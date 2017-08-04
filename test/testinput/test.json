@@ -1,0 +1,32 @@
+{
+  "logging": {
+    "categories": "Warning, Error"
+  },
+  "test_framework_runtime_config": "--log_level=test_suite",
+  "example_tests": {
+    "test_read_config": "42"
+  },
+  "toleranceTestAD": "1.0e-12",
+  "testdate": "2009-12-31T00:00:00Z",
+  "geometry": {
+    "nx": "40",
+    "ny": "20",
+    "bc": "1"
+  },
+  "variables": {
+    "variables": "ci"
+  },
+  "resolution": {
+    "nx": "40",
+    "ny": "20",
+    "bc": "1"
+  },
+  "test_length": "P1D",
+  "state": {
+    "read_from_file": "0",
+    "top_layer_depth": "5500.0",
+    "bottom_layer_depth": "4500.0",
+    "perturb": "0",
+    "date": "2009-12-31T00:00:00Z"
+  }
+}
