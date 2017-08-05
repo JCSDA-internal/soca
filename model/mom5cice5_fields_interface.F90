@@ -370,7 +370,7 @@ nx = fld%nx
 ny = fld%ny
 nf = fld%nf
 nb =0
-if (fld%lbc) nb = 2
+
 
 end subroutine mom5cice5_fieldnum_c
 

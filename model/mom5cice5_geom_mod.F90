@@ -20,8 +20,8 @@ module mom5cice5_geom_mod
      integer :: nzo
      integer :: nzi
      integer :: ncat
-     real(kind=kind_real), allocatable :: lon(:,:)
-     real(kind=kind_real), allocatable :: lat(:,:)     
+     !real(kind=kind_real), allocatable :: lon(:,:)
+     !real(kind=kind_real), allocatable :: lat(:,:)     
   end type mom5cice5_geom
 
 #define LISTED_TYPE mom5cice5_geom
@@ -76,8 +76,8 @@ contains
     other%nzo = self%nzo
     other%nzi = self%nzi
     other%ncat = self%ncat
-    other%lon = self%lon
-    other%lat = self%lat
+    !other%lon = self%lon
+    !other%lat = self%lat
 
   end subroutine c_mom5cice5_geo_clone
 
@@ -94,7 +94,7 @@ contains
 
   ! ------------------------------------------------------------------------------
 
-  subroutine c_mom5cice5_geo_info(c_key_self, c_nx, c_ny) bind(c,name='mom5cice5_geo_info_f90')
+  subroutine c_mom5cice5_geo_info(c_key_self, c_nx, c_ny, c_nzo, c_nzi, c_ncat) bind(c,name='mom5cice5_geo_info_f90')
     implicit none
     integer(c_int), intent(in   ) :: c_key_self
     integer(c_int), intent(inout) :: c_nx

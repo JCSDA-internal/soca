@@ -24,9 +24,12 @@ Geometry::~Geometry() {
 void Geometry::print(std::ostream & os) const {
   int nx;
   int ny;
-  mom5cice5_geo_info_f90(keyGeom_, nx, ny);
+  int nzo;
+  int nzi;
+  int ncat;
+  mom5cice5_geo_info_f90(keyGeom_, nx, ny, nzo, nzi, ncat);
   os << "nx = " << nx << ", ny = " << ny;
-  os << "nzo = " << nzo << ", nzi = " << ny << ", ncat = " << ncat;  
+  //os << "nzo = " << nzo << ", nzi = " << ny << ", ncat = " << ncat;  
 }
 // -----------------------------------------------------------------------------
 }  // namespace mom5cice5

@@ -37,7 +37,7 @@ contains
   subroutine mom5cice5_vars_setup(self, cvars)
     implicit none
     type(mom5cice5_vars), intent(inout) :: self
-    character(len=1), intent(in) :: cvars(:)
+    character(len=5), intent(in) :: cvars(:)
     integer :: jj
 
     self%nv = size(cvars)
@@ -45,8 +45,8 @@ contains
     do jj=1,self%nv
        if (cvars(jj)/="cicen" .and. cvars(jj)/="hicen" .and. cvars(jj)/="vicen" &
             .and. cvars(jj)/="hsnon" .and. cvars(jj)/="vsnon".and. cvars(jj)/="tsfcn" &
-            .and. cvars(jj)/="qsnon" .and. cvars(jj)/="sicenk".and. cvars(jj)/="so" &
-            .and. cvars(jj)/="qicenk" .and. cvars(jj)/="to".and. cvars(jj)/="tsst") then        
+            .and. cvars(jj)/="qsnon" .and. cvars(jj)/="sicnk".and. cvars(jj)/="sssoc" &
+            .and. cvars(jj)/="qicnk" .and. cvars(jj)/="tlioc".and. cvars(jj)/="sstoc") then        
 
           call abor1_ftn ("mom5cice5_vars_setup: unknown field")
        end if
@@ -76,7 +76,7 @@ contains
        self%nv = 12
        allocate(self%fldnames(1))
        self%fldnames(:) = (/"cicen","hicen","vicen","hsnon","vsnon",&
-            "tsfcn","qsnon","sicenk","so","qicenk","to","tsst"/)  
+            "tsfcn","qsnon","sicnk","sssoc","qicnk","tlioc","sstoc"/)  
     case default
        call abor1_ftn("c_mom5cice5_vars_create: undefined variables")
     end select

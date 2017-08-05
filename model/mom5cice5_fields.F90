@@ -167,7 +167,7 @@ contains
 
     call check(self)
 
-    call random_vector_gauss(self%gfld3d(:,:,:))
+    !call random_vector_gauss(self%gfld3d(:,:,:))
 
   end subroutine random
 
@@ -342,9 +342,10 @@ contains
   subroutine dot_prod(fld1,fld2,zprod)
     implicit none
     type(mom5cice5_field), intent(in) :: fld1, fld2
+    real(kind=kind_real), intent(out) :: zprod    
 
     call check_resolution(fld1, fld2)
-    if (fld1%nf /= fld2%nf .or. fld1%nl /= fld2%nl) then
+    if (fld1%nf /= fld2%nf .or. fld1%nzi /= fld2%nzi) then
        call abor1_ftn("mom5cice5_fields:field_prod error number of fields")
     endif
     call abor1_ftn("mom5cice5_fields:field_prod should never dot_product full state")    
@@ -460,55 +461,6 @@ contains
        call datetime_set(sdate, vdate)
     else
        call zeros(fld)
-       filename = config_get_string(c_conf,len(filename),"filename")
-       WRITE(buf,*) 'mom5cice5_field:read_file: opening '//filename
-       call log%info(buf)
-       open(unit=iunit, file=trim(filename), form='formatted', action='read')
-
-       read(iunit,*) ix, iy, il, ic, is
-       if (ix /= fld%nx .or. iy /= fld%ny .or. il /= fld%nl) then
-          write (record,*) "mom5cice5_fields:read_file: ", &
-               & "input fields have wrong dimensions: ",ix,iy,il
-          call log%error(record)
-          write (record,*) "mom5cice5_fields:read_file: expected: ",fld%nx,fld%ny,fld%nl
-          call log%error(record)
-          call abor1_ftn("mom5cice5_fields:read_file: input fields have wrong dimensions")
-       endif
-
-       read(iunit,*) sdate
-       WRITE(buf,*) 'validity date is: '//sdate
-       call log%info(buf)
-       call datetime_set(sdate, vdate)
-
-       if (fld%nx>9999)  call abor1_ftn("Format too small")
-       write(cnx,'(I4)')fld%nx
-       fmtn='('//trim(cnx)//fmt1//')'
-
-       nf = min(fld%nf, ic)
-       do jf=1,il*nf
-          do jy=1,fld%ny
-             read(iunit,fmtn) (fld%gfld3d(jx,jy,jf), jx=1,fld%nx)
-          enddo
-       enddo
-       ! Skip un-necessary data from file if any
-       allocate(zz(fld%nx))
-       do jf=nf*il+1, ic*il
-          do jy=1,fld%ny
-             read(iunit,fmtn) (zz(jx), jx=1,fld%nx)
-          enddo
-       enddo
-       deallocate(zz)
-
-       if (fld%lbc) then
-          do jf=1,4
-             read(iunit,fmt1) fld%xbound(jf)
-          enddo
-          do jf=1,4
-             read(iunit,fmtn) (fld%qbound(jx,jf), jx=1,fld%nx)
-          enddo
-       endif
-
-       close(iunit)
     endif
 
     call check(fld)
@@ -546,33 +498,11 @@ contains
     open(unit=iunit, file=trim(filename), form='formatted', action='write')
 
     is=0
-    if (fld%lbc) is=1
 
-    write(iunit,*) fld%nx, fld%ny, fld%nl, fld%nf, is
+
+
 
     call datetime_to_string(vdate, sdate)
-    write(iunit,*) sdate
-
-    if (fld%nx>9999)  call abor1_ftn("Format too small")
-    write(cnx,'(I4)')fld%nx
-    fmtn='('//trim(cnx)//fmt1//')'
-
-    do jf=1,fld%nl*fld%nf
-       do jy=1,fld%ny
-          write(iunit,fmtn) (fld%gfld3d(jx,jy,jf), jx=1,fld%nx)
-       enddo
-    enddo
-
-    if (fld%lbc) then
-       do jf=1,4
-          write(iunit,fmt1) fld%xbound(jf)
-       enddo
-       do jf=1,4
-          write(iunit,fmtn) (fld%qbound(jx,jf), jx=1,fld%nx)
-       enddo
-    endif
-
-    close(iunit)
 
     return
   end subroutine write_file
@@ -588,28 +518,7 @@ contains
 
     call check(fld)
 
-    do jj=1,fld%nf
-       joff=(jj-1)*fld%nl
-       pstat(1,jj)=minval(fld%gfld3d(:,:,joff+1:joff+fld%nl))
-       pstat(2,jj)=maxval(fld%gfld3d(:,:,joff+1:joff+fld%nl))
-       pstat(3,jj)=sqrt(sum(fld%gfld3d(:,:,joff+1:joff+fld%nl)**2) &
-            & /real(fld%nl*fld%nx*fld%ny,kind_real))
-    enddo
-    jj=jj-1
-
-    if (fld%lbc) then
-       jj=jj+1
-       pstat(1,jj)=minval(fld%xbound(:))
-       pstat(2,jj)=maxval(fld%xbound(:))
-       pstat(3,jj)=sqrt(sum(fld%xbound(:)**2)/real(4,kind_real))
-
-       jj=jj+1
-       pstat(1,jj)=minval(fld%qbound(:,:))
-       pstat(2,jj)=maxval(fld%qbound(:,:))
-       pstat(3,jj)=sqrt(sum(fld%qbound(:,:)**2)/real(4*fld%nx,kind_real))
-    endif
-
-    if (jj /= nf) call abor1_ftn("mom5cice5_fields_gpnorm: error number of fields")
+    if (jj /= nf) call abor1_ftn("mom5cice5_fields_gpnorm: error not implemented")
 
     return
   end subroutine gpnorm
@@ -627,17 +536,17 @@ contains
 
     zz = 0.0
 
-    do jf=1,fld%nl*fld%nf
-       do jy=1,fld%ny
-          do jx=1,fld%nx
-             zz = zz + fld%gfld3d(jx,jy,jf)*fld%gfld3d(jx,jy,jf)
-          enddo
-       enddo
-    enddo
+    !do jf=1,fld%nl*fld%nf
+    !   do jy=1,fld%ny
+    !      do jx=1,fld%nx
+    !         zz = zz + fld%gfld3d(jx,jy,jf)*fld%gfld3d(jx,jy,jf)
+    !      enddo
+    !   enddo
+    !enddo
 
-    ii = fld%nl*fld%nf*fld%ny*fld%nx
+    !ii = fld%nl*fld%nf*fld%ny*fld%nx
 
-    prms = sqrt(zz/real(ii,kind_real))
+    !prms = sqrt(zz/real(ii,kind_real))
 
   end subroutine fldrms
 
@@ -736,8 +645,8 @@ contains
        if (x1%fldnames(jf)/=x2%fldnames(jf)) &
             & call abor1_ftn("common_vars: fields do not match")
     enddo
-    if (x1%nl /= x2%nl) call abor1_ftn("common_vars: error number of levels")
-    common_vars = x1%nl * common_vars
+    if (x1%nzi /= x2%nzi) call abor1_ftn("common_vars: error number of levels")
+    common_vars = x1%nzi * common_vars
 
   end function common_vars
 
@@ -770,7 +679,7 @@ contains
     ! add more test here ...
 
     if (bad) then
-       write(0,*)'nx, ny, nf, nl, lbc = ',self%nx,self%ny,self%nf,self%nl,self%lbc
+       write(0,*)'nx, ny, nf, nzi, nzo = ',self%nx,self%ny,self%nf,self%nzi,self%nzo
        call abor1_ftn ("mom5cice5_fields: field not consistent")
     endif
 
