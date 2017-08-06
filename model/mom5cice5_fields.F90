@@ -29,20 +29,20 @@ module mom5cice5_fields
      integer :: nzi                    !< Number of levels in sea-ice  
      integer :: ncat                   !< Number of sea-ice thickness categories    
      integer :: nf                     !< Number of fields
-
-     real(kind=kind_real), allocatable :: cn(:,:,:)        !< Sea-ice fraction
-     real(kind=kind_real), allocatable :: hicen(:,:,:)     !< Sea-ice thickness
-     real(kind=kind_real), allocatable :: vicen(:,:,:)     !< Sea-ice volume
-     real(kind=kind_real), allocatable :: hsnon(:,:,:)     !< Snow depth over sea-ice
-     real(kind=kind_real), allocatable :: vsnon(:,:,:)     !< Snow volume over sea-ice  
-     real(kind=kind_real), allocatable :: tsfcn(:,:,:)     !< Temperature over sea-ice or snow
-     real(kind=kind_real), allocatable :: qsnon(:,:,:)     !< Enthalpy of snow
-     real(kind=kind_real), allocatable :: sicenk(:,:,:,:)  !< Salinity of sea-ice
-     real(kind=kind_real), allocatable :: so(:,:)          !< Ocean (surface) Salinity
-     real(kind=kind_real), allocatable :: qicenk(:,:,:,:)  !< Enthalpy of sea-ice
-     real(kind=kind_real), allocatable :: to(:,:)          !< Liquid ocean temperature
-     real(kind=kind_real), allocatable :: tsst(:,:)        !< Average temperature 
-     character(len=1), allocatable :: fldnames(:)      !< Variable identifiers
+     character(len=128) :: gridfname   !< Grid file name
+     real(kind=kind_real), allocatable :: cicen(:,:,:)        !< Sea-ice fraction
+     real(kind=kind_real), allocatable :: hicen(:,:,:)        !< Sea-ice thickness
+     real(kind=kind_real), allocatable :: vicen(:,:,:)        !< Sea-ice volume
+     real(kind=kind_real), allocatable :: hsnon(:,:,:)        !< Snow depth over sea-ice
+     real(kind=kind_real), allocatable :: vsnon(:,:,:)        !< Snow volume over sea-ice  
+     real(kind=kind_real), allocatable :: tsfcn(:,:,:)        !< Temperature over sea-ice or snow
+     real(kind=kind_real), allocatable :: qsnon(:,:,:)        !< Enthalpy of snow
+     real(kind=kind_real), allocatable :: sicnk(:,:,:,:)      !< Salinity of sea-ice
+     real(kind=kind_real), allocatable :: sssoc(:,:)          !< Ocean (surface) Salinity
+     real(kind=kind_real), allocatable :: qicnk(:,:,:,:)      !< Enthalpy of sea-ice
+     real(kind=kind_real), allocatable :: tlioc(:,:)          !< Liquid ocean temperature
+     real(kind=kind_real), allocatable :: sstoc(:,:)          !< Average temperature of grid cell 
+     character(len=5), allocatable :: fldnames(:)             !< Variable identifiers
   end type mom5cice5_field
 
 #define LISTED_TYPE mom5cice5_field
@@ -66,40 +66,40 @@ contains
     type(mom5cice5_field), intent(inout) :: self
     type(mom5cice5_geom),  intent(in)    :: geom
     type(mom5cice5_vars),  intent(in)    :: vars
-    integer :: ioff
 
     self%nx   = geom%nx
     self%ny   = geom%ny
     self%nzo  = geom%nzo
     self%nzi  = geom%nzi
     self%ncat = geom%ncat
+    self%gridfname = geom%filename
     self%nf   = vars%nv
 
-    allocate(self%cn(self%nx,self%ny,self%ncat))
+    allocate(self%cicen(self%nx,self%ny,self%ncat))
     allocate(self%hicen(self%nx,self%ny,self%ncat))
     allocate(self%vicen(self%nx,self%ny,self%ncat))
     allocate(self%hsnon(self%nx,self%ny,self%ncat))
     allocate(self%vsnon(self%nx,self%ny,self%ncat))
     allocate(self%tsfcn(self%nx,self%ny,self%ncat))
     allocate(self%qsnon(self%nx,self%ny,self%ncat))
-    allocate(self%sicenk(self%nx,self%ny,self%ncat,self%nzi))
-    allocate(self%so(self%nx,self%ny))
-    allocate(self%qicenk(self%nx,self%ny,self%ncat,self%nzi))
-    allocate(self%to(self%nx,self%ny))
-    allocate(self%tsst(self%nx,self%ny))    
+    allocate(self%sicnk(self%nx,self%ny,self%ncat,self%nzi))
+    allocate(self%sssoc(self%nx,self%ny))
+    allocate(self%qicnk(self%nx,self%ny,self%ncat,self%nzi))
+    allocate(self%tlioc(self%nx,self%ny))
+    allocate(self%sstoc(self%nx,self%ny))    
 
-    self%cn(:,:,:)=0.0_kind_real
-    self%hicen(:,:,:)=0.0_kind_real
-    self%vicen(:,:,:)=0.0_kind_real        
-    self%hsnon(:,:,:)=0.0_kind_real
-    self%vsnon(:,:,:)=0.0_kind_real
-    self%tsfcn(:,:,:)=0.0_kind_real
-    self%qsnon(:,:,:)=0.0_kind_real
-    self%sicenk(:,:,:,:)=0.0_kind_real
-    self%so(:,:)=0.0_kind_real    
-    self%qicenk(:,:,:,:)=0.0_kind_real
-    self%to(:,:)=0.0_kind_real    
-    self%tsst(:,:)=0.0_kind_real
+    self%cicen=0.0_kind_real
+    self%hicen=0.0_kind_real
+    self%vicen=0.0_kind_real        
+    self%hsnon=0.0_kind_real
+    self%vsnon=0.0_kind_real
+    self%tsfcn=0.0_kind_real
+    self%qsnon=0.0_kind_real
+    self%sicnk=0.0_kind_real
+    self%sssoc=0.0_kind_real    
+    self%qicnk=0.0_kind_real
+    self%tlioc=0.0_kind_real    
+    self%sstoc=0.0_kind_real
 
     if (self%nf>12) then
        call abor1_ftn ("mom5cice5_fields:create error number of fields")       
@@ -119,18 +119,18 @@ contains
 
     call check(self)
 
-    if (allocated(self%cn)) deallocate(self%cn)
+    if (allocated(self%cicen)) deallocate(self%cicen)
     if (allocated(self%hicen)) deallocate(self%hicen)
     if (allocated(self%vicen)) deallocate(self%vicen)        
     if (allocated(self%hsnon)) deallocate(self%hsnon)
     if (allocated(self%vsnon)) deallocate(self%vsnon)
     if (allocated(self%tsfcn)) deallocate(self%tsfcn)    
     if (allocated(self%qsnon)) deallocate(self%qsnon)
-    if (allocated(self%sicenk)) deallocate(self%sicenk)
-    if (allocated(self%so)) deallocate(self%so)
-    if (allocated(self%qicenk)) deallocate(self%qicenk)
-    if (allocated(self%to)) deallocate(self%to)
-    if (allocated(self%tsst)) deallocate(self%tsst)    
+    if (allocated(self%sicnk)) deallocate(self%sicnk)
+    if (allocated(self%sssoc)) deallocate(self%sssoc)
+    if (allocated(self%qicnk)) deallocate(self%qicnk)
+    if (allocated(self%tlioc)) deallocate(self%tlioc)
+    if (allocated(self%sstoc)) deallocate(self%sstoc)    
     if (allocated(self%fldnames)) deallocate(self%fldnames)
 
   end subroutine delete
@@ -143,18 +143,18 @@ contains
 
     call check(self)
 
-    self%cn=0.0_kind_real
+    self%cicen=0.0_kind_real
     self%hicen=0.0_kind_real
     self%vicen=0.0_kind_real        
     self%hsnon=0.0_kind_real
     self%vsnon=0.0_kind_real
     self%tsfcn=0.0_kind_real
     self%qsnon=0.0_kind_real
-    self%sicenk=0.0_kind_real
-    self%so=0.0_kind_real    
-    self%qicenk=0.0_kind_real
-    self%to=0.0_kind_real    
-    self%tsst=0.0_kind_real
+    self%sicnk=0.0_kind_real
+    self%sssoc=0.0_kind_real    
+    self%qicnk=0.0_kind_real
+    self%tlioc=0.0_kind_real    
+    self%sstoc=0.0_kind_real
 
   end subroutine zeros
 
@@ -183,18 +183,18 @@ contains
 
     nf = common_vars(self, rhs)
 
-    self%cn=rhs%cn
+    self%cicen=rhs%cicen
     self%hicen=rhs%hicen
     self%vicen=rhs%vicen
     self%hsnon=rhs%hsnon
     self%vsnon=rhs%vsnon
     self%tsfcn=rhs%tsfcn
     self%qsnon=rhs%qsnon
-    self%sicenk=rhs%sicenk
-    self%so=rhs%so
-    self%qicenk=rhs%qicenk
-    self%to=rhs%to
-    self%tsst=rhs%tsst
+    self%sicnk=rhs%sicnk
+    self%sssoc=rhs%sssoc
+    self%qicnk=rhs%qicnk
+    self%tlioc=rhs%tlioc
+    self%sstoc=rhs%sstoc
 
     return
   end subroutine copy
@@ -211,18 +211,18 @@ contains
 
     nf = common_vars(self, rhs)
 
-    self%cn=self%cn+rhs%cn
+    self%cicen=self%cicen+rhs%cicen
     self%hicen=self%hicen+rhs%hicen
     self%vicen=self%vicen+rhs%vicen
     self%hsnon=self%hsnon+rhs%hsnon
     self%vsnon=self%vsnon+rhs%vsnon
     self%tsfcn=self%tsfcn+rhs%tsfcn
     self%qsnon=self%qsnon+rhs%qsnon
-    self%sicenk=self%sicenk+rhs%sicenk
-    self%so=self%so+rhs%so
-    self%qicenk=self%qicenk+rhs%qicenk
-    self%to=self%to+rhs%to
-    self%tsst=self%tsst+rhs%tsst
+    self%sicnk=self%sicnk+rhs%sicnk
+    self%sssoc=self%sssoc+rhs%sssoc
+    self%qicnk=self%qicnk+rhs%qicnk
+    self%tlioc=self%tlioc+rhs%tlioc
+    self%sstoc=self%sstoc+rhs%sstoc
 
     return
   end subroutine self_add
@@ -239,18 +239,18 @@ contains
 
     nf = common_vars(self, rhs)
 
-    self%cn=self%cn*rhs%cn
+    self%cicen=self%cicen*rhs%cicen
     self%hicen=self%hicen*rhs%hicen
     self%vicen=self%vicen*rhs%vicen
     self%hsnon=self%hsnon*rhs%hsnon
     self%vsnon=self%vsnon*rhs%vsnon
     self%tsfcn=self%tsfcn*rhs%tsfcn
     self%qsnon=self%qsnon*rhs%qsnon
-    self%sicenk=self%sicenk*rhs%sicenk
-    self%so=self%so*rhs%so
-    self%qicenk=self%qicenk*rhs%qicenk
-    self%to=self%to*rhs%to
-    self%tsst=self%tsst*rhs%tsst
+    self%sicnk=self%sicnk*rhs%sicnk
+    self%sssoc=self%sssoc*rhs%sssoc
+    self%qicnk=self%qicnk*rhs%qicnk
+    self%tlioc=self%tlioc*rhs%tlioc
+    self%sstoc=self%sstoc*rhs%sstoc
 
     return
   end subroutine self_schur
@@ -267,18 +267,18 @@ contains
 
     nf = common_vars(self, rhs)
 
-    self%cn=self%cn-rhs%cn
+    self%cicen=self%cicen-rhs%cicen
     self%hicen=self%hicen-rhs%hicen
     self%vicen=self%vicen-rhs%vicen
     self%hsnon=self%hsnon-rhs%hsnon
     self%vsnon=self%vsnon-rhs%vsnon
     self%tsfcn=self%tsfcn-rhs%tsfcn
     self%qsnon=self%qsnon-rhs%qsnon
-    self%sicenk=self%sicenk-rhs%sicenk
-    self%so=self%so-rhs%so
-    self%qicenk=self%qicenk-rhs%qicenk
-    self%to=self%to-rhs%to
-    self%tsst=self%tsst-rhs%tsst
+    self%sicnk=self%sicnk-rhs%sicnk
+    self%sssoc=self%sssoc-rhs%sssoc
+    self%qicnk=self%qicnk-rhs%qicnk
+    self%tlioc=self%tlioc-rhs%tlioc
+    self%sstoc=self%sstoc-rhs%sstoc
 
     return
   end subroutine self_sub
@@ -292,18 +292,18 @@ contains
 
     call check(self)
 
-    self%cn = zz * self%cn
+    self%cicen = zz * self%cicen
     self%hicen = zz * self%hicen
     self%vicen = zz * self%vicen
     self%hsnon = zz * self%hsnon
     self%vsnon = zz * self%vsnon
     self%tsfcn = zz * self%tsfcn
     self%qsnon = zz * self%qsnon
-    self%sicenk = zz * self%sicenk
-    self%so = zz * self%so
-    self%qicenk = zz * self%qicenk
-    self%to = zz * self%to
-    self%tsst = zz * self%tsst
+    self%sicnk = zz * self%sicnk
+    self%sssoc = zz * self%sssoc
+    self%qicnk = zz * self%qicnk
+    self%tlioc = zz * self%tlioc
+    self%sstoc = zz * self%sstoc
 
     return
   end subroutine self_mul
@@ -321,18 +321,18 @@ contains
 
     nf = common_vars(self, rhs)
 
-    self%cn=self%cn + zz * rhs%cn
+    self%cicen=self%cicen + zz * rhs%cicen
     self%hicen=self%hicen + zz * rhs%hicen
     self%vicen=self%vicen + zz * rhs%vicen
     self%hsnon=self%hsnon + zz * rhs%hsnon
     self%vsnon=self%vsnon + zz * rhs%vsnon
     self%tsfcn=self%tsfcn + zz * rhs%tsfcn
     self%qsnon=self%qsnon + zz * rhs%qsnon
-    self%sicenk=self%sicenk + zz * rhs%sicenk
-    self%so=self%so + zz * rhs%so
-    self%qicenk=self%qicenk + zz * rhs%qicenk
-    self%to=self%to + zz * rhs%to
-    self%tsst=self%tsst + zz * rhs%tsst        
+    self%sicnk=self%sicnk + zz * rhs%sicnk
+    self%sssoc=self%sssoc + zz * rhs%sssoc
+    self%qicnk=self%qicnk + zz * rhs%qicnk
+    self%tlioc=self%tlioc + zz * rhs%tlioc
+    self%sstoc=self%sstoc + zz * rhs%sstoc        
 
     return
   end subroutine axpy
@@ -348,8 +348,8 @@ contains
     if (fld1%nf /= fld2%nf .or. fld1%nzi /= fld2%nzi) then
        call abor1_ftn("mom5cice5_fields:field_prod error number of fields")
     endif
-    call abor1_ftn("mom5cice5_fields:field_prod should never dot_product full state")    
-
+    !call abor1_ftn("mom5cice5_fields:field_prod should never dot_product full state")    
+    zprod=0.0_kind_real
     return
   end subroutine dot_prod
 
@@ -384,18 +384,18 @@ contains
 
     if (x1%nx==x2%nx .and. x1%ny==x2%ny) then
        if (lhs%nx==x1%nx .and. lhs%ny==x1%ny) then
-          lhs%cn = x1%cn - x2%cn
+          lhs%cicen = x1%cicen - x2%cicen
           lhs%hicen = x1%hicen - x2%hicen
           lhs%vicen = x1%vicen - x2%vicen
           lhs%hsnon = x1%hsnon - x2%hsnon
           lhs%vsnon = x1%vsnon - x2%vsnon
           lhs%tsfcn = x1%tsfcn - x2%tsfcn
           lhs%qsnon = x1%qsnon - x2%qsnon
-          lhs%sicenk = x1%sicenk -x2%sicenk
-          lhs%so = x1%so - x2%so
-          lhs%qicenk = x1%qicenk - x2%qicenk
-          lhs%to = x1%to - x2%to
-          lhs%tsst = x1%tsst - x2%tsst         
+          lhs%sicnk = x1%sicnk - x2%sicnk
+          lhs%sssoc = x1%sssoc - x2%sssoc
+          lhs%qicnk = x1%qicnk - x2%qicnk
+          lhs%tlioc = x1%tlioc - x2%tlioc
+          lhs%sstoc = x1%sstoc - x2%sstoc         
        else
           call abor1_ftn("mom5cice5_fields:diff_incr: not coded for low res increment yet")
        endif
@@ -509,16 +509,18 @@ contains
 
   ! ------------------------------------------------------------------------------
 
-  subroutine gpnorm(fld, nf, pstat)
+  subroutine gpnorm(fld, nf, pstat) 
     implicit none
     type(mom5cice5_field), intent(in) :: fld
     integer, intent(in) :: nf
-    real(kind=kind_real), intent(inout) :: pstat(3, nf)
+    real(kind=kind_real), intent(inout) :: pstat(3, nf) !> [average, min, max]
     integer :: jj,joff
 
     call check(fld)
 
-    if (jj /= nf) call abor1_ftn("mom5cice5_fields_gpnorm: error not implemented")
+    !if (jj /= nf) call abor1_ftn("mom5cice5_fields_gpnorm: error not implemented")
+    
+    pstat = 0.0_kind_real
 
     return
   end subroutine gpnorm
@@ -534,7 +536,7 @@ contains
 
     call check(fld)
 
-    zz = 0.0
+    zz = 0.0_kind_real
 
     !do jf=1,fld%nl*fld%nf
     !   do jy=1,fld%ny
@@ -547,6 +549,7 @@ contains
     !ii = fld%nl*fld%nf*fld%ny*fld%nx
 
     !prms = sqrt(zz/real(ii,kind_real))
+    prms = 0.0_kind_real
 
   end subroutine fldrms
 
@@ -558,7 +561,7 @@ contains
     real(kind=kind_real), intent(in)     :: delta1,delta2
     integer, intent(out) :: k1,k2
     real(kind=kind_real), intent(out)    :: w1,w2
-
+    
     integer :: ii
     real(kind=kind_real) :: zz
 
@@ -569,7 +572,7 @@ contains
     w2=1.0_kind_real-w1
     k1=ii+1
     k2=ii+2
-
+    
     return
   end subroutine lin_weights
 
@@ -674,7 +677,7 @@ contains
     logical :: bad
 
     bad = .false.
-    bad = bad .or. (size(self%cn, 1) /= self%nx)
+    bad = bad .or. (size(self%cicen, 1) /= self%nx)
 
     ! add more test here ...
 

@@ -4,9 +4,13 @@
   },
   "test_framework_runtime_config": "--log_level=test_suite",
   "Geometry": {
-    "nx": "40",
-    "ny": "20",
-    "bc": "1"
+    "nx": "720",
+    "ny": "410",
+    "nzo": "1",
+    "nzi": "7",
+    "ncat": "5",
+    "nf": "12",
+    "filename": "grid_spec.nc"
   },
   "Variables": {
     "variables": "ci"

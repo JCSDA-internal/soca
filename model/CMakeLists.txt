@@ -11,15 +11,13 @@ State.h
 Traits.h
 Variables.cc
 Variables.h
-calc_pv.f90
-laplacian_2d.f90
-pv_operator.f90
 mom5cice5_constants.f90
 mom5cice5_fields.F90
 mom5cice5_fields_interface.F90
 mom5cice5_geom_mod.F90
 mom5cice5_invent_state.f90
 mom5cice5_vars_mod.F90
+mom5cice5_ncutils_mod.F90
 )
 
 if ( CMAKE_Fortran_COMPILER_ID MATCHES "Cray" )

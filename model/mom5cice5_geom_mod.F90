@@ -5,6 +5,9 @@ module mom5cice5_geom_mod
 
   use iso_c_binding
   use config_mod
+  use kinds
+  !use netcdf
+  !use ncutils
 
   implicit none
   private
@@ -20,8 +23,9 @@ module mom5cice5_geom_mod
      integer :: nzo
      integer :: nzi
      integer :: ncat
-     !real(kind=kind_real), allocatable :: lon(:,:)
-     !real(kind=kind_real), allocatable :: lat(:,:)     
+     character(len=128) :: filename
+     real(kind=kind_real), allocatable :: lon(:,:)
+     real(kind=kind_real), allocatable :: lat(:,:)     
   end type mom5cice5_geom
 
 #define LISTED_TYPE mom5cice5_geom
@@ -41,11 +45,13 @@ contains
   ! ------------------------------------------------------------------------------
 
   subroutine c_mom5cice5_geo_setup(c_key_self, c_conf) bind(c,name='mom5cice5_geo_setup_f90')
+    !use netcdf
+    !use ncutils
     implicit none
     integer(c_int), intent(inout) :: c_key_self
     type(c_ptr), intent(in)    :: c_conf
-
     type(mom5cice5_geom), pointer :: self
+    integer :: varid, ncid, nxdimid, nydimid
 
     call mom5cice5_geom_registry%init()
     call mom5cice5_geom_registry%add(c_key_self)
@@ -56,6 +62,23 @@ contains
     self%nzo = config_get_int(c_conf, "nzo")
     self%nzi = config_get_int(c_conf, "nzi")
     self%ncat = config_get_int(c_conf, "ncat")
+    self%filename = config_get_string(c_conf, len(self%filename), "filename")
+    allocate(self%lon(self%nx,self%ny))
+    allocate(self%lat(self%nx,self%ny))
+
+    !call nccheck(nf90_open(self%filename, nf90_nowrite,ncid))
+    !Get the size of the state
+    !call nccheck(nf90_inq_dimid(ncid, 'grid_x_T', nxdimid))
+    !call nccheck(nf90_inquire_dimension(ncid, nxdimid, len = self%nx))
+    !call nccheck(nf90_inq_dimid(ncid, 'grid_y_T', nydimid))
+    !call nccheck(nf90_inquire_dimension(ncid, nydimid, len = self%ny))
+
+    !call nccheck(nf90_inq_varid(ncid, 'x_T', varid))
+    !call nccheck(nf90_get_var(ncid, varid, self%lon))
+    !call nccheck(nf90_inq_varid(ncid, 'y_T', varid))
+    !call nccheck(nf90_get_var(ncid, varid, self%lat))
+
+    !call check(nf90_close(ncid))
 
   end subroutine c_mom5cice5_geo_setup
 
@@ -76,8 +99,9 @@ contains
     other%nzo = self%nzo
     other%nzi = self%nzi
     other%ncat = self%ncat
-    !other%lon = self%lon
-    !other%lat = self%lat
+    other%filename = self%filename
+    other%lon = self%lon
+    other%lat = self%lat
 
   end subroutine c_mom5cice5_geo_clone
 
@@ -87,7 +111,11 @@ contains
 
     implicit none
     integer(c_int), intent(inout) :: c_key_self     
+    type(mom5cice5_geom), pointer :: self
 
+    call mom5cice5_geom_registry%get(c_key_self , self )
+    if (allocated(self%lon)) deallocate(self%lon)
+    if (allocated(self%lat)) deallocate(self%lat)
     call mom5cice5_geom_registry%remove(c_key_self)
 
   end subroutine c_mom5cice5_geo_delete

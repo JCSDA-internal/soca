@@ -45,7 +45,7 @@ class State : public util::Printable,
 //  void interpolate(const LocQG &, GomQG &) const;
 
 /// Interpolate full fields
-  void changeResolution(const State & xx);
+///  void changeResolution(const State & xx);
 
 /// Interactions with Increment
   State & operator+=(const Increment &);

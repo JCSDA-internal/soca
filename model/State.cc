@@ -92,10 +92,10 @@ State & State::operator=(const State & rhs) {
 // -----------------------------------------------------------------------------
 /// Interpolate full fields
 // -----------------------------------------------------------------------------
-void State::changeResolution(const State & other) {
-  fields_->changeResolution(*other.fields_);
-  Log::trace() << "State interpolated" << std::endl;
-}
+//void State::changeResolution(const State & other) {
+//  fields_->changeResolution(*other.fields_);
+//  Log::trace() << "State interpolated" << std::endl;
+//}
 // -----------------------------------------------------------------------------
 /// Interactions with Increments
 // -----------------------------------------------------------------------------

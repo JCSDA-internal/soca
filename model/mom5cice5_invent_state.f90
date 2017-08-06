@@ -1,4 +1,5 @@
 
+
 !> Invent an initial state for the QG model.
 
 !> This routine invent an initial state for the QG model. It is used to

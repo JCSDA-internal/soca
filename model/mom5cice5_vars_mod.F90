@@ -15,7 +15,7 @@ module mom5cice5_vars_mod
   !> Fortran derived type to represent MOM5 & CICE5 model variables
   type :: mom5cice5_vars
      integer :: nv
-     character(len=1), allocatable :: fldnames(:) !< Variable identifiers
+     character(len=5), allocatable :: fldnames(:) !< Variable identifiers
   end type mom5cice5_vars
 
 #define LISTED_TYPE mom5cice5_vars
@@ -71,12 +71,23 @@ contains
     call mom5cice5_vars_registry%get(c_key_self, self)
 
     svar = config_get_string(c_conf,len(svar),"variables")
+    print *,'svar=',svar
     select case (svar)
-    case ("ci")
+    case ("ci","cv")
        self%nv = 12
-       allocate(self%fldnames(1))
-       self%fldnames(:) = (/"cicen","hicen","vicen","hsnon","vsnon",&
-            "tsfcn","qsnon","sicnk","sssoc","qicnk","tlioc","sstoc"/)  
+       allocate(self%fldnames(self%nv))
+       self%fldnames(1) = "cicen"
+       self%fldnames(2) = "hicen"
+       self%fldnames(3) = "vicen"
+       self%fldnames(4) = "hsnon"
+       self%fldnames(5) = "vsnon"
+       self%fldnames(6) = "tsfcn"
+       self%fldnames(7) = "qsnon"
+       self%fldnames(8) = "sicnk"
+       self%fldnames(9) = "sssoc"
+       self%fldnames(10) = "qicnk"
+       self%fldnames(11) = "tlioc"
+       self%fldnames(12) = "sstoc"
     case default
        call abor1_ftn("c_mom5cice5_vars_create: undefined variables")
     end select
@@ -109,7 +120,6 @@ contains
     type(mom5cice5_vars), intent(inout) :: other
 
     other%nv = self%nv
-
     allocate(other%fldnames(other%nv))
     other%fldnames(:)=self%fldnames(:)
 

@@ -57,7 +57,7 @@ extern "C" {
                                const util::DateTime * const *);
 
   void mom5cice5_field_gpnorm_f90(const int & keyFlds, const int &, double &);
-  void mom5cice5_field_sizes_f90(const int & keyFlds, int &, int &, int &, int &);
+  void mom5cice5_field_sizes_f90(const int & keyFlds, int &, int &, int &, int &, int &, int &);
   void mom5cice5_field_rms_f90(const int & keyFlds, double &);
 
 // -----------------------------------------------------------------------------
@@ -65,7 +65,7 @@ extern "C" {
 // -----------------------------------------------------------------------------
   void mom5cice5_var_create_f90(int & keyVars, const eckit::Configuration * const *);
   void mom5cice5_var_clone_f90(const int & keyVars, int & keyVars_other);
-  void mom5cice5_var_info_f90(const int & keyVars, int &, int &);
+  void mom5cice5_var_info_f90(const int & keyVars, int &);
   void mom5cice5_var_delete_f90(int & keyVars);
 }
 
