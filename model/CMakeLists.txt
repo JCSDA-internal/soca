@@ -12,6 +12,7 @@ Traits.h
 Variables.cc
 Variables.h
 mom5cice5_constants.f90
+mom5cice5_thermo.F90
 mom5cice5_fields.F90
 mom5cice5_fields_interface.F90
 mom5cice5_geom_mod.F90

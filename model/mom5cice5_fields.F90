@@ -161,7 +161,7 @@ contains
   ! ------------------------------------------------------------------------------
 
   subroutine random(self)
-    use random_vectors_gauss_mod
+    !use random_vectors_gauss_mod
     implicit none
     type(mom5cice5_field), intent(inout) :: self
 

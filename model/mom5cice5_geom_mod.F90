@@ -26,6 +26,7 @@ module mom5cice5_geom_mod
      character(len=128) :: filename
      real(kind=kind_real), allocatable :: lon(:,:)
      real(kind=kind_real), allocatable :: lat(:,:)     
+     real(kind=kind_real), allocatable :: mask(:,:) !< 0 = land 1 = ocean    
   end type mom5cice5_geom
 
 #define LISTED_TYPE mom5cice5_geom
@@ -65,6 +66,7 @@ contains
     self%filename = config_get_string(c_conf, len(self%filename), "filename")
     allocate(self%lon(self%nx,self%ny))
     allocate(self%lat(self%nx,self%ny))
+    allocate(self%mask(self%nx,self%ny))
 
     !call nccheck(nf90_open(self%filename, nf90_nowrite,ncid))
     !Get the size of the state
@@ -77,6 +79,8 @@ contains
     !call nccheck(nf90_get_var(ncid, varid, self%lon))
     !call nccheck(nf90_inq_varid(ncid, 'y_T', varid))
     !call nccheck(nf90_get_var(ncid, varid, self%lat))
+    !call nccheck(nf90_inq_varid(ncid, 'wet', varid))
+    !call nccheck(nf90_get_var(ncid, varid, self%mask))
 
     !call check(nf90_close(ncid))
 
@@ -85,6 +89,7 @@ contains
   ! ------------------------------------------------------------------------------
 
   subroutine c_mom5cice5_geo_clone(c_key_self, c_key_other) bind(c,name='mom5cice5_geo_clone_f90')
+
     implicit none
     integer(c_int), intent(in   ) :: c_key_self
     integer(c_int), intent(inout) :: c_key_other
@@ -102,6 +107,7 @@ contains
     other%filename = self%filename
     other%lon = self%lon
     other%lat = self%lat
+    other%mask = self%mask
 
   end subroutine c_mom5cice5_geo_clone
 
@@ -116,6 +122,7 @@ contains
     call mom5cice5_geom_registry%get(c_key_self , self )
     if (allocated(self%lon)) deallocate(self%lon)
     if (allocated(self%lat)) deallocate(self%lat)
+    if (allocated(self%mask)) deallocate(self%mask)
     call mom5cice5_geom_registry%remove(c_key_self)
 
   end subroutine c_mom5cice5_geo_delete
@@ -123,6 +130,7 @@ contains
   ! ------------------------------------------------------------------------------
 
   subroutine c_mom5cice5_geo_info(c_key_self, c_nx, c_ny, c_nzo, c_nzi, c_ncat) bind(c,name='mom5cice5_geo_info_f90')
+
     implicit none
     integer(c_int), intent(in   ) :: c_key_self
     integer(c_int), intent(inout) :: c_nx
