@@ -1,5 +1,5 @@
 
-!> Interfaces to be called from C++ for Fortran handling of QG model fields
+!> Interfaces to be called from C++ for Fortran handling of model fields
 
 ! ------------------------------------------------------------------------------
 
