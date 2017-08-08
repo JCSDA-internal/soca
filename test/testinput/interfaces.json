@@ -4,13 +4,11 @@
   },
   "test_framework_runtime_config": "--log_level=test_suite",
   "Geometry": {
-    "nx": "720",
-    "ny": "410",
     "nzo": "1",
     "nzi": "7",
     "ncat": "5",
     "nf": "12",
-    "filename": "grid_spec.nc"
+    "filename": "/glade/p/work/gvernier/MOM5CICE5/ogrid05.nc"
   },
   "Variables": {
     "variables": "ci"

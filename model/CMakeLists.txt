@@ -12,13 +12,13 @@ Traits.h
 Variables.cc
 Variables.h
 mom5cice5_constants.f90
-mom5cice5_thermo.F90
+#mom5cice5_thermo.F90
 mom5cice5_fields.F90
 mom5cice5_fields_interface.F90
 mom5cice5_geom_mod.F90
+mom5cice5_ncutils_mod.F90
 mom5cice5_invent_state.f90
 mom5cice5_vars_mod.F90
-mom5cice5_ncutils_mod.F90
 )
 
 if ( CMAKE_Fortran_COMPILER_ID MATCHES "Cray" )
@@ -28,7 +28,7 @@ endif()
 ecbuild_add_library( TARGET   mom5cice5
                      DEFINITIONS ${cfdealloc}
                      SOURCES  ${oops_mom5cice5_src_files}
-                     LIBS     oops ${LAPACK_LIBRARIES}
+                     LIBS     oops ${LAPACK_LIBRARIES} ${NETCDF_LIBRARIES}
                      INSTALL_HEADERS LISTED
                      LINKER_LANGUAGE ${OOPS_LINKER_LANGUAGE}
                     )

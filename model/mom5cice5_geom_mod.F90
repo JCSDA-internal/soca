@@ -6,8 +6,8 @@ module mom5cice5_geom_mod
   use iso_c_binding
   use config_mod
   use kinds
-  !use netcdf
-  !use ncutils
+  use netcdf
+  use ncutils
 
   implicit none
   private
@@ -58,31 +58,33 @@ contains
     call mom5cice5_geom_registry%add(c_key_self)
     call mom5cice5_geom_registry%get(c_key_self,self)
 
-    self%nx = config_get_int(c_conf, "nx")
-    self%ny = config_get_int(c_conf, "ny")
     self%nzo = config_get_int(c_conf, "nzo")
     self%nzi = config_get_int(c_conf, "nzi")
     self%ncat = config_get_int(c_conf, "ncat")
     self%filename = config_get_string(c_conf, len(self%filename), "filename")
+
+    call nccheck(nf90_open(self%filename, nf90_nowrite,ncid))
+    !Get the size of the state
+    call nccheck(nf90_inq_dimid(ncid, 'grid_x_T', nxdimid))
+    call nccheck(nf90_inquire_dimension(ncid, nxdimid, len = self%nx))
+    call nccheck(nf90_inq_dimid(ncid, 'grid_y_T', nydimid))
+    call nccheck(nf90_inquire_dimension(ncid, nydimid, len = self%ny))
+
     allocate(self%lon(self%nx,self%ny))
     allocate(self%lat(self%nx,self%ny))
     allocate(self%mask(self%nx,self%ny))
 
-    call nccheck(nf90_open(self%filename, nf90_nowrite,ncid))
-    !Get the size of the state
-    !call nccheck(nf90_inq_dimid(ncid, 'grid_x_T', nxdimid))
-    !call nccheck(nf90_inquire_dimension(ncid, nxdimid, len = self%nx))
-    !call nccheck(nf90_inq_dimid(ncid, 'grid_y_T', nydimid))
-    !call nccheck(nf90_inquire_dimension(ncid, nydimid, len = self%ny))
+    call nccheck(nf90_inq_varid(ncid, 'x_T', varid))
+    call nccheck(nf90_get_var(ncid, varid, self%lon))
+    call nccheck(nf90_inq_varid(ncid, 'y_T', varid))
+    call nccheck(nf90_get_var(ncid, varid, self%lat))
+    call nccheck(nf90_inq_varid(ncid, 'wet', varid))
+    call nccheck(nf90_get_var(ncid, varid, self%mask))
 
-    !call nccheck(nf90_inq_varid(ncid, 'x_T', varid))
-    !call nccheck(nf90_get_var(ncid, varid, self%lon))
-    !call nccheck(nf90_inq_varid(ncid, 'y_T', varid))
-    !call nccheck(nf90_get_var(ncid, varid, self%lat))
-    !call nccheck(nf90_inq_varid(ncid, 'wet', varid))
-    !call nccheck(nf90_get_var(ncid, varid, self%mask))
+    call nccheck(nf90_close(ncid))
 
-    call check(nf90_close(ncid))
+    print *,'nx=',self%nx
+    print *,'ny=',self%ny
 
   end subroutine c_mom5cice5_geo_setup
 
@@ -148,7 +150,5 @@ contains
     c_ncat = self%ncat
 
   end subroutine c_mom5cice5_geo_info
-
-  ! ------------------------------------------------------------------------------
 
 end module mom5cice5_geom_mod
