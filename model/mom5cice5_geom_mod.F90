@@ -46,7 +46,7 @@ contains
   ! ------------------------------------------------------------------------------
 
   subroutine c_mom5cice5_geo_setup(c_key_self, c_conf) bind(c,name='mom5cice5_geo_setup_f90')
-    !use netcdf
+    use netcdf
     !use ncutils
     implicit none
     integer(c_int), intent(inout) :: c_key_self
@@ -68,7 +68,7 @@ contains
     allocate(self%lat(self%nx,self%ny))
     allocate(self%mask(self%nx,self%ny))
 
-    !call nccheck(nf90_open(self%filename, nf90_nowrite,ncid))
+    call nccheck(nf90_open(self%filename, nf90_nowrite,ncid))
     !Get the size of the state
     !call nccheck(nf90_inq_dimid(ncid, 'grid_x_T', nxdimid))
     !call nccheck(nf90_inquire_dimension(ncid, nxdimid, len = self%nx))
@@ -82,7 +82,7 @@ contains
     !call nccheck(nf90_inq_varid(ncid, 'wet', varid))
     !call nccheck(nf90_get_var(ncid, varid, self%mask))
 
-    !call check(nf90_close(ncid))
+    call check(nf90_close(ncid))
 
   end subroutine c_mom5cice5_geo_setup
 
