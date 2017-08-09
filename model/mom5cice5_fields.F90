@@ -31,6 +31,7 @@ module mom5cice5_fields
      integer :: nf                     !< Number of fields
      character(len=128) :: gridfname   !< Grid file name
      character(len=128) :: cicefname   !< Fields file name for cice
+     character(len=128) :: momfname    !< Fields file name for mom
      real(kind=kind_real), allocatable :: cicen(:,:,:)        !< Sea-ice fraction
      real(kind=kind_real), allocatable :: hicen(:,:,:)        !< Sea-ice thickness
      real(kind=kind_real), allocatable :: vicen(:,:,:)        !< Sea-ice volume
@@ -41,7 +42,7 @@ module mom5cice5_fields
      real(kind=kind_real), allocatable :: sicnk(:,:,:,:)      !< Salinity of sea-ice
      real(kind=kind_real), allocatable :: sssoc(:,:)          !< Ocean (surface) Salinity
      real(kind=kind_real), allocatable :: qicnk(:,:,:,:)      !< Enthalpy of sea-ice
-     real(kind=kind_real), allocatable :: tlioc(:,:)          !< Liquid ocean temperature
+     real(kind=kind_real), allocatable :: tlioc(:,:)          !< Liquid ocean temperature 
      real(kind=kind_real), allocatable :: sstoc(:,:)          !< Average temperature of grid cell 
      character(len=5), allocatable :: fldnames(:)             !< Variable identifiers
   end type mom5cice5_field
@@ -73,7 +74,7 @@ contains
     self%nzo  = geom%nzo
     self%nzi  = geom%nzi
     self%ncat = geom%ncat
-    self%gridfname = geom%filename
+    self%gridfname = geom%gridfname
     self%nf   = vars%nv
 
     allocate(self%cicen(self%nx,self%ny,self%ncat))
@@ -349,8 +350,10 @@ contains
     if (fld1%nf /= fld2%nf .or. fld1%nzi /= fld2%nzi) then
        call abor1_ftn("mom5cice5_fields:field_prod error number of fields")
     endif
+    
     !call abor1_ftn("mom5cice5_fields:field_prod should never dot_product full state")    
     zprod=0.0_kind_real
+    
     return
   end subroutine dot_prod
 
@@ -450,12 +453,13 @@ contains
     integer :: ic, iy, il, ix, is, jx, jy, jf, iread, nf
     real(kind=kind_real), allocatable :: zz(:)
 
-    integer :: nx, ny, varid, ncid
+    integer :: nx, ny, varid, ncid, start(4), count(4)
 
-    iread = 1
+    iread = 0
     if (config_element_exists(c_conf,"read_from_file")) then
        iread = config_get_int(c_conf,"read_from_file")
     endif
+    print *,'IREAD=',iread
     if (iread==0) then
        call log%warning("mom5cice5_fields:read_file: Inventing State")
        call invent_state(fld,c_conf)
@@ -464,6 +468,10 @@ contains
        call log%info(buf)
        call datetime_set(sdate, vdate)
     else
+       sdate = config_get_string(c_conf,len(sdate),"date")
+       WRITE(buf,*) 'validity date is: '//sdate
+       call log%info(buf)
+       call datetime_set(sdate, vdate)       
        fld%cicefname = config_get_string(c_conf, len(fld%cicefname), "cicefname")
        print *,'cice fname:',fld%cicefname
        call nccheck(nf90_open(fld%cicefname, nf90_nowrite,ncid))
@@ -482,10 +490,25 @@ contains
 
        call nccheck(nf90_close(ncid))
 
+       fld%momfname = config_get_string(c_conf, len(fld%momfname), "momfname")
+       print *,'mom fname:',fld%momfname
+       call nccheck(nf90_open(fld%momfname, nf90_nowrite,ncid))
+       !Get the size of the state                  
+       start = (/1,1,1,1/)
+       !count = (/1,1,fld%ny,fld%nx/)
+       count = (/fld%nx,fld%ny,1,1/)
+       call nccheck(nf90_inq_varid(ncid, 'temp', varid))
+       call nccheck(nf90_get_var(ncid, varid, fld%sstoc, start = start, count = count))
+
+       call nccheck(nf90_inq_varid(ncid, 'salt', varid))
+       call nccheck(nf90_get_var(ncid, varid, fld%sssoc, start = start, count = count))
+
+       call nccheck(nf90_close(ncid))
+
     endif
 
     call check(fld)
-    print *,'==========out of read========='
+
     return
   end subroutine read_file
 
@@ -504,31 +527,29 @@ contains
     type(datetime), intent(inout) :: vdate    !< DateTime
     integer, parameter :: max_string_length=800 ! Yuk!
     character(len=max_string_length) :: filename
+    character(len=20) :: sdate
 
     integer :: ncid, varid, dimids2d(2)
-    integer :: x_dimid, y_dimid
+    integer :: x_dimid, y_dimid, status
 
     call check(fld)
 
-    print *,'================== writing stuff ================='
+    filename = config_get_string(c_conf, len(filename), "filename")
 
-    filename='test.nc'
-    !fld%cicefname = config_get_string(c_conf, filename, "save")
-    !filename = config_get_string(c_conf, filename, "save")
-    print *,'filename:',filename
-    call nccheck( nf90_open(filename, nf90_write, ncid) )
-    call nccheck( nf90_inq_dimid(ncid, "xaxis_1", x_dimid) )
-    call nccheck( nf90_inq_dimid(ncid, "yaxis_1", y_dimid) )
-    call nccheck( nf90_redef(ncid) )
+    call nccheck( nf90_create(filename, nf90_clobber, ncid) )
+    call nccheck( nf90_def_dim(ncid, "xaxis_1", fld%nx, x_dimid) )
+    call nccheck( nf90_def_dim(ncid, "yaxis_1", fld%ny, y_dimid) )
     dimids2d =  (/ x_dimid, y_dimid/)
+    !call nccheck( nf90_def_var(ncid, 'aice', nf90_double, dimids2d, varid) )
+    !call nccheck( nf90_enddef(ncid) )
+    !call nccheck( nf90_put_var(ncid, varid, sum(fld%cicen,3) ) )
 
-    call nccheck( nf90_def_var(ncid, 'aice', nf90_double, dimids2d, varid) )
+    call nccheck( nf90_def_var(ncid, 'sstoc', nf90_double, dimids2d, varid) )
     call nccheck( nf90_enddef(ncid) )
-    call nccheck(nf90_inq_varid(ncid,'aice',varid))    
-    call nccheck( nf90_put_var(ncid, varid, sum(fld%cicen,3) ) )
+    call nccheck( nf90_put_var(ncid, varid, fld%sstoc ) )
     call nccheck( nf90_close(ncid) )
 
-    !call datetime_to_string(vdate, sdate)
+    call datetime_to_string(vdate, sdate)
 
     return
   end subroutine write_file
@@ -601,60 +622,6 @@ contains
     
     return
   end subroutine lin_weights
-
-  ! ------------------------------------------------------------------------------
-
-  function genfilename (c_conf,length,vdate)
-    use iso_c_binding
-    use datetime_mod
-    use duration_mod
-    type(c_ptr), intent(in)    :: c_conf  !< Configuration
-    integer, intent(in) :: length
-    character(len=length) :: genfilename
-    type(datetime), intent(in) :: vdate
-
-    character(len=length) :: fdbdir, expver, typ, validitydate, referencedate, sstep, &
-         & prefix, mmb
-    type(datetime) :: rdate
-    type(duration) :: step
-    integer lenfn
-
-    ! here we should query the length and then allocate "string".
-    ! But Fortran 90 does not allow variable-length allocatable strings.
-    ! config_get_string checks the string length and aborts if too short.
-    fdbdir = config_get_string(c_conf,len(fdbdir),"datadir")
-    expver = config_get_string(c_conf,len(expver),"exp")
-    typ    = config_get_string(c_conf,len(typ)   ,"type")
-
-    if (typ=="ens") then
-       mmb = config_get_string(c_conf, len(mmb), "member")
-       lenfn = LEN_TRIM(fdbdir) + 1 + LEN_TRIM(expver) + 1 + LEN_TRIM(typ) + 1 + LEN_TRIM(mmb)
-       prefix = TRIM(fdbdir) // "/" // TRIM(expver) // "." // TRIM(typ) // "." // TRIM(mmb)
-    else
-       lenfn = LEN_TRIM(fdbdir) + 1 + LEN_TRIM(expver) + 1 + LEN_TRIM(typ)
-       prefix = TRIM(fdbdir) // "/" // TRIM(expver) // "." // TRIM(typ)
-    endif
-
-    if (typ=="fc" .or. typ=="ens") then
-       referencedate = config_get_string(c_conf,len(referencedate),"date")
-       call datetime_to_string(vdate, validitydate)
-       call datetime_create(TRIM(referencedate), rdate)
-       call datetime_diff(vdate, rdate, step)
-       call duration_to_string(step, sstep)
-       lenfn = lenfn + 1 + LEN_TRIM(referencedate) + 1 + LEN_TRIM(sstep)
-       genfilename = TRIM(prefix) // "." // TRIM(referencedate) // "." // TRIM(sstep)
-    endif
-
-    if (typ=="an") then
-       call datetime_to_string(vdate, validitydate)
-       lenfn = lenfn + 1 + LEN_TRIM(validitydate)
-       genfilename = TRIM(prefix) // "." // TRIM(validitydate)
-    endif
-
-    if (lenfn>length) &
-         & call abor1_ftn("mom5cice5_fields:genfilename: filename too long")
-
-  end function genfilename
 
   ! ------------------------------------------------------------------------------
 

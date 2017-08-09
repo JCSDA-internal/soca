@@ -128,16 +128,25 @@ contains
     type(mom5cice5_field), intent(in) :: xb
     type(mom5cice5_field), intent(out) :: dxi
 
-    real(kind=kind_real) :: A, B, C, D, E, F
-
-    call check_resolution(dxi, xb)
+    real(kind=kind_real), allocatable :: aice(:,:)
+    real(kind=kind_real) :: A, B, C
     
+    allocate( aice(xb%nx,xb%ny) )
+    
+    aice = sum(xb%cicen,3)
+
     A = (rho_s*c0)**(-1.0_kind_real)
     B = 0.0_kind_real !-mu*rho_i(L0/xb%
     C = 0.0_kind_real
-    D = -mu*sum(xb%cicen,3)
-    E = -mu*xb%sssoc
-    F = 1.0_kind_real-sum(xb%cicen,3)
+
+    call check_resolution(dxi, xb)
+    
+    !A = (rho_s*c0)**(-1.0_kind_real)
+    !B = 0.0_kind_real !-mu*rho_i(L0/xb%
+    !C = 0.0_kind_real
+    !D = -mu*sum(xb%cicen,3)
+    !E = -mu*xb%sssoc
+    !F = 1.0_kind_real-sum(xb%cicen,3)
     
     call zeros(dxi)
     dxi%cicen = dx%cicen
@@ -151,7 +160,7 @@ contains
     dxi%qicnk = (dx%qicnk - B * dx%sicnk)/C
     dxi%sssoc = dx%sssoc
     dxi%tlioc = dx%tlioc
-    dxi%sstoc = D * dx%sssoc + E * sum(dx%cicen,3) + F * dx%tlioc  
+    dxi%sstoc = -mu*aice * dx%sssoc -mu*xb%sssoc * sum(dx%cicen,3) + (1.0_kind_real-aice) * dx%tlioc  
 
     return
   end subroutine Kop_inv
@@ -164,28 +173,32 @@ contains
     type(mom5cice5_field), intent(in) :: xb
     type(mom5cice5_field), intent(out) :: dxi_ad
 
-    real(kind=kind_real) :: A, B, C, D, E, F
+    real(kind=kind_real), allocatable :: aice(:,:)
+    real(kind=kind_real) :: A, B, C
     
+    allocate( aice(xb%nx,xb%ny) )
+    
+    aice = sum(xb%cicen,3)
+
     A = (rho_s*c0)**(-1.0_kind_real)
     B = 0.0_kind_real !-mu*rho_i(L0/xb%
     C = 0.0_kind_real
-    D = -mu*sum(xb%cicen,3)
-    E = -mu*xb%sssoc
-    F = 1.0_kind_real-sum(xb%cicen,3)
-    
+
     call zeros(dxi_ad)
-    dxi_ad%cicen = dx_ad%cicen + xb%hicen * dx_ad%vicen + xb%hsnon * dx_ad%vsnon + E * dx_ad%sstoc
-    dxi_ad%hicen = dx_ad%hicen + xb%cicen * dx_ad*vicen
+    dxi_ad%cicen = dx_ad%cicen + xb%hicen * dx_ad%vicen! + xb%hsnon * dx_ad%vsnon - mu*xb%sssoc * dx_ad%sstoc
+    dxi_ad%hicen = dx_ad%hicen + xb%cicen * dx_ad%vicen
     dxi_ad%vicen = 0.0_kind_real
-    dxi_ad%hsnon = dx_ad%hsnon + xb%cicen * dx_ad*vsnon
+    dxi_ad%hsnon = dx_ad%hsnon + xb%cicen * dx_ad%vsnon
     dxi_ad%vsnon = 0.0_kind_real
     dxi_ad%tsfcn = dx_ad%tsfcn      !<---- Wrong below that line ... CHECK
-    dxi_ad%qsnon = 
-    dxi_ad%sicnk = 
-    dxi_ad%qicnk = 
-    dxi_ad%sssoc = dx_ad%sssoc + D * dx_ad%sstoc
-    dxi_ad%tlioc = dx_ad%tlioc + F * dx_ad%sstoc
+    dxi_ad%qsnon = 0.0_kind_real 
+    dxi_ad%sicnk = 0.0_kind_real 
+    dxi_ad%qicnk = 0.0_kind_real 
+    dxi_ad%sssoc = dx_ad%sssoc - mu*aice * dx_ad%sstoc
+    dxi_ad%tlioc = dx_ad%tlioc + (1.0_kind_real-aice) * dx_ad%sstoc
     dxi_ad%sstoc = 0.0_kind_real
+
+    deallocate(aice)
 
     return
   end subroutine Kop_inv_ad

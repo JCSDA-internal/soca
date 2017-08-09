@@ -23,7 +23,7 @@ module mom5cice5_geom_mod
      integer :: nzo
      integer :: nzi
      integer :: ncat
-     character(len=128) :: filename
+     character(len=128) :: gridfname
      real(kind=kind_real), allocatable :: lon(:,:)
      real(kind=kind_real), allocatable :: lat(:,:)     
      real(kind=kind_real), allocatable :: mask(:,:) !< 0 = land 1 = ocean    
@@ -61,9 +61,9 @@ contains
     self%nzo = config_get_int(c_conf, "nzo")
     self%nzi = config_get_int(c_conf, "nzi")
     self%ncat = config_get_int(c_conf, "ncat")
-    self%filename = config_get_string(c_conf, len(self%filename), "filename")
+    self%gridfname = config_get_string(c_conf, len(self%gridfname), "gridfname")
 
-    call nccheck(nf90_open(self%filename, nf90_nowrite,ncid))
+    call nccheck(nf90_open(self%gridfname, nf90_nowrite,ncid))
     !Get the size of the state
     call nccheck(nf90_inq_dimid(ncid, 'grid_x_T', nxdimid))
     call nccheck(nf90_inquire_dimension(ncid, nxdimid, len = self%nx))
@@ -106,7 +106,7 @@ contains
     other%nzo = self%nzo
     other%nzi = self%nzi
     other%ncat = self%ncat
-    other%filename = self%filename
+    other%gridfname = self%gridfname
     other%lon = self%lon
     other%lat = self%lat
     other%mask = self%mask

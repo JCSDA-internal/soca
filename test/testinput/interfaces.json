@@ -8,7 +8,7 @@
     "nzi": "7",
     "ncat": "5",
     "nf": "12",
-    "filename": "/glade/p/work/gvernier/MOM5CICE5/ogrid05.nc"
+    "gridfname": "/glade/p/work/gvernier/MOM5CICE5/ogrid05.nc"
   },
   "Variables": {
     "variables": "ci"
@@ -16,16 +16,18 @@
   "TestDate": "2009-12-31T00:00:00Z",
   "State": {
     "read_from_file": "1",
-    "cicefname": "/glade/p/work/gvernier/MOM5CICE5/gs04001.cice5_model.res.nc",
-    "save": "test.out" 
+    "date": "2009-12-31T00:00:00Z",
+    "cicefname": "/glade/p/work/gvernier/MOM5CICE5/m01/gs04001.cice5_model.res.nc",
+    "momfname": "/glade/p/work/gvernier/MOM5CICE5/m01/ocean_temp_salt.res.nc",
+    "save": {
+      "filename" : "/glade/p/work/gvernier/OOPS/build/oops/Mom5Cice5/test/test.nc"
+    }
   },
   "StateTest": {
-    "read_from_file": "1",
-    "top_layer_depth": "5500.0",
-    "bottom_layer_depth": "4500.0",
-    "perturb": "0",
+    "read_from_file": "0",
     "date": "2009-12-31T00:00:00Z",
-    "norm": "0.0",
+    "perturb": "0",
+    "norm": "0.1",
     "tolerance": "0.005"
   }
 }
