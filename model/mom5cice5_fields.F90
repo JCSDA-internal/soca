@@ -30,6 +30,7 @@ module mom5cice5_fields
      integer :: ncat                   !< Number of sea-ice thickness categories    
      integer :: nf                     !< Number of fields
      character(len=128) :: gridfname   !< Grid file name
+     character(len=128) :: cicefname   !< Fields file name for cice
      real(kind=kind_real), allocatable :: cicen(:,:,:)        !< Sea-ice fraction
      real(kind=kind_real), allocatable :: hicen(:,:,:)        !< Sea-ice thickness
      real(kind=kind_real), allocatable :: vicen(:,:,:)        !< Sea-ice volume
@@ -431,7 +432,8 @@ contains
     use iso_c_binding
     use datetime_mod
     use fckit_log_module, only : log
-
+    use netcdf
+    use ncutils
     implicit none
     type(mom5cice5_field), intent(inout) :: fld      !< Fields
     type(c_ptr), intent(in)       :: c_conf   !< Configuration
@@ -448,6 +450,8 @@ contains
     integer :: ic, iy, il, ix, is, jx, jy, jf, iread, nf
     real(kind=kind_real), allocatable :: zz(:)
 
+    integer :: nx, ny, varid, ncid
+
     iread = 1
     if (config_element_exists(c_conf,"read_from_file")) then
        iread = config_get_int(c_conf,"read_from_file")
@@ -460,11 +464,28 @@ contains
        call log%info(buf)
        call datetime_set(sdate, vdate)
     else
-       call zeros(fld)
+       fld%cicefname = config_get_string(c_conf, len(fld%cicefname), "cicefname")
+       print *,'cice fname:',fld%cicefname
+       call nccheck(nf90_open(fld%cicefname, nf90_nowrite,ncid))
+       !Get the size of the state                                                                               
+       call nccheck(nf90_inq_varid(ncid, 'aicen', varid))
+       call nccheck(nf90_get_var(ncid, varid, fld%cicen))
+
+       call nccheck(nf90_inq_varid(ncid, 'vicen', varid))
+       call nccheck(nf90_get_var(ncid, varid, fld%vicen))
+
+       call nccheck(nf90_inq_varid(ncid, 'vsnon', varid))
+       call nccheck(nf90_get_var(ncid, varid, fld%vsnon))
+
+       call nccheck(nf90_inq_varid(ncid, 'Tsfcn', varid))
+       call nccheck(nf90_get_var(ncid, varid, fld%tsfcn))
+
+       call nccheck(nf90_close(ncid))
+
     endif
 
     call check(fld)
-
+    print *,'==========out of read========='
     return
   end subroutine read_file
 
@@ -474,35 +495,40 @@ contains
     use iso_c_binding
     use datetime_mod
     use fckit_log_module, only : log
+    use netcdf
+    use ncutils
 
     implicit none
-    type(mom5cice5_field), intent(in) :: fld    !< Fields
+    type(mom5cice5_field), intent(inout) :: fld    !< Fields
     type(c_ptr), intent(in)    :: c_conf !< Configuration
-    type(datetime), intent(in) :: vdate  !< DateTime
-
-    integer, parameter :: iunit=11
+    type(datetime), intent(inout) :: vdate    !< DateTime
     integer, parameter :: max_string_length=800 ! Yuk!
-    character(len=max_string_length+50) :: record
     character(len=max_string_length) :: filename
-    character(len=20) :: sdate, fmtn
-    character(len=4)  :: cnx
-    character(len=11) :: fmt1='(X,ES24.16)'
-    character(len=1024):: buf
-    integer :: jf, jy, jx, is
+
+    integer :: ncid, varid, dimids2d(2)
+    integer :: x_dimid, y_dimid
 
     call check(fld)
 
-    filename = genfilename(c_conf,max_string_length,vdate)
-    WRITE(buf,*) 'mom5cice5_field:write_file: writing '//filename
-    call log%info(buf)
-    open(unit=iunit, file=trim(filename), form='formatted', action='write')
+    print *,'================== writing stuff ================='
 
-    is=0
+    filename='test.nc'
+    !fld%cicefname = config_get_string(c_conf, filename, "save")
+    !filename = config_get_string(c_conf, filename, "save")
+    print *,'filename:',filename
+    call nccheck( nf90_open(filename, nf90_write, ncid) )
+    call nccheck( nf90_inq_dimid(ncid, "xaxis_1", x_dimid) )
+    call nccheck( nf90_inq_dimid(ncid, "yaxis_1", y_dimid) )
+    call nccheck( nf90_redef(ncid) )
+    dimids2d =  (/ x_dimid, y_dimid/)
 
+    call nccheck( nf90_def_var(ncid, 'aice', nf90_double, dimids2d, varid) )
+    call nccheck( nf90_enddef(ncid) )
+    call nccheck(nf90_inq_varid(ncid,'aice',varid))    
+    call nccheck( nf90_put_var(ncid, varid, sum(fld%cicen,3) ) )
+    call nccheck( nf90_close(ncid) )
 
-
-
-    call datetime_to_string(vdate, sdate)
+    !call datetime_to_string(vdate, sdate)
 
     return
   end subroutine write_file

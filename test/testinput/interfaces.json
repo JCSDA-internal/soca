@@ -15,14 +15,12 @@
   },
   "TestDate": "2009-12-31T00:00:00Z",
   "State": {
-    "read_from_file": "0",
-    "top_layer_depth": "5500.0",
-    "bottom_layer_depth": "4500.0",
-    "perturb": "0",
-    "date": "2009-12-31T00:00:00Z"
+    "read_from_file": "1",
+    "cicefname": "/glade/p/work/gvernier/MOM5CICE5/gs04001.cice5_model.res.nc",
+    "save": "test.out" 
   },
   "StateTest": {
-    "read_from_file": "0",
+    "read_from_file": "1",
     "top_layer_depth": "5500.0",
     "bottom_layer_depth": "4500.0",
     "perturb": "0",

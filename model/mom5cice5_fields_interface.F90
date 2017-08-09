@@ -298,7 +298,7 @@ subroutine mom5cice5_field_write_file_c(c_key_fld, c_conf, c_dt) bind(c,name='mo
 
   type(mom5cice5_field), pointer :: fld
   type(datetime) :: fdate
-
+  print *,'===========in write =============='
   call mom5cice5_field_registry%get(c_key_fld,fld)
   call c_f_datetime(c_dt, fdate)
   call write_file(fld, c_conf, fdate)
