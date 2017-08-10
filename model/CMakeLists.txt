@@ -12,14 +12,14 @@ Traits.h
 Variables.cc
 Variables.h
 mom5cice5_constants.f90
-#mom5cice5_thermo.F90
+mom5cice5_thermo.F90
 mom5cice5_fields.F90
 mom5cice5_fields_interface.F90
 mom5cice5_geom_mod.F90
 mom5cice5_ncutils_mod.F90
 mom5cice5_invent_state.f90
 mom5cice5_vars_mod.F90
-#mom5cice5_balanceop.F90
+mom5cice5_balanceop.F90
 )
 
 if ( CMAKE_Fortran_COMPILER_ID MATCHES "Cray" )

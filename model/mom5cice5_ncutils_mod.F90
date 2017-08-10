@@ -16,7 +16,6 @@ contains
 
   end subroutine nccheck
 
-
   function itoa(i) result(res)
     character(:),allocatable :: res
     integer,intent(in) :: i
@@ -53,12 +52,12 @@ contains
     ! Read 2d field from 2d nc field
     implicit none
 
-    character(len=128), intent(in)                                        :: filename
+    character(len=128), intent(in)                                    :: filename
     character*128, intent(in)                                         :: varname
     real(kind=kind_real), allocatable, dimension(:,:), intent(inout)  :: VAR 
     integer                                                           :: varid, fid_in, n1, n2
 
-    call nccheck(nf90_open(filename, nf90_nowrite, fid_in) )
+    call nccheck(nf90_open(filename, nf90_nowrite, fid_in))
     call nccheck(nf90_inq_varid(fid_in, varname, varid))
     call nccheck(nf90_get_var(fid_in, varid, VAR))
     call nccheck(nf90_close(fid_in))
@@ -70,10 +69,11 @@ contains
     implicit none
 
     character(len=128), intent(in)                                          :: filename
-    character(len=128), intent(in)                                           :: varname
-    real(kind=kind_real), allocatable, dimension(:,:,:), intent(inout)  :: VAR 
-    integer                                                             :: varid, fid_in, n1, n2, n3
+    character(len=128), intent(in)                                          :: varname
+    real(kind=kind_real), allocatable, dimension(:,:,:), intent(inout)      :: VAR 
+    integer                                                                 :: varid, fid_in, n1, n2, n3
 
+    print *,'Reading ',varname
     call nccheck(nf90_open(filename, nf90_nowrite, fid_in) )
     call nccheck(nf90_inq_varid(fid_in, varname, varid))
     call nccheck(nf90_get_var(fid_in, varid, VAR))
@@ -82,13 +82,14 @@ contains
   end subroutine read3d
 
   subroutine read2d_from4d(filename, varname, VAR, n1, n2, start, count)
-    ! Read 3d field from 3d nc field
+    ! Read 2d field from 4d nc field
     implicit none
 
-    character(len=128), intent(in)                                         :: filename
-    character(len=128), intent(in)                                          :: varname
+    character(len=128), intent(in)                                     :: filename
+    character(len=128), intent(in)                                     :: varname
     real(kind=kind_real), allocatable, dimension(:, :), intent(inout)  :: VAR 
-    integer                                                            :: varid, fid_in, n1, n2, start(4), count(4)
+    integer, intent(in)                                                :: n1, n2, start(4), count(4)
+    integer                                                            :: varid, fid_in
 
     call nccheck(nf90_open(filename, nf90_nowrite, fid_in) )
     call nccheck(nf90_inq_varid(fid_in, varname, varid))

@@ -4,6 +4,8 @@
   },
   "test_framework_runtime_config": "--log_level=test_suite",
   "Geometry": {
+    "nx": "720",
+    "ny": "410",
     "nzo": "1",
     "nzi": "7",
     "ncat": "5",
@@ -20,7 +22,8 @@
     "cicefname": "/glade/p/work/gvernier/MOM5CICE5/m01/gs04001.cice5_model.res.nc",
     "momfname": "/glade/p/work/gvernier/MOM5CICE5/m01/ocean_temp_salt.res.nc",
     "save": {
-      "filename" : "/glade/p/work/gvernier/OOPS/build/oops/Mom5Cice5/test/test.nc"
+      "filename" : "/glade/p/work/gvernier/OOPS/build/oops/Mom5Cice5/test/test.nc",
+      "varname" : "sstoc"
     }
   },
   "StateTest": {

@@ -26,7 +26,7 @@ module mom5cice5_geom_mod
      character(len=128) :: gridfname
      real(kind=kind_real), allocatable :: lon(:,:)
      real(kind=kind_real), allocatable :: lat(:,:)     
-     real(kind=kind_real), allocatable :: mask(:,:) !< 0 = land 1 = ocean    
+     real(kind=kind_real), allocatable :: mask(:,:) !< 0 = land 1 = ocean
   end type mom5cice5_geom
 
 #define LISTED_TYPE mom5cice5_geom
@@ -47,44 +47,34 @@ contains
 
   subroutine c_mom5cice5_geo_setup(c_key_self, c_conf) bind(c,name='mom5cice5_geo_setup_f90')
     use netcdf
-    !use ncutils
+    use interface_ncread_fld, only: ncread_fld
+
     implicit none
     integer(c_int), intent(inout) :: c_key_self
     type(c_ptr), intent(in)    :: c_conf
     type(mom5cice5_geom), pointer :: self
     integer :: varid, ncid, nxdimid, nydimid
+    character(len=128)  :: varname
 
     call mom5cice5_geom_registry%init()
     call mom5cice5_geom_registry%add(c_key_self)
     call mom5cice5_geom_registry%get(c_key_self,self)
 
+    self%nx = config_get_int(c_conf, "nx")
+    self%ny = config_get_int(c_conf, "ny")
     self%nzo = config_get_int(c_conf, "nzo")
     self%nzi = config_get_int(c_conf, "nzi")
     self%ncat = config_get_int(c_conf, "ncat")
     self%gridfname = config_get_string(c_conf, len(self%gridfname), "gridfname")
 
-    call nccheck(nf90_open(self%gridfname, nf90_nowrite,ncid))
-    !Get the size of the state
-    call nccheck(nf90_inq_dimid(ncid, 'grid_x_T', nxdimid))
-    call nccheck(nf90_inquire_dimension(ncid, nxdimid, len = self%nx))
-    call nccheck(nf90_inq_dimid(ncid, 'grid_y_T', nydimid))
-    call nccheck(nf90_inquire_dimension(ncid, nydimid, len = self%ny))
-
     allocate(self%lon(self%nx,self%ny))
     allocate(self%lat(self%nx,self%ny))
     allocate(self%mask(self%nx,self%ny))
 
-    call nccheck(nf90_inq_varid(ncid, 'x_T', varid))
-    call nccheck(nf90_get_var(ncid, varid, self%lon))
-    call nccheck(nf90_inq_varid(ncid, 'y_T', varid))
-    call nccheck(nf90_get_var(ncid, varid, self%lat))
-    call nccheck(nf90_inq_varid(ncid, 'wet', varid))
-    call nccheck(nf90_get_var(ncid, varid, self%mask))
-
-    call nccheck(nf90_close(ncid))
-
-    print *,'nx=',self%nx
-    print *,'ny=',self%ny
+    print *,self%gridfname
+    varname='x_T'; call ncread_fld(self%gridfname, varname, self%lon, self%nx, self%ny)
+    varname='y_T'; call ncread_fld(self%gridfname, varname, self%lat, self%nx, self%ny)
+    varname='wet'; call ncread_fld(self%gridfname, varname, self%mask, self%nx, self%ny)
 
   end subroutine c_mom5cice5_geo_setup
 

@@ -474,29 +474,30 @@ contains
        WRITE(buf,*) 'validity date is: '//sdate
        call log%info(buf)
        call datetime_set(sdate, vdate)       
-       fld%cicefname = config_get_string(c_conf, len(fld%cicefname), "cicefname")
-       print *,'cice fname:',fld%cicefname
 
        ! Read Sea-Ice
-       varname='aicen'
-       call ncread_fld(fld%cicefname, varname, fld%cicen, fld%nx, fld%ny, fld%ncat)
-       varname='vicen'
-       call ncread_fld(fld%cicefname, varname, fld%vicen, fld%nx, fld%ny, fld%ncat)
-       varname='vsnon'
-       call ncread_fld(fld%cicefname, varname, fld%vicen, fld%nx, fld%ny, fld%ncat)
-       !varname='qsnon'
-       !call ncread_fld(fld%cicefname, varname, fld%qsnon, fld%nx, fld%ny, fld%ncat)
-       varname='Tsfcn'
-       call ncread_fld(fld%cicefname, varname, fld%tsfcn, fld%nx, fld%ny, fld%ncat)
-
-       allocate(var3d(fld%nx,fld%ny,fld%nx))
-       basename='qice'
+       fld%cicefname = config_get_string(c_conf, len(fld%cicefname), "cicefname")
+       !WRITE(buf,*) 'cice fname:',fld%cicefname
+       print *, 'cice fname:',fld%cicefname
+       varname='aicen'; call ncread_fld(fld%cicefname, varname, fld%cicen, fld%nx, fld%ny, fld%ncat)
+       varname='vicen'; call ncread_fld(fld%cicefname, varname, fld%vicen, fld%nx, fld%ny, fld%ncat)
+       varname='vsnon'; call ncread_fld(fld%cicefname, varname, fld%vicen, fld%nx, fld%ny, fld%ncat)
+       varname='Tsfcn'; call ncread_fld(fld%cicefname, varname, fld%tsfcn, fld%nx, fld%ny, fld%ncat)
+       allocate(var3d(fld%nx,fld%ny,fld%ncat))
        do level=1,fld%nzi
-          call fld_name_int2str(basename, level, varname)
-          print *,varname
-          call ncread_fld(fld%cicefname, varname, var3d, fld%nx, fld%ny, fld%ncat)          
+          basename='qice'; call fld_name_int2str(basename, level, varname)
+          call ncread_fld(fld%cicefname, varname, var3d, fld%nx, fld%ny, fld%ncat)
           fld%qicnk(:,:,:,level)=var3d
+          basename='sice'; call fld_name_int2str(basename, level, varname)
+          call ncread_fld(fld%cicefname, varname, var3d, fld%nx, fld%ny, fld%ncat)
+          fld%sicnk(:,:,:,level)=var3d
        end do
+       deallocate(var3d)
+       !do level=1,fld%nzs
+       basename='qsno'; call fld_name_int2str(basename, 1, varname)
+       print *, varname
+       call ncread_fld(fld%cicefname, varname, fld%qsnon, fld%nx, fld%ny, fld%ncat)
+
        ! Read Ocean
        fld%momfname = config_get_string(c_conf, len(fld%momfname), "momfname")
        print *,'mom fname:',fld%momfname
@@ -525,10 +526,11 @@ contains
 
     implicit none
     type(mom5cice5_field), intent(inout) :: fld    !< Fields
-    type(c_ptr), intent(in)    :: c_conf !< Configuration
-    type(datetime), intent(inout) :: vdate    !< DateTime
-    integer, parameter :: max_string_length=800 ! Yuk!
+    type(c_ptr), intent(in)    :: c_conf           !< Configuration
+    type(datetime), intent(inout) :: vdate         !< DateTime
+    integer, parameter :: max_string_length=800    ! Yuk!
     character(len=max_string_length) :: filename
+    character(len=128)  :: varname
     character(len=20) :: sdate
 
     integer :: ncid, varid, dimids2d(2)
@@ -537,6 +539,7 @@ contains
     call check(fld)
 
     filename = config_get_string(c_conf, len(filename), "filename")
+    varname = config_get_string(c_conf, len(varname), "varname")
 
     call nccheck( nf90_create(filename, nf90_clobber, ncid) )
     call nccheck( nf90_def_dim(ncid, "xaxis_1", fld%nx, x_dimid) )
@@ -546,7 +549,7 @@ contains
     !call nccheck( nf90_enddef(ncid) )
     !call nccheck( nf90_put_var(ncid, varid, sum(fld%cicen,3) ) )
 
-    call nccheck( nf90_def_var(ncid, 'sstoc', nf90_double, dimids2d, varid) )
+    call nccheck( nf90_def_var(ncid, varname, nf90_double, dimids2d, varid) )
     call nccheck( nf90_enddef(ncid) )
     call nccheck( nf90_put_var(ncid, varid, fld%sstoc ) )
     call nccheck( nf90_close(ncid) )
