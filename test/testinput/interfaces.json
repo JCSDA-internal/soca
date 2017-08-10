@@ -23,7 +23,7 @@
     "momfname": "/glade/p/work/gvernier/MOM5CICE5/m01/ocean_temp_salt.res.nc",
     "save": {
       "filename" : "/glade/p/work/gvernier/OOPS/build/oops/Mom5Cice5/test/test.nc",
-      "varname" : "sstoc"
+      "varname" : "sssoc"
     }
   },
   "StateTest": {

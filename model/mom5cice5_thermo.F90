@@ -2,7 +2,7 @@ module mom5cice5_thermo
 
   use mom5cice5_constants
   use mom5cice5_fields
-
+  !use mpi
   implicit none
 
   
@@ -33,7 +33,7 @@ contains
     real(kind=kind_real) :: Si
     real(kind=kind_real) :: Ti
     real(kind=kind_real) :: Qi_nl
-
+    
     real(kind=kind_real) :: dum1, dum2, dum3
     
     dum1 = c0 * (Tm(Si)-Ti)
@@ -64,12 +64,12 @@ contains
     real(kind=kind_real) :: Ti
     real(kind=kind_real) :: dSi
     real(kind=kind_real) :: dTi
-    real(kind=kind_real) :: dQi_nl
+    real(kind=kind_real) :: dQi_tl
 
     real(kind=kind_real) :: dqdt, dqds
 
     dqdt = L0*mu*rho_i*(Si/Ti**2)
-    dqds = mu*rho*(2.0_kind_Real*c0*Ti-L0)/Ti
+    dqds = mu*rho_i*(2.0_kind_Real*c0*Ti-L0)/Ti
 
     dQi_tl = dqdt * dTi + dqds * dSi
 

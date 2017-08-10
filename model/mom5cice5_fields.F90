@@ -163,13 +163,12 @@ contains
   ! ------------------------------------------------------------------------------
 
   subroutine random(self)
-    !use random_vectors_gauss_mod
+
     implicit none
     type(mom5cice5_field), intent(inout) :: self
 
     call check(self)
-
-    !call random_vector_gauss(self%gfld3d(:,:,:))
+    call random_number(self%cicen); self%cicen=self%cicen-sum(self%cicen)
 
   end subroutine random
 
@@ -548,7 +547,7 @@ contains
     !call nccheck( nf90_def_var(ncid, 'aice', nf90_double, dimids2d, varid) )
     !call nccheck( nf90_enddef(ncid) )
     !call nccheck( nf90_put_var(ncid, varid, sum(fld%cicen,3) ) )
-
+    
     call nccheck( nf90_def_var(ncid, varname, nf90_double, dimids2d, varid) )
     call nccheck( nf90_enddef(ncid) )
     call nccheck( nf90_put_var(ncid, varid, fld%sstoc ) )

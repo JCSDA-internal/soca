@@ -28,6 +28,8 @@ subroutine invent_state(flds,config)
 
   ! ------------------------------------------------------------------------------
   call zeros(flds)
+  call random_number(flds%cicen)
+  call random_number(flds%cicen)
   ! ------------------------------------------------------------------------------
   
   return
