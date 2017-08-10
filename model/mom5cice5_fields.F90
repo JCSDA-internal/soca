@@ -437,6 +437,7 @@ contains
     use fckit_log_module, only : log
     use netcdf
     use ncutils
+    use interface_ncread_fld, only: ncread_fld
     implicit none
     type(mom5cice5_field), intent(inout) :: fld      !< Fields
     type(c_ptr), intent(in)       :: c_conf   !< Configuration
@@ -450,9 +451,10 @@ contains
     character(len=4)  :: cnx
     character(len=11) :: fmt1='(X,ES24.16)'
     character(len=1024)  :: buf
-    integer :: ic, iy, il, ix, is, jx, jy, jf, iread, nf
-    real(kind=kind_real), allocatable :: zz(:)
-
+    character(len=128)  :: varname, basename
+    integer :: ic, iy, il, ix, is, jx, jy, jf, iread, nf, level
+    real(kind=kind_real), allocatable :: zz(:), var3d(:,:,:)
+    
     integer :: nx, ny, varid, ncid, start(4), count(4)
 
     iread = 0
@@ -474,36 +476,36 @@ contains
        call datetime_set(sdate, vdate)       
        fld%cicefname = config_get_string(c_conf, len(fld%cicefname), "cicefname")
        print *,'cice fname:',fld%cicefname
-       call nccheck(nf90_open(fld%cicefname, nf90_nowrite,ncid))
-       !Get the size of the state                                                                               
-       call nccheck(nf90_inq_varid(ncid, 'aicen', varid))
-       call nccheck(nf90_get_var(ncid, varid, fld%cicen))
 
-       call nccheck(nf90_inq_varid(ncid, 'vicen', varid))
-       call nccheck(nf90_get_var(ncid, varid, fld%vicen))
+       ! Read Sea-Ice
+       varname='aicen'
+       call ncread_fld(fld%cicefname, varname, fld%cicen, fld%nx, fld%ny, fld%ncat)
+       varname='vicen'
+       call ncread_fld(fld%cicefname, varname, fld%vicen, fld%nx, fld%ny, fld%ncat)
+       varname='vsnon'
+       call ncread_fld(fld%cicefname, varname, fld%vicen, fld%nx, fld%ny, fld%ncat)
+       !varname='qsnon'
+       !call ncread_fld(fld%cicefname, varname, fld%qsnon, fld%nx, fld%ny, fld%ncat)
+       varname='Tsfcn'
+       call ncread_fld(fld%cicefname, varname, fld%tsfcn, fld%nx, fld%ny, fld%ncat)
 
-       call nccheck(nf90_inq_varid(ncid, 'vsnon', varid))
-       call nccheck(nf90_get_var(ncid, varid, fld%vsnon))
-
-       call nccheck(nf90_inq_varid(ncid, 'Tsfcn', varid))
-       call nccheck(nf90_get_var(ncid, varid, fld%tsfcn))
-
-       call nccheck(nf90_close(ncid))
-
+       allocate(var3d(fld%nx,fld%ny,fld%nx))
+       basename='qice'
+       do level=1,fld%nzi
+          call fld_name_int2str(basename, level, varname)
+          print *,varname
+          call ncread_fld(fld%cicefname, varname, var3d, fld%nx, fld%ny, fld%ncat)          
+          fld%qicnk(:,:,:,level)=var3d
+       end do
+       ! Read Ocean
        fld%momfname = config_get_string(c_conf, len(fld%momfname), "momfname")
        print *,'mom fname:',fld%momfname
-       call nccheck(nf90_open(fld%momfname, nf90_nowrite,ncid))
-       !Get the size of the state                  
        start = (/1,1,1,1/)
-       !count = (/1,1,fld%ny,fld%nx/)
-       count = (/fld%nx,fld%ny,1,1/)
-       call nccheck(nf90_inq_varid(ncid, 'temp', varid))
-       call nccheck(nf90_get_var(ncid, varid, fld%sstoc, start = start, count = count))
-
-       call nccheck(nf90_inq_varid(ncid, 'salt', varid))
-       call nccheck(nf90_get_var(ncid, varid, fld%sssoc, start = start, count = count))
-
-       call nccheck(nf90_close(ncid))
+       count = (/fld%nx,fld%ny,fld%nzo,1/)
+       varname='temp'
+       call ncread_fld(fld%momfname, varname, fld%sstoc, fld%nx, fld%ny, start, count)
+       varname='salt'
+       call ncread_fld(fld%momfname, varname, fld%sssoc, fld%nx, fld%ny, start, count)
 
     endif
 
