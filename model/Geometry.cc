@@ -21,6 +21,12 @@ Geometry::~Geometry() {
   mom5cice5_geo_delete_f90(keyGeom_);
 }
 // -----------------------------------------------------------------------------
+std::vector<int> Geometry::getDims() const {
+  std::vector<int> dims(2);
+  qg_geo_info_f90(keyGeom_, dims[0], dims[1]);
+  return dims;
+}
+// -----------------------------------------------------------------------------
 void Geometry::print(std::ostream & os) const {
   int nx;
   int ny;
