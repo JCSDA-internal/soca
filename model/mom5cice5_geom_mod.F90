@@ -20,13 +20,14 @@ module mom5cice5_geom_mod
   type :: mom5cice5_geom
      integer :: nx
      integer :: ny
-     integer :: nzo
-     integer :: nzi
-     integer :: ncat
-     character(len=128) :: gridfname
-     real(kind=kind_real), allocatable :: lon(:,:)
-     real(kind=kind_real), allocatable :: lat(:,:)     
-     real(kind=kind_real), allocatable :: mask(:,:) !< 0 = land 1 = ocean
+     integer :: nzo                                 !< Number of ocean levels
+     integer :: nzi                                 !< Number of ice levels
+     integer :: ncat                                !< Number of ice thickness categories
+     character(len=128) :: gridfname                !< Name of file containing the grid specs
+     real(kind=kind_real), allocatable :: lon(:,:)  !< 2D array of longitude 
+     real(kind=kind_real), allocatable :: lat(:,:)  !< 2D array of latitude
+     !real(kind=kind_real), allocatable :: zi(:,:,:) !< 3D array of depth bellow ice/snow surface    
+     real(kind=kind_real), allocatable :: mask(:,:) !< 0 = land 1 = ocean NEED TO MERGE WITH ICE MASK
   end type mom5cice5_geom
 
 #define LISTED_TYPE mom5cice5_geom
