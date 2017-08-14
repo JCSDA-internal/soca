@@ -20,14 +20,15 @@ module mom5cice5_geom_mod
   type :: mom5cice5_geom
      integer :: nx
      integer :: ny
-     integer :: nzo                                 !< Number of ocean levels
-     integer :: nzi                                 !< Number of ice levels
-     integer :: ncat                                !< Number of ice thickness categories
-     character(len=128) :: gridfname                !< Name of file containing the grid specs
-     real(kind=kind_real), allocatable :: lon(:,:)  !< 2D array of longitude 
-     real(kind=kind_real), allocatable :: lat(:,:)  !< 2D array of latitude
-     !real(kind=kind_real), allocatable :: zi(:,:,:) !< 3D array of depth bellow ice/snow surface    
-     real(kind=kind_real), allocatable :: mask(:,:) !< 0 = land 1 = ocean NEED TO MERGE WITH ICE MASK
+     integer :: nzo                                      !< Number of ocean levels
+     integer :: nzi                                      !< Number of ice levels
+     integer :: ncat                                     !< Number of ice thickness categories
+     character(len=128) :: gridfname                     !< Name of file containing the grid specs
+     real(kind=kind_real), allocatable :: lon(:,:)       !< 2D array of longitude 
+     real(kind=kind_real), allocatable :: lat(:,:)       !< 2D array of latitude
+     !real(kind=kind_real), allocatable :: zi(:,:,:)     !< 3D array of depth bellow ice/snow surface    
+     real(kind=kind_real), allocatable :: mask(:,:)      !< 0 = land 1 = ocean NEED TO MERGE WITH ICE MASK
+     real(kind=kind_real), allocatable :: cell_area(:,:) !< 0 = land 1 = ocean NEED TO MERGE WITH ICE MASK
   end type mom5cice5_geom
 
 #define LISTED_TYPE mom5cice5_geom
@@ -71,11 +72,13 @@ contains
     allocate(self%lon(self%nx,self%ny))
     allocate(self%lat(self%nx,self%ny))
     allocate(self%mask(self%nx,self%ny))
+    allocate(self%cell_area(self%nx,self%ny))
 
     print *,self%gridfname
     varname='x_T'; call ncread_fld(self%gridfname, varname, self%lon, self%nx, self%ny)
     varname='y_T'; call ncread_fld(self%gridfname, varname, self%lat, self%nx, self%ny)
     varname='wet'; call ncread_fld(self%gridfname, varname, self%mask, self%nx, self%ny)
+    varname='area_T'; call ncread_fld(self%gridfname, varname, self%cell_area, self%nx, self%ny)
 
   end subroutine c_mom5cice5_geo_setup
 
@@ -101,6 +104,7 @@ contains
     other%lon = self%lon
     other%lat = self%lat
     other%mask = self%mask
+    other%cell_area = self%cell_area
 
   end subroutine c_mom5cice5_geo_clone
 
@@ -116,6 +120,7 @@ contains
     if (allocated(self%lon)) deallocate(self%lon)
     if (allocated(self%lat)) deallocate(self%lat)
     if (allocated(self%mask)) deallocate(self%mask)
+    if (allocated(self%cell_area)) deallocate(self%cell_area)
     call mom5cice5_geom_registry%remove(c_key_self)
 
   end subroutine c_mom5cice5_geo_delete
@@ -141,5 +146,26 @@ contains
     c_ncat = self%ncat
 
   end subroutine c_mom5cice5_geo_info
+
+  ! ------------------------------------------------------------------------------
+
+  subroutine c_mom5cice5_geo_getgeofld(c_key_self, geoloc, geofld) bind(c,name='mom5cice5_geo_getgeofld_f90')
+
+    implicit none
+    integer(c_int), intent(in) :: c_key_self
+    integer(c_int), intent(in) :: geofld     !< 0: lon, 1: lat, 2: mask, 3: cell_area
+    type(mom5cice5_geom), pointer :: self
+    real(kind=kind_real), allocatable :: geoloc(:) 
+    integer :: jx, jy, jj
+
+    call mom5cice5_geom_registry%get(c_key_self , self )
+
+    ! Extract fld grom mom5cice5 object
+    allocate(geoloc(self%nx*self%ny))
+    if (geofld==0) geoloc=reshape(self%lon, (/self%nx*self%ny/))       
+    if (geofld==1) geoloc=reshape(self%lat, (/self%nx*self%ny/))
+    if (geofld==2) geoloc=reshape(self%mask, (/self%nx*self%ny/))
+    if (geofld==3) geoloc=reshape(self%cell_area, (/self%nx*self%ny/))
+  end subroutine c_mom5cice5_geo_getgeofld
 
 end module mom5cice5_geom_mod
