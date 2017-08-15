@@ -16,34 +16,34 @@ namespace eckit {
 
 namespace mom5cice5 {
 
-// -----------------------------------------------------------------------------
-/// Geometry handles geometry for MOM5CICE5 model.
+  // -----------------------------------------------------------------------------
+  /// Geometry handles geometry for MOM5CICE5 model.
 
-class Geometry : public util::Printable,
-                     private util::ObjectCounter<Geometry> {
- public:
-  static const std::string classname() {return "mom5cice5::Geometry";}
+  class Geometry : public util::Printable,
+    private util::ObjectCounter<Geometry> {
+  public:
+      static const std::string classname() {return "mom5cice5::Geometry";}
 
-  explicit Geometry(const eckit::Configuration &);
-  Geometry(const Geometry &);
-  ~Geometry();
+      explicit Geometry(const eckit::Configuration &);
+      Geometry(const Geometry &);
+      ~Geometry();
 
-  std::vector<int> getDims() const;
-  std::vector<double> getLats() const;
-  std::vector<double> getLons() const;
-  std::vector<double> getLevs() const;
-  std::vector<double> getArea() const;
-  std::vector<int> getMask(const int &) const;
+      std::vector<int> getDims() const;
+      std::vector<double> getLats() const;
+      std::vector<double> getLons() const;
+      std::vector<double> getLevs() const;
+      std::vector<double> getArea() const;
+      std::vector<int> getMask(const int &) const;
 
-  int& toFortran() {return keyGeom_;}
-  const int& toFortran() const {return keyGeom_;}
+      int& toFortran() {return keyGeom_;}
+      const int& toFortran() const {return keyGeom_;}
 
- private:
-  Geometry & operator=(const Geometry &);
-  void print(std::ostream &) const;
-  int keyGeom_;
-};
-// -----------------------------------------------------------------------------
+  private:
+      Geometry & operator=(const Geometry &);
+      void print(std::ostream &) const;
+      int keyGeom_;
+    };
+  // -----------------------------------------------------------------------------
 
 }  // namespace mom5cice5
 

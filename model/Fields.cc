@@ -12,6 +12,11 @@
 #include "model/Variables.h"
 #include "eckit/config/Configuration.h"
 #include "util/DateTime.h"
+//#include "model/GomQG.h"
+//#include "model/LocQG.h"
+#include "oops/generic/UnstructuredGrid.h"
+#include "util/Logger.h"
+
 
 // -----------------------------------------------------------------------------
 namespace mom5cice5 {

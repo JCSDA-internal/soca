@@ -53,7 +53,7 @@ contains
     implicit none
 
     character(len=128), intent(in)                                    :: filename
-    character*128, intent(in)                                         :: varname
+    character(len=128), intent(in)                                         :: varname
     real(kind=kind_real), allocatable, dimension(:,:), intent(inout)  :: VAR 
     integer                                                           :: varid, fid_in, n1, n2
 

@@ -10,7 +10,8 @@
     "nzi": "7",
     "ncat": "5",
     "nf": "12",
-    "gridfname": "/glade/p/work/gvernier/MOM5CICE5/ogrid05.nc"
+    "gridfname": "/glade/p/work/gvernier/MOM5CICE5/ogrid05.nc",
+    "icemaskfname": "/glade/p/work/gvernier/MOM5CICE5/icemask.nc"
   },
   "Variables": {
     "variables": "ci"

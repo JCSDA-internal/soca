@@ -24,10 +24,12 @@ module mom5cice5_geom_mod
      integer :: nzi                                      !< Number of ice levels
      integer :: ncat                                     !< Number of ice thickness categories
      character(len=128) :: gridfname                     !< Name of file containing the grid specs
+     character(len=128) :: icemaskfname                     !< Name of file containing the grid specs
      real(kind=kind_real), allocatable :: lon(:,:)       !< 2D array of longitude 
      real(kind=kind_real), allocatable :: lat(:,:)       !< 2D array of latitude
      !real(kind=kind_real), allocatable :: zi(:,:,:)     !< 3D array of depth bellow ice/snow surface    
-     real(kind=kind_real), allocatable :: mask(:,:)      !< 0 = land 1 = ocean NEED TO MERGE WITH ICE MASK
+     real(kind=kind_real), allocatable :: mask(:,:)      !< 0 = land 1 = ocean surface mask only
+     real(kind=kind_real), allocatable :: icemask(:,:)      !< 0 = land/liquid ocean 1 = some ice
      real(kind=kind_real), allocatable :: cell_area(:,:) !< 0 = land 1 = ocean NEED TO MERGE WITH ICE MASK
   end type mom5cice5_geom
 
@@ -68,10 +70,12 @@ contains
     self%nzi = config_get_int(c_conf, "nzi")
     self%ncat = config_get_int(c_conf, "ncat")
     self%gridfname = config_get_string(c_conf, len(self%gridfname), "gridfname")
+    self%gridfname = config_get_string(c_conf, len(self%gridfname), "icemaskfname")
 
     allocate(self%lon(self%nx,self%ny))
     allocate(self%lat(self%nx,self%ny))
     allocate(self%mask(self%nx,self%ny))
+    allocate(self%icemask(self%nx,self%ny))
     allocate(self%cell_area(self%nx,self%ny))
 
     print *,self%gridfname
@@ -79,6 +83,7 @@ contains
     varname='y_T'; call ncread_fld(self%gridfname, varname, self%lat, self%nx, self%ny)
     varname='wet'; call ncread_fld(self%gridfname, varname, self%mask, self%nx, self%ny)
     varname='area_T'; call ncread_fld(self%gridfname, varname, self%cell_area, self%nx, self%ny)
+    varname='iceumask'; call ncread_fld(self%icemaskfname, varname, self%mask, self%nx, self%ny)
 
   end subroutine c_mom5cice5_geo_setup
 
@@ -104,6 +109,7 @@ contains
     other%lon = self%lon
     other%lat = self%lat
     other%mask = self%mask
+    other%icemask = self%icemask
     other%cell_area = self%cell_area
 
   end subroutine c_mom5cice5_geo_clone
@@ -120,6 +126,7 @@ contains
     if (allocated(self%lon)) deallocate(self%lon)
     if (allocated(self%lat)) deallocate(self%lat)
     if (allocated(self%mask)) deallocate(self%mask)
+    if (allocated(self%icemask)) deallocate(self%icemask)
     if (allocated(self%cell_area)) deallocate(self%cell_area)
     call mom5cice5_geom_registry%remove(c_key_self)
 
@@ -160,7 +167,7 @@ contains
 
     call mom5cice5_geom_registry%get(c_key_self , self )
 
-    ! Extract fld grom mom5cice5 object
+    ! Extract geometry elements from mom5cice5 geom object
     allocate(geoloc(self%nx*self%ny))
     if (geofld==0) geoloc=reshape(self%lon, (/self%nx*self%ny/))       
     if (geofld==1) geoloc=reshape(self%lat, (/self%nx*self%ny/))
