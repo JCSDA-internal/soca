@@ -26,12 +26,16 @@ module mom5cice5_fields
      integer :: nx                     !< Zonal grid dimension
      integer :: ny                     !< Meridional grid dimension
      integer :: nzo                    !< Number of z levels in the ocean
-     integer :: nzi                    !< Number of levels in sea-ice  
+     integer :: nzi                    !< Number of levels in sea-ice
+     integer :: nzs                    !< Number of levels in snow       !!!!!!!!!!! HARD CODED TO 1 !!!!!!!!!!!!!!!
      integer :: ncat                   !< Number of sea-ice thickness categories    
      integer :: nf                     !< Number of fields
      character(len=128) :: gridfname   !< Grid file name
      character(len=128) :: cicefname   !< Fields file name for cice
      character(len=128) :: momfname    !< Fields file name for mom
+     real(kind=kind_real), allocatable :: lat(:,:)            !< ... from geom
+     real(kind=kind_real), allocatable :: lon(:,:)            !< ... from geom  !!!! NEED TO FIND BETTER SOLUTION !!!!!!
+     integer,              allocatable :: level(:)            !< ... from geom
      real(kind=kind_real), allocatable :: cicen(:,:,:)        !< Sea-ice fraction
      real(kind=kind_real), allocatable :: hicen(:,:,:)        !< Sea-ice thickness
      real(kind=kind_real), allocatable :: vicen(:,:,:)        !< Sea-ice volume
@@ -73,10 +77,19 @@ contains
     self%ny   = geom%ny
     self%nzo  = geom%nzo
     self%nzi  = geom%nzi
+    self%nzs  = geom%nzs
     self%ncat = geom%ncat
     self%gridfname = geom%gridfname
     self%nf   = vars%nv
+    
+    allocate(self%lon(self%nx,self%ny))
+    allocate(self%lat(self%nx,self%ny))
+    allocate(self%level(self%nzs+self%nzi+self%nzo+1))    
 
+    self%lat = geom%lat
+    self%lon = geom%lon    
+    self%level = geom%level
+    
     allocate(self%cicen(self%nx,self%ny,self%ncat))
     allocate(self%hicen(self%nx,self%ny,self%ncat))
     allocate(self%vicen(self%nx,self%ny,self%ncat))
@@ -184,18 +197,21 @@ contains
 
     nf = common_vars(self, rhs)
 
-    self%cicen=rhs%cicen
-    self%hicen=rhs%hicen
-    self%vicen=rhs%vicen
-    self%hsnon=rhs%hsnon
-    self%vsnon=rhs%vsnon
-    self%tsfcn=rhs%tsfcn
-    self%qsnon=rhs%qsnon
-    self%sicnk=rhs%sicnk
-    self%sssoc=rhs%sssoc
-    self%qicnk=rhs%qicnk
-    self%tlioc=rhs%tlioc
-    self%sstoc=rhs%sstoc
+    self%lat = rhs%lat
+    self%lon = rhs%lon
+    self%level = rhs%level
+    self%cicen = rhs%cicen
+    self%hicen = rhs%hicen
+    self%vicen = rhs%vicen
+    self%hsnon = rhs%hsnon
+    self%vsnon = rhs%vsnon
+    self%tsfcn = rhs%tsfcn
+    self%qsnon = rhs%qsnon
+    self%sicnk = rhs%sicnk
+    self%sssoc = rhs%sssoc
+    self%qicnk = rhs%qicnk
+    self%tlioc = rhs%tlioc
+    self%sstoc = rhs%sstoc
 
     return
   end subroutine copy
@@ -492,7 +508,7 @@ contains
           fld%sicnk(:,:,:,level)=var3d
        end do
        deallocate(var3d)
-       !do level=1,fld%nzs
+       !do level=1,fld%nzs !!!!!!! CURRENTLY HARD CODED FOR NZS=1 !!!!!!!!!!!!!!!!
        basename='qsno'; call fld_name_int2str(basename, 1, varname)
        print *, varname
        call ncread_fld(fld%cicefname, varname, fld%qsnon, fld%nx, fld%ny, fld%ncat)
@@ -635,17 +651,19 @@ contains
     implicit none
     type(mom5cice5_field), intent(in) :: self
     type(unstructured_grid), intent(inout) :: ug
-    real(kind=kind_real) :: xlat, xlon, dx, dy, zz(2)
-    integer :: jx,jy
+    real(kind=kind_real), allocatable :: zz(:)
+    integer :: jx,jy,jz,nz_total
 
-    zz(1) = 0.0    !!!!!!!! replace with level from geom
-    zz(2) = 1.0    !!!!!!!! replace with level from geom
-    call create_unstructured_grid(ug, 2, zz)
+    nz_total=size(self%level)
+    allocate(zz(nz_total))
+    do jz = 1,nz_total
+       zz(jz) = real(self%level(jz))
+    end do
+    call create_unstructured_grid(ug, nz_total, zz)
 
     do jy=1,self%ny
        do jx=1,self%nx
-          !call add_column(ug, self%lat(jx,jy), self%lon(jx,jy), 2, 1, 0) !!!!!! lon and lat not infield
-                                                                          !!!!!! need to get from geom  
+          call add_column(ug, self%lat(jx,jy), self%lon(jx,jy), 2, 1, 0)
           ug%last%column%cols(1) = self%sstoc(jx,jy) !field level 1
           ug%last%column%cols(2) = self%sstoc(jx,jy) !field level 2
        enddo
