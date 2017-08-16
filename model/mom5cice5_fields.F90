@@ -16,7 +16,7 @@ module mom5cice5_fields
        & self_add, self_schur, self_sub, self_mul, axpy, &
        & dot_prod, add_incr, diff_incr, &
        & read_file, write_file, gpnorm, fldrms, &
-       & change_resol
+       & change_resol, convert_to_ug, convert_from_ug
   public :: mom5cice5_field_registry
 
   ! ------------------------------------------------------------------------------
@@ -39,7 +39,7 @@ module mom5cice5_fields
      real(kind=kind_real), allocatable :: vsnon(:,:,:)        !< Snow volume over sea-ice  
      real(kind=kind_real), allocatable :: tsfcn(:,:,:)        !< Temperature over sea-ice or snow
      real(kind=kind_real), allocatable :: qsnon(:,:,:)        !< Enthalpy of snow
-     real(kind=kind_real), allocatable :: sicnk(:,:,:,:)      !< Salinity of sea-ice
+     real(kind=kind_real), allocatable :: sicnk(:,:,:,:)      !< Salin_wity of sea-ice
      real(kind=kind_real), allocatable :: sssoc(:,:)          !< Ocean (surface) Salinity
      real(kind=kind_real), allocatable :: qicnk(:,:,:,:)      !< Enthalpy of sea-ice
      real(kind=kind_real), allocatable :: tlioc(:,:)          !< Liquid ocean temperature 
@@ -349,10 +349,10 @@ contains
     if (fld1%nf /= fld2%nf .or. fld1%nzi /= fld2%nzi) then
        call abor1_ftn("mom5cice5_fields:field_prod error number of fields")
     endif
-    
+
     !call abor1_ftn("mom5cice5_fields:field_prod should never dot_product full state")    
     zprod=0.0_kind_real
-    
+
     return
   end subroutine dot_prod
 
@@ -453,7 +453,7 @@ contains
     character(len=128)  :: varname, basename
     integer :: ic, iy, il, ix, is, jx, jy, jf, iread, nf, level
     real(kind=kind_real), allocatable :: zz(:), var3d(:,:,:)
-    
+
     integer :: nx, ny, varid, ncid, start(4), count(4)
 
     iread = 0
@@ -548,7 +548,7 @@ contains
     call nccheck( nf90_def_var(ncid, 'aice', nf90_double, dimids2d, varid) )
     call nccheck( nf90_enddef(ncid) )
     call nccheck( nf90_put_var(ncid, varid, sum(fld%cicen,3) ) )
-    
+
     !call nccheck( nf90_def_var(ncid, varname, nf90_double, dimids2d, varid) )
     !call nccheck( nf90_enddef(ncid) )
     !call nccheck( nf90_put_var(ncid, varid, fld%sstoc ) )
@@ -571,7 +571,7 @@ contains
     call check(fld)
 
     !if (jj /= nf) call abor1_ftn("mom5cice5_fields_gpnorm: error not implemented")
-    
+
     pstat = 0.0_kind_real
 
     return
@@ -613,7 +613,7 @@ contains
     real(kind=kind_real), intent(in)     :: delta1,delta2
     integer, intent(out) :: k1,k2
     real(kind=kind_real), intent(out)    :: w1,w2
-    
+
     integer :: ii
     real(kind=kind_real) :: zz
 
@@ -624,9 +624,57 @@ contains
     w2=1.0_kind_real-w1
     k1=ii+1
     k2=ii+2
-    
+
     return
   end subroutine lin_weights
+
+  ! ------------------------------------------------------------------------------
+
+  subroutine convert_to_ug(self, ug)
+    use unstructured_grid_mod
+    implicit none
+    type(mom5cice5_field), intent(in) :: self
+    type(unstructured_grid), intent(inout) :: ug
+    real(kind=kind_real) :: xlat, xlon, dx, dy, zz(2)
+    integer :: jx,jy
+
+    zz(1) = 0.0    !!!!!!!! replace with level from geom
+    zz(2) = 1.0    !!!!!!!! replace with level from geom
+    call create_unstructured_grid(ug, 2, zz)
+
+    do jy=1,self%ny
+       do jx=1,self%nx
+          !call add_column(ug, self%lat(jx,jy), self%lon(jx,jy), 2, 1, 0) !!!!!! lon and lat not infield
+                                                                          !!!!!! need to get from geom  
+          ug%last%column%cols(1) = self%sstoc(jx,jy) !field level 1
+          ug%last%column%cols(2) = self%sstoc(jx,jy) !field level 2
+       enddo
+    enddo
+
+  end subroutine convert_to_ug
+
+  ! ------------------------------------------------------------------------------
+
+  subroutine convert_from_ug(self, ug)
+    use unstructured_grid_mod
+    implicit none
+    type(mom5cice5_field), intent(inout) :: self
+    type(unstructured_grid), intent(in) :: ug
+    type(column_element), pointer :: current
+    real(kind=kind_real) :: dx, dy
+    integer :: jx,jy
+
+    !!!!!!!!! code inverse of convert_to_ug !!!!!!!!!!!!!!!
+    current => ug%head
+    do while (associated(current))
+       jy = nint((current%column%lat + 40.0_kind_real) / dy) + 1
+       jx = nint(current%column%lon / dx) + 1
+       !self%x(jx,jy,1) = current%column%cols(1)
+       !self%x(jx,jy,2) = current%column%cols(2)
+       current => current%next
+    enddo
+
+  end subroutine convert_from_ug
 
   ! ------------------------------------------------------------------------------
 

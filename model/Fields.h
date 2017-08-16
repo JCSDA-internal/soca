@@ -19,6 +19,10 @@ namespace eckit {
   class Configuration;
 }
 
+namespace oops {
+  class UnstructuredGrid;
+}
+
 namespace mom5cice5 {
 
 // -----------------------------------------------------------------------------
@@ -56,7 +60,11 @@ class Fields : public util::Printable,
   void changeResolution(const Fields &);
   void add(const Fields &);
   void diff(const Fields &, const Fields &);
-
+  
+// Convert to/from unstructured grid
+  void convert_to(oops::UnstructuredGrid &) const;
+  void convert_from(const oops::UnstructuredGrid &);
+  
 // Utilities
   void read(const eckit::Configuration &);
   void write(const eckit::Configuration &) const;

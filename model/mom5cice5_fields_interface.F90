@@ -264,6 +264,41 @@ subroutine mom5cice5_field_change_resol_c(c_key_fld,c_key_rhs) bind(c,name='mom5
 end subroutine mom5cice5_field_change_resol_c
 
 ! ------------------------------------------------------------------------------
+subroutine mom5cice5_field_convert_to_c(c_key_fld, c_key_ug) bind (c,name='mom5cice5_field_convert_to_f90')
+  use iso_c_binding
+  use mom5cice5_fields
+  use unstructured_grid_mod
+  implicit none
+  integer(c_int), intent(in) :: c_key_fld
+  integer(c_int), intent(in) :: c_key_ug
+  type(mom5cice5_field), pointer :: fld
+  type(unstructured_grid), pointer :: ug
+
+  call mom5cice5_field_registry%get(c_key_fld,fld)
+  call unstructured_grid_registry%get(c_key_ug,ug)
+
+  call convert_to_ug(fld, ug)
+
+end subroutine mom5cice5_field_convert_to_c
+! ------------------------------------------------------------------------------
+subroutine mom5cice5_field_convert_from_c(c_key_fld, c_key_ug) bind (c,name='mom5cice5_field_convert_from_f90')
+  use iso_c_binding
+  use mom5cice5_fields
+  use unstructured_grid_mod
+  implicit none
+  integer(c_int), intent(in) :: c_key_fld
+  integer(c_int), intent(in) :: c_key_ug
+  type(mom5cice5_field), pointer :: fld
+  type(unstructured_grid), pointer :: ug
+
+  call mom5cice5_field_registry%get(c_key_fld,fld)
+  call unstructured_grid_registry%get(c_key_ug,ug)
+
+  call convert_from_ug(fld, ug)
+
+end subroutine mom5cice5_field_convert_from_c
+
+! ------------------------------------------------------------------------------
 
 subroutine mom5cice5_field_read_file_c(c_key_fld, c_conf, c_dt) bind(c,name='mom5cice5_field_read_file_f90')
   use iso_c_binding

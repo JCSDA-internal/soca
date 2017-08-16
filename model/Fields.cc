@@ -124,6 +124,14 @@ void Fields::diff(const Fields & x1, const Fields & x2) {
   mom5cice5_field_diff_incr_f90(keyFlds_, x1.keyFlds_, x2.keyFlds_);
 }
 // -----------------------------------------------------------------------------
+void Fields::convert_to(oops::UnstructuredGrid & ug) const {
+  mom5cice5_field_convert_to_f90(keyFlds_, ug.toFortran());
+}
+// -----------------------------------------------------------------------------
+void Fields::convert_from(const oops::UnstructuredGrid & ug) {
+  mom5cice5_field_convert_from_f90(keyFlds_, ug.toFortran());
+}
+// -----------------------------------------------------------------------------
 void Fields::read(const eckit::Configuration & config) {
   const eckit::Configuration * conf = &config;
   util::DateTime * dtp = &time_;
