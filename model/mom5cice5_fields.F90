@@ -544,14 +544,15 @@ contains
     call nccheck( nf90_def_dim(ncid, "xaxis_1", fld%nx, x_dimid) )
     call nccheck( nf90_def_dim(ncid, "yaxis_1", fld%ny, y_dimid) )
     dimids2d =  (/ x_dimid, y_dimid/)
-    !call nccheck( nf90_def_var(ncid, 'aice', nf90_double, dimids2d, varid) )
-    !call nccheck( nf90_enddef(ncid) )
-    !call nccheck( nf90_put_var(ncid, varid, sum(fld%cicen,3) ) )
-    
-    call nccheck( nf90_def_var(ncid, varname, nf90_double, dimids2d, varid) )
+
+    call nccheck( nf90_def_var(ncid, 'aice', nf90_double, dimids2d, varid) )
     call nccheck( nf90_enddef(ncid) )
-    call nccheck( nf90_put_var(ncid, varid, fld%sstoc ) )
-    call nccheck( nf90_close(ncid) )
+    call nccheck( nf90_put_var(ncid, varid, sum(fld%cicen,3) ) )
+    
+    !call nccheck( nf90_def_var(ncid, varname, nf90_double, dimids2d, varid) )
+    !call nccheck( nf90_enddef(ncid) )
+    !call nccheck( nf90_put_var(ncid, varid, fld%sstoc ) )
+    !call nccheck( nf90_close(ncid) )
 
     call datetime_to_string(vdate, sdate)
 

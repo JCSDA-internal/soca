@@ -22,14 +22,14 @@ namespace mom5cice5 {
     mom5cice5_geo_delete_f90(keyGeom_);
   }
   // -----------------------------------------------------------------------------
-  std::vector<int> Geometry::getDims() const {
+  /*std::vector<int> Geometry::getDims() const {
     std::vector<int> dims(2);
     int nzo;
     int nzi;
     int ncat;
     mom5cice5_geo_info_f90(keyGeom_, dims[0], dims[1], nzo, nzi, ncat);  
     return dims;
-  }
+    }/**/
   // -----------------------------------------------------------------------------                                                                               
   std::vector<double> Geometry::getLats() const {
     int nx;
@@ -38,11 +38,13 @@ namespace mom5cice5 {
     int nzi;
     int ncat;
     int geofld;
+    int level;
     mom5cice5_geo_info_f90(keyGeom_, nx, ny, nzo, nzi, ncat);
     std::vector<double> lats(nx * ny);
   
-    geofld = 1; 
-    mom5cice5_geo_getgeofld_f90(keyGeom_, &lats[0], geofld);
+    geofld = 1;
+    level = 0;
+    mom5cice5_geo_getgeofld_f90(keyGeom_, &lats[0], geofld, level);
 
     return lats;
   }
@@ -54,11 +56,13 @@ namespace mom5cice5 {
     int nzi;
     int ncat;
     int geofld;
+    int level;
     mom5cice5_geo_info_f90(keyGeom_, nx, ny, nzo, nzi, ncat);
     std::vector<double> lons(nx * ny);
   
-    geofld = 0; 
-    mom5cice5_geo_getgeofld_f90(keyGeom_, &lons[0], geofld);
+    geofld = 0;
+    level = 0;    
+    mom5cice5_geo_getgeofld_f90(keyGeom_, &lons[0], geofld, level);
 
     return lons;
   }
@@ -70,14 +74,14 @@ namespace mom5cice5 {
     int nzi;
     int ncat;
     mom5cice5_geo_info_f90(keyGeom_, nx, ny, nzo, nzi, ncat);
-    std::vector<double> levs(nzi+1);
-    for (int jj = 0; jj < nzi+1; ++jj) {
+    std::vector<double> levs(nzo+nzi+2);
+    for (int jj = 0; jj < nzo+nzi+2; ++jj) {
       levs[jj] = double(jj);
     }
     return levs;
   }
   // -----------------------------------------------------------------------------
-  std::vector<double> Geometry::getArea() const {
+  /*std::vector<double> Geometry::getArea() const {
     int nx;
     int ny;
     int nzo;
@@ -103,9 +107,10 @@ namespace mom5cice5 {
       area[jj] = a;
     }
     return area;
-  }
+    }/**/
   // -----------------------------------------------------------------------------
-  std::vector<int> Geometry::getMask(const int &) const {
+  std::vector<int> Geometry::getMask(const int & level) const {
+    //std::vector<int> Geometry::getMask(int & level) const {    
     int nx;
     int ny;
     int nzo;
@@ -116,9 +121,9 @@ namespace mom5cice5 {
     std::vector<double> dmask(nx * ny);
 
     geofld=2; // Get the mask
-    mom5cice5_geo_getgeofld_f90(keyGeom_, &dmask[0], geofld);
+    mom5cice5_geo_getgeofld_f90(keyGeom_, &dmask[0], geofld, level);
 
-    std::vector<int> mask(dmask.begin(), dmask.end());
+    std::vector<int> mask(dmask.begin(), dmask.end()); //Convert double to int
     assert(mask.size() == nx*ny);
 
     return mask;
