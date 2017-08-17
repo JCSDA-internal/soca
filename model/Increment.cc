@@ -109,6 +109,10 @@ void Increment::zero() {
   fields_->zero();
 }
 // -----------------------------------------------------------------------------
+  void Increment::dirac(const eckit::Configuration & config) {
+    fields_->dirac(config);
+}  
+// -----------------------------------------------------------------------------
 void Increment::zero(const util::DateTime & vt) {
   fields_->zero(vt);
 }
@@ -133,6 +137,16 @@ double Increment::dot_product_with(const Increment & other) const {
 // -----------------------------------------------------------------------------
 void Increment::random() {
   fields_->random();
+}
+// -----------------------------------------------------------------------------
+/// Convert to/from unstructured grid
+// -----------------------------------------------------------------------------
+void Increment::convert_to(oops::UnstructuredGrid & ug) const {
+  fields_->convert_to(ug);
+}
+// -----------------------------------------------------------------------------
+void Increment::convert_from(const oops::UnstructuredGrid & ug) {
+  fields_->convert_from(ug);
 }
 // -----------------------------------------------------------------------------
 /// I/O and diagnostics

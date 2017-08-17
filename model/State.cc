@@ -106,6 +106,16 @@ State & State::operator+=(const Increment & dx) {
   return *this;
 }
 // -----------------------------------------------------------------------------
+/// Convert to/from unstructured grid
+// -----------------------------------------------------------------------------
+void State::convert_to(oops::UnstructuredGrid & ug) const {
+  fields_->convert_to(ug);
+}
+// -----------------------------------------------------------------------------
+void State::convert_from(const oops::UnstructuredGrid & ug) {
+  fields_->convert_from(ug);
+}  
+// -----------------------------------------------------------------------------
 /// I/O and diagnostics
 // -----------------------------------------------------------------------------
 void State::read(const eckit::Configuration & files) {

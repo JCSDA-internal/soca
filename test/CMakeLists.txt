@@ -1,6 +1,12 @@
 list( APPEND mom5cice5_test_input
+  testinput/dirac.nicas.json
   testinput/interfaces.json
   testinput/test.json
+  compare.sh
+)
+
+list( APPEND mom5cice5_testoutput
+  testoutput/dirac.nicas.test
 )
 
 # Create Data directory for test input and symlink all files
@@ -37,4 +43,11 @@ ecbuild_add_test( TARGET  test_mom5cice5_increment
                   SOURCES executables/TestIncrement.cc
                   ARGS    "testinput/interfaces.json"
                   LIBS    mom5cice5 )
+
+ecbuild_add_test( TARGET test_mom5cice5_dirac_nicas
+                  TYPE SCRIPT
+                  COMMAND "compare.sh"
+                  ARGS "${CMAKE_BINARY_DIR}/bin/mom5cice5_dirac.x testinput/dirac.nicas.json"
+                       testoutput/dirac.nicas.test
+                  DEPENDS mom5cice5_dirac.x )
 

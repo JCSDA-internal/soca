@@ -48,23 +48,23 @@ module interface_ncread_fld
   end interface ncread_fld
 contains
 
-  subroutine read2d(filename, varname, VAR, n1, n2)
+  subroutine read2d(filename, varname, VAR, start, count)
     ! Read 2d field from 2d nc field
     implicit none
 
     character(len=128), intent(in)                                    :: filename
     character(len=128), intent(in)                                         :: varname
     real(kind=kind_real), allocatable, dimension(:,:), intent(inout)  :: VAR 
-    integer                                                           :: varid, fid_in, n1, n2
-
+    integer                                                           :: varid, fid_in
+    integer, intent(in)                                               :: start(2), count(2)
     call nccheck(nf90_open(filename, nf90_nowrite, fid_in))
     call nccheck(nf90_inq_varid(fid_in, varname, varid))
-    call nccheck(nf90_get_var(fid_in, varid, VAR))
+    call nccheck(nf90_get_var(fid_in, varid, VAR, start, count))
     call nccheck(nf90_close(fid_in))
 
   end subroutine read2d
 
-  subroutine read3d(filename, varname, VAR, n1, n2, n3)
+  subroutine read3d(filename, varname, VAR, n1, n2, n3, start, count)
     ! Read 3d field from 3d nc field
     implicit none
 
@@ -72,11 +72,11 @@ contains
     character(len=128), intent(in)                                          :: varname
     real(kind=kind_real), allocatable, dimension(:,:,:), intent(inout)      :: VAR 
     integer                                                                 :: varid, fid_in, n1, n2, n3
-
+    integer, intent(in)                                                     :: start(3), count(3)
     print *,'Reading ',varname
     call nccheck(nf90_open(filename, nf90_nowrite, fid_in) )
     call nccheck(nf90_inq_varid(fid_in, varname, varid))
-    call nccheck(nf90_get_var(fid_in, varid, VAR))
+    call nccheck(nf90_get_var(fid_in, varid, VAR, start, count))
     call nccheck(nf90_close(fid_in))
 
   end subroutine read3d
@@ -91,11 +91,12 @@ contains
     integer, intent(in)                                                :: n1, n2, start(4), count(4)
     integer                                                            :: varid, fid_in
 
+    print *,filename, varname
     call nccheck(nf90_open(filename, nf90_nowrite, fid_in) )
     call nccheck(nf90_inq_varid(fid_in, varname, varid))
-    call nccheck(nf90_get_var(fid_in, varid, VAR))
+    call nccheck(nf90_get_var(fid_in, varid, VAR, start, count))
     call nccheck(nf90_close(fid_in))
-
+    print *,'out of readnc'
   end subroutine read2d_from4d
 
 end module interface_ncread_fld

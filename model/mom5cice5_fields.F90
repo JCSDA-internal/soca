@@ -12,7 +12,7 @@ module mom5cice5_fields
   private
 
   public :: mom5cice5_field, &
-       & create, delete, zeros, random, copy, &
+       & create, delete, zeros, dirac, random, copy, &
        & self_add, self_schur, self_sub, self_mul, axpy, &
        & dot_prod, add_incr, diff_incr, &
        & read_file, write_file, gpnorm, fldrms, &
@@ -36,6 +36,8 @@ module mom5cice5_fields
      real(kind=kind_real), allocatable :: lat(:,:)            !< ... from geom
      real(kind=kind_real), allocatable :: lon(:,:)            !< ... from geom  !!!! NEED TO FIND BETTER SOLUTION !!!!!!
      integer,              allocatable :: level(:)            !< ... from geom
+     real(kind=kind_real), allocatable :: icemask(:,:)        !< ... from geom Sea-ice mask
+     real(kind=kind_real), allocatable :: mask(:,:)           !< ... from geom ocean mask !!!!! ONLY SURFACE !!!!!!        
      real(kind=kind_real), allocatable :: cicen(:,:,:)        !< Sea-ice fraction
      real(kind=kind_real), allocatable :: hicen(:,:,:)        !< Sea-ice thickness
      real(kind=kind_real), allocatable :: vicen(:,:,:)        !< Sea-ice volume
@@ -81,15 +83,19 @@ contains
     self%ncat = geom%ncat
     self%gridfname = geom%gridfname
     self%nf   = vars%nv
-    
+
     allocate(self%lon(self%nx,self%ny))
     allocate(self%lat(self%nx,self%ny))
-    allocate(self%level(self%nzs+self%nzi+self%nzo+1))    
+    allocate(self%mask(self%nx,self%ny))
+    allocate(self%icemask(self%nx,self%ny))
+    allocate(self%level(self%nzs+self%nzi+self%nzo+2))    
 
     self%lat = geom%lat
-    self%lon = geom%lon    
+    self%lon = geom%lon
+    self%mask = geom%mask
+    self%icemask = geom%icemask
     self%level = geom%level
-    
+
     allocate(self%cicen(self%nx,self%ny,self%ncat))
     allocate(self%hicen(self%nx,self%ny,self%ncat))
     allocate(self%vicen(self%nx,self%ny,self%ncat))
@@ -172,6 +178,49 @@ contains
     self%sstoc=0.0_kind_real
 
   end subroutine zeros
+
+  ! ------------------------------------------------------------------------------
+
+  subroutine dirac(self, c_conf)
+    use iso_c_binding
+    implicit none
+    type(mom5cice5_field), intent(inout) :: self
+    type(c_ptr), intent(in)       :: c_conf   !< Configuration
+    integer :: ndir,idir,ildir,ifdir,ioff
+    integer,allocatable :: ixdir(:),iydir(:)
+    character(len=3) :: idirchar
+
+    call check(self)
+
+    ! Get Diracs positions
+    ndir = config_get_int(c_conf,"ndir")
+    allocate(ixdir(ndir))
+    allocate(iydir(ndir))
+    do idir=1,ndir
+       write(idirchar,'(i3)') idir
+       ixdir(idir) = config_get_int(c_conf,"ixdir("//trim(adjustl(idirchar))//")")
+       iydir(idir) = config_get_int(c_conf,"iydir("//trim(adjustl(idirchar))//")")
+    end do
+    !ildir = config_get_int(c_conf,"ildir")
+    !ifdir = config_get_int(c_conf,"ifdir")
+
+    ! Check 
+    !if (ndir<1) call abor1_ftn("qg_fields:dirac non-positive ndir")
+    !if (any(ixdir<1).or.any(ixdir>self%nx)) call abor1_ftn("qg_fields:dirac invalid ixdir")
+    !if (any(iydir<1).or.any(iydir>self%ny)) call abor1_ftn("qg_fields:dirac invalid iydir")
+    !if ((ildir<1).or.(ildir>self%nl)) call abor1_ftn("qg_fields:dirac invalid ildir")
+    !if ((ifdir<1).or.(ifdir>self%nf)) call abor1_ftn("qg_fields:dirac invalid ifdir")
+
+    ! Setup Diracs
+    call zeros(self)
+    !ioff = (ifdir-1)*self%nl
+    do idir=1,ndir
+       self%qicnk(ixdir(idir),iydir(idir),1,4) = 1.0 ! Surface temp incr for cat 1
+    end do
+
+  end subroutine dirac
+
+  ! ------------------------------------------------------------------------------
 
   ! ------------------------------------------------------------------------------
 
@@ -470,7 +519,10 @@ contains
     integer :: ic, iy, il, ix, is, jx, jy, jf, iread, nf, level
     real(kind=kind_real), allocatable :: zz(:), var3d(:,:,:)
 
-    integer :: nx, ny, varid, ncid, start(4), count(4)
+    integer :: nx, ny, varid, ncid
+    integer :: start2(2), count2(2)
+    integer :: start3(3), count3(3)
+    integer :: start4(4), count4(4)    
 
     iread = 0
     if (config_element_exists(c_conf,"read_from_file")) then
@@ -485,6 +537,9 @@ contains
        call log%info(buf)
        call datetime_set(sdate, vdate)
     else
+
+    
+       !iread = 0
        sdate = config_get_string(c_conf,len(sdate),"date")
        WRITE(buf,*) 'validity date is: '//sdate
        call log%info(buf)
@@ -494,34 +549,36 @@ contains
        fld%cicefname = config_get_string(c_conf, len(fld%cicefname), "cicefname")
        !WRITE(buf,*) 'cice fname:',fld%cicefname
        print *, 'cice fname:',fld%cicefname
-       varname='aicen'; call ncread_fld(fld%cicefname, varname, fld%cicen, fld%nx, fld%ny, fld%ncat)
-       varname='vicen'; call ncread_fld(fld%cicefname, varname, fld%vicen, fld%nx, fld%ny, fld%ncat)
-       varname='vsnon'; call ncread_fld(fld%cicefname, varname, fld%vicen, fld%nx, fld%ny, fld%ncat)
-       varname='Tsfcn'; call ncread_fld(fld%cicefname, varname, fld%tsfcn, fld%nx, fld%ny, fld%ncat)
+       start3 = (/1,1,1/)
+       count3 = (/fld%nx,fld%ny,fld%ncat/)
+       varname='aicen'; call ncread_fld(fld%cicefname, varname, fld%cicen, fld%nx, fld%ny, fld%ncat, start3, count3)
+       varname='vicen'; call ncread_fld(fld%cicefname, varname, fld%vicen, fld%nx, fld%ny, fld%ncat, start3, count3)
+       varname='vsnon'; call ncread_fld(fld%cicefname, varname, fld%vicen, fld%nx, fld%ny, fld%ncat, start3, count3)
+       varname='Tsfcn'; call ncread_fld(fld%cicefname, varname, fld%tsfcn, fld%nx, fld%ny, fld%ncat, start3, count3)
        allocate(var3d(fld%nx,fld%ny,fld%ncat))
        do level=1,fld%nzi
           basename='qice'; call fld_name_int2str(basename, level, varname)
-          call ncread_fld(fld%cicefname, varname, var3d, fld%nx, fld%ny, fld%ncat)
+          call ncread_fld(fld%cicefname, varname, var3d, fld%nx, fld%ny, fld%ncat, start3, count3)
           fld%qicnk(:,:,:,level)=var3d
           basename='sice'; call fld_name_int2str(basename, level, varname)
-          call ncread_fld(fld%cicefname, varname, var3d, fld%nx, fld%ny, fld%ncat)
+          call ncread_fld(fld%cicefname, varname, var3d, fld%nx, fld%ny, fld%ncat, start3, count3)
           fld%sicnk(:,:,:,level)=var3d
        end do
        deallocate(var3d)
        !do level=1,fld%nzs !!!!!!! CURRENTLY HARD CODED FOR NZS=1 !!!!!!!!!!!!!!!!
        basename='qsno'; call fld_name_int2str(basename, 1, varname)
        print *, varname
-       call ncread_fld(fld%cicefname, varname, fld%qsnon, fld%nx, fld%ny, fld%ncat)
+       call ncread_fld(fld%cicefname, varname, fld%qsnon, fld%nx, fld%ny, fld%ncat, start3, count3)
 
        ! Read Ocean
        fld%momfname = config_get_string(c_conf, len(fld%momfname), "momfname")
        print *,'mom fname:',fld%momfname
-       start = (/1,1,1,1/)
-       count = (/fld%nx,fld%ny,fld%nzo,1/)
+       start4 = (/1,1,1,1/)
+       count4 = (/fld%nx,fld%ny,fld%nzo,1/)
        varname='temp'
-       call ncread_fld(fld%momfname, varname, fld%sstoc, fld%nx, fld%ny, start, count)
+       call ncread_fld(fld%momfname, varname, fld%sstoc, fld%nx, fld%ny, start4, count4)
        varname='salt'
-       call ncread_fld(fld%momfname, varname, fld%sssoc, fld%nx, fld%ny, start, count)
+       call ncread_fld(fld%momfname, varname, fld%sssoc, fld%nx, fld%ny, start4, count4)
 
     endif
 
@@ -547,9 +604,10 @@ contains
     character(len=max_string_length) :: filename
     character(len=128)  :: varname
     character(len=20) :: sdate
+    real(kind=8) :: missing=-999d0
 
-    integer :: ncid, varid, dimids2d(2)
-    integer :: x_dimid, y_dimid, status
+    integer :: ncid, varid, dimids2d(3), jx, jy
+    integer :: x_dimid, y_dimid, z_dimid, status
 
     call check(fld)
 
@@ -559,17 +617,29 @@ contains
     call nccheck( nf90_create(filename, nf90_clobber, ncid) )
     call nccheck( nf90_def_dim(ncid, "xaxis_1", fld%nx, x_dimid) )
     call nccheck( nf90_def_dim(ncid, "yaxis_1", fld%ny, y_dimid) )
-    dimids2d =  (/ x_dimid, y_dimid/)
+    call nccheck( nf90_def_dim(ncid, "zaxis_1", fld%nzi, z_dimid) )
+    dimids2d =  (/ x_dimid, y_dimid, z_dimid/)
 
-    call nccheck( nf90_def_var(ncid, 'aice', nf90_double, dimids2d, varid) )
+    print *,'writing ....', fld%nx, fld%ny
+    
+    do jx=1,fld%nx
+       do jy=1,fld%ny
+          if (nint(fld%mask(jx,jy))==0) fld%qicnk(jx,jy,:,:) = missing
+       end do
+    end do
+
+    call nccheck( nf90_def_var(ncid, 'qicnk', nf90_double, dimids2d, varid) )
+    call nccheck( nf90_put_att(ncid, varid, '_FillValue', missing) )
     call nccheck( nf90_enddef(ncid) )
-    call nccheck( nf90_put_var(ncid, varid, sum(fld%cicen,3) ) )
-
+    call nccheck( nf90_put_var(ncid, varid, fld%qicnk(:,:,1,:)))
+    !print *,'wdoneriting ....'
     !call nccheck( nf90_def_var(ncid, varname, nf90_double, dimids2d, varid) )
     !call nccheck( nf90_enddef(ncid) )
     !call nccheck( nf90_put_var(ncid, varid, fld%sstoc ) )
-    !call nccheck( nf90_close(ncid) )
+    call nccheck( nf90_close(ncid) )
 
+    print *,'in write field ...............'
+    
     call datetime_to_string(vdate, sdate)
 
     return
@@ -652,23 +722,62 @@ contains
     type(mom5cice5_field), intent(in) :: self
     type(unstructured_grid), intent(inout) :: ug
     real(kind=kind_real), allocatable :: zz(:)
-    integer :: jx,jy,jz,nz_total
+    real(kind=kind_real), allocatable :: vv(:)    
+    integer, allocatable :: cmask(:)
+    integer :: jx,jy,jz,jk
+    integer :: nz_total     ! Total number of levels in the 3D fields
+    integer :: n_vars       ! Number of 3D variables 
+    integer :: n_surf_vars  ! Number of surf vars (sould be 0 for ocean/ice)
+    integer :: cat_num      ! !!!!!!!!! only doing 1 category for now !!!!!!!!!!!
 
-    nz_total=size(self%level)
+    cat_num = 1 
+    nz_total = size(self%level)
     allocate(zz(nz_total))
+    allocate(vv(nz_total))
+    allocate(cmask(nz_total))
     do jz = 1,nz_total
        zz(jz) = real(self%level(jz))
     end do
     call create_unstructured_grid(ug, nz_total, zz)
 
+    n_vars = 1      !!!!! START WITH ONLY ONE VAR !!!!!!!!! 
+    n_surf_vars = 0 !!!!! NO SURFACE VAR !!!!!!!!! 
+
     do jy=1,self%ny
        do jx=1,self%nx
-          call add_column(ug, self%lat(jx,jy), self%lon(jx,jy), 2, 1, 0)
-          ug%last%column%cols(1) = self%sstoc(jx,jy) !field level 1
-          ug%last%column%cols(2) = self%sstoc(jx,jy) !field level 2
+          jk = 1
+          cmask(jk) = nint(self%icemask(jx,jy))       ! Surface
+          vv(jk) = self%tsfcn(jx,jy,cat_num)
+          jk = jk + 1
+          do jz = 1,self%nzs                    ! Snow
+             cmask(jk) = nint(self%icemask(jx,jy))    !
+             vv(jk) = self%qsnon(jx,jy,cat_num)             
+             jk = jk + 1
+          end do
+          do jz = 1,self%nzi                    ! Ice
+             cmask(jk) = nint(self%icemask(jx,jy))    !
+             vv(jk) = self%qicnk(jx,jy,cat_num,jz)
+             jk = jk + 1
+          end do
+          cmask(jk) = nint(self%icemask(jx,jy))       ! Ice/Ocean interface
+          vv(jk) = self%sssoc(jx,jy)            ! Tf = -mu * S          
+          jk = jk + 1          
+          do jz = 1,self%nzo                    ! Ocean
+             cmask(jk) = nint(self%mask(jx,jy))    !
+             vv(jk) = self%sstoc(jx,jy)         !
+             jk = jk + 1
+          end do
+          cmask(:) = nint(self%mask(jx,jy)) ! A corriger !!!
+
+          call add_column(ug, self%lat(jx,jy), self%lon(jx,jy), &
+               nz_total, &
+               n_vars, &
+               n_surf_vars, &
+               cmask, &
+               0)
+          ug%last%column%cols(:) = vv(:)
        enddo
     enddo
-
   end subroutine convert_to_ug
 
   ! ------------------------------------------------------------------------------
@@ -680,16 +789,46 @@ contains
     type(unstructured_grid), intent(in) :: ug
     type(column_element), pointer :: current
     real(kind=kind_real) :: dx, dy
-    integer :: jx,jy
+    integer :: jx,jy,jz,jk
+    integer :: n_vars       ! Number of 3D variables 
+    integer :: n_surf_vars  ! Number of surf vars (sould be 0 for ocean/ice)
+    integer :: cat_num      ! !!!!!!!!! only doing 1 category for now !!!!!!!!!!!
 
-    !!!!!!!!! code inverse of convert_to_ug !!!!!!!!!!!!!!!
+!!!!!!!!! code inverse of convert_to_ug !!!!!!!!!!!!!!!
     current => ug%head
-    do while (associated(current))
-       jy = nint((current%column%lat + 40.0_kind_real) / dy) + 1
-       jx = nint(current%column%lon / dx) + 1
-       !self%x(jx,jy,1) = current%column%cols(1)
-       !self%x(jx,jy,2) = current%column%cols(2)
-       current => current%next
+    !do while (associated(current))
+    !   jy = nint((current%column%lat + 40.0_kind_real) / dy) + 1
+    !   jx = nint(current%column%lon / dx) + 1
+    !self%x(jx,jy,1) = current%column%cols(1)
+    !self%x(jx,jy,2) = current%column%cols(2)
+    !   current => current%next
+    !enddo
+    cat_num = 1 
+    n_vars = 1      !!!!! START WITH ONLY ONE VAR !!!!!!!!! 
+    n_surf_vars = 0 !!!!! NO SURFACE VAR !!!!!!!!! 
+
+    do jy=1,self%ny
+       do jx=1,self%nx
+          jk = 1
+          self%tsfcn(jx,jy,cat_num) = current%column%cols(jk)
+          jk = jk + 1
+          do jz = 1,self%nzs                    ! Snow
+             self%qsnon(jx,jy,cat_num) = current%column%cols(jk)
+             jk = jk + 1
+          end do
+          do jz = 1,self%nzi                    ! Ice
+             self%qicnk(jx,jy,cat_num,jz) = current%column%cols(jk)
+             jk = jk + 1
+          end do
+          self%sssoc(jx,jy) = current%column%cols(jk) ! Ice/Ocean interface, Tf = -mu * S          
+          jk = jk + 1          
+          do jz = 1,self%nzo                    ! Ocean
+             self%sstoc(jx,jy) = current%column%cols(jk)         !
+             jk = jk + 1
+          end do
+          current => current%next
+       enddo
+       print*, 'from',jy
     enddo
 
   end subroutine convert_from_ug

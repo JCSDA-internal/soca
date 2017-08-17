@@ -42,6 +42,7 @@ class Fields : public util::Printable,
 
   void zero();
   void zero(const util::DateTime &);
+  void dirac(const eckit::Configuration &);  
   Fields & operator=(const Fields &);
   Fields & operator+=(const Fields &);
   Fields & operator-=(const Fields &);

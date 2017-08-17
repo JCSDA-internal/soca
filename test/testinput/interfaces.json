@@ -4,8 +4,8 @@
   },
   "test_framework_runtime_config": "--log_level=test_suite",
   "Geometry": {
-    "nx": "720",
-    "ny": "410",
+    "nx": "72",
+    "ny": "60",
     "nzo": "1",
     "nzi": "7",
     "nzs": "1",

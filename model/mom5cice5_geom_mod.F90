@@ -18,18 +18,19 @@ module mom5cice5_geom_mod
 
   !> Fortran derived type to hold geometry data for MOM5 & CICE5 model
   !>
-  !>   level 0          ---- Surface                  Tsfc
-  !>   level 1          ---- Upper snow level         Qsno
-  !>     .                        .                    .
-  !>     .                        .                    .
-  !>     .                        .                    .        
-  !>   level nzs        ---- Lower snow level         Qsno
-  !>   level nzs+1      ---- Upper ice level          Qice     
-  !>     .                        .                    .
-  !>     .                        .                    .
-  !>     .                        .                    .
-  !>   level nzs+nzi    ---- Upper ice level          Qice
-  !>   level nzs+nzi+1  ---- Upper ocean level        Tfreeze
+  !>   level 0          ---- Surface                     Tsfc
+  !>   level 1          ---- Upper snow level            Qsno
+  !>     .                        .                       .
+  !>     .                        .                       .
+  !>     .                        .                       .        
+  !>   level nzs        ---- Lower snow level            Qsno
+  !>   level nzs+1      ---- Upper ice level             Qice     
+  !>     .                        .                       .
+  !>     .                        .                       .
+  !>     .                        .                       .
+  !>   level nzs+nzi    ---- Upper ice level             Qice
+  !>   level nzs+nzi+1  ---- Ice/Ocean interface level   Tfreeze (from S)
+  !>   level nzs+nzi+2  ---- Upper level Ocean           SST    
   !>
   
   type :: mom5cice5_geom
@@ -68,7 +69,6 @@ contains
   subroutine c_mom5cice5_geo_setup(c_key_self, c_conf) bind(c,name='mom5cice5_geo_setup_f90')
     use netcdf
     use interface_ncread_fld, only: ncread_fld
-
     implicit none
     integer(c_int), intent(inout) :: c_key_self
     type(c_ptr), intent(in)    :: c_conf
@@ -76,6 +76,8 @@ contains
     integer :: varid, ncid, nxdimid, nydimid
     character(len=128)  :: varname
     integer :: jj
+    integer :: start2(2), count2(2)
+    
     call mom5cice5_geom_registry%init()
     call mom5cice5_geom_registry%add(c_key_self)
     call mom5cice5_geom_registry%get(c_key_self,self)
@@ -91,22 +93,24 @@ contains
 
     allocate(self%lon(self%nx,self%ny))
     allocate(self%lat(self%nx,self%ny))
-    allocate(self%level(self%nzs+self%nzi+self%nzo+1))    
+    allocate(self%level(self%nzs+self%nzi+self%nzo+2))    
     allocate(self%mask(self%nx,self%ny))
     allocate(self%icemask(self%nx,self%ny))
     allocate(self%cell_area(self%nx,self%ny))
 
-    do jj = 0,size(self%level, 1)
-       self%level(jj+1) = jj
+    !do jj = 0,size(self%level, 1)
+    do jj = 1,size(self%level, 1)       
+       self%level(jj) = jj
     end do
-    
+    start2 = (/1,1/)
+    count2 = (/self%nx,self%ny/)    
     print *,'ocean grid file name:',self%gridfname
     print *,'ice mask file name:',self%icemaskfname
-    varname='x_T'; call ncread_fld(self%gridfname, varname, self%lon, self%nx, self%ny)
-    varname='y_T'; call ncread_fld(self%gridfname, varname, self%lat, self%nx, self%ny)
-    varname='wet'; call ncread_fld(self%gridfname, varname, self%mask, self%nx, self%ny)
-    varname='area_T'; call ncread_fld(self%gridfname, varname, self%cell_area, self%nx, self%ny)
-    varname='iceumask'; call ncread_fld(self%icemaskfname, varname, self%mask, self%nx, self%ny)
+    varname='x_T'; call ncread_fld(self%gridfname, varname, self%lon, start2, count2)
+    varname='y_T'; call ncread_fld(self%gridfname, varname, self%lat, start2, count2)
+    varname='wet'; call ncread_fld(self%gridfname, varname, self%mask, start2, count2)
+    varname='area_T'; call ncread_fld(self%gridfname, varname, self%cell_area, start2, count2)
+    varname='iceumask'; call ncread_fld(self%icemaskfname, varname, self%mask, start2, count2)
 
   end subroutine c_mom5cice5_geo_setup
 
@@ -199,7 +203,7 @@ contains
     if (geofld==0) geoloc=reshape(self%lon, (/self%nx*self%ny/))       
     if (geofld==1) geoloc=reshape(self%lat, (/self%nx*self%ny/))
     if (geofld==2) then
-       if (level==self%nzs+self%nzi+1) then ! Last level is the ocean mask
+       if (level==self%nzs+self%nzi+2) then ! Last level is the ocean mask
           geoloc=reshape(self%mask, (/self%nx*self%ny/))
        else
           geoloc=reshape(self%icemask, (/self%nx*self%ny/))

@@ -93,6 +93,11 @@ void Fields::zero(const util::DateTime & time) {
   mom5cice5_field_zero_f90(keyFlds_);
   time_ = time;
 }
+  // -----------------------------------------------------------------------------
+  void Fields::dirac(const eckit::Configuration & config) {
+  const eckit::Configuration * conf = &config;
+  mom5cice5_field_dirac_f90(keyFlds_, &conf);
+}
 // -----------------------------------------------------------------------------
 void Fields::axpy(const double & zz, const Fields & rhs) {
   mom5cice5_field_axpy_f90(keyFlds_, zz, rhs.keyFlds_);

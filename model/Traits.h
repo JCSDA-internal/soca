@@ -8,6 +8,7 @@
 #include "model/Increment.h"
 #include "model/State.h"
 #include "model/Variables.h"
+#include "model/ErrorCovariance.h"
 
 namespace mom5cice5 {
 
@@ -18,6 +19,9 @@ struct Traits {
   typedef mom5cice5::Variables           Variables;
   typedef mom5cice5::State               State;
   typedef mom5cice5::Increment           Increment;
+  static std::string nameCovar() {return "MC5Error";}
+  typedef mom5cice5::ErrorCovariance     Covariance;
+  
 };
 
 }  // namespace mom5cice5

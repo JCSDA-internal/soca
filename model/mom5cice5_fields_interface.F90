@@ -60,6 +60,23 @@ end subroutine mom5cice5_field_zero_c
 
 ! ------------------------------------------------------------------------------
 
+subroutine mom5cice5_field_dirac_c(c_key_self,c_conf) bind(c,name='mom5cice5_field_dirac_f90')
+use iso_c_binding
+use mom5cice5_fields
+implicit none
+integer(c_int), intent(in) :: c_key_self
+type(c_ptr), intent(in)    :: c_conf !< Configuration
+type(mom5cice5_field), pointer :: self
+
+call mom5cice5_field_registry%get(c_key_self,self)
+call dirac(self,c_conf)
+
+end subroutine mom5cice5_field_dirac_c
+
+! ------------------------------------------------------------------------------
+
+! ------------------------------------------------------------------------------
+
 subroutine mom5cice5_field_random_c(c_key_self) bind(c,name='mom5cice5_field_random_f90')
   use iso_c_binding
   use mom5cice5_fields
