@@ -114,6 +114,8 @@ contains
     varname='area_T'; call ncread_fld(self%gridfname, varname, self%cell_area, start2, count2)
     varname='iceumask'; call ncread_fld(self%icemaskfname, varname, self%icemask, start2, count2)
 
+    print *,sum(self%cell_area)/(6300e3)**2
+    
   end subroutine c_mom5cice5_geo_setup
 
   ! ------------------------------------------------------------------------------

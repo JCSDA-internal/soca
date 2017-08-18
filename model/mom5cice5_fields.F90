@@ -35,6 +35,7 @@ module mom5cice5_fields
      character(len=128) :: momfname    !< Fields file name for mom
      real(kind=kind_real), allocatable :: lat(:,:)            !< ... from geom
      real(kind=kind_real), allocatable :: lon(:,:)            !< ... from geom  !!!! NEED TO FIND BETTER SOLUTION !!!!!!
+     real(kind=kind_real), allocatable :: cell_area(:,:)      !< ... from geom  !!!! NEED TO FIND BETTER SOLUTION !!!!!!     
      integer,              allocatable :: level(:)            !< ... from geom
      real(kind=kind_real), allocatable :: icemask(:,:)        !< ... from geom Sea-ice mask
      real(kind=kind_real), allocatable :: mask(:,:)           !< ... from geom ocean mask !!!!! ONLY SURFACE !!!!!!        
@@ -86,12 +87,14 @@ contains
 
     allocate(self%lon(self%nx,self%ny))
     allocate(self%lat(self%nx,self%ny))
+    allocate(self%cell_area(self%nx,self%ny))
     allocate(self%mask(self%nx,self%ny))
     allocate(self%icemask(self%nx,self%ny))
     allocate(self%level(self%nzs+self%nzi+self%nzo+2))    
 
     self%lat = geom%lat
     self%lon = geom%lon
+    self%cell_area = geom%cell_area    
     self%mask = geom%mask
     self%icemask = geom%icemask
     self%level = geom%level
@@ -248,6 +251,7 @@ contains
 
     self%lat = rhs%lat
     self%lon = rhs%lon
+    self%cell_area = rhs%cell_area
     self%level = rhs%level
     self%cicen = rhs%cicen
     self%hicen = rhs%hicen
@@ -794,6 +798,8 @@ contains
     end do
     call create_unstructured_grid(ug, nz_total, zz)
 
+    print *,sum(self%cell_area)/(6300e3)**2
+    
     n_vars = 1      !!!!! START WITH ONLY ONE VAR !!!!!!!!! 
     n_surf_vars = 0 !!!!! NO SURFACE VAR !!!!!!!!! 
 
@@ -834,7 +840,7 @@ contains
           !end if
           !if (cmask(1)==1) read(*,*)
           
-          call add_column(ug, self%lat(jx,jy), self%lon(jx,jy), &
+          call add_column(ug, self%lat(jx,jy), self%lon(jx,jy), self%cell_area(jx, jy), &
                nz_total, &
                n_vars, &
                n_surf_vars, &

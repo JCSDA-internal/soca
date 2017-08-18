@@ -92,7 +92,7 @@
       "Lbv(9)": 2.0,
 	"Lbv(10)": 2.0,
       "Lbv(11)": 2.0,
-      "resol": 6.0,
+      "resol": 10.0,
       "network": 1,
       "nproc": 1,
       "mpicom": 2
