@@ -539,11 +539,18 @@ contains
     integer :: ic, iy, il, ix, is, jx, jy, jf, iread, nf, level
     real(kind=kind_real), allocatable :: zz(:), var3d(:,:,:)
 
+    integer :: nx0, ny0
     integer :: nx, ny, varid, ncid
     integer :: start2(2), count2(2)
     integer :: start3(3), count3(3)
     integer :: start4(4), count4(4)    
 
+    nx0=1 !20
+    ny0=350 !60
+
+    print *,fld%nx, fld%ny
+    print *,shape(fld%cicen)
+    print *,fld%lon(10,10)
     iread = 0
     if (config_element_exists(c_conf,"read_from_file")) then
        iread = config_get_int(c_conf,"read_from_file")
@@ -567,7 +574,7 @@ contains
        fld%cicefname = config_get_string(c_conf, len(fld%cicefname), "cicefname")
        !WRITE(buf,*) 'cice fname:',fld%cicefname
        print *, 'cice fname:',fld%cicefname
-       start3 = (/1,1,1/)
+       start3 = (/nx0,ny0,1/)
        count3 = (/fld%nx,fld%ny,fld%ncat/)
        varname='aicen'; call ncread_fld(fld%cicefname, varname, fld%cicen, fld%nx, fld%ny, fld%ncat, start3, count3)
        varname='vicen'; call ncread_fld(fld%cicefname, varname, fld%vicen, fld%nx, fld%ny, fld%ncat, start3, count3)
@@ -591,7 +598,7 @@ contains
        ! Read Ocean
        fld%momfname = config_get_string(c_conf, len(fld%momfname), "momfname")
        print *,'mom fname:',fld%momfname
-       start4 = (/1,1,1,1/)
+       start4 = (/nx0,ny0,1,1/)
        count4 = (/fld%nx,fld%ny,fld%nzo,1/)
        varname='temp'
        call ncread_fld(fld%momfname, varname, fld%sstoc, fld%nx, fld%ny, start4, count4)

@@ -75,7 +75,7 @@ contains
     type(mom5cice5_geom), pointer :: self
     integer :: varid, ncid, nxdimid, nydimid
     character(len=128)  :: varname
-    integer :: jj
+    integer :: jj, nx0, ny0
     integer :: start2(2), count2(2)
     
     call mom5cice5_geom_registry%init()
@@ -102,7 +102,9 @@ contains
     do jj = 1,size(self%level, 1)       
        self%level(jj) = jj
     end do
-    start2 = (/1,1/)
+    nx0=1 !20
+    ny0=350 !60
+    start2 = (/nx0,ny0/)
     count2 = (/self%nx,self%ny/)    
     print *,'ocean grid file name:',self%gridfname
     print *,'ice mask file name:',self%icemaskfname
