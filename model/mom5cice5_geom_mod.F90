@@ -47,7 +47,7 @@ module mom5cice5_geom_mod
      integer,              allocatable :: level(:)       !< 1D array of levels. See beginning of script for def.
      real(kind=kind_real), allocatable :: mask(:,:)      !< 0 = land 1 = ocean surface mask only
      real(kind=kind_real), allocatable :: icemask(:,:)   !< 0 = land/liquid ocean 1 = some ice
-     real(kind=kind_real), allocatable :: cell_area(:,:) !< 0 = land 1 = ocean NEED TO MERGE WITH ICE MASK
+     real(kind=kind_real), allocatable :: cell_area(:,:) !< 
   end type mom5cice5_geom
 
 #define LISTED_TYPE mom5cice5_geom
@@ -110,7 +110,7 @@ contains
     varname='y_T'; call ncread_fld(self%gridfname, varname, self%lat, start2, count2)
     varname='wet'; call ncread_fld(self%gridfname, varname, self%mask, start2, count2)
     varname='area_T'; call ncread_fld(self%gridfname, varname, self%cell_area, start2, count2)
-    varname='iceumask'; call ncread_fld(self%icemaskfname, varname, self%mask, start2, count2)
+    varname='iceumask'; call ncread_fld(self%icemaskfname, varname, self%icemask, start2, count2)
 
   end subroutine c_mom5cice5_geo_setup
 

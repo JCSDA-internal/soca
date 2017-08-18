@@ -10,7 +10,7 @@
 
 flog=$2.log.out
 ftest=$2.test.out
-
+export OMP_NUM_THREADS=4
 $1 | tee ${flog} && \
 grep 'Test     : ' ${flog} > ${ftest} && \
 diff -s $2 ${ftest}

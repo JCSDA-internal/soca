@@ -408,15 +408,34 @@ contains
   subroutine dot_prod(fld1,fld2,zprod)
     implicit none
     type(mom5cice5_field), intent(in) :: fld1, fld2
-    real(kind=kind_real), intent(out) :: zprod    
-
+    real(kind=kind_real), intent(out) :: zprod
+    integer :: jj, kk
     call check_resolution(fld1, fld2)
     if (fld1%nf /= fld2%nf .or. fld1%nzi /= fld2%nzi) then
        call abor1_ftn("mom5cice5_fields:field_prod error number of fields")
     endif
 
-    !call abor1_ftn("mom5cice5_fields:field_prod should never dot_product full state")    
-    zprod=0.0_kind_real
+    zprod = 0.0_kind_real
+    do jj = 1, fld1%ncat
+       zprod=sum(fld1%cicen(:,:,jj)*fld2%cicen(:,:,jj)*fld1%icemask) + &
+         sum(fld1%hicen(:,:,jj)*fld2%hicen(:,:,jj)*fld1%icemask) + &
+         sum(fld1%vicen(:,:,jj)*fld2%vicen(:,:,jj)*fld1%icemask) + &
+         sum(fld1%hsnon(:,:,jj)*fld2%hsnon(:,:,jj)*fld1%icemask) + &
+         sum(fld1%vsnon(:,:,jj)*fld2%vsnon(:,:,jj)*fld1%icemask) + &
+         sum(fld1%tsfcn(:,:,jj)*fld2%tsfcn(:,:,jj)*fld1%icemask) + &
+         sum(fld1%qsnon(:,:,jj)*fld2%qsnon(:,:,jj)*fld1%icemask)
+    end do
+
+    do jj = 1, fld1%ncat
+       do kk = 1,fld1%nzi
+          zprod = zprod + &
+         sum(fld1%sicnk(:,:,jj,kk)*fld2%sicnk(:,:,jj,kk)*fld1%icemask) + &
+         sum(fld1%qicnk(:,:,jj,kk)*fld2%qicnk(:,:,jj,kk)*fld1%icemask)
+       end do
+    end do
+    zprod = zprod + sum(fld1%sssoc*fld2%sssoc*fld1%mask) + &
+                    sum(fld1%tlioc*fld2%tlioc*fld1%mask) + &
+                    sum(fld1%sstoc*fld2%sstoc*fld1%mask)
 
     return
   end subroutine dot_prod
@@ -449,6 +468,7 @@ contains
     call check(x2)
 
     call zeros(lhs)
+
 
     if (x1%nx==x2%nx .and. x1%ny==x2%ny) then
        if (lhs%nx==x1%nx .and. lhs%ny==x1%ny) then
@@ -486,8 +506,8 @@ contains
 
     call check(fld)
     call check(rhs)
-
-    call abor1_ftn("mom5cice5_fields:field_resol: untested code")
+    call copy(fld,rhs) !!!!!!!!! NOT IMPLEMENTED YET !!!!!!!!!!!!!
+    !call abor1_ftn("mom5cice5_fields:field_resol: untested code")
 
     return
   end subroutine change_resol
@@ -537,8 +557,6 @@ contains
        call log%info(buf)
        call datetime_set(sdate, vdate)
     else
-
-    
        !iread = 0
        sdate = config_get_string(c_conf,len(sdate),"date")
        WRITE(buf,*) 'validity date is: '//sdate
@@ -606,11 +624,17 @@ contains
     character(len=20) :: sdate
     real(kind=8) :: missing=-999d0
 
-    integer :: ncid, varid, dimids2d(3), jx, jy
-    integer :: x_dimid, y_dimid, z_dimid, status
+    integer :: ncid, varid, dimids2d(2), dimids4d(3)
+    integer :: jx, jy, varid_lon, varid_lat, varid_sst
+    integer :: x_dimid, y_dimid, z_dimid, cat_dimid, status
+    integer :: catnum
+
+    catnum=1 !!!!!!!!!!!! HARD CODED CATEGORY !!!!!!!!!!!!!!!!!!!!
 
     call check(fld)
 
+    print *,'writing stuf ................'
+    
     filename = config_get_string(c_conf, len(filename), "filename")
     varname = config_get_string(c_conf, len(varname), "varname")
 
@@ -618,21 +642,33 @@ contains
     call nccheck( nf90_def_dim(ncid, "xaxis_1", fld%nx, x_dimid) )
     call nccheck( nf90_def_dim(ncid, "yaxis_1", fld%ny, y_dimid) )
     call nccheck( nf90_def_dim(ncid, "zaxis_1", fld%nzi, z_dimid) )
-    dimids2d =  (/ x_dimid, y_dimid, z_dimid/)
+    !call nccheck( nf90_def_dim(ncid, "cataxis_1", fld%ncat, cat_dimid) )
+    !dimids4d =  (/ x_dimid, y_dimid, cat_dimid, z_dimid /)
+    dimids4d =  (/ x_dimid, y_dimid, z_dimid /)
+    dimids2d =  (/ x_dimid, y_dimid /)
 
     print *,'writing ....', fld%nx, fld%ny
     
     do jx=1,fld%nx
        do jy=1,fld%ny
-          if (nint(fld%mask(jx,jy))==0) fld%qicnk(jx,jy,:,:) = missing
+          if (nint(fld%icemask(jx,jy))==0) fld%qicnk(jx,jy,:,:) = missing
+          if (nint(fld%mask(jx,jy))==0) fld%sstoc(jx,jy) = missing
        end do
     end do
 
-    call nccheck( nf90_def_var(ncid, 'qicnk', nf90_double, dimids2d, varid) )
+    call nccheck( nf90_def_var(ncid, 'qicnk', nf90_double, dimids4d, varid) )
     call nccheck( nf90_put_att(ncid, varid, '_FillValue', missing) )
+    call nccheck( nf90_def_var(ncid, 'sstoc', nf90_double, dimids2d, varid_sst) )
+    call nccheck( nf90_put_att(ncid, varid_sst, '_FillValue', missing) )
+    call nccheck( nf90_def_var(ncid, 'lat', nf90_double, dimids2d, varid_lat) )
+    call nccheck( nf90_def_var(ncid, 'lon', nf90_double, dimids2d, varid_lon) )        
     call nccheck( nf90_enddef(ncid) )
-    call nccheck( nf90_put_var(ncid, varid, fld%qicnk(:,:,1,:)))
-    !print *,'wdoneriting ....'
+    !call nccheck( nf90_put_var(ncid, varid, fld%qicnk(:,:,catnum,:)))
+    call nccheck( nf90_put_var(ncid, varid, fld%qicnk(:,:,catnum,:)))    
+    call nccheck( nf90_put_var(ncid, varid_sst, fld%sstoc))
+    call nccheck( nf90_put_var(ncid, varid_lat, fld%lat))
+    call nccheck( nf90_put_var(ncid, varid_lon, fld%lon))        
+    !print *,'doneriting ....'
     !call nccheck( nf90_def_var(ncid, varname, nf90_double, dimids2d, varid) )
     !call nccheck( nf90_enddef(ncid) )
     !call nccheck( nf90_put_var(ncid, varid, fld%sstoc ) )
@@ -652,14 +688,22 @@ contains
     type(mom5cice5_field), intent(in) :: fld
     integer, intent(in) :: nf
     real(kind=kind_real), intent(inout) :: pstat(3, nf) !> [average, min, max]
+    real(kind=kind_real) :: zz
     integer :: jj,joff
 
     call check(fld)
+    
+    !pstat(1,:)=minval(fld%cicen)
+    !pstat(2,:)=maxval(fld%cicen)
+    !pstat(3,:)=abs(maxval(fld%cicen)-minval(fld%cicen))
+    
+    !call abor1_ftn("mom5cice5_fields_gpnorm: error not implemented")
+    !print *,'pstat=',pstat
+    call dot_prod(fld,fld,zz)    
 
-    !if (jj /= nf) call abor1_ftn("mom5cice5_fields_gpnorm: error not implemented")
-
-    pstat = 0.0_kind_real
-
+    pstat = sqrt(zz)
+    !call random_number(pstat)
+    
     return
   end subroutine gpnorm
 
@@ -674,7 +718,7 @@ contains
 
     call check(fld)
 
-    zz = 0.0_kind_real
+    !zz = 0.0_kind_real
 
     !do jf=1,fld%nl*fld%nf
     !   do jy=1,fld%ny
@@ -685,9 +729,10 @@ contains
     !enddo
 
     !ii = fld%nl*fld%nf*fld%ny*fld%nx
-
+    call dot_prod(fld,fld,prms)
+    
     !prms = sqrt(zz/real(ii,kind_real))
-    prms = 0.0_kind_real
+    !prms = 1.0_kind_real
 
   end subroutine fldrms
 
@@ -718,6 +763,8 @@ contains
 
   subroutine convert_to_ug(self, ug)
     use unstructured_grid_mod
+    use mom5cice5_thermo
+    
     implicit none
     type(mom5cice5_field), intent(in) :: self
     type(unstructured_grid), intent(inout) :: ug
@@ -730,7 +777,7 @@ contains
     integer :: n_surf_vars  ! Number of surf vars (sould be 0 for ocean/ice)
     integer :: cat_num      ! !!!!!!!!! only doing 1 category for now !!!!!!!!!!!
 
-    cat_num = 1 
+    cat_num = 1
     nz_total = size(self%level)
     allocate(zz(nz_total))
     allocate(vv(nz_total))
@@ -746,29 +793,40 @@ contains
     do jy=1,self%ny
        do jx=1,self%nx
           jk = 1
-          cmask(jk) = nint(self%icemask(jx,jy))       ! Surface
+          cmask(jk) = int(self%icemask(jx,jy))       ! Surface T
           vv(jk) = self%tsfcn(jx,jy,cat_num)
           jk = jk + 1
-          do jz = 1,self%nzs                    ! Snow
-             cmask(jk) = nint(self%icemask(jx,jy))    !
+          do jz = 1,self%nzs                         ! Snow T
+             cmask(jk) = int(self%icemask(jx,jy))    !
+             !vv(jk) = Ts_nl(self%qsnon(jx,jy,cat_num))
              vv(jk) = self%qsnon(jx,jy,cat_num)             
              jk = jk + 1
           end do
-          do jz = 1,self%nzi                    ! Ice
-             cmask(jk) = nint(self%icemask(jx,jy))    !
+          do jz = 1,self%nzi                         ! Ice T
+             cmask(jk) = int(self%icemask(jx,jy))    !
+             !vv(jk) = Ti_nl(self%qicnk(jx,jy,cat_num,jz),self%sicnk(jx,jy,cat_num,jz))
              vv(jk) = self%qicnk(jx,jy,cat_num,jz)
              jk = jk + 1
           end do
-          cmask(jk) = nint(self%icemask(jx,jy))       ! Ice/Ocean interface
-          vv(jk) = self%sssoc(jx,jy)            ! Tf = -mu * S          
+          cmask(jk) = int(self%icemask(jx,jy))       ! Ice/Ocean interface
+          !vv(jk) = Tm(self%sssoc(jx,jy))             ! Tf = -mu * S
+          vv(jk) = self%sssoc(jx,jy)             ! Tf = -mu * S          
           jk = jk + 1          
-          do jz = 1,self%nzo                    ! Ocean
-             cmask(jk) = nint(self%mask(jx,jy))    !
-             vv(jk) = self%sstoc(jx,jy)         !
+          do jz = 1,self%nzo                         ! Ocean
+             !cmask(jk) = int(self%mask(jx,jy))       !
+             cmask(jk) = int(self%icemask(jx,jy))   !             
+             vv(jk) = self%sstoc(jx,jy)              !
              jk = jk + 1
           end do
-          cmask(:) = nint(self%mask(jx,jy)) ! A corriger !!!
 
+          cmask(:) = int(self%mask(jx,jy))           ! A corriger !!!
+          !print *,'cmask=',cmask
+          !if (self%icemask(jx,jy)>0.0) then
+             !print *,vv(:)
+             !read(*,*)
+          !end if
+          !if (cmask(1)==1) read(*,*)
+          
           call add_column(ug, self%lat(jx,jy), self%lon(jx,jy), &
                nz_total, &
                n_vars, &
@@ -795,14 +853,11 @@ contains
     integer :: cat_num      ! !!!!!!!!! only doing 1 category for now !!!!!!!!!!!
 
 !!!!!!!!! code inverse of convert_to_ug !!!!!!!!!!!!!!!
+
+    print *,'in convert from ug ............'
+
+    
     current => ug%head
-    !do while (associated(current))
-    !   jy = nint((current%column%lat + 40.0_kind_real) / dy) + 1
-    !   jx = nint(current%column%lon / dx) + 1
-    !self%x(jx,jy,1) = current%column%cols(1)
-    !self%x(jx,jy,2) = current%column%cols(2)
-    !   current => current%next
-    !enddo
     cat_num = 1 
     n_vars = 1      !!!!! START WITH ONLY ONE VAR !!!!!!!!! 
     n_surf_vars = 0 !!!!! NO SURFACE VAR !!!!!!!!! 
@@ -810,22 +865,23 @@ contains
     do jy=1,self%ny
        do jx=1,self%nx
           jk = 1
-          self%tsfcn(jx,jy,cat_num) = current%column%cols(jk)
+          self%tsfcn(jx,jy,cat_num) = current%column%cols(jk)         ! Tsfcs
           jk = jk + 1
-          do jz = 1,self%nzs                    ! Snow
+          do jz = 1,self%nzs                                          ! Q Snow
              self%qsnon(jx,jy,cat_num) = current%column%cols(jk)
              jk = jk + 1
           end do
-          do jz = 1,self%nzi                    ! Ice
+          do jz = 1,self%nzi                                          ! Q Ice
              self%qicnk(jx,jy,cat_num,jz) = current%column%cols(jk)
              jk = jk + 1
           end do
-          self%sssoc(jx,jy) = current%column%cols(jk) ! Ice/Ocean interface, Tf = -mu * S          
+          self%sssoc(jx,jy) = current%column%cols(jk)                 ! Ice/Ocean interface,
+                                                                      ! Tf = -mu * S          
           jk = jk + 1          
-          do jz = 1,self%nzo                    ! Ocean
-             self%sstoc(jx,jy) = current%column%cols(jk)         !
+          do jz = 1,self%nzo                                          ! Ocean SST
+             self%sstoc(jx,jy) = current%column%cols(jk)              !
              jk = jk + 1
-          end do
+          end do          
           current => current%next
        enddo
        print*, 'from',jy

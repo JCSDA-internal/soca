@@ -1,7 +1,7 @@
 module mom5cice5_thermo
 
   use mom5cice5_constants
-  use mom5cice5_fields
+  !use mom5cice5_fields
   !use mpi
   implicit none
 
@@ -131,6 +131,24 @@ contains
 
   end function dTi_tl
 
+  ! ------------------------------------------------------------------------------
+  function Ts_nl(Qs)
+    ! Temperature of sea-ice given sea-ice enthalpy and salinity ( Qi_nl^-1 )
+    !
+    !  Args:
+    !      Qs   (kind_real): Sea-Ice enthalpy
+    !
+    !  Return: 
+    !         (kind_real): Temperature of Sea-Ice     
+    !
+    real(kind=kind_real) :: Qs
+    real(kind=kind_real) :: Ts_nl
+    
+    Ts_nl = (Qs+rho_s*L0)/(rho_s*c0)
+
+  end function Ts_nl
+
+  
   ! ------------------------------------------------------------------------------
 
   function Ki_nl(Ti,Si)
