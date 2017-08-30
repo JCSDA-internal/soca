@@ -23,6 +23,7 @@ module mom5cice5_fields
 
   !> Fortran derived type to hold QG fields
   type :: mom5cice5_field
+     type(mom5cice5_geom), pointer :: geom !< MOM5 & CICE5 Geometry
      integer :: nx                     !< Zonal grid dimension
      integer :: ny                     !< Meridional grid dimension
      integer :: nzo                    !< Number of z levels in the ocean
@@ -33,12 +34,7 @@ module mom5cice5_fields
      character(len=128) :: gridfname   !< Grid file name
      character(len=128) :: cicefname   !< Fields file name for cice
      character(len=128) :: momfname    !< Fields file name for mom
-     real(kind=kind_real), allocatable :: lat(:,:)            !< ... from geom
-     real(kind=kind_real), allocatable :: lon(:,:)            !< ... from geom  !!!! NEED TO FIND BETTER SOLUTION !!!!!!
-     real(kind=kind_real), allocatable :: cell_area(:,:)      !< ... from geom  !!!! NEED TO FIND BETTER SOLUTION !!!!!!     
-     integer,              allocatable :: level(:)            !< ... from geom
-     real(kind=kind_real), allocatable :: icemask(:,:)        !< ... from geom Sea-ice mask
-     real(kind=kind_real), allocatable :: mask(:,:)           !< ... from geom ocean mask !!!!! ONLY SURFACE !!!!!!        
+
      real(kind=kind_real), allocatable :: cicen(:,:,:)        !< Sea-ice fraction
      real(kind=kind_real), allocatable :: hicen(:,:,:)        !< Sea-ice thickness
      real(kind=kind_real), allocatable :: vicen(:,:,:)        !< Sea-ice volume
@@ -73,9 +69,10 @@ contains
   subroutine create(self, geom, vars)
     implicit none
     type(mom5cice5_field), intent(inout) :: self
-    type(mom5cice5_geom),  intent(in)    :: geom
+    type(mom5cice5_geom),  pointer, intent(in)    :: geom
     type(mom5cice5_vars),  intent(in)    :: vars
 
+    self%geom => geom
     self%nx   = geom%nx
     self%ny   = geom%ny
     self%nzo  = geom%nzo
@@ -84,20 +81,6 @@ contains
     self%ncat = geom%ncat
     self%gridfname = geom%gridfname
     self%nf   = vars%nv
-
-    allocate(self%lon(self%nx,self%ny))
-    allocate(self%lat(self%nx,self%ny))
-    allocate(self%cell_area(self%nx,self%ny))
-    allocate(self%mask(self%nx,self%ny))
-    allocate(self%icemask(self%nx,self%ny))
-    allocate(self%level(self%nzs+self%nzi+self%nzo+2))    
-
-    self%lat = geom%lat
-    self%lon = geom%lon
-    self%cell_area = geom%cell_area    
-    self%mask = geom%mask
-    self%icemask = geom%icemask
-    self%level = geom%level
 
     allocate(self%cicen(self%nx,self%ny,self%ncat))
     allocate(self%hicen(self%nx,self%ny,self%ncat))
@@ -249,10 +232,6 @@ contains
 
     nf = common_vars(self, rhs)
 
-    self%lat = rhs%lat
-    self%lon = rhs%lon
-    self%cell_area = rhs%cell_area
-    self%level = rhs%level
     self%cicen = rhs%cicen
     self%hicen = rhs%hicen
     self%vicen = rhs%vicen
@@ -421,26 +400,26 @@ contains
 
     zprod = 0.0_kind_real
     do jj = 1, fld1%ncat
-       zprod=sum(fld1%cicen(:,:,jj)*fld2%cicen(:,:,jj)*fld1%icemask) + &
-         sum(fld1%hicen(:,:,jj)*fld2%hicen(:,:,jj)*fld1%icemask) + &
-         sum(fld1%vicen(:,:,jj)*fld2%vicen(:,:,jj)*fld1%icemask) + &
-         sum(fld1%hsnon(:,:,jj)*fld2%hsnon(:,:,jj)*fld1%icemask) + &
-         sum(fld1%vsnon(:,:,jj)*fld2%vsnon(:,:,jj)*fld1%icemask) + &
-         sum(fld1%tsfcn(:,:,jj)*fld2%tsfcn(:,:,jj)*fld1%icemask) + &
-         sum(fld1%qsnon(:,:,jj)*fld2%qsnon(:,:,jj)*fld1%icemask)
+       zprod=sum(fld1%cicen(:,:,jj)*fld2%cicen(:,:,jj)*fld1%geom%icemask) + &
+             sum(fld1%hicen(:,:,jj)*fld2%hicen(:,:,jj)*fld1%geom%icemask) + &
+             sum(fld1%vicen(:,:,jj)*fld2%vicen(:,:,jj)*fld1%geom%icemask) + &
+             sum(fld1%hsnon(:,:,jj)*fld2%hsnon(:,:,jj)*fld1%geom%icemask) + &
+             sum(fld1%vsnon(:,:,jj)*fld2%vsnon(:,:,jj)*fld1%geom%icemask) + &
+             sum(fld1%tsfcn(:,:,jj)*fld2%tsfcn(:,:,jj)*fld1%geom%icemask) + &
+             sum(fld1%qsnon(:,:,jj)*fld2%qsnon(:,:,jj)*fld1%geom%icemask)
     end do
 
     do jj = 1, fld1%ncat
        do kk = 1,fld1%nzi
           zprod = zprod + &
-         sum(fld1%sicnk(:,:,jj,kk)*fld2%sicnk(:,:,jj,kk)*fld1%icemask) + &
-         sum(fld1%qicnk(:,:,jj,kk)*fld2%qicnk(:,:,jj,kk)*fld1%icemask)
+             sum(fld1%sicnk(:,:,jj,kk)*fld2%sicnk(:,:,jj,kk)*fld1%geom%icemask) + &
+             sum(fld1%qicnk(:,:,jj,kk)*fld2%qicnk(:,:,jj,kk)*fld1%geom%icemask)
        end do
     end do
-    zprod = zprod + sum(fld1%sssoc*fld2%sssoc*fld1%mask) + &
-                    sum(fld1%tlioc*fld2%tlioc*fld1%mask) + &
-                    sum(fld1%sstoc*fld2%sstoc*fld1%mask)
-
+    zprod = zprod + sum(fld1%sssoc*fld2%sssoc*fld1%geom%mask) + &
+                    sum(fld1%tlioc*fld2%tlioc*fld1%geom%mask) + &
+                    sum(fld1%sstoc*fld2%sstoc*fld1%geom%mask)
+    print *,'zprod=',zprod
     return
   end subroutine dot_prod
 
@@ -510,7 +489,7 @@ contains
 
     call check(fld)
     call check(rhs)
-    call copy(fld,rhs) !!!!!!!!! NOT IMPLEMENTED YET !!!!!!!!!!!!!
+    call copy(fld,rhs)
     !call abor1_ftn("mom5cice5_fields:field_resol: untested code")
 
     return
@@ -526,6 +505,8 @@ contains
     use netcdf
     use ncutils
     use interface_ncread_fld, only: ncread_fld
+    use mom5cice5_thermo
+    
     implicit none
     type(mom5cice5_field), intent(inout) :: fld      !< Fields
     type(c_ptr), intent(in)       :: c_conf   !< Configuration
@@ -540,7 +521,7 @@ contains
     character(len=11) :: fmt1='(X,ES24.16)'
     character(len=1024)  :: buf
     character(len=128)  :: varname, basename
-    integer :: ic, iy, il, ix, is, jx, jy, jf, iread, nf, level
+    integer :: ic, iy, il, ix, is, jx, jy, jk, jcat, jf, iread, nf, level
     real(kind=kind_real), allocatable :: zz(:), var3d(:,:,:)
 
     integer :: nx0, ny0
@@ -550,16 +531,12 @@ contains
     integer :: start4(4), count4(4)    
 
     nx0=1 !20
-    ny0=350 !60
+    ny0=1 !60
 
-    print *,fld%nx, fld%ny
-    print *,shape(fld%cicen)
-    print *,fld%lon(10,10)
     iread = 0
     if (config_element_exists(c_conf,"read_from_file")) then
        iread = config_get_int(c_conf,"read_from_file")
     endif
-    print *,'IREAD=',iread
     if (iread==0) then
        call log%warning("mom5cice5_fields:read_file: Inventing State")
        call invent_state(fld,c_conf)
@@ -611,6 +588,16 @@ contains
 
     endif
 
+    do jx = 1,fld%nx
+       do jy = 1,fld%ny
+          do jk = 1,fld%nzi
+             do jcat = 1,fld%ncat             
+                fld%qicnk(jx,jy,jcat,jk) = Ti_nl(fld%qicnk(jx,jy,jcat,jk),fld%sicnk(jx,jy,jcat,jk))
+             end do
+          end do
+       end do
+    end do
+    
     call check(fld)
 
     return
@@ -642,10 +629,10 @@ contains
 
     catnum=1 !!!!!!!!!!!! HARD CODED CATEGORY !!!!!!!!!!!!!!!!!!!!
 
+    print *,'============== IN WRITE FILE =================='
+    
     call check(fld)
 
-    print *,'writing stuf ................'
-    
     filename = config_get_string(c_conf, len(filename), "filename")
     varname = config_get_string(c_conf, len(varname), "varname")
 
@@ -658,12 +645,10 @@ contains
     dimids4d =  (/ x_dimid, y_dimid, z_dimid /)
     dimids2d =  (/ x_dimid, y_dimid /)
 
-    print *,'writing ....', fld%nx, fld%ny
-    
     do jx=1,fld%nx
        do jy=1,fld%ny
-          if (nint(fld%icemask(jx,jy))==0) fld%qicnk(jx,jy,:,:) = missing
-          if (nint(fld%mask(jx,jy))==0) fld%sstoc(jx,jy) = missing
+          if (nint(fld%geom%mask(jx,jy))==0) fld%qicnk(jx,jy,:,:) = missing          
+          if (nint(fld%geom%mask(jx,jy))==0) fld%sstoc(jx,jy) = missing
        end do
     end do
 
@@ -677,16 +662,14 @@ contains
     !call nccheck( nf90_put_var(ncid, varid, fld%qicnk(:,:,catnum,:)))
     call nccheck( nf90_put_var(ncid, varid, fld%qicnk(:,:,catnum,:)))    
     call nccheck( nf90_put_var(ncid, varid_sst, fld%sstoc))
-    call nccheck( nf90_put_var(ncid, varid_lat, fld%lat))
-    call nccheck( nf90_put_var(ncid, varid_lon, fld%lon))        
+    call nccheck( nf90_put_var(ncid, varid_lat, fld%geom%lat))
+    call nccheck( nf90_put_var(ncid, varid_lon, fld%geom%lon))        
     !print *,'doneriting ....'
     !call nccheck( nf90_def_var(ncid, varname, nf90_double, dimids2d, varid) )
     !call nccheck( nf90_enddef(ncid) )
     !call nccheck( nf90_put_var(ncid, varid, fld%sstoc ) )
     call nccheck( nf90_close(ncid) )
 
-    print *,'in write field ...............'
-    
     call datetime_to_string(vdate, sdate)
 
     return
@@ -713,6 +696,9 @@ contains
     call dot_prod(fld,fld,zz)    
 
     pstat = sqrt(zz)
+
+    print *,'pstat=',pstat
+    
     !call random_number(pstat)
     
     return
@@ -729,21 +715,8 @@ contains
 
     call check(fld)
 
-    !zz = 0.0_kind_real
-
-    !do jf=1,fld%nl*fld%nf
-    !   do jy=1,fld%ny
-    !      do jx=1,fld%nx
-    !         zz = zz + fld%gfld3d(jx,jy,jf)*fld%gfld3d(jx,jy,jf)
-    !      enddo
-    !   enddo
-    !enddo
-
-    !ii = fld%nl*fld%nf*fld%ny*fld%nx
     call dot_prod(fld,fld,prms)
-    
-    !prms = sqrt(zz/real(ii,kind_real))
-    !prms = 1.0_kind_real
+    prms = sqrt(prms)
 
   end subroutine fldrms
 
@@ -789,50 +762,47 @@ contains
     integer :: cat_num      ! !!!!!!!!! only doing 1 category for now !!!!!!!!!!!
 
     cat_num = 1
-    nz_total = size(self%level)
+    nz_total = size(self%geom%level)
     allocate(zz(nz_total))
     allocate(vv(nz_total))
     allocate(cmask(nz_total))
     do jz = 1,nz_total
-       zz(jz) = real(self%level(jz))
+       zz(jz) = real(self%geom%level(jz))
     end do
     call create_unstructured_grid(ug, nz_total, zz)
 
-    print *,sum(self%cell_area)/(6300e3)**2
-    
     n_vars = 1      !!!!! START WITH ONLY ONE VAR !!!!!!!!! 
     n_surf_vars = 0 !!!!! NO SURFACE VAR !!!!!!!!! 
 
     do jy=1,self%ny
        do jx=1,self%nx
           jk = 1
-          cmask(jk) = int(self%icemask(jx,jy))       ! Surface T
+          cmask(jk) = int(self%geom%mask(jx,jy))       ! Surface T
           vv(jk) = self%tsfcn(jx,jy,cat_num)
           jk = jk + 1
-          do jz = 1,self%nzs                         ! Snow T
-             cmask(jk) = int(self%icemask(jx,jy))    !
+          do jz = 1,self%nzs                              ! Snow T
+             cmask(jk) = int(self%geom%mask(jx,jy))    !
              !vv(jk) = Ts_nl(self%qsnon(jx,jy,cat_num))
              vv(jk) = self%qsnon(jx,jy,cat_num)             
              jk = jk + 1
           end do
-          do jz = 1,self%nzi                         ! Ice T
-             cmask(jk) = int(self%icemask(jx,jy))    !
+          do jz = 1,self%nzi                              ! Ice T
+             cmask(jk) = int(self%geom%mask(jx,jy))    !
              !vv(jk) = Ti_nl(self%qicnk(jx,jy,cat_num,jz),self%sicnk(jx,jy,cat_num,jz))
              vv(jk) = self%qicnk(jx,jy,cat_num,jz)
              jk = jk + 1
           end do
-          cmask(jk) = int(self%icemask(jx,jy))       ! Ice/Ocean interface
-          !vv(jk) = Tm(self%sssoc(jx,jy))             ! Tf = -mu * S
-          vv(jk) = self%sssoc(jx,jy)             ! Tf = -mu * S          
+          cmask(jk) = int(self%geom%mask(jx,jy))       ! Ice/Ocean interface
+          !vv(jk) = Tm(self%sssoc(jx,jy))                 ! Tf = -mu * S
+          vv(jk) = self%sssoc(jx,jy)                      ! Tf = -mu * S          
           jk = jk + 1          
-          do jz = 1,self%nzo                         ! Ocean
-             !cmask(jk) = int(self%mask(jx,jy))       !
-             cmask(jk) = int(self%icemask(jx,jy))   !             
-             vv(jk) = self%sstoc(jx,jy)              !
+          do jz = 1,self%nzo                              ! Ocean
+             cmask(jk) = int(self%geom%mask(jx,jy))    !             
+             vv(jk) = self%sstoc(jx,jy)                   !
              jk = jk + 1
           end do
 
-          cmask(:) = int(self%mask(jx,jy))           ! A corriger !!!
+          cmask(:) = int(self%geom%mask(jx,jy))           ! Some issues with the mask
           !print *,'cmask=',cmask
           !if (self%icemask(jx,jy)>0.0) then
              !print *,vv(:)
@@ -840,7 +810,7 @@ contains
           !end if
           !if (cmask(1)==1) read(*,*)
           
-          call add_column(ug, self%lat(jx,jy), self%lon(jx,jy), self%cell_area(jx, jy), &
+          call add_column(ug, self%geom%lat(jx,jy), self%geom%lon(jx,jy), self%geom%cell_area(jx, jy), &
                nz_total, &
                n_vars, &
                n_surf_vars, &
@@ -867,9 +837,6 @@ contains
 
 !!!!!!!!! code inverse of convert_to_ug !!!!!!!!!!!!!!!
 
-    print *,'in convert from ug ............'
-
-    
     current => ug%head
     cat_num = 1 
     n_vars = 1      !!!!! START WITH ONLY ONE VAR !!!!!!!!! 
@@ -897,7 +864,6 @@ contains
           end do          
           current => current%next
        enddo
-       print*, 'from',jy
     enddo
 
   end subroutine convert_from_ug

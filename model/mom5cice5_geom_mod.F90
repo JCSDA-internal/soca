@@ -103,7 +103,7 @@ contains
        self%level(jj) = jj
     end do
     nx0=1 !20
-    ny0=350 !60
+    ny0=1 !60
     start2 = (/nx0,ny0/)
     count2 = (/self%nx,self%ny/)    
     print *,'ocean grid file name:',self%gridfname

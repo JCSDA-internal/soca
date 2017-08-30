@@ -1,0 +1,135 @@
+---
+logging:
+  categories: Info, Test, Warning, Error
+resolution:
+  nx: '600'
+  ny: '60'
+  nzo: '1'
+  nzi: '7'
+  nzs: '1'
+  ncat: '5'
+  nf: '12'
+  gridfname: "/home/gvernier/Data/MOM5CICE5/ogrid05.nc"
+  icemaskfname: "/home/gvernier/Data/MOM5CICE5/icemask.nc"
+variables:
+  variables: "ci"
+initial:
+  read_from_file: '1'
+  date: "2009-12-31T00:00:00Z"
+  cicefname: "/home/gvernier/Data/MOM5CICE5/iced.2015-05-01.01.nc"
+  momfname: "/home/gvernier/Data/MOM5CICE5/ocean_temp_salt.01.res.nc"
+  save:
+    filename: "/home/gvernier/Sandboxes/OOPS/build/oops/Mom5Cice5/test/test.nc"
+    varname: "sssoc"
+Covariance:
+  covariance: "ensemble"
+  members: '4'
+  variables:
+    variables: "ci"
+  date: "2009-12-31T00:00:00Z"
+  localization:
+    localization: "NICAS"
+    datadir: "."
+    prefix: "ocean_ice"
+    colorlog: '0'
+    model: "oops"
+    nl: '11'
+    levs(1): '1'
+    levs(2): '2'
+    levs(3): '3'
+    levs(4): '4'
+    levs(5): '5'
+    levs(6): '6'
+    levs(7): '7'
+    levs(8): '8'
+    levs(9): '9'
+    levs(10): '10'
+    levs(11): '11'
+    new_param: '1'
+    new_mpi: '1'
+    check_adjoints: '1'
+    check_pos_def: '0'
+    check_mpi: '1'
+    check_dirac: '1'
+    check_perf: '0'
+    ndir: '1'
+    levdir: '1'
+    londir(1): '0'
+    latdir(1): '-90'
+    sam_default_seed: '1'
+    mask_check: '1'
+    ntry: '3'
+    nrep: '2'
+    logpres: '0'
+    lsqrt: '0'
+    Lbh_file: 'none'
+    Lbh(1): '300000'
+    Lbh(2): '300000'
+    Lbh(3): '300000'
+    Lbh(4): '300000'
+    Lbh(5): '300000'
+    Lbh(6): '300000'
+    Lbh(7): '300000'
+    Lbh(8): '300000'
+    Lbh(9): '300000'
+    Lbh(10): '300000'
+    Lbh(11): '300000'
+    Lbv_file: 'none'
+    Lbv(1): '2'
+    Lbv(2): '2'
+    Lbv(3): '2'
+    Lbv(4): '2'
+    Lbv(5): '2'
+    Lbv(6): '2'
+    Lbv(7): '2'
+    Lbv(8): '2'
+    Lbv(9): '2'
+    Lbv(10):'2'
+    Lbv(11): '2'
+    resol: '10'
+    network: '1'
+    nproc: '1'
+    mpicom: '2'
+  state:
+  - read_from_file: '1'
+    date: "2009-12-31T00:00:00Z"
+    cicefname: "/home/gvernier/Data/MOM5CICE5/iced.2015-05-01.01.nc"
+    momfname: "/home/gvernier/Data/MOM5CICE5/ocean_temp_salt.01.res.nc"
+  - read_from_file: '1'
+    date: "2009-12-31T00:00:00Z"
+    cicefname: "/home/gvernier/Data/MOM5CICE5/iced.2015-05-01.02.nc"
+    momfname: "/home/gvernier/Data/MOM5CICE5/ocean_temp_salt.02.res.nc"
+  - read_from_file: '1'
+    date: "2009-12-31T00:00:00Z"
+    cicefname: "/home/gvernier/Data/MOM5CICE5/iced.2015-05-01.03.nc"
+    momfname: "/home/gvernier/Data/MOM5CICE5/ocean_temp_salt.03.res.nc"
+  - read_from_file: '1'
+    date: "2009-12-31T00:00:00Z"
+    cicefname: "/home/gvernier/Data/MOM5CICE5/iced.2015-05-01.04.nc"
+    momfname: "/home/gvernier/Data/MOM5CICE5/ocean_temp_salt.04.res.nc"
+dirac:
+  ndir: '8'
+  ixdir(1): '2'
+  ixdir(2): '386'
+  ixdir(3): '210'
+  ixdir(4): '295'
+  ixdir(5): '444'
+  ixdir(6): '592'
+  ixdir(7): '521'
+  ixdir(8): '580'
+  iydir(1): '11'
+  iydir(2): '7'
+  iydir(3): '55'
+  iydir(4): '47'
+  iydir(5): '45'
+  iydir(6): '57'
+  iydir(7): '21'
+  iydir(8): '48'
+  ildir: '1'
+  ifdir: '1'
+output_nicas:
+  filename: "/home/gvernier/Sandboxes/OOPS/build/oops/Mom5Cice5/test/dirac.nc"
+  varname: "sssoc"
+output_Bens:
+  filename: "/home/gvernier/Sandboxes/OOPS/build/oops/Mom5Cice5/test/Bens.nc"
+  varname: "sssoc"
