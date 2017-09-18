@@ -7,10 +7,10 @@ module ncutils
 contains
   subroutine nccheck(status)
 
-    integer, intent (in) :: status
+    integer, intent (in)  :: status
 
     if (status /= nf90_noerr) then
-       !print *, trim(nf90_strerror(status))
+       print *,trim(nf90_strerror(status))
        stop "Stopped"
     end if
 
@@ -91,12 +91,10 @@ contains
     integer, intent(in)                                                :: n1, n2, start(4), count(4)
     integer                                                            :: varid, fid_in
 
-    print *,filename, varname
     call nccheck(nf90_open(filename, nf90_nowrite, fid_in) )
     call nccheck(nf90_inq_varid(fid_in, varname, varid))
     call nccheck(nf90_get_var(fid_in, varid, VAR, start, count))
     call nccheck(nf90_close(fid_in))
-    print *,'out of readnc'
   end subroutine read2d_from4d
 
 end module interface_ncread_fld

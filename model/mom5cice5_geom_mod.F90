@@ -47,7 +47,7 @@ module mom5cice5_geom_mod
      integer,              allocatable :: level(:)       !< 1D array of levels. See beginning of script for def.
      real(kind=kind_real), allocatable :: mask(:,:)      !< 0 = land 1 = ocean surface mask only
      real(kind=kind_real), allocatable :: icemask(:,:)   !< 0 = land/liquid ocean 1 = some ice
-     real(kind=kind_real), allocatable :: cell_area(:,:) !< 
+     real(kind=kind_real), allocatable :: cell_area(:,:) !<
   end type mom5cice5_geom
 
 #define LISTED_TYPE mom5cice5_geom
@@ -65,7 +65,6 @@ contains
 #include "linkedList_c.f"
 
   ! ------------------------------------------------------------------------------
-
   subroutine c_mom5cice5_geo_setup(c_key_self, c_conf) bind(c,name='mom5cice5_geo_setup_f90')
     use netcdf
     use interface_ncread_fld, only: ncread_fld
@@ -106,16 +105,12 @@ contains
     ny0=1 !60
     start2 = (/nx0,ny0/)
     count2 = (/self%nx,self%ny/)    
-    print *,'ocean grid file name:',self%gridfname
-    print *,'ice mask file name:',self%icemaskfname
     varname='x_T'; call ncread_fld(self%gridfname, varname, self%lon, start2, count2)
     varname='y_T'; call ncread_fld(self%gridfname, varname, self%lat, start2, count2)
     varname='wet'; call ncread_fld(self%gridfname, varname, self%mask, start2, count2)
     varname='area_T'; call ncread_fld(self%gridfname, varname, self%cell_area, start2, count2)
     varname='iceumask'; call ncread_fld(self%icemaskfname, varname, self%icemask, start2, count2)
 
-    print *,sum(self%cell_area)/(6300e3)**2
-    
   end subroutine c_mom5cice5_geo_setup
 
   ! ------------------------------------------------------------------------------
@@ -155,7 +150,7 @@ contains
     integer(c_int), intent(inout) :: c_key_self     
     type(mom5cice5_geom), pointer :: self
 
-    call mom5cice5_geom_registry%get(c_key_self , self )
+    call mom5cice5_geom_registry%get(c_key_self, self)
     if (allocated(self%lon)) deallocate(self%lon)
     if (allocated(self%lat)) deallocate(self%lat)
     if (allocated(self%level)) deallocate(self%level)    
