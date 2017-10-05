@@ -29,11 +29,11 @@ namespace mom5cice5 {
       ~Geometry();
 
       //std::vector<int> getDims() const;
-      std::vector<double> getLats() const;
-      std::vector<double> getLons() const;
-      std::vector<double> getLevs() const;
+      //std::vector<double> getLats() const;
+      //std::vector<double> getLons() const;
+      //std::vector<double> getLevs() const;
       //std::vector<double> getArea() const;
-      std::vector<int> getMask(const int &) const;
+      //std::vector<int> getMask(const int &) const;
 
       int& toFortran() {return keyGeom_;}
       const int& toFortran() const {return keyGeom_;}

@@ -53,7 +53,7 @@ module mom5cice5_fields
 #define LISTED_TYPE mom5cice5_field
 
   !> Linked list interface - defines registry_t type
-#include "linkedList_i.f"
+#include "util/linkedList_i.f"
 
   !> Global registry
   type(registry_t) :: mom5cice5_field_registry
@@ -62,7 +62,7 @@ module mom5cice5_fields
 contains
   ! ------------------------------------------------------------------------------
   !> Linked list implementation
-#include "linkedList_c.f"
+#include "util/linkedList_c.f"
 
   ! ------------------------------------------------------------------------------
 
@@ -586,17 +586,19 @@ contains
        varname='salt'
        call ncread_fld(fld%momfname, varname, fld%sssoc, fld%nx, fld%ny, start4, count4)
 
+       print *, 'OUT OF READ_FILE'
     endif
-
-    do jx = 1,fld%nx
-       do jy = 1,fld%ny
-          do jk = 1,fld%nzi
-             do jcat = 1,fld%ncat             
-                fld%qicnk(jx,jy,jcat,jk) = Ti_nl(fld%qicnk(jx,jy,jcat,jk),fld%sicnk(jx,jy,jcat,jk))
-             end do
-          end do
-       end do
-    end do
+!!$
+!!$    
+!!$    do jx = 1,fld%nx
+!!$       do jy = 1,fld%ny
+!!$          do jk = 1,fld%nzi
+!!$             do jcat = 1,fld%ncat             
+!!$                fld%qicnk(jx,jy,jcat,jk) = Ti_nl(fld%qicnk(jx,jy,jcat,jk),fld%sicnk(jx,jy,jcat,jk))
+!!$             end do
+!!$          end do
+!!$       end do
+!!$    end do
     
     call check(fld)
 
@@ -802,7 +804,7 @@ contains
              jk = jk + 1
           end do
 
-          cmask(:) = int(self%geom%mask(jx,jy))           ! Some issues with the mask
+          !cmask(:) = int(self%geom%mask(jx,jy))           ! Some issues with the mask
           !print *,'cmask=',cmask
           !if (self%icemask(jx,jy)>0.0) then
              !print *,vv(:)
@@ -816,7 +818,7 @@ contains
                n_surf_vars, &
                cmask, &
                0)
-          ug%last%column%cols(:) = vv(:)
+          ug%last%column%fld3d(:) = vv(:)
        enddo
     enddo
   end subroutine convert_to_ug
@@ -845,21 +847,21 @@ contains
     do jy=1,self%ny
        do jx=1,self%nx
           jk = 1
-          self%tsfcn(jx,jy,cat_num) = current%column%cols(jk)         ! Tsfcs
+          self%tsfcn(jx,jy,cat_num) = current%column%fld3d(jk)         ! Tsfcs
           jk = jk + 1
           do jz = 1,self%nzs                                          ! Q Snow
-             self%qsnon(jx,jy,cat_num) = current%column%cols(jk)
+             self%qsnon(jx,jy,cat_num) = current%column%fld3d(jk)
              jk = jk + 1
           end do
           do jz = 1,self%nzi                                          ! Q Ice
-             self%qicnk(jx,jy,cat_num,jz) = current%column%cols(jk)
+             self%qicnk(jx,jy,cat_num,jz) = current%column%fld3d(jk)
              jk = jk + 1
           end do
-          self%sssoc(jx,jy) = current%column%cols(jk)                 ! Ice/Ocean interface,
+          self%sssoc(jx,jy) = current%column%fld3d(jk)                 ! Ice/Ocean interface,
                                                                       ! Tf = -mu * S          
           jk = jk + 1          
           do jz = 1,self%nzo                                          ! Ocean SST
-             self%sstoc(jx,jy) = current%column%cols(jk)              !
+             self%sstoc(jx,jy) = current%column%fld3d(jk)              !
              jk = jk + 1
           end do          
           current => current%next

@@ -21,7 +21,7 @@ module mom5cice5_vars_mod
 #define LISTED_TYPE mom5cice5_vars
 
   !> Linked list interface - defines registry_t type
-#include "linkedList_i.f"
+#include "util/linkedList_i.f"
 
   !> Global registry
   type(registry_t) :: mom5cice5_vars_registry
@@ -30,7 +30,7 @@ module mom5cice5_vars_mod
 contains
   ! ------------------------------------------------------------------------------
   !> Linked list implementation
-#include "linkedList_c.f"
+#include "util/linkedList_c.f"
 
   ! ------------------------------------------------------------------------------
 

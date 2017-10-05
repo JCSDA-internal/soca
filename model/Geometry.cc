@@ -31,6 +31,7 @@ namespace mom5cice5 {
     return dims;
     }/**/
   // -----------------------------------------------------------------------------                                                                               
+  /*
   std::vector<double> Geometry::getLats() const {
     int nx;
     int ny;
@@ -100,14 +101,15 @@ namespace mom5cice5 {
     mom5cice5_geo_getgeofld_f90(keyGeom_, &cell_area[0], geofld);
     a=0.0;
     for (int jj = 0; jj < nx*ny; ++jj) {
-      a = a + mask[jj]*cell_area[jj];
+    a = a + mask[jj]*cell_area[jj];
     }
     std::vector<double> area(nzi+1);
     for (int jj = 0; jj < nzi+1; ++jj) {
-      area[jj] = a;
+    area[jj] = a;
     }
     return area;
     }/**/
+  /*
   // -----------------------------------------------------------------------------
   std::vector<int> Geometry::getMask(const int & level) const {
     //std::vector<int> Geometry::getMask(int & level) const {    
@@ -128,7 +130,7 @@ namespace mom5cice5 {
 
     return mask;
   }
-  // -----------------------------------------------------------------------------             
+  // -----------------------------------------------------------------------------          /**/   
   void Geometry::print(std::ostream & os) const {
     int nx;
     int ny;
