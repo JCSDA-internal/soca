@@ -201,7 +201,10 @@ contains
     call zeros(self)
     !ioff = (ifdir-1)*self%nl
     do idir=1,ndir
-       self%qicnk(ixdir(idir),iydir(idir),1,4) = 1.0 ! Surface temp incr for cat 1
+       !self%qicnk(ixdir(idir),iydir(idir),1,4) = 1.0 ! Surface temp incr for cat 1
+       !self%tsfcn(ixdir(idir),iydir(idir),1) = 1.0 ! Surface temp incr for cat 1
+       self%sstoc(ixdir(idir),iydir(idir)) = 1.0 ! Surface temp incr for cat 1
+       !self%cicen(ixdir(idir),iydir(idir),3) = 1.0 ! Surface temp incr for cat 1
     end do
 
   end subroutine dirac
@@ -588,18 +591,18 @@ contains
 
        print *, 'OUT OF READ_FILE'
     endif
-!!$
-!!$    
-!!$    do jx = 1,fld%nx
-!!$       do jy = 1,fld%ny
-!!$          do jk = 1,fld%nzi
-!!$             do jcat = 1,fld%ncat             
-!!$                fld%qicnk(jx,jy,jcat,jk) = Ti_nl(fld%qicnk(jx,jy,jcat,jk),fld%sicnk(jx,jy,jcat,jk))
-!!$             end do
-!!$          end do
-!!$       end do
-!!$    end do
+
     
+    do jx = 1,fld%nx
+       do jy = 1,fld%ny
+          do jk = 1,fld%nzi
+             do jcat = 1,fld%ncat             
+                fld%qicnk(jx,jy,jcat,jk) = Ti_nl(fld%qicnk(jx,jy,jcat,jk),fld%sicnk(jx,jy,jcat,jk))
+             end do
+          end do
+       end do
+    end do
+
     call check(fld)
 
     return
@@ -624,8 +627,8 @@ contains
     character(len=20) :: sdate
     real(kind=8) :: missing=-999d0
 
-    integer :: ncid, varid, dimids2d(2), dimids4d(3)
-    integer :: jx, jy, varid_lon, varid_lat, varid_sst
+    integer :: ncid, varid, dimids2d(2), dimids3d(3), dimids4d(3)
+    integer :: jx, jy, varid_lon, varid_lat, varid_sst, varid_cicen, varid_tsfcn
     integer :: x_dimid, y_dimid, z_dimid, cat_dimid, status
     integer :: catnum
 
@@ -642,9 +645,12 @@ contains
     call nccheck( nf90_def_dim(ncid, "xaxis_1", fld%nx, x_dimid) )
     call nccheck( nf90_def_dim(ncid, "yaxis_1", fld%ny, y_dimid) )
     call nccheck( nf90_def_dim(ncid, "zaxis_1", fld%nzi, z_dimid) )
+    call nccheck( nf90_def_dim(ncid, "cataxis_1", fld%ncat, cat_dimid) )
+
     !call nccheck( nf90_def_dim(ncid, "cataxis_1", fld%ncat, cat_dimid) )
     !dimids4d =  (/ x_dimid, y_dimid, cat_dimid, z_dimid /)
     dimids4d =  (/ x_dimid, y_dimid, z_dimid /)
+    dimids3d =  (/ x_dimid, y_dimid, cat_dimid /)
     dimids2d =  (/ x_dimid, y_dimid /)
 
     do jx=1,fld%nx
@@ -656,17 +662,22 @@ contains
 
     call nccheck( nf90_def_var(ncid, 'qicnk', nf90_double, dimids4d, varid) )
     call nccheck( nf90_put_att(ncid, varid, '_FillValue', missing) )
+    call nccheck( nf90_def_var(ncid, 'cicen', nf90_double, dimids3d, varid_cicen) )
+    call nccheck( nf90_put_att(ncid, varid_cicen, '_FillValue', missing) )
+    call nccheck( nf90_def_var(ncid, 'tsfcn', nf90_double, dimids3d, varid_tsfcn) )
+    call nccheck( nf90_put_att(ncid, varid_tsfcn, '_FillValue', missing) )        
     call nccheck( nf90_def_var(ncid, 'sstoc', nf90_double, dimids2d, varid_sst) )
     call nccheck( nf90_put_att(ncid, varid_sst, '_FillValue', missing) )
     call nccheck( nf90_def_var(ncid, 'lat', nf90_double, dimids2d, varid_lat) )
     call nccheck( nf90_def_var(ncid, 'lon', nf90_double, dimids2d, varid_lon) )        
     call nccheck( nf90_enddef(ncid) )
-    !call nccheck( nf90_put_var(ncid, varid, fld%qicnk(:,:,catnum,:)))
+    call nccheck( nf90_put_var(ncid, varid_tsfcn, fld%tsfcn))
     call nccheck( nf90_put_var(ncid, varid, fld%qicnk(:,:,catnum,:)))    
     call nccheck( nf90_put_var(ncid, varid_sst, fld%sstoc))
+    call nccheck( nf90_put_var(ncid, varid_cicen, fld%cicen))
     call nccheck( nf90_put_var(ncid, varid_lat, fld%geom%lat))
     call nccheck( nf90_put_var(ncid, varid_lon, fld%geom%lon))        
-    !print *,'doneriting ....'
+
     !call nccheck( nf90_def_var(ncid, varname, nf90_double, dimids2d, varid) )
     !call nccheck( nf90_enddef(ncid) )
     !call nccheck( nf90_put_var(ncid, varid, fld%sstoc ) )
