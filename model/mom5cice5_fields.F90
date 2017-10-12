@@ -23,7 +23,7 @@ module mom5cice5_fields
 
   ! ------------------------------------------------------------------------------
 
-  !> Fortran derived type to hold QG fields
+  !> Fortran derived type to hold fields
   type :: mom5cice5_field
      type(mom5cice5_geom), pointer :: geom !< MOM5 & CICE5 Geometry
      integer :: nx                     !< Zonal grid dimension
@@ -784,7 +784,7 @@ contains
 
     pstat = sqrt(zz)
 
-    print *,'pstat=',pstat
+    !print *,'pstat=',pstat
     
     !call random_number(pstat)
     
@@ -813,7 +813,6 @@ contains
     implicit none
     type(mom5cice5_field), intent(in)   :: fld
     type(mom5cice5_locs), intent(in)    :: locs
-    !real(kind=kind_real), intent(in)    :: locs
     type(mom5cice5_goms), intent(inout) :: gom
 
     call check(fld)
@@ -826,7 +825,6 @@ contains
     implicit none
     type(mom5cice5_field), intent(inout) :: fld
     type(mom5cice5_locs), intent(in)     :: locs
-    !real(kind=kind_real), intent(in)    :: locs    
     type(mom5cice5_goms), intent(inout)  :: gom
 
     call check(fld)

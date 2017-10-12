@@ -1,2 +1,2 @@
-# Interface MOM5/CICE5 into OOPS
+# Interface MOM5/CICE5 with OOPS
 

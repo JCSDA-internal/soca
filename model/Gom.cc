@@ -18,8 +18,8 @@ Gom::Gom(const ObsSpace & obsdb, const Variables & var,
              const Geometry &) {
   const util::DateTime * p1 = &t1;
   const util::DateTime * p2 = &t2;
-  //mom5cice5_obsdb_getgom_f90(obsdb.toFortran(), obsdb.obsname().size(), obsdb.obsname().c_str(),
-  //                    var.toFortran(), &p1, &p2, keyGom_);
+  mom5cice5_obsdb_getgom_f90(obsdb.toFortran(), obsdb.obsname().size(), obsdb.obsname().c_str(),
+                      var.toFortran(), &p1, &p2, keyGom_);
 }
 // -----------------------------------------------------------------------------
 Gom::~Gom() {
