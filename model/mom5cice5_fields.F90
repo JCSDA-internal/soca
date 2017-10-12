@@ -509,7 +509,12 @@ contains
     use ncutils
     use interface_ncread_fld, only: ncread_fld
     use mom5cice5_thermo
-    
+
+    ! Test Ben's interp tools
+    use type_linop
+    use tools_interp, only: interp_horiz
+    use type_randgen, only: rng,initialize_sampling,create_randgen !randgentype
+    use module_namelist, only: namtype    
     implicit none
     type(mom5cice5_field), intent(inout) :: fld      !< Fields
     type(c_ptr), intent(in)       :: c_conf   !< Configuration
@@ -532,6 +537,16 @@ contains
     integer :: start2(2), count2(2)
     integer :: start3(3), count3(3)
     integer :: start4(4), count4(4)    
+
+    ! Test of Ben's interp tools
+    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    integer :: Nc, No, Nl, Nlo, index, ij
+    type(linoptype) :: hinterp_op
+    logical,allocatable :: mask(:), masko(:)                !< mask (ncells, nlevels)
+    real(kind=kind_real), allocatable :: lon(:), lat(:), lono(:), lato(:), fld_src(:), fld_dst(:)
+    real(kind=kind_real) :: deg2rad=0.017453292519943295_kind_real, start, finish
+    type(namtype) :: nam !< Namelist variables
+    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     nx0=1 !20
     ny0=1 !60
@@ -592,7 +607,6 @@ contains
        print *, 'OUT OF READ_FILE'
     endif
 
-    
     do jx = 1,fld%nx
        do jy = 1,fld%ny
           do jk = 1,fld%nzi
@@ -603,6 +617,63 @@ contains
        end do
     end do
 
+    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!    
+    ! Test of Ben's interp tools
+    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!    
+    Nc = fld%geom%nx*fld%geom%ny
+    Nl = 1
+    No = 100
+    Nlo = 1
+    index = 20000
+    
+    print *,Nc, Nl, No, Nlo
+
+    allocate(lon(Nc), lat(Nc), mask(Nc), lono(No), lato(No), masko(No), fld_src(Nc), fld_dst(No) )
+    lon = deg2rad*reshape(fld%geom%lon, (/Nc/))
+    lat = deg2rad*reshape(fld%geom%lat, (/Nc/))
+
+    call random_number(lono)
+    call random_number(lato)
+    print *,'min lon:',minval(lon),' max lon:',maxval(lon)
+    lono=(maxval(lon)-minval(lon))*lono+minval(lon)
+    lato=2.0_kind_real*(lato-0.5_kind_real)
+    print *,'min lono:',minval(lono),' max lono:',maxval(lono)
+    !lono(1)=0.0_kind_real!lon(index)!0.0_kind_real
+    !lato(1)=-67.0_kind_real*deg2rad!lat(index)!90.0_kind_real
+    masko = .true.
+
+    mask = .true.
+    rng = create_randgen(nam)
+    !call create_mesh(rng,Nc,lon,lat,.false.,mesh)
+    print *,'ENTERING INTERP_HORIZ ........'
+    call cpu_time(start)
+    call interp_horiz(&
+         rng, &
+         Nc, lon, lat, mask, &
+         No, lono, lato, masko, &
+         hinterp_op)
+    call cpu_time(finish)
+    print *,'OUT OF INTERP_HORIZ ........ cpu time:',finish-start
+    fld_src=reshape(fld%sstoc, (/Nc/))
+    call cpu_time(start)
+    call apply_linop(hinterp_op, fld_src, fld_dst)
+    call cpu_time(finish)
+    print *,'APPLY INTERP ........ cpu time:',finish-start
+    !read(*,*)
+    !print *,'fld_src=',fld_src    
+    print *,'fld_dst=',fld_dst, fld_src(index), lon(index), lat(index)
+
+    call apply_linop_ad(hinterp_op,fld_dst,fld_src)
+    do ij = 0, Nc
+       if (fld_src(ij).ne.0.0_kind_real) then
+          print *,'adjoint:',fld_src(ij)
+       end if
+    end do
+    !read(*,*)
+    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!    
+    ! Test of Ben's interp tools
+    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!        
+    
     call check(fld)
 
     return
