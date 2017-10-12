@@ -44,10 +44,16 @@ ecbuild_add_test( TARGET  test_mom5cice5_increment
                   ARGS    "testinput/interfaces.json"
                   LIBS    mom5cice5 )
 
-ecbuild_add_test( TARGET test_mom5cice5_dirac_nicas
-                  TYPE SCRIPT
-                  COMMAND "compare.sh"
-                  ARGS "${CMAKE_BINARY_DIR}/bin/mom5cice5_dirac.x testinput/dirac.nicas.json"
-                       testoutput/dirac.nicas.test
-                  DEPENDS mom5cice5_dirac.x )
+ecbuild_add_test( TARGET  test_mom5cice5_locations
+                  BOOST
+                  SOURCES executables/TestLocations.cc
+                  ARGS    "testinput/interfaces.json"
+                  LIBS    mom5cice5 )
+		  
+#ecbuild_add_test( TARGET test_mom5cice5_dirac_nicas
+#                  TYPE SCRIPT
+#                  COMMAND "compare.sh"
+#                  ARGS "${CMAKE_BINARY_DIR}/bin/mom5cice5_dirac.x testinput/dirac.nicas.json"
+#                       testoutput/dirac.nicas.test
+#                  DEPENDS mom5cice5_dirac.x )
 

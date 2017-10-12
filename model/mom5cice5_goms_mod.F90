@@ -1,0 +1,151 @@
+
+!> Fortran module handling interpolated (to obs locations) model variables
+
+module mom5cice5_goms_mod
+
+  use iso_c_binding
+  use mom5cice5_vars_mod
+  use kinds
+
+  implicit none
+  private
+  public :: mom5cice5_goms, gom_setup
+  public :: mom5cice5_goms_registry
+
+  ! ------------------------------------------------------------------------------
+
+  !> Fortran derived type to hold interpolated fields required by the obs operators
+  type :: mom5cice5_goms
+     integer :: nobs
+     integer :: nvar
+     integer :: used
+     integer, allocatable :: indx(:)
+     real(kind=kind_real), allocatable :: values(:,:)
+     character(len=1), allocatable :: variables(:)
+     logical :: lalloc
+  end type mom5cice5_goms
+
+#define LISTED_TYPE mom5cice5_goms
+
+  !> Linked list interface - defines registry_t type
+#include "util/linkedList_i.f"
+
+  !> Global registry
+  type(registry_t) :: mom5cice5_goms_registry
+
+  ! ------------------------------------------------------------------------------
+contains
+  ! ------------------------------------------------------------------------------
+  !> Linked list implementation
+#include "util/linkedList_c.f"
+
+  ! ------------------------------------------------------------------------------
+
+  subroutine c_mom5cice5_gom_create(c_key_self) bind(c,name='mom5cice5_gom_create_f90')
+
+    implicit none
+    integer(c_int), intent(inout) :: c_key_self
+
+    type(mom5cice5_goms), pointer :: self
+    call mom5cice5_goms_registry%init()
+    call mom5cice5_goms_registry%add(c_key_self)
+    call mom5cice5_goms_registry%get(c_key_self, self)
+
+    self%lalloc = .false.
+
+  end subroutine c_mom5cice5_gom_create
+
+  ! ------------------------------------------------------------------------------
+
+  subroutine gom_setup(self, vars, kobs)
+    implicit none
+    type(mom5cice5_goms), intent(inout) :: self
+    type(mom5cice5_vars), intent(in) :: vars
+    integer, intent(in) :: kobs(:)
+
+    self%nobs=size(kobs)
+    self%nvar=vars%nv
+    self%used=0
+
+    allocate(self%indx(self%nobs))
+    self%indx(:)=kobs(:)
+
+    allocate(self%variables(self%nvar))
+    self%variables(:)=vars%fldnames(:)
+
+    allocate(self%values(self%nvar,self%nobs))
+
+    self%lalloc = .true.
+
+  end subroutine gom_setup
+
+  ! ------------------------------------------------------------------------------
+
+  subroutine c_mom5cice5_gom_delete(c_key_self) bind(c,name='mom5cice5_gom_delete_f90')
+
+    implicit none
+    integer(c_int), intent(inout) :: c_key_self
+
+    type(mom5cice5_goms), pointer :: self
+
+    call mom5cice5_goms_registry%get(c_key_self, self)
+    if (self%lalloc) then
+       deallocate(self%values)
+       deallocate(self%indx)
+       deallocate(self%variables)
+    endif
+    call mom5cice5_goms_registry%remove(c_key_self)
+
+  end subroutine c_mom5cice5_gom_delete
+
+  ! ------------------------------------------------------------------------------
+
+  subroutine c_mom5cice5_gom_zero(c_key_self) bind(c,name='mom5cice5_gom_zero_f90')
+    implicit none
+    integer(c_int), intent(in) :: c_key_self
+    type(mom5cice5_goms), pointer :: self
+    call mom5cice5_goms_registry%get(c_key_self, self)
+    self%values(:,:)=0.0_kind_real
+  end subroutine c_mom5cice5_gom_zero
+
+  ! ------------------------------------------------------------------------------
+
+  subroutine c_mom5cice5_gom_dotprod(c_key_self, c_key_other, prod) bind(c,name='mom5cice5_gom_dotprod_f90')
+    implicit none
+    integer(c_int), intent(in) :: c_key_self, c_key_other
+    real(c_double), intent(inout) :: prod
+    type(mom5cice5_goms), pointer :: self, other
+    integer :: jo, jv
+
+    call mom5cice5_goms_registry%get(c_key_self, self)
+    call mom5cice5_goms_registry%get(c_key_other, other)
+    prod=0.0_kind_real
+    do jo=1,self%nobs
+       do jv=1,self%nvar
+          prod=prod+self%values(jv,jo)*other%values(jv,jo)
+       enddo
+    enddo
+
+  end subroutine c_mom5cice5_gom_dotprod
+
+  ! ------------------------------------------------------------------------------
+
+  subroutine c_mom5cice5_gom_minmaxavg(c_key_self, kobs, pmin, pmax, prms) bind(c,name='mom5cice5_gom_minmaxavg_f90')
+    implicit none
+    integer(c_int), intent(in) :: c_key_self
+    integer(c_int), intent(inout) :: kobs
+    real(c_double), intent(inout) :: pmin, pmax, prms
+    type(mom5cice5_goms), pointer :: self
+
+    call mom5cice5_goms_registry%get(c_key_self, self)
+
+    kobs = self%nobs
+    pmin=minval(self%values(:,:))
+    pmax=maxval(self%values(:,:))
+    prms=sqrt(sum(self%values(:,:)**2)/real(self%nobs*self%nvar,kind_real))
+
+  end subroutine c_mom5cice5_gom_minmaxavg
+
+  ! ------------------------------------------------------------------------------
+
+end module mom5cice5_goms_mod

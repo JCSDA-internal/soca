@@ -12,8 +12,8 @@
 #include "model/Variables.h"
 #include "eckit/config/Configuration.h"
 #include "util/DateTime.h"
-//#include "model/Gom.h"
-//#include "model/Loc.h"
+#include "model/Gom.h"
+#include "model/Loc.h"
 #include "oops/generic/UnstructuredGrid.h"
 #include "util/Logger.h"
 
@@ -115,6 +115,18 @@ void Fields::schur_product_with(const Fields & dx) {
 // -----------------------------------------------------------------------------
 void Fields::random() {
   mom5cice5_field_random_f90(keyFlds_);
+}
+// -----------------------------------------------------------------------------
+void Fields::interpolate(const Loc & locs, Gom & gom) const {
+  mom5cice5_field_interp_tl_f90(keyFlds_, locs.toFortran(), gom.toFortran());
+}
+// -----------------------------------------------------------------------------
+void Fields::interpolateTL(const Loc & locs, Gom & gom) const {
+  mom5cice5_field_interp_tl_f90(keyFlds_, locs.toFortran(), gom.toFortran());
+}
+// -----------------------------------------------------------------------------
+void Fields::interpolateAD(const Loc & locs, const Gom & gom) {
+  mom5cice5_field_interp_ad_f90(keyFlds_, locs.toFortran(), gom.toFortran());
 }
 // -----------------------------------------------------------------------------
 void Fields::changeResolution(const Fields & other) {

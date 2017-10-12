@@ -24,7 +24,9 @@ namespace oops {
 }
 
 namespace mom5cice5 {
-
+  class Loc;
+  class Gom;
+  
 // -----------------------------------------------------------------------------
 /// Class to represent a FieldSet for the MOM5CICE5 model
 class Fields : public util::Printable,
@@ -53,9 +55,9 @@ class Fields : public util::Printable,
   void random();
 
 // Interpolate to given location
-//  void interpolate(const LocQG &, GomQG &) const;
-//  void interpolateTL(const LocQG &, GomQG &) const;
-//  void interpolateAD(const LocQG &, const GomQG &);
+  void interpolate(const Loc &, Gom &) const;
+  void interpolateTL(const Loc &, Gom &) const;
+  void interpolateAD(const Loc &, const Gom &);
 
 // Interpolate full fields
   void changeResolution(const Fields &);
