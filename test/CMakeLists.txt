@@ -49,6 +49,12 @@ ecbuild_add_test( TARGET  test_mom5cice5_locations
                   SOURCES executables/TestLocations.cc
                   ARGS    "testinput/interfaces.json"
                   LIBS    mom5cice5 )
+
+ecbuild_add_test( TARGET  test_mom5cice5_obsvector
+                  BOOST
+                  SOURCES executables/TestObsVector.cc
+                  ARGS    "testinput/interfaces.json"
+                  LIBS    mom5cice5 )
 		  
 #ecbuild_add_test( TARGET test_mom5cice5_dirac_nicas
 #                  TYPE SCRIPT

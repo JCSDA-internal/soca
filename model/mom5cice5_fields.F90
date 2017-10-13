@@ -221,7 +221,7 @@ contains
     type(mom5cice5_field), intent(inout) :: self
 
     call check(self)
-    call random_number(self%cicen); self%cicen=self%cicen-sum(self%cicen)
+    call random_number(self%cicen); self%cicen=self%cicen-sum(self%cicen) !<--- NO GOOD !!!!
 
   end subroutine random
 

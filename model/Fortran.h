@@ -87,7 +87,7 @@ extern "C" {
 // -----------------------------------------------------------------------------
 //  Local Values (GOM)
 // -----------------------------------------------------------------------------
-  void mom5cice5_gom_create_f90(int & keyGoms);
+  void mom5cice5_gom_create_f90(int & keyGoms, const int &);
   void mom5cice5_gom_delete_f90(int & keyGoms);
   void mom5cice5_gom_zero_f90(const int & keyGoms);
   void mom5cice5_gom_dotprod_f90(const int & keyGoms, const int & keyGomsOther, double &);

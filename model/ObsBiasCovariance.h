@@ -1,0 +1,49 @@
+
+#ifndef MOM5CICE5_MODEL_OBSBIASCOVARIANCE_H_
+#define MOM5CICE5_MODEL_OBSBIASCOVARIANCE_H_
+
+#include <ostream>
+#include <string>
+#include <vector>
+#include <boost/noncopyable.hpp>
+
+#include "eckit/config/LocalConfiguration.h"
+#include "util/ObjectCounter.h"
+#include "util/Printable.h"
+
+namespace mom5cice5 {
+  class ObsBias;
+  class ObsBiasIncrement;
+
+// -----------------------------------------------------------------------------
+
+class ObsBiasCovariance : public util::Printable,
+                          private boost::noncopyable,
+                          private util::ObjectCounter<ObsBiasCovariance> {
+ public:
+  static const std::string classname() {return "mom5cice5::ObsBiasCovariance";}
+
+/// Constructor, destructor
+  explicit ObsBiasCovariance(const eckit::Configuration &);
+  ~ObsBiasCovariance() {}
+
+/// Linear algebra operators
+  void linearize(const ObsBias &) {}
+  void multiply(const ObsBiasIncrement &, ObsBiasIncrement &) const;
+  void inverseMultiply(const ObsBiasIncrement &, ObsBiasIncrement &) const;
+  void randomize(ObsBiasIncrement &) const;
+
+  const eckit::Configuration & config() const {return conf_;}
+  bool active(const unsigned int ii) const {return variance_[ii] > 0.0;}
+
+ private:
+  void print(std::ostream &) const;
+  const eckit::LocalConfiguration conf_;
+  std::vector<double> variance_;
+};
+
+// -----------------------------------------------------------------------------
+
+}  // namespace mom5cice5
+
+#endif  // MOM5CICE5_MODEL_OBSBIASCOVARIANCE_H_

@@ -4,9 +4,15 @@
 module mom5cice5_goms_mod
 
   use iso_c_binding
+  use mom5cice5_geom_mod
   use mom5cice5_vars_mod
   use kinds
-
+  !Interpolation related modules
+  use type_linop
+  use tools_interp, only: interp_horiz
+  use type_randgen, only: rng,initialize_sampling,create_randgen
+  use module_namelist, only: namtype
+  
   implicit none
   private
   public :: mom5cice5_goms, gom_setup
@@ -16,6 +22,7 @@ module mom5cice5_goms_mod
 
   !> Fortran derived type to hold interpolated fields required by the obs operators
   type :: mom5cice5_goms
+     type(mom5cice5_geom), pointer :: geom !< MOM5 & CICE5 Geometry     
      integer :: nobs
      integer :: nvar
      integer :: used
@@ -23,6 +30,7 @@ module mom5cice5_goms_mod
      real(kind=kind_real), allocatable :: values(:,:)
      character(len=1), allocatable :: variables(:)
      logical :: lalloc
+     type(linoptype) :: hinterp_op
   end type mom5cice5_goms
 
 #define LISTED_TYPE mom5cice5_goms
@@ -41,12 +49,15 @@ contains
 
   ! ------------------------------------------------------------------------------
 
-  subroutine c_mom5cice5_gom_create(c_key_self) bind(c,name='mom5cice5_gom_create_f90')
+  subroutine c_mom5cice5_gom_create(c_key_self, c_key_geom) bind(c,name='mom5cice5_gom_create_f90')
 
     implicit none
     integer(c_int), intent(inout) :: c_key_self
-
-    type(mom5cice5_goms), pointer :: self
+    integer(c_int), intent(in) :: c_key_geom     !< Geometry
+    
+    type(mom5cice5_goms), pointer  :: self
+    type(mom5cice5_geom),  pointer :: geom
+    
     call mom5cice5_goms_registry%init()
     call mom5cice5_goms_registry%add(c_key_self)
     call mom5cice5_goms_registry%get(c_key_self, self)
