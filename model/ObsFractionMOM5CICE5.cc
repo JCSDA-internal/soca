@@ -3,7 +3,7 @@
 
 #include "util/Logger.h"
 #include "model/Gom.h"
-//#include "model/ObsBias.h"
+#include "model/ObsBias.h"
 #include "model/ObsSpace.h"
 #include "model/ObsVec.h"
 #include "model/Variables.h"

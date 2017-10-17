@@ -31,6 +31,8 @@ module mom5cice5_goms_mod
      character(len=1), allocatable :: variables(:)
      logical :: lalloc
      type(linoptype) :: hinterp_op
+     logical :: hinterp_initialized !True:  hinterp_op has been initialized
+                                    !False: hinterp_op not initialized
   end type mom5cice5_goms
 
 #define LISTED_TYPE mom5cice5_goms

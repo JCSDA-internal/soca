@@ -185,4 +185,23 @@ void Fields::print(std::ostream & os) const {
   }
 }
 // -----------------------------------------------------------------------------
+  bool Fields::isForModel(bool nonlinear) const {
+  int nx = -1;
+  int ny = -1;
+  int nzo = -1;
+  int nzi = -1;
+  int ncat = -1;
+  int nf = -1;
+  mom5cice5_field_sizes_f90(keyFlds_, nx, ny, nzo, nzi, ncat, nf);
+  
+  //int nx = -1;
+  //int ny = -1;
+  //int nf = -1;
+  //int nb = -1;
+  //mom5cice5_field_sizes_f90(keyFlds_, nx, ny, nf, nb);
+  bool ok = (nf == 12);   //<---- HARD CODED STUFF ... NEED TO CHANGE
+  if (nonlinear) ok = ok; // && (nb == 2);
+  return ok;
+}
+// -----------------------------------------------------------------------------
 }  // namespace mom5cice5

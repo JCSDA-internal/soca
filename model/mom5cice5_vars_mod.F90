@@ -73,7 +73,7 @@ contains
     svar = config_get_string(c_conf,len(svar),"variables")
     print *,'svar=',svar
     select case (svar)
-    case ("ci","cv","x")
+    case ("nl","tl","cv","ci","x")
        self%nv = 12
        allocate(self%fldnames(self%nv))
        self%fldnames(1) = "cicen"

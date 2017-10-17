@@ -26,7 +26,7 @@ module mom5cice5_fields
   !> Fortran derived type to hold fields
   type :: mom5cice5_field
      type(mom5cice5_geom), pointer :: geom !< MOM5 & CICE5 Geometry
-     integer :: nx                     !< Zonal grid dimension
+     integer :: nx                     !< Zonal grid dimension         !!!!!!!!! CLEANUP !!!!!!!! GRID DIM PRESENT IN GEOM
      integer :: ny                     !< Meridional grid dimension
      integer :: nzo                    !< Number of z levels in the ocean
      integer :: nzi                    !< Number of levels in sea-ice
@@ -814,9 +814,11 @@ contains
     type(mom5cice5_field), intent(in)   :: fld
     type(mom5cice5_locs), intent(in)    :: locs
     type(mom5cice5_goms), intent(inout) :: gom
-
+    character(2)                        :: op_type='TL'
+    
     call check(fld)
-
+    call nicas_interph(fld, locs, gom, op_type)
+    
   end subroutine interp_tl
 
   ! ------------------------------------------------------------------------------
@@ -826,11 +828,70 @@ contains
     type(mom5cice5_field), intent(inout) :: fld
     type(mom5cice5_locs), intent(in)     :: locs
     type(mom5cice5_goms), intent(inout)  :: gom
+    character(2)                        :: op_type='AD'
 
     call check(fld)
-
+    call nicas_interph(fld, locs, gom, op_type)
+    
   end subroutine interp_ad
 
+  ! ------------------------------------------------------------------------------
+
+  subroutine nicas_interph(fld, locs, gom, op_type)
+
+    use type_linop
+    use tools_interp, only: interp_horiz
+    use type_randgen, only: rng,initialize_sampling,create_randgen !randgentype
+    use module_namelist, only: namtype    
+    use tools_const, only : deg2rad
+    
+    type(mom5cice5_field), intent(in)    :: fld
+    type(mom5cice5_locs), intent(in)     :: locs
+    type(mom5cice5_goms), intent(inout)  :: gom
+    character(2), intent(in)             :: op_type !('TL' or 'AD')
+    
+    integer :: Nc, No, var_index
+
+    logical,allocatable :: mask(:), masko(:)                !< mask (ncells, nlevels)
+    real(kind=kind_real), allocatable :: lon(:), lat(:), lono(:), lato(:), fld_src(:), fld_dst(:)
+    real(kind=kind_real) :: start, finish
+    type(namtype) :: nam !< Namelist variables
+    
+    if (.not.(gom%hinterp_initialized)) then
+       call cpu_time(start)
+       Nc = fld%geom%nx*fld%geom%ny
+       No = locs%nloc       
+       allocate(lon(Nc), lat(Nc), mask(Nc), masko(No), fld_src(Nc), fld_dst(No) ) ! <--- Hack job, need to replace with pointers? ...
+       allocate(lono(No), lato(No))
+       masko = .true. ! Figured out what's the use for masko????
+       mask = .true.  ! Need to point to proper mask
+       rng = create_randgen(nam)       
+       lono = deg2rad*locs%xyz(1,:)
+       lato = deg2rad*locs%xyz(2,:)
+       lon = deg2rad*reshape(fld%geom%lon, (/Nc/))     ! Inline grid, structured to un-structured
+       lat = deg2rad*reshape(fld%geom%lat, (/Nc/))     !       
+       call interp_horiz(rng, Nc, lon,  lat,  mask, &
+                              No, lono, lato, masko, &
+                              gom%hinterp_op)
+       call cpu_time(finish)
+       gom%hinterp_initialized = .true.
+    end if
+
+    select case (op_type)
+    case ('TL')
+       !need to loop through all variables fld_dst ==> gom%values
+       var_index=12
+       fld_src = reshape(fld%sstoc, (/Nc/))
+       call apply_linop(gom%hinterp_op, fld_src, gom%values(var_index,:))
+    case ('AD')
+       !call apply_linop_ad(hinterp_op,fld_dst,fld_src)
+       !put fld_src
+    end select
+       
+    print *,'OUT OF INTERP_HORIZ ........ cpu time:',finish-start
+
+  end subroutine nicas_interph
+  
   ! ------------------------------------------------------------------------------
   
   subroutine lin_weights(kk,delta1,delta2,k1,k2,w1,w2)

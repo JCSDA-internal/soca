@@ -3,3 +3,8 @@ ecbuild_add_executable( TARGET  mom5cice5_dirac.x
                         LIBS    mom5cice5
                       )
 
+ecbuild_add_executable( TARGET  mom5cice5_forecast.x
+                        SOURCES Forecast.cc
+                        LIBS    mom5cice5
+                      )
+

@@ -10,6 +10,8 @@ Increment.cc
 Increment.h
 LinearObsOp.h
 Loc.h
+Model.cc
+Model.h
 Observation.cc
 Observation.h
 ObsBias.cc
