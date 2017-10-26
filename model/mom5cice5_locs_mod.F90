@@ -42,6 +42,7 @@ contains
     type(obs_vect), intent(in) :: lvec
     integer :: jc, jo
 
+    print *,'IN mom5cice5_loc_setup(self, lvec) ................'
     self%nloc=lvec%nobs
     allocate(self%xyz(3,self%nloc))
     do jo=1,self%nloc
@@ -74,7 +75,7 @@ contains
     integer(c_int), intent(in) :: key
     integer(c_int), intent(inout) :: kobs
     type(mom5cice5_locs), pointer :: self
-
+    print *,'mom5cice5_loc_setup(self, lvec)'
     call mom5cice5_locs_registry%get(key,self)
     kobs = self%nloc
 

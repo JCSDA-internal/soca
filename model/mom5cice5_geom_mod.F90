@@ -185,30 +185,4 @@ contains
 
   ! ------------------------------------------------------------------------------
 
-  subroutine c_mom5cice5_geo_getgeofld(c_key_self, geoloc, geofld, level) bind(c,name='mom5cice5_geo_getgeofld_f90')
-
-    implicit none
-    integer(c_int), intent(in) :: c_key_self
-    integer(c_int), intent(in) :: geofld     !< 0: lon, 1: lat, 2: mask, 3: cell_area
-    integer(c_int), intent(in) :: level    
-    type(mom5cice5_geom), pointer :: self
-    real(kind=kind_real), allocatable :: geoloc(:) 
-    integer :: jx, jy, jj
-
-    call mom5cice5_geom_registry%get(c_key_self , self )
-
-    ! Extract geometry elements from mom5cice5 geom object
-    allocate(geoloc(self%nx*self%ny))
-    if (geofld==0) geoloc=reshape(self%lon, (/self%nx*self%ny/))       
-    if (geofld==1) geoloc=reshape(self%lat, (/self%nx*self%ny/))
-    if (geofld==2) then
-       if (level==self%nzs+self%nzi+2) then ! Last level is the ocean mask
-          geoloc=reshape(self%mask, (/self%nx*self%ny/))
-       else
-          geoloc=reshape(self%icemask, (/self%nx*self%ny/))
-       end if
-    end if
-    if (geofld==3) geoloc=reshape(self%cell_area, (/self%nx*self%ny/))
-  end subroutine c_mom5cice5_geo_getgeofld
-
 end module mom5cice5_geom_mod

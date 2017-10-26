@@ -25,79 +25,79 @@ namespace mom5cice5 {
   class State;
   class Variables;
 
-/// Increment Class: Difference between two states
-/*!
- *  Some fields that are present in a State may not be present in
- *  an Increment. The Increment contains everything that is needed by
- *  the tangent-linear and adjoint models.
- */
+  /// Increment Class: Difference between two states
+  /*!
+   *  Some fields that are present in a State may not be present in
+   *  an Increment. The Increment contains everything that is needed by
+   *  the tangent-linear and adjoint models.
+   */
   
-// -----------------------------------------------------------------------------
+  // -----------------------------------------------------------------------------
 
-class Increment : public oops::GeneralizedDepartures,
-                    public util::Printable,
-                    private util::ObjectCounter<Increment> {
- public:
-  static const std::string classname() {return "mom5cice5::Increment";}
+  class Increment : public oops::GeneralizedDepartures,
+    public util::Printable,
+    private util::ObjectCounter<Increment> {
+  public:
+      static const std::string classname() {return "mom5cice5::Increment";}
 
-/// Constructor, destructor
-  Increment(const Geometry &, const Variables &, const util::DateTime &);
-  Increment(const Geometry &, const Increment &);
-  Increment(const Increment &, const bool);
-  Increment(const Increment &);
-  virtual ~Increment();
+      /// Constructor, destructor
+      Increment(const Geometry &, const Variables &, const util::DateTime &);
+      Increment(const Geometry &, const Increment &);
+      Increment(const Increment &, const bool);
+      Increment(const Increment &);
+      virtual ~Increment();
 
-/// Basic operators
-  void diff(const State &, const State &);
-  void zero();
-  void zero(const util::DateTime &);
-  void dirac(const eckit::Configuration &);
-  Increment & operator =(const Increment &);
-  Increment & operator+=(const Increment &);
-  Increment & operator-=(const Increment &);
-  Increment & operator*=(const double &);
-  void axpy(const double &, const Increment &, const bool check = true);
-  double dot_product_with(const Increment &) const;
-  void schur_product_with(const Increment &);
-  void random();
+      /// Basic operators
+      void diff(const State &, const State &);
+      void zero();
+      void zero(const util::DateTime &);
+      void dirac(const eckit::Configuration &);
+      Increment & operator =(const Increment &);
+      Increment & operator+=(const Increment &);
+      Increment & operator-=(const Increment &);
+      Increment & operator*=(const double &);
+      void axpy(const double &, const Increment &, const bool check = true);
+      double dot_product_with(const Increment &) const;
+      void schur_product_with(const Increment &);
+      void random();
 
-/// Interpolate to observation location
-//  void interpolateTL(const LocQG &, GomQG &) const;
-//  void interpolateAD(const LocQG &, const GomQG &);
+      /// Interpolate to observation location
+      void interpolateTL(const Loc &, Gom &) const;
+      void interpolateAD(const Loc &, const Gom &);
 
-/// I/O and diagnostics
-  void read(const eckit::Configuration &);
-  void write(const eckit::Configuration &) const;
-  double norm() const {return fields_->norm();}
-  const util::DateTime & validTime() const {return fields_->time();}
-  util::DateTime & validTime() {return fields_->time();}
-  void updateTime(const util::Duration & dt) {fields_->time() += dt;}
+      /// I/O and diagnostics
+      void read(const eckit::Configuration &);
+      void write(const eckit::Configuration &) const;
+      double norm() const {return fields_->norm();}
+      const util::DateTime & validTime() const {return fields_->time();}
+      util::DateTime & validTime() {return fields_->time();}
+      void updateTime(const util::Duration & dt) {fields_->time() += dt;}
 
-/// Convert to/from unstructured grid
-  void convert_to(oops::UnstructuredGrid &) const;
-  void convert_from(const oops::UnstructuredGrid &);
+      /// Convert to/from unstructured grid
+      void convert_to(oops::UnstructuredGrid &) const;
+      void convert_from(const oops::UnstructuredGrid &);
   
-/// Access to fields
-  Fields & fields() {return *fields_;}
-  const Fields & fields() const {return *fields_;}
+      /// Access to fields
+      Fields & fields() {return *fields_;}
+      const Fields & fields() const {return *fields_;}
 
-  boost::shared_ptr<const Geometry> geometry() const {
-    return fields_->geometry();
-  }
+      boost::shared_ptr<const Geometry> geometry() const {
+	return fields_->geometry();
+      }
 
-/// Other
-  void activateModel();
-  void deactivateModel();
+      /// Other
+      void activateModel();
+      void deactivateModel();
 
-  void accumul(const double &, const State &);
+      void accumul(const double &, const State &);
 
-/// Data
- private:
-  void print(std::ostream &) const;
-  boost::scoped_ptr<Fields> fields_;
-  boost::scoped_ptr<Fields> stash_;
-};
-// -----------------------------------------------------------------------------
+      /// Data
+  private:
+      void print(std::ostream &) const;
+      boost::scoped_ptr<Fields> fields_;
+      boost::scoped_ptr<Fields> stash_;
+    };
+  // -----------------------------------------------------------------------------
 
 }  // namespace mom5cice5
 

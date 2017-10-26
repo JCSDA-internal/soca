@@ -23,28 +23,28 @@ namespace mom5cice5 {
   class ObsBiasIncrement;
   class Variables;
 
-// -----------------------------------------------------------------------------
+  // -----------------------------------------------------------------------------
 
-class LinearObsOp : private boost::noncopyable {
- public:
-  static LinearObsOp * create(const Observation & obs) {return obs.getTLAD();}
+  class LinearObsOp : private boost::noncopyable {
+  public:
+    static LinearObsOp * create(const Observation & obs) {return obs.getTLAD();}
 
-  LinearObsOp() {}
-  virtual ~LinearObsOp() {}
+    LinearObsOp() {}
+    virtual ~LinearObsOp() {}
 
-// Obs Operators
-  virtual void setTrajectory(const Gom &, const ObsBias &) =0;
-  virtual void obsEquivTL(const Gom &, ObsVec &, const ObsBiasIncrement &) const =0;
-  virtual void obsEquivAD(Gom &, const ObsVec &, ObsBiasIncrement &) const =0;
+    // Obs Operators
+    virtual void setTrajectory(const Gom &, const ObsBias &) =0;
+    virtual void obsEquivTL(const Gom &, ObsVec &, const ObsBiasIncrement &) const =0;
+    virtual void obsEquivAD(Gom &, const ObsVec &, ObsBiasIncrement &) const =0;
 
-// Other
-  virtual boost::shared_ptr<const Variables> variables() const =0;
+    // Other
+    virtual boost::shared_ptr<const Variables> variables() const =0;
 
-  virtual int & toFortran() =0;
-  virtual const int & toFortran() const =0;
-};
+    virtual int & toFortran() =0;
+    virtual const int & toFortran() const =0;
+  };
 
-// -----------------------------------------------------------------------------
+  // -----------------------------------------------------------------------------
 
 }  // namespace mom5cice5
 #endif  // MOM5CICE5_MODEL_LINEAROBSOP_H_

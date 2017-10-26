@@ -24,7 +24,7 @@ namespace mom5cice5 {
 
   ObsFactory::ObsFactory(const std::string & name) {
     if (!makers_) makers_=new std::map < std::string, ObsFactory * >();
-
+    Log::info() << "========= IN ObsFactory =============" << name << std::endl;
     if (makers_->find(name) != makers_->end()) {
       Log::error() << name << " already registered in MOM5CICE5 observation factory." << std::endl;
       ABORT("Element already registered in ObsFactory.");
@@ -36,7 +36,7 @@ namespace mom5cice5 {
 
   Observation * ObsFactory::create(ObsSpace & odb, const eckit::Configuration & conf) {
     if (!makers_) makers_=new std::map < std::string, ObsFactory * >();
-
+    Log::info() << "========= IN ObsFactory CREATE=============" << std::endl;
     std::string id = conf.getString("ObsType");
     Log::trace() << "MOM5CICE5 ObsFactory ObsType =" << id << std::endl;
     std::map<std::string, ObsFactory*>::iterator j = makers_->find(id);

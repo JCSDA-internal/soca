@@ -21,67 +21,67 @@ namespace mom5cice5 {
   class Increment;
   class Variables;
 
-/// MOM5CICE5 model state
-/*!
- * A State contains everything that is needed to propagate the state
- * forward in time.
- */
+  /// MOM5CICE5 model state
+  /*!
+   * A State contains everything that is needed to propagate the state
+   * forward in time.
+   */
 
-// -----------------------------------------------------------------------------
-class State : public util::Printable,
-                private util::ObjectCounter<State> {
- public:
-  static const std::string classname() {return "mom5cice5::State";}
+  // -----------------------------------------------------------------------------
+  class State : public util::Printable,
+    private util::ObjectCounter<State> {
+  public:
+      static const std::string classname() {return "mom5cice5::State";}
 
-/// Constructor, destructor
-  State(const Geometry &, const Variables &, const util::DateTime &);  // Is it used?
-  State(const Geometry &, const eckit::Configuration &);
-  State(const Geometry &, const State &);
-  State(const State &);
-  virtual ~State();
-  State & operator=(const State &);
+      /// Constructor, destructor
+      State(const Geometry &, const Variables &, const util::DateTime &);  // Is it used?
+      State(const Geometry &, const eckit::Configuration &);
+      State(const Geometry &, const State &);
+      State(const State &);
+      virtual ~State();
+      State & operator=(const State &);
 
-/// Interpolate to observation location
-//  void interpolate(const LocQG &, GomQG &) const;
+      /// Interpolate to observation location
+      void interpolate(const Loc &, Gom &) const;
 
-/// Interpolate full fields
-///  void changeResolution(const State & xx);
+      /// Interpolate full fields
+      ///  void changeResolution(const State & xx);
 
-/// Interactions with Increment
-  State & operator+=(const Increment &);
+      /// Interactions with Increment
+      State & operator+=(const Increment &);
 
-/// I/O and diagnostics
-  void read(const eckit::Configuration &);
-  void write(const eckit::Configuration &) const;
-  double norm() const {return fields_->norm();}
-  const util::DateTime & validTime() const {return fields_->time();}
-  util::DateTime & validTime() {return fields_->time();}
+      /// I/O and diagnostics
+      void read(const eckit::Configuration &);
+      void write(const eckit::Configuration &) const;
+      double norm() const {return fields_->norm();}
+      const util::DateTime & validTime() const {return fields_->time();}
+      util::DateTime & validTime() {return fields_->time();}
 
-/// Convert to/from unstructured grid
-  void convert_to(oops::UnstructuredGrid &) const;
-  void convert_from(const oops::UnstructuredGrid &);
+      /// Convert to/from unstructured grid
+      void convert_to(oops::UnstructuredGrid &) const;
+      void convert_from(const oops::UnstructuredGrid &);
 
-/// Access to fields
-  Fields & fields() {return *fields_;}
-  const Fields & fields() const {return *fields_;}
+      /// Access to fields
+      Fields & fields() {return *fields_;}
+      const Fields & fields() const {return *fields_;}
 
-  boost::shared_ptr<const Geometry> geometry() const {
-    return fields_->geometry();
-  }
+      boost::shared_ptr<const Geometry> geometry() const {
+	return fields_->geometry();
+      }
 
-/// Other
-  void activateModel();
-  void deactivateModel();
+      /// Other
+      void activateModel();
+      void deactivateModel();
 
-  void zero();
-  void accumul(const double &, const State &);
+      void zero();
+      void accumul(const double &, const State &);
 
- private:
-  void print(std::ostream &) const;
-  boost::scoped_ptr<Fields> fields_;
-  boost::scoped_ptr<Fields> stash_;
-};
-// -----------------------------------------------------------------------------
+  private:
+      void print(std::ostream &) const;
+      boost::scoped_ptr<Fields> fields_;
+      boost::scoped_ptr<Fields> stash_;
+    };
+  // -----------------------------------------------------------------------------
 
 }  // namespace mom5cice5
 

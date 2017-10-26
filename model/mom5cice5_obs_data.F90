@@ -356,6 +356,8 @@ contains
     nlocs  = config_get_int(c_conf, "obs_density");
     kobs=nlocs*ktimes;
 
+    print *,'=============== obs_density=',nlocs
+    
     allocate(times(kobs))
 
     call generate_locations(c_conf, nlocs, ktimes, bgn, step, times, obsloc)

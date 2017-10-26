@@ -27,7 +27,12 @@ module mom5cice5_goms_mod
      integer :: nvar
      integer :: used
      integer, allocatable :: indx(:)
-     real(kind=kind_real), allocatable :: values(:,:)
+     real(kind=kind_real), allocatable :: values(:,:)  ! nvar x nobs
+                                                       ! values(:,i)=[cicen(1:ncat),
+                                                       !              hicen(1:ncat),
+                                                       !              vicen(1:ncat),
+                                                       !              hsnon(1:ncat),     
+                                                       !              ...]
      character(len=1), allocatable :: variables(:)
      logical :: lalloc
      type(linoptype) :: hinterp_op

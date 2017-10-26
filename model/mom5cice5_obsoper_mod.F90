@@ -1,5 +1,5 @@
 
-!> Fortran module for fake observations for the MOM5CICE5 model
+!> Fortran module for observation operators for the model
 module mom5cice5_obsoper_mod
 
   use iso_c_binding
@@ -14,7 +14,7 @@ module mom5cice5_obsoper_mod
 
   ! ------------------------------------------------------------------------------
 
-  !> Fortran derived type for fake observations for the MOM5CICE5 model
+  !> Fortran derived type for sea-ice fraction observations for the model
   type :: mom5cice5_obsoper
      character(len=30) :: request
      type(mom5cice5_vars) :: varin
@@ -43,7 +43,7 @@ contains
     type(c_ptr), intent(in)    :: c_conf
     character(len=*), intent(in) :: svars(:)
     integer :: ncol
-
+    print *,'============ IN OPER_SETUP ============='
     self%request = config_get_string(c_conf, len(self%request), "ObsType")
     call mom5cice5_vars_setup(self%varin, svars)
     self%ncol = ncol
@@ -69,7 +69,7 @@ contains
 
     type(mom5cice5_obsoper), pointer :: self
     type(mom5cice5_vars), pointer :: vars
-
+    print *,'============ IN OPER_SETUP ============='
     call mom5cice5_obsoper_registry%get(c_key_self, self)
     call mom5cice5_vars_registry%init()
     call mom5cice5_vars_registry%add(c_key_vars)

@@ -36,30 +36,39 @@ StateTest:
 ModelBias: null
 
 Model:
-  tstep: 'PT1H'
+  tstep: "PT1H"
   
 ModelTest:
   fclength: "PT24H"
-  finalnorm: 13.965
+  finalnorm: 2988985338.2310634
   tolerance: 0.005
   
 Covariance:
-  covariance: "QgError"
+  covariance: "Error"
   standard_deviation: 0.8
   vertical_correlation: 0.2
   horizontal_length_scale: 1e6
   maximum_condition_number: 1.0e6
   date: "2009-12-31T00:00:00Z"
-  
+
+CovarianceTest:
+  tolerance: 0.01
+
+ObsBias:
+  Fraction: -0.0
+
+ObsBiasCovariance:
+  Fraction: 1.0
+
 window_begin: "2010-01-01T00:00:00Z"
 window_end: "2010-01-02T00:00:00Z"
 
-Observation:
+Observations:
   ObsType: "Fraction"
   ObsData:
     ObsHandler: "ObsHelp"
     ObsDataIn:
-      obsfile: "Data/fraction_test_in.obt"
+      obsfile: "Data/test.obt"
     ObsDataOut:
       obsfile: "Data/fraction_test_out.obt"
     obsvalue: "ObsVal"

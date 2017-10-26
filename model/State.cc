@@ -90,6 +90,12 @@ State & State::operator=(const State & rhs) {
   return *this;
 }
 // -----------------------------------------------------------------------------
+/// Interpolate to observation location
+// -----------------------------------------------------------------------------
+void State::interpolate(const Loc & locs, Gom & cols) const {
+  fields_->interpolate(locs, cols);
+}
+// -----------------------------------------------------------------------------
 /// Interpolate full fields
 // -----------------------------------------------------------------------------
 //void State::changeResolution(const State & other) {

@@ -27,9 +27,28 @@ extern "C" {
   void mom5cice5_geo_setup_f90(int & keyGeom, const eckit::Configuration * const *);
   void mom5cice5_geo_clone_f90(const int & keyGeom, int & keyGeom_other);
   void mom5cice5_geo_info_f90(const int & keyGeom, int &, int &, int &, int &, int &);
-  void mom5cice5_geo_getgeofld_f90(const int & keyGeom, double *, int &, const int &);
   void mom5cice5_geo_delete_f90(int & keyGeom);
 
+// -----------------------------------------------------------------------------
+//  Model
+// -----------------------------------------------------------------------------
+  void mom5cice5_setup_f90(const eckit::Configuration * const *, const int &, int & keyConf);
+  void mom5cice5_delete_f90(int &);
+
+  void mom5cice5_prepare_integration_f90(const int & keyConf, const int & keyFlds);
+  //void mom5cice5_prepare_integration_tl_f90(const int & keyConf, const int & keyFlds);
+  //void mom5cice5_prepare_integration_ad_f90(const int & keyConf, const int & keyFlds);
+
+  void mom5cice5_propagate_f90(const int & keyConf, const int & keyFlds);
+  //void mom5cice5_prop_traj_f90(const int & keyConf, const int & keyFlds, int & keyTraj);
+  //void mom5cice5_propagate_tl_f90(const int & keyConf, const int & keyFlds,
+  //                         const int & keyTraj);
+  //void mom5cice5_propagate_ad_f90(const int & keyConf, const int & keyFlds,
+  //                         const int & keyTraj);
+  //
+  //void mom5cice5_wipe_traj_f90(int & keyTraj);
+  //void mom5cice5_traj_minmaxrms_f90(const int & keyTraj, double &);
+  
 // -----------------------------------------------------------------------------
 //  Fields
 // -----------------------------------------------------------------------------
@@ -87,11 +106,20 @@ extern "C" {
 // -----------------------------------------------------------------------------
 //  Local Values (GOM)
 // -----------------------------------------------------------------------------
-  void mom5cice5_gom_create_f90(int & keyGoms, const int &);
+  void mom5cice5_gom_create_f90(int & keyGoms);//, const int &);
   void mom5cice5_gom_delete_f90(int & keyGoms);
   void mom5cice5_gom_zero_f90(const int & keyGoms);
   void mom5cice5_gom_dotprod_f90(const int & keyGoms, const int & keyGomsOther, double &);
   void mom5cice5_gom_minmaxavg_f90(const int & keyGoms, int &, double &, double &, double &);
+
+// -----------------------------------------------------------------------------
+//  Fraction observations
+// -----------------------------------------------------------------------------
+  void mom5cice5_fraction_setup_f90(int & keyOper, const eckit::Configuration * const *);
+  void mom5cice5_fraction_delete_f90(int & keyOper);
+  void mom5cice5_fraction_equiv_f90(const int & keyGoms, const int & keyOvec, const double &);
+  void mom5cice5_fraction_equiv_tl_f90(const int & keyGoms, const int & keyOvec, const double &);
+  void mom5cice5_fraction_equiv_ad_f90(const int & keyGoms, const int & keyOvec, const double &);
 
 // -----------------------------------------------------------------------------
 //  Observation Vectors

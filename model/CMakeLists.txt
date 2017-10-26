@@ -1,4 +1,11 @@
 list( APPEND oops_mom5cice5_src_files
+c_mom5cice5_obs_data.F90
+c_mom5cice5_setup.F90
+c_mom5cice5_delete.F90
+c_mom5cice5_prepare_integration.F90
+c_mom5cice5_propagate.F90
+ErrorCovariance.cc
+ErrorCovariance.h
 Fields.cc
 Fields.h
 Fortran.h
@@ -12,6 +19,9 @@ LinearObsOp.h
 Loc.h
 Model.cc
 Model.h
+ModelBias.h
+ModelBiasIncrement.h
+ModelBiasCovariance.h
 Observation.cc
 Observation.h
 ObsBias.cc
@@ -20,8 +30,8 @@ ObsBiasCovariance.cc
 ObsBiasCovariance.h
 ObsBiasIncrement.cc
 ObsBiasIncrement.h
-ObsFractionMOM5CICE5.cc
-ObsFractionMOM5CICE5.h
+ObsFraction.cc
+ObsFraction.h
 ObsFractionTLAD.cc
 ObsFractionTLAD.h
 ObsHelp.cc
@@ -36,16 +46,18 @@ Traits.h
 Variables.cc
 Variables.h
 generate_locations.f90
+propagate.f90
+mom5cice5_configs.F90
 mom5cice5_constants.f90
 mom5cice5_thermo.F90
 mom5cice5_fields.F90
 mom5cice5_fields_interface.F90
+mom5cice5_fraction_mod.F90
 mom5cice5_geom_mod.F90
 mom5cice5_goms_mod.F90
 mom5cice5_locs_mod.F90
 mom5cice5_ncutils_mod.F90
 mom5cice5_obs_data.F90
-c_mom5cice5_obs_data.F90
 mom5cice5_obsoper_mod.F90
 mom5cice5_obs_vectors.F90
 mom5cice5_invent_state.f90

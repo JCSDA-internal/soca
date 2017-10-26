@@ -406,24 +406,24 @@ contains
     zprod = 0.0_kind_real
     do jj = 1, fld1%ncat
        zprod=sum(fld1%cicen(:,:,jj)*fld2%cicen(:,:,jj)*fld1%geom%icemask) + &
-             sum(fld1%hicen(:,:,jj)*fld2%hicen(:,:,jj)*fld1%geom%icemask) + &
-             sum(fld1%vicen(:,:,jj)*fld2%vicen(:,:,jj)*fld1%geom%icemask) + &
-             sum(fld1%hsnon(:,:,jj)*fld2%hsnon(:,:,jj)*fld1%geom%icemask) + &
-             sum(fld1%vsnon(:,:,jj)*fld2%vsnon(:,:,jj)*fld1%geom%icemask) + &
-             sum(fld1%tsfcn(:,:,jj)*fld2%tsfcn(:,:,jj)*fld1%geom%icemask) + &
-             sum(fld1%qsnon(:,:,jj)*fld2%qsnon(:,:,jj)*fld1%geom%icemask)
+            sum(fld1%hicen(:,:,jj)*fld2%hicen(:,:,jj)*fld1%geom%icemask) + &
+            sum(fld1%vicen(:,:,jj)*fld2%vicen(:,:,jj)*fld1%geom%icemask) + &
+            sum(fld1%hsnon(:,:,jj)*fld2%hsnon(:,:,jj)*fld1%geom%icemask) + &
+            sum(fld1%vsnon(:,:,jj)*fld2%vsnon(:,:,jj)*fld1%geom%icemask) + &
+            sum(fld1%tsfcn(:,:,jj)*fld2%tsfcn(:,:,jj)*fld1%geom%icemask) + &
+            sum(fld1%qsnon(:,:,jj)*fld2%qsnon(:,:,jj)*fld1%geom%icemask)
     end do
 
     do jj = 1, fld1%ncat
        do kk = 1,fld1%nzi
           zprod = zprod + &
-             sum(fld1%sicnk(:,:,jj,kk)*fld2%sicnk(:,:,jj,kk)*fld1%geom%icemask) + &
-             sum(fld1%qicnk(:,:,jj,kk)*fld2%qicnk(:,:,jj,kk)*fld1%geom%icemask)
+               sum(fld1%sicnk(:,:,jj,kk)*fld2%sicnk(:,:,jj,kk)*fld1%geom%icemask) + &
+               sum(fld1%qicnk(:,:,jj,kk)*fld2%qicnk(:,:,jj,kk)*fld1%geom%icemask)
        end do
     end do
     zprod = zprod + sum(fld1%sssoc*fld2%sssoc*fld1%geom%mask) + &
-                    sum(fld1%tlioc*fld2%tlioc*fld1%geom%mask) + &
-                    sum(fld1%sstoc*fld2%sstoc*fld1%geom%mask)
+         sum(fld1%tlioc*fld2%tlioc*fld1%geom%mask) + &
+         sum(fld1%sstoc*fld2%sstoc*fld1%geom%mask)
     print *,'zprod=',zprod
     return
   end subroutine dot_prod
@@ -512,12 +512,6 @@ contains
     use interface_ncread_fld, only: ncread_fld
     use mom5cice5_thermo
 
-!!$    ! Test Ben's interp tools
-!!$    use type_linop
-!!$    use tools_interp, only: interp_horiz
-!!$    use type_randgen, only: rng,initialize_sampling,create_randgen !randgentype
-!!$    use module_namelist, only: namtype    
-
     implicit none
     type(mom5cice5_field), intent(inout) :: fld      !< Fields
     type(c_ptr), intent(in)       :: c_conf   !< Configuration
@@ -540,16 +534,6 @@ contains
     integer :: start2(2), count2(2)
     integer :: start3(3), count3(3)
     integer :: start4(4), count4(4)    
-
-!!$    ! Test of Ben's interp tools
-!!$    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!$    integer :: Nc, No, Nl, Nlo, index, ij
-!!$    type(linoptype) :: hinterp_op
-!!$    logical,allocatable :: mask(:), masko(:)                !< mask (ncells, nlevels)
-!!$    real(kind=kind_real), allocatable :: lon(:), lat(:), lono(:), lato(:), fld_src(:), fld_dst(:)
-!!$    real(kind=kind_real) :: deg2rad=0.017453292519943295_kind_real, start, finish
-!!$    type(namtype) :: nam !< Namelist variables
-!!$    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     nx0=1 !20
     ny0=1 !60
@@ -620,63 +604,6 @@ contains
        end do
     end do
 
-!!$    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!    
-!!$    ! Test of Ben's interp tools
-!!$    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!    
-!!$    Nc = fld%geom%nx*fld%geom%ny
-!!$    Nl = 1
-!!$    No = 100
-!!$    Nlo = 1
-!!$    index = 20000
-!!$    
-!!$    print *,Nc, Nl, No, Nlo
-!!$
-!!$    allocate(lon(Nc), lat(Nc), mask(Nc), lono(No), lato(No), masko(No), fld_src(Nc), fld_dst(No) )
-!!$    lon = deg2rad*reshape(fld%geom%lon, (/Nc/))
-!!$    lat = deg2rad*reshape(fld%geom%lat, (/Nc/))
-!!$
-!!$    call random_number(lono)
-!!$    call random_number(lato)
-!!$    print *,'min lon:',minval(lon),' max lon:',maxval(lon)
-!!$    lono=(maxval(lon)-minval(lon))*lono+minval(lon)
-!!$    lato=2.0_kind_real*(lato-0.5_kind_real)
-!!$    print *,'min lono:',minval(lono),' max lono:',maxval(lono)
-!!$    !lono(1)=0.0_kind_real!lon(index)!0.0_kind_real
-!!$    !lato(1)=-67.0_kind_real*deg2rad!lat(index)!90.0_kind_real
-!!$    masko = .true.
-!!$
-!!$    mask = .true.
-!!$    rng = create_randgen(nam)
-!!$    !call create_mesh(rng,Nc,lon,lat,.false.,mesh)
-!!$    print *,'ENTERING INTERP_HORIZ ........'
-!!$    call cpu_time(start)
-!!$    call interp_horiz(&
-!!$         rng, &
-!!$         Nc, lon, lat, mask, &
-!!$         No, lono, lato, masko, &
-!!$         hinterp_op)
-!!$    call cpu_time(finish)
-!!$    print *,'OUT OF INTERP_HORIZ ........ cpu time:',finish-start
-!!$    fld_src=reshape(fld%sstoc, (/Nc/))
-!!$    call cpu_time(start)
-!!$    call apply_linop(hinterp_op, fld_src, fld_dst)
-!!$    call cpu_time(finish)
-!!$    print *,'APPLY INTERP ........ cpu time:',finish-start
-!!$    !read(*,*)
-!!$    !print *,'fld_src=',fld_src    
-!!$    print *,'fld_dst=',fld_dst, fld_src(index), lon(index), lat(index)
-!!$
-!!$    call apply_linop_ad(hinterp_op,fld_dst,fld_src)
-!!$    do ij = 0, Nc
-!!$       if (fld_src(ij).ne.0.0_kind_real) then
-!!$          print *,'adjoint:',fld_src(ij)
-!!$       end if
-!!$    end do
-!!$    !read(*,*)
-!!$    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!    
-!!$    ! Test of Ben's interp tools
-!!$    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!        
-!!$    
     call check(fld)
 
     return
@@ -687,7 +614,7 @@ contains
   subroutine write_file(fld, c_conf, vdate)
     use iso_c_binding
     use datetime_mod
-    use fckit_log_module, only : log
+    use fckit_log_module, only : fckit_log
     use netcdf
     use ncutils
 
@@ -700,6 +627,7 @@ contains
     character(len=128)  :: varname
     character(len=20) :: sdate
     real(kind=8) :: missing=-999d0
+    character(len=1024):: buf
 
     integer :: ncid, varid, dimids2d(2), dimids3d(3), dimids4d(3)
     integer :: jx, jy, varid_lon, varid_lat, varid_sst, varid_cicen, varid_tsfcn
@@ -709,11 +637,15 @@ contains
     catnum=1 !!!!!!!!!!!! HARD CODED CATEGORY !!!!!!!!!!!!!!!!!!!!
 
     print *,'============== IN WRITE FILE =================='
-    
+
     call check(fld)
 
-    filename = config_get_string(c_conf, len(filename), "filename")
-    varname = config_get_string(c_conf, len(varname), "varname")
+    !filename = config_get_string(c_conf, len(filename), "filename")
+    !varname = config_get_string(c_conf, len(varname), "varname")
+
+    filename = genfilename(c_conf,max_string_length,vdate)
+    WRITE(buf,*) 'field:write_file: writing '//filename
+    call fckit_log%info(buf)
 
     call nccheck( nf90_create(filename, nf90_clobber, ncid) )
     call nccheck( nf90_def_dim(ncid, "xaxis_1", fld%nx, x_dimid) )
@@ -764,6 +696,61 @@ contains
 
   ! ------------------------------------------------------------------------------
 
+  function genfilename (c_conf,length,vdate)
+    use iso_c_binding
+    use datetime_mod
+    use duration_mod
+    type(c_ptr), intent(in)    :: c_conf  !< Configuration
+    integer, intent(in) :: length
+    character(len=length) :: genfilename
+    type(datetime), intent(in) :: vdate
+
+    character(len=length) :: fdbdir, expver, typ, validitydate, referencedate, sstep, &
+         & prefix, mmb
+    type(datetime) :: rdate
+    type(duration) :: step
+    integer lenfn
+
+    ! here we should query the length and then allocate "string".
+    ! But Fortran 90 does not allow variable-length allocatable strings.
+    ! config_get_string checks the string length and aborts if too short.
+    fdbdir = config_get_string(c_conf,len(fdbdir),"datadir")
+    expver = config_get_string(c_conf,len(expver),"exp")
+    typ    = config_get_string(c_conf,len(typ)   ,"type")
+
+    if (typ=="ens") then
+       mmb = config_get_string(c_conf, len(mmb), "member")
+       lenfn = LEN_TRIM(fdbdir) + 1 + LEN_TRIM(expver) + 1 + LEN_TRIM(typ) + 1 + LEN_TRIM(mmb)
+       prefix = TRIM(fdbdir) // "/" // TRIM(expver) // "." // TRIM(typ) // "." // TRIM(mmb)
+    else
+       lenfn = LEN_TRIM(fdbdir) + 1 + LEN_TRIM(expver) + 1 + LEN_TRIM(typ)
+       prefix = TRIM(fdbdir) // "/" // TRIM(expver) // "." // TRIM(typ)
+    endif
+
+    if (typ=="fc" .or. typ=="ens") then
+       referencedate = config_get_string(c_conf,len(referencedate),"date")
+       call datetime_to_string(vdate, validitydate)
+       call datetime_create(TRIM(referencedate), rdate)
+       call datetime_diff(vdate, rdate, step)
+       call duration_to_string(step, sstep)
+       lenfn = lenfn + 1 + LEN_TRIM(referencedate) + 1 + LEN_TRIM(sstep)
+       genfilename = TRIM(prefix) // "." // TRIM(referencedate) // "." // TRIM(sstep)
+    endif
+
+    if (typ=="an") then
+       call datetime_to_string(vdate, validitydate)
+       lenfn = lenfn + 1 + LEN_TRIM(validitydate)
+       genfilename = TRIM(prefix) // "." // TRIM(validitydate)
+    endif
+
+    if (lenfn>length) &
+         & call abor1_ftn("fields:genfilename: filename too long")
+
+  end function genfilename
+
+  ! ------------------------------------------------------------------------------
+  ! ------------------------------------------------------------------------------
+
   subroutine gpnorm(fld, nf, pstat) 
     implicit none
     type(mom5cice5_field), intent(in) :: fld
@@ -773,11 +760,11 @@ contains
     integer :: jj,joff
 
     call check(fld)
-    
+
     !pstat(1,:)=minval(fld%cicen)
     !pstat(2,:)=maxval(fld%cicen)
     !pstat(3,:)=abs(maxval(fld%cicen)-minval(fld%cicen))
-    
+
     !call abor1_ftn("mom5cice5_fields_gpnorm: error not implemented")
     !print *,'pstat=',pstat
     call dot_prod(fld,fld,zz)    
@@ -785,9 +772,9 @@ contains
     pstat = sqrt(zz)
 
     !print *,'pstat=',pstat
-    
+
     !call random_number(pstat)
-    
+
     return
   end subroutine gpnorm
 
@@ -815,10 +802,10 @@ contains
     type(mom5cice5_locs), intent(in)    :: locs
     type(mom5cice5_goms), intent(inout) :: gom
     character(2)                        :: op_type='TL'
-    
+
     call check(fld)
     call nicas_interph(fld, locs, gom, op_type)
-    
+
   end subroutine interp_tl
 
   ! ------------------------------------------------------------------------------
@@ -832,7 +819,7 @@ contains
 
     call check(fld)
     call nicas_interph(fld, locs, gom, op_type)
-    
+
   end subroutine interp_ad
 
   ! ------------------------------------------------------------------------------
@@ -844,19 +831,19 @@ contains
     use type_randgen, only: rng,initialize_sampling,create_randgen !randgentype
     use module_namelist, only: namtype    
     use tools_const, only : deg2rad
-    
+
     type(mom5cice5_field), intent(in)    :: fld
     type(mom5cice5_locs), intent(in)     :: locs
     type(mom5cice5_goms), intent(inout)  :: gom
     character(2), intent(in)             :: op_type !('TL' or 'AD')
-    
+
     integer :: Nc, No, var_index
 
     logical,allocatable :: mask(:), masko(:)                !< mask (ncells, nlevels)
     real(kind=kind_real), allocatable :: lon(:), lat(:), lono(:), lato(:), fld_src(:), fld_dst(:)
     real(kind=kind_real) :: start, finish
     type(namtype) :: nam !< Namelist variables
-    
+
     if (.not.(gom%hinterp_initialized)) then
        call cpu_time(start)
        Nc = fld%geom%nx*fld%geom%ny
@@ -869,10 +856,10 @@ contains
        lono = deg2rad*locs%xyz(1,:)
        lato = deg2rad*locs%xyz(2,:)
        lon = deg2rad*reshape(fld%geom%lon, (/Nc/))     ! Inline grid, structured to un-structured
-       lat = deg2rad*reshape(fld%geom%lat, (/Nc/))     !       
+       lat = deg2rad*reshape(fld%geom%lat, (/Nc/))     ! and change to SI Units      
        call interp_horiz(rng, Nc, lon,  lat,  mask, &
-                              No, lono, lato, masko, &
-                              gom%hinterp_op)
+            No, lono, lato, masko, &
+            gom%hinterp_op)
        call cpu_time(finish)
        gom%hinterp_initialized = .true.
     end if
@@ -887,13 +874,13 @@ contains
        !call apply_linop_ad(hinterp_op,fld_dst,fld_src)
        !put fld_src
     end select
-       
+
     print *,'OUT OF INTERP_HORIZ ........ cpu time:',finish-start
 
   end subroutine nicas_interph
-  
+
   ! ------------------------------------------------------------------------------
-  
+
   subroutine lin_weights(kk,delta1,delta2,k1,k2,w1,w2)
     implicit none
     integer, intent(in)  :: kk
@@ -920,7 +907,7 @@ contains
   subroutine convert_to_ug(self, ug)
     use unstructured_grid_mod
     use mom5cice5_thermo
-    
+
     implicit none
     type(mom5cice5_field), intent(in) :: self
     type(unstructured_grid), intent(inout) :: ug
@@ -977,11 +964,11 @@ contains
           !cmask(:) = int(self%geom%mask(jx,jy))           ! Some issues with the mask
           !print *,'cmask=',cmask
           !if (self%icemask(jx,jy)>0.0) then
-             !print *,vv(:)
-             !read(*,*)
+          !print *,vv(:)
+          !read(*,*)
           !end if
           !if (cmask(1)==1) read(*,*)
-          
+
           call add_column(ug, self%geom%lat(jx,jy), self%geom%lon(jx,jy), self%geom%cell_area(jx, jy), &
                nz_total, &
                n_vars, &
@@ -1028,12 +1015,12 @@ contains
              jk = jk + 1
           end do
           self%sssoc(jx,jy) = current%column%fld3d(jk)                 ! Ice/Ocean interface,
-                                                                      ! Tf = -mu * S          
+          ! Tf = -mu * S          
           jk = jk + 1          
           do jz = 1,self%nzo                                          ! Ocean SST
              self%sstoc(jx,jy) = current%column%fld3d(jk)              !
              jk = jk + 1
-          end do          
+          end do
           current => current%next
        enddo
     enddo

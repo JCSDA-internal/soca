@@ -17,41 +17,41 @@ namespace eckit {
 namespace mom5cice5 {
   class ObsBiasIncrement;
 
-/// Class to handle observation bias parameters.
+  /// Class to handle observation bias parameters.
 
-// -----------------------------------------------------------------------------
+  // -----------------------------------------------------------------------------
 
-class ObsBias : public util::Printable,
-                private boost::noncopyable,
-                private util::ObjectCounter<ObsBias> {
- public:
-  static const unsigned int ntypes = 4;
-  static const std::string classname() {return "mom5cice5::ObsBias";}
+  class ObsBias : public util::Printable,
+    private boost::noncopyable,
+    private util::ObjectCounter<ObsBias> {
+  public:
+      static const unsigned int ntypes = 4;
+      static const std::string classname() {return "mom5cice5::ObsBias";}
 
-  explicit ObsBias(const eckit::Configuration &);
-  ObsBias(const ObsBias &, const bool);
-  ~ObsBias() {}
+      explicit ObsBias(const eckit::Configuration &);
+      ObsBias(const ObsBias &, const bool);
+      ~ObsBias() {}
 
-  ObsBias & operator+=(const ObsBiasIncrement &);
+      ObsBias & operator+=(const ObsBiasIncrement &);
 
-/// I/O and diagnostics
-  void read(const eckit::Configuration &) {}
-  void write(const eckit::Configuration &) const {}
-  double norm() const;
+      /// I/O and diagnostics
+      void read(const eckit::Configuration &) {}
+      void write(const eckit::Configuration &) const {}
+      double norm() const;
 
-  const double & operator[](const unsigned int ii) const {return bias_[ii];}
+      const double & operator[](const unsigned int ii) const {return bias_[ii];}
 
-  const double & fraction() const {return bias_[0];}
-  const double & temp() const {return bias_[1];}
-  const double & salt() const {return bias_[3];}
+      const double & fraction() const {return bias_[0];}
+      const double & temp() const {return bias_[1];}
+      const double & salt() const {return bias_[3];}
 
- private:
-  void print(std::ostream &) const;
-  std::vector<double> bias_;
-  bool active_;
-};
+  private:
+      void print(std::ostream &) const;
+      std::vector<double> bias_;
+      bool active_;
+    };
 
-// -----------------------------------------------------------------------------
+  // -----------------------------------------------------------------------------
 
 }  // namespace mom5cice5
 

@@ -138,6 +138,15 @@ namespace mom5cice5 {
   void Increment::random() {
     fields_->random();
   }
+  /// Interpolate to observation location
+  // -----------------------------------------------------------------------------
+  void Increment::interpolateTL(const Loc & locs, Gom & cols) const {
+    fields_->interpolateTL(locs, cols);
+  }
+  // -----------------------------------------------------------------------------
+  void Increment::interpolateAD(const Loc & locs, const Gom & cols) {
+    fields_->interpolateAD(locs, cols);
+  }
   // -----------------------------------------------------------------------------
   /// Convert to/from unstructured grid
   // -----------------------------------------------------------------------------

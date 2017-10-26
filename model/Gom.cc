@@ -5,7 +5,7 @@
 #include "util/Logger.h"
 #include "model/ObsSpace.h"
 #include "model/Observation.h"
-//#include "model/LinearObsOp.h"
+#include "model/LinearObsOp.h"
 #include "model/Fortran.h"
 #include "model/Variables.h"
 

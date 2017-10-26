@@ -1,12 +1,3 @@
-/*
- * (C) Copyright 2009-2016 ECMWF.
- * 
- * This software is licensed under the terms of the Apache Licence Version 2.0
- * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
- * In applying this licence, ECMWF does not waive the privileges and immunities 
- * granted to it by virtue of its status as an intergovernmental organisation nor
- * does it submit to any jurisdiction.
- */
 
 #ifndef MOM5CICE5_MODEL_MOM5CICE5ERRORCOVARIANCE_H_
 #define MOM5CICE5_MODEL_MOM5CICE5ERRORCOVARIANCE_H_
@@ -29,27 +20,30 @@ namespace mom5cice5 {
   class State;
   class Variables;
 
-// -----------------------------------------------------------------------------
-/// Background error covariance matrix for MOM5CICE5 model.
+  // -----------------------------------------------------------------------------
+  /// Background error covariance matrix for MOM5CICE5 model.
 
-class ErrorCovariance : public util::Printable,
-                          private boost::noncopyable,
-                          private util::ObjectCounter<ErrorCovariance> {
- public:
-  static const std::string classname() {return "mom5cice5::ErrorCovariance";}
+  class ErrorCovariance : public util::Printable,
+    private boost::noncopyable,
+    private util::ObjectCounter<ErrorCovariance> {
+  public:
+      static const std::string classname() {return "mom5cic5::ErrorCovariance";}
 
-  ErrorCovariance(const Geometry &, const Variables &, const eckit::Configuration &, const State &) {}
-  ~ErrorCovariance() {}
+      ErrorCovariance(const Geometry &, const Variables &, const eckit::Configuration &, const State &);
+      ~ErrorCovariance();
 
-  void linearize(const State &, const Geometry &) {}
-  void multiply(const Increment &, Increment &) const {}
-  void inverseMultiply(const Increment &, Increment &) const {}
-  void randomize(Increment &) const {}
+      void linearize(const State &, const Geometry &);
+      void multiply(const Increment &, Increment &) const;
+      void inverseMultiply(const Increment &, Increment &) const;
+      void randomize(Increment &) const;
 
- private:
-  void print(std::ostream &) const {}
-};
-// -----------------------------------------------------------------------------
+  private:
+      void print(std::ostream &) const;
+      int keyFtnConfig_;
+      boost::scoped_ptr<const Geometry> geom_;
+      util::DateTime time_;
+    };
+  // -----------------------------------------------------------------------------
 
 }  // namespace mom5cice5
 #endif  // MOM5CICE5_MODEL_MOM5CICE5ERRORCOVARIANCE_H_

@@ -21,9 +21,9 @@ ObsBiasIncrement::ObsBiasIncrement(const eckit::Configuration & conf)
   : bias_(ObsBias::ntypes, 0.0), active_(ObsBias::ntypes, false)
 {
   active_[0] = conf.has("fraction");
-  active_[1] = conf.has("freeboard");
-  active_[2] = conf.has("temp");
-  active_[3] = conf.has("salt");
+  //active_[1] = conf.has("freeboard");
+  //active_[2] = conf.has("temp");
+  //active_[3] = conf.has("salt");
   bool on = false;
   std::string strn = "";
   for (unsigned int jj = 0; jj < ObsBias::ntypes; ++jj) {
