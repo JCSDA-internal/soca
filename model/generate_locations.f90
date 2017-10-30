@@ -25,10 +25,14 @@ subroutine generate_locations(c_conf,nlocs,ntimes,bgn,step,times,obsloc)
   allocate(xxyyzz(3,nlocs))
   print *,'-----GENERATE ',nlocs,' OBS -----'
   ijk=0
+  call random_number(xxyyzz)
+
   do jobs=1,nlocs
-     xxyyzz(1,jobs)=10.0_kind_real
-     xxyyzz(2,jobs)=10.0_kind_real
+     xxyyzz(1,jobs)=360.0_kind_real*xxyyzz(1,jobs)
+     xxyyzz(2,jobs)=180.0_kind_real*xxyyzz(2,jobs)-90.0_kind_real
      xxyyzz(3,jobs)=0.0_kind_real
+     print *,'generate location index:',jobs,xxyyzz(:,jobs)
+     
   enddo
 
   call obsvec_setup(obsloc,3,nlocs*ntimes)
@@ -39,7 +43,7 @@ subroutine generate_locations(c_conf,nlocs,ntimes,bgn,step,times,obsloc)
      do jobs=1,nlocs
         iobs=iobs+1
         times(iobs)=now
-        obsloc%values(:,iobs)=xxyyzz(:,jobs)
+        obsloc%values(1:3,iobs)=xxyyzz(1:3,jobs)
      enddo
      call datetime_update(now,step)
   enddo

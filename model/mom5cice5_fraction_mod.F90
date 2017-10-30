@@ -26,13 +26,16 @@ contains
     type(c_ptr), intent(in)       :: c_conf
 
     type(mom5cice5_obsoper), pointer :: self
-    character(len=1) :: svars(1) = (/"x"/)
+    !character(len=5) :: svars /"cicen"/
+    character(len=5) :: svars(1)!(5) = (/"x"/) ! = (/"cicen"/)
 
+    svars(1)='cicen'
+    print *,'============ In fraction setup ===== ',svars
     call mom5cice5_obsoper_registry%init()
     call mom5cice5_obsoper_registry%add(c_key_self)
     call mom5cice5_obsoper_registry%get(c_key_self, self)
 
-    call mom5cice5_oper_setup(self, c_conf, svars, 1)
+    call mom5cice5_oper_setup(self, c_conf, svars(:), 1)
 
   end subroutine c_mom5cice5_fraction_setup
 
@@ -65,9 +68,20 @@ contains
     call mom5cice5_goms_registry%get(c_key_gom, gom) 
     call mom5cice5_obs_vect_registry%get(c_key_hofx,hofx)
 
+    print *,'================== gom%nobs=',gom%nobs
+    print *,'================== gom%nvar=',gom%nvar    
+    print *,'================== gom%indx=',gom%indx
+    !print *,'================== gom%geom%nx=',gom%geom%nx
+    !print *,'================== gom%geom%ny=',gom%geom%ny
+    print *,'================== gom%values=',gom%values
+    !!!!!!!!!!!!!! PROBLEM WITH HOFX !!!!!!!!!!!!!!!!!!!!!!!!!!
+
     do jo=1,gom%nobs
        io=gom%indx(jo)
-       hofx%values(1,io)=sum(gom%values(1:gom%geom%ncat,jo)) + c_bias
+       print *,'gom%indx(jo)=',gom%indx(jo),io,jo
+       print *,'values:',jo,gom%values(:,jo)
+       read(*,*)
+       hofx%values(1,io)=sum(gom%values(:,jo)) !+ c_bias
     enddo
 
   end subroutine mom5cice5_fraction_equiv
@@ -89,7 +103,7 @@ contains
 
     do jo=1,gom%nobs
        io=gom%indx(jo)
-       hofx%values(1,io)=sum(gom%values(1:gom%geom%ncat,jo)) + c_bias       
+       !hofx%values(1,io)=sum(gom%values(1:gom%geom%ncat,jo)) + c_bias       
     enddo
 
   end subroutine mom5cice5_fraction_equiv_tl
@@ -111,9 +125,9 @@ contains
 
     do jo=1,gom%nobs
        io=gom%indx(jo)
-       do nco=1,gom%geom%ncat
-          gom%values(nco,jo)=gom%values(nco,jo)+hofx%values(1,io)
-       end do
+       !do nco=1,gom%geom%ncat
+       !   gom%values(nco,jo)=gom%values(nco,jo)+hofx%values(1,io)
+       !end do
        c_bias = c_bias + hofx%values(1,io)
        ! CODE ADJOINT BELOW
        !gom%values(1,jo)=hofx%values(1,io)

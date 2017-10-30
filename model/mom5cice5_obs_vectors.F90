@@ -43,11 +43,15 @@ contains
     integer(c_int), intent(in) :: ncol, nobs
     type(obs_vect), pointer :: self
 
+    print *,'=============== OBSVEC (c interface) ============== ncol:',ncol,' nobs:',nobs    
+    
     call mom5cice5_obs_vect_registry%init()
     call mom5cice5_obs_vect_registry%add(c_key_self)
     call mom5cice5_obs_vect_registry%get(c_key_self,self)
     call obsvec_setup(self, ncol, nobs)
-
+    
+    print *,'=============== ALLOCATED OBSVEC (c interface) ==============',self%ncol,self%nobs
+    read(*,*)
   end subroutine c_mom5cice5_obsvec_setup
 
   ! ------------------------------------------------------------------------------
@@ -61,7 +65,9 @@ contains
     self%nobs=no
     if (allocated(self%values)) deallocate(self%values)
     allocate(self%values(self%ncol,self%nobs))
-
+    
+    print *,'=============== ALLOCATED OBSVEC ==============',self%ncol,self%nobs
+    
   end subroutine obsvec_setup
 
   ! ------------------------------------------------------------------------------

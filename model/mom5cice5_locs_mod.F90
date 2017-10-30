@@ -42,7 +42,7 @@ contains
     type(obs_vect), intent(in) :: lvec
     integer :: jc, jo
 
-    print *,'IN mom5cice5_loc_setup(self, lvec) ................'
+    print *,'IN mom5cice5_loc_setup(self, lvec) ................ lvec=',lvec%values
     self%nloc=lvec%nobs
     allocate(self%xyz(3,self%nloc))
     do jo=1,self%nloc
@@ -50,7 +50,7 @@ contains
           self%xyz(jc,jo)=lvec%values(jc,jo)
        enddo
     enddo
-
+    print *,'out of loc_setup nloc=',self%nloc
   end subroutine mom5cice5_loc_setup
 
   ! ------------------------------------------------------------------------------

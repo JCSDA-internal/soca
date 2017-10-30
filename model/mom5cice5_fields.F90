@@ -818,7 +818,7 @@ contains
     character(2)                        :: op_type='AD'
 
     call check(fld)
-    call nicas_interph(fld, locs, gom, op_type)
+    !call nicas_interph(fld, locs, gom, op_type)
 
   end subroutine interp_ad
 
@@ -844,11 +844,16 @@ contains
     real(kind=kind_real) :: start, finish
     type(namtype) :: nam !< Namelist variables
 
+    print *,'&&&&&&&&&&&&&&&&&&& IN NICAS_INTERPH &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&'
+    
     if (.not.(gom%hinterp_initialized)) then
+       print *,'&&&&&&&&&&&&&&&&&&& ININITIALIZE NICAS_INTERPH &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&'
        call cpu_time(start)
        Nc = fld%geom%nx*fld%geom%ny
-       No = locs%nloc       
+       No = locs%nloc
+       !No = gom%nobs       
        allocate(lon(Nc), lat(Nc), mask(Nc), masko(No), fld_src(Nc), fld_dst(No) ) ! <--- Hack job, need to replace with pointers? ...
+       print *,'----------stuff:',Nc, No, lono, lato
        allocate(lono(No), lato(No))
        masko = .true. ! Figured out what's the use for masko????
        mask = .true.  ! Need to point to proper mask
@@ -856,26 +861,44 @@ contains
        lono = deg2rad*locs%xyz(1,:)
        lato = deg2rad*locs%xyz(2,:)
        lon = deg2rad*reshape(fld%geom%lon, (/Nc/))     ! Inline grid, structured to un-structured
-       lat = deg2rad*reshape(fld%geom%lat, (/Nc/))     ! and change to SI Units      
+       lat = deg2rad*reshape(fld%geom%lat, (/Nc/))     ! and change to SI Units
        call interp_horiz(rng, Nc, lon,  lat,  mask, &
             No, lono, lato, masko, &
             gom%hinterp_op)
        call cpu_time(finish)
        gom%hinterp_initialized = .true.
+       print *,'linop row:',gom%hinterp_op%row
+       print *,'linop ns:',gom%hinterp_op%n_s       
+       print *,'OUT OF INTERP_HORIZ INIT ........ cpu time:',finish-start
+       print *,'Nxc, No:',Nc, No
+       print *,'gom nobs:',gom%nobs
+       print *,'locs nloc:',locs%nloc
+       !read(*,*)
     end if
 
     select case (op_type)
     case ('TL')
+       print *,'&&&&&&&&&&&&&&&&&&& APPLY NICAS_INTERPH TL OPERATOR &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&'       
        !need to loop through all variables fld_dst ==> gom%values
-       var_index=12
+       var_index=1
+       print *,'linop row:',gom%hinterp_op%row
+       print *,'linop ns:',gom%hinterp_op%n_s       
+
+       print *,'shape of gom%values',shape(gom%values)
        fld_src = reshape(fld%sstoc, (/Nc/))
        call apply_linop(gom%hinterp_op, fld_src, gom%values(var_index,:))
+       
+       print *,gom%values(var_index,:)
+       print *,'linop row:',gom%hinterp_op%row
+       print *,'********* in interp tl ********************', gom%values(var_index,:)
+
+
     case ('AD')
        !call apply_linop_ad(hinterp_op,fld_dst,fld_src)
        !put fld_src
     end select
 
-    print *,'OUT OF INTERP_HORIZ ........ cpu time:',finish-start
+    print *,'OUT OF INTERP_HORIZ:',locs%xyz(1,:)
 
   end subroutine nicas_interph
 

@@ -1,6 +1,7 @@
 list( APPEND mom5cice5_test_input
   testinput/dirac.nicas.json
   testinput/interfaces.yml
+  testinput/interfaces.json  
   testinput/forecast.yml
   testinput/truth.yml
   testinput/makeobs3d.yml
@@ -59,7 +60,7 @@ ecbuild_add_test( TARGET test_mom5cice5_forecast
 ecbuild_add_test( TARGET test_mom5cice5_makeobs3d
                   TYPE SCRIPT
                   COMMAND "compare.sh"
-                  ARGS "${CMAKE_BINARY_DIR}/bin/mom5cice5_makeobs.x testinput/makeobs3d.yml"
+                  ARGS "${CMAKE_BINARY_DIR}/bin/mom5cice5_makeobs.x testinput/makeobs3d.json"
                        testoutput/makeobs3d.test
                   DEPENDS mom5cice5_makeobs.x )
 		  
@@ -68,67 +69,67 @@ ecbuild_add_test( TARGET test_mom5cice5_makeobs3d
 ecbuild_add_test( TARGET  test_mom5cice5_geometry
                   BOOST
                   SOURCES executables/TestGeometry.cc
-                  ARGS    "testinput/interfaces.yml"
+                  ARGS    "testinput/interfaces.json"
                   LIBS    mom5cice5 )
 
 ecbuild_add_test( TARGET  test_mom5cice5_locations
                   BOOST
                   SOURCES executables/TestLocations.cc
-                  ARGS    "testinput/interfaces.yml"
+                  ARGS    "testinput/interfaces.json"
                   LIBS    mom5cice5 )
 
 ecbuild_add_test( TARGET  test_mom5cice5_variables
                   BOOST
                   SOURCES executables/TestVariables.cc
-                  ARGS    "testinput/interfaces.yml"
+                  ARGS    "testinput/interfaces.json"
                   LIBS    mom5cice5 )
 
 ecbuild_add_test( TARGET  test_mom5cice5_state
                   BOOST
                   SOURCES executables/TestState.cc
-                  ARGS    "testinput/interfaces.yml"
+                  ARGS    "testinput/interfaces.json"
                   LIBS    mom5cice5 )
 		  
 ecbuild_add_test( TARGET  test_mom5cice5_modelaux
                   BOOST
                   SOURCES executables/TestModelAuxControl.cc
-                  ARGS    "testinput/interfaces.yml"
+                  ARGS    "testinput/interfaces.json"
                   LIBS    mom5cice5 )
 		  
 ecbuild_add_test( TARGET  test_mom5cice5_model
                   BOOST
                   SOURCES executables/TestModel.cc
-                  ARGS    "testinput/interfaces.yml"
+                  ARGS    "testinput/interfaces.json"
                   LIBS    mom5cice5 )
 		  
 ecbuild_add_test( TARGET  test_mom5cice5_increment
                   BOOST
                   SOURCES executables/TestIncrement.cc
-                  ARGS    "testinput/interfaces.yml"
+                  ARGS    "testinput/interfaces.json"
                   LIBS    mom5cice5 )
 
 #ecbuild_add_test( TARGET  test_mom5cice5_errorcovariance
 #                  BOOST
 #                  SOURCES executables/TestErrorCovariance.cc
-#                  ARGS    "testinput/interfaces.yml"
+#                  ARGS    "testinput/interfaces.json"
 #                  LIBS    mom5cice5 )
 
 ecbuild_add_test( TARGET  test_mom5cice5_obsvector
                   BOOST
                   SOURCES executables/TestObsVector.cc
-                  ARGS    "testinput/interfaces.yml"
+                  ARGS    "testinput/interfaces.json"
                   LIBS    mom5cice5 )
 
 ecbuild_add_test( TARGET test_mom5cice5_observationspace
                   BOOST
                   SOURCES executables/TestObservationSpace.cc
-                  ARGS "testinput/interfaces.yml"
+                  ARGS "testinput/interfaces.json"
                   LIBS    mom5cice5 )
 
 ecbuild_add_test( TARGET  test_mom5cice5_obsaux
                   BOOST
                   SOURCES executables/TestObsAuxControl.cc
-                  ARGS    "testinput/interfaces.yml"
+                  ARGS    "testinput/interfaces.json"
                   LIBS    mom5cice5 )
 		  
 #ecbuild_add_test( TARGET test_mom5cice5_dirac_nicas

@@ -9,6 +9,7 @@ module mom5cice5_obs_data
   use datetime_mod
   use duration_mod
   use mom5cice5_goms_mod
+  use mom5cice5_geom_mod
   use mom5cice5_locs_mod
   use mom5cice5_obs_vectors
   use mom5cice5_obsoper_mod
@@ -256,6 +257,10 @@ contains
     call mom5cice5_locs_registry%add(c_key_locs)
     call mom5cice5_locs_registry%get(c_key_locs,locs)
 
+    print *,'ovec=',ovec%values
+    print *,'==========in obs_data=========='
+    
+    
     call mom5cice5_loc_setup(locs, ovec)
 
     deallocate(ovec%values)
@@ -264,7 +269,8 @@ contains
 
   ! ------------------------------------------------------------------------------
 
-  subroutine obs_getgom(c_key_self, lreq, c_req, c_key_vars, c_t1, c_t2, c_key_gom) bind(c,name='mom5cice5_obsdb_getgom_f90')
+  subroutine obs_getgom(c_key_self, lreq, c_req, c_key_vars, c_t1, c_t2, c_key_gom)&
+       &bind(c,name='mom5cice5_obsdb_getgom_f90')
     implicit none
     integer(c_int), intent(in) :: c_key_self
     integer(c_int), intent(in) :: lreq
@@ -272,12 +278,14 @@ contains
     integer(c_int), intent(in) :: c_key_vars
     type(c_ptr), intent(in) :: c_t1, c_t2
     integer(c_int), intent(inout) :: c_key_gom
+    !integer(c_int), intent(inout) :: c_key_geom
 
     type(obs_data), pointer :: self
     character(len=lreq) :: req
     type(mom5cice5_vars), pointer :: vars
     type(datetime) :: t1, t2
     type(mom5cice5_goms), pointer :: gom
+    !type(mom5cice5_geom), pointer :: geom    
 
     integer :: nobs
     integer, allocatable :: mobs(:)
@@ -348,6 +356,8 @@ contains
     type(datetime), allocatable :: times(:)
     type(obs_vect) :: obsloc
 
+    character(len=21) :: tstr
+    
     call obs_data_registry%get(c_key_self, self)
     call c_f_string(c_req, req)
     call c_f_datetime(c_bgn, bgn)
@@ -355,7 +365,9 @@ contains
 
     nlocs  = config_get_int(c_conf, "obs_density");
     kobs=nlocs*ktimes;
+    call datetime_to_string(bgn, tstr)
 
+    print *,'=============== obs bgn time=',tstr    
     print *,'=============== obs_density=',nlocs
     
     allocate(times(kobs))
@@ -402,6 +414,9 @@ contains
     type(column_data), pointer :: jcol
     integer :: jo, jc, iobs
 
+    character(len=21) :: t1str, t2str, tstr
+    !character(kind=c_char,len=1) :: cstring(21)
+
     ! Find obs group
     call findgroup(self,req,jgrp)
     if (.not.associated(jgrp)) call abor1_ftn("obs_time_get: obs group not found")
@@ -410,18 +425,28 @@ contains
     call findcolumn(jgrp,col,jcol)
     if (.not.associated(jcol)) call abor1_ftn("obs_time_get: obs column not found")
 
+    print *,'jgrp%nobs:',jgrp%nobs
+    
     ! Time selection
     iobs=0
     do jo=1,jgrp%nobs
+       call datetime_to_string(t1, t1str)
+       call datetime_to_string(t2, t2str)
+       call datetime_to_string(jgrp%times(jo), tstr)
+       print *,'t1=',t1str,' t=',tstr,' t2=',t2str       
+    
        if (t1<jgrp%times(jo) .and. jgrp%times(jo)<=t2) iobs=iobs+1
     enddo
 
+    print *,'in obs_time_get iobs=',iobs
+    
     ! Get data
     if (ovec%nobs/=iobs .or. ovec%ncol/=jcol%ncol) then
        if (allocated(ovec%values)) deallocate(ovec%values)
        ovec%nobs=iobs
        ovec%ncol=jcol%ncol
        allocate(ovec%values(ovec%ncol,ovec%nobs))
+       print *,'allocated ovec'
     endif
 
     iobs=0
@@ -433,7 +458,11 @@ contains
           enddo
        endif
     enddo
-
+    !print *,'shape ovec%value:',shape(ovec%values)
+    !print *,ovec%ncol,ovec%nobs
+    !print *,ovec%values
+    !read(*,*)
+    
   end subroutine obs_time_get
 
   ! ------------------------------------------------------------------------------
@@ -567,6 +596,10 @@ contains
     character(len=20) :: stime
     character(len=max_string+50) :: record
 
+    character(len=21) :: tstr
+
+    print *,'-------------- READING ',trim(self%filein)
+    
     iin=90
     write(record,*)'obs_read: opening ',trim(self%filein)
     call fckit_log%info(record)
@@ -606,6 +639,8 @@ contains
        do jo=1,jgrp%nobs
           read(iin,*)stime,ztmp(:)
           call datetime_create(stime,jgrp%times(jo))
+          call datetime_to_string(jgrp%times(jo), tstr)
+          print *,'in read obs, time:',tstr
           icol=0
           jcol=>jgrp%colhead
           do while (associated(jcol))

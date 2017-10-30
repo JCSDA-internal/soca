@@ -38,8 +38,10 @@ contains
     implicit none
     type(mom5cice5_vars), intent(inout) :: self
     character(len=5), intent(in) :: cvars(:)
+    !character(*), intent(in) :: cvars(:)
     integer :: jj
 
+    print *,cvars
     self%nv = size(cvars)
 
     do jj=1,self%nv

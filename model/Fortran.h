@@ -157,7 +157,7 @@ extern "C" {
   void mom5cice5_obsdb_getgom_f90(const int & keyHelp, const int &, const char *,
                            const int & keyVars,
                            const util::DateTime * const *, const util::DateTime * const *,
-                           int & keyGoms);
+				  int & keyGoms);
   void mom5cice5_obsdb_generate_f90(const int & keyHelp, const int &, const char *,
                              const eckit::Configuration * const *, const util::DateTime * const *,
                              const util::Duration * const *, const int &, int &);

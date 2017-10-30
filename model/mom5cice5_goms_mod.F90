@@ -22,7 +22,7 @@ module mom5cice5_goms_mod
 
   !> Fortran derived type to hold interpolated fields required by the obs operators
   type :: mom5cice5_goms
-     type(mom5cice5_geom), pointer :: geom !< MOM5 & CICE5 Geometry     
+     !type(mom5cice5_geom), pointer :: geom !< MOM5 & CICE5 Geometry     
      integer :: nobs
      integer :: nvar
      integer :: used
@@ -56,14 +56,15 @@ contains
 
   ! ------------------------------------------------------------------------------
 
-  subroutine c_mom5cice5_gom_create(c_key_self, c_key_geom) bind(c,name='mom5cice5_gom_create_f90')
+  !subroutine c_mom5cice5_gom_create(c_key_self, c_key_geom) bind(c,name='mom5cice5_gom_create_f90')
+  subroutine c_mom5cice5_gom_create(c_key_self) bind(c,name='mom5cice5_gom_create_f90')
 
     implicit none
     integer(c_int), intent(inout) :: c_key_self
-    integer(c_int), intent(in) :: c_key_geom     !< Geometry
+    !integer(c_int), intent(in) :: c_key_geom     !< Geometry
     
     type(mom5cice5_goms), pointer  :: self
-    type(mom5cice5_geom),  pointer :: geom
+    !type(mom5cice5_geom),  pointer :: geom
     
     call mom5cice5_goms_registry%init()
     call mom5cice5_goms_registry%add(c_key_self)
@@ -79,8 +80,11 @@ contains
     implicit none
     type(mom5cice5_goms), intent(inout) :: self
     type(mom5cice5_vars), intent(in) :: vars
+    !type(mom5cice5_geom), intent(in), pointer :: geom    
     integer, intent(in) :: kobs(:)
 
+    print *,'========== kobs = ',kobs
+    !self%geom => geom    
     self%nobs=size(kobs)
     self%nvar=vars%nv
     self%used=0
@@ -91,7 +95,8 @@ contains
     allocate(self%variables(self%nvar))
     self%variables(:)=vars%fldnames(:)
 
-    allocate(self%values(self%nvar,self%nobs))
+    !allocate(self%values(self%nvar,self%nobs))
+    allocate(self%values(5,self%nobs)) ! <--- pb here hard code 5 cat
 
     self%lalloc = .true.
 

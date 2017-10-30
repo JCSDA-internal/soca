@@ -61,15 +61,15 @@ end subroutine mom5cice5_field_zero_c
 ! ------------------------------------------------------------------------------
 
 subroutine mom5cice5_field_dirac_c(c_key_self,c_conf) bind(c,name='mom5cice5_field_dirac_f90')
-use iso_c_binding
-use mom5cice5_fields
-implicit none
-integer(c_int), intent(in) :: c_key_self
-type(c_ptr), intent(in)    :: c_conf !< Configuration
-type(mom5cice5_field), pointer :: self
+  use iso_c_binding
+  use mom5cice5_fields
+  implicit none
+  integer(c_int), intent(in) :: c_key_self
+  type(c_ptr), intent(in)    :: c_conf !< Configuration
+  type(mom5cice5_field), pointer :: self
 
-call mom5cice5_field_registry%get(c_key_self,self)
-call dirac(self,c_conf)
+  call mom5cice5_field_registry%get(c_key_self,self)
+  call dirac(self,c_conf)
 
 end subroutine mom5cice5_field_dirac_c
 
@@ -409,46 +409,48 @@ end subroutine mom5cice5_field_rms_c
 ! ------------------------------------------------------------------------------
 
 subroutine mom5cice5_field_interp_tl_c(c_key_fld,c_key_loc,c_key_gom) bind(c,name='mom5cice5_field_interp_tl_f90')
-use iso_c_binding
-use mom5cice5_fields
-use mom5cice5_locs_mod
-use mom5cice5_goms_mod
-implicit none
-integer(c_int), intent(in) :: c_key_fld
-integer(c_int), intent(in) :: c_key_loc
-integer(c_int), intent(in) :: c_key_gom
-type(mom5cice5_field), pointer :: fld
-type(mom5cice5_locs),  pointer :: locs
-type(mom5cice5_goms),  pointer :: gom
+  use iso_c_binding
+  use mom5cice5_fields
+  use mom5cice5_locs_mod
+  use mom5cice5_goms_mod
+  implicit none
+  integer(c_int), intent(in) :: c_key_fld
+  integer(c_int), intent(in) :: c_key_loc
+  integer(c_int), intent(in) :: c_key_gom
+  type(mom5cice5_field), pointer :: fld
+  type(mom5cice5_locs),  pointer :: locs
+  type(mom5cice5_goms),  pointer :: gom
 
-call mom5cice5_field_registry%get(c_key_fld,fld)
-call mom5cice5_locs_registry%get(c_key_loc,locs)
-call mom5cice5_goms_registry%get(c_key_gom,gom)
+  call mom5cice5_field_registry%get(c_key_fld,fld)
+  call mom5cice5_locs_registry%get(c_key_loc,locs)
+  call mom5cice5_goms_registry%get(c_key_gom,gom)
 
-call interp_tl(fld, locs, gom)
+  print *,'IN FIELDS INTERFACE ... locs nloc:',locs%nloc
+
+  call interp_tl(fld, locs, gom)
 
 end subroutine mom5cice5_field_interp_tl_c
 
 ! ------------------------------------------------------------------------------
 
 subroutine mom5cice5_field_interp_ad_c(c_key_fld,c_key_loc,c_key_gom) bind(c,name='mom5cice5_field_interp_ad_f90')
-use iso_c_binding
-use mom5cice5_fields
-use mom5cice5_locs_mod
-use mom5cice5_goms_mod
-implicit none
-integer(c_int), intent(in) :: c_key_fld
-integer(c_int), intent(in) :: c_key_loc
-integer(c_int), intent(in) :: c_key_gom
-type(mom5cice5_field), pointer :: fld
-type(mom5cice5_locs),  pointer :: locs
-type(mom5cice5_goms),  pointer :: gom
+  use iso_c_binding
+  use mom5cice5_fields
+  use mom5cice5_locs_mod
+  use mom5cice5_goms_mod
+  implicit none
+  integer(c_int), intent(in) :: c_key_fld
+  integer(c_int), intent(in) :: c_key_loc
+  integer(c_int), intent(in) :: c_key_gom
+  type(mom5cice5_field), pointer :: fld
+  type(mom5cice5_locs),  pointer :: locs
+  type(mom5cice5_goms),  pointer :: gom
 
-call mom5cice5_field_registry%get(c_key_fld,fld)
-call mom5cice5_locs_registry%get(c_key_loc,locs)
-call mom5cice5_goms_registry%get(c_key_gom,gom)
+  call mom5cice5_field_registry%get(c_key_fld,fld)
+  call mom5cice5_locs_registry%get(c_key_loc,locs)
+  call mom5cice5_goms_registry%get(c_key_gom,gom)
 
-call interp_ad(fld, locs, gom)
+  call interp_ad(fld, locs, gom)
 
 end subroutine mom5cice5_field_interp_ad_c
 
