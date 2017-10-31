@@ -18,7 +18,7 @@ module mom5cice5_obs_vectors
   type obs_vect
      integer :: nobs=0
      integer :: ncol=0
-     real(kind=kind_real), allocatable :: values(:,:)
+     real(kind=kind_real), allocatable :: values(:,:)  ! ncol x nobs
   end type obs_vect
 
 #define LISTED_TYPE obs_vect
@@ -50,8 +50,9 @@ contains
     call mom5cice5_obs_vect_registry%get(c_key_self,self)
     call obsvec_setup(self, ncol, nobs)
     
-    print *,'=============== ALLOCATED OBSVEC (c interface) ==============',self%ncol,self%nobs
-    read(*,*)
+    !print *,'=============== ALLOCATED OBSVEC (c interface) ==============',self%ncol,self%nobs
+    !print *,'obsvec values=',self%values
+    !read(*,*)
   end subroutine c_mom5cice5_obsvec_setup
 
   ! ------------------------------------------------------------------------------

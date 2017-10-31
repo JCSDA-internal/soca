@@ -43,10 +43,12 @@ contains
     type(c_ptr), intent(in)    :: c_conf
     character(len=*), intent(in) :: svars(:)
     integer :: ncol
-    print *,'============ IN OPER_SETUP =============',svars
+    print *,'============ IN OPER_SETUP =============',svars,ncol
     self%request = config_get_string(c_conf, len(self%request), "ObsType")
     call mom5cice5_vars_setup(self%varin, svars)
     self%ncol = ncol
+    print *,'END OF OPER_SETUP ncol=',ncol
+    !read(*,*)
 
   end subroutine mom5cice5_oper_setup
 

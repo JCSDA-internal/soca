@@ -39,7 +39,7 @@
     "Generate": {
       "begin": "PT1H",
       "obs_period": "PT1H",
-      "obs_density": "10",
+      "obs_density": "3",
       "obs_error": "0.1"
     }
     }],

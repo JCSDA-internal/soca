@@ -86,17 +86,17 @@ contains
     print *,'========== kobs = ',kobs
     !self%geom => geom    
     self%nobs=size(kobs)
-    self%nvar=vars%nv
+    self%nvar=5*vars%nv  ! <--- <--- pb here hard coded 5 cat
     self%used=0
 
     allocate(self%indx(self%nobs))
     self%indx(:)=kobs(:)
 
-    allocate(self%variables(self%nvar))
+    allocate(self%variables(self%nvar/5)) ! <--- <--- pb here hard coded 5 cat
     self%variables(:)=vars%fldnames(:)
 
-    !allocate(self%values(self%nvar,self%nobs))
-    allocate(self%values(5,self%nobs)) ! <--- pb here hard code 5 cat
+    allocate(self%values(self%nvar,self%nobs)) ! ex: self%values(:,jobs)=[cicen(1),cicen(2),cicen(3),cicen(4),cicen(5)]
+    !self%values=0.0_kind_real
 
     self%lalloc = .true.
 

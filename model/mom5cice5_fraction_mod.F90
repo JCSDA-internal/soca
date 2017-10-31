@@ -35,7 +35,8 @@ contains
     call mom5cice5_obsoper_registry%add(c_key_self)
     call mom5cice5_obsoper_registry%get(c_key_self, self)
 
-    call mom5cice5_oper_setup(self, c_conf, svars(:), 1)
+    
+    call mom5cice5_oper_setup(self, c_conf, svars(:), 5) !<---- HARD CODED CATEGORY ... CHANGE
 
   end subroutine c_mom5cice5_fraction_setup
 
@@ -80,7 +81,7 @@ contains
        io=gom%indx(jo)
        print *,'gom%indx(jo)=',gom%indx(jo),io,jo
        print *,'values:',jo,gom%values(:,jo)
-       read(*,*)
+       !read(*,*)
        hofx%values(1,io)=sum(gom%values(:,jo)) !+ c_bias
     enddo
 

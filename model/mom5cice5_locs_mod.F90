@@ -75,7 +75,7 @@ contains
     integer(c_int), intent(in) :: key
     integer(c_int), intent(inout) :: kobs
     type(mom5cice5_locs), pointer :: self
-    print *,'mom5cice5_loc_setup(self, lvec)'
+
     call mom5cice5_locs_registry%get(key,self)
     kobs = self%nloc
 

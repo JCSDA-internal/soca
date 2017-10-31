@@ -257,10 +257,11 @@ contains
     call mom5cice5_locs_registry%add(c_key_locs)
     call mom5cice5_locs_registry%get(c_key_locs,locs)
 
-    print *,'ovec=',ovec%values
+
     print *,'==========in obs_data=========='
-    
-    
+    print *,'ovec=',shape(ovec%values)    
+    print *,'locs=',locs%xyz
+    !read(*,*)
     call mom5cice5_loc_setup(locs, ovec)
 
     deallocate(ovec%values)
@@ -436,6 +437,7 @@ contains
        print *,'t1=',t1str,' t=',tstr,' t2=',t2str       
     
        if (t1<jgrp%times(jo) .and. jgrp%times(jo)<=t2) iobs=iobs+1
+       !iobs=iobs+1        ! <--- WRONG, REMOVE, JUST HERE FOR TESTING
     enddo
 
     print *,'in obs_time_get iobs=',iobs
@@ -599,7 +601,7 @@ contains
     character(len=21) :: tstr
 
     print *,'-------------- READING ',trim(self%filein)
-    
+    !read(*,*)
     iin=90
     write(record,*)'obs_read: opening ',trim(self%filein)
     call fckit_log%info(record)
@@ -621,6 +623,8 @@ contains
        allocate(jgrp%times(jgrp%nobs))
 
        read(iin,*)ncol
+       print *,'reading ncol:',ncol
+       !read(*,*)
        icol=0
        do jc=1,ncol
           if (jc==1) then

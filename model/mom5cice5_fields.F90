@@ -845,9 +845,10 @@ contains
     type(namtype) :: nam !< Namelist variables
 
     print *,'&&&&&&&&&&&&&&&&&&& IN NICAS_INTERPH &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&'
-    
+
     if (.not.(gom%hinterp_initialized)) then
        print *,'&&&&&&&&&&&&&&&&&&& ININITIALIZE NICAS_INTERPH &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&'
+       !read(*,*)
        call cpu_time(start)
        Nc = fld%geom%nx*fld%geom%ny
        No = locs%nloc
@@ -873,6 +874,7 @@ contains
        print *,'Nxc, No:',Nc, No
        print *,'gom nobs:',gom%nobs
        print *,'locs nloc:',locs%nloc
+       print *,'locs xyz:',locs%xyz
        !read(*,*)
     end if
 
