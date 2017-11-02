@@ -25,11 +25,13 @@ subroutine generate_locations(c_conf,nlocs,ntimes,bgn,step,times,obsloc)
   allocate(xxyyzz(3,nlocs))
   print *,'-----GENERATE ',nlocs,' OBS -----'
   ijk=0
-  call random_number(xxyyzz)
+  !call random_number(xxyyzz)
 
   do jobs=1,nlocs
-     xxyyzz(1,jobs)=360.0_kind_real*xxyyzz(1,jobs)
-     xxyyzz(2,jobs)=20.0_kind_real*xxyyzz(2,jobs)+80.0_kind_real
+     !xxyyzz(1,jobs)=360.0_kind_real*xxyyzz(1,jobs)
+     !xxyyzz(2,jobs)=20.0_kind_real*xxyyzz(2,jobs)+80.0_kind_real
+     xxyyzz(1,jobs)=real(jobs*360.0_kind_real/nlocs)
+     xxyyzz(2,jobs)=85.0_kind_real
      xxyyzz(3,jobs)=0.0_kind_real
   enddo
 

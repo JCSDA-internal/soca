@@ -35,8 +35,6 @@ contains
     call mom5cice5_obsoper_registry%add(c_key_self)
     call mom5cice5_obsoper_registry%get(c_key_self, self)
 
-    
-    !call mom5cice5_oper_setup(self, c_conf, svars(:), 5) !<---- HARD CODED CATEGORY ... CHANGE
     call mom5cice5_oper_setup(self, c_conf, svars(:), 5) !<---- HARD CODED CATEGORY ... CHANGE
 
   end subroutine c_mom5cice5_fraction_setup
@@ -75,11 +73,7 @@ contains
     print *,'shape(gom)=',shape(gom%values)    
     do jo=1,gom%nobs
        io=gom%indx(jo)
-
-       !hofx%values(1,io)=sum(gom%values(:,jo)) !+ c_bias
-       hofx%values(1,io)=gom%values(1,jo) !+ c_bias       
-
-
+       hofx%values(1,io)=sum(gom%values(:,jo)) + c_bias
     enddo
 
   end subroutine mom5cice5_fraction_equiv
@@ -100,10 +94,8 @@ contains
     call mom5cice5_obs_vect_registry%get(c_key_hofx,hofx)
 
     do jo=1,gom%nobs
-       !io=gom%indx(jo)
-       hofx%values(1,io)=sum(gom%values(:,jo)) !+ c_bias
-
-       !read(*,*)
+       io=gom%indx(jo)
+       hofx%values(1,io)=sum(gom%values(:,jo)) + c_bias       
     enddo
 
   end subroutine mom5cice5_fraction_equiv_tl

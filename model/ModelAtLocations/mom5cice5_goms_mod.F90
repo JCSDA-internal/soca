@@ -36,7 +36,7 @@ module mom5cice5_goms_mod
      character(len=1), allocatable :: variables(:)
      logical :: lalloc
      type(linoptype) :: hinterp_op
-     integer :: tindex
+     integer :: tindex              !To keep track of time index ... Not sure it should be done that way
      logical :: hinterp_initialized !True:  hinterp_op has been initialized
                                     !False: hinterp_op not initialized
   end type mom5cice5_goms
@@ -87,18 +87,21 @@ contains
 
     !self%geom => geom    
     self%nobs=size(kobs)
-    !self%nvar=5*vars%nv  ! <--- <--- pb here hard coded 5 cat
-    self%nvar=vars%nv
+    self%nvar=5*vars%nv  ! <--- <--- pb here hard coded 5 cat
+    !self%nvar=vars%nv
     self%used=0
 
+    print *,'nvar=',self%nvar
+    !read(*,*)
     allocate(self%indx(self%nobs))
     self%indx(:)=kobs(:)
-    self%tindex=1
-    allocate(self%variables(self%nvar)) ! <--- <--- pb here hard coded 5 cat
-    !allocate(self%variables(self%nvar/5)) ! <--- <--- pb here hard coded 5 cat    
+    self%tindex=1 ! Initialize time index
+    !allocate(self%variables(self%nvar)) ! <--- <--- pb here hard coded 5 cat
+    allocate(self%variables(self%nvar/5)) ! <--- <--- pb here hard coded 5 cat, and size of variables ...    
     self%variables(1:self%nvar)=vars%fldnames(vars%nv)
 
-    allocate(self%values(self%nvar,self%nobs)) ! ex: self%values(:,jobs)=[cicen(1),cicen(2),cicen(3),cicen(4),cicen(5)]
+    !!!!!!!! HARD CODED CATEGORY !!!!!!!!!!!!!!
+    allocate(self%values(self%nvar,self%nobs*5)) ! ex: self%values(:,jobs)=[cicen(1),cicen(2),cicen(3),cicen(4),cicen(5)]
     !self%values=0.0_kind_real
     print *,'in gom setup ========== shape goms = ',shape(self%values)
     !read(*,*)

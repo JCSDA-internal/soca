@@ -67,7 +67,7 @@
         "ObsData": {
           "ObsHandler": "ObsHelp",
           "ObsDataIn": {
-            "obsfile": "Data/testin.obt"
+            "obsfile": "Data/mc5.truth3d.obt"
           },
           "ObsDataOut": {
             "obsfile": "Data/testout.obt"

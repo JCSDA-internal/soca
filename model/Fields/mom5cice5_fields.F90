@@ -838,7 +838,7 @@ contains
     type(mom5cice5_goms), intent(inout)  :: gom
     character(2), intent(in)             :: op_type !('TL' or 'AD')
 
-    integer :: Nc, No, var_index
+    integer :: Nc, No, var_index, NCAT
 
     logical,allocatable :: mask(:), masko(:)                !< mask (ncells, nlevels)
     real(kind=kind_real), allocatable :: lon(:), lat(:), lono(:), lato(:), fld_src(:), fld_dst(:)
@@ -874,18 +874,20 @@ contains
        case ('TL')
           print *,'&&&&&&&&&&&&&&&&&&& APPLY NICAS_INTERPH TL OPERATOR ',No
           !need to loop through all variables fld_dst ==> gom%values
-          var_index=1
           Nc = fld%geom%nx*fld%geom%ny
+          NCAT = 5 !<=== NO GOOD !!!!! GET FROM GEOM
           if (.not.allocated(fld_src)) allocate(fld_src(Nc)) ! <--- Hack job, need to replace with pointers? ...
-          fld_src = reshape(fld%cicen(:,:,var_index), (/Nc/))
-          call apply_linop(gom%hinterp_op, fld_src, fld_dst) !gom%values(var_index,:))
-          gom%values(var_index,gom%tindex:gom%tindex+No-1)=fld_dst(1:No)
+          do var_index=1,NCAT
+             fld_src = reshape(fld%cicen(:,:,var_index), (/Nc/))
+             call apply_linop(gom%hinterp_op, fld_src, fld_dst)
+             gom%values(var_index,gom%tindex:gom%tindex+No-1)=fld_dst(1:No)
+          end do
           deallocate(fld_src)
        case ('AD')
           !call apply_linop_ad(hinterp_op,fld_dst,fld_src)
           !put fld_src
        end select
-       gom%tindex=gom%tindex+locs%nloc !*nvar?
+       gom%tindex=gom%tindex+locs%nloc*gom%nvar
     end if
   end subroutine nicas_interph
 
