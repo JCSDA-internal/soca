@@ -846,10 +846,8 @@ contains
 
     Nc = fld%geom%nx*fld%geom%ny
     No = locs%nloc
-    !No = gom%nobs
-    !No=2
+    Ncat = fld%geom%ncat
     if (No>0) then
-       print *,'nobs=',locs%nloc,gom%nobs
        allocate(lon(Nc), lat(Nc), mask(Nc), fld_src(Nc))
        allocate(masko(No), fld_dst(No), lono(No), lato(No)) ! <--- Hack job, need to replace with pointers? ...
 
@@ -872,22 +870,19 @@ contains
 
        select case (op_type)
        case ('TL')
-          print *,'&&&&&&&&&&&&&&&&&&& APPLY NICAS_INTERPH TL OPERATOR ',No
-          !need to loop through all variables fld_dst ==> gom%values
-          Nc = fld%geom%nx*fld%geom%ny
-          NCAT = 5 !<=== NO GOOD !!!!! GET FROM GEOM
+          print *,'Apply interp op'
           if (.not.allocated(fld_src)) allocate(fld_src(Nc)) ! <--- Hack job, need to replace with pointers? ...
-          do var_index=1,NCAT
+          do var_index=1,Ncat
              fld_src = reshape(fld%cicen(:,:,var_index), (/Nc/))
              call apply_linop(gom%hinterp_op, fld_src, fld_dst)
-             gom%values(var_index,gom%tindex:gom%tindex+No-1)=fld_dst(1:No)
+             gom%values(var_index,gom%used:gom%used+No-1)=fld_dst(1:No)
           end do
           deallocate(fld_src)
        case ('AD')
           !call apply_linop_ad(hinterp_op,fld_dst,fld_src)
           !put fld_src
        end select
-       gom%tindex=gom%tindex+locs%nloc*gom%nvar
+       gom%used=gom%used+locs%nloc*gom%nvar
     end if
   end subroutine nicas_interph
 

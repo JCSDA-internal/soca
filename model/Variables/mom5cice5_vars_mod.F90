@@ -14,7 +14,7 @@ module mom5cice5_vars_mod
 
   !> Fortran derived type to represent MOM5 & CICE5 model variables
   type :: mom5cice5_vars
-     integer :: nv
+     integer :: nv                                !< Number of variable type
      character(len=5), allocatable :: fldnames(:) !< Variable identifiers
   end type mom5cice5_vars
 
@@ -41,7 +41,8 @@ contains
     !character(*), intent(in) :: cvars(:)
     integer :: jj
 
-    print *,cvars
+    print *,'=============CVARS=',cvars
+    read(*,*)
     self%nv = size(cvars)
 
     do jj=1,self%nv
