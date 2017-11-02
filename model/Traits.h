@@ -4,24 +4,24 @@
 
 #include <string>
 
-#include "model/Gom.h"
-#include "model/LinearObsOp.h"
-#include "model/Loc.h"
+#include "model/ModelAtLocations/Gom.h"
+#include "model/ObsOperator/LinearObsOp.h"
+#include "model/Locations/Loc.h"
 #include "model/ModelBias.h"
 #include "model/ModelBiasIncrement.h"
 #include "model/ModelBiasCovariance.h"
 #include "model/ObsBias.h"
 #include "model/ObsBiasIncrement.h"
 #include "model/ObsBiasCovariance.h"
-#include "model/ObsSpace.h"
-#include "model/ObsVec.h"
-#include "model/ErrorCovariance.h"
-#include "model/Geometry.h"
-#include "model/Increment.h"
-#include "model/Model.h"
-#include "model/Observation.h"
-#include "model/State.h"
-#include "model/Variables.h"
+#include "model/ObsSpace/ObsSpace.h"
+#include "model/ObsVector/ObsVec.h"
+#include "model/Covariance/ErrorCovariance.h"
+#include "model/Geometry/Geometry.h"
+#include "model/Increment/Increment.h"
+#include "model/Model/Model.h"
+#include "model/ObsOperator/Observation.h"
+#include "model/State/State.h"
+#include "model/Variables/Variables.h"
 
 namespace mom5cice5 {
 

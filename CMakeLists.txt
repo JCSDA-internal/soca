@@ -10,8 +10,8 @@ include( ecbuild_bundle )
 project( mom5cice5 C CXX Fortran)
 
 set( ENABLE_MPI ON CACHE BOOL "Compile with MPI" )
-#set( ECBUILD_DEFAULT_BUILD_TYPE Release )
-set( ECBUILD_DEFAULT_BUILD_TYPE Debug )
+set( ECBUILD_DEFAULT_BUILD_TYPE Release )
+#set( ECBUILD_DEFAULT_BUILD_TYPE Debug )
 include( ecbuild_system NO_POLICY_SCOPE )
 
 ecbuild_requires_macro_version( 2.5 )
