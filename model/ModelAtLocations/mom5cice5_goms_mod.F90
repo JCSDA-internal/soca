@@ -33,7 +33,7 @@ module mom5cice5_goms_mod
                                                        !              vicen(1:ncat),
                                                        !              hsnon(1:ncat),     
                                                        !              ...]
-     character(len=1), allocatable :: variables(:)
+     character(len=5), allocatable :: variables(:)
      logical :: lalloc
      type(linoptype) :: hinterp_op
      logical :: hinterp_initialized !True:  hinterp_op has been initialized
@@ -56,54 +56,21 @@ contains
 
   ! ------------------------------------------------------------------------------
 
-!!$  !subroutine c_mom5cice5_gom_create(c_key_self, c_key_geom) bind(c,name='mom5cice5_gom_create_f90')
-!!$  subroutine c_mom5cice5_gom_create(c_key_self) bind(c,name='mom5cice5_gom_create_f90')
-!!$
-!!$    implicit none
-!!$    integer(c_int), intent(inout) :: c_key_self
-!!$    !integer(c_int), intent(in) :: c_key_geom     !< Geometry
-!!$    
-!!$    type(mom5cice5_goms), pointer  :: self
-!!$    !type(mom5cice5_geom),  pointer :: geom
-!!$    
-!!$    call mom5cice5_goms_registry%init()
-!!$    call mom5cice5_goms_registry%add(c_key_self)
-!!$    call mom5cice5_goms_registry%get(c_key_self, self)
-!!$
-!!$    self%lalloc = .false.
-!!$
-!!$  end subroutine c_mom5cice5_gom_create
-
-  ! ------------------------------------------------------------------------------
-
   subroutine gom_setup(self, vars, kobs)
     implicit none
     type(mom5cice5_goms), intent(inout) :: self
     type(mom5cice5_vars), intent(in) :: vars
-    !type(mom5cice5_geom), intent(in), pointer :: geom    
     integer, intent(in) :: kobs(:)     ! Obs indices
 
-
-    !self%geom => geom    
     self%nobs=size(kobs)
-    self%nvar=5*vars%nv  ! <--- <--- pb here hard coded 5 cat
-    !self%nvar=vars%nv
+    self%nvar=vars%nv
     self%used=1
-
-    print *,'nvar=',self%nvar
-    !read(*,*)
     allocate(self%indx(self%nobs))
     self%indx(:)=kobs(:)
-
-    !allocate(self%variables(self%nvar)) ! <--- <--- pb here hard coded 5 cat
-    allocate(self%variables(self%nvar/5)) ! <--- <--- pb here hard coded 5 cat, and size of variables ...    
-    self%variables(1:self%nvar)=vars%fldnames(vars%nv)
-
-    !!!!!!!! HARD CODED CATEGORY !!!!!!!!!!!!!!
-    allocate(self%values(self%nvar,self%nobs*5)) ! ex: self%values(:,jobs)=[cicen(1),cicen(2),cicen(3),cicen(4),cicen(5)]
-    !self%values=0.0_kind_real
-    print *,'in gom setup ========== shape goms = ',shape(self%values)
-    !read(*,*)
+    allocate(self%variables(self%nvar))
+    self%variables(1:self%nvar)=vars%fldnames(1:vars%nv)
+    ! self%values is allocated after the initialization
+    ! of the interpolation (in fields)
     self%lalloc = .true.
 
   end subroutine gom_setup
@@ -114,12 +81,11 @@ contains
 
     implicit none
     integer(c_int), intent(inout) :: c_key_self
-
     type(mom5cice5_goms), pointer :: self
 
     call mom5cice5_goms_registry%get(c_key_self, self)
     if (self%lalloc) then
-       deallocate(self%values)
+       if (allocated(self%values)) deallocate(self%values) !Not allocated in constructor
        deallocate(self%indx)
        deallocate(self%variables)
     endif

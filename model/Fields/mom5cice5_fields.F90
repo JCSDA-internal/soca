@@ -862,7 +862,8 @@ contains
     type(mom5cice5_goms), intent(inout)  :: gom
     character(2), intent(in)             :: op_type !('TL' or 'AD')
 
-    integer :: Nc, No, var_index, Ncat
+    integer :: Nc, No, var_type_index, Ncat
+    integer :: ivar, gom_dim1, cnt_fld
 
     logical,allocatable :: mask(:), masko(:)               ! < mask (ncells, nlevels)
     real(kind=kind_real), allocatable :: lon(:), lat(:), lono(:), lato(:), fld_src(:), fld_dst(:)
@@ -872,10 +873,11 @@ contains
     No = locs%nloc
     Ncat = fld%geom%ncat
     if (No>0) then
-       allocate(lon(Nc), lat(Nc), mask(Nc), fld_src(Nc))
-       allocate(masko(No), fld_dst(No), lono(No), lato(No)) ! <--- Hack job, need to replace with pointers? ...
+       allocate(lon(Nc), lat(Nc), mask(Nc), fld_src(Nc))    ! <--- Not memory efficient ...
+       allocate(masko(No), fld_dst(No), lono(No), lato(No)) ! <--- use pointers?
 
        masko = .true. ! Figured out what's the use for masko????
+       !Some issues with the mask, FIX IT!!!!
        !where(reshape(fld%geom%mask,(/Nc/)).eq.0.0_kind_real)
        mask = .true.
        !end where
@@ -892,22 +894,33 @@ contains
           gom%hinterp_initialized = .true.
        end if
 
+       if (.not.allocated(gom%values)) then
+          !Finish Initializing gom
+          gom_dim1=sum(fld%numfld_per_fldname(1:gom%nvar)) ! WILL CREATE ISSUES:
+                                                           ! Assume the order of var type is preserved       
+          allocate(gom%values(gom_dim1,gom%nobs))
+       end if !probably need to assert shape of gom%values==(gom_dim1,gom%nobs)
+          
        select case (op_type)
        case ('TL')
-          print *,'Apply interp op'
           if (.not.allocated(fld_src)) allocate(fld_src(Nc))
-          
-          do var_index=1,Ncat !fld%numfld_per_fldname(ivar)
-             fld_src = reshape(fld%cicen(:,:,var_index), (/Nc/))
-             call apply_linop(gom%hinterp_op, fld_src, fld_dst)
-             gom%values(var_index,gom%used:gom%used+No-1)=fld_dst(1:No)
+          cnt_fld=0
+          do var_type_index=1,gom%nvar !Loop through variable types
+             do ivar=1,fld%numfld_per_fldname(var_type_index) !Loop through variable's fields
+                cnt_fld=cnt_fld+1
+                WRITE(buf,*),'Apply interp op to variable:',gom%variables(var_type_index),' field num:',cnt_fld
+                fld_src = reshape(fld%cicen(:,:,ivar), (/Nc/))
+                call apply_linop(gom%hinterp_op, fld_src, fld_dst)
+                gom%values(cnt_fld,gom%used:gom%used+No-1)=fld_dst(1:No)
+             end do
           end do
           deallocate(fld_src)
        case ('AD')
+          call abor1_ftn("nicas_interph: Wrapper for adjoint not implemented yet")
           !call apply_linop_ad(hinterp_op,fld_dst,fld_src)
           !put fld_src
        end select
-       gom%used=gom%used+locs%nloc*gom%nvar
+       gom%used=gom%used+locs%nloc
     end if
   end subroutine nicas_interph
 
