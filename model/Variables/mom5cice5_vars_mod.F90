@@ -48,8 +48,8 @@ contains
        if (cvars(jj)/="cicen" .and. cvars(jj)/="hicen" .and. cvars(jj)/="vicen" &
             .and. cvars(jj)/="hsnon" .and. cvars(jj)/="vsnon".and. cvars(jj)/="tsfcn" &
             .and. cvars(jj)/="qsnon" .and. cvars(jj)/="sicnk".and. cvars(jj)/="sssoc" &
-            .and. cvars(jj)/="qicnk" .and. cvars(jj)/="tlioc".and. cvars(jj)/="sstoc") then        
-
+            .and. cvars(jj)/="qicnk" .and. cvars(jj)/="sstoc") then            
+          
           call abor1_ftn ("mom5cice5_vars_setup: unknown field")
        end if
     enddo
@@ -77,7 +77,7 @@ contains
 
     select case (svar)
     case ("nl","tl","cv","ci","x")
-       self%nv = 12
+       self%nv = 11
        allocate(self%fldnames(self%nv))
        self%fldnames(1) = "cicen"
        self%fldnames(2) = "hicen"
@@ -89,8 +89,7 @@ contains
        self%fldnames(8) = "sicnk"
        self%fldnames(9) = "sssoc"
        self%fldnames(10) = "qicnk"
-       self%fldnames(11) = "tlioc"
-       self%fldnames(12) = "sstoc"
+       self%fldnames(11) = "sstoc"
     case default
        call abor1_ftn("c_mom5cice5_vars_create: undefined variables")
     end select

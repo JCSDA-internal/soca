@@ -47,7 +47,6 @@ module mom5cice5_fields
      real(kind=kind_real), allocatable :: sicnk(:,:,:,:)      !< Salin_wity of sea-ice
      real(kind=kind_real), allocatable :: sssoc(:,:)          !< Ocean (surface) Salinity
      real(kind=kind_real), allocatable :: qicnk(:,:,:,:)      !< Enthalpy of sea-ice
-     real(kind=kind_real), allocatable :: tlioc(:,:)          !< Liquid ocean temperature 
      real(kind=kind_real), allocatable :: sstoc(:,:)          !< Average temperature of grid cell 
      character(len=5), allocatable     :: fldnames(:)           !< Variable identifiers
      integer, allocatable              :: numfld_per_fldname(:) !< Number of 2d fields for each
@@ -100,7 +99,7 @@ contains
           self%numfld_per_fldname(ivar)=geom%ncat*geom%nzi
        case ('qsnon')
           self%numfld_per_fldname(ivar)=geom%ncat*geom%nzs
-       case ('sssoc','sstoc','tlioc')
+       case ('sssoc','sstoc')
          self%numfld_per_fldname(ivar)=geom%nzo
        case default
           call abor1_ftn("c_mom5cice5_fields: undefined variables")
@@ -118,7 +117,6 @@ contains
     allocate(self%sicnk(self%nx,self%ny,self%ncat,self%nzi))
     allocate(self%sssoc(self%nx,self%ny))
     allocate(self%qicnk(self%nx,self%ny,self%ncat,self%nzi))
-    allocate(self%tlioc(self%nx,self%ny))
     allocate(self%sstoc(self%nx,self%ny))    
 
     self%cicen=0.0_kind_real
@@ -131,10 +129,9 @@ contains
     self%sicnk=0.0_kind_real
     self%sssoc=0.0_kind_real    
     self%qicnk=0.0_kind_real
-    self%tlioc=0.0_kind_real    
     self%sstoc=0.0_kind_real
 
-    if (self%nf>12) then
+    if (self%nf>11) then
        call abor1_ftn ("mom5cice5_fields:create error number of fields")       
     endif
     allocate(self%fldnames(self%nf))
@@ -162,7 +159,6 @@ contains
     if (allocated(self%sicnk)) deallocate(self%sicnk)
     if (allocated(self%sssoc)) deallocate(self%sssoc)
     if (allocated(self%qicnk)) deallocate(self%qicnk)
-    if (allocated(self%tlioc)) deallocate(self%tlioc)
     if (allocated(self%sstoc)) deallocate(self%sstoc)    
     if (allocated(self%fldnames)) deallocate(self%fldnames)
 
@@ -186,7 +182,6 @@ contains
     self%sicnk=0.0_kind_real
     self%sssoc=0.0_kind_real    
     self%qicnk=0.0_kind_real
-    self%tlioc=0.0_kind_real    
     self%sstoc=0.0_kind_real
 
   end subroutine zeros
@@ -271,7 +266,6 @@ contains
     self%sicnk = rhs%sicnk
     self%sssoc = rhs%sssoc
     self%qicnk = rhs%qicnk
-    self%tlioc = rhs%tlioc
     self%sstoc = rhs%sstoc
 
     return
@@ -299,7 +293,6 @@ contains
     self%sicnk=self%sicnk+rhs%sicnk
     self%sssoc=self%sssoc+rhs%sssoc
     self%qicnk=self%qicnk+rhs%qicnk
-    self%tlioc=self%tlioc+rhs%tlioc
     self%sstoc=self%sstoc+rhs%sstoc
 
     return
@@ -327,7 +320,6 @@ contains
     self%sicnk=self%sicnk*rhs%sicnk
     self%sssoc=self%sssoc*rhs%sssoc
     self%qicnk=self%qicnk*rhs%qicnk
-    self%tlioc=self%tlioc*rhs%tlioc
     self%sstoc=self%sstoc*rhs%sstoc
 
     return
@@ -355,7 +347,6 @@ contains
     self%sicnk=self%sicnk-rhs%sicnk
     self%sssoc=self%sssoc-rhs%sssoc
     self%qicnk=self%qicnk-rhs%qicnk
-    self%tlioc=self%tlioc-rhs%tlioc
     self%sstoc=self%sstoc-rhs%sstoc
 
     return
@@ -380,7 +371,6 @@ contains
     self%sicnk = zz * self%sicnk
     self%sssoc = zz * self%sssoc
     self%qicnk = zz * self%qicnk
-    self%tlioc = zz * self%tlioc
     self%sstoc = zz * self%sstoc
 
     return
@@ -409,7 +399,6 @@ contains
     self%sicnk=self%sicnk + zz * rhs%sicnk
     self%sssoc=self%sssoc + zz * rhs%sssoc
     self%qicnk=self%qicnk + zz * rhs%qicnk
-    self%tlioc=self%tlioc + zz * rhs%tlioc
     self%sstoc=self%sstoc + zz * rhs%sstoc        
 
     return
@@ -446,7 +435,6 @@ contains
        end do
     end do
     zprod = zprod + sum(fld1%sssoc*fld2%sssoc*fld1%geom%mask) + &
-         sum(fld1%tlioc*fld2%tlioc*fld1%geom%mask) + &
          sum(fld1%sstoc*fld2%sstoc*fld1%geom%mask)
     return
   end subroutine dot_prod
@@ -493,7 +481,6 @@ contains
           lhs%sicnk = x1%sicnk - x2%sicnk
           lhs%sssoc = x1%sssoc - x2%sssoc
           lhs%qicnk = x1%qicnk - x2%qicnk
-          lhs%tlioc = x1%tlioc - x2%tlioc
           lhs%sstoc = x1%sstoc - x2%sstoc         
        else
           call abor1_ftn("mom5cice5_fields:diff_incr: not coded for low res increment yet")

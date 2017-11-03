@@ -39,8 +39,8 @@ contains
     dxi%sicnk = dx%sicnk
     dxi%qicnk = (dx%qicnk - B * dx%sicnk)/C
     dxi%sssoc = dx%sssoc
-    dxi%tlioc = dx%tlioc
-    dxi%sstoc = -mu*aice * dx%sssoc -mu*xb%sssoc * sum(dx%cicen,3) + (1.0_kind_real-aice) * dx%tlioc
+    !dxi%tlioc = dx%tlioc
+    dxi%sstoc = -mu*aice * dx%sssoc -mu*xb%sssoc * sum(dx%cicen,3)! + (1.0_kind_real-aice) * dx%tlioc
     return
   end subroutine Kop_inv
 
