@@ -464,11 +464,11 @@ subroutine mom5cice5_fieldnum_c(c_key_fld, nx, ny, nzo, nzi, ncat, nf) bind(c,na
 
   call mom5cice5_field_registry%get(c_key_fld,fld)
 
-  nx = fld%nx
-  ny = fld%ny
-  nzo = fld%nzo
-  nzi = fld%nzi
-  ncat = fld%ncat
+  nx = fld%geom%nx
+  ny = fld%geom%ny
+  nzo = fld%geom%nzo
+  nzi = fld%geom%nzi
+  ncat = fld%geom%ncat
   nf = fld%nf
 
 

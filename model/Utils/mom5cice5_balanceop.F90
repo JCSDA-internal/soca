@@ -20,7 +20,7 @@ contains
     real(kind=kind_real), allocatable :: aice(:,:)
     real(kind=kind_real) :: A, B, C
     
-    allocate( aice(xb%nx,xb%ny) )
+    allocate( aice(xb%geom%nx,xb%geom%ny) )
     
     aice = sum(xb%cicen,3)
 

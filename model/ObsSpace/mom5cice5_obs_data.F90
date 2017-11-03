@@ -29,8 +29,9 @@ module mom5cice5_obs_data
 
   !> A type to represent observation data
   type obs_data
-     integer :: ngrp
-     character(len=max_string) :: filein, fileout
+     integer                   :: ngrp
+     character(len=max_string) :: filein
+     character(len=max_string) :: fileout     
      type(group_data), pointer :: grphead => null()
   end type obs_data
 
@@ -46,21 +47,21 @@ module mom5cice5_obs_data
 
   !> A type to represent a linked list of observation group data
   type group_data
-     character(len=50) :: grpname
-     type(group_data), pointer :: next => null()
-     integer :: nobs
-     integer, allocatable :: seqnos(:)
+     character(len=50)           :: grpname
+     type(group_data), pointer   :: next => null()
+     integer                     :: nobs
+     integer, allocatable        :: seqnos(:)
      type(datetime), allocatable :: times(:)
-     type(column_data), pointer :: colhead => null()
+     type(column_data), pointer  :: colhead => null()
   end type group_data
 
   ! ------------------------------------------------------------------------------
 
   !> A type to represent a linked list of observation columns
   type column_data
-     character(len=50) :: colname
-     type(column_data), pointer :: next => null()
-     integer :: ncol
+     character(len=50)                 :: colname
+     type(column_data), pointer        :: next => null()
+     integer                           :: ncol
      real(kind=kind_real), allocatable :: values(:,:)
   end type column_data
 

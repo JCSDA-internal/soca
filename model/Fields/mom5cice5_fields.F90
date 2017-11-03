@@ -25,34 +25,25 @@ module mom5cice5_fields
 
   !> Fortran derived type to hold fields
   type :: mom5cice5_field
-     type(mom5cice5_geom), pointer :: geom !< MOM5 & CICE5 Geometry
-     integer :: nx                     !< Zonal grid dimension         !!!!!!!!! CLEANUP !!!!!!!! GRID DIM PRESENT IN GEOM
-     integer :: ny                     !< Meridional grid dimension
-     integer :: nzo                    !< Number of z levels in the ocean
-     integer :: nzi                    !< Number of levels in sea-ice
-     integer :: nzs                    !< Number of levels in snow       !!!!!!!!!!! HARD CODED TO 1 !!!!!!!!!!!!!!!
-     integer :: ncat                   !< Number of sea-ice thickness categories    
-     integer :: nf                     !< Number of fields
-     character(len=128) :: gridfname   !< Grid file name
-     character(len=128) :: cicefname   !< Fields file name for cice
-     character(len=128) :: momfname    !< Fields file name for mom
-
-     real(kind=kind_real), allocatable :: cicen(:,:,:)        !< Sea-ice fraction
-     real(kind=kind_real), allocatable :: hicen(:,:,:)        !< Sea-ice thickness
-     real(kind=kind_real), allocatable :: vicen(:,:,:)        !< Sea-ice volume
-     real(kind=kind_real), allocatable :: hsnon(:,:,:)        !< Snow depth over sea-ice
-     real(kind=kind_real), allocatable :: vsnon(:,:,:)        !< Snow volume over sea-ice  
-     real(kind=kind_real), allocatable :: tsfcn(:,:,:)        !< Temperature over sea-ice or snow
-     real(kind=kind_real), allocatable :: qsnon(:,:,:)        !< Enthalpy of snow
-     real(kind=kind_real), allocatable :: sicnk(:,:,:,:)      !< Salin_wity of sea-ice
-     real(kind=kind_real), allocatable :: sssoc(:,:)          !< Ocean (surface) Salinity
-     real(kind=kind_real), allocatable :: qicnk(:,:,:,:)      !< Enthalpy of sea-ice
-     real(kind=kind_real), allocatable :: sstoc(:,:)          !< Average temperature of grid cell 
-     character(len=5), allocatable     :: fldnames(:)           !< Variable identifiers
-     integer, allocatable              :: numfld_per_fldname(:) !< Number of 2d fields for each
-                                                                !< element of fldnames
-
-     
+     type(mom5cice5_geom), pointer     :: geom                  !< MOM5 & CICE5 Geometry
+     integer                           :: nf                    !< Number of fields
+     character(len=128)                :: gridfname             !< Grid file name
+     character(len=128)                :: cicefname             !< Fields file name for cice
+     character(len=128)                :: momfname              !< Fields file name for mom
+     real(kind=kind_real), allocatable :: cicen(:,:,:)          !< Sea-ice fraction                 (nx,ny,ncat)
+     real(kind=kind_real), allocatable :: hicen(:,:,:)          !< Sea-ice thickness                (nx,ny,ncat)
+     real(kind=kind_real), allocatable :: vicen(:,:,:)          !< Sea-ice volume                   (nx,ny,ncat)
+     real(kind=kind_real), allocatable :: hsnon(:,:,:)          !< Snow depth over sea-ice          (nx,ny,ncat)
+     real(kind=kind_real), allocatable :: vsnon(:,:,:)          !< Snow volume over sea-ice         (nx,ny,ncat) 
+     real(kind=kind_real), allocatable :: tsfcn(:,:,:)          !< Temperature over sea-ice or snow (nx,ny,ncat)
+     real(kind=kind_real), allocatable :: qsnon(:,:,:)          !< Enthalpy of snow                 (nx,ny,ncat)
+     real(kind=kind_real), allocatable :: sicnk(:,:,:,:)        !< Salin_wity of sea-ice            (nx,ny,ncat,nzi)
+     real(kind=kind_real), allocatable :: sssoc(:,:)            !< Ocean (surface) Salinity         (nx,ny,nzo)
+     real(kind=kind_real), allocatable :: qicnk(:,:,:,:)        !< Enthalpy of sea-ice              (nx,ny,ncat,nzi)
+     real(kind=kind_real), allocatable :: sstoc(:,:)            !< Average temperature of grid cell (nx,ny,nzo)
+     character(len=5), allocatable     :: fldnames(:)           !< Variable identifiers             (nf)
+     integer, allocatable              :: numfld_per_fldname(:) !< Number of 2d fields for each     (nf) 
+                                                                !< element of fldnames 
   end type mom5cice5_field
 
 #define LISTED_TYPE mom5cice5_field
@@ -80,12 +71,6 @@ contains
     integer :: ivar
 
     self%geom => geom
-    self%nx   = geom%nx
-    self%ny   = geom%ny
-    self%nzo  = geom%nzo
-    self%nzi  = geom%nzi
-    self%nzs  = geom%nzs
-    self%ncat = geom%ncat
     self%gridfname = geom%gridfname
     self%nf   = vars%nv
 
@@ -107,17 +92,17 @@ contains
     end do
 
     
-    allocate(self%cicen(self%nx,self%ny,self%ncat))
-    allocate(self%hicen(self%nx,self%ny,self%ncat))
-    allocate(self%vicen(self%nx,self%ny,self%ncat))
-    allocate(self%hsnon(self%nx,self%ny,self%ncat))
-    allocate(self%vsnon(self%nx,self%ny,self%ncat))
-    allocate(self%tsfcn(self%nx,self%ny,self%ncat))
-    allocate(self%qsnon(self%nx,self%ny,self%ncat))
-    allocate(self%sicnk(self%nx,self%ny,self%ncat,self%nzi))
-    allocate(self%sssoc(self%nx,self%ny))
-    allocate(self%qicnk(self%nx,self%ny,self%ncat,self%nzi))
-    allocate(self%sstoc(self%nx,self%ny))    
+    allocate(self%cicen(self%geom%nx,self%geom%ny,self%geom%ncat))
+    allocate(self%hicen(self%geom%nx,self%geom%ny,self%geom%ncat))
+    allocate(self%vicen(self%geom%nx,self%geom%ny,self%geom%ncat))
+    allocate(self%hsnon(self%geom%nx,self%geom%ny,self%geom%ncat))
+    allocate(self%vsnon(self%geom%nx,self%geom%ny,self%geom%ncat))
+    allocate(self%tsfcn(self%geom%nx,self%geom%ny,self%geom%ncat))
+    allocate(self%qsnon(self%geom%nx,self%geom%ny,self%geom%ncat))
+    allocate(self%sicnk(self%geom%nx,self%geom%ny,self%geom%ncat,self%geom%nzi))
+    allocate(self%sssoc(self%geom%nx,self%geom%ny))
+    allocate(self%qicnk(self%geom%nx,self%geom%ny,self%geom%ncat,self%geom%nzi))
+    allocate(self%sstoc(self%geom%nx,self%geom%ny))    
 
     self%cicen=0.0_kind_real
     self%hicen=0.0_kind_real
@@ -213,8 +198,8 @@ contains
 
     ! Check 
     !if (ndir<1) call abor1_ftn("qg_fields:dirac non-positive ndir")
-    !if (any(ixdir<1).or.any(ixdir>self%nx)) call abor1_ftn("qg_fields:dirac invalid ixdir")
-    !if (any(iydir<1).or.any(iydir>self%ny)) call abor1_ftn("qg_fields:dirac invalid iydir")
+    !if (any(ixdir<1).or.any(ixdir>self%geom%nx)) call abor1_ftn("qg_fields:dirac invalid ixdir")
+    !if (any(iydir<1).or.any(iydir>self%geom%ny)) call abor1_ftn("qg_fields:dirac invalid iydir")
     !if ((ildir<1).or.(ildir>self%nl)) call abor1_ftn("qg_fields:dirac invalid ildir")
     !if ((ifdir<1).or.(ifdir>self%nf)) call abor1_ftn("qg_fields:dirac invalid ifdir")
 
@@ -412,12 +397,12 @@ contains
     real(kind=kind_real), intent(out) :: zprod
     integer :: jj, kk
     call check_resolution(fld1, fld2)
-    if (fld1%nf /= fld2%nf .or. fld1%nzi /= fld2%nzi) then
+    if (fld1%nf /= fld2%nf .or. fld1%geom%nzi /= fld2%geom%nzi) then
        call abor1_ftn("mom5cice5_fields:field_prod error number of fields")
     endif
 
     zprod = 0.0_kind_real
-    do jj = 1, fld1%ncat
+    do jj = 1, fld1%geom%ncat
        zprod=sum(fld1%cicen(:,:,jj)*fld2%cicen(:,:,jj)*fld1%geom%icemask) + &
             sum(fld1%hicen(:,:,jj)*fld2%hicen(:,:,jj)*fld1%geom%icemask) + &
             sum(fld1%vicen(:,:,jj)*fld2%vicen(:,:,jj)*fld1%geom%icemask) + &
@@ -427,8 +412,8 @@ contains
             sum(fld1%qsnon(:,:,jj)*fld2%qsnon(:,:,jj)*fld1%geom%icemask)
     end do
 
-    do jj = 1, fld1%ncat
-       do kk = 1,fld1%nzi
+    do jj = 1, fld1%geom%ncat
+       do kk = 1,fld1%geom%nzi
           zprod = zprod + &
                sum(fld1%sicnk(:,:,jj,kk)*fld2%sicnk(:,:,jj,kk)*fld1%geom%icemask) + &
                sum(fld1%qicnk(:,:,jj,kk)*fld2%qicnk(:,:,jj,kk)*fld1%geom%icemask)
@@ -469,8 +454,8 @@ contains
     call zeros(lhs)
 
 
-    if (x1%nx==x2%nx .and. x1%ny==x2%ny) then
-       if (lhs%nx==x1%nx .and. lhs%ny==x1%ny) then
+    if (x1%geom%nx==x2%geom%nx .and. x1%geom%ny==x2%geom%ny) then
+       if (lhs%geom%nx==x1%geom%nx .and. lhs%geom%ny==x1%geom%ny) then
           lhs%cicen = x1%cicen - x2%cicen
           lhs%hicen = x1%hicen - x2%hicen
           lhs%vicen = x1%vicen - x2%vicen
@@ -571,44 +556,45 @@ contains
        !WRITE(buf,*) 'cice fname:',fld%cicefname
        print *, 'cice fname:',fld%cicefname
        start3 = (/nx0,ny0,1/)
-       count3 = (/fld%nx,fld%ny,fld%ncat/)
-       varname='aicen'; call ncread_fld(fld%cicefname, varname, fld%cicen, fld%nx, fld%ny, fld%ncat, start3, count3)
-       varname='vicen'; call ncread_fld(fld%cicefname, varname, fld%vicen, fld%nx, fld%ny, fld%ncat, start3, count3)
-       varname='vsnon'; call ncread_fld(fld%cicefname, varname, fld%vicen, fld%nx, fld%ny, fld%ncat, start3, count3)
-       varname='Tsfcn'; call ncread_fld(fld%cicefname, varname, fld%tsfcn, fld%nx, fld%ny, fld%ncat, start3, count3)
-       allocate(var3d(fld%nx,fld%ny,fld%ncat))
-       do level=1,fld%nzi
+       count3 = (/fld%geom%nx,fld%geom%ny,fld%geom%ncat/)
+       varname='aicen'; call ncread_fld(fld%cicefname, varname, fld%cicen, fld%geom%nx, fld%geom%ny, fld%geom%ncat, start3, count3)
+       varname='vicen'; call ncread_fld(fld%cicefname, varname, fld%vicen, fld%geom%nx, fld%geom%ny, fld%geom%ncat, start3, count3)
+       varname='vsnon'; call ncread_fld(fld%cicefname, varname, fld%vicen, fld%geom%nx, fld%geom%ny, fld%geom%ncat, start3, count3)
+       varname='Tsfcn'; call ncread_fld(fld%cicefname, varname, fld%tsfcn, fld%geom%nx, fld%geom%ny, fld%geom%ncat, start3, count3)
+       allocate(var3d(fld%geom%nx,fld%geom%ny,fld%geom%ncat))
+       do level=1,fld%geom%nzi
           basename='qice'; call fld_name_int2str(basename, level, varname)
-          call ncread_fld(fld%cicefname, varname, var3d, fld%nx, fld%ny, fld%ncat, start3, count3)
+          call ncread_fld(fld%cicefname, varname, var3d, fld%geom%nx, fld%geom%ny, fld%geom%ncat, start3, count3)
           fld%qicnk(:,:,:,level)=var3d
           basename='sice'; call fld_name_int2str(basename, level, varname)
-          call ncread_fld(fld%cicefname, varname, var3d, fld%nx, fld%ny, fld%ncat, start3, count3)
+          call ncread_fld(fld%cicefname, varname, var3d, fld%geom%nx, fld%geom%ny, fld%geom%ncat, start3, count3)
           fld%sicnk(:,:,:,level)=var3d
        end do
 
        deallocate(var3d)
-       !do level=1,fld%nzs !!!!!!! CURRENTLY HARD CODED FOR NZS=1 !!!!!!!!!!!!!!!!
+       !do level=1,fld%geom%nzs !!!!!!! CURRENTLY HARD CODED FOR NZS=1 !!!!!!!!!!!!!!!!
        basename='qsno'; call fld_name_int2str(basename, 1, varname)
        print *, varname
-       call ncread_fld(fld%cicefname, varname, fld%qsnon, fld%nx, fld%ny, fld%ncat, start3, count3)
+       call ncread_fld(fld%cicefname, varname, fld%qsnon, fld%geom%nx, fld%geom%ny, fld%geom%ncat, start3, count3)
 
        ! Read Ocean
        fld%momfname = config_get_string(c_conf, len(fld%momfname), "momfname")
        print *,'mom fname:',fld%momfname
        start4 = (/nx0,ny0,1,1/)
-       count4 = (/fld%nx,fld%ny,fld%nzo,1/)
+       count4 = (/fld%geom%nx,fld%geom%ny,fld%geom%nzo,1/)
        varname='temp'
-       call ncread_fld(fld%momfname, varname, fld%sstoc, fld%nx, fld%ny, start4, count4)
+       call ncread_fld(fld%momfname, varname, fld%sstoc, fld%geom%nx, fld%geom%ny, start4, count4)
        varname='salt'
-       call ncread_fld(fld%momfname, varname, fld%sssoc, fld%nx, fld%ny, start4, count4)
+       call ncread_fld(fld%momfname, varname, fld%sssoc, fld%geom%nx, fld%geom%ny, start4, count4)
 
        print *, 'OUT OF READ_FILE'
     endif
 
-    do jx = 1,fld%nx
-       do jy = 1,fld%ny
-          do jk = 1,fld%nzi
-             do jcat = 1,fld%ncat             
+    ! Enthalpy to temperature
+    do jx = 1,fld%geom%nx
+       do jy = 1,fld%geom%ny
+          do jk = 1,fld%geom%nzi
+             do jcat = 1,fld%geom%ncat             
                 fld%qicnk(jx,jy,jcat,jk) = Ti_nl(fld%qicnk(jx,jy,jcat,jk),fld%sicnk(jx,jy,jcat,jk))
              end do
           end do
@@ -659,19 +645,19 @@ contains
     call fckit_log%info(buf)
 
     call nccheck( nf90_create(filename, nf90_clobber, ncid) )
-    call nccheck( nf90_def_dim(ncid, "xaxis_1", fld%nx, x_dimid) )
-    call nccheck( nf90_def_dim(ncid, "yaxis_1", fld%ny, y_dimid) )
-    call nccheck( nf90_def_dim(ncid, "zaxis_1", fld%nzi, z_dimid) )
-    call nccheck( nf90_def_dim(ncid, "cataxis_1", fld%ncat, cat_dimid) )
+    call nccheck( nf90_def_dim(ncid, "xaxis_1", fld%geom%nx, x_dimid) )
+    call nccheck( nf90_def_dim(ncid, "yaxis_1", fld%geom%ny, y_dimid) )
+    call nccheck( nf90_def_dim(ncid, "zaxis_1", fld%geom%nzi, z_dimid) )
+    call nccheck( nf90_def_dim(ncid, "cataxis_1", fld%geom%ncat, cat_dimid) )
 
-    !call nccheck( nf90_def_dim(ncid, "cataxis_1", fld%ncat, cat_dimid) )
+    !call nccheck( nf90_def_dim(ncid, "cataxis_1", fld%geom%ncat, cat_dimid) )
     !dimids4d =  (/ x_dimid, y_dimid, cat_dimid, z_dimid /)
     dimids4d =  (/ x_dimid, y_dimid, z_dimid /)
     dimids3d =  (/ x_dimid, y_dimid, cat_dimid /)
     dimids2d =  (/ x_dimid, y_dimid /)
 
-    do jx=1,fld%nx
-       do jy=1,fld%ny
+    do jx=1,fld%geom%nx
+       do jy=1,fld%geom%ny
           if (nint(fld%geom%mask(jx,jy))==0) fld%qicnk(jx,jy,:,:) = missing          
           if (nint(fld%geom%mask(jx,jy))==0) fld%sstoc(jx,jy) = missing
        end do
@@ -884,10 +870,11 @@ contains
        !Finish Initializing gom
        if (.not.allocated(gom%values)) then
           gom_dim1=sum(fld%numfld_per_fldname(1:gom%nvar)) ! WILL CREATE ISSUES:
-                                                           ! Assume the order of var type is preserved       
+                                                           ! Assume the order of var type is preserved
+                                                           ! [cicen, hicen, ...]
           allocate(gom%values(gom_dim1,gom%nobs))
        end if
-       if (.not.allocated(gom%numfld_per_fldname)) then       
+       if (.not.allocated(gom%numfld_per_fldname)) then
           allocate(gom%numfld_per_fldname(gom%nvar))
           gom%numfld_per_fldname=fld%numfld_per_fldname ! Will be used in obs oper          
        end if !probably need to assert shape of gom%values==(gom_dim1,gom%nobs)
@@ -896,8 +883,10 @@ contains
        case ('TL')
           if (.not.allocated(fld_src)) allocate(fld_src(Nc))
           cnt_fld=0
-          do var_type_index=1,gom%nvar !Loop through variable types
-             do ivar=1,fld%numfld_per_fldname(var_type_index) !Loop through variable's fields
+          !Loop through variable types
+          do var_type_index=1,gom%nvar
+             !Loop through variable fields
+             do ivar=1,fld%numfld_per_fldname(var_type_index)
                 cnt_fld=cnt_fld+1
                 print *,'Apply interp op to variable:',gom%variables(var_type_index),' field num:',cnt_fld
                 fld_src = reshape(fld%cicen(:,:,ivar), (/Nc/))
@@ -909,6 +898,7 @@ contains
        case ('AD')
           call abor1_ftn("nicas_interph: Wrapper for adjoint not implemented yet")
           !call apply_linop_ad(hinterp_op,fld_dst,fld_src)
+          !CHECK: WHERE DO WE TRIGGER THE ADJOINT TESTS? 
           !put fld_src
        end select
        gom%used=gom%used+locs%nloc
@@ -969,19 +959,19 @@ contains
     n_vars = 1      !!!!! START WITH ONLY ONE VAR !!!!!!!!! 
     n_surf_vars = 0 !!!!! NO SURFACE VAR !!!!!!!!! 
 
-    do jy=1,self%ny
-       do jx=1,self%nx
+    do jy=1,self%geom%ny
+       do jx=1,self%geom%nx
           jk = 1
           cmask(jk) = int(self%geom%mask(jx,jy))       ! Surface T
           vv(jk) = self%tsfcn(jx,jy,cat_num)
           jk = jk + 1
-          do jz = 1,self%nzs                              ! Snow T
+          do jz = 1,self%geom%nzs                              ! Snow T
              cmask(jk) = int(self%geom%mask(jx,jy))    !
              !vv(jk) = Ts_nl(self%qsnon(jx,jy,cat_num))
              vv(jk) = self%qsnon(jx,jy,cat_num)             
              jk = jk + 1
           end do
-          do jz = 1,self%nzi                              ! Ice T
+          do jz = 1,self%geom%nzi                              ! Ice T
              cmask(jk) = int(self%geom%mask(jx,jy))    !
              !vv(jk) = Ti_nl(self%qicnk(jx,jy,cat_num,jz),self%sicnk(jx,jy,cat_num,jz))
              vv(jk) = self%qicnk(jx,jy,cat_num,jz)
@@ -991,7 +981,7 @@ contains
           !vv(jk) = Tm(self%sssoc(jx,jy))                 ! Tf = -mu * S
           vv(jk) = self%sssoc(jx,jy)                      ! Tf = -mu * S          
           jk = jk + 1          
-          do jz = 1,self%nzo                              ! Ocean
+          do jz = 1,self%geom%nzo                              ! Ocean
              cmask(jk) = int(self%geom%mask(jx,jy))    !             
              vv(jk) = self%sstoc(jx,jy)                   !
              jk = jk + 1
@@ -1037,23 +1027,23 @@ contains
     n_vars = 1      !!!!! START WITH ONLY ONE VAR !!!!!!!!! 
     n_surf_vars = 0 !!!!! NO SURFACE VAR !!!!!!!!! 
 
-    do jy=1,self%ny
-       do jx=1,self%nx
+    do jy=1,self%geom%ny
+       do jx=1,self%geom%nx
           jk = 1
           self%tsfcn(jx,jy,cat_num) = current%column%fld3d(jk)         ! Tsfcs
           jk = jk + 1
-          do jz = 1,self%nzs                                          ! Q Snow
+          do jz = 1,self%geom%nzs                                          ! Q Snow
              self%qsnon(jx,jy,cat_num) = current%column%fld3d(jk)
              jk = jk + 1
           end do
-          do jz = 1,self%nzi                                          ! Q Ice
+          do jz = 1,self%geom%nzi                                          ! Q Ice
              self%qicnk(jx,jy,cat_num,jz) = current%column%fld3d(jk)
              jk = jk + 1
           end do
           self%sssoc(jx,jy) = current%column%fld3d(jk)                 ! Ice/Ocean interface,
           ! Tf = -mu * S          
           jk = jk + 1          
-          do jz = 1,self%nzo                                          ! Ocean SST
+          do jz = 1,self%geom%nzo                                          ! Ocean SST
              self%sstoc(jx,jy) = current%column%fld3d(jk)              !
              jk = jk + 1
           end do
@@ -1081,8 +1071,8 @@ contains
        if (x1%fldnames(jf)/=x2%fldnames(jf)) &
             & call abor1_ftn("common_vars: fields do not match")
     enddo
-    if (x1%nzi /= x2%nzi) call abor1_ftn("common_vars: error number of levels")
-    common_vars = x1%nzi * common_vars
+    if (x1%geom%nzi /= x2%geom%nzi) call abor1_ftn("common_vars: error number of levels")
+    common_vars = x1%geom%nzi * common_vars
 
   end function common_vars
 
@@ -1094,7 +1084,7 @@ contains
     type(mom5cice5_field), intent(in) :: x1, x2
 
     ! NEEDS WORK !!!
-    if (x1%nx /= x2%nx .or.  x1%ny /= x2%ny ) then
+    if (x1%geom%nx /= x2%geom%nx .or.  x1%geom%ny /= x2%geom%ny ) then
        call abor1_ftn ("mom5cice5_fields: resolution error")
     endif
     call check(x1)
@@ -1110,12 +1100,12 @@ contains
     logical :: bad
 
     bad = .false.
-    bad = bad .or. (size(self%cicen, 1) /= self%nx)
+    bad = bad .or. (size(self%cicen, 1) /= self%geom%nx)
 
     ! add more test here ...
 
     if (bad) then
-       write(0,*)'nx, ny, nf, nzi, nzo = ',self%nx,self%ny,self%nf,self%nzi,self%nzo
+       write(0,*)'nx, ny, nf, nzi, nzo = ',self%geom%nx,self%geom%ny,self%nf,self%geom%nzi,self%geom%nzo
        call abor1_ftn ("mom5cice5_fields: field not consistent")
     endif
 
