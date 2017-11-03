@@ -14,7 +14,9 @@ module mom5cice5_vars_mod
 
   !> Fortran derived type to represent MOM5 & CICE5 model variables
   type :: mom5cice5_vars
-     integer :: nv                                !< Number of variable type
+     integer                       :: nv          !< Number of variable type
+     !integer, allocatable          :: ns(:)       !< Size of state per variable type.
+     !                                             !< ns has nv elements
      character(len=5), allocatable :: fldnames(:) !< Variable identifiers
   end type mom5cice5_vars
 
@@ -41,10 +43,7 @@ contains
     !character(*), intent(in) :: cvars(:)
     integer :: jj
 
-    print *,'=============CVARS=',cvars
-    read(*,*)
     self%nv = size(cvars)
-
     do jj=1,self%nv
        if (cvars(jj)/="cicen" .and. cvars(jj)/="hicen" .and. cvars(jj)/="vicen" &
             .and. cvars(jj)/="hsnon" .and. cvars(jj)/="vsnon".and. cvars(jj)/="tsfcn" &
@@ -68,13 +67,14 @@ contains
 
     type(mom5cice5_vars), pointer :: self
     character(len=2) :: svar
-
+    integer :: nzi, nzo, ncat
+    
     call mom5cice5_vars_registry%init()
     call mom5cice5_vars_registry%add(c_key_self)
     call mom5cice5_vars_registry%get(c_key_self, self)
 
     svar = config_get_string(c_conf,len(svar),"variables")
-    print *,'svar=',svar
+
     select case (svar)
     case ("nl","tl","cv","ci","x")
        self%nv = 12
@@ -138,6 +138,7 @@ contains
     type(mom5cice5_vars), pointer :: self
     call mom5cice5_vars_registry%get(c_key_self, self)
     deallocate(self%fldnames)
+    !deallocate(self%ns)
     call mom5cice5_vars_registry%remove(c_key_self)
 
     return

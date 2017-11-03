@@ -49,7 +49,11 @@ module mom5cice5_fields
      real(kind=kind_real), allocatable :: qicnk(:,:,:,:)      !< Enthalpy of sea-ice
      real(kind=kind_real), allocatable :: tlioc(:,:)          !< Liquid ocean temperature 
      real(kind=kind_real), allocatable :: sstoc(:,:)          !< Average temperature of grid cell 
-     character(len=5), allocatable :: fldnames(:)             !< Variable identifiers
+     character(len=5), allocatable     :: fldnames(:)           !< Variable identifiers
+     integer, allocatable              :: numfld_per_fldname(:) !< Number of 2d fields for each
+                                                                !< element of fldnames
+
+     
   end type mom5cice5_field
 
 #define LISTED_TYPE mom5cice5_field
@@ -70,9 +74,11 @@ contains
 
   subroutine create(self, geom, vars)
     implicit none
-    type(mom5cice5_field), intent(inout) :: self
+    type(mom5cice5_field), intent(inout)          :: self
     type(mom5cice5_geom),  pointer, intent(in)    :: geom
-    type(mom5cice5_vars),  intent(in)    :: vars
+    type(mom5cice5_vars),  intent(in)          :: vars        
+
+    integer :: ivar
 
     self%geom => geom
     self%nx   = geom%nx
@@ -84,6 +90,24 @@ contains
     self%gridfname = geom%gridfname
     self%nf   = vars%nv
 
+    allocate(self%numfld_per_fldname(vars%nv))
+    
+    do ivar=1,vars%nv
+       select case(vars%fldnames(ivar))
+       case ('cicen','hicen','vicen','hsnon','vsnon','tsfcn')
+          self%numfld_per_fldname(ivar)=geom%ncat
+       case ('sicnk','qicnk')
+          self%numfld_per_fldname(ivar)=geom%ncat*geom%nzi
+       case ('qsnon')
+          self%numfld_per_fldname(ivar)=geom%ncat*geom%nzs
+       case ('sssoc','sstoc','tlioc')
+         self%numfld_per_fldname(ivar)=geom%nzo
+       case default
+          call abor1_ftn("c_mom5cice5_fields: undefined variables")
+       end select
+    end do
+
+    
     allocate(self%cicen(self%nx,self%ny,self%ncat))
     allocate(self%hicen(self%nx,self%ny,self%ncat))
     allocate(self%vicen(self%nx,self%ny,self%ncat))
@@ -838,9 +862,9 @@ contains
     type(mom5cice5_goms), intent(inout)  :: gom
     character(2), intent(in)             :: op_type !('TL' or 'AD')
 
-    integer :: Nc, No, var_index, NCAT
+    integer :: Nc, No, var_index, Ncat
 
-    logical,allocatable :: mask(:), masko(:)                !< mask (ncells, nlevels)
+    logical,allocatable :: mask(:), masko(:)               ! < mask (ncells, nlevels)
     real(kind=kind_real), allocatable :: lon(:), lat(:), lono(:), lato(:), fld_src(:), fld_dst(:)
     type(namtype) :: nam !< Namelist variables
 
@@ -857,7 +881,7 @@ contains
        !end where
        if (.not.(gom%hinterp_initialized)) then
           print *,'INITIALIZE INTERP'
-          rng = create_randgen(nam)       
+          rng = create_randgen(nam)
           lono = deg2rad*locs%xyz(1,:)
           lato = deg2rad*locs%xyz(2,:)
           lon = deg2rad*reshape(fld%geom%lon, (/Nc/))     ! Inline grid, structured to un-structured
@@ -871,8 +895,9 @@ contains
        select case (op_type)
        case ('TL')
           print *,'Apply interp op'
-          if (.not.allocated(fld_src)) allocate(fld_src(Nc)) ! <--- Hack job, need to replace with pointers? ...
-          do var_index=1,Ncat
+          if (.not.allocated(fld_src)) allocate(fld_src(Nc))
+          
+          do var_index=1,Ncat !fld%numfld_per_fldname(ivar)
              fld_src = reshape(fld%cicen(:,:,var_index), (/Nc/))
              call apply_linop(gom%hinterp_op, fld_src, fld_dst)
              gom%values(var_index,gom%used:gom%used+No-1)=fld_dst(1:No)

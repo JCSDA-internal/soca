@@ -10,7 +10,7 @@ module mom5cice5_goms_mod
   !Interpolation related modules
   use type_linop
   use tools_interp, only: interp_horiz
-  use type_randgen, only: rng,initialize_sampling,create_randgen
+  !use type_randgen, only: rng,initialize_sampling,create_randgen
   use module_namelist, only: namtype
   
   implicit none

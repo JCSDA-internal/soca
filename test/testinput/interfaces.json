@@ -15,7 +15,11 @@
     "icemaskfname": "/home/gvernier/Data/MOM5CICE5/icemask.nc"
   },
   "Variables": {
-    "variables": "ci"
+    "variables": "ci",
+    "nzo": 1,
+    "nzi": 7,
+    "nzs": 1,
+    "ncat": 5
   },
   "TestDate": "2015-05-01T00:00:00Z",
   "State": {

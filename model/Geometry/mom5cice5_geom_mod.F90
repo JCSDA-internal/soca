@@ -46,7 +46,7 @@ module mom5cice5_geom_mod
      real(kind=kind_real), allocatable :: lat(:,:)       !< 2D array of latitude
      integer,              allocatable :: level(:)       !< 1D array of levels. See beginning of script for def.
      real(kind=kind_real), allocatable :: mask(:,:)      !< 0 = land 1 = ocean surface mask only
-     real(kind=kind_real), allocatable :: icemask(:,:)   !< 0 = land/liquid ocean 1 = some ice
+     real(kind=kind_real), allocatable :: icemask(:,:)   !< 0 = land/liquid ocean; 1 = some ice
      real(kind=kind_real), allocatable :: cell_area(:,:) !<
   end type mom5cice5_geom
 
