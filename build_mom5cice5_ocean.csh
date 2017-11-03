@@ -3,7 +3,7 @@
 #export CC=gcc
 
 export SRC=$PWD
-export BUILD=${SRC}/build
+#export BUILD=${SRC}/build
 
 # Remove anaconda from path, reduce to bare minimum.
 export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin

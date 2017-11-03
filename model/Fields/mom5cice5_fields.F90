@@ -864,7 +864,7 @@ contains
 
     integer :: Nc, No, var_type_index, Ncat
     integer :: ivar, gom_dim1, cnt_fld
-
+    character(len=1024)  :: buf
     logical,allocatable :: mask(:), masko(:)               ! < mask (ncells, nlevels)
     real(kind=kind_real), allocatable :: lon(:), lat(:), lono(:), lato(:), fld_src(:), fld_dst(:)
     type(namtype) :: nam !< Namelist variables
@@ -894,11 +894,15 @@ contains
           gom%hinterp_initialized = .true.
        end if
 
+       !Finish Initializing gom
        if (.not.allocated(gom%values)) then
-          !Finish Initializing gom
           gom_dim1=sum(fld%numfld_per_fldname(1:gom%nvar)) ! WILL CREATE ISSUES:
                                                            ! Assume the order of var type is preserved       
           allocate(gom%values(gom_dim1,gom%nobs))
+       end if
+       if (.not.allocated(gom%numfld_per_fldname)) then       
+          allocate(gom%numfld_per_fldname(gom%nvar))
+          gom%numfld_per_fldname=fld%numfld_per_fldname ! Will be used in obs oper          
        end if !probably need to assert shape of gom%values==(gom_dim1,gom%nobs)
           
        select case (op_type)
@@ -908,7 +912,7 @@ contains
           do var_type_index=1,gom%nvar !Loop through variable types
              do ivar=1,fld%numfld_per_fldname(var_type_index) !Loop through variable's fields
                 cnt_fld=cnt_fld+1
-                WRITE(buf,*),'Apply interp op to variable:',gom%variables(var_type_index),' field num:',cnt_fld
+                print *,'Apply interp op to variable:',gom%variables(var_type_index),' field num:',cnt_fld
                 fld_src = reshape(fld%cicen(:,:,ivar), (/Nc/))
                 call apply_linop(gom%hinterp_op, fld_src, fld_dst)
                 gom%values(cnt_fld,gom%used:gom%used+No-1)=fld_dst(1:No)

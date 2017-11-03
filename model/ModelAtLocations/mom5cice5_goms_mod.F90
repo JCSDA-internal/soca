@@ -27,6 +27,7 @@ module mom5cice5_goms_mod
      integer :: nvar                                   ! Number of variables in gom
      integer :: used
      integer, allocatable :: indx(:)
+     integer, allocatable :: numfld_per_fldname(:)        ! Cloned from field in interp
      real(kind=kind_real), allocatable :: values(:,:)  ! nvar x nobs
                                                        ! values(:,i)=[cicen(1:ncat),
                                                        !              hicen(1:ncat),

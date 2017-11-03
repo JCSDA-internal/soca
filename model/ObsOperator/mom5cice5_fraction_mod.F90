@@ -26,16 +26,16 @@ contains
     type(c_ptr), intent(in)       :: c_conf
 
     type(mom5cice5_obsoper), pointer :: self
-    !character(len=5) :: svars /"cicen"/
-    character(len=5) :: svars(1)!(5) = (/"x"/) ! = (/"cicen"/)
-
-    svars(1)='cicen'
+    character(len=5) :: svars(2) = (/"cicen","hicen"/)
+    integer :: ncol
+    
     print *,'============ In fraction setup ===== ',svars
     call mom5cice5_obsoper_registry%init()
     call mom5cice5_obsoper_registry%add(c_key_self)
     call mom5cice5_obsoper_registry%get(c_key_self, self)
 
-    call mom5cice5_oper_setup(self, c_conf, svars(:), 5) !<---- HARD CODED CATEGORY ... CHANGE
+    ncol = 1
+    call mom5cice5_oper_setup(self, c_conf, svars(:), ncol)
 
   end subroutine c_mom5cice5_fraction_setup
 
@@ -63,17 +63,15 @@ contains
     real(c_double), intent(in) :: c_bias
     type(mom5cice5_goms), pointer  :: gom
     type(obs_vect), pointer :: hofx
-    integer :: io, jo
+    integer :: io, jo, ncat
 
     call mom5cice5_goms_registry%get(c_key_gom, gom) 
     call mom5cice5_obs_vect_registry%get(c_key_hofx,hofx)
 
-    !!!!!!!!!!!!!! PROBLEM WITH HOFX !!!!!!!!!!!!!!!!!!!!!!!!!!
-    print *,'shape(hofx)=',shape(hofx%values)
-    print *,'shape(gom)=',shape(gom%values)    
+    ncat=gom%numfld_per_fldname(1)
     do jo=1,gom%nobs
        io=gom%indx(jo)
-       hofx%values(1,io)=sum(gom%values(:,jo)) + c_bias
+       hofx%values(1,io)=sum(gom%values(1:ncat,jo)) + c_bias
     enddo
 
   end subroutine mom5cice5_fraction_equiv
@@ -88,14 +86,15 @@ contains
     real(c_double), intent(in) :: c_bias
     type(mom5cice5_goms), pointer  :: gom
     type(obs_vect), pointer :: hofx
-    integer :: io, jo
+    integer :: io, jo, ncat
 
     call mom5cice5_goms_registry%get(c_key_gom, gom)
     call mom5cice5_obs_vect_registry%get(c_key_hofx,hofx)
 
+    ncat=gom%numfld_per_fldname(1)
     do jo=1,gom%nobs
        io=gom%indx(jo)
-       hofx%values(1,io)=sum(gom%values(:,jo)) + c_bias       
+       hofx%values(1,io)=sum(gom%values(1:ncat,jo)) + c_bias
     enddo
 
   end subroutine mom5cice5_fraction_equiv_tl
