@@ -15,7 +15,7 @@
 #include "model/ObsBiasCovariance.h"
 #include "model/ObsSpace/ObsSpace.h"
 #include "model/ObsVector/ObsVec.h"
-#include "model/Covariance/ErrorCovariance.h"
+//#include "model/Covariance/ErrorCovariance.h"
 #include "model/Geometry/Geometry.h"
 #include "model/Increment/Increment.h"
 #include "model/Model/Model.h"

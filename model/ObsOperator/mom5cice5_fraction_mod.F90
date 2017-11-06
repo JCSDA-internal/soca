@@ -1,5 +1,5 @@
-
-!> Fortran module for fraction observations for the QG model
+!> Fortran module for the simulation of sea-ice fraction observations
+!! @todo Write detailed documentation.
 module mom5cice5_fraction_mod
 
   use iso_c_binding
@@ -26,7 +26,7 @@ contains
     type(c_ptr), intent(in)       :: c_conf
 
     type(mom5cice5_obsoper), pointer :: self
-    character(len=5) :: svars(2) = (/"cicen","hicen"/)
+    character(len=5) :: svars(5) = (/"cicen","hicen","vicen","hsnon","vsnon"/)
     integer :: ncol
     
     print *,'============ In fraction setup ===== ',svars

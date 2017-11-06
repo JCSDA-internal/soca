@@ -14,11 +14,11 @@ module mom5cice5_obsoper_mod
 
   ! ------------------------------------------------------------------------------
 
-  !> Fortran derived type for sea-ice fraction observations for the model
+  !> Fortran derived type for observations for the model
   type :: mom5cice5_obsoper
-     character(len=30) :: request
+     character(len=30)    :: request
      type(mom5cice5_vars) :: varin
-     integer :: ncol
+     integer              :: ncol
   end type mom5cice5_obsoper
 
 #define LISTED_TYPE mom5cice5_obsoper
@@ -43,7 +43,6 @@ contains
     type(c_ptr), intent(in)    :: c_conf
     character(len=*), intent(in) :: svars(:)
     integer :: ncol
-    print *,'============ IN OPER_SETUP =============',svars,ncol
 
     self%request = config_get_string(c_conf, len(self%request), "ObsType")
     call mom5cice5_vars_setup(self%varin, svars)
@@ -70,7 +69,7 @@ contains
 
     type(mom5cice5_obsoper), pointer :: self
     type(mom5cice5_vars), pointer :: vars
-    print *,'============ IN OPER_SETUP ============='
+
     call mom5cice5_obsoper_registry%get(c_key_self, self)
     call mom5cice5_vars_registry%init()
     call mom5cice5_vars_registry%add(c_key_vars)

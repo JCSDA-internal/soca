@@ -64,8 +64,8 @@ list( APPEND oops_mom5cice5_src_files
 ./ObsOperator/mom5cice5_obsoper_mod.F90
 
 #Covariance
-./Covariance/ErrorCovariance.cc
-./Covariance/ErrorCovariance.h
+#./Covariance/ErrorCovariance.cc
+#./Covariance/ErrorCovariance.h
 
 #ObsVector
 ./ObsVector/ObsVec.cc

@@ -561,6 +561,9 @@ contains
        varname='vicen'; call ncread_fld(fld%cicefname, varname, fld%vicen, fld%geom%nx, fld%geom%ny, fld%geom%ncat, start3, count3)
        varname='vsnon'; call ncread_fld(fld%cicefname, varname, fld%vicen, fld%geom%nx, fld%geom%ny, fld%geom%ncat, start3, count3)
        varname='Tsfcn'; call ncread_fld(fld%cicefname, varname, fld%tsfcn, fld%geom%nx, fld%geom%ny, fld%geom%ncat, start3, count3)
+       where (abs(fld%cicen)>999.9_kind_real)
+          fld%cicen=0.0_kind_real
+       end where
        allocate(var3d(fld%geom%nx,fld%geom%ny,fld%geom%ncat))
        do level=1,fld%geom%nzi
           basename='qice'; call fld_name_int2str(basename, level, varname)
@@ -758,15 +761,15 @@ contains
 
     call check(fld)
 
-    !pstat(1,:)=minval(fld%cicen)
-    !pstat(2,:)=maxval(fld%cicen)
+    pstat(1,:)=minval(fld%cicen)
+    pstat(2,:)=maxval(fld%cicen)
     !pstat(3,:)=abs(maxval(fld%cicen)-minval(fld%cicen))
 
     !call abor1_ftn("mom5cice5_fields_gpnorm: error not implemented")
     !print *,'pstat=',pstat
-    call dot_prod(fld,fld,zz)    
-
-    pstat = sqrt(zz)
+    !call dot_prod(fld,fld,zz)    
+    call fldrms(fld, zz)
+    pstat(3,:) = zz
 
     !print *,'pstat=',pstat
 
@@ -782,12 +785,28 @@ contains
     type(mom5cice5_field), intent(in) :: fld
     real(kind=kind_real), intent(out) :: prms
     integer :: jf,jy,jx,ii
-    real(kind=kind_real) :: zz
+    real(kind=kind_real) :: zz, ns, n2dfld
 
+    real(kind=kind_real), allocatable :: cicen(:,:,:)          !< Sea-ice fraction                 (nx,ny,ncat)
+    real(kind=kind_real), allocatable :: hicen(:,:,:)          !< Sea-ice thickness                (nx,ny,ncat)
+    real(kind=kind_real), allocatable :: vicen(:,:,:)          !< Sea-ice volume                   (nx,ny,ncat)
+    real(kind=kind_real), allocatable :: hsnon(:,:,:)          !< Snow depth over sea-ice          (nx,ny,ncat)
+    real(kind=kind_real), allocatable :: vsnon(:,:,:)          !< Snow volume over sea-ice         (nx,ny,ncat) 
+    real(kind=kind_real), allocatable :: tsfcn(:,:,:)          !< Temperature over sea-ice or snow (nx,ny,ncat)
+    real(kind=kind_real), allocatable :: qsnon(:,:,:)          !< Enthalpy of snow                 (nx,ny,ncat)
+    real(kind=kind_real), allocatable :: sicnk(:,:,:,:)        !< Salin_wity of sea-ice            (nx,ny,ncat,nzi)
+    real(kind=kind_real), allocatable :: sssoc(:,:)            !< Ocean (surface) Salinity         (nx,ny,nzo)
+    real(kind=kind_real), allocatable :: qicnk(:,:,:,:)        !< Enthalpy of sea-ice              (nx,ny,ncat,nzi)
+    real(kind=kind_real), allocatable :: sstoc(:,:)            !< Average temperature of grid cell (nx,ny,nzo)
+    
     call check(fld)
 
+    n2dfld=fld%geom%ncat*7+&
+         & fld%geom%ncat*fld%geom%nzi*2+&
+         & fld%geom%nzo*2
+    ns = real(sum(fld%geom%mask)*n2dfld)
     call dot_prod(fld,fld,prms)
-    prms = sqrt(prms)
+    prms = sqrt(prms)/ns
 
   end subroutine fldrms
 
@@ -843,7 +862,7 @@ contains
     type(namtype) :: nam !< Namelist variables
 
     Nc = fld%geom%nx*fld%geom%ny
-    No = locs%nloc
+    No = locs%nloc   !< DOES NOT SEEM RIGHT, SHOULD BE TOTAL OBS IN da WINDOW
     Ncat = fld%geom%ncat
     if (No>0) then
        allocate(lon(Nc), lat(Nc), mask(Nc), fld_src(Nc))    ! <--- Not memory efficient ...
@@ -855,7 +874,7 @@ contains
        mask = .true.
        !end where
        if (.not.(gom%hinterp_initialized)) then
-          print *,'INITIALIZE INTERP'
+          print *,'INITIALIZE INTERP',gom%nobs,locs%nloc
           rng = create_randgen(nam)
           lono = deg2rad*locs%xyz(1,:)
           lato = deg2rad*locs%xyz(2,:)

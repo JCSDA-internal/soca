@@ -16,8 +16,8 @@ module mom5cice5_locs_mod
 
   !> Fortran derived type to hold observation locations
   type :: mom5cice5_locs
-     integer :: nloc
-     real(kind=kind_real), allocatable :: xyz(:,:) ! Ex: (3, number of obs) 3: lon, lat, lev
+     integer                           :: nloc     !< Number of obs loc in ]t,t+dt] (see ObsSpace) CONFUSING ... CHECK
+     real(kind=kind_real), allocatable :: xyz(:,:) !< Need to be allocated as (3, nloc) 3: lon, lat, lev
   end type mom5cice5_locs
 
 #define LISTED_TYPE mom5cice5_locs

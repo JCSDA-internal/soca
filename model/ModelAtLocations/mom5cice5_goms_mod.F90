@@ -23,7 +23,7 @@ module mom5cice5_goms_mod
   !> Fortran derived type to hold interpolated fields required by the obs operators
   type :: mom5cice5_goms
      !type(mom5cice5_geom), pointer :: geom !< MOM5 & CICE5 Geometry     
-     integer :: nobs                                   ! Number of obs (time and loc)
+     integer :: nobs                                   ! Number of obs (time and loc) in DA window (?)
      integer :: nvar                                   ! Number of variables in gom
      integer :: used
      integer, allocatable :: indx(:)

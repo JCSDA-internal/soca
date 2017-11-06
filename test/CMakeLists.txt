@@ -10,7 +10,7 @@ list( APPEND mom5cice5_test_input
 )
 
 list( APPEND mom5cice5_testoutput
-  testoutput/dirac.nicas.test
+  #testoutput/dirac.nicas.test
   testoutput/forecast.test
   testoutput/truth.test
   testoutput/makeobs3d.test

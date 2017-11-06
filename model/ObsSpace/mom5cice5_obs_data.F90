@@ -9,7 +9,6 @@ module mom5cice5_obs_data
   use datetime_mod
   use duration_mod
   use mom5cice5_goms_mod
-  !use mom5cice5_geom_mod
   use mom5cice5_locs_mod
   use mom5cice5_obs_vectors
   use mom5cice5_obsoper_mod
@@ -141,7 +140,7 @@ contains
     write(record,*)"obs_get col=",col
     call fckit_log%info(record)
 
-    ! Find obs group
+    ! Find obs group !!!! DEFINE OBS GROUP !!!!!!!!!
     call findgroup(self,req,jgrp)
     if (.not.associated(jgrp)) then
        jgrp=>self%grphead
@@ -275,18 +274,18 @@ contains
     integer(c_int), intent(in) :: c_key_vars
     type(c_ptr), intent(in) :: c_t1, c_t2
     integer(c_int), intent(inout) :: c_key_gom
-    !integer(c_int), intent(inout) :: c_key_geom
 
     type(obs_data), pointer :: self
     character(len=lreq) :: req
     type(mom5cice5_vars), pointer :: vars
     type(datetime) :: t1, t2
     type(mom5cice5_goms), pointer :: gom
-    !type(mom5cice5_geom), pointer :: geom    
 
     integer :: nobs
     integer, allocatable :: mobs(:)
 
+    character(len=21) :: t1str, t2str, tstr
+    
     call obs_data_registry%get(c_key_self, self)
     call c_f_string(c_req, req)
     call mom5cice5_vars_registry%get(c_key_vars, vars)
@@ -295,6 +294,7 @@ contains
 
     call obs_count(self, req, t1, t2, nobs)
     allocate(mobs(nobs))
+    
     call obs_count(self, req, t1, t2, mobs)
 
     allocate(gom)
@@ -451,10 +451,6 @@ contains
           enddo
        endif
     enddo
-    !print *,'shape ovec%value:',shape(ovec%values)
-    !print *,ovec%ncol,ovec%nobs
-    !print *,ovec%values
-    !read(*,*)
     
   end subroutine obs_time_get
 

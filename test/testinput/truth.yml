@@ -3,13 +3,13 @@ logging:
   categories: Warning, Error
 test_framework_runtime_config: "--log_level=test_suite"
 resolution:
-  nx: 72
-  ny: 41
+  nx: 720
+  ny: 410
   nzo: 1
   nzi: 7
   nzs: 1
   ncat: 5
-  nf: '12'
+  nf: '11'
   gridfname: "/home/gvernier/Data/MOM5CICE5/ogrid05.nc"
   icemaskfname: "/home/gvernier/Data/MOM5CICE5/icemask.nc"
 

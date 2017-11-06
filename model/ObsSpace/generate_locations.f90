@@ -1,4 +1,4 @@
-
+!> Generates synthetic obs for he makeobs test.
 subroutine generate_locations(c_conf,nlocs,ntimes,bgn,step,times,obsloc)
 
   use iso_c_binding
@@ -21,15 +21,11 @@ subroutine generate_locations(c_conf,nlocs,ntimes,bgn,step,times,obsloc)
   real(kind=kind_real), allocatable :: xxyyzz(:,:)
   type(datetime) :: now
 
-  !!!!!!!!!!!! NOT DONE YET !!!!!!!!!!!!
   allocate(xxyyzz(3,nlocs))
   print *,'-----GENERATE ',nlocs,' OBS -----'
   ijk=0
-  !call random_number(xxyyzz)
 
   do jobs=1,nlocs
-     !xxyyzz(1,jobs)=360.0_kind_real*xxyyzz(1,jobs)
-     !xxyyzz(2,jobs)=20.0_kind_real*xxyyzz(2,jobs)+80.0_kind_real
      xxyyzz(1,jobs)=real(jobs*360.0_kind_real/nlocs)
      xxyyzz(2,jobs)=85.0_kind_real
      xxyyzz(3,jobs)=0.0_kind_real

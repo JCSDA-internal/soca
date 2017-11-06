@@ -1,6 +1,5 @@
-
-!> Fortran module handling geometry for MOM5 & CICE5 model
-
+!> Fortran module handling geometry for MOM5 & CICE5 model.
+!! @ Todo: Remove sea-ice mask (maybe?), add nx0, ny0 to .json
 module mom5cice5_geom_mod
 
   use iso_c_binding
@@ -105,7 +104,7 @@ contains
     ny0=1 !60
     start2 = (/nx0,ny0/)
     count2 = (/self%nx,self%ny/)
-    print *,'================ READING GRID ====================='
+
     varname='x_T'; call ncread_fld(self%gridfname, varname, self%lon, start2, count2)
     varname='y_T'; call ncread_fld(self%gridfname, varname, self%lat, start2, count2)
     varname='wet'; call ncread_fld(self%gridfname, varname, self%mask, start2, count2)
