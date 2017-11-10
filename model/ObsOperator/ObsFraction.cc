@@ -15,8 +15,10 @@ using oops::Log;
 namespace mom5cice5 {
   // -----------------------------------------------------------------------------
 
-  ObsFraction::ObsFraction(ObsSpace & odb, const eckit::Configuration & config)
-    : obsdb_(odb), obsname_("Fraction"), varin_()
+  static oops::ObsOperatorMaker<Traits, ObsFraction> makerFraction_("Fraction");
+  
+  ObsFraction::ObsFraction(const ObsSpace & odb, const eckit::Configuration & config)
+    : obsname_("Fraction"), varin_()
   {
     const eckit::Configuration * configc = &config;
     mom5cice5_fraction_setup_f90(keyOperStrm_, &configc);
@@ -41,10 +43,10 @@ namespace mom5cice5 {
 
   // -----------------------------------------------------------------------------
 
-  void ObsFraction::generateObsError(const eckit::Configuration & conf) {
-    const double err = conf.getDouble("obs_error");
-    mom5cice5_obsdb_seterr_f90(obsdb_.toFortran(), keyOperStrm_, err);
-  }
+  //void ObsFraction::generateObsError(const eckit::Configuration & conf) {
+  //  const double err = conf.getDouble("obs_error");
+  //  mom5cice5_obsdb_seterr_f90(obsdb_.toFortran(), keyOperStrm_, err);
+  //}
 
   // -----------------------------------------------------------------------------
 

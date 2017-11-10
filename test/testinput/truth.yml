@@ -13,7 +13,7 @@ resolution:
   gridfname: "/home/gvernier/Data/MOM5CICE5/ogrid05.nc"
   icemaskfname: "/home/gvernier/Data/MOM5CICE5/icemask.nc"
 
-model:
+Model:
   tstep: "PT1H"
 
 initial:

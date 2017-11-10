@@ -52,7 +52,7 @@ module mom5cice5_geom_mod
 #define LISTED_TYPE mom5cice5_geom
 
   !> Linked list interface - defines registry_t type
-#include "util/linkedList_i.f"
+#include "Utils/linkedList_i.f"
 
   !> Global registry
   type(registry_t) :: mom5cice5_geom_registry
@@ -61,7 +61,7 @@ module mom5cice5_geom_mod
 contains
   ! ------------------------------------------------------------------------------
   !> Linked list implementation
-#include "util/linkedList_c.f"
+#include "Utils/linkedList_c.f"
 
   ! ------------------------------------------------------------------------------
   subroutine c_mom5cice5_geo_setup(c_key_self, c_conf) bind(c,name='mom5cice5_geo_setup_f90')

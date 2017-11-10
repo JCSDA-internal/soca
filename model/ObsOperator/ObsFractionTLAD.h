@@ -8,7 +8,8 @@
 #include <boost/scoped_ptr.hpp>
 #include <boost/shared_ptr.hpp>
 
-#include "model/ObsOperator/LinearObsOp.h"
+#include "model/Traits.h"
+#include "oops/interface/LinearObsOperBase.h"
 #include "model/ObsSpace/ObsSpace.h"
 #include "util/ObjectCounter.h"
 
@@ -29,7 +30,7 @@ namespace mom5cice5 {
    *  ObsFractionTLAD for  model inherits from ObsEquivalent.
    */
 
-  class ObsFractionTLAD : public LinearObsOp, private util::ObjectCounter<ObsFractionTLAD> {
+  class ObsFractionTLAD : public oops::LinearObsOperBase<Traits>, private util::ObjectCounter<ObsFractionTLAD> {
   public:
     static const std::string classname() {return "mom5cice5::ObsFractionTLAD";}
 

@@ -19,7 +19,7 @@ namespace eckit {
 }
 
 namespace mom5cice5 {
-  class F90traj;
+  //class F90traj;
   class ModelBias;
   class Fields;
   class State;

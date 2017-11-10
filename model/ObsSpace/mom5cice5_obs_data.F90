@@ -37,7 +37,7 @@ module mom5cice5_obs_data
 #define LISTED_TYPE obs_data
 
   !> Linked list interface - defines registry_t type
-#include "util/linkedList_i.f"
+#include "Utils/linkedList_i.f"
 
   !> Global registry
   type(registry_t) :: obs_data_registry
@@ -75,7 +75,7 @@ module mom5cice5_obs_data
 contains
   ! ------------------------------------------------------------------------------
   !> Linked list implementation
-#include "util/linkedList_c.f"
+#include "Utils/linkedList_c.f"
 
   ! ------------------------------------------------------------------------------
 

@@ -24,7 +24,7 @@ module mom5cice5_obsoper_mod
 #define LISTED_TYPE mom5cice5_obsoper
 
   !> Linked list interface - defines registry_t type
-#include "util/linkedList_i.f"
+#include "Utils/linkedList_i.f"
 
   !> Global registry
   type(registry_t) :: mom5cice5_obsoper_registry
@@ -33,7 +33,7 @@ module mom5cice5_obsoper_mod
 contains
   ! ------------------------------------------------------------------------------
   !> Linked list implementation
-#include "util/linkedList_c.f"
+#include "Utils/linkedList_c.f"
 
   ! ------------------------------------------------------------------------------
 

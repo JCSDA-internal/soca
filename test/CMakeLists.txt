@@ -4,6 +4,7 @@ list( APPEND mom5cice5_test_input
   testinput/interfaces.json  
   testinput/forecast.yml
   testinput/truth.yml
+  testinput/truth.json
   testinput/makeobs3d.yml
   testinput/makeobs3d.json  
   compare.sh
@@ -46,7 +47,7 @@ file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/Data)
 ecbuild_add_test( TARGET test_mom5cice5_truth
                   TYPE SCRIPT
                   COMMAND "compare.sh"
-                  ARGS "${CMAKE_BINARY_DIR}/bin/mom5cice5_forecast.x testinput/truth.yml"
+                  ARGS "${CMAKE_BINARY_DIR}/bin/mom5cice5_forecast.x testinput/truth.json"
                        testoutput/truth.test
                   DEPENDS mom5cice5_forecast.x )
 

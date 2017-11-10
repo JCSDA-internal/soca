@@ -36,7 +36,7 @@ include_directories( ${Boost_INCLUDE_DIR} )
 # oops
 ecbuild_use_package( PROJECT oops VERSION 0.1.0 REQUIRED )
 include_directories( ${OOPS_INCLUDE_DIRS} )
-
+MESSAGE( STATUS "oops include dirs: " ${OOPS_INCLUDE_DIRS} )
 ################################################################################
 # Export package info
 ################################################################################
@@ -53,6 +53,7 @@ endforeach()
 ################################################################################
 include_directories( ${CMAKE_CURRENT_SOURCE_DIR} )
 include_directories( ${CMAKE_CURRENT_SOURCE_DIR}/model )
+
 add_subdirectory( mains )
 add_subdirectory( model )
 add_subdirectory( test )

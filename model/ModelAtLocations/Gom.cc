@@ -4,8 +4,8 @@
 
 #include "util/Logger.h"
 #include "model/ObsSpace/ObsSpace.h"
-#include "model/ObsOperator/Observation.h"
-#include "model/ObsOperator/LinearObsOp.h"
+//#include "model/ObsOperator/Observation.h"
+//#include "model/ObsOperator/LinearObsOp.h"
 #include "model/Fortran.h"
 #include "model/Variables/Variables.h"
 

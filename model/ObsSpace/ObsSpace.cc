@@ -20,7 +20,7 @@ namespace mom5cice5 {
 
   ObsSpace::ObsSpace(const eckit::Configuration & config,
 		     const util::DateTime & bgn, const util::DateTime & end)
-    : winbgn_(bgn), winend_(end)
+    : oops::ObsSpaceBase(config, bgn, end), winbgn_(bgn), winend_(end)
   {
     static std::map < std::string, ObsHelp * > theObsFileRegister_;
     typedef std::map< std::string, ObsHelp * >::iterator otiter;
@@ -93,14 +93,14 @@ namespace mom5cice5 {
 
   // -----------------------------------------------------------------------------
 
-  ObsSpace::ObsSpace(const ObsSpace & other)
-    : ref_(other.ref_), helper_(other.helper_),
-      obsname_(other.obsname_), nobs_(other.nobs_), nvin_(other.nvin_), nout_(other.nout_)
-  {
-    ASSERT(theObsFileCount_[ref_] > 0);
-    theObsFileCount_[ref_]+=1;
-    Log::trace() << "ObsSpace copied, count=" << theObsFileCount_[ref_] << std::endl;
-  }
+  //ObsSpace::ObsSpace(const ObsSpace & other)
+  //  : ref_(other.ref_), helper_(other.helper_),
+  //    obsname_(other.obsname_), nobs_(other.nobs_), nvin_(other.nvin_), nout_(other.nout_)
+  // {
+  //  ASSERT(theObsFileCount_[ref_] > 0);
+  //  theObsFileCount_[ref_]+=1;
+  //  Log::trace() << "ObsSpace copied, count=" << theObsFileCount_[ref_] << std::endl;
+  // }
 
   // -----------------------------------------------------------------------------
 

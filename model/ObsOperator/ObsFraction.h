@@ -9,10 +9,12 @@
 #include <boost/scoped_ptr.hpp>
 #include <boost/shared_ptr.hpp>
 
+#include "oops/interface/ObsOperatorBase.h"
 #include "model/ObsSpace/ObsSpace.h"
-#include "model/ObsOperator/Observation.h"
-#include "model/ObsOperator/ObsFractionTLAD.h"
+//#include "model/ObsOperator/Observation.h"
+//#include "model/ObsOperator/ObsFractionTLAD.h"
 #include "util/ObjectCounter.h"
+#include "model/Traits.h"
 
 // Forward declarations
 namespace eckit {
@@ -35,22 +37,22 @@ namespace mom5cice5 {
    *  ObsFraction for model inherits from ObsEquivalent.
    */
 
-  class ObsFraction : public Observation,
-    private util::ObjectCounter<ObsFraction> {
+  class ObsFraction : public oops::ObsOperatorBase<Traits>,
+                      private util::ObjectCounter<ObsFraction> {
   public:
       static const std::string classname() {return "mom5cice5::ObsFraction";}
 
-      ObsFraction(ObsSpace &, const eckit::Configuration &);
+      ObsFraction(const ObsSpace &, const eckit::Configuration &);
       virtual ~ObsFraction();
 
       // Obs Operator
       void obsEquiv(const Gom &, ObsVec &, const ObsBias &) const;
 
       // Is there a way to put this in the TLAD class?
-      LinearObsOp * getTLAD() const {return new ObsFractionTLAD(obsdb_, keyOperStrm_);}
+      //LinearObsOp * getTLAD() const {return new ObsFractionTLAD(obsdb_, keyOperStrm_);}
 
       // Other
-      void generateObsError(const eckit::Configuration &);
+      //void generateObsError(const eckit::Configuration &);
       boost::shared_ptr<const Variables> variables() const {return varin_;}
 
       int & toFortran() {return keyOperStrm_;}
@@ -58,7 +60,7 @@ namespace mom5cice5 {
 
   private:
       void print(std::ostream &) const;
-      ObsSpace & obsdb_;
+      //const ObsSpace & obsdb_;
       const std::string obsname_;
       int keyOperStrm_;
       boost::shared_ptr<const Variables> varin_;

@@ -26,12 +26,14 @@ namespace mom5cice5 {
     geom_(new Geometry(geom)), vars_(new Variables(vars)), time_(time)
   {
     mom5cice5_field_create_f90(keyFlds_, geom_->toFortran(), vars_->toFortran());
+    std::cout << "===================== 00000 in create cc " << keyFlds_ << std::endl;        
   }
   // -----------------------------------------------------------------------------
   Fields::Fields(const Fields & other, const bool copy)
     : geom_(other.geom_), vars_(other.vars_), time_(other.time_)
   {
     mom5cice5_field_create_f90(keyFlds_, geom_->toFortran(), vars_->toFortran());
+    std::cout << "===================== 11111 in create cc " << keyFlds_ << std::endl;        
     if (copy) {
       mom5cice5_field_copy_f90(keyFlds_, other.keyFlds_);
     } else {
@@ -43,6 +45,7 @@ namespace mom5cice5 {
     : geom_(other.geom_), vars_(other.vars_), time_(other.time_)
   {
     mom5cice5_field_create_f90(keyFlds_, geom_->toFortran(), vars_->toFortran());
+    std::cout << "===================== 2222222 in create cc " << keyFlds_ << std::endl;    
     mom5cice5_field_copy_f90(keyFlds_, other.keyFlds_);
   }
   // -----------------------------------------------------------------------------
@@ -50,6 +53,7 @@ namespace mom5cice5 {
     : geom_(new Geometry(geom)), vars_(other.vars_), time_(other.time_)
   {
     mom5cice5_field_create_f90(keyFlds_, geom_->toFortran(), vars_->toFortran());
+    std::cout << "===================== 133333 in create cc " << keyFlds_ << std::endl;            
     mom5cice5_field_change_resol_f90(keyFlds_, other.keyFlds_);
   }
   // -----------------------------------------------------------------------------
@@ -57,6 +61,7 @@ namespace mom5cice5 {
     : geom_(other.geom_), vars_(new Variables(vars)), time_(other.time_)
   {
     mom5cice5_field_create_f90(keyFlds_, geom_->toFortran(), vars_->toFortran());
+        std::cout << "====================44444444 in create cc " << keyFlds_ << std::endl;        
     mom5cice5_field_copy_f90(keyFlds_, other.keyFlds_);
   }
   // -----------------------------------------------------------------------------
@@ -152,6 +157,7 @@ namespace mom5cice5 {
   void Fields::read(const eckit::Configuration & config) {
     const eckit::Configuration * conf = &config;
     util::DateTime * dtp = &time_;
+    std::cout << "in field.cc" << keyFlds_ << std::endl;
     mom5cice5_field_read_file_f90(keyFlds_, &conf, &dtp);
   }
   // -----------------------------------------------------------------------------

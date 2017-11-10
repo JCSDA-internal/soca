@@ -6,7 +6,8 @@
 #include <string>
 
 #include "util/DateTime.h"
-#include "util/Logger.h"
+#include "oops/interface/ObsSpaceBase.h"
+//#include "util/Logger.h"
 #include "util/Printable.h"
 
 #include "model/ObsSpace/ObsHelp.h"
@@ -23,10 +24,11 @@ namespace mom5cice5 {
 
   /// Wrapper around ObsHelp, mostly to hide the factory
 
-  class ObsSpace : public util::Printable {
+  //class ObsSpace : public util::Printable {
+  class ObsSpace : public oops::ObsSpaceBase {
   public:
     ObsSpace(const eckit::Configuration &, const util::DateTime &, const util::DateTime &);
-    ObsSpace(const ObsSpace &);
+    //ObsSpace(const ObsSpace &);
     ~ObsSpace();
 
     void getdb(const std::string & col, int & keyData) const {

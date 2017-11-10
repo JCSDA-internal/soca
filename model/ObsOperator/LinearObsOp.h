@@ -8,7 +8,7 @@
 #include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
 
-#include "model/ObsOperator/Observation.h"
+//#include "model/ObsOperator/Observation.h"
 #include "eckit/config/Configuration.h"
 
 namespace util {

@@ -25,6 +25,8 @@ subroutine mom5cice5_field_create_c(c_key_self, c_key_geom, c_key_vars) bind(c,n
 
   call create(self, geom, vars)
 
+  print *,'================field created',c_key_self
+  
 end subroutine mom5cice5_field_create_c
 
 ! ------------------------------------------------------------------------------
@@ -329,8 +331,10 @@ subroutine mom5cice5_field_read_file_c(c_key_fld, c_conf, c_dt) bind(c,name='mom
 
   type(mom5cice5_field), pointer :: fld
   type(datetime) :: fdate
-
+  print *,'%%%%%%%%%%%%%%%%%%%%%%%%%%%% in read %%%%%%%%'
+  print *,'%%%%%%%%%%%%%%%%%%%%%%%%%%%% in read %%%%%%%%',c_key_fld
   call mom5cice5_field_registry%get(c_key_fld,fld)
+  print *,'%%%%%%%%%%%%%%%%%%%%%%%%%%%% in read %%%%%%%%'
   call c_f_datetime(c_dt, fdate)
   call read_file(fld, c_conf, fdate)
 

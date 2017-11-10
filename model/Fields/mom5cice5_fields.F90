@@ -49,7 +49,7 @@ module mom5cice5_fields
 #define LISTED_TYPE mom5cice5_field
 
   !> Linked list interface - defines registry_t type
-#include "util/linkedList_i.f"
+#include "Utils/linkedList_i.f"
 
   !> Global registry
   type(registry_t) :: mom5cice5_field_registry
@@ -58,7 +58,7 @@ module mom5cice5_fields
 contains
   ! ------------------------------------------------------------------------------
   !> Linked list implementation
-#include "util/linkedList_c.f"
+#include "Utils/linkedList_c.f"
 
   ! ------------------------------------------------------------------------------
 
@@ -533,6 +533,8 @@ contains
     nx0=1 !20
     ny0=1 !60
 
+    print *,'===================in read file ==============='
+    
     iread = 0
     if (config_element_exists(c_conf,"read_from_file")) then
        iread = config_get_int(c_conf,"read_from_file")

@@ -53,9 +53,9 @@ list( APPEND oops_mom5cice5_src_files
 ./Locations/mom5cice5_locs_mod.F90
 
 #ObsOperator
-./ObsOperator/Observation.cc
-./ObsOperator/Observation.h
-./ObsOperator/LinearObsOp.h
+#./ObsOperator/Observation.cc
+#./ObsOperator/Observation.h
+#./ObsOperator/LinearObsOp.h
 ./ObsOperator/ObsFraction.cc
 ./ObsOperator/ObsFraction.h
 ./ObsOperator/ObsFractionTLAD.cc
@@ -77,6 +77,8 @@ list( APPEND oops_mom5cice5_src_files
 ./Utils/mom5cice5_thermo.F90
 ./Utils/mom5cice5_ncutils_mod.F90
 ./Utils/mom5cice5_balanceop.F90
+#./Utils/linkedList_c.f
+#./Utils/linkedList_i.f
 
 Traits.h
 Fortran.h
@@ -90,12 +92,6 @@ ObsBiasCovariance.cc
 ObsBiasCovariance.h
 ObsBiasIncrement.cc
 ObsBiasIncrement.h
-
-
-
-
-
-
 )
 
 if ( CMAKE_Fortran_COMPILER_ID MATCHES "Cray" )

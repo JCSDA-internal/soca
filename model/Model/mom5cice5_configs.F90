@@ -20,7 +20,7 @@ module mom5cice5_configs
 #define LISTED_TYPE mom5cice5_config
 
   !> Linked list interface - defines registry_t type
-#include "util/linkedList_i.f"
+#include "Utils/linkedList_i.f"
 
   !> Global registry
   type(registry_t) :: mom5cice5_config_registry
@@ -29,6 +29,6 @@ module mom5cice5_configs
 contains
   ! ------------------------------------------------------------------------------
   !> Linked list implementation
-#include "util/linkedList_c.f"
+#include "Utils/linkedList_c.f"
 
 end module mom5cice5_configs
