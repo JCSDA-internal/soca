@@ -4,7 +4,6 @@
 #include <string>
 
 #include "util/Logger.h"
-//#include "model/ObsOperator/Observation.h"
 #include "model/Fortran.h"
 #include "eckit/config/Configuration.h"
 #include "util/DateTime.h"

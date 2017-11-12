@@ -285,6 +285,9 @@ contains
     integer, allocatable :: mobs(:)
 
     character(len=21) :: t1str, t2str, tstr
+
+    print *,'*********** in db_getgom ************'
+    !read(*,*)
     
     call obs_data_registry%get(c_key_self, self)
     call c_f_string(c_req, req)

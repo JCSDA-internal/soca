@@ -5,7 +5,6 @@
 #include <string>
 
 #include "model/ModelAtLocations/Gom.h"
-//#include "model/ObsOperator/LinearObsOp.h"
 #include "model/Locations/Loc.h"
 #include "model/ModelBias.h"
 #include "model/ModelBiasIncrement.h"
@@ -19,7 +18,6 @@
 #include "model/Geometry/Geometry.h"
 #include "model/Increment/Increment.h"
 #include "model/Model/Model.h"
-//#include "model/ObsOperator/Observation.h"
 #include "model/State/State.h"
 #include "model/Variables/Variables.h"
 

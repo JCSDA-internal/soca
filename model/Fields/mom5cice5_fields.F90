@@ -8,6 +8,10 @@ module mom5cice5_fields
   use mom5cice5_goms_mod
   use mom5cice5_locs_mod  
   use mom5cice5_vars_mod
+  use type_linop
+  use tools_interp, only: interp_horiz
+  !use type_randgen, only: rng,initialize_sampling,create_randgen
+  use module_namelist, only: namtype  
   use kinds
 
   implicit none
@@ -43,7 +47,11 @@ module mom5cice5_fields
      real(kind=kind_real), allocatable :: sstoc(:,:)            !< Average temperature of grid cell (nx,ny,nzo)
      character(len=5), allocatable     :: fldnames(:)           !< Variable identifiers             (nf)
      integer, allocatable              :: numfld_per_fldname(:) !< Number of 2d fields for each     (nf) 
-                                                                !< element of fldnames 
+                                                                !< element of fldnames
+
+     type(linoptype)                   :: hinterp_op
+     logical                           :: hinterp_initialized !True:  hinterp_op has been initialized
+                                                              !False: hinterp_op not initialized
   end type mom5cice5_field
 
 #define LISTED_TYPE mom5cice5_field
@@ -146,7 +154,9 @@ contains
     if (allocated(self%qicnk)) deallocate(self%qicnk)
     if (allocated(self%sstoc)) deallocate(self%sstoc)    
     if (allocated(self%fldnames)) deallocate(self%fldnames)
+    !call linop_dealloc(self%hinterp_op)
 
+    
   end subroutine delete
 
   ! ------------------------------------------------------------------------------
@@ -253,6 +263,8 @@ contains
     self%qicnk = rhs%qicnk
     self%sstoc = rhs%sstoc
 
+    !call linop_copy(rhs%hinterp_op, self%hinterp_op)
+    
     return
   end subroutine copy
 
@@ -816,7 +828,7 @@ contains
 
   subroutine interp_tl(fld, locs, gom)
     implicit none
-    type(mom5cice5_field), intent(in)   :: fld
+    type(mom5cice5_field), intent(inout)   :: fld
     type(mom5cice5_locs), intent(in)    :: locs
     type(mom5cice5_goms), intent(inout) :: gom
     character(2)                        :: op_type='TL'
@@ -851,7 +863,7 @@ contains
     use module_namelist, only: namtype    
     use tools_const, only : deg2rad
 
-    type(mom5cice5_field), intent(in)    :: fld
+    type(mom5cice5_field), intent(inout)    :: fld
     type(mom5cice5_locs), intent(in)     :: locs
     type(mom5cice5_goms), intent(inout)  :: gom
     character(2), intent(in)             :: op_type !('TL' or 'AD')
@@ -862,6 +874,7 @@ contains
     logical,allocatable :: mask(:), masko(:)               ! < mask (ncells, nlevels)
     real(kind=kind_real), allocatable :: lon(:), lat(:), lono(:), lato(:), fld_src(:), fld_dst(:)
     type(namtype) :: nam !< Namelist variables
+    type(linoptype) :: hinterp_op
 
     Nc = fld%geom%nx*fld%geom%ny
     No = locs%nloc   !< DOES NOT SEEM RIGHT, SHOULD BE TOTAL OBS IN da WINDOW
@@ -875,7 +888,7 @@ contains
        !where(reshape(fld%geom%mask,(/Nc/)).eq.0.0_kind_real)
        mask = .true.
        !end where
-       if (.not.(gom%hinterp_initialized)) then
+       if (.not.(fld%hinterp_initialized)) then
           print *,'INITIALIZE INTERP',gom%nobs,locs%nloc
           rng = create_randgen(nam)
           lono = deg2rad*locs%xyz(1,:)
@@ -883,9 +896,8 @@ contains
           lon = deg2rad*reshape(fld%geom%lon, (/Nc/))     ! Inline grid, structured to un-structured
           lat = deg2rad*reshape(fld%geom%lat, (/Nc/))     ! and change to SI Units
           call interp_horiz(rng, Nc, lon,  lat,  mask, &
-            No, lono, lato, masko, &
-            gom%hinterp_op)
-          gom%hinterp_initialized = .true.
+               No, lono, lato, masko, fld%hinterp_op)               
+          fld%hinterp_initialized = .true.          
        end if
 
        !Finish Initializing gom
@@ -911,7 +923,7 @@ contains
                 cnt_fld=cnt_fld+1
                 print *,'Apply interp op to variable:',gom%variables(var_type_index),' field num:',cnt_fld
                 fld_src = reshape(fld%cicen(:,:,ivar), (/Nc/))
-                call apply_linop(gom%hinterp_op, fld_src, fld_dst)
+                call apply_linop(fld%hinterp_op, fld_src, fld_dst)
                 gom%values(cnt_fld,gom%used:gom%used+No-1)=fld_dst(1:No)
              end do
           end do
@@ -925,29 +937,6 @@ contains
        gom%used=gom%used+locs%nloc
     end if
   end subroutine nicas_interph
-
-  ! ------------------------------------------------------------------------------
-
-  subroutine lin_weights(kk,delta1,delta2,k1,k2,w1,w2)
-    implicit none
-    integer, intent(in)  :: kk
-    real(kind=kind_real), intent(in)     :: delta1,delta2
-    integer, intent(out) :: k1,k2
-    real(kind=kind_real), intent(out)    :: w1,w2
-
-    integer :: ii
-    real(kind=kind_real) :: zz
-
-    zz=real(kk-1,kind_real)*delta1
-    zz=zz/delta2
-    ii=int(zz)
-    w1=zz-real(ii,kind_real)
-    w2=1.0_kind_real-w1
-    k1=ii+1
-    k2=ii+2
-
-    return
-  end subroutine lin_weights
 
   ! ------------------------------------------------------------------------------
 

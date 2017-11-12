@@ -7,11 +7,6 @@ module mom5cice5_goms_mod
   use mom5cice5_geom_mod
   use mom5cice5_vars_mod
   use kinds
-  !Interpolation related modules
-  use type_linop
-  use tools_interp, only: interp_horiz
-  !use type_randgen, only: rng,initialize_sampling,create_randgen
-  use module_namelist, only: namtype
   
   implicit none
   private
@@ -27,7 +22,7 @@ module mom5cice5_goms_mod
      integer :: nvar                                   ! Number of variables in gom
      integer :: used
      integer, allocatable :: indx(:)
-     integer, allocatable :: numfld_per_fldname(:)        ! Cloned from field in interp
+     integer, allocatable :: numfld_per_fldname(:)     ! Cloned from field in interp
      real(kind=kind_real), allocatable :: values(:,:)  ! nvar x nobs
                                                        ! values(:,i)=[cicen(1:ncat),
                                                        !              hicen(1:ncat),
@@ -36,9 +31,6 @@ module mom5cice5_goms_mod
                                                        !              ...]
      character(len=5), allocatable :: variables(:)
      logical :: lalloc
-     type(linoptype) :: hinterp_op
-     logical :: hinterp_initialized !True:  hinterp_op has been initialized
-                                    !False: hinterp_op not initialized
   end type mom5cice5_goms
 
 #define LISTED_TYPE mom5cice5_goms
@@ -70,8 +62,6 @@ contains
     self%indx(:)=kobs(:)
     allocate(self%variables(self%nvar))
     self%variables(1:self%nvar)=vars%fldnames(1:vars%nv)
-    ! self%values is allocated after the initialization
-    ! of the interpolation (in fields)
     self%lalloc = .true.
 
   end subroutine gom_setup
