@@ -1,0 +1,29 @@
+Stuff to remove to usee the UFO library:
+---------------------------------------
+
+GeoVaLs.cc !Not trivial
+GeoVaLs.h
+ufo_geovals_mod.F90
+
+Locations.h  !Should be easy
+ufo_locs_mod.F90
+
+ObsBias.h    !Should be easy
+
+ObsSpace.cc  !Not trival
+ObsSpace.h
+ufo_obs_data.F90
+
+ObsVector.cc !Should be easy
+ObsVector.h
+ufo_obs_vectors.F90
+
+Variables.cc  !Not trivial
+Variables.h
+ufo_variables_mod.F90
+
+#UFO
+#----
+ObsWSpeed.cc
+ObsWSpeed.h
+ufo_wspeed_mod.F90
