@@ -4,7 +4,7 @@
 module mom5cice5_obs_vectors
 
   use iso_c_binding
-  !use random_vectors_mod
+  use random_vectors_mod
   use kinds
 
   implicit none
@@ -212,7 +212,7 @@ contains
     type(obs_vect), pointer :: self
 
     call mom5cice5_obs_vect_registry%get(c_key_self,self)
-    !call random_vector(self%values)
+    call random_vector(self%values)
 
   end subroutine c_mom5cice5_obsvec_random
   ! ------------------------------------------------------------------------------

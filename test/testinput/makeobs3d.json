@@ -1,5 +1,6 @@
 {
   "logging": {
+	
     "categories": "Info, Test, Warning, Error, Debug, Trace"
   },
   "Geometry": {
@@ -46,8 +47,9 @@
   "ObsFilters": [
     {
       "ObsType": "Fraction",
-      "Filter": "GOMsaver",
-      "filename": "Data/mc5.fraction.gom"
+	"Filter": "GOMsaver",
+	"filename": "Data/mc5.fraction.gom",
+	"ncat": 5
     }
     ]
   },

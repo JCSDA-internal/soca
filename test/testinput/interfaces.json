@@ -80,12 +80,14 @@
 	},
 	"GeoVaLs":{
             "filename": "Data/mc5.fraction.gom",
-              "norm": "9999.9"
+            "norm": "9999.9",
+	    "ncat": 5
 	  },
       "Covariance": {
         "covariance": "diagonal",
         "obserror": "ObsErr"
-      }
+      },
+      "rmsequiv": "0.49629383960815932"		
 	    }
   ]
     }

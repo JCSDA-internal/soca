@@ -1,11 +1,8 @@
 
 
 #include "model/ModelAtLocations/Gom.h"
-
 #include "util/Logger.h"
 #include "model/ObsSpace/ObsSpace.h"
-//#include "model/ObsOperator/Observation.h"
-//#include "model/ObsOperator/LinearObsOp.h"
 #include "model/Fortran.h"
 #include "model/Variables/Variables.h"
 
@@ -25,7 +22,7 @@ namespace mom5cice5 {
   Gom::Gom(const eckit::Configuration & config) {
     mom5cice5_gom_create_f90(keyGom_);
     const eckit::Configuration * conf = &config;
-    std::cout << " gom_read_file not implemented " << std::endl;
+    std::cout << " gom_read_file " << std::endl;
     mom5cice5_gom_read_file_f90(keyGom_, &conf);
   }
   // -----------------------------------------------------------------------------  
@@ -37,15 +34,15 @@ namespace mom5cice5 {
     mom5cice5_gom_zero_f90(keyGom_);
   }
   // -----------------------------------------------------------------------------
-   void Gom::random() {
-     mom5cice5_gom_random_f90(keyGom_);
-   }
+  void Gom::random() {
+    mom5cice5_gom_random_f90(keyGom_);
+  }
   // -----------------------------------------------------------------------------
-Gom & Gom::operator*=(const double & zz) {
-  //mom5cice5_gom_mult_f90(keyGom_, zz);
-  return *this;
-}
-// -----------------------------------------------------------------------------  
+  Gom & Gom::operator*=(const double & zz) {
+    mom5cice5_gom_mult_f90(keyGom_, zz);
+    return *this;
+  }
+  // -----------------------------------------------------------------------------  
   double Gom::dot_product_with(const Gom & other) const {    
     double zz;
     //mom5cice5_gom_dotprod_f90(keyGom_, other.toFortran(), zz);

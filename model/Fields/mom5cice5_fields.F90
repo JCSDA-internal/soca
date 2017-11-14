@@ -909,8 +909,9 @@ contains
        end if
        if (.not.allocated(gom%numfld_per_fldname)) then
           allocate(gom%numfld_per_fldname(gom%nvar))
-          gom%numfld_per_fldname=fld%numfld_per_fldname ! Will be used in obs oper          
-       end if !probably need to assert shape of gom%values==(gom_dim1,gom%nobs)
+       end if
+       gom%numfld_per_fldname=fld%numfld_per_fldname ! Will be used in obs oper          
+       !end if !probably need to assert shape of gom%values==(gom_dim1,gom%nobs)
           
        select case (op_type)
        case ('TL')

@@ -53,7 +53,6 @@ void ObsFractionTLAD::obsEquivTL(const Gom & gom, ObsVec & ovec,
 
 void ObsFractionTLAD::obsEquivAD(Gom & gom, const ObsVec & ovec,
                                ObsBiasIncrement & bias) const {
-  // NOT IMPLEMENTED YET  
   mom5cice5_fraction_equiv_ad_f90(gom.toFortran(), ovec.toFortran(), bias.fraction());
 }
 

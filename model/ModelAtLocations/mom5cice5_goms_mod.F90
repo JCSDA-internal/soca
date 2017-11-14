@@ -87,7 +87,6 @@ contains
     if (.not.allocated(self%numfld_per_fldname)) then
        print *,'in gom setup'
        print *,vars%fldnames
-       read(*,*)
        allocate(self%numfld_per_fldname(vars%nv))  
     end if
     self%lalloc = .true.
@@ -206,7 +205,7 @@ contains
     character(len=4)  :: cnx
     character(len=17) :: fmtn
     character(len=11) :: fmt1='(X,ES24.16)'
-    integer :: jj, jo, jv
+    integer :: jj, jo, jv, ncat
 
     print *,'@@@@@@@@@@@@@@@@@@@ IN GOM READ @@@@@@@@@@@@@@@@@@@@@@@@@@' 
 
@@ -223,7 +222,12 @@ contains
     !call write_split_conv_diag_nc(fn, hdr, mass, wind, append_suffix)
     !call nc_diag_metadata("Station_ID",              conv_wind(i)%Station_ID)x    
 
-    read(iunit,*) self%nobs, self%nvar, self%used
+    read(iunit,*) self%nobs, self%nvar, self%used, ncat
+    print *,'$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$44444 ncat=',ncat
+    if (.not.(allocated(self%numfld_per_fldname))) allocate(self%numfld_per_fldname(1))
+    self%numfld_per_fldname(1)=ncat
+    print *,'Nobs=',self%nobs, 'Nvar=',self%nvar
+    
     allocate(self%indx(self%nobs))
     allocate(self%variables(self%nvar))
     allocate(self%values(self%nvar,self%nobs))
@@ -264,7 +268,7 @@ contains
     character(len=4)  :: cnx
     character(len=17) :: fmtn
     character(len=11) :: fmt1='(X,ES24.16)'
-    integer :: jj, jo, jv
+    integer :: jj, jo, jv, ncat
 
 !!!!!!!!     FOR EXAMLE: LOOK AT gsidiag_conv_bin2nc4.f90 IN IODA REPO  !!!!!!!!!!!!!
 
@@ -272,13 +276,17 @@ contains
     if (.not.self%lalloc) call abor1_ftn("mom5cice5_gom_write_file gom not allocated")
 
     filename = config_get_string(c_conf,len(filename),"filename")
+    ncat = config_get_int(c_conf, "ncat")
+
+    print *,'0000000000000000000 in write gom ncat=',ncat
+    
     write(record,*)'mom5cice5_gom_write_file: opening '//trim(filename)
     call fckit_log%info(record)
     !call nc_diag_init(filename)!, iunit)
 
     open(unit=iunit, file=trim(filename), form='formatted', action='write')
 
-    write(iunit,*) self%nobs, self%nvar, self%used
+    write(iunit,*) self%nobs, self%nvar, self%used, ncat
     write(iunit,*) self%indx(:)
     do jv=1,self%nvar
        write(iunit,*) self%variables(jv)

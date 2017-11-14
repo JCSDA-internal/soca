@@ -66,20 +66,22 @@ contains
     integer :: io, jo, ncat
 
     print *,'In fraction equiv fortran .... registering keys ...'
+    !read(*,*)
     call mom5cice5_goms_registry%get(c_key_gom, gom) 
     call mom5cice5_obs_vect_registry%get(c_key_hofx,hofx)
 
     print *,'In fraction equiv fortran .... DONE registering keys ...'
     !read(*,*)
-    print *,'allocated numfld_per...:',allocated(gom%numfld_per_fldname)
-    !read(*,*)    
+    print *,'allocated numfld_per...:',allocated(gom%numfld_per_fldname),gom%numfld_per_fldname(1)
     ncat=gom%numfld_per_fldname(1)
-    print *,'ncat=',ncat
+    print *,'ncat=',ncat,' nobs=',gom%nobs
+    !read(*,*)        
     do jo=1,gom%nobs
        io=gom%indx(jo)
-       hofx%values(1,io)=sum(gom%values(1:ncat,jo)) + c_bias
+       hofx%values(1,io)=sum(gom%values(1:ncat,jo))! + c_bias
     enddo
-
+    print *,'end nl'
+    
   end subroutine mom5cice5_fraction_equiv
 
   ! ------------------------------------------------------------------------------
@@ -97,13 +99,10 @@ contains
     call mom5cice5_goms_registry%get(c_key_gom, gom)
     call mom5cice5_obs_vect_registry%get(c_key_hofx,hofx)
 
-    print *,' in tl .....'
-    read(*,*)
-    
     ncat=gom%numfld_per_fldname(1)
     do jo=1,gom%nobs
        io=gom%indx(jo)
-       hofx%values(1,io)=sum(gom%values(1:ncat,jo)) + c_bias
+       hofx%values(1,io)=sum(gom%values(1:ncat,jo))! + c_bias
     enddo
 
   end subroutine mom5cice5_fraction_equiv_tl
@@ -123,20 +122,18 @@ contains
     call mom5cice5_goms_registry%get(c_key_gom, gom)
     call mom5cice5_obs_vect_registry%get(c_key_hofx,hofx)
 
-    print *,' in adjoint .....'
-    read(*,*)
+    print *,' in adjoint .....shape of gom%values:',shape(gom%values)
+    print *,'shape of hofx%values:',shape(hofx%values)
+
     ncat=gom%numfld_per_fldname(1)
     do jo=1,gom%nobs
        io=gom%indx(jo)
-       do nco=1,ncat          
+       do nco=1,ncat
           gom%values(nco,jo)=hofx%values(1,io)
-          !gom%values(nco,jo)+
        end do
-       !c_bias = c_bias + hofx%values(1,io)
-
-       !gom%values(1,jo)=hofx%values(1,io)
-       !c_bias = c_bias + hofx%values(1,io)
     enddo
+    print *,'end ad'
+    !read(*,*)       
 
   end subroutine mom5cice5_fraction_equiv_ad
 
