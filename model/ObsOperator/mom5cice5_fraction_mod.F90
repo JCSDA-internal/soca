@@ -65,10 +65,16 @@ contains
     type(obs_vect), pointer :: hofx
     integer :: io, jo, ncat
 
+    print *,'In fraction equiv fortran .... registering keys ...'
     call mom5cice5_goms_registry%get(c_key_gom, gom) 
     call mom5cice5_obs_vect_registry%get(c_key_hofx,hofx)
 
+    print *,'In fraction equiv fortran .... DONE registering keys ...'
+    !read(*,*)
+    print *,'allocated numfld_per...:',allocated(gom%numfld_per_fldname)
+    !read(*,*)    
     ncat=gom%numfld_per_fldname(1)
+    print *,'ncat=',ncat
     do jo=1,gom%nobs
        io=gom%indx(jo)
        hofx%values(1,io)=sum(gom%values(1:ncat,jo)) + c_bias
@@ -91,6 +97,9 @@ contains
     call mom5cice5_goms_registry%get(c_key_gom, gom)
     call mom5cice5_obs_vect_registry%get(c_key_hofx,hofx)
 
+    print *,' in tl .....'
+    read(*,*)
+    
     ncat=gom%numfld_per_fldname(1)
     do jo=1,gom%nobs
        io=gom%indx(jo)
@@ -109,18 +118,22 @@ contains
     real(c_double), intent(inout) :: c_bias
     type(mom5cice5_goms), pointer  :: gom
     type(obs_vect), pointer :: hofx
-    integer :: io, jo, nco
+    integer :: io, jo, nco, ncat
 
     call mom5cice5_goms_registry%get(c_key_gom, gom)
     call mom5cice5_obs_vect_registry%get(c_key_hofx,hofx)
 
+    print *,' in adjoint .....'
+    read(*,*)
+    ncat=gom%numfld_per_fldname(1)
     do jo=1,gom%nobs
        io=gom%indx(jo)
-       !do nco=1,gom%geom%ncat
-       !   gom%values(nco,jo)=gom%values(nco,jo)+hofx%values(1,io)
-       !end do
-       c_bias = c_bias + hofx%values(1,io)
-       ! CODE ADJOINT BELOW
+       do nco=1,ncat          
+          gom%values(nco,jo)=hofx%values(1,io)
+          !gom%values(nco,jo)+
+       end do
+       !c_bias = c_bias + hofx%values(1,io)
+
        !gom%values(1,jo)=hofx%values(1,io)
        !c_bias = c_bias + hofx%values(1,io)
     enddo

@@ -94,8 +94,8 @@ namespace mom5cice5 {
   // -----------------------------------------------------------------------------
   /// Interpolate to observation location
   // -----------------------------------------------------------------------------
-  void State::interpolate(const Loc & locs, Gom & cols) const {
-    fields_->interpolate(locs, cols);
+  void State::interpolate(const Loc & locs, const Variables & vars, Gom & cols) const {
+    fields_->interpolate(locs, vars, cols);
   }
   // -----------------------------------------------------------------------------
   /// Interpolate full fields

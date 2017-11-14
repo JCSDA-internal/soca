@@ -1,6 +1,7 @@
 
 #include "model/ObsOperator/ObsFractionTLAD.h"
 
+#include "eckit/config/Configuration.h"
 #include "util/Logger.h"
 #include "model/ModelAtLocations/Gom.h"
 #include "model/ObsBias.h"
@@ -8,20 +9,24 @@
 #include "model/ObsSpace/ObsSpace.h"
 #include "model/ObsVector/ObsVec.h"
 #include "model/Variables/Variables.h"
-
+#include "model/Fortran.h"
 
 using oops::Log;
 
 // -----------------------------------------------------------------------------
 namespace mom5cice5 {
 // -----------------------------------------------------------------------------
-
-ObsFractionTLAD::ObsFractionTLAD(const ObsSpace &, const int & keyOperStrm)
-  : keyOperStrm_(keyOperStrm), varin_()
+static oops::LinearObsOpMaker<Traits, ObsFractionTLAD> makerFractionTL_("Fraction");
+// -----------------------------------------------------------------------------
+//ObsFractionTLAD::ObsFractionTLAD(const ObsSpace &, const int & keyOperStrm)
+//  : keyOperFraction_(keyOperStrm), varin_()
+ObsFractionTLAD::ObsFractionTLAD(const ObsSpace &, const eckit::Configuration & config)
+  : keyOperFraction_(0), varin_()    
 {
-  int keyVarin;
-  // NOT IMPLEMENTED YET
-  mom5cice5_obsoper_inputs_f90(keyOperStrm_, keyVarin);
+  const eckit::Configuration * configc = &config;    
+  mom5cice5_fraction_setup_f90(keyOperFraction_, &configc);
+  int keyVarin; 
+  mom5cice5_obsoper_inputs_f90(keyOperFraction_, keyVarin);
   varin_.reset(new Variables(keyVarin));
   Log::trace() << "ObsFractionTLAD created" << std::endl;
 }
@@ -53,5 +58,7 @@ void ObsFractionTLAD::obsEquivAD(Gom & gom, const ObsVec & ovec,
 }
 
 // -----------------------------------------------------------------------------
-
+void ObsFractionTLAD::print(std::ostream & os) const {
+  os << "ObsFractionTLAD::print not implemented" << std::endl;  
+}
 }  // namespace mom5cice5

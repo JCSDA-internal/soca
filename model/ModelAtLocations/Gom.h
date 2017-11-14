@@ -23,22 +23,27 @@ namespace mom5cice5 {
       static const std::string classname() {return "mom5cice5::Gom";}
 
       Gom(const ObsSpace &, const Variables &,
-	  const util::DateTime &, const util::DateTime &, const Geometry &);
-
+	  const util::DateTime &, const util::DateTime &);//, const Geometry &);
+      Gom(const eckit::Configuration &);
+      
       explicit Gom(): keyGom_(0) {}
       explicit Gom(int & fgom): keyGom_(fgom) {}
 
       ~Gom();
 
       void zero();
-      double dot_product_with(const Gom & other) const;
-
+      void random();
+      Gom & operator*=(const double &);
+      double dot_product_with(const Gom &) const;
+      void read(const eckit::Configuration &);
+      void write(const eckit::Configuration &) const;
+  
       int & toFortran() {return keyGom_;}
       const int & toFortran() const {return keyGom_;}
 
   private:
       void print(std::ostream &) const;
-      int keyGom_;
+      F90goms keyGom_;
     };
 
 }  // namespace mom5cice5

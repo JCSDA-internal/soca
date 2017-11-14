@@ -121,6 +121,18 @@ ecbuild_add_test( TARGET  test_mom5cice5_obsvector
                   ARGS    "testinput/interfaces.json"
                   LIBS    mom5cice5 )
 
+ecbuild_add_test( TARGET  test_mom5cice5_obsoperator
+                  BOOST
+                  SOURCES executables/TestObsOperator.cc
+                  ARGS    "testinput/interfaces.json"
+                  LIBS    mom5cice5 )
+
+ecbuild_add_test( TARGET  test_mom5cice5_linobsoperator
+                  BOOST
+                  SOURCES executables/TestLinearObsOperator.cc
+                  ARGS    "testinput/interfaces.json"
+                  LIBS    mom5cice5 )
+
 ecbuild_add_test( TARGET test_mom5cice5_observationspace
                   BOOST
                   SOURCES executables/TestObservationSpace.cc

@@ -24,6 +24,8 @@ namespace eckit {
 namespace mom5cice5 {
   class State;
   class Variables;
+  class Gom;
+  class Loc;
 
   /// Increment Class: Difference between two states
   /*!
@@ -62,8 +64,8 @@ namespace mom5cice5 {
       void random();
 
       /// Interpolate to observation location
-      void interpolateTL(const Loc &, Gom &) const;
-      void interpolateAD(const Loc &, const Gom &);
+      void interpolateTL(const Loc &, const Variables &,Gom &) const;
+      void interpolateAD(const Loc &, const Variables &, const Gom &);
 
       /// I/O and diagnostics
       void read(const eckit::Configuration &);

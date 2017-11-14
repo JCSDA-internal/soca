@@ -132,9 +132,13 @@ extern "C" {
   void mom5cice5_gom_create_f90(F90goms &);//, const int &);
   void mom5cice5_gom_delete_f90(F90goms &);
   void mom5cice5_gom_zero_f90(const F90goms &);
+  void mom5cice5_gom_random_f90(const F90goms &);
+  void mom5cice5_gom_mult_f90(const F90goms &, const double &);  
   void mom5cice5_gom_dotprod_f90(const F90goms &, const F90goms &, double &);
   void mom5cice5_gom_minmaxavg_f90(const F90goms &, int &, double &, double &, double &);
-
+  void mom5cice5_gom_read_file_f90(const F90goms &, const eckit::Configuration * const *);
+  void mom5cice5_gom_write_file_f90(const F90goms &, const eckit::Configuration * const *);
+  
 // -----------------------------------------------------------------------------
 //  Fraction observations
 // -----------------------------------------------------------------------------

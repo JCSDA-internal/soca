@@ -10,6 +10,7 @@
 #include "model/Geometry/Geometry.h"
 #include "model/State/State.h"
 #include "model/Variables/Variables.h"
+#include "model/ModelAtLocations/Gom.h"
 #include "util/DateTime.h"
 #include "util/Duration.h"
 
@@ -140,12 +141,16 @@ namespace mom5cice5 {
   }
   /// Interpolate to observation location
   // -----------------------------------------------------------------------------
-  void Increment::interpolateTL(const Loc & locs, Gom & cols) const {
-    fields_->interpolateTL(locs, cols);
+  void Increment::interpolateTL(const Loc & locs, const Variables & vars, Gom & cols) const {
+    Log::debug() << "Increment::interpolateTL fields in" << *fields_ << std::endl;
+    fields_->interpolateTL(locs, vars, cols);
+    //Log::debug() << "Increment::interpolateTL gom " << cols << std::endl;    
   }
   // -----------------------------------------------------------------------------
-  void Increment::interpolateAD(const Loc & locs, const Gom & cols) {
-    fields_->interpolateAD(locs, cols);
+  void Increment::interpolateAD(const Loc & locs, const Variables & vars, const Gom & cols) {
+    Log::debug() << "Increment::interpolateAD gom " << cols << std::endl;
+    Log::debug() << "Increment::interpolateAD fields in" << *fields_ << std::endl;    
+    fields_->interpolateAD(locs, vars, cols);
   }
   // -----------------------------------------------------------------------------
   /// Convert to/from unstructured grid

@@ -20,10 +20,11 @@ namespace mom5cice5 {
   ObsFraction::ObsFraction(const ObsSpace & odb, const eckit::Configuration & config)
     : obsname_("Fraction"), varin_()
   {
+    Log::trace() << "ObsFraction start create " << obsname_ << std::endl;    
     const eckit::Configuration * configc = &config;
-    mom5cice5_fraction_setup_f90(keyOperStrm_, &configc);
+    mom5cice5_fraction_setup_f90(keyOperFraction_, &configc);
     int keyVarin;
-    mom5cice5_obsoper_inputs_f90(keyOperStrm_, keyVarin);
+    mom5cice5_obsoper_inputs_f90(keyOperFraction_, keyVarin);
     varin_.reset(new Variables(keyVarin));
     Log::trace() << "ObsFraction created " << obsname_ << std::endl;
   }
@@ -31,21 +32,23 @@ namespace mom5cice5 {
   // -----------------------------------------------------------------------------
 
   ObsFraction::~ObsFraction() {
-    mom5cice5_fraction_delete_f90(keyOperStrm_);
+    mom5cice5_fraction_delete_f90(keyOperFraction_);
   }
 
   // -----------------------------------------------------------------------------
 
   void ObsFraction::obsEquiv(const Gom & gom, ObsVec & ovec,
 			     const ObsBias & bias) const {
+    Log::trace() << "Starting ObsEquiv ... " << obsname_ << std::endl;        
     mom5cice5_fraction_equiv_f90(gom.toFortran(), ovec.toFortran(), bias.fraction());
+    Log::trace() << "Out of ObsEquiv ... " << obsname_ << std::endl;            
   }
 
   // -----------------------------------------------------------------------------
 
   //void ObsFraction::generateObsError(const eckit::Configuration & conf) {
   //  const double err = conf.getDouble("obs_error");
-  //  mom5cice5_obsdb_seterr_f90(obsdb_.toFortran(), keyOperStrm_, err);
+  //  mom5cice5_obsdb_seterr_f90(obsdb_.toFortran(), keyOperFraction_, err);
   //}
 
   // -----------------------------------------------------------------------------

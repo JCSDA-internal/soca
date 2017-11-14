@@ -55,9 +55,11 @@ namespace mom5cice5 {
       void random();
 
       // Interpolate to given location
-      void interpolate(const Loc &, Gom &) const;
-      void interpolateTL(const Loc &, Gom &) const;
-      void interpolateAD(const Loc &, const Gom &);
+      void interpolate(const Loc &, const Variables &, Gom &) const;
+      void interpolateTL(const Loc &, const Variables &, Gom &) const;
+      void interpolateAD(const Loc &, const Variables &, const Gom &);      
+      //void interpolateTL(const Loc &, Gom &) const;
+      //void interpolateAD(const Loc &, const Gom &);
 
       // Interpolate full fields
       void changeResolution(const Fields &);

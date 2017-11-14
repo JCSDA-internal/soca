@@ -77,6 +77,9 @@ list( APPEND oops_mom5cice5_src_files
 ./Utils/mom5cice5_thermo.F90
 ./Utils/mom5cice5_ncutils_mod.F90
 ./Utils/mom5cice5_balanceop.F90
+./Utils/random_vectors_mod.F90
+./Utils/random_f.cc
+./Utils/random_f.h
 #./Utils/linkedList_c.f
 #./Utils/linkedList_i.f
 
@@ -101,7 +104,7 @@ endif()
 ecbuild_add_library( TARGET   mom5cice5
                      DEFINITIONS ${cfdealloc}
                      SOURCES  ${oops_mom5cice5_src_files}
-                     LIBS     oops ${LAPACK_LIBRARIES} ${NETCDF_LIBRARIES}
+                     LIBS     oops ioda ${LAPACK_LIBRARIES} ${NETCDF_LIBRARIES}
                      INSTALL_HEADERS LISTED
                      LINKER_LANGUAGE ${OOPS_LINKER_LANGUAGE}
                     )

@@ -117,15 +117,15 @@ namespace mom5cice5 {
     mom5cice5_field_random_f90(keyFlds_);
   }
   // -----------------------------------------------------------------------------
-   void Fields::interpolate(const Loc & locs, Gom & gom) const {
+  void Fields::interpolate(const Loc & locs, const Variables &, Gom & gom) const {
       mom5cice5_field_interp_tl_f90(keyFlds_, locs.toFortran(), gom.toFortran());
    }
   // -----------------------------------------------------------------------------
-  void Fields::interpolateTL(const Loc & locs, Gom & gom) const {
+  void Fields::interpolateTL(const Loc & locs, const Variables &, Gom & gom) const {
     mom5cice5_field_interp_tl_f90(keyFlds_, locs.toFortran(), gom.toFortran());
   }
   // -----------------------------------------------------------------------------
-  void Fields::interpolateAD(const Loc & locs, const Gom & gom) {
+  void Fields::interpolateAD(const Loc & locs, const Variables &, const Gom & gom) {
     mom5cice5_field_interp_ad_f90(keyFlds_, locs.toFortran(), gom.toFortran());
   }
   // -----------------------------------------------------------------------------

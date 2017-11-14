@@ -20,7 +20,7 @@ namespace eckit {
 
 namespace mom5cice5 {
   class ObsVec;
-  class Observation;
+  //class Observation;
 
   /// Wrapper around ObsHelp, mostly to hide the factory
 
@@ -28,7 +28,6 @@ namespace mom5cice5 {
   class ObsSpace : public oops::ObsSpaceBase {
   public:
     ObsSpace(const eckit::Configuration &, const util::DateTime &, const util::DateTime &);
-    //ObsSpace(const ObsSpace &);
     ~ObsSpace();
 
     void getdb(const std::string & col, int & keyData) const {

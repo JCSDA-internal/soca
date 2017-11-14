@@ -17,9 +17,13 @@ namespace eckit {
 }
 
 namespace mom5cice5 {
+  class Gom;
+  class Variables;
+  class Loc;
   class Geometry;
   class Increment;
   class Variables;
+  
 
   /// MOM5CICE5 model state
   /*!
@@ -42,7 +46,7 @@ namespace mom5cice5 {
       State & operator=(const State &);
 
       /// Interpolate to observation location
-      void interpolate(const Loc &, Gom &) const;
+      void interpolate(const Loc &, const Variables &, Gom &) const;
 
       /// Interpolate full fields
       ///  void changeResolution(const State & xx);

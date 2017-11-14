@@ -34,22 +34,24 @@ namespace mom5cice5 {
   public:
     static const std::string classname() {return "mom5cice5::ObsFractionTLAD";}
 
-    ObsFractionTLAD(const ObsSpace &, const int &);
+    //ObsFractionTLAD(const ObsSpace &, const int &);
+    ObsFractionTLAD(const ObsSpace &, const eckit::Configuration &);    
     virtual ~ObsFractionTLAD();
 
     // Obs Operators
     void setTrajectory(const Gom &, const ObsBias &);
-    void obsEquivTL(const Gom &, ObsVec &, const ObsBiasIncrement &) const;
-    void obsEquivAD(Gom &, const ObsVec &, ObsBiasIncrement &) const;
+    void obsEquivTL(const Gom &, ObsVec &, const ObsBiasIncrement &) const override;
+    void obsEquivAD(Gom &, const ObsVec &, ObsBiasIncrement &) const override;
 
     // Other
-    boost::shared_ptr<const Variables> variables() const {return varin_;}
+    boost::shared_ptr<const Variables> variables() const override {return varin_;}
 
-    int& toFortran() {return keyOperStrm_;}
-    const int& toFortran() const {return keyOperStrm_;}
+    int& toFortran() {return keyOperFraction_;}
+    const int& toFortran() const {return keyOperFraction_;}
 
   private:
-    int keyOperStrm_;
+    void print(std::ostream &) const override;    
+    F90hop keyOperFraction_;
     boost::shared_ptr<const Variables> varin_;
   };
   // -----------------------------------------------------------------------------

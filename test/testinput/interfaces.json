@@ -64,25 +64,29 @@
   },
   "window_begin": "2015-05-01T00:00:00Z",
   "window_end": "2015-05-02T00:00:00Z",
-  "Observations": [
-    {
-      "Observation": {
-        "ObsType": "Fraction",
+    "Observations": {
+      "ObsTypes": [
+	    {	    
+        "ObsType": "Fraction", 
         "ObsData": {
           "ObsHandler": "ObsHelp",
           "ObsDataIn": {
             "obsfile": "Data/mc5.truth3d.obt"
           },
           "ObsDataOut": {
-            "obsfile": "Data/mc5.test.obt"
+              "obsfile": "Data/mc5.test.obt"
           },
           "obsvalue": "ObsVal"
-        }
-      },
+	},
+	"GeoVaLs":{
+            "filename": "Data/mc5.fraction.gom",
+              "norm": "9999.9"
+	  },
       "Covariance": {
         "covariance": "diagonal",
         "obserror": "ObsErr"
       }
-    }
+	    }
   ]
+    }
 }

@@ -41,6 +41,18 @@
       "obs_density": "600",
       "obs_error": "0.12345"
     }
-    }]
+    }
+		],
+  "ObsFilters": [
+    {
+      "ObsType": "Fraction",
+      "Filter": "GOMsaver",
+      "filename": "Data/mc5.fraction.gom"
+    }
+    ]
+  },
+  "prints": {
+    "frequency": "PT3H"
   }
-}
+}      
+

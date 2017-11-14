@@ -48,21 +48,18 @@ namespace mom5cice5 {
       // Obs Operator
       void obsEquiv(const Gom &, ObsVec &, const ObsBias &) const;
 
-      // Is there a way to put this in the TLAD class?
-      //LinearObsOp * getTLAD() const {return new ObsFractionTLAD(obsdb_, keyOperStrm_);}
-
       // Other
-      //void generateObsError(const eckit::Configuration &);
       boost::shared_ptr<const Variables> variables() const {return varin_;}
 
-      int & toFortran() {return keyOperStrm_;}
-      const int & toFortran() const {return keyOperStrm_;}
+      int & toFortran() {return keyOperFraction_;}
+      const int & toFortran() const {return keyOperFraction_;}
 
   private:
       void print(std::ostream &) const;
       //const ObsSpace & obsdb_;
       const std::string obsname_;
-      int keyOperStrm_;
+      //int keyOperFraction_;
+      F90hop keyOperFraction_;
       boost::shared_ptr<const Variables> varin_;
     };
   // -----------------------------------------------------------------------------
