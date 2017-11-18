@@ -1,2 +1,3 @@
-# Interface MOM5/CICE5 with OOPS
+# Interface coupled model (currently MOM6-CICE5) with OOPS
+
 

@@ -1,14 +1,16 @@
-Stuff to do Monday 12/11/2017: Fix increment, field, state
-interp has now 3 arguments (Y added goms ...) 
+* Decide on model config (Atm or no Atm)
+* Add/build model library? FMS issues?
 
-Stuff to remove to usee the UFO library:
+
+
+Stuff to remove to use the UFO library:
 ---------------------------------------
 
 GeoVaLs.cc !Not trivial
 GeoVaLs.h
 ufo_geovals_mod.F90
 
-Locations.h  !Should be easy
+Locations.h  !Should be easy?
 ufo_locs_mod.F90
 
 ObsBias.h    !Should be easy
