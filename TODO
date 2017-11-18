@@ -1,5 +1,25 @@
 * Decide on model config (Atm or no Atm)
 * Add/build model library? FMS issues?
+* Work on model interface
+  * Geometry:
+    soca_geom_mod.F90                     ! Geometry class
+					  ! Implement using model lib
+  * Fields					  
+    soca_fields.F90                       ! Contains field names
+                                          ! need new convention (cf complient?)
+  * State
+    
+  * Model constructor:
+    /Model/c_soca_setup.F90               ! Initialize geometry (again?)
+    /Model/soca_configs.F90               ! Holds model config derived type ... no methods 
+    /Model/c_soca_prepare_integration.F90 ! Pass keys, associate pointers
+  * Model run:
+    /Model/propagate.F90                  ! Advance 1 time step
+    /Model/c_soca_propagate.F90           ! c interface to model run
+  * Model destructor  
+    /Model/c_soca_delete.F90              ! Nullify pointers (or deallocate?) 
+
+
 
 
 
