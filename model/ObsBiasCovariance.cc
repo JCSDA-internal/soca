@@ -16,7 +16,7 @@
 using oops::Log;
 
 // -----------------------------------------------------------------------------
-namespace mom5cice5 {
+namespace soca {
 // -----------------------------------------------------------------------------
 ObsBiasCovariance::ObsBiasCovariance(const eckit::Configuration & conf)
   : conf_(conf), variance_(ObsBias::ntypes, 0.0)
@@ -82,4 +82,4 @@ void ObsBiasCovariance::print(std::ostream & os) const {
   os << "ObsBiasCovariance::print not implemented";
 }
 // -----------------------------------------------------------------------------
-}  // namespace mom5cice5
+}  // namespace soca

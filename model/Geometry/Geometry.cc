@@ -6,20 +6,20 @@
 #include <string>
 
 // -----------------------------------------------------------------------------
-namespace mom5cice5 {
+namespace soca {
   // -----------------------------------------------------------------------------
   Geometry::Geometry(const eckit::Configuration & conf) {
     const eckit::Configuration * configc = &conf;
-    mom5cice5_geo_setup_f90(keyGeom_, &configc);
+    soca_geo_setup_f90(keyGeom_, &configc);
   }
   // -----------------------------------------------------------------------------
   Geometry::Geometry(const Geometry & other) {
     const int key_geo = other.keyGeom_;
-    mom5cice5_geo_clone_f90(key_geo, keyGeom_);
+    soca_geo_clone_f90(key_geo, keyGeom_);
   }
   // -----------------------------------------------------------------------------
   Geometry::~Geometry() {
-    mom5cice5_geo_delete_f90(keyGeom_);
+    soca_geo_delete_f90(keyGeom_);
   }
 
   // -----------------------------------------------------------------------------          /**/   
@@ -29,8 +29,8 @@ namespace mom5cice5 {
     int nzo;
     int nzi;
     int ncat;
-    mom5cice5_geo_info_f90(keyGeom_, nx, ny, nzo, nzi, ncat);
+    soca_geo_info_f90(keyGeom_, nx, ny, nzo, nzi, ncat);
     os << "nx = " << nx << ", ny = " << ny;
   }
   // -----------------------------------------------------------------------------
-}  // namespace mom5cice5
+}  // namespace soca

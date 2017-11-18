@@ -22,12 +22,12 @@ export OPENMPI_BINDIR=${COMMON_LIBS}/bin
 
 
 export SRC_OOPS="/home/gvernier/Sandboxes/JEDI/jedi/"
-export SRC_MODEL="/home/gvernier/Sandboxes/JEDI/mom5cice5/"
+export SRC_MODEL="/home/gvernier/Sandboxes/JEDI/soca/"
 export BUILD=${SRC_OOPS}"build"
 export PATH=${PATH}:${SRC_OOPS}/ecbuild/bin
 #set path = ( ${SRC_OOPS}/ecbuild/bin $path )
 echo $SRC_OOPS
-rm -rf ${BUILD}/mom5cice5; mkdir ${BUILD}/mom5cice5; cd ${BUILD}/mom5cice5
+rm -rf ${BUILD}/soca; mkdir ${BUILD}/soca; cd ${BUILD}/soca
     #-DCMAKE_C_COMPILER=mpiCC \
 ecbuild \
     -DENABLE_CXX11=ON \

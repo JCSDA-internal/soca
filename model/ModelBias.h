@@ -1,6 +1,6 @@
 
-#ifndef MOM5CICE5_MODEL_MODELBIAS_H_
-#define MOM5CICE5_MODEL_MODELBIAS_H_
+#ifndef SOCA_MODEL_MODELBIAS_H_
+#define SOCA_MODEL_MODELBIAS_H_
 
 #include <iostream>
 #include <string>
@@ -13,11 +13,11 @@ namespace eckit {
   class Configuration;
 }
 
-namespace mom5cice5 {
+namespace soca {
   class Geometry;
   class ModelBiasIncrement;
 
-/// Model error for the MOM5CICE5 model.
+/// Model error for the SOCA model.
 /*!
  * This class is used to manipulate parameters of the model that
  * can be estimated in the assimilation. This includes model bias for
@@ -33,7 +33,7 @@ class ModelBias : public util::Printable,
                   private boost::noncopyable,
                   private util::ObjectCounter<ModelBias> {
  public:
-  static const std::string classname() {return "mom5cice5::ModelBias";}
+  static const std::string classname() {return "soca::ModelBias";}
 
   ModelBias(const Geometry &, const eckit::Configuration &) {}
   ModelBias(const Geometry &, const ModelBias &) {}
@@ -53,6 +53,6 @@ class ModelBias : public util::Printable,
 
 // -----------------------------------------------------------------------------
 
-}  // namespace mom5cice5
+}  // namespace soca
 
-#endif  // MOM5CICE5_MODEL_MODELBIAS_H_
+#endif  // SOCA_MODEL_MODELBIAS_H_

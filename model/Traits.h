@@ -1,6 +1,6 @@
 
-#ifndef MOM5CICE5_MODEL_MOM5CICE5TRAITS_H_
-#define MOM5CICE5_MODEL_MOM5CICE5TRAITS_H_
+#ifndef SOCA_MODEL_SOCATRAITS_H_
+#define SOCA_MODEL_SOCATRAITS_H_
 
 #include <string>
 
@@ -21,37 +21,37 @@
 #include "model/State/State.h"
 #include "model/Variables/Variables.h"
 
-namespace mom5cice5 {
+namespace soca {
 
 struct Traits {
-  static std::string name() {return "MOM5CICE5";}
+  static std::string name() {return "SOCA";}
+  
+  typedef soca::Geometry            Geometry;
+  typedef soca::Variables           Variables;
 
-  typedef mom5cice5::Geometry            Geometry;
-  typedef mom5cice5::Variables           Variables;
-
-  typedef mom5cice5::State               State;
-  typedef mom5cice5::Model               Model;
-  typedef mom5cice5::Increment           Increment;
+  typedef soca::State               State;
+  typedef soca::Model               Model;
+  typedef soca::Increment           Increment;
   //static std::string nameCovar() {return "MC5Error";}
-  //typedef mom5cice5::ErrorCovariance     Covariance;
+  //typedef soca::ErrorCovariance     Covariance;
 
-  typedef mom5cice5::ModelBias           ModelAuxControl;
-  typedef mom5cice5::ModelBiasIncrement  ModelAuxIncrement;
-  typedef mom5cice5::ModelBiasCovariance ModelAuxCovariance;
+  typedef soca::ModelBias           ModelAuxControl;
+  typedef soca::ModelBiasIncrement  ModelAuxIncrement;
+  typedef soca::ModelBiasCovariance ModelAuxCovariance;
   
-  typedef mom5cice5::ObsSpace            ObsSpace;
-  //typedef mom5cice5::Observation         ObsOperator;
-  //  typedef mom5cice5::LinearObsOp         LinearObsOperator;
-  typedef mom5cice5::ObsVec              ObsVector;
+  typedef soca::ObsSpace            ObsSpace;
+  //typedef soca::Observation         ObsOperator;
+  //  typedef soca::LinearObsOp         LinearObsOperator;
+  typedef soca::ObsVec              ObsVector;
 
-  typedef mom5cice5::ObsBias             ObsAuxControl;
-  typedef mom5cice5::ObsBiasIncrement    ObsAuxIncrement;
-  typedef mom5cice5::ObsBiasCovariance   ObsAuxCovariance;
+  typedef soca::ObsBias             ObsAuxControl;
+  typedef soca::ObsBiasIncrement    ObsAuxIncrement;
+  typedef soca::ObsBiasCovariance   ObsAuxCovariance;
   
-  typedef mom5cice5::Gom                 GeoVaLs; //ModelAtLocations;
-  typedef mom5cice5::Loc                 Locations;
+  typedef soca::Gom                 GeoVaLs; //ModelAtLocations;
+  typedef soca::Loc                 Locations;
 };
 
-}  // namespace mom5cice5
+}  // namespace soca
 
-#endif  // MOM5CICE5_MODEL_MOM5CICE5TRAITS_H_
+#endif  // SOCA_MODEL_SOCATRAITS_H_

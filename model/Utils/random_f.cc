@@ -9,7 +9,7 @@
 #include <random>
 
 // -----------------------------------------------------------------------------
-namespace mom5cice5 {
+namespace soca {
 // -----------------------------------------------------------------------------
 
 void random_f(const int & nn, double * xx) {
@@ -21,4 +21,4 @@ void random_f(const int & nn, double * xx) {
 
 // -----------------------------------------------------------------------------
 
-}  // namespace mom5cice5
+}  // namespace soca

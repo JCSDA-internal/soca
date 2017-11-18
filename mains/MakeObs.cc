@@ -6,8 +6,8 @@
 
 int main(int argc,  char ** argv) {
   oops::Run run(argc, argv);
-  //mom5cice5::instantiateObsFactory();
-  oops::MakeObs<mom5cice5::Traits> mkobs;
+  //soca::instantiateObsFactory();
+  oops::MakeObs<soca::Traits> mkobs;
   run.execute(mkobs);
   return 0;
 };

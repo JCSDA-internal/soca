@@ -1,15 +1,15 @@
-list( APPEND oops_mom5cice5_src_files
+list( APPEND oops_soca_src_files
 #Geometry
 ./Geometry/Geometry.cc
 ./Geometry/Geometry.h
-./Geometry/mom5cice5_geom_mod.F90
+./Geometry/soca_geom_mod.F90
 
 #Fields
 ./Fields/Fields.cc
 ./Fields/Fields.h
-./Fields/mom5cice5_fields.F90
-./Fields/mom5cice5_fields_interface.F90
-./Fields/mom5cice5_invent_state.f90
+./Fields/soca_fields.F90
+./Fields/soca_fields_interface.F90
+./Fields/soca_invent_state.f90
 
 #State
 ./State/State.cc
@@ -18,7 +18,7 @@ list( APPEND oops_mom5cice5_src_files
 #Variables
 ./Variables/Variables.cc
 ./Variables/Variables.h
-./Variables/mom5cice5_vars_mod.F90
+./Variables/soca_vars_mod.F90
 
 #Increment
 ./Increment/Increment.cc
@@ -27,30 +27,30 @@ list( APPEND oops_mom5cice5_src_files
 #Model
 ./Model/Model.cc
 ./Model/Model.h
-./Model/c_mom5cice5_setup.F90
-./Model/c_mom5cice5_delete.F90
-./Model/c_mom5cice5_prepare_integration.F90
-./Model/c_mom5cice5_propagate.F90
+./Model/c_soca_setup.F90
+./Model/c_soca_delete.F90
+./Model/c_soca_prepare_integration.F90
+./Model/c_soca_propagate.F90
 ./Model/propagate.f90
-./Model/mom5cice5_configs.F90
+./Model/soca_configs.F90
 
 #ModelAtLocations
 ./ModelAtLocations/Gom.cc
 ./ModelAtLocations/Gom.h
-./ModelAtLocations/mom5cice5_goms_mod.F90
+./ModelAtLocations/soca_goms_mod.F90
 
 #ObsSpace
 ./ObsSpace/ObsSpace.cc
 ./ObsSpace/ObsSpace.h
 ./ObsSpace/ObsHelp.cc
 ./ObsSpace/ObsHelp.h
-./ObsSpace/mom5cice5_obs_data.F90
-./ObsSpace/c_mom5cice5_obs_data.F90
+./ObsSpace/soca_obs_data.F90
+./ObsSpace/c_soca_obs_data.F90
 ./ObsSpace/generate_locations.f90
 
 #Locations
 ./Locations/Loc.h
-./Locations/mom5cice5_locs_mod.F90
+./Locations/soca_locs_mod.F90
 
 #ObsOperator
 #./ObsOperator/Observation.cc
@@ -60,8 +60,8 @@ list( APPEND oops_mom5cice5_src_files
 ./ObsOperator/ObsFraction.h
 ./ObsOperator/ObsFractionTLAD.cc
 ./ObsOperator/ObsFractionTLAD.h
-./ObsOperator/mom5cice5_fraction_mod.F90
-./ObsOperator/mom5cice5_obsoper_mod.F90
+./ObsOperator/soca_fraction_mod.F90
+./ObsOperator/soca_obsoper_mod.F90
 
 #Covariance
 #./Covariance/ErrorCovariance.cc
@@ -70,13 +70,13 @@ list( APPEND oops_mom5cice5_src_files
 #ObsVector
 ./ObsVector/ObsVec.cc
 ./ObsVector/ObsVec.h
-./ObsVector/mom5cice5_obs_vectors.F90
+./ObsVector/soca_obs_vectors.F90
 
 #Utils
-./Utils/mom5cice5_constants.f90
-./Utils/mom5cice5_thermo.F90
-./Utils/mom5cice5_ncutils_mod.F90
-./Utils/mom5cice5_balanceop.F90
+./Utils/soca_constants.f90
+./Utils/soca_thermo.F90
+./Utils/soca_ncutils_mod.F90
+./Utils/soca_balanceop.F90
 ./Utils/random_vectors_mod.F90
 ./Utils/random_f.cc
 ./Utils/random_f.h
@@ -101,9 +101,9 @@ if ( CMAKE_Fortran_COMPILER_ID MATCHES "Cray" )
   set( cfdealloc C_F_NO_DEALLOC )
 endif()
 
-ecbuild_add_library( TARGET   mom5cice5
+ecbuild_add_library( TARGET   soca
                      DEFINITIONS ${cfdealloc}
-                     SOURCES  ${oops_mom5cice5_src_files}
+                     SOURCES  ${oops_soca_src_files}
                      LIBS     oops ioda ${LAPACK_LIBRARIES} ${NETCDF_LIBRARIES}
                      INSTALL_HEADERS LISTED
                      LINKER_LANGUAGE ${OOPS_LINKER_LANGUAGE}

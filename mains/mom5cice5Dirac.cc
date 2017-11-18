@@ -14,7 +14,7 @@
 
 int main(int argc,  char ** argv) {
   oops::Run run(argc, argv);
-  oops::Dirac<mom5cice5::Traits> dir;
+  oops::Dirac<soca::Traits> dir;
   run.execute(dir);
   return 0;
 };

@@ -1,6 +1,6 @@
 
-#ifndef MOM5CICE5_MODEL_MOM5CICE5STATE_H_
-#define MOM5CICE5_MODEL_MOM5CICE5STATE_H_
+#ifndef SOCA_MODEL_SOCASTATE_H_
+#define SOCA_MODEL_SOCASTATE_H_
 
 #include <ostream>
 #include <string>
@@ -16,7 +16,7 @@ namespace eckit {
   class Configuration;
 }
 
-namespace mom5cice5 {
+namespace soca {
   class Gom;
   class Variables;
   class Loc;
@@ -25,7 +25,7 @@ namespace mom5cice5 {
   class Variables;
   
 
-  /// MOM5CICE5 model state
+  /// SOCA model state
   /*!
    * A State contains everything that is needed to propagate the state
    * forward in time.
@@ -35,7 +35,7 @@ namespace mom5cice5 {
   class State : public util::Printable,
     private util::ObjectCounter<State> {
   public:
-      static const std::string classname() {return "mom5cice5::State";}
+      static const std::string classname() {return "soca::State";}
 
       /// Constructor, destructor
       State(const Geometry &, const Variables &, const util::DateTime &);  // Is it used?
@@ -87,6 +87,6 @@ namespace mom5cice5 {
     };
   // -----------------------------------------------------------------------------
 
-}  // namespace mom5cice5
+}  // namespace soca
 
-#endif  // MOM5CICE5_MODEL_MOM5CICE5STATE_H_
+#endif  // SOCA_MODEL_SOCASTATE_H_

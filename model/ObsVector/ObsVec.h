@@ -1,6 +1,6 @@
 
-#ifndef MOM5CICE5_MODEL_OBSVEC_H_
-#define MOM5CICE5_MODEL_OBSVEC_H_
+#ifndef SOCA_MODEL_OBSVEC_H_
+#define SOCA_MODEL_OBSVEC_H_
 
 #include <ostream>
 #include <string>
@@ -9,16 +9,16 @@
 #include "util/ObjectCounter.h"
 #include "util/Printable.h"
 
-namespace mom5cice5 {
+namespace soca {
   class ObsSpace;
 
   // -----------------------------------------------------------------------------
-  /// ObsVec class to handle vectors in observation space for MOM5CICE5 model.
+  /// ObsVec class to handle vectors in observation space for SOCA model.
 
   class ObsVec : public util::Printable,
     private util::ObjectCounter<ObsVec> {
   public:
-      static const std::string classname() {return "mom5cice5::ObsVec";}
+      static const std::string classname() {return "soca::ObsVec";}
 
       explicit ObsVec(const ObsSpace &);
       ObsVec(const ObsVec &, const bool copy = true);
@@ -55,6 +55,6 @@ namespace mom5cice5 {
     };
   // -----------------------------------------------------------------------------
 
-}  // namespace mom5cice5
+}  // namespace soca
 
-#endif  // MOM5CICE5_MODEL_OBSVEC_H_
+#endif  // SOCA_MODEL_OBSVEC_H_

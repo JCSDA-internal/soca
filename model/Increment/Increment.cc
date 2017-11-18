@@ -16,7 +16,7 @@
 
 using oops::Log;
 
-namespace mom5cice5 {
+namespace soca {
 
   // -----------------------------------------------------------------------------
   /// Constructor, destructor
@@ -179,4 +179,4 @@ namespace mom5cice5 {
   }
   // -----------------------------------------------------------------------------
 
-}  // namespace mom5cice5
+}  // namespace soca

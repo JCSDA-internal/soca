@@ -1,6 +1,6 @@
 
-#ifndef MOM5CICE5_MODEL_MOM5CICE5GEOMETRY_H_
-#define MOM5CICE5_MODEL_MOM5CICE5GEOMETRY_H_
+#ifndef SOCA_MODEL_SOCAGEOMETRY_H_
+#define SOCA_MODEL_SOCAGEOMETRY_H_
 
 #include <ostream>
 #include <string>
@@ -14,15 +14,15 @@ namespace eckit {
   class Configuration;
 }
 
-namespace mom5cice5 {
+namespace soca {
 
   // -----------------------------------------------------------------------------
-  /// Geometry handles geometry for MOM5CICE5 model.
+  /// Geometry handles geometry for SOCA model.
 
   class Geometry : public util::Printable,
     private util::ObjectCounter<Geometry> {
   public:
-      static const std::string classname() {return "mom5cice5::Geometry";}
+      static const std::string classname() {return "soca::Geometry";}
 
       explicit Geometry(const eckit::Configuration &);
       Geometry(const Geometry &);
@@ -38,6 +38,6 @@ namespace mom5cice5 {
     };
   // -----------------------------------------------------------------------------
 
-}  // namespace mom5cice5
+}  // namespace soca
 
-#endif  // MOM5CICE5_MODEL_MOM5CICE5GEOMETRY_H_
+#endif  // SOCA_MODEL_SOCAGEOMETRY_H_

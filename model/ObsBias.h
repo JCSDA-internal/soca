@@ -1,6 +1,6 @@
 
-#ifndef MOM5CICE5_MODEL_OBSBIAS_H_
-#define MOM5CICE5_MODEL_OBSBIAS_H_
+#ifndef SOCA_MODEL_OBSBIAS_H_
+#define SOCA_MODEL_OBSBIAS_H_
 
 #include <iostream>
 #include <string>
@@ -14,7 +14,7 @@ namespace eckit {
   class Configuration;
 }
 
-namespace mom5cice5 {
+namespace soca {
   class ObsBiasIncrement;
 
   /// Class to handle observation bias parameters.
@@ -26,7 +26,7 @@ namespace mom5cice5 {
     private util::ObjectCounter<ObsBias> {
   public:
       static const unsigned int ntypes = 4;
-      static const std::string classname() {return "mom5cice5::ObsBias";}
+      static const std::string classname() {return "soca::ObsBias";}
 
       explicit ObsBias(const eckit::Configuration &);
       ObsBias(const ObsBias &, const bool);
@@ -53,6 +53,6 @@ namespace mom5cice5 {
 
   // -----------------------------------------------------------------------------
 
-}  // namespace mom5cice5
+}  // namespace soca
 
-#endif  // MOM5CICE5_MODEL_OBSBIAS_H_
+#endif  // SOCA_MODEL_OBSBIAS_H_

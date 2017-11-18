@@ -1,10 +1,10 @@
 !> Setup the model
 
-subroutine c_mom5cice5_setup(c_confspec, c_key_geom, c_key_confdata) bind (c,name='mom5cice5_setup_f90')
+subroutine c_soca_setup(c_confspec, c_key_geom, c_key_confdata) bind (c,name='soca_setup_f90')
 
-  use mom5cice5_constants
-  use mom5cice5_configs
-  use mom5cice5_geom_mod
+  use soca_constants
+  use soca_configs
+  use soca_geom_mod
   use iso_c_binding
   use config_mod
   use duration_mod
@@ -16,8 +16,8 @@ subroutine c_mom5cice5_setup(c_confspec, c_key_geom, c_key_confdata) bind (c,nam
   integer(c_int), intent(in) :: c_key_geom         !< Geometry
   integer(c_int), intent(inout) :: c_key_confdata  !< Key to configuration data
 
-  type(mom5cice5_config), pointer :: config
-  type(mom5cice5_geom), pointer :: geom
+  type(soca_config), pointer :: config
+  type(soca_geom), pointer :: geom
 
   integer :: icentre, jcentre, ii, jj
   real(kind=kind_real) :: distx, disty
@@ -27,22 +27,22 @@ subroutine c_mom5cice5_setup(c_confspec, c_key_geom, c_key_confdata) bind (c,nam
 
   ! ------------------------------------------------------------------------------
 
-  call mom5cice5_geom_registry%get(c_key_geom, geom)
-  call mom5cice5_config_registry%init()
-  call mom5cice5_config_registry%add(c_key_confdata)
-  call mom5cice5_config_registry%get(c_key_confdata, config)
+  call soca_geom_registry%get(c_key_geom, geom)
+  call soca_config_registry%init()
+  call soca_config_registry%add(c_key_confdata)
+  call soca_config_registry%get(c_key_confdata, config)
 
   config%nx  = geom%nx
   config%ny  = geom%ny
-  write(record,*)'c_mom5cice5_setup: nx, ny=',config%nx,config%ny
+  write(record,*)'c_soca_setup: nx, ny=',config%nx,config%ny
   call fckit_log%info(record)
 
   ststep = config_get_string(c_confspec,len(ststep),"tstep")
   dtstep = trim(ststep)
   config%dt0 = duration_seconds(dtstep)
-  write(record,*)'c_mom5cice5_setup: dt0=',config%dt0
+  write(record,*)'c_soca_setup: dt0=',config%dt0
   call fckit_log%info(record)
 
   ! ------------------------------------------------------------------------------
   return
-end subroutine c_mom5cice5_setup
+end subroutine c_soca_setup

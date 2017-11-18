@@ -1,6 +1,6 @@
 
-#ifndef MOM5CICE5_MODEL_MOM5CICE5INCREMENT_H_
-#define MOM5CICE5_MODEL_MOM5CICE5INCREMENT_H_
+#ifndef SOCA_MODEL_SOCAINCREMENT_H_
+#define SOCA_MODEL_SOCAINCREMENT_H_
 
 #include <ostream>
 #include <string>
@@ -21,7 +21,7 @@ namespace eckit {
   class Configuration;
 }
 
-namespace mom5cice5 {
+namespace soca {
   class State;
   class Variables;
   class Gom;
@@ -40,7 +40,7 @@ namespace mom5cice5 {
     public util::Printable,
     private util::ObjectCounter<Increment> {
   public:
-      static const std::string classname() {return "mom5cice5::Increment";}
+      static const std::string classname() {return "soca::Increment";}
 
       /// Constructor, destructor
       Increment(const Geometry &, const Variables &, const util::DateTime &);
@@ -101,6 +101,6 @@ namespace mom5cice5 {
     };
   // -----------------------------------------------------------------------------
 
-}  // namespace mom5cice5
+}  // namespace soca
 
-#endif  // MOM5CICE5_MODEL_MOM5CICE5INCREMENT_H_
+#endif  // SOCA_MODEL_SOCAINCREMENT_H_

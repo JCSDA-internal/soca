@@ -1,23 +1,23 @@
 
 !> Fortran module handling interpolated (to obs locations) model variables
 
-module mom5cice5_goms_mod
+module soca_goms_mod
 
   use iso_c_binding
-  use mom5cice5_geom_mod
-  use mom5cice5_vars_mod
+  use soca_geom_mod
+  use soca_vars_mod
   use kinds
 
   implicit none
   private
-  public :: mom5cice5_goms, gom_setup
-  public :: mom5cice5_goms_registry
+  public :: soca_goms, gom_setup
+  public :: soca_goms_registry
 
   ! ------------------------------------------------------------------------------
 
   !> Fortran derived type to hold interpolated fields required by the obs operators
-  type :: mom5cice5_goms
-     !type(mom5cice5_geom), pointer :: geom !< MOM5 & CICE5 Geometry     
+  type :: soca_goms
+     !type(soca_geom), pointer :: geom !< MOM5 & CICE5 Geometry     
      integer :: nobs                                   ! Number of obs (time and loc) in DA window (?)
      integer :: nvar                                   ! Number of variables in gom
      integer :: used
@@ -31,15 +31,15 @@ module mom5cice5_goms_mod
      !              ...]
      character(len=5), allocatable :: variables(:)
      logical :: lalloc
-  end type mom5cice5_goms
+  end type soca_goms
 
-#define LISTED_TYPE mom5cice5_goms
+#define LISTED_TYPE soca_goms
 
   !> Linked list interface - defines registry_t type
 #include "Utils/linkedList_i.f"
 
   !> Global registry
-  type(registry_t) :: mom5cice5_goms_registry
+  type(registry_t) :: soca_goms_registry
 
   ! ------------------------------------------------------------------------------
 contains
@@ -49,29 +49,29 @@ contains
 
   ! ------------------------------------------------------------------------------
 
-  subroutine c_mom5cice5_gom_create(c_key_self) bind(c,name='mom5cice5_gom_create_f90')
+  subroutine c_soca_gom_create(c_key_self) bind(c,name='soca_gom_create_f90')
 
     implicit none
     integer(c_int), intent(inout) :: c_key_self
 
-    type(mom5cice5_goms), pointer :: self
+    type(soca_goms), pointer :: self
 
     print *,'&&&&&&&&&&&&&&&&&&&&&&& IN GOM CREATE &&&&&&&&&&&&&&&&&&&'
     
-    call mom5cice5_goms_registry%init()
-    call mom5cice5_goms_registry%add(c_key_self)
-    call mom5cice5_goms_registry%get(c_key_self, self)
+    call soca_goms_registry%init()
+    call soca_goms_registry%add(c_key_self)
+    call soca_goms_registry%get(c_key_self, self)
 
     self%lalloc = .false.
 
-  end subroutine c_mom5cice5_gom_create
+  end subroutine c_soca_gom_create
 
   ! ------------------------------------------------------------------------------
 
   subroutine gom_setup(self, vars, kobs)
     implicit none
-    type(mom5cice5_goms), intent(inout) :: self
-    type(mom5cice5_vars), intent(in) :: vars
+    type(soca_goms), intent(inout) :: self
+    type(soca_vars), intent(in) :: vars
     integer, intent(in) :: kobs(:)     ! Obs indices
 
     print *,'@@@@@@@@@@@@@@@@@@@@@ IN GOM SETUP @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@'
@@ -95,72 +95,72 @@ contains
 
   ! ------------------------------------------------------------------------------
 
-  subroutine c_mom5cice5_gom_delete(c_key_self) bind(c,name='mom5cice5_gom_delete_f90')
+  subroutine c_soca_gom_delete(c_key_self) bind(c,name='soca_gom_delete_f90')
 
     implicit none
     integer(c_int), intent(inout) :: c_key_self
-    type(mom5cice5_goms), pointer :: self
+    type(soca_goms), pointer :: self
 
-    call mom5cice5_goms_registry%get(c_key_self, self)
+    call soca_goms_registry%get(c_key_self, self)
     if (self%lalloc) then
        if (allocated(self%values)) deallocate(self%values) !Not allocated in constructor
        deallocate(self%indx)
        deallocate(self%variables)
     endif
-    call mom5cice5_goms_registry%remove(c_key_self)
+    call soca_goms_registry%remove(c_key_self)
 
-  end subroutine c_mom5cice5_gom_delete
+  end subroutine c_soca_gom_delete
 
   ! ------------------------------------------------------------------------------
 
-  subroutine c_mom5cice5_gom_zero(c_key_self) bind(c,name='mom5cice5_gom_zero_f90')
+  subroutine c_soca_gom_zero(c_key_self) bind(c,name='soca_gom_zero_f90')
     implicit none
     integer(c_int), intent(in) :: c_key_self
-    type(mom5cice5_goms), pointer :: self
-    call mom5cice5_goms_registry%get(c_key_self, self)
+    type(soca_goms), pointer :: self
+    call soca_goms_registry%get(c_key_self, self)
     self%values(:,:)=0.0_kind_real
-  end subroutine c_mom5cice5_gom_zero
+  end subroutine c_soca_gom_zero
 
   ! ------------------------------------------------------------------------------
 
-  subroutine c_mom5cice5_gom_random(c_key_self) bind(c,name='mom5cice5_gom_random_f90')
+  subroutine c_soca_gom_random(c_key_self) bind(c,name='soca_gom_random_f90')
     use random_vectors_mod
     implicit none
     integer(c_int), intent(in) :: c_key_self
-    type(mom5cice5_goms), pointer :: self
-    call mom5cice5_goms_registry%get(c_key_self, self)
+    type(soca_goms), pointer :: self
+    call soca_goms_registry%get(c_key_self, self)
     call random_vector(self%values(:,:))
-  end subroutine c_mom5cice5_gom_random
+  end subroutine c_soca_gom_random
 
   ! ------------------------------------------------------------------------------
 
-  subroutine c_mom5cice5_gom_mult(c_key_self, zz) bind(c,name='mom5cice5_gom_mult_f90')
+  subroutine c_soca_gom_mult(c_key_self, zz) bind(c,name='soca_gom_mult_f90')
     implicit none
     integer(c_int), intent(in) :: c_key_self
     real(c_double), intent(in) :: zz
-    type(mom5cice5_goms), pointer :: self
+    type(soca_goms), pointer :: self
     integer :: jo, jv
 
-    call mom5cice5_goms_registry%get(c_key_self, self)
+    call soca_goms_registry%get(c_key_self, self)
     do jo=1,self%nobs
        do jv=1,self%nvar
           self%values(jv,jo) = zz * self%values(jv,jo)
        enddo
     enddo
 
-  end subroutine c_mom5cice5_gom_mult
+  end subroutine c_soca_gom_mult
 
   ! ------------------------------------------------------------------------------
 
-  subroutine c_mom5cice5_gom_dotprod(c_key_self, c_key_other, prod) bind(c,name='mom5cice5_gom_dotprod_f90')
+  subroutine c_soca_gom_dotprod(c_key_self, c_key_other, prod) bind(c,name='soca_gom_dotprod_f90')
     implicit none
     integer(c_int), intent(in) :: c_key_self, c_key_other
     real(c_double), intent(inout) :: prod
-    type(mom5cice5_goms), pointer :: self, other
+    type(soca_goms), pointer :: self, other
     integer :: jo, jv
 
-    call mom5cice5_goms_registry%get(c_key_self, self)
-    call mom5cice5_goms_registry%get(c_key_other, other)
+    call soca_goms_registry%get(c_key_self, self)
+    call soca_goms_registry%get(c_key_other, other)
     prod=0.0_kind_real
     do jo=1,self%nobs
        do jv=1,self%nvar
@@ -168,28 +168,28 @@ contains
        enddo
     enddo
 
-  end subroutine c_mom5cice5_gom_dotprod
+  end subroutine c_soca_gom_dotprod
 
   ! ------------------------------------------------------------------------------
 
-  subroutine c_mom5cice5_gom_minmaxavg(c_key_self, kobs, pmin, pmax, prms) bind(c,name='mom5cice5_gom_minmaxavg_f90')
+  subroutine c_soca_gom_minmaxavg(c_key_self, kobs, pmin, pmax, prms) bind(c,name='soca_gom_minmaxavg_f90')
     implicit none
     integer(c_int), intent(in) :: c_key_self
     integer(c_int), intent(inout) :: kobs
     real(c_double), intent(inout) :: pmin, pmax, prms
-    type(mom5cice5_goms), pointer :: self
+    type(soca_goms), pointer :: self
 
-    call mom5cice5_goms_registry%get(c_key_self, self)
+    call soca_goms_registry%get(c_key_self, self)
 
     kobs = self%nobs
     pmin=minval(self%values(:,:))
     pmax=maxval(self%values(:,:))
     prms=sqrt(sum(self%values(:,:)**2)/real(self%nobs*self%nvar,kind_real))
 
-  end subroutine c_mom5cice5_gom_minmaxavg
+  end subroutine c_soca_gom_minmaxavg
 
   ! ------------------------------------------------------------------------------
-  subroutine mom5cice5_gom_read_file_c(c_key_self, c_conf) bind(c,name='mom5cice5_gom_read_file_f90')
+  subroutine soca_gom_read_file_c(c_key_self, c_conf) bind(c,name='soca_gom_read_file_f90')
     !use nc_diag_write_mod!, only: nc_diag_init
     use nc_diag_write_mod, only: nc_diag_init, nc_diag_metadata, nc_diag_write    
     use config_mod
@@ -197,7 +197,7 @@ contains
     implicit none
     integer(c_int), intent(in) :: c_key_self
     type(c_ptr), intent(in)    :: c_conf
-    type(mom5cice5_goms), pointer :: self
+    type(soca_goms), pointer :: self
 
     integer, parameter :: iunit=10
     integer, parameter :: max_string_length=250 ! Yuk!
@@ -209,11 +209,11 @@ contains
 
     print *,'@@@@@@@@@@@@@@@@@@@ IN GOM READ @@@@@@@@@@@@@@@@@@@@@@@@@@' 
 
-    call mom5cice5_goms_registry%get(c_key_self, self)
-    if (self%lalloc) call abor1_ftn("mom5cice5_gom_read_file gom alredy allocated")
+    call soca_goms_registry%get(c_key_self, self)
+    if (self%lalloc) call abor1_ftn("soca_gom_read_file gom alredy allocated")
 
     filename = config_get_string(c_conf,len(filename),"filename")
-    write(record,*)'mom5cice5_gom_read_file: opening '//trim(filename)
+    write(record,*)'soca_gom_read_file: opening '//trim(filename)
     call fckit_log%info(record)
     open(unit=iunit, file=trim(filename), form='formatted', action='read')
 
@@ -249,18 +249,18 @@ contains
 !!$    !call nc_diag_write_close(filename)
     self%lalloc = .true.
 
-  end subroutine mom5cice5_gom_read_file_c
+  end subroutine soca_gom_read_file_c
 
   ! ------------------------------------------------------------------------------
 
-  subroutine mom5cice5_gom_write_file_c(c_key_self, c_conf) bind(c,name='mom5cice5_gom_write_file_f90')
+  subroutine soca_gom_write_file_c(c_key_self, c_conf) bind(c,name='soca_gom_write_file_f90')
     use nc_diag_write_mod!, only: nc_diag_init 
     use config_mod
     use fckit_log_module, only : fckit_log
     implicit none
     integer(c_int), intent(in) :: c_key_self
     type(c_ptr), intent(in) :: c_conf
-    type(mom5cice5_goms), pointer :: self
+    type(soca_goms), pointer :: self
 
     integer, parameter :: iunit=10
     integer, parameter :: max_string_length=250 ! Yuk!
@@ -272,15 +272,15 @@ contains
 
 !!!!!!!!     FOR EXAMLE: LOOK AT gsidiag_conv_bin2nc4.f90 IN IODA REPO  !!!!!!!!!!!!!
 
-    call mom5cice5_goms_registry%get(c_key_self, self)
-    if (.not.self%lalloc) call abor1_ftn("mom5cice5_gom_write_file gom not allocated")
+    call soca_goms_registry%get(c_key_self, self)
+    if (.not.self%lalloc) call abor1_ftn("soca_gom_write_file gom not allocated")
 
     filename = config_get_string(c_conf,len(filename),"filename")
     ncat = config_get_int(c_conf, "ncat")
 
     print *,'0000000000000000000 in write gom ncat=',ncat
     
-    write(record,*)'mom5cice5_gom_write_file: opening '//trim(filename)
+    write(record,*)'soca_gom_write_file: opening '//trim(filename)
     call fckit_log%info(record)
     !call nc_diag_init(filename)!, iunit)
 
@@ -302,8 +302,8 @@ contains
 
     close(iunit)
 
-  end subroutine mom5cice5_gom_write_file_c
+  end subroutine soca_gom_write_file_c
 
   ! ------------------------------------------------------------------------------  
 
-end module mom5cice5_goms_mod
+end module soca_goms_mod

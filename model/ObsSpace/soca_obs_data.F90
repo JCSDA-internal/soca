@@ -1,18 +1,18 @@
 
-!> Handle observations for the MOM5CICE5 model
+!> Handle observations for the SOCA model
 
-module mom5cice5_obs_data
+module soca_obs_data
 
   use iso_c_binding
   use string_f_c_mod
   use config_mod
   use datetime_mod
   use duration_mod
-  use mom5cice5_goms_mod
-  use mom5cice5_locs_mod
-  use mom5cice5_obs_vectors
-  use mom5cice5_obsoper_mod
-  use mom5cice5_vars_mod
+  use soca_goms_mod
+  use soca_locs_mod
+  use soca_obs_vectors
+  use soca_obsoper_mod
+  use soca_vars_mod
   use fckit_log_module, only : fckit_log
   use kinds
 
@@ -89,7 +89,7 @@ contains
     self%fileout=fout
 
     if (self%filein/="") call obs_read(self)
-    call fckit_log%debug("TRACE: mom5cice5_obs_data:obs_setup: done")
+    call fckit_log%debug("TRACE: soca_obs_data:obs_setup: done")
 
   end subroutine obs_setup
 
@@ -151,12 +151,12 @@ contains
        enddo
        write(record,*)"Cannot find ",req," ."
        call fckit_log%error(record)
-       call abor1_ftn("mom5cice5_obs_get: obs group not found")
+       call abor1_ftn("soca_obs_get: obs group not found")
     endif
 
     ! Find obs column
     call findcolumn(jgrp,col,jcol)
-    if (.not.associated(jcol)) call abor1_ftn("mom5cice5_obs_get: obs column not found")
+    if (.not.associated(jcol)) call abor1_ftn("soca_obs_get: obs column not found")
 
     ! Get data
     if (allocated(ovec%values)) deallocate(ovec%values)
@@ -199,13 +199,13 @@ contains
        enddo
        write(record,*)"Cannot find ",req," ."
        call fckit_log%error(record)
-       call abor1_ftn("mom5cice5_obs_put: obs group not found")
+       call abor1_ftn("soca_obs_put: obs group not found")
     endif
 
     ! Find obs column (and add it if not there)
     call findcolumn(jgrp,col,jcol)
     if (.not.associated(jcol)) then
-       if (.not.associated(jgrp%colhead)) call abor1_ftn("mom5cice5_obs_put: no locations")
+       if (.not.associated(jgrp%colhead)) call abor1_ftn("soca_obs_put: no locations")
        jcol=>jgrp%colhead
        do while (associated(jcol%next))
           jcol=>jcol%next
@@ -219,8 +219,8 @@ contains
     endif
 
     ! Put data
-    if (ovec%nobs/=jgrp%nobs) call abor1_ftn("mom5cice5_obs_put: error obs number")
-    if (ovec%ncol/=jcol%ncol) call abor1_ftn("mom5cice5_obs_put: error col number")
+    if (ovec%nobs/=jgrp%nobs) call abor1_ftn("soca_obs_put: error obs number")
+    if (ovec%ncol/=jcol%ncol) call abor1_ftn("soca_obs_put: error col number")
     do jo=1,jgrp%nobs
        do jc=1,jcol%ncol
           jcol%values(jc,jo)=ovec%values(jc,jo)
@@ -231,7 +231,7 @@ contains
 
   ! ------------------------------------------------------------------------------
 
-  subroutine obs_locations(c_key_self, lreq, c_req, c_t1, c_t2, c_key_locs) bind(c,name='mom5cice5_obsdb_locations_f90')
+  subroutine obs_locations(c_key_self, lreq, c_req, c_t1, c_t2, c_key_locs) bind(c,name='soca_obsdb_locations_f90')
     implicit none
     integer(c_int), intent(in) :: c_key_self
     integer(c_int), intent(in) :: lreq
@@ -242,7 +242,7 @@ contains
     type(obs_data), pointer :: self
     character(len=lreq) :: req
     type(datetime) :: t1, t2
-    type(mom5cice5_locs), pointer :: locs
+    type(soca_locs), pointer :: locs
     type(obs_vect) :: ovec
     character(len=8) :: col="Location"
 
@@ -253,11 +253,11 @@ contains
 
     call obs_time_get(self, req, col, t1, t2, ovec)
 
-    call mom5cice5_locs_registry%init()
-    call mom5cice5_locs_registry%add(c_key_locs)
-    call mom5cice5_locs_registry%get(c_key_locs,locs)
+    call soca_locs_registry%init()
+    call soca_locs_registry%add(c_key_locs)
+    call soca_locs_registry%get(c_key_locs,locs)
 
-    call mom5cice5_loc_setup(locs, ovec)
+    call soca_loc_setup(locs, ovec)
 
     deallocate(ovec%values)
 
@@ -266,7 +266,7 @@ contains
   ! ------------------------------------------------------------------------------
 
   subroutine obs_getgom(c_key_self, lreq, c_req, c_key_vars, c_t1, c_t2, c_key_gom)&
-       &bind(c,name='mom5cice5_obsdb_getgom_f90')
+       &bind(c,name='soca_obsdb_getgom_f90')
     implicit none
     integer(c_int), intent(in) :: c_key_self
     integer(c_int), intent(in) :: lreq
@@ -277,9 +277,9 @@ contains
 
     type(obs_data), pointer :: self
     character(len=lreq) :: req
-    type(mom5cice5_vars), pointer :: vars
+    type(soca_vars), pointer :: vars
     type(datetime) :: t1, t2
-    type(mom5cice5_goms), pointer :: gom
+    type(soca_goms), pointer :: gom
 
     integer :: nobs
     integer, allocatable :: mobs(:)
@@ -291,7 +291,7 @@ contains
     
     call obs_data_registry%get(c_key_self, self)
     call c_f_string(c_req, req)
-    call mom5cice5_vars_registry%get(c_key_vars, vars)
+    call soca_vars_registry%get(c_key_vars, vars)
     call c_f_datetime(c_t1, t1)
     call c_f_datetime(c_t2, t2)
 
@@ -301,9 +301,9 @@ contains
     call obs_count(self, req, t1, t2, mobs)
 
     allocate(gom)
-    call mom5cice5_goms_registry%init()
-    call mom5cice5_goms_registry%add(c_key_gom)
-    call mom5cice5_goms_registry%get(c_key_gom,gom)
+    call soca_goms_registry%init()
+    call soca_goms_registry%add(c_key_gom)
+    call soca_goms_registry%get(c_key_gom,gom)
 
     call gom_setup(gom, vars, mobs)
     deallocate(mobs)
@@ -312,19 +312,19 @@ contains
 
   ! ------------------------------------------------------------------------------
 
-  subroutine obs_err_generate(c_key_self, c_key_type, perr) bind(c,name='mom5cice5_obsdb_seterr_f90')
+  subroutine obs_err_generate(c_key_self, c_key_type, perr) bind(c,name='soca_obsdb_seterr_f90')
     implicit none
     integer(c_int), intent(in) :: c_key_self
     integer(c_int), intent(in) :: c_key_type
     real(c_double), intent(in) :: perr
 
     type(obs_data), pointer :: self
-    type(mom5cice5_obsoper), pointer :: otyp
+    type(soca_obsoper), pointer :: otyp
     type(obs_vect) :: obserr
     integer :: nobs
 
     call obs_data_registry%get(c_key_self, self)
-    call mom5cice5_obsoper_registry%get(c_key_type, otyp)
+    call soca_obsoper_registry%get(c_key_type, otyp)
 
     call obs_count(self, otyp%request, nobs)
     call obsvec_setup(obserr,otyp%ncol,nobs)
@@ -336,7 +336,7 @@ contains
 
   ! ------------------------------------------------------------------------------
 
-  subroutine obs_generate(c_key_self, lreq, c_req, c_conf, c_bgn, c_step, ktimes, kobs) bind(c,name='mom5cice5_obsdb_generate_f90')
+  subroutine obs_generate(c_key_self, lreq, c_req, c_conf, c_bgn, c_step, ktimes, kobs) bind(c,name='soca_obsdb_generate_f90')
     implicit none
     integer(c_int), intent(in) :: c_key_self
     integer(c_int), intent(in) :: lreq
@@ -380,7 +380,7 @@ contains
 
   ! ------------------------------------------------------------------------------
 
-  subroutine obs_nobs(c_key_self, lreq, c_req, kobs) bind(c,name='mom5cice5_obsdb_nobs_f90')
+  subroutine obs_nobs(c_key_self, lreq, c_req, kobs) bind(c,name='soca_obsdb_nobs_f90')
     implicit none
     integer(c_int), intent(in) :: c_key_self
     integer(c_int), intent(in) :: lreq
@@ -737,4 +737,4 @@ contains
 
   ! ------------------------------------------------------------------------------
 
-end module mom5cice5_obs_data
+end module soca_obs_data

@@ -1,6 +1,6 @@
 
-#ifndef MOM5CICE5_MODEL_OBSBIASCOVARIANCE_H_
-#define MOM5CICE5_MODEL_OBSBIASCOVARIANCE_H_
+#ifndef SOCA_MODEL_OBSBIASCOVARIANCE_H_
+#define SOCA_MODEL_OBSBIASCOVARIANCE_H_
 
 #include <ostream>
 #include <string>
@@ -11,7 +11,7 @@
 #include "util/ObjectCounter.h"
 #include "util/Printable.h"
 
-namespace mom5cice5 {
+namespace soca {
   class ObsBias;
   class ObsBiasIncrement;
 
@@ -21,7 +21,7 @@ class ObsBiasCovariance : public util::Printable,
                           private boost::noncopyable,
                           private util::ObjectCounter<ObsBiasCovariance> {
  public:
-  static const std::string classname() {return "mom5cice5::ObsBiasCovariance";}
+  static const std::string classname() {return "soca::ObsBiasCovariance";}
 
 /// Constructor, destructor
   explicit ObsBiasCovariance(const eckit::Configuration &);
@@ -44,6 +44,6 @@ class ObsBiasCovariance : public util::Printable,
 
 // -----------------------------------------------------------------------------
 
-}  // namespace mom5cice5
+}  // namespace soca
 
-#endif  // MOM5CICE5_MODEL_OBSBIASCOVARIANCE_H_
+#endif  // SOCA_MODEL_OBSBIASCOVARIANCE_H_

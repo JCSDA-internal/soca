@@ -1,7 +1,7 @@
 
-!> Constants for the MOM5CICE5 model
+!> Constants for the SOCA model
 
-module mom5cice5_constants
+module soca_constants
 
   use kinds
   implicit none
@@ -19,4 +19,4 @@ module mom5cice5_constants
   real(kind=kind_real),parameter :: hs_min = 1.0e-4_kind_real   !< Minimum snow depth [m]
   real(kind=kind_real),parameter :: hi_min = 0.01_kind_real     !< Minimum sea-ice thickness [m]
 
-end module mom5cice5_constants
+end module soca_constants

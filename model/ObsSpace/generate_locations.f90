@@ -5,7 +5,7 @@ subroutine generate_locations(c_conf,nlocs,ntimes,bgn,step,times,obsloc)
   use config_mod
   use datetime_mod
   use duration_mod
-  use mom5cice5_obs_vectors
+  use soca_obs_vectors
   use kinds
 
   implicit none

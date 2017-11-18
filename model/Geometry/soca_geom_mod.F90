@@ -1,6 +1,6 @@
 !> Fortran module handling geometry for MOM5 & CICE5 model.
 !! @ Todo: Remove sea-ice mask (maybe?), add nx0, ny0 to .json
-module mom5cice5_geom_mod
+module soca_geom_mod
 
   use iso_c_binding
   use config_mod
@@ -10,8 +10,8 @@ module mom5cice5_geom_mod
 
   implicit none
   private
-  public :: mom5cice5_geom
-  public :: mom5cice5_geom_registry
+  public :: soca_geom
+  public :: soca_geom_registry
 
   ! ------------------------------------------------------------------------------
 
@@ -32,7 +32,7 @@ module mom5cice5_geom_mod
   !>   level nzs+nzi+2  ---- Upper level Ocean           SST    
   !>
   
-  type :: mom5cice5_geom
+  type :: soca_geom
      integer :: nx
      integer :: ny
      integer :: nzs                                      !< Number of snow levels (!!!! Fields hard coded for 1 level !!!!)
@@ -47,15 +47,15 @@ module mom5cice5_geom_mod
      real(kind=kind_real), allocatable :: mask(:,:)      !< 0 = land 1 = ocean surface mask only
      real(kind=kind_real), allocatable :: icemask(:,:)   !< 0 = land/liquid ocean; 1 = some ice
      real(kind=kind_real), allocatable :: cell_area(:,:) !<
-  end type mom5cice5_geom
+  end type soca_geom
 
-#define LISTED_TYPE mom5cice5_geom
+#define LISTED_TYPE soca_geom
 
   !> Linked list interface - defines registry_t type
 #include "Utils/linkedList_i.f"
 
   !> Global registry
-  type(registry_t) :: mom5cice5_geom_registry
+  type(registry_t) :: soca_geom_registry
 
   ! ------------------------------------------------------------------------------
 contains
@@ -64,21 +64,21 @@ contains
 #include "Utils/linkedList_c.f"
 
   ! ------------------------------------------------------------------------------
-  subroutine c_mom5cice5_geo_setup(c_key_self, c_conf) bind(c,name='mom5cice5_geo_setup_f90')
+  subroutine c_soca_geo_setup(c_key_self, c_conf) bind(c,name='soca_geo_setup_f90')
     use netcdf
     use interface_ncread_fld, only: ncread_fld
     implicit none
     integer(c_int), intent(inout) :: c_key_self
     type(c_ptr), intent(in)    :: c_conf
-    type(mom5cice5_geom), pointer :: self
+    type(soca_geom), pointer :: self
     integer :: varid, ncid, nxdimid, nydimid
     character(len=128)  :: varname
     integer :: jj, nx0, ny0
     integer :: start2(2), count2(2)
     
-    call mom5cice5_geom_registry%init()
-    call mom5cice5_geom_registry%add(c_key_self)
-    call mom5cice5_geom_registry%get(c_key_self,self)
+    call soca_geom_registry%init()
+    call soca_geom_registry%add(c_key_self)
+    call soca_geom_registry%get(c_key_self,self)
 
     self%nx = config_get_int(c_conf, "nx")
     self%ny = config_get_int(c_conf, "ny")
@@ -111,21 +111,21 @@ contains
     varname='area_T'; call ncread_fld(self%gridfname, varname, self%cell_area, start2, count2)
     varname='iceumask'; call ncread_fld(self%icemaskfname, varname, self%icemask, start2, count2)
 
-  end subroutine c_mom5cice5_geo_setup
+  end subroutine c_soca_geo_setup
 
   ! ------------------------------------------------------------------------------
 
-  subroutine c_mom5cice5_geo_clone(c_key_self, c_key_other) bind(c,name='mom5cice5_geo_clone_f90')
+  subroutine c_soca_geo_clone(c_key_self, c_key_other) bind(c,name='soca_geo_clone_f90')
 
     implicit none
     integer(c_int), intent(in   ) :: c_key_self
     integer(c_int), intent(inout) :: c_key_other
 
-    type(mom5cice5_geom), pointer :: self, other
+    type(soca_geom), pointer :: self, other
 
-    call mom5cice5_geom_registry%add(c_key_other)
-    call mom5cice5_geom_registry%get(c_key_other, other)
-    call mom5cice5_geom_registry%get(c_key_self , self )
+    call soca_geom_registry%add(c_key_other)
+    call soca_geom_registry%get(c_key_other, other)
+    call soca_geom_registry%get(c_key_self , self )
     other%nx = self%nx
     other%ny = self%ny
     other%nzo = self%nzo
@@ -140,30 +140,30 @@ contains
     other%icemask = self%icemask
     other%cell_area = self%cell_area
 
-  end subroutine c_mom5cice5_geo_clone
+  end subroutine c_soca_geo_clone
 
   ! ------------------------------------------------------------------------------
 
-  subroutine c_mom5cice5_geo_delete(c_key_self) bind(c,name='mom5cice5_geo_delete_f90')
+  subroutine c_soca_geo_delete(c_key_self) bind(c,name='soca_geo_delete_f90')
 
     implicit none
     integer(c_int), intent(inout) :: c_key_self     
-    type(mom5cice5_geom), pointer :: self
+    type(soca_geom), pointer :: self
 
-    call mom5cice5_geom_registry%get(c_key_self, self)
+    call soca_geom_registry%get(c_key_self, self)
     if (allocated(self%lon)) deallocate(self%lon)
     if (allocated(self%lat)) deallocate(self%lat)
     if (allocated(self%level)) deallocate(self%level)    
     if (allocated(self%mask)) deallocate(self%mask)
     if (allocated(self%icemask)) deallocate(self%icemask)
     if (allocated(self%cell_area)) deallocate(self%cell_area)
-    call mom5cice5_geom_registry%remove(c_key_self)
+    call soca_geom_registry%remove(c_key_self)
 
-  end subroutine c_mom5cice5_geo_delete
+  end subroutine c_soca_geo_delete
 
   ! ------------------------------------------------------------------------------
 
-  subroutine c_mom5cice5_geo_info(c_key_self, c_nx, c_ny, c_nzo, c_nzi, c_ncat) bind(c,name='mom5cice5_geo_info_f90')
+  subroutine c_soca_geo_info(c_key_self, c_nx, c_ny, c_nzo, c_nzi, c_ncat) bind(c,name='soca_geo_info_f90')
 
     implicit none
     integer(c_int), intent(in   ) :: c_key_self
@@ -172,17 +172,17 @@ contains
     integer(c_int), intent(inout) :: c_nzo
     integer(c_int), intent(inout) :: c_nzi
     integer(c_int), intent(inout) :: c_ncat
-    type(mom5cice5_geom), pointer :: self
+    type(soca_geom), pointer :: self
 
-    call mom5cice5_geom_registry%get(c_key_self , self )
+    call soca_geom_registry%get(c_key_self , self )
     c_nx = self%nx
     c_ny = self%ny
     c_nzo = self%nzo
     c_nzi = self%nzi
     c_ncat = self%ncat
 
-  end subroutine c_mom5cice5_geo_info
+  end subroutine c_soca_geo_info
 
   ! ------------------------------------------------------------------------------
 
-end module mom5cice5_geom_mod
+end module soca_geom_mod

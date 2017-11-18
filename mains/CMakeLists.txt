@@ -1,14 +1,14 @@
-#ecbuild_add_executable( TARGET  mom5cice5_dirac.x
-#                        SOURCES mom5cice5Dirac.cc
-#                        LIBS    mom5cice5
+#ecbuild_add_executable( TARGET  soca_dirac.x
+#                        SOURCES socaDirac.cc
+#                        LIBS    soca
 #                      )
 
-ecbuild_add_executable( TARGET  mom5cice5_forecast.x
+ecbuild_add_executable( TARGET  soca_forecast.x
                         SOURCES Forecast.cc
-                        LIBS    mom5cice5
+                        LIBS    soca
                       )
 
-ecbuild_add_executable( TARGET  mom5cice5_makeobs.x
+ecbuild_add_executable( TARGET  soca_makeobs.x
                         SOURCES MakeObs.cc
-                        LIBS    mom5cice5
+                        LIBS    soca
                       )

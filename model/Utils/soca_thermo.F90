@@ -1,7 +1,7 @@
-module mom5cice5_thermo
+module soca_thermo
 
-  use mom5cice5_constants
-  !use mom5cice5_fields
+  use soca_constants
+  !use soca_fields
   !use mpi
   implicit none
 
@@ -169,4 +169,4 @@ contains
 
   end function Ki_nl
 
-end module mom5cice5_thermo
+end module soca_thermo

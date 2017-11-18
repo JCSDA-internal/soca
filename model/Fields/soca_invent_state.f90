@@ -7,16 +7,16 @@
 
 subroutine invent_state(flds,config)
 
-  use mom5cice5_fields
+  use soca_fields
   use iso_c_binding
   use config_mod
   use fckit_log_module, only : log
-  use mom5cice5_constants
+  use soca_constants
   use kinds
   
   implicit none
 
-  type(mom5cice5_field), intent(inout) :: flds    !< Model fields
+  type(soca_field), intent(inout) :: flds    !< Model fields
   type(c_ptr), intent(in)       :: config  !< Configuration structure
 
   ! ------------------------------------------------------------------------------

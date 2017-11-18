@@ -1,6 +1,6 @@
 
-#ifndef MOM5CICE5_MODEL_MODELBIASINCREMENT_H_
-#define MOM5CICE5_MODEL_MODELBIASINCREMENT_H_
+#ifndef SOCA_MODEL_MODELBIASINCREMENT_H_
+#define SOCA_MODEL_MODELBIASINCREMENT_H_
 
 #include <iostream>
 
@@ -10,7 +10,7 @@ namespace eckit {
   class Configuration;
 }
 
-namespace mom5cice5 {
+namespace soca {
   class ModelBias;
   class ModelBiasCovariance;
   class Geometry;
@@ -47,6 +47,6 @@ class ModelBiasIncrement : public util::Printable {
 
 // -----------------------------------------------------------------------------
 
-}  // namespace mom5cice5
+}  // namespace soca
 
-#endif  // MOM5CICE5_MODEL_MODELBIASINCREMENT_H_
+#endif  // SOCA_MODEL_MODELBIASINCREMENT_H_

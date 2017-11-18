@@ -1,6 +1,6 @@
 
-#ifndef MOM5CICE5_MODEL_OBSBIASINCREMENT_H_
-#define MOM5CICE5_MODEL_OBSBIASINCREMENT_H_
+#ifndef SOCA_MODEL_OBSBIASINCREMENT_H_
+#define SOCA_MODEL_OBSBIASINCREMENT_H_
 
 #include <iostream>
 #include <vector>
@@ -11,7 +11,7 @@ namespace eckit {
   class Configuration;
 }
 
-namespace mom5cice5 {
+namespace soca {
   class ObsBias;
 
   // -----------------------------------------------------------------------------
@@ -60,6 +60,6 @@ namespace mom5cice5 {
 
   // -----------------------------------------------------------------------------
 
-}  // namespace mom5cice5
+}  // namespace soca
 
-#endif  // MOM5CICE5_MODEL_OBSBIASINCREMENT_H_
+#endif  // SOCA_MODEL_OBSBIASINCREMENT_H_

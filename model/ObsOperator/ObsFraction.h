@@ -25,7 +25,7 @@ namespace util {
   class DateTime;
 }
 
-namespace mom5cice5 {
+namespace soca {
   class Gom;
   class ObsBias;
   class ObsBiasIncrement;
@@ -40,7 +40,7 @@ namespace mom5cice5 {
   class ObsFraction : public oops::ObsOperatorBase<Traits>,
                       private util::ObjectCounter<ObsFraction> {
   public:
-      static const std::string classname() {return "mom5cice5::ObsFraction";}
+      static const std::string classname() {return "soca::ObsFraction";}
 
       ObsFraction(const ObsSpace &, const eckit::Configuration &);
       virtual ~ObsFraction();
@@ -64,5 +64,5 @@ namespace mom5cice5 {
     };
   // -----------------------------------------------------------------------------
 
-}  // namespace mom5cice5
+}  // namespace soca
 #endif  // _MODEL_OBSFRACTION_H_

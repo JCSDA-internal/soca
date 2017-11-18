@@ -1,6 +1,6 @@
 
-#ifndef MOM5CICE5_MODEL_MOM5CICE5FIELDS_H_
-#define MOM5CICE5_MODEL_MOM5CICE5FIELDS_H_
+#ifndef SOCA_MODEL_SOCAFIELDS_H_
+#define SOCA_MODEL_SOCAFIELDS_H_
 
 #include <ostream>
 #include <string>
@@ -23,16 +23,16 @@ namespace oops {
   class UnstructuredGrid;
 }
 
-namespace mom5cice5 {
+namespace soca {
   class Loc;
   class Gom;
   
   // -----------------------------------------------------------------------------
-  /// Class to represent a FieldSet for the MOM5CICE5 model
+  /// Class to represent a FieldSet for the SOCA model
   class Fields : public util::Printable,
     private util::ObjectCounter<Fields> {
   public:
-      static const std::string classname() {return "mom5cice5::Fields";}
+      static const std::string classname() {return "soca::Fields";}
 
       // Constructors and basic operators
       Fields(const Geometry &, const Variables &, const util::DateTime &);
@@ -93,5 +93,5 @@ namespace mom5cice5 {
     };
   // -----------------------------------------------------------------------------
 
-}  // namespace mom5cice5
-#endif  // MOM5CICE5_MODEL_MOM5CICE5FIELDS_H_
+}  // namespace soca
+#endif  // SOCA_MODEL_SOCAFIELDS_H_

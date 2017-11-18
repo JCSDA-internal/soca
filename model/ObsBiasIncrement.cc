@@ -15,7 +15,7 @@ using oops::Log;
 
 
 // -----------------------------------------------------------------------------
-namespace mom5cice5 {
+namespace soca {
 // -----------------------------------------------------------------------------
 ObsBiasIncrement::ObsBiasIncrement(const eckit::Configuration & conf)
   : bias_(ObsBias::ntypes, 0.0), active_(ObsBias::ntypes, false)
@@ -140,4 +140,4 @@ void ObsBiasIncrement::print(std::ostream & os) const {
   if (on) os << std::endl << "ObsBiasIncrement = " << strn;
 }
 // -----------------------------------------------------------------------------
-}  // namespace mom5cice5
+}  // namespace soca

@@ -5,7 +5,7 @@
 
 int main(int argc,  char ** argv) {
   oops::Run run(argc, argv);
-  test::ModelAuxControl<mom5cice5::Traits> tests;
+  test::ModelAuxControl<soca::Traits> tests;
   run.execute(tests);
   return 0;
 };

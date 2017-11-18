@@ -11,20 +11,20 @@
 
 using oops::Log;
 
-namespace mom5cice5 {
+namespace soca {
 
 // -----------------------------------------------------------------------------
 
 ObsHelp::ObsHelp(const eckit::Configuration & config) {
   const eckit::Configuration * configc = &config;
-  mom5cice5_obsdb_setup_f90(keyHelp_, &configc);
+  soca_obsdb_setup_f90(keyHelp_, &configc);
   Log::trace() << "ObsHelp constructed" << std::endl;
 }
 
 // -----------------------------------------------------------------------------
 
 ObsHelp::~ObsHelp() {
-  mom5cice5_obsdb_delete_f90(keyHelp_);
+  soca_obsdb_delete_f90(keyHelp_);
   Log::trace() << "ObsHelp destructed" << std::endl;
 }
 
@@ -32,14 +32,14 @@ ObsHelp::~ObsHelp() {
 
 void ObsHelp::putdb(const std::string & obsname, const std::string & col, const int & keyFvec) {
   Log::trace() << "ObsHelp:putdb obsname = " << obsname << ", col = " << col << std::endl;
-  mom5cice5_obsdb_put_f90(keyHelp_, obsname.size(), obsname.c_str(), col.size(), col.c_str(), keyFvec);
+  soca_obsdb_put_f90(keyHelp_, obsname.size(), obsname.c_str(), col.size(), col.c_str(), keyFvec);
 }
 
 // -----------------------------------------------------------------------------
 
 void ObsHelp::getdb(const std::string & obsname, const std::string & col, int & keyFvec) const {
   Log::trace() << "ObsHelp:getdb obsname = " << obsname << ", col = " << col << std::endl;
-  mom5cice5_obsdb_get_f90(keyHelp_, obsname.size(), obsname.c_str(), col.size(), col.c_str(), keyFvec);
+  soca_obsdb_get_f90(keyHelp_, obsname.size(), obsname.c_str(), col.size(), col.c_str(), keyFvec);
 }
 
 // -----------------------------------------------------------------------------
@@ -49,7 +49,7 @@ int ObsHelp::locations(const std::string & obsname,
   const util::DateTime * p1 = &t1;
   const util::DateTime * p2 = &t2;
   int key_locs;
-  mom5cice5_obsdb_locations_f90(keyHelp_, obsname.size(), obsname.c_str(), &p1, &p2, key_locs);
+  soca_obsdb_locations_f90(keyHelp_, obsname.size(), obsname.c_str(), &p1, &p2, key_locs);
   return key_locs;
 }
 
@@ -71,7 +71,7 @@ void ObsHelp::generateDistribution(const eckit::Configuration & config, const st
   const util::DateTime * bgn = &start;
   const util::Duration * stp = &freq;
   int iobs;
-  mom5cice5_obsdb_generate_f90(keyHelp_, obsname.size(), obsname.c_str(), &configc,
+  soca_obsdb_generate_f90(keyHelp_, obsname.size(), obsname.c_str(), &configc,
                         &bgn, &stp, nobstimes, iobs);
   nobs = iobs;
 }
@@ -80,11 +80,11 @@ void ObsHelp::generateDistribution(const eckit::Configuration & config, const st
 
 int ObsHelp::nobs(const std::string & obsname) const {
   int iobs;
-  mom5cice5_obsdb_nobs_f90(keyHelp_, obsname.size(), obsname.c_str(), iobs);
+  soca_obsdb_nobs_f90(keyHelp_, obsname.size(), obsname.c_str(), iobs);
   return iobs;
 }
 
 // -----------------------------------------------------------------------------
 
 
-}  // namespace mom5cice5
+}  // namespace soca

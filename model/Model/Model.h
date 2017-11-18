@@ -1,6 +1,6 @@
 
-#ifndef MOM5CICE5_MODEL_MOM5CICE5MODEL_H_
-#define MOM5CICE5_MODEL_MOM5CICE5MODEL_H_
+#ifndef SOCA_MODEL_SOCAMODEL_H_
+#define SOCA_MODEL_SOCAMODEL_H_
 
 #include <ostream>
 #include <string>
@@ -18,23 +18,23 @@ namespace eckit {
   class Configuration;
 }
 
-namespace mom5cice5 {
+namespace soca {
   //class F90traj;
   class ModelBias;
   class Fields;
   class State;
 
 // -----------------------------------------------------------------------------
-/// MOM5CICE5 model definition.
+/// SOCA model definition.
 /*!
- *  MOM5CICE5 nonlinear model definition and configuration parameters.
+ *  SOCA nonlinear model definition and configuration parameters.
  */
 
 class Model: public util::Printable,
                private boost::noncopyable,
                private util::ObjectCounter<Model> {
  public:
-  static const std::string classname() {return "mom5cice5::Model";}
+  static const std::string classname() {return "soca::Model";}
 
   Model(const Geometry &, const eckit::Configuration &);
   ~Model();
@@ -60,5 +60,5 @@ class Model: public util::Printable,
 };
 // -----------------------------------------------------------------------------
 
-}  // namespace mom5cice5
-#endif  // MOM5CICE5_MODEL_MOM5CICE5MODEL_H_
+}  // namespace soca
+#endif  // SOCA_MODEL_SOCAMODEL_H_

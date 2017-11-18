@@ -1,4 +1,4 @@
-list( APPEND mom5cice5_test_input
+list( APPEND soca_test_input
   testinput/dirac.nicas.json
   testinput/interfaces.yml
   testinput/interfaces.json  
@@ -10,7 +10,7 @@ list( APPEND mom5cice5_test_input
   compare.sh
 )
 
-list( APPEND mom5cice5_testoutput
+list( APPEND soca_testoutput
   #testoutput/dirac.nicas.test
   testoutput/forecast.test
   testoutput/truth.test
@@ -19,7 +19,7 @@ list( APPEND mom5cice5_testoutput
 
 # Create Data directory for test input and symlink all files
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/testinput)
-foreach(FILENAME ${mom5cice5_test_input})
+foreach(FILENAME ${soca_test_input})
     execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
            ${CMAKE_CURRENT_SOURCE_DIR}/${FILENAME}
            ${CMAKE_CURRENT_BINARY_DIR}/${FILENAME} )
@@ -27,15 +27,15 @@ endforeach(FILENAME)
 
 # Create Data directory for reference output and symlink all files
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/testoutput)
-foreach(FILENAME ${mom5cice5_testoutput})
+foreach(FILENAME ${soca_testoutput})
     execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
            ${CMAKE_CURRENT_SOURCE_DIR}/${FILENAME}
            ${CMAKE_CURRENT_BINARY_DIR}/${FILENAME} )
 endforeach(FILENAME)
 
-ecbuild_add_resources( TARGET   mom5cice5_test_scripts
+ecbuild_add_resources( TARGET   soca_test_scripts
                        SOURCES_PACK
-                       ${mom5cice5_test_input}
+                       ${soca_test_input}
                      )
 
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/Data)
@@ -44,111 +44,111 @@ file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/Data)
 
 # Tests that create data other tests might use (should check what is really needed...)
 
-ecbuild_add_test( TARGET test_mom5cice5_truth
+ecbuild_add_test( TARGET test_soca_truth
                   TYPE SCRIPT
                   COMMAND "compare.sh"
-                  ARGS "${CMAKE_BINARY_DIR}/bin/mom5cice5_forecast.x testinput/truth.json"
+                  ARGS "${CMAKE_BINARY_DIR}/bin/soca_forecast.x testinput/truth.json"
                        testoutput/truth.test
-                  DEPENDS mom5cice5_forecast.x )
+                  DEPENDS soca_forecast.x )
 
-ecbuild_add_test( TARGET test_mom5cice5_forecast
+ecbuild_add_test( TARGET test_soca_forecast
                   TYPE SCRIPT
                   COMMAND "compare.sh"
-                  ARGS "${CMAKE_BINARY_DIR}/bin/mom5cice5_forecast.x testinput/forecast.yml"
+                  ARGS "${CMAKE_BINARY_DIR}/bin/soca_forecast.x testinput/forecast.yml"
                        testoutput/forecast.test
-                  DEPENDS mom5cice5_forecast.x )
+                  DEPENDS soca_forecast.x )
 
-ecbuild_add_test( TARGET test_mom5cice5_makeobs3d
+ecbuild_add_test( TARGET test_soca_makeobs3d
                   TYPE SCRIPT
                   COMMAND "compare.sh"
-                  ARGS "${CMAKE_BINARY_DIR}/bin/mom5cice5_makeobs.x testinput/makeobs3d.json"
+                  ARGS "${CMAKE_BINARY_DIR}/bin/soca_makeobs.x testinput/makeobs3d.json"
                        testoutput/makeobs3d.test
-                  DEPENDS mom5cice5_makeobs.x )
+                  DEPENDS soca_makeobs.x )
 		  
 # Tests of class interfaces
 
-ecbuild_add_test( TARGET  test_mom5cice5_geometry
+ecbuild_add_test( TARGET  test_soca_geometry
                   BOOST
                   SOURCES executables/TestGeometry.cc
                   ARGS    "testinput/interfaces.json"
-                  LIBS    mom5cice5 )
+                  LIBS    soca )
 
-ecbuild_add_test( TARGET  test_mom5cice5_locations
+ecbuild_add_test( TARGET  test_soca_locations
                   BOOST
                   SOURCES executables/TestLocations.cc
                   ARGS    "testinput/interfaces.json"
-                  LIBS    mom5cice5 )
+                  LIBS    soca )
 
-ecbuild_add_test( TARGET  test_mom5cice5_variables
+ecbuild_add_test( TARGET  test_soca_variables
                   BOOST
                   SOURCES executables/TestVariables.cc
                   ARGS    "testinput/interfaces.json"
-                  LIBS    mom5cice5 )
+                  LIBS    soca )
 
-ecbuild_add_test( TARGET  test_mom5cice5_state
+ecbuild_add_test( TARGET  test_soca_state
                   BOOST
                   SOURCES executables/TestState.cc
                   ARGS    "testinput/interfaces.json"
-                  LIBS    mom5cice5 )
+                  LIBS    soca )
 		  
-ecbuild_add_test( TARGET  test_mom5cice5_modelaux
+ecbuild_add_test( TARGET  test_soca_modelaux
                   BOOST
                   SOURCES executables/TestModelAuxControl.cc
                   ARGS    "testinput/interfaces.json"
-                  LIBS    mom5cice5 )
+                  LIBS    soca )
 		  
-ecbuild_add_test( TARGET  test_mom5cice5_model
+ecbuild_add_test( TARGET  test_soca_model
                   BOOST
                   SOURCES executables/TestModel.cc
                   ARGS    "testinput/interfaces.json"
-                  LIBS    mom5cice5 )
+                  LIBS    soca )
 		  
-ecbuild_add_test( TARGET  test_mom5cice5_increment
+ecbuild_add_test( TARGET  test_soca_increment
                   BOOST
                   SOURCES executables/TestIncrement.cc
                   ARGS    "testinput/interfaces.json"
-                  LIBS    mom5cice5 )
+                  LIBS    soca )
 
-#ecbuild_add_test( TARGET  test_mom5cice5_errorcovariance
+#ecbuild_add_test( TARGET  test_soca_errorcovariance
 #                  BOOST
 #                  SOURCES executables/TestErrorCovariance.cc
 #                  ARGS    "testinput/interfaces.json"
-#                  LIBS    mom5cice5 )
+#                  LIBS    soca )
 
-ecbuild_add_test( TARGET  test_mom5cice5_obsvector
+ecbuild_add_test( TARGET  test_soca_obsvector
                   BOOST
                   SOURCES executables/TestObsVector.cc
                   ARGS    "testinput/interfaces.json"
-                  LIBS    mom5cice5 )
+                  LIBS    soca )
 
-ecbuild_add_test( TARGET  test_mom5cice5_obsoperator
+ecbuild_add_test( TARGET  test_soca_obsoperator
                   BOOST
                   SOURCES executables/TestObsOperator.cc
                   ARGS    "testinput/interfaces.json"
-                  LIBS    mom5cice5 )
+                  LIBS    soca )
 
-ecbuild_add_test( TARGET  test_mom5cice5_linobsoperator
+ecbuild_add_test( TARGET  test_soca_linobsoperator
                   BOOST
                   SOURCES executables/TestLinearObsOperator.cc
                   ARGS    "testinput/interfaces.json"
-                  LIBS    mom5cice5 )
+                  LIBS    soca )
 
-ecbuild_add_test( TARGET test_mom5cice5_observationspace
+ecbuild_add_test( TARGET test_soca_observationspace
                   BOOST
                   SOURCES executables/TestObservationSpace.cc
                   ARGS "testinput/interfaces.json"
-                  LIBS    mom5cice5 )
+                  LIBS    soca )
 
-ecbuild_add_test( TARGET  test_mom5cice5_obsaux
+ecbuild_add_test( TARGET  test_soca_obsaux
                   BOOST
                   SOURCES executables/TestObsAuxControl.cc
                   ARGS    "testinput/interfaces.json"
-                  LIBS    mom5cice5 )
+                  LIBS    soca )
 		  
-#ecbuild_add_test( TARGET test_mom5cice5_dirac_nicas
+#ecbuild_add_test( TARGET test_soca_dirac_nicas
 #                  TYPE SCRIPT
 #                  COMMAND "compare.sh"
-#                  ARGS "${CMAKE_BINARY_DIR}/bin/mom5cice5_dirac.x testinput/dirac.nicas.json"
+#                  ARGS "${CMAKE_BINARY_DIR}/bin/soca_dirac.x testinput/dirac.nicas.json"
 #                       testoutput/dirac.nicas.test
-#                  DEPENDS mom5cice5_dirac.x )
+#                  DEPENDS soca_dirac.x )
 

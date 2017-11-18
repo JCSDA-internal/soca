@@ -1,6 +1,6 @@
 
-#ifndef MOM5CICE5_MODEL_MOM5CICE5ERRORCOVARIANCE_H_
-#define MOM5CICE5_MODEL_MOM5CICE5ERRORCOVARIANCE_H_
+#ifndef SOCA_MODEL_SOCAERRORCOVARIANCE_H_
+#define SOCA_MODEL_SOCAERRORCOVARIANCE_H_
 
 #include <ostream>
 #include <string>
@@ -15,13 +15,13 @@
 #include "util/Printable.h"
 
 // Forward declarations
-namespace mom5cice5 {
+namespace soca {
   class Increment;
   class State;
   class Variables;
 
   // -----------------------------------------------------------------------------
-  /// Background error covariance matrix for MOM5CICE5 model.
+  /// Background error covariance matrix for SOCA model.
 
   class ErrorCovariance : public util::Printable,
     private boost::noncopyable,
@@ -45,5 +45,5 @@ namespace mom5cice5 {
     };
   // -----------------------------------------------------------------------------
 
-}  // namespace mom5cice5
-#endif  // MOM5CICE5_MODEL_MOM5CICE5ERRORCOVARIANCE_H_
+}  // namespace soca
+#endif  // SOCA_MODEL_SOCAERRORCOVARIANCE_H_

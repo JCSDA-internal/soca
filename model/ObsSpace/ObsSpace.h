@@ -1,5 +1,5 @@
-#ifndef MOM5CICE5_MODEL_OBSSPACE_H_
-#define MOM5CICE5_MODEL_OBSSPACE_H_
+#ifndef SOCA_MODEL_OBSSPACE_H_
+#define SOCA_MODEL_OBSSPACE_H_
 
 #include <map>
 #include <ostream>
@@ -18,7 +18,7 @@ namespace eckit {
   class Configuration;
 }
 
-namespace mom5cice5 {
+namespace soca {
   class ObsVec;
   //class Observation;
 
@@ -74,6 +74,6 @@ namespace mom5cice5 {
     static std::map < std::string, int > theObsFileCount_;
   };
 
-}  // namespace mom5cice5
+}  // namespace soca
 
-#endif  // MOM5CICE5_MODEL_OBSSPACE_H_
+#endif  // SOCA_MODEL_OBSSPACE_H_

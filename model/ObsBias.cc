@@ -13,7 +13,7 @@
 using oops::Log;
 
 // -----------------------------------------------------------------------------
-namespace mom5cice5 {
+namespace soca {
   // -----------------------------------------------------------------------------
   ObsBias::ObsBias(const eckit::Configuration & conf) : bias_(ntypes, 0.0), active_(false) {
     Log::info() << "ObsBias: conf = " << conf << std::endl;
@@ -71,5 +71,5 @@ namespace mom5cice5 {
     }
   }
   // -----------------------------------------------------------------------------
-}  // namespace mom5cice5
+}  // namespace soca
 

@@ -1,6 +1,6 @@
 
 #define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE MOM5CICE5_TEST_OP_OBS
+#define BOOST_TEST_MODULE SOCA_TEST_OP_OBS
 
 #include <iostream>
 #include <iomanip>
@@ -14,10 +14,10 @@
 
 #include "test/base/TestSuiteOpObsFixture.h"
 
-namespace mom5cice5 {
+namespace soca {
 
 /*!
- *  TestEnv initializes the test suite for the MOM5CICE5 model as an OOPS application
+ *  TestEnv initializes the test suite for the SOCA model as an OOPS application
  */
 class TestEnv: public oops::Run {
   public:
@@ -36,28 +36,28 @@ class TestEnv: public oops::Run {
     void setup(const eckit::Configuration & fullConfig) {
       instantiateObsFactory();
       instantiateCovarFactory();
-      test::TestSuiteOpObsFixture<mom5cice5::Traits>::getInstance().setup(
+      test::TestSuiteOpObsFixture<soca::Traits>::getInstance().setup(
           fullConfig);
     }
 };
 }
 
 // -----------------------------------------------------------------------------
-typedef mom5cice5::TestEnv TestEnv_;
+typedef soca::TestEnv TestEnv_;
 BOOST_GLOBAL_FIXTURE(TestEnv_);
 
 /*!
- *  Run the generic tests for the MOM5CICE5 model
+ *  Run the generic tests for the SOCA model
  */
 
 // -----------------------------------------------------------------------------
-BOOST_FIXTURE_TEST_SUITE(tl_ad, test::TestSuiteOpObsFixture<mom5cice5::Traits>)
+BOOST_FIXTURE_TEST_SUITE(tl_ad, test::TestSuiteOpObsFixture<soca::Traits>)
 #include "test/base/TestSuiteOpObsTLAD.h"
 BOOST_AUTO_TEST_SUITE_END()
 // -----------------------------------------------------------------------------
 
 // -----------------------------------------------------------------------------
-BOOST_FIXTURE_TEST_SUITE(tl, test::TestSuiteOpObsFixture<mom5cice5::Traits>)
+BOOST_FIXTURE_TEST_SUITE(tl, test::TestSuiteOpObsFixture<soca::Traits>)
 #include "test/base/TestSuiteOpObsTL.h"
 BOOST_AUTO_TEST_SUITE_END()
 // -----------------------------------------------------------------------------

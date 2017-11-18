@@ -1,6 +1,6 @@
 
-#ifndef MOM5CICE5_MODEL_GOM_H_
-#define MOM5CICE5_MODEL_GOM_H_
+#ifndef SOCA_MODEL_GOM_H_
+#define SOCA_MODEL_GOM_H_
 
 #include <ostream>
 #include <string>
@@ -10,7 +10,7 @@
 #include "util/ObjectCounter.h"
 #include "util/Printable.h"
 
-namespace mom5cice5 {
+namespace soca {
   class ObsSpace;
   class Geometry;
   class Variables;
@@ -20,7 +20,7 @@ namespace mom5cice5 {
   class Gom : public util::Printable,
     private util::ObjectCounter<Gom> {
   public:
-      static const std::string classname() {return "mom5cice5::Gom";}
+      static const std::string classname() {return "soca::Gom";}
 
       Gom(const ObsSpace &, const Variables &,
 	  const util::DateTime &, const util::DateTime &);//, const Geometry &);
@@ -46,6 +46,6 @@ namespace mom5cice5 {
       F90goms keyGom_;
     };
 
-}  // namespace mom5cice5
+}  // namespace soca
 
-#endif  // MOM5CICE5_MODEL_GOM_H_
+#endif  // SOCA_MODEL_GOM_H_

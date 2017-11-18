@@ -1,7 +1,7 @@
-module mom5cice5_balanceop
+module soca_balanceop
 
-  use mom5cice5_constants
-  use mom5cice5_fields
+  use soca_constants
+  use soca_fields
 
   implicit none
   
@@ -13,9 +13,9 @@ contains
 
     ! dxi = Kop_inv(xb) * dx 
     implicit none
-    type(mom5cice5_field), intent(in) :: dx
-    type(mom5cice5_field), intent(in) :: xb
-    type(mom5cice5_field), intent(out) :: dxi
+    type(soca_field), intent(in) :: dx
+    type(soca_field), intent(in) :: xb
+    type(soca_field), intent(out) :: dxi
 
     real(kind=kind_real), allocatable :: aice(:,:)
     real(kind=kind_real) :: A, B, C
@@ -49,9 +49,9 @@ contains
 !!$  subroutine Kop_inv_ad(dx_ad, xb, dxi_ad)
 !!$    ! dxi_ad = Kop_inv(xb)^T * dx_ad 
 !!$    implicit none    
-!!$    type(mom5cice5_field), intent(in) :: dx_ad
-!!$    type(mom5cice5_field), intent(in) :: xb
-!!$    type(mom5cice5_field), intent(out) :: dxi_ad
+!!$    type(soca_field), intent(in) :: dx_ad
+!!$    type(soca_field), intent(in) :: xb
+!!$    type(soca_field), intent(out) :: dxi_ad
 !!$
 !!$    real(kind=kind_real), allocatable :: aice(:,:)
 !!$    real(kind=kind_real) :: A, B, C
@@ -84,4 +84,4 @@ contains
 !!$  end subroutine Kop_inv_ad
 
 
-end module mom5cice5_balanceop
+end module soca_balanceop

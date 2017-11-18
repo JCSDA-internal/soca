@@ -7,7 +7,7 @@ cmake_minimum_required( VERSION 3.3.2 FATAL_ERROR )
 
 set( CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH};${CMAKE_CURRENT_SOURCE_DIR}/ecbuild/cmake)
 include( ecbuild_bundle )
-project( mom5cice5 C CXX Fortran)
+project( soca C CXX Fortran)
 
 set( ENABLE_MPI ON CACHE BOOL "Compile with MPI" )
 set( ECBUILD_DEFAULT_BUILD_TYPE Release )
@@ -22,7 +22,7 @@ ecbuild_requires_macro_version( 2.5 )
 ecbuild_declare_project()
 ecbuild_enable_fortran( REQUIRED )
 ecbuild_add_cxx11_flags()
-set( MOM5CICE5_LINKER_LANGUAGE CXX )
+set( SOCA_LINKER_LANGUAGE CXX )
 
 ################################################################################
 # Dependencies
@@ -44,12 +44,12 @@ MESSAGE( STATUS "oops include dirs: " ${OOPS_INCLUDE_DIRS} )
 ################################################################################
 # Export package info
 ################################################################################
-list( APPEND MOM5CICE5_TPLS ioda oops )
-foreach( _tpl ${MOM5CICE5_TPLS} )
+list( APPEND SOCA_TPLS ioda oops )
+foreach( _tpl ${SOCA_TPLS} )
 string( TOUPPER ${_tpl} TPL )
-list( APPEND MOM5CICE5_EXTRA_DEFINITIONS   ${${TPL}_DEFINITIONS}  ${${TPL}_TPL_DEFINITIONS}  )
-list( APPEND MOM5CICE5_EXTRA_INCLUDE_DIRS  ${${TPL}_INCLUDE_DIRS} ${${TPL}_TPL_INCLUDE_DIRS} )
-list( APPEND MOM5CICE5_EXTRA_LIBRARIES     ${${TPL}_LIBRARIES}    ${${TPL}_TPL_LIBRARIES}    )
+list( APPEND SOCA_EXTRA_DEFINITIONS   ${${TPL}_DEFINITIONS}  ${${TPL}_TPL_DEFINITIONS}  )
+list( APPEND SOCA_EXTRA_INCLUDE_DIRS  ${${TPL}_INCLUDE_DIRS} ${${TPL}_TPL_INCLUDE_DIRS} )
+list( APPEND SOCA_EXTRA_LIBRARIES     ${${TPL}_LIBRARIES}    ${${TPL}_TPL_LIBRARIES}    )
 endforeach()
 
 ################################################################################
@@ -67,7 +67,7 @@ add_subdirectory( test )
 ################################################################################
 
 # prepares a tar.gz of the sources and/or binaries
-ecbuild_install_project( NAME mom5cice5 )
+ecbuild_install_project( NAME soca )
 
 # print the summary of the configuration
 ecbuild_print_summary()

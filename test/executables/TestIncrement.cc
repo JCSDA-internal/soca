@@ -5,7 +5,7 @@
 
 int main(int argc,  char ** argv) {
   oops::Run run(argc, argv);
-  test::Increment<mom5cice5::Traits> tests;
+  test::Increment<soca::Traits> tests;
   run.execute(tests);
   return 0;
 };

@@ -1,6 +1,6 @@
 
-#ifndef MOM5CICE5_MODEL_OBSHELP_H_
-#define MOM5CICE5_MODEL_OBSHELP_H_
+#ifndef SOCA_MODEL_OBSHELP_H_
+#define SOCA_MODEL_OBSHELP_H_
 
 #include <string>
 
@@ -14,14 +14,14 @@ namespace eckit {
   class Configuration;
 }
 
-namespace mom5cice5 {
+namespace soca {
 
-/// Observation Data Handler for MOM5CICE5 Model
+/// Observation Data Handler for SOCA Model
 
 class ObsHelp : private boost::noncopyable,
                   private util::ObjectCounter<ObsHelp> {
  public:
-  static const std::string classname() {return "mom5cice5::ObsHelp";}
+  static const std::string classname() {return "soca::ObsHelp";}
 
   explicit ObsHelp(const eckit::Configuration &);
   ~ObsHelp();
@@ -41,6 +41,6 @@ class ObsHelp : private boost::noncopyable,
   int keyHelp_;
 };
 
-}  // namespace mom5cice5
+}  // namespace soca
 
-#endif  // MOM5CICE5_MODEL_OBSHELP_H_
+#endif  // SOCA_MODEL_OBSHELP_H_

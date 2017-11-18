@@ -5,13 +5,13 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
  */
 
-#ifndef MOM5CICE5_MODEL_RANDOM_F_H_
-#define MOM5CICE5_MODEL_RANDOM_F_H_
+#ifndef SOCA_MODEL_RANDOM_F_H_
+#define SOCA_MODEL_RANDOM_F_H_
 
-namespace mom5cice5 {
+namespace soca {
 extern "C" {
   void random_f(const int &, double *);
 }
-}  // namespace mom5cice5
+}  // namespace soca
 
-#endif  // MOM5CICE5_MODEL_RANDOM_F_H_
+#endif  // SOCA_MODEL_RANDOM_F_H_

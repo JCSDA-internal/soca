@@ -36,11 +36,11 @@ setenv NETCDF_LIBRARIES "${NETCDF}/lib/libnetcdf.a;${NETCDF}/lib/libnetcdff.a"
 # Define source and build directories                                                                                                                                       
                                                                                                                                                                             
 setenv SRC_OOPS "/scratch4/NCEPDEV/ocean/scrub/Guillaume.Vernieres/JEDI/TEST/jedi/"                                                                                         
-setenv SRC_MODEL "/scratch4/NCEPDEV/ocean/scrub/Guillaume.Vernieres/JEDI/TEST/mom5cice5/"                                                                                   
+setenv SRC_MODEL "/scratch4/NCEPDEV/ocean/scrub/Guillaume.Vernieres/JEDI/TEST/soca/"                                                                                   
 setenv BUILD "/scratch4/NCEPDEV/ocean/scrub/Guillaume.Vernieres/JEDI/TEST/jedi/build/"                                                                                      
 setenv PATH ${PATH}:${SRC_OOPS}/ecbuild/bin                                                                                                                                 
 #set path = ( ${SRC_OOPS}/ecbuild/bin $path )                                                                                                                               
-rm -rf ${BUILD}/mom5cice5; mkdir ${BUILD}/mom5cice5; cd ${BUILD}/mom5cice5                                                                                                  
+rm -rf ${BUILD}/soca; mkdir ${BUILD}/soca; cd ${BUILD}/soca                                                                                                  
 ecbuild \                                                                                                                                                                   
     -DENABLE_CXX11=ON \                                                                                                                                                     
     -DOOPS_PATH=${BUILD}/oops \                                                                                                                                             

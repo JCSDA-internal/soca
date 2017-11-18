@@ -1,13 +1,13 @@
 
 !> Handle fields for the  model
 
-module mom5cice5_fields
+module soca_fields
 
   use config_mod
-  use mom5cice5_geom_mod
-  use mom5cice5_goms_mod
-  use mom5cice5_locs_mod  
-  use mom5cice5_vars_mod
+  use soca_geom_mod
+  use soca_goms_mod
+  use soca_locs_mod  
+  use soca_vars_mod
   use type_linop
   use tools_interp, only: interp_horiz
   !use type_randgen, only: rng,initialize_sampling,create_randgen
@@ -17,19 +17,19 @@ module mom5cice5_fields
   implicit none
   private
 
-  public :: mom5cice5_field, &
+  public :: soca_field, &
        & create, delete, zeros, dirac, random, copy, &
        & self_add, self_schur, self_sub, self_mul, axpy, &
        & dot_prod, add_incr, diff_incr, &
        & read_file, write_file, gpnorm, fldrms, &
        & change_resol, interp_tl, interp_ad, convert_to_ug, convert_from_ug
-  public :: mom5cice5_field_registry
+  public :: soca_field_registry
 
   ! ------------------------------------------------------------------------------
 
   !> Fortran derived type to hold fields
-  type :: mom5cice5_field
-     type(mom5cice5_geom), pointer     :: geom                  !< MOM5 & CICE5 Geometry
+  type :: soca_field
+     type(soca_geom), pointer     :: geom                  !< MOM5 & CICE5 Geometry
      integer                           :: nf                    !< Number of fields
      character(len=128)                :: gridfname             !< Grid file name
      character(len=128)                :: cicefname             !< Fields file name for cice
@@ -52,15 +52,15 @@ module mom5cice5_fields
      type(linoptype)                   :: hinterp_op
      logical                           :: hinterp_initialized !True:  hinterp_op has been initialized
                                                               !False: hinterp_op not initialized
-  end type mom5cice5_field
+  end type soca_field
 
-#define LISTED_TYPE mom5cice5_field
+#define LISTED_TYPE soca_field
 
   !> Linked list interface - defines registry_t type
 #include "Utils/linkedList_i.f"
 
   !> Global registry
-  type(registry_t) :: mom5cice5_field_registry
+  type(registry_t) :: soca_field_registry
 
   ! ------------------------------------------------------------------------------
 contains
@@ -72,9 +72,9 @@ contains
 
   subroutine create(self, geom, vars)
     implicit none
-    type(mom5cice5_field), intent(inout)          :: self
-    type(mom5cice5_geom),  pointer, intent(in)    :: geom
-    type(mom5cice5_vars),  intent(in)          :: vars        
+    type(soca_field), intent(inout)          :: self
+    type(soca_geom),  pointer, intent(in)    :: geom
+    type(soca_vars),  intent(in)          :: vars        
 
     integer :: ivar
 
@@ -95,7 +95,7 @@ contains
        case ('sssoc','sstoc')
          self%numfld_per_fldname(ivar)=geom%nzo
        case default
-          call abor1_ftn("c_mom5cice5_fields: undefined variables")
+          call abor1_ftn("c_soca_fields: undefined variables")
        end select
     end do
 
@@ -125,7 +125,7 @@ contains
     self%sstoc=0.0_kind_real
 
     if (self%nf>11) then
-       call abor1_ftn ("mom5cice5_fields:create error number of fields")       
+       call abor1_ftn ("soca_fields:create error number of fields")       
     endif
     allocate(self%fldnames(self%nf))
     self%fldnames(:)=vars%fldnames(:)
@@ -138,7 +138,7 @@ contains
 
   subroutine delete(self)
     implicit none
-    type(mom5cice5_field), intent(inout) :: self
+    type(soca_field), intent(inout) :: self
 
     call check(self)
 
@@ -163,7 +163,7 @@ contains
 
   subroutine zeros(self)
     implicit none
-    type(mom5cice5_field), intent(inout) :: self
+    type(soca_field), intent(inout) :: self
 
     call check(self)
 
@@ -186,7 +186,7 @@ contains
   subroutine dirac(self, c_conf)
     use iso_c_binding
     implicit none
-    type(mom5cice5_field), intent(inout) :: self
+    type(soca_field), intent(inout) :: self
     type(c_ptr), intent(in)       :: c_conf   !< Configuration
     integer :: ndir,idir,ildir,ifdir,ioff
     integer,allocatable :: ixdir(:),iydir(:)
@@ -232,7 +232,7 @@ contains
   subroutine random(self)
 
     implicit none
-    type(mom5cice5_field), intent(inout) :: self
+    type(soca_field), intent(inout) :: self
 
     call check(self)
     call random_number(self%cicen); self%cicen=self%cicen-sum(self%cicen) !<--- NO GOOD !!!!
@@ -243,8 +243,8 @@ contains
 
   subroutine copy(self,rhs)
     implicit none
-    type(mom5cice5_field), intent(inout) :: self
-    type(mom5cice5_field), intent(in)    :: rhs
+    type(soca_field), intent(inout) :: self
+    type(soca_field), intent(in)    :: rhs
     integer :: nf
 
     call check_resolution(self, rhs)
@@ -272,8 +272,8 @@ contains
 
   subroutine self_add(self,rhs)
     implicit none
-    type(mom5cice5_field), intent(inout) :: self
-    type(mom5cice5_field), intent(in)    :: rhs
+    type(soca_field), intent(inout) :: self
+    type(soca_field), intent(in)    :: rhs
     integer :: nf
 
     call check_resolution(self, rhs)
@@ -299,8 +299,8 @@ contains
 
   subroutine self_schur(self,rhs)
     implicit none
-    type(mom5cice5_field), intent(inout) :: self
-    type(mom5cice5_field), intent(in)    :: rhs
+    type(soca_field), intent(inout) :: self
+    type(soca_field), intent(in)    :: rhs
     integer :: nf
 
     call check_resolution(self, rhs)
@@ -326,8 +326,8 @@ contains
 
   subroutine self_sub(self,rhs)
     implicit none
-    type(mom5cice5_field), intent(inout) :: self
-    type(mom5cice5_field), intent(in)    :: rhs
+    type(soca_field), intent(inout) :: self
+    type(soca_field), intent(in)    :: rhs
     integer :: nf
 
     call check_resolution(self, rhs)
@@ -353,7 +353,7 @@ contains
 
   subroutine self_mul(self,zz)
     implicit none
-    type(mom5cice5_field), intent(inout) :: self
+    type(soca_field), intent(inout) :: self
     real(kind=kind_real), intent(in) :: zz
 
     call check(self)
@@ -377,9 +377,9 @@ contains
 
   subroutine axpy(self,zz,rhs)
     implicit none
-    type(mom5cice5_field), intent(inout) :: self
+    type(soca_field), intent(inout) :: self
     real(kind=kind_real), intent(in) :: zz
-    type(mom5cice5_field), intent(in)    :: rhs
+    type(soca_field), intent(in)    :: rhs
     integer :: nf
 
     call check_resolution(self, rhs)
@@ -405,12 +405,12 @@ contains
 
   subroutine dot_prod(fld1,fld2,zprod)
     implicit none
-    type(mom5cice5_field), intent(in) :: fld1, fld2
+    type(soca_field), intent(in) :: fld1, fld2
     real(kind=kind_real), intent(out) :: zprod
     integer :: jj, kk
     call check_resolution(fld1, fld2)
     if (fld1%nf /= fld2%nf .or. fld1%geom%nzi /= fld2%geom%nzi) then
-       call abor1_ftn("mom5cice5_fields:field_prod error number of fields")
+       call abor1_ftn("soca_fields:field_prod error number of fields")
     endif
 
     zprod = 0.0_kind_real
@@ -440,8 +440,8 @@ contains
 
   subroutine add_incr(self,rhs)
     implicit none
-    type(mom5cice5_field), intent(inout) :: self
-    type(mom5cice5_field), intent(in)    :: rhs
+    type(soca_field), intent(inout) :: self
+    type(soca_field), intent(in)    :: rhs
 
     call check(self)
     call check(rhs)
@@ -455,9 +455,9 @@ contains
 
   subroutine diff_incr(lhs,x1,x2)
     implicit none
-    type(mom5cice5_field), intent(inout) :: lhs
-    type(mom5cice5_field), intent(in)    :: x1
-    type(mom5cice5_field), intent(in)    :: x2
+    type(soca_field), intent(inout) :: lhs
+    type(soca_field), intent(in)    :: x1
+    type(soca_field), intent(in)    :: x2
 
     call check(lhs)
     call check(x1)
@@ -480,10 +480,10 @@ contains
           lhs%qicnk = x1%qicnk - x2%qicnk
           lhs%sstoc = x1%sstoc - x2%sstoc         
        else
-          call abor1_ftn("mom5cice5_fields:diff_incr: not coded for low res increment yet")
+          call abor1_ftn("soca_fields:diff_incr: not coded for low res increment yet")
        endif
     else
-       call abor1_ftn("mom5cice5_fields:diff_incr: states not at same resolution")
+       call abor1_ftn("soca_fields:diff_incr: states not at same resolution")
     endif
 
     return
@@ -493,8 +493,8 @@ contains
 
   subroutine change_resol(fld,rhs)
     implicit none
-    type(mom5cice5_field), intent(inout) :: fld
-    type(mom5cice5_field), intent(in)    :: rhs
+    type(soca_field), intent(inout) :: fld
+    type(soca_field), intent(in)    :: rhs
     real(kind=kind_real), allocatable :: ztmp(:,:)
     real(kind=kind_real) :: dy1, dy2, ya, yb, dx1, dx2, xa, xb
     integer :: jx, jy, jf, iy, ia, ib
@@ -502,7 +502,7 @@ contains
     call check(fld)
     call check(rhs)
     call copy(fld,rhs)
-    !call abor1_ftn("mom5cice5_fields:field_resol: untested code")
+    !call abor1_ftn("soca_fields:field_resol: untested code")
 
     return
   end subroutine change_resol
@@ -517,10 +517,10 @@ contains
     use netcdf
     use ncutils
     use interface_ncread_fld, only: ncread_fld
-    use mom5cice5_thermo
+    use soca_thermo
 
     implicit none
-    type(mom5cice5_field), intent(inout) :: fld      !< Fields
+    type(soca_field), intent(inout) :: fld      !< Fields
     type(c_ptr), intent(in)       :: c_conf   !< Configuration
     type(datetime), intent(inout) :: vdate    !< DateTime
 
@@ -552,7 +552,7 @@ contains
        iread = config_get_int(c_conf,"read_from_file")
     endif
     if (iread==0) then
-       call log%warning("mom5cice5_fields:read_file: Inventing State")
+       call log%warning("soca_fields:read_file: Inventing State")
        call invent_state(fld,c_conf)
        sdate = config_get_string(c_conf,len(sdate),"date")
        WRITE(buf,*) 'validity date is: '//sdate
@@ -633,7 +633,7 @@ contains
     use ncutils
 
     implicit none
-    type(mom5cice5_field), intent(inout) :: fld    !< Fields
+    type(soca_field), intent(inout) :: fld    !< Fields
     type(c_ptr), intent(in)    :: c_conf           !< Configuration
     type(datetime), intent(inout) :: vdate         !< DateTime
     integer, parameter :: max_string_length=800    ! Yuk!
@@ -767,7 +767,7 @@ contains
 
   subroutine gpnorm(fld, nf, pstat) 
     implicit none
-    type(mom5cice5_field), intent(in) :: fld
+    type(soca_field), intent(in) :: fld
     integer, intent(in) :: nf
     real(kind=kind_real), intent(inout) :: pstat(3, nf) !> [average, min, max]
     real(kind=kind_real) :: zz
@@ -779,7 +779,7 @@ contains
     pstat(2,:)=maxval(fld%cicen)
     !pstat(3,:)=abs(maxval(fld%cicen)-minval(fld%cicen))
 
-    !call abor1_ftn("mom5cice5_fields_gpnorm: error not implemented")
+    !call abor1_ftn("soca_fields_gpnorm: error not implemented")
     !print *,'pstat=',pstat
     !call dot_prod(fld,fld,zz)    
     call fldrms(fld, zz)
@@ -796,7 +796,7 @@ contains
 
   subroutine fldrms(fld, prms)
     implicit none
-    type(mom5cice5_field), intent(in) :: fld
+    type(soca_field), intent(in) :: fld
     real(kind=kind_real), intent(out) :: prms
     integer :: jf,jy,jx,ii
     real(kind=kind_real) :: zz, ns, n2dfld
@@ -828,9 +828,9 @@ contains
 
   subroutine interp_tl(fld, locs, gom)
     implicit none
-    type(mom5cice5_field), intent(inout)   :: fld
-    type(mom5cice5_locs), intent(in)    :: locs
-    type(mom5cice5_goms), intent(inout) :: gom
+    type(soca_field), intent(inout)   :: fld
+    type(soca_locs), intent(in)    :: locs
+    type(soca_goms), intent(inout) :: gom
     character(2)                        :: op_type='TL'
 
     call check(fld)
@@ -843,9 +843,9 @@ contains
 
   subroutine interp_ad(fld, locs, gom)
     implicit none
-    type(mom5cice5_field), intent(inout) :: fld
-    type(mom5cice5_locs), intent(in)     :: locs
-    type(mom5cice5_goms), intent(inout)  :: gom
+    type(soca_field), intent(inout) :: fld
+    type(soca_locs), intent(in)     :: locs
+    type(soca_goms), intent(inout)  :: gom
     character(2)                        :: op_type='AD'
 
     call check(fld)
@@ -863,9 +863,9 @@ contains
     use module_namelist, only: namtype    
     use tools_const, only : deg2rad
 
-    type(mom5cice5_field), intent(inout)    :: fld
-    type(mom5cice5_locs), intent(in)     :: locs
-    type(mom5cice5_goms), intent(inout)  :: gom
+    type(soca_field), intent(inout)    :: fld
+    type(soca_locs), intent(in)     :: locs
+    type(soca_goms), intent(inout)  :: gom
     character(2), intent(in)             :: op_type !('TL' or 'AD')
 
     integer :: Nc, No, var_type_index, Ncat
@@ -943,10 +943,10 @@ contains
 
   subroutine convert_to_ug(self, ug)
     use unstructured_grid_mod
-    use mom5cice5_thermo
+    use soca_thermo
 
     implicit none
-    type(mom5cice5_field), intent(in) :: self
+    type(soca_field), intent(in) :: self
     type(unstructured_grid), intent(inout) :: ug
     real(kind=kind_real), allocatable :: zz(:)
     real(kind=kind_real), allocatable :: vv(:)    
@@ -1022,7 +1022,7 @@ contains
   subroutine convert_from_ug(self, ug)
     use unstructured_grid_mod
     implicit none
-    type(mom5cice5_field), intent(inout) :: self
+    type(soca_field), intent(inout) :: self
     type(unstructured_grid), intent(in) :: ug
     type(column_element), pointer :: current
     real(kind=kind_real) :: dx, dy
@@ -1069,7 +1069,7 @@ contains
   function common_vars(x1, x2)
 
     implicit none
-    type(mom5cice5_field), intent(in) :: x1, x2
+    type(soca_field), intent(in) :: x1, x2
     integer :: common_vars
     integer :: jf
 
@@ -1092,11 +1092,11 @@ contains
   subroutine check_resolution(x1, x2)
 
     implicit none
-    type(mom5cice5_field), intent(in) :: x1, x2
+    type(soca_field), intent(in) :: x1, x2
 
     ! NEEDS WORK !!!
     if (x1%geom%nx /= x2%geom%nx .or.  x1%geom%ny /= x2%geom%ny ) then
-       call abor1_ftn ("mom5cice5_fields: resolution error")
+       call abor1_ftn ("soca_fields: resolution error")
     endif
     call check(x1)
     call check(x2)
@@ -1107,7 +1107,7 @@ contains
 
   subroutine check(self)
     implicit none
-    type(mom5cice5_field), intent(in) :: self
+    type(soca_field), intent(in) :: self
     logical :: bad
 
     bad = .false.
@@ -1117,11 +1117,11 @@ contains
 
     if (bad) then
        write(0,*)'nx, ny, nf, nzi, nzo = ',self%geom%nx,self%geom%ny,self%nf,self%geom%nzi,self%geom%nzo
-       call abor1_ftn ("mom5cice5_fields: field not consistent")
+       call abor1_ftn ("soca_fields: field not consistent")
     endif
 
   end subroutine check
 
   ! ------------------------------------------------------------------------------
 
-end module mom5cice5_fields
+end module soca_fields

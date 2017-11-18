@@ -1,6 +1,6 @@
 
-#ifndef MOM5CICE5_MODEL_OBSFRACTIONTLAD_H_
-#define MOM5CICE5_MODEL_OBSFRACTIONTLAD_H_
+#ifndef SOCA_MODEL_OBSFRACTIONTLAD_H_
+#define SOCA_MODEL_OBSFRACTIONTLAD_H_
 
 #include <string>
 #include <vector>
@@ -18,7 +18,7 @@ namespace util {
   class DateTime;
 }
 
-namespace mom5cice5 {
+namespace soca {
   class Gom;
   class ObsBias;
   class ObsBiasIncrement;
@@ -32,7 +32,7 @@ namespace mom5cice5 {
 
   class ObsFractionTLAD : public oops::LinearObsOperBase<Traits>, private util::ObjectCounter<ObsFractionTLAD> {
   public:
-    static const std::string classname() {return "mom5cice5::ObsFractionTLAD";}
+    static const std::string classname() {return "soca::ObsFractionTLAD";}
 
     //ObsFractionTLAD(const ObsSpace &, const int &);
     ObsFractionTLAD(const ObsSpace &, const eckit::Configuration &);    
@@ -56,5 +56,5 @@ namespace mom5cice5 {
   };
   // -----------------------------------------------------------------------------
 
-}  // namespace mom5cice5
-#endif  // MOM5CICE5_MODEL_OBSFRACTIONTLAD_H_
+}  // namespace soca
+#endif  // SOCA_MODEL_OBSFRACTIONTLAD_H_

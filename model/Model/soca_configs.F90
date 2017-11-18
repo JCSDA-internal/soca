@@ -1,29 +1,29 @@
 
 !> Structure holding configuration variables for the  model
 
-module mom5cice5_configs
+module soca_configs
 
   use kinds
   implicit none
   private
-  public :: mom5cice5_config
-  public :: mom5cice5_config_registry
+  public :: soca_config
+  public :: soca_config_registry
 
   !> Fortran derived type to hold configuration data for the  model
-  type :: mom5cice5_config
+  type :: soca_config
      integer :: nx     !< Zonal grid dimension
      integer :: ny     !< Meridional grid dimension
      ! dimensional parameters
      real(kind=kind_real) :: dt0       !< dimensional time (seconds)
-  end type mom5cice5_config
+  end type soca_config
 
-#define LISTED_TYPE mom5cice5_config
+#define LISTED_TYPE soca_config
 
   !> Linked list interface - defines registry_t type
 #include "Utils/linkedList_i.f"
 
   !> Global registry
-  type(registry_t) :: mom5cice5_config_registry
+  type(registry_t) :: soca_config_registry
 
   ! ------------------------------------------------------------------------------
 contains
@@ -31,4 +31,4 @@ contains
   !> Linked list implementation
 #include "Utils/linkedList_c.f"
 
-end module mom5cice5_configs
+end module soca_configs
