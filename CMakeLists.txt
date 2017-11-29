@@ -37,6 +37,11 @@ include_directories( ${Boost_INCLUDE_DIR} )
 ecbuild_use_package( PROJECT ioda VERSION 0.1.0 REQUIRED )
 include_directories( ${IODA_INCLUDE_DIRS} )
 
+# ufo
+ecbuild_use_package( PROJECT ufo VERSION 0.1.0 REQUIRED )
+include_directories( ${UFO_INCLUDE_DIRS} )
+MESSAGE( STATUS "ufo include dirs: " ${UFO_INCLUDE_DIRS} )
+
 # oops
 ecbuild_use_package( PROJECT oops VERSION 0.1.0 REQUIRED )
 include_directories( ${OOPS_INCLUDE_DIRS} )
@@ -44,7 +49,7 @@ MESSAGE( STATUS "oops include dirs: " ${OOPS_INCLUDE_DIRS} )
 ################################################################################
 # Export package info
 ################################################################################
-list( APPEND SOCA_TPLS ioda oops )
+list( APPEND SOCA_TPLS ufo ioda oops )
 foreach( _tpl ${SOCA_TPLS} )
 string( TOUPPER ${_tpl} TPL )
 list( APPEND SOCA_EXTRA_DEFINITIONS   ${${TPL}_DEFINITIONS}  ${${TPL}_TPL_DEFINITIONS}  )

@@ -9,7 +9,7 @@ list( APPEND oops_soca_src_files
 ./Fields/Fields.h
 ./Fields/soca_fields.F90
 ./Fields/soca_fields_interface.F90
-./Fields/soca_invent_state.f90
+./Fields/soca_invent_state.F90
 
 #State
 ./State/State.cc
@@ -31,7 +31,7 @@ list( APPEND oops_soca_src_files
 ./Model/c_soca_delete.F90
 ./Model/c_soca_prepare_integration.F90
 ./Model/c_soca_propagate.F90
-./Model/propagate.f90
+./Model/propagate.F90
 ./Model/soca_configs.F90
 
 #ModelAtLocations
@@ -46,7 +46,7 @@ list( APPEND oops_soca_src_files
 ./ObsSpace/ObsHelp.h
 ./ObsSpace/soca_obs_data.F90
 ./ObsSpace/c_soca_obs_data.F90
-./ObsSpace/generate_locations.f90
+./ObsSpace/generate_locations.F90
 
 #Locations
 ./Locations/Loc.h
@@ -73,7 +73,7 @@ list( APPEND oops_soca_src_files
 ./ObsVector/soca_obs_vectors.F90
 
 #Utils
-./Utils/soca_constants.f90
+./Utils/soca_constants.F90
 ./Utils/soca_thermo.F90
 ./Utils/soca_ncutils_mod.F90
 ./Utils/soca_balanceop.F90
