@@ -10,6 +10,11 @@ subroutine c_soca_setup(c_confspec, c_key_geom, c_key_confdata) bind (c,name='so
   use duration_mod
   use kinds
   use fckit_log_module, only : fckit_log
+  use mpi,             only: mpi_comm_world
+  use mpp_mod,         only: mpp_init
+  use mpp_domains_mod, only: mpp_domains_init
+  !use mpp_domains_mod, only: mpp_domains_set_stack_size
+  use fms_io_mod,      only: fms_io_init
 
   implicit none
   type(c_ptr), intent(in)    :: c_confspec         !< pointer to object of class Config
@@ -27,6 +32,10 @@ subroutine c_soca_setup(c_confspec, c_key_geom, c_key_confdata) bind (c,name='so
 
   ! ------------------------------------------------------------------------------
 
+  !call mpp_init(localcomm=mpi_comm_world)
+  !call mpp_domains_init
+  !call fms_io_init
+  
   call soca_geom_registry%get(c_key_geom, geom)
   call soca_config_registry%init()
   call soca_config_registry%add(c_key_confdata)

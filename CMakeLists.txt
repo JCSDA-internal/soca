@@ -46,6 +46,16 @@ MESSAGE( STATUS "ufo include dirs: " ${UFO_INCLUDE_DIRS} )
 ecbuild_use_package( PROJECT oops VERSION 0.1.0 REQUIRED )
 include_directories( ${OOPS_INCLUDE_DIRS} )
 MESSAGE( STATUS "oops include dirs: " ${OOPS_INCLUDE_DIRS} )
+
+# MOM6 SIS2
+include_directories( ${MOM6_INCLUDE_DIRS} )
+include_directories( ${MOM6_HEADER_DIRS} )
+include_directories( ${MOM6_MACROS_DIRS} )
+
+# FMS
+include_directories( ${FMS_INCLUDE_DIRS} )
+
+
 ################################################################################
 # Export package info
 ################################################################################

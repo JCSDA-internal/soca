@@ -5,9 +5,11 @@ module soca_geom_mod
   use iso_c_binding
   use config_mod
   use kinds
-  use netcdf
+  !use netcdf
   use ncutils
 
+  !use MOM_grid
+  
   implicit none
   private
   public :: soca_geom
@@ -67,6 +69,11 @@ contains
   subroutine c_soca_geo_setup(c_key_self, c_conf) bind(c,name='soca_geo_setup_f90')
     use netcdf
     use interface_ncread_fld, only: ncread_fld
+    use soca_mom6sis2
+    use constants_mod,           only: constants_init    
+    use ocean_model_mod,         only: ocean_public_type, ocean_state_type, ice_ocean_boundary_type
+    use ice_model_mod,           only: ice_data_type
+    
     implicit none
     integer(c_int), intent(inout) :: c_key_self
     type(c_ptr), intent(in)    :: c_conf
@@ -74,11 +81,33 @@ contains
     integer :: varid, ncid, nxdimid, nydimid
     character(len=128)  :: varname
     integer :: jj, nx0, ny0
-    integer :: start2(2), count2(2)
+    integer :: start2(2), count2(2), pe
+    type (ocean_public_type) :: Ocean_
+    type (ocean_state_type), pointer :: Ocean_state_ => NULL()
+    type   (ice_data_type) :: Ice_
     
     call soca_geom_registry%init()
     call soca_geom_registry%add(c_key_self)
     call soca_geom_registry%get(c_key_self,self)
+
+    call constants_init
+    call soca_models_init(Ocean_, Ocean_state_, Ice_) ! switch ocean_state_type to public in
+                                                  ! ocean_model_MOM.F90
+
+    print *,'Ocean_state_%grid%geoLonT=',Ocean_state_%grid%geoLonT(1,1)
+    print *,'Ocean_state_%grid%geoLonT=',Ice_%part_size(1,1,1)
+    
+    
+    print *,'============================================================='
+    print *,'============================================================='
+    print *,'============================================================='
+    print *,'===================out of coupler init======================='
+    print *,'============================================================='
+    print *,'============================================================='
+    print *,'============================================================='
+    
+    !call ocean_model_restart(Ocean_state_)!, timestamp)
+    !call ice_model_restart(Ice_)
 
     self%nx = config_get_int(c_conf, "nx")
     self%ny = config_get_int(c_conf, "ny")
@@ -145,10 +174,18 @@ contains
   ! ------------------------------------------------------------------------------
 
   subroutine c_soca_geo_delete(c_key_self) bind(c,name='soca_geo_delete_f90')
-
+    use soca_mom6sis2
+    use mpp_mod,         only: mpp_exit    
+    use fms_io_mod,      only: fms_io_init, fms_io_exit    
     implicit none
     integer(c_int), intent(inout) :: c_key_self     
     type(soca_geom), pointer :: self
+
+    !call fms_io_exit
+    print *,'================ THE END ====================='
+
+
+    call soca_models_end()
 
     call soca_geom_registry%get(c_key_self, self)
     if (allocated(self%lon)) deallocate(self%lon)
@@ -159,6 +196,11 @@ contains
     if (allocated(self%cell_area)) deallocate(self%cell_area)
     call soca_geom_registry%remove(c_key_self)
 
+
+!call mpp_domains_exit
+!call mpp_exit
+
+    
   end subroutine c_soca_geo_delete
 
   ! ------------------------------------------------------------------------------

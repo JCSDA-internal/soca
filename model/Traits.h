@@ -20,6 +20,7 @@
 #include "model/Model/Model.h"
 #include "model/State/State.h"
 #include "model/Variables/Variables.h"
+#include "model/Run/Run.h"
 
 namespace soca {
 
@@ -28,6 +29,8 @@ struct Traits {
   
   typedef soca::Geometry            Geometry;
   typedef soca::Variables           Variables;
+
+  typedef soca::Run                 Run;  
 
   typedef soca::State               State;
   typedef soca::Model               Model;

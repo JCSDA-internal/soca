@@ -7,7 +7,8 @@
 #include <cmath>
 
 #include <boost/test/unit_test.hpp>
-#include "oops/runs/Run.h"
+//#include "oops/runs/Run.h"
+#include "model/Run/Run.h"
 #include "model/Traits.h"
 #include "model/instantiateCovarFactory.h"
 #include "model/instantiateObsFactory.h"
