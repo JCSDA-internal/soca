@@ -33,22 +33,23 @@ module soca_geom_mod
   !>   level nzs+nzi+1  ---- Ice/Ocean interface level   Tfreeze (from S)
   !>   level nzs+nzi+2  ---- Upper level Ocean           SST    
   !>
-  
-  type :: soca_geom
+
+  type :: soca_model_geom
      integer :: nx
      integer :: ny
-     integer :: nzs                                      !< Number of snow levels (!!!! Fields hard coded for 1 level !!!!)
-     integer :: nzi                                      !< Number of ice levels     
-     integer :: nzo                                      !< Number of ocean levels
-     integer :: ncat                                     !< Number of ice thickness categories
-     character(len=128) :: gridfname                     !< Name of file containing the grid specs
-     character(len=128) :: icemaskfname                  !< Name of file containing the grid specs
-     real(kind=kind_real), allocatable :: lon(:,:)       !< 2D array of longitude 
-     real(kind=kind_real), allocatable :: lat(:,:)       !< 2D array of latitude
-     integer,              allocatable :: level(:)       !< 1D array of levels. See beginning of script for def.
-     real(kind=kind_real), allocatable :: mask(:,:)      !< 0 = land 1 = ocean surface mask only
-     real(kind=kind_real), allocatable :: icemask(:,:)   !< 0 = land/liquid ocean; 1 = some ice
-     real(kind=kind_real), allocatable :: cell_area(:,:) !<
+     integer :: nz
+     integer :: ncat
+     real(kind=kind_real), pointer :: lon(:,:)       !< 2D array of longitude 
+     real(kind=kind_real), pointer :: lat(:,:)       !< 2D array of latitude
+     real(kind=kind_real), pointer :: z(:)         !<      
+     real(kind=kind_real), pointer :: mask2d(:,:)      !< 0 = land 1 = ocean surface mask only
+     real(kind=kind_real), pointer :: cell_area(:,:) !<
+  end type soca_model_geom
+
+  type :: soca_geom
+     type( soca_model_geom ) :: ocean
+     type( soca_model_geom ) :: ice
+     type( soca_model_geom ) :: snow
   end type soca_geom
 
 #define LISTED_TYPE soca_geom
@@ -70,9 +71,15 @@ contains
     use netcdf
     use interface_ncread_fld, only: ncread_fld
     use soca_mom6sis2
-    use constants_mod,           only: constants_init    
-    use ocean_model_mod,         only: ocean_public_type, ocean_state_type, ice_ocean_boundary_type
-    use ice_model_mod,           only: ice_data_type
+    use MOM_grid,                  only : MOM_grid_init, MOM_grid_end, ocean_grid_type
+    use MOM_file_parser,    only: get_param, log_version, param_file_type
+    use MOM_get_input,      only: Get_MOM_Input, directories
+    use MOM_domains,              only : MOM_domains_init, clone_MOM_domain
+    use MOM_io,                   only : MOM_io_init
+    use MOM_hor_index,             only : hor_index_type, hor_index_init    
+    !use constants_mod,           only: constants_init    
+    !use ocean_model_mod,         only: ocean_public_type, ocean_state_type, ice_ocean_boundary_type
+    !use ice_model_mod,           only: ice_data_type
     
     implicit none
     integer(c_int), intent(inout) :: c_key_self
@@ -82,63 +89,30 @@ contains
     character(len=128)  :: varname
     integer :: jj, nx0, ny0
     integer :: start2(2), count2(2), pe
-    type (ocean_public_type) :: Ocean_
-    type (ocean_state_type), pointer :: Ocean_state_ => NULL()
-    type   (ice_data_type) :: Ice_
+
+    type(ocean_grid_type) :: G          !< The horizontal grid type
+    type(param_file_type) :: param_file           !< A structure to parse for run-time parameters
+    type(directories)     :: dirs_tmp             !< A structure containing several relevant directory paths
+    type(hor_index_type)            :: HI  !  A hor_index_type for array extents
+    logical :: global_indexing   ! If true use global horizontal index values instead
     
     call soca_geom_registry%init()
     call soca_geom_registry%add(c_key_self)
     call soca_geom_registry%get(c_key_self,self)
 
-    call constants_init
-    call soca_models_init(Ocean_, Ocean_state_, Ice_) ! switch ocean_state_type to public in
-                                                  ! ocean_model_MOM.F90
+    !call get_MOM_Input(param_file, dirs_tmp)!, check_params=.false.)
+    !call MOM_domains_init(G%domain, param_file)!, symmetric=symmetric)
+    !!call MOM_debugging_init(param_file)
+    !!call diag_mediator_infrastructure_init()
+    !call MOM_io_init(param_file)
 
-    print *,'Ocean_state_%grid%geoLonT=',Ocean_state_%grid%geoLonT(1,1)
-    print *,'Ocean_state_%grid%geoLonT=',Ice_%part_size(1,1,1)
+    !call hor_index_init(G%Domain, HI, param_file, &
+     !                 local_indexing=.not.global_indexing)
     
-    
-    print *,'============================================================='
-    print *,'============================================================='
-    print *,'============================================================='
-    print *,'===================out of coupler init======================='
-    print *,'============================================================='
-    print *,'============================================================='
-    print *,'============================================================='
-    
-    !call ocean_model_restart(Ocean_state_)!, timestamp)
-    !call ice_model_restart(Ice_)
-
-    self%nx = config_get_int(c_conf, "nx")
-    self%ny = config_get_int(c_conf, "ny")
-    self%nzo = config_get_int(c_conf, "nzo")      ! Number of ocean levels
-    self%nzi = config_get_int(c_conf, "nzi")      ! Number of sea-ice levels
-    self%nzs = config_get_int(c_conf, "nzs")      ! Number of snow levels
-    self%ncat = config_get_int(c_conf, "ncat")
-    self%gridfname = config_get_string(c_conf, len(self%gridfname), "gridfname")
-    self%icemaskfname = config_get_string(c_conf, len(self%icemaskfname), "icemaskfname")
-
-    allocate(self%lon(self%nx,self%ny))
-    allocate(self%lat(self%nx,self%ny))
-    allocate(self%level(self%nzs+self%nzi+self%nzo+2))    
-    allocate(self%mask(self%nx,self%ny))
-    allocate(self%icemask(self%nx,self%ny))
-    allocate(self%cell_area(self%nx,self%ny))
-
-    !do jj = 0,size(self%level, 1)
-    do jj = 1,size(self%level, 1)       
-       self%level(jj) = jj
-    end do
-    nx0=1 !20
-    ny0=1 !60
-    start2 = (/nx0,ny0/)
-    count2 = (/self%nx,self%ny/)
-
-    varname='x_T'; call ncread_fld(self%gridfname, varname, self%lon, start2, count2)
-    varname='y_T'; call ncread_fld(self%gridfname, varname, self%lat, start2, count2)
-    varname='wet'; call ncread_fld(self%gridfname, varname, self%mask, start2, count2)
-    varname='area_T'; call ncread_fld(self%gridfname, varname, self%cell_area, start2, count2)
-    varname='iceumask'; call ncread_fld(self%icemaskfname, varname, self%icemask, start2, count2)
+    !print *,'calling MOM_grid_init'
+    !call MOM_grid_init(G, param_file)
+    !print *,'=============isc=',G%isc,G%isd_global,maxval(G%mask2dT),G%geoLonT
+    !call soca_simple_init()
 
   end subroutine c_soca_geo_setup
 
@@ -155,52 +129,43 @@ contains
     call soca_geom_registry%add(c_key_other)
     call soca_geom_registry%get(c_key_other, other)
     call soca_geom_registry%get(c_key_self , self )
-    other%nx = self%nx
-    other%ny = self%ny
-    other%nzo = self%nzo
-    other%nzi = self%nzi
-    other%nzs = self%nzs
-    other%ncat = self%ncat
-    other%gridfname = self%gridfname
-    other%lon = self%lon
-    other%lat = self%lat
-    other%level = self%level
-    other%mask = self%mask
-    other%icemask = self%icemask
-    other%cell_area = self%cell_area
+
+!!$    other%nx = self%nx
+!!$    other%ny = self%ny
+!!$    other%nzo = self%nzo
+!!$    other%nzi = self%nzi
+!!$    other%nzs = self%nzs
+!!$    other%ncat = self%ncat
+!!$    other%gridfname = self%gridfname
+!!$    other%lon = self%lon
+!!$    other%lat = self%lat
+!!$    other%level = self%level
+!!$    other%mask = self%mask
+!!$    other%icemask = self%icemask
+!!$    other%cell_area = self%cell_area
 
   end subroutine c_soca_geo_clone
 
   ! ------------------------------------------------------------------------------
 
   subroutine c_soca_geo_delete(c_key_self) bind(c,name='soca_geo_delete_f90')
-    use soca_mom6sis2
-    use mpp_mod,         only: mpp_exit    
+    !use soca_mom6sis2
+    !use mpp_mod,         only: mpp_exit    
     use fms_io_mod,      only: fms_io_init, fms_io_exit    
     implicit none
     integer(c_int), intent(inout) :: c_key_self     
     type(soca_geom), pointer :: self
 
-    !call fms_io_exit
-    print *,'================ THE END ====================='
-
-
-    call soca_models_end()
-
     call soca_geom_registry%get(c_key_self, self)
-    if (allocated(self%lon)) deallocate(self%lon)
-    if (allocated(self%lat)) deallocate(self%lat)
-    if (allocated(self%level)) deallocate(self%level)    
-    if (allocated(self%mask)) deallocate(self%mask)
-    if (allocated(self%icemask)) deallocate(self%icemask)
-    if (allocated(self%cell_area)) deallocate(self%cell_area)
+    !if (allocated(self%lon)) deallocate(self%lon)
+    !if (allocated(self%lat)) deallocate(self%lat)
+    !if (allocated(self%level)) deallocate(self%level)    
+    !if (allocated(self%mask)) deallocate(self%mask)
+    !if (allocated(self%icemask)) deallocate(self%icemask)
+    !if (allocated(self%cell_area)) deallocate(self%cell_area)
     call soca_geom_registry%remove(c_key_self)
 
 
-!call mpp_domains_exit
-!call mpp_exit
-
-    
   end subroutine c_soca_geo_delete
 
   ! ------------------------------------------------------------------------------
@@ -217,11 +182,11 @@ contains
     type(soca_geom), pointer :: self
 
     call soca_geom_registry%get(c_key_self , self )
-    c_nx = self%nx
-    c_ny = self%ny
-    c_nzo = self%nzo
-    c_nzi = self%nzi
-    c_ncat = self%ncat
+!!$    c_nx = self%nx
+!!$    c_ny = self%ny
+!!$    c_nzo = self%nzo
+!!$    c_nzi = self%nzi
+!!$    c_ncat = self%ncat
 
   end subroutine c_soca_geo_info
 

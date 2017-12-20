@@ -468,11 +468,11 @@ subroutine soca_fieldnum_c(c_key_fld, nx, ny, nzo, nzi, ncat, nf) bind(c,name='s
 
   call soca_field_registry%get(c_key_fld,fld)
 
-  nx = fld%geom%nx
-  ny = fld%geom%ny
-  nzo = fld%geom%nzo
-  nzi = fld%geom%nzi
-  ncat = fld%geom%ncat
+  nx = fld%geom%ocean%nx
+  ny = fld%geom%ocean%ny
+  nzo = fld%geom%ocean%nz
+  nzi = fld%geom%ice%nz
+  ncat = fld%geom%ocean%ncat
   nf = fld%nf
 
 

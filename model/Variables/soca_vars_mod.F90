@@ -47,8 +47,8 @@ contains
     do jj=1,self%nv
        if (cvars(jj)/="cicen" .and. cvars(jj)/="hicen" .and. cvars(jj)/="vicen" &
             .and. cvars(jj)/="hsnon" .and. cvars(jj)/="vsnon".and. cvars(jj)/="tsfcn" &
-            .and. cvars(jj)/="qsnon" .and. cvars(jj)/="sicnk".and. cvars(jj)/="sssoc" &
-            .and. cvars(jj)/="qicnk" .and. cvars(jj)/="sstoc") then            
+            .and. cvars(jj)/="qsnon" .and. cvars(jj)/="sicnk".and. cvars(jj)/="socn" &
+            .and. cvars(jj)/="qicnk" .and. cvars(jj)/="tocn") then            
           
           call abor1_ftn ("soca_vars_setup: unknown field")
        end if
@@ -87,9 +87,9 @@ contains
        self%fldnames(6) = "tsfcn"
        self%fldnames(7) = "qsnon"
        self%fldnames(8) = "sicnk"
-       self%fldnames(9) = "sssoc"
+       self%fldnames(9) = "socn"
        self%fldnames(10) = "qicnk"
-       self%fldnames(11) = "sstoc"
+       self%fldnames(11) = "tocn"
     case default
        call abor1_ftn("c_soca_vars_create: undefined variables")
     end select

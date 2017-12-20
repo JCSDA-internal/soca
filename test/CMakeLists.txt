@@ -44,19 +44,21 @@ file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/Data)
 
 # Tests that create data other tests might use (should check what is really needed...)
 
-#ecbuild_add_test( TARGET test_soca_truth
-#                  TYPE SCRIPT
-#                  COMMAND "compare.sh"
-#                  ARGS "${CMAKE_BINARY_DIR}/bin/soca_forecast.x testinput/truth.json"
-#                       testoutput/truth.test
-#                  DEPENDS soca_forecast.x )
+ecbuild_add_test( TARGET test_soca_truth
+                  TYPE SCRIPT
+		  MPI     4		  
+                  COMMAND "compare.sh"
+                  ARGS "${CMAKE_BINARY_DIR}/bin/soca_forecast.x testinput/truth.json"
+                       testoutput/truth.test
+                  DEPENDS soca_forecast.x )
 
-#ecbuild_add_test( TARGET test_soca_forecast
-#                  TYPE SCRIPT
-#                  COMMAND "compare.sh"
-#                  ARGS "${CMAKE_BINARY_DIR}/bin/soca_forecast.x testinput/forecast.yml"
-#                       testoutput/forecast.test
-#                  DEPENDS soca_forecast.x )
+ecbuild_add_test( TARGET test_soca_forecast
+                  TYPE SCRIPT
+		  MPI     4		  		  
+                  COMMAND "compare.sh"
+                  ARGS "${CMAKE_BINARY_DIR}/bin/soca_forecast.x testinput/forecast.yml"
+                       testoutput/forecast.test
+                  DEPENDS soca_forecast.x )
 
 #ecbuild_add_test( TARGET test_soca_makeobs3d
 #                  TYPE SCRIPT
@@ -80,17 +82,19 @@ ecbuild_add_test( TARGET  test_soca_geometry
 #                  ARGS    "testinput/interfaces.json"
 #                  LIBS    soca )
 
-#ecbuild_add_test( TARGET  test_soca_variables
-#                  BOOST
-#                  SOURCES executables/TestVariables.cc
-#                  ARGS    "testinput/interfaces.json"
-#                  LIBS    soca )
+ecbuild_add_test( TARGET  test_soca_variables
+                  BOOST
+		  MPI     4		  
+                  SOURCES executables/TestVariables.cc
+                  ARGS    "testinput/interfaces.json"
+                  LIBS    soca )
 
-#ecbuild_add_test( TARGET  test_soca_state
-#                  BOOST
-#                  SOURCES executables/TestState.cc
-#                  ARGS    "testinput/interfaces.json"
-#                  LIBS    soca )
+ecbuild_add_test( TARGET  test_soca_state
+                  BOOST
+		  MPI     4		  
+                  SOURCES executables/TestState.cc
+                  ARGS    "testinput/interfaces.json"
+                  LIBS    soca )
 		  
 #ecbuild_add_test( TARGET  test_soca_modelaux
 #                  BOOST

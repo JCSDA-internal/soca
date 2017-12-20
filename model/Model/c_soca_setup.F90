@@ -41,8 +41,8 @@ subroutine c_soca_setup(c_confspec, c_key_geom, c_key_confdata) bind (c,name='so
   call soca_config_registry%add(c_key_confdata)
   call soca_config_registry%get(c_key_confdata, config)
 
-  config%nx  = geom%nx
-  config%ny  = geom%ny
+  config%nx  = geom%ocean%nx
+  config%ny  = geom%ocean%ny
   write(record,*)'c_soca_setup: nx, ny=',config%nx,config%ny
   call fckit_log%info(record)
 

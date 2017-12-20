@@ -38,9 +38,9 @@ contains
     dxi%qsnon = A*dx%qsnon    ! snow temperature from enthalpy    
     dxi%sicnk = dx%sicnk
     dxi%qicnk = (dx%qicnk - B * dx%sicnk)/C
-    dxi%sssoc = dx%sssoc
+    dxi%socn = dx%socn
     !dxi%tlioc = dx%tlioc
-    dxi%sstoc = -mu*aice * dx%sssoc -mu*xb%sssoc * sum(dx%cicen,3)! + (1.0_kind_real-aice) * dx%tlioc
+    dxi%tocn = -mu*aice * dx%socn -mu*xb%socn * sum(dx%cicen,3)! + (1.0_kind_real-aice) * dx%tlioc
     return
   end subroutine Kop_inv
 
@@ -65,7 +65,7 @@ contains
 !!$    C = 0.0_kind_real
 !!$
 !!$    call zeros(dxi_ad)
-!!$    dxi_ad%cicen = dx_ad%cicen + xb%hicen * dx_ad%vicen! + xb%hsnon * dx_ad%vsnon - mu*xb%sssoc * dx_ad%sstoc
+!!$    dxi_ad%cicen = dx_ad%cicen + xb%hicen * dx_ad%vicen! + xb%hsnon * dx_ad%vsnon - mu*xb%socn * dx_ad%tocn
 !!$    dxi_ad%hicen = dx_ad%hicen + xb%cicen * dx_ad%vicen
 !!$    dxi_ad%vicen = 0.0_kind_real
 !!$    dxi_ad%hsnon = dx_ad%hsnon + xb%cicen * dx_ad%vsnon
@@ -74,9 +74,9 @@ contains
 !!$    dxi_ad%qsnon = 0.0_kind_real 
 !!$    dxi_ad%sicnk = 0.0_kind_real 
 !!$    dxi_ad%qicnk = 0.0_kind_real 
-!!$    dxi_ad%sssoc = dx_ad%sssoc - mu*aice * dx_ad%sstoc
-!!$    dxi_ad%tlioc = dx_ad%tlioc + (1.0_kind_real-aice) * dx_ad%sstoc
-!!$    dxi_ad%sstoc = 0.0_kind_real
+!!$    dxi_ad%socn = dx_ad%socn - mu*aice * dx_ad%tocn
+!!$    dxi_ad%tlioc = dx_ad%tlioc + (1.0_kind_real-aice) * dx_ad%tocn
+!!$    dxi_ad%tocn = 0.0_kind_real
 !!$
 !!$    deallocate(aice)
 !!$
