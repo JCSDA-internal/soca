@@ -10,11 +10,13 @@ namespace soca {
   // -----------------------------------------------------------------------------
   Geometry::Geometry(const eckit::Configuration & conf) {
     const eckit::Configuration * configc = &conf;
+    std::cout << "***************************** constructor 1" << std::endl;
     soca_geo_setup_f90(keyGeom_, &configc);
   }
   // -----------------------------------------------------------------------------
   Geometry::Geometry(const Geometry & other) {
     const int key_geo = other.keyGeom_;
+    std::cout << "***************************** constructor 2 (clone)" << std::endl;    
     soca_geo_clone_f90(key_geo, keyGeom_);
   }
   // -----------------------------------------------------------------------------

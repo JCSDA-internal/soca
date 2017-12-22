@@ -3,6 +3,7 @@ list( APPEND oops_soca_src_files
 ./Geometry/Geometry.cc
 ./Geometry/Geometry.h
 ./Geometry/soca_geom_mod.F90
+./Geometry/soca_model_geom_type.F90
 #./Geometry/soca_geom_mom6.F90
 
 #Fields

@@ -6,7 +6,7 @@ subroutine c_soca_prepare_integration(c_key_conf, c_key_state) &
   use soca_fields
   use soca_configs
   use soca_constants
-  use soca_mom6sis2, only : soca_models_init, soca_models_end, Coupled
+  !use soca_mom6sis2, only : soca_models_init, soca_models_end, Coupled
 use mpi,             only: mpi_comm_world
 use mpp_mod,         only: mpp_init
 use fms_mod,                 only: fms_init

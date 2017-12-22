@@ -17,7 +17,7 @@ module soca_fields
   use land_model_mod,          only: land_data_type    
   use ocean_model_mod,         only: ocean_public_type, ocean_state_type, ice_ocean_boundary_type
   use ice_model_mod,           only: ice_data_type
-  use soca_mom6sis2, only : soca_models_init, soca_models_end, Coupled
+  use soca_mom6sis2, only : Coupled
   implicit none
   private
 
@@ -77,7 +77,7 @@ contains
   ! ------------------------------------------------------------------------------
 
   subroutine create(self, geom, vars)
-    use soca_mom6sis2, only: soca_models_init, soca_models_end, Coupled
+    use soca_mom6sis2, only: Coupled
     use mpp_io_mod,              only: mpp_open, mpp_close
     use SIS_hor_grid, only: set_hor_grid, SIS_hor_grid_type
     !use SIS_get_input, only:directories, Get_SIS_Input
@@ -120,7 +120,7 @@ contains
 
     !call fms_io_init
     print *,'=============== in create ======================='
-    call soca_models_init(self%AOGCM)
+    !call soca_models_init(self%AOGCM)
     !call fms_io_exit
     
 !!$    inquire(file="EGRESS", exist=self%AOGCM%initialized)
