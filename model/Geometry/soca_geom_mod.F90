@@ -86,6 +86,8 @@ contains
     self%snow%ny = ny
     self%snow%nz = 1      ! HARDCODED ... NEED TO FIX
     self%snow%ncat = self%ice%ncat    ! HARDCODED ... NEED TO FIX
+
+    call self%ocean%infotofile()
     
   end subroutine c_soca_geo_setup
 
@@ -107,8 +109,6 @@ contains
     call self%ice%clone(other%ice)
     call self%snow%clone(other%snow)        
 
-    call self%ocean%print()
-    
   end subroutine c_soca_geo_clone
 
   ! ------------------------------------------------------------------------------
@@ -125,24 +125,21 @@ contains
     call soca_geom_end(self%ocean%G, self%ocean%GV)
     call soca_geom_registry%remove(c_key_self)
 
+    !self => NULL()
+    
   end subroutine c_soca_geo_delete
 
   ! ------------------------------------------------------------------------------
 
-  subroutine c_soca_geo_info(c_key_self, c_nx, c_ny, c_nzo, c_nzi, c_ncat) bind(c,name='soca_geo_info_f90')
+  subroutine c_soca_geo_info(c_key_self) bind(c,name='soca_geo_info_f90')
 
     implicit none
     integer(c_int), intent(in   ) :: c_key_self
-    integer(c_int), intent(inout) :: c_nx
-    integer(c_int), intent(inout) :: c_ny
-    integer(c_int), intent(inout) :: c_nzo
-    integer(c_int), intent(inout) :: c_nzi
-    integer(c_int), intent(inout) :: c_ncat
     type(soca_geom), pointer :: self
 
-    call soca_geom_registry%get(c_key_self , self )
-
+    call soca_geom_registry%get(c_key_self , self)
     call self%ocean%print()
+    call self%ocean%infotofile()    
     
   end subroutine c_soca_geo_info
 

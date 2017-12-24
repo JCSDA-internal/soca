@@ -1,50 +1,36 @@
+! 
+! ------------------------------------------------------------------------------
+!> Typical geometry/state for ocean/sea-ice models
+!>
+!>   level 0          ---- Surface                     Tsfc
+!>   level 1          ---- Upper snow level            Qsno
+!>     .                        .                       .
+!>     .                        .                       .
+!>     .                        .                       .        
+!>   level nzs        ---- Lower snow level            Qsno
+!>   level nzs+1      ---- Upper ice level             Qice     
+!>     .                        .                       .
+!>     .                        .                       .
+!>     .                        .                       .
+!>   level nzs+nzi    ---- Upper ice level             Qice
+!>   level nzs+nzi+1  ---- Ice/Ocean interface level   Tfreeze (from S)
+!>   level nzs+nzi+2  ---- Upper level Ocean           SST    
+!>
+!> 
 module soca_mom6sis2
+
   use ice_model_mod,           only: ice_data_type
   use ocean_model_mod,         only: ocean_state_type, ocean_public_type
   use time_manager_mod,        only: time_type
   use kinds
   use MOM_grid,                  only : ocean_grid_type
   use MOM_verticalGrid,          only : verticalGrid_type
-  
+
   implicit none
   private
 
-  public :: soca_geom_init, soca_geom_end, Coupled!, soca_model_geom
+  public :: soca_geom_init, soca_geom_end, Coupled, soca_field_init
 
-  ! ------------------------------------------------------------------------------
-
-  !> Fortran derived type to hold geometry data for MOM5 & CICE5 model
-  !>
-  !>   level 0          ---- Surface                     Tsfc
-  !>   level 1          ---- Upper snow level            Qsno
-  !>     .                        .                       .
-  !>     .                        .                       .
-  !>     .                        .                       .        
-  !>   level nzs        ---- Lower snow level            Qsno
-  !>   level nzs+1      ---- Upper ice level             Qice     
-  !>     .                        .                       .
-  !>     .                        .                       .
-  !>     .                        .                       .
-  !>   level nzs+nzi    ---- Upper ice level             Qice
-  !>   level nzs+nzi+1  ---- Ice/Ocean interface level   Tfreeze (from S)
-  !>   level nzs+nzi+2  ---- Upper level Ocean           SST    
-  !>
-
-!!$  type :: soca_model_geom
-!!$     type(ocean_grid_type) :: G
-!!$     type(VerticalGrid_type), pointer :: GV          
-!!$     integer :: nx
-!!$     integer :: ny
-!!$     integer :: nz
-!!$     integer :: ncat
-!!$     real(kind=kind_real), pointer :: lon(:,:)       !< The horizontal grid type     !< 2D array of longitude 
-!!$     real(kind=kind_real), pointer :: lat(:,:)       !< 2D array of latitude
-!!$     real(kind=kind_real), pointer :: z(:)           !<      
-!!$     real(kind=kind_real), pointer :: mask2d(:,:)    !< 0 = land 1 = ocean surface mask only
-!!$     real(kind=kind_real), pointer :: cell_area(:,:) !<
-!!$  end type soca_model_geom
-
-  
   type Coupled
      type   (ice_data_type)             :: Ice
      type (ocean_public_type)           :: Ocean
@@ -83,15 +69,14 @@ contains
 
     type(ocean_grid_type),            intent(out) :: G          !< The horizontal grid type
     type(verticalGrid_type), pointer, intent(out) :: GV
-    
-    type(dyn_horgrid_type),       pointer  :: dG => NULL()
 
+    type(dyn_horgrid_type),       pointer  :: dG => NULL()              !< Dynamic grid
     type(hor_index_type)                   :: HI                        !< Horiz index array extents
     type(param_file_type)                  :: param_file                !< Structure to parse for run-time parameters
     type(directories)                      :: dirs                      !< Structure containing several relevant directory paths
     logical                                :: global_indexing = .false. !< If true use global horizontal index DOES NOT WORK
-    logical                                :: write_geom_files = .false.
-    type(ocean_OBC_type),          pointer :: OBC => NULL()
+    logical                                :: write_geom_files = .false.!< !!!! SOMETHING FISHY, ONLY WORKS WHEN NO MPI !!!!!!!! <--- CHECK
+    type(ocean_OBC_type),          pointer :: OBC => NULL()             !< Ocean boundary condition
 
     ! Initialize fms/mpp io stuff
     call fms_io_init()
@@ -107,41 +92,61 @@ contains
 
     ! Allocate grid arrays
     GV => NULL()
-    call verticalGridInit( param_file, GV )
-    print *,'---------------------------- z=',GV%sLayer        
+    call verticalGridInit( param_file, GV ) !!!!!!!!!!!! NO GOOD, INITIALIZATION ISSUE
     call MOM_grid_init(G, param_file, HI, global_indexing=global_indexing)
 
     ! Read/Generate grid
     call MOM_initialize_fixed(dG, OBC, param_file, write_geom_files, dirs%output_directory)
     call copy_dyngrid_to_MOM_grid(dG, G)
     G%ke = GV%ke ; G%g_Earth = GV%g_Earth
-    
-    ! Deallocate dynamic grid
-    call destroy_dyn_horgrid(dG)
 
-    ! Deassociate pointers to dyn grid and vert grid
+    ! Destructor for dynamic grid
+    call destroy_dyn_horgrid(dG)
     dG => NULL()
-    !GV => NULL()    
 
     call mpp_sync()
-    print *,'+++++++++++++++++ out init geom ++++++++++++++++++++++++++'
-
+    
     call close_param_file(param_file)
     call fms_io_exit()
 
   end subroutine soca_geom_init
 
   subroutine soca_geom_end(G, GV)
+
     use MOM_grid,                  only : MOM_grid_init, MOM_grid_end, ocean_grid_type
     use MOM_verticalGrid,          only : verticalGrid_type, verticalGridInit, verticalGridEnd    
+
     implicit none
-    
+
     type(ocean_grid_type),            intent(inout) :: G
     type(verticalGrid_type), pointer, intent(inout) :: GV
-    
+
     call MOM_grid_end(G)
     call verticalGridEnd(GV)
-    
+
   end subroutine soca_geom_end
-  
+
+  subroutine soca_field_init(AOGCM, G, GV)
+    use MOM_state_initialization, only : MOM_initialize_state
+    use MOM_time_manager,         only : time_type, set_time, time_type_to_real, operator(+)
+    use MOM_file_parser,           only : get_param, param_file_type
+    use MOM_get_input,             only : Get_MOM_Input, directories
+    use MOM, only : MOM_control_struct, initialize_MOM
+    
+    implicit none
+    type (Coupled), intent(out) :: AOGCM
+    type(ocean_grid_type),            intent(inout) :: G
+    type(verticalGrid_type), pointer, intent(inout) :: GV    
+    type(time_type) :: Time        !< model time, set in this routine
+    type(param_file_type)        :: param_file  !< structure indicating paramater file to parse
+    type(directories)           :: dirs        !< structure with directory paths
+    type(MOM_control_struct),  pointer       :: CS          !< pointer set in this routine to MOM control structure
+    logical   :: offline_tracer_mode=.true. !< True if tracers are being run offline
+
+    !call MOM_initialize_state(CS%u, CS%v, CS%h, CS%tv, Time, G, GV, param_file, &
+    !     dirs, CS%restart_CSp, CS%ALE_CSp, CS%tracer_Reg, &
+    !     CS%sponge_CSp, CS%ALE_sponge_CSp, CS%OBC)!, Time_in)
+    
+  end subroutine soca_field_init
+
 end module soca_mom6sis2

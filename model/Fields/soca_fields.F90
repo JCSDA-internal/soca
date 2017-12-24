@@ -77,7 +77,7 @@ contains
   ! ------------------------------------------------------------------------------
 
   subroutine create(self, geom, vars)
-    use soca_mom6sis2, only: Coupled
+    use soca_mom6sis2, only: Coupled, soca_field_init
     use mpp_io_mod,              only: mpp_open, mpp_close
     use SIS_hor_grid, only: set_hor_grid, SIS_hor_grid_type
     !use SIS_get_input, only:directories, Get_SIS_Input
@@ -96,7 +96,7 @@ contains
     use fms_io_mod,      only: fms_io_init, fms_io_exit    
     implicit none
     type(soca_field), intent(inout)          :: self
-    type(soca_geom),  pointer, intent(inout) :: geom !Not clean, but geom is initialized in field
+    type(soca_geom),  pointer, intent(inout) :: geom
     type(soca_vars),  intent(in)             :: vars        
 
     !Stuff for sea-ice grid init
@@ -119,99 +119,31 @@ contains
     real(kind=kind_real) :: kg_m2_to_H
 
     !call fms_io_init
-    print *,'=============== in create ======================='
-    !call soca_models_init(self%AOGCM)
+    print *,'=============== in create 1 ======================='
+    call soca_field_init(self%AOGCM, geom%ocean%G, geom%ocean%GV)
     !call fms_io_exit
     
-!!$    inquire(file="EGRESS", exist=self%AOGCM%initialized)
-!!$    print *,'=============== in create =======================',self%AOGCM%initialized    
-!!$    if ( .not. self%AOGCM%initialized ) then
-!!$       call soca_models_init(self%AOGCM)
-!!$       call mpp_open( unit, 'EGRESS' )
-!!$       call mpp_close(unit)
-!!$    else
-!!$       print *,'============ ocean init :0 ====================='              
-!!$       !self%AOGCM%Ocean_state => NULL()
-!!$       allocate(self%AOGCM%Ocean_state%grid%geoLonT(1,1))
-!!$       !, Time_in, offline_tracer_mode)
-!!$       
-!!$       !call ocean_model_init( self%AOGCM%Ocean, self%AOGCM%Ocean_state, self%AOGCM%Time_init, self%AOGCM%Time )
-!!$       !print *,'============ ocean init :1 ====================='       
-!!$       !call ice_model_init( self%AOGCM%Ice, self%AOGCM%Time_init, self%AOGCM%Time, self%AOGCM%Time_step_atmos, &
-!!$       !     self%AOGCM%Time_step_cpld, Verona_coupler=.false., &
-!!$       !     concurrent_ice=self%AOGCM%concurrent_ice )       
-!!$    end if
-!!$    !call initialize_MOM(Time, param_file, path, CS)    
-    print *,'============ ocean init :2 =====================',self%AOGCM%Ocean%pelist
-    
-    !print *,'shape of part_size:',shape(self%AOGCM%Ice%fCS%IST%part_size),' ========================'
-    
-    ! Initialize Ocean geometry
-    nxny = shape(self%AOGCM%Ocean_state%grid%geoLonT)
-    print *,'============ ocean init :2.5 =====================',nxny   
-    geom%ocean%nx = nxny(1)
-    geom%ocean%ny = nxny(2)
-    geom%ocean%nz = self%AOGCM%Ocean_state%GV%ke
-    geom%ocean%ncat = 0
-    print *,'============ ocean init :3 ====================='           
-    geom%ocean%lon => self%AOGCM%Ocean_state%grid%geoLonT
-    geom%ocean%lat => self%AOGCM%Ocean_state%grid%geoLatT  
-    geom%ocean%mask2d => self%AOGCM%Ocean_state%grid%mask2dT
-    geom%ocean%cell_area => self%AOGCM%Ocean_state%grid%areaT  
-    geom%ocean%z => self%AOGCM%Ocean_state%GV%sLayer
-    print *,'============ ocean init :4 ====================='       
-    ! Initialize Sea-ice geometry
-    nxny = shape(self%AOGCM%Ice%fCS%G%geoLonT)
-    geom%ice%nx = nxny(1)
-    geom%ice%ny = nxny(2)
-    geom%ice%ncat = self%AOGCM%Ice%fCS%IG%CatIce
-    geom%ice%nz = self%AOGCM%Ice%fCS%IG%NkIce
-
-    print *,'Nzcat=',geom%ice%ncat, geom%ice%nz,' ================================================='
-    
-    geom%ice%lon => self%AOGCM%Ice%fCS%G%geoLonT
-    geom%ice%lat => self%AOGCM%Ice%fCS%G%geoLatT
-
-    !geom%ice%mask2d => self%AOGCM%Ice%grid%mask2dT
-    !geom%ice%cell_area => self%AOGCM%Ice%grid%areaT  
-    !geom%ice%z => self%AOGCM%Ice%GV%sLayer
-
-    ! Initialize geomery of Snow over Sea-ice
-    !nxny = shape(self%AOGCM%Ice%grid%geoLonT)
-    !geom%ice%nx = nxny(1)
-    !geom%ice%ny = nxny(2)
-    !geom%ice%nz = self%AOGCM%Ice%GV%ke
-    !geom%ice%ncat = 0
-    
-    !geom%ice%lon => self%AOGCM%Ice%grid%geoLonT
-    !geom%ice%lat => self%AOGCM%Ice%grid%geoLatT  
-    !geom%ice%mask2d => self%AOGCM%Ice%grid%mask2dT
-    !geom%ice%cell_area => self%AOGCM%Ice%grid%areaT  
-    !geom%ice%z => self%AOGCM%Ice%GV%sLayer        
-    
     kg_m2_to_H = self%AOGCM%Ice%fCS%IG%kg_m2_to_H
-    
+    print *,'=============== in create 2 ======================='    
     !Sea-ice internal state
-    !allocate(self%cicen(self%geom%ice%nx,self%geom%ice%ny,self%geom%ice%ncat))
-    self%cicen => self%AOGCM%Ice%fCS%IST%part_size
-    self%vicen => self%AOGCM%Ice%fCS%IST%mH_ice    ! NEED TO CONVERT FROM KG/M2 TO THICKNESS
-    self%vsnon => self%AOGCM%Ice%fCS%IST%mH_snow   ! OR SWITCH STATE TO MASS
-    self%tsfcn => self%AOGCM%Ice%fCS%IST%t_surf    
-    self%sicnk => self%AOGCM%Ice%fCS%IST%sal_ice
-    self%qicnk => self%AOGCM%Ice%fCS%IST%enth_ice
-    self%qsnon => self%AOGCM%Ice%fCS%IST%enth_snow    
-
+!!$    self%cicen => self%AOGCM%Ice%fCS%IST%part_size
+!!$    self%vicen => self%AOGCM%Ice%fCS%IST%mH_ice    ! NEED TO CONVERT FROM KG/M2 TO THICKNESS
+!!$    self%vsnon => self%AOGCM%Ice%fCS%IST%mH_snow   ! OR SWITCH STATE TO MASS
+!!$    self%tsfcn => self%AOGCM%Ice%fCS%IST%t_surf    
+!!$    self%sicnk => self%AOGCM%Ice%fCS%IST%sal_ice
+!!$    self%qicnk => self%AOGCM%Ice%fCS%IST%enth_ice
+!!$    self%qsnon => self%AOGCM%Ice%fCS%IST%enth_snow    
+    print *,'=============== in create 3 ======================='
     !Ocean internal state
-    self%tocn => self%AOGCM%Ocean_state%MOM_CSp%T 
-    self%socn => self%AOGCM%Ocean_state%MOM_CSp%S
-    self%ssh => self%AOGCM%Ocean_state%MOM_CSp%ave_ssh       
+    !self%tocn => self%AOGCM%Ocean_state%MOM_CSp%T 
+    !self%socn => self%AOGCM%Ocean_state%MOM_CSp%S
+    !self%ssh => self%AOGCM%Ocean_state%MOM_CSp%ave_ssh       
 
-    print *,'SSH=',maxval(self%ssh)
-    print *,'SHAPE OF CICEN:',shape(self%cicen)
-    print *,'======================================='
+    !print *,'SSH=',maxval(self%ssh)
+    !print *,'SHAPE OF CICEN:',shape(self%cicen)
+    !print *,'======================================='
     
     self%geom => geom
-    !self%gridfname = geom%gridfname
     self%nf   = vars%nv
 
     allocate(self%numfld_per_fldname(vars%nv))
@@ -231,19 +163,8 @@ contains
        end select
     end do
 
-    print *,'ocean grid stuff:',shape(self%tocn)
-    print *,'ice grid stuff:',shape(self%cicen)  
-
-!!$    allocate(self%hicen(self%geom%nx,self%geom%ny,self%geom%ncat))
-!!$    allocate(self%vicen(self%geom%nx,self%geom%ny,self%geom%ncat))
-!!$    allocate(self%hsnon(self%geom%nx,self%geom%ny,self%geom%ncat))
-!!$    allocate(self%vsnon(self%geom%nx,self%geom%ny,self%geom%ncat))
-!!$    allocate(self%tsfcn(self%geom%nx,self%geom%ny,self%geom%ncat))
-!!$    allocate(self%qsnon(self%geom%nx,self%geom%ny,self%geom%ncat))
-!!$    allocate(self%sicnk(self%geom%nx,self%geom%ny,self%geom%ncat,self%geom%nzi))
-!!$    allocate(self%socn(self%geom%nx,self%geom%ny))
-!!$    allocate(self%qicnk(self%geom%nx,self%geom%ny,self%geom%ncat,self%geom%nzi))
-!!$    !allocate(self%tocn(self%geom%nx,self%geom%ny))    
+    !print *,'ocean grid stuff:',shape(self%tocn)
+    !print *,'ice grid stuff:',shape(self%cicen)  
 
 !!$    self%cicen=0.0_kind_real
 !!$    self%hicen=0.0_kind_real
