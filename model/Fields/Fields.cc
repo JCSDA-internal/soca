@@ -6,34 +6,33 @@
 #include <string>
 #include <vector>
 
+#include "eckit/config/Configuration.h"
+#include "oops/generic/UnstructuredGrid.h"
+#include "oops/base/Variables.h"
+#include "util/DateTime.h"
 #include "util/Logger.h"
+#include "model/ModelAtLocations/Gom.h"
+#include "model/Locations/Loc.h"
 #include "model/Fortran.h"
 #include "model/Geometry/Geometry.h"
 #include "model/Variables/Variables.h"
-#include "eckit/config/Configuration.h"
-#include "util/DateTime.h"
-#include "model/ModelAtLocations/Gom.h"
-#include "model/Locations/Loc.h"
-#include "oops/generic/UnstructuredGrid.h"
-#include "util/Logger.h"
-
 
 // -----------------------------------------------------------------------------
 namespace soca {
   // -----------------------------------------------------------------------------
-  Fields::Fields(const Geometry & geom, const Variables & vars,
+  Fields::Fields(const Geometry & geom, const oops::Variables & vars,
 		 const util::DateTime & time):
-    geom_(new Geometry(geom)), vars_(new Variables(vars)), time_(time)
+    geom_(new Geometry(geom)), vars_(vars), time_(time)
   {
     std::cout << "************************ Field constructor 1" << std::endl;
-    soca_field_create_f90(keyFlds_, geom_->toFortran(), vars_->toFortran());
+    soca_field_create_f90(keyFlds_, geom_->toFortran(), vars_.toFortran());
   }
   // -----------------------------------------------------------------------------
   Fields::Fields(const Fields & other, const bool copy)
     : geom_(other.geom_), vars_(other.vars_), time_(other.time_)
   {
     std::cout << "************************ Field constructor 2" << std::endl;    
-    soca_field_create_f90(keyFlds_, geom_->toFortran(), vars_->toFortran());
+    soca_field_create_f90(keyFlds_, geom_->toFortran(), vars_.toFortran());
     if (copy) {
       std::cout << "************************* Field constructor 2.1" << std::endl;      
       soca_field_copy_f90(keyFlds_, other.keyFlds_);
@@ -47,7 +46,7 @@ namespace soca {
     : geom_(other.geom_), vars_(other.vars_), time_(other.time_)
   {
     std::cout << "************************* Field constructor 3" << std::endl;
-    soca_field_create_f90(keyFlds_, geom_->toFortran(), vars_->toFortran());
+    soca_field_create_f90(keyFlds_, geom_->toFortran(), vars_.toFortran());
     soca_field_copy_f90(keyFlds_, other.keyFlds_);
   }
   // -----------------------------------------------------------------------------
@@ -55,15 +54,15 @@ namespace soca {
     : geom_(new Geometry(geom)), vars_(other.vars_), time_(other.time_)
   {
     std::cout << "***************************** constructor 4" << std::endl;
-    soca_field_create_f90(keyFlds_, geom_->toFortran(), vars_->toFortran());
+    soca_field_create_f90(keyFlds_, geom_->toFortran(), vars_.toFortran());
     soca_field_change_resol_f90(keyFlds_, other.keyFlds_);
   }
   // -----------------------------------------------------------------------------
-  Fields::Fields(const Fields & other, const Variables & vars)
-    : geom_(other.geom_), vars_(new Variables(vars)), time_(other.time_)
+  Fields::Fields(const Fields & other, const oops::Variables & vars)
+    : geom_(other.geom_), vars_(vars), time_(other.time_)
   {
     std::cout << "***************************** constructor 5" << std::endl;
-    soca_field_create_f90(keyFlds_, geom_->toFortran(), vars_->toFortran());
+    soca_field_create_f90(keyFlds_, geom_->toFortran(), vars_.toFortran());
     soca_field_copy_f90(keyFlds_, other.keyFlds_);
   }
   // -----------------------------------------------------------------------------
@@ -124,15 +123,15 @@ namespace soca {
     soca_field_random_f90(keyFlds_);
   }
   // -----------------------------------------------------------------------------
-  void Fields::interpolate(const Loc & locs, const Variables &, Gom & gom) const {
+  void Fields::interpolate(const Loc & locs, const oops::Variables & vars, Gom & gom) const {
       soca_field_interp_tl_f90(keyFlds_, locs.toFortran(), gom.toFortran());
    }
   // -----------------------------------------------------------------------------
-  void Fields::interpolateTL(const Loc & locs, const Variables &, Gom & gom) const {
+  void Fields::interpolateTL(const Loc & locs, const oops::Variables & vars, Gom & gom) const {
     soca_field_interp_tl_f90(keyFlds_, locs.toFortran(), gom.toFortran());
   }
   // -----------------------------------------------------------------------------
-  void Fields::interpolateAD(const Loc & locs, const Variables &, const Gom & gom) {
+  void Fields::interpolateAD(const Loc & locs, const oops::Variables & vars, const Gom & gom) {
     soca_field_interp_ad_f90(keyFlds_, locs.toFortran(), gom.toFortran());
   }
   // -----------------------------------------------------------------------------

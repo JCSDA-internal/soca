@@ -21,8 +21,6 @@ subroutine soca_setup(c_conf) bind(c,name='soca_setup_f')
   
   call mpp_init(localcomm=mpi_comm_world)
   call fms_init()
-  !call mpp_domains_init
-  !call fms_io_init
 
 end subroutine soca_setup
 
@@ -32,22 +30,15 @@ subroutine soca_finalize() bind(c,name='soca_finalize_f')
 
   use fms_io_mod,      only: fms_io_exit
   !use soca_mom6sis2
-  use mpp_mod,         only: mpp_exit
+  use mpp_mod,         only: mpp_exit, mpp_sync
   use mpp_io_mod,              only: mpp_open, mpp_close, MPP_DELETE
   use fms_mod,                 only: fms_end
   use fms_io_mod,              only: fms_io_exit
   implicit none
   integer :: unit
 
-  print *,'============================================================='
-  print *,'============================================================='
-  print *,'============================================================='
-  print *,'===================calling mpp exit======================='
+  call mpp_sync()
 
-
-  call fms_io_exit
-  !call mpp_domains_exit
-  !call mpp_exit()
 end subroutine soca_finalize
 
 ! ------------------------------------------------------------------------------

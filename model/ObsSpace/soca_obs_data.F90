@@ -245,70 +245,77 @@ contains
     type(soca_locs), pointer :: locs
     type(obs_vect) :: ovec
     character(len=8) :: col="Location"
+    integer :: nobs
+integer, allocatable :: mobs(:)
 
+    
     call obs_data_registry%get(c_key_self, self)
     call c_f_string(c_req, req)
     call c_f_datetime(c_t1, t1)
     call c_f_datetime(c_t2, t2)
 
+
+    call obs_count(self, req, t1, t2, nobs)
+    allocate(mobs(nobs))
+    call obs_count(self, req, t1, t2, mobs)
     call obs_time_get(self, req, col, t1, t2, ovec)
 
     call soca_locs_registry%init()
     call soca_locs_registry%add(c_key_locs)
     call soca_locs_registry%get(c_key_locs,locs)
 
-    call soca_loc_setup(locs, ovec)
+    call soca_loc_setup(locs, ovec, mobs)
 
     deallocate(ovec%values)
-
+    deallocate(mobs)
   end subroutine obs_locations
 
   ! ------------------------------------------------------------------------------
 
-  subroutine obs_getgom(c_key_self, lreq, c_req, c_key_vars, c_t1, c_t2, c_key_gom)&
-       &bind(c,name='soca_obsdb_getgom_f90')
-    implicit none
-    integer(c_int), intent(in) :: c_key_self
-    integer(c_int), intent(in) :: lreq
-    character(kind=c_char,len=1), intent(in) :: c_req(lreq+1)
-    integer(c_int), intent(in) :: c_key_vars
-    type(c_ptr), intent(in) :: c_t1, c_t2
-    integer(c_int), intent(inout) :: c_key_gom
-
-    type(obs_data), pointer :: self
-    character(len=lreq) :: req
-    type(soca_vars), pointer :: vars
-    type(datetime) :: t1, t2
-    type(soca_goms), pointer :: gom
-
-    integer :: nobs
-    integer, allocatable :: mobs(:)
-
-    character(len=21) :: t1str, t2str, tstr
-
-    print *,'*********** in db_getgom ************'
-    !read(*,*)
-    
-    call obs_data_registry%get(c_key_self, self)
-    call c_f_string(c_req, req)
-    call soca_vars_registry%get(c_key_vars, vars)
-    call c_f_datetime(c_t1, t1)
-    call c_f_datetime(c_t2, t2)
-
-    call obs_count(self, req, t1, t2, nobs)
-    allocate(mobs(nobs))
-    
-    call obs_count(self, req, t1, t2, mobs)
-
-    allocate(gom)
-    call soca_goms_registry%init()
-    call soca_goms_registry%add(c_key_gom)
-    call soca_goms_registry%get(c_key_gom,gom)
-
-    call gom_setup(gom, vars, mobs)
-    deallocate(mobs)
-
-  end subroutine obs_getgom
+!!$  subroutine obs_getgom(c_key_self, lreq, c_req, c_key_vars, c_t1, c_t2, c_key_gom)&
+!!$       &bind(c,name='soca_obsdb_getgom_f90')
+!!$    implicit none
+!!$    integer(c_int), intent(in) :: c_key_self
+!!$    integer(c_int), intent(in) :: lreq
+!!$    character(kind=c_char,len=1), intent(in) :: c_req(lreq+1)
+!!$    integer(c_int), intent(in) :: c_key_vars
+!!$    type(c_ptr), intent(in) :: c_t1, c_t2
+!!$    integer(c_int), intent(inout) :: c_key_gom
+!!$
+!!$    type(obs_data), pointer :: self
+!!$    character(len=lreq) :: req
+!!$    type(soca_vars), pointer :: vars
+!!$    type(datetime) :: t1, t2
+!!$    type(soca_goms), pointer :: gom
+!!$
+!!$    integer :: nobs
+!!$    integer, allocatable :: mobs(:)
+!!$
+!!$    character(len=21) :: t1str, t2str, tstr
+!!$
+!!$    print *,'*********** in db_getgom ************'
+!!$    !read(*,*)
+!!$    
+!!$    call obs_data_registry%get(c_key_self, self)
+!!$    call c_f_string(c_req, req)
+!!$    call soca_vars_registry%get(c_key_vars, vars)
+!!$    call c_f_datetime(c_t1, t1)
+!!$    call c_f_datetime(c_t2, t2)
+!!$
+!!$    call obs_count(self, req, t1, t2, nobs)
+!!$    allocate(mobs(nobs))
+!!$    
+!!$    call obs_count(self, req, t1, t2, mobs)
+!!$
+!!$    allocate(gom)
+!!$    call soca_goms_registry%init()
+!!$    call soca_goms_registry%add(c_key_gom)
+!!$    call soca_goms_registry%get(c_key_gom,gom)
+!!$
+!!$    call gom_setup(gom, vars, mobs)
+!!$    deallocate(mobs)
+!!$
+!!$  end subroutine obs_getgom
 
   ! ------------------------------------------------------------------------------
 

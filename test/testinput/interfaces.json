@@ -15,7 +15,7 @@
     "icemaskfname": "/home/gvernier/Data/SOCA/icemask.nc"
   },
   "Variables": {
-    "variables": "ci",
+    "variables": ["ci"],
     "nzo": 1,
     "nzi": 7,
     "nzs": 1,

@@ -82,7 +82,6 @@ list( APPEND oops_soca_src_files
 #Utils
 ./Utils/soca_constants.F90
 ./Utils/soca_thermo.F90
-./Utils/soca_ncutils_mod.F90
 #./Utils/soca_balanceop.F90
 ./Utils/random_vectors_mod.F90
 ./Utils/random_f.cc

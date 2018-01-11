@@ -16,14 +16,17 @@ namespace eckit {
   class Configuration;
 }
 
+namespace oops {
+  class UnstructuredGrid;
+  class Variables;
+}
+  
+
 namespace soca {
   class Gom;
-  class Variables;
   class Loc;
   class Geometry;
   class Increment;
-  class Variables;
-  
 
   /// SOCA model state
   /*!
@@ -38,7 +41,7 @@ namespace soca {
       static const std::string classname() {return "soca::State";}
 
       /// Constructor, destructor
-      State(const Geometry &, const Variables &, const util::DateTime &);  // Is it used?
+      State(const Geometry &, const oops::Variables &, const util::DateTime &);  // Is it used?
       State(const Geometry &, const eckit::Configuration &);
       State(const Geometry &, const State &);
       State(const State &);
@@ -46,7 +49,7 @@ namespace soca {
       State & operator=(const State &);
 
       /// Interpolate to observation location
-      void interpolate(const Loc &, const Variables &, Gom &) const;
+      void interpolate(const Loc &, const oops::Variables &, Gom &) const;
 
       /// Interpolate full fields
       ///  void changeResolution(const State & xx);

@@ -1,11 +1,10 @@
-!> Fortran module handling geometry for MOM5 & CICE5 model.
-!! @ Todo: Remove sea-ice mask (maybe?), add nx0, ny0 to .json
+!> Fortran module handling geometry for MOM6 & SIS2 model.
+
 module soca_geom_mod
 
   use iso_c_binding
   use config_mod
   use kinds
-  !use soca_mom6sis2,             only : soca_model_geom
   use soca_model_geom_type
   
   implicit none
@@ -13,9 +12,7 @@ module soca_geom_mod
   public :: soca_geom_registry, soca_geom
 
   type :: soca_geom
-     type( soca_model_geom ) :: ocean
-     type( soca_model_geom ) :: ice
-     type( soca_model_geom ) :: snow
+     type( soca_model_geom ) :: ocean ! Includes sea-ice
   end type soca_geom
   
 #define LISTED_TYPE soca_geom
@@ -49,45 +46,7 @@ contains
     call soca_geom_registry%add(c_key_self)
     call soca_geom_registry%get(c_key_self,self)
 
-    call soca_geom_init(self%ocean%G, self%ocean%GV)
-    
-    nxny = shape( self%ocean%G%GeoLonT )
-    nx = nxny(1)
-    ny = nxny(2)    
-
-    ! Ocean
-    self%ocean%lon => self%ocean%G%GeoLonT
-    self%ocean%lat => self%ocean%G%GeoLatT    
-    self%ocean%mask2d => self%ocean%G%mask2dT
-    self%ocean%cell_area => self%ocean%G%areaT
-    self%ocean%z => self%ocean%GV%sLayer   ! pb here: Not initialized ...    
-    self%ocean%nx = nx
-    self%ocean%ny = ny    
-    self%ocean%nz = self%ocean%G%ke
-    self%ocean%ncat = 0    
-
-    ! Assume Same horizontal grid for Ocean and Sea-ice 
-    ! Sea-ice
-    self%ice%lon => self%ocean%G%GeoLonT
-    self%ice%lat => self%ocean%G%GeoLatT    
-    self%ice%mask2d => self%ocean%G%mask2dT
-    self%ice%cell_area => self%ocean%G%areaT
-    self%ice%nx = nx
-    self%ice%ny = ny
-    self%ice%nz = 7      ! HARDCODED ... NEED TO FIX
-    self%ice%ncat = 5    ! HARDCODED ... NEED TO FIX    
-    
-    ! Snow over Sea-ice
-    self%snow%lon => self%ocean%G%GeoLonT
-    self%snow%lat => self%ocean%G%GeoLatT    
-    self%snow%mask2d => self%ocean%G%mask2dT
-    self%snow%cell_area => self%ocean%G%areaT    
-    self%snow%nx = nx
-    self%snow%ny = ny
-    self%snow%nz = 1      ! HARDCODED ... NEED TO FIX
-    self%snow%ncat = self%ice%ncat    ! HARDCODED ... NEED TO FIX
-
-    call self%ocean%infotofile()
+    call self%ocean%init() 
     
   end subroutine c_soca_geo_setup
 
@@ -106,8 +65,6 @@ contains
     call soca_geom_registry%get(c_key_self , self )
 
     call self%ocean%clone(other%ocean)
-    call self%ice%clone(other%ice)
-    call self%snow%clone(other%snow)        
 
   end subroutine c_soca_geo_clone
 
@@ -122,7 +79,8 @@ contains
     type(soca_geom), pointer :: self
 
     call soca_geom_registry%get(c_key_self, self)
-    call soca_geom_end(self%ocean%G, self%ocean%GV)
+    !call soca_geom_end(self%ocean%G, self%ocean%GV)
+    call self%ocean%end()
     call soca_geom_registry%remove(c_key_self)
 
     !self => NULL()

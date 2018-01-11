@@ -1,48 +1,55 @@
+/*
+ * (C) Copyright 2017 UCAR
+ *
+ * This software is licensed under the terms of the Apache Licence Version 2.0
+ * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+ */
 
 #ifndef SOCA_MODEL_SOCAVARIABLES_H_
 #define SOCA_MODEL_SOCAVARIABLES_H_
 
 #include <ostream>
 #include <string>
+#include <vector>
 
-#include "util/Logger.h"
-#include "model/Fortran.h"
-#include "eckit/config/Configuration.h"
 #include "util/ObjectCounter.h"
 #include "util/Printable.h"
 
+namespace eckit {
+  class Configuration;
+}
+
+namespace oops {
+  class Variables;
+}
+
 namespace soca {
 
-  // -----------------------------------------------------------------------------
-  /// Variables class to handle variables for SOCA model.
+// -----------------------------------------------------------------------------
 
-  class Variables : public util::Printable,
-    private util::ObjectCounter<Variables> {
-  public:
-      static const std::string classname() {return "soca::Variables";}
+class Variables : public util::Printable,
+                    private util::ObjectCounter<Variables> {
+ public:
+  static const std::string classname() {return "soca::Variables";}
 
-      explicit Variables(const eckit::Configuration & config) {
-	using oops::Log;
-	Log::debug() << "Variables config:" << config << std::endl;
-	const eckit::Configuration * conf = &config;
-	soca_var_create_f90(keyVar_, &conf);
-      }
-      explicit Variables(const int keyVar): keyVar_(keyVar) {}
+  explicit Variables(const oops::Variables &);
+  explicit Variables(const eckit::Configuration &);
 
-      ~Variables() {soca_var_delete_f90(keyVar_);}
+  ~Variables();
 
-      Variables(const Variables & other) {soca_var_clone_f90(other.keyVar_, keyVar_);}
+  Variables(const Variables &);
 
-      int& toFortran() {return keyVar_;}
-      const int& toFortran() const {return keyVar_;}
+  const int * toFortran() const {return &fvars_[0];}
 
-  private:
-      void print(std::ostream &) const;
-      int keyVar_;
-    };
+ private:
+  void print(std::ostream &) const;
+  void setF90(const std::vector<std::string>);
+  std::vector<int> fvars_;
+};
 
-  // -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
 }  // namespace soca
 
-#endif  // SOCA_MODEL_SOCAVARIABLES_H_
+#endif    // SOCA_MODEL_SOCAVARIABLES_H_
+

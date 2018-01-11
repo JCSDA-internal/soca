@@ -5,15 +5,19 @@
 #include <string>
 
 #include "eckit/config/LocalConfiguration.h"
-#include "util/Logger.h"
+
+#include "oops/base/Variables.h"
+#include "oops/generic/UnstructuredGrid.h"
+#include "model/ModelAtLocations/Gom.h"
+#include "model/Locations/Loc.h"
+#include "model/ModelBias.h"
 #include "model/Fields/Fields.h"
 #include "model/Geometry/Geometry.h"
 #include "model/Increment/Increment.h"
-#include "model/Variables/Variables.h"
+#include "model/Model/Model.h"
 #include "util/DateTime.h"
 #include "util/Duration.h"
-
-#include "model/Locations/Loc.h"
+#include "util/Logger.h"
 
 using oops::Log;
 
@@ -22,7 +26,7 @@ namespace soca {
   // -----------------------------------------------------------------------------
   /// Constructor, destructor
   // -----------------------------------------------------------------------------
-  State::State(const Geometry & resol, const Variables & vars,
+  State::State(const Geometry & resol, const oops::Variables & vars,
 	       const util::DateTime & vt)
     : fields_(new Fields(resol, vars, vt)), stash_()
   {
@@ -32,14 +36,20 @@ namespace soca {
   State::State(const Geometry & resol, const eckit::Configuration & file)
     : fields_(), stash_()
   {
-    // Should get variables from file. YT
-    eckit::LocalConfiguration modelvars;
-    modelvars.set("variables", "cv");
-    Variables vars(modelvars);
-    // Should get variables from file. YT
+    const std::vector<std::string> vv{"cicen",
+	  "hicen",
+	  "hsnon",
+	  "tsfcn",
+	  "qsnon",
+	  "sicnk",
+	  "qicnk",
+	  "socn",
+	  "tocn",
+	  "ssh"
+	};
+    oops::Variables vars(vv);
     fields_.reset(new Fields(resol, vars, util::DateTime()));
     fields_->read(file);
-
     ASSERT(fields_);
     Log::trace() << "State::State created and read in." << std::endl;
   }
@@ -64,14 +74,14 @@ namespace soca {
   // -----------------------------------------------------------------------------
   void State::activateModel() {
     // Should get variables from model. YT
-    eckit::LocalConfiguration modelvars;
-    modelvars.set("variables", "nl");
-    Variables vars(modelvars);
+    //eckit::LocalConfiguration modelvars;
+    //modelvars.set("variables", "nl");
+    //oops::Variables vars(modelvars);
     // Should get variables from model. YT
-    stash_.reset(new Fields(*fields_, vars));
-    swap(fields_, stash_);
-    ASSERT(fields_);
-    ASSERT(stash_);
+    //stash_.reset(new Fields(*fields_, vars));
+    //swap(fields_, stash_);
+    //ASSERT(fields_);
+    //ASSERT(stash_);
     Log::trace() << "State activated for Model" << std::endl;
   }
   // -----------------------------------------------------------------------------
@@ -94,7 +104,7 @@ namespace soca {
   // -----------------------------------------------------------------------------
   /// Interpolate to observation location
   // -----------------------------------------------------------------------------
-  void State::interpolate(const Loc & locs, const Variables & vars, Gom & cols) const {
+  void State::interpolate(const Loc & locs, const oops::Variables & vars, Gom & cols) const {
     fields_->interpolate(locs, vars, cols);
   }
   // -----------------------------------------------------------------------------

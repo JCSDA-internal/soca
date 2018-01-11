@@ -28,7 +28,7 @@ struct Traits {
   static std::string name() {return "SOCA";}
   
   typedef soca::Geometry            Geometry;
-  typedef soca::Variables           Variables;
+  //typedef soca::Variables           Variables;
 
   typedef soca::Run                 Run;  
 

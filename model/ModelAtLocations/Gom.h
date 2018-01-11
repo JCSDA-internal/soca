@@ -10,11 +10,16 @@
 #include "util/ObjectCounter.h"
 #include "util/Printable.h"
 
+namespace oops {
+  class Variables;
+}
+
 namespace soca {
   class ObsSpace;
   class Geometry;
-  class Variables;
-
+  //class Variables;
+  class Loc;
+  
   /// Gom class to handle local model values for  model.
 
   class Gom : public util::Printable,
@@ -22,8 +27,9 @@ namespace soca {
   public:
       static const std::string classname() {return "soca::Gom";}
 
-      Gom(const ObsSpace &, const Variables &,
-	  const util::DateTime &, const util::DateTime &);//, const Geometry &);
+      //Gom(const ObsSpace &, const oops::Variables &,
+      //const util::DateTime &, const util::DateTime &);//, const Geometry &);
+      Gom(const Loc &, const oops::Variables &);
       Gom(const eckit::Configuration &);
       
       explicit Gom(): keyGom_(0) {}

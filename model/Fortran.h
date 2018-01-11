@@ -85,12 +85,11 @@ extern "C" {
 // -----------------------------------------------------------------------------
 //  Fields
 // -----------------------------------------------------------------------------
-  void soca_field_create_f90(F90flds &, const F90geom &, const F90vars &);
+  void soca_field_create_f90(F90flds &, const F90geom &, const F90vars *);
   void soca_field_delete_f90(F90flds &);
 
   void soca_field_copy_f90(const F90flds &, const F90flds &);
   void soca_field_zero_f90(const F90flds & );
-  void soca_field_dirac_f90(const F90flds &, const eckit::Configuration * const *);
   void soca_field_self_add_f90(const F90flds &, const F90flds &);
   void soca_field_self_sub_f90(const F90flds &, const F90flds &);
   void soca_field_self_mul_f90(const F90flds &, const double &);
@@ -98,7 +97,8 @@ extern "C" {
   void soca_field_dot_prod_f90(const F90flds &, const F90flds &, double &);
   void soca_field_self_schur_f90(const F90flds &, const F90flds &);
   void soca_field_random_f90(const F90flds &);
-
+  void soca_field_dirac_f90(const F90flds &, const eckit::Configuration * const *);
+  
   void soca_field_add_incr_f90(const F90flds &, const F90flds &);
   void soca_field_diff_incr_f90(const F90flds &, const F90flds &, const F90flds &);
 
@@ -122,10 +122,10 @@ extern "C" {
 // -----------------------------------------------------------------------------
 //  Variables
 // -----------------------------------------------------------------------------
-  void soca_var_create_f90(F90vars &, const eckit::Configuration * const *);
-  void soca_var_clone_f90(const F90vars &, F90vars &);
-  void soca_var_info_f90(const F90vars &, int &);
-  void soca_var_delete_f90(F90vars &);
+//  void soca_var_create_f90(F90vars &, const eckit::Configuration * const *);
+//  void soca_var_clone_f90(const F90vars &, F90vars &);
+//  void soca_var_info_f90(const F90vars &, int &);
+//  void soca_var_delete_f90(F90vars &);
 
 // -----------------------------------------------------------------------------
 //  Locations
@@ -136,6 +136,7 @@ extern "C" {
 // -----------------------------------------------------------------------------
 //  Local Values (GOM or GeoVaLs)
 // -----------------------------------------------------------------------------
+  void soca_gom_setup_f90(F90goms &, const F90locs &, const F90vars *);  
   void soca_gom_create_f90(F90goms &);//, const int &);
   void soca_gom_delete_f90(F90goms &);
   void soca_gom_zero_f90(const F90goms &);

@@ -19,33 +19,46 @@
 !> 
 module soca_mom6sis2
 
-  use ice_model_mod,           only: ice_data_type
+  !use ice_model_mod,           only: ice_data_type
+  use SIS_types,               only: ice_state_type, alloc_IST_arrays
   use ocean_model_mod,         only: ocean_state_type, ocean_public_type
   use time_manager_mod,        only: time_type
   use kinds
   use MOM_grid,                  only : ocean_grid_type
   use MOM_verticalGrid,          only : verticalGrid_type
-
+  use MOM, only : MOM_control_struct
+  
   implicit none
   private
 
   public :: soca_geom_init, soca_geom_end, Coupled, soca_field_init
 
-  type Coupled
-     type   (ice_data_type)             :: Ice
-     type (ocean_public_type)           :: Ocean
-     type (ocean_state_type),  pointer  :: Ocean_state
+  type soca_ocn_data_type ! TODO: change to mom's derived data type ...
+     real(kind=kind_real), pointer, dimension(:,:,:) :: T
+     real(kind=kind_real), pointer, dimension(:,:,:) :: S
+     real(kind=kind_real), pointer, dimension(:,:,:) :: U
+     real(kind=kind_real), pointer, dimension(:,:,:) :: V
+     real(kind=kind_real), pointer, dimension(:,:)   :: ssh
+  end type soca_ocn_Data_Type
 
-     type (time_type)                   :: Time, Time_init, Time_end, Time_step_atmos, Time_step_cpld
-     logical                            :: concurrent_ice
-     logical                            :: initialized = .false.
-     integer                            :: ensemble_id = 1
-     integer, allocatable               :: ensemble_pelist(:,:)
+  type soca_ice_data_type ! TODO: change to mom's derived data type ...
+     real(kind=kind_real), pointer, dimension(:,:,:) :: part_size
+     real(kind=kind_real), pointer, dimension(:,:,:) :: h_ice
+     real(kind=kind_real), pointer, dimension(:,:,:,:) :: enth_ice
+     real(kind=kind_real), pointer, dimension(:,:,:,:) :: sal_ice     
+     real(kind=kind_real), pointer, dimension(:,:,:) :: h_snow
+     real(kind=kind_real), pointer, dimension(:,:,:,:) :: enth_snow
+     real(kind=kind_real), pointer, dimension(:,:,:) :: T_skin
+  end type soca_ice_data_type
+  
+  type Coupled
+     type (soca_ice_data_type)     :: Ice     
+     type (soca_ocn_data_type)     :: Ocn
   end type Coupled
 
 contains
 
-  subroutine soca_geom_init(G, GV)
+  subroutine soca_geom_init(G, GV, IG)
 
     use MOM_dyn_horgrid,           only : dyn_horgrid_type, create_dyn_horgrid, destroy_dyn_horgrid
     use MOM_transcribe_grid,       only : copy_dyngrid_to_MOM_grid
@@ -57,34 +70,46 @@ contains
     use MOM_domains,               only : MOM_domains_init, clone_MOM_domain
     use MOM_hor_index,             only : hor_index_type, hor_index_init
     use fms_io_mod,                only : fms_io_init, fms_io_exit
+    use fms_mod,                   only : read_data
     use MOM_domains,               only : MOM_infra_init, MOM_infra_end
-    use MOM_io,                    only : check_nml_error, io_infra_init, io_infra_end, read_data
+    use MOM_io,                    only : check_nml_error, io_infra_init, io_infra_end
     use MOM_file_parser,           only : open_param_file, close_param_file
     use MOM_grid_initialize,       only : set_grid_metrics
     use MOM_open_boundary,         only : ocean_OBC_type
     use mpp_mod,                   only : mpp_pe, mpp_npes, mpp_root_pe, mpp_sync
     use MOM_fixed_initialization,  only : MOM_initialize_fixed
-
+    use ice_grid,                  only : set_ice_grid, ice_grid_type
+    use ice_model_mod
+    use SIS_get_input,             only : Get_SIS_input, sis_directories => directories
+    !use ice_model_mod, only : initialize_ice_categories
+    use kinds
+    
     implicit none
 
-    type(ocean_grid_type),            intent(out) :: G          !< The horizontal grid type
-    type(verticalGrid_type), pointer, intent(out) :: GV
-
+    type(ocean_grid_type),            intent(out) :: G          !< The horizontal grid type (same for ice & ocean)
+    type(verticalGrid_type), pointer, intent(out) :: GV         !< Ocean vertical grid
+    type(ice_grid_type),              intent(out) :: IG         !< Ice grid
     type(dyn_horgrid_type),       pointer  :: dG => NULL()              !< Dynamic grid
     type(hor_index_type)                   :: HI                        !< Horiz index array extents
     type(param_file_type)                  :: param_file                !< Structure to parse for run-time parameters
     type(directories)                      :: dirs                      !< Structure containing several relevant directory paths
     logical                                :: global_indexing = .false. !< If true use global horizontal index DOES NOT WORK
-    logical                                :: write_geom_files = .false.!< !!!! SOMETHING FISHY, ONLY WORKS WHEN NO MPI !!!!!!!! <--- CHECK
+    logical                                :: write_geom_files = .false.!< 
     type(ocean_OBC_type),          pointer :: OBC => NULL()             !< Ocean boundary condition
 
+
+    integer :: NCat_dflt = 5
+    character(len=40)  :: mdl = "soca_mom6sis2"
+    real :: Rho_ice = 905.0
+    integer :: ncat, nkice, nksnow, km
+    
     ! Initialize fms/mpp io stuff
     call fms_io_init()
 
-    ! Read grid inputs
+    ! Parse grid inputs
     call Get_MOM_Input(param_file, dirs)
 
-    ! Inintialize mpp domains
+    ! Domain decomposition/Inintialize mpp domains
     call MOM_domains_init(G%domain, param_file)
     call hor_index_init(G%Domain, HI, param_file, local_indexing=.not.global_indexing)
     call create_dyn_horgrid(dG, HI)!, bathymetry_at_vel=bathy_at_vel)
@@ -100,10 +125,19 @@ contains
     call copy_dyngrid_to_MOM_grid(dG, G)
     G%ke = GV%ke ; G%g_Earth = GV%g_Earth
 
+    ! Read bathymetry
+    call read_data('ocean_geometry.nc', 'D', G%bathyT, G%Domain%mpp_domain)
+    
     ! Destructor for dynamic grid
     call destroy_dyn_horgrid(dG)
     dG => NULL()
 
+    ! Initialize sea-ice grid
+    call set_ice_grid(IG, param_file, NCat_dflt)
+    print *,'IG:',IG%CatIce,IG%NkIce,IG%NkSnow, IG%H_to_kg_m2, IG%kg_m2_to_H, IG%ocean_part_min
+    print *,'IG lim:',IG%cat_thick_lim
+    !call initialize_ice_categories(IG, Rho_ice, param_file) NOCANDO, PRIVATE!!!
+    
     call mpp_sync()
     
     call close_param_file(param_file)
@@ -111,42 +145,83 @@ contains
 
   end subroutine soca_geom_init
 
-  subroutine soca_geom_end(G, GV)
+  subroutine soca_geom_end(G, GV, IG)
 
     use MOM_grid,                  only : MOM_grid_init, MOM_grid_end, ocean_grid_type
     use MOM_verticalGrid,          only : verticalGrid_type, verticalGridInit, verticalGridEnd    
-
+    use ice_grid,                  only : ice_grid_end, ice_grid_type
+    
     implicit none
 
     type(ocean_grid_type),            intent(inout) :: G
     type(verticalGrid_type), pointer, intent(inout) :: GV
-
-    call MOM_grid_end(G)
-    call verticalGridEnd(GV)
-
+    type(ice_grid_type),              intent(inout) :: IG         !< Ice grid
+    
+    ! Destructors below don't work
+    !call MOM_grid_end(G)
+    !call verticalGridEnd(GV)
+    call ice_grid_end(IG)
   end subroutine soca_geom_end
 
-  subroutine soca_field_init(AOGCM, G, GV)
+  subroutine soca_field_init(aogcm, G, GV, IG)
     use MOM_state_initialization, only : MOM_initialize_state
     use MOM_time_manager,         only : time_type, set_time, time_type_to_real, operator(+)
     use MOM_file_parser,           only : get_param, param_file_type
-    use MOM_get_input,             only : Get_MOM_Input, directories
+    !use MOM_get_input,             only : Get_MOM_Input, directories
     use MOM, only : MOM_control_struct, initialize_MOM
+    use fms_io_mod,                only : fms_io_init, fms_io_exit
+    use MOM_file_parser,           only : open_param_file, close_param_file, get_param
+    !use MOM_domains,        only: MOM_infra_init, num_pes, root_pe, pe_here
+    use mpp_mod,                   only : mpp_pe, mpp_npes, mpp_root_pe, mpp_sync
+    use SIS_get_input, only : Get_SIS_input, directories
+    use fms_mod,                   only : read_data
+    use ice_grid,                  only : set_ice_grid, ice_grid_type
     
     implicit none
-    type (Coupled), intent(out) :: AOGCM
-    type(ocean_grid_type),            intent(inout) :: G
-    type(verticalGrid_type), pointer, intent(inout) :: GV    
+    type (Coupled),                     intent(out) :: aogcm
+    type(ocean_grid_type), intent(inout)           :: G
+    type(verticalGrid_type), pointer, intent(inout):: GV
+    type(ice_grid_type),              intent(inout) :: IG         !< Ice grid    
     type(time_type) :: Time        !< model time, set in this routine
     type(param_file_type)        :: param_file  !< structure indicating paramater file to parse
     type(directories)           :: dirs        !< structure with directory paths
-    type(MOM_control_struct),  pointer       :: CS          !< pointer set in this routine to MOM control structure
-    logical   :: offline_tracer_mode=.true. !< True if tracers are being run offline
 
-    !call MOM_initialize_state(CS%u, CS%v, CS%h, CS%tv, Time, G, GV, param_file, &
-    !     dirs, CS%restart_CSp, CS%ALE_CSp, CS%tracer_Reg, &
-    !     CS%sponge_CSp, CS%ALE_sponge_CSp, CS%OBC)!, Time_in)
-    
+    logical   :: offline_tracer_mode=.true. !< True if tracers are being run offline
+    !type(time_type), target :: Time
+    integer :: i, j, k, is, ie, js, je, Isq, Ieq, Jsq, Jeq, nzo, n, nzi, nzs
+    integer :: isd, ied, jsd, jed, IsdB, IedB, JsdB, JedB
+    integer :: ncat, nkice, nksnow, km
+
+    is   = G%isc  ; ie   = G%iec  ; js   = G%jsc  ; je   = G%jec ; nzo = G%ke
+    Isq  = G%IscB ; Ieq  = G%IecB ; Jsq  = G%JscB ; Jeq  = G%JecB
+    isd  = G%isd  ; ied  = G%ied  ; jsd  = G%jsd  ; jed  = G%jed
+    IsdB = G%IsdB ; IedB = G%IedB ; JsdB = G%JsdB ; JedB = G%JedB
+
+    ncat = IG%CatIce
+    nzi = IG%NkIce
+    nzs = IG%NkSnow
+
+    ! Allocate ocean state
+    allocate(aogcm%Ocn%T(isd:ied,jsd:jed,nzo))   ; aogcm%Ocn%T(:,:,:) = 0.0
+    allocate(aogcm%Ocn%S(isd:ied,jsd:jed,nzo))   ; aogcm%Ocn%S(:,:,:) = 0.0
+    allocate(aogcm%Ocn%ssh(isd:ied,jsd:jed))   ; aogcm%Ocn%ssh(:,:) = 0.0
+
+    ! Allocate sea-ice state
+    km = ncat + 1
+    allocate(aogcm%Ice%part_size(isd:ied, jsd:jed, km)) ; aogcm%Ice%part_size(:,:,:) = 0.0
+    allocate(aogcm%Ice%h_ice(isd:ied, jsd:jed, ncat)) ; aogcm%Ice%h_ice(:,:,:) = 0.0
+    allocate(aogcm%Ice%h_snow(isd:ied, jsd:jed, ncat)) ; aogcm%Ice%h_snow(:,:,:) = 0.0    
+    allocate(aogcm%Ice%enth_ice(isd:ied, jsd:jed, ncat, nzi)) ; aogcm%Ice%enth_ice(:,:,:,:) = 0.0
+    allocate(aogcm%Ice%enth_snow(isd:ied, jsd:jed, ncat, nzs)) ; aogcm%Ice%enth_snow(:,:,:,:) = 0.0
+    allocate(aogcm%Ice%sal_ice(isd:ied, jsd:jed, ncat, nzi)) ; aogcm%Ice%sal_ice(:,:,:,:) = 0.0    
+    allocate(aogcm%Ice%T_skin(isd:ied, jsd:jed, ncat)) ; aogcm%Ice%T_skin(:,:,:) = 0.0    
+
+    print *,'PE #',mpp_pe(),' of ',mpp_npes(),'. PE root is ',mpp_root_pe()
+    print *,' shape T:',shape(aogcm%Ocn%T)
+    print *,' shape aice:',shape(aogcm%Ice%part_size)
+    print *,' shape enth_ice:',shape(aogcm%Ice%enth_ice)    
+    call mpp_sync()
+
   end subroutine soca_field_init
 
 end module soca_mom6sis2

@@ -1,23 +1,35 @@
 
 
 #include "model/ModelAtLocations/Gom.h"
+
+#include "eckit/config/Configuration.h"
+#include "oops/base/Variables.h"
 #include "util/Logger.h"
-#include "model/ObsSpace/ObsSpace.h"
+#include "model/Locations/Loc.h"
 #include "model/Fortran.h"
 #include "model/Variables/Variables.h"
+
+//#include "model/ObsSpace/ObsSpace.h"
+
+
 
 namespace soca {
   class Geometry;
 
   // -----------------------------------------------------------------------------
-  Gom::Gom(const ObsSpace & obsdb, const Variables & var,
-	   const util::DateTime & t1, const util::DateTime & t2) {
+  // Gom::Gom(const ObsSpace & obsdb, const oops::Variables & var,
+  //	   const util::DateTime & t1, const util::DateTime & t2) {
     //const Geometry & ) {
-    const util::DateTime * p1 = &t1;
-    const util::DateTime * p2 = &t2;
-    soca_obsdb_getgom_f90(obsdb.toFortran(), obsdb.obsname().size(), obsdb.obsname().c_str(),
-			       var.toFortran(), &p1, &p2, keyGom_);
-  }
+  // const util::DateTime * p1 = &t1;
+  // const util::DateTime * p2 = &t2;
+  //  soca_obsdb_getgom_f90(obsdb.toFortran(), obsdb.obsname().size(), obsdb.obsname().c_str(),
+  //			       var.toFortran(), &p1, &p2, keyGom_);
+//}
+// -----------------------------------------------------------------------------
+Gom::Gom(const Loc & locs, const oops::Variables & var) {
+  const Variables varsoca(var);
+  soca_gom_setup_f90(keyGom_, locs.toFortran(), varsoca.toFortran());
+}  
   // -----------------------------------------------------------------------------
   Gom::Gom(const eckit::Configuration & config) {
     soca_gom_create_f90(keyGom_);

@@ -82,12 +82,12 @@ ecbuild_add_test( TARGET  test_soca_geometry
 #                  ARGS    "testinput/interfaces.json"
 #                  LIBS    soca )
 
-ecbuild_add_test( TARGET  test_soca_variables
-                  BOOST
-		  MPI     4		  
-                  SOURCES executables/TestVariables.cc
-                  ARGS    "testinput/interfaces.json"
-                  LIBS    soca )
+#ecbuild_add_test( TARGET  test_soca_variables
+#                  BOOST
+#		  MPI     4		  
+#                  SOURCES executables/TestVariables.cc
+#                  ARGS    "testinput/interfaces.json"
+#                  LIBS    soca )
 
 ecbuild_add_test( TARGET  test_soca_state
                   BOOST

@@ -3,7 +3,7 @@
 
 ! ------------------------------------------------------------------------------
 
-subroutine soca_field_create_c(c_key_self, c_key_geom, c_key_vars) bind(c,name='soca_field_create_f90')
+subroutine soca_field_create_c(c_key_self, c_key_geom, c_vars) bind(c,name='soca_field_create_f90')
   use iso_c_binding
   use soca_fields
   use soca_geom_mod
@@ -11,21 +11,21 @@ subroutine soca_field_create_c(c_key_self, c_key_geom, c_key_vars) bind(c,name='
   implicit none
   integer(c_int), intent(inout) :: c_key_self
   integer(c_int), intent(in) :: c_key_geom !< Geometry
-  integer(c_int), intent(in) :: c_key_vars !< List of variables
-
+  !integer(c_int), intent(in) :: c_key_vars !< List of variables
+  integer(c_int), dimension(*), intent(in) :: c_vars     !< List of variables
+  
   type(soca_field), pointer :: self
   type(soca_geom),  pointer :: geom
-  type(soca_vars),  pointer :: vars
+  type(soca_vars) :: vars
 
   call soca_geom_registry%get(c_key_geom, geom)
-  call soca_vars_registry%get(c_key_vars, vars)
+  !call soca_vars_registry%get(c_key_vars, vars)
   call soca_field_registry%init()
   call soca_field_registry%add(c_key_self)
   call soca_field_registry%get(c_key_self,self)
 
+  call soca_vars_create(vars, c_vars)
   call create(self, geom, vars)
-
-  print *,'================field created',c_key_self
   
 end subroutine soca_field_create_c
 
@@ -331,10 +331,8 @@ subroutine soca_field_read_file_c(c_key_fld, c_conf, c_dt) bind(c,name='soca_fie
 
   type(soca_field), pointer :: fld
   type(datetime) :: fdate
-  print *,'%%%%%%%%%%%%%%%%%%%%%%%%%%%% in read %%%%%%%%'
-  print *,'%%%%%%%%%%%%%%%%%%%%%%%%%%%% in read %%%%%%%%',c_key_fld
+
   call soca_field_registry%get(c_key_fld,fld)
-  print *,'%%%%%%%%%%%%%%%%%%%%%%%%%%%% in read %%%%%%%%'
   call c_f_datetime(c_dt, fdate)
   call read_file(fld, c_conf, fdate)
 
@@ -354,6 +352,7 @@ subroutine soca_field_write_file_c(c_key_fld, c_conf, c_dt) bind(c,name='soca_fi
 
   type(soca_field), pointer :: fld
   type(datetime) :: fdate
+
   print *,'===========in write =============='
   call soca_field_registry%get(c_key_fld,fld)
   call c_f_datetime(c_dt, fdate)
@@ -470,8 +469,8 @@ subroutine soca_fieldnum_c(c_key_fld, nx, ny, nzo, nzi, ncat, nf) bind(c,name='s
 
   nx = fld%geom%ocean%nx
   ny = fld%geom%ocean%ny
-  nzo = fld%geom%ocean%nz
-  nzi = fld%geom%ice%nz
+  nzo = fld%geom%ocean%nzo
+  nzi = fld%geom%ocean%nzi
   ncat = fld%geom%ocean%ncat
   nf = fld%nf
 

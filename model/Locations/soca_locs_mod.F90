@@ -18,6 +18,7 @@ module soca_locs_mod
   type :: soca_locs
      integer                           :: nloc     !< Number of obs loc in ]t,t+dt] (see ObsSpace) CONFUSING ... CHECK
      real(kind=kind_real), allocatable :: xyz(:,:) !< Need to be allocated as (3, nloc) 3: lon, lat, lev
+     integer, allocatable :: indx(:)
   end type soca_locs
 
 #define LISTED_TYPE soca_locs
@@ -36,13 +37,16 @@ contains
 
   ! ------------------------------------------------------------------------------
 
-  subroutine soca_loc_setup(self, lvec)
+  subroutine soca_loc_setup(self, lvec, kobs)
     implicit none
     type(soca_locs), intent(inout) :: self
     type(obs_vect), intent(in) :: lvec
+    integer, intent(in) :: kobs(:)
     integer :: jc, jo
 
     self%nloc=lvec%nobs
+    allocate(self%indx(self%nloc))
+    self%indx(:) = kobs(:)
     allocate(self%xyz(3,self%nloc))
     do jo=1,self%nloc
        do jc=1,3

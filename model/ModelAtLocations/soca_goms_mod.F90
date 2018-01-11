@@ -6,6 +6,7 @@ module soca_goms_mod
   use iso_c_binding
   use soca_geom_mod
   use soca_vars_mod
+  use soca_locs_mod
   use kinds
 
   implicit none
@@ -49,6 +50,28 @@ contains
 
   ! ------------------------------------------------------------------------------
 
+subroutine c_soca_gom_setup(c_key_self, c_key_locs, c_vars) bind(c,name='soca_gom_setup_f90')
+implicit none
+integer(c_int), intent(inout) :: c_key_self
+integer(c_int), intent(inout) :: c_key_locs
+integer(c_int), dimension(*), intent(in) :: c_vars     !< List of variables
+
+type(soca_goms), pointer :: self
+type(soca_locs), pointer :: locs
+type(soca_vars) :: vars
+
+call soca_goms_registry%init()
+call soca_goms_registry%add(c_key_self)
+call soca_goms_registry%get(c_key_self, self)
+call soca_locs_registry%get(c_key_locs, locs)
+call soca_vars_create(vars, c_vars)
+
+call gom_setup(self, vars, locs%indx)
+
+end subroutine c_soca_gom_setup
+
+  ! ------------------------------------------------------------------------------
+  
   subroutine c_soca_gom_create(c_key_self) bind(c,name='soca_gom_create_f90')
 
     implicit none

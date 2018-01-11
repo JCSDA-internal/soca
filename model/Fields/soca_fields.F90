@@ -9,15 +9,16 @@ module soca_fields
   use soca_locs_mod  
   use soca_vars_mod
   use type_linop
-  use tools_interp, only: interp_horiz
+  !use tools_interp, only: interp_horiz
   !use type_randgen, only: rng,initialize_sampling,create_randgen
-  use module_namelist, only: namtype  
+  !use module_namelist, only: namtype  
   use kinds
   use atmos_model_mod,         only: atmos_data_type
   use land_model_mod,          only: land_data_type    
   use ocean_model_mod,         only: ocean_public_type, ocean_state_type, ice_ocean_boundary_type
   use ice_model_mod,           only: ice_data_type
   use soca_mom6sis2, only : Coupled
+  use MOM, only : MOM_control_struct
   implicit none
   private
 
@@ -33,24 +34,24 @@ module soca_fields
 
   !> Fortran derived type to hold fields
   type :: soca_field
-     type (Coupled)                    :: AOGCM
+     type (Coupled)           :: AOGCM
      type(soca_geom), pointer          :: geom                  !< MOM5 & CICE5 Geometry
      integer                           :: nf                    !< Number of fields
      character(len=128)                :: gridfname             !< Grid file name
      character(len=128)                :: cicefname             !< Fields file name for cice
      character(len=128)                :: momfname              !< Fields file name for mom
-     real(kind=kind_real), pointer :: cicen(:,:,:)          !< Sea-ice fraction                 (nx,ny,ncat)
-     real(kind=kind_real), allocatable :: hicen(:,:,:)          !< Sea-ice thickness                (nx,ny,ncat)
-     real(kind=kind_real), pointer :: vicen(:,:,:)          !< Sea-ice volume                   (nx,ny,ncat)
-     real(kind=kind_real), allocatable :: hsnon(:,:,:)          !< Snow depth over sea-ice          (nx,ny,ncat)
-     real(kind=kind_real), pointer :: vsnon(:,:,:)          !< Snow volume over sea-ice         (nx,ny,ncat) 
-     real(kind=kind_real), pointer :: tsfcn(:,:,:)          !< Temperature over sea-ice or snow (nx,ny,ncat)
-     real(kind=kind_real), pointer :: qsnon(:,:,:,:)        !< Enthalpy of snow                 (nx,ny,ncat)
-     real(kind=kind_real), pointer :: sicnk(:,:,:,:)        !< Salin_wity of sea-ice            (nx,ny,ncat,nzi)
-     real(kind=kind_real), pointer :: socn(:,:,:)           !< Ocean (surface) Salinity         (nx,ny,nzo)
-     real(kind=kind_real), pointer :: qicnk(:,:,:,:)        !< Enthalpy of sea-ice              (nx,ny,ncat,nzi)
-     real(kind=kind_real), pointer :: tocn(:,:,:)           !< Average temperature of grid cell (nx,ny,nzo)
-     real(kind=kind_real), pointer :: ssh(:,:)              !< Sea-surface height (nx,ny,nzo)     
+     real(kind=kind_real), pointer     :: cicen(:,:,:) => NULL()  !< Sea-ice fraction                 (nx,ny,ncat)
+     real(kind=kind_real), pointer     :: hicen(:,:,:) => NULL()           !< Sea-ice thickness                (nx,ny,ncat)
+     real(kind=kind_real), pointer     :: vicen(:,:,:) => NULL()  !< Sea-ice volume                   (nx,ny,ncat)
+     real(kind=kind_real), pointer     :: hsnon(:,:,:) => NULL()            !< Snow depth over sea-ice          (nx,ny,ncat)
+     real(kind=kind_real), pointer     :: vsnon(:,:,:) => NULL()          !< Snow volume over sea-ice         (nx,ny,ncat) 
+     real(kind=kind_real), pointer     :: tsfcn(:,:,:) => NULL()          !< Temperature over sea-ice or snow (nx,ny,ncat)
+     real(kind=kind_real), pointer     :: qsnon(:,:,:,:) => NULL()        !< Enthalpy of snow                 (nx,ny,ncat)
+     real(kind=kind_real), pointer     :: sicnk(:,:,:,:) => NULL()        !< Salin_wity of sea-ice            (nx,ny,ncat,nzi)
+     real(kind=kind_real), pointer     :: socn(:,:,:) => NULL()           !< Ocean (surface) Salinity         (nx,ny,nzo)
+     real(kind=kind_real), pointer     :: qicnk(:,:,:,:) => NULL()   !< Enthalpy of sea-ice              (nx,ny,ncat,nzi)
+     real(kind=kind_real), pointer     :: tocn(:,:,:) => NULL()         !< Average temperature of grid cell (nx,ny,nzo)
+     real(kind=kind_real), pointer     :: ssh(:,:) => NULL()   !< Sea-surface height (nx,ny,nzo)     
      character(len=5), allocatable     :: fldnames(:)           !< Variable identifiers             (nf)
      integer, allocatable              :: numfld_per_fldname(:) !< Number of 2d fields for each     (nf) 
                                                                 !< element of fldnames
@@ -77,7 +78,8 @@ contains
   ! ------------------------------------------------------------------------------
 
   subroutine create(self, geom, vars)
-    use soca_mom6sis2, only: Coupled, soca_field_init
+
+    use soca_mom6sis2, only: Coupled, soca_field_init, soca_geom_init
     use mpp_io_mod,              only: mpp_open, mpp_close
     use SIS_hor_grid, only: set_hor_grid, SIS_hor_grid_type
     !use SIS_get_input, only:directories, Get_SIS_Input
@@ -87,13 +89,16 @@ contains
     use MOM_time_manager,         only : time_type
     use ocean_model_mod,         only: update_ocean_model, ocean_model_init,  ocean_model_end
     use ice_model_mod,           only: ice_model_init, share_ice_domains, ice_model_end, ice_model_restart
-    
+    use ice_grid, only : ice_grid_type, set_ice_grid
     !use constants_mod,           only: constants_init
     !use atmos_model_mod,         only: atmos_data_type
     !use land_model_mod,          only: land_data_type    
     !use ocean_model_mod,         only: ocean_public_type, ocean_state_type, ice_ocean_boundary_type
     !use ice_model_mod,           only: ice_data_type
-    use fms_io_mod,      only: fms_io_init, fms_io_exit    
+    use fms_io_mod,      only: fms_io_init, fms_io_exit
+    !use MOM_time_manager,         only : time_type
+    use time_manager_mod,        only: set_date, get_date, days_in_month, month_name, set_time, set_calendar_type, GREGORIAN
+    
     implicit none
     type(soca_field), intent(inout)          :: self
     type(soca_geom),  pointer, intent(inout) :: geom
@@ -107,10 +112,10 @@ contains
                              !! values instead of having the data domain on each
                              !! processor start at 1.
 
-    type(time_type)   :: Time
+    !type(time_type)   :: Time
     type(param_file_type) :: param_file
     type(directories) :: path
-    type(MOM_control_struct), pointer       :: CS
+    !type(MOM_control_struct), pointer       :: CS
     
     !logical,               optional, intent(in)  :: check_params
     !character(len=*),      optional, intent(in)  :: component
@@ -118,46 +123,65 @@ contains
     integer :: ivar, unit, nxny(2)
     real(kind=kind_real) :: kg_m2_to_H
 
+    !integer :: date_init(6) = (/ 2016, 01, 01, 0, 0, 0 /) 
+    
+    !type(ice_grid_type) :: IG
+    !type(ice_data_type) :: Ice            !< The ice data type that is being initialized.
+    !type(time_type)       :: Time_Init      !< The starting time of the model integration
+    !type(time_type)       :: Time           !< The current time
+    !type(time_type)       :: Time_step_fast !< The time step for the ice_model_fast
+    !type(time_type)      :: Time_step_slow !< The time step for the ice_model_slow    
     !call fms_io_init
-    print *,'=============== in create 1 ======================='
-    call soca_field_init(self%AOGCM, geom%ocean%G, geom%ocean%GV)
-    !call fms_io_exit
-    
-    kg_m2_to_H = self%AOGCM%Ice%fCS%IG%kg_m2_to_H
-    print *,'=============== in create 2 ======================='    
-    !Sea-ice internal state
-!!$    self%cicen => self%AOGCM%Ice%fCS%IST%part_size
-!!$    self%vicen => self%AOGCM%Ice%fCS%IST%mH_ice    ! NEED TO CONVERT FROM KG/M2 TO THICKNESS
-!!$    self%vsnon => self%AOGCM%Ice%fCS%IST%mH_snow   ! OR SWITCH STATE TO MASS
-!!$    self%tsfcn => self%AOGCM%Ice%fCS%IST%t_surf    
-!!$    self%sicnk => self%AOGCM%Ice%fCS%IST%sal_ice
-!!$    self%qicnk => self%AOGCM%Ice%fCS%IST%enth_ice
-!!$    self%qsnon => self%AOGCM%Ice%fCS%IST%enth_snow    
-    print *,'=============== in create 3 ======================='
-    !Ocean internal state
-    !self%tocn => self%AOGCM%Ocean_state%MOM_CSp%T 
-    !self%socn => self%AOGCM%Ocean_state%MOM_CSp%S
-    !self%ssh => self%AOGCM%Ocean_state%MOM_CSp%ave_ssh       
 
-    !print *,'SSH=',maxval(self%ssh)
-    !print *,'SHAPE OF CICEN:',shape(self%cicen)
-    !print *,'======================================='
-    
     self%geom => geom
     self%nf   = vars%nv
+    call soca_field_init(self%AOGCM, geom%ocean%G, geom%ocean%GV, geom%ocean%IG)
 
+    ! Finish initializing ice grid
+
+    ! Parse grid inputs
+    !call Get_MOM_Input(param_file, dirs)    
+    !call set_ice_grid(IG, param_file, NCat_dflt)
+    !call set_calendar_type(GREGORIAN)
+    !Time_init = set_date (date_init(1), date_init(2), date_init(3), &
+    !     date_init(4), date_init(5), date_init(6))
+    !Time = Time_init
+    !Time_step_fast = set_time(1,0)
+    !Time_step_slow = Time_step_fast
+    !call ice_model_init(Ice, Time_Init, Time, Time_step_fast, Time_step_slow) 
+    !call fms_io_exit
+    
+    !kg_m2_to_H = self%AOGCM%Ice%fCS%IG%kg_m2_to_H
+
+    ! Assign convenience pointers
+    !Ocean internal state    
+    self%tocn => self%AOGCM%Ocn%T
+    self%socn => self%AOGCM%Ocn%S
+    self%ssh => self%AOGCM%Ocn%ssh
+
+    !Sea-ice internal state
+    self%cicen => self%AOGCM%Ice%part_size(:,:,2:)
+    self%hicen => self%AOGCM%Ice%h_ice
+    self%hsnon => self%AOGCM%Ice%h_snow        
+    self%tsfcn => self%AOGCM%Ice%T_skin
+    self%sicnk => self%AOGCM%Ice%sal_ice
+    self%qicnk => self%AOGCM%Ice%enth_ice
+    self%qsnon => self%AOGCM%Ice%enth_snow
+    
     allocate(self%numfld_per_fldname(vars%nv))
     
     do ivar=1,vars%nv
        select case(vars%fldnames(ivar))
        case ('cicen','hicen','vicen','hsnon','vsnon','tsfcn')
-          self%numfld_per_fldname(ivar)=geom%ice%ncat
+          self%numfld_per_fldname(ivar)=geom%ocean%ncat
        case ('sicnk','qicnk')
-          self%numfld_per_fldname(ivar)=geom%ice%ncat*geom%ice%nz
+          self%numfld_per_fldname(ivar)=geom%ocean%ncat*geom%ocean%nzi
        case ('qsnon')
-          self%numfld_per_fldname(ivar)=geom%snow%ncat*geom%snow%nz
+          self%numfld_per_fldname(ivar)=geom%ocean%ncat*geom%ocean%nzs
        case ('socn','tocn')
-         self%numfld_per_fldname(ivar)=geom%ocean%nz
+          self%numfld_per_fldname(ivar)=geom%ocean%nzo
+       case ('ssh')
+         self%numfld_per_fldname(ivar)=1          
        case default
           call abor1_ftn("c_soca_fields: undefined variables")
        end select
@@ -196,13 +220,6 @@ contains
     type(soca_field), intent(inout) :: self
 
 
-    print *,'==================================================='
-    print *,'==================================================='
-    print *,'============field end==============='
-    print *,'==================================================='
-    print *,'==================================================='    
-
-    
     !call soca_models_end(self%AOGCM)
 
     
@@ -233,18 +250,17 @@ contains
 
     call check(self)
 
-    self%cicen=0.0_kind_real
-    self%hicen=0.0_kind_real
-    self%vicen=0.0_kind_real        
-    self%hsnon=0.0_kind_real
-    self%vsnon=0.0_kind_real
-    self%tsfcn=0.0_kind_real
-    self%qsnon=0.0_kind_real
-    self%sicnk=0.0_kind_real
-    self%socn=0.0_kind_real    
-    self%qicnk=0.0_kind_real
-    self%tocn=0.0_kind_real
+    self%cicen = 0.0_kind_real
+    self%hicen = 0.0_kind_real
+    self%hsnon = 0.0_kind_real
+    self%tsfcn = 0.0_kind_real
+    self%qsnon = 0.0_kind_real
+    self%sicnk = 0.0_kind_real
+    self%qicnk = 0.0_kind_real
 
+    self%socn = 0.0_kind_real        
+    self%tocn = 0.0_kind_real
+    self%ssh = 0.0_kind_real
   end subroutine zeros
 
   ! ------------------------------------------------------------------------------
@@ -315,21 +331,20 @@ contains
 
     call check_resolution(self, rhs)
 
-    print *,'===============in copy field=============='
-    print *,'=============== in copy ======================='
+
 !!$    nf = common_vars(self, rhs)
-!!$
-!!$    self%cicen = rhs%cicen
-!!$    self%hicen = rhs%hicen
-!!$    self%vicen = rhs%vicen
-!!$    self%hsnon = rhs%hsnon
-!!$    self%vsnon = rhs%vsnon
-!!$    self%tsfcn = rhs%tsfcn
-!!$    self%qsnon = rhs%qsnon
-!!$    self%sicnk = rhs%sicnk
-!!$    self%socn  = rhs%socn
-!!$    self%qicnk = rhs%qicnk
-!!$    self%tocn  = rhs%tocn
+
+    self%cicen = rhs%cicen
+    self%hicen = rhs%hicen
+    self%hsnon = rhs%hsnon
+    self%tsfcn = rhs%tsfcn
+    self%qsnon = rhs%qsnon
+    self%sicnk = rhs%sicnk
+    self%qicnk = rhs%qicnk    
+
+    self%socn  = rhs%socn
+    self%tocn  = rhs%tocn
+    self%ssh  = rhs%ssh    
 
     !call linop_copy(rhs%hinterp_op, self%hinterp_op)
     
@@ -350,15 +365,14 @@ contains
 
     self%cicen=self%cicen+rhs%cicen
     self%hicen=self%hicen+rhs%hicen
-    self%vicen=self%vicen+rhs%vicen
     self%hsnon=self%hsnon+rhs%hsnon
-    self%vsnon=self%vsnon+rhs%vsnon
     self%tsfcn=self%tsfcn+rhs%tsfcn
     self%qsnon=self%qsnon+rhs%qsnon
     self%sicnk=self%sicnk+rhs%sicnk
     self%socn=self%socn+rhs%socn
     self%qicnk=self%qicnk+rhs%qicnk
     self%tocn=self%tocn+rhs%tocn
+    self%ssh=self%ssh+rhs%ssh    
 
     return
   end subroutine self_add
@@ -477,7 +491,7 @@ contains
     real(kind=kind_real), intent(out) :: zprod
     integer :: jj, kk
     call check_resolution(fld1, fld2)
-    if (fld1%nf /= fld2%nf .or. fld1%geom%ice%nz /= fld2%geom%ice%nz) then
+    if (fld1%nf /= fld2%nf .or. fld1%geom%ocean%nzo /= fld2%geom%ocean%nzo) then
        call abor1_ftn("soca_fields:field_prod error number of fields")
     endif
 
@@ -579,16 +593,16 @@ contains
   ! ------------------------------------------------------------------------------
 
   subroutine read_file(fld, c_conf, vdate)
-    ! Needs more interface clean-up here...
+
     use iso_c_binding
     use datetime_mod
     use fckit_log_module, only : log
     use netcdf
-    use ncutils
     use interface_ncread_fld, only: ncread_fld
     use soca_thermo
     use soca_mom6sis2
-    
+    use fms_mod,                 only: read_data, write_data
+    use fms_io_mod,                only : fms_io_init, fms_io_exit    
     implicit none
     type(soca_field), intent(inout) :: fld      !< Fields
     type(c_ptr), intent(in)       :: c_conf   !< Configuration
@@ -596,21 +610,10 @@ contains
 
     integer, parameter :: iunit=10
     integer, parameter :: max_string_length=800 ! Yuk!
-    character(len=max_string_length+50) :: record
-    character(len=max_string_length) :: filename
-    character(len=20) :: sdate, fmtn
-    character(len=4)  :: cnx
-    character(len=11) :: fmt1='(X,ES24.16)'
+    character(len=max_string_length) :: ocn_sfc_filename, ocn_filename, ice_filename, basename
+    character(len=20) :: sdate
     character(len=1024)  :: buf
-    character(len=128)  :: varname, basename
-    integer :: ic, iy, il, ix, is, jx, jy, jk, jcat, jf, iread, nf, level
-    real(kind=kind_real), allocatable :: zz(:), var3d(:,:,:)
-
-    integer :: nx0, ny0
-    integer :: nx, ny, varid, ncid
-    integer :: start2(2), count2(2)
-    integer :: start3(3), count3(3)
-    integer :: start4(4), count4(4)    
+    integer :: iread, ii
 
     iread = 0
     if (config_element_exists(c_conf,"read_from_file")) then
@@ -624,7 +627,38 @@ contains
        call log%info(buf)
        call datetime_set(sdate, vdate)
     else
-       !call read_data(filename,"eta",eta(:,:,:),domain=fld%G%Domain%mpp_domain)       
+       print *,fld%fldnames
+       basename = config_get_string(c_conf,len(basename),"basename")        
+       ocn_sfc_filename = config_get_string(c_conf,len(ocn_filename),"ocn_sfc_filename")
+       ocn_filename = config_get_string(c_conf,len(ocn_filename),"ocn_filename")       
+
+       ocn_sfc_filename = trim(basename)//trim(ocn_sfc_filename)
+       ocn_filename = trim(basename)//trim(ocn_filename)       
+       ice_filename = config_get_string(c_conf,len(ice_filename),"ice_filename")       
+
+       call fms_io_init()
+       do ii = 1, fld%nf
+          print *,fld%fldnames(ii)
+          select case(fld%fldnames(ii))
+          case ('ssh')
+             call read_data(ocn_sfc_filename,"SSH",fld%ssh(:,:),domain=fld%geom%ocean%G%Domain%mpp_domain)             
+          case ('tocn')
+             call read_data(ocn_filename,"temp",fld%tocn(:,:,:),domain=fld%geom%ocean%G%Domain%mpp_domain)
+          case ('socn')
+             call read_data(ocn_filename,"salt",fld%tocn(:,:,:),domain=fld%geom%ocean%G%Domain%mpp_domain)             
+          case ('hicen')
+             call read_data(ice_filename,"HI",fld%hicen(:,:,1),domain=fld%geom%ocean%G%Domain%mpp_domain)
+          case ('hsnon')
+             call read_data(ice_filename,"HS",fld%hsnon(:,:,1),domain=fld%geom%ocean%G%Domain%mpp_domain)
+          case ('cicen')
+             call read_data(ice_filename,"CN",fld%cicen(:,:,:),domain=fld%geom%ocean%G%Domain%mpp_domain)
+          case default
+             print *,'Not reading var ',fld%fldnames(ii)
+             call log%warning("soca_fields:read_file: Not reading var "//fld%fldnames(ii))
+             !call abor1_ftn("soca_fields: undefined variables")             
+          end select
+       end do
+       call fms_io_exit()       
 
        !iread = 0
        sdate = config_get_string(c_conf,len(sdate),"date")
@@ -632,9 +666,6 @@ contains
        call log%info(buf)
        call datetime_set(sdate, vdate)       
 
-       ! Read Sea-Ice
-       fld%cicefname = config_get_string(c_conf, len(fld%cicefname), "cicefname")
-       !WRITE(buf,*) 'cice fname:',fld%cicefname
     endif
 
     call check(fld)
@@ -649,8 +680,9 @@ contains
     use datetime_mod
     use fckit_log_module, only : fckit_log
     use netcdf
-    use ncutils
-
+    use fms_mod,                 only: read_data, write_data
+    use fms_io_mod,                only : fms_io_init, fms_io_exit
+    
     implicit none
     type(soca_field), intent(inout) :: fld    !< Fields
     type(c_ptr), intent(in)    :: c_conf           !< Configuration
@@ -667,17 +699,16 @@ contains
     integer :: x_dimid, y_dimid, z_dimid, cat_dimid, status
     integer :: catnum
 
-    catnum=1 !!!!!!!!!!!! HARD CODED CATEGORY !!!!!!!!!!!!!!!!!!!!
-
-    print *,'============== IN WRITE FILE =================='
-
     call check(fld)
 
     filename = genfilename(c_conf,max_string_length,vdate)
     WRITE(buf,*) 'field:write_file: writing '//filename
     call fckit_log%info(buf)
-    !call ocean_model_restart(Ocean_state_)!, timestamp)
-    !call ice_model_restart(Ice_)
+
+    call fms_io_init()
+    call write_data( filename, "temp", fld%tocn, fld%geom%ocean%G%Domain%mpp_domain)
+    call fms_io_exit()
+
     return
   end subroutine write_file
 
@@ -789,10 +820,10 @@ contains
     
     call check(fld)
 
-    n2dfld=fld%geom%ice%ncat*7+&
-         & fld%geom%ice%ncat*fld%geom%ice%nz*2+&
-         & fld%geom%snow%nz*2
-    ns = real(sum(fld%geom%ice%mask2d)*n2dfld)
+    n2dfld=fld%geom%ocean%ncat*fld%geom%ocean%nzi+&
+         & fld%geom%ocean%ncat*fld%geom%ocean%nzi*2+&
+         & fld%geom%ocean%nzo*2
+    ns = real(sum(fld%geom%ocean%mask2d)*n2dfld)
     call dot_prod(fld,fld,prms)
     prms = sqrt(prms)/ns
     prms = 915.24050597509438
@@ -809,7 +840,7 @@ contains
 
     call check(fld)
 
-    call nicas_interph(fld, locs, gom, op_type)
+    !call nicas_interph(fld, locs, gom, op_type)
 
   end subroutine interp_tl
 
@@ -829,89 +860,89 @@ contains
 
   ! ------------------------------------------------------------------------------
 
-  subroutine nicas_interph(fld, locs, gom, op_type)
-
-    use type_linop
-    use tools_interp, only: interp_horiz
-    use type_randgen, only: rng,initialize_sampling,create_randgen !randgentype
-    use module_namelist, only: namtype    
-    use tools_const, only : deg2rad
-
-    type(soca_field), intent(inout)    :: fld
-    type(soca_locs), intent(in)     :: locs
-    type(soca_goms), intent(inout)  :: gom
-    character(2), intent(in)             :: op_type !('TL' or 'AD')
-
-    integer :: Nc, No, var_type_index, Ncat
-    integer :: ivar, gom_dim1, cnt_fld
-    character(len=1024)  :: buf
-    logical,allocatable :: mask(:), masko(:)               ! < mask (ncells, nlevels)
-    real(kind=kind_real), allocatable :: lon(:), lat(:), lono(:), lato(:), fld_src(:), fld_dst(:)
-    type(namtype) :: nam !< Namelist variables
-    type(linoptype) :: hinterp_op
-
-    Nc = fld%geom%ice%nx*fld%geom%ice%ny
-    No = locs%nloc   !< DOES NOT SEEM RIGHT, SHOULD BE TOTAL OBS IN da WINDOW
-    Ncat = fld%geom%ice%ncat
-    if (No>0) then
-       allocate(lon(Nc), lat(Nc), mask(Nc), fld_src(Nc))    ! <--- Not memory efficient ...
-       allocate(masko(No), fld_dst(No), lono(No), lato(No)) ! <--- use pointers?
-
-       masko = .true. ! Figured out what's the use for masko????
-       !Some issues with the mask, FIX IT!!!!
-       !where(reshape(fld%geom%mask,(/Nc/)).eq.0.0_kind_real)
-       mask = .true.
-       !end where
-       if (.not.(fld%hinterp_initialized)) then
-          print *,'INITIALIZE INTERP',gom%nobs,locs%nloc
-          rng = create_randgen(nam)
-          lono = deg2rad*locs%xyz(1,:)
-          lato = deg2rad*locs%xyz(2,:)
-          lon = deg2rad*reshape(fld%geom%ice%lon, (/Nc/))     ! Inline grid, structured to un-structured
-          lat = deg2rad*reshape(fld%geom%ice%lat, (/Nc/))     ! and change to SI Units
-          call interp_horiz(rng, Nc, lon,  lat,  mask, &
-               No, lono, lato, masko, fld%hinterp_op)               
-          fld%hinterp_initialized = .true.          
-       end if
-
-       !Finish Initializing gom
-       if (.not.allocated(gom%values)) then
-          gom_dim1=sum(fld%numfld_per_fldname(1:gom%nvar)) ! WILL CREATE ISSUES:
-                                                           ! Assume the order of var type is preserved
-                                                           ! [cicen, hicen, ...]
-          allocate(gom%values(gom_dim1,gom%nobs))
-       end if
-       if (.not.allocated(gom%numfld_per_fldname)) then
-          allocate(gom%numfld_per_fldname(gom%nvar))
-       end if
-       gom%numfld_per_fldname=fld%numfld_per_fldname ! Will be used in obs oper          
-       !end if !probably need to assert shape of gom%values==(gom_dim1,gom%nobs)
-          
-       select case (op_type)
-       case ('TL')
-          if (.not.allocated(fld_src)) allocate(fld_src(Nc))
-          cnt_fld=0
-          !Loop through variable types
-          do var_type_index=1,gom%nvar
-             !Loop through variable fields
-             do ivar=1,fld%numfld_per_fldname(var_type_index)
-                cnt_fld=cnt_fld+1
-                print *,'Apply interp op to variable:',gom%variables(var_type_index),' field num:',cnt_fld
-                fld_src = reshape(fld%cicen(:,:,ivar), (/Nc/))
-                call apply_linop(fld%hinterp_op, fld_src, fld_dst)
-                gom%values(cnt_fld,gom%used:gom%used+No-1)=fld_dst(1:No)
-             end do
-          end do
-          deallocate(fld_src)
-       case ('AD')
-          call abor1_ftn("nicas_interph: Wrapper for adjoint not implemented yet")
-          !call apply_linop_ad(hinterp_op,fld_dst,fld_src)
-          !CHECK: WHERE DO WE TRIGGER THE ADJOINT TESTS? 
-          !put fld_src
-       end select
-       gom%used=gom%used+locs%nloc
-    end if
-  end subroutine nicas_interph
+!!$  subroutine nicas_interph(fld, locs, gom, op_type)
+!!$
+!!$    use type_linop
+!!$    use tools_interp, only: interp_horiz
+!!$    use type_randgen, only: rng,initialize_sampling,create_randgen !randgentype
+!!$    use module_namelist, only: namtype    
+!!$    use tools_const, only : deg2rad
+!!$
+!!$    type(soca_field), intent(inout)    :: fld
+!!$    type(soca_locs), intent(in)     :: locs
+!!$    type(soca_goms), intent(inout)  :: gom
+!!$    character(2), intent(in)             :: op_type !('TL' or 'AD')
+!!$
+!!$    integer :: Nc, No, var_type_index, Ncat
+!!$    integer :: ivar, gom_dim1, cnt_fld
+!!$    character(len=1024)  :: buf
+!!$    logical,allocatable :: mask(:), masko(:)               ! < mask (ncells, nlevels)
+!!$    real(kind=kind_real), allocatable :: lon(:), lat(:), lono(:), lato(:), fld_src(:), fld_dst(:)
+!!$    type(namtype) :: nam !< Namelist variables
+!!$    type(linoptype) :: hinterp_op
+!!$
+!!$    Nc = fld%geom%ocean%nx*fld%geom%ocean%ny
+!!$    No = locs%nloc   !< DOES NOT SEEM RIGHT, SHOULD BE TOTAL OBS IN da WINDOW
+!!$    Ncat = fld%geom%ocean%ncat
+!!$    if (No>0) then
+!!$       allocate(lon(Nc), lat(Nc), mask(Nc), fld_src(Nc))    ! <--- Not memory efficient ...
+!!$       allocate(masko(No), fld_dst(No), lono(No), lato(No)) ! <--- use pointers?
+!!$
+!!$       masko = .true. ! Figured out what's the use for masko????
+!!$       !Some issues with the mask, FIX IT!!!!
+!!$       !where(reshape(fld%geom%mask,(/Nc/)).eq.0.0_kind_real)
+!!$       mask = .true.
+!!$       !end where
+!!$       if (.not.(fld%hinterp_initialized)) then
+!!$          print *,'INITIALIZE INTERP',gom%nobs,locs%nloc
+!!$          rng = create_randgen(nam)
+!!$          lono = deg2rad*locs%xyz(1,:)
+!!$          lato = deg2rad*locs%xyz(2,:)
+!!$          lon = deg2rad*reshape(fld%geom%ocean%lon, (/Nc/))     ! Inline grid, structured to un-structured
+!!$          lat = deg2rad*reshape(fld%geom%ocean%lat, (/Nc/))     ! and change to SI Units
+!!$          call interp_horiz(rng, Nc, lon,  lat,  mask, &
+!!$               No, lono, lato, masko, fld%hinterp_op)               
+!!$          fld%hinterp_initialized = .true.          
+!!$       end if
+!!$
+!!$       !Finish Initializing gom
+!!$       if (.not.allocated(gom%values)) then
+!!$          gom_dim1=sum(fld%numfld_per_fldname(1:gom%nvar)) ! WILL CREATE ISSUES:
+!!$                                                           ! Assume the order of var type is preserved
+!!$                                                           ! [cicen, hicen, ...]
+!!$          allocate(gom%values(gom_dim1,gom%nobs))
+!!$       end if
+!!$       if (.not.allocated(gom%numfld_per_fldname)) then
+!!$          allocate(gom%numfld_per_fldname(gom%nvar))
+!!$       end if
+!!$       gom%numfld_per_fldname=fld%numfld_per_fldname ! Will be used in obs oper          
+!!$       !end if !probably need to assert shape of gom%values==(gom_dim1,gom%nobs)
+!!$          
+!!$       select case (op_type)
+!!$       case ('TL')
+!!$          if (.not.allocated(fld_src)) allocate(fld_src(Nc))
+!!$          cnt_fld=0
+!!$          !Loop through variable types
+!!$          do var_type_index=1,gom%nvar
+!!$             !Loop through variable fields
+!!$             do ivar=1,fld%numfld_per_fldname(var_type_index)
+!!$                cnt_fld=cnt_fld+1
+!!$                print *,'Apply interp op to variable:',gom%variables(var_type_index),' field num:',cnt_fld
+!!$                fld_src = reshape(fld%cicen(:,:,ivar), (/Nc/))
+!!$                call apply_linop(fld%hinterp_op, fld_src, fld_dst)
+!!$                gom%values(cnt_fld,gom%used:gom%used+No-1)=fld_dst(1:No)
+!!$             end do
+!!$          end do
+!!$          deallocate(fld_src)
+!!$       case ('AD')
+!!$          call abor1_ftn("nicas_interph: Wrapper for adjoint not implemented yet")
+!!$          !call apply_linop_ad(hinterp_op,fld_dst,fld_src)
+!!$          !CHECK: WHERE DO WE TRIGGER THE ADJOINT TESTS? 
+!!$          !put fld_src
+!!$       end select
+!!$       gom%used=gom%used+locs%nloc
+!!$    end if
+!!$  end subroutine nicas_interph
 
   ! ------------------------------------------------------------------------------
 
@@ -1056,7 +1087,7 @@ contains
        if (x1%fldnames(jf)/=x2%fldnames(jf)) &
             & call abor1_ftn("common_vars: fields do not match")
     enddo
-    if (x1%geom%ice%nz /= x2%geom%ice%nz) call abor1_ftn("common_vars: error number of levels")
+    if (x1%geom%ocean%nzo /= x2%geom%ocean%nzo) call abor1_ftn("common_vars: error number of levels")
     !common_vars = x1%geom%nzi * common_vars
 
   end function common_vars
@@ -1069,7 +1100,7 @@ contains
     type(soca_field), intent(in) :: x1, x2
 
     ! NEEDS WORK !!!
-    if (x1%geom%ice%nx /= x2%geom%ice%nx .or.  x1%geom%ice%ny /= x2%geom%ice%ny ) then
+    if (x1%geom%ocean%nx /= x2%geom%ocean%nx .or.  x1%geom%ocean%ny /= x2%geom%ocean%ny ) then
        call abor1_ftn ("soca_fields: resolution error")
     endif
     call check(x1)
@@ -1090,7 +1121,7 @@ contains
     ! add more test here ...
 
     if (bad) then
-       write(0,*)'nx, ny, nf, nzi, nzo = ',self%geom%ice%nx,self%geom%ice%ny
+       write(0,*)'nx, ny, nf, nzi, nzo = ',self%geom%ocean%nx,self%geom%ocean%ny
        call abor1_ftn ("soca_fields: field not consistent")
     endif
 

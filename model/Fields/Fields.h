@@ -21,6 +21,7 @@ namespace eckit {
 
 namespace oops {
   class UnstructuredGrid;
+  class Variables;  
 }
 
 namespace soca {
@@ -35,9 +36,9 @@ namespace soca {
       static const std::string classname() {return "soca::Fields";}
 
       // Constructors and basic operators
-      Fields(const Geometry &, const Variables &, const util::DateTime &);
+      Fields(const Geometry &, const oops::Variables &, const util::DateTime &);
       Fields(const Fields &, const Geometry &);
-      Fields(const Fields &, const Variables &);
+      Fields(const Fields &, const oops::Variables &);
       Fields(const Fields &, const bool);
       Fields(const Fields &);
       ~Fields();
@@ -55,9 +56,9 @@ namespace soca {
       void random();
 
       // Interpolate to given location
-      void interpolate(const Loc &, const Variables &, Gom &) const;
-      void interpolateTL(const Loc &, const Variables &, Gom &) const;
-      void interpolateAD(const Loc &, const Variables &, const Gom &);      
+      void interpolate(const Loc &, const oops::Variables &, Gom &) const;
+      void interpolateTL(const Loc &, const oops::Variables &, Gom &) const;
+      void interpolateAD(const Loc &, const oops::Variables &, const Gom &);      
       //void interpolateTL(const Loc &, Gom &) const;
       //void interpolateAD(const Loc &, const Gom &);
 
@@ -86,9 +87,9 @@ namespace soca {
 
   private:
       void print(std::ostream &) const;
-      int keyFlds_;
+      F90flds keyFlds_;
       boost::shared_ptr<const Geometry> geom_;
-      boost::shared_ptr<const Variables> vars_;
+      const Variables vars_;      
       util::DateTime time_;
     };
   // -----------------------------------------------------------------------------
