@@ -31,7 +31,7 @@ module soca_mom6sis2
   implicit none
   private
 
-  public :: soca_geom_init, soca_geom_end, Coupled, soca_field_init
+  public :: soca_geom_init, soca_geom_end, Coupled, soca_field_init, soca_field_end
 
   type soca_ocn_data_type ! TODO: change to mom's derived data type ...
      real(kind=kind_real), pointer, dimension(:,:,:) :: T
@@ -102,10 +102,12 @@ contains
     character(len=40)  :: mdl = "soca_mom6sis2"
     real :: Rho_ice = 905.0
     integer :: ncat, nkice, nksnow, km
-    
+
+    print *,'=========== fms_io_init'
     ! Initialize fms/mpp io stuff
     call fms_io_init()
 
+    print *,'=========== get mom input'    
     ! Parse grid inputs
     call Get_MOM_Input(param_file, dirs)
 
@@ -164,6 +166,7 @@ contains
   end subroutine soca_geom_end
 
   subroutine soca_field_init(aogcm, G, GV, IG)
+    
     use MOM_state_initialization, only : MOM_initialize_state
     use MOM_time_manager,         only : time_type, set_time, time_type_to_real, operator(+)
     use MOM_file_parser,           only : get_param, param_file_type
@@ -178,6 +181,7 @@ contains
     use ice_grid,                  only : set_ice_grid, ice_grid_type
     
     implicit none
+    
     type (Coupled),                     intent(out) :: aogcm
     type(ocean_grid_type), intent(inout)           :: G
     type(verticalGrid_type), pointer, intent(inout):: GV
@@ -192,6 +196,9 @@ contains
     integer :: isd, ied, jsd, jed, IsdB, IedB, JsdB, JedB
     integer :: ncat, nkice, nksnow, km
 
+    ! Allocate arrays on data domain
+    ! Note: Compute domain excludes halo (is, ie, js, je)
+    !       Data domain includes halo (isd, ied, jsd, jed)
     is   = G%isc  ; ie   = G%iec  ; js   = G%jsc  ; je   = G%jec ; nzo = G%ke
     Isq  = G%IscB ; Ieq  = G%IecB ; Jsq  = G%JscB ; Jeq  = G%JecB
     isd  = G%isd  ; ied  = G%ied  ; jsd  = G%jsd  ; jed  = G%jed
@@ -202,19 +209,19 @@ contains
     nzs = IG%NkSnow
 
     ! Allocate ocean state
-    allocate(aogcm%Ocn%T(isd:ied,jsd:jed,nzo))   ; aogcm%Ocn%T(:,:,:) = 0.0
-    allocate(aogcm%Ocn%S(isd:ied,jsd:jed,nzo))   ; aogcm%Ocn%S(:,:,:) = 0.0
-    allocate(aogcm%Ocn%ssh(isd:ied,jsd:jed))   ; aogcm%Ocn%ssh(:,:) = 0.0
+    allocate(aogcm%Ocn%T(isd:ied,jsd:jed,nzo))   ; aogcm%Ocn%T(:,:,:) = 0.0_kind_real
+    allocate(aogcm%Ocn%S(isd:ied,jsd:jed,nzo))   ; aogcm%Ocn%S(:,:,:) = 0.0_kind_real
+    allocate(aogcm%Ocn%ssh(isd:ied,jsd:jed))   ; aogcm%Ocn%ssh(:,:) = 0.0_kind_real
 
     ! Allocate sea-ice state
     km = ncat + 1
-    allocate(aogcm%Ice%part_size(isd:ied, jsd:jed, km)) ; aogcm%Ice%part_size(:,:,:) = 0.0
-    allocate(aogcm%Ice%h_ice(isd:ied, jsd:jed, ncat)) ; aogcm%Ice%h_ice(:,:,:) = 0.0
-    allocate(aogcm%Ice%h_snow(isd:ied, jsd:jed, ncat)) ; aogcm%Ice%h_snow(:,:,:) = 0.0    
-    allocate(aogcm%Ice%enth_ice(isd:ied, jsd:jed, ncat, nzi)) ; aogcm%Ice%enth_ice(:,:,:,:) = 0.0
-    allocate(aogcm%Ice%enth_snow(isd:ied, jsd:jed, ncat, nzs)) ; aogcm%Ice%enth_snow(:,:,:,:) = 0.0
-    allocate(aogcm%Ice%sal_ice(isd:ied, jsd:jed, ncat, nzi)) ; aogcm%Ice%sal_ice(:,:,:,:) = 0.0    
-    allocate(aogcm%Ice%T_skin(isd:ied, jsd:jed, ncat)) ; aogcm%Ice%T_skin(:,:,:) = 0.0    
+    allocate(aogcm%Ice%part_size(isd:ied, jsd:jed, km)) ; aogcm%Ice%part_size(:,:,:) = 0.0_kind_real
+    allocate(aogcm%Ice%h_ice(isd:ied, jsd:jed, ncat)) ; aogcm%Ice%h_ice(:,:,:) = 0.0_kind_real
+    allocate(aogcm%Ice%h_snow(isd:ied, jsd:jed, ncat)) ; aogcm%Ice%h_snow(:,:,:) = 0.0_kind_real
+    allocate(aogcm%Ice%enth_ice(isd:ied, jsd:jed, ncat, nzi)) ; aogcm%Ice%enth_ice(:,:,:,:) = 0.0_kind_real
+    allocate(aogcm%Ice%enth_snow(isd:ied, jsd:jed, ncat, nzs)) ; aogcm%Ice%enth_snow(:,:,:,:) = 0.0_kind_real
+    allocate(aogcm%Ice%sal_ice(isd:ied, jsd:jed, ncat, nzi)) ; aogcm%Ice%sal_ice(:,:,:,:) = 0.0_kind_real
+    allocate(aogcm%Ice%T_skin(isd:ied, jsd:jed, ncat)) ; aogcm%Ice%T_skin(:,:,:) = 0.0_kind_real
 
     print *,'PE #',mpp_pe(),' of ',mpp_npes(),'. PE root is ',mpp_root_pe()
     print *,' shape T:',shape(aogcm%Ocn%T)
@@ -224,4 +231,29 @@ contains
 
   end subroutine soca_field_init
 
+  subroutine soca_field_end(aogcm)!, G, GV, IG)
+    
+    implicit none
+    
+    type (Coupled),                     intent(inout) :: aogcm
+
+    ! deallocate ocean state
+    deallocate(aogcm%Ocn%T)
+    deallocate(aogcm%Ocn%S)
+    deallocate(aogcm%Ocn%ssh)
+
+    ! Allocate sea-ice state
+    deallocate(aogcm%Ice%part_size)
+    deallocate(aogcm%Ice%h_ice)
+    deallocate(aogcm%Ice%h_snow)
+    deallocate(aogcm%Ice%enth_ice)
+    deallocate(aogcm%Ice%enth_snow)
+    deallocate(aogcm%Ice%sal_ice)
+    deallocate(aogcm%Ice%T_skin)
+
+    !call mpp_sync()
+
+  end subroutine soca_field_end
+
+  
 end module soca_mom6sis2

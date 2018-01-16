@@ -23,8 +23,8 @@ list( APPEND oops_soca_src_files
 ./Variables/soca_vars_mod.F90
 
 #Increment
-#./Increment/Increment.cc
-#./Increment/Increment.h
+./Increment/Increment.cc
+./Increment/Increment.h
 
 #Model
 ./Model/Model.cc

@@ -32,10 +32,6 @@ subroutine c_soca_setup(c_confspec, c_key_geom, c_key_confdata) bind (c,name='so
 
   ! ------------------------------------------------------------------------------
 
-  !call mpp_init(localcomm=mpi_comm_world)
-  !call mpp_domains_init
-  !call fms_io_init
-  
   call soca_geom_registry%get(c_key_geom, geom)
   call soca_config_registry%init()
   call soca_config_registry%add(c_key_confdata)

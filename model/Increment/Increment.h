@@ -1,3 +1,12 @@
+/*
+ * (C) Copyright 2009-2016 ECMWF.
+ *
+ * This software is licensed under the terms of the Apache Licence Version 2.0
+ * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+ * In applying this licence, ECMWF does not waive the privileges and immunities
+ * granted to it by virtue of its status as an intergovernmental organisation nor
+ * does it submit to any jurisdiction.
+ */
 
 #ifndef SOCA_MODEL_SOCAINCREMENT_H_
 #define SOCA_MODEL_SOCAINCREMENT_H_
@@ -21,11 +30,17 @@ namespace eckit {
   class Configuration;
 }
 
-namespace soca {
-  class State;
+namespace oops {
+  class UnstructuredGrid;
   class Variables;
+}
+
+namespace soca {
   class Gom;
   class Loc;
+  class ModelBiasIncrement;
+  class ErrorCovariance;  
+  class State;
 
   /// Increment Class: Difference between two states
   /*!
@@ -43,7 +58,7 @@ namespace soca {
       static const std::string classname() {return "soca::Increment";}
 
       /// Constructor, destructor
-      Increment(const Geometry &, const Variables &, const util::DateTime &);
+      Increment(const Geometry &, const oops::Variables &, const util::DateTime &);
       Increment(const Geometry &, const Increment &);
       Increment(const Increment &, const bool);
       Increment(const Increment &);
@@ -53,7 +68,6 @@ namespace soca {
       void diff(const State &, const State &);
       void zero();
       void zero(const util::DateTime &);
-      void dirac(const eckit::Configuration &);
       Increment & operator =(const Increment &);
       Increment & operator+=(const Increment &);
       Increment & operator-=(const Increment &);
@@ -62,10 +76,11 @@ namespace soca {
       double dot_product_with(const Increment &) const;
       void schur_product_with(const Increment &);
       void random();
-
+      void dirac(const eckit::Configuration &);
+      
       /// Interpolate to observation location
-      void interpolateTL(const Loc &, const Variables &,Gom &) const;
-      void interpolateAD(const Loc &, const Variables &, const Gom &);
+      void interpolateTL(const Loc &, const oops::Variables &,Gom &) const;
+      void interpolateAD(const Loc &, const oops::Variables &, const Gom &);
 
       /// I/O and diagnostics
       void read(const eckit::Configuration &);

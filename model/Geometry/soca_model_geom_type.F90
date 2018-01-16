@@ -126,9 +126,9 @@ contains
   
   subroutine geom_infotofile(self)
 
-    use mpp_mod,                   only : mpp_pe, mpp_npes, mpp_root_pe, mpp_sync
+    use mpp_mod,          only : mpp_pe, mpp_npes, mpp_root_pe, mpp_sync
     use fms_mod,         only : get_mosaic_tile_grid, write_data, set_domain
-    use fms_io_mod,                only : fms_io_init, fms_io_exit
+    use fms_io_mod,      only : fms_io_init, fms_io_exit
     
     implicit none
     class(soca_model_geom), intent(in) :: self

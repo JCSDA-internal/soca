@@ -5,8 +5,8 @@
   "test_framework_runtime_config": "--log_level=test_suite",
   "Geometry": {
   },
-  "Variables": {
-      "variables": [""]
+    "Variables": {
+      "variables": ["cicen"]
   },
   "TestDate": "2015-05-01T00:00:00Z",
     "State": {
@@ -21,7 +21,7 @@
     "read_from_file": 0,
     "date": "2015-05-01T00:00:00Z",
     "perturb": 0,
-    "norm": 1.1429778339993186,
+    "norm": 99999.1,
     "tolerance": 0.005
   }
 }

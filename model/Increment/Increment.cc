@@ -5,14 +5,18 @@
 #include <string>
 
 #include "eckit/config/LocalConfiguration.h"
-#include "util/Logger.h"
+#include "oops/base/Variables.h"
+#include "oops/generic/UnstructuredGrid.h"
+#include "model/ModelAtLocations/Gom.h"
+#include "model/Locations/Loc.h"
+#include "model/ModelBiasIncrement.h"
+//#include "model/ErrorCovariance.h"
 #include "model/Fields/Fields.h"
 #include "model/Geometry/Geometry.h"
 #include "model/State/State.h"
-#include "model/Variables/Variables.h"
-#include "model/ModelAtLocations/Gom.h"
 #include "util/DateTime.h"
 #include "util/Duration.h"
+#include "util/Logger.h"
 
 using oops::Log;
 
@@ -21,7 +25,7 @@ namespace soca {
   // -----------------------------------------------------------------------------
   /// Constructor, destructor
   // -----------------------------------------------------------------------------
-  Increment::Increment(const Geometry & resol, const Variables & vars,
+  Increment::Increment(const Geometry & resol, const oops::Variables & vars,
 		       const util::DateTime & vt)
     : fields_(new Fields(resol, vars, vt)), stash_()
   {
@@ -53,23 +57,23 @@ namespace soca {
   // -----------------------------------------------------------------------------
   void Increment::activateModel() {
     // Should get variables from model. YT
-    eckit::LocalConfiguration modelvars;
-    modelvars.set("variables", "tl");
-    Variables vars(modelvars);
+    //eckit::LocalConfiguration modelvars;
+    //modelvars.set("variables", "tl");
+    //Variables vars(modelvars);
     // Should get variables from model. YT
-    stash_.reset(new Fields(*fields_, vars));
-    swap(fields_, stash_);
-    ASSERT(fields_);
-    ASSERT(stash_);
+    //stash_.reset(new Fields(*fields_, vars));
+    //swap(fields_, stash_);
+    //ASSERT(fields_);
+    //ASSERT(stash_);
     Log::trace() << "Increment activated for TLM" << std::endl;
   }
   // -----------------------------------------------------------------------------
   void Increment::deactivateModel() {
-    swap(fields_, stash_);
-    *fields_ = *stash_;
-    stash_.reset();
-    ASSERT(fields_);
-    ASSERT(!stash_);
+    //swap(fields_, stash_);
+    //*fields_ = *stash_;
+    //stash_.reset();
+    //ASSERT(fields_);
+    //ASSERT(!stash_);
     Log::trace() << "Increment deactivated for TLM" << std::endl;
   }
   // -----------------------------------------------------------------------------
@@ -141,13 +145,13 @@ namespace soca {
   }
   /// Interpolate to observation location
   // -----------------------------------------------------------------------------
-  void Increment::interpolateTL(const Loc & locs, const Variables & vars, Gom & cols) const {
+  void Increment::interpolateTL(const Loc & locs, const oops::Variables & vars, Gom & cols) const {
     Log::debug() << "Increment::interpolateTL fields in" << *fields_ << std::endl;
     fields_->interpolateTL(locs, vars, cols);
     //Log::debug() << "Increment::interpolateTL gom " << cols << std::endl;    
   }
   // -----------------------------------------------------------------------------
-  void Increment::interpolateAD(const Loc & locs, const Variables & vars, const Gom & cols) {
+  void Increment::interpolateAD(const Loc & locs, const oops::Variables & vars, const Gom & cols) {
     Log::debug() << "Increment::interpolateAD gom " << cols << std::endl;
     Log::debug() << "Increment::interpolateAD fields in" << *fields_ << std::endl;    
     fields_->interpolateAD(locs, vars, cols);

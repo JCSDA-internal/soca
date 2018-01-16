@@ -34,24 +34,24 @@ module soca_fields
 
   !> Fortran derived type to hold fields
   type :: soca_field
-     type (Coupled)           :: AOGCM
+     type (Coupled)                    :: AOGCM
      type(soca_geom), pointer          :: geom                  !< MOM5 & CICE5 Geometry
      integer                           :: nf                    !< Number of fields
      character(len=128)                :: gridfname             !< Grid file name
      character(len=128)                :: cicefname             !< Fields file name for cice
      character(len=128)                :: momfname              !< Fields file name for mom
      real(kind=kind_real), pointer     :: cicen(:,:,:) => NULL()  !< Sea-ice fraction                 (nx,ny,ncat)
-     real(kind=kind_real), pointer     :: hicen(:,:,:) => NULL()           !< Sea-ice thickness                (nx,ny,ncat)
-     real(kind=kind_real), pointer     :: vicen(:,:,:) => NULL()  !< Sea-ice volume                   (nx,ny,ncat)
-     real(kind=kind_real), pointer     :: hsnon(:,:,:) => NULL()            !< Snow depth over sea-ice          (nx,ny,ncat)
+     real(kind=kind_real), pointer     :: hicen(:,:,:) => NULL()          !< Sea-ice thickness                (nx,ny,ncat)
+     real(kind=kind_real), pointer     :: vicen(:,:,:) => NULL()          !< Sea-ice volume                   (nx,ny,ncat)
+     real(kind=kind_real), pointer     :: hsnon(:,:,:) => NULL()          !< Snow depth over sea-ice          (nx,ny,ncat)
      real(kind=kind_real), pointer     :: vsnon(:,:,:) => NULL()          !< Snow volume over sea-ice         (nx,ny,ncat) 
      real(kind=kind_real), pointer     :: tsfcn(:,:,:) => NULL()          !< Temperature over sea-ice or snow (nx,ny,ncat)
      real(kind=kind_real), pointer     :: qsnon(:,:,:,:) => NULL()        !< Enthalpy of snow                 (nx,ny,ncat)
      real(kind=kind_real), pointer     :: sicnk(:,:,:,:) => NULL()        !< Salin_wity of sea-ice            (nx,ny,ncat,nzi)
      real(kind=kind_real), pointer     :: socn(:,:,:) => NULL()           !< Ocean (surface) Salinity         (nx,ny,nzo)
      real(kind=kind_real), pointer     :: qicnk(:,:,:,:) => NULL()   !< Enthalpy of sea-ice              (nx,ny,ncat,nzi)
-     real(kind=kind_real), pointer     :: tocn(:,:,:) => NULL()         !< Average temperature of grid cell (nx,ny,nzo)
-     real(kind=kind_real), pointer     :: ssh(:,:) => NULL()   !< Sea-surface height (nx,ny,nzo)     
+     real(kind=kind_real), pointer     :: tocn(:,:,:) => NULL()      !< Average temperature of grid cell (nx,ny,nzo)
+     real(kind=kind_real), pointer     :: ssh(:,:) => NULL()         !< Sea-surface height (nx,ny,nzo)     
      character(len=5), allocatable     :: fldnames(:)           !< Variable identifiers             (nf)
      integer, allocatable              :: numfld_per_fldname(:) !< Number of 2d fields for each     (nf) 
                                                                 !< element of fldnames
@@ -167,6 +167,8 @@ contains
     self%sicnk => self%AOGCM%Ice%sal_ice
     self%qicnk => self%AOGCM%Ice%enth_ice
     self%qsnon => self%AOGCM%Ice%enth_snow
+
+    call zeros(self)
     
     allocate(self%numfld_per_fldname(vars%nv))
     
@@ -181,26 +183,11 @@ contains
        case ('socn','tocn')
           self%numfld_per_fldname(ivar)=geom%ocean%nzo
        case ('ssh')
-         self%numfld_per_fldname(ivar)=1          
+         self%numfld_per_fldname(ivar)=1
        case default
           call abor1_ftn("c_soca_fields: undefined variables")
        end select
     end do
-
-    !print *,'ocean grid stuff:',shape(self%tocn)
-    !print *,'ice grid stuff:',shape(self%cicen)  
-
-!!$    self%cicen=0.0_kind_real
-!!$    self%hicen=0.0_kind_real
-!!$    self%vicen=0.0_kind_real        
-!!$    self%hsnon=0.0_kind_real
-!!$    self%vsnon=0.0_kind_real
-!!$    self%tsfcn=0.0_kind_real
-!!$    self%qsnon=0.0_kind_real
-!!$    self%sicnk=0.0_kind_real
-!!$    self%socn=0.0_kind_real    
-!!$    self%qicnk=0.0_kind_real
-!!$    !self%tocn=0.0_kind_real
 
     if (self%nf>11) then
        call abor1_ftn ("soca_fields:create error number of fields")       
@@ -219,26 +206,7 @@ contains
     implicit none
     type(soca_field), intent(inout) :: self
 
-
-    !call soca_models_end(self%AOGCM)
-
-    
-    !call check(self)
-
-!!$    !if (allocated(self%cicen)) deallocate(self%cicen)
-!!$    if (allocated(self%hicen)) deallocate(self%hicen)
-!!$    if (allocated(self%vicen)) deallocate(self%vicen)        
-!!$    if (allocated(self%hsnon)) deallocate(self%hsnon)
-!!$    if (allocated(self%vsnon)) deallocate(self%vsnon)
-!!$    if (allocated(self%tsfcn)) deallocate(self%tsfcn)    
-!!$    if (allocated(self%qsnon)) deallocate(self%qsnon)
-!!$    if (allocated(self%sicnk)) deallocate(self%sicnk)
-!!$    if (allocated(self%socn)) deallocate(self%socn)
-!!$    if (allocated(self%qicnk)) deallocate(self%qicnk)
-!!$    !if (allocated(self%tocn)) deallocate(self%tocn)    
-!!$    if (allocated(self%fldnames)) deallocate(self%fldnames)
-!!$    !call linop_dealloc(self%hinterp_op)
-
+    call soca_field_end(self%AOGCM)!, geom%ocean%G, geom%ocean%GV, geom%ocean%IG)
     
   end subroutine delete
 
@@ -317,8 +285,17 @@ contains
     type(soca_field), intent(inout) :: self
 
     call check(self)
-    call random_number(self%cicen); self%cicen=self%cicen-sum(self%cicen) !<--- NO GOOD !!!!
 
+    !call random_number(self%cicen); self%cicen=self%cicen-0.5_kind_real
+    !call random_number(self%hicen); self%hicen=self%hicen-0.5_kind_real
+    !call random_number(self%hsnon); self%hsnon=self%hsnon-0.5_kind_real        
+    !call random_number(self%tsfcn); self%tsfcn=self%tsfcn-0.5_kind_real
+    
+    !call random_number(self%tocn); self%tocn=self%tocn-0.5_kind_real
+    !call random_number(self%socn); self%tocn=self%socn-0.5_kind_real
+    !self%ssh=0.1_kind_real
+    call random_number(self%ssh); self%ssh=(self%ssh-0.5_kind_real)*self%geom%ocean%mask2d
+    
   end subroutine random
 
   ! ------------------------------------------------------------------------------
@@ -331,8 +308,7 @@ contains
 
     call check_resolution(self, rhs)
 
-
-!!$    nf = common_vars(self, rhs)
+    nf = common_vars(self, rhs)
 
     self%cicen = rhs%cicen
     self%hicen = rhs%hicen
@@ -354,7 +330,9 @@ contains
   ! ------------------------------------------------------------------------------
 
   subroutine self_add(self,rhs)
+
     implicit none
+
     type(soca_field), intent(inout) :: self
     type(soca_field), intent(in)    :: rhs
     integer :: nf
@@ -363,18 +341,26 @@ contains
 
     nf = common_vars(self, rhs)
 
-    self%cicen=self%cicen+rhs%cicen
-    self%hicen=self%hicen+rhs%hicen
-    self%hsnon=self%hsnon+rhs%hsnon
-    self%tsfcn=self%tsfcn+rhs%tsfcn
-    self%qsnon=self%qsnon+rhs%qsnon
-    self%sicnk=self%sicnk+rhs%sicnk
-    self%socn=self%socn+rhs%socn
-    self%qicnk=self%qicnk+rhs%qicnk
-    self%tocn=self%tocn+rhs%tocn
-    self%ssh=self%ssh+rhs%ssh    
+    self%cicen = self%cicen + rhs%cicen
+    self%hicen = self%hicen + rhs%hicen
+    self%hsnon = self%hsnon + rhs%hsnon
+    self%tsfcn = self%tsfcn + rhs%tsfcn
+    self%qsnon = self%qsnon + rhs%qsnon
+    self%sicnk = self%sicnk + rhs%sicnk
+    self%qicnk = self%qicnk + rhs%qicnk
 
-    return
+    self%tocn = self%tocn + rhs%tocn
+    self%socn = self%socn + rhs%socn
+
+    print *,'%%%%%%%%%%%%%%%%%%%%% IN self_add ##################'
+    print *,'before self,self,rhs:',self%ssh(1,1), rhs%ssh(1,1), sum(self%geom%ocean%mask2d)
+    
+    self%ssh = self%ssh + rhs%ssh
+
+    print *,'after,self,rhs:',self%ssh(1,1), rhs%ssh(1,1)    
+
+    !self%AOGCM%Ocn%ssh = self%AOGCM%Ocn%ssh + rhs%AOGCM%Ocn%ssh
+    !return
   end subroutine self_add
 
   ! ------------------------------------------------------------------------------
@@ -391,16 +377,16 @@ contains
 
     self%cicen=self%cicen*rhs%cicen
     self%hicen=self%hicen*rhs%hicen
-    self%vicen=self%vicen*rhs%vicen
     self%hsnon=self%hsnon*rhs%hsnon
-    self%vsnon=self%vsnon*rhs%vsnon
     self%tsfcn=self%tsfcn*rhs%tsfcn
     self%qsnon=self%qsnon*rhs%qsnon
     self%sicnk=self%sicnk*rhs%sicnk
-    self%socn=self%socn*rhs%socn
     self%qicnk=self%qicnk*rhs%qicnk
-    self%tocn=self%tocn*rhs%tocn
 
+    self%tocn=self%tocn*rhs%tocn
+    self%socn=self%socn*rhs%socn
+    self%ssh=self%ssh*rhs%ssh    
+    
     return
   end subroutine self_schur
 
@@ -418,17 +404,16 @@ contains
 
     self%cicen=self%cicen-rhs%cicen
     self%hicen=self%hicen-rhs%hicen
-    self%vicen=self%vicen-rhs%vicen
     self%hsnon=self%hsnon-rhs%hsnon
-    self%vsnon=self%vsnon-rhs%vsnon
     self%tsfcn=self%tsfcn-rhs%tsfcn
     self%qsnon=self%qsnon-rhs%qsnon
     self%sicnk=self%sicnk-rhs%sicnk
-    self%socn=self%socn-rhs%socn
     self%qicnk=self%qicnk-rhs%qicnk
+    
+    self%socn=self%socn-rhs%socn
     self%tocn=self%tocn-rhs%tocn
+    self%ssh=self%ssh-rhs%ssh    
 
-    return
   end subroutine self_sub
 
   ! ------------------------------------------------------------------------------
@@ -442,17 +427,16 @@ contains
 
     self%cicen = zz * self%cicen
     self%hicen = zz * self%hicen
-    self%vicen = zz * self%vicen
     self%hsnon = zz * self%hsnon
-    self%vsnon = zz * self%vsnon
     self%tsfcn = zz * self%tsfcn
     self%qsnon = zz * self%qsnon
     self%sicnk = zz * self%sicnk
-    self%socn = zz * self%socn
     self%qicnk = zz * self%qicnk
+    
     self%tocn = zz * self%tocn
-
-    return
+    self%socn = zz * self%socn
+    self%ssh = zz * self%ssh
+    
   end subroutine self_mul
 
   ! ------------------------------------------------------------------------------
@@ -470,53 +454,58 @@ contains
 
     self%cicen=self%cicen + zz * rhs%cicen
     self%hicen=self%hicen + zz * rhs%hicen
-    self%vicen=self%vicen + zz * rhs%vicen
     self%hsnon=self%hsnon + zz * rhs%hsnon
-    self%vsnon=self%vsnon + zz * rhs%vsnon
     self%tsfcn=self%tsfcn + zz * rhs%tsfcn
     self%qsnon=self%qsnon + zz * rhs%qsnon
     self%sicnk=self%sicnk + zz * rhs%sicnk
-    self%socn=self%socn + zz * rhs%socn
     self%qicnk=self%qicnk + zz * rhs%qicnk
+    
     self%tocn=self%tocn + zz * rhs%tocn        
-
-    return
+    self%socn=self%socn + zz * rhs%socn
+    self%ssh=self%ssh + zz * rhs%ssh
+    
   end subroutine axpy
 
   ! ------------------------------------------------------------------------------
 
   subroutine dot_prod(fld1,fld2,zprod)
+    
+    use mpp_mod,  only : mpp_pe, mpp_npes, mpp_root_pe, mpp_sync, mpp_sum, mpp_gather, mpp_broadcast
+    
     implicit none
     type(soca_field), intent(in) :: fld1, fld2
     real(kind=kind_real), intent(out) :: zprod
-    integer :: jj, kk
+    real(kind=kind_real),allocatable,dimension(:) :: zprod_allpes
+    integer :: ii, jj, kk
+    integer :: is, ie, js, je
     call check_resolution(fld1, fld2)
     if (fld1%nf /= fld2%nf .or. fld1%geom%ocean%nzo /= fld2%geom%ocean%nzo) then
        call abor1_ftn("soca_fields:field_prod error number of fields")
     endif
 
-!!$    zprod = 0.0_kind_real
-!!$    do jj = 1, fld1%geom%ice%ncat
-!!$       zprod=sum(fld1%cicen(:,:,jj)*fld2%cicen(:,:,jj)*fld1%geom%ice%mask2d) + &
-!!$            sum(fld1%hicen(:,:,jj)*fld2%hicen(:,:,jj)*fld1%geom%ice%mask2d) + &
-!!$            sum(fld1%vicen(:,:,jj)*fld2%vicen(:,:,jj)*fld1%geom%ice%mask2d) + &
-!!$            sum(fld1%hsnon(:,:,jj)*fld2%hsnon(:,:,jj)*fld1%geom%ice%mask2d) + &
-!!$            sum(fld1%vsnon(:,:,jj)*fld2%vsnon(:,:,jj)*fld1%geom%ice%mask2d) + &
-!!$            sum(fld1%tsfcn(:,:,jj)*fld2%tsfcn(:,:,jj)*fld1%geom%ice%mask2d)
-!!$    end do
-!!$
-!!$    do jj = 1, fld1%geom%ice%ncat
-!!$       do kk = 1,fld1%geom%ice%nz
-!!$          zprod = zprod + &
-!!$               sum(fld1%sicnk(:,:,jj,kk)*fld2%sicnk(:,:,jj,kk)*fld1%geom%ice%mask2d) + &
-!!$               sum(fld1%qicnk(:,:,jj,kk)*fld2%qicnk(:,:,jj,kk)*fld1%geom%ice%mask2d) + &
-!!$               sum(fld1%qsnon(:,:,jj,kk)*fld2%qsnon(:,:,jj,kk)*fld1%geom%ice%mask2d)               
-!!$       end do
-!!$    end do
-    !zprod = zprod + sum(fld1%socn*fld2%socn*fld1%geom%ocen%mask2d) !+ &
-    !sum(fld1%tocn*fld2%tocn*fld1%geom%mask)
-    zprod=999.9
-    return
+    ! Get compute domain
+    is = fld1%geom%ocean%G%isc    
+    ie = fld1%geom%ocean%G%iec
+    js = fld1%geom%ocean%G%jsc    
+    je = fld1%geom%ocean%G%jec    
+
+    zprod = 0.0_kind_real
+    do ii = is, ie
+       do jj = js, je
+          zprod = zprod + fld1%ssh(ii,jj)*fld2%ssh(ii,jj)*fld1%geom%ocean%mask2d(ii,jj)
+       end do
+    end do
+    !zprod=sum(fld1%ssh(is:ie,js:je)*fld2%ssh(is:ie,js:je)*fld1%geom%ocean%mask2d(is:ie,js:je))
+    allocate(zprod_allpes(mpp_npes()))
+
+    call mpp_gather((/zprod/),zprod_allpes)
+    call mpp_broadcast(zprod_allpes, mpp_npes(), mpp_root_pe())    
+    zprod=sum(zprod_allpes)
+    !print *,' ======================= DOT PROD GLOBAL= ',zprod
+    
+    deallocate(zprod_allpes)
+    call mpp_sync()
+    
   end subroutine dot_prod
 
   ! ------------------------------------------------------------------------------
@@ -553,15 +542,15 @@ contains
     !   if (lhs%geom%nx==x1%geom%nx .and. lhs%geom%ny==x1%geom%ny) then
     lhs%cicen = x1%cicen - x2%cicen
     lhs%hicen = x1%hicen - x2%hicen
-    lhs%vicen = x1%vicen - x2%vicen
     lhs%hsnon = x1%hsnon - x2%hsnon
-    lhs%vsnon = x1%vsnon - x2%vsnon
     lhs%tsfcn = x1%tsfcn - x2%tsfcn
     lhs%qsnon = x1%qsnon - x2%qsnon
     lhs%sicnk = x1%sicnk - x2%sicnk
-    lhs%socn = x1%socn - x2%socn
     lhs%qicnk = x1%qicnk - x2%qicnk
-    lhs%tocn = x1%tocn - x2%tocn         
+    
+    lhs%tocn = x1%tocn - x2%tocn
+    lhs%socn = x1%socn - x2%socn
+    lhs%ssh = x1%ssh - x2%ssh    
     !   else
     !      call abor1_ftn("soca_fields:diff_incr: not coded for low res increment yet")
     !   endif
@@ -569,7 +558,6 @@ contains
     !   call abor1_ftn("soca_fields:diff_incr: states not at same resolution")
     !endif
 
-    return
   end subroutine diff_incr
 
   ! ------------------------------------------------------------------------------
@@ -602,13 +590,13 @@ contains
     use soca_thermo
     use soca_mom6sis2
     use fms_mod,                 only: read_data, write_data
-    use fms_io_mod,                only : fms_io_init, fms_io_exit    
+    use fms_io_mod,                only : fms_io_init, fms_io_exit
+    use mpp_mod,  only : mpp_pe, mpp_npes, mpp_root_pe, mpp_sync, mpp_sum, mpp_gather, mpp_broadcast    
     implicit none
     type(soca_field), intent(inout) :: fld      !< Fields
     type(c_ptr), intent(in)       :: c_conf   !< Configuration
     type(datetime), intent(inout) :: vdate    !< DateTime
 
-    integer, parameter :: iunit=10
     integer, parameter :: max_string_length=800 ! Yuk!
     character(len=max_string_length) :: ocn_sfc_filename, ocn_filename, ice_filename, basename
     character(len=20) :: sdate
@@ -638,29 +626,30 @@ contains
 
        call fms_io_init()
        do ii = 1, fld%nf
-          print *,fld%fldnames(ii)
+          print *,fld%fldnames(ii),' ---- ',ocn_sfc_filename,ocn_filename,ice_filename
           select case(fld%fldnames(ii))
           case ('ssh')
-             call read_data(ocn_sfc_filename,"SSH",fld%ssh(:,:),domain=fld%geom%ocean%G%Domain%mpp_domain)             
+             call read_data(ocn_sfc_filename,"ave_ssh",fld%ssh(:,:),domain=fld%geom%ocean%G%Domain%mpp_domain)
           case ('tocn')
-             call read_data(ocn_filename,"temp",fld%tocn(:,:,:),domain=fld%geom%ocean%G%Domain%mpp_domain)
-          case ('socn')
-             call read_data(ocn_filename,"salt",fld%tocn(:,:,:),domain=fld%geom%ocean%G%Domain%mpp_domain)             
-          case ('hicen')
-             call read_data(ice_filename,"HI",fld%hicen(:,:,1),domain=fld%geom%ocean%G%Domain%mpp_domain)
-          case ('hsnon')
-             call read_data(ice_filename,"HS",fld%hsnon(:,:,1),domain=fld%geom%ocean%G%Domain%mpp_domain)
+             call read_data(ocn_filename,"Temp",fld%tocn(:,:,:),domain=fld%geom%ocean%G%Domain%mpp_domain)
+          case ('socn')             
+             call read_data(ocn_filename,"Salt",fld%tocn(:,:,:),domain=fld%geom%ocean%G%Domain%mpp_domain)             
           case ('cicen')
-             call read_data(ice_filename,"CN",fld%cicen(:,:,:),domain=fld%geom%ocean%G%Domain%mpp_domain)
+             call read_data(ice_filename,"part_size",fld%cicen(:,:,:),domain=fld%geom%ocean%G%Domain%mpp_domain)
+          case ('hicen')
+             !call read_data(ice_filename,"h_ice",fld%hicen(:,:,:),domain=fld%geom%ocean%G%Domain%mpp_domain)
+          case ('hsnon')
+             !call read_data(ice_filename,"h_snow",fld%hsnon(:,:,:),domain=fld%geom%ocean%G%Domain%mpp_domain)
+
           case default
-             print *,'Not reading var ',fld%fldnames(ii)
-             call log%warning("soca_fields:read_file: Not reading var "//fld%fldnames(ii))
+             print *,'Not reading var ',fld%fldnames(ii),' in file ',ocn_filename
+             !call log%warning("soca_fields:read_file: Not reading var "//fld%fldnames(ii))
              !call abor1_ftn("soca_fields: undefined variables")             
           end select
        end do
+       call write_data( "test_write.nc", "SSH", fld%ssh, fld%geom%ocean%G%Domain%mpp_domain)
        call fms_io_exit()       
 
-       !iread = 0
        sdate = config_get_string(c_conf,len(sdate),"date")
        WRITE(buf,*) 'validity date is: '//sdate
        call log%info(buf)
@@ -669,8 +658,8 @@ contains
     endif
 
     call check(fld)
-
-    return
+    !call mpp_sync()
+    
   end subroutine read_file
 
   ! ------------------------------------------------------------------------------
@@ -689,27 +678,40 @@ contains
     type(datetime), intent(inout) :: vdate         !< DateTime
     integer, parameter :: max_string_length=800    ! Yuk!
     character(len=max_string_length) :: filename
-    character(len=128)  :: varname
-    character(len=20) :: sdate
-    real(kind=8) :: missing=-999d0
     character(len=1024):: buf
-
-    integer :: ncid, varid, dimids2d(2), dimids3d(3), dimids4d(3)
-    integer :: jx, jy, varid_lon, varid_lat, varid_sst, varid_cicen, varid_tsfcn
-    integer :: x_dimid, y_dimid, z_dimid, cat_dimid, status
-    integer :: catnum
-
+    integer :: ii
     call check(fld)
 
     filename = genfilename(c_conf,max_string_length,vdate)
     WRITE(buf,*) 'field:write_file: writing '//filename
     call fckit_log%info(buf)
-
+    
     call fms_io_init()
-    call write_data( filename, "temp", fld%tocn, fld%geom%ocean%G%Domain%mpp_domain)
-    call fms_io_exit()
-
-    return
+    do ii = 1, fld%nf
+       print *,fld%fldnames(ii)
+       select case(fld%fldnames(ii))
+       case ('ssh')
+          call write_data( filename, "SSH", fld%ssh, fld%geom%ocean%G%Domain%mpp_domain)              
+       case ('tocn')
+          call write_data( filename, "temp", fld%tocn, fld%geom%ocean%G%Domain%mpp_domain)          
+       case ('socn')
+          call write_data( filename, "salt", fld%socn, fld%geom%ocean%G%Domain%mpp_domain)          
+       case ('hicen')
+          call write_data( filename, "HI", fld%hicen(:,:,1), fld%geom%ocean%G%Domain%mpp_domain)
+       case ('hsnon')
+          call write_data(filename, "HS", fld%hsnon(:,:,1), fld%geom%ocean%G%Domain%mpp_domain)
+       case ('cicen')
+          call write_data(filename, "CN", fld%cicen(:,:,:), fld%geom%ocean%G%Domain%mpp_domain)
+       case default
+          print *,'Not writing var ',fld%fldnames(ii),' in file ',filename
+          !call log%warning("soca_fields:read_file: Not reading var "//fld%fldnames(ii))
+          !call abor1_ftn("soca_fields: undefined variables")             
+       end select
+    end do
+    call fms_io_exit()       
+    
+    print *,'===================== Done writting' 
+    
   end subroutine write_file
 
   ! ------------------------------------------------------------------------------
@@ -779,54 +781,39 @@ contains
 
     call check(fld)
 
-    pstat(1,:)=0.0!minval(fld%cicen)
-    pstat(2,:)=999.9!maxval(fld%cicen)
-    !pstat(3,:)=abs(maxval(fld%cicen)-minval(fld%cicen))
 
+    
+    pstat(1,:) = minval(fld%ssh)
+    pstat(2,:) = maxval(fld%ssh)
+    !call fldrms(fld, zz)
+    call dot_prod(fld,fld,zz)    
+    pstat(3,:) = sqrt(zz)
+    print *,'-------------------- GPNORM = ',zz
     !call abor1_ftn("soca_fields_gpnorm: error not implemented")
-    !print *,'pstat=',pstat
-    !call dot_prod(fld,fld,zz)    
-    call fldrms(fld, zz)
-    !pstat(3,:) = zz
-    pstat(3,:) = 915.24050597509438
 
-    !print *,'pstat=',pstat
-
-    !call random_number(pstat)
-
-    return
   end subroutine gpnorm
 
   ! ------------------------------------------------------------------------------
 
   subroutine fldrms(fld, prms)
+    
+    use mpp_mod,                   only : mpp_pe, mpp_npes, mpp_root_pe, mpp_sync
+    
     implicit none
+    
     type(soca_field), intent(in) :: fld
     real(kind=kind_real), intent(out) :: prms
     integer :: jf,jy,jx,ii
     real(kind=kind_real) :: zz, ns, n2dfld
 
-    real(kind=kind_real), allocatable :: cicen(:,:,:)          !< Sea-ice fraction                 (nx,ny,ncat)
-    real(kind=kind_real), allocatable :: hicen(:,:,:)          !< Sea-ice thickness                (nx,ny,ncat)
-    real(kind=kind_real), allocatable :: vicen(:,:,:)          !< Sea-ice volume                   (nx,ny,ncat)
-    real(kind=kind_real), allocatable :: hsnon(:,:,:)          !< Snow depth over sea-ice          (nx,ny,ncat)
-    real(kind=kind_real), allocatable :: vsnon(:,:,:)          !< Snow volume over sea-ice         (nx,ny,ncat) 
-    real(kind=kind_real), allocatable :: tsfcn(:,:,:)          !< Temperature over sea-ice or snow (nx,ny,ncat)
-    real(kind=kind_real), allocatable :: qsnon(:,:,:)          !< Enthalpy of snow                 (nx,ny,ncat)
-    real(kind=kind_real), allocatable :: sicnk(:,:,:,:)        !< Salin_wity of sea-ice            (nx,ny,ncat,nzi)
-    real(kind=kind_real), allocatable :: socn(:,:)            !< Ocean (surface) Salinity         (nx,ny,nzo)
-    real(kind=kind_real), allocatable :: qicnk(:,:,:,:)        !< Enthalpy of sea-ice              (nx,ny,ncat,nzi)
-    real(kind=kind_real), allocatable :: tocn(:,:,:)            !< Average temperature of grid cell (nx,ny,nzo)
     
     call check(fld)
 
-    n2dfld=fld%geom%ocean%ncat*fld%geom%ocean%nzi+&
-         & fld%geom%ocean%ncat*fld%geom%ocean%nzi*2+&
-         & fld%geom%ocean%nzo*2
-    ns = real(sum(fld%geom%ocean%mask2d)*n2dfld)
-    call dot_prod(fld,fld,prms)
-    prms = sqrt(prms)/ns
-    prms = 915.24050597509438
+    
+    call dot_prod(fld,fld,prms) ! Global value 
+    prms=sqrt(prms)
+    print *,'PE# ',mpp_pe(),' ---------------- NORM = ',prms
+
   end subroutine fldrms
 
   ! ------------------------------------------------------------------------------

@@ -86,11 +86,11 @@ namespace soca {
   }
   // -----------------------------------------------------------------------------
   void State::deactivateModel() {
-    swap(fields_, stash_);
-    *fields_ = *stash_;
-    stash_.reset();
-    ASSERT(fields_);
-    ASSERT(!stash_);
+    //swap(fields_, stash_);
+    //*fields_ = *stash_;
+    //stash_.reset();
+    //ASSERT(fields_);
+    //ASSERT(!stash_);
     Log::trace() << "State deactivated for Model" << std::endl;
   }
   // -----------------------------------------------------------------------------

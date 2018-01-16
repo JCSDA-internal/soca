@@ -24,21 +24,5 @@ integer :: unit
   call soca_field_registry%get(c_key_state,flds)
   call soca_config_registry%get(c_key_conf, conf)
 
-!  call mpp_init(localcomm=mpi_comm_world)
-!  call fms_init
-!  call fms_io_init
-  
-!!$  inquire(file="EGRESS", exist=flds%AOGCM%initialized)
-!!$  if ( .not. flds%AOGCM%initialized ) then
-!!$     print *,'---------------in prepare_integration--------------------'     
-!!$     call soca_models_init(flds%AOGCM)
-!!$     call mpp_open( unit, 'EGRESS' )
-!!$     call mpp_close(unit)
-!!$  end if
-!!$
-!!$  print *,'ice stuff:',flds%AOGCM%Ice%part_size
-
-  !call soca_models_init(flds%AOGCM)
-  ! -- Do stuff below
 
 end subroutine c_soca_prepare_integration

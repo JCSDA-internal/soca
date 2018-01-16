@@ -34,10 +34,15 @@ subroutine soca_finalize() bind(c,name='soca_finalize_f')
   use mpp_io_mod,              only: mpp_open, mpp_close, MPP_DELETE
   use fms_mod,                 only: fms_end
   use fms_io_mod,              only: fms_io_exit
+  use mpi
   implicit none
-  integer :: unit
+  integer :: unit, ierr
 
-  call mpp_sync()
+  !call mpi_finalize(ierr)
+  !call mpp_exit()
+  call fms_io_exit()
+  print *,'================================== soca_finalize'
+  !call mpp_sync()
 
 end subroutine soca_finalize
 

@@ -1,12 +1,12 @@
 list( APPEND soca_test_input
-  testinput/dirac.nicas.json
-  testinput/interfaces.yml
   testinput/interfaces.json  
-  testinput/forecast.yml
-  testinput/truth.yml
   testinput/truth.json
+  testoutput/forecast.test  
   testinput/makeobs3d.yml
-  testinput/makeobs3d.json  
+  testinput/makeobs3d.json
+  testinput/state_test.json    
+  testinput/geometry_test.json
+  testinput/increment_test.json
   compare.sh
 )
 
@@ -46,7 +46,7 @@ file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/Data)
 
 ecbuild_add_test( TARGET test_soca_truth
                   TYPE SCRIPT
-		  MPI     4		  
+		  MPI     2  
                   COMMAND "compare.sh"
                   ARGS "${CMAKE_BINARY_DIR}/bin/soca_forecast.x testinput/truth.json"
                        testoutput/truth.test
@@ -54,7 +54,7 @@ ecbuild_add_test( TARGET test_soca_truth
 
 ecbuild_add_test( TARGET test_soca_forecast
                   TYPE SCRIPT
-		  MPI     4		  		  
+		  MPI     2		  		  
                   COMMAND "compare.sh"
                   ARGS "${CMAKE_BINARY_DIR}/bin/soca_forecast.x testinput/forecast.yml"
                        testoutput/forecast.test
@@ -71,9 +71,9 @@ ecbuild_add_test( TARGET test_soca_forecast
 
 ecbuild_add_test( TARGET  test_soca_geometry
                   BOOST
-		  MPI     4
+		  MPI     2
                   SOURCES executables/TestGeometry.cc
-                  ARGS    "testinput/interfaces.json"
+                  ARGS    "testinput/geometry_test.json"
                   LIBS    soca )
 
 #ecbuild_add_test( TARGET  test_soca_locations
@@ -84,16 +84,16 @@ ecbuild_add_test( TARGET  test_soca_geometry
 
 #ecbuild_add_test( TARGET  test_soca_variables
 #                  BOOST
-#		  MPI     4		  
+#		  MPI     2		  
 #                  SOURCES executables/TestVariables.cc
 #                  ARGS    "testinput/interfaces.json"
 #                  LIBS    soca )
 
 ecbuild_add_test( TARGET  test_soca_state
                   BOOST
-		  MPI     4		  
+		  MPI     2
                   SOURCES executables/TestState.cc
-                  ARGS    "testinput/interfaces.json"
+                  ARGS    "testinput/state_test.json"
                   LIBS    soca )
 		  
 #ecbuild_add_test( TARGET  test_soca_modelaux
@@ -108,11 +108,12 @@ ecbuild_add_test( TARGET  test_soca_state
 #                  ARGS    "testinput/interfaces.json"
 #                  LIBS    soca )
 		  
-#ecbuild_add_test( TARGET  test_soca_increment
-#                  BOOST
-#                  SOURCES executables/TestIncrement.cc
-#                  ARGS    "testinput/interfaces.json"
-#                  LIBS    soca )
+ecbuild_add_test( TARGET  test_soca_increment
+                  BOOST
+		  MPI     2 		  
+                  SOURCES executables/TestIncrement.cc
+                  ARGS    "testinput/increment_test.json"
+                  LIBS    soca )
 
 #ecbuild_add_test( TARGET  test_soca_errorcovariance
 #                  BOOST
