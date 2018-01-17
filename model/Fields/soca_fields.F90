@@ -668,7 +668,7 @@ contains
              !call abor1_ftn("soca_fields: undefined variables")             
           end select
        end do
-       call restore_state(sis_restart, directory='')                    
+       call restore_state(sis_restart, directory='')
 
        sdate = config_get_string(c_conf,len(sdate),"date")
        WRITE(buf,*) 'validity date is: '//sdate
@@ -856,7 +856,7 @@ contains
 
     call check(fld)
 
-    !call nicas_interph(fld, locs, gom, op_type)
+    call nicas_interph(fld, locs, gom, op_type)
 
   end subroutine interp_tl
 
@@ -870,95 +870,95 @@ contains
     character(2)                        :: op_type='AD'
 
     call check(fld)
-    !call nicas_interph(fld, locs, gom, op_type)
+    call nicas_interph(fld, locs, gom, op_type)
 
   end subroutine interp_ad
 
   ! ------------------------------------------------------------------------------
 
-!!$  subroutine nicas_interph(fld, locs, gom, op_type)
-!!$
-!!$    use type_linop
-!!$    use tools_interp, only: interp_horiz
-!!$    use type_randgen, only: rng,initialize_sampling,create_randgen !randgentype
-!!$    use module_namelist, only: namtype    
-!!$    use tools_const, only : deg2rad
-!!$
-!!$    type(soca_field), intent(inout)    :: fld
-!!$    type(soca_locs), intent(in)     :: locs
-!!$    type(soca_goms), intent(inout)  :: gom
-!!$    character(2), intent(in)             :: op_type !('TL' or 'AD')
-!!$
-!!$    integer :: Nc, No, var_type_index, Ncat
-!!$    integer :: ivar, gom_dim1, cnt_fld
-!!$    character(len=1024)  :: buf
-!!$    logical,allocatable :: mask(:), masko(:)               ! < mask (ncells, nlevels)
-!!$    real(kind=kind_real), allocatable :: lon(:), lat(:), lono(:), lato(:), fld_src(:), fld_dst(:)
-!!$    type(namtype) :: nam !< Namelist variables
-!!$    type(linoptype) :: hinterp_op
-!!$
-!!$    Nc = fld%geom%ocean%nx*fld%geom%ocean%ny
-!!$    No = locs%nloc   !< DOES NOT SEEM RIGHT, SHOULD BE TOTAL OBS IN da WINDOW
-!!$    Ncat = fld%geom%ocean%ncat
-!!$    if (No>0) then
-!!$       allocate(lon(Nc), lat(Nc), mask(Nc), fld_src(Nc))    ! <--- Not memory efficient ...
-!!$       allocate(masko(No), fld_dst(No), lono(No), lato(No)) ! <--- use pointers?
-!!$
-!!$       masko = .true. ! Figured out what's the use for masko????
-!!$       !Some issues with the mask, FIX IT!!!!
-!!$       !where(reshape(fld%geom%mask,(/Nc/)).eq.0.0_kind_real)
-!!$       mask = .true.
-!!$       !end where
-!!$       if (.not.(fld%hinterp_initialized)) then
-!!$          print *,'INITIALIZE INTERP',gom%nobs,locs%nloc
-!!$          rng = create_randgen(nam)
-!!$          lono = deg2rad*locs%xyz(1,:)
-!!$          lato = deg2rad*locs%xyz(2,:)
-!!$          lon = deg2rad*reshape(fld%geom%ocean%lon, (/Nc/))     ! Inline grid, structured to un-structured
-!!$          lat = deg2rad*reshape(fld%geom%ocean%lat, (/Nc/))     ! and change to SI Units
-!!$          call interp_horiz(rng, Nc, lon,  lat,  mask, &
-!!$               No, lono, lato, masko, fld%hinterp_op)               
-!!$          fld%hinterp_initialized = .true.          
-!!$       end if
-!!$
-!!$       !Finish Initializing gom
-!!$       if (.not.allocated(gom%values)) then
-!!$          gom_dim1=sum(fld%numfld_per_fldname(1:gom%nvar)) ! WILL CREATE ISSUES:
-!!$                                                           ! Assume the order of var type is preserved
-!!$                                                           ! [cicen, hicen, ...]
-!!$          allocate(gom%values(gom_dim1,gom%nobs))
-!!$       end if
-!!$       if (.not.allocated(gom%numfld_per_fldname)) then
-!!$          allocate(gom%numfld_per_fldname(gom%nvar))
-!!$       end if
-!!$       gom%numfld_per_fldname=fld%numfld_per_fldname ! Will be used in obs oper          
-!!$       !end if !probably need to assert shape of gom%values==(gom_dim1,gom%nobs)
-!!$          
-!!$       select case (op_type)
-!!$       case ('TL')
-!!$          if (.not.allocated(fld_src)) allocate(fld_src(Nc))
-!!$          cnt_fld=0
-!!$          !Loop through variable types
-!!$          do var_type_index=1,gom%nvar
-!!$             !Loop through variable fields
-!!$             do ivar=1,fld%numfld_per_fldname(var_type_index)
-!!$                cnt_fld=cnt_fld+1
-!!$                print *,'Apply interp op to variable:',gom%variables(var_type_index),' field num:',cnt_fld
-!!$                fld_src = reshape(fld%cicen(:,:,ivar), (/Nc/))
-!!$                call apply_linop(fld%hinterp_op, fld_src, fld_dst)
-!!$                gom%values(cnt_fld,gom%used:gom%used+No-1)=fld_dst(1:No)
-!!$             end do
-!!$          end do
-!!$          deallocate(fld_src)
-!!$       case ('AD')
-!!$          call abor1_ftn("nicas_interph: Wrapper for adjoint not implemented yet")
-!!$          !call apply_linop_ad(hinterp_op,fld_dst,fld_src)
-!!$          !CHECK: WHERE DO WE TRIGGER THE ADJOINT TESTS? 
-!!$          !put fld_src
-!!$       end select
-!!$       gom%used=gom%used+locs%nloc
-!!$    end if
-!!$  end subroutine nicas_interph
+  subroutine nicas_interph(fld, locs, gom, op_type)
+
+    use type_linop
+    use tools_interp, only: compute_interp
+    !use type_randgen, only: rng,initialize_sampling,create_randgen !randgentype
+    !use module_namelist, only: namtype    
+    use tools_const, only : deg2rad
+
+    type(soca_field), intent(inout)    :: fld
+    type(soca_locs), intent(in)     :: locs
+    type(soca_goms), intent(inout)  :: gom
+    character(2), intent(in)             :: op_type !('TL' or 'AD')
+
+    integer :: Nc, No, var_type_index, Ncat
+    integer :: ivar, gom_dim1, cnt_fld
+    character(len=1024)  :: buf
+    logical,allocatable :: mask(:), masko(:)               ! < mask (ncells, nlevels)
+    real(kind=kind_real), allocatable :: lon(:), lat(:), lono(:), lato(:), fld_src(:), fld_dst(:)
+    !type(namtype) :: nam !< Namelist variables
+    type(linoptype) :: hinterp_op
+    integer :: n_src, n_dst
+    character(len=1024) :: interp_type='bilin'
+    
+    Nc = fld%geom%ocean%nx*fld%geom%ocean%ny
+    No = locs%nloc   !< DOES NOT SEEM RIGHT, SHOULD BE TOTAL OBS IN da WINDOW
+    Ncat = fld%geom%ocean%ncat
+    if (No>0) then
+       allocate(lon(Nc), lat(Nc), mask(Nc), fld_src(Nc))    ! <--- Not memory efficient ...
+       allocate(masko(No), fld_dst(No), lono(No), lato(No)) ! <--- use pointers?
+
+       masko = .true. ! Figured out what's the use for masko????
+       !Some issues with the mask, FIX IT!!!!
+       !where(reshape(fld%geom%mask,(/Nc/)).eq.0.0_kind_real)
+       mask = .true.
+       !end where
+       if (.not.(fld%hinterp_initialized)) then
+          print *,'INITIALIZE INTERP',gom%nobs,locs%nloc
+          lono = deg2rad*locs%xyz(1,:)
+          lato = deg2rad*locs%xyz(2,:)
+          lon = deg2rad*reshape(fld%geom%ocean%lon, (/Nc/))     ! Inline grid, structured to un-structured
+          lat = deg2rad*reshape(fld%geom%ocean%lat, (/Nc/))     ! and change to SI Units
+          call compute_interp(Nc, lon, lat, mask, No, lono, lato, masko, interp_type, fld%hinterp_op)          
+          fld%hinterp_initialized = .true.          
+       end if
+
+       !Finish Initializing gom
+       if (.not.allocated(gom%values)) then
+          gom_dim1=sum(fld%numfld_per_fldname(1:gom%nvar)) ! WILL CREATE ISSUES:
+                                                           ! Assume the order of var type is preserved
+                                                           ! [cicen, hicen, ...]
+          allocate(gom%values(gom_dim1,gom%nobs))
+       end if
+       if (.not.allocated(gom%numfld_per_fldname)) then
+          allocate(gom%numfld_per_fldname(gom%nvar))
+       end if
+       gom%numfld_per_fldname=fld%numfld_per_fldname ! Will be used in obs oper          
+       !end if !probably need to assert shape of gom%values==(gom_dim1,gom%nobs)
+          
+       select case (op_type)
+       case ('TL')
+          if (.not.allocated(fld_src)) allocate(fld_src(Nc))
+          cnt_fld=0
+          !Loop through variable types
+          do var_type_index=1,gom%nvar
+             !Loop through variable fields
+             do ivar=1,fld%numfld_per_fldname(var_type_index)
+                cnt_fld=cnt_fld+1
+                print *,'Apply interp op to variable:',gom%variables(var_type_index),' field num:',cnt_fld
+                fld_src = reshape(fld%cicen(:,:,ivar), (/Nc/))
+                call apply_linop(fld%hinterp_op, fld_src, fld_dst)
+                gom%values(cnt_fld,gom%used:gom%used+No-1)=fld_dst(1:No)
+             end do
+          end do
+          deallocate(fld_src)
+       case ('AD')
+          call abor1_ftn("nicas_interph: Wrapper for adjoint not implemented yet")
+          !call apply_linop_ad(hinterp_op,fld_dst,fld_src)
+          !CHECK: WHERE DO WE TRIGGER THE ADJOINT TESTS? 
+          !put fld_src
+       end select
+       gom%used=gom%used+locs%nloc
+    end if
+  end subroutine nicas_interph
 
   ! ------------------------------------------------------------------------------
 
