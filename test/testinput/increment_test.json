@@ -11,10 +11,10 @@
   "TestDate": "2015-05-01T00:00:00Z",
     "State": {
 	"read_from_file": 1,
-	"basename": "./",
-	"ocn_sfc_filename": "00010101.ocean_sfc.nc",
-	"ocn_filename": "00010101.ocean_month.nc",	
-	"ice_filename": "00010101.ice_month.nc",	
+	"basename": "./RESTART/",
+	"ocn_sfc_filename": "MOM.res.nc",
+	"ocn_filename": "MOM.res.nc",	
+	"ice_filename": "ice_model.res.nc",	
         "date": "2015-05-01T00:00:00Z"
   },
   "StateTest": {

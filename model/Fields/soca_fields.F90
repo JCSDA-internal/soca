@@ -160,7 +160,7 @@ contains
     self%ssh => self%AOGCM%Ocn%ssh
 
     !Sea-ice internal state
-    self%cicen => self%AOGCM%Ice%part_size(:,:,2:)
+    self%cicen => self%AOGCM%Ice%part_size !(:,:,2:)
     self%hicen => self%AOGCM%Ice%h_ice
     self%hsnon => self%AOGCM%Ice%h_snow        
     self%tsfcn => self%AOGCM%Ice%T_skin
@@ -589,9 +589,12 @@ contains
     use interface_ncread_fld, only: ncread_fld
     use soca_thermo
     use soca_mom6sis2
-    use fms_mod,                 only: read_data, write_data
+    use fms_mod,                 only: read_data, write_data, set_domain
     use fms_io_mod,                only : fms_io_init, fms_io_exit
-    use mpp_mod,  only : mpp_pe, mpp_npes, mpp_root_pe, mpp_sync, mpp_sum, mpp_gather, mpp_broadcast    
+    use mpp_mod,  only : mpp_pe, mpp_npes, mpp_root_pe, mpp_sync, mpp_sum, mpp_gather, mpp_broadcast
+    use fms_io_mod,       only : register_restart_field, restart_file_type
+    use fms_io_mod,       only : restore_state, query_initialized
+    
     implicit none
     type(soca_field), intent(inout) :: fld      !< Fields
     type(c_ptr), intent(in)       :: c_conf   !< Configuration
@@ -602,6 +605,9 @@ contains
     character(len=20) :: sdate
     character(len=1024)  :: buf
     integer :: iread, ii
+
+    type(restart_file_type) :: sis_restart    
+    integer :: idr
 
     iread = 0
     if (config_element_exists(c_conf,"read_from_file")) then
@@ -623,10 +629,11 @@ contains
        ocn_sfc_filename = trim(basename)//trim(ocn_sfc_filename)
        ocn_filename = trim(basename)//trim(ocn_filename)       
        ice_filename = config_get_string(c_conf,len(ice_filename),"ice_filename")       
-
+       ice_filename = trim(basename)//trim(ice_filename)
+       
        call fms_io_init()
        do ii = 1, fld%nf
-          print *,fld%fldnames(ii),' ---- ',ocn_sfc_filename,ocn_filename,ice_filename
+          print *,fld%fldnames(ii)
           select case(fld%fldnames(ii))
           case ('ssh')
              call read_data(ocn_sfc_filename,"ave_ssh",fld%ssh(:,:),domain=fld%geom%ocean%G%Domain%mpp_domain)
@@ -635,20 +642,33 @@ contains
           case ('socn')             
              call read_data(ocn_filename,"Salt",fld%tocn(:,:,:),domain=fld%geom%ocean%G%Domain%mpp_domain)             
           case ('cicen')
-             call read_data(ice_filename,"part_size",fld%cicen(:,:,:),domain=fld%geom%ocean%G%Domain%mpp_domain)
+             idr = register_restart_field(sis_restart, ice_filename, 'part_size', fld%AOGCM%Ice%part_size, &
+                  domain=fld%geom%ocean%G%Domain%mpp_domain)
           case ('hicen')
-             !call read_data(ice_filename,"h_ice",fld%hicen(:,:,:),domain=fld%geom%ocean%G%Domain%mpp_domain)
+             idr = register_restart_field(sis_restart, ice_filename, 'h_ice', fld%AOGCM%Ice%h_ice, &
+                  domain=fld%geom%ocean%G%Domain%mpp_domain)
           case ('hsnon')
-             !call read_data(ice_filename,"h_snow",fld%hsnon(:,:,:),domain=fld%geom%ocean%G%Domain%mpp_domain)
-
+             idr = register_restart_field(sis_restart, ice_filename, 'h_snow', fld%AOGCM%Ice%h_snow, &
+                  domain=fld%geom%ocean%G%Domain%mpp_domain)             
+          case ('qicnk')             
+             idr = register_restart_field(sis_restart, ice_filename, 'enth_ice', fld%AOGCM%Ice%enth_ice, &
+                  domain=fld%geom%ocean%G%Domain%mpp_domain)
+          case ('qsnon')             
+             idr = register_restart_field(sis_restart, ice_filename, 'enth_snow', fld%AOGCM%Ice%enth_snow, &
+                  domain=fld%geom%ocean%G%Domain%mpp_domain)
+          case ('tsfcn')             
+             idr = register_restart_field(sis_restart, ice_filename, 'T_skin', fld%AOGCM%Ice%T_skin, &
+                  domain=fld%geom%ocean%G%Domain%mpp_domain)
+          case ('sicen')             
+             idr = register_restart_field(sis_restart, ice_filename, 'sal_ice', fld%AOGCM%Ice%sal_ice, &
+                  domain=fld%geom%ocean%G%Domain%mpp_domain)             
           case default
              print *,'Not reading var ',fld%fldnames(ii),' in file ',ocn_filename
              !call log%warning("soca_fields:read_file: Not reading var "//fld%fldnames(ii))
              !call abor1_ftn("soca_fields: undefined variables")             
           end select
        end do
-       call write_data( "test_write.nc", "SSH", fld%ssh, fld%geom%ocean%G%Domain%mpp_domain)
-       call fms_io_exit()       
+       call restore_state(sis_restart, directory='')                    
 
        sdate = config_get_string(c_conf,len(sdate),"date")
        WRITE(buf,*) 'validity date is: '//sdate
@@ -669,7 +689,7 @@ contains
     use datetime_mod
     use fckit_log_module, only : fckit_log
     use netcdf
-    use fms_mod,                 only: read_data, write_data
+    use fms_mod,                 only: read_data, write_data, set_domain
     use fms_io_mod,                only : fms_io_init, fms_io_exit
     
     implicit none
@@ -687,21 +707,30 @@ contains
     call fckit_log%info(buf)
     
     call fms_io_init()
+    call set_domain( fld%geom%ocean%G%Domain%mpp_domain )    
     do ii = 1, fld%nf
        print *,fld%fldnames(ii)
        select case(fld%fldnames(ii))
        case ('ssh')
-          call write_data( filename, "SSH", fld%ssh, fld%geom%ocean%G%Domain%mpp_domain)              
+          call write_data( filename, "ssh", fld%ssh, fld%geom%ocean%G%Domain%mpp_domain)              
        case ('tocn')
           call write_data( filename, "temp", fld%tocn, fld%geom%ocean%G%Domain%mpp_domain)          
        case ('socn')
           call write_data( filename, "salt", fld%socn, fld%geom%ocean%G%Domain%mpp_domain)          
        case ('hicen')
-          call write_data( filename, "HI", fld%hicen(:,:,1), fld%geom%ocean%G%Domain%mpp_domain)
+          call write_data( filename, "hicen", fld%hicen, fld%geom%ocean%G%Domain%mpp_domain)
        case ('hsnon')
-          call write_data(filename, "HS", fld%hsnon(:,:,1), fld%geom%ocean%G%Domain%mpp_domain)
+          call write_data(filename, "hsnon", fld%hsnon, fld%geom%ocean%G%Domain%mpp_domain)
        case ('cicen')
-          call write_data(filename, "CN", fld%cicen(:,:,:), fld%geom%ocean%G%Domain%mpp_domain)
+          call write_data(filename, "cicen", fld%cicen, fld%geom%ocean%G%Domain%mpp_domain)
+       case ('qicnk')
+          call write_data(filename, "qicnk", fld%qicnk, fld%geom%ocean%G%Domain%mpp_domain)
+       case ('sicnk')
+          call write_data(filename, "sicnk", fld%sicnk, fld%geom%ocean%G%Domain%mpp_domain)
+       case ('qsnon')
+          call write_data(filename, "qsnon", fld%qsnon, fld%geom%ocean%G%Domain%mpp_domain)
+       case ('tsfcn')
+          call write_data(filename, "tsfcn", fld%tsfcn, fld%geom%ocean%G%Domain%mpp_domain)                    
        case default
           print *,'Not writing var ',fld%fldnames(ii),' in file ',filename
           !call log%warning("soca_fields:read_file: Not reading var "//fld%fldnames(ii))

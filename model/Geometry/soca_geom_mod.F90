@@ -47,6 +47,7 @@ contains
     call soca_geom_registry%get(c_key_self,self)
 
     call self%ocean%init() 
+    !call self%ocean%infotofile()
     
   end subroutine c_soca_geo_setup
 

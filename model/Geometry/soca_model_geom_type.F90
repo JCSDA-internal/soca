@@ -11,6 +11,7 @@ module soca_model_geom_type
   type, public :: soca_model_geom
      type(ocean_grid_type)            :: G     !< Ocean/sea-ice horizontal grid
      type(VerticalGrid_type), pointer :: GV    !< Ocean vertical grid
+     type(ocean_grid_type)            :: seaice_G     !< Ocean/sea-ice horizontal grid     
      type(ice_grid_type)              :: IG    !< Ice grid
      ! Short-cut variables and convenience pointers
      integer :: nx
@@ -38,13 +39,14 @@ contains
   subroutine geom_init(self)
     
     use kinds
-    use soca_mom6sis2, only : soca_geom_init
+    use soca_mom6sis2, only : soca_geom_init !, soca_ice_geom_init
     
     implicit none
 
     class(soca_model_geom),   intent(out)  :: self    
 
     call soca_geom_init(self%G, self%GV, self%IG)
+    !call soca_ice_geom_init(self%seaice_G, self%IG)    
     call geom_associate(self)
     
   end subroutine geom_init
@@ -98,7 +100,7 @@ contains
     allocate(self%cell_area(nx, ny))
     
     self%lon = self%G%GeoLonT
-    self%lat = self%G%GeoLatT    
+    self%lat = self%G%GeoLatT
     self%mask2d = self%G%mask2dT
     self%cell_area = self%G%areaT
     
@@ -137,6 +139,7 @@ contains
     character(len=256) :: geom_field_name  = "none"
 
     call fms_io_init()
+    !call set_domain( self%G%Domain%mpp_domain)
     call write_data( geom_output_file, "lon", self%lon, self%G%Domain%mpp_domain)
     call write_data( geom_output_file, "lat", self%lat, self%G%Domain%mpp_domain)
     call write_data( geom_output_file, "z", self%z, self%G%Domain%mpp_domain)

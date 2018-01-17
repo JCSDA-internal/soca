@@ -70,7 +70,7 @@ contains
     use MOM_domains,               only : MOM_domains_init, clone_MOM_domain
     use MOM_hor_index,             only : hor_index_type, hor_index_init
     use fms_io_mod,                only : fms_io_init, fms_io_exit
-    use fms_mod,                   only : read_data
+    use fms_mod,                   only : read_data, write_data
     use MOM_domains,               only : MOM_infra_init, MOM_infra_end
     use MOM_io,                    only : check_nml_error, io_infra_init, io_infra_end
     use MOM_file_parser,           only : open_param_file, close_param_file
@@ -93,6 +93,8 @@ contains
     type(hor_index_type)                   :: HI                        !< Horiz index array extents
     type(param_file_type)                  :: param_file                !< Structure to parse for run-time parameters
     type(directories)                      :: dirs                      !< Structure containing several relevant directory paths
+    type(param_file_type)                  :: sis_param_file                !< Structure to parse for run-time parameters    
+    type(sis_directories)                  :: sis_dirs                      !<  
     logical                                :: global_indexing = .false. !< If true use global horizontal index DOES NOT WORK
     logical                                :: write_geom_files = .false.!< 
     type(ocean_OBC_type),          pointer :: OBC => NULL()             !< Ocean boundary condition
@@ -129,23 +131,115 @@ contains
 
     ! Read bathymetry
     call read_data('ocean_geometry.nc', 'D', G%bathyT, G%Domain%mpp_domain)
+    !call read_data('sea_ice_geometry.nc', 'D', G%bathyT, G%Domain%mpp_domain)
+
+    !call write_data( "test2_write.nc", "bathyT", G%bathyT, G%Domain%mpp_domain)
     
     ! Destructor for dynamic grid
     call destroy_dyn_horgrid(dG)
     dG => NULL()
-
+    
+    !call Get_SIS_Input(sis_param_file, sis_dirs, check_params=.false., component='SIS')
+    
     ! Initialize sea-ice grid
     call set_ice_grid(IG, param_file, NCat_dflt)
     print *,'IG:',IG%CatIce,IG%NkIce,IG%NkSnow, IG%H_to_kg_m2, IG%kg_m2_to_H, IG%ocean_part_min
     print *,'IG lim:',IG%cat_thick_lim
     !call initialize_ice_categories(IG, Rho_ice, param_file) NOCANDO, PRIVATE!!!
     
-    call mpp_sync()
-    
     call close_param_file(param_file)
+    !call close_param_file(sis_param_file)    
+    
     call fms_io_exit()
 
   end subroutine soca_geom_init
+
+!!$  subroutine soca_ice_geom_init(momG, IG)
+!!$
+!!$    use MOM_dyn_horgrid,           only : dyn_horgrid_type, create_dyn_horgrid, destroy_dyn_horgrid
+!!$    use MOM_transcribe_grid,       only : copy_dyngrid_to_MOM_grid
+!!$    use MOM_verticalGrid,          only : verticalGrid_type, verticalGridInit, verticalGridEnd
+!!$    use MOM_grid,                  only : MOM_grid_init, ocean_grid_type
+!!$    use MOM_grid,                  only : ocean_grid_type
+!!$    use MOM_file_parser,           only : get_param, param_file_type
+!!$    use MOM_get_input,             only : Get_MOM_Input, directories
+!!$    use MOM_domains,               only : MOM_domains_init, clone_MOM_domain
+!!$    use MOM_hor_index,             only : hor_index_type, hor_index_init
+!!$    use fms_io_mod,                only : fms_io_init, fms_io_exit
+!!$    use fms_mod,                   only : read_data, set_domain
+!!$    use MOM_domains,               only : MOM_infra_init, MOM_infra_end
+!!$    use MOM_io,                    only : check_nml_error, io_infra_init, io_infra_end
+!!$    use MOM_file_parser,           only : open_param_file, close_param_file
+!!$    use MOM_grid_initialize,       only : set_grid_metrics
+!!$    use MOM_open_boundary,         only : ocean_OBC_type
+!!$    use mpp_mod,                   only : mpp_pe, mpp_npes, mpp_root_pe, mpp_sync
+!!$    use MOM_fixed_initialization,  only : MOM_initialize_fixed
+!!$    use ice_grid,                  only : set_ice_grid, ice_grid_type
+!!$    use ice_model_mod
+!!$    use SIS_get_input,             only : Get_SIS_input, sis_directories => directories
+!!$    use SIS_hor_grid,              only : set_hor_grid, SIS_hor_grid_type
+!!$    use SIS_fixed_initialization,  only : SIS_initialize_fixed
+!!$    use SIS_transcribe_grid, only : copy_dyngrid_to_SIS_horgrid, copy_SIS_horgrid_to_dyngrid    
+!!$    !use ice_model_mod, only : initialize_ice_categories
+!!$    use kinds
+!!$
+!!$    implicit none
+!!$
+!!$    type(ocean_grid_type),            intent(out) :: momG          !< The horizontal grid type (same for ice & ocean)
+!!$    type(ice_grid_type),              intent(out) :: IG         !< Ice grid
+!!$
+!!$    type(SIS_hor_grid_type)  :: sisG !(sG)
+!!$    !type(SIS_hor_grid_type), pointer :: sisG => NULL() !(sG)
+!!$    
+!!$    type(dyn_horgrid_type),       pointer  :: dG => NULL()              !< Dynamic grid
+!!$    type(hor_index_type)                   :: HI                        !< Horiz index array extents
+!!$    type(param_file_type)                  :: sis_param_file                !< Structure to parse for run-time parameters    
+!!$    type(sis_directories)                  :: sis_dirs                      !<  
+!!$    logical                                :: global_indexing = .false. !< If true use global horizontal index DOES NOT WORK
+!!$    logical                                :: write_geom_files = .false.!< 
+!!$    type(ocean_OBC_type),          pointer :: OBC => NULL()             !< Ocean boundary condition
+!!$
+!!$
+!!$    integer :: NCat_dflt = 5
+!!$    character(len=40)  :: mdl = "soca_mom6sis2"
+!!$    real :: Rho_ice = 905.0
+!!$    integer :: ncat, nkice, nksnow, km
+!!$
+!!$    ! Initialize fms/mpp io stuff
+!!$    call fms_io_init()
+!!$
+!!$    ! Parse grid inputs
+!!$    call Get_SIS_Input(sis_param_file, sis_dirs, check_params=.false., component='SIS')
+!!$
+!!$    ! Initialize sea-ice grid
+!!$    call set_ice_grid(IG, sis_param_file, NCat_dflt)
+!!$    !call initialize_ice_categories(IG, Rho_ice, param_file) NOCANDO, PRIVATE!!!
+!!$    
+!!$    ! Domain decomposition/Inintialize mpp domains
+!!$    call MOM_domains_init(momG%Domain, sis_param_file, domain_name="ice model")
+!!$    call hor_index_init(momG%Domain, HI, sis_param_file, local_indexing=.not.global_indexing)
+!!$    call create_dyn_horgrid(dG, HI)!, bathymetry_at_vel=bathy_at_vel)
+!!$    call clone_MOM_domain(momG%Domain, dG%Domain)
+!!$
+!!$    ! Read/Generate grid
+!!$    print *,'11111111111111111111111111111111111111111111111'    
+!!$    call SIS_initialize_fixed(dG, sis_param_file, write_geom_files, sis_dirs%output_directory)
+!!$    print *,'22222222222222222222222222222222222222222222222'
+!!$    !call set_hor_grid(sisG, sis_param_file, global_indexing=global_indexing)
+!!$    print *,'333333333333333333333333333333333333333333333333'
+!!$    !call copy_dyngrid_to_SIS_horgrid(dG, sisG)
+!!$    print *,'444444444444444444444444444444444444444444444444'    
+!!$    !call destroy_dyn_horgrid(dG)
+!!$    
+!!$    ! Read bathymetry
+!!$    call set_domain( momG%Domain%mpp_domain)    
+!!$    call read_data('sea_ice_geometry.nc', 'D', momG%bathyT)!, momG%Domain%mpp_domain)
+!!$
+!!$    call close_param_file(sis_param_file)    
+!!$     
+!!$    call fms_io_exit()
+!!$
+!!$  end subroutine soca_ice_geom_init
 
   subroutine soca_geom_end(G, GV, IG)
 
