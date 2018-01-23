@@ -3,7 +3,7 @@
 #                        LIBS    soca
 #                      )
 
-ecbuild_add_executable( TARGET  soca_forecast.x
+		       ecbuild_add_executable( TARGET  soca_forecast.x
                         SOURCES Forecast.cc
                         LIBS    soca
                       )

@@ -6,6 +6,7 @@ list( APPEND soca_test_input
   testinput/makeobs3d.json
   testinput/state_test.json    
   testinput/geometry_test.json
+  testinput/geovals_test.json  
   testinput/increment_test.json
   compare.sh
 )
@@ -75,6 +76,12 @@ ecbuild_add_test( TARGET  test_soca_geometry
                   SOURCES executables/TestGeometry.cc
                   ARGS    "testinput/geometry_test.json"
                   LIBS    soca )
+
+#ecbuild_add_test( TARGET  test_soca_geovals
+#                  BOOST
+#                  SOURCES executables/TestGeoVaLs.cc
+#                  ARGS    "testinput/geovals_test.json"
+#                  LIBS    soca )
 
 #ecbuild_add_test( TARGET  test_soca_locations
 #                  BOOST

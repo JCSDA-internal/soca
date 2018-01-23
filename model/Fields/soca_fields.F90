@@ -8,7 +8,7 @@ module soca_fields
   use soca_goms_mod
   use soca_locs_mod  
   use soca_vars_mod
-  use type_linop
+  !use type_linop
   !use tools_interp, only: interp_horiz
   !use type_randgen, only: rng,initialize_sampling,create_randgen
   !use module_namelist, only: namtype  
@@ -56,9 +56,9 @@ module soca_fields
      integer, allocatable              :: numfld_per_fldname(:) !< Number of 2d fields for each     (nf) 
                                                                 !< element of fldnames
 
-     type(linoptype)                   :: hinterp_op
-     logical                           :: hinterp_initialized !True:  hinterp_op has been initialized
-                                                              !False: hinterp_op not initialized
+     !type(linoptype)                   :: hinterp_op
+     logical                           :: hinterp_initialized = .false. !True:  hinterp_op has been initialized
+                                                                        !False: hinterp_op not initialized
   end type soca_field
 
 #define LISTED_TYPE soca_field
@@ -351,13 +351,7 @@ contains
 
     self%tocn = self%tocn + rhs%tocn
     self%socn = self%socn + rhs%socn
-
-    print *,'%%%%%%%%%%%%%%%%%%%%% IN self_add ##################'
-    print *,'before self,self,rhs:',self%ssh(1,1), rhs%ssh(1,1), sum(self%geom%ocean%mask2d)
-    
     self%ssh = self%ssh + rhs%ssh
-
-    print *,'after,self,rhs:',self%ssh(1,1), rhs%ssh(1,1)    
 
     !self%AOGCM%Ocn%ssh = self%AOGCM%Ocn%ssh + rhs%AOGCM%Ocn%ssh
     !return
@@ -586,7 +580,7 @@ contains
     use datetime_mod
     use fckit_log_module, only : log
     use netcdf
-    use interface_ncread_fld, only: ncread_fld
+    !use interface_ncread_fld, only: ncread_fld
     use soca_thermo
     use soca_mom6sis2
     use fms_mod,                 only: read_data, write_data, set_domain
@@ -609,6 +603,11 @@ contains
     type(restart_file_type) :: sis_restart    
     integer :: idr
 
+    
+    type(soca_locs)    :: locs
+    type(soca_goms) :: gom
+    type(soca_vars) :: vars
+    
     iread = 0
     if (config_element_exists(c_conf,"read_from_file")) then
        iread = config_get_int(c_conf,"read_from_file")
@@ -677,6 +676,20 @@ contains
 
     endif
 
+    print *,'================ INTERP ================='
+    locs%nloc = 1
+    allocate( locs%xyz(3, locs%nloc) )
+    locs%xyz(1,1) = 15.0!_kind_real
+    locs%xyz(2,1) = 62.0!_kind_real
+    locs%xyz(3,1) = 1.0!_kind_real    
+
+    gom%nvar=1
+    gom%nobs=1
+    allocate(gom%variables(gom%nvar))
+    gom%variables(1)="cicen"
+    print *,'================ INTERP ================='    
+    call interp_tl(fld, locs, gom)
+    
     call check(fld)
     !call mpp_sync()
     
@@ -809,13 +822,11 @@ contains
     integer :: jj,joff
 
     call check(fld)
-
-
     
     pstat(1,:) = minval(fld%ssh)
     pstat(2,:) = maxval(fld%ssh)
     !call fldrms(fld, zz)
-    call dot_prod(fld,fld,zz)    
+    call dot_prod(fld, fld, zz)    
     pstat(3,:) = sqrt(zz)
     print *,'-------------------- GPNORM = ',zz
     !call abor1_ftn("soca_fields_gpnorm: error not implemented")
@@ -880,10 +891,12 @@ contains
 
     use type_linop
     use tools_interp, only: compute_interp
-    !use type_randgen, only: rng,initialize_sampling,create_randgen !randgentype
-    !use module_namelist, only: namtype    
+    !use type_randgen, only: rng,initialize_sampling, create_randgen, randgentype
+    use type_nam, only: namtype
     use tools_const, only : deg2rad
-
+    use horiz_interp_mod, only : horiz_interp_type, horiz_interp_new
+    use horiz_interp_mod, only : horiz_interp_init
+    
     type(soca_field), intent(inout)    :: fld
     type(soca_locs), intent(in)     :: locs
     type(soca_goms), intent(inout)  :: gom
@@ -895,9 +908,30 @@ contains
     logical,allocatable :: mask(:), masko(:)               ! < mask (ncells, nlevels)
     real(kind=kind_real), allocatable :: lon(:), lat(:), lono(:), lato(:), fld_src(:), fld_dst(:)
     !type(namtype) :: nam !< Namelist variables
-    type(linoptype) :: hinterp_op
+    !type(linoptype) :: hinterp_op
     integer :: n_src, n_dst
     character(len=1024) :: interp_type='bilin'
+    
+    type(horiz_interp_type) :: fms_interp
+    
+
+!!$   horiz_interp_new_1d_dst (Interp, lon_in, lat_in,
+!!$                                    lon_out, lat_out,
+!!$                       verbose, interp_method, num_nbrs, max_dist, src_modulo, mask_in, mask_out, is_latlon_in )
+!!$   type(horiz_interp_type), intent(inout)     :: Interp
+!!$   real, intent(in),  dimension(:,:)          :: lon_in , lat_in
+!!$   real, intent(in),  dimension(:)            :: lon_out, lat_out
+!!$   integer, intent(in),              optional :: verbose
+!!$   character(len=*), intent(in),     optional :: interp_method
+!!$   integer, intent(in),              optional :: num_nbrs
+!!$   real,    intent(in),              optional :: max_dist
+!!$   logical, intent(in),              optional :: src_modulo
+!!$   real, intent(in), dimension(:,:), optional :: mask_in
+!!$   real, intent(out),dimension(:,:), optional :: mask_out
+!!$   logical, intent(in),              optional :: is_latlon_in
+
+
+    call horiz_interp_init
     
     Nc = fld%geom%ocean%nx*fld%geom%ocean%ny
     No = locs%nloc   !< DOES NOT SEEM RIGHT, SHOULD BE TOTAL OBS IN da WINDOW
@@ -906,26 +940,56 @@ contains
        allocate(lon(Nc), lat(Nc), mask(Nc), fld_src(Nc))    ! <--- Not memory efficient ...
        allocate(masko(No), fld_dst(No), lono(No), lato(No)) ! <--- use pointers?
 
-       masko = .true. ! Figured out what's the use for masko????
-       !Some issues with the mask, FIX IT!!!!
-       !where(reshape(fld%geom%mask,(/Nc/)).eq.0.0_kind_real)
+       masko = .true.
        mask = .true.
-       !end where
+       !fld%hinterp_initialized = .false.
        if (.not.(fld%hinterp_initialized)) then
-          print *,'INITIALIZE INTERP',gom%nobs,locs%nloc
-          lono = deg2rad*locs%xyz(1,:)
-          lato = deg2rad*locs%xyz(2,:)
+          print *,'INITIALIZE INTERP',gom%nobs, locs%nloc
+
+          print *,'LOCS=',locs%xyz
+          print *,'111111111111111111111111111111111111111111111111'          
+          !lono = deg2rad*locs%xyz(1,:)
+          !lato = deg2rad*locs%xyz(2,:)
+
+          lono = locs%xyz(1,:)
+          lato = locs%xyz(2,:)
+          
+          !lono = locs%xyz(1,:)/deg2rad
+          !lato = locs%xyz(2,:)/deg2rad
+
+          !call horiz_interp_new ( Hintrp, lon_bnd, lat_bnd, lon, lat, interp_method= interp_method )
+          print *,'shape lonin: ',shape(lon)
+          call horiz_interp_new(fms_interp, fld%geom%ocean%lon, fld%geom%ocean%lat, lono, lato, interp_method="bilinear")
+          !call horiz_interp_new(fms_interp, real(fld%geom%ocean%lon), real(fld%geom%ocean%lat), 10.0, 10.0)          
+
+          print *,'11111 ============================= 11111111111111'
+          
           lon = deg2rad*reshape(fld%geom%ocean%lon, (/Nc/))     ! Inline grid, structured to un-structured
           lat = deg2rad*reshape(fld%geom%ocean%lat, (/Nc/))     ! and change to SI Units
-          call compute_interp(Nc, lon, lat, mask, No, lono, lato, masko, interp_type, fld%hinterp_op)          
-          fld%hinterp_initialized = .true.          
+          print *,'obs: ',lono, lato
+          print *,'22222222222222222222222222222222222222222222222'
+          print *,'Nc=',Nc,shape(lon)
+          !print *,'lon=',lon
+          !print *,'lat=',lat
+          !print *,'mask=',mask
+          print *,'lono, lato, masko=',lono, lato, masko
+          print *,'interp type:',interp_type
+
+
+          !rng = create_randgen(nam)
+          !call compute_interp(Nc, lon, lat, mask, No, lono, lato, masko, interp_type, fld%hinterp_op)          
+          fld%hinterp_initialized = .true.
+
        end if
 
        !Finish Initializing gom
        if (.not.allocated(gom%values)) then
+          print *,'fld%numfld_per_fldname=',fld%numfld_per_fldname
+          print *,'gom%nvar=',gom%nvar
           gom_dim1=sum(fld%numfld_per_fldname(1:gom%nvar)) ! WILL CREATE ISSUES:
                                                            ! Assume the order of var type is preserved
                                                            ! [cicen, hicen, ...]
+          print *,'gom_dim1=',gom_dim1
           allocate(gom%values(gom_dim1,gom%nobs))
        end if
        if (.not.allocated(gom%numfld_per_fldname)) then
@@ -933,7 +997,7 @@ contains
        end if
        gom%numfld_per_fldname=fld%numfld_per_fldname ! Will be used in obs oper          
        !end if !probably need to assert shape of gom%values==(gom_dim1,gom%nobs)
-          
+
        select case (op_type)
        case ('TL')
           if (.not.allocated(fld_src)) allocate(fld_src(Nc))
@@ -945,8 +1009,11 @@ contains
                 cnt_fld=cnt_fld+1
                 print *,'Apply interp op to variable:',gom%variables(var_type_index),' field num:',cnt_fld
                 fld_src = reshape(fld%cicen(:,:,ivar), (/Nc/))
-                call apply_linop(fld%hinterp_op, fld_src, fld_dst)
+                fld_dst = 0.0_kind_real
+                print *,'fld_dst=',fld_dst
+                !call apply_linop(fld%hinterp_op, fld_src, fld_dst)
                 gom%values(cnt_fld,gom%used:gom%used+No-1)=fld_dst(1:No)
+
              end do
           end do
           deallocate(fld_src)
@@ -957,6 +1024,7 @@ contains
           !put fld_src
        end select
        gom%used=gom%used+locs%nloc
+       print *,"========== OUT OF INTERP ====================="
     end if
   end subroutine nicas_interph
 
