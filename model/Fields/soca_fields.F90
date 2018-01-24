@@ -677,11 +677,15 @@ contains
     endif
 
     print *,'================ INTERP ================='
-    locs%nloc = 1
+    locs%nloc = 2
     allocate( locs%xyz(3, locs%nloc) )
-    locs%xyz(1,1) = 15.0!_kind_real
-    locs%xyz(2,1) = 62.0!_kind_real
-    locs%xyz(3,1) = 1.0!_kind_real    
+    locs%xyz(1,1) = 15.3!_kind_real
+    locs%xyz(2,1) = 62.3!_kind_real
+
+    locs%xyz(1,2) = 17.2!_kind_real
+    locs%xyz(2,2) = 63.4!_kind_real
+    
+    locs%xyz(3,:) = 1.0!_kind_real    
 
     gom%nvar=1
     gom%nobs=1
@@ -848,7 +852,6 @@ contains
 
     
     call check(fld)
-
     
     call dot_prod(fld,fld,prms) ! Global value 
     prms=sqrt(prms)
@@ -894,9 +897,10 @@ contains
     !use type_randgen, only: rng,initialize_sampling, create_randgen, randgentype
     use type_nam, only: namtype
     use tools_const, only : deg2rad
-    use horiz_interp_mod, only : horiz_interp_type, horiz_interp_new
-    use horiz_interp_mod, only : horiz_interp_init
-    
+    use horiz_interp_mod, only : horiz_interp_type, horiz_interp_new, horiz_interp
+    use horiz_interp_mod, only : horiz_interp_init, horiz_interp_end
+    use horiz_interp_bilinear_mod,  only: horiz_interp_bilinear_init, horiz_interp_bilinear
+
     type(soca_field), intent(inout)    :: fld
     type(soca_locs), intent(in)     :: locs
     type(soca_goms), intent(inout)  :: gom
@@ -913,7 +917,8 @@ contains
     character(len=1024) :: interp_type='bilin'
     
     type(horiz_interp_type) :: fms_interp
-    
+    real(kind_real) :: missing_value=999.9
+    logical :: new_missing_handle=.false.    
 
 !!$   horiz_interp_new_1d_dst (Interp, lon_in, lat_in,
 !!$                                    lon_out, lat_out,
@@ -958,8 +963,16 @@ contains
           !lato = locs%xyz(2,:)/deg2rad
 
           !call horiz_interp_new ( Hintrp, lon_bnd, lat_bnd, lon, lat, interp_method= interp_method )
-          print *,'shape lonin: ',shape(lon)
+          print *,'============================= compute weights'
+          print *,'wgt=',fms_interp%wtj          
           call horiz_interp_new(fms_interp, fld%geom%ocean%lon, fld%geom%ocean%lat, lono, lato, interp_method="bilinear")
+          print *,'wgt=',fms_interp%wtj
+          print *,'i_lon=',fms_interp%i_lon
+          print *,'j_lat=',fms_interp%j_lat          
+          
+          !call horiz_interp_bilinear(fms_interp, fld%geom%ocean%lon, lono)
+          !call horiz_interp(fms_interp, fld%geom%ocean%lon, lono)
+          
           !call horiz_interp_new(fms_interp, real(fld%geom%ocean%lon), real(fld%geom%ocean%lat), 10.0, 10.0)          
 
           print *,'11111 ============================= 11111111111111'
@@ -1011,6 +1024,14 @@ contains
                 fld_src = reshape(fld%cicen(:,:,ivar), (/Nc/))
                 fld_dst = 0.0_kind_real
                 print *,'fld_dst=',fld_dst
+
+                print *,'shape src:',shape( fld%geom%ocean%lon )
+                print *,'shape field:', shape(fld%cicen(:,:,ivar))
+                print *,'shape dst:',shape( lono )                
+                
+                !call horiz_interp(fms_interp, fld%cicen(:,:,ivar), fld_dst)
+
+                print *,'out of interp:',fld_dst
                 !call apply_linop(fld%hinterp_op, fld_src, fld_dst)
                 gom%values(cnt_fld,gom%used:gom%used+No-1)=fld_dst(1:No)
 
