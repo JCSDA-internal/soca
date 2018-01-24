@@ -130,74 +130,74 @@ extern "C" {
 // -----------------------------------------------------------------------------
 //  Locations
 // -----------------------------------------------------------------------------
-  void soca_loc_delete_f90(F90locs &);
-  void soca_loc_nobs_f90(const F90locs & , int &);
+//  void soca_loc_delete_f90(F90locs &);
+//  void soca_loc_nobs_f90(const F90locs & , int &);
 
 // -----------------------------------------------------------------------------
 //  Local Values (GOM or GeoVaLs)
 // -----------------------------------------------------------------------------
-  void soca_gom_setup_f90(F90goms &, const F90locs &, const F90vars *);  
-  void soca_gom_create_f90(F90goms &);//, const int &);
-  void soca_gom_delete_f90(F90goms &);
-  void soca_gom_zero_f90(const F90goms &);
-  void soca_gom_random_f90(const F90goms &);
-  void soca_gom_mult_f90(const F90goms &, const double &);  
-  void soca_gom_dotprod_f90(const F90goms &, const F90goms &, double &);
-  void soca_gom_minmaxavg_f90(const F90goms &, int &, double &, double &, double &);
-  void soca_gom_read_file_f90(const F90goms &, const eckit::Configuration * const *);
-  void soca_gom_write_file_f90(const F90goms &, const eckit::Configuration * const *);
+//  void soca_gom_setup_f90(F90goms &, const F90locs &, const F90vars *);  
+//  void soca_gom_create_f90(F90goms &);//, const int &);
+//  void soca_gom_delete_f90(F90goms &);
+//  void soca_gom_zero_f90(const F90goms &);
+//  void soca_gom_random_f90(const F90goms &);
+//  void soca_gom_mult_f90(const F90goms &, const double &);  
+//  void soca_gom_dotprod_f90(const F90goms &, const F90goms &, double &);
+//  void soca_gom_minmaxavg_f90(const F90goms &, int &, double &, double &, double &);
+//  void soca_gom_read_file_f90(const F90goms &, const eckit::Configuration * const *);
+//  void soca_gom_write_file_f90(const F90goms &, const eckit::Configuration * const *);
   
 // -----------------------------------------------------------------------------
 //  Fraction observations
 // -----------------------------------------------------------------------------
-  void soca_fraction_setup_f90(F90hop &, const eckit::Configuration * const *);
-  void soca_fraction_delete_f90(F90hop &);
-  void soca_fraction_equiv_f90(const F90goms &, const F90ovec &, const double &);
-  void soca_fraction_equiv_tl_f90(const F90goms &, const F90ovec &, const double &);
-  void soca_fraction_equiv_ad_f90(const F90goms &, const F90ovec &, const double &);
+//  void soca_fraction_setup_f90(F90hop &, const eckit::Configuration * const *);
+//  void soca_fraction_delete_f90(F90hop &);
+//  void soca_fraction_equiv_f90(const F90goms &, const F90ovec &, const double &);
+//  void soca_fraction_equiv_tl_f90(const F90goms &, const F90ovec &, const double &);
+//  void soca_fraction_equiv_ad_f90(const F90goms &, const F90ovec &, const double &);
 
 // -----------------------------------------------------------------------------
 //  Observation Vectors
 // -----------------------------------------------------------------------------
-  void soca_obsvec_setup_f90(F90hop &, const int &, const int &);
-  void soca_obsvec_clone_f90(const F90ovec &, F90ovec &);
-  void soca_obsvec_delete_f90(F90ovec &);
+//  void soca_obsvec_setup_f90(F90hop &, const int &, const int &);
+//  void soca_obsvec_clone_f90(const F90ovec &, F90ovec &);
+//  void soca_obsvec_delete_f90(F90ovec &);
 
-  void soca_obsvec_assign_f90(const F90ovec &, const F90ovec &);
-  void soca_obsvec_zero_f90(const F90ovec &);
-  void soca_obsvec_mul_scal_f90(const F90ovec &, const double &);
-  void soca_obsvec_add_f90(const F90ovec &, const F90ovec &);
-  void soca_obsvec_sub_f90(const F90ovec &, const F90ovec &);
-  void soca_obsvec_mul_f90(const F90ovec &, const F90ovec &);
-  void soca_obsvec_div_f90(const F90ovec &, const F90ovec &);
-  void soca_obsvec_axpy_f90(const F90ovec &, const double &, const F90ovec &);
-  void soca_obsvec_invert_f90(const F90ovec &);
-  void soca_obsvec_random_f90(const F90ovec &);
-  void soca_obsvec_dotprod_f90(const F90ovec &, const F90ovec &, double &);
-  void soca_obsvec_minmaxavg_f90(const F90ovec &, double &, double &, double &);
-  void soca_obsvec_nobs_f90(const F90ovec &, int &);
+//  void soca_obsvec_assign_f90(const F90ovec &, const F90ovec &);
+//  void soca_obsvec_zero_f90(const F90ovec &);
+//  void soca_obsvec_mul_scal_f90(const F90ovec &, const double &);
+//  void soca_obsvec_add_f90(const F90ovec &, const F90ovec &);
+//  void soca_obsvec_sub_f90(const F90ovec &, const F90ovec &);
+//  void soca_obsvec_mul_f90(const F90ovec &, const F90ovec &);
+//  void soca_obsvec_div_f90(const F90ovec &, const F90ovec &);
+//  void soca_obsvec_axpy_f90(const F90ovec &, const double &, const F90ovec &);
+//  void soca_obsvec_invert_f90(const F90ovec &);
+//  void soca_obsvec_random_f90(const F90ovec &);
+//  void soca_obsvec_dotprod_f90(const F90ovec &, const F90ovec &, double &);
+//  void soca_obsvec_minmaxavg_f90(const F90ovec &, double &, double &, double &);
+//  void soca_obsvec_nobs_f90(const F90ovec &, int &);
 
 // -----------------------------------------------------------------------------
 //  Observation Handler
 // -----------------------------------------------------------------------------
-  void soca_obsdb_setup_f90(F90odb &, const eckit::Configuration * const *);
-  void soca_obsdb_delete_f90(F90odb &);
-  void soca_obsdb_get_f90(const F90odb &, const int &, const char *,
-                               const int &, const char *, const F90ovec &);
-  void soca_obsdb_put_f90(const F90odb &, const int &, const char *,
-                               const int &, const char *, const F90ovec &);
-  void soca_obsdb_locations_f90(const F90odb &, const int &, const char *,
-                              const util::DateTime * const *, const util::DateTime * const *,
-                              F90locs &);
-  void soca_obsdb_getgom_f90(const F90odb &, const int &, const char *, const F90vars &,
-                           const util::DateTime * const *, const util::DateTime * const *,
-                           F90goms &);
-  void soca_obsdb_generate_f90(const F90odb &, const int &, const char *,
-                             const eckit::Configuration * const *, const util::DateTime * const *,
-                             const util::Duration * const *, const int &, int &);
-  void soca_obsdb_seterr_f90(const F90odb &, const F90hop &, const double &);
-  void soca_obsdb_nobs_f90(const F90odb &, const int &, const char *, int &);
-  void soca_obsoper_inputs_f90(const F90hop &, F90vars &);
+//  void soca_obsdb_setup_f90(F90odb &, const eckit::Configuration * const *);
+//  void soca_obsdb_delete_f90(F90odb &);
+//  void soca_obsdb_get_f90(const F90odb &, const int &, const char *,
+//                               const int &, const char *, const F90ovec &);
+//  void soca_obsdb_put_f90(const F90odb &, const int &, const char *,
+//                               const int &, const char *, const F90ovec &);
+//  void soca_obsdb_locations_f90(const F90odb &, const int &, const char *,
+//                              const util::DateTime * const *, const util::DateTime * const *,
+//                              F90locs &);
+//  void soca_obsdb_getgom_f90(const F90odb &, const int &, const char *, const F90vars &,
+//                           const util::DateTime * const *, const util::DateTime * const *,
+//                           F90goms &);
+//  void soca_obsdb_generate_f90(const F90odb &, const int &, const char *,
+//                             const eckit::Configuration * const *, const util::DateTime * const *,
+//                             const util::Duration * const *, const int &, int &);
+//  void soca_obsdb_seterr_f90(const F90odb &, const F90hop &, const double &);
+//  void soca_obsdb_nobs_f90(const F90odb &, const int &, const char *, int &);
+//  void soca_obsoper_inputs_f90(const F90hop &, F90vars &);
 };
 // -----------------------------------------------------------------------------
 

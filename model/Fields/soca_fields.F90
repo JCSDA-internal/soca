@@ -676,23 +676,23 @@ contains
 
     endif
 
-    print *,'================ INTERP ================='
-    locs%nloc = 2
-    allocate( locs%xyz(3, locs%nloc) )
-    locs%xyz(1,1) = 15.3!_kind_real
-    locs%xyz(2,1) = 62.3!_kind_real
-
-    locs%xyz(1,2) = 17.2!_kind_real
-    locs%xyz(2,2) = 63.4!_kind_real
-    
-    locs%xyz(3,:) = 1.0!_kind_real    
-
-    gom%nvar=1
-    gom%nobs=1
-    allocate(gom%variables(gom%nvar))
-    gom%variables(1)="cicen"
-    print *,'================ INTERP ================='    
-    call interp_tl(fld, locs, gom)
+!!$    print *,'================ INTERP ================='
+!!$    locs%nloc = 2
+!!$    allocate( locs%xyz(3, locs%nloc) )
+!!$    locs%xyz(1,1) = 15.3!_kind_real
+!!$    locs%xyz(2,1) = 62.3!_kind_real
+!!$
+!!$    locs%xyz(1,2) = 17.2!_kind_real
+!!$    locs%xyz(2,2) = 63.4!_kind_real
+!!$    
+!!$    locs%xyz(3,:) = 1.0!_kind_real    
+!!$
+!!$    gom%nvar=1
+!!$    gom%nobs=1
+!!$    allocate(gom%variables(gom%nvar))
+!!$    gom%variables(1)="cicen"
+!!$    print *,'================ INTERP ================='    
+!!$    call interp_tl(fld, locs, gom)
     
     call check(fld)
     !call mpp_sync()
@@ -862,29 +862,33 @@ contains
   ! ------------------------------------------------------------------------------
 
   subroutine interp_tl(fld, locs, gom)
+    use ufo_locs_mod
+    use ufo_geovals_mod
     implicit none
     type(soca_field), intent(inout)   :: fld
-    type(soca_locs), intent(in)    :: locs
-    type(soca_goms), intent(inout) :: gom
+    type(ufo_locs), intent(in)    :: locs
+    type(ufo_geovals), intent(inout) :: gom
     character(2)                        :: op_type='TL'
 
     call check(fld)
 
-    call nicas_interph(fld, locs, gom, op_type)
+    !call nicas_interph(fld, locs, gom, op_type)
 
   end subroutine interp_tl
 
   ! ------------------------------------------------------------------------------
 
   subroutine interp_ad(fld, locs, gom)
+    use ufo_locs_mod
+    use ufo_geovals_mod    
     implicit none
     type(soca_field), intent(inout) :: fld
-    type(soca_locs), intent(in)     :: locs
-    type(soca_goms), intent(inout)  :: gom
+    type(ufo_locs), intent(in)    :: locs
+    type(ufo_geovals), intent(inout) :: gom    
     character(2)                        :: op_type='AD'
 
     call check(fld)
-    call nicas_interph(fld, locs, gom, op_type)
+    !call nicas_interph(fld, locs, gom, op_type)
 
   end subroutine interp_ad
 

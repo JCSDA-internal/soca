@@ -11,8 +11,10 @@
 #include "oops/base/Variables.h"
 #include "util/DateTime.h"
 #include "util/Logger.h"
-#include "model/ModelAtLocations/Gom.h"
-#include "model/Locations/Loc.h"
+//#include "model/ModelAtLocations/Gom.h"
+#include "ufo/GeoVaLs.h"
+//#include "model/Locations/Loc.h"
+#include "ufo/Locations.h"
 #include "model/Fortran.h"
 #include "model/Geometry/Geometry.h"
 #include "model/Variables/Variables.h"
@@ -123,16 +125,16 @@ namespace soca {
     soca_field_random_f90(keyFlds_);
   }
   // -----------------------------------------------------------------------------
-  void Fields::interpolate(const Loc & locs, const oops::Variables & vars, Gom & gom) const {
-      soca_field_interp_tl_f90(keyFlds_, locs.toFortran(), gom.toFortran());
+  void Fields::interpolate(const ufo::Locations & locs, const oops::Variables & vars, ufo::GeoVaLs & gom) const {
+    //soca_field_interp_tl_f90(keyFlds_, locs.toFortran(), gom.toFortran());
    }
   // -----------------------------------------------------------------------------
-  void Fields::interpolateTL(const Loc & locs, const oops::Variables & vars, Gom & gom) const {
-    soca_field_interp_tl_f90(keyFlds_, locs.toFortran(), gom.toFortran());
+  void Fields::interpolateTL(const ufo::Locations & locs, const oops::Variables & vars, ufo::GeoVaLs & gom) const {
+    //soca_field_interp_tl_f90(keyFlds_, locs.toFortran(), gom.toFortran());
   }
   // -----------------------------------------------------------------------------
-  void Fields::interpolateAD(const Loc & locs, const oops::Variables & vars, const Gom & gom) {
-    soca_field_interp_ad_f90(keyFlds_, locs.toFortran(), gom.toFortran());
+  void Fields::interpolateAD(const ufo::Locations & locs, const oops::Variables & vars, const ufo::GeoVaLs & gom) {
+    //soca_field_interp_ad_f90(keyFlds_, locs.toFortran(), gom.toFortran());
   }
   // -----------------------------------------------------------------------------
   void Fields::changeResolution(const Fields & other) {

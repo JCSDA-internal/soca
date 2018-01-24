@@ -8,8 +8,8 @@
 
 #include "oops/base/Variables.h"
 //#include "oops/generic/UnstructuredGrid.h"
-#include "model/ModelAtLocations/Gom.h"
-#include "model/Locations/Loc.h"
+//#include "model/ModelAtLocations/Gom.h"
+//#include "model/Locations/Loc.h"
 #include "model/ModelBias.h"
 #include "model/Fields/Fields.h"
 #include "model/Geometry/Geometry.h"
@@ -18,6 +18,10 @@
 #include "util/DateTime.h"
 #include "util/Duration.h"
 #include "util/Logger.h"
+
+#include "ufo/GeoVaLs.h"
+#include "ufo/Locations.h"
+
 
 using oops::Log;
 
@@ -104,7 +108,7 @@ namespace soca {
   // -----------------------------------------------------------------------------
   /// Interpolate to observation location
   // -----------------------------------------------------------------------------
-  void State::interpolate(const Loc & locs, const oops::Variables & vars, Gom & cols) const {
+  void State::interpolate(const ufo::Locations & locs, const oops::Variables & vars, ufo::GeoVaLs & cols) const {
     fields_->interpolate(locs, vars, cols);
   }
   // -----------------------------------------------------------------------------

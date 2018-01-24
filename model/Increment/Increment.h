@@ -35,9 +35,14 @@ namespace oops {
   class Variables;
 }
 
+namespace ufo {
+  class GeoVaLs;
+  class Locations;
+}
+
 namespace soca {
-  class Gom;
-  class Loc;
+  //class Gom;
+  //class Loc;
   class ModelBiasIncrement;
   class ErrorCovariance;  
   class State;
@@ -79,8 +84,8 @@ namespace soca {
       void dirac(const eckit::Configuration &);
       
       /// Interpolate to observation location
-      void interpolateTL(const Loc &, const oops::Variables &,Gom &) const;
-      void interpolateAD(const Loc &, const oops::Variables &, const Gom &);
+      void interpolateTL(const ufo::Locations &, const oops::Variables &,ufo::GeoVaLs &) const;
+      void interpolateAD(const ufo::Locations &, const oops::Variables &, const ufo::GeoVaLs &);
 
       /// I/O and diagnostics
       void read(const eckit::Configuration &);

@@ -37,22 +37,22 @@ list( APPEND oops_soca_src_files
 ./Model/soca_configs.F90
 
 #ModelAtLocations
-./ModelAtLocations/Gom.cc
-./ModelAtLocations/Gom.h
-./ModelAtLocations/soca_goms_mod.F90
+#./ModelAtLocations/Gom.cc
+#./ModelAtLocations/Gom.h
+#./ModelAtLocations/soca_goms_mod.F90
 
 #ObsSpace
-./ObsSpace/ObsSpace.cc
-./ObsSpace/ObsSpace.h
-./ObsSpace/ObsHelp.cc
-./ObsSpace/ObsHelp.h
-./ObsSpace/soca_obs_data.F90
-./ObsSpace/c_soca_obs_data.F90
-./ObsSpace/generate_locations.F90
+#./ObsSpace/ObsSpace.cc
+#./ObsSpace/ObsSpace.h
+#./ObsSpace/ObsHelp.cc
+#./ObsSpace/ObsHelp.h
+#./ObsSpace/soca_obs_data.F90
+#./ObsSpace/c_soca_obs_data.F90
+#./ObsSpace/generate_locations.F90
 
 #Locations
-./Locations/Loc.h
-./Locations/soca_locs_mod.F90
+#./Locations/Loc.h
+#./Locations/soca_locs_mod.F90
 
 #ObsOperator
 #./ObsOperator/Observation.cc
@@ -63,16 +63,16 @@ list( APPEND oops_soca_src_files
 #./ObsOperator/ObsFractionTLAD.cc
 #./ObsOperator/ObsFractionTLAD.h
 #./ObsOperator/soca_fraction_mod.F90
-./ObsOperator/soca_obsoper_mod.F90
+#./ObsOperator/soca_obsoper_mod.F90
 
 #Covariance
 #./Covariance/ErrorCovariance.cc
 #./Covariance/ErrorCovariance.h
 
 #ObsVector
-./ObsVector/ObsVec.cc
-./ObsVector/ObsVec.h
-./ObsVector/soca_obs_vectors.F90
+#./ObsVector/ObsVec.cc
+#./ObsVector/ObsVec.h
+#./ObsVector/soca_obs_vectors.F90
 
 #Run
 ./Run/Run.cc
@@ -114,7 +114,7 @@ endif()
 ecbuild_add_library( TARGET   soca
                      DEFINITIONS ${cfdealloc}
                      SOURCES  ${oops_soca_src_files}
-                     LIBS     oops ioda ${LAPACK_LIBRARIES} ${NETCDF_LIBRARIES} ${MOM6_LIBRARIES} ${FMS_LIBRARIES} ${MPI_LIBRARIES}
+                     LIBS     oops ioda ufo ${LAPACK_LIBRARIES} ${NETCDF_LIBRARIES} ${MOM6_LIBRARIES} ${FMS_LIBRARIES} ${MPI_LIBRARIES}
 		     INCLUDES ${FMS_INCLUDE_DIRS} ${MPI_INCLUDE_DIRS}
                      INSTALL_HEADERS LISTED
                      LINKER_LANGUAGE ${OOPS_LINKER_LANGUAGE}

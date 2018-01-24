@@ -24,9 +24,14 @@ namespace oops {
   class Variables;  
 }
 
+namespace ufo {
+  class GeoVaLs;
+  class Locations;
+}
+
 namespace soca {
-  class Loc;
-  class Gom;
+  //class Loc;
+  //class Gom;
   
   // -----------------------------------------------------------------------------
   /// Class to represent a FieldSet for the SOCA model
@@ -56,9 +61,9 @@ namespace soca {
       void random();
 
       // Interpolate to given location
-      void interpolate(const Loc &, const oops::Variables &, Gom &) const;
-      void interpolateTL(const Loc &, const oops::Variables &, Gom &) const;
-      void interpolateAD(const Loc &, const oops::Variables &, const Gom &);      
+      void interpolate(const ufo::Locations &, const oops::Variables &, ufo::GeoVaLs &) const;
+      void interpolateTL(const ufo::Locations &, const oops::Variables &, ufo::GeoVaLs &) const;
+      void interpolateAD(const ufo::Locations &, const oops::Variables &, const ufo::GeoVaLs &);      
       //void interpolateTL(const Loc &, Gom &) const;
       //void interpolateAD(const Loc &, const Gom &);
 

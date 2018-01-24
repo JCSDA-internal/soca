@@ -20,11 +20,15 @@ namespace oops {
   class UnstructuredGrid;
   class Variables;
 }
-  
+
+namespace ufo {
+  class GeoVaLs;
+  class Locations;
+}
 
 namespace soca {
-  class Gom;
-  class Loc;
+  //class Gom;
+  //class Loc;
   class Geometry;
   class Increment;
 
@@ -49,7 +53,7 @@ namespace soca {
       State & operator=(const State &);
 
       /// Interpolate to observation location
-      void interpolate(const Loc &, const oops::Variables &, Gom &) const;
+      void interpolate(const ufo::Locations &, const oops::Variables &, ufo::GeoVaLs &) const;
 
       /// Interpolate full fields
       ///  void changeResolution(const State & xx);

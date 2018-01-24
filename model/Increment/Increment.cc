@@ -7,8 +7,8 @@
 #include "eckit/config/LocalConfiguration.h"
 #include "oops/base/Variables.h"
 //#include "oops/generic/UnstructuredGrid.h"
-#include "model/ModelAtLocations/Gom.h"
-#include "model/Locations/Loc.h"
+//#include "model/ModelAtLocations/Gom.h"
+//#include "model/Locations/Loc.h"
 #include "model/ModelBiasIncrement.h"
 //#include "model/ErrorCovariance.h"
 #include "model/Fields/Fields.h"
@@ -17,6 +17,9 @@
 #include "util/DateTime.h"
 #include "util/Duration.h"
 #include "util/Logger.h"
+
+#include "ufo/GeoVaLs.h"
+#include "ufo/Locations.h"
 
 using oops::Log;
 
@@ -145,13 +148,13 @@ namespace soca {
   }
   /// Interpolate to observation location
   // -----------------------------------------------------------------------------
-  void Increment::interpolateTL(const Loc & locs, const oops::Variables & vars, Gom & cols) const {
+  void Increment::interpolateTL(const ufo::Locations & locs, const oops::Variables & vars, ufo::GeoVaLs & cols) const {
     Log::debug() << "Increment::interpolateTL fields in" << *fields_ << std::endl;
     fields_->interpolateTL(locs, vars, cols);
     //Log::debug() << "Increment::interpolateTL gom " << cols << std::endl;    
   }
   // -----------------------------------------------------------------------------
-  void Increment::interpolateAD(const Loc & locs, const oops::Variables & vars, const Gom & cols) {
+  void Increment::interpolateAD(const ufo::Locations & locs, const oops::Variables & vars, const ufo::GeoVaLs & cols) {
     Log::debug() << "Increment::interpolateAD gom " << cols << std::endl;
     Log::debug() << "Increment::interpolateAD fields in" << *fields_ << std::endl;    
     fields_->interpolateAD(locs, vars, cols);
