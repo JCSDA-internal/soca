@@ -8,7 +8,7 @@ module soca_fields
   use soca_goms_mod
   use soca_locs_mod  
   use soca_vars_mod
-  !use type_linop
+  use type_linop
   !use tools_interp, only: interp_horiz
   !use type_randgen, only: rng,initialize_sampling,create_randgen
   !use module_namelist, only: namtype  
@@ -894,7 +894,7 @@ contains
 
     use type_linop
     use tools_interp, only: compute_interp
-    !use type_randgen, only: rng,initialize_sampling, create_randgen, randgentype
+    use type_randgen, only: initialize_sampling, create_randgen!, randgentype
     use type_nam, only: namtype
     use tools_const, only : deg2rad
     use horiz_interp_mod, only : horiz_interp_type, horiz_interp_new, horiz_interp
@@ -913,31 +913,8 @@ contains
     real(kind=kind_real), allocatable :: lon(:), lat(:), lono(:), lato(:), fld_src(:), fld_dst(:)
     !type(namtype) :: nam !< Namelist variables
     !type(linoptype) :: hinterp_op
-    integer :: n_src, n_dst
-    character(len=1024) :: interp_type='bilin'
     
-    type(horiz_interp_type) :: fms_interp
-    real(kind_real) :: missing_value=999.9
-    logical :: new_missing_handle=.false.    
 
-!!$   horiz_interp_new_1d_dst (Interp, lon_in, lat_in,
-!!$                                    lon_out, lat_out,
-!!$                       verbose, interp_method, num_nbrs, max_dist, src_modulo, mask_in, mask_out, is_latlon_in )
-!!$   type(horiz_interp_type), intent(inout)     :: Interp
-!!$   real, intent(in),  dimension(:,:)          :: lon_in , lat_in
-!!$   real, intent(in),  dimension(:)            :: lon_out, lat_out
-!!$   integer, intent(in),              optional :: verbose
-!!$   character(len=*), intent(in),     optional :: interp_method
-!!$   integer, intent(in),              optional :: num_nbrs
-!!$   real,    intent(in),              optional :: max_dist
-!!$   logical, intent(in),              optional :: src_modulo
-!!$   real, intent(in), dimension(:,:), optional :: mask_in
-!!$   real, intent(out),dimension(:,:), optional :: mask_out
-!!$   logical, intent(in),              optional :: is_latlon_in
-
-
-    call horiz_interp_init
-    
     Nc = fld%geom%ocean%nx*fld%geom%ocean%ny
     No = locs%nloc   !< DOES NOT SEEM RIGHT, SHOULD BE TOTAL OBS IN da WINDOW
     Ncat = fld%geom%ocean%ncat
@@ -952,42 +929,15 @@ contains
           print *,'INITIALIZE INTERP',gom%nobs, locs%nloc
 
           print *,'LOCS=',locs%xyz
-          print *,'111111111111111111111111111111111111111111111111'          
-          !lono = deg2rad*locs%xyz(1,:)
-          !lato = deg2rad*locs%xyz(2,:)
 
-          lono = locs%xyz(1,:)
-          lato = locs%xyz(2,:)
-          
-          !lono = locs%xyz(1,:)/deg2rad
-          !lato = locs%xyz(2,:)/deg2rad
+          lono = deg2rad*locs%xyz(1,:)
+          lato = deg2rad*locs%xyz(2,:)
 
-          !call horiz_interp_new ( Hintrp, lon_bnd, lat_bnd, lon, lat, interp_method= interp_method )
-          print *,'============================= compute weights'
-          print *,'wgt=',fms_interp%wtj          
-          call horiz_interp_new(fms_interp, fld%geom%ocean%lon, fld%geom%ocean%lat, lono, lato, interp_method="bilinear")
-          print *,'wgt=',fms_interp%wtj
-          print *,'i_lon=',fms_interp%i_lon
-          print *,'j_lat=',fms_interp%j_lat          
-          
-          !call horiz_interp_bilinear(fms_interp, fld%geom%ocean%lon, lono)
-          !call horiz_interp(fms_interp, fld%geom%ocean%lon, lono)
-          
-          !call horiz_interp_new(fms_interp, real(fld%geom%ocean%lon), real(fld%geom%ocean%lat), 10.0, 10.0)          
-
-          print *,'11111 ============================= 11111111111111'
-          
           lon = deg2rad*reshape(fld%geom%ocean%lon, (/Nc/))     ! Inline grid, structured to un-structured
           lat = deg2rad*reshape(fld%geom%ocean%lat, (/Nc/))     ! and change to SI Units
           print *,'obs: ',lono, lato
-          print *,'22222222222222222222222222222222222222222222222'
-          print *,'Nc=',Nc,shape(lon)
-          !print *,'lon=',lon
-          !print *,'lat=',lat
-          !print *,'mask=',mask
-          print *,'lono, lato, masko=',lono, lato, masko
-          print *,'interp type:',interp_type
 
+          print *,'Nc=',Nc,shape(lon)
 
           !rng = create_randgen(nam)
           !call compute_interp(Nc, lon, lat, mask, No, lono, lato, masko, interp_type, fld%hinterp_op)          
