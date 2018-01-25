@@ -414,8 +414,6 @@ end subroutine soca_field_rms_c
 subroutine soca_field_interp_tl_c(c_key_fld,c_key_loc,c_key_gom) bind(c,name='soca_field_interp_tl_f90')
   use iso_c_binding
   use soca_fields
-  !use soca_locs_mod
-  !use soca_goms_mod
   use ufo_locs_mod_c  
   use ufo_locs_mod    
   use ufo_geovals_mod_c
@@ -426,14 +424,10 @@ subroutine soca_field_interp_tl_c(c_key_fld,c_key_loc,c_key_gom) bind(c,name='so
   integer(c_int), intent(in) :: c_key_loc
   integer(c_int), intent(in) :: c_key_gom
   type(soca_field), pointer :: fld
-  !type(soca_locs),  pointer :: locs
-  !type(soca_goms),  pointer :: gom
   type(ufo_locs),  pointer :: locs  
   type(ufo_geovals),  pointer :: gom  
 
   call soca_field_registry%get(c_key_fld,fld)
-  !call soca_locs_registry%get(c_key_loc,locs)
-  !call soca_goms_registry%get(c_key_gom,gom)
   call ufo_locs_registry%get(c_key_loc,locs)  
   call ufo_geovals_registry%get(c_key_gom,gom)  
 
@@ -446,8 +440,6 @@ end subroutine soca_field_interp_tl_c
 subroutine soca_field_interp_ad_c(c_key_fld,c_key_loc,c_key_gom) bind(c,name='soca_field_interp_ad_f90')
   use iso_c_binding
   use soca_fields
-  !use soca_locs_mod
-  !use soca_goms_mod
   use ufo_locs_mod_c  
   use ufo_locs_mod  
   use ufo_geovals_mod_c
@@ -457,14 +449,10 @@ subroutine soca_field_interp_ad_c(c_key_fld,c_key_loc,c_key_gom) bind(c,name='so
   integer(c_int), intent(in) :: c_key_loc
   integer(c_int), intent(in) :: c_key_gom
   type(soca_field), pointer :: fld
-  !type(soca_locs),  pointer :: locs
-  !type(soca_goms),  pointer :: gom
   type(ufo_locs),  pointer :: locs  
   type(ufo_geovals),  pointer :: gom  
 
   call soca_field_registry%get(c_key_fld,fld)
-  !call soca_locs_registry%get(c_key_loc,locs)
-  !call soca_goms_registry%get(c_key_gom,gom)
   call ufo_locs_registry%get(c_key_loc,locs)
   call ufo_geovals_registry%get(c_key_gom,gom)
   

@@ -70,6 +70,7 @@ endforeach()
 ################################################################################
 # Sources
 ################################################################################
+include( soca_compiler_flags )
 include_directories( ${CMAKE_CURRENT_SOURCE_DIR} )
 include_directories( ${CMAKE_CURRENT_SOURCE_DIR}/model )
 

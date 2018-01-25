@@ -115,7 +115,7 @@ ecbuild_add_library( TARGET   soca
                      DEFINITIONS ${cfdealloc}
                      SOURCES  ${oops_soca_src_files}
                      LIBS     oops ioda ufo ${LAPACK_LIBRARIES} ${NETCDF_LIBRARIES} ${MOM6_LIBRARIES} ${FMS_LIBRARIES} ${MPI_LIBRARIES}
-		     INCLUDES ${FMS_INCLUDE_DIRS} ${MPI_INCLUDE_DIRS}
+		     INCLUDES ${FMS_INCLUDE_DIRS} ${MPI_INCLUDE_DIRS} ${MOM6_INCLUDE_DIRS}
                      INSTALL_HEADERS LISTED
                      LINKER_LANGUAGE ${OOPS_LINKER_LANGUAGE}
                     )

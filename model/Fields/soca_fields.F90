@@ -5,8 +5,8 @@ module soca_fields
 
   use config_mod
   use soca_geom_mod
-  use soca_goms_mod
-  use soca_locs_mod  
+  !use soca_goms_mod
+  !use soca_locs_mod  
   use soca_vars_mod
   use type_linop
   !use tools_interp, only: interp_horiz
@@ -56,7 +56,7 @@ module soca_fields
      integer, allocatable              :: numfld_per_fldname(:) !< Number of 2d fields for each     (nf) 
                                                                 !< element of fldnames
 
-     !type(linoptype)                   :: hinterp_op
+     type(linoptype)                   :: hinterp_op
      logical                           :: hinterp_initialized = .false. !True:  hinterp_op has been initialized
                                                                         !False: hinterp_op not initialized
   end type soca_field
@@ -580,7 +580,6 @@ contains
     use datetime_mod
     use fckit_log_module, only : log
     use netcdf
-    !use interface_ncread_fld, only: ncread_fld
     use soca_thermo
     use soca_mom6sis2
     use fms_mod,                 only: read_data, write_data, set_domain
@@ -588,6 +587,10 @@ contains
     use mpp_mod,  only : mpp_pe, mpp_npes, mpp_root_pe, mpp_sync, mpp_sum, mpp_gather, mpp_broadcast
     use fms_io_mod,       only : register_restart_field, restart_file_type
     use fms_io_mod,       only : restore_state, query_initialized
+
+    use ufo_locs_mod
+    use ufo_geovals_mod
+    use ufo_vars_mod
     
     implicit none
     type(soca_field), intent(inout) :: fld      !< Fields
@@ -604,9 +607,10 @@ contains
     integer :: idr
 
     
-    type(soca_locs)    :: locs
-    type(soca_goms) :: gom
-    type(soca_vars) :: vars
+    type(ufo_locs)    :: locs
+    type(ufo_geovals)    :: gom
+    type(ufo_vars)    :: vars
+    integer            :: nobs, nval
     
     iread = 0
     if (config_element_exists(c_conf,"read_from_file")) then
@@ -676,23 +680,38 @@ contains
 
     endif
 
-!!$    print *,'================ INTERP ================='
-!!$    locs%nloc = 2
-!!$    allocate( locs%xyz(3, locs%nloc) )
-!!$    locs%xyz(1,1) = 15.3!_kind_real
-!!$    locs%xyz(2,1) = 62.3!_kind_real
-!!$
-!!$    locs%xyz(1,2) = 17.2!_kind_real
-!!$    locs%xyz(2,2) = 63.4!_kind_real
-!!$    
-!!$    locs%xyz(3,:) = 1.0!_kind_real    
-!!$
-!!$    gom%nvar=1
-!!$    gom%nobs=1
-!!$    allocate(gom%variables(gom%nvar))
-!!$    gom%variables(1)="cicen"
-!!$    print *,'================ INTERP ================='    
-!!$    call interp_tl(fld, locs, gom)
+    print *,'================ HACK TO TEST INTERP ================='
+
+    nobs = 2
+    print *,'Init locs'
+    call ufo_locs_setup(locs, 2)
+    locs%nlocs = nobs
+    locs%lon(1) = 15.3_kind_real
+    locs%lat(1) = 62.3_kind_real
+
+    locs%lon(2) = 17.2_kind_real
+    locs%lat(2) = 63.4_kind_real
+
+    print *,'Init ufo vars'
+    call ufo_vars_setup(vars, (/var_seaicefrac/))
+    
+    print *,'Init gom'
+    call ufo_geovals_init(gom)
+    call ufo_geovals_setup(gom, vars, nobs)
+    nval = fld%geom%ocean%ncat
+    gom%geovals(1)%nval = nval
+    allocate(gom%geovals(1)%vals(nval,nobs))
+    allocate(gom%geovals(1)%vals(nval,nobs))
+    gom%linit = .true.    
+    call ufo_geovals_zero(gom)
+    print *,gom%lalloc
+    !call ufo_geovals_print(gom, 1)
+    !gom%nvar=1
+    !gom%nobs=1
+    !allocate(gom%variables(gom%nvar))
+    !gom%variables(1)="cicen"
+    print *,'================ INTERP ================='    
+    call interp_tl(fld, locs, gom)
     
     call check(fld)
     !call mpp_sync()
@@ -872,7 +891,7 @@ contains
 
     call check(fld)
 
-    !call nicas_interph(fld, locs, gom, op_type)
+    call nicas_interph(fld, locs, gom, op_type)
 
   end subroutine interp_tl
 
@@ -888,7 +907,7 @@ contains
     character(2)                        :: op_type='AD'
 
     call check(fld)
-    !call nicas_interph(fld, locs, gom, op_type)
+    call nicas_interph(fld, locs, gom, op_type)
 
   end subroutine interp_ad
 
@@ -897,17 +916,21 @@ contains
   subroutine nicas_interph(fld, locs, gom, op_type)
 
     use type_linop
-    use tools_interp, only: compute_interp
-    use type_randgen, only: initialize_sampling, create_randgen!, randgentype
-    use type_nam, only: namtype
-    use tools_const, only : deg2rad
-    use horiz_interp_mod, only : horiz_interp_type, horiz_interp_new, horiz_interp
-    use horiz_interp_mod, only : horiz_interp_init, horiz_interp_end
-    use horiz_interp_bilinear_mod,  only: horiz_interp_bilinear_init, horiz_interp_bilinear
-
+    !use tools_interp, only: compute_interp
+    !use type_randgen, only: initialize_sampling, create_randgen!, randgentype
+    !use type_nam, only: namtype
+    !use tools_const, only : deg2rad
+    !use horiz_interp_mod, only : horiz_interp_type, horiz_interp_new, horiz_interp
+    !use horiz_interp_mod, only : horiz_interp_init, horiz_interp_end
+    !use horiz_interp_bilinear_mod,  only: horiz_interp_bilinear_init, horiz_interp_bilinear
+    use ufo_locs_mod_c  
+    use ufo_locs_mod  
+    use ufo_geovals_mod_c
+    use ufo_geovals_mod
+    
     type(soca_field), intent(inout)    :: fld
-    type(soca_locs), intent(in)     :: locs
-    type(soca_goms), intent(inout)  :: gom
+    type(ufo_locs), intent(in)     :: locs
+    type(ufo_geovals), intent(inout)  :: gom
     character(2), intent(in)             :: op_type !('TL' or 'AD')
 
     integer :: Nc, No, var_type_index, Ncat
@@ -920,85 +943,88 @@ contains
     
 
     Nc = fld%geom%ocean%nx*fld%geom%ocean%ny
-    No = locs%nloc   !< DOES NOT SEEM RIGHT, SHOULD BE TOTAL OBS IN da WINDOW
+    No = locs%nlocs   !< DOES NOT SEEM RIGHT, SHOULD BE TOTAL OBS IN da WINDOW
     Ncat = fld%geom%ocean%ncat
     if (No>0) then
        allocate(lon(Nc), lat(Nc), mask(Nc), fld_src(Nc))    ! <--- Not memory efficient ...
-       allocate(masko(No), fld_dst(No), lono(No), lato(No)) ! <--- use pointers?
+       allocate(masko(No), fld_dst(No), lono(No), lato(No)) ! <--- RECODE
 
        masko = .true.
        mask = .true.
-       !fld%hinterp_initialized = .false.
+       fld%hinterp_initialized = .false.
        if (.not.(fld%hinterp_initialized)) then
-          print *,'INITIALIZE INTERP',gom%nobs, locs%nloc
+          print *,'INITIALIZE INTERP',gom%nobs, locs%nlocs
+          print *,'LOCS=',locs%lat
+          
+          !lono = deg2rad*locs%lon(:)
+          !lato = deg2rad*locs%lat(:)
+          !lon = deg2rad*reshape(fld%geom%ocean%lon, (/Nc/))     ! Inline grid, structured to un-structured
+          !lat = deg2rad*reshape(fld%geom%ocean%lat, (/Nc/))     ! and change to SI Units
+          
+          lono = locs%lon(:)
+          lato = locs%lat(:)          
+          lon = reshape(fld%geom%ocean%lon, (/Nc/))     ! Inline grid, structured to un-structured
+          lat = reshape(fld%geom%ocean%lat, (/Nc/))     ! and change to SI Units
 
-          print *,'LOCS=',locs%xyz
 
-          lono = deg2rad*locs%xyz(1,:)
-          lato = deg2rad*locs%xyz(2,:)
-
-          lon = deg2rad*reshape(fld%geom%ocean%lon, (/Nc/))     ! Inline grid, structured to un-structured
-          lat = deg2rad*reshape(fld%geom%ocean%lat, (/Nc/))     ! and change to SI Units
-          print *,'obs: ',lono, lato
-
-          print *,'Nc=',Nc,shape(lon)
-
+          ! Ben's interp initialization (BROKEN)
           !rng = create_randgen(nam)
           !call compute_interp(Nc, lon, lat, mask, No, lono, lato, masko, interp_type, fld%hinterp_op)          
           fld%hinterp_initialized = .true.
 
        end if
 
-       !Finish Initializing gom
-       if (.not.allocated(gom%values)) then
-          print *,'fld%numfld_per_fldname=',fld%numfld_per_fldname
-          print *,'gom%nvar=',gom%nvar
-          gom_dim1=sum(fld%numfld_per_fldname(1:gom%nvar)) ! WILL CREATE ISSUES:
-                                                           ! Assume the order of var type is preserved
-                                                           ! [cicen, hicen, ...]
-          print *,'gom_dim1=',gom_dim1
-          allocate(gom%values(gom_dim1,gom%nobs))
-       end if
-       if (.not.allocated(gom%numfld_per_fldname)) then
-          allocate(gom%numfld_per_fldname(gom%nvar))
-       end if
-       gom%numfld_per_fldname=fld%numfld_per_fldname ! Will be used in obs oper          
-       !end if !probably need to assert shape of gom%values==(gom_dim1,gom%nobs)
+       !Finish Initializing gom (right place?)
+!!$       if (.not.(gom%alloc)) then
+!!$          
+!!$          print *,'fld%numfld_per_fldname=',fld%numfld_per_fldname
+!!$          print *,'gom%nvar=',gom%nvar
+!!$          gom_dim1=sum(fld%numfld_per_fldname(1:gom%nvar)) ! WILL CREATE ISSUES:
+!!$                                                           ! Assume the order of var type is preserved
+!!$                                                           ! [cicen, hicen, ...]
+!!$          print *,'gom_dim1=',gom_dim1
+!!$          allocate(gom%geovals(gom_dim1,gom%nobs))
+!!$       end if
+!!$       if (.not.allocated(gom%numfld_per_fldname)) then
+!!$          allocate(gom%numfld_per_fldname(gom%nvar))
+!!$       end if
+!!$       gom%numfld_per_fldname=fld%numfld_per_fldname ! Will be used in obs oper          
+!!$       !end if !probably need to assert shape of gom%values==(gom_dim1,gom%nobs)
 
        select case (op_type)
        case ('TL')
-          if (.not.allocated(fld_src)) allocate(fld_src(Nc))
-          cnt_fld=0
-          !Loop through variable types
-          do var_type_index=1,gom%nvar
-             !Loop through variable fields
-             do ivar=1,fld%numfld_per_fldname(var_type_index)
-                cnt_fld=cnt_fld+1
-                print *,'Apply interp op to variable:',gom%variables(var_type_index),' field num:',cnt_fld
-                fld_src = reshape(fld%cicen(:,:,ivar), (/Nc/))
-                fld_dst = 0.0_kind_real
-                print *,'fld_dst=',fld_dst
-
-                print *,'shape src:',shape( fld%geom%ocean%lon )
-                print *,'shape field:', shape(fld%cicen(:,:,ivar))
-                print *,'shape dst:',shape( lono )                
-                
-                !call horiz_interp(fms_interp, fld%cicen(:,:,ivar), fld_dst)
-
-                print *,'out of interp:',fld_dst
-                !call apply_linop(fld%hinterp_op, fld_src, fld_dst)
-                gom%values(cnt_fld,gom%used:gom%used+No-1)=fld_dst(1:No)
-
-             end do
-          end do
-          deallocate(fld_src)
+!!$          if (.not.allocated(fld_src)) allocate(fld_src(Nc))
+!!$          cnt_fld=0
+!!$          !Loop through variable types
+!!$          do var_type_index=1,gom%nvar
+!!$             !Loop through variable fields
+!!$             do ivar=1,fld%numfld_per_fldname(var_type_index)
+!!$                cnt_fld=cnt_fld+1
+!!$                print *,'Apply interp op to variable:',gom%variables(var_type_index),' field num:',cnt_fld
+!!$                fld_src = reshape(fld%cicen(:,:,ivar), (/Nc/))
+!!$                fld_dst = 0.0_kind_real
+!!$                print *,'fld_dst=',fld_dst
+!!$
+!!$                print *,'shape src:',shape( fld%geom%ocean%lon )
+!!$                print *,'shape field:', shape(fld%cicen(:,:,ivar))
+!!$                print *,'shape dst:',shape( lono )                
+!!$                
+!!$                !call horiz_interp(fms_interp, fld%cicen(:,:,ivar), fld_dst)
+!!$
+!!$                print *,'out of interp:',fld_dst
+!!$                !call apply_linop(fld%hinterp_op, fld_src, fld_dst)
+!!$                gom%values(cnt_fld,gom%used:gom%used+No-1)=fld_dst(1:No)
+!!$
+!!$             end do
+!!$          end do
+!!$          deallocate(fld_src)
        case ('AD')
           call abor1_ftn("nicas_interph: Wrapper for adjoint not implemented yet")
           !call apply_linop_ad(hinterp_op,fld_dst,fld_src)
           !CHECK: WHERE DO WE TRIGGER THE ADJOINT TESTS? 
           !put fld_src
        end select
-       gom%used=gom%used+locs%nloc
+!!$       gom%used=gom%used+locs%nlocs
        print *,"========== OUT OF INTERP ====================="
     end if
   end subroutine nicas_interph
@@ -1088,7 +1114,7 @@ contains
     implicit none
     type(soca_field), intent(inout) :: self
     type(unstructured_grid), intent(in) :: ug
-    type(column_element), pointer :: current
+    !type(column_element), pointer :: current
     real(kind=kind_real) :: dx, dy
     integer :: jx,jy,jz,jk
     integer :: n_vars       ! Number of 3D variables 
