@@ -26,9 +26,15 @@
         "ObsType": "SeaIceFraction",
         "ObsData": {
           "ObsDataOut": {
-            "obsfile": "data.nc"
+            "obsfile": "./Data/data.nc"
           }
         },
+      "Generate": {
+	  "begin": "PT01H",
+	  "obs_period": "PT1H",
+	  "obs_density": "600",
+	  "obs_error": "0.12345"
+      },  
         "GeoVaLs": {
           "norm": "1567.673435381234",
           "random": "1",

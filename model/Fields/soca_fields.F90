@@ -682,35 +682,35 @@ contains
 
     print *,'================ HACK TO TEST INTERP ================='
 
-    nobs = 2
-    print *,'Init locs'
-    call ufo_locs_setup(locs, 2)
-    locs%nlocs = nobs
-    locs%lon(1) = 15.3_kind_real
-    locs%lat(1) = 62.3_kind_real
+    !nobs = 2
+    !print *,'Init locs'
+    !call ufo_locs_setup(locs, 2)
+    !locs%nlocs = nobs
+    !locs%lon(1) = 15.3_kind_real
+    !locs%lat(1) = 62.3_kind_real
 
-    locs%lon(2) = 17.2_kind_real
-    locs%lat(2) = 63.4_kind_real
+    !locs%lon(2) = 17.2_kind_real
+    !locs%lat(2) = 63.4_kind_real
 
-    print *,'Init ufo vars'
-    call ufo_vars_setup(vars, (/var_seaicefrac/))
+    !print *,'Init ufo vars'
+    !call ufo_vars_setup(vars, (/var_seaicefrac/))
     
-    print *,'Init gom'
-    call ufo_geovals_init(gom)
-    call ufo_geovals_setup(gom, vars, nobs)
-    nval = fld%geom%ocean%ncat
-    gom%geovals(1)%nval = nval
-    allocate(gom%geovals(1)%vals(nval,nobs))
-    gom%linit = .true.    
-    call ufo_geovals_zero(gom)
-    print *,gom%lalloc
-    !call ufo_geovals_print(gom, 1)
-    !gom%nvar=1
-    !gom%nobs=1
-    !allocate(gom%variables(gom%nvar))
-    !gom%variables(1)="cicen"
-    print *,'================ INTERP ================='    
-    call interp_tl(fld, locs, gom)
+    !print *,'Init gom'
+    !call ufo_geovals_init(gom)
+    !call ufo_geovals_setup(gom, vars, nobs)
+    !nval = fld%geom%ocean%ncat
+    !gom%geovals(1)%nval = nval
+    !allocate(gom%geovals(1)%vals(nval,nobs))
+    !gom%linit = .true.    
+    !call ufo_geovals_zero(gom)
+    !print *,gom%lalloc
+    !!call ufo_geovals_print(gom, 1)
+    !!gom%nvar=1
+    !!gom%nobs=1
+    !!allocate(gom%variables(gom%nvar))
+    !!gom%variables(1)="cicen"
+    !print *,'================ INTERP ================='    
+    !call interp_tl(fld, locs, gom)
     
     call check(fld)
     !call mpp_sync()
