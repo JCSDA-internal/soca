@@ -22,6 +22,23 @@
 #include "model/Variables/Variables.h"
 #include "model/Run/Run.h"
 
+#include "ufo/GeoVaLs.h"
+#include "ufo/Locations.h"
+#include "ufo/ObsSpace.h"
+#include "ufo/ObsVector.h"
+#include "ufo/ObsBias.h"
+#include "ufo/ObsBiasIncrement.h"
+
+namespace ufo {
+  class GeoVaLs;
+  class Locations;
+  class ObsSpace;
+  class ObsVector;
+  class ObsBias;
+  class ObsBiasIncrement;  
+}
+
+
 namespace soca {
 
 struct Traits {
@@ -30,7 +47,7 @@ struct Traits {
   typedef soca::Geometry            Geometry;
   //typedef soca::Variables           Variables;
 
-  typedef soca::Run                 Run;  
+  typedef soca::Run                 Run;
 
   typedef soca::State               State;
   typedef soca::Model               Model;
@@ -42,17 +59,18 @@ struct Traits {
   typedef soca::ModelBiasIncrement  ModelAuxIncrement;
   typedef soca::ModelBiasCovariance ModelAuxCovariance;
   
-  //typedef soca::ObsSpace            ObsSpace;
   //typedef soca::Observation         ObsOperator;
   //  typedef soca::LinearObsOp         LinearObsOperator;
-  //typedef soca::ObsVec              ObsVector;
 
-  //typedef soca::ObsBias             ObsAuxControl;
-  //typedef soca::ObsBiasIncrement    ObsAuxIncrement;
-  //typedef soca::ObsBiasCovariance   ObsAuxCovariance;
+  typedef ufo::ObsBias             ObsAuxControl;
+  typedef ufo::ObsBiasIncrement    ObsAuxIncrement;
+  typedef soca::ObsBiasCovariance   ObsAuxCovariance;
   
-  //typedef soca::Gom                 GeoVaLs; //ModelAtLocations;
-  //typedef soca::Loc                 Locations;
+  typedef ufo::GeoVaLs              GeoVaLs; //ModelAtLocations;
+  typedef ufo::Locations            Locations;
+  typedef ufo::ObsSpace             ObsSpace;
+  typedef ufo::ObsVector            ObsVector;
+  
 };
 
 }  // namespace soca

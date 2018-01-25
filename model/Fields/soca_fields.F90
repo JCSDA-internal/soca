@@ -56,7 +56,7 @@ module soca_fields
      integer, allocatable              :: numfld_per_fldname(:) !< Number of 2d fields for each     (nf) 
                                                                 !< element of fldnames
 
-     type(linoptype)                   :: hinterp_op
+     !type(linoptype)                   :: hinterp_op
      logical                           :: hinterp_initialized = .false. !True:  hinterp_op has been initialized
                                                                         !False: hinterp_op not initialized
   end type soca_field
@@ -700,7 +700,6 @@ contains
     call ufo_geovals_setup(gom, vars, nobs)
     nval = fld%geom%ocean%ncat
     gom%geovals(1)%nval = nval
-    allocate(gom%geovals(1)%vals(nval,nobs))
     allocate(gom%geovals(1)%vals(nval,nobs))
     gom%linit = .true.    
     call ufo_geovals_zero(gom)

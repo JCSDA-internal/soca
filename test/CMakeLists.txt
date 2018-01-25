@@ -1,7 +1,7 @@
 list( APPEND soca_test_input
   testinput/interfaces.json  
   testinput/truth.json
-  testoutput/forecast.test  
+  testinput/forecast.json  
   testinput/makeobs3d.yml
   testinput/makeobs3d.json
   testinput/state_test.json    
@@ -57,16 +57,17 @@ ecbuild_add_test( TARGET test_soca_forecast
                   TYPE SCRIPT
 		  MPI     2		  		  
                   COMMAND "compare.sh"
-                  ARGS "${CMAKE_BINARY_DIR}/bin/soca_forecast.x testinput/forecast.yml"
+                  ARGS "${CMAKE_BINARY_DIR}/bin/soca_forecast.x testinput/forecast.json"
                        testoutput/forecast.test
                   DEPENDS soca_forecast.x )
 
-#ecbuild_add_test( TARGET test_soca_makeobs3d
-#                  TYPE SCRIPT
-#                  COMMAND "compare.sh"
-#                  ARGS "${CMAKE_BINARY_DIR}/bin/soca_makeobs.x testinput/makeobs3d.json"
-#                       testoutput/makeobs3d.test
-#                  DEPENDS soca_makeobs.x )
+ecbuild_add_test( TARGET test_soca_makeobs3d
+                  TYPE SCRIPT
+		  MPI     2		  		  		  
+                  COMMAND "compare.sh"
+                  ARGS "${CMAKE_BINARY_DIR}/bin/soca_makeobs.x testinput/makeobs3d.json"
+                       testoutput/makeobs3d.test
+                  DEPENDS soca_makeobs.x )
 		  
 # Tests of class interfaces
 
