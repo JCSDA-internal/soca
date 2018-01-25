@@ -28,6 +28,7 @@
 #include "ufo/ObsVector.h"
 #include "ufo/ObsBias.h"
 #include "ufo/ObsBiasIncrement.h"
+#include "ufo/ObsSeaIceFraction.h"
 
 namespace ufo {
   class GeoVaLs;
@@ -35,7 +36,8 @@ namespace ufo {
   class ObsSpace;
   class ObsVector;
   class ObsBias;
-  class ObsBiasIncrement;  
+  class ObsBiasIncrement;
+  class ObsSeaIceFraction;  
 }
 
 
@@ -59,7 +61,7 @@ struct Traits {
   typedef soca::ModelBiasIncrement  ModelAuxIncrement;
   typedef soca::ModelBiasCovariance ModelAuxCovariance;
   
-  //typedef soca::Observation         ObsOperator;
+  typedef ufo::ObsSeaIceFraction         ObsOperator;
   //  typedef soca::LinearObsOp         LinearObsOperator;
 
   typedef ufo::ObsBias             ObsAuxControl;

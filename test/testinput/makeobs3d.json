@@ -25,8 +25,8 @@
       {
         "ObsType": "SeaIceFraction",
         "ObsData": {
-          "ObsDataIn": {
-            "obsfile": "/home/gvernier/Sandboxes/codesprint-ufo/jedi/build/ufo/test/Data/seaice_obs.nc"
+          "ObsDataOut": {
+            "obsfile": "data.nc"
           }
         },
         "GeoVaLs": {
