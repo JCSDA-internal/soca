@@ -63,7 +63,7 @@ ecbuild_add_test( TARGET test_soca_forecast
 
 ecbuild_add_test( TARGET test_soca_makeobs3d
                   TYPE SCRIPT
-		  MPI     2		  		  		  
+		  MPI     1  		  		  
                   COMMAND "compare.sh"
                   ARGS "${CMAKE_BINARY_DIR}/bin/soca_makeobs.x testinput/makeobs3d.json"
                        testoutput/makeobs3d.test

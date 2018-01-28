@@ -431,6 +431,8 @@ subroutine soca_field_interp_tl_c(c_key_fld,c_key_loc,c_key_gom) bind(c,name='so
   call ufo_locs_registry%get(c_key_loc,locs)  
   call ufo_geovals_registry%get(c_key_gom,gom)  
 
+  print *,'================= soca field interp ===============',c_key_gom
+  
   call interp_tl(fld, locs, gom)
 
 end subroutine soca_field_interp_tl_c

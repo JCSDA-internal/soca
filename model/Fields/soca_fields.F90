@@ -926,6 +926,7 @@ contains
     use ufo_locs_mod  
     use ufo_geovals_mod_c
     use ufo_geovals_mod
+    use ufo_vars_mod
     
     type(soca_field), intent(inout)    :: fld
     type(ufo_locs), intent(in)     :: locs
@@ -939,11 +940,80 @@ contains
     real(kind=kind_real), allocatable :: lon(:), lat(:), lono(:), lato(:), fld_src(:), fld_dst(:)
     !type(namtype) :: nam !< Namelist variables
     !type(linoptype) :: hinterp_op
-    
+    integer :: nobs, nval
+    type(ufo_vars) :: ufovars
+    character(len=MAXVARLEN), dimension(1) :: cvars
+
 
     Nc = fld%geom%ocean%nx*fld%geom%ocean%ny
     No = locs%nlocs   !< DOES NOT SEEM RIGHT, SHOULD BE TOTAL OBS IN da WINDOW
     Ncat = fld%geom%ocean%ncat
+
+    print *,'================ IN INTERP  ================='
+    print *,'================ IN INTERP  ================='
+    print *,'================ IN INTERP  ================='
+    nobs = locs%nlocs
+    nval = fld%geom%ocean%ncat
+    cvars(1) = "ice_concentration"
+    call ufo_vars_setup(ufovars, cvars)
+    print *,cvars(1)
+    print *,ufovars%fldnames(:)
+    print *,gom%lalloc,gom%linit
+    if ( gom%lalloc .or. gom%linit) then
+       call ufo_geovals_delete(gom)
+    end if
+    call ufo_geovals_init(gom)
+    call ufo_geovals_setup(gom, ufovars, nobs)
+    gom%geovals(1)%nval = nval
+    if (allocated(gom%geovals(ivar)%vals))  deallocate(gom%geovals(ivar)%vals)
+    allocate(gom%geovals(1)%vals(nval,nobs))
+    gom%geovals(1)%vals(:,:)=0.1_kind_real    
+    !call ufo_geovals_zero(gom)
+    print *,gom%lalloc,gom%linit
+    gom%lalloc = .true.       
+    gom%linit = .true.    
+
+
+    !ufovars%nv=1
+    !ufovars%fldnames(1)="ice_concentration"!var_seaicefrac
+    print *,'oooooooooooooooooooooooooooooooooo',ufovars%fldnames(1)
+    if (.not.gom%lalloc) then
+       !call ufo_vars_setup(ufovars, cvars)
+
+       print *,'ooooooooooooooooooooooooooooooooooooooooooooooooooo'       
+
+       print *,'ooooooooooooooooooooooooooooooooooooooooooooooooooo'       
+
+
+       print *,'ooooooooooooooooooooooooooooooooooooooooooooooooooo'              
+    end if
+    print *,'ooooooooooooooooooooooooooooYYYYYYYYYYYYYYYYYYYYYYYYYYYYy'       
+    print *,'nlocs=',nobs
+    print *,'lon=',locs%lon    
+    print *,'gom%geovals(1)%nval=',gom%geovals(1)%nval
+    print *,gom%lalloc
+    print *,'var:',ufovars%fldnames(1)
+    print *,cvars(1)
+    !print *,'Init ufo vars'
+    !call ufo_vars_setup(vars, (/var_seaicefrac/))
+    
+    !print *,'Init gom'
+    !call ufo_geovals_init(gom)
+    !call ufo_geovals_setup(gom, vars, nobs)
+    !nval = fld%geom%ocean%ncat
+
+    !!call ufo_geovals_print(gom, 1)
+    !!gom%nvar=1
+    !!gom%nobs=1
+    !!allocate(gom%variables(gom%nvar))
+    !!gom%variables(1)="cicen"
+    !print *,'================ INTERP ================='    
+    !call interp_tl(fld, locs, gom)
+
+    print *,'================ IN INTERP  ================='
+    print *,'================ IN INTERP  ================='
+    print *,'================ IN INTERP  ================='
+    
     if (No>0) then
        allocate(lon(Nc), lat(Nc), mask(Nc), fld_src(Nc))    ! <--- Not memory efficient ...
        allocate(masko(No), fld_dst(No), lono(No), lato(No)) ! <--- RECODE
@@ -953,7 +1023,7 @@ contains
        fld%hinterp_initialized = .false.
        if (.not.(fld%hinterp_initialized)) then
           print *,'INITIALIZE INTERP',gom%nobs, locs%nlocs
-          print *,'LOCS=',locs%lat
+          print *,'LOCS=',locs%lon
           
           !lono = deg2rad*locs%lon(:)
           !lato = deg2rad*locs%lat(:)
