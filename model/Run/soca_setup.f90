@@ -39,7 +39,7 @@ subroutine soca_finalize() bind(c,name='soca_finalize_f')
   integer :: unit, ierr
 
   !call mpi_finalize(ierr)
-  call mpp_exit()
+  !call mpp_exit()
   call fms_io_exit()
   print *,'================================== soca_finalize'
   !call mpp_sync()
