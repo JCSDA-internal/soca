@@ -128,7 +128,11 @@ namespace soca {
     return *this;
   }
   // -----------------------------------------------------------------------------
-  /// Convert to/from unstructured grid
+  /// Define and convert to/from unstructured grid
+  // -----------------------------------------------------------------------------
+  void State::define(oops::UnstructuredGrid & ug) const {
+    //fields_->define(ug);
+  }
   // -----------------------------------------------------------------------------
   void State::convert_to(oops::UnstructuredGrid & ug) const {
     fields_->convert_to(ug);

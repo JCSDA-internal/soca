@@ -13,6 +13,7 @@
 #include "util/DateTime.h"
 #include "util/ObjectCounter.h"
 #include "util/Printable.h"
+#include "oops/base/Variables.h"
 
 // Forward declarations
 namespace soca {
@@ -27,9 +28,9 @@ namespace soca {
     private boost::noncopyable,
     private util::ObjectCounter<ErrorCovariance> {
   public:
-      static const std::string classname() {return "mom5cic5::ErrorCovariance";}
+      static const std::string classname() {return "soca::ErrorCovariance";}
 
-      ErrorCovariance(const Geometry &, const Variables &, const eckit::Configuration &, const State &);
+      ErrorCovariance(const Geometry &, const oops::Variables &, const eckit::Configuration &, const State &);
       ~ErrorCovariance();
 
       void linearize(const State &, const Geometry &);

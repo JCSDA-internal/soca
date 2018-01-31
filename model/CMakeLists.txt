@@ -4,7 +4,6 @@ list( APPEND oops_soca_src_files
 ./Geometry/Geometry.h
 ./Geometry/soca_geom_mod.F90
 ./Geometry/soca_model_geom_type.F90
-#./Geometry/soca_geom_mom6.F90
 
 #Fields
 ./Fields/Fields.cc
@@ -36,43 +35,16 @@ list( APPEND oops_soca_src_files
 ./Model/propagate.F90
 ./Model/soca_configs.F90
 
-#ModelAtLocations
-#./ModelAtLocations/Gom.cc
-#./ModelAtLocations/Gom.h
-#./ModelAtLocations/soca_goms_mod.F90
-
-#ObsSpace
-#./ObsSpace/ObsSpace.cc
-#./ObsSpace/ObsSpace.h
-#./ObsSpace/ObsHelp.cc
-#./ObsSpace/ObsHelp.h
-#./ObsSpace/soca_obs_data.F90
-#./ObsSpace/c_soca_obs_data.F90
-#./ObsSpace/generate_locations.F90
-
-#Locations
-#./Locations/Loc.h
-#./Locations/soca_locs_mod.F90
-
-#ObsOperator
-#./ObsOperator/Observation.cc
-#./ObsOperator/Observation.h
-#./ObsOperator/LinearObsOp.h
-#./ObsOperator/ObsFraction.cc
-#./ObsOperator/ObsFraction.h
-#./ObsOperator/ObsFractionTLAD.cc
-#./ObsOperator/ObsFractionTLAD.h
-#./ObsOperator/soca_fraction_mod.F90
-#./ObsOperator/soca_obsoper_mod.F90
-
 #Covariance
-#./Covariance/ErrorCovariance.cc
-#./Covariance/ErrorCovariance.h
+./Covariance/ErrorCovariance.cc
+./Covariance/ErrorCovariance.h
+./Covariance/c_soca_bmatrix.F90
+./Covariance/soca_covariance_mod.F90
 
-#ObsVector
-#./ObsVector/ObsVec.cc
-#./ObsVector/ObsVec.h
-#./ObsVector/soca_obs_vectors.F90
+#LocalizationMatrix
+./LocalizationMatrix/LocalizationMatrix.cc
+./LocalizationMatrix/LocalizationMatrix.h
+./LocalizationMatrix/soca_localization_matrix.F90
 
 #Run
 ./Run/Run.cc

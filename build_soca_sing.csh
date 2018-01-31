@@ -1,8 +1,10 @@
 #!/bin/bash -f
-export SRC="/home/gvernier/Sandboxes/codesprint-ufo/jedi/code/"
+export SRC="/home/gvernier/Sandboxes/soca/code/" #"/home/gvernier/Sandboxes/codesprint-ufo/jedi/code/"
+export BUILD="/home/gvernier/Sandboxes/soca/build/" #"/home/gvernier/Sandboxes/codesprint-ufo/jedi/build"
+
 export SRC_OOPS=${SRC}"jedi-bundle/oops/"
 export SRC_MODEL=${SRC}"soca/"
-export BUILD="/home/gvernier/Sandboxes/codesprint-ufo/jedi/build"
+
 
 
 export MOM6_SRC="/home/gvernier/Sandboxes/MOM6-examples/src/"

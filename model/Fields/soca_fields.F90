@@ -23,7 +23,7 @@ module soca_fields
   private
 
   public :: soca_field, &
-       & create, delete, zeros, dirac, random, copy, &
+       & create, delete, zeros, ones, dirac, random, copy, &
        & self_add, self_schur, self_sub, self_mul, axpy, &
        & dot_prod, add_incr, diff_incr, &
        & read_file, write_file, gpnorm, fldrms, &
@@ -233,6 +233,27 @@ contains
 
   ! ------------------------------------------------------------------------------
 
+  subroutine ones(self)
+    implicit none
+    type(soca_field), intent(inout) :: self
+
+    call check(self)
+
+    self%cicen = 1.0_kind_real
+    self%hicen = 1.0_kind_real
+    self%hsnon = 1.0_kind_real
+    self%tsfcn = 1.0_kind_real
+    self%qsnon = 1.0_kind_real
+    self%sicnk = 1.0_kind_real
+    self%qicnk = 1.0_kind_real
+
+    self%socn = 1.0_kind_real        
+    self%tocn = 1.0_kind_real
+    self%ssh = 1.0_kind_real
+  end subroutine ones
+
+  ! ------------------------------------------------------------------------------  
+
   subroutine dirac(self, c_conf)
     use iso_c_binding
     implicit none
@@ -286,14 +307,13 @@ contains
 
     call check(self)
 
-    !call random_number(self%cicen); self%cicen=self%cicen-0.5_kind_real
-    !call random_number(self%hicen); self%hicen=self%hicen-0.5_kind_real
-    !call random_number(self%hsnon); self%hsnon=self%hsnon-0.5_kind_real        
-    !call random_number(self%tsfcn); self%tsfcn=self%tsfcn-0.5_kind_real
+    call random_number(self%cicen); self%cicen=self%cicen-0.5_kind_real
+    call random_number(self%hicen); self%hicen=self%hicen-0.5_kind_real
+    call random_number(self%hsnon); self%hsnon=self%hsnon-0.5_kind_real        
+    call random_number(self%tsfcn); self%tsfcn=self%tsfcn-0.5_kind_real
     
-    !call random_number(self%tocn); self%tocn=self%tocn-0.5_kind_real
-    !call random_number(self%socn); self%tocn=self%socn-0.5_kind_real
-    !self%ssh=0.1_kind_real
+    call random_number(self%tocn); self%tocn=self%tocn-0.5_kind_real
+    call random_number(self%socn); self%tocn=self%socn-0.5_kind_real
     call random_number(self%ssh); self%ssh=(self%ssh-0.5_kind_real)*self%geom%ocean%mask2d
     
   end subroutine random

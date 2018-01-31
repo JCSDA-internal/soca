@@ -12,3 +12,8 @@ ecbuild_add_executable( TARGET  soca_makeobs.x
                         SOURCES MakeObs.cc
                         LIBS    soca
                       )
+
+ecbuild_add_executable( TARGET  soca_hofx.x
+                        SOURCES HofX.cc
+                        LIBS    soca
+                      )

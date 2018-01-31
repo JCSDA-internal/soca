@@ -10,6 +10,7 @@
 #include "model/Increment/Increment.h"
 #include "model/State/State.h"
 #include "eckit/config/Configuration.h"
+#include "oops/base/Variables.h"
 
 
 using oops::Log;
@@ -18,18 +19,18 @@ using oops::Log;
 namespace soca {
   // -----------------------------------------------------------------------------
 
-  ErrorCovariance::ErrorCovariance(const Geometry & resol, const Variables &,
+  ErrorCovariance::ErrorCovariance(const Geometry & resol, const oops::Variables &,
 				   const eckit::Configuration & conf, const State &) {
     time_ = util::DateTime(conf.getString("date"));
     const eckit::Configuration * configc = &conf;
-    //soca_b_setup_f90(keyFtnConfig_, &configc, resol.toFortran());
+    soca_b_setup_f90(keyFtnConfig_, &configc, resol.toFortran());
     Log::trace() << "ErrorCovariance created" << std::endl;
   }
 
   // -----------------------------------------------------------------------------
 
   ErrorCovariance::~ErrorCovariance() {
-    //soca_b_delete_f90(keyFtnConfig_);
+    soca_b_delete_f90(keyFtnConfig_);
     Log::trace() << "ErrorCovariance destructed" << std::endl;
   }
 
@@ -42,21 +43,21 @@ namespace soca {
   // -----------------------------------------------------------------------------
 
   void ErrorCovariance::multiply(const Increment & dxin, Increment & dxout) const {
-    //soca_b_mult_f90(keyFtnConfig_, dxin.fields().toFortran(),
-    //			 dxout.fields().toFortran());
+    soca_b_mult_f90(keyFtnConfig_, dxin.fields().toFortran(),
+    			 dxout.fields().toFortran());
   }
 
   // -----------------------------------------------------------------------------
 
   void ErrorCovariance::inverseMultiply(const Increment & dxin, Increment & dxout) const {
-    //soca_b_invmult_f90(keyFtnConfig_, dxin.fields().toFortran(),
-    //			    dxout.fields().toFortran());
+    soca_b_invmult_f90(keyFtnConfig_, dxin.fields().toFortran(),
+     			    dxout.fields().toFortran());
   }
 
   // -----------------------------------------------------------------------------
 
   void ErrorCovariance::randomize(Increment & dx) const {
-    //soca_b_randomize_f90(keyFtnConfig_, dx.fields().toFortran());
+    soca_b_randomize_f90(keyFtnConfig_, dx.fields().toFortran());
   }
 
   // -----------------------------------------------------------------------------

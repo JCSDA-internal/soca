@@ -8,8 +8,10 @@
 #include "model/ModelBiasCovariance.h"
 #include "model/Geometry/Geometry.h"
 #include "model/Increment/Increment.h"
+#include "model/LocalizationMatrix/LocalizationMatrix.h"
 #include "model/Model/Model.h"
 #include "model/State/State.h"
+#include "model/Covariance/ErrorCovariance.h"
 
 #include "ufo/GeoVaLs.h"
 #include "ufo/Locations.h"
@@ -24,15 +26,18 @@ namespace soca {
 
 struct Traits {
   static std::string name() {return "SOCA";}
-
+  static std::string nameCovar() {return "SocaError";}
+  
   typedef soca::Geometry            Geometry;
   typedef soca::State               State;
   typedef soca::Model               Model;
   typedef soca::Increment           Increment;
-
+  typedef soca::ErrorCovariance     Covariance;
+  
   typedef soca::ModelBias           ModelAuxControl;
   typedef soca::ModelBiasIncrement  ModelAuxIncrement;
   typedef soca::ModelBiasCovariance ModelAuxCovariance;
+  typedef soca::LocalizationMatrix  LocalizationMatrix;  
 
   typedef ufo::ObsBias              ObsAuxControl;
   typedef ufo::ObsBiasIncrement     ObsAuxIncrement;
