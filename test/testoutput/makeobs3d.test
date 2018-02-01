@@ -1,3 +1,3 @@
-Test     : Initial state: 1.83916
-Test     : Final state: 1.83916
-Test     : Generated observation: SeaIceFraction nobs= 30 Min=0.5, Max=0.5, Average=0.5
+Test     : Initial state: 165.444
+Test     : Final state: 165.444
+Test     : Generated observation: SeaIceFraction nobs= 30 Min=0, Max=1, Average=0.651087

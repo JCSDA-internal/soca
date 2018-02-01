@@ -18,6 +18,7 @@ list( APPEND soca_testoutput
   #testoutput/dirac.nicas.test
   testoutput/forecast.test
   testoutput/truth.test
+  testoutput/hofx.test  
   testoutput/makeobs3d.test
 )
 
@@ -175,3 +176,10 @@ ecbuild_add_test( TARGET test_soca_hofx
                   ARGS "${CMAKE_BINARY_DIR}/bin/soca_hofx.x testinput/hofx_test.json"
                        testoutput/hofx.test
                   DEPENDS soca_hofx.x )
+
+ecbuild_add_test( TARGET test_soca_3dvar
+                  TYPE SCRIPT
+                  COMMAND "compare.sh"
+                  ARGS "${CMAKE_BINARY_DIR}/bin/soca_3var.x testinput/hofx_test.json"
+                       testoutput/3dvar.test
+                  DEPENDS soca_3dvar.x )

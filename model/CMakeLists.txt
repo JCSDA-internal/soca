@@ -44,6 +44,7 @@ list( APPEND oops_soca_src_files
 #LocalizationMatrix
 ./LocalizationMatrix/LocalizationMatrix.cc
 ./LocalizationMatrix/LocalizationMatrix.h
+./LocalizationMatrix/instantiateLocalizationFactory.h
 ./LocalizationMatrix/soca_localization_matrix.F90
 
 #Run
@@ -61,6 +62,7 @@ list( APPEND oops_soca_src_files
 #./Utils/linkedList_c.f
 #./Utils/linkedList_i.f
 ./Utils/soca_mom6sis2.F90
+./Utils/soca_interp.F90
 
 Traits.h
 Fortran.h

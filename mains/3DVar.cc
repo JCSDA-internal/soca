@@ -9,14 +9,14 @@
  */
 
 #include "model/Traits.h"
-#include "oops/runs/HofX.h"
+#include "model/LocalizationMatrix/instantiateLocalizationFactory.h"
+#include "oops/runs/Variational.h"
 #include "model/Run/Run.h"
-#include "ufo/instantiateObsOperatorFactory.h"
 
 int main(int argc,  char ** argv) {
   soca::Run run(argc, argv);
-  ufo::instantiateObsOperatorFactory<soca::Traits>();  
-  oops::HofX<soca::Traits> hofx;
-  run.execute(hofx);
+  soca::instantiateLocalizationFactory();
+  oops::Variational<soca::Traits> var;
+  run.execute(var);
   return 0;
 };

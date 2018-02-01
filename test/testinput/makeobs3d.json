@@ -31,9 +31,9 @@
         },
 	  "Generate": {
 	      "nobs": "30",
-	      "lat": "62.5",
-	      "lon1": "12.0",
-	      "lon2": "15.5",
+	      "lat": "80.5",
+	      "lon1": "-209.0",
+	      "lon2": "0.0",
 	  "begin": "PT01H",
 	  "obs_period": "PT1H",
 	  "obs_density": "600",

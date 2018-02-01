@@ -8,7 +8,7 @@
   "ModelBias": null,    
     "ModelTest":{
     "fclength": "PT24H",
-    "finalnorm": "1.8391567253390675",
+    "finalnorm": 165.44428085229271,
     "tolerance": "0.005"
   },	
   "Model": {

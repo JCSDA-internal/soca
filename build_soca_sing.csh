@@ -11,8 +11,8 @@ export MOM6_SRC="/home/gvernier/Sandboxes/MOM6-examples/src/"
 export MOM6_PATH="/home/gvernier/Sandboxes/MOM6-examples/build/gnu/ice_ocean_SIS2/repro/"
 export MOM6_LIBRARIES="${MOM6_PATH}libmom6.a"
 export MOM6_INCLUDE_DIRS=$MOM6_PATH
-export MOM6_HEADER_DIRS=${MOM6_SRC}/MOM6/config_src/dynamic/
-export MOM6_MACROS_DIRS=${MOM6_SRC}/MOM6/src/framework/
+export MOM6_HEADER_DIRS= ${MOM6_SRC}/MOM6/config_src/dynamic/
+export MOM6_MACROS_DIRS= ${MOM6_SRC}/MOM6/src/framework/
 
 export FMS_PATH="/home/gvernier/Sandboxes/MOM6-examples/build/gnu/shared/repro/"
 export FMS_LIBRARIES="$FMS_PATH/libfms.a"

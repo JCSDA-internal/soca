@@ -13,7 +13,14 @@ ecbuild_add_executable( TARGET  soca_makeobs.x
                         LIBS    soca
                       )
 
+
 ecbuild_add_executable( TARGET  soca_hofx.x
                         SOURCES HofX.cc
                         LIBS    soca
                       )
+
+#ecbuild_add_executable( TARGET  soca_3dvar.x
+#                        SOURCES 3DVar.cc
+#                        LIBS    soca
+#                      )
+		      
