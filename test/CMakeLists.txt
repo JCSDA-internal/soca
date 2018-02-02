@@ -11,6 +11,7 @@ list( APPEND soca_test_input
   testinput/geovals_test.json  
   testinput/increment_test.json
   testinput/errorcovariance_test.json
+  testinput/3dvar_test.json
   compare.sh
 )
 
@@ -180,6 +181,6 @@ ecbuild_add_test( TARGET test_soca_hofx
 ecbuild_add_test( TARGET test_soca_3dvar
                   TYPE SCRIPT
                   COMMAND "compare.sh"
-                  ARGS "${CMAKE_BINARY_DIR}/bin/soca_3var.x testinput/hofx_test.json"
+                  ARGS "${CMAKE_BINARY_DIR}/bin/soca_3dvar.x testinput/3dvar_test.json"
                        testoutput/3dvar.test
                   DEPENDS soca_3dvar.x )

@@ -12,6 +12,8 @@
 #include "model/Model/Model.h"
 #include "model/State/State.h"
 #include "model/Covariance/ErrorCovariance.h"
+#include "model/ObsBiasCovariance.h"
+
 
 #include "ufo/GeoVaLs.h"
 #include "ufo/Locations.h"
@@ -20,7 +22,7 @@
 #include "ufo/ObsBias.h"
 #include "ufo/ObsBiasIncrement.h"
 #include "ufo/ObsCheck.h"
-//#include "ufo/ObsBiasCovarance.h"
+#include "ufo/ObsBiasCovariance.h"
 
 namespace soca {
 
@@ -39,9 +41,11 @@ struct Traits {
   typedef soca::ModelBiasCovariance ModelAuxCovariance;
   typedef soca::LocalizationMatrix  LocalizationMatrix;  
 
+  //typedef soca::ObsBiasCovariance     ObsAuxCovariance;
+  
   typedef ufo::ObsBias              ObsAuxControl;
   typedef ufo::ObsBiasIncrement     ObsAuxIncrement;
-  //typedef ufo::ObsBiasCovariance    ObsAuxCovariance;
+  typedef ufo::ObsBiasCovariance    ObsAuxCovariance;
   
   typedef ufo::ObsCheck             ObsCheck;  
 
