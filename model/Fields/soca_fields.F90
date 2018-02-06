@@ -493,7 +493,7 @@ contains
     real(kind=kind_real), intent(out) :: zprod
     real(kind=kind_real),allocatable,dimension(:) :: zprod_allpes
     integer :: ii, jj, kk
-    integer :: is, ie, js, je
+    integer :: is, ie, js, je, ncat, nzo
     call check_resolution(fld1, fld2)
     if (fld1%nf /= fld2%nf .or. fld1%geom%ocean%nzo /= fld2%geom%ocean%nzo) then
        call abor1_ftn("soca_fields:field_prod error number of fields")
@@ -504,20 +504,36 @@ contains
     ie = fld1%geom%ocean%G%iec
     js = fld1%geom%ocean%G%jsc    
     je = fld1%geom%ocean%G%jec    
-
+    ncat = fld1%geom%ocean%ncat
+    nzo = fld1%geom%ocean%nzo    
+    
     zprod = 0.0_kind_real
+    !----- OCEAN
     do ii = is, ie
        do jj = js, je
-          zprod = zprod + fld1%ssh(ii,jj)*fld2%ssh(ii,jj)*fld1%geom%ocean%mask2d(ii,jj)
+          zprod = zprod + fld1%ssh(ii,jj)*fld2%ssh(ii,jj)*fld1%geom%ocean%mask2d(ii,jj)       !SSH      
+          do kk = 1, 1 !nzo ADD 3D MASK!!!!!!
+             zprod = zprod + fld1%tocn(ii,jj,kk)*fld2%tocn(ii,jj,kk)*fld1%geom%ocean%mask2d(ii,jj) &   !TOCN
+                           + fld1%socn(ii,jj,kk)*fld2%socn(ii,jj,kk)*fld1%geom%ocean%mask2d(ii,jj)     !SOCN
+          end do
        end do
     end do
-    !zprod=sum(fld1%ssh(is:ie,js:je)*fld2%ssh(is:ie,js:je)*fld1%geom%ocean%mask2d(is:ie,js:je))
+    
+    !----- SEA-ICE
+    do ii = is, ie
+       do jj = js, je
+          do kk = 1, ncat
+             zprod = zprod + fld1%cicen(ii,jj,kk)*fld2%cicen(ii,jj,kk)*fld1%geom%ocean%mask2d(ii,jj) & !CICEN
+                           + fld1%hicen(ii,jj,kk)*fld2%hicen(ii,jj,kk)*fld1%geom%ocean%mask2d(ii,jj)   !HICEN          
+          end do
+       end do
+    end do    
+    
     allocate(zprod_allpes(mpp_npes()))
 
     call mpp_gather((/zprod/),zprod_allpes)
     call mpp_broadcast(zprod_allpes, mpp_npes(), mpp_root_pe())    
     zprod=sum(zprod_allpes)
-    !print *,' ======================= DOT PROD GLOBAL= ',zprod
     
     deallocate(zprod_allpes)
     call mpp_sync()
@@ -701,41 +717,8 @@ contains
        call datetime_set(sdate, vdate)       
 
     endif
-
-    print *,'================ HACK TO TEST INTERP ================='
-
-    !nobs = 2
-    !print *,'Init locs'
-    !call ufo_locs_setup(locs, 2)
-    !locs%nlocs = nobs
-    !locs%lon(1) = 15.3_kind_real
-    !locs%lat(1) = 62.3_kind_real
-
-    !locs%lon(2) = 17.2_kind_real
-    !locs%lat(2) = 63.4_kind_real
-
-    !print *,'Init ufo vars'
-    !call ufo_vars_setup(vars, (/var_seaicefrac/))
-    
-    !print *,'Init gom'
-    !call ufo_geovals_init(gom)
-    !call ufo_geovals_setup(gom, vars, nobs)
-    !nval = fld%geom%ocean%ncat
-    !gom%geovals(1)%nval = nval
-    !allocate(gom%geovals(1)%vals(nval,nobs))
-    !gom%linit = .true.    
-    !call ufo_geovals_zero(gom)
-    !print *,gom%lalloc
-    !!call ufo_geovals_print(gom, 1)
-    !!gom%nvar=1
-    !!gom%nobs=1
-    !!allocate(gom%variables(gom%nvar))
-    !!gom%variables(1)="cicen"
-    !print *,'================ INTERP ================='    
-    !call interp_tl(fld, locs, gom)
-    
+    print *,'Depth=',fld%geom%ocean%z
     call check(fld)
-    !call mpp_sync()
     
   end subroutine read_file
 
@@ -795,8 +778,6 @@ contains
        end select
     end do
     call fms_io_exit()       
-    
-    print *,'===================== Done writting' 
     
   end subroutine write_file
 
@@ -863,17 +844,19 @@ contains
     integer, intent(in) :: nf
     real(kind=kind_real), intent(inout) :: pstat(3, nf) !> [average, min, max]
     real(kind=kind_real) :: zz
-    integer :: jj,joff
+    integer :: jj
 
     call check(fld)
-    
-    pstat(1,:) = minval(fld%ssh)
-    pstat(2,:) = maxval(fld%ssh)
-    !call fldrms(fld, zz)
+
+    pstat=0.0
+    pstat(1,1) = minval(fld%ssh)
+    pstat(2,1) = maxval(fld%ssh)
+
+    pstat(1,2) = minval(fld%cicen)
+    pstat(2,2) = maxval(fld%cicen)    
+
     call dot_prod(fld, fld, zz)    
     pstat(3,:) = sqrt(zz)
-    print *,'-------------------- GPNORM = ',zz
-    !call abor1_ftn("soca_fields_gpnorm: error not implemented")
 
   end subroutine gpnorm
 
@@ -889,13 +872,11 @@ contains
     real(kind=kind_real), intent(out) :: prms
     integer :: jf,jy,jx,ii
     real(kind=kind_real) :: zz, ns, n2dfld
-
     
     call check(fld)
     
     call dot_prod(fld,fld,prms) ! Global value 
     prms=sqrt(prms)
-    print *,'PE# ',mpp_pe(),' ---------------- NORM = ',prms
 
   end subroutine fldrms
 
@@ -963,10 +944,7 @@ contains
     real(kind=kind_real), allocatable :: area(:),vunit(:)
     real(kind=kind_real), allocatable :: obs_field(:,:), mod_field(:,:), obsout(:)
 
-    integer :: icat
-
-
-    print *,' ------------- INTERP INITIALIZED:',fld%hinterp_initialized
+    integer :: icat, index, ii, jj
 
     Nc = fld%geom%ocean%nx*fld%geom%ocean%ny
     No = locs%nlocs
@@ -983,17 +961,14 @@ contains
     call ufo_geovals_init(gom)
     call ufo_geovals_setup(gom, ufovars, nobs)
     gom%geovals(1)%nval = nval
-    print *,nval,nobs
     if (allocated(gom%geovals(ivar)%vals))  deallocate(gom%geovals(ivar)%vals)
     allocate(gom%geovals(1)%vals(nval,nobs))
 
     gom%geovals(1)%vals(:,:)=0.0_kind_real    
-    !call ufo_geovals_zero(gom)
     gom%lalloc = .true.       
     gom%linit = .true.    
 
     if (No>0) then
-       print *,' ------------- ooo INTERP INITIALIZED:',fld%hinterp_initialized
        if (fld%hinterp_initialized.eq.0) then
           ! Initialize interp object          
           call fld%hinterp%interp_init(No)          
@@ -1004,23 +979,25 @@ contains
        allocate(obsout(No))
 
        ! Hardcoded for sea-ice fraction
-       !do icat = 2,fld%geom%ocean%ncat
-       !   print *,'Applying interp to category ',icat
-       !   call fld%hinterp%interp_apply(fld%cicen(:,:,icat), gom%geovals(1)%vals(icat-1,:))
-       !end do
-
        select case (op_type)
        case ('TL')
-          do icat = 2,fld%geom%ocean%ncat
+          do icat = 1,fld%geom%ocean%ncat
              print *,'Applying interp to category ',icat
-             call fld%hinterp%interp_apply(fld%cicen(:,:,icat), gom%geovals(1)%vals(icat-1,:))
+             call fld%hinterp%interp_apply(fld%cicen(:,:,icat+1), gom%geovals(1)%vals(icat,:))
           end do
-          !call fld%hinterp%interp_apply(fld%cicen(:,:,icat), gom%geovals(1)%vals(icat-1,:))
        case ('AD')
-          call abor1_ftn("adjoint not implemented yet")
-          
+          do icat = 1,fld%geom%ocean%ncat
+             do index =1,  No
+                ii = fld%hinterp%index(index,1)
+                jj = fld%hinterp%index(index,2)                                
+                fld%cicen(ii,jj,icat+1) =  gom%geovals(1)%vals(icat,index)
+             enddo
+          enddo
+          !call abor1_ftn("adjoint not implemented yet")
+          print *,'======= no adjoint'
        end select
     end if
+    
   end subroutine nicas_interph
 
   ! ------------------------------------------------------------------------------
@@ -1208,38 +1185,4 @@ contains
 
   ! ------------------------------------------------------------------------------
 
-!!$  subroutine pnpoly(PX,PY,XX,YY,N,INOUT)                            
-!!$    real, dimension(:) :: X(200),Y(200),XX(N),YY(N)                                    
-!!$    LOGICAL MX,MY,NX,NY                                               
-!!$    INTEGER O                                                         
-!!$
-!!$      DATA O/6/                                                         
-!!$      MAXDIM=200                                                        
-!!$      IF(N.LE.MAXDIM)GO TO 6                                            
-!!$      WRITE(O,7)                                                        
-!!$7     FORMAT('0WARNING:',I5,' TOO GREAT FOR THIS VERSION OF PNPOLY.     
-!!$     1RESULTS INVALID')                                                 
-!!$      RETURN                                                            
-!!$6     DO 1 I=1,N                                                        
-!!$      X(I)=XX(I)-PX                                                     
-!!$1     Y(I)=YY(I)-PY                                                     
-!!$      INOUT=-1                                                          
-!!$      DO 2 I=1,N                                                        
-!!$      J=1+MOD(I,N)                                                      
-!!$      MX=X(I).GE.0.0                                                    
-!!$      NX=X(J).GE.0.0                                                    
-!!$      MY=Y(I).GE.0.0                                                    
-!!$      NY=Y(J).GE.0.0                                                    
-!!$      IF(.NOT.((MY.OR.NY).AND.(MX.OR.NX)).OR.(MX.AND.NX)) GO TO 2       
-!!$      IF(.NOT.(MY.AND.NY.AND.(MX.OR.NX).AND..NOT.(MX.AND.NX))) GO TO 3  
-!!$      INOUT=-INOUT                                                      
-!!$      GO TO 2                                                           
-!!$3     IF((Y(I)*X(J)-X(I)*Y(J))/(X(J)-X(I))) 2,4,5                       
-!!$4     INOUT=0                                                           
-!!$      RETURN                                                            
-!!$5     INOUT=-INOUT                                                      
-!!$2     CONTINUE                                                          
-!!$      RETURN                                                            
-!!$      END              
-!!$  
 end module soca_fields

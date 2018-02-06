@@ -35,6 +35,10 @@ list( APPEND oops_soca_src_files
 ./Model/propagate.F90
 ./Model/soca_configs.F90
 
+#Model
+./LinearModel/TlmId.cc
+./LinearModel/TlmId.h
+
 #Covariance
 ./Covariance/ErrorCovariance.cc
 ./Covariance/ErrorCovariance.h

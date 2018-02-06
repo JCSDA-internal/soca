@@ -26,20 +26,16 @@ namespace soca {
 		 const util::DateTime & time):
     geom_(new Geometry(geom)), vars_(vars), time_(time)
   {
-    std::cout << "************************ Field constructor 1" << std::endl;
     soca_field_create_f90(keyFlds_, geom_->toFortran(), vars_.toFortran());
   }
   // -----------------------------------------------------------------------------
   Fields::Fields(const Fields & other, const bool copy)
     : geom_(other.geom_), vars_(other.vars_), time_(other.time_)
   {
-    std::cout << "************************ Field constructor 2" << std::endl;    
     soca_field_create_f90(keyFlds_, geom_->toFortran(), vars_.toFortran());
     if (copy) {
-      std::cout << "************************* Field constructor 2.1" << std::endl;      
       soca_field_copy_f90(keyFlds_, other.keyFlds_);
     } else {
-      std::cout << "************************ Field constructor 2.2" << std::endl;
       soca_field_zero_f90(keyFlds_);
     }
   }
@@ -47,7 +43,6 @@ namespace soca {
   Fields::Fields(const Fields & other)
     : geom_(other.geom_), vars_(other.vars_), time_(other.time_)
   {
-    std::cout << "************************* Field constructor 3" << std::endl;
     soca_field_create_f90(keyFlds_, geom_->toFortran(), vars_.toFortran());
     soca_field_copy_f90(keyFlds_, other.keyFlds_);
   }
@@ -55,7 +50,6 @@ namespace soca {
   Fields::Fields(const Fields & other, const Geometry & geom)
     : geom_(new Geometry(geom)), vars_(other.vars_), time_(other.time_)
   {
-    std::cout << "***************************** constructor 4" << std::endl;
     soca_field_create_f90(keyFlds_, geom_->toFortran(), vars_.toFortran());
     soca_field_change_resol_f90(keyFlds_, other.keyFlds_);
   }
@@ -63,7 +57,6 @@ namespace soca {
   Fields::Fields(const Fields & other, const oops::Variables & vars)
     : geom_(other.geom_), vars_(vars), time_(other.time_)
   {
-    std::cout << "***************************** constructor 5" << std::endl;
     soca_field_create_f90(keyFlds_, geom_->toFortran(), vars_.toFortran());
     soca_field_copy_f90(keyFlds_, other.keyFlds_);
   }
@@ -188,8 +181,7 @@ namespace soca {
     std::vector<double> zstat(3*nf);
     soca_field_gpnorm_f90(keyFlds_, nf, zstat[0]);
     for (int jj = 0; jj < nf; ++jj) {
-      os << std::endl << "  Min=" << zstat[3*jj]
-	 << ", Max=" << zstat[3*jj+1] << ", RMS=" << zstat[3*jj+2];
+      os << std::endl << "Min=" << zstat[3*jj] << " RMS=" << zstat[3*jj+2];
     }
   }
   // -----------------------------------------------------------------------------

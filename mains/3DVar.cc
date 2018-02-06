@@ -13,11 +13,13 @@
 #include "oops/runs/Variational.h"
 #include "model/Run/Run.h"
 #include "ufo/instantiateObsOperatorFactory.h"
+#include "ufo/instantiateLinearObsOpFactory.h"
 
 int main(int argc,  char ** argv) {
   soca::Run run(argc, argv);
   soca::instantiateLocalizationFactory();
-  ufo::instantiateObsOperatorFactory<soca::Traits>();  
+  ufo::instantiateObsOperatorFactory<soca::Traits>();
+  ufo::instantiateLinearObsOpFactory<soca::Traits>();    
   oops::Variational<soca::Traits> var;
   run.execute(var);
   return 0;

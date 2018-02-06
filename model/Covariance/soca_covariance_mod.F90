@@ -86,12 +86,12 @@ integer(c_int), intent(inout) :: c_key_conf !< The model covariance structure
 
 type(soca_3d_covar_config), pointer :: conf !< covar structure
 
-call soca_3d_cov_registry%get(c_key_conf, conf)
+!call soca_3d_cov_registry%get(c_key_conf, conf)
 
 !deallocate(conf%sqrt_zonal)
 !deallocate(conf%sqrt_merid)
 !deallocate(conf%sqrt_inv_merid)
-call soca_3d_cov_registry%remove(c_key_conf)
+!call soca_3d_cov_registry%remove(c_key_conf)
 
 end subroutine soca_3d_covar_delete
 

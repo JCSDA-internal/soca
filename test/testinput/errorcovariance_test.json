@@ -27,37 +27,5 @@
   },
   "CovarianceTest": {
     "tolerance": "0.01"
-  },    
-    "StateTest": {
-	"StateFile": {
-            "read_from_file": 1,
-	    "basename": "./RESTART/",
-	    "ocn_sfc_filename": "MOM.res.nc",
-	    "ocn_filename": "MOM.res.nc",
-	    "ice_filename": "ice_model.res.nc",	
-            "date": "2015-05-01T00:00:00Z",
-            "perturb": 0,
-            "norm": 1.8391567253390675,
-            "tolerance": 0.005
-        },
-	"norm-file": "1.8391567253390675",
-        "date": "2015-05-01T00:00:00Z",	
-	 "StateGenerate": {
-	"read_from_file": 1,
-	"basename": "./RESTART/",
-	"ocn_sfc_filename": "MOM.res.nc",
-	"ocn_filename": "MOM.res.nc",
-	"ice_filename": "ice_model.res.nc",	
-        "date": "2015-05-01T00:00:00Z"
-	 },
-	"norm-gen": 1.8391567253390675,
-	"tolerance": 1.0e-8,
-	"Locations": {
-	    "lats": [62.1],
-	    "lons": [12.5]
-	},
-	"Variables": {
-	    "variables": ["cicen"]
-	}
-    }
+  }
 }

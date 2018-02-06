@@ -46,7 +46,7 @@ integer(c_int), intent(inout) :: c_key_self  !< The background covariance struct
 type(soca_3d_covar_config), pointer :: self
 
 call soca_3d_cov_registry%get(c_key_self,self)
-!call soca_3d_covar_delete(self)
+call soca_3d_covar_delete(c_key_self)
 call soca_3d_cov_registry%remove(c_key_self)
 
 end subroutine c_soca_b_delete
@@ -79,7 +79,7 @@ call soca_field_registry%get(c_key_out,xout)
 !xctl(:,:,:)=0.0_kind_real
 
 !call soca_3d_covar_sqrt_inv_mult(conf%nx,conf%ny,xctl,xin,conf)
-call zeros(xout)
+!call zeros(xout)
 call ones(xout)
 call self_schur(xout, xin)
 !call soca_3d_covar_sqrt_inv_mult_ad(conf%nx,conf%ny,xctl,xout,conf)
@@ -154,7 +154,7 @@ call soca_field_registry%get(c_key_out,xout)
 
 !call random_vector(xctl(:,:,:))
 !call zeros(xout)
-!call ones(xout)
+call ones(xout)
 call random(xout)
 call fldrms(xout, prms)
 print *,'**************** IN COV:',prms

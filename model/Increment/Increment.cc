@@ -32,6 +32,7 @@ namespace soca {
 		       const util::DateTime & vt)
     : fields_(new Fields(resol, vars, vt)), stash_()
   {
+    std::cout << "constr 1" << std::endl;
     fields_->zero();
     Log::trace() << "Increment constructed." << std::endl;
   }
@@ -39,18 +40,21 @@ namespace soca {
   Increment::Increment(const Geometry & resol, const Increment & other)
     : fields_(new Fields(*other.fields_, resol)), stash_()
   {
+    std::cout << "constr 2" << std::endl;    
     Log::trace() << "Increment constructed from other." << std::endl;
   }
   // -----------------------------------------------------------------------------
   Increment::Increment(const Increment & other, const bool copy)
     : fields_(new Fields(*other.fields_, copy)), stash_()
   {
+    std::cout << "constr 3" << std::endl;    
     Log::trace() << "Increment copy-created." << std::endl;
   }
   // -----------------------------------------------------------------------------
   Increment::Increment(const Increment & other)
     : fields_(new Fields(*other.fields_)), stash_()
   {
+    std::cout << "constr 4" << std::endl;    
     Log::trace() << "Increment copy-created." << std::endl;
   }
   // -----------------------------------------------------------------------------
@@ -68,7 +72,7 @@ namespace soca {
     //swap(fields_, stash_);
     //ASSERT(fields_);
     //ASSERT(stash_);
-    Log::trace() << "Increment activated for TLM" << std::endl;
+    Log::trace() << "TLM ... NO IMPLEMENTED" << std::endl;
   }
   // -----------------------------------------------------------------------------
   void Increment::deactivateModel() {
