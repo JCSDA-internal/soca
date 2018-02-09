@@ -6,7 +6,8 @@ list( APPEND soca_test_input
   testinput/makeobs3d.json
   testinput/state_test.json
   testinput/hofx_test.json  
-  testinput/model_test.json      
+  testinput/model_test.json
+  testinput/linearmodel_test.json  
   testinput/geometry_test.json
   testinput/geovals_test.json  
   testinput/increment_test.json
@@ -84,12 +85,12 @@ ecbuild_add_test( TARGET  test_soca_geometry
                   ARGS    "testinput/geometry_test.json"
                   LIBS    soca )
 
-#ecbuild_add_test( TARGET  test_soca_variables
-#                  BOOST
-#		  MPI     2		  
-#                  SOURCES executables/TestVariables.cc
-#                  ARGS    "testinput/interfaces.json"
-#                  LIBS    soca )
+ecbuild_add_test( TARGET  test_soca_linearmodel
+                  BOOST
+		  MPI     2		  
+                  SOURCES executables/TestLinearModel.cc
+                  ARGS    "testinput/linearmodel_test.json"
+                  LIBS    soca )
 
 ecbuild_add_test( TARGET  test_soca_state
                   BOOST

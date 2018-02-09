@@ -246,32 +246,32 @@ end subroutine soca_3d_covar_delete
 
 ! ------------------------------------------------------------------------------
 
-!> Multiply streamfunction by sqrt(C), where C is a 3d covariance matrix
+!> Multiply by sqrt(C), where C is a 3d covariance matrix
 
-!!$subroutine soca_3d_covar_sqrt_mult(kx,ky,xincr,xctl,config)
-!!$use iso_c_binding
-!!$use fft_mod
-!!$use kinds
-!!$use soca_fields
-!!$
-!!$implicit none
-!!$integer(c_int), intent(in) :: kx               !< Zonal grid dimension
-!!$integer(c_int), intent(in) :: ky               !< Meridional grid dimension
-!!$type(soca_field), intent(inout) :: xincr         !< sqrt(C) times streamfunction
-!!$real(c_double), intent(in) :: xctl(kx,ky,2)    !< Streamfunction
-!!$type(soca_3d_covar_config), intent(in) :: config !< covariance config structure
-!!$
-!!$integer :: i, j, k, iri, m
-!!$real(kind=kind_real) :: zc, zero, one
-!!$real(kind=kind_real) :: zfour(kx+2), work(ky)
-!!$
-!!$!--- multiply by symmetric square-root of vertical correlation matrix
-!!$
-!!$zc = sqrt(1.0_kind_real-config%vert_corr*config%vert_corr)
+subroutine soca_3d_covar_sqrt_mult(kx,ky,xincr,xctl,config)
+use iso_c_binding
+use fft_mod
+use kinds
+use soca_fields
+
+implicit none
+integer(c_int), intent(in) :: kx               !< Zonal grid dimension
+integer(c_int), intent(in) :: ky               !< Meridional grid dimension
+type(soca_field), intent(inout) :: xincr         !< sqrt(C) times streamfunction
+real(c_double), intent(in) :: xctl(kx,ky,2)    !< Streamfunction
+type(soca_3d_covar_config), intent(in) :: config !< covariance config structure
+
+integer :: i, j, k, iri, m
+real(kind=kind_real) :: zc, zero, one
+real(kind=kind_real) :: zfour(kx+2), work(ky)
+
+!--- multiply by symmetric square-root of vertical correlation matrix
+
+!zc = sqrt(1.0_kind_real-config%vert_corr*config%vert_corr)
 !!$do j=1,ky
 !!$  do i=1,kx
 !!$    xincr%x(i,j,1) = xctl(i,j,1)
-!!$    xincr%x(i,j,2) = config%vert_corr * xctl(i,j,1) + zc * xctl(i,j,2)
+!!$    !xincr%x(i,j,2) = config%vert_corr * xctl(i,j,1) + zc * xctl(i,j,2)
 !!$  enddo
 !!$enddo
 !!$
@@ -288,8 +288,8 @@ end subroutine soca_3d_covar_delete
 !!$  enddo
 !!$enddo
 !!$
-!!$!--- multiply by square-root of zonal correlation matrix
-!!$
+!--- multiply by square-root of zonal correlation matrix
+
 !!$do k=1,2
 !!$  do j=1,ky
 !!$    call fft_fwd(kx,xincr%x(:,j,k),zfour)
@@ -311,8 +311,8 @@ end subroutine soca_3d_covar_delete
 !!$    enddo
 !!$  enddo
 !!$enddo
-!!$
-!!$end subroutine soca_3d_covar_sqrt_mult
+
+end subroutine soca_3d_covar_sqrt_mult
 
 ! ------------------------------------------------------------------------------
 

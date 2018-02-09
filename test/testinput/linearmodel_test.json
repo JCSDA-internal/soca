@@ -1,10 +1,37 @@
 {
   "test_framework_runtime_config": "--log_level=test_suite",    
-  "resolution": {
+  "Geometry": {
   },
-  "model": {
-    "tstep": "PT1H"
+  "Model": {
+      "tstep": "PT1H"
   },
+    "Variables": {
+	"variables": ["cicen","hicen","hsnon","tsfcn","qsnon","sicnk","qicnk","socn","tocn","ssh"]
+    },
+    "ModelBias": null,
+      "Covariance": {
+        "covariance": "SocaError",
+        "standard_deviation": "0.8",
+        "vertical_correlation": "0.2",
+        "horizontal_length_scale": "1e6",
+        "maximum_condition_number": "1.0e6",
+        "date": "2015-01-01T12:00:00Z"
+      },    
+  "State": {
+    "filename": "Data/truth.fc.2009-12-15T00:00:00Z.P16D",
+    "date": "2009-12-31T00:00:00Z"
+  },
+          "LinearModel": {
+              "version": "IdTLM",
+              "tstep": "PT1H" 
+        },
+    
+  "LinearModelTest": {
+    "fclength": "PT24H",
+    "testiterTL": "12",
+    "toleranceTL": "1.0e-6",
+    "toleranceAD": "1.0e-12"
+  },    
   "cost_function": {
     "cost_type": "3D-Var",
     "window_begin": "2015-01-01T09:00:00Z",
@@ -35,10 +62,10 @@
         {
           "ObsType": "SeaIceFraction",
 	  "Generate": {
-	      "nobs": 400,
-	      "lat": 0.5,
+	      "nobs": 100,
+	      "lat": 80.5,
 	      "lon1": -270.0,
-	      "lon2": -200.0
+	      "lon2": -90.0
 	  },
           "ObsData": {
               "ObsDataOut": {
@@ -63,7 +90,7 @@
               "version": "IdTLM",
               "tstep": "PT1H" 
         },
-        "ninner": "4",
+        "ninner": "10",
         "gradient_norm_reduction": "1e-8",
         "test": "on"
       }

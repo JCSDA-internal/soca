@@ -105,11 +105,9 @@ contains
     real :: Rho_ice = 905.0
     integer :: ncat, nkice, nksnow, km
 
-    print *,'=========== fms_io_init'
     ! Initialize fms/mpp io stuff
     call fms_io_init()
 
-    print *,'=========== get mom input'    
     ! Parse grid inputs
     call Get_MOM_Input(param_file, dirs)
 
@@ -143,8 +141,6 @@ contains
     
     ! Initialize sea-ice grid
     call set_ice_grid(IG, param_file, NCat_dflt)
-    print *,'IG:',IG%CatIce,IG%NkIce,IG%NkSnow, IG%H_to_kg_m2, IG%kg_m2_to_H, IG%ocean_part_min
-    print *,'IG lim:',IG%cat_thick_lim
     !call initialize_ice_categories(IG, Rho_ice, param_file) NOCANDO, PRIVATE!!!
     
     call close_param_file(param_file)
@@ -317,10 +313,6 @@ contains
     allocate(aogcm%Ice%sal_ice(isd:ied, jsd:jed, ncat, nzi)) ; aogcm%Ice%sal_ice(:,:,:,:) = 0.0_kind_real
     allocate(aogcm%Ice%T_skin(isd:ied, jsd:jed, ncat)) ; aogcm%Ice%T_skin(:,:,:) = 0.0_kind_real
 
-    print *,'PE #',mpp_pe(),' of ',mpp_npes(),'. PE root is ',mpp_root_pe()
-    print *,' shape T:',shape(aogcm%Ocn%T)
-    print *,' shape aice:',shape(aogcm%Ice%part_size)
-    print *,' shape enth_ice:',shape(aogcm%Ice%enth_ice)    
     call mpp_sync()
 
   end subroutine soca_field_init

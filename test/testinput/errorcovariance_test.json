@@ -3,7 +3,7 @@
   "Geometry": {
   },
   "Variables": {
-      "variables": ["cicen"]
+      "variables": ["cicen","hicen","hsnon","tsfcn","qsnon","sicnk","qicnk","socn","tocn","ssh"]
   },
   "TestDate": "2015-05-01T00:00:00Z",
     "State": {

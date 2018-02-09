@@ -151,8 +151,6 @@ type(soca_field), pointer :: xout
 real(kind=kind_real) :: prms ! Control vector
 !real(kind=kind_real), allocatable :: xctl(:,:,:) ! Control vector
 
-print *,'**************** IN :'
-
 call soca_3d_cov_registry%get(c_key_conf,conf)
 call soca_field_registry%get(c_key_out,xout)
 
@@ -163,7 +161,7 @@ call soca_field_registry%get(c_key_out,xout)
 call ones(xout)
 call random(xout)
 call fldrms(xout, prms)
-print *,'**************** IN COV:',prms
+
 !call soca_3d_covar_sqrt_mult(conf%nx,conf%ny,xout,xctl,conf)
 
 !deallocate(xctl)

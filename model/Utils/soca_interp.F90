@@ -66,7 +66,7 @@ contains
        end if
     end do
     !$OMP END PARALLEL DO
-    print *,'Number of obs befor qc:',self%nobs,' after qc',cnt
+
     self%initialized = .false.
     
   end subroutine interp_compute_weight

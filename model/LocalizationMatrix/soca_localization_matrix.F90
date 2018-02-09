@@ -30,7 +30,7 @@ real(kind=kind_real), allocatable :: xctl(:,:,:) ! Control vector
 
 call soca_3d_cov_registry%get(c_key_conf,conf)
 call soca_field_registry%get(c_key_xincr,xincr)
-
+call abor1_ftn("localization: not implemented")             
 !allocate(xctl(conf%nx, conf%ny, 2))
 
 !xctl(:,:,:)=0.0_kind_real
@@ -51,6 +51,8 @@ integer(c_int), intent(in) :: c_key_geom !< Geometry
 type(soca_3d_covar_config), pointer :: conf !< covar structure
 type(soca_geom), pointer :: geom     !< Geometry
 
+call abor1_ftn("localization: not implemented")
+
 call soca_3d_cov_registry%init()
 call soca_3d_cov_registry%add(c_key_conf)
 call soca_3d_cov_registry%get(c_key_conf, conf)
@@ -67,6 +69,7 @@ implicit none
 integer(c_int), intent(inout) :: c_key_self
 type(soca_3d_covar_config), pointer :: self
 
+call abor1_ftn("localization: not implemented")             
 call soca_3d_cov_registry%get(c_key_self, self)
 !call soca_3d_covar_delete(self)
 

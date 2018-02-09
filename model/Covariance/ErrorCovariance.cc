@@ -43,16 +43,21 @@ namespace soca {
   // -----------------------------------------------------------------------------
 
   void ErrorCovariance::multiply(const Increment & dxin, Increment & dxout) const {
-    std::cout << "BKG ERR" << std::endl;
-    soca_b_mult_f90(keyFtnConfig_, dxin.fields().toFortran(),
-    			 dxout.fields().toFortran());
+    std::cout << "mult" << std::endl;    
+    dxout = dxin;
+    Log::debug() << std::endl << "------- dxin" << dxin << std::endl;
+    Log::debug() << std::endl <<"------ dxout" << dxout << std::endl;        
+    //soca_b_mult_f90(keyFtnConfig_, dxin.fields().toFortran(),
+    //   			 dxout.fields().toFortran());
   }
 
   // -----------------------------------------------------------------------------
 
   void ErrorCovariance::inverseMultiply(const Increment & dxin, Increment & dxout) const {
-    soca_b_invmult_f90(keyFtnConfig_, dxin.fields().toFortran(),
-     			    dxout.fields().toFortran());
+    //soca_b_invmult_f90(keyFtnConfig_, dxin.fields().toFortran(),		       
+    // 			    dxout.fields().toFortran());
+    std::cout << "inv mult" << std::endl;        
+    dxout = dxin;
   }
 
   // -----------------------------------------------------------------------------

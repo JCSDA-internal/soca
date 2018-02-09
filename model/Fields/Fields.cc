@@ -26,7 +26,6 @@ namespace soca {
 		 const util::DateTime & time):
     geom_(new Geometry(geom)), vars_(vars), time_(time)
   {
-    std::cout << "------------------ field constr 1" << std::endl;
     soca_field_create_f90(keyFlds_, geom_->toFortran(), vars_.toFortran());
   }
   // -----------------------------------------------------------------------------
@@ -182,7 +181,7 @@ namespace soca {
     std::vector<double> zstat(3*nf);
     soca_field_gpnorm_f90(keyFlds_, nf, zstat[0]);
     for (int jj = 0; jj < nf; ++jj) {
-      os << std::endl << "Min=" << zstat[3*jj] << " RMS=" << zstat[3*jj+2];
+      os << std::endl << "Min=" << zstat[3*jj] << " Max=" << zstat[3*jj+1] << " RMS=" << zstat[3*jj+2];
     }
   }
   // -----------------------------------------------------------------------------

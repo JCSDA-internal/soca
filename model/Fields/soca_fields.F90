@@ -41,7 +41,7 @@ module soca_fields
      character(len=128)                :: cicefname             !< Fields file name for cice
      character(len=128)                :: momfname              !< Fields file name for mom
      real(kind=kind_real), pointer     :: cicen(:,:,:) => NULL()  !< Sea-ice fraction                 (nx,ny,ncat)
-     real(kind=kind_real), pointer     :: hicen(:,:,:) => NULL()          !< Sea-ice thickness                (nx,ny,ncat)
+     real(kind=kind_real), pointer     :: hicen(:,:,:) => NULL()          !< Sea-ice thickness                (nx,ny,ncat+1)
      real(kind=kind_real), pointer     :: vicen(:,:,:) => NULL()          !< Sea-ice volume                   (nx,ny,ncat)
      real(kind=kind_real), pointer     :: hsnon(:,:,:) => NULL()          !< Snow depth over sea-ice          (nx,ny,ncat)
      real(kind=kind_real), pointer     :: vsnon(:,:,:) => NULL()          !< Snow volume over sea-ice         (nx,ny,ncat) 
@@ -134,8 +134,6 @@ contains
     !type(time_type)      :: Time_step_slow !< The time step for the ice_model_slow    
     !call fms_io_init
 
-    print *,"$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$44 IN FLD CREATE"
-
     
     self%geom => geom
     self%nf   = vars%nv
@@ -164,7 +162,7 @@ contains
     self%ssh => self%AOGCM%Ocn%ssh
 
     !Sea-ice internal state
-    self%cicen => self%AOGCM%Ice%part_size !(:,:,2:)
+    self%cicen => self%AOGCM%Ice%part_size
     self%hicen => self%AOGCM%Ice%h_ice
     self%hsnon => self%AOGCM%Ice%h_snow        
     self%tsfcn => self%AOGCM%Ice%T_skin
@@ -177,7 +175,6 @@ contains
     allocate(self%numfld_per_fldname(vars%nv))
     
     do ivar=1,vars%nv
-       print *,'vars: ',vars%fldnames(ivar)
        select case(vars%fldnames(ivar))          
        case ('cicen','hicen','hsnon','tsfcn')
           self%numfld_per_fldname(ivar)=geom%ocean%ncat
@@ -188,7 +185,7 @@ contains
        case ('socn','tocn')
           self%numfld_per_fldname(ivar)=geom%ocean%nzo
        case ('ssh')
-         self%numfld_per_fldname(ivar)=1
+          self%numfld_per_fldname(ivar)=1
        case default
           call abor1_ftn("c_soca_fields: undefined variables")
        end select
@@ -347,7 +344,7 @@ contains
     self%tocn  = rhs%tocn
     self%ssh  = rhs%ssh    
 
-    self%hinterp_initialized = rhs%hinterp_initialized
+    !self%hinterp_initialized = rhs%hinterp_initialized
     !call linop_copy(rhs%hinterp_op, self%hinterp_op)
     
     return
@@ -512,23 +509,23 @@ contains
     nzo = fld1%geom%ocean%nzo    
     
     zprod = 0.0_kind_real
-!!$    !----- OCEAN
-!!$    do ii = is, ie
-!!$       do jj = js, je
-!!$          zprod = zprod + fld1%ssh(ii,jj)*fld2%ssh(ii,jj)*fld1%geom%ocean%mask2d(ii,jj)       !SSH      
-!!$          do kk = 1, 1 !nzo ADD 3D MASK!!!!!!
-!!$             zprod = zprod + fld1%tocn(ii,jj,kk)*fld2%tocn(ii,jj,kk)*fld1%geom%ocean%mask2d(ii,jj) &   !TOCN
-!!$                           + fld1%socn(ii,jj,kk)*fld2%socn(ii,jj,kk)*fld1%geom%ocean%mask2d(ii,jj)     !SOCN
-!!$          end do
-!!$       end do
-!!$    end do
+    !----- OCEAN
+    do ii = is, ie
+       do jj = js, je
+          zprod = zprod + fld1%ssh(ii,jj)*fld2%ssh(ii,jj)*fld1%geom%ocean%mask2d(ii,jj)       !SSH      
+          do kk = 1, 1 !nzo ADD 3D MASK!!!!!!
+             zprod = zprod + fld1%tocn(ii,jj,kk)*fld2%tocn(ii,jj,kk)*fld1%geom%ocean%mask2d(ii,jj) &   !TOCN
+                           + fld1%socn(ii,jj,kk)*fld2%socn(ii,jj,kk)*fld1%geom%ocean%mask2d(ii,jj)     !SOCN
+          end do
+       end do
+    end do
     
     !----- SEA-ICE
     do ii = is, ie
        do jj = js, je
           do kk = 1, ncat
-             zprod = zprod + fld1%cicen(ii,jj,kk)*fld2%cicen(ii,jj,kk)*fld1%geom%ocean%mask2d(ii,jj)! & !CICEN
-                           !+ fld1%hicen(ii,jj,kk)*fld2%hicen(ii,jj,kk)*fld1%geom%ocean%mask2d(ii,jj)   !HICEN          
+             zprod = zprod + fld1%cicen(ii,jj,kk)*fld2%cicen(ii,jj,kk)*fld1%geom%ocean%mask2d(ii,jj) & !CICEN
+                           + fld1%hicen(ii,jj,kk)*fld2%hicen(ii,jj,kk)*fld1%geom%ocean%mask2d(ii,jj)   !HICEN          
           end do
        end do
     end do    
@@ -567,17 +564,12 @@ contains
     type(soca_field), intent(in)    :: x1
     type(soca_field), intent(in)    :: x2
 
-    print *,'QQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQq'
-    
     call check(lhs)
     call check(x1)
     call check(x2)
 
     call zeros(lhs)
 
-    !if (x1%geom%nx==x2%geom%nx .and. x1%geom%ny==x2%geom%ny) then
-    !   if (lhs%geom%nx==x1%geom%nx .and. lhs%geom%ny==x1%geom%ny) then
-    
     lhs%cicen = x1%cicen - x2%cicen
     lhs%hicen = x1%hicen - x2%hicen
     lhs%hsnon = x1%hsnon - x2%hsnon
@@ -668,7 +660,6 @@ contains
        call log%info(buf)
        call datetime_set(sdate, vdate)
     else
-       print *,fld%fldnames
        basename = config_get_string(c_conf,len(basename),"basename")        
        ocn_sfc_filename = config_get_string(c_conf,len(ocn_filename),"ocn_sfc_filename")
        ocn_filename = config_get_string(c_conf,len(ocn_filename),"ocn_filename")       
@@ -680,7 +671,6 @@ contains
        
        call fms_io_init()
        do ii = 1, fld%nf
-          print *,fld%fldnames(ii)
           select case(fld%fldnames(ii))
           case ('ssh')
              call read_data(ocn_sfc_filename,"ave_ssh",fld%ssh(:,:),domain=fld%geom%ocean%G%Domain%mpp_domain)
@@ -706,7 +696,7 @@ contains
           case ('tsfcn')             
              idr = register_restart_field(sis_restart, ice_filename, 'T_skin', fld%AOGCM%Ice%T_skin, &
                   domain=fld%geom%ocean%G%Domain%mpp_domain)
-          case ('sicen')             
+          case ('sicnk')             
              idr = register_restart_field(sis_restart, ice_filename, 'sal_ice', fld%AOGCM%Ice%sal_ice, &
                   domain=fld%geom%ocean%G%Domain%mpp_domain)             
           case default
@@ -723,7 +713,7 @@ contains
        call datetime_set(sdate, vdate)       
 
     endif
-    print *,'Depth=',fld%geom%ocean%z
+
     call check(fld)
     
   end subroutine read_file
@@ -755,7 +745,6 @@ contains
     call fms_io_init()
     call set_domain( fld%geom%ocean%G%Domain%mpp_domain )    
     do ii = 1, fld%nf
-       print *,fld%fldnames(ii)
        select case(fld%fldnames(ii))
        case ('ssh')
           call write_data( filename, "ssh", fld%ssh, fld%geom%ocean%G%Domain%mpp_domain)              
@@ -850,19 +839,48 @@ contains
     integer, intent(in) :: nf
     real(kind=kind_real), intent(inout) :: pstat(3, nf) !> [average, min, max]
     real(kind=kind_real) :: zz
-    integer :: jj
+    integer :: jj, Nc2d
 
     call check(fld)
 
+    Nc2d = sum(fld%geom%ocean%mask2d)
+    
     pstat=0.0
-    pstat(1,1) = minval(fld%ssh)
-    pstat(2,1) = maxval(fld%ssh)
+    pstat(1,1) = minval(fld%cicen)
+    pstat(2,1) = maxval(fld%cicen)
+    pstat(3,1) = sqrt(sum(fld%cicen*fld%cicen)/real(Nc2d*fld%geom%ocean%ncat))
 
-    pstat(1,2) = minval(fld%cicen)
-    pstat(2,2) = maxval(fld%cicen)    
+    pstat(1,2) = minval(fld%hicen)
+    pstat(2,2) = maxval(fld%hicen)
+    pstat(3,2) = sqrt(sum(fld%hicen*fld%hicen)/real(Nc2d*fld%geom%ocean%ncat))
+    
+    pstat(1,3) = minval(fld%hsnon)
+    pstat(2,3) = maxval(fld%hsnon)
+    pstat(2,3) = sqrt(sum(fld%hsnon*fld%hsnon)/real(Nc2d*fld%geom%ocean%ncat))
 
+    pstat(1,4) = minval(fld%tsfcn)
+    pstat(2,4) = maxval(fld%tsfcn)        
+
+    pstat(1,5) = minval(fld%qsnon)
+    pstat(2,5) = maxval(fld%qsnon)
+
+    pstat(1,6) = minval(fld%sicnk)
+    pstat(2,6) = maxval(fld%sicnk)        
+
+    pstat(1,7) = minval(fld%qicnk)
+    pstat(2,7) = maxval(fld%qicnk)
+
+    pstat(1,8) = minval(fld%tocn)
+    pstat(2,8) = maxval(fld%tocn)
+    
+    pstat(1,9) = minval(fld%socn)
+    pstat(2,9) = maxval(fld%socn)    
+
+    pstat(1,10) = minval(fld%ssh)
+    pstat(2,10) = maxval(fld%ssh)    
+    
     call dot_prod(fld, fld, zz)    
-    pstat(3,:) = sqrt(zz)
+    !pstat(3,:) = sqrt(zz)
 
   end subroutine gpnorm
 
@@ -972,34 +990,26 @@ contains
     gom%lalloc = .true.       
     gom%linit = .true.    
 
+    print *,'-------------------- in interp'
+    !print *,'locs%lat=',locs%lat
+    !print *,'=== lon model:',fld%geom%ocean%lon
     if (No>0) then
        if (fld%hinterp_initialized.eq.0) then
           ! Initialize interp object          
           call fld%hinterp%interp_init(No)          
-          print *,'Compute weight'
-          call fld%hinterp%interp_compute_weight(fld%geom%ocean%lon, fld%geom%ocean%lat, locs%lon, locs%lat)
+          !call fld%hinterp%interp_compute_weight(fld%geom%ocean%lon, fld%geom%ocean%lat, locs%lon, locs%lat)
           fld%hinterp_initialized = 1
        end if
        allocate(obsout(No))
 
        ! Hardcoded for sea-ice fraction
        do icat = 1,fld%geom%ocean%ncat
-          print *,'Applying interp to category ',icat
+          call fld%hinterp%interp_compute_weight(fld%geom%ocean%lon, fld%geom%ocean%lat, locs%lon, locs%lat)          
           call fld%hinterp%interp_apply(fld%cicen(:,:,icat+1)*fld%geom%ocean%mask2d(:,:)&
                &, gom%geovals(1)%vals(icat,:))
+
        end do
 
-!!$    case ('AD')
-!!$          do icat = 1,fld%geom%ocean%ncat
-!!$             do index =1,  No
-!!$                ii = fld%hinterp%index(index,1)
-!!$                jj = fld%hinterp%index(index,2)
-!!$                fld%cicen(ii,jj,icat+1) = gom%geovals(1)%vals(icat,index)
-!!$                print *,'{{{{{{{{{{{{{{{{{{{{{{  FIELD AD:',gom%geovals(1)%vals(icat,index)
-!!$             enddo
-!!$          enddo
-!!$          !call abor1_ftn("adjoint not implemented yet")
-!!$       end select
     end if
     
   end subroutine nicas_interph
@@ -1038,39 +1048,20 @@ contains
     No = locs%nlocs
     Ncat = fld%geom%ocean%ncat
     ivar = 1 ! HARD CODED
-    
-!!$    nobs = locs%nlocs
-!!$    nval = fld%geom%ocean%ncat
-!!$    cvars(1) = "ice_concentration"
-!!$    call ufo_vars_setup(ufovars, cvars)
-!!$    if ( gom%lalloc .or. gom%linit) then
-!!$       call ufo_geovals_delete(gom)
-!!$    end if
-!!$    call ufo_geovals_init(gom)
-!!$    call ufo_geovals_setup(gom, ufovars, nobs)
-!!$    gom%geovals(1)%nval = nval
-!!$    if (allocated(gom%geovals(ivar)%vals))  deallocate(gom%geovals(ivar)%vals)
-!!$    allocate(gom%geovals(1)%vals(nval,nobs))
-!!$
-!!$    gom%geovals(1)%vals(:,:)=0.0_kind_real    
-!!$    gom%lalloc = .true.       
-!!$    gom%linit = .true.    
 
-
-    print *,"==================== IN INTERP AD =================================="
-    call fld%hinterp%interp_init(No)          
-    print *,'Compute weight'
+    call fld%hinterp%interp_init(No)
+    print *,'-------------------- in interp ad'
+    print *,'locs%lat=',locs%lat
     call fld%hinterp%interp_compute_weight(fld%geom%ocean%lon, fld%geom%ocean%lat, locs%lon, locs%lat)
     fld%hinterp_initialized = 1
 
-    !print *,fld%hinterp%index
-    
     do icat = 1,fld%geom%ocean%ncat
-       do index =1,  No
+       do index = 1, No
           ii = fld%hinterp%index(index,1)
           jj = fld%hinterp%index(index,2)
-          fld%cicen(ii,jj,icat+1) = gom%geovals(1)%vals(icat,index)
-          print *,'{{{{{{{{{{{{{{{{{{{{{{  FIELD AD:',ii,jj,gom%geovals(1)%vals(icat,index)
+          fld%cicen(ii,jj,icat+1) = fld%cicen(ii,jj,icat+1) +&
+               &gom%geovals(1)%vals(icat,index)
+          print *,'      FIELD AD:',ii,jj,gom%geovals(1)%vals(icat,index)
        enddo
     enddo
     !call abor1_ftn("===================================================================")    
@@ -1137,7 +1128,7 @@ contains
 !!$
 !!$          !cmask(:) = int(self%geom%mask(jx,jy))           ! Some issues with the mask
 !!$          !print *,'cmask=',cmask
-!!$          !if (self%icemask(jx,jy)>0.0) then
+!!$          !if (ssnicas_interpelf%icemask(jx,jy)>0.0) then
 !!$          !print *,vv(:)
 !!$          !read(*,*)
 !!$          !end if
@@ -1216,7 +1207,6 @@ contains
 
     common_vars = min(x1%nf, x2%nf)
     do jf = 1, common_vars
-       print *,x1%fldnames(jf),' ',x2%fldnames(jf)
        if (x1%fldnames(jf)/=x2%fldnames(jf)) &
             & call abor1_ftn("common_vars: fields do not match")
     enddo

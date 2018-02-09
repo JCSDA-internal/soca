@@ -61,7 +61,7 @@ contains
 
     ii = 0
     do jj=1,kvars(1)
-       if (kvars(jj+1)/=10) ii=ii+1
+       if (kvars(jj+1)/=11) ii=ii+1
        if (kvars(jj+1)==1) self%fldnames(ii) = "cicen"
        if (kvars(jj+1)==2) self%fldnames(ii) = "hicen"
        if (kvars(jj+1)==3) self%fldnames(ii) = "hsnon"
@@ -71,7 +71,7 @@ contains
        if (kvars(jj+1)==7) self%fldnames(ii) = "qicnk"
        if (kvars(jj+1)==8) self%fldnames(ii) = "socn"
        if (kvars(jj+1)==9) self%fldnames(ii) = "tocn"
-       if (kvars(jj+1)==10) self%fldnames(ii) = "ssh"
+       if (kvars(jj+1)==10) self%fldnames(ii)= "ssh"
     enddo
     
   end subroutine soca_vars_create

@@ -79,22 +79,37 @@ namespace soca {
   void State::activateModel() {
     // Should get variables from model. YT
     //eckit::LocalConfiguration modelvars;
+
+    const std::vector<std::string> vv{"cicen",
+	  "hicen",
+	  "hsnon",
+	  "tsfcn",
+	  "qsnon",
+	  "sicnk",
+	  "qicnk",
+	  "socn",
+	  "tocn",
+	  "ssh"
+	};
+    oops::Variables vars(vv);
+
+    
     //modelvars.set("variables", "nl");
-    //oops::Variables vars(modelvars);
+    //oops::Variables vars(vars);
     // Should get variables from model. YT
-    //stash_.reset(new Fields(*fields_, vars));
-    //swap(fields_, stash_);
-    //ASSERT(fields_);
-    //ASSERT(stash_);
+    stash_.reset(new Fields(*fields_, vars));
+    swap(fields_, stash_);
+    ASSERT(fields_);
+    ASSERT(stash_);
     Log::trace() << "State activated for Model" << std::endl;
   }
   // -----------------------------------------------------------------------------
   void State::deactivateModel() {
-    //swap(fields_, stash_);
-    //*fields_ = *stash_;
-    //stash_.reset();
-    //ASSERT(fields_);
-    //ASSERT(!stash_);
+    swap(fields_, stash_);
+    *fields_ = *stash_;
+    stash_.reset();
+    ASSERT(fields_);
+    ASSERT(!stash_);
     Log::trace() << "State deactivated for Model" << std::endl;
   }
   // -----------------------------------------------------------------------------
