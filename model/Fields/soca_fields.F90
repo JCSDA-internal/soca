@@ -134,6 +134,9 @@ contains
     !type(time_type)      :: Time_step_slow !< The time step for the ice_model_slow    
     !call fms_io_init
 
+    print *,"$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$44 IN FLD CREATE"
+
+    
     self%geom => geom
     self%nf   = vars%nv
     call soca_field_init(self%AOGCM, geom%ocean%G, geom%ocean%GV, geom%ocean%IG)
@@ -174,8 +177,9 @@ contains
     allocate(self%numfld_per_fldname(vars%nv))
     
     do ivar=1,vars%nv
-       select case(vars%fldnames(ivar))
-       case ('cicen','hicen','vicen','hsnon','vsnon','tsfcn')
+       print *,'vars: ',vars%fldnames(ivar)
+       select case(vars%fldnames(ivar))          
+       case ('cicen','hicen','hsnon','tsfcn')
           self%numfld_per_fldname(ivar)=geom%ocean%ncat
        case ('sicnk','qicnk')
           self%numfld_per_fldname(ivar)=geom%ocean%ncat*geom%ocean%nzi
@@ -508,23 +512,23 @@ contains
     nzo = fld1%geom%ocean%nzo    
     
     zprod = 0.0_kind_real
-    !----- OCEAN
-    do ii = is, ie
-       do jj = js, je
-          zprod = zprod + fld1%ssh(ii,jj)*fld2%ssh(ii,jj)*fld1%geom%ocean%mask2d(ii,jj)       !SSH      
-          do kk = 1, 1 !nzo ADD 3D MASK!!!!!!
-             zprod = zprod + fld1%tocn(ii,jj,kk)*fld2%tocn(ii,jj,kk)*fld1%geom%ocean%mask2d(ii,jj) &   !TOCN
-                           + fld1%socn(ii,jj,kk)*fld2%socn(ii,jj,kk)*fld1%geom%ocean%mask2d(ii,jj)     !SOCN
-          end do
-       end do
-    end do
+!!$    !----- OCEAN
+!!$    do ii = is, ie
+!!$       do jj = js, je
+!!$          zprod = zprod + fld1%ssh(ii,jj)*fld2%ssh(ii,jj)*fld1%geom%ocean%mask2d(ii,jj)       !SSH      
+!!$          do kk = 1, 1 !nzo ADD 3D MASK!!!!!!
+!!$             zprod = zprod + fld1%tocn(ii,jj,kk)*fld2%tocn(ii,jj,kk)*fld1%geom%ocean%mask2d(ii,jj) &   !TOCN
+!!$                           + fld1%socn(ii,jj,kk)*fld2%socn(ii,jj,kk)*fld1%geom%ocean%mask2d(ii,jj)     !SOCN
+!!$          end do
+!!$       end do
+!!$    end do
     
     !----- SEA-ICE
     do ii = is, ie
        do jj = js, je
           do kk = 1, ncat
-             zprod = zprod + fld1%cicen(ii,jj,kk)*fld2%cicen(ii,jj,kk)*fld1%geom%ocean%mask2d(ii,jj) & !CICEN
-                           + fld1%hicen(ii,jj,kk)*fld2%hicen(ii,jj,kk)*fld1%geom%ocean%mask2d(ii,jj)   !HICEN          
+             zprod = zprod + fld1%cicen(ii,jj,kk)*fld2%cicen(ii,jj,kk)*fld1%geom%ocean%mask2d(ii,jj)! & !CICEN
+                           !+ fld1%hicen(ii,jj,kk)*fld2%hicen(ii,jj,kk)*fld1%geom%ocean%mask2d(ii,jj)   !HICEN          
           end do
        end do
     end do    
@@ -563,15 +567,17 @@ contains
     type(soca_field), intent(in)    :: x1
     type(soca_field), intent(in)    :: x2
 
+    print *,'QQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQq'
+    
     call check(lhs)
     call check(x1)
     call check(x2)
 
     call zeros(lhs)
 
-
     !if (x1%geom%nx==x2%geom%nx .and. x1%geom%ny==x2%geom%ny) then
     !   if (lhs%geom%nx==x1%geom%nx .and. lhs%geom%ny==x1%geom%ny) then
+    
     lhs%cicen = x1%cicen - x2%cicen
     lhs%hicen = x1%hicen - x2%hicen
     lhs%hsnon = x1%hsnon - x2%hsnon
@@ -889,11 +895,10 @@ contains
     type(soca_field), intent(inout)   :: fld
     type(ufo_locs), intent(in)    :: locs
     type(ufo_geovals), intent(inout) :: gom
-    character(2)                        :: op_type='TL'
 
     call check(fld)
 
-    call nicas_interph(fld, locs, gom, op_type)
+    call nicas_interph(fld, locs, gom)
 
   end subroutine interp_tl
 
@@ -909,13 +914,13 @@ contains
     character(2)                        :: op_type='AD'
 
     call check(fld)
-    call nicas_interph(fld, locs, gom, op_type)
+    call nicas_interphad(fld, locs, gom)
 
   end subroutine interp_ad
 
   ! ------------------------------------------------------------------------------
 
-  subroutine nicas_interph(fld, locs, gom, op_type)
+  subroutine nicas_interph(fld, locs, gom)
 
     use ufo_locs_mod_c  
     use ufo_locs_mod  
@@ -928,7 +933,6 @@ contains
     type(soca_field), intent(inout)  :: fld
     type(ufo_locs), intent(in)       :: locs
     type(ufo_geovals), intent(inout)  :: gom
-    character(2), intent(in)             :: op_type !('TL' or 'AD')
 
     integer :: Nc, No, var_type_index, Ncat
     integer :: ivar, gom_dim1, cnt_fld
@@ -979,26 +983,98 @@ contains
        allocate(obsout(No))
 
        ! Hardcoded for sea-ice fraction
-       select case (op_type)
-       case ('TL')
-          do icat = 1,fld%geom%ocean%ncat
-             print *,'Applying interp to category ',icat
-             call fld%hinterp%interp_apply(fld%cicen(:,:,icat+1), gom%geovals(1)%vals(icat,:))
-          end do
-       case ('AD')
-          do icat = 1,fld%geom%ocean%ncat
-             do index =1,  No
-                ii = fld%hinterp%index(index,1)
-                jj = fld%hinterp%index(index,2)                                
-                fld%cicen(ii,jj,icat+1) =  gom%geovals(1)%vals(icat,index)
-             enddo
-          enddo
-          !call abor1_ftn("adjoint not implemented yet")
-          print *,'======= no adjoint'
-       end select
+       do icat = 1,fld%geom%ocean%ncat
+          print *,'Applying interp to category ',icat
+          call fld%hinterp%interp_apply(fld%cicen(:,:,icat+1)*fld%geom%ocean%mask2d(:,:)&
+               &, gom%geovals(1)%vals(icat,:))
+       end do
+
+!!$    case ('AD')
+!!$          do icat = 1,fld%geom%ocean%ncat
+!!$             do index =1,  No
+!!$                ii = fld%hinterp%index(index,1)
+!!$                jj = fld%hinterp%index(index,2)
+!!$                fld%cicen(ii,jj,icat+1) = gom%geovals(1)%vals(icat,index)
+!!$                print *,'{{{{{{{{{{{{{{{{{{{{{{  FIELD AD:',gom%geovals(1)%vals(icat,index)
+!!$             enddo
+!!$          enddo
+!!$          !call abor1_ftn("adjoint not implemented yet")
+!!$       end select
     end if
     
   end subroutine nicas_interph
+
+  subroutine nicas_interphad(fld, locs, gom)
+
+    use ufo_locs_mod_c  
+    use ufo_locs_mod  
+    use ufo_geovals_mod_c
+    use ufo_geovals_mod
+    use ufo_vars_mod
+
+    use soca_interph_mod
+    
+    type(soca_field), intent(inout)  :: fld
+    type(ufo_locs), intent(in)       :: locs
+    type(ufo_geovals), intent(in)  :: gom
+
+    integer :: Nc, No, var_type_index, Ncat
+    integer :: ivar, gom_dim1, cnt_fld
+    character(len=1024)  :: buf
+    logical,allocatable :: mask(:), masko(:)               ! < mask (ncells, nlevels)
+    real(kind=kind_real), allocatable :: lon(:), lat(:), lono(:), lato(:), fld_src(:), fld_dst(:)
+    integer :: nobs, nval
+    type(ufo_vars) :: ufovars
+    character(len=MAXVARLEN), dimension(1) :: cvars
+
+    ! interp stuff
+    integer, allocatable :: imask(:)
+    real(kind=kind_real), allocatable :: area(:),vunit(:)
+    real(kind=kind_real), allocatable :: obs_field(:,:), mod_field(:,:), obsout(:)
+
+    integer :: icat, index, ii, jj
+
+    Nc = fld%geom%ocean%nx*fld%geom%ocean%ny
+    No = locs%nlocs
+    Ncat = fld%geom%ocean%ncat
+    ivar = 1 ! HARD CODED
+    
+!!$    nobs = locs%nlocs
+!!$    nval = fld%geom%ocean%ncat
+!!$    cvars(1) = "ice_concentration"
+!!$    call ufo_vars_setup(ufovars, cvars)
+!!$    if ( gom%lalloc .or. gom%linit) then
+!!$       call ufo_geovals_delete(gom)
+!!$    end if
+!!$    call ufo_geovals_init(gom)
+!!$    call ufo_geovals_setup(gom, ufovars, nobs)
+!!$    gom%geovals(1)%nval = nval
+!!$    if (allocated(gom%geovals(ivar)%vals))  deallocate(gom%geovals(ivar)%vals)
+!!$    allocate(gom%geovals(1)%vals(nval,nobs))
+!!$
+!!$    gom%geovals(1)%vals(:,:)=0.0_kind_real    
+!!$    gom%lalloc = .true.       
+!!$    gom%linit = .true.    
+
+
+    print *,"==================== IN INTERP AD =================================="
+    call fld%hinterp%interp_init(No)          
+    print *,'Compute weight'
+    call fld%hinterp%interp_compute_weight(fld%geom%ocean%lon, fld%geom%ocean%lat, locs%lon, locs%lat)
+    fld%hinterp_initialized = 1
+
+    !print *,fld%hinterp%index
+    
+    do icat = 1,fld%geom%ocean%ncat
+       do index =1,  No
+          ii = fld%hinterp%index(index,1)
+          jj = fld%hinterp%index(index,2)
+          fld%cicen(ii,jj,icat+1) = gom%geovals(1)%vals(icat,index)
+          print *,'{{{{{{{{{{{{{{{{{{{{{{  FIELD AD:',ii,jj,gom%geovals(1)%vals(icat,index)
+       enddo
+    enddo
+    !call abor1_ftn("===================================================================")    
+  end subroutine nicas_interphad
 
   ! ------------------------------------------------------------------------------
 
@@ -1140,6 +1216,7 @@ contains
 
     common_vars = min(x1%nf, x2%nf)
     do jf = 1, common_vars
+       print *,x1%fldnames(jf),' ',x2%fldnames(jf)
        if (x1%fldnames(jf)/=x2%fldnames(jf)) &
             & call abor1_ftn("common_vars: fields do not match")
     enddo

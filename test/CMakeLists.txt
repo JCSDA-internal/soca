@@ -11,6 +11,7 @@ list( APPEND soca_test_input
   testinput/geovals_test.json  
   testinput/increment_test.json
   testinput/errorcovariance_test.json
+  testinput/obserrorcovariance_test.json  
   testinput/3dvar_test.json
   compare.sh
 )
@@ -83,18 +84,6 @@ ecbuild_add_test( TARGET  test_soca_geometry
                   ARGS    "testinput/geometry_test.json"
                   LIBS    soca )
 
-#ecbuild_add_test( TARGET  test_soca_geovals
-#                  BOOST
-#                  SOURCES executables/TestGeoVaLs.cc
-#                  ARGS    "testinput/geovals_test.json"
-#                  LIBS    soca )
-
-#ecbuild_add_test( TARGET  test_soca_locations
-#                  BOOST
-#                  SOURCES executables/TestLocations.cc
-#                  ARGS    "testinput/interfaces.json"
-#                  LIBS    soca )
-
 #ecbuild_add_test( TARGET  test_soca_variables
 #                  BOOST
 #		  MPI     2		  
@@ -134,42 +123,11 @@ ecbuild_add_test( TARGET  test_soca_errorcovariance
                   ARGS    "testinput/errorcovariance_test.json"
                   LIBS    soca )
 
-#ecbuild_add_test( TARGET  test_soca_obsvector
-#                  BOOST
-#                  SOURCES executables/TestObsVector.cc
-#                  ARGS    "testinput/interfaces.json"
-#                  LIBS    soca )
-
-#ecbuild_add_test( TARGET  test_soca_obsoperator
-#                  BOOST
-#                  SOURCES executables/TestObsOperator.cc
-#                  ARGS    "testinput/interfaces.json"
-#                  LIBS    soca )
-
-#ecbuild_add_test( TARGET  test_soca_linobsoperator
-#                  BOOST
-#                  SOURCES executables/TestLinearObsOperator.cc
-#                  ARGS    "testinput/interfaces.json"
-#                  LIBS    soca )
-
-#ecbuild_add_test( TARGET test_soca_observationspace
-#                  BOOST
-#                  SOURCES executables/TestObservationSpace.cc
-#                  ARGS "testinput/interfaces.json"
-#                  LIBS    soca )
-
-#ecbuild_add_test( TARGET  test_soca_obsaux
-#                  BOOST
-#                  SOURCES executables/TestObsAuxControl.cc
-#                  ARGS    "testinput/interfaces.json"
-#                  LIBS    soca )
-		  
-#ecbuild_add_test( TARGET test_soca_dirac_nicas
-#                  TYPE SCRIPT
-#                  COMMAND "compare.sh"
-#                  ARGS "${CMAKE_BINARY_DIR}/bin/soca_dirac.x testinput/dirac.nicas.json"
-#                       testoutput/dirac.nicas.test
-#                  DEPENDS soca_dirac.x )
+ecbuild_add_test( TARGET test_soca_obserrorcov
+                  BOOST
+                  SOURCES executables/TestObsErrorCovariance.cc
+                  ARGS "testinput/obserrorcovariance.json"
+                  LIBS    soca )
 
 ecbuild_add_test( TARGET test_soca_hofx
                   TYPE SCRIPT

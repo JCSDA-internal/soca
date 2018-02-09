@@ -43,6 +43,7 @@ namespace soca {
   // -----------------------------------------------------------------------------
 
   void ErrorCovariance::multiply(const Increment & dxin, Increment & dxout) const {
+    std::cout << "BKG ERR" << std::endl;
     soca_b_mult_f90(keyFtnConfig_, dxin.fields().toFortran(),
     			 dxout.fields().toFortran());
   }

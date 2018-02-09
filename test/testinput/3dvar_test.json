@@ -8,7 +8,7 @@
     "cost_type": "3D-Var",
     "window_begin": "2015-01-01T09:00:00Z",
     "window_length": "PT6H",
-    "variables": ["cicen", "hicen"],      
+      "variables": ["cicen"],
     "Jb": {
       "Background": {
           "state": [{
@@ -59,7 +59,7 @@
               "version": "IdTLM",
               "tstep": "PT1H" 
         },
-        "ninner": "1",
+        "ninner": "10",
         "gradient_norm_reduction": "1e-10",
         "test": "on"
       }

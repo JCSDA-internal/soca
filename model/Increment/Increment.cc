@@ -87,6 +87,9 @@ namespace soca {
   /// Basic operators
   // -----------------------------------------------------------------------------
   void Increment::diff(const State & x1, const State & x2) {
+    std::cout << "3333333333333 IN DIFF PPPPPPPPPPPPPPPXS" << std::endl;
+    std::cout << x1 <<  x2 << std::endl; 
+	
     ASSERT(this->validTime() == x1.validTime());
     ASSERT(this->validTime() == x2.validTime());
     Log::debug() << "Increment:diff incr " << *fields_ << std::endl;

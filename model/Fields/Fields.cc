@@ -26,6 +26,7 @@ namespace soca {
 		 const util::DateTime & time):
     geom_(new Geometry(geom)), vars_(vars), time_(time)
   {
+    std::cout << "------------------ field constr 1" << std::endl;
     soca_field_create_f90(keyFlds_, geom_->toFortran(), vars_.toFortran());
   }
   // -----------------------------------------------------------------------------
@@ -42,7 +43,7 @@ namespace soca {
   // -----------------------------------------------------------------------------
   Fields::Fields(const Fields & other)
     : geom_(other.geom_), vars_(other.vars_), time_(other.time_)
-  {
+  {    
     soca_field_create_f90(keyFlds_, geom_->toFortran(), vars_.toFortran());
     soca_field_copy_f90(keyFlds_, other.keyFlds_);
   }

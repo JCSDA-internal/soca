@@ -61,7 +61,7 @@ contains
 
     ii = 0
     do jj=1,kvars(1)
-       if (kvars(jj+1)/=11) ii=ii+1
+       if (kvars(jj+1)/=10) ii=ii+1
        if (kvars(jj+1)==1) self%fldnames(ii) = "cicen"
        if (kvars(jj+1)==2) self%fldnames(ii) = "hicen"
        if (kvars(jj+1)==3) self%fldnames(ii) = "hsnon"

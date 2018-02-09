@@ -32,7 +32,6 @@ contains
   ! ------------------------------------------------------------------------------
   subroutine c_soca_geo_setup(c_key_self, c_conf) bind(c,name='soca_geo_setup_f90')
     use netcdf
-    !use interface_ncread_fld, only: ncread_fld
     use soca_mom6sis2
 
     implicit none

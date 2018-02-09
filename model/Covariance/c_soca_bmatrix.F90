@@ -53,7 +53,7 @@ end subroutine c_soca_b_delete
 
 ! ------------------------------------------------------------------------------
 
-!> Multiply streamfunction by inverse of covariance
+!> Multiply by inverse of covariance
 
 subroutine c_soca_b_inv_mult(c_key_conf, c_key_in, c_key_out) bind(c,name='soca_b_invmult_f90')
 
@@ -77,6 +77,8 @@ call soca_field_registry%get(c_key_out,xout)
 
 !allocate(xctl(conf%nx, conf%ny, 2))
 !xctl(:,:,:)=0.0_kind_real
+
+print *,"[[[[[[[[[[[[[[[[[[[[[[[[ IN B INV MULT ]]]]]]]]]]]]]]]]]]]]]]]]"
 
 !call soca_3d_covar_sqrt_inv_mult(conf%nx,conf%ny,xctl,xin,conf)
 !call zeros(xout)
@@ -116,9 +118,13 @@ call soca_field_registry%get(c_key_out,xout)
 
 !xctl(:,:,:)=0.0_kind_real
 !call soca_3d_covar_sqrt_mult_ad(conf%nx,conf%ny,xin,xctl,conf)
-call zeros(xout)
+!call zeros(xout)
+
+print *,"[[[[[[[[[[[[[[[[[[[[[[[[ IN B MULT ]]]]]]]]]]]]]]]]]]]]]]]]"
+
 call ones(xout)
 call self_schur(xout, xin)
+
 !call soca_3d_covar_sqrt_mult(conf%nx,conf%ny,xout,xctl,conf)
 
 !deallocate(xctl)
