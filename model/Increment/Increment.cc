@@ -178,7 +178,7 @@ namespace soca {
   /// Define and convert to/from unstructured grid
   // -----------------------------------------------------------------------------
   void Increment::define(oops::UnstructuredGrid & ug) const {
-    //fields_->define(ug);
+    fields_->define(ug);
   }  
   void Increment::convert_to(oops::UnstructuredGrid & ug) const {
     fields_->convert_to(ug);

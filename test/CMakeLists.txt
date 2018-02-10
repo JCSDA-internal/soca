@@ -143,3 +143,10 @@ ecbuild_add_test( TARGET test_soca_3dvar
                   ARGS "${CMAKE_BINARY_DIR}/bin/soca_3dvar.x testinput/3dvar_test.json"
                        testoutput/3dvar.test
                   DEPENDS soca_3dvar.x )
+		  
+ecbuild_add_test( TARGET test_soca_dirac
+                  TYPE SCRIPT
+                  COMMAND "compare.sh"
+                  ARGS "${CMAKE_BINARY_DIR}/bin/soca_dirac.x testinput/dirac_test.json"
+                       testoutput/3dvar.test
+                  DEPENDS soca_3dvar.x )		  

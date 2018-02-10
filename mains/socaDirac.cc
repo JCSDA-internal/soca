@@ -10,11 +10,11 @@
 
 #include "model/Traits.h"
 #include "oops/runs/Dirac.h"
-#include "oops/runs/Run.h"
+#include "model/Run/Run.h"
 
 int main(int argc,  char ** argv) {
-  oops::Run run(argc, argv);
+  soca::Run run(argc, argv);
   oops::Dirac<soca::Traits> dir;
   run.execute(dir);
   return 0;
-};
+}

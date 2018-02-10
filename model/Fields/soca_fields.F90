@@ -293,7 +293,7 @@ contains
        !self%qicnk(ixdir(idir),iydir(idir),1,4) = 1.0 ! Surface temp incr for cat 1
        !self%tsfcn(ixdir(idir),iydir(idir),1) = 1.0 ! Surface temp incr for cat 1
        !self%tocn(ixdir(idir),iydir(idir)) = 1.0 ! Surface temp incr for cat 1
-       !self%cicen(ixdir(idir),iydir(idir),3) = 1.0 ! Surface temp incr for cat 1
+       self%cicen(ixdir(idir),iydir(idir),3) = 1.0 ! Surface temp incr for cat 1
     end do
 
   end subroutine dirac
@@ -1059,8 +1059,7 @@ contains
        do index = 1, No
           ii = fld%hinterp%index(index,1)
           jj = fld%hinterp%index(index,2)
-          fld%cicen(ii,jj,icat+1) = fld%cicen(ii,jj,icat+1) +&
-               &gom%geovals(1)%vals(icat,index)
+          fld%cicen(ii,jj,icat+1) = fld%cicen(ii,jj,icat+1) + gom%geovals(1)%vals(icat,index)
           print *,'      FIELD AD:',ii,jj,gom%geovals(1)%vals(icat,index)
        enddo
     enddo
@@ -1083,66 +1082,41 @@ contains
     integer :: nz_total     ! Total number of levels in the 3D fields
     integer :: n_vars       ! Number of 3D variables 
     integer :: n_surf_vars  ! Number of surf vars (sould be 0 for ocean/ice)
-    integer :: cat_num      ! !!!!!!!!! only doing 1 category for now !!!!!!!!!!!
+    integer :: ncat      ! !!!!!!!!! only doing 1 category for now !!!!!!!!!!!
 
-!!$    cat_num = 1
-!!$    nz_total = size(self%geom%level)
-!!$    allocate(zz(nz_total))
-!!$    allocate(vv(nz_total))
-!!$    allocate(cmask(nz_total))
-!!$    do jz = 1,nz_total
-!!$       zz(jz) = real(self%geom%level(jz))
-!!$    end do
-!!$    call create_unstructured_grid(ug, nz_total, zz)
+    !nicas stuff
+    integer :: nc0a, nl0, nv, nts
+    real(kind=kind_real), allocatable :: lon(:), lat(:), area(:), vunit(:)
+    integer, allocatable :: imask(:,:)
+    
+    nv = self%geom%ocean%ncat
+    nl0 = 1
+    nl0 = ncat
 
-!!$    n_vars = 1      !!!!! START WITH ONLY ONE VAR !!!!!!!!! 
-!!$    n_surf_vars = 0 !!!!! NO SURFACE VAR !!!!!!!!! 
-!!$
-!!$    do jy=1,self%geom%ny
-!!$       do jx=1,self%geom%nx
-!!$          jk = 1
-!!$          cmask(jk) = int(self%geom%mask(jx,jy))       ! Surface T
-!!$          vv(jk) = self%tsfcn(jx,jy,cat_num)
-!!$          jk = jk + 1
-!!$          do jz = 1,self%geom%nzs                              ! Snow T
-!!$             cmask(jk) = int(self%geom%mask(jx,jy))    !
-!!$             !vv(jk) = Ts_nl(self%qsnon(jx,jy,cat_num))
-!!$             vv(jk) = self%qsnon(jx,jy,cat_num)             
-!!$             jk = jk + 1
-!!$          end do
-!!$          do jz = 1,self%geom%nzi                              ! Ice T
-!!$             cmask(jk) = int(self%geom%mask(jx,jy))    !
-!!$             !vv(jk) = Ti_nl(self%qicnk(jx,jy,cat_num,jz),self%sicnk(jx,jy,cat_num,jz))
-!!$             vv(jk) = self%qicnk(jx,jy,cat_num,jz)
-!!$             jk = jk + 1
-!!$          end do
-!!$          cmask(jk) = int(self%geom%mask(jx,jy))       ! Ice/Ocean interface
-!!$          !vv(jk) = Tm(self%socn(jx,jy))                 ! Tf = -mu * S
-!!$          vv(jk) = self%socn(jx,jy)                      ! Tf = -mu * S          
-!!$          jk = jk + 1          
-!!$          do jz = 1,self%geom%nzo                              ! Ocean
-!!$             cmask(jk) = int(self%geom%mask(jx,jy))    !             
-!!$             !vv(jk) = self%tocn(jx,jy)                   !
-!!$             jk = jk + 1
-!!$          end do
-!!$
-!!$          !cmask(:) = int(self%geom%mask(jx,jy))           ! Some issues with the mask
-!!$          !print *,'cmask=',cmask
-!!$          !if (ssnicas_interpelf%icemask(jx,jy)>0.0) then
-!!$          !print *,vv(:)
-!!$          !read(*,*)
-!!$          !end if
-!!$          !if (cmask(1)==1) read(*,*)
-!!$
-!!$          call add_column(ug, self%geom%lat(jx,jy), self%geom%lon(jx,jy), self%geom%cell_area(jx, jy), &
-!!$               nz_total, &
-!!$               n_vars, &
-!!$               n_surf_vars, &
-!!$               cmask, &
-!!$               0)
-!!$          ug%last%column%fld3d(:) = vv(:)
-!!$       enddo
-!!$    enddo
+    nc0a = self%geom%ocean%nx*self%geom%ocean%ny
+    allocate( lon(nc0a), lat(nc0a), area(nc0a) )
+    allocate( vunit(nl0) )
+    allocate( imask(nc0a, nl0) )    
+
+    lon = reshape( self%geom%ocean%lon, (/nc0a/) )
+    lat = reshape( self%geom%ocean%lat, (/nc0a/) )    
+    area = reshape( self%geom%ocean%cell_area, (/nc0a/) )
+    do jz = 1, nl0
+       vunit(jz) = real(jz)
+       imask(:,jz) = reshape( self%geom%ocean%mask2d, (/nc0a/) )
+    end do
+
+    !call create_unstructured_grid(ug, nc0a, nl0, nv, nts, lon, lat, area, vunit, imask)
+
+    do jz = 1, nl0
+       vunit(jz) = real(jz)
+       imask(:,jz) = reshape( self%geom%ocean%mask2d, (/nc0a/) )
+    end do
+
+    do jk = 1, nv
+       ug%fld(:, 1, jk, 1) = reshape( self%cicen(:,:,jk+1), (/nc0a/) )       
+    end do
+
   end subroutine convert_to_ug
 
   ! ------------------------------------------------------------------------------
@@ -1158,37 +1132,12 @@ contains
     integer :: n_vars       ! Number of 3D variables 
     integer :: n_surf_vars  ! Number of surf vars (sould be 0 for ocean/ice)
     integer :: cat_num      ! !!!!!!!!! only doing 1 category for now !!!!!!!!!!!
+    integer :: nv
 
-!!!!!!!!! code inverse of convert_to_ug !!!!!!!!!!!!!!!
-!!$
-!!$    current => ug%head
-!!$    cat_num = 1 
-!!$    n_vars = 1      !!!!! START WITH ONLY ONE VAR !!!!!!!!! 
-!!$    n_surf_vars = 0 !!!!! NO SURFACE VAR !!!!!!!!! 
-!!$
-!!$    do jy=1,self%geom%ny
-!!$       do jx=1,self%geom%nx
-!!$          jk = 1
-!!$          self%tsfcn(jx,jy,cat_num) = current%column%fld3d(jk)         ! Tsfcs
-!!$          jk = jk + 1
-!!$          do jz = 1,self%geom%nzs                                          ! Q Snow
-!!$             self%qsnon(jx,jy,cat_num) = current%column%fld3d(jk)
-!!$             jk = jk + 1
-!!$          end do
-!!$          do jz = 1,self%geom%nzi                                          ! Q Ice
-!!$             self%qicnk(jx,jy,cat_num,jz) = current%column%fld3d(jk)
-!!$             jk = jk + 1
-!!$          end do
-!!$          self%socn(jx,jy) = current%column%fld3d(jk)                 ! Ice/Ocean interface,
-!!$          ! Tf = -mu * S          
-!!$          jk = jk + 1          
-!!$          do jz = 1,self%geom%nzo                                          ! Ocean SST
-!!$             !self%tocn(jx,jy) = current%column%fld3d(jk)              !
-!!$             jk = jk + 1
-!!$          end do
-!!$          current => current%next
-!!$       enddo
-!!$    enddo
+    nv = self%geom%ocean%ncat    
+    do jk = 1, nv
+       self%cicen(:,:,jk+1) = reshape( ug%fld(:, 1, jk, 1), (/self%geom%ocean%nx, self%geom%ocean%ny/) )
+    end do    
 
   end subroutine convert_from_ug
 

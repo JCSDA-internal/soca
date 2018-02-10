@@ -35,10 +35,10 @@
         {
           "ObsType": "SeaIceFraction",
 	  "Generate": {
-	      "nobs": 400,
+	      "nobs": 40,
 	      "lat": 0.5,
 	      "lon1": -270.0,
-	      "lon2": -200.0
+	      "lon2": -0.0
 	  },
           "ObsData": {
               "ObsDataOut": {

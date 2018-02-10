@@ -7,7 +7,7 @@
 #include <vector>
 
 #include "eckit/config/Configuration.h"
-//#include "oops/generic/UnstructuredGrid.h"
+#include "oops/generic/UnstructuredGrid.h"
 #include "oops/base/Variables.h"
 #include "util/DateTime.h"
 #include "util/Logger.h"
@@ -143,11 +143,12 @@ namespace soca {
   }
   // -----------------------------------------------------------------------------
   void Fields::convert_to(oops::UnstructuredGrid & ug) const {
-    //soca_field_convert_to_f90(keyFlds_, ug.toFortran());
+    std::cout << "--------- in convert " << std::endl;
+    soca_field_convert_to_f90(keyFlds_, ug.toFortran());
   }
   // -----------------------------------------------------------------------------
   void Fields::convert_from(const oops::UnstructuredGrid & ug) {
-    //soca_field_convert_from_f90(keyFlds_, ug.toFortran());
+    soca_field_convert_from_f90(keyFlds_, ug.toFortran());
   }
   // -----------------------------------------------------------------------------
   void Fields::read(const eckit::Configuration & config) {
