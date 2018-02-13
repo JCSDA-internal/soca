@@ -14,6 +14,7 @@
 
 int main(int argc,  char ** argv) {
   soca::Run run(argc, argv);
+  //soca::instantiateLocalizationFactory();  
   oops::Dirac<soca::Traits> dir;
   run.execute(dir);
   return 0;

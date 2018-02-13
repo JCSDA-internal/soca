@@ -1,0 +1,5 @@
+---
+logging:
+  categories: Warning, Error, Debug
+test_framework_runtime_config: "--log_level=test_suite"
+Geometry: {}

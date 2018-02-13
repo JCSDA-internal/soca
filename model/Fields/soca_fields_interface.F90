@@ -286,34 +286,35 @@ end subroutine soca_field_change_resol_c
 subroutine soca_field_convert_to_c(c_key_fld, c_key_ug) bind (c,name='soca_field_convert_to_f90')
   use iso_c_binding
   use soca_fields
-  !use unstructured_grid_mod
+  use unstructured_grid_mod
   implicit none
   integer(c_int), intent(in) :: c_key_fld
   integer(c_int), intent(in) :: c_key_ug
   type(soca_field), pointer :: fld
-  !type(unstructured_grid), pointer :: ug
+  type(unstructured_grid), pointer :: ug
 
   call soca_field_registry%get(c_key_fld,fld)
-  !call unstructured_grid_registry%get(c_key_ug,ug)
+  call unstructured_grid_registry%get(c_key_ug,ug)
 
-  !call convert_to_ug(fld, ug)
+  print *,'oooooooooooo in convert_c'
+  call convert_to_ug(fld, ug)
 
 end subroutine soca_field_convert_to_c
 ! ------------------------------------------------------------------------------
 subroutine soca_field_convert_from_c(c_key_fld, c_key_ug) bind (c,name='soca_field_convert_from_f90')
   use iso_c_binding
   use soca_fields
-  !use unstructured_grid_mod
+  use unstructured_grid_mod
   implicit none
   integer(c_int), intent(in) :: c_key_fld
   integer(c_int), intent(in) :: c_key_ug
   type(soca_field), pointer :: fld
-  !type(unstructured_grid), pointer :: ug
+  type(unstructured_grid), pointer :: ug
 
   call soca_field_registry%get(c_key_fld,fld)
-  !call unstructured_grid_registry%get(c_key_ug,ug)
+  call unstructured_grid_registry%get(c_key_ug,ug)
 
-  !call convert_from_ug(fld, ug)
+  call convert_from_ug(fld, ug)
 
 end subroutine soca_field_convert_from_c
 

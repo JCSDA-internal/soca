@@ -2,10 +2,15 @@
 logging:
   categories: Warning, Error
 test_framework_runtime_config: "--log_level=test_suite"
-resolution: {}
-model:
+Geometry: {}
+ModelBias: 
+ModelTest:
+  fclength: PT24H
+  finalnorm: 27801.561332561767
+  tolerance: '0.005'
+Model:
   tstep: PT6H
-initial:
+State:
   read_from_file: 1
   date: '2015-05-01T00:00:00Z'
   basename: "./RESTART/"
@@ -16,7 +21,7 @@ forecast_length: P1D
 output:
   frequency: PT6H
   datadir: Data
-  exp: truth
+  exp: example
   date: '2015-05-01T00:00:00Z'
   type: fc
 print:

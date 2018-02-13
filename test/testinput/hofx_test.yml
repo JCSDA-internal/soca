@@ -14,17 +14,18 @@ Initial Condition:
 Assimilation Window:
   Begin: '2015-05-01T00:00:00Z'
   End: '2015-05-01T15:00:00Z'
+  Length: PT12H
 Observations:
   ObsTypes:
   - ObsType: SeaIceFraction
-    ObsData:
-      ObsDataOut:
-        obsfile: "./Data/data.nc"
     Generate:
       nobs: '30'
       lat: '80.5'
       lon1: "-209.0"
-      lon2: '0.0'
+      lon2: '0.0'    
+    #ObsData:
+      #ObsDataIn:
+      #  obsfile: "./Data/seaice_obs.nc"
     GeoVaLs:
       norm: '1567.673435381234'
       random: '1'

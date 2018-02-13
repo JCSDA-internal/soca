@@ -6,7 +6,7 @@
   },
   "test_framework_runtime_config": "--log_level=test_suite",
   "variables": {
-    "variables": ["cicen"]
+    "variables": ["cicen","hicen","hsnon","tsfcn","qsnon","sicnk","qicnk","socn","tocn","ssh"]
   },
   "initial": {
      "datapath_in" : "./",
@@ -16,13 +16,13 @@
     "covariance": "ensemble",
     "members": "10",
     "variables": {
-      "variables": ["u","v","pt","q",delp"]
+      "variables": ["cicen","hicen","hsnon","tsfcn","qsnon","sicnk","qicnk","socn","tocn","ssh"]
     },
     "date": "2017-08-08T00:00:00Z",
     "localization": {
       "localization": "HDIAG_NICAS",
       "variables": {
-        "variables": ["cicen"]
+        "variables": ["cicen","hicen","hsnon","tsfcn","qsnon","sicnk","qicnk","socn","tocn","ssh"]
       },
       "hdiag_ensemble": [
       {

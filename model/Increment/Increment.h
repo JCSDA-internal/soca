@@ -41,8 +41,6 @@ namespace ufo {
 }
 
 namespace soca {
-  //class Gom;
-  //class Loc;
   class ModelBiasIncrement;
   class ErrorCovariance;  
   class State;

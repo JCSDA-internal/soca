@@ -1,0 +1,32 @@
+---
+test_framework_runtime_config: "--log_level=test_suite"
+Geometry: {}
+Variables:
+  variables:
+  - cicen
+  - hicen
+  - hsnon
+  - tsfcn
+  - qsnon
+  - sicnk
+  - qicnk
+  - socn
+  - tocn
+  - ssh
+TestDate: '2015-05-01T00:00:00Z'
+State:
+  read_from_file: 1
+  basename: "./RESTART/"
+  ocn_sfc_filename: MOM.res.nc
+  ocn_filename: MOM.res.nc
+  ice_filename: ice_model.res.nc
+  date: '2015-05-01T00:00:00Z'
+Covariance:
+  covariance: SocaError
+  standard_deviation: '0.8'
+  vertical_correlation: '0.2'
+  horizontal_length_scale: 1e6
+  maximum_condition_number: 1.0e6
+  date: '2009-12-31T00:00:00Z'
+CovarianceTest:
+  tolerance: '0.01'

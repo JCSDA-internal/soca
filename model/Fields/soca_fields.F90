@@ -1060,7 +1060,7 @@ contains
           ii = fld%hinterp%index(index,1)
           jj = fld%hinterp%index(index,2)
           fld%cicen(ii,jj,icat+1) = fld%cicen(ii,jj,icat+1) + gom%geovals(1)%vals(icat,index)
-          print *,'      FIELD AD:',ii,jj,gom%geovals(1)%vals(icat,index)
+          !print *,'      FIELD AD:',ii,jj,gom%geovals(1)%vals(icat,index)
        enddo
     enddo
     !call abor1_ftn("===================================================================")    
@@ -1089,6 +1089,8 @@ contains
     real(kind=kind_real), allocatable :: lon(:), lat(:), area(:), vunit(:)
     integer, allocatable :: imask(:,:)
     
+    print *,'yyyyyyyyyyyyyyyyy in convert'
+    
     nv = self%geom%ocean%ncat
     nl0 = 1
     nl0 = ncat
@@ -1106,7 +1108,8 @@ contains
        imask(:,jz) = reshape( self%geom%ocean%mask2d, (/nc0a/) )
     end do
 
-    !call create_unstructured_grid(ug, nc0a, nl0, nv, nts, lon, lat, area, vunit, imask)
+
+    call create_unstructured_grid(ug, nc0a, nl0, nv, nts, lon, lat, area, vunit, imask)
 
     do jz = 1, nl0
        vunit(jz) = real(jz)
