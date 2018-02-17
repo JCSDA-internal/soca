@@ -296,7 +296,6 @@ subroutine soca_field_convert_to_c(c_key_fld, c_key_ug) bind (c,name='soca_field
   call soca_field_registry%get(c_key_fld,fld)
   call unstructured_grid_registry%get(c_key_ug,ug)
 
-  print *,'oooooooooooo in convert_c'
   call convert_to_ug(fld, ug)
 
 end subroutine soca_field_convert_to_c

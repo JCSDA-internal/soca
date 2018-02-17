@@ -11,9 +11,7 @@
 #include "oops/base/Variables.h"
 #include "util/DateTime.h"
 #include "util/Logger.h"
-//#include "model/ModelAtLocations/Gom.h"
 #include "ufo/GeoVaLs.h"
-//#include "model/Locations/Loc.h"
 #include "ufo/Locations.h"
 #include "model/Fortran.h"
 #include "model/Geometry/Geometry.h"
@@ -143,7 +141,7 @@ namespace soca {
   }
   // -----------------------------------------------------------------------------
   void Fields::convert_to(oops::UnstructuredGrid & ug) const {
-    std::cout << "--------- in convert " << std::endl;
+    std::cout << "--------- in convert_to " << std::endl;
     soca_field_convert_to_f90(keyFlds_, ug.toFortran());
   }
   // -----------------------------------------------------------------------------

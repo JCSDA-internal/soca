@@ -10,13 +10,13 @@
 
 #include "model/Traits.h"
 //#include "model/LocalizationMatrix/instantiateLocalizationFactory.h"
-#include "oops/runs/Dirac.h"
 #include "model/Run/Run.h"
+#include "test/interface/Localization.h"
 
 int main(int argc,  char ** argv) {
   soca::Run run(argc, argv);
-  //soca::instantiateLocalizationFactory();  
-  oops::Dirac<soca::Traits> dir;
-  run.execute(dir);
+  //soca::instantiateLocalizationFactory();
+  test::Localization<soca::Traits> tests;
+  run.execute(tests);
   return 0;
-}
+};

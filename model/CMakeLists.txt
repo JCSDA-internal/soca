@@ -67,6 +67,7 @@ list( APPEND oops_soca_src_files
 #./Utils/linkedList_i.f
 ./Utils/soca_mom6sis2.F90
 ./Utils/soca_interp.F90
+./Utils/soca_Butils.F90
 
 Traits.h
 Fortran.h

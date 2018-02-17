@@ -6,18 +6,15 @@
 
 #include "eckit/config/LocalConfiguration.h"
 #include "oops/base/Variables.h"
-//#include "oops/generic/UnstructuredGrid.h"
-//#include "model/ModelAtLocations/Gom.h"
-//#include "model/Locations/Loc.h"
+#include "oops/generic/UnstructuredGrid.h"
+#include "util/DateTime.h"
+#include "util/Logger.h"
 #include "model/ModelBiasIncrement.h"
-//#include "model/ErrorCovariance.h"
+#include "model/Covariance/ErrorCovariance.h"
 #include "model/Fields/Fields.h"
 #include "model/Geometry/Geometry.h"
 #include "model/State/State.h"
-#include "util/DateTime.h"
 #include "util/Duration.h"
-#include "util/Logger.h"
-
 #include "ufo/GeoVaLs.h"
 #include "ufo/Locations.h"
 
@@ -60,7 +57,8 @@ namespace soca {
   // -----------------------------------------------------------------------------
   void Increment::activateModel() {
     // Should get variables from model. YT
-     const std::vector<std::string> vv{"cicen",
+     const std::vector<std::string> vv{
+          "cicen",
 	  "hicen",
 	  "hsnon",
 	  "tsfcn",
@@ -71,9 +69,7 @@ namespace soca {
 	  "tocn",
 	  "ssh"
 	};
-    oops::Variables vars(vv);
-
-    
+    oops::Variables vars(vv);    
     //eckit::LocalConfiguration modelvars;
     //modelvars.set("variables", "tl");
     //oops::Variables vars(modelvars);
@@ -134,6 +130,7 @@ namespace soca {
   // -----------------------------------------------------------------------------
   void Increment::dirac(const eckit::Configuration & config) {
     fields_->dirac(config);
+    Log::trace() << "Increment dirac initialized" << std::endl;    
   }  
   // -----------------------------------------------------------------------------
   void Increment::zero(const util::DateTime & vt) {
@@ -166,7 +163,7 @@ namespace soca {
   void Increment::interpolateTL(const ufo::Locations & locs, const oops::Variables & vars, ufo::GeoVaLs & cols) const {
     Log::debug() << "Increment::interpolateTL fields in" << *fields_ << std::endl;
     fields_->interpolateTL(locs, vars, cols);
-    //Log::debug() << "Increment::interpolateTL gom " << cols << std::endl;    
+    Log::debug() << "Increment::interpolateTL " << cols << std::endl;    
   }
   // -----------------------------------------------------------------------------
   void Increment::interpolateAD(const ufo::Locations & locs, const oops::Variables & vars, const ufo::GeoVaLs & cols) {
@@ -181,6 +178,7 @@ namespace soca {
     //fields_->define(ug);
   }  
   void Increment::convert_to(oops::UnstructuredGrid & ug) const {
+    Log::debug() << "Increment::convert_to" << std::endl;    
     fields_->convert_to(ug);
   }
   // -----------------------------------------------------------------------------

@@ -11,6 +11,8 @@ list( APPEND soca_test_input
   testinput/errorcovariance_test.yml
   testinput/obserrorcovariance_test.yml  
   testinput/3dvar_test.yml
+  testinput/localization_test.yml
+  testinput/nicas_test.yml
   compare.sh
 )
 
@@ -140,6 +142,13 @@ ecbuild_add_test( TARGET  test_soca_errorcovariance
                   ARGS    "testinput/errorcovariance_test.yml"
                   LIBS    soca )
 
+ecbuild_add_test( TARGET  test_soca_localization
+                  BOOST
+                  SOURCES executables/TestLocalization.cc
+                  ARGS    "testinput/localization_test.yml"
+                  MPI     1
+                  LIBS    soca )
+		  
 ecbuild_add_test( TARGET test_soca_obserrorcov
                   BOOST
                   SOURCES executables/TestObsErrorCovariance.cc
@@ -148,6 +157,7 @@ ecbuild_add_test( TARGET test_soca_obserrorcov
 
 ecbuild_add_test( TARGET test_soca_hofx
                   TYPE SCRIPT
+                  MPI     1		  
                   COMMAND "compare.sh"
                   ARGS "${CMAKE_BINARY_DIR}/bin/soca_hofx.x testinput/hofx_test.yml"
                        testoutput/hofx.test
@@ -155,14 +165,24 @@ ecbuild_add_test( TARGET test_soca_hofx
 
 ecbuild_add_test( TARGET test_soca_3dvar
                   TYPE SCRIPT
+                  MPI     1		  
                   COMMAND "compare.sh"
                   ARGS "${CMAKE_BINARY_DIR}/bin/soca_3dvar.x testinput/3dvar_test.yml"
                        testoutput/3dvar.test
                   DEPENDS soca_3dvar.x )
+
+ecbuild_add_test( TARGET test_soca_4denvar
+                  TYPE SCRIPT
+                  MPI     1		  
+                  COMMAND "compare.sh"
+                  ARGS "${CMAKE_BINARY_DIR}/bin/soca_3dvar.x testinput/4denvar_nicas_test.yml"
+                       testoutput/4denvar.test
+                  DEPENDS soca_3dvar.x )
 		  
 ecbuild_add_test( TARGET test_soca_dirac
                   TYPE SCRIPT
+                  MPI     1		  
                   COMMAND "compare.sh"
-                  ARGS "${CMAKE_BINARY_DIR}/bin/soca_dirac.x testinput/dirac_test.json"
+                  ARGS "${CMAKE_BINARY_DIR}/bin/soca_dirac.x testinput/nicas_test.yml"
                        testoutput/3dvar.test
                   DEPENDS soca_3dvar.x )		  

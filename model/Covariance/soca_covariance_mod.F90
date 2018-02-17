@@ -318,25 +318,25 @@ end subroutine soca_3d_covar_sqrt_mult
 
 !> Multiply streamfunction by sqrt(C) - Adjoint
 
-!!$subroutine soca_3d_covar_sqrt_mult_ad(kx,ky,xincr,xctl,config)
-!!$use iso_c_binding
-!!$use kinds
-!!$use soca_fields
-!!$
-!!$implicit none
-!!$integer(c_int), intent(in)    :: kx            !< Zonal grid spacing
-!!$integer(c_int), intent(in)    :: ky            !< Meridional grid spacing
-!!$real(c_double), intent(inout) :: xctl(kx,ky,2) !< Result
-!!$type(soca_field), intent(in)    :: xincr         !< Streamfunction: psi
-!!$type(soca_3d_covar_config), intent(in) :: config !< covar config structure
-!!$
-!!$real(kind=kind_real), allocatable :: xout(:,:,:)
-!!$integer :: i, j, k, iri, m
-!!$real(kind=kind_real) :: zc, zero, one
-!!$real(kind=kind_real) :: zgrid(kx), zfour(kx+2), work(ky)
-!!$
-!!$!--- adjoint of multiplication by standard deviation
-!!$
+subroutine soca_3d_covar_sqrt_mult_ad(kx,ky,xincr,xctl,config)
+use iso_c_binding
+use kinds
+use soca_fields
+
+implicit none
+integer(c_int), intent(in)    :: kx            !< Zonal grid spacing
+integer(c_int), intent(in)    :: ky            !< Meridional grid spacing
+real(c_double), intent(inout) :: xctl(kx,ky,2) !< Result
+type(soca_field), intent(in)    :: xincr         !< Streamfunction: psi
+type(soca_3d_covar_config), intent(in) :: config !< covar config structure
+
+real(kind=kind_real), allocatable :: xout(:,:,:)
+integer :: i, j, k, iri, m
+real(kind=kind_real) :: zc, zero, one
+real(kind=kind_real) :: zgrid(kx), zfour(kx+2), work(ky)
+
+!--- adjoint of multiplication by standard deviation
+
 !!$allocate(xout(kx,ky,2))
 !!$
 !!$do k=1,2
@@ -377,8 +377,8 @@ end subroutine soca_3d_covar_sqrt_mult
 !!$enddo
 !!$
 !!$deallocate(xout)
-!!$
-!!$end subroutine soca_3d_covar_sqrt_mult_ad
+
+end subroutine soca_3d_covar_sqrt_mult_ad
 
 ! ------------------------------------------------------------------------------
 

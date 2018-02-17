@@ -100,7 +100,7 @@ use iso_c_binding
 use soca_covariance_mod
 use soca_fields
 use kinds
-
+use soca_Butils
 implicit none
 integer(c_int), intent(in) :: c_key_conf  !< covar config structure
 integer(c_int), intent(in) :: c_key_in    !< Streamfunction: psi
@@ -109,6 +109,8 @@ type(soca_3d_covar_config), pointer :: conf
 type(soca_field), pointer :: xin
 type(soca_field), pointer :: xout
 !real(kind=kind_real), allocatable :: xctl(:,:,:) ! Control vector
+real(kind=kind_real), allocatable :: dy(:,:,:), Bdy(:,:,:)
+integer :: nx, ny, ncat
 
 call soca_3d_cov_registry%get(c_key_conf,conf)
 call soca_field_registry%get(c_key_in,xin)
@@ -118,13 +120,23 @@ call soca_field_registry%get(c_key_out,xout)
 
 !xctl(:,:,:)=0.0_kind_real
 !call soca_3d_covar_sqrt_mult_ad(conf%nx,conf%ny,xin,xctl,conf)
-!call zeros(xout)
+call zeros(xout)
 
 print *,"[[[[[[[[[[[[[[[[[[[[[[[[ IN B MULT ]]]]]]]]]]]]]]]]]]]]]]]]"
 
+nx = xin%geom%ocean%nx
+ny = xin%geom%ocean%ny
+ncat = xin%geom%ocean%ncat
+
+allocate(dy(nx,ny,ncat), Bdy(nx,ny,ncat))
+dy = xin%cicen(:,:,:)
+
+print *,'==========================',shape(xin%cicen)
+call simple_Bdy(Bdy, dy, xin%geom%ocean%lon, xin%geom%ocean%lat)
 
 call ones(xout)
 call self_schur(xout, xin)
+xout%cicen = Bdy
 
 !call soca_3d_covar_sqrt_mult(conf%nx,conf%ny,xout,xctl,conf)
 

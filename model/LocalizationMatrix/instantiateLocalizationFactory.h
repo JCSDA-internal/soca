@@ -18,7 +18,7 @@
 namespace soca {
 
 void instantiateLocalizationFactory() {
-  //static oops::LocalizationMaker<soca::Traits, LocalizationMatrix> makerWSpeed_("SOCA");
+  // static oops::LocalizationMaker;//<Traits, LocalizationMatrix> makerSeaIceFraction_("SeaIceFraction");
 }
 
 }  // namespace soca

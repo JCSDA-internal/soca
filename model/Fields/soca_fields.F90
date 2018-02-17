@@ -267,6 +267,7 @@ contains
 
     call check(self)
 
+    print *,'=========== IN DIRAC ==================='
     ! Get Diracs positions
     ndir = config_get_int(c_conf,"ndir")
     allocate(ixdir(ndir))
@@ -275,16 +276,17 @@ contains
        write(idirchar,'(i3)') idir
        ixdir(idir) = config_get_int(c_conf,"ixdir("//trim(adjustl(idirchar))//")")
        iydir(idir) = config_get_int(c_conf,"iydir("//trim(adjustl(idirchar))//")")
+    print *,self%geom%ocean%lon(ixdir(idir),iydir(idir)), self%geom%ocean%lat(ixdir(idir),iydir(idir))
     end do
-    !ildir = config_get_int(c_conf,"ildir")
-    !ifdir = config_get_int(c_conf,"ifdir")
+    ildir = config_get_int(c_conf,"ildir")
+    ifdir = config_get_int(c_conf,"ifdir")
 
+
+    
     ! Check 
-    !if (ndir<1) call abor1_ftn("qg_fields:dirac non-positive ndir")
-    !if (any(ixdir<1).or.any(ixdir>self%geom%nx)) call abor1_ftn("qg_fields:dirac invalid ixdir")
-    !if (any(iydir<1).or.any(iydir>self%geom%ny)) call abor1_ftn("qg_fields:dirac invalid iydir")
-    !if ((ildir<1).or.(ildir>self%nl)) call abor1_ftn("qg_fields:dirac invalid ildir")
-    !if ((ifdir<1).or.(ifdir>self%nf)) call abor1_ftn("qg_fields:dirac invalid ifdir")
+    if (ndir<1) call abor1_ftn("fields:dirac non-positive ndir")
+    if (any(ixdir<1).or.any(ixdir>self%geom%ocean%nx)) call abor1_ftn("fields:dirac invalid ixdir")
+    if (any(iydir<1).or.any(iydir>self%geom%ocean%ny)) call abor1_ftn("fields:dirac invalid iydir")
 
     ! Setup Diracs
     call zeros(self)
@@ -296,6 +298,8 @@ contains
        self%cicen(ixdir(idir),iydir(idir),3) = 1.0 ! Surface temp incr for cat 1
     end do
 
+    print *,'=========== BYE BYE DIRAC ==================='
+    
   end subroutine dirac
 
   ! ------------------------------------------------------------------------------
@@ -654,6 +658,7 @@ contains
     endif
     if (iread==0) then
        call log%warning("soca_fields:read_file: Inventing State")
+       !call abor1_ftn("soca_fields: inventing state")                    
        call invent_state(fld,c_conf)
        sdate = config_get_string(c_conf,len(sdate),"date")
        WRITE(buf,*) 'validity date is: '//sdate
@@ -702,7 +707,6 @@ contains
           case default
              print *,'Not reading var ',fld%fldnames(ii),' in file ',ocn_filename
              !call log%warning("soca_fields:read_file: Not reading var "//fld%fldnames(ii))
-             !call abor1_ftn("soca_fields: undefined variables")             
           end select
        end do
        call restore_state(sis_restart, directory='')
@@ -771,6 +775,7 @@ contains
           !call log%warning("soca_fields:read_file: Not reading var "//fld%fldnames(ii))
           !call abor1_ftn("soca_fields: undefined variables")             
        end select
+
     end do
     call fms_io_exit()       
     
@@ -1071,7 +1076,8 @@ contains
   subroutine convert_to_ug(self, ug)
     use unstructured_grid_mod
     use soca_thermo
-
+    use tools_const, only: deg2rad
+    
     implicit none
     type(soca_field), intent(in) :: self
     type(unstructured_grid), intent(inout) :: ug
@@ -1086,40 +1092,54 @@ contains
 
     !nicas stuff
     integer :: nc0a, nl0, nv, nts
-    real(kind=kind_real), allocatable :: lon(:), lat(:), area(:), vunit(:)
+    real(kind=kind_real), allocatable :: lon(:), lat(:), area(:), vunit(:), rndnum(:)
     integer, allocatable :: imask(:,:)
-    
-    print *,'yyyyyyyyyyyyyyyyy in convert'
+
+    !Grid stuff
+    integer :: isc, iec, jsc, jec, jjj
+
+    !Get indices for compute domain (no halo)
+    isc = self%geom%ocean%G%isc
+    iec = self%geom%ocean%G%iec    
+    jsc = self%geom%ocean%G%jsc
+    jec = self%geom%ocean%G%jec
     
     nv = self%geom%ocean%ncat
     nl0 = 1
-    nl0 = ncat
+    nts = 1
+    nc0a = (iec - isc + 1) * (jec - jsc + 1 )
 
-    nc0a = self%geom%ocean%nx*self%geom%ocean%ny
+    print *,'nc0a',nc0a,isc, iec, jsc, jec
+    
     allocate( lon(nc0a), lat(nc0a), area(nc0a) )
     allocate( vunit(nl0) )
     allocate( imask(nc0a, nl0) )    
 
-    lon = reshape( self%geom%ocean%lon, (/nc0a/) )
-    lat = reshape( self%geom%ocean%lat, (/nc0a/) )    
-    area = reshape( self%geom%ocean%cell_area, (/nc0a/) )
-    do jz = 1, nl0
+    call random_number(lon)
+    call random_number(lat)    
+
+    !lon = 0.001*lon + deg2rad*reshape( self%geom%ocean%lon(isc:iec, jsc:jec), (/nc0a/) )
+    !lat = 0.001*lat + deg2rad*reshape( self%geom%ocean%lat(isc:iec, jsc:jec), (/nc0a/) )
+
+    lon = deg2rad*reshape( self%geom%ocean%lon(isc:iec, jsc:jec), (/nc0a/) )
+    lat = deg2rad*reshape( self%geom%ocean%lat(isc:iec, jsc:jec), (/nc0a/) ) 
+    
+    area = reshape( self%geom%ocean%cell_area(isc:iec, jsc:jec), (/nc0a/) )
+
+    do jz = 1, nl0       
        vunit(jz) = real(jz)
-       imask(:,jz) = reshape( self%geom%ocean%mask2d, (/nc0a/) )
+       imask(1:nc0a,jz) = reshape( self%geom%ocean%mask2d(isc:iec, jsc:jec), (/nc0a/) )
     end do
 
-
-    call create_unstructured_grid(ug, nc0a, nl0, nv, nts, lon, lat, area, vunit, imask)
-
-    do jz = 1, nl0
-       vunit(jz) = real(jz)
-       imask(:,jz) = reshape( self%geom%ocean%mask2d, (/nc0a/) )
-    end do
+    !print *,'================== 51:',lon(51)/deg2rad, lat(51)/deg2rad
+    !print *,'================== 52:',lon(52)/deg2rad, lat(52)/deg2rad
+    
+    call create_unstructured_grid(ug, nc0a, nl0, nv, 1, lon, lat, area, vunit, imask)
 
     do jk = 1, nv
-       ug%fld(:, 1, jk, 1) = reshape( self%cicen(:,:,jk+1), (/nc0a/) )       
+       ug%fld(:, 1, jk, 1) = reshape( self%cicen(isc:iec, jsc:jec, jk+1), (/nc0a/) )
     end do
-
+    
   end subroutine convert_to_ug
 
   ! ------------------------------------------------------------------------------
@@ -1137,9 +1157,19 @@ contains
     integer :: cat_num      ! !!!!!!!!! only doing 1 category for now !!!!!!!!!!!
     integer :: nv
 
+    !Grid stuff
+    integer :: isc, iec, jsc, jec
+    
+    !Get indices for compute domain (no halo)
+    isc = self%geom%ocean%G%isc
+    iec = self%geom%ocean%G%iec    
+    jsc = self%geom%ocean%G%jsc
+    jec = self%geom%ocean%G%jec
+    
+    !call abor1_ftn("convert_from_ug: NOT IMPLEMENTED")
     nv = self%geom%ocean%ncat    
     do jk = 1, nv
-       self%cicen(:,:,jk+1) = reshape( ug%fld(:, 1, jk, 1), (/self%geom%ocean%nx, self%geom%ocean%ny/) )
+       self%cicen(isc:iec, jsc:jec,jk+1) = reshape( ug%fld(:, 1, jk, 1), (/(iec - isc + 1 ), (jec - jsc + 1 )/) )
     end do    
 
   end subroutine convert_from_ug
