@@ -52,7 +52,7 @@ void Variables::setF90(const std::vector<std::string> vars) {
      if (vars[jj]=="socn") ii = 8;     
      if (vars[jj]=="tocn") ii = 9;
      if (vars[jj]=="ssh") ii = 10;
-     std::cout << vars[jj] << std::endl;     
+     //std::cout << vars[jj] << std::endl;     
      ASSERT(ii > 0);
      fvars_[jj+1] = ii;
   }

@@ -128,7 +128,7 @@ nx = xin%geom%ocean%nx
 ny = xin%geom%ocean%ny
 ncat = xin%geom%ocean%ncat
 
-allocate(dy(nx,ny,ncat), Bdy(nx,ny,ncat))
+allocate(dy(nx,ny,ncat), Bdy(nx,ny,ncat+1))
 dy = xin%cicen(:,:,:)
 
 print *,'==========================',shape(xin%cicen)

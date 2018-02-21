@@ -267,7 +267,7 @@ contains
 
     call check(self)
 
-    print *,'=========== IN DIRAC ==================='
+    !print *,'=========== IN DIRAC ==================='
     ! Get Diracs positions
     ndir = config_get_int(c_conf,"ndir")
     allocate(ixdir(ndir))
@@ -276,7 +276,7 @@ contains
        write(idirchar,'(i3)') idir
        ixdir(idir) = config_get_int(c_conf,"ixdir("//trim(adjustl(idirchar))//")")
        iydir(idir) = config_get_int(c_conf,"iydir("//trim(adjustl(idirchar))//")")
-    print *,self%geom%ocean%lon(ixdir(idir),iydir(idir)), self%geom%ocean%lat(ixdir(idir),iydir(idir))
+
     end do
     ildir = config_get_int(c_conf,"ildir")
     ifdir = config_get_int(c_conf,"ifdir")
@@ -298,7 +298,7 @@ contains
        self%cicen(ixdir(idir),iydir(idir),3) = 1.0 ! Surface temp incr for cat 1
     end do
 
-    print *,'=========== BYE BYE DIRAC ==================='
+
     
   end subroutine dirac
 
@@ -705,7 +705,7 @@ contains
              idr = register_restart_field(sis_restart, ice_filename, 'sal_ice', fld%AOGCM%Ice%sal_ice, &
                   domain=fld%geom%ocean%G%Domain%mpp_domain)             
           case default
-             print *,'Not reading var ',fld%fldnames(ii),' in file ',ocn_filename
+             !print *,'Not reading var ',fld%fldnames(ii),' in file ',ocn_filename
              !call log%warning("soca_fields:read_file: Not reading var "//fld%fldnames(ii))
           end select
        end do
@@ -771,7 +771,7 @@ contains
        case ('tsfcn')
           call write_data(filename, "tsfcn", fld%tsfcn, fld%geom%ocean%G%Domain%mpp_domain)                    
        case default
-          print *,'Not writing var ',fld%fldnames(ii),' in file ',filename
+          !print *,'Not writing var ',fld%fldnames(ii),' in file ',filename
           !call log%warning("soca_fields:read_file: Not reading var "//fld%fldnames(ii))
           !call abor1_ftn("soca_fields: undefined variables")             
        end select
@@ -995,7 +995,6 @@ contains
     gom%lalloc = .true.       
     gom%linit = .true.    
 
-    print *,'-------------------- in interp'
     !print *,'locs%lat=',locs%lat
     !print *,'=== lon model:',fld%geom%ocean%lon
     if (No>0) then
@@ -1055,8 +1054,6 @@ contains
     ivar = 1 ! HARD CODED
 
     call fld%hinterp%interp_init(No)
-    print *,'-------------------- in interp ad'
-    print *,'locs%lat=',locs%lat
     call fld%hinterp%interp_compute_weight(fld%geom%ocean%lon, fld%geom%ocean%lat, locs%lon, locs%lat)
     fld%hinterp_initialized = 1
 
@@ -1109,8 +1106,6 @@ contains
     nts = 1
     nc0a = (iec - isc + 1) * (jec - jsc + 1 )
 
-    print *,'nc0a',nc0a,isc, iec, jsc, jec
-    
     allocate( lon(nc0a), lat(nc0a), area(nc0a) )
     allocate( vunit(nl0) )
     allocate( imask(nc0a, nl0) )    

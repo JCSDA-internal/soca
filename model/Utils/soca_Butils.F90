@@ -32,58 +32,50 @@ contains
     dist = radius*c
   end function haversine
 
-
-  subroutine naiveGauss (source, filtered, r, lon, lat)
+  subroutine naiveGauss (source, filtered, lon, lat)
     use kinds      
     implicit none
-    integer, intent(in)                          :: r
+
     real(kind=kind_real), intent(in)                 :: source(:,:)
     real(kind=kind_real), intent(in)                 :: lon(:,:), lat(:,:)
     real(kind=kind_real), intent(out)                :: filtered(:,:)
 
-    real(kind=kind_real), parameter                  :: PI = 4.*atan(1.)
-
     integer                                      :: i, j, k, l
-    integer                                      :: ii, jj      ! inside the array
     integer                                      :: nx, ny
     integer                                      :: dim(2)
-    real(kind=kind_real)                             :: val, wsum, lon1, lon2, lat1, lat2, L0=300.0e3
+    real(kind=kind_real)                             :: val, Lx=5.0, Ly=1
     real(kind=kind_real)                             :: dsq         ! distance squared
     real(kind=kind_real)                             :: wght        ! weight
+    real(kind=kind_real)                             :: dlon, dlat    
+    integer                             :: r=20    
 
     dim = shape(source)
     nx = dim(1)
     ny = dim(2)
 
+    print *,'in simple B'
     do i = 1, nx
        do j = 1, ny
-          val = 0
-          wsum = 0
-          do k = i-r, i+r     ! inner loop over kernel
-             do l = j-r, j+r  ! inner loop over kernel
-
-                ii = min(nx, max(1,k))   ! make sure i is always inside the grid (this implies values are extendet (stretched at the boundaries))
-                jj = min(ny, max(1,l))   ! make sure j is always inside the grid (this implies values are extendet (stretched at the boundaries))
-
-                if (source(ii,jj).ne.0.0) then
-                   lat1 = lat(i,j)
-                   lon1 = lon(i,j)
-                   lat2 = lat(ii,jj)
-                   lon2 = lon(ii,jj)                                
-                   dsq = haversine(lat1, lon1, lat2, lon2)
-                   wght = exp(-(dsq / (2.d0*L0))**2) !/ (2.d0*PI*r**2)
-                   val = val + source(ii,jj) * wght                
-                   wsum = wsum + wght          
+          val = 0.0
+          do k = 1, nx    
+             do l = 1, ny
+                if (source(k,l).ne.0.0) then
+                   dlat = lat(k,l)-lat(i,j)
+                   dlon = abs(lon(i,j)-lon(k,l))
+                   if (dlon>180.0) dlon=dlon-360.0                   
+                   dsq = (dlon/(2*Lx))**2+(dlat/(2*Ly))**2
+                   wght = exp(-dsq)
+                   val = val + source(k,l) * wght
                 end if
              end do
           end do
-          filtered(i,j) = val / wsum
-          
+          filtered(i,j) = val
        end do
     end do
-    
+
   end subroutine naiveGauss
-  
+
+
   subroutine simple_Bdy(Bdy, dy, lon, lat)
     use kinds  
     implicit none
@@ -91,19 +83,24 @@ contains
     real(kind=kind_real), intent(in) :: dy(:,:,:)
     real(kind=kind_real), intent(in) :: lon(:,:), lat(:,:)    
     real(kind=kind_real), allocatable, intent(inout) :: Bdy(:,:,:)
+    real(kind=kind_real), allocatable :: dy_b(:,:), Bdy_b(:,:)
+    
     integer :: ii, jj, k, i, j, nx, ny, nk, r
-    real(kind=kind_real) :: dij, lon1, lon2, lat1, lat2, L=500.0e3, wgt, sumwgt
+    real(kind=kind_real) :: dij, lon1, lon2, lat1, lat2, L=100.0e3, wgt, sumwgt
        
     nx=size(dy,1)
     ny=size(dy,2)
     nk=size(dy,2)
-    
-    Bdy=0.0
 
-    r=200
-    do k=1, 5
-       call naiveGauss (dy(:,:,k), Bdy(:,:,k), r, lon, lat)
+    allocate(dy_b(nx, ny), Bdy_b(nx, ny))
+
+    Bdy=0.0
+    do k=2, 6
+       print *,k
+       dy_b = 0.0
+       Bdy_b = 0.0       
+       call naiveGauss (dy(:,:,k), Bdy(:,:,k), lon, lat)
     end do
-    
+
   end subroutine Simple_Bdy
 end module soca_Butils

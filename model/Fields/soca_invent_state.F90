@@ -20,7 +20,7 @@ subroutine invent_state(flds,config)
   type(c_ptr), intent(in)       :: config  !< Configuration structure
 
   ! ------------------------------------------------------------------------------
-  print *,'QQQQQQQQQQQQQQQQQQQ IN INVENTE STATE 111111111111111111111'
+
   call zeros(flds)
   call random_number(flds%cicen)
   

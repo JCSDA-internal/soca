@@ -36,11 +36,11 @@ cost_function:
   Jo:
     ObsTypes:
     - ObsType: SeaIceFraction
-      Generate:
-        nobs: 20 #40
-        lat: 80.0
-        lon1: -260 #-270
-        lon2: -140 #0
+      #Generate:
+      #  nobs: 80
+      #  lat: 80.0
+      #  lon1: -260 #-270
+      #  lon2: 100 #0
       ObsData:
         ObsDataOut:
           obsfile: Data/test_obsout.nc
@@ -56,7 +56,7 @@ variational:
     linearmodel:
       version: IdTLM
       tstep: PT1H
-    ninner: 10
+    ninner: 1
     gradient_norm_reduction: 1e-8
     test: 'on'
 #  iteration:
@@ -64,14 +64,15 @@ variational:
 #    linearmodel:
 #      version: IdTLM
 #      tstep: PT1H
-#    ninner: 1
+#    ninner: 5
 #    gradient_norm_reduction: 1e-8
 #    test: 'on'
+#  iteration:
 #  - resolution: {}
 #    linearmodel:
 #      version: IdTLM
 #      tstep: PT1H
-#    ninner: 1
+#    ninner: 5
 #    gradient_norm_reduction: 1e-8
 #    test: 'on'        
 minimizer:
