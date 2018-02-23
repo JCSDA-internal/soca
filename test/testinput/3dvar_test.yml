@@ -36,11 +36,11 @@ cost_function:
   Jo:
     ObsTypes:
     - ObsType: SeaIceFraction
-      #Generate:
-      #  nobs: 80
-      #  lat: 80.0
-      #  lon1: -260 #-270
-      #  lon2: 100 #0
+      Generate:
+        nobs: 80
+        lat: 80.0
+        lon1: -260 #-270
+        lon2: 100 #0
       ObsData:
         ObsDataOut:
           obsfile: Data/test_obsout.nc

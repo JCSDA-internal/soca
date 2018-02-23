@@ -95,222 +95,124 @@ type(soca_3d_covar_config), pointer :: conf !< covar structure
 
 end subroutine soca_3d_covar_delete
 
-! ------------------------------------------------------------------------------
-
-!> Multiply streamfunction by inverse(sqrt(C)), where C is 3d covariance matrix
-
-!!$subroutine soca_3d_covar_sqrt_inv_mult(kx,ky,xctl,xincr,config)
-!!$use iso_c_binding
-!!$use fft_mod
-!!$use kinds
-!!$use soca_fields
-!!$
-!!$implicit none
-!!$integer(c_int), intent(in)    :: kx            !< Zonal grid dimension
-!!$integer(c_int), intent(in)    :: ky            !< Meridional grid dimension
-!!$real(c_double), intent(inout) :: xctl(kx,ky,2) !< inv(sqrt(C)) times psi
-!!$type(soca_field), intent(in)    :: xincr         !< Streamfunction: psi
-!!$type(soca_3d_covar_config), intent(in) :: config !< covar config structure
-!!$
-!!$real(kind=kind_real) :: zfour(kx+2), work(ky)
-!!$integer :: i, j, k, iri, m
-!!$real(kind=kind_real) :: zc, zero, one
-!!$
-!!$!--- multiply by standard deviation
-!!$
-!!$zc = 1.0_kind_real/config%sigma
-!!$do k=1,2
-!!$  do j=1,ky
-!!$    do i=1,kx
-!!$      xctl(i,j,k) = zc * xincr%x(i,j,k)
-!!$    enddo
-!!$  enddo
-!!$enddo
-!!$
-!!$!--- multiply by inverse square-root of zonal correlation matrix
-!!$
-!!$do k=1,2
-!!$  do j=1,ky
-!!$    call fft_fwd(kx,xctl(:,j,k),zfour)
-!!$    do m=0,kx/2
-!!$      do iri=1,2
-!!$        zfour(2*m+iri) = zfour(2*m+iri) / config%sqrt_zonal(m)
-!!$      enddo
-!!$    enddo
-!!$    call fft_inv(kx,zfour,xctl(:,j,k))
-!!$  enddo
-!!$enddo
-!!$
-!!$!--- multiply by inverse square-root of meridional correlation matrix
-!!$
-!!$zero = 0.0_kind_real
-!!$one = 1.0_kind_real
-!!$do k=1,2
-!!$  do i=1,kx
-!!$    call DSYMV('L',ky,one,config%sqrt_inv_merid,ky,xctl(i,1,k),kx,zero,work,1)
-!!$    do j=1,ky
-!!$      xctl(i,j,k) = work(j)
-!!$    enddo
-!!$  enddo
-!!$enddo
-!!$
-!!$!--- multiply by inverse symmetric square-root of vertical correlation matrix
-!!$
-!!$zc = 1.0_kind_real / sqrt(1.0_kind_real-config%vert_corr*config%vert_corr)
-!!$do j=1,ky
-!!$  do i=1,kx
-!!$    xctl(i,j,2) = zc * (xctl(i,j,2) - config%vert_corr * xctl(i,j,1))
-!!$  enddo
-!!$enddo
-!!$
-!!$end subroutine soca_3d_covar_sqrt_inv_mult
-
-! ------------------------------------------------------------------------------
-
-!> Multiply streamfunction by inverse(sqrt(C)) - Adjoint
-
-!!$subroutine soca_3d_covar_sqrt_inv_mult_ad(kx,ky,xctl,xincr,config)
-!!$use iso_c_binding
-!!$use fft_mod
-!!$use kinds
-!!$use soca_fields
-!!$
-!!$implicit none
-!!$integer(c_int), intent(in) :: kx               !< Zonal grid dimension
-!!$integer(c_int), intent(in) :: ky               !< Meridional grid dimension
-!!$type(soca_field), intent(inout) :: xincr         !< sqrt(C) times streamfunction
-!!$real(c_double), intent(in) :: xctl(kx,ky,2)    !< Streamfunction
-!!$type(soca_3d_covar_config), intent(in) :: config !< covariance config structure
-!!$
-!!$real(kind=kind_real), allocatable :: xout(:,:,:)
-!!$real(kind=kind_real) :: zfour(kx+2), work(ky)
-!!$integer :: i, j, k, iri, m
-!!$real(kind=kind_real) :: zc, zero, one
-!!$
-!!$!--- adoint of multiplication by inverse symmetric square-root of vertical
-!!$!--- correlation matrix
-!!$
-!!$allocate(xout(kx,ky,2))
-!!$
-!!$zc = sqrt(1.0_kind_real-config%vert_corr*config%vert_corr)
-!!$do j=1,ky
-!!$  do i=1,kx
-!!$    xout(i,j,1) = xctl(i,j,1) -config%vert_corr * xctl(i,j,2) &
-!!$                    & *(1.0_kind_real/zc)
-!!$    xout(i,j,2) = xctl(i,j,2)*(1.0_kind_real/zc)
-!!$  enddo
-!!$enddo
-!!$
-!!$!--- adjoint multiplication by inverse sqrt of meridional correlation matrix
-!!$
-!!$zero = 0.0_kind_real
-!!$one = 1.0_kind_real
-!!$do k=1,2
-!!$  do i=1,kx
-!!$    call DSYMV('L',ky,one,config%sqrt_inv_merid,ky,xout(i,1,k), &
-!!$        &      kx,zero,work,1)
-!!$    do j=1,ky
-!!$      xout(i,j,k) = work(j)
-!!$    enddo
-!!$  enddo
-!!$enddo
-!!$
-!!$!--- multiply by inverse square-root of zonal correlation matrix
-!!$
-!!$do k=1,2
-!!$  do j=1,ky
-!!$    call fft_fwd(kx,xout(:,j,k),zfour)
-!!$    do m=0,kx/2
-!!$      do iri=1,2
-!!$        zfour(2*m+iri) = zfour(2*m+iri) / config%sqrt_zonal(m)
-!!$      enddo
-!!$    enddo
-!!$    call fft_inv(kx,zfour,xout(:,j,k))
-!!$  enddo
-!!$enddo
-!!$
-!!$!--- adjoint of multiplication by standard deviation
-!!$
-!!$do k=1,2
-!!$  do j=1,ky
-!!$    do i=1,kx
-!!$      xincr%x(i,j,k) = xincr%x(i,j,k) + xout(i,j,k) &
-!!$                    & *(1.0_kind_real/config%sigma)
-!!$    enddo
-!!$  enddo
-!!$enddo
-!!$
-!!$deallocate(xout)
-!!$
-!!$end subroutine soca_3d_covar_sqrt_inv_mult_ad
-
-! ------------------------------------------------------------------------------
-
 !> Multiply by sqrt(C), where C is a 3d covariance matrix
 
-subroutine soca_3d_covar_sqrt_mult(kx,ky,xincr,xctl,config)
+subroutine soca_3d_covar_sqrt_mult(xincr, xctrl, config)
 use iso_c_binding
-use fft_mod
 use kinds
 use soca_fields
+use type_nam, only: namtype
+use type_geom, only: geomtype, compute_grid_mesh
+use type_bpar, only: bpartype
+use type_ndata, only: ndatatype,ndata_dealloc
+use unstructured_grid_mod
+use soca_fields
+use nicas_apply_localization, only: apply_localization,apply_localization_from_sqrt,randomize_localization
+use tools_const, only: deg2rad
+use type_bdata, only: bdatatype
+use type_bpar, only: bpartype,bpar_alloc
+use model_oops, only: model_oops_coord
+use nicas_apply_nicas, only: apply_nicas
+use type_randgen,     only: create_randgen
 
 implicit none
-integer(c_int), intent(in) :: kx               !< Zonal grid dimension
-integer(c_int), intent(in) :: ky               !< Meridional grid dimension
-type(soca_field), intent(inout) :: xincr         !< sqrt(C) times streamfunction
-real(c_double), intent(in) :: xctl(kx,ky,2)    !< Streamfunction
+type(soca_field), intent(inout) :: xincr
+type(soca_field), intent(in) :: xctrl
 type(soca_3d_covar_config), intent(in) :: config !< covariance config structure
 
-integer :: i, j, k, iri, m
-real(kind=kind_real) :: zc, zero, one
-real(kind=kind_real) :: zfour(kx+2), work(ky)
+type(namtype)   :: nam                                                            !< Namelist
+type(geomtype)  :: geom                                                          !< Geometry
+type(bpartype)  :: bpar                                                          !< Block parameters
+!type(ndatatype), allocatable :: ndata(:)!(bpar%nb+1)                                             !< NICAS data
+type(ndatatype) :: ndata
+type(unstructured_grid) :: ug
 
-!--- multiply by symmetric square-root of vertical correlation matrix
+!nicas stuff
+integer :: nc0a, nl0, nv, nts
+real(kind=kind_real), allocatable :: lon(:), lat(:), area(:), vunit(:), rndnum(:)
+integer, allocatable :: imask(:,:)
 
-!zc = sqrt(1.0_kind_real-config%vert_corr*config%vert_corr)
-!!$do j=1,ky
-!!$  do i=1,kx
-!!$    xincr%x(i,j,1) = xctl(i,j,1)
-!!$    !xincr%x(i,j,2) = config%vert_corr * xctl(i,j,1) + zc * xctl(i,j,2)
-!!$  enddo
-!!$enddo
-!!$
-!!$!--- multiply by square-root of meridional correlation matrix
-!!$
-!!$zero = 0.0_kind_real
-!!$one = 1.0_kind_real
-!!$do k=1,2
-!!$  do i=1,kx
-!!$    call DSYMV('L',ky,one,config%sqrt_merid,ky,xincr%x(i,1,k),kx,zero,work,1)
-!!$    do j=1,ky
-!!$      xincr%x(i,j,k) = work(j)
-!!$    enddo
-!!$  enddo
-!!$enddo
-!!$
-!--- multiply by square-root of zonal correlation matrix
+!Grid stuff
+integer :: isc, iec, jsc, jec, jjj, jz, il
 
-!!$do k=1,2
-!!$  do j=1,ky
-!!$    call fft_fwd(kx,xincr%x(:,j,k),zfour)
-!!$    do m=0,kx/2
-!!$      do iri=1,2
-!!$        zfour(2*m+iri) = zfour(2*m+iri) * config%sqrt_zonal(m)
-!!$      enddo
-!!$    enddo
-!!$    call fft_inv(kx,zfour,xincr%x(:,j,k))
-!!$  enddo
-!!$enddo
-!!$
-!!$!--- multiply by standard deviation
-!!$
-!!$do k=1,2
-!!$  do j=1,ky
-!!$    do i=1,kx
-!!$      xincr%x(i,j,k) = xincr%x(i,j,k) * config%sigma
-!!$    enddo
-!!$  enddo
-!!$enddo
+!Get indices for compute domain (no halo)
+isc = xctrl%geom%ocean%G%isc
+iec = xctrl%geom%ocean%G%iec    
+jsc = xctrl%geom%ocean%G%jsc
+jec = xctrl%geom%ocean%G%jec
+    
+nv = xctrl%geom%ocean%ncat
+nl0 = 1
+nts = 1
+nc0a = (iec - isc + 1) * (jec - jsc + 1 )
+
+allocate( lon(nc0a), lat(nc0a), area(nc0a) )
+allocate( vunit(nl0) )
+allocate( imask(nc0a, nl0) )    
+
+
+lon = deg2rad*reshape( xctrl%geom%ocean%lon(isc:iec, jsc:jec), (/nc0a/) )
+lat = deg2rad*reshape( xctrl%geom%ocean%lat(isc:iec, jsc:jec), (/nc0a/) ) 
+
+area = reshape( xctrl%geom%ocean%cell_area(isc:iec, jsc:jec), (/nc0a/) )
+
+do jz = 1, nl0       
+   vunit(jz) = real(jz)
+   imask(1:nc0a,jz) = reshape( xctrl%geom%ocean%mask2d(isc:iec, jsc:jec), (/nc0a/) )
+end do
+
+area = 1.0           ! Dummy area
+vunit = 1.0          ! Dummy vertical unit
+imask = 1            ! Mask
+
+nam%default_seed = .true.
+nam%model = 'oops'
+nam%mask_type = 'none'
+nam%new_hdiag = .false.
+nam%displ_diag = .false.
+nam%new_param = .false.
+nam%new_lct = .false.
+nam%mask_check = .false.
+nam%new_obsop = .false.
+nam%check_dirac = .false.
+nam%nc3 = 1
+nam%dc = 1.0
+nam%nl = nl0
+nam%nv = nv
+nam%nts = nts
+nam%timeslot = 0
+nam%datadir = '.'
+nam%colorlog = .false.
+nam%ens1_ne_offset = 0
+do il=1,nam%nl
+   nam%levs(il) = il
+end do
+
+geom%nc0a = nc0a
+geom%nl0 = nl0
+geom%nlev = nl0
+
+
+!Initialize random number generator
+call create_randgen(nam)
+print *,"================="
+! Initialize coordinates
+call model_oops_coord(geom,lon,lat,area,vunit,imask)
+print *,"================="
+call bpar_alloc(nam,geom,bpar) 
+print *,"================="
+call compute_grid_mesh(nam,geom)
+print *,"================="
+call convert_to_ug(xctrl, ug)
+print *,"================="
+
+print *,ndata%nsb
+!ndata%nam = nam
+call apply_nicas(geom,ndata,ug%fld)
+!call apply_localization_from_sqrt(nam,geom,bpar,ndata,ug%fld)
+print *,"================="
+!call convert_from_ug(xincr, ug)
+print *,"================="
 
 end subroutine soca_3d_covar_sqrt_mult
 
@@ -335,48 +237,7 @@ integer :: i, j, k, iri, m
 real(kind=kind_real) :: zc, zero, one
 real(kind=kind_real) :: zgrid(kx), zfour(kx+2), work(ky)
 
-!--- adjoint of multiplication by standard deviation
 
-!!$allocate(xout(kx,ky,2))
-!!$
-!!$do k=1,2
-!!$  do j=1,ky
-!!$    zgrid(:) = xincr%x(:,j,k) * config%sigma
-!!$    call fft_fwd(kx,zgrid,zfour)
-!!$    do m=0,kx/2
-!!$      do iri=1,2
-!!$        zfour(2*m+iri) = zfour(2*m+iri) * config%sqrt_zonal(m)
-!!$      enddo
-!!$    enddo
-!!$    call fft_inv(kx,zfour,xout(:,j,k))
-!!$  enddo
-!!$enddo
-!!$
-!!$!--- adjoint of multiplication by square-root of meridional correlation matrix
-!!$
-!!$zero = 0.0_kind_real
-!!$one = 1.0_kind_real
-!!$do k=1,2
-!!$  do i=1,kx
-!!$    call DSYMV('L',ky,ONE,CONFIg%sqrt_merid,ky,xout(i,1,k),kx,zero,work,1)
-!!$    do j=1,ky
-!!$      xout(i,j,k) = work(j)
-!!$    enddo
-!!$  enddo
-!!$enddo
-!!$
-!!$!--- adjoint multiplication by symmetric square-root of vert correlation matrix
-!!$
-!!$zc = sqrt(1.0_kind_real-config%vert_corr*config%vert_corr)
-!!$do j=1,ky
-!!$  do i=1,kx
-!!$    xctl(i,j,1) = xctl(i,j,1) + xout(i,j,1) &
-!!$              & +config%vert_corr * xout(i,j,2)
-!!$    xctl(i,j,2) = xctl(i,j,2) + xout(i,j,2) * zc
-!!$  enddo
-!!$enddo
-!!$
-!!$deallocate(xout)
 
 end subroutine soca_3d_covar_sqrt_mult_ad
 

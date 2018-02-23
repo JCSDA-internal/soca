@@ -3,78 +3,87 @@ module soca_Butils
 
 contains
 
-  function to_radian(degree) result(rad)
-    ! degrees to radians
-    use kinds      
-    real(kind=kind_real),intent(in) :: degree
-    real(kind=kind_real), parameter :: deg_to_rad = atan(1.0)/45 ! exploit intrinsic atan to generate pi/180 runtime constant
-    real(kind=kind_real) :: rad
-    
-    rad = degree*deg_to_rad
-  end function to_radian
- 
-  function haversine(deglat1,deglon1,deglat2,deglon2) result (dist)
-    ! great circle distance -- adapted from Matlab
-    use tools_const, only: deg2rad
-    use kinds      
+  !  Differentiation of gauss in reverse (adjoint) mode:
+  !   gradient     of useful results: xctrl
+  !   with respect to varying inputs: xctrl xincr
+  !   RW status of diff variables: xctrl:in-out xincr:out
+  subroutine gauss_b(xincrb, xctrlb, lon, lat, lx, ly)
+    use kinds
     implicit none
-
-    real(kind=kind_real),intent(in) :: deglat1,deglon1,deglat2,deglon2
-    real(kind=kind_real) :: a,c,dist,dlat,dlon,lat1,lat2
-    real(kind=kind_real),parameter :: radius = 6372.8e3
-    
-    dlat = deg2rad*(deglat2-deglat1)
-    dlon = deg2rad*(deglon2-deglon1)
-    lat1 = deg2rad*(deglat1)
-    lat2 = deg2rad*(deglat2)
-    a = (sin(dlat/2))**2 + cos(lat1)*cos(lat2)*(sin(dlon/2))**2
-    c = 2*asin(sqrt(a))
-    dist = radius*c
-  end function haversine
-
-  subroutine naiveGauss (source, filtered, lon, lat)
-    use kinds      
-    implicit none
-
-    real(kind=kind_real), intent(in)                 :: source(:,:)
-    real(kind=kind_real), intent(in)                 :: lon(:,:), lat(:,:)
-    real(kind=kind_real), intent(out)                :: filtered(:,:)
-
-    integer                                      :: i, j, k, l
-    integer                                      :: nx, ny
-    integer                                      :: dim(2)
-    real(kind=kind_real)                             :: val, Lx=5.0, Ly=1
-    real(kind=kind_real)                             :: dsq         ! distance squared
-    real(kind=kind_real)                             :: wght        ! weight
-    real(kind=kind_real)                             :: dlon, dlat    
-    integer                             :: r=20    
-
-    dim = shape(source)
+    real :: xincrb(:, :)
+    real, intent(IN) :: lon(:, :), lat(:, :)
+    real, intent(IN) :: lx
+    real, intent(IN) :: ly
+    real :: xctrlb(:, :)
+    integer :: i, j, k, l
+    integer :: nx, ny
+    integer :: dim(2)
+    real :: wght
+    real :: dlon, dlat
+    real :: valb
+    integer :: branch
+    real :: val
+    dim = shape(xctrlb)
     nx = dim(1)
     ny = dim(2)
 
-    print *,'in simple B'
-    do i = 1, nx
-       do j = 1, ny
-          val = 0.0
-          do k = 1, nx    
-             do l = 1, ny
-                if (source(k,l).ne.0.0) then
-                   dlat = lat(k,l)-lat(i,j)
-                   dlon = abs(lon(i,j)-lon(k,l))
-                   if (dlon>180.0) dlon=dlon-360.0                   
-                   dsq = (dlon/(2*Lx))**2+(dlat/(2*Ly))**2
-                   wght = exp(-dsq)
-                   val = val + source(k,l) * wght
-                end if
+    wght=0.0
+    xincrb = 0.0
+    do i=nx,1,-1
+       do j=ny,1,-1
+          valb = xctrlb(i, j)
+          xctrlb(i, j) = 0.0
+          do k=nx,1,-1
+             do l=ny,1,-1
+                xincrb(k, l) = xincrb(k, l) + wght*valb
+                dlat = lat(k, l) - lat(i, j)
+                dlon = lon(i, j) - lon(k, l)
+                if (abs(dlon) .gt. 180.0) dlon = dlon - 360.0
+                wght = exp(-((dlon/(2*lx))**2+(dlat/(2*ly))**2))                
              end do
           end do
-          filtered(i,j) = val
        end do
     end do
+  end subroutine gauss_b
 
-  end subroutine naiveGauss
+  subroutine gauss(xincr, xctrl, lon, lat, lx, ly)
 
+    implicit none
+    real, intent(IN) :: xincr(:, :)
+    real, intent(IN) :: lon(:, :), lat(:, :)
+    real, intent(IN) :: lx
+    real, intent(IN) :: ly
+    real, intent(OUT) :: xctrl(:, :)
+    integer :: i, j, k, l
+    integer :: nx, ny
+    integer :: dim(2)
+    real :: wght
+    real :: dlon, dlat
+    intrinsic SHAPE
+    intrinsic ABS
+    intrinsic EXP
+    real :: val
+    dim = shape(xincr)
+    nx = dim(1)
+    ny = dim(2)
+    do i=1,nx
+       do j=1,ny
+          val = 0.0
+          do k=1,nx
+             do l=1,ny
+                !if (xincr(k, l) .ne. 0.0) then
+                dlat = lat(k, l) - lat(i, j)
+                dlon = lon(i, j) - lon(k, l)
+                if (abs(dlon) .gt. 180.0) dlon = dlon - 360.0
+                wght = exp(-((dlon/(2*lx))**2+(dlat/(2*ly))**2))
+                val = val + xincr(k, l)*wght
+                !end if
+             end do
+          end do
+          xctrl(i, j) = val
+       end do
+    end do
+  end subroutine gauss
 
   subroutine simple_Bdy(Bdy, dy, lon, lat)
     use kinds  
@@ -84,22 +93,32 @@ contains
     real(kind=kind_real), intent(in) :: lon(:,:), lat(:,:)    
     real(kind=kind_real), allocatable, intent(inout) :: Bdy(:,:,:)
     real(kind=kind_real), allocatable :: dy_b(:,:), Bdy_b(:,:)
-    
+
     integer :: ii, jj, k, i, j, nx, ny, nk, r
-    real(kind=kind_real) :: dij, lon1, lon2, lat1, lat2, L=100.0e3, wgt, sumwgt
-       
+    real(kind=kind_real) :: Lx=5.0, Ly=1.0
+
+    real, allocatable :: xctrl(:,:), xincr(:,:), xincrb(:,:)
+
     nx=size(dy,1)
     ny=size(dy,2)
     nk=size(dy,2)
 
-    allocate(dy_b(nx, ny), Bdy_b(nx, ny))
+    allocate(dy_b(nx, ny), Bdy_b(nx, ny), xctrl(nx, ny), xincr(nx, ny), xincrb(nx, ny))
 
     Bdy=0.0
     do k=2, 6
        print *,k
        dy_b = 0.0
-       Bdy_b = 0.0       
-       call naiveGauss (dy(:,:,k), Bdy(:,:,k), lon, lat)
+       Bdy_b = 0.0
+
+       xincrb = 0.0       
+       xctrl = real(dy(:,:,k)) 
+       call gauss_b(xincrb, xctrl, real(lon), real(lat), real(lx), real(ly))
+       xctrl = 0.0
+       call gauss(xincrb, xctrl, real(lon), real(lat), real(lx), real(ly))
+       Bdy(:,:,k)=xctrl
+       print *,xctrl
+       !call gauss(dy(:,:,k), Bdy(:,:,k), lon, lat, lx, ly)
     end do
 
   end subroutine Simple_Bdy

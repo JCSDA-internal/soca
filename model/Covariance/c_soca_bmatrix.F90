@@ -119,28 +119,28 @@ call soca_field_registry%get(c_key_out,xout)
 !allocate(xctl(conf%nx, conf%ny, 2))
 
 !xctl(:,:,:)=0.0_kind_real
-!call soca_3d_covar_sqrt_mult_ad(conf%nx,conf%ny,xin,xctl,conf)
-call zeros(xout)
-
-print *,"[[[[[[[[[[[[[[[[[[[[[[[[ IN B MULT ]]]]]]]]]]]]]]]]]]]]]]]]"
-
-nx = xin%geom%ocean%nx
-ny = xin%geom%ocean%ny
-ncat = xin%geom%ocean%ncat
-
-allocate(dy(nx,ny,ncat), Bdy(nx,ny,ncat+1))
-dy = xin%cicen(:,:,:)
-
-print *,'==========================',shape(xin%cicen)
-call simple_Bdy(Bdy, dy, xin%geom%ocean%lon, xin%geom%ocean%lat)
-
-call ones(xout)
-call self_schur(xout, xin)
-xout%cicen = Bdy
-
-!call soca_3d_covar_sqrt_mult(conf%nx,conf%ny,xout,xctl,conf)
-
-!deallocate(xctl)
+call soca_3d_covar_sqrt_mult(xout,xin,conf)
+!!$call zeros(xout)
+!!$
+!!$print *,"[[[[[[[[[[[[[[[[[[[[[[[[ IN B MULT ]]]]]]]]]]]]]]]]]]]]]]]]"
+!!$
+!!$nx = xin%geom%ocean%nx
+!!$ny = xin%geom%ocean%ny
+!!$ncat = xin%geom%ocean%ncat
+!!$
+!!$allocate(dy(nx,ny,ncat), Bdy(nx,ny,ncat+1))
+!!$dy = xin%cicen(:,:,:)
+!!$
+!!$print *,'==========================',shape(xin%cicen)
+!!$!call simple_Bdy(Bdy, dy, xin%geom%ocean%lon, xin%geom%ocean%lat)
+!!$
+!!$call ones(xout)
+!!$call self_schur(xout, xin)
+!!$!xout%cicen = Bdy
+!!$
+!!$!call soca_3d_covar_sqrt_mult(conf%nx,conf%ny,xout,xctl,conf)
+!!$
+!!$!deallocate(xctl)
 
 end subroutine c_soca_b_mult
 

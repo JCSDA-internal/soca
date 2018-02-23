@@ -1110,8 +1110,8 @@ contains
     allocate( vunit(nl0) )
     allocate( imask(nc0a, nl0) )    
 
-    call random_number(lon)
-    call random_number(lat)    
+    !call random_number(lon)
+    !call random_number(lat)    
 
     !lon = 0.001*lon + deg2rad*reshape( self%geom%ocean%lon(isc:iec, jsc:jec), (/nc0a/) )
     !lat = 0.001*lat + deg2rad*reshape( self%geom%ocean%lat(isc:iec, jsc:jec), (/nc0a/) )

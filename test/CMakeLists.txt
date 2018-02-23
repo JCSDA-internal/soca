@@ -13,6 +13,7 @@ list( APPEND soca_test_input
   testinput/3dvar_test.yml
   testinput/localization_test.yml
   testinput/nicas_test.yml
+  testinput/4denvar_nicas_test.yml
   compare.sh
 )
 

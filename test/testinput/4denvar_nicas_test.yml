@@ -22,7 +22,7 @@ cost_function:
     ObsTypes:
     - ObsType: SeaIceFraction
       Generate:
-        nobs: 40
+        nobs: 8
         lat: 0.5
         lon1: -270
         lon2: 0
@@ -125,7 +125,7 @@ cost_function:
       #  date: '2015-01-01T00:00:00Z'
       covariance_time:
       - covariance: ensemble
-        members: 5
+        members: 4
         variables:
           variables:
               - cicen
@@ -140,11 +140,102 @@ cost_function:
               - ssh
         date: '2015-01-01T00:00:00Z'
         localization:
-          localization: NICAS
-          standard_deviation: '1.0'
-          vertical_correlation: '0.4'
-          horizontal_length_scale: 2e6
-          maximum_condition_number: 1.0e6
+          localization: HDIAG_NICAS
+          variables:
+            variables:
+            - cicen
+            - hicen
+            - hsnon
+            - tsfcn
+            - qsnon
+            - sicnk
+            - qicnk
+            - socn
+            - tocn
+            - ssh
+          hdiag_ensemble:
+            - read_from_file: 1
+              basename: "./RESTART-01/"
+              ocn_sfc_filename: MOM.res.nc
+              ocn_filename: MOM.res.nc
+              ice_filename: ice_model.res.nc
+              date: '2015-01-01T00:00:00Z'
+            - read_from_file: 1
+              basename: "./RESTART-02/"
+              ocn_sfc_filename: MOM.res.nc
+              ocn_filename: MOM.res.nc
+              ice_filename: ice_model.res.nc
+              date: '2015-01-01T00:00:00Z'          
+            - read_from_file: 1
+              basename: "./RESTART-03/"
+              ocn_sfc_filename: MOM.res.nc
+              ocn_filename: MOM.res.nc
+              ice_filename: ice_model.res.nc
+              date: '2015-01-01T00:00:00Z'
+            - read_from_file: 1
+              basename: "./RESTART-04/"
+              ocn_sfc_filename: MOM.res.nc
+              ocn_filename: MOM.res.nc
+              ice_filename: ice_model.res.nc
+              date: '2015-01-01T00:00:00Z'              
+          prefix: soca
+          default_seed: 1
+          method: loc
+          strategy: common
+          new_hdiag: 1
+          new_param: 1
+          check_adjoints: 1
+          check_pos_def: 0
+          check_sqrt: 0
+          check_dirac: 0
+          check_perf: 0
+          check_randomization: 0
+          check_consistency: 0
+          check_optimality: 0
+          new_lct: 0
+          new_obsop: 1
+          logpres: 0
+          transform: 0
+          mask_type: none
+          mask_th: 0
+          mask_check: 0
+          nc1: 400
+          ntry: 3
+          nrep: 2
+          nc3: 10
+          dc: 500.0e3
+          nl0r: 1
+          ne: 4
+          gau_approx: 0
+          full_var: 0
+          local_diag: 0
+          local_rad: 0
+          displ_diag: 0
+          displ_rad: 0
+          displ_explicit: 0
+          displ_niter: 0
+          displ_rhflt: 0
+          displ_tol: 0
+          fit_type: fast
+          fit_wgt: 1
+          lhomh: 0
+          lhomv: 0
+          rvflt: 0
+          nldwh: 0
+          nldwv: 0
+          flt_type: average
+          diag_interp: bilin
+          diag_rhflt: 0
+          lsqrt: 0
+          resol: 10
+          nicas_interp: bilin
+          network: 1
+          mpicom: 1
+          ndir: 0
+          nobs: 200
+          obsdis: 1
+          obsop_interp: bilin
+          nproc: 1          
         state:
         - read_from_file: 1
           basename: "./RESTART-01/"
@@ -169,15 +260,9 @@ cost_function:
           ocn_sfc_filename: MOM.res.nc
           ocn_filename: MOM.res.nc
           ice_filename: ice_model.res.nc
-          date: '2015-01-01T00:00:00Z'
-        - read_from_file: 1
-          basename: "./RESTART-05/"
-          ocn_sfc_filename: MOM.res.nc
-          ocn_filename: MOM.res.nc
-          ice_filename: ice_model.res.nc
-          date: '2015-01-01T00:00:00Z'
+          date: '2015-01-01T00:00:00Z'          
       - covariance: ensemble
-        members: 5
+        members: 4
         variables:
           variables:
               - cicen
@@ -192,11 +277,101 @@ cost_function:
               - ssh
         date: '2015-01-01T01:00:00Z'
         localization:
-          localization: NICAS
-          standard_deviation: '1.0'
-          vertical_correlation: '0.4'
-          horizontal_length_scale: 2e6
-          maximum_condition_number: 1.0e6
+          localization: HDIAG_NICAS
+          variables:
+            variables:            
+            - cicen
+            - hicen
+            - hsnon
+            - tsfcn
+            - qsnon
+            - sicnk
+            - qicnk
+            - socn
+            - tocn
+            - ssh
+          hdiag_ensemble:
+            - read_from_file: 1
+              basename: "./RESTART-01/"
+              ocn_sfc_filename: MOM.res.nc
+              ocn_filename: MOM.res.nc
+              ice_filename: ice_model.res.nc
+              date: '2015-01-01T01:00:00Z'
+            - read_from_file: 1
+              basename: "./RESTART-02/"
+              ocn_sfc_filename: MOM.res.nc
+              ocn_filename: MOM.res.nc
+              ice_filename: ice_model.res.nc
+              date: '2015-01-01T01:00:00Z'          
+            - read_from_file: 1
+              basename: "./RESTART-03/"
+              ocn_sfc_filename: MOM.res.nc
+              ocn_filename: MOM.res.nc
+              ice_filename: ice_model.res.nc
+              date: '2015-01-01T01:00:00Z'
+            - read_from_file: 1
+              basename: "./RESTART-04/"
+              ocn_sfc_filename: MOM.res.nc
+              ocn_filename: MOM.res.nc
+              ice_filename: ice_model.res.nc
+              date: '2015-01-01T01:00:00Z'              
+          prefix: soca
+          default_seed: 1
+          method: loc
+          strategy: common
+          new_hdiag: 1
+          new_param: 1
+          check_adjoints: 1
+          check_pos_def: 0
+          check_sqrt: 0
+          check_dirac: 0
+          check_perf: 0
+          check_randomization: 0
+          check_consistency: 0
+          check_optimality: 0
+          new_lct: 0
+          new_obsop: 1
+          logpres: 0
+          transform: 0
+          mask_type: none
+          mask_th: 0
+          mask_check: 0
+          nc1: 400
+          ntry: 3
+          nrep: 2
+          nc3: 10
+          dc: 500.0e3
+          nl0r: 1
+          ne: 4
+          gau_approx: 0
+          full_var: 0
+          local_diag: 0
+          local_rad: 0
+          displ_diag: 0
+          displ_rad: 0
+          displ_explicit: 0
+          displ_niter: 0
+          displ_rhflt: 0
+          displ_tol: 0
+          fit_type: fast
+          fit_wgt: 1
+          lhomh: 0
+          lhomv: 0
+          rvflt: 0
+          nldwh: 0
+          nldwv: 0
+          flt_type: average
+          diag_interp: bilin
+          diag_rhflt: 0
+          lsqrt: 0
+          resol: 10
+          nicas_interp: bilin
+          network: 1
+          mpicom: 1
+          ndir: 0
+          nobs: 200
+          obsdis: 1
+          obsop_interp: bilin          
         state:
         - read_from_file: 1
           basename: "./RESTART-01/"
@@ -221,15 +396,9 @@ cost_function:
           ocn_sfc_filename: MOM.res.nc
           ocn_filename: MOM.res.nc
           ice_filename: ice_model.res.nc
-          date: '2015-01-01T01:00:00Z'
-        - read_from_file: 1
-          basename: "./RESTART-05/"
-          ocn_sfc_filename: MOM.res.nc
-          ocn_filename: MOM.res.nc
-          ice_filename: ice_model.res.nc
-          date: '2015-01-01T01:00:00Z'
+          date: '2015-01-01T01:00:00Z'          
       - covariance: ensemble
-        members: 5
+        members: 4
         variables:
           variables:
               - cicen
@@ -244,11 +413,101 @@ cost_function:
               - ssh
         date: '2015-01-01T02:00:00Z'
         localization:
-          localization: NICAS
-          standard_deviation: '1.0'
-          vertical_correlation: '0.4'
-          horizontal_length_scale: 2e6
-          maximum_condition_number: 1.0e6
+          localization: HDIAG_NICAS
+          variables:
+            variables:
+            - cicen
+            - hicen
+            - hsnon
+            - tsfcn
+            - qsnon
+            - sicnk
+            - qicnk
+            - socn
+            - tocn
+            - ssh
+          hdiag_ensemble:
+            - read_from_file: 1
+              basename: "./RESTART-01/"
+              ocn_sfc_filename: MOM.res.nc
+              ocn_filename: MOM.res.nc
+              ice_filename: ice_model.res.nc
+              date: '2015-01-01T02:00:00Z'
+            - read_from_file: 1
+              basename: "./RESTART-02/"
+              ocn_sfc_filename: MOM.res.nc
+              ocn_filename: MOM.res.nc
+              ice_filename: ice_model.res.nc
+              date: '2015-01-01T02:00:00Z'          
+            - read_from_file: 1
+              basename: "./RESTART-03/"
+              ocn_sfc_filename: MOM.res.nc
+              ocn_filename: MOM.res.nc
+              ice_filename: ice_model.res.nc
+              date: '2015-01-01T02:00:00Z'
+            - read_from_file: 1
+              basename: "./RESTART-04/"
+              ocn_sfc_filename: MOM.res.nc
+              ocn_filename: MOM.res.nc
+              ice_filename: ice_model.res.nc
+              date: '2015-01-01T02:00:00Z'              
+          prefix: soca
+          default_seed: 1
+          method: loc
+          strategy: common
+          new_hdiag: 1
+          new_param: 1
+          check_adjoints: 1
+          check_pos_def: 0
+          check_sqrt: 0
+          check_dirac: 0
+          check_perf: 0
+          check_randomization: 0
+          check_consistency: 0
+          check_optimality: 0
+          new_lct: 0
+          new_obsop: 1
+          logpres: 0
+          transform: 0
+          mask_type: none
+          mask_th: 0
+          mask_check: 0
+          nc1: 400
+          ntry: 3
+          nrep: 2
+          nc3: 10
+          dc: 500.0e3
+          nl0r: 1
+          ne: 4
+          gau_approx: 0
+          full_var: 0
+          local_diag: 0
+          local_rad: 0
+          displ_diag: 0
+          displ_rad: 0
+          displ_explicit: 0
+          displ_niter: 0
+          displ_rhflt: 0
+          displ_tol: 0
+          fit_type: fast
+          fit_wgt: 1
+          lhomh: 0
+          lhomv: 0
+          rvflt: 0
+          nldwh: 0
+          nldwv: 0
+          flt_type: average
+          diag_interp: bilin
+          diag_rhflt: 0
+          lsqrt: 0
+          resol: 10
+          nicas_interp: bilin
+          network: 1
+          mpicom: 1
+          ndir: 0
+          nobs: 200
+          obsdis: 1
+          obsop_interp: bilin          
         state:
         - read_from_file: 1
           basename: "./RESTART-01/"
@@ -273,15 +532,9 @@ cost_function:
           ocn_sfc_filename: MOM.res.nc
           ocn_filename: MOM.res.nc
           ice_filename: ice_model.res.nc
-          date: '2015-01-01T02:00:00Z'
-        - read_from_file: 1
-          basename: "./RESTART-05/"
-          ocn_sfc_filename: MOM.res.nc
-          ocn_filename: MOM.res.nc
-          ice_filename: ice_model.res.nc
-          date: '2015-01-01T02:00:00Z'
+          date: '2015-01-01T02:00:00Z'          
       - covariance: ensemble
-        members: 5
+        members: 4
         variables:
           variables:
               - cicen
@@ -296,11 +549,101 @@ cost_function:
               - ssh
         date: '2015-01-01T03:00:00Z'
         localization:
-          localization: NICAS
-          standard_deviation: '1.0'
-          vertical_correlation: '0.4'
-          horizontal_length_scale: 2e6
-          maximum_condition_number: 1.0e6
+          localization: HDIAG_NICAS
+          variables:
+            variables:            
+            - cicen
+            - hicen
+            - hsnon
+            - tsfcn
+            - qsnon
+            - sicnk
+            - qicnk
+            - socn
+            - tocn
+            - ssh
+          hdiag_ensemble:
+            - read_from_file: 1
+              basename: "./RESTART-01/"
+              ocn_sfc_filename: MOM.res.nc
+              ocn_filename: MOM.res.nc
+              ice_filename: ice_model.res.nc
+              date: '2015-01-01T03:00:00Z'
+            - read_from_file: 1
+              basename: "./RESTART-02/"
+              ocn_sfc_filename: MOM.res.nc
+              ocn_filename: MOM.res.nc
+              ice_filename: ice_model.res.nc
+              date: '2015-01-01T03:00:00Z'          
+            - read_from_file: 1
+              basename: "./RESTART-03/"
+              ocn_sfc_filename: MOM.res.nc
+              ocn_filename: MOM.res.nc
+              ice_filename: ice_model.res.nc
+              date: '2015-01-01T03:00:00Z'
+            - read_from_file: 1
+              basename: "./RESTART-04/"
+              ocn_sfc_filename: MOM.res.nc
+              ocn_filename: MOM.res.nc
+              ice_filename: ice_model.res.nc
+              date: '2015-01-01T03:00:00Z'              
+          prefix: soca
+          default_seed: 1
+          method: loc
+          strategy: common
+          new_hdiag: 1
+          new_param: 1
+          check_adjoints: 1
+          check_pos_def: 0
+          check_sqrt: 0
+          check_dirac: 0
+          check_perf: 0
+          check_randomization: 0
+          check_consistency: 0
+          check_optimality: 0
+          new_lct: 0
+          new_obsop: 1
+          logpres: 0
+          transform: 0
+          mask_type: none
+          mask_th: 0
+          mask_check: 0
+          nc1: 400
+          ntry: 3
+          nrep: 2
+          nc3: 10
+          dc: 500.0e3
+          nl0r: 1
+          ne: 4
+          gau_approx: 0
+          full_var: 0
+          local_diag: 0
+          local_rad: 0
+          displ_diag: 0
+          displ_rad: 0
+          displ_explicit: 0
+          displ_niter: 0
+          displ_rhflt: 0
+          displ_tol: 0
+          fit_type: fast
+          fit_wgt: 1
+          lhomh: 0
+          lhomv: 0
+          rvflt: 0
+          nldwh: 0
+          nldwv: 0
+          flt_type: average
+          diag_interp: bilin
+          diag_rhflt: 0
+          lsqrt: 0
+          resol: 10
+          nicas_interp: bilin
+          network: 1
+          mpicom: 1
+          ndir: 0
+          nobs: 200
+          obsdis: 1
+          obsop_interp: bilin          
         state:
         - read_from_file: 1
           basename: "./RESTART-01/"
@@ -325,15 +668,9 @@ cost_function:
           ocn_sfc_filename: MOM.res.nc
           ocn_filename: MOM.res.nc
           ice_filename: ice_model.res.nc
-          date: '2015-01-01T03:00:00Z'
-        - read_from_file: 1
-          basename: "./RESTART-05/"
-          ocn_sfc_filename: MOM.res.nc
-          ocn_filename: MOM.res.nc
-          ice_filename: ice_model.res.nc
-          date: '2015-01-01T03:00:00Z'
+          date: '2015-01-01T03:00:00Z'          
       - covariance: ensemble
-        members: 5
+        members: 4
         variables:
           variables:
               - cicen
@@ -348,11 +685,101 @@ cost_function:
               - ssh
         date: '2015-01-01T04:00:00Z'
         localization:
-          localization: NICAS
-          standard_deviation: '1.0'
-          vertical_correlation: '0.4'
-          horizontal_length_scale: 2e6
-          maximum_condition_number: 1.0e6
+          localization: HDIAG_NICAS
+          variables:
+            variables:            
+            - cicen
+            - hicen
+            - hsnon
+            - tsfcn
+            - qsnon
+            - sicnk
+            - qicnk
+            - socn
+            - tocn
+            - ssh
+          hdiag_ensemble:
+            - read_from_file: 1
+              basename: "./RESTART-01/"
+              ocn_sfc_filename: MOM.res.nc
+              ocn_filename: MOM.res.nc
+              ice_filename: ice_model.res.nc
+              date: '2015-01-01T04:00:00Z'
+            - read_from_file: 1
+              basename: "./RESTART-02/"
+              ocn_sfc_filename: MOM.res.nc
+              ocn_filename: MOM.res.nc
+              ice_filename: ice_model.res.nc
+              date: '2015-01-01T04:00:00Z'          
+            - read_from_file: 1
+              basename: "./RESTART-03/"
+              ocn_sfc_filename: MOM.res.nc
+              ocn_filename: MOM.res.nc
+              ice_filename: ice_model.res.nc
+              date: '2015-01-01T04:00:00Z'
+            - read_from_file: 1
+              basename: "./RESTART-04/"
+              ocn_sfc_filename: MOM.res.nc
+              ocn_filename: MOM.res.nc
+              ice_filename: ice_model.res.nc
+              date: '2015-01-01T04:00:00Z'              
+          prefix: soca
+          default_seed: 1
+          method: loc
+          strategy: common
+          new_hdiag: 1
+          new_param: 1
+          check_adjoints: 1
+          check_pos_def: 0
+          check_sqrt: 0
+          check_dirac: 0
+          check_perf: 0
+          check_randomization: 0
+          check_consistency: 0
+          check_optimality: 0
+          new_lct: 0
+          new_obsop: 1
+          logpres: 0
+          transform: 0
+          mask_type: none
+          mask_th: 0
+          mask_check: 0
+          nc1: 400
+          ntry: 3
+          nrep: 2
+          nc3: 10
+          dc: 500.0e3
+          nl0r: 1
+          ne: 4
+          gau_approx: 0
+          full_var: 0
+          local_diag: 0
+          local_rad: 0
+          displ_diag: 0
+          displ_rad: 0
+          displ_explicit: 0
+          displ_niter: 0
+          displ_rhflt: 0
+          displ_tol: 0
+          fit_type: fast
+          fit_wgt: 1
+          lhomh: 0
+          lhomv: 0
+          rvflt: 0
+          nldwh: 0
+          nldwv: 0
+          flt_type: average
+          diag_interp: bilin
+          diag_rhflt: 0
+          lsqrt: 0
+          resol: 10
+          nicas_interp: bilin
+          network: 1
+          mpicom: 1
+          ndir: 0
+          nobs: 200
+          obsdis: 1
+          obsop_interp: bilin          
         state:
         - read_from_file: 1
           basename: "./RESTART-01/"
@@ -377,15 +804,9 @@ cost_function:
           ocn_sfc_filename: MOM.res.nc
           ocn_filename: MOM.res.nc
           ice_filename: ice_model.res.nc
-          date: '2015-01-01T04:00:00Z'
-        - read_from_file: 1
-          basename: "./RESTART-05/"
-          ocn_sfc_filename: MOM.res.nc
-          ocn_filename: MOM.res.nc
-          ice_filename: ice_model.res.nc
-          date: '2015-01-01T04:00:00Z'
+          date: '2015-01-01T04:00:00Z'          
       - covariance: ensemble
-        members: 5
+        members: 4
         variables:
           variables:
               - cicen
@@ -400,11 +821,101 @@ cost_function:
               - ssh
         date: '2015-01-01T05:00:00Z'
         localization:
-          localization: NICAS
-          standard_deviation: '1.0'
-          vertical_correlation: '0.4'
-          horizontal_length_scale: 2e6
-          maximum_condition_number: 1.0e6
+          localization: HDIAG_NICAS
+          variables:
+            variables:            
+            - cicen
+            - hicen
+            - hsnon
+            - tsfcn
+            - qsnon
+            - sicnk
+            - qicnk
+            - socn
+            - tocn
+            - ssh
+          hdiag_ensemble:
+            - read_from_file: 1
+              basename: "./RESTART-01/"
+              ocn_sfc_filename: MOM.res.nc
+              ocn_filename: MOM.res.nc
+              ice_filename: ice_model.res.nc
+              date: '2015-01-01T05:00:00Z'
+            - read_from_file: 1
+              basename: "./RESTART-02/"
+              ocn_sfc_filename: MOM.res.nc
+              ocn_filename: MOM.res.nc
+              ice_filename: ice_model.res.nc
+              date: '2015-01-01T05:00:00Z'          
+            - read_from_file: 1
+              basename: "./RESTART-03/"
+              ocn_sfc_filename: MOM.res.nc
+              ocn_filename: MOM.res.nc
+              ice_filename: ice_model.res.nc
+              date: '2015-01-01T05:00:00Z'
+            - read_from_file: 1
+              basename: "./RESTART-04/"
+              ocn_sfc_filename: MOM.res.nc
+              ocn_filename: MOM.res.nc
+              ice_filename: ice_model.res.nc
+              date: '2015-01-01T05:00:00Z'              
+          prefix: soca
+          default_seed: 1
+          method: loc
+          strategy: common
+          new_hdiag: 1
+          new_param: 1
+          check_adjoints: 1
+          check_pos_def: 0
+          check_sqrt: 0
+          check_dirac: 0
+          check_perf: 0
+          check_randomization: 0
+          check_consistency: 0
+          check_optimality: 0
+          new_lct: 0
+          new_obsop: 1
+          logpres: 0
+          transform: 0
+          mask_type: none
+          mask_th: 0
+          mask_check: 0
+          nc1: 400
+          ntry: 3
+          nrep: 2
+          nc3: 10
+          dc: 500.0e3
+          nl0r: 1
+          ne: 4
+          gau_approx: 0
+          full_var: 0
+          local_diag: 0
+          local_rad: 0
+          displ_diag: 0
+          displ_rad: 0
+          displ_explicit: 0
+          displ_niter: 0
+          displ_rhflt: 0
+          displ_tol: 0
+          fit_type: fast
+          fit_wgt: 1
+          lhomh: 0
+          lhomv: 0
+          rvflt: 0
+          nldwh: 0
+          nldwv: 0
+          flt_type: average
+          diag_interp: bilin
+          diag_rhflt: 0
+          lsqrt: 0
+          resol: 10
+          nicas_interp: bilin
+          network: 1
+          mpicom: 1
+          ndir: 0
+          nobs: 200
+          obsdis: 1
+          obsop_interp: bilin          
         state:
         - read_from_file: 1
           basename: "./RESTART-01/"
@@ -429,15 +940,9 @@ cost_function:
           ocn_sfc_filename: MOM.res.nc
           ocn_filename: MOM.res.nc
           ice_filename: ice_model.res.nc
-          date: '2015-01-01T05:00:00Z'
-        - read_from_file: 1
-          basename: "./RESTART-05/"
-          ocn_sfc_filename: MOM.res.nc
-          ocn_filename: MOM.res.nc
-          ice_filename: ice_model.res.nc
-          date: '2015-01-01T05:00:00Z'
+          date: '2015-01-01T05:00:00Z'          
       - covariance: ensemble
-        members: 5
+        members: 4
         variables:
           variables:
               - cicen
@@ -452,11 +957,101 @@ cost_function:
               - ssh
         date: '2015-01-01T06:00:00Z'
         localization:
-          localization: NICAS
-          standard_deviation: '1.0'
-          vertical_correlation: '0.4'
-          horizontal_length_scale: 2e6
-          maximum_condition_number: 1.0e6
+          localization: HDIAG_NICAS
+          variables:
+            variables:            
+            - cicen
+            - hicen
+            - hsnon
+            - tsfcn
+            - qsnon
+            - sicnk
+            - qicnk
+            - socn
+            - tocn
+            - ssh
+          hdiag_ensemble:
+            - read_from_file: 1
+              basename: "./RESTART-01/"
+              ocn_sfc_filename: MOM.res.nc
+              ocn_filename: MOM.res.nc
+              ice_filename: ice_model.res.nc
+              date: '2015-01-01T06:00:00Z'
+            - read_from_file: 1
+              basename: "./RESTART-02/"
+              ocn_sfc_filename: MOM.res.nc
+              ocn_filename: MOM.res.nc
+              ice_filename: ice_model.res.nc
+              date: '2015-01-01T06:00:00Z'          
+            - read_from_file: 1
+              basename: "./RESTART-03/"
+              ocn_sfc_filename: MOM.res.nc
+              ocn_filename: MOM.res.nc
+              ice_filename: ice_model.res.nc
+              date: '2015-01-01T06:00:00Z'
+            - read_from_file: 1
+              basename: "./RESTART-04/"
+              ocn_sfc_filename: MOM.res.nc
+              ocn_filename: MOM.res.nc
+              ice_filename: ice_model.res.nc
+              date: '2015-01-01T06:00:00Z'              
+          prefix: soca
+          default_seed: 1
+          method: loc
+          strategy: common
+          new_hdiag: 1
+          new_param: 1
+          check_adjoints: 1
+          check_pos_def: 0
+          check_sqrt: 0
+          check_dirac: 0
+          check_perf: 0
+          check_randomization: 0
+          check_consistency: 0
+          check_optimality: 0
+          new_lct: 0
+          new_obsop: 1
+          logpres: 0
+          transform: 0
+          mask_type: none
+          mask_th: 0
+          mask_check: 0
+          nc1: 400
+          ntry: 3
+          nrep: 2
+          nc3: 10
+          dc: 500.0e3
+          nl0r: 1
+          ne: 4
+          gau_approx: 0
+          full_var: 0
+          local_diag: 0
+          local_rad: 0
+          displ_diag: 0
+          displ_rad: 0
+          displ_explicit: 0
+          displ_niter: 0
+          displ_rhflt: 0
+          displ_tol: 0
+          fit_type: fast
+          fit_wgt: 1
+          lhomh: 0
+          lhomv: 0
+          rvflt: 0
+          nldwh: 0
+          nldwv: 0
+          flt_type: average
+          diag_interp: bilin
+          diag_rhflt: 0
+          lsqrt: 0
+          resol: 10
+          nicas_interp: bilin
+          network: 1
+          mpicom: 1
+          ndir: 0
+          nobs: 200
+          obsdis: 1
+          obsop_interp: bilin          
         state:
         - read_from_file: 1
           basename: "./RESTART-01/"
@@ -481,15 +1076,9 @@ cost_function:
           ocn_sfc_filename: MOM.res.nc
           ocn_filename: MOM.res.nc
           ice_filename: ice_model.res.nc
-          date: '2015-01-01T06:00:00Z'
-        - read_from_file: 1
-          basename: "./RESTART-05/"
-          ocn_sfc_filename: MOM.res.nc
-          ocn_filename: MOM.res.nc
-          ice_filename: ice_model.res.nc
-          date: '2015-01-01T06:00:00Z'
+          date: '2015-01-01T06:00:00Z'          
       - covariance: ensemble
-        members: 5
+        members: 4
         variables:
           variables:
               - cicen
@@ -504,11 +1093,101 @@ cost_function:
               - ssh
         date: '2015-01-01T07:00:00Z'
         localization:
-          localization: NICAS
-          standard_deviation: '1.0'
-          vertical_correlation: '0.4'
-          horizontal_length_scale: 2e6
-          maximum_condition_number: 1.0e6
+          localization: HDIAG_NICAS
+          variables:
+            variables:            
+            - cicen
+            - hicen
+            - hsnon
+            - tsfcn
+            - qsnon
+            - sicnk
+            - qicnk
+            - socn
+            - tocn
+            - ssh
+          hdiag_ensemble:
+            - read_from_file: 1
+              basename: "./RESTART-01/"
+              ocn_sfc_filename: MOM.res.nc
+              ocn_filename: MOM.res.nc
+              ice_filename: ice_model.res.nc
+              date: '2015-01-01T07:00:00Z'
+            - read_from_file: 1
+              basename: "./RESTART-02/"
+              ocn_sfc_filename: MOM.res.nc
+              ocn_filename: MOM.res.nc
+              ice_filename: ice_model.res.nc
+              date: '2015-01-01T07:00:00Z'          
+            - read_from_file: 1
+              basename: "./RESTART-03/"
+              ocn_sfc_filename: MOM.res.nc
+              ocn_filename: MOM.res.nc
+              ice_filename: ice_model.res.nc
+              date: '2015-01-01T07:00:00Z'
+            - read_from_file: 1
+              basename: "./RESTART-04/"
+              ocn_sfc_filename: MOM.res.nc
+              ocn_filename: MOM.res.nc
+              ice_filename: ice_model.res.nc
+              date: '2015-01-01T07:00:00Z'              
+          prefix: soca
+          default_seed: 1
+          method: loc
+          strategy: common
+          new_hdiag: 1
+          new_param: 1
+          check_adjoints: 1
+          check_pos_def: 0
+          check_sqrt: 0
+          check_dirac: 0
+          check_perf: 0
+          check_randomization: 0
+          check_consistency: 0
+          check_optimality: 0
+          new_lct: 0
+          new_obsop: 1
+          logpres: 0
+          transform: 0
+          mask_type: none
+          mask_th: 0
+          mask_check: 0
+          nc1: 400
+          ntry: 3
+          nrep: 2
+          nc3: 10
+          dc: 500.0e3
+          nl0r: 1
+          ne: 4
+          gau_approx: 0
+          full_var: 0
+          local_diag: 0
+          local_rad: 0
+          displ_diag: 0
+          displ_rad: 0
+          displ_explicit: 0
+          displ_niter: 0
+          displ_rhflt: 0
+          displ_tol: 0
+          fit_type: fast
+          fit_wgt: 1
+          lhomh: 0
+          lhomv: 0
+          rvflt: 0
+          nldwh: 0
+          nldwv: 0
+          flt_type: average
+          diag_interp: bilin
+          diag_rhflt: 0
+          lsqrt: 0
+          resol: 10
+          nicas_interp: bilin
+          network: 1
+          mpicom: 1
+          ndir: 0
+          nobs: 200
+          obsdis: 1
+          obsop_interp: bilin          
         state:
         - read_from_file: 1
           basename: "./RESTART-01/"
@@ -533,15 +1212,9 @@ cost_function:
           ocn_sfc_filename: MOM.res.nc
           ocn_filename: MOM.res.nc
           ice_filename: ice_model.res.nc
-          date: '2015-01-01T07:00:00Z'
-        - read_from_file: 1
-          basename: "./RESTART-05/"
-          ocn_sfc_filename: MOM.res.nc
-          ocn_filename: MOM.res.nc
-          ice_filename: ice_model.res.nc
-          date: '2015-01-01T07:00:00Z'
+          date: '2015-01-01T07:00:00Z'          
       - covariance: ensemble
-        members: 5
+        members: 4
         variables:
           variables:
               - cicen
@@ -556,11 +1229,101 @@ cost_function:
               - ssh
         date: '2015-01-01T08:00:00Z'
         localization:
-          localization: NICAS
-          standard_deviation: '1.0'
-          vertical_correlation: '0.4'
-          horizontal_length_scale: 2e6
-          maximum_condition_number: 1.0e6
+          localization: HDIAG_NICAS
+          variables:
+            variables:            
+            - cicen
+            - hicen
+            - hsnon
+            - tsfcn
+            - qsnon
+            - sicnk
+            - qicnk
+            - socn
+            - tocn
+            - ssh
+          hdiag_ensemble:
+            - read_from_file: 1
+              basename: "./RESTART-01/"
+              ocn_sfc_filename: MOM.res.nc
+              ocn_filename: MOM.res.nc
+              ice_filename: ice_model.res.nc
+              date: '2015-01-01T08:00:00Z'
+            - read_from_file: 1
+              basename: "./RESTART-02/"
+              ocn_sfc_filename: MOM.res.nc
+              ocn_filename: MOM.res.nc
+              ice_filename: ice_model.res.nc
+              date: '2015-01-01T08:00:00Z'          
+            - read_from_file: 1
+              basename: "./RESTART-03/"
+              ocn_sfc_filename: MOM.res.nc
+              ocn_filename: MOM.res.nc
+              ice_filename: ice_model.res.nc
+              date: '2015-01-01T08:00:00Z'
+            - read_from_file: 1
+              basename: "./RESTART-04/"
+              ocn_sfc_filename: MOM.res.nc
+              ocn_filename: MOM.res.nc
+              ice_filename: ice_model.res.nc
+              date: '2015-01-01T08:00:00Z'              
+          prefix: soca
+          default_seed: 1
+          method: loc
+          strategy: common
+          new_hdiag: 1
+          new_param: 1
+          check_adjoints: 1
+          check_pos_def: 0
+          check_sqrt: 0
+          check_dirac: 0
+          check_perf: 0
+          check_randomization: 0
+          check_consistency: 0
+          check_optimality: 0
+          new_lct: 0
+          new_obsop: 1
+          logpres: 0
+          transform: 0
+          mask_type: none
+          mask_th: 0
+          mask_check: 0
+          nc1: 400
+          ntry: 3
+          nrep: 2
+          nc3: 10
+          dc: 500.0e3
+          nl0r: 1
+          ne: 4
+          gau_approx: 0
+          full_var: 0
+          local_diag: 0
+          local_rad: 0
+          displ_diag: 0
+          displ_rad: 0
+          displ_explicit: 0
+          displ_niter: 0
+          displ_rhflt: 0
+          displ_tol: 0
+          fit_type: fast
+          fit_wgt: 1
+          lhomh: 0
+          lhomv: 0
+          rvflt: 0
+          nldwh: 0
+          nldwv: 0
+          flt_type: average
+          diag_interp: bilin
+          diag_rhflt: 0
+          lsqrt: 0
+          resol: 10
+          nicas_interp: bilin
+          network: 1
+          mpicom: 1
+          ndir: 0
+          nobs: 200
+          obsdis: 1
+          obsop_interp: bilin          
         state:
         - read_from_file: 1
           basename: "./RESTART-01/"
@@ -585,15 +1348,9 @@ cost_function:
           ocn_sfc_filename: MOM.res.nc
           ocn_filename: MOM.res.nc
           ice_filename: ice_model.res.nc
-          date: '2015-01-01T08:00:00Z'
-        - read_from_file: 1
-          basename: "./RESTART-05/"
-          ocn_sfc_filename: MOM.res.nc
-          ocn_filename: MOM.res.nc
-          ice_filename: ice_model.res.nc
-          date: '2015-01-01T08:00:00Z'
+          date: '2015-01-01T08:00:00Z'          
       - covariance: ensemble
-        members: 5
+        members: 4
         variables:
           variables:
               - cicen
@@ -608,11 +1365,101 @@ cost_function:
               - ssh
         date: '2015-01-01T09:00:00Z'
         localization:
-          localization: NICAS
-          standard_deviation: '1.0'
-          vertical_correlation: '0.4'
-          horizontal_length_scale: 2e6
-          maximum_condition_number: 1.0e6
+          localization: HDIAG_NICAS
+          variables:
+            variables:            
+            - cicen
+            - hicen
+            - hsnon
+            - tsfcn
+            - qsnon
+            - sicnk
+            - qicnk
+            - socn
+            - tocn
+            - ssh
+          hdiag_ensemble:
+            - read_from_file: 1
+              basename: "./RESTART-01/"
+              ocn_sfc_filename: MOM.res.nc
+              ocn_filename: MOM.res.nc
+              ice_filename: ice_model.res.nc
+              date: '2015-01-01T09:00:00Z'
+            - read_from_file: 1
+              basename: "./RESTART-02/"
+              ocn_sfc_filename: MOM.res.nc
+              ocn_filename: MOM.res.nc
+              ice_filename: ice_model.res.nc
+              date: '2015-01-01T09:00:00Z'          
+            - read_from_file: 1
+              basename: "./RESTART-03/"
+              ocn_sfc_filename: MOM.res.nc
+              ocn_filename: MOM.res.nc
+              ice_filename: ice_model.res.nc
+              date: '2015-01-01T09:00:00Z'
+            - read_from_file: 1
+              basename: "./RESTART-04/"
+              ocn_sfc_filename: MOM.res.nc
+              ocn_filename: MOM.res.nc
+              ice_filename: ice_model.res.nc
+              date: '2015-01-01T09:00:00Z'              
+          prefix: soca
+          default_seed: 1
+          method: loc
+          strategy: common
+          new_hdiag: 1
+          new_param: 1
+          check_adjoints: 1
+          check_pos_def: 0
+          check_sqrt: 0
+          check_dirac: 0
+          check_perf: 0
+          check_randomization: 0
+          check_consistency: 0
+          check_optimality: 0
+          new_lct: 0
+          new_obsop: 1
+          logpres: 0
+          transform: 0
+          mask_type: none
+          mask_th: 0
+          mask_check: 0
+          nc1: 400
+          ntry: 3
+          nrep: 2
+          nc3: 10
+          dc: 500.0e3
+          nl0r: 1
+          ne: 4
+          gau_approx: 0
+          full_var: 0
+          local_diag: 0
+          local_rad: 0
+          displ_diag: 0
+          displ_rad: 0
+          displ_explicit: 0
+          displ_niter: 0
+          displ_rhflt: 0
+          displ_tol: 0
+          fit_type: fast
+          fit_wgt: 1
+          lhomh: 0
+          lhomv: 0
+          rvflt: 0
+          nldwh: 0
+          nldwv: 0
+          flt_type: average
+          diag_interp: bilin
+          diag_rhflt: 0
+          lsqrt: 0
+          resol: 10
+          nicas_interp: bilin
+          network: 1
+          mpicom: 1
+          ndir: 0
+          nobs: 200
+          obsdis: 1
+          obsop_interp: bilin          
         state:
         - read_from_file: 1
           basename: "./RESTART-01/"
@@ -637,15 +1484,9 @@ cost_function:
           ocn_sfc_filename: MOM.res.nc
           ocn_filename: MOM.res.nc
           ice_filename: ice_model.res.nc
-          date: '2015-01-01T09:00:00Z'
-        - read_from_file: 1
-          basename: "./RESTART-05/"
-          ocn_sfc_filename: MOM.res.nc
-          ocn_filename: MOM.res.nc
-          ice_filename: ice_model.res.nc
-          date: '2015-01-01T09:00:00Z'
+          date: '2015-01-01T09:00:00Z'          
       - covariance: ensemble
-        members: 5
+        members: 4
         variables:
           variables:
               - cicen
@@ -660,11 +1501,101 @@ cost_function:
               - ssh
         date: '2015-01-01T10:00:00Z'
         localization:
-          localization: NICAS
-          standard_deviation: '1.0'
-          vertical_correlation: '0.4'
-          horizontal_length_scale: 2e6
-          maximum_condition_number: 1.0e6
+          localization: HDIAG_NICAS
+          variables:
+            variables:            
+            - cicen
+            - hicen
+            - hsnon
+            - tsfcn
+            - qsnon
+            - sicnk
+            - qicnk
+            - socn
+            - tocn
+            - ssh
+          hdiag_ensemble:
+            - read_from_file: 1
+              basename: "./RESTART-01/"
+              ocn_sfc_filename: MOM.res.nc
+              ocn_filename: MOM.res.nc
+              ice_filename: ice_model.res.nc
+              date: '2015-01-01T10:00:00Z'
+            - read_from_file: 1
+              basename: "./RESTART-02/"
+              ocn_sfc_filename: MOM.res.nc
+              ocn_filename: MOM.res.nc
+              ice_filename: ice_model.res.nc
+              date: '2015-01-01T10:00:00Z'          
+            - read_from_file: 1
+              basename: "./RESTART-03/"
+              ocn_sfc_filename: MOM.res.nc
+              ocn_filename: MOM.res.nc
+              ice_filename: ice_model.res.nc
+              date: '2015-01-01T10:00:00Z'
+            - read_from_file: 1
+              basename: "./RESTART-04/"
+              ocn_sfc_filename: MOM.res.nc
+              ocn_filename: MOM.res.nc
+              ice_filename: ice_model.res.nc
+              date: '2015-01-01T10:00:00Z'              
+          prefix: soca
+          default_seed: 1
+          method: loc
+          strategy: common
+          new_hdiag: 1
+          new_param: 1
+          check_adjoints: 1
+          check_pos_def: 0
+          check_sqrt: 0
+          check_dirac: 0
+          check_perf: 0
+          check_randomization: 0
+          check_consistency: 0
+          check_optimality: 0
+          new_lct: 0
+          new_obsop: 1
+          logpres: 0
+          transform: 0
+          mask_type: none
+          mask_th: 0
+          mask_check: 0
+          nc1: 400
+          ntry: 3
+          nrep: 2
+          nc3: 10
+          dc: 500.0e3
+          nl0r: 1
+          ne: 4
+          gau_approx: 0
+          full_var: 0
+          local_diag: 0
+          local_rad: 0
+          displ_diag: 0
+          displ_rad: 0
+          displ_explicit: 0
+          displ_niter: 0
+          displ_rhflt: 0
+          displ_tol: 0
+          fit_type: fast
+          fit_wgt: 1
+          lhomh: 0
+          lhomv: 0
+          rvflt: 0
+          nldwh: 0
+          nldwv: 0
+          flt_type: average
+          diag_interp: bilin
+          diag_rhflt: 0
+          lsqrt: 0
+          resol: 10
+          nicas_interp: bilin
+          network: 1
+          mpicom: 1
+          ndir: 0
+          nobs: 200
+          obsdis: 1
+          obsop_interp: bilin          
         state:
         - read_from_file: 1
           basename: "./RESTART-01/"
@@ -689,15 +1620,9 @@ cost_function:
           ocn_sfc_filename: MOM.res.nc
           ocn_filename: MOM.res.nc
           ice_filename: ice_model.res.nc
-          date: '2015-01-01T10:00:00Z'
-        - read_from_file: 1
-          basename: "./RESTART-05/"
-          ocn_sfc_filename: MOM.res.nc
-          ocn_filename: MOM.res.nc
-          ice_filename: ice_model.res.nc
-          date: '2015-01-01T10:00:00Z'
+          date: '2015-01-01T10:00:00Z'          
       - covariance: ensemble
-        members: 5
+        members: 4
         variables:
           variables:
               - cicen
@@ -712,11 +1637,101 @@ cost_function:
               - ssh
         date: '2015-01-01T11:00:00Z'
         localization:
-          localization: NICAS
-          standard_deviation: '1.0'
-          vertical_correlation: '0.4'
-          horizontal_length_scale: 2e6
-          maximum_condition_number: 1.0e6
+          localization: HDIAG_NICAS
+          variables:
+            variables:            
+            - cicen
+            - hicen
+            - hsnon
+            - tsfcn
+            - qsnon
+            - sicnk
+            - qicnk
+            - socn
+            - tocn
+            - ssh
+          hdiag_ensemble:
+            - read_from_file: 1
+              basename: "./RESTART-01/"
+              ocn_sfc_filename: MOM.res.nc
+              ocn_filename: MOM.res.nc
+              ice_filename: ice_model.res.nc
+              date: '2015-01-01T11:00:00Z'
+            - read_from_file: 1
+              basename: "./RESTART-02/"
+              ocn_sfc_filename: MOM.res.nc
+              ocn_filename: MOM.res.nc
+              ice_filename: ice_model.res.nc
+              date: '2015-01-01T11:00:00Z'          
+            - read_from_file: 1
+              basename: "./RESTART-03/"
+              ocn_sfc_filename: MOM.res.nc
+              ocn_filename: MOM.res.nc
+              ice_filename: ice_model.res.nc
+              date: '2015-01-01T11:00:00Z'
+            - read_from_file: 1
+              basename: "./RESTART-04/"
+              ocn_sfc_filename: MOM.res.nc
+              ocn_filename: MOM.res.nc
+              ice_filename: ice_model.res.nc
+              date: '2015-01-01T11:00:00Z'              
+          prefix: soca
+          default_seed: 1
+          method: loc
+          strategy: common
+          new_hdiag: 1
+          new_param: 1
+          check_adjoints: 1
+          check_pos_def: 0
+          check_sqrt: 0
+          check_dirac: 0
+          check_perf: 0
+          check_randomization: 0
+          check_consistency: 0
+          check_optimality: 0
+          new_lct: 0
+          new_obsop: 1
+          logpres: 0
+          transform: 0
+          mask_type: none
+          mask_th: 0
+          mask_check: 0
+          nc1: 400
+          ntry: 3
+          nrep: 2
+          nc3: 10
+          dc: 500.0e3
+          nl0r: 1
+          ne: 4
+          gau_approx: 0
+          full_var: 0
+          local_diag: 0
+          local_rad: 0
+          displ_diag: 0
+          displ_rad: 0
+          displ_explicit: 0
+          displ_niter: 0
+          displ_rhflt: 0
+          displ_tol: 0
+          fit_type: fast
+          fit_wgt: 1
+          lhomh: 0
+          lhomv: 0
+          rvflt: 0
+          nldwh: 0
+          nldwv: 0
+          flt_type: average
+          diag_interp: bilin
+          diag_rhflt: 0
+          lsqrt: 0
+          resol: 10
+          nicas_interp: bilin
+          network: 1
+          mpicom: 1
+          ndir: 0
+          nobs: 200
+          obsdis: 1
+          obsop_interp: bilin          
         state:
         - read_from_file: 1
           basename: "./RESTART-01/"
@@ -741,15 +1756,9 @@ cost_function:
           ocn_sfc_filename: MOM.res.nc
           ocn_filename: MOM.res.nc
           ice_filename: ice_model.res.nc
-          date: '2015-01-01T11:00:00Z'
-        - read_from_file: 1
-          basename: "./RESTART-05/"
-          ocn_sfc_filename: MOM.res.nc
-          ocn_filename: MOM.res.nc
-          ice_filename: ice_model.res.nc
-          date: '2015-01-01T11:00:00Z'
+          date: '2015-01-01T11:00:00Z'          
       - covariance: ensemble
-        members: 5
+        members: 4
         variables:
           variables:
               - cicen
@@ -764,11 +1773,101 @@ cost_function:
               - ssh
         date: '2015-01-01T12:00:00Z'
         localization:
-          localization: NICAS
-          standard_deviation: '1.0'
-          vertical_correlation: '0.4'
-          horizontal_length_scale: 2e6
-          maximum_condition_number: 1.0e6
+          localization: HDIAG_NICAS
+          variables:
+            variables:            
+            - cicen
+            - hicen
+            - hsnon
+            - tsfcn
+            - qsnon
+            - sicnk
+            - qicnk
+            - socn
+            - tocn
+            - ssh
+          hdiag_ensemble:
+            - read_from_file: 1
+              basename: "./RESTART-01/"
+              ocn_sfc_filename: MOM.res.nc
+              ocn_filename: MOM.res.nc
+              ice_filename: ice_model.res.nc
+              date: '2015-01-01T12:00:00Z'
+            - read_from_file: 1
+              basename: "./RESTART-02/"
+              ocn_sfc_filename: MOM.res.nc
+              ocn_filename: MOM.res.nc
+              ice_filename: ice_model.res.nc
+              date: '2015-01-01T12:00:00Z'          
+            - read_from_file: 1
+              basename: "./RESTART-03/"
+              ocn_sfc_filename: MOM.res.nc
+              ocn_filename: MOM.res.nc
+              ice_filename: ice_model.res.nc
+              date: '2015-01-01T12:00:00Z'
+            - read_from_file: 1
+              basename: "./RESTART-04/"
+              ocn_sfc_filename: MOM.res.nc
+              ocn_filename: MOM.res.nc
+              ice_filename: ice_model.res.nc
+              date: '2015-01-01T12:00:00Z'              
+          prefix: soca
+          default_seed: 1
+          method: loc
+          strategy: common
+          new_hdiag: 1
+          new_param: 1
+          check_adjoints: 1
+          check_pos_def: 0
+          check_sqrt: 0
+          check_dirac: 0
+          check_perf: 0
+          check_randomization: 0
+          check_consistency: 0
+          check_optimality: 0
+          new_lct: 0
+          new_obsop: 1
+          logpres: 0
+          transform: 0
+          mask_type: none
+          mask_th: 0
+          mask_check: 0
+          nc1: 400
+          ntry: 3
+          nrep: 2
+          nc3: 10
+          dc: 500.0e3
+          nl0r: 1
+          ne: 4
+          gau_approx: 0
+          full_var: 0
+          local_diag: 0
+          local_rad: 0
+          displ_diag: 0
+          displ_rad: 0
+          displ_explicit: 0
+          displ_niter: 0
+          displ_rhflt: 0
+          displ_tol: 0
+          fit_type: fast
+          fit_wgt: 1
+          lhomh: 0
+          lhomv: 0
+          rvflt: 0
+          nldwh: 0
+          nldwv: 0
+          flt_type: average
+          diag_interp: bilin
+          diag_rhflt: 0
+          lsqrt: 0
+          resol: 10
+          nicas_interp: bilin
+          network: 1
+          mpicom: 1
+          ndir: 0
+          nobs: 200
+          obsdis: 1
+          obsop_interp: bilin          
         state:
         - read_from_file: 1
           basename: "./RESTART-01/"
@@ -793,36 +1892,36 @@ cost_function:
           ocn_sfc_filename: MOM.res.nc
           ocn_filename: MOM.res.nc
           ice_filename: ice_model.res.nc
-          date: '2015-01-01T12:00:00Z'
-        - read_from_file: 1
-          basename: "./RESTART-05/"
-          ocn_sfc_filename: MOM.res.nc
-          ocn_filename: MOM.res.nc
-          ice_filename: ice_model.res.nc
-          date: '2015-01-01T12:00:00Z'
-  Jc:
-  - jcdfi:
-      type: DolphChebyshev
-      variables:
-        - cicen
-        - hicen
-        - hsnon
-        - tsfcn
-        - qsnon
-        - sicnk
-        - qicnk
-        - socn
-        - tocn
-        - ssh      
-      cutoff: PT3H
-      alpha: 0.1
+          date: '2015-01-01T12:00:00Z'          
+#  Jc:
+#  - jcdfi:
+#      type: DolphChebyshev
+#      variables:
+#        - cicen
+#        - hicen
+#        - hsnon
+#        - tsfcn
+#        - qsnon
+#        - sicnk
+#        - qicnk
+#        - socn
+#        - tocn
+#        - ssh      
+#      cutoff: PT3H
+#      alpha: 0.1
 minimizer:
   algorithm: DRIPCG
+#output:
+#  first: PT0S
+#  frequency: PT6H
+#  datadir: Data
+#  exp: example
+#  type: an
 output:
-  first: PT0S
-  frequency: PT6H
+  first: PT3H
+  frequency: PT06H
   datadir: Data
-  exp: example
+  exp: 4denvar
   type: an
 variational:
   iteration:
@@ -832,8 +1931,8 @@ variational:
       tstep: PT1H
       trajectory:
         tstep: PT1H
-    ninner: 2
-    gradient_norm_reduction: 1e-10
+    ninner: 1
+    gradient_norm_reduction: 1e-6
     test: on
     diagnostics:
       departures: ombg
