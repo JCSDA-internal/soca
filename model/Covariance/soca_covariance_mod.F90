@@ -101,7 +101,7 @@ subroutine soca_3d_covar_sqrt_mult(xincr, xctrl, config)
 use iso_c_binding
 use kinds
 use soca_fields
-use type_nam, only: namtype
+use type_nam, only: namtype, namcheck
 use type_geom, only: geomtype, compute_grid_mesh
 use type_bpar, only: bpartype
 use type_ndata, only: ndatatype,ndata_dealloc
@@ -187,11 +187,14 @@ nam%ens1_ne_offset = 0
 do il=1,nam%nl
    nam%levs(il) = il
 end do
+nam%method = 'cor'
+nam%strategy = 'common'
+nam%diag_interp = 'natural'
+nam%flt_type = 'gc99'
 
 geom%nc0a = nc0a
 geom%nl0 = nl0
 geom%nlev = nl0
-
 
 !Initialize random number generator
 call create_randgen(nam)
@@ -205,9 +208,11 @@ call compute_grid_mesh(nam,geom)
 print *,"================="
 call convert_to_ug(xctrl, ug)
 print *,"================="
-
 print *,ndata%nsb
 !ndata%nam = nam
+
+call namcheck(nam)
+
 call apply_nicas(geom,ndata,ug%fld)
 !call apply_localization_from_sqrt(nam,geom,bpar,ndata,ug%fld)
 print *,"================="

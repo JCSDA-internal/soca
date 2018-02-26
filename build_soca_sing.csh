@@ -19,6 +19,7 @@ export MPI_LIBRARIES="/usr/local/lib/libmpi.so"
 
 export UFO_DATA_DIR="/home/gvernier/Sandboxes/soca/code/jedi-bundle/ufo/test/testinput/"
 export MOM6_SCRATCH_DIR="/home/gvernier/Sandboxes/MOM6-examples/ice_ocean_SIS2/SIS2/scratch_ens/"
+#export MOM6_SCRATCH_DIR="/home/gvernier/Sandboxes/MOM6-examples/ice_ocean_SIS2/Baltic/scratch/"
 
 rm -rf ${BUILD}/soca; mkdir ${BUILD}/soca; cd ${BUILD}/soca
 
