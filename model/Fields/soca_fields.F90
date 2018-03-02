@@ -133,7 +133,6 @@ contains
     !type(time_type)       :: Time_step_fast !< The time step for the ice_model_fast
     !type(time_type)      :: Time_step_slow !< The time step for the ice_model_slow    
     !call fms_io_init
-
     
     self%geom => geom
     self%nf   = vars%nv
@@ -648,7 +647,7 @@ contains
 
     
     type(ufo_locs)    :: locs
-    type(ufo_geovals)    :: gom
+    type(ufo_geovals)    :: geovals
     type(ufo_vars)    :: vars
     integer            :: nobs, nval
     
@@ -911,39 +910,43 @@ contains
 
   ! ------------------------------------------------------------------------------
 
-  subroutine interp_tl(fld, locs, gom)
+  subroutine interp_tl(fld, locs, vars, geovals)
     use ufo_locs_mod
     use ufo_geovals_mod
+    use ufo_vars_mod
     implicit none
     type(soca_field), intent(inout)   :: fld
     type(ufo_locs), intent(in)    :: locs
-    type(ufo_geovals), intent(inout) :: gom
+    type(ufo_vars),     intent(in)    :: vars    
+    type(ufo_geovals), intent(inout) :: geovals
 
     call check(fld)
 
-    call nicas_interph(fld, locs, gom)
+    call nicas_interph(fld, locs, vars, geovals)
 
   end subroutine interp_tl
 
   ! ------------------------------------------------------------------------------
 
-  subroutine interp_ad(fld, locs, gom)
+  subroutine interp_ad(fld, locs, vars, geovals)
     use ufo_locs_mod
-    use ufo_geovals_mod    
+    use ufo_geovals_mod
+    use ufo_vars_mod    
     implicit none
     type(soca_field), intent(inout) :: fld
     type(ufo_locs), intent(in)    :: locs
-    type(ufo_geovals), intent(inout) :: gom    
+    type(ufo_vars),     intent(in)    :: vars        
+    type(ufo_geovals), intent(inout) :: geovals    
     character(2)                        :: op_type='AD'
 
     call check(fld)
-    call nicas_interphad(fld, locs, gom)
+    call nicas_interphad(fld, locs, vars, geovals)
 
   end subroutine interp_ad
 
   ! ------------------------------------------------------------------------------
 
-  subroutine nicas_interph(fld, locs, gom)
+  subroutine nicas_interph(fld, locs, ufovars, geovals)
 
     use ufo_locs_mod_c  
     use ufo_locs_mod  
@@ -955,16 +958,17 @@ contains
     
     type(soca_field), intent(inout)  :: fld
     type(ufo_locs), intent(in)       :: locs
-    type(ufo_geovals), intent(inout)  :: gom
+    type(ufo_vars),     intent(in)    :: ufovars            
+    type(ufo_geovals), intent(inout)  :: geovals
 
     integer :: Nc, No, var_type_index, Ncat
-    integer :: ivar, gom_dim1, cnt_fld
+    integer :: ivar, geovals_dim1, cnt_fld
     character(len=1024)  :: buf
     logical,allocatable :: mask(:), masko(:)               ! < mask (ncells, nlevels)
     real(kind=kind_real), allocatable :: lon(:), lat(:), lono(:), lato(:), fld_src(:), fld_dst(:)
     integer :: nobs, nval
-    type(ufo_vars) :: ufovars
-    character(len=MAXVARLEN), dimension(1) :: cvars
+    !type(ufo_vars) :: ufovars
+    !character(len=MAXVARLEN), dimension(1) :: cvars
 
     ! interp stuff
     integer, allocatable :: imask(:)
@@ -973,52 +977,80 @@ contains
 
     integer :: icat, index, ii, jj
 
+    print *,"===================UFOVARS==================="
+    print *,"UFOVARS:",ufovars%fldnames, ufovars%nv, shape(geovals)
+
+    !call abor1_ftn("===================================================================")                  
     Nc = fld%geom%ocean%nx*fld%geom%ocean%ny
     No = locs%nlocs
     Ncat = fld%geom%ocean%ncat
     ivar = 1 ! HARD CODED
     
     nobs = locs%nlocs
-    nval = fld%geom%ocean%ncat
-    cvars(1) = "ice_concentration"
-    call ufo_vars_setup(ufovars, cvars)
-    if ( gom%lalloc .or. gom%linit) then
-       call ufo_geovals_delete(gom)
-    end if
-    call ufo_geovals_init(gom)
-    call ufo_geovals_setup(gom, ufovars, nobs)
-    gom%geovals(1)%nval = nval
-    if (allocated(gom%geovals(ivar)%vals))  deallocate(gom%geovals(ivar)%vals)
-    allocate(gom%geovals(1)%vals(nval,nobs))
-
-    gom%geovals(1)%vals(:,:)=0.0_kind_real    
-    gom%lalloc = .true.       
-    gom%linit = .true.    
-
-    !print *,'locs%lat=',locs%lat
-    !print *,'=== lon model:',fld%geom%ocean%lon
-    if (No>0) then
-       if (fld%hinterp_initialized.eq.0) then
-          ! Initialize interp object          
-          call fld%hinterp%interp_init(No)          
-          !call fld%hinterp%interp_compute_weight(fld%geom%ocean%lon, fld%geom%ocean%lat, locs%lon, locs%lat)
-          fld%hinterp_initialized = 1
-       end if
-       allocate(obsout(No))
-
-       ! Hardcoded for sea-ice fraction
-       do icat = 1,fld%geom%ocean%ncat
-          call fld%hinterp%interp_compute_weight(fld%geom%ocean%lon, fld%geom%ocean%lat, locs%lon, locs%lat)          
-          call fld%hinterp%interp_apply(fld%cicen(:,:,icat+1)*fld%geom%ocean%mask2d(:,:)&
-               &, gom%geovals(1)%vals(icat,:))
-
-       end do
-
-    end if
     
+    !cvars(1) = "ice_concentration"
+    !cvars(2) = "steric_height"    
+
+    if ( geovals%lalloc .or. geovals%linit) then
+       call ufo_geovals_delete(geovals)
+    end if
+    call ufo_geovals_init(geovals)
+    call ufo_geovals_setup(geovals, ufovars, nobs)
+
+    do ivar = 1, ufovars%nv
+       print *,'ufovar=',ufovars%fldnames(ivar)
+       
+       select case (trim(ufovars%fldnames(ivar)))
+
+       case ("ice_concentration")
+
+          geovals%geovals(ivar)%nval = fld%geom%ocean%ncat
+          if (.not.(allocated(geovals%geovals(ivar)%vals))) allocate(geovals%geovals(ivar)%vals(nval,nobs))
+          !geovals%geovals(ivar)%vals(:,:)=0.0_kind_real
+
+          !if (fld%hinterp_initialized.eq.0) then
+             print *,"===================INTERP===================:",ufovars%fldnames(ivar)
+             call fld%hinterp%interp_init(No)          
+             !call fld%hinterp%interp_compute_weight(fld%geom%ocean%lon, fld%geom%ocean%lat, locs%lon, locs%lat)
+             fld%hinterp_initialized = 1
+             print *,'========== shape:',shape(geovals%geovals(ivar)%vals(icat,:))
+             do icat = 1,fld%geom%ocean%ncat
+                call fld%hinterp%interp_compute_weight(fld%geom%ocean%lon, fld%geom%ocean%lat, locs%lon, locs%lat)
+                print *,'================= ',shape( geovals%geovals(ivar)%vals(icat,:))
+                !call fld%hinterp%interp_apply(fld%cicen(:,:,icat+1)*fld%geom%ocean%mask2d(:,:), geovals%geovals(ivar)%vals(icat,:))
+                !geovals%geovals(ivar)%vals(icat,:) = .1
+                print *,'================= ',geovals%geovals(ivar)%vals(icat,:)
+             end do             
+             !call abor1_ftn("===================================================================")                  
+          !end if
+
+!!$       case ("steric_height")
+!!$          
+!!$          geovals%geovals(ivar)%nval = 1
+!!$          if (allocated(geovals%geovals(ivar)%vals))  deallocate(geovals%geovals(ivar)%vals)
+!!$          allocate(geovals%geovals(ivar)%vals(nval,nobs))
+!!$          geovals%geovals(ivar)%vals(:,:)=0.0_kind_real    
+!!$          geovals%lalloc = .true.       
+!!$          geovals%linit = .true.    
+!!$
+!!$          if (No>0) then
+!!$             if (fld%hinterp_initialized.eq.0) then
+!!$                call fld%hinterp%interp_init(No)          
+!!$                fld%hinterp_initialized = 1
+!!$             end if
+!!$             allocate(obsout(No))
+!!$             call fld%hinterp%interp_compute_weight(fld%geom%ocean%lon, fld%geom%ocean%lat, locs%lon, locs%lat)          
+!!$             call fld%hinterp%interp_apply(fld%ssh(:,:)*fld%geom%ocean%mask2d(:,:)&
+!!$               &, geovals%geovals(ivar)%vals(1,:))
+
+!!$          end if
+
+       end select
+    end do
+
   end subroutine nicas_interph
 
-  subroutine nicas_interphad(fld, locs, gom)
+  subroutine nicas_interphad(fld, locs, ufovars, geovals)
 
     use ufo_locs_mod_c  
     use ufo_locs_mod  
@@ -1030,16 +1062,17 @@ contains
     
     type(soca_field), intent(inout)  :: fld
     type(ufo_locs), intent(in)       :: locs
-    type(ufo_geovals), intent(in)  :: gom
+    type(ufo_vars),     intent(in)    :: ufovars    
+    type(ufo_geovals), intent(in)  :: geovals
 
     integer :: Nc, No, var_type_index, Ncat
-    integer :: ivar, gom_dim1, cnt_fld
+    integer :: ivar, geovals_dim1, cnt_fld
     character(len=1024)  :: buf
     logical,allocatable :: mask(:), masko(:)               ! < mask (ncells, nlevels)
     real(kind=kind_real), allocatable :: lon(:), lat(:), lono(:), lato(:), fld_src(:), fld_dst(:)
     integer :: nobs, nval
-    type(ufo_vars) :: ufovars
-    character(len=MAXVARLEN), dimension(1) :: cvars
+
+    !character(len=MAXVARLEN), dimension(1) :: cvars
 
     ! interp stuff
     integer, allocatable :: imask(:)
@@ -1048,7 +1081,7 @@ contains
 
     integer :: icat, index, ii, jj
 
-    Nc = fld%geom%ocean%nx*fld%geom%ocean%ny
+    !Nc = fld%geom%ocean%nx*fld%geom%ocean%ny
     No = locs%nlocs
     Ncat = fld%geom%ocean%ncat
     ivar = 1 ! HARD CODED
@@ -1061,8 +1094,8 @@ contains
        do index = 1, No
           ii = fld%hinterp%index(index,1)
           jj = fld%hinterp%index(index,2)
-          fld%cicen(ii,jj,icat+1) = fld%cicen(ii,jj,icat+1) + gom%geovals(1)%vals(icat,index)
-          !print *,'      FIELD AD:',ii,jj,gom%geovals(1)%vals(icat,index)
+          fld%cicen(ii,jj,icat+1) = fld%cicen(ii,jj,icat+1) + geovals%geovals(1)%vals(icat,index)
+          !print *,'      FIELD AD:',ii,jj,geovals%geovals(1)%vals(icat,index)
        enddo
     enddo
     !call abor1_ftn("===================================================================")    
