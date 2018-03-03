@@ -117,15 +117,18 @@ namespace soca {
   }
   // -----------------------------------------------------------------------------
   void Fields::interpolate(const ufo::Locations & locs, const oops::Variables & vars, ufo::GeoVaLs & gom) const {
-    soca_field_interp_tl_f90(keyFlds_, locs.toFortran(), gom.toFortran());
+    const eckit::Configuration * conf = &vars.toFortran();    
+    soca_field_interp_tl_f90(keyFlds_, locs.toFortran(), &conf, gom.toFortran());
    }
   // -----------------------------------------------------------------------------
   void Fields::interpolateTL(const ufo::Locations & locs, const oops::Variables & vars, ufo::GeoVaLs & gom) const {
-    soca_field_interp_tl_f90(keyFlds_, locs.toFortran(), gom.toFortran());
+    const eckit::Configuration * conf = &vars.toFortran();        
+    soca_field_interp_tl_f90(keyFlds_, locs.toFortran(), &conf, gom.toFortran());
   }
   // -----------------------------------------------------------------------------
   void Fields::interpolateAD(const ufo::Locations & locs, const oops::Variables & vars, const ufo::GeoVaLs & gom) {
-    soca_field_interp_ad_f90(keyFlds_, locs.toFortran(), gom.toFortran());
+    const eckit::Configuration * conf = &vars.toFortran();            
+    soca_field_interp_ad_f90(keyFlds_, locs.toFortran(), &conf, gom.toFortran());
   }
   // -----------------------------------------------------------------------------
   void Fields::changeResolution(const Fields & other) {

@@ -35,18 +35,19 @@ cost_function:
       date: '2015-01-01T12:00:00Z'
   Jo:
     ObsTypes:
-    - ObsType: SeaIceFraction
-      Generate:
-        nobs: 80
-        lat: 80.0
-        lon1: -260 #-270
-        lon2: 100 #0
+    - ObsType: StericHeight #SeaIceFraction
+      #Generate:
+      #  nobs: 100
+      #  lat: 45.0 #75.5
+      #  lon1: -200#-260 #-270
+      #  lon2: 0 #80 #0
       ObsData:
         ObsDataOut:
           obsfile: Data/test_obsout.nc
         ObsDataIn:
-          obsfile: Data/seaice_obs.nc                
-        obsvalue: ObsVal
+          #obsfile: Data/seaice_obs.nc
+          obsfile: Data/jason-2.nc           
+        obsvalue: ObsVal        
       Covariance:
         covariance: diagonal
         obserror: ObsErr

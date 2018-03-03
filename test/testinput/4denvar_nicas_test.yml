@@ -20,12 +20,12 @@ cost_function:
   - ssh
   Jo:
     ObsTypes:
-    - ObsType: SeaIceFraction
-      Generate:
-        nobs: 10
-        lat: 80.5
-        lon1: -180
-        lon2: 180
+    - ObsType: StericHeight #SeaIceFraction
+      #Generate:
+      #  nobs: 100 #10
+      #  lat: 0.0 #85.5
+      #  lon1: -200 #-280
+      #  lon2: 100 #80
         #nobs: 4
         #lat: 58.5
         #lon1: 18.50
@@ -34,7 +34,7 @@ cost_function:
         ObsDataOut:
           obsfile: Data/test_obsout.nc
         ObsDataIn:
-          obsfile: Data/seaice_obs.nc                
+          obsfile: Data/jason-2_002.nc #seaice_obs.nc                
         obsvalue: ObsVal
       Covariance:
         covariance: diagonal
@@ -62,14 +62,14 @@ cost_function:
         date: '2015-01-01T02:00:00Z'        
     Covariance:
       #static:
-      #  covariance: SocaError
-      #  standard_deviation: '0.8'
-      #  vertical_correlation: '0.2'
-      #  horizontal_length_scale: 1e6
-      #  date: '2015-01-01T00:00:00Z'
+        #covariance: SocaError
+        #standard_deviation: '0.8'
+        #vertical_correlation: '0.2'
+        #horizontal_length_scale: 1e6
+        #date: '2015-01-01T00:00:00Z'
       covariance_time:
       - covariance: ensemble
-        members: 5
+        members: 20
         variables:
           variables:
               - cicen
@@ -127,6 +127,96 @@ cost_function:
               ocn_sfc_filename: MOM.res.nc
               ocn_filename: MOM.res.nc
               ice_filename: ice_model.res.nc
+              date: '2015-01-01T00:00:00Z'
+            - read_from_file: 1
+              basename: "./RESTART-06/"
+              ocn_sfc_filename: MOM.res.nc
+              ocn_filename: MOM.res.nc
+              ice_filename: ice_model.res.nc
+              date: '2015-01-01T00:00:00Z'
+            - read_from_file: 1
+              basename: "./RESTART-07/"
+              ocn_sfc_filename: MOM.res.nc
+              ocn_filename: MOM.res.nc
+              ice_filename: ice_model.res.nc
+              date: '2015-01-01T00:00:00Z'
+            - read_from_file: 1
+              basename: "./RESTART-08/"
+              ocn_sfc_filename: MOM.res.nc
+              ocn_filename: MOM.res.nc
+              ice_filename: ice_model.res.nc
+              date: '2015-01-01T00:00:00Z'
+            - read_from_file: 1
+              basename: "./RESTART-09/"
+              ocn_sfc_filename: MOM.res.nc
+              ocn_filename: MOM.res.nc
+              ice_filename: ice_model.res.nc
+              date: '2015-01-01T00:00:00Z'
+            - read_from_file: 1
+              basename: "./RESTART-10/"
+              ocn_sfc_filename: MOM.res.nc
+              ocn_filename: MOM.res.nc
+              ice_filename: ice_model.res.nc
+              date: '2015-01-01T00:00:00Z'
+            - read_from_file: 1
+              basename: "./RESTART-11/"
+              ocn_sfc_filename: MOM.res.nc
+              ocn_filename: MOM.res.nc
+              ice_filename: ice_model.res.nc
+              date: '2015-01-01T00:00:00Z'
+            - read_from_file: 1
+              basename: "./RESTART-12/"
+              ocn_sfc_filename: MOM.res.nc
+              ocn_filename: MOM.res.nc
+              ice_filename: ice_model.res.nc
+              date: '2015-01-01T00:00:00Z'
+            - read_from_file: 1
+              basename: "./RESTART-13/"
+              ocn_sfc_filename: MOM.res.nc
+              ocn_filename: MOM.res.nc
+              ice_filename: ice_model.res.nc
+              date: '2015-01-01T00:00:00Z'
+            - read_from_file: 1
+              basename: "./RESTART-14/"
+              ocn_sfc_filename: MOM.res.nc
+              ocn_filename: MOM.res.nc
+              ice_filename: ice_model.res.nc
+              date: '2015-01-01T00:00:00Z'
+            - read_from_file: 1
+              basename: "./RESTART-15/"
+              ocn_sfc_filename: MOM.res.nc
+              ocn_filename: MOM.res.nc
+              ice_filename: ice_model.res.nc
+              date: '2015-01-01T00:00:00Z'
+            - read_from_file: 1
+              basename: "./RESTART-16/"
+              ocn_sfc_filename: MOM.res.nc
+              ocn_filename: MOM.res.nc
+              ice_filename: ice_model.res.nc
+              date: '2015-01-01T00:00:00Z'
+            - read_from_file: 1
+              basename: "./RESTART-17/"
+              ocn_sfc_filename: MOM.res.nc
+              ocn_filename: MOM.res.nc
+              ice_filename: ice_model.res.nc
+              date: '2015-01-01T00:00:00Z'
+            - read_from_file: 1
+              basename: "./RESTART-18/"
+              ocn_sfc_filename: MOM.res.nc
+              ocn_filename: MOM.res.nc
+              ice_filename: ice_model.res.nc
+              date: '2015-01-01T00:00:00Z'
+            - read_from_file: 1
+              basename: "./RESTART-19/"
+              ocn_sfc_filename: MOM.res.nc
+              ocn_filename: MOM.res.nc
+              ice_filename: ice_model.res.nc
+              date: '2015-01-01T00:00:00Z'
+            - read_from_file: 1
+              basename: "./RESTART-20/"
+              ocn_sfc_filename: MOM.res.nc
+              ocn_filename: MOM.res.nc
+              ice_filename: ice_model.res.nc
               date: '2015-01-01T00:00:00Z'              
           prefix: soca
           default_seed: 1
@@ -153,9 +243,9 @@ cost_function:
           ntry: 3
           nrep: 2
           nc3: 10
-          dc: 100.0e3
+          dc: 50.0e3
           nl0r: 1
-          ne: 5
+          ne: 20
           gau_approx: 0
           full_var: 0
           local_diag: 0
@@ -179,7 +269,7 @@ cost_function:
           lsqrt: 0
           resol: 10
           nicas_interp: bilin
-          network: 1
+          network: 0
           mpicom: 1
           ndir: 0
           nobs: 200
@@ -216,9 +306,99 @@ cost_function:
           ocn_sfc_filename: MOM.res.nc
           ocn_filename: MOM.res.nc
           ice_filename: ice_model.res.nc
+          date: '2015-01-01T00:00:00Z'
+        - read_from_file: 1
+          basename: "./RESTART-06/"
+          ocn_sfc_filename: MOM.res.nc
+          ocn_filename: MOM.res.nc
+          ice_filename: ice_model.res.nc
+          date: '2015-01-01T00:00:00Z'
+        - read_from_file: 1
+          basename: "./RESTART-07/"
+          ocn_sfc_filename: MOM.res.nc
+          ocn_filename: MOM.res.nc
+          ice_filename: ice_model.res.nc
+          date: '2015-01-01T00:00:00Z'
+        - read_from_file: 1
+          basename: "./RESTART-08/"
+          ocn_sfc_filename: MOM.res.nc
+          ocn_filename: MOM.res.nc
+          ice_filename: ice_model.res.nc
+          date: '2015-01-01T00:00:00Z'          
+        - read_from_file: 1
+          basename: "./RESTART-09/"
+          ocn_sfc_filename: MOM.res.nc
+          ocn_filename: MOM.res.nc
+          ice_filename: ice_model.res.nc
+          date: '2015-01-01T00:00:00Z'
+        - read_from_file: 1
+          basename: "./RESTART-10/"
+          ocn_sfc_filename: MOM.res.nc
+          ocn_filename: MOM.res.nc
+          ice_filename: ice_model.res.nc
+          date: '2015-01-01T00:00:00Z'
+        - read_from_file: 1
+          basename: "./RESTART-11/"
+          ocn_sfc_filename: MOM.res.nc
+          ocn_filename: MOM.res.nc
+          ice_filename: ice_model.res.nc
+          date: '2015-01-01T00:00:00Z'
+        - read_from_file: 1
+          basename: "./RESTART-12/"
+          ocn_sfc_filename: MOM.res.nc
+          ocn_filename: MOM.res.nc
+          ice_filename: ice_model.res.nc
+          date: '2015-01-01T00:00:00Z'
+        - read_from_file: 1
+          basename: "./RESTART-13/"
+          ocn_sfc_filename: MOM.res.nc
+          ocn_filename: MOM.res.nc
+          ice_filename: ice_model.res.nc
+          date: '2015-01-01T00:00:00Z'
+        - read_from_file: 1
+          basename: "./RESTART-14/"
+          ocn_sfc_filename: MOM.res.nc
+          ocn_filename: MOM.res.nc
+          ice_filename: ice_model.res.nc
+          date: '2015-01-01T00:00:00Z'
+        - read_from_file: 1
+          basename: "./RESTART-15/"
+          ocn_sfc_filename: MOM.res.nc
+          ocn_filename: MOM.res.nc
+          ice_filename: ice_model.res.nc
+          date: '2015-01-01T00:00:00Z'
+        - read_from_file: 1
+          basename: "./RESTART-16/"
+          ocn_sfc_filename: MOM.res.nc
+          ocn_filename: MOM.res.nc
+          ice_filename: ice_model.res.nc
+          date: '2015-01-01T00:00:00Z'          
+        - read_from_file: 1
+          basename: "./RESTART-17/"
+          ocn_sfc_filename: MOM.res.nc
+          ocn_filename: MOM.res.nc
+          ice_filename: ice_model.res.nc
+          date: '2015-01-01T00:00:00Z'
+        - read_from_file: 1
+          basename: "./RESTART-18/"
+          ocn_sfc_filename: MOM.res.nc
+          ocn_filename: MOM.res.nc
+          ice_filename: ice_model.res.nc
+          date: '2015-01-01T00:00:00Z'
+        - read_from_file: 1
+          basename: "./RESTART-19/"
+          ocn_sfc_filename: MOM.res.nc
+          ocn_filename: MOM.res.nc
+          ice_filename: ice_model.res.nc
+          date: '2015-01-01T00:00:00Z'
+        - read_from_file: 1
+          basename: "./RESTART-20/"
+          ocn_sfc_filename: MOM.res.nc
+          ocn_filename: MOM.res.nc
+          ice_filename: ice_model.res.nc
           date: '2015-01-01T00:00:00Z'                    
       - covariance: ensemble
-        members: 5
+        members: 20
         variables:
           variables:
               - cicen
@@ -276,7 +456,97 @@ cost_function:
               ocn_sfc_filename: MOM.res.nc
               ocn_filename: MOM.res.nc
               ice_filename: ice_model.res.nc
-              date: '2015-01-01T01:00:00Z'                            
+              date: '2015-01-01T01:00:00Z'
+            - read_from_file: 1
+              basename: "./RESTART-06/"
+              ocn_sfc_filename: MOM.res.nc
+              ocn_filename: MOM.res.nc
+              ice_filename: ice_model.res.nc
+              date: '2015-01-01T01:00:00Z'
+            - read_from_file: 1
+              basename: "./RESTART-07/"
+              ocn_sfc_filename: MOM.res.nc
+              ocn_filename: MOM.res.nc
+              ice_filename: ice_model.res.nc
+              date: '2015-01-01T01:00:00Z'
+            - read_from_file: 1
+              basename: "./RESTART-08/"
+              ocn_sfc_filename: MOM.res.nc
+              ocn_filename: MOM.res.nc
+              ice_filename: ice_model.res.nc
+              date: '2015-01-01T01:00:00Z'
+            - read_from_file: 1
+              basename: "./RESTART-09/"
+              ocn_sfc_filename: MOM.res.nc
+              ocn_filename: MOM.res.nc
+              ice_filename: ice_model.res.nc
+              date: '2015-01-01T01:00:00Z'
+            - read_from_file: 1
+              basename: "./RESTART-10/"
+              ocn_sfc_filename: MOM.res.nc
+              ocn_filename: MOM.res.nc
+              ice_filename: ice_model.res.nc
+              date: '2015-01-01T01:00:00Z'
+            - read_from_file: 1
+              basename: "./RESTART-11/"
+              ocn_sfc_filename: MOM.res.nc
+              ocn_filename: MOM.res.nc
+              ice_filename: ice_model.res.nc
+              date: '2015-01-01T01:00:00Z'
+            - read_from_file: 1
+              basename: "./RESTART-12/"
+              ocn_sfc_filename: MOM.res.nc
+              ocn_filename: MOM.res.nc
+              ice_filename: ice_model.res.nc
+              date: '2015-01-01T01:00:00Z'
+            - read_from_file: 1
+              basename: "./RESTART-13/"
+              ocn_sfc_filename: MOM.res.nc
+              ocn_filename: MOM.res.nc
+              ice_filename: ice_model.res.nc
+              date: '2015-01-01T01:00:00Z'
+            - read_from_file: 1
+              basename: "./RESTART-14/"
+              ocn_sfc_filename: MOM.res.nc
+              ocn_filename: MOM.res.nc
+              ice_filename: ice_model.res.nc
+              date: '2015-01-01T01:00:00Z'
+            - read_from_file: 1
+              basename: "./RESTART-15/"
+              ocn_sfc_filename: MOM.res.nc
+              ocn_filename: MOM.res.nc
+              ice_filename: ice_model.res.nc
+              date: '2015-01-01T01:00:00Z'
+            - read_from_file: 1
+              basename: "./RESTART-16/"
+              ocn_sfc_filename: MOM.res.nc
+              ocn_filename: MOM.res.nc
+              ice_filename: ice_model.res.nc
+              date: '2015-01-01T01:00:00Z'
+            - read_from_file: 1
+              basename: "./RESTART-17/"
+              ocn_sfc_filename: MOM.res.nc
+              ocn_filename: MOM.res.nc
+              ice_filename: ice_model.res.nc
+              date: '2015-01-01T01:00:00Z'
+            - read_from_file: 1
+              basename: "./RESTART-18/"
+              ocn_sfc_filename: MOM.res.nc
+              ocn_filename: MOM.res.nc
+              ice_filename: ice_model.res.nc
+              date: '2015-01-01T01:00:00Z'
+            - read_from_file: 1
+              basename: "./RESTART-19/"
+              ocn_sfc_filename: MOM.res.nc
+              ocn_filename: MOM.res.nc
+              ice_filename: ice_model.res.nc
+              date: '2015-01-01T01:00:00Z'
+            - read_from_file: 1
+              basename: "./RESTART-20/"
+              ocn_sfc_filename: MOM.res.nc
+              ocn_filename: MOM.res.nc
+              ice_filename: ice_model.res.nc
+              date: '2015-01-01T01:00:00Z'              
           prefix: soca
           default_seed: 1
           method: loc
@@ -302,9 +572,9 @@ cost_function:
           ntry: 3
           nrep: 2
           nc3: 10
-          dc: 100.0e3
+          dc: 50.0e3
           nl0r: 1
-          ne: 5
+          ne: 20
           gau_approx: 0
           full_var: 0
           local_diag: 0
@@ -328,7 +598,7 @@ cost_function:
           lsqrt: 0
           resol: 10
           nicas_interp: bilin
-          network: 1
+          network: 0
           mpicom: 1
           ndir: 0
           nobs: 200
@@ -364,9 +634,99 @@ cost_function:
           ocn_sfc_filename: MOM.res.nc
           ocn_filename: MOM.res.nc
           ice_filename: ice_model.res.nc
+          date: '2015-01-01T01:00:00Z'
+        - read_from_file: 1
+          basename: "./RESTART-06/"
+          ocn_sfc_filename: MOM.res.nc
+          ocn_filename: MOM.res.nc
+          ice_filename: ice_model.res.nc
+          date: '2015-01-01T01:00:00Z'
+        - read_from_file: 1
+          basename: "./RESTART-07/"
+          ocn_sfc_filename: MOM.res.nc
+          ocn_filename: MOM.res.nc
+          ice_filename: ice_model.res.nc
+          date: '2015-01-01T01:00:00Z'
+        - read_from_file: 1
+          basename: "./RESTART-08/"
+          ocn_sfc_filename: MOM.res.nc
+          ocn_filename: MOM.res.nc
+          ice_filename: ice_model.res.nc
+          date: '2015-01-01T01:00:00Z'          
+        - read_from_file: 1
+          basename: "./RESTART-09/"
+          ocn_sfc_filename: MOM.res.nc
+          ocn_filename: MOM.res.nc
+          ice_filename: ice_model.res.nc
+          date: '2015-01-01T01:00:00Z'
+        - read_from_file: 1
+          basename: "./RESTART-10/"
+          ocn_sfc_filename: MOM.res.nc
+          ocn_filename: MOM.res.nc
+          ice_filename: ice_model.res.nc
+          date: '2015-01-01T01:00:00Z'
+        - read_from_file: 1
+          basename: "./RESTART-11/"
+          ocn_sfc_filename: MOM.res.nc
+          ocn_filename: MOM.res.nc
+          ice_filename: ice_model.res.nc
+          date: '2015-01-01T01:00:00Z'
+        - read_from_file: 1
+          basename: "./RESTART-12/"
+          ocn_sfc_filename: MOM.res.nc
+          ocn_filename: MOM.res.nc
+          ice_filename: ice_model.res.nc
+          date: '2015-01-01T01:00:00Z'
+        - read_from_file: 1
+          basename: "./RESTART-13/"
+          ocn_sfc_filename: MOM.res.nc
+          ocn_filename: MOM.res.nc
+          ice_filename: ice_model.res.nc
+          date: '2015-01-01T01:00:00Z'
+        - read_from_file: 1
+          basename: "./RESTART-14/"
+          ocn_sfc_filename: MOM.res.nc
+          ocn_filename: MOM.res.nc
+          ice_filename: ice_model.res.nc
+          date: '2015-01-01T01:00:00Z'
+        - read_from_file: 1
+          basename: "./RESTART-15/"
+          ocn_sfc_filename: MOM.res.nc
+          ocn_filename: MOM.res.nc
+          ice_filename: ice_model.res.nc
+          date: '2015-01-01T01:00:00Z'
+        - read_from_file: 1
+          basename: "./RESTART-16/"
+          ocn_sfc_filename: MOM.res.nc
+          ocn_filename: MOM.res.nc
+          ice_filename: ice_model.res.nc
+          date: '2015-01-01T01:00:00Z'          
+        - read_from_file: 1
+          basename: "./RESTART-17/"
+          ocn_sfc_filename: MOM.res.nc
+          ocn_filename: MOM.res.nc
+          ice_filename: ice_model.res.nc
+          date: '2015-01-01T01:00:00Z'
+        - read_from_file: 1
+          basename: "./RESTART-18/"
+          ocn_sfc_filename: MOM.res.nc
+          ocn_filename: MOM.res.nc
+          ice_filename: ice_model.res.nc
+          date: '2015-01-01T01:00:00Z'
+        - read_from_file: 1
+          basename: "./RESTART-19/"
+          ocn_sfc_filename: MOM.res.nc
+          ocn_filename: MOM.res.nc
+          ice_filename: ice_model.res.nc
+          date: '2015-01-01T01:00:00Z'
+        - read_from_file: 1
+          basename: "./RESTART-20/"
+          ocn_sfc_filename: MOM.res.nc
+          ocn_filename: MOM.res.nc
+          ice_filename: ice_model.res.nc
           date: '2015-01-01T01:00:00Z'                    
       - covariance: ensemble
-        members: 5
+        members: 20
         variables:
           variables:
               - cicen
@@ -424,6 +784,96 @@ cost_function:
               ocn_sfc_filename: MOM.res.nc
               ocn_filename: MOM.res.nc
               ice_filename: ice_model.res.nc
+              date: '2015-01-01T02:00:00Z'
+            - read_from_file: 1
+              basename: "./RESTART-06/"
+              ocn_sfc_filename: MOM.res.nc
+              ocn_filename: MOM.res.nc
+              ice_filename: ice_model.res.nc
+              date: '2015-01-01T02:00:00Z'
+            - read_from_file: 1
+              basename: "./RESTART-07/"
+              ocn_sfc_filename: MOM.res.nc
+              ocn_filename: MOM.res.nc
+              ice_filename: ice_model.res.nc
+              date: '2015-01-01T02:00:00Z'
+            - read_from_file: 1
+              basename: "./RESTART-08/"
+              ocn_sfc_filename: MOM.res.nc
+              ocn_filename: MOM.res.nc
+              ice_filename: ice_model.res.nc
+              date: '2015-01-01T02:00:00Z'
+            - read_from_file: 1
+              basename: "./RESTART-09/"
+              ocn_sfc_filename: MOM.res.nc
+              ocn_filename: MOM.res.nc
+              ice_filename: ice_model.res.nc
+              date: '2015-01-01T02:00:00Z'
+            - read_from_file: 1
+              basename: "./RESTART-10/"
+              ocn_sfc_filename: MOM.res.nc
+              ocn_filename: MOM.res.nc
+              ice_filename: ice_model.res.nc
+              date: '2015-01-01T02:00:00Z'
+            - read_from_file: 1
+              basename: "./RESTART-11/"
+              ocn_sfc_filename: MOM.res.nc
+              ocn_filename: MOM.res.nc
+              ice_filename: ice_model.res.nc
+              date: '2015-01-01T02:00:00Z'
+            - read_from_file: 1
+              basename: "./RESTART-12/"
+              ocn_sfc_filename: MOM.res.nc
+              ocn_filename: MOM.res.nc
+              ice_filename: ice_model.res.nc
+              date: '2015-01-01T02:00:00Z'
+            - read_from_file: 1
+              basename: "./RESTART-13/"
+              ocn_sfc_filename: MOM.res.nc
+              ocn_filename: MOM.res.nc
+              ice_filename: ice_model.res.nc
+              date: '2015-01-01T02:00:00Z'
+            - read_from_file: 1
+              basename: "./RESTART-14/"
+              ocn_sfc_filename: MOM.res.nc
+              ocn_filename: MOM.res.nc
+              ice_filename: ice_model.res.nc
+              date: '2015-01-01T02:00:00Z'
+            - read_from_file: 1
+              basename: "./RESTART-15/"
+              ocn_sfc_filename: MOM.res.nc
+              ocn_filename: MOM.res.nc
+              ice_filename: ice_model.res.nc
+              date: '2015-01-01T02:00:00Z'
+            - read_from_file: 1
+              basename: "./RESTART-16/"
+              ocn_sfc_filename: MOM.res.nc
+              ocn_filename: MOM.res.nc
+              ice_filename: ice_model.res.nc
+              date: '2015-01-01T02:00:00Z'
+            - read_from_file: 1
+              basename: "./RESTART-17/"
+              ocn_sfc_filename: MOM.res.nc
+              ocn_filename: MOM.res.nc
+              ice_filename: ice_model.res.nc
+              date: '2015-01-01T02:00:00Z'
+            - read_from_file: 1
+              basename: "./RESTART-18/"
+              ocn_sfc_filename: MOM.res.nc
+              ocn_filename: MOM.res.nc
+              ice_filename: ice_model.res.nc
+              date: '2015-01-01T02:00:00Z'
+            - read_from_file: 1
+              basename: "./RESTART-19/"
+              ocn_sfc_filename: MOM.res.nc
+              ocn_filename: MOM.res.nc
+              ice_filename: ice_model.res.nc
+              date: '2015-01-01T02:00:00Z'
+            - read_from_file: 1
+              basename: "./RESTART-20/"
+              ocn_sfc_filename: MOM.res.nc
+              ocn_filename: MOM.res.nc
+              ice_filename: ice_model.res.nc
               date: '2015-01-01T02:00:00Z'                            
           prefix: soca
           default_seed: 1
@@ -450,9 +900,9 @@ cost_function:
           ntry: 3
           nrep: 2
           nc3: 10
-          dc: 100.0e3
+          dc: 50.0e3
           nl0r: 1
-          ne: 5
+          ne: 20
           gau_approx: 0
           full_var: 0
           local_diag: 0
@@ -476,7 +926,7 @@ cost_function:
           lsqrt: 0
           resol: 10
           nicas_interp: bilin
-          network: 1
+          network: 0
           mpicom: 1
           ndir: 0
           nobs: 200
@@ -512,7 +962,97 @@ cost_function:
           ocn_sfc_filename: MOM.res.nc
           ocn_filename: MOM.res.nc
           ice_filename: ice_model.res.nc
-          date: '2015-01-01T02:00:00Z'                    
+          date: '2015-01-01T02:00:00Z'
+        - read_from_file: 1
+          basename: "./RESTART-06/"
+          ocn_sfc_filename: MOM.res.nc
+          ocn_filename: MOM.res.nc
+          ice_filename: ice_model.res.nc
+          date: '2015-01-01T02:00:00Z'
+        - read_from_file: 1
+          basename: "./RESTART-07/"
+          ocn_sfc_filename: MOM.res.nc
+          ocn_filename: MOM.res.nc
+          ice_filename: ice_model.res.nc
+          date: '2015-01-01T02:00:00Z'
+        - read_from_file: 1
+          basename: "./RESTART-08/"
+          ocn_sfc_filename: MOM.res.nc
+          ocn_filename: MOM.res.nc
+          ice_filename: ice_model.res.nc
+          date: '2015-01-01T02:00:00Z'          
+        - read_from_file: 1
+          basename: "./RESTART-09/"
+          ocn_sfc_filename: MOM.res.nc
+          ocn_filename: MOM.res.nc
+          ice_filename: ice_model.res.nc
+          date: '2015-01-01T02:00:00Z'
+        - read_from_file: 1
+          basename: "./RESTART-10/"
+          ocn_sfc_filename: MOM.res.nc
+          ocn_filename: MOM.res.nc
+          ice_filename: ice_model.res.nc
+          date: '2015-01-01T02:00:00Z'
+        - read_from_file: 1
+          basename: "./RESTART-11/"
+          ocn_sfc_filename: MOM.res.nc
+          ocn_filename: MOM.res.nc
+          ice_filename: ice_model.res.nc
+          date: '2015-01-01T02:00:00Z'
+        - read_from_file: 1
+          basename: "./RESTART-12/"
+          ocn_sfc_filename: MOM.res.nc
+          ocn_filename: MOM.res.nc
+          ice_filename: ice_model.res.nc
+          date: '2015-01-01T02:00:00Z'
+        - read_from_file: 1
+          basename: "./RESTART-13/"
+          ocn_sfc_filename: MOM.res.nc
+          ocn_filename: MOM.res.nc
+          ice_filename: ice_model.res.nc
+          date: '2015-01-01T02:00:00Z'
+        - read_from_file: 1
+          basename: "./RESTART-14/"
+          ocn_sfc_filename: MOM.res.nc
+          ocn_filename: MOM.res.nc
+          ice_filename: ice_model.res.nc
+          date: '2015-01-01T02:00:00Z'
+        - read_from_file: 1
+          basename: "./RESTART-15/"
+          ocn_sfc_filename: MOM.res.nc
+          ocn_filename: MOM.res.nc
+          ice_filename: ice_model.res.nc
+          date: '2015-01-01T02:00:00Z'
+        - read_from_file: 1
+          basename: "./RESTART-16/"
+          ocn_sfc_filename: MOM.res.nc
+          ocn_filename: MOM.res.nc
+          ice_filename: ice_model.res.nc
+          date: '2015-01-01T02:00:00Z'          
+        - read_from_file: 1
+          basename: "./RESTART-17/"
+          ocn_sfc_filename: MOM.res.nc
+          ocn_filename: MOM.res.nc
+          ice_filename: ice_model.res.nc
+          date: '2015-01-01T02:00:00Z'
+        - read_from_file: 1
+          basename: "./RESTART-18/"
+          ocn_sfc_filename: MOM.res.nc
+          ocn_filename: MOM.res.nc
+          ice_filename: ice_model.res.nc
+          date: '2015-01-01T02:00:00Z'
+        - read_from_file: 1
+          basename: "./RESTART-19/"
+          ocn_sfc_filename: MOM.res.nc
+          ocn_filename: MOM.res.nc
+          ice_filename: ice_model.res.nc
+          date: '2015-01-01T02:00:00Z'
+        - read_from_file: 1
+          basename: "./RESTART-20/"
+          ocn_sfc_filename: MOM.res.nc
+          ocn_filename: MOM.res.nc
+          ice_filename: ice_model.res.nc
+          date: '2015-01-01T02:00:00Z'                              
 #  Jc:
 #  - jcdfi:
 #      type: DolphChebyshev

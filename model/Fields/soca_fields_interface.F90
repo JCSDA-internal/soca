@@ -410,52 +410,60 @@ end subroutine soca_field_rms_c
 
 ! ------------------------------------------------------------------------------
 
-subroutine soca_field_interp_tl_c(c_key_fld,c_key_loc,c_key_gom) bind(c,name='soca_field_interp_tl_f90')
+subroutine soca_field_interp_tl_c(c_key_fld,c_key_loc,c_vars,c_key_gom) bind(c,name='soca_field_interp_tl_f90')
   use iso_c_binding
   use soca_fields
   use ufo_locs_mod_c  
   use ufo_locs_mod    
   use ufo_geovals_mod_c
   use ufo_geovals_mod
+  use ufo_vars_mod
   
   implicit none
   integer(c_int), intent(in) :: c_key_fld
   integer(c_int), intent(in) :: c_key_loc
+  type(c_ptr), intent(in)    :: c_vars     !< List of requested variables
   integer(c_int), intent(in) :: c_key_gom
   type(soca_field), pointer :: fld
   type(ufo_locs),  pointer :: locs  
-  type(ufo_geovals),  pointer :: gom  
+  type(ufo_geovals),  pointer :: gom
+  type(ufo_vars) :: vars  
+
+  call ufo_vars_setup(vars, c_vars)
 
   call soca_field_registry%get(c_key_fld,fld)
   call ufo_locs_registry%get(c_key_loc,locs)  
   call ufo_geovals_registry%get(c_key_gom,gom)  
 
-  call interp_tl(fld, locs, gom)
+  call interp_tl(fld, locs, vars, gom)
 
 end subroutine soca_field_interp_tl_c
 
 ! ------------------------------------------------------------------------------
 
-subroutine soca_field_interp_ad_c(c_key_fld,c_key_loc,c_key_gom) bind(c,name='soca_field_interp_ad_f90')
+subroutine soca_field_interp_ad_c(c_key_fld,c_key_loc,c_vars,c_key_gom) bind(c,name='soca_field_interp_ad_f90')
   use iso_c_binding
   use soca_fields
   use ufo_locs_mod_c  
   use ufo_locs_mod  
   use ufo_geovals_mod_c
   use ufo_geovals_mod
+  use ufo_vars_mod  
   implicit none
   integer(c_int), intent(in) :: c_key_fld
   integer(c_int), intent(in) :: c_key_loc
+  type(c_ptr), intent(in)    :: c_vars     !< List of requested variables  
   integer(c_int), intent(in) :: c_key_gom
   type(soca_field), pointer :: fld
   type(ufo_locs),  pointer :: locs  
   type(ufo_geovals),  pointer :: gom  
+  type(ufo_vars) :: vars
 
   call soca_field_registry%get(c_key_fld,fld)
   call ufo_locs_registry%get(c_key_loc,locs)
   call ufo_geovals_registry%get(c_key_gom,gom)
   
-  call interp_ad(fld, locs, gom)
+  call interp_ad(fld, locs, vars, gom)
 
 end subroutine soca_field_interp_ad_c
 

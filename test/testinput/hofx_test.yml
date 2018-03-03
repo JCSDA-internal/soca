@@ -17,15 +17,15 @@ Assimilation Window:
   Length: PT12H
 Observations:
   ObsTypes:
-  - ObsType: SeaIceFraction
+  - ObsType: StericHeight #SeaIceFraction
     Generate:
-      nobs: '30'
-      lat: '80.5'
-      lon1: "-209.0"
-      lon2: '0.0'    
-    #ObsData:
-      #ObsDataIn:
-      #  obsfile: "./Data/seaice_obs.nc"
+      nobs: 30
+      lat: 80.5
+      lon1: -209.0
+      lon2: 0.0   
+    ObsData:
+      ObsDataIn:
+        obsfile: "./Data/seaice_obs.nc"
     GeoVaLs:
       norm: '1567.673435381234'
       random: '1'
