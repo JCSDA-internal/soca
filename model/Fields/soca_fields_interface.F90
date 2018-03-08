@@ -459,6 +459,8 @@ subroutine soca_field_interp_ad_c(c_key_fld,c_key_loc,c_vars,c_key_gom) bind(c,n
   type(ufo_geovals),  pointer :: gom  
   type(ufo_vars) :: vars
 
+  call ufo_vars_setup(vars, c_vars)
+  
   call soca_field_registry%get(c_key_fld,fld)
   call ufo_locs_registry%get(c_key_loc,locs)
   call ufo_geovals_registry%get(c_key_gom,gom)

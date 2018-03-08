@@ -25,7 +25,8 @@ Observations:
       lon2: 0.0   
     ObsData:
       ObsDataIn:
-        obsfile: "./Data/seaice_obs.nc"
+        #obsfile: Data/seaice_obs.nc
+        obsfile: Data/jason-2.nc        
     GeoVaLs:
       norm: '1567.673435381234'
       random: '1'

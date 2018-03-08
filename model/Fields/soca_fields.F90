@@ -956,9 +956,9 @@ contains
 
     use soca_interph_mod
     
-    type(soca_field), intent(inout)  :: fld
-    type(ufo_locs), intent(in)       :: locs
-    type(ufo_vars),     intent(in)   :: ufovars            
+    type(soca_field), intent(inout)   :: fld
+    type(ufo_locs), intent(in)        :: locs
+    type(ufo_vars),     intent(in)    :: ufovars            
     type(ufo_geovals), intent(inout)  :: geovals
 
     integer :: Nc, No, var_type_index, Ncat
@@ -975,18 +975,22 @@ contains
     real(kind=kind_real), allocatable :: area(:),vunit(:)
     real(kind=kind_real), allocatable :: obs_field(:,:), mod_field(:,:), obsout(:)
 
-    integer :: icat, index, ii, jj
+    integer :: icat, ilev
+
+    print *,'ufovars%nv=',ufovars%nv, ufovars%fldnames
+    call abor1_ftn("==============================")    
 
     nobs = locs%nlocs
     do ivar = 1, ufovars%nv
-
+       print *,ufovars%fldnames(ivar)
        select case (trim(ufovars%fldnames(ivar)))
-       case ("ice_concentration")
+       case ("ice_concentration","ice_thickness")
           nval = fld%geom%ocean%ncat
-       case ("steric_height")
-          nval = 1       
+       case ("steric_height","sea_surface_height_above_geoid")
+          nval = 1
+       case ("ocean_potential_temperature","ocean_salinity")
+          nval = fld%geom%ocean%nzo
        end select
-       nval = fld%geom%ocean%ncat
        geovals%geovals(ivar)%nval = nval
        if (allocated(geovals%geovals(ivar)%vals))  deallocate(geovals%geovals(ivar)%vals)
        allocate(geovals%geovals(ivar)%vals(nval,nobs))
@@ -1005,10 +1009,24 @@ contains
           do icat = 1,fld%geom%ocean%ncat
              call fld%hinterp%interp_apply(fld%cicen(:,:,icat+1)*fld%geom%ocean%mask2d(:,:), geovals%geovals(ivar)%vals(icat,:))
           end do
-
-       case ("steric_height")
-          call fld%hinterp%interp_apply(fld%ssh(:,:)*fld%geom%ocean%mask2d(:,:), geovals%geovals(ivar)%vals(1,:))
           
+       case ("ice_thickness")
+          do icat = 1,fld%geom%ocean%ncat
+             call fld%hinterp%interp_apply(fld%hicen(:,:,icat+1)*fld%geom%ocean%mask2d(:,:), geovals%geovals(ivar)%vals(icat,:))
+          end do
+          
+       case ("sea_surface_height_above_geoid","steric_height")
+          call fld%hinterp%interp_apply(fld%ssh(:,:)*fld%geom%ocean%mask2d(:,:), geovals%geovals(ivar)%vals(1,:))
+
+       case ("ocean_potential_temperature")
+          do ilev = 1, nval
+             call fld%hinterp%interp_apply(fld%tocn(:,:,nval)*fld%geom%ocean%mask2d(:,:), geovals%geovals(ivar)%vals(ilev,:))
+          end do
+          
+       case ("ocean_salinity")
+          do ilev = 1, nval
+             call fld%hinterp%interp_apply(fld%socn(:,:,ilev)*fld%geom%ocean%mask2d(:,:), geovals%geovals(ivar)%vals(ilev,:))
+          end do
        end select
     end do
 
@@ -1047,18 +1065,10 @@ contains
 
     nobs = locs%nlocs
 
-    nv =1
-
-    !!! UFOVARS NOT PROPERLY INIT !!!!!!!!!!!!!
-    allocate(ufovars%fldnames(nv))
-    !ufovars%fldnames(1)="ice_concentration"
-    ufovars%fldnames(1)="steric_height"    
-    ufovars%nv=1
-    
     call fld%hinterp%interp_init(nobs)
     call fld%hinterp%interp_compute_weight(fld%geom%ocean%lon, fld%geom%ocean%lat, locs%lon, locs%lat)
     fld%hinterp_initialized = 1
-
+    
     do ivar = 1, ufovars%nv
 
        select case (trim(ufovars%fldnames(ivar)))
@@ -1071,7 +1081,16 @@ contains
              enddo
           enddo
 
-       case ("steric_height")
+       case ("ice_thickness")
+          do icat = 1,fld%geom%ocean%ncat
+             do index = 1, nobs
+                ii = fld%hinterp%index(index,1)
+                jj = fld%hinterp%index(index,2)
+                fld%hicen(ii,jj,icat+1) = fld%hicen(ii,jj,icat+1) + geovals%geovals(ivar)%vals(icat,index)
+             enddo
+          enddo          
+
+       case ("sea_surface_height_above_geoid","steric_height") !!!! steric height sould be  different case
           print *,'INTERP AD STERIC HEIGHT'
           do index = 1, nobs
              ii = fld%hinterp%index(index,1)
@@ -1168,7 +1187,6 @@ contains
     jsc = self%geom%ocean%G%jsc
     jec = self%geom%ocean%G%jec
     
-    !call abor1_ftn("convert_from_ug: NOT IMPLEMENTED")
     nv = self%geom%ocean%ncat + 1    
     do jk = 1, nv - 1
        self%cicen(isc:iec, jsc:jec,jk+1) = reshape( ug%fld(:, 1, jk, 1), (/(iec - isc + 1 ), (jec - jsc + 1 )/) )
