@@ -112,7 +112,8 @@ type(soca_field), pointer :: xout
 real(kind=kind_real), allocatable :: dy(:,:,:), Bdy(:,:,:)
 integer :: nx, ny, ncat, nk, k
 
-real(kind=kind_real) :: Lx=5.0, Ly=1.0
+!real(kind=kind_real) :: Lx=5.0, Ly=1.0, sig_sic=0.01, sig_sit=0.5
+real(kind=kind_real) :: Lx=.01, Ly=.01, sig_sic=0.05, sig_sit=150.0
 
 call soca_3d_cov_registry%get(c_key_conf,conf)
 call soca_field_registry%get(c_key_in,xin)
@@ -125,11 +126,14 @@ nx = xin%geom%ocean%nx
 ny = xin%geom%ocean%ny
 ncat = xin%geom%ocean%ncat
 
-!cicen
+!cicen, !hicen
 do k=2, 6
    print *,'category:',k
    call gauss(xin%cicen(:,:,k), xout%cicen(:,:,k), xin%geom%ocean%lon, xin%geom%ocean%lat, lx, ly)
+   call gauss(xin%hicen(:,:,k), xout%hicen(:,:,k), xin%geom%ocean%lon, xin%geom%ocean%lat, lx, ly)   
 end do
+xout%cicen = sig_sic**2 * xout%cicen
+xout%hicen = sig_sit**2 * xout%hicen
 
 !ssh
 print *,'ssh'

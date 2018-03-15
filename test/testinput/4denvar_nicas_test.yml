@@ -20,7 +20,7 @@ cost_function:
   - ssh
   Jo:
     ObsTypes:
-    - ObsType: StericHeight #SeaIceFraction
+    - ObsType: SeaIceThickness
       #Generate:
       #  nobs: 100 #10
       #  lat: 0.0 #85.5
@@ -34,7 +34,8 @@ cost_function:
         ObsDataOut:
           obsfile: Data/test_obsout.nc
         ObsDataIn:
-          obsfile: Data/jason-2_002.nc #seaice_obs.nc                
+          obsfile: /home/gvernier/Data/CS2/cryosat2-nrt-nh-20171030-v2.0.nc          
+          #obsfile: Data/jason-2_002.nc #seaice_obs.nc                
         obsvalue: ObsVal
       Covariance:
         covariance: diagonal
@@ -221,7 +222,7 @@ cost_function:
           prefix: soca
           default_seed: 1
           method: loc
-          strategy: common
+          strategy: specific_univariate #common
           new_hdiag: 1
           new_param: 1
           check_adjoints: 1
@@ -550,7 +551,7 @@ cost_function:
           prefix: soca
           default_seed: 1
           method: loc
-          strategy: common
+          strategy: specific_univariate #common
           new_hdiag: 1
           new_param: 1
           check_adjoints: 1
@@ -878,7 +879,7 @@ cost_function:
           prefix: soca
           default_seed: 1
           method: loc
-          strategy: common
+          strategy: specific_univariate #common
           new_hdiag: 1
           new_param: 1
           check_adjoints: 1

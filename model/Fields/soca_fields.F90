@@ -35,13 +35,13 @@ module soca_fields
   !> Fortran derived type to hold fields
   type :: soca_field
      type (Coupled)                    :: AOGCM
-     type(soca_geom), pointer          :: geom                  !< MOM5 & CICE5 Geometry
+     type(soca_geom), pointer          :: geom                  !< MOM6 & SIS2 Geometry
      integer                           :: nf                    !< Number of fields
      character(len=128)                :: gridfname             !< Grid file name
      character(len=128)                :: cicefname             !< Fields file name for cice
      character(len=128)                :: momfname              !< Fields file name for mom
-     real(kind=kind_real), pointer     :: cicen(:,:,:) => NULL()  !< Sea-ice fraction                 (nx,ny,ncat)
-     real(kind=kind_real), pointer     :: hicen(:,:,:) => NULL()          !< Sea-ice thickness                (nx,ny,ncat+1)
+     real(kind=kind_real), pointer     :: cicen(:,:,:) => NULL()  !< Sea-ice fraction                 (nx,ny,ncat+1)
+     real(kind=kind_real), pointer     :: hicen(:,:,:) => NULL()          !< Sea-ice mass/m2                  (nx,ny,ncat) [kg/m2]
      real(kind=kind_real), pointer     :: vicen(:,:,:) => NULL()          !< Sea-ice volume                   (nx,ny,ncat)
      real(kind=kind_real), pointer     :: hsnon(:,:,:) => NULL()          !< Snow depth over sea-ice          (nx,ny,ncat)
      real(kind=kind_real), pointer     :: vsnon(:,:,:) => NULL()          !< Snow volume over sea-ice         (nx,ny,ncat) 
@@ -294,10 +294,11 @@ contains
        !self%qicnk(ixdir(idir),iydir(idir),1,4) = 1.0 ! Surface temp incr for cat 1
        !self%tsfcn(ixdir(idir),iydir(idir),1) = 1.0 ! Surface temp incr for cat 1
        !self%tocn(ixdir(idir),iydir(idir)) = 1.0 ! Surface temp incr for cat 1
-       self%cicen(ixdir(idir),iydir(idir),3) = 1.0 ! Surface temp incr for cat 1
+       !self%cicen(ixdir(idir),iydir(idir),3) = 1.0 ! Surface temp incr for cat 1
+       self%ssh(ixdir(idir),iydir(idir)) = 1.0 ! Surface temp incr for cat 1
     end do
 
-
+    print *,'out of dirac'
     
   end subroutine dirac
 
@@ -953,7 +954,7 @@ contains
     use ufo_geovals_mod_c
     use ufo_geovals_mod
     use ufo_vars_mod
-
+    use soca_constants, only : rho_i
     use soca_interph_mod
     
     type(soca_field), intent(inout)   :: fld
@@ -978,7 +979,6 @@ contains
     integer :: icat, ilev
 
     print *,'ufovars%nv=',ufovars%nv, ufovars%fldnames
-    call abor1_ftn("==============================")    
 
     nobs = locs%nlocs
     do ivar = 1, ufovars%nv
@@ -1013,6 +1013,7 @@ contains
        case ("ice_thickness")
           do icat = 1,fld%geom%ocean%ncat
              call fld%hinterp%interp_apply(fld%hicen(:,:,icat+1)*fld%geom%ocean%mask2d(:,:), geovals%geovals(ivar)%vals(icat,:))
+             print *,'geovals in interp:',geovals%geovals(ivar)%vals(icat,:)
           end do
           
        case ("sea_surface_height_above_geoid","steric_height")
@@ -1029,7 +1030,7 @@ contains
           end do
        end select
     end do
-
+    !call abor1_ftn("==============================")    
   end subroutine nicas_interph
 
   subroutine nicas_interphad(fld, locs, ufovars, geovals)
@@ -1039,7 +1040,7 @@ contains
     use ufo_geovals_mod_c
     use ufo_geovals_mod
     use ufo_vars_mod
-
+    use soca_constants, only : rho_i
     use soca_interph_mod
     
     type(soca_field), intent(inout)  :: fld
@@ -1070,11 +1071,12 @@ contains
     fld%hinterp_initialized = 1
     
     do ivar = 1, ufovars%nv
-
+       print *,'=================== in soca ad ================= ',ufovars%fldnames(ivar)
        select case (trim(ufovars%fldnames(ivar)))
        case ("ice_concentration")
           do icat = 1,fld%geom%ocean%ncat
              do index = 1, nobs
+                !print *,'in ad thickness, geovals=',geovals%geovals(ivar)%vals(icat,index)                                
                 ii = fld%hinterp%index(index,1)
                 jj = fld%hinterp%index(index,2)
                 fld%cicen(ii,jj,icat+1) = fld%cicen(ii,jj,icat+1) + geovals%geovals(ivar)%vals(icat,index)
@@ -1084,12 +1086,13 @@ contains
        case ("ice_thickness")
           do icat = 1,fld%geom%ocean%ncat
              do index = 1, nobs
+                !print *,'in ad thickness, geovals=',geovals%geovals(ivar)%vals(icat,index)                
                 ii = fld%hinterp%index(index,1)
                 jj = fld%hinterp%index(index,2)
                 fld%hicen(ii,jj,icat+1) = fld%hicen(ii,jj,icat+1) + geovals%geovals(ivar)%vals(icat,index)
              enddo
-          enddo          
-
+          enddo
+          
        case ("sea_surface_height_above_geoid","steric_height") !!!! steric height sould be  different case
           print *,'INTERP AD STERIC HEIGHT'
           do index = 1, nobs
@@ -1160,7 +1163,7 @@ contains
     end do
     jk = nv
     ug%fld(:, 1, jk, 1) = reshape( self%ssh(isc:iec, jsc:jec), (/nc0a/) )
-    
+    print *,'out of convert to'
   end subroutine convert_to_ug
 
   ! ------------------------------------------------------------------------------

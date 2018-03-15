@@ -9,7 +9,7 @@ Variables:
 TestDate: '2015-05-01T00:00:00Z'
 State:
   read_from_file: 1
-  basename: "./RESTART/"
+  basename: "./RESTART-01/"
   ocn_sfc_filename: MOM.res.nc
   ocn_filename: MOM.res.nc
   ice_filename: ice_model.res.nc

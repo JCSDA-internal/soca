@@ -11,6 +11,7 @@ list( APPEND soca_test_input
   testinput/errorcovariance_test.yml
   testinput/obserrorcovariance_test.yml  
   testinput/3dvar_test.yml
+  testinput/3dvarfgat_test.yml
   testinput/localization_test.yml
   testinput/nicas_test.yml
   testinput/4denvar_nicas_test.yml
@@ -73,7 +74,7 @@ execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
 
 ecbuild_add_test( TARGET test_soca_truth
                   TYPE SCRIPT
-		  MPI     2  
+		  MPI     1
                   COMMAND "compare.sh"
                   ARGS "${CMAKE_BINARY_DIR}/bin/soca_forecast.x testinput/truth.yml"
                        testoutput/truth.test
@@ -81,7 +82,7 @@ ecbuild_add_test( TARGET test_soca_truth
 
 ecbuild_add_test( TARGET test_soca_forecast
                   TYPE SCRIPT
-		  MPI     2		  		  
+		  MPI     1		  		  
                   COMMAND "compare.sh"
                   ARGS "${CMAKE_BINARY_DIR}/bin/soca_forecast.x testinput/forecast.yml"
                        testoutput/forecast.test
@@ -172,6 +173,14 @@ ecbuild_add_test( TARGET test_soca_3dvar
                        testoutput/3dvar.test
                   DEPENDS soca_3dvar.x )
 
+ecbuild_add_test( TARGET test_soca_3dvarfgat
+                  TYPE SCRIPT
+                  MPI     1		  
+                  COMMAND "compare.sh"
+                  ARGS "${CMAKE_BINARY_DIR}/bin/soca_3dvar.x testinput/3dvarfgat_test.yml"
+                       testoutput/3dvarfgat.test
+                  DEPENDS soca_3dvar.x )		  
+
 ecbuild_add_test( TARGET test_soca_4denvar
                   TYPE SCRIPT
                   MPI     1		  
@@ -185,5 +194,5 @@ ecbuild_add_test( TARGET test_soca_dirac
                   MPI     1		  
                   COMMAND "compare.sh"
                   ARGS "${CMAKE_BINARY_DIR}/bin/soca_dirac.x testinput/nicas_test.yml"
-                       testoutput/3dvar.test
+                       testoutput/dirac.test
                   DEPENDS soca_3dvar.x )		  

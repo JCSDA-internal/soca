@@ -96,6 +96,7 @@ namespace soca {
   void Fields::dirac(const eckit::Configuration & config) {
     const eckit::Configuration * conf = &config;
     soca_field_dirac_f90(keyFlds_, &conf);
+    std::cout << "ot of dirac" << std::endl;
   }
   // -----------------------------------------------------------------------------
   void Fields::axpy(const double & zz, const Fields & rhs) {

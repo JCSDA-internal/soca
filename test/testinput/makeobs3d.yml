@@ -22,11 +22,11 @@ Observations:
         obsfile: "./Data/data.nc"
       ObsDataIn:
         obsfile: Data/seaice_obs.nc
-    #Generate:
-    #  nobs: '30'
-    #  lat: '80.5'
-    #  lon1: "-209.0"
-    #  lon2: '0.0'
+    Generate:
+      nobs: 30
+      lat: 80.5
+      lon1: -209.0
+      lon2: 0.0
 #    GeoVaLs:
 #      norm: '1567.673435381234'
 #      random: '1'

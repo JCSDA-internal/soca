@@ -7,7 +7,7 @@ module soca_constants
   implicit none
 
   real(kind=kind_real),parameter :: rho_s=330.0_kind_real       !< Snow density [kg/m3]
-  real(kind=kind_real),parameter :: rho_i=917.0_kind_real       !< Sea-Ice density [kg/m3]
+  real(kind=kind_real),parameter :: rho_i=905.0_kind_real       !< Sea-Ice density [kg/m3]
   real(kind=kind_real),parameter :: c0 = 2106.0_kind_real       !< Specific heat of fresh ice at 0C [J/kg/deg]
   real(kind=kind_real),parameter :: L0 = 3.34e5_kind_real       !< Latent heat of fusion of fresh ice at 0C [J/kg]
   real(kind=kind_real),parameter :: cw = 4218.0_kind_real       !< Specific heat of sea-water ???? <--- Check
