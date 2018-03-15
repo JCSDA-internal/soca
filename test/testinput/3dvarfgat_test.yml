@@ -1,0 +1,103 @@
+#
+#                               3DVAR FGAT
+#
+#     <---------------------- window_length (6 hours) ---------------------->
+#
+# ---|-----------|-----------|-----------|-----------|-----------|-----------|
+#    |                                   |                                   |      
+# window_begin: 2015-01-01T09:00:00Z     |                           2015-01-01T15:00:00Z
+#                                        |
+#                       bkg/ana/incr: 2015-01-01T12:00:00Z
+#
+#
+
+test_framework_runtime_config: "--log_level=test_suite"
+resolution:
+model:
+  tstep: PT1H
+cost_function:
+  cost_type: 4D-Var
+  window_begin: '2015-01-01T09:00:00Z'
+  window_length: PT6H
+  variables:
+  - cicen
+  - hicen
+  - hsnon
+  - tsfcn
+  - qsnon
+  - sicnk
+  - qicnk
+  - socn
+  - tocn
+  - ssh
+  Jb:
+    Background:
+      state:
+      - read_from_file: 1
+        basename: "./RESTART-01/"
+        ocn_sfc_filename: MOM.res.nc
+        ocn_filename: MOM.res.nc
+        ice_filename: ice_model.res.nc
+        date: '2015-01-01T09:00:00Z'
+    Covariance:
+      covariance: SocaError
+      standard_deviation: 0.8
+      vertical_correlation: 0.2
+      horizontal_length_scale: 1e6
+      date: '2015-01-01T09:00:00Z'
+  Jo:
+    ObsTypes:
+#    - ObsType: SeaIceThickness #StericHeight #SeaIceFraction #
+    - ObsType: SeaIceThickness
+      #Generate:
+      #  nobs:  50
+      #  lat:   75.5
+      #  lon1: -200#-260 #-270
+      #  lon2: 0 #80 #0
+      ObsData:
+        ObsDataOut:
+          obsfile: Data/test_obsout.nc
+        ObsDataIn:
+          obsfile: /home/gvernier/Data/CS2/cryosat2-nrt-nh-20171030-v2.0.nc
+          #obsfile: Data/seaice_obs.nc
+          #obsfile: Data/jason-2.nc           
+        obsvalue: ObsVal        
+      Covariance:
+        covariance: diagonal
+        obserror: ObsErr
+variational:
+  iteration:
+  - resolution: {}
+    linearmodel:
+      version: IdTLM
+      tstep: PT1H
+    ninner: 2
+    gradient_norm_reduction: 1e-5
+    test: 'on'
+  iteration:
+  - resolution: {}
+    linearmodel:
+      version: IdTLM
+      tstep: PT1H
+    ninner: 2
+    gradient_norm_reduction: 1e-8
+    test: 'on'
+#  iteration:
+#  - resolution: {}
+#    linearmodel:
+#      version: IdTLM
+#      tstep: PT1H
+#    ninner: 2
+#    gradient_norm_reduction: 1e-8
+#    test: 'on'        
+minimizer:
+  algorithm: DRIPCG
+output:
+  datadir: Data
+  exp: 3dvarfgat
+  type: an
+final:
+  diagnostics:
+    departures: oman
+prints:
+  frequency: PT3H
