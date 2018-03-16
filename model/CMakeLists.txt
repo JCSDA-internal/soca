@@ -68,8 +68,6 @@ list( APPEND oops_soca_src_files
 ./Utils/soca_mom6sis2.F90
 ./Utils/soca_interp.F90
 ./Utils/soca_Butils.F90
-./Utils/adBuffer.f
-./Utils/adStack.c
 
 Traits.h
 Fortran.h
