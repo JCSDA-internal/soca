@@ -113,7 +113,7 @@ real(kind=kind_real), allocatable :: dy(:,:,:), Bdy(:,:,:)
 integer :: nx, ny, ncat, nk, k
 
 !real(kind=kind_real) :: Lx=5.0, Ly=1.0, sig_sic=0.01, sig_sit=0.5
-real(kind=kind_real) :: Lx=.01, Ly=.01, sig_sic=0.05, sig_sit=150.0
+real(kind=kind_real) :: Lx=1.0, Ly=.5, sig_sic=0.05, sig_sit=150.0
 
 call soca_3d_cov_registry%get(c_key_conf,conf)
 call soca_field_registry%get(c_key_in,xin)
