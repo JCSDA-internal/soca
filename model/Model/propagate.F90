@@ -18,8 +18,7 @@ subroutine propagate(flds,config)
   type(soca_field),  intent(inout) :: flds
   type(soca_config), intent(in)    :: config
 
-  !flds%cicen=0.9_kind_real*flds%cicen
-  print *,'Advance model'
+  print *,'Advance model (not!).'
 
   ! ------------------------------------------------------------------------------
   return

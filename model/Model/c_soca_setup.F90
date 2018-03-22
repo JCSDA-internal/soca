@@ -30,8 +30,6 @@ subroutine c_soca_setup(c_confspec, c_key_geom, c_key_confdata) bind (c,name='so
   type(soca_config), pointer :: config
   type(soca_geom), pointer :: geom
 
-  integer :: icentre, jcentre, ii, jj
-  real(kind=kind_real) :: distx, disty
   type(duration) :: dtstep
   character(len=20) :: ststep
   character(len=160) :: record

@@ -171,7 +171,7 @@ class Output:
         return dict(datadir=self.datadir,exp=self.exp,type=self.typeout)
     
 #Start of DA window (read from file ...)
-yyyy=2015
+yyyy=2016
 mm=1
 dd=1
 hh=9
@@ -215,6 +215,7 @@ window_length='PT'+str(dt.seconds/3600)+'H'
 model=Model()
 bkg_error=Covariance()
 bkg_mid=BackgroundFile(date=t_mid.isoformat()+'Z',
+                       basename='./RESTART/',
                        ocn_filename=ocnfname,
                        ice_filename=icefname)
 bkg_mid=[bkg_mid.todict()]
@@ -222,7 +223,7 @@ obstypes=ObsType()
 obstypes=[obstypes.todict()]
 jo=Jo(obstypes)
 jb=Jb(backgrounds=bkg_mid,covariance=bkg_error)
-J=CostFunction(variables=model_vars,Jb=jb,Jo=jo)
+J=CostFunction(variables=model_vars,Jb=jb,Jo=jo,window_begin=window_begin,window_length=window_length)
 
 iterations=Iteration(tlm='IdTLM',resolution={},tstep=model.dt,ninner=1)
 

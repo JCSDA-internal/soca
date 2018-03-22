@@ -87,7 +87,6 @@ contains
     use soca_mom6sis2, only: Coupled, soca_field_init, soca_geom_init
     use mpp_io_mod,              only: mpp_open, mpp_close
     use SIS_hor_grid, only: set_hor_grid, SIS_hor_grid_type
-    !use SIS_get_input, only:directories, Get_SIS_Input
     use MOM_get_input,            only : directories    
     use MOM_file_parser, only : open_param_file, param_file_type, read_param
     use MOM, only : MOM_control_struct, initialize_MOM
@@ -95,68 +94,18 @@ contains
     use ocean_model_mod,         only: update_ocean_model, ocean_model_init,  ocean_model_end
     use ice_model_mod,           only: ice_model_init, share_ice_domains, ice_model_end, ice_model_restart
     use ice_grid, only : ice_grid_type, set_ice_grid
-    !use constants_mod,           only: constants_init
-    !use atmos_model_mod,         only: atmos_data_type
-    !use land_model_mod,          only: land_data_type    
-    !use ocean_model_mod,         only: ocean_public_type, ocean_state_type, ice_ocean_boundary_type
-    !use ice_model_mod,           only: ice_data_type
     use fms_io_mod,      only: fms_io_init, fms_io_exit
-    !use MOM_time_manager,         only : time_type
     use time_manager_mod,        only: set_date, get_date, days_in_month, month_name, set_time, set_calendar_type, GREGORIAN
     
     implicit none
     type(soca_field), intent(inout)          :: self
     type(soca_geom),  pointer, intent(inout) :: geom
     type(soca_vars),  intent(in)             :: vars        
-
-    !Stuff for sea-ice grid init
-    !type(SIS_hor_grid_type) :: G        !< The horizontal grid type
-    !type(param_file_type)    :: param_file !< Parameter file handle
-    !type(hor_index_type) :: HI !< A hor_index_type for array extents
-    !logical :: global_indexing !< If true use global index
-                             !! values instead of having the data domain on each
-                             !! processor start at 1.
-
-    !type(time_type)   :: Time
-    type(param_file_type) :: param_file
-    type(directories) :: path
-    !type(MOM_control_struct), pointer       :: CS
-    
-    !logical,               optional, intent(in)  :: check_params
-    !character(len=*),      optional, intent(in)  :: component
-    
-    integer :: ivar, unit, nxny(2)
-    real(kind=kind_real) :: kg_m2_to_H
-
-    !integer :: date_init(6) = (/ 2016, 01, 01, 0, 0, 0 /) 
-    
-    !type(ice_grid_type) :: IG
-    !type(ice_data_type) :: Ice            !< The ice data type that is being initialized.
-    !type(time_type)       :: Time_Init      !< The starting time of the model integration
-    !type(time_type)       :: Time           !< The current time
-    !type(time_type)       :: Time_step_fast !< The time step for the ice_model_fast
-    !type(time_type)      :: Time_step_slow !< The time step for the ice_model_slow    
-    !call fms_io_init
+    integer :: ivar!, unit, nxny(2)
     
     self%geom => geom
     self%nf   = vars%nv
     call soca_field_init(self%AOGCM, geom%ocean%G, geom%ocean%GV, geom%ocean%IG)
-
-    ! Finish initializing ice grid
-
-    ! Parse grid inputs
-    !call Get_MOM_Input(param_file, dirs)    
-    !call set_ice_grid(IG, param_file, NCat_dflt)
-    !call set_calendar_type(GREGORIAN)
-    !Time_init = set_date (date_init(1), date_init(2), date_init(3), &
-    !     date_init(4), date_init(5), date_init(6))
-    !Time = Time_init
-    !Time_step_fast = set_time(1,0)
-    !Time_step_slow = Time_step_fast
-    !call ice_model_init(Ice, Time_Init, Time, Time_step_fast, Time_step_slow) 
-    !call fms_io_exit
-    
-    !kg_m2_to_H = self%AOGCM%Ice%fCS%IG%kg_m2_to_H
 
     ! Assign convenience pointers
     !Ocean internal state    
@@ -264,7 +213,7 @@ contains
     implicit none
     type(soca_field), intent(inout) :: self
     type(c_ptr), intent(in)       :: c_conf   !< Configuration
-    integer :: ndir,idir,ildir,ifdir,ioff
+    integer :: ndir,idir,ildir,ifdir
     integer,allocatable :: ixdir(:),iydir(:)
     character(len=3) :: idirchar
 
@@ -604,9 +553,6 @@ contains
     implicit none
     type(soca_field), intent(inout) :: fld
     type(soca_field), intent(in)    :: rhs
-    real(kind=kind_real), allocatable :: ztmp(:,:)
-    real(kind=kind_real) :: dy1, dy2, ya, yb, dx1, dx2, xa, xb
-    integer :: jx, jy, jf, iy, ia, ib
 
     call check(fld)
     call check(rhs)
@@ -653,7 +599,7 @@ contains
     
     type(ufo_locs)    :: locs
     type(ufo_geovals)    :: geovals
-    type(ufo_vars)    :: vars
+    !type(ufo_vars)    :: vars
     integer            :: nobs, nval
     
     iread = 0
@@ -663,7 +609,10 @@ contains
     if (iread==0) then
        call log%warning("soca_fields:read_file: Inventing State")
        !call abor1_ftn("soca_fields: inventing state")                    
-       call invent_state(fld,c_conf)
+       !call invent_state(fld)
+       call zeros(fld)
+       call random_number(fld%cicen)
+
        sdate = config_get_string(c_conf,len(sdate),"date")
        WRITE(buf,*) 'validity date is: '//sdate
        call log%info(buf)
@@ -686,26 +635,38 @@ contains
           case ('tocn')
              call read_data(ocn_filename,"Temp",fld%tocn(:,:,:),domain=fld%geom%ocean%G%Domain%mpp_domain)
           case ('socn')             
-             call read_data(ocn_filename,"Salt",fld%tocn(:,:,:),domain=fld%geom%ocean%G%Domain%mpp_domain)             
+             call read_data(ocn_filename,"Salt",fld%tocn(:,:,:),domain=fld%geom%ocean%G%Domain%mpp_domain)
           case ('cicen')
+             !call read_data(ice_filename, 'part_size', fld%AOGCM%Ice%part_size, domain=fld%geom%ocean%G%Domain%mpp_domain)
              idr = register_restart_field(sis_restart, ice_filename, 'part_size', fld%AOGCM%Ice%part_size, &
                   domain=fld%geom%ocean%G%Domain%mpp_domain)
           case ('hicen')
+             !call read_data(ice_filename, 'h_ice', fld%AOGCM%Ice%h_ice, domain=fld%geom%ocean%G%Domain%mpp_domain)
              idr = register_restart_field(sis_restart, ice_filename, 'h_ice', fld%AOGCM%Ice%h_ice, &
                   domain=fld%geom%ocean%G%Domain%mpp_domain)
           case ('hsnon')
+             !call read_data(ice_filename, 'h_snow', fld%AOGCM%Ice%h_snow, domain=fld%geom%ocean%G%Domain%mpp_domain)             
              idr = register_restart_field(sis_restart, ice_filename, 'h_snow', fld%AOGCM%Ice%h_snow, &
                   domain=fld%geom%ocean%G%Domain%mpp_domain)             
-          case ('qicnk')             
+          case ('qicnk')
+             !call read_data(ice_filename, 'enth_ice', fld%AOGCM%Ice%enth_ice, domain=fld%geom%ocean%G%Domain%mpp_domain)
              idr = register_restart_field(sis_restart, ice_filename, 'enth_ice', fld%AOGCM%Ice%enth_ice, &
                   domain=fld%geom%ocean%G%Domain%mpp_domain)
-          case ('qsnon')             
+          case ('qsnon')
+             print *,'==============================================='
+             print *,'==============================================='
+             print *,shape(fld%AOGCM%Ice%enth_snow)
+             print *,'==============================================='
+             print *,'==============================================='
+             !call read_data(ice_filename, 'enth_snow', fld%AOGCM%Ice%enth_snow, domain=fld%geom%ocean%G%Domain%mpp_domain)
              idr = register_restart_field(sis_restart, ice_filename, 'enth_snow', fld%AOGCM%Ice%enth_snow, &
                   domain=fld%geom%ocean%G%Domain%mpp_domain)
           case ('tsfcn')             
+             !call read_data(ice_filename, 'T_skin', fld%AOGCM%Ice%T_skin, domain=fld%geom%ocean%G%Domain%mpp_domain)
              idr = register_restart_field(sis_restart, ice_filename, 'T_skin', fld%AOGCM%Ice%T_skin, &
                   domain=fld%geom%ocean%G%Domain%mpp_domain)
-          case ('sicnk')             
+          case ('sicnk')
+             !call read_data(ice_filename, 'sal_ice', fld%AOGCM%Ice%sal_ice, domain=fld%geom%ocean%G%Domain%mpp_domain)             
              idr = register_restart_field(sis_restart, ice_filename, 'sal_ice', fld%AOGCM%Ice%sal_ice, &
                   domain=fld%geom%ocean%G%Domain%mpp_domain)             
           case default
@@ -966,14 +927,11 @@ contains
     type(ufo_vars),     intent(in)    :: ufovars            
     type(ufo_geovals), intent(inout)  :: geovals
 
-    integer :: Nc, No, var_type_index, Ncat
-    integer :: ivar, geovals_dim1, cnt_fld
+    integer :: ivar
     character(len=1024)  :: buf
     logical,allocatable :: mask(:), masko(:)               ! < mask (ncells, nlevels)
     real(kind=kind_real), allocatable :: lon(:), lat(:), lono(:), lato(:), fld_src(:), fld_dst(:)
     integer :: nobs, nval
-    !type(ufo_vars) :: ufovars
-    !character(len=MAXVARLEN), dimension(1) :: cvars
 
     ! interp stuff
     integer, allocatable :: imask(:)
@@ -1052,7 +1010,6 @@ contains
     type(ufo_vars)    :: ufovars    
     type(ufo_geovals), intent(in)  :: geovals
 
-    integer :: Nc, No, var_type_index, Ncat
     integer :: ivar, geovals_dim1, cnt_fld
     character(len=1024)  :: buf
     logical,allocatable :: mask(:), masko(:)               ! < mask (ncells, nlevels)
@@ -1066,7 +1023,7 @@ contains
     real(kind=kind_real), allocatable :: area(:),vunit(:)
     real(kind=kind_real), allocatable :: obs_field(:,:), mod_field(:,:), obsout(:)
 
-    integer :: icat, index, ii, jj, nv
+    integer :: icat, index, ii, jj
 
     nobs = locs%nlocs
 
@@ -1118,14 +1075,10 @@ contains
     implicit none
     type(soca_field), intent(in) :: self
     type(unstructured_grid), intent(inout) :: ug
-    real(kind=kind_real), allocatable :: zz(:)
-    real(kind=kind_real), allocatable :: vv(:)    
-    integer, allocatable :: cmask(:)
     integer :: jx,jy,jz,jk
     integer :: nz_total     ! Total number of levels in the 3D fields
     integer :: n_vars       ! Number of 3D variables 
     integer :: n_surf_vars  ! Number of surf vars (sould be 0 for ocean/ice)
-    integer :: ncat      ! !!!!!!!!! only doing 1 category for now !!!!!!!!!!!
 
     !nicas stuff
     integer :: nc0a, nl0, nv, nts

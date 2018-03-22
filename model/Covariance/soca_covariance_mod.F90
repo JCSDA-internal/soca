@@ -64,8 +64,6 @@ type(soca_geom), intent(in) :: geom     !< Geometry
 type(soca_3d_covar_config), intent(inout) :: config !< The covariance structure
 real(kind=kind_real) :: corr_length_scale
 
-!config%nx         = geom%nx
-!config%ny         = geom%ny
 config%sigma      = config_get_real(c_model,"standard_deviation")
 config%vert_corr  = config_get_real(c_model,"vertical_correlation")
 corr_length_scale = config_get_real(c_model,"horizontal_length_scale")
@@ -225,23 +223,11 @@ end subroutine soca_3d_covar_sqrt_mult
 
 !> Multiply streamfunction by sqrt(C) - Adjoint
 
-subroutine soca_3d_covar_sqrt_mult_ad(kx,ky,xincr,xctl,config)
-use iso_c_binding
-use kinds
-use soca_fields
+subroutine soca_3d_covar_sqrt_mult_ad()
 
 implicit none
-integer(c_int), intent(in)    :: kx            !< Zonal grid spacing
-integer(c_int), intent(in)    :: ky            !< Meridional grid spacing
-real(c_double), intent(inout) :: xctl(kx,ky,2) !< Result
-type(soca_field), intent(in)    :: xincr         !< Streamfunction: psi
-type(soca_3d_covar_config), intent(in) :: config !< covar config structure
 
-real(kind=kind_real), allocatable :: xout(:,:,:)
-integer :: i, j, k, iri, m
-real(kind=kind_real) :: zc, zero, one
-real(kind=kind_real) :: zgrid(kx), zfour(kx+2), work(ky)
-
+! Call to nicas and balance ops ... eventually
 
 
 end subroutine soca_3d_covar_sqrt_mult_ad

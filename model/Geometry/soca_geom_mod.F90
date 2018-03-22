@@ -46,7 +46,6 @@ contains
     integer(c_int), intent(inout) :: c_key_self
     type(c_ptr),       intent(in) :: c_conf
     type(soca_geom),      pointer :: self
-    integer                       :: nxny(2), nx, ny
     
     call soca_geom_registry%init()
     call soca_geom_registry%add(c_key_self)

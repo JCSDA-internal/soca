@@ -141,12 +141,9 @@ contains
     
     implicit none
     class(soca_model_geom), intent(in) :: self
-    integer :: unit
     character(len=256) :: geom_output_file = "geom_output.nc"
-    character(len=256) :: geom_field_name  = "none"
 
     call fms_io_init()
-    !call set_domain( self%G%Domain%mpp_domain)
     call write_data( geom_output_file, "lon", self%lon, self%G%Domain%mpp_domain)
     call write_data( geom_output_file, "lat", self%lat, self%G%Domain%mpp_domain)
     call write_data( geom_output_file, "z", self%z, self%G%Domain%mpp_domain)

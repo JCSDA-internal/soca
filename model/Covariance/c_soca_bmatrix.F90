@@ -69,30 +69,21 @@ integer(c_int), intent(in) :: c_key_out   !< Streamfunction: psi
 type(soca_3d_covar_config), pointer :: conf
 type(soca_field), pointer :: xin
 type(soca_field), pointer :: xout
-!real(kind=kind_real), allocatable :: xctl(:,:,:) ! Control vector
 
 call soca_3d_cov_registry%get(c_key_conf,conf)
 call soca_field_registry%get(c_key_in,xin)
 call soca_field_registry%get(c_key_out,xout)
 
-!allocate(xctl(conf%nx, conf%ny, 2))
-!xctl(:,:,:)=0.0_kind_real
+print *,"[[[[[[[[[[[[[[[[[[[[[[[[ IN B INV MULT: NOT IMPLEMENTED ]]]]]]]]]]]]]]]]]]]]]]]]"
 
-print *,"[[[[[[[[[[[[[[[[[[[[[[[[ IN B INV MULT ]]]]]]]]]]]]]]]]]]]]]]]]"
-
-!call soca_3d_covar_sqrt_inv_mult(conf%nx,conf%ny,xctl,xin,conf)
-!call zeros(xout)
 call ones(xout)
 call self_schur(xout, xin)
-!call soca_3d_covar_sqrt_inv_mult_ad(conf%nx,conf%ny,xctl,xout,conf)
-
-!deallocate(xctl)
 
 end subroutine c_soca_b_inv_mult
 
 ! ------------------------------------------------------------------------------
 
-!> Multiply streamfunction by covariance
+!> Multiply by covariance
 
 subroutine c_soca_b_mult(c_key_conf, c_key_in, c_key_out) bind(c,name='soca_b_mult_f90')
 
@@ -108,10 +99,7 @@ integer(c_int), intent(in) :: c_key_out   !< Streamfunction: psi
 type(soca_3d_covar_config), pointer :: conf
 type(soca_field), pointer :: xin
 type(soca_field), pointer :: xout
-!real(kind=kind_real), allocatable :: xctl(:,:,:) ! Control vector
-real(kind=kind_real), allocatable :: dy(:,:,:), Bdy(:,:,:)
-integer :: nx, ny, ncat, nk, k
-
+integer :: ncat, k
 !real(kind=kind_real) :: Lx=5.0, Ly=1.0, sig_sic=0.01, sig_sit=0.5
 real(kind=kind_real) :: Lx=1.0, Ly=.5, sig_sic=0.05, sig_sit=150.0
 
@@ -122,12 +110,10 @@ call soca_field_registry%get(c_key_out,xout)
 call zeros(xout)
 print *,"[[[[[[[[[[[[[[[[[[[[[[[[ IN B MULT ]]]]]]]]]]]]]]]]]]]]]]]]"
 
-nx = xin%geom%ocean%nx
-ny = xin%geom%ocean%ny
 ncat = xin%geom%ocean%ncat
 
 !cicen, !hicen
-do k=2, 6
+do k=2, ncat
    print *,'category:',k
    call gauss(xin%cicen(:,:,k), xout%cicen(:,:,k), xin%geom%ocean%lon, xin%geom%ocean%lat, lx, ly)
    call gauss(xin%hicen(:,:,k), xout%hicen(:,:,k), xin%geom%ocean%lon, xin%geom%ocean%lat, lx, ly)   

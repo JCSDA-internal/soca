@@ -11,6 +11,7 @@ module soca_Butils
 contains
 
   subroutine gauss(xincr, xctrl, lon, lat, lx, ly)
+    ! Temporary convolution operator, will be replaced by nicas ... soon
     use kinds  
     implicit none
     real(kind=kind_real), intent(IN) :: xincr(:, :)
@@ -58,14 +59,8 @@ contains
     real(kind=kind_real), allocatable, intent(inout) :: Bdy(:,:,:)
 
 
-    integer :: ii, jj, k, i, j, nx, ny, nk, r
+    integer :: k
     real(kind=kind_real) :: Lx=5.0, Ly=1.0
-
-    !real, allocatable :: xctrl(:,:), xincr(:,:), xincrb(:,:)
-
-    nx=size(dy,1)
-    ny=size(dy,2)
-    nk=size(dy,2)
 
     do k=2, 6
        print *,'category:',k, maxval(dy(:,:,k))

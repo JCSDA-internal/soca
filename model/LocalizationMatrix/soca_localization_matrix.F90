@@ -26,7 +26,6 @@ integer(c_int), intent(in) :: c_key_xincr
 
 type(soca_3d_covar_config), pointer :: conf   !< Config structure
 type(soca_field), pointer :: xincr
-real(kind=kind_real), allocatable :: xctl(:,:,:) ! Control vector
 
 call soca_3d_cov_registry%get(c_key_conf,conf)
 call soca_field_registry%get(c_key_xincr,xincr)

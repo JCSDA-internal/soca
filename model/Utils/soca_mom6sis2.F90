@@ -282,15 +282,12 @@ contains
     type(ocean_grid_type), intent(inout)           :: G
     type(verticalGrid_type), pointer, intent(inout):: GV
     type(ice_grid_type),              intent(inout) :: IG         !< Ice grid    
-    type(time_type) :: Time        !< model time, set in this routine
     type(param_file_type)        :: param_file  !< structure indicating paramater file to parse
     type(directories)           :: dirs        !< structure with directory paths
 
-    logical   :: offline_tracer_mode=.true. !< True if tracers are being run offline
-    !type(time_type), target :: Time
-    integer :: i, j, k, is, ie, js, je, Isq, Ieq, Jsq, Jeq, nzo, n, nzi, nzs
+    integer :: is, ie, js, je, Isq, Ieq, Jsq, Jeq, nzo, nzi, nzs
     integer :: isd, ied, jsd, jed, IsdB, IedB, JsdB, JedB
-    integer :: ncat, nkice, nksnow, km
+    integer :: ncat, km
 
     ! Allocate arrays on data domain
     ! Note: Compute domain excludes halo (is, ie, js, je)

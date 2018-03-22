@@ -25,7 +25,7 @@ type(soca_field),  pointer :: flds
 call soca_config_registry%get(c_key_conf, conf)
 call soca_field_registry%get(c_key_state,flds)
 
-call propagate(flds, conf)
+!call propagate(flds, conf)
 
 ! ------------------------------------------------------------------------------
 return

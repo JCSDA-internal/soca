@@ -8,19 +8,13 @@
 !! Two slightly different initial states may be created (according to whether
 !! or not ctype is set to 'f').
 
-subroutine invent_state(flds,config)
+subroutine invent_state(flds)
 
   use soca_fields
-  use iso_c_binding
-  use config_mod
-  use fckit_log_module, only : log
-  use soca_constants
-  use kinds
   
   implicit none
 
   type(soca_field), intent(inout) :: flds    !< Model fields
-  type(c_ptr), intent(in)       :: config  !< Configuration structure
 
   ! ------------------------------------------------------------------------------
 

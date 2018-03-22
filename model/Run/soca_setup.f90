@@ -22,7 +22,6 @@ subroutine soca_setup(c_conf) bind(c,name='soca_setup_f')
   implicit none
 
   type(c_ptr), intent(in) :: c_conf
-  integer :: stackmax = 4000000, unit
   
   call mpp_init(localcomm=mpi_comm_world)
   call fms_init()
@@ -34,19 +33,16 @@ end subroutine soca_setup
 subroutine soca_finalize() bind(c,name='soca_finalize_f')
 
   use fms_io_mod,      only: fms_io_exit
-  !use soca_mom6sis2
   use mpp_mod,         only: mpp_exit, mpp_sync
   use mpp_io_mod,              only: mpp_open, mpp_close, MPP_DELETE
   use fms_mod,                 only: fms_end
   use fms_io_mod,              only: fms_io_exit
   use mpi
   implicit none
-  integer :: unit, ierr
 
   !call mpi_finalize(ierr)
   !call mpp_exit()
   call fms_io_exit()
-  print *,'================================== soca_finalize'
   !call mpp_sync()
 
 end subroutine soca_finalize
