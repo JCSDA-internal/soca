@@ -931,7 +931,8 @@ contains
     character(len=1024)  :: buf
     logical,allocatable :: mask(:), masko(:)               ! < mask (ncells, nlevels)
     real(kind=kind_real), allocatable :: lon(:), lat(:), lono(:), lato(:), fld_src(:), fld_dst(:)
-    integer :: nobs, nval
+    integer :: nobs
+    integer :: nval
 
     ! interp stuff
     integer, allocatable :: imask(:)
@@ -952,7 +953,11 @@ contains
           nval = 1
        case ("ocean_potential_temperature","ocean_salinity")
           nval = fld%geom%ocean%nzo
+       case default
+          nval = 1
+          print *,'In interp, defaulting to ssh'        
        end select
+       
        geovals%geovals(ivar)%nval = nval
        if (allocated(geovals%geovals(ivar)%vals))  deallocate(geovals%geovals(ivar)%vals)
        allocate(geovals%geovals(ivar)%vals(nval,nobs))
@@ -974,7 +979,7 @@ contains
           
        case ("ice_thickness")
           do icat = 1,fld%geom%ocean%ncat
-             call fld%hinterp%interp_apply(fld%hicen(:,:,icat+1)*fld%geom%ocean%mask2d(:,:), geovals%geovals(ivar)%vals(icat,:))
+             call fld%hinterp%interp_apply(fld%hicen(:,:,icat)*fld%geom%ocean%mask2d(:,:), geovals%geovals(ivar)%vals(icat,:))
              print *,'geovals in interp:',geovals%geovals(ivar)%vals(icat,:)
           end do
           
@@ -990,6 +995,10 @@ contains
           do ilev = 1, nval
              call fld%hinterp%interp_apply(fld%socn(:,:,ilev)*fld%geom%ocean%mask2d(:,:), geovals%geovals(ivar)%vals(ilev,:))
           end do
+
+       case default
+          call fld%hinterp%interp_apply(fld%ssh(:,:)*fld%geom%ocean%mask2d(:,:), geovals%geovals(ivar)%vals(1,:))
+
        end select
     end do
     !call abor1_ftn("==============================")    
