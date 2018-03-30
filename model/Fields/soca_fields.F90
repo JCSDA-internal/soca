@@ -619,10 +619,10 @@ contains
        call datetime_set(sdate, vdate)
     else
        basename = config_get_string(c_conf,len(basename),"basename")        
-       ocn_sfc_filename = config_get_string(c_conf,len(ocn_filename),"ocn_sfc_filename")
+       !ocn_sfc_filename = config_get_string(c_conf,len(ocn_filename),"ocn_sfc_filename")
        ocn_filename = config_get_string(c_conf,len(ocn_filename),"ocn_filename")       
 
-       ocn_sfc_filename = trim(basename)//trim(ocn_sfc_filename)
+       !ocn_sfc_filename = trim(basename)//trim(ocn_sfc_filename)
        ocn_filename = trim(basename)//trim(ocn_filename)       
        ice_filename = config_get_string(c_conf,len(ice_filename),"ice_filename")       
        ice_filename = trim(basename)//trim(ice_filename)
@@ -631,7 +631,7 @@ contains
        do ii = 1, fld%nf
           select case(fld%fldnames(ii))
           case ('ssh')
-             call read_data(ocn_sfc_filename,"ave_ssh",fld%ssh(:,:),domain=fld%geom%ocean%G%Domain%mpp_domain)
+             call read_data(ocn_filename,"ave_ssh",fld%ssh(:,:),domain=fld%geom%ocean%G%Domain%mpp_domain)
           case ('tocn')
              call read_data(ocn_filename,"Temp",fld%tocn(:,:,:),domain=fld%geom%ocean%G%Domain%mpp_domain)
           case ('socn')             
@@ -1059,7 +1059,7 @@ contains
                 !print *,'in ad thickness, geovals=',geovals%geovals(ivar)%vals(icat,index)                
                 ii = fld%hinterp%index(index,1)
                 jj = fld%hinterp%index(index,2)
-                fld%hicen(ii,jj,icat+1) = fld%hicen(ii,jj,icat+1) + geovals%geovals(ivar)%vals(icat,index)
+                fld%hicen(ii,jj,icat) = fld%hicen(ii,jj,icat) + geovals%geovals(ivar)%vals(icat,index)
              enddo
           enddo
           

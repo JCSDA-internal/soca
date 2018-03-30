@@ -68,13 +68,15 @@ def main():
     bkg_mid=BackgroundFile(date=t_mid.isoformat()+'Z',
                        basename='./RESTART/',
                        ocn_filename=ocnfname,
+                       ocn_sfc_filename=ocnfname,
                        ice_filename=icefname)
     bkg_mid=[bkg_mid.todict()]
 
     #Observation types
-    obstypes=ObsType(obstype='SeaIceFraction',
+    obstypes=ObsType(obstype='SeaIceThickness',
                      obsfileout='Data/test.out',
-                     obsfilein='/scratch4/NCEPDEV/ocean/scrub/Guillaume.Vernieres/JEDI/seaice_obs.nc',
+                     #obsfilein='/scratch4/NCEPDEV/ocean/scrub/Guillaume.Vernieres/JEDI/soca/data/seaice_obs.nc',
+                     obsfilein='/scratch4/NCEPDEV/ocean/scrub/Guillaume.Vernieres/JEDI/soca/data/cryosat2-nrt-nh-20171030-v2.0.nc',
                      obsvalue='ObsVal',
                      covariance='diagonal',
                      obserror='ObsErr')

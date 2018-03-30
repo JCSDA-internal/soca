@@ -134,7 +134,7 @@ contains
     G%ke = GV%ke ; G%g_Earth = GV%g_Earth
 
     ! Read bathymetry
-    call read_data('ocean_geometry.nc', 'D', G%bathyT, G%Domain%mpp_domain)
+    !call read_data('ocean_geometry.nc', 'D', G%bathyT, G%Domain%mpp_domain)
     !call read_data('sea_ice_geometry.nc', 'D', G%bathyT, G%Domain%mpp_domain)
 
     !call write_data( "test2_write.nc", "bathyT", G%bathyT, G%Domain%mpp_domain)
