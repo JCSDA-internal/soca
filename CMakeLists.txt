@@ -11,7 +11,6 @@ project( soca C CXX Fortran)
 
 set( ENABLE_MPI ON CACHE BOOL "Compile with MPI" )
 set( ECBUILD_DEFAULT_BUILD_TYPE Release )
-#set( ECBUILD_DEFAULT_BUILD_TYPE Debug )
 include( ecbuild_system NO_POLICY_SCOPE )
 
 ecbuild_requires_macro_version( 2.5 )
