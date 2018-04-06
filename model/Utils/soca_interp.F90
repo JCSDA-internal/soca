@@ -13,7 +13,9 @@ module soca_interph_mod
   private
 
   type, public :: soca_hinterp
-     integer, allocatable, dimension(:,:)  :: index
+     integer, allocatable              :: index(:,:,:)  !< Indices of nearest neighbors
+     real(kind=kind_real), allocatable :: wgh(:,:)      !< Interp weight
+     integer :: nn                                      !< Number of neighbors
      integer :: nobs
      logical :: initialized
      logical :: alloc
@@ -21,77 +23,130 @@ module soca_interph_mod
      procedure :: interp_init
      procedure :: interp_compute_weight
      procedure :: interp_apply     
+     procedure :: interpad_apply 
      procedure :: interp_exit
   end type soca_hinterp
 
 contains
 
   !--------------------------------------------
-  subroutine interp_init(self, nobs)
+  subroutine interp_init(self, nobs, nn)
 
     implicit none
 
-    integer, intent(in) :: nobs
+    integer, intent(in)              :: nobs   !< Number of obs
+    integer, optional                :: nn     !< Number of neighbors
     class(soca_hinterp), intent(out) :: self
-    real(kind=kind_real), allocatable, dimension(:) :: mlon, mlat    
-
+        
+    self%nn=3; if (present(nn)) self%nn = nn
     self%nobs = nobs
-    allocate(self%index(nobs,2))
+    allocate(self%index(nobs,2,self%nn))
+    allocate(self%wgh(nobs,self%nn))
     self%initialized = .false.
     self%alloc = .true.
     
   end subroutine interp_init
 
   !--------------------------------------------  
-  subroutine interp_compute_weight(self, lon, lat, lono, lato)
+  subroutine interp_compute_weight(self, lon, lat, lono, lato) !!! ADD MASK !!!
 
     use kinds
+    use type_ctree, only: ctreetype,create_ctree,delete_ctree,find_nearest_neighbors
+    use tools_const, only: pi,req,deg2rad,rad2deg,sphere_dist
 
     implicit none
     
     class(soca_hinterp), intent(inout) :: self    
     real(kind=kind_real), dimension(:,:), intent(in) :: lon, lat
     real(kind=kind_real), dimension(:), intent(in) :: lono, lato
-    real(kind=kind_real), allocatable, dimension(:,:) :: wrk    
-    integer :: nobs, ni, nj, k, ij(2), cnt
+    integer :: nobs, ni, nj, k, l, ij(2), cnt
 
+    integer :: n, nn
+    logical, allocatable :: mask(:)
+    type(ctreetype) :: cover_tree
+    real(kind=kind_real), allocatable :: nn_dist(:,:), tmplon(:), tmplat(:)
+    real(kind=kind_real), allocatable :: tmplono(:), tmplato(:)
+    integer, allocatable :: nn_index(:,:)              ! nobsxnn
+    real(kind=kind_real) :: offset
+    integer :: ii,jj
     ni = size(lon,1)
     nj = size(lon,2)
 
-    allocate(wrk(ni,nj))
+    !--- Initialize kd-tree
+    n=ni*nj
+    allocate(mask(n))
+    mask=.true.
+    allocate(tmplon(n),tmplat(n))
+    tmplon=deg2rad*reshape(lon,(/n/))
+    tmplat=deg2rad*reshape(lat,(/n/))
+    cover_tree=create_ctree(n,tmplon,tmplat,mask)
+
+    !--- Find nn nearest neighbors
+    nn = self%nn
+    allocate(nn_dist(self%nobs,nn),nn_index(self%nobs,nn))
+    allocate(tmplono(self%nobs),tmplato(self%nobs))
+    tmplono=deg2rad*lono
+    tmplato=deg2rad*lato
 
     ! A very dumb nearest interp
     !$OMP PARALLEL DO
     cnt = 0
     do k = 1, self%nobs
-       if (lono(k).gt.-360.0) then
-          wrk = abs(lon - lono(k)) + abs(lat - lato(k))
-          self%index(k,:) = minloc(wrk)
-          cnt = cnt + 1
-       else
-          self%index(k,:) = 0
-       end if
+       call find_nearest_neighbors(cover_tree,tmplono(k),tmplato(k),nn,nn_index(k,:),nn_dist(k,:))
+       do l = 1, nn
+          self%index(k,1,l)=mod(nn_index(k,l),ni)
+          self%index(k,2,l)=nn_index(k,l)/ni+1
+          self%wgh(k,l)=nn_dist(k,l)/sum(nn_dist(k,:))
+       end do
     end do
     !$OMP END PARALLEL DO
 
     self%initialized = .false.
-    
+
+    deallocate(mask,tmplon,tmplat,tmplono,tmplato)
+
   end subroutine interp_compute_weight
 
   !--------------------------------------------  
   subroutine interp_apply(self, fld, obs)
-
+    ! Forward interpolation: "fields to obs"
     use kinds
+
+    implicit none
+
     class(soca_hinterp), intent(in) :: self    
     real(kind=kind_real), dimension(:,:), intent(in) :: fld
     real(kind=kind_real), dimension(:), intent(out) :: obs    
-    integer :: k
+    integer :: k,l
+    do k = 1, self%nobs
+       obs(k) = 0.0
+       do l = 1, self%nn
+          obs(k) = obs(k) + self%wgh(k,l)*fld(self%index(k,1,l),self%index(k,2,l))
+       end do
+    end do
+  end subroutine interp_apply
+
+  !--------------------------------------------  
+  subroutine interpad_apply(self, fld, obs)
+    ! Backward interpolation: "obs to fields"
+    use kinds
+
+    implicit none
+
+    class(soca_hinterp), intent(in) :: self    
+    real(kind=kind_real), dimension(:,:), intent(inout) :: fld
+    real(kind=kind_real), dimension(:), intent(in) :: obs    
+    integer :: k,l
 
     do k = 1, self%nobs
-       obs(k) = fld(self%index(k,1),self%index(k,2))
+       do l = 1, self%nn
+          fld(self%index(k,1,l),self%index(k,2,l))=fld(self%index(k,1,l),self%index(k,2,l))+&
+               &self%wgh(k,l)*obs(k)
+       end do
+       !obs(k) = 0.0
     end do
     
-  end subroutine interp_apply
+  end subroutine interpad_apply
   
   !--------------------------------------------  
   subroutine interp_exit(self)

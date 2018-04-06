@@ -73,10 +73,10 @@ def main():
     bkg_mid=[bkg_mid.todict()]
 
     #Observation types
-    obstypes=ObsType(obstype='SeaIceThickness',
+    obstypes=ObsType(obstype='SeaIceFraction',
                      obsfileout='Data/test.out',
-                     #obsfilein='/scratch4/NCEPDEV/ocean/scrub/Guillaume.Vernieres/JEDI/soca/data/seaice_obs.nc',
-                     obsfilein='/scratch4/NCEPDEV/ocean/scrub/Guillaume.Vernieres/JEDI/soca/data/cryosat2-nrt-nh-20171030-v2.0.nc',
+                     obsfilein='/scratch4/NCEPDEV/ocean/scrub/Guillaume.Vernieres/JEDI/soca/data/seaice_obs.nc',
+                     #obsfilein='/scratch4/NCEPDEV/ocean/scrub/Guillaume.Vernieres/JEDI/soca/data/cryosat2-nrt-nh-20171030-v2.0.nc',
                      obsvalue='ObsVal',
                      covariance='diagonal',
                      obserror='ObsErr')

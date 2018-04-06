@@ -136,6 +136,7 @@ subroutine c_soca_b_setup(c_key_self, c_conf, c_key_geom) &
      self%nicasB%bdata(ib)%rh0s=self%nicasB%nam%dc
      self%nicasB%bdata(ib)%rv0s=1000.0!self%nicasB%nam%dc
   end do  
+
   call run_nicas(self%nicasB%nam,self%nicasB%geom,self%nicasB%bpar,self%nicasB%bdata,self%nicasB%ndata)
   
   print *,'nsb=',self%nicasB%ndata(1)%nsb

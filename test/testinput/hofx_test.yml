@@ -5,21 +5,21 @@ Geometry: {}
 Model:
   tstep: PT1H
 Initial Condition:
+  basename: ./RESTART/
+  date: '2016-01-02T12:00:00Z'
+  ice_filename: 20160102.120000.ice_model.res.nc
+  ocn_filename: MOM.res_Y2016_D002_S43200.nc
+  ocn_sfc_filename: MOM.res_Y2016_D002_S43200.nc
   read_from_file: 1
-  date: '2015-05-01T00:00:00Z'
-  basename: "./RESTART-01/"
-  ocn_sfc_filename: MOM.res.nc
-  ocn_filename: MOM.res.nc
-  ice_filename: ice_model.res.nc
 Assimilation Window:
-  Begin: '2015-05-01T00:00:00Z'
-  End: '2015-05-01T15:00:00Z'
+  Begin: '2016-01-02T09:00:00Z'
+  End: '2016-01-02T21:00:00Z'
   Length: PT12H
 Observations:
   ObsTypes:
   - ObsType: SeaIceFraction
     Generate:
-      nobs: 30
+      nobs: 10
       lat: 80.5
       lon1: -209.0
       lon2: 0.0   
