@@ -11,8 +11,7 @@
 
 module soca_covariance_mod
 
-  use kinds
-  use hdiag_nicas_mod
+use kinds
 implicit none
 
 !> Fortran derived type to hold configuration data for the SOCA background/model covariance
@@ -21,10 +20,9 @@ type :: soca_3d_covar_config
   integer :: ny !< Meridional grid dimension
   real(kind=kind_real)    :: sigma        !< Standard deviation
   real(kind=kind_real)    :: vert_corr    !< Vertical correlation between levels
-  !real(kind=kind_real), allocatable :: sqrt_merid(:,:) !< sqrt(meridional correlation matrix)
-  !real(kind=kind_real), allocatable :: sqrt_inv_merid(:,:) !< Its inverse
-  !real(kind=kind_real), allocatable :: sqrt_zonal(:) !< Spectral weights for sqrt(zonal corr)
-  type(hdiag_nicas)    :: nicasB  
+  real(kind=kind_real), allocatable :: sqrt_merid(:,:) !< sqrt(meridional correlation matrix)
+  real(kind=kind_real), allocatable :: sqrt_inv_merid(:,:) !< Its inverse
+  real(kind=kind_real), allocatable :: sqrt_zonal(:) !< Spectral weights for sqrt(zonal corr)
 end type soca_3d_covar_config
 
 #define LISTED_TYPE soca_3d_covar_config
@@ -60,21 +58,15 @@ use fft_mod
 use kinds
 use fckit_log_module, only : fckit_log
 
-
 implicit none
 type(c_ptr), intent(in)   :: c_model  !< The configuration
 type(soca_geom), intent(in) :: geom     !< Geometry
 type(soca_3d_covar_config), intent(inout) :: config !< The covariance structure
-!real(kind=kind_real) :: corr_length_scale
+real(kind=kind_real) :: corr_length_scale
 
-!type(hdiag_nicas) :: hdiag
-
-
-
-!config%sigma      = config_get_real(c_model,"standard_deviation")
-!config%vert_corr  = config_get_real(c_model,"vertical_correlation")
-!corr_length_scale = config_get_real(c_model,"horizontal_length_scale")
-
+config%sigma      = config_get_real(c_model,"standard_deviation")
+config%vert_corr  = config_get_real(c_model,"vertical_correlation")
+corr_length_scale = config_get_real(c_model,"horizontal_length_scale")
 
 return
 end subroutine soca_3d_covar_setup
@@ -101,8 +93,6 @@ type(soca_3d_covar_config), pointer :: conf !< covar structure
 
 end subroutine soca_3d_covar_delete
 
-! ------------------------------------------------------------------------------
-
 !> Multiply by sqrt(C), where C is a 3d covariance matrix
 
 subroutine soca_3d_covar_sqrt_mult(xincr, xctrl, config)
@@ -113,19 +103,15 @@ use type_nam, only: namtype, namcheck
 use type_geom, only: geomtype, compute_grid_mesh
 use type_bpar, only: bpartype
 use type_ndata, only: ndatatype,ndata_dealloc
-use type_bdata, only: bdatatype,bdata_alloc
 use unstructured_grid_mod
 use soca_fields
-use nicas_apply_localization, only: apply_localization,apply_localization_sqrt,randomize_localization
-use nicas_apply_nicas, only: apply_nicas,apply_nicas_sqrt,apply_nicas_sqrt_ad  
-
+use nicas_apply_localization, only: apply_localization,apply_localization_from_sqrt,randomize_localization
+use tools_const, only: deg2rad
 use type_bdata, only: bdatatype
 use type_bpar, only: bpartype,bpar_alloc
 use model_oops, only: model_oops_coord
 use nicas_apply_nicas, only: apply_nicas
 use type_randgen,     only: create_randgen
-use type_cv, only: cvtype,cv_alloc,cv_random 
-use nicas_parameters
 
 implicit none
 type(soca_field), intent(inout) :: xincr
@@ -136,14 +122,100 @@ type(namtype)   :: nam                                                          
 type(geomtype)  :: geom                                                          !< Geometry
 type(bpartype)  :: bpar                                                          !< Block parameters
 !type(ndatatype), allocatable :: ndata(:)!(bpar%nb+1)                                             !< NICAS data
-!type(ndatatype), allocatable :: ndata(:)
 type(ndatatype) :: ndata
-type(bdatatype) :: bdata
 type(unstructured_grid) :: ug
 
+!nicas stuff
+integer :: nc0a, nl0, nv, nts
+real(kind=kind_real), allocatable :: lon(:), lat(:), area(:), vunit(:), rndnum(:)
+integer, allocatable :: imask(:,:)
+
+!Grid stuff
+integer :: isc, iec, jsc, jec, jjj, jz, il
+
+!Get indices for compute domain (no halo)
+isc = xctrl%geom%ocean%G%isc
+iec = xctrl%geom%ocean%G%iec    
+jsc = xctrl%geom%ocean%G%jsc
+jec = xctrl%geom%ocean%G%jec
+    
+nv = xctrl%geom%ocean%ncat
+nl0 = 1
+nts = 1
+nc0a = (iec - isc + 1) * (jec - jsc + 1 )
+
+allocate( lon(nc0a), lat(nc0a), area(nc0a) )
+allocate( vunit(nl0) )
+allocate( imask(nc0a, nl0) )    
 
 
-  
+lon = deg2rad*reshape( xctrl%geom%ocean%lon(isc:iec, jsc:jec), (/nc0a/) )
+lat = deg2rad*reshape( xctrl%geom%ocean%lat(isc:iec, jsc:jec), (/nc0a/) ) 
+
+area = reshape( xctrl%geom%ocean%cell_area(isc:iec, jsc:jec), (/nc0a/) )
+
+do jz = 1, nl0       
+   vunit(jz) = real(jz)
+   imask(1:nc0a,jz) = reshape( xctrl%geom%ocean%mask2d(isc:iec, jsc:jec), (/nc0a/) )
+end do
+
+area = 1.0           ! Dummy area
+vunit = 1.0          ! Dummy vertical unit
+imask = 1            ! Mask
+
+nam%default_seed = .true.
+nam%model = 'oops'
+nam%mask_type = 'none'
+nam%new_hdiag = .false.
+nam%displ_diag = .false.
+nam%new_param = .false.
+nam%new_lct = .false.
+nam%mask_check = .false.
+nam%new_obsop = .false.
+nam%check_dirac = .false.
+nam%nc3 = 1
+nam%dc = 1.0
+nam%nl = nl0
+nam%nv = nv
+nam%nts = nts
+nam%timeslot = 0
+nam%datadir = '.'
+nam%colorlog = .false.
+nam%ens1_ne_offset = 0
+do il=1,nam%nl
+   nam%levs(il) = il
+end do
+nam%method = 'cor'
+nam%strategy = 'common'
+nam%diag_interp = 'natural'
+nam%flt_type = 'gc99'
+
+geom%nc0a = nc0a
+geom%nl0 = nl0
+geom%nlev = nl0
+
+!Initialize random number generator
+call create_randgen(nam)
+print *,"================="
+! Initialize coordinates
+call model_oops_coord(geom,lon,lat,area,vunit,imask)
+print *,"================="
+call bpar_alloc(nam,geom,bpar) 
+print *,"================="
+call compute_grid_mesh(nam,geom)
+print *,"================="
+call convert_to_ug(xctrl, ug)
+print *,"================="
+print *,ndata%nsb
+!ndata%nam = nam
+
+call namcheck(nam)
+
+call apply_nicas(geom,ndata,ug%fld)
+!call apply_localization_from_sqrt(nam,geom,bpar,ndata,ug%fld)
+print *,"================="
+!call convert_from_ug(xincr, ug)
+print *,"================="
 
 end subroutine soca_3d_covar_sqrt_mult
 

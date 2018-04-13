@@ -34,7 +34,7 @@ cost_function:
     Background:
       state:
       - read_from_file: 1
-        basename: "./RESTART-01/"
+        basename: "./RESTART-22/"
         ocn_sfc_filename: MOM.res.nc
         ocn_filename: MOM.res.nc
         ice_filename: ice_model.res.nc
@@ -47,33 +47,78 @@ cost_function:
       date: '2015-01-01T12:00:00Z'
   Jo:
     ObsTypes:
-#    - ObsType: SeaIceThickness #StericHeight #SeaIceFraction #
     - ObsType: SeaIceThickness
-#      Generate:
-#        nobs:  50
-#        lat:   75.5
-#        lon1: -200#-260 #-270
-#        lon2: 0 #80 #0
       ObsData:
         ObsDataOut:
           obsfile: Data/test_obsout.nc
         ObsDataIn:
           obsfile: /home/gvernier/Data/CS2/cryosat2-nrt-nh-20171030-v2.0.nc
-          #obsfile: Data/seaice_obs.nc
-          #obsfile: Data/jason-2.nc           
         obsvalue: ObsVal        
       Covariance:
         covariance: diagonal
         obserror: ObsErr
+#    - ObsType: StericHeight
+#      ObsData:
+#        ObsDataOut:
+#          obsfile: Data/test_obsout.nc
+#        ObsDataIn:
+#          obsfile: Data/jason-2.nc           
+#        obsvalue: ObsVal        
+#      Covariance:
+#        covariance: diagonal
+#        obserror: ObsErr	
+#    - ObsType: SeaIceFraction
+#      Generate:
+#        nobs:  500
+#        lat:   75.5
+#        lon1: -200#-260 #-270
+#        lon2: 0 #80 #0
+#      ObsData:
+#        ObsDataOut:
+#          obsfile: Data/test_obsout.nc
+#        ObsDataIn:
+#          obsfile: Data/seaice_obs.nc
+#        obsvalue: ObsVal        
+#      Covariance:
+#        covariance: diagonal
+#        obserror: ObsErr	
 variational:
   iteration:
   - resolution: {}
     linearmodel:
       version: IdTLM
       tstep: PT1H
-    ninner: 1
-    gradient_norm_reduction: 1e-5
+    ninner: 20
+    gradient_norm_reduction: 1e-15
     test: 'on'
+  - resolution: {}
+    linearmodel:
+      version: IdTLM
+      tstep: PT1H
+    ninner: 10
+    gradient_norm_reduction: 1e-15
+    test: 'on'
+  - resolution: {}
+    linearmodel:
+      version: IdTLM
+      tstep: PT1H
+    ninner: 10
+    gradient_norm_reduction: 1e-15
+    test: 'on'
+  - resolution: {}
+    linearmodel:
+      version: IdTLM
+      tstep: PT1H
+    ninner: 10
+    gradient_norm_reduction: 1e-15
+    test: 'on'
+  - resolution: {}
+    linearmodel:
+      version: IdTLM
+      tstep: PT1H
+    ninner: 10
+    gradient_norm_reduction: 1e-15
+    test: 'on'        
 #  iteration:
 #  - resolution: {}
 #    linearmodel:

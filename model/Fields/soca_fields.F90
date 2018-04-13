@@ -57,12 +57,12 @@ module soca_fields
      real(kind=kind_real), pointer     :: tocn(:,:,:) => NULL()      !< Average temperature of grid cell (nx,ny,nzo)
      real(kind=kind_real), pointer     :: ssh(:,:) => NULL()         !< Sea-surface height (nx,ny,nzo)     
      character(len=5), allocatable     :: fldnames(:)           !< Variable identifiers             (nf)
-     integer, allocatable              :: numfld_per_fldname(:) !< Number of 2d fields for each     (nf) 
+     !integer, allocatable              :: numfld_per_fldname(:) !< Number of 2d fields for each     (nf) 
                                                                 !< element of fldnames
 
-     type(soca_hinterp)                 :: hinterp
+     !type(soca_hinterp)                 :: hinterp
      !type(linoptype)                   :: hinterp_op
-     integer                           :: hinterp_initialized = 0     !1:  hinterp_op has been initialized
+     !integer                           :: hinterp_initialized = 0     !1:  hinterp_op has been initialized
                                                                       !0: hinterp_op not initialized
   end type soca_field
 
@@ -124,24 +124,24 @@ contains
 
     call zeros(self)
     
-    allocate(self%numfld_per_fldname(vars%nv))
+    !allocate(self%numfld_per_fldname(vars%nv))
     
-    do ivar=1,vars%nv
-       select case(vars%fldnames(ivar))          
-       case ('cicen','hicen','hsnon','tsfcn')
-          self%numfld_per_fldname(ivar)=geom%ocean%ncat
-       case ('sicnk','qicnk')
-          self%numfld_per_fldname(ivar)=geom%ocean%ncat*geom%ocean%nzi
-       case ('qsnon')
-          self%numfld_per_fldname(ivar)=geom%ocean%ncat*geom%ocean%nzs
-       case ('socn','tocn')
-          self%numfld_per_fldname(ivar)=geom%ocean%nzo
-       case ('ssh')
-          self%numfld_per_fldname(ivar)=1
-       case default
-          call abor1_ftn("c_soca_fields: undefined variables")
-       end select
-    end do
+!!$    do ivar=1,vars%nv
+!!$       select case(vars%fldnames(ivar))          
+!!$       case ('cicen','hicen','hsnon','tsfcn')
+!!$          self%numfld_per_fldname(ivar)=geom%ocean%ncat
+!!$       case ('sicnk','qicnk')
+!!$          self%numfld_per_fldname(ivar)=geom%ocean%ncat*geom%ocean%nzi
+!!$       case ('qsnon')
+!!$          self%numfld_per_fldname(ivar)=geom%ocean%ncat*geom%ocean%nzs
+!!$       case ('socn','tocn')
+!!$          self%numfld_per_fldname(ivar)=geom%ocean%nzo
+!!$       case ('ssh')
+!!$          self%numfld_per_fldname(ivar)=1
+!!$       case default
+!!$          call abor1_ftn("c_soca_fields: undefined variables")
+!!$       end select
+!!$    end do
 
     if (self%nf>11) then
        call abor1_ftn ("soca_fields:create error number of fields")       
@@ -653,11 +653,6 @@ contains
              idr = register_restart_field(sis_restart, ice_filename, 'enth_ice', fld%AOGCM%Ice%enth_ice, &
                   domain=fld%geom%ocean%G%Domain%mpp_domain)
           case ('qsnon')
-             print *,'==============================================='
-             print *,'==============================================='
-             print *,shape(fld%AOGCM%Ice%enth_snow)
-             print *,'==============================================='
-             print *,'==============================================='
              !call read_data(ice_filename, 'enth_snow', fld%AOGCM%Ice%enth_snow, domain=fld%geom%ocean%G%Domain%mpp_domain)
              idr = register_restart_field(sis_restart, ice_filename, 'enth_snow', fld%AOGCM%Ice%enth_snow, &
                   domain=fld%geom%ocean%G%Domain%mpp_domain)
@@ -926,7 +921,6 @@ contains
     type(soca_hinterp), save, target :: horiz_interp
     integer :: nobs
 
-    print *,'============ initialize interpolation'
     if (.NOT.interph_initialized) then
        nobs = locs%nlocs
        call horiz_interp%interp_init(nobs)
@@ -935,11 +929,8 @@ contains
          &                                     locs%lon,&
          &                                     locs%lat)
        interph_initialized = .true.
-       print *,'============ done initialize interpolation'
     end if
-    print *,'============ associate pointer'
     horiz_interp_p => horiz_interp
-    print *,'============ done associate pointer'
 
   end subroutine initialize_interph
 
@@ -979,6 +970,7 @@ contains
     integer :: icat, ilev
 
     nobs = locs%nlocs
+    print *,'lm nobs=',nobs
     do ivar = 1, ufovars%nv
        print *,ufovars%fldnames(ivar)
        select case (trim(ufovars%fldnames(ivar)))
@@ -994,7 +986,10 @@ contains
        end select
        
        geovals%geovals(ivar)%nval = nval
-       if (allocated(geovals%geovals(ivar)%vals))  deallocate(geovals%geovals(ivar)%vals)
+       if (allocated(geovals%geovals(ivar)%vals)) then
+          print *,'I WAS ALLOCATED !!!!!!!!!'
+          deallocate(geovals%geovals(ivar)%vals)
+       end if
        allocate(geovals%geovals(ivar)%vals(nval,nobs))
        geovals%geovals(ivar)%vals(:,:)=0.0_kind_real    
        geovals%lalloc = .true.       
@@ -1002,52 +997,35 @@ contains
        
        ! Initialize horizontal inerpolation
        call initialize_interph(fld, locs, horiz_interp_p)
-
-       !if (fld%hinterp_initialized.eq.0) then
-       !   call fld%hinterp%interp_init(nobs)          
-       !   call fld%hinterp%interp_compute_weight(fld%geom%ocean%lon, fld%geom%ocean%lat, locs%lon, locs%lat)
-       !   fld%hinterp_initialized = 1
-       !end if
-       print *,'============ out of initialize interp'
        select case (trim(ufovars%fldnames(ivar)))
        case ("ice_concentration")
           do icat = 1,fld%geom%ocean%ncat
-             !call fld%hinterp%interp_apply(fld%cicen(:,:,icat+1)*fld%geom%ocean%mask2d(:,:), geovals%geovals(ivar)%vals(icat,:))
-             print *,'============ interpolating ice'
              call horiz_interp_p%interp_apply(fld%cicen(:,:,icat+1)*fld%geom%ocean%mask2d(:,:), geovals%geovals(ivar)%vals(icat,:))
           end do
-             print *,'============ done interpolating ice'          
        case ("ice_thickness")
           do icat = 1,fld%geom%ocean%ncat
-             !call fld%hinterp%interp_apply(fld%hicen(:,:,icat)*fld%geom%ocean%mask2d(:,:), geovals%geovals(ivar)%vals(icat,:))
-
              call horiz_interp_p%interp_apply(fld%hicen(:,:,icat)*fld%geom%ocean%mask2d(:,:), geovals%geovals(ivar)%vals(icat,:))
-             print *,'geovals in interp:',geovals%geovals(ivar)%vals(icat,:)
           end do
           
        case ("sea_surface_height_above_geoid","steric_height")
-          !call fld%hinterp%interp_apply(fld%ssh(:,:)*fld%geom%ocean%mask2d(:,:), geovals%geovals(ivar)%vals(1,:))
           call horiz_interp_p%interp_apply(fld%ssh(:,:)*fld%geom%ocean%mask2d(:,:), geovals%geovals(ivar)%vals(1,:))
 
        case ("ocean_potential_temperature")
           do ilev = 1, nval
-             !call fld%hinterp%interp_apply(fld%tocn(:,:,nval)*fld%geom%ocean%mask2d(:,:), geovals%geovals(ivar)%vals(ilev,:))
              call horiz_interp_p%interp_apply(fld%tocn(:,:,nval)*fld%geom%ocean%mask2d(:,:), geovals%geovals(ivar)%vals(ilev,:))
           end do
           
        case ("ocean_salinity")
           do ilev = 1, nval
-             !call fld%hinterp%interp_apply(fld%socn(:,:,ilev)*fld%geom%ocean%mask2d(:,:), geovals%geovals(ivar)%vals(ilev,:))
              call horiz_interp_p%interp_apply(fld%socn(:,:,ilev)*fld%geom%ocean%mask2d(:,:), geovals%geovals(ivar)%vals(ilev,:))
           end do
 
        case default
-          !call fld%hinterp%interp_apply(fld%ssh(:,:)*fld%geom%ocean%mask2d(:,:), geovals%geovals(ivar)%vals(1,:))
           call horiz_interp_p%interp_apply(fld%ssh(:,:)*fld%geom%ocean%mask2d(:,:), geovals%geovals(ivar)%vals(1,:))
 
        end select
     end do
-    !call abor1_ftn("==============================")    
+
   end subroutine nicas_interph
 
   subroutine nicas_interphad(fld, locs, ufovars, geovals)
@@ -1082,48 +1060,24 @@ contains
 
     integer :: icat, index, ii, jj
 
-    print *,'=================== in soca interp adjoint ad ================= '
-    call abor1_ftn("out of interp adjoint......................................")
     nobs = locs%nlocs
 
     call initialize_interph(fld, locs, horiz_interp_p)
-    !call fld%hinterp%interp_init(nobs)
-    !call fld%hinterp%interp_compute_weight(fld%geom%ocean%lon, fld%geom%ocean%lat, locs%lon, locs%lat)
-    !fld%hinterp_initialized = 1
-
 
     do ivar = 1, ufovars%nv
 
        select case (trim(ufovars%fldnames(ivar)))
        case ("ice_concentration")
           do icat = 1,fld%geom%ocean%ncat
-             !do index = 1, nobs
-                !print *,'in ad thickness, geovals=',geovals%geovals(ivar)%vals(icat,index)                                
-             !   ii = fld%hinterp%index(index,1,1)
-             !   jj = fld%hinterp%index(index,2,1)
-
-              !  fld%cicen(ii,jj,icat+1) = fld%cicen(ii,jj,icat+1) + geovals%geovals(ivar)%vals(icat,index)
-             !enddo
              call horiz_interp_p%interpad_apply(fld%cicen(:,:,icat+1), geovals%geovals(ivar)%vals(icat,:))
           enddo
 
        case ("ice_thickness")
           do icat = 1,fld%geom%ocean%ncat
-             !do index = 1, nobs
-                !print *,'in ad thickness, geovals=',geovals%geovals(ivar)%vals(icat,index)                
-             !   ii = fld%hinterp%index(index,1,1)
-             !   jj = fld%hinterp%index(index,2,1)
-             !   fld%hicen(ii,jj,icat) = fld%hicen(ii,jj,icat) + geovals%geovals(ivar)%vals(icat,index)
-             !enddo
+             call horiz_interp_p%interpad_apply(fld%hicen(:,:,icat), geovals%geovals(ivar)%vals(icat,:))
           enddo
-          call horiz_interp_p%interpad_apply(fld%hicen(:,:,icat), geovals%geovals(ivar)%vals(icat,:))
+
        case ("sea_surface_height_above_geoid","steric_height") !!!! steric height sould be  different case
-          print *,'INTERP AD STERIC HEIGHT'
-          !do index = 1, nobs
-          !   ii = fld%hinterp%index(index,1,1)
-          !   jj = fld%hinterp%index(index,2,1)
-          !   fld%ssh(ii,jj) = fld%ssh(ii,jj) + geovals%geovals(ivar)%vals(1,index)
-          !enddo          
           call horiz_interp_p%interpad_apply(fld%ssh(:,:), geovals%geovals(ivar)%vals(1,:))
        end select
     end do

@@ -15,7 +15,8 @@ module soca_interph_mod
   type, public :: soca_hinterp
      integer, allocatable              :: index(:,:,:)  !< Indices of nearest neighbors
      real(kind=kind_real), allocatable :: wgh(:,:)      !< Interp weight
-     integer :: nn                                      !< Number of neighbors
+     integer                           :: nn            !< Number of neighbors
+     real(kind=kind_real)              :: lx, ly        !< Decorrelation length scales     
      integer :: nobs
      logical :: initialized
      logical :: alloc
@@ -30,15 +31,20 @@ module soca_interph_mod
 contains
 
   !--------------------------------------------
-  subroutine interp_init(self, nobs, nn)
+  subroutine interp_init(self, nobs, nn, lx, ly)
 
     implicit none
 
     integer, intent(in)              :: nobs   !< Number of obs
     integer, optional                :: nn     !< Number of neighbors
+    real(kind=kind_real), optional   :: lx     !< Decorrelation scales
+    real(kind=kind_real), optional   :: ly     !< for dist wghted interp   
     class(soca_hinterp), intent(out) :: self
         
-    self%nn=3; if (present(nn)) self%nn = nn
+    self%nn=128; if (present(nn)) self%nn = nn
+    self%lx=5e-2; if (present(lx)) self%lx = lx
+    self%ly=1e-2; if (present(ly)) self%ly = ly    
+    
     self%nobs = nobs
     allocate(self%index(nobs,2,self%nn))
     allocate(self%wgh(nobs,self%nn))
@@ -88,18 +94,19 @@ contains
     tmplono=deg2rad*lono
     tmplato=deg2rad*lato
 
-    ! A very dumb nearest interp
-    !$OMP PARALLEL DO
+!!$    !$OMP PARALLEL DO
     cnt = 0
     do k = 1, self%nobs
        call find_nearest_neighbors(cover_tree,tmplono(k),tmplato(k),nn,nn_index(k,:),nn_dist(k,:))
+       nn_dist(k,:)=exp(-(nn_dist(k,:)/self%lx)**2)
        do l = 1, nn
           self%index(k,1,l)=mod(nn_index(k,l),ni)
           self%index(k,2,l)=nn_index(k,l)/ni+1
           self%wgh(k,l)=nn_dist(k,l)/sum(nn_dist(k,:))
        end do
+
     end do
-    !$OMP END PARALLEL DO
+!!$    !$OMP END PARALLEL DO
 
     self%initialized = .false.
 
