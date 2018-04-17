@@ -41,32 +41,32 @@ cost_function:
         date: '2015-01-01T12:00:00Z'
     Covariance:
       covariance: SocaError
-      standard_deviation: 0.8
-      vertical_correlation: 0.2
-      horizontal_length_scale: 1e6
+      sig_sic: 5.0
+      sig_sit: 1.5
+      sig_ssh: 0.2      
       date: '2015-01-01T12:00:00Z'
   Jo:
     ObsTypes:
-    - ObsType: SeaIceThickness
-      ObsData:
-        ObsDataOut:
-          obsfile: Data/test_obsout.nc
-        ObsDataIn:
-          obsfile: /home/gvernier/Data/CS2/cryosat2-nrt-nh-20171030-v2.0.nc
-        obsvalue: ObsVal        
-      Covariance:
-        covariance: diagonal
-        obserror: ObsErr
-#    - ObsType: StericHeight
+#    - ObsType: SeaIceThickness
 #      ObsData:
 #        ObsDataOut:
 #          obsfile: Data/test_obsout.nc
 #        ObsDataIn:
-#          obsfile: Data/jason-2.nc           
+#          obsfile: /home/gvernier/Data/CS2/cryosat2-nrt-nh-20171030-v2.0.nc
 #        obsvalue: ObsVal        
 #      Covariance:
 #        covariance: diagonal
-#        obserror: ObsErr	
+#        obserror: ObsErr
+    - ObsType: StericHeight
+      ObsData:
+        ObsDataOut:
+          obsfile: Data/test_obsout.nc
+        ObsDataIn:
+          obsfile: Data/jason-2.nc           
+        obsvalue: ObsVal        
+      Covariance:
+        covariance: diagonal
+        obserror: ObsErr	
 #    - ObsType: SeaIceFraction
 #      Generate:
 #        nobs:  500
@@ -88,53 +88,23 @@ variational:
     linearmodel:
       version: IdTLM
       tstep: PT1H
-    ninner: 20
+    ninner: 2
     gradient_norm_reduction: 1e-15
     test: 'on'
-  - resolution: {}
-    linearmodel:
-      version: IdTLM
-      tstep: PT1H
-    ninner: 10
-    gradient_norm_reduction: 1e-15
-    test: 'on'
-  - resolution: {}
-    linearmodel:
-      version: IdTLM
-      tstep: PT1H
-    ninner: 10
-    gradient_norm_reduction: 1e-15
-    test: 'on'
-  - resolution: {}
-    linearmodel:
-      version: IdTLM
-      tstep: PT1H
-    ninner: 10
-    gradient_norm_reduction: 1e-15
-    test: 'on'
-  - resolution: {}
-    linearmodel:
-      version: IdTLM
-      tstep: PT1H
-    ninner: 10
-    gradient_norm_reduction: 1e-15
-    test: 'on'        
-#  iteration:
 #  - resolution: {}
 #    linearmodel:
 #      version: IdTLM
 #      tstep: PT1H
-#    ninner: 1
-#    gradient_norm_reduction: 1e-8
+#    ninner: 10
+#    gradient_norm_reduction: 1e-15
 #    test: 'on'
-#  iteration:
 #  - resolution: {}
 #    linearmodel:
 #      version: IdTLM
 #      tstep: PT1H
-#    ninner: 2
-#    gradient_norm_reduction: 1e-8
-#    test: 'on'        
+#    ninner: 10
+#    gradient_norm_reduction: 1e-15
+#    test: 'on'
 minimizer:
   algorithm: DRIPCG
 output:

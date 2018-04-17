@@ -34,7 +34,11 @@ module soca_fields
        & read_file, write_file, gpnorm, fldrms, &
        & change_resol, interp_tl, interp_ad, convert_to_ug, convert_from_ug
   public :: soca_field_registry
-  
+
+  interface create
+     module procedure create_constructor, create_copy
+  end interface create
+           
   ! ------------------------------------------------------------------------------
   !> Fortran derived type to hold fields
   type :: soca_field
@@ -82,20 +86,10 @@ contains
 
   ! ------------------------------------------------------------------------------
 
-  subroutine create(self, geom, vars)
-
+  subroutine create_constructor(self, geom, vars)
+    ! Construct a field from geom and vars
     use soca_mom6sis2, only: Coupled, soca_field_init, soca_geom_init
-    use mpp_io_mod,              only: mpp_open, mpp_close
-    use SIS_hor_grid, only: set_hor_grid, SIS_hor_grid_type
-    use MOM_get_input,            only : directories    
-    use MOM_file_parser, only : open_param_file, param_file_type, read_param
-    use MOM, only : MOM_control_struct, initialize_MOM
-    use MOM_time_manager,         only : time_type
-    use ocean_model_mod,         only: update_ocean_model, ocean_model_init,  ocean_model_end
-    use ice_model_mod,           only: ice_model_init, share_ice_domains, ice_model_end, ice_model_restart
-    use ice_grid, only : ice_grid_type, set_ice_grid
-    use fms_io_mod,      only: fms_io_init, fms_io_exit
-    use time_manager_mod,        only: set_date, get_date, days_in_month, month_name, set_time, set_calendar_type, GREGORIAN
+    use soca_vars_mod
     
     implicit none
     type(soca_field), intent(inout)          :: self
@@ -106,6 +100,50 @@ contains
     self%geom => geom
     self%nf   = vars%nv
     call soca_field_init(self%AOGCM, geom%ocean%G, geom%ocean%GV, geom%ocean%IG)
+
+    ! Assign convenience pointers
+    !Ocean internal state    
+    self%tocn => self%AOGCM%Ocn%T
+    self%socn => self%AOGCM%Ocn%S
+    self%ssh => self%AOGCM%Ocn%ssh
+    self%ssh = self%ssh*self%geom%ocean%mask2d
+
+    !Sea-ice internal state
+    self%cicen => self%AOGCM%Ice%part_size
+    self%hicen => self%AOGCM%Ice%h_ice
+    self%hsnon => self%AOGCM%Ice%h_snow        
+    self%tsfcn => self%AOGCM%Ice%T_skin
+    self%sicnk => self%AOGCM%Ice%sal_ice
+    self%qicnk => self%AOGCM%Ice%enth_ice
+    self%qsnon => self%AOGCM%Ice%enth_snow
+
+    call zeros(self)
+
+    if (self%nf>11) then
+       call abor1_ftn ("soca_fields:create error number of fields")       
+    endif
+    allocate(self%fldnames(self%nf))
+    self%fldnames(:)=vars%fldnames(:)
+
+    call check(self)
+
+  end subroutine create_constructor
+
+  ! ------------------------------------------------------------------------------
+     
+  subroutine create_copy(self, rhs_fld)
+    ! Construct a field from an other field, lhs_fld=rhs_fld       
+    use soca_mom6sis2, only: Coupled, soca_field_init, soca_geom_init
+    use soca_vars_mod
+    
+    implicit none
+    type(soca_field), intent(inout)          :: self
+    type(soca_field), intent(inout)          :: rhs_fld
+    integer :: ivar!, unit, nxny(2)
+    
+    self%geom => rhs_fld%geom
+    self%nf   = rhs_fld%nf
+    call soca_field_init(self%AOGCM, rhs_fld%geom%ocean%G, rhs_fld%geom%ocean%GV, rhs_fld%geom%ocean%IG)
 
     ! Assign convenience pointers
     !Ocean internal state    
@@ -123,35 +161,16 @@ contains
     self%qsnon => self%AOGCM%Ice%enth_snow
 
     call zeros(self)
-    
-    !allocate(self%numfld_per_fldname(vars%nv))
-    
-!!$    do ivar=1,vars%nv
-!!$       select case(vars%fldnames(ivar))          
-!!$       case ('cicen','hicen','hsnon','tsfcn')
-!!$          self%numfld_per_fldname(ivar)=geom%ocean%ncat
-!!$       case ('sicnk','qicnk')
-!!$          self%numfld_per_fldname(ivar)=geom%ocean%ncat*geom%ocean%nzi
-!!$       case ('qsnon')
-!!$          self%numfld_per_fldname(ivar)=geom%ocean%ncat*geom%ocean%nzs
-!!$       case ('socn','tocn')
-!!$          self%numfld_per_fldname(ivar)=geom%ocean%nzo
-!!$       case ('ssh')
-!!$          self%numfld_per_fldname(ivar)=1
-!!$       case default
-!!$          call abor1_ftn("c_soca_fields: undefined variables")
-!!$       end select
-!!$    end do
 
     if (self%nf>11) then
-       call abor1_ftn ("soca_fields:create error number of fields")       
+       call abor1_ftn ("soca_fields:create_copy error number of fields")       
     endif
     allocate(self%fldnames(self%nf))
-    self%fldnames(:)=vars%fldnames(:)
+    self%fldnames(:)=rhs_fld%fldnames(:)
 
     call check(self)
 
-  end subroutine create
+  end subroutine create_copy
 
   ! ------------------------------------------------------------------------------
 
@@ -278,8 +297,9 @@ contains
   end subroutine random
 
   ! ------------------------------------------------------------------------------
-
+  
   subroutine copy(self,rhs)
+    
     implicit none
     type(soca_field), intent(inout) :: self
     type(soca_field), intent(in)    :: rhs
@@ -287,7 +307,7 @@ contains
 
     call check_resolution(self, rhs)
 
-    nf = common_vars(self, rhs)
+    !nf = common_vars(self, rhs)
 
     self%cicen = rhs%cicen
     self%hicen = rhs%hicen
@@ -301,9 +321,6 @@ contains
     self%tocn  = rhs%tocn
     self%ssh  = rhs%ssh    
 
-    !self%hinterp_initialized = rhs%hinterp_initialized
-    !call linop_copy(rhs%hinterp_op, self%hinterp_op)
-    
     return
   end subroutine copy
 
@@ -333,8 +350,6 @@ contains
     self%socn = self%socn + rhs%socn
     self%ssh = self%ssh + rhs%ssh
 
-    !self%AOGCM%Ocn%ssh = self%AOGCM%Ocn%ssh + rhs%AOGCM%Ocn%ssh
-    !return
   end subroutine self_add
 
   ! ------------------------------------------------------------------------------
@@ -969,8 +984,35 @@ contains
 
     integer :: icat, ilev
 
+!!$    HACK TO TEST ADJOINT OF INTERPOLTION
+!!$    type(ufo_locs)        :: locs_test
+!!$    integer, parameter :: nobs_test=100000
+!!$    real(kind_real) :: lats(nobs_test), lons(nobs_test)
+!!$    real(kind=kind_real),allocatable :: dx1(:,:),dx2(:,:)
+!!$    real(kind=kind_real) :: dy1(nobs_test),dy2(nobs_test)
+!!$    
+!!$    ! Test horizontal inerpolation
+!!$    call random_number(lons)
+!!$    lons=-30.0*lons
+!!$    call random_number(lats)    
+!!$    lats=75.0*lats
+!!$    allocate(dx1(size(fld%cicen(:,:,1),1),size(fld%cicen(:,:,1),1)))
+!!$    allocate(dx2(size(fld%cicen(:,:,1),1),size(fld%cicen(:,:,1),1)))
+!!$    call ufo_locs_create(locs_test, nobs_test, lats, lons)
+!!$    call random_number(dx1)
+!!$    call random_number(dy1)
+!!$    dx2=0.0
+!!$    dy2=0.0
+!!$    call initialize_interph(fld, locs_test, horiz_interp_p)
+!!$    call horiz_interp_p%interp_apply(dx1, dy2)           ! dy2=I.dx1
+!!$    call horiz_interp_p%interpad_apply(dx2, dy1)         ! dx2=I^T.dy1
+!!$    print *,'dx1.dx2-dy1.dy2=',sum(dx2*dx1)-sum(dy2*dy1) ! dx1.dx2=dy1.dy2
+!!$
+!!$    call abor1_ftn("done testing interp")
+!!$    !End test
+    
     nobs = locs%nlocs
-    print *,'lm nobs=',nobs
+    
     do ivar = 1, ufovars%nv
        print *,ufovars%fldnames(ivar)
        select case (trim(ufovars%fldnames(ivar)))

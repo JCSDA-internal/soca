@@ -16,7 +16,10 @@ module soca_interph_mod
      integer, allocatable              :: index(:,:,:)  !< Indices of nearest neighbors
      real(kind=kind_real), allocatable :: wgh(:,:)      !< Interp weight
      integer                           :: nn            !< Number of neighbors
-     real(kind=kind_real)              :: lx, ly        !< Decorrelation length scales     
+     real(kind=kind_real)              :: lx, ly        !< Decorrelation length scales
+     character(len=3)                  :: wgt_type      !< 'avg': wgt=1, 
+                                                        !< 'bar': bilinear-interp weight 
+
      integer :: nobs
      logical :: initialized
      logical :: alloc
@@ -31,20 +34,22 @@ module soca_interph_mod
 contains
 
   !--------------------------------------------
-  subroutine interp_init(self, nobs, nn, lx, ly)
+  subroutine interp_init(self, nobs, nn, lx, ly, wgt_type)
 
     implicit none
 
-    integer, intent(in)              :: nobs   !< Number of obs
-    integer, optional                :: nn     !< Number of neighbors
-    real(kind=kind_real), optional   :: lx     !< Decorrelation scales
-    real(kind=kind_real), optional   :: ly     !< for dist wghted interp   
+    integer, intent(in)              :: nobs     !< Number of obs
+    integer, optional                :: nn       !< Number of neighbors
+    real(kind=kind_real), optional   :: lx       !< Decorrelation scales
+    real(kind=kind_real), optional   :: ly       !< for dist wghted interp
+    character(len=3), optional       :: wgt_type !< 'avg' or 'bar'     
     class(soca_hinterp), intent(out) :: self
         
-    self%nn=128; if (present(nn)) self%nn = nn
+    self%nn=64; if (present(nn)) self%nn = nn
+    self%wgt_type='bar'; if (present(nn)) self%wgt_type = wgt_type    
     self%lx=5e-2; if (present(lx)) self%lx = lx
     self%ly=1e-2; if (present(ly)) self%ly = ly    
-    
+
     self%nobs = nobs
     allocate(self%index(nobs,2,self%nn))
     allocate(self%wgh(nobs,self%nn))
@@ -54,27 +59,30 @@ contains
   end subroutine interp_init
 
   !--------------------------------------------  
-  subroutine interp_compute_weight(self, lon, lat, lono, lato) !!! ADD MASK !!!
+  subroutine interp_compute_weight(self, lon, lat, lono, lato)
 
     use kinds
     use type_ctree, only: ctreetype,create_ctree,delete_ctree,find_nearest_neighbors
     use tools_const, only: pi,req,deg2rad,rad2deg,sphere_dist
-
+    use iso_fortran_env
+    use mpi
+    
     implicit none
     
-    class(soca_hinterp), intent(inout) :: self    
+    class(soca_hinterp), intent(inout)               :: self    
     real(kind=kind_real), dimension(:,:), intent(in) :: lon, lat
-    real(kind=kind_real), dimension(:), intent(in) :: lono, lato
-    integer :: nobs, ni, nj, k, l, ij(2), cnt
+    real(kind=kind_real), dimension(:), intent(in)   :: lono, lato
 
+    integer :: nobs, ni, nj, k, l, ij(2), cnt
     integer :: n, nn
     logical, allocatable :: mask(:)
     type(ctreetype) :: cover_tree
     real(kind=kind_real), allocatable :: nn_dist(:,:), tmplon(:), tmplat(:)
     real(kind=kind_real), allocatable :: tmplono(:), tmplato(:)
     integer, allocatable :: nn_index(:,:)              ! nobsxnn
-    real(kind=kind_real) :: offset
+    real(kind=kind_real) :: offset, dist
     integer :: ii,jj
+    integer :: my_rank, ierr
     ni = size(lon,1)
     nj = size(lon,2)
 
@@ -95,19 +103,28 @@ contains
     tmplato=deg2rad*lato
 
 !!$    !$OMP PARALLEL DO
+    call MPI_Comm_rank ( MPI_COMM_WORLD, my_rank, ierr )
     cnt = 0
     do k = 1, self%nobs
+       if (my_rank.eq.0) then
+          write(*,FMT="(A1,A,t21,F6.2,A,A)",ADVANCE="NO") achar(13), &
+               & " Percent Complete: ", (real(k)/real(self%nobs))*100.0, "% for ",self%wgt_type
+       end if
        call find_nearest_neighbors(cover_tree,tmplono(k),tmplato(k),nn,nn_index(k,:),nn_dist(k,:))
-       nn_dist(k,:)=exp(-(nn_dist(k,:)/self%lx)**2)
+       !nn_dist(k,:)=exp(-(nn_dist(k,:)/self%lx)**2)
        do l = 1, nn
           self%index(k,1,l)=mod(nn_index(k,l),ni)
           self%index(k,2,l)=nn_index(k,l)/ni+1
-          self%wgh(k,l)=nn_dist(k,l)/sum(nn_dist(k,:))
+          dist=sum(nn_dist(k,:))
+          if (self%wgt_type.eq.'bar') then
+             self%wgh(k,l)=(dist-nn_dist(k,l))/dist
+          else
+             self%wgh(k,l)=1.0/real(nn)
+          end if          
        end do
-
     end do
 !!$    !$OMP END PARALLEL DO
-
+    call mpi_barrier(MPI_COMM_WORLD,ierr)
     self%initialized = .false.
 
     deallocate(mask,tmplon,tmplat,tmplono,tmplato)
@@ -117,6 +134,7 @@ contains
   !--------------------------------------------  
   subroutine interp_apply(self, fld, obs)
     ! Forward interpolation: "fields to obs"
+    ! obs = interp(fld)
     use kinds
 
     implicit none
@@ -136,6 +154,7 @@ contains
   !--------------------------------------------  
   subroutine interpad_apply(self, fld, obs)
     ! Backward interpolation: "obs to fields"
+    ! fld = interpad(obs)    
     use kinds
 
     implicit none
@@ -166,6 +185,7 @@ contains
     self%initialized = .false.
     self%alloc = .true.
     self%nobs = 0
+    !More cleaning/deallocating needs to be done
     
   end subroutine interp_exit
 

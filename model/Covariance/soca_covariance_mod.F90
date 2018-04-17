@@ -11,227 +11,193 @@
 
 module soca_covariance_mod
 
-use kinds
-implicit none
+  use kinds
+  implicit none
 
-!> Fortran derived type to hold configuration data for the SOCA background/model covariance
-type :: soca_3d_covar_config
-  integer :: nx !< Zonal grid dimension
-  integer :: ny !< Meridional grid dimension
-  real(kind=kind_real)    :: sigma        !< Standard deviation
-  real(kind=kind_real)    :: vert_corr    !< Vertical correlation between levels
-  real(kind=kind_real), allocatable :: sqrt_merid(:,:) !< sqrt(meridional correlation matrix)
-  real(kind=kind_real), allocatable :: sqrt_inv_merid(:,:) !< Its inverse
-  real(kind=kind_real), allocatable :: sqrt_zonal(:) !< Spectral weights for sqrt(zonal corr)
-end type soca_3d_covar_config
+  !> Fortran derived type to hold configuration data for the SOCA background/model covariance
+  type :: soca_3d_covar_config
+     real(kind=kind_real) :: Lx=1.0, Ly=.5
+     real(kind=kind_real) :: sig_sic
+     real(kind=kind_real) :: sig_sit
+     real(kind=kind_real) :: sig_ssh
+  end type soca_3d_covar_config
 
 #define LISTED_TYPE soca_3d_covar_config
 
-!> Linked list interface - defines registry_t type
+  !> Linked list interface - defines registry_t type
 #include "util/linkedList_i.f"
 
-!> Global registry
-type(registry_t) :: soca_3d_cov_registry
+  !> Global registry
+  type(registry_t) :: soca_3d_cov_registry
 
-! ------------------------------------------------------------------------------
+  ! ------------------------------------------------------------------------------
 contains
-! ------------------------------------------------------------------------------
-!> Linked list implementation
+  ! ------------------------------------------------------------------------------
+  !> Linked list implementation
 #include "util/linkedList_c.f"
-! ------------------------------------------------------------------------------
+  ! ------------------------------------------------------------------------------
 
-! ------------------------------------------------------------------------------
+  ! ------------------------------------------------------------------------------
 
-!> Setup for the SOCA model's 3d error covariance matrices (B and Q_i)
+  !> Setup for the SOCA model's 3d error covariance matrices (B and Q_i)
 
-!> This routine queries the configuration for the parameters that define the
-!! covariance matrix, and stores the relevant values in the
-!! error covariance structure.
+  !> This routine queries the configuration for the parameters that define the
+  !! covariance matrix, and stores the relevant values in the
+  !! error covariance structure.
 
-subroutine soca_3d_covar_setup(c_model, geom, config)
+  subroutine soca_3d_covar_setup(c_model, geom, config)
 
-use soca_constants
-use soca_geom_mod
-use iso_c_binding
-use config_mod
-use fft_mod
-use kinds
-use fckit_log_module, only : fckit_log
-
-implicit none
-type(c_ptr), intent(in)   :: c_model  !< The configuration
-type(soca_geom), intent(in) :: geom     !< Geometry
-type(soca_3d_covar_config), intent(inout) :: config !< The covariance structure
-real(kind=kind_real) :: corr_length_scale
-
-config%sigma      = config_get_real(c_model,"standard_deviation")
-config%vert_corr  = config_get_real(c_model,"vertical_correlation")
-corr_length_scale = config_get_real(c_model,"horizontal_length_scale")
-
-return
-end subroutine soca_3d_covar_setup
-
-! ------------------------------------------------------------------------------
-
-!> Delete for the SOCA model's 3d error covariance matrices
-!!$
-subroutine soca_3d_covar_delete(c_key_conf)
-
-use iso_c_binding
-
-implicit none
-integer(c_int), intent(inout) :: c_key_conf !< The model covariance structure
-
-type(soca_3d_covar_config), pointer :: conf !< covar structure
-
-!call soca_3d_cov_registry%get(c_key_conf, conf)
-
-!deallocate(conf%sqrt_zonal)
-!deallocate(conf%sqrt_merid)
-!deallocate(conf%sqrt_inv_merid)
-!call soca_3d_cov_registry%remove(c_key_conf)
-
-end subroutine soca_3d_covar_delete
-
-!> Multiply by sqrt(C), where C is a 3d covariance matrix
-
-subroutine soca_3d_covar_sqrt_mult(xincr, xctrl, config)
-use iso_c_binding
-use kinds
-use soca_fields
-use type_nam, only: namtype, namcheck
-use type_geom, only: geomtype, compute_grid_mesh
-use type_bpar, only: bpartype
-use type_ndata, only: ndatatype,ndata_dealloc
-use unstructured_grid_mod
-use soca_fields
-use nicas_apply_localization, only: apply_localization,apply_localization_from_sqrt,randomize_localization
-use tools_const, only: deg2rad
-use type_bdata, only: bdatatype
-use type_bpar, only: bpartype,bpar_alloc
-use model_oops, only: model_oops_coord
-use nicas_apply_nicas, only: apply_nicas
-use type_randgen,     only: create_randgen
-
-implicit none
-type(soca_field), intent(inout) :: xincr
-type(soca_field), intent(in) :: xctrl
-type(soca_3d_covar_config), intent(in) :: config !< covariance config structure
-
-type(namtype)   :: nam                                                            !< Namelist
-type(geomtype)  :: geom                                                          !< Geometry
-type(bpartype)  :: bpar                                                          !< Block parameters
-!type(ndatatype), allocatable :: ndata(:)!(bpar%nb+1)                                             !< NICAS data
-type(ndatatype) :: ndata
-type(unstructured_grid) :: ug
-
-!nicas stuff
-integer :: nc0a, nl0, nv, nts
-real(kind=kind_real), allocatable :: lon(:), lat(:), area(:), vunit(:), rndnum(:)
-integer, allocatable :: imask(:,:)
-
-!Grid stuff
-integer :: isc, iec, jsc, jec, jjj, jz, il
-
-!Get indices for compute domain (no halo)
-isc = xctrl%geom%ocean%G%isc
-iec = xctrl%geom%ocean%G%iec    
-jsc = xctrl%geom%ocean%G%jsc
-jec = xctrl%geom%ocean%G%jec
+    use soca_constants
+    use soca_geom_mod
+    use iso_c_binding
+    use config_mod
+    use fft_mod
+    use kinds
+    use fckit_log_module, only : fckit_log
+    use soca_interph_mod
     
-nv = xctrl%geom%ocean%ncat
-nl0 = 1
-nts = 1
-nc0a = (iec - isc + 1) * (jec - jsc + 1 )
+    implicit none
+    type(c_ptr), intent(in)   :: c_model  !< The configuration
+    type(soca_geom), intent(in) :: geom     !< Geometry
+    type(soca_3d_covar_config), intent(inout) :: config !< The covariance structure
+    real(kind=kind_real) :: corr_length_scale
+    type(soca_hinterp), pointer :: horiz_convol_p
+    
+    config%sig_sic      = config_get_real(c_model,"sig_sic")
+    config%sig_sit      = config_get_real(c_model,"sig_sit")
+    config%sig_ssh      = config_get_real(c_model,"sig_ssh")
 
-allocate( lon(nc0a), lat(nc0a), area(nc0a) )
-allocate( vunit(nl0) )
-allocate( imask(nc0a, nl0) )    
+    call initialize_convolh(geom, horiz_convol_p)
+    
+  end subroutine soca_3d_covar_setup
 
+  ! ------------------------------------------------------------------------------
 
-lon = deg2rad*reshape( xctrl%geom%ocean%lon(isc:iec, jsc:jec), (/nc0a/) )
-lat = deg2rad*reshape( xctrl%geom%ocean%lat(isc:iec, jsc:jec), (/nc0a/) ) 
+  !> Delete for the SOCA model's 3d error covariance matrices
+!!$
+  subroutine soca_3d_covar_delete(c_key_conf)
 
-area = reshape( xctrl%geom%ocean%cell_area(isc:iec, jsc:jec), (/nc0a/) )
+    use iso_c_binding
 
-do jz = 1, nl0       
-   vunit(jz) = real(jz)
-   imask(1:nc0a,jz) = reshape( xctrl%geom%ocean%mask2d(isc:iec, jsc:jec), (/nc0a/) )
-end do
+    implicit none
+    integer(c_int), intent(inout) :: c_key_conf !< The model covariance structure
 
-area = 1.0           ! Dummy area
-vunit = 1.0          ! Dummy vertical unit
-imask = 1            ! Mask
+    type(soca_3d_covar_config), pointer :: conf !< covar structure
 
-nam%default_seed = .true.
-nam%model = 'oops'
-nam%mask_type = 'none'
-nam%new_hdiag = .false.
-nam%displ_diag = .false.
-nam%new_param = .false.
-nam%new_lct = .false.
-nam%mask_check = .false.
-nam%new_obsop = .false.
-nam%check_dirac = .false.
-nam%nc3 = 1
-nam%dc = 1.0
-nam%nl = nl0
-nam%nv = nv
-nam%nts = nts
-nam%timeslot = 0
-nam%datadir = '.'
-nam%colorlog = .false.
-nam%ens1_ne_offset = 0
-do il=1,nam%nl
-   nam%levs(il) = il
-end do
-nam%method = 'cor'
-nam%strategy = 'common'
-nam%diag_interp = 'natural'
-nam%flt_type = 'gc99'
+    !call soca_3d_cov_registry%get(c_key_conf, conf)
 
-geom%nc0a = nc0a
-geom%nl0 = nl0
-geom%nlev = nl0
+    !deallocate(conf%sqrt_zonal)
+    !deallocate(conf%sqrt_merid)
+    !deallocate(conf%sqrt_inv_merid)
+    !call soca_3d_cov_registry%remove(c_key_conf)
 
-!Initialize random number generator
-call create_randgen(nam)
-print *,"================="
-! Initialize coordinates
-call model_oops_coord(geom,lon,lat,area,vunit,imask)
-print *,"================="
-call bpar_alloc(nam,geom,bpar) 
-print *,"================="
-call compute_grid_mesh(nam,geom)
-print *,"================="
-call convert_to_ug(xctrl, ug)
-print *,"================="
-print *,ndata%nsb
-!ndata%nam = nam
+  end subroutine soca_3d_covar_delete
 
-call namcheck(nam)
+  !> Multiply by sqrt(C), where C is a 3d covariance matrix
 
-call apply_nicas(geom,ndata,ug%fld)
-!call apply_localization_from_sqrt(nam,geom,bpar,ndata,ug%fld)
-print *,"================="
-!call convert_from_ug(xincr, ug)
-print *,"================="
+  subroutine soca_3d_covar_sqrt_mult(dx, sqrtCdx, config)
+    use iso_c_binding
+    use kinds
+    use soca_fields
+    use soca_interph_mod
+    
+    implicit none
+    type(soca_field), intent(inout)        :: sqrtCdx         !< Full C^1/2 applied to dx
+    type(soca_field), intent(in)           :: dx              !< State space increment
+    type(soca_3d_covar_config), intent(in) :: config          !< covariance config structure
+    type(soca_hinterp), pointer            :: horiz_convol_p  !< pointer to convolution operator
+    real(kind=kind_real), allocatable      :: tmp_incr(:)
 
-end subroutine soca_3d_covar_sqrt_mult
+    call copy(sqrtCdx, dx)
+    
+    ! sqrtCdx=C.dx
+    call initialize_convolh(sqrtCdx%geom, horiz_convol_p)
+    allocate(tmp_incr(size(dx%ssh,1)*size(dx%ssh,2)))
+    tmp_incr=reshape(dx%ssh,(/size(dx%ssh,1)*size(dx%ssh,2)/))
+    call horiz_convol_p%interp_apply(sqrtCdx%ssh, tmp_incr)
+    sqrtCdx%ssh=reshape(tmp_incr,(/size(dx%ssh,1),size(dx%ssh,2)/))
+    
+  end subroutine soca_3d_covar_sqrt_mult
 
-! ------------------------------------------------------------------------------
+  ! ------------------------------------------------------------------------------
 
-!> Multiply streamfunction by sqrt(C) - Adjoint
+  !> Multiply streamfunction by sqrt(C) - Adjoint
 
-subroutine soca_3d_covar_sqrt_mult_ad()
+  subroutine soca_3d_covar_sqrt_mult_ad(dx, sqrtCTdx, config)
+    use iso_c_binding
+    use kinds
+    use soca_fields
+    use soca_interph_mod
+    
+    implicit none
+    type(soca_field), intent(in)           :: dx
+    type(soca_field), intent(inout)        :: sqrtCTdx
+    type(soca_3d_covar_config), intent(in) :: config !< covariance config structure
+    type(soca_hinterp), pointer            :: horiz_convol_p
+    real(kind=kind_real), allocatable      :: tmp_incr(:)
+    real(kind=kind_real)      :: crap
+    
+    call copy(sqrtCTdx, dx)
+    
+    call initialize_convolh(dx%geom, horiz_convol_p)
+    allocate(tmp_incr(size(sqrtCTdx%ssh,1)*size(sqrtCTdx%ssh,2)))
+    tmp_incr=reshape(dx%ssh,(/size(dx%ssh,1)*size(dx%ssh,2)/))
+    call horiz_convol_p%interpad_apply(sqrtCTdx%ssh,tmp_incr)
 
-implicit none
+  end subroutine soca_3d_covar_sqrt_mult_ad
 
-! Call to nicas and balance ops ... eventually
+  ! ------------------------------------------------------------------------------
+  
+  subroutine soca_3d_covar_D_mult(Ddx, config)
+    use iso_c_binding
+    use kinds
+    use soca_fields
+    use soca_interph_mod
+    
+    implicit none
+    type(soca_field), intent(inout)        :: Ddx             !< D applied to dx
+    type(soca_3d_covar_config), intent(in) :: config          !< covariance config structure
 
+    Ddx%cicen=config%sig_sic*Ddx%cicen
+    Ddx%hicen=config%sig_sit*Ddx%hicen
+    Ddx%ssh=config%sig_ssh*Ddx%ssh    
+    
+  end subroutine soca_3d_covar_D_mult
 
-end subroutine soca_3d_covar_sqrt_mult_ad
+  ! ------------------------------------------------------------------------------
 
-! ------------------------------------------------------------------------------
+  subroutine initialize_convolh(geom, horiz_convol_p)
+    use ufo_locs_mod  
+    use soca_interph_mod
+    use soca_geom_mod
+    use soca_interph_mod
+    
+    implicit none
+
+    type(soca_geom), intent(in)              :: geom
+    type(soca_hinterp), pointer, intent(out) :: horiz_convol_p
+
+    real(kind=kind_real), allocatable :: lon(:), lat(:)
+    logical, save :: convolh_initialized = .false.
+    type(soca_hinterp), save, target :: horiz_convol
+    integer :: n, nn=4
+    character(len=3) :: wgt_type='avg'
+
+    if (.NOT.convolh_initialized) then
+       n = size(geom%ocean%lon,1)*size(geom%ocean%lon,2)
+       allocate(lon(n),lat(n))
+       call horiz_convol%interp_init(n,nn=nn,wgt_type=wgt_type)
+       call horiz_convol%interp_compute_weight(geom%ocean%lon,&
+            &                                     geom%ocean%lat,&
+            &                                     lon,&
+            &                                     lat)
+       convolh_initialized = .true.
+       deallocate(lon,lat)
+    end if
+    horiz_convol_p => horiz_convol
+
+  end subroutine initialize_convolh
+
+  ! ------------------------------------------------------------------------------
 
 end module soca_covariance_mod
