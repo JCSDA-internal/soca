@@ -90,7 +90,18 @@ contains
 
     class(soca_model_geom), intent(inout)  :: self
     integer                       :: nxny(2), nx, ny
-    
+
+    integer :: is, ie, js, je, Isq, Ieq, Jsq, Jeq, nzo, nzi, nzs
+    integer :: isd, ied, jsd, jed, IsdB, IedB, JsdB, JedB
+
+    ! Allocate arrays on data domain
+    ! Note: Compute domain excludes halo (is, ie, js, je)
+    !       Data domain includes halo (isd, ied, jsd, jed)
+    is   = self%G%isc  ; ie   = self%G%iec  ; js   = self%G%jsc  ; je   = self%G%jec ; nzo = self%G%ke
+    Isq  = self%G%IscB ; Ieq  = self%G%IecB ; Jsq  = self%G%JscB ; Jeq  = self%G%JecB
+    isd  = self%G%isd  ; ied  = self%G%ied  ; jsd  = self%G%jsd  ; jed  = self%G%jed
+    IsdB = self%G%IsdB ; IedB = self%G%IedB ; JsdB = self%G%JsdB ; JedB = self%G%JedB
+   
     nxny = shape( self%G%GeoLonT )
     nx = nxny(1)
     ny = nxny(2)
@@ -101,11 +112,16 @@ contains
     self%ny = ny
 
     ! Can't point to data structure, so allocating ...
-    allocate(self%lon(nx, ny))
-    allocate(self%lat(nx, ny))
-    allocate(self%mask2d(nx, ny))
-    allocate(self%cell_area(nx, ny))
+    allocate(self%lon(isd:ied,jsd:jed))
+    allocate(self%lat(isd:ied,jsd:jed))    
+    allocate(self%mask2d(isd:ied,jsd:jed))
+    allocate(self%cell_area(isd:ied,jsd:jed))
     
+!!$    allocate(self%lon(nx, ny))
+!!$    allocate(self%lat(nx, ny))
+!!$    allocate(self%mask2d(nx, ny))
+!!$    allocate(self%cell_area(nx, ny))
+!!$    
     self%lon = self%G%GeoLonT
     self%lat = self%G%GeoLatT
     self%mask2d = self%G%mask2dT

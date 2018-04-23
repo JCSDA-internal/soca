@@ -16,10 +16,15 @@ module soca_covariance_mod
 
   !> Fortran derived type to hold configuration data for the SOCA background/model covariance
   type :: soca_3d_covar_config
-     real(kind=kind_real) :: Lx=1.0, Ly=.5
-     real(kind=kind_real) :: sig_sic
-     real(kind=kind_real) :: sig_sit
-     real(kind=kind_real) :: sig_ssh
+     real(kind=kind_real) :: Lx=1.0      !< Zonal       ] Length scale
+     real(kind=kind_real) :: Ly=1.0      !< Meridional  ] for
+     real(kind=kind_real) :: Lz=1.0      !< vertical    ] convolution kernel
+     real(kind=kind_real) :: sig_sic     !<   
+     real(kind=kind_real) :: sig_sit     !< Temporary hack 
+     real(kind=kind_real) :: sig_ssh     !<
+     character(len=800)   :: D_filename  !< Netcdf file containing
+                                         !< the diagonal matrix of standard deviation for
+                                         !< all the fields
   end type soca_3d_covar_config
 
 #define LISTED_TYPE soca_3d_covar_config
@@ -67,14 +72,14 @@ contains
     config%sig_sit      = config_get_real(c_model,"sig_sit")
     config%sig_ssh      = config_get_real(c_model,"sig_ssh")
 
-    call initialize_convolh(geom, horiz_convol_p)
+    !call initialize_convolh(geom, horiz_convol_p)
     
   end subroutine soca_3d_covar_setup
 
   ! ------------------------------------------------------------------------------
 
   !> Delete for the SOCA model's 3d error covariance matrices
-!!$
+
   subroutine soca_3d_covar_delete(c_key_conf)
 
     use iso_c_binding
@@ -106,17 +111,73 @@ contains
     type(soca_field), intent(in)           :: dx              !< State space increment
     type(soca_3d_covar_config), intent(in) :: config          !< covariance config structure
     type(soca_hinterp), pointer            :: horiz_convol_p  !< pointer to convolution operator
-    real(kind=kind_real), allocatable      :: tmp_incr(:)
+    real(kind=kind_real), allocatable      :: tmp_incr(:,:),tmp_incr3d(:,:,:)
+
+    integer :: k,l,m,iter
 
     call copy(sqrtCdx, dx)
     
+    ! Temporary hack while waiting for new interfaces for NICAS
     ! sqrtCdx=C.dx
-    call initialize_convolh(sqrtCdx%geom, horiz_convol_p)
-    allocate(tmp_incr(size(dx%ssh,1)*size(dx%ssh,2)))
-    tmp_incr=reshape(dx%ssh,(/size(dx%ssh,1)*size(dx%ssh,2)/))
-    call horiz_convol_p%interp_apply(sqrtCdx%ssh, tmp_incr)
-    sqrtCdx%ssh=reshape(tmp_incr,(/size(dx%ssh,1),size(dx%ssh,2)/))
+    allocate(tmp_incr(size(dx%ssh,1),size(dx%ssh,2)))
+    !call zeros(sqrtCdx)
+!!$!    sqrtCdx%ssh=dx%ssh    
+    do iter = 1, 1
+       tmp_incr=sqrtCdx%ssh*dx%geom%ocean%mask2d       
+       do k = 2, size(dx%ssh,1)-1
+          do l = 2, size(dx%ssh,2)-1
+             sqrtCdx%ssh(k,l)=(tmp_incr(k+1,l-1)+tmp_incr(k,l-1)+tmp_incr(k-1,l-1)+&
+                              &tmp_incr(k+1,l)+tmp_incr(k,l)+tmp_incr(k-1,l)+&
+                              &tmp_incr(k+1,l+1)+tmp_incr(k,l+1)+tmp_incr(k-1,l+1))/9.0
+          end do
+       end do
+    end do
+
+    allocate(tmp_incr3d(size(dx%ssh,1),size(dx%ssh,2),dx%geom%ocean%ncat))
+    sqrtCdx%hicen=dx%hicen    
+!!$    do iter = 1, 1
+!!$       tmp_incr3d=sqrtCdx%hicen       
+!!$       do k = 2, size(dx%ssh,1)-1
+!!$          do l = 2, size(dx%ssh,2)-1
+!!$             do m = 1, dx%geom%ocean%ncat
+!!$                sqrtCdx%hicen(k,l,m)=(tmp_incr3d(k+1,l-1,m)+tmp_incr3d(k,l-1,m)+tmp_incr3d(k-1,l-1,m)+&
+!!$                              &tmp_incr3d(k+1,l,m)+tmp_incr3d(k,l,m)+tmp_incr3d(k-1,l,m)+&
+!!$                              &tmp_incr3d(k+1,l+1,m)+tmp_incr3d(k,l+1,m)+tmp_incr3d(k-1,l+1,m))/9.0
+!!$             end do
+!!$          end do
+!!$       end do
+!!$    end do
+
+    sqrtCdx%cicen=dx%cicen
+!!$    do iter = 1, 2
+!!$       tmp_incr3d=sqrtCdx%cicen(:,:,2:dx%geom%ocean%ncat+1)
+!!$       do k = 2, size(dx%ssh,1)-1
+!!$          do l = 2, size(dx%ssh,2)-1
+!!$             do m = 1, dx%geom%ocean%ncat
+!!$                sqrtCdx%cicen(k,l,m+1)=(tmp_incr3d(k+1,l-1,m)+tmp_incr3d(k,l-1,m)+tmp_incr3d(k-1,l-1,m)+&
+!!$                              &tmp_incr3d(k+1,l,m)+tmp_incr3d(k,l,m)+tmp_incr3d(k-1,l,m)+&
+!!$                              &tmp_incr3d(k+1,l+1,m)+tmp_incr3d(k,l+1,m)+tmp_incr3d(k-1,l+1,m))/9.0
+!!$             end do
+!!$          end do
+!!$       end do
+!!$    end do
+
+    sqrtCdx%hicen=dx%hicen
+!!$    do iter = 1, 1
+!!$       tmp_incr3d=sqrtCdx%hicen(:,:,1:dx%geom%ocean%ncat)
+!!$       do k = 2, size(dx%ssh,1)-1
+!!$          do l = 2, size(dx%ssh,2)-1
+!!$             do m = 1, dx%geom%ocean%ncat
+!!$                sqrtCdx%hicen(k,l,m)=(tmp_incr3d(k+1,l-1,m)+tmp_incr3d(k,l-1,m)+tmp_incr3d(k-1,l-1,m)+&
+!!$                              &tmp_incr3d(k+1,l,m)+tmp_incr3d(k,l,m)+tmp_incr3d(k-1,l,m)+&
+!!$                              &tmp_incr3d(k+1,l+1,m)+tmp_incr3d(k,l+1,m)+tmp_incr3d(k-1,l+1,m))/9.0
+!!$             end do
+!!$          end do
+!!$       end do
+!!$    end do        
     
+    deallocate(tmp_incr, tmp_incr3d)
+
   end subroutine soca_3d_covar_sqrt_mult
 
   ! ------------------------------------------------------------------------------
@@ -138,11 +199,11 @@ contains
     real(kind=kind_real)      :: crap
     
     call copy(sqrtCTdx, dx)
-    
     call initialize_convolh(dx%geom, horiz_convol_p)
     allocate(tmp_incr(size(sqrtCTdx%ssh,1)*size(sqrtCTdx%ssh,2)))
     tmp_incr=reshape(dx%ssh,(/size(dx%ssh,1)*size(dx%ssh,2)/))
     call horiz_convol_p%interpad_apply(sqrtCTdx%ssh,tmp_incr)
+    deallocate(tmp_incr)
 
   end subroutine soca_3d_covar_sqrt_mult_ad
 
@@ -161,7 +222,7 @@ contains
     Ddx%cicen=config%sig_sic*Ddx%cicen
     Ddx%hicen=config%sig_sit*Ddx%hicen
     Ddx%ssh=config%sig_ssh*Ddx%ssh    
-    
+
   end subroutine soca_3d_covar_D_mult
 
   ! ------------------------------------------------------------------------------

@@ -74,6 +74,7 @@ subroutine c_soca_b_inv_mult(c_key_conf, c_key_in, c_key_out) bind(c,name='soca_
   call soca_field_registry%get(c_key_in,xin)
   call soca_field_registry%get(c_key_out,xout)
 
+  call zeros(xout)
   call copy(xout,xin) ! HACK, B^-1=Id
 
 end subroutine c_soca_b_inv_mult
@@ -106,22 +107,31 @@ subroutine c_soca_b_mult(c_key_conf, c_key_in, c_key_out) bind(c,name='soca_b_mu
   call soca_field_registry%get(c_key_out,xout)
 
   print *,"============ IN B MULT ============="
+  !call copy(xout,xin)
 
-!!$  call create(xtmp,xin)
-!!$  call zeros(xtmp)
-!!$  call soca_3d_covar_sqrt_mult_ad(xin, xtmp, conf)    ! xtmp = Cad.xin
-!!$  call zeros(xout)
-!!$  call soca_3d_covar_sqrt_mult(xout, xtmp, conf)      ! xout = C.xtmp
+  !call create(xtmp,xin)
+  !call copy(xtmp,xin)
+  !print *,'xin:',maxval(xin%ssh)  
+  !call soca_3d_covar_sqrt_mult(xin,xout,conf)      ! xout = C.xtmp
+  !print *,'xout:',maxval(xout%ssh)
 
-  call soca_3d_covar_D_mult(xin, conf)                ! xin = D.xin
-  call copy(xout,xin)
-  call create(xtmp,xin)
-  call soca_3d_covar_sqrt_mult_ad(xin, xout, conf)    ! xout = Cad.xin
-  call copy(xtmp,xout)
-  call soca_3d_covar_sqrt_mult(xout, xtmp, conf)      ! xout = C.xtmp
-  call copy(xin,xout)
+  call create(xtmp,xin)  
+  call copy(xtmp,xin)
+  call copy(xout,xin)  
+  call soca_3d_covar_D_mult(xtmp, conf)                ! xin = D.xin
+  call soca_3d_covar_sqrt_mult(xtmp,xout,conf)      ! xout = C.xtmp  
   call soca_3d_covar_D_mult(xout, conf)               ! xout = D.xout  
-  call delete(xtmp)
+  
+  !read(*,*)
+!!$  call soca_3d_covar_D_mult(xin, conf)                ! xin = D.xin
+!!$  call copy(xout,xin)
+!!$  call soca_3d_covar_sqrt_mult_ad(xin, xout, conf)    ! xout = Cad.xin
+!!$  call create(xtmp,xin)  
+!!$  call copy(xtmp,xout)
+!!$  call soca_3d_covar_sqrt_mult(xtmp, xout, conf)      ! xout = C.xtmp
+!!$  call copy(xout,xin)
+!!$  call soca_3d_covar_D_mult(xout, conf)               ! xout = D.xout  
+!!$  call delete(xtmp)
 
 end subroutine c_soca_b_mult
 

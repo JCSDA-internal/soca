@@ -9,13 +9,7 @@ module soca_fields
 
   use config_mod
   use soca_geom_mod
-  !use soca_goms_mod
-  !use soca_locs_mod  
   use soca_vars_mod
-  !use type_linop
-  !use tools_interp, only: interp_horiz
-  !use type_randgen, only: rng,initialize_sampling,create_randgen
-  !use module_namelist, only: namtype
   use soca_interph_mod
   use kinds
   use atmos_model_mod,         only: atmos_data_type
@@ -913,7 +907,7 @@ contains
     type(ufo_locs), intent(in)    :: locs
     type(ufo_vars),     intent(in)    :: vars        
     type(ufo_geovals), intent(inout) :: geovals    
-    character(2)                        :: op_type='AD'
+    !character(2)                        :: op_type='AD'
 
     call check(fld)
     call nicas_interphad(fld, locs, vars, geovals)
@@ -921,8 +915,46 @@ contains
   end subroutine interp_ad
 
   ! ------------------------------------------------------------------------------
+  function get_obsop_index(horiz_interp, locs, interph_initialized)
+    !> Returns index of interpolation object/obs operator
+    use ufo_locs_mod  
+    use soca_interph_mod
+    implicit none
 
-  subroutine initialize_interph(fld, locs, horiz_interp_p)
+    type(soca_hinterp), dimension(10), intent(in) :: horiz_interp        !< HARD CODED ... HACK ...
+    type(ufo_locs), intent(in)                    :: locs                !< HARD CODED ... HACK ...
+    logical, dimension(10), intent(in)            :: interph_initialized !< HARD CODED ... HACK ...
+
+    logical, dimension(10)            :: obs_type_test                   !< HARD CODED ... HACK ...
+    integer :: nobs    
+    integer :: cnt, cnt_obstype
+    integer :: get_obsop_index
+
+    ! Check nobs from interp object against nobs from locs 
+    obs_type_test=(horiz_interp(:)%nobs.eq.locs%nlocs)
+
+    ! Check for nobs matches between locs and horiz_interp
+    cnt_obstype=count(obs_type_test)
+    if (cnt_obstype.gt.1) then
+       call abor1_ftn('Idetification of obsop from nobs failed, needs further implementation')
+    end if
+    if (cnt_obstype.eq.0) then
+       !New obs operator: add 1 to the last index for interp operator
+       get_obsop_index=count(interph_initialized(:))+1
+       return
+    end if    
+
+    ! Get index of interpolation object
+    do cnt=1,size(obs_type_test)
+       if (obs_type_test(cnt)) exit
+    end do
+    get_obsop_index=cnt
+
+  end function get_obsop_index
+  
+  ! ------------------------------------------------------------------------------    
+
+  subroutine initialize_interph(fld, locs, horiz_interp_p, interp_type)    
     use ufo_locs_mod  
     use soca_interph_mod
 
@@ -931,21 +963,34 @@ contains
     type(soca_field), intent(in)             :: fld
     type(ufo_locs), intent(in)               :: locs
     type(soca_hinterp), pointer, intent(out) :: horiz_interp_p
-
-    logical, save :: interph_initialized = .false.
-    type(soca_hinterp), save, target :: horiz_interp
+    character(len=3), optional               :: interp_type     !< Forward: 'fwd' or adjoint: 'adj'
+    
+    logical, dimension(10), save                    :: interph_initialized = .false. !< HARD CODED ... HACK ... 
+    type(soca_hinterp), dimension(10), save, target :: horiz_interp                  !< HARD CODED ... HACK ...
+    logical, dimension(10)                          :: obs_type_test                 !< HARD CODED ... HACK ...    
     integer :: nobs
+    integer :: cnt, cnt_obstype, obs_type_counter
 
-    if (.NOT.interph_initialized) then
+    obs_type_counter = get_obsop_index(horiz_interp, locs, interph_initialized)
+
+    ! Comming from adjoint, no need to initialize
+    if (present(interp_type)) then   ! if interp_type is present, interp_type=adjoint
+       print *,obs_type_counter
+       horiz_interp_p => horiz_interp(obs_type_counter)
+       return
+    end if
+
+    ! Compute interpolation weights if needed
+    if (.not.(interph_initialized(obs_type_counter))) then       
        nobs = locs%nlocs
-       call horiz_interp%interp_init(nobs)
-       call horiz_interp%interp_compute_weight(fld%geom%ocean%lon,&
+       call horiz_interp(obs_type_counter)%interp_init(nobs)
+       call horiz_interp(obs_type_counter)%interp_compute_weight(fld%geom%ocean%lon,&
          &                                     fld%geom%ocean%lat,&
          &                                     locs%lon,&
          &                                     locs%lat)
-       interph_initialized = .true.
+       interph_initialized(obs_type_counter) = .true.
     end if
-    horiz_interp_p => horiz_interp
+    horiz_interp_p => horiz_interp(obs_type_counter)
 
   end subroutine initialize_interph
 
@@ -960,7 +1005,8 @@ contains
     use ufo_vars_mod
     use soca_constants, only : rho_i
     use soca_interph_mod
-
+    use fckit_log_module, only : fckit_log
+    
     implicit none
 
     type(soca_field), intent(inout)   :: fld
@@ -983,8 +1029,9 @@ contains
     real(kind=kind_real), allocatable :: obs_field(:,:), mod_field(:,:), obsout(:)
 
     integer :: icat, ilev
+    character(len=160) :: record
 
-!!$    HACK TO TEST ADJOINT OF INTERPOLTION
+!!$    !HACK TO TEST ADJOINT OF INTERPOLTION
 !!$    type(ufo_locs)        :: locs_test
 !!$    integer, parameter :: nobs_test=100000
 !!$    real(kind_real) :: lats(nobs_test), lons(nobs_test)
@@ -1012,21 +1059,27 @@ contains
 !!$    !End test
     
     nobs = locs%nlocs
-    
     do ivar = 1, ufovars%nv
-       print *,ufovars%fldnames(ivar)
+       write(record,*) "nicas_interph: ",ufovars%fldnames(ivar)
+       call fckit_log%info(record)
+
        select case (trim(ufovars%fldnames(ivar)))
        case ("ice_concentration","ice_thickness")
           nval = fld%geom%ocean%ncat
+
        case ("steric_height","sea_surface_height_above_geoid")
           nval = 1
+
        case ("ocean_potential_temperature","ocean_salinity")
           nval = fld%geom%ocean%nzo
+
        case default
-          nval = 1
-          print *,'In interp, defaulting to ssh'        
+          write(record,*) "nicas_interph: Doing nothing "
+          call fckit_log%info(record)          
+
        end select
-       
+
+       ! Allocate GeoVaLs (fields at locations)
        geovals%geovals(ivar)%nval = nval
        if (allocated(geovals%geovals(ivar)%vals)) then
           print *,'I WAS ALLOCATED !!!!!!!!!'
@@ -1039,7 +1092,10 @@ contains
        
        ! Initialize horizontal inerpolation
        call initialize_interph(fld, locs, horiz_interp_p)
+       write(record,*) "nicas_interph: ",ufovars%fldnames(ivar)
+       call fckit_log%info(record)       
        select case (trim(ufovars%fldnames(ivar)))
+          
        case ("ice_concentration")
           do icat = 1,fld%geom%ocean%ncat
              call horiz_interp_p%interp_apply(fld%cicen(:,:,icat+1)*fld%geom%ocean%mask2d(:,:), geovals%geovals(ivar)%vals(icat,:))
@@ -1053,23 +1109,22 @@ contains
           call horiz_interp_p%interp_apply(fld%ssh(:,:)*fld%geom%ocean%mask2d(:,:), geovals%geovals(ivar)%vals(1,:))
 
        case ("ocean_potential_temperature")
-          do ilev = 1, nval
-             call horiz_interp_p%interp_apply(fld%tocn(:,:,nval)*fld%geom%ocean%mask2d(:,:), geovals%geovals(ivar)%vals(ilev,:))
+          do ilev = 1, fld%geom%ocean%nzo
+             call horiz_interp_p%interp_apply(fld%tocn(:,:,ilev), geovals%geovals(ivar)%vals(ilev,:))
           end do
           
        case ("ocean_salinity")
-          do ilev = 1, nval
-             call horiz_interp_p%interp_apply(fld%socn(:,:,ilev)*fld%geom%ocean%mask2d(:,:), geovals%geovals(ivar)%vals(ilev,:))
+          do ilev = 1, fld%geom%ocean%nzo
+             call horiz_interp_p%interp_apply(fld%socn(:,:,ilev), geovals%geovals(ivar)%vals(ilev,:))
           end do
-
-       case default
-          call horiz_interp_p%interp_apply(fld%ssh(:,:)*fld%geom%ocean%mask2d(:,:), geovals%geovals(ivar)%vals(1,:))
 
        end select
     end do
 
   end subroutine nicas_interph
 
+  ! ------------------------------------------------------------------------------
+  
   subroutine nicas_interphad(fld, locs, ufovars, geovals)
 
     use ufo_locs_mod_c  
@@ -1079,34 +1134,29 @@ contains
     use ufo_vars_mod
     use soca_constants, only : rho_i
     use soca_interph_mod
+    use fckit_log_module, only : fckit_log
     
     type(soca_field), intent(inout)  :: fld
     type(ufo_locs), intent(in)       :: locs
+    type(ufo_geovals), intent(in)    :: geovals    
     type(ufo_vars)    :: ufovars    
-    type(ufo_geovals), intent(in)  :: geovals
 
     integer :: ivar, geovals_dim1, cnt_fld
     character(len=1024)  :: buf
     logical,allocatable :: mask(:), masko(:)               ! < mask (ncells, nlevels)
-    !real(kind=kind_real), allocatable :: lon(:), lat(:), lono(:), lato(:), fld_src(:), fld_dst(:)
     integer :: nobs, nval
 
-    !character(len=MAXVARLEN), dimension(1) :: cvars
-
-    ! interp stuff
     type(soca_hinterp), pointer :: horiz_interp_p
+    integer :: icat, ilev
+    character(len=160) :: record
 
-    integer, allocatable :: imask(:)
-    real(kind=kind_real), allocatable :: area(:),vunit(:)
-    real(kind=kind_real), allocatable :: obs_field(:,:), mod_field(:,:), obsout(:)
-
-    integer :: icat, index, ii, jj
-
-    nobs = locs%nlocs
-
-    call initialize_interph(fld, locs, horiz_interp_p)
+    print *,'In adjoint'
+    
+    call initialize_interph(fld, locs, horiz_interp_p, interp_type='adj')
 
     do ivar = 1, ufovars%nv
+       write(record,*) "nicas_interphad: ",trim(ufovars%fldnames(ivar))
+       call fckit_log%info(record)                           
 
        select case (trim(ufovars%fldnames(ivar)))
        case ("ice_concentration")
@@ -1121,6 +1171,21 @@ contains
 
        case ("sea_surface_height_above_geoid","steric_height") !!!! steric height sould be  different case
           call horiz_interp_p%interpad_apply(fld%ssh(:,:), geovals%geovals(ivar)%vals(1,:))
+          
+       case ("ocean_potential_temperature")
+          write(record,*) "nicas_interphad: ocean_potential_temperature not yet implemented in ufo"
+          call fckit_log%info(record)          
+          !do ilev = 1, fld%geom%ocean%nzo
+          !   call horiz_interp_p%interpad_apply(fld%tocn(:,:,ilev), geovals%geovals(ivar)%vals(ilev,:))
+          !end do
+          
+       case ("ocean_salinity")
+          write(record,*) "nicas_interphad: ocean_salinity not yet implemented in ufo"
+          call fckit_log%info(record)                    
+          !do ilev = 1, fld%geom%ocean%nzo
+          !   call horiz_interp_p%interpad_apply(fld%socn(:,:,ilev), geovals%geovals(ivar)%vals(ilev,:))
+          !end do
+          
        end select
     end do
   end subroutine nicas_interphad

@@ -14,20 +14,23 @@ module soca_interph_mod
 
   type, public :: soca_hinterp
      integer, allocatable              :: index(:,:,:)  !< Indices of nearest neighbors
+                                                        !< (nobs x 2 x number of neighbors)
      real(kind=kind_real), allocatable :: wgh(:,:)      !< Interp weight
+                                                        !< (nobs x number of neighbors)     
      integer                           :: nn            !< Number of neighbors
      real(kind=kind_real)              :: lx, ly        !< Decorrelation length scales
-     character(len=3)                  :: wgt_type      !< 'avg': wgt=1, 
+     character(len=3)                  :: wgt_type      !< 'avg': wgt=1 (NOT IMPLEMENTED ANYMORE) 
                                                         !< 'bar': bilinear-interp weight 
-
-     integer :: nobs
-     logical :: initialized
-     logical :: alloc
+     integer                           :: nobs          !< Number of values to interpolate
+     real(kind=kind_real), allocatable :: lono(:)       !< Longitude of destination
+     real(kind=kind_real), allocatable :: lato(:)       !< Latitude of destination 
+     logical                           :: initialized   !< Initialization switch
+     logical                           :: alloc         !< ... Not sure if this is still used ...
    contains
      procedure :: interp_init
      procedure :: interp_compute_weight
      procedure :: interp_apply     
-     procedure :: interpad_apply 
+     procedure :: interpad_apply
      procedure :: interp_exit
   end type soca_hinterp
 
@@ -45,12 +48,13 @@ contains
     character(len=3), optional       :: wgt_type !< 'avg' or 'bar'     
     class(soca_hinterp), intent(out) :: self
         
-    self%nn=64; if (present(nn)) self%nn = nn
+    self%nn=5;          if (present(nn)) self%nn = nn
     self%wgt_type='bar'; if (present(nn)) self%wgt_type = wgt_type    
-    self%lx=5e-2; if (present(lx)) self%lx = lx
-    self%ly=1e-2; if (present(ly)) self%ly = ly    
+    self%lx=5e-2;        if (present(lx)) self%lx = lx
+    self%ly=1e-2;        if (present(ly)) self%ly = ly
 
     self%nobs = nobs
+    allocate(self%lono(nobs),self%lato(nobs))
     allocate(self%index(nobs,2,self%nn))
     allocate(self%wgh(nobs,self%nn))
     self%initialized = .false.
@@ -86,6 +90,10 @@ contains
     ni = size(lon,1)
     nj = size(lon,2)
 
+    !--- Save destination locations
+    self%lono = lono
+    self%lato = lato
+    
     !--- Initialize kd-tree
     n=ni*nj
     allocate(mask(n))
@@ -102,7 +110,6 @@ contains
     tmplono=deg2rad*lono
     tmplato=deg2rad*lato
 
-!!$    !$OMP PARALLEL DO
     call MPI_Comm_rank ( MPI_COMM_WORLD, my_rank, ierr )
     cnt = 0
     do k = 1, self%nobs
@@ -111,19 +118,16 @@ contains
                & " Percent Complete: ", (real(k)/real(self%nobs))*100.0, "% for ",self%wgt_type
        end if
        call find_nearest_neighbors(cover_tree,tmplono(k),tmplato(k),nn,nn_index(k,:),nn_dist(k,:))
-       !nn_dist(k,:)=exp(-(nn_dist(k,:)/self%lx)**2)
+       nn_dist(k,:)=exp(-(nn_dist(k,:)/self%lx)**2)
+       dist=sum(nn_dist(k,:))
        do l = 1, nn
-          self%index(k,1,l)=mod(nn_index(k,l),ni)
-          self%index(k,2,l)=nn_index(k,l)/ni+1
-          dist=sum(nn_dist(k,:))
-          if (self%wgt_type.eq.'bar') then
-             self%wgh(k,l)=(dist-nn_dist(k,l))/dist
-          else
-             self%wgh(k,l)=1.0/real(nn)
-          end if          
+          self%index(k,1,l)=max(1,mod(nn_index(k,l),ni))
+          self%index(k,2,l)=max(1,nn_index(k,l)/ni+1)
+          self%wgh(k,l)=(dist-nn_dist(k,l))
        end do
+       self%wgh(k,:)=self%wgh(k,:)/sum(self%wgh(k,:))       
     end do
-!!$    !$OMP END PARALLEL DO
+
     call mpi_barrier(MPI_COMM_WORLD,ierr)
     self%initialized = .false.
 
@@ -142,11 +146,11 @@ contains
     class(soca_hinterp), intent(in) :: self    
     real(kind=kind_real), dimension(:,:), intent(in) :: fld
     real(kind=kind_real), dimension(:), intent(out) :: obs    
-    integer :: k,l
+    integer :: k,l,i
+    obs = 0.0
     do k = 1, self%nobs
-       obs(k) = 0.0
        do l = 1, self%nn
-          obs(k) = obs(k) + self%wgh(k,l)*fld(self%index(k,1,l),self%index(k,2,l))
+          obs(k) = obs(k) + self%wgh(k,l)*fld(self%index(k,1,l),self%index(k,2,l))          
        end do
     end do
   end subroutine interp_apply
@@ -181,7 +185,7 @@ contains
     
     class(soca_hinterp), intent(out) :: self
 
-    deallocate(self%index)
+    deallocate(self%index,self%lono,self%lato,self%wgh)
     self%initialized = .false.
     self%alloc = .true.
     self%nobs = 0

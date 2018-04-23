@@ -41,22 +41,22 @@ cost_function:
         date: '2015-01-01T12:00:00Z'
     Covariance:
       covariance: SocaError
-      sig_sic: 5.0
-      sig_sit: 1.5
+      sig_sic: 0.1#.0001
+      sig_sit: 250.0
       sig_ssh: 0.2      
       date: '2015-01-01T12:00:00Z'
   Jo:
     ObsTypes:
-#    - ObsType: SeaIceThickness
-#      ObsData:
-#        ObsDataOut:
-#          obsfile: Data/test_obsout.nc
-#        ObsDataIn:
-#          obsfile: /home/gvernier/Data/CS2/cryosat2-nrt-nh-20171030-v2.0.nc
-#        obsvalue: ObsVal        
-#      Covariance:
-#        covariance: diagonal
-#        obserror: ObsErr
+    - ObsType: SeaIceThickness
+      ObsData:
+        ObsDataOut:
+          obsfile: Data/test_obsout.nc
+        ObsDataIn:
+          obsfile: /home/gvernier/Data/CS2/cryosat2-nrt-nh-20171030-v2.0.nc
+        obsvalue: ObsVal        
+      Covariance:
+        covariance: diagonal
+        obserror: ObsErr
     - ObsType: StericHeight
       ObsData:
         ObsDataOut:
@@ -67,46 +67,46 @@ cost_function:
       Covariance:
         covariance: diagonal
         obserror: ObsErr	
-#    - ObsType: SeaIceFraction
-#      Generate:
-#        nobs:  500
-#        lat:   75.5
-#        lon1: -200#-260 #-270
-#        lon2: 0 #80 #0
-#      ObsData:
-#        ObsDataOut:
-#          obsfile: Data/test_obsout.nc
-#        ObsDataIn:
-#          obsfile: Data/seaice_obs.nc
-#        obsvalue: ObsVal        
-#      Covariance:
-#        covariance: diagonal
-#        obserror: ObsErr	
+    - ObsType: SeaIceFraction
+      #Generate:
+      #  nobs:  500
+      #  lat:   75.5
+      #  lon1: -200#-260 #-270
+      #  lon2: 0 #80 #0
+      ObsData:
+        ObsDataOut:
+          obsfile: Data/test_obsout.nc
+        ObsDataIn:
+          obsfile: Data/seaice_obs.nc
+        obsvalue: ObsVal        
+      Covariance:
+        covariance: diagonal
+        obserror: ObsErr	
 variational:
   iteration:
   - resolution: {}
     linearmodel:
       version: IdTLM
       tstep: PT1H
-    ninner: 2
+    ninner: 5
     gradient_norm_reduction: 1e-15
     test: 'on'
-#  - resolution: {}
-#    linearmodel:
-#      version: IdTLM
-#      tstep: PT1H
-#    ninner: 10
-#    gradient_norm_reduction: 1e-15
-#    test: 'on'
-#  - resolution: {}
-#    linearmodel:
-#      version: IdTLM
-#      tstep: PT1H
-#    ninner: 10
-#    gradient_norm_reduction: 1e-15
-#    test: 'on'
+  - resolution: {}
+    linearmodel:
+      version: IdTLM
+      tstep: PT1H
+    ninner: 3
+    gradient_norm_reduction: 1e-15
+    test: 'on'
+  - resolution: {}
+    linearmodel:
+      version: IdTLM
+      tstep: PT1H
+    ninner: 3
+    gradient_norm_reduction: 1e-15
+    test: 'on'
 minimizer:
-  algorithm: DRIPCG
+  algorithm: DRPCG #DRIPCG
 output:
   datadir: Data
   exp: 3dvar

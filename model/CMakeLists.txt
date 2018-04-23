@@ -57,6 +57,7 @@ list( APPEND oops_soca_src_files
 ./Run/soca_setup.f90
 
 #Utils
+./Utils/soca_utils.F90
 ./Utils/soca_constants.F90
 ./Utils/soca_thermo.F90
 #./Utils/soca_balanceop.F90

@@ -23,10 +23,9 @@ State:
   date: '2015-05-01T00:00:00Z'
 Covariance:
   covariance: SocaError
-  standard_deviation: '0.8'
-  vertical_correlation: '0.2'
-  horizontal_length_scale: 1e6
-  maximum_condition_number: 1.0e6
-  date: '2009-12-31T00:00:00Z'
+  sig_sic: 5.0
+  sig_sit: 1.5
+  sig_ssh: 0.2      
+  date: '2015-05-01T00:00:00Z'
 CovarianceTest:
   tolerance: '0.01'
