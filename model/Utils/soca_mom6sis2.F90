@@ -343,6 +343,5 @@ contains
     !call mpp_sync()
 
   end subroutine soca_field_end
-
   
 end module soca_mom6sis2
