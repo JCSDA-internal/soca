@@ -5,9 +5,9 @@
 #
 # ---|-----------|-----------|-----------|-----------|-----------|-----------|
 #    |                                   |                                   |      
-# window_begin: 2015-01-01T09:00:00Z     |                           2015-01-01T15:00:00Z
+# window_begin: 2018-04-14T21:00:00Z     |                           2015-04-15T3:00:00Z
 #                                        |
-#                       bkg/ana/incr: 2015-01-01T12:00:00Z
+#                       bkg/ana/incr: 2018-04-15T00:00:00Z
 #
 #
 
@@ -17,7 +17,7 @@ model:
   tstep: PT1H
 cost_function:
   cost_type: 3D-Var
-  window_begin: '2015-01-01T09:00:00Z'
+  window_begin: '2018-04-14T21:00:00Z'
   window_length: PT6H
   variables:
   - cicen
@@ -34,17 +34,17 @@ cost_function:
     Background:
       state:
       - read_from_file: 1
-        basename: "./RESTART-22/"
+        basename: "./INPUT/"
         ocn_sfc_filename: MOM.res.nc
         ocn_filename: MOM.res.nc
         ice_filename: ice_model.res.nc
-        date: '2015-01-01T12:00:00Z'
+        date: '2018-04-15T00:00:00Z'
     Covariance:
       covariance: SocaError
       sig_sic: 0.1#.0001
       sig_sit: 250.0
       sig_ssh: 0.2      
-      date: '2015-01-01T12:00:00Z'
+      date: '2018-04-15T00:00:00Z'
   Jo:
     ObsTypes:
     - ObsType: SeaIceThickness
@@ -62,7 +62,7 @@ cost_function:
         ObsDataOut:
           obsfile: Data/test_obsout.nc
         ObsDataIn:
-          obsfile: Data/jason-2.nc           
+          obsfile: Data/Jason-3-2018-04-15.nc
         obsvalue: ObsVal        
       Covariance:
         covariance: diagonal
@@ -77,7 +77,7 @@ cost_function:
         ObsDataOut:
           obsfile: Data/test_obsout.nc
         ObsDataIn:
-          obsfile: Data/seaice_obs.nc
+          obsfile: Data/seaice_obs-2018-04-15.nc
         obsvalue: ObsVal        
       Covariance:
         covariance: diagonal
@@ -88,7 +88,7 @@ variational:
     linearmodel:
       version: IdTLM
       tstep: PT1H
-    ninner: 5
+    ninner: 10
     gradient_norm_reduction: 1e-15
     test: 'on'
   - resolution: {}

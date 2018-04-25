@@ -135,34 +135,34 @@ contains
 
     allocate(tmp_incr3d(size(dx%ssh,1),size(dx%ssh,2),dx%geom%ocean%ncat))
     sqrtCdx%hicen=dx%hicen    
-!!$    do iter = 1, 1
-!!$       tmp_incr3d=sqrtCdx%hicen       
-!!$       do k = 2, size(dx%ssh,1)-1
-!!$          do l = 2, size(dx%ssh,2)-1
-!!$             do m = 1, dx%geom%ocean%ncat
-!!$                sqrtCdx%hicen(k,l,m)=(tmp_incr3d(k+1,l-1,m)+tmp_incr3d(k,l-1,m)+tmp_incr3d(k-1,l-1,m)+&
-!!$                              &tmp_incr3d(k+1,l,m)+tmp_incr3d(k,l,m)+tmp_incr3d(k-1,l,m)+&
-!!$                              &tmp_incr3d(k+1,l+1,m)+tmp_incr3d(k,l+1,m)+tmp_incr3d(k-1,l+1,m))/9.0
-!!$             end do
-!!$          end do
-!!$       end do
-!!$    end do
+    do iter = 1, 1
+       tmp_incr3d=sqrtCdx%hicen       
+       do k = 2, size(dx%ssh,1)-1
+          do l = 2, size(dx%ssh,2)-1
+             do m = 1, dx%geom%ocean%ncat
+                sqrtCdx%hicen(k,l,m)=(tmp_incr3d(k+1,l-1,m)+tmp_incr3d(k,l-1,m)+tmp_incr3d(k-1,l-1,m)+&
+                              &tmp_incr3d(k+1,l,m)+tmp_incr3d(k,l,m)+tmp_incr3d(k-1,l,m)+&
+                              &tmp_incr3d(k+1,l+1,m)+tmp_incr3d(k,l+1,m)+tmp_incr3d(k-1,l+1,m))/9.0
+             end do
+          end do
+       end do
+    end do
 
     sqrtCdx%cicen=dx%cicen
-!!$    do iter = 1, 2
-!!$       tmp_incr3d=sqrtCdx%cicen(:,:,2:dx%geom%ocean%ncat+1)
-!!$       do k = 2, size(dx%ssh,1)-1
-!!$          do l = 2, size(dx%ssh,2)-1
-!!$             do m = 1, dx%geom%ocean%ncat
-!!$                sqrtCdx%cicen(k,l,m+1)=(tmp_incr3d(k+1,l-1,m)+tmp_incr3d(k,l-1,m)+tmp_incr3d(k-1,l-1,m)+&
-!!$                              &tmp_incr3d(k+1,l,m)+tmp_incr3d(k,l,m)+tmp_incr3d(k-1,l,m)+&
-!!$                              &tmp_incr3d(k+1,l+1,m)+tmp_incr3d(k,l+1,m)+tmp_incr3d(k-1,l+1,m))/9.0
-!!$             end do
-!!$          end do
-!!$       end do
-!!$    end do
+    do iter = 1, 2
+       tmp_incr3d=sqrtCdx%cicen(:,:,2:dx%geom%ocean%ncat+1)
+       do k = 2, size(dx%ssh,1)-1
+          do l = 2, size(dx%ssh,2)-1
+             do m = 1, dx%geom%ocean%ncat
+                sqrtCdx%cicen(k,l,m+1)=(tmp_incr3d(k+1,l-1,m)+tmp_incr3d(k,l-1,m)+tmp_incr3d(k-1,l-1,m)+&
+                              &tmp_incr3d(k+1,l,m)+tmp_incr3d(k,l,m)+tmp_incr3d(k-1,l,m)+&
+                              &tmp_incr3d(k+1,l+1,m)+tmp_incr3d(k,l+1,m)+tmp_incr3d(k-1,l+1,m))/9.0
+             end do
+          end do
+       end do
+    end do
 
-    sqrtCdx%hicen=dx%hicen
+!!$    sqrtCdx%hicen=dx%hicen
 !!$    do iter = 1, 1
 !!$       tmp_incr3d=sqrtCdx%hicen(:,:,1:dx%geom%ocean%ncat)
 !!$       do k = 2, size(dx%ssh,1)-1

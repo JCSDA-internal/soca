@@ -24,6 +24,21 @@ list( APPEND soca_testoutput
   testoutput/truth.test
   testoutput/hofx.test  
   testoutput/makeobs3d.test
+  testoutput/3dvar.test  
+)
+
+list( APPEND soca_model_param
+  Data/360x210x63/input.nml
+  Data/360x210x63/MOM_input
+  Data/360x210x63/MOM_override
+  Data/360x210x63/Vertical_coordinate.nc
+)
+
+list( APPEND soca_model_restarts
+  Data/360x210x63/INPUT/MOM.res.nc
+  Data/360x210x63/INPUT/ice_model.res.nc
+  Data/360x210x63/INPUT/ocean_hgrid.nc
+  Data/360x210x63/INPUT/topog.nc
 )
 
 # Create Data directory for test input and symlink all files
@@ -37,35 +52,48 @@ endforeach(FILENAME)
 # Create Data directory for reference output and symlink all files
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/testoutput)
 foreach(FILENAME ${soca_testoutput})
+    message(${FILENAME})
+    message(${CMAKE_CURRENT_SOURCE_DIR})    
     execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
            ${CMAKE_CURRENT_SOURCE_DIR}/${FILENAME}
            ${CMAKE_CURRENT_BINARY_DIR}/${FILENAME} )
 endforeach(FILENAME)
 
-# Link to MOM6-SIS2 scratch dir files
-file( GLOB mom6_scratch_files ${MOM6_SCRATCH_DIR}/* )
-foreach(FILENAME ${mom6_scratch_files})
+# Create Data directory for model input and symlink all files
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/INPUT)
+foreach(FILENAME ${soca_model_restarts})
      get_filename_component(filename ${FILENAME} NAME )
-     message("Symbolic link of "${filename}" to:"${FILENAME})     
      execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
-           ${FILENAME}
-           ${CMAKE_CURRENT_BINARY_DIR}/${filename} )
+           ${CMAKE_CURRENT_SOURCE_DIR}/${FILENAME}
+           ${CMAKE_CURRENT_BINARY_DIR}/INPUT/${filename} )
 endforeach(FILENAME)
 
-execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
-           ${MOM6_SCRATCH_DIR}/*
-           ${CMAKE_CURRENT_BINARY_DIR}/ )
+#Link to MOM's resource files
+foreach(FILENAME ${soca_model_param})
+     get_filename_component(filename ${FILENAME} NAME )
+     execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
+           ${CMAKE_CURRENT_SOURCE_DIR}/${FILENAME}
+           ${CMAKE_CURRENT_BINARY_DIR}/${filename} )
+endforeach(FILENAME)
 
 ecbuild_add_resources( TARGET   soca_test_scripts
                        SOURCES_PACK
                        ${soca_test_input}
                      )
-
+# Link to UFO Marine obs
+list( APPEND soca_obs
+  ../../ufo/test/testinput/marineobs/Jason-3-2018-04-15.nc
+  ../../ufo/test/testinput/marineobs/seaice_obs-2018-04-15.nc
+)
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/Data)
-
-execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
-           ${UFO_DATA_DIR}/seaice_obs.nc
-           ${CMAKE_CURRENT_BINARY_DIR}/Data/seaice_obs.nc )
+foreach(FILENAME ${soca_obs})
+     get_filename_component(filename ${FILENAME} NAME )
+     #configure_file(${CMAKE_CURRENT_SOURCE_DIR}/${FILENAME}
+     #               ${CMAKE_CURRENT_BINARY_DIR}/Data/${filename} COPYONLY)
+     execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
+           ${CMAKE_CURRENT_SOURCE_DIR}/${FILENAME}    
+           ${CMAKE_CURRENT_BINARY_DIR}/Data/${filename} )
+endforeach(FILENAME)
 
 
 #####################################################################
@@ -100,14 +128,14 @@ ecbuild_add_test( TARGET test_soca_makeobs3d
 
 ecbuild_add_test( TARGET  test_soca_geometry
                   BOOST
-		  MPI     2
+		  MPI     1
                   SOURCES executables/TestGeometry.cc
                   ARGS    "testinput/geometry_test.yml"
                   LIBS    soca )
 
 ecbuild_add_test( TARGET  test_soca_linearmodel
                   BOOST
-		  MPI     2		  
+		  MPI     1		  
                   SOURCES executables/TestLinearModel.cc
                   ARGS    "testinput/linearmodel_test.yml"
                   LIBS    soca )
@@ -126,14 +154,14 @@ ecbuild_add_test( TARGET  test_soca_modelaux
 		  
 ecbuild_add_test( TARGET  test_soca_model
                   BOOST
-		  MPI     2
+		  MPI     1
                   SOURCES executables/TestModel.cc
                   ARGS    "testinput/model_test.yml"
                   LIBS    soca )
 		  
 ecbuild_add_test( TARGET  test_soca_increment
                   BOOST
-		  MPI     2 		  
+		  MPI     1 		  
                   SOURCES executables/TestIncrement.cc
                   ARGS    "testinput/increment_test.yml"
                   LIBS    soca )

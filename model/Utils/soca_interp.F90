@@ -118,7 +118,7 @@ contains
                & " Percent Complete: ", (real(k)/real(self%nobs))*100.0, "% for ",self%wgt_type
        end if
        call find_nearest_neighbors(cover_tree,tmplono(k),tmplato(k),nn,nn_index(k,:),nn_dist(k,:))
-       nn_dist(k,:)=exp(-(nn_dist(k,:)/self%lx)**2)
+       !nn_dist(k,:)=exp(-(nn_dist(k,:)/self%lx)**2)
        dist=sum(nn_dist(k,:))
        do l = 1, nn
           self%index(k,1,l)=max(1,mod(nn_index(k,l),ni))
