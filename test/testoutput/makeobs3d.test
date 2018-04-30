@@ -1,3 +1,5 @@
 Test     : Initial state: 147747
 Test     : Final state: 147747
-Test     : Generated observation: SeaIceFraction nobs= 30 Min=0, Max=1, Average=0.642922
+Test     : Generated observation: SeaIceThickness nobs= 8065 Min=0.383734, Max=2.54078, Average=1.63771
+Test     : Generated observation: StericHeight nobs= 19266 Min=-1.77224, Max=0.828332, Average=-0.248748
+Test     : Generated observation: SeaIceFraction nobs= 126753 Min=0, Max=1, Average=0.859613

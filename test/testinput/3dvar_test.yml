@@ -68,11 +68,6 @@ cost_function:
         covariance: diagonal
         obserror: ObsErr	
     - ObsType: SeaIceFraction
-      #Generate:
-      #  nobs:  500
-      #  lat:   75.5
-      #  lon1: -200#-260 #-270
-      #  lon2: 0 #80 #0
       ObsData:
         ObsDataOut:
           obsfile: Data/test_obsout.nc

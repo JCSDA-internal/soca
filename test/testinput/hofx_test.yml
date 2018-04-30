@@ -17,20 +17,32 @@ Assimilation Window:
   Length: PT12H
 Observations:
   ObsTypes:
-  - ObsType: SeaIceFraction
-    Generate:
-      nobs: 1000
-      lat: 70.5
-      lon1: -209.0
-      lon2: 0.0
+  - ObsType: SeaIceThickness
     ObsData:
+      ObsDataOut:
+        obsfile: Data/test_obsout.nc
       ObsDataIn:
-        obsfile: Data/seaice_obs.nc
-        #obsfile: Data/jason-2.nc        
-    GeoVaLs:
-      norm: 1567.673435381234
-      random: '1'
-      nobs: '2457600'
+        obsfile: /home/gvernier/Data/CS2/cryosat2-nrt-nh-20171030-v2.0.nc
+      obsvalue: ObsVal        
+    Covariance:
+      covariance: diagonal
+      obserror: ObsErr
+  - ObsType: StericHeight
+    ObsData:
+      ObsDataOut:
+        obsfile: Data/test_obsout.nc
+      ObsDataIn:
+        obsfile: Data/Jason-3-2018-04-15.nc
+      obsvalue: ObsVal        
+    Covariance:
+      covariance: diagonal
+      obserror: ObsErr	    
+  - ObsType:  SeaIceFraction
+    ObsData:
+      ObsDataOut:
+        obsfile: "./Data/data.nc"
+      ObsDataIn:
+        obsfile: Data/seaice_obs-2018-04-15.nc        
     ObsBias: {}
     rmsequiv: '1.'
     tolerance: '1.0e-8'
