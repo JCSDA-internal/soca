@@ -103,7 +103,7 @@ endforeach(FILENAME)
 ecbuild_add_test( TARGET test_soca_truth
                   TYPE SCRIPT
 		  MPI     1
-                  COMMAND "compare.sh"
+                  COMMAND "./compare.sh"
                   ARGS "${CMAKE_BINARY_DIR}/bin/soca_forecast.x testinput/truth.yml"
                        testoutput/truth.test
                   DEPENDS soca_forecast.x )
@@ -111,7 +111,7 @@ ecbuild_add_test( TARGET test_soca_truth
 ecbuild_add_test( TARGET test_soca_forecast
                   TYPE SCRIPT
 		  MPI     1		  		  
-                  COMMAND "compare.sh"
+                  COMMAND "./compare.sh"
                   ARGS "${CMAKE_BINARY_DIR}/bin/soca_forecast.x testinput/forecast.yml"
                        testoutput/forecast.test
                   DEPENDS soca_forecast.x )
@@ -119,7 +119,7 @@ ecbuild_add_test( TARGET test_soca_forecast
 ecbuild_add_test( TARGET test_soca_makeobs3d
                   TYPE SCRIPT
 		  MPI     1  		  		  
-                  COMMAND "compare.sh"
+                  COMMAND "./compare.sh"
                   ARGS "${CMAKE_BINARY_DIR}/bin/soca_makeobs.x testinput/makeobs3d.yml"
                        testoutput/makeobs3d.test
                   DEPENDS soca_makeobs.x )
@@ -188,7 +188,7 @@ ecbuild_add_test( TARGET test_soca_obserrorcov
 ecbuild_add_test( TARGET test_soca_hofx
                   TYPE SCRIPT
                   MPI     1		  
-                  COMMAND "compare.sh"
+                  COMMAND "./compare.sh"
                   ARGS "${CMAKE_BINARY_DIR}/bin/soca_hofx.x testinput/hofx_test.yml"
                        testoutput/hofx.test
                   DEPENDS soca_hofx.x )
@@ -196,7 +196,7 @@ ecbuild_add_test( TARGET test_soca_hofx
 ecbuild_add_test( TARGET test_soca_3dvar
                   TYPE SCRIPT
                   MPI     1		  
-                  COMMAND "compare.sh"
+                  COMMAND "./compare.sh"
                   ARGS "${CMAKE_BINARY_DIR}/bin/soca_3dvar.x testinput/3dvar_test.yml"
                        testoutput/3dvar.test
                   DEPENDS soca_3dvar.x )
@@ -204,7 +204,7 @@ ecbuild_add_test( TARGET test_soca_3dvar
 ecbuild_add_test( TARGET test_soca_3dvarfgat
                   TYPE SCRIPT
                   MPI     1		  
-                  COMMAND "compare.sh"
+                  COMMAND "./compare.sh"
                   ARGS "${CMAKE_BINARY_DIR}/bin/soca_3dvar.x testinput/3dvarfgat_test.yml"
                        testoutput/3dvarfgat.test
                   DEPENDS soca_3dvar.x )		  
@@ -212,7 +212,7 @@ ecbuild_add_test( TARGET test_soca_3dvarfgat
 ecbuild_add_test( TARGET test_soca_4denvar
                   TYPE SCRIPT
                   MPI     1		  
-                  COMMAND "compare.sh"
+                  COMMAND "./compare.sh"
                   ARGS "${CMAKE_BINARY_DIR}/bin/soca_3dvar.x testinput/4denvar_nicas_test.yml"
                        testoutput/4denvar.test
                   DEPENDS soca_3dvar.x )
@@ -220,7 +220,7 @@ ecbuild_add_test( TARGET test_soca_4denvar
 ecbuild_add_test( TARGET test_soca_dirac
                   TYPE SCRIPT
                   MPI     1		  
-                  COMMAND "compare.sh"
+                  COMMAND "./compare.sh"
                   ARGS "${CMAKE_BINARY_DIR}/bin/soca_dirac.x testinput/nicas_test.yml"
                        testoutput/dirac.test
                   DEPENDS soca_3dvar.x )		  
