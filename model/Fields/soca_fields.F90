@@ -42,26 +42,20 @@ module soca_fields
      character(len=128)                :: gridfname             !< Grid file name
      character(len=128)                :: cicefname             !< Fields file name for cice
      character(len=128)                :: momfname              !< Fields file name for mom
-     real(kind=kind_real), pointer     :: cicen(:,:,:) => NULL()  !< Sea-ice fraction                 (nx,ny,ncat+1)
-     real(kind=kind_real), pointer     :: hicen(:,:,:) => NULL()          !< Sea-ice mass/m2                  (nx,ny,ncat) [kg/m2]
-     real(kind=kind_real), pointer     :: vicen(:,:,:) => NULL()          !< Sea-ice volume                   (nx,ny,ncat)
-     real(kind=kind_real), pointer     :: hsnon(:,:,:) => NULL()          !< Snow depth over sea-ice          (nx,ny,ncat)
-     real(kind=kind_real), pointer     :: vsnon(:,:,:) => NULL()          !< Snow volume over sea-ice         (nx,ny,ncat) 
-     real(kind=kind_real), pointer     :: tsfcn(:,:,:) => NULL()          !< Temperature over sea-ice or snow (nx,ny,ncat)
-     real(kind=kind_real), pointer     :: qsnon(:,:,:,:) => NULL()        !< Enthalpy of snow                 (nx,ny,ncat)
-     real(kind=kind_real), pointer     :: sicnk(:,:,:,:) => NULL()        !< Salin_wity of sea-ice            (nx,ny,ncat,nzi)
-     real(kind=kind_real), pointer     :: socn(:,:,:) => NULL()           !< Ocean (surface) Salinity         (nx,ny,nzo)
-     real(kind=kind_real), pointer     :: qicnk(:,:,:,:) => NULL()   !< Enthalpy of sea-ice              (nx,ny,ncat,nzi)
-     real(kind=kind_real), pointer     :: tocn(:,:,:) => NULL()      !< Average temperature of grid cell (nx,ny,nzo)
-     real(kind=kind_real), pointer     :: ssh(:,:) => NULL()         !< Sea-surface height (nx,ny,nzo)     
-     character(len=5), allocatable     :: fldnames(:)           !< Variable identifiers             (nf)
-     !integer, allocatable              :: numfld_per_fldname(:) !< Number of 2d fields for each     (nf) 
-                                                                !< element of fldnames
-
-     !type(soca_hinterp)                 :: hinterp
-     !type(linoptype)                   :: hinterp_op
-     !integer                           :: hinterp_initialized = 0     !1:  hinterp_op has been initialized
-                                                                      !0: hinterp_op not initialized
+     real(kind=kind_real), pointer     :: cicen(:,:,:) => NULL()   !< Sea-ice fraction                 (nx,ny,ncat+1)
+     real(kind=kind_real), pointer     :: hicen(:,:,:) => NULL()   !< Sea-ice mass/m2                  (nx,ny,ncat) [kg/m2]
+     real(kind=kind_real), pointer     :: vicen(:,:,:) => NULL()   !< Sea-ice volume                   (nx,ny,ncat)
+     real(kind=kind_real), pointer     :: hsnon(:,:,:) => NULL()   !< Snow depth over sea-ice          (nx,ny,ncat)
+     real(kind=kind_real), pointer     :: vsnon(:,:,:) => NULL()   !< Snow volume over sea-ice         (nx,ny,ncat) 
+     real(kind=kind_real), pointer     :: tsfcn(:,:,:) => NULL()   !< Temperature over sea-ice or snow (nx,ny,ncat)
+     real(kind=kind_real), pointer     :: qsnon(:,:,:,:) => NULL() !< Enthalpy of snow                 (nx,ny,ncat)
+     real(kind=kind_real), pointer     :: sicnk(:,:,:,:) => NULL() !< Salin_wity of sea-ice            (nx,ny,ncat,nzi)
+     real(kind=kind_real), pointer     :: socn(:,:,:) => NULL()    !< Ocean Practical Salinity         (nx,ny,nzo)
+     real(kind=kind_real), pointer     :: qicnk(:,:,:,:) => NULL() !< Enthalpy of sea-ice              (nx,ny,ncat,nzi)
+     real(kind=kind_real), pointer     :: tocn(:,:,:) => NULL()    !< Ocean Potential Temperature, ref to p=0      (nx,ny,nzo)
+     real(kind=kind_real), pointer     :: ssh(:,:) => NULL()       !< Sea-surface height (nx,ny,nzo)
+     real(kind=kind_real), pointer     :: hocn(:,:,:) => NULL()    !< Layer thickness (nx,ny,nzo)     
+     character(len=5), allocatable     :: fldnames(:)              !< Variable identifiers             (nf)
   end type soca_field
 
 #define LISTED_TYPE soca_field
@@ -99,6 +93,7 @@ contains
     !Ocean internal state    
     self%tocn => self%AOGCM%Ocn%T
     self%socn => self%AOGCM%Ocn%S
+    self%hocn => self%AOGCM%Ocn%H
     self%ssh => self%AOGCM%Ocn%ssh
     self%ssh = self%ssh*self%geom%ocean%mask2d
 
@@ -144,7 +139,8 @@ contains
     self%tocn => self%AOGCM%Ocn%T
     self%socn => self%AOGCM%Ocn%S
     self%ssh => self%AOGCM%Ocn%ssh
-
+    self%hocn => self%AOGCM%Ocn%H
+    
     !Sea-ice internal state
     self%cicen => self%AOGCM%Ice%part_size
     self%hicen => self%AOGCM%Ice%h_ice
@@ -196,6 +192,7 @@ contains
     self%socn = 0.0_kind_real        
     self%tocn = 0.0_kind_real
     self%ssh = 0.0_kind_real
+    self%hocn = 0.0_kind_real    
   end subroutine zeros
 
   ! ------------------------------------------------------------------------------
@@ -217,6 +214,8 @@ contains
     self%socn = 1.0_kind_real        
     self%tocn = 1.0_kind_real
     self%ssh = 1.0_kind_real
+    self%tocn = 1.0_kind_real
+    
   end subroutine ones
 
   ! ------------------------------------------------------------------------------  
@@ -270,8 +269,6 @@ contains
 
   ! ------------------------------------------------------------------------------
 
-  ! ------------------------------------------------------------------------------
-
   subroutine random(self)
 
     implicit none
@@ -314,7 +311,8 @@ contains
     self%socn  = rhs%socn
     self%tocn  = rhs%tocn
     self%ssh  = rhs%ssh    
-
+    self%hocn  = rhs%hocn
+    
     return
   end subroutine copy
 
@@ -645,6 +643,8 @@ contains
              call read_data(ocn_filename,"Temp",fld%tocn(:,:,:),domain=fld%geom%ocean%G%Domain%mpp_domain)
           case ('socn')             
              call read_data(ocn_filename,"Salt",fld%tocn(:,:,:),domain=fld%geom%ocean%G%Domain%mpp_domain)
+          case ('hocn')             
+             call read_data(ocn_filename,"h",fld%hocn(:,:,:),domain=fld%geom%ocean%G%Domain%mpp_domain)             
           case ('cicen')
              !call read_data(ice_filename, 'part_size', fld%AOGCM%Ice%part_size, domain=fld%geom%ocean%G%Domain%mpp_domain)
              idr = register_restart_field(sis_restart, ice_filename, 'part_size', fld%AOGCM%Ice%part_size, &
@@ -724,7 +724,9 @@ contains
        case ('tocn')
           call write_data( filename, "temp", fld%tocn, fld%geom%ocean%G%Domain%mpp_domain)          
        case ('socn')
-          call write_data( filename, "salt", fld%socn, fld%geom%ocean%G%Domain%mpp_domain)          
+          call write_data( filename, "salt", fld%socn, fld%geom%ocean%G%Domain%mpp_domain)
+       case ('hocn')
+          call write_data( filename, "h", fld%hocn, fld%geom%ocean%G%Domain%mpp_domain)
        case ('hicen')
           call write_data( filename, "hicen", fld%hicen, fld%geom%ocean%G%Domain%mpp_domain)
        case ('hsnon')

@@ -182,7 +182,7 @@ contains
 
   ! ------------------------------------------------------------------------------
 
-  !> Multiply streamfunction by sqrt(C) - Adjoint
+  !> Multiply by sqrt(C) - Adjoint
 
   subroutine soca_3d_covar_sqrt_mult_ad(dx, sqrtCTdx, config)
     use iso_c_binding

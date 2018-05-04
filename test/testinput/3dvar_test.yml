@@ -30,6 +30,7 @@ cost_function:
   - socn
   - tocn
   - ssh
+  - hocn  
   Jb:
     Background:
       state:

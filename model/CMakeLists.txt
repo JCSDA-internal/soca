@@ -42,7 +42,7 @@ list( APPEND oops_soca_src_files
 #Covariance
 ./Covariance/ErrorCovariance.cc
 ./Covariance/ErrorCovariance.h
-./Covariance/c_soca_bmatrix.F90
+./Covariance/soca_bmatrix.interface.F90
 ./Covariance/soca_covariance_mod.F90
 
 #LocalizationMatrix

@@ -73,7 +73,8 @@ namespace soca {
 	  "qicnk",
 	  "socn",
 	  "tocn",
-	  "ssh"
+	  "ssh",
+	  "hocn"	    
 	};
     oops::Variables vars(vv);    
     //eckit::LocalConfiguration modelvars;

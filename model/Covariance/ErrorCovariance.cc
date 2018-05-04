@@ -26,7 +26,10 @@ namespace soca {
   // -----------------------------------------------------------------------------
 
   ErrorCovariance::ErrorCovariance(const Geometry & resol, const oops::Variables &,
-				   const eckit::Configuration & conf, const State &) {
+				   const eckit::Configuration & conf, const State & traj) {
+    std::cout << "!!!!!!!!!!!!!!!traj!!!!!!!!!!!!!!!!!!!!" << std::endl;    
+    std::cout << traj << std::endl;
+    std::cout << "!!!!!!!!!!!!!!!traj!!!!!!!!!!!!!!!!!!!!" << std::endl;        
     time_ = util::DateTime(conf.getString("date"));
     const eckit::Configuration * configc = &conf;
     soca_b_setup_f90(keyFtnConfig_, &configc, resol.toFortran());

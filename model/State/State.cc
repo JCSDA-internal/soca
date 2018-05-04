@@ -55,7 +55,8 @@ namespace soca {
 	  "qicnk",
 	  "socn",
 	  "tocn",
-	  "ssh"
+	  "ssh",
+	  "hocn"	
 	};
     oops::Variables vars(vv);
     fields_.reset(new Fields(resol, vars, util::DateTime()));
@@ -95,7 +96,8 @@ namespace soca {
 	  "qicnk",
 	  "socn",
 	  "tocn",
-	  "ssh"
+	  "ssh",
+	  "hocn",	
 	};
     oops::Variables vars(vv);
 

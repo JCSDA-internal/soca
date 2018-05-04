@@ -45,6 +45,7 @@ module soca_mom6sis2
      real(kind=kind_real), pointer, dimension(:,:,:) :: U
      real(kind=kind_real), pointer, dimension(:,:,:) :: V
      real(kind=kind_real), pointer, dimension(:,:)   :: ssh
+     real(kind=kind_real), pointer, dimension(:,:,:) :: H     
   end type soca_ocn_Data_Type
 
   type soca_ice_data_type ! TODO: change to mom's derived data type ...
@@ -305,7 +306,7 @@ contains
     allocate(aogcm%Ocn%T(isd:ied,jsd:jed,nzo))   ; aogcm%Ocn%T(:,:,:) = 0.0_kind_real
     allocate(aogcm%Ocn%S(isd:ied,jsd:jed,nzo))   ; aogcm%Ocn%S(:,:,:) = 0.0_kind_real
     allocate(aogcm%Ocn%ssh(isd:ied,jsd:jed))   ; aogcm%Ocn%ssh(:,:) = 0.0_kind_real
-
+    allocate(aogcm%Ocn%H(isd:ied,jsd:jed,nzo))   ; aogcm%Ocn%H(:,:,:) = 0.0_kind_real
     ! Allocate sea-ice state
     km = ncat + 1
     allocate(aogcm%Ice%part_size(isd:ied, jsd:jed, km)) ; aogcm%Ice%part_size(:,:,:) = 0.0_kind_real
@@ -330,6 +331,7 @@ contains
     deallocate(aogcm%Ocn%T)
     deallocate(aogcm%Ocn%S)
     deallocate(aogcm%Ocn%ssh)
+    deallocate(aogcm%Ocn%H)    
 
     ! Allocate sea-ice state
     deallocate(aogcm%Ice%part_size)
