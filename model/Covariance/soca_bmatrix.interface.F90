@@ -119,7 +119,8 @@ subroutine c_soca_b_mult(c_key_conf, c_key_in, c_key_out) bind(c,name='soca_b_mu
   call copy(xtmp,xin)
   call copy(xout,xin)  
   call soca_3d_covar_D_mult(xtmp, conf)                ! xin = D.xin
-  call soca_3d_covar_sqrt_mult(xtmp,xout,conf)      ! xout = C.xtmp  
+  !call soca_3d_covar_sqrt_mult(xtmp,xout,conf)      ! xout = C.xtmp
+  call soca_3d_covar_mult(xtmp,xout,conf)      ! xout = C.xtmp  
   call soca_3d_covar_D_mult(xout, conf)               ! xout = D.xout  
   
   !read(*,*)

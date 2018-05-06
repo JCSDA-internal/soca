@@ -60,20 +60,20 @@ contains
     use kinds
     use fckit_log_module, only : fckit_log
     use soca_interph_mod
+    use type_bump
+    use type_nam
+    use tools_const, only: pi,req,deg2rad,rad2deg
+    use mpi,             only: mpi_comm_world
     
     implicit none
     type(c_ptr), intent(in)   :: c_model  !< The configuration
     type(soca_geom), intent(in) :: geom     !< Geometry
     type(soca_3d_covar_config), intent(inout) :: config !< The covariance structure
     real(kind=kind_real) :: corr_length_scale
-    type(soca_hinterp), pointer :: horiz_convol_p
+    !type(soca_hinterp), pointer :: horiz_convol_p
     
-    config%sig_sic      = config_get_real(c_model,"sig_sic")
-    config%sig_sit      = config_get_real(c_model,"sig_sit")
-    config%sig_ssh      = config_get_real(c_model,"sig_ssh")
 
-    !call initialize_convolh(geom, horiz_convol_p)
-    
+
   end subroutine soca_3d_covar_setup
 
   ! ------------------------------------------------------------------------------
@@ -188,13 +188,14 @@ contains
     use iso_c_binding
     use kinds
     use soca_fields
-    use soca_interph_mod
+    !use soca_interph_mod
+    use type_bump
     
     implicit none
     type(soca_field), intent(in)           :: dx
     type(soca_field), intent(inout)        :: sqrtCTdx
     type(soca_3d_covar_config), intent(in) :: config !< covariance config structure
-    type(soca_hinterp), pointer            :: horiz_convol_p
+    type(bump_type), pointer            :: horiz_convol_p
     real(kind=kind_real), allocatable      :: tmp_incr(:)
     real(kind=kind_real)      :: crap
     
@@ -202,12 +203,55 @@ contains
     call initialize_convolh(dx%geom, horiz_convol_p)
     allocate(tmp_incr(size(sqrtCTdx%ssh,1)*size(sqrtCTdx%ssh,2)))
     tmp_incr=reshape(dx%ssh,(/size(dx%ssh,1)*size(dx%ssh,2)/))
-    call horiz_convol_p%interpad_apply(sqrtCTdx%ssh,tmp_incr)
+    !call horiz_convol_p%interpad_apply(sqrtCTdx%ssh,tmp_incr)
     deallocate(tmp_incr)
 
   end subroutine soca_3d_covar_sqrt_mult_ad
 
   ! ------------------------------------------------------------------------------
+
+  !> Multiply by sqrt(C) - Adjoint
+
+  subroutine soca_3d_covar_mult(dx, Cdx, config)
+    use iso_c_binding
+    use kinds
+    use soca_fields
+    !use soca_interph_mod
+    use type_bump
+    
+    implicit none
+    type(soca_field), intent(in)           :: dx
+    type(soca_field), intent(inout)        :: Cdx
+    type(soca_3d_covar_config), intent(in) :: config !< covariance config structure
+    type(bump_type), pointer            :: horiz_convol_p
+    real(kind=kind_real), allocatable      :: tmp_incr(:)
+    !Grid stuff
+    integer :: isc, iec, jsc, jec, jjj, jz, il, ib
+
+    !--- Initialize geometry to be passed to NICAS
+    ! Indices for compute domain (no halo)
+    isc = dx%geom%ocean%G%isc
+    iec = dx%geom%ocean%G%iec
+    jsc = dx%geom%ocean%G%jsc
+    jec = dx%geom%ocean%G%jec
+    
+    call copy(Cdx, dx)
+    call initialize_convolh(dx%geom, horiz_convol_p)
+    allocate(tmp_incr(size(Cdx%ssh,1)*size(Cdx%ssh,2)))
+    tmp_incr=reshape(dx%ssh,(/size(dx%ssh,1)*size(dx%ssh,2)/))
+
+    print *,'apply nicas'
+    
+    call horiz_convol_p%apply_nicas(tmp_incr)
+    print *,'apply nicas done'
+    Cdx%ssh = reshape(tmp_incr,(/size(dx%ssh,1),size(dx%ssh,2)/))
+    
+    deallocate(tmp_incr)
+
+  end subroutine soca_3d_covar_mult
+
+  ! ------------------------------------------------------------------------------
+
   
   subroutine soca_3d_covar_D_mult(Ddx, config)
     use iso_c_binding
@@ -231,29 +275,114 @@ contains
     use ufo_locs_mod  
     use soca_interph_mod
     use soca_geom_mod
-    use soca_interph_mod
+    !use soca_interph_mod
+    use type_bump
+    use type_nam
+    use tools_const, only: pi,req,deg2rad,rad2deg
+    use mpi,             only: mpi_comm_world
     
     implicit none
 
-    type(soca_geom), intent(in)              :: geom
-    type(soca_hinterp), pointer, intent(out) :: horiz_convol_p
+    type(soca_geom), intent(in)            :: geom
+    type(bump_type), pointer, intent(out)  :: horiz_convol_p
 
-    real(kind=kind_real), allocatable :: lon(:), lat(:)
-    logical, save :: convolh_initialized = .false.
-    type(soca_hinterp), save, target :: horiz_convol
-    integer :: n, nn=4
-    character(len=3) :: wgt_type='avg'
+    logical, save                    :: convolh_initialized = .false.
+    type(bump_type), save, target    :: horiz_convol
+
+    !Grid stuff
+    integer :: isc, iec, jsc, jec, jjj, jz, il, ib
+    character(len=1024) :: subr = 'model_write'
+
+    !bump stuff
+    integer :: nc0a, nl0, nv, nts
+    real(kind=kind_real), allocatable :: lon(:), lat(:), area(:), vunit(:), rndnum(:)
+    logical, allocatable :: lmask(:,:)
+    integer, allocatable :: imask(:,:)    
+    type(nam_type) :: nam
 
     if (.NOT.convolh_initialized) then
-       n = size(geom%ocean%lon,1)*size(geom%ocean%lon,2)
-       allocate(lon(n),lat(n))
-       call horiz_convol%interp_init(n,nn=nn,wgt_type=wgt_type)
-       call horiz_convol%interp_compute_weight(geom%ocean%lon,&
-            &                                     geom%ocean%lat,&
-            &                                     lon,&
-            &                                     lat)
+
+       !--- Initialize geometry to be passed to NICAS
+       ! Indices for compute domain (no halo)
+       isc = geom%ocean%G%isc
+       iec = geom%ocean%G%iec
+       jsc = geom%ocean%G%jsc
+       jec = geom%ocean%G%jec
+
+       nv = geom%ocean%ncat + 1                   !< Number of variables
+       nl0 = 1                                    !< Number of independent levels
+       nts = 1                                    !< Number of time slots
+       nc0a = (iec - isc + 1) * (jec - jsc + 1 )  !< Total number of grid cells in the compute domain
+
+       allocate( lon(nc0a), lat(nc0a), area(nc0a) )
+       allocate( vunit(nl0) )
+       allocate( imask(nc0a, nl0), lmask(nc0a, nl0) )
+       lon = deg2rad*reshape( geom%ocean%lon(isc:iec, jsc:jec), (/nc0a/) )
+       lat = deg2rad*reshape( geom%ocean%lat(isc:iec, jsc:jec), (/nc0a/) ) 
+       area = reshape( geom%ocean%cell_area(isc:iec, jsc:jec), (/nc0a/) )
+       do jz = 1, nl0       
+          vunit(jz) = real(jz)
+          imask(1:nc0a,jz) = reshape( geom%ocean%mask2d(isc:iec, jsc:jec), (/nc0a/) )
+       end do
+       vunit = 1.0                      !< Dummy vertical unit
+
+       lmask = .false.
+       where (imask.eq.1)
+          lmask=.true.
+       end where
+
+       print *,'b mat setup ----------------------------'
+
+       horiz_convol%nam%default_seed = .true.
+       horiz_convol%nam%new_hdiag = .false.
+       horiz_convol%nam%new_param = .false.
+       horiz_convol%nam%check_adjoints = .false.
+       horiz_convol%nam%check_pos_def = .false.
+       horiz_convol%nam%check_sqrt = .false.
+       horiz_convol%nam%check_randomization = .false.
+       horiz_convol%nam%check_consistency = .false.
+       horiz_convol%nam%check_optimality = .false.
+       horiz_convol%nam%new_lct = .false.
+       horiz_convol%nam%new_obsop = .false.
+
+       horiz_convol%nam%prefix = "soca"
+       horiz_convol%nam%method = "cor"
+       horiz_convol%nam%strategy = "specific_univariate"
+       horiz_convol%nam%sam_write= .false.
+       horiz_convol%nam%sam_read= .false.
+       horiz_convol%nam%mask_type= "none"
+       horiz_convol%nam%mask_check = .false.
+       horiz_convol%nam%draw_type = "random_uniform"
+       horiz_convol%nam%nc1 = 400
+       horiz_convol%nam%ntry = 3
+       horiz_convol%nam%nrep =  2
+       horiz_convol%nam%nc3 = 10
+       horiz_convol%nam%dc = 1000.0e3
+       horiz_convol%nam%nl0r = 15
+       horiz_convol%nam%ne = 4
+       horiz_convol%nam%gau_approx = .false.
+       horiz_convol%nam%full_var = .false.
+       horiz_convol%nam%local_diag = .false.
+       horiz_convol%nam%minim_algo= "hooke"
+       horiz_convol%nam%lhomh = .false.
+       horiz_convol%nam%lhomv = .false.
+       horiz_convol%nam%rvflt =0.0
+       horiz_convol%nam%lsqrt = .true.
+       horiz_convol%nam%resol =10.0
+       horiz_convol%nam%nicas_interp = "bilin"
+       horiz_convol%nam%network = .false.
+       horiz_convol%nam%mpicom = 2
+       horiz_convol%nam%advmode = 0
+       horiz_convol%nam%nldwh = 0
+       horiz_convol%nam%nldwv = 0
+       horiz_convol%nam%diag_rhflt = 0.0
+       horiz_convol%nam%diag_interp = "bilin"
+       horiz_convol%nam%grid_output = .false.
+
+       call horiz_convol%bump_setup_online(mpi_comm_world,nc0a,nl0,nv,nts,lon,lat,area,vunit,lmask)!,rh=rh,rv=rv)
+       print *,'b mat setup done ----------------------------'
        convolh_initialized = .true.
-       deallocate(lon,lat)
+       deallocate( lon, lat, area, vunit, imask, lmask )       
     end if
     horiz_convol_p => horiz_convol
 
