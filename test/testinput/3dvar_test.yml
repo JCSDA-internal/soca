@@ -67,7 +67,17 @@ cost_function:
         obsvalue: ObsVal        
       Covariance:
         covariance: diagonal
-        obserror: ObsErr	
+        obserror: ObsErr
+    - ObsType: TemperatureProfile
+      ObsData:
+        ObsDataOut:
+          obsfile: Data/20180415.T.nc
+        ObsDataIn:
+          obsfile: Data/20180415.T.nc
+        obsvalue: ObsVal        
+      Covariance:
+        covariance: diagonal
+        obserror: ObsErr		
     - ObsType: SeaIceFraction
       ObsData:
         ObsDataOut:

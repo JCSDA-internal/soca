@@ -600,8 +600,9 @@ contains
     character(len=1024)  :: buf
     integer :: iread, ii
 
-    type(restart_file_type) :: sis_restart    
-    integer :: idr
+    type(restart_file_type) :: sis_restart
+    type(restart_file_type) :: ocean_restart    
+    integer :: idr, idr_ocean
 
     
     type(ufo_locs)    :: locs
@@ -638,11 +639,13 @@ contains
        do ii = 1, fld%nf
           select case(fld%fldnames(ii))
           case ('ssh')
-             call read_data(ocn_filename,"ave_ssh",fld%ssh(:,:),domain=fld%geom%ocean%G%Domain%mpp_domain)
+             idr_ocean = register_restart_field(ocean_restart, ocn_filename, 'ave_ssh', fld%ssh(:,:), &
+                  domain=fld%geom%ocean%G%Domain%mpp_domain)
+             !call read_data(ocn_filename,"ave_ssh",fld%ssh(:,:),domain=fld%geom%ocean%G%Domain%mpp_domain)
           case ('tocn')
              call read_data(ocn_filename,"Temp",fld%tocn(:,:,:),domain=fld%geom%ocean%G%Domain%mpp_domain)
           case ('socn')             
-             call read_data(ocn_filename,"Salt",fld%tocn(:,:,:),domain=fld%geom%ocean%G%Domain%mpp_domain)
+             call read_data(ocn_filename,"Salt",fld%socn(:,:,:),domain=fld%geom%ocean%G%Domain%mpp_domain)
           case ('hocn')             
              call read_data(ocn_filename,"h",fld%hocn(:,:,:),domain=fld%geom%ocean%G%Domain%mpp_domain)             
           case ('cicen')
@@ -679,6 +682,7 @@ contains
           end select
        end do
        call restore_state(sis_restart, directory='')
+       call restore_state(ocean_restart, directory='')       
 
        sdate = config_get_string(c_conf,len(sdate),"date")
        WRITE(buf,*) 'validity date is: '//sdate
@@ -1059,6 +1063,8 @@ contains
 !!$
 !!$    call abor1_ftn("done testing interp")
 !!$    !End test
+
+    !call t_from_pt(pt_in,sp_in,p_in,lon_in,lat_in)
     
     nobs = locs%nlocs
     do ivar = 1, ufovars%nv
@@ -1120,6 +1126,11 @@ contains
              call horiz_interp_p%interp_apply(fld%socn(:,:,ilev), geovals%geovals(ivar)%vals(ilev,:))
           end do
 
+       case ("ocean_layer_thickness")
+          do ilev = 1, fld%geom%ocean%nzo
+             call horiz_interp_p%interp_apply(fld%hocn(:,:,ilev), geovals%geovals(ivar)%vals(ilev,:))
+          end do
+
        end select
     end do
 
@@ -1177,16 +1188,16 @@ contains
        case ("ocean_potential_temperature")
           write(record,*) "nicas_interphad: ocean_potential_temperature not yet implemented in ufo"
           call fckit_log%info(record)          
-          !do ilev = 1, fld%geom%ocean%nzo
-          !   call horiz_interp_p%interpad_apply(fld%tocn(:,:,ilev), geovals%geovals(ivar)%vals(ilev,:))
-          !end do
+          do ilev = 1, fld%geom%ocean%nzo
+             call horiz_interp_p%interpad_apply(fld%tocn(:,:,ilev), geovals%geovals(ivar)%vals(ilev,:))
+          end do
           
        case ("ocean_salinity")
           write(record,*) "nicas_interphad: ocean_salinity not yet implemented in ufo"
           call fckit_log%info(record)                    
-          !do ilev = 1, fld%geom%ocean%nzo
-          !   call horiz_interp_p%interpad_apply(fld%socn(:,:,ilev), geovals%geovals(ivar)%vals(ilev,:))
-          !end do
+          do ilev = 1, fld%geom%ocean%nzo
+             call horiz_interp_p%interpad_apply(fld%socn(:,:,ilev), geovals%geovals(ivar)%vals(ilev,:))
+          end do
           
        end select
     end do
