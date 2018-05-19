@@ -23,9 +23,9 @@
 
 
 #include "ufo/GeoVaLs.h"
-#include "ufo/Locations.h"
-#include "ufo/ObsSpace.h"
-#include "ufo/ObsVector.h"
+#include "ioda/Locations.h"
+#include "ioda/ObsSpace.h"
+#include "ioda/ObsVector.h"
 #include "ufo/ObsBias.h"
 #include "ufo/ObsBiasIncrement.h"
 #include "ufo/ObsCheck.h"
@@ -57,9 +57,9 @@ struct Traits {
   typedef ufo::ObsCheck             ObsCheck;  
 
   typedef ufo::GeoVaLs              GeoVaLs;
-  typedef ufo::Locations            Locations;
-  typedef ufo::ObsSpace             ObsSpace;
-  typedef ufo::ObsVector            ObsVector;
+  typedef ioda::Locations           Locations;
+  typedef ioda::ObsSpace             ObsSpace;
+  typedef ioda::ObsVector            ObsVector;
 };
 
 }  // namespace soca

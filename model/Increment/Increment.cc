@@ -22,7 +22,7 @@
 #include "model/State/State.h"
 #include "util/Duration.h"
 #include "ufo/GeoVaLs.h"
-#include "ufo/Locations.h"
+#include "ioda/Locations.h"
 
 using oops::Log;
 
@@ -167,13 +167,13 @@ namespace soca {
   }
   /// Interpolate to observation location
   // -----------------------------------------------------------------------------
-  void Increment::interpolateTL(const ufo::Locations & locs, const oops::Variables & vars, ufo::GeoVaLs & cols) const {
+  void Increment::interpolateTL(const ioda::Locations & locs, const oops::Variables & vars, ufo::GeoVaLs & cols) const {
     Log::debug() << "Increment::interpolateTL fields in" << *fields_ << std::endl;
     fields_->interpolateTL(locs, vars, cols);
     Log::debug() << "Increment::interpolateTL " << cols << std::endl;    
   }
   // -----------------------------------------------------------------------------
-  void Increment::interpolateAD(const ufo::Locations & locs, const oops::Variables & vars, const ufo::GeoVaLs & cols) {
+  void Increment::interpolateAD(const ioda::Locations & locs, const oops::Variables & vars, const ufo::GeoVaLs & cols) {
     Log::debug() << "Increment::interpolateAD gom " << cols << std::endl;
     Log::debug() << "Increment::interpolateAD fields in" << *fields_ << std::endl;    
     fields_->interpolateAD(locs, vars, cols);

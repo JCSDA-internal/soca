@@ -228,7 +228,7 @@ contains
   ! ------------------------------------------------------------------------------
 
   subroutine initialize_convolh(geom, horiz_convol_p)
-    use ufo_locs_mod  
+    !use ufo_locs_mod  
     use soca_interph_mod
     use soca_geom_mod
     use soca_interph_mod

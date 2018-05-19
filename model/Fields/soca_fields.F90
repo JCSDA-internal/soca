@@ -585,7 +585,7 @@ contains
     use fms_io_mod,       only : register_restart_field, restart_file_type
     use fms_io_mod,       only : restore_state, query_initialized
 
-    use ufo_locs_mod
+    use ioda_locs_mod
     use ufo_geovals_mod
     use ufo_vars_mod
     
@@ -605,7 +605,7 @@ contains
     integer :: idr, idr_ocean
 
     
-    type(ufo_locs)    :: locs
+    type(ioda_locs)    :: locs
     type(ufo_geovals)    :: geovals
     !type(ufo_vars)    :: vars
     integer            :: nobs, nval
@@ -887,12 +887,12 @@ contains
   ! ------------------------------------------------------------------------------
 
   subroutine interp_tl(fld, locs, vars, geovals)
-    use ufo_locs_mod
+    use ioda_locs_mod
     use ufo_geovals_mod
     use ufo_vars_mod
     implicit none
     type(soca_field), intent(inout)   :: fld
-    type(ufo_locs), intent(in)    :: locs
+    type(ioda_locs), intent(in)    :: locs
     type(ufo_vars),     intent(in)    :: vars    
     type(ufo_geovals), intent(inout) :: geovals
 
@@ -905,12 +905,12 @@ contains
   ! ------------------------------------------------------------------------------
 
   subroutine interp_ad(fld, locs, vars, geovals)
-    use ufo_locs_mod
+    use ioda_locs_mod
     use ufo_geovals_mod
     use ufo_vars_mod    
     implicit none
     type(soca_field), intent(inout) :: fld
-    type(ufo_locs), intent(in)    :: locs
+    type(ioda_locs), intent(in)    :: locs
     type(ufo_vars),     intent(in)    :: vars        
     type(ufo_geovals), intent(inout) :: geovals    
     !character(2)                        :: op_type='AD'
@@ -923,12 +923,12 @@ contains
   ! ------------------------------------------------------------------------------
   function get_obsop_index(horiz_interp, locs, interph_initialized)
     !> Returns index of interpolation object/obs operator
-    use ufo_locs_mod  
+    use ioda_locs_mod  
     use soca_interph_mod
     implicit none
 
     type(soca_hinterp), dimension(10), intent(in) :: horiz_interp        !< HARD CODED ... HACK ...
-    type(ufo_locs), intent(in)                    :: locs                !< HARD CODED ... HACK ...
+    type(ioda_locs), intent(in)                    :: locs                !< HARD CODED ... HACK ...
     logical, dimension(10), intent(in)            :: interph_initialized !< HARD CODED ... HACK ...
 
     logical, dimension(10)            :: obs_type_test                   !< HARD CODED ... HACK ...
@@ -961,13 +961,13 @@ contains
   ! ------------------------------------------------------------------------------    
 
   subroutine initialize_interph(fld, locs, horiz_interp_p, interp_type)    
-    use ufo_locs_mod  
+    use ioda_locs_mod  
     use soca_interph_mod
 
     implicit none
 
     type(soca_field), intent(in)             :: fld
-    type(ufo_locs), intent(in)               :: locs
+    type(ioda_locs), intent(in)               :: locs
     type(soca_hinterp), pointer, intent(out) :: horiz_interp_p
     character(len=3), optional               :: interp_type     !< Forward: 'fwd' or adjoint: 'adj'
     
@@ -1004,8 +1004,8 @@ contains
 
   subroutine nicas_interph(fld, locs, ufovars, geovals)
 
-    use ufo_locs_mod_c  
-    use ufo_locs_mod  
+    !use ioda_locs_mod_c  
+    use ioda_locs_mod  
     use ufo_geovals_mod_c
     use ufo_geovals_mod
     use ufo_vars_mod
@@ -1016,7 +1016,7 @@ contains
     implicit none
 
     type(soca_field), intent(inout)   :: fld
-    type(ufo_locs), intent(in)        :: locs
+    type(ioda_locs), intent(in)        :: locs
     type(ufo_vars),     intent(in)    :: ufovars  
     type(ufo_geovals), intent(inout)  :: geovals
 
@@ -1140,8 +1140,8 @@ contains
   
   subroutine nicas_interphad(fld, locs, ufovars, geovals)
 
-    use ufo_locs_mod_c  
-    use ufo_locs_mod  
+    !use ufo_locs_mod_c  
+    use ioda_locs_mod  
     use ufo_geovals_mod_c
     use ufo_geovals_mod
     use ufo_vars_mod
@@ -1150,7 +1150,7 @@ contains
     use fckit_log_module, only : fckit_log
     
     type(soca_field), intent(inout)  :: fld
-    type(ufo_locs), intent(in)       :: locs
+    type(ioda_locs), intent(in)       :: locs
     type(ufo_geovals), intent(in)    :: geovals    
     type(ufo_vars)    :: ufovars    
 

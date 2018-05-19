@@ -29,6 +29,9 @@ namespace oops {
 
 namespace ufo {
   class GeoVaLs;
+}
+
+namespace ioda {
   class Locations;
 }
 
@@ -59,7 +62,7 @@ namespace soca {
       State & operator=(const State &);
 
       /// Interpolate to observation location
-      void interpolate(const ufo::Locations &, const oops::Variables &, ufo::GeoVaLs &) const;
+      void interpolate(const ioda::Locations &, const oops::Variables &, ufo::GeoVaLs &) const;
 
       /// Interpolate full fields
       ///  void changeResolution(const State & xx);

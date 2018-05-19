@@ -32,6 +32,9 @@ namespace oops {
 
 namespace ufo {
   class GeoVaLs;
+}
+
+namespace ioda {
   class Locations;
 }
 
@@ -67,9 +70,9 @@ namespace soca {
       void random();
 
       // Interpolate to given location
-      void interpolate(const ufo::Locations &, const oops::Variables &, ufo::GeoVaLs &) const;
-      void interpolateTL(const ufo::Locations &, const oops::Variables &, ufo::GeoVaLs &) const;
-      void interpolateAD(const ufo::Locations &, const oops::Variables &, const ufo::GeoVaLs &);      
+      void interpolate(const ioda::Locations &, const oops::Variables &, ufo::GeoVaLs &) const;
+      void interpolateTL(const ioda::Locations &, const oops::Variables &, ufo::GeoVaLs &) const;
+      void interpolateAD(const ioda::Locations &, const oops::Variables &, const ufo::GeoVaLs &);      
       //void interpolateTL(const Loc &, Gom &) const;
       //void interpolateAD(const Loc &, const Gom &);
 
