@@ -14,9 +14,10 @@
 #include <boost/scoped_ptr.hpp>
 
 #include "model/Fields/Fields.h"
-#include "util/DateTime.h"
-#include "util/ObjectCounter.h"
-#include "util/Printable.h"
+#include "model/Nothing/Nothing.h"
+#include "oops/util/DateTime.h"
+#include "oops/util/ObjectCounter.h"
+#include "oops/util/Printable.h"
 
 namespace eckit {
   class Configuration;
@@ -62,7 +63,8 @@ namespace soca {
       State & operator=(const State &);
 
       /// Interpolate to observation location
-      void interpolate(const ioda::Locations &, const oops::Variables &, ufo::GeoVaLs &) const;
+      void getValues(const ioda::Locations &, const oops::Variables &, ufo::GeoVaLs &) const;
+      void getValues(const ioda::Locations &, const oops::Variables &, ufo::GeoVaLs &, Nothing &) const;      
 
       /// Interpolate full fields
       ///  void changeResolution(const State & xx);

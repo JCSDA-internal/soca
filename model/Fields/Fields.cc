@@ -15,8 +15,8 @@
 #include "eckit/config/Configuration.h"
 #include "oops/generic/UnstructuredGrid.h"
 #include "oops/base/Variables.h"
-#include "util/DateTime.h"
-#include "util/Logger.h"
+#include "oops/util/DateTime.h"
+#include "oops/util/Logger.h"
 #include "ufo/GeoVaLs.h"
 #include "ioda/Locations.h"
 #include "model/Fortran.h"
@@ -123,17 +123,17 @@ namespace soca {
     soca_field_random_f90(keyFlds_);
   }
   // -----------------------------------------------------------------------------
-  void Fields::interpolate(const ioda::Locations & locs, const oops::Variables & vars, ufo::GeoVaLs & gom) const {
+  void Fields::getValues(const ioda::Locations & locs, const oops::Variables & vars, ufo::GeoVaLs & gom) const {
     const eckit::Configuration * conf = &vars.toFortran();    
     soca_field_interp_tl_f90(keyFlds_, locs.toFortran(), &conf, gom.toFortran());
    }
   // -----------------------------------------------------------------------------
-  void Fields::interpolateTL(const ioda::Locations & locs, const oops::Variables & vars, ufo::GeoVaLs & gom) const {
+  void Fields::getValuesTL(const ioda::Locations & locs, const oops::Variables & vars, ufo::GeoVaLs & gom) const {
     const eckit::Configuration * conf = &vars.toFortran();        
     soca_field_interp_tl_f90(keyFlds_, locs.toFortran(), &conf, gom.toFortran());
   }
   // -----------------------------------------------------------------------------
-  void Fields::interpolateAD(const ioda::Locations & locs, const oops::Variables & vars, const ufo::GeoVaLs & gom) {
+  void Fields::getValuesAD(const ioda::Locations & locs, const oops::Variables & vars, const ufo::GeoVaLs & gom) {
     const eckit::Configuration * conf = &vars.toFortran();            
     soca_field_interp_ad_f90(keyFlds_, locs.toFortran(), &conf, gom.toFortran());
   }

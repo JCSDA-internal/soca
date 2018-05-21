@@ -5,7 +5,7 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#include "util/Logger.h"
+#include "oops/util/Logger.h"
 #include "model/Geometry/Geometry.h"
 #include "model/Fortran.h"
 #include "eckit/config/Configuration.h"

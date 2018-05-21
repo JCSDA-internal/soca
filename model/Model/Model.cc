@@ -7,14 +7,14 @@
 
 #include "model/Model/Model.h"
 
-#include "util/Logger.h"
+#include "oops/util/Logger.h"
 #include "model/ModelBias.h"
 #include "model/Fields/Fields.h"
 #include "model/Fortran.h"
 #include "model/Geometry/Geometry.h"
 #include "model/State/State.h"
 #include "eckit/config/Configuration.h"
-#include "util/DateTime.h"
+#include "oops/util/DateTime.h"
 
 using oops::Log;
 

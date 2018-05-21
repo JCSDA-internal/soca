@@ -11,15 +11,15 @@
 #include "model/LinearModel/TlmId.h"
 
 #include "eckit/config/LocalConfiguration.h"
-#include "util/Logger.h"
+#include "oops/util/Logger.h"
 #include "model/ModelBiasIncrement.h"
 #include "model/Fortran.h"
 #include "model/Geometry/Geometry.h"
 #include "model/Increment/Increment.h"
 #include "model/State/State.h"
 #include "model/Traits.h"
-#include "util/DateTime.h"
-#include "util/abor1_cpp.h"
+#include "oops/util/DateTime.h"
+#include "oops/util/abor1_cpp.h"
 
 using oops::Log;
 

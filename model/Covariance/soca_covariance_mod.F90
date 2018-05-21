@@ -30,7 +30,7 @@ module soca_covariance_mod
 #define LISTED_TYPE soca_3d_covar_config
 
   !> Linked list interface - defines registry_t type
-#include "util/linkedList_i.f"
+#include "oops/util/linkedList_i.f"
 
   !> Global registry
   type(registry_t) :: soca_3d_cov_registry
@@ -39,7 +39,7 @@ module soca_covariance_mod
 contains
   ! ------------------------------------------------------------------------------
   !> Linked list implementation
-#include "util/linkedList_c.f"
+#include "oops/util/linkedList_c.f"
   ! ------------------------------------------------------------------------------
 
   ! ------------------------------------------------------------------------------

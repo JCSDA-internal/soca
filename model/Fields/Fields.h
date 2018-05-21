@@ -15,10 +15,10 @@
 
 #include "model/Geometry/Geometry.h"
 #include "model/Variables/Variables.h"
-#include "util/DateTime.h"
-#include "util/Duration.h"
-#include "util/ObjectCounter.h"
-#include "util/Printable.h"
+#include "oops/util/DateTime.h"
+#include "oops/util/Duration.h"
+#include "oops/util/ObjectCounter.h"
+#include "oops/util/Printable.h"
 
 // Forward declarations
 namespace eckit {
@@ -70,9 +70,9 @@ namespace soca {
       void random();
 
       // Interpolate to given location
-      void interpolate(const ioda::Locations &, const oops::Variables &, ufo::GeoVaLs &) const;
-      void interpolateTL(const ioda::Locations &, const oops::Variables &, ufo::GeoVaLs &) const;
-      void interpolateAD(const ioda::Locations &, const oops::Variables &, const ufo::GeoVaLs &);      
+      void getValues(const ioda::Locations &, const oops::Variables &, ufo::GeoVaLs &) const;
+      void getValuesTL(const ioda::Locations &, const oops::Variables &, ufo::GeoVaLs &) const;
+      void getValuesAD(const ioda::Locations &, const oops::Variables &, const ufo::GeoVaLs &);      
       //void interpolateTL(const Loc &, Gom &) const;
       //void interpolateAD(const Loc &, const Gom &);
 

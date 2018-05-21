@@ -16,9 +16,9 @@
 #include "model/Fortran.h"
 #include "model/Geometry/Geometry.h"
 #include "eckit/config/Configuration.h"
-#include "util/DateTime.h"
-#include "util/ObjectCounter.h"
-#include "util/Printable.h"
+#include "oops/util/DateTime.h"
+#include "oops/util/ObjectCounter.h"
+#include "oops/util/Printable.h"
 #include "oops/base/Variables.h"
 
 // Forward declarations

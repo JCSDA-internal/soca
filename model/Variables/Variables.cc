@@ -11,7 +11,7 @@
 
 #include "oops/base/Variables.h"
 #include "eckit/config/Configuration.h"
-#include "util/Logger.h"
+#include "oops/util/Logger.h"
 
 namespace soca {
 
