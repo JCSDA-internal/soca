@@ -42,7 +42,6 @@ void Variables::setF90(const std::vector<std::string> vars) {
   fvars_[0] = nv;
   for (size_t jj = 0; jj < nv; ++jj) {
      int ii = 0;
-     std::cout << "---------------- vars=" << vars[jj] << std::endl;
      if (vars[jj]=="cicen") ii = 1;
      if (vars[jj]=="hicen") ii = 2;
      if (vars[jj]=="hsnon") ii = 3;
@@ -54,7 +53,6 @@ void Variables::setF90(const std::vector<std::string> vars) {
      if (vars[jj]=="tocn") ii = 9;
      if (vars[jj]=="ssh") ii = 10;
      if (vars[jj]=="hocn") ii = 11;     
-     //std::cout << vars[jj] << std::endl;     
      ASSERT(ii > 0);
      fvars_[jj+1] = ii;
   }

@@ -231,7 +231,6 @@ contains
 
     call check(self)
 
-    !print *,'=========== IN DIRAC ==================='
     ! Get Diracs positions
     ndir = config_get_int(c_conf,"ndir")
     allocate(ixdir(ndir))
@@ -263,8 +262,6 @@ contains
        self%ssh(ixdir(idir),iydir(idir)) = 1.0 ! Surface temp incr for cat 1
     end do
 
-    print *,'out of dirac'
-    
   end subroutine dirac
 
   ! ------------------------------------------------------------------------------
@@ -981,7 +978,6 @@ contains
 
     ! Comming from adjoint, no need to initialize
     if (present(interp_type)) then   ! if interp_type is present, interp_type=adjoint
-       print *,obs_type_counter
        horiz_interp_p => horiz_interp(obs_type_counter)
        return
     end if
@@ -1075,7 +1071,7 @@ contains
        case ("ice_concentration","ice_thickness")
           nval = fld%geom%ocean%ncat
 
-       case ("steric_height","sea_surface_height_above_geoid")
+       case ("steric_height","sea_surface_height_above_geoid","ocean_upper_level_temperature")
           nval = 1
 
        case ("ocean_potential_temperature","ocean_salinity")
@@ -1087,10 +1083,11 @@ contains
 
        end select
 
+       
        ! Allocate GeoVaLs (fields at locations)
+       if (nval.eq.0) call abor1_ftn("Wrong nval: nval = 0")
        geovals%geovals(ivar)%nval = nval
        if (allocated(geovals%geovals(ivar)%vals)) then
-          print *,'I WAS ALLOCATED !!!!!!!!!'
           deallocate(geovals%geovals(ivar)%vals)
        end if
        allocate(geovals%geovals(ivar)%vals(nval,nobs))
@@ -1131,6 +1128,9 @@ contains
              call horiz_interp_p%interp_apply(fld%hocn(:,:,ilev), geovals%geovals(ivar)%vals(ilev,:))
           end do
 
+       case ("ocean_upper_level_temperature")          
+          call horiz_interp_p%interp_apply(fld%tocn(:,:,1), geovals%geovals(ivar)%vals(1,:))
+          
        end select
     end do
 
@@ -1163,8 +1163,6 @@ contains
     integer :: icat, ilev
     character(len=160) :: record
 
-    print *,'In adjoint'
-    
     call initialize_interph(fld, locs, horiz_interp_p, interp_type='adj')
 
     do ivar = 1, ufovars%nv
@@ -1186,18 +1184,18 @@ contains
           call horiz_interp_p%interpad_apply(fld%ssh(:,:), geovals%geovals(ivar)%vals(1,:))
           
        case ("ocean_potential_temperature")
-          write(record,*) "nicas_interphad: ocean_potential_temperature not yet implemented in ufo"
-          call fckit_log%info(record)          
           do ilev = 1, fld%geom%ocean%nzo
              call horiz_interp_p%interpad_apply(fld%tocn(:,:,ilev), geovals%geovals(ivar)%vals(ilev,:))
           end do
           
        case ("ocean_salinity")
-          write(record,*) "nicas_interphad: ocean_salinity not yet implemented in ufo"
-          call fckit_log%info(record)                    
           do ilev = 1, fld%geom%ocean%nzo
              call horiz_interp_p%interpad_apply(fld%socn(:,:,ilev), geovals%geovals(ivar)%vals(ilev,:))
           end do
+
+       case ("ocean_upper_level_temperature")
+          call horiz_interp_p%interpad_apply(fld%tocn(:,:,1), geovals%geovals(ivar)%vals(1,:))
+
           
        end select
     end do
@@ -1258,7 +1256,7 @@ contains
     end do
     jk = nv
     ug%fld(:, 1, jk, 1) = reshape( self%ssh(isc:iec, jsc:jec), (/nc0a/) )
-    print *,'out of convert to'
+
   end subroutine convert_to_ug
 
   ! ------------------------------------------------------------------------------

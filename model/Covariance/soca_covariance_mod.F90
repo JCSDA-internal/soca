@@ -22,6 +22,8 @@ module soca_covariance_mod
      real(kind=kind_real) :: sig_sic     !<   
      real(kind=kind_real) :: sig_sit     !< Temporary hack 
      real(kind=kind_real) :: sig_ssh     !<
+     real(kind=kind_real) :: sig_tocn     !<
+     real(kind=kind_real) :: sig_socn     !<          
      character(len=800)   :: D_filename  !< Netcdf file containing
                                          !< the diagonal matrix of standard deviation for
                                          !< all the fields
@@ -33,7 +35,7 @@ module soca_covariance_mod
 #include "oops/util/linkedList_i.f"
 
   !> Global registry
-  type(registry_t) :: soca_3d_cov_registry
+ type(registry_t) :: soca_3d_cov_registry
 
   ! ------------------------------------------------------------------------------
 contains
@@ -71,6 +73,8 @@ contains
     config%sig_sic      = config_get_real(c_model,"sig_sic")
     config%sig_sit      = config_get_real(c_model,"sig_sit")
     config%sig_ssh      = config_get_real(c_model,"sig_ssh")
+    config%sig_tocn      = config_get_real(c_model,"sig_tocn")
+    config%sig_socn      = config_get_real(c_model,"sig_socn")        
 
     !call initialize_convolh(geom, horiz_convol_p)
     
@@ -162,6 +166,30 @@ contains
        end do
     end do
 
+    deallocate(tmp_incr3d)
+    allocate(tmp_incr3d(size(dx%ssh,1),size(dx%ssh,2),dx%geom%ocean%nzo))
+    sqrtCdx%tocn=dx%tocn    
+    do iter = 1, 1
+       tmp_incr3d=sqrtCdx%tocn
+       do k = 2, size(dx%ssh,1)-1
+          do l = 2, size(dx%ssh,2)-1
+             do m = 1, dx%geom%ocean%nzo
+                sqrtCdx%tocn(k,l,m)=(tmp_incr3d(k+1,l-1,m)+tmp_incr3d(k,l-1,m)+tmp_incr3d(k-1,l-1,m)+&
+                              &tmp_incr3d(k+1,l,m)+tmp_incr3d(k,l,m)+tmp_incr3d(k-1,l,m)+&
+                              &tmp_incr3d(k+1,l+1,m)+tmp_incr3d(k,l+1,m)+tmp_incr3d(k-1,l+1,m))/9.0
+             end do
+          end do
+       end do
+       tmp_incr3d=sqrtCdx%tocn
+       do k = 2, size(dx%ssh,1)-1
+          do l = 2, size(dx%ssh,2)-1
+             do m = 2, dx%geom%ocean%nzo-1
+                sqrtCdx%tocn(k,l,m)=(tmp_incr3d(k,l,m-1)+tmp_incr3d(k,l,m)+tmp_incr3d(k,l,m+1))/3.0
+             end do
+          end do
+       end do
+    end do
+
 !!$    sqrtCdx%hicen=dx%hicen
 !!$    do iter = 1, 1
 !!$       tmp_incr3d=sqrtCdx%hicen(:,:,1:dx%geom%ocean%ncat)
@@ -221,7 +249,9 @@ contains
 
     Ddx%cicen=config%sig_sic*Ddx%cicen
     Ddx%hicen=config%sig_sit*Ddx%hicen
-    Ddx%ssh=config%sig_ssh*Ddx%ssh    
+    Ddx%ssh=config%sig_ssh*Ddx%ssh
+    Ddx%tocn=config%sig_tocn*Ddx%tocn
+    Ddx%socn=config%sig_socn*Ddx%socn
 
   end subroutine soca_3d_covar_D_mult
 

@@ -208,7 +208,6 @@ namespace soca {
     //int nf = -1;
     //int nb = -1;
     //soca_field_sizes_f90(keyFlds_, nx, ny, nf, nb);
-    std::cout << "================ nf=" << nf << std::endl;
     bool ok = (nf == 11);   //<---- HARD CODED STUFF ... NEED TO CHANGE
     if (nonlinear) ok = ok; // && (nb == 2);
     return ok;
