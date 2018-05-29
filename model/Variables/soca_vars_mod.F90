@@ -73,7 +73,6 @@ contains
        if (kvars(jj+1)==9) self%fldnames(ii) = "tocn"
        if (kvars(jj+1)==10) self%fldnames(ii)= "ssh"
        if (kvars(jj+1)==11) self%fldnames(ii)= "hocn"
-       print *,'******************* var=',self%fldnames(ii)
     enddo
     
   end subroutine soca_vars_create

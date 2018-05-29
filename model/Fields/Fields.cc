@@ -15,10 +15,10 @@
 #include "eckit/config/Configuration.h"
 #include "oops/generic/UnstructuredGrid.h"
 #include "oops/base/Variables.h"
-#include "util/DateTime.h"
-#include "util/Logger.h"
+#include "oops/util/DateTime.h"
+#include "oops/util/Logger.h"
 #include "ufo/GeoVaLs.h"
-#include "ufo/Locations.h"
+#include "ioda/Locations.h"
 #include "model/Fortran.h"
 #include "model/Geometry/Geometry.h"
 #include "model/Variables/Variables.h"
@@ -123,17 +123,17 @@ namespace soca {
     soca_field_random_f90(keyFlds_);
   }
   // -----------------------------------------------------------------------------
-  void Fields::interpolate(const ufo::Locations & locs, const oops::Variables & vars, ufo::GeoVaLs & gom) const {
+  void Fields::getValues(const ioda::Locations & locs, const oops::Variables & vars, ufo::GeoVaLs & gom) const {
     const eckit::Configuration * conf = &vars.toFortran();    
     soca_field_interp_tl_f90(keyFlds_, locs.toFortran(), &conf, gom.toFortran());
    }
   // -----------------------------------------------------------------------------
-  void Fields::interpolateTL(const ufo::Locations & locs, const oops::Variables & vars, ufo::GeoVaLs & gom) const {
+  void Fields::getValuesTL(const ioda::Locations & locs, const oops::Variables & vars, ufo::GeoVaLs & gom) const {
     const eckit::Configuration * conf = &vars.toFortran();        
     soca_field_interp_tl_f90(keyFlds_, locs.toFortran(), &conf, gom.toFortran());
   }
   // -----------------------------------------------------------------------------
-  void Fields::interpolateAD(const ufo::Locations & locs, const oops::Variables & vars, const ufo::GeoVaLs & gom) {
+  void Fields::getValuesAD(const ioda::Locations & locs, const oops::Variables & vars, const ufo::GeoVaLs & gom) {
     const eckit::Configuration * conf = &vars.toFortran();            
     soca_field_interp_ad_f90(keyFlds_, locs.toFortran(), &conf, gom.toFortran());
   }
@@ -208,7 +208,6 @@ namespace soca {
     //int nf = -1;
     //int nb = -1;
     //soca_field_sizes_f90(keyFlds_, nx, ny, nf, nb);
-    std::cout << "================ nf=" << nf << std::endl;
     bool ok = (nf == 11);   //<---- HARD CODED STUFF ... NEED TO CHANGE
     if (nonlinear) ok = ok; // && (nb == 2);
     return ok;

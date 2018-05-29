@@ -14,7 +14,7 @@
 #include <string>
 #include <vector>
 
-#include "util/Logger.h"
+#include "oops/util/Logger.h"
 #include "model/ObsBias.h"
 #include "model/ObsBiasIncrement.h"
 #include "eckit/config/LocalConfiguration.h"

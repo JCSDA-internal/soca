@@ -18,13 +18,14 @@
 #include <boost/shared_ptr.hpp>
 
 #include "model/Fields/Fields.h"
+#include "model/Nothing/Nothing.h"
 #include "model/Geometry/Geometry.h"
 #include "oops/base/GeneralizedDepartures.h"
-#include "util/DateTime.h"
-#include "util/Duration.h"
-#include "util/ObjectCounter.h"
-#include "util/Printable.h"
-#include "util/dot_product.h"
+#include "oops/util/DateTime.h"
+#include "oops/util/Duration.h"
+#include "oops/util/ObjectCounter.h"
+#include "oops/util/Printable.h"
+#include "oops/util/dot_product.h"
 
 namespace eckit {
   class Configuration;
@@ -37,6 +38,9 @@ namespace oops {
 
 namespace ufo {
   class GeoVaLs;
+}
+
+namespace ioda {
   class Locations;
 }
 
@@ -82,8 +86,8 @@ namespace soca {
       void dirac(const eckit::Configuration &);
       
       /// Interpolate to observation location
-      void interpolateTL(const ufo::Locations &, const oops::Variables &,ufo::GeoVaLs &) const;
-      void interpolateAD(const ufo::Locations &, const oops::Variables &, const ufo::GeoVaLs &);
+      void getValuesTL(const ioda::Locations &, const oops::Variables &,ufo::GeoVaLs &, const Nothing &) const;
+      void getValuesAD(const ioda::Locations &, const oops::Variables &, const ufo::GeoVaLs &, const Nothing &);
 
       /// I/O and diagnostics
       void read(const eckit::Configuration &);

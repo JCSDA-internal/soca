@@ -13,16 +13,17 @@
 #include "eckit/config/LocalConfiguration.h"
 #include "oops/base/Variables.h"
 #include "oops/generic/UnstructuredGrid.h"
-#include "util/DateTime.h"
-#include "util/Logger.h"
+#include "oops/util/DateTime.h"
+#include "oops/util/Logger.h"
 #include "model/ModelBiasIncrement.h"
 #include "model/Covariance/ErrorCovariance.h"
 #include "model/Fields/Fields.h"
 #include "model/Geometry/Geometry.h"
 #include "model/State/State.h"
-#include "util/Duration.h"
+#include "model/Nothing/Nothing.h"
+#include "oops/util/Duration.h"
 #include "ufo/GeoVaLs.h"
-#include "ufo/Locations.h"
+#include "ioda/Locations.h"
 
 using oops::Log;
 
@@ -167,16 +168,16 @@ namespace soca {
   }
   /// Interpolate to observation location
   // -----------------------------------------------------------------------------
-  void Increment::interpolateTL(const ufo::Locations & locs, const oops::Variables & vars, ufo::GeoVaLs & cols) const {
+  void Increment::getValuesTL(const ioda::Locations & locs, const oops::Variables & vars, ufo::GeoVaLs & cols, const Nothing &) const {
     Log::debug() << "Increment::interpolateTL fields in" << *fields_ << std::endl;
-    fields_->interpolateTL(locs, vars, cols);
+    fields_->getValuesTL(locs, vars, cols);
     Log::debug() << "Increment::interpolateTL " << cols << std::endl;    
   }
   // -----------------------------------------------------------------------------
-  void Increment::interpolateAD(const ufo::Locations & locs, const oops::Variables & vars, const ufo::GeoVaLs & cols) {
+  void Increment::getValuesAD(const ioda::Locations & locs, const oops::Variables & vars, const ufo::GeoVaLs & cols, const Nothing &) {
     Log::debug() << "Increment::interpolateAD gom " << cols << std::endl;
     Log::debug() << "Increment::interpolateAD fields in" << *fields_ << std::endl;    
-    fields_->interpolateAD(locs, vars, cols);
+    fields_->getValuesAD(locs, vars, cols);
   }
   // -----------------------------------------------------------------------------
   /// Define and convert to/from unstructured grid

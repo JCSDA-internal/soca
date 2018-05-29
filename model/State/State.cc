@@ -21,12 +21,13 @@
 #include "model/Geometry/Geometry.h"
 #include "model/Increment/Increment.h"
 #include "model/Model/Model.h"
-#include "util/DateTime.h"
-#include "util/Duration.h"
-#include "util/Logger.h"
+#include "model/Nothing/Nothing.h"
+#include "oops/util/DateTime.h"
+#include "oops/util/Duration.h"
+#include "oops/util/Logger.h"
 
 #include "ufo/GeoVaLs.h"
-#include "ufo/Locations.h"
+#include "ioda/Locations.h"
 
 
 using oops::Log;
@@ -131,10 +132,14 @@ namespace soca {
   // -----------------------------------------------------------------------------
   /// Interpolate to observation location
   // -----------------------------------------------------------------------------
-  void State::interpolate(const ufo::Locations & locs, const oops::Variables & vars, ufo::GeoVaLs & cols) const {
-    fields_->interpolate(locs, vars, cols);
+  void State::getValues(const ioda::Locations & locs, const oops::Variables & vars, ufo::GeoVaLs & cols) const {
+    fields_->getValues(locs, vars, cols);
   }
   // -----------------------------------------------------------------------------
+  void State::getValues(const ioda::Locations & locs, const oops::Variables & vars, ufo::GeoVaLs & cols, Nothing &) const {
+    fields_->getValues(locs, vars, cols);
+  }
+  // -----------------------------------------------------------------------------  
   /// Interpolate full fields
   // -----------------------------------------------------------------------------
   //void State::changeResolution(const State & other) {
