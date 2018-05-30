@@ -26,10 +26,8 @@ namespace soca {
   // -----------------------------------------------------------------------------
 
   ErrorCovariance::ErrorCovariance(const Geometry & resol, const oops::Variables &,
-				   const eckit::Configuration & conf, const State & traj) {
-    std::cout << "!!!!!!!!!!!!!!!traj!!!!!!!!!!!!!!!!!!!!" << std::endl;    
-    std::cout << traj << std::endl;
-    std::cout << "!!!!!!!!!!!!!!!traj!!!!!!!!!!!!!!!!!!!!" << std::endl;        
+				   const eckit::Configuration & conf, const State & bkg) {
+    //bkg: Background state, invariant wrt outer-loop. 
     time_ = util::DateTime(conf.getString("date"));
     const eckit::Configuration * configc = &conf;
     soca_b_setup_f90(keyFtnConfig_, &configc, resol.toFortran());
@@ -45,8 +43,10 @@ namespace soca {
 
   // -----------------------------------------------------------------------------
 
-  void ErrorCovariance::linearize(const State &, const Geometry & resol) {
+  void ErrorCovariance::linearize(const State & traj, const Geometry & resol) {
     geom_.reset(new Geometry(resol));
+  //traj: Trajectory used for the linearization of the balance operators. Changes at each outer-loops.
+    
   }
 
   // -----------------------------------------------------------------------------
