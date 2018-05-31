@@ -260,13 +260,15 @@ contains
 
     !--- Initialize geometry to be passed to NICAS
     ! Indices for compute domain (no halo)
-    isc = dx%geom%ocean%G%isc
-    iec = dx%geom%ocean%G%iec
-    jsc = dx%geom%ocean%G%jsc
-    jec = dx%geom%ocean%G%jec
+    !isc = dx%geom%ocean%G%isc
+    !iec = dx%geom%ocean%G%iec
+    !jsc = dx%geom%ocean%G%jsc
+    !jec = dx%geom%ocean%G%jec
     
     call copy(Cdx, dx)
+    print *,'init bump'
     call initialize_convolh(dx%geom, horiz_convol_p)
+    print *,'done init bump'    
     allocate(tmp_incr(size(Cdx%ssh,1)*size(Cdx%ssh,2)))
     tmp_incr=reshape(dx%ssh,(/size(dx%ssh,1)*size(dx%ssh,2)/))
 
@@ -366,7 +368,7 @@ contains
        print *,'b mat setup ----------------------------'
 
        horiz_convol%nam%default_seed = .true.
-       horiz_convol%nam%new_hdiag = .false.
+       horiz_convol%nam%new_hdiag = .true.
        horiz_convol%nam%new_param = .false.
        horiz_convol%nam%check_adjoints = .false.
        horiz_convol%nam%check_pos_def = .false.
@@ -416,6 +418,7 @@ contains
        convolh_initialized = .true.
        deallocate( lon, lat, area, vunit, imask, lmask )       
     end if
+    print *,'associate pointer' 
     horiz_convol_p => horiz_convol
 
   end subroutine initialize_convolh

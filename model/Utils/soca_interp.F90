@@ -66,7 +66,10 @@ contains
   subroutine interp_compute_weight(self, lon, lat, lono, lato)
 
     use kinds
-    use type_ctree, only: ctree_type!,ctree_create,delete_ctree,find_nearest_neighbors
+
+    
+    !use type_ctree, only: ctree_type!,ctree_create,delete_ctree,find_nearest_neighbors
+    use type_kdtree, only: kdtree_type
     use tools_const, only: pi,req,deg2rad,rad2deg
     use iso_fortran_env
     use mpi
@@ -80,7 +83,7 @@ contains
     integer :: nobs, ni, nj, k, l, ij(2), cnt
     integer :: n, nn
     logical, allocatable :: mask(:)
-    type(ctree_type) :: cover_tree
+    type(kdtree_type) :: cover_tree
     real(kind=kind_real), allocatable :: nn_dist(:,:), tmplon(:), tmplat(:)
     real(kind=kind_real), allocatable :: tmplono(:), tmplato(:)
     integer, allocatable :: nn_index(:,:)              ! nobsxnn
