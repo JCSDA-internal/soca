@@ -242,12 +242,25 @@ contains
     use kinds
     use soca_fields
     use soca_interph_mod
+    use fms_mod,                 only: read_data, write_data, set_domain
+    use fms_io_mod,                only : fms_io_init, fms_io_exit
     
     implicit none
     type(soca_field), intent(inout)        :: Ddx             !< D applied to dx
     type(soca_3d_covar_config), intent(in) :: config          !< covariance config structure
+    type(soca_field)    :: sig_cicen             !< D applied to dx
 
-    Ddx%cicen=config%sig_sic*Ddx%cicen
+    call create_copy(sig_cicen,Ddx)
+    call fms_io_init()
+    call read_data('std.nc', 'cicen', sig_cicen%AOGCM%Ice%part_size, domain=Ddx%geom%ocean%G%Domain%mpp_domain)
+    call fms_io_exit()
+
+    !Ddx%cicen=1.0Ddx%cicen+0.01
+
+    ! A "bit" of a hack!!!
+    !sig_cicen%cicen=exp( -((0.15-sig_cicen%cicen)/0.1)**2 )
+    
+    !Ddx%cicen=config%sig_sic*sig_cicen%cicen*Ddx%cicen
     Ddx%hicen=config%sig_sit*Ddx%hicen
     Ddx%ssh=config%sig_ssh*Ddx%ssh
     Ddx%tocn=config%sig_tocn*Ddx%tocn

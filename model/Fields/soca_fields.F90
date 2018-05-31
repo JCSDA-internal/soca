@@ -22,7 +22,7 @@ module soca_fields
   private
 
   public :: soca_field, &
-       & create, delete, zeros, ones, dirac, random, copy, &
+       & create, delete, zeros, ones, dirac, random, copy, create_copy,&
        & self_add, self_schur, self_sub, self_mul, axpy, &
        & dot_prod, add_incr, diff_incr, &
        & read_file, write_file, gpnorm, fldrms, &
