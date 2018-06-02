@@ -7,88 +7,102 @@
 
 module soca_balanceop
 
-  use soca_constants
-  use soca_fields
-
   implicit none
   
 contains
 
-  ! ------------------------------------------------------------------------------
+  !==========================================================================
+  subroutine steric_tl (detas, dt, ds, t0, s0, p, h)
+    !==========================================================================
+    !
+    ! Tangent of stericnl relative to the reference state t0, s0
+    !
+    ! Input:
+    ! ------
+    ! ds     : Absolute Salinity                               [g/kg]
+    ! dt     : Conservative Temperature                        [deg C]
+    ! s0     : Ref. Absolute Salinity                          [g/kg]
+    ! t0     : Ref. Conservative Temperature                   [deg C]
+    ! p      : Pressure                                        [dbar]
+    ! h      : Layer thickness                                 [m]
+    !
+    ! Output:
+    ! -------
+    ! detas  : steric height                                   [m]
+    !
+    ! jac    : Jacobian [detas/dt1, ...,detas/dtN;             [m/deg C]  
+    !                    detas/ds1, ...,detas/dsN]             [m/(g/kg)]
+    !    
+    !--------------------------------------------------------------------------
 
-  subroutine Kop_inv(dx, xb, dxi)
+    use gsw_mod_toolbox, only : gsw_rho, gsw_rho_first_derivatives
+    use gsw_mod_kinds
+    use kinds
 
-    ! dxi = Kop_inv(xb) * dx 
     implicit none
-    type(soca_field), intent(in) :: dx
-    type(soca_field), intent(in) :: xb
-    type(soca_field), intent(out) :: dxi
 
-    real(kind=kind_real), allocatable :: aice(:,:)
-    real(kind=kind_real) :: A, B, C
-    
-    allocate( aice(xb%geom%nx,xb%geom%ny) )
-    
-    aice = sum(xb%cicen,3)
+    real(kind=kind_real), intent(in) :: dt, ds, t0, s0, p, h
+    real(kind=kind_real), intent(out) :: detas
+    real(kind=kind_real) :: jac(2) 
+    real(kind=kind_real) :: rho0
+    real(kind=kind_real) :: drhods, drhodt, drhodp
 
-    A = (rho_s*c0)**(-1.0_kind_real)
-    B = 0.0_kind_real !-mu*rho_i(L0/xb%
-    C = 0.0_kind_real
+    integer :: k, N
 
-    call zeros(dxi)
-    dxi%cicen = dx%cicen
-    dxi%hicen = dx%hicen
-    dxi%vicen = xb%cicen * dx%hicen + xb%hicen * dx%cicen
-    dxi%hsnon = dx%hsnon
-    dxi%vsnon = xb%cicen * dx%hsnon + xb%hsnon * dx%cicen
-    dxi%tsfcn = dx%tsfcn
-    dxi%qsnon = A*dx%qsnon    ! snow temperature from enthalpy    
-    dxi%sicnk = dx%sicnk
-    dxi%qicnk = (dx%qicnk - B * dx%sicnk)/C
-    dxi%socn = dx%socn
-    !dxi%tlioc = dx%tlioc
-    dxi%tocn = -mu*aice * dx%socn -mu*xb%socn * sum(dx%cicen,3)! + (1.0_kind_real-aice) * dx%tlioc
-    return
-  end subroutine Kop_inv
+    detas = 0.0
+    rho0 = gsw_rho(s0,t0,p)
+    call gsw_rho_first_derivatives(s0,t0,p,drhods, drhodt, drhodp)
+    jac(1)=h*drhodt/rho0
+    jac(2)=h*drhods/rho0
+    detas = jac(1)*dt + jac(2)*ds
 
-  ! ------------------------------------------------------------------------------
-!!$
-!!$  subroutine Kop_inv_ad(dx_ad, xb, dxi_ad)
-!!$    ! dxi_ad = Kop_inv(xb)^T * dx_ad 
-!!$    implicit none    
-!!$    type(soca_field), intent(in) :: dx_ad
-!!$    type(soca_field), intent(in) :: xb
-!!$    type(soca_field), intent(out) :: dxi_ad
-!!$
-!!$    real(kind=kind_real), allocatable :: aice(:,:)
-!!$    real(kind=kind_real) :: A, B, C
-!!$    
-!!$    allocate( aice(xb%nx,xb%ny) )
-!!$    
-!!$    aice = sum(xb%cicen,3)
-!!$
-!!$    A = (rho_s*c0)**(-1.0_kind_real)
-!!$    B = 0.0_kind_real !-mu*rho_i(L0/xb%
-!!$    C = 0.0_kind_real
-!!$
-!!$    call zeros(dxi_ad)
-!!$    dxi_ad%cicen = dx_ad%cicen + xb%hicen * dx_ad%vicen! + xb%hsnon * dx_ad%vsnon - mu*xb%socn * dx_ad%tocn
-!!$    dxi_ad%hicen = dx_ad%hicen + xb%cicen * dx_ad%vicen
-!!$    dxi_ad%vicen = 0.0_kind_real
-!!$    dxi_ad%hsnon = dx_ad%hsnon + xb%cicen * dx_ad%vsnon
-!!$    dxi_ad%vsnon = 0.0_kind_real
-!!$    dxi_ad%tsfcn = dx_ad%tsfcn      !<---- Wrong below that line ... CHECK
-!!$    dxi_ad%qsnon = 0.0_kind_real 
-!!$    dxi_ad%sicnk = 0.0_kind_real 
-!!$    dxi_ad%qicnk = 0.0_kind_real 
-!!$    dxi_ad%socn = dx_ad%socn - mu*aice * dx_ad%tocn
-!!$    dxi_ad%tlioc = dx_ad%tlioc + (1.0_kind_real-aice) * dx_ad%tocn
-!!$    dxi_ad%tocn = 0.0_kind_real
-!!$
-!!$    deallocate(aice)
-!!$
-!!$    return
-!!$  end subroutine Kop_inv_ad
+  end subroutine steric_tl
 
+  !==========================================================================
+  subroutine steric_ad (detas, dt_ad, ds_ad, t0, s0, p, h)
+    !==========================================================================
+    !
+    ! Adjoint of sterictl relative to the trajectory t0, s0
+    !
+    ! Input:
+    ! ------
+    ! detas  : Steric Height                                   [m]    
+    ! s0     : Traj. for Absolute Salinity                     [g/kg]
+    ! t0     : Traj. for Conservative Temperature              [deg C]
+    ! p      : Pressure                                        [dbar]
+    ! h      : Layer thickness                                 [m]
+    !
+    ! Output:
+    ! -------
+    !
+    ! ds_ad  : Adjoint var for Absolute Salinity               [g/kg]
+    ! dt_ad  : Adjoint var for Conservative Temperature        [deg C]
+    !
+    !--------------------------------------------------------------------------
+
+    use gsw_mod_toolbox, only : gsw_rho, gsw_rho_first_derivatives
+    use gsw_mod_kinds
+    use kinds
+
+    implicit none
+
+    real(kind=kind_real), intent(in) :: t0, s0, p, h
+    real(kind=kind_real), intent(in) :: detas
+    real (r8), intent(out) :: dt_ad, ds_ad
+
+    real(kind=kind_real) :: jac(2) 
+    real (r8) :: rho0
+    real (r8) :: drhods, drhodt, drhodp
+
+    dt_ad = 0.0
+    ds_ad = 0.0    
+    rho0 = gsw_rho(s0,t0,p)
+    call gsw_rho_first_derivatives(s0,t0,p,drhods, drhodt, drhodp)
+    jac(1)=h*drhodt/rho0
+    jac(2)=h*drhods/rho0
+    dt_ad = dt_ad + jac(1)*detas
+    ds_ad = ds_ad + jac(2)*detas
+
+  end subroutine steric_ad
 
 end module soca_balanceop

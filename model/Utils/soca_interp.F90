@@ -128,7 +128,7 @@ contains
           self%index(k,2,l)=max(1,nn_index(k,l)/ni+1)
           self%wgh(k,l)=(dist-nn_dist(k,l))
        end do
-       self%wgh(k,:)=self%wgh(k,:)/sum(self%wgh(k,:))       
+       self%wgh(k,:)=self%wgh(k,:)/sum(self%wgh(k,:))  
     end do
 
     call mpi_barrier(MPI_COMM_WORLD,ierr)
@@ -153,7 +153,7 @@ contains
     obs = 0.0
     do k = 1, self%nobs
        do l = 1, self%nn
-          obs(k) = obs(k) + self%wgh(k,l)*fld(self%index(k,1,l),self%index(k,2,l))          
+          obs(k) = obs(k) + self%wgh(k,l)*fld(self%index(k,1,l),self%index(k,2,l))
        end do
     end do
   end subroutine interp_apply

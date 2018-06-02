@@ -73,8 +73,6 @@ namespace soca {
       void getValues(const ioda::Locations &, const oops::Variables &, ufo::GeoVaLs &) const;
       void getValuesTL(const ioda::Locations &, const oops::Variables &, ufo::GeoVaLs &) const;
       void getValuesAD(const ioda::Locations &, const oops::Variables &, const ufo::GeoVaLs &);      
-      //void interpolateTL(const Loc &, Gom &) const;
-      //void interpolateAD(const Loc &, const Gom &);
 
       // Interpolate full fields
       void changeResolution(const Fields &);

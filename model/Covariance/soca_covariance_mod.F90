@@ -282,8 +282,97 @@ contains
 
   end subroutine soca_3d_covar_mult
 
-  ! ------------------------------------------------------------------------------
+  ! ------------------------------------------------------------------------------  
+  
+  subroutine soca_3d_covar_K_mult_ad(KTdy, traj)
+    use iso_c_binding
+    use kinds
+    use soca_fields
+    use soca_balanceop
+    
+    implicit none
+    type(soca_field), intent(inout) :: KTdy             !< D applied to dx
+    !type(soca_field), intent(in)    :: dy            !< trajectory        
+    type(soca_field), intent(in)    :: traj            !< trajectory    
 
+    !Grid stuff
+    integer :: isc, iec, jsc, jec, i, j, k
+    real(kind=kind_real) :: t0, s0, dt, ds,deta, z, p, h
+
+    ! Indices for compute domain (no halo)
+    isc = traj%geom%ocean%G%isc
+    iec = traj%geom%ocean%G%iec
+    jsc = traj%geom%ocean%G%jsc
+    jec = traj%geom%ocean%G%jec
+
+    do i = isc, iec
+       do j = jsc, jec
+          do k = 1, traj%geom%ocean%nzo
+             t0=traj%tocn(i,j,k)
+             s0=traj%socn(i,j,k)
+             if (k.eq.1) then
+                z=traj%hocn(i,j,k)
+             else
+                z=sum(traj%hocn(i,j,1:k-1))+0.5*traj%hocn(i,j,k)
+             end if
+             h=traj%hocn(i,j,k)
+             p=z
+             deta=KTdy%ssh(i,j)
+             call steric_ad(deta, dt, ds, t0, s0, p, h)
+             KTdy%tocn(i,j,k)=KTdy%tocn(i,j,k)+dt
+             KTdy%socn(i,j,k)=KTdy%socn(i,j,k)+ds
+          end do
+       end do
+    end do
+
+  end subroutine soca_3d_covar_K_mult_ad
+
+  ! ------------------------------------------------------------------------------  
+  
+  subroutine soca_3d_covar_K_mult(Kdx, traj)
+    use iso_c_binding
+    use kinds
+    use soca_fields
+    use soca_balanceop
+    
+    implicit none
+    type(soca_field), intent(inout) :: Kdx             !< D applied to dx
+    type(soca_field), intent(in)    :: traj            !< trajectory    
+
+    !Grid stuff
+    integer :: isc, iec, jsc, jec, i, j, k
+    real(kind=kind_real) :: t0, s0, dt, ds,deta, z, p, h
+
+    ! Indices for compute domain (no halo)
+    isc = traj%geom%ocean%G%isc
+    iec = traj%geom%ocean%G%iec
+    jsc = traj%geom%ocean%G%jsc
+    jec = traj%geom%ocean%G%jec
+
+    !----- OCEAN
+    do i = isc, iec
+       do j = jsc, jec
+          do k = 1, traj%geom%ocean%nzo
+             t0=traj%tocn(i,j,k)
+             s0=traj%socn(i,j,k)
+             dt=Kdx%tocn(i,j,k)
+             ds=Kdx%socn(i,j,k)
+             if (k.eq.1) then
+                z=traj%hocn(i,j,k)
+             else
+                z=sum(traj%hocn(i,j,1:k-1))+0.5*traj%hocn(i,j,k)
+             end if
+             h=traj%hocn(i,j,k)
+             p=z
+             call steric_tl(deta, dt, ds, t0, s0, p, h)
+             Kdx%ssh(i,j)=deta    
+          end do
+       end do
+    end do
+
+  end subroutine soca_3d_covar_K_mult
+
+  ! ------------------------------------------------------------------------------
   
   subroutine soca_3d_covar_D_mult(Ddx, config)
     use iso_c_binding
@@ -329,11 +418,14 @@ contains
 
     !bump stuff
     integer :: nc0a, nl0, nv, nts
-    real(kind=kind_real), allocatable :: lon(:), lat(:), area(:), vunit(:), rndnum(:)
+    real(kind=kind_real), allocatable :: lon(:), lat(:), area(:), vunit(:,:)
     logical, allocatable :: lmask(:,:)
     integer, allocatable :: imask(:,:)    
     type(nam_type) :: nam
 
+    real(kind_real), allocatable :: rh(:,:,:,:)     !< Horizontal support radius for covariance (in m)
+    real(kind_real), allocatable :: rv(:,:,:,:)     !< Vertical support radius for
+    
     if (.NOT.convolh_initialized) then
 
        !--- Initialize geometry to be passed to NICAS
@@ -349,13 +441,13 @@ contains
        nc0a = (iec - isc + 1) * (jec - jsc + 1 )  !< Total number of grid cells in the compute domain
 
        allocate( lon(nc0a), lat(nc0a), area(nc0a) )
-       allocate( vunit(nl0) )
+       allocate( vunit(nc0a,nl0) )
        allocate( imask(nc0a, nl0), lmask(nc0a, nl0) )
        lon = deg2rad*reshape( geom%ocean%lon(isc:iec, jsc:jec), (/nc0a/) )
        lat = deg2rad*reshape( geom%ocean%lat(isc:iec, jsc:jec), (/nc0a/) ) 
        area = reshape( geom%ocean%cell_area(isc:iec, jsc:jec), (/nc0a/) )
        do jz = 1, nl0       
-          vunit(jz) = real(jz)
+          vunit(:,jz) = real(jz)
           imask(1:nc0a,jz) = reshape( geom%ocean%mask2d(isc:iec, jsc:jec), (/nc0a/) )
        end do
        vunit = 1.0                      !< Dummy vertical unit
@@ -368,8 +460,8 @@ contains
        print *,'b mat setup ----------------------------'
 
        horiz_convol%nam%default_seed = .true.
-       horiz_convol%nam%new_hdiag = .true.
-       horiz_convol%nam%new_param = .false.
+       horiz_convol%nam%new_hdiag = .false.
+       horiz_convol%nam%new_param = .true.
        horiz_convol%nam%check_adjoints = .false.
        horiz_convol%nam%check_pos_def = .false.
        horiz_convol%nam%check_sqrt = .false.
@@ -382,7 +474,7 @@ contains
        horiz_convol%nam%prefix = "soca"
        horiz_convol%nam%method = "cor"
        horiz_convol%nam%strategy = "specific_univariate"
-       horiz_convol%nam%sam_write= .false.
+       horiz_convol%nam%sam_write= .true.
        horiz_convol%nam%sam_read= .false.
        horiz_convol%nam%mask_type= "none"
        horiz_convol%nam%mask_check = .false.
@@ -392,7 +484,7 @@ contains
        horiz_convol%nam%nrep =  2
        horiz_convol%nam%nc3 = 10
        horiz_convol%nam%dc = 1000.0e3
-       horiz_convol%nam%nl0r = 15
+       horiz_convol%nam%nl0r = 1
        horiz_convol%nam%ne = 4
        horiz_convol%nam%gau_approx = .false.
        horiz_convol%nam%full_var = .false.
@@ -413,14 +505,19 @@ contains
        horiz_convol%nam%diag_interp = "bilin"
        horiz_convol%nam%grid_output = .false.
 
-       call horiz_convol%bump_setup_online(mpi_comm_world,nc0a,nl0,nv,nts,lon,lat,area,vunit,lmask)!,rh=rh,rv=rv)
+       allocate(rh(nc0a,nl0,nv,nts))
+       allocate(rv(nc0a,nl0,nv,nts))
+       rh=500.0e3
+       rv=1.0
+       call horiz_convol%bump_setup_online(mpi_comm_world,nc0a,nl0,nv,nts,lon,lat,area,vunit,lmask,rh=rh,rv=rv)
        print *,'b mat setup done ----------------------------'
        convolh_initialized = .true.
        deallocate( lon, lat, area, vunit, imask, lmask )       
     end if
     print *,'associate pointer' 
     horiz_convol_p => horiz_convol
-
+    deallocate(rh,rv)
+    
   end subroutine initialize_convolh
 
   ! ------------------------------------------------------------------------------
