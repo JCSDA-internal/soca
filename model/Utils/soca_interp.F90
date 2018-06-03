@@ -48,7 +48,7 @@ contains
     character(len=3), optional       :: wgt_type !< 'avg' or 'bar'     
     class(soca_hinterp), intent(out) :: self
         
-    self%nn=5;          if (present(nn)) self%nn = nn
+    self%nn=4;          if (present(nn)) self%nn = nn
     self%wgt_type='bar'; if (present(nn)) self%wgt_type = wgt_type    
     self%lx=5e-2;        if (present(lx)) self%lx = lx
     self%ly=1e-2;        if (present(ly)) self%ly = ly

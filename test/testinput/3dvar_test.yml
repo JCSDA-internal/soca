@@ -50,26 +50,16 @@ cost_function:
       date: '2018-04-15T00:00:00Z'
   Jo:
     ObsTypes:
-#    - ObsType: SeaIceThickness
-#      ObsData:
-#        ObsDataOut:
-#          obsfile: Data/test_obsout.nc
-#        ObsDataIn:
-#          obsfile: /home/gvernier/Data/CS2/cryosat2-nrt-nh-20171030-v2.0.nc
-#        obsvalue: ObsVal        
-#      Covariance:
-#        covariance: diagonal
-#        obserror: ObsErr
-#    - ObsType: StericHeight
-#      ObsData:
-#	ObsDataOut:
-#          obsfile: Data/test_obsout.nc
-#        ObsDataIn:
-#          obsfile: Data/Jason-3-2018-04-15.nc
-#        obsvalue: ObsVal        
-#      Covariance:
-#        covariance: diagonal
-#        obserror: ObsErr
+    - ObsType: SeaIceThickness
+      ObsData:
+        ObsDataOut:
+          obsfile: Data/test_obsout.nc
+        ObsDataIn:
+          obsfile: /home/gvernier/Data/CS2/cryosat2-nrt-nh-20171030-v2.0.nc
+        obsvalue: ObsVal        
+      Covariance:
+        covariance: diagonal
+        obserror: ObsErr
     - ObsType: InsituTemperature
       ObsData:
         ObsDataOut:
@@ -80,16 +70,16 @@ cost_function:
       Covariance:
         covariance: diagonal
         obserror: ObsErr		
-#    - ObsType: SeaIceFraction
-#      ObsData:
-#        ObsDataOut:
-#          obsfile: Data/test_obsout.nc
-#        ObsDataIn:
-#          obsfile: Data/seaice_obs-2018-04-15.nc
-#        obsvalue: ObsVal        
-#      Covariance:
-#        covariance: diagonal
-#        obserror: ObsErr
+    - ObsType: SeaIceFraction
+      ObsData:
+        ObsDataOut:
+          obsfile: Data/test_obsout.nc
+        ObsDataIn:
+          obsfile: Data/seaice_obs-2018-04-15.nc
+        obsvalue: ObsVal        
+      Covariance:
+        covariance: diagonal
+        obserror: ObsErr
 #    - ObsType: SeaSurfaceTemp
 #      ObsData:
 #        ObsDataOut:

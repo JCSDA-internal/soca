@@ -67,8 +67,8 @@ namespace soca {
     Log::debug() << std::endl <<"------ traj ---- :" << std::endl;
     Log::debug() << std::endl <<"------ traj" << traj_->fields() << std::endl;
     Log::debug() << std::endl <<"------ traj" << traj_->fields().toFortran() << std::endl;
-    //soca_b_mult_f90(keyFtnConfig_, dxin.fields().toFortran(),
-    //		    dxout.fields().toFortran(), traj_->fields().toFortran());
+    soca_b_mult_f90(keyFtnConfig_, dxin.fields().toFortran(),
+    		    dxout.fields().toFortran(), traj_->fields().toFortran());
   }
 
   // -----------------------------------------------------------------------------

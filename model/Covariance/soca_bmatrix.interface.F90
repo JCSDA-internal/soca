@@ -100,26 +100,33 @@ subroutine c_soca_b_mult(c_key_conf, c_key_in, c_key_out, c_key_traj) bind(c,nam
   type(soca_field), pointer :: xout
   type(soca_field), pointer :: traj  
   type(soca_field)          :: xtmp
-  type(soca_field)          :: xtmp2  
+  type(soca_field)          :: xtmp2
+
+  !type(soca_field)          :: dy
+!  type(soca_field)          :: KTdy
+!  type(soca_field)          :: Kdx    
+
   integer :: ncat, k, iter
 
   call soca_3d_cov_registry%get(c_key_conf,conf)
   call soca_field_registry%get(c_key_in,xin)
   call soca_field_registry%get(c_key_out,xout)
-  print *,c_key_traj
-  !call soca_field_registry%get(c_key_traj,traj)  
+  call soca_field_registry%get(c_key_traj,traj)  
 
   print *,"============ IN B MULT ============="
 
   call create(xtmp,xin)  
-  call copy(xtmp,xin)
+  call copy(xtmp,xin) ! xtmp = xin
   call copy(xout,xin)
+  !call zeros(xout)
 
-  !call soca_3d_covar_K_mult_ad(xtmp, traj)  !xtmp=K^T.xtmp
-  !call soca_3d_covar_D_mult(xtmp, conf)     ! xtmp = D.xtmp
-  !call soca_3d_covar_mult(xtmp,xout,conf)   ! xout = C.xtmp  
-  !call soca_3d_covar_D_mult(xtmp, conf)     ! xtmp = D.xtmp  
-  !call soca_3d_covar_K_mult(xtmp, traj)  !xtmp=K^T.xtmp
+  call soca_3d_covar_K_mult_ad(xin,xtmp, traj)  !xtmp=K^T.xtmp
+  call soca_3d_covar_D_mult(xtmp, conf)     ! xtmp = D.xtmp
+  !call soca_3d_covar_mult(xtmp,xout,conf)   ! xout = C.xtmp
+  call soca_3d_covar_sqrt_mult(xtmp,xout,conf)
+  call copy(xtmp,xout) ! xtmp = xin
+  call soca_3d_covar_D_mult(xtmp, conf)     ! xtmp = D.xtmp  
+  call soca_3d_covar_K_mult(xtmp, xout, traj)  !xtmp=K^T.xtmp
 
   !call copy(xout,xtmp)
   
@@ -147,11 +154,6 @@ subroutine c_soca_b_linearize(c_key_self, c_key_geom) bind(c,name='soca_b_linear
 
   call soca_geom_registry%get(c_key_geom, geom)
   call soca_field_registry%get(c_key_self, self)
-
-  print *,self%ssh
-  print *,'=traj'
-  print *,'key=',c_key_self
-  read(*,*)
 
 end subroutine c_soca_b_linearize
 

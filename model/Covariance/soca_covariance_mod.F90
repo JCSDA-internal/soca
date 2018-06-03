@@ -127,9 +127,10 @@ contains
     ! sqrtCdx=C.dx
     allocate(tmp_incr(size(dx%ssh,1),size(dx%ssh,2)))
     !call zeros(sqrtCdx)
+    tmp_incr=0.0
 !!$!    sqrtCdx%ssh=dx%ssh    
-    do iter = 1, 1
-       tmp_incr=sqrtCdx%ssh*dx%geom%ocean%mask2d       
+    do iter = 1, 3
+       tmp_incr=tmp_incr+sqrtCdx%ssh*dx%geom%ocean%mask2d       
        do k = 2, size(dx%ssh,1)-1
           do l = 2, size(dx%ssh,2)-1
              sqrtCdx%ssh(k,l)=(tmp_incr(k+1,l-1)+tmp_incr(k,l-1)+tmp_incr(k-1,l-1)+&
@@ -141,7 +142,7 @@ contains
 
     allocate(tmp_incr3d(size(dx%ssh,1),size(dx%ssh,2),dx%geom%ocean%ncat))
     sqrtCdx%hicen=dx%hicen    
-    do iter = 1, 1
+    do iter = 1, 3
        tmp_incr3d=sqrtCdx%hicen       
        do k = 2, size(dx%ssh,1)-1
           do l = 2, size(dx%ssh,2)-1
@@ -155,7 +156,7 @@ contains
     end do
 
     sqrtCdx%cicen=dx%cicen
-    do iter = 1, 2
+    do iter = 1, 3
        tmp_incr3d=sqrtCdx%cicen(:,:,2:dx%geom%ocean%ncat+1)
        do k = 2, size(dx%ssh,1)-1
           do l = 2, size(dx%ssh,2)-1
@@ -171,7 +172,7 @@ contains
     deallocate(tmp_incr3d)
     allocate(tmp_incr3d(size(dx%ssh,1),size(dx%ssh,2),dx%geom%ocean%nzo))
     sqrtCdx%tocn=dx%tocn    
-    do iter = 1, 1
+    do iter = 1, 3
        tmp_incr3d=sqrtCdx%tocn
        do k = 2, size(dx%ssh,1)-1
           do l = 2, size(dx%ssh,2)-1
@@ -284,16 +285,16 @@ contains
 
   ! ------------------------------------------------------------------------------  
   
-  subroutine soca_3d_covar_K_mult_ad(KTdy, traj)
+  subroutine soca_3d_covar_K_mult_ad(dy, KTdy, traj)
     use iso_c_binding
     use kinds
     use soca_fields
     use soca_balanceop
     
     implicit none
-    type(soca_field), intent(inout) :: KTdy             !< D applied to dx
-    !type(soca_field), intent(in)    :: dy            !< trajectory        
-    type(soca_field), intent(in)    :: traj            !< trajectory    
+    type(soca_field), intent(inout) :: KTdy     !< K^T dx
+    type(soca_field), intent(in)    :: dy       !< Increment        
+    type(soca_field), intent(in)    :: traj     !< trajectory    
 
     !Grid stuff
     integer :: isc, iec, jsc, jec, i, j, k
@@ -304,6 +305,8 @@ contains
     iec = traj%geom%ocean%G%iec
     jsc = traj%geom%ocean%G%jsc
     jec = traj%geom%ocean%G%jec
+
+    call copy(KTdy,dy)
 
     do i = isc, iec
        do j = jsc, jec
@@ -317,7 +320,7 @@ contains
              end if
              h=traj%hocn(i,j,k)
              p=z
-             deta=KTdy%ssh(i,j)
+             deta=dy%ssh(i,j)
              call steric_ad(deta, dt, ds, t0, s0, p, h)
              KTdy%tocn(i,j,k)=KTdy%tocn(i,j,k)+dt
              KTdy%socn(i,j,k)=KTdy%socn(i,j,k)+ds
@@ -329,15 +332,16 @@ contains
 
   ! ------------------------------------------------------------------------------  
   
-  subroutine soca_3d_covar_K_mult(Kdx, traj)
+  subroutine soca_3d_covar_K_mult(dx, Kdx, traj)
     use iso_c_binding
     use kinds
     use soca_fields
     use soca_balanceop
     
     implicit none
-    type(soca_field), intent(inout) :: Kdx             !< D applied to dx
-    type(soca_field), intent(in)    :: traj            !< trajectory    
+    type(soca_field), intent(inout) :: Kdx      !< K dx
+    type(soca_field), intent(in)    :: dx       !< Increment            
+    type(soca_field), intent(in)    :: traj     !< trajectory    
 
     !Grid stuff
     integer :: isc, iec, jsc, jec, i, j, k
@@ -349,14 +353,15 @@ contains
     jsc = traj%geom%ocean%G%jsc
     jec = traj%geom%ocean%G%jec
 
-    !----- OCEAN
+    call copy(Kdx,dx)
+
     do i = isc, iec
        do j = jsc, jec
           do k = 1, traj%geom%ocean%nzo
              t0=traj%tocn(i,j,k)
              s0=traj%socn(i,j,k)
-             dt=Kdx%tocn(i,j,k)
-             ds=Kdx%socn(i,j,k)
+             dt=dx%tocn(i,j,k)
+             ds=dx%socn(i,j,k)
              if (k.eq.1) then
                 z=traj%hocn(i,j,k)
              else
@@ -365,7 +370,7 @@ contains
              h=traj%hocn(i,j,k)
              p=z
              call steric_tl(deta, dt, ds, t0, s0, p, h)
-             Kdx%ssh(i,j)=deta    
+             Kdx%ssh(i,j)=Kdx%ssh(i,j)+deta    
           end do
        end do
     end do
