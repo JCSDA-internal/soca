@@ -229,13 +229,13 @@ contains
     type(bump_type), pointer            :: horiz_convol_p
     real(kind=kind_real), allocatable      :: tmp_incr(:)
     real(kind=kind_real)      :: crap
-    
-    call copy(sqrtCTdx, dx)
-    call initialize_convolh(dx%geom, horiz_convol_p)
-    allocate(tmp_incr(size(sqrtCTdx%ssh,1)*size(sqrtCTdx%ssh,2)))
-    tmp_incr=reshape(dx%ssh,(/size(dx%ssh,1)*size(dx%ssh,2)/))
-    !call horiz_convol_p%interpad_apply(sqrtCTdx%ssh,tmp_incr)
-    deallocate(tmp_incr)
+!!$    
+!!$    call copy(sqrtCTdx, dx)
+!!$    call initialize_convolh(dx%geom, horiz_convol_p)
+!!$    allocate(tmp_incr(size(sqrtCTdx%ssh,1)*size(sqrtCTdx%ssh,2)))
+!!$    tmp_incr=reshape(dx%ssh,(/size(dx%ssh,1)*size(dx%ssh,2)/))
+!!$    !call horiz_convol_p%interpad_apply(sqrtCTdx%ssh,tmp_incr)
+!!$    deallocate(tmp_incr)
 
   end subroutine soca_3d_covar_sqrt_mult_ad
 

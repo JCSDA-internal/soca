@@ -50,26 +50,36 @@ cost_function:
       date: '2018-04-15T00:00:00Z'
   Jo:
     ObsTypes:
-    - ObsType: SeaIceThickness
+#    - ObsType: SeaIceThickness
+#      ObsData:
+#        ObsDataOut:
+#          obsfile: Data/test_obsout.nc
+#        ObsDataIn:
+#          obsfile: /home/gvernier/Data/CS2/cryosat2-nrt-nh-20171030-v2.0.nc
+#        obsvalue: ObsVal        
+#      Covariance:
+#        covariance: diagonal
+#        obserror: ObsErr
+    - ObsType: ADT
       ObsData:
         ObsDataOut:
           obsfile: Data/test_obsout.nc
         ObsDataIn:
-          obsfile: /home/gvernier/Data/CS2/cryosat2-nrt-nh-20171030-v2.0.nc
+          obsfile: Data/Jason-3-2018-04-15.nc
         obsvalue: ObsVal        
       Covariance:
         covariance: diagonal
-        obserror: ObsErr
-    - ObsType: InsituTemperature
-      ObsData:
-        ObsDataOut:
-          obsfile: Data/t0n156e_dy.nc
-        ObsDataIn:
-          obsfile: Data/t0n156e_dy.nc
-        obsvalue: ObsVal        
-      Covariance:
-        covariance: diagonal
-        obserror: ObsErr		
+        obserror: ObsErr        
+#    - ObsType: InsituTemperature
+#      ObsData:
+#        ObsDataOut:
+#          obsfile: Data/t0n156e_dy.nc
+#        ObsDataIn:
+#          obsfile: Data/t0n156e_dy.nc
+#        obsvalue: ObsVal        
+#      Covariance:
+#        covariance: diagonal
+#        obserror: ObsErr		
     - ObsType: SeaIceFraction
       ObsData:
         ObsDataOut:
@@ -99,13 +109,13 @@ variational:
     ninner: 10
     gradient_norm_reduction: 1e-15
     test: 'on'
-#  - resolution: {}
-#    linearmodel:
-#      version: IdTLM
-#      tstep: PT1H
-#    ninner: 3
-#    gradient_norm_reduction: 1e-15
-#    test: 'on'
+  - resolution: {}
+    linearmodel:
+      version: IdTLM
+      tstep: PT1H
+    ninner: 3
+    gradient_norm_reduction: 1e-15
+    test: 'on'
 #  - resolution: {}
 #    linearmodel:
 #      version: IdTLM
