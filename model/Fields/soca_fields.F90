@@ -710,12 +710,14 @@ contains
     character(len=max_string_length) :: filename
     character(len=1024):: buf
     integer :: ii
-    call check(fld)
 
-    filename = genfilename(c_conf,max_string_length,vdate)
+
+    call check(fld)
+    
+    filename = genfilename(c_conf,max_string_length,vdate)    
     WRITE(buf,*) 'field:write_file: writing '//filename
     call fckit_log%info(buf)
-    
+
     call fms_io_init()
     call set_domain( fld%geom%ocean%G%Domain%mpp_domain )    
     do ii = 1, fld%nf
@@ -939,7 +941,7 @@ contains
     ! Check for nobs matches between locs and horiz_interp
     cnt_obstype=count(obs_type_test)
     if (cnt_obstype.gt.1) then
-       call abor1_ftn('Idetification of obsop from nobs failed, needs further implementation')
+       call abor1_ftn('Identification of obsop from nobs failed, needs further implementation')
     end if
     if (cnt_obstype.eq.0) then
        !New obs operator: add 1 to the last index for interp operator

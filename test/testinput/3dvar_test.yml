@@ -70,16 +70,16 @@ cost_function:
       Covariance:
         covariance: diagonal
         obserror: ObsErr        
-#    - ObsType: InsituTemperature
-#      ObsData:
-#        ObsDataOut:
-#          obsfile: Data/t0n156e_dy.nc
-#        ObsDataIn:
-#          obsfile: Data/t0n156e_dy.nc
-#        obsvalue: ObsVal        
-#      Covariance:
-#        covariance: diagonal
-#        obserror: ObsErr		
+    - ObsType: InsituTemperature
+      ObsData:
+        ObsDataOut:
+          obsfile: Data/t0n156e_dy.nc
+        ObsDataIn:
+          obsfile: Data/t0n156e_dy.nc
+        obsvalue: ObsVal        
+      Covariance:
+        covariance: diagonal
+        obserror: ObsErr		
     - ObsType: SeaIceFraction
       ObsData:
         ObsDataOut:
@@ -106,14 +106,14 @@ variational:
     linearmodel:
       version: IdTLM
       tstep: PT1H
-    ninner: 10
+    ninner: 1
     gradient_norm_reduction: 1e-15
     test: 'on'
   - resolution: {}
     linearmodel:
       version: IdTLM
       tstep: PT1H
-    ninner: 3
+    ninner: 1
     gradient_norm_reduction: 1e-15
     test: 'on'
 #  - resolution: {}

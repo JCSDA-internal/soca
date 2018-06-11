@@ -64,7 +64,6 @@ contains
     use soca_interph_mod
     use type_bump
     use type_nam
-    use tools_const, only: pi,req,deg2rad,rad2deg
     use mpi,             only: mpi_comm_world
     
     implicit none
@@ -72,7 +71,7 @@ contains
     type(soca_geom), intent(in) :: geom     !< Geometry
     type(soca_3d_covar_config), intent(inout) :: config !< The covariance structure
     real(kind=kind_real) :: corr_length_scale
-    !type(soca_hinterp), pointer :: horiz_convol_p
+    type(bump_type), pointer            :: horiz_convol_p
     
     config%sig_sic      = config_get_real(c_model,"sig_sic")
     config%sig_sit      = config_get_real(c_model,"sig_sit")
@@ -80,6 +79,8 @@ contains
     config%sig_tocn      = config_get_real(c_model,"sig_tocn")
     config%sig_socn      = config_get_real(c_model,"sig_socn")        
 
+    call initialize_convolh(geom, horiz_convol_p)
+    
   end subroutine soca_3d_covar_setup
 
   ! ------------------------------------------------------------------------------
@@ -92,7 +93,6 @@ contains
 
     implicit none
     integer(c_int), intent(inout) :: c_key_conf !< The model covariance structure
-
     type(soca_3d_covar_config), pointer :: conf !< covar structure
 
     !call soca_3d_cov_registry%get(c_key_conf, conf)
@@ -104,151 +104,71 @@ contains
 
   end subroutine soca_3d_covar_delete
 
-  !> Multiply by sqrt(C), where C is a 3d covariance matrix
+  ! ------------------------------------------------------------------------------
+  
+  subroutine soca_struct2unstruct(dx_struct, geom, dx_unstruct)
+    use soca_geom_mod
 
-  subroutine soca_3d_covar_sqrt_mult(dx, sqrtCdx, config)
-    use iso_c_binding
-    use kinds
-    use soca_fields
-    use soca_interph_mod
-    
     implicit none
-    type(soca_field), intent(inout)        :: sqrtCdx         !< Full C^1/2 applied to dx
-    type(soca_field), intent(in)           :: dx              !< State space increment
-    type(soca_3d_covar_config), intent(in) :: config          !< covariance config structure
-    type(soca_hinterp), pointer            :: horiz_convol_p  !< pointer to convolution operator
-    real(kind=kind_real), allocatable      :: tmp_incr(:,:),tmp_incr3d(:,:,:)
 
-    integer :: k,l,m,iter
+    real(kind=kind_real),intent(in)                :: dx_struct(:,:)
+    type(soca_geom), intent(in)                    :: geom    
+    real(kind=kind_real), allocatable, intent(out) :: dx_unstruct(:)
 
-    call copy(sqrtCdx, dx)
+    integer :: isc, iec, jsc, jec, jjj, jz, il, ib, nc0a
+
+    !--- Initialize geometry to be passed to NICAS
+    ! Indices for compute domain (no halo)
+    isc = geom%ocean%G%isc
+    iec = geom%ocean%G%iec
+    jsc = geom%ocean%G%jsc
+    jec = geom%ocean%G%jec
     
-    ! Temporary hack while waiting for new interfaces for NICAS
-    ! sqrtCdx=C.dx
-    allocate(tmp_incr(size(dx%ssh,1),size(dx%ssh,2)))
-    !call zeros(sqrtCdx)
-    tmp_incr=0.0
-!!$!    sqrtCdx%ssh=dx%ssh    
-    do iter = 1, 3
-       tmp_incr=tmp_incr+sqrtCdx%ssh*dx%geom%ocean%mask2d       
-       do k = 2, size(dx%ssh,1)-1
-          do l = 2, size(dx%ssh,2)-1
-             sqrtCdx%ssh(k,l)=(tmp_incr(k+1,l-1)+tmp_incr(k,l-1)+tmp_incr(k-1,l-1)+&
-                              &tmp_incr(k+1,l)+tmp_incr(k,l)+tmp_incr(k-1,l)+&
-                              &tmp_incr(k+1,l+1)+tmp_incr(k,l+1)+tmp_incr(k-1,l+1))/9.0
-          end do
-       end do
-    end do
-
-    allocate(tmp_incr3d(size(dx%ssh,1),size(dx%ssh,2),dx%geom%ocean%ncat))
-    sqrtCdx%hicen=dx%hicen    
-    do iter = 1, 3
-       tmp_incr3d=sqrtCdx%hicen       
-       do k = 2, size(dx%ssh,1)-1
-          do l = 2, size(dx%ssh,2)-1
-             do m = 1, dx%geom%ocean%ncat
-                sqrtCdx%hicen(k,l,m)=(tmp_incr3d(k+1,l-1,m)+tmp_incr3d(k,l-1,m)+tmp_incr3d(k-1,l-1,m)+&
-                              &tmp_incr3d(k+1,l,m)+tmp_incr3d(k,l,m)+tmp_incr3d(k-1,l,m)+&
-                              &tmp_incr3d(k+1,l+1,m)+tmp_incr3d(k,l+1,m)+tmp_incr3d(k-1,l+1,m))/9.0
-             end do
-          end do
-       end do
-    end do
-
-    sqrtCdx%cicen=dx%cicen
-    do iter = 1, 3
-       tmp_incr3d=sqrtCdx%cicen(:,:,2:dx%geom%ocean%ncat+1)
-       do k = 2, size(dx%ssh,1)-1
-          do l = 2, size(dx%ssh,2)-1
-             do m = 1, dx%geom%ocean%ncat
-                sqrtCdx%cicen(k,l,m+1)=(tmp_incr3d(k+1,l-1,m)+tmp_incr3d(k,l-1,m)+tmp_incr3d(k-1,l-1,m)+&
-                              &tmp_incr3d(k+1,l,m)+tmp_incr3d(k,l,m)+tmp_incr3d(k-1,l,m)+&
-                              &tmp_incr3d(k+1,l+1,m)+tmp_incr3d(k,l+1,m)+tmp_incr3d(k-1,l+1,m))/9.0
-             end do
-          end do
-       end do
-    end do
-
-    deallocate(tmp_incr3d)
-    allocate(tmp_incr3d(size(dx%ssh,1),size(dx%ssh,2),dx%geom%ocean%nzo))
-    sqrtCdx%tocn=dx%tocn    
-    do iter = 1, 3
-       tmp_incr3d=sqrtCdx%tocn
-       do k = 2, size(dx%ssh,1)-1
-          do l = 2, size(dx%ssh,2)-1
-             do m = 1, dx%geom%ocean%nzo
-                sqrtCdx%tocn(k,l,m)=(tmp_incr3d(k+1,l-1,m)+tmp_incr3d(k,l-1,m)+tmp_incr3d(k-1,l-1,m)+&
-                              &tmp_incr3d(k+1,l,m)+tmp_incr3d(k,l,m)+tmp_incr3d(k-1,l,m)+&
-                              &tmp_incr3d(k+1,l+1,m)+tmp_incr3d(k,l+1,m)+tmp_incr3d(k-1,l+1,m))/9.0
-             end do
-          end do
-       end do
-       tmp_incr3d=sqrtCdx%tocn
-       do k = 2, size(dx%ssh,1)-1
-          do l = 2, size(dx%ssh,2)-1
-             do m = 2, dx%geom%ocean%nzo-1
-                sqrtCdx%tocn(k,l,m)=(tmp_incr3d(k,l,m-1)+tmp_incr3d(k,l,m)+tmp_incr3d(k,l,m+1))/3.0
-             end do
-          end do
-       end do
-    end do
-
-!!$    sqrtCdx%hicen=dx%hicen
-!!$    do iter = 1, 1
-!!$       tmp_incr3d=sqrtCdx%hicen(:,:,1:dx%geom%ocean%ncat)
-!!$       do k = 2, size(dx%ssh,1)-1
-!!$          do l = 2, size(dx%ssh,2)-1
-!!$             do m = 1, dx%geom%ocean%ncat
-!!$                sqrtCdx%hicen(k,l,m)=(tmp_incr3d(k+1,l-1,m)+tmp_incr3d(k,l-1,m)+tmp_incr3d(k-1,l-1,m)+&
-!!$                              &tmp_incr3d(k+1,l,m)+tmp_incr3d(k,l,m)+tmp_incr3d(k-1,l,m)+&
-!!$                              &tmp_incr3d(k+1,l+1,m)+tmp_incr3d(k,l+1,m)+tmp_incr3d(k-1,l+1,m))/9.0
-!!$             end do
-!!$          end do
-!!$       end do
-!!$    end do        
+    nc0a = (iec - isc + 1) * (jec - jsc + 1 )
+    allocate(dx_unstruct(nc0a))
+    dx_unstruct = reshape( dx_struct(isc:iec, jsc:jec), (/nc0a/) )
     
-    deallocate(tmp_incr, tmp_incr3d)
-
-  end subroutine soca_3d_covar_sqrt_mult
+  end subroutine soca_struct2unstruct
 
   ! ------------------------------------------------------------------------------
+  
+  subroutine soca_unstruct2struct(dx_struct, geom, dx_unstruct)
+    use soca_geom_mod
 
-  !> Multiply by sqrt(C) - Adjoint
+    implicit none
 
-  subroutine soca_3d_covar_sqrt_mult_ad(dx, sqrtCTdx, config)
+    real(kind=kind_real),intent(inout)               :: dx_struct(:,:)
+    type(soca_geom), intent(in)                      :: geom    
+    real(kind=kind_real), allocatable, intent(inout) :: dx_unstruct(:)
+
+    integer :: isc, iec, jsc, jec, jjj, jz, il, ib, nc0a
+
+    !--- Initialize geometry to be passed to NICAS
+    ! Indices for compute domain (no halo)
+    isc = geom%ocean%G%isc
+    iec = geom%ocean%G%iec
+    jsc = geom%ocean%G%jsc
+    jec = geom%ocean%G%jec
+    
+    nc0a = (iec - isc + 1) * (jec - jsc + 1 )
+
+    dx_struct(isc:iec, jsc:jec) = reshape(dx_unstruct,(/size(dx_struct(isc:iec, jsc:jec),1),&
+                                                       &size(dx_struct(isc:iec, jsc:jec),2)/))
+
+    deallocate(dx_unstruct)
+    
+  end subroutine soca_unstruct2struct
+  
+  ! ------------------------------------------------------------------------------
+
+  subroutine soca_3d_covar_C_mult(dx, Cdx, config)
     use iso_c_binding
     use kinds
     use soca_fields
     !use soca_interph_mod
     use type_bump
-    
-    implicit none
-    type(soca_field), intent(in)           :: dx
-    type(soca_field), intent(inout)        :: sqrtCTdx
-    type(soca_3d_covar_config), intent(in) :: config !< covariance config structure
-    type(bump_type), pointer            :: horiz_convol_p
-    real(kind=kind_real), allocatable      :: tmp_incr(:)
-    real(kind=kind_real)      :: crap
-!!$    
-!!$    call copy(sqrtCTdx, dx)
-!!$    call initialize_convolh(dx%geom, horiz_convol_p)
-!!$    allocate(tmp_incr(size(sqrtCTdx%ssh,1)*size(sqrtCTdx%ssh,2)))
-!!$    tmp_incr=reshape(dx%ssh,(/size(dx%ssh,1)*size(dx%ssh,2)/))
-!!$    !call horiz_convol_p%interpad_apply(sqrtCTdx%ssh,tmp_incr)
-!!$    deallocate(tmp_incr)
-
-  end subroutine soca_3d_covar_sqrt_mult_ad
-
-  ! ------------------------------------------------------------------------------
-
-  !> Multiply by sqrt(C) - Adjoint
-
-  subroutine soca_3d_covar_mult(dx, Cdx, config)
-    use iso_c_binding
-    use kinds
-    use soca_fields
-    !use soca_interph_mod
-    use type_bump
+    use fms_mod,                 only: read_data, write_data, set_domain
+    use fms_io_mod,                only : fms_io_init, fms_io_exit
     
     implicit none
     type(soca_field), intent(in)           :: dx
@@ -257,31 +177,58 @@ contains
     type(bump_type), pointer            :: horiz_convol_p
     real(kind=kind_real), allocatable      :: tmp_incr(:)
     !Grid stuff
-    integer :: isc, iec, jsc, jec, jjj, jz, il, ib
+    integer :: isc, iec, jsc, jec, jjj, jz, il, ib, nc0a, icat, izo
+    character(len=128) :: filename
 
-    !--- Initialize geometry to be passed to NICAS
-    ! Indices for compute domain (no halo)
-    !isc = dx%geom%ocean%G%isc
-    !iec = dx%geom%ocean%G%iec
-    !jsc = dx%geom%ocean%G%jsc
-    !jec = dx%geom%ocean%G%jec
-    
     call copy(Cdx, dx)
-    print *,'init bump'
+    print *,'Init bump'
     call initialize_convolh(dx%geom, horiz_convol_p)
-    print *,'done init bump'    
-    allocate(tmp_incr(size(Cdx%ssh,1)*size(Cdx%ssh,2)))
-    tmp_incr=reshape(dx%ssh,(/size(dx%ssh,1)*size(dx%ssh,2)/))
+    print *,'Done init bump'
 
-    print *,'apply nicas'
+!!$    call fms_io_init()
+!!$    filename='test-cov1.nc'
+!!$    call write_data( filename, "ssh", dx%ssh, dx%geom%ocean%G%Domain%mpp_domain)
+!!$    call fms_io_exit()
+!!$    print *,'wrote cov1 to file'
+!!$    read(*,*)
+
     
+    print *,'Apply nicas: ssh'
+    call soca_struct2unstruct(dx%ssh, dx%geom, tmp_incr)    
     call horiz_convol_p%apply_nicas(tmp_incr)
-    print *,'apply nicas done'
-    Cdx%ssh = reshape(tmp_incr,(/size(dx%ssh,1),size(dx%ssh,2)/))
-    
-    deallocate(tmp_incr)
+    call soca_unstruct2struct(Cdx%ssh, dx%geom, tmp_incr)
 
-  end subroutine soca_3d_covar_mult
+!!$    call fms_io_init()
+!!$    filename='test-cov2.nc'
+!!$    call write_data( filename, "ssh", Cdx%ssh, dx%geom%ocean%G%Domain%mpp_domain)
+!!$    call fms_io_exit()
+!!$    print *,'wrote cov1 to file'
+!!$    read(*,*)
+
+    
+    do icat = 1, dx%geom%ocean%ncat
+       print *,'Apply nicas: aice, hice, category:',icat       
+       call soca_struct2unstruct(dx%cicen(:,:,icat+1), dx%geom, tmp_incr)    
+       call horiz_convol_p%apply_nicas(tmp_incr)
+       call soca_unstruct2struct(Cdx%cicen(:,:,icat+1), dx%geom, tmp_incr)    
+
+       call soca_struct2unstruct(dx%hicen(:,:,icat), dx%geom, tmp_incr)    
+       call horiz_convol_p%apply_nicas(tmp_incr)
+       call soca_unstruct2struct(Cdx%hicen(:,:,icat), dx%geom, tmp_incr)    
+    end do    
+
+    do izo = 1,dx%geom%ocean%nzo
+       print *,'Apply nicas: tocn, socn, category:',izo       
+       call soca_struct2unstruct(dx%tocn(:,:,izo), dx%geom, tmp_incr)    
+       call horiz_convol_p%apply_nicas(tmp_incr)
+       call soca_unstruct2struct(Cdx%tocn(:,:,izo), dx%geom, tmp_incr)    
+
+       call soca_struct2unstruct(dx%socn(:,:,izo), dx%geom, tmp_incr)    
+       call horiz_convol_p%apply_nicas(tmp_incr)
+       call soca_unstruct2struct(Cdx%socn(:,:,izo), dx%geom, tmp_incr)
+    end do    
+
+  end subroutine soca_3d_covar_C_mult
 
   ! ------------------------------------------------------------------------------  
   
@@ -400,13 +347,10 @@ contains
   ! ------------------------------------------------------------------------------
 
   subroutine initialize_convolh(geom, horiz_convol_p)
-    !use ufo_locs_mod  
     use soca_interph_mod
     use soca_geom_mod
-    !use soca_interph_mod
     use type_bump
     use type_nam
-    use tools_const, only: pi,req,deg2rad,rad2deg
     use mpi,             only: mpi_comm_world
     
     implicit none
@@ -440,7 +384,7 @@ contains
        jsc = geom%ocean%G%jsc
        jec = geom%ocean%G%jec
 
-       nv = geom%ocean%ncat + 1                   !< Number of variables
+       nv = 1!geom%ocean%ncat + 1                 !< Number of variables
        nl0 = 1                                    !< Number of independent levels
        nts = 1                                    !< Number of time slots
        nc0a = (iec - isc + 1) * (jec - jsc + 1 )  !< Total number of grid cells in the compute domain
@@ -448,8 +392,9 @@ contains
        allocate( lon(nc0a), lat(nc0a), area(nc0a) )
        allocate( vunit(nc0a,nl0) )
        allocate( imask(nc0a, nl0), lmask(nc0a, nl0) )
-       lon = deg2rad*reshape( geom%ocean%lon(isc:iec, jsc:jec), (/nc0a/) )
-       lat = deg2rad*reshape( geom%ocean%lat(isc:iec, jsc:jec), (/nc0a/) ) 
+
+       lon = reshape( geom%ocean%lon(isc:iec, jsc:jec), (/nc0a/) )
+       lat = reshape( geom%ocean%lat(isc:iec, jsc:jec), (/nc0a/) )        
        area = reshape( geom%ocean%cell_area(isc:iec, jsc:jec), (/nc0a/) )
        do jz = 1, nl0       
           vunit(:,jz) = real(jz)
@@ -461,8 +406,6 @@ contains
        where (imask.eq.1)
           lmask=.true.
        end where
-
-       print *,'b mat setup ----------------------------'
 
        horiz_convol%nam%default_seed = .true.
        horiz_convol%nam%new_hdiag = .false.
@@ -484,13 +427,15 @@ contains
        horiz_convol%nam%mask_type= "none"
        horiz_convol%nam%mask_check = .false.
        horiz_convol%nam%draw_type = "random_uniform"
-       horiz_convol%nam%nc1 = 400
+       horiz_convol%nam%nc1 = 400!0
+
        horiz_convol%nam%ntry = 3
        horiz_convol%nam%nrep =  2
        horiz_convol%nam%nc3 = 10
-       horiz_convol%nam%dc = 1000.0e3
+       
+       horiz_convol%nam%dc = 1500.0e3
        horiz_convol%nam%nl0r = 1
-       horiz_convol%nam%ne = 4
+
        horiz_convol%nam%gau_approx = .false.
        horiz_convol%nam%full_var = .false.
        horiz_convol%nam%local_diag = .false.
@@ -498,30 +443,29 @@ contains
        horiz_convol%nam%lhomh = .false.
        horiz_convol%nam%lhomv = .false.
        horiz_convol%nam%rvflt =0.0
-       horiz_convol%nam%lsqrt = .true.
-       horiz_convol%nam%resol =10.0
+       horiz_convol%nam%lsqrt = .false.!.true.
+       horiz_convol%nam%resol = 10.0 !1000.0!10.0
        horiz_convol%nam%nicas_interp = "bilin"
-       horiz_convol%nam%network = .false.
-       horiz_convol%nam%mpicom = 2
-       horiz_convol%nam%advmode = 0
-       horiz_convol%nam%nldwh = 0
-       horiz_convol%nam%nldwv = 0
-       horiz_convol%nam%diag_rhflt = 0.0
+       !horiz_convol%nam%network = .false.
+       horiz_convol%nam%mpicom = 1
+       !horiz_convol%nam%advmode = 0
+       !horiz_convol%nam%nldwh = 0
+       !horiz_convol%nam%nldwv = 0
+       !horiz_convol%nam%diag_rhflt = 0.0
        horiz_convol%nam%diag_interp = "bilin"
        horiz_convol%nam%grid_output = .false.
 
        allocate(rh(nc0a,nl0,nv,nts))
        allocate(rv(nc0a,nl0,nv,nts))
-       rh=500.0e3
+       rh=1500.0e3
        rv=1.0
        call horiz_convol%bump_setup_online(mpi_comm_world,nc0a,nl0,nv,nts,lon,lat,area,vunit,lmask,rh=rh,rv=rv)
-       print *,'b mat setup done ----------------------------'
        convolh_initialized = .true.
-       deallocate( lon, lat, area, vunit, imask, lmask )       
+       deallocate( lon, lat, area, vunit, imask, lmask )
+       deallocate(rh,rv)       
     end if
-    print *,'associate pointer' 
     horiz_convol_p => horiz_convol
-    deallocate(rh,rv)
+
     
   end subroutine initialize_convolh
 

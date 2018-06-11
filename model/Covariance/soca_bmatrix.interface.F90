@@ -90,6 +90,9 @@ subroutine c_soca_b_mult(c_key_conf, c_key_in, c_key_out, c_key_traj) bind(c,nam
   use soca_fields
   use kinds
   use soca_Butils
+  use fms_mod,                 only: read_data, write_data, set_domain
+  use fms_io_mod,                only : fms_io_init, fms_io_exit
+  
   implicit none
   integer(c_int), intent(in) :: c_key_conf  !< 
   integer(c_int), intent(in) :: c_key_in    !< 
@@ -102,36 +105,34 @@ subroutine c_soca_b_mult(c_key_conf, c_key_in, c_key_out, c_key_traj) bind(c,nam
   type(soca_field)          :: xtmp
   type(soca_field)          :: xtmp2
 
-  !type(soca_field)          :: dy
-!  type(soca_field)          :: KTdy
-!  type(soca_field)          :: Kdx    
-
   integer :: ncat, k, iter
+  character(len=128) :: filename='test-cov.nc'
 
   call soca_3d_cov_registry%get(c_key_conf,conf)
   call soca_field_registry%get(c_key_in,xin)
   call soca_field_registry%get(c_key_out,xout)
   call soca_field_registry%get(c_key_traj,traj)  
 
-  print *,"============ IN B MULT ============="
-
   call create(xtmp,xin)  
   call copy(xtmp,xin) ! xtmp = xin
-  call copy(xout,xin)
-  !call zeros(xout)
 
-  call soca_3d_covar_K_mult_ad(xin,xtmp, traj)  !xtmp=K^T.xtmp
-  call soca_3d_covar_D_mult(xtmp, conf)     ! xtmp = D.xtmp
-  call soca_3d_covar_mult(xtmp,xout,conf)   ! xout = C.xtmp
-  !call soca_3d_covar_sqrt_mult(xtmp,xout,conf)
-  call copy(xtmp,xout) ! xtmp = xin
-  call soca_3d_covar_D_mult(xtmp, conf)     ! xtmp = D.xtmp  
-  call soca_3d_covar_K_mult(xtmp, xout, traj)  !xtmp=K^T.xtmp
-
+  call soca_3d_covar_K_mult_ad(xin,xtmp, traj)  ! xtmp = K^T.xtmp
+  call soca_3d_covar_D_mult(xtmp, conf)         ! xtmp = D.xtmp
   !call copy(xout,xtmp)
-  
+  call soca_3d_covar_C_mult(xtmp,xout,conf)     ! xout = C.xtmp
+  call copy(xtmp,xout)                          ! xtmp = xout
+  call soca_3d_covar_D_mult(xtmp, conf)         ! xtmp = D.xtmp  
+  call soca_3d_covar_K_mult(xtmp, xout, traj)   ! xout = K.xtmp
+  !call copy(xout,xtmp)
   call delete(xtmp)
 
+!!$  call fms_io_init()
+!!$  call write_data( filename, "ssh", xout%ssh, xout%geom%ocean%G%Domain%mpp_domain)
+!!$  call fms_io_exit()
+!!$  print *,'wrote cov to file'
+!!$  read(*,*)
+
+  
 end subroutine c_soca_b_mult
 
 ! ------------------------------------------------------------------------------
