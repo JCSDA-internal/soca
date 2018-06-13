@@ -42,7 +42,7 @@ cost_function:
         date: '2018-04-15T00:00:00Z'
     Covariance:
       covariance: SocaError
-      sig_sic: 0.1#.0001
+      sig_sic: 0.5#.0001
       sig_sit: 250.0
       sig_ssh: 0.2
       sig_tocn: 0.5
@@ -55,7 +55,7 @@ cost_function:
 #        ObsDataOut:
 #          obsfile: Data/test_obsout.nc
 #        ObsDataIn:
-#          obsfile: /home/gvernier/Data/CS2/cryosat2-nrt-nh-20171030-v2.0.nc
+#          obsfile: Data/cryosat2-2018-04-15.nc
 #        obsvalue: ObsVal        
 #      Covariance:
 #        covariance: diagonal

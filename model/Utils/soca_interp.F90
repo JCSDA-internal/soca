@@ -48,7 +48,7 @@ contains
     character(len=3), optional       :: wgt_type !< 'avg' or 'bar'     
     class(soca_hinterp), intent(out) :: self
         
-    self%nn=3;          if (present(nn)) self%nn = nn
+    self%nn=3;           if (present(nn)) self%nn = nn
     self%wgt_type='bar'; if (present(nn)) self%wgt_type = wgt_type    
     self%lx=5e-2;        if (present(lx)) self%lx = lx
     self%ly=1e-2;        if (present(ly)) self%ly = ly
@@ -105,9 +105,6 @@ contains
     tmplon=deg2rad*reshape(lon,(/n/))
     tmplat=deg2rad*reshape(lat,(/n/))
 
-    !tmplon=reshape(lon,(/n/))
-    !tmplat=reshape(lat,(/n/))
-    
     call cover_tree%create(n,tmplon,tmplat,mask)
 
     !--- Find nn nearest neighbors

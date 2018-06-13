@@ -217,8 +217,8 @@ contains
        call soca_unstruct2struct(Cdx%hicen(:,:,icat), dx%geom, tmp_incr)    
     end do    
 
-    do izo = 1,dx%geom%ocean%nzo
-       print *,'Apply nicas: tocn, socn, category:',izo       
+    do izo = 1,1!dx%geom%ocean%nzo
+       print *,'Apply nicas: tocn, socn, layer:',izo       
        call soca_struct2unstruct(dx%tocn(:,:,izo), dx%geom, tmp_incr)    
        call horiz_convol_p%apply_nicas(tmp_incr)
        call soca_unstruct2struct(Cdx%tocn(:,:,izo), dx%geom, tmp_incr)    
@@ -237,6 +237,7 @@ contains
     use kinds
     use soca_fields
     use soca_balanceop
+    use soca_seaice_balanceop
     
     implicit none
     type(soca_field), intent(inout) :: KTdy     !< K^T dx
@@ -245,7 +246,8 @@ contains
 
     !Grid stuff
     integer :: isc, iec, jsc, jec, i, j, k
-    real(kind=kind_real) :: t0, s0, dt, ds,deta, z, p, h
+    real(kind=kind_real) :: tb, sb, dt, ds,deta, z, p, h
+    real(kind=kind_real), allocatable :: dcn(:), cnb(:)
 
     ! Indices for compute domain (no halo)
     isc = traj%geom%ocean%G%isc
@@ -255,11 +257,12 @@ contains
 
     call copy(KTdy,dy)
 
+    ! Steric height/density balance
     do i = isc, iec
        do j = jsc, jec
           do k = 1, traj%geom%ocean%nzo
-             t0=traj%tocn(i,j,k)
-             s0=traj%socn(i,j,k)
+             tb=traj%tocn(i,j,k)
+             sb=traj%socn(i,j,k)
              if (k.eq.1) then
                 z=traj%hocn(i,j,k)
              else
@@ -268,13 +271,29 @@ contains
              h=traj%hocn(i,j,k)
              p=z
              deta=dy%ssh(i,j)
-             call steric_ad(deta, dt, ds, t0, s0, p, h)
+             call steric_ad(deta, dt, ds, tb, sb, p, h)
              KTdy%tocn(i,j,k)=KTdy%tocn(i,j,k)+dt
              KTdy%socn(i,j,k)=KTdy%socn(i,j,k)+ds
           end do
        end do
     end do
 
+    ! T/C balance
+    allocate(dcn(traj%geom%ocean%ncat),cnb(traj%geom%ocean%ncat))
+    do i = isc, iec
+       do j = jsc, jec
+          tb=traj%tocn(i,j,1)
+          sb=traj%socn(i,j,1)
+          cnb=traj%cicen(i,j,2:)
+          call tofc_ad (dt, dcn, tb, sb, cnb)
+          do k = 1, traj%geom%ocean%ncat
+             KTdy%cicen(i,j,k+1)=KTdy%cicen(i,j,k+1)+dcn(k)
+          end do
+       end do
+    end do
+
+    deallocate(dcn, cnb)
+    
   end subroutine soca_3d_covar_K_mult_ad
 
   ! ------------------------------------------------------------------------------  
@@ -284,6 +303,7 @@ contains
     use kinds
     use soca_fields
     use soca_balanceop
+    use soca_seaice_balanceop
     
     implicit none
     type(soca_field), intent(inout) :: Kdx      !< K dx
@@ -292,7 +312,8 @@ contains
 
     !Grid stuff
     integer :: isc, iec, jsc, jec, i, j, k
-    real(kind=kind_real) :: t0, s0, dt, ds,deta, z, p, h
+    real(kind=kind_real) :: tb, sb, dt, ds,deta, z, p, h
+    real(kind=kind_real), allocatable :: dcn(:), cnb(:)
 
     ! Indices for compute domain (no halo)
     isc = traj%geom%ocean%G%isc
@@ -302,11 +323,12 @@ contains
 
     call copy(Kdx,dx)
 
+    ! Steric height/density balance
     do i = isc, iec
        do j = jsc, jec
           do k = 1, traj%geom%ocean%nzo
-             t0=traj%tocn(i,j,k)
-             s0=traj%socn(i,j,k)
+             tb=traj%tocn(i,j,k)
+             sb=traj%socn(i,j,k)
              dt=dx%tocn(i,j,k)
              ds=dx%socn(i,j,k)
              if (k.eq.1) then
@@ -316,12 +338,27 @@ contains
              end if
              h=traj%hocn(i,j,k)
              p=z
-             call steric_tl(deta, dt, ds, t0, s0, p, h)
+             call steric_tl(deta, dt, ds, tb, sb, p, h)
              Kdx%ssh(i,j)=Kdx%ssh(i,j)+deta    
           end do
        end do
     end do
 
+    ! T/C balance
+    allocate(dcn(traj%geom%ocean%ncat),cnb(traj%geom%ocean%ncat))
+    do i = isc, iec
+       do j = jsc, jec
+          tb=traj%tocn(i,j,1)
+          sb=traj%socn(i,j,1)
+          cnb=traj%cicen(i,j,2:)
+          dcn=dx%cicen(i,j,2:)          
+          call tofc_tl (dt, dcn, tb, sb, cnb)
+          Kdx%tocn(i,j,1)=Kdx%tocn(i,j,1)+dt
+       end do
+    end do
+
+    deallocate(dcn)
+    
   end subroutine soca_3d_covar_K_mult
 
   ! ------------------------------------------------------------------------------
@@ -427,13 +464,13 @@ contains
        horiz_convol%nam%mask_type= "none"
        horiz_convol%nam%mask_check = .false.
        horiz_convol%nam%draw_type = "random_uniform"
-       horiz_convol%nam%nc1 = 400!0
+       horiz_convol%nam%nc1 = 100!0
 
        horiz_convol%nam%ntry = 3
        horiz_convol%nam%nrep =  2
        horiz_convol%nam%nc3 = 10
        
-       horiz_convol%nam%dc = 1500.0e3
+       horiz_convol%nam%dc = 500.0e3
        horiz_convol%nam%nl0r = 1
 
        horiz_convol%nam%gau_approx = .false.
@@ -457,7 +494,7 @@ contains
 
        allocate(rh(nc0a,nl0,nv,nts))
        allocate(rv(nc0a,nl0,nv,nts))
-       rh=1500.0e3
+       rh=100.0e3
        rv=1.0
        call horiz_convol%bump_setup_online(mpi_comm_world,nc0a,nl0,nv,nts,lon,lat,area,vunit,lmask,rh=rh,rv=rv)
        convolh_initialized = .true.
