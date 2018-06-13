@@ -461,8 +461,8 @@ contains
        horiz_convol%nam%strategy = "specific_univariate"
        horiz_convol%nam%sam_write= .true.
        horiz_convol%nam%sam_read= .false.
-       horiz_convol%nam%mask_type= "none"
-       horiz_convol%nam%mask_check = .false.
+       !horiz_convol%nam%mask_type= "none"
+       horiz_convol%nam%mask_check = .true. !.false.
        horiz_convol%nam%draw_type = "random_uniform"
        horiz_convol%nam%nc1 = 100!0
 
@@ -483,7 +483,7 @@ contains
        horiz_convol%nam%lsqrt = .false.!.true.
        horiz_convol%nam%resol = 10.0 !1000.0!10.0
        horiz_convol%nam%nicas_interp = "bilin"
-       !horiz_convol%nam%network = .false.
+       horiz_convol%nam%network = .true.!.false.
        horiz_convol%nam%mpicom = 1
        !horiz_convol%nam%advmode = 0
        !horiz_convol%nam%nldwh = 0
@@ -494,7 +494,7 @@ contains
 
        allocate(rh(nc0a,nl0,nv,nts))
        allocate(rv(nc0a,nl0,nv,nts))
-       rh=100.0e3
+       rh=500.0e3
        rv=1.0
        call horiz_convol%bump_setup_online(mpi_comm_world,nc0a,nl0,nv,nts,lon,lat,area,vunit,lmask,rh=rh,rv=rv)
        convolh_initialized = .true.
