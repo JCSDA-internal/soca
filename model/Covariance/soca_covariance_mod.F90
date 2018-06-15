@@ -396,7 +396,7 @@ contains
     use soca_geom_mod
     use type_bump
     use type_nam
-    use mpi,             only: mpi_comm_world
+    use mpi!,             only: mpi_comm_world
     
     implicit none
 
@@ -416,7 +416,9 @@ contains
     logical, allocatable :: lmask(:,:)
     integer, allocatable :: imask(:,:)    
     type(nam_type) :: nam
-
+    integer :: ierr
+    real :: start, finish
+    
     real(kind_real), allocatable :: rh(:,:,:,:)     !< Horizontal support radius for covariance (in m)
     real(kind_real), allocatable :: rv(:,:,:,:)     !< Vertical support radius for
 
@@ -486,7 +488,7 @@ contains
        horiz_convol%nam%nrep =  2
        horiz_convol%nam%nc3 = 10
        
-       horiz_convol%nam%dc = 500.0e3
+       horiz_convol%nam%dc = 200.0e3
        horiz_convol%nam%nl0r = 1
 
        horiz_convol%nam%gau_approx = .false.
@@ -510,9 +512,15 @@ contains
 
        allocate(rh(nc0a,nl0,nv,nts))
        allocate(rv(nc0a,nl0,nv,nts))
-       rh=500.0e3
+       rh=200.0e3
        rv=1.0
+
+       call cpu_time(start)
+       print *,"Time start = ",start," seconds."       
        call horiz_convol%bump_setup_online(mpi_comm_world,nc0a,nl0,nv,nts,lon,lat,area,vunit,lmask,rh=rh,rv=rv)
+       call cpu_time(finish)
+       call mpi_barrier(MPI_COMM_WORLD,ierr)
+       print *,"Time = ",finish-start," seconds."
        convolh_initialized = .true.
        deallocate( lon, lat, area, vunit, imask, lmask )
        deallocate(rh,rv)       
