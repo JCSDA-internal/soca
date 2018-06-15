@@ -13,7 +13,8 @@
 #include <boost/noncopyable.hpp>
 #include <boost/scoped_ptr.hpp>
 
-#include "model/Fortran.h"
+//#include "model/Fortran.h"
+#include "model/Fields/Fields.h"
 #include "model/Geometry/Geometry.h"
 #include "eckit/config/Configuration.h"
 #include "oops/util/DateTime.h"
@@ -44,10 +45,15 @@ namespace soca {
       void inverseMultiply(const Increment &, Increment &) const;
       void randomize(Increment &) const;
 
+      /// Access to trajectory
+      //Fields & fields() {return *fields_;}
+      //const Fields & fields() const {return *fields_;}
+      
   private:
       void print(std::ostream &) const;
       int keyFtnConfig_;
       boost::scoped_ptr<const Geometry> geom_;
+      const State * traj_;     
       util::DateTime time_;
     };
   // -----------------------------------------------------------------------------

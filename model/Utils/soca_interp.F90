@@ -48,7 +48,7 @@ contains
     character(len=3), optional       :: wgt_type !< 'avg' or 'bar'     
     class(soca_hinterp), intent(out) :: self
         
-    self%nn=5;          if (present(nn)) self%nn = nn
+    self%nn=3;           if (present(nn)) self%nn = nn
     self%wgt_type='bar'; if (present(nn)) self%wgt_type = wgt_type    
     self%lx=5e-2;        if (present(lx)) self%lx = lx
     self%ly=1e-2;        if (present(ly)) self%ly = ly
@@ -66,8 +66,11 @@ contains
   subroutine interp_compute_weight(self, lon, lat, lono, lato)
 
     use kinds
-    use type_ctree, only: ctreetype,create_ctree,delete_ctree,find_nearest_neighbors
-    use tools_const, only: pi,req,deg2rad,rad2deg,sphere_dist
+
+    
+    !use type_ctree, only: ctree_type!,ctree_create,delete_ctree,find_nearest_neighbors
+    use type_kdtree, only: kdtree_type
+    use tools_const, only: pi,req,deg2rad,rad2deg
     use iso_fortran_env
     use mpi
     
@@ -80,7 +83,7 @@ contains
     integer :: nobs, ni, nj, k, l, ij(2), cnt
     integer :: n, nn
     logical, allocatable :: mask(:)
-    type(ctreetype) :: cover_tree
+    type(kdtree_type) :: cover_tree
     real(kind=kind_real), allocatable :: nn_dist(:,:), tmplon(:), tmplat(:)
     real(kind=kind_real), allocatable :: tmplono(:), tmplato(:)
     integer, allocatable :: nn_index(:,:)              ! nobsxnn
@@ -101,7 +104,8 @@ contains
     allocate(tmplon(n),tmplat(n))
     tmplon=deg2rad*reshape(lon,(/n/))
     tmplat=deg2rad*reshape(lat,(/n/))
-    cover_tree=create_ctree(n,tmplon,tmplat,mask)
+
+    call cover_tree%create(n,tmplon,tmplat,mask)
 
     !--- Find nn nearest neighbors
     nn = self%nn
@@ -117,7 +121,7 @@ contains
           write(*,FMT="(A1,A,t21,F6.2,A,A)",ADVANCE="NO") achar(13), &
                & " Percent Complete: ", (real(k)/real(self%nobs))*100.0, "% for ",self%wgt_type
        end if
-       call find_nearest_neighbors(cover_tree,tmplono(k),tmplato(k),nn,nn_index(k,:),nn_dist(k,:))
+       call cover_tree%find_nearest_neighbors(tmplono(k),tmplato(k),nn,nn_index(k,:),nn_dist(k,:))       
        !nn_dist(k,:)=exp(-(nn_dist(k,:)/self%lx)**2)
        dist=sum(nn_dist(k,:))
        do l = 1, nn
@@ -125,7 +129,7 @@ contains
           self%index(k,2,l)=max(1,nn_index(k,l)/ni+1)
           self%wgh(k,l)=(dist-nn_dist(k,l))
        end do
-       self%wgh(k,:)=self%wgh(k,:)/sum(self%wgh(k,:))       
+       self%wgh(k,:)=self%wgh(k,:)/sum(self%wgh(k,:))  
     end do
 
     call mpi_barrier(MPI_COMM_WORLD,ierr)
@@ -150,7 +154,7 @@ contains
     obs = 0.0
     do k = 1, self%nobs
        do l = 1, self%nn
-          obs(k) = obs(k) + self%wgh(k,l)*fld(self%index(k,1,l),self%index(k,2,l))          
+          obs(k) = obs(k) + self%wgh(k,l)*fld(self%index(k,1,l),self%index(k,2,l))
        end do
     end do
   end subroutine interp_apply

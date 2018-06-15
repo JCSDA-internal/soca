@@ -62,13 +62,17 @@ contains
     use kinds
     use fckit_log_module, only : fckit_log
     use soca_interph_mod
+    use type_bump
+    use type_nam
+    use mpi,              only : mpi_comm_world
     
     implicit none
+    
     type(c_ptr), intent(in)   :: c_model  !< The configuration
     type(soca_geom), intent(in) :: geom     !< Geometry
     type(soca_3d_covar_config), intent(inout) :: config !< The covariance structure
     real(kind=kind_real) :: corr_length_scale
-    type(soca_hinterp), pointer :: horiz_convol_p
+    type(bump_type), pointer            :: horiz_convol_p
     
     config%sig_sic      = config_get_real(c_model,"sig_sic")
     config%sig_sit      = config_get_real(c_model,"sig_sit")
@@ -76,7 +80,7 @@ contains
     config%sig_tocn      = config_get_real(c_model,"sig_tocn")
     config%sig_socn      = config_get_real(c_model,"sig_socn")        
 
-    !call initialize_convolh(geom, horiz_convol_p)
+    call soca_bump_correlation(geom, horiz_convol_p)
     
   end subroutine soca_3d_covar_setup
 
@@ -91,153 +95,268 @@ contains
     implicit none
     integer(c_int), intent(inout) :: c_key_conf !< The model covariance structure
 
-    type(soca_3d_covar_config), pointer :: conf !< covar structure
-
-    !call soca_3d_cov_registry%get(c_key_conf, conf)
-
-    !deallocate(conf%sqrt_zonal)
-    !deallocate(conf%sqrt_merid)
-    !deallocate(conf%sqrt_inv_merid)
-    !call soca_3d_cov_registry%remove(c_key_conf)
-
+    call soca_3d_cov_registry%remove(c_key_conf)
+    call soca_bump_correlation(destruct=.true.)
+    
   end subroutine soca_3d_covar_delete
-
-  !> Multiply by sqrt(C), where C is a 3d covariance matrix
-
-  subroutine soca_3d_covar_sqrt_mult(dx, sqrtCdx, config)
-    use iso_c_binding
-    use kinds
-    use soca_fields
-    use soca_interph_mod
-    
-    implicit none
-    type(soca_field), intent(inout)        :: sqrtCdx         !< Full C^1/2 applied to dx
-    type(soca_field), intent(in)           :: dx              !< State space increment
-    type(soca_3d_covar_config), intent(in) :: config          !< covariance config structure
-    type(soca_hinterp), pointer            :: horiz_convol_p  !< pointer to convolution operator
-    real(kind=kind_real), allocatable      :: tmp_incr(:,:),tmp_incr3d(:,:,:)
-
-    integer :: k,l,m,iter
-
-    call copy(sqrtCdx, dx)
-    
-    ! Temporary hack while waiting for new interfaces for NICAS
-    ! sqrtCdx=C.dx
-    allocate(tmp_incr(size(dx%ssh,1),size(dx%ssh,2)))
-    !call zeros(sqrtCdx)
-!!$!    sqrtCdx%ssh=dx%ssh    
-    do iter = 1, 1
-       tmp_incr=sqrtCdx%ssh*dx%geom%ocean%mask2d       
-       do k = 2, size(dx%ssh,1)-1
-          do l = 2, size(dx%ssh,2)-1
-             sqrtCdx%ssh(k,l)=(tmp_incr(k+1,l-1)+tmp_incr(k,l-1)+tmp_incr(k-1,l-1)+&
-                              &tmp_incr(k+1,l)+tmp_incr(k,l)+tmp_incr(k-1,l)+&
-                              &tmp_incr(k+1,l+1)+tmp_incr(k,l+1)+tmp_incr(k-1,l+1))/9.0
-          end do
-       end do
-    end do
-
-    allocate(tmp_incr3d(size(dx%ssh,1),size(dx%ssh,2),dx%geom%ocean%ncat))
-    sqrtCdx%hicen=dx%hicen    
-    do iter = 1, 1
-       tmp_incr3d=sqrtCdx%hicen       
-       do k = 2, size(dx%ssh,1)-1
-          do l = 2, size(dx%ssh,2)-1
-             do m = 1, dx%geom%ocean%ncat
-                sqrtCdx%hicen(k,l,m)=(tmp_incr3d(k+1,l-1,m)+tmp_incr3d(k,l-1,m)+tmp_incr3d(k-1,l-1,m)+&
-                              &tmp_incr3d(k+1,l,m)+tmp_incr3d(k,l,m)+tmp_incr3d(k-1,l,m)+&
-                              &tmp_incr3d(k+1,l+1,m)+tmp_incr3d(k,l+1,m)+tmp_incr3d(k-1,l+1,m))/9.0
-             end do
-          end do
-       end do
-    end do
-
-    sqrtCdx%cicen=dx%cicen
-    do iter = 1, 2
-       tmp_incr3d=sqrtCdx%cicen(:,:,2:dx%geom%ocean%ncat+1)
-       do k = 2, size(dx%ssh,1)-1
-          do l = 2, size(dx%ssh,2)-1
-             do m = 1, dx%geom%ocean%ncat
-                sqrtCdx%cicen(k,l,m+1)=(tmp_incr3d(k+1,l-1,m)+tmp_incr3d(k,l-1,m)+tmp_incr3d(k-1,l-1,m)+&
-                              &tmp_incr3d(k+1,l,m)+tmp_incr3d(k,l,m)+tmp_incr3d(k-1,l,m)+&
-                              &tmp_incr3d(k+1,l+1,m)+tmp_incr3d(k,l+1,m)+tmp_incr3d(k-1,l+1,m))/9.0
-             end do
-          end do
-       end do
-    end do
-
-    deallocate(tmp_incr3d)
-    allocate(tmp_incr3d(size(dx%ssh,1),size(dx%ssh,2),dx%geom%ocean%nzo))
-    sqrtCdx%tocn=dx%tocn    
-    do iter = 1, 1
-       tmp_incr3d=sqrtCdx%tocn
-       do k = 2, size(dx%ssh,1)-1
-          do l = 2, size(dx%ssh,2)-1
-             do m = 1, dx%geom%ocean%nzo
-                sqrtCdx%tocn(k,l,m)=(tmp_incr3d(k+1,l-1,m)+tmp_incr3d(k,l-1,m)+tmp_incr3d(k-1,l-1,m)+&
-                              &tmp_incr3d(k+1,l,m)+tmp_incr3d(k,l,m)+tmp_incr3d(k-1,l,m)+&
-                              &tmp_incr3d(k+1,l+1,m)+tmp_incr3d(k,l+1,m)+tmp_incr3d(k-1,l+1,m))/9.0
-             end do
-          end do
-       end do
-       tmp_incr3d=sqrtCdx%tocn
-       do k = 2, size(dx%ssh,1)-1
-          do l = 2, size(dx%ssh,2)-1
-             do m = 2, dx%geom%ocean%nzo-1
-                sqrtCdx%tocn(k,l,m)=(tmp_incr3d(k,l,m-1)+tmp_incr3d(k,l,m)+tmp_incr3d(k,l,m+1))/3.0
-             end do
-          end do
-       end do
-    end do
-
-!!$    sqrtCdx%hicen=dx%hicen
-!!$    do iter = 1, 1
-!!$       tmp_incr3d=sqrtCdx%hicen(:,:,1:dx%geom%ocean%ncat)
-!!$       do k = 2, size(dx%ssh,1)-1
-!!$          do l = 2, size(dx%ssh,2)-1
-!!$             do m = 1, dx%geom%ocean%ncat
-!!$                sqrtCdx%hicen(k,l,m)=(tmp_incr3d(k+1,l-1,m)+tmp_incr3d(k,l-1,m)+tmp_incr3d(k-1,l-1,m)+&
-!!$                              &tmp_incr3d(k+1,l,m)+tmp_incr3d(k,l,m)+tmp_incr3d(k-1,l,m)+&
-!!$                              &tmp_incr3d(k+1,l+1,m)+tmp_incr3d(k,l+1,m)+tmp_incr3d(k-1,l+1,m))/9.0
-!!$             end do
-!!$          end do
-!!$       end do
-!!$    end do        
-    
-    deallocate(tmp_incr, tmp_incr3d)
-
-  end subroutine soca_3d_covar_sqrt_mult
-
-  ! ------------------------------------------------------------------------------
-
-  !> Multiply by sqrt(C) - Adjoint
-
-  subroutine soca_3d_covar_sqrt_mult_ad(dx, sqrtCTdx, config)
-    use iso_c_binding
-    use kinds
-    use soca_fields
-    use soca_interph_mod
-    
-    implicit none
-    type(soca_field), intent(in)           :: dx
-    type(soca_field), intent(inout)        :: sqrtCTdx
-    type(soca_3d_covar_config), intent(in) :: config !< covariance config structure
-    type(soca_hinterp), pointer            :: horiz_convol_p
-    real(kind=kind_real), allocatable      :: tmp_incr(:)
-    real(kind=kind_real)      :: crap
-    
-    call copy(sqrtCTdx, dx)
-    call initialize_convolh(dx%geom, horiz_convol_p)
-    allocate(tmp_incr(size(sqrtCTdx%ssh,1)*size(sqrtCTdx%ssh,2)))
-    tmp_incr=reshape(dx%ssh,(/size(dx%ssh,1)*size(dx%ssh,2)/))
-    call horiz_convol_p%interpad_apply(sqrtCTdx%ssh,tmp_incr)
-    deallocate(tmp_incr)
-
-  end subroutine soca_3d_covar_sqrt_mult_ad
 
   ! ------------------------------------------------------------------------------
   
-  subroutine soca_3d_covar_D_mult(Ddx, config)
+  subroutine soca_struct2unstruct(dx_struct, geom, dx_unstruct)
+    use soca_geom_mod
+
+    implicit none
+
+    real(kind=kind_real),intent(in)                :: dx_struct(:,:)
+    type(soca_geom), intent(in)                    :: geom    
+    real(kind=kind_real), allocatable, intent(out) :: dx_unstruct(:)
+
+    integer :: isc, iec, jsc, jec, jjj, jz, il, ib, nc0a
+
+    ! Indices for compute domain (no halo)
+    isc = geom%ocean%G%isc
+    iec = geom%ocean%G%iec
+    jsc = geom%ocean%G%jsc
+    jec = geom%ocean%G%jec
+    
+    nc0a = (iec - isc + 1) * (jec - jsc + 1 )
+    allocate(dx_unstruct(nc0a))
+    dx_unstruct = reshape( dx_struct(isc:iec, jsc:jec), (/nc0a/) )
+    
+  end subroutine soca_struct2unstruct
+
+  ! ------------------------------------------------------------------------------
+  
+  subroutine soca_unstruct2struct(dx_struct, geom, dx_unstruct)
+    use soca_geom_mod
+
+    implicit none
+
+    real(kind=kind_real),intent(inout)               :: dx_struct(:,:)
+    type(soca_geom), intent(in)                      :: geom    
+    real(kind=kind_real), allocatable, intent(inout) :: dx_unstruct(:)
+
+    integer :: isc, iec, jsc, jec, jjj, jz, il, ib, nc0a
+
+    ! Indices for compute domain (no halo)
+    isc = geom%ocean%G%isc
+    iec = geom%ocean%G%iec
+    jsc = geom%ocean%G%jsc
+    jec = geom%ocean%G%jec
+    
+    nc0a = (iec - isc + 1) * (jec - jsc + 1 )
+
+    dx_struct(isc:iec, jsc:jec) = reshape(dx_unstruct,(/size(dx_struct(isc:iec, jsc:jec),1),&
+                                                       &size(dx_struct(isc:iec, jsc:jec),2)/))
+
+    deallocate(dx_unstruct)
+    
+  end subroutine soca_unstruct2struct
+  
+  ! ------------------------------------------------------------------------------
+
+  subroutine soca_3d_covar_C_mult(dx, Cdx, config)
+    use iso_c_binding
+    use kinds
+    use soca_fields
+    use type_bump
+    use fms_mod,                 only: read_data, write_data, set_domain
+    use fms_io_mod,                only : fms_io_init, fms_io_exit
+    
+    implicit none
+    type(soca_field), intent(in)           :: dx
+    type(soca_field), intent(inout)        :: Cdx
+    type(soca_3d_covar_config), intent(in) :: config !< covariance config structure
+    type(bump_type), pointer            :: horiz_convol_p
+    real(kind=kind_real), allocatable      :: tmp_incr(:)
+    !Grid stuff
+    integer :: isc, iec, jsc, jec, jjj, jz, il, ib, nc0a, icat, izo
+    character(len=128) :: filename
+
+    call copy(Cdx, dx)
+    print *,'Init bump'
+    call soca_bump_correlation(dx%geom, horiz_convol_p)
+    print *,'Done init bump'
+
+!!$    call fms_io_init()
+!!$    filename='test-cov1.nc'
+!!$    call write_data( filename, "ssh", dx%ssh, dx%geom%ocean%G%Domain%mpp_domain)
+!!$    call fms_io_exit()
+!!$    print *,'wrote cov1 to file'
+!!$    read(*,*)
+
+    
+    print *,'Apply nicas: ssh'
+    call soca_struct2unstruct(dx%ssh, dx%geom, tmp_incr)    
+    call horiz_convol_p%apply_nicas(tmp_incr)
+    call soca_unstruct2struct(Cdx%ssh, dx%geom, tmp_incr)
+
+!!$    call fms_io_init()
+!!$    filename='test-cov2.nc'
+!!$    call write_data( filename, "ssh", Cdx%ssh, dx%geom%ocean%G%Domain%mpp_domain)
+!!$    call fms_io_exit()
+!!$    print *,'wrote cov1 to file'
+!!$    read(*,*)
+
+    
+    do icat = 1, dx%geom%ocean%ncat
+       print *,'Apply nicas: aice, hice, category:',icat       
+       call soca_struct2unstruct(dx%cicen(:,:,icat+1), dx%geom, tmp_incr)    
+       call horiz_convol_p%apply_nicas(tmp_incr)
+       call soca_unstruct2struct(Cdx%cicen(:,:,icat+1), dx%geom, tmp_incr)    
+
+       call soca_struct2unstruct(dx%hicen(:,:,icat), dx%geom, tmp_incr)    
+       call horiz_convol_p%apply_nicas(tmp_incr)
+       call soca_unstruct2struct(Cdx%hicen(:,:,icat), dx%geom, tmp_incr)    
+    end do    
+
+    do izo = 1,1!dx%geom%ocean%nzo
+       print *,'Apply nicas: tocn, socn, layer:',izo       
+       call soca_struct2unstruct(dx%tocn(:,:,izo), dx%geom, tmp_incr)    
+       call horiz_convol_p%apply_nicas(tmp_incr)
+       call soca_unstruct2struct(Cdx%tocn(:,:,izo), dx%geom, tmp_incr)    
+
+       call soca_struct2unstruct(dx%socn(:,:,izo), dx%geom, tmp_incr)    
+       call horiz_convol_p%apply_nicas(tmp_incr)
+       call soca_unstruct2struct(Cdx%socn(:,:,izo), dx%geom, tmp_incr)
+    end do    
+
+  end subroutine soca_3d_covar_C_mult
+
+  ! ------------------------------------------------------------------------------  
+  
+  subroutine soca_3d_covar_K_mult_ad(dy, KTdy, traj)
+    use iso_c_binding
+    use kinds
+    use soca_fields
+    use soca_balanceop
+    use soca_seaice_balanceop
+    
+    implicit none
+    type(soca_field), intent(inout) :: KTdy     !< K^T dx
+    type(soca_field), intent(in)    :: dy       !< Increment        
+    type(soca_field), intent(in)    :: traj     !< trajectory    
+
+    !Grid stuff
+    integer :: isc, iec, jsc, jec, i, j, k
+    real(kind=kind_real) :: tb, sb, dt, ds,deta, z, p, h
+    real(kind=kind_real), allocatable :: dcn(:), cnb(:)
+
+    ! Indices for compute domain (no halo)
+    isc = traj%geom%ocean%G%isc
+    iec = traj%geom%ocean%G%iec
+    jsc = traj%geom%ocean%G%jsc
+    jec = traj%geom%ocean%G%jec
+
+    call copy(KTdy,dy)
+
+    ! Steric height/density balance
+    do i = isc, iec
+       do j = jsc, jec
+          do k = 1, traj%geom%ocean%nzo
+             tb=traj%tocn(i,j,k)
+             sb=traj%socn(i,j,k)
+             if (k.eq.1) then
+                z=traj%hocn(i,j,k)
+             else
+                z=sum(traj%hocn(i,j,1:k-1))+0.5*traj%hocn(i,j,k)
+             end if
+             h=traj%hocn(i,j,k)
+             p=z
+             deta=dy%ssh(i,j)
+             call steric_ad(deta, dt, ds, tb, sb, p, h)
+             KTdy%tocn(i,j,k)=KTdy%tocn(i,j,k)+dt
+             KTdy%socn(i,j,k)=KTdy%socn(i,j,k)+ds
+          end do
+       end do
+    end do
+
+    ! T/C balance
+    allocate(dcn(traj%geom%ocean%ncat),cnb(traj%geom%ocean%ncat))
+    do i = isc, iec
+       do j = jsc, jec
+          tb=traj%tocn(i,j,1)
+          sb=traj%socn(i,j,1)
+          cnb=traj%cicen(i,j,2:)
+          call tofc_ad (dt, dcn, tb, sb, cnb)
+          do k = 1, traj%geom%ocean%ncat
+             KTdy%cicen(i,j,k+1)=KTdy%cicen(i,j,k+1)+dcn(k)
+          end do
+       end do
+    end do
+
+    deallocate(dcn, cnb)
+    
+  end subroutine soca_3d_covar_K_mult_ad
+
+  ! ------------------------------------------------------------------------------  
+  
+  subroutine soca_3d_covar_K_mult(dx, Kdx, traj)
+    use iso_c_binding
+    use kinds
+    use soca_fields
+    use soca_balanceop
+    use soca_seaice_balanceop
+    
+    implicit none
+    type(soca_field), intent(inout) :: Kdx      !< K dx
+    type(soca_field), intent(in)    :: dx       !< Increment            
+    type(soca_field), intent(in)    :: traj     !< trajectory    
+
+    !Grid stuff
+    integer :: isc, iec, jsc, jec, i, j, k
+    real(kind=kind_real) :: tb, sb, dt, ds,deta, z, p, h
+    real(kind=kind_real), allocatable :: dcn(:), cnb(:)
+
+    ! Indices for compute domain (no halo)
+    isc = traj%geom%ocean%G%isc
+    iec = traj%geom%ocean%G%iec
+    jsc = traj%geom%ocean%G%jsc
+    jec = traj%geom%ocean%G%jec
+
+    call copy(Kdx,dx)
+
+    ! Steric height/density balance
+    do i = isc, iec
+       do j = jsc, jec
+          do k = 1, traj%geom%ocean%nzo
+             tb=traj%tocn(i,j,k)
+             sb=traj%socn(i,j,k)
+             dt=dx%tocn(i,j,k)
+             ds=dx%socn(i,j,k)
+             if (k.eq.1) then
+                z=traj%hocn(i,j,k)
+             else
+                z=sum(traj%hocn(i,j,1:k-1))+0.5*traj%hocn(i,j,k)
+             end if
+             h=traj%hocn(i,j,k)
+             p=z
+             call steric_tl(deta, dt, ds, tb, sb, p, h)
+             Kdx%ssh(i,j)=Kdx%ssh(i,j)+deta    
+          end do
+       end do
+    end do
+
+    ! T/C balance
+    allocate(dcn(traj%geom%ocean%ncat),cnb(traj%geom%ocean%ncat))
+    do i = isc, iec
+       do j = jsc, jec
+          tb=traj%tocn(i,j,1)
+          sb=traj%socn(i,j,1)
+          cnb=traj%cicen(i,j,2:)
+          dcn=dx%cicen(i,j,2:)          
+          call tofc_tl (dt, dcn, tb, sb, cnb)
+          Kdx%tocn(i,j,1)=Kdx%tocn(i,j,1)+dt
+       end do
+    end do
+
+    deallocate(dcn)
+    
+  end subroutine soca_3d_covar_K_mult
+
+  ! ------------------------------------------------------------------------------
+  
+  subroutine soca_3d_covar_D_mult(Ddx, traj, config)
     use iso_c_binding
     use kinds
     use soca_fields
@@ -246,21 +365,23 @@ contains
     use fms_io_mod,                only : fms_io_init, fms_io_exit
     
     implicit none
-    type(soca_field), intent(inout)        :: Ddx             !< D applied to dx
-    type(soca_3d_covar_config), intent(in) :: config          !< covariance config structure
-    type(soca_field)    :: sig_cicen             !< D applied to dx
+    type(soca_field), intent(inout)        :: Ddx      !< D applied to dx
+    type(soca_field), intent(in)           :: traj     !< trajectory   
+    type(soca_3d_covar_config), intent(in) :: config   !< covariance config structure
+    type(soca_field)    :: sig_cicen                   !< D applied to dx
 
-    call create_copy(sig_cicen,Ddx)
-    call fms_io_init()
-    call read_data('std.nc', 'cicen', sig_cicen%AOGCM%Ice%part_size, domain=Ddx%geom%ocean%G%Domain%mpp_domain)
-    call fms_io_exit()
+    !call create_copy(sig_cicen,Ddx)
+    !call fms_io_init()
+    !call read_data('std.nc', 'cicen', sig_cicen%AOGCM%Ice%part_size, domain=Ddx%geom%ocean%G%Domain%mpp_domain)
+    !call fms_io_exit()
 
     !Ddx%cicen=1.0Ddx%cicen+0.01
 
     ! A "bit" of a hack!!!
-    !sig_cicen%cicen=exp( -((0.15-sig_cicen%cicen)/0.1)**2 )
+    !sig_cicen%cicen=exp( -((0.15-traj%cicen)/0.1)**2 )
+    !sig_cicen%cicen=exp( -((0.15-traj%cicen)    
     
-    !Ddx%cicen=config%sig_sic*sig_cicen%cicen*Ddx%cicen
+    Ddx%cicen=config%sig_sic*Ddx%cicen
     Ddx%hicen=config%sig_sit*Ddx%hicen
     Ddx%ssh=config%sig_ssh*Ddx%ssh
     Ddx%tocn=config%sig_tocn*Ddx%tocn
@@ -270,38 +391,135 @@ contains
 
   ! ------------------------------------------------------------------------------
 
-  subroutine initialize_convolh(geom, horiz_convol_p)
-    !use ufo_locs_mod  
+  subroutine soca_bump_correlation(geom, horiz_convol_p, destruct)
     use soca_interph_mod
     use soca_geom_mod
-    use soca_interph_mod
+    use type_bump
+    use type_nam
+    use mpi,             only: mpi_comm_world
     
     implicit none
 
-    type(soca_geom), intent(in)              :: geom
-    type(soca_hinterp), pointer, intent(out) :: horiz_convol_p
+    type(soca_geom), optional, intent(in)            :: geom
+    type(bump_type), optional, pointer, intent(out)  :: horiz_convol_p
+    logical, optional                                :: destruct       ! If true: call bump destructor
+    logical, save                    :: convolh_initialized = .false.
+    type(bump_type), save, target    :: horiz_convol
 
-    real(kind=kind_real), allocatable :: lon(:), lat(:)
-    logical, save :: convolh_initialized = .false.
-    type(soca_hinterp), save, target :: horiz_convol
-    integer :: n, nn=4
-    character(len=3) :: wgt_type='avg'
+    !Grid stuff
+    integer :: isc, iec, jsc, jec, jjj, jz, il, ib
+    character(len=1024) :: subr = 'model_write'
 
+    !bump stuff
+    integer :: nc0a, nl0, nv, nts
+    real(kind=kind_real), allocatable :: lon(:), lat(:), area(:), vunit(:,:)
+    logical, allocatable :: lmask(:,:)
+    integer, allocatable :: imask(:,:)    
+    type(nam_type) :: nam
+
+    real(kind_real), allocatable :: rh(:,:,:,:)     !< Horizontal support radius for covariance (in m)
+    real(kind_real), allocatable :: rv(:,:,:,:)     !< Vertical support radius for
+
+    ! Desructor
+    if (present(destruct)) then
+       convolh_initialized = .false.
+       call horiz_convol%dealloc()
+       return
+    end if
+
+    ! Constructor
     if (.NOT.convolh_initialized) then
-       n = size(geom%ocean%lon,1)*size(geom%ocean%lon,2)
-       allocate(lon(n),lat(n))
-       call horiz_convol%interp_init(n,nn=nn,wgt_type=wgt_type)
-       call horiz_convol%interp_compute_weight(geom%ocean%lon,&
-            &                                     geom%ocean%lat,&
-            &                                     lon,&
-            &                                     lat)
+
+       !--- Initialize geometry to be passed to NICAS
+       ! Indices for compute domain (no halo)
+       isc = geom%ocean%G%isc
+       iec = geom%ocean%G%iec
+       jsc = geom%ocean%G%jsc
+       jec = geom%ocean%G%jec
+
+       nv = 1!geom%ocean%ncat + 1                 !< Number of variables
+       nl0 = 1                                    !< Number of independent levels
+       nts = 1                                    !< Number of time slots
+       nc0a = (iec - isc + 1) * (jec - jsc + 1 )  !< Total number of grid cells in the compute domain
+
+       allocate( lon(nc0a), lat(nc0a), area(nc0a) )
+       allocate( vunit(nc0a,nl0) )
+       allocate( imask(nc0a, nl0), lmask(nc0a, nl0) )
+
+       lon = reshape( geom%ocean%lon(isc:iec, jsc:jec), (/nc0a/) )
+       lat = reshape( geom%ocean%lat(isc:iec, jsc:jec), (/nc0a/) )        
+       area = reshape( geom%ocean%cell_area(isc:iec, jsc:jec), (/nc0a/) )
+       do jz = 1, nl0       
+          vunit(:,jz) = real(jz)
+          imask(1:nc0a,jz) = reshape( geom%ocean%mask2d(isc:iec, jsc:jec), (/nc0a/) )
+       end do
+       vunit = 1.0                      !< Dummy vertical unit
+
+       lmask = .false.
+       where (imask.eq.1)
+          lmask=.true.
+       end where
+
+       horiz_convol%nam%default_seed = .true.
+       horiz_convol%nam%new_hdiag = .false.
+       horiz_convol%nam%new_param = .true.
+       horiz_convol%nam%check_adjoints = .false.
+       horiz_convol%nam%check_pos_def = .false.
+       horiz_convol%nam%check_sqrt = .false.
+       horiz_convol%nam%check_randomization = .false.
+       horiz_convol%nam%check_consistency = .false.
+       horiz_convol%nam%check_optimality = .false.
+       horiz_convol%nam%new_lct = .false.
+       horiz_convol%nam%new_obsop = .false.
+
+       horiz_convol%nam%prefix = "soca"
+       horiz_convol%nam%method = "cor"
+       horiz_convol%nam%strategy = "specific_univariate"
+       horiz_convol%nam%sam_write= .true.
+       horiz_convol%nam%sam_read= .false.
+       !horiz_convol%nam%mask_type= "none"
+       horiz_convol%nam%mask_check = .true. !.false.
+       horiz_convol%nam%draw_type = "random_uniform"
+       horiz_convol%nam%nc1 = 100!0
+
+       horiz_convol%nam%ntry = 3
+       horiz_convol%nam%nrep =  2
+       horiz_convol%nam%nc3 = 10
+       
+       horiz_convol%nam%dc = 500.0e3
+       horiz_convol%nam%nl0r = 1
+
+       horiz_convol%nam%gau_approx = .false.
+       horiz_convol%nam%full_var = .false.
+       horiz_convol%nam%local_diag = .false.
+       horiz_convol%nam%minim_algo= "hooke"
+       horiz_convol%nam%lhomh = .false.
+       horiz_convol%nam%lhomv = .false.
+       horiz_convol%nam%rvflt =0.0
+       horiz_convol%nam%lsqrt = .false.!.true.
+       horiz_convol%nam%resol = 10.0 !1000.0!10.0
+       horiz_convol%nam%nicas_interp = "bilin"
+       horiz_convol%nam%network = .true.!.false.
+       horiz_convol%nam%mpicom = 1
+       !horiz_convol%nam%advmode = 0
+       !horiz_convol%nam%nldwh = 0
+       !horiz_convol%nam%nldwv = 0
+       !horiz_convol%nam%diag_rhflt = 0.0
+       horiz_convol%nam%diag_interp = "bilin"
+       horiz_convol%nam%grid_output = .false.
+
+       allocate(rh(nc0a,nl0,nv,nts))
+       allocate(rv(nc0a,nl0,nv,nts))
+       rh=500.0e3
+       rv=1.0
+       call horiz_convol%bump_setup_online(mpi_comm_world,nc0a,nl0,nv,nts,lon,lat,area,vunit,lmask,rh=rh,rv=rv)
        convolh_initialized = .true.
-       deallocate(lon,lat)
+       deallocate( lon, lat, area, vunit, imask, lmask )
+       deallocate(rh,rv)       
     end if
     horiz_convol_p => horiz_convol
 
-  end subroutine initialize_convolh
-
-  ! ------------------------------------------------------------------------------
+    
+  end subroutine soca_bump_correlation
 
 end module soca_covariance_mod

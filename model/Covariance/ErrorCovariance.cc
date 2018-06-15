@@ -26,10 +26,8 @@ namespace soca {
   // -----------------------------------------------------------------------------
 
   ErrorCovariance::ErrorCovariance(const Geometry & resol, const oops::Variables &,
-				   const eckit::Configuration & conf, const State & traj) {
-    std::cout << "!!!!!!!!!!!!!!!traj!!!!!!!!!!!!!!!!!!!!" << std::endl;    
-    std::cout << traj << std::endl;
-    std::cout << "!!!!!!!!!!!!!!!traj!!!!!!!!!!!!!!!!!!!!" << std::endl;        
+				   const eckit::Configuration & conf, const State & bkg) {
+    //bkg: Background state, invariant wrt outer-loop. 
     time_ = util::DateTime(conf.getString("date"));
     const eckit::Configuration * configc = &conf;
     soca_b_setup_f90(keyFtnConfig_, &configc, resol.toFortran());
@@ -45,19 +43,28 @@ namespace soca {
 
   // -----------------------------------------------------------------------------
 
-  void ErrorCovariance::linearize(const State &, const Geometry & resol) {
+  void ErrorCovariance::linearize(const State & traj, const Geometry & resol) {
     geom_.reset(new Geometry(resol));
+  //traj: Trajectory used for the linearization of the balance operators. Changes at each outer-loops.
+    traj_ = & traj;
+    Log::debug() << std::endl <<"------ traj:" << traj_->fields().toFortran() << std::endl;
+    Log::debug() << std::endl <<"------ traj:" << traj_ << std::endl;            
+    //soca_b_linearize_f90(traj.fields().toFortran(), resol.toFortran());
   }
 
   // -----------------------------------------------------------------------------
 
-  void ErrorCovariance::multiply(const Increment & dxin, Increment & dxout) const {
+  void ErrorCovariance::multiply(const Increment & dxin, Increment & dxout)
+    const {
     std::cout << "mult" << std::endl;    
     //dxout = dxin;
     Log::debug() << std::endl << "------- dxin" << dxin << std::endl;
-    Log::debug() << std::endl <<"------ dxout" << dxout << std::endl;        
+    Log::debug() << std::endl <<"------ dxout" << dxout << std::endl;
+    Log::debug() << std::endl <<"------ traj ---- :" << std::endl;
+    Log::debug() << std::endl <<"------ traj" << traj_->fields() << std::endl;
+    Log::debug() << std::endl <<"------ traj" << traj_->fields().toFortran() << std::endl;
     soca_b_mult_f90(keyFtnConfig_, dxin.fields().toFortran(),
-       			 dxout.fields().toFortran());
+    		    dxout.fields().toFortran(), traj_->fields().toFortran());
   }
 
   // -----------------------------------------------------------------------------

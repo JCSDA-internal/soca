@@ -60,7 +60,8 @@ list( APPEND oops_soca_src_files
 ./Utils/soca_utils.F90
 ./Utils/soca_constants.F90
 ./Utils/soca_thermo.F90
-#./Utils/soca_balanceop.F90
+./Utils/soca_balanceop.F90
+./Utils/soca_seaice_balanceop.F90
 ./Utils/random_vectors_mod.F90
 ./Utils/random_f.cc
 ./Utils/random_f.h
