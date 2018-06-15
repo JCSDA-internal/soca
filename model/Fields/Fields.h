@@ -39,8 +39,6 @@ namespace ioda {
 }
 
 namespace soca {
-  //class Loc;
-  //class Gom;
   
   // -----------------------------------------------------------------------------
   /// Class to represent a FieldSet for the SOCA model

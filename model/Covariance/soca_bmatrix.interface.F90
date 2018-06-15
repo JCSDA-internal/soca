@@ -47,8 +47,7 @@ subroutine c_soca_b_delete(c_key_self) bind (c,name='soca_b_delete_f90')
 
   call soca_3d_cov_registry%get(c_key_self,self)
   call soca_3d_covar_delete(c_key_self)
-  call soca_3d_cov_registry%remove(c_key_self)
-
+  
 end subroutine c_soca_b_delete
 
 ! ------------------------------------------------------------------------------
@@ -91,7 +90,7 @@ subroutine c_soca_b_mult(c_key_conf, c_key_in, c_key_out, c_key_traj) bind(c,nam
   use kinds
   use soca_Butils
   use fms_mod,                 only: read_data, write_data, set_domain
-  use fms_io_mod,                only : fms_io_init, fms_io_exit
+  use fms_io_mod,              only : fms_io_init, fms_io_exit
   
   implicit none
   integer(c_int), intent(in) :: c_key_conf  !< 
@@ -117,11 +116,11 @@ subroutine c_soca_b_mult(c_key_conf, c_key_in, c_key_out, c_key_traj) bind(c,nam
   call copy(xtmp,xin) ! xtmp = xin
 
   call soca_3d_covar_K_mult_ad(xin,xtmp, traj)  ! xtmp = K^T.xtmp
-  call soca_3d_covar_D_mult(xtmp, conf)         ! xtmp = D.xtmp
+  call soca_3d_covar_D_mult(xtmp, traj, conf)   ! xtmp = D.xtmp
   !call copy(xout,xtmp)
   call soca_3d_covar_C_mult(xtmp,xout,conf)     ! xout = C.xtmp
   call copy(xtmp,xout)                          ! xtmp = xout
-  call soca_3d_covar_D_mult(xtmp, conf)         ! xtmp = D.xtmp  
+  call soca_3d_covar_D_mult(xtmp, traj, conf)         ! xtmp = D.xtmp  
   call soca_3d_covar_K_mult(xtmp, xout, traj)   ! xout = K.xtmp
   !call copy(xout,xtmp)
   call delete(xtmp)

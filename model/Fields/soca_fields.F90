@@ -1010,7 +1010,6 @@ contains
 
   subroutine nicas_interph(fld, locs, ufovars, geovals)
 
-    !use ioda_locs_mod_c  
     use ioda_locs_mod  
     use ufo_geovals_mod_c
     use ufo_geovals_mod
@@ -1022,7 +1021,7 @@ contains
     implicit none
 
     type(soca_field), intent(inout)   :: fld
-    type(ioda_locs), intent(in)        :: locs
+    type(ioda_locs), intent(in)       :: locs
     type(ufo_vars),     intent(in)    :: ufovars  
     type(ufo_geovals), intent(inout)  :: geovals
 
@@ -1160,7 +1159,6 @@ contains
   
   subroutine nicas_interphad(fld, locs, ufovars, geovals)
 
-    !use ufo_locs_mod_c  
     use ioda_locs_mod  
     use ufo_geovals_mod_c
     use ufo_geovals_mod
@@ -1168,6 +1166,8 @@ contains
     use soca_constants, only : rho_i
     use soca_interph_mod
     use fckit_log_module, only : fckit_log
+
+    implicit none
     
     type(soca_field), intent(inout)  :: fld
     type(ioda_locs), intent(in)       :: locs
@@ -1223,7 +1223,6 @@ contains
 
        case ("ocean_upper_level_temperature")
           call horiz_interp_p%interpad_apply(fld%tocn(isc:iec,jsc:jec,1), geovals%geovals(ivar)%vals(1,:))
-
           
        end select
     end do

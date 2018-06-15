@@ -64,9 +64,10 @@ contains
     use soca_interph_mod
     use type_bump
     use type_nam
-    use mpi,             only: mpi_comm_world
+    use mpi,              only : mpi_comm_world
     
     implicit none
+    
     type(c_ptr), intent(in)   :: c_model  !< The configuration
     type(soca_geom), intent(in) :: geom     !< Geometry
     type(soca_3d_covar_config), intent(inout) :: config !< The covariance structure
@@ -79,7 +80,7 @@ contains
     config%sig_tocn      = config_get_real(c_model,"sig_tocn")
     config%sig_socn      = config_get_real(c_model,"sig_socn")        
 
-    call initialize_convolh(geom, horiz_convol_p)
+    call soca_bump_correlation(geom, horiz_convol_p)
     
   end subroutine soca_3d_covar_setup
 
@@ -93,15 +94,10 @@ contains
 
     implicit none
     integer(c_int), intent(inout) :: c_key_conf !< The model covariance structure
-    type(soca_3d_covar_config), pointer :: conf !< covar structure
 
-    !call soca_3d_cov_registry%get(c_key_conf, conf)
-
-    !deallocate(conf%sqrt_zonal)
-    !deallocate(conf%sqrt_merid)
-    !deallocate(conf%sqrt_inv_merid)
-    !call soca_3d_cov_registry%remove(c_key_conf)
-
+    call soca_3d_cov_registry%remove(c_key_conf)
+    call soca_bump_correlation(destruct=.true.)
+    
   end subroutine soca_3d_covar_delete
 
   ! ------------------------------------------------------------------------------
@@ -117,7 +113,6 @@ contains
 
     integer :: isc, iec, jsc, jec, jjj, jz, il, ib, nc0a
 
-    !--- Initialize geometry to be passed to NICAS
     ! Indices for compute domain (no halo)
     isc = geom%ocean%G%isc
     iec = geom%ocean%G%iec
@@ -143,7 +138,6 @@ contains
 
     integer :: isc, iec, jsc, jec, jjj, jz, il, ib, nc0a
 
-    !--- Initialize geometry to be passed to NICAS
     ! Indices for compute domain (no halo)
     isc = geom%ocean%G%isc
     iec = geom%ocean%G%iec
@@ -165,7 +159,6 @@ contains
     use iso_c_binding
     use kinds
     use soca_fields
-    !use soca_interph_mod
     use type_bump
     use fms_mod,                 only: read_data, write_data, set_domain
     use fms_io_mod,                only : fms_io_init, fms_io_exit
@@ -182,7 +175,7 @@ contains
 
     call copy(Cdx, dx)
     print *,'Init bump'
-    call initialize_convolh(dx%geom, horiz_convol_p)
+    call soca_bump_correlation(dx%geom, horiz_convol_p)
     print *,'Done init bump'
 
 !!$    call fms_io_init()
@@ -363,16 +356,31 @@ contains
 
   ! ------------------------------------------------------------------------------
   
-  subroutine soca_3d_covar_D_mult(Ddx, config)
+  subroutine soca_3d_covar_D_mult(Ddx, traj, config)
     use iso_c_binding
     use kinds
     use soca_fields
     use soca_interph_mod
+    use fms_mod,                 only: read_data, write_data, set_domain
+    use fms_io_mod,                only : fms_io_init, fms_io_exit
     
     implicit none
-    type(soca_field), intent(inout)        :: Ddx             !< D applied to dx
-    type(soca_3d_covar_config), intent(in) :: config          !< covariance config structure
+    type(soca_field), intent(inout)        :: Ddx      !< D applied to dx
+    type(soca_field), intent(in)           :: traj     !< trajectory   
+    type(soca_3d_covar_config), intent(in) :: config   !< covariance config structure
+    type(soca_field)    :: sig_cicen                   !< D applied to dx
 
+    !call create_copy(sig_cicen,Ddx)
+    !call fms_io_init()
+    !call read_data('std.nc', 'cicen', sig_cicen%AOGCM%Ice%part_size, domain=Ddx%geom%ocean%G%Domain%mpp_domain)
+    !call fms_io_exit()
+
+    !Ddx%cicen=1.0Ddx%cicen+0.01
+
+    ! A "bit" of a hack!!!
+    !sig_cicen%cicen=exp( -((0.15-traj%cicen)/0.1)**2 )
+    !sig_cicen%cicen=exp( -((0.15-traj%cicen)    
+    
     Ddx%cicen=config%sig_sic*Ddx%cicen
     Ddx%hicen=config%sig_sit*Ddx%hicen
     Ddx%ssh=config%sig_ssh*Ddx%ssh
@@ -383,7 +391,7 @@ contains
 
   ! ------------------------------------------------------------------------------
 
-  subroutine initialize_convolh(geom, horiz_convol_p)
+  subroutine soca_bump_correlation(geom, horiz_convol_p, destruct)
     use soca_interph_mod
     use soca_geom_mod
     use type_bump
@@ -392,9 +400,9 @@ contains
     
     implicit none
 
-    type(soca_geom), intent(in)            :: geom
-    type(bump_type), pointer, intent(out)  :: horiz_convol_p
-
+    type(soca_geom), optional, intent(in)            :: geom
+    type(bump_type), optional, pointer, intent(out)  :: horiz_convol_p
+    logical, optional                                :: destruct       ! If true: call bump destructor
     logical, save                    :: convolh_initialized = .false.
     type(bump_type), save, target    :: horiz_convol
 
@@ -411,7 +419,15 @@ contains
 
     real(kind_real), allocatable :: rh(:,:,:,:)     !< Horizontal support radius for covariance (in m)
     real(kind_real), allocatable :: rv(:,:,:,:)     !< Vertical support radius for
-    
+
+    ! Desructor
+    if (present(destruct)) then
+       convolh_initialized = .false.
+       call horiz_convol%dealloc()
+       return
+    end if
+
+    ! Constructor
     if (.NOT.convolh_initialized) then
 
        !--- Initialize geometry to be passed to NICAS
@@ -504,8 +520,6 @@ contains
     horiz_convol_p => horiz_convol
 
     
-  end subroutine initialize_convolh
-
-  ! ------------------------------------------------------------------------------
+  end subroutine soca_bump_correlation
 
 end module soca_covariance_mod

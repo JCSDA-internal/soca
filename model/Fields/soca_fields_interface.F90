@@ -15,7 +15,6 @@ subroutine soca_field_create_c(c_key_self, c_key_geom, c_vars) bind(c,name='soca
   implicit none
   integer(c_int), intent(inout) :: c_key_self
   integer(c_int), intent(in) :: c_key_geom !< Geometry
-  !integer(c_int), intent(in) :: c_key_vars !< List of variables
   integer(c_int), dimension(*), intent(in) :: c_vars     !< List of variables
   
   type(soca_field), pointer :: self
@@ -23,7 +22,6 @@ subroutine soca_field_create_c(c_key_self, c_key_geom, c_vars) bind(c,name='soca
   type(soca_vars) :: vars
 
   call soca_geom_registry%get(c_key_geom, geom)
-  !call soca_vars_registry%get(c_key_vars, vars)
   call soca_field_registry%init()
   call soca_field_registry%add(c_key_self)
   call soca_field_registry%get(c_key_self,self)
@@ -43,9 +41,7 @@ subroutine soca_field_delete_c(c_key_self) bind(c,name='soca_field_delete_f90')
   type(soca_field), pointer :: self
 
   call soca_field_registry%get(c_key_self,self)
-
   call delete(self)
-
   call soca_field_registry%remove(c_key_self)
 
 end subroutine soca_field_delete_c
@@ -424,12 +420,12 @@ subroutine soca_field_interp_tl_c(c_key_fld,c_key_loc,c_vars,c_key_gom) bind(c,n
   use ufo_vars_mod
   
   implicit none
-  integer(c_int), intent(in) :: c_key_fld
-  integer(c_int), intent(in) :: c_key_loc
-  type(c_ptr), intent(in)    :: c_vars     !< List of requested variables
-  integer(c_int), intent(in) :: c_key_gom
-  type(soca_field), pointer :: fld
-  type(ioda_locs),  pointer :: locs  
+  integer(c_int), intent(in)  :: c_key_fld
+  integer(c_int), intent(in)  :: c_key_loc
+  type(c_ptr), intent(in)     :: c_vars     !< List of requested variables
+  integer(c_int), intent(in)  :: c_key_gom
+  type(soca_field), pointer   :: fld
+  type(ioda_locs),  pointer   :: locs  
   type(ufo_geovals),  pointer :: gom
   type(ufo_vars) :: vars  
 
@@ -437,7 +433,7 @@ subroutine soca_field_interp_tl_c(c_key_fld,c_key_loc,c_vars,c_key_gom) bind(c,n
 
   call soca_field_registry%get(c_key_fld,fld)
   call ioda_locs_registry%get(c_key_loc,locs)  
-  call ufo_geovals_registry%get(c_key_gom,gom)  
+  call ufo_geovals_registry%get(c_key_gom,gom)
 
   call interp_tl(fld, locs, vars, gom)
 
