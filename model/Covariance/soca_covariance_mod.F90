@@ -77,8 +77,8 @@ contains
     config%sig_sic      = config_get_real(c_model,"sig_sic")
     config%sig_sit      = config_get_real(c_model,"sig_sit")
     config%sig_ssh      = config_get_real(c_model,"sig_ssh")
-    config%sig_tocn      = config_get_real(c_model,"sig_tocn")
-    config%sig_socn      = config_get_real(c_model,"sig_socn")        
+    config%sig_tocn     = config_get_real(c_model,"sig_tocn")
+    config%sig_socn     = config_get_real(c_model,"sig_socn")        
 
     call soca_bump_correlation(geom, horiz_convol_p)
     
@@ -264,7 +264,7 @@ contains
              h=traj%hocn(i,j,k)
              p=z
              deta=dy%ssh(i,j)
-             call steric_ad(deta, dt, ds, tb, sb, p, h)
+             call soca_steric_ad(deta, dt, ds, tb, sb, p, h)
              KTdy%tocn(i,j,k)=KTdy%tocn(i,j,k)+dt
              KTdy%socn(i,j,k)=KTdy%socn(i,j,k)+ds
           end do
@@ -331,7 +331,7 @@ contains
              end if
              h=traj%hocn(i,j,k)
              p=z
-             call steric_tl(deta, dt, ds, tb, sb, p, h)
+             call soca_steric_tl(deta, dt, ds, tb, sb, p, h)
              Kdx%ssh(i,j)=Kdx%ssh(i,j)+deta    
           end do
        end do
@@ -488,7 +488,7 @@ contains
        horiz_convol%nam%nrep =  2
        horiz_convol%nam%nc3 = 10
        
-       horiz_convol%nam%dc = 200.0e3
+       horiz_convol%nam%dc = 300.0e3
        horiz_convol%nam%nl0r = 1
 
        horiz_convol%nam%gau_approx = .false.
@@ -512,7 +512,7 @@ contains
 
        allocate(rh(nc0a,nl0,nv,nts))
        allocate(rv(nc0a,nl0,nv,nts))
-       rh=200.0e3
+       rh=300.0e3
        rv=1.0
 
        call cpu_time(start)

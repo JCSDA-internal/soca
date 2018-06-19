@@ -10,9 +10,47 @@ module soca_balanceop
   implicit none
   
 contains
+  !==========================================================================
+  subroutine soca_steric_jacobian (jac, t, s, p, h)
+    !==========================================================================
+    !
+    ! Jacobian of stericnl relative to the reference state t0, s0
+    !
+    ! Input:
+    ! ------
+    ! s      : Ref. Absolute Salinity                          [g/kg]
+    ! t      : Ref. Conservative Temperature                   [deg C]
+    ! p      : Pressure                                        [dbar]
+    ! h      : Layer thickness                                 [m]
+    !
+    ! Output:
+    ! -------
+    ! jac    : Jacobian [detas/dt1, ...,detas/dtN;             [m/deg C]  
+    !                    detas/ds1, ...,detas/dsN]             [m/(g/kg)]
+    !    
+    !--------------------------------------------------------------------------
+
+    use gsw_mod_toolbox, only : gsw_rho, gsw_rho_first_derivatives
+    use gsw_mod_kinds
+    use kinds
+
+    implicit none
+
+    real(kind=kind_real), intent(in)  :: t, s, p, h
+    real(kind=kind_real), intent(out) :: jac(2)
+    real(kind=kind_real) :: rho0
+    real(kind=kind_real) :: drhods, drhodt, drhodp
+
+    rho0 = gsw_rho(s,t,p)
+    call gsw_rho_first_derivatives(s,t,p,drhods, drhodt, drhodp)
+    jac(1)=-h*drhodt/rho0
+    jac(2)=-h*drhods/rho0
+emaq     !jac(3)=(rho-rho0)/rho0 !=detas/dh 
+    
+  end subroutine soca_steric_jacobian
 
   !==========================================================================
-  subroutine steric_tl (detas, dt, ds, t0, s0, p, h)
+  subroutine soca_steric_tl (detas, dt, ds, t0, s0, p, h)
     !==========================================================================
     !
     ! Tangent of stericnl relative to the reference state t0, s0
@@ -29,14 +67,9 @@ contains
     ! Output:
     ! -------
     ! detas  : steric height                                   [m]
-    !
-    ! jac    : Jacobian [detas/dt1, ...,detas/dtN;             [m/deg C]  
-    !                    detas/ds1, ...,detas/dsN]             [m/(g/kg)]
     !    
     !--------------------------------------------------------------------------
 
-    use gsw_mod_toolbox, only : gsw_rho, gsw_rho_first_derivatives
-    use gsw_mod_kinds
     use kinds
 
     implicit none
@@ -44,22 +77,14 @@ contains
     real(kind=kind_real), intent(in) :: dt, ds, t0, s0, p, h
     real(kind=kind_real), intent(out) :: detas
     real(kind=kind_real) :: jac(2) 
-    real(kind=kind_real) :: rho0
-    real(kind=kind_real) :: drhods, drhodt, drhodp
 
-    integer :: k, N
-
-    detas = 0.0
-    rho0 = gsw_rho(s0,t0,p)
-    call gsw_rho_first_derivatives(s0,t0,p,drhods, drhodt, drhodp)
-    jac(1)=h*drhodt/rho0
-    jac(2)=h*drhods/rho0
+    call soca_steric_jacobian (jac, t0, s0, p, h)
     detas = jac(1)*dt + jac(2)*ds
 
-  end subroutine steric_tl
+  end subroutine soca_steric_tl
 
   !==========================================================================
-  subroutine steric_ad (detas, dt_ad, ds_ad, t0, s0, p, h)
+  subroutine soca_steric_ad (detas, dt_ad, ds_ad, t0, s0, p, h)
     !==========================================================================
     !
     ! Adjoint of sterictl relative to the trajectory t0, s0
@@ -80,29 +105,18 @@ contains
     !
     !--------------------------------------------------------------------------
 
-    use gsw_mod_toolbox, only : gsw_rho, gsw_rho_first_derivatives
-    use gsw_mod_kinds
     use kinds
 
     implicit none
 
-    real(kind=kind_real), intent(in) :: t0, s0, p, h
-    real(kind=kind_real), intent(in) :: detas
-    real (r8), intent(out) :: dt_ad, ds_ad
-
+    real(kind=kind_real), intent(in) :: t0, s0, p, h, detas
+    real (kind=kind_real),            intent(out) :: dt_ad, ds_ad
     real(kind=kind_real) :: jac(2) 
-    real (r8) :: rho0
-    real (r8) :: drhods, drhodt, drhodp
 
-    dt_ad = 0.0
-    ds_ad = 0.0    
-    rho0 = gsw_rho(s0,t0,p)
-    call gsw_rho_first_derivatives(s0,t0,p,drhods, drhodt, drhodp)
-    jac(1)=h*drhodt/rho0
-    jac(2)=h*drhods/rho0
-    dt_ad = dt_ad + jac(1)*detas
-    ds_ad = ds_ad + jac(2)*detas
+    call soca_steric_jacobian (jac, t0, s0, p, h)    
+    dt_ad = jac(1)*detas
+    ds_ad = jac(2)*detas
 
-  end subroutine steric_ad
-
+  end subroutine soca_steric_ad
+  
 end module soca_balanceop

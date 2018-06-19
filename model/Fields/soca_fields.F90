@@ -1092,7 +1092,6 @@ contains
           call fckit_log%info(record)          
 
        end select
-
        
        ! Allocate GeoVaLs (fields at locations)
        if (nval.eq.0) call abor1_ftn("Wrong nval: nval = 0")

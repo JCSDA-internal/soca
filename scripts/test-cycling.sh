@@ -14,20 +14,25 @@ cd ${SOCA_TEST}
 
 # Run 3DVAR
 #----------
-singularity exec ${JCSDA_SING} ${SOCA_BIN}/soca_3dvar.x ${SOCA_INPUT}/3dvar_test.yml
+#singularity exec ${JCSDA_SING} ${SOCA_BIN}/soca_3dvar.x ${SOCA_INPUT}/3dvar_test.yml
 
 # Put analysis in restart file
 #-----------------------------
 
-# Make copy of bkg and ana
+echo "Making copy of bkg and ana"
 cp ${SOCA_TEST}/INPUT/MOM.res.nc ${SOCA_TEST}/MOM-ana.res.nc
-cp ${SOCA_TEST}/Data/3dvar.an.2018-04-15T00\:00\:00Z.nc ${SOCA_TEST}/3DVAR.an.tmp.nc
+cp ${SOCA_TEST}/Data/3dvar.an.2018-04-15T00\:00\:00Z.nc ${SOCA_TEST}/3dvar.an.tmp.nc
 
-# Rename variable in ana file
-ncrename -v temp,Temp 3DVAR.an.tmp.nc
 
-# Dump Temp analysis into bkg restart file
-ncks -A -v Temp 3dvar.an.test.nc MOM-ana.res.nc
+echo "Rename variable in ana file"
+ncrename -v temp,Temp 3dvar.an.tmp.nc
+ncrename -v salt,Salt 3dvar.an.tmp.nc
+
+echo "Dump Temp analysis into bkg restart file"
+ncks -A -v Temp 3dvar.an.tmp.nc MOM-ana.res.nc
+ncks -A -v Salt 3dvar.an.tmp.nc MOM-ana.res.nc
+
+exit
 
 # Setup model
 #------------
@@ -42,14 +47,14 @@ mkdir ${SCRATCH}/INPUT
 mkdir ${SCRATCH}/RESTART
 cp ${SOCA_MODEL_RSC}/INPUT/ocean_hgrid.nc ${SCRATCH}/INPUT/
 cp ${SOCA_MODEL_RSC}/INPUT/topog.nc ${SCRATCH}/INPUT/
-cp MOM-ana.res.nc ${SCRATCH}/INPUT/
 cp ./INPUT/ice_model.res.nc ${SCRATCH}/INPUT/
 ln -s /home/gvernier/Sandboxes/MOM6-examples/ice_ocean_SIS2/SIS2/scratch/minscratch/INPUT/* ${SCRATCH}/INPUT/
 cp /home/gvernier/Sandboxes/MOM6-examples/ice_ocean_SIS2/SIS2/scratch/minscratch/MOM6 ${SCRATCH}
 
-
-#cp /home/gvernier/Sandboxes/MOM6-examples/ice_ocean_SIS2/SIS2/scratch
-#singularity exec ${JCSDA_SING} mpirun 
+# Get restart
+rm ${SCRATCH}/INPUT/MOM.res.nc
+cp ${SOCA_TEST}/MOM-ana.res.nc ${SCRATCH}/INPUT/MOM.res.nc
+cp ${SOCA_TEST}/INPUT/ice_model.res.nc ${SCRATCH}/INPUT/ice_model.res.nc
 
 # Start MOM6-SIS2
 #----------------
