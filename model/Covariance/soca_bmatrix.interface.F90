@@ -107,11 +107,16 @@ subroutine c_soca_b_mult(c_key_conf, c_key_in, c_key_out, c_key_traj) bind(c,nam
   integer :: ncat, k, iter
   character(len=128) :: filename='test-cov.nc'
 
+  print *,'111111111111111111'
+  
   call soca_3d_cov_registry%get(c_key_conf,conf)
+  print *,'222222222222222222222'
   call soca_field_registry%get(c_key_in,xin)
+  print *,'333333333333333333333'  
   call soca_field_registry%get(c_key_out,xout)
+  print *,'4444444444444444444444 c_key_traj:',c_key_traj
   call soca_field_registry%get(c_key_traj,traj)  
-
+  print *,'555555555555555555555555'
   call create(xtmp,xin)  
   call copy(xtmp,xin) ! xtmp = xin
 

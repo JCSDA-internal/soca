@@ -18,19 +18,27 @@ Variables:
 ModelBias: 
 Covariance:
   covariance: SocaError
-  sig_sic: 0.1
+  sig_sic: 0.5#.0001
   sig_sit: 250.0
-  sig_ssh: 0.2      
+  sig_ssh: 0.2
+  sig_tocn: 0.5
+  sig_socn: 0.0        
   date: '2018-04-15T00:00:00Z'  
 State:
-  filename: Data/truth.fc.2009-12-15T00:00:00Z.P16D
-  date: '2009-12-31T00:00:00Z'
+  read_from_file: 1
+  basename: "./INPUT/"
+  ocn_sfc_filename: MOM.res.nc
+  ocn_filename: MOM.res.nc
+  ice_filename: ice_model.res.nc
+  date: '2018-04-15T00:00:00Z'
+  #filename: Data/example.fc.2018-04-15T00:00:00Z.P1D.nc #truth.fc.2009-12-15T00:00:00Z.P16D
+  #date: '2018-04-15T00:00:00Z'
 LinearModel:
   version: IdTLM
   tstep: PT1H
 LinearModelTest:
   fclength: PT24H
-  testiterTL: '12'
+  testiterTL: '1'
   toleranceTL: '1.0e-6'
   toleranceAD: '1.0e-12'
 cost_function:

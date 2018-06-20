@@ -46,10 +46,11 @@ namespace soca {
   void ErrorCovariance::linearize(const State & traj, const Geometry & resol) {
     geom_.reset(new Geometry(resol));
   //traj: Trajectory used for the linearization of the balance operators. Changes at each outer-loops.
+    std::cout<< "in linearize" << std::endl;
     traj_ = & traj;
-    Log::debug() << std::endl <<"------ traj:" << traj_->fields().toFortran() << std::endl;
-    Log::debug() << std::endl <<"------ traj:" << traj_ << std::endl;            
-    //soca_b_linearize_f90(traj.fields().toFortran(), resol.toFortran());
+    //Log::debug() << std::endl <<"in linearize------ traj:" << traj_->fields().toFortran() << std::endl;
+    //Log::debug() << std::endl <<"------ traj:" << traj_ << std::endl;            
+    soca_b_linearize_f90(traj.fields().toFortran(), resol.toFortran());
   }
 
   // -----------------------------------------------------------------------------
@@ -61,10 +62,10 @@ namespace soca {
     Log::debug() << std::endl << "------- dxin" << dxin << std::endl;
     Log::debug() << std::endl <<"------ dxout" << dxout << std::endl;
     Log::debug() << std::endl <<"------ traj ---- :" << std::endl;
-    Log::debug() << std::endl <<"------ traj" << traj_->fields() << std::endl;
-    Log::debug() << std::endl <<"------ traj" << traj_->fields().toFortran() << std::endl;
-    soca_b_mult_f90(keyFtnConfig_, dxin.fields().toFortran(),
-    		    dxout.fields().toFortran(), traj_->fields().toFortran());
+    //Log::debug() << std::endl <<"------ traj" << traj_->fields() << std::endl;
+    //Log::debug() << std::endl <<"------ traj" << traj_->fields().toFortran() << std::endl;
+    //soca_b_mult_f90(keyFtnConfig_, dxin.fields().toFortran(),
+    // 		    dxout.fields().toFortran(), traj_->fields().toFortran());
   }
 
   // -----------------------------------------------------------------------------

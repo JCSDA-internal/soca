@@ -109,6 +109,7 @@ contains
     call zeros(self)
 
     if (self%nf>11) then
+       print *,'Number of fields:',self%nf
        call abor1_ftn ("soca_fields:create error number of fields")       
     endif
     allocate(self%fldnames(self%nf))
@@ -458,6 +459,7 @@ contains
     integer :: is, ie, js, je, ncat, nzo
     call check_resolution(fld1, fld2)
     if (fld1%nf /= fld2%nf .or. fld1%geom%ocean%nzo /= fld2%geom%ocean%nzo) then
+       print *,'STUFF:',fld1%nf,fld2%nf,fld1%geom%ocean%nzo, fld2%geom%ocean%nzo
        call abor1_ftn("soca_fields:field_prod error number of fields")
     endif
 

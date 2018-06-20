@@ -54,17 +54,13 @@ contains
 
   subroutine soca_3d_covar_setup(c_model, geom, config)
 
-    use soca_constants
     use soca_geom_mod
     use iso_c_binding
     use config_mod
-    use fft_mod
     use kinds
     use fckit_log_module, only : fckit_log
-    use soca_interph_mod
     use type_bump
     use type_nam
-    use mpi,              only : mpi_comm_world
     
     implicit none
     
@@ -101,59 +97,6 @@ contains
   end subroutine soca_3d_covar_delete
 
   ! ------------------------------------------------------------------------------
-  
-  subroutine soca_struct2unstruct(dx_struct, geom, dx_unstruct)
-    use soca_geom_mod
-
-    implicit none
-
-    real(kind=kind_real),intent(in)                :: dx_struct(:,:)
-    type(soca_geom), intent(in)                    :: geom    
-    real(kind=kind_real), allocatable, intent(out) :: dx_unstruct(:)
-
-    integer :: isc, iec, jsc, jec, jjj, jz, il, ib, nc0a
-
-    ! Indices for compute domain (no halo)
-    isc = geom%ocean%G%isc
-    iec = geom%ocean%G%iec
-    jsc = geom%ocean%G%jsc
-    jec = geom%ocean%G%jec
-    
-    nc0a = (iec - isc + 1) * (jec - jsc + 1 )
-    allocate(dx_unstruct(nc0a))
-    dx_unstruct = reshape( dx_struct(isc:iec, jsc:jec), (/nc0a/) )
-    
-  end subroutine soca_struct2unstruct
-
-  ! ------------------------------------------------------------------------------
-  
-  subroutine soca_unstruct2struct(dx_struct, geom, dx_unstruct)
-    use soca_geom_mod
-
-    implicit none
-
-    real(kind=kind_real),intent(inout)               :: dx_struct(:,:)
-    type(soca_geom), intent(in)                      :: geom    
-    real(kind=kind_real), allocatable, intent(inout) :: dx_unstruct(:)
-
-    integer :: isc, iec, jsc, jec, jjj, jz, il, ib, nc0a
-
-    ! Indices for compute domain (no halo)
-    isc = geom%ocean%G%isc
-    iec = geom%ocean%G%iec
-    jsc = geom%ocean%G%jsc
-    jec = geom%ocean%G%jec
-    
-    nc0a = (iec - isc + 1) * (jec - jsc + 1 )
-
-    dx_struct(isc:iec, jsc:jec) = reshape(dx_unstruct,(/size(dx_struct(isc:iec, jsc:jec),1),&
-                                                       &size(dx_struct(isc:iec, jsc:jec),2)/))
-
-    deallocate(dx_unstruct)
-    
-  end subroutine soca_unstruct2struct
-  
-  ! ------------------------------------------------------------------------------
 
   subroutine soca_3d_covar_C_mult(dx, Cdx, config)
     use iso_c_binding
@@ -167,6 +110,7 @@ contains
     type(soca_field), intent(in)           :: dx
     type(soca_field), intent(inout)        :: Cdx
     type(soca_3d_covar_config), intent(in) :: config !< covariance config structure
+
     type(bump_type), pointer            :: horiz_convol_p
     real(kind=kind_real), allocatable      :: tmp_incr(:)
     !Grid stuff
@@ -174,72 +118,58 @@ contains
     character(len=128) :: filename
 
     call copy(Cdx, dx)
-    print *,'Init bump'
+
+    ! Initialize BUMP and Associate horiz_convol_p 
     call soca_bump_correlation(dx%geom, horiz_convol_p)
-    print *,'Done init bump'
 
-!!$    call fms_io_init()
-!!$    filename='test-cov1.nc'
-!!$    call write_data( filename, "ssh", dx%ssh, dx%geom%ocean%G%Domain%mpp_domain)
-!!$    call fms_io_exit()
-!!$    print *,'wrote cov1 to file'
-!!$    read(*,*)
-
-    
+    ! Apply convolution to fields
     print *,'Apply nicas: ssh'
-    call soca_struct2unstruct(dx%ssh, dx%geom, tmp_incr)    
-    call horiz_convol_p%apply_nicas(tmp_incr)
-    call soca_unstruct2struct(Cdx%ssh, dx%geom, tmp_incr)
-
-!!$    call fms_io_init()
-!!$    filename='test-cov2.nc'
-!!$    call write_data( filename, "ssh", Cdx%ssh, dx%geom%ocean%G%Domain%mpp_domain)
-!!$    call fms_io_exit()
-!!$    print *,'wrote cov1 to file'
-!!$    read(*,*)
-
+    call soca_2d_convol(Cdx%ssh, horiz_convol_p, dx%geom)
     
     do icat = 1, dx%geom%ocean%ncat
-       print *,'Apply nicas: aice, hice, category:',icat       
-       call soca_struct2unstruct(dx%cicen(:,:,icat+1), dx%geom, tmp_incr)    
-       call horiz_convol_p%apply_nicas(tmp_incr)
-       call soca_unstruct2struct(Cdx%cicen(:,:,icat+1), dx%geom, tmp_incr)    
-
-       call soca_struct2unstruct(dx%hicen(:,:,icat), dx%geom, tmp_incr)    
-       call horiz_convol_p%apply_nicas(tmp_incr)
-       call soca_unstruct2struct(Cdx%hicen(:,:,icat), dx%geom, tmp_incr)    
+       print *,'Apply nicas: aice, hice, category:',icat
+       call soca_2d_convol(Cdx%cicen(:,:,icat+1), horiz_convol_p, dx%geom)
+       call soca_2d_convol(Cdx%hicen(:,:,icat), horiz_convol_p, dx%geom)       
     end do    
 
     do izo = 1,1!dx%geom%ocean%nzo
-       print *,'Apply nicas: tocn, socn, layer:',izo       
-       call soca_struct2unstruct(dx%tocn(:,:,izo), dx%geom, tmp_incr)    
-       call horiz_convol_p%apply_nicas(tmp_incr)
-       call soca_unstruct2struct(Cdx%tocn(:,:,izo), dx%geom, tmp_incr)    
-
-       call soca_struct2unstruct(dx%socn(:,:,izo), dx%geom, tmp_incr)    
-       call horiz_convol_p%apply_nicas(tmp_incr)
-       call soca_unstruct2struct(Cdx%socn(:,:,izo), dx%geom, tmp_incr)
+       print *,'Apply nicas: tocn, socn, layer:',izo
+       call soca_2d_convol(Cdx%tocn(:,:,izo), horiz_convol_p, dx%geom)
+       call soca_2d_convol(Cdx%socn(:,:,izo), horiz_convol_p, dx%geom)       
     end do    
 
   end subroutine soca_3d_covar_C_mult
 
   ! ------------------------------------------------------------------------------  
+  !> Adjoint of balance operators
   
   subroutine soca_3d_covar_K_mult_ad(dy, KTdy, traj)
-    use iso_c_binding
     use kinds
     use soca_fields
     use soca_balanceop
     use soca_seaice_balanceop
     
     implicit none
-    type(soca_field), intent(inout) :: KTdy     !< K^T dx
+    type(soca_field), intent(inout) :: KTdy     !< K^T dy
     type(soca_field), intent(in)    :: dy       !< Increment        
     type(soca_field), intent(in)    :: traj     !< trajectory    
 
-    !Grid stuff
+    ! Grid stuff
     integer :: isc, iec, jsc, jec, i, j, k
-    real(kind=kind_real) :: tb, sb, dt, ds,deta, z, p, h
+
+    ! Convenience variables
+    ! Adjoint of steric height: Inputs
+    real(kind=kind_real) :: tb   !< Background potential temperature [C]
+    real(kind=kind_real) :: sb   !< Background practical salinity [psu]
+    real(kind=kind_real) :: z    !< Mid-layer depth [m]
+    real(kind=kind_real) :: p    !< Pressure at mid-layer depth [dbar]
+    real(kind=kind_real) :: h    !< Layer thickness [m]
+    real(kind=kind_real) :: deta !< Sea surface height increment [m]
+    
+    ! Adjoint of steric height: Outputs 
+    real(kind=kind_real) :: dt   !< Potential temperature increment [C] 
+    real(kind=kind_real) :: ds   !< Practical salinity increment [psu]
+
     real(kind=kind_real), allocatable :: dcn(:), cnb(:)
 
     ! Indices for compute domain (no halo)
@@ -292,7 +222,6 @@ contains
   ! ------------------------------------------------------------------------------  
   
   subroutine soca_3d_covar_K_mult(dx, Kdx, traj)
-    use iso_c_binding
     use kinds
     use soca_fields
     use soca_balanceop
@@ -357,7 +286,6 @@ contains
   ! ------------------------------------------------------------------------------
   
   subroutine soca_3d_covar_D_mult(Ddx, traj, config)
-    use iso_c_binding
     use kinds
     use soca_fields
     use soca_interph_mod
@@ -392,7 +320,6 @@ contains
   ! ------------------------------------------------------------------------------
 
   subroutine soca_bump_correlation(geom, horiz_convol_p, destruct)
-    use soca_interph_mod
     use soca_geom_mod
     use type_bump
     use type_nam
@@ -488,7 +415,7 @@ contains
        horiz_convol%nam%nrep =  2
        horiz_convol%nam%nc3 = 10
        
-       horiz_convol%nam%dc = 300.0e3
+       horiz_convol%nam%dc = 3000.0e3
        horiz_convol%nam%nl0r = 1
 
        horiz_convol%nam%gau_approx = .false.
@@ -512,7 +439,7 @@ contains
 
        allocate(rh(nc0a,nl0,nv,nts))
        allocate(rv(nc0a,nl0,nv,nts))
-       rh=300.0e3
+       rh=3000.0e3
        rv=1.0
 
        call cpu_time(start)
@@ -526,8 +453,82 @@ contains
        deallocate(rh,rv)       
     end if
     horiz_convol_p => horiz_convol
-
     
   end subroutine soca_bump_correlation
 
+  ! ------------------------------------------------------------------------------
+
+  subroutine soca_2d_convol(dx, horiz_convol_p, geom)
+
+    use soca_geom_mod
+    use kinds
+    use type_bump
+    
+    implicit none
+    real(kind=kind_real),     intent(inout) :: dx(:,:)
+    type(bump_type),             intent(in) :: horiz_convol_p    
+    type(soca_geom),             intent(in) :: geom        
+
+    real(kind=kind_real), allocatable :: tmp_incr(:)
+
+    ! Apply 2D convolution
+    call soca_struct2unstruct(dx(:,:), geom, tmp_incr)    
+    call horiz_convol_p%apply_nicas(tmp_incr)
+    call soca_unstruct2struct(dx(:,:), geom, tmp_incr)    
+    
+  end subroutine soca_2d_convol
+
+  ! ------------------------------------------------------------------------------
+  
+  subroutine soca_struct2unstruct(dx_struct, geom, dx_unstruct)
+    use soca_geom_mod
+
+    implicit none
+
+    real(kind=kind_real),intent(in)                :: dx_struct(:,:)
+    type(soca_geom), intent(in)                    :: geom    
+    real(kind=kind_real), allocatable, intent(out) :: dx_unstruct(:)
+
+    integer :: isc, iec, jsc, jec, jjj, jz, il, ib, nc0a
+
+    ! Indices for compute domain (no halo)
+    isc = geom%ocean%G%isc
+    iec = geom%ocean%G%iec
+    jsc = geom%ocean%G%jsc
+    jec = geom%ocean%G%jec
+    
+    nc0a = (iec - isc + 1) * (jec - jsc + 1 )
+    allocate(dx_unstruct(nc0a))
+    dx_unstruct = reshape( dx_struct(isc:iec, jsc:jec), (/nc0a/) )
+    
+  end subroutine soca_struct2unstruct
+
+  ! ------------------------------------------------------------------------------
+  
+  subroutine soca_unstruct2struct(dx_struct, geom, dx_unstruct)
+    use soca_geom_mod
+
+    implicit none
+
+    real(kind=kind_real),intent(inout)               :: dx_struct(:,:)
+    type(soca_geom), intent(in)                      :: geom    
+    real(kind=kind_real), allocatable, intent(inout) :: dx_unstruct(:)
+
+    integer :: isc, iec, jsc, jec, jjj, jz, il, ib, nc0a
+
+    ! Indices for compute domain (no halo)
+    isc = geom%ocean%G%isc
+    iec = geom%ocean%G%iec
+    jsc = geom%ocean%G%jsc
+    jec = geom%ocean%G%jec
+    
+    nc0a = (iec - isc + 1) * (jec - jsc + 1 )
+
+    dx_struct(isc:iec, jsc:jec) = reshape(dx_unstruct,(/size(dx_struct(isc:iec, jsc:jec),1),&
+                                                       &size(dx_struct(isc:iec, jsc:jec),2)/))
+
+    deallocate(dx_unstruct)
+    
+  end subroutine soca_unstruct2struct
+  
 end module soca_covariance_mod

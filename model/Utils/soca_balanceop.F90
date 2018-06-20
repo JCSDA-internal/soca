@@ -45,7 +45,7 @@ contains
     call gsw_rho_first_derivatives(s,t,p,drhods, drhodt, drhodp)
     jac(1)=-h*drhodt/rho0
     jac(2)=-h*drhods/rho0
-emaq     !jac(3)=(rho-rho0)/rho0 !=detas/dh 
+     !jac(3)=(rho-rho0)/rho0 !=detas/dh 
     
   end subroutine soca_steric_jacobian
 
