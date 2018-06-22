@@ -715,6 +715,8 @@ contains
 
 
     call check(fld)
+
+    !call geom_infotofile(fld%geom)
     
     filename = genfilename(c_conf,max_string_length,vdate)    
     WRITE(buf,*) 'field:write_file: writing '//filename
@@ -725,7 +727,8 @@ contains
     do ii = 1, fld%nf
        select case(fld%fldnames(ii))
        case ('ssh')
-          call write_data( filename, "ssh", fld%ssh, fld%geom%ocean%G%Domain%mpp_domain)              
+          call write_data( filename, "ssh", fld%ssh, fld%geom%ocean%G%Domain%mpp_domain)
+          call write_data( filename, "rossby_radius", fld%geom%ocean%rossby_radius, fld%geom%ocean%G%Domain%mpp_domain)          
        case ('tocn')
           call write_data( filename, "temp", fld%tocn, fld%geom%ocean%G%Domain%mpp_domain)          
        case ('socn')

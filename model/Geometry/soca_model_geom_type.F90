@@ -14,7 +14,8 @@ module soca_model_geom_type
 
   implicit none
   private
-
+  public :: geom_infotofile
+  
   type, public :: soca_model_geom
      type(ocean_grid_type)            :: G     !< Ocean/sea-ice horizontal grid
      type(VerticalGrid_type), pointer :: GV    !< Ocean vertical grid
@@ -32,16 +33,22 @@ module soca_model_geom_type
      real(kind=kind_real), allocatable, dimension(:)   :: z           !<      
      real(kind=kind_real), allocatable, dimension(:,:) :: mask2d    !< 0 = land 1 = ocean surface mask only
      real(kind=kind_real), allocatable, dimension(:,:) :: cell_area !<
+     real(kind=kind_real), allocatable, dimension(:,:) :: rossby_radius !<     
    contains
      procedure :: init => geom_init
      procedure :: end => geom_end     
      procedure :: shortcuts => geom_associate     
      procedure :: clone => geom_clone
      procedure :: print => geom_print
+     procedure :: get_rossby_radius => geom_rossby_radius
      procedure :: infotofile => geom_infotofile
   end type soca_model_geom
 
+  ! ------------------------------------------------------------------------------
 contains
+  ! ------------------------------------------------------------------------------
+
+  ! ------------------------------------------------------------------------------
 
   subroutine geom_init(self)
     
@@ -67,10 +74,13 @@ contains
     if (allocated(self%lon)) deallocate(self%lon)
     if (allocated(self%lat)) deallocate(self%lat)
     if (allocated(self%mask2d)) deallocate(self%mask2d)
-    if (allocated(self%cell_area)) deallocate(self%cell_area)    
+    if (allocated(self%cell_area)) deallocate(self%cell_area)
+    if (allocated(self%rossby_radius)) deallocate(self%rossby_radius)    
     
   end subroutine geom_end
-    
+
+  ! ------------------------------------------------------------------------------
+  
   subroutine geom_clone(self, other)
 
     implicit none
@@ -84,6 +94,8 @@ contains
     
   end subroutine geom_clone
 
+  ! ------------------------------------------------------------------------------
+  
   subroutine geom_associate(self)
 
     implicit none
@@ -116,6 +128,7 @@ contains
     allocate(self%lat(isd:ied,jsd:jed))    
     allocate(self%mask2d(isd:ied,jsd:jed))
     allocate(self%cell_area(isd:ied,jsd:jed))
+    allocate(self%rossby_radius(isd:ied,jsd:jed))
     
 !!$    allocate(self%lon(nx, ny))
 !!$    allocate(self%lat(nx, ny))
@@ -138,6 +151,8 @@ contains
     
   end subroutine geom_associate
 
+  ! ------------------------------------------------------------------------------
+
   subroutine geom_print(self)
 
     implicit none
@@ -148,6 +163,82 @@ contains
     print *, 'ny=', self%ny    
 
   end subroutine geom_print
+
+  ! ------------------------------------------------------------------------------
+
+  subroutine geom_rossby_radius(self)
+    use kinds
+    use type_kdtree, only: kdtree_type
+    use tools_const, only: pi,req,deg2rad,rad2deg
+    use fms_mod,         only : get_mosaic_tile_grid, write_data, set_domain
+    use fms_io_mod,      only : fms_io_init, fms_io_exit
+
+    implicit none
+
+    class(soca_model_geom), intent(inout) :: self
+
+    integer :: unit, i, j, n
+    real(kind=kind_real), allocatable :: lon(:),lat(:),rr(:)
+    logical, allocatable :: mask(:)    
+    type(kdtree_type) :: kdtree
+    real(kind=kind_real) :: dum, dist(1),lonm(1),latm(1)
+    integer :: isc, iec, jsc, jec
+    integer :: index(1), nn, io
+    character(len=256) :: geom_output_file = "geom_output.nc"
+    
+    unit = 20
+    open(unit=unit,file="rossrad.dat",status="old",action="read")
+    n = 0
+    do
+       read(unit,*,iostat=io)
+       if (io/=0) exit
+       n = n+1
+    end do
+    rewind(unit)
+    allocate(lon(n),lat(n),rr(n),mask(n))
+    do i = 1, n
+       read(unit,*) lat(i),lon(i),dum,rr(i)
+    end do
+    close(unit)
+
+    !--- Initialize kd-tree
+    mask=.true.
+    where (lon>180.0)
+       lon=lon-360.0
+    end where
+    lon=deg2rad*reshape(lon,(/n/))
+    lat=deg2rad*reshape(lat,(/n/))
+
+    call kdtree%create(n,lon,lat,mask)
+
+    !--- Find nearest neighbor    
+    isc   = self%G%isc
+    iec   = self%G%iec
+    jsc   = self%G%jsc
+    jec   = self%G%jec
+
+    nn=1 ! Num neighbors
+    do i = isc, iec
+       do j = jsc, jec
+          lonm=self%lon(i,j)
+          if (lonm(1)>180.0) lonm=lonm-360.0
+          lonm=deg2rad*lonm
+          latm(1)=deg2rad*self%lat(i,j)          
+          call kdtree%find_nearest_neighbors(lonm(1),&
+                                            &latm(1),&
+                                            &nn,index,dist)
+          self%rossby_radius(i,j)=rr(index(1))*1e3
+       end do
+    end do
+
+    call fms_io_init()
+    call write_data( geom_output_file, "rossby_radius", self%rossby_radius*self%mask2d, self%G%Domain%mpp_domain)    
+    !call write_data( geom_output_file, "mask2d", self%mask2d, self%G%Domain%mpp_domain)
+    call fms_io_exit()
+    
+  end subroutine geom_rossby_radius
+
+  ! ------------------------------------------------------------------------------
   
   subroutine geom_infotofile(self)
 
@@ -164,7 +255,8 @@ contains
     call write_data( geom_output_file, "lat", self%lat, self%G%Domain%mpp_domain)
     call write_data( geom_output_file, "z", self%z, self%G%Domain%mpp_domain)
     call write_data( geom_output_file, "area", self%cell_area, self%G%Domain%mpp_domain)
-    call write_data( geom_output_file, "mask2d", self%mask2d, self%G%Domain%mpp_domain)        
+    call write_data( geom_output_file, "rossby_radius", self%rossby_radius, self%G%Domain%mpp_domain)    
+    call write_data( geom_output_file, "mask2d", self%mask2d, self%G%Domain%mpp_domain)
     call fms_io_exit()    
     
   end subroutine geom_infotofile

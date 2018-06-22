@@ -26,7 +26,7 @@ module soca_covariance_mod
      real(kind=kind_real) :: sig_socn     !<          
      character(len=800)   :: D_filename  !< Netcdf file containing
                                          !< the diagonal matrix of standard deviation for
-                                         !< all the fields
+     !< all the fields
   end type soca_3d_covar_config
 
 #define LISTED_TYPE soca_3d_covar_config
@@ -76,6 +76,9 @@ contains
     config%sig_tocn     = config_get_real(c_model,"sig_tocn")
     config%sig_socn     = config_get_real(c_model,"sig_socn")        
 
+    !< Read Rossby radius from file and map into grid 
+    
+    !< Initialize bump
     call soca_bump_correlation(geom, horiz_convol_p)
     
   end subroutine soca_3d_covar_setup
@@ -98,44 +101,38 @@ contains
 
   ! ------------------------------------------------------------------------------
 
-  subroutine soca_3d_covar_C_mult(dx, Cdx, config)
+  subroutine soca_3d_covar_C_mult(dx, config)
     use iso_c_binding
     use kinds
     use soca_fields
     use type_bump
-    use fms_mod,                 only: read_data, write_data, set_domain
-    use fms_io_mod,                only : fms_io_init, fms_io_exit
     
     implicit none
-    type(soca_field), intent(in)           :: dx
-    type(soca_field), intent(inout)        :: Cdx
+
+    type(soca_field),        intent(inout) :: dx     !< Input: Increment
+                                                     !< Output: C dx
     type(soca_3d_covar_config), intent(in) :: config !< covariance config structure
 
-    type(bump_type), pointer            :: horiz_convol_p
-    real(kind=kind_real), allocatable      :: tmp_incr(:)
-    !Grid stuff
-    integer :: isc, iec, jsc, jec, jjj, jz, il, ib, nc0a, icat, izo
-    character(len=128) :: filename
-
-    call copy(Cdx, dx)
-
+    type(bump_type), pointer          :: horiz_convol_p
+    integer :: icat, izo
+    
     ! Initialize BUMP and Associate horiz_convol_p 
     call soca_bump_correlation(dx%geom, horiz_convol_p)
 
     ! Apply convolution to fields
     print *,'Apply nicas: ssh'
-    call soca_2d_convol(Cdx%ssh, horiz_convol_p, dx%geom)
+    call soca_2d_convol(dx%ssh, horiz_convol_p, dx%geom)
     
     do icat = 1, dx%geom%ocean%ncat
        print *,'Apply nicas: aice, hice, category:',icat
-       call soca_2d_convol(Cdx%cicen(:,:,icat+1), horiz_convol_p, dx%geom)
-       call soca_2d_convol(Cdx%hicen(:,:,icat), horiz_convol_p, dx%geom)       
+       call soca_2d_convol(dx%cicen(:,:,icat+1), horiz_convol_p, dx%geom)
+       call soca_2d_convol(dx%hicen(:,:,icat), horiz_convol_p, dx%geom)       
     end do    
 
-    do izo = 1,1!dx%geom%ocean%nzo
+    do izo = 1,dx%geom%ocean%nzo
        print *,'Apply nicas: tocn, socn, layer:',izo
-       call soca_2d_convol(Cdx%tocn(:,:,izo), horiz_convol_p, dx%geom)
-       call soca_2d_convol(Cdx%socn(:,:,izo), horiz_convol_p, dx%geom)       
+       call soca_2d_convol(dx%tocn(:,:,izo), horiz_convol_p, dx%geom)
+       call soca_2d_convol(dx%socn(:,:,izo), horiz_convol_p, dx%geom)       
     end do    
 
   end subroutine soca_3d_covar_C_mult
@@ -143,15 +140,16 @@ contains
   ! ------------------------------------------------------------------------------  
   !> Adjoint of balance operators
   
-  subroutine soca_3d_covar_K_mult_ad(dy, KTdy, traj)
+  subroutine soca_3d_covar_K_mult_ad(dy, traj)
     use kinds
     use soca_fields
     use soca_balanceop
     use soca_seaice_balanceop
     
     implicit none
-    type(soca_field), intent(inout) :: KTdy     !< K^T dy
-    type(soca_field), intent(in)    :: dy       !< Increment        
+    !type(soca_field), intent(inout) :: KTdy     !< K^T dy
+    type(soca_field), intent(inout) :: dy       !< Input:Increment
+                                                !< Input:K^T dy
     type(soca_field), intent(in)    :: traj     !< trajectory    
 
     ! Grid stuff
@@ -178,8 +176,6 @@ contains
     jsc = traj%geom%ocean%G%jsc
     jec = traj%geom%ocean%G%jec
 
-    call copy(KTdy,dy)
-
     ! Steric height/density balance
     do i = isc, iec
        do j = jsc, jec
@@ -195,8 +191,8 @@ contains
              p=z
              deta=dy%ssh(i,j)
              call soca_steric_ad(deta, dt, ds, tb, sb, p, h)
-             KTdy%tocn(i,j,k)=KTdy%tocn(i,j,k)+dt
-             KTdy%socn(i,j,k)=KTdy%socn(i,j,k)+ds
+             dy%tocn(i,j,k)=dy%tocn(i,j,k)+dt
+             dy%socn(i,j,k)=dy%socn(i,j,k)+ds
           end do
        end do
     end do
@@ -210,7 +206,7 @@ contains
           cnb=traj%cicen(i,j,2:)
           call tofc_ad (dt, dcn, tb, sb, cnb)
           do k = 1, traj%geom%ocean%ncat
-             KTdy%cicen(i,j,k+1)=KTdy%cicen(i,j,k+1)+dcn(k)
+             dy%cicen(i,j,k+1)=dy%cicen(i,j,k+1)+dcn(k)
           end do
        end do
     end do
@@ -221,16 +217,15 @@ contains
 
   ! ------------------------------------------------------------------------------  
   
-  subroutine soca_3d_covar_K_mult(dx, Kdx, traj)
+  subroutine soca_3d_covar_K_mult(dx, traj)
     use kinds
     use soca_fields
     use soca_balanceop
     use soca_seaice_balanceop
     
     implicit none
-    type(soca_field), intent(inout) :: Kdx      !< K dx
-    type(soca_field), intent(in)    :: dx       !< Increment            
-    type(soca_field), intent(in)    :: traj     !< trajectory    
+    type(soca_field), intent(in) :: dx       !< Increment            
+    type(soca_field), intent(in) :: traj     !< trajectory    
 
     !Grid stuff
     integer :: isc, iec, jsc, jec, i, j, k
@@ -242,8 +237,6 @@ contains
     iec = traj%geom%ocean%G%iec
     jsc = traj%geom%ocean%G%jsc
     jec = traj%geom%ocean%G%jec
-
-    call copy(Kdx,dx)
 
     ! Steric height/density balance
     do i = isc, iec
@@ -261,7 +254,7 @@ contains
              h=traj%hocn(i,j,k)
              p=z
              call soca_steric_tl(deta, dt, ds, tb, sb, p, h)
-             Kdx%ssh(i,j)=Kdx%ssh(i,j)+deta    
+             dx%ssh(i,j)=dx%ssh(i,j)+deta    
           end do
        end do
     end do
@@ -275,7 +268,7 @@ contains
           cnb=traj%cicen(i,j,2:)
           dcn=dx%cicen(i,j,2:)          
           call tofc_tl (dt, dcn, tb, sb, cnb)
-          Kdx%tocn(i,j,1)=Kdx%tocn(i,j,1)+dt
+          dx%tocn(i,j,1)=dx%tocn(i,j,1)+dt
        end do
     end do
 
@@ -285,7 +278,7 @@ contains
 
   ! ------------------------------------------------------------------------------
   
-  subroutine soca_3d_covar_D_mult(Ddx, traj, config)
+  subroutine soca_3d_covar_D_mult(dx, traj, config)
     use kinds
     use soca_fields
     use soca_interph_mod
@@ -293,27 +286,17 @@ contains
     use fms_io_mod,                only : fms_io_init, fms_io_exit
     
     implicit none
-    type(soca_field), intent(inout)        :: Ddx      !< D applied to dx
+    type(soca_field), intent(inout)        :: dx     !< Input:  Increment
+                                                     !< Output: D applied to dx
     type(soca_field), intent(in)           :: traj     !< trajectory   
     type(soca_3d_covar_config), intent(in) :: config   !< covariance config structure
-    type(soca_field)    :: sig_cicen                   !< D applied to dx
 
-    !call create_copy(sig_cicen,Ddx)
-    !call fms_io_init()
-    !call read_data('std.nc', 'cicen', sig_cicen%AOGCM%Ice%part_size, domain=Ddx%geom%ocean%G%Domain%mpp_domain)
-    !call fms_io_exit()
-
-    !Ddx%cicen=1.0Ddx%cicen+0.01
-
-    ! A "bit" of a hack!!!
-    !sig_cicen%cicen=exp( -((0.15-traj%cicen)/0.1)**2 )
-    !sig_cicen%cicen=exp( -((0.15-traj%cicen)    
-    
-    Ddx%cicen=config%sig_sic*Ddx%cicen
-    Ddx%hicen=config%sig_sit*Ddx%hicen
-    Ddx%ssh=config%sig_ssh*Ddx%ssh
-    Ddx%tocn=config%sig_tocn*Ddx%tocn
-    Ddx%socn=config%sig_socn*Ddx%socn
+    !!!!!!!! Need to get D from file !!!!!!!!!!!!!!!
+    dx%cicen=config%sig_sic*dx%cicen
+    dx%hicen=config%sig_sit*dx%hicen
+    dx%ssh=config%sig_ssh*dx%ssh
+    dx%tocn=config%sig_tocn*dx%tocn
+    dx%socn=config%sig_socn*dx%socn
 
   end subroutine soca_3d_covar_D_mult
 
@@ -340,6 +323,7 @@ contains
     !bump stuff
     integer :: nc0a, nl0, nv, nts
     real(kind=kind_real), allocatable :: lon(:), lat(:), area(:), vunit(:,:)
+    real(kind=kind_real), allocatable :: rosrad(:)    
     logical, allocatable :: lmask(:,:)
     integer, allocatable :: imask(:,:)    
     type(nam_type) :: nam
@@ -371,13 +355,15 @@ contains
        nts = 1                                    !< Number of time slots
        nc0a = (iec - isc + 1) * (jec - jsc + 1 )  !< Total number of grid cells in the compute domain
 
-       allocate( lon(nc0a), lat(nc0a), area(nc0a) )
+       allocate( lon(nc0a), lat(nc0a), area(nc0a), rosrad(nc0a) )
        allocate( vunit(nc0a,nl0) )
        allocate( imask(nc0a, nl0), lmask(nc0a, nl0) )
-
+       
        lon = reshape( geom%ocean%lon(isc:iec, jsc:jec), (/nc0a/) )
        lat = reshape( geom%ocean%lat(isc:iec, jsc:jec), (/nc0a/) )        
        area = reshape( geom%ocean%cell_area(isc:iec, jsc:jec), (/nc0a/) )
+       rosrad = reshape( geom%ocean%rossby_radius(isc:iec, jsc:jec), (/nc0a/) )
+
        do jz = 1, nl0       
           vunit(:,jz) = real(jz)
           imask(1:nc0a,jz) = reshape( geom%ocean%mask2d(isc:iec, jsc:jec), (/nc0a/) )
@@ -439,7 +425,11 @@ contains
 
        allocate(rh(nc0a,nl0,nv,nts))
        allocate(rv(nc0a,nl0,nv,nts))
-       rh=3000.0e3
+
+       do jjj=1,nc0a
+          rh(jjj,1,1,1)=10.0*rosrad(jjj)
+       end do
+       !rh=3000.0e3
        rv=1.0
 
        call cpu_time(start)

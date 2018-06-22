@@ -53,6 +53,7 @@ contains
 
     call self%ocean%init() 
     !call self%ocean%infotofile()
+    call self%ocean%get_rossby_radius()
     
   end subroutine c_soca_geo_setup
 
@@ -71,7 +72,7 @@ contains
     call soca_geom_registry%get(c_key_self , self )
 
     call self%ocean%clone(other%ocean)
-
+    
   end subroutine c_soca_geo_clone
 
   ! ------------------------------------------------------------------------------

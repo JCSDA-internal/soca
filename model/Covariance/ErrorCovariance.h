@@ -45,15 +45,11 @@ namespace soca {
       void inverseMultiply(const Increment &, Increment &) const;
       void randomize(Increment &) const;
 
-      /// Access to trajectory
-      //Fields & fields() {return *fields_;}
-      //const Fields & fields() const {return *fields_;}
-      
   private:
       void print(std::ostream &) const;
       int keyFtnConfig_;
       boost::scoped_ptr<const Geometry> geom_;
-      const State * traj_;     
+      boost::scoped_ptr<const State> traj_;
       util::DateTime time_;
     };
   // -----------------------------------------------------------------------------

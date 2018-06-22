@@ -110,7 +110,7 @@ contains
     implicit none
 
     real(kind=kind_real), intent(in) :: t0, s0, p, h, detas
-    real (kind=kind_real),            intent(out) :: dt_ad, ds_ad
+    real(kind=kind_real),            intent(out) :: dt_ad, ds_ad
     real(kind=kind_real) :: jac(2) 
 
     call soca_steric_jacobian (jac, t0, s0, p, h)    
@@ -118,5 +118,5 @@ contains
     ds_ad = jac(2)*detas
 
   end subroutine soca_steric_ad
-  
+
 end module soca_balanceop

@@ -18,9 +18,10 @@ subroutine c_soca_b_setup(c_key_self, c_conf, c_key_geom) &
   use soca_geom_mod
 
   implicit none
-  integer(c_int), intent(inout) :: c_key_self   !< The background covariance structure
-  type(c_ptr), intent(in)    :: c_conf     !< The configuration
-  integer(c_int), intent(in) :: c_key_geom !< Geometry
+  integer(c_int), intent(inout) :: c_key_self !< The background covariance structure
+  type(c_ptr), intent(in)    :: c_conf        !< The configuration
+  integer(c_int), intent(in) :: c_key_geom    !< Geometry
+  
   type(soca_3d_covar_config), pointer :: self
   type(soca_geom),  pointer :: geom
 
@@ -63,8 +64,9 @@ subroutine c_soca_b_inv_mult(c_key_conf, c_key_in, c_key_out) bind(c,name='soca_
 
   implicit none
   integer(c_int), intent(in) :: c_key_conf  !< covar config structure
-  integer(c_int), intent(in) :: c_key_in    !< Streamfunction: psi
-  integer(c_int), intent(in) :: c_key_out   !< Streamfunction: psi
+  integer(c_int), intent(in) :: c_key_in    !<
+  integer(c_int), intent(in) :: c_key_out   !<
+  
   type(soca_3d_covar_config), pointer :: conf
   type(soca_field), pointer :: xin
   type(soca_field), pointer :: xout
@@ -83,65 +85,46 @@ end subroutine c_soca_b_inv_mult
 !> Multiply by covariance
 
 subroutine c_soca_b_mult(c_key_conf, c_key_in, c_key_out, c_key_traj) bind(c,name='soca_b_mult_f90')
-  ! xout = K D C^1/2 C^1/2^T D K xin 
+  !> xout = K D C^1/2 C^1/2^T D K^T xin 
   use iso_c_binding
   use soca_covariance_mod
   use soca_fields
   use kinds
   use soca_Butils
-  use fms_mod,                 only: read_data, write_data, set_domain
-  use fms_io_mod,              only : fms_io_init, fms_io_exit
   
   implicit none
-  integer(c_int), intent(in) :: c_key_conf  !< 
-  integer(c_int), intent(in) :: c_key_in    !< 
-  integer(c_int), intent(in) :: c_key_out   !< 
-  integer(c_int), intent(in) :: c_key_traj  !< 
+  integer(c_int), intent(in) :: c_key_conf  !< Handle to covariance configuration 
+  integer(c_int), intent(in) :: c_key_in    !<    "   to Increment in
+  integer(c_int), intent(in) :: c_key_out   !<    "   to Increment out 
+  integer(c_int), intent(in) :: c_key_traj  !<    "   to trajectory
+
   type(soca_3d_covar_config), pointer :: conf
   type(soca_field), pointer :: xin
   type(soca_field), pointer :: xout
   type(soca_field), pointer :: traj  
   type(soca_field)          :: xtmp
-  type(soca_field)          :: xtmp2
 
-  integer :: ncat, k, iter
-  character(len=128) :: filename='test-cov.nc'
-
-  print *,'111111111111111111'
-  
   call soca_3d_cov_registry%get(c_key_conf,conf)
-  print *,'222222222222222222222'
   call soca_field_registry%get(c_key_in,xin)
-  print *,'333333333333333333333'  
   call soca_field_registry%get(c_key_out,xout)
-  print *,'4444444444444444444444 c_key_traj:',c_key_traj
   call soca_field_registry%get(c_key_traj,traj)  
-  print *,'555555555555555555555555'
-  call create(xtmp,xin)  
-  call copy(xtmp,xin) ! xtmp = xin
 
-  call soca_3d_covar_K_mult_ad(xin,xtmp, traj)  ! xtmp = K^T.xtmp
-  call soca_3d_covar_D_mult(xtmp, traj, conf)   ! xtmp = D.xtmp
-  !call copy(xout,xtmp)
-  call soca_3d_covar_C_mult(xtmp,xout,conf)     ! xout = C.xtmp
-  call copy(xtmp,xout)                          ! xtmp = xout
-  call soca_3d_covar_D_mult(xtmp, traj, conf)         ! xtmp = D.xtmp  
-  call soca_3d_covar_K_mult(xtmp, xout, traj)   ! xout = K.xtmp
-  !call copy(xout,xtmp)
+  call create(xtmp,xin)  
+  call copy(xtmp,xin)                         !< xtmp = xin
+
+  call soca_3d_covar_K_mult_ad(xtmp, traj)    !< xtmp = K^T.xtmp
+  call soca_3d_covar_D_mult(xtmp, traj, conf) !< xtmp = D.xtmp
+  call soca_3d_covar_C_mult(xtmp,conf)        !< xtmp = C.xtmp
+  call soca_3d_covar_D_mult(xtmp, traj, conf) !< xtmp = D.xtmp  
+  call soca_3d_covar_K_mult(xtmp, traj)       !< xtmp = K.xtmp
+  call copy(xout,xtmp)                        !< xout = xtmp
   call delete(xtmp)
 
-!!$  call fms_io_init()
-!!$  call write_data( filename, "ssh", xout%ssh, xout%geom%ocean%G%Domain%mpp_domain)
-!!$  call fms_io_exit()
-!!$  print *,'wrote cov to file'
-!!$  read(*,*)
-
-  
 end subroutine c_soca_b_mult
 
 ! ------------------------------------------------------------------------------
 
-!> Multiply by covariance
+!> Setup linearization parameters (traj, ...)
 
 subroutine c_soca_b_linearize(c_key_self, c_key_geom) bind(c,name='soca_b_linearize_f90')
 
@@ -153,13 +136,16 @@ subroutine c_soca_b_linearize(c_key_self, c_key_geom) bind(c,name='soca_b_linear
   implicit none
 
   integer(c_int), intent(inout) :: c_key_self   !< The trajectory covariance structure
-  integer(c_int), intent(in) :: c_key_geom !< Geometry
-  type(soca_field), pointer  :: self  !< Trajectory
+  integer(c_int), intent(in)    :: c_key_geom   !< Geometry
+
+  type(soca_field), pointer  :: self       !< Trajectory
   type(soca_geom),  pointer  :: geom
 
   call soca_geom_registry%get(c_key_geom, geom)
   call soca_field_registry%get(c_key_self, self)
 
+  !Do nothing
+  
 end subroutine c_soca_b_linearize
 
 ! ------------------------------------------------------------------------------
@@ -179,23 +165,15 @@ subroutine c_soca_b_randomize(c_key_conf, c_key_out) bind(c,name='soca_b_randomi
   integer(c_int), intent(in) :: c_key_out   !< Randomized increment
   type(soca_3d_covar_config), pointer :: conf
   type(soca_field), pointer :: xout
-  real(kind=kind_real) :: prms ! Control vector
-  !real(kind=kind_real), allocatable :: xctl(:,:,:) ! Control vector
+  real(kind=kind_real) :: prms
 
   call soca_3d_cov_registry%get(c_key_conf,conf)
   call soca_field_registry%get(c_key_out,xout)
 
-  !allocate(xctl(conf%nx, conf%ny, 2))
 
-  !call random_vector(xctl(:,:,:))
-  !call zeros(xout)
   call ones(xout)
   call random(xout)
   call fldrms(xout, prms)
-
-  !call soca_3d_covar_sqrt_mult(conf%nx,conf%ny,xout,xctl,conf)
-
-  !deallocate(xctl)
 
 end subroutine c_soca_b_randomize
 

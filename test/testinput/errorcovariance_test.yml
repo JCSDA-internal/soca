@@ -30,4 +30,4 @@ Covariance:
   sig_socn: 0.0
   date: '2018-04-15T00:00:00Z'
 CovarianceTest:
-  tolerance: '0.01'
+  tolerance: 1e-7
