@@ -56,7 +56,7 @@ call soca_3d_cov_registry%init()
 call soca_3d_cov_registry%add(c_key_conf)
 call soca_3d_cov_registry%get(c_key_conf, conf)
 call soca_geom_registry%get(c_key_geom, geom)
-call soca_3d_covar_setup(c_model, geom, conf)
+!call soca_3d_covar_setup(c_model, geom, conf)
 
 return
 end subroutine soca_localization_setup

@@ -10,27 +10,31 @@
 
 !> Setup for the SOCA model's background error covariance matrix
 
-subroutine c_soca_b_setup(c_key_self, c_conf, c_key_geom) &
+subroutine c_soca_b_setup(c_key_self, c_conf, c_key_geom, c_key_bkg) &
      & bind (c,name='soca_b_setup_f90')
 
   use iso_c_binding
   use soca_covariance_mod
   use soca_geom_mod
+  use soca_fields
 
   implicit none
-  integer(c_int), intent(inout) :: c_key_self !< The background covariance structure
-  type(c_ptr), intent(in)    :: c_conf        !< The configuration
-  integer(c_int), intent(in) :: c_key_geom    !< Geometry
+  integer(c_int), intent(inout) :: c_key_self   !< The background covariance structure
+  type(c_ptr),       intent(in) :: c_conf        !< The configuration
+  integer(c_int),    intent(in) :: c_key_geom    !< Geometry
+  integer(c_int),    intent(in) :: c_key_bkg     !< Background  
   
   type(soca_3d_covar_config), pointer :: self
-  type(soca_geom),  pointer :: geom
+  type(soca_geom),            pointer :: geom
+  type(soca_field),           pointer :: bkg
 
   call soca_geom_registry%get(c_key_geom, geom)
   call soca_3d_cov_registry%init()
   call soca_3d_cov_registry%add(c_key_self)
   call soca_3d_cov_registry%get(c_key_self, self)
+  call soca_field_registry%get(c_key_bkg,bkg)
 
-  call soca_3d_covar_setup(c_conf, geom, self)
+  call soca_3d_covar_setup(c_conf, geom, self, bkg)
 
 end subroutine c_soca_b_setup
 

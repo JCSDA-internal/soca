@@ -18,15 +18,16 @@
  /
 
  &coupler_nml
+            restart_interval = 0,0,0,3,0,0, 
             months = 0,
-            days   = 1,
+            days   = 5,
             current_date = 2018,4,15,0,0,0,
             hours = 0,
             minutes = 0,
             seconds = 0,
             calendar = 'NOLEAP',
-            dt_cpld  = 7200,
-            dt_atmos = 7200,
+            dt_cpld  = 3600,
+            dt_atmos = 3600,
             do_atmos = .false.,
             do_land = .false.,
             do_ice = .true.,

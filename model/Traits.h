@@ -30,6 +30,8 @@
 #include "ufo/ObsBiasIncrement.h"
 #include "ufo/ObsCheck.h"
 #include "ufo/ObsBiasCovariance.h"
+#include "ufo/ObsOperator.h"
+#include "ufo/LinearObsOperator.h"
 
 namespace soca {
 
@@ -54,9 +56,9 @@ struct Traits {
   typedef ufo::ObsBias              ObsAuxControl;
   typedef ufo::ObsBiasIncrement     ObsAuxIncrement;
   typedef ufo::ObsBiasCovariance    ObsAuxCovariance;
-  
-  typedef ufo::ObsCheck             ObsCheck;  
-
+  typedef ufo::ObsCheck             ObsCheck;
+  typedef ufo::ObsOperator          ObsOperator;
+  typedef ufo::LinearObsOperator    LinearObsOperator;
   typedef ufo::GeoVaLs              GeoVaLs;
   typedef ioda::Locations           Locations;
   typedef ioda::ObsSpace             ObsSpace;

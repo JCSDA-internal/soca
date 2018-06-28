@@ -45,8 +45,8 @@ cost_function:
       sig_sic: 0.5#.0001
       sig_sit: 250.0
       sig_ssh: 0.2
-      sig_tocn: 0.5
-      sig_socn: 0.0      
+      sig_tocn: 1.0
+      sig_socn: 0.1      
       date: '2018-04-15T00:00:00Z'
   Jo:
     ObsTypes:
@@ -113,16 +113,16 @@ variational:
     linearmodel:
       version: IdTLM
       tstep: PT1H
-    ninner: 5
+    ninner: 10
     gradient_norm_reduction: 1e-15
     test: 'on'
-  - resolution: {}
-    linearmodel:
-      version: IdTLM
-      tstep: PT1H
-    ninner: 3
-    gradient_norm_reduction: 1e-15
-    test: 'on'
+#  - resolution: {}
+#    linearmodel:
+#      version: IdTLM
+#      tstep: PT1H
+#    ninner: 3
+#    gradient_norm_reduction: 1e-15
+#    test: 'on'
 minimizer:
   algorithm: DRPCG #DRIPCG
 output:

@@ -11,11 +11,9 @@
 #include "model/Traits.h"
 #include "oops/runs/HofX.h"
 #include "model/Run/Run.h"
-#include "ufo/instantiateObsOperatorFactory.h"
 
 int main(int argc,  char ** argv) {
   soca::Run run(argc, argv);
-  ufo::instantiateObsOperatorFactory<soca::Traits>();  
   oops::HofX<soca::Traits> hofx;
   run.execute(hofx);
   return 0;

@@ -22,8 +22,8 @@ module soca_covariance_mod
      real(kind=kind_real) :: sig_sic     !<   
      real(kind=kind_real) :: sig_sit     !< Temporary hack 
      real(kind=kind_real) :: sig_ssh     !<
-     real(kind=kind_real) :: sig_tocn     !<
-     real(kind=kind_real) :: sig_socn     !<          
+     real(kind=kind_real) :: sig_tocn    !<
+     real(kind=kind_real) :: sig_socn    !<          
      character(len=800)   :: D_filename  !< Netcdf file containing
                                          !< the diagonal matrix of standard deviation for
      !< all the fields
@@ -52,9 +52,10 @@ contains
   !! covariance matrix, and stores the relevant values in the
   !! error covariance structure.
 
-  subroutine soca_3d_covar_setup(c_model, geom, config)
+  subroutine soca_3d_covar_setup(c_model, geom, config, bkg)
 
     use soca_geom_mod
+    use soca_fields    
     use iso_c_binding
     use config_mod
     use kinds
@@ -64,11 +65,14 @@ contains
     
     implicit none
     
-    type(c_ptr), intent(in)   :: c_model  !< The configuration
-    type(soca_geom), intent(in) :: geom     !< Geometry
-    type(soca_3d_covar_config), intent(inout) :: config !< The covariance structure
-    real(kind=kind_real) :: corr_length_scale
-    type(bump_type), pointer            :: horiz_convol_p
+    type(c_ptr),                   intent(in) :: c_model  !< The configuration
+    type(soca_geom),               intent(in) :: geom     !< Geometry
+    type(soca_3d_covar_config), intent(inout) :: config   !< The covariance structure
+    type(soca_field),              intent(in) :: bkg      !< Background
+    
+    type(bump_type),  pointer :: horiz_convol_p !< Convolution op from bump
+    type(soca_field), pointer :: D_p            !< Std of background error estimated
+                                                !< from background
     
     config%sig_sic      = config_get_real(c_model,"sig_sic")
     config%sig_sit      = config_get_real(c_model,"sig_sit")
@@ -77,6 +81,7 @@ contains
     config%sig_socn     = config_get_real(c_model,"sig_socn")        
 
     !< Read Rossby radius from file and map into grid 
+    call soca_init_D(geom, bkg, D_p)
     
     !< Initialize bump
     call soca_bump_correlation(geom, horiz_convol_p)
@@ -288,18 +293,61 @@ contains
     implicit none
     type(soca_field), intent(inout)        :: dx     !< Input:  Increment
                                                      !< Output: D applied to dx
-    type(soca_field), intent(in)           :: traj     !< trajectory   
-    type(soca_3d_covar_config), intent(in) :: config   !< covariance config structure
+    type(soca_field), pointer, intent(in)  :: traj   !< trajectory   
+    type(soca_3d_covar_config), intent(in) :: config !< covariance config structure
 
+    type(soca_field)           :: sig    
+    integer :: k, test
+    
     !!!!!!!! Need to get D from file !!!!!!!!!!!!!!!
     dx%cicen=config%sig_sic*dx%cicen
     dx%hicen=config%sig_sit*dx%hicen
     dx%ssh=config%sig_ssh*dx%ssh
-    dx%tocn=config%sig_tocn*dx%tocn
-    dx%socn=config%sig_socn*dx%socn
+    !dx%ssh=dx%ssh    
 
+    call create(sig,traj)  
+    call zeros(sig)                         !< xtmp = xin
+
+    do k = 1, traj%geom%ocean%nzo
+       if (k.eq.1) then
+          sig%tocn(:,:,k)=abs(traj%tocn(:,:,1)-abs(traj%tocn(:,:,2)))
+          sig%socn(:,:,k)=abs(traj%socn(:,:,1)-abs(traj%socn(:,:,2)))
+       elseif (k.eq.traj%geom%ocean%nzo) then
+          sig%tocn(:,:,k)=abs(traj%tocn(:,:,k)-abs(traj%tocn(:,:,k-1)))
+          sig%tocn(:,:,k)=abs(traj%socn(:,:,k)-abs(traj%socn(:,:,k-1)) )         
+       else
+          sig%tocn(:,:,k)=0.5*abs(traj%tocn(:,:,k+1)-abs(traj%tocn(:,:,k-1)))
+          sig%socn(:,:,k)=0.5*abs(traj%socn(:,:,k+1)-abs(traj%socn(:,:,k-1)))
+       end if
+       dx%tocn(:,:,k)=sig%tocn(:,:,k)*dx%tocn(:,:,k)
+       dx%socn(:,:,k)=sig%socn(:,:,k)*dx%socn(:,:,k)       
+    end do
+    
   end subroutine soca_3d_covar_D_mult
 
+  ! ------------------------------------------------------------------------------
+  
+  subroutine soca_init_D(geom, bkg, D_p)
+    use soca_geom_mod
+    use soca_fields
+
+    implicit none
+    
+    type(soca_geom),            intent(in) :: geom    !< Geometry
+    type(soca_field),           intent(in) :: bkg     !< Background field
+    type(soca_field), pointer, intent(out) :: D_p     !< Std of backcround error
+
+    logical,                  save :: D_initialized = .false.
+    type(soca_field), save, target :: D  !< Std of backcround error
+
+    if (.not.D_initialized) then
+       !call create(D,bkg)
+       !call zeros(D)       
+    end if
+    D_p => D
+    
+  end subroutine soca_init_D
+  
   ! ------------------------------------------------------------------------------
 
   subroutine soca_bump_correlation(geom, horiz_convol_p, destruct)
@@ -429,6 +477,9 @@ contains
        do jjj=1,nc0a
           rh(jjj,1,1,1)=10.0*rosrad(jjj)
        end do
+       where (rh<500e3)
+          rh=500e3
+       end where
        !rh=3000.0e3
        rv=1.0
 

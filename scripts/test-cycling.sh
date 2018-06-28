@@ -3,12 +3,12 @@
 #source anaconda2/Python/bin/activate nco
 
 JCSDA_SING="/home/gvernier/Sandboxes/soca/JCSDA-singularity-master-latest.simg"
-SOCA_BUILD="/home/gvernier/Sandboxes/soca/soca-ioda-ufo-split/build"
+SOCA_BUILD="/home/gvernier/Sandboxes/soca/soca-bundle/build"
 SOCA_BIN="${SOCA_BUILD}/bin"
 SOCA_INPUT="${SOCA_BUILD}/soca/test/testinput"
 SOCA_TEST="${SOCA_BUILD}/soca/test"
-SOCA_MODEL_RSC="/home/gvernier/Sandboxes/soca/soca-ioda-ufo-split/soca/test/Data/360x210x63"
-SOCA_MODEL_FORCING="/home/gvernier/Sandboxes/soca/soca-ioda-ufo-split/soca/test/Data/360x210x63"
+SOCA_MODEL_RSC="/home/gvernier/Sandboxes/soca/soca-bundle/soca/test/Data/360x210x63"
+SOCA_MODEL_FORCING="/home/gvernier/Sandboxes/soca/soca-bundle/soca/test/Data/360x210x63"
 
 cd ${SOCA_TEST}
 
@@ -23,7 +23,6 @@ echo "Making copy of bkg and ana"
 cp ${SOCA_TEST}/INPUT/MOM.res.nc ${SOCA_TEST}/MOM-ana.res.nc
 cp ${SOCA_TEST}/Data/3dvar.an.2018-04-15T00\:00\:00Z.nc ${SOCA_TEST}/3dvar.an.tmp.nc
 
-
 echo "Rename variable in ana file"
 ncrename -v temp,Temp 3dvar.an.tmp.nc
 ncrename -v salt,Salt 3dvar.an.tmp.nc
@@ -32,12 +31,10 @@ echo "Dump Temp analysis into bkg restart file"
 ncks -A -v Temp 3dvar.an.tmp.nc MOM-ana.res.nc
 ncks -A -v Salt 3dvar.an.tmp.nc MOM-ana.res.nc
 
-exit
-
 # Setup model
 #------------
 
-SCRATCH=${SOCA_TEST}/scratch
+SCRATCH=${SOCA_TEST}/scratch #_noda
 rm -rf ${SCRATCH}
 mkdir  ${SCRATCH}
 
