@@ -106,14 +106,14 @@ variational:
     linearmodel:
       version: IdTLM
       tstep: PT1H
-    ninner: 10
+    ninner: 1
     gradient_norm_reduction: 1e-15
     test: 'on'
   - resolution: {}
     linearmodel:
       version: IdTLM
       tstep: PT1H
-    ninner: 10
+    ninner: 1
     gradient_norm_reduction: 1e-15
     test: 'on'
 #  - resolution: {}

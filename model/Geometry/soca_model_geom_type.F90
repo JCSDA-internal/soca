@@ -169,10 +169,12 @@ contains
   subroutine geom_rossby_radius(self)
     use kinds
     use type_kdtree, only: kdtree_type
+    use type_mpl    
     use tools_const, only: pi,req,deg2rad,rad2deg
     use fms_mod,         only : get_mosaic_tile_grid, write_data, set_domain
     use fms_io_mod,      only : fms_io_init, fms_io_exit
-
+    use mpi
+    
     implicit none
 
     class(soca_model_geom), intent(inout) :: self
@@ -181,6 +183,7 @@ contains
     real(kind=kind_real), allocatable :: lon(:),lat(:),rr(:)
     logical, allocatable :: mask(:)    
     type(kdtree_type) :: kdtree
+    type(mpl_type) :: mpl    
     real(kind=kind_real) :: dum, dist(1),lonm(1),latm(1)
     integer :: isc, iec, jsc, jec
     integer :: index(1), nn, io
@@ -209,7 +212,8 @@ contains
     lon=deg2rad*reshape(lon,(/n/))
     lat=deg2rad*reshape(lat,(/n/))
 
-    call kdtree%create(n,lon,lat,mask)
+    call mpl%init(mpi_comm_world)
+    call kdtree%create(mpl, n,lon,lat,mask)
 
     !--- Find nearest neighbor    
     isc   = self%G%isc

@@ -52,7 +52,7 @@ contains
   !! covariance matrix, and stores the relevant values in the
   !! error covariance structure.
 
-  subroutine soca_3d_covar_setup(c_model, geom, config, bkg)
+  subroutine soca_3d_covar_setup(c_conf, geom, config, bkg)
 
     use soca_geom_mod
     use soca_fields    
@@ -65,7 +65,7 @@ contains
     
     implicit none
     
-    type(c_ptr),                   intent(in) :: c_model  !< The configuration
+    type(c_ptr),                   intent(in) :: c_conf   !< The configuration
     type(soca_geom),               intent(in) :: geom     !< Geometry
     type(soca_3d_covar_config), intent(inout) :: config   !< The covariance structure
     type(soca_field),              intent(in) :: bkg      !< Background
@@ -74,17 +74,17 @@ contains
     type(soca_field), pointer :: D_p            !< Std of background error estimated
                                                 !< from background
     
-    config%sig_sic      = config_get_real(c_model,"sig_sic")
-    config%sig_sit      = config_get_real(c_model,"sig_sit")
-    config%sig_ssh      = config_get_real(c_model,"sig_ssh")
-    config%sig_tocn     = config_get_real(c_model,"sig_tocn")
-    config%sig_socn     = config_get_real(c_model,"sig_socn")        
+    config%sig_sic      = config_get_real(c_conf,"sig_sic")
+    config%sig_sit      = config_get_real(c_conf,"sig_sit")
+    config%sig_ssh      = config_get_real(c_conf,"sig_ssh")
+    config%sig_tocn     = config_get_real(c_conf,"sig_tocn")
+    config%sig_socn     = config_get_real(c_conf,"sig_socn")        
 
     !< Read Rossby radius from file and map into grid 
     call soca_init_D(geom, bkg, D_p)
     
     !< Initialize bump
-    call soca_bump_correlation(geom, horiz_convol_p)
+    call soca_bump_correlation(geom, horiz_convol_p, c_conf)
     
   end subroutine soca_3d_covar_setup
 
@@ -308,6 +308,7 @@ contains
     call create(sig,traj)  
     call zeros(sig)                         !< xtmp = xin
 
+    !!!!! HACK !!!!!
     do k = 1, traj%geom%ocean%nzo
        if (k.eq.1) then
           sig%tocn(:,:,k)=abs(traj%tocn(:,:,1)-abs(traj%tocn(:,:,2)))
@@ -322,7 +323,7 @@ contains
        dx%tocn(:,:,k)=sig%tocn(:,:,k)*dx%tocn(:,:,k)
        dx%socn(:,:,k)=sig%socn(:,:,k)*dx%socn(:,:,k)       
     end do
-    
+    !!!!! END HACK !!!!!!
   end subroutine soca_3d_covar_D_mult
 
   ! ------------------------------------------------------------------------------
@@ -350,16 +351,18 @@ contains
   
   ! ------------------------------------------------------------------------------
 
-  subroutine soca_bump_correlation(geom, horiz_convol_p, destruct)
+  subroutine soca_bump_correlation(geom, horiz_convol_p, c_conf, destruct)
     use soca_geom_mod
     use type_bump
     use type_nam
     use mpi!,             only: mpi_comm_world
-    
+    use iso_c_binding
+    use bump_mod, only: bump_read_conf
     implicit none
 
-    type(soca_geom), optional, intent(in)            :: geom
-    type(bump_type), optional, pointer, intent(out)  :: horiz_convol_p
+    type(soca_geom),           optional, intent(in) :: geom
+    type(bump_type), optional, pointer, intent(out) :: horiz_convol_p
+    type(c_ptr),               optional, intent(in) :: c_conf         !< Handle to configuration    
     logical, optional                                :: destruct       ! If true: call bump destructor
     logical, save                    :: convolh_initialized = .false.
     type(bump_type), save, target    :: horiz_convol
@@ -390,7 +393,9 @@ contains
 
     ! Constructor
     if (.NOT.convolh_initialized) then
-
+       if (.not.(present(c_conf))) then
+          call abor1_ftn ("soca_covariance_mod:soca_bump_correlation error, need to specify configuration")
+       end if
        !--- Initialize geometry to be passed to NICAS
        ! Indices for compute domain (no halo)
        isc = geom%ocean%G%isc
@@ -423,54 +428,10 @@ contains
           lmask=.true.
        end where
 
-       horiz_convol%nam%default_seed = .true.
-       horiz_convol%nam%new_hdiag = .false.
-       horiz_convol%nam%new_param = .true.
-       horiz_convol%nam%check_adjoints = .false.
-       horiz_convol%nam%check_pos_def = .false.
-       horiz_convol%nam%check_sqrt = .false.
-       horiz_convol%nam%check_randomization = .false.
-       horiz_convol%nam%check_consistency = .false.
-       horiz_convol%nam%check_optimality = .false.
-       horiz_convol%nam%new_lct = .false.
-       horiz_convol%nam%new_obsop = .false.
+       ! Read bump configuration
+       call bump_read_conf(c_conf,horiz_convol)  
 
-       horiz_convol%nam%prefix = "soca"
-       horiz_convol%nam%method = "cor"
-       horiz_convol%nam%strategy = "specific_univariate"
-       horiz_convol%nam%sam_write= .true.
-       horiz_convol%nam%sam_read= .false.
-       !horiz_convol%nam%mask_type= "none"
-       horiz_convol%nam%mask_check = .true. !.false.
-       horiz_convol%nam%draw_type = "random_uniform"
-       horiz_convol%nam%nc1 = 100!0
-
-       horiz_convol%nam%ntry = 3
-       horiz_convol%nam%nrep =  2
-       horiz_convol%nam%nc3 = 10
-       
-       horiz_convol%nam%dc = 3000.0e3
-       horiz_convol%nam%nl0r = 1
-
-       horiz_convol%nam%gau_approx = .false.
-       horiz_convol%nam%full_var = .false.
-       horiz_convol%nam%local_diag = .false.
-       horiz_convol%nam%minim_algo= "hooke"
-       horiz_convol%nam%lhomh = .false.
-       horiz_convol%nam%lhomv = .false.
-       horiz_convol%nam%rvflt =0.0
-       horiz_convol%nam%lsqrt = .false.!.true.
-       horiz_convol%nam%resol = 10.0 !1000.0!10.0
-       horiz_convol%nam%nicas_interp = "bilin"
-       horiz_convol%nam%network = .true.!.false.
-       horiz_convol%nam%mpicom = 1
-       !horiz_convol%nam%advmode = 0
-       !horiz_convol%nam%nldwh = 0
-       !horiz_convol%nam%nldwv = 0
-       !horiz_convol%nam%diag_rhflt = 0.0
-       horiz_convol%nam%diag_interp = "bilin"
-       horiz_convol%nam%grid_output = .false.
-
+       ! Compute convolution weight
        allocate(rh(nc0a,nl0,nv,nts))
        allocate(rv(nc0a,nl0,nv,nts))
 
@@ -480,7 +441,6 @@ contains
        where (rh<500e3)
           rh=500e3
        end where
-       !rh=3000.0e3
        rv=1.0
 
        call cpu_time(start)

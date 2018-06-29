@@ -32,6 +32,7 @@ list( APPEND soca_model_param
   Data/360x210x63/MOM_input
   Data/360x210x63/MOM_override
   Data/360x210x63/Vertical_coordinate.nc
+  Data/rossrad.dat
 )
 
 list( APPEND soca_model_restarts
