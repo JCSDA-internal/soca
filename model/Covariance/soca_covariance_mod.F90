@@ -323,7 +323,9 @@ contains
        dx%tocn(:,:,k)=sig%tocn(:,:,k)*dx%tocn(:,:,k)
        dx%socn(:,:,k)=sig%socn(:,:,k)*dx%socn(:,:,k)       
     end do
+    call delete(sig)
     !!!!! END HACK !!!!!!
+    
   end subroutine soca_3d_covar_D_mult
 
   ! ------------------------------------------------------------------------------
