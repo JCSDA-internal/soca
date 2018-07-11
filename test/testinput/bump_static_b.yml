@@ -1,0 +1,48 @@
+---
+# BUMP Configuration
+# General parameters
+default_seed: 1
+prefix: soca
+# Driver parameters
+method: cor
+strategy: specific_univariate
+new_hdiag: 0
+new_param: 1
+check_adjoints: 0
+check_pos_def: 0
+check_sqrt: 0
+check_randomization: 0
+check_consistency: 0
+check_optimality: 0
+new_lct: 0
+new_obsop: 0
+# Sampling parameters
+sam_read: 0
+sam_write: 1  
+mask_check: 1
+draw_type: random_uniform
+nc1: 100
+ntry: 3
+nrep:  2
+nc3: 10
+dc: 3000.0e3
+nl0r: 1
+# Diag parameters
+gau_approx: 0
+full_var: 0
+local_diag: 0
+# Fit parameters
+minim_algo: "hooke"
+lhomh: 0
+lhomv: 0
+rvflt: 0.0
+# NICAS parameters
+lsqrt: 0
+resol: 10.0
+nicas_interp: bilin
+network: 1
+mpicom: 1
+# Output parameters  
+diag_interp: bilin
+grid_output: 0
+
