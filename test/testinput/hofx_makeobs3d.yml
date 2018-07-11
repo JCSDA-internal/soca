@@ -1,6 +1,3 @@
----
-logging:
-  categories: Info, Test, Warning, Error, Debug, Trace
 Geometry: {}
 Model:
   tstep: PT1H
@@ -14,6 +11,7 @@ Initial Condition:
 Assimilation Window:
   Begin: '2018-04-15T00:00:00Z'
   End: '2018-04-15T15:00:00Z'
+  Length: PT12H  
 Observations:
   ObsTypes:
   - ObsType: SeaIceThickness
@@ -26,22 +24,46 @@ Observations:
     Covariance:
       covariance: diagonal
       obserror: ObsErr
-  - ObsType: StericHeight
-    ObsData:
-      ObsDataOut:
-        obsfile: Data/test_obsout.nc
-      ObsDataIn:
-        obsfile: Data/Jason-3-2018-04-15.nc
-      obsvalue: ObsVal        
-    Covariance:
-      covariance: diagonal
-      obserror: ObsErr	    
   - ObsType:  SeaIceFraction
     ObsData:
       ObsDataOut:
         obsfile: "./Data/data.nc"
       ObsDataIn:
-        obsfile: Data/seaice_obs-2018-04-15.nc        
+        obsfile: Data/seaice_obs-2018-04-15.nc
+        obsvalue: ObsVal        
+      Covariance:
+        covariance: diagonal
+        obserror: ObsErr        	
+  - ObsType: ADT
+    ObsData:
+      ObsDataOut:
+        obsfile: Data/test_obsout.nc
+      ObsDataIn:
+        obsfile: Data/Jason-3-2018-04-15.nc
+        obsvalue: ObsVal        
+      Covariance:
+        covariance: diagonal
+        obserror: ObsErr        
+  - ObsType: InsituTemperature
+    ObsData:
+      ObsDataOut:
+        obsfile: Data/t0n156e_dy.nc
+      ObsDataIn:
+        obsfile: Data/t0n156e_dy.nc
+      obsvalue: ObsVal        
+    Covariance:
+      covariance: diagonal
+      obserror: ObsErr
+  - ObsType: SeaSurfaceTemp
+    ObsData:
+      ObsDataOut:
+        obsfile: Data/test_obsout.nc
+      ObsDataIn:
+        obsfile: Data/sst_obs-2018-04-15.nc
+      obsvalue: ObsVal
+    Covariance:
+      covariance: diagonal
+      obserror: ObsErr	
     ObsBias: {}
     rmsequiv: '1.'
     tolerance: '1.0e-8'

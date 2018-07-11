@@ -1,9 +1,8 @@
 list( APPEND soca_test_input
   testinput/truth.yml
   testinput/forecast.yml 
-  testinput/makeobs3d.yml
+  testinput/hofx_makeobs3d.yml
   testinput/state_test.yml
-  testinput/hofx_test.yml
   testinput/model_test.yml
   testinput/linearmodel_test.yml
   testinput/geometry_test.yml
@@ -124,7 +123,7 @@ ecbuild_add_test( TARGET test_soca_makeobs3d
                   TYPE SCRIPT
 		  MPI     1  		  		  
                   COMMAND "./compare.sh"
-                  ARGS "${CMAKE_BINARY_DIR}/bin/soca_makeobs.x testinput/makeobs3d.yml"
+                  ARGS "${CMAKE_BINARY_DIR}/bin/soca_makeobs.x testinput/hofx_makeobs3d.yml"
                        testoutput/makeobs3d.test
                   DEPENDS soca_makeobs.x )
 		  
@@ -193,7 +192,7 @@ ecbuild_add_test( TARGET test_soca_hofx
                   TYPE SCRIPT
                   MPI     1		  
                   COMMAND "./compare.sh"
-                  ARGS "${CMAKE_BINARY_DIR}/bin/soca_hofx.x testinput/hofx_test.yml"
+                  ARGS "${CMAKE_BINARY_DIR}/bin/soca_hofx.x testinput/hofx_makeobs3d.yml"
                        testoutput/hofx.test
                   DEPENDS soca_hofx.x )
 
