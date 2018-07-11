@@ -11,18 +11,23 @@
 #include <ostream>
 
 #include "oops/util/Printable.h"
+#include "Fortran.h"
 
 namespace soca {
 
 // -----------------------------------------------------------------------------
 
-class Nothing : public util::Printable {
+class GetValuesTraj : public util::Printable {
  public:
-  Nothing() {}
-  ~Nothing() {}
+  GetValuesTraj();
+  ~GetValuesTraj();
 
+  int & toFortran() {return keyGetValuesTraj_;}
+  const int & toFortran() const {return keyGetValuesTraj_;}
+  
  private:
   void print(std::ostream &) const {}
+  F90getvaltraj keyGetValuesTraj_;
 };
 
 // -----------------------------------------------------------------------------

@@ -34,6 +34,8 @@ namespace soca {
   typedef int F90flds;
   // Trajectory key type
   typedef int F90traj;
+  // Trajectory for getvalues key type
+  typedef int F90getvaltraj;  
   // Background error covariance key type
   typedef int F90bmat;
   // Observation vector key type
@@ -124,6 +126,12 @@ namespace soca {
     void soca_field_gpnorm_f90(const F90flds &, const int &, double &);
     void soca_field_sizes_f90(const F90flds &, int &, int &, int &, int &, int &, int &);
     void soca_field_rms_f90(const F90flds &, double &);
+
+    // -----------------------------------------------------------------------------
+    //  Trajectory (&more) for interpolation
+    // -----------------------------------------------------------------------------
+    void soca_getvaltraj_setup_f90(const F90getvaltraj &);
+    void soca_getvaltraj_delete_f90(const F90getvaltraj &);
 
     // -----------------------------------------------------------------------------
     //  Background error

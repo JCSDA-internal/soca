@@ -20,7 +20,7 @@
 #include "model/Fields/Fields.h"
 #include "model/Geometry/Geometry.h"
 #include "model/State/State.h"
-#include "model/Nothing/Nothing.h"
+#include "model/GetValuesTraj/GetValuesTraj.h"
 #include "oops/util/Duration.h"
 #include "ufo/GeoVaLs.h"
 #include "ioda/Locations.h"
@@ -168,13 +168,13 @@ namespace soca {
   }
   /// Interpolate to observation location
   // -----------------------------------------------------------------------------
-  void Increment::getValuesTL(const ioda::Locations & locs, const oops::Variables & vars, ufo::GeoVaLs & cols, const Nothing &) const {
+  void Increment::getValuesTL(const ioda::Locations & locs, const oops::Variables & vars, ufo::GeoVaLs & cols, const GetValuesTraj &) const {
     Log::debug() << "Increment::interpolateTL fields in" << *fields_ << std::endl;
     fields_->getValuesTL(locs, vars, cols);
     Log::debug() << "Increment::interpolateTL " << cols << std::endl;    
   }
   // -----------------------------------------------------------------------------
-  void Increment::getValuesAD(const ioda::Locations & locs, const oops::Variables & vars, const ufo::GeoVaLs & cols, const Nothing &) {
+  void Increment::getValuesAD(const ioda::Locations & locs, const oops::Variables & vars, const ufo::GeoVaLs & cols, const GetValuesTraj &) {
     Log::debug() << "Increment::interpolateAD gom " << cols << std::endl;
     Log::debug() << "Increment::interpolateAD fields in" << *fields_ << std::endl;    
     fields_->getValuesAD(locs, vars, cols);

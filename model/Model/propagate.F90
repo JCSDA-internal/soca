@@ -18,7 +18,7 @@ subroutine propagate(flds,config)
   type(soca_field),  intent(inout) :: flds
   type(soca_config), intent(in)    :: config
 
-  print *,'Advance model (not!).'
+  print *,'============== Advance model (not!) =============='
 
   ! ------------------------------------------------------------------------------
   return

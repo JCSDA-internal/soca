@@ -8,7 +8,8 @@ list( APPEND soca_test_input
   testinput/geometry_test.yml
   testinput/increment_test.yml
   testinput/errorcovariance_test.yml
-  testinput/obserrorcovariance_test.yml  
+  testinput/obserrorcovariance_test.yml
+  testinput/bump_static_b.yml  
   testinput/3dvar_test.yml
   testinput/3dvarfgat_test.yml
   testinput/localization_test.yml

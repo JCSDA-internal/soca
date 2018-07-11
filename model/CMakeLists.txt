@@ -69,8 +69,10 @@ list( APPEND oops_soca_src_files
 ./Utils/soca_interp.F90
 ./Utils/soca_Butils.F90
 
-#Run
-./Nothing/Nothing.h
+#GetValuesTraj
+./GetValuesTraj/GetValuesTraj.cc
+./GetValuesTraj/GetValuesTraj.h
+./GetValuesTraj/soca_getvaltraj_mod.F90
 
 Traits.h
 Fortran.h
@@ -78,12 +80,6 @@ Fortran.h
 ModelBias.h
 ModelBiasIncrement.h
 ModelBiasCovariance.h
-#ObsBias.cc
-#ObsBias.h
-#ObsBiasCovariance.cc
-#ObsBiasCovariance.h
-#ObsBiasIncrement.cc
-#ObsBiasIncrement.h
 )
 
 if ( CMAKE_Fortran_COMPILER_ID MATCHES "Cray" )

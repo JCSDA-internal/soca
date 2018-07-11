@@ -18,7 +18,7 @@
 #include <boost/shared_ptr.hpp>
 
 #include "model/Fields/Fields.h"
-#include "model/Nothing/Nothing.h"
+#include "model/GetValuesTraj/GetValuesTraj.h"
 #include "model/Geometry/Geometry.h"
 #include "oops/base/GeneralizedDepartures.h"
 #include "oops/util/DateTime.h"
@@ -86,8 +86,8 @@ namespace soca {
       void dirac(const eckit::Configuration &);
       
       /// Interpolate to observation location
-      void getValuesTL(const ioda::Locations &, const oops::Variables &,ufo::GeoVaLs &, const Nothing &) const;
-      void getValuesAD(const ioda::Locations &, const oops::Variables &, const ufo::GeoVaLs &, const Nothing &);
+      void getValuesTL(const ioda::Locations &, const oops::Variables &,ufo::GeoVaLs &, const GetValuesTraj &) const;
+      void getValuesAD(const ioda::Locations &, const oops::Variables &, const ufo::GeoVaLs &, const GetValuesTraj &);
 
       /// I/O and diagnostics
       void read(const eckit::Configuration &);

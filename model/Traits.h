@@ -20,7 +20,7 @@
 #include "model/State/State.h"
 #include "model/Covariance/ErrorCovariance.h"
 #include "model/ObsBiasCovariance.h"
-#include "model/Nothing/Nothing.h"
+#include "model/GetValuesTraj/GetValuesTraj.h"
 
 #include "ufo/GeoVaLs.h"
 #include "ioda/Locations.h"
@@ -44,7 +44,7 @@ struct Traits {
   typedef soca::Model               Model;
   typedef soca::Increment           Increment;
   typedef soca::ErrorCovariance     Covariance;
-  typedef soca::Nothing               InterpolatorTraj;
+  typedef soca::GetValuesTraj       InterpolatorTraj;
   
   typedef soca::ModelBias           ModelAuxControl;
   typedef soca::ModelBiasIncrement  ModelAuxIncrement;

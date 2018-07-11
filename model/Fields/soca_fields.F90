@@ -11,6 +11,7 @@ module soca_fields
   use soca_geom_mod
   use soca_vars_mod
   use soca_interph_mod
+  use soca_getvaltraj_mod
   use kinds
   use atmos_model_mod,         only: atmos_data_type
   use land_model_mod,          only: land_data_type    
@@ -890,15 +891,16 @@ contains
 
   ! ------------------------------------------------------------------------------
 
-  subroutine interp_tl(fld, locs, vars, geovals)
+  subroutine interp_tl(fld, locs, vars, geovals, traj)
     use ioda_locs_mod
     use ufo_geovals_mod
     use ufo_vars_mod
     implicit none
-    type(soca_field), intent(inout)   :: fld
-    type(ioda_locs), intent(in)    :: locs
-    type(ufo_vars),     intent(in)    :: vars    
-    type(ufo_geovals), intent(inout) :: geovals
+    type(soca_field),                        intent(inout) :: fld
+    type(ioda_locs),                            intent(in) :: locs
+    type(ufo_vars),                             intent(in) :: vars    
+    type(ufo_geovals),                       intent(inout) :: geovals
+    type(soca_getvaltraj), optional, target, intent(inout) :: traj    
 
     call check(fld)
 
@@ -908,16 +910,16 @@ contains
 
   ! ------------------------------------------------------------------------------
 
-  subroutine interp_ad(fld, locs, vars, geovals)
+  subroutine interp_ad(fld, locs, vars, geovals, traj)
     use ioda_locs_mod
     use ufo_geovals_mod
     use ufo_vars_mod    
     implicit none
-    type(soca_field), intent(inout) :: fld
-    type(ioda_locs), intent(in)    :: locs
+    type(soca_field),   intent(inout) :: fld
+    type(ioda_locs),    intent(in)    :: locs
     type(ufo_vars),     intent(in)    :: vars        
-    type(ufo_geovals), intent(inout) :: geovals    
-    !character(2)                        :: op_type='AD'
+    type(ufo_geovals),  intent(inout) :: geovals
+    type(soca_getvaltraj), intent(in) :: traj    
 
     call check(fld)
     call nicas_interphad(fld, locs, vars, geovals)
@@ -962,7 +964,7 @@ contains
 
   end function get_obsop_index
   
-  ! ------------------------------------------------------------------------------    
+  ! ------------------------------------------------------------------------------
 
   subroutine initialize_interph(fld, locs, horiz_interp_p, interp_type)    
     use ioda_locs_mod  
@@ -971,7 +973,7 @@ contains
     implicit none
 
     type(soca_field), intent(in)             :: fld
-    type(ioda_locs), intent(in)               :: locs
+    type(ioda_locs), intent(in)              :: locs
     type(soca_hinterp), pointer, intent(out) :: horiz_interp_p
     character(len=3), optional               :: interp_type     !< Forward: 'fwd' or adjoint: 'adj'
     

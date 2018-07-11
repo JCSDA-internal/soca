@@ -14,7 +14,7 @@
 #include <boost/scoped_ptr.hpp>
 
 #include "model/Fields/Fields.h"
-#include "model/Nothing/Nothing.h"
+#include "model/GetValuesTraj/GetValuesTraj.h"
 #include "oops/util/DateTime.h"
 #include "oops/util/ObjectCounter.h"
 #include "oops/util/Printable.h"
@@ -64,7 +64,7 @@ namespace soca {
 
       /// Interpolate to observation location
       void getValues(const ioda::Locations &, const oops::Variables &, ufo::GeoVaLs &) const;
-      void getValues(const ioda::Locations &, const oops::Variables &, ufo::GeoVaLs &, Nothing &) const;      
+      void getValues(const ioda::Locations &, const oops::Variables &, ufo::GeoVaLs &, GetValuesTraj &) const;      
 
       /// Interpolate full fields
       ///  void changeResolution(const State & xx);

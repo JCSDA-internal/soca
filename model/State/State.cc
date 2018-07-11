@@ -21,7 +21,7 @@
 #include "model/Geometry/Geometry.h"
 #include "model/Increment/Increment.h"
 #include "model/Model/Model.h"
-#include "model/Nothing/Nothing.h"
+#include "model/GetValuesTraj/GetValuesTraj.h"
 #include "oops/util/DateTime.h"
 #include "oops/util/Duration.h"
 #include "oops/util/Logger.h"
@@ -136,7 +136,7 @@ namespace soca {
     fields_->getValues(locs, vars, cols);
   }
   // -----------------------------------------------------------------------------
-  void State::getValues(const ioda::Locations & locs, const oops::Variables & vars, ufo::GeoVaLs & cols, Nothing &) const {
+  void State::getValues(const ioda::Locations & locs, const oops::Variables & vars, ufo::GeoVaLs & cols, GetValuesTraj &) const {
     fields_->getValues(locs, vars, cols);
   }
   // -----------------------------------------------------------------------------  
