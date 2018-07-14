@@ -118,7 +118,8 @@ namespace soca {
 				   const util::DateTime * const *);
     void soca_field_interp_f90(const F90flds &, const F90locs &, const eckit::Configuration * const *, const F90goms &);
     void soca_field_interp_tl_f90(const F90flds &, const F90locs &, const eckit::Configuration * const *,const F90goms &);
-    void soca_field_interp_ad_f90(const F90flds &, const F90locs &, const eckit::Configuration * const *,const F90goms &);
+    void soca_field_interp_tl_traj_f90(const F90flds &, const F90locs &, const eckit::Configuration * const *,const F90goms &, const F90getvaltraj &);    
+    void soca_field_interp_ad_f90(const F90flds &, const F90locs &, const eckit::Configuration * const *,const F90goms &, const F90getvaltraj &);
   
     void soca_field_convert_to_f90(const F90flds &, const int &);
     void soca_field_convert_from_f90(const F90flds &, const int &);

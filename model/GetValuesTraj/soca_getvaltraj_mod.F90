@@ -6,8 +6,9 @@ module soca_getvaltraj_mod
   !General JEDI uses
   use kinds
   use iso_c_binding
-  use type_bump, only: bump_type
-
+  !use type_bump, only: bump_type
+  use soca_interph_mod
+  
   implicit none
   private
 
@@ -16,9 +17,10 @@ module soca_getvaltraj_mod
   public c_soca_getvaltraj_setup, c_soca_getvaltraj_delete
 
   type :: soca_getvaltraj
-     !integer :: nobs
-     !type(bump_type) :: bump
-     !logical :: lalloc = .false.
+     integer            :: nobs
+     type(soca_hinterp) :: horiz_interp
+     logical            :: interph_initialized = .false.
+     integer            :: obstype_index
   end type soca_getvaltraj
 
 #define LISTED_TYPE soca_getvaltraj
@@ -49,13 +51,13 @@ contains
     call soca_getvaltraj_registry%add(c_key_self)
     call soca_getvaltraj_registry%get(c_key_self,self)
 
-    print *,'======================================='
-    print*, 'dh: getvaltraj_setup', c_key_self
-    print *,'======================================='
+    self%interph_initialized = .false.
+    self%nobs = 0
+    self%obstype_index = c_key_self
 
-    !self%lalloc = .false.
-    !self%nobs = 0
-    !self%ngrid = 0
+    print *,'======================================='
+    print*, 'getvaltraj_setup, obstype_index:', c_key_self
+    print *,'======================================='
 
   end subroutine c_soca_getvaltraj_setup
 
@@ -67,17 +69,16 @@ contains
     integer(c_int), intent(inout) :: c_key_self
     type(soca_getvaltraj), pointer :: self
 
+    print *,'======================================='
+    print*, 'getvaltraj_delete, obstype_index:', c_key_self
+    print *,'======================================='
+    read(*,*)
     ! Get key
     call soca_getvaltraj_registry%get(c_key_self, self)
 
-    !if (self%lalloc) then
-    !  self%nobs = 0
-    !  self%ngrid = 0
-    !  if (allocated(self%pt)) deallocate(self%pt)
-    !  if (allocated(self%q)) deallocate(self%q)
-    !  call self%bump%dealloc
-    !  self%lalloc = .false.
-    !endif
+    if (self%interph_initialized) then
+      self%nobs = 0
+    endif
 
     ! Remove key
     call soca_getvaltraj_registry%remove(c_key_self)

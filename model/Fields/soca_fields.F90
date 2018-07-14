@@ -13,11 +13,11 @@ module soca_fields
   use soca_interph_mod
   use soca_getvaltraj_mod
   use kinds
-  use atmos_model_mod,         only: atmos_data_type
-  use land_model_mod,          only: land_data_type    
-  use ocean_model_mod,         only: ocean_public_type, ocean_state_type, ice_ocean_boundary_type
-  use ice_model_mod,           only: ice_data_type
-  use soca_mom6sis2, only : Coupled
+  use atmos_model_mod, only: atmos_data_type
+  use land_model_mod,  only: land_data_type    
+  use ocean_model_mod, only: ocean_public_type, ocean_state_type, ice_ocean_boundary_type
+  use ice_model_mod,   only: ice_data_type
+  use soca_mom6sis2,   only: Coupled
   use MOM, only : MOM_control_struct
   implicit none
   private
@@ -904,8 +904,12 @@ contains
 
     call check(fld)
 
-    call nicas_interph(fld, locs, vars, geovals)
-
+    call nicas_interph(fld, locs, vars, geovals, traj)
+!!$    if (present(traj)) then
+!!$
+!!$    else
+!!$       call abor1_ftn("no traj case not implemented yet")
+!!$    end if
   end subroutine interp_tl
 
   ! ------------------------------------------------------------------------------
@@ -915,107 +919,76 @@ contains
     use ufo_geovals_mod
     use ufo_vars_mod    
     implicit none
-    type(soca_field),   intent(inout) :: fld
-    type(ioda_locs),    intent(in)    :: locs
-    type(ufo_vars),     intent(in)    :: vars        
-    type(ufo_geovals),  intent(inout) :: geovals
-    type(soca_getvaltraj), intent(in) :: traj    
+    type(soca_field),      intent(inout) :: fld
+    type(ioda_locs),          intent(in) :: locs
+    type(ufo_vars),           intent(in) :: vars        
+    type(ufo_geovals),     intent(inout) :: geovals
+    type(soca_getvaltraj), intent(inout) :: traj    
 
     call check(fld)
-    call nicas_interphad(fld, locs, vars, geovals)
+    call nicas_interphad(fld, locs, vars, geovals, traj)
 
   end subroutine interp_ad
-
-  ! ------------------------------------------------------------------------------
-  function get_obsop_index(horiz_interp, locs, interph_initialized)
-    !> Returns index of interpolation object/obs operator
-    use ioda_locs_mod  
-    use soca_interph_mod
-    implicit none
-
-    type(soca_hinterp), dimension(10), intent(in) :: horiz_interp        !< HARD CODED ... HACK ...
-    type(ioda_locs), intent(in)                    :: locs                !< HARD CODED ... HACK ...
-    logical, dimension(10), intent(in)            :: interph_initialized !< HARD CODED ... HACK ...
-
-    logical, dimension(10)            :: obs_type_test                   !< HARD CODED ... HACK ...
-    integer :: nobs    
-    integer :: cnt, cnt_obstype
-    integer :: get_obsop_index
-
-    ! Check nobs from interp object against nobs from locs 
-    obs_type_test=(horiz_interp(:)%nobs.eq.locs%nlocs)
-
-    ! Check for nobs matches between locs and horiz_interp
-    cnt_obstype=count(obs_type_test)
-    if (cnt_obstype.gt.1) then
-       call abor1_ftn('Identification of obsop from nobs failed, needs further implementation')
-    end if
-    if (cnt_obstype.eq.0) then
-       !New obs operator: add 1 to the last index for interp operator
-       get_obsop_index=count(interph_initialized(:))+1
-       return
-    end if    
-
-    ! Get index of interpolation object
-    do cnt=1,size(obs_type_test)
-       if (obs_type_test(cnt)) exit
-    end do
-    get_obsop_index=cnt
-
-  end function get_obsop_index
   
   ! ------------------------------------------------------------------------------
 
-  subroutine initialize_interph(fld, locs, horiz_interp_p, interp_type)    
+  subroutine initialize_interph(fld, locs, horiz_interp_p, traj, interp_type)    
     use ioda_locs_mod  
     use soca_interph_mod
 
     implicit none
 
-    type(soca_field), intent(in)             :: fld
-    type(ioda_locs), intent(in)              :: locs
-    type(soca_hinterp), pointer, intent(out) :: horiz_interp_p
-    character(len=3), optional               :: interp_type     !< Forward: 'fwd' or adjoint: 'adj'
+    type(soca_field),                   intent(in) :: fld
+    type(ioda_locs),                    intent(in) :: locs
+    type(soca_hinterp),       pointer, intent(out) :: horiz_interp_p
+    type(soca_getvaltraj), optional, intent(inout) :: traj    
+    character(len=3),                     optional :: interp_type     !< Forward: 'fwd' or adjoint: 'adj'
     
-    logical, dimension(10), save                    :: interph_initialized = .false. !< HARD CODED ... HACK ... 
-    type(soca_hinterp), dimension(10), save, target :: horiz_interp                  !< HARD CODED ... HACK ...
-    logical, dimension(10)                          :: obs_type_test                 !< HARD CODED ... HACK ...    
     integer :: nobs
     integer :: cnt, cnt_obstype, obs_type_counter
     integer :: isc, iec, jsc, jec
     
-    obs_type_counter = get_obsop_index(horiz_interp, locs, interph_initialized)
-
+    !obs_type_counter = get_obsop_index(horiz_interp, locs, interph_initialized)
+    print *,'in interp init '
+    print *,'in interp init ... ',traj%interph_initialized
+    
     ! Comming from adjoint, no need to initialize
-    if (present(interp_type)) then   ! if interp_type is present, interp_type=adjoint
-       horiz_interp_p => horiz_interp(obs_type_counter)
-       return
-    end if
+    !if (present(interp_type)) then   ! if interp_type is present, interp_type=adjoint
+       !print *,'in interp init ... ad'
+!!$    if (present(traj)) then
+!!$       print *,'traj present ',interp_type,traj%obstype_index
+!!$       horiz_interp_p => traj%horiz_interp
+!!$       print *,'pointing to key_traj ',traj%obstype_index          
+!!$       return
+!!$    !else
+!!$    !   call abor1_ftn("No interp traj ... aborting")
+!!$    end if
+!!$    !end if       
 
     ! Compute interpolation weights if needed
-    if (.not.(interph_initialized(obs_type_counter))) then       
+    if (.not.(traj%interph_initialized)) then
        nobs = locs%nlocs
+       traj%nobs = nobs
        ! Indices for compute domain (no halo)
        isc = fld%geom%ocean%G%isc
        iec = fld%geom%ocean%G%iec
        jsc = fld%geom%ocean%G%jsc
        jec = fld%geom%ocean%G%jec
-       
-       call horiz_interp(obs_type_counter)%interp_init(nobs)
-       call horiz_interp(obs_type_counter)%interp_compute_weight(&
+       call traj%horiz_interp%interp_init(nobs)
+       call traj%horiz_interp%interp_compute_weight(&
          &                       fld%geom%ocean%lon(isc:iec,jsc:jec),&
          &                       fld%geom%ocean%lat(isc:iec,jsc:jec),&
          &                       locs%lon,&
          &                       locs%lat)
-       interph_initialized(obs_type_counter) = .true.
+       traj%interph_initialized = .true.
     end if
-    horiz_interp_p => horiz_interp(obs_type_counter)
+    !horiz_interp_p => traj%horiz_interp
 
   end subroutine initialize_interph
 
   ! ------------------------------------------------------------------------------
 
-  subroutine nicas_interph(fld, locs, ufovars, geovals)
+  subroutine nicas_interph(fld, locs, ufovars, geovals, traj)
 
     use ioda_locs_mod  
     use ufo_geovals_mod_c
@@ -1027,20 +1000,22 @@ contains
     
     implicit none
 
-    type(soca_field), intent(inout)   :: fld
-    type(ioda_locs), intent(in)       :: locs
-    type(ufo_vars),     intent(in)    :: ufovars  
-    type(ufo_geovals), intent(inout)  :: geovals
+    type(soca_field),      intent(inout) :: fld
+    type(ioda_locs),          intent(in) :: locs
+    type(ufo_vars),           intent(in) :: ufovars  
+    type(ufo_geovals),               intent(inout) :: geovals
+    type(soca_getvaltraj), optional, intent(inout) :: traj
 
-    integer :: ivar
-    character(len=1024)  :: buf
+    type(soca_hinterp), pointer :: horiz_interp_p
+    type(soca_hinterp), target  :: horiz_interp    
+
+    integer             :: ivar
+    character(len=1024) :: buf
     logical,allocatable :: mask(:), masko(:)               ! < mask (ncells, nlevels)
     real(kind=kind_real), allocatable :: lon(:), lat(:), lono(:), lato(:), fld_src(:), fld_dst(:)
     integer :: nobs
     integer :: nval
 
-    ! interp stuff
-    type(soca_hinterp), pointer :: horiz_interp_p
 
     integer, allocatable :: imask(:)
     real(kind=kind_real), allocatable :: area(:),vunit(:)
@@ -1078,7 +1053,7 @@ contains
 !!$    !End test
 
     !call t_from_pt(pt_in,sp_in,p_in,lon_in,lat_in)
-    
+
     nobs = locs%nlocs
     do ivar = 1, ufovars%nv
        write(record,*) "nicas_interph: ",ufovars%fldnames(ivar)
@@ -1112,7 +1087,26 @@ contains
        geovals%linit = .true.
        
        ! Initialize horizontal inerpolation
-       call initialize_interph(fld, locs, horiz_interp_p)
+       if (present(traj)) then
+          print *,'Initialize interp traj for obstype:',traj%obstype_index
+          call initialize_interph(fld, locs, horiz_interp_p, traj)
+          call traj%horiz_interp%interp_copy(horiz_interp)
+          horiz_interp_p => horiz_interp
+       else
+          nobs = locs%nlocs
+          ! Indices for compute domain (no halo)
+          isc = fld%geom%ocean%G%isc
+          iec = fld%geom%ocean%G%iec
+          jsc = fld%geom%ocean%G%jsc
+          jec = fld%geom%ocean%G%jec
+          call horiz_interp%interp_init(nobs)
+          call horiz_interp%interp_compute_weight(&
+               &                       fld%geom%ocean%lon(isc:iec,jsc:jec),&
+               &                       fld%geom%ocean%lat(isc:iec,jsc:jec),&
+               &                       locs%lon,&
+               &                       locs%lat)
+          horiz_interp_p => horiz_interp
+       end if
        write(record,*) "nicas_interph: ",ufovars%fldnames(ivar)
        call fckit_log%info(record)
        ! Indices for compute domain (no halo)
@@ -1163,7 +1157,7 @@ contains
 
   ! ------------------------------------------------------------------------------
   
-  subroutine nicas_interphad(fld, locs, ufovars, geovals)
+  subroutine nicas_interphad(fld, locs, ufovars, geovals, traj)
 
     use ioda_locs_mod  
     use ufo_geovals_mod_c
@@ -1175,10 +1169,12 @@ contains
 
     implicit none
     
-    type(soca_field), intent(inout)  :: fld
-    type(ioda_locs), intent(in)       :: locs
-    type(ufo_geovals), intent(in)    :: geovals    
-    type(ufo_vars)    :: ufovars    
+    type(soca_field),      intent(inout) :: fld
+    type(ioda_locs),          intent(in) :: locs
+    type(ufo_vars),           intent(in) :: ufovars        
+    type(ufo_geovals),        intent(in) :: geovals
+    type(soca_getvaltraj), intent(inout) :: traj    
+
 
     integer :: ivar, geovals_dim1, cnt_fld
     character(len=1024)  :: buf
@@ -1190,15 +1186,20 @@ contains
     character(len=160) :: record
     integer :: isc, iec, jsc, jec
 
-
+    print *,'Initialize interp_adjoint'
+    
     ! Indices for compute domain (no halo)
     isc = fld%geom%ocean%G%isc
     iec = fld%geom%ocean%G%iec
     jsc = fld%geom%ocean%G%jsc
     jec = fld%geom%ocean%G%jec
 
-    call initialize_interph(fld, locs, horiz_interp_p, interp_type='adj')
-
+    !print *,'Initialize interp_adjoint traj for obstype:',traj%obstype_index
+    !read(*,*)
+    call initialize_interph(fld, locs, horiz_interp_p, traj, interp_type='adj')
+    !print *,'done initialize'
+    print *,'key_traj ',traj%obstype_index
+    print *,'traj init?',traj%interph_initialized    
     do ivar = 1, ufovars%nv
        write(record,*) "nicas_interphad: ",trim(ufovars%fldnames(ivar))
        call fckit_log%info(record)                           
@@ -1206,29 +1207,30 @@ contains
        select case (trim(ufovars%fldnames(ivar)))
        case ("ice_concentration")
           do icat = 1,fld%geom%ocean%ncat
-             call horiz_interp_p%interpad_apply(fld%cicen(isc:iec,jsc:jec,icat+1), geovals%geovals(ivar)%vals(icat,:))
+             call traj%horiz_interp%interpad_apply(fld%cicen(isc:iec,jsc:jec,icat+1), geovals%geovals(ivar)%vals(icat,:))
           enddo
 
        case ("ice_thickness")
           do icat = 1,fld%geom%ocean%ncat
-             call horiz_interp_p%interpad_apply(fld%hicen(isc:iec,jsc:jec,icat), geovals%geovals(ivar)%vals(icat,:))
+             call traj%horiz_interp%interpad_apply(fld%hicen(isc:iec,jsc:jec,icat), geovals%geovals(ivar)%vals(icat,:))
           enddo
 
        case ("sea_surface_height_above_geoid","steric_height") !!!! steric height sould be  different case
-          call horiz_interp_p%interpad_apply(fld%ssh(isc:iec,jsc:jec), geovals%geovals(ivar)%vals(1,:))
+          print *,ivar,ufovars%fldnames(ivar)          
+          call traj%horiz_interp%interpad_apply(fld%ssh(isc:iec,jsc:jec), geovals%geovals(ivar)%vals(1,:))
           
        case ("ocean_potential_temperature")
           do ilev = 1, fld%geom%ocean%nzo
-             call horiz_interp_p%interpad_apply(fld%tocn(isc:iec,jsc:jec,ilev), geovals%geovals(ivar)%vals(ilev,:))
+             call traj%horiz_interp%interpad_apply(fld%tocn(isc:iec,jsc:jec,ilev), geovals%geovals(ivar)%vals(ilev,:))
           end do
           
        case ("ocean_salinity")
           do ilev = 1, fld%geom%ocean%nzo
-             call horiz_interp_p%interpad_apply(fld%socn(isc:iec,jsc:jec,ilev), geovals%geovals(ivar)%vals(ilev,:))
+             call traj%horiz_interp%interpad_apply(fld%socn(isc:iec,jsc:jec,ilev), geovals%geovals(ivar)%vals(ilev,:))
           end do
 
        case ("ocean_upper_level_temperature")
-          call horiz_interp_p%interpad_apply(fld%tocn(isc:iec,jsc:jec,1), geovals%geovals(ivar)%vals(1,:))
+          call traj%horiz_interp%interpad_apply(fld%tocn(isc:iec,jsc:jec,1), geovals%geovals(ivar)%vals(1,:))
           
        end select
     end do

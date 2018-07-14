@@ -467,8 +467,9 @@ subroutine soca_field_interp_tl_traj_c(c_key_fld,c_key_loc,c_vars,c_key_gom,c_ke
   call soca_field_registry%get(c_key_fld,fld)
   call ioda_locs_registry%get(c_key_loc,locs)  
   call ufo_geovals_registry%get(c_key_gom,gom)
-
-  call interp_tl(fld, locs, vars, gom)
+  call soca_getvaltraj_registry%get(c_key_traj,traj)
+  
+  call interp_tl(fld, locs, vars, gom, traj)
 
 end subroutine soca_field_interp_tl_traj_c
 
@@ -500,7 +501,8 @@ subroutine soca_field_interp_ad_c(c_key_fld,c_key_loc,c_vars,c_key_gom,c_key_tra
   call soca_field_registry%get(c_key_fld,fld)
   call ioda_locs_registry%get(c_key_loc,locs)
   call ufo_geovals_registry%get(c_key_gom,gom)
-
+  call soca_getvaltraj_registry%get(c_key_traj,traj)
+  
   call interp_ad(fld, locs, vars, gom, traj)
 
 end subroutine soca_field_interp_ad_c
@@ -523,8 +525,6 @@ subroutine soca_fieldnum_c(c_key_fld, nx, ny, nzo, nzi, ncat, nf) bind(c,name='s
   nzi = fld%geom%ocean%nzi
   ncat = fld%geom%ocean%ncat
   nf = fld%nf
-
-
 
 end subroutine soca_fieldnum_c
 

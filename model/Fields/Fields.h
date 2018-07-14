@@ -19,6 +19,7 @@
 #include "oops/util/Duration.h"
 #include "oops/util/ObjectCounter.h"
 #include "oops/util/Printable.h"
+#include "model/GetValuesTraj/GetValuesTraj.h"
 
 // Forward declarations
 namespace eckit {
@@ -68,9 +69,14 @@ namespace soca {
       void random();
 
       // Interpolate to given location
-      void getValues(const ioda::Locations &, const oops::Variables &, ufo::GeoVaLs &) const;
-      void getValuesTL(const ioda::Locations &, const oops::Variables &, ufo::GeoVaLs &) const;
-      void getValuesAD(const ioda::Locations &, const oops::Variables &, const ufo::GeoVaLs &);      
+      void getValues(const ioda::Locations &, const oops::Variables &,
+		     ufo::GeoVaLs &) const;
+      void getValues(const ioda::Locations &, const oops::Variables &,
+		     ufo::GeoVaLs &,const GetValuesTraj &) const;
+      void getValuesTL(const ioda::Locations &, const oops::Variables &,
+		       ufo::GeoVaLs &, const GetValuesTraj &) const;
+      void getValuesAD(const ioda::Locations &, const oops::Variables &,
+		       const ufo::GeoVaLs &, const GetValuesTraj &);      
 
       // Interpolate full fields
       void changeResolution(const Fields &);

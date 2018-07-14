@@ -22,6 +22,7 @@
 #include "model/Fortran.h"
 #include "model/Geometry/Geometry.h"
 #include "model/Variables/Variables.h"
+#include "model/GetValuesTraj/GetValuesTraj.h"
 
 // -----------------------------------------------------------------------------
 namespace soca {
@@ -123,19 +124,44 @@ namespace soca {
     soca_field_random_f90(keyFlds_);
   }
   // -----------------------------------------------------------------------------
-  void Fields::getValues(const ioda::Locations & locs, const oops::Variables & vars, ufo::GeoVaLs & gom) const {
-    const eckit::Configuration * conf = &vars.toFortran();    
-    soca_field_interp_tl_f90(keyFlds_, locs.toFortran(), &conf, gom.toFortran());
+  void Fields::getValues(const ioda::Locations & locs,
+			 const oops::Variables & vars,
+			 ufo::GeoVaLs & gom) const {
+    const eckit::Configuration * conf = &vars.toFortran();
+    std::cout << "getval(loc,vars,geovals)" << std::endl;
+    soca_field_interp_tl_f90(keyFlds_, locs.toFortran(), &conf,
+			     gom.toFortran());
    }
+
   // -----------------------------------------------------------------------------
-  void Fields::getValuesTL(const ioda::Locations & locs, const oops::Variables & vars, ufo::GeoVaLs & gom) const {
-    const eckit::Configuration * conf = &vars.toFortran();        
-    soca_field_interp_tl_f90(keyFlds_, locs.toFortran(), &conf, gom.toFortran());
+  void Fields::getValues(const ioda::Locations & locs,
+			 const oops::Variables & vars,
+			 ufo::GeoVaLs & gom,
+			 const GetValuesTraj & traj) const {
+    const eckit::Configuration * conf = &vars.toFortran();
+    std::cout << "getval(loc,vars,geovals,traj)" << std::endl;    
+    soca_field_interp_tl_traj_f90(keyFlds_, locs.toFortran(), &conf,
+				  gom.toFortran(), traj.toFortran());
+   }
+
+  // -----------------------------------------------------------------------------
+  void Fields::getValuesTL(const ioda::Locations & locs,
+			   const oops::Variables & vars,
+			   ufo::GeoVaLs & gom,
+			   const GetValuesTraj & traj) const {
+    const eckit::Configuration * conf = &vars.toFortran();
+    soca_field_interp_tl_traj_f90(keyFlds_, locs.toFortran(), &conf,
+				  gom.toFortran(), traj.toFortran());    
   }
   // -----------------------------------------------------------------------------
-  void Fields::getValuesAD(const ioda::Locations & locs, const oops::Variables & vars, const ufo::GeoVaLs & gom) {
-    const eckit::Configuration * conf = &vars.toFortran();            
-    soca_field_interp_ad_f90(keyFlds_, locs.toFortran(), &conf, gom.toFortran());
+  void Fields::getValuesAD(const ioda::Locations & locs,
+			   const oops::Variables & vars,
+			   const ufo::GeoVaLs & gom,
+			   const GetValuesTraj & traj) {
+    const eckit::Configuration * conf = &vars.toFortran();
+    std::cout << "in getvaluesadjoint" << std::endl;
+    soca_field_interp_ad_f90(keyFlds_, locs.toFortran(), &conf,
+			     gom.toFortran(), traj.toFortran());
   }
   // -----------------------------------------------------------------------------
   void Fields::changeResolution(const Fields & other) {

@@ -31,6 +31,7 @@ module soca_interph_mod
      procedure :: interp_compute_weight
      procedure :: interp_apply     
      procedure :: interpad_apply
+     procedure :: interp_copy
      procedure :: interp_exit
   end type soca_hinterp
 
@@ -47,12 +48,12 @@ contains
     real(kind=kind_real), optional   :: ly       !< for dist wghted interp
     character(len=3), optional       :: wgt_type !< 'avg' or 'bar'     
     class(soca_hinterp), intent(out) :: self
-        
+
+    call interp_exit(self)
     self%nn=3;           if (present(nn)) self%nn = nn
-    self%wgt_type='bar'; if (present(nn)) self%wgt_type = wgt_type    
+    self%wgt_type='bar'; if (present(wgt_type)) self%wgt_type = wgt_type
     self%lx=5e-2;        if (present(lx)) self%lx = lx
     self%ly=1e-2;        if (present(ly)) self%ly = ly
-
     self%nobs = nobs
     allocate(self%lono(nobs),self%lato(nobs))
     allocate(self%index(nobs,2,self%nn))
@@ -61,6 +62,26 @@ contains
     self%alloc = .true.
     
   end subroutine interp_init
+
+  !--------------------------------------------
+  subroutine interp_copy(self, lhs)
+
+    implicit none
+
+    class(soca_hinterp), intent(in)  :: self
+    class(soca_hinterp), intent(out) :: lhs    
+
+    call interp_init(lhs, self%nobs, self%nn)
+
+    lhs%lono=self%lono
+    lhs%lato=self%lato
+    lhs%index=self%index
+    lhs%wgh=self%wgh
+    lhs%initialized=self%initialized
+    lhs%alloc=self%alloc
+    
+  end subroutine interp_copy
+  
 
   !--------------------------------------------  
   subroutine interp_compute_weight(self, lon, lat, lono, lato)
@@ -191,9 +212,14 @@ contains
     
     class(soca_hinterp), intent(out) :: self
 
-    deallocate(self%index,self%lono,self%lato,self%wgh)
+    if (allocated(self%index)) deallocate(self%index)
+    if (allocated(self%lono)) deallocate(self%lono)
+    if (allocated(self%lato)) deallocate(self%lato)    
+    if (allocated(self%wgh)) deallocate(self%wgh)
+    
+    !deallocate(self%index,self%lono,self%lato,self%wgh)
     self%initialized = .false.
-    self%alloc = .true.
+    self%alloc = .false.
     self%nobs = 0
     !More cleaning/deallocating needs to be done
     

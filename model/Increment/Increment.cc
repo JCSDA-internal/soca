@@ -168,16 +168,16 @@ namespace soca {
   }
   /// Interpolate to observation location
   // -----------------------------------------------------------------------------
-  void Increment::getValuesTL(const ioda::Locations & locs, const oops::Variables & vars, ufo::GeoVaLs & cols, const GetValuesTraj &) const {
+  void Increment::getValuesTL(const ioda::Locations & locs, const oops::Variables & vars, ufo::GeoVaLs & cols, const GetValuesTraj & traj) const {
     Log::debug() << "Increment::interpolateTL fields in" << *fields_ << std::endl;
-    fields_->getValuesTL(locs, vars, cols);
+    fields_->getValuesTL(locs, vars, cols, traj);
     Log::debug() << "Increment::interpolateTL " << cols << std::endl;    
   }
   // -----------------------------------------------------------------------------
-  void Increment::getValuesAD(const ioda::Locations & locs, const oops::Variables & vars, const ufo::GeoVaLs & cols, const GetValuesTraj &) {
+  void Increment::getValuesAD(const ioda::Locations & locs, const oops::Variables & vars, const ufo::GeoVaLs & cols, const GetValuesTraj & traj) {
     Log::debug() << "Increment::interpolateAD gom " << cols << std::endl;
     Log::debug() << "Increment::interpolateAD fields in" << *fields_ << std::endl;    
-    fields_->getValuesAD(locs, vars, cols);
+    fields_->getValuesAD(locs, vars, cols, traj);
   }
   // -----------------------------------------------------------------------------
   /// Define and convert to/from unstructured grid
