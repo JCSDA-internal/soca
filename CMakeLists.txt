@@ -78,10 +78,10 @@ endforeach()
 ################################################################################
 include( soca_compiler_flags )
 include_directories( ${CMAKE_CURRENT_SOURCE_DIR} )
-include_directories( ${CMAKE_CURRENT_SOURCE_DIR}/model )
+include_directories( ${CMAKE_CURRENT_SOURCE_DIR}/src )
 
 add_subdirectory( mains )
-add_subdirectory( model )
+add_subdirectory( src )
 add_subdirectory( test )
 
 ################################################################################
@@ -97,10 +97,10 @@ ecbuild_print_summary()
 #cmake_minimum_required(VERSION 3.6)
 
 #include_directories( ${CMAKE_CURRENT_SOURCE_DIR} )
-#include_directories( ${CMAKE_CURRENT_SOURCE_DIR}/model )
+#include_directories( ${CMAKE_CURRENT_SOURCE_DIR}/src )
 
 #add_subdirectory( mains )
-#add_subdirectory( model )
+#add_subdirectory( src )
 #add_subdirectory( test )
 
 ################################################################################

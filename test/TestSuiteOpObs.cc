@@ -7,11 +7,10 @@
 #include <cmath>
 
 #include <boost/test/unit_test.hpp>
-//#include "oops/runs/Run.h"
-#include "model/Run/Run.h"
-#include "model/Traits.h"
-#include "model/instantiateCovarFactory.h"
-#include "model/instantiateObsFactory.h"
+#include "src/Run/Run.h"
+#include "src/Traits.h"
+#include "src/instantiateCovarFactory.h"
+#include "src/instantiateObsFactory.h"
 
 #include "test/base/TestSuiteOpObsFixture.h"
 

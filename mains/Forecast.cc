@@ -1,7 +1,7 @@
 
-#include "model/Traits.h"
+#include "src/Traits.h"
 #include "oops/runs/Forecast.h"
-#include "model/Run/Run.h"
+#include "src/Run/Run.h"
 
 int main(int argc,  char ** argv) {
   soca::Run run(argc, argv);

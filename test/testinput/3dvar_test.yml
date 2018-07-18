@@ -97,26 +97,26 @@ cost_function:
       grid_output: 0
   Jo:
     ObsTypes:
-    - ObsType: SeaIceThickness
-      ObsData:
-        ObsDataOut:
-          obsfile: Data/test_obsout.nc
-        ObsDataIn:
-          obsfile: Data/cryosat2-2018-04-15.nc
-        obsvalue: ObsVal        
-      Covariance:
-        covariance: diagonal
-        obserror: ObsErr
-    - ObsType: ADT
-      ObsData:
-        ObsDataOut:
-          obsfile: Data/test_obsout.nc
-        ObsDataIn:
-          obsfile: Data/Jason-3-2018-04-15.nc
-        obsvalue: ObsVal        
-      Covariance:
-        covariance: diagonal
-        obserror: ObsErr        
+#    - ObsType: SeaIceThickness
+#      ObsData:
+#        ObsDataOut:
+#          obsfile: Data/test_obsout.nc
+#        ObsDataIn:
+#          obsfile: Data/cryosat2-2018-04-15.nc
+#        obsvalue: ObsVal        
+#      Covariance:
+#        covariance: diagonal
+#        obserror: ObsErr
+#    - ObsType: ADT
+#      ObsData:
+#        ObsDataOut:
+#          obsfile: Data/test_obsout.nc
+#        ObsDataIn:
+#          obsfile: Data/Jason-3-2018-04-15.nc
+#        obsvalue: ObsVal        
+#      Covariance:
+#        covariance: diagonal
+#        obserror: ObsErr        
 #    - ObsType: InsituTemperature
 #      ObsData:
 #        ObsDataOut:
@@ -132,7 +132,7 @@ cost_function:
         ObsDataOut:
           obsfile: Data/test_obsout.nc
         ObsDataIn:
-          obsfile: Data/seaice_obs-2018-04-15.nc
+          obsfile: /home/gvernier/Sandboxes/soca/data/bob_l2_sic/l2/sea-ice-con.nc #Data/seaice_obs-2018-04-15.nc
         obsvalue: ObsVal        
       Covariance:
         covariance: diagonal

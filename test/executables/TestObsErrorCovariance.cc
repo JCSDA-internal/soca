@@ -8,8 +8,8 @@
  * does it submit to any jurisdiction.
  */
 
-#include "model/Traits.h"
-#include "model/Run/Run.h"
+#include "src/Traits.h"
+#include "src/Run/Run.h"
 #include "test/interface/ObsErrorCovariance.h"
 
 int main(int argc,  char ** argv) {

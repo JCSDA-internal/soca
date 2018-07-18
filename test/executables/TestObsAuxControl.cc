@@ -1,5 +1,5 @@
 
-#include "model/Traits.h"
+#include "src/Traits.h"
 #include "oops/runs/Run.h"
 #include "test/interface/ObsAuxControl.h"
 

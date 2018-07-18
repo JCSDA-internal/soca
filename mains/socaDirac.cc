@@ -8,14 +8,12 @@
  * does it submit to any jurisdiction.
  */
 
-#include "model/Traits.h"
-//#include "model/LocalizationMatrix/instantiateLocalizationFactory.h"
+#include "src/Traits.h"
 #include "oops/runs/Dirac.h"
-#include "model/Run/Run.h"
+#include "src/Run/Run.h"
 
 int main(int argc,  char ** argv) {
   soca::Run run(argc, argv);
-  //soca::instantiateLocalizationFactory();  
   oops::Dirac<soca::Traits> dir;
   run.execute(dir);
   return 0;
