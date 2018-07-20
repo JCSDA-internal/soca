@@ -31,7 +31,8 @@ module soca_model_geom_type
      real(kind=kind_real), allocatable, dimension(:,:) :: lon      !< The horizontal grid type     !< 2D array of longitude 
      real(kind=kind_real), allocatable, dimension(:,:) :: lat       !< 2D array of latitude
      real(kind=kind_real), allocatable, dimension(:)   :: z           !<      
-     real(kind=kind_real), allocatable, dimension(:,:) :: mask2d    !< 0 = land 1 = ocean surface mask only
+     real(kind=kind_real), allocatable, dimension(:,:) :: mask2d    !< 0 = land 1 = ocean
+     real(kind=kind_real), allocatable, dimension(:,:) :: obsmask   !< 0 = land and halo 1 = ocean     
      real(kind=kind_real), allocatable, dimension(:,:) :: cell_area !<
      real(kind=kind_real), allocatable, dimension(:,:) :: rossby_radius !<     
    contains
@@ -74,6 +75,7 @@ contains
     if (allocated(self%lon)) deallocate(self%lon)
     if (allocated(self%lat)) deallocate(self%lat)
     if (allocated(self%mask2d)) deallocate(self%mask2d)
+    if (allocated(self%obsmask)) deallocate(self%obsmask)    
     if (allocated(self%cell_area)) deallocate(self%cell_area)
     if (allocated(self%rossby_radius)) deallocate(self%rossby_radius)    
     
@@ -127,19 +129,28 @@ contains
     allocate(self%lon(isd:ied,jsd:jed))
     allocate(self%lat(isd:ied,jsd:jed))    
     allocate(self%mask2d(isd:ied,jsd:jed))
+    allocate(self%obsmask(isd:ied,jsd:jed))    
     allocate(self%cell_area(isd:ied,jsd:jed))
     allocate(self%rossby_radius(isd:ied,jsd:jed))
     
-!!$    allocate(self%lon(nx, ny))
-!!$    allocate(self%lat(nx, ny))
-!!$    allocate(self%mask2d(nx, ny))
-!!$    allocate(self%cell_area(nx, ny))
-!!$    
     self%lon = self%G%GeoLonT
     self%lat = self%G%GeoLatT
     self%mask2d = self%G%mask2dT
     self%cell_area = self%G%areaT
+
+    ! Setting up mask used to qc out observation that are on land or out
+    ! of the compute domain
+    self%obsmask = self%G%mask2dT        
+!!$    self%obsmask(isd:is-1,:)=0.0
+!!$    self%obsmask(ie+1:,:)=0.0
+!!$    self%obsmask(:,jsd:js-1)=0.0
+!!$    self%obsmask(:,je+1:)=0.0    
     
+    self%obsmask(isd:is,:)=0.0
+    self%obsmask(ie:,:)=0.0
+    self%obsmask(:,jsd:js)=0.0
+    self%obsmask(:,je:)=0.0    
+
     ! Ocean
     self%nzo = self%G%ke
     !self%z => self%GV%sLayer
@@ -249,20 +260,49 @@ contains
     use mpp_mod,          only : mpp_pe, mpp_npes, mpp_root_pe, mpp_sync
     use fms_mod,         only : get_mosaic_tile_grid, write_data, set_domain
     use fms_io_mod,      only : fms_io_init, fms_io_exit
+    use soca_utils
     
     implicit none
     class(soca_model_geom), intent(in) :: self
     character(len=256) :: geom_output_file = "geom_output.nc"
-
+    character(len=256) :: geom_output_pe,varname
+    integer :: pe
+    character(len=8) :: fmt = '(I5.5)'
+    character(len=1024) :: strpe
+    integer :: isc,iec,jsc,jec 
+    
     call fms_io_init()
+    ! Save full domain
     call write_data( geom_output_file, "lon", self%lon, self%G%Domain%mpp_domain)
     call write_data( geom_output_file, "lat", self%lat, self%G%Domain%mpp_domain)
-    call write_data( geom_output_file, "z", self%z, self%G%Domain%mpp_domain)
     call write_data( geom_output_file, "area", self%cell_area, self%G%Domain%mpp_domain)
-    call write_data( geom_output_file, "rossby_radius", self%rossby_radius, self%G%Domain%mpp_domain)    
+    call write_data( geom_output_file, "rossby_radius", self%rossby_radius, self%G%Domain%mpp_domain)
     call write_data( geom_output_file, "mask2d", self%mask2d, self%G%Domain%mpp_domain)
     call fms_io_exit()    
-    
+
+    ! Save local compute grid
+    ! Get compute domain
+    isc = self%G%isc    
+    iec = self%G%iec
+    jsc = self%G%jsc    
+    jec = self%G%jec    
+
+    pe = mpp_pe()
+    write (strpe,fmt) pe
+    geom_output_pe='geom_output_'//trim(strpe)//'.nc'
+    !print *,self%lon(isc:iec,jsc)
+    !print *,self%lon(iec,jsc:jec)
+    !print *,self%lon(iec:isc:-1,jec)
+    !print *,self%lon(isc,jec:jsc:-1)
+    varname='obsmask'
+    call write2pe(reshape(self%obsmask,(/self%nx*self%ny/)),varname,geom_output_pe,.false.)
+    varname='lon'
+    call write2pe(reshape(self%lon,(/self%nx*self%ny/)),varname,geom_output_pe,.true.)
+    varname='lat'
+    call write2pe(reshape(self%lat,(/self%nx*self%ny/)),varname,geom_output_pe,.true.)        
+
+    print *,'--------------------- ',pe,mpp_npes(),strpe,geom_output_pe
+
   end subroutine geom_infotofile
 
 end module soca_model_geom_type

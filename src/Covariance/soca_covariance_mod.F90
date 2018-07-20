@@ -134,7 +134,7 @@ contains
        call soca_2d_convol(dx%hicen(:,:,icat), horiz_convol_p, dx%geom)       
     end do    
 
-    do izo = 1,dx%geom%ocean%nzo
+    do izo = 1,1!dx%geom%ocean%nzo
        print *,'Apply nicas: tocn, socn, layer:',izo
        call soca_2d_convol(dx%tocn(:,:,izo), horiz_convol_p, dx%geom)
        call soca_2d_convol(dx%socn(:,:,izo), horiz_convol_p, dx%geom)       

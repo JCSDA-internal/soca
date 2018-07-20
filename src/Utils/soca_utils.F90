@@ -48,5 +48,62 @@ contains
     return
 
   end function inside_polygon
+  ! ------------------------------------------------------------------------------
+
+  subroutine write2pe(vec,varname,filename,append)
+
+    use netcdf
+    use kinds
+    
+    implicit none
+
+    real(kind=kind_real), intent(in) :: vec(:)
+    character(len=256),   intent(in) :: varname
+    character(len=256),   intent(in) :: filename
+    logical,              intent(in) :: append
+
+    !netcdf stuff    
+    integer(kind=4) :: iNcid
+    integer(kind=4) :: iDim_ID
+    integer(kind=4) :: iVar_ID
+    integer         :: ndims=1, ns
+
+    ns=size(vec)
+    if (append) then  ! If file exists, append to it
+       call check( nf90_open(filename, NF90_WRITE, iNcid) )
+       call check( nf90_inquire(iNcid, nDimensions = ndims) )
+       call check( nf90_inq_dimid(iNcid, "ns", iDim_ID) )
+       call check( nf90_redef(iNcid) )
+    else    
+       call check(nf90_create(filename, NF90_CLOBBER, iNcid))
+       call check(nf90_def_dim(iNcid, "ns", ns, iDim_ID))
+    end if
+
+    ! Define of variables.
+    call check( nf90_def_var(iNcid, trim(varname), NF90_DOUBLE,  (/ iDim_ID /), iVar_ID) )
+
+    ! End define mode.
+    call check(nf90_enddef(iNcid))
+
+    ! Writing
+    call check(nf90_put_var(iNcid, iVar_ID , vec))     
+
+    ! Close file.
+    call check(nf90_close(iNcid))
+    
+  end subroutine write2pe
+
+  ! ------------------------------------------------------------------------------  
+  
+  subroutine check(status)
+
+    use netcdf
+    IMPLICIT NONE
+    integer(4), intent ( in) :: status
+    if(status /= nf90_noerr) then
+       print *, trim(nf90_strerror(status))
+       stop "Stopped"
+    end if
+  end subroutine check
 
 end module soca_utils
