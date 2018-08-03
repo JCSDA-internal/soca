@@ -615,8 +615,6 @@ contains
     endif
     if (iread==0) then
        call log%warning("soca_fields:read_file: Inventing State")
-       !call abor1_ftn("soca_fields: inventing state")                    
-       !call invent_state(fld)
        call zeros(fld)
        call random_number(fld%cicen)
 
