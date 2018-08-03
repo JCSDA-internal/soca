@@ -15,6 +15,7 @@ Variables:
   - socn
   - tocn
   - ssh
+  - hocn
 ModelBias: 
 Covariance:
   covariance: SocaError

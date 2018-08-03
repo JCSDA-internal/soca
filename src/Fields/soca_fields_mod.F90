@@ -460,6 +460,8 @@ contains
     call check_resolution(fld1, fld2)
     if (fld1%nf /= fld2%nf .or. fld1%geom%ocean%nzo /= fld2%geom%ocean%nzo) then
        print *,'STUFF:',fld1%nf,fld2%nf,fld1%geom%ocean%nzo, fld2%geom%ocean%nzo
+       print *,'fld1:',fld1%fldnames
+       print *,'fld2:',fld2%fldnames       
        call abor1_ftn("soca_fields:field_prod error number of fields")
     endif
 

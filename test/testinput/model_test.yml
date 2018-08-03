@@ -6,7 +6,7 @@ Geometry: {}
 ModelBias: 
 ModelTest:
   fclength: PT24H
-  finalnorm: 147747.12307291865
+  finalnorm: 160926.40386345252
   tolerance: '0.005'
 Model:
   tstep: PT6H
