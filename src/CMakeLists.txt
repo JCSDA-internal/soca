@@ -9,7 +9,7 @@ list( APPEND oops_soca_src_files
 ./Fields/Fields.cc
 ./Fields/Fields.h
 ./Fields/soca_fields_mod.F90
-./Fields/soca_fields_interface.F90
+./Fields/soca_fields.interface.F90
 
 #State
 ./State/State.cc
