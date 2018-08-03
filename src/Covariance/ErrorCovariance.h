@@ -25,7 +25,7 @@
 namespace soca {
   class Increment;
   class State;
-  class Variables;
+  //class Variables;
 
   // -----------------------------------------------------------------------------
   /// Background error covariance matrix for SOCA model.

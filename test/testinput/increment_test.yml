@@ -15,9 +15,3 @@ State:
   ocn_filename: MOM.res.nc
   ice_filename: ice_model.res.nc
 
-StateTest:
-  read_from_file: 0
-  date: '2018-04-15T00:00:00Z'
-  perturb: 0
-  norm: 99999.1
-  tolerance: 0.005

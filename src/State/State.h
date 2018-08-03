@@ -37,8 +37,6 @@ namespace ioda {
 }
 
 namespace soca {
-  //class Gom;
-  //class Loc;
   class Geometry;
   class Increment;
 

@@ -14,7 +14,7 @@
 #include <boost/shared_ptr.hpp>
 
 #include "src/Geometry/Geometry.h"
-#include "src/Variables/Variables.h"
+#include "oops/base/Variables.h"    
 #include "oops/util/DateTime.h"
 #include "oops/util/Duration.h"
 #include "oops/util/ObjectCounter.h"
@@ -28,7 +28,6 @@ namespace eckit {
 
 namespace oops {
   class UnstructuredGrid;
-  class Variables;  
 }
 
 namespace ufo {
@@ -105,7 +104,7 @@ namespace soca {
       void print(std::ostream &) const;
       F90flds keyFlds_;
       boost::shared_ptr<const Geometry> geom_;
-      const Variables vars_;      
+      oops::Variables vars_;      
       util::DateTime time_;
     };
   // -----------------------------------------------------------------------------

@@ -11,22 +11,22 @@ subroutine soca_field_create_c(c_key_self, c_key_geom, c_vars) bind(c,name='soca
   use iso_c_binding
   use soca_fields
   use soca_geom_mod
-  use soca_vars_mod
+  use ufo_vars_mod  
   implicit none
-  integer(c_int), intent(inout) :: c_key_self
-  integer(c_int), intent(in) :: c_key_geom !< Geometry
-  integer(c_int), dimension(*), intent(in) :: c_vars     !< List of variables
-
+  integer(c_int), intent(inout) :: c_key_self !< Handle to field
+  integer(c_int),    intent(in) :: c_key_geom !< Geometry
+  type(c_ptr),       intent(in) :: c_vars     !< List of variables
+  
   type(soca_field), pointer :: self
   type(soca_geom),  pointer :: geom
-  type(soca_vars) :: vars
+  type(ufo_vars) :: vars
 
   call soca_geom_registry%get(c_key_geom, geom)
   call soca_field_registry%init()
   call soca_field_registry%add(c_key_self)
   call soca_field_registry%get(c_key_self,self)
 
-  call soca_vars_create(vars, c_vars)
+  call ufo_vars_setup(vars, c_vars)  
   call create(self, geom, vars)
 
 end subroutine soca_field_create_c
@@ -38,7 +38,7 @@ subroutine soca_field_delete_c(c_key_self) bind(c,name='soca_field_delete_f90')
   use soca_fields
   implicit none
   integer(c_int), intent(inout) :: c_key_self
-  type(soca_field), pointer :: self
+  type(soca_field),  pointer :: self
 
   call soca_field_registry%get(c_key_self,self)
   call delete(self)
@@ -429,6 +429,7 @@ subroutine soca_field_interp_tl_c(c_key_fld,c_key_loc,c_vars,c_key_gom) bind(c,n
   type(ufo_geovals),  pointer :: gom
   type(ufo_vars) :: vars  
 
+  
   call ufo_vars_setup(vars, c_vars)
 
   call soca_field_registry%get(c_key_fld,fld)

@@ -44,7 +44,8 @@ namespace soca {
   State::State(const Geometry & resol, const eckit::Configuration & file)
     : fields_(), stash_()
   {
-    const std::vector<std::string> vv{"cicen",
+    const std::vector<std::string> vv={
+      	  "cicen",
 	  "hicen",
 	  "hsnon",
 	  "tsfcn",
@@ -54,8 +55,8 @@ namespace soca {
 	  "socn",
 	  "tocn",
 	  "ssh",
-	  "hocn"	
-	};
+	  "hocn"      
+    };
     oops::Variables vars(vv);
     fields_.reset(new Fields(resol, vars, util::DateTime()));
     fields_->read(file);
@@ -82,27 +83,20 @@ namespace soca {
   }
   // -----------------------------------------------------------------------------
   void State::activateModel() {
-    // Should get variables from model. YT
-    //eckit::LocalConfiguration modelvars;
-
     const std::vector<std::string> vv{"cicen",
-	  "hicen",
-	  "hsnon",
-	  "tsfcn",
-	  "qsnon",
-	  "sicnk",
-	  "qicnk",
-	  "socn",
-	  "tocn",
-	  "ssh",
-	  "hocn",	
+	"hicen",
+	"hsnon",
+	"tsfcn",
+	"qsnon",
+	"sicnk",
+	"qicnk",
+	"socn",
+	"tocn",
+	"ssh",
+	"hocn",	
 	};
     oops::Variables vars(vv);
 
-    
-    //modelvars.set("variables", "nl");
-    //oops::Variables vars(vars);
-    // Should get variables from model. YT
     stash_.reset(new Fields(*fields_, vars));
     swap(fields_, stash_);
     ASSERT(fields_);

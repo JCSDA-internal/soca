@@ -93,9 +93,9 @@ namespace soca {
     // -----------------------------------------------------------------------------
     //  Fields
     // -----------------------------------------------------------------------------
-    void soca_field_create_f90(F90flds &, const F90geom &, const F90vars *);
+    void soca_field_create_f90(F90flds &, const F90geom &,
+			       const eckit::Configuration * const *);
     void soca_field_delete_f90(F90flds &);
-
     void soca_field_copy_f90(const F90flds &, const F90flds &);
     void soca_field_zero_f90(const F90flds & );
     void soca_field_self_add_f90(const F90flds &, const F90flds &);

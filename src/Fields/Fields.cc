@@ -21,23 +21,25 @@
 #include "ioda/Locations.h"
 #include "src/Fortran.h"
 #include "src/Geometry/Geometry.h"
-#include "src/Variables/Variables.h"
 #include "src/GetValuesTraj/GetValuesTraj.h"
 
 // -----------------------------------------------------------------------------
 namespace soca {
   // -----------------------------------------------------------------------------
-  Fields::Fields(const Geometry & geom, const oops::Variables & vars,
+  Fields::Fields(const Geometry & geom,
+		 const oops::Variables & vars,
 		 const util::DateTime & time):
     geom_(new Geometry(geom)), vars_(vars), time_(time)
   {
-    soca_field_create_f90(keyFlds_, geom_->toFortran(), vars_.toFortran());
+    const eckit::Configuration * conf = &vars_.toFortran();
+    soca_field_create_f90(keyFlds_, geom_->toFortran(), &conf);
   }
   // -----------------------------------------------------------------------------
   Fields::Fields(const Fields & other, const bool copy)
     : geom_(other.geom_), vars_(other.vars_), time_(other.time_)
   {
-    soca_field_create_f90(keyFlds_, geom_->toFortran(), vars_.toFortran());
+    const eckit::Configuration * conf = &vars_.toFortran();    
+    soca_field_create_f90(keyFlds_, geom_->toFortran(), &conf);
     if (copy) {
       soca_field_copy_f90(keyFlds_, other.keyFlds_);
     } else {
@@ -47,22 +49,25 @@ namespace soca {
   // -----------------------------------------------------------------------------
   Fields::Fields(const Fields & other)
     : geom_(other.geom_), vars_(other.vars_), time_(other.time_)
-  {    
-    soca_field_create_f90(keyFlds_, geom_->toFortran(), vars_.toFortran());
+  {
+    const eckit::Configuration * conf = &vars_.toFortran();    
+    soca_field_create_f90(keyFlds_, geom_->toFortran(), &conf);
     soca_field_copy_f90(keyFlds_, other.keyFlds_);
   }
   // -----------------------------------------------------------------------------
   Fields::Fields(const Fields & other, const Geometry & geom)
     : geom_(new Geometry(geom)), vars_(other.vars_), time_(other.time_)
   {
-    soca_field_create_f90(keyFlds_, geom_->toFortran(), vars_.toFortran());
+    const eckit::Configuration * conf = &vars_.toFortran();    
+    soca_field_create_f90(keyFlds_, geom_->toFortran(), &conf);
     soca_field_change_resol_f90(keyFlds_, other.keyFlds_);
   }
   // -----------------------------------------------------------------------------
   Fields::Fields(const Fields & other, const oops::Variables & vars)
     : geom_(other.geom_), vars_(vars), time_(other.time_)
   {
-    soca_field_create_f90(keyFlds_, geom_->toFortran(), vars_.toFortran());
+    const eckit::Configuration * conf = &vars_.toFortran();    
+    soca_field_create_f90(keyFlds_, geom_->toFortran(), &conf);
     soca_field_copy_f90(keyFlds_, other.keyFlds_);
   }
   // -----------------------------------------------------------------------------

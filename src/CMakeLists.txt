@@ -17,9 +17,9 @@ list( APPEND oops_soca_src_files
 ./State/State.h
 
 #Variables
-./Variables/Variables.cc
-./Variables/Variables.h
-./Variables/soca_vars_mod.F90
+#./Variables/Variables.cc
+#./Variables/Variables.h
+#./Variables/soca_vars_mod.F90
 
 #Increment
 ./Increment/Increment.cc

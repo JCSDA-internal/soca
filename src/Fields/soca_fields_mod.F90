@@ -9,7 +9,7 @@ module soca_fields
 
   use config_mod
   use soca_geom_mod
-  use soca_vars_mod
+  use ufo_vars_mod  
   use soca_interph_mod
   use soca_getvaltraj_mod
   use kinds
@@ -78,14 +78,14 @@ contains
   subroutine create_constructor(self, geom, vars)
     ! Construct a field from geom and vars
     use soca_mom6sis2, only: Coupled, soca_field_init, soca_geom_init
-    use soca_vars_mod
+    use ufo_vars_mod    
     
     implicit none
     type(soca_field), intent(inout)          :: self
     type(soca_geom),  pointer, intent(inout) :: geom
-    type(soca_vars),  intent(in)             :: vars        
-    integer :: ivar!, unit, nxny(2)
-    
+    type(ufo_vars),  intent(in)              :: vars        
+    integer :: ivar
+
     self%geom => geom
     self%nf   = vars%nv
     call soca_field_init(self%AOGCM, geom%ocean%G, geom%ocean%GV, geom%ocean%IG)
@@ -125,7 +125,6 @@ contains
   subroutine create_copy(self, rhs_fld)
     ! Construct a field from an other field, lhs_fld=rhs_fld       
     use soca_mom6sis2, only: Coupled, soca_field_init, soca_geom_init
-    use soca_vars_mod
     
     implicit none
     type(soca_field), intent(inout)          :: self
