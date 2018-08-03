@@ -125,12 +125,11 @@ subroutine c_soca_b_mult(c_key_conf, c_key_in, c_key_out, c_key_traj) bind(c,nam
 
   call soca_3d_covar_K_mult_ad(xtmp, traj)    !< xtmp = K^T.xtmp
   call soca_3d_covar_D_mult(xtmp, traj, conf) !< xtmp = D.xtmp
-  call soca_3d_covar_C_mult(xtmp,conf)        !< xtmp = C.xtmp
+  !call soca_3d_covar_C_mult(xtmp,conf)        !< xtmp = C.xtmp
   call soca_3d_covar_D_mult(xtmp, traj, conf) !< xtmp = D.xtmp  
   call soca_3d_covar_K_mult(xtmp, traj)       !< xtmp = K.xtmp
 
   call cpu_time(finish)
-  call mpi_barrier(MPI_COMM_WORLD,ierr)
   call mpi_barrier(MPI_COMM_WORLD,ierr)
   print *,"B.dy elapsed Time = ",finish-start," seconds."
   !stop

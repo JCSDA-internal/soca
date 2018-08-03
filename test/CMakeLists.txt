@@ -85,6 +85,7 @@ ecbuild_add_resources( TARGET   soca_test_scripts
 list( APPEND soca_obs
   ../../ufo/test/testinput/marineobs/Jason-3-2018-04-15.nc
   ../../ufo/test/testinput/marineobs/seaice_obs-2018-04-15.nc
+  ../../ufo/test/testinput/marineobs/sea-ice-con-l2.nc
   ../../ufo/test/testinput/marineobs/sst_obs-2018-04-15.nc
   ../../ufo/test/testinput/marineobs/t0n156e_dy.nc
   ../../ufo/test/testinput/marineobs/cryosat2-2018-04-15.nc

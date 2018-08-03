@@ -84,7 +84,7 @@ contains
     call soca_init_D(geom, bkg, D_p)
     
     !< Initialize bump
-    call soca_bump_correlation(geom, horiz_convol_p, c_conf)
+    !call soca_bump_correlation(geom, horiz_convol_p, c_conf)
     
   end subroutine soca_3d_covar_setup
 
@@ -100,7 +100,7 @@ contains
     integer(c_int), intent(inout) :: c_key_conf !< The model covariance structure
 
     call soca_3d_cov_registry%remove(c_key_conf)
-    call soca_bump_correlation(destruct=.true.)
+    !call soca_bump_correlation(destruct=.true.)
     
   end subroutine soca_3d_covar_delete
 
@@ -303,27 +303,28 @@ contains
     dx%cicen=config%sig_sic*dx%cicen
     dx%hicen=config%sig_sit*dx%hicen
     dx%ssh=config%sig_ssh*dx%ssh
-    !dx%ssh=dx%ssh    
+    dx%tocn=config%sig_tocn*dx%tocn
+    dx%socn=config%sig_socn*dx%socn    
 
-    call create(sig,traj)  
-    call zeros(sig)                         !< xtmp = xin
-
-    !!!!! HACK !!!!!
-    do k = 1, traj%geom%ocean%nzo
-       if (k.eq.1) then
-          sig%tocn(:,:,k)=abs(traj%tocn(:,:,1)-abs(traj%tocn(:,:,2)))
-          sig%socn(:,:,k)=abs(traj%socn(:,:,1)-abs(traj%socn(:,:,2)))
-       elseif (k.eq.traj%geom%ocean%nzo) then
-          sig%tocn(:,:,k)=abs(traj%tocn(:,:,k)-abs(traj%tocn(:,:,k-1)))
-          sig%tocn(:,:,k)=abs(traj%socn(:,:,k)-abs(traj%socn(:,:,k-1)) )         
-       else
-          sig%tocn(:,:,k)=0.5*abs(traj%tocn(:,:,k+1)-abs(traj%tocn(:,:,k-1)))
-          sig%socn(:,:,k)=0.5*abs(traj%socn(:,:,k+1)-abs(traj%socn(:,:,k-1)))
-       end if
-       dx%tocn(:,:,k)=sig%tocn(:,:,k)*dx%tocn(:,:,k)
-       dx%socn(:,:,k)=sig%socn(:,:,k)*dx%socn(:,:,k)       
-    end do
-    call delete(sig)
+!!$    call create(sig,traj)  
+!!$    call zeros(sig)                         !< xtmp = xin
+!!$
+!!$    !!!!! HACK !!!!!
+!!$    do k = 1, traj%geom%ocean%nzo
+!!$       if (k.eq.1) then
+!!$          sig%tocn(:,:,k)=abs(traj%tocn(:,:,1)-abs(traj%tocn(:,:,2)))
+!!$          sig%socn(:,:,k)=abs(traj%socn(:,:,1)-abs(traj%socn(:,:,2)))
+!!$       elseif (k.eq.traj%geom%ocean%nzo) then
+!!$          sig%tocn(:,:,k)=abs(traj%tocn(:,:,k)-abs(traj%tocn(:,:,k-1)))
+!!$          sig%tocn(:,:,k)=abs(traj%socn(:,:,k)-abs(traj%socn(:,:,k-1)) )         
+!!$       else
+!!$          sig%tocn(:,:,k)=0.5*abs(traj%tocn(:,:,k+1)-abs(traj%tocn(:,:,k-1)))
+!!$          sig%socn(:,:,k)=0.5*abs(traj%socn(:,:,k+1)-abs(traj%socn(:,:,k-1)))
+!!$       end if
+!!$       dx%tocn(:,:,k)=sig%tocn(:,:,k)*dx%tocn(:,:,k)
+!!$       dx%socn(:,:,k)=sig%socn(:,:,k)*dx%socn(:,:,k)       
+!!$    end do
+!!$    call delete(sig)
     !!!!! END HACK !!!!!!
     
   end subroutine soca_3d_covar_D_mult

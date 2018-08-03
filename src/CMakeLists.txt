@@ -28,12 +28,8 @@ list( APPEND oops_soca_src_files
 #Model
 ./Model/Model.cc
 ./Model/Model.h
-./Model/c_soca_setup.F90
-./Model/c_soca_delete.F90
-./Model/c_soca_prepare_integration.F90
-./Model/c_soca_propagate.F90
-./Model/propagate.F90
-./Model/soca_configs.F90
+./Model/soca_model.interface.F90
+./Model/soca_model_mod.F90
 
 #Model
 ./LinearModel/TlmId.cc
@@ -42,7 +38,7 @@ list( APPEND oops_soca_src_files
 #Covariance
 ./Covariance/ErrorCovariance.cc
 ./Covariance/ErrorCovariance.h
-./Covariance/soca_bmatrix.interface.F90
+./Covariance/soca_covariance.interface.F90
 ./Covariance/soca_covariance_mod.F90
 
 #LocalizationMatrix

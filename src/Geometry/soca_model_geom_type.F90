@@ -111,10 +111,14 @@ contains
     ! Allocate arrays on data domain
     ! Note: Compute domain excludes halo (is, ie, js, je)
     !       Data domain includes halo (isd, ied, jsd, jed)
+    ! Compute
     is   = self%G%isc  ; ie   = self%G%iec  ; js   = self%G%jsc  ; je   = self%G%jec ; nzo = self%G%ke
-    Isq  = self%G%IscB ; Ieq  = self%G%IecB ; Jsq  = self%G%JscB ; Jeq  = self%G%JecB
+
+    ! Data
     isd  = self%G%isd  ; ied  = self%G%ied  ; jsd  = self%G%jsd  ; jed  = self%G%jed
-    IsdB = self%G%IsdB ; IedB = self%G%IedB ; JsdB = self%G%JsdB ; JedB = self%G%JedB
+
+    !Isq  = self%G%IscB ; Ieq  = self%G%IecB ; Jsq  = self%G%JscB ; Jeq  = self%G%JecB    
+    !IsdB = self%G%IsdB ; IedB = self%G%IedB ; JsdB = self%G%JsdB ; JedB = self%G%JedB
    
     nxny = shape( self%G%GeoLonT )
     nx = nxny(1)
@@ -141,6 +145,7 @@ contains
     ! Setting up mask used to qc out observation that are on land or out
     ! of the compute domain
     self%obsmask = self%G%mask2dT        
+
 !!$    self%obsmask(isd:is-1,:)=0.0
 !!$    self%obsmask(ie+1:,:)=0.0
 !!$    self%obsmask(:,jsd:js-1)=0.0
@@ -290,10 +295,6 @@ contains
     pe = mpp_pe()
     write (strpe,fmt) pe
     geom_output_pe='geom_output_'//trim(strpe)//'.nc'
-    !print *,self%lon(isc:iec,jsc)
-    !print *,self%lon(iec,jsc:jec)
-    !print *,self%lon(iec:isc:-1,jec)
-    !print *,self%lon(isc,jec:jsc:-1)
     varname='obsmask'
     call write2pe(reshape(self%obsmask,(/self%nx*self%ny/)),varname,geom_output_pe,.false.)
     varname='lon'

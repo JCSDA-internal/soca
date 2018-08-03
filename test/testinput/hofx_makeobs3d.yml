@@ -29,7 +29,7 @@ Observations:
       ObsDataOut:
         obsfile: "./Data/data.nc"
       ObsDataIn:
-        obsfile: Data/seaice_obs-2018-04-15.nc
+        obsfile: ./Data/sea-ice-con-l2.nc #seaice_obs-2018-04-15.nc
         obsvalue: ObsVal        
       Covariance:
         covariance: diagonal

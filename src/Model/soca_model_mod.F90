@@ -6,29 +6,28 @@
 !
 !> Structure holding configuration variables for the  model
 
-module soca_configs
+module soca_model_mod
 
   use kinds
   implicit none
   private
-  public :: soca_config
-  public :: soca_config_registry
+  public :: soca_model
+  public :: soca_model_registry
 
   !> Fortran derived type to hold configuration data for the  model
-  type :: soca_config
-     integer :: nx     !< Zonal grid dimension
-     integer :: ny     !< Meridional grid dimension
-     ! dimensional parameters
-     real(kind=kind_real) :: dt0       !< dimensional time (seconds)
-  end type soca_config
+  type :: soca_model
+     integer :: nx                !< Zonal grid dimension
+     integer :: ny                !< Meridional grid dimension
+     real(kind=kind_real) :: dt0  !< dimensional time (seconds)
+  end type soca_model
 
-#define LISTED_TYPE soca_config
+#define LISTED_TYPE soca_model
 
   !> Linked list interface - defines registry_t type
 #include "Utils/linkedList_i.f"
 
   !> Global registry
-  type(registry_t) :: soca_config_registry
+  type(registry_t) :: soca_model_registry
 
   ! ------------------------------------------------------------------------------
 contains
@@ -36,4 +35,4 @@ contains
   !> Linked list implementation
 #include "Utils/linkedList_c.f"
 
-end module soca_configs
+end module soca_model_mod
