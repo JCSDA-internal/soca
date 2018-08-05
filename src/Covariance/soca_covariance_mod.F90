@@ -84,7 +84,7 @@ contains
     call soca_init_D(geom, bkg, D_p)
     
     !< Initialize bump
-    !call soca_bump_correlation(geom, horiz_convol_p, c_conf)
+    call soca_bump_correlation(geom, horiz_convol_p, c_conf)
     
   end subroutine soca_3d_covar_setup
 
