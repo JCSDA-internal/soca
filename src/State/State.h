@@ -5,8 +5,8 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#ifndef SOCA_MODEL_SOCASTATE_H_
-#define SOCA_MODEL_SOCASTATE_H_
+#ifndef SOCA_SRC_STATE_STATE_H_
+#define SOCA_SRC_STATE_STATE_H_
 
 #include <ostream>
 #include <string>
@@ -49,11 +49,12 @@ namespace soca {
   // -----------------------------------------------------------------------------
   class State : public util::Printable,
     private util::ObjectCounter<State> {
-  public:
+   public:
       static const std::string classname() {return "soca::State";}
 
       /// Constructor, destructor
-      State(const Geometry &, const oops::Variables &, const util::DateTime &);  // Is it used?
+      State(const Geometry &, const oops::Variables &,
+            const util::DateTime &);  // Is it used?
       State(const Geometry &, const eckit::Configuration &);
       State(const Geometry &, const State &);
       State(const State &);
@@ -61,8 +62,13 @@ namespace soca {
       State & operator=(const State &);
 
       /// Interpolate to observation location
-      void getValues(const ioda::Locations &, const oops::Variables &, ufo::GeoVaLs &) const;
-      void getValues(const ioda::Locations &, const oops::Variables &, ufo::GeoVaLs &, GetValuesTraj &) const;      
+      void getValues(const ioda::Locations &,
+                     const oops::Variables &,
+                     ufo::GeoVaLs &) const;
+      void getValues(const ioda::Locations &,
+                     const oops::Variables &,
+                     ufo::GeoVaLs &,
+                     GetValuesTraj &) const;
 
       /// Interpolate full fields
       ///  void changeResolution(const State & xx);
@@ -78,7 +84,7 @@ namespace soca {
       util::DateTime & validTime() {return fields_->time();}
 
       /// Define and convert to/from unstructured grid
-      void define(oops::UnstructuredGrid &) const;      
+      void define(oops::UnstructuredGrid &) const;
       void convert_to(oops::UnstructuredGrid &) const;
       void convert_from(const oops::UnstructuredGrid &);
 
@@ -87,7 +93,7 @@ namespace soca {
       const Fields & fields() const {return *fields_;}
 
       boost::shared_ptr<const Geometry> geometry() const {
-	return fields_->geometry();
+        return fields_->geometry();
       }
 
       /// Other
@@ -97,13 +103,13 @@ namespace soca {
       void zero();
       void accumul(const double &, const State &);
 
-  private:
+   private:
       void print(std::ostream &) const;
       boost::scoped_ptr<Fields> fields_;
       boost::scoped_ptr<Fields> stash_;
-    };
+  };
   // -----------------------------------------------------------------------------
 
 }  // namespace soca
 
-#endif  // SOCA_MODEL_SOCASTATE_H_
+#endif  // SOCA_SRC_STATE_STATE_H_

@@ -9,6 +9,8 @@
 
 #include <algorithm>
 #include <string>
+#include <vector>
+#include <utility>
 
 #include "eckit/config/LocalConfiguration.h"
 
@@ -35,7 +37,7 @@ namespace soca {
   /// Constructor, destructor
   // -----------------------------------------------------------------------------
   State::State(const Geometry & resol, const oops::Variables & vars,
-	       const util::DateTime & vt)
+               const util::DateTime & vt)
     : fields_(new Fields(resol, vars, vt)), stash_()
   {
     Log::trace() << "State::State created." << std::endl;
@@ -44,18 +46,18 @@ namespace soca {
   State::State(const Geometry & resol, const eckit::Configuration & file)
     : fields_(), stash_()
   {
-    const std::vector<std::string> vv={
-      	  "cicen",
-	  "hicen",
-	  "hsnon",
-	  "tsfcn",
-	  "qsnon",
-	  "sicnk",
-	  "qicnk",
-	  "socn",
-	  "tocn",
-	  "ssh",
-	  "hocn"      
+    const std::vector<std::string> vv = {
+          "cicen",
+          "hicen",
+          "hsnon",
+          "tsfcn",
+          "qsnon",
+          "sicnk",
+          "qicnk",
+          "socn",
+          "tocn",
+          "ssh",
+          "hocn"
     };
     oops::Variables vars(vv);
     fields_.reset(new Fields(resol, vars, util::DateTime()));
@@ -83,18 +85,19 @@ namespace soca {
   }
   // -----------------------------------------------------------------------------
   void State::activateModel() {
-    const std::vector<std::string> vv{"cicen",
-	"hicen",
-	"hsnon",
-	"tsfcn",
-	"qsnon",
-	"sicnk",
-	"qicnk",
-	"socn",
-	"tocn",
-	"ssh",
-	"hocn",	
-	};
+    const std::vector<std::string> vv{
+          "cicen",
+          "hicen",
+          "hsnon",
+          "tsfcn",
+          "qsnon",
+          "sicnk",
+          "qicnk",
+          "socn",
+          "tocn",
+          "ssh",
+          "hocn"
+    };
     oops::Variables vars(vv);
 
     stash_.reset(new Fields(*fields_, vars));
@@ -123,20 +126,18 @@ namespace soca {
   // -----------------------------------------------------------------------------
   /// Interpolate to observation location
   // -----------------------------------------------------------------------------
-  void State::getValues(const ioda::Locations & locs, const oops::Variables & vars, ufo::GeoVaLs & cols) const {
+  void State::getValues(const ioda::Locations & locs,
+                        const oops::Variables & vars,
+                        ufo::GeoVaLs & cols) const {
     fields_->getValues(locs, vars, cols);
   }
   // -----------------------------------------------------------------------------
-  void State::getValues(const ioda::Locations & locs, const oops::Variables & vars, ufo::GeoVaLs & cols, GetValuesTraj &) const {
+  void State::getValues(const ioda::Locations & locs,
+                        const oops::Variables & vars,
+                        ufo::GeoVaLs & cols,
+                        GetValuesTraj &) const {
     fields_->getValues(locs, vars, cols);
   }
-  // -----------------------------------------------------------------------------  
-  /// Interpolate full fields
-  // -----------------------------------------------------------------------------
-  //void State::changeResolution(const State & other) {
-  //  fields_->changeResolution(*other.fields_);
-  //  Log::trace() << "State interpolated" << std::endl;
-  //}
   // -----------------------------------------------------------------------------
   /// Interactions with Increments
   // -----------------------------------------------------------------------------
@@ -150,7 +151,7 @@ namespace soca {
   /// Define and convert to/from unstructured grid
   // -----------------------------------------------------------------------------
   void State::define(oops::UnstructuredGrid & ug) const {
-    //fields_->define(ug);
+    // fields_->define(ug);
   }
   // -----------------------------------------------------------------------------
   void State::convert_to(oops::UnstructuredGrid & ug) const {
@@ -159,7 +160,7 @@ namespace soca {
   // -----------------------------------------------------------------------------
   void State::convert_from(const oops::UnstructuredGrid & ug) {
     fields_->convert_from(ug);
-  }  
+  }
   // -----------------------------------------------------------------------------
   /// I/O and diagnostics
   // -----------------------------------------------------------------------------

@@ -25,12 +25,15 @@ using oops::Log;
 namespace soca {
   // -----------------------------------------------------------------------------
 
-  ErrorCovariance::ErrorCovariance(const Geometry & resol, const oops::Variables &,
-				   const eckit::Configuration & conf, const State & bkg) {
-    //bkg: Background state, invariant wrt outer-loop. 
+  ErrorCovariance::ErrorCovariance(const Geometry & resol,
+                                   const oops::Variables &,
+                                   const eckit::Configuration & conf,
+                                   const State & bkg) {
+    // bkg: Background state, invariant wrt outer-loop.
     time_ = util::DateTime(conf.getString("date"));
     const eckit::Configuration * configc = &conf;
-    soca_b_setup_f90(keyFtnConfig_, &configc, resol.toFortran(), bkg.fields().toFortran());
+    soca_b_setup_f90(keyFtnConfig_, &configc, resol.toFortran(),
+                     bkg.fields().toFortran());
     Log::trace() << "ErrorCovariance created" << std::endl;
   }
 
@@ -45,10 +48,11 @@ namespace soca {
 
   void ErrorCovariance::linearize(const State & traj, const Geometry & resol) {
     geom_.reset(new Geometry(resol));
-  //traj: Trajectory used for the linearization of the balance operators. Changes at each outer-loops.
+  // traj: Trajectory used for the linearization of the balance operators.
+  // Changes at each outer-loops.
     traj_.reset(new State(traj));
     soca_b_linearize_f90(traj.fields().toFortran(), resol.toFortran());
-    Log::trace() << "Trajectory for ErrorCovariance" << std::endl;    
+    Log::trace() << "Trajectory for ErrorCovariance" << std::endl;
   }
 
   // -----------------------------------------------------------------------------
@@ -59,16 +63,16 @@ namespace soca {
     Log::debug() << std::endl <<"------ dxout" << dxout << std::endl;
     Log::debug() << std::endl <<"------ traj ---- :" << std::endl;
     soca_b_mult_f90(keyFtnConfig_, dxin.fields().toFortran(),
-     		    dxout.fields().toFortran(), traj_->fields().toFortran());
+                    dxout.fields().toFortran(), traj_->fields().toFortran());
   }
 
   // -----------------------------------------------------------------------------
 
-  void ErrorCovariance::inverseMultiply(const Increment & dxin, Increment & dxout) const {
-    soca_b_invmult_f90(keyFtnConfig_, dxin.fields().toFortran(),		       
-     			    dxout.fields().toFortran());
-    std::cout << "inv mult" << std::endl;        
-    //dxout = dxin;
+  void ErrorCovariance::inverseMultiply(const Increment & dxin,
+                                        Increment & dxout) const {
+    soca_b_invmult_f90(keyFtnConfig_, dxin.fields().toFortran(),
+                       dxout.fields().toFortran());
+    std::cout << "inv mult" << std::endl;
   }
 
   // -----------------------------------------------------------------------------

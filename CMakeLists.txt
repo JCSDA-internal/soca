@@ -94,6 +94,11 @@ ecbuild_install_project( NAME soca )
 # print the summary of the configuration
 ecbuild_print_summary()
 
+ecbuild_add_test( TARGET soca_coding_norms
+                  TYPE SCRIPT
+		  COMMAND ${CMAKE_BINARY_DIR}/bin/cpplint.py
+		  ARGS --quiet --recursive ${CMAKE_CURRENT_SOURCE_DIR} )
+
 #cmake_minimum_required(VERSION 3.6)
 
 #include_directories( ${CMAKE_CURRENT_SOURCE_DIR} )

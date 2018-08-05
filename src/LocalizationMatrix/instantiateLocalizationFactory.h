@@ -8,8 +8,8 @@
  * does it submit to any jurisdiction.
  */
 
-#ifndef SOCA_MODEL_INSTANTIATESOCALOCALIZATIONFACTORY_H_
-#define SOCA_MODEL_INSTANTIATESOCALOCALIZATIONFACTORY_H_
+#ifndef SOCA_SRC_LOCALIZATIONMATRIX_INSTANTIATELOCALIZATIONFACTORY_H_
+#define SOCA_SRC_LOCALIZATIONMATRIX_INSTANTIATELOCALIZATIONFACTORY_H_
 
 #include "oops/interface/LocalizationBase.h"
 #include "src/LocalizationMatrix/LocalizationMatrix.h"
@@ -18,9 +18,8 @@
 namespace soca {
 
 void instantiateLocalizationFactory() {
-  // static oops::LocalizationMaker;//<Traits, LocalizationMatrix> makerSeaIceFraction_("SeaIceFraction");
 }
 
 }  // namespace soca
 
-#endif  // SOCA_MODEL_INSTANTIATESOCALOCALIZATIONFACTORY_H_
+#endif  // SOCA_SRC_LOCALIZATIONMATRIX_INSTANTIATELOCALIZATIONFACTORY_H_

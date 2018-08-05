@@ -19,4 +19,4 @@ int main(int argc,  char ** argv) {
   oops::Variational<soca::Traits> var;
   run.execute(var);
   return 0;
-};
+}

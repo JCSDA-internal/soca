@@ -5,8 +5,8 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#ifndef SOCA_MODEL_NOTHING_H_
-#define SOCA_MODEL_NOTHING_H_
+#ifndef SOCA_SRC_GETVALUESTRAJ_GETVALUESTRAJ_H_
+#define SOCA_SRC_GETVALUESTRAJ_GETVALUESTRAJ_H_
 
 #include <ostream>
 
@@ -24,7 +24,7 @@ class GetValuesTraj : public util::Printable {
 
   int & toFortran() {return keyGetValuesTraj_;}
   const int & toFortran() const {return keyGetValuesTraj_;}
-  
+
  private:
   void print(std::ostream &) const {}
   F90getvaltraj keyGetValuesTraj_;
@@ -34,4 +34,4 @@ class GetValuesTraj : public util::Printable {
 
 }  // namespace soca
 
-#endif  // SOCA_MODEL_NOTHING_H_
+#endif  // SOCA_SRC_GETVALUESTRAJ_GETVALUESTRAJ_H_

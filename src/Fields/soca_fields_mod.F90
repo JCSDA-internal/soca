@@ -713,11 +713,10 @@ contains
     character(len=1024):: buf
     integer :: ii
 
-
     call check(fld)
 
     !call geom_infotofile(fld%geom)
-    
+
     filename = genfilename(c_conf,max_string_length,vdate)    
     WRITE(buf,*) 'field:write_file: writing '//filename
     call fckit_log%info(buf)
@@ -725,7 +724,10 @@ contains
     call fms_io_init()
     call set_domain( fld%geom%ocean%G%Domain%mpp_domain )    
     do ii = 1, fld%nf
+       WRITE(buf,*) 'field:write_file: writing fieldname '//fld%fldnames(ii)
+       call fckit_log%info(buf)                 
        select case(fld%fldnames(ii))
+
        case ('ssh')
           call write_data( filename, "ssh", fld%ssh, fld%geom%ocean%G%Domain%mpp_domain)
           call write_data( filename, "rossby_radius", fld%geom%ocean%rossby_radius, fld%geom%ocean%G%Domain%mpp_domain)          
@@ -757,7 +759,7 @@ contains
 
     end do
     call fms_io_exit()       
-    
+
   end subroutine write_file
 
   ! ------------------------------------------------------------------------------
@@ -803,7 +805,7 @@ contains
        genfilename = TRIM(prefix) // "." // TRIM(referencedate) // "." // TRIM(sstep)
     endif
 
-    if (typ=="an") then
+    if (typ=="an"  .or. typ=="incr") then
        call datetime_to_string(vdate, validitydate)
        lenfn = lenfn + 1 + LEN_TRIM(validitydate)
        genfilename = TRIM(prefix) // "." // TRIM(validitydate)

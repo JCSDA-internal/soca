@@ -5,8 +5,8 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#ifndef SOCA_MODEL_MODELBIASINCREMENT_H_
-#define SOCA_MODEL_MODELBIASINCREMENT_H_
+#ifndef SOCA_SRC_MODELBIASINCREMENT_H_
+#define SOCA_SRC_MODELBIASINCREMENT_H_
 
 #include <iostream>
 
@@ -28,7 +28,8 @@ class ModelBiasIncrement : public util::Printable {
 /// Constructor, destructor
   ModelBiasIncrement(const Geometry &, const eckit::Configuration &) {}
   ModelBiasIncrement(const ModelBiasIncrement &, const bool) {}
-  ModelBiasIncrement(const ModelBiasIncrement &, const eckit::Configuration &) {}
+  ModelBiasIncrement(const ModelBiasIncrement &,
+                     const eckit::Configuration &) {}
   ~ModelBiasIncrement() {}
 
 /// Linear algebra operators
@@ -55,4 +56,4 @@ class ModelBiasIncrement : public util::Printable {
 
 }  // namespace soca
 
-#endif  // SOCA_MODEL_MODELBIASINCREMENT_H_
+#endif  // SOCA_SRC_MODELBIASINCREMENT_H_

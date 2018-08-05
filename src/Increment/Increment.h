@@ -8,8 +8,8 @@
  * does it submit to any jurisdiction.
  */
 
-#ifndef SOCA_MODEL_SOCAINCREMENT_H_
-#define SOCA_MODEL_SOCAINCREMENT_H_
+#ifndef SOCA_SRC_INCREMENT_INCREMENT_H_
+#define SOCA_SRC_INCREMENT_INCREMENT_H_
 
 #include <ostream>
 #include <string>
@@ -46,7 +46,7 @@ namespace ioda {
 
 namespace soca {
   class ModelBiasIncrement;
-  class ErrorCovariance;  
+  class ErrorCovariance;
   class State;
 
   /// Increment Class: Difference between two states
@@ -55,17 +55,17 @@ namespace soca {
    *  an Increment. The Increment contains everything that is needed by
    *  the tangent-linear and adjoint models.
    */
-  
   // -----------------------------------------------------------------------------
 
   class Increment : public oops::GeneralizedDepartures,
     public util::Printable,
     private util::ObjectCounter<Increment> {
-  public:
+   public:
       static const std::string classname() {return "soca::Increment";}
 
       /// Constructor, destructor
-      Increment(const Geometry &, const oops::Variables &, const util::DateTime &);
+      Increment(const Geometry &, const oops::Variables &,
+                const util::DateTime &);
       Increment(const Geometry &, const Increment &);
       Increment(const Increment &, const bool);
       Increment(const Increment &);
@@ -84,10 +84,15 @@ namespace soca {
       void schur_product_with(const Increment &);
       void random();
       void dirac(const eckit::Configuration &);
-      
       /// Interpolate to observation location
-      void getValuesTL(const ioda::Locations &, const oops::Variables &,ufo::GeoVaLs &, const GetValuesTraj &) const;
-      void getValuesAD(const ioda::Locations &, const oops::Variables &, const ufo::GeoVaLs &, const GetValuesTraj &);
+      void getValuesTL(const ioda::Locations &,
+                       const oops::Variables &,
+                       ufo::GeoVaLs &,
+                       const GetValuesTraj &) const;
+      void getValuesAD(const ioda::Locations &,
+                       const oops::Variables &,
+                       const ufo::GeoVaLs &,
+                       const GetValuesTraj &);
 
       /// I/O and diagnostics
       void read(const eckit::Configuration &);
@@ -99,16 +104,16 @@ namespace soca {
 
 
       /// Define and convert to/from unstructured grid
-      void define(oops::UnstructuredGrid &) const;      
+      void define(oops::UnstructuredGrid &) const;
       void convert_to(oops::UnstructuredGrid &) const;
       void convert_from(const oops::UnstructuredGrid &);
-  
+
       /// Access to fields
       Fields & fields() {return *fields_;}
       const Fields & fields() const {return *fields_;}
 
       boost::shared_ptr<const Geometry> geometry() const {
-	return fields_->geometry();
+       return fields_->geometry();
       }
 
       /// Other
@@ -118,13 +123,13 @@ namespace soca {
       void accumul(const double &, const State &);
 
       /// Data
-  private:
+   private:
       void print(std::ostream &) const;
       boost::scoped_ptr<Fields> fields_;
       boost::scoped_ptr<Fields> stash_;
-    };
+  };
   // -----------------------------------------------------------------------------
 
 }  // namespace soca
 
-#endif  // SOCA_MODEL_SOCAINCREMENT_H_
+#endif  // SOCA_SRC_INCREMENT_INCREMENT_H_

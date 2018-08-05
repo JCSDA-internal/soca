@@ -18,7 +18,7 @@
 namespace soca {
 // -----------------------------------------------------------------------------
 LocalizationMatrix::LocalizationMatrix(const Geometry & resol,
-                                           const eckit::Configuration & config) {
+                                       const eckit::Configuration & config) {
   const eckit::Configuration * configc = &config;
   soca_localization_setup_f90(keyFtnConfig_, &configc, resol.toFortran());
 }
