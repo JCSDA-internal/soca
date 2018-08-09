@@ -134,7 +134,7 @@ contains
        call soca_2d_convol(dx%hicen(:,:,icat), horiz_convol_p, dx%geom)       
     end do    
 
-    do izo = 1,1!dx%geom%ocean%nzo
+    do izo = 1,dx%geom%ocean%nzo
        print *,'Apply nicas: tocn, socn, layer:',izo
        call soca_2d_convol(dx%tocn(:,:,izo), horiz_convol_p, dx%geom)
        call soca_2d_convol(dx%socn(:,:,izo), horiz_convol_p, dx%geom)       
@@ -173,34 +173,13 @@ contains
     real(kind=kind_real) :: dt   !< Potential temperature increment [C] 
     real(kind=kind_real) :: ds   !< Practical salinity increment [psu]
 
-    real(kind=kind_real), allocatable :: dcn(:), cnb(:)
+    real(kind=kind_real), allocatable :: dcn(:), cnb(:), dtv(:), dsv(:)
 
     ! Indices for compute domain (no halo)
     isc = traj%geom%ocean%G%isc
     iec = traj%geom%ocean%G%iec
     jsc = traj%geom%ocean%G%jsc
     jec = traj%geom%ocean%G%jec
-
-    ! Steric height/density balance
-    do i = isc, iec
-       do j = jsc, jec
-          do k = 1, traj%geom%ocean%nzo
-             tb=traj%tocn(i,j,k)
-             sb=traj%socn(i,j,k)
-             if (k.eq.1) then
-                z=traj%hocn(i,j,k)
-             else
-                z=sum(traj%hocn(i,j,1:k-1))+0.5*traj%hocn(i,j,k)
-             end if
-             h=traj%hocn(i,j,k)
-             p=z
-             deta=dy%ssh(i,j)
-             call soca_steric_ad(deta, dt, ds, tb, sb, p, h)
-             dy%tocn(i,j,k)=dy%tocn(i,j,k)+dt
-             dy%socn(i,j,k)=dy%socn(i,j,k)+ds
-          end do
-       end do
-    end do
 
     ! T/C balance
     allocate(dcn(traj%geom%ocean%ncat),cnb(traj%geom%ocean%ncat))
@@ -211,13 +190,51 @@ contains
           cnb=traj%cicen(i,j,2:)
           call tofc_ad (dt, dcn, tb, sb, cnb)
           do k = 1, traj%geom%ocean%ncat
-             dy%cicen(i,j,k+1)=dy%cicen(i,j,k+1)+dcn(k)
+             dy%cicen(i,j,k+1)=dcn(k)
           end do
        end do
     end do
 
     deallocate(dcn, cnb)
+
+    ! T-S balance
+    allocate(dsv(traj%geom%ocean%nzo),dtv(traj%geom%ocean%nzo))
+    dsv=0.0
+    dtv=0.0
+    do i = isc, iec
+       do j = jsc, jec
+          dsv = dy%socn(i,j,:)          
+          call soca_soft_ad (dsv,dtv,&
+                            &traj%tocn(i,j,:),&
+                            &traj%socn(i,j,:),&
+                            &traj%hocn(i,j,:))
+          dy%tocn(i,j,:) = dy%tocn(i,j,:) + dtv
+       end do
+    end do
+    deallocate(dtv,dsv)
     
+    ! Steric height/density balance
+    do i = isc, iec
+       do j = jsc, jec
+          do k = traj%geom%ocean%nzo, 1, -1
+             tb=traj%tocn(i,j,k)
+             sb=traj%socn(i,j,k)
+             if (k.eq.1) then
+                z=traj%hocn(i,j,k)
+             else
+                z=sum(traj%hocn(i,j,1:k-1))+0.5_kind_real*traj%hocn(i,j,k)
+             end if
+             h=traj%hocn(i,j,k)
+             p=z
+             deta=dy%ssh(i,j)
+             call soca_steric_ad(deta, dt, ds, tb, sb, p, h,&
+                  &traj%geom%ocean%lon(i,j), traj%geom%ocean%lat(i,j))
+             dy%tocn(i,j,k)=dy%tocn(i,j,k)+dt
+             dy%socn(i,j,k)=dy%socn(i,j,k)+ds
+          end do
+       end do
+    end do
+
   end subroutine soca_3d_covar_K_mult_ad
 
   ! ------------------------------------------------------------------------------  
@@ -235,7 +252,7 @@ contains
     !Grid stuff
     integer :: isc, iec, jsc, jec, i, j, k
     real(kind=kind_real) :: tb, sb, dt, ds,deta, z, p, h
-    real(kind=kind_real), allocatable :: dcn(:), cnb(:)
+    real(kind=kind_real), allocatable :: dcn(:), cnb(:), dtv(:), dsv(:)
 
     ! Indices for compute domain (no halo)
     isc = traj%geom%ocean%G%isc
@@ -254,16 +271,32 @@ contains
              if (k.eq.1) then
                 z=traj%hocn(i,j,k)
              else
-                z=sum(traj%hocn(i,j,1:k-1))+0.5*traj%hocn(i,j,k)
+                z=sum(traj%hocn(i,j,1:k-1))+0.5_kind_real*traj%hocn(i,j,k)
              end if
              h=traj%hocn(i,j,k)
              p=z
-             call soca_steric_tl(deta, dt, ds, tb, sb, p, h)
+             call soca_steric_tl(deta, dt, ds, tb, sb, p, h,&
+                  &traj%geom%ocean%lon(i,j), traj%geom%ocean%lat(i,j))
              dx%ssh(i,j)=dx%ssh(i,j)+deta    
           end do
        end do
     end do
 
+    ! T-S balance
+    allocate(dsv(traj%geom%ocean%nzo),dtv(traj%geom%ocean%nzo))
+    dsv=0.0
+    dtv=0.0    
+    do i = isc, iec
+       do j = jsc, jec
+          dtv = dx%tocn(i,j,:)
+          call soca_soft_tl (dsv,dtv,&
+                            &traj%tocn(i,j,:),&
+                            &traj%socn(i,j,:),&
+                            &traj%hocn(i,j,:))
+          dx%socn(i,j,:) = dx%socn(i,j,:) + dsv
+       end do
+    end do
+    
     ! T/C balance
     allocate(dcn(traj%geom%ocean%ncat),cnb(traj%geom%ocean%ncat))
     do i = isc, iec

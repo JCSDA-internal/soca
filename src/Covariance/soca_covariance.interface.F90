@@ -57,35 +57,6 @@ end subroutine c_soca_b_delete
 
 ! ------------------------------------------------------------------------------
 
-!> Multiply by inverse of covariance
-
-subroutine c_soca_b_inv_mult(c_key_conf, c_key_in, c_key_out) bind(c,name='soca_b_invmult_f90')
-
-  use iso_c_binding
-  use soca_covariance_mod
-  use soca_fields
-  use kinds
-
-  implicit none
-  integer(c_int), intent(in) :: c_key_conf  !< covar config structure
-  integer(c_int), intent(in) :: c_key_in    !<
-  integer(c_int), intent(in) :: c_key_out   !<
-  
-  type(soca_3d_covar_config), pointer :: conf
-  type(soca_field), pointer :: xin
-  type(soca_field), pointer :: xout
-
-  call soca_3d_cov_registry%get(c_key_conf,conf)
-  call soca_field_registry%get(c_key_in,xin)
-  call soca_field_registry%get(c_key_out,xout)
-
-  call zeros(xout)
-  call copy(xout,xin) ! HACK, B^-1=Id
-
-end subroutine c_soca_b_inv_mult
-
-! ------------------------------------------------------------------------------
-
 !> Multiply by covariance
 
 subroutine c_soca_b_mult(c_key_conf, c_key_in, c_key_out, c_key_traj) bind(c,name='soca_b_mult_f90')

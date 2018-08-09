@@ -17,6 +17,8 @@
 #include "src/State/State.h"
 #include "eckit/config/Configuration.h"
 #include "oops/base/Variables.h"
+#include "oops/base/IdentityMatrix.h"
+#include "oops/assimilation/GMRESR.h"
 
 
 using oops::Log;
@@ -70,8 +72,10 @@ namespace soca {
 
   void ErrorCovariance::inverseMultiply(const Increment & dxin,
                                         Increment & dxout) const {
-    soca_b_invmult_f90(keyFtnConfig_, dxin.fields().toFortran(),
-                       dxout.fields().toFortran());
+    oops::IdentityMatrix<Increment> Id;
+    dxout.zero();
+    //GMRESR(dxout, dxin, *this, Id, 10, 1.0e-6);
+
     std::cout << "inv mult" << std::endl;
   }
 

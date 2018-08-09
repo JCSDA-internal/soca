@@ -76,4 +76,4 @@ Covariance:
   diag_interp: bilin
   grid_output: 0
 CovarianceTest:
-  tolerance: 1e-7
+  tolerance: 1e-4
