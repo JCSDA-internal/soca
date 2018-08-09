@@ -77,11 +77,6 @@ namespace soca {
       const util::DateTime & validTime() const {return fields_->time();}
       util::DateTime & validTime() {return fields_->time();}
 
-      /// Define and convert to/from unstructured grid
-      void define(oops::UnstructuredGrid &) const;      
-      void convert_to(oops::UnstructuredGrid &) const;
-      void convert_from(const oops::UnstructuredGrid &);
-
       /// Access to fields
       Fields & fields() {return *fields_;}
       const Fields & fields() const {return *fields_;}
