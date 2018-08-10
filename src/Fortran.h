@@ -122,8 +122,11 @@ namespace soca {
                                   const eckit::Configuration * const *,
                                   const F90goms &,
                                   const F90getvaltraj &);
-    void soca_field_convert_to_f90(const F90flds &, const int &);
-    void soca_field_convert_from_f90(const F90flds &, const int &);
+
+    void soca_field_ug_coord_f90(const F90flds &, const int &);
+    void soca_field_field_to_ug_f90(const F90flds &, const int &);
+    void soca_field_field_from_ug_f90(const F90flds &, const int &);
+
     void soca_field_gpnorm_f90(const F90flds &, const int &, double &);
     void soca_field_sizes_f90(const F90flds &, int &, int &, int &,
                               int &, int &, int &);

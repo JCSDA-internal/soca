@@ -27,7 +27,7 @@ module soca_fields
        & self_add, self_schur, self_sub, self_mul, axpy, &
        & dot_prod, add_incr, diff_incr, &
        & read_file, write_file, gpnorm, fldrms, &
-       & change_resol, interp_tl, interp_ad, convert_to_ug, convert_from_ug
+       & change_resol, interp_tl, interp_ad, field_to_ug, field_from_ug, ug_coord
   public :: soca_field_registry
 
   interface create
@@ -1215,94 +1215,120 @@ contains
 
   ! ------------------------------------------------------------------------------
 
-  subroutine convert_to_ug(self, ug)
+  subroutine ug_size(self, ug)
     use unstructured_grid_mod
-    use soca_thermo
+    
+    implicit none
+    type(soca_field), intent(in) :: self
+    type(unstructured_grid), intent(inout) :: ug
+
+    integer :: isc, iec, jsc, jec
+
+    ! Get indices for compute domain (no halo)
+    isc = self%geom%ocean%G%isc
+    iec = self%geom%ocean%G%iec    
+    jsc = self%geom%ocean%G%jsc
+    jec = self%geom%ocean%G%jec
+
+    ! Set local number of points
+    ug%nmga = (iec - isc + 1) * (jec - jsc + 1 )
+
+    ! Set number of levels
+    ug%nl0 = 1
+
+    ! Set number of variables
+    ug%nv = self%geom%ocean%ncat + 1
+
+    ! Set number of timeslots
+    ug%nts = 1
+
+  end subroutine ug_size
+
+  ! ------------------------------------------------------------------------------
+
+  subroutine ug_coord(self, ug)
+    use unstructured_grid_mod
     use tools_const, only: deg2rad
     
     implicit none
     type(soca_field), intent(in) :: self
     type(unstructured_grid), intent(inout) :: ug
-    integer :: jx,jy,jz,jk
-    integer :: nz_total     ! Total number of levels in the 3D fields
-    integer :: n_vars       ! Number of 3D variables 
-    integer :: n_surf_vars  ! Number of surf vars (sould be 0 for ocean/ice)
 
-    !nicas stuff
-    integer :: nc0a, nl0, nv, nts
-    real(kind=kind_real), allocatable :: lon(:), lat(:), area(:), vunit(:), rndnum(:)
-    integer, allocatable :: imask(:,:)
+    integer :: isc, iec, jsc, jec, jz
 
-    !Grid stuff
-    integer :: isc, iec, jsc, jec, jjj
-
-    !Get indices for compute domain (no halo)
+    ! Get indices for compute domain (no halo)
     isc = self%geom%ocean%G%isc
     iec = self%geom%ocean%G%iec    
     jsc = self%geom%ocean%G%jsc
     jec = self%geom%ocean%G%jec
-    
-    nv = self%geom%ocean%ncat + 1
-    nl0 = 1
-    nts = 1
-    nc0a = (iec - isc + 1) * (jec - jsc + 1 )
 
-    allocate( lon(nc0a), lat(nc0a), area(nc0a) )
-    allocate( vunit(nl0) )
-    allocate( imask(nc0a, nl0) )    
+    ! Define size
+    call ug_size(self, ug)
 
-    lon = deg2rad*reshape( self%geom%ocean%lon(isc:iec, jsc:jec), (/nc0a/) )
-    lat = deg2rad*reshape( self%geom%ocean%lat(isc:iec, jsc:jec), (/nc0a/) ) 
-    
-    area = reshape( self%geom%ocean%cell_area(isc:iec, jsc:jec), (/nc0a/) )
+    ! Allocate unstructured grid coordinates
+    call allocate_unstructured_grid_coord(ug)
 
-    do jz = 1, nl0       
-       vunit(jz) = real(jz)
-       imask(1:nc0a,jz) = reshape( self%geom%ocean%mask2d(isc:iec, jsc:jec), (/nc0a/) )
+    ! Define coordinates
+    ug%lon = deg2rad*reshape( self%geom%ocean%lon(isc:iec, jsc:jec), (/ug%nmga/) )
+    ug%lat = deg2rad*reshape( self%geom%ocean%lat(isc:iec, jsc:jec), (/ug%nmga/) ) 
+    ug%area = reshape( self%geom%ocean%cell_area(isc:iec, jsc:jec), (/ug%nmga/) )
+    do jz = 1, ug%nl0       
+       ug%vunit(:,jz) = real(jz)
+       ug%lmask(:,jz) = reshape( self%geom%ocean%mask2d(isc:iec, jsc:jec)==1, (/ug%nmga/) )
     end do
 
-    call create_unstructured_grid(ug, nc0a, nl0, nv, 1, lon, lat, area, vunit, imask)
-
-    do jk = 1, nv - 1
-       ug%fld(:, 1, jk, 1) = reshape( self%cicen(isc:iec, jsc:jec, jk+1), (/nc0a/) )
-    end do
-    jk = nv
-    ug%fld(:, 1, jk, 1) = reshape( self%ssh(isc:iec, jsc:jec), (/nc0a/) )
-
-  end subroutine convert_to_ug
+  end subroutine ug_coord
 
   ! ------------------------------------------------------------------------------
 
-  subroutine convert_from_ug(self, ug)
+  subroutine field_to_ug(self, ug)
     use unstructured_grid_mod
+    
+    implicit none
+    type(soca_field), intent(in) :: self
+    type(unstructured_grid), intent(inout) :: ug
+
+    integer :: isc, iec, jsc, jec, jk
+
+    ! Get indices for compute domain (no halo)
+    isc = self%geom%ocean%G%isc
+    iec = self%geom%ocean%G%iec    
+    jsc = self%geom%ocean%G%jsc
+    jec = self%geom%ocean%G%jec
+
+    ! Copy
+    do jk = 1, ug%nv - 1
+       ug%fld(:, 1, jk, 1) = reshape( self%cicen(isc:iec, jsc:jec, jk+1), (/ug%nmga/) )
+    end do
+    jk = ug%nv
+    ug%fld(:, 1, jk, 1) = reshape( self%ssh(isc:iec, jsc:jec), (/ug%nmga/) )
+
+  end subroutine field_to_ug
+
+  ! ------------------------------------------------------------------------------
+
+  subroutine field_from_ug(self, ug)
+    use unstructured_grid_mod
+
     implicit none
     type(soca_field), intent(inout) :: self
     type(unstructured_grid), intent(in) :: ug
-    !type(column_element), pointer :: current
-    real(kind=kind_real) :: dx, dy
-    integer :: jx,jy,jz,jk
-    integer :: n_vars       ! Number of 3D variables 
-    integer :: n_surf_vars  ! Number of surf vars (sould be 0 for ocean/ice)
-    integer :: cat_num      ! !!!!!!!!! only doing 1 category for now !!!!!!!!!!!
-    integer :: nv
 
-    !Grid stuff
-    integer :: isc, iec, jsc, jec
+    integer :: isc, iec, jsc, jec, jk
     
-    !Get indices for compute domain (no halo)
+    ! Get indices for compute domain (no halo)
     isc = self%geom%ocean%G%isc
     iec = self%geom%ocean%G%iec    
     jsc = self%geom%ocean%G%jsc
     jec = self%geom%ocean%G%jec
     
-    nv = self%geom%ocean%ncat + 1    
-    do jk = 1, nv - 1
+    do jk = 1, ug%nv - 1
        self%cicen(isc:iec, jsc:jec,jk+1) = reshape( ug%fld(:, 1, jk, 1), (/(iec - isc + 1 ), (jec - jsc + 1 )/) )
     end do
-    jk = nv
+    jk = ug%nv
     self%ssh(isc:iec, jsc:jec) = reshape( ug%fld(:, 1, jk, 1), (/(iec - isc + 1 ), (jec - jsc + 1 )/) )
 
-  end subroutine convert_from_ug
+  end subroutine field_from_ug
 
   ! ------------------------------------------------------------------------------
 

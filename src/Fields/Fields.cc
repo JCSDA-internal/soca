@@ -181,13 +181,16 @@ namespace soca {
     soca_field_diff_incr_f90(keyFlds_, x1.keyFlds_, x2.keyFlds_);
   }
   // -----------------------------------------------------------------------------
-  void Fields::convert_to(oops::UnstructuredGrid & ug) const {
-    std::cout << "--------- in convert_to " << std::endl;
-    soca_field_convert_to_f90(keyFlds_, ug.toFortran());
+  void Fields::ug_coord(oops::UnstructuredGrid & ug) const {
+    soca_field_ug_coord_f90(keyFlds_, ug.toFortran());
   }
   // -----------------------------------------------------------------------------
-  void Fields::convert_from(const oops::UnstructuredGrid & ug) {
-    soca_field_convert_from_f90(keyFlds_, ug.toFortran());
+  void Fields::field_to_ug(oops::UnstructuredGrid & ug) const {
+    soca_field_field_to_ug_f90(keyFlds_, ug.toFortran());
+  }
+  // -----------------------------------------------------------------------------
+  void Fields::field_from_ug(const oops::UnstructuredGrid & ug) {
+    soca_field_field_from_ug_f90(keyFlds_, ug.toFortran());
   }
   // -----------------------------------------------------------------------------
   void Fields::read(const eckit::Configuration & config) {

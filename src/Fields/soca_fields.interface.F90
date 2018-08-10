@@ -283,7 +283,8 @@ subroutine soca_field_change_resol_c(c_key_fld,c_key_rhs) bind(c,name='soca_fiel
 end subroutine soca_field_change_resol_c
 
 ! ------------------------------------------------------------------------------
-subroutine soca_field_convert_to_c(c_key_fld, c_key_ug) bind (c,name='soca_field_convert_to_f90')
+
+subroutine soca_field_ug_coord_c(c_key_fld, c_key_ug) bind (c,name='soca_field_ug_coord_f90')
   use iso_c_binding
   use soca_fields
   use unstructured_grid_mod
@@ -296,11 +297,13 @@ subroutine soca_field_convert_to_c(c_key_fld, c_key_ug) bind (c,name='soca_field
   call soca_field_registry%get(c_key_fld,fld)
   call unstructured_grid_registry%get(c_key_ug,ug)
 
-  call convert_to_ug(fld, ug)
+  call ug_coord(fld, ug)
 
-end subroutine soca_field_convert_to_c
+end subroutine soca_field_ug_coord_c
+
 ! ------------------------------------------------------------------------------
-subroutine soca_field_convert_from_c(c_key_fld, c_key_ug) bind (c,name='soca_field_convert_from_f90')
+
+subroutine soca_field_field_to_ug_c(c_key_fld, c_key_ug) bind (c,name='soca_field_field_to_ug_f90')
   use iso_c_binding
   use soca_fields
   use unstructured_grid_mod
@@ -313,9 +316,28 @@ subroutine soca_field_convert_from_c(c_key_fld, c_key_ug) bind (c,name='soca_fie
   call soca_field_registry%get(c_key_fld,fld)
   call unstructured_grid_registry%get(c_key_ug,ug)
 
-  call convert_from_ug(fld, ug)
+  call field_to_ug(fld, ug)
 
-end subroutine soca_field_convert_from_c
+end subroutine soca_field_field_to_ug_c
+
+! ------------------------------------------------------------------------------
+
+subroutine soca_field_field_from_ug_c(c_key_fld, c_key_ug) bind (c,name='soca_field_field_from_ug_f90')
+  use iso_c_binding
+  use soca_fields
+  use unstructured_grid_mod
+  implicit none
+  integer(c_int), intent(in) :: c_key_fld
+  integer(c_int), intent(in) :: c_key_ug
+  type(soca_field), pointer :: fld
+  type(unstructured_grid), pointer :: ug
+
+  call soca_field_registry%get(c_key_fld,fld)
+  call unstructured_grid_registry%get(c_key_ug,ug)
+
+  call field_from_ug(fld, ug)
+
+end subroutine soca_field_field_from_ug_c
 
 ! ------------------------------------------------------------------------------
 

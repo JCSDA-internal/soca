@@ -103,11 +103,11 @@ namespace soca {
       void updateTime(const util::Duration & dt) {fields_->time() += dt;}
 
 
-      /// Define and convert to/from unstructured grid
-      void define(oops::UnstructuredGrid &) const;
-      void convert_to(oops::UnstructuredGrid &) const;
-      void convert_from(const oops::UnstructuredGrid &);
-
+      /// Unstructured grid
+      void ug_coord(oops::UnstructuredGrid &) const;      
+      void field_to_ug(oops::UnstructuredGrid &) const;
+      void field_from_ug(const oops::UnstructuredGrid &);
+  
       /// Access to fields
       Fields & fields() {return *fields_;}
       const Fields & fields() const {return *fields_;}
