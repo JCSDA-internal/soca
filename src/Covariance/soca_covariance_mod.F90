@@ -481,7 +481,7 @@ contains
 
        call cpu_time(start)
        print *,"Time start = ",start," seconds."       
-       call horiz_convol%bump_setup_online(mpi_comm_world,nc0a,nl0,nv,nts,lon,lat,area,vunit,lmask,rh=rh,rv=rv)
+       call horiz_convol%setup_online(mpi_comm_world,nc0a,nl0,nv,nts,lon,lat,area,vunit,lmask,rh=rh,rv=rv)
        call cpu_time(finish)
        call mpi_barrier(MPI_COMM_WORLD,ierr)
        print *,"Time = ",finish-start," seconds."

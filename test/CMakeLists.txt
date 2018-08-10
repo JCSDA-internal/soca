@@ -229,3 +229,9 @@ ecbuild_add_test( TARGET test_soca_dirac
                   ARGS "${CMAKE_BINARY_DIR}/bin/soca_dirac.x testinput/nicas_test.yml"
                        testoutput/dirac.test
                   DEPENDS soca_3dvar.x )		  
+
+ecbuild_add_test( TARGET test_soca_variablechange
+                  BOOST
+                  SOURCES executables/TestVariableChange.cc
+                  ARGS "testinput/variablechange.yml"
+                  LIBS    soca )

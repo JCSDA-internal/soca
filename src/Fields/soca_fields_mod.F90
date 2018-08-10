@@ -27,7 +27,7 @@ module soca_fields
        & self_add, self_schur, self_sub, self_mul, axpy, &
        & dot_prod, add_incr, diff_incr, &
        & read_file, write_file, gpnorm, fldrms, &
-       & change_resol, interp_tl, interp_ad, convert_to_ug, convert_from_ug
+       & change_resol, interp_tl, interp_ad, field_to_ug, field_from_ug, ug_coord
   public :: soca_field_registry
 
   interface create
