@@ -19,6 +19,7 @@ cost_function:
   cost_type: 3D-Var
   window_begin: '2018-04-14T21:00:00Z'
   window_length: PT6H
+  increment_time: 2018-04-14T21:00:00Z
   variables:
   - cicen
   - hicen
@@ -96,16 +97,16 @@ cost_function:
       grid_output: 0
   Jo:
     ObsTypes:
-    - ObsType: SeaIceThickness
-      ObsData:
-        ObsDataOut:
-          obsfile: Data/test_obsout.nc
-        ObsDataIn:
-          obsfile: Data/cryosat2-2018-04-15.nc
-        obsvalue: ObsVal        
-      Covariance:
-        covariance: diagonal
-        obserror: ObsErr
+#    - ObsType: SeaIceThickness
+#      ObsData:
+#        ObsDataOut:
+#          obsfile: Data/test_obsout.nc
+#        ObsDataIn:
+#          obsfile: Data/cryosat2-2018-04-15.nc
+#        obsvalue: ObsVal        
+#      Covariance:
+#        covariance: diagonal
+#        obserror: ObsErr
     - ObsType: ADT
       ObsData:
         ObsDataOut:
@@ -126,43 +127,58 @@ cost_function:
       Covariance:
         covariance: diagonal
         obserror: ObsErr		
-    - ObsType: SeaIceFraction
-      ObsData:
-        ObsDataOut:
-          obsfile: Data/test_obsout.nc
-        ObsDataIn:
-          #obsfile: Data/seaice_obs-2018-04-15.nc
-          obsfile: /home/gvernier/Sandboxes/soca/data/bob_l2_sic/l2/sea-ice-con.nc #Data/seaice_obs-2018-04-15.nc	  
-        obsvalue: ObsVal        
-      Covariance:
-        covariance: diagonal
-        obserror: ObsErr
-    - ObsType: SeaSurfaceTemp
-      ObsData:
-        ObsDataOut:
-          obsfile: Data/test_obsout.nc
-        ObsDataIn:
-          obsfile: Data/sst_obs-2018-04-15.nc
-        obsvalue: ObsVal        
-      Covariance:
-        covariance: diagonal
-        obserror: ObsErr	
+#    - ObsType: SeaIceFraction
+#      ObsData:
+#        ObsDataOut:
+#          obsfile: Data/test_obsout.nc
+#        ObsDataIn:
+#          #obsfile: Data/seaice_obs-2018-04-15.nc
+#          obsfile: /home/gvernier/Sandboxes/soca/data/bob_l2_sic/l2/sea-ice-con.nc #Data/seaice_obs-2018-04-15.nc	  
+#        obsvalue: ObsVal        
+#      Covariance:
+#        covariance: diagonal
+#        obserror: ObsErr
+#    - ObsType: SeaSurfaceTemp
+#      ObsData:
+#        ObsDataOut:
+#          obsfile: Data/test_obsout.nc
+#        ObsDataIn:
+#          obsfile: Data/sst_obs-2018-04-15.nc
+#        obsvalue: ObsVal        
+#      Covariance:
+#        covariance: diagonal
+#        obserror: ObsErr	
 variational:
   iteration:
   - resolution: {}
     linearmodel:
       version: IdTLM
       tstep: PT1H
-    ninner: 1
+    ninner: 10
     gradient_norm_reduction: 1e-15
     test: 'on'
+    output:
+      datadir: Data
+      exp: 3dvar
+      type: incr1
   - resolution: {}
     linearmodel:
       version: IdTLM
       tstep: PT1H
-    ninner: 1
+    ninner: 5
     gradient_norm_reduction: 1e-15
     test: 'on'
+    output:
+      datadir: Data
+      exp: 3dvar
+      type: incr  
+#  - resolution: {}
+#    linearmodel:
+#      version: IdTLM
+#      tstep: PT1H
+#    ninner: 1
+#    gradient_norm_reduction: 1e-15
+#    test: 'on'
 #  - resolution: {}
 #    linearmodel:
 #      version: IdTLM

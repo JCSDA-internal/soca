@@ -17,5 +17,5 @@ int main(int argc,  char ** argv) {
   test::LinearModel<soca::Traits> tests;
   run.execute(tests);
   return 0;
-};
+}
 

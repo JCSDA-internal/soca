@@ -5,8 +5,8 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#ifndef SOCA_MODEL_MODELBIASCOVARIANCE_H_
-#define SOCA_MODEL_MODELBIASCOVARIANCE_H_
+#ifndef SOCA_SRC_MODELBIASCOVARIANCE_H_
+#define SOCA_SRC_MODELBIASCOVARIANCE_H_
 
 #include <ostream>
 #include <string>
@@ -30,7 +30,8 @@ class ModelBiasCovariance : public util::Printable,
   static const std::string classname() {return "soca::ModelBiasCovariance";}
 
 /// Constructor, destructor
-  ModelBiasCovariance(const eckit::Configuration & conf, const Geometry &): conf_(conf) {}
+  ModelBiasCovariance(const eckit::Configuration & conf,
+                      const Geometry &): conf_(conf) {}
   ~ModelBiasCovariance() {}
 
 /// Linear algebra operators
@@ -50,4 +51,4 @@ class ModelBiasCovariance : public util::Printable,
 
 }  // namespace soca
 
-#endif  // SOCA_MODEL_MODELBIASCOVARIANCE_H_
+#endif  // SOCA_SRC_MODELBIASCOVARIANCE_H_

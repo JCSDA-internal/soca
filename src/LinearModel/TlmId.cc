@@ -39,7 +39,7 @@ TlmId::TlmId(const Geometry & resol, const eckit::Configuration & tlConf)
 }
 // -----------------------------------------------------------------------------
 TlmId::~TlmId() {
-  //soca_delete_f90(keyConfig_);
+  // soca_delete_f90(keyConfig_);
   Log::trace() << "TlmId destructed" << std::endl;
 }
 // -----------------------------------------------------------------------------
@@ -48,7 +48,7 @@ void TlmId::setTrajectory(const State &, State &, const ModelBias &) {}
 void TlmId::initializeTL(Increment & dx) const {
   dx.activateModel();
   ASSERT(dx.fields().isForModel(false));
-  //soca_prepare_integration_tl_f90(keyConfig_, dx.fields().toFortran());
+  // soca_prepare_integration_tl_f90(keyConfig_, dx.fields().toFortran());
   Log::debug() << "TlmId::initializeTL" << dx.fields() << std::endl;
 }
 // -----------------------------------------------------------------------------
@@ -72,8 +72,8 @@ void TlmId::stepAD(Increment & dx, ModelBiasIncrement &) const {
 }
 // -----------------------------------------------------------------------------
 void TlmId::finalizeAD(Increment & dx) const {
-  //soca_prepare_integration_ad_f90(keyConfig_, dx.fields().toFortran());
-  //dx.deactivateModel();
+  // soca_prepare_integration_ad_f90(keyConfig_, dx.fields().toFortran());
+  // dx.deactivateModel();
   Log::debug() << "TlmId::finalizeAD" << dx.fields() << std::endl;
 }
 // -----------------------------------------------------------------------------

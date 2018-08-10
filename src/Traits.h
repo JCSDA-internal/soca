@@ -5,8 +5,8 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#ifndef SOCA_MODEL_SOCATRAITS_H_
-#define SOCA_MODEL_SOCATRAITS_H_
+#ifndef SOCA_SRC_TRAITS_H_
+#define SOCA_SRC_TRAITS_H_
 
 #include <string>
 
@@ -37,21 +37,19 @@ namespace soca {
 struct Traits {
   static std::string name() {return "SOCA";}
   static std::string nameCovar() {return "SocaError";}
-  
+
   typedef soca::Geometry            Geometry;
   typedef soca::State               State;
   typedef soca::Model               Model;
   typedef soca::Increment           Increment;
   typedef soca::ErrorCovariance     Covariance;
   typedef soca::GetValuesTraj       InterpolatorTraj;
-  
+
   typedef soca::ModelBias           ModelAuxControl;
   typedef soca::ModelBiasIncrement  ModelAuxIncrement;
   typedef soca::ModelBiasCovariance ModelAuxCovariance;
-  typedef soca::LocalizationMatrix  LocalizationMatrix;  
+  typedef soca::LocalizationMatrix  LocalizationMatrix;
 
-  //typedef soca::ObsBiasCovariance     ObsAuxCovariance;
-  
   typedef ufo::ObsBias              ObsAuxControl;
   typedef ufo::ObsBiasIncrement     ObsAuxIncrement;
   typedef ufo::ObsBiasCovariance    ObsAuxCovariance;
@@ -66,4 +64,4 @@ struct Traits {
 
 }  // namespace soca
 
-#endif  // SOCA_MODEL_SOCATRAITS_H_
+#endif  // SOCA_SRC_TRAITS_H_

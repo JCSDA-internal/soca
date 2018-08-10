@@ -5,7 +5,7 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#include "Run.h"
+#include "src/Run/Run.h"
 
 #include "oops/util/Logger.h"
 #include "oops/runs/Run.h"

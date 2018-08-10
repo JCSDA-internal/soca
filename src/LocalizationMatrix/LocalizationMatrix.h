@@ -8,8 +8,8 @@
  * does it submit to any jurisdiction.
  */
 
-#ifndef SOCA_MODEL_LOCALIZATIONMATRIXSOCA_H_
-#define SOCA_MODEL_LOCALIZATIONMATRIXSOCA_H_
+#ifndef SOCA_SRC_LOCALIZATIONMATRIX_LOCALIZATIONMATRIX_H_
+#define SOCA_SRC_LOCALIZATIONMATRIX_LOCALIZATIONMATRIX_H_
 
 #include <ostream>
 #include <string>
@@ -24,28 +24,28 @@
 
 // Forward declarations
 namespace soca {
-  class Geometry;  
+  class Geometry;
   class Increment;
 
   /// Localization matrix for SOCA model.
 
   // -----------------------------------------------------------------------------
   class LocalizationMatrix : public util::Printable,
-                            private boost::noncopyable,
-                            private util::ObjectCounter<LocalizationMatrix>{
-  public:
+     private boost::noncopyable,
+     private util::ObjectCounter<LocalizationMatrix>{
+   public:
       static const std::string classname() {return "soca::LocalizationMatrix";}
 
       LocalizationMatrix(const Geometry &, const eckit::Configuration &);
       ~LocalizationMatrix();
       void multiply(Increment &) const;
 
-  private:
+   private:
       void print(std::ostream &) const;
       int keyFtnConfig_;
-    };
+  };
   // -----------------------------------------------------------------------------
 
 }  // namespace soca
 
-#endif  // SOCA_MODEL_LOCALIZATIONMATRIXSOCA_H_
+#endif  // SOCA_SRC_LOCALIZATIONMATRIX_LOCALIZATIONMATRIX_H_

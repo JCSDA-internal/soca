@@ -17,4 +17,4 @@ int main(int argc,  char ** argv) {
   oops::HofX<soca::Traits> hofx;
   run.execute(hofx);
   return 0;
-};
+}

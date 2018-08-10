@@ -5,11 +5,12 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
+#include <string>
 #include "oops/util/Logger.h"
 #include "src/Geometry/Geometry.h"
 #include "src/Fortran.h"
 #include "eckit/config/Configuration.h"
-#include <string>
+
 
 // -----------------------------------------------------------------------------
 namespace soca {
@@ -28,10 +29,9 @@ namespace soca {
     soca_geo_delete_f90(keyGeom_);
   }
 
-  // -----------------------------------------------------------------------------          /**/   
+  // -----------------------------------------------------------------------------
   void Geometry::print(std::ostream & os) const {
     soca_geo_info_f90(keyGeom_);
-
   }
   // -----------------------------------------------------------------------------
 }  // namespace soca

@@ -5,8 +5,8 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#ifndef SOCA_MODEL_SOCAGEOMETRY_H_
-#define SOCA_MODEL_SOCAGEOMETRY_H_
+#ifndef SOCA_SRC_GEOMETRY_GEOMETRY_H_
+#define SOCA_SRC_GEOMETRY_GEOMETRY_H_
 
 #include <ostream>
 #include <string>
@@ -27,7 +27,7 @@ namespace soca {
 
   class Geometry : public util::Printable,
     private util::ObjectCounter<Geometry> {
-  public:
+   public:
       static const std::string classname() {return "soca::Geometry";}
 
       explicit Geometry(const eckit::Configuration &);
@@ -37,13 +37,13 @@ namespace soca {
       int& toFortran() {return keyGeom_;}
       const int& toFortran() const {return keyGeom_;}
 
-  private:
+   private:
       Geometry & operator=(const Geometry &);
       void print(std::ostream &) const;
       int keyGeom_;
-    };
+  };
   // -----------------------------------------------------------------------------
 
 }  // namespace soca
 
-#endif  // SOCA_MODEL_SOCAGEOMETRY_H_
+#endif  // SOCA_SRC_GEOMETRY_GEOMETRY_H_

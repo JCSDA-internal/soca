@@ -5,23 +5,23 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#ifndef SOCA_RUN_H
-#define SOCA_RUN_H
+#ifndef SOCA_SRC_RUN_RUN_H_
+#define SOCA_SRC_RUN_RUN_H_
 
 #include "oops/runs/Run.h"
 
 namespace soca {
 
-// -----------------------------------------------------------------------------
+  // -----------------------------------------------------------------------------
 
-class Run : public oops::Run {
-public:
-  Run(int, char **);
-  ~Run();
-};
+  class Run : public oops::Run {
+   public:
+    Run(int, char **);
+    ~Run();
+  };
 
-// -----------------------------------------------------------------------------
+  // -----------------------------------------------------------------------------
 
 }  // namespace soca
 
-#endif // SOCA_RUN_H
+#endif  // SOCA_SRC_RUN_RUN_H_

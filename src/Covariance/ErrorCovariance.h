@@ -5,8 +5,8 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#ifndef SOCA_MODEL_SOCAERRORCOVARIANCE_H_
-#define SOCA_MODEL_SOCAERRORCOVARIANCE_H_
+#ifndef SOCA_SRC_COVARIANCE_ERRORCOVARIANCE_H_
+#define SOCA_SRC_COVARIANCE_ERRORCOVARIANCE_H_
 
 #include <ostream>
 #include <string>
@@ -25,18 +25,19 @@
 namespace soca {
   class Increment;
   class State;
-  //class Variables;
+  // class Variables;
 
   // -----------------------------------------------------------------------------
-  /// Background error covariance matrix for SOCA model.
+  // Background error covariance matrix for SOCA model.
 
   class ErrorCovariance : public util::Printable,
     private boost::noncopyable,
     private util::ObjectCounter<ErrorCovariance> {
-  public:
+   public:
       static const std::string classname() {return "soca::ErrorCovariance";}
 
-      ErrorCovariance(const Geometry &, const oops::Variables &, const eckit::Configuration &, const State &);
+      ErrorCovariance(const Geometry &, const oops::Variables &,
+                      const eckit::Configuration &, const State &);
       ~ErrorCovariance();
 
       void linearize(const State &, const Geometry &);
@@ -44,14 +45,14 @@ namespace soca {
       void inverseMultiply(const Increment &, Increment &) const;
       void randomize(Increment &) const;
 
-  private:
+   private:
       void print(std::ostream &) const;
       int keyFtnConfig_;
       boost::scoped_ptr<const Geometry> geom_;
       boost::scoped_ptr<const State> traj_;
       util::DateTime time_;
-    };
+  };
   // -----------------------------------------------------------------------------
 
 }  // namespace soca
-#endif  // SOCA_MODEL_SOCAERRORCOVARIANCE_H_
+#endif  // SOCA_SRC_COVARIANCE_ERRORCOVARIANCE_H_

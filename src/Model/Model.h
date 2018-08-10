@@ -5,8 +5,8 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#ifndef SOCA_MODEL_SOCAMODEL_H_
-#define SOCA_MODEL_SOCAMODEL_H_
+#ifndef SOCA_SRC_MODEL_MODEL_H_
+#define SOCA_SRC_MODEL_MODEL_H_
 
 #include <ostream>
 #include <string>
@@ -25,7 +25,6 @@ namespace eckit {
 }
 
 namespace soca {
-  //class F90traj;
   class ModelBias;
   class Fields;
   class State;
@@ -67,4 +66,4 @@ class Model: public util::Printable,
 // -----------------------------------------------------------------------------
 
 }  // namespace soca
-#endif  // SOCA_MODEL_SOCAMODEL_H_
+#endif  // SOCA_SRC_MODEL_MODEL_H_

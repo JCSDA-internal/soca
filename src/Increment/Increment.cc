@@ -9,6 +9,8 @@
 
 #include <algorithm>
 #include <string>
+#include <vector>
+#include <utility>
 
 #include "eckit/config/LocalConfiguration.h"
 #include "oops/base/Variables.h"
@@ -33,7 +35,7 @@ namespace soca {
   /// Constructor, destructor
   // -----------------------------------------------------------------------------
   Increment::Increment(const Geometry & resol, const oops::Variables & vars,
-		       const util::DateTime & vt)
+                       const util::DateTime & vt)
     : fields_(new Fields(resol, vars, vt)), stash_()
   {
     fields_->zero();
@@ -66,22 +68,18 @@ namespace soca {
     // Should get variables from model. YT
      const std::vector<std::string> vv{
           "cicen",
-	  "hicen",
-	  "hsnon",
-	  "tsfcn",
-	  "qsnon",
-	  "sicnk",
-	  "qicnk",
-	  "socn",
-	  "tocn",
-	  "ssh",
-	  "hocn"	    
-	};
-    oops::Variables vars(vv);    
-    //eckit::LocalConfiguration modelvars;
-    //modelvars.set("variables", "tl");
-    //oops::Variables vars(modelvars);
-    // Should get variables from model. YT
+          "hicen",
+          "hsnon",
+          "tsfcn",
+          "qsnon",
+          "sicnk",
+          "qicnk",
+          "socn",
+          "tocn",
+          "ssh",
+          "hocn"
+    };
+     oops::Variables vars(vv);
     stash_.reset(new Fields(*fields_, vars));
     swap(fields_, stash_);
     ASSERT(fields_);
@@ -101,7 +99,6 @@ namespace soca {
   /// Basic operators
   // -----------------------------------------------------------------------------
   void Increment::diff(const State & x1, const State & x2) {
-
     ASSERT(this->validTime() == x1.validTime());
     ASSERT(this->validTime() == x2.validTime());
     Log::debug() << "Increment:diff incr " << *fields_ << std::endl;
@@ -138,8 +135,8 @@ namespace soca {
   // -----------------------------------------------------------------------------
   void Increment::dirac(const eckit::Configuration & config) {
     fields_->dirac(config);
-    Log::trace() << "Increment dirac initialized" << std::endl;    
-  }  
+    Log::trace() << "Increment dirac initialized" << std::endl;
+  }
   // -----------------------------------------------------------------------------
   void Increment::zero(const util::DateTime & vt) {
     fields_->zero(vt);
@@ -168,26 +165,43 @@ namespace soca {
   }
   /// Interpolate to observation location
   // -----------------------------------------------------------------------------
-  void Increment::getValuesTL(const ioda::Locations & locs, const oops::Variables & vars, ufo::GeoVaLs & cols, const GetValuesTraj & traj) const {
-    Log::debug() << "Increment::interpolateTL fields in" << *fields_ << std::endl;
+  void Increment::getValuesTL(const ioda::Locations & locs,
+                              const oops::Variables & vars,
+                              ufo::GeoVaLs & cols,
+                              const GetValuesTraj & traj) const {
+    Log::debug() << "Increment::interpolateTL fields in" <<
+                    *fields_ << std::endl;
     fields_->getValuesTL(locs, vars, cols, traj);
-    Log::debug() << "Increment::interpolateTL " << cols << std::endl;    
+    Log::debug() << "Increment::interpolateTL " << cols << std::endl;
   }
   // -----------------------------------------------------------------------------
-  void Increment::getValuesAD(const ioda::Locations & locs, const oops::Variables & vars, const ufo::GeoVaLs & cols, const GetValuesTraj & traj) {
+  void Increment::getValuesAD(const ioda::Locations & locs,
+                              const oops::Variables & vars,
+                              const ufo::GeoVaLs & cols,
+                              const GetValuesTraj & traj) {
     Log::debug() << "Increment::interpolateAD gom " << cols << std::endl;
-    Log::debug() << "Increment::interpolateAD fields in" << *fields_ << std::endl;    
+    Log::debug() << "Increment::interpolateAD fields in" <<
+                    *fields_ << std::endl;
     fields_->getValuesAD(locs, vars, cols, traj);
   }
   // -----------------------------------------------------------------------------
   /// Unstructured grid
   // -----------------------------------------------------------------------------
+<<<<<<< HEAD
   void Increment::ug_coord(oops::UnstructuredGrid & ug) const {
     fields_->ug_coord(ug);
   }
   // -----------------------------------------------------------------------------
   void Increment::field_to_ug(oops::UnstructuredGrid & ug) const {
     fields_->field_to_ug(ug);
+=======
+  void Increment::define(oops::UnstructuredGrid & ug) const {
+    // fields_->define(ug);
+  }
+  void Increment::convert_to(oops::UnstructuredGrid & ug) const {
+    Log::debug() << "Increment::convert_to" << std::endl;
+    fields_->convert_to(ug);
+>>>>>>> develop
   }
   // -----------------------------------------------------------------------------
   void Increment::field_from_ug(const oops::UnstructuredGrid & ug) {

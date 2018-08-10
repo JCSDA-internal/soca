@@ -5,8 +5,8 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#ifndef SOCA_MODEL_SOCAFIELDS_H_
-#define SOCA_MODEL_SOCAFIELDS_H_
+#ifndef SOCA_SRC_FIELDS_FIELDS_H_
+#define SOCA_SRC_FIELDS_FIELDS_H_
 
 #include <ostream>
 #include <string>
@@ -14,7 +14,7 @@
 #include <boost/shared_ptr.hpp>
 
 #include "src/Geometry/Geometry.h"
-#include "oops/base/Variables.h"    
+#include "oops/base/Variables.h"
 #include "oops/util/DateTime.h"
 #include "oops/util/Duration.h"
 #include "oops/util/ObjectCounter.h"
@@ -39,12 +39,12 @@ namespace ioda {
 }
 
 namespace soca {
-  
+
   // -----------------------------------------------------------------------------
   /// Class to represent a FieldSet for the SOCA model
   class Fields : public util::Printable,
     private util::ObjectCounter<Fields> {
-  public:
+   public:
       static const std::string classname() {return "soca::Fields";}
 
       // Constructors and basic operators
@@ -57,7 +57,7 @@ namespace soca {
 
       void zero();
       void zero(const util::DateTime &);
-      void dirac(const eckit::Configuration &);  
+      void dirac(const eckit::Configuration &);
       Fields & operator=(const Fields &);
       Fields & operator+=(const Fields &);
       Fields & operator-=(const Fields &);
@@ -69,13 +69,13 @@ namespace soca {
 
       // Interpolate to given location
       void getValues(const ioda::Locations &, const oops::Variables &,
-		     ufo::GeoVaLs &) const;
+                     ufo::GeoVaLs &) const;
       void getValues(const ioda::Locations &, const oops::Variables &,
-		     ufo::GeoVaLs &,const GetValuesTraj &) const;
+                     ufo::GeoVaLs &, const GetValuesTraj &) const;
       void getValuesTL(const ioda::Locations &, const oops::Variables &,
-		       ufo::GeoVaLs &, const GetValuesTraj &) const;
+                       ufo::GeoVaLs &, const GetValuesTraj &) const;
       void getValuesAD(const ioda::Locations &, const oops::Variables &,
-		       const ufo::GeoVaLs &, const GetValuesTraj &);      
+                       const ufo::GeoVaLs &, const GetValuesTraj &);
 
       // Interpolate full fields
       void changeResolution(const Fields &);
@@ -101,14 +101,14 @@ namespace soca {
 
       bool isForModel(const bool) const;
 
-  private:
+   private:
       void print(std::ostream &) const;
       F90flds keyFlds_;
       boost::shared_ptr<const Geometry> geom_;
-      oops::Variables vars_;      
+      oops::Variables vars_;
       util::DateTime time_;
-    };
+  };
   // -----------------------------------------------------------------------------
 
 }  // namespace soca
-#endif  // SOCA_MODEL_SOCAFIELDS_H_
+#endif  // SOCA_SRC_FIELDS_FIELDS_H_

@@ -58,11 +58,13 @@ namespace soca {
   int Model::saveTrajectory(State & xx, const ModelBias &) const {
     ASSERT(xx.fields().isForModel(true));
     int ftraj = 0;
-    Log::debug() << "Model::saveTrajectory fields in" << xx.fields() << std::endl;
-    //soca_prop_traj_f90(keyConfig_, xx.fields().toFortran(), ftraj);
+    Log::debug() << "Model::saveTrajectory fields in" <<
+                    xx.fields() << std::endl;
+    // soca_prop_traj_f90(keyConfig_, xx.fields().toFortran(), ftraj);
     xx.validTime() += tstep_;
     ASSERT(ftraj != 0);
-    Log::debug() << "Model::saveTrajectory fields out" << xx.fields() << std::endl;
+    Log::debug() << "Model::saveTrajectory fields out" <<
+                    xx.fields() << std::endl;
     return ftraj;
   }
   // -----------------------------------------------------------------------------

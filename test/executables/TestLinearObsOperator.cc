@@ -14,5 +14,5 @@ int main(int argc,  char ** argv) {
   test::LinearObsOperator<soca::Traits> tests;
   run.execute(tests);
   return 0;
-};
+}
 

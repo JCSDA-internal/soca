@@ -29,4 +29,4 @@ GetValuesTraj::~GetValuesTraj() {
   oops::Log::trace() << "GetValuesTraj destructor done" << std::endl;
 }
 // -----------------------------------------------------------------------------
-}  // namespace fv3jedi
+}  // namespace soca

@@ -17,4 +17,4 @@ int main(int argc,  char ** argv) {
   test::Localization<soca::Traits> tests;
   run.execute(tests);
   return 0;
-};
+}
