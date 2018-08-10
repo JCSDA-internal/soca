@@ -1267,12 +1267,12 @@ contains
     call allocate_unstructured_grid_coord(ug)
 
     ! Define coordinates
-    ug%lon = deg2rad*reshape( self%geom%ocean%lon(isc:iec, jsc:jec), (/ug%nc0a/) )
-    ug%lat = deg2rad*reshape( self%geom%ocean%lat(isc:iec, jsc:jec), (/ug%nc0a/) ) 
-    ug%area = reshape( self%geom%ocean%cell_area(isc:iec, jsc:jec), (/ug%nc0a/) )
+    ug%lon = deg2rad*reshape( self%geom%ocean%lon(isc:iec, jsc:jec), (/ug%nmga/) )
+    ug%lat = deg2rad*reshape( self%geom%ocean%lat(isc:iec, jsc:jec), (/ug%nmga/) ) 
+    ug%area = reshape( self%geom%ocean%cell_area(isc:iec, jsc:jec), (/ug%nmga/) )
     do jz = 1, ug%nl0       
        ug%vunit(:,jz) = real(jz)
-       ug%lmask(:,jz) = reshape( self%geom%ocean%mask2d(isc:iec, jsc:jec)==1, (/ug%nc0a/) )
+       ug%lmask(:,jz) = reshape( self%geom%ocean%mask2d(isc:iec, jsc:jec)==1, (/ug%nmga/) )
     end do
 
   end subroutine ug_coord
@@ -1296,10 +1296,10 @@ contains
 
     ! Copy
     do jk = 1, ug%nv - 1
-       ug%fld(:, 1, jk, 1) = reshape( self%cicen(isc:iec, jsc:jec, jk+1), (/ug%nc0a/) )
+       ug%fld(:, 1, jk, 1) = reshape( self%cicen(isc:iec, jsc:jec, jk+1), (/ug%nmga/) )
     end do
     jk = ug%nv
-    ug%fld(:, 1, jk, 1) = reshape( self%ssh(isc:iec, jsc:jec), (/ug%nc0a/) )
+    ug%fld(:, 1, jk, 1) = reshape( self%ssh(isc:iec, jsc:jec), (/ug%nmga/) )
 
   end subroutine field_to_ug
 
