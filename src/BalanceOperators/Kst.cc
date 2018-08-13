@@ -35,7 +35,7 @@ void Kst::linearize(const State & traj, const Geometry & geom) {
   geom_.reset(new Geometry(geom));
   Log::trace() << "Trajectory for Kst: " << traj <<std::endl;
   Log::trace() << "Geometry for Kst: " << geom <<std::endl;
-  soca_kst_linearize_f90();
+  soca_kst_linearize_f90(traj.fields().toFortran(), geom.toFortran());
 }
 // -----------------------------------------------------------------------------
 void Kst::multiply(const Increment & dxa, Increment & dxm) const {
