@@ -35,6 +35,9 @@ LinearVariableChangeTests:
       - ssh
       - hocn  
   - varchange: KstSOCA
+    dsdtmax: 1.0    
+    dsdzmin: 3.0e-3
+    dtdzmin: 1.0e-3
     inputVariables:
       variables:
       - cicen

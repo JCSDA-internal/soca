@@ -36,6 +36,8 @@ namespace soca {
   typedef int F90getvaltraj;
   // Background error covariance key type
   typedef int F90bmat;
+  // Background error covariance key type
+  typedef int F90balopmat;  
   // Observation vector key type
   typedef int F90ovec;
   // Obs operator key type
@@ -150,6 +152,15 @@ namespace soca {
     void soca_b_invmult_f90(const F90bmat &, const F90flds &, const F90flds &);
     void soca_b_randomize_f90(const F90bmat &, const F90flds &);
 
+    // -----------------------------------------------------------------------------
+    //  Kst Balance operator
+    // -----------------------------------------------------------------------------
+    void soca_kst_setup_f90(F90balopmat &, const eckit::Configuration * const *);
+    void soca_kst_delete_f90(F90balopmat &);
+    void soca_kst_linearize_f90();
+    void soca_kst_mult_f90();
+    void soca_kst_multad_f90();
+    
     // -----------------------------------------------------------------------------
     //  Localization matrix
     // -----------------------------------------------------------------------------

@@ -15,26 +15,34 @@
 #include "src/Geometry/Geometry.h"
 #include "src/Increment/Increment.h"
 #include "src/State/State.h"
+#include "src/Fortran.h"
 
 using oops::Log;
 
 namespace soca {
 // -----------------------------------------------------------------------------
-Kst::Kst(const eckit::Configuration &) {}
+Kst::Kst(const eckit::Configuration & conf) {
+  const eckit::Configuration * configc = &conf;
+  soca_kst_setup_f90(keyFtnConfig_, &configc);
+}
 // -----------------------------------------------------------------------------
-Kst::~Kst() {}
+Kst::~Kst() {
+  soca_kst_delete_f90(keyFtnConfig_);
+}
 // -----------------------------------------------------------------------------
 void Kst::linearize(const State & traj, const Geometry & geom) {
   traj_.reset(new State(traj));
-  geom_.reset(new Geometry(geom));  
+  geom_.reset(new Geometry(geom));
   Log::trace() << "Trajectory for Kst: " << traj <<std::endl;
   Log::trace() << "Geometry for Kst: " << geom <<std::endl;
+  soca_kst_linearize_f90();
 }
 // -----------------------------------------------------------------------------
 void Kst::multiply(const Increment & dxa, Increment & dxm) const {
   Log::trace() << "Trajectory key for Kst: " << traj_->fields().toFortran() <<std::endl;
-  Log::trace() << "Geometry key for Kst: " << geom_->toFortran() <<std::endl;  
-  dxm = dxa;
+  Log::trace() << "Geometry key for Kst: " << geom_->toFortran() <<std::endl;
+  soca_kst_mult_f90();
+  dxm = dxa;  
 }
 // -----------------------------------------------------------------------------
 void Kst::multiplyInverse(const Increment & dxm, Increment & dxa) const {
@@ -43,7 +51,8 @@ void Kst::multiplyInverse(const Increment & dxm, Increment & dxa) const {
 // -----------------------------------------------------------------------------
 void Kst::multiplyAD(const Increment & dxm, Increment & dxa) const {
   Log::trace() << "Trajectory key for Kst: " << traj_->fields().toFortran() <<std::endl;
-  Log::trace() << "Geometry key for KTst: " << geom_->toFortran() <<std::endl;  
+  Log::trace() << "Geometry key for KTst: " << geom_->toFortran() <<std::endl;
+  soca_kst_multad_f90();
   dxa = dxm;
 }
 // -----------------------------------------------------------------------------

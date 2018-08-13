@@ -14,6 +14,7 @@
 
 #include "oops/util/DateTime.h"
 #include "oops/util/Printable.h"
+#include "eckit/config/Configuration.h"
 
 // Forward declarations
 namespace eckit {
@@ -46,6 +47,7 @@ class Kst: public util::Printable {
 
  private:
   void print(std::ostream &) const override;
+  int keyFtnConfig_;  
   boost::scoped_ptr<const Geometry> geom_;  
   boost::scoped_ptr<const State> traj_;
   util::DateTime time_;
