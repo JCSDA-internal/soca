@@ -69,6 +69,11 @@ list( APPEND oops_soca_src_files
 ./GetValuesTraj/GetValuesTraj.h
 ./GetValuesTraj/soca_getvaltraj_mod.F90
 
+#Balance Operators
+./BalanceOperators/Kst.cc
+./BalanceOperators/Kst.h
+./BalanceOperators/instantiateBalanceOpFactory.h
+
 Traits.h
 Fortran.h
 

@@ -15,6 +15,7 @@ list( APPEND soca_test_input
   testinput/localization_test.yml
   testinput/nicas_test.yml
   testinput/4denvar_nicas_test.yml
+  testinput/variablechange.yml  
   compare.sh
 )
 

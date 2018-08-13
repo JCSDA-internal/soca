@@ -478,7 +478,7 @@ contains
     do ii = is, ie
        do jj = js, je
           zprod = zprod + fld1%ssh(ii,jj)*fld2%ssh(ii,jj)*fld1%geom%ocean%mask2d(ii,jj)       !SSH      
-          do kk = 1, nzo !!! ADD 3D MASK!!!!!!
+          do kk = 1, nzo
              zprod = zprod + fld1%tocn(ii,jj,kk)*fld2%tocn(ii,jj,kk)*fld1%geom%ocean%mask2d(ii,jj) &   !TOCN
                            + fld1%socn(ii,jj,kk)*fld2%socn(ii,jj,kk)*fld1%geom%ocean%mask2d(ii,jj)     !SOCN
           end do
@@ -500,7 +500,7 @@ contains
     call mpp_gather((/zprod/),zprod_allpes)
     call mpp_broadcast(zprod_allpes, mpp_npes(), mpp_root_pe())    
     zprod=sum(zprod_allpes)
-    
+
     deallocate(zprod_allpes)
     call mpp_sync()
     
@@ -1236,12 +1236,12 @@ contains
     ! Set number of levels
     ug%nl0 = 1
 
-    ! Set number of variables
-    ug%nv = self%geom%ocean%ncat + 1
+    ! Set number of variables (cicen,hicen,tocn,socn,ssh)
+    ug%nv = self%geom%ocean%ncat*2 + 1
 
     ! Set number of timeslots
     ug%nts = 1
-
+    
   end subroutine ug_size
 
   ! ------------------------------------------------------------------------------
@@ -1269,14 +1269,13 @@ contains
     call allocate_unstructured_grid_coord(ug)
 
     ! Define coordinates
-    ug%lon = deg2rad*reshape( self%geom%ocean%lon(isc:iec, jsc:jec), (/ug%nmga/) )
-    ug%lat = deg2rad*reshape( self%geom%ocean%lat(isc:iec, jsc:jec), (/ug%nmga/) ) 
+    ug%lon = reshape( self%geom%ocean%lon(isc:iec, jsc:jec), (/ug%nmga/) )
+    ug%lat = reshape( self%geom%ocean%lat(isc:iec, jsc:jec), (/ug%nmga/) ) 
     ug%area = reshape( self%geom%ocean%cell_area(isc:iec, jsc:jec), (/ug%nmga/) )
     do jz = 1, ug%nl0       
        ug%vunit(:,jz) = real(jz)
        ug%lmask(:,jz) = reshape( self%geom%ocean%mask2d(isc:iec, jsc:jec)==1, (/ug%nmga/) )
     end do
-
   end subroutine ug_coord
 
   ! ------------------------------------------------------------------------------
@@ -1288,7 +1287,8 @@ contains
     type(soca_field), intent(in) :: self
     type(unstructured_grid), intent(inout) :: ug
 
-    integer :: isc, iec, jsc, jec, jk
+    integer :: isc, iec, jsc, jec, jk, incat, inzo, ncat, nzo
+    integer :: ni, nj
 
     ! Get indices for compute domain (no halo)
     isc = self%geom%ocean%G%isc
@@ -1296,12 +1296,41 @@ contains
     jsc = self%geom%ocean%G%jsc
     jec = self%geom%ocean%G%jec
 
-    ! Copy
-    do jk = 1, ug%nv - 1
-       ug%fld(:, 1, jk, 1) = reshape( self%cicen(isc:iec, jsc:jec, jk+1), (/ug%nmga/) )
+    ni = iec - isc + 1
+    nj = jec - jsc + 1
+    ncat = self%geom%ocean%ncat
+    
+    ! Define size
+    call ug_size(self, ug)
+
+    ! Allocate unstructured grid field
+    call allocate_unstructured_grid_field(ug)
+    ug%fld = 0.0
+    
+    !ug%fld(nmga,nl0,nv,nts)
+    ! nmga !> Number of gridpoints (on a given MPI task)
+    ! nl0  !> Number of levels
+    ! nv   !> Number of variables
+    ! nts  !> Number of timeslots
+    ncat = self%geom%ocean%ncat
+    nzo = self%geom%ocean%nzo    
+
+    ! cicen
+    jk=1
+    do incat = 1, ncat
+       ug%fld(1:ni*nj, 1, jk, 1) = reshape( self%cicen(isc:iec, jsc:jec, incat+1), (/ug%nmga/) )
+       jk = jk + 1
     end do
-    jk = ug%nv
-    ug%fld(:, 1, jk, 1) = reshape( self%ssh(isc:iec, jsc:jec), (/ug%nmga/) )
+    
+    ! hicen
+    do incat = 1, ncat
+       ug%fld(1:ni*nj, 1, jk, 1) = reshape( self%hicen(isc:iec, jsc:jec, incat), (/ug%nmga/) )
+       jk = jk + 1       
+    end do
+
+    ! ssh
+    ug%fld(1:ni*nj, 1, jk, 1) = reshape( self%ssh(isc:iec, jsc:jec), (/ug%nmga/) )
+    jk = jk + 1
 
   end subroutine field_to_ug
 
@@ -1314,19 +1343,37 @@ contains
     type(soca_field), intent(inout) :: self
     type(unstructured_grid), intent(in) :: ug
 
-    integer :: isc, iec, jsc, jec, jk
+    integer :: isc, iec, jsc, jec, jk, incat, inzo, ncat, nzo
+    integer :: ni, nj
     
     ! Get indices for compute domain (no halo)
-    isc = self%geom%ocean%G%isc
+     isc = self%geom%ocean%G%isc
     iec = self%geom%ocean%G%iec    
     jsc = self%geom%ocean%G%jsc
     jec = self%geom%ocean%G%jec
-    
-    do jk = 1, ug%nv - 1
-       self%cicen(isc:iec, jsc:jec,jk+1) = reshape( ug%fld(:, 1, jk, 1), (/(iec - isc + 1 ), (jec - jsc + 1 )/) )
+
+    ni = iec - isc + 1
+    nj = jec - jsc + 1
+    ncat = self%geom%ocean%ncat
+
+    call zeros(self)
+
+    ! cicen
+    jk=1
+    do incat = 1, ncat
+       self%cicen(isc:iec, jsc:jec, incat+1) = reshape( ug%fld(1:ni*nj, 1, jk, 1), (/ni, nj/))
+       jk = jk + 1
     end do
-    jk = ug%nv
-    self%ssh(isc:iec, jsc:jec) = reshape( ug%fld(:, 1, jk, 1), (/(iec - isc + 1 ), (jec - jsc + 1 )/) )
+
+    ! hicen
+    do incat = 1, ncat
+       self%hicen(isc:iec, jsc:jec, incat) = reshape( ug%fld(1:ni*nj, 1, jk, 1), (/ni, nj/) )
+       jk = jk + 1       
+    end do
+
+    ! ssh
+    self%ssh(isc:iec, jsc:jec) = reshape( ug%fld(1:ni*nj, 1, jk, 1), (/ni, nj/) )    
+    jk = jk + 1
 
   end subroutine field_from_ug
 
