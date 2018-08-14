@@ -30,7 +30,8 @@ namespace soca {
   ErrorCovariance::ErrorCovariance(const Geometry & resol,
                                    const oops::Variables &,
                                    const eckit::Configuration & conf,
-                                   const State & bkg) {
+                                   const State & bkg,
+				   const State & traj) {
     // bkg: Background state, invariant wrt outer-loop.
     time_ = util::DateTime(conf.getString("date"));
     const eckit::Configuration * configc = &conf;

@@ -11,6 +11,7 @@
 #include <ostream>
 #include <string>
 #include <boost/scoped_ptr.hpp>
+#include <boost/shared_ptr.hpp>
 
 #include "oops/util/DateTime.h"
 #include "oops/util/Printable.h"
@@ -22,7 +23,6 @@ namespace eckit {
 }
 
 namespace soca {
-  class Geometry;
   class State;
   class Increment;
 
@@ -33,11 +33,8 @@ class Kst: public util::Printable {
  public:
   static const std::string classname() {return "soca::Kst";}
 
-  explicit Kst(const eckit::Configuration &);
+  explicit Kst(const State &, const State &, const eckit::Configuration &);
   ~Kst();
-
-/// Set linearisation state
-  void linearize(const State &, const Geometry &);
 
 /// Perform linear transforms
   void multiply(const Increment &, Increment &) const;
@@ -48,9 +45,7 @@ class Kst: public util::Printable {
  private:
   void print(std::ostream &) const override;
   int keyFtnConfig_;  
-  boost::scoped_ptr<const Geometry> geom_;  
-  boost::scoped_ptr<const State> traj_;
-  util::DateTime time_;
+  const State & traj_;
 };
 // -----------------------------------------------------------------------------
 

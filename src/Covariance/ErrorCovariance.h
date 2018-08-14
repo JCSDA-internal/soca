@@ -37,7 +37,7 @@ namespace soca {
       static const std::string classname() {return "soca::ErrorCovariance";}
 
       ErrorCovariance(const Geometry &, const oops::Variables &,
-                      const eckit::Configuration &, const State &);
+                      const eckit::Configuration &, const State &, const State &);
       ~ErrorCovariance();
 
       void linearize(const State &, const Geometry &);

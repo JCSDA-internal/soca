@@ -8,7 +8,7 @@
 #ifndef SOCA_MODEL_INSTANTIATECHANGEVARFACTORY_H_
 #define SOCA_MODEL_INSTANTIATECHANGEVARFACTORY_H_
 
-#include "src/BalanceOperators/Kst.h"
+#include "src/BalanceOperators/Kst/Kst.h"
 #include "src/Traits.h"
 #include "oops/interface/LinearVariableChange.h"
 
@@ -16,8 +16,11 @@ namespace soca {
 
 void instantiateBalanceOpFactory() {
   static oops::LinearVariableChangeMaker<soca::Traits,
-                                         oops::LinearVariableChange<soca::Traits, soca::Kst> >
-    makerBalanceOpSOCA_("KstSOCA");
+              oops::LinearVariableChange<soca::Traits, soca::Kst> >
+              makerBalanceOpSOCA_("KstSOCA");
+  /*static oops::LinearVariableChangeMaker<soca::Traits,
+              oops::LinearVariableChange<soca::Traits, soca::Ksshts> >
+              makerBalanceOpSOCA_("KsshtsSOCA");*/
 }
 
 }  // namespace qg
