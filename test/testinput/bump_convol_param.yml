@@ -1,0 +1,74 @@
+---
+logging:
+  categories: Info, Test, Warning, Error
+resolution:
+variables:
+  variables:
+  - cicen
+  - hicen
+  - hsnon
+  - tsfcn
+  - qsnon
+  - sicnk
+  - qicnk
+  - socn
+  - tocn
+  - ssh
+  - hocn  
+date: 2018-04-14T21:00:00Z
+background:
+  read_from_file: 1
+  basename: "./INPUT/"
+  ocn_filename: MOM.res.nc
+  ice_filename: ice_model.res.nc
+  date: '2018-04-15T00:00:00Z'
+#covariance: BUMP
+# General parameters
+default_seed: 1
+prefix: soca
+# Driver parameters
+method: cor
+strategy: common
+#      new_hdiag: 0
+new_param: 1      # Read convol files -> 0
+check_adjoint: 0  # Read convol files -> 1
+# Sampling parameters
+sam_read: 0
+sam_write: 1  
+mask_check: 0
+draw_type: random_uniform
+nc1: 100
+ntry: 3
+nrep:  2
+nc3: 10
+dc: 300.0e3
+nl0r: 1
+# Diag parameters
+# Fit parameters
+minim_algo: "hooke"
+rvflt: 0.0
+# NICAS parameters
+lsqrt: 1  
+resol: 6.0
+nicas_interp: bilin
+network: 0
+mpicom: 2 # Number of internal comm steps 
+#NICAS parameters
+forced_radii: 1
+rh: 500e3
+rv: 30
+advmode: 0
+# Output parameters  
+diag_interp: bilin
+date: '2018-04-15T00:00:00Z'
+output:
+- parameter: cor_rh
+  datadir: Data
+  exp: cor_rh
+  type: an
+  date: '2018-04-15T00:00:00Z'
+- parameter: cor_rv
+  datadir: Data
+  exp: cor_rv
+  type: an
+  date:  '2018-04-15T00:00:00Z'
