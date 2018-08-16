@@ -33,7 +33,7 @@ module soca_fields
   interface create
      module procedure create_constructor, create_copy
   end interface create
-           
+
   ! ------------------------------------------------------------------------------
   !> Fortran derived type to hold fields
   type :: soca_field
@@ -79,7 +79,7 @@ contains
     ! Construct a field from geom and vars
     use soca_mom6sis2, only: Coupled, soca_field_init, soca_geom_init
     use ufo_vars_mod    
-    
+
     implicit none
     type(soca_field), intent(inout)          :: self
     type(soca_geom),  pointer, intent(inout) :: geom
@@ -121,16 +121,16 @@ contains
   end subroutine create_constructor
 
   ! ------------------------------------------------------------------------------
-     
+
   subroutine create_copy(self, rhs_fld)
     ! Construct a field from an other field, lhs_fld=rhs_fld       
     use soca_mom6sis2, only: Coupled, soca_field_init, soca_geom_init
-    
+
     implicit none
     type(soca_field), intent(inout)          :: self
     type(soca_field), intent(inout)          :: rhs_fld
     integer :: ivar!, unit, nxny(2)
-    
+
     self%geom => rhs_fld%geom
     self%nf   = rhs_fld%nf
     call soca_field_init(self%AOGCM, rhs_fld%geom%ocean%G, rhs_fld%geom%ocean%GV, rhs_fld%geom%ocean%IG)
@@ -141,7 +141,7 @@ contains
     self%socn => self%AOGCM%Ocn%S
     self%ssh => self%AOGCM%Ocn%ssh
     self%hocn => self%AOGCM%Ocn%H
-    
+
     !Sea-ice internal state
     self%cicen => self%AOGCM%Ice%part_size
     self%hicen => self%AOGCM%Ice%h_ice
@@ -171,7 +171,7 @@ contains
     type(soca_field), intent(inout) :: self
 
     call soca_field_end(self%AOGCM)!, geom%ocean%G, geom%ocean%GV, geom%ocean%IG)
-    
+
   end subroutine delete
 
   ! ------------------------------------------------------------------------------
@@ -216,7 +216,7 @@ contains
     self%tocn = 1.0_kind_real
     self%ssh = 1.0_kind_real
     self%tocn = 1.0_kind_real
-    
+
   end subroutine ones
 
   ! ------------------------------------------------------------------------------  
@@ -246,7 +246,7 @@ contains
     ifdir = config_get_int(c_conf,"ifdir")
 
 
-    
+
     ! Check 
     if (ndir<1) call abor1_ftn("fields:dirac non-positive ndir")
     if (any(ixdir<1).or.any(ixdir>self%geom%ocean%nx)) call abor1_ftn("fields:dirac invalid ixdir")
@@ -278,17 +278,17 @@ contains
     call random_number(self%hicen); self%hicen=self%hicen-0.5_kind_real
     call random_number(self%hsnon); self%hsnon=self%hsnon-0.5_kind_real        
     call random_number(self%tsfcn); self%tsfcn=self%tsfcn-0.5_kind_real
-    
+
     call random_number(self%tocn); self%tocn=self%tocn-0.5_kind_real
     call random_number(self%socn); self%tocn=self%socn-0.5_kind_real
     call random_number(self%ssh); self%ssh=(self%ssh-0.5_kind_real)*self%geom%ocean%mask2d
-    
+
   end subroutine random
 
   ! ------------------------------------------------------------------------------
-  
+
   subroutine copy(self,rhs)
-    
+
     implicit none
     type(soca_field), intent(inout) :: self
     type(soca_field), intent(in)    :: rhs
@@ -310,7 +310,7 @@ contains
     self%tocn  = rhs%tocn
     self%ssh  = rhs%ssh    
     self%hocn  = rhs%hocn
-    
+
     return
   end subroutine copy
 
@@ -365,7 +365,7 @@ contains
     self%tocn=self%tocn*rhs%tocn
     self%socn=self%socn*rhs%socn
     self%ssh=self%ssh*rhs%ssh    
-    
+
     return
   end subroutine self_schur
 
@@ -388,7 +388,7 @@ contains
     self%qsnon=self%qsnon-rhs%qsnon
     self%sicnk=self%sicnk-rhs%sicnk
     self%qicnk=self%qicnk-rhs%qicnk
-    
+
     self%socn=self%socn-rhs%socn
     self%tocn=self%tocn-rhs%tocn
     self%ssh=self%ssh-rhs%ssh    
@@ -411,11 +411,11 @@ contains
     self%qsnon = zz * self%qsnon
     self%sicnk = zz * self%sicnk
     self%qicnk = zz * self%qicnk
-    
+
     self%tocn = zz * self%tocn
     self%socn = zz * self%socn
     self%ssh = zz * self%ssh
-    
+
   end subroutine self_mul
 
   ! ------------------------------------------------------------------------------
@@ -438,19 +438,19 @@ contains
     self%qsnon=self%qsnon + zz * rhs%qsnon
     self%sicnk=self%sicnk + zz * rhs%sicnk
     self%qicnk=self%qicnk + zz * rhs%qicnk
-    
+
     self%tocn=self%tocn + zz * rhs%tocn        
     self%socn=self%socn + zz * rhs%socn
     self%ssh=self%ssh + zz * rhs%ssh
-    
+
   end subroutine axpy
 
   ! ------------------------------------------------------------------------------
 
   subroutine dot_prod(fld1,fld2,zprod)
-    
+
     use mpp_mod,  only : mpp_pe, mpp_npes, mpp_root_pe, mpp_sync, mpp_sum, mpp_gather, mpp_broadcast
-    
+
     implicit none
     type(soca_field), intent(in) :: fld1, fld2
     real(kind=kind_real), intent(out) :: zprod
@@ -472,7 +472,7 @@ contains
     je = fld1%geom%ocean%G%jec    
     ncat = fld1%geom%ocean%ncat
     nzo = fld1%geom%ocean%nzo    
-    
+
     zprod = 0.0_kind_real
     !----- OCEAN
     do ii = is, ie
@@ -480,21 +480,21 @@ contains
           zprod = zprod + fld1%ssh(ii,jj)*fld2%ssh(ii,jj)*fld1%geom%ocean%mask2d(ii,jj)       !SSH      
           do kk = 1, nzo
              zprod = zprod + fld1%tocn(ii,jj,kk)*fld2%tocn(ii,jj,kk)*fld1%geom%ocean%mask2d(ii,jj) &   !TOCN
-                           + fld1%socn(ii,jj,kk)*fld2%socn(ii,jj,kk)*fld1%geom%ocean%mask2d(ii,jj)     !SOCN
+                  + fld1%socn(ii,jj,kk)*fld2%socn(ii,jj,kk)*fld1%geom%ocean%mask2d(ii,jj)     !SOCN
           end do
        end do
     end do
-    
+
     !----- SEA-ICE
     do ii = is, ie
        do jj = js, je
           do kk = 1, ncat
-             zprod = zprod + fld1%cicen(ii,jj,kk)*fld2%cicen(ii,jj,kk)*fld1%geom%ocean%mask2d(ii,jj) & !CICEN
-                           + fld1%hicen(ii,jj,kk)*fld2%hicen(ii,jj,kk)*fld1%geom%ocean%mask2d(ii,jj)   !HICEN          
+             zprod = zprod + fld1%cicen(ii,jj,kk+1)*fld2%cicen(ii,jj,kk+1)*fld1%geom%ocean%mask2d(ii,jj) & !CICEN
+                  + fld1%hicen(ii,jj,kk)*fld2%hicen(ii,jj,kk)*fld1%geom%ocean%mask2d(ii,jj)   !HICEN          
           end do
        end do
-    end do    
-    
+    end do
+
     allocate(zprod_allpes(mpp_npes()))
 
     call mpp_gather((/zprod/),zprod_allpes)
@@ -503,7 +503,7 @@ contains
 
     deallocate(zprod_allpes)
     call mpp_sync()
-    
+
   end subroutine dot_prod
 
   ! ------------------------------------------------------------------------------
@@ -542,7 +542,7 @@ contains
     lhs%qsnon = x1%qsnon - x2%qsnon
     lhs%sicnk = x1%sicnk - x2%sicnk
     lhs%qicnk = x1%qicnk - x2%qicnk
-    
+
     lhs%tocn = x1%tocn - x2%tocn
     lhs%socn = x1%socn - x2%socn
     lhs%ssh = x1%ssh - x2%ssh    
@@ -589,7 +589,7 @@ contains
     use ioda_locs_mod
     use ufo_geovals_mod
     use ufo_vars_mod
-    
+
     implicit none
     type(soca_field), intent(inout) :: fld      !< Fields
     type(c_ptr), intent(in)       :: c_conf   !< Configuration
@@ -605,12 +605,12 @@ contains
     type(restart_file_type) :: ocean_restart    
     integer :: idr, idr_ocean
 
-    
+
     type(ioda_locs)    :: locs
     type(ufo_geovals)    :: geovals
     !type(ufo_vars)    :: vars
     integer            :: nobs, nval
-    
+
     iread = 0
     if (config_element_exists(c_conf,"read_from_file")) then
        iread = config_get_int(c_conf,"read_from_file")
@@ -633,7 +633,7 @@ contains
        ocn_filename = trim(basename)//trim(ocn_filename)       
        ice_filename = config_get_string(c_conf,len(ice_filename),"ice_filename")       
        ice_filename = trim(basename)//trim(ice_filename)
-       
+
        call fms_io_init()
        do ii = 1, fld%nf
           select case(fld%fldnames(ii))
@@ -691,7 +691,7 @@ contains
     endif
 
     call check(fld)
-    
+
   end subroutine read_file
 
   ! ------------------------------------------------------------------------------
@@ -703,7 +703,7 @@ contains
     use netcdf
     use fms_mod,                 only: read_data, write_data, set_domain
     use fms_io_mod,                only : fms_io_init, fms_io_exit
-    
+
     implicit none
     type(soca_field), intent(inout) :: fld    !< Fields
     type(c_ptr), intent(in)    :: c_conf           !< Configuration
@@ -830,7 +830,7 @@ contains
     call check(fld)
 
     Nc2d = sum(fld%geom%ocean%mask2d)
-    
+
     pstat=0.0
     pstat(1,1) = minval(fld%cicen)
     pstat(2,1) = maxval(fld%cicen)
@@ -839,7 +839,7 @@ contains
     pstat(1,2) = minval(fld%hicen)
     pstat(2,2) = maxval(fld%hicen)
     pstat(3,2) = sqrt(sum(fld%hicen*fld%hicen)/real(Nc2d*fld%geom%ocean%ncat))
-    
+
     pstat(1,3) = minval(fld%hsnon)
     pstat(2,3) = maxval(fld%hsnon)
     pstat(2,3) = sqrt(sum(fld%hsnon*fld%hsnon)/real(Nc2d*fld%geom%ocean%ncat))
@@ -858,13 +858,13 @@ contains
 
     pstat(1,8) = minval(fld%tocn)
     pstat(2,8) = maxval(fld%tocn)
-    
+
     pstat(1,9) = minval(fld%socn)
     pstat(2,9) = maxval(fld%socn)    
 
     pstat(1,10) = minval(fld%ssh)
     pstat(2,10) = maxval(fld%ssh)    
-    
+
     call dot_prod(fld, fld, zz)    
     !pstat(3,:) = sqrt(zz)
 
@@ -873,18 +873,18 @@ contains
   ! ------------------------------------------------------------------------------
 
   subroutine fldrms(fld, prms)
-    
+
     use mpp_mod,                   only : mpp_pe, mpp_npes, mpp_root_pe, mpp_sync
-    
+
     implicit none
-    
+
     type(soca_field), intent(in) :: fld
     real(kind=kind_real), intent(out) :: prms
     integer :: jf,jy,jx,ii
     real(kind=kind_real) :: zz, ns, n2dfld
-    
+
     call check(fld)
-    
+
     call dot_prod(fld,fld,prms) ! Global value 
     prms=sqrt(prms)
 
@@ -926,7 +926,7 @@ contains
     call nicas_interphad(fld, locs, vars, geovals, traj)
 
   end subroutine interp_ad
-  
+
   ! ------------------------------------------------------------------------------
 
   subroutine initialize_interph(fld, locs, traj, horiz_interp)    
@@ -939,10 +939,10 @@ contains
     type(ioda_locs),                    intent(in) :: locs
     type(soca_getvaltraj), optional, intent(inout) :: traj    
     type(soca_hinterp),      optional, intent(out) :: horiz_interp    
-    
+
     integer :: nobs
     integer :: isc, iec, jsc, jec
-    
+
     ! Indices for compute domain (no halo)
     isc = fld%geom%ocean%G%isc
     iec = fld%geom%ocean%G%iec
@@ -951,7 +951,7 @@ contains
 
     ! Number of obs
     nobs = locs%nlocs
-    
+
     ! Compute interpolation weights if needed
     if (present(traj)) then
        if (.not.(traj%interph_initialized)) then
@@ -974,7 +974,7 @@ contains
             &                       locs%lon,&
             &                       locs%lat)
     end if
-    
+
   end subroutine initialize_interph
 
   ! ------------------------------------------------------------------------------
@@ -988,7 +988,7 @@ contains
     use soca_constants, only : rho_i
     use soca_interph_mod
     use fckit_log_module, only : fckit_log
-    
+
     implicit none
 
     type(soca_field),      intent(inout) :: fld
@@ -1065,7 +1065,7 @@ contains
           call fckit_log%info(record)          
 
        end select
-       
+
        ! Allocate GeoVaLs (fields at locations)
        if (nval.eq.0) call abor1_ftn("Wrong nval: nval = 0")
        geovals%geovals(ivar)%nval = nval
@@ -1076,7 +1076,7 @@ contains
        geovals%geovals(ivar)%vals(:,:)=0.0_kind_real    
        geovals%lalloc = .true.       
        geovals%linit = .true.
-       
+
        ! Initialize horizontal inerpolation
        if (present(traj)) then
           print *,'Initialize interp traj for obstype:',traj%obstype_index
@@ -1093,9 +1093,9 @@ contains
        iec = fld%geom%ocean%G%iec
        jsc = fld%geom%ocean%G%jsc
        jec = fld%geom%ocean%G%jec
-              
+
        select case (trim(ufovars%fldnames(ivar)))
-          
+
        case ("ice_concentration")
           do icat = 1,fld%geom%ocean%ncat
              call horiz_interp_p%interp_apply(fld%cicen(isc:iec,jsc:jec,icat+1)*fld%geom%ocean%mask2d(isc:iec,jsc:jec),&
@@ -1106,7 +1106,7 @@ contains
              call horiz_interp_p%interp_apply(fld%hicen(isc:iec,jsc:jec,icat)*fld%geom%ocean%mask2d(isc:iec,jsc:jec),&
                   &geovals%geovals(ivar)%vals(icat,:))
           end do
-          
+
        case ("sea_surface_height_above_geoid","steric_height")
           call horiz_interp_p%interp_apply(fld%ssh(isc:iec,jsc:jec)*fld%geom%ocean%mask2d(isc:iec,jsc:jec),&
                &geovals%geovals(ivar)%vals(1,:))
@@ -1115,7 +1115,7 @@ contains
           do ilev = 1, fld%geom%ocean%nzo
              call horiz_interp_p%interp_apply(fld%tocn(isc:iec,jsc:jec,ilev), geovals%geovals(ivar)%vals(ilev,:))
           end do
-          
+
        case ("ocean_salinity")
           do ilev = 1, fld%geom%ocean%nzo
              call horiz_interp_p%interp_apply(fld%socn(isc:iec,jsc:jec,ilev), geovals%geovals(ivar)%vals(ilev,:))
@@ -1128,14 +1128,14 @@ contains
 
        case ("ocean_upper_level_temperature")          
           call horiz_interp_p%interp_apply(fld%tocn(isc:iec,jsc:jec,1), geovals%geovals(ivar)%vals(1,:))
-          
+
        end select
     end do
 
   end subroutine nicas_interph
 
   ! ------------------------------------------------------------------------------
-  
+
   subroutine nicas_interphad(fld, locs, ufovars, geovals, traj)
 
     use ioda_locs_mod  
@@ -1147,7 +1147,7 @@ contains
     use fckit_log_module, only : fckit_log
 
     implicit none
-    
+
     type(soca_field),      intent(inout) :: fld
     type(ioda_locs),          intent(in) :: locs
     type(ufo_vars),           intent(in) :: ufovars        
@@ -1166,7 +1166,7 @@ contains
     integer :: isc, iec, jsc, jec
 
     print *,'Initialize interp_adjoint'
-    
+
     ! Indices for compute domain (no halo)
     isc = fld%geom%ocean%G%isc
     iec = fld%geom%ocean%G%iec
@@ -1195,12 +1195,12 @@ contains
        case ("sea_surface_height_above_geoid","steric_height") !!!! steric height sould be  different case
           print *,ivar,ufovars%fldnames(ivar)          
           call traj%horiz_interp%interpad_apply(fld%ssh(isc:iec,jsc:jec), geovals%geovals(ivar)%vals(1,:))
-          
+
        case ("ocean_potential_temperature")
           do ilev = 1, fld%geom%ocean%nzo
              call traj%horiz_interp%interpad_apply(fld%tocn(isc:iec,jsc:jec,ilev), geovals%geovals(ivar)%vals(ilev,:))
           end do
-          
+
        case ("ocean_salinity")
           do ilev = 1, fld%geom%ocean%nzo
              call traj%horiz_interp%interpad_apply(fld%socn(isc:iec,jsc:jec,ilev), geovals%geovals(ivar)%vals(ilev,:))
@@ -1208,7 +1208,7 @@ contains
 
        case ("ocean_upper_level_temperature")
           call traj%horiz_interp%interpad_apply(fld%tocn(isc:iec,jsc:jec,1), geovals%geovals(ivar)%vals(1,:))
-          
+
        end select
     end do
   end subroutine nicas_interphad
@@ -1217,43 +1217,72 @@ contains
 
   subroutine ug_size(self, ug)
     use unstructured_grid_mod
-    
+
     implicit none
     type(soca_field), intent(in) :: self
     type(unstructured_grid), intent(inout) :: ug
 
     integer :: isc, iec, jsc, jec
-
+    integer :: igrid
+    
     ! Get indices for compute domain (no halo)
     isc = self%geom%ocean%G%isc
     iec = self%geom%ocean%G%iec    
     jsc = self%geom%ocean%G%jsc
     jec = self%geom%ocean%G%jec
 
+    ! Set number of grids ! Only 1 grid currently ! 
+    if (ug%colocated==1) then
+       ! Colocatd
+       ug%ngrid = 1
+    else
+       ! Not colocatedd
+       ug%ngrid = 1
+    end if
+
+    ! Allocate grid instances
+    if (.not.allocated(ug%grid)) allocate(ug%grid(ug%ngrid))
+
+    ! Colocated
+
     ! Set local number of points
-    ug%nmga = (iec - isc + 1) * (jec - jsc + 1 )
+    ug%grid(1)%nmga = (iec - isc + 1) * (jec - jsc + 1 )
 
     ! Set number of levels
-    ug%nl0 = 1
+    ug%grid(1)%nl0 = self%geom%ocean%nzo
 
-    ! Set number of variables (cicen,hicen,tocn,socn,ssh)
-    ug%nv = self%geom%ocean%ncat*2 + 1
+    ! Set number of variables
+    ug%grid(1)%nv = self%geom%ocean%ncat*2 + 3
 
     ! Set number of timeslots
-    ug%nts = 1
-    
+    ug%grid(1)%nts = 1
+
+!!$    ! Set local number of points
+!!$    ug%nmga = (iec - isc + 1) * (jec - jsc + 1 )
+!!$
+!!$    ! Set number of levels
+!!$    ug%nl0 = 1
+!!$
+!!$    ! Set number of variables (cicen,hicen,tocn,socn,ssh)
+!!$    ug%nv = self%geom%ocean%ncat*2 + 1
+!!$
+!!$    ! Set number of timeslots
+!!$    ug%nts = 1
+
   end subroutine ug_size
 
   ! ------------------------------------------------------------------------------
 
-  subroutine ug_coord(self, ug)
+  subroutine ug_coord(self, ug, colocated)
     use unstructured_grid_mod
     use tools_const, only: deg2rad
-    
+
     implicit none
     type(soca_field), intent(in) :: self
+    integer, intent(in) :: colocated
     type(unstructured_grid), intent(inout) :: ug
 
+    integer :: igrid
     integer :: isc, iec, jsc, jec, jz
 
     ! Get indices for compute domain (no halo)
@@ -1262,6 +1291,9 @@ contains
     jsc = self%geom%ocean%G%jsc
     jec = self%geom%ocean%G%jec
 
+    ! Copy colocate
+    ug%colocated = colocated
+
     ! Define size
     call ug_size(self, ug)
 
@@ -1269,22 +1301,28 @@ contains
     call allocate_unstructured_grid_coord(ug)
 
     ! Define coordinates
-    ug%lon = reshape( self%geom%ocean%lon(isc:iec, jsc:jec), (/ug%nmga/) )
-    ug%lat = reshape( self%geom%ocean%lat(isc:iec, jsc:jec), (/ug%nmga/) ) 
-    ug%area = reshape( self%geom%ocean%cell_area(isc:iec, jsc:jec), (/ug%nmga/) )
-    do jz = 1, ug%nl0       
-       ug%vunit(:,jz) = real(jz)
-       ug%lmask(:,jz) = reshape( self%geom%ocean%mask2d(isc:iec, jsc:jec)==1, (/ug%nmga/) )
+
+    ug%grid(1)%lon = &
+         &reshape( self%geom%ocean%lon(isc:iec, jsc:jec), (/ug%grid(1)%nmga/) )
+    ug%grid(1)%lat = &
+         &reshape( self%geom%ocean%lat(isc:iec, jsc:jec), (/ug%grid(1)%nmga/) ) 
+    ug%grid(1)%area = &
+         &reshape( self%geom%ocean%cell_area(isc:iec, jsc:jec), (/ug%grid(1)%nmga/) )
+    do jz = 1, ug%grid(1)%nl0       
+       ug%grid(1)%vunit(:,jz) = real(jz)
+       ug%grid(1)%lmask(:,jz) = reshape( self%geom%ocean%mask2d(isc:iec, jsc:jec)==1, (/ug%grid(1)%nmga/) )
     end do
+
   end subroutine ug_coord
 
   ! ------------------------------------------------------------------------------
 
-  subroutine field_to_ug(self, ug)
+  subroutine field_to_ug(self, ug, colocated)
     use unstructured_grid_mod
-    
+
     implicit none
     type(soca_field), intent(in) :: self
+    integer, intent(in) :: colocated
     type(unstructured_grid), intent(inout) :: ug
 
     integer :: isc, iec, jsc, jec, jk, incat, inzo, ncat, nzo
@@ -1299,38 +1337,60 @@ contains
     ni = iec - isc + 1
     nj = jec - jsc + 1
     ncat = self%geom%ocean%ncat
-    
+
+    ! Copy colocated
+    ug%colocated = colocated
+
     ! Define size
     call ug_size(self, ug)
 
     ! Allocate unstructured grid field
     call allocate_unstructured_grid_field(ug)
-    ug%fld = 0.0
-    
+
     !ug%fld(nmga,nl0,nv,nts)
     ! nmga !> Number of gridpoints (on a given MPI task)
     ! nl0  !> Number of levels
     ! nv   !> Number of variables
     ! nts  !> Number of timeslots
     ncat = self%geom%ocean%ncat
-    nzo = self%geom%ocean%nzo    
+    nzo = ug%grid(1)%nl0!self%geom%ocean%nzo    
+
+    ! Copy field
+
+    ug%grid(1)%fld = 0.0
 
     ! cicen
     jk=1
     do incat = 1, ncat
-       ug%fld(1:ni*nj, 1, jk, 1) = reshape( self%cicen(isc:iec, jsc:jec, incat+1), (/ug%nmga/) )
+       ug%grid(1)%fld(1:ni*nj, 1, jk, 1) = &
+            &reshape( self%cicen(isc:iec, jsc:jec, incat+1), (/ug%grid(1)%nmga/) )
        jk = jk + 1
     end do
     
     ! hicen
     do incat = 1, ncat
-       ug%fld(1:ni*nj, 1, jk, 1) = reshape( self%hicen(isc:iec, jsc:jec, incat), (/ug%nmga/) )
+       ug%grid(1)%fld(1:ni*nj, 1, jk, 1) = &
+            &reshape( self%hicen(isc:iec, jsc:jec, incat), (/ug%grid(1)%nmga/) )
        jk = jk + 1       
     end do
 
     ! ssh
-    ug%fld(1:ni*nj, 1, jk, 1) = reshape( self%ssh(isc:iec, jsc:jec), (/ug%nmga/) )
+    ug%grid(1)%fld(1:ni*nj, 1, jk, 1) = &
+         &reshape( self%ssh(isc:iec, jsc:jec), (/ug%grid(1)%nmga/) )
     jk = jk + 1
+
+    ! tocn
+    do inzo = 1, nzo
+       ug%grid(1)%fld(1:ni*nj, inzo, jk, 1) = &
+            &reshape( self%tocn(isc:iec, jsc:jec,inzo), (/ug%grid(1)%nmga/) )
+    end do
+    jk = jk + 1
+
+    ! socn
+    do inzo = 1, nzo
+       ug%grid(1)%fld(1:ni*nj, inzo, jk, 1) = &
+            &reshape( self%socn(isc:iec, jsc:jec,inzo), (/ug%grid(1)%nmga/) )
+    end do
 
   end subroutine field_to_ug
 
@@ -1345,9 +1405,9 @@ contains
 
     integer :: isc, iec, jsc, jec, jk, incat, inzo, ncat, nzo
     integer :: ni, nj
-    
+
     ! Get indices for compute domain (no halo)
-     isc = self%geom%ocean%G%isc
+    isc = self%geom%ocean%G%isc
     iec = self%geom%ocean%G%iec    
     jsc = self%geom%ocean%G%jsc
     jec = self%geom%ocean%G%jec
@@ -1355,25 +1415,40 @@ contains
     ni = iec - isc + 1
     nj = jec - jsc + 1
     ncat = self%geom%ocean%ncat
+    nzo = ug%grid(1)%nl0
 
     call zeros(self)
+
+    ! Copy field
 
     ! cicen
     jk=1
     do incat = 1, ncat
-       self%cicen(isc:iec, jsc:jec, incat+1) = reshape( ug%fld(1:ni*nj, 1, jk, 1), (/ni, nj/))
+       self%cicen(isc:iec, jsc:jec, incat+1) = &
+            &reshape( ug%grid(1)%fld(1:ni*nj, 1, jk, 1), (/ni, nj/))
        jk = jk + 1
     end do
-
     ! hicen
     do incat = 1, ncat
-       self%hicen(isc:iec, jsc:jec, incat) = reshape( ug%fld(1:ni*nj, 1, jk, 1), (/ni, nj/) )
+       self%hicen(isc:iec, jsc:jec, incat) = &
+            &reshape( ug%grid(1)%fld(1:ni*nj, 1, jk, 1), (/ni, nj/) )
        jk = jk + 1       
     end do
-
     ! ssh
-    self%ssh(isc:iec, jsc:jec) = reshape( ug%fld(1:ni*nj, 1, jk, 1), (/ni, nj/) )    
+    self%ssh(isc:iec, jsc:jec) = &
+         &reshape( ug%grid(1)%fld(1:ni*nj, 1, jk, 1), (/ni, nj/) )    
     jk = jk + 1
+    ! tocn
+    do inzo = 1, nzo    
+       self%tocn(isc:iec, jsc:jec,inzo) = &
+            &reshape( ug%grid(1)%fld(1:ni*nj, inzo, jk, 1), (/ni, nj/) )
+    end do
+    jk = jk + 1
+    ! socn
+    do inzo = 1, nzo    
+       self%socn(isc:iec, jsc:jec,inzo) = &
+            &reshape( ug%grid(1)%fld(1:ni*nj, inzo, jk, 1), (/ni, nj/) )
+    end do    
 
   end subroutine field_from_ug
 

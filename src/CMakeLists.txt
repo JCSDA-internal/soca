@@ -70,10 +70,22 @@ list( APPEND oops_soca_src_files
 ./GetValuesTraj/soca_getvaltraj_mod.F90
 
 #Balance Operators
+./BalanceOperators/Ktc/Ktc.cc
+./BalanceOperators/Ktc/Ktc.h
+./BalanceOperators/Ktc/soca_ktc.interface.F90
+./BalanceOperators/Ktc/soca_ktc_mod.F90
 ./BalanceOperators/Kst/Kst.cc
 ./BalanceOperators/Kst/Kst.h
 ./BalanceOperators/Kst/soca_kst.interface.F90
 ./BalanceOperators/Kst/soca_kst_mod.F90
+./BalanceOperators/Ksshts/Ksshts.cc
+./BalanceOperators/Ksshts/Ksshts.h
+./BalanceOperators/Ksshts/soca_ksshts.interface.F90
+./BalanceOperators/Ksshts/soca_ksshts_mod.F90
+./BalanceOperators/BkgErr/BkgErr.cc
+./BalanceOperators/BkgErr/BkgErr.h
+./BalanceOperators/BkgErr/soca_bkgerr.interface.F90
+./BalanceOperators/BkgErr/soca_bkgerr_mod.F90
 ./BalanceOperators/instantiateBalanceOpFactory.h
 
 Traits.h

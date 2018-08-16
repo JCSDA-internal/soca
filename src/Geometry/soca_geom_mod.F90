@@ -51,7 +51,7 @@ contains
     call soca_geom_registry%add(c_key_self)
     call soca_geom_registry%get(c_key_self,self)
 
-    call self%ocean%init() 
+    call self%ocean%init()
     call self%ocean%get_rossby_radius()
     call self%ocean%infotofile()
     

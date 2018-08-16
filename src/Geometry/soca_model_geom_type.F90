@@ -59,7 +59,6 @@ contains
     implicit none
 
     class(soca_model_geom),   intent(out)  :: self    
-
     call soca_geom_init(self%G, self%GV, self%IG)
     !call soca_ice_geom_init(self%seaice_G, self%IG)   
     call geom_associate(self)

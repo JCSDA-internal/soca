@@ -5,7 +5,7 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#include "src/BalanceOperators/Kst/Kst.h"
+#include "src/BalanceOperators/Ksshts/Ksshts.h"
 
 #include <ostream>
 #include <string>
@@ -20,41 +20,41 @@ using oops::Log;
 
 namespace soca {
   // -----------------------------------------------------------------------------
-  Kst::Kst(const State & bkg,
-	   const State & traj,
-	   const Geometry & geom,	   
-	   const eckit::Configuration & conf): traj_(traj) {
+  Ksshts::Ksshts(const State & bkg,
+		 const State & traj,
+          	 const Geometry & geom,		 
+		 const eckit::Configuration & conf): traj_(traj) {
     const eckit::Configuration * configc = &conf;
-    soca_kst_setup_f90(keyFtnConfig_, &configc);
+    soca_ksshts_setup_f90(keyFtnConfig_, &configc);
   }
   // -----------------------------------------------------------------------------
-  Kst::~Kst() {
-    soca_kst_delete_f90(keyFtnConfig_);
+  Ksshts::~Ksshts() {
+    soca_ksshts_delete_f90(keyFtnConfig_);
   }
   // -----------------------------------------------------------------------------
-  void Kst::multiply(const Increment & dxa, Increment & dxm) const {
+  void Ksshts::multiply(const Increment & dxa, Increment & dxm) const {
     // dxm = K dxa
-    soca_kst_mult_f90(dxa.fields().toFortran(),
-		      dxm.fields().toFortran(),
-		      traj_.fields().toFortran());
+    soca_ksshts_mult_f90(dxa.fields().toFortran(),
+	          	 dxm.fields().toFortran(),
+		         traj_.fields().toFortran());
   }
   // -----------------------------------------------------------------------------
-  void Kst::multiplyInverse(const Increment & dxm, Increment & dxa) const {
+  void Ksshts::multiplyInverse(const Increment & dxm, Increment & dxa) const {
     dxa = dxm;
   }
   // -----------------------------------------------------------------------------
-  void Kst::multiplyAD(const Increment & dxm, Increment & dxa) const {
+  void Ksshts::multiplyAD(const Increment & dxm, Increment & dxa) const {
     // dxa = K^T dxm  
-    soca_kst_multad_f90(dxm.fields().toFortran(),
-			dxa.fields().toFortran(),
-			traj_.fields().toFortran());
+    soca_ksshts_multad_f90(dxm.fields().toFortran(),
+	          	   dxa.fields().toFortran(),
+			   traj_.fields().toFortran());
   }
   // -----------------------------------------------------------------------------
-  void Kst::multiplyInverseAD(const Increment & dxa, Increment & dxm) const {
+  void Ksshts::multiplyInverseAD(const Increment & dxa, Increment & dxm) const {
     dxm = dxa;
   }
   // -----------------------------------------------------------------------------
-  void Kst::print(std::ostream & os) const {
+  void Ksshts::print(std::ostream & os) const {
     os << "SOCA change variable";
   }
   // -----------------------------------------------------------------------------

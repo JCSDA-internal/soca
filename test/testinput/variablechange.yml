@@ -64,3 +64,84 @@ LinearVariableChangeTests:
       - tocn
       - ssh
       - hocn  
+  - varchange: KsshtsSOCA
+    inputVariables:
+      variables:
+      - cicen
+      - hicen
+      - hsnon
+      - tsfcn
+      - qsnon
+      - sicnk
+      - qicnk
+      - socn
+      - tocn
+      - ssh
+      - hocn  
+    outputVariables:
+      variables:
+      - cicen
+      - hicen
+      - hsnon
+      - tsfcn
+      - qsnon
+      - sicnk
+      - qicnk
+      - socn
+      - tocn
+      - ssh
+      - hocn
+  - varchange: KsshtsSOCA
+    inputVariables:
+      variables:
+      - cicen
+      - hicen
+      - hsnon
+      - tsfcn
+      - qsnon
+      - sicnk
+      - qicnk
+      - socn
+      - tocn
+      - ssh
+      - hocn  
+    outputVariables:
+      variables:
+      - cicen
+      - hicen
+      - hsnon
+      - tsfcn
+      - qsnon
+      - sicnk
+      - qicnk
+      - socn
+      - tocn
+      - ssh
+      - hocn      
+  - varchange: KtcSOCA
+    inputVariables:
+      variables:
+      - cicen
+      - hicen
+      - hsnon
+      - tsfcn
+      - qsnon
+      - sicnk
+      - qicnk
+      - socn
+      - tocn
+      - ssh
+      - hocn  
+    outputVariables:
+      variables:
+      - cicen
+      - hicen
+      - hsnon
+      - tsfcn
+      - qsnon
+      - sicnk
+      - qicnk
+      - socn
+      - tocn
+      - ssh
+      - hocn  

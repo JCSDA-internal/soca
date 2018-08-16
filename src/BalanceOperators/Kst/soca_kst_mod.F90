@@ -47,9 +47,6 @@ contains
     config%dsdtmax      = config_get_real(c_conf,"dsdtmax")
     config%dsdzmin      = config_get_real(c_conf,"dsdzmin")
     config%dtdzmin      = config_get_real(c_conf,"dtdzmin")
-    print *,'dsdtmax=',config%dsdtmax
-    print *,'dsdzmin=',config%dsdzmin
-    print *,'dtdzmin=',config%dtdzmin
 
   end subroutine soca_kst_setup
 

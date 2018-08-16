@@ -82,31 +82,34 @@ subroutine c_soca_b_mult(c_key_conf, c_key_in, c_key_out, c_key_traj) bind(c,nam
 
   real :: start, finish
   integer :: ierr
-  
+
+  print *,'---------------------------------'
   call soca_3d_cov_registry%get(c_key_conf,conf)
   call soca_field_registry%get(c_key_in,xin)
   call soca_field_registry%get(c_key_out,xout)
   call soca_field_registry%get(c_key_traj,traj)  
-
-  call create(xtmp,xin)  
-  call copy(xtmp,xin)                         !< xtmp = xin
-
-  call cpu_time(start)
-  print *,"B.dy Time start = ",start," seconds."       
-
-  call soca_3d_covar_K_mult_ad(xtmp, traj)    !< xtmp = K^T.xtmp
-  call soca_3d_covar_D_mult(xtmp, traj, conf) !< xtmp = D.xtmp
-  call soca_3d_covar_C_mult(xtmp,conf)        !< xtmp = C.xtmp
-  call soca_3d_covar_D_mult(xtmp, traj, conf) !< xtmp = D.xtmp  
-  call soca_3d_covar_K_mult(xtmp, traj)       !< xtmp = K.xtmp
-
-  call cpu_time(finish)
-  call mpi_barrier(MPI_COMM_WORLD,ierr)
-  print *,"B.dy elapsed Time = ",finish-start," seconds."
-  !stop
-  
-  call copy(xout,xtmp)                        !< xout = xtmp
-  call delete(xtmp)
+  print *,'---------------------------------'
+  call copy(xout,xin)                         !< xtmp = xin
+    print *,'---------------------------------'
+!!$  call create(xtmp,xin)  
+!!$  call copy(xtmp,xin)                         !< xtmp = xin
+!!$
+!!$  call cpu_time(start)
+!!$  print *,"B.dy Time start = ",start," seconds."       
+!!$
+!!$  !call soca_3d_covar_K_mult_ad(xtmp, traj)    !< xtmp = K^T.xtmp
+!!$  !call soca_3d_covar_D_mult(xtmp, traj, conf) !< xtmp = D.xtmp
+!!$  !call soca_3d_covar_C_mult(xtmp,conf)        !< xtmp = C.xtmp
+!!$  !call soca_3d_covar_D_mult(xtmp, traj, conf) !< xtmp = D.xtmp  
+!!$  !call soca_3d_covar_K_mult(xtmp, traj)       !< xtmp = K.xtmp
+!!$
+!!$  call cpu_time(finish)
+!!$  call mpi_barrier(MPI_COMM_WORLD,ierr)
+!!$  print *,"B.dy elapsed Time = ",finish-start," seconds."
+!!$  !stop
+!!$  
+!!$  call copy(xout,xtmp)                        !< xout = xtmp
+!!$  call delete(xtmp)
 
 end subroutine c_soca_b_mult
 

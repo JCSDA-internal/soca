@@ -284,39 +284,45 @@ end subroutine soca_field_change_resol_c
 
 ! ------------------------------------------------------------------------------
 
-subroutine soca_field_ug_coord_c(c_key_fld, c_key_ug) bind (c,name='soca_field_ug_coord_f90')
+subroutine soca_field_ug_coord_c(c_key_fld, c_key_ug, c_colocated) bind (c,name='soca_field_ug_coord_f90')
   use iso_c_binding
   use soca_fields
   use unstructured_grid_mod
   implicit none
   integer(c_int), intent(in) :: c_key_fld
   integer(c_int), intent(in) :: c_key_ug
+  integer(c_int), intent(in) :: c_colocated
   type(soca_field), pointer :: fld
   type(unstructured_grid), pointer :: ug
-
+  integer :: colocated
+  
   call soca_field_registry%get(c_key_fld,fld)
   call unstructured_grid_registry%get(c_key_ug,ug)
-
-  call ug_coord(fld, ug)
+  colocated = c_colocated
+  
+  call ug_coord(fld, ug, colocated)
 
 end subroutine soca_field_ug_coord_c
 
 ! ------------------------------------------------------------------------------
 
-subroutine soca_field_field_to_ug_c(c_key_fld, c_key_ug) bind (c,name='soca_field_field_to_ug_f90')
+subroutine soca_field_field_to_ug_c(c_key_fld, c_key_ug, c_colocated) bind (c,name='soca_field_field_to_ug_f90')
   use iso_c_binding
   use soca_fields
   use unstructured_grid_mod
   implicit none
   integer(c_int), intent(in) :: c_key_fld
-  integer(c_int), intent(in) :: c_key_ug
+  integer(c_int), intent(in) :: c_key_ug 
+  integer(c_int), intent(in) :: c_colocated 
   type(soca_field), pointer :: fld
   type(unstructured_grid), pointer :: ug
+  integer :: colocated
 
   call soca_field_registry%get(c_key_fld,fld)
   call unstructured_grid_registry%get(c_key_ug,ug)
-
-  call field_to_ug(fld, ug)
+  colocated = c_colocated
+  
+  call field_to_ug(fld, ug, colocated)
 
 end subroutine soca_field_field_to_ug_c
 
@@ -331,10 +337,10 @@ subroutine soca_field_field_from_ug_c(c_key_fld, c_key_ug) bind (c,name='soca_fi
   integer(c_int), intent(in) :: c_key_ug
   type(soca_field), pointer :: fld
   type(unstructured_grid), pointer :: ug
-
+  
   call soca_field_registry%get(c_key_fld,fld)
   call unstructured_grid_registry%get(c_key_ug,ug)
-
+  
   call field_from_ug(fld, ug)
 
 end subroutine soca_field_field_from_ug_c

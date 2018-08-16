@@ -105,23 +105,5 @@ contains
        stop "Stopped"
     end if
   end subroutine check
-
-  ! ------------------------------------------------------------------------------
-
-  subroutine soca_compute_domain(isc, iec, jsc, jec, geom)
-    use soca_fields
-    use soca_geom_mod
-    
-    implicit none
-    type(soca_geom), intent(in) :: geom
-    integer,        intent(out) :: isc, iec, jsc, jec    
-
-    ! Indices for compute domain (no halo)
-    isc = geom%ocean%G%isc
-    iec = geom%ocean%G%iec
-    jsc = geom%ocean%G%jsc
-    jec = geom%ocean%G%jec
-    
-  end subroutine soca_compute_domain
   
 end module soca_utils

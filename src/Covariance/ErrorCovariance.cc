@@ -65,18 +65,20 @@ namespace soca {
     Log::debug() << std::endl << "------- dxin" << dxin << std::endl;
     Log::debug() << std::endl <<"------ dxout" << dxout << std::endl;
     Log::debug() << std::endl <<"------ traj ---- :" << std::endl;
-    soca_b_mult_f90(keyFtnConfig_, dxin.fields().toFortran(),
-                    dxout.fields().toFortran(), traj_->fields().toFortran());
+    //soca_b_mult_f90(keyFtnConfig_, dxin.fields().toFortran(),
+    //                dxout.fields().toFortran(), traj_->fields().toFortran());
+    std::cout<<"================================================="<<std::endl;
+    dxout=dxin;
   }
 
   // -----------------------------------------------------------------------------
 
   void ErrorCovariance::inverseMultiply(const Increment & dxin,
                                         Increment & dxout) const {
-    oops::IdentityMatrix<Increment> Id;
-    dxout.zero();
+    //oops::IdentityMatrix<Increment> Id;
+    //dxout.zero();
     //GMRESR(dxout, dxin, *this, Id, 10, 1.0e-6);
-
+    dxout=dxin;
     std::cout << "inv mult" << std::endl;
   }
 

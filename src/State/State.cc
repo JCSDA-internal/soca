@@ -43,8 +43,9 @@ namespace soca {
     Log::trace() << "State::State created." << std::endl;
   }
   // -----------------------------------------------------------------------------
-  State::State(const Geometry & resol, const eckit::Configuration & file)
-    : fields_(), stash_()
+  State::State(const Geometry & resol, const oops::Variables & vars,
+	       const eckit::Configuration & file)
+    : fields_(new Fields(resol, vars, util::DateTime())), stash_()
   {
     const std::vector<std::string> vv = {
           "cicen",
@@ -59,8 +60,8 @@ namespace soca {
           "ssh",
           "hocn"
     };
-    oops::Variables vars(vv);
-    fields_.reset(new Fields(resol, vars, util::DateTime()));
+    //oops::Variables vars(vv);
+    //fields_.reset(new Fields(resol, vars, util::DateTime()));
     fields_->read(file);
     ASSERT(fields_);
     Log::trace() << "State::State created and read in." << std::endl;

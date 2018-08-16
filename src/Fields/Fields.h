@@ -83,8 +83,8 @@ namespace soca {
       void diff(const Fields &, const Fields &);
   
       // Unstructured grid
-      void ug_coord(oops::UnstructuredGrid &) const;
-      void field_to_ug(oops::UnstructuredGrid &) const;
+      void ug_coord(oops::UnstructuredGrid &, const int &) const;
+      void field_to_ug(oops::UnstructuredGrid &, const int &) const;
       void field_from_ug(const oops::UnstructuredGrid &);
   
       // Utilities

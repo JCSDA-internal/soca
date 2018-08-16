@@ -10,12 +10,14 @@
 
 #include "src/Traits.h"
 #include "src/LocalizationMatrix/instantiateLocalizationFactory.h"
+#include "src/BalanceOperators/instantiateBalanceOpFactory.h"
 #include "oops/runs/Variational.h"
 #include "src/Run/Run.h"
 
 int main(int argc,  char ** argv) {
   soca::Run run(argc, argv);
   soca::instantiateLocalizationFactory();
+  soca::instantiateBalanceOpFactory();
   oops::Variational<soca::Traits> var;
   run.execute(var);
   return 0;

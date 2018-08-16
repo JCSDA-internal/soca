@@ -21,7 +21,19 @@ using oops::Log;
 namespace soca {
   // -----------------------------------------------------------------------------
   Model::Model(const Geometry & resol, const eckit::Configuration & model)
-    : keyConfig_(0), tstep_(0), geom_(resol)
+    : keyConfig_(0), tstep_(0), geom_(resol),
+    vars_(std::vector<std::string>{
+          "cicen",
+          "hicen",
+          "hsnon",
+          "tsfcn",
+          "qsnon",
+          "sicnk",
+          "qicnk",
+          "socn",
+          "tocn",
+          "ssh",
+          "hocn"})      
   {
     Log::trace() << "Model::Model" << std::endl;
     tstep_ = util::Duration(model.getString("tstep"));

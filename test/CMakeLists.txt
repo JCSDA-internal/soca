@@ -15,7 +15,8 @@ list( APPEND soca_test_input
   testinput/localization_test.yml
   testinput/nicas_test.yml
   testinput/4denvar_nicas_test.yml
-  testinput/variablechange.yml  
+  testinput/variablechange.yml
+  testinput/parametersbump.cov.yml  
   compare.sh
 )
 
@@ -236,3 +237,8 @@ ecbuild_add_test( TARGET test_soca_variablechange
                   SOURCES executables/TestVariableChange.cc
                   ARGS "testinput/variablechange.yml"
                   LIBS    soca )
+
+ecbuild_add_test( TARGET test_soca_parameters_bump_cov
+                  TYPE SCRIPT
+                  COMMAND ${CMAKE_BINARY_DIR}/bin/compare.sh
+                  ARGS "${CMAKE_BINARY_DIR}/bin/soca_parameters.x testinput/parametersbump.cov.yml" )

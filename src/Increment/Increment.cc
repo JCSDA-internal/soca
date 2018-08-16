@@ -187,12 +187,12 @@ namespace soca {
   // -----------------------------------------------------------------------------
   /// Unstructured grid
   // -----------------------------------------------------------------------------
-  void Increment::ug_coord(oops::UnstructuredGrid & ug) const {
-    fields_->ug_coord(ug);
+  void Increment::ug_coord(oops::UnstructuredGrid & ug, const int & colocated) const {
+    fields_->ug_coord(ug, colocated);
   }
   // -----------------------------------------------------------------------------
-  void Increment::field_to_ug(oops::UnstructuredGrid & ug) const {
-    fields_->field_to_ug(ug);
+  void Increment::field_to_ug(oops::UnstructuredGrid & ug, const int & colocated) const {
+    fields_->field_to_ug(ug, colocated);
   }
   // -----------------------------------------------------------------------------
   void Increment::field_from_ug(const oops::UnstructuredGrid & ug) {

@@ -58,6 +58,7 @@ class TlmId: public oops::LinearModelBase<Traits>,
 /// Other utilities
   const util::Duration & timeResolution() const override {return tstep_;}
   const Geometry & resolution() const {return resol_;}
+  const oops::Variables & variables() const override {return linvars_;}
 
  private:
   void print(std::ostream &) const override;
@@ -66,6 +67,7 @@ class TlmId: public oops::LinearModelBase<Traits>,
   int keyConfig_;
   util::Duration tstep_;
   const Geometry resol_;
+  const oops::Variables linvars_;  
 };
 // -----------------------------------------------------------------------------
 

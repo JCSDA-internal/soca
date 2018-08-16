@@ -18,6 +18,7 @@
 #include "oops/util/Duration.h"
 #include "oops/util/ObjectCounter.h"
 #include "oops/util/Printable.h"
+#include "oops/base/Variables.h"
 
 // Forward declarations
 namespace eckit {
@@ -56,12 +57,14 @@ class Model: public util::Printable,
 
 /// Utilities
   const util::Duration & timeResolution() const {return tstep_;}
+  const oops::Variables & variables() const {return vars_;}
 
  private:
   void print(std::ostream &) const;
   int keyConfig_;
   util::Duration tstep_;
   const Geometry geom_;
+  const oops::Variables vars_;  
 };
 // -----------------------------------------------------------------------------
 

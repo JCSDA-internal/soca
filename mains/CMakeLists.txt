@@ -24,3 +24,7 @@ ecbuild_add_executable( TARGET  soca_3dvar.x
                         LIBS    soca
                       )
 		      
+ecbuild_add_executable( TARGET  soca_parameters.x
+                        SOURCES EstimateParams.cc
+                        LIBS    soca
+                      )

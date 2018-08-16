@@ -125,8 +125,8 @@ namespace soca {
                                   const F90goms &,
                                   const F90getvaltraj &);
 
-    void soca_field_ug_coord_f90(const F90flds &, const int &);
-    void soca_field_field_to_ug_f90(const F90flds &, const int &);
+    void soca_field_ug_coord_f90(const F90flds &, const int &, const int &);
+    void soca_field_field_to_ug_f90(const F90flds &, const int &, const int &);
     void soca_field_field_from_ug_f90(const F90flds &, const int &);
 
     void soca_field_gpnorm_f90(const F90flds &, const int &, double &);
@@ -159,7 +159,29 @@ namespace soca {
     void soca_kst_delete_f90(F90balopmat &);
     void soca_kst_mult_f90(const F90balopmat &, F90balopmat &, const F90balopmat &);
     void soca_kst_multad_f90(const F90balopmat &, F90balopmat &, const F90balopmat &);
+
+    // -----------------------------------------------------------------------------
+    //  Ksshts Balance operator
+    // -----------------------------------------------------------------------------
+    void soca_ksshts_setup_f90(F90balopmat &, const eckit::Configuration * const *);
+    void soca_ksshts_delete_f90(F90balopmat &);
+    void soca_ksshts_mult_f90(const F90balopmat &, F90balopmat &, const F90balopmat &);
+    void soca_ksshts_multad_f90(const F90balopmat &, F90balopmat &, const F90balopmat &);
+
+    // -----------------------------------------------------------------------------
+    //  Ktc Balance operator
+    // -----------------------------------------------------------------------------
+    void soca_ktc_setup_f90(F90balopmat &, const eckit::Configuration * const *);
+    void soca_ktc_delete_f90(F90balopmat &);
+    void soca_ktc_mult_f90(const F90balopmat &, F90balopmat &, const F90balopmat &);
+    void soca_ktc_multad_f90(const F90balopmat &, F90balopmat &, const F90balopmat &);
     
+    // -----------------------------------------------------------------------------
+    //  Standard deviation of background error
+    // -----------------------------------------------------------------------------
+    void soca_bkgerr_setup_f90(F90balopmat &, const eckit::Configuration * const *);
+    void soca_bkgerr_delete_f90(F90balopmat &);
+
     // -----------------------------------------------------------------------------
     //  Localization matrix
     // -----------------------------------------------------------------------------

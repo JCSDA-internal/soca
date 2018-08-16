@@ -5,8 +5,8 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#ifndef SOCA_MODEL_CHANGEVAR_H_
-#define SOCA_MODEL_CHANGEVAR_H_
+#ifndef SOCA_SRC_KSSHTS_H_
+#define SOCA_SRC_KSSHTS_H_
 
 #include <ostream>
 #include <string>
@@ -30,12 +30,12 @@ namespace soca {
 // -----------------------------------------------------------------------------
 /// SOCA linear change of variable
 
-class Kst: public util::Printable {
+class Ksshts: public util::Printable {
  public:
-  static const std::string classname() {return "soca::Kst";}
+  static const std::string classname() {return "soca::Ksshts";}
 
-  explicit Kst(const State &, const State &, const Geometry &, const eckit::Configuration &);
-  ~Kst();
+  explicit Ksshts(const State &, const State &, const Geometry &, const eckit::Configuration &);
+  ~Ksshts();
 
 /// Perform linear transforms
   void multiply(const Increment &, Increment &) const;
@@ -51,4 +51,4 @@ class Kst: public util::Printable {
 // -----------------------------------------------------------------------------
 
 }  // namespace soca
-#endif  // SOCA_MODEL_CHANGEVAR_H_
+#endif  // SOCA_SRC_KSSHTS_H_

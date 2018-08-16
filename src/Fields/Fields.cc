@@ -181,12 +181,12 @@ namespace soca {
     soca_field_diff_incr_f90(keyFlds_, x1.keyFlds_, x2.keyFlds_);
   }
   // -----------------------------------------------------------------------------
-  void Fields::ug_coord(oops::UnstructuredGrid & ug) const {
-    soca_field_ug_coord_f90(keyFlds_, ug.toFortran());
+  void Fields::ug_coord(oops::UnstructuredGrid & ug, const int & colocate) const {
+    soca_field_ug_coord_f90(keyFlds_, ug.toFortran(), colocate);
   }
   // -----------------------------------------------------------------------------
-  void Fields::field_to_ug(oops::UnstructuredGrid & ug) const {
-    soca_field_field_to_ug_f90(keyFlds_, ug.toFortran());
+  void Fields::field_to_ug(oops::UnstructuredGrid & ug, const int & colocate) const {
+    soca_field_field_to_ug_f90(keyFlds_, ug.toFortran(), colocate);
   }
   // -----------------------------------------------------------------------------
   void Fields::field_from_ug(const oops::UnstructuredGrid & ug) {

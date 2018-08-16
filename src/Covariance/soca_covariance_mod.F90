@@ -84,7 +84,7 @@ contains
     call soca_init_D(geom, bkg, D_p)
     
     !< Initialize bump
-    call soca_bump_correlation(geom, horiz_convol_p, c_conf)
+    !call soca_bump_correlation(geom, horiz_convol_p, c_conf)
     
   end subroutine soca_3d_covar_setup
 
@@ -174,7 +174,7 @@ contains
     real(kind=kind_real) :: ds   !< Practical salinity increment [psu]
 
     real(kind=kind_real), allocatable :: dcn(:), cnb(:), dtv(:), dsv(:)
-
+    
     ! Indices for compute domain (no halo)
     isc = traj%geom%ocean%G%isc
     iec = traj%geom%ocean%G%iec
@@ -393,7 +393,7 @@ contains
     use type_nam
     use mpi!,             only: mpi_comm_world
     use iso_c_binding
-    use bump_mod, only: bump_read_conf
+    use oobump_mod, only: bump_read_conf
     implicit none
 
     type(soca_geom),           optional, intent(in) :: geom
@@ -481,7 +481,7 @@ contains
 
        call cpu_time(start)
        print *,"Time start = ",start," seconds."       
-       call horiz_convol%setup_online(mpi_comm_world,nc0a,nl0,nv,nts,lon,lat,area,vunit,lmask,rh=rh,rv=rv)
+       call horiz_convol%setup_online(mpi_comm_world,nc0a,nl0,nv,nts,lon,lat,area,vunit,lmask)!,rh=rh,rv=rv)
        call cpu_time(finish)
        call mpi_barrier(MPI_COMM_WORLD,ierr)
        print *,"Time = ",finish-start," seconds."

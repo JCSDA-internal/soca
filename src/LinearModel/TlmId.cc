@@ -28,7 +28,19 @@ namespace soca {
 static oops::LinearModelMaker<Traits, TlmId> makerIdTLM_("IdTLM");
 // -----------------------------------------------------------------------------
 TlmId::TlmId(const Geometry & resol, const eckit::Configuration & tlConf)
-  : keyConfig_(0), tstep_(), resol_(resol)
+  : keyConfig_(0), tstep_(), resol_(resol),
+    linvars_(std::vector<std::string>{
+          "cicen",
+          "hicen",
+          "hsnon",
+          "tsfcn",
+          "qsnon",
+          "sicnk",
+          "qicnk",
+          "socn",
+          "tocn",
+          "ssh",
+          "hocn"})
 {
   tstep_ = util::Duration(tlConf.getString("tstep"));
 
