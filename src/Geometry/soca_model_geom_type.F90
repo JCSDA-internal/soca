@@ -186,7 +186,7 @@ contains
     use type_kdtree, only: kdtree_type
     use type_mpl    
     use tools_const, only: pi,req,deg2rad,rad2deg
-    use fms_mod,         only : get_mosaic_tile_grid, write_data, set_domain
+    use fms_mod,         only : get_mosaic_tile_grid, write_data, set_domain, read_data
     use fms_io_mod,      only : fms_io_init, fms_io_exit
     use mpi
     
@@ -253,6 +253,12 @@ contains
     call fms_io_init()
     call write_data( geom_output_file, "rossby_radius", self%rossby_radius*self%mask2d, self%G%Domain%mpp_domain)    
     !call write_data( geom_output_file, "mask2d", self%mask2d, self%G%Domain%mpp_domain)
+!!$    print *,'rosbby:',self%rossby_radius
+!!$    print *,'============================================'
+!!$    read(*,*)    
+!!$    call read_data(geom_output_file,"rossby_radius",self%rossby_radius,domain=self%G%Domain%mpp_domain)
+!!$    print *,'rosbby:',self%rossby_radius
+!!$    read(*,*)
     call fms_io_exit()
     
   end subroutine geom_rossby_radius

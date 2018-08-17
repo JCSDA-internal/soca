@@ -26,7 +26,7 @@ module soca_fields
        & create, delete, zeros, ones, dirac, random, copy, create_copy,&
        & self_add, self_schur, self_sub, self_mul, axpy, &
        & dot_prod, add_incr, diff_incr, &
-       & read_file, write_file, gpnorm, fldrms, &
+       & read_file, write_file, gpnorm, fldrms, fld2file, &
        & change_resol, interp_tl, interp_ad, field_to_ug, field_from_ug, ug_coord
   public :: soca_field_registry
 
@@ -721,11 +721,28 @@ contains
     WRITE(buf,*) 'field:write_file: writing '//filename
     call fckit_log%info(buf)
 
+    call fld2file(fld, filename)
+
+  end subroutine write_file
+
+  ! ------------------------------------------------------------------------------
+  subroutine fld2file(fld, filename)
+    use iso_c_binding
+    use fms_mod,                 only: read_data, write_data, set_domain
+    use fms_io_mod,                only : fms_io_init, fms_io_exit
+
+    implicit none
+    type(soca_field), intent(in) :: fld    !< Fields
+    character(len=800), intent(in) :: filename
+    integer :: ii
+    character(len=1024):: buf
+
+    call check(fld)
+
     call fms_io_init()
     call set_domain( fld%geom%ocean%G%Domain%mpp_domain )    
     do ii = 1, fld%nf
-       WRITE(buf,*) 'field:write_file: writing fieldname '//fld%fldnames(ii)
-       call fckit_log%info(buf)                 
+       print *,fld%fldnames(ii)
        select case(fld%fldnames(ii))
 
        case ('ssh')
@@ -752,15 +769,13 @@ contains
        case ('tsfcn')
           call write_data(filename, "tsfcn", fld%tsfcn, fld%geom%ocean%G%Domain%mpp_domain)                    
        case default
-          !print *,'Not writing var ',fld%fldnames(ii),' in file ',filename
-          !call log%warning("soca_fields:read_file: Not reading var "//fld%fldnames(ii))
-          !call abor1_ftn("soca_fields: undefined variables")             
+
        end select
 
     end do
     call fms_io_exit()       
 
-  end subroutine write_file
+  end subroutine fld2file
 
   ! ------------------------------------------------------------------------------
 

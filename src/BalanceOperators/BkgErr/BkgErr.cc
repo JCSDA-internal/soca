@@ -26,11 +26,11 @@ namespace soca {
 		 const Geometry & geom,
 	         const eckit::Configuration & conf): traj_(traj) {
     const eckit::Configuration * configc = &conf;
-    soca_bkgerr_setup_f90(keyFtnConfig_, &configc);
+    soca_bkgerr_setup_f90(keyFtnConfig_, &configc, bkg.fields().toFortran());
   }
   // -----------------------------------------------------------------------------
   BkgErr::~BkgErr() {
-    soca_bkgerr_delete_f90(keyFtnConfig_);
+    //soca_bkgerr_delete_f90(keyFtnConfig_);
   }
   // -----------------------------------------------------------------------------
   void BkgErr::multiply(const Increment & dxa, Increment & dxm) const {

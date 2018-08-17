@@ -7,33 +7,6 @@ State:
   ocn_filename: MOM.res.nc
   ice_filename: ice_model.res.nc
 LinearVariableChangeTests:
-  - varchange: StatsVariableChange
-    inputVariables:
-      variables:
-      - cicen
-      - hicen
-      - hsnon
-      - tsfcn
-      - qsnon
-      - sicnk
-      - qicnk
-      - socn
-      - tocn
-      - ssh
-      - hocn  
-    outputVariables:
-      variables:
-      - cicen
-      - hicen
-      - hsnon
-      - tsfcn
-      - qsnon
-      - sicnk
-      - qicnk
-      - socn
-      - tocn
-      - ssh
-      - hocn  
   - varchange: KstSOCA
     dsdtmax: 1.0    
     dsdzmin: 3.0e-3

@@ -8,20 +8,25 @@
 
 ! ------------------------------------------------------------------------------
 !> Constructor for D (standard deviation of background error)
-subroutine c_soca_bkgerr_setup(c_key_self, c_conf) bind(c,name='soca_bkgerr_setup_f90')
+subroutine c_soca_bkgerr_setup(c_key_self, c_conf, c_key_bkg) &
+     &bind(c,name='soca_bkgerr_setup_f90')
   use iso_c_binding
   use soca_bkgerr_mod
+  use soca_fields
 
   integer(c_int), intent(inout) :: c_key_self   !< The D structure
   type(c_ptr),       intent(in) :: c_conf       !< The configuration
+  integer(c_int), intent(in)    :: c_key_bkg    !< Background field
 
+  type(soca_field), pointer :: bkg
   type(soca_bkgerr_config), pointer :: self
 
   call soca_bkgerr_registry%init()
   call soca_bkgerr_registry%add(c_key_self)
   call soca_bkgerr_registry%get(c_key_self, self)
-
-  call soca_bkgerr_setup(c_conf, self)
+  call soca_field_registry%get(c_key_bkg, bkg)
+  
+  call soca_bkgerr_setup(c_conf, self, bkg)
 
 end subroutine c_soca_bkgerr_setup
 

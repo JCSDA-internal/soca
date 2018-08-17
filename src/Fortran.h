@@ -179,7 +179,7 @@ namespace soca {
     // -----------------------------------------------------------------------------
     //  Standard deviation of background error
     // -----------------------------------------------------------------------------
-    void soca_bkgerr_setup_f90(F90balopmat &, const eckit::Configuration * const *);
+    void soca_bkgerr_setup_f90(F90balopmat &, const eckit::Configuration * const *, const F90flds &);
     void soca_bkgerr_delete_f90(F90balopmat &);
 
     // -----------------------------------------------------------------------------
