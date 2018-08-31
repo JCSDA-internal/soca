@@ -1413,15 +1413,12 @@ contains
     ug%grid(1)%fld(1:ni*nj, 1, jk, 1) = &
          &reshape( self%ssh(isc:iec, jsc:jec), (/ug%grid(1)%nmga/) )
     jk = jk + 1
-    print *,'field to ug, ssh=',maxval(self%ssh(isc:iec, jsc:jec))
-    read(*,*)
+
     ! tocn
     do inzo = 1, nzo
        ug%grid(1)%fld(1:ni*nj, inzo, jk, 1) = &
             &reshape( self%tocn(isc:iec, jsc:jec,inzo), (/ug%grid(1)%nmga/) )
     end do
-    print *,'field to ug, tocn=',maxval(self%tocn(isc:iec, jsc:jec,:))
-    read(*,*)    
     jk = jk + 1
 
     ! socn
@@ -1429,8 +1426,6 @@ contains
        ug%grid(1)%fld(1:ni*nj, inzo, jk, 1) = &
             &reshape( self%socn(isc:iec, jsc:jec,inzo), (/ug%grid(1)%nmga/) )
     end do
-    print *,'field to ug, socn=',maxval(self%socn(isc:iec, jsc:jec,:))
-    read(*,*)
     
   end subroutine field_to_ug
 
@@ -1478,16 +1473,12 @@ contains
     self%ssh(isc:iec, jsc:jec) = &
          &reshape( ug%grid(1)%fld(1:ni*nj, 1, jk, 1), (/ni, nj/) )    
     jk = jk + 1
-    print *,'ssh',maxval(ug%grid(1)%fld(1:ni*nj, :, jk, 1))
-    read(*,*)
     
     ! tocn
     do inzo = 1, nzo
        self%tocn(isc:iec, jsc:jec,inzo) = &
             &reshape( ug%grid(1)%fld(1:ni*nj, inzo, jk, 1), (/ni, nj/) )
     end do
-    print *,'temp',maxval(ug%grid(1)%fld(1:ni*nj, :, jk, 1))
-    read(*,*)       
 
     jk = jk + 1
     ! socn
@@ -1495,8 +1486,6 @@ contains
        self%socn(isc:iec, jsc:jec,inzo) = &
             &reshape( ug%grid(1)%fld(1:ni*nj, inzo, jk, 1), (/ni, nj/) )
     end do    
-    print *,'salt',maxval(ug%grid(1)%fld(1:ni*nj, :, jk, 1))
-    read(*,*)
 
   end subroutine field_from_ug
 

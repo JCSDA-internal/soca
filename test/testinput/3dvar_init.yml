@@ -35,14 +35,14 @@ cost_function:
       prefix: soca
       # Driver parameters
       method: cor
-      strategy: common
+      strategy: specific_univariate #common
 #      new_hdiag: 0
       new_nicas: 1     # Read convol files -> 0
       load_nicas: 0    # 1: loads convol param (layout specific)
       # Sampling parameters
       sam_read: 0
       sam_write: 1  
-      mask_check: 0
+      mask_check: 1
       draw_type: random_uniform
       nc1: 100
       ntry: 3
@@ -58,12 +58,12 @@ cost_function:
       lsqrt: 1  
       resol: 6.0
       nicas_interp: bilin
-      network: 0
+      network: 1
       mpicom: 2 # Number of internal comm steps 
       #NICAS parameters
       forced_radii: 1
-      rh: 500e3
-      rv: 5
+      rh: 800e3
+      rv: 10
       advmode: 0
       # Output parameters  
       diag_interp: bilin
@@ -77,16 +77,16 @@ cost_function:
       #  incr_filename: rv.nc
   Jo:
     ObsTypes:
-    - ObsType: InsituTemperature
+    - ObsType: ADT
       ObsData:
         ObsDataOut:
-          obsfile: Data/t0n156e_dy.nc
+          obsfile: Data/test_obsout.nc
         ObsDataIn:
-          obsfile: Data/t0n156e_dy.nc
+          obsfile: Data/Jason-3-2018-04-15.nc
         obsvalue: ObsVal        
       Covariance:
         covariance: diagonal
-        obserror: ObsErr		      
+        obserror: ObsErr        
 variational:
   iteration:
   - resolution: {}

@@ -48,7 +48,7 @@ cost_function:
       prefix: soca
       # Driver parameters
       method: cor
-      strategy: common
+      strategy: specific_univariate #common
 #      new_hdiag: 0
       new_nicas: 0   # 1: recomputes convol param
       load_nicas: 1  # 1: loads convol param (layout specific)
@@ -81,94 +81,94 @@ cost_function:
       # Output parameters  
       diag_interp: bilin
       date: '2018-04-15T00:00:00Z'
-#      variable_changes:
-#      - varchange: KsshtsSOCA
-#        dsdtmax: 1.0    
-#        dsdzmin: 3.0e-3
-#        dtdzmin: 1.0e-3 
-#        inputVariables:  #Input to the adjoint
-#          variables:
-#          - cicen
-#          - hicen
-#          - hsnon
-#          - tsfcn
-#          - qsnon
-#          - sicnk
-#          - qicnk
-#          - socn
-#          - tocn
-#          - ssh
-#          - hocn          
-#        outputVariables:
-#          variables:
-#          - cicen
-#          - hicen
-#          - hsnon
-#          - tsfcn
-#          - qsnon
-#          - sicnk
-#          - qicnk
-#          - socn
-#          - tocn
-#          - ssh
-#          - hocn          
-#      - varchange: KstSOCA
-#        dsdtmax: 1.0    
-#        dsdzmin: 3.0e-3
-#        dtdzmin: 1.0e-3 
-#        inputVariables:
-#          variables:
-#          - cicen
-#          - hicen
-#          - hsnon
-#          - tsfcn
-#          - qsnon
-#          - sicnk
-#          - qicnk
-#          - socn
-#          - tocn
-#          - ssh
-#          - hocn
-#        outputVariables:
-#          variables:
-#          - cicen
-#          - hicen
-#          - hsnon
-#          - tsfcn
-#          - qsnon
-#          - sicnk
-#          - qicnk
-#          - socn
-#          - tocn
-#          - ssh
-#          - hocn            
-#      - varchange: KtcSOCA
-#        inputVariables:
-#          variables:
-#          - cicen
-#          - hicen
-#          - hsnon
-#          - tsfcn
-#          - qsnon
-#          - sicnk
-#          - qicnk
-#          - socn
-#          - tocn
-#          - ssh
-#          - hocn
-#        outputVariables:
-#          variables:
-#          - cicen
-#          - hicen
-#          - hsnon
-#          - tsfcn
-#          - qsnon
-#          - sicnk
-#          - qicnk
-#          - socn
-#          - tocn
-#          - ssh
-#          - hocn
+      variable_changes:
+      - varchange: KsshtsSOCA
+        dsdtmax: 1.0    
+        dsdzmin: 3.0e-3
+        dtdzmin: 1.0e-3 
+        inputVariables:  #Input to the adjoint
+          variables:
+          - cicen
+          - hicen
+          - hsnon
+          - tsfcn
+          - qsnon
+          - sicnk
+          - qicnk
+          - socn
+          - tocn
+          - ssh
+          - hocn          
+        outputVariables:
+          variables:
+          - cicen
+          - hicen
+          - hsnon
+          - tsfcn
+          - qsnon
+          - sicnk
+          - qicnk
+          - socn
+          - tocn
+          - ssh
+          - hocn          
+      - varchange: KstSOCA
+        dsdtmax: 1.0    
+        dsdzmin: 3.0e-3
+        dtdzmin: 1.0e-3 
+        inputVariables:
+          variables:
+          - cicen
+          - hicen
+          - hsnon
+          - tsfcn
+          - qsnon
+          - sicnk
+          - qicnk
+          - socn
+          - tocn
+          - ssh
+          - hocn
+        outputVariables:
+          variables:
+          - cicen
+          - hicen
+          - hsnon
+          - tsfcn
+          - qsnon
+          - sicnk
+          - qicnk
+          - socn
+          - tocn
+          - ssh
+          - hocn            
+      - varchange: KtcSOCA
+        inputVariables:
+          variables:
+          - cicen
+          - hicen
+          - hsnon
+          - tsfcn
+          - qsnon
+          - sicnk
+          - qicnk
+          - socn
+          - tocn
+          - ssh
+          - hocn
+        outputVariables:
+          variables:
+          - cicen
+          - hicen
+          - hsnon
+          - tsfcn
+          - qsnon
+          - sicnk
+          - qicnk
+          - socn
+          - tocn
+          - ssh
+          - hocn
   Jo:
     ObsTypes:
 #    - ObsType: SeaIceThickness
@@ -191,37 +191,37 @@ cost_function:
       Covariance:
         covariance: diagonal
         obserror: ObsErr        
-#    - ObsType: InsituTemperature
-#      ObsData:
-#        ObsDataOut:
-#          obsfile: Data/t0n156e_dy.nc
-#        ObsDataIn:
-#          obsfile: /home/gvernier/Data/Argo/Santha/report.FixedMor_profile_2018041500.nc #Data/t0n156e_dy.nc
-#        obsvalue: ObsVal        
-#      Covariance:
-#        covariance: diagonal
-#        obserror: ObsErr		
-#    - ObsType: SeaIceFraction
-#      ObsData:
-#        ObsDataOut:
-#          obsfile: Data/test_obsout.nc
-#        ObsDataIn:
-#          #obsfile: Data/seaice_obs-2018-04-15.nc
-#          obsfile: /home/gvernier/Sandboxes/soca/data/bob_l2_sic/l2/sea-ice-con.nc #Data/seaice_obs-2018-04-15.nc
-#        obsvalue: ObsVal        
-#      Covariance:
-#        covariance: diagonal
-#        obserror: ObsErr
-#    - ObsType: SeaSurfaceTemp
-#      ObsData:
-#        ObsDataOut:
-#          obsfile: Data/test_obsout.nc
-#        ObsDataIn:
-#          obsfile: Data/sst_obs-2018-04-15.nc
-#        obsvalue: ObsVal        
-#      Covariance:
-#        covariance: diagonal
-#        obserror: ObsErr	      
+    - ObsType: InsituTemperature
+      ObsData:
+        ObsDataOut:
+          obsfile: Data/t0n156e_dy.nc
+        ObsDataIn:
+          obsfile: /home/gvernier/Data/Argo/Santha/report.FixedMor_profile_2018041500.nc #Data/t0n156e_dy.nc
+        obsvalue: ObsVal        
+      Covariance:
+        covariance: diagonal
+        obserror: ObsErr		
+    - ObsType: SeaIceFraction
+      ObsData:
+        ObsDataOut:
+          obsfile: Data/test_obsout.nc
+        ObsDataIn:
+          #obsfile: Data/seaice_obs-2018-04-15.nc
+          obsfile: /home/gvernier/Sandboxes/soca/data/bob_l2_sic/l2/sea-ice-con.nc #Data/seaice_obs-2018-04-15.nc
+        obsvalue: ObsVal        
+      Covariance:
+        covariance: diagonal
+        obserror: ObsErr
+    - ObsType: SeaSurfaceTemp
+      ObsData:
+        ObsDataOut:
+          obsfile: Data/test_obsout.nc
+        ObsDataIn:
+          obsfile: Data/sst_obs-2018-04-15.nc
+        obsvalue: ObsVal        
+      Covariance:
+        covariance: diagonal
+        obserror: ObsErr	      
 variational:
   iteration:
   - resolution: {}
@@ -229,39 +229,37 @@ variational:
       varchange: Identity
       version: IdTLM
       tstep: PT1H
-    ninner: 1
+    ninner: 10
     gradient_norm_reduction: 1e-15
     test: 'on'
     output:
       datadir: Data
       exp: 3dvar
       type: incr1
-#  - resolution: {}
-#    linearmodel:
-#      varchange: Identity      
-#      version: IdTLM
-#      tstep: PT1H
-#    ninner: 1
-#    gradient_norm_reduction: 1e-15
-#    test: 'on'
-#    output:
-#      datadir: Data
-#      exp: 3dvar
-#      type: incr  
-#  - resolution: {}
-#    linearmodel:
-#      version: IdTLM
-#      tstep: PT1H
-#    ninner: 1
-#    gradient_norm_reduction: 1e-15
-#    test: 'on'
-#  - resolution: {}
-#    linearmodel:
-#      version: IdTLM
-#      tstep: PT1H
-#    ninner: 3
-#    gradient_norm_reduction: 1e-15
-#    test: 'on'
+  - resolution: {}
+    linearmodel:
+      varchange: Identity      
+      version: IdTLM
+      tstep: PT1H
+    ninner: 5
+    gradient_norm_reduction: 1e-15
+    test: 'on'
+    output:
+      datadir: Data
+      exp: 3dvar
+      type: incr
+  - resolution: {}
+    linearmodel:
+      varchange: Identity      
+      version: IdTLM
+      tstep: PT1H
+    ninner: 5
+    gradient_norm_reduction: 1e-15
+    test: 'on'
+    output:
+      datadir: Data
+      exp: 3dvar
+      type: incr      
 minimizer:
   algorithm: DRPCG #DRIPCG
 output:
