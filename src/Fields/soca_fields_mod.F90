@@ -215,7 +215,7 @@ contains
     self%socn = 1.0_kind_real        
     self%tocn = 1.0_kind_real
     self%ssh = 1.0_kind_real
-    self%tocn = 1.0_kind_real
+    self%hocn = 1.0_kind_real
 
   end subroutine ones
 
@@ -280,7 +280,7 @@ contains
     call random_number(self%tsfcn); self%tsfcn=self%tsfcn-0.5_kind_real
 
     call random_number(self%tocn); self%tocn=self%tocn-0.5_kind_real
-    call random_number(self%socn); self%tocn=self%socn-0.5_kind_real
+    call random_number(self%socn); self%socn=self%socn-0.5_kind_real
     call random_number(self%ssh); self%ssh=(self%ssh-0.5_kind_real)*self%geom%ocean%mask2d
 
   end subroutine random
@@ -596,7 +596,7 @@ contains
     type(datetime), intent(inout) :: vdate    !< DateTime
 
     integer, parameter :: max_string_length=800 ! Yuk!
-    character(len=max_string_length) :: ocn_sfc_filename, ocn_filename, ice_filename, basename
+    character(len=max_string_length) :: ocn_sfc_filename, ocn_filename, ice_filename, basename, incr_filename
     character(len=20) :: sdate
     character(len=1024)  :: buf
     integer :: iread, ii
@@ -615,6 +615,7 @@ contains
     if (config_element_exists(c_conf,"read_from_file")) then
        iread = config_get_int(c_conf,"read_from_file")
     endif
+    
     if (iread==0) then
        call log%warning("soca_fields:read_file: Inventing State")
        call zeros(fld)
@@ -624,7 +625,8 @@ contains
        WRITE(buf,*) 'validity date is: '//sdate
        call log%info(buf)
        call datetime_set(sdate, vdate)
-    else
+    end if
+    if (iread==1) then
        basename = config_get_string(c_conf,len(basename),"basename")        
        !ocn_sfc_filename = config_get_string(c_conf,len(ocn_filename),"ocn_sfc_filename")
        ocn_filename = config_get_string(c_conf,len(ocn_filename),"ocn_filename")       
@@ -640,7 +642,6 @@ contains
           case ('ssh')
              idr_ocean = register_restart_field(ocean_restart, ocn_filename, 'ave_ssh', fld%ssh(:,:), &
                   domain=fld%geom%ocean%G%Domain%mpp_domain)
-             !call read_data(ocn_filename,"ave_ssh",fld%ssh(:,:),domain=fld%geom%ocean%G%Domain%mpp_domain)
           case ('tocn')
              call read_data(ocn_filename,"Temp",fld%tocn(:,:,:),domain=fld%geom%ocean%G%Domain%mpp_domain)
           case ('socn')             
@@ -648,46 +649,65 @@ contains
           case ('hocn')             
              call read_data(ocn_filename,"h",fld%hocn(:,:,:),domain=fld%geom%ocean%G%Domain%mpp_domain)             
           case ('cicen')
-             !call read_data(ice_filename, 'part_size', fld%AOGCM%Ice%part_size, domain=fld%geom%ocean%G%Domain%mpp_domain)
              idr = register_restart_field(sis_restart, ice_filename, 'part_size', fld%AOGCM%Ice%part_size, &
                   domain=fld%geom%ocean%G%Domain%mpp_domain)
           case ('hicen')
-             !call read_data(ice_filename, 'h_ice', fld%AOGCM%Ice%h_ice, domain=fld%geom%ocean%G%Domain%mpp_domain)
              idr = register_restart_field(sis_restart, ice_filename, 'h_ice', fld%AOGCM%Ice%h_ice, &
                   domain=fld%geom%ocean%G%Domain%mpp_domain)
           case ('hsnon')
-             !call read_data(ice_filename, 'h_snow', fld%AOGCM%Ice%h_snow, domain=fld%geom%ocean%G%Domain%mpp_domain)             
              idr = register_restart_field(sis_restart, ice_filename, 'h_snow', fld%AOGCM%Ice%h_snow, &
                   domain=fld%geom%ocean%G%Domain%mpp_domain)             
           case ('qicnk')
-             !call read_data(ice_filename, 'enth_ice', fld%AOGCM%Ice%enth_ice, domain=fld%geom%ocean%G%Domain%mpp_domain)
              idr = register_restart_field(sis_restart, ice_filename, 'enth_ice', fld%AOGCM%Ice%enth_ice, &
                   domain=fld%geom%ocean%G%Domain%mpp_domain)
           case ('qsnon')
-             !call read_data(ice_filename, 'enth_snow', fld%AOGCM%Ice%enth_snow, domain=fld%geom%ocean%G%Domain%mpp_domain)
              idr = register_restart_field(sis_restart, ice_filename, 'enth_snow', fld%AOGCM%Ice%enth_snow, &
                   domain=fld%geom%ocean%G%Domain%mpp_domain)
           case ('tsfcn')             
-             !call read_data(ice_filename, 'T_skin', fld%AOGCM%Ice%T_skin, domain=fld%geom%ocean%G%Domain%mpp_domain)
              idr = register_restart_field(sis_restart, ice_filename, 'T_skin', fld%AOGCM%Ice%T_skin, &
                   domain=fld%geom%ocean%G%Domain%mpp_domain)
           case ('sicnk')
-             !call read_data(ice_filename, 'sal_ice', fld%AOGCM%Ice%sal_ice, domain=fld%geom%ocean%G%Domain%mpp_domain)             
              idr = register_restart_field(sis_restart, ice_filename, 'sal_ice', fld%AOGCM%Ice%sal_ice, &
                   domain=fld%geom%ocean%G%Domain%mpp_domain)             
           case default
-             !print *,'Not reading var ',fld%fldnames(ii),' in file ',ocn_filename
              !call log%warning("soca_fields:read_file: Not reading var "//fld%fldnames(ii))
           end select
        end do
        call restore_state(sis_restart, directory='')
        call restore_state(ocean_restart, directory='')       
+       call fms_io_exit()
 
        sdate = config_get_string(c_conf,len(sdate),"date")
        WRITE(buf,*) 'validity date is: '//sdate
        call log%info(buf)
        call datetime_set(sdate, vdate)       
-
+    end if
+    if (iread==2) then ! Read increment
+       print *,c_conf
+       !incr_filename = config_get_string(c_conf,len(incr_filename),"input")               
+       !incr_filename = config_get_string(c_conf,len(incr_filename),"parameter")        
+       incr_filename = config_get_string(c_conf,len(incr_filename),"filename")
+       incr_filename = trim(basename)//trim(incr_filename)       
+       call fms_io_init()
+       do ii = 1, fld%nf
+          select case(fld%fldnames(ii))
+          case ('ssh')
+             call read_data(ocn_filename,"ssh",fld%ssh(:,:),domain=fld%geom%ocean%G%Domain%mpp_domain)
+          case ('tocn')
+             call read_data(ocn_filename,"temp",fld%tocn(:,:,:),domain=fld%geom%ocean%G%Domain%mpp_domain)
+          case ('socn')             
+             call read_data(ocn_filename,"salt",fld%socn(:,:,:),domain=fld%geom%ocean%G%Domain%mpp_domain)
+          case ('hocn')             
+             call read_data(ocn_filename,"h",fld%hocn(:,:,:),domain=fld%geom%ocean%G%Domain%mpp_domain)             
+          case ('cicen')
+             call read_data(ice_filename, 'cicen', fld%AOGCM%Ice%part_size, domain=fld%geom%ocean%G%Domain%mpp_domain)
+          case ('hicen')
+             call read_data(ice_filename, 'hicen', fld%AOGCM%Ice%h_ice, domain=fld%geom%ocean%G%Domain%mpp_domain)
+          case default
+             
+          end select
+       end do
+       call fms_io_init()
     endif
 
     call check(fld)
@@ -1393,12 +1413,15 @@ contains
     ug%grid(1)%fld(1:ni*nj, 1, jk, 1) = &
          &reshape( self%ssh(isc:iec, jsc:jec), (/ug%grid(1)%nmga/) )
     jk = jk + 1
-
+    print *,'field to ug, ssh=',maxval(self%ssh(isc:iec, jsc:jec))
+    read(*,*)
     ! tocn
     do inzo = 1, nzo
        ug%grid(1)%fld(1:ni*nj, inzo, jk, 1) = &
             &reshape( self%tocn(isc:iec, jsc:jec,inzo), (/ug%grid(1)%nmga/) )
     end do
+    print *,'field to ug, tocn=',maxval(self%tocn(isc:iec, jsc:jec,:))
+    read(*,*)    
     jk = jk + 1
 
     ! socn
@@ -1406,7 +1429,9 @@ contains
        ug%grid(1)%fld(1:ni*nj, inzo, jk, 1) = &
             &reshape( self%socn(isc:iec, jsc:jec,inzo), (/ug%grid(1)%nmga/) )
     end do
-
+    print *,'field to ug, socn=',maxval(self%socn(isc:iec, jsc:jec,:))
+    read(*,*)
+    
   end subroutine field_to_ug
 
   ! ------------------------------------------------------------------------------
@@ -1447,23 +1472,31 @@ contains
     do incat = 1, ncat
        self%hicen(isc:iec, jsc:jec, incat) = &
             &reshape( ug%grid(1)%fld(1:ni*nj, 1, jk, 1), (/ni, nj/) )
-       jk = jk + 1       
+       jk = jk + 1
     end do
     ! ssh
     self%ssh(isc:iec, jsc:jec) = &
          &reshape( ug%grid(1)%fld(1:ni*nj, 1, jk, 1), (/ni, nj/) )    
     jk = jk + 1
+    print *,'ssh',maxval(ug%grid(1)%fld(1:ni*nj, :, jk, 1))
+    read(*,*)
+    
     ! tocn
-    do inzo = 1, nzo    
+    do inzo = 1, nzo
        self%tocn(isc:iec, jsc:jec,inzo) = &
             &reshape( ug%grid(1)%fld(1:ni*nj, inzo, jk, 1), (/ni, nj/) )
     end do
+    print *,'temp',maxval(ug%grid(1)%fld(1:ni*nj, :, jk, 1))
+    read(*,*)       
+
     jk = jk + 1
     ! socn
-    do inzo = 1, nzo    
+    do inzo = 1, nzo
        self%socn(isc:iec, jsc:jec,inzo) = &
             &reshape( ug%grid(1)%fld(1:ni*nj, inzo, jk, 1), (/ni, nj/) )
     end do    
+    print *,'salt',maxval(ug%grid(1)%fld(1:ni*nj, :, jk, 1))
+    read(*,*)
 
   end subroutine field_from_ug
 

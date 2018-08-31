@@ -14,7 +14,7 @@ contains
   subroutine soca_steric_jacobian (jac, t, s, p, h, lon, lat)
     !==========================================================================
     !
-    ! Jacobian of stericnl relative to the reference state t0, s0
+    ! Finite difference Jacobian of stericnl at the reference state t0, s0
     !
     ! Input:
     ! ------

@@ -24,7 +24,7 @@ cost_function:
       state:
       - read_from_file: 1
         basename: "./INPUT/"
-        ocn_sfc_filename: MOM.res.nc
+        ocn_sfc_file: MOM.res.nc
         ocn_filename: MOM.res.nc
         ice_filename: ice_model.res.nc
         date: '2018-04-15T00:00:00Z'
@@ -63,11 +63,18 @@ cost_function:
       #NICAS parameters
       forced_radii: 1
       rh: 500e3
-      rv: 30
+      rv: 5
       advmode: 0
       # Output parameters  
       diag_interp: bilin
       date: '2018-04-15T00:00:00Z'
+      #input:
+      #- parameter: loc_rh
+      #  read_from_file: 2
+      #  filename: rh.nc
+      #- parameter: loc_rv
+      #  read_from_file: 2
+      #  incr_filename: rv.nc
   Jo:
     ObsTypes:
     - ObsType: InsituTemperature

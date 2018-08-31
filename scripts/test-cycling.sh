@@ -3,13 +3,13 @@
 #source anaconda2/Python/bin/activate nco
 
 JCSDA_SING="/home/gvernier/Sandboxes/soca/JCSDA-singularity-master-latest.simg"
-SOCA_BUILD="/home/gvernier/Sandboxes/soca/soca-bundle/build"
+SOCA_BUILD="/home/gvernier/Sandboxes/soca/bmatrix2/soca-bundle/build"
 SOCA_BIN="${SOCA_BUILD}/bin"
 SOCA_INPUT="${SOCA_BUILD}/soca/test/testinput"
 SOCA_TEST="${SOCA_BUILD}/soca/test"
 SOCA_MODEL_RSC="/home/gvernier/Sandboxes/soca/soca-bundle/soca/test/Data/360x210x63"
 SOCA_MODEL_FORCING="/home/gvernier/Sandboxes/soca/soca-bundle/soca/test/Data/360x210x63"
-SOCA_DA_IC=true
+SOCA_DA_IC=false #true
 
 echo $SOCA_DA_IC
 

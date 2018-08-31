@@ -8,14 +8,12 @@
  * does it submit to any jurisdiction.
  */
 
-#include "src/BalanceOperators/instantiateBalanceOpFactory.h"
 #include "src/Traits.h"
 #include "oops/runs/EstimateParams.h"
-#include "oops/runs/Run.h"
+#include "src/Run/Run.h"
 
 int main(int argc,  char ** argv) {
-  oops::Run run(argc, argv);
-  soca::instantiateBalanceOpFactory();
+  soca::Run run(argc, argv);
   oops::EstimateParams<soca::Traits> dir;
   run.execute(dir);
   return 0;

@@ -132,7 +132,7 @@ contains
     nl = size(dt,1)
     allocate(jac(nl))
 
-    ! Compute Jacobian
+    ! Compute Jacobian <<< should be stored in traj >>>
     call soca_soft_jacobian (jac, t0, s0, h)
 
     ! TLM
@@ -166,7 +166,7 @@ contains
     real(kind=kind_real), intent(in)  :: ds(:), t0(:), s0(:), h(:)
     real(kind=kind_real), intent(out) :: dt(:)
 
-    real(kind=kind_real), allocatable :: jac(:)    !< Mid-layer depth
+    real(kind=kind_real), allocatable :: jac(:)
 
     integer :: nl !< Number of layers
 
@@ -174,12 +174,12 @@ contains
     nl = size(dt,1)
     allocate(jac(nl))
 
-    ! Compute Jacobian
+    ! Compute Jacobian  <<< should be stored in traj >>>
     call soca_soft_jacobian (jac, t0, s0, h)
 
     ! TLM
     dt = jac * ds
-
+    
   end subroutine soca_soft_ad
 
   subroutine soca_diff(dvdz,v,h)

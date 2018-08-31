@@ -82,7 +82,7 @@ subroutine c_soca_ktc_mult_f90(c_key_a, c_key_m, c_key_traj)&
   do i = isc, iec
      do j = jsc, jec
         if (sum(traj%cicen(i,j,2:)).gt.0.0) then
-           dxm%tocn(i,j,1) = dxm%tocn(i,j,1) - sum(dxa%cicen(i,j,2:))
+           dxm%tocn(i,j,1) = dxm%tocn(i,j,1) - 0.5 * sum(dxa%cicen(i,j,2:))
         end if
      end do
   end do
@@ -135,7 +135,7 @@ subroutine c_soca_ktc_multad_f90(c_key_m, c_key_a, c_key_traj) bind(c,name='soca
         if (sum(traj%cicen(i,j,2:)).gt.0.0) then
            !dxa%cicen(i,j,1) = 0.0
            do k = 1, traj%geom%ocean%ncat+1
-              dxa%cicen(i,j,k) = dxa%cicen(i,j,k)-dxm%tocn(i,j,1)
+              dxa%cicen(i,j,k) = dxa%cicen(i,j,k) - .5 * dxm%tocn(i,j,1)
            end do
         end if
      end do
