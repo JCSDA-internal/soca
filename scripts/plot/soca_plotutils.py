@@ -4,6 +4,28 @@ from mpl_toolkits.basemap import Basemap
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 
+def plothor(x,y,z,map,varname='',label='[m]',clim=[0,1]):
+    a=clim[0] #np.min(z[:])
+    b=clim[1] #np.max(z[:])
+
+    print 'clim=',clim
+    print np.max(np.abs(z))
+
+    clevs = np.linspace(a, b, 41)
+
+    map.drawcoastlines()
+    map.fillcontinents(color='coral')
+    map.drawparallels(np.arange(-90.,120.,15.))
+    map.drawmeridians(np.arange(0.,420.,30.))
+    cmap=cm.nipy_spectral
+    cs = map.contourf(x, y, z, clevs, cmap = cmap, extend='both')
+    #cs = map.pcolormesh(x, y, z, cmap = cmap)
+    plt.title(varname)
+    cbar=plt.colorbar(shrink=0.5,format="%.1f")
+    cbar.set_label(label, rotation=270)
+    #clevs = np.linspace(a, b, 11)
+    #map.contour(x, y, z, clevs, colors='k')
+    
 class Grid:
     def __init__(self):    
         fname='/home/gvernier/Sandboxes/soca/soca-bundle/soca/test/Data/360x210x63/ocean_geometry.nc'
@@ -50,6 +72,34 @@ class OceanState:
         plt.subplot(212)
         plt.pcolor(x,z,self.salt[:,j,:]-other.salt[:,j,:],vmin=-.2,vmax=.2,cmap=cm.bwr)
         plt.ylim((-1000, 0))
+        #plt.xlim((-215, -195))
+
+    def plot_horiz_section(self, other, vars=['temp'], levels=[0], fignum=1):
+        plt.figure(num=fignum)
+        map = Basemap(projection='mill',lon_0=-100)
+        x, y = map(self.grid.lon,self.grid.lat)
+
+        for var in vars:
+            if var=='temp':
+                incr=self.temp[levels[0],:,:]-other.temp[levels[0],:,:]
+                cmin=-5.0
+                cmax=5.0
+                titlestr='Temperature increment'
+            if var=='salt':
+                incr=self.salt[levels[0],:,:]-other.salt[levels[0],:,:]
+                cmin=-.2
+                cmax=.2
+                titlestr='Salinity increment'
+            if var=='ssh':
+                incr=self.ssh[:,:]-other.ssh[:,:]
+                cmin=-1.
+                cmax=1.
+                titlestr='SSH increment'
+                
+            plothor(x,y,incr,map,titlestr,clim=[cmin,cmax],label='')
+            plt.show()
+        
+
         #plt.xlim((-215, -195))
 
 class OceanObs:

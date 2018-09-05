@@ -12,7 +12,7 @@ module soca_kst_mod
 
   !> Fortran derived type to hold configuration Kst
   type :: soca_kst_config
-     real(kind=kind_real) :: dsdtmax !> 1.0 [psu/K]
+     real(kind=kind_real) :: dsdtmax !> 1.0    [psu/K]
      real(kind=kind_real) :: dsdzmin !> 3.0e-3 [psu/m] 
      real(kind=kind_real) :: dtdzmin !> 1.0e-3 [K/m]
   end type soca_kst_config
@@ -43,7 +43,7 @@ contains
 
     type(c_ptr),              intent(in) :: c_conf   !< The configuration
     type(soca_kst_config), intent(inout) :: config   !< Config parameters for Kst
-
+    
     config%dsdtmax      = config_get_real(c_conf,"dsdtmax")
     config%dsdzmin      = config_get_real(c_conf,"dsdzmin")
     config%dtdzmin      = config_get_real(c_conf,"dtdzmin")
@@ -61,6 +61,7 @@ contains
     ! s      : Background practical salinity                   [g/kg]
     ! t      : Background potential Temperature                [deg C]
     ! h      : Layer thickness                                 [m]
+    ! config : Configuration for soft
     !
     ! Output:
     ! -------
@@ -73,7 +74,8 @@ contains
     implicit none
 
     real(kind=kind_real),               intent(in) :: t(:), s(:), h(:)
-    real(kind=kind_real), allocatable, intent(out) :: jac(:)
+    !type(soca_kst_config),              intent(in) :: config    
+    real(kind=kind_real), allocatable, intent(out) :: jac(:) ! jac=ds/dt
 
     real(kind=kind_real), allocatable :: dtdz(:), dsdz(:)
     real(kind=kind_real) :: dsdtmax = 1.0    !> Need to go in conf
@@ -88,10 +90,17 @@ contains
 
     call soca_diff(dtdz,t,h)
     call soca_diff(dsdz,s,h)
-    jac=0.0
-    where (abs(dtdz)>dtdzmin)
-       jac=dsdz/dtdz
+
+    ! Jacobian of soft
+    jac=dsdz/dtdz
+
+    ! Limit application of soft according to configuration
+    where (abs(dtdz)<dtdzmin)
+       jac=0.0
     end where
+    where (abs(dsdz)<dsdzmin)
+       jac=0.0
+    end where    
     where (abs(jac)>dsdtmax)
        jac=0.0
     end where

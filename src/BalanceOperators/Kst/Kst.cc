@@ -15,6 +15,7 @@
 #include "src/Increment/Increment.h"
 #include "src/State/State.h"
 #include "src/Fortran.h"
+#include "oops/util/Logger.h"
 
 using oops::Log;
 
@@ -25,32 +26,38 @@ namespace soca {
 	   const Geometry & geom,	   
 	   const eckit::Configuration & conf): traj_(traj) {
     const eckit::Configuration * configc = &conf;
+    oops::Log::trace() << "soca::Kst::setup " << std::endl;
     soca_kst_setup_f90(keyFtnConfig_, &configc);
   }
   // -----------------------------------------------------------------------------
   Kst::~Kst() {
+    oops::Log::trace() << "soca::Kst::delete " << std::endl;    
     soca_kst_delete_f90(keyFtnConfig_);
   }
   // -----------------------------------------------------------------------------
   void Kst::multiply(const Increment & dxa, Increment & dxm) const {
     // dxm = K dxa
+    oops::Log::trace() << "soca::Kst::multiply " << std::endl;    
     soca_kst_mult_f90(dxa.fields().toFortran(),
 		      dxm.fields().toFortran(),
 		      traj_.fields().toFortran());
   }
   // -----------------------------------------------------------------------------
   void Kst::multiplyInverse(const Increment & dxm, Increment & dxa) const {
+    oops::Log::trace() << "soca::Kst::multiplyInverse " << std::endl;    
     dxa = dxm;
   }
   // -----------------------------------------------------------------------------
   void Kst::multiplyAD(const Increment & dxm, Increment & dxa) const {
-    // dxa = K^T dxm  
+    // dxa = K^T dxm
+    oops::Log::trace() << "soca::Kst::multiplyAD " << std::endl;
     soca_kst_multad_f90(dxm.fields().toFortran(),
 			dxa.fields().toFortran(),
 			traj_.fields().toFortran());
   }
   // -----------------------------------------------------------------------------
   void Kst::multiplyInverseAD(const Increment & dxa, Increment & dxm) const {
+    oops::Log::trace() << "soca::Kst::multiplyInverseAD " << std::endl;    
     dxm = dxa;
   }
   // -----------------------------------------------------------------------------

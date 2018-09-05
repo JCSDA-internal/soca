@@ -1,3 +1,4 @@
+#! /usr/bin/env python
 import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.basemap import Basemap
@@ -11,6 +12,7 @@ fname_ana='/home/gvernier/Sandboxes/soca/bmatrix2/soca-bundle/build/soca/test/Da
 fname_bkg='/home/gvernier/Sandboxes/soca/bmatrix2/soca-bundle/build/soca/test/Data/example.fc.2018-04-15T00:00:00Z.P1D.nc'
 oana=OceanState(fname_ana)
 obkg=OceanState(fname_bkg)
+oana.plot_horiz_section(obkg,vars=['temp','salt','ssh'],fignum=1)
 oana.plot_vert_section(obkg,fignum=1)
 plt.show()
 #Reforecast increment

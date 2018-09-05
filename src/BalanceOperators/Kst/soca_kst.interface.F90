@@ -40,7 +40,7 @@ end subroutine c_soca_kst_delete
 ! ------------------------------------------------------------------------------
 !> Multiplication
 subroutine c_soca_kst_mult_f90(c_key_a, c_key_m, c_key_traj)&
-     &bind(c,name='soca_kst_mult_f90')
+     & bind(c,name='soca_kst_mult_f90')
   use iso_c_binding
   use soca_kst_mod
   use soca_fields
@@ -49,20 +49,23 @@ subroutine c_soca_kst_mult_f90(c_key_a, c_key_m, c_key_traj)&
   !use soca_balanceop
 
   implicit none
-  integer(c_int), intent(in) :: c_key_a     !<    "   to Increment in
-  integer(c_int), intent(in) :: c_key_m     !<    "   to Increment out 
-  integer(c_int), intent(in) :: c_key_traj  !<    "   to trajectory
+  integer(c_int), intent(in) :: c_key_a     !< Increment in
+  integer(c_int), intent(in) :: c_key_m     !< Increment out 
+  integer(c_int), intent(in) :: c_key_traj  !< trajectory
+  !integer(c_int), intent(in) :: c_key_conf  !< config  
 
-  type(soca_field), pointer :: dxa
-  type(soca_field), pointer :: dxm
-  type(soca_field), pointer :: traj  
-
+  type(soca_field),      pointer :: dxa
+  type(soca_field),      pointer :: dxm
+  type(soca_field),      pointer :: traj  
+  !type(soca_kst_config), pointer :: conf
+  
   real(kind=kind_real), allocatable :: dtv(:), dsv(:)
   integer :: isc, iec, jsc, jec, i, j, k
   
-  call soca_field_registry%get(c_key_a,dxa)
-  call soca_field_registry%get(c_key_m,dxm)
-  call soca_field_registry%get(c_key_traj,traj)  
+  call soca_field_registry%get(c_key_a, dxa)
+  call soca_field_registry%get(c_key_m, dxm)
+  call soca_field_registry%get(c_key_traj, traj)  
+  !call soca_kst_registry%get(c_key_conf, conf)
 
   !< Computes dxm = Kst dxa
   
@@ -95,7 +98,8 @@ end subroutine c_soca_kst_mult_f90
 
 ! ------------------------------------------------------------------------------
 !> Multiplication adjoint
-subroutine c_soca_kst_multad_f90(c_key_m, c_key_a, c_key_traj) bind(c,name='soca_kst_multad_f90')
+subroutine c_soca_kst_multad_f90(c_key_m, c_key_a, c_key_traj)&
+     & bind(c,name='soca_kst_multad_f90')
   use iso_c_binding
   use soca_kst_mod
   use soca_fields
@@ -103,13 +107,15 @@ subroutine c_soca_kst_multad_f90(c_key_m, c_key_a, c_key_traj) bind(c,name='soca
   !use soca_balanceop
 
   implicit none
-  integer(c_int), intent(in) :: c_key_a     !<    "   to Increment out
-  integer(c_int), intent(in) :: c_key_m     !<    "   to Increment in 
-  integer(c_int), intent(in) :: c_key_traj  !<    "   to trajectory
+  integer(c_int), intent(in) :: c_key_a     !< Increment out
+  integer(c_int), intent(in) :: c_key_m     !< Increment in 
+  integer(c_int), intent(in) :: c_key_traj  !< Trajectory
+  !integer(c_int), intent(in) :: c_key_conf  !< Configuration
 
-  type(soca_field), pointer :: dxa
-  type(soca_field), pointer :: dxm
-  type(soca_field), pointer :: traj  
+  type(soca_field),      pointer :: dxa
+  type(soca_field),      pointer :: dxm
+  type(soca_field),      pointer :: traj  
+  !type(soca_kst_config), pointer :: conf
 
   real(kind=kind_real), allocatable :: dtv(:), dsv(:)
   integer :: isc, iec, jsc, jec, i, j, k
@@ -117,6 +123,7 @@ subroutine c_soca_kst_multad_f90(c_key_m, c_key_a, c_key_traj) bind(c,name='soca
   call soca_field_registry%get(c_key_a,dxa)
   call soca_field_registry%get(c_key_m,dxm)
   call soca_field_registry%get(c_key_traj,traj)  
+  !call soca_kst_registry%get(c_key_conf, conf)
 
   !< Computes dxa = K^T dxm
   
