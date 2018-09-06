@@ -27,7 +27,7 @@ namespace soca {
 	   const eckit::Configuration & conf): traj_(traj) {
     const eckit::Configuration * configc = &conf;
     oops::Log::trace() << "soca::Kst::setup " << std::endl;
-    soca_kst_setup_f90(keyFtnConfig_, &configc);
+    soca_kst_setup_f90(keyFtnConfig_, &configc, traj_.fields().toFortran());
   }
   // -----------------------------------------------------------------------------
   Kst::~Kst() {
@@ -40,7 +40,8 @@ namespace soca {
     oops::Log::trace() << "soca::Kst::multiply " << std::endl;    
     soca_kst_mult_f90(dxa.fields().toFortran(),
 		      dxm.fields().toFortran(),
-		      traj_.fields().toFortran());
+		      traj_.fields().toFortran(),
+		      keyFtnConfig_);
   }
   // -----------------------------------------------------------------------------
   void Kst::multiplyInverse(const Increment & dxm, Increment & dxa) const {
@@ -53,7 +54,8 @@ namespace soca {
     oops::Log::trace() << "soca::Kst::multiplyAD " << std::endl;
     soca_kst_multad_f90(dxm.fields().toFortran(),
 			dxa.fields().toFortran(),
-			traj_.fields().toFortran());
+			traj_.fields().toFortran(),
+		        keyFtnConfig_);
   }
   // -----------------------------------------------------------------------------
   void Kst::multiplyInverseAD(const Increment & dxa, Increment & dxm) const {

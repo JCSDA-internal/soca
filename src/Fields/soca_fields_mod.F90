@@ -1120,7 +1120,7 @@ contains
        else
           call initialize_interph(fld, locs, horiz_interp=horiz_interp)
        end if
-       horiz_interp_p => horiz_interp       
+       horiz_interp_p => horiz_interp
        write(record,*) "nicas_interph: ",ufovars%fldnames(ivar)
        call fckit_log%info(record)
        ! Indices for compute domain (no halo)

@@ -191,37 +191,37 @@ cost_function:
       Covariance:
         covariance: diagonal
         obserror: ObsErr        
-    - ObsType: InsituTemperature
-      ObsData:
-        ObsDataOut:
-          obsfile: Data/t0n156e_dy.nc
-        ObsDataIn:
-          obsfile: /home/gvernier/Data/Argo/Santha/report.FixedMor_profile_2018041500.nc #Data/t0n156e_dy.nc
-        obsvalue: ObsVal        
-      Covariance:
-        covariance: diagonal
-        obserror: ObsErr		
-    - ObsType: SeaIceFraction
-      ObsData:
-        ObsDataOut:
-          obsfile: Data/test_obsout.nc
-        ObsDataIn:
-          #obsfile: Data/seaice_obs-2018-04-15.nc
-          obsfile: /home/gvernier/Sandboxes/soca/data/bob_l2_sic/l2/sea-ice-con.nc #Data/seaice_obs-2018-04-15.nc
-        obsvalue: ObsVal        
-      Covariance:
-        covariance: diagonal
-        obserror: ObsErr
-    - ObsType: SeaSurfaceTemp
-      ObsData:
-        ObsDataOut:
-          obsfile: Data/test_obsout.nc
-        ObsDataIn:
-          obsfile: Data/sst_obs-2018-04-15.nc
-        obsvalue: ObsVal        
-      Covariance:
-        covariance: diagonal
-        obserror: ObsErr	      
+#    - ObsType: InsituTemperature
+#      ObsData:
+#        ObsDataOut:
+#          obsfile: Data/t0n156e_dy.nc
+#        ObsDataIn:
+#          obsfile: /home/gvernier/Data/Argo/Santha/report.FixedMor_profile_2018041500.nc #Data/t0n156e_dy.nc
+#        obsvalue: ObsVal        
+#      Covariance:
+#        covariance: diagonal
+#        obserror: ObsErr		
+#    - ObsType: SeaIceFraction
+#      ObsData:
+#        ObsDataOut:
+#          obsfile: Data/test_obsout.nc
+#        ObsDataIn:
+#          #obsfile: Data/seaice_obs-2018-04-15.nc
+#          obsfile: /home/gvernier/Sandboxes/soca/data/bob_l2_sic/l2/sea-ice-con.nc #Data/seaice_obs-2018-04-15.nc
+#        obsvalue: ObsVal        
+#      Covariance:
+#        covariance: diagonal
+#        obserror: ObsErr
+#    - ObsType: SeaSurfaceTemp
+#      ObsData:
+#        ObsDataOut:
+#          obsfile: Data/test_obsout.nc
+#        ObsDataIn:
+#          obsfile: Data/sst_obs-2018-04-15.nc
+#        obsvalue: ObsVal        
+#      Covariance:
+#        covariance: diagonal
+#        obserror: ObsErr	      
 variational:
   iteration:
   - resolution: {}
@@ -229,37 +229,37 @@ variational:
       varchange: Identity
       version: IdTLM
       tstep: PT1H
-    ninner: 10
+    ninner: 1
     gradient_norm_reduction: 1e-15
     test: 'on'
     output:
       datadir: Data
       exp: 3dvar
       type: incr1
-  - resolution: {}
-    linearmodel:
-      varchange: Identity      
-      version: IdTLM
-      tstep: PT1H
-    ninner: 5
-    gradient_norm_reduction: 1e-15
-    test: 'on'
-    output:
-      datadir: Data
-      exp: 3dvar
-      type: incr
-  - resolution: {}
-    linearmodel:
-      varchange: Identity      
-      version: IdTLM
-      tstep: PT1H
-    ninner: 5
-    gradient_norm_reduction: 1e-15
-    test: 'on'
-    output:
-      datadir: Data
-      exp: 3dvar
-      type: incr      
+#  - resolution: {}
+#    linearmodel:
+#      varchange: Identity      
+#      version: IdTLM
+#      tstep: PT1H
+#    ninner: 5
+#    gradient_norm_reduction: 1e-15
+#    test: 'on'
+#    output:
+#      datadir: Data
+#      exp: 3dvar
+#      type: incr
+#  - resolution: {}
+#    linearmodel:
+#      varchange: Identity      
+#      version: IdTLM
+#      tstep: PT1H
+#    ninner: 5
+#    gradient_norm_reduction: 1e-15
+#    test: 'on'
+#    output:
+#      datadir: Data
+#      exp: 3dvar
+#      type: incr      
 minimizer:
   algorithm: DRPCG #DRIPCG
 output:

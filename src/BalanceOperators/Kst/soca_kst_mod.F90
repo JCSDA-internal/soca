@@ -8,16 +8,19 @@
 module soca_kst_mod
 
   use kinds
+  use soca_fields
+  
   implicit none
 
-  !> Fortran derived type to hold configuration Kst
-  type :: soca_kst_config
+  !> Fortran derived type to hold the setup for Kst
+  type :: soca_kst
      real(kind=kind_real) :: dsdtmax !> 1.0    [psu/K]
      real(kind=kind_real) :: dsdzmin !> 3.0e-3 [psu/m] 
      real(kind=kind_real) :: dtdzmin !> 1.0e-3 [K/m]
-  end type soca_kst_config
+     real(kind=kind_real), allocatable :: jacobian(:,:,:) !> dS/dT(i,j,k)
+  end type soca_kst
 
-#define LISTED_TYPE soca_kst_config
+#define LISTED_TYPE soca_kst
 
   !> Linked list interface - defines registry_t type
 #include "oops/util/linkedList_i.f"
@@ -32,26 +35,8 @@ contains
 #include "oops/util/linkedList_c.f"
   ! ------------------------------------------------------------------------------
 
-  ! ------------------------------------------------------------------------------
-
-  subroutine soca_kst_setup(c_conf, config)
-    use iso_c_binding
-    use config_mod
-    use kinds
-
-    implicit none
-
-    type(c_ptr),              intent(in) :: c_conf   !< The configuration
-    type(soca_kst_config), intent(inout) :: config   !< Config parameters for Kst
-    
-    config%dsdtmax      = config_get_real(c_conf,"dsdtmax")
-    config%dsdzmin      = config_get_real(c_conf,"dsdzmin")
-    config%dtdzmin      = config_get_real(c_conf,"dtdzmin")
-
-  end subroutine soca_kst_setup
-
   !==========================================================================
-  subroutine soca_soft_jacobian (jac, t, s, h)
+  subroutine soca_soft_jacobian (jac, t, s, h, dsdtmax, dsdzmin, dtdzmin)
     !==========================================================================
     !
     ! Jacobian of Sb=S(T) relative to the reference state t, s. jac=dS/dT at (t,s)
@@ -73,20 +58,21 @@ contains
 
     implicit none
 
-    real(kind=kind_real),               intent(in) :: t(:), s(:), h(:)
-    !type(soca_kst_config),              intent(in) :: config    
-    real(kind=kind_real), allocatable, intent(out) :: jac(:) ! jac=ds/dt
+    real(kind=kind_real),                 intent(in) :: t(:), s(:), h(:)
+    real(kind=kind_real),                 intent(in) :: dsdtmax, dsdzmin, dtdzmin
+    real(kind=kind_real), allocatable, intent(inout) :: jac(:) ! jac=ds/dt
 
     real(kind=kind_real), allocatable :: dtdz(:), dsdz(:)
-    real(kind=kind_real) :: dsdtmax = 1.0    !> Need to go in conf
-    real(kind=kind_real) :: dsdzmin = 3.0e-3 !> Need to go in conf
-    real(kind=kind_real) :: dtdzmin = 1.0e-3 !> Need to go in conf
+    !real(kind=kind_real) :: dsdtmax = 1.0    !> Need to go in conf
+    !real(kind=kind_real) :: dsdzmin = 3.0e-3 !> Need to go in conf
+    !real(kind=kind_real) :: dtdzmin = 1.0e-3 !> Need to go in conf
 
     integer :: nl
 
     ! Allocate
     nl = size(t,1)
-    allocate(dtdz(nl),dsdz(nl),jac(nl))
+    allocate(dtdz(nl),dsdz(nl))
+    if (.not.allocated(jac)) allocate(jac(nl))
 
     call soca_diff(dtdz,t,h)
     call soca_diff(dsdz,s,h)
@@ -108,7 +94,7 @@ contains
   end subroutine soca_soft_jacobian
 
   !==========================================================================
-  subroutine soca_soft_tl (ds, dt, t0, s0, h)
+  subroutine soca_soft_tl (ds, dt, jac)
     !==========================================================================
     !
     ! Tangent of soft relative to the reference state t0, s0
@@ -116,9 +102,7 @@ contains
     ! Input:
     ! ------
     ! dt     : Potential temperature                           [deg C]
-    ! s0     : Salinity trajectory                             [psu]
-    ! t0     : Potential Temperature trajectory                [deg C]
-    ! h      : Layer thickness                                 [m]
+    ! jac    : ds/dt                                           [psu/K]
     !
     ! Output:
     ! -------
@@ -130,19 +114,10 @@ contains
 
     implicit none
 
-    real(kind=kind_real), intent(in)  :: dt(:), t0(:), s0(:), h(:)
+    real(kind=kind_real), intent(in)  :: dt(:), jac(:)
     real(kind=kind_real), intent(out) :: ds(:)
 
-    real(kind=kind_real), allocatable :: jac(:)    !< Mid-layer depth
-
     integer :: nl !< Number of layers
-
-    ! Allocate
-    nl = size(dt,1)
-    allocate(jac(nl))
-
-    ! Compute Jacobian <<< should be stored in traj >>>
-    call soca_soft_jacobian (jac, t0, s0, h)
 
     ! TLM
     ds = jac * dt
@@ -150,7 +125,7 @@ contains
   end subroutine soca_soft_tl
 
   !==========================================================================
-  subroutine soca_soft_ad (ds, dt, t0, s0, h)
+  subroutine soca_soft_ad (ds, dt, jac)
     !==========================================================================
     !
     ! Adjoint of tangent of soft relative to the reference state t0, s0
@@ -158,9 +133,7 @@ contains
     ! Input:
     ! ------
     ! ds  : salinity                                           [psu]
-    ! s0     : Salinity trajectory                             [psu]
-    ! t0     : Potential Temperature trajectory                [deg C]
-    ! h      : Layer thickness                                 [m]
+    ! jac    : ds/dt                                           [psu/K]
     !
     ! Output:
     ! -------
@@ -172,21 +145,10 @@ contains
 
     implicit none
 
-    real(kind=kind_real), intent(in)  :: ds(:), t0(:), s0(:), h(:)
+    real(kind=kind_real), intent(in)  :: ds(:), jac(:)
     real(kind=kind_real), intent(out) :: dt(:)
 
-    real(kind=kind_real), allocatable :: jac(:)
-
-    integer :: nl !< Number of layers
-
-    ! Allocate
-    nl = size(dt,1)
-    allocate(jac(nl))
-
-    ! Compute Jacobian  <<< should be stored in traj >>>
-    call soca_soft_jacobian (jac, t0, s0, h)
-
-    ! TLM
+    ! AD of TLM
     dt = jac * ds
     
   end subroutine soca_soft_ad
