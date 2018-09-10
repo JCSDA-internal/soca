@@ -162,10 +162,10 @@ subroutine c_soca_b_randomize(c_key_conf, c_key_out) bind(c,name='soca_b_randomi
   call soca_field_registry%get(c_key_out,xout)
 
 
-  call ones(xout)
+  !call ones(xout)
   call random(xout)
   call fldrms(xout, prms)
-
+  
 end subroutine c_soca_b_randomize
 
 ! ------------------------------------------------------------------------------

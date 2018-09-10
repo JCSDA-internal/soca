@@ -22,58 +22,45 @@ State:
   ocn_filename: MOM.res.nc
   ice_filename: ice_model.res.nc
 Covariance:
-  covariance: SocaError
-  date: '2018-04-15T00:00:00Z'  
-  sig_sic: 0.1#.0001
-  sig_sit: 250.0
-  sig_ssh: 0.2
-  sig_tocn: 0.5
-  sig_socn: 0.0
-  # BUMP Configuration
+  covariance: BUMP
   # General parameters
   default_seed: 1
   prefix: soca
   # Driver parameters
   method: cor
-  strategy: specific_univariate
-  new_hdiag: 0
-  new_param: 1
-  check_adjoints: 0
-  check_pos_def: 0
-  check_sqrt: 0
-  check_randomization: 0
-  check_consistency: 0
-  check_optimality: 0
-  new_lct: 0
-  new_obsop: 0
+  strategy: specific_univariate #common
+#  new_hdiag: 0
+  new_nicas: 0   # 1: recomputes convol param
+  load_nicas: 1  # 1: loads convol param (layout specific)
   # Sampling parameters
   sam_read: 0
   sam_write: 1  
-  mask_check: 1
+  mask_check: 0
   draw_type: random_uniform
   nc1: 100
   ntry: 3
   nrep:  2
   nc3: 10
-  dc: 3000.0e3
+  dc: 300.0e3
   nl0r: 1
   # Diag parameters
-  gau_approx: 0
-  full_var: 0
-  local_diag: 0
   # Fit parameters
   minim_algo: "hooke"
-  lhomh: 0
-  lhomv: 0
   rvflt: 0.0
   # NICAS parameters
-  lsqrt: 0
-  resol: 10.0
+  lsqrt: 1  
+  resol: 6.0
   nicas_interp: bilin
-  network: 1
-  mpicom: 1
+  network: 0
+  mpicom: 2 # Number of internal comm steps 
+  #NICAS parameters
+  forced_radii: 1
+  rh: 500e3
+  rv: 5
+  advmode: 0
   # Output parameters  
   diag_interp: bilin
-  grid_output: 0
+  date: '2018-04-15T00:00:00Z'
 CovarianceTest:
   tolerance: 1e-4
+  doinverse: false

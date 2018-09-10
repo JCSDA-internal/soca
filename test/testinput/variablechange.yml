@@ -7,114 +7,127 @@ State:
   ocn_filename: MOM.res.nc
   ice_filename: ice_model.res.nc
 LinearVariableChangeTests:
-  - varchange: KstSOCA
-    dsdtmax: 1.0    
-    dsdzmin: 3.0e-3
-    dtdzmin: 1.0e-3
-    inputVariables:
-      variables:
-      - cicen
-      - hicen
-      - hsnon
-      - tsfcn
-      - qsnon
-      - sicnk
-      - qicnk
-      - socn
-      - tocn
-      - ssh
-      - hocn  
-    outputVariables:
-      variables:
-      - cicen
-      - hicen
-      - hsnon
-      - tsfcn
-      - qsnon
-      - sicnk
-      - qicnk
-      - socn
-      - tocn
-      - ssh
-      - hocn  
-  - varchange: KsshtsSOCA
-    inputVariables:
-      variables:
-      - cicen
-      - hicen
-      - hsnon
-      - tsfcn
-      - qsnon
-      - sicnk
-      - qicnk
-      - socn
-      - tocn
-      - ssh
-      - hocn  
-    outputVariables:
-      variables:
-      - cicen
-      - hicen
-      - hsnon
-      - tsfcn
-      - qsnon
-      - sicnk
-      - qicnk
-      - socn
-      - tocn
-      - ssh
-      - hocn
-  - varchange: KsshtsSOCA
-    inputVariables:
-      variables:
-      - cicen
-      - hicen
-      - hsnon
-      - tsfcn
-      - qsnon
-      - sicnk
-      - qicnk
-      - socn
-      - tocn
-      - ssh
-      - hocn  
-    outputVariables:
-      variables:
-      - cicen
-      - hicen
-      - hsnon
-      - tsfcn
-      - qsnon
-      - sicnk
-      - qicnk
-      - socn
-      - tocn
-      - ssh
-      - hocn      
-  - varchange: KtcSOCA
-    inputVariables:
-      variables:
-      - cicen
-      - hicen
-      - hsnon
-      - tsfcn
-      - qsnon
-      - sicnk
-      - qicnk
-      - socn
-      - tocn
-      - ssh
-      - hocn  
-    outputVariables:
-      variables:
-      - cicen
-      - hicen
-      - hsnon
-      - tsfcn
-      - qsnon
-      - sicnk
-      - qicnk
-      - socn
-      - tocn
-      - ssh
-      - hocn  
+- varchange: KstSOCA
+  variables:                                
+    variables:
+    - cicen
+    - hicen
+    - hsnon
+    - tsfcn
+    - qsnon
+    - sicnk
+    - qicnk
+    - socn
+    - tocn
+    - ssh
+    - hocn      
+  dsdtmax: 1.0    
+  dsdzmin: 3.0e-3
+  dtdzmin: 1.0e-3
+  inputVariables:
+    variables:
+    - cicen
+    - hicen
+    - hsnon
+    - tsfcn
+    - qsnon
+    - sicnk
+    - qicnk
+    - socn
+    - tocn
+    - ssh
+    - hocn  
+  outputVariables:
+    variables:
+    - cicen
+    - hicen
+    - hsnon
+    - tsfcn
+    - qsnon
+    - sicnk
+    - qicnk
+    - socn
+    - tocn
+    - ssh
+    - hocn  
+- varchange: KsshtsSOCA
+  inputVariables:
+    variables:
+    - cicen
+    - hicen
+    - hsnon
+    - tsfcn
+    - qsnon
+    - sicnk
+    - qicnk
+    - socn
+    - tocn
+    - ssh
+    - hocn  
+  outputVariables:
+    variables:
+    - cicen
+    - hicen
+    - hsnon
+    - tsfcn
+    - qsnon
+    - sicnk
+    - qicnk
+    - socn
+    - tocn
+    - ssh
+    - hocn
+- varchange: KsshtsSOCA
+  inputVariables:
+    variables:
+    - cicen
+    - hicen
+    - hsnon
+    - tsfcn
+    - qsnon
+    - sicnk
+    - qicnk
+    - socn
+    - tocn
+    - ssh
+    - hocn  
+  outputVariables:
+    variables:
+    - cicen
+    - hicen
+    - hsnon
+    - tsfcn
+    - qsnon
+    - sicnk
+    - qicnk
+    - socn
+    - tocn
+    - ssh
+    - hocn      
+- varchange: KtcSOCA
+  inputVariables:
+    variables:
+    - cicen
+    - hicen
+    - hsnon
+    - tsfcn
+    - qsnon
+    - sicnk
+    - qicnk
+    - socn
+    - tocn
+    - ssh
+    - hocn  
+  outputVariables:
+    variables:
+    - cicen
+    - hicen
+    - hsnon
+    - tsfcn
+    - qsnon
+    - sicnk
+    - qicnk
+    - socn
+    - tocn
+    - ssh
+    - hocn  

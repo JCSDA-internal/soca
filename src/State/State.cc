@@ -45,8 +45,14 @@ namespace soca {
   // -----------------------------------------------------------------------------
   State::State(const Geometry & resol, const oops::Variables & vars,
 	       const eckit::Configuration & file)
-    : fields_(new Fields(resol, vars, util::DateTime())), stash_()
+    : fields_(), stash_() //new Fields(resol, vars, util::DateTime())), stash_()
   {
+    // Possible bug somewhere:
+    // This constructor is used in the variable change test, but vars
+    // isn't currently read from the yaml ... need to change that.
+    // vars is hard-coded ... 
+    Log::trace() << "State::file: " << file << std::endl;
+    Log::trace() << "State::vars: " << vars << std::endl;    
     const std::vector<std::string> vv = {
           "cicen",
           "hicen",
@@ -58,10 +64,9 @@ namespace soca {
           "socn",
           "tocn",
           "ssh",
-          "hocn"
-    };
-    //oops::Variables vars(vv);
-    //fields_.reset(new Fields(resol, vars, util::DateTime()));
+          "hocn"};
+    const oops::Variables varss(vv); // Ugly, change that!
+    fields_.reset(new Fields(resol, varss, util::DateTime()));
     fields_->read(file);
     ASSERT(fields_);
     Log::trace() << "State::State created and read in." << std::endl;
@@ -152,7 +157,9 @@ namespace soca {
   /// I/O and diagnostics
   // -----------------------------------------------------------------------------
   void State::read(const eckit::Configuration & files) {
+    Log::trace() << "State::State read started." << std::endl;    
     fields_->read(files);
+    Log::trace() << "State::State read done." << std::endl;        
   }
   // -----------------------------------------------------------------------------
   void State::write(const eckit::Configuration & files) const {

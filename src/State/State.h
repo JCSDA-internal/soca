@@ -55,7 +55,8 @@ namespace soca {
       /// Constructor, destructor
       State(const Geometry &, const oops::Variables &,
             const util::DateTime &);  // Is it used?
-      State(const Geometry &, const oops::Variables &, const eckit::Configuration &);
+      State(const Geometry &, const oops::Variables &,
+	    const eckit::Configuration &);
       State(const Geometry &, const State &);
       State(const State &);
       virtual ~State();

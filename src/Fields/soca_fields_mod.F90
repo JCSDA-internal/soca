@@ -620,7 +620,6 @@ contains
        call log%warning("soca_fields:read_file: Inventing State")
        call zeros(fld)
        call random_number(fld%cicen)
-
        sdate = config_get_string(c_conf,len(sdate),"date")
        WRITE(buf,*) 'validity date is: '//sdate
        call log%info(buf)
@@ -632,7 +631,7 @@ contains
        ocn_filename = config_get_string(c_conf,len(ocn_filename),"ocn_filename")       
 
        !ocn_sfc_filename = trim(basename)//trim(ocn_sfc_filename)
-       ocn_filename = trim(basename)//trim(ocn_filename)       
+       ocn_filename = trim(basename)//trim(ocn_filename)
        ice_filename = config_get_string(c_conf,len(ice_filename),"ice_filename")       
        ice_filename = trim(basename)//trim(ice_filename)
 
@@ -683,9 +682,8 @@ contains
        call datetime_set(sdate, vdate)       
     end if
     if (iread==2) then ! Read increment
-       print *,c_conf
        !incr_filename = config_get_string(c_conf,len(incr_filename),"input")               
-       !incr_filename = config_get_string(c_conf,len(incr_filename),"parameter")        
+       !incr_filename = config_get_string(c_conf,len(incr_filename),"parameter")
        incr_filename = config_get_string(c_conf,len(incr_filename),"filename")
        incr_filename = trim(basename)//trim(incr_filename)       
        call fms_io_init()

@@ -51,7 +51,7 @@ TlmId::TlmId(const Geometry & resol, const eckit::Configuration & tlConf)
 }
 // -----------------------------------------------------------------------------
 TlmId::~TlmId() {
-  // soca_delete_f90(keyConfig_);
+  //soca_delete_f90(keyConfig_);
   Log::trace() << "TlmId destructed" << std::endl;
 }
 // -----------------------------------------------------------------------------
