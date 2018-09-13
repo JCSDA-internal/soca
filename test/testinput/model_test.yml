@@ -9,6 +9,7 @@ ModelTest:
   finalnorm: 160926.40386345252
   tolerance: '0.005'
 Model:
+  name: 'SOCA'
   tstep: PT6H
 State:
   read_from_file: 1

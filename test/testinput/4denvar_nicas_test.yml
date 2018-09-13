@@ -1,6 +1,7 @@
 ---
 resolution:
 model:
+  name: 'SOCA'
   tstep: PT1H
 cost_function:
   cost_type: 4D-Ens-Var
