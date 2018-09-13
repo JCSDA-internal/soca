@@ -15,7 +15,7 @@
 
 #include <boost/noncopyable.hpp>
 
-#include "oops/interface/LinearModelBase.h"
+#include "oops/base/LinearModelBase.h"
 
 #include "oops/util/Duration.h"
 #include "oops/util/ObjectCounter.h"

@@ -10,15 +10,18 @@
 
 #include <ostream>
 #include <string>
+
 #include <boost/noncopyable.hpp>
 #include <boost/scoped_ptr.hpp>
 
-#include "src/Fortran.h"
-#include "src/Geometry/Geometry.h"
+#include "oops/base/ModelBase.h"
+#include "oops/base/Variables.h"
 #include "oops/util/Duration.h"
 #include "oops/util/ObjectCounter.h"
 #include "oops/util/Printable.h"
-#include "oops/base/Variables.h"
+
+#include "src/Fortran.h"
+#include "src/Geometry/Geometry.h"
 
 // Forward declarations
 namespace eckit {
@@ -36,9 +39,8 @@ namespace soca {
  *  SOCA nonlinear model definition and configuration parameters.
  */
 
-class Model: public util::Printable,
-               private boost::noncopyable,
-               private util::ObjectCounter<Model> {
+class Model: public oops::ModelBase<Traits>,
+             private util::ObjectCounter<Model> {
  public:
   static const std::string classname() {return "soca::Model";}
 
