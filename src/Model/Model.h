@@ -10,17 +10,19 @@
 
 #include <ostream>
 #include <string>
+
 #include <boost/noncopyable.hpp>
 #include <boost/scoped_ptr.hpp>
+
+#include "oops/base/ModelBase.h"
+#include "oops/base/Variables.h"
+#include "oops/util/Duration.h"
+#include "oops/util/ObjectCounter.h"
+#include "oops/util/Printable.h"
 
 #include "src/Fortran.h"
 #include "src/Traits.h"
 #include "src/Geometry/Geometry.h"
-#include "oops/base/ModelBase.h"
-#include "oops/util/Duration.h"
-#include "oops/util/ObjectCounter.h"
-#include "oops/util/Printable.h"
-#include "oops/base/Variables.h"
 
 // Forward declarations
 namespace eckit {

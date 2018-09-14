@@ -1,5 +1,6 @@
 Geometry: {}
 Model:
+  name: 'SOCA'
   tstep: PT1H
 Initial Condition:
   read_from_file: 1

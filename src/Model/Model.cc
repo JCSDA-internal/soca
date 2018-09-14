@@ -7,14 +7,16 @@
 
 #include "src/Model/Model.h"
 
+#include "eckit/config/Configuration.h"
+
+#include "oops/util/DateTime.h"
 #include "oops/util/Logger.h"
-#include "src/ModelBias.h"
+
 #include "src/Fields/Fields.h"
 #include "src/Fortran.h"
 #include "src/Geometry/Geometry.h"
+#include "src/ModelBias.h"
 #include "src/State/State.h"
-#include "eckit/config/Configuration.h"
-#include "oops/util/DateTime.h"
 
 using oops::Log;
 
@@ -35,7 +37,7 @@ namespace soca {
           "socn",
           "tocn",
           "ssh",
-          "hocn"})      
+          "hocn"})
   {
     Log::trace() << "Model::Model" << std::endl;
     tstep_ = util::Duration(model.getString("tstep"));
