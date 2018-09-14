@@ -21,6 +21,7 @@
 #include "oops/util/Printable.h"
 
 #include "src/Fortran.h"
+#include "src/Traits.h"
 #include "src/Geometry/Geometry.h"
 
 // Forward declarations
