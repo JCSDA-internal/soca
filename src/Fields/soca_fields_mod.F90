@@ -930,11 +930,11 @@ contains
     use ufo_geovals_mod
     use ufo_vars_mod
     implicit none
-    type(soca_field),                        intent(inout) :: fld
-    type(ioda_locs),                            intent(in) :: locs
-    type(ufo_vars),                             intent(in) :: vars    
-    type(ufo_geovals),                       intent(inout) :: geovals
-    type(soca_getvaltraj), optional, target, intent(inout) :: traj    
+    type(soca_field),                intent(inout) :: fld
+    type(ioda_locs),                    intent(in) :: locs
+    type(ufo_vars),                     intent(in) :: vars    
+    type(ufo_geovals),               intent(inout) :: geovals
+    type(soca_getvaltraj), optional, intent(inout) :: traj    
 
     call check(fld)
 
@@ -965,13 +965,14 @@ contains
   subroutine initialize_interph(fld, locs, traj, horiz_interp)    
     use ioda_locs_mod  
     use soca_interph_mod
+    use type_bump, only: bump_type
 
     implicit none
 
     type(soca_field),                   intent(in) :: fld
     type(ioda_locs),                    intent(in) :: locs
-    type(soca_getvaltraj), optional, intent(inout) :: traj    
-    type(soca_hinterp),      optional, intent(out) :: horiz_interp    
+    type(soca_getvaltraj), optional, intent(inout) :: traj 
+    type(bump_type),         optional, intent(out) :: horiz_interp    
 
     integer :: nobs
     integer :: isc, iec, jsc, jec
@@ -1114,11 +1115,12 @@ contains
        if (present(traj)) then
           print *,'Initialize interp traj for obstype:',traj%obstype_index
           call initialize_interph(fld, locs, traj=traj)
-          call traj%horiz_interp%interp_copy(horiz_interp)
+          !call traj%horiz_interp%interp_copy(horiz_interp)
+          horiz_interp_p => traj%horiz_interp          
        else
           call initialize_interph(fld, locs, horiz_interp=horiz_interp)
        end if
-       horiz_interp_p => horiz_interp
+       !horiz_interp_p => horiz_interp
        write(record,*) "nicas_interph: ",ufovars%fldnames(ivar)
        call fckit_log%info(record)
        ! Indices for compute domain (no halo)
@@ -1282,7 +1284,7 @@ contains
     ug%grid(1)%nmga = (iec - isc + 1) * (jec - jsc + 1 )
 
     ! Set number of levels
-    ug%grid(1)%nl0 = self%geom%ocean%nzo
+    ug%grid(1)%nl0 = 2!self%geom%ocean%nzo
 
     ! Set number of variables
     ug%grid(1)%nv = self%geom%ocean%ncat*2 + 3
