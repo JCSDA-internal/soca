@@ -1,7 +1,7 @@
 test_framework_runtime_config: "--log_level=test_suite"
 resolution:
 model:
-  name: 'SOCA'
+  name: SOCA
   tstep: PT1H
 cost_function:
   cost_type: 3D-Var
@@ -36,20 +36,21 @@ cost_function:
       prefix: soca
       # Driver parameters
       method: cor
-      strategy: specific_univariate #common
+      #strategy: specific_univariate
+      strategy: common      
 #      new_hdiag: 0
       new_nicas: 1     # Read convol files -> 0
       load_nicas: 0    # 1: loads convol param (layout specific)
       # Sampling parameters
       sam_read: 0
       sam_write: 1  
-      mask_check: 1
+      mask_check: 0
       draw_type: random_uniform
       nc1: 100
       ntry: 3
       nrep:  2
       nc3: 10
-      dc: 300.0e3
+      dc: 1000.0e3
       nl0r: 1
       # Diag parameters
       # Fit parameters
@@ -57,14 +58,14 @@ cost_function:
       rvflt: 0.0
       # NICAS parameters
       lsqrt: 1  
-      resol: 6.0
+      resol: 10.0
       nicas_interp: bilin
-      network: 1
+      network: 0
       mpicom: 2 # Number of internal comm steps 
       #NICAS parameters
       forced_radii: 1
-      rh: 800e3
-      rv: 10
+      rh: 3000e3
+      rv: 100
       advmode: 0
       # Output parameters  
       diag_interp: bilin

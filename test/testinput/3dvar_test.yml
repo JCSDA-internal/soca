@@ -14,7 +14,7 @@
 test_framework_runtime_config: "--log_level=test_suite"
 resolution:
 model:
-  name: 'SOCA'
+  name: SOCA
   tstep: PT1H
 cost_function:
   cost_type: 3D-Var
