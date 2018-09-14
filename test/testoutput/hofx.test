@@ -1,0 +1,29 @@
+Test     : Initial state: 
+Test     :   Valid time: 2018-04-15T00:00:00Z
+Test     :   Resolution = 368, 218, Fields = 11
+Test     : Min=0 Max=1 RMS=0.524221
+Test     : Min=0 Max=2756.94 RMS=286.785
+Test     : Min=0 Max=30.4111 RMS=0
+Test     : Min=-27.8498 Max=0 RMS=0
+Test     : Min=-382763 Max=0 RMS=0
+Test     : Min=0 Max=5 RMS=0
+Test     : Min=-372547 Max=0 RMS=0
+Test     : Min=-2 Max=37.6251 RMS=0
+Test     : Min=0 Max=40.6337 RMS=0
+Test     : Min=-1.7733 Max=1.11429 RMS=0
+Test     : Min=0 Max=0 RMS=0
+Test     : Final state: 
+Test     :   Valid time: 2018-04-15T12:00:00Z
+Test     :   Resolution = 368, 218, Fields = 11
+Test     : Min=0 Max=1 RMS=0.524221
+Test     : Min=0 Max=2756.94 RMS=286.785
+Test     : Min=0 Max=30.4111 RMS=0
+Test     : Min=-27.8498 Max=0 RMS=0
+Test     : Min=-382763 Max=0 RMS=0
+Test     : Min=0 Max=5 RMS=0
+Test     : Min=-372547 Max=0 RMS=0
+Test     : Min=-2 Max=37.6251 RMS=0
+Test     : Min=0 Max=40.6337 RMS=0
+Test     : Min=-1.7733 Max=1.11429 RMS=0
+Test     : Min=0 Max=0 RMS=0
+Test     : H(x): SeaIceThickness nobs= 8065 Min=0.463733, Max=2.54865, Average=1.63946SeaIceFraction nobs= 34329 Min=0, Max=1, Average=0.933331ADT nobs= 19266 Min=-1.41721, Max=1.1732, Average=0.106198InsituTemperature nobs= 20082 Min=0, Max=29.9166, Average=19.1836SeaSurfaceTemp nobs= 223966 Min=-1.77582, Max=27.8607, Average=20.3276

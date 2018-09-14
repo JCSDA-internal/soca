@@ -11,7 +11,6 @@ project( soca C CXX Fortran)
 
 set( ENABLE_MPI ON CACHE BOOL "Compile with MPI" )
 set( ECBUILD_DEFAULT_BUILD_TYPE Release )
-#set( ECBUILD_DEFAULT_BUILD_TYPE Debug )
 include( ecbuild_system NO_POLICY_SCOPE )
 
 ecbuild_requires_macro_version( 2.5 )
@@ -48,6 +47,13 @@ include_directories( ${OOPS_INCLUDE_DIRS} )
 MESSAGE( STATUS "oops include dirs: " ${OOPS_INCLUDE_DIRS} )
 
 # MOM6 SIS2
+message([STATUS] "=============================")
+message([STATUS] "=============================")
+message([STATUS] "=============================")
+message([STATUS] "${MOM6_INCLUDE_DIRS}")
+message([STATUS] "=============================")
+message([STATUS] "=============================")
+message([STATUS] "=============================")
 include_directories( ${MOM6_INCLUDE_DIRS} )
 include_directories( ${MOM6_HEADER_DIRS} )
 include_directories( ${MOM6_MACROS_DIRS} )
@@ -72,10 +78,10 @@ endforeach()
 ################################################################################
 include( soca_compiler_flags )
 include_directories( ${CMAKE_CURRENT_SOURCE_DIR} )
-include_directories( ${CMAKE_CURRENT_SOURCE_DIR}/model )
+include_directories( ${CMAKE_CURRENT_SOURCE_DIR}/src )
 
 add_subdirectory( mains )
-add_subdirectory( model )
+add_subdirectory( src )
 add_subdirectory( test )
 
 ################################################################################
@@ -88,13 +94,18 @@ ecbuild_install_project( NAME soca )
 # print the summary of the configuration
 ecbuild_print_summary()
 
+ecbuild_add_test( TARGET soca_coding_norms
+                  TYPE SCRIPT
+		  COMMAND ${CMAKE_BINARY_DIR}/bin/cpplint.py
+		  ARGS --quiet --recursive ${CMAKE_CURRENT_SOURCE_DIR} )
+
 #cmake_minimum_required(VERSION 3.6)
 
 #include_directories( ${CMAKE_CURRENT_SOURCE_DIR} )
-#include_directories( ${CMAKE_CURRENT_SOURCE_DIR}/model )
+#include_directories( ${CMAKE_CURRENT_SOURCE_DIR}/src )
 
 #add_subdirectory( mains )
-#add_subdirectory( model )
+#add_subdirectory( src )
 #add_subdirectory( test )
 
 ################################################################################

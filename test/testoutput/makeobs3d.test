@@ -1,3 +1,14 @@
-Test     : Initial state: 1.83916
-Test     : Final state: 1.83916
-Test     : Generated observation: SeaIceFraction nobs= 30 Min=0.5, Max=0.5, Average=0.5
+Test     : Initial state: 
+Test     :   Valid time: 2018-04-15T00:00:00Z
+Test     :   Resolution = 368, 218, Fields = 11
+Test     : Min=0 Max=1 RMS=0.524221
+Test     : Min=0 Max=2756.94 RMS=286.785
+Test     : Min=0 Max=30.4111 RMS=0
+Test     : Min=-27.8498 Max=0 RMS=0
+Test     : Min=-382763 Max=0 RMS=0
+Test     : Min=0 Max=5 RMS=0
+Test     : Min=-372547 Max=0 RMS=0
+Test     : Min=-2 Max=37.6251 RMS=0
+Test     : Min=0 Max=40.6337 RMS=0
+Test     : Min=-1.7733 Max=1.11429 RMS=0
+Test     : Min=0 Max=0 RMS=0

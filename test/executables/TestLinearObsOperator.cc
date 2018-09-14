@@ -5,7 +5,7 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
  */
 
-#include "model/Traits.h"
+#include "src/Traits.h"
 #include "oops/runs/Run.h"
 #include "test/interface/LinearObsOperator.h"
 
@@ -14,5 +14,5 @@ int main(int argc,  char ** argv) {
   test::LinearObsOperator<soca::Traits> tests;
   run.execute(tests);
   return 0;
-};
+}
 

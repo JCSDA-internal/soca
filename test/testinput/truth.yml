@@ -2,36 +2,23 @@
 logging:
   categories: Warning, Error
 test_framework_runtime_config: "--log_level=test_suite"
-resolution:
-  nx: 720
-  ny: 410
-  nzo: 1
-  nzi: 7
-  nzs: 1
-  ncat: 5
-  nf: '11'
-  gridfname: "/home/gvernier/Data/SOCA/ogrid05.nc"
-  icemaskfname: "/home/gvernier/Data/SOCA/icemask.nc"
-
-Model:
-  tstep: "PT1H"
-
+resolution: {}
+model:
+  name: 'SOCA'
+  tstep: PT6H
 initial:
   read_from_file: 1
-  cicefname: "/home/gvernier/Data/SOCA/iced.2015-05-01.01.nc"
-  momfname: "/home/gvernier/Data/SOCA/ocean_temp_salt.01.res.nc"
-  date: "2015-05-01T00:00:00Z"
-
-forecast_length: "P2D"
-
+  date: '2018-04-15T00:00:00Z'
+  basename: "./INPUT/"
+  ocn_sfc_filename: MOM.res.nc
+  ocn_filename: MOM.res.nc
+  ice_filename: ice_model.res.nc
+forecast_length: P1D
 output:
-  frequency: "PT1H"
-  datadir: "Data"
-  exp: "truth"
-  date: "2015-05-01T00:00:00Z"
-  type: "fc"
-  filename: "test.nc"
-  varname: "sstoc"
-
+  frequency: PT6H
+  datadir: Data
+  exp: truth
+  date: '2018-04-15T00:00:00Z'
+  type: fc
 print:
-  frequency: "PT3H"  
+  frequency: PT3H

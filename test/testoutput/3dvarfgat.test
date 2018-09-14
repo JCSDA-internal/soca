@@ -1,0 +1,26 @@
+Test     : CostJb   : Nonlinear Jb = 0
+Test     : CostJo   : Nonlinear Jo = 4.81234e+07, nobs = 8065, Jo/n = 5966.94, err = 0.01
+Test     : CostJo   : Nonlinear Jo = 148697, nobs = 19266, Jo/n = 7.71812, err = 0.1
+Test     : CostJo   : Nonlinear Jo = 273739, nobs = 126753, Jo/n = 2.15962, err = 0.1
+Test     : CostFunction: Nonlinear J = 4.85458e+07
+Test     : DRIPCGMinimizer: reduction in residual norm = 0.136109
+Test     : CostFunction::addIncrement: Analysis norm: 150795
+Test     : CostJb   : Nonlinear Jb = 1.83354e+08
+Test     : CostJo   : Nonlinear Jo = 3.03313e+07, nobs = 8065, Jo/n = 3760.85, err = 0.01
+Test     : CostJo   : Nonlinear Jo = 142211, nobs = 19266, Jo/n = 7.38143, err = 0.1
+Test     : CostJo   : Nonlinear Jo = 294920, nobs = 126753, Jo/n = 2.32673, err = 0.1
+Test     : CostFunction: Nonlinear J = 2.14123e+08
+Test     : DRIPCGMinimizer: reduction in residual norm = 0.61383
+Test     : CostFunction::addIncrement: Analysis norm: 150342
+Test     : CostJb   : Nonlinear Jb = 1.79397e+08
+Test     : CostJo   : Nonlinear Jo = 3.0028e+07, nobs = 8065, Jo/n = 3723.25, err = 0.01
+Test     : CostJo   : Nonlinear Jo = 139787, nobs = 19266, Jo/n = 7.25564, err = 0.1
+Test     : CostJo   : Nonlinear Jo = 283752, nobs = 126753, Jo/n = 2.23862, err = 0.1
+Test     : CostFunction: Nonlinear J = 2.09848e+08
+Test     : DRIPCGMinimizer: reduction in residual norm = 1.0776
+Test     : CostFunction::addIncrement: Analysis norm: 150338
+Test     : CostJb   : Nonlinear Jb = 1.73928e+08
+Test     : CostJo   : Nonlinear Jo = 3.00431e+07, nobs = 8065, Jo/n = 3725.12, err = 0.01
+Test     : CostJo   : Nonlinear Jo = 141583, nobs = 19266, Jo/n = 7.34885, err = 0.1
+Test     : CostJo   : Nonlinear Jo = 287893, nobs = 126753, Jo/n = 2.27129, err = 0.1
+Test     : CostFunction: Nonlinear J = 2.044e+08
