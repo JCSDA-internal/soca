@@ -12,8 +12,7 @@ module soca_getvaltraj_mod
   !General JEDI uses
   use kinds
   use iso_c_binding
-  !use type_bump, only: bump_type
-  use soca_interph_mod
+  use soca_bumpinterp2d_mod
   
   implicit none
   private
@@ -23,10 +22,10 @@ module soca_getvaltraj_mod
   public c_soca_getvaltraj_setup, c_soca_getvaltraj_delete
 
   type :: soca_getvaltraj
-     integer            :: nobs
-     type(soca_hinterp) :: horiz_interp
-     logical            :: interph_initialized = .false.
-     integer            :: obstype_index
+     integer                 :: nobs
+     type(soca_bumpinterp2d) :: horiz_interp
+     logical                 :: interph_initialized = .false.
+     integer                 :: obstype_index
   end type soca_getvaltraj
 
 #define LISTED_TYPE soca_getvaltraj

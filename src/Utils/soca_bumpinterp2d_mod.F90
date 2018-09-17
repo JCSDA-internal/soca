@@ -1,0 +1,184 @@
+!
+! (C) Copyright 2017 UCAR
+!
+! This software is licensed under the terms of the Apache Licence Version 2.0
+! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+!
+
+module soca_bumpinterp2d_mod
+
+  use kinds
+  use type_bump, only: bump_type
+
+  implicit none
+  private
+  public :: soca_bumpinterp2d
+  type, public :: soca_bumpinterp2d
+     type(bump_type)                   :: bump          !< bump interp object
+     integer                           :: nobs          !< Number of values to interpolate
+     real(kind=kind_real), allocatable :: lono(:)       !< Longitude of destination
+     real(kind=kind_real), allocatable :: lato(:)       !< Latitude of destination 
+     logical                           :: initialized   !< Initialization switch
+   contains
+     procedure :: initialize => interp_init
+     procedure :: apply => interp_apply     
+     procedure :: applyad => interpad_apply
+     procedure :: finalize => interp_exit
+  end type soca_bumpinterp2d
+
+contains
+
+  !--------------------------------------------
+  subroutine interp_init(self, mod_lon, mod_lat, mod_mask, obs_lon, obs_lat)
+    ! Adapted from the fv3-jedi interface
+
+    use fckit_mpi_module, only: fckit_mpi_comm
+    use type_bump, only: bump_type
+
+    implicit none
+
+    class(soca_bumpinterp2d), intent(inout) :: self    
+    real(kind=kind_real),      intent(in) :: mod_lon(:,:)
+    real(kind=kind_real),      intent(in) :: mod_lat(:,:)
+    real(kind=kind_real),      intent(in) :: mod_mask(:,:)    
+    real(kind=kind_real),      intent(in) :: obs_lon(:)
+    real(kind=kind_real),      intent(in) :: obs_lat(:)    
+    
+    !Locals
+    integer :: ns, no, ni, nj
+    real(kind=kind_real), allocatable :: area(:),vunit(:,:)
+    real(kind=kind_real), allocatable :: tmp_lonmod(:), tmp_latmod(:)    
+    logical             , allocatable :: tmp_maskmod(:,:)
+    
+    integer, save :: bumpcount = 0
+    character(len=5) :: cbumpcount
+    character(len=16) :: bump_nam_prefix
+
+    type(fckit_mpi_comm) :: f_comm
+
+    f_comm = fckit_mpi_comm()
+
+    ! Each bump%nam%prefix must be distinct
+    ! -------------------------------------
+    bumpcount = bumpcount + 1
+    write(cbumpcount,"(I0.5)") bumpcount
+    bump_nam_prefix = 'soca_bump_data_'//cbumpcount
+
+    !Get the obs and state dimension
+    !-------------------------------
+    ni = size(mod_lon, 1)
+    nj = size(mod_lon, 2)    
+    ns = ni * nj
+    no = size(obs_lon, 1)    
+    
+    !Calculate interpolation weight using BUMP
+    !-----------------------------------------
+
+    !Important namelist options
+    call self%bump%nam%init()
+
+    self%bump%nam%prefix = bump_nam_prefix   ! Prefix for files output
+    self%bump%nam%nobs = no                  ! Number of observations
+    self%bump%nam%obsop_interp = 'bilin'     ! Interpolation type (bilinear)
+    self%bump%nam%obsdis = 'local'           ! Local or BUMP may try to redistribute obs
+    self%bump%nam%diag_interp = 'bilin'
+    self%bump%nam%local_diag = .false.
+
+    !Less important namelist options (should not be changed)
+    self%bump%nam%default_seed = .true.
+    self%bump%nam%new_hdiag = .false.
+    self%bump%nam%new_nicas = .false.
+    self%bump%nam%check_adjoints = .false.
+    self%bump%nam%check_pos_def = .false.
+    self%bump%nam%check_sqrt = .false.
+    self%bump%nam%check_dirac = .false.
+    self%bump%nam%check_randomization = .false.
+    self%bump%nam%check_consistency = .false.
+    self%bump%nam%check_optimality = .false.
+    self%bump%nam%new_lct = .false.
+    self%bump%nam%new_obsop = .true.
+
+    !Initialize geometry
+    allocate(area(ns))
+    allocate(vunit(ns,1))
+    area = 1.0           ! Dummy area
+    vunit = 1.0          ! Dummy vertical unit
+
+    !Allocate temporary arrays
+    allocate(tmp_lonmod(ns), tmp_latmod(ns), tmp_maskmod(ni, nj))
+    tmp_lonmod(:) = reshape(mod_lon, (/ns/))
+    tmp_latmod(:) = reshape(mod_lat, (/ns/))
+    tmp_maskmod = .true.
+    where (mod_mask == 0.0)
+       tmp_maskmod = .false.
+    end where
+    tmp_maskmod = reshape(tmp_maskmod, (/ns, 1/))
+    
+    !Initialize BUMP
+    call self%bump%setup_online( f_comm%communicator(), ns, 1, 1, 1,&
+         &tmp_lonmod, tmp_latmod, area, vunit, tmp_maskmod(:,1),&
+         &nobs=no, lonobs=obs_lon, latobs=obs_lat )
+
+    !Release memory
+    deallocate(area)
+    deallocate(vunit)
+    deallocate(tmp_lonmod, tmp_latmod, tmp_maskmod)
+    
+  end subroutine interp_init
+
+  !--------------------------------------------  
+  subroutine interp_apply(self, fld, obs)
+    ! Forward interpolation: "fields to obs"
+    ! obs = interp(fld)
+    use kinds
+
+    implicit none
+
+    class(soca_bumpinterp2d), intent(in) :: self    
+    real(kind=kind_real),     intent(in) :: fld(:,:)
+    real(kind=kind_real),    intent(out) :: obs(:) 
+
+    call self%bump%apply_obsop(fld,obs)
+
+  end subroutine interp_apply
+
+  !--------------------------------------------  
+  subroutine interpad_apply(self, fld, obs)
+    ! Backward interpolation: "obs to fields"
+    ! fld = interpad(obs)    
+    use kinds
+
+    implicit none
+
+    class(soca_bumpinterp2d),    intent(in) :: self    
+    real(kind=kind_real),     intent(inout) :: fld(:,:)
+    real(kind=kind_real),        intent(in) :: obs(:)
+
+    ! Locals
+    real(kind=kind_real), allocatable :: tmp_obs(:)
+    integer :: nobs
+
+    nobs = size(obs, 1)
+    allocate(tmp_obs(nobs))
+    tmp_obs = obs
+    call self%bump%apply_obsop_ad(tmp_obs, fld)
+    deallocate(tmp_obs)
+
+  end subroutine interpad_apply
+
+  !--------------------------------------------  
+  subroutine interp_exit(self)
+
+    implicit none
+
+    class(soca_bumpinterp2d), intent(out) :: self
+
+    self%nobs = 0
+    if (allocated(self%lono)) deallocate(self%lono)
+    if (allocated(self%lato)) deallocate(self%lato)
+    call self%bump%dealloc()
+    
+  end subroutine interp_exit
+
+end module soca_bumpinterp2d_mod
+
