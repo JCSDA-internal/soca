@@ -21,6 +21,7 @@ module soca_bumpinterp2d_mod
      logical                           :: initialized   !< Initialization switch
    contains
      procedure :: initialize => interp_init
+     procedure :: info => interp_info
      procedure :: apply => interp_apply     
      procedure :: applyad => interpad_apply
      procedure :: finalize => interp_exit
@@ -34,7 +35,8 @@ contains
 
     use fckit_mpi_module, only: fckit_mpi_comm
     use type_bump, only: bump_type
-
+    use mpi
+    
     implicit none
 
     class(soca_bumpinterp2d), intent(inout) :: self    
@@ -56,11 +58,14 @@ contains
 
     type(fckit_mpi_comm) :: f_comm
 
-    f_comm = fckit_mpi_comm()
-
+    !f_comm = fckit_mpi_comm()
+    print *,bumpcount
+    read(*,*)
     ! Each bump%nam%prefix must be distinct
-    ! -------------------------------------
+    ! -------------------------------------    
     bumpcount = bumpcount + 1
+    print *,'bumpcount=',bumpcount
+    print *,'lono=',obs_lon
     write(cbumpcount,"(I0.5)") bumpcount
     bump_nam_prefix = 'soca_bump_data_'//cbumpcount
 
@@ -109,16 +114,19 @@ contains
     tmp_lonmod(:) = reshape(mod_lon, (/ns/))
     tmp_latmod(:) = reshape(mod_lat, (/ns/))
     tmp_maskmod = .true.
-    where (mod_mask == 0.0)
-       tmp_maskmod = .false.
-    end where
+    !where (mod_mask == 0.0)
+    !   tmp_maskmod = .false.
+    !end where
     tmp_maskmod = reshape(tmp_maskmod, (/ns, 1/))
     
     !Initialize BUMP
+    print *,'starting init ...'
     call self%bump%setup_online( f_comm%communicator(), ns, 1, 1, 1,&
          &tmp_lonmod, tmp_latmod, area, vunit, tmp_maskmod(:,1),&
          &nobs=no, lonobs=obs_lon, latobs=obs_lat )
 
+    self%initialized = .true.
+    
     !Release memory
     deallocate(area)
     deallocate(vunit)
@@ -167,6 +175,23 @@ contains
   end subroutine interpad_apply
 
   !--------------------------------------------  
+  subroutine interp_info(self)
+
+    use fckit_log_module, only : fckit_log
+    
+    implicit none
+
+    class(soca_bumpinterp2d), intent(in) :: self    
+    character(len=160) :: record
+
+    write(record,*) "soca_bumpinterp2d%nobs: ",self%nobs
+    call fckit_log%info(record)
+    write(record,*) "soca_bumpinterp2d%initialized: ",self%initialized
+    call fckit_log%info(record)    
+
+  end subroutine interp_info
+
+  !--------------------------------------------  
   subroutine interp_exit(self)
 
     implicit none
@@ -177,6 +202,7 @@ contains
     if (allocated(self%lono)) deallocate(self%lono)
     if (allocated(self%lato)) deallocate(self%lato)
     call self%bump%dealloc()
+    self%initialized = .false.
     
   end subroutine interp_exit
 

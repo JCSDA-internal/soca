@@ -208,8 +208,8 @@ cost_function:
 #        ObsDataOut:
 #          obsfile: Data/test_obsout.nc
 #        ObsDataIn:
-#          #obsfile: Data/seaice_obs-2018-04-15.nc
-#          obsfile: /home/gvernier/Sandboxes/soca/data/bob_l2_sic/l2/sea-ice-con.nc #Data/seaice_obs-2018-04-15.nc
+#          obsfile: Data/seaice_obs-2018-04-15.nc
+#          obsfile: /home/gvernier/Sandboxes/soca/data/bob_l2_sic/l2/sea-ice-con.nc Data/seaice_obs-2018-04-15.nc
 #        obsvalue: ObsVal        
 #      Covariance:
 #        covariance: diagonal

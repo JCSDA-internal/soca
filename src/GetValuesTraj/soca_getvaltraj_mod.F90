@@ -22,8 +22,8 @@ module soca_getvaltraj_mod
   public c_soca_getvaltraj_setup, c_soca_getvaltraj_delete
 
   type :: soca_getvaltraj
-     integer                 :: nobs
-     type(soca_bumpinterp2d) :: horiz_interp
+     integer                          :: nobs
+     type(soca_bumpinterp2d), pointer :: horiz_interp
      logical                 :: interph_initialized = .false.
      integer                 :: obstype_index
   end type soca_getvaltraj
@@ -59,7 +59,7 @@ contains
     self%interph_initialized = .false.
     self%nobs = 0
     self%obstype_index = c_key_self
-
+    print *,'=====================gettraj setup, ',c_key_self
   end subroutine c_soca_getvaltraj_setup
 
   ! ------------------------------------------------------------------------------
@@ -70,7 +70,7 @@ contains
     integer(c_int), intent(inout) :: c_key_self
     type(soca_getvaltraj), pointer :: self
 
-      ! Get key
+    ! Get key
     call soca_getvaltraj_registry%get(c_key_self, self)
 
     if (self%interph_initialized) then
@@ -79,7 +79,8 @@ contains
 
     ! Remove key
     call soca_getvaltraj_registry%remove(c_key_self)
-
+    print *,'===============gettraj removed key',c_key_self
+    
   end subroutine c_soca_getvaltraj_delete
 
   ! ------------------------------------------------------------------------------

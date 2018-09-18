@@ -155,6 +155,7 @@ namespace soca {
                            ufo::GeoVaLs & gom,
                            const GetValuesTraj & traj) const {
     const eckit::Configuration * conf = &vars.toFortran();
+    std::cout << "getvaltl(loc,vars,geovals,traj)" << std::endl;    
     soca_field_interp_tl_traj_f90(keyFlds_, locs.toFortran(), &conf,
                                   gom.toFortran(), traj.toFortran());
   }

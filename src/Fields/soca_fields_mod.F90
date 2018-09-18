@@ -27,7 +27,8 @@ module soca_fields
        & self_add, self_schur, self_sub, self_mul, axpy, &
        & dot_prod, add_incr, diff_incr, &
        & read_file, write_file, gpnorm, fldrms, fld2file, &
-       & change_resol, interp_tl, interp_ad, field_to_ug, field_from_ug, ug_coord
+       & change_resol, getvalues, getvalues_tl, getvalues_ad,&
+       & field_to_ug, field_from_ug, ug_coord
   public :: soca_field_registry
 
   interface create
@@ -924,30 +925,229 @@ contains
   end subroutine fldrms
 
   ! ------------------------------------------------------------------------------
-
-  subroutine interp_tl(fld, locs, vars, geovals, traj)
+  subroutine getvalues(fld, locs, vars, geovals, traj)
     use ioda_locs_mod
     use ufo_geovals_mod
     use ufo_vars_mod
+    use fckit_log_module, only : fckit_log
+    
     implicit none
-    type(soca_field),                        intent(inout) :: fld
-    type(ioda_locs),                            intent(in) :: locs
-    type(ufo_vars),                             intent(in) :: vars    
-    type(ufo_geovals),                       intent(inout) :: geovals
-    type(soca_getvaltraj), optional, target, intent(inout) :: traj    
+    
+    type(soca_field),   intent(inout) :: fld
+    type(ioda_locs),       intent(in) :: locs
+    type(ufo_vars),        intent(in) :: vars    
+    type(ufo_geovals),  intent(inout) :: geovals
+    type(soca_getvaltraj), target, optional, intent(inout) :: traj    
 
-    call check(fld)
+    type(soca_bumpinterp2d), pointer :: horiz_interp_p
+    type(soca_bumpinterp2d), target  :: horiz_interp    
 
-    call nicas_interph(fld, locs, vars, geovals, traj)
+    integer             :: ivar
+    character(len=1024) :: buf
+    logical,allocatable :: mask(:), masko(:)               ! < mask (ncells, nlevels)
+    real(kind=kind_real), allocatable :: lon(:), lat(:), lono(:), lato(:), fld_src(:), fld_dst(:)
+    integer :: nobs
+    integer :: nval
 
-  end subroutine interp_tl
+
+    integer, allocatable :: imask(:)
+    real(kind=kind_real), allocatable :: area(:),vunit(:)
+    real(kind=kind_real), allocatable :: obs_field(:,:), mod_field(:,:), obsout(:)
+
+    integer :: icat, ilev
+    character(len=160) :: record
+    integer :: isc, iec, jsc, jec
+
+    call check(fld)    
+
+    if (present(traj)) then
+       if (.not.(traj%interph_initialized)) then
+          call initialize_interph(fld, locs, traj=traj)
+          traj%interph_initialized = .true.
+       end if
+       horiz_interp_p => traj%horiz_interp       
+    else
+       call initialize_interph(fld, locs, horiz_interp=horiz_interp)
+       horiz_interp_p => horiz_interp
+    end if
+
+    call interp_tl(fld, locs, vars, geovals, horiz_interp_p)    
+    
+  end subroutine getvalues
 
   ! ------------------------------------------------------------------------------
-
-  subroutine interp_ad(fld, locs, vars, geovals, traj)
+  subroutine getvalues_tl(fld, locs, vars, geovals, traj)
     use ioda_locs_mod
     use ufo_geovals_mod
-    use ufo_vars_mod    
+    use ufo_vars_mod
+    use fckit_log_module, only : fckit_log
+    
+    implicit none
+    
+    type(soca_field),   intent(inout) :: fld
+    type(ioda_locs),       intent(in) :: locs
+    type(ufo_vars),        intent(in) :: vars    
+    type(ufo_geovals),  intent(inout) :: geovals
+    type(soca_getvaltraj), target, intent(inout) :: traj    
+
+    type(soca_bumpinterp2d), pointer :: horiz_interp_p
+    type(soca_bumpinterp2d), target  :: horiz_interp    
+
+    integer             :: ivar
+    character(len=1024) :: buf
+    logical,allocatable :: mask(:), masko(:)               ! < mask (ncells, nlevels)
+    real(kind=kind_real), allocatable :: lon(:), lat(:), lono(:), lato(:), fld_src(:), fld_dst(:)
+    integer :: nobs
+    integer :: nval
+
+
+    integer, allocatable :: imask(:)
+    real(kind=kind_real), allocatable :: area(:),vunit(:)
+    real(kind=kind_real), allocatable :: obs_field(:,:), mod_field(:,:), obsout(:)
+
+    integer :: icat, ilev
+    character(len=160) :: record
+    integer :: isc, iec, jsc, jec
+
+    call check(fld)    
+
+    !call initialize_interph(fld, locs, traj=traj)    !!!!!!!
+    call traj%horiz_interp%info()
+    call interp_tl(fld, locs, vars, geovals, traj%horiz_interp)
+    
+  end subroutine getvalues_tl
+
+  ! ------------------------------------------------------------------------------
+  subroutine interp_tl(fld, locs, vars, geovals, horiz_interp)
+
+    use ioda_locs_mod
+    use ufo_geovals_mod
+    use ufo_vars_mod
+    use fckit_log_module, only : fckit_log
+    
+    implicit none
+    
+    type(soca_field),   intent(inout) :: fld
+    type(ioda_locs),       intent(in) :: locs
+    type(ufo_vars),        intent(in) :: vars    
+    type(ufo_geovals),  intent(inout) :: geovals
+    type(soca_bumpinterp2d), intent(inout)  :: horiz_interp        
+
+    integer             :: ivar
+    character(len=1024) :: buf
+    logical,allocatable :: mask(:), masko(:)               ! < mask (ncells, nlevels)
+    real(kind=kind_real), allocatable :: lon(:), lat(:), lono(:), lato(:), fld_src(:), fld_dst(:)
+    integer :: nobs
+    integer :: nval
+
+
+    integer, allocatable :: imask(:)
+    real(kind=kind_real), allocatable :: area(:),vunit(:)
+    real(kind=kind_real), allocatable :: obs_field(:,:), mod_field(:,:), obsout(:)
+
+    integer :: icat, ilev
+    character(len=160) :: record
+    integer :: isc, iec, jsc, jec
+
+    call check(fld)    
+
+    nobs = locs%nlocs
+
+    call initialize_interph(fld, locs, horiz_interp=horiz_interp)
+
+    
+    do ivar = 1, vars%nv
+
+       write(record,*) "nicas_interph: ",vars%fldnames(ivar),' nobs=',locs%nlocs
+       call fckit_log%info(record)
+
+       select case (trim(vars%fldnames(ivar)))
+       case ("ice_concentration","ice_thickness")
+          nval = fld%geom%ocean%ncat
+
+       case ("steric_height",&
+            &"sea_surface_height_above_geoid",&
+            &"ocean_upper_level_temperature")
+          nval = 1
+
+       case ("ocean_potential_temperature","ocean_salinity")
+          nval = fld%geom%ocean%nzo
+
+       case default
+          write(record,*) "nicas_interph: Doing nothing "
+          call fckit_log%info(record)          
+
+       end select
+
+       ! Allocate GeoVaLs (fields at locations)
+       if (nval.eq.0) call abor1_ftn("Wrong nval: nval = 0")
+       geovals%geovals(ivar)%nval = nval
+       if (allocated(geovals%geovals(ivar)%vals)) then
+          deallocate(geovals%geovals(ivar)%vals)
+       end if
+       allocate(geovals%geovals(ivar)%vals(nval,nobs))
+       geovals%geovals(ivar)%vals(:,:)=0.0_kind_real    
+       geovals%lalloc = .true.       
+       geovals%linit = .true.
+
+       ! Output status of interpolation
+       call horiz_interp%info()
+       
+       ! Indices for compute domain (no halo)
+       isc = fld%geom%ocean%G%isc
+       iec = fld%geom%ocean%G%iec
+       jsc = fld%geom%ocean%G%jsc
+       jec = fld%geom%ocean%G%jec
+
+       select case (trim(vars%fldnames(ivar)))
+          
+       case ("ice_concentration")
+          do icat = 1,fld%geom%ocean%ncat
+             call horiz_interp%apply(fld%cicen(isc:iec,jsc:jec,icat+1)*fld%geom%ocean%mask2d(isc:iec,jsc:jec),&
+                  &geovals%geovals(ivar)%vals(icat,:))
+          end do
+       case ("ice_thickness")
+          do icat = 1,fld%geom%ocean%ncat
+             call horiz_interp%apply(fld%hicen(isc:iec,jsc:jec,icat)*fld%geom%ocean%mask2d(isc:iec,jsc:jec),&
+                  &geovals%geovals(ivar)%vals(icat,:))
+          end do
+
+       case ("sea_surface_height_above_geoid","steric_height")
+          call horiz_interp%apply(fld%ssh(isc:iec,jsc:jec)*fld%geom%ocean%mask2d(isc:iec,jsc:jec),&
+               &geovals%geovals(ivar)%vals(1,:))
+
+       case ("ocean_potential_temperature")
+          do ilev = 1, fld%geom%ocean%nzo
+             call horiz_interp%apply(fld%tocn(isc:iec,jsc:jec,ilev), geovals%geovals(ivar)%vals(ilev,:))
+          end do
+
+       case ("ocean_salinity")
+          do ilev = 1, fld%geom%ocean%nzo
+             call horiz_interp%apply(fld%socn(isc:iec,jsc:jec,ilev), geovals%geovals(ivar)%vals(ilev,:))
+          end do
+
+       case ("ocean_layer_thickness")
+          do ilev = 1, fld%geom%ocean%nzo
+             call horiz_interp%apply(fld%hocn(isc:iec,jsc:jec,ilev), geovals%geovals(ivar)%vals(ilev,:))
+          end do
+
+       case ("ocean_upper_level_temperature")          
+          call horiz_interp%apply(fld%tocn(isc:iec,jsc:jec,1), geovals%geovals(ivar)%vals(1,:))
+
+       end select
+       
+    end do
+
+  end subroutine interp_tl
+  
+  ! ------------------------------------------------------------------------------
+
+  subroutine getvalues_ad(fld, locs, vars, geovals, traj)
+    use ioda_locs_mod
+    use ufo_geovals_mod
+    use ufo_vars_mod
+    use fckit_log_module, only : fckit_log
+   
     implicit none
     type(soca_field),      intent(inout) :: fld
     type(ioda_locs),          intent(in) :: locs
@@ -955,10 +1155,75 @@ contains
     type(ufo_geovals),     intent(inout) :: geovals
     type(soca_getvaltraj), intent(inout) :: traj    
 
-    call check(fld)
-    call nicas_interphad(fld, locs, vars, geovals, traj)
+    integer :: ivar, geovals_dim1, cnt_fld
+    character(len=1024)  :: buf
+    logical,allocatable :: mask(:), masko(:)               ! < mask (ncells, nlevels)
+    integer :: nobs, nval
 
-  end subroutine interp_ad
+    type(soca_bumpinterp2d), pointer :: horiz_interp_p
+    type(soca_bumpinterp2d), target  :: horiz_interp    
+    
+    integer :: icat, ilev
+    character(len=160) :: record
+    integer :: isc, iec, jsc, jec
+
+    print *,'Initialize interp_adjoint'
+    print *,'key_traj ',traj%obstype_index
+    print *,'traj init?',traj%interph_initialized    
+    call check(fld)
+
+!!$    if (.not.(traj%interph_initialized)) then
+!!$       call initialize_interph(fld, locs, traj=traj)
+!!$    end if
+!!$    horiz_interp_p => traj%horiz_interp
+    call initialize_interph(fld, locs, horiz_interp=horiz_interp)
+    horiz_interp_p => horiz_interp
+    
+    ! Indices for compute domain (no halo)
+    isc = fld%geom%ocean%G%isc
+    iec = fld%geom%ocean%G%iec
+    jsc = fld%geom%ocean%G%jsc
+    jec = fld%geom%ocean%G%jec
+    
+    !call initialize_interph(fld, locs, traj)
+
+    do ivar = 1, vars%nv
+       write(record,*) "nicas_interphad: ",trim(vars%fldnames(ivar))
+       call fckit_log%info(record)                           
+
+       select case (trim(vars%fldnames(ivar)))
+       case ("ice_concentration")
+          do icat = 1,fld%geom%ocean%ncat
+             call horiz_interp_p%applyad(fld%cicen(isc:iec,jsc:jec,icat+1), geovals%geovals(ivar)%vals(icat,:))
+          enddo
+
+       case ("ice_thickness")
+          do icat = 1,fld%geom%ocean%ncat
+             call horiz_interp_p%applyad(fld%hicen(isc:iec,jsc:jec,icat), geovals%geovals(ivar)%vals(icat,:))
+          enddo
+
+       case ("sea_surface_height_above_geoid","steric_height") !!!! steric height sould be  different case
+          print *,ivar,vars%fldnames(ivar)          
+          call horiz_interp_p%applyad(fld%ssh(isc:iec,jsc:jec), geovals%geovals(ivar)%vals(1,:))
+
+       case ("ocean_potential_temperature")
+          do ilev = 1, fld%geom%ocean%nzo
+             call horiz_interp_p%applyad(fld%tocn(isc:iec,jsc:jec,ilev), geovals%geovals(ivar)%vals(ilev,:))
+          end do
+
+       case ("ocean_salinity")
+          do ilev = 1, fld%geom%ocean%nzo
+             call horiz_interp_p%applyad(fld%socn(isc:iec,jsc:jec,ilev), geovals%geovals(ivar)%vals(ilev,:))
+          end do
+
+       case ("ocean_upper_level_temperature")
+          call horiz_interp_p%applyad(fld%tocn(isc:iec,jsc:jec,1), geovals%geovals(ivar)%vals(1,:))
+
+       end select
+    end do
+    nullify(horiz_interp_p)    
+
+  end subroutine getvalues_ad
 
   ! ------------------------------------------------------------------------------
 
@@ -995,7 +1260,6 @@ contains
                & fld%geom%ocean%mask2d(isc:iec,jsc:jec),&
                & locs%lon,&
                & locs%lat)
-
           traj%interph_initialized = .true.
        end if
     end if
@@ -1010,244 +1274,6 @@ contains
     end if
 
   end subroutine initialize_interph
-
-  ! ------------------------------------------------------------------------------
-
-  subroutine nicas_interph(fld, locs, ufovars, geovals, traj)
-
-    use ioda_locs_mod  
-    use ufo_geovals_mod_c
-    use ufo_geovals_mod
-    use ufo_vars_mod
-    use soca_constants, only : rho_i
-    use soca_bumpinterp2d_mod
-    use fckit_log_module, only : fckit_log
-
-    implicit none
-
-    type(soca_field),      intent(inout) :: fld
-    type(ioda_locs),          intent(in) :: locs
-    type(ufo_vars),           intent(in) :: ufovars  
-    type(ufo_geovals),               intent(inout) :: geovals
-    type(soca_getvaltraj), optional, intent(inout) :: traj
-
-    type(soca_bumpinterp2d), pointer :: horiz_interp_p
-    type(soca_bumpinterp2d), target  :: horiz_interp    
-
-    integer             :: ivar
-    character(len=1024) :: buf
-    logical,allocatable :: mask(:), masko(:)               ! < mask (ncells, nlevels)
-    real(kind=kind_real), allocatable :: lon(:), lat(:), lono(:), lato(:), fld_src(:), fld_dst(:)
-    integer :: nobs
-    integer :: nval
-
-
-    integer, allocatable :: imask(:)
-    real(kind=kind_real), allocatable :: area(:),vunit(:)
-    real(kind=kind_real), allocatable :: obs_field(:,:), mod_field(:,:), obsout(:)
-
-    integer :: icat, ilev
-    character(len=160) :: record
-    integer :: isc, iec, jsc, jec
-
-!!$    !HACK TO TEST ADJOINT OF INTERPOLTION
-!!$    type(ufo_locs)        :: locs_test
-!!$    integer, parameter :: nobs_test=100000
-!!$    real(kind_real) :: lats(nobs_test), lons(nobs_test)
-!!$    real(kind=kind_real),allocatable :: dx1(:,:),dx2(:,:)
-!!$    real(kind=kind_real) :: dy1(nobs_test),dy2(nobs_test)
-!!$    
-!!$    ! Test horizontal inerpolation
-!!$    call random_number(lons)
-!!$    lons=-30.0*lons
-!!$    call random_number(lats)    
-!!$    lats=75.0*lats
-!!$    allocate(dx1(size(fld%cicen(:,:,1),1),size(fld%cicen(:,:,1),1)))
-!!$    allocate(dx2(size(fld%cicen(:,:,1),1),size(fld%cicen(:,:,1),1)))
-!!$    call ufo_locs_create(locs_test, nobs_test, lats, lons)
-!!$    call random_number(dx1)
-!!$    call random_number(dy1)
-!!$    dx2=0.0
-!!$    dy2=0.0
-!!$    call initialize_interph(fld, locs_test, horiz_interp_p)
-!!$    call horiz_interp_p%interp_apply(dx1, dy2)           ! dy2=I.dx1
-!!$    call horiz_interp_p%interpad_apply(dx2, dy1)         ! dx2=I^T.dy1
-!!$    print *,'dx1.dx2-dy1.dy2=',sum(dx2*dx1)-sum(dy2*dy1) ! dx1.dx2=dy1.dy2
-!!$
-!!$    call abor1_ftn("done testing interp")
-!!$    !End test
-
-    !call t_from_pt(pt_in,sp_in,p_in,lon_in,lat_in)
-
-    nobs = locs%nlocs
-    do ivar = 1, ufovars%nv
-       write(record,*) "nicas_interph: ",ufovars%fldnames(ivar)
-       call fckit_log%info(record)
-
-       select case (trim(ufovars%fldnames(ivar)))
-       case ("ice_concentration","ice_thickness")
-          nval = fld%geom%ocean%ncat
-
-       case ("steric_height","sea_surface_height_above_geoid","ocean_upper_level_temperature")
-          nval = 1
-
-       case ("ocean_potential_temperature","ocean_salinity")
-          nval = fld%geom%ocean%nzo
-
-       case default
-          write(record,*) "nicas_interph: Doing nothing "
-          call fckit_log%info(record)          
-
-       end select
-
-       ! Allocate GeoVaLs (fields at locations)
-       if (nval.eq.0) call abor1_ftn("Wrong nval: nval = 0")
-       geovals%geovals(ivar)%nval = nval
-       if (allocated(geovals%geovals(ivar)%vals)) then
-          deallocate(geovals%geovals(ivar)%vals)
-       end if
-       allocate(geovals%geovals(ivar)%vals(nval,nobs))
-       geovals%geovals(ivar)%vals(:,:)=0.0_kind_real    
-       geovals%lalloc = .true.       
-       geovals%linit = .true.
-
-       ! Initialize horizontal inerpolation
-       if (present(traj)) then
-          print *,'Initialize interp traj for obstype:',traj%obstype_index
-          !call initialize_interph(fld, locs, traj=traj)
-          call initialize_interph(fld, locs, horiz_interp=horiz_interp)
-          print *,'---- used to be a copy of interp obj ----'
-          !call traj%horiz_interp%interp_copy(horiz_interp)
-       else
-          call initialize_interph(fld, locs, horiz_interp=horiz_interp)
-       end if
-       horiz_interp_p => horiz_interp
-       write(record,*) "nicas_interph: ",ufovars%fldnames(ivar)
-       call fckit_log%info(record)
-       ! Indices for compute domain (no halo)
-       isc = fld%geom%ocean%G%isc
-       iec = fld%geom%ocean%G%iec
-       jsc = fld%geom%ocean%G%jsc
-       jec = fld%geom%ocean%G%jec
-
-       select case (trim(ufovars%fldnames(ivar)))
-
-       case ("ice_concentration")
-          do icat = 1,fld%geom%ocean%ncat
-             call horiz_interp_p%apply(fld%cicen(isc:iec,jsc:jec,icat+1)*fld%geom%ocean%mask2d(isc:iec,jsc:jec),&
-                  &geovals%geovals(ivar)%vals(icat,:))
-          end do
-       case ("ice_thickness")
-          do icat = 1,fld%geom%ocean%ncat
-             call horiz_interp_p%apply(fld%hicen(isc:iec,jsc:jec,icat)*fld%geom%ocean%mask2d(isc:iec,jsc:jec),&
-                  &geovals%geovals(ivar)%vals(icat,:))
-          end do
-
-       case ("sea_surface_height_above_geoid","steric_height")
-          call horiz_interp_p%apply(fld%ssh(isc:iec,jsc:jec)*fld%geom%ocean%mask2d(isc:iec,jsc:jec),&
-               &geovals%geovals(ivar)%vals(1,:))
-
-       case ("ocean_potential_temperature")
-          do ilev = 1, fld%geom%ocean%nzo
-             call horiz_interp_p%apply(fld%tocn(isc:iec,jsc:jec,ilev), geovals%geovals(ivar)%vals(ilev,:))
-          end do
-
-       case ("ocean_salinity")
-          do ilev = 1, fld%geom%ocean%nzo
-             call horiz_interp_p%apply(fld%socn(isc:iec,jsc:jec,ilev), geovals%geovals(ivar)%vals(ilev,:))
-          end do
-
-       case ("ocean_layer_thickness")
-          do ilev = 1, fld%geom%ocean%nzo
-             call horiz_interp_p%apply(fld%hocn(isc:iec,jsc:jec,ilev), geovals%geovals(ivar)%vals(ilev,:))
-          end do
-
-       case ("ocean_upper_level_temperature")          
-          call horiz_interp_p%apply(fld%tocn(isc:iec,jsc:jec,1), geovals%geovals(ivar)%vals(1,:))
-
-       end select
-    end do
-
-  end subroutine nicas_interph
-
-  ! ------------------------------------------------------------------------------
-
-  subroutine nicas_interphad(fld, locs, ufovars, geovals, traj)
-
-    use ioda_locs_mod  
-    use ufo_geovals_mod_c
-    use ufo_geovals_mod
-    use ufo_vars_mod
-    use soca_constants, only : rho_i
-    use soca_bumpinterp2d_mod
-    use fckit_log_module, only : fckit_log
-
-    implicit none
-
-    type(soca_field),      intent(inout) :: fld
-    type(ioda_locs),          intent(in) :: locs
-    type(ufo_vars),           intent(in) :: ufovars        
-    type(ufo_geovals),        intent(in) :: geovals
-    type(soca_getvaltraj), intent(inout) :: traj    
-
-
-    integer :: ivar, geovals_dim1, cnt_fld
-    character(len=1024)  :: buf
-    logical,allocatable :: mask(:), masko(:)               ! < mask (ncells, nlevels)
-    integer :: nobs, nval
-
-    type(soca_bumpinterp2d), pointer :: horiz_interp_p
-    integer :: icat, ilev
-    character(len=160) :: record
-    integer :: isc, iec, jsc, jec
-
-    print *,'Initialize interp_adjoint'
-
-    ! Indices for compute domain (no halo)
-    isc = fld%geom%ocean%G%isc
-    iec = fld%geom%ocean%G%iec
-    jsc = fld%geom%ocean%G%jsc
-    jec = fld%geom%ocean%G%jec
-
-    call initialize_interph(fld, locs, traj)
-
-    print *,'key_traj ',traj%obstype_index
-    print *,'traj init?',traj%interph_initialized    
-    do ivar = 1, ufovars%nv
-       write(record,*) "nicas_interphad: ",trim(ufovars%fldnames(ivar))
-       call fckit_log%info(record)                           
-
-       select case (trim(ufovars%fldnames(ivar)))
-       case ("ice_concentration")
-          do icat = 1,fld%geom%ocean%ncat
-             call traj%horiz_interp%applyad(fld%cicen(isc:iec,jsc:jec,icat+1), geovals%geovals(ivar)%vals(icat,:))
-          enddo
-
-       case ("ice_thickness")
-          do icat = 1,fld%geom%ocean%ncat
-             call traj%horiz_interp%applyad(fld%hicen(isc:iec,jsc:jec,icat), geovals%geovals(ivar)%vals(icat,:))
-          enddo
-
-       case ("sea_surface_height_above_geoid","steric_height") !!!! steric height sould be  different case
-          print *,ivar,ufovars%fldnames(ivar)          
-          call traj%horiz_interp%applyad(fld%ssh(isc:iec,jsc:jec), geovals%geovals(ivar)%vals(1,:))
-
-       case ("ocean_potential_temperature")
-          do ilev = 1, fld%geom%ocean%nzo
-             call traj%horiz_interp%applyad(fld%tocn(isc:iec,jsc:jec,ilev), geovals%geovals(ivar)%vals(ilev,:))
-          end do
-
-       case ("ocean_salinity")
-          do ilev = 1, fld%geom%ocean%nzo
-             call traj%horiz_interp%applyad(fld%socn(isc:iec,jsc:jec,ilev), geovals%geovals(ivar)%vals(ilev,:))
-          end do
-
-       case ("ocean_upper_level_temperature")
-          call traj%horiz_interp%applyad(fld%tocn(isc:iec,jsc:jec,1), geovals%geovals(ivar)%vals(1,:))
-
-       end select
-    end do
-  end subroutine nicas_interphad
 
   ! ------------------------------------------------------------------------------
 
