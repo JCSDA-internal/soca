@@ -441,6 +441,7 @@ end subroutine soca_field_rms_c
 subroutine soca_field_interp_tl_c(c_key_fld,c_key_loc,c_vars,c_key_gom) bind(c,name='soca_field_interp_tl_f90')
   use iso_c_binding
   use soca_fields
+  use soca_interpfields_mod
   use ioda_locs_mod_c  
   use ioda_locs_mod    
   use ufo_geovals_mod_c
@@ -473,6 +474,7 @@ end subroutine soca_field_interp_tl_c
 subroutine soca_field_interp_tl_traj_c(c_key_fld,c_key_loc,c_vars,c_key_gom,c_key_traj) bind(c,name='soca_field_interp_tl_traj_f90')
   use iso_c_binding
   use soca_fields
+  use soca_interpfields_mod  
   use ioda_locs_mod_c  
   use ioda_locs_mod    
   use ufo_geovals_mod_c
@@ -507,6 +509,7 @@ end subroutine soca_field_interp_tl_traj_c
 subroutine soca_field_interp_ad_c(c_key_fld,c_key_loc,c_vars,c_key_gom,c_key_traj) bind(c,name='soca_field_interp_ad_f90')
   use iso_c_binding
   use soca_fields
+  use soca_interpfields_mod  
   use ioda_locs_mod_c  
   use ioda_locs_mod  
   use ufo_geovals_mod_c
@@ -541,6 +544,7 @@ end subroutine soca_field_interp_ad_c
 subroutine soca_fieldnum_c(c_key_fld, nx, ny, nzo, nzi, ncat, nf) bind(c,name='soca_field_sizes_f90')
   use iso_c_binding
   use soca_fields
+
   implicit none
   integer(c_int), intent(in) :: c_key_fld
   integer(kind=c_int), intent(inout) :: nx, ny, nzo, nzi, ncat, nf

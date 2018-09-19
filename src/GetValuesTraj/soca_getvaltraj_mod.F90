@@ -23,7 +23,7 @@ module soca_getvaltraj_mod
 
   type :: soca_getvaltraj
      integer                          :: nobs
-     type(soca_bumpinterp2d), pointer :: horiz_interp
+     type(soca_bumpinterp2d) :: horiz_interp
      logical                 :: interph_initialized = .false.
      integer                 :: obstype_index
   end type soca_getvaltraj

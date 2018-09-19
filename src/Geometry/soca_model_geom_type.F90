@@ -14,7 +14,7 @@ module soca_model_geom_type
 
   implicit none
   private
-  public :: geom_infotofile
+  public :: geom_infotofile, geom_get_domain_indices
   
   type, public :: soca_model_geom
      type(ocean_grid_type)            :: G     !< Ocean/sea-ice horizontal grid
@@ -312,4 +312,29 @@ contains
 
   end subroutine geom_infotofile
 
+  subroutine geom_get_domain_indices(self, domain_type, is, ie, js, je)
+
+    implicit none
+
+    class(soca_model_geom), intent(in)  :: self
+    character(7),            intent(in) :: domain_type
+    integer,                intent(out) :: is, ie, js, je
+
+    select case (trim(domain_type))
+       case ("compute")
+          is = self%G%isc
+          ie = self%G%iec
+          js = self%G%jsc
+          je = self%G%jec
+
+       case ("data")
+          is = self%G%isd
+          ie = self%G%ied
+          js = self%G%jsd
+          je = self%G%jed
+
+       end select
+
+  end subroutine geom_get_domain_indices
+  
 end module soca_model_geom_type
