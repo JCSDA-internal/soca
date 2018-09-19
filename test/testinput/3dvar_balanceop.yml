@@ -173,16 +173,16 @@ cost_function:
           - hocn
   Jo:
     ObsTypes:
-#    - ObsType: SeaIceThickness
-#      ObsData:
-#        ObsDataOut:
-#          obsfile: Data/test_obsout.nc
-#        ObsDataIn:
-#          obsfile: Data/cryosat2-2018-04-15.nc
-#        obsvalue: ObsVal        
-#      Covariance:
-#        covariance: diagonal
-#        obserror: ObsErr
+    - ObsType: SeaIceThickness
+      ObsData:
+        ObsDataOut:
+          obsfile: Data/test_obsout.nc
+        ObsDataIn:
+          obsfile: Data/cryosat2-2018-04-15.nc
+        obsvalue: ObsVal        
+      Covariance:
+        covariance: diagonal
+        obserror: ObsErr
     - ObsType: ADT
       ObsData:
         ObsDataOut:
@@ -193,16 +193,16 @@ cost_function:
       Covariance:
         covariance: diagonal
         obserror: ObsErr        
-#    - ObsType: InsituTemperature
-#      ObsData:
-#        ObsDataOut:
-#          obsfile: Data/t0n156e_dy.nc
-#        ObsDataIn:
-#          obsfile: /home/gvernier/Data/Argo/Santha/report.FixedMor_profile_2018041500.nc #Data/t0n156e_dy.nc
-#        obsvalue: ObsVal        
-#      Covariance:
-#        covariance: diagonal
-#        obserror: ObsErr		
+    - ObsType: InsituTemperature
+      ObsData:
+        ObsDataOut:
+          obsfile: Data/t0n156e_dy.nc
+        ObsDataIn:
+          obsfile: /home/gvernier/Data/Argo/Santha/report.FixedMor_profile_2018041500.nc #Data/t0n156e_dy.nc
+        obsvalue: ObsVal        
+      Covariance:
+        covariance: diagonal
+        obserror: ObsErr		
 #    - ObsType: SeaIceFraction
 #      ObsData:
 #        ObsDataOut:
@@ -214,16 +214,16 @@ cost_function:
 #      Covariance:
 #        covariance: diagonal
 #        obserror: ObsErr
-#    - ObsType: SeaSurfaceTemp
-#      ObsData:
-#        ObsDataOut:
-#          obsfile: Data/test_obsout.nc
-#        ObsDataIn:
-#          obsfile: Data/sst_obs-2018-04-15.nc
-#        obsvalue: ObsVal        
-#      Covariance:
-#        covariance: diagonal
-#        obserror: ObsErr	      
+    - ObsType: SeaSurfaceTemp
+      ObsData:
+        ObsDataOut:
+          obsfile: Data/test_obsout.nc
+        ObsDataIn:
+          obsfile: Data/sst_obs-2018-04-15.nc
+        obsvalue: ObsVal        
+      Covariance:
+        covariance: diagonal
+        obserror: ObsErr	      
 variational:
   iteration:
   - resolution: {}

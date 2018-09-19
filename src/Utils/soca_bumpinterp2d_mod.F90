@@ -59,13 +59,12 @@ contains
     type(fckit_mpi_comm) :: f_comm
 
     !f_comm = fckit_mpi_comm()
-    print *,bumpcount
-    read(*,*)
+    !print *,bumpcount
+    !read(*,*)
     ! Each bump%nam%prefix must be distinct
     ! -------------------------------------    
     bumpcount = bumpcount + 1
     print *,'bumpcount=',bumpcount
-    print *,'lono=',obs_lon
     write(cbumpcount,"(I0.5)") bumpcount
     bump_nam_prefix = 'soca_bump_data_'//cbumpcount
 

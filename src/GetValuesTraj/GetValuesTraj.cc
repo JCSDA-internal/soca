@@ -17,7 +17,7 @@ namespace soca {
 GetValuesTraj::GetValuesTraj() {
   oops::Log::trace() << "GetValuesTraj constructor starting"
                      << std::endl;
-  soca_getvaltraj_setup_f90(keyGetValuesTraj_);
+  //soca_getvaltraj_setup_f90(keyGetValuesTraj_);
   oops::Log::trace() << "GetValuesTraj constructor done"
                      << keyGetValuesTraj_ << std::endl;
 }
@@ -25,7 +25,7 @@ GetValuesTraj::GetValuesTraj() {
 GetValuesTraj::~GetValuesTraj() {
   oops::Log::trace() << "GetValuesTraj destructor starting"
                      << std::endl;
-  soca_getvaltraj_delete_f90(keyGetValuesTraj_);
+  //soca_getvaltraj_delete_f90(keyGetValuesTraj_);
   oops::Log::trace() << "GetValuesTraj destructor done" << std::endl;
 }
 // -----------------------------------------------------------------------------

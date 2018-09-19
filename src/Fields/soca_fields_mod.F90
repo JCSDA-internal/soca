@@ -940,7 +940,7 @@ contains
     type(soca_getvaltraj), target, optional, intent(inout) :: traj    
 
     type(soca_bumpinterp2d), pointer :: horiz_interp_p
-    type(soca_bumpinterp2d), target  :: horiz_interp    
+    type(soca_bumpinterp2d) :: horiz_interp    
 
     integer             :: ivar
     character(len=1024) :: buf
@@ -959,19 +959,20 @@ contains
     integer :: isc, iec, jsc, jec
 
     call check(fld)    
+    print *,'******************** getvalues'
+!!$    if (present(traj)) then
+!!$       if (.not.(traj%interph_initialized)) then
+!!$          call initialize_interph(fld, locs, traj=traj)
+!!$          traj%interph_initialized = .true.
+!!$       end if
+!!$       horiz_interp_p => traj%horiz_interp       
+!!$    else
+!!$       call initialize_interph(fld, locs, horiz_interp=horiz_interp)
+!!$       horiz_interp_p => horiz_interp
+!!$    end if
 
-    if (present(traj)) then
-       if (.not.(traj%interph_initialized)) then
-          call initialize_interph(fld, locs, traj=traj)
-          traj%interph_initialized = .true.
-       end if
-       horiz_interp_p => traj%horiz_interp       
-    else
-       call initialize_interph(fld, locs, horiz_interp=horiz_interp)
-       horiz_interp_p => horiz_interp
-    end if
-
-    call interp_tl(fld, locs, vars, geovals, horiz_interp_p)    
+    call initialize_interph(fld, locs, horiz_interp=horiz_interp)
+    call interp_tl(fld, locs, vars, geovals, horiz_interp)    
     
   end subroutine getvalues
 
@@ -991,7 +992,7 @@ contains
     type(soca_getvaltraj), target, intent(inout) :: traj    
 
     type(soca_bumpinterp2d), pointer :: horiz_interp_p
-    type(soca_bumpinterp2d), target  :: horiz_interp    
+    type(soca_bumpinterp2d) :: horiz_interp    
 
     integer             :: ivar
     character(len=1024) :: buf
@@ -1009,12 +1010,14 @@ contains
     character(len=160) :: record
     integer :: isc, iec, jsc, jec
 
+    print *,'******************** getvalues_tl'
+    
     call check(fld)    
 
-    !call initialize_interph(fld, locs, traj=traj)    !!!!!!!
-    call traj%horiz_interp%info()
-    call interp_tl(fld, locs, vars, geovals, traj%horiz_interp)
-    
+    call initialize_interph(fld, locs, horiz_interp=horiz_interp)    !!!!!!!
+    !call traj%horiz_interp%info()
+    call interp_tl(fld, locs, vars, geovals, horiz_interp)
+
   end subroutine getvalues_tl
 
   ! ------------------------------------------------------------------------------
@@ -1031,7 +1034,7 @@ contains
     type(ioda_locs),       intent(in) :: locs
     type(ufo_vars),        intent(in) :: vars    
     type(ufo_geovals),  intent(inout) :: geovals
-    type(soca_bumpinterp2d), intent(inout)  :: horiz_interp        
+    type(soca_bumpinterp2d), intent(in)  :: horiz_interp        
 
     integer             :: ivar
     character(len=1024) :: buf
@@ -1053,7 +1056,7 @@ contains
 
     nobs = locs%nlocs
 
-    call initialize_interph(fld, locs, horiz_interp=horiz_interp)
+    !call initialize_interph(fld, locs, horiz_interp=horiz_interp)
 
     
     do ivar = 1, vars%nv
@@ -1160,24 +1163,25 @@ contains
     logical,allocatable :: mask(:), masko(:)               ! < mask (ncells, nlevels)
     integer :: nobs, nval
 
-    type(soca_bumpinterp2d), pointer :: horiz_interp_p
-    type(soca_bumpinterp2d), target  :: horiz_interp    
+    type(soca_bumpinterp2d) :: horiz_interp_p
+    type(soca_bumpinterp2d) :: horiz_interp    
     
     integer :: icat, ilev
     character(len=160) :: record
     integer :: isc, iec, jsc, jec
 
-    print *,'Initialize interp_adjoint'
-    print *,'key_traj ',traj%obstype_index
-    print *,'traj init?',traj%interph_initialized    
+    print *,'******************** getvalues_ad'    
+
+    call initialize_interph(fld, locs, horiz_interp=horiz_interp_p)
+    !horiz_interp_p => horiz_interp
+    
     call check(fld)
 
 !!$    if (.not.(traj%interph_initialized)) then
 !!$       call initialize_interph(fld, locs, traj=traj)
 !!$    end if
 !!$    horiz_interp_p => traj%horiz_interp
-    call initialize_interph(fld, locs, horiz_interp=horiz_interp)
-    horiz_interp_p => horiz_interp
+
     
     ! Indices for compute domain (no halo)
     isc = fld%geom%ocean%G%isc
@@ -1221,7 +1225,6 @@ contains
 
        end select
     end do
-    nullify(horiz_interp_p)    
 
   end subroutine getvalues_ad
 

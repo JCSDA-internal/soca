@@ -59,7 +59,7 @@ contains
     self%interph_initialized = .false.
     self%nobs = 0
     self%obstype_index = c_key_self
-    print *,'=====================gettraj setup, ',c_key_self
+
   end subroutine c_soca_getvaltraj_setup
 
   ! ------------------------------------------------------------------------------
@@ -79,7 +79,6 @@ contains
 
     ! Remove key
     call soca_getvaltraj_registry%remove(c_key_self)
-    print *,'===============gettraj removed key',c_key_self
     
   end subroutine c_soca_getvaltraj_delete
 

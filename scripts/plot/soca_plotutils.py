@@ -35,7 +35,7 @@ class Grid:
         ncfile.close()        
 
 class OceanState:
-    def __init__(self, filename):
+    def __init__(self, filename, maptype='N'):
         print filename
         ncfile = Dataset(filename,'r')
         try:
@@ -53,8 +53,13 @@ class OceanState:
             
         self.grid=Grid()
         self.hbottomz=np.cumsum(self.h,axis=0)
-        self.hmidz=self.hbottomz-0.5*self.h        
-        self.map = Basemap(projection='mill',lon_0=-100)
+        self.hmidz=self.hbottomz-0.5*self.h
+        if (maptype=='N'):
+            self.map = Basemap(projection='npstere',lon_0=0,boundinglat=50, resolution='l')
+        elif (maptype=='S'):
+            self.map = Basemap(projection='spstere',lon_0=0,boundinglat=50, resolution='l')
+        else:
+            self.map = Basemap(projection='mill',lon_0=-100)
         self.x, self.y = self.map(self.grid.lon,self.grid.lat)
 
     def plot_vert_section(self, other, fignum=1):
@@ -76,8 +81,8 @@ class OceanState:
 
     def plot_horiz_section(self, other, vars=['temp'], levels=[0], fignum=1):
         plt.figure(num=fignum)
-        map = Basemap(projection='mill',lon_0=-100)
-        x, y = map(self.grid.lon,self.grid.lat)
+        #map = Basemap(projection='mill',lon_0=-100)
+        #x, y = map(self.grid.lon,self.grid.lat)
 
         for var in vars:
             if var=='temp':
@@ -96,7 +101,7 @@ class OceanState:
                 cmax=1.
                 titlestr='SSH increment'
                 
-            plothor(x,y,incr,map,titlestr,clim=[cmin,cmax],label='')
+            plothor(self.x,self.y,incr,self.map,titlestr,clim=[cmin,cmax],label='')
             plt.show()
         
 
