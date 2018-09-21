@@ -16,8 +16,11 @@ list( APPEND soca_test_input
   testinput/nicas_test.yml
   testinput/4denvar_nicas_test.yml
   testinput/variablechange.yml
-  testinput/parametersbump.cov.yml  
+  testinput/parametersbump.cov.yml
+  testinput/static_scale_binit.yml
+  testinput/static_binit.yml  
   compare.sh
+  run.sh
 )
 
 list( APPEND soca_testoutput
@@ -109,28 +112,35 @@ endforeach(FILENAME)
 
 ecbuild_add_test( TARGET test_soca_truth
                   TYPE SCRIPT
-		  MPI     1
-                  COMMAND "./compare.sh"
-                  ARGS "${CMAKE_BINARY_DIR}/bin/soca_forecast.x testinput/truth.yml"
-                       testoutput/truth.test
+                  COMMAND "./run.sh"
+                  ARGS "mpirun -np 4 ${CMAKE_BINARY_DIR}/bin/soca_forecast.x testinput/truth.yml"
                   DEPENDS soca_forecast.x )
 
 ecbuild_add_test( TARGET test_soca_forecast
                   TYPE SCRIPT
-		  MPI     1		  		  
-                  COMMAND "./compare.sh"
-                  ARGS "${CMAKE_BINARY_DIR}/bin/soca_forecast.x testinput/forecast.yml"
-                       testoutput/forecast.test
+                  COMMAND "./run.sh"
+                  ARGS "mpirun -np 4 ${CMAKE_BINARY_DIR}/bin/soca_forecast.x testinput/forecast.yml"
                   DEPENDS soca_forecast.x )
 
 ecbuild_add_test( TARGET test_soca_makeobs3d
                   TYPE SCRIPT
-		  MPI     1  		  		  
-                  COMMAND "./compare.sh"
-                  ARGS "${CMAKE_BINARY_DIR}/bin/soca_makeobs.x testinput/hofx_makeobs3d.yml"
-                       testoutput/makeobs3d.test
+                  COMMAND "./run.sh"
+                  ARGS "mpirun -np 4 ${CMAKE_BINARY_DIR}/bin/soca_makeobs.x testinput/hofx_makeobs3d.yml"
                   DEPENDS soca_makeobs.x )
-		  
+
+ecbuild_add_test( TARGET test_soca_covar_lengthscale
+                  TYPE SCRIPT
+		  COMMAND "./run.sh"
+                  ARGS "mpirun -np 4 ${CMAKE_BINARY_DIR}/bin/soca_staticbinit.x testinput/static_scale_binit.yml"
+                  DEPENDS soca_staticbinit.x )
+
+ecbuild_add_test( TARGET test_soca_binit
+                  TYPE SCRIPT
+		  COMMAND "./run.sh"
+                  ARGS "mpirun -np 4 ${CMAKE_BINARY_DIR}/bin/soca_staticbinit.x testinput/static_binit.yml"
+                  DEPENDS soca_staticbinit.x )
+
+
 # Tests of class interfaces
 
 ecbuild_add_test( TARGET  test_soca_geometry
@@ -194,34 +204,26 @@ ecbuild_add_test( TARGET test_soca_obserrorcov
 
 ecbuild_add_test( TARGET test_soca_hofx
                   TYPE SCRIPT
-                  MPI     1		  
-                  COMMAND "./compare.sh"
-                  ARGS "${CMAKE_BINARY_DIR}/bin/soca_hofx.x testinput/hofx_makeobs3d.yml"
-                       testoutput/hofx.test
+                  COMMAND "./run.sh"
+                  ARGS "mpirun -np 4 ${CMAKE_BINARY_DIR}/bin/soca_hofx.x testinput/hofx_makeobs3d.yml"             
                   DEPENDS soca_hofx.x )
 
 ecbuild_add_test( TARGET test_soca_3dvar
                   TYPE SCRIPT
-                  MPI     1		  
-                  COMMAND "./compare.sh"
-                  ARGS "${CMAKE_BINARY_DIR}/bin/soca_3dvar.x testinput/3dvar_test.yml"
-                       testoutput/3dvar.test
+                  COMMAND "./run.sh"
+                  ARGS "mpirun -np 4 ${CMAKE_BINARY_DIR}/bin/soca_3dvar.x testinput/3dvar_test.yml"                       testoutput/3dvar.test
                   DEPENDS soca_3dvar.x )
 
 ecbuild_add_test( TARGET test_soca_3dvarfgat
                   TYPE SCRIPT
-                  MPI     1		  
-                  COMMAND "./compare.sh"
-                  ARGS "${CMAKE_BINARY_DIR}/bin/soca_3dvar.x testinput/3dvarfgat_test.yml"
-                       testoutput/3dvarfgat.test
+                  COMMAND "./run.sh"
+                  ARGS "mpirun -np 4 ${CMAKE_BINARY_DIR}/bin/soca_3dvar.x testinput/3dvarfgat_test.yml"
                   DEPENDS soca_3dvar.x )		  
 
 ecbuild_add_test( TARGET test_soca_4denvar
                   TYPE SCRIPT
-                  MPI     1		  
                   COMMAND "./compare.sh"
-                  ARGS "${CMAKE_BINARY_DIR}/bin/soca_3dvar.x testinput/4denvar_nicas_test.yml"
-                       testoutput/4denvar.test
+                  ARGS "mpirun -np 4 ${CMAKE_BINARY_DIR}/bin/soca_3dvar.x testinput/4denvar_nicas_test.yml"
                   DEPENDS soca_3dvar.x )
 		  
 ecbuild_add_test( TARGET test_soca_dirac

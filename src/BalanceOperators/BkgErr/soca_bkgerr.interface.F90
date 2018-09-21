@@ -26,7 +26,7 @@ subroutine c_soca_bkgerr_setup(c_key_self, c_conf, c_key_bkg) &
   call soca_bkgerr_registry%get(c_key_self, self)
   call soca_field_registry%get(c_key_bkg, bkg)
   
-  call soca_bkgerr_setup(c_conf, self, bkg)
+  !call soca_bkgerr_setup(c_conf, self, bkg)
 
 end subroutine c_soca_bkgerr_setup
 

@@ -683,25 +683,27 @@ contains
        call datetime_set(sdate, vdate)       
     end if
     if (iread==2) then ! Read increment
-       !incr_filename = config_get_string(c_conf,len(incr_filename),"input")               
+       print *,'reading increment. iread= ',iread
+       !incr_filename = config_get_string(c_conf,len(incr_filename),"input")
        !incr_filename = config_get_string(c_conf,len(incr_filename),"parameter")
        incr_filename = config_get_string(c_conf,len(incr_filename),"filename")
-       incr_filename = trim(basename)//trim(incr_filename)       
+       print *,'incr_filename: ', incr_filename
+       !incr_filename = trim(basename)//trim(incr_filename)       
        call fms_io_init()
        do ii = 1, fld%nf
           select case(fld%fldnames(ii))
           case ('ssh')
-             call read_data(ocn_filename,"ssh",fld%ssh(:,:),domain=fld%geom%ocean%G%Domain%mpp_domain)
+             call read_data(incr_filename,"ssh",fld%ssh(:,:),domain=fld%geom%ocean%G%Domain%mpp_domain)
           case ('tocn')
-             call read_data(ocn_filename,"temp",fld%tocn(:,:,:),domain=fld%geom%ocean%G%Domain%mpp_domain)
+             call read_data(incr_filename,"temp",fld%tocn(:,:,:),domain=fld%geom%ocean%G%Domain%mpp_domain)
           case ('socn')             
-             call read_data(ocn_filename,"salt",fld%socn(:,:,:),domain=fld%geom%ocean%G%Domain%mpp_domain)
+             call read_data(incr_filename,"salt",fld%socn(:,:,:),domain=fld%geom%ocean%G%Domain%mpp_domain)
           case ('hocn')             
-             call read_data(ocn_filename,"h",fld%hocn(:,:,:),domain=fld%geom%ocean%G%Domain%mpp_domain)             
+             call read_data(incr_filename,"h",fld%hocn(:,:,:),domain=fld%geom%ocean%G%Domain%mpp_domain)             
           case ('cicen')
-             call read_data(ice_filename, 'cicen', fld%AOGCM%Ice%part_size, domain=fld%geom%ocean%G%Domain%mpp_domain)
+             call read_data(incr_filename, 'cicen', fld%AOGCM%Ice%part_size, domain=fld%geom%ocean%G%Domain%mpp_domain)
           case ('hicen')
-             call read_data(ice_filename, 'hicen', fld%AOGCM%Ice%h_ice, domain=fld%geom%ocean%G%Domain%mpp_domain)
+             call read_data(incr_filename, 'hicen', fld%AOGCM%Ice%h_ice, domain=fld%geom%ocean%G%Domain%mpp_domain)
           case default
              
           end select

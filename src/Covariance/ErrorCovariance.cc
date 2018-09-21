@@ -33,18 +33,18 @@ namespace soca {
                                    const State & bkg,
 				   const State & traj) {
     // bkg: Background state, invariant wrt outer-loop.
-    //time_ = util::DateTime(conf.getString("date"));
-    //const eckit::Configuration * configc = &conf;
-    //soca_b_setup_f90(keyFtnConfig_, &configc, resol.toFortran(),
-    //                 bkg.fields().toFortran());
-    //Log::trace() << "ErrorCovariance created" << std::endl;
+    time_ = util::DateTime(conf.getString("date"));
+    const eckit::Configuration * configc = &conf;
+    soca_b_setup_f90(keyFtnConfig_, &configc, resol.toFortran(),
+                     bkg.fields().toFortran());
+    Log::trace() << "ErrorCovariance created" << std::endl;
   }
 
   // -----------------------------------------------------------------------------
 
   ErrorCovariance::~ErrorCovariance() {
-    //soca_b_delete_f90(keyFtnConfig_);
-    //Log::trace() << "ErrorCovariance destructed" << std::endl;
+    soca_b_delete_f90(keyFtnConfig_);
+    Log::trace() << "ErrorCovariance destructed" << std::endl;
   }
 
   // -----------------------------------------------------------------------------
@@ -61,38 +61,20 @@ namespace soca {
   // -----------------------------------------------------------------------------
 
   void ErrorCovariance::multiply(const Increment & dxin, Increment & dxout)
-    const {
-    //Log::debug() << std::endl << "------- dxin" << dxin << std::endl;
-    //Log::debug() << std::endl <<"------ dxout" << dxout << std::endl;
-    //Log::debug() << std::endl <<"------ traj ---- :" << std::endl;
-    //soca_b_mult_f90(keyFtnConfig_, dxin.fields().toFortran(),
-    //                dxout.fields().toFortran(), traj_->fields().toFortran());
-    //std::cout<<"================================================="<<std::endl;
-    dxout=dxin;
-  }
+    const {}
 
   // -----------------------------------------------------------------------------
 
   void ErrorCovariance::inverseMultiply(const Increment & dxin,
-                                        Increment & dxout) const {
-    //oops::IdentityMatrix<Increment> Id;
-    //dxout.zero();
-    //GMRESR(dxout, dxin, *this, Id, 10, 1.0e-6);
-    dxout=dxin;
-    std::cout << "inv mult" << std::endl;
-  }
+                                        Increment & dxout) const {}
 
   // -----------------------------------------------------------------------------
 
-  void ErrorCovariance::randomize(Increment & dx) const {
-    soca_b_randomize_f90(keyFtnConfig_, dx.fields().toFortran());
-  }
+  void ErrorCovariance::randomize(Increment & dx) const {}
 
   // -----------------------------------------------------------------------------
 
-  void ErrorCovariance::print(std::ostream & os) const {
-    os << "ErrorCovariance::print not implemented";
-  }
+  void ErrorCovariance::print(std::ostream & os) const {}
 
   // -----------------------------------------------------------------------------
 
