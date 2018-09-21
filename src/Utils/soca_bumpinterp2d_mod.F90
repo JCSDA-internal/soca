@@ -12,7 +12,7 @@ module soca_bumpinterp2d_mod
 
   implicit none
   private
-  public :: soca_bumpinterp2d
+
   type, public :: soca_bumpinterp2d
      type(bump_type)                   :: bump          !< bump interp object
      integer                           :: nobs          !< Number of values to interpolate
