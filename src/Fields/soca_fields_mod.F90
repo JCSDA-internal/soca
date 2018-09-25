@@ -558,6 +558,51 @@ contains
 
   ! ------------------------------------------------------------------------------
 
+  subroutine self_mask(self, mask_val)
+    implicit none
+    type(soca_field), intent(inout)   :: self
+    real(kind=kind_real), intent(in)  :: mask_val
+
+    where(self%cicen.eq.0.0)
+       self%cicen=mask_val
+       self%hicen=mask_val
+       self%hsnon=mask_val
+       self%tsfcn=mask_val
+    end where
+
+    where(self%sicnk.eq.0.0)
+       self%sicnk=mask_val
+       self%qicnk=mask_val
+       self%qsnon=mask_val       
+    end where
+
+    where(self%tocn.eq.0.0)    
+       self%socn=mask_val
+       self%tocn=mask_val
+    end where
+
+    where(self%ssh.eq.0.0)
+       self%ssh=mask_val
+    end where
+
+!!$    self%AOGCM%Ocn%T=mask_val
+!!$    self%AOGCM%Ocn%S=mask_val
+!!$    self%AOGCM%Ocn%H=mask_val
+!!$    self%AOGCM%Ocn%ssh=mask_val
+!!$
+!!$    self%AOGCM%Ice%part_size=mask_val
+!!$    self%AOGCM%Ice%h_ice=mask_val
+!!$    self%AOGCM%Ice%h_snow=mask_val
+!!$    self%AOGCM%Ice%T_skin=mask_val
+!!$    self%AOGCM%Ice%sal_ice=mask_val
+!!$    self%AOGCM%Ice%enth_ice=mask_val
+!!$    self%AOGCM%Ice%enth_snow=mask_val
+
+       
+  end subroutine self_mask
+  
+  ! ------------------------------------------------------------------------------
+
   subroutine change_resol(fld,rhs)
     implicit none
     type(soca_field), intent(inout) :: fld
@@ -605,7 +650,7 @@ contains
     type(restart_file_type) :: sis_restart
     type(restart_file_type) :: ocean_restart    
     integer :: idr, idr_ocean
-
+    real(kind=kind_real) :: mask_val=3000d3
 
     type(ioda_locs)    :: locs
     type(ufo_geovals)    :: geovals
@@ -684,30 +729,49 @@ contains
     end if
     if (iread==2) then ! Read increment
        print *,'reading increment. iread= ',iread
-       !incr_filename = config_get_string(c_conf,len(incr_filename),"input")
-       !incr_filename = config_get_string(c_conf,len(incr_filename),"parameter")
        incr_filename = config_get_string(c_conf,len(incr_filename),"filename")
        print *,'incr_filename: ', incr_filename
        !incr_filename = trim(basename)//trim(incr_filename)       
        call fms_io_init()
        do ii = 1, fld%nf
+          write(buf,*) 'OOPS_INFO soca_fields_mod::read_file::increment: '//fld%fldnames(ii)
+          call log%info(buf)
+
           select case(fld%fldnames(ii))
+             ! Ocean variables
           case ('ssh')
-             call read_data(incr_filename,"ssh",fld%ssh(:,:),domain=fld%geom%ocean%G%Domain%mpp_domain)
+             call read_data(incr_filename,"ssh",fld%ssh(:,:),domain=fld%geom%ocean%G%Domain%mpp_domain)             
           case ('tocn')
              call read_data(incr_filename,"temp",fld%tocn(:,:,:),domain=fld%geom%ocean%G%Domain%mpp_domain)
           case ('socn')             
              call read_data(incr_filename,"salt",fld%socn(:,:,:),domain=fld%geom%ocean%G%Domain%mpp_domain)
           case ('hocn')             
-             call read_data(incr_filename,"h",fld%hocn(:,:,:),domain=fld%geom%ocean%G%Domain%mpp_domain)             
+             call read_data(incr_filename,"h",fld%hocn(:,:,:),domain=fld%geom%ocean%G%Domain%mpp_domain)
+
+             ! Sea-ice variables             
           case ('cicen')
-             call read_data(incr_filename, 'cicen', fld%AOGCM%Ice%part_size, domain=fld%geom%ocean%G%Domain%mpp_domain)
+             call read_data(incr_filename, 'cicen', fld%cicen, domain=fld%geom%ocean%G%Domain%mpp_domain)
           case ('hicen')
-             call read_data(incr_filename, 'hicen', fld%AOGCM%Ice%h_ice, domain=fld%geom%ocean%G%Domain%mpp_domain)
-          case default
+             call read_data(incr_filename, 'hicen', fld%hicen, domain=fld%geom%ocean%G%Domain%mpp_domain)
+          case ('hsnon')
+             call read_data(incr_filename, 'hsnon', fld%hsnon, domain=fld%geom%ocean%G%Domain%mpp_domain)
+          case ('qicnk')
+             call read_data(incr_filename, 'qicnk', fld%qicnk, domain=fld%geom%ocean%G%Domain%mpp_domain)
+          case ('sicnk')
+             call read_data(incr_filename, 'sicnk', fld%sicnk, domain=fld%geom%ocean%G%Domain%mpp_domain)                          
+          case ('qsnon')
+             call read_data(incr_filename, 'qsnon', fld%qsnon, domain=fld%geom%ocean%G%Domain%mpp_domain)
+          case ('tsfcn')
+             call read_data(incr_filename, 'tsfcn', fld%tsfcn, domain=fld%geom%ocean%G%Domain%mpp_domain)                          
+          case default             
+             write(buf,*) 'soca_fields_mod::read_file::increment. Not reading '//fld%fldnames(ii)
+             call log%info(buf)
              
           end select
        end do
+       ! Reset mask value to mask_val
+       call self_mask(fld, mask_val)
+
        call fms_io_init()
     endif
 
@@ -1110,6 +1174,7 @@ contains
   ! ------------------------------------------------------------------------------
 
   subroutine field_from_ug(self, ug)
+    
     use unstructured_grid_mod
 
     implicit none

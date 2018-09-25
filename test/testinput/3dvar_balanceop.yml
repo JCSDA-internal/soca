@@ -49,8 +49,8 @@ cost_function:
       prefix: soca
       # Driver parameters
       method: cor
-      #strategy: specific_univariate
-      strategy: common      
+      strategy: specific_univariate
+      #strategy: common      
 #      new_hdiag: 0
       new_nicas: 0   # 1: recomputes convol param
       load_nicas: 1  # 1: loads convol param (layout specific)
@@ -77,7 +77,7 @@ cost_function:
       mpicom: 2 # Number of internal comm steps 
       #NICAS parameters
       forced_radii: 1
-      rh: 3000e3
+      rh: 300e3
       rv: 100
       advmode: 0
       # Output parameters  
@@ -208,8 +208,8 @@ cost_function:
 #        ObsDataOut:
 #          obsfile: Data/test_obsout.nc
 #        ObsDataIn:
-#          obsfile: Data/seaice_obs-2018-04-15.nc
-#          obsfile: /home/gvernier/Sandboxes/soca/data/bob_l2_sic/l2/sea-ice-con.nc Data/seaice_obs-2018-04-15.nc
+#          #obsfile: Data/seaice_obs-2018-04-15.nc
+#          obsfile: /home/gvernier/Sandboxes/soca/data/bob_l2_sic/l2/sea-ice-con.nc
 #        obsvalue: ObsVal        
 #      Covariance:
 #        covariance: diagonal
@@ -231,37 +231,37 @@ variational:
       varchange: Identity
       version: IdTLM
       tstep: PT1H
-    ninner: 1
+    ninner: 10
     gradient_norm_reduction: 1e-15
     test: 'on'
     output:
       datadir: Data
       exp: 3dvar
       type: incr1
-#  - resolution: {}
-#    linearmodel:
-#      varchange: Identity      
-#      version: IdTLM
-#      tstep: PT1H
-#    ninner: 5
-#    gradient_norm_reduction: 1e-15
-#    test: 'on'
-#    output:
-#      datadir: Data
-#      exp: 3dvar
-#      type: incr
-#  - resolution: {}
-#    linearmodel:
-#      varchange: Identity      
-#      version: IdTLM
-#      tstep: PT1H
-#    ninner: 5
-#    gradient_norm_reduction: 1e-15
-#    test: 'on'
-#    output:
-#      datadir: Data
-#      exp: 3dvar
-#      type: incr      
+  - resolution: {}
+    linearmodel:
+      varchange: Identity      
+      version: IdTLM
+      tstep: PT1H
+    ninner: 5
+    gradient_norm_reduction: 1e-15
+    test: 'on'
+    output:
+      datadir: Data
+      exp: 3dvar
+      type: incr
+  - resolution: {}
+    linearmodel:
+      varchange: Identity      
+      version: IdTLM
+      tstep: PT1H
+    ninner: 5
+    gradient_norm_reduction: 1e-15
+    test: 'on'
+    output:
+      datadir: Data
+      exp: 3dvar
+      type: incr      
 minimizer:
   algorithm: DRPCG #DRIPCG
 output:

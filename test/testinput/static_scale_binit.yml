@@ -23,9 +23,8 @@ State:
 Covariance:
   covariance: SocaError
   date: '2018-04-15T00:00:00Z'
-  ocean_alpha_Lx: 10.0
-  ocean_alpha_Ly: 10.0
-  ocean_alpha_Lz: 10.0  
-  ice_Lx: 3000e3
-  ice_Lz: 100  
+  ocean_alpha_Lx: 100.0
+  ocean_Lz: 100.0
+  ice_Lx: 3000.0d3
+  ice_Lz: 100.0 
 

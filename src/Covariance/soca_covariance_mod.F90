@@ -16,9 +16,8 @@ module soca_covariance_mod
 
   !> Fortran derived type to hold configuration data for the SOCA background/model covariance
   type :: soca_3d_covar_config
-     real(kind=kind_real) :: ocean_alpha_Lx=1.0      !< Zonal       ] Length scale
-     real(kind=kind_real) :: ocean_alpha_Ly=1.0      !< Meridional  ] for
-     real(kind=kind_real) :: ocean_alpha_Lz=1.0      !< vertical    ] convolution kernel
+     real(kind=kind_real) :: ocean_alpha_Lx=1.0
+     real(kind=kind_real) :: ocean_Lz=1.0
      real(kind=kind_real) :: ice_Lx=200.0e3      !< Zonal       ] Length scale
      real(kind=kind_real) :: ice_Lz=1.0      !< vertical    ] convolution kernel     
      character(len=800)   :: D_filename  !< Netcdf file containing
@@ -126,10 +125,11 @@ contains
     type(soca_field) :: lensca    
     integer :: inzo, incat
     character(len=800) :: filename
+    real(kind=kind_real) :: default_L=1000.0d3
 
     ! Get configuration
     config%ocean_alpha_Lx  = config_get_real(c_conf,"ocean_alpha_Lx")
-    config%ocean_alpha_Lz  = config_get_real(c_conf,"ocean_alpha_Lz")    
+    config%ocean_Lz  = config_get_real(c_conf,"ocean_Lz")    
     config%ice_Lx  = config_get_real(c_conf,"ice_Lx")
     config%ice_Lz  = config_get_real(c_conf,"ice_Lz")
 
@@ -138,15 +138,15 @@ contains
 
     ! Set rh to a large default value
     call ones(lensca)
-    call self_mul(lensca, 9999.9d3)
+    call self_mul(lensca, default_L)
     
     ! Setup horizontal length scale
     ! Ocean
     call bkg%geom%ocean%get_rossby_radius()    
 
     do inzo = 1,bkg%geom%ocean%nzo
-       lensca%tocn(:,:,inzo) = config%ocean_alpha_Lx*&
-            &max(200e3, 5.0*bkg%geom%ocean%rossby_radius)
+       lensca%tocn(:,:,inzo) = max(200e3, &
+            &config%ocean_alpha_Lx*bkg%geom%ocean%rossby_radius)
        lensca%socn(:,:,inzo) = lensca%tocn(:,:,inzo)
        lensca%hocn(:,:,inzo) = lensca%tocn(:,:,inzo)
     end do
@@ -163,16 +163,16 @@ contains
 
     ! Set rv to a large default value
     call ones(lensca)
-    call self_mul(lensca, 9999.9d3)
+    call self_mul(lensca, default_L)
     
     ! Setup vertical length scale
     ! Ocean
     do inzo = 1,bkg%geom%ocean%nzo
-       lensca%tocn(:,:,inzo) = config%ocean_alpha_Lz*20
-       lensca%socn(:,:,inzo) = config%ocean_alpha_Lz*20
-       lensca%hocn(:,:,inzo) = config%ocean_alpha_Lz*20
+       lensca%tocn(:,:,inzo) = config%ocean_Lz
+       lensca%socn(:,:,inzo) = config%ocean_Lz
+       lensca%hocn(:,:,inzo) = config%ocean_Lz
     end do
-    lensca%ssh = config%ocean_alpha_Lz*20
+    lensca%ssh = config%ocean_Lz
 
     ! Sea-ice
     do incat = 1,bkg%geom%ocean%ncat
@@ -181,7 +181,7 @@ contains
     end do
 
     filename="rv.nc"
-    call fld2file(lensca, filename)   
+    call fld2file(lensca, filename)
     
   end subroutine soca_init_lengthscale
 
