@@ -15,10 +15,10 @@ module soca_bumpinterp2d_mod
 
   type, public :: soca_bumpinterp2d
      type(bump_type)                   :: bump          !< bump interp object
-     integer                           :: nobs          !< Number of values to interpolate
+     integer                           :: nobs = 0      !< Number of values to interpolate
      real(kind=kind_real), allocatable :: lono(:)       !< Longitude of destination
      real(kind=kind_real), allocatable :: lato(:)       !< Latitude of destination 
-     logical                           :: initialized   !< Initialization switch
+     logical                           :: initialized = .false.   !< Initialization switch
    contains
      procedure :: initialize => interp_init
      procedure :: info => interp_info
@@ -57,10 +57,10 @@ contains
     character(len=16) :: bump_nam_prefix
 
     type(fckit_mpi_comm) :: f_comm
+    integer :: ierr
 
-    !f_comm = fckit_mpi_comm()
-    !print *,bumpcount
-    !read(*,*)
+    f_comm = fckit_mpi_comm()
+
     ! Each bump%nam%prefix must be distinct
     ! -------------------------------------    
     bumpcount = bumpcount + 1
@@ -73,7 +73,15 @@ contains
     ni = size(mod_lon, 1)
     nj = size(mod_lon, 2)    
     ns = ni * nj
-    no = size(obs_lon, 1)    
+    no = size(obs_lon, 1)
+
+    print *,' init interp with ',no,' obs'    
+    call mpi_barrier(f_comm%communicator(),ierr)         
+!!$       print *,'No obs, skipping interp'
+!!$       self%nobs = 0
+!!$       self%initialized = .true.       
+!!$       return
+!!$    end if
     
     !Calculate interpolation weight using BUMP
     !-----------------------------------------
@@ -119,18 +127,18 @@ contains
     tmp_maskmod = reshape(tmp_maskmod, (/ns, 1/))
     
     !Initialize BUMP
-    print *,'starting init ...'
+    print *,'starting BUMP init with nobs=',no
     call self%bump%setup_online( f_comm%communicator(), ns, 1, 1, 1,&
          &tmp_lonmod, tmp_latmod, area, vunit, tmp_maskmod(:,1),&
          &nobs=no, lonobs=obs_lon, latobs=obs_lat )
-
+    print *,'done BUMP init'
     self%initialized = .true.
     
     !Release memory
     deallocate(area)
     deallocate(vunit)
     deallocate(tmp_lonmod, tmp_latmod, tmp_maskmod)
-    
+    print *,'out of BUMP init'    
   end subroutine interp_init
 
   !--------------------------------------------  
@@ -145,8 +153,8 @@ contains
     real(kind=kind_real),     intent(in) :: fld(:,:)
     real(kind=kind_real),    intent(out) :: obs(:) 
 
-    call self%bump%apply_obsop(fld,obs)
-
+       call self%bump%apply_obsop(fld,obs)
+    
   end subroutine interp_apply
 
   !--------------------------------------------  
@@ -165,11 +173,10 @@ contains
     real(kind=kind_real), allocatable :: tmp_obs(:)
     integer :: nobs
 
-    nobs = size(obs, 1)
-    allocate(tmp_obs(nobs))
+    allocate(tmp_obs(self%nobs))
     tmp_obs = obs
     call self%bump%apply_obsop_ad(tmp_obs, fld)
-    deallocate(tmp_obs)
+    deallocate(tmp_obs)       
 
   end subroutine interpad_apply
 

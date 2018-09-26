@@ -35,7 +35,7 @@ contains
 
     type(soca_field),         intent(in) :: fld
     type(ioda_locs),          intent(in) :: locs
-    type(soca_bumpinterp2d), intent(out) :: horiz_interp    
+    type(soca_bumpinterp2d),intent(out) :: horiz_interp
 
     integer :: nobs
     integer :: isc, iec, jsc, jec
@@ -64,19 +64,29 @@ contains
     type(ufo_geovals),             intent(inout) :: geovals
     type(soca_getvaltraj), target, intent(inout) :: traj    
 
-    call check(fld)    
-    if (.not.(traj%interph_initialized)) then
-       call initialize_interph(fld, locs, traj%horiz_interp)
-       call traj%horiz_interp%info()
-       traj%interph_initialized = .true.
-    end if
-    call interp_tl(fld, locs, vars, geovals, traj%horiz_interp)    
+    type(soca_bumpinterp2d),  pointer :: horiz_interp_p
+    
+!!$    call check(fld)
+!!$    print *,'In getvalues_traj, interp_initialized=',traj%interph_initialized
+!!$    horiz_interp_p => traj%horiz_interp    
+!!$    if (.not.(traj%interph_initialized)) then
+!!$       call initialize_interph(fld, locs, horiz_interp_p)!traj%horiz_interp)
+!!$       call traj%horiz_interp%info()
+!!$       traj%interph_initialized = .true.
+!!$    end if
+!!$    
+!!$    call interp_tl(fld, locs, vars, geovals, traj%horiz_interp)    
 
+    call getvalues_notraj(fld, locs, vars, geovals)
+    
   end subroutine getvalues_traj
 
   ! ------------------------------------------------------------------------------
   subroutine getvalues_notraj(fld, locs, vars, geovals)
 
+    use mpi
+    use fckit_mpi_module, only: fckit_mpi_comm
+    
     implicit none
 
     type(soca_field),   intent(inout) :: fld
@@ -84,18 +94,35 @@ contains
     type(ufo_vars),        intent(in) :: vars    
     type(ufo_geovals),  intent(inout) :: geovals
 
-    type(soca_bumpinterp2d),  target :: horiz_interp    
+    type(soca_bumpinterp2d),  target :: horiz_interp
+    type(soca_bumpinterp2d),  pointer :: horiz_interp_p
+    type(soca_bumpinterp2d) :: interp2d    
 
-    call check(fld)    
-    call initialize_interph(fld, locs, horiz_interp)
-    call interp_tl(fld, locs, vars, geovals, horiz_interp)    
 
+    type(fckit_mpi_comm) :: f_comm
+    integer :: ierr, npes, pe
+
+!!$    f_comm = fckit_mpi_comm()
+!!$    call mpi_comm_size(f_comm%communicator(), npes, ierr)
+!!$    call mpi_comm_rank(f_comm%communicator(), pe, ierr)
+!!$    call check(fld)
+!!$    print *,'======= In getvalues_notraj nobs=',locs%nlocs, pe, npes
+!!$
+!!$    print *,horiz_interp%initialized,horiz_interp%nobs
+!!$    horiz_interp_p => horiz_interp
+    call initialize_interph(fld, locs, interp2d)
+!!$    call horiz_interp%info()
+!!$    call mpi_barrier(f_comm%communicator(),ierr)         
+!!$    
+!!$    print *,'===================== calling interp_tl '
+    call interp_tl(fld, locs, vars, geovals, interp2d)    
+!!$    print *,'getting out of getvalues_notraj' 
   end subroutine getvalues_notraj
   
   ! ------------------------------------------------------------------------------
 
   subroutine getvalues_ad(fld, locs, vars, geovals, traj)
-    
+    use mpi
     implicit none
 
     type(soca_field),              intent(inout) :: fld
@@ -105,14 +132,16 @@ contains
     type(soca_getvaltraj), target, intent(inout) :: traj    
 
     type(soca_bumpinterp2d), pointer :: horiz_interp_p
-    integer :: icat, ilev, ivar, nobs, nval    
+    integer :: icat, ilev, ivar, nobs, nval, ierr   
     character(len=160) :: record
     integer :: isc, iec, jsc, jec
+    type(soca_bumpinterp2d) :: interp2d    
 
     call check(fld)    
     if (.not.(traj%interph_initialized)) then
-       call initialize_interph(fld, locs, traj%horiz_interp)
-       traj%interph_initialized = .true.
+       print *,'MMMMEEEERRRRRDDDDDDEEEEEE'
+!!$       call initialize_interph(fld, locs, traj%horiz_interp)
+!!$       traj%interph_initialized = .true.
     end if
     horiz_interp_p => traj%horiz_interp
 
@@ -121,7 +150,7 @@ contains
 
     do ivar = 1, vars%nv
        write(record,*) "getvalues_ad: ",trim(vars%fldnames(ivar))
-       call fckit_log%info(record)
+       call fckit_log%info(record) 
 
        select case (trim(vars%fldnames(ivar)))
        case ("ice_concentration")
@@ -158,31 +187,36 @@ contains
 
   ! ------------------------------------------------------------------------------
   subroutine interp_tl(fld, locs, vars, geovals, horiz_interp)
-
+    use mpi
     implicit none
 
     type(soca_field),      intent(inout) :: fld
     type(ioda_locs),          intent(in) :: locs
     type(ufo_vars),           intent(in) :: vars    
     type(ufo_geovals),     intent(inout) :: geovals
-    type(soca_bumpinterp2d), intent(in)  :: horiz_interp        
+    type(soca_bumpinterp2d), intent(in)  :: horiz_interp
+
+    type(soca_bumpinterp2d) :: interp2d    
 
     integer :: icat, ilev, ivar, nobs, nval    
     character(len=160) :: record
-    integer :: isc, iec, jsc, jec
-
-    call check(fld)    
+    integer :: isc, iec, jsc, jec, ierr
+print *,'00000000000000000000000000'
+    call check(fld)
 
     nobs = locs%nlocs
 
     ! Indices for compute domain (no halo)
     call geom_get_domain_indices(fld%geom%ocean, "compute", isc, iec, jsc, jec)
 
+    call initialize_interph(fld, locs, interp2d)
+    
     do ivar = 1, vars%nv
-       write(record,*) "interp_tl: ",trim(vars%fldnames(ivar))
-       call fckit_log%info(record)
+       !write(record,*) "interp_tl: ",trim(vars%fldnames(ivar))
+       !call fckit_log%info(record)
+       print *,trim(vars%fldnames(ivar))       
 
-       select case (trim(vars%fldnames(ivar)))
+       select case (trim(vars%fldnames(ivar)))          
        case ("ice_concentration","ice_thickness")
           nval = fld%geom%ocean%ncat
 
@@ -247,7 +281,6 @@ contains
           call horiz_interp%apply(fld%tocn(isc:iec,jsc:jec,1), geovals%geovals(ivar)%vals(1,:))
 
        end select
-
     end do
 
   end subroutine interp_tl

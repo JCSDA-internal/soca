@@ -1,3 +1,5 @@
+#! /usr/bin/env python
+
 from netCDF4 import Dataset, num2date, date2num
 import numpy as np
 import matplotlib.pyplot as plt
@@ -23,6 +25,8 @@ color=['r','k','b','y','g','m','c','y','r','k','b','y','g','m','c','y']
 marker=['+','.','o','*','o','.','o','.','o','.','o','.''o','.','o','.']
 cnt=0
 for fname in flist:
+    if cnt>15:
+        cnt=0
     # 2d pe domain
     ncfile = Dataset(fname,'r')
     x=np.squeeze(ncfile.variables['lon'][:])
@@ -31,7 +35,7 @@ for fname in flist:
     mask=np.squeeze(ncfile.variables['obsmask'][:])
     ncfile.close()
     I=np.where(mask==1)
-    #plt.subplot(121)
+    #plt.subplot(121)    
     plt.plot(x[I],y[I],color=color[cnt],marker='.',linestyle='None',alpha=0.1)
 
     try:

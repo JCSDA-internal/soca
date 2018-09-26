@@ -18,12 +18,16 @@ subroutine soca_setup(c_conf) bind(c,name='soca_setup_f')
   use fms_io_mod,              only: fms_io_init
   use mpp_io_mod,              only: mpp_open, mpp_close, MPP_DELETE
   use mpp_domains_mod, only: mpp_domains_init
+  use fckit_mpi_module, only: fckit_mpi_comm
   
   implicit none
 
   type(c_ptr), intent(in) :: c_conf
+  type(fckit_mpi_comm) :: f_comm
+
+  f_comm = fckit_mpi_comm()
   
-  call mpp_init(localcomm=mpi_comm_world)
+  call mpp_init(localcomm=f_comm%communicator())
   call fms_init()
 
 end subroutine soca_setup

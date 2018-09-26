@@ -133,7 +133,7 @@ namespace soca {
                          const oops::Variables & vars,
                          ufo::GeoVaLs & gom) const {
     const eckit::Configuration * conf = &vars.toFortran();
-
+    std::cout<<"getvalues NOTRAJ"<<std::endl;
     soca_field_interp_tl_f90(keyFlds_, locs.toFortran(), &conf,
                              gom.toFortran());
   }
@@ -144,7 +144,7 @@ namespace soca {
                          ufo::GeoVaLs & gom,
                          const GetValuesTraj & traj) const {
     const eckit::Configuration * conf = &vars.toFortran();
-
+    std::cout<<"getvalues TRAJ"<<std::endl;
     soca_field_interp_tl_traj_f90(keyFlds_, locs.toFortran(), &conf,
                                   gom.toFortran(), traj.toFortran());
   }
@@ -155,7 +155,7 @@ namespace soca {
                            ufo::GeoVaLs & gom,
                            const GetValuesTraj & traj) const {
     const eckit::Configuration * conf = &vars.toFortran();
-
+    std::cout<<"getvaluesTL TRAJ"<<std::endl;    
     soca_field_interp_tl_traj_f90(keyFlds_, locs.toFortran(), &conf,
                                   gom.toFortran(), traj.toFortran());
   }
@@ -165,7 +165,7 @@ namespace soca {
                            const ufo::GeoVaLs & gom,
                            const GetValuesTraj & traj) {
     const eckit::Configuration * conf = &vars.toFortran();
-
+    std::cout<<"getvaluesAD TRAJ"<<std::endl;    
     soca_field_interp_ad_f90(keyFlds_, locs.toFortran(), &conf,
                              gom.toFortran(), traj.toFortran());
   }

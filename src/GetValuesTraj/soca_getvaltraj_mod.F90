@@ -22,7 +22,7 @@ module soca_getvaltraj_mod
   public c_soca_getvaltraj_setup, c_soca_getvaltraj_delete
 
   type :: soca_getvaltraj
-     integer                          :: nobs
+     integer                 :: nobs
      type(soca_bumpinterp2d) :: horiz_interp
      logical                 :: interph_initialized = .false.
      integer                 :: obstype_index
@@ -74,7 +74,8 @@ contains
     call soca_getvaltraj_registry%get(c_key_self, self)
 
     if (self%interph_initialized) then
-      self%nobs = 0
+       self%nobs = 0
+       self%interph_initialized = .false.      
     endif
 
     ! Remove key

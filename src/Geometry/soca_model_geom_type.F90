@@ -190,6 +190,7 @@ contains
     use fms_mod,         only : get_mosaic_tile_grid, write_data, set_domain, read_data
     use fms_io_mod,      only : fms_io_init, fms_io_exit
     use mpi
+    use fckit_mpi_module, only: fckit_mpi_comm
     
     implicit none
 
@@ -204,7 +205,10 @@ contains
     integer :: isc, iec, jsc, jec
     integer :: index(1), nn, io
     character(len=256) :: geom_output_file = "geom_output.nc"
-    
+    type(fckit_mpi_comm) :: f_comm
+
+    f_comm = fckit_mpi_comm()
+        
     unit = 20
     open(unit=unit,file="rossrad.dat",status="old",action="read")
     n = 0
@@ -228,7 +232,7 @@ contains
     lon=deg2rad*reshape(lon,(/n/))
     lat=deg2rad*reshape(lat,(/n/))
 
-    call mpl%init(mpi_comm_world)
+    call mpl%init(f_comm%communicator())
     call kdtree%create(mpl, n,lon,lat,mask)
 
     !--- Find nearest neighbor    
