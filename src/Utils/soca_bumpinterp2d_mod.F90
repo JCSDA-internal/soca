@@ -15,10 +15,10 @@ module soca_bumpinterp2d_mod
 
   type, public :: soca_bumpinterp2d
      type(bump_type)                   :: bump          !< bump interp object
-     integer                           :: nobs = 0      !< Number of values to interpolate
+     integer                           :: nobs          !< Number of values to interpolate
      real(kind=kind_real), allocatable :: lono(:)       !< Longitude of destination
      real(kind=kind_real), allocatable :: lato(:)       !< Latitude of destination 
-     logical                           :: initialized = .false.   !< Initialization switch
+     logical                           :: initialized   !< Initialization switch
    contains
      procedure :: initialize => interp_init
      procedure :: info => interp_info
@@ -57,12 +57,16 @@ contains
     character(len=16) :: bump_nam_prefix
 
     type(fckit_mpi_comm) :: f_comm
-    integer :: ierr
 
-    f_comm = fckit_mpi_comm()
 
+    if (self%initialized) call interp_exit(self)
+    
+    !f_comm = fckit_mpi_comm()
+    !print *,bumpcount
+    !read(*,*)
     ! Each bump%nam%prefix must be distinct
-    ! -------------------------------------    
+    ! -------------------------------------
+    
     bumpcount = bumpcount + 1
     print *,'bumpcount=',bumpcount
     write(cbumpcount,"(I0.5)") bumpcount
@@ -73,15 +77,7 @@ contains
     ni = size(mod_lon, 1)
     nj = size(mod_lon, 2)    
     ns = ni * nj
-    no = size(obs_lon, 1)
-
-    print *,' init interp with ',no,' obs'    
-    call mpi_barrier(f_comm%communicator(),ierr)         
-!!$       print *,'No obs, skipping interp'
-!!$       self%nobs = 0
-!!$       self%initialized = .true.       
-!!$       return
-!!$    end if
+    no = size(obs_lon, 1)    
     
     !Calculate interpolation weight using BUMP
     !-----------------------------------------
@@ -90,25 +86,29 @@ contains
     call self%bump%nam%init()
 
     self%bump%nam%prefix = bump_nam_prefix   ! Prefix for files output
-    self%bump%nam%nobs = no                  ! Number of observations
     self%bump%nam%obsop_interp = 'bilin'     ! Interpolation type (bilinear)
-    self%bump%nam%obsdis = 'local'           ! Local or BUMP may try to redistribute obs
-    self%bump%nam%diag_interp = 'bilin'
-    self%bump%nam%local_diag = .false.
-
-    !Less important namelist options (should not be changed)
     self%bump%nam%default_seed = .true.
-    self%bump%nam%new_hdiag = .false.
-    self%bump%nam%new_nicas = .false.
-    self%bump%nam%check_adjoints = .false.
-    self%bump%nam%check_pos_def = .false.
-    self%bump%nam%check_sqrt = .false.
-    self%bump%nam%check_dirac = .false.
-    self%bump%nam%check_randomization = .false.
-    self%bump%nam%check_consistency = .false.
-    self%bump%nam%check_optimality = .false.
-    self%bump%nam%new_lct = .false.
     self%bump%nam%new_obsop = .true.
+    
+!!$    self%bump%nam%nobs = no                  ! Number of observations
+!!$
+!!$    self%bump%nam%obsdis = 'local'           ! Local or BUMP may try to redistribute obs
+!!$    self%bump%nam%diag_interp = 'bilin'
+!!$    self%bump%nam%local_diag = .false.
+!!$
+!!$    !Less important namelist options (should not be changed)
+!!$
+!!$    self%bump%nam%new_hdiag = .false.
+!!$    self%bump%nam%new_nicas = .false.
+!!$    self%bump%nam%check_adjoints = .false.
+!!$    self%bump%nam%check_pos_def = .false.
+!!$    self%bump%nam%check_sqrt = .false.
+!!$    self%bump%nam%check_dirac = .false.
+!!$    self%bump%nam%check_randomization = .false.
+!!$    self%bump%nam%check_consistency = .false.
+!!$    self%bump%nam%check_optimality = .false.
+!!$    self%bump%nam%new_lct = .false.
+!!$    self%bump%nam%new_obsop = .true.
 
     !Initialize geometry
     allocate(area(ns))
@@ -127,18 +127,21 @@ contains
     tmp_maskmod = reshape(tmp_maskmod, (/ns, 1/))
     
     !Initialize BUMP
-    print *,'starting BUMP init with nobs=',no
+    print *,'starting init ...',self%initialized
     call self%bump%setup_online( f_comm%communicator(), ns, 1, 1, 1,&
          &tmp_lonmod, tmp_latmod, area, vunit, tmp_maskmod(:,1),&
          &nobs=no, lonobs=obs_lon, latobs=obs_lat )
-    print *,'done BUMP init'
+
     self%initialized = .true.
+    self%nobs = no
     
     !Release memory
     deallocate(area)
     deallocate(vunit)
     deallocate(tmp_lonmod, tmp_latmod, tmp_maskmod)
-    print *,'out of BUMP init'    
+
+    print *,'out of init ...',self%initialized
+    
   end subroutine interp_init
 
   !--------------------------------------------  
@@ -153,8 +156,26 @@ contains
     real(kind=kind_real),     intent(in) :: fld(:,:)
     real(kind=kind_real),    intent(out) :: obs(:) 
 
-       call self%bump%apply_obsop(fld,obs)
-    
+    ! Locals
+    real(kind=kind_real), allocatable :: tmp_fld(:,:)
+    real(kind=kind_real), allocatable :: tmp_obs(:,:)    
+    integer :: ns
+
+    allocate(tmp_fld(size(fld,1),size(fld,2)))
+    allocate(tmp_obs(size(obs,1),1))    
+    ns = size(fld,1)*size(fld,2)
+
+    tmp_fld = fld
+    tmp_fld = reshape(tmp_fld,(/ns, 1/))
+    tmp_obs(:,1) = obs
+    print *,'SOCA::interp apply obs:',shape(tmp_obs),' fld:',shape(tmp_fld)
+    print *,'nobs=',self%bump%nam%nobs
+    print *,'geom stuff: ',self%bump%geom%nl0,self%bump%obsop%nobsa
+    call self%bump%apply_obsop(tmp_fld,tmp_obs)
+    obs = tmp_obs(:,1)
+    !fld = reshape(tmp_fld,(/size(fld,1),size(fld,2)/))
+    deallocate(tmp_fld, tmp_obs)
+    print *,'out of apply'
   end subroutine interp_apply
 
   !--------------------------------------------  
@@ -173,10 +194,11 @@ contains
     real(kind=kind_real), allocatable :: tmp_obs(:)
     integer :: nobs
 
-    allocate(tmp_obs(self%nobs))
+    nobs = size(obs, 1)
+    allocate(tmp_obs(nobs))
     tmp_obs = obs
     call self%bump%apply_obsop_ad(tmp_obs, fld)
-    deallocate(tmp_obs)       
+    deallocate(tmp_obs)
 
   end subroutine interpad_apply
 
