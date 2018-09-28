@@ -86,23 +86,27 @@ ecbuild_add_resources( TARGET   soca_test_scripts
                        SOURCES_PACK
                        ${soca_test_input}
                      )
-# Link to UFO Marine obs
-list( APPEND soca_obs
-  ../../ufo/test/testinput/marineobs/Jason-3-2018-04-15.nc
-  ../../ufo/test/testinput/marineobs/seaice_obs-2018-04-15.nc
-  ../../ufo/test/testinput/marineobs/sea-ice-con-l2.nc
-  ../../ufo/test/testinput/marineobs/sst_obs-2018-04-15.nc
-  ../../ufo/test/testinput/marineobs/t0n156e_dy.nc
-  ../../ufo/test/testinput/marineobs/cryosat2-2018-04-15.nc
-)
+# Link to IODA Marine obs
+file(GLOB ioda_obs "${ioda_SOURCE_DIR}/test/testinput/marine/*.nc*")
+#list( APPEND soca_obs
+#  ../../ufo/test/testinput/marineobs/Jason-3-2018-04-15.nc
+#  ../../ufo/test/testinput/marineobs/seaice_obs-2018-04-15.nc
+#  ../../ufo/test/testinput/marineobs/sea-ice-con-l2.nc
+#  ../../ufo/test/testinput/marineobs/sst_obs-2018-04-15.nc
+#  ../../ufo/test/testinput/marineobs/t0n156e_dy.nc
+#  ../../ufo/test/testinput/marineobs/cryosat2-2018-04-15.nc
+#)
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/Data)
-foreach(FILENAME ${soca_obs})
+foreach(FILENAME ${ioda_obs})
      get_filename_component(filename ${FILENAME} NAME )
      #configure_file(${CMAKE_CURRENT_SOURCE_DIR}/${FILENAME}
      #               ${CMAKE_CURRENT_BINARY_DIR}/Data/${filename} COPYONLY)
+     #execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
+     #      ${CMAKE_CURRENT_SOURCE_DIR}/${FILENAME}    
+     #      ${CMAKE_CURRENT_BINARY_DIR}/Data/${filename} )
      execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
-           ${CMAKE_CURRENT_SOURCE_DIR}/${FILENAME}    
-           ${CMAKE_CURRENT_BINARY_DIR}/Data/${filename} )
+           ${FILENAME}
+           ${CMAKE_CURRENT_BINARY_DIR}/Data/${filename} )	   
 endforeach(FILENAME)
 
 
