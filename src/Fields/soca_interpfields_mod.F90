@@ -64,15 +64,13 @@ contains
     type(ufo_geovals),             intent(inout) :: geovals
     type(soca_getvaltraj), target, intent(inout) :: traj    
 
-!!$    call check(fld)    
-!!$    if (.not.(traj%interph_initialized)) then
-!!$       call initialize_interph(fld, locs, traj%horiz_interp)
-!!$       call traj%horiz_interp%info()
-!!$       traj%interph_initialized = .true.
-!!$    end if
-!!$    call interp_tl(fld, locs, vars, geovals, traj%horiz_interp)    
-
-    call getvalues_notraj(fld, locs, vars, geovals)
+    call check(fld)    
+    if (.not.(traj%interph_initialized)) then
+       call initialize_interph(fld, locs, traj%horiz_interp)
+       call traj%horiz_interp%info()
+       traj%interph_initialized = .true.
+    end if
+    call interp_tl(fld, locs, vars, geovals, traj%horiz_interp)    
 
   end subroutine getvalues_traj
 
@@ -89,7 +87,7 @@ contains
     type(soca_bumpinterp2d) :: horiz_interp    
 
     call check(fld)    
-    !call initialize_interph(fld, locs, horiz_interp)
+    call initialize_interph(fld, locs, horiz_interp)
     call interp_tl(fld, locs, vars, geovals, horiz_interp)    
 
   end subroutine getvalues_notraj
@@ -111,11 +109,7 @@ contains
     character(len=160) :: record
     integer :: isc, iec, jsc, jec
 
-    call check(fld)    
-    if (.not.(traj%interph_initialized)) then
-       call initialize_interph(fld, locs, traj%horiz_interp)
-       traj%interph_initialized = .true.
-    end if
+
     horiz_interp_p => traj%horiz_interp
 
     ! Indices for compute domain (no halo)
@@ -175,10 +169,6 @@ contains
     call check(fld)    
 
     nobs = locs%nlocs
-
-    ! Temporary hack ... remove
-    call horiz_interp%finalize()
-    call initialize_interph(fld, locs, horiz_interp)
 
     ! Indices for compute domain (no halo)
     call geom_get_domain_indices(fld%geom%ocean, "compute", isc, iec, jsc, jec)

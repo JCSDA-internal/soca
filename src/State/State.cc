@@ -141,8 +141,8 @@ namespace soca {
   void State::getValues(const ioda::Locations & locs,
                         const oops::Variables & vars,
                         ufo::GeoVaLs & cols,
-                        GetValuesTraj &) const {
-    fields_->getValues(locs, vars, cols);
+                        GetValuesTraj & traj) const {
+    fields_->getValues(locs, vars, cols, traj);
   }
   // -----------------------------------------------------------------------------
   /// Interactions with Increments

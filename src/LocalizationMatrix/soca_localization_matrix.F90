@@ -30,14 +30,7 @@ type(soca_field), pointer :: xincr
 call soca_3d_cov_registry%get(c_key_conf,conf)
 call soca_field_registry%get(c_key_xincr,xincr)
 call abor1_ftn("localization: not implemented")             
-!allocate(xctl(conf%nx, conf%ny, 2))
 
-!xctl(:,:,:)=0.0_kind_real
-!call soca_3d_covar_sqrt_mult_ad(conf%nx,conf%ny,xincr,xctl,conf)
-!call zeros(xincr1)
-!call soca_3d_covar_sqrt_mult(conf%nx,conf%ny,xincr,xctl,conf)
-
-!deallocate(xctl)
 end subroutine soca_localization_mult
 
 ! ------------------------------------------------------------------------------
@@ -56,7 +49,6 @@ call soca_3d_cov_registry%init()
 call soca_3d_cov_registry%add(c_key_conf)
 call soca_3d_cov_registry%get(c_key_conf, conf)
 call soca_geom_registry%get(c_key_geom, geom)
-!call soca_3d_covar_setup(c_model, geom, conf)
 
 return
 end subroutine soca_localization_setup
@@ -70,7 +62,6 @@ type(soca_3d_covar_config), pointer :: self
 
 call abor1_ftn("localization: not implemented")             
 call soca_3d_cov_registry%get(c_key_self, self)
-!call soca_3d_covar_delete(self)
 
 end subroutine soca_localization_delete
 

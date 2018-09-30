@@ -61,14 +61,12 @@ contains
 
     if (self%initialized) call interp_exit(self)
     
-    !f_comm = fckit_mpi_comm()
-    !print *,bumpcount
-    !read(*,*)
+    f_comm = fckit_mpi_comm()
+
     ! Each bump%nam%prefix must be distinct
     ! -------------------------------------
     
     bumpcount = bumpcount + 1
-    print *,'bumpcount=',bumpcount
     write(cbumpcount,"(I0.5)") bumpcount
     bump_nam_prefix = 'soca_bump_data_'//cbumpcount
 
@@ -90,26 +88,6 @@ contains
     self%bump%nam%default_seed = .true.
     self%bump%nam%new_obsop = .true.
     
-!!$    self%bump%nam%nobs = no                  ! Number of observations
-!!$
-!!$    self%bump%nam%obsdis = 'local'           ! Local or BUMP may try to redistribute obs
-!!$    self%bump%nam%diag_interp = 'bilin'
-!!$    self%bump%nam%local_diag = .false.
-!!$
-!!$    !Less important namelist options (should not be changed)
-!!$
-!!$    self%bump%nam%new_hdiag = .false.
-!!$    self%bump%nam%new_nicas = .false.
-!!$    self%bump%nam%check_adjoints = .false.
-!!$    self%bump%nam%check_pos_def = .false.
-!!$    self%bump%nam%check_sqrt = .false.
-!!$    self%bump%nam%check_dirac = .false.
-!!$    self%bump%nam%check_randomization = .false.
-!!$    self%bump%nam%check_consistency = .false.
-!!$    self%bump%nam%check_optimality = .false.
-!!$    self%bump%nam%new_lct = .false.
-!!$    self%bump%nam%new_obsop = .true.
-
     !Initialize geometry
     allocate(area(ns))
     allocate(vunit(ns,1))
@@ -127,7 +105,6 @@ contains
     tmp_maskmod = reshape(tmp_maskmod, (/ns, 1/))
     
     !Initialize BUMP
-    print *,'starting init ...',self%initialized
     call self%bump%setup_online( f_comm%communicator(), ns, 1, 1, 1,&
          &tmp_lonmod, tmp_latmod, area, vunit, tmp_maskmod(:,1),&
          &nobs=no, lonobs=obs_lon, latobs=obs_lat )
@@ -140,8 +117,6 @@ contains
     deallocate(vunit)
     deallocate(tmp_lonmod, tmp_latmod, tmp_maskmod)
 
-    print *,'out of init ...',self%initialized
-    
   end subroutine interp_init
 
   !--------------------------------------------  
@@ -168,14 +143,11 @@ contains
     tmp_fld = fld
     tmp_fld = reshape(tmp_fld,(/ns, 1/))
     tmp_obs(:,1) = obs
-    print *,'SOCA::interp apply obs:',shape(tmp_obs),' fld:',shape(tmp_fld)
-    print *,'nobs=',self%bump%nam%nobs
-    print *,'geom stuff: ',self%bump%geom%nl0,self%bump%obsop%nobsa
     call self%bump%apply_obsop(tmp_fld,tmp_obs)
     obs = tmp_obs(:,1)
-    !fld = reshape(tmp_fld,(/size(fld,1),size(fld,2)/))
+
     deallocate(tmp_fld, tmp_obs)
-    print *,'out of apply'
+
   end subroutine interp_apply
 
   !--------------------------------------------  

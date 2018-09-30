@@ -74,7 +74,8 @@ contains
     call soca_getvaltraj_registry%get(c_key_self, self)
 
     if (self%interph_initialized) then
-      self%nobs = 0
+       self%nobs = 0
+       self%interph_initialized = .false.       
     endif
 
     ! Remove key

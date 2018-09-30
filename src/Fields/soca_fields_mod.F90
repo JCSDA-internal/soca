@@ -111,7 +111,6 @@ contains
     call zeros(self)
 
     if (self%nf>11) then
-       print *,'Number of fields:',self%nf
        call abor1_ftn ("soca_fields:create error number of fields")       
     endif
     allocate(self%fldnames(self%nf))
@@ -460,9 +459,6 @@ contains
     integer :: is, ie, js, je, ncat, nzo
     call check_resolution(fld1, fld2)
     if (fld1%nf /= fld2%nf .or. fld1%geom%ocean%nzo /= fld2%geom%ocean%nzo) then
-       print *,'STUFF:',fld1%nf,fld2%nf,fld1%geom%ocean%nzo, fld2%geom%ocean%nzo
-       print *,'fld1:',fld1%fldnames
-       print *,'fld2:',fld2%fldnames       
        call abor1_ftn("soca_fields:field_prod error number of fields")
     endif
 
@@ -728,10 +724,7 @@ contains
        call datetime_set(sdate, vdate)       
     end if
     if (iread==2) then ! Read increment
-       print *,'reading increment. iread= ',iread
        incr_filename = config_get_string(c_conf,len(incr_filename),"filename")
-       print *,'incr_filename: ', incr_filename
-       !incr_filename = trim(basename)//trim(incr_filename)       
        call fms_io_init()
        do ii = 1, fld%nf
           write(buf,*) 'OOPS_INFO soca_fields_mod::read_file::increment: '//fld%fldnames(ii)
@@ -802,10 +795,10 @@ contains
 
     !call geom_infotofile(fld%geom)
 
-    filename = genfilename(c_conf,max_string_length,vdate)    
+    filename = genfilename(c_conf,max_string_length,vdate)
     WRITE(buf,*) 'field:write_file: writing '//filename
     call fckit_log%info(buf)
-
+    
     call fld2file(fld, filename)
 
   end subroutine write_file
@@ -827,9 +820,8 @@ contains
     call fms_io_init()
     call set_domain( fld%geom%ocean%G%Domain%mpp_domain )    
     do ii = 1, fld%nf
-       print *,fld%fldnames(ii)
        select case(fld%fldnames(ii))
-
+          
        case ('ssh')
           call write_data( filename, "ssh", fld%ssh, fld%geom%ocean%G%Domain%mpp_domain)
           call write_data( filename, "rossby_radius", fld%geom%ocean%rossby_radius, fld%geom%ocean%G%Domain%mpp_domain)          
@@ -886,6 +878,8 @@ contains
     expver = config_get_string(c_conf,len(expver),"exp")
     typ    = config_get_string(c_conf,len(typ)   ,"type")
 
+    print *,"++++++++++++++ WRITE FIELDS ++++++++++++++",typ, expver, fdbdir
+    
     if (typ=="ens") then
        mmb = config_get_string(c_conf, len(mmb), "member")
        lenfn = LEN_TRIM(fdbdir) + 1 + LEN_TRIM(expver) + 1 + LEN_TRIM(typ) + 1 + LEN_TRIM(mmb)
@@ -905,12 +899,16 @@ contains
        genfilename = TRIM(prefix) // "." // TRIM(referencedate) // "." // TRIM(sstep)
     endif
 
-    if (typ=="an"  .or. typ=="incr") then
+    if (typ=="an") then
        call datetime_to_string(vdate, validitydate)
        lenfn = lenfn + 1 + LEN_TRIM(validitydate)
        genfilename = TRIM(prefix) // "." // TRIM(validitydate)
     endif
 
+    if (typ=="incr") then
+       genfilename = 'test-incr.nc'
+    endif
+    
     if (lenfn>length) &
          & call abor1_ftn("fields:genfilename: filename too long")
 

@@ -8,8 +8,8 @@ import matplotlib
 from soca_plotutils import *
 
 # Analysis increment
-fname_ana='/home/gvernier/Sandboxes/soca/bmatrix2/soca-bundle/build-debug/soca/test/Data/3dvar.an.2018-04-15T00:00:00Z.nc'
-fname_bkg='/home/gvernier/Sandboxes/soca/bmatrix2/soca-bundle/build-debug/soca/test/Data/example.fc.2018-04-15T00:00:00Z.P1D.nc'
+fname_ana='/home/gvernier/Sandboxes/soca/bmatrix2/soca-bundle/build/soca/test/Data/3dvar.an.2018-04-15T00:00:00Z.nc'
+fname_bkg='/home/gvernier/Sandboxes/soca/bmatrix2/soca-bundle/build/soca/test/Data/example.fc.2018-04-15T00:00:00Z.P1D.nc'
 oana=OceanState(fname_ana, maptype='R')
 obkg=OceanState(fname_bkg)
 oana.plot_horiz_section(obkg,vars=['temp','salt','ssh'],fignum=1)
