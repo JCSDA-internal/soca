@@ -316,6 +316,8 @@ contains
 
   end subroutine geom_infotofile
 
+  ! ------------------------------------------------------------------------------
+  
   subroutine geom_get_domain_indices(self, domain_type, is, ie, js, je)
 
     implicit none

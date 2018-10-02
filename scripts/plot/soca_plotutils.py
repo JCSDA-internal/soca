@@ -28,7 +28,7 @@ def plothor(x,y,z,map,varname='',label='[m]',clim=[0,1]):
     
 class Grid:
     def __init__(self):    
-        fname='/home/gvernier/Sandboxes/soca/soca-bundle/soca/test/Data/360x210x63/ocean_geometry.nc'
+        fname='../../test/Data/360x210x63/ocean_geometry.nc'
         ncfile = Dataset(fname,'r')
         self.lat=np.squeeze(ncfile.variables['geolat'][:])
         self.lon=np.squeeze(ncfile.variables['geolon'][:])         
@@ -70,8 +70,15 @@ class OceanState:
         plt.figure(num=fignum)
         j=90
         plt.subplot(211)
-        plt.pcolor(x,z,self.temp[:,j,:]-other.temp[:,j,:],vmin=-5.0,vmax=5.0,cmap=cm.bwr)
-        plt.ylim((-1000, 0))
+        print 'min temp:',np.min(self.temp[:,j,:]-other.temp[:,j,:])
+        print 'max temp:',np.max(self.temp[:,j,:]-other.temp[:,j,:])
+        vmin=-1.05
+        vmax=1.05
+        clevs = np.linspace(vmin, vmax, 41)
+
+        plt.contourf(x,z,self.temp[:,j,:]-other.temp[:,j,:], clevs, extend='both',cmap=cm.jet)
+        #plt.pcolor(x,z,self.temp[:,j,:]-other.temp[:,j,:],vmin=-.05,vmax=.05,cmap=cm.bwr)
+        plt.ylim((-3000, 0))
         #plt.xlim((-215, -195))
 
         plt.subplot(212)

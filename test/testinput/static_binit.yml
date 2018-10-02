@@ -27,8 +27,8 @@ Covariance:
   prefix: soca
   # Driver parameters
   method: cor
-  #strategy: specific_univariate
-  strategy: common      
+  strategy: specific_univariate
+  #strategy: common      
 #  new_hdiag: 0
   new_nicas: 1   # 1: recomputes convol param
   load_nicas: 0  # 1: loads convol param (layout specific)
@@ -56,7 +56,7 @@ Covariance:
   #NICAS parameters
   forced_radii: 1
   rh: 3000e3
-  rv: 100
+  rv: 1
   advmode: 0
   # Output parameters  
   diag_interp: bilin

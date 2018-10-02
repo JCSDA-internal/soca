@@ -49,8 +49,8 @@ cost_function:
       prefix: soca
       # Driver parameters
       method: cor
-      strategy: specific_univariate
-      #strategy: common      
+      #strategy: specific_univariate
+      strategy: common      
 #      new_hdiag: 0
       new_nicas: 0   # 1: recomputes convol param
       load_nicas: 1  # 1: loads convol param (layout specific)
@@ -83,62 +83,7 @@ cost_function:
       # Output parameters  
       diag_interp: bilin
       date: '2018-04-15T00:00:00Z'
-      variable_changes:
-      - varchange: VertConvSOCA
-        variables:                                
-          variables:
-          - socn
-          - tocn
-          - hocn      
-        Lz: 1000.0 
-        inputVariables:
-          variables:
-          - socn
-          - tocn
-        outputVariables:
-          variables:
-          - socn
-          - tocn
-      - varchange: KsshtsSOCA
-        inputVariables:  #Input to the adjoint
-          variables:
-          - socn
-          - tocn
-          - ssh
-          - hocn          
-        outputVariables:
-          variables:
-          - socn
-          - tocn
-          - ssh
-          - hocn          
-      - varchange: KstSOCA
-        dsdtmax: 1.0    
-        dsdzmin: 3.0e-3
-        dtdzmin: 1.0e-3 
-        inputVariables:
-          variables:
-          - socn
-          - tocn
-          - ssh
-          - hocn
-        outputVariables:
-          variables:
-          - socn
-          - tocn
-          - ssh
-          - hocn            
-      - varchange: KtcSOCA
-        inputVariables:
-          variables:
-          - cicen
-          - socn
-          - tocn
-        outputVariables:
-          variables:
-          - cicen
-          - socn
-          - tocn
+#      variable_changes:
   Jo:
     ObsTypes:
 #    - ObsType: SeaIceThickness
@@ -151,16 +96,16 @@ cost_function:
 #      Covariance:
 #        covariance: diagonal
 #        obserror: ObsErr
-    - ObsType: ADT
-      ObsData:
-        ObsDataOut:
-          obsfile: Data/test_obsout.nc
-        ObsDataIn:
-          obsfile: Data/Jason-3-2018-04-15.nc
-        obsvalue: ObsVal        
-      Covariance:
-        covariance: diagonal
-        obserror: ObsErr        
+#    - ObsType: ADT
+#      ObsData:
+#        ObsDataOut:
+#          obsfile: Data/test_obsout.nc
+#        ObsDataIn:
+#          obsfile: Data/Jason-3-2018-04-15.nc
+#        obsvalue: ObsVal        
+#      Covariance:
+#        covariance: diagonal
+#        obserror: ObsErr        
     - ObsType: InsituTemperature
       ObsData:
         ObsDataOut:
@@ -171,17 +116,17 @@ cost_function:
       Covariance:
         covariance: diagonal
         obserror: ObsErr		
-    - ObsType: SeaIceFraction
-      ObsData:
-        ObsDataOut:
-          obsfile: Data/test_obsout.nc
-        ObsDataIn:
-          #obsfile: Data/seaice_obs-2018-04-15.nc
-          obsfile: /home/gvernier/Sandboxes/soca/data/bob_l2_sic/l2/sea-ice-con.nc
-        obsvalue: ObsVal        
-      Covariance:
-        covariance: diagonal
-        obserror: ObsErr
+#    - ObsType: SeaIceFraction
+#      ObsData:
+#        ObsDataOut:
+#          obsfile: Data/test_obsout.nc
+#        ObsDataIn:
+#          #obsfile: Data/seaice_obs-2018-04-15.nc
+#          obsfile: /home/gvernier/Sandboxes/soca/data/bob_l2_sic/l2/sea-ice-con.nc
+#        obsvalue: ObsVal        
+#      Covariance:
+#        covariance: diagonal
+#        obserror: ObsErr
 #    - ObsType: SeaSurfaceTemp
 #      ObsData:
 #        ObsDataOut:
@@ -199,7 +144,7 @@ variational:
       varchange: Identity
       version: IdTLM
       tstep: PT1H
-    ninner: 10
+    ninner: 1
     gradient_norm_reduction: 1e-5
     test: 'on'
     prints:

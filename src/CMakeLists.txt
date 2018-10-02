@@ -89,6 +89,10 @@ list( APPEND oops_soca_src_files
 ./BalanceOperators/BkgErr/soca_bkgerr.interface.F90
 ./BalanceOperators/BkgErr/soca_bkgerr_mod.F90
 ./BalanceOperators/instantiateBalanceOpFactory.h
+./BalanceOperators/VertConv/VertConv.cc
+./BalanceOperators/VertConv/VertConv.h
+./BalanceOperators/VertConv/soca_vertconv.interface.F90
+./BalanceOperators/VertConv/soca_vertconv_mod.F90
 
 Traits.h
 Fortran.h

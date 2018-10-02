@@ -65,7 +65,7 @@ cost_function:
       #NICAS parameters
       forced_radii: 1
       rh: 3000e3
-      rv: 100
+      rv: 1
       advmode: 0
       # Output parameters  
       diag_interp: bilin

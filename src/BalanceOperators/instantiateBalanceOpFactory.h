@@ -12,12 +12,16 @@
 #include "src/BalanceOperators/Ktc/Ktc.h"
 #include "src/BalanceOperators/BkgErr/BkgErr.h"
 #include "src/BalanceOperators/Ksshts/Ksshts.h"
+#include "src/BalanceOperators/VertConv/VertConv.h"
 #include "src/Traits.h"
 #include "oops/interface/LinearVariableChange.h"
 
 namespace soca {
 
 void instantiateBalanceOpFactory() {
+  static oops::LinearVariableChangeMaker<soca::Traits,
+              oops::LinearVariableChange<soca::Traits, soca::VertConv> >
+              makerBalanceOpVertConvSOCA_("VertConvSOCA");  
   static oops::LinearVariableChangeMaker<soca::Traits,
               oops::LinearVariableChange<soca::Traits, soca::Kst> >
               makerBalanceOpKstSOCA_("KstSOCA");

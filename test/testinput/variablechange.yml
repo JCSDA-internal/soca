@@ -7,6 +7,21 @@ State:
   ocn_filename: MOM.res.nc
   ice_filename: ice_model.res.nc
 LinearVariableChangeTests:
+- varchange: VertConvSOCA
+  variables:                                
+    variables:
+    - socn
+    - tocn
+    - hocn      
+  Lz: 1000.0 
+  inputVariables:
+    variables:
+    - socn
+    - tocn
+  outputVariables:
+    variables:
+    - socn
+    - tocn
 - varchange: KstSOCA
   variables:                                
     variables:
