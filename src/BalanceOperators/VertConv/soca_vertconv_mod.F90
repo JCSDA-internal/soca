@@ -107,7 +107,6 @@ contains
           if (self%bkg%geom%ocean%mask2d(id,jd).eq.1) then
              dx%tocn(id,jd,:) = 0.0d0
              dx%socn(id,jd,:) = 0.0d0                
-
              do j = nl, 1, -1
                 do k = nl, 1, -1
                    dist2 = (z(j)-zp(k))**2

@@ -25,7 +25,7 @@ subroutine c_soca_bkgerr_setup(c_key_self, c_conf, c_key_bkg) &
   call soca_bkgerr_registry%add(c_key_self)
   call soca_bkgerr_registry%get(c_key_self, self)
   call soca_field_registry%get(c_key_bkg, bkg)
-  
+
   !call soca_bkgerr_setup(c_conf, self, bkg)
 
 end subroutine c_soca_bkgerr_setup
@@ -52,7 +52,6 @@ subroutine c_soca_bkgerr_mult_f90(c_key_a, c_key_m, c_key_traj)&
   use soca_fields
   use soca_utils
   use kinds
-  !use soca_balanceop
 
   implicit none
   integer(c_int), intent(in) :: c_key_a     !<    "   to Increment in
@@ -68,7 +67,43 @@ subroutine c_soca_bkgerr_mult_f90(c_key_a, c_key_m, c_key_traj)&
   call soca_field_registry%get(c_key_traj,traj)  
 
   !< Computes dxm = D dxa
-  call copy(dxm,dxa)
-  
+  call copy(dxm, dxa)
+  dxm%tocn =  1.5d0 * dxa%tocn
+  dxm%socn =  0.05d0 * dxa%socn  
+  dxm%ssh =  0.05d0 * dxa%ssh
+  dxm%cicen =  0.05d0 * dxa%cicen
+  dxm%hicen =  100.0d0 * dxa%hicen    
+
 end subroutine c_soca_bkgerr_mult_f90
+
+! ------------------------------------------------------------------------------
+!> Multiplication adjoint
+subroutine c_soca_bkgerr_multad_f90(c_key_m, c_key_a)&
+     &bind(c,name='soca_bkgerr_multad_f90')
+  use iso_c_binding
+  use soca_bkgerr_mod
+  use soca_fields
+  use soca_utils
+  use kinds
+
+  implicit none
+  integer(c_int), intent(in) :: c_key_a     !<    "   to Increment in
+  integer(c_int), intent(in) :: c_key_m     !<    "   to Increment out 
+
+  type(soca_field), pointer :: dxa
+  type(soca_field), pointer :: dxm
+
+  call soca_field_registry%get(c_key_a,dxa)
+  call soca_field_registry%get(c_key_m,dxm)
+
+  !< Computes dxa = D dxm
+  call copy(dxa, dxm)
+  dxa%tocn =  1.5d0 * dxm%tocn
+  dxa%socn =  0.05d0 * dxm%socn  
+  dxa%ssh =  0.05d0 * dxm%ssh
+  dxa%cicen =  0.05d0 * dxm%cicen
+  dxa%hicen =  100.0d0 * dxm%hicen    
+
+end subroutine c_soca_bkgerr_multad_f90
+
 

@@ -34,11 +34,10 @@ namespace soca {
   }
   // -----------------------------------------------------------------------------
   void BkgErr::multiply(const Increment & dxa, Increment & dxm) const {
-    // dxm = K dxa
-    //soca_bkgerr_mult_f90(dxa.fields().toFortran(),
-    //		      dxm.fields().toFortran(),
-    //		      traj_.fields().toFortran());
-    dxm = dxa;
+    // dxm = K dxa    
+    soca_bkgerr_mult_f90(dxa.fields().toFortran(),
+			 dxm.fields().toFortran(),
+			 traj_.fields().toFortran());
   }
   // -----------------------------------------------------------------------------
   void BkgErr::multiplyInverse(const Increment & dxm, Increment & dxa) const {
@@ -47,10 +46,7 @@ namespace soca {
   // -----------------------------------------------------------------------------
   void BkgErr::multiplyAD(const Increment & dxm, Increment & dxa) const {
     // dxa = K^T dxm  
-    //soca_bkgerr_multad_f90(dxm.fields().toFortran(),
-    //			dxa.fields().toFortran(),
-    //			traj_.fields().toFortran());
-    dxa = dxm;    
+    soca_bkgerr_multad_f90(dxm.fields().toFortran(), dxa.fields().toFortran());
   }
   // -----------------------------------------------------------------------------
   void BkgErr::multiplyInverseAD(const Increment & dxa, Increment & dxm) const {

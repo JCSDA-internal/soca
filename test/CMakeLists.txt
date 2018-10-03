@@ -15,8 +15,13 @@ list( APPEND soca_test_input
   testinput/localization_test.yml
   testinput/nicas_test.yml
   testinput/4denvar_nicas_test.yml
-  testinput/variablechange.yml
-  testinput/parametersbump.cov.yml
+  #testinput/variablechange.yml
+  testinput/ksshts.yml
+  testinput/kst.yml
+  testinput/ktc.yml
+  testinput/bkgerr.yml
+  testinput/vertconv.yml  
+  #testinput/parametersbump.cov.yml
   testinput/static_scale_binit.yml
   testinput/static_binit.yml  
   compare.sh
@@ -237,14 +242,38 @@ ecbuild_add_test( TARGET test_soca_dirac
                   ARGS "${CMAKE_BINARY_DIR}/bin/soca_dirac.x testinput/nicas_test.yml"
                        testoutput/dirac.test
                   DEPENDS soca_3dvar.x )		  
-
-ecbuild_add_test( TARGET test_soca_variablechange
+  
+ecbuild_add_test( TARGET test_soca_ksshts
                   BOOST
                   SOURCES executables/TestVariableChange.cc
-                  ARGS "testinput/variablechange.yml"
+                  ARGS "testinput/ksshts.yml"
                   LIBS    soca )
 
-ecbuild_add_test( TARGET test_soca_parameters_bump_cov
-                  TYPE SCRIPT
-                  COMMAND ${CMAKE_BINARY_DIR}/bin/compare.sh
-                  ARGS "${CMAKE_BINARY_DIR}/bin/soca_parameters.x testinput/parametersbump.cov.yml" )
+ecbuild_add_test( TARGET test_soca_kst
+                  BOOST
+                  SOURCES executables/TestVariableChange.cc
+                  ARGS "testinput/kst.yml"
+                  LIBS    soca )
+
+ecbuild_add_test( TARGET test_soca_ktc
+                  BOOST
+                  SOURCES executables/TestVariableChange.cc
+                  ARGS "testinput/ktc.yml"
+                  LIBS    soca )
+
+ecbuild_add_test( TARGET test_soca_bkgerr
+                  BOOST
+                  SOURCES executables/TestVariableChange.cc
+                  ARGS "testinput/bkgerr.yml"
+                  LIBS    soca )
+
+ecbuild_add_test( TARGET test_soca_vertconv
+                  BOOST
+                  SOURCES executables/TestVariableChange.cc
+                  ARGS "testinput/vertconv.yml"
+                  LIBS    soca )		
+		
+#ecbuild_add_test( TARGET test_soca_parameters_bump_cov
+#                  TYPE SCRIPT
+#                  COMMAND ${CMAKE_BINARY_DIR}/bin/compare.sh
+#                  ARGS "${CMAKE_BINARY_DIR}/bin/soca_parameters.x testinput/parametersbump.cov.yml" )
