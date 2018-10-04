@@ -25,7 +25,7 @@ subroutine c_soca_vertconv_setup(c_key_self, c_conf, c_key_traj, c_key_bkg) &
   type(soca_vertconv), pointer :: self
   type(soca_field), pointer :: traj
   type(soca_field), pointer :: bkg  
-  real(kind=kind_real), allocatable :: jac(:)
+  real(kind=kind_real), allocatable :: jac(:), temp(:,:,:)
 
   integer :: isc, iec, jsc, jec, i, j, k, nl
   
@@ -33,32 +33,39 @@ subroutine c_soca_vertconv_setup(c_key_self, c_conf, c_key_traj, c_key_bkg) &
   call soca_vertconv_registry%add(c_key_self)
   call soca_vertconv_registry%get(c_key_self, self)
   call soca_field_registry%get(c_key_traj, traj)
-  call soca_field_registry%get(c_key_traj, bkg)  
+  call soca_field_registry%get(c_key_bkg, bkg)  
 
-  nl = size(bkg%hocn,3)
-  
-  ! Get configuration for vertical convolution
-  self%lz   = config_get_real(c_conf, "Lz")
+  call soca_conv_setup (self, bkg, traj, c_conf)
 
-  ! Store trajectory and background
-  call create_copy(self%traj, traj)
-  call create_copy(self%bkg, bkg)
-  
-  ! Indices for compute domain (no halo)
-  call geom_get_domain_indices(bkg%geom%ocean, "compute", isc, iec, jsc, jec)
-  self%isc=isc; self%iec=iec; self%jsc=jsc; self%jec=jec
-  
-  ! Initialize local ocean depth from layer thickness
-  allocate(self%z(isc:iec, jsc:jec, nl))
-  do i = isc, iec
-     do j = jsc, jec
-        if (bkg%geom%ocean%mask2d(i,j).eq.1) then
-           do k = 1, nl
-              self%z(i,j,k) = sum(bkg%hocn(i,j,k:))
-           end do
-        end if
-     end do
-  end do
+!!$  nl = size(bkg%hocn,3)
+!!$  
+!!$  ! Get configuration for vertical convolution
+!!$  self%lz      = config_get_real(c_conf, "Lz")
+!!$  self%ltemp   = config_get_real(c_conf, "Ltemp")
+!!$
+!!$  ! Store trajectory and background
+!!$  call create_copy(self%traj, traj)
+!!$  call create_copy(self%bkg, bkg)
+!!$  
+!!$  ! Indices for compute domain (no halo)
+!!$  call geom_get_domain_indices(bkg%geom%ocean, "compute", isc, iec, jsc, jec)
+!!$  self%isc=isc; self%iec=iec; self%jsc=jsc; self%jec=jec
+!!$  
+!!$  allocate(self%temp(isc:iec, jsc:jec, nl))
+!!$  self%temp = self%traj%tocn
+!!$  print *,'in setup, max temp: ',maxval(self%temp)
+!!$  
+!!$  ! Initialize local ocean depth from layer thickness  
+!!$  allocate(self%z(isc:iec, jsc:jec, nl))
+!!$  do i = isc, iec
+!!$     do j = jsc, jec
+!!$        if (bkg%geom%ocean%mask2d(i,j).eq.1) then
+!!$           do k = 1, nl
+!!$              self%z(i,j,k) = sum(bkg%hocn(i,j,k:))
+!!$           end do
+!!$        end if
+!!$     end do
+!!$  end do
 
 end subroutine c_soca_vertconv_setup
 
@@ -82,6 +89,9 @@ subroutine c_soca_vertconv_delete(c_key_self) bind(c,name='soca_vertconv_delete_
   call soca_vertconv_registry%get(c_key_self, self)  
   call soca_vertconv_registry%remove(c_key_self)
 
+  if (allocated(self%z)) deallocate(self%z)
+  if (allocated(self%temp)) deallocate(self%temp)  
+  
 end subroutine c_soca_vertconv_delete
 
 ! ------------------------------------------------------------------------------
@@ -115,7 +125,7 @@ subroutine c_soca_vertconv_mult_f90(c_key_a, c_key_m, c_key_traj, c_key_self)&
   !< Computes dxm = Vertconv dxa
 
   ! dxm = dxa
-  !call copy(dxm, dxa) 
+  call copy(dxm, dxa) 
 
   ! Apply forward convolution operator to T & S
   call soca_conv(self, dxm, dxa)
@@ -149,7 +159,7 @@ subroutine c_soca_vertconv_multad_f90(c_key_m, c_key_a, c_key_traj, c_key_self)&
   call soca_vertconv_registry%get(c_key_self, self)    
 
   ! dxa = dxm
-  !call copy(dxa,dxm)
+  call copy(dxa,dxm)
   
   ! Apply adjoint of convolution operator
   call soca_conv_ad(self, dxm, dxa)

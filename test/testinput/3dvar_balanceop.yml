@@ -84,21 +84,6 @@ cost_function:
       diag_interp: bilin
       date: '2018-04-15T00:00:00Z'
       variable_changes:
-      - varchange: VertConvSOCA
-        variables:                                
-          variables:
-          - socn
-          - tocn
-          - hocn      
-        Lz: 500.0 
-        inputVariables:
-          variables:
-          - socn
-          - tocn
-        outputVariables:
-          variables:
-          - socn
-          - tocn
       - varchange: BkgErrSOCA
         variables:                                
           variables:
@@ -133,8 +118,8 @@ cost_function:
           - hocn          
       - varchange: KstSOCA
         dsdtmax: 1.0    
-        dsdzmin: 3.0e-3
-        dtdzmin: 1.0e-3 
+        dsdzmin: 3.0e-2
+        dtdzmin: 1.0e-2 
         inputVariables:
           variables:
           - socn
@@ -158,6 +143,22 @@ cost_function:
           - cicen
           - socn
           - tocn
+      - varchange: VertConvSOCA
+        variables:                                
+          variables:
+          - socn
+          - tocn
+          - hocn      
+        Lz: 500.0
+        Ltemp: 10.0	
+        inputVariables:
+          variables:
+          - socn
+          - tocn
+        outputVariables:
+          variables:
+          - socn
+          - tocn	  
   Jo:
     ObsTypes:
 #    - ObsType: SeaIceThickness
@@ -180,16 +181,16 @@ cost_function:
       Covariance:
         covariance: diagonal
         obserror: ObsErr        
-    - ObsType: InsituTemperature
-      ObsData:
-        ObsDataOut:
-          obsfile: Data/t0n156e_dy.nc
-        ObsDataIn:
-          obsfile: /home/gvernier/Data/Argo/Santha/report.FixedMor_profile_2018041500.nc #Data/t0n156e_dy.nc
-        obsvalue: ObsVal        
-      Covariance:
-        covariance: diagonal
-        obserror: ObsErr		
+#    - ObsType: InsituTemperature
+#      ObsData:
+#        ObsDataOut:
+#          obsfile: Data/t0n156e_dy.nc
+#        ObsDataIn:
+#          obsfile: /home/gvernier/Data/Argo/Santha/report.FixedMor_profile_2018041500.nc #Data/t0n156e_dy.nc
+#        obsvalue: ObsVal        
+#      Covariance:
+#        covariance: diagonal
+#        obserror: ObsErr		
 #    - ObsType: SeaIceFraction
 #      ObsData:
 #        ObsDataOut:
@@ -229,18 +230,18 @@ variational:
       exp: 3dvar
       date: "2018-04-15T00:00:00Z"      
       type: incr
-  - resolution: {}
-    linearmodel:
-      varchange: Identity      
-      version: IdTLM
-      tstep: PT1H
-    ninner: 5
-    gradient_norm_reduction: 1e-15
-    test: 'on'
-    output:
-      datadir: Data
-      exp: 3dvar
-      type: incr
+#  - resolution: {}
+#    linearmodel:
+#      varchange: Identity      
+#      version: IdTLM
+#      tstep: PT1H
+#    ninner: 5
+#    gradient_norm_reduction: 1e-15
+#    test: 'on'
+#    output:
+#      datadir: Data
+#      exp: 3dvar
+#      type: incr
 #  - resolution: {}
 #    linearmodel:
 #      varchange: Identity      

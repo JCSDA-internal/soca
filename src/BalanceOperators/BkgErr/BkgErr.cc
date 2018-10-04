@@ -46,7 +46,9 @@ namespace soca {
   // -----------------------------------------------------------------------------
   void BkgErr::multiplyAD(const Increment & dxm, Increment & dxa) const {
     // dxa = K^T dxm  
-    soca_bkgerr_multad_f90(dxm.fields().toFortran(), dxa.fields().toFortran());
+    soca_bkgerr_multad_f90(dxm.fields().toFortran(),
+			   dxa.fields().toFortran(),
+			   traj_.fields().toFortran());
   }
   // -----------------------------------------------------------------------------
   void BkgErr::multiplyInverseAD(const Increment & dxa, Increment & dxm) const {

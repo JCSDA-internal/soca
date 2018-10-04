@@ -342,5 +342,23 @@ contains
        end select
 
   end subroutine geom_get_domain_indices
+
+  subroutine geom_thickness2depth
+
+    implicit none
+    
+    class(soca_model_geom), intent(in)  :: self
+    character(7),            intent(in) :: domain_type
+    integer,                intent(out) :: is, ie, js, je
+    
+    do k = 1, self%geom%ocean%nzo
+       if (k.eq.1) then
+          z=traj%hocn(i,j,k)
+       else
+          z=sum(traj%hocn(i,j,1:k-1))+0.5_kind_real*traj%hocn(i,j,k)
+       end if
+
+    end do
+  end subroutine geom_thickness2depth
   
 end module soca_model_geom_type

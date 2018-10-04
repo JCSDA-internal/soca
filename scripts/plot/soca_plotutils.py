@@ -68,22 +68,28 @@ class OceanState:
         z=np.squeeze(-other.hmidz[:,100,:])        
 
         plt.figure(num=fignum)
-        j=90
+        j=100
         plt.subplot(211)
         print 'min temp:',np.min(self.temp[:,j,:]-other.temp[:,j,:])
         print 'max temp:',np.max(self.temp[:,j,:]-other.temp[:,j,:])
-        vmin=-1.05
-        vmax=1.05
+        vmin=-3.0
+        vmax=3.0
         clevs = np.linspace(vmin, vmax, 41)
 
-        plt.contourf(x,z,self.temp[:,j,:]-other.temp[:,j,:], clevs, extend='both',cmap=cm.jet)
+        plt.contourf(x,z,self.temp[:,j,:]-other.temp[:,j,:], clevs, extend='both',cmap=cm.spectral)
         #plt.pcolor(x,z,self.temp[:,j,:]-other.temp[:,j,:],vmin=-.05,vmax=.05,cmap=cm.bwr)
         plt.ylim((-3000, 0))
         #plt.xlim((-215, -195))
 
         plt.subplot(212)
-        plt.pcolor(x,z,self.salt[:,j,:]-other.salt[:,j,:],vmin=-.2,vmax=.2,cmap=cm.bwr)
-        plt.ylim((-1000, 0))
+        vmin=-.1
+        vmax=.1
+        clevs = np.linspace(vmin, vmax, 41)
+
+        plt.contourf(x,z,self.salt[:,j,:]-other.salt[:,j,:], clevs, extend='both',cmap=cm.spectral)
+        
+        #plt.pcolor(x,z,self.salt[:,j,:]-other.salt[:,j,:],vmin=-.2,vmax=.2,cmap=cm.bwr)
+        plt.ylim((-3000, 0))
         #plt.xlim((-215, -195))
 
     def plot_horiz_section(self, other, vars=['temp'], levels=[0], fignum=1):

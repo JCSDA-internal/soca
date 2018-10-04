@@ -13,7 +13,8 @@ LinearVariableChangeTests:
     - socn
     - tocn
     - hocn      
-  Lz: 1000.0 
+  Lz: 1000.0
+  Ltemp: 1.0	
   inputVariables:
     variables:
     - socn
