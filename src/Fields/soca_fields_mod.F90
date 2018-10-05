@@ -128,7 +128,7 @@ contains
 
     implicit none
     type(soca_field), intent(inout)          :: self
-    type(soca_field), intent(inout)          :: rhs_fld
+    type(soca_field), intent(in)          :: rhs_fld
     integer :: ivar!, unit, nxny(2)
 
     self%geom => rhs_fld%geom
@@ -631,7 +631,7 @@ contains
     use ioda_locs_mod
     use ufo_geovals_mod
     use ufo_vars_mod
-
+    use mpi
     implicit none
     type(soca_field), intent(inout) :: fld      !< Fields
     type(c_ptr), intent(in)       :: c_conf   !< Configuration
@@ -651,7 +651,7 @@ contains
     type(ioda_locs)    :: locs
     type(ufo_geovals)    :: geovals
     !type(ufo_vars)    :: vars
-    integer            :: nobs, nval
+    integer            :: nobs, nval, pe, ierror
 
     iread = 0
     if (config_element_exists(c_conf,"read_from_file")) then
@@ -677,9 +677,20 @@ contains
        ice_filename = config_get_string(c_conf,len(ice_filename),"ice_filename")       
        ice_filename = trim(basename)//trim(ice_filename)
 
+       ! !!!!!!!!!!!!!!!!!
+       call mpi_comm_rank(MPI_COMM_WORLD, pe, ierror)
+       ! !!!!!!!!!!!!!!!!!
+       print *,ocn_filename,ice_filename
+       do ii = 1,fld%nf
+          print *,'varnames:',fld%fldnames(ii)
+       end do
+       
        call fms_io_init()
        do ii = 1, fld%nf
+          
+          print *,'*******************************   pe: ',pe,ii,'varname:',fld%fldnames(ii)
           select case(fld%fldnames(ii))
+             
           case ('ssh')
              idr_ocean = register_restart_field(ocean_restart, ocn_filename, 'ave_ssh', fld%ssh(:,:), &
                   domain=fld%geom%ocean%G%Domain%mpp_domain)
@@ -714,6 +725,7 @@ contains
              !call log%warning("soca_fields:read_file: Not reading var "//fld%fldnames(ii))
           end select
        end do
+       print *,'oooooooooooooooo'       
        call restore_state(sis_restart, directory='')
        call restore_state(ocean_restart, directory='')       
        call fms_io_exit()
@@ -722,6 +734,8 @@ contains
        WRITE(buf,*) 'validity date is: '//sdate
        call log%info(buf)
        call datetime_set(sdate, vdate)       
+       print *,'pppppppppppppppppppppppppppppppppppppp'
+       return
     end if
     if (iread==2) then ! Read increment
        incr_filename = config_get_string(c_conf,len(incr_filename),"filename")
@@ -764,8 +778,9 @@ contains
        end do
        ! Reset mask value to mask_val
        call self_mask(fld, mask_val)
-
-       call fms_io_init()
+       call fms_io_exit()
+       !call fms_io_init()
+       
     endif
 
     call check(fld)
@@ -878,8 +893,6 @@ contains
     expver = config_get_string(c_conf,len(expver),"exp")
     typ    = config_get_string(c_conf,len(typ)   ,"type")
 
-    print *,"++++++++++++++ WRITE FIELDS ++++++++++++++",typ, expver, fdbdir
-    
     if (typ=="ens") then
        mmb = config_get_string(c_conf, len(mmb), "member")
        lenfn = LEN_TRIM(fdbdir) + 1 + LEN_TRIM(expver) + 1 + LEN_TRIM(typ) + 1 + LEN_TRIM(mmb)

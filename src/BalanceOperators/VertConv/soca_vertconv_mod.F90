@@ -118,8 +118,8 @@ contains
                 convdx%socn(id,jd,j) = 0.0d0             
                 do k = 1,nl
                    dist2 = (z(j)-zp(k))**2
-                   dtemp2 = (self%temp(id,jd,j)-self%temp(id,jd,k))**2
-                   coef = exp(-dist2/lz2 -dtemp2/ltemp2)
+                   !dtemp2 = (self%temp(id,jd,j)-self%temp(id,jd,k))**2
+                   coef = exp(-dist2/lz2) ! -dtemp2/ltemp2)
                    convdx%tocn(id,jd,j) = convdx%tocn(id,jd,j) &
                         &+ dx%tocn(id,jd,k)*coef
                    convdx%socn(id,jd,j) = convdx%socn(id,jd,j) &
@@ -164,8 +164,8 @@ contains
              do j = nl, 1, -1
                 do k = nl, 1, -1
                    dist2 = (z(j)-zp(k))**2
-                   dtemp2 = (self%temp(id,jd,j)-self%temp(id,jd,k))**2                   
-                   coef = exp(-dist2/lz2 -dtemp2/ltemp2)
+                   !dtemp2 = (self%temp(id,jd,j)-self%temp(id,jd,k))**2
+                   coef = exp(-dist2/lz2) ! -dtemp2/ltemp2)
                    dx%tocn(id,jd,k) = dx%tocn(id,jd,k) + coef*convdx%tocn(id,jd,j)
                    dx%socn(id,jd,k) = dx%socn(id,jd,k) + coef*convdx%socn(id,jd,j)
                 end do

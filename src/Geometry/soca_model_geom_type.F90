@@ -42,6 +42,7 @@ module soca_model_geom_type
      procedure :: clone => geom_clone
      procedure :: print => geom_print
      procedure :: get_rossby_radius => geom_rossby_radius
+     procedure :: thickness2depth => geom_thickness2depth
      procedure :: infotofile => geom_infotofile
   end type soca_model_geom
 
@@ -343,21 +344,30 @@ contains
 
   end subroutine geom_get_domain_indices
 
-  subroutine geom_thickness2depth
+  subroutine geom_thickness2depth(self, h, z) 
 
     implicit none
     
-    class(soca_model_geom), intent(in)  :: self
-    character(7),            intent(in) :: domain_type
-    integer,                intent(out) :: is, ie, js, je
-    
-    do k = 1, self%geom%ocean%nzo
-       if (k.eq.1) then
-          z=traj%hocn(i,j,k)
-       else
-          z=sum(traj%hocn(i,j,1:k-1))+0.5_kind_real*traj%hocn(i,j,k)
-       end if
+    class(soca_model_geom),             intent(in) :: self
+    real(kind=kind_real),               intent(in) :: h(:,:,:) ! Layer depth    
+    real(kind=kind_real), allocatable, intent(out) :: z(:,:,:) ! Mid-layer depth
 
+    integer :: is, ie, js, je, i, j, k
+
+    ! Should check shape of z 
+    call geom_get_domain_indices(self, "compute", is, ie, js, je)
+    allocate(z(is:ie, js:je, self%nzo))    
+
+    do i = is, ie
+       do j = js, je
+          do k = 1, self%nzo
+             if (k.eq.1) then
+                z(i,j,k) = h(i,j,k)
+             else
+                z(i,j,k) = sum(h(i,j,1:k-1))+0.5_kind_real*h(i,j,k)
+             end if
+          end do
+       end do
     end do
   end subroutine geom_thickness2depth
   

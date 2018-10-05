@@ -72,8 +72,8 @@ class OceanState:
         plt.subplot(211)
         print 'min temp:',np.min(self.temp[:,j,:]-other.temp[:,j,:])
         print 'max temp:',np.max(self.temp[:,j,:]-other.temp[:,j,:])
-        vmin=-3.0
-        vmax=3.0
+        vmin=-.10
+        vmax=.10
         clevs = np.linspace(vmin, vmax, 41)
 
         plt.contourf(x,z,self.temp[:,j,:]-other.temp[:,j,:], clevs, extend='both',cmap=cm.spectral)
@@ -82,8 +82,8 @@ class OceanState:
         #plt.xlim((-215, -195))
 
         plt.subplot(212)
-        vmin=-.1
-        vmax=.1
+        vmin=-.01
+        vmax=.01
         clevs = np.linspace(vmin, vmax, 41)
 
         plt.contourf(x,z,self.salt[:,j,:]-other.salt[:,j,:], clevs, extend='both',cmap=cm.spectral)
@@ -100,8 +100,8 @@ class OceanState:
         for var in vars:
             if var=='temp':
                 incr=self.temp[levels[0],:,:]-other.temp[levels[0],:,:]
-                cmin=-5.0
-                cmax=5.0
+                cmin=-.5
+                cmax=.5
                 titlestr='Temperature increment'
             if var=='salt':
                 incr=self.salt[levels[0],:,:]-other.salt[levels[0],:,:]
@@ -113,6 +113,12 @@ class OceanState:
                 cmin=-1.
                 cmax=1.
                 titlestr='SSH increment'
+            if var=='cicen':
+                self.maptype = 'N'
+                incr=np.squeeze(np.sum(self.cicen[1:,:,:]-other.cicen[1:,:,:],0))
+                cmin=-1.
+                cmax=1.
+                titlestr='cice increment'   
                 
             plothor(self.x,self.y,incr,self.map,titlestr,clim=[cmin,cmax],label='')
             plt.show()

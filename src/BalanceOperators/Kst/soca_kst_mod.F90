@@ -168,6 +168,7 @@ contains
     integer :: k, ik
 
     k = size(v,1)
+    
     do ik = 2, k-1
        dvdz(ik) = (v(ik+1)-v(ik-1))/(h(ik)+0.5*h(ik+1)+h(ik-1))
     end do

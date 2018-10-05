@@ -26,18 +26,18 @@ namespace soca {
 		 const Geometry & geom,
 	         const eckit::Configuration & conf): traj_(traj) {
     const eckit::Configuration * configc = &conf;
-    soca_bkgerr_setup_f90(keyFtnConfig_, &configc, bkg.fields().toFortran());
+    soca_bkgerr_setup_f90(keyFtnConfig_, &configc, traj_.fields().toFortran());
   }
   // -----------------------------------------------------------------------------
   BkgErr::~BkgErr() {
-    //soca_bkgerr_delete_f90(keyFtnConfig_);
+    soca_bkgerr_delete_f90(keyFtnConfig_);
   }
   // -----------------------------------------------------------------------------
   void BkgErr::multiply(const Increment & dxa, Increment & dxm) const {
     // dxm = K dxa    
-    soca_bkgerr_mult_f90(dxa.fields().toFortran(),
-			 dxm.fields().toFortran(),
-			 traj_.fields().toFortran());
+    soca_bkgerr_mult_f90(keyFtnConfig_,
+			 dxa.fields().toFortran(),
+			 dxm.fields().toFortran());
   }
   // -----------------------------------------------------------------------------
   void BkgErr::multiplyInverse(const Increment & dxm, Increment & dxa) const {
@@ -45,10 +45,11 @@ namespace soca {
   }
   // -----------------------------------------------------------------------------
   void BkgErr::multiplyAD(const Increment & dxm, Increment & dxa) const {
-    // dxa = K^T dxm  
-    soca_bkgerr_multad_f90(dxm.fields().toFortran(),
-			   dxa.fields().toFortran(),
-			   traj_.fields().toFortran());
+    // dxa = K^T dxm
+    std::cout<<"keyFtnConfig_:"<<keyFtnConfig_<<std::endl;
+    soca_bkgerr_mult_f90(keyFtnConfig_,
+			 dxm.fields().toFortran(),
+			 dxa.fields().toFortran());
   }
   // -----------------------------------------------------------------------------
   void BkgErr::multiplyInverseAD(const Increment & dxa, Increment & dxm) const {

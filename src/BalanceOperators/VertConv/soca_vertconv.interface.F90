@@ -37,36 +37,6 @@ subroutine c_soca_vertconv_setup(c_key_self, c_conf, c_key_traj, c_key_bkg) &
 
   call soca_conv_setup (self, bkg, traj, c_conf)
 
-!!$  nl = size(bkg%hocn,3)
-!!$  
-!!$  ! Get configuration for vertical convolution
-!!$  self%lz      = config_get_real(c_conf, "Lz")
-!!$  self%ltemp   = config_get_real(c_conf, "Ltemp")
-!!$
-!!$  ! Store trajectory and background
-!!$  call create_copy(self%traj, traj)
-!!$  call create_copy(self%bkg, bkg)
-!!$  
-!!$  ! Indices for compute domain (no halo)
-!!$  call geom_get_domain_indices(bkg%geom%ocean, "compute", isc, iec, jsc, jec)
-!!$  self%isc=isc; self%iec=iec; self%jsc=jsc; self%jec=jec
-!!$  
-!!$  allocate(self%temp(isc:iec, jsc:jec, nl))
-!!$  self%temp = self%traj%tocn
-!!$  print *,'in setup, max temp: ',maxval(self%temp)
-!!$  
-!!$  ! Initialize local ocean depth from layer thickness  
-!!$  allocate(self%z(isc:iec, jsc:jec, nl))
-!!$  do i = isc, iec
-!!$     do j = jsc, jec
-!!$        if (bkg%geom%ocean%mask2d(i,j).eq.1) then
-!!$           do k = 1, nl
-!!$              self%z(i,j,k) = sum(bkg%hocn(i,j,k:))
-!!$           end do
-!!$        end if
-!!$     end do
-!!$  end do
-
 end subroutine c_soca_vertconv_setup
 
 ! ------------------------------------------------------------------------------
