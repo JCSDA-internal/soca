@@ -59,7 +59,8 @@ end subroutine c_soca_b_delete
 
 !> Multiply by covariance
 
-subroutine c_soca_b_mult(c_key_conf, c_key_in, c_key_out, c_key_traj) bind(c,name='soca_b_mult_f90')
+!subroutine c_soca_b_mult(c_key_conf, c_key_in, c_key_out, c_key_traj) bind(c,name='soca_b_mult_f90')
+subroutine c_soca_b_mult(c_key_conf, c_key_in, c_key_out) bind(c,name='soca_b_mult_f90')  
   !> xout = K D C^1/2 C^1/2^T D K^T xin 
   use iso_c_binding
   use soca_covariance_mod
@@ -72,12 +73,12 @@ subroutine c_soca_b_mult(c_key_conf, c_key_in, c_key_out, c_key_traj) bind(c,nam
   integer(c_int), intent(in) :: c_key_conf  !< Handle to covariance configuration 
   integer(c_int), intent(in) :: c_key_in    !<    "   to Increment in
   integer(c_int), intent(in) :: c_key_out   !<    "   to Increment out 
-  integer(c_int), intent(in) :: c_key_traj  !<    "   to trajectory
+  !integer(c_int), intent(in) :: c_key_traj  !<    "   to trajectory
 
   type(soca_3d_covar_config), pointer :: conf
   type(soca_field), pointer :: xin
   type(soca_field), pointer :: xout
-  type(soca_field), pointer :: traj  
+  !type(soca_field), pointer :: traj  
   type(soca_field)          :: xtmp
 
   real :: start, finish
@@ -87,29 +88,22 @@ subroutine c_soca_b_mult(c_key_conf, c_key_in, c_key_out, c_key_traj) bind(c,nam
   call soca_3d_cov_registry%get(c_key_conf,conf)
   call soca_field_registry%get(c_key_in,xin)
   call soca_field_registry%get(c_key_out,xout)
-  call soca_field_registry%get(c_key_traj,traj)  
+  !call soca_field_registry%get(c_key_traj,traj)  
   print *,'---------------------------------'
   call copy(xout,xin)                         !< xtmp = xin
     print *,'---------------------------------'
-!!$  call create(xtmp,xin)  
-!!$  call copy(xtmp,xin)                         !< xtmp = xin
-!!$
-!!$  call cpu_time(start)
+  call create(xtmp,xin)  
 !!$  print *,"B.dy Time start = ",start," seconds."       
 !!$
-!!$  !call soca_3d_covar_K_mult_ad(xtmp, traj)    !< xtmp = K^T.xtmp
-!!$  !call soca_3d_covar_D_mult(xtmp, traj, conf) !< xtmp = D.xtmp
-!!$  !call soca_3d_covar_C_mult(xtmp,conf)        !< xtmp = C.xtmp
-!!$  !call soca_3d_covar_D_mult(xtmp, traj, conf) !< xtmp = D.xtmp  
-!!$  !call soca_3d_covar_K_mult(xtmp, traj)       !< xtmp = K.xtmp
+    call soca_3d_covar_C_mult(xtmp,conf)        !< xtmp = C.xtmp
 !!$
 !!$  call cpu_time(finish)
 !!$  call mpi_barrier(MPI_COMM_WORLD,ierr)
 !!$  print *,"B.dy elapsed Time = ",finish-start," seconds."
 !!$  !stop
 !!$  
-!!$  call copy(xout,xtmp)                        !< xout = xtmp
-!!$  call delete(xtmp)
+  call copy(xout,xtmp)                        !< xout = xtmp
+  call delete(xtmp)
 
 end subroutine c_soca_b_mult
 

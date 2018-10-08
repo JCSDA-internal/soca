@@ -74,17 +74,17 @@ contains
     type(soca_field), pointer :: D_p            !< Std of background error estimated
                                                 !< from background
     
-    config%sig_sic      = config_get_real(c_conf,"sig_sic")
-    config%sig_sit      = config_get_real(c_conf,"sig_sit")
-    config%sig_ssh      = config_get_real(c_conf,"sig_ssh")
-    config%sig_tocn     = config_get_real(c_conf,"sig_tocn")
-    config%sig_socn     = config_get_real(c_conf,"sig_socn")        
+    config%sig_sic      = 1.0 !config_get_real(c_conf,"sig_sic")
+    config%sig_sit      = 1.0 !config_get_real(c_conf,"sig_sit")
+    config%sig_ssh      = 1.0 !config_get_real(c_conf,"sig_ssh")
+    config%sig_tocn     = 1.0 !config_get_real(c_conf,"sig_tocn")
+    config%sig_socn     = 1.0 !config_get_real(c_conf,"sig_socn")        
 
     !< Read Rossby radius from file and map into grid 
     call soca_init_D(geom, bkg, D_p)
     
     !< Initialize bump
-    !call soca_bump_correlation(geom, horiz_convol_p, c_conf)
+    call soca_bump_correlation(geom, horiz_convol_p, c_conf)
     
   end subroutine soca_3d_covar_setup
 
@@ -394,6 +394,8 @@ contains
     use mpi!,             only: mpi_comm_world
     use iso_c_binding
     use oobump_mod, only: bump_read_conf
+    use fckit_mpi_module, only: fckit_mpi_comm
+    
     implicit none
 
     type(soca_geom),           optional, intent(in) :: geom
@@ -419,7 +421,14 @@ contains
     
     real(kind_real), allocatable :: rh(:,:,:,:)     !< Horizontal support radius for covariance (in m)
     real(kind_real), allocatable :: rv(:,:,:,:)     !< Vertical support radius for
+    type(fckit_mpi_comm) :: f_comm
 
+    f_comm = fckit_mpi_comm()
+
+    print *,convolh_initialized
+    print *,'----------------------------------'
+    !read(*,*)
+    
     ! Desructor
     if (present(destruct)) then
        convolh_initialized = .false.
@@ -465,8 +474,8 @@ contains
        end where
 
        ! Read bump configuration
-       call bump_read_conf(c_conf,horiz_convol)  
-
+       call bump_read_conf(c_conf,horiz_convol)
+       
        ! Compute convolution weight
        allocate(rh(nc0a,nl0,nv,nts))
        allocate(rv(nc0a,nl0,nv,nts))
@@ -481,11 +490,12 @@ contains
 
        call cpu_time(start)
        print *,"Time start = ",start," seconds."       
-       call horiz_convol%setup_online(mpi_comm_world,nc0a,nl0,nv,nts,lon,lat,area,vunit,lmask)!,rh=rh,rv=rv)
+       call horiz_convol%setup_online(f_comm%communicator(),nc0a,nl0,nv,nts,lon,lat,area,vunit,lmask) !,rh=rh,rv=rv)
        call cpu_time(finish)
        call mpi_barrier(MPI_COMM_WORLD,ierr)
        print *,"Time = ",finish-start," seconds."
-       convolh_initialized = .true.
+       !read(*,*)
+       !convolh_initialized = .true.
        deallocate( lon, lat, area, vunit, imask, lmask )
        deallocate(rh,rv)       
     end if
@@ -506,12 +516,16 @@ contains
     type(bump_type),             intent(in) :: horiz_convol_p    
     type(soca_geom),             intent(in) :: geom        
 
-    real(kind=kind_real), allocatable :: tmp_incr(:)
+    real(kind=kind_real), allocatable :: tmp_incr(:,:,:,:)
 
     ! Apply 2D convolution
-    call soca_struct2unstruct(dx(:,:), geom, tmp_incr)    
+    print *,'1111111111111'
+    call soca_struct2unstruct(dx(:,:), geom, tmp_incr)
+    print *,'1111111111111'    
     call horiz_convol_p%apply_nicas(tmp_incr)
-    call soca_unstruct2struct(dx(:,:), geom, tmp_incr)    
+    print *,'1111111111111'    
+    call soca_unstruct2struct(dx(:,:), geom, tmp_incr)
+    print *,'1111111111111'
     
   end subroutine soca_2d_convol
 
@@ -524,7 +538,7 @@ contains
 
     real(kind=kind_real),intent(in)                :: dx_struct(:,:)
     type(soca_geom), intent(in)                    :: geom    
-    real(kind=kind_real), allocatable, intent(out) :: dx_unstruct(:)
+    real(kind=kind_real), allocatable, intent(out) :: dx_unstruct(:,:,:,:)
 
     integer :: isc, iec, jsc, jec, jjj, jz, il, ib, nc0a
 
@@ -535,8 +549,8 @@ contains
     jec = geom%ocean%G%jec
     
     nc0a = (iec - isc + 1) * (jec - jsc + 1 )
-    allocate(dx_unstruct(nc0a))
-    dx_unstruct = reshape( dx_struct(isc:iec, jsc:jec), (/nc0a/) )
+    allocate(dx_unstruct(nc0a,1,1,1))
+    dx_unstruct = reshape( dx_struct(isc:iec, jsc:jec), (/nc0a,1,1,1/) )
     
   end subroutine soca_struct2unstruct
 
@@ -549,7 +563,7 @@ contains
 
     real(kind=kind_real),intent(inout)               :: dx_struct(:,:)
     type(soca_geom), intent(in)                      :: geom    
-    real(kind=kind_real), allocatable, intent(inout) :: dx_unstruct(:)
+    real(kind=kind_real), allocatable, intent(inout) :: dx_unstruct(:,:,:,:)
 
     integer :: isc, iec, jsc, jec, jjj, jz, il, ib, nc0a
 

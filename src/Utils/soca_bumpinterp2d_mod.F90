@@ -58,9 +58,9 @@ contains
 
     type(fckit_mpi_comm) :: f_comm
 
-    !f_comm = fckit_mpi_comm()
-    !print *,bumpcount
-    !read(*,*)
+    if (self%initialized) call interp_exit(self)
+    
+    f_comm = fckit_mpi_comm()
     ! Each bump%nam%prefix must be distinct
     ! -------------------------------------    
     bumpcount = bumpcount + 1
@@ -82,24 +82,8 @@ contains
     call self%bump%nam%init()
 
     self%bump%nam%prefix = bump_nam_prefix   ! Prefix for files output
-    self%bump%nam%nobs = no                  ! Number of observations
     self%bump%nam%obsop_interp = 'bilin'     ! Interpolation type (bilinear)
-    self%bump%nam%obsdis = 'local'           ! Local or BUMP may try to redistribute obs
-    self%bump%nam%diag_interp = 'bilin'
-    self%bump%nam%local_diag = .false.
-
-    !Less important namelist options (should not be changed)
     self%bump%nam%default_seed = .true.
-    self%bump%nam%new_hdiag = .false.
-    self%bump%nam%new_nicas = .false.
-    self%bump%nam%check_adjoints = .false.
-    self%bump%nam%check_pos_def = .false.
-    self%bump%nam%check_sqrt = .false.
-    self%bump%nam%check_dirac = .false.
-    self%bump%nam%check_randomization = .false.
-    self%bump%nam%check_consistency = .false.
-    self%bump%nam%check_optimality = .false.
-    self%bump%nam%new_lct = .false.
     self%bump%nam%new_obsop = .true.
 
     !Initialize geometry
@@ -125,6 +109,7 @@ contains
          &nobs=no, lonobs=obs_lon, latobs=obs_lat )
 
     self%initialized = .true.
+    self%nobs = no
     
     !Release memory
     deallocate(area)
@@ -145,7 +130,22 @@ contains
     real(kind=kind_real),     intent(in) :: fld(:,:)
     real(kind=kind_real),    intent(out) :: obs(:) 
 
-    call self%bump%apply_obsop(fld,obs)
+    ! Locals
+    real(kind=kind_real), allocatable :: tmp_fld(:,:)
+    real(kind=kind_real), allocatable :: tmp_obs(:,:)    
+    integer :: ns
+
+    allocate(tmp_fld(size(fld,1),size(fld,2)))
+    allocate(tmp_obs(size(obs,1),1))    
+    ns = size(fld,1)*size(fld,2)
+
+    tmp_fld = fld
+    tmp_fld = reshape(tmp_fld,(/ns, 1/))
+    tmp_obs(:,1) = obs
+    call self%bump%apply_obsop(tmp_fld,tmp_obs)
+    obs = tmp_obs(:,1)
+
+    deallocate(tmp_fld, tmp_obs)
 
   end subroutine interp_apply
 
