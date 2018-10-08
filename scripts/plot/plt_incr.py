@@ -29,7 +29,7 @@ plt.show()
 #plt.show()
 
 #Obsspace
-obs=OceanObs()
-obs.plot_regress()
+#obs=OceanObs()
+#obs.plot_regress()
 #obs.plot()
-plt.show()
+#plt.show()

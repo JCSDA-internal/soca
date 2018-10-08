@@ -81,7 +81,7 @@ contains
     config%sig_socn     = 1.0 !config_get_real(c_conf,"sig_socn")        
 
     !< Read Rossby radius from file and map into grid 
-    call soca_init_D(geom, bkg, D_p)
+    !call soca_init_D(geom, bkg, D_p)
     
     !< Initialize bump
     call soca_bump_correlation(geom, horiz_convol_p, c_conf)
@@ -141,249 +141,6 @@ contains
     end do    
 
   end subroutine soca_3d_covar_C_mult
-
-  ! ------------------------------------------------------------------------------  
-  !> Adjoint of balance operators
-  
-  subroutine soca_3d_covar_K_mult_ad(dy, traj)
-    use kinds
-    use soca_fields
-    use soca_balanceop
-    use soca_seaice_balanceop
-    
-    implicit none
-    !type(soca_field), intent(inout) :: KTdy     !< K^T dy
-    type(soca_field), intent(inout) :: dy       !< Input:Increment
-                                                !< Input:K^T dy
-    type(soca_field), intent(in)    :: traj     !< trajectory    
-
-    ! Grid stuff
-    integer :: isc, iec, jsc, jec, i, j, k
-
-    ! Convenience variables
-    ! Adjoint of steric height: Inputs
-    real(kind=kind_real) :: tb   !< Background potential temperature [C]
-    real(kind=kind_real) :: sb   !< Background practical salinity [psu]
-    real(kind=kind_real) :: z    !< Mid-layer depth [m]
-    real(kind=kind_real) :: p    !< Pressure at mid-layer depth [dbar]
-    real(kind=kind_real) :: h    !< Layer thickness [m]
-    real(kind=kind_real) :: deta !< Sea surface height increment [m]
-    
-    ! Adjoint of steric height: Outputs 
-    real(kind=kind_real) :: dt   !< Potential temperature increment [C] 
-    real(kind=kind_real) :: ds   !< Practical salinity increment [psu]
-
-    real(kind=kind_real), allocatable :: dcn(:), cnb(:), dtv(:), dsv(:)
-    
-    ! Indices for compute domain (no halo)
-    isc = traj%geom%ocean%G%isc
-    iec = traj%geom%ocean%G%iec
-    jsc = traj%geom%ocean%G%jsc
-    jec = traj%geom%ocean%G%jec
-
-    ! T/C balance
-    allocate(dcn(traj%geom%ocean%ncat),cnb(traj%geom%ocean%ncat))
-    do i = isc, iec
-       do j = jsc, jec
-          tb=traj%tocn(i,j,1)
-          sb=traj%socn(i,j,1)
-          cnb=traj%cicen(i,j,2:)
-          call tofc_ad (dt, dcn, tb, sb, cnb)
-          do k = 1, traj%geom%ocean%ncat
-             dy%cicen(i,j,k+1)=dcn(k)
-          end do
-       end do
-    end do
-
-    deallocate(dcn, cnb)
-
-    ! T-S balance
-    allocate(dsv(traj%geom%ocean%nzo),dtv(traj%geom%ocean%nzo))
-    dsv=0.0
-    dtv=0.0
-    do i = isc, iec
-       do j = jsc, jec
-          dsv = dy%socn(i,j,:)          
-          call soca_soft_ad (dsv,dtv,&
-                            &traj%tocn(i,j,:),&
-                            &traj%socn(i,j,:),&
-                            &traj%hocn(i,j,:))
-          dy%tocn(i,j,:) = dy%tocn(i,j,:) + dtv
-       end do
-    end do
-    deallocate(dtv,dsv)
-    
-    ! Steric height/density balance
-    do i = isc, iec
-       do j = jsc, jec
-          do k = traj%geom%ocean%nzo, 1, -1
-             tb=traj%tocn(i,j,k)
-             sb=traj%socn(i,j,k)
-             if (k.eq.1) then
-                z=traj%hocn(i,j,k)
-             else
-                z=sum(traj%hocn(i,j,1:k-1))+0.5_kind_real*traj%hocn(i,j,k)
-             end if
-             h=traj%hocn(i,j,k)
-             p=z
-             deta=dy%ssh(i,j)
-             call soca_steric_ad(deta, dt, ds, tb, sb, p, h,&
-                  &traj%geom%ocean%lon(i,j), traj%geom%ocean%lat(i,j))
-             dy%tocn(i,j,k)=dy%tocn(i,j,k)+dt
-             dy%socn(i,j,k)=dy%socn(i,j,k)+ds
-          end do
-       end do
-    end do
-
-  end subroutine soca_3d_covar_K_mult_ad
-
-  ! ------------------------------------------------------------------------------  
-  
-  subroutine soca_3d_covar_K_mult(dx, traj)
-    use kinds
-    use soca_fields
-    use soca_balanceop
-    use soca_seaice_balanceop
-    
-    implicit none
-    type(soca_field), intent(in) :: dx       !< Increment            
-    type(soca_field), intent(in) :: traj     !< trajectory    
-
-    !Grid stuff
-    integer :: isc, iec, jsc, jec, i, j, k
-    real(kind=kind_real) :: tb, sb, dt, ds,deta, z, p, h
-    real(kind=kind_real), allocatable :: dcn(:), cnb(:), dtv(:), dsv(:)
-
-    ! Indices for compute domain (no halo)
-    isc = traj%geom%ocean%G%isc
-    iec = traj%geom%ocean%G%iec
-    jsc = traj%geom%ocean%G%jsc
-    jec = traj%geom%ocean%G%jec
-
-    ! Steric height/density balance
-    do i = isc, iec
-       do j = jsc, jec
-          do k = 1, traj%geom%ocean%nzo
-             tb=traj%tocn(i,j,k)
-             sb=traj%socn(i,j,k)
-             dt=dx%tocn(i,j,k)
-             ds=dx%socn(i,j,k)
-             if (k.eq.1) then
-                z=traj%hocn(i,j,k)
-             else
-                z=sum(traj%hocn(i,j,1:k-1))+0.5_kind_real*traj%hocn(i,j,k)
-             end if
-             h=traj%hocn(i,j,k)
-             p=z
-             call soca_steric_tl(deta, dt, ds, tb, sb, p, h,&
-                  &traj%geom%ocean%lon(i,j), traj%geom%ocean%lat(i,j))
-             dx%ssh(i,j)=dx%ssh(i,j)+deta    
-          end do
-       end do
-    end do
-
-    ! T-S balance
-    allocate(dsv(traj%geom%ocean%nzo),dtv(traj%geom%ocean%nzo))
-    dsv=0.0
-    dtv=0.0    
-    do i = isc, iec
-       do j = jsc, jec
-          dtv = dx%tocn(i,j,:)
-          call soca_soft_tl (dsv,dtv,&
-                            &traj%tocn(i,j,:),&
-                            &traj%socn(i,j,:),&
-                            &traj%hocn(i,j,:))
-          dx%socn(i,j,:) = dx%socn(i,j,:) + dsv
-       end do
-    end do
-    
-    ! T/C balance
-    allocate(dcn(traj%geom%ocean%ncat),cnb(traj%geom%ocean%ncat))
-    do i = isc, iec
-       do j = jsc, jec
-          tb=traj%tocn(i,j,1)
-          sb=traj%socn(i,j,1)
-          cnb=traj%cicen(i,j,2:)
-          dcn=dx%cicen(i,j,2:)          
-          call tofc_tl (dt, dcn, tb, sb, cnb)
-          dx%tocn(i,j,1)=dx%tocn(i,j,1)+dt
-       end do
-    end do
-
-    deallocate(dcn)
-    
-  end subroutine soca_3d_covar_K_mult
-
-  ! ------------------------------------------------------------------------------
-  
-  subroutine soca_3d_covar_D_mult(dx, traj, config)
-    use kinds
-    use soca_fields
-    use soca_interph_mod
-    use fms_mod,                 only: read_data, write_data, set_domain
-    use fms_io_mod,                only : fms_io_init, fms_io_exit
-    
-    implicit none
-    type(soca_field), intent(inout)        :: dx     !< Input:  Increment
-                                                     !< Output: D applied to dx
-    type(soca_field), pointer, intent(in)  :: traj   !< trajectory   
-    type(soca_3d_covar_config), intent(in) :: config !< covariance config structure
-
-    type(soca_field)           :: sig    
-    integer :: k, test
-    
-    !!!!!!!! Need to get D from file !!!!!!!!!!!!!!!
-    dx%cicen=config%sig_sic*dx%cicen
-    dx%hicen=config%sig_sit*dx%hicen
-    dx%ssh=config%sig_ssh*dx%ssh
-    dx%tocn=config%sig_tocn*dx%tocn
-    dx%socn=config%sig_socn*dx%socn    
-
-!!$    call create(sig,traj)  
-!!$    call zeros(sig)                         !< xtmp = xin
-!!$
-!!$    !!!!! HACK !!!!!
-!!$    do k = 1, traj%geom%ocean%nzo
-!!$       if (k.eq.1) then
-!!$          sig%tocn(:,:,k)=abs(traj%tocn(:,:,1)-abs(traj%tocn(:,:,2)))
-!!$          sig%socn(:,:,k)=abs(traj%socn(:,:,1)-abs(traj%socn(:,:,2)))
-!!$       elseif (k.eq.traj%geom%ocean%nzo) then
-!!$          sig%tocn(:,:,k)=abs(traj%tocn(:,:,k)-abs(traj%tocn(:,:,k-1)))
-!!$          sig%tocn(:,:,k)=abs(traj%socn(:,:,k)-abs(traj%socn(:,:,k-1)) )         
-!!$       else
-!!$          sig%tocn(:,:,k)=0.5*abs(traj%tocn(:,:,k+1)-abs(traj%tocn(:,:,k-1)))
-!!$          sig%socn(:,:,k)=0.5*abs(traj%socn(:,:,k+1)-abs(traj%socn(:,:,k-1)))
-!!$       end if
-!!$       dx%tocn(:,:,k)=sig%tocn(:,:,k)*dx%tocn(:,:,k)
-!!$       dx%socn(:,:,k)=sig%socn(:,:,k)*dx%socn(:,:,k)       
-!!$    end do
-!!$    call delete(sig)
-    !!!!! END HACK !!!!!!
-    
-  end subroutine soca_3d_covar_D_mult
-
-  ! ------------------------------------------------------------------------------
-  
-  subroutine soca_init_D(geom, bkg, D_p)
-    use soca_geom_mod
-    use soca_fields
-
-    implicit none
-    
-    type(soca_geom),            intent(in) :: geom    !< Geometry
-    type(soca_field),           intent(in) :: bkg     !< Background field
-    type(soca_field), pointer, intent(out) :: D_p     !< Std of backcround error
-
-    logical,                  save :: D_initialized = .false.
-    type(soca_field), save, target :: D  !< Std of backcround error
-
-    if (.not.D_initialized) then
-       !call create(D,bkg)
-       !call zeros(D)       
-    end if
-    D_p => D
-    
-  end subroutine soca_init_D
   
   ! ------------------------------------------------------------------------------
 
@@ -425,10 +182,6 @@ contains
 
     f_comm = fckit_mpi_comm()
 
-    print *,convolh_initialized
-    print *,'----------------------------------'
-    !read(*,*)
-    
     ! Desructor
     if (present(destruct)) then
        convolh_initialized = .false.
@@ -473,10 +226,6 @@ contains
           lmask=.true.
        end where
 
-       ! Read bump configuration
-       call bump_read_conf(c_conf,horiz_convol)
-       
-       ! Compute convolution weight
        allocate(rh(nc0a,nl0,nv,nts))
        allocate(rv(nc0a,nl0,nv,nts))
 
@@ -489,13 +238,18 @@ contains
        rv=1.0
 
        call cpu_time(start)
-       print *,"Time start = ",start," seconds."       
-       call horiz_convol%setup_online(f_comm%communicator(),nc0a,nl0,nv,nts,lon,lat,area,vunit,lmask) !,rh=rh,rv=rv)
+       print *,"Time start = ",start," seconds."
+
+       ! Compute convolution weight
+       call horiz_convol%nam%init() 
+       call bump_read_conf(c_conf, horiz_convol)       
+       call horiz_convol%setup_online(f_comm%communicator(),nc0a,nl0,nv,nts,lon,lat,area,vunit,lmask)
+       call horiz_convol%set_parameter('cor_rh',rh)       
+       call horiz_convol%run_drivers()
        call cpu_time(finish)
        call mpi_barrier(MPI_COMM_WORLD,ierr)
        print *,"Time = ",finish-start," seconds."
-       !read(*,*)
-       !convolh_initialized = .true.
+       convolh_initialized = .true.
        deallocate( lon, lat, area, vunit, imask, lmask )
        deallocate(rh,rv)       
     end if
@@ -519,13 +273,9 @@ contains
     real(kind=kind_real), allocatable :: tmp_incr(:,:,:,:)
 
     ! Apply 2D convolution
-    print *,'1111111111111'
     call soca_struct2unstruct(dx(:,:), geom, tmp_incr)
-    print *,'1111111111111'    
     call horiz_convol_p%apply_nicas(tmp_incr)
-    print *,'1111111111111'    
     call soca_unstruct2struct(dx(:,:), geom, tmp_incr)
-    print *,'1111111111111'
     
   end subroutine soca_2d_convol
 

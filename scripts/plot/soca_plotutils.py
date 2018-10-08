@@ -28,7 +28,7 @@ def plothor(x,y,z,map,varname='',label='[m]',clim=[0,1]):
     
 class Grid:
     def __init__(self):    
-        fname='/home/gvernier/Sandboxes/soca/soca-bundle/soca/test/Data/360x210x63/ocean_geometry.nc'
+        fname='../../test/Data/360x210x63/ocean_geometry.nc'
         ncfile = Dataset(fname,'r')
         self.lat=np.squeeze(ncfile.variables['geolat'][:])
         self.lon=np.squeeze(ncfile.variables['geolon'][:])         
@@ -68,15 +68,28 @@ class OceanState:
         z=np.squeeze(-other.hmidz[:,100,:])        
 
         plt.figure(num=fignum)
-        j=90
+        j=100
         plt.subplot(211)
-        plt.pcolor(x,z,self.temp[:,j,:]-other.temp[:,j,:],vmin=-5.0,vmax=5.0,cmap=cm.bwr)
-        plt.ylim((-1000, 0))
+        print 'min temp:',np.min(self.temp[:,j,:]-other.temp[:,j,:])
+        print 'max temp:',np.max(self.temp[:,j,:]-other.temp[:,j,:])
+        vmin=-.10
+        vmax=.10
+        clevs = np.linspace(vmin, vmax, 41)
+
+        plt.contourf(x,z,self.temp[:,j,:]-other.temp[:,j,:], clevs, extend='both',cmap=cm.spectral)
+        #plt.pcolor(x,z,self.temp[:,j,:]-other.temp[:,j,:],vmin=-.05,vmax=.05,cmap=cm.bwr)
+        plt.ylim((-3000, 0))
         #plt.xlim((-215, -195))
 
         plt.subplot(212)
-        plt.pcolor(x,z,self.salt[:,j,:]-other.salt[:,j,:],vmin=-.2,vmax=.2,cmap=cm.bwr)
-        plt.ylim((-1000, 0))
+        vmin=-.01
+        vmax=.01
+        clevs = np.linspace(vmin, vmax, 41)
+
+        plt.contourf(x,z,self.salt[:,j,:]-other.salt[:,j,:], clevs, extend='both',cmap=cm.spectral)
+        
+        #plt.pcolor(x,z,self.salt[:,j,:]-other.salt[:,j,:],vmin=-.2,vmax=.2,cmap=cm.bwr)
+        plt.ylim((-3000, 0))
         #plt.xlim((-215, -195))
 
     def plot_horiz_section(self, other, vars=['temp'], levels=[0], fignum=1):
@@ -87,8 +100,8 @@ class OceanState:
         for var in vars:
             if var=='temp':
                 incr=self.temp[levels[0],:,:]-other.temp[levels[0],:,:]
-                cmin=-5.0
-                cmax=5.0
+                cmin=-.5
+                cmax=.5
                 titlestr='Temperature increment'
             if var=='salt':
                 incr=self.salt[levels[0],:,:]-other.salt[levels[0],:,:]
@@ -100,6 +113,12 @@ class OceanState:
                 cmin=-1.
                 cmax=1.
                 titlestr='SSH increment'
+            if var=='cicen':
+                self.maptype = 'N'
+                incr=np.squeeze(np.sum(self.cicen[1:,:,:]-other.cicen[1:,:,:],0))
+                cmin=-1.
+                cmax=1.
+                titlestr='cice increment'   
                 
             plothor(self.x,self.y,incr,self.map,titlestr,clim=[cmin,cmax],label='')
             plt.show()

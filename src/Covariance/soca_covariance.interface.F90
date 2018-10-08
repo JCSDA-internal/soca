@@ -23,7 +23,7 @@ subroutine c_soca_b_setup(c_key_self, c_conf, c_key_geom, c_key_bkg) &
   type(c_ptr),       intent(in) :: c_conf        !< The configuration
   integer(c_int),    intent(in) :: c_key_geom    !< Geometry
   integer(c_int),    intent(in) :: c_key_bkg     !< Background  
-  
+
   type(soca_3d_covar_config), pointer :: self
   type(soca_geom),            pointer :: geom
   type(soca_field),           pointer :: bkg
@@ -52,7 +52,7 @@ subroutine c_soca_b_delete(c_key_self) bind (c,name='soca_b_delete_f90')
 
   call soca_3d_cov_registry%get(c_key_self,self)
   call soca_3d_covar_delete(c_key_self)
-  
+
 end subroutine c_soca_b_delete
 
 ! ------------------------------------------------------------------------------
@@ -68,7 +68,7 @@ subroutine c_soca_b_mult(c_key_conf, c_key_in, c_key_out) bind(c,name='soca_b_mu
   use kinds
   use soca_Butils
   use mpi
-  
+
   implicit none
   integer(c_int), intent(in) :: c_key_conf  !< Handle to covariance configuration 
   integer(c_int), intent(in) :: c_key_in    !<    "   to Increment in
@@ -88,20 +88,10 @@ subroutine c_soca_b_mult(c_key_conf, c_key_in, c_key_out) bind(c,name='soca_b_mu
   call soca_3d_cov_registry%get(c_key_conf,conf)
   call soca_field_registry%get(c_key_in,xin)
   call soca_field_registry%get(c_key_out,xout)
-  !call soca_field_registry%get(c_key_traj,traj)  
-  print *,'---------------------------------'
-  call copy(xout,xin)                         !< xtmp = xin
-    print *,'---------------------------------'
-  call create(xtmp,xin)  
-!!$  print *,"B.dy Time start = ",start," seconds."       
-!!$
-    call soca_3d_covar_C_mult(xtmp,conf)        !< xtmp = C.xtmp
-!!$
-!!$  call cpu_time(finish)
-!!$  call mpi_barrier(MPI_COMM_WORLD,ierr)
-!!$  print *,"B.dy elapsed Time = ",finish-start," seconds."
-!!$  !stop
-!!$  
+
+  call create(xtmp,xin)
+  call copy(xtmp,xin)  
+  call soca_3d_covar_C_mult(xtmp,conf)        !< xtmp = C.xtmp
   call copy(xout,xtmp)                        !< xout = xtmp
   call delete(xtmp)
 
@@ -117,7 +107,7 @@ subroutine c_soca_b_linearize(c_key_self, c_key_geom) bind(c,name='soca_b_linear
   use soca_covariance_mod
   use soca_geom_mod
   use soca_fields
-  
+
   implicit none
 
   integer(c_int), intent(inout) :: c_key_self   !< The trajectory covariance structure
@@ -130,7 +120,7 @@ subroutine c_soca_b_linearize(c_key_self, c_key_geom) bind(c,name='soca_b_linear
   call soca_field_registry%get(c_key_self, self)
 
   !Do nothing
-  
+
 end subroutine c_soca_b_linearize
 
 ! ------------------------------------------------------------------------------
@@ -159,7 +149,7 @@ subroutine c_soca_b_randomize(c_key_conf, c_key_out) bind(c,name='soca_b_randomi
   !call ones(xout)
   call random(xout)
   call fldrms(xout, prms)
-  
+
 end subroutine c_soca_b_randomize
 
 ! ------------------------------------------------------------------------------
