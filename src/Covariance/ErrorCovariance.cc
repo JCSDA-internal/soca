@@ -51,30 +51,39 @@ namespace soca {
 
   void ErrorCovariance::linearize(const State & traj, const Geometry & resol) {
     geom_.reset(new Geometry(resol));
-  // traj: Trajectory used for the linearization of the balance operators.
-  // Changes at each outer-loops.
-    //traj_.reset(new State(traj));
-    //soca_b_linearize_f90(traj.fields().toFortran(), resol.toFortran());
     Log::trace() << "Trajectory for ErrorCovariance" << std::endl;
   }
 
   // -----------------------------------------------------------------------------
 
   void ErrorCovariance::multiply(const Increment & dxin, Increment & dxout)
-    const {}
+    const {
+    soca_b_mult_f90(keyFtnConfig_, dxin.fields().toFortran(),
+                    dxout.fields().toFortran());
+  }
 
   // -----------------------------------------------------------------------------
 
   void ErrorCovariance::inverseMultiply(const Increment & dxin,
-                                        Increment & dxout) const {}
+                                        Increment & dxout) const {
+    //oops::IdentityMatrix<Increment> Id;
+    //dxout.zero();
+    //GMRESR(dxout, dxin, *this, Id, 10, 1.0e-6);
+    dxout=dxin;
+    std::cout << "inv mult" << std::endl;
+  }
 
   // -----------------------------------------------------------------------------
 
-  void ErrorCovariance::randomize(Increment & dx) const {}
+  void ErrorCovariance::randomize(Increment & dx) const {
+    soca_b_randomize_f90(keyFtnConfig_, dx.fields().toFortran());
+  }
 
   // -----------------------------------------------------------------------------
 
-  void ErrorCovariance::print(std::ostream & os) const {}
+  void ErrorCovariance::print(std::ostream & os) const {
+    os << "ErrorCovariance::print not implemented";
+  }
 
   // -----------------------------------------------------------------------------
 

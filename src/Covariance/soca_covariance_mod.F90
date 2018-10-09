@@ -16,13 +16,7 @@ module soca_covariance_mod
 
   !> Fortran derived type to hold configuration data for the SOCA background/model covariance
   type :: soca_3d_covar_config
-     real(kind=kind_real) :: ocean_alpha_Lx=1.0
-     real(kind=kind_real) :: ocean_Lz=1.0
-     real(kind=kind_real) :: ice_Lx=200.0e3      !< Zonal       ] Length scale
-     real(kind=kind_real) :: ice_Lz=1.0      !< vertical    ] convolution kernel     
-     character(len=800)   :: D_filename  !< Netcdf file containing
-                                         !< the diagonal matrix of standard deviation for
-     !< all the fields
+
   end type soca_3d_covar_config
 
 #define LISTED_TYPE soca_3d_covar_config
@@ -66,7 +60,12 @@ contains
     type(soca_3d_covar_config), intent(inout) :: config   !< The covariance structure
     type(soca_field),              intent(in) :: bkg      !< Background
     
-    call soca_init_lengthscale(c_conf, config, bkg)
+    type(bump_type),  pointer :: horiz_convol_p !< Convolution op from bump
+    type(soca_field), pointer :: D_p            !< Std of background error estimated
+                                                !< from background
+    
+    !< Initialize bump
+    call soca_bump_correlation(geom, horiz_convol_p, c_conf)
     
   end subroutine soca_3d_covar_setup
 
@@ -82,108 +81,236 @@ contains
     integer(c_int), intent(inout) :: c_key_conf !< The model covariance structure
 
     call soca_3d_cov_registry%remove(c_key_conf)
-    !call soca_bump_correlation(destruct=.true.)
+    call soca_bump_correlation(destruct=.true.)
     
   end subroutine soca_3d_covar_delete
 
   ! ------------------------------------------------------------------------------
-  
-  subroutine soca_init_D(geom, bkg, D_p)
-    use soca_geom_mod
-    use soca_fields
 
-    implicit none
-    
-    type(soca_geom),            intent(in) :: geom    !< Geometry
-    type(soca_field),           intent(in) :: bkg     !< Background field
-    type(soca_field), pointer, intent(out) :: D_p     !< Std of backcround error
-
-    logical,                  save :: D_initialized = .false.
-    type(soca_field), save, target :: D  !< Std of backcround error
-
-    if (.not.D_initialized) then
-       !call create(D,bkg)
-       !call zeros(D)       
-    end if
-    D_p => D
-    
-  end subroutine soca_init_D
-
-  subroutine soca_init_lengthscale(c_conf, config, bkg)
+  subroutine soca_3d_covar_C_mult(dx, config)
     use iso_c_binding
-    use config_mod
     use kinds
     use soca_fields
-    use fms_io_mod,      only : fms_io_init, fms_io_exit
+    use type_bump
+    
+    implicit none
+
+    type(soca_field),        intent(inout) :: dx     !< Input: Increment
+                                                     !< Output: C dx
+    type(soca_3d_covar_config), intent(in) :: config !< covariance config structure
+
+    type(bump_type), pointer          :: horiz_convol_p
+    integer :: icat, izo
+    
+    ! Initialize BUMP and Associate horiz_convol_p 
+    call soca_bump_correlation(dx%geom, horiz_convol_p)
+
+    ! Apply convolution to fields
+    print *,'Apply nicas: ssh'
+    call soca_2d_convol(dx%ssh, horiz_convol_p, dx%geom)
+    
+    do icat = 1, dx%geom%ocean%ncat
+       print *,'Apply nicas: aice, hice, category:',icat
+       call soca_2d_convol(dx%cicen(:,:,icat+1), horiz_convol_p, dx%geom)
+       call soca_2d_convol(dx%hicen(:,:,icat), horiz_convol_p, dx%geom)       
+    end do    
+
+    do izo = 1,dx%geom%ocean%nzo
+       print *,'Apply nicas: tocn, socn, layer:',izo
+       call soca_2d_convol(dx%tocn(:,:,izo), horiz_convol_p, dx%geom)
+       call soca_2d_convol(dx%socn(:,:,izo), horiz_convol_p, dx%geom)       
+    end do    
+
+  end subroutine soca_3d_covar_C_mult
+  
+  ! ------------------------------------------------------------------------------
+
+  subroutine soca_bump_correlation(geom, horiz_convol_p, c_conf, destruct)
+    use soca_geom_mod
+    use type_bump
+    use type_nam
+    use mpi!,             only: mpi_comm_world
+    use iso_c_binding
+    use oobump_mod, only: bump_read_conf
+    use fckit_mpi_module, only: fckit_mpi_comm
+    
+    implicit none
+
+    type(soca_geom),           optional, intent(in) :: geom
+    type(bump_type), optional, pointer, intent(out) :: horiz_convol_p
+    type(c_ptr),               optional, intent(in) :: c_conf         !< Handle to configuration    
+    logical, optional                                :: destruct       ! If true: call bump destructor
+    logical, save                    :: convolh_initialized = .false.
+    type(bump_type), save, target    :: horiz_convol
+
+    !Grid stuff
+    integer :: isc, iec, jsc, jec, jjj, jz, il, ib
+    character(len=1024) :: subr = 'model_write'
+
+    !bump stuff
+    integer :: nc0a, nl0, nv, nts
+    real(kind=kind_real), allocatable :: lon(:), lat(:), area(:), vunit(:,:)
+    real(kind=kind_real), allocatable :: rosrad(:)    
+    logical, allocatable :: lmask(:,:)
+    integer, allocatable :: imask(:,:)    
+    type(nam_type) :: nam
+    integer :: ierr
+    real :: start, finish
+    
+    real(kind_real), allocatable :: rh(:,:,:,:)     !< Horizontal support radius for covariance (in m)
+    real(kind_real), allocatable :: rv(:,:,:,:)     !< Vertical support radius for
+    type(fckit_mpi_comm) :: f_comm
+
+    f_comm = fckit_mpi_comm()
+
+    ! Desructor
+    if (present(destruct)) then
+       convolh_initialized = .false.
+       call horiz_convol%dealloc()
+       return
+    end if
+
+    ! Constructor
+    if (.NOT.convolh_initialized) then
+       if (.not.(present(c_conf))) then
+          call abor1_ftn ("soca_covariance_mod:soca_bump_correlation error, need to specify configuration")
+       end if
+       !--- Initialize geometry to be passed to NICAS
+       ! Indices for compute domain (no halo)
+       isc = geom%ocean%G%isc
+       iec = geom%ocean%G%iec
+       jsc = geom%ocean%G%jsc
+       jec = geom%ocean%G%jec
+
+       nv = 1!geom%ocean%ncat + 1                 !< Number of variables
+       nl0 = 1                                    !< Number of independent levels
+       nts = 1                                    !< Number of time slots
+       nc0a = (iec - isc + 1) * (jec - jsc + 1 )  !< Total number of grid cells in the compute domain
+
+       allocate( lon(nc0a), lat(nc0a), area(nc0a), rosrad(nc0a) )
+       allocate( vunit(nc0a,nl0) )
+       allocate( imask(nc0a, nl0), lmask(nc0a, nl0) )
+       
+       lon = reshape( geom%ocean%lon(isc:iec, jsc:jec), (/nc0a/) )
+       lat = reshape( geom%ocean%lat(isc:iec, jsc:jec), (/nc0a/) )        
+       area = reshape( geom%ocean%cell_area(isc:iec, jsc:jec), (/nc0a/) )
+       rosrad = reshape( geom%ocean%rossby_radius(isc:iec, jsc:jec), (/nc0a/) )
+
+       do jz = 1, nl0       
+          vunit(:,jz) = real(jz)
+          imask(1:nc0a,jz) = reshape( geom%ocean%mask2d(isc:iec, jsc:jec), (/nc0a/) )
+       end do
+       vunit = 1.0                      !< Dummy vertical unit
+
+       lmask = .false.
+       where (imask.eq.1)
+          lmask=.true.
+       end where
+
+       allocate(rh(nc0a,nl0,nv,nts))
+       allocate(rv(nc0a,nl0,nv,nts))
+
+       do jjj=1,nc0a
+          rh(jjj,1,1,1)=10.0*rosrad(jjj)
+       end do
+       where (rh<500e3)
+          rh=500e3
+       end where
+       rv=1.0
+
+       call cpu_time(start)
+       print *,"Time start = ",start," seconds."
+
+       ! Compute convolution weight
+       call horiz_convol%nam%init() 
+       call bump_read_conf(c_conf, horiz_convol)       
+       call horiz_convol%setup_online(f_comm%communicator(),nc0a,nl0,nv,nts,lon,lat,area,vunit,lmask)
+       call horiz_convol%set_parameter('cor_rh',rh)       
+       call horiz_convol%run_drivers()
+       call cpu_time(finish)
+       call mpi_barrier(MPI_COMM_WORLD,ierr)
+       print *,"Time = ",finish-start," seconds."
+       convolh_initialized = .true.
+       deallocate( lon, lat, area, vunit, imask, lmask )
+       deallocate(rh,rv)       
+    end if
+    horiz_convol_p => horiz_convol
+    
+  end subroutine soca_bump_correlation
+
+  ! ------------------------------------------------------------------------------
+
+  subroutine soca_2d_convol(dx, horiz_convol_p, geom)
+
+    use soca_geom_mod
+    use kinds
+    use type_bump
+    
+    implicit none
+    real(kind=kind_real),     intent(inout) :: dx(:,:)
+    type(bump_type),             intent(in) :: horiz_convol_p    
+    type(soca_geom),             intent(in) :: geom        
+
+    real(kind=kind_real), allocatable :: tmp_incr(:,:,:,:)
+
+    ! Apply 2D convolution
+    call soca_struct2unstruct(dx(:,:), geom, tmp_incr)
+    call horiz_convol_p%apply_nicas(tmp_incr)
+    call soca_unstruct2struct(dx(:,:), geom, tmp_incr)
+    
+  end subroutine soca_2d_convol
+
+  ! ------------------------------------------------------------------------------
+  
+  subroutine soca_struct2unstruct(dx_struct, geom, dx_unstruct)
+    use soca_geom_mod
 
     implicit none
 
-    type(c_ptr),                 intent(in) :: c_conf   !< The configuration
-    type(soca_3d_covar_config), intent(inout) :: config   !< Config parameters for D
+    real(kind=kind_real),intent(in)                :: dx_struct(:,:)
+    type(soca_geom), intent(in)                    :: geom    
+    real(kind=kind_real), allocatable, intent(out) :: dx_unstruct(:,:,:,:)
 
-    type(soca_field) :: bkg
-    type(soca_field) :: lensca    
-    integer :: inzo, incat
-    character(len=800) :: filename
-    real(kind=kind_real) :: default_L=1000.0d3
+    integer :: isc, iec, jsc, jec, jjj, jz, il, ib, nc0a
 
-    ! Get configuration
-    config%ocean_alpha_Lx  = config_get_real(c_conf,"ocean_alpha_Lx")
-    config%ocean_Lz  = config_get_real(c_conf,"ocean_Lz")    
-    config%ice_Lx  = config_get_real(c_conf,"ice_Lx")
-    config%ice_Lz  = config_get_real(c_conf,"ice_Lz")
-
-    ! Setup a copy of bkg to store rh and rv
-    call create_copy(lensca, bkg)
-
-    ! Set rh to a large default value
-    call ones(lensca)
-    call self_mul(lensca, default_L)
+    ! Indices for compute domain (no halo)
+    isc = geom%ocean%G%isc
+    iec = geom%ocean%G%iec
+    jsc = geom%ocean%G%jsc
+    jec = geom%ocean%G%jec
     
-    ! Setup horizontal length scale
-    ! Ocean
-    call bkg%geom%ocean%get_rossby_radius()    
-
-    do inzo = 1,bkg%geom%ocean%nzo
-       lensca%tocn(:,:,inzo) = max(200e3, &
-            &config%ocean_alpha_Lx*bkg%geom%ocean%rossby_radius)
-       lensca%socn(:,:,inzo) = lensca%tocn(:,:,inzo)
-       lensca%hocn(:,:,inzo) = lensca%tocn(:,:,inzo)
-    end do
-    lensca%ssh = lensca%tocn(:,:,1)
-
-    ! Sea-ice
-    do incat = 1,bkg%geom%ocean%ncat
-       lensca%cicen(:,:,incat+1) = config%ice_Lx
-       lensca%hicen(:,:,incat) = config%ice_Lx
-    end do
-
-    filename="rh.nc"
-    call fld2file(lensca, filename)
-
-    ! Set rv to a large default value
-    call ones(lensca)
-    call self_mul(lensca, default_L)
+    nc0a = (iec - isc + 1) * (jec - jsc + 1 )
+    allocate(dx_unstruct(nc0a,1,1,1))
+    dx_unstruct = reshape( dx_struct(isc:iec, jsc:jec), (/nc0a,1,1,1/) )
     
-    ! Setup vertical length scale
-    ! Ocean
-    do inzo = 1,bkg%geom%ocean%nzo
-       lensca%tocn(:,:,inzo) = config%ocean_Lz
-       lensca%socn(:,:,inzo) = config%ocean_Lz
-       lensca%hocn(:,:,inzo) = config%ocean_Lz
-    end do
-    lensca%ssh = config%ocean_Lz
+  end subroutine soca_struct2unstruct
 
-    ! Sea-ice
-    do incat = 1,bkg%geom%ocean%ncat
-       lensca%cicen(:,:,incat+1) = config%ice_Lx
-       lensca%hicen(:,:,incat) = config%ice_Lx
-    end do
+  ! ------------------------------------------------------------------------------
+  
+  subroutine soca_unstruct2struct(dx_struct, geom, dx_unstruct)
+    use soca_geom_mod
 
-    filename="rv.nc"
-    call fld2file(lensca, filename)
+    implicit none
+
+    real(kind=kind_real),intent(inout)               :: dx_struct(:,:)
+    type(soca_geom), intent(in)                      :: geom    
+    real(kind=kind_real), allocatable, intent(inout) :: dx_unstruct(:,:,:,:)
+
+    integer :: isc, iec, jsc, jec, jjj, jz, il, ib, nc0a
+
+    ! Indices for compute domain (no halo)
+    isc = geom%ocean%G%isc
+    iec = geom%ocean%G%iec
+    jsc = geom%ocean%G%jsc
+    jec = geom%ocean%G%jec
     
-  end subroutine soca_init_lengthscale
+    nc0a = (iec - isc + 1) * (jec - jsc + 1 )
 
+    dx_struct(isc:iec, jsc:jec) = reshape(dx_unstruct,(/size(dx_struct(isc:iec, jsc:jec),1),&
+                                                       &size(dx_struct(isc:iec, jsc:jec),2)/))
+
+    deallocate(dx_unstruct)
+    
+  end subroutine soca_unstruct2struct
   
 end module soca_covariance_mod

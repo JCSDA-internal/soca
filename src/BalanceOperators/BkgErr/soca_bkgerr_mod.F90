@@ -17,9 +17,6 @@ module soca_bkgerr_mod
      type(soca_field),         pointer :: bkg
      type(soca_field)                  :: std_bkgerr     
      real(kind=kind_real), allocatable :: z(:,:,:)
-     real(kind=kind_real), allocatable :: sig_temp(:,:,:)
-     real(kind=kind_real), allocatable :: sig_salt(:,:,:)
-     real(kind=kind_real), allocatable :: sig_ssh(:,:)
      integer              :: isc, iec, jsc, jec       !> Compute domain 
   end type soca_bkgerr_config
 
@@ -73,19 +70,25 @@ contains
     call geom_get_domain_indices(bkg%geom%ocean, "compute", isc, iec, jsc, jec)
     self%isc=isc; self%iec=iec; self%jsc=jsc; self%jec=jec
 
+    ! Initialize local ocean depth from layer thickness  
+    call bkg%geom%ocean%thickness2depth(bkg%hocn, self%z)
+    
     ! Limit background error
     do i = isc, iec
        do j = jsc, jec
-          if (self%bkg%geom%ocean%mask2d(i,j).eq.1) then
+          !if (self%bkg%geom%ocean%mask2d(i,j).eq.1) then
              ! ocean
-             self%std_bkgerr%ssh(i,j) = adjusted_std(abs(self%std_bkgerr%ssh(i,j)), 0.0d0, 0.2d0)
-             self%std_bkgerr%tocn(i,j,:) = adjusted_std(abs(self%std_bkgerr%tocn(i,j,:)), 0.d0, 2.0d0)
-             self%std_bkgerr%socn(i,j,:) = adjusted_std(abs(self%std_bkgerr%socn(i,j,:)), 0.0d0, 0.5d0)
-
+             self%std_bkgerr%ssh(i,j) = adjusted_std(abs(self%std_bkgerr%ssh(i,j)), 0.1d0, 10.0d0)
+             do k = 1, nl
+                self%std_bkgerr%tocn(i,j,k) = 1.0*exp(-self%z(i,j,k)/300d0)
+                    !adjusted_std(abs(self%std_bkgerr%tocn(i,j,k)), 0.d0, 2.0d0)
+                self%std_bkgerr%socn(i,j,k) = 0.2*exp(-self%z(i,j,k)/300d0)
+                    !adjusted_std(abs(self%std_bkgerr%socn(i,j,k)), 0.0d0, 0.1d0)
+             end do
              ! sea-ice
              self%std_bkgerr%cicen(i,j,:) = adjusted_std(abs(self%std_bkgerr%cicen(i,j,:)), 0.01d0, 0.5d0)
              self%std_bkgerr%hicen(i,j,:) = adjusted_std(abs(self%std_bkgerr%hicen(i,j,:)), 10d0, 100.0d0)             
-          end if
+          !end if
        end do
     end do
     

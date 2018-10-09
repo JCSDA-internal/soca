@@ -159,7 +159,7 @@ namespace soca {
     void soca_b_delete_f90(F90bmat &);
     void soca_b_linearize_f90(const F90flds &, const F90geom &);
     void soca_b_mult_f90(const F90bmat &, const F90flds &,
-                         const F90flds &, const F90flds &);
+                         const F90flds &); //, const F90flds &);
     void soca_b_invmult_f90(const F90bmat &, const F90flds &, const F90flds &);
     void soca_b_randomize_f90(const F90bmat &, const F90flds &);
 

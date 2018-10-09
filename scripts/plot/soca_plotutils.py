@@ -68,25 +68,27 @@ class OceanState:
         z=np.squeeze(-other.hmidz[:,100,:])        
 
         plt.figure(num=fignum)
-        j=100
+        j=110
         plt.subplot(211)
         print 'min temp:',np.min(self.temp[:,j,:]-other.temp[:,j,:])
         print 'max temp:',np.max(self.temp[:,j,:]-other.temp[:,j,:])
-        vmin=-.10
-        vmax=.10
+        incr = self.temp[:,j,:]-other.temp[:,j,:]
+        #vmin=np.min(incr)
+        #vmax=np.max(incr)
+        vmin=0.5*np.min(incr)
+        vmax=0.5*abs(np.min(incr)) #np.max(incr)                
         clevs = np.linspace(vmin, vmax, 41)
-
-        plt.contourf(x,z,self.temp[:,j,:]-other.temp[:,j,:], clevs, extend='both',cmap=cm.spectral)
+        plt.contourf(x,z,incr, clevs, extend='both',cmap=cm.spectral)
         #plt.pcolor(x,z,self.temp[:,j,:]-other.temp[:,j,:],vmin=-.05,vmax=.05,cmap=cm.bwr)
         plt.ylim((-3000, 0))
         #plt.xlim((-215, -195))
 
         plt.subplot(212)
-        vmin=-.01
-        vmax=.01
-        clevs = np.linspace(vmin, vmax, 41)
-
-        plt.contourf(x,z,self.salt[:,j,:]-other.salt[:,j,:], clevs, extend='both',cmap=cm.spectral)
+        incr = self.salt[:,j,:]-other.salt[:,j,:]        
+        vmin=0.5*np.min(incr)
+        vmax=0.5*abs(np.min(incr)) #np.max(incr)        
+        clevs = np.linspace(vmin, vmax, 41)        
+        plt.contourf(x,z,incr, clevs, extend='both',cmap=cm.spectral)
         
         #plt.pcolor(x,z,self.salt[:,j,:]-other.salt[:,j,:],vmin=-.2,vmax=.2,cmap=cm.bwr)
         plt.ylim((-3000, 0))
