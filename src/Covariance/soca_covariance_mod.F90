@@ -16,17 +16,7 @@ module soca_covariance_mod
 
   !> Fortran derived type to hold configuration data for the SOCA background/model covariance
   type :: soca_3d_covar_config
-     real(kind=kind_real) :: Lx=1.0      !< Zonal       ] Length scale
-     real(kind=kind_real) :: Ly=1.0      !< Meridional  ] for
-     real(kind=kind_real) :: Lz=1.0      !< vertical    ] convolution kernel
-     real(kind=kind_real) :: sig_sic     !<   
-     real(kind=kind_real) :: sig_sit     !< Temporary hack 
-     real(kind=kind_real) :: sig_ssh     !<
-     real(kind=kind_real) :: sig_tocn    !<
-     real(kind=kind_real) :: sig_socn    !<          
-     character(len=800)   :: D_filename  !< Netcdf file containing
-                                         !< the diagonal matrix of standard deviation for
-     !< all the fields
+
   end type soca_3d_covar_config
 
 #define LISTED_TYPE soca_3d_covar_config
@@ -74,15 +64,6 @@ contains
     type(soca_field), pointer :: D_p            !< Std of background error estimated
                                                 !< from background
     
-    config%sig_sic      = 1.0 !config_get_real(c_conf,"sig_sic")
-    config%sig_sit      = 1.0 !config_get_real(c_conf,"sig_sit")
-    config%sig_ssh      = 1.0 !config_get_real(c_conf,"sig_ssh")
-    config%sig_tocn     = 1.0 !config_get_real(c_conf,"sig_tocn")
-    config%sig_socn     = 1.0 !config_get_real(c_conf,"sig_socn")        
-
-    !< Read Rossby radius from file and map into grid 
-    !call soca_init_D(geom, bkg, D_p)
-    
     !< Initialize bump
     call soca_bump_correlation(geom, horiz_convol_p, c_conf)
     
@@ -100,7 +81,7 @@ contains
     integer(c_int), intent(inout) :: c_key_conf !< The model covariance structure
 
     call soca_3d_cov_registry%remove(c_key_conf)
-    !call soca_bump_correlation(destruct=.true.)
+    call soca_bump_correlation(destruct=.true.)
     
   end subroutine soca_3d_covar_delete
 
@@ -237,18 +218,12 @@ contains
        end where
        rv=1.0
 
-       call cpu_time(start)
-       print *,"Time start = ",start," seconds."
-
        ! Compute convolution weight
        call horiz_convol%nam%init() 
        call bump_read_conf(c_conf, horiz_convol)       
        call horiz_convol%setup_online(f_comm%communicator(),nc0a,nl0,nv,nts,lon,lat,area,vunit,lmask)
        call horiz_convol%set_parameter('cor_rh',rh)       
        call horiz_convol%run_drivers()
-       call cpu_time(finish)
-       call mpi_barrier(MPI_COMM_WORLD,ierr)
-       print *,"Time = ",finish-start," seconds."
        convolh_initialized = .true.
        deallocate( lon, lat, area, vunit, imask, lmask )
        deallocate(rh,rv)       

@@ -15,9 +15,17 @@ list( APPEND soca_test_input
   testinput/localization_test.yml
   testinput/nicas_test.yml
   testinput/4denvar_nicas_test.yml
-  testinput/variablechange.yml
-  testinput/parametersbump.cov.yml  
+  #testinput/variablechange.yml
+  testinput/ksshts.yml
+  testinput/kst.yml
+  testinput/ktc.yml
+  testinput/bkgerr.yml
+  testinput/vertconv.yml  
+  #testinput/parametersbump.cov.yml
+  testinput/static_scale_binit.yml
+  testinput/static_binit.yml  
   compare.sh
+  run.sh
 )
 
 list( APPEND soca_testoutput
@@ -83,23 +91,27 @@ ecbuild_add_resources( TARGET   soca_test_scripts
                        SOURCES_PACK
                        ${soca_test_input}
                      )
-# Link to UFO Marine obs
-list( APPEND soca_obs
-  ../../ufo/test/testinput/marineobs/Jason-3-2018-04-15.nc
-  ../../ufo/test/testinput/marineobs/seaice_obs-2018-04-15.nc
-  ../../ufo/test/testinput/marineobs/sea-ice-con-l2.nc
-  ../../ufo/test/testinput/marineobs/sst_obs-2018-04-15.nc
-  ../../ufo/test/testinput/marineobs/t0n156e_dy.nc
-  ../../ufo/test/testinput/marineobs/cryosat2-2018-04-15.nc
-)
+# Link to IODA Marine obs
+file(GLOB ioda_obs "${ioda_SOURCE_DIR}/test/testinput/marine/*.nc*")
+#list( APPEND soca_obs
+#  ../../ufo/test/testinput/marineobs/Jason-3-2018-04-15.nc
+#  ../../ufo/test/testinput/marineobs/seaice_obs-2018-04-15.nc
+#  ../../ufo/test/testinput/marineobs/sea-ice-con-l2.nc
+#  ../../ufo/test/testinput/marineobs/sst_obs-2018-04-15.nc
+#  ../../ufo/test/testinput/marineobs/t0n156e_dy.nc
+#  ../../ufo/test/testinput/marineobs/cryosat2-2018-04-15.nc
+#)
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/Data)
-foreach(FILENAME ${soca_obs})
+foreach(FILENAME ${ioda_obs})
      get_filename_component(filename ${FILENAME} NAME )
      #configure_file(${CMAKE_CURRENT_SOURCE_DIR}/${FILENAME}
      #               ${CMAKE_CURRENT_BINARY_DIR}/Data/${filename} COPYONLY)
+     #execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
+     #      ${CMAKE_CURRENT_SOURCE_DIR}/${FILENAME}    
+     #      ${CMAKE_CURRENT_BINARY_DIR}/Data/${filename} )
      execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
-           ${CMAKE_CURRENT_SOURCE_DIR}/${FILENAME}    
-           ${CMAKE_CURRENT_BINARY_DIR}/Data/${filename} )
+           ${FILENAME}
+           ${CMAKE_CURRENT_BINARY_DIR}/Data/${filename} )	   
 endforeach(FILENAME)
 
 
@@ -109,28 +121,35 @@ endforeach(FILENAME)
 
 ecbuild_add_test( TARGET test_soca_truth
                   TYPE SCRIPT
-		  MPI     1
-                  COMMAND "./compare.sh"
-                  ARGS "${CMAKE_BINARY_DIR}/bin/soca_forecast.x testinput/truth.yml"
-                       testoutput/truth.test
+                  COMMAND "./run.sh"
+                  ARGS "mpirun -np 4 ${CMAKE_BINARY_DIR}/bin/soca_forecast.x testinput/truth.yml"
                   DEPENDS soca_forecast.x )
 
 ecbuild_add_test( TARGET test_soca_forecast
                   TYPE SCRIPT
-		  MPI     1		  		  
-                  COMMAND "./compare.sh"
-                  ARGS "${CMAKE_BINARY_DIR}/bin/soca_forecast.x testinput/forecast.yml"
-                       testoutput/forecast.test
+                  COMMAND "./run.sh"
+                  ARGS "mpirun -np 4 ${CMAKE_BINARY_DIR}/bin/soca_forecast.x testinput/forecast.yml"
                   DEPENDS soca_forecast.x )
 
 ecbuild_add_test( TARGET test_soca_makeobs3d
                   TYPE SCRIPT
-		  MPI     1  		  		  
-                  COMMAND "./compare.sh"
-                  ARGS "${CMAKE_BINARY_DIR}/bin/soca_makeobs.x testinput/hofx_makeobs3d.yml"
-                       testoutput/makeobs3d.test
+                  COMMAND "./run.sh"
+                  ARGS "mpirun -np 4 ${CMAKE_BINARY_DIR}/bin/soca_makeobs.x testinput/hofx_makeobs3d.yml"
                   DEPENDS soca_makeobs.x )
-		  
+
+ecbuild_add_test( TARGET test_soca_covar_lengthscale
+                  TYPE SCRIPT
+		  COMMAND "./run.sh"
+                  ARGS "mpirun -np 4 ${CMAKE_BINARY_DIR}/bin/soca_staticbinit.x testinput/static_scale_binit.yml"
+                  DEPENDS soca_staticbinit.x )
+
+ecbuild_add_test( TARGET test_soca_binit
+                  TYPE SCRIPT
+		  COMMAND "./run.sh"
+                  ARGS "mpirun -np 4 ${CMAKE_BINARY_DIR}/bin/soca_staticbinit.x testinput/static_binit.yml"
+                  DEPENDS soca_staticbinit.x )
+
+
 # Tests of class interfaces
 
 ecbuild_add_test( TARGET  test_soca_geometry
@@ -194,34 +213,26 @@ ecbuild_add_test( TARGET test_soca_obserrorcov
 
 ecbuild_add_test( TARGET test_soca_hofx
                   TYPE SCRIPT
-                  MPI     1		  
-                  COMMAND "./compare.sh"
-                  ARGS "${CMAKE_BINARY_DIR}/bin/soca_hofx.x testinput/hofx_makeobs3d.yml"
-                       testoutput/hofx.test
+                  COMMAND "./run.sh"
+                  ARGS "mpirun -np 4 ${CMAKE_BINARY_DIR}/bin/soca_hofx.x testinput/hofx_makeobs3d.yml"             
                   DEPENDS soca_hofx.x )
 
 ecbuild_add_test( TARGET test_soca_3dvar
                   TYPE SCRIPT
-                  MPI     1		  
-                  COMMAND "./compare.sh"
-                  ARGS "${CMAKE_BINARY_DIR}/bin/soca_3dvar.x testinput/3dvar_test.yml"
-                       testoutput/3dvar.test
+                  COMMAND "./run.sh"
+                  ARGS "mpirun -np 4 ${CMAKE_BINARY_DIR}/bin/soca_3dvar.x testinput/3dvar_test.yml"                       testoutput/3dvar.test
                   DEPENDS soca_3dvar.x )
 
 ecbuild_add_test( TARGET test_soca_3dvarfgat
                   TYPE SCRIPT
-                  MPI     1		  
-                  COMMAND "./compare.sh"
-                  ARGS "${CMAKE_BINARY_DIR}/bin/soca_3dvar.x testinput/3dvarfgat_test.yml"
-                       testoutput/3dvarfgat.test
+                  COMMAND "./run.sh"
+                  ARGS "mpirun -np 4 ${CMAKE_BINARY_DIR}/bin/soca_3dvar.x testinput/3dvarfgat_test.yml"
                   DEPENDS soca_3dvar.x )		  
 
 ecbuild_add_test( TARGET test_soca_4denvar
                   TYPE SCRIPT
-                  MPI     1		  
                   COMMAND "./compare.sh"
-                  ARGS "${CMAKE_BINARY_DIR}/bin/soca_3dvar.x testinput/4denvar_nicas_test.yml"
-                       testoutput/4denvar.test
+                  ARGS "mpirun -np 4 ${CMAKE_BINARY_DIR}/bin/soca_3dvar.x testinput/4denvar_nicas_test.yml"
                   DEPENDS soca_3dvar.x )
 		  
 ecbuild_add_test( TARGET test_soca_dirac
@@ -231,14 +242,38 @@ ecbuild_add_test( TARGET test_soca_dirac
                   ARGS "${CMAKE_BINARY_DIR}/bin/soca_dirac.x testinput/nicas_test.yml"
                        testoutput/dirac.test
                   DEPENDS soca_3dvar.x )		  
-
-ecbuild_add_test( TARGET test_soca_variablechange
+  
+ecbuild_add_test( TARGET test_soca_ksshts
                   BOOST
                   SOURCES executables/TestVariableChange.cc
-                  ARGS "testinput/variablechange.yml"
+                  ARGS "testinput/ksshts.yml"
                   LIBS    soca )
 
-ecbuild_add_test( TARGET test_soca_parameters_bump_cov
-                  TYPE SCRIPT
-                  COMMAND ${CMAKE_BINARY_DIR}/bin/compare.sh
-                  ARGS "${CMAKE_BINARY_DIR}/bin/soca_parameters.x testinput/parametersbump.cov.yml" )
+ecbuild_add_test( TARGET test_soca_kst
+                  BOOST
+                  SOURCES executables/TestVariableChange.cc
+                  ARGS "testinput/kst.yml"
+                  LIBS    soca )
+
+ecbuild_add_test( TARGET test_soca_ktc
+                  BOOST
+                  SOURCES executables/TestVariableChange.cc
+                  ARGS "testinput/ktc.yml"
+                  LIBS    soca )
+
+ecbuild_add_test( TARGET test_soca_bkgerr
+                  BOOST
+                  SOURCES executables/TestVariableChange.cc
+                  ARGS "testinput/bkgerr.yml"
+                  LIBS    soca )
+
+ecbuild_add_test( TARGET test_soca_vertconv
+                  BOOST
+                  SOURCES executables/TestVariableChange.cc
+                  ARGS "testinput/vertconv.yml"
+                  LIBS    soca )		
+		
+#ecbuild_add_test( TARGET test_soca_parameters_bump_cov
+#                  TYPE SCRIPT
+#                  COMMAND ${CMAKE_BINARY_DIR}/bin/compare.sh
+#                  ARGS "${CMAKE_BINARY_DIR}/bin/soca_parameters.x testinput/parametersbump.cov.yml" )

@@ -24,7 +24,7 @@ module soca_interpfields_mod
   public :: getvalues, getvalues_ad
 
   interface getvalues
-     procedure getvalues_traj, getvalues_notraj 
+     procedure getvalues_traj, getvalues_notraj
   end interface getvalues
   
 contains
@@ -84,7 +84,7 @@ contains
     type(ufo_vars),        intent(in) :: vars    
     type(ufo_geovals),  intent(inout) :: geovals
 
-    type(soca_bumpinterp2d),  target :: horiz_interp    
+    type(soca_bumpinterp2d) :: horiz_interp    
 
     call check(fld)    
     call initialize_interph(fld, locs, horiz_interp)
@@ -109,11 +109,7 @@ contains
     character(len=160) :: record
     integer :: isc, iec, jsc, jec
 
-    call check(fld)    
-    if (.not.(traj%interph_initialized)) then
-       call initialize_interph(fld, locs, traj%horiz_interp)
-       traj%interph_initialized = .true.
-    end if
+
     horiz_interp_p => traj%horiz_interp
 
     ! Indices for compute domain (no halo)
@@ -135,7 +131,6 @@ contains
           enddo
 
        case ("sea_surface_height_above_geoid","steric_height") !!!! steric height sould be  different case
-          print *,ivar,vars%fldnames(ivar)          
           call horiz_interp_p%applyad(fld%ssh(isc:iec,jsc:jec), geovals%geovals(ivar)%vals(1,:))
 
        case ("ocean_potential_temperature")
@@ -165,7 +160,7 @@ contains
     type(ioda_locs),          intent(in) :: locs
     type(ufo_vars),           intent(in) :: vars    
     type(ufo_geovals),     intent(inout) :: geovals
-    type(soca_bumpinterp2d), intent(in)  :: horiz_interp        
+    type(soca_bumpinterp2d), intent(inout)  :: horiz_interp
 
     integer :: icat, ilev, ivar, nobs, nval    
     character(len=160) :: record

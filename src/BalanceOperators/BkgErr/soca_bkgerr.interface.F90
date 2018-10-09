@@ -25,9 +25,9 @@ subroutine c_soca_bkgerr_setup(c_key_self, c_conf, c_key_bkg) &
   call soca_bkgerr_registry%add(c_key_self)
   call soca_bkgerr_registry%get(c_key_self, self)
   call soca_field_registry%get(c_key_bkg, bkg)
-  
-  call soca_bkgerr_setup(c_conf, self, bkg)
 
+  call soca_bkgerr_setup(c_conf, self, bkg)
+  
 end subroutine c_soca_bkgerr_setup
 
 ! ------------------------------------------------------------------------------
@@ -37,38 +37,38 @@ subroutine c_soca_bkgerr_delete(c_key_self) bind(c,name='soca_bkgerr_delete_f90'
   use soca_bkgerr_mod
 
   implicit none
-  integer(c_int), intent(inout) :: c_key_self  !< The background covariance structure
+  integer(c_int), intent(inout) :: c_key_self
 
   call soca_bkgerr_registry%remove(c_key_self)
 
 end subroutine c_soca_bkgerr_delete
 
 ! ------------------------------------------------------------------------------
-!> Multiplication
-subroutine c_soca_bkgerr_mult_f90(c_key_a, c_key_m, c_key_traj)&
+!> Multiplication forward and adjoint
+subroutine c_soca_bkgerr_mult_f90(c_key_self, c_key_a, c_key_m)&
      &bind(c,name='soca_bkgerr_mult_f90')
   use iso_c_binding
   use soca_bkgerr_mod
   use soca_fields
-  use soca_utils
   use kinds
-  !use soca_balanceop
-
+  use soca_kst_mod
+  
   implicit none
   integer(c_int), intent(in) :: c_key_a     !<    "   to Increment in
   integer(c_int), intent(in) :: c_key_m     !<    "   to Increment out 
-  integer(c_int), intent(in) :: c_key_traj  !<    "   to trajectory
+  integer(c_int), intent(in) :: c_key_self 
 
   type(soca_field), pointer :: dxa
   type(soca_field), pointer :: dxm
-  type(soca_field), pointer :: traj  
-
+  type(soca_bkgerr_config), pointer :: self
+  
   call soca_field_registry%get(c_key_a,dxa)
   call soca_field_registry%get(c_key_m,dxm)
-  call soca_field_registry%get(c_key_traj,traj)  
+  call soca_bkgerr_registry%get(c_key_self,self)  
 
   !< Computes dxm = D dxa
-  call copy(dxm,dxa)
+  call copy(dxm, dxa)
+  call soca_bkgerr_mult(self, dxa, dxm)
   
 end subroutine c_soca_bkgerr_mult_f90
 

@@ -12,7 +12,7 @@ module soca_bumpinterp2d_mod
 
   implicit none
   private
-  public :: soca_bumpinterp2d
+
   type, public :: soca_bumpinterp2d
      type(bump_type)                   :: bump          !< bump interp object
      integer                           :: nobs          !< Number of values to interpolate
@@ -61,10 +61,11 @@ contains
     if (self%initialized) call interp_exit(self)
     
     f_comm = fckit_mpi_comm()
+
     ! Each bump%nam%prefix must be distinct
-    ! -------------------------------------    
+    ! -------------------------------------
+    
     bumpcount = bumpcount + 1
-    print *,'bumpcount=',bumpcount
     write(cbumpcount,"(I0.5)") bumpcount
     bump_nam_prefix = 'soca_bump_data_'//cbumpcount
 
@@ -85,7 +86,7 @@ contains
     self%bump%nam%obsop_interp = 'bilin'     ! Interpolation type (bilinear)
     self%bump%nam%default_seed = .true.
     self%bump%nam%new_obsop = .true.
-
+    
     !Initialize geometry
     allocate(area(ns))
     allocate(vunit(ns,1))
@@ -103,7 +104,6 @@ contains
     tmp_maskmod = reshape(tmp_maskmod, (/ns, 1/))
     
     !Initialize BUMP
-    print *,'starting init ...'
     call self%bump%setup_online( f_comm%communicator(), ns, 1, 1, 1,&
          &tmp_lonmod, tmp_latmod, area, vunit, tmp_maskmod(:,1),&
          &nobs=no, lonobs=obs_lon, latobs=obs_lat )
@@ -115,7 +115,7 @@ contains
     deallocate(area)
     deallocate(vunit)
     deallocate(tmp_lonmod, tmp_latmod, tmp_maskmod)
-    
+
   end subroutine interp_init
 
   !--------------------------------------------  

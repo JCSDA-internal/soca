@@ -28,3 +28,8 @@ ecbuild_add_executable( TARGET  soca_parameters.x
                         SOURCES EstimateParams.cc
                         LIBS    soca
                       )
+
+ecbuild_add_executable( TARGET  soca_staticbinit.x
+                        SOURCES StaticBInit.cc
+                        LIBS    soca
+                      )

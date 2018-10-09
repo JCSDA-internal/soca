@@ -5,7 +5,7 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#include "src/BalanceOperators/BkgErr/BkgErr.h"
+#include "src/BalanceOperators/LengthScale/LengthScale.h"
 
 #include <ostream>
 #include <string>
@@ -21,42 +21,35 @@ using oops::Log;
 
 namespace soca {
   // -----------------------------------------------------------------------------
-  BkgErr::BkgErr(const State & bkg,
+  LengthScale::LengthScale(const State & bkg,
          	 const State & traj,
 		 const Geometry & geom,
 	         const eckit::Configuration & conf): traj_(traj) {
     const eckit::Configuration * configc = &conf;
-    soca_bkgerr_setup_f90(keyFtnConfig_, &configc, traj_.fields().toFortran());
+    soca_lengthscale_setup_f90(keyFtnConfig_, &configc);
   }
   // -----------------------------------------------------------------------------
-  BkgErr::~BkgErr() {
-    soca_bkgerr_delete_f90(keyFtnConfig_);
+  LengthScale::~LengthScale() {
+    soca_lengthscale_delete_f90(keyFtnConfig_);
   }
   // -----------------------------------------------------------------------------
-  void BkgErr::multiply(const Increment & dxa, Increment & dxm) const {
-    // dxm = K dxa    
-    soca_bkgerr_mult_f90(keyFtnConfig_,
-			 dxa.fields().toFortran(),
-			 dxm.fields().toFortran());
-  }
-  // -----------------------------------------------------------------------------
-  void BkgErr::multiplyInverse(const Increment & dxm, Increment & dxa) const {
-    dxa = dxm;
-  }
-  // -----------------------------------------------------------------------------
-  void BkgErr::multiplyAD(const Increment & dxm, Increment & dxa) const {
-    // dxa = K^T dxm
-    std::cout<<"keyFtnConfig_:"<<keyFtnConfig_<<std::endl;
-    soca_bkgerr_mult_f90(keyFtnConfig_,
-			 dxm.fields().toFortran(),
-			 dxa.fields().toFortran());
-  }
-  // -----------------------------------------------------------------------------
-  void BkgErr::multiplyInverseAD(const Increment & dxa, Increment & dxm) const {
+  void LengthScale::multiply(const Increment & dxa, Increment & dxm) const {
     dxm = dxa;
   }
   // -----------------------------------------------------------------------------
-  void BkgErr::print(std::ostream & os) const {
+  void LengthScale::multiplyInverse(const Increment & dxm, Increment & dxa) const {
+    dxa = dxm;
+  }
+  // -----------------------------------------------------------------------------
+  void LengthScale::multiplyAD(const Increment & dxm, Increment & dxa) const {
+    dxa = dxm;    
+  }
+  // -----------------------------------------------------------------------------
+  void LengthScale::multiplyInverseAD(const Increment & dxa, Increment & dxm) const {
+    dxm = dxa;
+  }
+  // -----------------------------------------------------------------------------
+  void LengthScale::print(std::ostream & os) const {
     os << "SOCA change variable";
   }
   // -----------------------------------------------------------------------------

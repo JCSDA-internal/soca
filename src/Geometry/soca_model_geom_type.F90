@@ -42,6 +42,7 @@ module soca_model_geom_type
      procedure :: clone => geom_clone
      procedure :: print => geom_print
      procedure :: get_rossby_radius => geom_rossby_radius
+     procedure :: thickness2depth => geom_thickness2depth
      procedure :: infotofile => geom_infotofile
   end type soca_model_geom
 
@@ -190,6 +191,7 @@ contains
     use fms_mod,         only : get_mosaic_tile_grid, write_data, set_domain, read_data
     use fms_io_mod,      only : fms_io_init, fms_io_exit
     use mpi
+    use fckit_mpi_module, only: fckit_mpi_comm
     
     implicit none
 
@@ -204,7 +206,10 @@ contains
     integer :: isc, iec, jsc, jec
     integer :: index(1), nn, io
     character(len=256) :: geom_output_file = "geom_output.nc"
-    
+    type(fckit_mpi_comm) :: f_comm
+
+    f_comm = fckit_mpi_comm()
+        
     unit = 20
     open(unit=unit,file="rossrad.dat",status="old",action="read")
     n = 0
@@ -228,7 +233,7 @@ contains
     lon=deg2rad*reshape(lon,(/n/))
     lat=deg2rad*reshape(lat,(/n/))
 
-    call mpl%init(mpi_comm_world)
+    call mpl%init(f_comm%communicator())
     call kdtree%create(mpl, n,lon,lat,mask)
 
     !--- Find nearest neighbor    
@@ -312,6 +317,8 @@ contains
 
   end subroutine geom_infotofile
 
+  ! ------------------------------------------------------------------------------
+  
   subroutine geom_get_domain_indices(self, domain_type, is, ie, js, je)
 
     implicit none
@@ -336,5 +343,32 @@ contains
        end select
 
   end subroutine geom_get_domain_indices
+
+  subroutine geom_thickness2depth(self, h, z) 
+
+    implicit none
+    
+    class(soca_model_geom),             intent(in) :: self
+    real(kind=kind_real),               intent(in) :: h(:,:,:) ! Layer depth    
+    real(kind=kind_real), allocatable, intent(out) :: z(:,:,:) ! Mid-layer depth
+
+    integer :: is, ie, js, je, i, j, k
+
+    ! Should check shape of z 
+    call geom_get_domain_indices(self, "compute", is, ie, js, je)
+    allocate(z(is:ie, js:je, self%nzo))    
+
+    do i = is, ie
+       do j = js, je
+          do k = 1, self%nzo
+             if (k.eq.1) then
+                z(i,j,k) = h(i,j,k)
+             else
+                z(i,j,k) = sum(h(i,j,1:k-1))+0.5_kind_real*h(i,j,k)
+             end if
+          end do
+       end do
+    end do
+  end subroutine geom_thickness2depth
   
 end module soca_model_geom_type

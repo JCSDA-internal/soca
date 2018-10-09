@@ -40,7 +40,6 @@ struct Traits {
 
   typedef soca::Geometry            Geometry;
   typedef soca::State               State;
-
   typedef soca::Increment           Increment;
   typedef soca::ErrorCovariance     Covariance;
   typedef soca::GetValuesTraj       InterpolatorTraj;

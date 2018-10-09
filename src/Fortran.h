@@ -141,6 +141,17 @@ namespace soca {
     void soca_getvaltraj_delete_f90(const F90getvaltraj &);
 
     // -----------------------------------------------------------------------------
+    //  Vertical convolution operator
+    // -----------------------------------------------------------------------------
+    void soca_vertconv_setup_f90(F90balopmat &,
+				 const eckit::Configuration * const *,
+				 const F90flds &,
+				 const F90flds &);
+    void soca_vertconv_delete_f90(F90balopmat &);
+    void soca_vertconv_mult_f90(const F90balopmat &, F90balopmat &, const F90balopmat &, const F90balopmat &);
+    void soca_vertconv_multad_f90(const F90balopmat &, F90balopmat &, const F90balopmat &, const F90balopmat &);
+    
+    // -----------------------------------------------------------------------------
     //  Background error
     // -----------------------------------------------------------------------------
     void soca_b_setup_f90(F90bmat &, const eckit::Configuration * const *,
@@ -181,6 +192,12 @@ namespace soca {
     // -----------------------------------------------------------------------------
     void soca_bkgerr_setup_f90(F90balopmat &, const eckit::Configuration * const *, const F90flds &);
     void soca_bkgerr_delete_f90(F90balopmat &);
+    void soca_bkgerr_mult_f90(const F90balopmat &,
+			      const F90balopmat &,
+			      F90balopmat &);
+    void soca_bkgerr_multad_f90(const F90balopmat,
+				F90balopmat &,
+				const F90balopmat &);
 
     // -----------------------------------------------------------------------------
     //  Localization matrix

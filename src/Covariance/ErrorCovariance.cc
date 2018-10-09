@@ -44,17 +44,13 @@ namespace soca {
 
   ErrorCovariance::~ErrorCovariance() {
     soca_b_delete_f90(keyFtnConfig_);
-    //Log::trace() << "ErrorCovariance destructed" << std::endl;
+    Log::trace() << "ErrorCovariance destructed" << std::endl;
   }
 
   // -----------------------------------------------------------------------------
 
   void ErrorCovariance::linearize(const State & traj, const Geometry & resol) {
     geom_.reset(new Geometry(resol));
-  // traj: Trajectory used for the linearization of the balance operators.
-  // Changes at each outer-loops.
-    //traj_.reset(new State(traj));
-    soca_b_linearize_f90(traj.fields().toFortran(), resol.toFortran());
     Log::trace() << "Trajectory for ErrorCovariance" << std::endl;
   }
 
@@ -62,13 +58,8 @@ namespace soca {
 
   void ErrorCovariance::multiply(const Increment & dxin, Increment & dxout)
     const {
-    Log::debug() << std::endl << "------- dxin" << dxin << std::endl;
-    Log::debug() << std::endl <<"------ dxout" << dxout << std::endl;
-    //Log::debug() << std::endl <<"------ traj ---- :" << traj_->fields().toFortran() << std::endl;
-    std::cout<<"==================multiply==============================="<<std::endl;    
     soca_b_mult_f90(keyFtnConfig_, dxin.fields().toFortran(),
-                    dxout.fields().toFortran()); //, traj_->fields().toFortran());
-    //dxout=dxin;
+                    dxout.fields().toFortran());
   }
 
   // -----------------------------------------------------------------------------

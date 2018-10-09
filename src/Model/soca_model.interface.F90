@@ -124,8 +124,6 @@ subroutine c_soca_propagate(c_key_model, c_key_state) bind(c,name='soca_propagat
   call soca_model_registry%get(c_key_model, model)
   call soca_field_registry%get(c_key_state,flds)
 
-  print *,'============== Advance model (not!) =============='
-
   ! ------------------------------------------------------------------------------
   return
 end subroutine c_soca_propagate
