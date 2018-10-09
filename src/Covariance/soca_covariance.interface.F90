@@ -59,7 +59,6 @@ end subroutine c_soca_b_delete
 
 !> Multiply by covariance
 
-!subroutine c_soca_b_mult(c_key_conf, c_key_in, c_key_out, c_key_traj) bind(c,name='soca_b_mult_f90')
 subroutine c_soca_b_mult(c_key_conf, c_key_in, c_key_out) bind(c,name='soca_b_mult_f90')  
   !> xout = K D C^1/2 C^1/2^T D K^T xin 
   use iso_c_binding
@@ -84,7 +83,6 @@ subroutine c_soca_b_mult(c_key_conf, c_key_in, c_key_out) bind(c,name='soca_b_mu
   real :: start, finish
   integer :: ierr
 
-  print *,'---------------------------------'
   call soca_3d_cov_registry%get(c_key_conf,conf)
   call soca_field_registry%get(c_key_in,xin)
   call soca_field_registry%get(c_key_out,xout)
@@ -145,8 +143,6 @@ subroutine c_soca_b_randomize(c_key_conf, c_key_out) bind(c,name='soca_b_randomi
   call soca_3d_cov_registry%get(c_key_conf,conf)
   call soca_field_registry%get(c_key_out,xout)
 
-
-  !call ones(xout)
   call random(xout)
   call fldrms(xout, prms)
 

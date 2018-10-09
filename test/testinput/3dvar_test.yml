@@ -165,16 +165,16 @@ cost_function:
           - tocn	  
   Jo:
     ObsTypes:
-#    - ObsType: SeaIceThickness
-#      ObsData:
-#        ObsDataOut:
-#          obsfile: Data/test_obsout.nc
-#        ObsDataIn:
-#          obsfile: Data/cryosat2-2018-04-15.nc
-#        obsvalue: ObsVal        
-#      Covariance:
-#        covariance: diagonal
-#        obserror: ObsErr
+    - ObsType: SeaIceThickness
+      ObsData:
+        ObsDataOut:
+          obsfile: Data/test_obsout.nc
+        ObsDataIn:
+          obsfile: Data/cryosat2-2018-04-15.nc
+        obsvalue: ObsVal        
+      Covariance:
+        covariance: diagonal
+        obserror: ObsErr
     - ObsType: ADT
       ObsData:
         ObsDataOut:

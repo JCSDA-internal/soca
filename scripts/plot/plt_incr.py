@@ -10,9 +10,9 @@ from soca_plotutils import *
 # Analysis increment
 fname_ana='/home/gvernier/Sandboxes/soca/bmatrix2/soca-bundle/build/soca/test/Data/3dvar.an.2018-04-15T00:00:00Z.nc'
 fname_bkg='/home/gvernier/Sandboxes/soca/bmatrix2/soca-bundle/build/soca/test/Data/example.fc.2018-04-15T00:00:00Z.P1D.nc'
-oana=OceanState(fname_ana, maptype='R')
+oana=OceanState(fname_ana, maptype='N')
 obkg=OceanState(fname_bkg)
-oana.plot_horiz_section(obkg,vars=['temp','salt','ssh'],fignum=1)
+oana.plot_horiz_section(obkg,vars=['cicen','hicen','temp','salt','ssh'],fignum=1)
 #oana.plot_horiz_section(obkg,vars=['cicen','temp'],fignum=1)
 plt.show()
 oana.plot_vert_section(obkg,fignum=1)

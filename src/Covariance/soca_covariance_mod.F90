@@ -218,18 +218,12 @@ contains
        end where
        rv=1.0
 
-       call cpu_time(start)
-       print *,"Time start = ",start," seconds."
-
        ! Compute convolution weight
        call horiz_convol%nam%init() 
        call bump_read_conf(c_conf, horiz_convol)       
        call horiz_convol%setup_online(f_comm%communicator(),nc0a,nl0,nv,nts,lon,lat,area,vunit,lmask)
        call horiz_convol%set_parameter('cor_rh',rh)       
        call horiz_convol%run_drivers()
-       call cpu_time(finish)
-       call mpi_barrier(MPI_COMM_WORLD,ierr)
-       print *,"Time = ",finish-start," seconds."
        convolh_initialized = .true.
        deallocate( lon, lat, area, vunit, imask, lmask )
        deallocate(rh,rv)       

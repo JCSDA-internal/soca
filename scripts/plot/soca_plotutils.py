@@ -75,8 +75,8 @@ class OceanState:
         incr = self.temp[:,j,:]-other.temp[:,j,:]
         #vmin=np.min(incr)
         #vmax=np.max(incr)
-        vmin=0.5*np.min(incr)
-        vmax=0.5*abs(np.min(incr)) #np.max(incr)                
+        vmin=-0.5 #*np.min(incr)
+        vmax=0.5 #*abs(np.min(incr)) #np.max(incr)                
         clevs = np.linspace(vmin, vmax, 41)
         plt.contourf(x,z,incr, clevs, extend='both',cmap=cm.spectral)
         #plt.pcolor(x,z,self.temp[:,j,:]-other.temp[:,j,:],vmin=-.05,vmax=.05,cmap=cm.bwr)
@@ -118,9 +118,15 @@ class OceanState:
             if var=='cicen':
                 self.maptype = 'N'
                 incr=np.squeeze(np.sum(self.cicen[1:,:,:]-other.cicen[1:,:,:],0))
+                cmin=-.2
+                cmax=.2
+                titlestr='cice increment'   
+            if var=='hicen':
+                self.maptype = 'N'
+                incr=np.squeeze(np.sum(self.hicen[1:,:,:]-other.hicen[1:,:,:],0))
                 cmin=-1.
                 cmax=1.
-                titlestr='cice increment'   
+                titlestr='hice increment'   
                 
             plothor(self.x,self.y,incr,self.map,titlestr,clim=[cmin,cmax],label='')
             plt.show()
