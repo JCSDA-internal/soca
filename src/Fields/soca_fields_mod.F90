@@ -777,7 +777,7 @@ contains
           end select
        end do
        ! Reset mask value to mask_val
-       call self_mask(fld, mask_val)
+       !call self_mask(fld, mask_val)
        call fms_io_exit()
        !call fms_io_init()
        
