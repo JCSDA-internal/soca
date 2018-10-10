@@ -5,7 +5,7 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#include "src/BalanceOperators/VertConv/VertConv.h"
+#include "src/Transforms/VertConv/VertConv.h"
 
 #include <ostream>
 #include <string>

@@ -9,7 +9,7 @@
  */
 
 #include "src/Traits.h"
-#include "src/BalanceOperators/instantiateBalanceOpFactory.h"
+#include "src/Transforms/instantiateBalanceOpFactory.h"
 #include "oops/runs/Variational.h"
 #include "src/Run/Run.h"
 

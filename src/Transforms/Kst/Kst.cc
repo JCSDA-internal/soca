@@ -5,7 +5,7 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#include "src/BalanceOperators/Ktc/Ktc.h"
+#include "src/Transforms/Kst/Kst.h"
 
 #include <ostream>
 #include <string>
@@ -14,48 +14,56 @@
 #include "eckit/config/Configuration.h"
 #include "src/Increment/Increment.h"
 #include "src/State/State.h"
-#include "src/Geometry/Geometry.h"
 #include "src/Fortran.h"
+#include "oops/util/Logger.h"
 
 using oops::Log;
 
 namespace soca {
   // -----------------------------------------------------------------------------
-  Ktc::Ktc(const State & bkg,
+  Kst::Kst(const State & bkg,
 	   const State & traj,
-	   const Geometry & geom,
+	   const Geometry & geom,	   
 	   const eckit::Configuration & conf): traj_(traj) {
     const eckit::Configuration * configc = &conf;
-    soca_ktc_setup_f90(keyFtnConfig_, &configc);
+    oops::Log::trace() << "soca::Kst::setup " << std::endl;
+    soca_kst_setup_f90(keyFtnConfig_, &configc, traj_.fields().toFortran());
   }
   // -----------------------------------------------------------------------------
-  Ktc::~Ktc() {
-    soca_ktc_delete_f90(keyFtnConfig_);
+  Kst::~Kst() {
+    oops::Log::trace() << "soca::Kst::delete " << std::endl;    
+    soca_kst_delete_f90(keyFtnConfig_);
   }
   // -----------------------------------------------------------------------------
-  void Ktc::multiply(const Increment & dxa, Increment & dxm) const {
+  void Kst::multiply(const Increment & dxa, Increment & dxm) const {
     // dxm = K dxa
-    soca_ktc_mult_f90(dxa.fields().toFortran(),
+    oops::Log::trace() << "soca::Kst::multiply " << std::endl;    
+    soca_kst_mult_f90(dxa.fields().toFortran(),
 		      dxm.fields().toFortran(),
-		      traj_.fields().toFortran());
+		      traj_.fields().toFortran(),
+		      keyFtnConfig_);
   }
   // -----------------------------------------------------------------------------
-  void Ktc::multiplyInverse(const Increment & dxm, Increment & dxa) const {
+  void Kst::multiplyInverse(const Increment & dxm, Increment & dxa) const {
+    oops::Log::trace() << "soca::Kst::multiplyInverse " << std::endl;    
     dxa = dxm;
   }
   // -----------------------------------------------------------------------------
-  void Ktc::multiplyAD(const Increment & dxm, Increment & dxa) const {
-    // dxa = K^T dxm  
-    soca_ktc_multad_f90(dxm.fields().toFortran(),
+  void Kst::multiplyAD(const Increment & dxm, Increment & dxa) const {
+    // dxa = K^T dxm
+    oops::Log::trace() << "soca::Kst::multiplyAD " << std::endl;
+    soca_kst_multad_f90(dxm.fields().toFortran(),
 			dxa.fields().toFortran(),
-			traj_.fields().toFortran());
+			traj_.fields().toFortran(),
+		        keyFtnConfig_);
   }
   // -----------------------------------------------------------------------------
-  void Ktc::multiplyInverseAD(const Increment & dxa, Increment & dxm) const {
+  void Kst::multiplyInverseAD(const Increment & dxa, Increment & dxm) const {
+    oops::Log::trace() << "soca::Kst::multiplyInverseAD " << std::endl;    
     dxm = dxa;
   }
   // -----------------------------------------------------------------------------
-  void Ktc::print(std::ostream & os) const {
+  void Kst::print(std::ostream & os) const {
     os << "SOCA change variable";
   }
   // -----------------------------------------------------------------------------

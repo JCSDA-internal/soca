@@ -8,11 +8,11 @@
 #ifndef SOCA_MODEL_INSTANTIATECHANGEVARFACTORY_H_
 #define SOCA_MODEL_INSTANTIATECHANGEVARFACTORY_H_
 
-#include "src/BalanceOperators/Kst/Kst.h"
-#include "src/BalanceOperators/Ktc/Ktc.h"
-#include "src/BalanceOperators/BkgErr/BkgErr.h"
-#include "src/BalanceOperators/Ksshts/Ksshts.h"
-#include "src/BalanceOperators/VertConv/VertConv.h"
+#include "src/Transforms/Kst/Kst.h"
+#include "src/Transforms/Ktc/Ktc.h"
+#include "src/Transforms/BkgErr/BkgErr.h"
+#include "src/Transforms/Ksshts/Ksshts.h"
+#include "src/Transforms/VertConv/VertConv.h"
 #include "src/Traits.h"
 #include "oops/interface/LinearVariableChange.h"
 

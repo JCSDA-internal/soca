@@ -7,7 +7,7 @@
 
 #include "src/Traits.h"
 #include "src/Run/Run.h"
-#include "src/BalanceOperators/instantiateBalanceOpFactory.h"
+#include "src/Transforms/instantiateBalanceOpFactory.h"
 #include "test/interface/LinearVariableChange.h"
 
 int main(int argc,  char ** argv) {

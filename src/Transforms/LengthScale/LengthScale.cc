@@ -5,7 +5,7 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#include "src/BalanceOperators/LengthScale/LengthScale.h"
+#include "src/Transforms/LengthScale/LengthScale.h"
 
 #include <ostream>
 #include <string>
