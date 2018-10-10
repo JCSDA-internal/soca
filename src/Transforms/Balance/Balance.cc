@@ -5,7 +5,7 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#include "src/Transforms/LengthScale/LengthScale.h"
+#include "src/Transforms/Balance/Balance.h"
 
 #include <ostream>
 #include <string>
@@ -21,35 +21,44 @@ using oops::Log;
 
 namespace soca {
   // -----------------------------------------------------------------------------
-  LengthScale::LengthScale(const State & bkg,
+  Balance::Balance(const State & bkg,
          	 const State & traj,
 		 const Geometry & geom,
 	         const eckit::Configuration & conf): traj_(traj) {
     const eckit::Configuration * configc = &conf;
-    soca_lengthscale_setup_f90(keyFtnConfig_, &configc);
+    soca_balance_setup_f90(keyFtnConfig_, &configc, traj_.fields().toFortran());
   }
   // -----------------------------------------------------------------------------
-  LengthScale::~LengthScale() {
-    soca_lengthscale_delete_f90(keyFtnConfig_);
+  Balance::~Balance() {
+    soca_balance_delete_f90(keyFtnConfig_);
   }
   // -----------------------------------------------------------------------------
-  void LengthScale::multiply(const Increment & dxa, Increment & dxm) const {
-    dxm = dxa;
+  void Balance::multiply(const Increment & dxa, Increment & dxm) const {
+    // dxm = K dxa
+    //dxm = dxa;
+    soca_balance_mult_f90(keyFtnConfig_,
+    			 dxa.fields().toFortran(),
+    			 dxm.fields().toFortran());
   }
   // -----------------------------------------------------------------------------
-  void LengthScale::multiplyInverse(const Increment & dxm, Increment & dxa) const {
+  void Balance::multiplyInverse(const Increment & dxm, Increment & dxa) const {
     dxa = dxm;
   }
   // -----------------------------------------------------------------------------
-  void LengthScale::multiplyAD(const Increment & dxm, Increment & dxa) const {
-    dxa = dxm;    
+  void Balance::multiplyAD(const Increment & dxm, Increment & dxa) const {
+    // dxa = K^T dxm
+    std::cout<<"keyFtnConfig_:"<<keyFtnConfig_<<std::endl;
+    //dxa = dxm;
+    soca_balance_multad_f90(keyFtnConfig_,
+    			 dxm.fields().toFortran(),
+    			 dxa.fields().toFortran());
   }
   // -----------------------------------------------------------------------------
-  void LengthScale::multiplyInverseAD(const Increment & dxa, Increment & dxm) const {
+  void Balance::multiplyInverseAD(const Increment & dxa, Increment & dxm) const {
     dxm = dxa;
   }
   // -----------------------------------------------------------------------------
-  void LengthScale::print(std::ostream & os) const {
+  void Balance::print(std::ostream & os) const {
     os << "SOCA change variable";
   }
   // -----------------------------------------------------------------------------

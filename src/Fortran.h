@@ -164,28 +164,12 @@ namespace soca {
     void soca_b_randomize_f90(const F90bmat &, const F90flds &);
 
     // -----------------------------------------------------------------------------
-    //  Kst Balance operator
+    //  Balance operator
     // -----------------------------------------------------------------------------
-    void soca_kst_setup_f90(F90balopmat &, const eckit::Configuration * const *, const F90flds &);
-    void soca_kst_delete_f90(F90balopmat &);
-    void soca_kst_mult_f90(const F90balopmat &, F90balopmat &, const F90balopmat &, const F90balopmat &);
-    void soca_kst_multad_f90(const F90balopmat &, F90balopmat &, const F90balopmat &, const F90balopmat &);
-
-    // -----------------------------------------------------------------------------
-    //  Ksshts Balance operator
-    // -----------------------------------------------------------------------------
-    void soca_ksshts_setup_f90(F90balopmat &, const eckit::Configuration * const *);
-    void soca_ksshts_delete_f90(F90balopmat &);
-    void soca_ksshts_mult_f90(const F90balopmat &, F90balopmat &, const F90balopmat &);
-    void soca_ksshts_multad_f90(const F90balopmat &, F90balopmat &, const F90balopmat &);
-
-    // -----------------------------------------------------------------------------
-    //  Ktc Balance operator
-    // -----------------------------------------------------------------------------
-    void soca_ktc_setup_f90(F90balopmat &, const eckit::Configuration * const *);
-    void soca_ktc_delete_f90(F90balopmat &);
-    void soca_ktc_mult_f90(const F90balopmat &, F90balopmat &, const F90balopmat &);
-    void soca_ktc_multad_f90(const F90balopmat &, F90balopmat &, const F90balopmat &);
+    void soca_balance_setup_f90(F90balopmat &, const eckit::Configuration * const *, const F90flds &);
+    void soca_balance_delete_f90(F90balopmat &);
+    void soca_balance_mult_f90(const F90balopmat &, const F90balopmat &, F90balopmat &);
+    void soca_balance_multad_f90(const F90balopmat &, const F90balopmat &, F90balopmat &);
     
     // -----------------------------------------------------------------------------
     //  Standard deviation of background error

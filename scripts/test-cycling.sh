@@ -10,7 +10,8 @@ SOCA_INPUT="${SOCA_BUILD}/soca/test/testinput"
 SOCA_TEST="${SOCA_BUILD}/soca/test"
 SOCA_MODEL_RSC="${SOCA_SRC}/test/Data/360x210x63"
 SOCA_MODEL_FORCING="${SOCA_SRC}/test/Data/360x210x63"
-SOCA_DA_IC=false #true
+#SOCA_DA_IC=false
+SOCA_DA_IC=true
 
 echo $SOCA_DA_IC
 

@@ -20,20 +20,8 @@ module soca_kst_mod
      real(kind=kind_real), allocatable :: jacobian(:,:,:) !> dS/dT(i,j,k)
   end type soca_kst
 
-#define LISTED_TYPE soca_kst
-
-  !> Linked list interface - defines registry_t type
-#include "oops/util/linkedList_i.f"
-
-  !> Global registry
-  type(registry_t) :: soca_kst_registry
-
   ! ------------------------------------------------------------------------------
 contains
-  ! ------------------------------------------------------------------------------
-  !> Linked list implementation
-#include "oops/util/linkedList_c.f"
-  ! ------------------------------------------------------------------------------
 
   !==========================================================================
   subroutine soca_soft_jacobian (jac, t, s, h, dsdtmax, dsdzmin, dtdzmin)
@@ -63,10 +51,6 @@ contains
     real(kind=kind_real), allocatable, intent(inout) :: jac(:) ! jac=ds/dt
 
     real(kind=kind_real), allocatable :: dtdz(:), dsdz(:)
-    !real(kind=kind_real) :: dsdtmax = 1.0    !> Need to go in conf
-    !real(kind=kind_real) :: dsdzmin = 3.0e-3 !> Need to go in conf
-    !real(kind=kind_real) :: dtdzmin = 1.0e-3 !> Need to go in conf
-
     integer :: nl
 
     ! Allocate
@@ -91,72 +75,10 @@ contains
        jac=0.0
     end where
 
-    ! !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!    
-    !jac(1:20) = 0.0 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    ! !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    
   end subroutine soca_soft_jacobian
 
-  !==========================================================================
-  subroutine soca_soft_tl (ds, dt, jac)
-    !==========================================================================
-    !
-    ! Tangent of soft relative to the reference state t0, s0
-    !
-    ! Input:
-    ! ------
-    ! dt     : Potential temperature                           [deg C]
-    ! jac    : ds/dt                                           [psu/K]
-    !
-    ! Output:
-    ! -------
-    ! ds  : salinity                                   [psu]
-    !    
-    !--------------------------------------------------------------------------
-
-    use kinds
-
-    implicit none
-
-    real(kind=kind_real), intent(in)  :: dt(:), jac(:)
-    real(kind=kind_real), intent(out) :: ds(:)
-
-    integer :: nl !< Number of layers
-
-    ! TLM
-    ds = jac * dt
-
-  end subroutine soca_soft_tl
-
-  !==========================================================================
-  subroutine soca_soft_ad (ds, dt, jac)
-    !==========================================================================
-    !
-    ! Adjoint of tangent of soft relative to the reference state t0, s0
-    !
-    ! Input:
-    ! ------
-    ! ds  : salinity                                           [psu]
-    ! jac    : ds/dt                                           [psu/K]
-    !
-    ! Output:
-    ! -------
-    ! dt     : Potential temperature                           [deg C]    
-    !    
-    !--------------------------------------------------------------------------
-
-    use kinds
-
-    implicit none
-
-    real(kind=kind_real), intent(in)  :: ds(:), jac(:)
-    real(kind=kind_real), intent(out) :: dt(:)
-
-    ! AD of TLM
-    dt = jac * ds
-    
-  end subroutine soca_soft_ad
-
+  ! ------------------------------------------------------------------------------
+  
   subroutine soca_diff(dvdz,v,h)
     use kinds
 

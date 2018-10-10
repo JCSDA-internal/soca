@@ -7,7 +7,7 @@ State:
   ocn_filename: MOM.res.nc
   ice_filename: ice_model.res.nc
 LinearVariableChangeTests:
-- varchange: KstSOCA
+- varchange: BalanceSOCA
   variables:                                
     variables:
     - socn

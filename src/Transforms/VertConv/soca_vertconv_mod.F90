@@ -76,15 +76,7 @@ contains
   
     ! Initialize local ocean depth from layer thickness  
     allocate(self%z(isc:iec, jsc:jec, nl))
-    do i = isc, iec
-       do j = jsc, jec
-          if (bkg%geom%ocean%mask2d(i,j).eq.1) then
-             do k = 1, nl
-                self%z(i,j,k) = sum(bkg%hocn(i,j,k:))
-             end do
-          end if
-       end do
-    end do
+    call bkg%geom%ocean%thickness2depth(bkg%hocn, self%z)    
 
   end subroutine soca_conv_setup
   

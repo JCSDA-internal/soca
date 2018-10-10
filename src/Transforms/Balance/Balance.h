@@ -5,8 +5,8 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#ifndef SOCA_SRC_BKGERR_H_
-#define SOCA_SRC_BKGERR_H_
+#ifndef SOCA_SRC_BALANCE_H_
+#define SOCA_SRC_BALANCE_H_
 
 #include <ostream>
 #include <string>
@@ -30,12 +30,12 @@ namespace soca {
 // -----------------------------------------------------------------------------
 /// SOCA linear change of variable
 
-class LengthScale: public util::Printable {
+class Balance: public util::Printable {
  public:
-  static const std::string classname() {return "soca::LengthScale";}
+  static const std::string classname() {return "soca::Balance";}
 
-  explicit LengthScale(const State &, const State &, const Geometry &, const eckit::Configuration &);
-  ~LengthScale();
+  explicit Balance(const State &, const State &, const Geometry &, const eckit::Configuration &);
+  ~Balance();
 
 /// Perform linear transforms
   void multiply(const Increment &, Increment &) const;
@@ -51,4 +51,4 @@ class LengthScale: public util::Printable {
 // -----------------------------------------------------------------------------
 
 }  // namespace soca
-#endif  // SOCA_SRC_BKGERR_H_
+#endif  // SOCA_SRC_BALANCE_H_

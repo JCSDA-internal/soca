@@ -243,22 +243,10 @@ ecbuild_add_test( TARGET test_soca_dirac
                        testoutput/dirac.test
                   DEPENDS soca_3dvar.x )		  
   
-ecbuild_add_test( TARGET test_soca_ksshts
-                  BOOST
-                  SOURCES executables/TestVariableChange.cc
-                  ARGS "testinput/ksshts.yml"
-                  LIBS    soca )
-
-ecbuild_add_test( TARGET test_soca_kst
+ecbuild_add_test( TARGET test_soca_balance
                   BOOST
                   SOURCES executables/TestVariableChange.cc
                   ARGS "testinput/kst.yml"
-                  LIBS    soca )
-
-ecbuild_add_test( TARGET test_soca_ktc
-                  BOOST
-                  SOURCES executables/TestVariableChange.cc
-                  ARGS "testinput/ktc.yml"
                   LIBS    soca )
 
 ecbuild_add_test( TARGET test_soca_bkgerr

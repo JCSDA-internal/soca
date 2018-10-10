@@ -53,8 +53,8 @@ cost_function:
       #strategy: specific_univariate
       strategy: common      
 #      new_hdiag: 0
-      new_nicas: 1   # 1: recomputes convol param
-      load_nicas: 0  # 1: loads convol param (layout specific)
+      new_nicas: 0   # 1: recomputes convol param
+      load_nicas: 1  # 1: loads convol param (layout specific)
       # Sampling parameters
       sam_read: 0
       sam_write: 1  
@@ -85,46 +85,22 @@ cost_function:
       diag_interp: bilin
       date: '2018-04-15T00:00:00Z'
       variable_changes:
-      - varchange: KsshtsSOCA
-        inputVariables:  #Input to the adjoint
+      - varchange: BalanceSOCA
+        dsdtmax: 1.0    
+        dsdzmin: 3.0e-2
+        dtdzmin: 1.0e-2 
+        inputVariables:
           variables:
           - socn
           - tocn
           - ssh
-          - hocn          
+          - hocn
         outputVariables:
           variables:
           - socn
           - tocn
           - ssh
-          - hocn          
-#      - varchange: KstSOCA
-#        dsdtmax: 1.0    
-#        dsdzmin: 3.0e-2
-#        dtdzmin: 1.0e-2 
-#        inputVariables:
-#          variables:
-#          - socn
-#          - tocn
-#          - ssh
-#          - hocn
-#        outputVariables:
-#          variables:
-#          - socn
-#          - tocn
-#          - ssh
-#          - hocn            
-#      - varchange: KtcSOCA
-#        inputVariables:
-#          variables:
-#          - cicen
-#          - socn
-#          - tocn
-#        outputVariables:
-#          variables:
-#          - cicen
-#          - socn
-#          - tocn
+          - hocn            
       - varchange: BkgErrSOCA
         read_from_file: 2
         date: 2018-04-15T00:00:00Z
@@ -165,36 +141,36 @@ cost_function:
           - tocn	  
   Jo:
     ObsTypes:
-    - ObsType: SeaIceThickness
-      ObsData:
-        ObsDataOut:
-          obsfile: Data/test_obsout.nc
-        ObsDataIn:
-          obsfile: Data/cryosat2-2018-04-15.nc
-        obsvalue: ObsVal        
-      Covariance:
-        covariance: diagonal
-        obserror: ObsErr
-    - ObsType: ADT
-      ObsData:
-        ObsDataOut:
-          obsfile: Data/test_obsout.nc
-        ObsDataIn:
-          obsfile: Data/Jason-3-2018-04-15.nc
-        obsvalue: ObsVal        
-      Covariance:
-        covariance: diagonal
-        obserror: ObsErr        
-#    - ObsType: InsituTemperature
+#    - ObsType: SeaIceThickness
 #      ObsData:
 #        ObsDataOut:
-#          obsfile: Data/t0n156e_dy.nc
+#          obsfile: Data/test_obsout.nc
 #        ObsDataIn:
-#          obsfile: /home/gvernier/Data/Argo/Santha/report.FixedMor_profile_2018041500.nc #Data/t0n156e_dy.nc
+#          obsfile: Data/cryosat2-2018-04-15.nc
 #        obsvalue: ObsVal        
 #      Covariance:
 #        covariance: diagonal
-#        obserror: ObsErr		
+#        obserror: ObsErr
+#    - ObsType: ADT
+#      ObsData:
+#        ObsDataOut:
+#          obsfile: Data/test_obsout.nc
+#        ObsDataIn:
+#          obsfile: Data/Jason-3-2018-04-15.nc
+#        obsvalue: ObsVal        
+#      Covariance:
+#        covariance: diagonal
+#        obserror: ObsErr        
+    - ObsType: InsituTemperature
+      ObsData:
+        ObsDataOut:
+          obsfile: Data/t0n156e_dy.nc
+        ObsDataIn:
+          obsfile: /home/gvernier/Data/Argo/Santha/report.FixedMor_profile_2018041500.nc #Data/t0n156e_dy.nc
+        obsvalue: ObsVal        
+      Covariance:
+        covariance: diagonal
+        obserror: ObsErr		
 #    - ObsType: SeaIceFraction
 #      ObsData:
 #        ObsDataOut:

@@ -75,25 +75,29 @@ class OceanState:
         incr = self.temp[:,j,:]-other.temp[:,j,:]
         #vmin=np.min(incr)
         #vmax=np.max(incr)
-        vmin=-0.5 #*np.min(incr)
-        vmax=0.5 #*abs(np.min(incr)) #np.max(incr)                
+        vmin=-0.2 #np.min(incr)
+        vmax=0.2 #abs(np.min(incr)) #np.max(incr)                
         clevs = np.linspace(vmin, vmax, 41)
         plt.contourf(x,z,incr, clevs, extend='both',cmap=cm.spectral)
         #plt.pcolor(x,z,self.temp[:,j,:]-other.temp[:,j,:],vmin=-.05,vmax=.05,cmap=cm.bwr)
         plt.ylim((-3000, 0))
         #plt.xlim((-215, -195))
+        cbar=plt.colorbar(shrink=0.5,format="%.1f")
+        cbar.set_label('[K]', rotation=270)
 
         plt.subplot(212)
         incr = self.salt[:,j,:]-other.salt[:,j,:]        
-        vmin=0.5*np.min(incr)
-        vmax=0.5*abs(np.min(incr)) #np.max(incr)        
+        vmin=-0.1 #np.min(incr)
+        vmax=0.1 #abs(np.min(incr)) #np.max(incr)        
         clevs = np.linspace(vmin, vmax, 41)        
         plt.contourf(x,z,incr, clevs, extend='both',cmap=cm.spectral)
         
         #plt.pcolor(x,z,self.salt[:,j,:]-other.salt[:,j,:],vmin=-.2,vmax=.2,cmap=cm.bwr)
         plt.ylim((-3000, 0))
         #plt.xlim((-215, -195))
-
+        cbar=plt.colorbar(shrink=0.5,format="%.1f")
+        cbar.set_label('[psu]', rotation=270)
+        
     def plot_horiz_section(self, other, vars=['temp'], levels=[0], fignum=1):
         plt.figure(num=fignum)
         #map = Basemap(projection='mill',lon_0=-100)
@@ -102,8 +106,8 @@ class OceanState:
         for var in vars:
             if var=='temp':
                 incr=self.temp[levels[0],:,:]-other.temp[levels[0],:,:]
-                cmin=-.5
-                cmax=.5
+                cmin=-2.5
+                cmax=2.5
                 titlestr='Temperature increment'
             if var=='salt':
                 incr=self.salt[levels[0],:,:]-other.salt[levels[0],:,:]
@@ -112,8 +116,8 @@ class OceanState:
                 titlestr='Salinity increment'
             if var=='ssh':
                 incr=self.ssh[:,:]-other.ssh[:,:]
-                cmin=-1.
-                cmax=1.
+                cmin=-.1
+                cmax=.1
                 titlestr='SSH increment'
             if var=='cicen':
                 self.maptype = 'N'

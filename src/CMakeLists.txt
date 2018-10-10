@@ -71,24 +71,30 @@ list( APPEND oops_soca_src_files
 ./GetValuesTraj/GetValuesTraj.h
 ./GetValuesTraj/soca_getvaltraj_mod.F90
 
-#Balance Operators
-./Transforms/Ktc/Ktc.cc
-./Transforms/Ktc/Ktc.h
-./Transforms/Ktc/soca_ktc.interface.F90
-./Transforms/Ktc/soca_ktc_mod.F90
-./Transforms/Kst/Kst.cc
-./Transforms/Kst/Kst.h
-./Transforms/Kst/soca_kst.interface.F90
-./Transforms/Kst/soca_kst_mod.F90
-./Transforms/Ksshts/Ksshts.cc
-./Transforms/Ksshts/Ksshts.h
-./Transforms/Ksshts/soca_ksshts.interface.F90
-./Transforms/Ksshts/soca_ksshts_mod.F90
+#Variable transforms
+#./Transforms/Ktc/Ktc.cc
+#./Transforms/Ktc/Ktc.h
+#./Transforms/Ktc/soca_ktc.interface.F90
+#./Transforms/Ktc/soca_ktc_mod.F90
+#./Transforms/Kst/Kst.cc
+#./Transforms/Kst/Kst.h
+#./Transforms/Kst/soca_kst.interface.F90
+#./Transforms/Kst/soca_kst_mod.F90
+#./Transforms/Ksshts/Ksshts.cc
+#./Transforms/Ksshts/Ksshts.h
+#./Transforms/Ksshts/soca_ksshts.interface.F90
+#./Transforms/Ksshts/soca_ksshts_mod.F90
+./Transforms/instantiateBalanceOpFactory.h
+./Transforms/Balance/Balance.cc
+./Transforms/Balance/Balance.h
+./Transforms/Balance/soca_balance.interface.F90
+./Transforms/Balance/soca_balance_mod.F90
+./Transforms/Balance/soca_kst_mod.F90
+./Transforms/Balance/soca_ksshts_mod.F90
 ./Transforms/BkgErr/BkgErr.cc
 ./Transforms/BkgErr/BkgErr.h
 ./Transforms/BkgErr/soca_bkgerr.interface.F90
 ./Transforms/BkgErr/soca_bkgerr_mod.F90
-./Transforms/instantiateBalanceOpFactory.h
 ./Transforms/VertConv/VertConv.cc
 ./Transforms/VertConv/VertConv.h
 ./Transforms/VertConv/soca_vertconv.interface.F90

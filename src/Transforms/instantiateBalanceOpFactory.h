@@ -8,10 +8,8 @@
 #ifndef SOCA_MODEL_INSTANTIATECHANGEVARFACTORY_H_
 #define SOCA_MODEL_INSTANTIATECHANGEVARFACTORY_H_
 
-#include "src/Transforms/Kst/Kst.h"
-#include "src/Transforms/Ktc/Ktc.h"
+#include "src/Transforms/Balance/Balance.h"
 #include "src/Transforms/BkgErr/BkgErr.h"
-#include "src/Transforms/Ksshts/Ksshts.h"
 #include "src/Transforms/VertConv/VertConv.h"
 #include "src/Traits.h"
 #include "oops/interface/LinearVariableChange.h"
@@ -21,19 +19,13 @@ namespace soca {
 void instantiateBalanceOpFactory() {
   static oops::LinearVariableChangeMaker<soca::Traits,
               oops::LinearVariableChange<soca::Traits, soca::VertConv> >
-              makerBalanceOpVertConvSOCA_("VertConvSOCA");  
-  static oops::LinearVariableChangeMaker<soca::Traits,
-              oops::LinearVariableChange<soca::Traits, soca::Kst> >
-              makerBalanceOpKstSOCA_("KstSOCA");
-  static oops::LinearVariableChangeMaker<soca::Traits,
-              oops::LinearVariableChange<soca::Traits, soca::Ksshts> >
-              makerBalanceOpKsshtsSOCA_("KsshtsSOCA");
-  static oops::LinearVariableChangeMaker<soca::Traits,
-              oops::LinearVariableChange<soca::Traits, soca::Ktc> >
-              makerBalanceOpKtcSOCA_("KtcSOCA");
+              makerBalanceOpVertConvSOCA_("VertConvSOCA");
   static oops::LinearVariableChangeMaker<soca::Traits,
               oops::LinearVariableChange<soca::Traits, soca::BkgErr> >
               makerBalanceOpBkgErrSOCA_("BkgErrSOCA");  
+  static oops::LinearVariableChangeMaker<soca::Traits,
+              oops::LinearVariableChange<soca::Traits, soca::Balance> >
+              makerBalanceOpBalanceSOCA_("BalanceSOCA");  
 }
 
 }  // namespace qg
