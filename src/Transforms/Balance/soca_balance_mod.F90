@@ -56,11 +56,10 @@ contains
     type(c_ptr),                 intent(in)  :: c_conf
 
     integer :: isc, iec, jsc, jec, i, j, k, nl
-    real(kind=kind_real), allocatable :: dvdz(:), v(:), h(:)
+    !real(kind=kind_real), allocatable :: dvdz(:), v(:), h(:)
     real(kind=kind_real), allocatable :: jac(:)
-    real(kind=kind_real) :: dt, ds, t0, s0, p, lon, lat
-    type(datetime) :: vdate
-
+    !real(kind=kind_real) :: dt, ds, t0, s0, p, lon, lat
+    
     ! Number of ocean layer
     nl = size(traj%hocn,3)
 
@@ -120,9 +119,9 @@ contains
     end do
     deallocate(jac)
 
-    ! Compute Jacobian of Kct
+    ! Compute Kst
     allocate(self%kct(isc:iec,jsc:jec))    
-    self%kct = 0.0d0 !-0.5d0 ! HaHa    
+    self%kct = -0.001d0 ! HaHa    
     
   end subroutine soca_balance_setup
 
@@ -145,11 +144,10 @@ contains
     do i = self%isc, self%iec
        do j = self%jsc, self%jec
           ! Temperature          
-          dxc = sum(dxm%cicen(i,j,2:))
           dxa%tocn(i,j,1) = dxm%tocn(i,j,1) + &
                &self%kst%jacobian(i,j,1) * dxm%socn(i,j,1) + &
-               &self%ksshts%kssht(i,j,1) * dxm%ssh(i,j) + &
-               &self%kct(i,j) * dxc
+               &self%ksshts%kssht(i,j,1) * dxm%ssh(i,j) +&
+               &self%kct(i,j) * sum(dxm%cicen(i,j,2:))
           dxa%tocn(i,j,2:) = dxm%tocn(i,j,2:) + &
                &self%kst%jacobian(i,j,2:) * dxm%socn(i,j,2:) + &
                &self%ksshts%kssht(i,j,2:) * dxm%ssh(i,j)
