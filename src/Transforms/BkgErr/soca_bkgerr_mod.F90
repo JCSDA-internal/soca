@@ -81,7 +81,7 @@ contains
           self%std_bkgerr%ssh(i,j) = 0.05d0
 !!$          adjusted_std(abs(self%std_bkgerr%ssh(i,j)), 0.1d0, 10.0d0)
              do k = 1, nl
-                self%std_bkgerr%tocn(i,j,k) = 5.0*exp(-self%z(i,j,k)/300d0)
+                self%std_bkgerr%tocn(i,j,k) = 1.0*exp(-self%z(i,j,k)/300d0)
                 self%std_bkgerr%socn(i,j,k) = 0.2*exp(-self%z(i,j,k)/300d0)
 
 !!$                self%std_bkgerr%tocn(i,j,k) = adjusted_std(abs(self%std_bkgerr%tocn(i,j,k)), 0.d0, 10.0d0)

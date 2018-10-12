@@ -211,10 +211,10 @@ contains
        allocate(rv(nc0a,nl0,nv,nts))
 
        do jjj=1,nc0a
-          rh(jjj,1,1,1)=10.0*rosrad(jjj)
+          rh(jjj,1,1,1)=20.0*rosrad(jjj)
        end do
-       where (rh<500e3)
-          rh=500e3
+       where (rh<800e3)
+          rh=800e3
        end where
        rv=1.0
 

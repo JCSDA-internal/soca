@@ -57,10 +57,14 @@ subroutine c_soca_vertconv_delete(c_key_self) bind(c,name='soca_vertconv_delete_
   ! TODO
   
   call soca_vertconv_registry%get(c_key_self, self)  
-  call soca_vertconv_registry%remove(c_key_self)
 
+  
   if (allocated(self%z)) deallocate(self%z)
   if (allocated(self%temp)) deallocate(self%temp)  
+  if (associated(self%traj)) nullify(self%traj)
+  if (associated(self%bkg)) nullify(self%bkg)  
+  
+  call soca_vertconv_registry%remove(c_key_self)
   
 end subroutine c_soca_vertconv_delete
 

@@ -3,6 +3,7 @@
 from netCDF4 import Dataset, num2date, date2num
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.tri as tri
 from mpl_toolkits.basemap import Basemap
 import matplotlib.cm as cm
 import glob
@@ -13,6 +14,28 @@ font = {'family' : 'normal',
         'weight' : 'bold',
         'size'   : 22}
 matplotlib.rc('font', **font)
+
+fname='../../../build/soca/test/geom_output.nc'
+ncfile = Dataset(fname,'r')
+x=np.squeeze(ncfile.variables['lon'][:])
+x[x<0]=x[x<0]+360
+y=np.squeeze(ncfile.variables['lat'][:])
+mask=np.squeeze(ncfile.variables['mask2d'][:])
+ncfile.close()
+
+x=np.reshape(x,75600)
+y=np.reshape(y,75600)
+mask=np.reshape(mask,75600)
+
+I=np.where(mask==1)
+triang = tri.Triangulation(x[I], y[I])
+
+#mask = np.reshape(mask,75600)
+#print np.shape(x), np.shape(y), np.shape(mask)
+#triang.set_mask(mask)
+
+plt.triplot(triang, 'bo-', lw=1)
+plt.show()
 
 flist=glob.glob('../../../build/soca/test/geom_output_*.nc')
 flist.sort()
@@ -52,5 +75,6 @@ for fname in flist:
     except:
         print 'oops ...'
     cnt+=1
-    
+
 plt.show()
+

@@ -126,6 +126,25 @@ contains
   end subroutine soca_balance_setup
 
   ! ------------------------------------------------------------------------------
+  subroutine soca_balance_delete(self)
+
+    use kinds
+    use iso_c_binding
+
+    implicit none
+    
+    type(soca_balance_config), intent(inout) :: self
+
+    nullify(self%traj)
+    deallocate(self%z)
+    deallocate(self%kst%jacobian)
+    deallocate(self%ksshts%kssht)
+    deallocate(self%ksshts%ksshs)    
+    deallocate(self%kct)
+    
+  end subroutine soca_balance_delete
+  
+  ! ------------------------------------------------------------------------------
 
   subroutine soca_balance_multad(self, dxa, dxm)
 

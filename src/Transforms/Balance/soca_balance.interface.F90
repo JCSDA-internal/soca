@@ -39,6 +39,10 @@ subroutine c_soca_balance_delete(c_key_self) bind(c,name='soca_balance_delete_f9
   implicit none
   integer(c_int), intent(inout) :: c_key_self
 
+  type(soca_balance_config), pointer :: self
+  
+  call soca_balance_registry%get(c_key_self,self)
+  call soca_balance_delete(self)
   call soca_balance_registry%remove(c_key_self)
 
 end subroutine c_soca_balance_delete

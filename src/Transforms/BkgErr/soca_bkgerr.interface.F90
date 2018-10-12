@@ -35,10 +35,17 @@ end subroutine c_soca_bkgerr_setup
 subroutine c_soca_bkgerr_delete(c_key_self) bind(c,name='soca_bkgerr_delete_f90')
   use iso_c_binding
   use soca_bkgerr_mod
+  use soca_fields
 
   implicit none
   integer(c_int), intent(inout) :: c_key_self
+  type(soca_bkgerr_config), pointer :: self
 
+  call soca_bkgerr_registry%get(c_key_self, self)
+  if (associated(self%bkg)) nullify(self%bkg)
+  if (allocated(self%z)) deallocate(self%z)
+  call delete(self%std_bkgerr)
+  
   call soca_bkgerr_registry%remove(c_key_self)
 
 end subroutine c_soca_bkgerr_delete
