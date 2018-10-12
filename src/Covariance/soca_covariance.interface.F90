@@ -24,17 +24,17 @@ subroutine c_soca_b_setup(c_key_self, c_conf, c_key_geom, c_key_bkg) &
   integer(c_int),    intent(in) :: c_key_geom    !< Geometry
   integer(c_int),    intent(in) :: c_key_bkg     !< Background  
 
-  type(soca_3d_covar_config), pointer :: self
-  type(soca_geom),            pointer :: geom
-  type(soca_field),           pointer :: bkg
+  type(soca_cov),   pointer :: self
+  type(soca_geom),  pointer :: geom
+  type(soca_field), pointer :: bkg
 
   call soca_geom_registry%get(c_key_geom, geom)
-  call soca_3d_cov_registry%init()
-  call soca_3d_cov_registry%add(c_key_self)
-  call soca_3d_cov_registry%get(c_key_self, self)
+  call soca_cov_registry%init()
+  call soca_cov_registry%add(c_key_self)
+  call soca_cov_registry%get(c_key_self, self)
   call soca_field_registry%get(c_key_bkg,bkg)
 
-  call soca_3d_covar_setup(c_conf, geom, self, bkg)
+  call soca_cov_setup(self, c_conf, geom, bkg)
 
 end subroutine c_soca_b_setup
 
@@ -48,18 +48,19 @@ subroutine c_soca_b_delete(c_key_self) bind (c,name='soca_b_delete_f90')
 
   implicit none
   integer(c_int), intent(inout) :: c_key_self  !< The background covariance structure
-  type(soca_3d_covar_config), pointer :: self
+  type(soca_cov),       pointer :: self
 
-  call soca_3d_cov_registry%get(c_key_self,self)
-  call soca_3d_covar_delete(c_key_self)
-
+  call soca_cov_registry%get(c_key_self,self)
+  call soca_cov_delete(self)
+  call soca_cov_registry%remove(c_key_self)
+  
 end subroutine c_soca_b_delete
 
 ! ------------------------------------------------------------------------------
 
 !> Multiply by covariance
 
-subroutine c_soca_b_mult(c_key_conf, c_key_in, c_key_out) bind(c,name='soca_b_mult_f90')  
+subroutine c_soca_b_mult(c_key_self, c_key_in, c_key_out) bind(c,name='soca_b_mult_f90')  
   !> xout = K D C^1/2 C^1/2^T D K^T xin 
   use iso_c_binding
   use soca_covariance_mod
@@ -69,28 +70,23 @@ subroutine c_soca_b_mult(c_key_conf, c_key_in, c_key_out) bind(c,name='soca_b_mu
   use mpi
 
   implicit none
-  integer(c_int), intent(in) :: c_key_conf  !< Handle to covariance configuration 
-  integer(c_int), intent(in) :: c_key_in    !<    "   to Increment in
-  integer(c_int), intent(in) :: c_key_out   !<    "   to Increment out 
-  !integer(c_int), intent(in) :: c_key_traj  !<    "   to trajectory
+  integer(c_int), intent(inout) :: c_key_self  !< The background covariance structure
+  integer(c_int), intent(in)    :: c_key_in    !<    "   to Increment in
+  integer(c_int), intent(in)    :: c_key_out   !<    "   to Increment out 
 
-  type(soca_3d_covar_config), pointer :: conf
+  type(soca_cov),   pointer :: self
   type(soca_field), pointer :: xin
   type(soca_field), pointer :: xout
-  !type(soca_field), pointer :: traj  
   type(soca_field)          :: xtmp
 
-  real :: start, finish
-  integer :: ierr
-
-  call soca_3d_cov_registry%get(c_key_conf,conf)
-  call soca_field_registry%get(c_key_in,xin)
-  call soca_field_registry%get(c_key_out,xout)
+  call soca_cov_registry%get(c_key_self, self)
+  call soca_field_registry%get(c_key_in, xin)
+  call soca_field_registry%get(c_key_out, xout)
 
   call create(xtmp,xin)
-  call copy(xtmp,xin)  
-  call soca_3d_covar_C_mult(xtmp,conf)        !< xtmp = C.xtmp
-  call copy(xout,xtmp)                        !< xout = xtmp
+  call copy(xtmp,xin)
+  call soca_cov_C_mult(self, xtmp) !< xtmp = C.xtmp
+  call copy(xout,xtmp)             !< xout = xtmp
   call delete(xtmp)
 
 end subroutine c_soca_b_mult
@@ -111,13 +107,8 @@ subroutine c_soca_b_linearize(c_key_self, c_key_geom) bind(c,name='soca_b_linear
   integer(c_int), intent(inout) :: c_key_self   !< The trajectory covariance structure
   integer(c_int), intent(in)    :: c_key_geom   !< Geometry
 
-  type(soca_field), pointer  :: self       !< Trajectory
-  type(soca_geom),  pointer  :: geom
-
-  call soca_geom_registry%get(c_key_geom, geom)
-  call soca_field_registry%get(c_key_self, self)
-
-  !Do nothing
+  ! Do nothing, current cov setup does not depend on the
+  ! trajectory
 
 end subroutine c_soca_b_linearize
 
@@ -134,17 +125,17 @@ subroutine c_soca_b_randomize(c_key_conf, c_key_out) bind(c,name='soca_b_randomi
   use kinds
 
   implicit none
+
   integer(c_int), intent(in) :: c_key_conf  !< covar config structure
   integer(c_int), intent(in) :: c_key_out   !< Randomized increment
-  type(soca_3d_covar_config), pointer :: conf
-  type(soca_field), pointer :: xout
-  real(kind=kind_real) :: prms
 
-  call soca_3d_cov_registry%get(c_key_conf,conf)
+  type(soca_cov),   pointer :: conf
+  type(soca_field), pointer :: xout
+
+  call soca_cov_registry%get(c_key_conf,conf)
   call soca_field_registry%get(c_key_out,xout)
 
   call random(xout)
-  call fldrms(xout, prms)
 
 end subroutine c_soca_b_randomize
 

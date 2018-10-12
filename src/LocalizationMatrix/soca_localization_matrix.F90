@@ -24,10 +24,10 @@ implicit none
 integer(c_int), intent(in) :: c_key_conf
 integer(c_int), intent(in) :: c_key_xincr
 
-type(soca_3d_covar_config), pointer :: conf   !< Config structure
+type(soca_cov),   pointer :: conf   !< Config structure
 type(soca_field), pointer :: xincr
 
-call soca_3d_cov_registry%get(c_key_conf,conf)
+call soca_cov_registry%get(c_key_conf,conf)
 call soca_field_registry%get(c_key_xincr,xincr)
 call abor1_ftn("localization: not implemented")             
 
@@ -40,14 +40,14 @@ implicit none
 integer(c_int), intent(inout) :: c_key_conf
 type(c_ptr), intent(in)    :: c_model  !< The configuration
 integer(c_int), intent(in) :: c_key_geom !< Geometry
-type(soca_3d_covar_config), pointer :: conf !< covar structure
+type(soca_cov), pointer :: conf !< covar structure
 type(soca_geom), pointer :: geom     !< Geometry
 
 call abor1_ftn("localization: not implemented")
 
-call soca_3d_cov_registry%init()
-call soca_3d_cov_registry%add(c_key_conf)
-call soca_3d_cov_registry%get(c_key_conf, conf)
+call soca_cov_registry%init()
+call soca_cov_registry%add(c_key_conf)
+call soca_cov_registry%get(c_key_conf, conf)
 call soca_geom_registry%get(c_key_geom, geom)
 
 return
@@ -58,10 +58,10 @@ end subroutine soca_localization_setup
 subroutine soca_localization_delete(c_key_self) bind(c,name='soca_localization_delete_f90')
 implicit none
 integer(c_int), intent(inout) :: c_key_self
-type(soca_3d_covar_config), pointer :: self
+type(soca_cov), pointer :: self
 
 call abor1_ftn("localization: not implemented")             
-call soca_3d_cov_registry%get(c_key_self, self)
+call soca_cov_registry%get(c_key_self, self)
 
 end subroutine soca_localization_delete
 

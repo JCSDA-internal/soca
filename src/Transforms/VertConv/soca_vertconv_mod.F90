@@ -14,13 +14,13 @@ module soca_vertconv_mod
 
   !> Fortran derived type to hold the setup for Vertconv
   type :: soca_vertconv
-     real(kind=kind_real) :: lz                    !> Vertical decorrelation [m]
-     real(kind=kind_real) :: ltemp                 !> Temperature decorrelation [K] 
-     type(soca_field),pointer     :: traj                  !> Trajectory
-     type(soca_field), pointer     :: bkg                   !> Background     
-     real(kind=kind_real), allocatable :: z(:,:,:) !> Ocean Depth [m]
-     real(kind=kind_real), allocatable :: temp(:,:,:) !> Ocean Depth [m]     
-     integer              :: isc, iec, jsc, jec    !> Compute domain 
+     real(kind=kind_real)              :: lz                 !> Vertical decorrelation [m]
+     real(kind=kind_real)              :: ltemp              !> Temperature decorrelation [K] 
+     type(soca_field),pointer          :: traj               !> Trajectory
+     type(soca_field), pointer         :: bkg                !> Background     
+     real(kind=kind_real), allocatable :: z(:,:,:)           !> Ocean Depth [m]
+     real(kind=kind_real), allocatable :: temp(:,:,:)        !> Ocean Depth [m]     
+     integer                           :: isc, iec, jsc, jec !> Compute domain 
   end type soca_vertconv
 
 #define LISTED_TYPE soca_vertconv
