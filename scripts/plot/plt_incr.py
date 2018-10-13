@@ -16,12 +16,20 @@ matplotlib.rc('font', **font)
 fname_ana='/home/gvernier/Sandboxes/soca/bmatrix2/soca-bundle/build/soca/test/Data/3dvar.an.2018-04-15T00:00:00Z.nc'
 fname_bkg='/home/gvernier/Sandboxes/soca/bmatrix2/soca-bundle/build/soca/test/Data/example.fc.2018-04-15T00:00:00Z.P1D.nc'
 
-oana=OceanState(fname_ana, maptype='R')
+oana=OceanState(fname_ana, maptype='N')
 obkg=OceanState(fname_bkg)
+
+oana.plot_horiz_section(obkg,vars=['cicen'],fignum=1)
+obkg.plot_horiz_section(obkg,vars=['cicen'],fignum=2)
+#oana.plot_horiz_section(obkg,vars=['temp'],fignum=2)
+plt.show()
+
 #oana.plot_integrated_horiz(obkg,vars=['temp'],fignum=1)
 #oana.plot_integrated_horiz(obkg,vars=['salt'],fignum=2)
 #plt.show()
-oana.plot_horiz_section(obkg,vars=['temp'],fignum=1)
+oana.plot_vert_section(obkg,fignum=1)
+oana.plot_horiz_section(obkg,vars=['temp'],fignum=2)
+oana.plot_horiz_section(obkg,vars=['salt'],fignum=2)
 plt.show()
 
 fname_ana='/home/gvernier/Sandboxes/soca/bmatrix2/soca-bundle/build/soca/test/scratch_sshda/RESTART/MOM.res_Y2018_D105_S10800.nc'
@@ -41,7 +49,7 @@ oana.plot_vert_section(obkg,fignum=1)
 plt.show()
 
 
-#oana.plot_horiz_section(obkg,vars=['cicen','temp'],fignum=1)
+
 #oana.plot_horiz_section(obkg,vars=['cicen','hicen','temp','salt','ssh'],fignum=1)
 #Reforecast increment
 #fname_mom='MOM.res_Y2018_D109_S32400.nc'

@@ -13,14 +13,18 @@ module soca_covariance_mod
 
   use kinds
   use type_bump
+  use soca_fields
+  use soca_model_geom_type, only : geom_get_domain_indices
   
   implicit none
 
   !> Fortran derived type to hold configuration data for the SOCA background/model covariance
   type :: soca_cov
-     type(bump_type) :: ocean_conv  !< Ocean convolution op from bump
-     type(bump_type) :: seaice_conv !< Seaice convolution op from bump
-     logical         :: initialized = .false.
+     type(bump_type)  :: ocean_conv  !< Ocean convolution op from bump
+     type(bump_type)  :: seaice_conv !< Seaice convolution op from bump
+     real(kind=kind_real), allocatable :: seaice_mask(:,:)     
+     type(soca_field), pointer :: bkg         !< Background field (or first guess)
+     logical          :: initialized = .false.
   end type soca_cov
 
 #define LISTED_TYPE soca_cov
@@ -49,7 +53,6 @@ contains
   subroutine soca_cov_setup(self, c_conf, geom, bkg)
 
     use soca_geom_mod
-    use soca_fields    
     use iso_c_binding
     use config_mod
     use type_bump
@@ -57,20 +60,34 @@ contains
     
     implicit none
 
-    type(soca_cov), intent(inout) :: self   !< The covariance structure    
-    type(c_ptr),       intent(in) :: c_conf !< The configuration
-    type(soca_geom),   intent(in) :: geom   !< Geometry
-    type(soca_field),  intent(in) :: bkg    !< Background
+    type(soca_cov),        intent(inout) :: self   !< The covariance structure    
+    type(c_ptr),              intent(in) :: c_conf !< The configuration
+    type(soca_geom),          intent(in) :: geom   !< Geometry
+    type(soca_field), target, intent(in) :: bkg    !< Background
     
     character(len=3)  :: domain
+    real(kind=kind_real), allocatable :: seaice_mask(:,:)
+    integer :: isc, iec, jsc, jec
+    
+    ! Associate background
+    self%bkg => bkg
 
-    !< Initialize ocean bump
+    ! Define seaice mask from background seaice fraction
+    call geom_get_domain_indices(bkg%geom%ocean, "compute", isc, iec, jsc, jec)
+    allocate(self%seaice_mask(isc:iec, jsc:jec))
+    self%seaice_mask = sum(bkg%cicen(2:,isc:iec, jsc:jec), 1) * &
+                     &bkg%geom%ocean%mask2d(isc:iec, jsc:jec)
+    where (self%seaice_mask>0.0d0)
+       self%seaice_mask = 1.0d0
+    end where
+
+    ! Initialize ocean bump
     domain = 'ocn'
-    call soca_bump_correlation(geom, self%ocean_conv, c_conf, domain)
+    call soca_bump_correlation(self, self%ocean_conv, geom, c_conf, domain)
 
-    !< Initialize seaice bump
+    ! Initialize seaice bump
     domain = 'ice'    
-    call soca_bump_correlation(geom, self%seaice_conv, c_conf, domain)    
+    call soca_bump_correlation(self, self%seaice_conv, geom, c_conf, domain)    
     
     self%initialized = .true.
     
@@ -88,7 +105,8 @@ contains
     type(soca_cov), intent(inout) :: self       !< The covariance structure        
 
     call self%ocean_conv%dealloc()
-    call self%seaice_conv%dealloc()    
+    call self%seaice_conv%dealloc()
+    call delete(self%bkg)
     self%initialized = .false.
     
   end subroutine soca_cov_delete
@@ -98,7 +116,6 @@ contains
   subroutine soca_cov_C_mult(self, dx)
 
     use kinds
-    use soca_fields
     use type_bump
     
     implicit none
@@ -115,21 +132,21 @@ contains
     
     do icat = 1, dx%geom%ocean%ncat
        print *,'Apply nicas: aice, hice, category:',icat
-       call soca_2d_convol(dx%cicen(:,:,icat+1), self%ocean_conv, dx%geom)
-       call soca_2d_convol(dx%hicen(:,:,icat), self%ocean_conv, dx%geom)       
+       call soca_2d_convol(dx%cicen(:,:,icat+1), self%seaice_conv, dx%geom)
+       call soca_2d_convol(dx%hicen(:,:,icat), self%seaice_conv, dx%geom)       
     end do    
 
     do izo = 1,dx%geom%ocean%nzo
        print *,'Apply nicas: tocn, socn, layer:',izo
-       call soca_2d_convol(dx%tocn(:,:,izo), self%seaice_conv, dx%geom)
-       call soca_2d_convol(dx%socn(:,:,izo), self%seaice_conv, dx%geom)       
+       call soca_2d_convol(dx%tocn(:,:,izo), self%ocean_conv, dx%geom)
+       call soca_2d_convol(dx%socn(:,:,izo), self%ocean_conv, dx%geom)       
     end do    
 
   end subroutine soca_cov_C_mult
   
   ! ------------------------------------------------------------------------------
 
-  subroutine soca_bump_correlation(geom, horiz_convol, c_conf, domain)
+  subroutine soca_bump_correlation(self, horiz_convol, geom, c_conf, domain)
     use soca_geom_mod
     use type_bump
     use type_nam
@@ -139,10 +156,12 @@ contains
     
     implicit none
 
-    type(soca_geom),  intent(in) :: geom
-    type(bump_type), intent(out) :: horiz_convol
-    type(c_ptr),      intent(in) :: c_conf         !< Handle to configuration    
-    character(len=3), intent(in) :: domain
+    type(soca_cov),  intent(inout) :: self   !< The covariance structure
+    type(bump_type), intent(inout) :: horiz_convol
+    type(soca_geom),    intent(in) :: geom
+    type(c_ptr),        intent(in) :: c_conf         !< Handle to configuration    
+    character(len=3),   intent(in) :: domain
+    
     !Grid stuff
     integer :: isc, iec, jsc, jec, jjj, jz, il, ib
     character(len=1024) :: subr = 'model_write'
@@ -153,9 +172,6 @@ contains
     real(kind=kind_real), allocatable :: rosrad(:)    
     logical, allocatable :: lmask(:,:)
     integer, allocatable :: imask(:,:)    
-    type(nam_type) :: nam
-    integer :: ierr
-    real :: start, finish
     
     real(kind_real), allocatable :: rh(:,:,:,:)     !< Horizontal support radius for covariance (in m)
     real(kind_real), allocatable :: rv(:,:,:,:)     !< Vertical support radius for
@@ -165,10 +181,7 @@ contains
 
     !--- Initialize geometry to be passed to NICAS
     ! Indices for compute domain (no halo)
-    isc = geom%ocean%G%isc
-    iec = geom%ocean%G%iec
-    jsc = geom%ocean%G%jsc
-    jec = geom%ocean%G%jec
+    call geom_get_domain_indices(geom%ocean, "compute", isc, iec, jsc, jec)
 
     nv = 1                                     !< Number of variables
     nl0 = 1                                    !< Number of independent levels
@@ -185,10 +198,14 @@ contains
     rosrad = reshape( geom%ocean%rossby_radius(isc:iec, jsc:jec), (/nc0a/) )
 
     ! Setup land mask
-    do jz = 1, nl0       
-       ! Add seaice case 
+    jz = 1
+    if (domain.eq.'ocn') then
        imask(1:nc0a,jz) = reshape( geom%ocean%mask2d(isc:iec, jsc:jec), (/nc0a/) )
-    end do
+    end if
+    if (domain.eq.'ice') then
+       imask(1:nc0a,jz) = reshape( geom%ocean%mask2d(isc:iec, jsc:jec), (/nc0a/) )!reshape( self%seaice_mask(isc:iec, jsc:jec), (/nc0a/) )
+    end if
+
     lmask = .false.
     where (imask.eq.1)
        lmask=.true.
@@ -198,23 +215,36 @@ contains
     vunit = 1.0d0
 
     ! Setup horizontal decorrelation length scales
+    ! TODO: Length scale should be in configuration 
     allocate(rh(nc0a,nl0,nv,nts))
     allocate(rv(nc0a,nl0,nv,nts))
-    do jjj=1,nc0a
-       rh(jjj,1,1,1)=20.0*rosrad(jjj)
-    end do
-    where (rh<800e3)
-       rh=800e3
-    end where
+    if (domain.eq.'ocn') then
+       do jjj=1,nc0a
+          rh(jjj,1,1,1)=20.0d0*rosrad(jjj)
+       end do
+       where (rh<300d3)
+          rh=300d3
+       end where
+    end if
+    if (domain.eq.'ice') then
+       rh = 500d3
+    end if
     rv=1.0 ! Vertical scales not used, set to something
 
-    ! Compute convolution weight
-    call horiz_convol%nam%init() 
-    call bump_read_conf(c_conf, horiz_convol)       
-    call horiz_convol%setup_online(f_comm%communicator(),nc0a,nl0,nv,nts,lon,lat,area,vunit,lmask)
+    ! Initialize bump namelist/parameters
+call horiz_convol%nam%init()
+
+    call bump_read_conf(c_conf, horiz_convol)
+
+    if (domain.eq.'ocn') horiz_convol%nam%prefix = 'ocn'
+    if (domain.eq.'ice') horiz_convol%nam%prefix = 'ice'     
+
+    ! Compute convolution weight    
+call horiz_convol%setup_online(f_comm%communicator(),nc0a,nl0,nv,nts,lon,lat,area,vunit,lmask)
+
     call horiz_convol%set_parameter('cor_rh',rh)       
     call horiz_convol%run_drivers()
-    
+
     deallocate( lon, lat, area, vunit, imask, lmask )
     deallocate(rh,rv)       
 

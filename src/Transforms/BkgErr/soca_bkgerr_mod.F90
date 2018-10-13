@@ -88,8 +88,8 @@ contains
 !!$                self%std_bkgerr%socn(i,j,k) = adjusted_std(abs(self%std_bkgerr%socn(i,j,k)), 0.0d0, 10.1d0)
              end do
              ! sea-ice
-             self%std_bkgerr%cicen(i,j,:) = adjusted_std(abs(self%std_bkgerr%cicen(i,j,:)), 0.01d0, 0.5d0)
-             self%std_bkgerr%hicen(i,j,:) = adjusted_std(abs(self%std_bkgerr%hicen(i,j,:)), 10d0, 100.0d0)             
+             self%std_bkgerr%cicen(i,j,:) = 0.1 !adjusted_std(abs(self%std_bkgerr%cicen(i,j,:)), 0.01d0, 0.5d0)
+             self%std_bkgerr%hicen(i,j,:) = 100d0 !adjusted_std(abs(self%std_bkgerr%hicen(i,j,:)), 10d0, 100.0d0)             
           !end if
        end do
     end do

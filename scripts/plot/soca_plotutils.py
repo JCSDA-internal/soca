@@ -80,8 +80,8 @@ class OceanState:
         incr = self.temp[:,j,:]-other.temp[:,j,:]
         #vmin=np.min(incr)
         #vmax=np.max(incr)
-        vmin=-2. #np.min(incr)
-        vmax=2. #abs(np.min(incr)) #np.max(incr)                
+        vmin=-1.5 #np.min(incr)
+        vmax=1.5 #abs(np.min(incr)) #np.max(incr)                
         clevs = np.linspace(vmin, vmax, 41)
         plt.contourf(x,z,incr, clevs, extend='both',cmap=cm.spectral)
         #plt.pcolor(x,z,self.temp[:,j,:]-other.temp[:,j,:],vmin=-.05,vmax=.05,cmap=cm.bwr)
@@ -92,8 +92,8 @@ class OceanState:
 
         plt.subplot(212)
         incr = self.salt[:,j,:]-other.salt[:,j,:]        
-        vmin=-0.05 #np.min(incr)
-        vmax=0.05 #abs(np.min(incr)) #np.max(incr)        
+        vmin=-0.01 #np.min(incr)
+        vmax=0.01 #abs(np.min(incr)) #np.max(incr)        
         clevs = np.linspace(vmin, vmax, 41)        
         plt.contourf(x,z,incr, clevs, extend='both',cmap=cm.spectral)
         
@@ -126,9 +126,9 @@ class OceanState:
                 titlestr='SSH increment'
             if var=='cicen':
                 self.maptype = 'N'
-                incr=np.squeeze(np.sum(self.cicen[1:,:,:]-other.cicen[1:,:,:],0))
-                cmin=-.2
-                cmax=.2
+                incr=np.squeeze(np.sum(self.cicen[1:,:,:],0))#-other.cicen[1:,:,:],0))
+                cmin=0 #-.2
+                cmax=1#.2
                 titlestr='cice increment'   
             if var=='hicen':
                 self.maptype = 'N'
