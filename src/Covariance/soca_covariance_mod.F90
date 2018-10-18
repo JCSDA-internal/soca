@@ -22,7 +22,8 @@ module soca_covariance_mod
   type :: soca_cov
      type(bump_type)  :: ocean_conv  !< Ocean convolution op from bump
      type(bump_type)  :: seaice_conv !< Seaice convolution op from bump
-     real(kind=kind_real), allocatable :: seaice_mask(:,:)     
+     !real(kind=kind_real), allocatable :: seaice_mask(:,:)
+     integer, allocatable :: seaice_mask(:,:)          
      type(soca_field), pointer :: bkg         !< Background field (or first guess)
      logical          :: initialized = .false.
   end type soca_cov
@@ -66,29 +67,33 @@ contains
     type(soca_field), target, intent(in) :: bkg    !< Background
     
     character(len=3)  :: domain
-    real(kind=kind_real), allocatable :: seaice_mask(:,:)
-    integer :: isc, iec, jsc, jec
+    integer :: is, ie, js, je, i, j
     
     ! Associate background
     self%bkg => bkg
 
     ! Define seaice mask from background seaice fraction
-    call geom_get_domain_indices(bkg%geom%ocean, "compute", isc, iec, jsc, jec)
-    allocate(self%seaice_mask(isc:iec, jsc:jec))
-    self%seaice_mask = sum(bkg%cicen(2:,isc:iec, jsc:jec), 1) * &
-                     &bkg%geom%ocean%mask2d(isc:iec, jsc:jec)
-    where (self%seaice_mask>0.0d0)
-       self%seaice_mask = 1.0d0
-    end where
+    call geom_get_domain_indices(bkg%geom%ocean, "compute", is, ie, js, je)
+    allocate(self%seaice_mask(is:ie, js:je))
+    self%seaice_mask = 0
+    do i = is, ie
+       do j = js, je
+          if (sum(bkg%cicen(i, j, 2:), 1) * bkg%geom%ocean%mask2d(i, j) .gt. 0.0) then
+             self%seaice_mask(i, j) = 1
+          else
+             self%seaice_mask(i, j) = 0
+          end if
+       end do
+    end do
 
     ! Initialize ocean bump
     domain = 'ocn'
     call soca_bump_correlation(self, self%ocean_conv, geom, c_conf, domain)
 
     ! Initialize seaice bump
-    domain = 'ice'    
+    domain = 'ice'
     call soca_bump_correlation(self, self%seaice_conv, geom, c_conf, domain)    
-    
+
     self%initialized = .true.
     
   end subroutine soca_cov_setup
@@ -106,7 +111,8 @@ contains
 
     call self%ocean_conv%dealloc()
     call self%seaice_conv%dealloc()
-    call delete(self%bkg)
+    nullify(self%bkg)
+    deallocate(self%seaice_mask)
     self%initialized = .false.
     
   end subroutine soca_cov_delete
@@ -127,13 +133,12 @@ contains
     integer :: icat, izo
     
     ! Apply convolution to fields
-    print *,'Apply nicas: ssh'
     call soca_2d_convol(dx%ssh, self%ocean_conv, dx%geom)
     
     do icat = 1, dx%geom%ocean%ncat
        print *,'Apply nicas: aice, hice, category:',icat
        call soca_2d_convol(dx%cicen(:,:,icat+1), self%seaice_conv, dx%geom)
-       call soca_2d_convol(dx%hicen(:,:,icat), self%seaice_conv, dx%geom)       
+       call soca_2d_convol(dx%hicen(:,:,icat), self%seaice_conv, dx%geom)
     end do    
 
     do izo = 1,dx%geom%ocean%nzo
@@ -200,10 +205,10 @@ contains
     ! Setup land mask
     jz = 1
     if (domain.eq.'ocn') then
-       imask(1:nc0a,jz) = reshape( geom%ocean%mask2d(isc:iec, jsc:jec), (/nc0a/) )
+       imask(1:nc0a,jz) = int(reshape( geom%ocean%mask2d(isc:iec, jsc:jec), (/nc0a/)))
     end if
     if (domain.eq.'ice') then
-       imask(1:nc0a,jz) = reshape( geom%ocean%mask2d(isc:iec, jsc:jec), (/nc0a/) )!reshape( self%seaice_mask(isc:iec, jsc:jec), (/nc0a/) )
+       imask(1:nc0a,jz) = int(reshape( self%seaice_mask(isc:iec, jsc:jec), (/nc0a/)))
     end if
 
     lmask = .false.
@@ -215,7 +220,7 @@ contains
     vunit = 1.0d0
 
     ! Setup horizontal decorrelation length scales
-    ! TODO: Length scale should be in configuration 
+    ! TODO: Length scale should be in configuration
     allocate(rh(nc0a,nl0,nv,nts))
     allocate(rv(nc0a,nl0,nv,nts))
     if (domain.eq.'ocn') then
@@ -232,16 +237,13 @@ contains
     rv=1.0 ! Vertical scales not used, set to something
 
     ! Initialize bump namelist/parameters
-call horiz_convol%nam%init()
-
+    call horiz_convol%nam%init()
     call bump_read_conf(c_conf, horiz_convol)
-
     if (domain.eq.'ocn') horiz_convol%nam%prefix = 'ocn'
     if (domain.eq.'ice') horiz_convol%nam%prefix = 'ice'     
 
     ! Compute convolution weight    
-call horiz_convol%setup_online(f_comm%communicator(),nc0a,nl0,nv,nts,lon,lat,area,vunit,lmask)
-
+    call horiz_convol%setup_online(f_comm%communicator(),nc0a,nl0,nv,nts,lon,lat,area,vunit,lmask)
     call horiz_convol%set_parameter('cor_rh',rh)       
     call horiz_convol%run_drivers()
 

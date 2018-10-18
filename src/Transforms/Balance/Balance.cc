@@ -35,14 +35,16 @@ namespace soca {
   // -----------------------------------------------------------------------------
   void Balance::multiply(const Increment & dxa, Increment & dxm) const {
     // dxm = K dxa
-    //dxm = dxa;
     soca_balance_mult_f90(keyFtnConfig_,
     			 dxa.fields().toFortran(),
     			 dxm.fields().toFortran());
   }
   // -----------------------------------------------------------------------------
   void Balance::multiplyInverse(const Increment & dxm, Increment & dxa) const {
-    dxa = dxm;
+    // dxa = K^-1 dxm
+    soca_balance_multinv_f90(keyFtnConfig_,
+    			 dxm.fields().toFortran(),
+    			 dxa.fields().toFortran());    
   }
   // -----------------------------------------------------------------------------
   void Balance::multiplyAD(const Increment & dxm, Increment & dxa) const {
@@ -55,7 +57,11 @@ namespace soca {
   }
   // -----------------------------------------------------------------------------
   void Balance::multiplyInverseAD(const Increment & dxa, Increment & dxm) const {
-    dxm = dxa;
+    // dxm = (K^-1)^T dxa
+    soca_balance_multinvad_f90(keyFtnConfig_,
+    			 dxa.fields().toFortran(),
+    			 dxm.fields().toFortran());
+    
   }
   // -----------------------------------------------------------------------------
   void Balance::print(std::ostream & os) const {

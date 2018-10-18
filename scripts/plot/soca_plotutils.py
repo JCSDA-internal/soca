@@ -80,8 +80,8 @@ class OceanState:
         incr = self.temp[:,j,:]-other.temp[:,j,:]
         #vmin=np.min(incr)
         #vmax=np.max(incr)
-        vmin=-1.5 #np.min(incr)
-        vmax=1.5 #abs(np.min(incr)) #np.max(incr)                
+        vmin=-0.1 #np.min(incr)
+        vmax=0.1 #abs(np.min(incr)) #np.max(incr)                
         clevs = np.linspace(vmin, vmax, 41)
         plt.contourf(x,z,incr, clevs, extend='both',cmap=cm.spectral)
         #plt.pcolor(x,z,self.temp[:,j,:]-other.temp[:,j,:],vmin=-.05,vmax=.05,cmap=cm.bwr)
@@ -92,8 +92,8 @@ class OceanState:
 
         plt.subplot(212)
         incr = self.salt[:,j,:]-other.salt[:,j,:]        
-        vmin=-0.01 #np.min(incr)
-        vmax=0.01 #abs(np.min(incr)) #np.max(incr)        
+        vmin=-0.1 #np.min(incr)
+        vmax=0.1 #abs(np.min(incr)) #np.max(incr)        
         clevs = np.linspace(vmin, vmax, 41)        
         plt.contourf(x,z,incr, clevs, extend='both',cmap=cm.spectral)
         
@@ -111,8 +111,8 @@ class OceanState:
         for var in vars:
             if var=='temp':
                 incr=self.temp[levels[0],:,:]-other.temp[levels[0],:,:]
-                cmin=-2.5
-                cmax=2.5
+                cmin=-0.1#2.5
+                cmax=0.1#2.5
                 titlestr='Temperature increment'
             if var=='salt':
                 incr=self.salt[levels[0],:,:]-other.salt[levels[0],:,:]
@@ -121,14 +121,14 @@ class OceanState:
                 titlestr='Salinity increment'
             if var=='ssh':
                 incr=self.ssh[:,:]-other.ssh[:,:]
-                cmin=-.1
-                cmax=.1
+                cmin=-.2
+                cmax=.2
                 titlestr='SSH increment'
             if var=='cicen':
                 self.maptype = 'N'
-                incr=np.squeeze(np.sum(self.cicen[1:,:,:],0))#-other.cicen[1:,:,:],0))
-                cmin=0 #-.2
-                cmax=1#.2
+                incr=np.squeeze(np.sum(self.cicen[1:,:,:]-other.cicen[1:,:,:],0))
+                cmin=-.5
+                cmax=.5
                 titlestr='cice increment'   
             if var=='hicen':
                 self.maptype = 'N'
@@ -154,16 +154,16 @@ class OceanState:
                      np.sum(self.h[0:,:,:],axis=0) - \
                      np.sum(other.h[0:,:,:]*other.temp[0:,:,:],axis=0)/ \
                      np.sum(other.h[0:,:,:],axis=0)                     
-                cmin=-0.1 #1300#np.min(incr)
-                cmax=0.1 #1300#np.max(incr)
+                cmin=-0.05 #1300#np.min(incr)
+                cmax=0.05 #1300#np.max(incr)
                 titlestr='Temperature'
             if var=='salt':
                 incr=np.sum(self.h[0:,:,:]*self.salt[0:,:,:],axis=0)/ \
                      np.sum(self.h[0:,:,:],axis=0) - \
                      np.sum(other.h[0:,:,:]*other.salt[0:,:,:],axis=0)/ \
                      np.sum(self.h[0:,:,:],axis=0)                     
-                cmin=-0.1#np.min(incr)
-                cmax=0.1 ##np.max(incr)
+                cmin=-0.05#np.min(incr)
+                cmax=0.05 ##np.max(incr)
                 titlestr='Salinity'                
                 
             plothor(self.x,self.y,incr,self.map,titlestr,clim=[cmin,cmax],label='')

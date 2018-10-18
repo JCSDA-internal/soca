@@ -31,8 +31,8 @@ Covariance:
   #strategy: specific_univariate
   strategy: common      
 #  new_hdiag: 0
-  new_nicas: 0   # 1: recomputes convol param
-  load_nicas: 1  # 1: loads convol param (layout specific)
+  new_nicas: 1   # 1: recomputes convol param
+  load_nicas: 0  # 1: loads convol param (layout specific)
   # Sampling parameters
   sam_read: 0
   sam_write: 1  

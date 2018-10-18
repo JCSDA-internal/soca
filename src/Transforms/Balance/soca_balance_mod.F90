@@ -56,9 +56,7 @@ contains
     type(c_ptr),                 intent(in)  :: c_conf
 
     integer :: isc, iec, jsc, jec, i, j, k, nl
-    !real(kind=kind_real), allocatable :: dvdz(:), v(:), h(:)
     real(kind=kind_real), allocatable :: jac(:)
-    !real(kind=kind_real) :: dt, ds, t0, s0, p, lon, lat
     
     ! Number of ocean layer
     nl = size(traj%hocn,3)
@@ -121,7 +119,7 @@ contains
 
     ! Compute Kst
     allocate(self%kct(isc:iec,jsc:jec))    
-    self%kct = -0.001d0 ! HaHa    
+    self%kct = -0.01d0 ! HaHa    
     
   end subroutine soca_balance_setup
 
@@ -143,9 +141,57 @@ contains
     deallocate(self%kct)
     
   end subroutine soca_balance_delete
+
+  ! ------------------------------------------------------------------------------
+  subroutine soca_balance_mult(self, dxa, dxm)
+
+    !>    [ I       0   0  0 ]
+    !>    [ Kst     I   0  0 ]
+    !> K= [ Ketat Ketas I  0 ]
+    !>    [ Kct     0   0  I ]
+    
+    use kinds
+    use soca_model_geom_type, only : geom_get_domain_indices
+
+    implicit none
+
+    type(soca_balance_config), intent(in) :: self    
+    type(soca_field),          intent(in) :: dxa
+    type(soca_field),       intent(inout) :: dxm
+
+    integer :: i, j, k
+    real(kind=kind_real) :: deta, dxc
+    
+    do i = self%isc, self%iec
+       do j = self%jsc, self%jec
+          ! Temperature
+          dxc = sum(dxa%cicen(i,j,2:))
+          dxm%tocn(i,j,1) = dxa%tocn(i,j,1) + self%kct(i,j) * dxc
+          dxm%tocn(i,j,:) = dxa%tocn(i,j,:)
+          ! Salinity
+          dxm%socn(i,j,:) = dxa%socn(i,j,:) +&
+               &self%kst%jacobian(i,j,:) * dxa%tocn(i,j,:)
+          ! SSH
+          deta = 0.0d0
+          do k = 1, size(self%traj%hocn,3)
+             deta = deta + self%ksshts%kssht(i,j,k) * dxa%tocn(i,j,k) +&
+                          &self%ksshts%ksshs(i,j,k) * dxa%socn(i,j,k)
+          end do
+          dxm%ssh(i,j)    = dxa%ssh(i,j) + deta
+          ! Ice fraction
+          dxm%cicen(i,j,:) =  dxa%cicen(i,j,:)
+          do k = 1, size(self%traj%hicen,3)
+             dxm%cicen(i,j,k+1) =  dxm%cicen(i,j,k+1) +&
+                  & self%kct(i,j) * dxa%tocn(i,j,1)
+          end do
+          ! Ice thickness
+          dxm%hicen(i,j,:) =  dxa%hicen(i,j,:)
+       end do
+    end do
+
+  end subroutine soca_balance_mult
   
   ! ------------------------------------------------------------------------------
-
   subroutine soca_balance_multad(self, dxa, dxm)
 
     use kinds
@@ -184,55 +230,89 @@ contains
 
   end subroutine soca_balance_multad
 
-  ! ------------------------------------------------------------------------------
-  
-  subroutine soca_balance_mult(self, dxa, dxm)
+  ! ------------------------------------------------------------------------------  
+  subroutine soca_balance_multinv(self, dxa, dxm)
 
-    !>    [ I       0   0  0 ]
-    !>    [ Kst     I   0  0 ]
-    !> K= [ Ketat Ketas I  0 ]
-    !>    [ Kct     0   0  I ]
-    
     use kinds
     use soca_model_geom_type, only : geom_get_domain_indices
 
     implicit none
 
-    type(soca_balance_config),    intent(in) :: self    
-    type(soca_field),            intent(in) :: dxa
-    type(soca_field),         intent(inout) :: dxm
+    type(soca_balance_config), intent(in) :: self
+    type(soca_field),          intent(in) :: dxm    
+    type(soca_field),       intent(inout) :: dxa
 
+    real(kind=kind_real) :: dxc, deta
     integer :: i, j, k
-    real(kind=kind_real) :: deta, dxc
-    
+
     do i = self%isc, self%iec
        do j = self%jsc, self%jec
-          ! Temperature
-          dxc = sum(dxa%cicen(i,j,2:))
-          dxm%tocn(i,j,1) = dxa%tocn(i,j,1) + self%kct(i,j) * dxc
-          dxm%tocn(i,j,:) = dxa%tocn(i,j,:)
+          ! Temperature          
+          dxa%tocn(i,j,:) = dxm%tocn(i,j,:)
           ! Salinity
-          dxm%socn(i,j,:) = dxa%socn(i,j,:) +&
-               &self%kst%jacobian(i,j,:) * dxa%tocn(i,j,:)
+          dxa%socn(i,j,:) = dxm%socn(i,j,:) -&
+               &self%kst%jacobian(i,j,:) * dxm%tocn(i,j,:)
           ! SSH
           deta = 0.0d0
           do k = 1, size(self%traj%hocn,3)
-             deta = deta + self%ksshts%kssht(i,j,k) * dxa%tocn(i,j,k) +&
-                          &self%ksshts%ksshs(i,j,k) * dxa%socn(i,j,k)
+             deta = deta + ( self%ksshts%ksshs(i,j,k) * self%kst%jacobian(i,j,k) - &
+                  &self%ksshts%kssht(i,j,k) ) * dxm%tocn(i,j,k) - &
+                  &self%ksshts%ksshs(i,j,k) * dxm%socn(i,j,k)
           end do
-          dxm%ssh(i,j)    = dxa%ssh(i,j) + deta
+          dxa%ssh(i,j)    = dxm%ssh(i,j) + deta
           ! Ice fraction
-          dxm%cicen(i,j,:) =  dxa%cicen(i,j,:)
+          dxa%cicen(i,j,:) =  dxm%cicen(i,j,:)
           do k = 1, size(self%traj%hicen,3)
-             dxm%cicen(i,j,k+1) =  dxm%cicen(i,j,k+1) +&
-                  & self%kct(i,j) * dxa%tocn(i,j,1)
-          end do
+             dxa%cicen(i,j,k+1) =  dxa%cicen(i,j,k+1) -&
+                  & self%kct(i,j) * dxm%tocn(i,j,1)
+          end do          
           ! Ice thickness
-          dxm%hicen(i,j,:) =  dxa%hicen(i,j,:)
+          dxa%hicen(i,j,:) =  dxm%hicen(i,j,:)
        end do
     end do
 
-  end subroutine soca_balance_mult
+  end subroutine soca_balance_multinv
+
+  ! ------------------------------------------------------------------------------
+  subroutine soca_balance_multinvad(self, dxa, dxm)
+
+    use kinds
+    use soca_model_geom_type, only : geom_get_domain_indices
+
+    implicit none
+
+    type(soca_balance_config), intent(in) :: self
+    type(soca_field),       intent(inout) :: dxm    
+    type(soca_field),          intent(in) :: dxa
+
+    real(kind=kind_real) :: dxc
+    integer :: i, j, k
+
+    do i = self%isc, self%iec
+       do j = self%jsc, self%jec
+          ! Ice thickness
+          dxm%hicen(i,j,:) =  dxa%hicen(i,j,:)
+          ! Ice fraction
+          dxm%cicen(i,j,:) =  dxa%cicen(i,j,:)          
+          ! Temperature          
+          dxm%tocn(i,j,1) = dxa%tocn(i,j,1) &
+               & - self%kst%jacobian(i,j,1) * dxa%socn(i,j,1) &
+               & + ( self%ksshts%ksshs(i,j,1) * self%kst%jacobian(i,j,1) &
+               &     - self%ksshts%kssht(i,j,1) ) * dxa%ssh(i,j) &
+               & - self%kct(i,j) * sum(dxa%cicen(i,j,2:))
+          dxm%tocn(i,j,2:) = dxa%tocn(i,j,2:) &
+               & - self%kst%jacobian(i,j,2:) * dxa%socn(i,j,2:) &
+               & + ( self%ksshts%ksshs(i,j,2:) * self%kst%jacobian(i,j,2:) &
+               &     - self%ksshts%kssht(i,j,2:) ) * dxa%ssh(i,j)
+          ! Salinity
+          dxm%socn(i,j,:) = dxa%socn(i,j,:) - &
+               &self%ksshts%ksshs(i,j,:) * dxa%ssh(i,j)
+          ! SSH
+          dxm%ssh(i,j)    = dxa%ssh(i,j)
+       end do
+    end do
+
+  end subroutine soca_balance_multinvad
   
 end module soca_balance_mod
 

@@ -40,22 +40,22 @@ module soca_mom6sis2
   public :: soca_geom_init, soca_geom_end, Coupled, soca_field_init, soca_field_end
 
   type soca_ocn_data_type ! TODO: change to mom's derived data type ...
-     real(kind=kind_real), pointer, dimension(:,:,:) :: T
-     real(kind=kind_real), pointer, dimension(:,:,:) :: S
-     real(kind=kind_real), pointer, dimension(:,:,:) :: U
-     real(kind=kind_real), pointer, dimension(:,:,:) :: V
-     real(kind=kind_real), pointer, dimension(:,:)   :: ssh
-     real(kind=kind_real), pointer, dimension(:,:,:) :: H     
+     real(kind=kind_real),  pointer :: T(:,:,:)
+     real(kind=kind_real),  pointer :: S(:,:,:)
+     real(kind=kind_real),  pointer :: U(:,:,:)
+     real(kind=kind_real),  pointer :: V(:,:,:)
+     real(kind=kind_real),  pointer :: ssh(:,:)
+     real(kind=kind_real),  pointer :: H(:,:,:)
   end type soca_ocn_Data_Type
 
   type soca_ice_data_type ! TODO: change to mom's derived data type ...
-     real(kind=kind_real), pointer, dimension(:,:,:) :: part_size
-     real(kind=kind_real), pointer, dimension(:,:,:) :: h_ice
-     real(kind=kind_real), pointer, dimension(:,:,:,:) :: enth_ice
-     real(kind=kind_real), pointer, dimension(:,:,:,:) :: sal_ice     
-     real(kind=kind_real), pointer, dimension(:,:,:) :: h_snow
-     real(kind=kind_real), pointer, dimension(:,:,:,:) :: enth_snow
-     real(kind=kind_real), pointer, dimension(:,:,:) :: T_skin
+     real(kind=kind_real),  pointer :: part_size(:,:,:)
+     real(kind=kind_real),  pointer :: h_ice(:,:,:)
+     real(kind=kind_real),  pointer :: enth_ice(:,:,:,:)
+     real(kind=kind_real),  pointer :: sal_ice(:,:,:,:)
+     real(kind=kind_real),  pointer :: h_snow(:,:,:)
+     real(kind=kind_real),  pointer :: enth_snow(:,:,:,:)
+     real(kind=kind_real),  pointer :: T_skin(:,:,:)
   end type soca_ice_data_type
   
   type Coupled
@@ -240,13 +240,13 @@ contains
     
     type (Coupled),                     intent(inout) :: aogcm
 
-    ! deallocate ocean state
+    ! Deallocate ocean state
     deallocate(aogcm%Ocn%T)
     deallocate(aogcm%Ocn%S)
     deallocate(aogcm%Ocn%ssh)
     deallocate(aogcm%Ocn%H)    
 
-    ! Allocate sea-ice state
+
     deallocate(aogcm%Ice%part_size)
     deallocate(aogcm%Ice%h_ice)
     deallocate(aogcm%Ice%h_snow)

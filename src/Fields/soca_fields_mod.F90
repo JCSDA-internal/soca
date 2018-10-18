@@ -622,7 +622,7 @@ contains
     use netcdf
     use soca_thermo
     use soca_mom6sis2
-    use fms_mod,                 only: read_data, write_data, set_domain
+    use fms_mod,                 only: read_data, set_domain
     use fms_io_mod,                only : fms_io_init, fms_io_exit
     use mpp_mod,  only : mpp_pe, mpp_npes, mpp_root_pe, mpp_sync, mpp_sum, mpp_gather, mpp_broadcast
     use fms_io_mod,       only : register_restart_field, restart_file_type
@@ -793,9 +793,6 @@ contains
     use iso_c_binding
     use datetime_mod
     use fckit_log_module, only : fckit_log
-    use netcdf
-    use fms_mod,                 only: read_data, write_data, set_domain
-    use fms_io_mod,                only : fms_io_init, fms_io_exit
 
     implicit none
     type(soca_field), intent(inout) :: fld    !< Fields

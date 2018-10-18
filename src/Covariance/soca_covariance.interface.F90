@@ -33,7 +33,6 @@ subroutine c_soca_b_setup(c_key_self, c_conf, c_key_geom, c_key_bkg) &
   call soca_cov_registry%add(c_key_self)
   call soca_cov_registry%get(c_key_self, self)
   call soca_field_registry%get(c_key_bkg,bkg)
-
   call soca_cov_setup(self, c_conf, geom, bkg)
 
 end subroutine c_soca_b_setup

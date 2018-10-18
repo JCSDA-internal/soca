@@ -7,22 +7,9 @@ State:
   ocn_filename: MOM.res.nc
   ice_filename: ice_model.res.nc
 LinearVariableChangeTests:
-- varchange: VertConvSOCA
-  variables:                                
-    variables:
-    - socn
-    - tocn
-    - hocn      
-  Lz: 1000.0 
-  inputVariables:
-    variables:
-    - socn
-    - tocn
-  outputVariables:
-    variables:
-    - socn
-    - tocn
-- varchange: KstSOCA
+- varchange: BalanceSOCA
+  toleranceInverse: 1e-3
+  testinverse: 1
   variables:                                
     variables:
     - cicen
@@ -39,87 +26,6 @@ LinearVariableChangeTests:
   dsdtmax: 1.0    
   dsdzmin: 3.0e-3
   dtdzmin: 1.0e-3
-  inputVariables:
-    variables:
-    - cicen
-    - hicen
-    - hsnon
-    - tsfcn
-    - qsnon
-    - sicnk
-    - qicnk
-    - socn
-    - tocn
-    - ssh
-    - hocn  
-  outputVariables:
-    variables:
-    - cicen
-    - hicen
-    - hsnon
-    - tsfcn
-    - qsnon
-    - sicnk
-    - qicnk
-    - socn
-    - tocn
-    - ssh
-    - hocn  
-- varchange: KsshtsSOCA
-  inputVariables:
-    variables:
-    - cicen
-    - hicen
-    - hsnon
-    - tsfcn
-    - qsnon
-    - sicnk
-    - qicnk
-    - socn
-    - tocn
-    - ssh
-    - hocn  
-  outputVariables:
-    variables:
-    - cicen
-    - hicen
-    - hsnon
-    - tsfcn
-    - qsnon
-    - sicnk
-    - qicnk
-    - socn
-    - tocn
-    - ssh
-    - hocn
-- varchange: KsshtsSOCA
-  inputVariables:
-    variables:
-    - cicen
-    - hicen
-    - hsnon
-    - tsfcn
-    - qsnon
-    - sicnk
-    - qicnk
-    - socn
-    - tocn
-    - ssh
-    - hocn  
-  outputVariables:
-    variables:
-    - cicen
-    - hicen
-    - hsnon
-    - tsfcn
-    - qsnon
-    - sicnk
-    - qicnk
-    - socn
-    - tocn
-    - ssh
-    - hocn      
-- varchange: KtcSOCA
   inputVariables:
     variables:
     - cicen
