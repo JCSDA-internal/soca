@@ -53,6 +53,7 @@ contains
 
     call self%ocean%init()
     call self%ocean%get_rossby_radius()
+    call self%ocean%validindex()
     call self%ocean%infotofile()
     
   end subroutine c_soca_geo_setup

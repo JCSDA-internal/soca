@@ -26,7 +26,7 @@
 module soca_mom6sis2
 
   !use ice_model_mod,           only: ice_data_type
-  use SIS_types,               only: ice_state_type, alloc_IST_arrays
+  !use SIS_types,               only: ice_state_type, alloc_IST_arrays
   use ocean_model_mod,         only: ocean_state_type, ocean_public_type
   use time_manager_mod,        only: time_type
   use kinds
@@ -87,8 +87,6 @@ contains
     use MOM_fixed_initialization,  only : MOM_initialize_fixed
     use ice_grid,                  only : set_ice_grid, ice_grid_type
     use ice_model_mod
-    use SIS_get_input,             only : Get_SIS_input, sis_directories => directories
-    !use ice_model_mod, only : initialize_ice_categories
     use kinds
     
     implicit none
@@ -100,8 +98,6 @@ contains
     type(hor_index_type)                   :: HI                        !< Horiz index array extents
     type(param_file_type)                  :: param_file                !< Structure to parse for run-time parameters
     type(directories)                      :: dirs                      !< Structure containing several relevant directory paths
-    type(param_file_type)                  :: sis_param_file                !< Structure to parse for run-time parameters    
-    type(sis_directories)                  :: sis_dirs                      !<  
     logical                                :: global_indexing = .false. !< If true use global horizontal index DOES NOT WORK
     logical                                :: write_geom_files = .false.!< 
     type(ocean_OBC_type),          pointer :: OBC => NULL()             !< Ocean boundary condition
@@ -144,14 +140,10 @@ contains
     call destroy_dyn_horgrid(dG)
     dG => NULL()
     
-    !call Get_SIS_Input(sis_param_file, sis_dirs, check_params=.false., component='SIS')
-    
     ! Initialize sea-ice grid
     call set_ice_grid(IG, param_file, NCat_dflt)
-    !call initialize_ice_categories(IG, Rho_ice, param_file) NOCANDO, PRIVATE!!!
     
     call close_param_file(param_file)
-    !call close_param_file(sis_param_file)    
     
     call fms_io_exit()
 
@@ -180,13 +172,13 @@ contains
     use MOM_state_initialization, only : MOM_initialize_state
     use MOM_time_manager,         only : time_type, set_time, time_type_to_real, operator(+)
     use MOM_file_parser,           only : get_param, param_file_type
-    !use MOM_get_input,             only : Get_MOM_Input, directories
+    use MOM_get_input,             only : Get_MOM_Input, directories
     use MOM, only : MOM_control_struct, initialize_MOM
     use fms_io_mod,                only : fms_io_init, fms_io_exit
     use MOM_file_parser,           only : open_param_file, close_param_file, get_param
     !use MOM_domains,        only: MOM_infra_init, num_pes, root_pe, pe_here
     use mpp_mod,                   only : mpp_pe, mpp_npes, mpp_root_pe, mpp_sync
-    use SIS_get_input, only : Get_SIS_input, directories
+    !use SIS_get_input, only : Get_SIS_input, directories
     use fms_mod,                   only : read_data
     use ice_grid,                  only : set_ice_grid, ice_grid_type
     
@@ -196,8 +188,8 @@ contains
     type(ocean_grid_type), intent(inout)           :: G
     type(verticalGrid_type), pointer, intent(inout):: GV
     type(ice_grid_type),              intent(inout) :: IG         !< Ice grid    
-    type(param_file_type)        :: param_file  !< structure indicating paramater file to parse
-    type(directories)           :: dirs        !< structure with directory paths
+    type(param_file_type) :: param_file  !< structure indicating paramater file to parse
+    type(directories)     :: dirs        !< structure with directory paths
 
     integer :: is, ie, js, je, Isq, Ieq, Jsq, Jeq, nzo, nzi, nzs
     integer :: isd, ied, jsd, jed, IsdB, IedB, JsdB, JedB

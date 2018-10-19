@@ -19,7 +19,11 @@ fname_bkg='/home/gvernier/Sandboxes/soca/bmatrix2/soca-bundle/build/soca/test/Da
 oana=OceanState(fname_ana, maptype='R')
 obkg=OceanState(fname_bkg)
 
-oana.plot_horiz_section(obkg,vars=['ssh'],fignum=3)
+oana.plot_horiz_section(obkg,vars=['ssh'],fignum=1)
+oana.plot_horiz_section(obkg,vars=['temp'],fignum=2)
+oana.plot_horiz_section(obkg,vars=['salt'],fignum=3)
+oana.plot_vert_section(obkg,fignum=4)
+plt.show()
 #plt.show()
 
 oana.plot_integrated_horiz(obkg,vars=['temp'],fignum=1)

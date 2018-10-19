@@ -22,7 +22,6 @@ module soca_covariance_mod
   type :: soca_cov
      type(bump_type)  :: ocean_conv  !< Ocean convolution op from bump
      type(bump_type)  :: seaice_conv !< Seaice convolution op from bump
-     !real(kind=kind_real), allocatable :: seaice_mask(:,:)
      integer, allocatable :: seaice_mask(:,:)          
      type(soca_field), pointer :: bkg         !< Background field (or first guess)
      logical          :: initialized = .false.
@@ -244,7 +243,7 @@ contains
 
     ! Compute convolution weight    
     call horiz_convol%setup_online(f_comm%communicator(),nc0a,nl0,nv,nts,lon,lat,area,vunit,lmask)
-    call horiz_convol%set_parameter('cor_rh',rh)       
+    call horiz_convol%set_parameter('cor_rh',rh)    
     call horiz_convol%run_drivers()
 
     deallocate( lon, lat, area, vunit, imask, lmask )
@@ -277,6 +276,7 @@ contains
   ! ------------------------------------------------------------------------------
   
   subroutine soca_struct2unstruct(dx_struct, geom, dx_unstruct)
+
     use soca_geom_mod
 
     implicit none
@@ -288,10 +288,7 @@ contains
     integer :: isc, iec, jsc, jec, jjj, jz, il, ib, nc0a
 
     ! Indices for compute domain (no halo)
-    isc = geom%ocean%G%isc
-    iec = geom%ocean%G%iec
-    jsc = geom%ocean%G%jsc
-    jec = geom%ocean%G%jec
+    call geom_get_domain_indices(geom%ocean, 'compute', isc, iec, jsc, jec)    
     
     nc0a = (iec - isc + 1) * (jec - jsc + 1 )
     allocate(dx_unstruct(nc0a,1,1,1))
@@ -313,13 +310,8 @@ contains
     integer :: isc, iec, jsc, jec, jjj, jz, il, ib, nc0a
 
     ! Indices for compute domain (no halo)
-    isc = geom%ocean%G%isc
-    iec = geom%ocean%G%iec
-    jsc = geom%ocean%G%jsc
-    jec = geom%ocean%G%jec
+    call geom_get_domain_indices(geom%ocean, 'compute', isc, iec, jsc, jec)    
     
-    nc0a = (iec - isc + 1) * (jec - jsc + 1 )
-
     dx_struct(isc:iec, jsc:jec) = reshape(dx_unstruct,(/size(dx_struct(isc:iec, jsc:jec),1),&
                                                        &size(dx_struct(isc:iec, jsc:jec),2)/))
 
