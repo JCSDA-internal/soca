@@ -46,26 +46,30 @@ ecbuild_use_package( PROJECT oops VERSION 0.1.0 REQUIRED )
 include_directories( ${OOPS_INCLUDE_DIRS} )
 MESSAGE( STATUS "oops include dirs: " ${OOPS_INCLUDE_DIRS} )
 
-# MOM6 SIS2
-message([STATUS] "=============================")
-message([STATUS] "=============================")
-message([STATUS] "=============================")
-message([STATUS] "${MOM6_INCLUDE_DIRS}")
-message([STATUS] "=============================")
-message([STATUS] "=============================")
-message([STATUS] "=============================")
-include_directories( ${MOM6_INCLUDE_DIRS} )
-include_directories( ${MOM6_HEADER_DIRS} )
-include_directories( ${MOM6_MACROS_DIRS} )
-
-# FMS
+# fms
+ecbuild_use_package( PROJECT fms REQUIRED )
 include_directories( ${FMS_INCLUDE_DIRS} )
+MESSAGE( STATUS "fms include dirs: " ${FMS_INCLUDE_DIRS} )
 
+# gsw
+ecbuild_use_package( PROJECT gsw REQUIRED )
+include_directories( ${GSW_INCLUDE_DIRS} )
+MESSAGE( STATUS "gsw include dirs: " ${GSW_INCLUDE_DIRS} )
+
+# cvmix
+ecbuild_use_package( PROJECT cvmix REQUIRED )
+include_directories( ${CVMIX_INCLUDE_DIRS} )
+MESSAGE( STATUS "cvmix include dirs: " ${CVMIX_INCLUDE_DIRS} )
+
+# mom6
+ecbuild_use_package( PROJECT mom6 REQUIRED )
+include_directories( ${MOM6_INCLUDE_DIRS} )
+MESSAGE( STATUS "mom6 include dirs: " ${MOM6_INCLUDE_DIRS} )
 
 ################################################################################
 # Export package info
 ################################################################################
-list( APPEND SOCA_TPLS ufo ioda oops )
+list( APPEND SOCA_TPLS ufo ioda oops gsw cvmix fms mom6)
 foreach( _tpl ${SOCA_TPLS} )
 string( TOUPPER ${_tpl} TPL )
 list( APPEND SOCA_EXTRA_DEFINITIONS   ${${TPL}_DEFINITIONS}  ${${TPL}_TPL_DEFINITIONS}  )
