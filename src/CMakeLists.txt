@@ -61,7 +61,7 @@ list( APPEND oops_soca_src_files
 ./Utils/random_vectors_mod.F90
 ./Utils/random_f.cc
 ./Utils/random_f.h
-./Utils/soca_mom6sis2.F90
+./Utils/soca_mom6.F90
 ./Utils/soca_interp.F90
 ./Utils/soca_Butils.F90
 ./Utils/soca_bumpinterp2d_mod.F90

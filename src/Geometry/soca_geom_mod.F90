@@ -5,7 +5,7 @@
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
 !
 
-!> Fortran module handling geometry for MOM6 & SIS2 model.
+!> Fortran module handling geometry for MOM6
 
 module soca_geom_mod
 
@@ -39,7 +39,7 @@ contains
   ! ------------------------------------------------------------------------------
   subroutine c_soca_geo_setup(c_key_self, c_conf) bind(c,name='soca_geo_setup_f90')
     use netcdf
-    use soca_mom6sis2
+    use soca_mom6
 
     implicit none
 
@@ -51,7 +51,7 @@ contains
     call soca_geom_registry%add(c_key_self)
     call soca_geom_registry%get(c_key_self,self)
 
-    call self%ocean%init()
+    call self%ocean%init(c_conf)
     call self%ocean%get_rossby_radius()
     call self%ocean%validindex()
     call self%ocean%infotofile()
@@ -61,7 +61,7 @@ contains
   ! ------------------------------------------------------------------------------
 
   subroutine c_soca_geo_clone(c_key_self, c_key_other) bind(c,name='soca_geo_clone_f90')
-    use soca_mom6sis2
+    use soca_mom6
     implicit none
     integer(c_int), intent(in   ) :: c_key_self
     integer(c_int), intent(inout) :: c_key_other
@@ -79,7 +79,7 @@ contains
   ! ------------------------------------------------------------------------------
 
   subroutine c_soca_geo_delete(c_key_self) bind(c,name='soca_geo_delete_f90')
-    use soca_mom6sis2
+    use soca_mom6
 
     use fms_io_mod,      only: fms_io_init, fms_io_exit    
     implicit none
@@ -91,8 +91,6 @@ contains
     call self%ocean%end()
     call soca_geom_registry%remove(c_key_self)
 
-    !self => NULL()
-    
   end subroutine c_soca_geo_delete
 
   ! ------------------------------------------------------------------------------

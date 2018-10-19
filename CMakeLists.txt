@@ -46,20 +46,26 @@ ecbuild_use_package( PROJECT oops VERSION 0.1.0 REQUIRED )
 include_directories( ${OOPS_INCLUDE_DIRS} )
 MESSAGE( STATUS "oops include dirs: " ${OOPS_INCLUDE_DIRS} )
 
-# fms
-ecbuild_use_package( PROJECT fms REQUIRED )
-include_directories( ${FMS_INCLUDE_DIRS} )
-MESSAGE( STATUS "fms include dirs: " ${FMS_INCLUDE_DIRS} )
-
-# mom6
-ecbuild_use_package( PROJECT mom6 REQUIRED )
+# MOM6 SIS2
+message([STATUS] "=============================")
+message([STATUS] "=============================")
+message([STATUS] "=============================")
+message([STATUS] "${MOM6_INCLUDE_DIRS}")
+message([STATUS] "=============================")
+message([STATUS] "=============================")
+message([STATUS] "=============================")
 include_directories( ${MOM6_INCLUDE_DIRS} )
-MESSAGE( STATUS "mom6 include dirs: " ${MOM6_INCLUDE_DIRS} )
+include_directories( ${MOM6_HEADER_DIRS} )
+include_directories( ${MOM6_MACROS_DIRS} )
+
+# FMS
+include_directories( ${FMS_INCLUDE_DIRS} )
+
 
 ################################################################################
 # Export package info
 ################################################################################
-list( APPEND SOCA_TPLS ufo ioda oops fms mom6)
+list( APPEND SOCA_TPLS ufo ioda oops )
 foreach( _tpl ${SOCA_TPLS} )
 string( TOUPPER ${_tpl} TPL )
 list( APPEND SOCA_EXTRA_DEFINITIONS   ${${TPL}_DEFINITIONS}  ${${TPL}_TPL_DEFINITIONS}  )

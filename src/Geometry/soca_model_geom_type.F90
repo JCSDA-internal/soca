@@ -9,7 +9,7 @@ module soca_model_geom_type
 
   use MOM_grid,                  only : ocean_grid_type
   use MOM_verticalGrid,          only : verticalGrid_type
-  use ice_grid,                  only : ice_grid_type  
+  use soca_mom6
   use kinds
 
   implicit none
@@ -20,8 +20,8 @@ module soca_model_geom_type
      type(ocean_grid_type)            :: G     !< Ocean/sea-ice horizontal grid
      type(VerticalGrid_type), pointer :: GV    !< Ocean vertical grid
      type(ocean_grid_type)            :: seaice_G     !< Ocean/sea-ice horizontal grid     
-     type(ice_grid_type)              :: IG    !< Ice grid
-     ! Short-cut variables and convenience pointers
+     !type(ice_grid_type)              :: IG    !< Ice grid
+     type(soca_ice_column) :: ice_column
      integer :: nx
      integer :: ny
      integer :: nzo
@@ -55,21 +55,24 @@ contains
 
   ! ------------------------------------------------------------------------------
 
-  subroutine geom_init(self)
+  subroutine geom_init(self, c_conf)
     
     use kinds
-    use soca_mom6sis2, only : soca_geom_init !, soca_ice_geom_init
-    
+    use soca_mom6, only : soca_geom_init !, soca_ice_geom_init
+    use iso_c_binding
+  
     implicit none
 
-    class(soca_model_geom),   intent(out)  :: self
-
-    call soca_geom_init(self%G, self%GV, self%IG)
-    !call soca_ice_geom_init(self%seaice_G, self%IG)   
+    class(soca_model_geom), intent(out) :: self
+    type(c_ptr),             intent(in) :: c_conf
+    
+    call soca_geom_init(self%G, self%GV, self%ice_column, c_conf)
     call geom_associate(self)
     
   end subroutine geom_init
 
+  ! ------------------------------------------------------------------------------
+  
   subroutine geom_end(self)
     
     implicit none
@@ -79,7 +82,8 @@ contains
     if (allocated(self%lon)) deallocate(self%lon)
     if (allocated(self%lat)) deallocate(self%lat)
     if (allocated(self%mask2d)) deallocate(self%mask2d)
-    if (allocated(self%obsmask)) deallocate(self%obsmask)    
+    if (allocated(self%obsmask)) deallocate(self%obsmask)
+    if (allocated(self%shoremask)) deallocate(self%shoremask)
     if (allocated(self%cell_area)) deallocate(self%cell_area)
     if (allocated(self%rossby_radius)) deallocate(self%rossby_radius)    
     
@@ -95,7 +99,7 @@ contains
     class(soca_model_geom), intent(out) :: other
 
     other%G = self%G
-    other%IG = self%IG
+    other%ice_column = self%ice_column
     call geom_associate(other)    
     
   end subroutine geom_clone
@@ -165,9 +169,9 @@ contains
     !self%z => self%GV%sLayer
 
     ! Sea-ice
-    self%ncat = self%IG%CatIce
-    self%nzi = self%IG%NkIce
-    self%nzs = self%IG%NkSnow    
+    self%ncat = self%ice_column%ncat
+    self%nzi = self%ice_column%nzi
+    self%nzs = self%ice_column%nzs
     
   end subroutine geom_associate
 
@@ -180,7 +184,7 @@ contains
     class(soca_model_geom), intent(in) :: self
 
     print *, 'nx=', self%nx
-    print *, 'ny=', self%ny    
+    print *, 'ny=', self%ny
 
   end subroutine geom_print
 

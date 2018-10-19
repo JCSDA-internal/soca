@@ -3,15 +3,9 @@ logging:
   categories: Warning, Error
 test_framework_runtime_config: "--log_level=test_suite"
 Geometry:
-  nx: 720
-  ny: 410
-  nzo: 1
-  nzi: 7
-  nzs: 1
-  ncat: 5
-  nf: '11'
-  gridfname: "/home/gvernier/Data/SOCA/ogrid05.nc"
-  icemaskfname: "/home/gvernier/Data/SOCA/icemask.nc"
+  num_ice_cat: 5
+  num_ice_lev: 4
+  num_sno_lev: 1
 Variables:
   variables: ci
 TestDate: '2009-12-31T00:00:00Z'

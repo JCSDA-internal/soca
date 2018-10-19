@@ -15,9 +15,7 @@ module soca_fields
   use kinds
   use atmos_model_mod, only: atmos_data_type
   use land_model_mod,  only: land_data_type    
-  use ocean_model_mod, only: ocean_public_type, ocean_state_type, ice_ocean_boundary_type
-  use ice_model_mod,   only: ice_data_type
-  use soca_mom6sis2,   only: Coupled
+  use soca_mom6,   only: Coupled
   use MOM, only : MOM_control_struct
   implicit none
   private
@@ -78,7 +76,7 @@ contains
 
   subroutine create_constructor(self, geom, vars)
     ! Construct a field from geom and vars
-    use soca_mom6sis2, only: Coupled, soca_field_init, soca_geom_init
+    use soca_mom6, only: Coupled, soca_field_init, soca_geom_init
     use ufo_vars_mod    
 
     implicit none
@@ -89,7 +87,7 @@ contains
 
     self%geom => geom
     self%nf   = vars%nv
-    call soca_field_init(self%AOGCM, geom%ocean%G, geom%ocean%GV, geom%ocean%IG)
+    call soca_field_init(self%AOGCM, geom%ocean%G, geom%ocean%GV, geom%ocean%ice_column)
 
     ! Assign convenience pointers
     !Ocean internal state    
@@ -124,7 +122,7 @@ contains
 
   subroutine create_copy(self, rhs_fld)
     ! Construct a field from an other field, lhs_fld=rhs_fld       
-    use soca_mom6sis2, only: Coupled, soca_field_init, soca_geom_init
+    use soca_mom6, only: Coupled, soca_field_init, soca_geom_init
 
     implicit none
     type(soca_field), intent(inout)          :: self
@@ -133,7 +131,7 @@ contains
 
     self%geom => rhs_fld%geom
     self%nf   = rhs_fld%nf
-    call soca_field_init(self%AOGCM, rhs_fld%geom%ocean%G, rhs_fld%geom%ocean%GV, rhs_fld%geom%ocean%IG)
+    call soca_field_init(self%AOGCM, rhs_fld%geom%ocean%G, rhs_fld%geom%ocean%GV, rhs_fld%geom%ocean%ice_column)
 
     ! Assign convenience pointers
     !Ocean internal state    
@@ -166,7 +164,7 @@ contains
   ! ------------------------------------------------------------------------------
 
   subroutine delete(self)
-    use soca_mom6sis2    
+    use soca_mom6    
     implicit none
     type(soca_field), intent(inout) :: self
 
@@ -621,7 +619,7 @@ contains
     use fckit_log_module, only : log
     use netcdf
     use soca_thermo
-    use soca_mom6sis2
+    use soca_mom6
     use fms_mod,                 only: read_data, set_domain
     use fms_io_mod,                only : fms_io_init, fms_io_exit
     use mpp_mod,  only : mpp_pe, mpp_npes, mpp_root_pe, mpp_sync, mpp_sum, mpp_gather, mpp_broadcast
