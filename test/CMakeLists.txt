@@ -23,7 +23,8 @@ list( APPEND soca_test_input
   testinput/vertconv.yml  
   #testinput/parametersbump.cov.yml
   testinput/static_scale_binit.yml
-  testinput/static_binit.yml  
+  testinput/static_binit.yml
+  testinput/static_SoccaError_init.yml  
   compare.sh
   run.sh
 )
@@ -90,7 +91,8 @@ endforeach(FILENAME)
 ecbuild_add_resources( TARGET   soca_test_scripts
                        SOURCES_PACK
                        ${soca_test_input}
-                     )
+                       )
+		     
 # Link to IODA Marine obs
 file(GLOB ioda_obs "${ioda_SOURCE_DIR}/test/testinput/marine/*.nc*")
 #list( APPEND soca_obs
@@ -113,6 +115,9 @@ foreach(FILENAME ${ioda_obs})
            ${FILENAME}
            ${CMAKE_CURRENT_BINARY_DIR}/Data/${filename} )	   
 endforeach(FILENAME)
+
+# Create directory for BUMP output
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bump)
 
 
 #####################################################################
@@ -137,17 +142,23 @@ ecbuild_add_test( TARGET test_soca_makeobs3d
                   ARGS "mpirun -np 4 ${CMAKE_BINARY_DIR}/bin/soca_makeobs.x testinput/hofx_makeobs3d.yml"
                   DEPENDS soca_makeobs.x )
 
-ecbuild_add_test( TARGET test_soca_covar_lengthscale
+ecbuild_add_test( TARGET test_soca_socaerror_init
                   TYPE SCRIPT
 		  COMMAND "./run.sh"
-                  ARGS "mpirun -np 4 ${CMAKE_BINARY_DIR}/bin/soca_staticbinit.x testinput/static_scale_binit.yml"
+                  ARGS "mpirun -np 4 ${CMAKE_BINARY_DIR}/bin/soca_staticbinit.x testinput/static_SocaError_init.yml"
                   DEPENDS soca_staticbinit.x )
+# Test below can take a few hours to complete. Commented out for now
+#ecbuild_add_test( TARGET test_soca_covar_lengthscale
+#                  TYPE SCRIPT
+#		  COMMAND "./run.sh"
+#                  ARGS "mpirun -np 4 ${CMAKE_BINARY_DIR}/bin/soca_staticbinit.x testinput/static_scale_binit.yml"
+#                  DEPENDS soca_staticbinit.x )
 
-ecbuild_add_test( TARGET test_soca_binit
-                  TYPE SCRIPT
-		  COMMAND "./run.sh"
-                  ARGS "mpirun -np 4 ${CMAKE_BINARY_DIR}/bin/soca_staticbinit.x testinput/static_binit.yml"
-                  DEPENDS soca_staticbinit.x )
+#ecbuild_add_test( TARGET test_soca_binit
+#                  TYPE SCRIPT
+#		  COMMAND "./run.sh"
+#                  ARGS "mpirun -np 4 ${CMAKE_BINARY_DIR}/bin/soca_staticbinit.x testinput/static_binit.yml"
+#                  DEPENDS soca_staticbinit.x )
 
 
 # Tests of class interfaces
