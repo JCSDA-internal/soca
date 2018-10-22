@@ -23,8 +23,6 @@ include( ecbuild_system NO_POLICY_SCOPE )
 
 ecbuild_requires_macro_version( 2.5 )
 
-#include( ecbuild_bundle )
-
 ################################################################################
 # Project
 ################################################################################
