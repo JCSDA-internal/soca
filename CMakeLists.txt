@@ -46,26 +46,30 @@ ecbuild_use_package( PROJECT oops VERSION 0.1.0 REQUIRED )
 include_directories( ${OOPS_INCLUDE_DIRS} )
 MESSAGE( STATUS "oops include dirs: " ${OOPS_INCLUDE_DIRS} )
 
-# MOM6 SIS2
-message([STATUS] "=============================")
-message([STATUS] "=============================")
-message([STATUS] "=============================")
-message([STATUS] "${MOM6_INCLUDE_DIRS}")
-message([STATUS] "=============================")
-message([STATUS] "=============================")
-message([STATUS] "=============================")
+ecbuild_use_package( PROJECT mom6 REQUIRED )
 include_directories( ${MOM6_INCLUDE_DIRS} )
-include_directories( ${MOM6_HEADER_DIRS} )
-include_directories( ${MOM6_MACROS_DIRS} )
+MESSAGE( STATUS "mom6 include dirs: " ${MOM6_INCLUDE_DIRS} )
+
+# MOM6
+#message([STATUS] "=============================")
+#message([STATUS] "=============================")
+#message([STATUS] "=============================")
+#message([STATUS] "${MOM6_INCLUDE_DIRS}")
+#message([STATUS] "=============================")
+#message([STATUS] "=============================")
+#message([STATUS] "=============================")
+#include_directories( ${MOM6_INCLUDE_DIRS} )
+#include_directories( ${MOM6_HEADER_DIRS} )
+#include_directories( ${MOM6_MACROS_DIRS} )
 
 # FMS
-include_directories( ${FMS_INCLUDE_DIRS} )
+#include_directories( ${FMS_INCLUDE_DIRS} )
 
 
 ################################################################################
 # Export package info
 ################################################################################
-list( APPEND SOCA_TPLS ufo ioda oops )
+list( APPEND SOCA_TPLS ufo ioda oops mom6 )
 foreach( _tpl ${SOCA_TPLS} )
 string( TOUPPER ${_tpl} TPL )
 list( APPEND SOCA_EXTRA_DEFINITIONS   ${${TPL}_DEFINITIONS}  ${${TPL}_TPL_DEFINITIONS}  )
@@ -96,8 +100,9 @@ ecbuild_print_summary()
 
 ecbuild_add_test( TARGET soca_coding_norms
                   TYPE SCRIPT
-		  COMMAND ${CMAKE_BINARY_DIR}/bin/cpplint.py
-		  ARGS --quiet --recursive ${CMAKE_CURRENT_SOURCE_DIR} )
+		          COMMAND ${CMAKE_BINARY_DIR}/bin/cpplint.py
+		          ARGS --quiet --recursive ${CMAKE_CURRENT_SOURCE_DIR}
+                )
 
 #cmake_minimum_required(VERSION 3.6)
 
@@ -112,7 +117,7 @@ ecbuild_add_test( TARGET soca_coding_norms
 # Build documentation
 ################################################################################
 
-option(BUILD_DOC "Build documentation" ON)
+option(BUILD_DOC "Build documentation" OFF)
 find_package(Doxygen)
 if (DOXYGEN_FOUND)
     set(DOXYGEN_IN ${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile)
