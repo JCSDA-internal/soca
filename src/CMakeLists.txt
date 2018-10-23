@@ -61,7 +61,7 @@ list( APPEND oops_soca_src_files
 ./Utils/random_vectors_mod.F90
 ./Utils/random_f.cc
 ./Utils/random_f.h
-./Utils/soca_mom6sis2.F90
+./Utils/soca_mom6.F90
 ./Utils/soca_interp.F90
 ./Utils/soca_Butils.F90
 ./Utils/soca_bumpinterp2d_mod.F90
@@ -108,19 +108,15 @@ ModelBiasIncrement.h
 ModelBiasCovariance.h
 )
 
-if ( CMAKE_Fortran_COMPILER_ID MATCHES "Cray" )
-  set( cfdealloc C_F_NO_DEALLOC )
-endif()
-
-#set ( FMS_LIBRARIES $ENV{FMS_LIBRARIES} )
-#set ( FMS_INCLUDE_DIRS $ENV{FMS_INCLUDE_DIRS} )
-
 ecbuild_add_library( TARGET   soca
-                     DEFINITIONS ${cfdealloc}
                      SOURCES  ${oops_soca_src_files}
-                     LIBS     oops ioda ufo ${LAPACK_LIBRARIES} ${NETCDF_LIBRARIES} ${MOM6_LIBRARIES} ${FMS_LIBRARIES} ${MPI_LIBRARIES}
-		     INCLUDES ${FMS_INCLUDE_DIRS} ${MPI_INCLUDE_DIRS} ${MOM6_INCLUDE_DIRS}
+                     LIBS     oops ioda ufo fms mom6 ${LAPACK_LIBRARIES} ${NETCDF_LIBRARIES}
                      INSTALL_HEADERS LISTED
                      LINKER_LANGUAGE ${OOPS_LINKER_LANGUAGE}
                     )
 
+# add soca coding norms test
+ecbuild_add_test( TARGET soca_coding_norms
+                  TYPE SCRIPT
+                  COMMAND ${CMAKE_BINARY_DIR}/bin/cpplint.py
+                  ARGS --quiet --recursive ${CMAKE_CURRENT_SOURCE_DIR} )

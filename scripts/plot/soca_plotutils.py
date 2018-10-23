@@ -73,18 +73,19 @@ class OceanState:
         z=np.squeeze(-other.hmidz[:,100,:])        
 
         plt.figure(num=fignum)
-        j=110
+        j=100
         plt.subplot(211)
         print 'min temp:',np.min(self.temp[:,j,:]-other.temp[:,j,:])
         print 'max temp:',np.max(self.temp[:,j,:]-other.temp[:,j,:])
         incr = self.temp[:,j,:]-other.temp[:,j,:]
         #vmin=np.min(incr)
         #vmax=np.max(incr)
-        vmin=-0.1 #np.min(incr)
-        vmax=0.1 #abs(np.min(incr)) #np.max(incr)                
+        vmin=-1.5 #np.min(incr)
+        vmax=1.5 #abs(np.min(incr)) #np.max(incr)                
         clevs = np.linspace(vmin, vmax, 41)
-        plt.contourf(x,z,incr, clevs, extend='both',cmap=cm.spectral)
-        #plt.pcolor(x,z,self.temp[:,j,:]-other.temp[:,j,:],vmin=-.05,vmax=.05,cmap=cm.bwr)
+        #plt.contourf(x,z,incr, clevs, extend='both',cmap=cm.spectral)
+        plt.pcolor(x,z,incr,vmin=vmin,vmax=vmax,cmap=cm.bwr)
+        plt.pcolor(x-360,z,incr,vmin=vmin,vmax=vmax,cmap=cm.bwr)        
         plt.ylim((-2000, 0))
         #plt.xlim((-215, -195))
         cbar=plt.colorbar(shrink=0.5,format="%.1f")
@@ -92,10 +93,11 @@ class OceanState:
 
         plt.subplot(212)
         incr = self.salt[:,j,:]-other.salt[:,j,:]        
-        vmin=-0.1 #np.min(incr)
-        vmax=0.1 #abs(np.min(incr)) #np.max(incr)        
-        clevs = np.linspace(vmin, vmax, 41)        
-        plt.contourf(x,z,incr, clevs, extend='both',cmap=cm.spectral)
+        vmin=-0.2 #np.min(incr)
+        vmax=0.2 #abs(np.min(incr)) #np.max(incr)        
+        clevs = np.linspace(vmin, vmax, 41)
+        plt.pcolor(x,z,incr,vmin=vmin,vmax=vmax,cmap=cm.bwr)        
+        #plt.contourf(x,z,incr, clevs, extend='both',cmap=cm.spectral)
         
         #plt.pcolor(x,z,self.salt[:,j,:]-other.salt[:,j,:],vmin=-.2,vmax=.2,cmap=cm.bwr)
         plt.ylim((-2000, 0))
@@ -111,18 +113,18 @@ class OceanState:
         for var in vars:
             if var=='temp':
                 incr=self.temp[levels[0],:,:]-other.temp[levels[0],:,:]
-                cmin=-0.1#2.5
-                cmax=0.1#2.5
+                cmin=-5.5
+                cmax=5.5
                 titlestr='Temperature increment'
             if var=='salt':
                 incr=self.salt[levels[0],:,:]-other.salt[levels[0],:,:]
-                cmin=-.2
-                cmax=.2
+                cmin=-.5
+                cmax=.5
                 titlestr='Salinity increment'
             if var=='ssh':
                 incr=self.ssh[:,:]-other.ssh[:,:]
-                cmin=-.2
-                cmax=.2
+                cmin=-.1
+                cmax=.1
                 titlestr='SSH increment'
             if var=='cicen':
                 self.maptype = 'N'

@@ -9,7 +9,7 @@ module soca_model_geom_type
 
   use MOM_grid,                  only : ocean_grid_type
   use MOM_verticalGrid,          only : verticalGrid_type
-  use ice_grid,                  only : ice_grid_type  
+  use soca_mom6
   use kinds
 
   implicit none
@@ -20,8 +20,8 @@ module soca_model_geom_type
      type(ocean_grid_type)            :: G     !< Ocean/sea-ice horizontal grid
      type(VerticalGrid_type), pointer :: GV    !< Ocean vertical grid
      type(ocean_grid_type)            :: seaice_G     !< Ocean/sea-ice horizontal grid     
-     type(ice_grid_type)              :: IG    !< Ice grid
-     ! Short-cut variables and convenience pointers
+     !type(ice_grid_type)              :: IG    !< Ice grid
+     type(soca_ice_column) :: ice_column
      integer :: nx
      integer :: ny
      integer :: nzo
@@ -32,7 +32,9 @@ module soca_model_geom_type
      real(kind=kind_real), allocatable, dimension(:,:) :: lat       !< 2D array of latitude
      real(kind=kind_real), allocatable, dimension(:)   :: z           !<      
      real(kind=kind_real), allocatable, dimension(:,:) :: mask2d    !< 0 = land 1 = ocean
-     real(kind=kind_real), allocatable, dimension(:,:) :: obsmask   !< 0 = land and halo 1 = ocean     
+     real(kind=kind_real), allocatable, dimension(:,:) :: obsmask   !< 0 = land and halo 1 = ocean
+     real(kind=kind_real), allocatable, dimension(:,:) :: shoremask ! Includes shoreline as ocean point (useful for BUMP)
+     integer, allocatable :: ij(:,:) ! index of ocean+shore line in compute grid
      real(kind=kind_real), allocatable, dimension(:,:) :: cell_area !<
      real(kind=kind_real), allocatable, dimension(:,:) :: rossby_radius !<     
    contains
@@ -42,6 +44,7 @@ module soca_model_geom_type
      procedure :: clone => geom_clone
      procedure :: print => geom_print
      procedure :: get_rossby_radius => geom_rossby_radius
+     procedure :: validindex => geom_validindex
      procedure :: thickness2depth => geom_thickness2depth
      procedure :: infotofile => geom_infotofile
   end type soca_model_geom
@@ -52,21 +55,24 @@ contains
 
   ! ------------------------------------------------------------------------------
 
-  subroutine geom_init(self)
+  subroutine geom_init(self, c_conf)
     
     use kinds
-    use soca_mom6sis2, only : soca_geom_init !, soca_ice_geom_init
-    
+    use soca_mom6, only : soca_geom_init !, soca_ice_geom_init
+    use iso_c_binding
+  
     implicit none
 
-    class(soca_model_geom),   intent(out)  :: self
-
-    call soca_geom_init(self%G, self%GV, self%IG)
-    !call soca_ice_geom_init(self%seaice_G, self%IG)   
+    class(soca_model_geom), intent(out) :: self
+    type(c_ptr),             intent(in) :: c_conf
+    
+    call soca_geom_init(self%G, self%GV, self%ice_column, c_conf)
     call geom_associate(self)
     
   end subroutine geom_init
 
+  ! ------------------------------------------------------------------------------
+  
   subroutine geom_end(self)
     
     implicit none
@@ -76,7 +82,8 @@ contains
     if (allocated(self%lon)) deallocate(self%lon)
     if (allocated(self%lat)) deallocate(self%lat)
     if (allocated(self%mask2d)) deallocate(self%mask2d)
-    if (allocated(self%obsmask)) deallocate(self%obsmask)    
+    if (allocated(self%obsmask)) deallocate(self%obsmask)
+    if (allocated(self%shoremask)) deallocate(self%shoremask)
     if (allocated(self%cell_area)) deallocate(self%cell_area)
     if (allocated(self%rossby_radius)) deallocate(self%rossby_radius)    
     
@@ -92,7 +99,7 @@ contains
     class(soca_model_geom), intent(out) :: other
 
     other%G = self%G
-    other%IG = self%IG
+    other%ice_column = self%ice_column
     call geom_associate(other)    
     
   end subroutine geom_clone
@@ -152,19 +159,19 @@ contains
 !!$    self%obsmask(:,jsd:js-1)=0.0
 !!$    self%obsmask(:,je+1:)=0.0    
     
-    self%obsmask(isd:is,:)=0.0
-    self%obsmask(ie:,:)=0.0
-    self%obsmask(:,jsd:js)=0.0
-    self%obsmask(:,je:)=0.0    
+!!$    self%obsmask(isd:is,:)=0.0
+!!$    self%obsmask(ie:,:)=0.0
+!!$    self%obsmask(:,jsd:js)=0.0
+!!$    self%obsmask(:,je:)=0.0    
 
     ! Ocean
     self%nzo = self%G%ke
     !self%z => self%GV%sLayer
 
     ! Sea-ice
-    self%ncat = self%IG%CatIce
-    self%nzi = self%IG%NkIce
-    self%nzs = self%IG%NkSnow    
+    self%ncat = self%ice_column%ncat
+    self%nzi = self%ice_column%nzi
+    self%nzs = self%ice_column%nzs
     
   end subroutine geom_associate
 
@@ -177,7 +184,7 @@ contains
     class(soca_model_geom), intent(in) :: self
 
     print *, 'nx=', self%nx
-    print *, 'ny=', self%ny    
+    print *, 'ny=', self%ny
 
   end subroutine geom_print
 
@@ -248,7 +255,7 @@ contains
           lonm=self%lon(i,j)
           if (lonm(1)>180.0) lonm=lonm-360.0
           lonm=deg2rad*lonm
-          latm(1)=deg2rad*self%lat(i,j)          
+          latm(1)=deg2rad*self%lat(i,j)
           call kdtree%find_nearest_neighbors(lonm(1),&
                                             &latm(1),&
                                             &nn,index,dist)
@@ -269,6 +276,67 @@ contains
     
   end subroutine geom_rossby_radius
 
+  ! ------------------------------------------------------------------------------
+  
+  subroutine geom_validindex(self)
+    ! Ignores inland mask grid points and
+    ! select wet gridpoints and shoreline mask
+    
+    use kinds
+    use type_kdtree, only: kdtree_type
+
+    implicit none
+
+    class(soca_model_geom), intent(inout) :: self    
+    integer :: is, ie, js, je
+    integer :: i, j, ns, cnt
+    real(kind=kind_real) :: shoretest
+    character(7) :: domain_type
+    
+    ! Allocate shoremask according to size of data domain
+    domain_type = "data"
+    call geom_get_domain_indices(self, domain_type, is, ie, js, je)
+    allocate(self%shoremask(is:ie,js:je))
+
+    domain_type = "compute"    
+    call geom_get_domain_indices(self, domain_type, is, ie, js, je)
+
+    ! Extend mask 2 grid point inland
+    self%shoremask = self%mask2d
+    do i = is, ie
+       do j = js, je
+          shoretest = sum(&
+               &self%mask2d(i-2:i+2,j-2) +&
+               &self%mask2d(i-2:i+2,j-1) +&               
+               &self%mask2d(i-2:i+2,j)   +&
+               &self%mask2d(i-2:i+2,j+1) +&
+               &self%mask2d(i-2:i+2,j+2) )
+          if (shoretest.gt.0.0d0) then
+             self%shoremask(i,j) = 1.0d0
+          end if
+       end do
+    end do
+
+    ! Get number of valid points
+    ns = int(sum(self%shoremask(is:ie,js:je)))
+    allocate(self%ij(2,ns))
+
+    ! Save shoreline + ocean grid point
+    cnt = 1
+    do i = is, ie
+       do j = js, je
+          if (shoretest.gt.0.0d0) then
+             self%ij(1, cnt) = i
+             self%ij(2, cnt) = j             
+          end if
+       end do
+    end do
+    
+    print *,'ns=',ns,' ',size(self%shoremask(is:ie,js:je),1)*&
+         &size(self%shoremask(is:ie,js:je),2)
+    
+  end subroutine geom_validindex
+  
   ! ------------------------------------------------------------------------------
   
   subroutine geom_infotofile(self)
@@ -308,12 +376,12 @@ contains
     geom_output_pe='geom_output_'//trim(strpe)//'.nc'
     varname='obsmask'
     call write2pe(reshape(self%obsmask,(/self%nx*self%ny/)),varname,geom_output_pe,.false.)
+    varname='shoremask'
+    call write2pe(reshape(self%shoremask,(/self%nx*self%ny/)),varname,geom_output_pe,.true.)    
     varname='lon'
     call write2pe(reshape(self%lon,(/self%nx*self%ny/)),varname,geom_output_pe,.true.)
     varname='lat'
     call write2pe(reshape(self%lat,(/self%nx*self%ny/)),varname,geom_output_pe,.true.)        
-
-    print *,'--------------------- ',pe,mpp_npes(),strpe,geom_output_pe
 
   end subroutine geom_infotofile
 
@@ -328,7 +396,7 @@ contains
     integer,                intent(out) :: is, ie, js, je
 
     select case (trim(domain_type))
-       case ("compute")
+    case ("compute")
           is = self%G%isc
           ie = self%G%iec
           js = self%G%jsc
@@ -349,7 +417,7 @@ contains
     implicit none
     
     class(soca_model_geom),             intent(in) :: self
-    real(kind=kind_real),               intent(in) :: h(:,:,:) ! Layer depth    
+    real(kind=kind_real),               intent(in) :: h(:,:,:) ! Layer thickness 
     real(kind=kind_real), allocatable, intent(out) :: z(:,:,:) ! Mid-layer depth
 
     integer :: is, ie, js, je, i, j, k

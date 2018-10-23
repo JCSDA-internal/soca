@@ -9,15 +9,13 @@ module soca_fields
 
   use config_mod
   use soca_geom_mod
-  use ufo_vars_mod  
+  use ufo_vars_mod
   use soca_bumpinterp2d_mod
   use soca_getvaltraj_mod
   use kinds
-  use atmos_model_mod, only: atmos_data_type
-  use land_model_mod,  only: land_data_type    
-  use ocean_model_mod, only: ocean_public_type, ocean_state_type, ice_ocean_boundary_type
-  use ice_model_mod,   only: ice_data_type
-  use soca_mom6sis2,   only: Coupled
+  !use atmos_model_mod, only: atmos_data_type
+  !use land_model_mod,  only: land_data_type
+  use soca_mom6,   only: Coupled
   use MOM, only : MOM_control_struct
   implicit none
   private
@@ -48,7 +46,7 @@ module soca_fields
      real(kind=kind_real), pointer     :: hicen(:,:,:) => NULL()   !< Sea-ice mass/m2                  (nx,ny,ncat) [kg/m2]
      real(kind=kind_real), pointer     :: vicen(:,:,:) => NULL()   !< Sea-ice volume                   (nx,ny,ncat)
      real(kind=kind_real), pointer     :: hsnon(:,:,:) => NULL()   !< Snow depth over sea-ice          (nx,ny,ncat)
-     real(kind=kind_real), pointer     :: vsnon(:,:,:) => NULL()   !< Snow volume over sea-ice         (nx,ny,ncat) 
+     real(kind=kind_real), pointer     :: vsnon(:,:,:) => NULL()   !< Snow volume over sea-ice         (nx,ny,ncat)
      real(kind=kind_real), pointer     :: tsfcn(:,:,:) => NULL()   !< Temperature over sea-ice or snow (nx,ny,ncat)
      real(kind=kind_real), pointer     :: qsnon(:,:,:,:) => NULL() !< Enthalpy of snow                 (nx,ny,ncat)
      real(kind=kind_real), pointer     :: sicnk(:,:,:,:) => NULL() !< Salin_wity of sea-ice            (nx,ny,ncat,nzi)
@@ -56,7 +54,7 @@ module soca_fields
      real(kind=kind_real), pointer     :: qicnk(:,:,:,:) => NULL() !< Enthalpy of sea-ice              (nx,ny,ncat,nzi)
      real(kind=kind_real), pointer     :: tocn(:,:,:) => NULL()    !< Ocean Potential Temperature, ref to p=0      (nx,ny,nzo)
      real(kind=kind_real), pointer     :: ssh(:,:) => NULL()       !< Sea-surface height (nx,ny,nzo)
-     real(kind=kind_real), pointer     :: hocn(:,:,:) => NULL()    !< Layer thickness (nx,ny,nzo)     
+     real(kind=kind_real), pointer     :: hocn(:,:,:) => NULL()    !< Layer thickness (nx,ny,nzo)
      character(len=5), allocatable     :: fldnames(:)              !< Variable identifiers             (nf)
   end type soca_field
 
@@ -78,21 +76,21 @@ contains
 
   subroutine create_constructor(self, geom, vars)
     ! Construct a field from geom and vars
-    use soca_mom6sis2, only: Coupled, soca_field_init, soca_geom_init
-    use ufo_vars_mod    
+    use soca_mom6, only: Coupled, soca_field_init, soca_geom_init
+    use ufo_vars_mod
 
     implicit none
     type(soca_field), intent(inout)          :: self
     type(soca_geom),  pointer, intent(inout) :: geom
-    type(ufo_vars),  intent(in)              :: vars        
+    type(ufo_vars),  intent(in)              :: vars
     integer :: ivar
 
     self%geom => geom
     self%nf   = vars%nv
-    call soca_field_init(self%AOGCM, geom%ocean%G, geom%ocean%GV, geom%ocean%IG)
+    call soca_field_init(self%AOGCM, geom%ocean%G, geom%ocean%GV, geom%ocean%ice_column)
 
     ! Assign convenience pointers
-    !Ocean internal state    
+    !Ocean internal state
     self%tocn => self%AOGCM%Ocn%T
     self%socn => self%AOGCM%Ocn%S
     self%hocn => self%AOGCM%Ocn%H
@@ -102,7 +100,7 @@ contains
     !Sea-ice internal state
     self%cicen => self%AOGCM%Ice%part_size
     self%hicen => self%AOGCM%Ice%h_ice
-    self%hsnon => self%AOGCM%Ice%h_snow        
+    self%hsnon => self%AOGCM%Ice%h_snow
     self%tsfcn => self%AOGCM%Ice%T_skin
     self%sicnk => self%AOGCM%Ice%sal_ice
     self%qicnk => self%AOGCM%Ice%enth_ice
@@ -111,7 +109,7 @@ contains
     call zeros(self)
 
     if (self%nf>11) then
-       call abor1_ftn ("soca_fields:create error number of fields")       
+       call abor1_ftn ("soca_fields:create error number of fields")
     endif
     allocate(self%fldnames(self%nf))
     self%fldnames(:)=vars%fldnames(:)
@@ -123,8 +121,8 @@ contains
   ! ------------------------------------------------------------------------------
 
   subroutine create_copy(self, rhs_fld)
-    ! Construct a field from an other field, lhs_fld=rhs_fld       
-    use soca_mom6sis2, only: Coupled, soca_field_init, soca_geom_init
+    ! Construct a field from an other field, lhs_fld=rhs_fld
+    use soca_mom6, only: Coupled, soca_field_init, soca_geom_init
 
     implicit none
     type(soca_field), intent(inout)          :: self
@@ -133,10 +131,10 @@ contains
 
     self%geom => rhs_fld%geom
     self%nf   = rhs_fld%nf
-    call soca_field_init(self%AOGCM, rhs_fld%geom%ocean%G, rhs_fld%geom%ocean%GV, rhs_fld%geom%ocean%IG)
+    call soca_field_init(self%AOGCM, rhs_fld%geom%ocean%G, rhs_fld%geom%ocean%GV, rhs_fld%geom%ocean%ice_column)
 
     ! Assign convenience pointers
-    !Ocean internal state    
+    !Ocean internal state
     self%tocn => self%AOGCM%Ocn%T
     self%socn => self%AOGCM%Ocn%S
     self%ssh => self%AOGCM%Ocn%ssh
@@ -145,7 +143,7 @@ contains
     !Sea-ice internal state
     self%cicen => self%AOGCM%Ice%part_size
     self%hicen => self%AOGCM%Ice%h_ice
-    self%hsnon => self%AOGCM%Ice%h_snow        
+    self%hsnon => self%AOGCM%Ice%h_snow
     self%tsfcn => self%AOGCM%Ice%T_skin
     self%sicnk => self%AOGCM%Ice%sal_ice
     self%qicnk => self%AOGCM%Ice%enth_ice
@@ -154,7 +152,7 @@ contains
     call zeros(self)
 
     if (self%nf>11) then
-       call abor1_ftn ("soca_fields:create_copy error number of fields")       
+       call abor1_ftn ("soca_fields:create_copy error number of fields")
     endif
     allocate(self%fldnames(self%nf))
     self%fldnames(:)=rhs_fld%fldnames(:)
@@ -166,7 +164,7 @@ contains
   ! ------------------------------------------------------------------------------
 
   subroutine delete(self)
-    use soca_mom6sis2    
+    use soca_mom6
     implicit none
     type(soca_field), intent(inout) :: self
 
@@ -190,10 +188,10 @@ contains
     self%sicnk = 0.0_kind_real
     self%qicnk = 0.0_kind_real
 
-    self%socn = 0.0_kind_real        
+    self%socn = 0.0_kind_real
     self%tocn = 0.0_kind_real
     self%ssh = 0.0_kind_real
-    self%hocn = 0.0_kind_real    
+    self%hocn = 0.0_kind_real
   end subroutine zeros
 
   ! ------------------------------------------------------------------------------
@@ -212,14 +210,14 @@ contains
     self%sicnk = 1.0_kind_real
     self%qicnk = 1.0_kind_real
 
-    self%socn = 1.0_kind_real        
+    self%socn = 1.0_kind_real
     self%tocn = 1.0_kind_real
     self%ssh = 1.0_kind_real
     self%hocn = 1.0_kind_real
 
   end subroutine ones
 
-  ! ------------------------------------------------------------------------------  
+  ! ------------------------------------------------------------------------------
 
   subroutine dirac(self, c_conf)
     use iso_c_binding
@@ -247,7 +245,7 @@ contains
 
 
 
-    ! Check 
+    ! Check
     if (ndir<1) call abor1_ftn("fields:dirac non-positive ndir")
     if (any(ixdir<1).or.any(ixdir>self%geom%ocean%nx)) call abor1_ftn("fields:dirac invalid ixdir")
     if (any(iydir<1).or.any(iydir>self%geom%ocean%ny)) call abor1_ftn("fields:dirac invalid iydir")
@@ -276,7 +274,7 @@ contains
 
     call random_number(self%cicen); self%cicen=self%cicen-0.5_kind_real
     call random_number(self%hicen); self%hicen=self%hicen-0.5_kind_real
-    call random_number(self%hsnon); self%hsnon=self%hsnon-0.5_kind_real        
+    call random_number(self%hsnon); self%hsnon=self%hsnon-0.5_kind_real
     call random_number(self%tsfcn); self%tsfcn=self%tsfcn-0.5_kind_real
 
     call random_number(self%tocn); self%tocn=self%tocn-0.5_kind_real
@@ -304,11 +302,11 @@ contains
     self%tsfcn = rhs%tsfcn
     self%qsnon = rhs%qsnon
     self%sicnk = rhs%sicnk
-    self%qicnk = rhs%qicnk    
+    self%qicnk = rhs%qicnk
 
     self%socn  = rhs%socn
     self%tocn  = rhs%tocn
-    self%ssh  = rhs%ssh    
+    self%ssh  = rhs%ssh
     self%hocn  = rhs%hocn
 
     return
@@ -364,7 +362,7 @@ contains
 
     self%tocn=self%tocn*rhs%tocn
     self%socn=self%socn*rhs%socn
-    self%ssh=self%ssh*rhs%ssh    
+    self%ssh=self%ssh*rhs%ssh
 
     return
   end subroutine self_schur
@@ -391,7 +389,7 @@ contains
 
     self%socn=self%socn-rhs%socn
     self%tocn=self%tocn-rhs%tocn
-    self%ssh=self%ssh-rhs%ssh    
+    self%ssh=self%ssh-rhs%ssh
 
   end subroutine self_sub
 
@@ -439,7 +437,7 @@ contains
     self%sicnk=self%sicnk + zz * rhs%sicnk
     self%qicnk=self%qicnk + zz * rhs%qicnk
 
-    self%tocn=self%tocn + zz * rhs%tocn        
+    self%tocn=self%tocn + zz * rhs%tocn
     self%socn=self%socn + zz * rhs%socn
     self%ssh=self%ssh + zz * rhs%ssh
 
@@ -463,18 +461,18 @@ contains
     endif
 
     ! Get compute domain
-    is = fld1%geom%ocean%G%isc    
+    is = fld1%geom%ocean%G%isc
     ie = fld1%geom%ocean%G%iec
-    js = fld1%geom%ocean%G%jsc    
-    je = fld1%geom%ocean%G%jec    
+    js = fld1%geom%ocean%G%jsc
+    je = fld1%geom%ocean%G%jec
     ncat = fld1%geom%ocean%ncat
-    nzo = fld1%geom%ocean%nzo    
+    nzo = fld1%geom%ocean%nzo
 
     zprod = 0.0_kind_real
     !----- OCEAN
     do ii = is, ie
        do jj = js, je
-          zprod = zprod + fld1%ssh(ii,jj)*fld2%ssh(ii,jj)*fld1%geom%ocean%mask2d(ii,jj)       !SSH      
+          zprod = zprod + fld1%ssh(ii,jj)*fld2%ssh(ii,jj)*fld1%geom%ocean%mask2d(ii,jj)       !SSH
           do kk = 1, nzo
              zprod = zprod + fld1%tocn(ii,jj,kk)*fld2%tocn(ii,jj,kk)*fld1%geom%ocean%mask2d(ii,jj) &   !TOCN
                   + fld1%socn(ii,jj,kk)*fld2%socn(ii,jj,kk)*fld1%geom%ocean%mask2d(ii,jj)     !SOCN
@@ -487,7 +485,7 @@ contains
        do jj = js, je
           do kk = 1, ncat
              zprod = zprod + fld1%cicen(ii,jj,kk+1)*fld2%cicen(ii,jj,kk+1)*fld1%geom%ocean%mask2d(ii,jj) & !CICEN
-                  + fld1%hicen(ii,jj,kk)*fld2%hicen(ii,jj,kk)*fld1%geom%ocean%mask2d(ii,jj)   !HICEN          
+                  + fld1%hicen(ii,jj,kk)*fld2%hicen(ii,jj,kk)*fld1%geom%ocean%mask2d(ii,jj)   !HICEN
           end do
        end do
     end do
@@ -495,7 +493,7 @@ contains
     allocate(zprod_allpes(mpp_npes()))
 
     call mpp_gather((/zprod/),zprod_allpes)
-    call mpp_broadcast(zprod_allpes, mpp_npes(), mpp_root_pe())    
+    call mpp_broadcast(zprod_allpes, mpp_npes(), mpp_root_pe())
     zprod=sum(zprod_allpes)
 
     deallocate(zprod_allpes)
@@ -542,7 +540,7 @@ contains
 
     lhs%tocn = x1%tocn - x2%tocn
     lhs%socn = x1%socn - x2%socn
-    lhs%ssh = x1%ssh - x2%ssh    
+    lhs%ssh = x1%ssh - x2%ssh
     !   else
     !      call abor1_ftn("soca_fields:diff_incr: not coded for low res increment yet")
     !   endif
@@ -569,10 +567,10 @@ contains
     where(self%sicnk.eq.0.0)
        self%sicnk=mask_val
        self%qicnk=mask_val
-       self%qsnon=mask_val       
+       self%qsnon=mask_val
     end where
 
-    where(self%tocn.eq.0.0)    
+    where(self%tocn.eq.0.0)
        self%socn=mask_val
        self%tocn=mask_val
     end where
@@ -594,9 +592,9 @@ contains
 !!$    self%AOGCM%Ice%enth_ice=mask_val
 !!$    self%AOGCM%Ice%enth_snow=mask_val
 
-       
+
   end subroutine self_mask
-  
+
   ! ------------------------------------------------------------------------------
 
   subroutine change_resol(fld,rhs)
@@ -621,7 +619,7 @@ contains
     use fckit_log_module, only : log
     use netcdf
     use soca_thermo
-    use soca_mom6sis2
+    use soca_mom6
     use fms_mod,                 only: read_data, set_domain
     use fms_io_mod,                only : fms_io_init, fms_io_exit
     use mpp_mod,  only : mpp_pe, mpp_npes, mpp_root_pe, mpp_sync, mpp_sum, mpp_gather, mpp_broadcast
@@ -644,7 +642,7 @@ contains
     integer :: iread, ii
 
     type(restart_file_type) :: sis_restart
-    type(restart_file_type) :: ocean_restart    
+    type(restart_file_type) :: ocean_restart
     integer :: idr, idr_ocean
     real(kind=kind_real) :: mask_val=3000d3
 
@@ -657,7 +655,7 @@ contains
     if (config_element_exists(c_conf,"read_from_file")) then
        iread = config_get_int(c_conf,"read_from_file")
     endif
-    
+
     if (iread==0) then
        call log%warning("soca_fields:read_file: Inventing State")
        call zeros(fld)
@@ -668,13 +666,13 @@ contains
        call datetime_set(sdate, vdate)
     end if
     if (iread==1) then
-       basename = config_get_string(c_conf,len(basename),"basename")        
+       basename = config_get_string(c_conf,len(basename),"basename")
        !ocn_sfc_filename = config_get_string(c_conf,len(ocn_filename),"ocn_sfc_filename")
-       ocn_filename = config_get_string(c_conf,len(ocn_filename),"ocn_filename")       
+       ocn_filename = config_get_string(c_conf,len(ocn_filename),"ocn_filename")
 
        !ocn_sfc_filename = trim(basename)//trim(ocn_sfc_filename)
        ocn_filename = trim(basename)//trim(ocn_filename)
-       ice_filename = config_get_string(c_conf,len(ice_filename),"ice_filename")       
+       ice_filename = config_get_string(c_conf,len(ice_filename),"ice_filename")
        ice_filename = trim(basename)//trim(ice_filename)
 
        ! !!!!!!!!!!!!!!!!!
@@ -684,22 +682,22 @@ contains
        do ii = 1,fld%nf
           print *,'varnames:',fld%fldnames(ii)
        end do
-       
+
        call fms_io_init()
        do ii = 1, fld%nf
-          
+
           print *,'*******************************   pe: ',pe,ii,'varname:',fld%fldnames(ii)
           select case(fld%fldnames(ii))
-             
+
           case ('ssh')
              idr_ocean = register_restart_field(ocean_restart, ocn_filename, 'ave_ssh', fld%ssh(:,:), &
                   domain=fld%geom%ocean%G%Domain%mpp_domain)
           case ('tocn')
              call read_data(ocn_filename,"Temp",fld%tocn(:,:,:),domain=fld%geom%ocean%G%Domain%mpp_domain)
-          case ('socn')             
+          case ('socn')
              call read_data(ocn_filename,"Salt",fld%socn(:,:,:),domain=fld%geom%ocean%G%Domain%mpp_domain)
-          case ('hocn')             
-             call read_data(ocn_filename,"h",fld%hocn(:,:,:),domain=fld%geom%ocean%G%Domain%mpp_domain)             
+          case ('hocn')
+             call read_data(ocn_filename,"h",fld%hocn(:,:,:),domain=fld%geom%ocean%G%Domain%mpp_domain)
           case ('cicen')
              idr = register_restart_field(sis_restart, ice_filename, 'part_size', fld%AOGCM%Ice%part_size, &
                   domain=fld%geom%ocean%G%Domain%mpp_domain)
@@ -708,32 +706,32 @@ contains
                   domain=fld%geom%ocean%G%Domain%mpp_domain)
           case ('hsnon')
              idr = register_restart_field(sis_restart, ice_filename, 'h_snow', fld%AOGCM%Ice%h_snow, &
-                  domain=fld%geom%ocean%G%Domain%mpp_domain)             
+                  domain=fld%geom%ocean%G%Domain%mpp_domain)
           case ('qicnk')
              idr = register_restart_field(sis_restart, ice_filename, 'enth_ice', fld%AOGCM%Ice%enth_ice, &
                   domain=fld%geom%ocean%G%Domain%mpp_domain)
           case ('qsnon')
              idr = register_restart_field(sis_restart, ice_filename, 'enth_snow', fld%AOGCM%Ice%enth_snow, &
                   domain=fld%geom%ocean%G%Domain%mpp_domain)
-          case ('tsfcn')             
+          case ('tsfcn')
              idr = register_restart_field(sis_restart, ice_filename, 'T_skin', fld%AOGCM%Ice%T_skin, &
                   domain=fld%geom%ocean%G%Domain%mpp_domain)
           case ('sicnk')
              idr = register_restart_field(sis_restart, ice_filename, 'sal_ice', fld%AOGCM%Ice%sal_ice, &
-                  domain=fld%geom%ocean%G%Domain%mpp_domain)             
+                  domain=fld%geom%ocean%G%Domain%mpp_domain)
           case default
              !call log%warning("soca_fields:read_file: Not reading var "//fld%fldnames(ii))
           end select
        end do
-       print *,'oooooooooooooooo'       
+       print *,'oooooooooooooooo'
        call restore_state(sis_restart, directory='')
-       call restore_state(ocean_restart, directory='')       
+       call restore_state(ocean_restart, directory='')
        call fms_io_exit()
 
        sdate = config_get_string(c_conf,len(sdate),"date")
        WRITE(buf,*) 'validity date is: '//sdate
        call log%info(buf)
-       call datetime_set(sdate, vdate)       
+       call datetime_set(sdate, vdate)
        print *,'pppppppppppppppppppppppppppppppppppppp'
        return
     end if
@@ -747,15 +745,15 @@ contains
           select case(fld%fldnames(ii))
              ! Ocean variables
           case ('ssh')
-             call read_data(incr_filename,"ssh",fld%ssh(:,:),domain=fld%geom%ocean%G%Domain%mpp_domain)             
+             call read_data(incr_filename,"ssh",fld%ssh(:,:),domain=fld%geom%ocean%G%Domain%mpp_domain)
           case ('tocn')
              call read_data(incr_filename,"temp",fld%tocn(:,:,:),domain=fld%geom%ocean%G%Domain%mpp_domain)
-          case ('socn')             
+          case ('socn')
              call read_data(incr_filename,"salt",fld%socn(:,:,:),domain=fld%geom%ocean%G%Domain%mpp_domain)
-          case ('hocn')             
+          case ('hocn')
              call read_data(incr_filename,"h",fld%hocn(:,:,:),domain=fld%geom%ocean%G%Domain%mpp_domain)
 
-             ! Sea-ice variables             
+             ! Sea-ice variables
           case ('cicen')
              call read_data(incr_filename, 'cicen', fld%cicen, domain=fld%geom%ocean%G%Domain%mpp_domain)
           case ('hicen')
@@ -765,22 +763,22 @@ contains
           case ('qicnk')
              call read_data(incr_filename, 'qicnk', fld%qicnk, domain=fld%geom%ocean%G%Domain%mpp_domain)
           case ('sicnk')
-             call read_data(incr_filename, 'sicnk', fld%sicnk, domain=fld%geom%ocean%G%Domain%mpp_domain)                          
+             call read_data(incr_filename, 'sicnk', fld%sicnk, domain=fld%geom%ocean%G%Domain%mpp_domain)
           case ('qsnon')
              call read_data(incr_filename, 'qsnon', fld%qsnon, domain=fld%geom%ocean%G%Domain%mpp_domain)
           case ('tsfcn')
-             call read_data(incr_filename, 'tsfcn', fld%tsfcn, domain=fld%geom%ocean%G%Domain%mpp_domain)                          
-          case default             
+             call read_data(incr_filename, 'tsfcn', fld%tsfcn, domain=fld%geom%ocean%G%Domain%mpp_domain)
+          case default
              write(buf,*) 'soca_fields_mod::read_file::increment. Not reading '//fld%fldnames(ii)
              call log%info(buf)
-             
+
           end select
        end do
        ! Reset mask value to mask_val
        !call self_mask(fld, mask_val)
        call fms_io_exit()
        !call fms_io_init()
-       
+
     endif
 
     call check(fld)
@@ -810,7 +808,7 @@ contains
     filename = genfilename(c_conf,max_string_length,vdate)
     WRITE(buf,*) 'field:write_file: writing '//filename
     call fckit_log%info(buf)
-    
+
     call fld2file(fld, filename)
 
   end subroutine write_file
@@ -830,15 +828,15 @@ contains
     call check(fld)
 
     call fms_io_init()
-    call set_domain( fld%geom%ocean%G%Domain%mpp_domain )    
+    call set_domain( fld%geom%ocean%G%Domain%mpp_domain )
     do ii = 1, fld%nf
        select case(fld%fldnames(ii))
-          
+
        case ('ssh')
           call write_data( filename, "ssh", fld%ssh, fld%geom%ocean%G%Domain%mpp_domain)
-          call write_data( filename, "rossby_radius", fld%geom%ocean%rossby_radius, fld%geom%ocean%G%Domain%mpp_domain)          
+          call write_data( filename, "rossby_radius", fld%geom%ocean%rossby_radius, fld%geom%ocean%G%Domain%mpp_domain)
        case ('tocn')
-          call write_data( filename, "temp", fld%tocn, fld%geom%ocean%G%Domain%mpp_domain)          
+          call write_data( filename, "temp", fld%tocn, fld%geom%ocean%G%Domain%mpp_domain)
        case ('socn')
           call write_data( filename, "salt", fld%socn, fld%geom%ocean%G%Domain%mpp_domain)
        case ('hocn')
@@ -856,13 +854,13 @@ contains
        case ('qsnon')
           call write_data(filename, "qsnon", fld%qsnon, fld%geom%ocean%G%Domain%mpp_domain)
        case ('tsfcn')
-          call write_data(filename, "tsfcn", fld%tsfcn, fld%geom%ocean%G%Domain%mpp_domain)                    
+          call write_data(filename, "tsfcn", fld%tsfcn, fld%geom%ocean%G%Domain%mpp_domain)
        case default
 
        end select
 
     end do
-    call fms_io_exit()       
+    call fms_io_exit()
 
   end subroutine fld2file
 
@@ -918,7 +916,7 @@ contains
     if (typ=="incr") then
        genfilename = 'test-incr.nc'
     endif
-    
+
     if (lenfn>length) &
          & call abor1_ftn("fields:genfilename: filename too long")
 
@@ -927,7 +925,7 @@ contains
   ! ------------------------------------------------------------------------------
   ! ------------------------------------------------------------------------------
 
-  subroutine gpnorm(fld, nf, pstat) 
+  subroutine gpnorm(fld, nf, pstat)
     implicit none
     type(soca_field), intent(in) :: fld
     integer, intent(in) :: nf
@@ -953,13 +951,13 @@ contains
     pstat(2,3) = sqrt(sum(fld%hsnon*fld%hsnon)/real(Nc2d*fld%geom%ocean%ncat))
 
     pstat(1,4) = minval(fld%tsfcn)
-    pstat(2,4) = maxval(fld%tsfcn)        
+    pstat(2,4) = maxval(fld%tsfcn)
 
     pstat(1,5) = minval(fld%qsnon)
     pstat(2,5) = maxval(fld%qsnon)
 
     pstat(1,6) = minval(fld%sicnk)
-    pstat(2,6) = maxval(fld%sicnk)        
+    pstat(2,6) = maxval(fld%sicnk)
 
     pstat(1,7) = minval(fld%qicnk)
     pstat(2,7) = maxval(fld%qicnk)
@@ -968,12 +966,12 @@ contains
     pstat(2,8) = maxval(fld%tocn)
 
     pstat(1,9) = minval(fld%socn)
-    pstat(2,9) = maxval(fld%socn)    
+    pstat(2,9) = maxval(fld%socn)
 
     pstat(1,10) = minval(fld%ssh)
-    pstat(2,10) = maxval(fld%ssh)    
+    pstat(2,10) = maxval(fld%ssh)
 
-    call dot_prod(fld, fld, zz)    
+    call dot_prod(fld, fld, zz)
     !pstat(3,:) = sqrt(zz)
 
   end subroutine gpnorm
@@ -993,7 +991,7 @@ contains
 
     call check(fld)
 
-    call dot_prod(fld,fld,prms) ! Global value 
+    call dot_prod(fld,fld,prms) ! Global value
     prms=sqrt(prms)
 
   end subroutine fldrms
@@ -1009,14 +1007,14 @@ contains
 
     integer :: isc, iec, jsc, jec
     integer :: igrid
-    
+
     ! Get indices for compute domain (no halo)
     isc = self%geom%ocean%G%isc
-    iec = self%geom%ocean%G%iec    
+    iec = self%geom%ocean%G%iec
     jsc = self%geom%ocean%G%jsc
     jec = self%geom%ocean%G%jec
 
-    ! Set number of grids ! Only 1 grid currently ! 
+    ! Set number of grids ! Only 1 grid currently !
     if (ug%colocated==1) then
        ! Colocatd
        ug%ngrid = 1
@@ -1072,7 +1070,7 @@ contains
 
     ! Get indices for compute domain (no halo)
     isc = self%geom%ocean%G%isc
-    iec = self%geom%ocean%G%iec    
+    iec = self%geom%ocean%G%iec
     jsc = self%geom%ocean%G%jsc
     jec = self%geom%ocean%G%jec
 
@@ -1090,10 +1088,10 @@ contains
     ug%grid(1)%lon = &
          &reshape( self%geom%ocean%lon(isc:iec, jsc:jec), (/ug%grid(1)%nmga/) )
     ug%grid(1)%lat = &
-         &reshape( self%geom%ocean%lat(isc:iec, jsc:jec), (/ug%grid(1)%nmga/) ) 
+         &reshape( self%geom%ocean%lat(isc:iec, jsc:jec), (/ug%grid(1)%nmga/) )
     ug%grid(1)%area = &
          &reshape( self%geom%ocean%cell_area(isc:iec, jsc:jec), (/ug%grid(1)%nmga/) )
-    do jz = 1, ug%grid(1)%nl0       
+    do jz = 1, ug%grid(1)%nl0
        ug%grid(1)%vunit(:,jz) = real(jz)
        ug%grid(1)%lmask(:,jz) = reshape( self%geom%ocean%mask2d(isc:iec, jsc:jec)==1, (/ug%grid(1)%nmga/) )
     end do
@@ -1115,7 +1113,7 @@ contains
 
     ! Get indices for compute domain (no halo)
     isc = self%geom%ocean%G%isc
-    iec = self%geom%ocean%G%iec    
+    iec = self%geom%ocean%G%iec
     jsc = self%geom%ocean%G%jsc
     jec = self%geom%ocean%G%jec
 
@@ -1138,7 +1136,7 @@ contains
     ! nv   !> Number of variables
     ! nts  !> Number of timeslots
     ncat = self%geom%ocean%ncat
-    nzo = ug%grid(1)%nl0!self%geom%ocean%nzo    
+    nzo = ug%grid(1)%nl0!self%geom%ocean%nzo
 
     ! Copy field
 
@@ -1151,12 +1149,12 @@ contains
             &reshape( self%cicen(isc:iec, jsc:jec, incat+1), (/ug%grid(1)%nmga/) )
        jk = jk + 1
     end do
-    
+
     ! hicen
     do incat = 1, ncat
        ug%grid(1)%fld(1:ni*nj, 1, jk, 1) = &
             &reshape( self%hicen(isc:iec, jsc:jec, incat), (/ug%grid(1)%nmga/) )
-       jk = jk + 1       
+       jk = jk + 1
     end do
 
     ! ssh
@@ -1176,13 +1174,13 @@ contains
        ug%grid(1)%fld(1:ni*nj, inzo, jk, 1) = &
             &reshape( self%socn(isc:iec, jsc:jec,inzo), (/ug%grid(1)%nmga/) )
     end do
-    
+
   end subroutine field_to_ug
 
   ! ------------------------------------------------------------------------------
 
   subroutine field_from_ug(self, ug)
-    
+
     use unstructured_grid_mod
 
     implicit none
@@ -1194,7 +1192,7 @@ contains
 
     ! Get indices for compute domain (no halo)
     isc = self%geom%ocean%G%isc
-    iec = self%geom%ocean%G%iec    
+    iec = self%geom%ocean%G%iec
     jsc = self%geom%ocean%G%jsc
     jec = self%geom%ocean%G%jec
 
@@ -1222,9 +1220,9 @@ contains
     end do
     ! ssh
     self%ssh(isc:iec, jsc:jec) = &
-         &reshape( ug%grid(1)%fld(1:ni*nj, 1, jk, 1), (/ni, nj/) )    
+         &reshape( ug%grid(1)%fld(1:ni*nj, 1, jk, 1), (/ni, nj/) )
     jk = jk + 1
-    
+
     ! tocn
     do inzo = 1, nzo
        self%tocn(isc:iec, jsc:jec,inzo) = &
@@ -1236,7 +1234,7 @@ contains
     do inzo = 1, nzo
        self%socn(isc:iec, jsc:jec,inzo) = &
             &reshape( ug%grid(1)%fld(1:ni*nj, inzo, jk, 1), (/ni, nj/) )
-    end do    
+    end do
 
   end subroutine field_from_ug
 

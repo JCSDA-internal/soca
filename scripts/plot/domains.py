@@ -28,14 +28,14 @@ y=np.reshape(y,75600)
 mask=np.reshape(mask,75600)
 
 I=np.where(mask==1)
-triang = tri.Triangulation(x[I], y[I])
+#triang = tri.Triangulation(x[I], y[I])
 
 #mask = np.reshape(mask,75600)
 #print np.shape(x), np.shape(y), np.shape(mask)
 #triang.set_mask(mask)
 
-plt.triplot(triang, 'bo-', lw=1)
-plt.show()
+#plt.triplot(triang, 'bo-', lw=1)
+#plt.show()
 
 flist=glob.glob('../../../build/soca/test/geom_output_*.nc')
 flist.sort()
@@ -51,16 +51,22 @@ for fname in flist:
     if cnt>15:
         cnt=0
     # 2d pe domain
+    print fname
     ncfile = Dataset(fname,'r')
     x=np.squeeze(ncfile.variables['lon'][:])
     x[x<0]=x[x<0]+360
     y=np.squeeze(ncfile.variables['lat'][:])
     mask=np.squeeze(ncfile.variables['obsmask'][:])
+    shoremask=np.squeeze(ncfile.variables['shoremask'][:])    
     ncfile.close()
     I=np.where(mask==1)
+    Is=np.where(abs(shoremask-mask)!=0)
+    #Is=np.where(shoremask==1)    
     #plt.subplot(121)    
     plt.plot(x[I],y[I],color=color[cnt],marker='.',linestyle='None',alpha=0.1)
-
+    #plt.subplot(122)    
+    plt.plot(x[Is],y[Is],color=color[cnt],marker='*',linestyle='None',alpha=1.0)    
+    #plt.plot(x[Is],y[Is],color=color[cnt],marker='.',linestyle='None',alpha=0.1)    
     try:
         # obs in pe domain
         print obsflist[cnt]
