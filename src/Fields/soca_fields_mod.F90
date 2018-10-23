@@ -667,26 +667,13 @@ contains
     end if
     if (iread==1) then
        basename = config_get_string(c_conf,len(basename),"basename")
-       !ocn_sfc_filename = config_get_string(c_conf,len(ocn_filename),"ocn_sfc_filename")
        ocn_filename = config_get_string(c_conf,len(ocn_filename),"ocn_filename")
-
-       !ocn_sfc_filename = trim(basename)//trim(ocn_sfc_filename)
        ocn_filename = trim(basename)//trim(ocn_filename)
        ice_filename = config_get_string(c_conf,len(ice_filename),"ice_filename")
        ice_filename = trim(basename)//trim(ice_filename)
 
-       ! !!!!!!!!!!!!!!!!!
-       call mpi_comm_rank(MPI_COMM_WORLD, pe, ierror)
-       ! !!!!!!!!!!!!!!!!!
-       print *,ocn_filename,ice_filename
-       do ii = 1,fld%nf
-          print *,'varnames:',fld%fldnames(ii)
-       end do
-
        call fms_io_init()
        do ii = 1, fld%nf
-
-          print *,'*******************************   pe: ',pe,ii,'varname:',fld%fldnames(ii)
           select case(fld%fldnames(ii))
 
           case ('ssh')
@@ -723,7 +710,6 @@ contains
              !call log%warning("soca_fields:read_file: Not reading var "//fld%fldnames(ii))
           end select
        end do
-       print *,'oooooooooooooooo'
        call restore_state(sis_restart, directory='')
        call restore_state(ocean_restart, directory='')
        call fms_io_exit()
@@ -732,7 +718,6 @@ contains
        WRITE(buf,*) 'validity date is: '//sdate
        call log%info(buf)
        call datetime_set(sdate, vdate)
-       print *,'pppppppppppppppppppppppppppppppppppppp'
        return
     end if
     if (iread==2) then ! Read increment
@@ -774,10 +759,7 @@ contains
 
           end select
        end do
-       ! Reset mask value to mask_val
-       !call self_mask(fld, mask_val)
        call fms_io_exit()
-       !call fms_io_init()
 
     endif
 

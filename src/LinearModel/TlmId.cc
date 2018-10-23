@@ -85,7 +85,7 @@ void TlmId::stepAD(Increment & dx, ModelBiasIncrement &) const {
 // -----------------------------------------------------------------------------
 void TlmId::finalizeAD(Increment & dx) const {
   // soca_prepare_integration_ad_f90(keyConfig_, dx.fields().toFortran());
-  // dx.deactivateModel();
+  dx.deactivateModel();
   Log::debug() << "TlmId::finalizeAD" << dx.fields() << std::endl;
 }
 // -----------------------------------------------------------------------------

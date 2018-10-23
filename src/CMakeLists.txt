@@ -42,10 +42,10 @@ list( APPEND oops_soca_src_files
 ./Covariance/soca_covariance_mod.F90
 
 #LocalizationMatrix
-./LocalizationMatrix/LocalizationMatrix.cc
-./LocalizationMatrix/LocalizationMatrix.h
-./LocalizationMatrix/instantiateLocalizationFactory.h
-./LocalizationMatrix/soca_localization_matrix.F90
+#./LocalizationMatrix/LocalizationMatrix.cc
+#./LocalizationMatrix/LocalizationMatrix.h
+#./LocalizationMatrix/instantiateLocalizationFactory.h
+#./LocalizationMatrix/soca_localization_matrix.F90
 
 #Run
 ./Run/Run.cc

@@ -15,16 +15,12 @@ list( APPEND soca_test_input
   testinput/localization_test.yml
   testinput/nicas_test.yml
   testinput/4denvar_nicas_test.yml
-  #testinput/variablechange.yml
-  testinput/ksshts.yml
-  testinput/kst.yml
-  testinput/ktc.yml
+  testinput/variablechange.yml
   testinput/bkgerr.yml
   testinput/vertconv.yml  
-  #testinput/parametersbump.cov.yml
   testinput/static_scale_binit.yml
   testinput/static_binit.yml
-  testinput/static_SoccaError_init.yml  
+  testinput/static_SocaError_init.yml  
   compare.sh
   run.sh
 )
@@ -145,7 +141,7 @@ ecbuild_add_test( TARGET test_soca_makeobs3d
 ecbuild_add_test( TARGET test_soca_socaerror_init
                   TYPE SCRIPT
 		  COMMAND "./run.sh"
-                  ARGS "mpirun -np 4 ${CMAKE_BINARY_DIR}/bin/soca_staticbinit.x testinput/static_SocaError_init.yml"
+                  ARGS "mpirun -np 1 ${CMAKE_BINARY_DIR}/bin/soca_staticbinit.x testinput/static_SocaError_init.yml"
                   DEPENDS soca_staticbinit.x )
 # Test below can take a few hours to complete. Commented out for now
 #ecbuild_add_test( TARGET test_soca_covar_lengthscale
@@ -231,7 +227,7 @@ ecbuild_add_test( TARGET test_soca_hofx
 ecbuild_add_test( TARGET test_soca_3dvar
                   TYPE SCRIPT
                   COMMAND "./run.sh"
-                  ARGS "mpirun -np 4 ${CMAKE_BINARY_DIR}/bin/soca_3dvar.x testinput/3dvar_test.yml"                       testoutput/3dvar.test
+                  ARGS "mpirun -np 1 ${CMAKE_BINARY_DIR}/bin/soca_3dvar.x testinput/3dvar_test.yml"                       testoutput/3dvar.test
                   DEPENDS soca_3dvar.x )
 
 ecbuild_add_test( TARGET test_soca_3dvarfgat
@@ -257,7 +253,7 @@ ecbuild_add_test( TARGET test_soca_dirac
 ecbuild_add_test( TARGET test_soca_balance
                   BOOST
                   SOURCES executables/TestVariableChange.cc
-                  ARGS "testinput/kst.yml"
+                  ARGS "testinput/variablechange.yml"
                   LIBS    soca )
 
 ecbuild_add_test( TARGET test_soca_bkgerr
