@@ -17,7 +17,8 @@ list( APPEND soca_test_input
   testinput/4denvar_nicas_test.yml
   testinput/variablechange.yml
   testinput/bkgerr.yml
-  testinput/vertconv.yml  
+  testinput/vertconv.yml
+  testinput/genenspert.yml
   testinput/static_scale_binit.yml
   testinput/static_binit.yml
   testinput/static_SocaError_init.yml  
@@ -143,6 +144,13 @@ ecbuild_add_test( TARGET test_soca_socaerror_init
 		  COMMAND "./run.sh"
                   ARGS "mpirun -np 1 ${CMAKE_BINARY_DIR}/bin/soca_staticbinit.x testinput/static_SocaError_init.yml"
                   DEPENDS soca_staticbinit.x )
+
+ecbuild_add_test( TARGET test_soca_enspert
+                  TYPE SCRIPT
+		  COMMAND "./run.sh"
+                  ARGS "mpirun -np 1 ${CMAKE_BINARY_DIR}/bin/soca_enspert.x testinput/static_SocaError_init.yml"
+                  DEPENDS soca_enspert.x )
+		
 # Test below can take a few hours to complete. Commented out for now
 #ecbuild_add_test( TARGET test_soca_covar_lengthscale
 #                  TYPE SCRIPT

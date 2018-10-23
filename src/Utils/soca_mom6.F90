@@ -25,7 +25,6 @@
 !>
 module soca_mom6
 
-  !use ocean_model_mod,         only: ocean_state_type, ocean_public_type
   use time_manager_mod,        only: time_type
   use kinds
   use MOM_grid,                  only : ocean_grid_type
@@ -84,8 +83,6 @@ contains
     use MOM_hor_index,             only : hor_index_type, hor_index_init
     use fms_io_mod,                only : fms_io_init, fms_io_exit
     use fms_mod,                   only : read_data, write_data
-    use MOM_domains,               only : MOM_infra_init, MOM_infra_end
-    use MOM_io,                    only : check_nml_error, io_infra_init, io_infra_end
     use MOM_file_parser,           only : open_param_file, close_param_file
     use MOM_fixed_initialization,  only : MOM_initialize_fixed
     use MOM_open_boundary,         only : ocean_OBC_type
@@ -169,23 +166,12 @@ contains
 
   subroutine soca_field_init(aogcm, G, GV, ice_column)
 
-    use MOM_state_initialization, only : MOM_initialize_state
-    use MOM_time_manager,         only : time_type, set_time, time_type_to_real, operator(+)
-    use MOM_file_parser,           only : get_param, param_file_type
-    use MOM_get_input,             only : Get_MOM_Input, directories
-    use MOM, only : MOM_control_struct, initialize_MOM
-    use fms_io_mod,                only : fms_io_init, fms_io_exit
-    use MOM_file_parser,           only : open_param_file, close_param_file, get_param
-    use fms_mod,                   only : read_data
-
     implicit none
 
     type (Coupled),                     intent(out) :: aogcm
     type(ocean_grid_type), intent(inout)           :: G
     type(verticalGrid_type), pointer, intent(inout):: GV
     type(soca_ice_column),              intent(in) :: ice_column
-    type(param_file_type) :: param_file  !< structure indicating paramater file to parse
-    type(directories)     :: dirs        !< structure with directory paths
 
     integer :: is, ie, js, je, Isq, Ieq, Jsq, Jeq, nzo, nzi, nzs
     integer :: isd, ied, jsd, jed, IsdB, IedB, JsdB, JedB

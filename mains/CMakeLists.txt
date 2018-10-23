@@ -32,4 +32,9 @@ ecbuild_add_executable( TARGET  soca_parameters.x
 ecbuild_add_executable( TARGET  soca_staticbinit.x
                         SOURCES StaticBInit.cc
                         LIBS    soca
-                      )
+			)
+
+ecbuild_add_executable( TARGET  soca_enspert.x
+                        SOURCES GenEnsPertB.cc
+                        LIBS    soca
+                      )		      
