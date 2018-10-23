@@ -108,15 +108,15 @@ ModelBiasIncrement.h
 ModelBiasCovariance.h
 )
 
-if ( CMAKE_Fortran_COMPILER_ID MATCHES "Cray" )
-  set( cfdealloc C_F_NO_DEALLOC )
-endif()
-
 ecbuild_add_library( TARGET   soca
-                     DEFINITIONS ${cfdealloc}
                      SOURCES  ${oops_soca_src_files}
-                     LIBS     oops ioda ufo ${LAPACK_LIBRARIES} ${NETCDF_LIBRARIES} ${FMS_LIBRARIES} ${MOM6_LIBRARIES}
+                     LIBS     oops ioda ufo fms mom6 ${LAPACK_LIBRARIES} ${NETCDF_LIBRARIES}
                      INSTALL_HEADERS LISTED
                      LINKER_LANGUAGE ${OOPS_LINKER_LANGUAGE}
                     )
 
+# add soca coding norms test
+ecbuild_add_test( TARGET soca_coding_norms
+                  TYPE SCRIPT
+                  COMMAND ${CMAKE_BINARY_DIR}/bin/cpplint.py
+                  ARGS --quiet --recursive ${CMAKE_CURRENT_SOURCE_DIR} )

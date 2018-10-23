@@ -70,7 +70,7 @@ include_directories( ${MOM6_INCLUDE_DIRS} )
 ################################################################################
 # Export package info
 ################################################################################
-list( APPEND SOCA_TPLS oops ioda ufo fms mom6 )
+list( APPEND SOCA_TPLS )
 
 set( SOCA_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src
                        ${CMAKE_CURRENT_BINARY_DIR}/src )
@@ -98,6 +98,9 @@ add_subdirectory( mains )
 add_subdirectory( src )
 add_subdirectory( test )
 
+# Build Doxygen documentation
+add_subdirectory( Documents )
+
 ################################################################################
 # Finalise configuration
 ################################################################################
@@ -107,28 +110,3 @@ ecbuild_install_project( NAME soca )
 
 # print the summary of the configuration
 ecbuild_print_summary()
-
-ecbuild_add_test( TARGET soca_coding_norms
-                  TYPE SCRIPT
-                  COMMAND ${CMAKE_BINARY_DIR}/bin/cpplint.py
-                  ARGS --quiet --recursive ${CMAKE_CURRENT_SOURCE_DIR} )
-
-################################################################################
-# Build documentation
-################################################################################
-
-option(BUILD_DOC "Build documentation" OFF)
-find_package(Doxygen)
-if (DOXYGEN_FOUND)
-    set(DOXYGEN_IN ${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile)
-    set(DOXYGEN_OUT ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile)
-    configure_file(${DOXYGEN_IN} ${DOXYGEN_OUT} @ONLY)
-    message("Doxygen build started")
-    add_custom_target( doc_doxygen ALL
-        COMMAND ${DOXYGEN_EXECUTABLE} ${DOXYGEN_OUT}
-        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-        COMMENT "Generating API documentation with Doxygen"
-    VERBATIM )
-else (DOXYGEN_FOUND)
-    message("Doxygen need to be installed to generate the doxygen documentation")
-endif (DOXYGEN_FOUND)
