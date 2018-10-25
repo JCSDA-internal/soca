@@ -82,14 +82,17 @@ contains
     use MOM_domains,               only : MOM_domains_init, clone_MOM_domain
     use MOM_hor_index,             only : hor_index_type, hor_index_init
     use fms_io_mod,                only : fms_io_init, fms_io_exit
-    use fms_mod,                   only : read_data, write_data
+    use fms_mod,                   only : read_data, write_data, fms_init, fms_end
+    use mpp_mod,         only: mpp_init
+    
     use MOM_file_parser,           only : open_param_file, close_param_file
     use MOM_fixed_initialization,  only : MOM_initialize_fixed
     use MOM_open_boundary,         only : ocean_OBC_type
     use kinds
     use iso_c_binding
     use config_mod
-
+    use fckit_mpi_module, only: fckit_mpi_comm
+  
     implicit none
 
     type(ocean_grid_type),            intent(out) :: G          !< The horizontal grid type (same for ice & ocean)
@@ -104,9 +107,15 @@ contains
     logical                                :: global_indexing = .false. !< If true use global horizontal index DOES NOT WORK
     logical                                :: write_geom_files = .false.!<
     type(ocean_OBC_type),          pointer :: OBC => NULL()             !< Ocean boundary condition
-    integer :: NCat_dflt = 5
-    integer :: ncat, nkice, nksnow, km
+    type(fckit_mpi_comm) :: f_comm
 
+  
+    f_comm = fckit_mpi_comm()
+    call mpp_init(localcomm=f_comm%communicator())
+    
+    ! Initialize fms
+    call fms_init()
+    
     ! Initialize fms io
     call fms_io_init()
 
@@ -159,6 +168,7 @@ contains
     ! Destructors below don't work
     !call MOM_grid_end(G)
     !call verticalGridEnd(GV)
+    nullify(GV)
 
   end subroutine soca_geom_end
 

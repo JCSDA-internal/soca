@@ -1,7 +1,5 @@
 list( APPEND soca_test_input
-  testinput/truth.yml
   testinput/forecast.yml 
-  testinput/hofx_makeobs3d.yml
   testinput/state_test.yml
   testinput/model_test.yml
   testinput/linearmodel_test.yml
@@ -11,8 +9,6 @@ list( APPEND soca_test_input
   testinput/obserrorcovariance_test.yml
   testinput/bump_static_b.yml  
   testinput/3dvar_test.yml
-  testinput/3dvarfgat_test.yml
-  testinput/localization_test.yml
   testinput/nicas_test.yml
   testinput/4denvar_nicas_test.yml
   testinput/variablechange.yml
@@ -27,11 +23,8 @@ list( APPEND soca_test_input
 )
 
 list( APPEND soca_testoutput
-  #testoutput/dirac.nicas.test
   testoutput/forecast.test
-  testoutput/truth.test
   testoutput/hofx.test  
-  testoutput/makeobs3d.test
   testoutput/3dvar.test  
 )
 
@@ -121,23 +114,11 @@ file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bump)
 
 # Tests that create data other tests might use (should check what is really needed...)
 
-ecbuild_add_test( TARGET test_soca_truth
-                  TYPE SCRIPT
-                  COMMAND "./run.sh"
-                  ARGS "mpirun -np 4 ${CMAKE_BINARY_DIR}/bin/soca_forecast.x testinput/truth.yml"
-                  DEPENDS soca_forecast.x )
-
 ecbuild_add_test( TARGET test_soca_forecast
                   TYPE SCRIPT
                   COMMAND "./run.sh"
                   ARGS "mpirun -np 4 ${CMAKE_BINARY_DIR}/bin/soca_forecast.x testinput/forecast.yml"
                   DEPENDS soca_forecast.x )
-
-ecbuild_add_test( TARGET test_soca_makeobs3d
-                  TYPE SCRIPT
-                  COMMAND "./run.sh"
-                  ARGS "mpirun -np 4 ${CMAKE_BINARY_DIR}/bin/soca_makeobs.x testinput/hofx_makeobs3d.yml"
-                  DEPENDS soca_makeobs.x )
 
 ecbuild_add_test( TARGET test_soca_socaerror_init
                   TYPE SCRIPT
@@ -148,7 +129,7 @@ ecbuild_add_test( TARGET test_soca_socaerror_init
 ecbuild_add_test( TARGET test_soca_enspert
                   TYPE SCRIPT
 		  COMMAND "./run.sh"
-                  ARGS "mpirun -np 1 ${CMAKE_BINARY_DIR}/bin/soca_enspert.x testinput/static_SocaError_init.yml"
+                  ARGS "mpirun -np 1 ${CMAKE_BINARY_DIR}/bin/soca_enspert.x testinput/genenspert.yml"
                   DEPENDS soca_enspert.x )
 		
 # Test below can take a few hours to complete. Commented out for now
@@ -210,15 +191,15 @@ ecbuild_add_test( TARGET  test_soca_increment
 ecbuild_add_test( TARGET  test_soca_errorcovariance
                   BOOST
                   SOURCES executables/TestErrorCovariance.cc
-                  ARGS    "testinput/errorcovariance_test.yml"
+                  ARGS    "testinput/errorcovariance_soca.yml"
                   LIBS    soca )
 
-ecbuild_add_test( TARGET  test_soca_localization
-                  BOOST
-                  SOURCES executables/TestLocalization.cc
-                  ARGS    "testinput/localization_test.yml"
-                  MPI     1
-                  LIBS    soca )
+#ecbuild_add_test( TARGET  test_soca_localization
+#                  BOOST
+#                  SOURCES executables/TestLocalization.cc
+#                  ARGS    "testinput/localization_test.yml"
+#                  MPI     1
+#                  LIBS    soca )
 		  
 ecbuild_add_test( TARGET test_soca_obserrorcov
                   BOOST
@@ -235,14 +216,9 @@ ecbuild_add_test( TARGET test_soca_hofx
 ecbuild_add_test( TARGET test_soca_3dvar
                   TYPE SCRIPT
                   COMMAND "./run.sh"
-                  ARGS "mpirun -np 1 ${CMAKE_BINARY_DIR}/bin/soca_3dvar.x testinput/3dvar_test.yml"                       testoutput/3dvar.test
+                  ARGS "mpirun -np 1 ${CMAKE_BINARY_DIR}/bin/soca_3dvar.x testinput/3dvar_test.yml"
+		         testoutput/3dvar.test
                   DEPENDS soca_3dvar.x )
-
-ecbuild_add_test( TARGET test_soca_3dvarfgat
-                  TYPE SCRIPT
-                  COMMAND "./run.sh"
-                  ARGS "mpirun -np 4 ${CMAKE_BINARY_DIR}/bin/soca_3dvar.x testinput/3dvarfgat_test.yml"
-                  DEPENDS soca_3dvar.x )		  
 
 ecbuild_add_test( TARGET test_soca_4denvar
                   TYPE SCRIPT
@@ -250,13 +226,13 @@ ecbuild_add_test( TARGET test_soca_4denvar
                   ARGS "mpirun -np 4 ${CMAKE_BINARY_DIR}/bin/soca_3dvar.x testinput/4denvar_nicas_test.yml"
                   DEPENDS soca_3dvar.x )
 		  
-ecbuild_add_test( TARGET test_soca_dirac
-                  TYPE SCRIPT
-                  MPI     1		  
-                  COMMAND "./compare.sh"
-                  ARGS "${CMAKE_BINARY_DIR}/bin/soca_dirac.x testinput/nicas_test.yml"
-                       testoutput/dirac.test
-                  DEPENDS soca_3dvar.x )		  
+#ecbuild_add_test( TARGET test_soca_dirac
+#                  TYPE SCRIPT
+#                  MPI     1		  
+#                  COMMAND "./compare.sh"
+#                  ARGS "${CMAKE_BINARY_DIR}/bin/soca_dirac.x testinput/nicas_test.yml"
+#                       testoutput/dirac.test
+#                  DEPENDS soca_3dvar.x )		  
   
 ecbuild_add_test( TARGET test_soca_balance
                   BOOST

@@ -65,7 +65,7 @@ contains
 
     class(soca_model_geom), intent(out) :: self
     type(c_ptr),             intent(in) :: c_conf
-    
+
     call soca_geom_init(self%G, self%GV, self%ice_column, c_conf)
     call geom_associate(self)
     

@@ -87,7 +87,7 @@ contains
     type(soca_geom), pointer :: self
 
     call soca_geom_registry%get(c_key_self, self)
-    !call soca_geom_end(self%ocean%G, self%ocean%GV)
+    call soca_geom_end(self%ocean%G, self%ocean%GV)
     call self%ocean%end()
     call soca_geom_registry%remove(c_key_self)
 

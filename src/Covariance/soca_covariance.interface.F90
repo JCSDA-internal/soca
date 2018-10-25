@@ -115,7 +115,7 @@ end subroutine c_soca_b_linearize
 
 !> Generate randomized increment
 
-subroutine c_soca_b_randomize(c_key_conf, c_key_out) bind(c,name='soca_b_randomize_f90')
+subroutine c_soca_b_randomize(c_key_self, c_key_out) bind(c,name='soca_b_randomize_f90')
 
   use iso_c_binding
   use soca_covariance_mod
@@ -125,16 +125,21 @@ subroutine c_soca_b_randomize(c_key_conf, c_key_out) bind(c,name='soca_b_randomi
 
   implicit none
 
-  integer(c_int), intent(in) :: c_key_conf  !< covar config structure
+  integer(c_int), intent(in) :: c_key_self  !< covar config structure
   integer(c_int), intent(in) :: c_key_out   !< Randomized increment
 
-  type(soca_cov),   pointer :: conf
+  type(soca_cov),   pointer :: self
   type(soca_field), pointer :: xout
+  type(soca_field)          :: xtmp  
 
-  call soca_cov_registry%get(c_key_conf,conf)
-  call soca_field_registry%get(c_key_out,xout)
+  call soca_cov_registry%get(c_key_self, self)
+  call soca_field_registry%get(c_key_out, xout)
 
-  call random(xout)
+  call create(xtmp,xout)
+  call random(xtmp)                !< xtmp = random
+  call soca_cov_C_mult(self, xtmp) !< xtmp = C.xtmp
+  call copy(xout,xtmp)             !< xout = xtmp
+  call delete(xtmp)
 
 end subroutine c_soca_b_randomize
 

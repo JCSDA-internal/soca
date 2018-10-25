@@ -272,14 +272,15 @@ contains
 
     call check(self)
 
-    call random_number(self%cicen); self%cicen=self%cicen-0.5_kind_real
-    call random_number(self%hicen); self%hicen=self%hicen-0.5_kind_real
-    call random_number(self%hsnon); self%hsnon=self%hsnon-0.5_kind_real
-    call random_number(self%tsfcn); self%tsfcn=self%tsfcn-0.5_kind_real
+    call zeros(self)
+    !call random_number(self%cicen); self%cicen=self%cicen-0.5_kind_real
+    !call random_number(self%hicen); self%hicen=self%hicen-0.5_kind_real
+    !call random_number(self%hsnon); self%hsnon=self%hsnon-0.5_kind_real
+    !call random_number(self%tsfcn); self%tsfcn=self%tsfcn-0.5_kind_real
 
     call random_number(self%tocn); self%tocn=self%tocn-0.5_kind_real
-    call random_number(self%socn); self%socn=self%socn-0.5_kind_real
-    call random_number(self%ssh); self%ssh=(self%ssh-0.5_kind_real)*self%geom%ocean%mask2d
+    !call random_number(self%socn); self%socn=self%socn-0.5_kind_real
+    !call random_number(self%ssh); self%ssh=(self%ssh-0.5_kind_real)*self%geom%ocean%mask2d
 
   end subroutine random
 
@@ -630,6 +631,11 @@ contains
     use ufo_geovals_mod
     use ufo_vars_mod
     use mpi
+    use fckit_mpi_module, only: fckit_mpi_comm
+    use mpp_mod,         only: mpp_init
+    use fms_io_mod,                only : fms_io_init, fms_io_exit
+    use fms_mod,                   only : read_data, write_data, fms_init, fms_end
+    
     implicit none
     type(soca_field), intent(inout) :: fld      !< Fields
     type(c_ptr), intent(in)       :: c_conf   !< Configuration
@@ -650,12 +656,13 @@ contains
     type(ufo_geovals)    :: geovals
     !type(ufo_vars)    :: vars
     integer            :: nobs, nval, pe, ierror
-
+  
     iread = 0
     if (config_element_exists(c_conf,"read_from_file")) then
        iread = config_get_int(c_conf,"read_from_file")
     endif
 
+    ! Invent state
     if (iread==0) then
        call log%warning("soca_fields:read_file: Inventing State")
        call zeros(fld)
@@ -665,6 +672,8 @@ contains
        call log%info(buf)
        call datetime_set(sdate, vdate)
     end if
+
+    ! Read restart file
     if (iread==1) then
        basename = config_get_string(c_conf,len(basename),"basename")
        ocn_filename = config_get_string(c_conf,len(ocn_filename),"ocn_filename")
@@ -720,10 +729,13 @@ contains
        call datetime_set(sdate, vdate)
        return
     end if
+
+    ! Read diagnostic file
     if (iread==2) then ! Read increment
        incr_filename = config_get_string(c_conf,len(incr_filename),"filename")
        call fms_io_init()
        do ii = 1, fld%nf
+          print *,'reading ::::::::: ', incr_filename,fld%fldnames(ii)
           write(buf,*) 'OOPS_INFO soca_fields_mod::read_file::increment: '//fld%fldnames(ii)
           call log%info(buf)
 
@@ -740,19 +752,19 @@ contains
 
              ! Sea-ice variables
           case ('cicen')
-             call read_data(incr_filename, 'cicen', fld%cicen, domain=fld%geom%ocean%G%Domain%mpp_domain)
+             !call read_data(incr_filename, 'cicen', fld%cicen, domain=fld%geom%ocean%G%Domain%mpp_domain)
           case ('hicen')
-             call read_data(incr_filename, 'hicen', fld%hicen, domain=fld%geom%ocean%G%Domain%mpp_domain)
+             !call read_data(incr_filename, 'hicen', fld%hicen, domain=fld%geom%ocean%G%Domain%mpp_domain)
           case ('hsnon')
-             call read_data(incr_filename, 'hsnon', fld%hsnon, domain=fld%geom%ocean%G%Domain%mpp_domain)
+             !call read_data(incr_filename, 'hsnon', fld%hsnon, domain=fld%geom%ocean%G%Domain%mpp_domain)
           case ('qicnk')
-             call read_data(incr_filename, 'qicnk', fld%qicnk, domain=fld%geom%ocean%G%Domain%mpp_domain)
+             !call read_data(incr_filename, 'qicnk', fld%qicnk, domain=fld%geom%ocean%G%Domain%mpp_domain)
           case ('sicnk')
-             call read_data(incr_filename, 'sicnk', fld%sicnk, domain=fld%geom%ocean%G%Domain%mpp_domain)
+             !call read_data(incr_filename, 'sicnk', fld%sicnk, domain=fld%geom%ocean%G%Domain%mpp_domain)
           case ('qsnon')
-             call read_data(incr_filename, 'qsnon', fld%qsnon, domain=fld%geom%ocean%G%Domain%mpp_domain)
+             !call read_data(incr_filename, 'qsnon', fld%qsnon, domain=fld%geom%ocean%G%Domain%mpp_domain)
           case ('tsfcn')
-             call read_data(incr_filename, 'tsfcn', fld%tsfcn, domain=fld%geom%ocean%G%Domain%mpp_domain)
+             !call read_data(incr_filename, 'tsfcn', fld%tsfcn, domain=fld%geom%ocean%G%Domain%mpp_domain)
           case default
              write(buf,*) 'soca_fields_mod::read_file::increment. Not reading '//fld%fldnames(ii)
              call log%info(buf)
@@ -843,7 +855,7 @@ contains
 
     end do
     call fms_io_exit()
-
+    
   end subroutine fld2file
 
   ! ------------------------------------------------------------------------------
