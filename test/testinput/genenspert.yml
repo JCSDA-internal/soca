@@ -1,0 +1,122 @@
+resolution:
+  num_ice_cat: 5
+  num_ice_lev: 4
+  num_sno_lev: 1
+variables: 
+ variables:
+  - cicen
+  - hicen
+  - hsnon
+  - tsfcn
+  - qsnon
+  - sicnk
+  - qicnk
+  - socn
+  - tocn
+  - ssh
+  - hocn  
+model: 
+ name: SOCA
+ tstep: PT1H
+initial:
+ read_from_file: 1
+ basename: ./INPUT/
+ ocn_filename: MOM.res.nc
+ ice_filename: ice_model.res.nc
+ date: 2018-04-15T00:00:00Z
+Covariance: 
+ covariance: SocaError
+ default_seed: 1
+ prefix: soca
+ datadir: ./bump
+ method: cor
+ strategy: common   
+ new_nicas: 0   # 1: recomputes convol param
+ load_nicas: 1  # 1: loads convol param (layout specific)
+ sam_read: 0
+ sam_write: 1  
+ mask_check: 1
+ draw_type: random_uniform
+ nc1: 100
+ ntry: 3
+ nrep:  2
+ nc3: 10
+ dc: 1000.0e3
+ nl0r: 1
+ minim_algo: "hooke"
+ rvflt: 0.0
+ lsqrt: 1  
+ resol: 8.0
+ nicas_interp: bilin
+ network: 1
+ mpicom: 2 # Number of internal comm steps 
+ forced_radii: 1
+ rh: 3000e3
+ rv: 100
+ advmode: 0
+ diag_interp: bilin
+ date: 2018-04-15T00:00:00Z
+ variable_changes:
+ - varchange: BalanceSOCA
+   dsdtmax: 1.0
+   dsdzmin: 3.0e-6
+   dtdzmin: 1.0e-6 
+   inputVariables:
+     variables:
+     - socn
+     - tocn
+     - ssh
+     - hocn
+   outputVariables:
+     variables:
+     - socn
+     - tocn
+     - ssh
+     - hocn
+ - varchange: BkgErrSOCA
+   read_from_file: 2
+   date: 2018-04-15T00:00:00Z
+   filename: /home/gvernier/Sandboxes/soca/data/test/std_bkgerror.nc
+   variables:  
+     variables:
+     - socn
+     - tocn
+     - ssh
+     - hocn 
+   inputVariables:
+     variables:
+     - socn
+     - tocn
+     - ssh
+     - hocn  
+   outputVariables:
+     variables:
+     - socn
+     - tocn
+     - ssh
+     - hocn	  
+ - varchange: VertConvSOCA
+   variables:  
+     variables:
+     - socn
+     - tocn
+     - hocn 
+   Lz: 300.0
+   Ltemp: 10.0	
+   inputVariables:
+     variables:
+     - socn
+     - tocn
+   outputVariables:
+     variables:
+     - socn
+     - tocn     
+members: 5
+forecast_length: PT1H #P1DT12H
+output: 
+ first: PT1H #P1D
+ frequency: PT1H
+ datadir: Data
+ exp: test
+ type: ens
+ date: 2018-04-15T00:00:00Z
