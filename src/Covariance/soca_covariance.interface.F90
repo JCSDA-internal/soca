@@ -1,3 +1,4 @@
+
 ! (C) Copyright 2009-2016 ECMWF.
 ! 
 ! This software is licensed under the terms of the Apache Licence Version 2.0
@@ -135,8 +136,18 @@ subroutine c_soca_b_randomize(c_key_self, c_key_out) bind(c,name='soca_b_randomi
   call soca_cov_registry%get(c_key_self, self)
   call soca_field_registry%get(c_key_out, xout)
 
+  !call random(xout)                !< xtmp = random
+
+  ! Randomize increment
   call create(xtmp,xout)
   call random(xtmp)                !< xtmp = random
+
+  ! Re-scale increment
+  xtmp%tocn = self%pert_scale%T*xtmp%tocn
+  xtmp%socn = self%pert_scale%S*xtmp%socn  
+
+  ! Apply convolution to increment
+  !call copy(xtmp, xout)                !< xtmp = random
   call soca_cov_C_mult(self, xtmp) !< xtmp = C.xtmp
   call copy(xout,xtmp)             !< xout = xtmp
   call delete(xtmp)

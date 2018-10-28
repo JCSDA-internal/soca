@@ -25,17 +25,12 @@ State:
   ice_filename: ice_model.res.nc
 Covariance:
   covariance: BUMP
-  # General parameters
   default_seed: 1
   prefix: soca
-  # Driver parameters
   method: cor
   strategy: specific_univariate
-  #strategy: common      
-#  new_hdiag: 0
   new_nicas: 1   # 1: recomputes convol param
   load_nicas: 0  # 1: loads convol param (layout specific)
-  # Sampling parameters
   sam_read: 0
   sam_write: 1  
   mask_check: 1
@@ -46,20 +41,16 @@ Covariance:
   nc3: 10
   dc: 1000.0e3
   nl0r: 1
-  # Diag parameters
-  # Fit parameters
   minim_algo: "hooke"
   rvflt: 0.0
-  # NICAS parameters
   lsqrt: 1  
   resol: 10.0
   nicas_interp: bilin
   network: 0
   mpicom: 2 # Number of internal comm steps 
-  #NICAS parameters
   forced_radii: 1
   rh: 3000e3
-  rv: 1
+  rv: 10
   advmode: 0
   # Output parameters  
   diag_interp: bilin

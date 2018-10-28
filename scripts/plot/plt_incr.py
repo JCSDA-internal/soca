@@ -13,22 +13,18 @@ matplotlib.rc('font', **font)
 
 # Analysis increment
 #fname_ana='/home/gvernier/Sandboxes/soca/bmatrix2/soca-bundle/build/soca/test/Data/3dvar.an.sshonly.2018-04-15T00:00:00Z.nc' #3dvar.an.2018-04-15T00:00:00Z.nc'
-fname_ana='/home/gvernier/Sandboxes/soca/bmatrix2/soca-bundle/build/soca/test/Data/3dvar.an.2018-04-15T00:00:00Z.nc'
-fname_bkg='/home/gvernier/Sandboxes/soca/bmatrix2/soca-bundle/build/soca/test/Data/example.fc.2018-04-15T00:00:00Z.P1D.nc'
+
+baseexp='/home/gvernier/Sandboxes/soca/soca-bundle-mom6/build/soca/test'
+fname_ana=baseexp+'/Data/3dvar.an.2018-04-15T00:00:00Z.nc'
+fname_bkg=baseexp+'/Data/example.fc.2018-04-15T00:00:00Z.P1D.nc'
 
 oana=OceanState(fname_ana, maptype='R')
 obkg=OceanState(fname_bkg)
 
 oana.plot_horiz_section(obkg,vars=['ssh'],fignum=1)
-oana.plot_horiz_section(obkg,vars=['temp'],fignum=2)
-oana.plot_horiz_section(obkg,vars=['salt'],fignum=3)
-oana.plot_vert_section(obkg,fignum=4)
-plt.show()
-#plt.show()
-
-oana.plot_integrated_horiz(obkg,vars=['temp'],fignum=1)
-oana.plot_integrated_horiz(obkg,vars=['salt'],fignum=2)
-oana.plot_vert_section(obkg,fignum=4)
+oana.plot_vert_section(obkg,fignum=2)
+oana.plot_integrated_horiz(obkg,vars=['temp'],fignum=3)
+oana.plot_integrated_horiz(obkg,vars=['salt'],fignum=4)
 plt.show()
 
 fname_ana='/home/gvernier/Sandboxes/soca/bmatrix2/soca-bundle/build/soca/test/scratch_sshda/RESTART/MOM.res_Y2018_D105_S10800.nc'

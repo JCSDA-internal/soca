@@ -88,7 +88,7 @@ cost_function:
       date: '2018-04-15T00:00:00Z'
       variable_changes:
       - varchange: BalanceSOCA
-        dsdtmax: 1.0
+        dsdtmax: 0.1
         dsdzmin: 3.0e-6
         dtdzmin: 1.0e-6 
         inputVariables:
@@ -153,26 +153,26 @@ cost_function:
 #      Covariance:
 #        covariance: diagonal
 #        obserror: ObsErr
-#    - ObsType: ADT
+    - ObsType: ADT
+      ObsData:
+        ObsDataOut:
+          obsfile: Data/test_obsout.nc
+        ObsDataIn:
+          obsfile: Data/Jason-2-2018-04-15.nc
+        obsvalue: obs_absolute_dynamic_topography
+      Covariance:
+        covariance: diagonal
+        obserror: obs_absolute_dynamic_topography_err  
+#    - ObsType: InsituTemperature
 #      ObsData:
 #        ObsDataOut:
-#          obsfile: Data/test_obsout.nc
+#          obsfile: Data/t0n156e_dy.nc
 #        ObsDataIn:
-#          obsfile: Data/Jason-3-2018-04-15.nc
+#          obsfile: /home/gvernier/Data/Argo/Santha/report.FixedMor_profile_2018041500.nc #Data/t0n156e_dy.nc
 #        obsvalue: ObsVal        
 #      Covariance:
 #        covariance: diagonal
-#        obserror: ObsErr        
-    - ObsType: InsituTemperature
-      ObsData:
-        ObsDataOut:
-          obsfile: Data/t0n156e_dy.nc
-        ObsDataIn:
-          obsfile: /home/gvernier/Data/Argo/Santha/report.FixedMor_profile_2018041500.nc #Data/t0n156e_dy.nc
-        obsvalue: ObsVal        
-      Covariance:
-        covariance: diagonal
-        obserror: ObsErr		
+#        obserror: ObsErr		
 #    - ObsType: SeaIceFraction
 #      ObsData:
 #        ObsDataOut:

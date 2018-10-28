@@ -26,6 +26,8 @@ initial:
  date: 2018-04-15T00:00:00Z
 Covariance: 
  covariance: SocaError
+ pert_T: 0.1
+ pert_S: 0.01 
  default_seed: 1
  prefix: soca
  datadir: ./bump
@@ -56,61 +58,61 @@ Covariance:
  advmode: 0
  diag_interp: bilin
  date: 2018-04-15T00:00:00Z
- variable_changes:
- - varchange: BalanceSOCA
-   dsdtmax: 1.0
-   dsdzmin: 3.0e-6
-   dtdzmin: 1.0e-6 
-   inputVariables:
-     variables:
-     - socn
-     - tocn
-     - ssh
-     - hocn
-   outputVariables:
-     variables:
-     - socn
-     - tocn
-     - ssh
-     - hocn
- - varchange: BkgErrSOCA
-   read_from_file: 2
-   date: 2018-04-15T00:00:00Z
-   filename: /home/gvernier/Sandboxes/soca/data/test/std_bkgerror.nc
-   variables:  
-     variables:
-     - socn
-     - tocn
-     - ssh
-     - hocn 
-   inputVariables:
-     variables:
-     - socn
-     - tocn
-     - ssh
-     - hocn  
-   outputVariables:
-     variables:
-     - socn
-     - tocn
-     - ssh
-     - hocn	  
- - varchange: VertConvSOCA
-   variables:  
-     variables:
-     - socn
-     - tocn
-     - hocn 
-   Lz: 300.0
-   Ltemp: 10.0	
-   inputVariables:
-     variables:
-     - socn
-     - tocn
-   outputVariables:
-     variables:
-     - socn
-     - tocn     
+# variable_changes:
+# - varchange: BalanceSOCA
+#   dsdtmax: 1.0
+#   dsdzmin: 3.0e-6
+#   dtdzmin: 1.0e-6 
+#   inputVariables:
+#     variables:
+#     - socn
+#     - tocn
+#     - ssh
+#     - hocn
+#   outputVariables:
+#     variables:
+#     - socn
+#     - tocn
+#     - ssh
+#     - hocn
+# - varchange: BkgErrSOCA
+#   read_from_file: 2
+#   date: 2018-04-15T00:00:00Z
+#   filename: /home/gvernier/Sandboxes/soca/data/test/std_bkgerror.nc
+#   variables:  
+#     variables:
+#     - socn
+#     - tocn
+#     - ssh
+#     - hocn 
+#   inputVariables:
+#     variables:
+#     - socn
+#     - tocn
+#     - ssh
+#     - hocn  
+#   outputVariables:
+#     variables:
+#     - socn
+#     - tocn
+#     - ssh
+#     - hocn	  
+# - varchange: VertConvSOCA
+#   variables:  
+#     variables:
+#     - socn
+#     - tocn
+#     - hocn 
+#   Lz: 300.0
+#   Ltemp: 10.0	
+#   inputVariables:
+#     variables:
+#     - socn
+#     - tocn
+#   outputVariables:
+#     variables:
+#     - socn
+#     - tocn     
 members: 5
 forecast_length: PT1H #P1DT12H
 output: 
