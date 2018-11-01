@@ -7,7 +7,8 @@ list( APPEND soca_test_input
   testinput/increment_test.yml
   #testinput/errorcovariance_test.yml
   testinput/obserrorcovariance_test.yml
-  #testinput/bump_static_b.yml  
+  #testinput/bump_static_b.yml
+  testinput/hofx-adt.yml
   testinput/3dvar_test.yml
   testinput/4dhybridbump.yml  
   #testinput/nicas_test.yml
@@ -120,7 +121,7 @@ file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bump)
 ecbuild_add_test( TARGET test_soca_forecast
                   TYPE SCRIPT
                   COMMAND "./run.sh"
-                  ARGS "mpirun -np 4 ${CMAKE_BINARY_DIR}/bin/soca_forecast.x testinput/forecast.yml"
+                  ARGS "mpirun -np 2 ${CMAKE_BINARY_DIR}/bin/soca_forecast.x testinput/forecast.yml"
                   DEPENDS soca_forecast.x )
 
 # Initialize static error covariance model defined in soca, used for 3DVAR
@@ -239,7 +240,7 @@ ecbuild_add_test( TARGET test_soca_obserrorcov
 ecbuild_add_test( TARGET test_soca_hofx
                   TYPE SCRIPT
                   COMMAND "./run.sh"
-                  ARGS "mpirun -np 4 ${CMAKE_BINARY_DIR}/bin/soca_hofx.x testinput/hofx_makeobs3d.yml"             
+                  ARGS "mpirun -np 2 ${CMAKE_BINARY_DIR}/bin/soca_hofx.x testinput/hofx_makeobs3d.yml"             
                   DEPENDS soca_hofx.x )
 
 ecbuild_add_test( TARGET test_soca_3dvar
