@@ -29,17 +29,18 @@ module soca_interpfields_mod
   
 contains
   ! ------------------------------------------------------------------------------
-  subroutine initialize_interph(fld, locs, horiz_interp)    
+  subroutine initialize_interph(fld, locs, horiz_interp, bumpid)    
   
     implicit none
 
     type(soca_field),         intent(in) :: fld
     type(ioda_locs),          intent(in) :: locs
     type(soca_bumpinterp2d), intent(out) :: horiz_interp    
-
+    integer,                  intent(in) :: bumpid
+    
     integer :: nobs
     integer :: isc, iec, jsc, jec
-
+    
     ! Indices for compute domain (no halo)
     call geom_get_domain_indices(fld%geom%ocean, "compute", isc, iec, jsc, jec)    
 
@@ -48,8 +49,7 @@ contains
             &      fld%geom%ocean%lon(isc:iec,jsc:jec),&
             &      fld%geom%ocean%lat(isc:iec,jsc:jec),&
             &      fld%geom%ocean%mask2d(isc:iec,jsc:jec),&
-            &      locs%lon,&
-            &      locs%lat)
+            &      locs%lon, locs%lat, bumpid)
 
   end subroutine initialize_interph
   
@@ -64,11 +64,15 @@ contains
     type(ufo_geovals),             intent(inout) :: geovals
     type(soca_getvaltraj), target, intent(inout) :: traj    
 
+    integer, save :: bumpid = 1000
+    
     call check(fld)    
     if (.not.(traj%interph_initialized)) then
-       call initialize_interph(fld, locs, traj%horiz_interp)
+       traj%bumpid = bumpid
+       call initialize_interph(fld, locs, traj%horiz_interp, traj%bumpid)
        call traj%horiz_interp%info()
        traj%interph_initialized = .true.
+       bumpid = bumpid + 1
     end if
     call interp_tl(fld, locs, vars, geovals, traj%horiz_interp)    
 
@@ -85,11 +89,13 @@ contains
     type(ufo_geovals),  intent(inout) :: geovals
 
     type(soca_bumpinterp2d) :: horiz_interp    
-
+    integer, save :: bumpid = 2000
+    
     call check(fld)    
-    call initialize_interph(fld, locs, horiz_interp)
+    call initialize_interph(fld, locs, horiz_interp, bumpid)
     call interp_tl(fld, locs, vars, geovals, horiz_interp)    
-
+    bumpid = bumpid + 1
+    
   end subroutine getvalues_notraj
   
   ! ------------------------------------------------------------------------------

@@ -22,6 +22,7 @@ oana=OceanState(fname_ana, maptype='R')
 obkg=OceanState(fname_bkg)
 
 oana.plot_horiz_section(obkg,vars=['ssh'],fignum=1)
+plt.show()
 oana.plot_vert_section(obkg,fignum=2)
 oana.plot_integrated_horiz(obkg,vars=['temp'],fignum=3)
 oana.plot_integrated_horiz(obkg,vars=['salt'],fignum=4)

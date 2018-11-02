@@ -197,9 +197,9 @@ contains
     
     real(kind_real), allocatable :: rh(:,:,:,:)     !< Horizontal support radius for covariance (in m)
     real(kind_real), allocatable :: rv(:,:,:,:)     !< Vertical support radius for
-    type(fckit_mpi_comm) :: f_comm
+    !type(fckit_mpi_comm) :: f_comm
 
-    f_comm = fckit_mpi_comm()
+    !f_comm = fckit_mpi_comm()
 
     !--- Initialize geometry to be passed to NICAS
     ! Indices for compute domain (no halo)
@@ -260,7 +260,7 @@ contains
     if (domain.eq.'ice') horiz_convol%nam%prefix = 'ice'     
 
     ! Compute convolution weight    
-    call horiz_convol%setup_online(f_comm%communicator(),nc0a,nl0,nv,nts,lon,lat,area,vunit,lmask)
+    call horiz_convol%setup_online(nc0a,nl0,nv,nts,lon,lat,area,vunit,lmask)
     call horiz_convol%set_parameter('cor_rh',rh)    
     call horiz_convol%run_drivers()
 
