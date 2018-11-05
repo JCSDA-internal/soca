@@ -65,7 +65,7 @@ contains
     type(soca_getvaltraj), target, intent(inout) :: traj    
 
     integer, save :: bumpid = 1000
-    
+
     call check(fld)    
     if (.not.(traj%interph_initialized)) then
        traj%bumpid = bumpid

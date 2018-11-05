@@ -240,7 +240,7 @@ ecbuild_add_test( TARGET test_soca_obserrorcov
 ecbuild_add_test( TARGET test_soca_hofx
                   TYPE SCRIPT
                   COMMAND "./run.sh"
-                  ARGS "mpirun -np 2 ${CMAKE_BINARY_DIR}/bin/soca_hofx.x testinput/hofx_makeobs3d.yml"             
+                  ARGS "mpirun -np 2 ${CMAKE_BINARY_DIR}/bin/soca_hofx.x testinput/hofx-adt.yml"             
                   DEPENDS soca_hofx.x )
 
 ecbuild_add_test( TARGET test_soca_3dvar
