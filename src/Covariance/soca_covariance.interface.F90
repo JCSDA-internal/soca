@@ -114,7 +114,7 @@ end subroutine c_soca_b_linearize
 
 ! ------------------------------------------------------------------------------
 
-!> Generate randomized increment
+!> Generate randomized C^1/2 x increment
 
 subroutine c_soca_b_randomize(c_key_self, c_key_out) bind(c,name='soca_b_randomize_f90')
 
@@ -144,11 +144,15 @@ subroutine c_soca_b_randomize(c_key_self, c_key_out) bind(c,name='soca_b_randomi
 
   ! Re-scale increment
   xtmp%tocn = self%pert_scale%T*xtmp%tocn
-  xtmp%socn = self%pert_scale%S*xtmp%socn  
-
-  ! Apply convolution to increment
-  !call copy(xtmp, xout)                !< xtmp = random
-  call soca_cov_C_mult(self, xtmp) !< xtmp = C.xtmp
+  xtmp%socn = self%pert_scale%S*xtmp%socn
+  xtmp%ssh = self%pert_scale%SSH*xtmp%ssh
+  xtmp%cicen = self%pert_scale%AICE*xtmp%cicen  
+  xtmp%hicen = self%pert_scale%AICE*xtmp%hicen
+  xtmp%tsfcn = 0.0*xtmp%tsfcn  
+  xtmp%hsnon = 0.0*xtmp%hsnon  
+  
+  ! Apply sqrt convolution to increment
+  call soca_cov_sqrt_C_mult(self, xtmp) !< xtmp = C.xtmp
   call copy(xout,xtmp)             !< xout = xtmp
   call delete(xtmp)
 

@@ -74,11 +74,11 @@ contains
 
 
     ! Set ensemble perturbation scales to 1.0    
-    self%pert_scale%T = 1.0
-    self%pert_scale%S = 1.0
-    self%pert_scale%SSH = 1.0
-    self%pert_scale%AICE = 1.0
-    self%pert_scale%HICE = 1.0
+    self%pert_scale%T = 0.0
+    self%pert_scale%S = 0.0
+    self%pert_scale%SSH = 0.0
+    self%pert_scale%AICE = 0.0
+    self%pert_scale%HICE = 0.0
     
     ! Overwrite scales if they exist   
     if (config_element_exists(c_conf,"pert_T")) then
@@ -165,6 +165,36 @@ contains
     end do    
 
   end subroutine soca_cov_C_mult
+  
+  ! ------------------------------------------------------------------------------
+
+  subroutine soca_cov_sqrt_C_mult(self, dx)
+
+    use kinds
+    use type_bump
+    
+    implicit none
+
+    type(soca_cov),   intent(inout) :: self !< The covariance structure    
+    type(soca_field), intent(inout) :: dx   !< Input: Increment
+                                            !< Output: C dx
+
+    integer :: icat, izo
+    
+    ! Apply convolution to fields
+    call soca_2d_sqrt_convol(dx%ssh, self%ocean_conv, dx%geom, self%pert_scale%SSH)
+    
+    do icat = 1, dx%geom%ocean%ncat
+       call soca_2d_sqrt_convol(dx%cicen(:,:,icat+1), self%seaice_conv, dx%geom, self%pert_scale%AICE)
+       call soca_2d_sqrt_convol(dx%hicen(:,:,icat), self%seaice_conv, dx%geom, self%pert_scale%HICE)
+    end do    
+
+    do izo = 1,dx%geom%ocean%nzo
+       call soca_2d_sqrt_convol(dx%tocn(:,:,izo), self%ocean_conv, dx%geom, self%pert_scale%T)
+       call soca_2d_sqrt_convol(dx%socn(:,:,izo), self%ocean_conv, dx%geom, self%pert_scale%S)       
+    end do    
+
+  end subroutine soca_cov_sqrt_C_mult
   
   ! ------------------------------------------------------------------------------
 
@@ -290,6 +320,48 @@ contains
     call soca_unstruct2struct(dx(:,:), geom, tmp_incr)
     
   end subroutine soca_2d_convol
+
+  ! ------------------------------------------------------------------------------
+
+  subroutine soca_2d_sqrt_convol(dx, horiz_convol, geom, pert_scale)
+
+    use soca_geom_mod
+    use kinds
+    use type_bump
+    
+    implicit none
+    
+    real(kind=kind_real), intent(inout) :: dx(:,:)
+    type(bump_type),         intent(in) :: horiz_convol    
+    type(soca_geom),         intent(in) :: geom        
+    real(kind=kind_real),    intent(in) :: pert_scale           
+
+    real(kind=kind_real), allocatable :: tmp_incr(:,:,:,:)
+    real(kind=kind_real), allocatable :: pcv(:)
+
+    integer :: offset, nn
+
+    offset = 0
+    
+    ! Apply 2D convolution
+    call soca_struct2unstruct(dx(:,:), geom, tmp_incr)
+
+    ! Get control variable size
+    call horiz_convol%get_cv_size(nn)
+    allocate(pcv(nn))
+    pcv = 0.0
+    call random_number(pcv); pcv = pert_scale * (pcv - 0.5)
+
+    ! Apply C^1/2
+    call horiz_convol%apply_nicas_sqrt(pcv, tmp_incr)
+
+    ! Back to structured grid
+    call soca_unstruct2struct(dx(:,:), geom, tmp_incr)
+
+    ! Clean up
+    deallocate(pcv)
+
+  end subroutine soca_2d_sqrt_convol
 
   ! ------------------------------------------------------------------------------
   

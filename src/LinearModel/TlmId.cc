@@ -10,6 +10,8 @@
 
 #include "src/LinearModel/TlmId.h"
 
+#include <vector>
+
 #include "eckit/config/LocalConfiguration.h"
 #include "oops/util/Logger.h"
 #include "src/ModelBiasIncrement.h"
@@ -20,6 +22,7 @@
 #include "src/Traits.h"
 #include "oops/util/DateTime.h"
 #include "oops/util/abor1_cpp.h"
+
 
 using oops::Log;
 
