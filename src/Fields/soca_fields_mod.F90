@@ -618,31 +618,22 @@ contains
     use iso_c_binding
     use datetime_mod
     use fckit_log_module, only : log
-    use netcdf
-    use soca_thermo
-    use soca_mom6
-    use fms_mod,                 only: read_data, set_domain
-    use fms_io_mod,                only : fms_io_init, fms_io_exit
-    use mpp_mod,  only : mpp_pe, mpp_npes, mpp_root_pe, mpp_sync, mpp_sum, mpp_gather, mpp_broadcast
+    use fms_mod,          only : read_data, set_domain
+    use fms_io_mod,       only : fms_io_init, fms_io_exit
     use fms_io_mod,       only : register_restart_field, restart_file_type
     use fms_io_mod,       only : restore_state, query_initialized
-
-    use ioda_locs_mod
-    use ufo_geovals_mod
-    use ufo_vars_mod
-    use mpi
-    use fckit_mpi_module, only: fckit_mpi_comm
-    use mpp_mod,         only: mpp_init
-    use fms_io_mod,                only : fms_io_init, fms_io_exit
-    use fms_mod,                   only : read_data, write_data, fms_init, fms_end
+    use fms_io_mod,       only : fms_io_init, fms_io_exit
+    use fms_mod,          only : read_data, write_data, fms_init, fms_end
     
     implicit none
-    type(soca_field), intent(inout) :: fld      !< Fields
-    type(c_ptr), intent(in)       :: c_conf   !< Configuration
-    type(datetime), intent(inout) :: vdate    !< DateTime
 
-    integer, parameter :: max_string_length=800 ! Yuk!
-    character(len=max_string_length) :: ocn_sfc_filename, ocn_filename, ice_filename, basename, incr_filename
+    type(soca_field), intent(inout) :: fld      !< Fields
+    type(c_ptr),         intent(in) :: c_conf   !< Configuration
+    type(datetime),   intent(inout) :: vdate    !< DateTime
+
+    integer, parameter :: max_string_length=800
+    character(len=max_string_length) :: ocn_sfc_filename, ocn_filename
+    character(len=max_string_length) :: ice_filename, basename, incr_filename    
     character(len=20) :: sdate
     character(len=1024)  :: buf
     integer :: iread, ii
@@ -650,13 +641,10 @@ contains
     type(restart_file_type) :: sis_restart
     type(restart_file_type) :: ocean_restart
     integer :: idr, idr_ocean
-    real(kind=kind_real) :: mask_val=3000d3
 
-    type(ioda_locs)    :: locs
-    type(ufo_geovals)    :: geovals
-    !type(ufo_vars)    :: vars
     integer            :: nobs, nval, pe, ierror
-  
+
+    
     iread = 0
     if (config_element_exists(c_conf,"read_from_file")) then
        iread = config_get_int(c_conf,"read_from_file")
@@ -688,11 +676,14 @@ contains
              idr_ocean = register_restart_field(ocean_restart, ocn_filename, 'ave_ssh', fld%ssh(:,:), &
                   domain=fld%geom%ocean%G%Domain%mpp_domain)
           case ('tocn')
-             call read_data(ocn_filename,"Temp",fld%tocn(:,:,:),domain=fld%geom%ocean%G%Domain%mpp_domain)
+             idr_ocean = register_restart_field(ocean_restart, ocn_filename, 'Temp', fld%tocn(:,:,:), &
+                  domain=fld%geom%ocean%G%Domain%mpp_domain)             
           case ('socn')
-             call read_data(ocn_filename,"Salt",fld%socn(:,:,:),domain=fld%geom%ocean%G%Domain%mpp_domain)
+             idr_ocean = register_restart_field(ocean_restart, ocn_filename, 'Salt', fld%socn(:,:,:), &
+                  domain=fld%geom%ocean%G%Domain%mpp_domain)             
           case ('hocn')
-             call read_data(ocn_filename,"h",fld%hocn(:,:,:),domain=fld%geom%ocean%G%Domain%mpp_domain)
+             idr_ocean = register_restart_field(ocean_restart, ocn_filename, 'h', fld%hocn(:,:,:), &
+                  domain=fld%geom%ocean%G%Domain%mpp_domain)             
           case ('cicen')
              idr = register_restart_field(sis_restart, ice_filename, 'part_size', fld%AOGCM%Ice%part_size, &
                   domain=fld%geom%ocean%G%Domain%mpp_domain)
@@ -796,12 +787,13 @@ contains
     call check(fld)
 
     !call geom_infotofile(fld%geom)
+    call write_restart(fld, c_conf, vdate)
 
-    filename = genfilename(c_conf,max_string_length,vdate)
-    WRITE(buf,*) 'field:write_file: writing '//filename
-    call fckit_log%info(buf)
-
-    call fld2file(fld, filename)
+!!$    filename = genfilename(c_conf,max_string_length,vdate)
+!!$    WRITE(buf,*) 'field:write_file: writing '//filename
+!!$    call fckit_log%info(buf)
+!!$
+!!$    call fld2file(fld, filename)
 
   end subroutine write_file
 
@@ -857,15 +849,95 @@ contains
   end subroutine fld2file
 
   ! ------------------------------------------------------------------------------
+  subroutine write_restart(fld, c_conf, vdate)
 
-  function genfilename (c_conf,length,vdate)
+    use iso_c_binding
+    use datetime_mod
+    use fckit_log_module, only : log
+    use fms_mod,          only : read_data, set_domain
+    use fms_io_mod,       only : register_restart_field, restart_file_type
+    use fms_io_mod,       only : restore_state, query_initialized
+    use fms_io_mod,       only : fms_io_init, fms_io_exit
+    use fms_io_mod,       only: free_restart_type, save_restart
+    
+    use fms_mod,          only : read_data, write_data, fms_init, fms_end
+    
+    implicit none
+
+    type(soca_field), intent(inout) :: fld      !< Fields
+    type(c_ptr),         intent(in) :: c_conf   !< Configuration
+    type(datetime),   intent(inout) :: vdate    !< DateTime
+
+    integer, parameter :: max_string_length=800
+    character(len=max_string_length) :: ocn_filename
+    character(len=max_string_length) :: ice_filename, basename, incr_filename    
+    character(len=20) :: sdate
+    character(len=1024)  :: buf
+    integer :: iread, ii
+
+    type(restart_file_type) :: ice_restart
+    type(restart_file_type) :: ocean_restart
+    integer :: idr, idr_ocean
+
+    integer            :: nobs, nval, pe, ierror
+
+
+    ! Generate file names
+    ocn_filename = genfilename(c_conf,max_string_length,vdate,"ocn")
+    ice_filename = genfilename(c_conf,max_string_length,vdate,"ice")
+
+    call fms_io_init()
+    ! Ocean State
+    idr_ocean = register_restart_field(ocean_restart, ocn_filename, 'ave_ssh', fld%ssh(:,:), &
+                  domain=fld%geom%ocean%G%Domain%mpp_domain)
+    idr_ocean = register_restart_field(ocean_restart, ocn_filename, 'Temp', fld%tocn(:,:,:), &
+                  domain=fld%geom%ocean%G%Domain%mpp_domain)             
+    idr_ocean = register_restart_field(ocean_restart, ocn_filename, 'Salt', fld%socn(:,:,:), &
+                  domain=fld%geom%ocean%G%Domain%mpp_domain)             
+    idr_ocean = register_restart_field(ocean_restart, ocn_filename, 'h', fld%hocn(:,:,:), &
+                  domain=fld%geom%ocean%G%Domain%mpp_domain)             
+
+    call save_restart(ocean_restart, directory='')
+    call free_restart_type(ocean_restart)
+    
+    ! Sea-Ice
+    idr = register_restart_field(ice_restart, ice_filename, 'part_size', fld%AOGCM%Ice%part_size, &
+                  domain=fld%geom%ocean%G%Domain%mpp_domain)
+    idr = register_restart_field(ice_restart, ice_filename, 'h_ice', fld%AOGCM%Ice%h_ice, &
+                  domain=fld%geom%ocean%G%Domain%mpp_domain)
+    idr = register_restart_field(ice_restart, ice_filename, 'h_snow', fld%AOGCM%Ice%h_snow, &
+                  domain=fld%geom%ocean%G%Domain%mpp_domain)
+    idr = register_restart_field(ice_restart, ice_filename, 'enth_ice', fld%AOGCM%Ice%enth_ice, &
+                  domain=fld%geom%ocean%G%Domain%mpp_domain)
+    idr = register_restart_field(ice_restart, ice_filename, 'enth_snow', fld%AOGCM%Ice%enth_snow, &
+                  domain=fld%geom%ocean%G%Domain%mpp_domain)
+    idr = register_restart_field(ice_restart, ice_filename, 'T_skin', fld%AOGCM%Ice%T_skin, &
+                  domain=fld%geom%ocean%G%Domain%mpp_domain)
+    idr = register_restart_field(ice_restart, ice_filename, 'sal_ice', fld%AOGCM%Ice%sal_ice, &
+                  domain=fld%geom%ocean%G%Domain%mpp_domain)
+    call save_restart(ice_restart, directory='')
+    call free_restart_type(ice_restart)
+
+    !call fms_io_exit()
+
+    !sdate = config_get_string(c_conf,len(sdate),"date")
+    !WRITE(buf,*) 'validity date is: '//sdate
+    !call log%info(buf)
+    !call datetime_set(sdate, vdate)
+    return
+
+  end subroutine write_restart
+  
+  ! ------------------------------------------------------------------------------
+  function genfilename (c_conf,length,vdate, domain_type)
     use iso_c_binding
     use datetime_mod
     use duration_mod
-    type(c_ptr), intent(in)    :: c_conf  !< Configuration
-    integer, intent(in) :: length
-    character(len=length) :: genfilename
-    type(datetime), intent(in) :: vdate
+    type(c_ptr),                intent(in) :: c_conf
+    integer,                    intent(in) :: length
+    type(datetime),             intent(in) :: vdate
+    character(len=3), optional, intent(in) :: domain_type    
+    character(len=length)                  :: genfilename
 
     character(len=length) :: fdbdir, expver, typ, validitydate, referencedate, sstep, &
          & prefix, mmb
@@ -880,6 +952,11 @@ contains
     expver = config_get_string(c_conf,len(expver),"exp")
     typ    = config_get_string(c_conf,len(typ)   ,"type")
 
+    if (present(domain_type)) then
+       expver = trim(domain_type)//"."//expver
+    else
+       expver = "ocn.ice."//expver
+    end if
     if (typ=="ens") then
        mmb = config_get_string(c_conf, len(mmb), "member")
        lenfn = LEN_TRIM(fdbdir) + 1 + LEN_TRIM(expver) + 1 + LEN_TRIM(typ) + 1 + LEN_TRIM(mmb)

@@ -19,7 +19,7 @@ namespace soca {
 
 void instantiateLocalizationFactory() {
 }
-
+//static oops::LocalizationMaker<soca::Traits, LocalizationMatrix> maker_("SOCA");
 }  // namespace soca
 
 #endif  // SOCA_SRC_LOCALIZATIONMATRIX_INSTANTIATELOCALIZATIONFACTORY_H_
