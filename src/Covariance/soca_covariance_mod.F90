@@ -73,20 +73,29 @@ contains
     integer :: is, ie, js, je, i, j
 
 
-    ! Set ensemble perturbation scales to 1.0    
-    self%pert_scale%T = 0.0
-    self%pert_scale%S = 0.0
-    self%pert_scale%SSH = 0.0
-    self%pert_scale%AICE = 0.0
-    self%pert_scale%HICE = 0.0
+    ! Set default ensemble perturbation scales to 1.0    
+    self%pert_scale%T = 1.0
+    self%pert_scale%S = 1.0
+    self%pert_scale%SSH = 1.0
+    self%pert_scale%AICE = 1.0
+    self%pert_scale%HICE = 1.0
     
-    ! Overwrite scales if they exist   
+    ! Overwrite scales if they exist
     if (config_element_exists(c_conf,"pert_T")) then
        self%pert_scale%T = config_get_real(c_conf,"pert_T")
     end if
     if (config_element_exists(c_conf,"pert_S")) then
        self%pert_scale%S = config_get_real(c_conf,"pert_S")       
     end if
+    if (config_element_exists(c_conf,"pert_SSH")) then
+       self%pert_scale%SSH = config_get_real(c_conf,"pert_SSH")       
+    end if
+    if (config_element_exists(c_conf,"pert_AICE")) then
+       self%pert_scale%AICE = config_get_real(c_conf,"pert_AICE")       
+    end if
+    if (config_element_exists(c_conf,"pert_HICE")) then
+       self%pert_scale%HICE = config_get_real(c_conf,"pert_HICE")       
+    end if            
     
     ! Associate background
     self%bkg => bkg

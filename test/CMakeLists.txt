@@ -6,7 +6,7 @@ list( APPEND soca_test_input
   testinput/geometry_test.yml
   testinput/increment_test.yml
   #testinput/errorcovariance_test.yml
-  testinput/obserrorcovariance_test.yml
+  #testinput/obserrorcovariance_test.yml
   #testinput/bump_static_b.yml
   testinput/hofx-adt.yml
   testinput/3dvar_test.yml
@@ -231,11 +231,11 @@ ecbuild_add_test( TARGET test_soca_vertconv
 #                  MPI     1
 #                  LIBS    soca )
 		  
-ecbuild_add_test( TARGET test_soca_obserrorcov
-                  BOOST
-                  SOURCES executables/TestObsErrorCovariance.cc
-                  ARGS "testinput/obserrorcovariance_test.yml"
-                  LIBS    soca )
+#ecbuild_add_test( TARGET test_soca_obserrorcov
+#                  BOOST
+#                  SOURCES executables/TestObsErrorCovariance.cc
+#                  ARGS "testinput/obserrorcovariance_test.yml"
+#                  LIBS    soca )
 
 ecbuild_add_test( TARGET test_soca_hofx
                   TYPE SCRIPT
