@@ -21,12 +21,12 @@ StateTest:
     perturb: 0
     norm: 132860.83068751212
     tolerance: 1e-8
-  norm-file: 160926.40386345252
+  norm-file: 160926.28899322095
   date: '2018-04-15T00:00:00Z'
   StateGenerate:
     read_from_file: 0	
     date: "2018-04-15T00:00:00Z"
-  norm-gen: 291.73128389933112
+  norm-gen: 0.0
   tolerance: 1.0e-08
   Locations:
     lats:

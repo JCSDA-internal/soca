@@ -1,39 +1,33 @@
 list( APPEND soca_test_input
-  testinput/truth.yml
   testinput/forecast.yml 
-  testinput/hofx_makeobs3d.yml
   testinput/state_test.yml
   testinput/model_test.yml
   testinput/linearmodel_test.yml
   testinput/geometry_test.yml
   testinput/increment_test.yml
-  testinput/errorcovariance_test.yml
-  testinput/obserrorcovariance_test.yml
-  testinput/bump_static_b.yml  
+  #testinput/errorcovariance_test.yml
+  #testinput/obserrorcovariance_test.yml
+  #testinput/bump_static_b.yml
+  testinput/hofx-adt.yml
   testinput/3dvar_test.yml
-  testinput/3dvarfgat_test.yml
-  testinput/localization_test.yml
-  testinput/nicas_test.yml
-  testinput/4denvar_nicas_test.yml
-  #testinput/variablechange.yml
-  testinput/ksshts.yml
-  testinput/kst.yml
-  testinput/ktc.yml
+  testinput/4dhybridbump.yml  
+  #testinput/nicas_test.yml
+  #testinput/4denvar_nicas_test.yml
+  testinput/variablechange.yml
   testinput/bkgerr.yml
-  testinput/vertconv.yml  
-  #testinput/parametersbump.cov.yml
-  testinput/static_scale_binit.yml
-  testinput/static_binit.yml  
+  testinput/vertconv.yml
+  testinput/genenspert.yml
+  #testinput/static_scale_binit.yml
+  testinput/static_binit.yml
+  testinput/static_SocaError_init.yml
+  testinput/static_SocaError_test.yml
   compare.sh
   run.sh
 )
 
 list( APPEND soca_testoutput
-  #testoutput/dirac.nicas.test
   testoutput/forecast.test
-  testoutput/truth.test
   testoutput/hofx.test  
-  testoutput/makeobs3d.test
   testoutput/3dvar.test  
 )
 
@@ -90,7 +84,8 @@ endforeach(FILENAME)
 ecbuild_add_resources( TARGET   soca_test_scripts
                        SOURCES_PACK
                        ${soca_test_input}
-                     )
+                       )
+		     
 # Link to IODA Marine obs
 file(GLOB ioda_obs "${ioda_SOURCE_DIR}/test/testinput/marine/*.nc*")
 #list( APPEND soca_obs
@@ -114,40 +109,53 @@ foreach(FILENAME ${ioda_obs})
            ${CMAKE_CURRENT_BINARY_DIR}/Data/${filename} )	   
 endforeach(FILENAME)
 
+# Create directory for BUMP output
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bump)
+
 
 #####################################################################
 
 # Tests that create data other tests might use (should check what is really needed...)
 
-ecbuild_add_test( TARGET test_soca_truth
-                  TYPE SCRIPT
-                  COMMAND "./run.sh"
-                  ARGS "mpirun -np 4 ${CMAKE_BINARY_DIR}/bin/soca_forecast.x testinput/truth.yml"
-                  DEPENDS soca_forecast.x )
-
+# Test of read/write restart, model advance = Id 
 ecbuild_add_test( TARGET test_soca_forecast
                   TYPE SCRIPT
                   COMMAND "./run.sh"
-                  ARGS "mpirun -np 4 ${CMAKE_BINARY_DIR}/bin/soca_forecast.x testinput/forecast.yml"
+                  ARGS "mpirun -np 2 ${CMAKE_BINARY_DIR}/bin/soca_forecast.x testinput/forecast.yml"
                   DEPENDS soca_forecast.x )
 
-ecbuild_add_test( TARGET test_soca_makeobs3d
-                  TYPE SCRIPT
-                  COMMAND "./run.sh"
-                  ARGS "mpirun -np 4 ${CMAKE_BINARY_DIR}/bin/soca_makeobs.x testinput/hofx_makeobs3d.yml"
-                  DEPENDS soca_makeobs.x )
-
-ecbuild_add_test( TARGET test_soca_covar_lengthscale
+# Initialize static error covariance model defined in soca, used for 3DVAR
+ecbuild_add_test( TARGET test_soca_socaerror_init
                   TYPE SCRIPT
 		  COMMAND "./run.sh"
-                  ARGS "mpirun -np 4 ${CMAKE_BINARY_DIR}/bin/soca_staticbinit.x testinput/static_scale_binit.yml"
+                  ARGS "mpirun -np 1 ${CMAKE_BINARY_DIR}/bin/soca_staticbinit.x testinput/static_SocaError_init.yml"
                   DEPENDS soca_staticbinit.x )
 
-ecbuild_add_test( TARGET test_soca_binit
+# Initialize static error covariance model for the generation of perturbation
+#ecbuild_add_test( TARGET test_soca_enspert_B_init
+#                  TYPE SCRIPT
+#		  COMMAND "./run.sh"
+#                  ARGS "mpirun -np 1 ${CMAKE_BINARY_DIR}/bin/soca_staticbinit.x testinput/enspert_B_init.yml"
+#                  DEPENDS soca_staticbinit.x )
+
+ecbuild_add_test( TARGET test_soca_enspert
                   TYPE SCRIPT
 		  COMMAND "./run.sh"
-                  ARGS "mpirun -np 4 ${CMAKE_BINARY_DIR}/bin/soca_staticbinit.x testinput/static_binit.yml"
-                  DEPENDS soca_staticbinit.x )
+                  ARGS "mpirun -np 1 ${CMAKE_BINARY_DIR}/bin/soca_enspert.x testinput/genenspert.yml"
+                  DEPENDS soca_enspert.x )
+		
+# Test below can take a few hours to complete. Commented out for now
+#ecbuild_add_test( TARGET test_soca_covar_lengthscale
+#                  TYPE SCRIPT
+#		  COMMAND "./run.sh"
+#                  ARGS "mpirun -np 4 ${CMAKE_BINARY_DIR}/bin/soca_staticbinit.x testinput/static_scale_binit.yml"
+#                  DEPENDS soca_staticbinit.x )
+
+#ecbuild_add_test( TARGET test_soca_binit
+#                  TYPE SCRIPT
+#		  COMMAND "./run.sh"
+#                  ARGS "mpirun -np 4 ${CMAKE_BINARY_DIR}/bin/soca_staticbinit.x testinput/static_binit.yml"
+#                  DEPENDS soca_staticbinit.x )
 
 
 # Tests of class interfaces
@@ -195,58 +203,13 @@ ecbuild_add_test( TARGET  test_soca_increment
 ecbuild_add_test( TARGET  test_soca_errorcovariance
                   BOOST
                   SOURCES executables/TestErrorCovariance.cc
-                  ARGS    "testinput/errorcovariance_test.yml"
+                  ARGS    "testinput/static_SocaError_test.yml"
                   LIBS    soca )
 
-ecbuild_add_test( TARGET  test_soca_localization
-                  BOOST
-                  SOURCES executables/TestLocalization.cc
-                  ARGS    "testinput/localization_test.yml"
-                  MPI     1
-                  LIBS    soca )
-		  
-ecbuild_add_test( TARGET test_soca_obserrorcov
-                  BOOST
-                  SOURCES executables/TestObsErrorCovariance.cc
-                  ARGS "testinput/obserrorcovariance_test.yml"
-                  LIBS    soca )
-
-ecbuild_add_test( TARGET test_soca_hofx
-                  TYPE SCRIPT
-                  COMMAND "./run.sh"
-                  ARGS "mpirun -np 4 ${CMAKE_BINARY_DIR}/bin/soca_hofx.x testinput/hofx_makeobs3d.yml"             
-                  DEPENDS soca_hofx.x )
-
-ecbuild_add_test( TARGET test_soca_3dvar
-                  TYPE SCRIPT
-                  COMMAND "./run.sh"
-                  ARGS "mpirun -np 4 ${CMAKE_BINARY_DIR}/bin/soca_3dvar.x testinput/3dvar_test.yml"                       testoutput/3dvar.test
-                  DEPENDS soca_3dvar.x )
-
-ecbuild_add_test( TARGET test_soca_3dvarfgat
-                  TYPE SCRIPT
-                  COMMAND "./run.sh"
-                  ARGS "mpirun -np 4 ${CMAKE_BINARY_DIR}/bin/soca_3dvar.x testinput/3dvarfgat_test.yml"
-                  DEPENDS soca_3dvar.x )		  
-
-ecbuild_add_test( TARGET test_soca_4denvar
-                  TYPE SCRIPT
-                  COMMAND "./compare.sh"
-                  ARGS "mpirun -np 4 ${CMAKE_BINARY_DIR}/bin/soca_3dvar.x testinput/4denvar_nicas_test.yml"
-                  DEPENDS soca_3dvar.x )
-		  
-ecbuild_add_test( TARGET test_soca_dirac
-                  TYPE SCRIPT
-                  MPI     1		  
-                  COMMAND "./compare.sh"
-                  ARGS "${CMAKE_BINARY_DIR}/bin/soca_dirac.x testinput/nicas_test.yml"
-                       testoutput/dirac.test
-                  DEPENDS soca_3dvar.x )		  
-  
 ecbuild_add_test( TARGET test_soca_balance
                   BOOST
                   SOURCES executables/TestVariableChange.cc
-                  ARGS "testinput/kst.yml"
+                  ARGS "testinput/variablechange.yml"
                   LIBS    soca )
 
 ecbuild_add_test( TARGET test_soca_bkgerr
@@ -261,6 +224,46 @@ ecbuild_add_test( TARGET test_soca_vertconv
                   ARGS "testinput/vertconv.yml"
                   LIBS    soca )		
 		
+#ecbuild_add_test( TARGET  test_soca_localization
+#                  BOOST
+#                  SOURCES executables/TestLocalization.cc
+#                  ARGS    "testinput/localization_test.yml"
+#                  MPI     1
+#                  LIBS    soca )
+		  
+#ecbuild_add_test( TARGET test_soca_obserrorcov
+#                  BOOST
+#                  SOURCES executables/TestObsErrorCovariance.cc
+#                  ARGS "testinput/obserrorcovariance_test.yml"
+#                  LIBS    soca )
+
+ecbuild_add_test( TARGET test_soca_hofx
+                  TYPE SCRIPT
+                  COMMAND "./run.sh"
+                  ARGS "mpirun -np 2 ${CMAKE_BINARY_DIR}/bin/soca_hofx.x testinput/hofx-adt.yml"             
+                  DEPENDS soca_hofx.x )
+
+ecbuild_add_test( TARGET test_soca_3dvar
+                  TYPE SCRIPT
+                  COMMAND "./run.sh"
+                  ARGS "mpirun -np 1 ${CMAKE_BINARY_DIR}/bin/soca_3dvar.x testinput/3dvar_test.yml"
+		         testoutput/3dvar.test
+                  DEPENDS soca_3dvar.x )
+
+ecbuild_add_test( TARGET test_soca_4denvar
+                  TYPE SCRIPT
+                  COMMAND "./compare.sh"
+                  ARGS "mpirun -np 1 ${CMAKE_BINARY_DIR}/bin/soca_3dvar.x testinput/4dhybridbump.yml"
+                  DEPENDS soca_3dvar.x )
+		  
+#ecbuild_add_test( TARGET test_soca_dirac
+#                  TYPE SCRIPT
+#                  MPI     1		  
+#                  COMMAND "./compare.sh"
+#                  ARGS "${CMAKE_BINARY_DIR}/bin/soca_dirac.x testinput/nicas_test.yml"
+#                       testoutput/dirac.test
+#                  DEPENDS soca_3dvar.x )		  
+  
 #ecbuild_add_test( TARGET test_soca_parameters_bump_cov
 #                  TYPE SCRIPT
 #                  COMMAND ${CMAKE_BINARY_DIR}/bin/compare.sh

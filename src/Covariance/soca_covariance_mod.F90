@@ -19,12 +19,16 @@ module soca_covariance_mod
   implicit none
 
   !> Fortran derived type to hold configuration data for the SOCA background/model covariance
+  type :: soca_pert
+    real(kind=kind_real) :: T, S, SSH, AICE, HICE     
+  end type soca_pert
   type :: soca_cov
      type(bump_type)  :: ocean_conv  !< Ocean convolution op from bump
      type(bump_type)  :: seaice_conv !< Seaice convolution op from bump
      integer, allocatable :: seaice_mask(:,:)          
      type(soca_field), pointer :: bkg         !< Background field (or first guess)
      logical          :: initialized = .false.
+     type(soca_pert) :: pert_scale
   end type soca_cov
 
 #define LISTED_TYPE soca_cov
@@ -67,6 +71,31 @@ contains
     
     character(len=3)  :: domain
     integer :: is, ie, js, je, i, j
+
+
+    ! Set default ensemble perturbation scales to 1.0    
+    self%pert_scale%T = 1.0
+    self%pert_scale%S = 1.0
+    self%pert_scale%SSH = 1.0
+    self%pert_scale%AICE = 1.0
+    self%pert_scale%HICE = 1.0
+    
+    ! Overwrite scales if they exist
+    if (config_element_exists(c_conf,"pert_T")) then
+       self%pert_scale%T = config_get_real(c_conf,"pert_T")
+    end if
+    if (config_element_exists(c_conf,"pert_S")) then
+       self%pert_scale%S = config_get_real(c_conf,"pert_S")       
+    end if
+    if (config_element_exists(c_conf,"pert_SSH")) then
+       self%pert_scale%SSH = config_get_real(c_conf,"pert_SSH")       
+    end if
+    if (config_element_exists(c_conf,"pert_AICE")) then
+       self%pert_scale%AICE = config_get_real(c_conf,"pert_AICE")       
+    end if
+    if (config_element_exists(c_conf,"pert_HICE")) then
+       self%pert_scale%HICE = config_get_real(c_conf,"pert_HICE")       
+    end if            
     
     ! Associate background
     self%bkg => bkg
@@ -135,18 +164,46 @@ contains
     call soca_2d_convol(dx%ssh, self%ocean_conv, dx%geom)
     
     do icat = 1, dx%geom%ocean%ncat
-       print *,'Apply nicas: aice, hice, category:',icat
        call soca_2d_convol(dx%cicen(:,:,icat+1), self%seaice_conv, dx%geom)
        call soca_2d_convol(dx%hicen(:,:,icat), self%seaice_conv, dx%geom)
     end do    
 
     do izo = 1,dx%geom%ocean%nzo
-       print *,'Apply nicas: tocn, socn, layer:',izo
        call soca_2d_convol(dx%tocn(:,:,izo), self%ocean_conv, dx%geom)
        call soca_2d_convol(dx%socn(:,:,izo), self%ocean_conv, dx%geom)       
     end do    
 
   end subroutine soca_cov_C_mult
+  
+  ! ------------------------------------------------------------------------------
+
+  subroutine soca_cov_sqrt_C_mult(self, dx)
+
+    use kinds
+    use type_bump
+    
+    implicit none
+
+    type(soca_cov),   intent(inout) :: self !< The covariance structure    
+    type(soca_field), intent(inout) :: dx   !< Input: Increment
+                                            !< Output: C dx
+
+    integer :: icat, izo
+    
+    ! Apply convolution to fields
+    call soca_2d_sqrt_convol(dx%ssh, self%ocean_conv, dx%geom, self%pert_scale%SSH)
+    
+    do icat = 1, dx%geom%ocean%ncat
+       call soca_2d_sqrt_convol(dx%cicen(:,:,icat+1), self%seaice_conv, dx%geom, self%pert_scale%AICE)
+       call soca_2d_sqrt_convol(dx%hicen(:,:,icat), self%seaice_conv, dx%geom, self%pert_scale%HICE)
+    end do    
+
+    do izo = 1,dx%geom%ocean%nzo
+       call soca_2d_sqrt_convol(dx%tocn(:,:,izo), self%ocean_conv, dx%geom, self%pert_scale%T)
+       call soca_2d_sqrt_convol(dx%socn(:,:,izo), self%ocean_conv, dx%geom, self%pert_scale%S)       
+    end do    
+
+  end subroutine soca_cov_sqrt_C_mult
   
   ! ------------------------------------------------------------------------------
 
@@ -179,9 +236,9 @@ contains
     
     real(kind_real), allocatable :: rh(:,:,:,:)     !< Horizontal support radius for covariance (in m)
     real(kind_real), allocatable :: rv(:,:,:,:)     !< Vertical support radius for
-    type(fckit_mpi_comm) :: f_comm
+    !type(fckit_mpi_comm) :: f_comm
 
-    f_comm = fckit_mpi_comm()
+    !f_comm = fckit_mpi_comm()
 
     !--- Initialize geometry to be passed to NICAS
     ! Indices for compute domain (no halo)
@@ -242,7 +299,7 @@ contains
     if (domain.eq.'ice') horiz_convol%nam%prefix = 'ice'     
 
     ! Compute convolution weight    
-    call horiz_convol%setup_online(f_comm%communicator(),nc0a,nl0,nv,nts,lon,lat,area,vunit,lmask)
+    call horiz_convol%setup_online(nc0a,nl0,nv,nts,lon,lat,area,vunit,lmask)
     call horiz_convol%set_parameter('cor_rh',rh)    
     call horiz_convol%run_drivers()
 
@@ -272,6 +329,48 @@ contains
     call soca_unstruct2struct(dx(:,:), geom, tmp_incr)
     
   end subroutine soca_2d_convol
+
+  ! ------------------------------------------------------------------------------
+
+  subroutine soca_2d_sqrt_convol(dx, horiz_convol, geom, pert_scale)
+
+    use soca_geom_mod
+    use kinds
+    use type_bump
+    
+    implicit none
+    
+    real(kind=kind_real), intent(inout) :: dx(:,:)
+    type(bump_type),         intent(in) :: horiz_convol    
+    type(soca_geom),         intent(in) :: geom        
+    real(kind=kind_real),    intent(in) :: pert_scale           
+
+    real(kind=kind_real), allocatable :: tmp_incr(:,:,:,:)
+    real(kind=kind_real), allocatable :: pcv(:)
+
+    integer :: offset, nn
+
+    offset = 0
+    
+    ! Apply 2D convolution
+    call soca_struct2unstruct(dx(:,:), geom, tmp_incr)
+
+    ! Get control variable size
+    call horiz_convol%get_cv_size(nn)
+    allocate(pcv(nn))
+    pcv = 0.0
+    call random_number(pcv); pcv = pert_scale * (pcv - 0.5)
+
+    ! Apply C^1/2
+    call horiz_convol%apply_nicas_sqrt(pcv, tmp_incr)
+
+    ! Back to structured grid
+    call soca_unstruct2struct(dx(:,:), geom, tmp_incr)
+
+    ! Clean up
+    deallocate(pcv)
+
+  end subroutine soca_2d_sqrt_convol
 
   ! ------------------------------------------------------------------------------
   

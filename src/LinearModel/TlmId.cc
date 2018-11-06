@@ -10,6 +10,8 @@
 
 #include "src/LinearModel/TlmId.h"
 
+#include <vector>
+
 #include "eckit/config/LocalConfiguration.h"
 #include "oops/util/Logger.h"
 #include "src/ModelBiasIncrement.h"
@@ -20,6 +22,7 @@
 #include "src/Traits.h"
 #include "oops/util/DateTime.h"
 #include "oops/util/abor1_cpp.h"
+
 
 using oops::Log;
 
@@ -85,7 +88,7 @@ void TlmId::stepAD(Increment & dx, ModelBiasIncrement &) const {
 // -----------------------------------------------------------------------------
 void TlmId::finalizeAD(Increment & dx) const {
   // soca_prepare_integration_ad_f90(keyConfig_, dx.fields().toFortran());
-  // dx.deactivateModel();
+  dx.deactivateModel();
   Log::debug() << "TlmId::finalizeAD" << dx.fields() << std::endl;
 }
 // -----------------------------------------------------------------------------

@@ -65,7 +65,7 @@ contains
 
     class(soca_model_geom), intent(out) :: self
     type(c_ptr),             intent(in) :: c_conf
-    
+
     call soca_geom_init(self%G, self%GV, self%ice_column, c_conf)
     call geom_associate(self)
     
@@ -213,9 +213,6 @@ contains
     integer :: isc, iec, jsc, jec
     integer :: index(1), nn, io
     character(len=256) :: geom_output_file = "geom_output.nc"
-    type(fckit_mpi_comm) :: f_comm
-
-    f_comm = fckit_mpi_comm()
         
     unit = 20
     open(unit=unit,file="rossrad.dat",status="old",action="read")
@@ -240,8 +237,8 @@ contains
     lon=deg2rad*reshape(lon,(/n/))
     lat=deg2rad*reshape(lat,(/n/))
 
-    call mpl%init(f_comm%communicator())
-    call kdtree%create(mpl, n,lon,lat,mask)
+    call mpl%init()
+    call kdtree%create(mpl, n, lon, lat,mask)
 
     !--- Find nearest neighbor    
     isc   = self%G%isc

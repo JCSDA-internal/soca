@@ -1,3 +1,4 @@
+
 ! (C) Copyright 2009-2016 ECMWF.
 ! 
 ! This software is licensed under the terms of the Apache Licence Version 2.0
@@ -113,9 +114,9 @@ end subroutine c_soca_b_linearize
 
 ! ------------------------------------------------------------------------------
 
-!> Generate randomized increment
+!> Generate randomized C^1/2 x increment
 
-subroutine c_soca_b_randomize(c_key_conf, c_key_out) bind(c,name='soca_b_randomize_f90')
+subroutine c_soca_b_randomize(c_key_self, c_key_out) bind(c,name='soca_b_randomize_f90')
 
   use iso_c_binding
   use soca_covariance_mod
@@ -125,16 +126,35 @@ subroutine c_soca_b_randomize(c_key_conf, c_key_out) bind(c,name='soca_b_randomi
 
   implicit none
 
-  integer(c_int), intent(in) :: c_key_conf  !< covar config structure
+  integer(c_int), intent(in) :: c_key_self  !< covar config structure
   integer(c_int), intent(in) :: c_key_out   !< Randomized increment
 
-  type(soca_cov),   pointer :: conf
+  type(soca_cov),   pointer :: self
   type(soca_field), pointer :: xout
+  type(soca_field)          :: xtmp  
 
-  call soca_cov_registry%get(c_key_conf,conf)
-  call soca_field_registry%get(c_key_out,xout)
+  call soca_cov_registry%get(c_key_self, self)
+  call soca_field_registry%get(c_key_out, xout)
 
-  call random(xout)
+  !call random(xout)                !< xtmp = random
+
+  ! Randomize increment
+  call create(xtmp,xout)
+  call random(xtmp)                !< xtmp = random
+
+  ! Re-scale increment
+  xtmp%tocn = self%pert_scale%T*xtmp%tocn
+  xtmp%socn = self%pert_scale%S*xtmp%socn
+  xtmp%ssh = self%pert_scale%SSH*xtmp%ssh
+  xtmp%cicen = self%pert_scale%AICE*xtmp%cicen  
+  xtmp%hicen = self%pert_scale%AICE*xtmp%hicen
+  xtmp%tsfcn = 0.0*xtmp%tsfcn  
+  xtmp%hsnon = 0.0*xtmp%hsnon  
+  
+  ! Apply sqrt convolution to increment
+  call soca_cov_sqrt_C_mult(self, xtmp) !< xtmp = C.xtmp
+  call copy(xout,xtmp)             !< xout = xtmp
+  call delete(xtmp)
 
 end subroutine c_soca_b_randomize
 

@@ -88,9 +88,7 @@ contains
 
     use kinds
     use type_mpl
-    
-    !use type_ctree, only: ctree_type!,ctree_create,delete_ctree,find_nearest_neighbors
-    use type_kdtree, only: kdtree_type
+        use type_kdtree, only: kdtree_type
     use tools_const, only: pi,req,deg2rad,rad2deg
     use iso_fortran_env
     use mpi
@@ -127,7 +125,7 @@ contains
     tmplon=deg2rad*reshape(lon,(/n/))
     tmplat=deg2rad*reshape(lat,(/n/))
 
-    call mpl%init(mpi_comm_world)
+    call mpl%init()
     call cover_tree%create(mpl,n,tmplon,tmplat,mask)
 
     !--- Find nn nearest neighbors

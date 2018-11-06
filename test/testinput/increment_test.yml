@@ -2,13 +2,46 @@
 logging:
   categories: Warning, Error, Debug
 test_framework_runtime_config: "--log_level=test_suite"
+InterpTest:
+  tolerance: 1e-8
+  Locations:
+    lats:
+    - 0.0
+    - 0.0
+    - -2.0
+    - 2.0  
+    - 89.0
+    lons:
+    - -15.
+    - -25.
+    - -15.
+    - -25.  
+    - 0.0
+  GeoVaLs:
+    variables:
+    - ocean_potential_temperature
+    - ocean_salinity
+    - ocean_layer_thickness  
+    - ice_concentration
+    - ice_thickness  
+    - sea_surface_height_above_geoid
+Variables:
+  variables:  
+  - cicen
+  - hicen
+  - hsnon
+  - tsfcn
+  - qsnon
+  - sicnk
+  - qicnk
+  - socn
+  - tocn
+  - ssh
+  - hocn  
 Geometry:
   num_ice_cat: 5
   num_ice_lev: 4
   num_sno_lev: 1
-Variables:
-  variables:
-  - cicen
 TestDate: '2018-04-15T00:00:00Z'
 State:
   read_from_file: 1
@@ -17,4 +50,3 @@ State:
   ocn_sfc_filename: MOM.res.nc
   ocn_filename: MOM.res.nc
   ice_filename: ice_model.res.nc
-

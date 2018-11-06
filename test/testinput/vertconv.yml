@@ -11,6 +11,8 @@ State:
   ice_filename: ice_model.res.nc
 LinearVariableChangeTests:
 - varchange: VertConvSOCA
+  toleranceInverse: 1e-12
+  testinverse: 0  
   variables:                                
     variables:
     - socn

@@ -30,7 +30,7 @@ module soca_bumpinterp2d_mod
 contains
 
   !--------------------------------------------
-  subroutine interp_init(self, mod_lon, mod_lat, mod_mask, obs_lon, obs_lat)
+  subroutine interp_init(self, mod_lon, mod_lat, mod_mask, obs_lon, obs_lat, bumpid)
     ! Adapted from the fv3-jedi interface
 
     use fckit_mpi_module, only: fckit_mpi_comm
@@ -45,29 +45,24 @@ contains
     real(kind=kind_real),      intent(in) :: mod_mask(:,:)    
     real(kind=kind_real),      intent(in) :: obs_lon(:)
     real(kind=kind_real),      intent(in) :: obs_lat(:)    
-    
+    integer,                   intent(in) :: bumpid
     !Locals
     integer :: ns, no, ni, nj
     real(kind=kind_real), allocatable :: area(:),vunit(:,:)
     real(kind=kind_real), allocatable :: tmp_lonmod(:), tmp_latmod(:)    
     logical             , allocatable :: tmp_maskmod(:,:)
     
-    integer, save :: bumpcount = 0
     character(len=5) :: cbumpcount
-    character(len=16) :: bump_nam_prefix
-
-    type(fckit_mpi_comm) :: f_comm
+    character(len=23) :: bump_nam_prefix
 
     if (self%initialized) call interp_exit(self)
     
-    f_comm = fckit_mpi_comm()
-
     ! Each bump%nam%prefix must be distinct
     ! -------------------------------------
     
-    bumpcount = bumpcount + 1
-    write(cbumpcount,"(I0.5)") bumpcount
-    bump_nam_prefix = 'soca_bump_data_'//cbumpcount
+    !bumpcount = bumpcount + 1
+    write(cbumpcount,"(I0.5)") bumpid
+    bump_nam_prefix = 'soca_bump_interp_'//cbumpcount
 
     !Get the obs and state dimension
     !-------------------------------
@@ -81,7 +76,7 @@ contains
 
     !Important namelist options
     call self%bump%nam%init()
-
+print *,'--------------------------------',bump_nam_prefix, bumpid
     self%bump%nam%prefix = bump_nam_prefix   ! Prefix for files output
     self%bump%nam%obsop_interp = 'bilin'     ! Interpolation type (bilinear)
     self%bump%nam%default_seed = .true.
@@ -104,9 +99,10 @@ contains
     tmp_maskmod = reshape(tmp_maskmod, (/ns, 1/))
     
     !Initialize BUMP
-    call self%bump%setup_online( f_comm%communicator(), ns, 1, 1, 1,&
+    call self%bump%setup_online( ns, 1, 1, 1,&
          &tmp_lonmod, tmp_latmod, area, vunit, tmp_maskmod(:,1),&
          &nobs=no, lonobs=obs_lon, latobs=obs_lat )
+    call self%bump%run_drivers()
 
     self%initialized = .true.
     self%nobs = no

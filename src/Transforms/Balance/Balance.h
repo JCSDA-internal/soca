@@ -5,8 +5,8 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#ifndef SOCA_SRC_BALANCE_H_
-#define SOCA_SRC_BALANCE_H_
+#ifndef SRC_TRANSFORMS_BALANCE_BALANCE_H_
+#define SRC_TRANSFORMS_BALANCE_BALANCE_H_
 
 #include <ostream>
 #include <string>
@@ -26,7 +26,7 @@ namespace soca {
   class State;
   class Increment;
   class Geometry;
-  
+
 // -----------------------------------------------------------------------------
 /// SOCA linear change of variable
 
@@ -34,7 +34,8 @@ class Balance: public util::Printable {
  public:
   static const std::string classname() {return "soca::Balance";}
 
-  explicit Balance(const State &, const State &, const Geometry &, const eckit::Configuration &);
+  explicit Balance(const State &, const State &,
+		   const Geometry &, const eckit::Configuration &);
   ~Balance();
 
 /// Perform linear transforms
@@ -51,4 +52,4 @@ class Balance: public util::Printable {
 // -----------------------------------------------------------------------------
 
 }  // namespace soca
-#endif  // SOCA_SRC_BALANCE_H_
+#endif  // SRC_TRANSFORMS_BALANCE_BALANCE_H_

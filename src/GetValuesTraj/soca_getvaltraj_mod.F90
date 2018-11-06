@@ -24,6 +24,7 @@ module soca_getvaltraj_mod
   type :: soca_getvaltraj
      integer                 :: nobs
      type(soca_bumpinterp2d) :: horiz_interp
+     integer                 :: bumpid     
      logical                 :: interph_initialized = .false.
      integer                 :: obstype_index
   end type soca_getvaltraj
@@ -58,6 +59,7 @@ contains
 
     self%interph_initialized = .false.
     self%nobs = 0
+    self%bumpid = 0
     self%obstype_index = c_key_self
 
   end subroutine c_soca_getvaltraj_setup
@@ -75,6 +77,7 @@ contains
 
     if (self%interph_initialized) then
        self%nobs = 0
+    self%bumpid = 0       
        self%interph_initialized = .false.       
     endif
 

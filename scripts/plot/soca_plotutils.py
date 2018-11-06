@@ -35,7 +35,10 @@ class Grid:
         fname='../../test/Data/360x210x63/ocean_geometry.nc'
         ncfile = Dataset(fname,'r')
         self.lat=np.squeeze(ncfile.variables['geolat'][:])
-        self.lon=np.squeeze(ncfile.variables['geolon'][:])         
+        self.lon=np.squeeze(ncfile.variables['geolon'][:])
+        #self.wet=np.tile(np.squeeze(ncfile.variables['wet'][:]),[63]
+        #print np.shape(self.wet)
+        
         ncfile.close()        
 
 class OceanState:
@@ -48,8 +51,8 @@ class OceanState:
             self.h=np.squeeze(ncfile.variables['h'][:])
             self.ssh=np.squeeze(ncfile.variables['ssh'][:])
             self.cicen=np.squeeze(ncfile.variables['cicen'][:])
-            self.hicen=np.squeeze(ncfile.variables['hicen'][:])        
-            ncfile.close()
+            self.hicen=np.squeeze(ncfile.variables['hicen'][:])    
+            ncfile.close()            
         except:
             self.temp=np.squeeze(ncfile.variables['Temp'][:])
             self.salt=np.squeeze(ncfile.variables['Salt'][:])
@@ -68,24 +71,25 @@ class OceanState:
         self.x, self.y = self.map(self.grid.lon,self.grid.lat)
 
     def plot_vert_section(self, other, fignum=1):
-        x=np.transpose(np.reshape(np.repeat(np.squeeze(self.grid.lon[100,:]),63),(360,63)))
-        #z=np.squeeze(-self.hmidz[:,100,:])
-        z=np.squeeze(-other.hmidz[:,100,:])        
+        j=100                         
+        x=np.transpose(np.reshape(np.repeat(np.squeeze(self.grid.lon[j,:]),63),(360,63)))
+        z=np.squeeze(-other.hmidz[:,j,:])        
 
         plt.figure(num=fignum)
-        j=100
+
         plt.subplot(211)
         print 'min temp:',np.min(self.temp[:,j,:]-other.temp[:,j,:])
         print 'max temp:',np.max(self.temp[:,j,:]-other.temp[:,j,:])
+                         
         incr = self.temp[:,j,:]-other.temp[:,j,:]
         #vmin=np.min(incr)
         #vmax=np.max(incr)
-        vmin=-1.5 #np.min(incr)
-        vmax=1.5 #abs(np.min(incr)) #np.max(incr)                
+        vmin=-.15 #np.min(incr)
+        vmax=.15 #abs(np.min(incr)) #np.max(incr)                
         clevs = np.linspace(vmin, vmax, 41)
-        #plt.contourf(x,z,incr, clevs, extend='both',cmap=cm.spectral)
-        plt.pcolor(x,z,incr,vmin=vmin,vmax=vmax,cmap=cm.bwr)
-        plt.pcolor(x-360,z,incr,vmin=vmin,vmax=vmax,cmap=cm.bwr)        
+        plt.contourf(x,z,incr, clevs, extend='both',cmap=cm.spectral)
+        #plt.pcolor(x,z,incr,vmin=vmin,vmax=vmax,cmap=cm.bwr)
+        #plt.pcolor(x-360,z,incr,vmin=vmin,vmax=vmax,cmap=cm.bwr)        
         plt.ylim((-2000, 0))
         #plt.xlim((-215, -195))
         cbar=plt.colorbar(shrink=0.5,format="%.1f")
@@ -93,11 +97,11 @@ class OceanState:
 
         plt.subplot(212)
         incr = self.salt[:,j,:]-other.salt[:,j,:]        
-        vmin=-0.2 #np.min(incr)
-        vmax=0.2 #abs(np.min(incr)) #np.max(incr)        
+        vmin=-0.1 #np.min(incr)
+        vmax=0.1 #abs(np.min(incr)) #np.max(incr)        
         clevs = np.linspace(vmin, vmax, 41)
-        plt.pcolor(x,z,incr,vmin=vmin,vmax=vmax,cmap=cm.bwr)        
-        #plt.contourf(x,z,incr, clevs, extend='both',cmap=cm.spectral)
+        #plt.pcolor(x,z,incr,vmin=vmin,vmax=vmax,cmap=cm.bwr)        
+        plt.contourf(x,z,incr, clevs, extend='both',cmap=cm.spectral)
         
         #plt.pcolor(x,z,self.salt[:,j,:]-other.salt[:,j,:],vmin=-.2,vmax=.2,cmap=cm.bwr)
         plt.ylim((-2000, 0))
@@ -123,8 +127,8 @@ class OceanState:
                 titlestr='Salinity increment'
             if var=='ssh':
                 incr=self.ssh[:,:]-other.ssh[:,:]
-                cmin=-.1
-                cmax=.1
+                cmin=-.2
+                cmax=.2
                 titlestr='SSH increment'
             if var=='cicen':
                 self.maptype = 'N'
@@ -156,16 +160,16 @@ class OceanState:
                      np.sum(self.h[0:,:,:],axis=0) - \
                      np.sum(other.h[0:,:,:]*other.temp[0:,:,:],axis=0)/ \
                      np.sum(other.h[0:,:,:],axis=0)                     
-                cmin=-0.05 #1300#np.min(incr)
-                cmax=0.05 #1300#np.max(incr)
+                cmin=-0.02 #1300#np.min(incr)
+                cmax=0.02 #1300#np.max(incr)
                 titlestr='Temperature'
             if var=='salt':
                 incr=np.sum(self.h[0:,:,:]*self.salt[0:,:,:],axis=0)/ \
                      np.sum(self.h[0:,:,:],axis=0) - \
                      np.sum(other.h[0:,:,:]*other.salt[0:,:,:],axis=0)/ \
                      np.sum(self.h[0:,:,:],axis=0)                     
-                cmin=-0.05#np.min(incr)
-                cmax=0.05 ##np.max(incr)
+                cmin=-0.01#np.min(incr)
+                cmax=0.01 ##np.max(incr)
                 titlestr='Salinity'                
                 
             plothor(self.x,self.y,incr,self.map,titlestr,clim=[cmin,cmax],label='')

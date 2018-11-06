@@ -272,6 +272,7 @@ contains
 
     call check(self)
 
+    call zeros(self)
     call random_number(self%cicen); self%cicen=self%cicen-0.5_kind_real
     call random_number(self%hicen); self%hicen=self%hicen-0.5_kind_real
     call random_number(self%hsnon); self%hsnon=self%hsnon-0.5_kind_real
@@ -630,6 +631,11 @@ contains
     use ufo_geovals_mod
     use ufo_vars_mod
     use mpi
+    use fckit_mpi_module, only: fckit_mpi_comm
+    use mpp_mod,         only: mpp_init
+    use fms_io_mod,                only : fms_io_init, fms_io_exit
+    use fms_mod,                   only : read_data, write_data, fms_init, fms_end
+    
     implicit none
     type(soca_field), intent(inout) :: fld      !< Fields
     type(c_ptr), intent(in)       :: c_conf   !< Configuration
@@ -650,43 +656,32 @@ contains
     type(ufo_geovals)    :: geovals
     !type(ufo_vars)    :: vars
     integer            :: nobs, nval, pe, ierror
-
+  
     iread = 0
     if (config_element_exists(c_conf,"read_from_file")) then
        iread = config_get_int(c_conf,"read_from_file")
     endif
 
+    ! Invent state
     if (iread==0) then
        call log%warning("soca_fields:read_file: Inventing State")
        call zeros(fld)
-       call random_number(fld%cicen)
        sdate = config_get_string(c_conf,len(sdate),"date")
        WRITE(buf,*) 'validity date is: '//sdate
        call log%info(buf)
        call datetime_set(sdate, vdate)
     end if
+
+    ! Read restart file
     if (iread==1) then
        basename = config_get_string(c_conf,len(basename),"basename")
-       !ocn_sfc_filename = config_get_string(c_conf,len(ocn_filename),"ocn_sfc_filename")
        ocn_filename = config_get_string(c_conf,len(ocn_filename),"ocn_filename")
-
-       !ocn_sfc_filename = trim(basename)//trim(ocn_sfc_filename)
        ocn_filename = trim(basename)//trim(ocn_filename)
        ice_filename = config_get_string(c_conf,len(ice_filename),"ice_filename")
        ice_filename = trim(basename)//trim(ice_filename)
 
-       ! !!!!!!!!!!!!!!!!!
-       call mpi_comm_rank(MPI_COMM_WORLD, pe, ierror)
-       ! !!!!!!!!!!!!!!!!!
-       print *,ocn_filename,ice_filename
-       do ii = 1,fld%nf
-          print *,'varnames:',fld%fldnames(ii)
-       end do
-
        call fms_io_init()
        do ii = 1, fld%nf
-
-          print *,'*******************************   pe: ',pe,ii,'varname:',fld%fldnames(ii)
           select case(fld%fldnames(ii))
 
           case ('ssh')
@@ -723,7 +718,6 @@ contains
              !call log%warning("soca_fields:read_file: Not reading var "//fld%fldnames(ii))
           end select
        end do
-       print *,'oooooooooooooooo'
        call restore_state(sis_restart, directory='')
        call restore_state(ocean_restart, directory='')
        call fms_io_exit()
@@ -732,14 +726,15 @@ contains
        WRITE(buf,*) 'validity date is: '//sdate
        call log%info(buf)
        call datetime_set(sdate, vdate)
-       print *,'pppppppppppppppppppppppppppppppppppppp'
        return
     end if
+
+    ! Read diagnostic file
     if (iread==2) then ! Read increment
        incr_filename = config_get_string(c_conf,len(incr_filename),"filename")
        call fms_io_init()
        do ii = 1, fld%nf
-          write(buf,*) 'OOPS_INFO soca_fields_mod::read_file::increment: '//fld%fldnames(ii)
+          write(buf,*) 'OOPS_INFO soca_fields_mod::read_file::iread2: '//trim(fld%fldnames(ii))
           call log%info(buf)
 
           select case(fld%fldnames(ii))
@@ -774,10 +769,7 @@ contains
 
           end select
        end do
-       ! Reset mask value to mask_val
-       !call self_mask(fld, mask_val)
        call fms_io_exit()
-       !call fms_io_init()
 
     endif
 
@@ -861,7 +853,7 @@ contains
 
     end do
     call fms_io_exit()
-
+    
   end subroutine fld2file
 
   ! ------------------------------------------------------------------------------
