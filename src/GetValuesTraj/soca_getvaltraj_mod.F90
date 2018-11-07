@@ -23,6 +23,7 @@ module soca_getvaltraj_mod
 
   type :: soca_getvaltraj
      integer                 :: nobs
+     logical                 :: noobs     
      type(soca_bumpinterp2d) :: horiz_interp
      integer                 :: bumpid     
      logical                 :: interph_initialized = .false.
@@ -76,9 +77,10 @@ contains
     call soca_getvaltraj_registry%get(c_key_self, self)
 
     if (self%interph_initialized) then
+       call self%horiz_interp%finalize()
        self%nobs = 0
-    self%bumpid = 0       
-       self%interph_initialized = .false.       
+       self%bumpid = 0       
+       self%interph_initialized = .false.
     endif
 
     ! Remove key

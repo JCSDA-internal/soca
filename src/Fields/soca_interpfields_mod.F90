@@ -18,6 +18,7 @@ module soca_interpfields_mod
   use soca_fields
   use soca_model_geom_type, only : geom_get_domain_indices
   use kinds
+  use fckit_mpi_module, only: fckit_mpi_comm, fckit_mpi_sum
 
   implicit none
   private
@@ -42,8 +43,12 @@ contains
     integer :: isc, iec, jsc, jec
     
     ! Indices for compute domain (no halo)
-    call geom_get_domain_indices(fld%geom%ocean, "compute", isc, iec, jsc, jec)    
+    call geom_get_domain_indices(fld%geom%ocean, "compute", isc, iec, jsc, jec)
 
+    if (locs%nlocs==0) return
+    print *,locs%indx,'=indx'
+    print *,'nlocs=',locs%nlocs    
+    read(*,*)
     ! Compute interpolation weights
     call horiz_interp%initialize(&
             &      fld%geom%ocean%lon(isc:iec,jsc:jec),&
@@ -65,15 +70,29 @@ contains
     type(soca_getvaltraj), target, intent(inout) :: traj    
 
     integer, save :: bumpid = 1000
+    type(fckit_mpi_comm) :: f_comm
+    integer :: allpes_nlocs, nlocs
+    
+    ! Sanity check for fields
+    call check(fld)
+    
+    ! Get global nlocs
+    f_comm = fckit_mpi_comm()
+    call f_comm%allreduce(nlocs, allpes_nlocs, fckit_mpi_sum())
 
-    call check(fld)    
+    ! Initialize traj and interp
     if (.not.(traj%interph_initialized)) then
        traj%bumpid = bumpid
+       traj%nobs = locs%nlocs
+       if (traj%nobs>0) traj%noobs = .false.
+       if (.not.traj%noobs) return        ! Exit if no obs
        call initialize_interph(fld, locs, traj%horiz_interp, traj%bumpid)
        call traj%horiz_interp%info()
        traj%interph_initialized = .true.
        bumpid = bumpid + 1
     end if
+
+    ! Apply interpolation
     call interp_tl(fld, locs, vars, geovals, traj%horiz_interp)    
 
   end subroutine getvalues_traj
@@ -90,8 +109,10 @@ contains
 
     type(soca_bumpinterp2d) :: horiz_interp    
     integer, save :: bumpid = 2000
+
+    if (locs%nlocs==0) return
     
-    call check(fld)    
+    call check(fld)
     call initialize_interph(fld, locs, horiz_interp, bumpid)
     call interp_tl(fld, locs, vars, geovals, horiz_interp)    
     bumpid = bumpid + 1
@@ -115,7 +136,8 @@ contains
     character(len=160) :: record
     integer :: isc, iec, jsc, jec
 
-
+    if (traj%noobs) return
+    
     horiz_interp_p => traj%horiz_interp
 
     ! Indices for compute domain (no halo)
@@ -162,16 +184,18 @@ contains
 
     implicit none
 
-    type(soca_field),      intent(inout) :: fld
-    type(ioda_locs),          intent(in) :: locs
-    type(ufo_vars),           intent(in) :: vars    
-    type(ufo_geovals),     intent(inout) :: geovals
-    type(soca_bumpinterp2d), intent(inout)  :: horiz_interp
+    type(soca_field),         intent(inout) :: fld
+    type(ioda_locs),             intent(in) :: locs
+    type(ufo_vars),              intent(in) :: vars    
+    type(ufo_geovals),        intent(inout) :: geovals
+    type(soca_bumpinterp2d),  intent(inout) :: horiz_interp
 
     integer :: icat, ilev, ivar, nobs, nval    
     character(len=160) :: record
     integer :: isc, iec, jsc, jec
 
+    if (locs%nlocs==0) return
+    
     call check(fld)    
 
     nobs = locs%nlocs
