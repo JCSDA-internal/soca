@@ -5,20 +5,13 @@ list( APPEND soca_test_input
   testinput/linearmodel_test.yml
   testinput/geometry_test.yml
   testinput/increment_test.yml
-  #testinput/errorcovariance_test.yml
-  #testinput/obserrorcovariance_test.yml
-  #testinput/bump_static_b.yml
   testinput/hofx-adt.yml
   testinput/3dvar_test.yml
   testinput/4dhybridbump.yml  
-  #testinput/nicas_test.yml
-  #testinput/4denvar_nicas_test.yml
-  testinput/variablechange.yml
+  testinput/balance.yml
   testinput/bkgerr.yml
   testinput/vertconv.yml
   testinput/genenspert.yml
-  #testinput/static_scale_binit.yml
-  testinput/static_binit.yml
   testinput/static_SocaError_init.yml
   testinput/static_SocaError_test.yml
   compare.sh
@@ -36,6 +29,7 @@ list( APPEND soca_model_param
   Data/360x210x63/MOM_input
   Data/360x210x63/MOM_override
   Data/360x210x63/Vertical_coordinate.nc
+  Data/360x210x63/std_bkgerror.nc  
   Data/rossrad.dat
 )
 
@@ -209,7 +203,7 @@ ecbuild_add_test( TARGET  test_soca_errorcovariance
 ecbuild_add_test( TARGET test_soca_balance
                   BOOST
                   SOURCES executables/TestVariableChange.cc
-                  ARGS "testinput/variablechange.yml"
+                  ARGS "testinput/balance.yml"
                   LIBS    soca )
 
 ecbuild_add_test( TARGET test_soca_bkgerr

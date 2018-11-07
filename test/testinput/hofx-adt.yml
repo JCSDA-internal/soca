@@ -1,0 +1,32 @@
+Geometry:
+  num_ice_cat: 5
+  num_ice_lev: 4
+  num_sno_lev: 1
+Model:
+  name: 'SOCA'
+  tstep: PT1H
+Initial Condition:
+  read_from_file: 1
+  date: '2018-04-15T00:00:00Z'
+  basename: "./INPUT/"
+  ocn_sfc_filename: MOM.res.nc
+  ocn_filename: MOM.res.nc
+  ice_filename: ice_model.res.nc
+Assimilation Window:
+  Begin: '2018-04-15T00:00:00Z'
+  End: '2018-04-15T10:00:00Z'
+  Length: PT1H  
+Observations:
+  ObsTypes:
+  - ObsType: ADT
+    ObsData:
+      ObsDataOut:
+        obsfile: Data/test_obsout.nc
+      ObsDataIn:
+        obsfile: /home/gvernier/Data/Jason-2/Jason-2-2018-04-15-timeon.nc #Data/Jason-2-2018-04-15.nc
+      obsvalue: obs_absolute_dynamic_topography
+    Covariance:
+      covariance: diagonal
+      obserror: obs_absolute_dynamic_topography_err  
+prints:
+  frequency: PT3H
