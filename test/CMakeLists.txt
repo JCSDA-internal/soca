@@ -73,7 +73,9 @@ endforeach(FILENAME)
 
 #Link to MOM's resource files
 foreach(FILENAME ${soca_model_param})
-     get_filename_component(filename ${FILENAME} NAME )
+  get_filename_component(filename ${FILENAME} NAME )
+  message("filename="${filename})
+     message("FILENAME="${FILENAME})     
      execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
            ${CMAKE_CURRENT_SOURCE_DIR}/${FILENAME}
            ${CMAKE_CURRENT_BINARY_DIR}/${filename} )
@@ -89,25 +91,21 @@ file(GLOB ioda_obs "${ioda_SOURCE_DIR}/test/testinput/marine/*.nc*")
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/Data)
 foreach(FILENAME ${ioda_obs})
      get_filename_component(filename ${FILENAME} NAME )
-     #configure_file(${CMAKE_CURRENT_SOURCE_DIR}/${FILENAME}
-     #               ${CMAKE_CURRENT_BINARY_DIR}/Data/${filename} COPYONLY)
-     #execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
-     #      ${CMAKE_CURRENT_SOURCE_DIR}/${FILENAME}    
-     #      ${CMAKE_CURRENT_BINARY_DIR}/Data/${filename} )
      execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
            ${FILENAME}
            ${CMAKE_CURRENT_BINARY_DIR}/Data/${filename} )	   
 endforeach(FILENAME)
 
-# Link to IODA Marine obs
-file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/Data)
+# Link to SOCA Marine obs
 foreach(FILENAME ${soca_obs})
      get_filename_component(filename ${FILENAME} NAME )
+     message("filename="${filename})
+     message("FILENAME="${FILENAME})
+     message(${CMAKE_CURRENT_BINARY_DIR})
      execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
-           ${FILENAME}
+           ${CMAKE_CURRENT_SOURCE_DIR}/${FILENAME}
            ${CMAKE_CURRENT_BINARY_DIR}/Data/${filename} )	   
 endforeach(FILENAME)
-
 
 # Create directory for BUMP output
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bump)
