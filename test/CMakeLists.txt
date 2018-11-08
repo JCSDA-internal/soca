@@ -40,6 +40,10 @@ list( APPEND soca_model_restarts
   Data/360x210x63/INPUT/topog.nc
 )
 
+list( APPEND soca_obs
+  Data/Obs/Jason-2-2018-04-15-soca.nc
+)
+
 # Create Data directory for test input and symlink all files
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/testinput)
 foreach(FILENAME ${soca_test_input})
@@ -69,7 +73,9 @@ endforeach(FILENAME)
 
 #Link to MOM's resource files
 foreach(FILENAME ${soca_model_param})
-     get_filename_component(filename ${FILENAME} NAME )
+  get_filename_component(filename ${FILENAME} NAME )
+  message("filename="${filename})
+     message("FILENAME="${FILENAME})     
      execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
            ${CMAKE_CURRENT_SOURCE_DIR}/${FILENAME}
            ${CMAKE_CURRENT_BINARY_DIR}/${filename} )
@@ -82,24 +88,22 @@ ecbuild_add_resources( TARGET   soca_test_scripts
 		     
 # Link to IODA Marine obs
 file(GLOB ioda_obs "${ioda_SOURCE_DIR}/test/testinput/marine/*.nc*")
-#list( APPEND soca_obs
-#  ../../ufo/test/testinput/marineobs/Jason-3-2018-04-15.nc
-#  ../../ufo/test/testinput/marineobs/seaice_obs-2018-04-15.nc
-#  ../../ufo/test/testinput/marineobs/sea-ice-con-l2.nc
-#  ../../ufo/test/testinput/marineobs/sst_obs-2018-04-15.nc
-#  ../../ufo/test/testinput/marineobs/t0n156e_dy.nc
-#  ../../ufo/test/testinput/marineobs/cryosat2-2018-04-15.nc
-#)
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/Data)
 foreach(FILENAME ${ioda_obs})
      get_filename_component(filename ${FILENAME} NAME )
-     #configure_file(${CMAKE_CURRENT_SOURCE_DIR}/${FILENAME}
-     #               ${CMAKE_CURRENT_BINARY_DIR}/Data/${filename} COPYONLY)
-     #execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
-     #      ${CMAKE_CURRENT_SOURCE_DIR}/${FILENAME}    
-     #      ${CMAKE_CURRENT_BINARY_DIR}/Data/${filename} )
      execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
            ${FILENAME}
+           ${CMAKE_CURRENT_BINARY_DIR}/Data/${filename} )	   
+endforeach(FILENAME)
+
+# Link to SOCA Marine obs
+foreach(FILENAME ${soca_obs})
+     get_filename_component(filename ${FILENAME} NAME )
+     message("filename="${filename})
+     message("FILENAME="${FILENAME})
+     message(${CMAKE_CURRENT_BINARY_DIR})
+     execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
+           ${CMAKE_CURRENT_SOURCE_DIR}/${FILENAME}
            ${CMAKE_CURRENT_BINARY_DIR}/Data/${filename} )	   
 endforeach(FILENAME)
 

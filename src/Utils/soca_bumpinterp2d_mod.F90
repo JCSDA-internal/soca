@@ -56,27 +56,19 @@ contains
     character(len=23) :: bump_nam_prefix
 
     if (self%initialized) call interp_exit(self)
-    
-    ! Each bump%nam%prefix must be distinct
-    ! -------------------------------------
-    
-    !bumpcount = bumpcount + 1
+
+    ! Each bump%nam%prefix must be distinct, set bump id
     write(cbumpcount,"(I0.5)") bumpid
     bump_nam_prefix = 'soca_bump_interp_'//cbumpcount
 
     !Get the obs and state dimension
-    !-------------------------------
     ni = size(mod_lon, 1)
     nj = size(mod_lon, 2)    
     ns = ni * nj
     no = size(obs_lon, 1)    
     
-    !Calculate interpolation weight using BUMP
-    !-----------------------------------------
-
-    !Important namelist options
+    ! Initialize bump parameters
     call self%bump%nam%init()
-print *,'--------------------------------',bump_nam_prefix, bumpid
     self%bump%nam%prefix = bump_nam_prefix   ! Prefix for files output
     self%bump%nam%obsop_interp = 'bilin'     ! Interpolation type (bilinear)
     self%bump%nam%default_seed = .true.
@@ -98,7 +90,7 @@ print *,'--------------------------------',bump_nam_prefix, bumpid
     !end where
     tmp_maskmod = reshape(tmp_maskmod, (/ns, 1/))
     
-    !Initialize BUMP
+    !Calculate interpolation weight using BUMP
     call self%bump%setup_online( ns, 1, 1, 1,&
          &tmp_lonmod, tmp_latmod, area, vunit, tmp_maskmod(:,1),&
          &nobs=no, lonobs=obs_lon, latobs=obs_lat )
