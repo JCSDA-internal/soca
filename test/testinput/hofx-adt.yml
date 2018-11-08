@@ -23,7 +23,7 @@ Observations:
       ObsDataOut:
         obsfile: Data/test_obsout.nc
       ObsDataIn:
-        obsfile: /home/gvernier/Data/Jason-2/crap.nc #Data/Jason-2-2018-04-15.nc
+        obsfile: Data/Jason-2-2018-04-15-soca.nc
       obsvalue: obs_absolute_dynamic_topography
     Covariance:
       covariance: diagonal

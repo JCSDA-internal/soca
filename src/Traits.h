@@ -28,7 +28,7 @@
 #include "ufo/LinearObsOperator.h"
 #include "ufo/ObsBias.h"
 #include "ufo/ObsBiasIncrement.h"
-#include "ufo/ObsCheck.h"
+//#include "ufo/ObsCheck.h"
 #include "ufo/ObsBiasCovariance.h"
 #include "ufo/ObsOperator.h"
 
@@ -52,7 +52,7 @@ struct Traits {
   typedef ufo::ObsBias              ObsAuxControl;
   typedef ufo::ObsBiasIncrement     ObsAuxIncrement;
   typedef ufo::ObsBiasCovariance    ObsAuxCovariance;
-  typedef ufo::ObsCheck             ObsCheck;
+  //  typedef ufo::ObsCheck             ObsCheck;
   typedef ufo::ObsOperator          ObsOperator;
   typedef ufo::LinearObsOperator    LinearObsOperator;
   typedef ufo::GeoVaLs              GeoVaLs;
