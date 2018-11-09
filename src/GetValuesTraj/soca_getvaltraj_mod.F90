@@ -85,7 +85,7 @@ contains
 
     ! Remove key
     call soca_getvaltraj_registry%remove(c_key_self)
-    
+
   end subroutine c_soca_getvaltraj_delete
 
   ! ------------------------------------------------------------------------------
