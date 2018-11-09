@@ -644,13 +644,13 @@ contains
 
     integer            :: nobs, nval, pe, ierror
 
-
+    ! Set default iread to 0
     iread = 0
     if (config_element_exists(c_conf,"read_from_file")) then
        iread = config_get_int(c_conf,"read_from_file")
     endif
 
-    ! Invent state
+    ! iread = 0: Invent state
     if (iread==0) then
        call log%warning("soca_fields:read_file: Inventing State")
        call zeros(fld)
@@ -660,7 +660,7 @@ contains
        call datetime_set(sdate, vdate)
     end if
 
-    ! Read restart file
+    ! iread = 1 (state) or 3 (increment): Read restart file
     if ((iread==1).or.(iread==3)) then
        basename = config_get_string(c_conf,len(basename),"basename")
        ocn_filename = config_get_string(c_conf,len(ocn_filename),"ocn_filename")
@@ -713,6 +713,7 @@ contains
        call restore_state(ocean_restart, directory='')
        call fms_io_exit()
 
+       ! Set vdate if reading state
        if (iread==1) then
           sdate = config_get_string(c_conf,len(sdate),"date")
           WRITE(buf,*) 'validity date is: '//sdate
@@ -899,9 +900,6 @@ contains
     idr_ocean = register_restart_field(ocean_restart, ocn_filename, 'h', fld%hocn(:,:,:), &
                   domain=fld%geom%ocean%G%Domain%mpp_domain)             
 
-    call save_restart(ocean_restart, directory='')
-    call free_restart_type(ocean_restart)
-    
     ! Sea-Ice
     idr = register_restart_field(ice_restart, ice_filename, 'part_size', fld%AOGCM%Ice%part_size, &
                   domain=fld%geom%ocean%G%Domain%mpp_domain)
@@ -916,16 +914,14 @@ contains
     idr = register_restart_field(ice_restart, ice_filename, 'T_skin', fld%AOGCM%Ice%T_skin, &
                   domain=fld%geom%ocean%G%Domain%mpp_domain)
     idr = register_restart_field(ice_restart, ice_filename, 'sal_ice', fld%AOGCM%Ice%sal_ice, &
-                  domain=fld%geom%ocean%G%Domain%mpp_domain)
+         domain=fld%geom%ocean%G%Domain%mpp_domain)
+
+    call save_restart(ocean_restart, directory='')
     call save_restart(ice_restart, directory='')
     call free_restart_type(ice_restart)
+    call free_restart_type(ocean_restart)
+    call fms_io_exit()
 
-    !call fms_io_exit()
-
-    !sdate = config_get_string(c_conf,len(sdate),"date")
-    !WRITE(buf,*) 'validity date is: '//sdate
-    !call log%info(buf)
-    !call datetime_set(sdate, vdate)
     return
 
   end subroutine write_restart
