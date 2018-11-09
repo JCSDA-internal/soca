@@ -644,7 +644,7 @@ contains
 
     integer            :: nobs, nval, pe, ierror
 
-    
+
     iread = 0
     if (config_element_exists(c_conf,"read_from_file")) then
        iread = config_get_int(c_conf,"read_from_file")
@@ -661,7 +661,7 @@ contains
     end if
 
     ! Read restart file
-    if (iread==1) then
+    if ((iread==1).or.(iread==3)) then
        basename = config_get_string(c_conf,len(basename),"basename")
        ocn_filename = config_get_string(c_conf,len(ocn_filename),"ocn_filename")
        ocn_filename = trim(basename)//trim(ocn_filename)
@@ -708,20 +708,22 @@ contains
           case default
              !call log%warning("soca_fields:read_file: Not reading var "//fld%fldnames(ii))
           end select
-       end do
+       end do       
        call restore_state(sis_restart, directory='')
        call restore_state(ocean_restart, directory='')
        call fms_io_exit()
 
-       sdate = config_get_string(c_conf,len(sdate),"date")
-       WRITE(buf,*) 'validity date is: '//sdate
-       call log%info(buf)
-       call datetime_set(sdate, vdate)
+       if (iread==1) then
+          sdate = config_get_string(c_conf,len(sdate),"date")
+          WRITE(buf,*) 'validity date is: '//sdate
+          call log%info(buf)
+          call datetime_set(sdate, vdate)
+       end if
        return
     end if
 
     ! Read diagnostic file
-    if (iread==2) then ! Read increment
+    if (iread==2) then
        incr_filename = config_get_string(c_conf,len(incr_filename),"filename")
        call fms_io_init()
        do ii = 1, fld%nf

@@ -76,59 +76,16 @@ contains
     ! Limit background error
     do i = isc, iec
        do j = jsc, jec
-          !if (self%bkg%geom%ocean%mask2d(i,j).eq.1) then
-             ! ocean
-          self%std_bkgerr%ssh(i,j) = 0.05d0
-!!$          adjusted_std(abs(self%std_bkgerr%ssh(i,j)), 0.1d0, 10.0d0)
-             do k = 1, nl
-                self%std_bkgerr%tocn(i,j,k) = 1.0*exp(-self%z(i,j,k)/300d0)
-                self%std_bkgerr%socn(i,j,k) = 0.2*exp(-self%z(i,j,k)/300d0)
-
-!!$                self%std_bkgerr%tocn(i,j,k) = adjusted_std(abs(self%std_bkgerr%tocn(i,j,k)), 0.d0, 10.0d0)
-!!$                self%std_bkgerr%socn(i,j,k) = adjusted_std(abs(self%std_bkgerr%socn(i,j,k)), 0.0d0, 10.1d0)
-             end do
-             ! sea-ice
-             self%std_bkgerr%cicen(i,j,:) = 0.1 !adjusted_std(abs(self%std_bkgerr%cicen(i,j,:)), 0.01d0, 0.5d0)
-             self%std_bkgerr%hicen(i,j,:) = 100d0 !adjusted_std(abs(self%std_bkgerr%hicen(i,j,:)), 10d0, 100.0d0)             
-          !end if
+          self%std_bkgerr%ssh(i,j) = adjusted_std(abs(self%std_bkgerr%ssh(i,j)), 0.1d0, 10.0d0)
+          do k = 1, nl
+             self%std_bkgerr%tocn(i,j,k) = adjusted_std(abs(self%std_bkgerr%tocn(i,j,k)), 0.d0, 10.0d0)
+             self%std_bkgerr%socn(i,j,k) = adjusted_std(abs(self%std_bkgerr%socn(i,j,k)), 0.0d0, 10.1d0)
+          end do
+          ! sea-ice
+          self%std_bkgerr%cicen(i,j,:) = adjusted_std(abs(self%std_bkgerr%cicen(i,j,:)), 0.01d0, 0.5d0)
+          self%std_bkgerr%hicen(i,j,:) = adjusted_std(abs(self%std_bkgerr%hicen(i,j,:)), 10d0, 100.0d0)
        end do
     end do
-    
-!!$    ! Setup arrays of backgroud error std dev
-!!$    allocate(self%sig_temp(isc:iec, jsc:jec, nl))
-!!$    allocate(self%sig_salt(isc:iec, jsc:jec, nl))    
-!!$    allocate(self%sig_ssh(isc:iec, jsc:jec))
-!!$
-!!$    ! Initialize local ocean depth from layer thickness  
-!!$    call bkg%geom%ocean%thickness2depth(bkg%hocn, self%z)
-!!$
-!!$    ! Estimate std. dev. of background error for temp and salt
-!!$    ! from vertical gradients
-!!$    allocate(h(nl),v(nl),dvdz(nl))
-!!$    do i = isc, iec
-!!$       do j = jsc, jec
-!!$          if (self%bkg%geom%ocean%mask2d(i,j).eq.1) then
-!!$             v(:) = self%bkg%tocn(i,j,:)
-!!$             h(:) = self%bkg%hocn(i,j,:)           
-!!$             call soca_diff(dvdz,v,h)
-!!$             do k = 1, nl              
-!!$                self%sig_temp(i,j,k) =  1.0d0 !min(abs(dvdz(k)),5.0d0)
-!!$             end do
-!!$             v(:)=bkg%socn(i,j,:)
-!!$             call soca_diff(dvdz,v,h)
-!!$             do k = 1, nl
-!!$                self%sig_salt(i,j,k) =  0.1d0 !min(abs(dvdz(k)),5.0d0)              
-!!$             end do
-!!$          end if
-!!$       end do
-!!$    end do
-!!$
-!!$    deallocate(h,v,dvdz)
-!!$
-!!$    ! Derive sig_ssh from dynamic height assumption
-!!$    ! TODO !!!!!!!!!!!!
-!!$    !self%sig_ssh(isc:iec, jsc:jec) = 0.1d0
-!!$    self%sig_ssh = 0.1d0    
     
   end subroutine soca_bkgerr_setup
 
