@@ -153,7 +153,18 @@ cost_function:
         obsvalue: obs_absolute_dynamic_topography
       Covariance:
         covariance: diagonal
-        obserror: obs_absolute_dynamic_topography_err  
+        obserror: obs_absolute_dynamic_topography_err
+    - ObsType: InsituTemperature
+      ObsData:
+        ObsDataOut:
+          obsfile: Data/profile_out.nc
+        ObsDataIn:
+          obsfile: Data/profile_2018-04-15.nc
+        obsvalue: insitu_temperature
+      Covariance:
+        covariance: diagonal
+        obserror: insitu_temperature_err
+	
 variational:
   iteration:
   - resolution:
