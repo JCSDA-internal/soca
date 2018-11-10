@@ -7,24 +7,36 @@
 
 module soca_fields
 
+  use kinds
+  use soca_mom6,   only: Coupled
+  use MOM, only : MOM_control_struct
   use config_mod
   use soca_geom_mod
+  use soca_model_geom_type, only : geom_get_domain_indices  
   use ufo_vars_mod
   use soca_bumpinterp2d_mod
   use soca_getvaltraj_mod
   use kinds
-  !use atmos_model_mod, only: atmos_data_type
-  !use land_model_mod,  only: land_data_type
-  use soca_mom6,   only: Coupled
-  use MOM, only : MOM_control_struct
+  use iso_c_binding
+  use fms_mod,    only: read_data, write_data, set_domain
+  use fms_io_mod, only : fms_io_init, fms_io_exit,&
+       &register_restart_field, restart_file_type,&
+       &restore_state, query_initialized,&
+       &free_restart_type, save_restart
+  use datetime_mod
+  use duration_mod  
+  use fckit_log_module, only : log
+  use fckit_mpi_module, only: fckit_mpi_comm, fckit_mpi_sum
+  
   implicit none
+
   private
 
   public :: soca_field, &
        & create, delete, zeros, ones, dirac, random, copy, create_copy,&
        & self_add, self_schur, self_sub, self_mul, axpy, &
        & dot_prod, add_incr, diff_incr, &
-       & read_file, write_file, gpnorm, fldrms, fld2file, &
+       & read_file, write_file, gpnorm, fldrms, soca_fld2file, &
        & change_resol, check, &
        & field_to_ug, field_from_ug, ug_coord
   public :: soca_field_registry
@@ -448,24 +460,28 @@ contains
 
   subroutine dot_prod(fld1,fld2,zprod)
 
-    use mpp_mod,  only : mpp_pe, mpp_npes, mpp_root_pe, mpp_sync, mpp_sum, mpp_gather, mpp_broadcast
+    !use mpp_mod,  only : mpp_pe, mpp_npes, mpp_root_pe, mpp_sync, mpp_sum, mpp_gather, mpp_broadcast
 
     implicit none
-    type(soca_field), intent(in) :: fld1, fld2
+    type(soca_field),      intent(in) :: fld1
+    type(soca_field),      intent(in) :: fld2    
     real(kind=kind_real), intent(out) :: zprod
-    real(kind=kind_real),allocatable,dimension(:) :: zprod_allpes
+
+    real(kind=kind_real) :: zprod_allpes
+    !real(kind=kind_real),allocatable,dimension(:) :: zprod_allpes
     integer :: ii, jj, kk
     integer :: is, ie, js, je, ncat, nzo
+    type(fckit_mpi_comm) :: f_comm
+    
     call check_resolution(fld1, fld2)
     if (fld1%nf /= fld2%nf .or. fld1%geom%ocean%nzo /= fld2%geom%ocean%nzo) then
        call abor1_ftn("soca_fields:field_prod error number of fields")
     endif
 
-    ! Get compute domain
-    is = fld1%geom%ocean%G%isc
-    ie = fld1%geom%ocean%G%iec
-    js = fld1%geom%ocean%G%jsc
-    je = fld1%geom%ocean%G%jec
+    ! Indices for compute domain (no halo)
+    call geom_get_domain_indices(fld1%geom%ocean, "compute", is, ie, js, je)
+    
+    ! Get ice categories and ocean levels 
     ncat = fld1%geom%ocean%ncat
     nzo = fld1%geom%ocean%nzo
 
@@ -491,14 +507,10 @@ contains
        end do
     end do
 
-    allocate(zprod_allpes(mpp_npes()))
-
-    call mpp_gather((/zprod/),zprod_allpes)
-    call mpp_broadcast(zprod_allpes, mpp_npes(), mpp_root_pe())
-    zprod=sum(zprod_allpes)
-
-    deallocate(zprod_allpes)
-    call mpp_sync()
+    ! Get global dot product
+    f_comm = fckit_mpi_comm()
+    call f_comm%allreduce(zprod, zprod_allpes, fckit_mpi_sum())
+    zprod = zprod_allpes
 
   end subroutine dot_prod
 
@@ -632,7 +644,7 @@ contains
     type(datetime),   intent(inout) :: vdate    !< DateTime
 
     integer, parameter :: max_string_length=800
-    character(len=max_string_length) :: ocn_sfc_filename, ocn_filename
+    character(len=max_string_length) :: ocn_filename
     character(len=max_string_length) :: ice_filename, basename, incr_filename    
     character(len=20) :: sdate
     character(len=1024)  :: buf
@@ -790,7 +802,7 @@ contains
     call check(fld)
 
     !call geom_infotofile(fld%geom)
-    call write_restart(fld, c_conf, vdate)
+    call soca_write_restart(fld, c_conf, vdate)
 
 !!$    filename = genfilename(c_conf,max_string_length,vdate)
 !!$    WRITE(buf,*) 'field:write_file: writing '//filename
@@ -800,196 +812,6 @@ contains
 
   end subroutine write_file
 
-  ! ------------------------------------------------------------------------------
-  subroutine fld2file(fld, filename)
-    use iso_c_binding
-    use fms_mod,                 only: read_data, write_data, set_domain
-    use fms_io_mod,                only : fms_io_init, fms_io_exit
-
-    implicit none
-    type(soca_field), intent(in) :: fld    !< Fields
-    character(len=800), intent(in) :: filename
-    integer :: ii
-    character(len=1024):: buf
-
-    call check(fld)
-
-    call fms_io_init()
-    call set_domain( fld%geom%ocean%G%Domain%mpp_domain )
-    do ii = 1, fld%nf
-       select case(fld%fldnames(ii))
-
-       case ('ssh')
-          call write_data( filename, "ssh", fld%ssh, fld%geom%ocean%G%Domain%mpp_domain)
-          call write_data( filename, "rossby_radius", fld%geom%ocean%rossby_radius, fld%geom%ocean%G%Domain%mpp_domain)
-       case ('tocn')
-          call write_data( filename, "temp", fld%tocn, fld%geom%ocean%G%Domain%mpp_domain)
-       case ('socn')
-          call write_data( filename, "salt", fld%socn, fld%geom%ocean%G%Domain%mpp_domain)
-       case ('hocn')
-          call write_data( filename, "h", fld%hocn, fld%geom%ocean%G%Domain%mpp_domain)
-       case ('hicen')
-          call write_data( filename, "hicen", fld%hicen, fld%geom%ocean%G%Domain%mpp_domain)
-       case ('hsnon')
-          call write_data(filename, "hsnon", fld%hsnon, fld%geom%ocean%G%Domain%mpp_domain)
-       case ('cicen')
-          call write_data(filename, "cicen", fld%cicen, fld%geom%ocean%G%Domain%mpp_domain)
-       case ('qicnk')
-          call write_data(filename, "qicnk", fld%qicnk, fld%geom%ocean%G%Domain%mpp_domain)
-       case ('sicnk')
-          call write_data(filename, "sicnk", fld%sicnk, fld%geom%ocean%G%Domain%mpp_domain)
-       case ('qsnon')
-          call write_data(filename, "qsnon", fld%qsnon, fld%geom%ocean%G%Domain%mpp_domain)
-       case ('tsfcn')
-          call write_data(filename, "tsfcn", fld%tsfcn, fld%geom%ocean%G%Domain%mpp_domain)
-       case default
-
-       end select
-
-    end do
-    call fms_io_exit()
-    
-  end subroutine fld2file
-
-  ! ------------------------------------------------------------------------------
-  subroutine write_restart(fld, c_conf, vdate)
-
-    use iso_c_binding
-    use datetime_mod
-    use fckit_log_module, only : log
-    use fms_mod,          only : read_data, set_domain
-    use fms_io_mod,       only : register_restart_field, restart_file_type
-    use fms_io_mod,       only : restore_state, query_initialized
-    use fms_io_mod,       only : fms_io_init, fms_io_exit
-    use fms_io_mod,       only: free_restart_type, save_restart
-    
-    use fms_mod,          only : read_data, write_data, fms_init, fms_end
-    
-    implicit none
-
-    type(soca_field), intent(inout) :: fld      !< Fields
-    type(c_ptr),         intent(in) :: c_conf   !< Configuration
-    type(datetime),   intent(inout) :: vdate    !< DateTime
-
-    integer, parameter :: max_string_length=800
-    character(len=max_string_length) :: ocn_filename
-    character(len=max_string_length) :: ice_filename, basename, incr_filename    
-    character(len=20) :: sdate
-    character(len=1024)  :: buf
-    integer :: iread, ii
-
-    type(restart_file_type) :: ice_restart
-    type(restart_file_type) :: ocean_restart
-    integer :: idr, idr_ocean
-
-    integer            :: nobs, nval, pe, ierror
-
-
-    ! Generate file names
-    ocn_filename = genfilename(c_conf,max_string_length,vdate,"ocn")
-    ice_filename = genfilename(c_conf,max_string_length,vdate,"ice")
-
-    call fms_io_init()
-    ! Ocean State
-    idr_ocean = register_restart_field(ocean_restart, ocn_filename, 'ave_ssh', fld%ssh(:,:), &
-                  domain=fld%geom%ocean%G%Domain%mpp_domain)
-    idr_ocean = register_restart_field(ocean_restart, ocn_filename, 'Temp', fld%tocn(:,:,:), &
-                  domain=fld%geom%ocean%G%Domain%mpp_domain)             
-    idr_ocean = register_restart_field(ocean_restart, ocn_filename, 'Salt', fld%socn(:,:,:), &
-                  domain=fld%geom%ocean%G%Domain%mpp_domain)             
-    idr_ocean = register_restart_field(ocean_restart, ocn_filename, 'h', fld%hocn(:,:,:), &
-                  domain=fld%geom%ocean%G%Domain%mpp_domain)             
-
-    ! Sea-Ice
-    idr = register_restart_field(ice_restart, ice_filename, 'part_size', fld%AOGCM%Ice%part_size, &
-                  domain=fld%geom%ocean%G%Domain%mpp_domain)
-    idr = register_restart_field(ice_restart, ice_filename, 'h_ice', fld%AOGCM%Ice%h_ice, &
-                  domain=fld%geom%ocean%G%Domain%mpp_domain)
-    idr = register_restart_field(ice_restart, ice_filename, 'h_snow', fld%AOGCM%Ice%h_snow, &
-                  domain=fld%geom%ocean%G%Domain%mpp_domain)
-    idr = register_restart_field(ice_restart, ice_filename, 'enth_ice', fld%AOGCM%Ice%enth_ice, &
-                  domain=fld%geom%ocean%G%Domain%mpp_domain)
-    idr = register_restart_field(ice_restart, ice_filename, 'enth_snow', fld%AOGCM%Ice%enth_snow, &
-                  domain=fld%geom%ocean%G%Domain%mpp_domain)
-    idr = register_restart_field(ice_restart, ice_filename, 'T_skin', fld%AOGCM%Ice%T_skin, &
-                  domain=fld%geom%ocean%G%Domain%mpp_domain)
-    idr = register_restart_field(ice_restart, ice_filename, 'sal_ice', fld%AOGCM%Ice%sal_ice, &
-         domain=fld%geom%ocean%G%Domain%mpp_domain)
-
-    call save_restart(ocean_restart, directory='')
-    call save_restart(ice_restart, directory='')
-    call free_restart_type(ice_restart)
-    call free_restart_type(ocean_restart)
-    call fms_io_exit()
-
-    return
-
-  end subroutine write_restart
-  
-  ! ------------------------------------------------------------------------------
-  function genfilename (c_conf,length,vdate, domain_type)
-    use iso_c_binding
-    use datetime_mod
-    use duration_mod
-    type(c_ptr),                intent(in) :: c_conf
-    integer,                    intent(in) :: length
-    type(datetime),             intent(in) :: vdate
-    character(len=3), optional, intent(in) :: domain_type    
-    character(len=length)                  :: genfilename
-
-    character(len=length) :: fdbdir, expver, typ, validitydate, referencedate, sstep, &
-         & prefix, mmb
-    type(datetime) :: rdate
-    type(duration) :: step
-    integer lenfn
-
-    ! here we should query the length and then allocate "string".
-    ! But Fortran 90 does not allow variable-length allocatable strings.
-    ! config_get_string checks the string length and aborts if too short.
-    fdbdir = config_get_string(c_conf,len(fdbdir),"datadir")
-    expver = config_get_string(c_conf,len(expver),"exp")
-    typ    = config_get_string(c_conf,len(typ)   ,"type")
-
-    if (present(domain_type)) then
-       expver = trim(domain_type)//"."//expver
-    else
-       expver = "ocn.ice."//expver
-    end if
-    if (typ=="ens") then
-       mmb = config_get_string(c_conf, len(mmb), "member")
-       lenfn = LEN_TRIM(fdbdir) + 1 + LEN_TRIM(expver) + 1 + LEN_TRIM(typ) + 1 + LEN_TRIM(mmb)
-       prefix = TRIM(fdbdir) // "/" // TRIM(expver) // "." // TRIM(typ) // "." // TRIM(mmb)
-    else
-       lenfn = LEN_TRIM(fdbdir) + 1 + LEN_TRIM(expver) + 1 + LEN_TRIM(typ)
-       prefix = TRIM(fdbdir) // "/" // TRIM(expver) // "." // TRIM(typ)
-    endif
-
-    if (typ=="fc" .or. typ=="ens") then
-       referencedate = config_get_string(c_conf,len(referencedate),"date")
-       call datetime_to_string(vdate, validitydate)
-       call datetime_create(TRIM(referencedate), rdate)
-       call datetime_diff(vdate, rdate, step)
-       call duration_to_string(step, sstep)
-       lenfn = lenfn + 1 + LEN_TRIM(referencedate) + 1 + LEN_TRIM(sstep)
-       genfilename = TRIM(prefix) // "." // TRIM(referencedate) // "." // TRIM(sstep)
-    endif
-
-    if (typ=="an") then
-       call datetime_to_string(vdate, validitydate)
-       lenfn = lenfn + 1 + LEN_TRIM(validitydate)
-       genfilename = TRIM(prefix) // "." // TRIM(validitydate)
-    endif
-
-    if (typ=="incr") then
-       genfilename = 'test-incr.nc'
-    endif
-
-    if (lenfn>length) &
-         & call abor1_ftn("fields:genfilename: filename too long")
-
-  end function genfilename
-
-  ! ------------------------------------------------------------------------------
   ! ------------------------------------------------------------------------------
 
   subroutine gpnorm(fld, nf, pstat)
@@ -1075,18 +897,15 @@ contains
     integer :: isc, iec, jsc, jec
     integer :: igrid
 
-    ! Get indices for compute domain (no halo)
-    isc = self%geom%ocean%G%isc
-    iec = self%geom%ocean%G%iec
-    jsc = self%geom%ocean%G%jsc
-    jec = self%geom%ocean%G%jec
+    ! Indices for compute domain (no halo)
+    call geom_get_domain_indices(self%geom%ocean, "compute", isc, iec, jsc, jec)
 
     ! Set number of grids ! Only 1 grid currently !
     if (ug%colocated==1) then
        ! Colocatd
        ug%ngrid = 1
     else
-       ! Not colocatedd
+       ! Not colocated
        ug%ngrid = 1
     end if
 
@@ -1135,11 +954,8 @@ contains
     integer :: igrid
     integer :: isc, iec, jsc, jec, jz
 
-    ! Get indices for compute domain (no halo)
-    isc = self%geom%ocean%G%isc
-    iec = self%geom%ocean%G%iec
-    jsc = self%geom%ocean%G%jsc
-    jec = self%geom%ocean%G%jec
+    ! Indices for compute domain (no halo)
+    call geom_get_domain_indices(self%geom%ocean, "compute", isc, iec, jsc, jec)
 
     ! Copy colocate
     ug%colocated = colocated
@@ -1178,11 +994,8 @@ contains
     integer :: isc, iec, jsc, jec, jk, incat, inzo, ncat, nzo
     integer :: ni, nj
 
-    ! Get indices for compute domain (no halo)
-    isc = self%geom%ocean%G%isc
-    iec = self%geom%ocean%G%iec
-    jsc = self%geom%ocean%G%jsc
-    jec = self%geom%ocean%G%jec
+    ! Indices for compute domain (no halo)
+    call geom_get_domain_indices(self%geom%ocean, "compute", isc, iec, jsc, jec)
 
     ni = iec - isc + 1
     nj = jec - jsc + 1
@@ -1257,11 +1070,8 @@ contains
     integer :: isc, iec, jsc, jec, jk, incat, inzo, ncat, nzo
     integer :: ni, nj
 
-    ! Get indices for compute domain (no halo)
-    isc = self%geom%ocean%G%isc
-    iec = self%geom%ocean%G%iec
-    jsc = self%geom%ocean%G%jsc
-    jec = self%geom%ocean%G%jec
+    ! Indices for compute domain (no halo)
+    call geom_get_domain_indices(self%geom%ocean, "compute", isc, iec, jsc, jec)
 
     ni = iec - isc + 1
     nj = jec - jsc + 1
@@ -1364,5 +1174,181 @@ contains
   end subroutine check
 
   ! ------------------------------------------------------------------------------
+  !> Save soca fields to file using fms write_data
+  subroutine soca_fld2file(fld, filename)
 
+    implicit none
+    type(soca_field), intent(in) :: fld    !< Fields
+    character(len=800), intent(in) :: filename
+    integer :: ii
+    character(len=1024):: buf
+
+    call check(fld)
+
+    call fms_io_init()
+    call set_domain( fld%geom%ocean%G%Domain%mpp_domain )
+    do ii = 1, fld%nf
+       select case(fld%fldnames(ii))
+
+       case ('ssh')
+          call write_data( filename, "ssh", fld%ssh, fld%geom%ocean%G%Domain%mpp_domain)
+          call write_data( filename, "rossby_radius", fld%geom%ocean%rossby_radius, fld%geom%ocean%G%Domain%mpp_domain)
+       case ('tocn')
+          call write_data( filename, "temp", fld%tocn, fld%geom%ocean%G%Domain%mpp_domain)
+       case ('socn')
+          call write_data( filename, "salt", fld%socn, fld%geom%ocean%G%Domain%mpp_domain)
+       case ('hocn')
+          call write_data( filename, "h", fld%hocn, fld%geom%ocean%G%Domain%mpp_domain)
+       case ('hicen')
+          call write_data( filename, "hicen", fld%hicen, fld%geom%ocean%G%Domain%mpp_domain)
+       case ('hsnon')
+          call write_data(filename, "hsnon", fld%hsnon, fld%geom%ocean%G%Domain%mpp_domain)
+       case ('cicen')
+          call write_data(filename, "cicen", fld%cicen, fld%geom%ocean%G%Domain%mpp_domain)
+       case ('qicnk')
+          call write_data(filename, "qicnk", fld%qicnk, fld%geom%ocean%G%Domain%mpp_domain)
+       case ('sicnk')
+          call write_data(filename, "sicnk", fld%sicnk, fld%geom%ocean%G%Domain%mpp_domain)
+       case ('qsnon')
+          call write_data(filename, "qsnon", fld%qsnon, fld%geom%ocean%G%Domain%mpp_domain)
+       case ('tsfcn')
+          call write_data(filename, "tsfcn", fld%tsfcn, fld%geom%ocean%G%Domain%mpp_domain)
+       case default
+
+       end select
+
+    end do
+    call fms_io_exit()
+
+  end subroutine soca_fld2file
+
+  ! ------------------------------------------------------------------------------
+  !> Save soca fields in a restart format  
+  subroutine soca_write_restart(fld, c_conf, vdate)
+
+    implicit none
+
+    type(soca_field), intent(inout) :: fld      !< Fields
+    type(c_ptr),         intent(in) :: c_conf   !< Configuration
+    type(datetime),   intent(inout) :: vdate    !< DateTime
+
+    integer, parameter :: max_string_length=800
+    character(len=max_string_length) :: ocn_filename
+    character(len=max_string_length) :: ice_filename, basename, incr_filename    
+    character(len=20) :: sdate
+    character(len=1024)  :: buf
+    integer :: iread, ii
+
+    type(restart_file_type) :: ice_restart
+    type(restart_file_type) :: ocean_restart
+    integer :: idr, idr_ocean
+
+    integer            :: nobs, nval, pe, ierror
+
+
+    ! Generate file names
+    ocn_filename = soca_genfilename(c_conf,max_string_length,vdate,"ocn")
+    ice_filename = soca_genfilename(c_conf,max_string_length,vdate,"ice")
+
+    call fms_io_init()
+    ! Ocean State
+    idr_ocean = register_restart_field(ocean_restart, ocn_filename, 'ave_ssh', fld%ssh(:,:), &
+         domain=fld%geom%ocean%G%Domain%mpp_domain)
+    idr_ocean = register_restart_field(ocean_restart, ocn_filename, 'Temp', fld%tocn(:,:,:), &
+         domain=fld%geom%ocean%G%Domain%mpp_domain)             
+    idr_ocean = register_restart_field(ocean_restart, ocn_filename, 'Salt', fld%socn(:,:,:), &
+         domain=fld%geom%ocean%G%Domain%mpp_domain)             
+    idr_ocean = register_restart_field(ocean_restart, ocn_filename, 'h', fld%hocn(:,:,:), &
+         domain=fld%geom%ocean%G%Domain%mpp_domain)             
+
+    ! Sea-Ice
+    idr = register_restart_field(ice_restart, ice_filename, 'part_size', fld%AOGCM%Ice%part_size, &
+         domain=fld%geom%ocean%G%Domain%mpp_domain)
+    idr = register_restart_field(ice_restart, ice_filename, 'h_ice', fld%AOGCM%Ice%h_ice, &
+         domain=fld%geom%ocean%G%Domain%mpp_domain)
+    idr = register_restart_field(ice_restart, ice_filename, 'h_snow', fld%AOGCM%Ice%h_snow, &
+         domain=fld%geom%ocean%G%Domain%mpp_domain)
+    idr = register_restart_field(ice_restart, ice_filename, 'enth_ice', fld%AOGCM%Ice%enth_ice, &
+         domain=fld%geom%ocean%G%Domain%mpp_domain)
+    idr = register_restart_field(ice_restart, ice_filename, 'enth_snow', fld%AOGCM%Ice%enth_snow, &
+         domain=fld%geom%ocean%G%Domain%mpp_domain)
+    idr = register_restart_field(ice_restart, ice_filename, 'T_skin', fld%AOGCM%Ice%T_skin, &
+         domain=fld%geom%ocean%G%Domain%mpp_domain)
+    idr = register_restart_field(ice_restart, ice_filename, 'sal_ice', fld%AOGCM%Ice%sal_ice, &
+         domain=fld%geom%ocean%G%Domain%mpp_domain)
+
+    call save_restart(ocean_restart, directory='')
+    call save_restart(ice_restart, directory='')
+    call free_restart_type(ice_restart)
+    call free_restart_type(ocean_restart)
+    call fms_io_exit()
+
+    return
+
+  end subroutine soca_write_restart
+
+  ! ------------------------------------------------------------------------------
+  !> Generate filename (based on oops/qg)
+  function soca_genfilename (c_conf,length,vdate, domain_type)
+    use iso_c_binding
+    use datetime_mod
+    use duration_mod
+    type(c_ptr),                intent(in) :: c_conf
+    integer,                    intent(in) :: length
+    type(datetime),             intent(in) :: vdate
+    character(len=3), optional, intent(in) :: domain_type    
+    character(len=length)                  :: soca_genfilename
+
+    character(len=length) :: fdbdir, expver, typ, validitydate, referencedate, sstep, &
+         & prefix, mmb
+    type(datetime) :: rdate
+    type(duration) :: step
+    integer lenfn
+
+    ! here we should query the length and then allocate "string".
+    ! But Fortran 90 does not allow variable-length allocatable strings.
+    ! config_get_string checks the string length and aborts if too short.
+    fdbdir = config_get_string(c_conf,len(fdbdir),"datadir")
+    expver = config_get_string(c_conf,len(expver),"exp")
+    typ    = config_get_string(c_conf,len(typ)   ,"type")
+
+    if (present(domain_type)) then
+       expver = trim(domain_type)//"."//expver
+    else
+       expver = "ocn.ice."//expver
+    end if
+    if (typ=="ens") then
+       mmb = config_get_string(c_conf, len(mmb), "member")
+       lenfn = LEN_TRIM(fdbdir) + 1 + LEN_TRIM(expver) + 1 + LEN_TRIM(typ) + 1 + LEN_TRIM(mmb)
+       prefix = TRIM(fdbdir) // "/" // TRIM(expver) // "." // TRIM(typ) // "." // TRIM(mmb)
+    else
+       lenfn = LEN_TRIM(fdbdir) + 1 + LEN_TRIM(expver) + 1 + LEN_TRIM(typ)
+       prefix = TRIM(fdbdir) // "/" // TRIM(expver) // "." // TRIM(typ)
+    endif
+
+    if (typ=="fc" .or. typ=="ens") then
+       referencedate = config_get_string(c_conf,len(referencedate),"date")
+       call datetime_to_string(vdate, validitydate)
+       call datetime_create(TRIM(referencedate), rdate)
+       call datetime_diff(vdate, rdate, step)
+       call duration_to_string(step, sstep)
+       lenfn = lenfn + 1 + LEN_TRIM(referencedate) + 1 + LEN_TRIM(sstep)
+       soca_genfilename = TRIM(prefix) // "." // TRIM(referencedate) // "." // TRIM(sstep)
+    endif
+
+    if (typ=="an") then
+       call datetime_to_string(vdate, validitydate)
+       lenfn = lenfn + 1 + LEN_TRIM(validitydate)
+       soca_genfilename = TRIM(prefix) // "." // TRIM(validitydate)
+    endif
+
+    if (typ=="incr") then
+       soca_genfilename = 'test-incr.nc'
+    endif
+
+    if (lenfn>length) &
+         & call abor1_ftn("fields:genfilename: filename too long")
+
+  end function soca_genfilename
+  
 end module soca_fields

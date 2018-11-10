@@ -70,14 +70,21 @@ contains
     integer, save :: bumpid = 1000
     type(fckit_mpi_comm) :: f_comm
     integer :: allpes_nlocs, nlocs
-    
+
     ! Sanity check for fields
     call check(fld)
+
+    ! Get local obs in [t, t+dt[
+    nlocs = locs%nlocs
     
-    ! Get global nlocs
+    ! Get global nlocs in [t, t+dt[
     f_comm = fckit_mpi_comm()
     call f_comm%allreduce(nlocs, allpes_nlocs, fckit_mpi_sum())
 
+    ! Return if allpes_nlocs == 0 ???
+    print *,traj%noobs, traj%nobs
+    print *,'allpes_nlocs=',allpes_nlocs
+    
     ! Initialize traj and interp
     if (.not.(traj%interph_initialized)) then
        traj%bumpid = bumpid
@@ -136,7 +143,7 @@ contains
     real(kind=kind_real), allocatable :: gom_window(:,:)
     real(kind=kind_real), allocatable :: fld3d(:,:,:)        
 
-    if (traj%noobs) return
+    !if (traj%noobs) return
     
     horiz_interp_p => traj%horiz_interp
 
@@ -146,12 +153,13 @@ contains
     do ivar = 1, vars%nv
        ! Set number of levels/categories (nval)
        call nlev_from_ufovar(fld, vars, ivar, nval)
-       
+       print *,'---------------------- var=',trim(vars%fldnames(ivar)), nval       
        ! Allocate temporary geoval and 3d field for the current time window
        allocate(gom_window(nval,locs%nlocs))
        allocate(fld3d(isc:iec,jsc:jec,1:nval))
-
-       ! Apply backward interpolation
+       fld3d = 0.0
+       
+       ! Apply backward interpolation: Obs ---> Model       
        do ival = 1, nval
           ! Fill proper geoval according to time window
           do indx = 1, locs%nlocs
@@ -163,25 +171,32 @@ contains
        ! Copy fld3d into field
        select case (trim(vars%fldnames(ivar)))
        case ("ice_concentration")
-          fld%cicen(isc:iec,jsc:jec,2:) = fld3d
+          fld%cicen(isc:iec,jsc:jec,2:nval+1) = fld%cicen(isc:iec,jsc:jec,2:nval+1) +&
+               &fld3d
           
        case ("ice_thickness")
-          fld%hicen(isc:iec,jsc:jec,1:) = fld3d
+          fld%hicen(isc:iec,jsc:jec,1:nval) = fld%hicen(isc:iec,jsc:jec,1:nval) +&
+               &fld3d
 
-       case ("sea_surface_height_above_geoid","steric_height")
-          fld%ssh(isc:iec,jsc:jec) = fld3d(isc:iec,jsc:jec,1)
+       case ("sea_surface_height_above_geoid")
+          fld%ssh(isc:iec,jsc:jec) = fld%ssh(isc:iec,jsc:jec) +&
+               &fld3d(isc:iec,jsc:jec,1)
 
        case ("ocean_potential_temperature")
-          fld%tocn(isc:iec,jsc:jec,1:) = fld3d
+          fld%tocn(isc:iec,jsc:jec,1:nval) = fld%tocn(isc:iec,jsc:jec,1:nval) +&
+               &fld3d
 
        case ("ocean_salinity")
-          fld%socn(isc:iec,jsc:jec,1:) = fld3d
+          fld%socn(isc:iec,jsc:jec,1:nval) = fld%socn(isc:iec,jsc:jec,1:nval) +&
+               &fld3d
 
        case ("ocean_layer_thickness")
-          fld%hocn(isc:iec,jsc:jec,1:) = fld3d  
+          fld%hocn(isc:iec,jsc:jec,1:nval) = fld%hocn(isc:iec,jsc:jec,1:nval) +&
+               &fld3d  
 
        case ("ocean_upper_level_temperature")
-          fld%tocn(isc:iec,jsc:jec,1) = fld3d(isc:iec,jsc:jec,1)
+          fld%tocn(isc:iec,jsc:jec,1) = fld%tocn(isc:iec,jsc:jec,1) +&
+               &fld3d(isc:iec,jsc:jec,1)
 
        end select
 
@@ -212,7 +227,7 @@ contains
     real(kind=kind_real), allocatable :: fld3d(:,:,:)        
 
     ! Exit if no obs
-    if (locs%nlocs==0) return
+    !if (locs%nlocs==0) return
 
     ! Sanity check
     call check(fld)    
@@ -222,20 +237,23 @@ contains
 
     ! Loop through ufo vars
     do ivar = 1, vars%nv
+       print *,'TL---------------------- var=',trim(vars%fldnames(ivar))
        ! Set number of levels/categories (nval)
        call nlev_from_ufovar(fld, vars, ivar, nval)
 
        ! Allocate GeoVaLs (fields at locations)
        geovals%geovals(ivar)%nval = nval
-       if (allocated(geovals%geovals(ivar)%vals)) then
-          deallocate(geovals%geovals(ivar)%vals)
+       if (.not.(allocated(geovals%geovals(ivar)%vals))) then
+          !if (allocated(geovals%geovals(ivar)%vals)) then
+          !deallocate(geovals%geovals(ivar)%vals)
+          !end if
+          nobs = geovals%geovals(ivar)%nobs ! Number of obs in pe
+          allocate(geovals%geovals(ivar)%vals(nval,nobs))
+          !geovals%geovals(ivar)%vals(:,:)=0.0_kind_real    
+          geovals%lalloc = .true.       
+          geovals%linit = .true.
        end if
-       nobs = geovals%geovals(ivar)%nobs ! Number of obs in pe
-       allocate(geovals%geovals(ivar)%vals(nval,nobs))
-       geovals%geovals(ivar)%vals(:,:)=0.0_kind_real    
-       geovals%lalloc = .true.       
-       geovals%linit = .true.
-
+       
        ! Allocate temporary geoval and 3d field for the current time window
        allocate(gom_window(nval,locs%nlocs))
        allocate(fld3d(isc:iec,jsc:jec,1:nval))
@@ -243,29 +261,29 @@ contains
        ! Extract fld3d from field 
        select case (trim(vars%fldnames(ivar)))
        case ("ice_concentration")
-          fld3d = fld%cicen(isc:iec,jsc:jec,2:)
+          fld3d = fld%cicen(isc:iec,jsc:jec,2:nval+1)
 
        case ("ice_thickness")
-          fld3d = fld%hicen(isc:iec,jsc:jec,1:)
+          fld3d = fld%hicen(isc:iec,jsc:jec,1:nval)
 
-       case ("sea_surface_height_above_geoid","steric_height")
+       case ("sea_surface_height_above_geoid")
           fld3d(isc:iec,jsc:jec,1) = fld%ssh(isc:iec,jsc:jec) 
 
        case ("ocean_potential_temperature")
-          fld3d = fld%tocn(isc:iec,jsc:jec,1:)
+          fld3d = fld%tocn(isc:iec,jsc:jec,1:nval)
 
        case ("ocean_salinity")
-          fld3d = fld%socn(isc:iec,jsc:jec,1:)
+          fld3d = fld%socn(isc:iec,jsc:jec,1:nval)
 
        case ("ocean_layer_thickness")
-          fld3d = fld%hocn(isc:iec,jsc:jec,1:)          
+          fld3d = fld%hocn(isc:iec,jsc:jec,1:nval)          
 
        case ("ocean_upper_level_temperature")
           fld3d(isc:iec,jsc:jec,1) = fld%tocn(isc:iec,jsc:jec,1)                    
 
        end select
 
-       ! Apply interpolation
+       ! Apply forward interpolation: Model ---> Obs
        do ival = 1, nval
           call horiz_interp%apply(fld3d(:,:,ival), gom_window(ival,:))
           ! Fill proper geoval according to time window

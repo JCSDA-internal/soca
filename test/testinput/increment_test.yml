@@ -21,10 +21,11 @@ InterpTest:
     variables:
     - ocean_potential_temperature
     - ocean_salinity
-    - ocean_layer_thickness  
-    - ice_concentration
-    - ice_thickness  
+    - ocean_layer_thickness
     - sea_surface_height_above_geoid
+    - ocean_upper_level_temperature        
+    - ice_concentration
+    - ice_thickness
 Variables:
   variables:  
   - cicen

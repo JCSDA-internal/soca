@@ -60,6 +60,7 @@ contains
 
     self%interph_initialized = .false.
     self%nobs = 0
+    self%noobs = .true.
     self%bumpid = 0
     self%obstype_index = c_key_self
 
