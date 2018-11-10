@@ -1178,11 +1178,16 @@ contains
   subroutine soca_fld2file(fld, filename)
 
     implicit none
-    type(soca_field), intent(in) :: fld    !< Fields
+    
+    type(soca_field),   intent(in) :: fld    !< Fields
     character(len=800), intent(in) :: filename
+    
     integer :: ii
     character(len=1024):: buf
+    character(len=800) :: fname    
 
+    fname = trim(filename)
+    
     call check(fld)
 
     call fms_io_init()
@@ -1191,28 +1196,28 @@ contains
        select case(fld%fldnames(ii))
 
        case ('ssh')
-          call write_data( filename, "ssh", fld%ssh, fld%geom%ocean%G%Domain%mpp_domain)
-          call write_data( filename, "rossby_radius", fld%geom%ocean%rossby_radius, fld%geom%ocean%G%Domain%mpp_domain)
+          call write_data( fname, "ssh", fld%ssh, fld%geom%ocean%G%Domain%mpp_domain)
+          call write_data( fname, "rossby_radius", fld%geom%ocean%rossby_radius, fld%geom%ocean%G%Domain%mpp_domain)
        case ('tocn')
-          call write_data( filename, "temp", fld%tocn, fld%geom%ocean%G%Domain%mpp_domain)
+          call write_data( fname, "temp", fld%tocn, fld%geom%ocean%G%Domain%mpp_domain)
        case ('socn')
-          call write_data( filename, "salt", fld%socn, fld%geom%ocean%G%Domain%mpp_domain)
+          call write_data( fname, "salt", fld%socn, fld%geom%ocean%G%Domain%mpp_domain)
        case ('hocn')
-          call write_data( filename, "h", fld%hocn, fld%geom%ocean%G%Domain%mpp_domain)
+          call write_data( fname, "h", fld%hocn, fld%geom%ocean%G%Domain%mpp_domain)
        case ('hicen')
-          call write_data( filename, "hicen", fld%hicen, fld%geom%ocean%G%Domain%mpp_domain)
+          call write_data( fname, "hicen", fld%hicen, fld%geom%ocean%G%Domain%mpp_domain)
        case ('hsnon')
-          call write_data(filename, "hsnon", fld%hsnon, fld%geom%ocean%G%Domain%mpp_domain)
+          call write_data(fname, "hsnon", fld%hsnon, fld%geom%ocean%G%Domain%mpp_domain)
        case ('cicen')
-          call write_data(filename, "cicen", fld%cicen, fld%geom%ocean%G%Domain%mpp_domain)
+          call write_data(fname, "cicen", fld%cicen, fld%geom%ocean%G%Domain%mpp_domain)
        case ('qicnk')
-          call write_data(filename, "qicnk", fld%qicnk, fld%geom%ocean%G%Domain%mpp_domain)
+          call write_data(fname, "qicnk", fld%qicnk, fld%geom%ocean%G%Domain%mpp_domain)
        case ('sicnk')
-          call write_data(filename, "sicnk", fld%sicnk, fld%geom%ocean%G%Domain%mpp_domain)
+          call write_data(fname, "sicnk", fld%sicnk, fld%geom%ocean%G%Domain%mpp_domain)
        case ('qsnon')
-          call write_data(filename, "qsnon", fld%qsnon, fld%geom%ocean%G%Domain%mpp_domain)
+          call write_data(fname, "qsnon", fld%qsnon, fld%geom%ocean%G%Domain%mpp_domain)
        case ('tsfcn')
-          call write_data(filename, "tsfcn", fld%tsfcn, fld%geom%ocean%G%Domain%mpp_domain)
+          call write_data(fname, "tsfcn", fld%tsfcn, fld%geom%ocean%G%Domain%mpp_domain)
        case default
 
        end select

@@ -12,12 +12,19 @@ module soca_bkgerr_mod
   
   implicit none
 
+  type :: soca_bkgerror_bounds
+     real(kind=kind_real) :: t_min, t_max
+     real(kind=kind_real) :: s_min, s_max
+     real(kind=kind_real) :: ssh_min, ssh_max
+  end type soca_bkgerror_bounds
+  
   !> Fortran derived type to hold configuration D
   type :: soca_bkgerr_config
      type(soca_field),         pointer :: bkg
-     type(soca_field)                  :: std_bkgerr     
+     type(soca_field)                  :: std_bkgerr
+     type(soca_bkgerror_bounds)        :: bounds
      real(kind=kind_real), allocatable :: z(:,:,:)
-     integer              :: isc, iec, jsc, jec       !> Compute domain 
+     integer                           :: isc, iec, jsc, jec
   end type soca_bkgerr_config
 
 #define LISTED_TYPE soca_bkgerr_config
@@ -56,12 +63,21 @@ contains
     real(kind=kind_real) :: dt, ds, t0, s0, p, lon, lat
     real(kind=kind_real) :: detas
     type(datetime) :: vdate
-    
+    character(len=800) :: fname = 'soca_bkgerror.nc'
+        
     nl = size(bkg%hocn,3)
 
-    ! Read background error
+    ! Read background error 
     call create_copy(self%std_bkgerr, bkg)
     call read_file(self%std_bkgerr, c_conf, vdate)
+
+    ! Get bounds from configuration
+    self%bounds%t_min   = config_get_real(c_conf,"t_min")
+    self%bounds%t_max   = config_get_real(c_conf,"t_max")
+    self%bounds%s_min   = config_get_real(c_conf,"s_min")
+    self%bounds%s_max   = config_get_real(c_conf,"s_max")    
+    self%bounds%ssh_min = config_get_real(c_conf,"ssh_min")
+    self%bounds%ssh_max = config_get_real(c_conf,"ssh_max")
     
     ! Store background
     self%bkg => bkg
@@ -70,22 +86,36 @@ contains
     call geom_get_domain_indices(bkg%geom%ocean, "compute", isc, iec, jsc, jec)
     self%isc=isc; self%iec=iec; self%jsc=jsc; self%jec=jec
 
-    ! Initialize local ocean depth from layer thickness  
+    ! Initialize local ocean depth (self%z) from layer thickness  
     call bkg%geom%ocean%thickness2depth(bkg%hocn, self%z)
-    
+
     ! Limit background error
     do i = isc, iec
        do j = jsc, jec
-          self%std_bkgerr%ssh(i,j) = adjusted_std(abs(self%std_bkgerr%ssh(i,j)), 0.1d0, 10.0d0)
+          self%std_bkgerr%ssh(i,j) = adjusted_std(abs(self%std_bkgerr%ssh(i,j)), &
+               &self%bounds%ssh_min,&
+               &self%bounds%ssh_max)
           do k = 1, nl
-             self%std_bkgerr%tocn(i,j,k) = adjusted_std(abs(self%std_bkgerr%tocn(i,j,k)), 0.d0, 10.0d0)
-             self%std_bkgerr%socn(i,j,k) = adjusted_std(abs(self%std_bkgerr%socn(i,j,k)), 0.0d0, 10.1d0)
+             if ( (bkg%hocn(i,j,k).gt.1d-3) ) then 
+                self%std_bkgerr%tocn(i,j,k) = adjusted_std(abs(self%std_bkgerr%tocn(i,j,k)),&
+               &self%bounds%t_min,&
+               &self%bounds%t_max)
+                self%std_bkgerr%socn(i,j,k) = adjusted_std(abs(self%std_bkgerr%socn(i,j,k)),&
+               &self%bounds%s_min,&
+               &self%bounds%s_max)
+             else
+                self%std_bkgerr%tocn(i,j,k) = 0.0
+                self%std_bkgerr%socn(i,j,k) = 0.0
+             end if
           end do
           ! sea-ice
           self%std_bkgerr%cicen(i,j,:) = adjusted_std(abs(self%std_bkgerr%cicen(i,j,:)), 0.01d0, 0.5d0)
           self%std_bkgerr%hicen(i,j,:) = adjusted_std(abs(self%std_bkgerr%hicen(i,j,:)), 10d0, 100.0d0)
        end do
     end do
+
+    ! Save filtered background error  
+    call soca_fld2file(self%std_bkgerr, fname)
     
   end subroutine soca_bkgerr_setup
 

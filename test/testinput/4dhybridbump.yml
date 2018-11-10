@@ -85,6 +85,12 @@ cost_function:
       read_from_file: 2
       date: 2018-04-14T00:00:00Z
       filename: std_bkgerror.nc
+      t_min: 0.01
+      t_max: 5.0
+      s_min: 0.01
+      s_max: 1.0
+      ssh_min: 0.01
+      ssh_max: 0.5      
       variables:                                
         variables:
         - socn

@@ -157,7 +157,6 @@ contains
        ! Allocate temporary geoval and 3d field for the current time window
        allocate(gom_window(nval,locs%nlocs))
        allocate(fld3d(isc:iec,jsc:jec,1:nval))
-       fld3d = 0.0
        
        ! Apply backward interpolation: Obs ---> Model       
        do ival = 1, nval
