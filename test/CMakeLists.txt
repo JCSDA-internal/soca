@@ -7,7 +7,7 @@ list( APPEND soca_test_input
   testinput/increment_test.yml
   testinput/hofx-adt.yml
   testinput/3dvar_test.yml
-  testinput/4dhybridbump.yml  
+  testinput/3dhybridbump.yml  
   testinput/balance.yml
   testinput/bkgerr.yml
   testinput/vertconv.yml
@@ -249,10 +249,10 @@ ecbuild_add_test( TARGET test_soca_3dvar
 		         testoutput/3dvar.test
                   DEPENDS soca_3dvar.x )
 
-ecbuild_add_test( TARGET test_soca_4denvar
+ecbuild_add_test( TARGET test_soca_3dhybrid
                   TYPE SCRIPT
                   COMMAND "./compare.sh"
-                  ARGS "mpirun -np 1 ${CMAKE_BINARY_DIR}/bin/soca_3dvar.x testinput/4dhybridbump.yml"
+                  ARGS "mpirun -np 1 ${CMAKE_BINARY_DIR}/bin/soca_3dvar.x testinput/3dhybridbump.yml"
                   DEPENDS soca_3dvar.x )
 		  
 #ecbuild_add_test( TARGET test_soca_dirac

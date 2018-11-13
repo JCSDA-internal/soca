@@ -161,7 +161,7 @@ contains
 
     integer :: i, j, k
     real(kind=kind_real) :: deta, dxc
-    
+    print *,'=============== in balance mult'
     do i = self%isc, self%iec
        do j = self%jsc, self%jec
           ! Temperature

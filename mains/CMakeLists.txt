@@ -38,3 +38,8 @@ ecbuild_add_executable( TARGET  soca_enspert.x
                         SOURCES GenEnsPertB.cc
                         LIBS    soca
                       )		      
+
+ecbuild_add_executable( TARGET  soca_ens_moments.x
+                        SOURCES EnsMoments.cc
+                        LIBS    soca
+                      )

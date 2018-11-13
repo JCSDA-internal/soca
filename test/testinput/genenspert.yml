@@ -27,7 +27,8 @@ initial:
 Covariance: 
  covariance: SocaError
  pert_T: 5.0
- pert_S: 0.0 
+ pert_S: 0.0
+ pert_SSH: 0.0
  default_seed: 1
  prefix: soca
  datadir: ./bump
@@ -110,7 +111,7 @@ Covariance:
      - socn
      - tocn
      - hocn 
-   Lz: 300.0
+   Lz: 3000.0
    Ltemp: 0.0   
    inputVariables:
      variables:
@@ -121,7 +122,7 @@ Covariance:
      - socn
      - tocn     
 members: 5
-forecast_length: PT1H #P1DT12H
+forecast_length: PT1H
 output: 
  first: PT1H #P1D
  frequency: PT1H

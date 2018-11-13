@@ -75,7 +75,7 @@ namespace soca {
 
   // -----------------------------------------------------------------------------
 
-  void ErrorCovariance::randomize(Increment & dx) const {
+  void ErrorCovariance::doRandomize(Increment & dx) const {
     soca_b_randomize_f90(keyFtnConfig_, dx.fields().toFortran());
   }
 

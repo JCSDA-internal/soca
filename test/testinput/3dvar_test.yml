@@ -150,26 +150,28 @@ cost_function:
           - tocn	  
   Jo:
     ObsTypes:
-#    - ObsType: ADT
-#      ObsData:
-#        ObsDataOut:
-#          obsfile: Data/test_obsout.nc
-#        ObsDataIn:
-#          obsfile: Data/Jason-2-2018-04-15.nc
-#        obsvalue: obs_absolute_dynamic_topography
-#      Covariance:
-#        covariance: diagonal
-#        obserror: "obs_absolute_dynamic_topography_err"
-    - ObsType: InsituTemperature
+    - ObsType: ADT
       ObsData:
         ObsDataOut:
-          obsfile: Data/profile_out.nc
+          obsfile: Data/test_obsout.nc
         ObsDataIn:
-          obsfile: Data/profile_2018-04-15.nc
-        obsvalue: ObsValue #insitu_temperature
+          obsfile: ./Data/Jason-2-2018-04-15-soca.nc
+#        obsvalue: ObsValue #obs_absolute_dynamic_topography
+#      variables:
+#      - obs_absolute_dynamic_topography
       Covariance:
         covariance: diagonal
-        obserror: ObsError #insitu_temperature_err
+        #obserror: ObsError #"obs_absolute_dynamic_topography_err"
+#    - ObsType: InsituTemperature
+#      ObsData:
+#        ObsDataOut:
+#          obsfile: Data/profile_out.nc
+#        ObsDataIn:
+#          obsfile: Data/profile_2018-04-15.nc
+#        obsvalue: ObsValue #insitu_temperature
+#      Covariance:
+#        covariance: diagonal
+#        obserror: ObsError #insitu_temperature_err
 variational:
   iteration:
   - resolution:
