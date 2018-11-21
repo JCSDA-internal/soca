@@ -242,11 +242,15 @@ contains
 
        ! Allocate GeoVaLs (fields at locations)
        geovals%geovals(ivar)%nval = nval
+
        if (.not.(allocated(geovals%geovals(ivar)%vals))) then
           !if (allocated(geovals%geovals(ivar)%vals)) then
           !deallocate(geovals%geovals(ivar)%vals)
           !end if
           nobs = geovals%geovals(ivar)%nobs ! Number of obs in pe
+          print *,"&&&&&&&&&&&&&&&&&    nobs=",nobs
+          !read(*,*)
+          
           allocate(geovals%geovals(ivar)%vals(nval,nobs))
           !geovals%geovals(ivar)%vals(:,:)=0.0_kind_real    
           geovals%lalloc = .true.       

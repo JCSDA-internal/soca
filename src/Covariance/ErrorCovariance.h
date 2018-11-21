@@ -43,7 +43,8 @@ namespace soca {
       void linearize(const State &, const Geometry &);
       void multiply(const Increment &, Increment &) const;
       void inverseMultiply(const Increment &, Increment &) const;
-      void doRandomize(Increment &) const;
+      void randomize(Increment &) const;
+      //void doRandomize(Increment &) const;      
 
    private:
       void print(std::ostream &) const;

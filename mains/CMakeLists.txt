@@ -24,10 +24,10 @@ ecbuild_add_executable( TARGET  soca_3dvar.x
                         LIBS    soca
                       )
 		      
-ecbuild_add_executable( TARGET  soca_parameters.x
-                        SOURCES EstimateParams.cc
-                        LIBS    soca
-                      )
+#ecbuild_add_executable( TARGET  soca_parameters.x
+#                        SOURCES EstimateParams.cc
+#                        LIBS    soca
+#                      )
 
 ecbuild_add_executable( TARGET  soca_staticbinit.x
                         SOURCES StaticBInit.cc
@@ -39,7 +39,7 @@ ecbuild_add_executable( TARGET  soca_enspert.x
                         LIBS    soca
                       )		      
 
-ecbuild_add_executable( TARGET  soca_ens_moments.x
-                        SOURCES EnsMoments.cc
-                        LIBS    soca
-                      )
+#ecbuild_add_executable( TARGET  soca_moments.x
+#                        SOURCES Moments.cc
+#                        LIBS    soca
+#                      )

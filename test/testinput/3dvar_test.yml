@@ -153,25 +153,15 @@ cost_function:
     - ObsType: ADT
       ObsData:
         ObsDataOut:
-          obsfile: Data/test_obsout.nc
+          obsfile: ./Data/Jason-2-2018-04-15-soca-out.nc
         ObsDataIn:
           obsfile: ./Data/Jason-2-2018-04-15-soca.nc
-#        obsvalue: ObsValue #obs_absolute_dynamic_topography
-#      variables:
-#      - obs_absolute_dynamic_topography
       Covariance:
         covariance: diagonal
-        #obserror: ObsError #"obs_absolute_dynamic_topography_err"
-#    - ObsType: InsituTemperature
-#      ObsData:
-#        ObsDataOut:
-#          obsfile: Data/profile_out.nc
-#        ObsDataIn:
-#          obsfile: Data/profile_2018-04-15.nc
-#        obsvalue: ObsValue #insitu_temperature
-#      Covariance:
-#        covariance: diagonal
-#        obserror: ObsError #insitu_temperature_err
+      ObsFilters:
+      - Filter: Background Check
+        variable: obs_absolute_dynamic_topography
+        threshold: 3
 variational:
   iteration:
   - resolution:
@@ -182,39 +172,39 @@ variational:
       varchange: Identity
       version: IdTLM
       tstep: PT1H
-    ninner: 15
+    ninner: 1
     gradient_norm_reduction: 1e-5
     test: 'on'
     prints:
       frequency: PT3H
-  - resolution:
-      num_ice_cat: 5
-      num_ice_lev: 4
-      num_sno_lev: 1
-    linearmodel:
-      varchange: Identity      
-      version: IdTLM
-      tstep: PT1H
-    ninner: 15
-    gradient_norm_reduction: 1e-5
-    test: 'on'
-  - resolution:
-      num_ice_cat: 5
-      num_ice_lev: 4
-      num_sno_lev: 1
-    linearmodel:
-      varchange: Identity      
-      version: IdTLM
-      tstep: PT1H
-    ninner: 15
-    gradient_norm_reduction: 1e-15
-    test: 'on'
-    output:
-      datadir: Data
-      exp: 3dvar
-      type: incr      
+#  - resolution:
+#      num_ice_cat: 5
+#      num_ice_lev: 4
+#      num_sno_lev: 1
+#    linearmodel:
+#      varchange: Identity      
+#      version: IdTLM
+#      tstep: PT1H
+#    ninner: 10
+#    gradient_norm_reduction: 1e-5
+#    test: 'on'
+#  - resolution:
+#      num_ice_cat: 5
+#      num_ice_lev: 4
+#      num_sno_lev: 1
+#    linearmodel:
+#      varchange: Identity      
+#      version: IdTLM
+#      tstep: PT1H
+#    ninner: 10
+#    gradient_norm_reduction: 1e-15
+#    test: 'on'
+#    output:
+#      datadir: Data
+#      exp: 3dvar
+#      type: incr      
 minimizer:
-  algorithm: DRPCG #DRIPCG
+  algorithm: DRIPCG
 output:
   datadir: Data
   exp: 3dvar
