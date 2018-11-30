@@ -95,9 +95,9 @@ contains
     type(ufo_vars),  intent(in)              :: vars
     integer :: ivar
 
-    ! Allocate and set fields to 0
+    ! Allocate
     call soca_field_alloc(self, geom)
-    call zeros(self)
+    !call zeros(self)
 
     ! Associate geometry    
     self%geom => geom
@@ -143,8 +143,8 @@ contains
 
     implicit none
 
-    type (soca_field), intent(out) :: self
-    type(soca_geom),    intent(in) :: geom
+    type (soca_field), intent(inout) :: self
+    type(soca_geom),      intent(in) :: geom
     
     integer :: isd, ied, jsd, jed, nzo, nzi, nzs
     integer :: ncat, km
@@ -328,6 +328,14 @@ contains
     call check_resolution(self, rhs)
 
     !nf = common_vars(self, rhs)
+
+    ! Associate geometry
+    if (.not.associated(self%geom)) self%geom => rhs%geom
+
+    ! Set fields numbers and names
+    self%nf   = rhs%nf
+    if (.not.allocated(self%fldnames)) allocate(self%fldnames(self%nf))
+    self%fldnames(:)=rhs%fldnames(:)
 
     self%cicen = rhs%cicen
     self%hicen = rhs%hicen

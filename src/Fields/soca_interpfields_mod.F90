@@ -289,6 +289,7 @@ contains
              geovals%geovals(ivar)%vals(ival, locs%indx(indx)) = gom_window(ival, indx)
           end do
        end do
+       print *,'db4theia:',minloc(abs(fld3d-gom_window(1,1)))
 
        ! Deallocate temporary arrays
        deallocate(fld3d)

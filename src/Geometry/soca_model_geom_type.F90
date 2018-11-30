@@ -149,7 +149,8 @@ contains
     self%lat = self%G%GeoLatT
     self%mask2d = self%G%mask2dT
     self%cell_area = self%G%areaT
-
+    print *,self%lon(270,150),self%lat(270,150),self%mask2d(270,150)
+    read(*,*)
     ! Setting up mask used to qc out observation that are on land or out
     ! of the compute domain
     self%obsmask(is:ie,js:je) = self%G%mask2dT(is:ie,js:je)        
