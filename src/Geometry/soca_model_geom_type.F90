@@ -329,9 +329,6 @@ contains
        end do
     end do
     
-    print *,'ns=',ns,' ',size(self%shoremask(is:ie,js:je),1)*&
-         &size(self%shoremask(is:ie,js:je),2)
-    
   end subroutine geom_validindex
   
   ! ------------------------------------------------------------------------------

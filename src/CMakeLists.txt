@@ -16,11 +16,6 @@ list( APPEND oops_soca_src_files
 ./State/State.cc
 ./State/State.h
 
-#Variables
-#./Variables/Variables.cc
-#./Variables/Variables.h
-#./Variables/soca_vars_mod.F90
-
 #Increment
 ./Increment/Increment.cc
 ./Increment/Increment.h
@@ -42,10 +37,6 @@ list( APPEND oops_soca_src_files
 ./Covariance/soca_covariance_mod.F90
 
 #LocalizationMatrix
-#./LocalizationMatrix/LocalizationMatrix.cc
-#./LocalizationMatrix/LocalizationMatrix.h
-#./LocalizationMatrix/instantiateLocalizationFactory.h
-#./LocalizationMatrix/soca_localization_matrix.F90
 
 #Run
 ./Run/Run.cc
@@ -54,16 +45,10 @@ list( APPEND oops_soca_src_files
 
 #Utils
 ./Utils/soca_utils.F90
-./Utils/soca_constants.F90
-./Utils/soca_thermo.F90
-./Utils/soca_balanceop.F90
-./Utils/soca_seaice_balanceop.F90
 ./Utils/random_vectors_mod.F90
 ./Utils/random_f.cc
 ./Utils/random_f.h
 ./Utils/soca_mom6.F90
-./Utils/soca_interp.F90
-#./Utils/soca_Butils.F90
 ./Utils/soca_bumpinterp2d_mod.F90
 
 #GetValuesTraj
@@ -72,18 +57,6 @@ list( APPEND oops_soca_src_files
 ./GetValuesTraj/soca_getvaltraj_mod.F90
 
 #Variable transforms
-#./Transforms/Ktc/Ktc.cc
-#./Transforms/Ktc/Ktc.h
-#./Transforms/Ktc/soca_ktc.interface.F90
-#./Transforms/Ktc/soca_ktc_mod.F90
-#./Transforms/Kst/Kst.cc
-#./Transforms/Kst/Kst.h
-#./Transforms/Kst/soca_kst.interface.F90
-#./Transforms/Kst/soca_kst_mod.F90
-#./Transforms/Ksshts/Ksshts.cc
-#./Transforms/Ksshts/Ksshts.h
-#./Transforms/Ksshts/soca_ksshts.interface.F90
-#./Transforms/Ksshts/soca_ksshts_mod.F90
 ./Transforms/instantiateBalanceOpFactory.h
 ./Transforms/Balance/Balance.cc
 ./Transforms/Balance/Balance.h

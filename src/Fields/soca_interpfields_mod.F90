@@ -82,8 +82,6 @@ contains
     call f_comm%allreduce(nlocs, allpes_nlocs, fckit_mpi_sum())
 
     ! Return if allpes_nlocs == 0 ???
-    print *,traj%noobs, traj%nobs
-    print *,'allpes_nlocs=',allpes_nlocs
     
     ! Initialize traj and interp
     if (.not.(traj%interph_initialized)) then
@@ -153,7 +151,7 @@ contains
     do ivar = 1, vars%nv
        ! Set number of levels/categories (nval)
        call nlev_from_ufovar(fld, vars, ivar, nval)
-       print *,'---------------------- var=',trim(vars%fldnames(ivar)), nval       
+
        ! Allocate temporary geoval and 3d field for the current time window
        allocate(gom_window(nval,locs%nlocs))
        allocate(fld3d(isc:iec,jsc:jec,1:nval))
@@ -236,7 +234,6 @@ contains
 
     ! Loop through ufo vars
     do ivar = 1, vars%nv
-       print *,'TL---------------------- var=',trim(vars%fldnames(ivar))
        ! Set number of levels/categories (nval)
        call nlev_from_ufovar(fld, vars, ivar, nval)
 
@@ -248,8 +245,6 @@ contains
           !deallocate(geovals%geovals(ivar)%vals)
           !end if
           nobs = geovals%geovals(ivar)%nobs ! Number of obs in pe
-          print *,"&&&&&&&&&&&&&&&&&    nobs=",nobs
-          !read(*,*)
           
           allocate(geovals%geovals(ivar)%vals(nval,nobs))
           !geovals%geovals(ivar)%vals(:,:)=0.0_kind_real    

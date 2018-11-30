@@ -8,7 +8,7 @@
 module soca_fields
 
   use kinds
-  use soca_mom6,   only: Coupled
+  use soca_mom6
   use MOM, only : MOM_control_struct
   use config_mod
   use soca_geom_mod
@@ -48,7 +48,6 @@ module soca_fields
   ! ------------------------------------------------------------------------------
   !> Fortran derived type to hold fields
   type :: soca_field
-     type (Coupled)                    :: AOGCM
      type(soca_geom), pointer          :: geom           !< MOM6 & SIS2 Geometry
      integer                           :: nf             !< Number of fields
      character(len=128)                :: gridfname      !< Grid file name
@@ -88,7 +87,6 @@ contains
 
   subroutine create_constructor(self, geom, vars)
     ! Construct a field from geom and vars
-    use soca_mom6, only: Coupled, soca_field_init, soca_geom_init
     use ufo_vars_mod
 
     implicit none
@@ -117,7 +115,6 @@ contains
 
   subroutine create_copy(self, rhs_fld)
     ! Construct a field from an other field, lhs_fld=rhs_fld
-    use soca_mom6, only: Coupled, soca_field_init, soca_geom_init
 
     implicit none
     type(soca_field), intent(inout)          :: self
@@ -703,7 +700,6 @@ contains
 
        call fms_io_init()
        do ii = 1, fld%nf
-          print *,'read:',fld%fldnames(ii)
           select case(fld%fldnames(ii))
 
           case ('ssh')
@@ -720,7 +716,6 @@ contains
                   domain=fld%geom%ocean%G%Domain%mpp_domain)
              
           case ('cicen')
-             print *,'cicen:',shape(fld%cicen)
              idr = register_restart_field(sis_restart, ice_filename, 'part_size', fld%cicen(:,:,:), &
                   domain=fld%geom%ocean%G%Domain%mpp_domain)
           case ('hicen')
@@ -757,7 +752,6 @@ contains
           call log%info(buf)
           call datetime_set(sdate, vdate)
        end if
-       print *,'out of read'
        return
     end if
 

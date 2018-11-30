@@ -34,7 +34,7 @@ module soca_mom6
   implicit none
   private
 
-  public :: soca_geom_init, soca_geom_end, Coupled, soca_field_init, soca_field_end, soca_ice_column
+  public :: soca_geom_init, soca_geom_end, soca_ice_column
 
   type soca_ice_column
      integer                        :: ncat ! Number of ice categories
@@ -42,30 +42,30 @@ module soca_mom6
      integer                        :: nzs  ! Number of snow levels
   end type soca_ice_column
 
-  type soca_ocn_data_type
-     real(kind=kind_real),  pointer :: T(:,:,:)
-     real(kind=kind_real),  pointer :: S(:,:,:)
-     real(kind=kind_real),  pointer :: U(:,:,:)
-     real(kind=kind_real),  pointer :: V(:,:,:)
-     real(kind=kind_real),  pointer :: ssh(:,:)
-     real(kind=kind_real),  pointer :: H(:,:,:)
-  end type soca_ocn_Data_Type
-
-  type soca_ice_data_type
-     type(soca_ice_column) :: ice_column
-     real(kind=kind_real),  pointer :: part_size(:,:,:)
-     real(kind=kind_real),  pointer :: h_ice(:,:,:)
-     real(kind=kind_real),  pointer :: enth_ice(:,:,:,:)
-     real(kind=kind_real),  pointer :: sal_ice(:,:,:,:)
-     real(kind=kind_real),  pointer :: h_snow(:,:,:)
-     real(kind=kind_real),  pointer :: enth_snow(:,:,:,:)
-     real(kind=kind_real),  pointer :: T_skin(:,:,:)
-  end type soca_ice_data_type
-
-  type Coupled
-     type (soca_ice_data_type)     :: Ice
-     type (soca_ocn_data_type)     :: Ocn
-  end type Coupled
+!!$  type soca_ocn_data_type
+!!$     real(kind=kind_real),  pointer :: T(:,:,:)
+!!$     real(kind=kind_real),  pointer :: S(:,:,:)
+!!$     real(kind=kind_real),  pointer :: U(:,:,:)
+!!$     real(kind=kind_real),  pointer :: V(:,:,:)
+!!$     real(kind=kind_real),  pointer :: ssh(:,:)
+!!$     real(kind=kind_real),  pointer :: H(:,:,:)
+!!$  end type soca_ocn_Data_Type
+!!$
+!!$  type soca_ice_data_type
+!!$     type(soca_ice_column) :: ice_column
+!!$     real(kind=kind_real),  pointer :: part_size(:,:,:)
+!!$     real(kind=kind_real),  pointer :: h_ice(:,:,:)
+!!$     real(kind=kind_real),  pointer :: enth_ice(:,:,:,:)
+!!$     real(kind=kind_real),  pointer :: sal_ice(:,:,:,:)
+!!$     real(kind=kind_real),  pointer :: h_snow(:,:,:)
+!!$     real(kind=kind_real),  pointer :: enth_snow(:,:,:,:)
+!!$     real(kind=kind_real),  pointer :: T_skin(:,:,:)
+!!$  end type soca_ice_data_type
+!!$
+!!$  type Coupled
+!!$     type (soca_ice_data_type)     :: Ice
+!!$     type (soca_ocn_data_type)     :: Ocn
+!!$  end type Coupled
 
 contains
 
@@ -171,76 +171,5 @@ contains
     nullify(GV)
 
   end subroutine soca_geom_end
-
-  ! ------------------------------------------------------------------------------
-
-  subroutine soca_field_init(aogcm, G, GV, ice_column)
-
-    implicit none
-
-    type (Coupled),                     intent(out) :: aogcm
-    type(ocean_grid_type), intent(inout)           :: G
-    type(verticalGrid_type), pointer, intent(inout):: GV
-    type(soca_ice_column),              intent(in) :: ice_column
-
-    integer :: is, ie, js, je, Isq, Ieq, Jsq, Jeq, nzo, nzi, nzs
-    integer :: isd, ied, jsd, jed, IsdB, IedB, JsdB, JedB
-    integer :: ncat, km
-
-    ! Allocate arrays on data domain
-    ! Note: Compute domain excludes halo (is, ie, js, je)
-    !       Data domain includes halo (isd, ied, jsd, jed)
-    is   = G%isc  ; ie   = G%iec  ; js   = G%jsc  ; je   = G%jec ; nzo = G%ke
-    Isq  = G%IscB ; Ieq  = G%IecB ; Jsq  = G%JscB ; Jeq  = G%JecB
-    isd  = G%isd  ; ied  = G%ied  ; jsd  = G%jsd  ; jed  = G%jed
-    IsdB = G%IsdB ; IedB = G%IedB ; JsdB = G%JsdB ; JedB = G%JedB
-
-    ! TODO: Get from config
-    ncat = ice_column%ncat
-    nzi = ice_column%nzi
-    nzs = ice_column%nzs
-
-    ! Allocate ocean state
-    allocate(aogcm%Ocn%T(isd:ied,jsd:jed,nzo))   ; aogcm%Ocn%T(:,:,:) = 0.0_kind_real
-    allocate(aogcm%Ocn%S(isd:ied,jsd:jed,nzo))   ; aogcm%Ocn%S(:,:,:) = 0.0_kind_real
-    allocate(aogcm%Ocn%ssh(isd:ied,jsd:jed))   ; aogcm%Ocn%ssh(:,:) = 0.0_kind_real
-    allocate(aogcm%Ocn%H(isd:ied,jsd:jed,nzo))   ; aogcm%Ocn%H(:,:,:) = 0.0_kind_real
-
-    ! Allocate sea-ice state
-    km = ncat + 1
-    allocate(aogcm%Ice%part_size(isd:ied, jsd:jed, km)) ; aogcm%Ice%part_size(:,:,:) = 0.0_kind_real
-    allocate(aogcm%Ice%h_ice(isd:ied, jsd:jed, ncat)) ; aogcm%Ice%h_ice(:,:,:) = 0.0_kind_real
-    allocate(aogcm%Ice%h_snow(isd:ied, jsd:jed, ncat)) ; aogcm%Ice%h_snow(:,:,:) = 0.0_kind_real
-    allocate(aogcm%Ice%enth_ice(isd:ied, jsd:jed, ncat, nzi)) ; aogcm%Ice%enth_ice(:,:,:,:) = 0.0_kind_real
-    allocate(aogcm%Ice%enth_snow(isd:ied, jsd:jed, ncat, nzs)) ; aogcm%Ice%enth_snow(:,:,:,:) = 0.0_kind_real
-    allocate(aogcm%Ice%sal_ice(isd:ied, jsd:jed, ncat, nzi)) ; aogcm%Ice%sal_ice(:,:,:,:) = 0.0_kind_real
-    allocate(aogcm%Ice%T_skin(isd:ied, jsd:jed, ncat)) ; aogcm%Ice%T_skin(:,:,:) = 0.0_kind_real
-
-  end subroutine soca_field_init
-
-  ! ------------------------------------------------------------------------------
-
-  subroutine soca_field_end(aogcm)
-
-    implicit none
-
-    type (Coupled),                     intent(inout) :: aogcm
-
-    ! Deallocate ocean state
-    deallocate(aogcm%Ocn%T)
-    deallocate(aogcm%Ocn%S)
-    deallocate(aogcm%Ocn%ssh)
-    deallocate(aogcm%Ocn%H)
-
-
-    deallocate(aogcm%Ice%part_size)
-    deallocate(aogcm%Ice%h_ice)
-    deallocate(aogcm%Ice%h_snow)
-    deallocate(aogcm%Ice%enth_ice)
-    deallocate(aogcm%Ice%enth_snow)
-    deallocate(aogcm%Ice%sal_ice)
-    deallocate(aogcm%Ice%T_skin)
-
-  end subroutine soca_field_end
 
 end module soca_mom6
