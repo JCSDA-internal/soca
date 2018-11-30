@@ -97,7 +97,7 @@ contains
 
     self%geom => geom
     self%nf   = vars%nv
-    call soca_field_alloc(self)
+    call soca_field_alloc(self, geom)
 
     call zeros(self)
 
@@ -124,7 +124,7 @@ contains
     self%geom => rhs_fld%geom
     self%nf   = rhs_fld%nf
 
-    call soca_field_alloc(self)
+    call soca_field_alloc(self, rhs_fld%geom)
     call copy(self,rhs_fld)
 
     if (self%nf>11) then
@@ -139,25 +139,26 @@ contains
 
   ! ------------------------------------------------------------------------------
   
-  subroutine soca_field_alloc(self)
+  subroutine soca_field_alloc(self, geom)
 
     implicit none
 
     type (soca_field), intent(out) :: self
-
+    type(soca_geom),    intent(in) :: geom
+    
     integer :: isd, ied, jsd, jed, nzo, nzi, nzs
     integer :: ncat, km
     character(7) :: domain_type
 
     ! Short cut to ice geometry
-    ncat = self%geom%ocean%ice_column%ncat
-    nzi = self%geom%ocean%ice_column%nzi
-    nzs = self%geom%ocean%ice_column%nzs
-    nzo = self%geom%ocean%nzo
+    ncat = geom%ocean%ice_column%ncat
+    nzi = geom%ocean%ice_column%nzi
+    nzs = geom%ocean%ice_column%nzs
+    nzo = geom%ocean%nzo
     
     ! Indices for data domain (with halo)
     domain_type = "data"
-    call geom_get_domain_indices(self%geom%ocean, domain_type, isd, ied, jsd, jed)
+    call geom_get_domain_indices(geom%ocean, domain_type, isd, ied, jsd, jed)
 
     ! Allocate ocean state
     if (.not.allocated(self%tocn)) allocate(self%tocn(isd:ied,jsd:jed,nzo))
