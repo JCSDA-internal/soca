@@ -115,13 +115,13 @@ contains
     
     ! Initialize fms
     call fms_init()
-    
+
     ! Initialize fms io
     call fms_io_init()
 
     ! Parse grid inputs
     call Get_MOM_Input(param_file, dirs)
-
+    
     ! Domain decomposition/Inintialize mpp domains
     call MOM_domains_init(G%domain, param_file)
     call hor_index_init(G%Domain, HI, param_file, local_indexing=.not.global_indexing)
