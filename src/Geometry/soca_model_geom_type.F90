@@ -128,7 +128,7 @@ contains
     !Isq  = self%G%IscB ; Ieq  = self%G%IecB ; Jsq  = self%G%JscB ; Jeq  = self%G%JecB    
     !IsdB = self%G%IsdB ; IedB = self%G%IedB ; JsdB = self%G%JsdB ; JedB = self%G%JedB
    
-    nxny = shape( self%G%GeoLonT )
+    nxny = shape( self%G%GeoLonT(is:ie,js:je) )
     nx = nxny(1)
     ny = nxny(2)
 
@@ -138,12 +138,12 @@ contains
     self%ny = ny
 
     ! Can't point to data structure, so allocating ...
-    allocate(self%lon(isd:ied,jsd:jed))
-    allocate(self%lat(isd:ied,jsd:jed))    
-    allocate(self%mask2d(isd:ied,jsd:jed))
-    allocate(self%obsmask(isd:ied,jsd:jed))    
-    allocate(self%cell_area(isd:ied,jsd:jed))
-    allocate(self%rossby_radius(isd:ied,jsd:jed))
+    allocate(self%lon(is:ie,js:je))
+    allocate(self%lat(is:ie,js:je))
+    allocate(self%mask2d(is:ie,js:je))
+    allocate(self%obsmask(is:ie,js:je))    
+    allocate(self%cell_area(is:ie,js:je))
+    allocate(self%rossby_radius(is:ie,js:je))
     
     self%lon = self%G%GeoLonT
     self%lat = self%G%GeoLatT
@@ -152,7 +152,7 @@ contains
 
     ! Setting up mask used to qc out observation that are on land or out
     ! of the compute domain
-    self%obsmask = self%G%mask2dT        
+    self%obsmask(is:ie,js:je) = self%G%mask2dT(is:ie,js:je)        
 
 !!$    self%obsmask(isd:is-1,:)=0.0
 !!$    self%obsmask(ie+1:,:)=0.0
@@ -260,8 +260,8 @@ contains
        end do
     end do
 
-    call fms_io_init()
-    call write_data( geom_output_file, "rossby_radius", self%rossby_radius*self%mask2d, self%G%Domain%mpp_domain)    
+    !call fms_io_init()
+    !call write_data( geom_output_file, "rossby_radius", self%rossby_radius*self%mask2d, self%G%Domain%mpp_domain)    
     !call write_data( geom_output_file, "mask2d", self%mask2d, self%G%Domain%mpp_domain)
 !!$    print *,'rosbby:',self%rossby_radius
 !!$    print *,'============================================'
@@ -269,7 +269,7 @@ contains
 !!$    call read_data(geom_output_file,"rossby_radius",self%rossby_radius,domain=self%G%Domain%mpp_domain)
 !!$    print *,'rosbby:',self%rossby_radius
 !!$    read(*,*)
-    call fms_io_exit()
+    !call fms_io_exit()
     
   end subroutine geom_rossby_radius
 
