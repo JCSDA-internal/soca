@@ -95,15 +95,15 @@ contains
     type(ufo_vars),  intent(in)              :: vars
     integer :: ivar
 
-    self%geom => geom
-    self%nf   = vars%nv
+    ! Allocate and set fields to 0
     call soca_field_alloc(self, geom)
-
     call zeros(self)
 
-    if (self%nf>11) then
-       call abor1_ftn ("soca_fields:create error number of fields")
-    endif
+    ! Associate geometry    
+    self%geom => geom
+
+    ! Set fields numbers and names
+    self%nf   = vars%nv    
     allocate(self%fldnames(self%nf))
     self%fldnames(:)=vars%fldnames(:)
 
@@ -121,15 +121,15 @@ contains
     type(soca_field), intent(in)          :: rhs_fld
     integer :: ivar!, unit, nxny(2)
 
-    self%geom => rhs_fld%geom
-    self%nf   = rhs_fld%nf
-
+    ! Allocate and copy fields
     call soca_field_alloc(self, rhs_fld%geom)
     call copy(self,rhs_fld)
 
-    if (self%nf>11) then
-       call abor1_ftn ("soca_fields:create_copy error number of fields")
-    endif
+    ! Associate geometry
+    self%geom => rhs_fld%geom
+
+    ! Set fields numbers and names
+    self%nf   = rhs_fld%nf
     allocate(self%fldnames(self%nf))
     self%fldnames(:)=rhs_fld%fldnames(:)
 
