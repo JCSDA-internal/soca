@@ -84,12 +84,14 @@ contains
     allocate(tmp_lonmod(ns), tmp_latmod(ns), tmp_maskmod(ni, nj))
     tmp_lonmod(:) = reshape(mod_lon, (/ns/))
     tmp_latmod(:) = reshape(mod_lat, (/ns/))
+    tmp_maskmod = reshape(tmp_maskmod, (/ns, 1/)) ! Assuming no mask!
     tmp_maskmod = .true.
-    !where (mod_mask == 0.0)
-    !   tmp_maskmod = .false.
-    !end where
-    tmp_maskmod = reshape(tmp_maskmod, (/ns, 1/))
-    
+
+    ! Rotate longitudes
+    where (tmp_lonmod < -180.0_kind_real)
+       tmp_lonmod = tmp_lonmod + 360.0_kind_real
+    end where
+
     !Calculate interpolation weight using BUMP
     call self%bump%setup_online( ns, 1, 1, 1,&
          &tmp_lonmod, tmp_latmod, area, vunit, tmp_maskmod(:,1),&
@@ -128,9 +130,10 @@ contains
     ns = size(fld,1)*size(fld,2)
 
     tmp_fld = fld
-    tmp_fld = reshape(tmp_fld,(/ns, 1/))
+    !tmp_fld = reshape(tmp_fld,(/ns, 1/))
     tmp_obs(:,1) = obs
-    call self%bump%apply_obsop(tmp_fld,tmp_obs)
+    !call self%bump%apply_obsop(tmp_fld,tmp_obs)
+    call self%bump%apply_obsop(fld,tmp_obs)
     obs = tmp_obs(:,1)
 
     deallocate(tmp_fld, tmp_obs)

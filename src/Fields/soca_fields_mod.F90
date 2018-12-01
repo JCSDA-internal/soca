@@ -123,7 +123,7 @@ contains
 
     ! Allocate and copy fields
     call soca_field_alloc(self, rhs_fld%geom)
-    call copy(self,rhs_fld)
+    !call copy(self,rhs_fld)
 
     ! Associate geometry
     self%geom => rhs_fld%geom

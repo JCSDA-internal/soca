@@ -26,19 +26,40 @@ LinearVariableChangeTests:
   ssh_max: 0.5      
   variables:                                
     variables:
+    - cicen
+    - hicen
+    - hsnon
+    - tsfcn
+    - qsnon
+    - sicnk
+    - qicnk
     - socn
     - tocn
     - ssh
-    - hocn
+    - hocn      
   inputVariables:
     variables:
+    - cicen
+    - hicen
+    - hsnon
+    - tsfcn
+    - qsnon
+    - sicnk
+    - qicnk
     - socn
     - tocn
     - ssh
-    - hocn  
+    - hocn      
   outputVariables:
     variables:
+    - cicen
+    - hicen
+    - hsnon
+    - tsfcn
+    - qsnon
+    - sicnk
+    - qicnk
     - socn
     - tocn
     - ssh
-    - hocn  
+    - hocn      

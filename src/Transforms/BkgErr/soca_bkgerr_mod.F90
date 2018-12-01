@@ -68,9 +68,11 @@ contains
     nl = size(bkg%hocn,3)
 
     ! Read background error 
+print *,'crap ---------------------'
     call create_copy(self%std_bkgerr, bkg)
+print *,'crap ---------------------'
     call read_file(self%std_bkgerr, c_conf, vdate)
-
+print *,'crap ---------------------'
     ! Get bounds from configuration
     self%bounds%t_min   = config_get_real(c_conf,"t_min")
     self%bounds%t_max   = config_get_real(c_conf,"t_max")

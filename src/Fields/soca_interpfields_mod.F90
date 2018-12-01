@@ -65,7 +65,8 @@ contains
     type(ioda_locs),                  intent(in) :: locs
     type(ufo_vars),                   intent(in) :: vars    
     type(ufo_geovals),             intent(inout) :: geovals
-    type(soca_getvaltraj), target, intent(inout) :: traj    
+!    type(soca_getvaltraj), target, intent(inout) :: traj    
+    type(soca_getvaltraj), intent(inout) :: traj    
 
     integer, save :: bumpid = 1000
     type(fckit_mpi_comm) :: f_comm
@@ -82,7 +83,7 @@ contains
     call f_comm%allreduce(nlocs, allpes_nlocs, fckit_mpi_sum())
 
     ! Return if allpes_nlocs == 0 ???
-    
+
     ! Initialize traj and interp
     if (.not.(traj%interph_initialized)) then
        traj%bumpid = bumpid
@@ -155,16 +156,17 @@ contains
        ! Allocate temporary geoval and 3d field for the current time window
        allocate(gom_window(nval,locs%nlocs))
        allocate(fld3d(isc:iec,jsc:jec,1:nval))
-       
+       fld3d = 0.0_kind_real
+
        ! Apply backward interpolation: Obs ---> Model       
        do ival = 1, nval
           ! Fill proper geoval according to time window
           do indx = 1, locs%nlocs
              gom_window(ival, indx) = geovals%geovals(ivar)%vals(ival, locs%indx(indx))
           end do          
-          call horiz_interp_p%applyad(fld3d(:,:,ival), gom_window(ival,:))
+          call horiz_interp_p%applyad(fld3d(:,:,ival), gom_window(ival,1:locs%nlocs))
        end do
-       
+
        ! Copy fld3d into field
        select case (trim(vars%fldnames(ivar)))
        case ("ice_concentration")
@@ -222,7 +224,7 @@ contains
     integer :: isc, iec, jsc, jec
     real(kind=kind_real), allocatable :: gom_window(:,:)
     real(kind=kind_real), allocatable :: fld3d(:,:,:)        
-
+    integer :: iii(3), bumpid=1111
     ! Exit if no obs
     !if (locs%nlocs==0) return
 
@@ -283,13 +285,13 @@ contains
 
        ! Apply forward interpolation: Model ---> Obs
        do ival = 1, nval
-          call horiz_interp%apply(fld3d(:,:,ival), gom_window(ival,:))
+          call horiz_interp%apply(fld3d(isc:iec,jsc:jec,ival), gom_window(ival,:))
+          !gom_window(ival,1)=fld3d(270,150,1)
           ! Fill proper geoval according to time window
           do indx = 1, locs%nlocs
              geovals%geovals(ivar)%vals(ival, locs%indx(indx)) = gom_window(ival, indx)
           end do
        end do
-       print *,'db4theia:',minloc(abs(fld3d-gom_window(1,1)))
 
        ! Deallocate temporary arrays
        deallocate(fld3d)
