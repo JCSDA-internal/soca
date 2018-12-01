@@ -15,16 +15,42 @@ LinearVariableChangeTests:
   testinverse: 0  
   variables:                                
     variables:
+    - cicen
+    - hicen
+    - hsnon
+    - tsfcn
+    - qsnon
+    - sicnk
+    - qicnk
     - socn
     - tocn
-    - hocn      
+    - ssh
+    - hocn  
   Lz: 1000.0
   Ltemp: 1.0	
   inputVariables:
     variables:
+    - cicen
+    - hicen
+    - hsnon
+    - tsfcn
+    - qsnon
+    - sicnk
+    - qicnk
     - socn
     - tocn
+    - ssh
+    - hocn  
   outputVariables:
     variables:
+    - cicen
+    - hicen
+    - hsnon
+    - tsfcn
+    - qsnon
+    - sicnk
+    - qicnk
     - socn
     - tocn
+    - ssh
+    - hocn  
