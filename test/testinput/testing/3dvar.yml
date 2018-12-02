@@ -234,7 +234,7 @@ variational:
       varchange: Identity
       version: IdTLM
       tstep: PT1H
-    ninner: 1
+    ninner: 15
     gradient_norm_reduction: 1e-15
     test: 'on'
     prints:
@@ -248,7 +248,18 @@ variational:
       varchange: Identity      
       version: IdTLM
       tstep: PT1H
-    ninner: 1
+    ninner: 15
+    gradient_norm_reduction: 1e-15
+    test: 'on'
+  - resolution:
+      num_ice_cat: 5
+      num_ice_lev: 4
+      num_sno_lev: 1
+    linearmodel:
+      varchange: Identity      
+      version: IdTLM
+      tstep: PT1H
+    ninner: 15
     gradient_norm_reduction: 1e-15
     test: 'on'
     output:
