@@ -113,62 +113,42 @@ contains
     class(soca_model_geom), intent(inout)  :: self
     integer                       :: nxny(2), nx, ny
 
-    integer :: is, ie, js, je, Isq, Ieq, Jsq, Jeq, nzo, nzi, nzs
-    integer :: isd, ied, jsd, jed, IsdB, IedB, JsdB, JedB
+    integer :: is, ie, js, je, nzo, nzi, nzs
 
-    ! Allocate arrays on data domain
-    ! Note: Compute domain excludes halo (is, ie, js, je)
-    !       Data domain includes halo (isd, ied, jsd, jed)
-    ! Compute
-    is   = self%G%isc  ; ie   = self%G%iec  ; js   = self%G%jsc  ; je   = self%G%jec ; nzo = self%G%ke
 
-    ! Data
-    isd  = self%G%isd  ; ied  = self%G%ied  ; jsd  = self%G%jsd  ; jed  = self%G%jed
-
-    !Isq  = self%G%IscB ; Ieq  = self%G%IecB ; Jsq  = self%G%JscB ; Jeq  = self%G%JecB    
-    !IsdB = self%G%IsdB ; IedB = self%G%IedB ; JsdB = self%G%JsdB ; JedB = self%G%JedB
-   
-    nxny = shape( self%G%GeoLonT )
-    nx = nxny(1)
-    ny = nxny(2)
+    ! Get indices of compute domain
+    is   = self%G%isc  ; ie   = self%G%iec
+    js   = self%G%jsc  ; je   = self%G%jec ; nzo = self%G%ke
 
     ! Extract geometry of interest from model's data structure.
     ! Common to ocean & sea-ice
+    nxny = shape( self%G%GeoLonT(is:ie,js:je) )
+    nx = nxny(1)
+    ny = nxny(2)
     self%nx = nx
     self%ny = ny
 
-    ! Can't point to data structure, so allocating ...
-    allocate(self%lon(isd:ied,jsd:jed))
-    allocate(self%lat(isd:ied,jsd:jed))    
-    allocate(self%mask2d(isd:ied,jsd:jed))
-    allocate(self%obsmask(isd:ied,jsd:jed))    
-    allocate(self%cell_area(isd:ied,jsd:jed))
-    allocate(self%rossby_radius(isd:ied,jsd:jed))
+    ! Allocate arrays on compute domain
+    allocate(self%lon(is:ie,js:je))
+    allocate(self%lat(is:ie,js:je))
+    allocate(self%mask2d(is:ie,js:je))
+    allocate(self%obsmask(is:ie,js:je))    
+    allocate(self%cell_area(is:ie,js:je))
+    allocate(self%rossby_radius(is:ie,js:je))
     
-    self%lon = self%G%GeoLonT
-    self%lat = self%G%GeoLatT
-    self%mask2d = self%G%mask2dT
-    self%cell_area = self%G%areaT
+    self%lon(is:ie,js:je) = self%G%GeoLonT(is:ie,js:je)
+    self%lat(is:ie,js:je) = self%G%GeoLatT(is:ie,js:je)
+    self%mask2d(is:ie,js:je) = self%G%mask2dT(is:ie,js:je)
+    self%cell_area(is:ie,js:je) = self%G%areaT(is:ie,js:je)
 
     ! Setting up mask used to qc out observation that are on land or out
-    ! of the compute domain
-    self%obsmask = self%G%mask2dT        
+    ! of the compute domain: STILL NEEDED?
+    self%obsmask(is:ie,js:je) = self%G%mask2dT(is:ie,js:je)        
 
-!!$    self%obsmask(isd:is-1,:)=0.0
-!!$    self%obsmask(ie+1:,:)=0.0
-!!$    self%obsmask(:,jsd:js-1)=0.0
-!!$    self%obsmask(:,je+1:)=0.0    
-    
-!!$    self%obsmask(isd:is,:)=0.0
-!!$    self%obsmask(ie:,:)=0.0
-!!$    self%obsmask(:,jsd:js)=0.0
-!!$    self%obsmask(:,je:)=0.0    
-
-    ! Ocean
+    ! Ocean levels
     self%nzo = self%G%ke
-    !self%z => self%GV%sLayer
 
-    ! Sea-ice
+    ! Sea-ice categories and levels
     self%ncat = self%ice_column%ncat
     self%nzi = self%ice_column%nzi
     self%nzs = self%ice_column%nzs
@@ -260,8 +240,8 @@ contains
        end do
     end do
 
-    call fms_io_init()
-    call write_data( geom_output_file, "rossby_radius", self%rossby_radius*self%mask2d, self%G%Domain%mpp_domain)    
+    !call fms_io_init()
+    !call write_data( geom_output_file, "rossby_radius", self%rossby_radius*self%mask2d, self%G%Domain%mpp_domain)    
     !call write_data( geom_output_file, "mask2d", self%mask2d, self%G%Domain%mpp_domain)
 !!$    print *,'rosbby:',self%rossby_radius
 !!$    print *,'============================================'
@@ -269,7 +249,7 @@ contains
 !!$    call read_data(geom_output_file,"rossby_radius",self%rossby_radius,domain=self%G%Domain%mpp_domain)
 !!$    print *,'rosbby:',self%rossby_radius
 !!$    read(*,*)
-    call fms_io_exit()
+    !call fms_io_exit()
     
   end subroutine geom_rossby_radius
 
@@ -328,9 +308,6 @@ contains
           end if
        end do
     end do
-    
-    print *,'ns=',ns,' ',size(self%shoremask(is:ie,js:je),1)*&
-         &size(self%shoremask(is:ie,js:je),2)
     
   end subroutine geom_validindex
   

@@ -8,7 +8,7 @@
 module soca_fields
 
   use kinds
-  use soca_mom6,   only: Coupled
+  use soca_mom6
   use MOM, only : MOM_control_struct
   use config_mod
   use soca_geom_mod
@@ -48,26 +48,25 @@ module soca_fields
   ! ------------------------------------------------------------------------------
   !> Fortran derived type to hold fields
   type :: soca_field
-     type (Coupled)                    :: AOGCM
-     type(soca_geom), pointer          :: geom                  !< MOM6 & SIS2 Geometry
-     integer                           :: nf                    !< Number of fields
-     character(len=128)                :: gridfname             !< Grid file name
-     character(len=128)                :: cicefname             !< Fields file name for cice
-     character(len=128)                :: momfname              !< Fields file name for mom
-     real(kind=kind_real), pointer     :: cicen(:,:,:) => NULL()   !< Sea-ice fraction                 (nx,ny,ncat+1)
-     real(kind=kind_real), pointer     :: hicen(:,:,:) => NULL()   !< Sea-ice mass/m2                  (nx,ny,ncat) [kg/m2]
-     real(kind=kind_real), pointer     :: vicen(:,:,:) => NULL()   !< Sea-ice volume                   (nx,ny,ncat)
-     real(kind=kind_real), pointer     :: hsnon(:,:,:) => NULL()   !< Snow depth over sea-ice          (nx,ny,ncat)
-     real(kind=kind_real), pointer     :: vsnon(:,:,:) => NULL()   !< Snow volume over sea-ice         (nx,ny,ncat)
-     real(kind=kind_real), pointer     :: tsfcn(:,:,:) => NULL()   !< Temperature over sea-ice or snow (nx,ny,ncat)
-     real(kind=kind_real), pointer     :: qsnon(:,:,:,:) => NULL() !< Enthalpy of snow                 (nx,ny,ncat)
-     real(kind=kind_real), pointer     :: sicnk(:,:,:,:) => NULL() !< Salin_wity of sea-ice            (nx,ny,ncat,nzi)
-     real(kind=kind_real), pointer     :: socn(:,:,:) => NULL()    !< Ocean Practical Salinity         (nx,ny,nzo)
-     real(kind=kind_real), pointer     :: qicnk(:,:,:,:) => NULL() !< Enthalpy of sea-ice              (nx,ny,ncat,nzi)
-     real(kind=kind_real), pointer     :: tocn(:,:,:) => NULL()    !< Ocean Potential Temperature, ref to p=0      (nx,ny,nzo)
-     real(kind=kind_real), pointer     :: ssh(:,:) => NULL()       !< Sea-surface height (nx,ny,nzo)
-     real(kind=kind_real), pointer     :: hocn(:,:,:) => NULL()    !< Layer thickness (nx,ny,nzo)
-     character(len=5), allocatable     :: fldnames(:)              !< Variable identifiers             (nf)
+     type(soca_geom), pointer          :: geom           !< MOM6 & SIS2 Geometry
+     integer                           :: nf             !< Number of fields
+     character(len=128)                :: gridfname      !< Grid file name
+     character(len=128)                :: cicefname      !< Fields file name for cice
+     character(len=128)                :: momfname       !< Fields file name for mom
+     real(kind=kind_real), allocatable :: cicen(:,:,:)   !< Sea-ice fraction                 (nx,ny,ncat+1)
+     real(kind=kind_real), allocatable :: hicen(:,:,:)   !< Sea-ice mass/m2                  (nx,ny,ncat) [kg/m2]
+     real(kind=kind_real), allocatable :: vicen(:,:,:)   !< Sea-ice volume                   (nx,ny,ncat)
+     real(kind=kind_real), allocatable :: hsnon(:,:,:)   !< Snow depth over sea-ice          (nx,ny,ncat)
+     real(kind=kind_real), allocatable :: vsnon(:,:,:)   !< Snow volume over sea-ice         (nx,ny,ncat)
+     real(kind=kind_real), allocatable :: tsfcn(:,:,:)   !< Temperature over sea-ice or snow (nx,ny,ncat)
+     real(kind=kind_real), allocatable :: qsnon(:,:,:,:) !< Enthalpy of snow                 (nx,ny,ncat)
+     real(kind=kind_real), allocatable :: sicnk(:,:,:,:) !< Salin_wity of sea-ice            (nx,ny,ncat,nzi)
+     real(kind=kind_real), allocatable :: socn(:,:,:)    !< Ocean Practical Salinity         (nx,ny,nzo)
+     real(kind=kind_real), allocatable :: qicnk(:,:,:,:) !< Enthalpy of sea-ice              (nx,ny,ncat,nzi)
+     real(kind=kind_real), allocatable :: tocn(:,:,:)    !< Ocean Potential Temperature, ref to p=0      (nx,ny,nzo)
+     real(kind=kind_real), allocatable :: ssh(:,:)       !< Sea-surface height (nx,ny,nzo)
+     real(kind=kind_real), allocatable :: hocn(:,:,:)    !< Layer thickness (nx,ny,nzo)
+     character(len=5),     allocatable :: fldnames(:)    !< Variable identifiers             (nf)
   end type soca_field
 
 #define LISTED_TYPE soca_field
@@ -88,7 +87,6 @@ contains
 
   subroutine create_constructor(self, geom, vars)
     ! Construct a field from geom and vars
-    use soca_mom6, only: Coupled, soca_field_init, soca_geom_init
     use ufo_vars_mod
 
     implicit none
@@ -97,32 +95,15 @@ contains
     type(ufo_vars),  intent(in)              :: vars
     integer :: ivar
 
+    ! Allocate
+    call soca_field_alloc(self, geom)
+    !call zeros(self)
+
+    ! Associate geometry    
     self%geom => geom
-    self%nf   = vars%nv
-    call soca_field_init(self%AOGCM, geom%ocean%G, geom%ocean%GV, geom%ocean%ice_column)
 
-    ! Assign convenience pointers
-    !Ocean internal state
-    self%tocn => self%AOGCM%Ocn%T
-    self%socn => self%AOGCM%Ocn%S
-    self%hocn => self%AOGCM%Ocn%H
-    self%ssh => self%AOGCM%Ocn%ssh
-    self%ssh = self%ssh*self%geom%ocean%mask2d
-
-    !Sea-ice internal state
-    self%cicen => self%AOGCM%Ice%part_size
-    self%hicen => self%AOGCM%Ice%h_ice
-    self%hsnon => self%AOGCM%Ice%h_snow
-    self%tsfcn => self%AOGCM%Ice%T_skin
-    self%sicnk => self%AOGCM%Ice%sal_ice
-    self%qicnk => self%AOGCM%Ice%enth_ice
-    self%qsnon => self%AOGCM%Ice%enth_snow
-
-    call zeros(self)
-
-    if (self%nf>11) then
-       call abor1_ftn ("soca_fields:create error number of fields")
-    endif
+    ! Set fields numbers and names
+    self%nf   = vars%nv    
     allocate(self%fldnames(self%nf))
     self%fldnames(:)=vars%fldnames(:)
 
@@ -134,38 +115,21 @@ contains
 
   subroutine create_copy(self, rhs_fld)
     ! Construct a field from an other field, lhs_fld=rhs_fld
-    use soca_mom6, only: Coupled, soca_field_init, soca_geom_init
 
     implicit none
     type(soca_field), intent(inout)          :: self
     type(soca_field), intent(in)          :: rhs_fld
     integer :: ivar!, unit, nxny(2)
 
+    ! Allocate and copy fields
+    call soca_field_alloc(self, rhs_fld%geom)
+    !call copy(self,rhs_fld)
+
+    ! Associate geometry
     self%geom => rhs_fld%geom
+
+    ! Set fields numbers and names
     self%nf   = rhs_fld%nf
-    call soca_field_init(self%AOGCM, rhs_fld%geom%ocean%G, rhs_fld%geom%ocean%GV, rhs_fld%geom%ocean%ice_column)
-
-    ! Assign convenience pointers
-    !Ocean internal state
-    self%tocn => self%AOGCM%Ocn%T
-    self%socn => self%AOGCM%Ocn%S
-    self%ssh => self%AOGCM%Ocn%ssh
-    self%hocn => self%AOGCM%Ocn%H
-
-    !Sea-ice internal state
-    self%cicen => self%AOGCM%Ice%part_size
-    self%hicen => self%AOGCM%Ice%h_ice
-    self%hsnon => self%AOGCM%Ice%h_snow
-    self%tsfcn => self%AOGCM%Ice%T_skin
-    self%sicnk => self%AOGCM%Ice%sal_ice
-    self%qicnk => self%AOGCM%Ice%enth_ice
-    self%qsnon => self%AOGCM%Ice%enth_snow
-
-    call zeros(self)
-
-    if (self%nf>11) then
-       call abor1_ftn ("soca_fields:create_copy error number of fields")
-    endif
     allocate(self%fldnames(self%nf))
     self%fldnames(:)=rhs_fld%fldnames(:)
 
@@ -174,16 +138,72 @@ contains
   end subroutine create_copy
 
   ! ------------------------------------------------------------------------------
+  
+  subroutine soca_field_alloc(self, geom)
 
-  subroutine delete(self)
-    use soca_mom6
     implicit none
-    type(soca_field), intent(inout) :: self
 
-    call soca_field_end(self%AOGCM)!, geom%ocean%G, geom%ocean%GV, geom%ocean%IG)
+    type (soca_field), intent(inout) :: self
+    type(soca_geom),      intent(in) :: geom
+    
+    integer :: isd, ied, jsd, jed, nzo, nzi, nzs
+    integer :: ncat, km
+    character(7) :: domain_type
+
+    ! Short cut to ice geometry
+    ncat = geom%ocean%ice_column%ncat
+    nzi = geom%ocean%ice_column%nzi
+    nzs = geom%ocean%ice_column%nzs
+    nzo = geom%ocean%nzo
+    
+    ! Indices for data domain (with halo)
+    domain_type = "data"
+    call geom_get_domain_indices(geom%ocean, domain_type, isd, ied, jsd, jed)
+
+    ! Allocate ocean state
+    if (.not.allocated(self%tocn)) allocate(self%tocn(isd:ied,jsd:jed,nzo))
+    if (.not.allocated(self%socn)) allocate(self%socn(isd:ied,jsd:jed,nzo))
+    if (.not.allocated(self%ssh)) allocate(self%ssh(isd:ied,jsd:jed))
+    if (.not.allocated(self%hocn)) allocate(self%hocn(isd:ied,jsd:jed,nzo))
+
+    ! Allocate sea-ice state
+    km = ncat + 1
+    if (.not.allocated(self%cicen)) allocate(self%cicen(isd:ied, jsd:jed, km))
+    if (.not.allocated(self%hicen)) allocate(self%hicen(isd:ied, jsd:jed, ncat))
+    if (.not.allocated(self%hsnon)) allocate(self%hsnon(isd:ied, jsd:jed, ncat))
+    if (.not.allocated(self%qicnk)) allocate(self%qicnk(isd:ied, jsd:jed, ncat, nzi))
+    if (.not.allocated(self%qsnon)) allocate(self%qsnon(isd:ied, jsd:jed, ncat, nzs))
+    if (.not.allocated(self%sicnk)) allocate(self%sicnk(isd:ied, jsd:jed, ncat, nzi))
+    if (.not.allocated(self%tsfcn)) allocate(self%tsfcn(isd:ied, jsd:jed, ncat))
+
+  end subroutine soca_field_alloc
+
+  ! ------------------------------------------------------------------------------
+  
+  subroutine delete(self)
+
+    implicit none
+
+    type (soca_field), intent(inout) :: self
+
+    ! Dellocate ocean state
+    deallocate(self%tocn)
+    deallocate(self%socn)
+    deallocate(self%ssh)
+    deallocate(self%hocn)
+
+    ! Allocate sea-ice state
+    deallocate(self%cicen)
+    deallocate(self%hicen)
+    deallocate(self%hsnon)
+    deallocate(self%qicnk)
+    deallocate(self%qsnon)
+    deallocate(self%sicnk)
+    deallocate(self%tsfcn)
 
   end subroutine delete
-
+  
+  
   ! ------------------------------------------------------------------------------
 
   subroutine zeros(self)
@@ -284,7 +304,6 @@ contains
 
     call check(self)
 
-    call zeros(self)
     call random_number(self%cicen); self%cicen=self%cicen-0.5_kind_real
     call random_number(self%hicen); self%hicen=self%hicen-0.5_kind_real
     call random_number(self%hsnon); self%hsnon=self%hsnon-0.5_kind_real
@@ -292,7 +311,7 @@ contains
 
     call random_number(self%tocn); self%tocn=self%tocn-0.5_kind_real
     call random_number(self%socn); self%socn=self%socn-0.5_kind_real
-    call random_number(self%ssh); self%ssh=(self%ssh-0.5_kind_real)*self%geom%ocean%mask2d
+    call random_number(self%ssh); self%ssh=(self%ssh-0.5_kind_real)
 
   end subroutine random
 
@@ -308,6 +327,14 @@ contains
     call check_resolution(self, rhs)
 
     !nf = common_vars(self, rhs)
+
+    ! Associate geometry
+    if (.not.associated(self%geom)) self%geom => rhs%geom
+
+    ! Set fields numbers and names
+    self%nf   = rhs%nf
+    if (.not.allocated(self%fldnames)) allocate(self%fldnames(self%nf))
+    self%fldnames(:)=rhs%fldnames(:)
 
     self%cicen = rhs%cicen
     self%hicen = rhs%hicen
@@ -442,17 +469,17 @@ contains
 
     nf = common_vars(self, rhs)
 
-    self%cicen=self%cicen + zz * rhs%cicen
-    self%hicen=self%hicen + zz * rhs%hicen
-    self%hsnon=self%hsnon + zz * rhs%hsnon
-    self%tsfcn=self%tsfcn + zz * rhs%tsfcn
-    self%qsnon=self%qsnon + zz * rhs%qsnon
-    self%sicnk=self%sicnk + zz * rhs%sicnk
-    self%qicnk=self%qicnk + zz * rhs%qicnk
+    self%cicen = self%cicen + zz * rhs%cicen
+    self%hicen = self%hicen + zz * rhs%hicen
+    self%hsnon = self%hsnon + zz * rhs%hsnon
+    self%tsfcn = self%tsfcn + zz * rhs%tsfcn
+    self%qsnon = self%qsnon + zz * rhs%qsnon
+    self%sicnk = self%sicnk + zz * rhs%sicnk
+    self%qicnk = self%qicnk + zz * rhs%qicnk
 
-    self%tocn=self%tocn + zz * rhs%tocn
-    self%socn=self%socn + zz * rhs%socn
-    self%ssh=self%ssh + zz * rhs%ssh
+    self%tocn = self%tocn + zz * rhs%tocn
+    self%socn = self%socn + zz * rhs%socn
+    self%ssh = self%ssh + zz * rhs%ssh
 
   end subroutine axpy
 
@@ -653,7 +680,6 @@ contains
     type(restart_file_type) :: sis_restart
     type(restart_file_type) :: ocean_restart
     integer :: idr, idr_ocean
-
     integer            :: nobs, nval, pe, ierror
 
     ! Set default iread to 0
@@ -689,38 +715,40 @@ contains
                   domain=fld%geom%ocean%G%Domain%mpp_domain)
           case ('tocn')
              idr_ocean = register_restart_field(ocean_restart, ocn_filename, 'Temp', fld%tocn(:,:,:), &
-                  domain=fld%geom%ocean%G%Domain%mpp_domain)             
+                  domain=fld%geom%ocean%G%Domain%mpp_domain)
           case ('socn')
              idr_ocean = register_restart_field(ocean_restart, ocn_filename, 'Salt', fld%socn(:,:,:), &
                   domain=fld%geom%ocean%G%Domain%mpp_domain)             
           case ('hocn')
              idr_ocean = register_restart_field(ocean_restart, ocn_filename, 'h', fld%hocn(:,:,:), &
-                  domain=fld%geom%ocean%G%Domain%mpp_domain)             
+                  domain=fld%geom%ocean%G%Domain%mpp_domain)
+             
           case ('cicen')
-             idr = register_restart_field(sis_restart, ice_filename, 'part_size', fld%AOGCM%Ice%part_size, &
+             idr = register_restart_field(sis_restart, ice_filename, 'part_size', fld%cicen(:,:,:), &
                   domain=fld%geom%ocean%G%Domain%mpp_domain)
           case ('hicen')
-             idr = register_restart_field(sis_restart, ice_filename, 'h_ice', fld%AOGCM%Ice%h_ice, &
+             idr = register_restart_field(sis_restart, ice_filename, 'h_ice', fld%hicen, &
                   domain=fld%geom%ocean%G%Domain%mpp_domain)
           case ('hsnon')
-             idr = register_restart_field(sis_restart, ice_filename, 'h_snow', fld%AOGCM%Ice%h_snow, &
+             idr = register_restart_field(sis_restart, ice_filename, 'h_snow', fld%hsnon, &
                   domain=fld%geom%ocean%G%Domain%mpp_domain)
           case ('qicnk')
-             idr = register_restart_field(sis_restart, ice_filename, 'enth_ice', fld%AOGCM%Ice%enth_ice, &
+             idr = register_restart_field(sis_restart, ice_filename, 'enth_ice', fld%qicnk, &
                   domain=fld%geom%ocean%G%Domain%mpp_domain)
           case ('qsnon')
-             idr = register_restart_field(sis_restart, ice_filename, 'enth_snow', fld%AOGCM%Ice%enth_snow, &
+             idr = register_restart_field(sis_restart, ice_filename, 'enth_snow', fld%qsnon, &
                   domain=fld%geom%ocean%G%Domain%mpp_domain)
           case ('tsfcn')
-             idr = register_restart_field(sis_restart, ice_filename, 'T_skin', fld%AOGCM%Ice%T_skin, &
+             idr = register_restart_field(sis_restart, ice_filename, 'T_skin', fld%tsfcn, &
                   domain=fld%geom%ocean%G%Domain%mpp_domain)
           case ('sicnk')
-             idr = register_restart_field(sis_restart, ice_filename, 'sal_ice', fld%AOGCM%Ice%sal_ice, &
+             idr = register_restart_field(sis_restart, ice_filename, 'sal_ice', fld%sicnk, &
                   domain=fld%geom%ocean%G%Domain%mpp_domain)
           case default
              !call log%warning("soca_fields:read_file: Not reading var "//fld%fldnames(ii))
           end select
-       end do       
+       end do
+
        call restore_state(sis_restart, directory='')
        call restore_state(ocean_restart, directory='')
        call fms_io_exit()
@@ -1267,19 +1295,19 @@ contains
          domain=fld%geom%ocean%G%Domain%mpp_domain)             
 
     ! Sea-Ice
-    idr = register_restart_field(ice_restart, ice_filename, 'part_size', fld%AOGCM%Ice%part_size, &
+    idr = register_restart_field(ice_restart, ice_filename, 'part_size', fld%cicen, &
          domain=fld%geom%ocean%G%Domain%mpp_domain)
-    idr = register_restart_field(ice_restart, ice_filename, 'h_ice', fld%AOGCM%Ice%h_ice, &
+    idr = register_restart_field(ice_restart, ice_filename, 'h_ice', fld%hicen, &
          domain=fld%geom%ocean%G%Domain%mpp_domain)
-    idr = register_restart_field(ice_restart, ice_filename, 'h_snow', fld%AOGCM%Ice%h_snow, &
+    idr = register_restart_field(ice_restart, ice_filename, 'h_snow', fld%hsnon, &
          domain=fld%geom%ocean%G%Domain%mpp_domain)
-    idr = register_restart_field(ice_restart, ice_filename, 'enth_ice', fld%AOGCM%Ice%enth_ice, &
+    idr = register_restart_field(ice_restart, ice_filename, 'enth_ice', fld%qicnk, &
          domain=fld%geom%ocean%G%Domain%mpp_domain)
-    idr = register_restart_field(ice_restart, ice_filename, 'enth_snow', fld%AOGCM%Ice%enth_snow, &
+    idr = register_restart_field(ice_restart, ice_filename, 'enth_snow', fld%qsnon, &
          domain=fld%geom%ocean%G%Domain%mpp_domain)
-    idr = register_restart_field(ice_restart, ice_filename, 'T_skin', fld%AOGCM%Ice%T_skin, &
+    idr = register_restart_field(ice_restart, ice_filename, 'T_skin', fld%tsfcn, &
          domain=fld%geom%ocean%G%Domain%mpp_domain)
-    idr = register_restart_field(ice_restart, ice_filename, 'sal_ice', fld%AOGCM%Ice%sal_ice, &
+    idr = register_restart_field(ice_restart, ice_filename, 'sal_ice', fld%sicnk, &
          domain=fld%geom%ocean%G%Domain%mpp_domain)
 
     call save_restart(ocean_restart, directory='')

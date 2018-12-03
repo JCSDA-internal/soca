@@ -8,7 +8,6 @@
 
 subroutine c_soca_setup(c_confspec, c_key_geom, c_key_confdata) bind (c,name='soca_setup_f90')
 
-  use soca_constants
   use soca_model_mod
   use soca_geom_mod
   use iso_c_binding
@@ -19,7 +18,6 @@ subroutine c_soca_setup(c_confspec, c_key_geom, c_key_confdata) bind (c,name='so
   use mpi,             only: mpi_comm_world
   use mpp_mod,         only: mpp_init
   use mpp_domains_mod, only: mpp_domains_init
-  !use mpp_domains_mod, only: mpp_domains_set_stack_size
   use fms_io_mod,      only: fms_io_init
 
   implicit none
@@ -83,8 +81,6 @@ subroutine c_soca_prepare_integration(c_key_model, c_key_state) &
   use iso_c_binding
   use soca_fields
   use soca_model_mod
-  use soca_constants
-  !use soca_mom6sis2, only : soca_models_init, soca_models_end, Coupled
   use mpi,             only: mpi_comm_world
   use mpp_mod,         only: mpp_init
   use fms_mod,                 only: fms_init

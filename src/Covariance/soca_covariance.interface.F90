@@ -66,7 +66,6 @@ subroutine c_soca_b_mult(c_key_self, c_key_in, c_key_out) bind(c,name='soca_b_mu
   use soca_covariance_mod
   use soca_fields
   use kinds
-  use soca_Butils
   use mpi
 
   implicit none

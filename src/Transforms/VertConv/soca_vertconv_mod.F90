@@ -72,7 +72,6 @@ contains
   
     allocate(self%temp(isc:iec, jsc:jec, nl))
     self%temp = self%traj%tocn
-    print *,'in setup, max temp: ',maxval(self%temp)
   
     ! Initialize local ocean depth from layer thickness  
     allocate(self%z(isc:iec, jsc:jec, nl))

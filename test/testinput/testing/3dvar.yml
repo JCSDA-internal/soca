@@ -34,7 +34,7 @@ cost_function:
   - socn
   - tocn
   - ssh
-  - hocn
+  - hocn  
   Jb:
     Background:
       state:
@@ -102,7 +102,7 @@ cost_function:
           - socn
           - tocn
           - ssh
-          - hocn
+          - hocn      
         outputVariables:
           variables:
           - cicen
@@ -115,7 +115,7 @@ cost_function:
           - socn
           - tocn
           - ssh
-          - hocn
+          - hocn      
       - varchange: BkgErrSOCA
         read_from_file: 3
         basename: ./
@@ -140,7 +140,7 @@ cost_function:
           - socn
           - tocn
           - ssh
-          - hocn
+          - hocn      
         inputVariables:
           variables:
           - cicen
@@ -153,7 +153,7 @@ cost_function:
           - socn
           - tocn
           - ssh
-          - hocn
+          - hocn      
         outputVariables:
           variables:
           - cicen
@@ -166,7 +166,7 @@ cost_function:
           - socn
           - tocn
           - ssh
-          - hocn
+          - hocn      
       - varchange: VertConvSOCA
         variables:                                
           variables:
@@ -180,7 +180,7 @@ cost_function:
           - socn
           - tocn
           - ssh
-          - hocn
+          - hocn      
         Lz: 300.0
         Ltemp: 10.0	
         inputVariables:
@@ -195,7 +195,7 @@ cost_function:
           - socn
           - tocn
           - ssh
-          - hocn
+          - hocn      
         outputVariables:
           variables:
           - cicen
@@ -208,7 +208,8 @@ cost_function:
           - socn
           - tocn
           - ssh
-          - hocn
+          - hocn      
+
   Jo:
     ObsTypes:
     - ObsType: ADT
@@ -233,7 +234,7 @@ variational:
       varchange: Identity
       version: IdTLM
       tstep: PT1H
-    ninner: 1
+    ninner: 15
     gradient_norm_reduction: 1e-15
     test: 'on'
     prints:
@@ -247,13 +248,24 @@ variational:
       varchange: Identity      
       version: IdTLM
       tstep: PT1H
-    ninner: 1
+    ninner: 15
+    gradient_norm_reduction: 1e-15
+    test: 'on'
+  - resolution:
+      num_ice_cat: 5
+      num_ice_lev: 4
+      num_sno_lev: 1
+    linearmodel:
+      varchange: Identity      
+      version: IdTLM
+      tstep: PT1H
+    ninner: 15
     gradient_norm_reduction: 1e-15
     test: 'on'
     output:
       datadir: Data
       exp: 3dvar
-      type: incr
+      type: incr      
 minimizer:
   algorithm: DRIPCG
 output:
@@ -263,3 +275,6 @@ output:
 final:
   diagnostics:
     departures: oman
+    
+#prints:
+#  frequency: PT3H
