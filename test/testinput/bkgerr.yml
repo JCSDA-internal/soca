@@ -36,7 +36,7 @@ LinearVariableChangeTests:
     - socn
     - tocn
     - ssh
-    - hocn      
+    - hocn
   inputVariables:
     variables:
     - cicen
@@ -49,7 +49,7 @@ LinearVariableChangeTests:
     - socn
     - tocn
     - ssh
-    - hocn      
+    - hocn
   outputVariables:
     variables:
     - cicen
@@ -62,4 +62,4 @@ LinearVariableChangeTests:
     - socn
     - tocn
     - ssh
-    - hocn      
+    - hocn

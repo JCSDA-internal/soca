@@ -61,11 +61,10 @@ contains
 
     implicit none
 
-    type(soca_field),              intent(inout) :: fld
-    type(ioda_locs),                  intent(in) :: locs
-    type(ufo_vars),                   intent(in) :: vars    
-    type(ufo_geovals),             intent(inout) :: geovals
-!    type(soca_getvaltraj), target, intent(inout) :: traj    
+    type(soca_field),      intent(inout) :: fld
+    type(ioda_locs),          intent(in) :: locs
+    type(ufo_vars),           intent(in) :: vars    
+    type(ufo_geovals),     intent(inout) :: geovals
     type(soca_getvaltraj), intent(inout) :: traj    
 
     integer, save :: bumpid = 1000

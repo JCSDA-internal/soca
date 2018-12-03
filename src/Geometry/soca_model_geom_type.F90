@@ -116,23 +116,19 @@ contains
     integer :: is, ie, js, je, nzo, nzi, nzs
 
 
-    ! Allocate arrays on compute domain
-    ! Note: Compute domain excludes halo (is, ie, js, je)
-    !       Data domain includes halo (isd, ied, jsd, jed)
-    ! Compute
+    ! Get indices of compute domain
     is   = self%G%isc  ; ie   = self%G%iec
     js   = self%G%jsc  ; je   = self%G%jec ; nzo = self%G%ke
 
+    ! Extract geometry of interest from model's data structure.
+    ! Common to ocean & sea-ice
     nxny = shape( self%G%GeoLonT(is:ie,js:je) )
     nx = nxny(1)
     ny = nxny(2)
-
-    ! Extract geometry of interest from model's data structure.
-    ! Common to ocean & sea-ice
     self%nx = nx
     self%ny = ny
 
-    ! Can't point to data structure, so allocating ...
+    ! Allocate arrays on compute domain
     allocate(self%lon(is:ie,js:je))
     allocate(self%lat(is:ie,js:je))
     allocate(self%mask2d(is:ie,js:je))
