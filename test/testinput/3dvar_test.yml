@@ -34,7 +34,7 @@ cost_function:
   - socn
   - tocn
   - ssh
-  - hocn  
+  - hocn
   Jb:
     Background:
       state:
@@ -102,7 +102,7 @@ cost_function:
           - socn
           - tocn
           - ssh
-          - hocn      
+          - hocn
         outputVariables:
           variables:
           - cicen
@@ -115,7 +115,7 @@ cost_function:
           - socn
           - tocn
           - ssh
-          - hocn      
+          - hocn
       - varchange: BkgErrSOCA
         read_from_file: 3
         basename: ./
@@ -140,7 +140,7 @@ cost_function:
           - socn
           - tocn
           - ssh
-          - hocn      
+          - hocn
         inputVariables:
           variables:
           - cicen
@@ -153,7 +153,7 @@ cost_function:
           - socn
           - tocn
           - ssh
-          - hocn      
+          - hocn
         outputVariables:
           variables:
           - cicen
@@ -166,7 +166,7 @@ cost_function:
           - socn
           - tocn
           - ssh
-          - hocn      
+          - hocn
       - varchange: VertConvSOCA
         variables:                                
           variables:
@@ -180,7 +180,7 @@ cost_function:
           - socn
           - tocn
           - ssh
-          - hocn      
+          - hocn
         Lz: 300.0
         Ltemp: 10.0	
         inputVariables:
@@ -195,7 +195,7 @@ cost_function:
           - socn
           - tocn
           - ssh
-          - hocn      
+          - hocn
         outputVariables:
           variables:
           - cicen
@@ -208,8 +208,7 @@ cost_function:
           - socn
           - tocn
           - ssh
-          - hocn      
-
+          - hocn
   Jo:
     ObsTypes:
     - ObsType: ADT
@@ -254,7 +253,7 @@ variational:
     output:
       datadir: Data
       exp: 3dvar
-      type: incr      
+      type: incr
 minimizer:
   algorithm: DRIPCG
 output:
@@ -264,6 +263,3 @@ output:
 final:
   diagnostics:
     departures: oman
-    
-#prints:
-#  frequency: PT3H

@@ -304,7 +304,6 @@ contains
 
     call check(self)
 
-    call zeros(self)
     call random_number(self%cicen); self%cicen=self%cicen-0.5_kind_real
     call random_number(self%hicen); self%hicen=self%hicen-0.5_kind_real
     call random_number(self%hsnon); self%hsnon=self%hsnon-0.5_kind_real
@@ -312,7 +311,7 @@ contains
 
     call random_number(self%tocn); self%tocn=self%tocn-0.5_kind_real
     call random_number(self%socn); self%socn=self%socn-0.5_kind_real
-    call random_number(self%ssh); self%ssh=(self%ssh-0.5_kind_real)*self%geom%ocean%mask2d
+    call random_number(self%ssh); self%ssh=(self%ssh-0.5_kind_real)
 
   end subroutine random
 
@@ -470,17 +469,17 @@ contains
 
     nf = common_vars(self, rhs)
 
-    self%cicen=self%cicen + zz * rhs%cicen
-    self%hicen=self%hicen + zz * rhs%hicen
-    self%hsnon=self%hsnon + zz * rhs%hsnon
-    self%tsfcn=self%tsfcn + zz * rhs%tsfcn
-    self%qsnon=self%qsnon + zz * rhs%qsnon
-    self%sicnk=self%sicnk + zz * rhs%sicnk
-    self%qicnk=self%qicnk + zz * rhs%qicnk
+    self%cicen = self%cicen + zz * rhs%cicen
+    self%hicen = self%hicen + zz * rhs%hicen
+    self%hsnon = self%hsnon + zz * rhs%hsnon
+    self%tsfcn = self%tsfcn + zz * rhs%tsfcn
+    self%qsnon = self%qsnon + zz * rhs%qsnon
+    self%sicnk = self%sicnk + zz * rhs%sicnk
+    self%qicnk = self%qicnk + zz * rhs%qicnk
 
-    self%tocn=self%tocn + zz * rhs%tocn
-    self%socn=self%socn + zz * rhs%socn
-    self%ssh=self%ssh + zz * rhs%ssh
+    self%tocn = self%tocn + zz * rhs%tocn
+    self%socn = self%socn + zz * rhs%socn
+    self%ssh = self%ssh + zz * rhs%ssh
 
   end subroutine axpy
 
