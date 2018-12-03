@@ -224,6 +224,18 @@ cost_function:
       - Filter: Background Check
         variable: obs_absolute_dynamic_topography
         threshold: 3
+    - ObsType: InsituTemperature
+      ObsData:
+        ObsDataOut:
+          obsfile: ./Data/profile_2018-04-15-soca-out.nc
+        ObsDataIn:
+          obsfile: /home/gvernier/Data/FNMOC/2018041500.profile.nc #./Data/profile_2018-04-15.nc
+      Covariance:
+        covariance: diagonal
+      ObsFilters:
+      - Filter: Background Check
+        variable: insitu_temperature
+        threshold: 3
 variational:
   iteration:
   - resolution:
