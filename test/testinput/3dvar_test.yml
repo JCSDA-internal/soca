@@ -211,18 +211,69 @@ cost_function:
           - hocn
   Jo:
     ObsTypes:
-    - ObsType: ADT
+#    - ObsType: ADT
+#      ObsData:
+#        ObsDataOut:
+#          obsfile: ./Data/Jason-2-2018-04-15-soca-out.nc
+#        ObsDataIn:
+#          obsfile: ./Data/Jason-2-2018-04-15-soca.nc
+#      Covariance:
+#        covariance: diagonal
+#      ObsFilters:
+#      - Filter: Background Check
+#        variable: obs_absolute_dynamic_topography
+#        threshold: 3
+    - ObsType: InsituTemperature
       ObsData:
         ObsDataOut:
-          obsfile: ./Data/Jason-2-2018-04-15-soca-out.nc
+          obsfile: ./Data/profile_2018-04-15-soca-out.nc
         ObsDataIn:
-          obsfile: ./Data/Jason-2-2018-04-15-soca.nc
+          obsfile: ./Data/profile_2018-04-15.nc
       Covariance:
         covariance: diagonal
       ObsFilters:
       - Filter: Background Check
-        variable: obs_absolute_dynamic_topography
+        variable: insitu_temperature
         threshold: 3
+      - Filter: Domain Check
+        variable: insitu_temperature
+        min_depth: 500.0
+#    - ObsType: SeaIceFraction
+#      ObsData:
+#        ObsDataOut:
+#          obsfile: ./Data/icec-2018-04-15-soca-out.nc
+#        ObsDataIn:
+#          obsfile: ./Data/icec-2018-04-15.nc
+#      Covariance:
+#        covariance: diagonal
+#      ObsFilters:
+#      - Filter: Background Check
+#        variable: obs_sea_ice_concentration
+#        threshold: 3
+#    - ObsType: SeaIceThickness
+#      ObsData:
+#        ObsDataOut:
+#          obsfile: ./Data/cryosat2-2018-04-15-soca-out.nc
+#        ObsDataIn:
+#          obsfile: ./Data/cryosat2-2018-04-15.nc
+#      Covariance:
+#        covariance: diagonal
+#      ObsFilters:
+#      - Filter: Background Check
+#        variable: obs_sea_ice_thickness
+#        threshold: 3
+#    - ObsType: SeaSurfaceTemp
+#      ObsData:
+#        ObsDataOut:
+#          obsfile: ./Data/sst_obs-2018-04-15-soca-out.nc
+#        ObsDataIn:
+#          obsfile: ./Data/sst_obs-2018-04-15.nc4
+#      Covariance:
+#        covariance: diagonal
+#      ObsFilters:
+#      - Filter: Background Check
+#        variable: obs_sst
+#        threshold: 3
 variational:
   iteration:
   - resolution:

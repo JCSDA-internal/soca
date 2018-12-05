@@ -13,15 +13,16 @@
 #include "oops/base/ObsFilterBase.h"
 #include "oops/interface/ObsFilter.h"
 #include "ufo/BackgroundCheck.h"
+#include "ufo/qcfilters/domaincheck/DomainCheck.h"
 
 namespace soca {
 
   void instantiateObsFilterFactory() {
     oops::instantiateObsFilterFactory<Traits>();
-    static oops::FilterMaker<Traits,
-      oops::ObsFilter<Traits, ufo::BackgroundCheck>
-                                >
+    static oops::FilterMaker<Traits,oops::ObsFilter<Traits, ufo::BackgroundCheck>>
       makerBkgChk_("Background Check");
+    static oops::FilterMaker<Traits,oops::ObsFilter<Traits, ufo::DomainCheck>>
+      makerDmChk_("Domain Check");    
   }
 
 }  // namespace soca
