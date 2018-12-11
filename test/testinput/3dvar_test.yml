@@ -219,11 +219,11 @@ cost_function:
           obsfile: ./Data/Jason-2-2018-04-15-soca.nc
       Covariance:
         covariance: diagonal
-      ObsFilters:
-      - Filter: Background Check
-        variables:
-        - obs_absolute_dynamic_topography
-        threshold: 3
+#      ObsFilters:
+#      - Filter: Background Check
+#        variables:
+#        - obs_absolute_dynamic_topography
+#        threshold: 3
 #      ObsData:
 #        ObsDataOut:
 #          obsfile: ./Data/icec-2018-04-15-soca-out.nc
