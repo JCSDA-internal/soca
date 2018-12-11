@@ -442,8 +442,8 @@ subroutine soca_field_interp_tl_c(c_key_fld,c_key_loc,c_vars,c_key_gom) bind(c,n
   use iso_c_binding
   use soca_fields
   use soca_interpfields_mod
-  use ioda_locs_mod_c  
-  use ioda_locs_mod    
+  use ufo_locs_mod_c  
+  use ufo_locs_mod    
   use ufo_geovals_mod_c
   use ufo_geovals_mod
   use ufo_vars_mod
@@ -454,7 +454,7 @@ subroutine soca_field_interp_tl_c(c_key_fld,c_key_loc,c_vars,c_key_gom) bind(c,n
   type(c_ptr), intent(in)     :: c_vars     !< List of requested variables
   integer(c_int), intent(in)  :: c_key_gom
   type(soca_field), pointer   :: fld
-  type(ioda_locs),  pointer   :: locs  
+  type(ufo_locs),  pointer   :: locs  
   type(ufo_geovals),  pointer :: gom
   type(ufo_vars) :: vars  
 
@@ -462,7 +462,7 @@ subroutine soca_field_interp_tl_c(c_key_fld,c_key_loc,c_vars,c_key_gom) bind(c,n
   call ufo_vars_setup(vars, c_vars)
 
   call soca_field_registry%get(c_key_fld,fld)
-  call ioda_locs_registry%get(c_key_loc,locs)  
+  call ufo_locs_registry%get(c_key_loc,locs)  
   call ufo_geovals_registry%get(c_key_gom,gom)
 
   call getvalues(fld, locs, vars, gom)
@@ -475,8 +475,8 @@ subroutine soca_field_interp_tl_traj_c(c_key_fld,c_key_loc,c_vars,c_key_gom,c_ke
   use iso_c_binding
   use soca_fields
   use soca_interpfields_mod  
-  use ioda_locs_mod_c  
-  use ioda_locs_mod    
+  use ufo_locs_mod_c  
+  use ufo_locs_mod    
   use ufo_geovals_mod_c
   use ufo_geovals_mod
   use ufo_vars_mod
@@ -488,7 +488,7 @@ subroutine soca_field_interp_tl_traj_c(c_key_fld,c_key_loc,c_vars,c_key_gom,c_ke
   integer(c_int),           intent(in) :: c_key_gom
   integer(c_int), intent(in), optional :: c_key_traj !< Trajectory for interpolation/transforms  
   type(soca_field), pointer   :: fld
-  type(ioda_locs),  pointer   :: locs  
+  type(ufo_locs),  pointer   :: locs  
   type(ufo_geovals),  pointer :: gom
   type(ufo_vars) :: vars  
   type(soca_getvaltraj), pointer :: traj
@@ -496,7 +496,7 @@ subroutine soca_field_interp_tl_traj_c(c_key_fld,c_key_loc,c_vars,c_key_gom,c_ke
   call ufo_vars_setup(vars, c_vars)
 
   call soca_field_registry%get(c_key_fld,fld)
-  call ioda_locs_registry%get(c_key_loc,locs)  
+  call ufo_locs_registry%get(c_key_loc,locs)  
   call ufo_geovals_registry%get(c_key_gom,gom)
   call soca_getvaltraj_registry%get(c_key_traj,traj)
   
@@ -510,8 +510,8 @@ subroutine soca_field_interp_ad_c(c_key_fld,c_key_loc,c_vars,c_key_gom,c_key_tra
   use iso_c_binding
   use soca_fields
   use soca_interpfields_mod  
-  use ioda_locs_mod_c  
-  use ioda_locs_mod  
+  use ufo_locs_mod_c  
+  use ufo_locs_mod  
   use ufo_geovals_mod_c
   use ufo_geovals_mod
   use ufo_vars_mod
@@ -523,7 +523,7 @@ subroutine soca_field_interp_ad_c(c_key_fld,c_key_loc,c_vars,c_key_gom,c_key_tra
   integer(c_int), intent(in) :: c_key_gom
   integer(c_int), intent(in) :: c_key_traj !< Trajectory for interpolation/transforms  
   type(soca_field),      pointer :: fld
-  type(ioda_locs),       pointer :: locs  
+  type(ufo_locs),       pointer :: locs  
   type(ufo_geovals),     pointer :: gom  
   type(ufo_vars)                 :: vars
   type(soca_getvaltraj), pointer :: traj
@@ -531,7 +531,7 @@ subroutine soca_field_interp_ad_c(c_key_fld,c_key_loc,c_vars,c_key_gom,c_key_tra
   call ufo_vars_setup(vars, c_vars)
 
   call soca_field_registry%get(c_key_fld,fld)
-  call ioda_locs_registry%get(c_key_loc,locs)
+  call ufo_locs_registry%get(c_key_loc,locs)
   call ufo_geovals_registry%get(c_key_gom,gom)
   call soca_getvaltraj_registry%get(c_key_traj,traj)
   

@@ -25,7 +25,7 @@
 #include "src/GetValuesTraj/GetValuesTraj.h"
 #include "oops/util/Duration.h"
 #include "ufo/GeoVaLs.h"
-#include "ioda/Locations.h"
+#include "ufo/Locations.h"
 
 using oops::Log;
 
@@ -165,7 +165,7 @@ namespace soca {
   }
   /// Interpolate to observation location
   // -----------------------------------------------------------------------------
-  void Increment::getValuesTL(const ioda::Locations & locs,
+  void Increment::getValuesTL(const ufo::Locations & locs,
                               const oops::Variables & vars,
                               ufo::GeoVaLs & cols,
                               const GetValuesTraj & traj) const {
@@ -175,7 +175,7 @@ namespace soca {
     Log::debug() << "Increment::interpolateTL " << cols << std::endl;
   }
   // -----------------------------------------------------------------------------
-  void Increment::getValuesAD(const ioda::Locations & locs,
+  void Increment::getValuesAD(const ufo::Locations & locs,
                               const oops::Variables & vars,
                               const ufo::GeoVaLs & cols,
                               const GetValuesTraj & traj) {

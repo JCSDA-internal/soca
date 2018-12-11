@@ -38,9 +38,6 @@ namespace oops {
 
 namespace ufo {
   class GeoVaLs;
-}
-
-namespace ioda {
   class Locations;
 }
 
@@ -85,11 +82,11 @@ namespace soca {
       void random();
       void dirac(const eckit::Configuration &);
       /// Interpolate to observation location
-      void getValuesTL(const ioda::Locations &,
+      void getValuesTL(const ufo::Locations &,
                        const oops::Variables &,
                        ufo::GeoVaLs &,
                        const GetValuesTraj &) const;
-      void getValuesAD(const ioda::Locations &,
+      void getValuesAD(const ufo::Locations &,
                        const oops::Variables &,
                        const ufo::GeoVaLs &,
                        const GetValuesTraj &);

@@ -18,10 +18,10 @@
 #include "oops/util/DateTime.h"
 #include "oops/util/Logger.h"
 #include "ufo/GeoVaLs.h"
-#include "ioda/Locations.h"
 #include "src/Fortran.h"
 #include "src/Geometry/Geometry.h"
 #include "src/GetValuesTraj/GetValuesTraj.h"
+#include "ufo/Locations.h"
 
 // -----------------------------------------------------------------------------
 namespace soca {
@@ -128,7 +128,7 @@ namespace soca {
     soca_field_random_f90(keyFlds_);
   }
   // -----------------------------------------------------------------------------
-  void Fields::getValues(const ioda::Locations & locs,
+  void Fields::getValues(const ufo::Locations & locs,
                          const oops::Variables & vars,
                          ufo::GeoVaLs & gom) const {
     const eckit::Configuration * conf = &vars.toFortran();
@@ -137,7 +137,7 @@ namespace soca {
   }
 
   // -----------------------------------------------------------------------------
-  void Fields::getValues(const ioda::Locations & locs,
+  void Fields::getValues(const ufo::Locations & locs,
                          const oops::Variables & vars,
                          ufo::GeoVaLs & gom,
                          const GetValuesTraj & traj) const {
@@ -147,7 +147,7 @@ namespace soca {
   }
 
   // -----------------------------------------------------------------------------
-  void Fields::getValuesTL(const ioda::Locations & locs,
+  void Fields::getValuesTL(const ufo::Locations & locs,
                            const oops::Variables & vars,
                            ufo::GeoVaLs & gom,
                            const GetValuesTraj & traj) const {
@@ -156,7 +156,7 @@ namespace soca {
                                   gom.toFortran(), traj.toFortran());
   }
   // -----------------------------------------------------------------------------
-  void Fields::getValuesAD(const ioda::Locations & locs,
+  void Fields::getValuesAD(const ufo::Locations & locs,
                            const oops::Variables & vars,
                            const ufo::GeoVaLs & gom,
                            const GetValuesTraj & traj) {

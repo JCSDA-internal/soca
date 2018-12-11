@@ -26,7 +26,7 @@
 #include "oops/util/Logger.h"
 
 #include "ufo/GeoVaLs.h"
-#include "ioda/Locations.h"
+#include "ufo/Locations.h"
 
 
 using oops::Log;
@@ -132,13 +132,13 @@ namespace soca {
   // -----------------------------------------------------------------------------
   /// Interpolate to observation location
   // -----------------------------------------------------------------------------
-  void State::getValues(const ioda::Locations & locs,
+  void State::getValues(const ufo::Locations & locs,
                         const oops::Variables & vars,
                         ufo::GeoVaLs & cols) const {
     fields_->getValues(locs, vars, cols);
   }
   // -----------------------------------------------------------------------------
-  void State::getValues(const ioda::Locations & locs,
+  void State::getValues(const ufo::Locations & locs,
                         const oops::Variables & vars,
                         ufo::GeoVaLs & cols,
                         GetValuesTraj & traj) const {

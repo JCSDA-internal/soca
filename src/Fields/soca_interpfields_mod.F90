@@ -11,7 +11,7 @@ module soca_interpfields_mod
 
   use ufo_geovals_mod
   use ufo_vars_mod
-  use ioda_locs_mod
+  use ufo_locs_mod
   use fckit_log_module, only : fckit_log  
   use soca_getvaltraj_mod
   use soca_bumpinterp2d_mod
@@ -35,7 +35,7 @@ contains
     implicit none
 
     type(soca_field),         intent(in) :: fld
-    type(ioda_locs),          intent(in) :: locs
+    type(ufo_locs),           intent(in) :: locs
     type(soca_bumpinterp2d), intent(out) :: horiz_interp    
     integer,                  intent(in) :: bumpid
     
@@ -62,7 +62,7 @@ contains
     implicit none
 
     type(soca_field),      intent(inout) :: fld
-    type(ioda_locs),          intent(in) :: locs
+    type(ufo_locs),           intent(in) :: locs
     type(ufo_vars),           intent(in) :: vars    
     type(ufo_geovals),     intent(inout) :: geovals
     type(soca_getvaltraj), intent(inout) :: traj    
@@ -106,7 +106,7 @@ contains
     implicit none
 
     type(soca_field),   intent(inout) :: fld
-    type(ioda_locs),       intent(in) :: locs
+    type(ufo_locs),        intent(in) :: locs
     type(ufo_vars),        intent(in) :: vars    
     type(ufo_geovals),  intent(inout) :: geovals
 
@@ -129,7 +129,7 @@ contains
     implicit none
 
     type(soca_field),              intent(inout) :: fld
-    type(ioda_locs),                  intent(in) :: locs
+    type(ufo_locs),                   intent(in) :: locs
     type(ufo_vars),                   intent(in) :: vars        
     type(ufo_geovals),             intent(inout) :: geovals
     type(soca_getvaltraj), target, intent(inout) :: traj    
@@ -212,7 +212,7 @@ contains
     implicit none
 
     type(soca_field),         intent(inout) :: fld
-    type(ioda_locs),             intent(in) :: locs
+    type(ufo_locs),              intent(in) :: locs
     type(ufo_vars),              intent(in) :: vars    
     type(ufo_geovals),        intent(inout) :: geovals
     type(soca_bumpinterp2d),  intent(inout) :: horiz_interp

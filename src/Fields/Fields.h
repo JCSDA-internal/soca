@@ -32,9 +32,6 @@ namespace oops {
 
 namespace ufo {
   class GeoVaLs;
-}
-
-namespace ioda {
   class Locations;
 }
 
@@ -68,13 +65,13 @@ namespace soca {
       void random();
 
       // Interpolate to given location
-      void getValues(const ioda::Locations &, const oops::Variables &,
+      void getValues(const ufo::Locations &, const oops::Variables &,
                      ufo::GeoVaLs &) const;
-      void getValues(const ioda::Locations &, const oops::Variables &,
+      void getValues(const ufo::Locations &, const oops::Variables &,
                      ufo::GeoVaLs &, const GetValuesTraj &) const;
-      void getValuesTL(const ioda::Locations &, const oops::Variables &,
+      void getValuesTL(const ufo::Locations &, const oops::Variables &,
                        ufo::GeoVaLs &, const GetValuesTraj &) const;
-      void getValuesAD(const ioda::Locations &, const oops::Variables &,
+      void getValuesAD(const ufo::Locations &, const oops::Variables &,
                        const ufo::GeoVaLs &, const GetValuesTraj &);
 
       // Interpolate full fields

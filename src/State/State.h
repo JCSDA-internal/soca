@@ -30,9 +30,6 @@ namespace oops {
 
 namespace ufo {
   class GeoVaLs;
-}
-
-namespace ioda {
   class Locations;
 }
 
@@ -63,10 +60,10 @@ namespace soca {
       State & operator=(const State &);
 
       /// Interpolate to observation location
-      void getValues(const ioda::Locations &,
+      void getValues(const ufo::Locations &,
                      const oops::Variables &,
                      ufo::GeoVaLs &) const;
-      void getValues(const ioda::Locations &,
+      void getValues(const ufo::Locations &,
                      const oops::Variables &,
                      ufo::GeoVaLs &,
                      GetValuesTraj &) const;
