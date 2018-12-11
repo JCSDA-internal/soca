@@ -86,36 +86,6 @@ cost_function:
       diag_interp: bilin
       date: '2018-04-15T00:00:00Z'
       variable_changes:
-      - varchange: BalanceSOCA
-        dsdtmax: 0.1
-        dsdzmin: 3.0e-6
-        dtdzmin: 1.0e-6 
-        inputVariables:
-          variables:
-          - cicen
-          - hicen
-          - hsnon
-          - tsfcn
-          - qsnon
-          - sicnk
-          - qicnk
-          - socn
-          - tocn
-          - ssh
-          - hocn
-        outputVariables:
-          variables:
-          - cicen
-          - hicen
-          - hsnon
-          - tsfcn
-          - qsnon
-          - sicnk
-          - qicnk
-          - socn
-          - tocn
-          - ssh
-          - hocn
       - varchange: BkgErrSOCA
         read_from_file: 3
         basename: ./
@@ -166,49 +136,7 @@ cost_function:
           - socn
           - tocn
           - ssh
-          - hocn      
-      - varchange: VertConvSOCA
-        variables:                                
-          variables:
-          - cicen
-          - hicen
-          - hsnon
-          - tsfcn
-          - qsnon
-          - sicnk
-          - qicnk
-          - socn
-          - tocn
-          - ssh
-          - hocn      
-        Lz: 300.0
-        Ltemp: 10.0	
-        inputVariables:
-          variables:
-          - cicen
-          - hicen
-          - hsnon
-          - tsfcn
-          - qsnon
-          - sicnk
-          - qicnk
-          - socn
-          - tocn
-          - ssh
-          - hocn      
-        outputVariables:
-          variables:
-          - cicen
-          - hicen
-          - hsnon
-          - tsfcn
-          - qsnon
-          - sicnk
-          - qicnk
-          - socn
-          - tocn
-          - ssh
-          - hocn      
+          - hocn
   Jo:
     ObsTypes:
     - ObsType: ADT
@@ -221,7 +149,8 @@ cost_function:
         covariance: diagonal
       ObsFilters:
       - Filter: Background Check
-        variable: obs_absolute_dynamic_topography
+        variables: 
+        - obs_absolute_dynamic_topography
         threshold: 3
     - ObsType: InsituTemperature
       ObsData:
@@ -232,9 +161,10 @@ cost_function:
       Covariance: 
         covariance: diagonal
       ObsFilters:
-      - Filter: Background Check
-        variable: insitu_temperature
-        threshold: 0.1
+#      - Filter: Background Check
+#        variables:
+#        - insitu_temperature
+#        threshold: 3
       - Filter: Domain Check
         variable: insitu_temperature
         min_depth: 500.0
@@ -290,32 +220,32 @@ variational:
     prints:
     diagnostics:
       departures: ombg
-  - resolution:
-      num_ice_cat: 5
-      num_ice_lev: 4
-      num_sno_lev: 1
-    linearmodel:
-      varchange: Identity      
-      version: IdTLM
-      tstep: PT1H
-    ninner: 15
-    gradient_norm_reduction: 1e-15
-    test: 'on'
-    diagnostics:
-      departures: ombg2
-  - resolution:
-      num_ice_cat: 5
-      num_ice_lev: 4
-      num_sno_lev: 1
-    linearmodel:
-      varchange: Identity      
-      version: IdTLM
-      tstep: PT1H
-    ninner: 15
-    gradient_norm_reduction: 1e-15
-    test: 'on'
-    diagnostics:
-      departures: ombg3
+#  - resolution:
+#      num_ice_cat: 5
+#      num_ice_lev: 4
+#      num_sno_lev: 1
+#    linearmodel:
+#      varchange: Identity      
+#      version: IdTLM
+#      tstep: PT1H
+#    ninner: 15
+#    gradient_norm_reduction: 1e-15
+#    test: 'on'
+#    diagnostics:
+#      departures: ombg2
+#  - resolution:
+#      num_ice_cat: 5
+#      num_ice_lev: 4
+#      num_sno_lev: 1
+#    linearmodel:
+#      varchange: Identity      
+#      version: IdTLM
+#      tstep: PT1H
+#    ninner: 15
+#    gradient_norm_reduction: 1e-15
+#    test: 'on'
+#    diagnostics:
+#      departures: ombg3
 minimizer:
   algorithm: DRIPCG
 output:

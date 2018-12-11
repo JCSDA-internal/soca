@@ -256,9 +256,10 @@ contains
        ! Allocate temporary geoval and 3d field for the current time window
        allocate(gom_window(nval,locs%nlocs))
        allocate(fld3d(isc:iec,jsc:jec,1:nval))
-
+          print *,'ufo_vars=',vars%fldnames(ivar)
        ! Extract fld3d from field 
        select case (trim(vars%fldnames(ivar)))
+
        case ("ice_concentration")
           fld3d = fld%cicen(isc:iec,jsc:jec,2:nval+1)
 
@@ -280,12 +281,14 @@ contains
        case ("ocean_upper_level_temperature")
           fld3d(isc:iec,jsc:jec,1) = fld%tocn(isc:iec,jsc:jec,1)                    
 
+       case ("ocean_fraction")
+          fld3d(isc:iec,jsc:jec,1) = real(fld%geom%ocean%mask2d(isc:iec,jsc:jec),kind=kind_real)
+
        end select
 
        ! Apply forward interpolation: Model ---> Obs
        do ival = 1, nval
           call horiz_interp%apply(fld3d(isc:iec,jsc:jec,ival), gom_window(ival,:))
-          !gom_window(ival,1)=fld3d(270,150,1)
           ! Fill proper geoval according to time window
           do indx = 1, locs%nlocs
              geovals%geovals(ivar)%vals(ival, locs%indx(indx)) = gom_window(ival, indx)
@@ -317,7 +320,8 @@ contains
        
     case ("steric_height",&
          &"sea_surface_height_above_geoid",&
-         &"ocean_upper_level_temperature")
+         &"ocean_upper_level_temperature",&
+         &"ocean_fraction")
        nval = 1
        
     case ("ocean_potential_temperature","ocean_salinity","ocean_layer_thickness")

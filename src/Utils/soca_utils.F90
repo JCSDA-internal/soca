@@ -6,8 +6,9 @@
 module soca_utils
 
   implicit none
+
   private
-  public :: inside_polygon, write2pe
+  public :: inside_polygon, write2pe, soca_clean_vertical
 contains
 
   ! ------------------------------------------------------------------------------  
@@ -49,6 +50,82 @@ contains
     return
 
   end function inside_polygon
+
+  ! ------------------------------------------------------------------------------
+
+  subroutine soca_clean_vertical(h, var)
+    use kinds
+    use vert_interp_mod
+    implicit none
+
+    real(kind=kind_real),    intent(in) :: h(:)
+    real(kind=kind_real), intent(inout) :: var(:)
+
+    real(kind=kind_real), allocatable :: tmp_var(:), tmp_h(:)
+    real(kind=kind_real), allocatable :: depth(:), tmp_depth(:)
+    integer :: nlev, ilev, nrlev, iilev
+    integer, allocatable :: mask(:), mask_index(:)
+    real(kind_real) :: wf
+    integer :: wi
+
+    ! Get vertical dimension
+    nlev = size(h,1)
+
+    ! Thickness to depth
+    allocate(depth(nlev))
+    depth(1)=0.5_kind_real*h(1)
+    do ilev = 2, nlev
+       depth(ilev)=sum(h(1:ilev-1))+0.5_kind_real*h(ilev)
+    end do
+
+    ! Setup vertical mask
+    allocate(mask(nlev))
+    mask=1
+    nrlev=0
+    do ilev = 1, nlev
+       if (h(ilev)<1d-6) then 
+          mask(ilev)=0
+       else
+          nrlev = nrlev + 1
+       end if
+    end do
+
+    ! Return if ocean depth is 0 or no vertical mask
+    if ((nrlev<2).or.(nrlev==nlev)) return
+
+    ! Setup valid var
+    allocate(tmp_var(nrlev), tmp_h(nrlev), tmp_depth(nrlev),mask_index(nlev))
+    iilev=1
+    do ilev = 1, nlev
+       if (mask(ilev)==1) then
+          tmp_var(iilev)=var(ilev)
+          tmp_h(iilev)=h(ilev)
+          tmp_depth(iilev)=depth(ilev)
+          mask_index(iilev)=ilev
+          iilev=iilev+1
+       end if
+    end do
+
+    ! Interpolate
+    do ilev = 1, nlev
+       if (mask(ilev)==0) then
+          call vert_interp_weights(nrlev, depth(ilev),&
+                                     & tmp_depth(:), wi, wf)
+          call vert_interp_apply(nlev, tmp_var(:), var(ilev), wi, wf)
+
+          if (isnan(var(ilev))) then
+             print *,'depth(ilev)=',var(ilev)
+             print *,'var(ilev)=',var(ilev)
+             !print *,'tmp_depth=',tmp_depth
+             print *,'tmp_var=',tmp_var
+             print *,'nrlev=',nrlev
+          end if
+       end if
+    end do
+    deallocate(tmp_var, tmp_h, tmp_depth, mask_index, depth, mask)
+
+  end subroutine soca_clean_vertical
+
   ! ------------------------------------------------------------------------------
 
   subroutine write2pe(vec,varname,filename,append)

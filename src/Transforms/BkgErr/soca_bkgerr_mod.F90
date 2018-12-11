@@ -69,7 +69,7 @@ contains
 
     ! Read background error 
     call create_copy(self%std_bkgerr, bkg)
-    call read_file(self%std_bkgerr, c_conf, vdate)
+    !call read_file(self%std_bkgerr, c_conf, vdate)
 
     ! Get bounds from configuration
     self%bounds%t_min   = config_get_real(c_conf,"t_min")
@@ -92,23 +92,20 @@ contains
     ! Limit background error
     do i = isc, iec
        do j = jsc, jec
+          ! Ocean
           self%std_bkgerr%ssh(i,j) = adjusted_std(abs(self%std_bkgerr%ssh(i,j)), &
                &self%bounds%ssh_min,&
                &self%bounds%ssh_max)
           do k = 1, nl
-             if ( (bkg%hocn(i,j,k).gt.1d-3) ) then 
-                self%std_bkgerr%tocn(i,j,k) = adjusted_std(abs(self%std_bkgerr%tocn(i,j,k)),&
+             self%std_bkgerr%tocn(i,j,k) = adjusted_std(abs(self%std_bkgerr%tocn(i,j,k)),&
                &self%bounds%t_min,&
                &self%bounds%t_max)
-                self%std_bkgerr%socn(i,j,k) = adjusted_std(abs(self%std_bkgerr%socn(i,j,k)),&
+             self%std_bkgerr%socn(i,j,k) = adjusted_std(abs(self%std_bkgerr%socn(i,j,k)),&
                &self%bounds%s_min,&
                &self%bounds%s_max)
-             else
-                self%std_bkgerr%tocn(i,j,k) = 0.0
-                self%std_bkgerr%socn(i,j,k) = 0.0
-             end if
           end do
-          ! sea-ice
+
+          ! Sea-ice
           self%std_bkgerr%cicen(i,j,:) = adjusted_std(abs(self%std_bkgerr%cicen(i,j,:)), 0.01d0, 0.5d0)
           self%std_bkgerr%hicen(i,j,:) = adjusted_std(abs(self%std_bkgerr%hicen(i,j,:)), 10d0, 100.0d0)
        end do

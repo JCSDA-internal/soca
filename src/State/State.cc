@@ -90,8 +90,8 @@ namespace soca {
     Log::trace() << "State::State destructed." << std::endl;
   }
   // -----------------------------------------------------------------------------
-  void State::activateModel() {
-    const std::vector<std::string> vv{
+    void State::activateModel() {
+      const std::vector<std::string> vv{
           "cicen",
           "hicen",
           "hsnon",
@@ -120,7 +120,7 @@ namespace soca {
     ASSERT(fields_);
     ASSERT(!stash_);
     Log::trace() << "State deactivated for Model" << std::endl;
-  }
+    }
   // -----------------------------------------------------------------------------
   /// Basic operators
   // -----------------------------------------------------------------------------

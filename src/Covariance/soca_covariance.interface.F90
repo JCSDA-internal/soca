@@ -76,17 +76,13 @@ subroutine c_soca_b_mult(c_key_self, c_key_in, c_key_out) bind(c,name='soca_b_mu
   type(soca_cov),   pointer :: self
   type(soca_field), pointer :: xin
   type(soca_field), pointer :: xout
-  type(soca_field)          :: xtmp
 
   call soca_cov_registry%get(c_key_self, self)
   call soca_field_registry%get(c_key_in, xin)
   call soca_field_registry%get(c_key_out, xout)
 
-  call create(xtmp,xin)
-  call copy(xtmp,xin)
-  call soca_cov_C_mult(self, xtmp) !< xtmp = C.xtmp
-  call copy(xout,xtmp)             !< xout = xtmp
-  call delete(xtmp)
+  call copy(xout,xin)              !< xout = xin
+  call soca_cov_C_mult(self, xout) !< xout = C.xout
 
 end subroutine c_soca_b_mult
 

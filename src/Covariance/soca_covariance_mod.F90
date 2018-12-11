@@ -281,11 +281,11 @@ contains
     allocate(rv(nc0a,nl0,nv,nts))
     if (domain.eq.'ocn') then
        do jjj=1,nc0a
-          rh(jjj,1,1,1)=20.0d0*rosrad(jjj)
+          rh(jjj,1,1,1)=500d3 + rosrad(jjj)
        end do
-       where (rh<300d3)
-          rh=300d3
-       end where
+!!$       where (rh<300d3)
+!!$          rh=500d3!300d3
+!!$       end where
     end if
     if (domain.eq.'ice') then
        rh = 500d3

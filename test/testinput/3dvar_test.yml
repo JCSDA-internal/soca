@@ -221,24 +221,9 @@ cost_function:
         covariance: diagonal
       ObsFilters:
       - Filter: Background Check
-        variable: obs_absolute_dynamic_topography
+        variables:
+        - obs_absolute_dynamic_topography
         threshold: 3
-    - ObsType: InsituTemperature
-      ObsData:
-        ObsDataOut:
-          obsfile: ./Data/profile_2018-04-15-soca-out.nc
-        ObsDataIn:
-          obsfile: /scratch4/NCEPDEV/ocean/scrub/Guillaume.Vernieres/JEDI/soca/data/profiles/2018041500.profile.nc #./Data/profile_2018-04-15.nc
-      Covariance:
-        covariance: diagonal
-      ObsFilters:
-      - Filter: Background Check
-        variable: insitu_temperature
-        threshold: 3
-      - Filter: Domain Check
-        variable: insitu_temperature
-        min_depth: 500.0
-#    - ObsType: SeaIceFraction
 #      ObsData:
 #        ObsDataOut:
 #          obsfile: ./Data/icec-2018-04-15-soca-out.nc
@@ -284,7 +269,7 @@ variational:
       varchange: Identity
       version: IdTLM
       tstep: PT1H
-    ninner: 1
+    ninner: 2
     gradient_norm_reduction: 1e-15
     test: 'on'
     prints:
@@ -298,7 +283,7 @@ variational:
       varchange: Identity      
       version: IdTLM
       tstep: PT1H
-    ninner: 1
+    ninner: 2
     gradient_norm_reduction: 1e-15
     test: 'on'
     output:

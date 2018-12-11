@@ -186,13 +186,13 @@ contains
 
     type (soca_field), intent(inout) :: self
 
-    ! Dellocate ocean state
+    ! Deallocate ocean state
     deallocate(self%tocn)
     deallocate(self%socn)
     deallocate(self%ssh)
     deallocate(self%hocn)
 
-    ! Allocate sea-ice state
+    ! Deallocate sea-ice state
     deallocate(self%cicen)
     deallocate(self%hicen)
     deallocate(self%hsnon)
@@ -200,6 +200,9 @@ contains
     deallocate(self%qsnon)
     deallocate(self%sicnk)
     deallocate(self%tsfcn)
+
+    ! Deallocate geometry
+    nullify(self%geom)
 
   end subroutine delete
   
@@ -346,7 +349,7 @@ contains
 
     self%socn  = rhs%socn
     self%tocn  = rhs%tocn
-    self%ssh  = rhs%ssh
+    self%ssh   = rhs%ssh
     self%hocn  = rhs%hocn
 
     return
@@ -377,6 +380,7 @@ contains
     self%tocn = self%tocn + rhs%tocn
     self%socn = self%socn + rhs%socn
     self%ssh = self%ssh + rhs%ssh
+    self%hocn = self%hocn + rhs%hocn
 
   end subroutine self_add
 
@@ -403,6 +407,7 @@ contains
     self%tocn=self%tocn*rhs%tocn
     self%socn=self%socn*rhs%socn
     self%ssh=self%ssh*rhs%ssh
+    self%hocn=self%hocn*rhs%hocn
 
     return
   end subroutine self_schur
@@ -430,6 +435,7 @@ contains
     self%socn=self%socn-rhs%socn
     self%tocn=self%tocn-rhs%tocn
     self%ssh=self%ssh-rhs%ssh
+    self%hocn=self%hocn-rhs%hocn
 
   end subroutine self_sub
 
@@ -453,6 +459,7 @@ contains
     self%tocn = zz * self%tocn
     self%socn = zz * self%socn
     self%ssh = zz * self%ssh
+    self%hocn = zz * self%hocn
 
   end subroutine self_mul
 
@@ -480,6 +487,7 @@ contains
     self%tocn = self%tocn + zz * rhs%tocn
     self%socn = self%socn + zz * rhs%socn
     self%ssh = self%ssh + zz * rhs%ssh
+    self%hocn = self%hocn + zz * rhs%hocn
 
   end subroutine axpy
 
@@ -581,13 +589,14 @@ contains
     lhs%tocn = x1%tocn - x2%tocn
     lhs%socn = x1%socn - x2%socn
     lhs%ssh = x1%ssh - x2%ssh
+    lhs%hocn = x1%hocn - x2%hocn
     !   else
     !      call abor1_ftn("soca_fields:diff_incr: not coded for low res increment yet")
     !   endif
     !else
     !   call abor1_ftn("soca_fields:diff_incr: states not at same resolution")
     !endif
-
+    print *,'sum(mask)=',sum(x1%geom%ocean%mask2d(:,:))
   end subroutine diff_incr
 
   ! ------------------------------------------------------------------------------
@@ -618,20 +627,6 @@ contains
     where(self%ssh.eq.0.0)
        self%ssh=mask_val
     end where
-
-!!$    self%AOGCM%Ocn%T=mask_val
-!!$    self%AOGCM%Ocn%S=mask_val
-!!$    self%AOGCM%Ocn%H=mask_val
-!!$    self%AOGCM%Ocn%ssh=mask_val
-!!$
-!!$    self%AOGCM%Ice%part_size=mask_val
-!!$    self%AOGCM%Ice%h_ice=mask_val
-!!$    self%AOGCM%Ice%h_snow=mask_val
-!!$    self%AOGCM%Ice%T_skin=mask_val
-!!$    self%AOGCM%Ice%sal_ice=mask_val
-!!$    self%AOGCM%Ice%enth_ice=mask_val
-!!$    self%AOGCM%Ice%enth_snow=mask_val
-
 
   end subroutine self_mask
 
@@ -718,7 +713,7 @@ contains
                   domain=fld%geom%ocean%G%Domain%mpp_domain)
           case ('socn')
              idr_ocean = register_restart_field(ocean_restart, ocn_filename, 'Salt', fld%socn(:,:,:), &
-                  domain=fld%geom%ocean%G%Domain%mpp_domain)             
+                  domain=fld%geom%ocean%G%Domain%mpp_domain)  
           case ('hocn')
              idr_ocean = register_restart_field(ocean_restart, ocn_filename, 'h', fld%hocn(:,:,:), &
                   domain=fld%geom%ocean%G%Domain%mpp_domain)
@@ -1383,5 +1378,34 @@ contains
          & call abor1_ftn("fields:genfilename: filename too long")
 
   end function soca_genfilename
+  ! ------------------------------------------------------------------------------
+
+  subroutine clean_ocean(fld)
+
+    use soca_utils
+
+    implicit none
+    type(soca_field), intent(inout) :: fld
+
+    integer :: ii, jj, kk
+    integer :: is, ie, js, je, ncat, nzo
+    type(fckit_mpi_comm) :: f_comm
+    
+    ! Indices for compute domain (no halo)
+    call geom_get_domain_indices(fld%geom%ocean, "compute", is, ie, js, je)
+    
+    ! Ocean levels 
+    nzo = fld%geom%ocean%nzo
+
+    do ii = is, ie
+       do jj = js, je
+          call soca_clean_vertical(fld%hocn(ii,jj,:), fld%tocn(ii,jj,:))
+          call soca_clean_vertical(fld%hocn(ii,jj,:), fld%socn(ii,jj,:))
+       end do
+    end do
+
+  end subroutine clean_ocean
+
+  ! ------------------------------------------------------------------------------
   
 end module soca_fields
