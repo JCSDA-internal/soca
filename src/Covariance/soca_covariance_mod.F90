@@ -23,8 +23,8 @@ module soca_covariance_mod
     real(kind=kind_real) :: T, S, SSH, AICE, HICE     
   end type soca_pert
   type :: soca_cov
-     type(bump_type)  :: ocean_conv  !< Ocean convolution op from bump
-     type(bump_type)  :: seaice_conv !< Seaice convolution op from bump
+     type(bump_type), allocatable :: ocean_conv(:)  !< Ocean convolution op from bump
+     type(bump_type), allocatable :: seaice_conv(:) !< Seaice convolution op from bump
      integer, allocatable :: seaice_mask(:,:)          
      type(soca_field), pointer :: bkg         !< Background field (or first guess)
      logical          :: initialized = .false.
@@ -128,11 +128,13 @@ contains
 
     ! Initialize ocean bump
     domain = 'ocn'
-    call soca_bump_correlation(self, self%ocean_conv, geom, c_conf, domain)
+    allocate(self%ocean_conv(1))
+    call soca_bump_correlation(self, self%ocean_conv(1), geom, c_conf, domain)
 
     ! Initialize seaice bump
     domain = 'ice'
-    call soca_bump_correlation(self, self%seaice_conv, geom, c_conf, domain)    
+    allocate(self%seaice_conv(1))    
+    call soca_bump_correlation(self, self%seaice_conv(1), geom, c_conf, domain)    
 
     self%initialized = .true.
     
@@ -149,8 +151,10 @@ contains
     implicit none
     type(soca_cov), intent(inout) :: self       !< The covariance structure        
 
-    call self%ocean_conv%dealloc()
-    call self%seaice_conv%dealloc()
+    call self%ocean_conv(1)%dealloc()
+    call self%seaice_conv(1)%dealloc()
+    deallocate(self%ocean_conv)
+    deallocate(self%seaice_conv)
     !nullify(self%bkg)
     deallocate(self%seaice_mask)
     self%initialized = .false.
@@ -173,16 +177,16 @@ contains
     integer :: icat, izo
     
     ! Apply convolution to fields
-    call soca_2d_convol(dx%ssh, self%ocean_conv, dx%geom)
+    call soca_2d_convol(dx%ssh, self%ocean_conv(1), dx%geom)
     
     do icat = 1, dx%geom%ocean%ncat
-       call soca_2d_convol(dx%cicen(:,:,icat+1), self%seaice_conv, dx%geom)
-       call soca_2d_convol(dx%hicen(:,:,icat), self%seaice_conv, dx%geom)
+       call soca_2d_convol(dx%cicen(:,:,icat+1), self%seaice_conv(1), dx%geom)
+       call soca_2d_convol(dx%hicen(:,:,icat), self%seaice_conv(1), dx%geom)
     end do    
 
     do izo = 1,dx%geom%ocean%nzo
-       call soca_2d_convol(dx%tocn(:,:,izo), self%ocean_conv, dx%geom)
-       call soca_2d_convol(dx%socn(:,:,izo), self%ocean_conv, dx%geom)       
+       call soca_2d_convol(dx%tocn(:,:,izo), self%ocean_conv(1), dx%geom)
+       call soca_2d_convol(dx%socn(:,:,izo), self%ocean_conv(1), dx%geom)       
     end do    
 
   end subroutine soca_cov_C_mult
@@ -203,16 +207,16 @@ contains
     integer :: icat, izo
     
     ! Apply convolution to fields
-    call soca_2d_sqrt_convol(dx%ssh, self%ocean_conv, dx%geom, self%pert_scale%SSH)
+    call soca_2d_sqrt_convol(dx%ssh, self%ocean_conv(1), dx%geom, self%pert_scale%SSH)
     
     do icat = 1, dx%geom%ocean%ncat
-       call soca_2d_sqrt_convol(dx%cicen(:,:,icat+1), self%seaice_conv, dx%geom, self%pert_scale%AICE)
-       call soca_2d_sqrt_convol(dx%hicen(:,:,icat), self%seaice_conv, dx%geom, self%pert_scale%HICE)
+       call soca_2d_sqrt_convol(dx%cicen(:,:,icat+1), self%seaice_conv(1), dx%geom, self%pert_scale%AICE)
+       call soca_2d_sqrt_convol(dx%hicen(:,:,icat), self%seaice_conv(1), dx%geom, self%pert_scale%HICE)
     end do    
 
     do izo = 1,dx%geom%ocean%nzo
-       call soca_2d_sqrt_convol(dx%tocn(:,:,izo), self%ocean_conv, dx%geom, self%pert_scale%T)
-       call soca_2d_sqrt_convol(dx%socn(:,:,izo), self%ocean_conv, dx%geom, self%pert_scale%S)       
+       call soca_2d_sqrt_convol(dx%tocn(:,:,izo), self%ocean_conv(1), dx%geom, self%pert_scale%T)
+       call soca_2d_sqrt_convol(dx%socn(:,:,izo), self%ocean_conv(1), dx%geom, self%pert_scale%S)       
     end do    
 
   end subroutine soca_cov_sqrt_C_mult
