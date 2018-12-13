@@ -60,6 +60,7 @@ namespace soca {
     const {
     soca_b_mult_f90(keyFtnConfig_, dxin.fields().toFortran(),
                     dxout.fields().toFortran());
+    Log::trace() << "ErrorCovariance multiply" << std::endl;
   }
 
   // -----------------------------------------------------------------------------
@@ -70,7 +71,7 @@ namespace soca {
     //dxout.zero();
     //GMRESR(dxout, dxin, *this, Id, 10, 1.0e-6);
     dxout=dxin;
-    std::cout << "inv mult" << std::endl;
+    Log::trace() << "ErrorCovariance inversemultiply" << std::endl;
   }
 
   // -----------------------------------------------------------------------------

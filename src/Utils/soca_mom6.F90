@@ -42,31 +42,6 @@ module soca_mom6
      integer                        :: nzs  ! Number of snow levels
   end type soca_ice_column
 
-!!$  type soca_ocn_data_type
-!!$     real(kind=kind_real),  pointer :: T(:,:,:)
-!!$     real(kind=kind_real),  pointer :: S(:,:,:)
-!!$     real(kind=kind_real),  pointer :: U(:,:,:)
-!!$     real(kind=kind_real),  pointer :: V(:,:,:)
-!!$     real(kind=kind_real),  pointer :: ssh(:,:)
-!!$     real(kind=kind_real),  pointer :: H(:,:,:)
-!!$  end type soca_ocn_Data_Type
-!!$
-!!$  type soca_ice_data_type
-!!$     type(soca_ice_column) :: ice_column
-!!$     real(kind=kind_real),  pointer :: part_size(:,:,:)
-!!$     real(kind=kind_real),  pointer :: h_ice(:,:,:)
-!!$     real(kind=kind_real),  pointer :: enth_ice(:,:,:,:)
-!!$     real(kind=kind_real),  pointer :: sal_ice(:,:,:,:)
-!!$     real(kind=kind_real),  pointer :: h_snow(:,:,:)
-!!$     real(kind=kind_real),  pointer :: enth_snow(:,:,:,:)
-!!$     real(kind=kind_real),  pointer :: T_skin(:,:,:)
-!!$  end type soca_ice_data_type
-!!$
-!!$  type Coupled
-!!$     type (soca_ice_data_type)     :: Ice
-!!$     type (soca_ocn_data_type)     :: Ocn
-!!$  end type Coupled
-
 contains
 
   ! ------------------------------------------------------------------------------

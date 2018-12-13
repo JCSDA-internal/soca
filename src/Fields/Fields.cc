@@ -221,8 +221,7 @@ namespace soca {
     soca_field_gpnorm_f90(keyFlds_, nf, zstat[0]);
     for (int jj = 0; jj < nf; ++jj) {
       os << std::endl << "Min=" << zstat[3*jj] <<
-                         " Max=" << zstat[3*jj+1] <<
-                         " RMS=" << zstat[3*jj+2];
+                         " Max=" << zstat[3*jj+1];
     }
   }
   // -----------------------------------------------------------------------------

@@ -505,9 +505,12 @@ contains
     real(kind=kind_real) :: zprod_allpes
     !real(kind=kind_real),allocatable,dimension(:) :: zprod_allpes
     integer :: ii, jj, kk
-    integer :: is, ie, js, je, ncat, nzo
+    integer :: is, ie, js, je, ncat, nzo, myrank
     type(fckit_mpi_comm) :: f_comm
     
+    ! Setup Communicator
+    f_comm = fckit_mpi_comm()
+
     call check_resolution(fld1, fld2)
     if (fld1%nf /= fld2%nf .or. fld1%geom%ocean%nzo /= fld2%geom%ocean%nzo) then
        call abor1_ftn("soca_fields:field_prod error number of fields")
@@ -524,26 +527,32 @@ contains
     !----- OCEAN
     do ii = is, ie
        do jj = js, je
-          zprod = zprod + fld1%ssh(ii,jj)*fld2%ssh(ii,jj)*fld1%geom%ocean%mask2d(ii,jj)       !SSH
+          if (fld1%geom%ocean%mask2d(ii,jj)==1) then
+             zprod = zprod + fld1%ssh(ii,jj)*fld2%ssh(ii,jj)               ! SSH
           do kk = 1, nzo
-             zprod = zprod + fld1%tocn(ii,jj,kk)*fld2%tocn(ii,jj,kk)*fld1%geom%ocean%mask2d(ii,jj) &   !TOCN
-                  + fld1%socn(ii,jj,kk)*fld2%socn(ii,jj,kk)*fld1%geom%ocean%mask2d(ii,jj)     !SOCN
+                zprod = zprod + fld1%tocn(ii,jj,kk)*fld2%tocn(ii,jj,kk) &  ! TOCN
+                              + fld1%socn(ii,jj,kk)*fld2%socn(ii,jj,kk)    ! SOCN
           end do
+          end if
        end do
     end do
+    call f_comm%barrier()
+    myrank = f_comm%rank()
+    print *,'myrank=',myrank,' zprod=',zprod,' mask=',sum(fld1%geom%ocean%mask2d)
 
     !----- SEA-ICE
     do ii = is, ie
        do jj = js, je
           do kk = 1, ncat
-             zprod = zprod + fld1%cicen(ii,jj,kk+1)*fld2%cicen(ii,jj,kk+1)*fld1%geom%ocean%mask2d(ii,jj) & !CICEN
-                  + fld1%hicen(ii,jj,kk)*fld2%hicen(ii,jj,kk)*fld1%geom%ocean%mask2d(ii,jj)   !HICEN
+             if (fld1%geom%ocean%mask2d(ii,jj)==1) then
+                zprod = zprod + fld1%cicen(ii,jj,kk+1)*fld2%cicen(ii,jj,kk+1) & !CICEN
+                              + fld1%hicen(ii,jj,kk)*fld2%hicen(ii,jj,kk)       !HICEN
+             end if
           end do
        end do
     end do
 
     ! Get global dot product
-    f_comm = fckit_mpi_comm()
     call f_comm%allreduce(zprod, zprod_allpes, fckit_mpi_sum())
     zprod = zprod_allpes
 
@@ -852,16 +861,13 @@ contains
     pstat=0.0
     pstat(1,1) = minval(fld%cicen)
     pstat(2,1) = maxval(fld%cicen)
-    pstat(3,1) = sqrt(sum(fld%cicen*fld%cicen)/real(Nc2d*fld%geom%ocean%ncat))
-
+    
     pstat(1,2) = minval(fld%hicen)
     pstat(2,2) = maxval(fld%hicen)
-    pstat(3,2) = sqrt(sum(fld%hicen*fld%hicen)/real(Nc2d*fld%geom%ocean%ncat))
-
+    
     pstat(1,3) = minval(fld%hsnon)
     pstat(2,3) = maxval(fld%hsnon)
-    pstat(2,3) = sqrt(sum(fld%hsnon*fld%hsnon)/real(Nc2d*fld%geom%ocean%ncat))
-
+    
     pstat(1,4) = minval(fld%tsfcn)
     pstat(2,4) = maxval(fld%tsfcn)
 
@@ -883,9 +889,7 @@ contains
     pstat(1,10) = minval(fld%ssh)
     pstat(2,10) = maxval(fld%ssh)
 
-    call dot_prod(fld, fld, zz)
-    !pstat(3,:) = sqrt(zz)
-
+    
   end subroutine gpnorm
 
   ! ------------------------------------------------------------------------------

@@ -69,6 +69,7 @@ contains
 
     ! Read background error 
     call create_copy(self%std_bkgerr, bkg)
+    call ones(self%std_bkgerr)
     !call read_file(self%std_bkgerr, c_conf, vdate)
 
     ! Get bounds from configuration

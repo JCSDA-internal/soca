@@ -12,7 +12,7 @@ State:
 LinearVariableChangeTests:
 - varchange: BkgErrSOCA
   toleranceInverse: 1e-12
-  testinverse: 0
+  testinverse: 1
   read_from_file: 3
   basename: ./
   ocn_filename: ocn.bkgerror.nc
