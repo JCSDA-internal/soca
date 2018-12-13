@@ -100,18 +100,17 @@ contains
     end if            
     
     ! Setup ocean and ice decorrelation length scales
+    self%ocn_l0 = 500.0d3
+    self%ice_l0 = 500.0d3    
     if (config_element_exists(c_conf,"ocean_corr_scale")) then
        self%ocn_l0 = config_get_real(c_conf,"ocean_corr_scale")
-    else
-       self%ocn_l0 = 500.0d3
     end if   
     if (config_element_exists(c_conf,"ice_corr_scale")) then
        self%ice_l0 = config_get_real(c_conf,"ice_corr_scale")
-    else
-       self%ice_l0 = 500.0d3
     end if   
+
     ! Associate background
-    self%bkg => bkg
+    !self%bkg => bkg !NEEDED?
 
     ! Define seaice mask from background seaice fraction
     call geom_get_domain_indices(bkg%geom%ocean, "compute", is, ie, js, je)
@@ -152,7 +151,7 @@ contains
 
     call self%ocean_conv%dealloc()
     call self%seaice_conv%dealloc()
-    nullify(self%bkg)
+    !nullify(self%bkg)
     deallocate(self%seaice_mask)
     self%initialized = .false.
     
