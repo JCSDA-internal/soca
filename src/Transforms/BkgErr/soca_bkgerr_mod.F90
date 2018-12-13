@@ -69,8 +69,11 @@ contains
 
     ! Read background error 
     call create_copy(self%std_bkgerr, bkg)
-    call ones(self%std_bkgerr)
-    !call read_file(self%std_bkgerr, c_conf, vdate)
+    if (config_element_exists(c_conf,"ocn_filename")) then
+       call read_file(self%std_bkgerr, c_conf, vdate)
+    else
+       call ones(self%std_bkgerr)
+    end if       
 
     ! Get bounds from configuration
     self%bounds%t_min   = config_get_real(c_conf,"t_min")
@@ -112,7 +115,7 @@ contains
        end do
     end do
 
-    ! Save filtered background error  
+    ! Save filtered background error
     call soca_fld2file(self%std_bkgerr, fname)
     
   end subroutine soca_bkgerr_setup

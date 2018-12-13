@@ -89,14 +89,14 @@ contains
        traj%nobs = locs%nlocs
        if (traj%nobs>0) traj%noobs = .false.
        !if (.not.traj%noobs) return        ! Exit if no obs
-       call initialize_interph(fld, locs, traj%horiz_interp, traj%bumpid)
-       call traj%horiz_interp%info()
+       call initialize_interph(fld, locs, traj%horiz_interp(1), traj%bumpid)
+       call traj%horiz_interp(1)%info()
        traj%interph_initialized = .true.
        bumpid = bumpid + 1
     end if
 
     ! Apply interpolation
-    call interp_tl(fld, locs, vars, geovals, traj%horiz_interp)    
+    call interp_tl(fld, locs, vars, geovals, traj%horiz_interp(1))    
 
   end subroutine getvalues_traj
 
@@ -143,7 +143,7 @@ contains
 
     !if (traj%noobs) return
     
-    horiz_interp_p => traj%horiz_interp
+    horiz_interp_p => traj%horiz_interp(1)
 
     ! Indices for compute domain (no halo)
     call geom_get_domain_indices(fld%geom%ocean, "compute", isc, iec, jsc, jec)
