@@ -29,6 +29,8 @@ module soca_covariance_mod
      type(soca_field), pointer :: bkg         !< Background field (or first guess)
      logical          :: initialized = .false.
      type(soca_pert) :: pert_scale
+     real(kind=kind_real) :: ocn_l0
+     real(kind=kind_real) :: ice_l0
   end type soca_cov
 
 #define LISTED_TYPE soca_cov
@@ -276,19 +278,15 @@ contains
     vunit = 1.0d0
 
     ! Setup horizontal decorrelation length scales
-    ! TODO: Length scale should be in configuration
     allocate(rh(nc0a,nl0,nv,nts))
     allocate(rv(nc0a,nl0,nv,nts))
     if (domain.eq.'ocn') then
        do jjj=1,nc0a
-          rh(jjj,1,1,1)=500d3 + rosrad(jjj)
+          rh(jjj,1,1,1)=self%ocn_l0 + rosrad(jjj)
        end do
-!!$       where (rh<300d3)
-!!$          rh=500d3!300d3
-!!$       end where
     end if
     if (domain.eq.'ice') then
-       rh = 500d3
+       rh = self%ice_l0
     end if
     rv=1.0 ! Vertical scales not used, set to something
 
