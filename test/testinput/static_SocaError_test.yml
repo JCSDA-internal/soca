@@ -65,6 +65,9 @@ Covariance:
   # Output parameters  
   diag_interp: bilin
   date: '2018-04-15T00:00:00Z'
+  # Decorrelation length scale
+  ocean_corr_scale: 3000.0e3
+  ice_corr_scale: 3000.0e3  
 CovarianceTest:
   tolerance: 1e-10
   testinverse: false

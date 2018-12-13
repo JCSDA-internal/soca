@@ -99,6 +99,17 @@ contains
        self%pert_scale%HICE = config_get_real(c_conf,"pert_HICE")       
     end if            
     
+    ! Setup ocean and ice decorrelation length scales
+    if (config_element_exists(c_conf,"ocean_corr_scale")) then
+       self%ocn_l0 = config_get_real(c_conf,"ocean_corr_scale")
+    else
+       self%ocn_l0 = 500.0d3
+    end if   
+    if (config_element_exists(c_conf,"ice_corr_scale")) then
+       self%ice_l0 = config_get_real(c_conf,"ice_corr_scale")
+    else
+       self%ice_l0 = 500.0d3
+    end if   
     ! Associate background
     self%bkg => bkg
 
