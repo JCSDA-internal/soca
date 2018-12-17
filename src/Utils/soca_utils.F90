@@ -8,7 +8,7 @@ module soca_utils
   implicit none
 
   private
-  public :: inside_polygon, write2pe, soca_clean_vertical
+  public :: inside_polygon, write2pe, soca_clean_vertical, soca_rho
 contains
 
   ! ------------------------------------------------------------------------------  
@@ -50,7 +50,32 @@ contains
     return
 
   end function inside_polygon
+    
+  ! ------------------------------------------------------------------------------
 
+  elemental function soca_rho(sp, pt, p, lon, lat)
+    use kinds
+    use gsw_mod_toolbox, only : gsw_rho, gsw_rho_first_derivatives,gsw_sa_from_sp, gsw_ct_from_pt    
+    real(kind=kind_real), intent(in)  :: pt, sp, p, lon, lat
+    real(kind=kind_real) :: sa, ct, lon_rot, soca_rho
+
+    !Rotate longitude if necessary
+    lon_rot = lon
+    if (lon<-180.0) lon_rot=lon+360.0
+    if (lon>180.0) lon_rot=lon-360.0
+    
+    ! Convert practical salinity to absolute salinity    
+    sa = gsw_sa_from_sp (sp, p, lon_rot, lat)
+
+    ! Convert potential temperature to concervative temperature
+    ct = gsw_ct_from_pt (sa, pt)
+
+    ! Insitu density
+    soca_rho = gsw_rho(sa,ct,p)
+
+    return
+  end function soca_rho
+  
   ! ------------------------------------------------------------------------------
 
   subroutine soca_clean_vertical(h, var)
