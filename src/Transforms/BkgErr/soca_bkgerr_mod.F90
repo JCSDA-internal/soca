@@ -64,14 +64,17 @@ contains
     real(kind=kind_real) :: detas
     type(datetime) :: vdate
     character(len=800) :: fname = 'soca_bkgerror.nc'
-        
+    logical :: read_from_file = .false.
+    
     nl = size(bkg%hocn,3)
 
-    ! Read background error 
+    ! Read background error
     call create_copy(self%std_bkgerr, bkg)
     if (config_element_exists(c_conf,"ocn_filename")) then
+       read_from_file = .true.
        call read_file(self%std_bkgerr, c_conf, vdate)
     else
+       read_from_file = .false.       
        call ones(self%std_bkgerr)
     end if       
 
