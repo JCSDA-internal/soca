@@ -18,7 +18,6 @@ module soca_vertconv_mod
      real(kind=kind_real)              :: ltemp              !> Temperature decorrelation [K] 
      type(soca_field),pointer          :: traj               !> Trajectory
      type(soca_field), pointer         :: bkg                !> Background     
-     real(kind=kind_real), allocatable :: z(:,:,:)           !> Ocean Depth [m]
      real(kind=kind_real), allocatable :: temp(:,:,:)        !> Ocean Depth [m]     
      integer                           :: isc, iec, jsc, jec !> Compute domain 
   end type soca_vertconv
@@ -73,10 +72,6 @@ contains
     allocate(self%temp(isc:iec, jsc:jec, nl))
     self%temp = self%traj%tocn
   
-    ! Initialize local ocean depth from layer thickness  
-    allocate(self%z(isc:iec, jsc:jec, nl))
-    call bkg%geom%ocean%thickness2depth(bkg%hocn, self%z)    
-
   end subroutine soca_conv_setup
   
   subroutine soca_conv (self, convdx, dx)
@@ -95,7 +90,7 @@ contains
 
     lz = self%lz
     ltemp2 = self%ltemp**2
-    nl = size(self%z,3)
+    nl = size(self%bkg%layer_depth,3)
     lz2 = lz**2
 
     allocate(z(nl), zp(nl), lzd(nl))
@@ -104,10 +99,10 @@ contains
     do id = self%isc, self%iec
        do jd = self%jsc, self%jec
           if (self%bkg%geom%ocean%mask2d(id,jd).eq.1) then
-             z(:) = self%z(id,jd,:)
+             z(:) = self%bkg%layer_depth(id,jd,:)
              zp = z
              !lzd = (z/10.0_kind_real)**2
-             lzd = self%z(id,jd,:)
+             lzd = (self%bkg%layer_depth(id,jd,:))**2
              do j = 1, nl
                 convdx%tocn(id,jd,j) = 0.0d0
                 convdx%socn(id,jd,j) = 0.0d0             
@@ -144,20 +139,20 @@ contains
 
     lz = self%lz
     ltemp2 = self%ltemp**2    
-    nl = size(self%z,3)
+    nl = size(self%bkg%layer_depth,3)
     lz2 = lz**2
 
     !allocate(z(nl), zp(nl))
     allocate(z(nl), zp(nl), lzd(nl))
     do id = self%isc, self%iec
        do jd = self%jsc, self%jec
-          z(:) = self%z(id,jd,:)
+          z(:) = self%bkg%layer_depth(id,jd,:)
           zp = z
           if (self%bkg%geom%ocean%mask2d(id,jd).eq.1) then
              dx%tocn(id,jd,:) = 0.0d0
              dx%socn(id,jd,:) = 0.0d0
              !lzd = (10.0_kind_real+z/10.0_kind_real)**2
-             lzd = self%z(id,jd,:)
+             lzd = (self%bkg%layer_depth(id,jd,:))**2             
              do j = nl, 1, -1
                 do k = nl, 1, -1
                    dist2 = (z(j)-zp(k))**2

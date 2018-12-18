@@ -17,7 +17,6 @@ module soca_balance_mod
   !> Fortran derived type to hold configuration D
   type :: soca_balance_config
      type(soca_field),  pointer :: traj                !> Trajectory
-     real(kind=kind_real), allocatable :: z(:,:,:)     !> Mid-layer depth
      integer                    :: isc, iec, jsc, jec  !> Compute domain
      type(soca_kst)             :: kst                 !> T/S balance
      type(soca_ksshts)          :: ksshts              !> SSH/T/S balance
@@ -68,10 +67,6 @@ contains
     call geom_get_domain_indices(traj%geom%ocean, "compute", isc, iec, jsc, jec)
     self%isc=isc; self%iec=iec; self%jsc=jsc; self%jec=jec
 
-    ! Initialize local ocean depth from layer thickness
-    allocate(self%z(isc:iec, jsc:jec, nl))    
-    call traj%geom%ocean%thickness2depth(traj%hocn, self%z)
-
     ! Get configuration for Kst
     self%kst%dsdtmax      = config_get_real(c_conf,"dsdtmax")
     self%kst%dsdzmin      = config_get_real(c_conf,"dsdzmin")
@@ -89,6 +84,12 @@ contains
                &traj%socn(i,j,:),&
                &traj%hocn(i,j,:),&
                &self%kst%dsdtmax, self%kst%dsdzmin, self%kst%dtdzmin)
+          ! Set Jacobian to 0 above mixed layer
+          do k=1,nl
+             if (self%traj%layer_depth(i,j,k)<self%traj%mld(i,j)) then
+                jac(k) = 0.0_kind_Real
+             end if
+          end do
           self%kst%jacobian(i,j,:) = jac(:)
        end do
     end do
@@ -106,7 +107,7 @@ contains
              call soca_steric_jacobian (jac, &
                   &traj%tocn(i,j,k),&
                   &traj%socn(i,j,k),&
-                  &self%z(i,j,k),&
+                  &self%traj%layer_depth(i,j,k),&
                   &traj%hocn(i,j,k),&
                   &traj%geom%ocean%lon(i,j),&
                   &traj%geom%ocean%lat(i,j))
@@ -134,7 +135,6 @@ contains
     type(soca_balance_config), intent(inout) :: self
 
     nullify(self%traj)
-    deallocate(self%z)
     deallocate(self%kst%jacobian)
     deallocate(self%ksshts%kssht)
     deallocate(self%ksshts%ksshs)    

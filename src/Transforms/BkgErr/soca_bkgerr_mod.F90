@@ -24,7 +24,6 @@ module soca_bkgerr_mod
      type(soca_field),         pointer :: bkg
      type(soca_field)                  :: std_bkgerr
      type(soca_bkgerror_bounds)        :: bounds
-     real(kind=kind_real), allocatable :: z(:,:,:)
      integer                           :: isc, iec, jsc, jec
   end type soca_bkgerr_config
 
@@ -90,10 +89,6 @@ contains
     ! Indices for compute domain (no halo)
     call geom_get_domain_indices(bkg%geom%ocean, "compute", isc, iec, jsc, jec)
     self%isc=isc; self%iec=iec; self%jsc=jsc; self%jec=jec
-
-    ! Initialize local ocean depth (self%z) from layer thickness   
-    call bkg%geom%ocean%thickness2depth(bkg%hocn, self%z) ! TODO: MOVE TO GEOM_INIT
-                                                          ! OR STATE INIT
 
     ! Std of bkg error for temperature based on dT/dz
     ! Need to initialize unbalanced Bs and Bssh

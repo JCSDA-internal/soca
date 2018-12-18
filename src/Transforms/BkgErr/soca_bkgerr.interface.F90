@@ -43,7 +43,6 @@ subroutine c_soca_bkgerr_delete(c_key_self) bind(c,name='soca_bkgerr_delete_f90'
 
   call soca_bkgerr_registry%get(c_key_self, self)
   if (associated(self%bkg)) nullify(self%bkg)
-  if (allocated(self%z)) deallocate(self%z)
   call delete(self%std_bkgerr)
   
   call soca_bkgerr_registry%remove(c_key_self)

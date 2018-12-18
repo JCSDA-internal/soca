@@ -175,11 +175,11 @@ contains
     km = ncat + 1
     if (.not.allocated(self%cicen)) allocate(self%cicen(isd:ied, jsd:jed, km))
     if (.not.allocated(self%hicen)) allocate(self%hicen(isd:ied, jsd:jed, ncat))
-    if (.not.allocated(self%hsnon)) allocate(self%hsnon(isd:ied, jsd:jed, ncat))
-    if (.not.allocated(self%qicnk)) allocate(self%qicnk(isd:ied, jsd:jed, ncat, nzi))
-    if (.not.allocated(self%qsnon)) allocate(self%qsnon(isd:ied, jsd:jed, ncat, nzs))
-    if (.not.allocated(self%sicnk)) allocate(self%sicnk(isd:ied, jsd:jed, ncat, nzi))
-    if (.not.allocated(self%tsfcn)) allocate(self%tsfcn(isd:ied, jsd:jed, ncat))
+    !if (.not.allocated(self%hsnon)) allocate(self%hsnon(isd:ied, jsd:jed, ncat))
+    !if (.not.allocated(self%qicnk)) allocate(self%qicnk(isd:ied, jsd:jed, ncat, nzi))
+    !if (.not.allocated(self%qsnon)) allocate(self%qsnon(isd:ied, jsd:jed, ncat, nzs))
+    !if (.not.allocated(self%sicnk)) allocate(self%sicnk(isd:ied, jsd:jed, ncat, nzi))
+    !if (.not.allocated(self%tsfcn)) allocate(self%tsfcn(isd:ied, jsd:jed, ncat))
 
   end subroutine soca_field_alloc
 
@@ -202,11 +202,11 @@ contains
     ! Deallocate sea-ice state
     deallocate(self%cicen)
     deallocate(self%hicen)
-    deallocate(self%hsnon)
-    deallocate(self%qicnk)
-    deallocate(self%qsnon)
-    deallocate(self%sicnk)
-    deallocate(self%tsfcn)
+    !deallocate(self%hsnon)
+    !deallocate(self%qicnk)
+    !deallocate(self%qsnon)
+    !deallocate(self%sicnk)
+    !deallocate(self%tsfcn)
 
     ! Deallocate geometry
     nullify(self%geom)
@@ -743,21 +743,21 @@ contains
           case ('hicen')
              idr = register_restart_field(sis_restart, ice_filename, 'h_ice', fld%hicen, &
                   domain=fld%geom%ocean%G%Domain%mpp_domain)
-          case ('hsnon')
-             idr = register_restart_field(sis_restart, ice_filename, 'h_snow', fld%hsnon, &
-                  domain=fld%geom%ocean%G%Domain%mpp_domain)
-          case ('qicnk')
-             idr = register_restart_field(sis_restart, ice_filename, 'enth_ice', fld%qicnk, &
-                  domain=fld%geom%ocean%G%Domain%mpp_domain)
-          case ('qsnon')
-             idr = register_restart_field(sis_restart, ice_filename, 'enth_snow', fld%qsnon, &
-                  domain=fld%geom%ocean%G%Domain%mpp_domain)
-          case ('tsfcn')
-             idr = register_restart_field(sis_restart, ice_filename, 'T_skin', fld%tsfcn, &
-                  domain=fld%geom%ocean%G%Domain%mpp_domain)
-          case ('sicnk')
-             idr = register_restart_field(sis_restart, ice_filename, 'sal_ice', fld%sicnk, &
-                  domain=fld%geom%ocean%G%Domain%mpp_domain)
+!!$          case ('hsnon')
+!!$             idr = register_restart_field(sis_restart, ice_filename, 'h_snow', fld%hsnon, &
+!!$                  domain=fld%geom%ocean%G%Domain%mpp_domain)
+!!$          case ('qicnk')
+!!$             idr = register_restart_field(sis_restart, ice_filename, 'enth_ice', fld%qicnk, &
+!!$                  domain=fld%geom%ocean%G%Domain%mpp_domain)
+!!$          case ('qsnon')
+!!$             idr = register_restart_field(sis_restart, ice_filename, 'enth_snow', fld%qsnon, &
+!!$                  domain=fld%geom%ocean%G%Domain%mpp_domain)
+!!$          case ('tsfcn')
+!!$             idr = register_restart_field(sis_restart, ice_filename, 'T_skin', fld%tsfcn, &
+!!$                  domain=fld%geom%ocean%G%Domain%mpp_domain)
+!!$          case ('sicnk')
+!!$             idr = register_restart_field(sis_restart, ice_filename, 'sal_ice', fld%sicnk, &
+!!$                  domain=fld%geom%ocean%G%Domain%mpp_domain)
           case default
              !call log%warning("soca_fields:read_file: Not reading var "//fld%fldnames(ii))
           end select
@@ -818,16 +818,16 @@ contains
              call read_data(incr_filename, 'cicen', fld%cicen, domain=fld%geom%ocean%G%Domain%mpp_domain)
           case ('hicen')
              call read_data(incr_filename, 'hicen', fld%hicen, domain=fld%geom%ocean%G%Domain%mpp_domain)
-          case ('hsnon')
-             call read_data(incr_filename, 'hsnon', fld%hsnon, domain=fld%geom%ocean%G%Domain%mpp_domain)
-          case ('qicnk')
-             call read_data(incr_filename, 'qicnk', fld%qicnk, domain=fld%geom%ocean%G%Domain%mpp_domain)
-          case ('sicnk')
-             call read_data(incr_filename, 'sicnk', fld%sicnk, domain=fld%geom%ocean%G%Domain%mpp_domain)
-          case ('qsnon')
-             call read_data(incr_filename, 'qsnon', fld%qsnon, domain=fld%geom%ocean%G%Domain%mpp_domain)
-          case ('tsfcn')
-             call read_data(incr_filename, 'tsfcn', fld%tsfcn, domain=fld%geom%ocean%G%Domain%mpp_domain)
+!!$          case ('hsnon')
+!!$             call read_data(incr_filename, 'hsnon', fld%hsnon, domain=fld%geom%ocean%G%Domain%mpp_domain)
+!!$          case ('qicnk')
+!!$             call read_data(incr_filename, 'qicnk', fld%qicnk, domain=fld%geom%ocean%G%Domain%mpp_domain)
+!!$          case ('sicnk')
+!!$             call read_data(incr_filename, 'sicnk', fld%sicnk, domain=fld%geom%ocean%G%Domain%mpp_domain)
+!!$          case ('qsnon')
+!!$             call read_data(incr_filename, 'qsnon', fld%qsnon, domain=fld%geom%ocean%G%Domain%mpp_domain)
+!!$          case ('tsfcn')
+!!$             call read_data(incr_filename, 'tsfcn', fld%tsfcn, domain=fld%geom%ocean%G%Domain%mpp_domain)
           case default
              write(buf,*) 'soca_fields_mod::read_file::increment. Not reading '//fld%fldnames(ii)
              call log%info(buf,newl=.true.)
@@ -1278,18 +1278,18 @@ contains
           call write_data( fname, "h", fld%hocn, fld%geom%ocean%G%Domain%mpp_domain)
        case ('hicen')
           call write_data( fname, "hicen", fld%hicen, fld%geom%ocean%G%Domain%mpp_domain)
-       case ('hsnon')
-          call write_data(fname, "hsnon", fld%hsnon, fld%geom%ocean%G%Domain%mpp_domain)
+!!$       case ('hsnon')
+!!$          call write_data(fname, "hsnon", fld%hsnon, fld%geom%ocean%G%Domain%mpp_domain)
        case ('cicen')
           call write_data(fname, "cicen", fld%cicen, fld%geom%ocean%G%Domain%mpp_domain)
-       case ('qicnk')
-          call write_data(fname, "qicnk", fld%qicnk, fld%geom%ocean%G%Domain%mpp_domain)
-       case ('sicnk')
-          call write_data(fname, "sicnk", fld%sicnk, fld%geom%ocean%G%Domain%mpp_domain)
-       case ('qsnon')
-          call write_data(fname, "qsnon", fld%qsnon, fld%geom%ocean%G%Domain%mpp_domain)
-       case ('tsfcn')
-          call write_data(fname, "tsfcn", fld%tsfcn, fld%geom%ocean%G%Domain%mpp_domain)
+!!$       case ('qicnk')
+!!$          call write_data(fname, "qicnk", fld%qicnk, fld%geom%ocean%G%Domain%mpp_domain)
+!!$       case ('sicnk')
+!!$          call write_data(fname, "sicnk", fld%sicnk, fld%geom%ocean%G%Domain%mpp_domain)
+!!$       case ('qsnon')
+!!$          call write_data(fname, "qsnon", fld%qsnon, fld%geom%ocean%G%Domain%mpp_domain)
+!!$       case ('tsfcn')
+!!$          call write_data(fname, "tsfcn", fld%tsfcn, fld%geom%ocean%G%Domain%mpp_domain)
        case default
 
        end select
