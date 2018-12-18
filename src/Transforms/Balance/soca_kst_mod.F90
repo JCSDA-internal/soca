@@ -43,7 +43,8 @@ contains
     !--------------------------------------------------------------------------
 
     use kinds
-
+    use soca_utils
+    
     implicit none
 
     real(kind=kind_real),                 intent(in) :: t(:), s(:), h(:)
@@ -76,27 +77,5 @@ contains
     end where
 
   end subroutine soca_soft_jacobian
-
-  ! ------------------------------------------------------------------------------
-  
-  subroutine soca_diff(dvdz,v,h)
-    use kinds
-
-    implicit none
-
-    real(kind=kind_real), intent(in)  :: v(:), h(:)
-    real(kind=kind_real), intent(out) :: dvdz(:)
-
-    integer :: k, ik
-
-    k = size(v,1)
-    
-    do ik = 2, k-1
-       dvdz(ik) = (v(ik+1)-v(ik-1))/(h(ik)+0.5*h(ik+1)+h(ik-1))
-    end do
-    dvdz(1) = dvdz(2)
-    dvdz(k) = dvdz(k-1)    
-
-  end subroutine soca_diff
 
 end module soca_kst_mod

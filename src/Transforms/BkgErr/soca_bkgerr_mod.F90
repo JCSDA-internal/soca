@@ -9,6 +9,7 @@ module soca_bkgerr_mod
 
   use kinds
   use soca_fields
+  use soca_model_geom_type, only : geom_get_domain_indices
   
   implicit none
 
@@ -46,8 +47,6 @@ contains
     use kinds
     use iso_c_binding
     use config_mod
-    use soca_fields
-    use soca_model_geom_type, only : geom_get_domain_indices
     use soca_kst_mod
     use datetime_mod
     use mpi
@@ -75,7 +74,6 @@ contains
        call read_file(self%std_bkgerr, c_conf, vdate)
     else
        read_from_file = .false.       
-       call ones(self%std_bkgerr)
     end if       
 
     ! Get bounds from configuration
@@ -93,9 +91,14 @@ contains
     call geom_get_domain_indices(bkg%geom%ocean, "compute", isc, iec, jsc, jec)
     self%isc=isc; self%iec=iec; self%jsc=jsc; self%jec=jec
 
-    ! Initialize local ocean depth (self%z) from layer thickness  
-    call bkg%geom%ocean%thickness2depth(bkg%hocn, self%z)
+    ! Initialize local ocean depth (self%z) from layer thickness   
+    call bkg%geom%ocean%thickness2depth(bkg%hocn, self%z) ! TODO: MOVE TO GEOM_INIT
+                                                          ! OR STATE INIT
 
+    ! Std of bkg error for temperature based on dT/dz
+    ! Need to initialize unbalanced Bs and Bssh
+    if (.not.read_from_file) call soca_bkgerr_tocn(self)
+    
     ! Limit background error
     do i = isc, iec
        do j = jsc, jec
@@ -137,7 +140,7 @@ contains
     type(soca_field),         intent(inout) :: dxm
 
     integer :: isc, iec, jsc, jec, i, j, k
-    
+
     ! Indices for compute domain (no halo)
     call geom_get_domain_indices(self%bkg%geom%ocean, "compute", isc, iec, jsc, jec)
 
@@ -166,6 +169,89 @@ contains
     adjusted_std = min( max(std, minstd), maxstd)
     
   end function adjusted_std
+
+  ! ------------------------------------------------------------------------------
+  
+  subroutine soca_bkgerr_tocn(self)
+    use kinds
+    use soca_utils
+    
+    implicit none
+    type(soca_bkgerr_config), intent(inout) :: self
+
+    real(kind=kind_real), allocatable :: rho(:), drhodz(:)
+    real(kind=kind_real), allocatable :: temp(:), vmask(:)
+    real(kind=kind_real) :: jac(2), mlp
+    real(kind=kind_real) :: delta_z = 10.0_kind_real ![m] TODO: Move to config
+    integer :: is, ie, js, je, i, j, k
+
+    ! Set all fields to zero
+    !call zeros(self%std_bkgerr)
+    call ones(self%std_bkgerr)    
+    !call self_mul(self%std_bkgerr, 1d-8)
+    
+    ! Indices for compute domain (no halo)
+    call geom_get_domain_indices(self%bkg%geom%ocean, "compute", is, ie, js, je)
+
+    ! Compute density gradient
+    allocate(rho(self%bkg%geom%ocean%nzo))
+    allocate(drhodz(self%bkg%geom%ocean%nzo))
+    allocate(temp(self%bkg%geom%ocean%nzo))
+    allocate(vmask(self%bkg%geom%ocean%nzo))
+
+    do i = is, ie
+       do j = js, je
+          if (self%bkg%geom%ocean%mask2d(i,j).eq.1) then
+             ! MLD from density
+             rho(:) = soca_rho(self%bkg%socn(i,j,:),&
+                  &self%bkg%tocn(i,j,:),&
+                  &self%z(i,j,:),&
+                  &self%bkg%geom%ocean%lon(i,j),&
+                  &self%bkg%geom%ocean%lat(i,j))
+
+             ! Mixed layer depth
+             mlp = soca_mld(self%bkg%socn(i,j,:),&
+                           &self%bkg%tocn(i,j,:),&
+                           &self%z(i,j,:),&
+                           &self%bkg%geom%ocean%lon(i,j),&
+                           &self%bkg%geom%ocean%lat(i,j))
+             !print *,'rho=',rho
+             print *,'z=',self%z(i,j,1)
+             print *,'mld=',mlp
+             read(*,*)
+             drhodz = 0.0_kind_real
+             !call soca_diff(drhodz,rho,self%bkg%hocn(i,j,:))
+             !call soca_mld(drhodz)
+
+             ! Make sure Temp values in thin layers are realistic
+             temp(:) = self%bkg%tocn(i,j,:)
+             call soca_clean_vertical(self%bkg%hocn(i,j,:), temp(:))
+             
+             ! T Bkg error from dT/dz 
+             call soca_diff(self%std_bkgerr%tocn(i,j,:),&
+                           &self%bkg%tocn(i,j,:),&
+                           &self%bkg%hocn(i,j,:))
+
+             ! Apply vertical mask
+             vmask = 1.0_kind_real
+             where (self%bkg%hocn(i,j,:)<1.0d-6)
+                vmask = 0.0_kind_real
+             end where
+
+             ! Scale background error
+             self%std_bkgerr%tocn(i,j,:) = abs(delta_z * &
+                  &(self%std_bkgerr%tocn(i,j,:) * vmask))
+             
+          end if
+       end do
+    end do
+
+    ! Release memory
+    deallocate(rho, drhodz, temp, vmask)
+    
+  end subroutine soca_bkgerr_tocn
+
+  ! ------------------------------------------------------------------------------
   
 end module soca_bkgerr_mod
 

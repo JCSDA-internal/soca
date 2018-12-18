@@ -89,7 +89,7 @@ contains
     type(soca_field),    intent(in) :: dx
     type(soca_field),   intent(inout) :: convdx
 
-    real(kind=kind_real), allocatable :: z(:), zp(:)
+    real(kind=kind_real), allocatable :: z(:), zp(:), lzd(:)
     real(kind=kind_real) :: lz2, dist2, dtemp2, coef, lz, ltemp2
     integer :: nl, j, k, id, jd
 
@@ -98,19 +98,22 @@ contains
     nl = size(self%z,3)
     lz2 = lz**2
 
-    allocate(z(nl), zp(nl))
+    allocate(z(nl), zp(nl), lzd(nl))
+
+    
     do id = self%isc, self%iec
        do jd = self%jsc, self%jec
           if (self%bkg%geom%ocean%mask2d(id,jd).eq.1) then
              z(:) = self%z(id,jd,:)
              zp = z
+             !lzd = (z/10.0_kind_real)**2
+             lzd = self%z(id,jd,:)
              do j = 1, nl
                 convdx%tocn(id,jd,j) = 0.0d0
                 convdx%socn(id,jd,j) = 0.0d0             
                 do k = 1,nl
                    dist2 = (z(j)-zp(k))**2
-                   !dtemp2 = (self%temp(id,jd,j)-self%temp(id,jd,k))**2
-                   coef = exp(-dist2/lz2) ! -dtemp2/ltemp2)
+                   coef = exp(-dist2/lzd(k)) !lz2)
                    convdx%tocn(id,jd,j) = convdx%tocn(id,jd,j) &
                         &+ dx%tocn(id,jd,k)*coef
                    convdx%socn(id,jd,j) = convdx%socn(id,jd,j) &
@@ -120,7 +123,7 @@ contains
           end if
        end do
     end do
-    deallocate(z, zp)
+    deallocate(z, zp, lzd)
 
   end subroutine soca_conv
 
@@ -135,7 +138,7 @@ contains
     type(soca_field), intent(inout) :: dx     ! OUT
     type(soca_field),    intent(in) :: convdx ! IN
 
-    real(kind=kind_real), allocatable :: z(:), zp(:)
+    real(kind=kind_real), allocatable :: z(:), zp(:), lzd(:)
     real(kind=kind_real) :: lz2, dist2, dtemp2, coef, lz, ltemp2    
     integer :: nl, j, k, id, jd
 
@@ -144,19 +147,22 @@ contains
     nl = size(self%z,3)
     lz2 = lz**2
 
-    allocate(z(nl), zp(nl))
+    !allocate(z(nl), zp(nl))
+    allocate(z(nl), zp(nl), lzd(nl))
     do id = self%isc, self%iec
        do jd = self%jsc, self%jec
           z(:) = self%z(id,jd,:)
           zp = z
           if (self%bkg%geom%ocean%mask2d(id,jd).eq.1) then
              dx%tocn(id,jd,:) = 0.0d0
-             dx%socn(id,jd,:) = 0.0d0                
+             dx%socn(id,jd,:) = 0.0d0
+             !lzd = (10.0_kind_real+z/10.0_kind_real)**2
+             lzd = self%z(id,jd,:)
              do j = nl, 1, -1
                 do k = nl, 1, -1
                    dist2 = (z(j)-zp(k))**2
-                   !dtemp2 = (self%temp(id,jd,j)-self%temp(id,jd,k))**2
-                   coef = exp(-dist2/lz2) ! -dtemp2/ltemp2)
+                   !coef = exp(-dist2/lz2)
+                   coef = exp(-dist2/lzd(k)) !lz2)
                    dx%tocn(id,jd,k) = dx%tocn(id,jd,k) + coef*convdx%tocn(id,jd,j)
                    dx%socn(id,jd,k) = dx%socn(id,jd,k) + coef*convdx%socn(id,jd,j)
                 end do
@@ -164,7 +170,7 @@ contains
           end if
        end do
     end do
-    deallocate(z, zp)
+    deallocate(z, zp, lzd)
 
   end subroutine soca_conv_ad
 

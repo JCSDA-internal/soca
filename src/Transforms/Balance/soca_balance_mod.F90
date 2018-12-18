@@ -161,7 +161,7 @@ contains
 
     integer :: i, j, k
     real(kind=kind_real) :: deta, dxc
-    print *,'=============== in balance mult'
+
     do i = self%isc, self%iec
        do j = self%jsc, self%jec
           ! Temperature
@@ -177,7 +177,7 @@ contains
              deta = deta + self%ksshts%kssht(i,j,k) * dxa%tocn(i,j,k) +&
                           &self%ksshts%ksshs(i,j,k) * dxa%socn(i,j,k)
           end do
-          dxm%ssh(i,j)    = dxa%ssh(i,j) + deta
+          dxm%ssh(i,j) = dxa%ssh(i,j) + deta
           ! Ice fraction
           dxm%cicen(i,j,:) =  dxa%cicen(i,j,:)
           do k = 1, size(self%traj%hicen,3)

@@ -8,7 +8,8 @@ module soca_utils
   implicit none
 
   private
-  public :: inside_polygon, write2pe, soca_clean_vertical, soca_rho
+  public :: inside_polygon, write2pe, soca_clean_vertical
+  public :: soca_rho, soca_diff, soca_mld
 contains
 
   ! ------------------------------------------------------------------------------  
@@ -55,9 +56,9 @@ contains
 
   elemental function soca_rho(sp, pt, p, lon, lat)
     use kinds
-    use gsw_mod_toolbox, only : gsw_rho, gsw_rho_first_derivatives,gsw_sa_from_sp, gsw_ct_from_pt    
+    use gsw_mod_toolbox, only : gsw_rho, gsw_sa_from_sp, gsw_ct_from_pt
     real(kind=kind_real), intent(in)  :: pt, sp, p, lon, lat
-    real(kind=kind_real) :: sa, ct, lon_rot, soca_rho
+    real(kind=kind_real) :: sa, ct, lon_rot, soca_rho, soca_mld
 
     !Rotate longitude if necessary
     lon_rot = lon
@@ -76,6 +77,62 @@ contains
     return
   end function soca_rho
   
+  ! ------------------------------------------------------------------------------
+
+  function soca_mld(sp, pt, p, lon, lat)
+    use kinds
+    use gsw_mod_toolbox, only : gsw_rho, gsw_sa_from_sp, gsw_ct_from_pt, gsw_mlp
+    real(kind=kind_real), intent(in)  :: pt(:), sp(:), p(:), lon, lat
+    
+    real(kind=kind_real) :: lon_rot, soca_mld
+    real(kind=kind_real), allocatable :: sa(:), ct(:)
+
+    !Rotate longitude if necessary
+    lon_rot = lon
+    if (lon<-180.0) lon_rot=lon+360.0
+    if (lon>180.0) lon_rot=lon-360.0
+
+    ! Allocate memory
+    allocate(sa(size(sp,1)),ct(size(sp,1)))
+    
+    ! Convert practical salinity to absolute salinity    
+    sa = gsw_sa_from_sp (sp, p, lon_rot, lat)
+
+    ! Convert potential temperature to concervative temperature
+    ct = gsw_ct_from_pt (sa, pt)
+
+    ! Mixed layer depth
+    soca_mld = gsw_mlp(sa,ct,p)
+    if (soca_mld>9999.9_kind_real) soca_mld = p(1)
+    soca_mld = max(soca_mld, p(1))
+    
+    deallocate(sa, ct)
+    
+    return
+  end function soca_mld
+  
+  ! ------------------------------------------------------------------------------
+  
+  subroutine soca_diff(dvdz,v,h)
+    use kinds
+
+    implicit none
+
+    real(kind=kind_real), intent(in)  :: v(:), h(:)
+    real(kind=kind_real), intent(out) :: dvdz(:)
+
+    integer :: k, ik
+
+    k = size(v,1)
+    
+    do ik = 2, k-1
+       dvdz(ik) = (v(ik+1)-v(ik-1))/(h(ik)+0.5*h(ik+1)+h(ik-1))
+    end do
+    dvdz(1) = dvdz(2)
+    dvdz(k) = dvdz(k-1)    
+
+  end subroutine soca_diff
+
   ! ------------------------------------------------------------------------------
 
   subroutine soca_clean_vertical(h, var)

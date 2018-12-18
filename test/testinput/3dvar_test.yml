@@ -117,10 +117,10 @@ cost_function:
           - ssh
           - hocn
       - varchange: BkgErrSOCA
-        read_from_file: 3
-        basename: ./
-        ocn_filename: ocn.bkgerror.nc
-        ice_filename: ice.bkgerror.nc
+        #read_from_file: 3
+        #basename: ./
+        #ocn_filename: ocn.bkgerror.nc
+        #ice_filename: ice.bkgerror.nc
         date: '2018-04-15T00:00:00Z'
         t_min: 0.01
         t_max: 5.0
@@ -219,10 +219,23 @@ cost_function:
           obsfile: ./Data/Jason-2-2018-04-15-soca.nc
       Covariance:
         covariance: diagonal
+      ObsFilters:
+      - Filter: Background Check
+        variables:
+        - obs_absolute_dynamic_topography
+        threshold: 3
+#    - ObsType: InsituTemperature
+#      ObsData:
+#        ObsDataOut:
+#          obsfile: ./Data/profile_2018-04-15-out.nc
+#        ObsDataIn:
+#          obsfile: ./Data/profile_2018-04-15.nc
+#      Covariance:
+#        covariance: diagonal
 #      ObsFilters:
 #      - Filter: Background Check
 #        variables:
-#        - obs_absolute_dynamic_topography
+#        - insitu_temperature
 #        threshold: 3
 #      ObsData:
 #        ObsDataOut:

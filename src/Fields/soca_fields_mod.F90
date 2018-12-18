@@ -12,7 +12,8 @@ module soca_fields
   use MOM, only : MOM_control_struct
   use config_mod
   use soca_geom_mod
-  use soca_model_geom_type, only : geom_get_domain_indices  
+  use soca_model_geom_type, only : geom_get_domain_indices
+  use soca_utils
   use ufo_vars_mod
   use soca_bumpinterp2d_mod
   use soca_getvaltraj_mod
@@ -67,6 +68,8 @@ module soca_fields
      real(kind=kind_real), allocatable :: ssh(:,:)       !< Sea-surface height (nx,ny,nzo)
      real(kind=kind_real), allocatable :: hocn(:,:,:)    !< Layer thickness (nx,ny,nzo)
      character(len=5),     allocatable :: fldnames(:)    !< Variable identifiers             (nf)
+     real(kind=kind_real), allocatable :: mld(:,:)       !< Sea-surface height (nx,ny,nzo)
+     real(kind=kind_real), allocatable :: layer_depth(:,:,:) !< Sea-surface height (nx,ny,nz0)     
   end type soca_field
 
 #define LISTED_TYPE soca_field
@@ -165,7 +168,9 @@ contains
     if (.not.allocated(self%socn)) allocate(self%socn(isd:ied,jsd:jed,nzo))
     if (.not.allocated(self%ssh)) allocate(self%ssh(isd:ied,jsd:jed))
     if (.not.allocated(self%hocn)) allocate(self%hocn(isd:ied,jsd:jed,nzo))
-
+    if (.not.allocated(self%mld)) allocate(self%mld(isd:ied,jsd:jed))
+    if (.not.allocated(self%layer_depth)) allocate(self%layer_depth(isd:ied,jsd:jed,nzo))    
+    
     ! Allocate sea-ice state
     km = ncat + 1
     if (.not.allocated(self%cicen)) allocate(self%cicen(isd:ied, jsd:jed, km))
@@ -191,7 +196,9 @@ contains
     deallocate(self%socn)
     deallocate(self%ssh)
     deallocate(self%hocn)
-
+    deallocate(self%mld)
+    deallocate(self%layer_depth)    
+    
     ! Deallocate sea-ice state
     deallocate(self%cicen)
     deallocate(self%hicen)
@@ -351,7 +358,9 @@ contains
     self%tocn  = rhs%tocn
     self%ssh   = rhs%ssh
     self%hocn  = rhs%hocn
-
+    self%mld   = rhs%mld
+    self%layer_depth   = rhs%layer_depth    
+    
     return
   end subroutine copy
 
@@ -685,7 +694,8 @@ contains
     type(restart_file_type) :: ocean_restart
     integer :: idr, idr_ocean
     integer            :: nobs, nval, pe, ierror
-
+    integer :: is, ie, js, je, i, j, k, nl
+    
     ! Set default iread to 0
     iread = 0
     if (config_element_exists(c_conf,"read_from_file")) then
@@ -694,11 +704,11 @@ contains
 
     ! iread = 0: Invent state
     if (iread==0) then
-       call log%warning("soca_fields:read_file: Inventing State")
+       call log%warning("soca_fields:read_file: Inventing State",newl=.true.)
        call zeros(fld)
        sdate = config_get_string(c_conf,len(sdate),"date")
        WRITE(buf,*) 'validity date is: '//sdate
-       call log%info(buf)
+       call log%info(buf,newl=.true.)
        call datetime_set(sdate, vdate)
     end if
 
@@ -757,11 +767,28 @@ contains
        call restore_state(ocean_restart, directory='')
        call fms_io_exit()
 
+       ! Indices for compute domain (no halo)
+       call geom_get_domain_indices(fld%geom%ocean, "compute", is, ie, js, je)
+
+       ! Initialize mid-layer depth from layer thickness   
+       call fld%geom%ocean%thickness2depth(fld%hocn, fld%layer_depth)
+    
+       ! Compute mixed layer depth
+       do i = is, ie
+          do j = js, je
+             fld%mld(i,j) = soca_mld(fld%socn(i,j,:),&
+                  &fld%tocn(i,j,:),&
+                  &fld%layer_depth(i,j,:),&
+                  &fld%geom%ocean%lon(i,j),&
+                  &fld%geom%ocean%lat(i,j))
+          end do
+       end do
+       
        ! Set vdate if reading state
        if (iread==1) then
           sdate = config_get_string(c_conf,len(sdate),"date")
           WRITE(buf,*) 'validity date is: '//sdate
-          call log%info(buf)
+          call log%info(buf,newl=.true.)
           call datetime_set(sdate, vdate)
        end if
        return
@@ -773,7 +800,7 @@ contains
        call fms_io_init()
        do ii = 1, fld%nf
           write(buf,*) 'OOPS_INFO soca_fields_mod::read_file::iread2: '//trim(fld%fldnames(ii))
-          call log%info(buf)
+          call log%info(buf,newl=.true.)
 
           select case(fld%fldnames(ii))
              ! Ocean variables
@@ -803,7 +830,7 @@ contains
              call read_data(incr_filename, 'tsfcn', fld%tsfcn, domain=fld%geom%ocean%G%Domain%mpp_domain)
           case default
              write(buf,*) 'soca_fields_mod::read_file::increment. Not reading '//fld%fldnames(ii)
-             call log%info(buf)
+             call log%info(buf,newl=.true.)
 
           end select
        end do
@@ -852,7 +879,12 @@ contains
     integer, intent(in) :: nf
     real(kind=kind_real), intent(inout) :: pstat(3, nf) !> [average, min, max]
     real(kind=kind_real) :: zz
-    integer :: jj, Nc2d
+    integer :: jj, Nc2d, myrank
+    character(len=1024):: buf
+    type(fckit_mpi_comm) :: f_comm
+    
+    ! Setup Communicator
+    f_comm = fckit_mpi_comm()
 
     call check(fld)
 
@@ -889,7 +921,20 @@ contains
     pstat(1,10) = minval(fld%ssh)
     pstat(2,10) = maxval(fld%ssh)
 
-    
+    ! Output fields info
+    call f_comm%barrier()
+    myrank = f_comm%rank()
+    WRITE(buf,*) '----------- myrank: ',myrank
+    call log%info(buf,newl=.true.,flush=.true.)
+    WRITE(buf,*) 'ssh: min=',pstat(1,10),' max=',pstat(2,10)
+    call log%info(buf,newl=.true.,flush=.true.)
+    WRITE(buf,*) 'T: min=',pstat(1,8),' max=',pstat(2,8)
+    call log%info(buf,newl=.true.,flush=.true.)
+    WRITE(buf,*) 'S: min=',pstat(1,9),' max=',pstat(2,9)
+    call log%info(buf,newl=.true.,flush=.true.)
+    WRITE(buf,*) 'aice: min=',pstat(1,1),' max=',pstat(2,1)
+    call log%info(buf,newl=.true.,flush=.true.)
+
   end subroutine gpnorm
 
   ! ------------------------------------------------------------------------------
@@ -1277,7 +1322,6 @@ contains
 
     integer            :: nobs, nval, pe, ierror
 
-
     ! Generate file names
     ocn_filename = soca_genfilename(c_conf,max_string_length,vdate,"ocn")
     ice_filename = soca_genfilename(c_conf,max_string_length,vdate,"ice")
@@ -1291,7 +1335,9 @@ contains
     idr_ocean = register_restart_field(ocean_restart, ocn_filename, 'Salt', fld%socn(:,:,:), &
          domain=fld%geom%ocean%G%Domain%mpp_domain)             
     idr_ocean = register_restart_field(ocean_restart, ocn_filename, 'h', fld%hocn(:,:,:), &
-         domain=fld%geom%ocean%G%Domain%mpp_domain)             
+         domain=fld%geom%ocean%G%Domain%mpp_domain)
+    idr_ocean = register_restart_field(ocean_restart, ocn_filename, 'mld', fld%mld(:,:), &
+         domain=fld%geom%ocean%G%Domain%mpp_domain)
 
     ! Sea-Ice
     idr = register_restart_field(ice_restart, ice_filename, 'part_size', fld%cicen, &
@@ -1385,8 +1431,6 @@ contains
   ! ------------------------------------------------------------------------------
 
   subroutine clean_ocean(fld)
-
-    use soca_utils
 
     implicit none
     type(soca_field), intent(inout) :: fld
