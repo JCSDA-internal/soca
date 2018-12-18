@@ -179,9 +179,8 @@ contains
     implicit none
     type(soca_bkgerr_config), intent(inout) :: self
 
-    real(kind=kind_real), allocatable :: rho(:), drhodz(:)
     real(kind=kind_real), allocatable :: temp(:), vmask(:)
-    real(kind=kind_real) :: jac(2), mlp
+    real(kind=kind_real) :: jac(2)
     real(kind=kind_real) :: delta_z = 10.0_kind_real ![m] TODO: Move to config
     integer :: is, ie, js, je, i, j, k
 
@@ -193,35 +192,13 @@ contains
     ! Indices for compute domain (no halo)
     call geom_get_domain_indices(self%bkg%geom%ocean, "compute", is, ie, js, je)
 
-    ! Compute density gradient
-    allocate(rho(self%bkg%geom%ocean%nzo))
-    allocate(drhodz(self%bkg%geom%ocean%nzo))
+    ! Compute temperature gradient
     allocate(temp(self%bkg%geom%ocean%nzo))
     allocate(vmask(self%bkg%geom%ocean%nzo))
 
     do i = is, ie
        do j = js, je
           if (self%bkg%geom%ocean%mask2d(i,j).eq.1) then
-             ! MLD from density
-             rho(:) = soca_rho(self%bkg%socn(i,j,:),&
-                  &self%bkg%tocn(i,j,:),&
-                  &self%z(i,j,:),&
-                  &self%bkg%geom%ocean%lon(i,j),&
-                  &self%bkg%geom%ocean%lat(i,j))
-
-             ! Mixed layer depth
-             mlp = soca_mld(self%bkg%socn(i,j,:),&
-                           &self%bkg%tocn(i,j,:),&
-                           &self%z(i,j,:),&
-                           &self%bkg%geom%ocean%lon(i,j),&
-                           &self%bkg%geom%ocean%lat(i,j))
-             !print *,'rho=',rho
-             print *,'z=',self%z(i,j,1)
-             print *,'mld=',mlp
-             read(*,*)
-             drhodz = 0.0_kind_real
-             !call soca_diff(drhodz,rho,self%bkg%hocn(i,j,:))
-             !call soca_mld(drhodz)
 
              ! Make sure Temp values in thin layers are realistic
              temp(:) = self%bkg%tocn(i,j,:)
