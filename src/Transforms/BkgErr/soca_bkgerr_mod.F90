@@ -224,7 +224,7 @@ contains
     end do
 
     ! Release memory
-    deallocate(rho, drhodz, temp, vmask)
+    deallocate(temp, vmask)
     
   end subroutine soca_bkgerr_tocn
 
