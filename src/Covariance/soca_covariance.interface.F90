@@ -143,8 +143,6 @@ subroutine c_soca_b_randomize(c_key_self, c_key_out) bind(c,name='soca_b_randomi
   xtmp%ssh = self%pert_scale%SSH*xtmp%ssh
   xtmp%cicen = self%pert_scale%AICE*xtmp%cicen  
   xtmp%hicen = self%pert_scale%AICE*xtmp%hicen
-  xtmp%tsfcn = 0.0*xtmp%tsfcn  
-  xtmp%hsnon = 0.0*xtmp%hsnon  
   
   ! Apply sqrt convolution to increment
   call soca_cov_sqrt_C_mult(self, xtmp) !< xtmp = C.xtmp

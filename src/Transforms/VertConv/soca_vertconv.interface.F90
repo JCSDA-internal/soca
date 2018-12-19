@@ -25,7 +25,7 @@ subroutine c_soca_vertconv_setup(c_key_self, c_conf, c_key_traj, c_key_bkg) &
   type(soca_vertconv), pointer :: self
   type(soca_field), pointer :: traj
   type(soca_field), pointer :: bkg  
-  real(kind=kind_real), allocatable :: jac(:), temp(:,:,:)
+  real(kind=kind_real), allocatable :: jac(:)
 
   integer :: isc, iec, jsc, jec, i, j, k, nl
   
@@ -58,7 +58,6 @@ subroutine c_soca_vertconv_delete(c_key_self) bind(c,name='soca_vertconv_delete_
   
   call soca_vertconv_registry%get(c_key_self, self)  
   
-  if (allocated(self%temp)) deallocate(self%temp)  
   if (associated(self%traj)) nullify(self%traj)
   if (associated(self%bkg)) nullify(self%bkg)  
   

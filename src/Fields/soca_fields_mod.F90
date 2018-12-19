@@ -56,12 +56,12 @@ module soca_fields
      character(len=128)                :: momfname       !< Fields file name for mom
      real(kind=kind_real), allocatable :: cicen(:,:,:)   !< Sea-ice fraction                 (nx,ny,ncat+1)
      real(kind=kind_real), allocatable :: hicen(:,:,:)   !< Sea-ice mass/m2                  (nx,ny,ncat) [kg/m2]
-     real(kind=kind_real), allocatable :: vicen(:,:,:)   !< Sea-ice volume                   (nx,ny,ncat)
-     real(kind=kind_real), allocatable :: hsnon(:,:,:)   !< Snow depth over sea-ice          (nx,ny,ncat)
-     real(kind=kind_real), allocatable :: vsnon(:,:,:)   !< Snow volume over sea-ice         (nx,ny,ncat)
-     real(kind=kind_real), allocatable :: tsfcn(:,:,:)   !< Temperature over sea-ice or snow (nx,ny,ncat)
-     real(kind=kind_real), allocatable :: qsnon(:,:,:,:) !< Enthalpy of snow                 (nx,ny,ncat)
-     real(kind=kind_real), allocatable :: sicnk(:,:,:,:) !< Salin_wity of sea-ice            (nx,ny,ncat,nzi)
+!!$     real(kind=kind_real), allocatable :: vicen(:,:,:)   !< Sea-ice volume                   (nx,ny,ncat)
+!!$     real(kind=kind_real), allocatable :: hsnon(:,:,:)   !< Snow depth over sea-ice          (nx,ny,ncat)
+!!$     real(kind=kind_real), allocatable :: vsnon(:,:,:)   !< Snow volume over sea-ice         (nx,ny,ncat)
+!!$     real(kind=kind_real), allocatable :: tsfcn(:,:,:)   !< Temperature over sea-ice or snow (nx,ny,ncat)
+!!$     real(kind=kind_real), allocatable :: qsnon(:,:,:,:) !< Enthalpy of snow                 (nx,ny,ncat)
+!!$     real(kind=kind_real), allocatable :: sicnk(:,:,:,:) !< Salin_wity of sea-ice            (nx,ny,ncat,nzi)
      real(kind=kind_real), allocatable :: socn(:,:,:)    !< Ocean Practical Salinity         (nx,ny,nzo)
      real(kind=kind_real), allocatable :: qicnk(:,:,:,:) !< Enthalpy of sea-ice              (nx,ny,ncat,nzi)
      real(kind=kind_real), allocatable :: tocn(:,:,:)    !< Ocean Potential Temperature, ref to p=0      (nx,ny,nzo)
@@ -224,11 +224,11 @@ contains
 
     self%cicen = 0.0_kind_real
     self%hicen = 0.0_kind_real
-    self%hsnon = 0.0_kind_real
-    self%tsfcn = 0.0_kind_real
-    self%qsnon = 0.0_kind_real
-    self%sicnk = 0.0_kind_real
-    self%qicnk = 0.0_kind_real
+!!$    self%hsnon = 0.0_kind_real
+!!$    self%tsfcn = 0.0_kind_real
+!!$    self%qsnon = 0.0_kind_real
+!!$    self%sicnk = 0.0_kind_real
+!!$    self%qicnk = 0.0_kind_real
 
     self%socn = 0.0_kind_real
     self%tocn = 0.0_kind_real
@@ -246,11 +246,11 @@ contains
 
     self%cicen = 1.0_kind_real
     self%hicen = 1.0_kind_real
-    self%hsnon = 1.0_kind_real
-    self%tsfcn = 1.0_kind_real
-    self%qsnon = 1.0_kind_real
-    self%sicnk = 1.0_kind_real
-    self%qicnk = 1.0_kind_real
+!!$    self%hsnon = 1.0_kind_real
+!!$    self%tsfcn = 1.0_kind_real
+!!$    self%qsnon = 1.0_kind_real
+!!$    self%sicnk = 1.0_kind_real
+!!$    self%qicnk = 1.0_kind_real
 
     self%socn = 1.0_kind_real
     self%tocn = 1.0_kind_real
@@ -316,8 +316,8 @@ contains
 
     call random_number(self%cicen); self%cicen=self%cicen-0.5_kind_real
     call random_number(self%hicen); self%hicen=self%hicen-0.5_kind_real
-    call random_number(self%hsnon); self%hsnon=self%hsnon-0.5_kind_real
-    call random_number(self%tsfcn); self%tsfcn=self%tsfcn-0.5_kind_real
+!!$    call random_number(self%hsnon); self%hsnon=self%hsnon-0.5_kind_real
+!!$    call random_number(self%tsfcn); self%tsfcn=self%tsfcn-0.5_kind_real
 
     call random_number(self%tocn); self%tocn=self%tocn-0.5_kind_real
     call random_number(self%socn); self%socn=self%socn-0.5_kind_real
@@ -348,11 +348,11 @@ contains
 
     self%cicen = rhs%cicen
     self%hicen = rhs%hicen
-    self%hsnon = rhs%hsnon
-    self%tsfcn = rhs%tsfcn
-    self%qsnon = rhs%qsnon
-    self%sicnk = rhs%sicnk
-    self%qicnk = rhs%qicnk
+!!$    self%hsnon = rhs%hsnon
+!!$    self%tsfcn = rhs%tsfcn
+!!$    self%qsnon = rhs%qsnon
+!!$    self%sicnk = rhs%sicnk
+!!$    self%qicnk = rhs%qicnk
 
     self%socn  = rhs%socn
     self%tocn  = rhs%tocn
@@ -380,11 +380,11 @@ contains
 
     self%cicen = self%cicen + rhs%cicen
     self%hicen = self%hicen + rhs%hicen
-    self%hsnon = self%hsnon + rhs%hsnon
-    self%tsfcn = self%tsfcn + rhs%tsfcn
-    self%qsnon = self%qsnon + rhs%qsnon
-    self%sicnk = self%sicnk + rhs%sicnk
-    self%qicnk = self%qicnk + rhs%qicnk
+!!$    self%hsnon = self%hsnon + rhs%hsnon
+!!$    self%tsfcn = self%tsfcn + rhs%tsfcn
+!!$    self%qsnon = self%qsnon + rhs%qsnon
+!!$    self%sicnk = self%sicnk + rhs%sicnk
+!!$    self%qicnk = self%qicnk + rhs%qicnk
 
     self%tocn = self%tocn + rhs%tocn
     self%socn = self%socn + rhs%socn
@@ -407,11 +407,11 @@ contains
 
     self%cicen=self%cicen*rhs%cicen
     self%hicen=self%hicen*rhs%hicen
-    self%hsnon=self%hsnon*rhs%hsnon
-    self%tsfcn=self%tsfcn*rhs%tsfcn
-    self%qsnon=self%qsnon*rhs%qsnon
-    self%sicnk=self%sicnk*rhs%sicnk
-    self%qicnk=self%qicnk*rhs%qicnk
+!!$    self%hsnon=self%hsnon*rhs%hsnon
+!!$    self%tsfcn=self%tsfcn*rhs%tsfcn
+!!$    self%qsnon=self%qsnon*rhs%qsnon
+!!$    self%sicnk=self%sicnk*rhs%sicnk
+!!$    self%qicnk=self%qicnk*rhs%qicnk
 
     self%tocn=self%tocn*rhs%tocn
     self%socn=self%socn*rhs%socn
@@ -435,11 +435,11 @@ contains
 
     self%cicen=self%cicen-rhs%cicen
     self%hicen=self%hicen-rhs%hicen
-    self%hsnon=self%hsnon-rhs%hsnon
-    self%tsfcn=self%tsfcn-rhs%tsfcn
-    self%qsnon=self%qsnon-rhs%qsnon
-    self%sicnk=self%sicnk-rhs%sicnk
-    self%qicnk=self%qicnk-rhs%qicnk
+!!$    self%hsnon=self%hsnon-rhs%hsnon
+!!$    self%tsfcn=self%tsfcn-rhs%tsfcn
+!!$    self%qsnon=self%qsnon-rhs%qsnon
+!!$    self%sicnk=self%sicnk-rhs%sicnk
+!!$    self%qicnk=self%qicnk-rhs%qicnk
 
     self%socn=self%socn-rhs%socn
     self%tocn=self%tocn-rhs%tocn
@@ -459,11 +459,11 @@ contains
 
     self%cicen = zz * self%cicen
     self%hicen = zz * self%hicen
-    self%hsnon = zz * self%hsnon
-    self%tsfcn = zz * self%tsfcn
-    self%qsnon = zz * self%qsnon
-    self%sicnk = zz * self%sicnk
-    self%qicnk = zz * self%qicnk
+!!$    self%hsnon = zz * self%hsnon
+!!$    self%tsfcn = zz * self%tsfcn
+!!$    self%qsnon = zz * self%qsnon
+!!$    self%sicnk = zz * self%sicnk
+!!$    self%qicnk = zz * self%qicnk
 
     self%tocn = zz * self%tocn
     self%socn = zz * self%socn
@@ -487,11 +487,11 @@ contains
 
     self%cicen = self%cicen + zz * rhs%cicen
     self%hicen = self%hicen + zz * rhs%hicen
-    self%hsnon = self%hsnon + zz * rhs%hsnon
-    self%tsfcn = self%tsfcn + zz * rhs%tsfcn
-    self%qsnon = self%qsnon + zz * rhs%qsnon
-    self%sicnk = self%sicnk + zz * rhs%sicnk
-    self%qicnk = self%qicnk + zz * rhs%qicnk
+!!$    self%hsnon = self%hsnon + zz * rhs%hsnon
+!!$    self%tsfcn = self%tsfcn + zz * rhs%tsfcn
+!!$    self%qsnon = self%qsnon + zz * rhs%qsnon
+!!$    self%sicnk = self%sicnk + zz * rhs%sicnk
+!!$    self%qicnk = self%qicnk + zz * rhs%qicnk
 
     self%tocn = self%tocn + zz * rhs%tocn
     self%socn = self%socn + zz * rhs%socn
@@ -598,11 +598,11 @@ contains
 
     lhs%cicen = x1%cicen - x2%cicen
     lhs%hicen = x1%hicen - x2%hicen
-    lhs%hsnon = x1%hsnon - x2%hsnon
-    lhs%tsfcn = x1%tsfcn - x2%tsfcn
-    lhs%qsnon = x1%qsnon - x2%qsnon
-    lhs%sicnk = x1%sicnk - x2%sicnk
-    lhs%qicnk = x1%qicnk - x2%qicnk
+!!$    lhs%hsnon = x1%hsnon - x2%hsnon
+!!$    lhs%tsfcn = x1%tsfcn - x2%tsfcn
+!!$    lhs%qsnon = x1%qsnon - x2%qsnon
+!!$    lhs%sicnk = x1%sicnk - x2%sicnk
+!!$    lhs%qicnk = x1%qicnk - x2%qicnk
 
     lhs%tocn = x1%tocn - x2%tocn
     lhs%socn = x1%socn - x2%socn
@@ -616,37 +616,6 @@ contains
     !endif
     print *,'sum(mask)=',sum(x1%geom%ocean%mask2d(:,:))
   end subroutine diff_incr
-
-  ! ------------------------------------------------------------------------------
-
-  subroutine self_mask(self, mask_val)
-    implicit none
-    type(soca_field), intent(inout)   :: self
-    real(kind=kind_real), intent(in)  :: mask_val
-
-    where(self%cicen.eq.0.0)
-       self%cicen=mask_val
-       self%hicen=mask_val
-       self%hsnon=mask_val
-       self%tsfcn=mask_val
-    end where
-
-    where(self%sicnk.eq.0.0)
-       self%sicnk=mask_val
-       self%qicnk=mask_val
-       self%qsnon=mask_val
-    end where
-
-    where(self%tocn.eq.0.0)
-       self%socn=mask_val
-       self%tocn=mask_val
-    end where
-
-    where(self%ssh.eq.0.0)
-       self%ssh=mask_val
-    end where
-
-  end subroutine self_mask
 
   ! ------------------------------------------------------------------------------
 
@@ -897,20 +866,20 @@ contains
     pstat(1,2) = minval(fld%hicen)
     pstat(2,2) = maxval(fld%hicen)
     
-    pstat(1,3) = minval(fld%hsnon)
-    pstat(2,3) = maxval(fld%hsnon)
-    
-    pstat(1,4) = minval(fld%tsfcn)
-    pstat(2,4) = maxval(fld%tsfcn)
-
-    pstat(1,5) = minval(fld%qsnon)
-    pstat(2,5) = maxval(fld%qsnon)
-
-    pstat(1,6) = minval(fld%sicnk)
-    pstat(2,6) = maxval(fld%sicnk)
-
-    pstat(1,7) = minval(fld%qicnk)
-    pstat(2,7) = maxval(fld%qicnk)
+!!$    pstat(1,3) = minval(fld%hsnon)
+!!$    pstat(2,3) = maxval(fld%hsnon)
+!!$    
+!!$    pstat(1,4) = minval(fld%tsfcn)
+!!$    pstat(2,4) = maxval(fld%tsfcn)
+!!$
+!!$    pstat(1,5) = minval(fld%qsnon)
+!!$    pstat(2,5) = maxval(fld%qsnon)
+!!$
+!!$    pstat(1,6) = minval(fld%sicnk)
+!!$    pstat(2,6) = maxval(fld%sicnk)
+!!$
+!!$    pstat(1,7) = minval(fld%qicnk)
+!!$    pstat(2,7) = maxval(fld%qicnk)
 
     pstat(1,8) = minval(fld%tocn)
     pstat(2,8) = maxval(fld%tocn)
@@ -1344,16 +1313,16 @@ contains
          domain=fld%geom%ocean%G%Domain%mpp_domain)
     idr = register_restart_field(ice_restart, ice_filename, 'h_ice', fld%hicen, &
          domain=fld%geom%ocean%G%Domain%mpp_domain)
-    idr = register_restart_field(ice_restart, ice_filename, 'h_snow', fld%hsnon, &
-         domain=fld%geom%ocean%G%Domain%mpp_domain)
-    idr = register_restart_field(ice_restart, ice_filename, 'enth_ice', fld%qicnk, &
-         domain=fld%geom%ocean%G%Domain%mpp_domain)
-    idr = register_restart_field(ice_restart, ice_filename, 'enth_snow', fld%qsnon, &
-         domain=fld%geom%ocean%G%Domain%mpp_domain)
-    idr = register_restart_field(ice_restart, ice_filename, 'T_skin', fld%tsfcn, &
-         domain=fld%geom%ocean%G%Domain%mpp_domain)
-    idr = register_restart_field(ice_restart, ice_filename, 'sal_ice', fld%sicnk, &
-         domain=fld%geom%ocean%G%Domain%mpp_domain)
+!!$    idr = register_restart_field(ice_restart, ice_filename, 'h_snow', fld%hsnon, &
+!!$         domain=fld%geom%ocean%G%Domain%mpp_domain)
+!!$    idr = register_restart_field(ice_restart, ice_filename, 'enth_ice', fld%qicnk, &
+!!$         domain=fld%geom%ocean%G%Domain%mpp_domain)
+!!$    idr = register_restart_field(ice_restart, ice_filename, 'enth_snow', fld%qsnon, &
+!!$         domain=fld%geom%ocean%G%Domain%mpp_domain)
+!!$    idr = register_restart_field(ice_restart, ice_filename, 'T_skin', fld%tsfcn, &
+!!$         domain=fld%geom%ocean%G%Domain%mpp_domain)
+!!$    idr = register_restart_field(ice_restart, ice_filename, 'sal_ice', fld%sicnk, &
+!!$         domain=fld%geom%ocean%G%Domain%mpp_domain)
 
     call save_restart(ocean_restart, directory='')
     call save_restart(ice_restart, directory='')

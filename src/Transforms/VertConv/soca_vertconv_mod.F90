@@ -14,12 +14,10 @@ module soca_vertconv_mod
 
   !> Fortran derived type to hold the setup for Vertconv
   type :: soca_vertconv
-     real(kind=kind_real)              :: lz                 !> Vertical decorrelation [m]
-     real(kind=kind_real)              :: ltemp              !> Temperature decorrelation [K] 
-     type(soca_field),pointer          :: traj               !> Trajectory
-     type(soca_field), pointer         :: bkg                !> Background     
-     real(kind=kind_real), allocatable :: temp(:,:,:)        !> Ocean Depth [m]     
-     integer                           :: isc, iec, jsc, jec !> Compute domain 
+     real(kind=kind_real)      :: lz                 !> Vertical decorrelation [m]
+     type(soca_field),pointer  :: traj               !> Trajectory
+     type(soca_field), pointer :: bkg                !> Background     
+     integer                   :: isc, iec, jsc, jec !> Compute domain 
   end type soca_vertconv
 
 #define LISTED_TYPE soca_vertconv
@@ -52,14 +50,12 @@ contains
     type(soca_field), target, intent(in) :: traj
     type(c_ptr),              intent(in) :: c_conf
 
-    real(kind=kind_real), allocatable :: temp(:,:,:)
     integer :: isc, iec, jsc, jec, i, j, k, nl
     
     nl = size(bkg%hocn,3)
   
     ! Get configuration for vertical convolution
     self%lz      = config_get_real(c_conf, "Lz")
-    self%ltemp   = config_get_real(c_conf, "Ltemp")
 
     ! Store trajectory and background
     self%traj => traj
@@ -69,10 +65,9 @@ contains
     call geom_get_domain_indices(bkg%geom%ocean, "compute", isc, iec, jsc, jec)
     self%isc=isc; self%iec=iec; self%jsc=jsc; self%jec=jec
   
-    allocate(self%temp(isc:iec, jsc:jec, nl))
-    self%temp = self%traj%tocn
-  
   end subroutine soca_conv_setup
+
+  ! ------------------------------------------------------------------------------
   
   subroutine soca_conv (self, convdx, dx)
 
@@ -85,30 +80,26 @@ contains
     type(soca_field),   intent(inout) :: convdx
 
     real(kind=kind_real), allocatable :: z(:), zp(:), lzd(:)
-    real(kind=kind_real) :: lz2, dist2, dtemp2, coef, lz, ltemp2
+    real(kind=kind_real) :: lz2, dist2, coef, lz
     integer :: nl, j, k, id, jd
 
     lz = self%lz
-    ltemp2 = self%ltemp**2
     nl = size(self%bkg%layer_depth,3)
     lz2 = lz**2
 
-    allocate(z(nl), zp(nl), lzd(nl))
-
-    
+    allocate(z(nl), zp(nl), lzd(nl))    
     do id = self%isc, self%iec
        do jd = self%jsc, self%jec
           if (self%bkg%geom%ocean%mask2d(id,jd).eq.1) then
              z(:) = self%bkg%layer_depth(id,jd,:)
              zp = z
-             !lzd = (z/10.0_kind_real)**2
              lzd = (self%bkg%layer_depth(id,jd,:))**2
              do j = 1, nl
                 convdx%tocn(id,jd,j) = 0.0d0
                 convdx%socn(id,jd,j) = 0.0d0             
                 do k = 1,nl
                    dist2 = (z(j)-zp(k))**2
-                   coef = exp(-dist2/lzd(k)) !lz2)
+                   coef = exp(-dist2/lzd(k))
                    convdx%tocn(id,jd,j) = convdx%tocn(id,jd,j) &
                         &+ dx%tocn(id,jd,k)*coef
                    convdx%socn(id,jd,j) = convdx%socn(id,jd,j) &
@@ -134,15 +125,13 @@ contains
     type(soca_field),    intent(in) :: convdx ! IN
 
     real(kind=kind_real), allocatable :: z(:), zp(:), lzd(:)
-    real(kind=kind_real) :: lz2, dist2, dtemp2, coef, lz, ltemp2    
+    real(kind=kind_real) :: lz2, dist2, coef, lz
     integer :: nl, j, k, id, jd
 
     lz = self%lz
-    ltemp2 = self%ltemp**2    
     nl = size(self%bkg%layer_depth,3)
     lz2 = lz**2
 
-    !allocate(z(nl), zp(nl))
     allocate(z(nl), zp(nl), lzd(nl))
     do id = self%isc, self%iec
        do jd = self%jsc, self%jec
@@ -151,13 +140,11 @@ contains
           if (self%bkg%geom%ocean%mask2d(id,jd).eq.1) then
              dx%tocn(id,jd,:) = 0.0d0
              dx%socn(id,jd,:) = 0.0d0
-             !lzd = (10.0_kind_real+z/10.0_kind_real)**2
              lzd = (self%bkg%layer_depth(id,jd,:))**2             
              do j = nl, 1, -1
                 do k = nl, 1, -1
                    dist2 = (z(j)-zp(k))**2
-                   !coef = exp(-dist2/lz2)
-                   coef = exp(-dist2/lzd(k)) !lz2)
+                   coef = exp(-dist2/lzd(k))
                    dx%tocn(id,jd,k) = dx%tocn(id,jd,k) + coef*convdx%tocn(id,jd,j)
                    dx%socn(id,jd,k) = dx%socn(id,jd,k) + coef*convdx%socn(id,jd,j)
                 end do

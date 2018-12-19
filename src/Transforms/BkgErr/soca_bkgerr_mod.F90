@@ -91,10 +91,9 @@ contains
     self%isc=isc; self%iec=iec; self%jsc=jsc; self%jec=jec
 
     ! Std of bkg error for temperature based on dT/dz
-    ! Need to initialize unbalanced Bs and Bssh
     if (.not.read_from_file) call soca_bkgerr_tocn(self)
     
-    ! Limit background error
+    ! Apply config bounds to background error
     do i = isc, iec
        do j = jsc, jec
           ! Ocean
@@ -180,8 +179,8 @@ contains
     integer :: is, ie, js, je, i, j, k
 
     ! Set all fields to zero
-    !call zeros(self%std_bkgerr)
-    call ones(self%std_bkgerr)    
+    call zeros(self%std_bkgerr)
+    !call ones(self%std_bkgerr)    
     !call self_mul(self%std_bkgerr, 1d-8)
     
     ! Indices for compute domain (no halo)
@@ -218,6 +217,10 @@ contains
        end do
     end do
 
+    ! Make up background error for salt and ssh
+    self%std_bkgerr%socn = 0.1_kind_real * self%std_bkgerr%tocn
+    self%std_bkgerr%ssh = 0.1_kind_real    
+    
     ! Release memory
     deallocate(temp, vmask)
     

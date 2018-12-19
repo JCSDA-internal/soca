@@ -25,12 +25,12 @@ module soca_covariance_mod
   type :: soca_cov
      type(bump_type), allocatable :: ocean_conv(:)  !< Ocean convolution op from bump
      type(bump_type), allocatable :: seaice_conv(:) !< Seaice convolution op from bump
-     integer, allocatable :: seaice_mask(:,:)          
-     type(soca_field), pointer :: bkg         !< Background field (or first guess)
-     logical          :: initialized = .false.
-     type(soca_pert) :: pert_scale
-     real(kind=kind_real) :: ocn_l0
-     real(kind=kind_real) :: ice_l0
+     integer,         allocatable :: seaice_mask(:,:)          
+     type(soca_field),    pointer :: bkg            !< Background field (or first guess)
+     logical                      :: initialized = .false.
+     type(soca_pert)              :: pert_scale
+     real(kind=kind_real)         :: ocn_l0
+     real(kind=kind_real)         :: ice_l0
   end type soca_cov
 
 #define LISTED_TYPE soca_cov

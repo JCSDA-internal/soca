@@ -278,21 +278,21 @@ contains
     domain_type = "compute"    
     call geom_get_domain_indices(self, domain_type, is, ie, js, je)
 
-    ! Extend mask 2 grid point inland
+    ! Extend mask 2 grid point inland TODO:NEED HALO FOR MASK!!!
     self%shoremask = self%mask2d
-    do i = is, ie
-       do j = js, je
-          shoretest = sum(&
-               &self%mask2d(i-2:i+2,j-2) +&
-               &self%mask2d(i-2:i+2,j-1) +&               
-               &self%mask2d(i-2:i+2,j)   +&
-               &self%mask2d(i-2:i+2,j+1) +&
-               &self%mask2d(i-2:i+2,j+2) )
-          if (shoretest.gt.0.0d0) then
-             self%shoremask(i,j) = 1.0d0
-          end if
-       end do
-    end do
+!!$    do i = is, ie
+!!$       do j = js, je
+!!$          shoretest = sum(&
+!!$               &self%mask2d(i-2:i+2,j-2) +&
+!!$               &self%mask2d(i-2:i+2,j-1) +&               
+!!$               &self%mask2d(i-2:i+2,j)   +&
+!!$               &self%mask2d(i-2:i+2,j+1) +&
+!!$               &self%mask2d(i-2:i+2,j+2) )
+!!$          if (shoretest.gt.0.0d0) then
+!!$             self%shoremask(i,j) = 1.0d0
+!!$          end if
+!!$       end do
+!!$    end do
 
     ! Get number of valid points
     ns = int(sum(self%shoremask(is:ie,js:je)))
@@ -404,7 +404,7 @@ contains
        do j = js, je
           do k = 1, self%nzo
              if (k.eq.1) then
-                z(i,j,k) = h(i,j,k)
+                z(i,j,k) = 0.5_kind_real*h(i,j,k)
              else
                 z(i,j,k) = sum(h(i,j,1:k-1))+0.5_kind_real*h(i,j,k)
              end if
