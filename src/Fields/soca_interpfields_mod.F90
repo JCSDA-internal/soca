@@ -12,7 +12,7 @@ module soca_interpfields_mod
   use ufo_geovals_mod
   use ufo_vars_mod
   use ufo_locs_mod
-  use fckit_log_module, only : fckit_log  
+  use fckit_log_module, only : fckit_log, log
   use soca_getvaltraj_mod
   use soca_bumpinterp2d_mod
   use soca_fields
@@ -256,7 +256,9 @@ contains
        ! Allocate temporary geoval and 3d field for the current time window
        allocate(gom_window(nval,locs%nlocs))
        allocate(fld3d(isc:iec,jsc:jec,1:nval))
-          print *,'ufo_vars=',vars%fldnames(ivar)
+
+       call log%info(trim(vars%fldnames(ivar)),newl=.true.)
+
        ! Extract fld3d from field 
        select case (trim(vars%fldnames(ivar)))
 
@@ -284,6 +286,8 @@ contains
        case ("ocean_fraction")
           fld3d(isc:iec,jsc:jec,1) = real(fld%geom%ocean%mask2d(isc:iec,jsc:jec),kind=kind_real)
 
+       case default
+          call abor1_ftn("soca_interpfields_mod: geoval does not exist")
        end select
 
        ! Apply forward interpolation: Model ---> Obs
@@ -329,7 +333,6 @@ contains
        
     case default
        call abor1_ftn("soca_interpfields_mod: Could not set nval")
-       
 
     end select
 

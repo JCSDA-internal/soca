@@ -54,22 +54,23 @@ module soca_fields
      character(len=128)                :: gridfname      !< Grid file name
      character(len=128)                :: cicefname      !< Fields file name for cice
      character(len=128)                :: momfname       !< Fields file name for mom
+
+     ! Sea-ice state variables
      real(kind=kind_real), allocatable :: cicen(:,:,:)   !< Sea-ice fraction                 (nx,ny,ncat+1)
      real(kind=kind_real), allocatable :: hicen(:,:,:)   !< Sea-ice mass/m2                  (nx,ny,ncat) [kg/m2]
-!!$     real(kind=kind_real), allocatable :: vicen(:,:,:)   !< Sea-ice volume                   (nx,ny,ncat)
-!!$     real(kind=kind_real), allocatable :: hsnon(:,:,:)   !< Snow depth over sea-ice          (nx,ny,ncat)
-!!$     real(kind=kind_real), allocatable :: vsnon(:,:,:)   !< Snow volume over sea-ice         (nx,ny,ncat)
-!!$     real(kind=kind_real), allocatable :: tsfcn(:,:,:)   !< Temperature over sea-ice or snow (nx,ny,ncat)
-!!$     real(kind=kind_real), allocatable :: qsnon(:,:,:,:) !< Enthalpy of snow                 (nx,ny,ncat)
-!!$     real(kind=kind_real), allocatable :: sicnk(:,:,:,:) !< Salin_wity of sea-ice            (nx,ny,ncat,nzi)
+
+     ! Ocean state variables
      real(kind=kind_real), allocatable :: socn(:,:,:)    !< Ocean Practical Salinity         (nx,ny,nzo)
-     real(kind=kind_real), allocatable :: qicnk(:,:,:,:) !< Enthalpy of sea-ice              (nx,ny,ncat,nzi)
      real(kind=kind_real), allocatable :: tocn(:,:,:)    !< Ocean Potential Temperature, ref to p=0      (nx,ny,nzo)
      real(kind=kind_real), allocatable :: ssh(:,:)       !< Sea-surface height (nx,ny,nzo)
      real(kind=kind_real), allocatable :: hocn(:,:,:)    !< Layer thickness (nx,ny,nzo)
-     character(len=5),     allocatable :: fldnames(:)    !< Variable identifiers             (nf)
+
+     ! Ocean diagnostics
      real(kind=kind_real), allocatable :: mld(:,:)       !< Sea-surface height (nx,ny,nzo)
-     real(kind=kind_real), allocatable :: layer_depth(:,:,:) !< Sea-surface height (nx,ny,nz0)     
+     real(kind=kind_real), allocatable :: layer_depth(:,:,:) !< Sea-surface height (nx,ny,nz0)
+     
+     character(len=5),     allocatable :: fldnames(:)    !< Variable identifiers             (nf)
+
   end type soca_field
 
 #define LISTED_TYPE soca_field
@@ -175,11 +176,6 @@ contains
     km = ncat + 1
     if (.not.allocated(self%cicen)) allocate(self%cicen(isd:ied, jsd:jed, km))
     if (.not.allocated(self%hicen)) allocate(self%hicen(isd:ied, jsd:jed, ncat))
-    !if (.not.allocated(self%hsnon)) allocate(self%hsnon(isd:ied, jsd:jed, ncat))
-    !if (.not.allocated(self%qicnk)) allocate(self%qicnk(isd:ied, jsd:jed, ncat, nzi))
-    !if (.not.allocated(self%qsnon)) allocate(self%qsnon(isd:ied, jsd:jed, ncat, nzs))
-    !if (.not.allocated(self%sicnk)) allocate(self%sicnk(isd:ied, jsd:jed, ncat, nzi))
-    !if (.not.allocated(self%tsfcn)) allocate(self%tsfcn(isd:ied, jsd:jed, ncat))
 
   end subroutine soca_field_alloc
 
@@ -202,11 +198,6 @@ contains
     ! Deallocate sea-ice state
     deallocate(self%cicen)
     deallocate(self%hicen)
-    !deallocate(self%hsnon)
-    !deallocate(self%qicnk)
-    !deallocate(self%qsnon)
-    !deallocate(self%sicnk)
-    !deallocate(self%tsfcn)
 
     ! Deallocate geometry
     nullify(self%geom)
@@ -224,11 +215,6 @@ contains
 
     self%cicen = 0.0_kind_real
     self%hicen = 0.0_kind_real
-!!$    self%hsnon = 0.0_kind_real
-!!$    self%tsfcn = 0.0_kind_real
-!!$    self%qsnon = 0.0_kind_real
-!!$    self%sicnk = 0.0_kind_real
-!!$    self%qicnk = 0.0_kind_real
 
     self%socn = 0.0_kind_real
     self%tocn = 0.0_kind_real
@@ -246,11 +232,6 @@ contains
 
     self%cicen = 1.0_kind_real
     self%hicen = 1.0_kind_real
-!!$    self%hsnon = 1.0_kind_real
-!!$    self%tsfcn = 1.0_kind_real
-!!$    self%qsnon = 1.0_kind_real
-!!$    self%sicnk = 1.0_kind_real
-!!$    self%qicnk = 1.0_kind_real
 
     self%socn = 1.0_kind_real
     self%tocn = 1.0_kind_real
@@ -316,8 +297,6 @@ contains
 
     call random_number(self%cicen); self%cicen=self%cicen-0.5_kind_real
     call random_number(self%hicen); self%hicen=self%hicen-0.5_kind_real
-!!$    call random_number(self%hsnon); self%hsnon=self%hsnon-0.5_kind_real
-!!$    call random_number(self%tsfcn); self%tsfcn=self%tsfcn-0.5_kind_real
 
     call random_number(self%tocn); self%tocn=self%tocn-0.5_kind_real
     call random_number(self%socn); self%socn=self%socn-0.5_kind_real
@@ -348,11 +327,6 @@ contains
 
     self%cicen = rhs%cicen
     self%hicen = rhs%hicen
-!!$    self%hsnon = rhs%hsnon
-!!$    self%tsfcn = rhs%tsfcn
-!!$    self%qsnon = rhs%qsnon
-!!$    self%sicnk = rhs%sicnk
-!!$    self%qicnk = rhs%qicnk
 
     self%socn  = rhs%socn
     self%tocn  = rhs%tocn
@@ -380,11 +354,6 @@ contains
 
     self%cicen = self%cicen + rhs%cicen
     self%hicen = self%hicen + rhs%hicen
-!!$    self%hsnon = self%hsnon + rhs%hsnon
-!!$    self%tsfcn = self%tsfcn + rhs%tsfcn
-!!$    self%qsnon = self%qsnon + rhs%qsnon
-!!$    self%sicnk = self%sicnk + rhs%sicnk
-!!$    self%qicnk = self%qicnk + rhs%qicnk
 
     self%tocn = self%tocn + rhs%tocn
     self%socn = self%socn + rhs%socn
@@ -407,11 +376,6 @@ contains
 
     self%cicen=self%cicen*rhs%cicen
     self%hicen=self%hicen*rhs%hicen
-!!$    self%hsnon=self%hsnon*rhs%hsnon
-!!$    self%tsfcn=self%tsfcn*rhs%tsfcn
-!!$    self%qsnon=self%qsnon*rhs%qsnon
-!!$    self%sicnk=self%sicnk*rhs%sicnk
-!!$    self%qicnk=self%qicnk*rhs%qicnk
 
     self%tocn=self%tocn*rhs%tocn
     self%socn=self%socn*rhs%socn
@@ -435,11 +399,6 @@ contains
 
     self%cicen=self%cicen-rhs%cicen
     self%hicen=self%hicen-rhs%hicen
-!!$    self%hsnon=self%hsnon-rhs%hsnon
-!!$    self%tsfcn=self%tsfcn-rhs%tsfcn
-!!$    self%qsnon=self%qsnon-rhs%qsnon
-!!$    self%sicnk=self%sicnk-rhs%sicnk
-!!$    self%qicnk=self%qicnk-rhs%qicnk
 
     self%socn=self%socn-rhs%socn
     self%tocn=self%tocn-rhs%tocn
@@ -459,11 +418,6 @@ contains
 
     self%cicen = zz * self%cicen
     self%hicen = zz * self%hicen
-!!$    self%hsnon = zz * self%hsnon
-!!$    self%tsfcn = zz * self%tsfcn
-!!$    self%qsnon = zz * self%qsnon
-!!$    self%sicnk = zz * self%sicnk
-!!$    self%qicnk = zz * self%qicnk
 
     self%tocn = zz * self%tocn
     self%socn = zz * self%socn
@@ -487,11 +441,6 @@ contains
 
     self%cicen = self%cicen + zz * rhs%cicen
     self%hicen = self%hicen + zz * rhs%hicen
-!!$    self%hsnon = self%hsnon + zz * rhs%hsnon
-!!$    self%tsfcn = self%tsfcn + zz * rhs%tsfcn
-!!$    self%qsnon = self%qsnon + zz * rhs%qsnon
-!!$    self%sicnk = self%sicnk + zz * rhs%sicnk
-!!$    self%qicnk = self%qicnk + zz * rhs%qicnk
 
     self%tocn = self%tocn + zz * rhs%tocn
     self%socn = self%socn + zz * rhs%socn
@@ -512,7 +461,6 @@ contains
     real(kind=kind_real), intent(out) :: zprod
 
     real(kind=kind_real) :: zprod_allpes
-    !real(kind=kind_real),allocatable,dimension(:) :: zprod_allpes
     integer :: ii, jj, kk
     integer :: is, ie, js, je, ncat, nzo, myrank
     type(fckit_mpi_comm) :: f_comm
@@ -598,22 +546,11 @@ contains
 
     lhs%cicen = x1%cicen - x2%cicen
     lhs%hicen = x1%hicen - x2%hicen
-!!$    lhs%hsnon = x1%hsnon - x2%hsnon
-!!$    lhs%tsfcn = x1%tsfcn - x2%tsfcn
-!!$    lhs%qsnon = x1%qsnon - x2%qsnon
-!!$    lhs%sicnk = x1%sicnk - x2%sicnk
-!!$    lhs%qicnk = x1%qicnk - x2%qicnk
 
     lhs%tocn = x1%tocn - x2%tocn
     lhs%socn = x1%socn - x2%socn
     lhs%ssh = x1%ssh - x2%ssh
     lhs%hocn = x1%hocn - x2%hocn
-    !   else
-    !      call abor1_ftn("soca_fields:diff_incr: not coded for low res increment yet")
-    !   endif
-    !else
-    !   call abor1_ftn("soca_fields:diff_incr: states not at same resolution")
-    !endif
     print *,'sum(mask)=',sum(x1%geom%ocean%mask2d(:,:))
   end subroutine diff_incr
 
@@ -627,7 +564,6 @@ contains
     call check(fld)
     call check(rhs)
     call copy(fld,rhs)
-    !call abor1_ftn("soca_fields:field_resol: untested code")
 
     return
   end subroutine change_resol
@@ -692,7 +628,7 @@ contains
        call fms_io_init()
        do ii = 1, fld%nf
           select case(fld%fldnames(ii))
-
+          ! Ocean
           case ('ssh')
              idr_ocean = register_restart_field(ocean_restart, ocn_filename, 'ave_ssh', fld%ssh(:,:), &
                   domain=fld%geom%ocean%G%Domain%mpp_domain)
@@ -705,30 +641,15 @@ contains
           case ('hocn')
              idr_ocean = register_restart_field(ocean_restart, ocn_filename, 'h', fld%hocn(:,:,:), &
                   domain=fld%geom%ocean%G%Domain%mpp_domain)
-             
+          ! Sea-ice   
           case ('cicen')
              idr = register_restart_field(sis_restart, ice_filename, 'part_size', fld%cicen(:,:,:), &
                   domain=fld%geom%ocean%G%Domain%mpp_domain)
           case ('hicen')
              idr = register_restart_field(sis_restart, ice_filename, 'h_ice', fld%hicen, &
                   domain=fld%geom%ocean%G%Domain%mpp_domain)
-!!$          case ('hsnon')
-!!$             idr = register_restart_field(sis_restart, ice_filename, 'h_snow', fld%hsnon, &
-!!$                  domain=fld%geom%ocean%G%Domain%mpp_domain)
-!!$          case ('qicnk')
-!!$             idr = register_restart_field(sis_restart, ice_filename, 'enth_ice', fld%qicnk, &
-!!$                  domain=fld%geom%ocean%G%Domain%mpp_domain)
-!!$          case ('qsnon')
-!!$             idr = register_restart_field(sis_restart, ice_filename, 'enth_snow', fld%qsnon, &
-!!$                  domain=fld%geom%ocean%G%Domain%mpp_domain)
-!!$          case ('tsfcn')
-!!$             idr = register_restart_field(sis_restart, ice_filename, 'T_skin', fld%tsfcn, &
-!!$                  domain=fld%geom%ocean%G%Domain%mpp_domain)
-!!$          case ('sicnk')
-!!$             idr = register_restart_field(sis_restart, ice_filename, 'sal_ice', fld%sicnk, &
-!!$                  domain=fld%geom%ocean%G%Domain%mpp_domain)
           case default
-             !call log%warning("soca_fields:read_file: Not reading var "//fld%fldnames(ii))
+             call log%warning("soca_fields:read_file: Not reading var "//fld%fldnames(ii))
           end select
        end do
 
@@ -742,7 +663,7 @@ contains
        ! Initialize mid-layer depth from layer thickness   
        call fld%geom%ocean%thickness2depth(fld%hocn, fld%layer_depth)
     
-       ! Compute mixed layer depth
+       ! Compute mixed layer depth TODO: Move somewhere else ...
        do i = is, ie
           do j = js, je
              fld%mld(i,j) = soca_mld(fld%socn(i,j,:),&
@@ -787,16 +708,6 @@ contains
              call read_data(incr_filename, 'cicen', fld%cicen, domain=fld%geom%ocean%G%Domain%mpp_domain)
           case ('hicen')
              call read_data(incr_filename, 'hicen', fld%hicen, domain=fld%geom%ocean%G%Domain%mpp_domain)
-!!$          case ('hsnon')
-!!$             call read_data(incr_filename, 'hsnon', fld%hsnon, domain=fld%geom%ocean%G%Domain%mpp_domain)
-!!$          case ('qicnk')
-!!$             call read_data(incr_filename, 'qicnk', fld%qicnk, domain=fld%geom%ocean%G%Domain%mpp_domain)
-!!$          case ('sicnk')
-!!$             call read_data(incr_filename, 'sicnk', fld%sicnk, domain=fld%geom%ocean%G%Domain%mpp_domain)
-!!$          case ('qsnon')
-!!$             call read_data(incr_filename, 'qsnon', fld%qsnon, domain=fld%geom%ocean%G%Domain%mpp_domain)
-!!$          case ('tsfcn')
-!!$             call read_data(incr_filename, 'tsfcn', fld%tsfcn, domain=fld%geom%ocean%G%Domain%mpp_domain)
           case default
              write(buf,*) 'soca_fields_mod::read_file::increment. Not reading '//fld%fldnames(ii)
              call log%info(buf,newl=.true.)
@@ -866,21 +777,6 @@ contains
     pstat(1,2) = minval(fld%hicen)
     pstat(2,2) = maxval(fld%hicen)
     
-!!$    pstat(1,3) = minval(fld%hsnon)
-!!$    pstat(2,3) = maxval(fld%hsnon)
-!!$    
-!!$    pstat(1,4) = minval(fld%tsfcn)
-!!$    pstat(2,4) = maxval(fld%tsfcn)
-!!$
-!!$    pstat(1,5) = minval(fld%qsnon)
-!!$    pstat(2,5) = maxval(fld%qsnon)
-!!$
-!!$    pstat(1,6) = minval(fld%sicnk)
-!!$    pstat(2,6) = maxval(fld%sicnk)
-!!$
-!!$    pstat(1,7) = minval(fld%qicnk)
-!!$    pstat(2,7) = maxval(fld%qicnk)
-
     pstat(1,8) = minval(fld%tocn)
     pstat(2,8) = maxval(fld%tocn)
 
@@ -909,8 +805,6 @@ contains
   ! ------------------------------------------------------------------------------
 
   subroutine fldrms(fld, prms)
-
-    use mpp_mod,                   only : mpp_pe, mpp_npes, mpp_root_pe, mpp_sync
 
     implicit none
 
@@ -966,18 +860,6 @@ contains
 
     ! Set number of timeslots
     ug%grid(1)%nts = 1
-
-!!$    ! Set local number of points
-!!$    ug%nmga = (iec - isc + 1) * (jec - jsc + 1 )
-!!$
-!!$    ! Set number of levels
-!!$    ug%nl0 = 1
-!!$
-!!$    ! Set number of variables (cicen,hicen,tocn,socn,ssh)
-!!$    ug%nv = self%geom%ocean%ncat*2 + 1
-!!$
-!!$    ! Set number of timeslots
-!!$    ug%nts = 1
 
   end subroutine ug_size
 
@@ -1049,19 +931,17 @@ contains
     call ug_size(self, ug)
 
     ! Allocate unstructured grid field
-    call allocate_unstructured_grid_field(ug)
-
-    !ug%fld(nmga,nl0,nv,nts)
+    ! ug%fld(nmga,nl0,nv,nts)
     ! nmga !> Number of gridpoints (on a given MPI task)
     ! nl0  !> Number of levels
     ! nv   !> Number of variables
     ! nts  !> Number of timeslots
+    call allocate_unstructured_grid_field(ug)
     ncat = self%geom%ocean%ncat
     nzo = ug%grid(1)%nl0!self%geom%ocean%nzo
 
     ! Copy field
-
-    ug%grid(1)%fld = 0.0
+    ug%grid(1)%fld = 0.0_kind_real
 
     ! cicen
     jk=1
@@ -1202,6 +1082,7 @@ contains
     type(soca_field), intent(in) :: self
     logical :: bad
 
+    ! Doesn't do any thing ...
     bad = .false.
     !bad = bad .or. (size(self%cicen, 1) /= self%geom%nx)
 
@@ -1247,18 +1128,8 @@ contains
           call write_data( fname, "h", fld%hocn, fld%geom%ocean%G%Domain%mpp_domain)
        case ('hicen')
           call write_data( fname, "hicen", fld%hicen, fld%geom%ocean%G%Domain%mpp_domain)
-!!$       case ('hsnon')
-!!$          call write_data(fname, "hsnon", fld%hsnon, fld%geom%ocean%G%Domain%mpp_domain)
        case ('cicen')
           call write_data(fname, "cicen", fld%cicen, fld%geom%ocean%G%Domain%mpp_domain)
-!!$       case ('qicnk')
-!!$          call write_data(fname, "qicnk", fld%qicnk, fld%geom%ocean%G%Domain%mpp_domain)
-!!$       case ('sicnk')
-!!$          call write_data(fname, "sicnk", fld%sicnk, fld%geom%ocean%G%Domain%mpp_domain)
-!!$       case ('qsnon')
-!!$          call write_data(fname, "qsnon", fld%qsnon, fld%geom%ocean%G%Domain%mpp_domain)
-!!$       case ('tsfcn')
-!!$          call write_data(fname, "tsfcn", fld%tsfcn, fld%geom%ocean%G%Domain%mpp_domain)
        case default
 
        end select
@@ -1313,16 +1184,6 @@ contains
          domain=fld%geom%ocean%G%Domain%mpp_domain)
     idr = register_restart_field(ice_restart, ice_filename, 'h_ice', fld%hicen, &
          domain=fld%geom%ocean%G%Domain%mpp_domain)
-!!$    idr = register_restart_field(ice_restart, ice_filename, 'h_snow', fld%hsnon, &
-!!$         domain=fld%geom%ocean%G%Domain%mpp_domain)
-!!$    idr = register_restart_field(ice_restart, ice_filename, 'enth_ice', fld%qicnk, &
-!!$         domain=fld%geom%ocean%G%Domain%mpp_domain)
-!!$    idr = register_restart_field(ice_restart, ice_filename, 'enth_snow', fld%qsnon, &
-!!$         domain=fld%geom%ocean%G%Domain%mpp_domain)
-!!$    idr = register_restart_field(ice_restart, ice_filename, 'T_skin', fld%tsfcn, &
-!!$         domain=fld%geom%ocean%G%Domain%mpp_domain)
-!!$    idr = register_restart_field(ice_restart, ice_filename, 'sal_ice', fld%sicnk, &
-!!$         domain=fld%geom%ocean%G%Domain%mpp_domain)
 
     call save_restart(ocean_restart, directory='')
     call save_restart(ice_restart, directory='')
@@ -1397,6 +1258,7 @@ contains
          & call abor1_ftn("fields:genfilename: filename too long")
 
   end function soca_genfilename
+
   ! ------------------------------------------------------------------------------
 
   subroutine clean_ocean(fld)
