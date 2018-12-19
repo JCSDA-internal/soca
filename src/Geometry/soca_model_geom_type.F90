@@ -334,7 +334,9 @@ contains
     call geom_get_domain_indices(self, "compute", is, ie, js, je)    
     ns = (ie - is + 1) * (je - js + 1 )
     varname='shoremask'
-    call write2pe(reshape(self%shoremask,(/ns/)),varname,geom_output_pe,.false.)  
+    call write2pe(reshape(self%shoremask,(/ns/)),varname,geom_output_pe,.false.)
+    varname='mask'
+    call write2pe(reshape(self%mask2d,(/ns/)),varname,geom_output_pe,.true.)      
     varname='lon'
     call write2pe(reshape(self%lon,(/ns/)),varname,geom_output_pe,.true.)
     varname='lat'

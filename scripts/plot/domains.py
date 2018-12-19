@@ -56,7 +56,7 @@ for fname in flist:
     x=np.squeeze(ncfile.variables['lon'][:])
     x[x<0]=x[x<0]+360
     y=np.squeeze(ncfile.variables['lat'][:])
-    mask=np.squeeze(ncfile.variables['obsmask'][:])
+    mask=np.squeeze(ncfile.variables['mask'][:])
     shoremask=np.squeeze(ncfile.variables['shoremask'][:])    
     ncfile.close()
     I=np.where(mask==1)
