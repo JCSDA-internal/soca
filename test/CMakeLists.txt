@@ -121,7 +121,7 @@ ecbuild_add_test( TARGET test_soca_forecast
                   TYPE SCRIPT
 		  #MPI     4
                   COMMAND "./run.sh"
-                  ARGS "mpirun -np 4 --oversubscribe ${CMAKE_BINARY_DIR}/bin/soca_forecast.x testinput/forecast.yml"
+                  ARGS "mpirun -np 2 ${CMAKE_BINARY_DIR}/bin/soca_forecast.x testinput/forecast.yml"
                   DEPENDS soca_forecast.x )
 
 # Initialize static error covariance model defined in soca, used for 3DVAR
@@ -129,7 +129,7 @@ ecbuild_add_test( TARGET test_soca_socaerror_init
                   TYPE SCRIPT
 		  #MPI     4
 		  COMMAND "./run.sh"
-                  ARGS "mpirun -np 4 --oversubscribe ${CMAKE_BINARY_DIR}/bin/soca_staticbinit.x testinput/static_SocaError_init.yml"
+                  ARGS "mpirun -np 2 ${CMAKE_BINARY_DIR}/bin/soca_staticbinit.x testinput/static_SocaError_init.yml"
                   DEPENDS soca_staticbinit.x )
 
 #ecbuild_add_test( TARGET test_soca_socaerror_serial_init
@@ -151,7 +151,7 @@ ecbuild_add_test( TARGET test_soca_enspert
                   TYPE SCRIPT
 		  #MPI     4
 		  COMMAND "./run.sh"
-                  ARGS "mpirun -np 4 --oversubscribe ${CMAKE_BINARY_DIR}/bin/soca_enspert.x testinput/genenspert.yml"
+                  ARGS "mpirun -np 2 ${CMAKE_BINARY_DIR}/bin/soca_enspert.x testinput/genenspert.yml"
                   DEPENDS soca_enspert.x )
 		
 # Test below can take a few hours to complete. Commented out for now
@@ -256,14 +256,14 @@ ecbuild_add_test( TARGET test_soca_hofx
                   TYPE SCRIPT
 		  #MPI     4
                   COMMAND "./run.sh"
-                  ARGS "mpirun -np 4 --oversubscribe ${CMAKE_BINARY_DIR}/bin/soca_hofx.x testinput/hofx-adt.yml"             
+                  ARGS "mpirun -np 2 ${CMAKE_BINARY_DIR}/bin/soca_hofx.x testinput/hofx-adt.yml"             
                   DEPENDS soca_hofx.x )
 
 ecbuild_add_test( TARGET test_soca_3dvar
                   TYPE SCRIPT
 		  #MPI     4
                   COMMAND "./run.sh"
-                  ARGS "mpirun -np 4 --oversubscribe ${CMAKE_BINARY_DIR}/bin/soca_3dvar.x testinput/3dvar_test.yml"
+                  ARGS "mpirun -np 2 ${CMAKE_BINARY_DIR}/bin/soca_3dvar.x testinput/3dvar_test.yml"
 		         testoutput/3dvar.test
                   DEPENDS soca_3dvar.x )
 
@@ -271,7 +271,7 @@ ecbuild_add_test( TARGET test_soca_3dhybrid
                   TYPE SCRIPT
 		  #MPI     4
                   COMMAND "./compare.sh"
-                  ARGS "$mpirun -np 4 --oversubscribe {CMAKE_BINARY_DIR}/bin/soca_3dvar.x testinput/3dhybridbump.yml"
+                  ARGS "$mpirun -np 2 {CMAKE_BINARY_DIR}/bin/soca_3dvar.x testinput/3dhybridbump.yml"
                   DEPENDS soca_3dvar.x )
 		  
 #ecbuild_add_test( TARGET test_soca_dirac
