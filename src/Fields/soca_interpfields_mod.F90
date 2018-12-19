@@ -240,15 +240,11 @@ contains
 
        ! Allocate GeoVaLs (fields at locations)
        geovals%geovals(ivar)%nval = nval
-
        if (.not.(allocated(geovals%geovals(ivar)%vals))) then
-          !if (allocated(geovals%geovals(ivar)%vals)) then
-          !deallocate(geovals%geovals(ivar)%vals)
-          !end if
-          nobs = geovals%geovals(ivar)%nobs ! Number of obs in pe
+          ! Number of obs in pe
+          nobs = geovals%geovals(ivar)%nobs
           
           allocate(geovals%geovals(ivar)%vals(nval,nobs))
-          !geovals%geovals(ivar)%vals(:,:)=0.0_kind_real    
           geovals%lalloc = .true.       
           geovals%linit = .true.
        end if
@@ -281,8 +277,8 @@ contains
           fld3d = fld%hocn(isc:iec,jsc:jec,1:nval)          
 
        case ("ocean_upper_level_temperature")
-          fld3d(isc:iec,jsc:jec,1) = fld%tocn(isc:iec,jsc:jec,1)                    
-
+          fld3d(isc:iec,jsc:jec,1) = fld%tocn(isc:iec,jsc:jec,1)
+          
        case ("ocean_fraction")
           fld3d(isc:iec,jsc:jec,1) = real(fld%geom%ocean%mask2d(isc:iec,jsc:jec),kind=kind_real)
 

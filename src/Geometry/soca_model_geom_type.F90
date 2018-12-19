@@ -30,9 +30,7 @@ module soca_model_geom_type
      integer :: ncat
      real(kind=kind_real), allocatable, dimension(:,:) :: lon      !< The horizontal grid type     !< 2D array of longitude 
      real(kind=kind_real), allocatable, dimension(:,:) :: lat       !< 2D array of latitude
-     real(kind=kind_real), allocatable, dimension(:)   :: z           !<      
      real(kind=kind_real), allocatable, dimension(:,:) :: mask2d    !< 0 = land 1 = ocean
-     real(kind=kind_real), allocatable, dimension(:,:) :: obsmask   !< 0 = land and halo 1 = ocean
      real(kind=kind_real), allocatable, dimension(:,:) :: shoremask ! Includes shoreline as ocean point (useful for BUMP)
      integer, allocatable :: ij(:,:) ! index of ocean+shore line in compute grid
      real(kind=kind_real), allocatable, dimension(:,:) :: cell_area !<
@@ -82,7 +80,6 @@ contains
     if (allocated(self%lon)) deallocate(self%lon)
     if (allocated(self%lat)) deallocate(self%lat)
     if (allocated(self%mask2d)) deallocate(self%mask2d)
-    if (allocated(self%obsmask)) deallocate(self%obsmask)
     if (allocated(self%shoremask)) deallocate(self%shoremask)
     if (allocated(self%cell_area)) deallocate(self%cell_area)
     if (allocated(self%rossby_radius)) deallocate(self%rossby_radius)    
@@ -122,6 +119,7 @@ contains
 
     ! Extract geometry of interest from model's data structure.
     ! Common to ocean & sea-ice
+    ! No halo grid size
     nxny = shape( self%G%GeoLonT(is:ie,js:je) )
     nx = nxny(1)
     ny = nxny(2)
@@ -132,7 +130,6 @@ contains
     allocate(self%lon(is:ie,js:je))
     allocate(self%lat(is:ie,js:je))
     allocate(self%mask2d(is:ie,js:je))
-    allocate(self%obsmask(is:ie,js:je))    
     allocate(self%cell_area(is:ie,js:je))
     allocate(self%rossby_radius(is:ie,js:je))
     
@@ -140,10 +137,6 @@ contains
     self%lat(is:ie,js:je) = self%G%GeoLatT(is:ie,js:je)
     self%mask2d(is:ie,js:je) = self%G%mask2dT(is:ie,js:je)
     self%cell_area(is:ie,js:je) = self%G%areaT(is:ie,js:je)
-
-    ! Setting up mask used to qc out observation that are on land or out
-    ! of the compute domain: STILL NEEDED?
-    self%obsmask(is:ie,js:je) = self%G%mask2dT(is:ie,js:je)        
 
     ! Ocean levels
     self%nzo = self%G%ke
@@ -268,31 +261,26 @@ contains
     integer :: is, ie, js, je
     integer :: i, j, ns, cnt
     real(kind=kind_real) :: shoretest
-    character(7) :: domain_type
     
-    ! Allocate shoremask according to size of data domain
-    domain_type = "data"
-    call geom_get_domain_indices(self, domain_type, is, ie, js, je)
+    ! Allocate shoremask
+    call geom_get_domain_indices(self, "compute", is, ie, js, je)
     allocate(self%shoremask(is:ie,js:je))
-
-    domain_type = "compute"    
-    call geom_get_domain_indices(self, domain_type, is, ie, js, je)
-
+    
     ! Extend mask 2 grid point inland TODO:NEED HALO FOR MASK!!!
     self%shoremask = self%mask2d
-!!$    do i = is, ie
-!!$       do j = js, je
-!!$          shoretest = sum(&
-!!$               &self%mask2d(i-2:i+2,j-2) +&
-!!$               &self%mask2d(i-2:i+2,j-1) +&               
-!!$               &self%mask2d(i-2:i+2,j)   +&
-!!$               &self%mask2d(i-2:i+2,j+1) +&
-!!$               &self%mask2d(i-2:i+2,j+2) )
-!!$          if (shoretest.gt.0.0d0) then
-!!$             self%shoremask(i,j) = 1.0d0
-!!$          end if
-!!$       end do
-!!$    end do
+    do i = is, ie
+       do j = js, je
+          shoretest = sum(&
+               &self%G%mask2dT(i-2:i+2,j-2) +&
+               &self%G%mask2dT(i-2:i+2,j-1) +&               
+               &self%G%mask2dT(i-2:i+2,j)   +&
+               &self%G%mask2dT(i-2:i+2,j+1) +&
+               &self%G%mask2dT(i-2:i+2,j+2) )
+          if (shoretest.gt.0.0d0) then
+             self%shoremask(i,j) = 1.0d0
+          end if
+       end do
+    end do
 
     ! Get number of valid points
     ns = int(sum(self%shoremask(is:ie,js:je)))
@@ -327,10 +315,10 @@ contains
     integer :: pe
     character(len=8) :: fmt = '(I5.5)'
     character(len=1024) :: strpe
-    integer :: isc,iec,jsc,jec 
+    integer :: is, ie, js, je, ns
     
     call fms_io_init()
-    ! Save full domain
+    ! Save global domain
     call write_data( geom_output_file, "lon", self%lon, self%G%Domain%mpp_domain)
     call write_data( geom_output_file, "lat", self%lat, self%G%Domain%mpp_domain)
     call write_data( geom_output_file, "area", self%cell_area, self%G%Domain%mpp_domain)
@@ -339,30 +327,26 @@ contains
     call fms_io_exit()    
 
     ! Save local compute grid
-    ! Get compute domain
-    isc = self%G%isc    
-    iec = self%G%iec
-    jsc = self%G%jsc    
-    jec = self%G%jec    
-
     pe = mpp_pe()
     write (strpe,fmt) pe
     geom_output_pe='geom_output_'//trim(strpe)//'.nc'
-    varname='obsmask'
-    call write2pe(reshape(self%obsmask,(/self%nx*self%ny/)),varname,geom_output_pe,.false.)
+
+    call geom_get_domain_indices(self, "compute", is, ie, js, je)    
+    ns = (ie - is + 1) * (je - js + 1 )
     varname='shoremask'
-    call write2pe(reshape(self%shoremask,(/self%nx*self%ny/)),varname,geom_output_pe,.true.)    
+    call write2pe(reshape(self%shoremask,(/ns/)),varname,geom_output_pe,.false.)  
     varname='lon'
-    call write2pe(reshape(self%lon,(/self%nx*self%ny/)),varname,geom_output_pe,.true.)
+    call write2pe(reshape(self%lon,(/ns/)),varname,geom_output_pe,.true.)
     varname='lat'
-    call write2pe(reshape(self%lat,(/self%nx*self%ny/)),varname,geom_output_pe,.true.)        
+    call write2pe(reshape(self%lat,(/ns/)),varname,geom_output_pe,.true.)        
 
   end subroutine geom_infotofile
 
   ! ------------------------------------------------------------------------------
   
   subroutine geom_get_domain_indices(self, domain_type, is, ie, js, je)
-
+    ! Short cut to extract array bounds of compute or data domain
+    
     implicit none
 
     class(soca_model_geom), intent(in)  :: self
@@ -371,18 +355,16 @@ contains
 
     select case (trim(domain_type))
     case ("compute")
-          is = self%G%isc
-          ie = self%G%iec
-          js = self%G%jsc
-          je = self%G%jec
-
-       case ("data")
-          is = self%G%isd
-          ie = self%G%ied
-          js = self%G%jsd
-          je = self%G%jed
-
-       end select
+       is = self%G%isc
+       ie = self%G%iec
+       js = self%G%jsc
+       je = self%G%jec
+    case ("data   ")
+       is = self%G%isd
+       ie = self%G%ied
+       js = self%G%jsd
+       je = self%G%jed
+    end select
 
   end subroutine geom_get_domain_indices
 
