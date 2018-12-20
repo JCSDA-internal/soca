@@ -26,5 +26,12 @@ Observations:
         obsfile: ./Data/Jason-2-2018-04-15-soca.nc
     Covariance:
       covariance: diagonal
+  ObsFilters:
+  - Filter: Background Check
+    variables:
+    - obs_absolute_dynamic_topography
+    threshold: 3    
+  - Filter: GOMsaver
+    filename: ./Data/testgeovl.nc
 prints:
   frequency: PT3H

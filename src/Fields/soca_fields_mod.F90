@@ -453,8 +453,6 @@ contains
 
   subroutine dot_prod(fld1,fld2,zprod)
 
-    !use mpp_mod,  only : mpp_pe, mpp_npes, mpp_root_pe, mpp_sync, mpp_sum, mpp_gather, mpp_broadcast
-
     implicit none
     type(soca_field),      intent(in) :: fld1
     type(soca_field),      intent(in) :: fld2    

@@ -35,7 +35,6 @@ contains
 
     use fckit_mpi_module, only: fckit_mpi_comm
     use type_bump, only: bump_type
-    use mpi
     
     implicit none
 
@@ -84,8 +83,12 @@ contains
     allocate(tmp_lonmod(ns), tmp_latmod(ns), tmp_maskmod(ni, nj))
     tmp_lonmod(:) = reshape(mod_lon, (/ns/))
     tmp_latmod(:) = reshape(mod_lat, (/ns/))
-    tmp_maskmod = reshape(tmp_maskmod, (/ns, 1/)) ! Assuming no mask!
-    tmp_maskmod = .true.
+    tmp_maskmod = .false.
+    where(mod_mask==1.0)
+       tmp_maskmod = .true.
+    end where
+    tmp_maskmod = reshape(tmp_maskmod, (/ns, 1/))
+    !tmp_maskmod = .true.
 
     ! Rotate longitudes
     where (tmp_lonmod < -180.0_kind_real)
@@ -121,22 +124,22 @@ contains
     real(kind=kind_real),    intent(out) :: obs(:) 
 
     ! Locals
-    real(kind=kind_real), allocatable :: tmp_fld(:,:)
+    !real(kind=kind_real), allocatable :: tmp_fld(:,:)
     real(kind=kind_real), allocatable :: tmp_obs(:,:)    
     integer :: ns
 
-    allocate(tmp_fld(size(fld,1),size(fld,2)))
+    !allocate(tmp_fld(size(fld,1),size(fld,2)))
     allocate(tmp_obs(size(obs,1),1))    
     ns = size(fld,1)*size(fld,2)
 
-    tmp_fld = fld
+    !tmp_fld = fld
     !tmp_fld = reshape(tmp_fld,(/ns, 1/))
     tmp_obs(:,1) = obs
     !call self%bump%apply_obsop(tmp_fld,tmp_obs)
     call self%bump%apply_obsop(fld,tmp_obs)
     obs = tmp_obs(:,1)
 
-    deallocate(tmp_fld, tmp_obs)
+    deallocate(tmp_obs)
 
   end subroutine interp_apply
 

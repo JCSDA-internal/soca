@@ -22,7 +22,7 @@ namespace soca {
     static oops::FilterMaker<Traits,oops::ObsFilter<Traits, ufo::BackgroundCheck>>
       makerBkgChk_("Background Check");
     static oops::FilterMaker<Traits,oops::ObsFilter<Traits, ufo::DomainCheck>>
-      makerDmChk_("Domain Check");    
+      makerDmChk_("Domain Check");
   }
 
 }  // namespace soca

@@ -224,6 +224,8 @@ cost_function:
         variables:
         - obs_absolute_dynamic_topography
         threshold: 3
+      - Filter: GOMsaver
+        filename: ./Data/testgeovl.nc        
 #    - ObsType: InsituTemperature
 #      ObsData:
 #        ObsDataOut:
