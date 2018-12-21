@@ -111,6 +111,10 @@ contains
                   &traj%hocn(i,j,k),&
                   &traj%geom%ocean%lon(i,j),&
                   &traj%geom%ocean%lat(i,j))
+             ! Set Jacobian to 0 in mixed layer
+             if (self%traj%layer_depth(i,j,k)<self%traj%mld(i,j)) then
+                jac = 0.0_kind_Real
+             end if             
              self%ksshts%kssht(i,j,k) = jac(1)
              self%ksshts%ksshs(i,j,k) = jac(2)
           end do

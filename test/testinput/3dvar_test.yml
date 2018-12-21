@@ -122,9 +122,9 @@ cost_function:
         #ocn_filename: ocn.bkgerror.nc
         #ice_filename: ice.bkgerror.nc
         date: '2018-04-15T00:00:00Z'
-        t_min: 0.01
+        t_min: 0.001
         t_max: 5.0
-        s_min: 0.001
+        s_min: 0.0001
         s_max: 0.2
         ssh_min: 0.05
         ssh_max: 0.5        
@@ -219,13 +219,13 @@ cost_function:
           obsfile: ./Data/Jason-2-2018-04-15-soca.nc
       Covariance:
         covariance: diagonal
-      ObsFilters:
-      - Filter: Background Check
-        variables:
-        - obs_absolute_dynamic_topography
-        threshold: 3
-      - Filter: GOMsaver
-        filename: ./Data/testgeovl.nc        
+#      ObsFilters:
+#      - Filter: Background Check
+#        variables:
+#        - obs_absolute_dynamic_topography
+#        threshold: 3
+#      - Filter: GOMsaver
+#        filename: ./Data/testgeovl.nc        
 #    - ObsType: InsituTemperature
 #      ObsData:
 #        ObsDataOut:
@@ -284,7 +284,7 @@ variational:
       varchange: Identity
       version: IdTLM
       tstep: PT1H
-    ninner: 2
+    ninner: 10
     gradient_norm_reduction: 1e-15
     test: 'on'
     prints:
@@ -298,7 +298,7 @@ variational:
       varchange: Identity      
       version: IdTLM
       tstep: PT1H
-    ninner: 2
+    ninner: 10
     gradient_norm_reduction: 1e-15
     test: 'on'
     output:

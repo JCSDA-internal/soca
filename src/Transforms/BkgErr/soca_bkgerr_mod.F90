@@ -207,7 +207,7 @@ contains
              vmask = 1.0_kind_real
              where (self%bkg%hocn(i,j,:)<1.0d-6)
                 vmask = 0.0_kind_real
-             end where
+             end where             
 
              ! Scale background error
              self%std_bkgerr%tocn(i,j,:) = abs(delta_z * &
