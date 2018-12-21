@@ -7,6 +7,7 @@ list( APPEND soca_test_input
   testinput/increment_test.yml
   testinput/hofx-adt.yml
   testinput/3dvar_test.yml
+  testinput/3dvarfgat_test.yml  
   testinput/3dhybridbump.yml  
   testinput/balance.yml
   testinput/bkgerr.yml
@@ -267,6 +268,14 @@ ecbuild_add_test( TARGET test_soca_3dvar
 		         testoutput/3dvar.test
                   DEPENDS soca_3dvar.x )
 
+ecbuild_add_test( TARGET test_soca_3dvarfgat
+                  TYPE SCRIPT
+		  #MPI     4
+                  COMMAND "./run.sh"
+                  ARGS "mpirun -np 2 ${CMAKE_BINARY_DIR}/bin/soca_3dvar.x testinput/3dvarfgat_test.yml"
+		         testoutput/3dvarfgat.test
+                  DEPENDS soca_3dvar.x )
+		
 ecbuild_add_test( TARGET test_soca_3dhybrid
                   TYPE SCRIPT
 		  #MPI     4
