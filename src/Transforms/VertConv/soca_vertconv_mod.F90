@@ -9,6 +9,8 @@ module soca_vertconv_mod
 
   use kinds
   use soca_fields
+  use tools_func
+  use type_mpl
 
   implicit none
 
@@ -80,12 +82,12 @@ contains
     type(soca_field),   intent(inout) :: convdx
 
     real(kind=kind_real), allocatable :: z(:), zp(:), lzd(:)
-    real(kind=kind_real) :: lz2, dist2, coef, lz
+    real(kind=kind_real) :: dist2, coef, lz
     integer :: nl, j, k, id, jd
-
+    type(mpl_type) :: mpl
+    
     lz = self%lz
     nl = size(self%bkg%layer_depth,3)
-    lz2 = lz**2
 
     allocate(z(nl), zp(nl), lzd(nl))    
     do id = self%isc, self%iec
@@ -93,13 +95,13 @@ contains
           if (self%bkg%geom%ocean%mask2d(id,jd).eq.1) then
              z(:) = self%bkg%layer_depth(id,jd,:)
              zp = z
-             lzd = (self%bkg%layer_depth(id,jd,:))**2
+             lzd = abs(self%bkg%layer_depth(id,jd,:))
              do j = 1, nl
                 convdx%tocn(id,jd,j) = 0.0d0
                 convdx%socn(id,jd,j) = 0.0d0             
                 do k = 1,nl
-                   dist2 = (z(j)-zp(k))**2
-                   coef = exp(-dist2/lzd(k))
+                   dist2 = abs(z(j)-zp(k))
+                   coef = gc99(mpl, dist2/lzd(k))
                    convdx%tocn(id,jd,j) = convdx%tocn(id,jd,j) &
                         &+ dx%tocn(id,jd,k)*coef
                    convdx%socn(id,jd,j) = convdx%socn(id,jd,j) &
@@ -125,12 +127,12 @@ contains
     type(soca_field),    intent(in) :: convdx ! IN
 
     real(kind=kind_real), allocatable :: z(:), zp(:), lzd(:)
-    real(kind=kind_real) :: lz2, dist2, coef, lz
+    real(kind=kind_real) :: dist2, coef, lz
     integer :: nl, j, k, id, jd
+    type(mpl_type) :: mpl
 
     lz = self%lz
     nl = size(self%bkg%layer_depth,3)
-    lz2 = lz**2
 
     allocate(z(nl), zp(nl), lzd(nl))
     do id = self%isc, self%iec
@@ -140,11 +142,11 @@ contains
           if (self%bkg%geom%ocean%mask2d(id,jd).eq.1) then
              dx%tocn(id,jd,:) = 0.0d0
              dx%socn(id,jd,:) = 0.0d0
-             lzd = (self%bkg%layer_depth(id,jd,:))**2             
+             lzd = abs(self%bkg%layer_depth(id,jd,:))
              do j = nl, 1, -1
                 do k = nl, 1, -1
-                   dist2 = (z(j)-zp(k))**2
-                   coef = exp(-dist2/lzd(k))
+                   dist2 = abs(z(j)-zp(k))
+                   coef = gc99(mpl, dist2/lzd(k))
                    dx%tocn(id,jd,k) = dx%tocn(id,jd,k) + coef*convdx%tocn(id,jd,j)
                    dx%socn(id,jd,k) = dx%socn(id,jd,k) + coef*convdx%socn(id,jd,j)
                 end do

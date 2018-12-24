@@ -66,16 +66,30 @@ Covariance:
    dtdzmin: 1.0e-6 
    inputVariables:
      variables:
+     - cicen
+     - hicen
+     - hsnon
+     - tsfcn
+     - qsnon
+     - sicnk
+     - qicnk
      - socn
      - tocn
      - ssh
-     - hocn
+     - hocn  
    outputVariables:
      variables:
+     - cicen
+     - hicen
+     - hsnon
+     - tsfcn
+     - qsnon
+     - sicnk
+     - qicnk
      - socn
      - tocn
      - ssh
-     - hocn
+     - hocn  
  - varchange: BkgErrSOCA
    read_from_file: 3
    basename: ./
@@ -89,38 +103,85 @@ Covariance:
    ssh_max: 0.5
    variables:  
      variables:
+     - cicen
+     - hicen
+     - hsnon
+     - tsfcn
+     - qsnon
+     - sicnk
+     - qicnk
      - socn
      - tocn
      - ssh
-     - hocn 
+     - hocn  
    inputVariables:
      variables:
+     - cicen
+     - hicen
+     - hsnon
+     - tsfcn
+     - qsnon
+     - sicnk
+     - qicnk
      - socn
      - tocn
      - ssh
      - hocn  
    outputVariables:
      variables:
+     - cicen
+     - hicen
+     - hsnon
+     - tsfcn
+     - qsnon
+     - sicnk
+     - qicnk
      - socn
      - tocn
      - ssh
-     - hocn	  
+     - hocn  
  - varchange: VertConvSOCA
    variables:  
      variables:
+     - cicen
+     - hicen
+     - hsnon
+     - tsfcn
+     - qsnon
+     - sicnk
+     - qicnk
      - socn
      - tocn
-     - hocn 
+     - ssh
+     - hocn  
    Lz: 3000.0
    Ltemp: 0.0   
    inputVariables:
      variables:
+     - cicen
+     - hicen
+     - hsnon
+     - tsfcn
+     - qsnon
+     - sicnk
+     - qicnk
      - socn
      - tocn
+     - ssh
+     - hocn  
    outputVariables:
      variables:
+     - cicen
+     - hicen
+     - hsnon
+     - tsfcn
+     - qsnon
+     - sicnk
+     - qicnk
      - socn
-     - tocn     
+     - tocn
+     - ssh
+     - hocn  
 members: 5
 forecast_length: PT1H
 output: 
