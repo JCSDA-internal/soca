@@ -360,17 +360,15 @@ contains
     real(kind=kind_real), allocatable :: tmp_incr(:,:,:,:)
     real(kind=kind_real), allocatable :: pcv(:)
 
-    integer :: offset, nn
+    integer :: nn
 
-    offset = 0
-    
     ! Apply 2D convolution
     call soca_struct2unstruct(dx(:,:), geom, tmp_incr)
 
     ! Get control variable size
     call horiz_convol%get_cv_size(nn)
     allocate(pcv(nn))
-    pcv = 0.0
+    pcv = 0.0_kind_real
     call random_number(pcv); pcv = pert_scale * (pcv - 0.5)
 
     ! Apply C^1/2
@@ -399,12 +397,12 @@ contains
     integer :: isc, iec, jsc, jec, jjj, jz, il, ib, nc0a
 
     ! Indices for compute domain (no halo)
-    call geom_get_domain_indices(geom%ocean, 'compute', isc, iec, jsc, jec)    
+    call geom_get_domain_indices(geom%ocean, 'compute', isc, iec, jsc, jec)
     
     nc0a = (iec - isc + 1) * (jec - jsc + 1 )
     allocate(dx_unstruct(nc0a,1,1,1))
     dx_unstruct = reshape( dx_struct(isc:iec, jsc:jec), (/nc0a,1,1,1/) )
-    
+
   end subroutine soca_struct2unstruct
 
   ! ------------------------------------------------------------------------------

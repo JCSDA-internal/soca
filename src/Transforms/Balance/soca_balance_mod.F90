@@ -112,9 +112,9 @@ contains
                   &traj%geom%ocean%lon(i,j),&
                   &traj%geom%ocean%lat(i,j))
              ! Set Jacobian to 0 in mixed layer
-             if (self%traj%layer_depth(i,j,k)<self%traj%mld(i,j)) then
-                jac = 0.0_kind_Real
-             end if             
+             !if (self%traj%layer_depth(i,j,k)<self%traj%mld(i,j)) then
+             !   jac = 0.0_kind_Real
+             !end if             
              self%ksshts%kssht(i,j,k) = jac(1)
              self%ksshts%ksshs(i,j,k) = jac(2)
           end do
@@ -176,12 +176,13 @@ contains
           dxm%socn(i,j,:) = dxa%socn(i,j,:) +&
                &self%kst%jacobian(i,j,:) * dxa%tocn(i,j,:)
           ! SSH
-          deta = 0.0d0
+          deta = 0.0_kind_real
           do k = 1, size(self%traj%hocn,3)
              deta = deta + self%ksshts%kssht(i,j,k) * dxa%tocn(i,j,k) +&
-                          &self%ksshts%ksshs(i,j,k) * dxa%socn(i,j,k)
+                  &self%ksshts%ksshs(i,j,k) * dxa%socn(i,j,k)
           end do
           dxm%ssh(i,j) = dxa%ssh(i,j) + deta
+
           ! Ice fraction
           dxm%cicen(i,j,:) =  dxa%cicen(i,j,:)
           do k = 1, size(self%traj%hicen,3)

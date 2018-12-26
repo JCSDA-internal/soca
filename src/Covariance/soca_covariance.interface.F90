@@ -126,28 +126,12 @@ subroutine c_soca_b_randomize(c_key_self, c_key_out) bind(c,name='soca_b_randomi
 
   type(soca_cov),   pointer :: self
   type(soca_field), pointer :: xout
-  type(soca_field)          :: xtmp  
 
   call soca_cov_registry%get(c_key_self, self)
   call soca_field_registry%get(c_key_out, xout)
 
-  !call random(xout)                !< xtmp = random
-
   ! Randomize increment
-  call create(xtmp,xout)
-  call random(xtmp)                !< xtmp = random
-
-  ! Re-scale increment
-  xtmp%tocn = self%pert_scale%T*xtmp%tocn
-  xtmp%socn = self%pert_scale%S*xtmp%socn
-  xtmp%ssh = self%pert_scale%SSH*xtmp%ssh
-  xtmp%cicen = self%pert_scale%AICE*xtmp%cicen  
-  xtmp%hicen = self%pert_scale%AICE*xtmp%hicen
-  
-  ! Apply sqrt convolution to increment
-  call soca_cov_sqrt_C_mult(self, xtmp) !< xtmp = C.xtmp
-  call copy(xout,xtmp)             !< xout = xtmp
-  call delete(xtmp)
+  call soca_cov_sqrt_C_mult(self, xout) !< xout = C^1/2.xout
 
 end subroutine c_soca_b_randomize
 

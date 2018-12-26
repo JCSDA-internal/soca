@@ -131,7 +131,7 @@ RESTART_CONTROL = 2
 ! === module MOM_tracer_flow_control ===
 USE_IDEAL_AGE_TRACER = True     !   [Boolean] default = False
                                 ! If true, use the ideal_age_example tracer package.
-USE_OCMIP2_CFC = True           !   [Boolean] default = False
+USE_OCMIP2_CFC = False !True           !   [Boolean] default = False
                                 ! If true, use the MOM_OCMIP2_CFC tracer package.
 
 ! === module ideal_age_example ===

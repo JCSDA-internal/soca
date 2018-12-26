@@ -24,6 +24,7 @@ module soca_bkgerr_mod
      type(soca_field),         pointer :: bkg
      type(soca_field)                  :: std_bkgerr
      type(soca_bkgerror_bounds)        :: bounds
+     real(kind=kind_real)              :: delta_z     
      integer                           :: isc, iec, jsc, jec
   end type soca_bkgerr_config
 
@@ -72,7 +73,8 @@ contains
        read_from_file = .true.
        call read_file(self%std_bkgerr, c_conf, vdate)
     else
-       read_from_file = .false.       
+       read_from_file = .false.
+       self%delta_z   = config_get_real(c_conf,"delta_z")
     end if       
 
     ! Get bounds from configuration
@@ -175,7 +177,6 @@ contains
 
     real(kind=kind_real), allocatable :: temp(:), vmask(:)
     real(kind=kind_real) :: jac(2)
-    real(kind=kind_real) :: delta_z = 10.0_kind_real ![m] TODO: Move to config
     integer :: is, ie, js, je, i, j, k
 
     ! Set all fields to zero
@@ -210,7 +211,7 @@ contains
              end where             
 
              ! Scale background error
-             self%std_bkgerr%tocn(i,j,:) = abs(delta_z * &
+             self%std_bkgerr%tocn(i,j,:) = abs(self%delta_z * &
                   &(self%std_bkgerr%tocn(i,j,:) * vmask))
              
           end if

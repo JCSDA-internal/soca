@@ -297,7 +297,7 @@ contains
 
     call random_number(self%cicen); self%cicen=self%cicen-0.5_kind_real
     call random_number(self%hicen); self%hicen=self%hicen-0.5_kind_real
-
+    
     call random_number(self%tocn); self%tocn=self%tocn-0.5_kind_real
     call random_number(self%socn); self%socn=self%socn-0.5_kind_real
     call random_number(self%ssh); self%ssh=(self%ssh-0.5_kind_real)
@@ -739,6 +739,7 @@ contains
     call check(fld)
 
     !call geom_infotofile(fld%geom)
+    call clean_ocean(fld)
     call soca_write_restart(fld, c_conf, vdate)
 
 !!$    filename = genfilename(c_conf,max_string_length,vdate)
@@ -1270,16 +1271,30 @@ contains
     
     ! Indices for compute domain (no halo)
     call geom_get_domain_indices(fld%geom%ocean, "compute", is, ie, js, je)
+
+    ! Apply temp/salt bounds: Yuk but needed until constraint in ana 
+    where (fld%tocn<-2.0_kind_real)
+       fld%tocn = -2.0_kind_real
+    end where
+    where (fld%tocn>40.0_kind_real)
+       fld%tocn = 40.0_kind_real
+    end where
+    where (fld%socn<1.0_kind_real)
+       fld%socn = 1.0_kind_real
+    end where
+    where (fld%socn>41.0_kind_real)
+       fld%socn = 41.0_kind_real
+    end where        
     
     ! Ocean levels 
-    nzo = fld%geom%ocean%nzo
-
-    do ii = is, ie
-       do jj = js, je
-          call soca_clean_vertical(fld%hocn(ii,jj,:), fld%tocn(ii,jj,:))
-          call soca_clean_vertical(fld%hocn(ii,jj,:), fld%socn(ii,jj,:))
-       end do
-    end do
+!!$    nzo = fld%geom%ocean%nzo
+!!$
+!!$    do ii = is, ie
+!!$       do jj = js, je
+!!$          call soca_clean_vertical(fld%hocn(ii,jj,:), fld%tocn(ii,jj,:))
+!!$          call soca_clean_vertical(fld%hocn(ii,jj,:), fld%socn(ii,jj,:))
+!!$       end do
+!!$    end do
 
   end subroutine clean_ocean
 
