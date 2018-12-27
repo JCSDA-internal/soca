@@ -84,8 +84,8 @@ class OceanState:
         incr = self.temp[:,j,:]-other.temp[:,j,:]
         #vmin=np.min(incr)
         #vmax=np.max(incr)
-        vmin=-5 #np.min(incr)
-        vmax=5 #abs(np.min(incr)) #np.max(incr)                
+        vmin=-10 #np.min(incr)
+        vmax=10 #abs(np.min(incr)) #np.max(incr)                
         clevs = np.linspace(vmin, vmax, 41)
         plt.contourf(x,z,incr, clevs, extend='both',cmap=cm.bwr)
         #plt.pcolor(x,z,incr,vmin=vmin,vmax=vmax,cmap=cm.bwr)

@@ -1273,8 +1273,8 @@ contains
     call geom_get_domain_indices(fld%geom%ocean, "compute", is, ie, js, je)
 
     ! Apply temp/salt bounds: Yuk but needed until constraint in ana 
-    where (fld%tocn<-2.0_kind_real)
-       fld%tocn = -2.0_kind_real
+    where (fld%tocn<-3.0_kind_real) ! TODO: Min temp=Melt point
+       fld%tocn = -3.0_kind_real
     end where
     where (fld%tocn>40.0_kind_real)
        fld%tocn = 40.0_kind_real
@@ -1286,7 +1286,7 @@ contains
        fld%socn = 41.0_kind_real
     end where        
     
-    ! Ocean levels 
+    ! Ocean levels TODO: Pass as option
 !!$    nzo = fld%geom%ocean%nzo
 !!$
 !!$    do ii = is, ie
