@@ -21,9 +21,10 @@ subroutine c_soca_setup(c_confspec, c_key_geom, c_key_confdata) bind (c,name='so
   use fms_io_mod,      only: fms_io_init
 
   implicit none
-  type(c_ptr), intent(in)    :: c_confspec         !< pointer to object of class Config
-  integer(c_int), intent(in) :: c_key_geom         !< Geometry
-  integer(c_int), intent(inout) :: c_key_confdata  !< Key to configuration data
+  
+  type(c_ptr),       intent(in) :: c_confspec     !< pointer to object of class Config
+  integer(c_int),    intent(in) :: c_key_geom     !< Geometry
+  integer(c_int), intent(inout) :: c_key_confdata !< Key to configuration data
 
   type(soca_model), pointer :: model
   type(soca_geom), pointer :: geom

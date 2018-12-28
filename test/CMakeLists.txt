@@ -133,12 +133,12 @@ ecbuild_add_test( TARGET test_soca_socaerror_init
                   ARGS "mpirun -np 2 ${CMAKE_BINARY_DIR}/bin/soca_staticbinit.x testinput/static_SocaError_init.yml"
                   DEPENDS soca_staticbinit.x )
 
-#ecbuild_add_test( TARGET test_soca_socaerror_serial_init
-#                  TYPE SCRIPT
-#		  #MPI     4
-#		  COMMAND "./run.sh"
-#                  ARGS "${CMAKE_BINARY_DIR}/bin/soca_staticbinit.x testinput/static_SocaError_init.yml"
-#                  DEPENDS soca_staticbinit.x )
+ecbuild_add_test( TARGET test_soca_socaerror_serial_init
+                  TYPE SCRIPT
+		  #MPI     4
+		  COMMAND "./run.sh"
+                  ARGS "${CMAKE_BINARY_DIR}/bin/soca_staticbinit.x testinput/static_SocaError_init.yml"
+                  DEPENDS soca_staticbinit.x )
 
 
 # Initialize static error covariance model for the generation of perturbation

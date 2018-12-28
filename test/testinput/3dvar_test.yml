@@ -227,15 +227,15 @@ cost_function:
 #        threshold: 3
 #      - Filter: GOMsaver
 #        filename: ./Data/testgeovl.nc
-    - ObsType: InsituTemperature
-      ObsData:
-        ObsDataOut:
-          obsfile: ./Data/profile_2018-04-15-out.nc
-        ObsDataIn:
-          obsfile: ./Data/profile_2018-04-15.nc
+#    - ObsType: InsituTemperature
+#      ObsData:
+#        ObsDataOut:
+#          obsfile: ./Data/profile_2018-04-15-out.nc
+#        ObsDataIn:
+#          obsfile: ./Data/profile_2018-04-15.nc
 #          #obsfile: /home/gvernier/Data/FNMOC/2018041500.profile.nc
-      Covariance:
-        covariance: diagonal
+#      Covariance:
+#        covariance: diagonal
 #      ObsFilters:
 #      - Filter: Background Check
 #        variables:
