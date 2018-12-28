@@ -26,7 +26,7 @@ initial:
  date: 2018-04-15T00:00:00Z
 Covariance: 
  covariance: SocaError
- pert_T: 1.0
+ pert_T: 0.1
  pert_S: 0.0
  pert_SSH: 0.0
  default_seed: 1
@@ -71,7 +71,8 @@ Covariance:
    s_max: 0.0
    ssh_min: 0.0
    ssh_max: 0.0
-   delta_z: 10.0   
+   delta_z: 10.0
+   efold_z: 1000.0   
    variables:  
      variables:
      - cicen
@@ -184,7 +185,7 @@ Covariance:
      - ssh
      - hocn  
 members: 1
-forecast_length: P1D #PT1H
+forecast_length: P5D #PT1H
 output: 
  frequency: PT6H
  datadir: Data

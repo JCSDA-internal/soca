@@ -25,6 +25,7 @@ module soca_bkgerr_mod
      type(soca_field)                  :: std_bkgerr
      type(soca_bkgerror_bounds)        :: bounds
      real(kind=kind_real)              :: delta_z     
+     real(kind=kind_real)              :: efold_z
      integer                           :: isc, iec, jsc, jec
   end type soca_bkgerr_config
 
@@ -60,7 +61,7 @@ contains
     integer :: isc, iec, jsc, jec, i, j, k, nl
     real(kind=kind_real), allocatable :: dvdz(:), v(:), h(:)
     real(kind=kind_real) :: dt, ds, t0, s0, p, lon, lat
-    real(kind=kind_real) :: detas
+    real(kind=kind_real) :: detas, efold
     type(datetime) :: vdate
     character(len=800) :: fname = 'soca_bkgerror.nc'
     logical :: read_from_file = .false.
@@ -75,7 +76,10 @@ contains
     else
        read_from_file = .false.
        self%delta_z   = config_get_real(c_conf,"delta_z")
-    end if       
+    end if
+
+    ! Vertical e-folding scale
+    self%efold_z   = config_get_real(c_conf,"efold_z")
 
     ! Get bounds from configuration
     self%bounds%t_min   = config_get_real(c_conf,"t_min")
@@ -103,12 +107,13 @@ contains
                &self%bounds%ssh_min,&
                &self%bounds%ssh_max)
           do k = 1, nl
+             efold = exp(-bkg%layer_depth(i,j,k)/self%efold_z)
              self%std_bkgerr%tocn(i,j,k) = adjusted_std(abs(self%std_bkgerr%tocn(i,j,k)),&
                &self%bounds%t_min,&
-               &self%bounds%t_max)
+               &self%bounds%t_max) * efold
              self%std_bkgerr%socn(i,j,k) = adjusted_std(abs(self%std_bkgerr%socn(i,j,k)),&
                &self%bounds%s_min,&
-               &self%bounds%s_max)
+               &self%bounds%s_max) * efold
           end do
 
           ! Sea-ice
@@ -219,8 +224,8 @@ contains
     end do
 
     ! Make up background error for salt and ssh
-    self%std_bkgerr%socn = 0.1_kind_real * self%std_bkgerr%tocn
-    self%std_bkgerr%ssh = 0.1_kind_real    
+    !self%std_bkgerr%socn = 0.1_kind_real * self%std_bkgerr%tocn
+    !self%std_bkgerr%ssh = 0.1_kind_real    
     
     ! Release memory
     deallocate(temp, vmask)

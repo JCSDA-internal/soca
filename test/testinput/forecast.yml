@@ -17,7 +17,7 @@ initial:
   ocn_filename: MOM.res.nc
   ice_filename: ice_model.res.nc
 
-forecast_length: "P1D"
+forecast_length: P5D
 
 output:
   frequency: "PT6H"

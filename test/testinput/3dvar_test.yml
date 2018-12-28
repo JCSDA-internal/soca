@@ -98,7 +98,8 @@ cost_function:
         s_max: 0.0 #0.2
         ssh_min: 0.01 #0.05
         ssh_max: 0.0 #0.5
-        delta_z: 10.0        
+        delta_z: 10.0
+        efold_z: 1500.0	
         variables:                                
           variables:
           - cicen
