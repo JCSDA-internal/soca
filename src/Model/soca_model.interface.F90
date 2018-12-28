@@ -6,7 +6,7 @@
 !
 !> Setup the model
 
-subroutine c_soca_setup(c_confspec, c_key_geom, c_key_confdata) bind (c,name='soca_setup_f90')
+subroutine c_soca_setup(c_confspec, c_key_geom, c_key_model) bind (c,name='soca_setup_f90')
 
   use soca_model_mod
   use soca_geom_mod
@@ -24,10 +24,10 @@ subroutine c_soca_setup(c_confspec, c_key_geom, c_key_confdata) bind (c,name='so
   
   type(c_ptr),       intent(in) :: c_confspec     !< pointer to object of class Config
   integer(c_int),    intent(in) :: c_key_geom     !< Geometry
-  integer(c_int), intent(inout) :: c_key_confdata !< Key to configuration data
+  integer(c_int), intent(inout) :: c_key_model !< Key to configuration data
 
   type(soca_model), pointer :: model
-  type(soca_geom), pointer :: geom
+  type(soca_geom),  pointer :: geom
 
   type(duration) :: dtstep
   character(len=20) :: ststep
@@ -37,8 +37,8 @@ subroutine c_soca_setup(c_confspec, c_key_geom, c_key_confdata) bind (c,name='so
 
   call soca_geom_registry%get(c_key_geom, geom)
   call soca_model_registry%init()
-  call soca_model_registry%add(c_key_confdata)
-  call soca_model_registry%get(c_key_confdata, model)
+  call soca_model_registry%add(c_key_model)
+  call soca_model_registry%get(c_key_model, model)
 
   model%nx  = geom%ocean%nx
   model%ny  = geom%ocean%ny
@@ -51,6 +51,8 @@ subroutine c_soca_setup(c_confspec, c_key_geom, c_key_confdata) bind (c,name='so
   write(record,*)'c_soca_setup: dt0=',model%dt0
   call fckit_log%info(record)
 
+  call soca_create(model, geom, c_confspec)
+  
   return
 end subroutine c_soca_setup
 

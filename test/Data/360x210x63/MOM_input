@@ -75,7 +75,7 @@ MIXEDLAYER_RESTRAT = True       !   [Boolean] default = False
                                 ! If true, a density-gradient dependent re-stratifying
                                 ! flow is imposed in the mixed layer.
                                 ! This is only used if BULKMIXEDLAYER is true.
-DT = 3600.0                     !   [s]
+DT = 3600                       !   [s]
                                 ! The (baroclinic) dynamics time step.  The time-step that
                                 ! is actually used will be an integer fraction of the
                                 ! forcing time-step (DT_FORCING in ocean-only mode or the
@@ -631,38 +631,75 @@ OCEAN_SURFACE_STAGGER = "B"     ! default = "B"
                                 ! 'A', 'B', or 'C'.
 
 ! === module MOM_surface_forcing ===
-MAX_P_SURF = 7.0E+04            !   [Pa] default = -1.0
-                                ! The maximum surface pressure that can be exerted by the
-                                ! atmosphere and floating sea-ice or ice shelves. This is
-                                ! needed because the FMS coupling structure does not
-                                ! limit the water that can be frozen out of the ocean and
-                                ! the ice-ocean heat fluxes are treated explicitly.  No
-                                ! limit is applied if a negative value is used.
-ADJUST_NET_FRESH_WATER_TO_ZERO = True !   [Boolean] default = False
-                                ! If true, adjusts the net fresh-water forcing seen
-                                ! by the ocean (including restoring) to zero.
-USE_LIMITED_PATM_SSH = False    !   [Boolean] default = True
-                                ! If true, return the the sea surface height with the
-                                ! correction for the atmospheric (and sea-ice) pressure
-                                ! limited by max_p_surf instead of the full atmospheric
-                                ! pressure.
-WIND_STAGGER = "B"              ! default = "C"
-                                ! A case-insensitive character string to indicate the
-                                ! staggering of the input wind stress field.  Valid
-                                ! values are 'A', 'B', or 'C'.
+BUOY_CONFIG = "file"            !
+                                ! The character string that indicates how buoyancy forcing
+                                ! is specified. Valid options include (file), (zero),
+                                ! (linear), (USER), and (NONE).
+ARCHAIC_OMIP_FORCING_FILE = False !   [Boolean] default = True
+                                ! If true, use the forcing variable decomposition from
+                                ! the old German OMIP prescription that predated CORE. If
+                                ! false, use the variable groupings available from MOM
+                                ! output diagnostics of forcing variables.
+LONGWAVE_FILE = "ocean_forcing_daily.nc" !
+                                ! The file with the longwave heat flux, in the variable
+                                ! given by LONGWAVE_FORCING_VAR.
+SHORTWAVE_FILE = "ocean_forcing_daily.nc" !
+                                ! The file with the shortwave heat flux, in the variable
+                                ! given by SHORTWAVE_FORCING_VAR.
+EVAPORATION_FILE = "ocean_forcing_daily.nc" !
+                                ! The file with the evaporative moisture flux, in the
+                                ! variable given by EVAP_FORCING_VAR.
+LATENTHEAT_FILE = "ocean_forcing_daily.nc" !
+                                ! The file with the latent heat flux, in the variable
+                                ! given by LATENT_FORCING_VAR.
+SENSIBLEHEAT_FILE = "ocean_forcing_daily.nc" !
+                                ! The file with the sensible heat flux, in the variable
+                                ! given by SENSIBLE_FORCING_VAR.
+RAIN_FILE = "ocean_precip_monthly.nc" !
+                                ! The file with the liquid precipitation flux, in the
+                                ! variable given by RAIN_FORCING_VAR.
+SNOW_FILE = "ocean_precip_monthly.nc" !
+                                ! The file with the frozen precipitation flux, in the
+                                ! variable given by SNOW_FORCING_VAR.
+RUNOFF_FILE = "ocean_precip_monthly.nc" !
+                                ! The file with the fresh and frozen runoff/calving
+                                ! fluxes, in variables given by LIQ_RUNOFF_FORCING_VAR
+                                ! and FROZ_RUNOFF_FORCING_VAR.
+SSTRESTORE_FILE = "ocean_forcing_daily.nc" !
+                                ! The file with the SST toward which to restore in the
+                                ! variable given by SST_RESTORE_VAR.
+SALINITYRESTORE_FILE = "ocean_forcing_daily.nc" !
+                                ! The file with the surface salinity toward which to
+                                ! restore in the variable given by SSS_RESTORE_VAR.
+WIND_CONFIG = "file"            !
+                                ! The character string that indicates how wind forcing
+                                ! is specified. Valid options include (file), (2gyre),
+                                ! (1gyre), (gyres), (zero), and (USER).
+WIND_FILE = "ocean_forcing_daily.nc" !
+                                ! The file in which the wind stresses are found in
+                                ! variables STRESS_X and STRESS_Y.
+WINDSTRESS_X_VAR = "taux"       ! default = "STRESS_X"
+                                ! The name of the x-wind stress variable in WIND_FILE.
+WINDSTRESS_Y_VAR = "tauy"       ! default = "STRESS_Y"
+                                ! The name of the y-wind stress variable in WIND_FILE.
+WINDSTRESS_STAGGER = "C"        ! default = "A"
+                                ! A character indicating how the wind stress components
+                                ! are staggered in WIND_FILE.  This may be A or C for now.
+RESTOREBUOY = True              !   [Boolean] default = False
+                                ! If true, the buoyancy fluxes drive the model back
+                                ! toward some specified surface state with a rate
+                                ! given by FLUXCONST.
 FLUXCONST = 0.5                 !   [m day-1]
                                 ! The constant that relates the restoring surface fluxes
                                 ! to the relative surface anomalies (akin to a piston
                                 ! velocity).  Note the non-MKS units.
-CD_TIDES = 0.0025               !   [nondim] default = 1.0E-04
-                                ! The drag coefficient that applies to the tides.
 READ_GUST_2D = True             !   [Boolean] default = False
                                 ! If true, use a 2-dimensional gustiness supplied from
                                 ! an input file
 GUST_2D_FILE = "gustiness_qscat.nc" !
                                 ! The file in which the wind gustiness is found in
                                 ! variable gustiness.
-
+				
 ! === module MOM_sum_output ===
 MAXTRUNC = 5000                 !   [truncations save_interval-1] default = 0
                                 ! The run will be stopped, and the day set to a very

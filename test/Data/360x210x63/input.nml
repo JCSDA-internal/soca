@@ -17,6 +17,15 @@
  &diag_manager_nml
  /
 
+ &ocean_solo_nml
+            months = 0
+            days   = 1
+            date_init = 2018,4,15,0,0,0,
+            hours = 0
+            minutes = 0
+            seconds = 0
+            calendar = 'NOLEAP' /
+
  &coupler_nml
             restart_interval = 0,0,0,3,0,0, 
             months = 0,
