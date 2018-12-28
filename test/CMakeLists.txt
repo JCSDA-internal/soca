@@ -42,6 +42,21 @@ list( APPEND soca_model_restarts
   Data/360x210x63/INPUT/topog.nc
 )
 
+
+OM3_zgrid.nc  gustiness_qscat.nc          ocean_forcing_daily.nc  ocean_precip_monthly.nc  sgs_h2.nc                              topog.nc
+
+list( APPEND soca_model_forcing
+  Data/360x210x63/INPUT/geothermal_heating_cm2g.nc
+  Data/360x210x63/INPUT/seawifs_1998-2006_GOLD_smoothed_2X.nc
+  Data/360x210x63/INPUT/tideamp.nc
+  Data/360x210x63/INPUT/topog.nc
+  Data/360x210x63/INPUT/OM3_zgrid.nc
+  Data/360x210x63/INPUT/gustiness_qscat.nc
+  Data/360x210x63/INPUT/ocean_forcing_daily.nc
+  Data/360x210x63/INPUT/ocean_precip_monthly.nc
+  Data/360x210x63/INPUT/sgs_h2.nc
+)
+
 list( APPEND soca_obs
   Data/Obs/Jason-2-2018-04-15-soca.nc
 )
@@ -68,17 +83,27 @@ endforeach(FILENAME)
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/INPUT)
 foreach(FILENAME ${soca_model_restarts})
      get_filename_component(filename ${FILENAME} NAME )
-     execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
+     execute_process( COMMAND ${CMAKE_COMMAND} copy
            ${CMAKE_CURRENT_SOURCE_DIR}/${FILENAME}
            ${CMAKE_CURRENT_BINARY_DIR}/INPUT/${filename} )
 endforeach(FILENAME)
 
-#Link to MOM's resource files
+# MOM's resource files
 foreach(FILENAME ${soca_model_param})
   get_filename_component(filename ${FILENAME} NAME )
   message("filename="${filename})
      message("FILENAME="${FILENAME})     
-     execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
+     execute_process( COMMAND ${CMAKE_COMMAND} copy
+           ${CMAKE_CURRENT_SOURCE_DIR}/${FILENAME}
+           ${CMAKE_CURRENT_BINARY_DIR}/${filename} )
+endforeach(FILENAME)
+
+# MOM's resource files
+foreach(FILENAME ${soca_model_forcing})
+  get_filename_component(filename ${FILENAME} NAME )
+  message("filename="${filename})
+     message("FILENAME="${FILENAME})     
+     execute_process( COMMAND ${CMAKE_COMMAND} copy
            ${CMAKE_CURRENT_SOURCE_DIR}/${FILENAME}
            ${CMAKE_CURRENT_BINARY_DIR}/${filename} )
 endforeach(FILENAME)
