@@ -29,6 +29,9 @@ list( APPEND soca_model_param
   Data/360x210x63/input.nml
   Data/360x210x63/MOM_input
   Data/360x210x63/MOM_override
+  Data/360x210x63/data_table
+  Data/360x210x63/diag_table
+  Data/360x210x63/field_table
   Data/360x210x63/Vertical_coordinate.nc
   Data/360x210x63/ice.bkgerror.nc
   Data/360x210x63/ocn.bkgerror.nc
@@ -42,8 +45,6 @@ list( APPEND soca_model_restarts
   Data/360x210x63/INPUT/topog.nc
 )
 
-
-OM3_zgrid.nc  gustiness_qscat.nc          ocean_forcing_daily.nc  ocean_precip_monthly.nc  sgs_h2.nc                              topog.nc
 
 list( APPEND soca_model_forcing
   Data/360x210x63/INPUT/geothermal_heating_cm2g.nc
@@ -83,7 +84,7 @@ endforeach(FILENAME)
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/INPUT)
 foreach(FILENAME ${soca_model_restarts})
      get_filename_component(filename ${FILENAME} NAME )
-     execute_process( COMMAND ${CMAKE_COMMAND} copy
+     execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
            ${CMAKE_CURRENT_SOURCE_DIR}/${FILENAME}
            ${CMAKE_CURRENT_BINARY_DIR}/INPUT/${filename} )
 endforeach(FILENAME)
@@ -93,19 +94,19 @@ foreach(FILENAME ${soca_model_param})
   get_filename_component(filename ${FILENAME} NAME )
   message("filename="${filename})
      message("FILENAME="${FILENAME})     
-     execute_process( COMMAND ${CMAKE_COMMAND} copy
+     execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
            ${CMAKE_CURRENT_SOURCE_DIR}/${FILENAME}
            ${CMAKE_CURRENT_BINARY_DIR}/${filename} )
 endforeach(FILENAME)
 
-# MOM's resource files
+# MOM's forcing files
 foreach(FILENAME ${soca_model_forcing})
   get_filename_component(filename ${FILENAME} NAME )
   message("filename="${filename})
      message("FILENAME="${FILENAME})     
-     execute_process( COMMAND ${CMAKE_COMMAND} copy
+     execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
            ${CMAKE_CURRENT_SOURCE_DIR}/${FILENAME}
-           ${CMAKE_CURRENT_BINARY_DIR}/${filename} )
+           ${CMAKE_CURRENT_BINARY_DIR}/INPUT/${filename} )
 endforeach(FILENAME)
 
 ecbuild_add_resources( TARGET   soca_test_scripts
