@@ -74,6 +74,7 @@ subroutine c_soca_delete(c_key_conf) bind (c,name='soca_delete_f90')
   call soca_model_registry%get(c_key_conf, model)  
   call soca_model_registry%remove(c_key_conf)
 
+  
   ! ------------------------------------------------------------------------------
   return
 end subroutine c_soca_delete
@@ -123,6 +124,9 @@ subroutine c_soca_propagate(c_key_model, c_key_state) bind(c,name='soca_propagat
   call soca_model_registry%get(c_key_model, model)
   call soca_field_registry%get(c_key_state,flds)
 
+  print *,"Advancing MOM6 1 time step"
+  call soca_propagate(model, flds)
+  
   ! ------------------------------------------------------------------------------
   return
 end subroutine c_soca_propagate

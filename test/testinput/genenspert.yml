@@ -17,7 +17,7 @@ variables:
   - hocn  
 model: 
  name: SOCA
- tstep: PT1H
+ tstep: PT6H
 initial:
  read_from_file: 1
  basename: ./INPUT/
@@ -26,7 +26,7 @@ initial:
  date: 2018-04-15T00:00:00Z
 Covariance: 
  covariance: SocaError
- pert_T: 5.0
+ pert_T: 1.0
  pert_S: 0.0
  pert_SSH: 0.0
  default_seed: 1
@@ -60,10 +60,31 @@ Covariance:
  diag_interp: bilin
  date: 2018-04-15T00:00:00Z
  variable_changes:
- - varchange: BalanceSOCA
-   dsdtmax: 1.0
-   dsdzmin: 3.0e-6
-   dtdzmin: 1.0e-6 
+ - varchange: BkgErrSOCA
+   #read_from_file: 3
+   #basename: ./
+   #ocn_filename: ocn.bkgerror.nc
+   #ice_filename: ice.bkgerror.nc   
+   t_min: 0.0
+   t_max: 5.0
+   s_min: 0.0
+   s_max: 0.0
+   ssh_min: 0.0
+   ssh_max: 0.0
+   delta_z: 10.0   
+   variables:  
+     variables:
+     - cicen
+     - hicen
+     - hsnon
+     - tsfcn
+     - qsnon
+     - sicnk
+     - qicnk
+     - socn
+     - tocn
+     - ssh
+     - hocn  
    inputVariables:
      variables:
      - cicen
@@ -89,31 +110,11 @@ Covariance:
      - socn
      - tocn
      - ssh
-     - hocn  
- - varchange: BkgErrSOCA
-   read_from_file: 3
-   basename: ./
-   ocn_filename: ocn.bkgerror.nc
-   ice_filename: ice.bkgerror.nc   
-   t_min: 0.01
-   t_max: 5.0
-   s_min: 0.01
-   s_max: 1.0
-   ssh_min: 0.01
-   ssh_max: 0.5
-   variables:  
-     variables:
-     - cicen
-     - hicen
-     - hsnon
-     - tsfcn
-     - qsnon
-     - sicnk
-     - qicnk
-     - socn
-     - tocn
-     - ssh
-     - hocn  
+     - hocn 
+ - varchange: BalanceSOCA
+   dsdtmax: 1.0
+   dsdzmin: 3.0e-6
+   dtdzmin: 1.0e-6 
    inputVariables:
      variables:
      - cicen
@@ -182,11 +183,10 @@ Covariance:
      - tocn
      - ssh
      - hocn  
-members: 5
-forecast_length: PT1H
+members: 1
+forecast_length: P1D #PT1H
 output: 
- first: PT1H #P1D
- frequency: PT1H
+ frequency: PT6H
  datadir: Data
  exp: test
  type: ens

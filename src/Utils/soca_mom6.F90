@@ -30,11 +30,15 @@ module soca_mom6
   use MOM_grid,                  only : ocean_grid_type
   use MOM_verticalGrid,          only : verticalGrid_type
   use MOM, only : MOM_control_struct
-
+  use MOM_forcing_type,    only : forcing, mech_forcing
+  use MOM_variables,       only : surface
+  use MOM_time_manager,    only : time_type
+  use MOM,                 only : MOM_control_struct
+  
   implicit none
   private
 
-  public :: soca_geom_init, soca_geom_end, soca_ice_column
+  public :: soca_geom_init, soca_geom_end, soca_ice_column, soca_mom6_init, soca_mom6_config
 
   type soca_ice_column
      integer                        :: ncat ! Number of ice categories
@@ -42,6 +46,16 @@ module soca_mom6
      integer                        :: nzs  ! Number of snow levels
   end type soca_ice_column
 
+  type soca_mom6_config
+    type(mech_forcing) :: forces     ! Driving mechanical surface forces
+    type(forcing)      :: fluxes     ! Pointers to the thermodynamic forcing fields
+                                     ! at the ocean surface.
+    type(surface)      :: sfc_state  ! Pointers to the ocean surface state fields.
+    type(time_type)    :: Time       ! Model's time before call to step_MOM.
+    real               :: dt_forcing ! Coupling time step in seconds.
+    type(MOM_control_struct), pointer :: MOM_CSp ! Tracer flow control structure.
+ end type soca_mom6_config
+  
 contains
 
   ! ------------------------------------------------------------------------------
@@ -149,7 +163,7 @@ contains
 
   ! ------------------------------------------------------------------------------
   
-  subroutine soca_mom6_init()
+  subroutine soca_mom6_init(mom6_config)
 
     use MOM_cpu_clock,       only : cpu_clock_id, cpu_clock_begin, cpu_clock_end
     use MOM_cpu_clock,       only : CLOCK_COMPONENT
@@ -334,6 +348,9 @@ contains
 
     integer :: param_int
 
+    type(soca_mom6_config), intent(out) :: mom6_config
+    !type(soca_mom6_config) :: mom6_config
+    
     call write_cputime_start_clock(write_CPU_CSp)
 
     call MOM_infra_init() ; call io_infra_init()
@@ -372,17 +389,18 @@ contains
 
     call time_interp_external_init
 
+    mom6_config%MOM_CSp => NULL()
     Time = Start_time
-    call initialize_MOM(Time, Start_time, param_file, dirs, MOM_CSp, restart_CSp, &
+    call initialize_MOM(Time, Start_time, param_file, dirs, mom6_config%MOM_CSp, restart_CSp, &
          offline_tracer_mode=offline_tracer_mode, diag_ptr=diag, &
          tracer_flow_CSp=tracer_flow_CSp)
 
-    call get_MOM_state_elements(MOM_CSp, G=grid, GV=GV, C_p=fluxes%C_p)
+    call get_MOM_state_elements(mom6_config%MOM_CSp, G=grid, GV=GV, C_p=mom6_config%fluxes%C_p)
     Master_Time = Time
 
     call callTree_waypoint("done initialize_MOM")
 
-    call extract_surface_state(MOM_CSp, sfc_state)
+    call extract_surface_state(mom6_config%MOM_CSp, mom6_config%sfc_state)
 
     call surface_forcing_init(Time, grid, param_file, diag, &
          surface_forcing_CSp, tracer_flow_CSp)
@@ -395,14 +413,25 @@ contains
     call log_version(param_file, mod_name, version, "")
     call get_param(param_file, mod_name, "DT", param_int, fail_if_missing=.true.)
     dt = real(param_int)
-    dt_forcing = dt
+    mom6_config%dt_forcing = dt
     Time_step_ocean = real_to_time(real(dt_forcing, kind=8))
 
     ! Close the param_file.  No further parsing of input is possible after this.
     call close_param_file(param_file)
 
     ! Set the forcing for the next steps.
-    call set_forcing(sfc_state, forces, fluxes, Time, Time_step_ocean, grid, &
+    call set_forcing(mom6_config%sfc_state, mom6_config%forces, mom6_config%fluxes,&
+         & Time, Time_step_ocean, grid, &
          surface_forcing_CSp)
+
+    ! Set Time
+    mom6_config%Time = Master_Time
+    
   end subroutine soca_mom6_init
+
+!!$  subroutine soca_mom6_end
+!!$    !call io_infra_end ; call MOM_infra_end
+!!$    !call MOM_end(MOM_CSp)
+!!$  end subroutine soca_mom6_end
+  
 end module soca_mom6
