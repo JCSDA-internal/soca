@@ -75,9 +75,11 @@ contains
     call mpp_update_domains(flds%tocn, flds%geom%ocean%G%Domain%mpp_domain)
     call mpp_update_domains(flds%socn, flds%geom%ocean%G%Domain%mpp_domain)    
 
+    ! Update MOM's T and S to soca's
     self%mom6_config%MOM_CSp%T = real(flds%tocn, kind=8)
     self%mom6_config%MOM_CSp%S = real(flds%socn, kind=8)    
-    
+
+    ! Advance MOM 1 baroclinic time step    
     call step_MOM(self%mom6_config%forces, &
                  &self%mom6_config%fluxes, &
                  &self%mom6_config%sfc_state, &
@@ -85,12 +87,12 @@ contains
                  &real(self%mom6_config%dt_forcing, kind=8), &
                  &self%mom6_config%MOM_CSp)
 
+    ! Update soca fields
     flds%tocn = real(self%mom6_config%MOM_CSp%T, kind=kind_real)
     flds%socn = real(self%mom6_config%MOM_CSp%S, kind=kind_real)
     flds%hocn = real(self%mom6_config%MOM_CSp%h, kind=kind_real)
     flds%ssh = real(self%mom6_config%MOM_CSp%ave_ssh_ibc, kind=kind_real)
 
-    
   end subroutine soca_propagate
 
   subroutine soca_delete(self)
@@ -99,7 +101,7 @@ contains
     
     type(soca_model), intent(inout) :: self
 
-    !call soca_mom6_end(self%mom6_config)
+    call soca_mom6_end(self%mom6_config)
 
   end subroutine soca_delete
   
