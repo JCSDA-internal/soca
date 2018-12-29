@@ -30,6 +30,7 @@ module soca_model_mod
      integer :: nx                !< Zonal grid dimension
      integer :: ny                !< Meridional grid dimension
      real(kind=kind_real) :: dt0  !< dimensional time (seconds)
+     integer                :: advance_mom6 ! call mom6 step if true
      type(soca_mom6_config) :: mom6_config
   end type soca_model
 
@@ -54,7 +55,6 @@ contains
     type(soca_model), intent(inout) :: self
     type(c_ptr),         intent(in) :: c_conf
     type(soca_geom),     intent(in) :: geom
-
 
     call soca_mom6_init(self%mom6_config)
 
