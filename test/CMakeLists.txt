@@ -1,5 +1,6 @@
 list( APPEND soca_test_input
-  testinput/forecast.yml 
+  testinput/forecast.yml
+  testinput/forecast_mom6.yml
   testinput/state_test.yml
   testinput/model_test.yml
   testinput/linearmodel_test.yml
@@ -149,6 +150,14 @@ ecbuild_add_test( TARGET test_soca_forecast
 		  #MPI     4
                   COMMAND "./run.sh"
                   ARGS "mpirun -np 2 ${CMAKE_BINARY_DIR}/bin/soca_forecast.x testinput/forecast.yml"
+                  DEPENDS soca_forecast.x )
+
+# Test mom6 forecast 
+ecbuild_add_test( TARGET test_soca_forecast_mom6
+                  TYPE SCRIPT
+		  #MPI     4
+                  COMMAND "./run.sh"
+                  ARGS "mpirun -np 2 ${CMAKE_BINARY_DIR}/bin/soca_forecast.x testinput/forecast_mom6.yml"
                   DEPENDS soca_forecast.x )
 
 # Initialize static error covariance model defined in soca, used for 3DVAR
