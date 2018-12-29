@@ -23,7 +23,9 @@ LinearVariableChangeTests:
   s_min: 0.01
   s_max: 1.0
   ssh_min: 0.01
-  ssh_max: 0.5      
+  ssh_max: 0.5
+  delta_z: 10.0
+  efold_z: 1500.0  
   variables:                                
     variables:
     - cicen
