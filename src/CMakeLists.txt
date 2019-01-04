@@ -25,8 +25,9 @@ list( APPEND oops_soca_src_files
 ./Model/Model.h
 ./Model/soca_model.interface.F90
 ./Model/soca_model_mod.F90
+./Model/soca_mom6.F90
 
-#Model
+#Linear Model
 ./LinearModel/TlmId.cc
 ./LinearModel/TlmId.h
 
@@ -48,7 +49,6 @@ list( APPEND oops_soca_src_files
 ./Utils/random_vectors_mod.F90
 ./Utils/random_f.cc
 ./Utils/random_f.h
-./Utils/soca_mom6.F90
 ./Utils/soca_bumpinterp2d_mod.F90
 
 #GetValuesTraj

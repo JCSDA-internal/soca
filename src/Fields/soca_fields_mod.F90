@@ -739,7 +739,7 @@ contains
     call check(fld)
 
     !call geom_infotofile(fld%geom)
-    call clean_ocean(fld)
+    !call clean_ocean(fld)
     call soca_write_restart(fld, c_conf, vdate)
 
 !!$    filename = genfilename(c_conf,max_string_length,vdate)

@@ -12,10 +12,10 @@ JCSDA_SING_old="/home/gvernier/Sandboxes/soca/JCSDA-singularity-master-latest.si
 
 # Source, config and build location of soca
 SOCA_SRC="/home/gvernier/Sandboxes/soca/soca-bundle-mom6/soca"
-SOCA_BUILD="/home/gvernier/Sandboxes/soca/soca-bundle-mom6/build"
+SOCA_BUILD="/home/gvernier/Sandboxes/soca/soca-bundle-mom6/build-release"
 SOCA_BIN="${SOCA_BUILD}/bin"
 SOCA_INPUT="${SOCA_BUILD}/soca/test/testinput"
-SOCA_TEST="${SOCA_BUILD}/soca/test"
+SOCA_TEST="${SOCA_BUILD}/soca/test-ams"
 SOCA_MODEL_RSC="${SOCA_SRC}/test/Data/360x210x63"
 SOCA_MODEL_FORCING="${SOCA_SRC}/test/Data/360x210x63"
 
@@ -86,9 +86,9 @@ else
     cp ${SOCA_TEST}/MOM.res.nc ${SCRATCH}/INPUT/MOM.res.nc
     cp ${SOCA_TEST}/INPUT/ice_model.res.nc ${SCRATCH}/INPUT/ice_model.res.nc
 fi
-
+exit
 # Start MOM6-SIS2
 #----------------
 cd ${SCRATCH}
 echo $SOCA_BIN   
-singularity exec ${JCSDA_SING_old} mpirun -np 4 --oversubscribe /home/gvernier/Sandboxes/MOM6-examples/build/gnu/ice_ocean_SIS2/repro/MOM6
+singularity exec ${JCSDA_SING} mpirun -np 4 --oversubscribe ${SOCA_BIN}/mom6.x

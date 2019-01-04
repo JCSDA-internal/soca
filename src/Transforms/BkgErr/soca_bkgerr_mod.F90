@@ -14,7 +14,7 @@ module soca_bkgerr_mod
   implicit none
 
   type :: soca_bkgerror_bounds
-     real(kind=kind_real) :: t_min, t_max
+     real(kind=kind_real) :: t_min, t_max, t_ml
      real(kind=kind_real) :: s_min, s_max
      real(kind=kind_real) :: ssh_min, ssh_max
   end type soca_bkgerror_bounds
@@ -84,11 +84,16 @@ contains
     ! Get bounds from configuration
     self%bounds%t_min   = config_get_real(c_conf,"t_min")
     self%bounds%t_max   = config_get_real(c_conf,"t_max")
+    if (config_element_exists(c_conf,"t_ml")) then
+       self%bounds%t_ml = config_get_real(c_conf,"t_ml")
+    else
+       self%bounds%t_ml = 0.5_kind_real
+    endif    
     self%bounds%s_min   = config_get_real(c_conf,"s_min")
     self%bounds%s_max   = config_get_real(c_conf,"s_max")    
     self%bounds%ssh_min = config_get_real(c_conf,"ssh_min")
     self%bounds%ssh_max = config_get_real(c_conf,"ssh_max")
-    
+
     ! Store background
     self%bkg => bkg
 
@@ -97,7 +102,9 @@ contains
     self%isc=isc; self%iec=iec; self%jsc=jsc; self%jec=jec
 
     ! Std of bkg error for temperature based on dT/dz
-    if (.not.read_from_file) call soca_bkgerr_tocn(self)
+    if (.not.read_from_file) then
+       call soca_bkgerr_tocn(self)
+    end if
     
     ! Apply config bounds to background error
     do i = isc, iec
@@ -183,16 +190,14 @@ contains
     real(kind=kind_real), allocatable :: temp(:), vmask(:)
     real(kind=kind_real) :: jac(2)
     integer :: is, ie, js, je, i, j, k
+    integer :: ins, ns = 1
 
     ! Set all fields to zero
     call zeros(self%std_bkgerr)
-    !call ones(self%std_bkgerr)    
-    !call self_mul(self%std_bkgerr, 1d-8)
-    
-    ! Indices for compute domain (no halo)
-    call geom_get_domain_indices(self%bkg%geom%ocean, "compute", is, ie, js, je)
 
     ! Compute temperature gradient
+    
+    call geom_get_domain_indices(self%bkg%geom%ocean, "compute", is, ie, js, je)
     allocate(temp(self%bkg%geom%ocean%nzo))
     allocate(vmask(self%bkg%geom%ocean%nzo))
 
@@ -203,30 +208,43 @@ contains
              ! Make sure Temp values in thin layers are realistic
              temp(:) = self%bkg%tocn(i,j,:)
              call soca_clean_vertical(self%bkg%hocn(i,j,:), temp(:))
-             
+
              ! T Bkg error from dT/dz 
              call soca_diff(self%std_bkgerr%tocn(i,j,:),&
                            &self%bkg%tocn(i,j,:),&
-                           &self%bkg%hocn(i,j,:))
+                           &temp(:))
 
              ! Apply vertical mask
              vmask = 1.0_kind_real
-             where (self%bkg%hocn(i,j,:)<1.0d-6)
-                vmask = 0.0_kind_real
-             end where             
+             !where (self%bkg%hocn(i,j,:)<1.0d-6)
+             !   vmask = 0.0_kind_real
+             !end where             
 
              ! Scale background error
              self%std_bkgerr%tocn(i,j,:) = abs(self%delta_z * &
                   &(self%std_bkgerr%tocn(i,j,:) * vmask))
+
+             do k = 1, self%bkg%geom%ocean%nzo
+                if (self%bkg%layer_depth(i,j,k)<self%bkg%mld(i,j)) then
+                   self%std_bkgerr%tocn(i,j,k) = max(self%std_bkgerr%tocn(i,j,k),&
+                        &self%bounds%t_ml)
+                else
+                   self%std_bkgerr%tocn(i,j,k) = max(self%std_bkgerr%tocn(i,j,k),&
+                        &self%bounds%t_min)                   
+                end if
+             end do
              
+!!$             do ins = 1, ns
+!!$                do k = 2, self%bkg%geom%ocean%nzo - 1 
+!!$                   self%std_bkgerr%tocn(i,j,k) = (self%std_bkgerr%tocn(i,j,k-1)+&
+!!$                        &self%std_bkgerr%tocn(i,j,k)+self%std_bkgerr%tocn(i,j,k+2))/3.0
+!!$                end do
+!!$             end do
+
           end if
        end do
     end do
 
-    ! Make up background error for salt and ssh
-    !self%std_bkgerr%socn = 0.1_kind_real * self%std_bkgerr%tocn
-    !self%std_bkgerr%ssh = 0.1_kind_real    
-    
     ! Release memory
     deallocate(temp, vmask)
     

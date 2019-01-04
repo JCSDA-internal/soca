@@ -82,8 +82,8 @@ module soca_mom6
   use mpp_mod,    only : mpp_init
   
   use time_interp_external_mod, only : time_interp_external_init
-  use time_manager_mod,         only: time_type
-  
+  use time_manager_mod,         only: time_type, print_time, print_date  
+
   implicit none
   private
 
@@ -98,13 +98,18 @@ module soca_mom6
   end type soca_ice_column
 
   type soca_mom6_config
-    type(mech_forcing) :: forces     ! Driving mechanical surface forces
-    type(forcing)      :: fluxes     ! Pointers to the thermodynamic forcing fields
-                                     ! at the ocean surface.
-    type(surface)      :: sfc_state  ! Pointers to the ocean surface state fields.
-    type(time_type)    :: Time       ! Model's time before call to step_MOM.
-    real               :: dt_forcing ! Coupling time step in seconds.
-    type(MOM_control_struct), pointer :: MOM_CSp ! Tracer flow control structure.
+    type(mech_forcing) :: forces     !< Driving mechanical surface forces
+    type(forcing)      :: fluxes     !< Pointers to the thermodynamic forcing fields
+                                     !< at the ocean surface.
+    type(surface)      :: sfc_state  !< Pointers to the ocean surface state fields.
+    real               :: dt_forcing !< Coupling time step in seconds.
+    type(directories)  :: dirs       !< Relevant dirs/path
+    type(time_type)    :: Time !< Model's time before call to step_MOM.
+    type(ocean_grid_type),    pointer :: grid !< Grid metrics
+    type(verticalGrid_type),  pointer :: GV   !< Vertical grid     
+    type(MOM_control_struct), pointer :: MOM_CSp  !< Tracer flow control structure.
+    type(MOM_restart_CS),     pointer :: restart_CSp !< A pointer to the restart control structure
+
  end type soca_mom6_config
   
 contains
@@ -200,26 +205,11 @@ contains
 
     implicit none
 
-    type(ocean_grid_type), pointer :: grid
-    type(verticalGrid_type), pointer :: GV
-    type(directories) :: dirs
-    type(time_type), target :: Time       ! A copy of the ocean model's time.
-    type(time_type) :: Master_Time        ! The ocean model's master clock. No other
     type(time_type) :: Start_time         ! The start time of the simulation.
+    type(time_type) :: Time_in            ! 
     type(time_type) :: Time_step_ocean    ! A time_type version of dt_forcing.
     real :: dt                      ! The baroclinic dynamics time step, in seconds.
-    integer :: Restart_control    ! An integer that is bit-tested to determine whether
-    ! incremental restart files are saved and whether they
-    ! have a time stamped name.  +1 (bit 0) for generic
-    ! files and +2 (bit 1) for time-stamped files.  A
-    ! restart file is saved at the end of a run segment
-    ! unless Restart_control is negative.
-
-    real            :: Time_unit       ! The time unit in seconds for the following input fields.
-    type(time_type) :: restint         ! The time between saves of the restart file.
-
     integer :: date_init(6)=0                ! The start date of the whole simulation.
-    integer :: date(6)=-1                    ! Possibly the start date of this run segment.
     integer :: years=0, months=0, days=0     ! These may determine the segment run
     integer :: hours=0, minutes=0, seconds=0 ! length, if read from a namelist.
     integer :: yr, mon, day, hr, mins, sec   ! Temp variables for writing the date.
@@ -228,32 +218,22 @@ contains
     character(len=9)  :: month
     character(len=16) :: calendar = 'julian'
     integer :: calendar_type=-1
-
     integer :: unit, io_status, ierr
-    integer :: ensemble_size, nPEs_per, ensemble_info(6)
-
-    integer, dimension(0) :: atm_PElist, land_PElist, ice_PElist
-    integer, dimension(:), allocatable :: ocean_PElist
-    logical :: unit_in_use
-
     logical :: offline_tracer_mode = .false.
 
     type(tracer_flow_control_CS), pointer :: &
          tracer_flow_CSp => NULL()  !< A pointer to the tracer flow control structure
     type(surface_forcing_CS),  pointer :: surface_forcing_CSp => NULL()
-    type(MOM_restart_CS),      pointer :: &
-         restart_CSp => NULL()     !< A pointer to the restart control structure
-    !! that will be used for MOM restart files.
     type(diag_ctrl), pointer :: diag => NULL() !< Diagnostic structure
     !-----------------------------------------------------------------------
 
     character(len=4), parameter :: vers_num = 'v2.0'
     ! This include declares and sets the variable "version".
 #include "version_variable.h"
-    character(len=40)  :: mod_name = "MOM_main (MOM_driver)" ! This module's name.
+    character(len=40)  :: mod_name = "soca_mom6" ! This module's name.
 
-    integer :: ocean_nthreads = 1
-    integer :: ncores_per_node = 36
+    integer :: ocean_nthreads != 1
+    integer :: ncores_per_node != 36
     logical :: use_hyper_thread = .false.
     integer :: omp_get_num_threads,omp_get_thread_num,get_cpu_affinity,adder,base_cpu
     namelist /ocean_solo_nml/ date_init, calendar, months, days, hours, minutes, seconds,&
@@ -291,44 +271,45 @@ contains
 
     Start_time = set_date(date_init(1),date_init(2), date_init(3), &
          date_init(4),date_init(5),date_init(6))
+    print *,'date=',date_init
 
     call time_interp_external_init
 
+    ! Nullify mom6_config pointers 
     mom6_config%MOM_CSp => NULL()
-    Time = Start_time
-    call initialize_MOM(Time, Start_time, param_file, dirs, mom6_config%MOM_CSp, restart_CSp, &
+    mom6_config%restart_CSp => NULL()
+    mom6_config%grid => NULL()    
+    mom6_config%GV => NULL()
+
+    ! Setup time and initialize MOM
+    mom6_config%Time = Start_time
+
+    Time_in = mom6_config%Time
+    call initialize_MOM(mom6_config%Time, Start_time, param_file, mom6_config%dirs, mom6_config%MOM_CSp, mom6_config%restart_CSp, &
          offline_tracer_mode=offline_tracer_mode, diag_ptr=diag, &
-         tracer_flow_CSp=tracer_flow_CSp)
+         tracer_flow_CSp=tracer_flow_CSp, Time_in=Time_in)
 
-    call get_MOM_state_elements(mom6_config%MOM_CSp, G=grid, GV=GV, C_p=mom6_config%fluxes%C_p)
-    Master_Time = Time
+    call get_MOM_state_elements(mom6_config%MOM_CSp, G=mom6_config%grid, GV=mom6_config%GV, C_p=mom6_config%fluxes%C_p)
 
-    call callTree_waypoint("done initialize_MOM")
-
+    ! Setup surface forcing
     call extract_surface_state(mom6_config%MOM_CSp, mom6_config%sfc_state)
-
-    call surface_forcing_init(Time, grid, param_file, diag, &
+    call surface_forcing_init(mom6_config%Time, mom6_config%grid, param_file, diag, &
          surface_forcing_CSp, tracer_flow_CSp)
-    call callTree_waypoint("done surface_forcing_init")
 
-    ! Read all relevant parameters and write them to the model log.
-    call log_version(param_file, mod_name, version, "")
+    ! Get time step from MOM config. TODO: Get DT from DA config
     call get_param(param_file, mod_name, "DT", param_int, fail_if_missing=.true.)
     dt = real(param_int)
     mom6_config%dt_forcing = dt
     Time_step_ocean = real_to_time(real(mom6_config%dt_forcing, kind=8))
 
-    ! Close the param_file.  No further parsing of input is possible after this.
+    ! Finalize file parsing
     call close_param_file(param_file)
 
     ! Set the forcing for the next steps.
     call set_forcing(mom6_config%sfc_state, mom6_config%forces, mom6_config%fluxes,&
-         & Time, Time_step_ocean, grid, &
+         & mom6_config%Time, Time_step_ocean, mom6_config%grid, &
          surface_forcing_CSp)
 
-    ! Set Time
-    mom6_config%Time = Master_Time
-    
   end subroutine soca_mom6_init
 
   ! ------------------------------------------------------------------------------
@@ -337,8 +318,17 @@ contains
     
     implicit none
     
-    type(soca_mom6_config), intent(out) :: mom6_config
-    
+    type(soca_mom6_config), intent(inout) :: mom6_config
+
+    ! Dump restart state before calling model destructor
+    call save_restart(mom6_config%dirs%restart_output_dir, &
+                     &mom6_config%Time,&
+                     &mom6_config%grid,&
+                     &mom6_config%restart_CSp,&
+                     &GV=mom6_config%GV)
+
+    ! Model destructor    
+    call io_infra_end ; call MOM_infra_end
     call MOM_end(mom6_config%MOM_CSp)
 
   end subroutine soca_mom6_end

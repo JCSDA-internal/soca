@@ -43,7 +43,7 @@ subroutine c_soca_setup(c_confspec, c_key_geom, c_key_model) bind (c,name='soca_
   model%nx  = geom%ocean%nx
   model%ny  = geom%ocean%ny
 
-  ! Setup time step
+  ! Setup time step 
   ststep = config_get_string(c_confspec,len(ststep),"tstep")
   dtstep = trim(ststep)
   model%dt0 = duration_seconds(dtstep)
@@ -74,12 +74,11 @@ subroutine c_soca_delete(c_key_conf) bind (c,name='soca_delete_f90')
   integer(c_int), intent(inout) :: c_key_conf !< Key to configuration structure
   type(soca_model), pointer :: model
 
-  call soca_model_registry%get(c_key_conf, model)  
-  call soca_model_registry%remove(c_key_conf)
-
+  call soca_model_registry%get(c_key_conf, model)
   if (model%advance_mom6==1) then
      call soca_delete(model)
-  end if
+  end if  
+  call soca_model_registry%remove(c_key_conf)
 
   return
 end subroutine c_soca_delete
@@ -134,7 +133,7 @@ subroutine c_soca_propagate(c_key_model, c_key_state) bind(c,name='soca_propagat
      print *,"Advancing MOM6 1 time step"
      call soca_propagate(model, flds)
   else
-     print *,"Not advancing MOM6 Persistence model"
+     print *,"Not advancing MOM6: Persistence model"
   end if
 
   return

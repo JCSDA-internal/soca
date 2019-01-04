@@ -14,6 +14,10 @@ module soca_model_mod
   use soca_mom6
   use soca_fields  
   use MOM,  only : step_MOM
+  use MOM_restart, only : save_restart
+  use MOM_time_manager,    only : real_to_time, time_type_to_real
+  use time_manager_mod, only : time_type, print_time, print_date
+  use MOM_time_manager,    only : operator(+)
   use mpp_domains_mod, only : mpp_update_domains
   
   implicit none
@@ -70,6 +74,7 @@ contains
     type(soca_field), intent(inout) :: flds
 
     integer :: isc, iec, jsc, jec
+    type(time_type) :: ocean_time   ! The ocean model's clock.
     
     ! Update halo
     call mpp_update_domains(flds%tocn, flds%geom%ocean%G%Domain%mpp_domain)
@@ -79,14 +84,23 @@ contains
     self%mom6_config%MOM_CSp%T = real(flds%tocn, kind=8)
     self%mom6_config%MOM_CSp%S = real(flds%socn, kind=8)    
 
+    ! Set ocean clock
+    ocean_time = self%mom6_config%Time
+    call print_date(self%mom6_config%Time)
+
     ! Advance MOM 1 baroclinic time step    
     call step_MOM(self%mom6_config%forces, &
                  &self%mom6_config%fluxes, &
                  &self%mom6_config%sfc_state, &
                  &self%mom6_config%Time, &
                  &real(self%mom6_config%dt_forcing, kind=8), &
-                 &self%mom6_config%MOM_CSp)
+                 &self%mom6_config%MOM_CSp,&
+                 &start_cycle=.false.)
 
+    ! Update ocean clock
+    ocean_time = ocean_time + real_to_time(self%mom6_config%MOM_CSp%dt)
+    self%mom6_config%Time = ocean_time
+    
     ! Update soca fields
     flds%tocn = real(self%mom6_config%MOM_CSp%T, kind=kind_real)
     flds%socn = real(self%mom6_config%MOM_CSp%S, kind=kind_real)
@@ -95,15 +109,17 @@ contains
 
   end subroutine soca_propagate
 
+  ! ------------------------------------------------------------------------------
+  
   subroutine soca_delete(self)
 
     implicit none
     
     type(soca_model), intent(inout) :: self
 
+    ! Finalize MOM6
     call soca_mom6_end(self%mom6_config)
 
   end subroutine soca_delete
-  
   
 end module soca_model_mod

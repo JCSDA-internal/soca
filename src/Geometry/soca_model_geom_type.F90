@@ -271,15 +271,7 @@ contains
     self%shoremask = self%mask2d
     do i = is, ie
        do j = js, je
-          shoretest = sum(&
-               &self%G%mask2dT(i-2:i+2,j-2) +&
-               &self%G%mask2dT(i-2:i+2,j-1) +&               
-               &self%G%mask2dT(i-2:i+2,j)   +&
-               &self%G%mask2dT(i-2:i+2,j+1) +&
-               &self%G%mask2dT(i-2:i+2,j+2) )
-          if (shoretest.gt.0.0d0) then
-             self%shoremask(i,j) = 1.0d0
-          end if
+          self%shoremask(i,j) = self%mask2d(i,j)
        end do
     end do
 

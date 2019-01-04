@@ -110,7 +110,7 @@ contains
     end if   
 
     ! Associate background
-    !self%bkg => bkg !NEEDED?
+    self%bkg => bkg
 
     ! Define seaice mask from background seaice fraction
     call geom_get_domain_indices(bkg%geom%ocean, "compute", is, ie, js, je)
@@ -155,7 +155,7 @@ contains
     call self%seaice_conv(1)%dealloc()
     deallocate(self%ocean_conv)
     deallocate(self%seaice_conv)
-    !nullify(self%bkg)
+    nullify(self%bkg)
     deallocate(self%seaice_mask)
     self%initialized = .false.
     
@@ -175,7 +175,7 @@ contains
                                             !< Output: C dx
 
     integer :: icat, izo
-    
+
     ! Apply convolution to fields
     call soca_2d_convol(dx%ssh, self%ocean_conv(1), dx%geom)
     
@@ -186,9 +186,9 @@ contains
 
     do izo = 1,dx%geom%ocean%nzo
        call soca_2d_convol(dx%tocn(:,:,izo), self%ocean_conv(1), dx%geom)
-       call soca_2d_convol(dx%socn(:,:,izo), self%ocean_conv(1), dx%geom)       
-    end do    
-
+       call soca_2d_convol(dx%socn(:,:,izo), self%ocean_conv(1), dx%geom)
+    end do
+    
   end subroutine soca_cov_C_mult
   
   ! ------------------------------------------------------------------------------

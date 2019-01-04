@@ -53,8 +53,8 @@ contains
 
     call self%ocean%init(c_conf)
     call self%ocean%get_rossby_radius()
-    !call self%ocean%validindex() !BUG: Needs a halo of 2 to work
-    !call self%ocean%infotofile()
+    call self%ocean%validindex() !BUG: Needs a halo of 2 to work
+    call self%ocean%infotofile()
     
   end subroutine c_soca_geo_setup
 
