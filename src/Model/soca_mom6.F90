@@ -281,9 +281,10 @@ contains
     mom6_config%grid => NULL()    
     mom6_config%GV => NULL()
 
-    ! Setup time and initialize MOM
+    ! Set mom6_config%Time to time parsed from mom6 config
     mom6_config%Time = Start_time
 
+    ! Initialize mom6
     Time_in = mom6_config%Time
     call initialize_MOM(mom6_config%Time, &
         &Start_time, &
@@ -294,7 +295,8 @@ contains
         &offline_tracer_mode=offline_tracer_mode, diag_ptr=diag, &
         &tracer_flow_CSp=tracer_flow_CSp, Time_in=Time_in)
 
-    call get_MOM_state_elements(mom6_config%MOM_CSp, G=mom6_config%grid, GV=mom6_config%GV, C_p=mom6_config%fluxes%C_p)
+    call get_MOM_state_elements(mom6_config%MOM_CSp, G=mom6_config%grid, &
+         &GV=mom6_config%GV, C_p=mom6_config%fluxes%C_p)
 
     ! Setup surface forcing
     call extract_surface_state(mom6_config%MOM_CSp, mom6_config%sfc_state)
@@ -332,8 +334,10 @@ contains
                      &mom6_config%restart_CSp,&
                      &GV=mom6_config%GV)
 
-    ! Call to Model destructor    
+    ! Finalize fms
     call io_infra_end ; call MOM_infra_end
+
+    ! Finalize mom6
     call MOM_end(mom6_config%MOM_CSp)
 
   end subroutine soca_mom6_end

@@ -19,6 +19,7 @@ resolution:
 model:
   name: SOCA
   tstep: P5D
+  advance_mom6: 0
 cost_function:
   cost_type: 4D-Var
   window_begin: '2018-04-10T00:00:00Z'
@@ -85,130 +86,6 @@ cost_function:
       # Output parameters  
       diag_interp: bilin
       date: '2018-04-15T00:00:00Z'
-      variable_changes:
-      - varchange: BalanceSOCA
-        dsdtmax: 0.1
-        dsdzmin: 3.0e-6
-        dtdzmin: 1.0e-6 
-        inputVariables:
-          variables:
-          - cicen
-          - hicen
-          - hsnon
-          - tsfcn
-          - qsnon
-          - sicnk
-          - qicnk
-          - socn
-          - tocn
-          - ssh
-          - hocn
-        outputVariables:
-          variables:
-          - cicen
-          - hicen
-          - hsnon
-          - tsfcn
-          - qsnon
-          - sicnk
-          - qicnk
-          - socn
-          - tocn
-          - ssh
-          - hocn            
-      - varchange: BkgErrSOCA
-        read_from_file: 3
-        basename: ./
-        ocn_filename: ocn.bkgerror.nc
-        ice_filename: ice.bkgerror.nc
-        date: '2018-04-15T00:00:00Z'
-        t_min: 0.01
-        t_max: 5.0
-        s_min: 0.001
-        s_max: 0.2
-        ssh_min: 0.05
-        ssh_max: 0.5        
-        variables:                                
-          variables:
-          - cicen
-          - hicen
-          - hsnon
-          - tsfcn
-          - qsnon
-          - sicnk
-          - qicnk
-          - socn
-          - tocn
-          - ssh
-          - hocn      
-        inputVariables:
-          variables:
-          - cicen
-          - hicen
-          - hsnon
-          - tsfcn
-          - qsnon
-          - sicnk
-          - qicnk
-          - socn
-          - tocn
-          - ssh
-          - hocn  
-        outputVariables:
-          variables:
-          - cicen
-          - hicen
-          - hsnon
-          - tsfcn
-          - qsnon
-          - sicnk
-          - qicnk
-          - socn
-          - tocn
-          - ssh
-          - hocn	  
-      - varchange: VertConvSOCA
-        variables:                                
-          variables:
-          - cicen
-          - hicen
-          - hsnon
-          - tsfcn
-          - qsnon
-          - sicnk
-          - qicnk
-          - socn
-          - tocn
-          - ssh
-          - hocn      
-        Lz: 300.0
-        Ltemp: 10.0	
-        inputVariables:
-          variables:
-          - cicen
-          - hicen
-          - hsnon
-          - tsfcn
-          - qsnon
-          - sicnk
-          - qicnk
-          - socn
-          - tocn
-          - ssh
-          - hocn
-        outputVariables:
-          variables:
-          - cicen
-          - hicen
-          - hsnon
-          - tsfcn
-          - qsnon
-          - sicnk
-          - qicnk
-          - socn
-          - tocn	  
-          - ssh
-          - hocn
   Jo:
     ObsTypes:
     - ObsType: ADT
@@ -241,7 +118,8 @@ variational:
       varchange: Identity
       version: IdTLM
       tstep: P5D
-    ninner: 5
+      advance_mom6: 0      
+    ninner: 1
     gradient_norm_reduction: 1e-15
     test: 'on'
   - resolution:
@@ -252,7 +130,8 @@ variational:
       varchange: Identity
       version: IdTLM
       tstep: P5D
-    ninner: 5
+      advance_mom6: 0      
+    ninner: 1
     gradient_norm_reduction: 1e-15
     test: 'on'    
 minimizer:
