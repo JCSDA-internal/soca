@@ -64,38 +64,6 @@ namespace soca {
     Log::trace() << "Increment destructed" << std::endl;
   }
   // -----------------------------------------------------------------------------
-  void Increment::activateModel() {
-    // Should get variables from model. YT
-     const std::vector<std::string> vv{
-          "cicen",
-          "hicen",
-          "hsnon",
-          "tsfcn",
-          "qsnon",
-          "sicnk",
-          "qicnk",
-          "socn",
-          "tocn",
-          "ssh",
-          "hocn"
-    };
-     oops::Variables vars(vv);
-    stash_.reset(new Fields(*fields_, vars));
-    swap(fields_, stash_);
-    ASSERT(fields_);
-    ASSERT(stash_);
-    Log::trace() << "TLM ... NO IMPLEMENTED" << std::endl;
-  }
-  // -----------------------------------------------------------------------------
-  void Increment::deactivateModel() {
-    swap(fields_, stash_);
-    *fields_ = *stash_;
-    stash_.reset();
-    ASSERT(fields_);
-    ASSERT(!stash_);
-    Log::trace() << "Increment deactivated for TLM" << std::endl;
-  }
-  // -----------------------------------------------------------------------------
   /// Basic operators
   // -----------------------------------------------------------------------------
   void Increment::diff(const State & x1, const State & x2) {

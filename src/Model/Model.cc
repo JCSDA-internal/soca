@@ -52,7 +52,6 @@ namespace soca {
   }
   // -----------------------------------------------------------------------------
   void Model::initialize(State & xx) const {
-    xx.activateModel();
     ASSERT(xx.fields().isForModel(true));
     soca_prepare_integration_f90(keyConfig_, xx.fields().toFortran());
     Log::debug() << "Model::initialize" << xx.fields() << std::endl;
@@ -68,7 +67,6 @@ namespace soca {
   }
   // -----------------------------------------------------------------------------
   void Model::finalize(State & xx) const {
-    xx.deactivateModel();
     Log::debug() << "Model::finalize" << xx.fields() << std::endl;
   }
   // -----------------------------------------------------------------------------

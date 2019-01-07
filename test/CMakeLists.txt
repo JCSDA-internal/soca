@@ -110,6 +110,9 @@ foreach(FILENAME ${soca_model_forcing})
            ${CMAKE_CURRENT_BINARY_DIR}/INPUT/${filename} )
 endforeach(FILENAME)
 
+# MOM's output directory
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/RESTART)
+
 ecbuild_add_resources( TARGET   soca_test_scripts
                        SOURCES_PACK
                        ${soca_test_input}

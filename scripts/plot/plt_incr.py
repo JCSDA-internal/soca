@@ -27,8 +27,8 @@ obkg=OceanState(fname_bkg, maptype='R')
 #plt.show()
 
 
-#oana.plot_horiz_section(oana,vars=['ssh'],fignum=1)
-#plt.show()
+oana.plot_horiz_section(obkg,vars=['ssh'],fignum=1)
+plt.show()
 
 #obkg.plot_horiz_section(oana,vars=['ssh'],fignum=1)
 #plt.show()

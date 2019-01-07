@@ -285,9 +285,14 @@ contains
     mom6_config%Time = Start_time
 
     Time_in = mom6_config%Time
-    call initialize_MOM(mom6_config%Time, Start_time, param_file, mom6_config%dirs, mom6_config%MOM_CSp, mom6_config%restart_CSp, &
-         offline_tracer_mode=offline_tracer_mode, diag_ptr=diag, &
-         tracer_flow_CSp=tracer_flow_CSp, Time_in=Time_in)
+    call initialize_MOM(mom6_config%Time, &
+        &Start_time, &
+        &param_file, &
+        &mom6_config%dirs, &
+        &mom6_config%MOM_CSp, &
+        &mom6_config%restart_CSp, &
+        &offline_tracer_mode=offline_tracer_mode, diag_ptr=diag, &
+        &tracer_flow_CSp=tracer_flow_CSp, Time_in=Time_in)
 
     call get_MOM_state_elements(mom6_config%MOM_CSp, G=mom6_config%grid, GV=mom6_config%GV, C_p=mom6_config%fluxes%C_p)
 
@@ -327,7 +332,7 @@ contains
                      &mom6_config%restart_CSp,&
                      &GV=mom6_config%GV)
 
-    ! Model destructor    
+    ! Call to Model destructor    
     call io_infra_end ; call MOM_infra_end
     call MOM_end(mom6_config%MOM_CSp)
 

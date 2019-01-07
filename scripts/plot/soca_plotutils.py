@@ -164,8 +164,8 @@ class OceanState:
         plt.figure(num=fignum)
         #map = Basemap(projection='mill',lon_0=-100)
         #x, y = map(self.grid.lon,self.grid.lat)
-        plothor(self.x,self.y,self.ssh,self.map,'',clim=[-1.6,1.4],label='',obs=self.obs)
-        return
+        #plothor(self.x,self.y,self.ssh,self.map,'',clim=[-1.6,1.4],label='',obs=self.obs)
+        #return
         for var in vars:
             if var=='temp':
                 incr=self.temp[levels[0],:,:]-other.temp[levels[0],:,:]

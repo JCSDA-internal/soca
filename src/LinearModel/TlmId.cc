@@ -61,7 +61,6 @@ TlmId::~TlmId() {
 void TlmId::setTrajectory(const State &, State &, const ModelBias &) {}
 // -----------------------------------------------------------------------------
 void TlmId::initializeTL(Increment & dx) const {
-  dx.activateModel();
   ASSERT(dx.fields().isForModel(false));
   // soca_prepare_integration_tl_f90(keyConfig_, dx.fields().toFortran());
   Log::debug() << "TlmId::initializeTL" << dx.fields() << std::endl;
@@ -72,12 +71,10 @@ void TlmId::stepTL(Increment & dx, const ModelBiasIncrement &) const {
 }
 // -----------------------------------------------------------------------------
 void TlmId::finalizeTL(Increment & dx) const {
-  dx.deactivateModel();
   Log::debug() << "TlmId::finalizeTL" << dx.fields() << std::endl;
 }
 // -----------------------------------------------------------------------------
 void TlmId::initializeAD(Increment & dx) const {
-  dx.activateModel();
   ASSERT(dx.fields().isForModel(false));
   Log::debug() << "TlmId::initializeAD" << dx.fields() << std::endl;
 }
@@ -88,7 +85,6 @@ void TlmId::stepAD(Increment & dx, ModelBiasIncrement &) const {
 // -----------------------------------------------------------------------------
 void TlmId::finalizeAD(Increment & dx) const {
   // soca_prepare_integration_ad_f90(keyConfig_, dx.fields().toFortran());
-  dx.deactivateModel();
   Log::debug() << "TlmId::finalizeAD" << dx.fields() << std::endl;
 }
 // -----------------------------------------------------------------------------

@@ -114,9 +114,6 @@ namespace soca {
       }
 
       /// Other
-      void activateModel();
-      void deactivateModel();
-
       void accumul(const double &, const State &);
 
       /// Data

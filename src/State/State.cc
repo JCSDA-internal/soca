@@ -90,38 +90,6 @@ namespace soca {
     Log::trace() << "State::State destructed." << std::endl;
   }
   // -----------------------------------------------------------------------------
-    void State::activateModel() {
-      const std::vector<std::string> vv{
-          "cicen",
-          "hicen",
-          "hsnon",
-          "tsfcn",
-          "qsnon",
-          "sicnk",
-          "qicnk",
-          "socn",
-          "tocn",
-          "ssh",
-          "hocn"
-    };
-    oops::Variables vars(vv);
-
-    stash_.reset(new Fields(*fields_, vars));
-    swap(fields_, stash_);
-    ASSERT(fields_);
-    ASSERT(stash_);
-    Log::trace() << "State activated for Model" << std::endl;
-  }
-  // -----------------------------------------------------------------------------
-  void State::deactivateModel() {
-    swap(fields_, stash_);
-    *fields_ = *stash_;
-    stash_.reset();
-    ASSERT(fields_);
-    ASSERT(!stash_);
-    Log::trace() << "State deactivated for Model" << std::endl;
-    }
-  // -----------------------------------------------------------------------------
   /// Basic operators
   // -----------------------------------------------------------------------------
   State & State::operator=(const State & rhs) {
