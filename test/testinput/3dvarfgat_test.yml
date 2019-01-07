@@ -18,12 +18,12 @@ resolution:
   num_sno_lev: 1
 model:
   name: SOCA
-  tstep: P5D
-  advance_mom6: 0
+  tstep: PT1H
+  advance_mom6: 1
 cost_function:
   cost_type: 4D-Var
-  window_begin: '2018-04-10T00:00:00Z'
-  window_length: P10D
+  window_begin: '2018-04-15T00:00:00Z'
+  window_length: PT2H
   variables:
   - cicen
   - hicen
@@ -43,7 +43,7 @@ cost_function:
         basename: "./INPUT/"
         ocn_filename: MOM.res.nc
         ice_filename: ice_model.res.nc
-        date: '2018-04-10T00:00:00Z'        
+        date: '2018-04-15T00:00:00Z'        
     Covariance:
       covariance: SocaError
       # General parameters
@@ -98,16 +98,7 @@ cost_function:
       Covariance:
         covariance: diagonal
         obserror: obs_absolute_dynamic_topography_err
-#    - ObsType: InsituTemperature
-#      ObsData:
-#        ObsDataOut:
-#          obsfile: Data/profile_out.nc
-#        ObsDataIn:
-#          obsfile: Data/profile_2018-04-15.nc
-#        obsvalue: insitu_temperature
-#      Covariance:
-#        covariance: diagonal
-#        obserror: insitu_temperature_err
+
 variational:
   iteration:
   - resolution:
@@ -117,7 +108,7 @@ variational:
     linearmodel:
       varchange: Identity
       version: IdTLM
-      tstep: P5D
+      tstep: PT1H
       advance_mom6: 0      
     ninner: 1
     gradient_norm_reduction: 1e-15
@@ -129,7 +120,7 @@ variational:
     linearmodel:
       varchange: Identity
       version: IdTLM
-      tstep: P5D
+      tstep: PT1H
       advance_mom6: 0      
     ninner: 1
     gradient_norm_reduction: 1e-15
