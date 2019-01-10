@@ -31,7 +31,7 @@ namespace soca {
                                    const oops::Variables &,
                                    const eckit::Configuration & conf,
                                    const State & bkg,
-				   const State & traj) {
+                                   const State & traj) {
     // bkg: Background state, invariant wrt outer-loop.
     time_ = util::DateTime(conf.getString("date"));
     const eckit::Configuration * configc = &conf;
@@ -67,10 +67,10 @@ namespace soca {
 
   void ErrorCovariance::inverseMultiply(const Increment & dxin,
                                         Increment & dxout) const {
-    //oops::IdentityMatrix<Increment> Id;
-    //dxout.zero();
-    //GMRESR(dxout, dxin, *this, Id, 10, 1.0e-6);
-    dxout=dxin;
+    // oops::IdentityMatrix<Increment> Id;
+    // dxout.zero();
+    // GMRESR(dxout, dxin, *this, Id, 10, 1.0e-6);
+    dxout = dxin;
     Log::trace() << "ErrorCovariance inversemultiply" << std::endl;
   }
 

@@ -5,8 +5,8 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#ifndef SOCA_SRC_TRAITS_H_
-#define SOCA_SRC_TRAITS_H_
+#ifndef SRC_TRAITS_H_
+#define SRC_TRAITS_H_
 
 #include <string>
 
@@ -62,4 +62,4 @@ struct Traits {
 
 }  // namespace soca
 
-#endif  // SOCA_SRC_TRAITS_H_
+#endif  // SRC_TRAITS_H_

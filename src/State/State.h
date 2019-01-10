@@ -5,8 +5,8 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#ifndef SOCA_SRC_STATE_STATE_H_
-#define SOCA_SRC_STATE_STATE_H_
+#ifndef SRC_STATE_STATE_H_
+#define SRC_STATE_STATE_H_
 
 #include <ostream>
 #include <string>
@@ -53,7 +53,7 @@ namespace soca {
       State(const Geometry &, const oops::Variables &,
             const util::DateTime &);  // Is it used?
       State(const Geometry &, const oops::Variables &,
-	    const eckit::Configuration &);
+            const eckit::Configuration &);
       State(const Geometry &, const State &);
       State(const State &);
       virtual ~State();
@@ -102,4 +102,4 @@ namespace soca {
 
 }  // namespace soca
 
-#endif  // SOCA_SRC_STATE_STATE_H_
+#endif  // SRC_STATE_STATE_H_

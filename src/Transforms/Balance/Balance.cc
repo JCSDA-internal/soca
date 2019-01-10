@@ -22,9 +22,9 @@ using oops::Log;
 namespace soca {
   // -----------------------------------------------------------------------------
   Balance::Balance(const State & bkg,
-         	 const State & traj,
-		 const Geometry & geom,
-	         const eckit::Configuration & conf): traj_(traj) {
+                   const State & traj,
+                   const Geometry & geom,
+                   const eckit::Configuration & conf): traj_(traj) {
     const eckit::Configuration * configc = &conf;
     soca_balance_setup_f90(keyFtnConfig_, &configc, traj_.fields().toFortran());
   }
@@ -36,32 +36,31 @@ namespace soca {
   void Balance::multiply(const Increment & dxa, Increment & dxm) const {
     // dxm = K dxa
     soca_balance_mult_f90(keyFtnConfig_,
-    			 dxa.fields().toFortran(),
-    			 dxm.fields().toFortran());
+                         dxa.fields().toFortran(),
+                         dxm.fields().toFortran());
   }
   // -----------------------------------------------------------------------------
   void Balance::multiplyInverse(const Increment & dxm, Increment & dxa) const {
     // dxa = K^-1 dxm
     soca_balance_multinv_f90(keyFtnConfig_,
-    			 dxm.fields().toFortran(),
-    			 dxa.fields().toFortran());    
+                         dxm.fields().toFortran(),
+                         dxa.fields().toFortran());
   }
   // -----------------------------------------------------------------------------
   void Balance::multiplyAD(const Increment & dxm, Increment & dxa) const {
     // dxa = K^T dxm
-    std::cout<<"keyFtnConfig_:"<<keyFtnConfig_<<std::endl;
-    //dxa = dxm;
+    // dxa = dxm;
     soca_balance_multad_f90(keyFtnConfig_,
-    			 dxm.fields().toFortran(),
-    			 dxa.fields().toFortran());
+                            dxm.fields().toFortran(),
+                            dxa.fields().toFortran());
   }
   // -----------------------------------------------------------------------------
-  void Balance::multiplyInverseAD(const Increment & dxa, Increment & dxm) const {
+  void Balance::multiplyInverseAD(const Increment & dxa,
+                                  Increment & dxm) const {
     // dxm = (K^-1)^T dxa
     soca_balance_multinvad_f90(keyFtnConfig_,
-    			 dxa.fields().toFortran(),
-    			 dxm.fields().toFortran());
-    
+                               dxa.fields().toFortran(),
+                               dxm.fields().toFortran());
   }
   // -----------------------------------------------------------------------------
   void Balance::print(std::ostream & os) const {

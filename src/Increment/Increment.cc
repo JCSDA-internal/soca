@@ -155,11 +155,13 @@ namespace soca {
   // -----------------------------------------------------------------------------
   /// Unstructured grid
   // -----------------------------------------------------------------------------
-  void Increment::ug_coord(oops::UnstructuredGrid & ug, const int & colocated) const {
+  void Increment::ug_coord(oops::UnstructuredGrid & ug,
+                           const int & colocated) const {
     fields_->ug_coord(ug, colocated);
   }
   // -----------------------------------------------------------------------------
-  void Increment::field_to_ug(oops::UnstructuredGrid & ug, const int & colocated) const {
+  void Increment::field_to_ug(oops::UnstructuredGrid & ug,
+                              const int & colocated) const {
     fields_->field_to_ug(ug, colocated);
   }
   // -----------------------------------------------------------------------------
@@ -178,8 +180,8 @@ namespace soca {
   }
   // -----------------------------------------------------------------------------
   void Increment::print(std::ostream & os) const {
-    //os << std::endl << "  Valid time: " << validTime();
-    //os << *fields_;
+    // os << std::endl << "  Valid time: " << validTime();
+    // os << *fields_;
   }
   // -----------------------------------------------------------------------------
 

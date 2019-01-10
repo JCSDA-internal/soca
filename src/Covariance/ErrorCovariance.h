@@ -5,8 +5,8 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#ifndef SOCA_SRC_COVARIANCE_ERRORCOVARIANCE_H_
-#define SOCA_SRC_COVARIANCE_ERRORCOVARIANCE_H_
+#ifndef SRC_COVARIANCE_ERRORCOVARIANCE_H_
+#define SRC_COVARIANCE_ERRORCOVARIANCE_H_
 
 #include <ostream>
 #include <string>
@@ -37,14 +37,14 @@ namespace soca {
       static const std::string classname() {return "soca::ErrorCovariance";}
 
       ErrorCovariance(const Geometry &, const oops::Variables &,
-                      const eckit::Configuration &, const State &, const State &);
+                      const eckit::Configuration &,
+                      const State &, const State &);
       ~ErrorCovariance();
 
       void linearize(const State &, const Geometry &);
       void multiply(const Increment &, Increment &) const;
       void inverseMultiply(const Increment &, Increment &) const;
       void randomize(Increment &) const;
-      //void doRandomize(Increment &) const;      
 
    private:
       void print(std::ostream &) const;
@@ -56,4 +56,4 @@ namespace soca {
   // -----------------------------------------------------------------------------
 
 }  // namespace soca
-#endif  // SOCA_SRC_COVARIANCE_ERRORCOVARIANCE_H_
+#endif  // SRC_COVARIANCE_ERRORCOVARIANCE_H_

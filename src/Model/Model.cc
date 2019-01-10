@@ -5,6 +5,8 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
+#include <vector>
+
 #include "src/Model/Model.h"
 
 #include "eckit/config/Configuration.h"
@@ -60,7 +62,7 @@ namespace soca {
   void Model::step(State & xx, const ModelBias &) const {
     ASSERT(xx.fields().isForModel(true));
     Log::debug() << "Model::step fields in" << xx.fields() << std::endl;
-    Log::trace() << "Model::Time: " << xx.validTime() << std::endl;    
+    Log::trace() << "Model::Time: " << xx.validTime() << std::endl;
     soca_propagate_f90(keyConfig_, xx.fields().toFortran());
     xx.validTime() += tstep_;
     Log::debug() << "Model::step fields out" << xx.fields() << std::endl;

@@ -5,8 +5,8 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#ifndef SOCA_SRC_MODEL_MODEL_H_
-#define SOCA_SRC_MODEL_MODEL_H_
+#ifndef SRC_MODEL_MODEL_H_
+#define SRC_MODEL_MODEL_H_
 
 #include <ostream>
 #include <string>
@@ -40,36 +40,36 @@ namespace soca {
    *  SOCA nonlinear model definition and configuration parameters.
    */
 
-  class Model: public oops::ModelBase<Traits>,
-    private util::ObjectCounter<Model> {
-  public:
-      static const std::string classname() {return "soca::Model";}
+  class Model:public oops::ModelBase<Traits>, private util::ObjectCounter<Model>
+  {
+   public:
+    static const std::string classname() {return "soca::Model";}
 
-      Model(const Geometry &, const eckit::Configuration &);
-      ~Model();
+    Model(const Geometry &, const eckit::Configuration &);
+    ~Model();
 
-      /// Prepare model integration
-      void initialize(State &) const;
+    /// Prepare model integration
+    void initialize(State &) const;
 
-      /// Model integration
-      void step(State &, const ModelBias &) const;
-      int saveTrajectory(State &, const ModelBias &) const;
+    /// Model integration
+    void step(State &, const ModelBias &) const;
+    int saveTrajectory(State &, const ModelBias &) const;
 
-      /// Finish model integration
-      void finalize(State &) const;
+    /// Finish model integration
+    void finalize(State &) const;
 
-      /// Utilities
-      const util::Duration & timeResolution() const {return tstep_;}
-      const oops::Variables & variables() const {return vars_;}
+    /// Utilities
+    const util::Duration & timeResolution() const {return tstep_;}
+    const oops::Variables & variables() const {return vars_;}
 
-  private:
-      void print(std::ostream &) const;
-      int keyConfig_;
-      util::Duration tstep_;
-      const Geometry geom_;
-      const oops::Variables vars_;  
-    };
+   private:
+    void print(std::ostream &) const;
+    int keyConfig_;
+    util::Duration tstep_;
+    const Geometry geom_;
+    const oops::Variables vars_;
+  };
   // -----------------------------------------------------------------------------
 
 }  // namespace soca
-#endif  // SOCA_SRC_MODEL_MODEL_H_
+#endif  // SRC_MODEL_MODEL_H_

@@ -35,7 +35,7 @@ class Balance: public util::Printable {
   static const std::string classname() {return "soca::Balance";}
 
   explicit Balance(const State &, const State &,
-		   const Geometry &, const eckit::Configuration &);
+                   const Geometry &, const eckit::Configuration &);
   ~Balance();
 
 /// Perform linear transforms
@@ -46,7 +46,7 @@ class Balance: public util::Printable {
 
  private:
   void print(std::ostream &) const override;
-  int keyFtnConfig_;  
+  int keyFtnConfig_;
   const State & traj_;
 };
 // -----------------------------------------------------------------------------

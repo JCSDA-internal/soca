@@ -5,8 +5,8 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#ifndef SOCA_SRC_GETVALUESTRAJ_GETVALUESTRAJ_H_
-#define SOCA_SRC_GETVALUESTRAJ_GETVALUESTRAJ_H_
+#ifndef SRC_GETVALUESTRAJ_GETVALUESTRAJ_H_
+#define SRC_GETVALUESTRAJ_GETVALUESTRAJ_H_
 
 #include <ostream>
 
@@ -34,4 +34,4 @@ class GetValuesTraj : public util::Printable {
 
 }  // namespace soca
 
-#endif  // SOCA_SRC_GETVALUESTRAJ_GETVALUESTRAJ_H_
+#endif  // SRC_GETVALUESTRAJ_GETVALUESTRAJ_H_

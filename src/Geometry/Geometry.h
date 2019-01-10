@@ -5,8 +5,8 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#ifndef SOCA_SRC_GEOMETRY_GEOMETRY_H_
-#define SOCA_SRC_GEOMETRY_GEOMETRY_H_
+#ifndef SRC_GEOMETRY_GEOMETRY_H_
+#define SRC_GEOMETRY_GEOMETRY_H_
 
 #include <ostream>
 #include <string>
@@ -46,4 +46,4 @@ namespace soca {
 
 }  // namespace soca
 
-#endif  // SOCA_SRC_GEOMETRY_GEOMETRY_H_
+#endif  // SRC_GEOMETRY_GEOMETRY_H_

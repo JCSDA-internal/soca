@@ -5,8 +5,8 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#ifndef SOCA_MODEL_INSTANTIATECHANGEVARFACTORY_H_
-#define SOCA_MODEL_INSTANTIATECHANGEVARFACTORY_H_
+#ifndef SRC_TRANSFORMS_INSTANTIATEBALANCEOPFACTORY_H_
+#define SRC_TRANSFORMS_INSTANTIATEBALANCEOPFACTORY_H_
 
 #include "src/Transforms/Balance/Balance.h"
 #include "src/Transforms/BkgErr/BkgErr.h"
@@ -22,12 +22,11 @@ void instantiateBalanceOpFactory() {
               makerBalanceOpVertConvSOCA_("VertConvSOCA");
   static oops::LinearVariableChangeMaker<soca::Traits,
               oops::LinearVariableChange<soca::Traits, soca::BkgErr> >
-              makerBalanceOpBkgErrSOCA_("BkgErrSOCA");  
+              makerBalanceOpBkgErrSOCA_("BkgErrSOCA");
   static oops::LinearVariableChangeMaker<soca::Traits,
               oops::LinearVariableChange<soca::Traits, soca::Balance> >
-              makerBalanceOpBalanceSOCA_("BalanceSOCA");  
+              makerBalanceOpBalanceSOCA_("BalanceSOCA");
 }
+}  // namespace soca
 
-}  // namespace qg
-
-#endif  // SOCA_MODEL_INSTANTIATECHANGEVARFACTORY_H_
+#endif  // SRC_TRANSFORMS_INSTANTIATEBALANCEOPFACTORY_H_

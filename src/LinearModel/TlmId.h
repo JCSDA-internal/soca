@@ -8,8 +8,8 @@
  * does it submit to any jurisdiction.
  */
 
-#ifndef SOCA_SRC_LINEARMODEL_TLMID_H_
-#define SOCA_SRC_LINEARMODEL_TLMID_H_
+#ifndef SRC_LINEARMODEL_TLMID_H_
+#define SRC_LINEARMODEL_TLMID_H_
 
 #include <string>
 
@@ -67,9 +67,9 @@ class TlmId: public oops::LinearModelBase<Traits>,
   int keyConfig_;
   util::Duration tstep_;
   const Geometry resol_;
-  const oops::Variables linvars_;  
+  const oops::Variables linvars_;
 };
 // -----------------------------------------------------------------------------
 
 }  // namespace soca
-#endif  // SOCA_SRC_LINEARMODEL_TLMID_H_
+#endif  // SRC_LINEARMODEL_TLMID_H_

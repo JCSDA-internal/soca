@@ -5,8 +5,8 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
  */
 
-#ifndef SOCA_SRC_UTILS_RANDOM_F_H_
-#define SOCA_SRC_UTILS_RANDOM_F_H_
+#ifndef SRC_UTILS_RANDOM_F_H_
+#define SRC_UTILS_RANDOM_F_H_
 
 namespace soca {
 extern "C" {
@@ -14,4 +14,4 @@ extern "C" {
 }
 }  // namespace soca
 
-#endif  // SOCA_SRC_UTILS_RANDOM_F_H_
+#endif  // SRC_UTILS_RANDOM_F_H_

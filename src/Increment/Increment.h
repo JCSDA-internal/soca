@@ -8,8 +8,8 @@
  * does it submit to any jurisdiction.
  */
 
-#ifndef SOCA_SRC_INCREMENT_INCREMENT_H_
-#define SOCA_SRC_INCREMENT_INCREMENT_H_
+#ifndef SRC_INCREMENT_INCREMENT_H_
+#define SRC_INCREMENT_INCREMENT_H_
 
 #include <ostream>
 #include <string>
@@ -101,10 +101,10 @@ namespace soca {
 
 
       /// Unstructured grid
-      void ug_coord(oops::UnstructuredGrid &, const int &) const;      
+      void ug_coord(oops::UnstructuredGrid &, const int &) const;
       void field_to_ug(oops::UnstructuredGrid &, const int &) const;
       void field_from_ug(const oops::UnstructuredGrid &);
-  
+
       /// Access to fields
       Fields & fields() {return *fields_;}
       const Fields & fields() const {return *fields_;}
@@ -126,4 +126,4 @@ namespace soca {
 
 }  // namespace soca
 
-#endif  // SOCA_SRC_INCREMENT_INCREMENT_H_
+#endif  // SRC_INCREMENT_INCREMENT_H_

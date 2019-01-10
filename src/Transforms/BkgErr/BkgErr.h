@@ -5,8 +5,8 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#ifndef SOCA_SRC_BKGERR_H_
-#define SOCA_SRC_BKGERR_H_
+#ifndef SRC_TRANSFORMS_BKGERR_BKGERR_H_
+#define SRC_TRANSFORMS_BKGERR_BKGERR_H_
 
 #include <ostream>
 #include <string>
@@ -26,7 +26,7 @@ namespace soca {
   class State;
   class Increment;
   class Geometry;
-  
+
 // -----------------------------------------------------------------------------
 /// SOCA linear change of variable
 
@@ -34,7 +34,8 @@ class BkgErr: public util::Printable {
  public:
   static const std::string classname() {return "soca::BkgErr";}
 
-  explicit BkgErr(const State &, const State &, const Geometry &, const eckit::Configuration &);
+  explicit BkgErr(const State &, const State &, const Geometry &,
+                  const eckit::Configuration &);
   ~BkgErr();
 
 /// Perform linear transforms
@@ -45,10 +46,10 @@ class BkgErr: public util::Printable {
 
  private:
   void print(std::ostream &) const override;
-  int keyFtnConfig_;  
+  int keyFtnConfig_;
   const State & traj_;
 };
 // -----------------------------------------------------------------------------
 
 }  // namespace soca
-#endif  // SOCA_SRC_BKGERR_H_
+#endif  // SRC_TRANSFORMS_BKGERR_BKGERR_H_

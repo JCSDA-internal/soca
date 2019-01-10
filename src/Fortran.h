@@ -5,8 +5,8 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#ifndef SOCA_SRC_FORTRAN_H_
-#define SOCA_SRC_FORTRAN_H_
+#ifndef SRC_FORTRAN_H_
+#define SRC_FORTRAN_H_
 
 // Forward declarations
 namespace eckit {
@@ -37,7 +37,7 @@ namespace soca {
   // Background error covariance key type
   typedef int F90bmat;
   // Background error covariance key type
-  typedef int F90balopmat;  
+  typedef int F90balopmat;
   // Observation vector key type
   typedef int F90ovec;
   // Obs operator key type
@@ -144,13 +144,15 @@ namespace soca {
     //  Vertical convolution operator
     // -----------------------------------------------------------------------------
     void soca_vertconv_setup_f90(F90balopmat &,
-				 const eckit::Configuration * const *,
-				 const F90flds &,
-				 const F90flds &);
+                                 const eckit::Configuration * const *,
+                                 const F90flds &,
+                                 const F90flds &);
     void soca_vertconv_delete_f90(F90balopmat &);
-    void soca_vertconv_mult_f90(const F90balopmat &, F90balopmat &, const F90balopmat &, const F90balopmat &);
-    void soca_vertconv_multad_f90(const F90balopmat &, F90balopmat &, const F90balopmat &, const F90balopmat &);
-    
+    void soca_vertconv_mult_f90(const F90balopmat &, F90balopmat &,
+                                const F90balopmat &, const F90balopmat &);
+    void soca_vertconv_multad_f90(const F90balopmat &, F90balopmat &,
+                                  const F90balopmat &, const F90balopmat &);
+
     // -----------------------------------------------------------------------------
     //  Background error
     // -----------------------------------------------------------------------------
@@ -159,31 +161,39 @@ namespace soca {
     void soca_b_delete_f90(F90bmat &);
     void soca_b_linearize_f90(const F90flds &, const F90geom &);
     void soca_b_mult_f90(const F90bmat &, const F90flds &,
-                         const F90flds &); //, const F90flds &);
+                         const F90flds &);
     void soca_b_invmult_f90(const F90bmat &, const F90flds &, const F90flds &);
     void soca_b_randomize_f90(const F90bmat &, const F90flds &);
 
     // -----------------------------------------------------------------------------
     //  Balance operator
     // -----------------------------------------------------------------------------
-    void soca_balance_setup_f90(F90balopmat &, const eckit::Configuration * const *, const F90flds &);
+    void soca_balance_setup_f90(F90balopmat &,
+                                const eckit::Configuration * const *,
+                                const F90flds &);
     void soca_balance_delete_f90(F90balopmat &);
-    void soca_balance_mult_f90(const F90balopmat &, const F90balopmat &, F90balopmat &);
-    void soca_balance_multinv_f90(const F90balopmat &, const F90balopmat &, F90balopmat &);
-    void soca_balance_multad_f90(const F90balopmat &, const F90balopmat &, F90balopmat &);
-    void soca_balance_multinvad_f90(const F90balopmat &, const F90balopmat &, F90balopmat &);
-    
+    void soca_balance_mult_f90(const F90balopmat &, const F90balopmat &,
+                               F90balopmat &);
+    void soca_balance_multinv_f90(const F90balopmat &, const F90balopmat &,
+                                  F90balopmat &);
+    void soca_balance_multad_f90(const F90balopmat &, const F90balopmat &,
+                                 F90balopmat &);
+    void soca_balance_multinvad_f90(const F90balopmat &, const F90balopmat &,
+                                    F90balopmat &);
+
     // -----------------------------------------------------------------------------
     //  Standard deviation of background error
     // -----------------------------------------------------------------------------
-    void soca_bkgerr_setup_f90(F90balopmat &, const eckit::Configuration * const *, const F90flds &);
+    void soca_bkgerr_setup_f90(F90balopmat &,
+                               const eckit::Configuration * const *,
+                               const F90flds &);
     void soca_bkgerr_delete_f90(F90balopmat &);
     void soca_bkgerr_mult_f90(const F90balopmat &,
-			      const F90balopmat &,
-			      F90balopmat &);
+                              const F90balopmat &,
+                              F90balopmat &);
     void soca_bkgerr_multad_f90(const F90balopmat,
-				F90balopmat &,
-				const F90balopmat &);
+                                F90balopmat &,
+                                const F90balopmat &);
 
     // -----------------------------------------------------------------------------
     //  Localization matrix
@@ -195,4 +205,4 @@ namespace soca {
     void soca_localization_mult_f90(const F90lclz &, const F90flds &);
   }
 }  // namespace soca
-#endif  // SOCA_SRC_FORTRAN_H_
+#endif  // SRC_FORTRAN_H_

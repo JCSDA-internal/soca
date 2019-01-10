@@ -5,8 +5,8 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#ifndef SOCA_SRC_VERTCONV_H_
-#define SOCA_SRC_VERTCONV_H_
+#ifndef SRC_TRANSFORMS_VERTCONV_VERTCONV_H_
+#define SRC_TRANSFORMS_VERTCONV_VERTCONV_H_
 
 #include <ostream>
 #include <string>
@@ -34,7 +34,8 @@ class VertConv: public util::Printable {
  public:
   static const std::string classname() {return "soca::VertConv";}
 
-  explicit VertConv(const State &, const State &, const Geometry &, const eckit::Configuration &);
+  explicit VertConv(const State &, const State &, const Geometry &,
+                    const eckit::Configuration &);
   ~VertConv();
 
 /// Perform linear transforms
@@ -45,10 +46,10 @@ class VertConv: public util::Printable {
 
  private:
   void print(std::ostream &) const override;
-  int keyFtnConfig_;  
+  int keyFtnConfig_;
   const State & traj_;
 };
 // -----------------------------------------------------------------------------
 
 }  // namespace soca
-#endif  // SOCA_SRC_VERTCONV_H_
+#endif  // SRC_TRANSFORMS_VERTCONV_VERTCONV_H_

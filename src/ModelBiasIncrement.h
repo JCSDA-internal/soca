@@ -5,8 +5,8 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#ifndef SOCA_SRC_MODELBIASINCREMENT_H_
-#define SOCA_SRC_MODELBIASINCREMENT_H_
+#ifndef SRC_MODELBIASINCREMENT_H_
+#define SRC_MODELBIASINCREMENT_H_
 
 #include <iostream>
 
@@ -56,4 +56,4 @@ class ModelBiasIncrement : public util::Printable {
 
 }  // namespace soca
 
-#endif  // SOCA_SRC_MODELBIASINCREMENT_H_
+#endif  // SRC_MODELBIASINCREMENT_H_

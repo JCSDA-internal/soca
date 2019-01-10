@@ -5,8 +5,8 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#ifndef SOCA_SRC_RUN_RUN_H_
-#define SOCA_SRC_RUN_RUN_H_
+#ifndef SRC_RUN_RUN_H_
+#define SRC_RUN_RUN_H_
 
 #include "oops/runs/Run.h"
 
@@ -24,4 +24,4 @@ namespace soca {
 
 }  // namespace soca
 
-#endif  // SOCA_SRC_RUN_RUN_H_
+#endif  // SRC_RUN_RUN_H_

@@ -5,8 +5,8 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#ifndef SOCA_SRC_FIELDS_FIELDS_H_
-#define SOCA_SRC_FIELDS_FIELDS_H_
+#ifndef SRC_FIELDS_FIELDS_H_
+#define SRC_FIELDS_FIELDS_H_
 
 #include <ostream>
 #include <string>
@@ -78,12 +78,12 @@ namespace soca {
       void changeResolution(const Fields &);
       void add(const Fields &);
       void diff(const Fields &, const Fields &);
-  
+
       // Unstructured grid
       void ug_coord(oops::UnstructuredGrid &, const int &) const;
       void field_to_ug(oops::UnstructuredGrid &, const int &) const;
       void field_from_ug(const oops::UnstructuredGrid &);
-  
+
       // Utilities
       void read(const eckit::Configuration &);
       void write(const eckit::Configuration &) const;
@@ -108,4 +108,4 @@ namespace soca {
   // -----------------------------------------------------------------------------
 
 }  // namespace soca
-#endif  // SOCA_SRC_FIELDS_FIELDS_H_
+#endif  // SRC_FIELDS_FIELDS_H_

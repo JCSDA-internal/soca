@@ -5,8 +5,8 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#ifndef SOCA_SRC_MODELBIASCOVARIANCE_H_
-#define SOCA_SRC_MODELBIASCOVARIANCE_H_
+#ifndef SRC_MODELBIASCOVARIANCE_H_
+#define SRC_MODELBIASCOVARIANCE_H_
 
 #include <ostream>
 #include <string>
@@ -51,4 +51,4 @@ class ModelBiasCovariance : public util::Printable,
 
 }  // namespace soca
 
-#endif  // SOCA_SRC_MODELBIASCOVARIANCE_H_
+#endif  // SRC_MODELBIASCOVARIANCE_H_
