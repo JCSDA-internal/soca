@@ -18,12 +18,12 @@ resolution:
   num_sno_lev: 1
 model:
   name: SOCA
-  tstep: P5D
+  tstep: PT1H
   advance_mom6: 1
 cost_function:
   cost_type: 4D-Var
-  window_begin: '2018-04-10T00:00:00Z'
-  window_length: P10D
+  window_begin: '2018-04-14T23:00:00Z'
+  window_length: PT6H
   variables:
   - cicen
   - hicen
@@ -43,7 +43,7 @@ cost_function:
         basename: "./INPUT/"
         ocn_filename: MOM.res.nc
         ice_filename: ice_model.res.nc
-        date: '2018-04-10T00:00:00Z'        
+        date: '2018-04-14T23:00:00Z'        
     Covariance:
       covariance: SocaError
       # General parameters
@@ -85,29 +85,18 @@ cost_function:
       advmode: 0
       # Output parameters  
       diag_interp: bilin
-      date: '2018-04-15T00:00:00Z'
+      date: '2018-04-14T00:00:00Z'
   Jo:
     ObsTypes:
-    - ObsType: ADT
+    - ObsType: SeaSurfaceTemp
       ObsData:
         ObsDataOut:
-          obsfile: Data/test_obsout.nc
+          obsfile: ./Data/sst_obs-2018-04-15-soca-out.nc
         ObsDataIn:
-          obsfile: Data/Jason-2-2018-04-15-soca.nc
-        obsvalue: obs_absolute_dynamic_topography
+          obsfile: ./Data/sst_obs-2018-04-15.nc4
       Covariance:
-        covariance: diagonal
-        obserror: obs_absolute_dynamic_topography_err
-#    - ObsType: InsituTemperature
-#      ObsData:
-#        ObsDataOut:
-#          obsfile: Data/profile_out.nc
-#        ObsDataIn:
-#          obsfile: Data/profile_2018-04-15.nc
-#        obsvalue: insitu_temperature
-#      Covariance:
-#        covariance: diagonal
-#        obserror: insitu_temperature_err
+        covariance: diagonal      
+
 variational:
   iteration:
   - resolution:
@@ -117,9 +106,9 @@ variational:
     linearmodel:
       varchange: Identity
       version: IdTLM
-      tstep: P5D
+      tstep: PT1H
       advance_mom6: 0      
-    ninner: 1
+    ninner: 10
     gradient_norm_reduction: 1e-15
     test: 'on'
   - resolution:
@@ -129,9 +118,9 @@ variational:
     linearmodel:
       varchange: Identity
       version: IdTLM
-      tstep: P5D
+      tstep: PT1H
       advance_mom6: 0      
-    ninner: 1
+    ninner: 10
     gradient_norm_reduction: 1e-15
     test: 'on'    
 minimizer:
