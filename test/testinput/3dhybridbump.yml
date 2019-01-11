@@ -1,3 +1,4 @@
+test_framework_runtime_config: "--log_level=test_suite"
 resolution: 
   num_ice_cat: 5
   num_ice_lev: 4
@@ -237,14 +238,5 @@ variational:
     linearmodel:
       varchange: Identity
       version: IdTLM
-      tstep: PT1H
-    ninner: 1
-    gradient_norm_reduction: 1e-5
-    test: on
-minimizer:
-  algorithm: DRPCG #DRIPCG    
-final: 
- diagnostics: 
-  departures: oman
- prints: 
-  frequency: PT1H
+  tstep: PT1H
+  advance_mom6: 1
