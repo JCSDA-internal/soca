@@ -108,7 +108,7 @@ variational:
       version: IdTLM
       tstep: PT1H
       advance_mom6: 0      
-    ninner: 10
+    ninner: 1
     gradient_norm_reduction: 1e-15
     test: 'on'
   - resolution:
@@ -120,7 +120,7 @@ variational:
       version: IdTLM
       tstep: PT1H
       advance_mom6: 0      
-    ninner: 10
+    ninner: 1
     gradient_norm_reduction: 1e-15
     test: 'on'    
 minimizer:
