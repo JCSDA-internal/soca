@@ -222,11 +222,11 @@ cost_function:
           obsfile: ./Data/Jason-2-2018-04-15.nc
       Covariance:
         covariance: diagonal
-#      ObsFilters:
-#      - Filter: Background Check
-#        variables:
-#        - obs_absolute_dynamic_topography
-#        threshold: 3
+      ObsFilters:
+      - Filter: Background Check
+        variables:
+        - obs_absolute_dynamic_topography
+        threshold: 3
 #      - Filter: GOMsaver
 #        filename: ./Data/testgeovl.nc
 #    - ObsType: InsituTemperature
@@ -243,40 +243,40 @@ cost_function:
 #        variables:
 #        - insitu_temperature
 #        threshold: 3
-    - ObsType: SeaIceFraction
-      ObsData:
-        ObsDataOut:
-          obsfile: ./Data/icec-2018-04-15-soca-out.nc
-        ObsDataIn:
-          obsfile: ./Data/icec-2018-04-15.nc
-      Covariance:
-        covariance: diagonal
+#    - ObsType: SeaIceFraction
+#      ObsData:
+#        ObsDataOut:
+#          obsfile: ./Data/icec-2018-04-15-soca-out.nc
+#        ObsDataIn:
+#          obsfile: ./Data/icec-2018-04-15.nc
+#      Covariance:
+#        covariance: diagonal
 #      ObsFilters:
 #      - Filter: Background Check
 #        variables:
 #        - obs_sea_ice_concentration
 #        threshold: 3
-    - ObsType: SeaIceThickness
-      ObsData:
-        ObsDataOut:
-          obsfile: ./Data/cryosat2-2018-04-15-soca-out.nc
-        ObsDataIn:
-          obsfile: ./Data/cryosat2-2018-04-15.nc
-      Covariance:
-        covariance: diagonal
+#    - ObsType: SeaIceThickness
+#      ObsData:
+#        ObsDataOut:
+#          obsfile: ./Data/cryosat2-2018-04-15-soca-out.nc
+#        ObsDataIn:
+#          obsfile: ./Data/cryosat2-2018-04-15.nc
+#      Covariance:
+#        covariance: diagonal
 #      ObsFilters:
 #      - Filter: Background Check
 #        variables:
 #        - obs_sea_ice_thickness
 #        threshold: 3
-    - ObsType: SeaSurfaceTemp
-      ObsData:
-        ObsDataOut:
-          obsfile: ./Data/sst_obs-2018-04-15-soca-out.nc
-        ObsDataIn:
-          obsfile: ./Data/sst_obs-2018-04-15.nc4
-      Covariance:
-        covariance: diagonal
+#    - ObsType: SeaSurfaceTemp
+#      ObsData:
+#        ObsDataOut:
+#          obsfile: ./Data/sst_obs-2018-04-15-soca-out.nc
+#        ObsDataIn:
+#          obsfile: ./Data/sst_obs-2018-04-15.nc4
+#      Covariance:
+#        covariance: diagonal
 #      ObsFilters:
 #      - Filter: Background Check
 #        variables:

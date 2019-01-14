@@ -13,18 +13,25 @@
 #include "oops/base/ObsFilterBase.h"
 #include "oops/interface/ObsFilter.h"
 #include "ufo/BackgroundCheck.h"
-// #include "ufo/qcfilters/domaincheck/DomainCheck.h"
+#include "ufo/BlackList.h"
+#include "ufo/ObsBoundsCheck.h"
+#include "ufo/ObsDomainCheck.h"
+#include "ufo/ObsPreQC.h"
 
 namespace soca {
 
   void instantiateObsFilterFactory() {
     oops::instantiateObsFilterFactory<Traits>();
-    static oops::FilterMaker<Traits,
-                             oops::ObsFilter<Traits, ufo::BackgroundCheck>>
+    static oops::FilterMaker<Traits, oops::ObsFilter<Traits, ufo::ObsPreQC>>
+      makerChkpreqc_("PreQC");
+    static oops::FilterMaker<Traits, oops::ObsFilter<Traits, ufo::ObsDomainCheck>>
+      makerChkdomaincheck_("Domain Check");
+    static oops::FilterMaker<Traits, oops::ObsFilter<Traits, ufo::ObsBoundsCheck>>
+      makerChkbndcheck_("Bounds Check");
+    static oops::FilterMaker<Traits, oops::ObsFilter<Traits, ufo::BlackList>>
+      makerChkblcklist_("BlackList");
+    static oops::FilterMaker<Traits, oops::ObsFilter<Traits, ufo::BackgroundCheck>>
       makerBkgChk_("Background Check");
-    // static oops::FilterMaker<Traits,
-    //                          oops::ObsFilter<Traits, ufo::DomainCheck>>
-    //  makerDmChk_("Domain Check");
   }
 }  // namespace soca
 
