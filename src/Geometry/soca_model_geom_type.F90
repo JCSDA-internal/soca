@@ -280,16 +280,16 @@ contains
     allocate(self%ij(2,ns))
 
     ! Save shoreline + ocean grid point
-    cnt = 1
-    do i = is, ie
-       do j = js, je
-          if (shoretest.gt.0.0d0) then
-             self%ij(1, cnt) = i
-             self%ij(2, cnt) = j
-             cnt = cnt + 1
-          end if
-       end do
-    end do
+!!$    cnt = 1
+!!$    do i = is, ie
+!!$       do j = js, je
+!!$          if (shoretest.gt.0.0d0) then
+!!$             self%ij(1, cnt) = i
+!!$             self%ij(2, cnt) = j
+!!$             cnt = cnt + 1
+!!$          end if
+!!$       end do
+!!$    end do
     
   end subroutine geom_validindex
   

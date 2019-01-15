@@ -114,12 +114,12 @@ contains
     integer, save :: bumpid = 2000
 
     if (locs%nlocs==0) return
-    
     call check(fld)
+
     call initialize_interph(fld, locs, horiz_interp, bumpid)
-    call interp_tl(fld, locs, vars, geovals, horiz_interp)    
+    call interp_tl(fld, locs, vars, geovals, horiz_interp)
     bumpid = bumpid + 1
-    
+
   end subroutine getvalues_notraj
   
   ! ------------------------------------------------------------------------------

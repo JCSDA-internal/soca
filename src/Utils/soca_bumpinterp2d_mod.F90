@@ -83,12 +83,13 @@ contains
     allocate(tmp_lonmod(ns), tmp_latmod(ns), tmp_maskmod(ni, nj))
     tmp_lonmod(:) = reshape(mod_lon, (/ns/))
     tmp_latmod(:) = reshape(mod_lat, (/ns/))
-    tmp_maskmod = .false.
-    where(mod_mask==1.0)
-       tmp_maskmod = .true.
-    end where
+    ! TODO: Fix interp with mask
+!!$   tmp_maskmod = .false.
+!!$    where(mod_mask==1.0)
+!!$       tmp_maskmod = .true.
+!!$    end where
     tmp_maskmod = reshape(tmp_maskmod, (/ns, 1/))
-    !tmp_maskmod = .true.
+    tmp_maskmod = .true.
 
     ! Rotate longitudes
     where (tmp_lonmod < -180.0_kind_real)
