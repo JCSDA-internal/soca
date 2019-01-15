@@ -22,7 +22,15 @@ Observations:
   - ObsType: ADT
     ObsData:
       ObsDataOut:
-        obsfile: Data/test_obsout.nc
+        obsfile: Data/profile_2018-04-15-hofx-out.nc
+      ObsDataIn:
+        obsfile: ./Data/profile_2018-04-15.nc
+    Covariance:
+      covariance: diagonal
+  - ObsType: ADT
+    ObsData:
+      ObsDataOut:
+        obsfile: Data/Jason-2-2018-04-15-hofx-out.nc
       ObsDataIn:
         obsfile: ./Data/Jason-2-2018-04-15.nc
     Covariance:
@@ -30,7 +38,7 @@ Observations:
   - ObsType: SeaSurfaceTemp
     ObsData:
       ObsDataOut:
-        obsfile: ./Data/sst_obs-2018-04-15-soca-out.nc
+        obsfile: ./Data/sst_obs-2018-04-15-hofx-out.nc4
       ObsDataIn:
         obsfile: ./Data/sst_obs-2018-04-15.nc4
     Covariance:
@@ -38,7 +46,7 @@ Observations:
   - ObsType: SeaIceFraction
     ObsData:
       ObsDataOut:
-        obsfile: ./Data/icec-2018-04-15-soca-out.nc
+        obsfile: ./Data/icec-2018-04-15-hofx-out.nc
       ObsDataIn:
         obsfile: ./Data/icec-2018-04-15.nc
     Covariance:

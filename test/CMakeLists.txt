@@ -16,6 +16,7 @@ list( APPEND soca_test_input
   testinput/vertconv.yml
   testinput/genenspert.yml
   testinput/static_SocaError_init.yml
+  testinput/static_SocaLoc_init.yml
   testinput/static_SocaError_test.yml
   compare.sh
   run.sh
@@ -172,6 +173,13 @@ ecbuild_add_test( TARGET test_soca_socaerror_init
                   ARGS "mpirun -np 2 ${CMAKE_BINARY_DIR}/bin/soca_staticbinit.x testinput/static_SocaError_init.yml"
                   DEPENDS soca_staticbinit.x )
 
+ecbuild_add_test( TARGET test_soca_socaloc_init
+                  TYPE SCRIPT
+		  #MPI     4
+		  COMMAND "./run.sh"
+                  ARGS "mpirun -np 2 ${CMAKE_BINARY_DIR}/bin/soca_staticbinit.x testinput/static_SocaLoc_init.yml"
+                  DEPENDS soca_staticbinit.x )
+		
 ecbuild_add_test( TARGET test_soca_socaerror_serial_init
                   TYPE SCRIPT
 		  #MPI     4
@@ -296,7 +304,7 @@ ecbuild_add_test( TARGET test_soca_hofx
                   TYPE SCRIPT
 		  #MPI     4
                   COMMAND "./run.sh"
-                  ARGS "mpirun -np 2 ${CMAKE_BINARY_DIR}/bin/soca_hofx.x testinput/hofx-adt.yml"             
+                  ARGS "mpirun -np 2 ${CMAKE_BINARY_DIR}/bin/soca_hofx.x testinput/hofx.yml"             
                   DEPENDS soca_hofx.x )
 
 ecbuild_add_test( TARGET test_soca_3dvar
