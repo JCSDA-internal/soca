@@ -225,6 +225,7 @@ THICKNESS_CONFIG = "file"       !
                                 !     rossby_front - a mixed layer front in thermal wind balance.
                                 !     USER - call a user modified routine.
 THICKNESS_FILE = "MOM.res.nc"   ! The name of the thickness file.
+REGRIDDING_COORDINATE_MODE = "SIGMA"
 ADJUST_THICKNESS = True         !   [Boolean] default = False
                                 ! If true, all mass below the bottom removed if the
                                 ! topography is shallower than the thickness input file

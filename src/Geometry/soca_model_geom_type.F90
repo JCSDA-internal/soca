@@ -12,6 +12,8 @@ module soca_model_geom_type
   use soca_mom6
   use kinds
   use fckit_mpi_module
+  use mpp_domains_mod, only : mpp_get_compute_domain, mpp_get_data_domain
+  use mpp_domains_mod, only : mpp_update_domains
   
   implicit none
   private
@@ -124,31 +126,40 @@ contains
 
     integer :: nxny(2), nx, ny
     integer :: is, ie, js, je, nzo, nzi, nzs
+    integer :: isd, ied, jsd, jed    
 
-    ! Get indices of compute domain
-    is   = self%G%isc  ; ie   = self%G%iec
-    js   = self%G%jsc  ; je   = self%G%jec ; nzo = self%G%ke
-
+    ! Get indices of data and compute domain
+    call geom_get_domain_indices(self, "compute", is, ie, js, je)
+    call geom_get_domain_indices(self, "data   ", isd, ied, jsd, jed)        
+    nzo = self%G%ke
+    
     ! Extract geometry of interest from model's data structure.
     ! Common to ocean & sea-ice
     ! No halo grid size
-    nxny = shape( self%G%GeoLonT(is:ie,js:je) )
+    ! TODO: Probably obsolete, remove 
+    nxny = shape( self%G%GeoLonT )
     nx = nxny(1)
     ny = nxny(2)
     self%nx = nx
     self%ny = ny
 
     ! Allocate arrays on compute domain
-    allocate(self%lon(is:ie,js:je))
-    allocate(self%lat(is:ie,js:je))
-    allocate(self%mask2d(is:ie,js:je))
-    allocate(self%cell_area(is:ie,js:je))
-    allocate(self%rossby_radius(is:ie,js:je))
-    
-    self%lon(is:ie,js:je) = self%G%GeoLonT(is:ie,js:je)
-    self%lat(is:ie,js:je) = self%G%GeoLatT(is:ie,js:je)
-    self%mask2d(is:ie,js:je) = self%G%mask2dT(is:ie,js:je)
-    self%cell_area(is:ie,js:je) = self%G%areaT(is:ie,js:je)
+    allocate(self%lon(isd:ied,jsd:jed))
+    allocate(self%lat(isd:ied,jsd:jed))
+    allocate(self%mask2d(isd:ied,jsd:jed))
+    allocate(self%cell_area(isd:ied,jsd:jed))
+    allocate(self%rossby_radius(isd:ied,jsd:jed))
+
+    self%lon = self%G%GeoLonT
+    self%lat = self%G%GeoLatT
+    self%mask2d = self%G%mask2dT
+    self%cell_area  = self%G%areaT
+
+    ! Fill halo
+    call mpp_update_domains(self%lon, self%G%Domain%mpp_domain)
+    call mpp_update_domains(self%lat, self%G%Domain%mpp_domain)    
+    call mpp_update_domains(self%mask2d, self%G%Domain%mpp_domain)
+    call mpp_update_domains(self%cell_area, self%G%Domain%mpp_domain)
 
     ! Ocean levels
     self%nzo = self%G%ke
@@ -226,10 +237,7 @@ contains
     call kdtree%create(mpl, n, lon, lat,mask)
 
     !--- Find nearest neighbor    
-    isc   = self%G%isc
-    iec   = self%G%iec
-    jsc   = self%G%jsc
-    jec   = self%G%jec
+    call geom_get_domain_indices(self, "compute", isc, iec, jsc, jec)
 
     nn=1 ! Num neighbors
     do i = isc, iec
@@ -344,26 +352,31 @@ contains
 
   ! ------------------------------------------------------------------------------
   
-  subroutine geom_get_domain_indices(self, domain_type, is, ie, js, je)
+  subroutine geom_get_domain_indices(self, domain_type, is, ie, js, je, local)
     ! Short cut to extract array bounds of compute or data domain
     
     implicit none
 
-    class(soca_model_geom), intent(in)  :: self
+    class(soca_model_geom),  intent(in) :: self
     character(7),            intent(in) :: domain_type
     integer,                intent(out) :: is, ie, js, je
+    logical,       optional, intent(in) :: local
+    integer :: isc, iec, jsc, jec    
+    integer :: isd, ied, jsd, jed
 
+    call mpp_get_compute_domain(self%G%Domain%mpp_domain,isc,iec,jsc,jec)
+    call mpp_get_data_domain(self%G%Domain%mpp_domain,isd,ied,jsd,jed)
+    if (present(local)) then
+       isc = isc - (isd-1) ; iec = iec - (isd-1) ; ied = ied - (isd-1) ; isd = 1
+       jsc = jsc - (jsd-1) ; jec = jec - (jsd-1) ; jed = jed - (jsd-1) ; jsd = 1
+    end if
+    
     select case (trim(domain_type))
     case ("compute")
-       is = self%G%isc
-       ie = self%G%iec
-       js = self%G%jsc
-       je = self%G%jec
-    case ("data   ")
-       is = self%G%isd
-       ie = self%G%ied
-       js = self%G%jsd
-       je = self%G%jed
+       is = isc; ie = iec; js = jsc; je = jec;
+    case ("data")
+       is = isd; ie = ied; js = jsd; je = jed;       
+
     end select
 
   end subroutine geom_get_domain_indices
@@ -372,15 +385,20 @@ contains
 
     implicit none
     
-    class(soca_model_geom),             intent(in) :: self
-    real(kind=kind_real),               intent(in) :: h(:,:,:) ! Layer thickness 
-    real(kind=kind_real), allocatable, intent(out) :: z(:,:,:) ! Mid-layer depth
+    class(soca_model_geom),    intent(in) :: self
+    real(kind=kind_real),      intent(in) :: h(:,:,:) ! Layer thickness 
+    real(kind=kind_real),   intent(inout) :: z(:,:,:) ! Mid-layer depth
 
     integer :: is, ie, js, je, i, j, k
 
-    ! Should check shape of z 
-    call geom_get_domain_indices(self, "compute", is, ie, js, je)
-    allocate(z(is:ie, js:je, self%nzo))    
+    ! Should check shape of z
+    is = lbound(h,dim=1)
+    ie = ubound(h,dim=1)
+    js = lbound(h,dim=2)
+    je = ubound(h,dim=2)        
+    !call geom_get_domain_indices(self, "compute", is, ie, js, je)
+
+    !allocate(z(is:ie, js:je, self%nzo))
 
     do i = is, ie
        do j = js, je

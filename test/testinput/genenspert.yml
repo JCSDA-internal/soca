@@ -18,7 +18,7 @@ variables:
 model: 
  name: SOCA
  tstep: PT6H
- advance_mom6: 0 
+ advance_mom6: 1 
 initial:
  read_from_file: 1
  basename: ./INPUT/
@@ -186,7 +186,7 @@ Covariance:
      - ssh
      - hocn  
 members: 4
-forecast_length: P5D #PT1H
+forecast_length: PT6H #P5D #PT1H
 output: 
  frequency: PT6H
  datadir: Data

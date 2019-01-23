@@ -28,7 +28,7 @@ module soca_fields
   use duration_mod  
   use fckit_log_module, only : log
   use fckit_mpi_module, only: fckit_mpi_comm, fckit_mpi_sum
-  
+    use MOM_remapping,       only : remapping_CS, initialize_remapping, remapping_core_h  
   implicit none
 
   private
@@ -40,7 +40,7 @@ module soca_fields
        & read_file, write_file, gpnorm, fldrms, soca_fld2file, &
        & change_resol, check, &
        & field_to_ug, field_from_ug, ug_coord
-  public :: soca_field_registry
+  public :: soca_field_registry, soca_column_model2da
 
   interface create
      module procedure create_constructor, create_copy
@@ -63,8 +63,12 @@ module soca_fields
      real(kind=kind_real), allocatable :: socn(:,:,:)    !< Ocean Practical Salinity         (nx,ny,nzo)
      real(kind=kind_real), allocatable :: tocn(:,:,:)    !< Ocean Potential Temperature, ref to p=0      (nx,ny,nzo)
      real(kind=kind_real), allocatable :: ssh(:,:)       !< Sea-surface height (nx,ny,nzo)
-     real(kind=kind_real), allocatable :: hocn(:,:,:)    !< Layer thickness (nx,ny,nzo)
+     real(kind=kind_real), allocatable :: hocn(:,:,:)    !< DA layer thickness (nx,ny,nzo)
 
+     ! MOM6 internal state
+     real(kind=kind_real), allocatable :: socn_model(:,:,:)
+     real(kind=kind_real), allocatable :: tocn_model(:,:,:)
+     real(kind=kind_real), allocatable :: hocn_model(:,:,:)
      ! Ocean diagnostics
      real(kind=kind_real), allocatable :: mld(:,:)       !< Sea-surface height (nx,ny,nzo)
      real(kind=kind_real), allocatable :: layer_depth(:,:,:) !< Sea-surface height (nx,ny,nz0)
@@ -159,19 +163,24 @@ contains
     nzi = geom%ocean%ice_column%nzi
     nzs = geom%ocean%ice_column%nzs
     nzo = geom%ocean%nzo
-    
+
     ! Indices for data domain (with halo)
-    domain_type = "data"
-    call geom_get_domain_indices(geom%ocean, domain_type, isd, ied, jsd, jed)
+    call geom_get_domain_indices(geom%ocean, "data   ", isd, ied, jsd, jed)    
 
     ! Allocate ocean state
     if (.not.allocated(self%tocn)) allocate(self%tocn(isd:ied,jsd:jed,nzo))
     if (.not.allocated(self%socn)) allocate(self%socn(isd:ied,jsd:jed,nzo))
     if (.not.allocated(self%ssh)) allocate(self%ssh(isd:ied,jsd:jed))
     if (.not.allocated(self%hocn)) allocate(self%hocn(isd:ied,jsd:jed,nzo))
+    if (.not.allocated(self%hocn_model)) allocate(self%hocn_model(isd:ied,jsd:jed,nzo))    
     if (.not.allocated(self%mld)) allocate(self%mld(isd:ied,jsd:jed))
-    if (.not.allocated(self%layer_depth)) allocate(self%layer_depth(isd:ied,jsd:jed,nzo))    
-    
+    if (.not.allocated(self%layer_depth)) allocate(self%layer_depth(isd:ied,jsd:jed,nzo))
+
+    ! Allocate mom6 internal state
+    if (.not.allocated(self%tocn_model)) allocate(self%tocn_model(isd:ied,jsd:jed,nzo))
+    if (.not.allocated(self%socn_model)) allocate(self%socn_model(isd:ied,jsd:jed,nzo))
+    if (.not.allocated(self%hocn_model)) allocate(self%hocn_model(isd:ied,jsd:jed,nzo))
+
     ! Allocate sea-ice state
     km = ncat + 1
     if (.not.allocated(self%cicen)) allocate(self%cicen(isd:ied, jsd:jed, km))
@@ -194,6 +203,11 @@ contains
     deallocate(self%hocn)
     deallocate(self%mld)
     deallocate(self%layer_depth)    
+
+    ! Deallocate mom6 internal state
+    deallocate(self%tocn_model)
+    deallocate(self%socn_model)
+    deallocate(self%hocn_model)
     
     ! Deallocate sea-ice state
     deallocate(self%cicen)
@@ -520,11 +534,44 @@ contains
     type(soca_field), intent(inout) :: self
     type(soca_field), intent(in)    :: rhs
 
+    real(kind=kind_real), allocatable :: incr(:,:,:)
+    integer :: is, ie, js, je, i, j, nz
+    type(remapping_CS)  :: remapCS
+    
     call check(self)
     call check(rhs)
 
     call self_add(self,rhs)
 
+    ! Interpolate and add increment to mom6 internal vertical geometry
+!!$    is = lbound(rhs%tocn_model,dim=1)
+!!$    ie = ubound(rhs%tocn_model,dim=1)
+!!$    js = lbound(rhs%tocn_model,dim=2)
+!!$    je = ubound(rhs%tocn_model,dim=2)
+!!$    allocate(incr(is:ie, js:je, self%geom%ocean%nzo))
+!!$    nz=self%geom%ocean%nzo
+!!$    call initialize_remapping(remapCS,'PPM_H4')
+!!$    incr=rhs%tocn    
+!!$    do i=is,ie
+!!$       do j=js,je
+!!$          call remapping_core_h(remapCS,&
+!!$               &nz, self%hocn(i,j,:), rhs%tocn(i,j,:),&
+!!$               &nz, self%hocn_model(i,j,:), incr(i,j,:))
+!!$       end do
+!!$    end do
+!!$    self%tocn_model = self%tocn_model + incr
+!!$    
+!!$    incr=rhs%socn    
+!!$    do i=is,ie
+!!$       do j=js,je
+!!$          call remapping_core_h(remapCS,&
+!!$               &nz, self%hocn(i,j,:), rhs%socn(i,j,:),&
+!!$               &nz, self%hocn_model(i,j,:), incr(i,j,:))
+!!$       end do
+!!$    end do    
+!!$    self%socn_model = self%socn_model + incr    
+!!$
+!!$    deallocate(incr)
     return
   end subroutine add_incr
 
@@ -549,7 +596,10 @@ contains
     lhs%socn = x1%socn - x2%socn
     lhs%ssh = x1%ssh - x2%ssh
     lhs%hocn = x1%hocn - x2%hocn
-    print *,'sum(mask)=',sum(x1%geom%ocean%mask2d(:,:))
+
+    lhs%tocn_model = x1%tocn_model - x2%tocn_model
+    lhs%socn_model = x1%socn_model - x2%socn_model
+
   end subroutine diff_incr
 
   ! ------------------------------------------------------------------------------
@@ -570,6 +620,7 @@ contains
 
   subroutine read_file(fld, c_conf, vdate)
 
+    use MOM_remapping,       only : remapping_CS, initialize_remapping, remapping_core_h
     use iso_c_binding
     use datetime_mod
     use fckit_log_module, only : log
@@ -579,6 +630,7 @@ contains
     use fms_io_mod,       only : restore_state, query_initialized
     use fms_io_mod,       only : fms_io_init, fms_io_exit
     use fms_mod,          only : read_data, write_data, fms_init, fms_end
+    use soca_utils
     
     implicit none
 
@@ -597,8 +649,9 @@ contains
     type(restart_file_type) :: ocean_restart
     integer :: idr, idr_ocean
     integer            :: nobs, nval, pe, ierror
-    integer :: is, ie, js, je, i, j, k, nl
-    
+    integer :: is, ie, js, je, i, j, k, nl, nz
+    type(remapping_CS)  :: remapCS
+
     ! Set default iread to 0
     iread = 0
     if (config_element_exists(c_conf,"read_from_file")) then
@@ -625,6 +678,7 @@ contains
 
        call fms_io_init()
        do ii = 1, fld%nf
+
           select case(fld%fldnames(ii))
           ! Ocean
           case ('ssh')
@@ -637,7 +691,7 @@ contains
              idr_ocean = register_restart_field(ocean_restart, ocn_filename, 'Salt', fld%socn(:,:,:), &
                   domain=fld%geom%ocean%G%Domain%mpp_domain)  
           case ('hocn')
-             idr_ocean = register_restart_field(ocean_restart, ocn_filename, 'h', fld%hocn(:,:,:), &
+             idr_ocean = register_restart_field(ocean_restart, ocn_filename, 'h', fld%hocn_model(:,:,:), &
                   domain=fld%geom%ocean%G%Domain%mpp_domain)
           ! Sea-ice   
           case ('cicen')
@@ -650,17 +704,21 @@ contains
              call log%warning("soca_fields:read_file: Not reading var "//fld%fldnames(ii))
           end select
        end do
-
+       
        call restore_state(sis_restart, directory='')
        call restore_state(ocean_restart, directory='')
        call fms_io_exit()
 
-       ! Indices for compute domain (no halo)
+       ! Set mom6 internals
+       fld%tocn_model = fld%tocn
+       fld%socn_model = fld%socn
+       
+       ! Indices for compute domain
        call geom_get_domain_indices(fld%geom%ocean, "compute", is, ie, js, je)
 
-       ! Initialize mid-layer depth from layer thickness   
-       call fld%geom%ocean%thickness2depth(fld%hocn, fld%layer_depth)
-    
+       ! Initialize model's mid-layer depth from layer thickness
+       call fld%geom%ocean%thickness2depth(fld%hocn_model, fld%layer_depth)
+       
        ! Compute mixed layer depth TODO: Move somewhere else ...
        do i = is, ie
           do j = js, je
@@ -671,6 +729,21 @@ contains
                   &fld%geom%ocean%lat(i,j))
           end do
        end do
+       
+       ! Set DA layer thickness
+       ! TODO: Pass verticall coordinate type through config
+       nz=fld%geom%ocean%nzo
+       do i=is,ie
+          do j=js,je
+             fld%hocn(i,j,:) = sum(fld%hocn_model(i,j,:))/real(nz,kind=kind_real)
+          end do
+       end do
+
+       ! Reset mid-layer depth from DA layer thickness
+       call fld%geom%ocean%thickness2depth(fld%hocn, fld%layer_depth)
+
+       ! Interpolate T & S: Model --> DA 
+       call soca_column_model2da(fld)
        
        ! Set vdate if reading state
        if (iread==1) then
@@ -742,11 +815,11 @@ contains
     !call clean_ocean(fld)
     call soca_write_restart(fld, c_conf, vdate)
 
-!!$    filename = genfilename(c_conf,max_string_length,vdate)
+!!$    filename = soca_genfilename(c_conf,max_string_length,vdate)
 !!$    WRITE(buf,*) 'field:write_file: writing '//filename
 !!$    call fckit_log%info(buf)
 !!$
-!!$    call fld2file(fld, filename)
+!!$    call soca_fld2file(fld, filename)
 
   end subroutine write_file
 
@@ -1258,6 +1331,34 @@ contains
 
   end function soca_genfilename
 
+  ! ------------------------------------------------------------------------------
+  
+  subroutine soca_column_model2da(fld)
+    
+    implicit none
+
+    type(soca_field), intent(inout) :: fld      !< Fields
+    
+    type(remapping_CS)  :: remapCS
+    integer :: is, ie, js, je, i, j, nz
+    
+    ! Indices for compute domain (no halo)
+    call geom_get_domain_indices(fld%geom%ocean, "data   ", is, ie, js, je)
+
+    ! Remap Temp and Salt to DA vertical coordinate
+    nz=fld%geom%ocean%nzo    
+    call initialize_remapping(remapCS,'PPM_H4')
+    do i=is,ie
+       do j=js,je
+          call remapping_core_h(remapCS,nz, fld%hocn_model(i,j,:), fld%tocn(i,j,:),&
+                  &nz, fld%hocn(i,j,:), fld%tocn(i,j,:))
+          call remapping_core_h(remapCS,nz, fld%hocn_model(i,j,:), fld%socn(i,j,:),&
+                                  &nz, fld%hocn(i,j,:), fld%socn(i,j,:))
+       end do
+    end do
+
+  end subroutine soca_column_model2da
+  
   ! ------------------------------------------------------------------------------
 
   subroutine clean_ocean(fld)

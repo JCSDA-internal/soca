@@ -10,6 +10,7 @@ module soca_utils
   private
   public :: write2pe, soca_clean_vertical
   public :: soca_rho, soca_diff, soca_mld
+
 contains
 
   ! ------------------------------------------------------------------------------
@@ -225,5 +226,5 @@ contains
        stop "Stopped"
     end if
   end subroutine nc_check
-  
+
 end module soca_utils

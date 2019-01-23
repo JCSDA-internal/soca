@@ -63,6 +63,9 @@ module soca_mom6
   use MOM_io,              only : APPEND_FILE, ASCII_FILE, READONLY_FILE, SINGLE_FILE
   use MOM_open_boundary,   only : ocean_OBC_type
   use MOM_restart,         only : MOM_restart_CS, save_restart
+  use MOM_remapping,       only : remapping_CS, initialize_remapping, remapping_core_h
+  use MOM_regridding,      only : regridding_CS, initialize_regridding
+  use MOM_regridding,      only : regridding_main, set_regrid_params
   use MOM_string_functions,only : uppercase
   use MOM_surface_forcing, only : set_forcing, forcing_save_restart
   use MOM_surface_forcing, only : surface_forcing_init, surface_forcing_CS
@@ -104,7 +107,7 @@ module soca_mom6
     type(surface)      :: sfc_state  !< Pointers to the ocean surface state fields.
     real               :: dt_forcing !< Coupling time step in seconds.
     type(directories)  :: dirs       !< Relevant dirs/path
-    type(time_type)    :: Time !< Model's time before call to step_MOM.
+    type(time_type)    :: Time       !< Model's time before call to step_MOM.
     type(ocean_grid_type),    pointer :: grid !< Grid metrics
     type(verticalGrid_type),  pointer :: GV   !< Vertical grid     
     type(MOM_control_struct), pointer :: MOM_CSp  !< Tracer flow control structure.
@@ -117,7 +120,11 @@ contains
   ! ------------------------------------------------------------------------------
 
   subroutine soca_geom_init(G, GV, ice_column, c_conf)
-
+    use regrid_consts, only : REGRIDDING_SIGMA_STRING
+    use MOM_ALE, only : ALE_CS, ALE_initThicknessToCoord, ALE_init, ALE_updateVerticalGridType
+    use mpp_domains_mod, only : mpp_get_compute_domain, mpp_get_data_domain
+    use MOM_remapping,        only : remapping_core_h
+    
     implicit none
 
     type(ocean_grid_type),            intent(out) :: G          !< The horizontal grid type (same for ice & ocean)
@@ -134,7 +141,15 @@ contains
     type(ocean_OBC_type),          pointer :: OBC => NULL()             !< Ocean boundary condition
     type(fckit_mpi_comm) :: f_comm
 
-
+    ! Regridding stuff
+    type(regridding_CS) :: regridCS !< ALE control structure for regridding
+    type(remapping_CS)  :: remapCS  !< ALE control structure for remapping
+    real :: max_depth !<
+    character(len=30) :: coord_mode
+    logical, save :: regrid_initialized = .false.
+    type(ALE_CS), pointer :: ALECS=>NULL() !< ALE control structure for DA    
+    real(kind=kind_real), allocatable :: h_da(:,:,:), h_model(:,:,:), t_da(:),t_model(:)
+    integer :: isd,ied,jsd,jed,i,j,k,nz
     f_comm = fckit_mpi_comm()
     call mpp_init(localcomm=f_comm%communicator())
 
@@ -202,7 +217,8 @@ contains
   subroutine soca_mom6_init(mom6_config)
 
     use MOM_diag_mediator,   only : diag_ctrl, diag_mediator_close_registration
-
+    use regrid_consts, only : REGRIDDING_SIGMA_STRING
+    
     implicit none
 
     type(time_type) :: Start_time         ! The start time of the simulation.
@@ -241,8 +257,15 @@ contains
 
     integer :: param_int
 
-    type(soca_mom6_config), intent(out) :: mom6_config
+    type(regridding_CS) :: regridCS !< ALE control structure for regridding
+    type(remapping_CS)  :: remapCS  !< ALE control structure for remapping
+    real :: max_depth !<
+    character(len=30) :: coord_mode
+    logical, save :: regrid_initialized = .false.
+
     
+    type(soca_mom6_config), intent(out) :: mom6_config
+
     call MOM_infra_init() ; call io_infra_init()
 
     call MOM_mesg('======== Model being driven by soca ========', 2)
@@ -317,6 +340,20 @@ contains
          & mom6_config%Time, Time_step_ocean, mom6_config%grid, &
          surface_forcing_CSp)
 
+    ! Initialization of vertical remapping
+!!$    print *,' ============== init:',regrid_initialized
+!!$    if (regrid_initialized .eqv. .false.) then
+!!$       max_depth = 1.0
+!!$       coord_mode = REGRIDDING_SIGMA_STRING
+!!$       call initialize_regridding(regridCS, mom6_config%GV,&
+!!$         &real(max_depth,kind=8),param_file,'soca_mom6',coord_mode,'','')
+!!$    !call initialize_remapping(remapCS,'PLM')
+!!$    !call set_regrid_params(regridCS, min_thickness=real(0.,kind=8))
+!!$    !call mpp_get_data_domain(G%Domain%mpp_domain,isd,ied,jsd,jed)
+!!$       regrid_initialized = .true.
+!!$    end if
+!!$    print *,' ============== init:',regrid_initialized
+!!$    read(*,*)
   end subroutine soca_mom6_init
 
   ! ------------------------------------------------------------------------------
@@ -341,5 +378,5 @@ contains
     call MOM_end(mom6_config%MOM_CSp)
 
   end subroutine soca_mom6_end
-  
+
 end module soca_mom6

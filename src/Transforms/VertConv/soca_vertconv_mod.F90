@@ -64,7 +64,8 @@ contains
     self%bkg => bkg
     
     ! Indices for compute domain (no halo)
-    call geom_get_domain_indices(bkg%geom%ocean, "compute", isc, iec, jsc, jec)
+    call geom_get_domain_indices(bkg%geom%ocean, "compute", &
+         &isc, iec, jsc, jec)
     self%isc=isc; self%iec=iec; self%jsc=jsc; self%jec=jec
   
   end subroutine soca_conv_setup
@@ -133,7 +134,6 @@ contains
 
     lz = self%lz
     nl = size(self%bkg%layer_depth,3)
-
     allocate(z(nl), zp(nl), lzd(nl))
     do id = self%isc, self%iec
        do jd = self%jsc, self%jec

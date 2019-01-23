@@ -14,7 +14,8 @@ matplotlib.rc('font', **font)
 # Analysis increment
 #fname_ana='/home/gvernier/Sandboxes/soca/bmatrix2/soca-bundle/build/soca/test/Data/3dvar.an.sshonly.2018-04-15T00:00:00Z.nc' #3dvar.an.2018-04-15T00:00:00Z.nc'
 
-baseexp='/home/gvernier/Sandboxes/soca/soca-bundle-mom6/build-release/soca/test-ams'
+baseexp='/home/gvernier/Sandboxes/soca/soca-bundle-mom6/build-release/soca/test'
+#fname_ana=baseexp+'/Data/ocn.3dvar.an.2018-04-15T00:00:00Z.nc'
 fname_ana=baseexp+'/Data/ocn.3dvar.an.2018-04-15T00:00:00Z.nc'
 fname_bkg=baseexp+'/Data/ocn.Id.fc.2018-04-15T00:00:00Z.P1D.nc'
 #fname_bkgerror='/home/gvernier/Sandboxes/soca/soca-bundle-mom6/build-release/soca/test-ams/soca_bkgerror.nc'
@@ -23,12 +24,17 @@ oana=OceanState(fname_ana, maptype='R')
 obkg=OceanState(fname_bkg, maptype='R')
 #bkgerr=OceanState(fname_bkgerror, maptype='R')
 
-#bkgerr.plot_vert_section(obkg,fignum=2)
-#plt.show()
-
-
-oana.plot_horiz_section(obkg,vars=['ssh'],fignum=1)
+oana.plot_horiz_section(obkg,vars=['salt'],fignum=1)
 plt.show()
+
+oana.plot_vert_section(obkg,fignum=2)
+plt.show()
+
+bkgerr.plot_vert_section(obkg,fignum=2)
+plt.show()
+
+
+
 
 #obkg.plot_horiz_section(oana,vars=['ssh'],fignum=1)
 #plt.show()

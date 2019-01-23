@@ -101,11 +101,11 @@ class OceanState:
 
         plt.figure(num=fignum)
 
-        #plt.subplot(211)
+        plt.subplot(211)
         #print 'min temp:',np.min(self.temp[:,j,:]-other.temp[:,j,:])
         #print 'max temp:',np.max(self.temp[:,j,:]-other.temp[:,j,:])
                          
-        incr = np.squeeze(self.temp[:,j,:])#-other.temp[:,j,:])
+        incr = np.squeeze(self.temp[:,j,:]-other.temp[:,j,:])
 
         depth=np.sum(other.h[:,j,:],axis=0)
         mask=np.ones(np.shape(depth))
@@ -115,10 +115,11 @@ class OceanState:
         for k in range(np.shape(incr)[0]):
             incr[k,:]=mask*incr[k,:]/self.grid.mask[j,:]
 
-        #vmin=np.min(incr)
-        #vmax=np.max(incr)
-        vmin=0.0 #-3 #np.min(incr)
-        vmax=31.0 #3 #abs(np.min(incr)) #np.max(incr)                
+        vmin=np.min(incr)
+        vmax=np.max(incr)
+        print vmin,vmax
+        #vmin=0.0 #-3 #np.min(incr)
+        #vmax=31.0 #3 #abs(np.min(incr)) #np.max(incr)                
         clevs = np.linspace(vmin, vmax, 41)
         plt.contourf(x,z,incr, clevs, extend='both',cmap=cm.seismic)
         cbar=plt.colorbar(shrink=0.6,format="%.1f")
@@ -131,7 +132,7 @@ class OceanState:
         #plt.xlim((-215, -195))
 
         #cbar.set_label('[K]', rotation=270)
-        return
+        #return
         plt.subplot(212)
         incr = self.salt[:,j,:]-other.salt[:,j,:]
 
