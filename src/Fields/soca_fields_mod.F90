@@ -28,7 +28,9 @@ module soca_fields
   use duration_mod  
   use fckit_log_module, only : log
   use fckit_mpi_module, only: fckit_mpi_comm, fckit_mpi_sum
-    use MOM_remapping,       only : remapping_CS, initialize_remapping, remapping_core_h  
+  use MOM_remapping,       only : remapping_CS, initialize_remapping, remapping_core_h  
+  use mpp_domains_mod, only : mpp_update_domains
+  
   implicit none
 
   private
@@ -708,6 +710,11 @@ contains
        call restore_state(sis_restart, directory='')
        call restore_state(ocean_restart, directory='')
        call fms_io_exit()
+
+       ! Update halo
+       call mpp_update_domains(fld%tocn, fld%geom%ocean%G%Domain%mpp_domain)
+       call mpp_update_domains(fld%socn, fld%geom%ocean%G%Domain%mpp_domain)    
+       call mpp_update_domains(fld%ssh, fld%geom%ocean%G%Domain%mpp_domain)
 
        ! Set mom6 internals
        fld%tocn_model = fld%tocn

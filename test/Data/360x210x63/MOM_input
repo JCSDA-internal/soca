@@ -65,6 +65,9 @@ NK = 63                         !   [nondim]
 ! Parameters providing information about the vertical grid.
 
 ! === module MOM ===
+USE_REGRIDDING = True           !   [Boolean] default = False
+                                ! If True, use the ALE algorithm (regridding/remapping).
+                                ! If False, use the layered isopycnal algorithm.
 THICKNESSDIFFUSE = True         !   [Boolean] default = False
                                 ! If true, interfaces or isopycnal surfaces are diffused,
                                 ! depending on the value of FULL_THICKNESSDIFFUSE.
@@ -203,7 +206,7 @@ CHANNEL_CONFIG = "global_1deg"  ! default = "none"
                                 !       test case.
                                 !     file - Read open face widths everywhere from a
                                 !       NetCDF file on the model grid.
-THICKNESS_CONFIG = "file"       !
+THICKNESS_CONFIG = coord !"file"       !
                                 ! A string that determines how the initial layer
                                 ! thicknesses are specified for a new run:
                                 !     file - read interface heights from the file specified
@@ -552,6 +555,7 @@ ABSORB_ALL_SW = True            !   [Boolean] default = False
                                 ! ocean, instead of passing through to the bottom mud.
 HMIX_MIN = 2.0                  !   [m] default = 0.0
                                 ! The minimum mixed layer depth if the mixed layer depth
+HMIX_FIXED = 0.5				
                                 ! is determined dynamically.
 LIMIT_BUFFER_DETRAIN = True     !   [Boolean] default = False
                                 ! If true, limit the detrainment from the buffer layers
