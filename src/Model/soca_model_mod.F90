@@ -77,17 +77,12 @@ contains
     type(time_type) :: ocean_time   ! The ocean model's clock.
     
     ! Update halo
-    call mpp_update_domains(flds%tocn_model, flds%geom%ocean%G%Domain%mpp_domain)
-    call mpp_update_domains(flds%socn_model, flds%geom%ocean%G%Domain%mpp_domain)
+    call mpp_update_domains(flds%tocn, flds%geom%ocean%G%Domain%mpp_domain)
+    call mpp_update_domains(flds%socn, flds%geom%ocean%G%Domain%mpp_domain)
 
     ! Update MOM's T and S to soca's
-!!$    self%mom6_config%MOM_CSp%T = real(flds%tocn_model, kind=8)
-!!$    self%mom6_config%MOM_CSp%S = real(flds%socn_model, kind=8)
-!!$    self%mom6_config%MOM_CSp%h = real(flds%hocn_model, kind=8)
-
-!!$    self%mom6_config%MOM_CSp%T = real(flds%tocn, kind=8)
-!!$    self%mom6_config%MOM_CSp%S = real(flds%socn, kind=8)
-!!$    self%mom6_config%MOM_CSp%h = real(flds%hocn, kind=8)        
+    self%mom6_config%MOM_CSp%T = real(flds%tocn, kind=8)
+    self%mom6_config%MOM_CSp%S = real(flds%socn, kind=8)
 
     ! Set ocean clock
     ocean_time = self%mom6_config%Time
@@ -107,19 +102,13 @@ contains
     self%mom6_config%Time = ocean_time
     
     ! Update soca fields
-!!$    flds%tocn_model = real(self%mom6_config%MOM_CSp%T, kind=kind_real)
-!!$    flds%socn_model = real(self%mom6_config%MOM_CSp%S, kind=kind_real)
-!!$    flds%hocn_model = real(self%mom6_config%MOM_CSp%h, kind=kind_real)
-!!$    flds%ssh = real(self%mom6_config%MOM_CSp%ave_ssh_ibc, kind=kind_real)
-
     flds%tocn = real(self%mom6_config%MOM_CSp%T, kind=kind_real)
     flds%socn = real(self%mom6_config%MOM_CSp%S, kind=kind_real)
     flds%hocn = real(self%mom6_config%MOM_CSp%h, kind=kind_real)
     flds%ssh = real(self%mom6_config%MOM_CSp%ave_ssh_ibc, kind=kind_real)
-
     
     ! Interpolate T & S: Model --> DA 
-    call soca_column_model2da(flds)
+    !call soca_column_model2da(flds)
 
     
   end subroutine soca_propagate
