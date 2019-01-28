@@ -330,7 +330,7 @@ contains
     
     implicit none
     real(kind=kind_real), intent(inout) :: dx(:,:)
-    type(bump_type),         intent(in) :: horiz_convol    
+    type(bump_type),         intent(inout) :: horiz_convol    
     type(soca_geom),         intent(in) :: geom        
 
     real(kind=kind_real), allocatable :: tmp_incr(:,:,:,:)
@@ -353,7 +353,7 @@ contains
     implicit none
     
     real(kind=kind_real), intent(inout) :: dx(:,:)
-    type(bump_type),         intent(in) :: horiz_convol    
+    type(bump_type),         intent(inout) :: horiz_convol    
     type(soca_geom),         intent(in) :: geom        
     real(kind=kind_real),    intent(in) :: pert_scale           
 

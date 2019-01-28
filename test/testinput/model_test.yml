@@ -9,7 +9,7 @@ Geometry:
 ModelBias: 
 ModelTest:
   fclength: PT6H
-  finalnorm: 161176.09895231324
+  finalnorm: 160518.27387233762
   tolerance: '0.005'
 Model:
   name: 'SOCA'

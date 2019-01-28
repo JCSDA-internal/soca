@@ -88,14 +88,14 @@ cost_function:
       date: '2018-04-14T00:00:00Z'
   Jo:
     ObsTypes:
-    - ObsType: SeaSurfaceTemp
+    - ObsType: ADT
       ObsData:
         ObsDataOut:
-          obsfile: ./Data/sst_obs-2018-04-15-soca-out.nc
+          obsfile: ./Data/ADT-2018-04-15-soca-out.nc
         ObsDataIn:
-          obsfile: ./Data/sst_obs-2018-04-15.nc4
+          obsfile: ./Data/Jason-2-2018-04-15.nc#./Data/Jason-2-2018-04-15.nc
       Covariance:
-        covariance: diagonal      
+        covariance: diagonal
 
 variational:
   iteration:

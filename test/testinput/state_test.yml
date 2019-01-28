@@ -21,7 +21,7 @@ StateTest:
     perturb: 0
     norm: 132860.83068751212
     tolerance: 1e-8
-  norm-file: 161176.09895231324
+  norm-file: 160518.32871208806
   date: '2018-04-15T00:00:00Z'
   StateGenerate:
     read_from_file: 0	

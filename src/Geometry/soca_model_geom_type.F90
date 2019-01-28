@@ -234,7 +234,13 @@ contains
     lat=deg2rad*reshape(lat,(/n/))
 
     call mpl%init()
-    call kdtree%create(mpl, n, lon, lat,mask)
+
+    !call kdtree%init(mpl, n, lon, lat,mask)
+    ! Allocation
+    call kdtree%alloc(mpl, n)
+
+    ! Initialization
+    call kdtree%init(mpl, lon, lat)
 
     !--- Find nearest neighbor    
     call geom_get_domain_indices(self, "compute", isc, iec, jsc, jec)
@@ -246,12 +252,16 @@ contains
           if (lonm(1)>180.0) lonm=lonm-360.0
           lonm=deg2rad*lonm
           latm(1)=deg2rad*self%lat(i,j)
-          call kdtree%find_nearest_neighbors(lonm(1),&
+          call kdtree%find_nearest_neighbors(mpl,&
+                                            &lonm(1),&
                                             &latm(1),&
                                             &nn,index,dist)
           self%rossby_radius(i,j)=rr(index(1))*1e3
        end do
     end do
+
+    ! Release memory
+    call kdtree%dealloc
 
   end subroutine geom_rossby_radius
 

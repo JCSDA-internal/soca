@@ -19,14 +19,14 @@ Assimilation Window:
   Length: P2D  
 Observations:
   ObsTypes:
-  - ObsType: InsituTemperature
-    ObsData:
-      ObsDataOut:
-        obsfile: Data/profile_2018-04-15-hofx-out.nc
-      ObsDataIn:
-        obsfile: ./Data/profile_2018-04-15.nc
-    Covariance:
-      covariance: diagonal
+#  - ObsType: InsituTemperature
+#    ObsData:
+#      ObsDataOut:
+#        obsfile: Data/profile_2018-04-15-hofx-out.nc
+#      ObsDataIn:
+#        obsfile: ./Data/profile_2018-04-15.nc
+#    Covariance:
+#      covariance: diagonal
   - ObsType: ADT
     ObsData:
       ObsDataOut:
@@ -35,19 +35,19 @@ Observations:
         obsfile: ./Data/Jason-2-2018-04-15.nc
     Covariance:
       covariance: diagonal
-  - ObsType: SeaSurfaceTemp
-    ObsData:
-      ObsDataOut:
-        obsfile: ./Data/sst_obs-2018-04-15-hofx-out.nc4
-      ObsDataIn:
-        obsfile: ./Data/sst_obs-2018-04-15.nc4
-    Covariance:
-      covariance: diagonal      
-  - ObsType: SeaIceFraction
-    ObsData:
-      ObsDataOut:
-        obsfile: ./Data/icec-2018-04-15-hofx-out.nc
-      ObsDataIn:
-        obsfile: ./Data/icec-2018-04-15.nc
-    Covariance:
-      covariance: diagonal
+#  - ObsType: SeaSurfaceTemp
+#    ObsData:
+#      ObsDataOut:
+#        obsfile: ./Data/sst_obs-2018-04-15-hofx-out.nc4
+#      ObsDataIn:
+#        obsfile: ./Data/sst_obs-2018-04-15.nc4
+#    Covariance:
+#      covariance: diagonal      
+#  - ObsType: SeaIceFraction
+#    ObsData:
+#      ObsDataOut:
+#        obsfile: ./Data/icec-2018-04-15-hofx-out.nc
+#      ObsDataIn:
+#        obsfile: ./Data/icec-2018-04-15.nc
+#    Covariance:
+#      covariance: diagonal

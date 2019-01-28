@@ -6,7 +6,7 @@ list( APPEND soca_test_input
   testinput/linearmodel_test.yml
   testinput/geometry_test.yml
   testinput/increment_test.yml
-  testinput/hofx-adt.yml
+  testinput/hofx.yml
   testinput/3dvar_test.yml
   testinput/3dvarfgat_test.yml
   testinput/3dvarfgat_mom6.yml  

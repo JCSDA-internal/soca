@@ -120,7 +120,7 @@ contains
 
     implicit none
 
-    class(soca_bumpinterp2d), intent(in) :: self    
+    class(soca_bumpinterp2d), intent(inout) :: self    
     real(kind=kind_real),     intent(in) :: fld(:,:)
     real(kind=kind_real),    intent(out) :: obs(:) 
 
@@ -152,7 +152,7 @@ contains
 
     implicit none
 
-    class(soca_bumpinterp2d),    intent(in) :: self    
+    class(soca_bumpinterp2d),    intent(inout) :: self    
     real(kind=kind_real),     intent(inout) :: fld(:,:)
     real(kind=kind_real),        intent(in) :: obs(:)
 
