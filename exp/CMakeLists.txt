@@ -54,8 +54,6 @@ endforeach(FILENAME)
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/INPUT)
 foreach(FILENAME ${soca_model_restarts})
   get_filename_component(filename ${FILENAME} NAME )
-  message("filename=" ${CMAKE_CURRENT_BINARY_DIR}/INPUT/${filename})
-  message("FILENAME=" ${CMAKE_CURRENT_SOURCE_DIR}/${FILENAME})     
   execute_process( COMMAND ${CMAKE_COMMAND} -E copy
            ${CMAKE_CURRENT_SOURCE_DIR}/${FILENAME}
            ${CMAKE_CURRENT_BINARY_DIR}/INPUT/${filename} )
@@ -64,8 +62,6 @@ endforeach(FILENAME)
 # MOM's resource files
 foreach(FILENAME ${soca_model_param})
   get_filename_component(filename ${FILENAME} NAME )
-  message("exp filename=" ${filename})
-  message("expFILENAME=" ${FILENAME})     
   execute_process( COMMAND ${CMAKE_COMMAND} -E copy
            ${CMAKE_CURRENT_SOURCE_DIR}/${FILENAME}
            ${CMAKE_CURRENT_BINARY_DIR}/${filename} )
@@ -74,8 +70,6 @@ endforeach(FILENAME)
 # MOM's forcing files
 foreach(FILENAME ${soca_model_forcing})
   get_filename_component(filename ${FILENAME} NAME )
-  message("exp filename=" ${filename})
-  message("exp FILENAME=" ${FILENAME})     
   execute_process( COMMAND ${CMAKE_COMMAND} -E copy
            ${CMAKE_CURRENT_SOURCE_DIR}/${FILENAME}
            ${CMAKE_CURRENT_BINARY_DIR}/INPUT/${filename} )
