@@ -68,7 +68,7 @@ list( APPEND soca_obs
 # Create Data directory for test input and symlink all files
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/testinput)
 foreach(FILENAME ${soca_test_input})
-    execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
+    execute_process( COMMAND ${CMAKE_COMMAND} -E copy #create_symlink
            ${CMAKE_CURRENT_SOURCE_DIR}/${FILENAME}
            ${CMAKE_CURRENT_BINARY_DIR}/${FILENAME} )
 endforeach(FILENAME)
@@ -95,8 +95,8 @@ endforeach(FILENAME)
 # MOM's resource files
 foreach(FILENAME ${soca_model_param})
   get_filename_component(filename ${FILENAME} NAME )
-  message("filename="${filename})
-     message("FILENAME="${FILENAME})     
+  message("filename=" ${filename})
+     message("FILENAME=" ${FILENAME})     
      execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
            ${CMAKE_CURRENT_SOURCE_DIR}/${FILENAME}
            ${CMAKE_CURRENT_BINARY_DIR}/${filename} )
@@ -105,8 +105,8 @@ endforeach(FILENAME)
 # MOM's forcing files
 foreach(FILENAME ${soca_model_forcing})
   get_filename_component(filename ${FILENAME} NAME )
-  message("filename="${filename})
-     message("FILENAME="${FILENAME})     
+  message("filename=" ${filename})
+     message("FILENAME=" ${FILENAME})     
      execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
            ${CMAKE_CURRENT_SOURCE_DIR}/${FILENAME}
            ${CMAKE_CURRENT_BINARY_DIR}/INPUT/${filename} )
@@ -133,8 +133,8 @@ endforeach(FILENAME)
 # Link to SOCA Marine obs
 foreach(FILENAME ${soca_obs})
      get_filename_component(filename ${FILENAME} NAME )
-     message("filename="${filename})
-     message("FILENAME="${FILENAME})
+     message("filename=" ${filename})
+     message("FILENAME=" ${FILENAME})
      message(${CMAKE_CURRENT_BINARY_DIR})
      execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
            ${CMAKE_CURRENT_SOURCE_DIR}/${FILENAME}
