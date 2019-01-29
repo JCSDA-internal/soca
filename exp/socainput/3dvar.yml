@@ -1,0 +1,325 @@
+#
+#                               3DVAR (No FGAT)
+#
+#     <---------------------- window_length (6 hours) ---------------------->
+#
+# ---|-----------|-----------|-----------|-----------|-----------|-----------|
+#    |                                   |                                   |      
+# window_begin: 2018-04-14T21:00:00Z     |                           2015-04-15T3:00:00Z
+#                                        |
+#                       bkg/ana/incr: 2018-04-15T00:00:00Z
+#
+#
+
+test_framework_runtime_config: "--log_level=test_suite"
+resolution:
+  num_ice_cat: 5
+  num_ice_lev: 4
+  num_sno_lev: 1
+model:
+  name: SOCA
+  tstep: PT1H
+  advance_mom6: 0
+cost_function:
+  cost_type: 3D-Var
+  window_begin: '2018-04-14T00:00:00Z'
+  window_length: P2D
+  variables:
+  - cicen
+  - hicen
+  - hsnon
+  - tsfcn
+  - qsnon
+  - sicnk
+  - qicnk
+  - socn
+  - tocn
+  - ssh
+  - hocn
+  Jb:
+    Background:
+      state:
+      - read_from_file: 1
+        basename: "./INPUT/"
+        ocn_filename: MOM.res.nc
+        ice_filename: ice_model.res.nc
+        date: '2018-04-15T00:00:00Z'
+    Covariance:
+      covariance: SocaError
+      # General parameters
+      default_seed: 1
+      prefix: soca
+      datadir: ./bump
+      # Driver parameters
+      method: cor
+      #strategy: specific_univariate
+      strategy: common      
+#      new_hdiag: 0
+      new_nicas: 0   # 1: recomputes convol param
+      load_nicas: 1  # 1: loads convol param (layout specific)
+      # Sampling parameters
+      sam_read: 0
+      sam_write: 1  
+      mask_check: 1
+      draw_type: random_uniform
+      nc1: 100
+      ntry: 3
+      nrep:  2
+      nc3: 10
+      dc: 1000.0e3
+      nl0r: 1
+      # Diag parameters
+      # Fit parameters
+      minim_algo: "hooke"
+      rvflt: 0.0
+      # NICAS parameters
+      lsqrt: 1  
+      resol: 8.0
+      nicas_interp: bilin
+      network: 1
+      mpicom: 2 # Number of internal comm steps 
+      #NICAS parameters
+      forced_radii: 1
+      rh: 3000e3
+      rv: 100
+      advmode: 0
+      # Output parameters  
+      diag_interp: bilin
+      date: '2018-04-15T00:00:00Z'
+      variable_changes:
+      - varchange: BkgErrSOCA
+        #read_from_file: 3
+        #basename: ./
+        #ocn_filename: ocn.bkgerror.nc
+        #ice_filename: ice.bkgerror.nc
+        date: '2018-04-15T00:00:00Z'
+        t_min: 0.0
+        t_max: 5.0
+        s_min: 0.01 #0.0001
+        s_max: 0.0 #0.2
+        ssh_min: 0.01 #0.05
+        ssh_max: 0.0 #0.5
+        delta_z: 10.0
+        efold_z: 1500.0	
+        variables:                                
+          variables:
+          - cicen
+          - hicen
+          - hsnon
+          - tsfcn
+          - qsnon
+          - sicnk
+          - qicnk
+          - socn
+          - tocn
+          - ssh
+          - hocn
+        inputVariables:
+          variables:
+          - cicen
+          - hicen
+          - hsnon
+          - tsfcn
+          - qsnon
+          - sicnk
+          - qicnk
+          - socn
+          - tocn
+          - ssh
+          - hocn
+        outputVariables:
+          variables:
+          - cicen
+          - hicen
+          - hsnon
+          - tsfcn
+          - qsnon
+          - sicnk
+          - qicnk
+          - socn
+          - tocn
+          - ssh
+          - hocn
+      - varchange: VertConvSOCA
+        variables:                                
+          variables:
+          - cicen
+          - hicen
+          - hsnon
+          - tsfcn
+          - qsnon
+          - sicnk
+          - qicnk
+          - socn
+          - tocn
+          - ssh
+          - hocn
+        Lz: 300.0
+        Ltemp: 10.0	
+        inputVariables:
+          variables:
+          - cicen
+          - hicen
+          - hsnon
+          - tsfcn
+          - qsnon
+          - sicnk
+          - qicnk
+          - socn
+          - tocn
+          - ssh
+          - hocn
+        outputVariables:
+          variables:
+          - cicen
+          - hicen
+          - hsnon
+          - tsfcn
+          - qsnon
+          - sicnk
+          - qicnk
+          - socn
+          - tocn
+          - ssh
+          - hocn
+      - varchange: BalanceSOCA
+        dsdtmax: 0.1
+        dsdzmin: 3.0e-6
+        dtdzmin: 1.0e-6 
+        inputVariables:
+          variables:
+          - cicen
+          - hicen
+          - hsnon
+          - tsfcn
+          - qsnon
+          - sicnk
+          - qicnk
+          - socn
+          - tocn
+          - ssh
+          - hocn
+        outputVariables:
+          variables:
+          - cicen
+          - hicen
+          - hsnon
+          - tsfcn
+          - qsnon
+          - sicnk
+          - qicnk
+          - socn
+          - tocn
+          - ssh
+          - hocn
+  Jo:
+    ObsTypes:
+    - ObsType: ADT
+      ObsData:
+        ObsDataOut:
+          obsfile: ./Data/Jason-2-2018-04-15-soca-out.nc
+        ObsDataIn:
+          obsfile: /home/gvernier/Data/FNMOC/ioda-converters/src/marine/profile/adt-ioda-2018072200-000.nc #./Data/Jason-2-2018-04-15.nc
+      Covariance:
+        covariance: diagonal
+      ObsFilters:
+      - Filter: Background Check
+        variables:
+        - obs_absolute_dynamic_topography
+        threshold: 3
+#      - Filter: GOMsaver
+#        filename: ./Data/testgeovl.nc
+#    - ObsType: InsituTemperature
+#      ObsData:
+#        ObsDataOut:
+#          obsfile: ./Data/profile_2018-04-15-out.nc
+#        ObsDataIn:
+#          obsfile: ./Data/profile_2018-04-15.nc
+#          #obsfile: /home/gvernier/Data/FNMOC/2018041500.profile.nc
+#      Covariance:
+#        covariance: diagonal
+#      ObsFilters:
+#      - Filter: Background Check
+#        variables:
+#        - insitu_temperature
+#        threshold: 3
+#    - ObsType: SeaIceFraction
+#      ObsData:
+#        ObsDataOut:
+#          obsfile: ./Data/icec-2018-04-15-soca-out.nc
+#        ObsDataIn:
+#          obsfile: ./Data/icec-2018-04-15.nc
+#      Covariance:
+#        covariance: diagonal
+#      ObsFilters:
+#      - Filter: Background Check
+#        variables:
+#        - obs_sea_ice_concentration
+#        threshold: 3
+#    - ObsType: SeaIceThickness
+#      ObsData:
+#        ObsDataOut:
+#          obsfile: ./Data/cryosat2-2018-04-15-soca-out.nc
+#        ObsDataIn:
+#          obsfile: ./Data/cryosat2-2018-04-15.nc
+#      Covariance:
+#        covariance: diagonal
+#      ObsFilters:
+#      - Filter: Background Check
+#        variables:
+#        - obs_sea_ice_thickness
+#        threshold: 3
+#    - ObsType: SeaSurfaceTemp
+#      ObsData:
+#        ObsDataOut:
+#          obsfile: ./Data/sst_obs-2018-04-15-soca-out.nc
+#        ObsDataIn:
+#          obsfile: ./Data/sst_obs-2018-04-15.nc4
+#      Covariance:
+#        covariance: diagonal
+#      ObsFilters:
+#      - Filter: Background Check
+#        variables:
+#        - obs_sst
+#        threshold: 3
+variational:
+  iteration:
+  - resolution:
+      num_ice_cat: 5
+      num_ice_lev: 4
+      num_sno_lev: 1
+    linearmodel:
+      varchange: Identity
+      version: IdTLM
+      tstep: PT1H
+      advance_mom6: 0      
+    ninner: 1
+    gradient_norm_reduction: 1e-15
+    test: 'on'
+    prints:
+    diagnostics:
+      departures: ombg
+#  - resolution:
+#      num_ice_cat: 5
+#      num_ice_lev: 4
+#      num_sno_lev: 1
+#    linearmodel:
+#      varchange: Identity      
+#      version: IdTLM
+#      tstep: PT1H
+#    ninner: 15
+#    gradient_norm_reduction: 1e-15
+#    test: 'on'
+#    output:
+#      datadir: Data
+#      exp: 3dvar
+#      type: incr
+minimizer:
+  algorithm: DRIPCG
+output:
+  datadir: Data
+  exp: 3dvar
+  type: an
+final:
+  diagnostics:
+    departures: oman
