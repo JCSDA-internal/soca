@@ -1,6 +1,7 @@
 # Config files for soca
 list( APPEND soca_scripts
   cycle.sh
+  cycle.py  
   )
 
 list( APPEND soca_exp_input
