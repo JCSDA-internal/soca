@@ -1,4 +1,8 @@
 # Config files for soca
+list( APPEND soca_scripts
+  cycle.sh
+  )
+
 list( APPEND soca_exp_input
   socainput/3dvar.yml
   socainput/3dvarfgat.yml
@@ -9,7 +13,7 @@ list( APPEND soca_exp_input
 )
 
 list( APPEND soca_model_param
-  ../test/Data/360x210x63/input.nml
+  ../test/Data/360x210x63/input-ymd.nml
   ../test/Data/360x210x63/MOM_input
   ../test/Data/360x210x63/MOM_override
   ../test/Data/360x210x63/data_table
@@ -41,7 +45,20 @@ list( APPEND soca_model_forcing
   ../test/Data/360x210x63/INPUT/sgs_h2.nc
 )
 
-# Create Data directory for experiment input
+# Copy scripts
+  message("================" ${soca_scripts})  
+foreach(FILENAME ${soca_scripts})
+  get_filename_component(filename ${FILENAME} NAME )
+  message("================" $FILENAME)  
+  execute_process( COMMAND ${CMAKE_COMMAND} -E copy
+           ${CMAKE_CURRENT_SOURCE_DIR}/${FILENAME}
+           ${CMAKE_CURRENT_BINARY_DIR}/${filename} )
+endforeach(FILENAME)
+
+# Create directory for observations, DA output, ...
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/Data)
+
+# Create directory for experiment input
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/expinput)
 foreach(FILENAME ${soca_exp_input})
   get_filename_component(filename ${FILENAME} NAME )
@@ -50,7 +67,7 @@ foreach(FILENAME ${soca_exp_input})
            ${CMAKE_CURRENT_BINARY_DIR}/expinput/${filename} )
 endforeach(FILENAME)
 
-# Create Data directory for model input and copy all files
+# Create directory for model input and copy all files
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/INPUT)
 foreach(FILENAME ${soca_model_restarts})
   get_filename_component(filename ${FILENAME} NAME )
