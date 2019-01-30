@@ -1,16 +1,19 @@
 #!/bin/sh
 
 # Set date for IC
-YYYY=2018
-MM=07
-DD=22
-HH=12
+YYYY=$1 #2018
+MM=$2   #07
+DD=$3    #22
+HH=$4    #12 
+WINDOW_LENGTH=PT$5H # DA window
 
-# DA window
-WINDOW_LENGTH=PT24H
+
 
 # Initialize B
 INIT_B=false 
+if ( ${INIT_B} ) then
+   mpirun -np 4 --oversubscribe ../../bin/soca_staticbinit.x ./expinput/static_SocaError_init.yml
+fi
 
 # Change dates in DA config file
 WINDOW_BEGIN=${YYYY}-${MM}-${DD}T${HH}:00:00Z
@@ -29,26 +32,23 @@ sed -i "s/HH/${HH}/g" input.nml
 WINDOW_MID='2018-07-23T00:00:00Z'
 
 #Jason-3
-OBS_ADT_J3=ADT-J3-${WINDOW_MID}
+OBS_ADT_J3=ADT-J3-${YYYY}${MM}${DD}${MM}${HH}
 sed -i "s/OBS_ADT_J3/${OBS_ADT_J3}/g" 3dvarfgat-${WINDOW_BEGIN}.yml
 cp /home/gvernier/Data/FNMOC/ioda-converters/src/marine/altimeter/adt-ioda-j3-$YYYY$MM$DD$HH.nc ./Data/${OBS_ADT_J3}.nc
 
 #Cryosat-2
-OBS_ADT_C2=ADT-C2-${WINDOW_MID}
+OBS_ADT_C2=ADT-C2-${YYYY}${MM}${DD}${MM}${HH}
 sed -i "s/OBS_ADT_C2/${OBS_ADT_C2}/g" 3dvarfgat-${WINDOW_BEGIN}.yml
 cp /home/gvernier/Data/FNMOC/ioda-converters/src/marine/altimeter/adt-ioda-c2-$YYYY$MM$DD$HH.nc ./Data/${OBS_ADT_C2}.nc
 
 #Cryosat-2
-OBS_ADT_SA=ADT-SA-${WINDOW_MID}
+OBS_ADT_SA=ADT-SA-${YYYY}${MM}${DD}${MM}${HH}
 sed -i "s/OBS_ADT_SA/${OBS_ADT_SA}/g" 3dvarfgat-${WINDOW_BEGIN}.yml
 cp /home/gvernier/Data/FNMOC/ioda-converters/src/marine/altimeter/adt-ioda-sa-$YYYY$MM$DD$HH.nc ./Data/${OBS_ADT_SA}.nc
-
-# Initialize static B
-if ( ${INIT_B} ) then
-   mpirun -np 4 --oversubscribe ../../bin/soca_staticbinit.x ./expinput/static_SocaError_init.yml
-fi
 
 # Run DA
 mpirun -np 4 --oversubscribe ../../bin/soca_3dvar.x 3dvarfgat-${WINDOW_BEGIN}.yml
 
 # Update IC
+mv ./RESTART/MOM.res.nc ./INPUT/
+
