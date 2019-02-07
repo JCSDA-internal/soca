@@ -93,7 +93,7 @@ cost_function:
         ObsDataOut:
           obsfile: ./Data/ADT-2018-04-15-soca-out.nc
         ObsDataIn:
-          obsfile: ./Data/Jason-2-2018-04-15.nc#./Data/Jason-2-2018-04-15.nc
+          obsfile: ./Data/Jason-2-2018-04-15.nc
       Covariance:
         covariance: diagonal
 

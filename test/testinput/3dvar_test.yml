@@ -219,7 +219,7 @@ cost_function:
         ObsDataOut:
           obsfile: ./Data/Jason-2-2018-04-15-soca-out.nc
         ObsDataIn:
-          obsfile: /home/gvernier/Data/FNMOC/ioda-converters/src/marine/profile/adt-ioda-2018072200-000.nc #./Data/Jason-2-2018-04-15.nc
+          obsfile: ./Data/Jason-2-2018-04-15.nc
       Covariance:
         covariance: diagonal
       ObsFilters:
