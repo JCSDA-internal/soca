@@ -10,7 +10,7 @@
 subroutine soca_field_create_c(c_key_self, c_key_geom, c_vars) bind(c,name='soca_field_create_f90')
   use iso_c_binding
   use soca_fields
-  use soca_geom_mod
+  use soca_geom_mod_c
   use ufo_vars_mod  
   implicit none
   integer(c_int), intent(inout) :: c_key_self !< Handle to field

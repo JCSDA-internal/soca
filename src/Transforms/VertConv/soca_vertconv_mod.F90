@@ -6,12 +6,14 @@
 !
 
 module soca_vertconv_mod
-
+  use config_mod
+  use iso_c_binding  
   use kinds
   use soca_fields
+  use soca_model_geom_type, only : geom_get_domain_indices  
   use tools_func
   use type_mpl
-
+  
   implicit none
 
   !> Fortran derived type to hold the setup for Vertconv
@@ -36,17 +38,9 @@ contains
   !> Linked list implementation
 #include "oops/util/linkedList_c.f"
   ! ------------------------------------------------------------------------------
-
+  ! Setup for the vertical convolution
+  ! TODO: Investigate computing and storing weights in vertconc data structure
   subroutine soca_conv_setup (self, bkg, traj, c_conf)
-
-    use kinds
-    use iso_c_binding
-    use config_mod
-    use soca_fields
-    use soca_model_geom_type, only : geom_get_domain_indices
-
-    implicit none
-
     type(soca_vertconv),   intent(inout) :: self
     type(soca_field), target, intent(in) :: bkg
     type(soca_field), target, intent(in) :: traj
@@ -71,13 +65,8 @@ contains
   end subroutine soca_conv_setup
 
   ! ------------------------------------------------------------------------------
-  
+  !> Apply forward convolution  
   subroutine soca_conv (self, convdx, dx)
-
-    use kinds
-
-    implicit none
-
     type(soca_vertconv), intent(in) :: self
     type(soca_field),    intent(in) :: dx
     type(soca_field),   intent(inout) :: convdx
@@ -116,13 +105,9 @@ contains
 
   end subroutine soca_conv
 
-  ! ------------------------------------------------------------------------------  
+  ! ------------------------------------------------------------------------------
+  !> Apply backward convolution
   subroutine soca_conv_ad (self, convdx, dx)
-
-    use kinds
-
-    implicit none
-
     type(soca_vertconv), intent(in) :: self
     type(soca_field), intent(inout) :: dx     ! OUT
     type(soca_field),    intent(in) :: convdx ! IN

@@ -9,7 +9,7 @@
 subroutine c_soca_setup(c_confspec, c_key_geom, c_key_model) bind (c,name='soca_setup_f90')
 
   use soca_model_mod
-  use soca_geom_mod
+  use soca_geom_mod_c
   use iso_c_binding
   use config_mod
   use duration_mod

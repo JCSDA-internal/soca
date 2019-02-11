@@ -24,16 +24,12 @@
 !>
 !>
 module soca_mom6
-
   use config_mod
   use fckit_mpi_module, only: fckit_mpi_comm
-  
   use fms_io_mod, only : fms_io_init, fms_io_exit
   use fms_mod,    only : read_data, write_data, fms_init, fms_end
-
   use iso_c_binding  
   use kinds
-
   use MOM_grid,                  only : ocean_grid_type
   use MOM_verticalGrid,          only : verticalGrid_type
   use MOM, only : MOM_control_struct
@@ -81,25 +77,27 @@ module soca_mom6
   use MOM_variables,       only : surface
   use MOM_verticalGrid,    only : verticalGrid_type
   use MOM_verticalGrid,    only : verticalGrid_type, verticalGridInit, verticalGridEnd  
-
-  use mpp_mod,    only : mpp_init
-  
+  use mpp_mod,    only : mpp_init  
   use time_interp_external_mod, only : time_interp_external_init
   use time_manager_mod,         only: time_type, print_time, print_date  
-
+  use MOM_diag_mediator,   only : diag_ctrl, diag_mediator_close_registration
+  use regrid_consts, only : REGRIDDING_SIGMA_STRING
+  
   implicit none
   private
 
-  public :: soca_geom_init, soca_geom_end
+  public :: soca_geom_init
   public :: soca_ice_column
   public :: soca_mom6_init, soca_mom6_config, soca_mom6_end
 
+  !> Simple Data structure for the generic sea-ice state 
   type soca_ice_column
      integer                        :: ncat ! Number of ice categories
      integer                        :: nzi  ! Number of ice levels
      integer                        :: nzs  ! Number of snow levels
   end type soca_ice_column
 
+  !> Data structure neccessary to initialize/run mom6
   type soca_mom6_config
     type(mech_forcing) :: forces     !< Driving mechanical surface forces
     type(forcing)      :: fluxes     !< Pointers to the thermodynamic forcing fields
@@ -118,15 +116,13 @@ module soca_mom6
 contains
 
   ! ------------------------------------------------------------------------------
-
+  !> Initialize mom6's geometry
   subroutine soca_geom_init(G, GV, ice_column, c_conf)
     use regrid_consts, only : REGRIDDING_SIGMA_STRING
     use MOM_ALE, only : ALE_CS, ALE_initThicknessToCoord, ALE_init, ALE_updateVerticalGridType
     use mpp_domains_mod, only : mpp_get_compute_domain, mpp_get_data_domain
     use MOM_remapping,        only : remapping_core_h
     
-    implicit none
-
     type(ocean_grid_type),            intent(out) :: G          !< The horizontal grid type (same for ice & ocean)
     type(verticalGrid_type), pointer, intent(out) :: GV         !< Ocean vertical grid
     type(soca_ice_column),            intent(out) :: ice_column !< Ice grid spec
@@ -194,32 +190,9 @@ contains
   end subroutine soca_geom_init
 
   ! ------------------------------------------------------------------------------
-
-  subroutine soca_geom_end(G, GV)
-
-    use MOM_grid,                  only : MOM_grid_init, MOM_grid_end, ocean_grid_type
-    use MOM_verticalGrid,          only : verticalGrid_type, verticalGridInit, verticalGridEnd
-
-    implicit none
-
-    type(ocean_grid_type),            intent(inout) :: G
-    type(verticalGrid_type), pointer, intent(inout) :: GV
-
-    ! Destructors below don't work
-    !call MOM_grid_end(G)
-    !call verticalGridEnd(GV)
-    nullify(GV)
-
-  end subroutine soca_geom_end
-
-  ! ------------------------------------------------------------------------------
-  
+  !> Setup/initialize/prepare mom6 for time integration
   subroutine soca_mom6_init(mom6_config)
-
-    use MOM_diag_mediator,   only : diag_ctrl, diag_mediator_close_registration
-    use regrid_consts, only : REGRIDDING_SIGMA_STRING
-    
-    implicit none
+    type(soca_mom6_config), intent(out) :: mom6_config
 
     type(time_type) :: Start_time         ! The start time of the simulation.
     type(time_type) :: Time_in            ! 
@@ -241,35 +214,23 @@ contains
          tracer_flow_CSp => NULL()  !< A pointer to the tracer flow control structure
     type(surface_forcing_CS),  pointer :: surface_forcing_CSp => NULL()
     type(diag_ctrl), pointer :: diag => NULL() !< Diagnostic structure
-    !-----------------------------------------------------------------------
-
     character(len=4), parameter :: vers_num = 'v2.0'
     ! This include declares and sets the variable "version".
 #include "version_variable.h"
     character(len=40)  :: mod_name = "soca_mom6" ! This module's name.
-
     integer :: ocean_nthreads != 1
     integer :: ncores_per_node != 36
     logical :: use_hyper_thread = .false.
     integer :: omp_get_num_threads,omp_get_thread_num,get_cpu_affinity,adder,base_cpu
     namelist /ocean_solo_nml/ date_init, calendar, months, days, hours, minutes, seconds,&
          ocean_nthreads, ncores_per_node, use_hyper_thread
-
     integer :: param_int
-
     type(regridding_CS) :: regridCS !< ALE control structure for regridding
     type(remapping_CS)  :: remapCS  !< ALE control structure for remapping
     real :: max_depth !<
     character(len=30) :: coord_mode
-    logical, save :: regrid_initialized = .false.
-
-    
-    type(soca_mom6_config), intent(out) :: mom6_config
 
     call MOM_infra_init() ; call io_infra_init()
-
-    call MOM_mesg('======== Model being driven by soca ========', 2)
-    call callTree_waypoint("soca_mom6::soca_mom6_init")
 
     ! Provide for namelist specification of the run length and calendar data.
     call open_file(unit, 'input.nml', form=ASCII_FILE, action=READONLY_FILE)
@@ -294,7 +255,6 @@ contains
 
     Start_time = set_date(date_init(1),date_init(2), date_init(3), &
          date_init(4),date_init(5),date_init(6))
-    print *,'date=',date_init
 
     call time_interp_external_init
 
@@ -309,6 +269,7 @@ contains
 
     ! Initialize mom6
     Time_in = mom6_config%Time
+
     call initialize_MOM(mom6_config%Time, &
         &Start_time, &
         &param_file, &
@@ -318,6 +279,7 @@ contains
         &offline_tracer_mode=offline_tracer_mode, diag_ptr=diag, &
         &tracer_flow_CSp=tracer_flow_CSp, Time_in=Time_in)
 
+    ! Continue initialization
     call get_MOM_state_elements(mom6_config%MOM_CSp, G=mom6_config%grid, &
          &GV=mom6_config%GV, C_p=mom6_config%fluxes%C_p)
 
@@ -357,20 +319,20 @@ contains
   end subroutine soca_mom6_init
 
   ! ------------------------------------------------------------------------------
-  
-  subroutine soca_mom6_end(mom6_config)
-    
-    implicit none
-    
+  !> Release memory and possibly dump mom6's restart 
+  subroutine soca_mom6_end(mom6_config, dump_restart)    
     type(soca_mom6_config), intent(inout) :: mom6_config
+    logical,         optional, intent(in) :: dump_restart
 
-    ! Dump restart state before calling model destructor
-    call save_restart(mom6_config%dirs%restart_output_dir, &
+    if (present(dump_restart)) then
+       ! Dump restart state before calling model destructor
+       call save_restart(mom6_config%dirs%restart_output_dir, &
                      &mom6_config%Time,&
                      &mom6_config%grid,&
                      &mom6_config%restart_CSp,&
                      &GV=mom6_config%GV)
-
+    end if
+    
     ! Finalize fms
     call io_infra_end ; call MOM_infra_end
 

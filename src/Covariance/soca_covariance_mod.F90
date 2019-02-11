@@ -10,12 +10,17 @@
 !! covariance matrices of the SOCA analysis.
 
 module soca_covariance_mod
-
+  use config_mod
+  use fckit_mpi_module, only: fckit_mpi_comm  
+  use iso_c_binding  
   use kinds
-  use type_bump
+  use oobump_mod, only: bump_read_conf
   use soca_fields
+  use soca_geom_mod_c
   use soca_model_geom_type, only : geom_get_domain_indices
-  
+  use type_bump
+  use type_nam
+
   implicit none
 
   !> Fortran derived type to hold configuration data for the SOCA background/model covariance
@@ -57,15 +62,6 @@ contains
   !! error covariance structure.
 
   subroutine soca_cov_setup(self, c_conf, geom, bkg)
-
-    use soca_geom_mod
-    use iso_c_binding
-    use config_mod
-    use type_bump
-    use type_nam
-    
-    implicit none
-
     type(soca_cov),        intent(inout) :: self   !< The covariance structure    
     type(c_ptr),              intent(in) :: c_conf !< The configuration
     type(soca_geom),          intent(in) :: geom   !< Geometry
@@ -73,7 +69,6 @@ contains
     
     character(len=3)  :: domain
     integer :: is, ie, js, je, i, j
-
 
     ! Set default ensemble perturbation scales to 1.0    
     self%pert_scale%T = 1.0
@@ -145,10 +140,6 @@ contains
   !> Delete for the SOCA model's 3d error covariance matrices
 
   subroutine soca_cov_delete(self)
-
-    use iso_c_binding
-
-    implicit none
     type(soca_cov), intent(inout) :: self       !< The covariance structure        
 
     call self%ocean_conv(1)%dealloc()
@@ -164,12 +155,6 @@ contains
   ! ------------------------------------------------------------------------------
 
   subroutine soca_cov_C_mult(self, dx)
-
-    use kinds
-    use type_bump
-    
-    implicit none
-
     type(soca_cov),   intent(inout) :: self !< The covariance structure    
     type(soca_field), intent(inout) :: dx   !< Input: Increment
                                             !< Output: C dx
@@ -194,12 +179,6 @@ contains
   ! ------------------------------------------------------------------------------
 
   subroutine soca_cov_sqrt_C_mult(self, dx)
-
-    use kinds
-    use type_bump
-    
-    implicit none
-
     type(soca_cov),   intent(inout) :: self !< The covariance structure    
     type(soca_field), intent(inout) :: dx   !< Input: Increment
                                             !< Output: C dx
@@ -224,15 +203,6 @@ contains
   ! ------------------------------------------------------------------------------
 
   subroutine soca_bump_correlation(self, horiz_convol, geom, c_conf, domain)
-    use soca_geom_mod
-    use type_bump
-    use type_nam
-    use iso_c_binding
-    use oobump_mod, only: bump_read_conf
-    use fckit_mpi_module, only: fckit_mpi_comm
-    
-    implicit none
-
     type(soca_cov),  intent(inout) :: self   !< The covariance structure
     type(bump_type), intent(inout) :: horiz_convol
     type(soca_geom),    intent(in) :: geom
@@ -323,14 +293,8 @@ contains
   ! ------------------------------------------------------------------------------
 
   subroutine soca_2d_convol(dx, horiz_convol, geom)
-
-    use soca_geom_mod
-    use kinds
-    use type_bump
-    
-    implicit none
     real(kind=kind_real), intent(inout) :: dx(:,:)
-    type(bump_type),         intent(inout) :: horiz_convol    
+    type(bump_type),      intent(inout) :: horiz_convol    
     type(soca_geom),         intent(in) :: geom        
 
     real(kind=kind_real), allocatable :: tmp_incr(:,:,:,:)
@@ -345,15 +309,8 @@ contains
   ! ------------------------------------------------------------------------------
 
   subroutine soca_2d_sqrt_convol(dx, horiz_convol, geom, pert_scale)
-
-    use soca_geom_mod
-    use kinds
-    use type_bump
-    
-    implicit none
-    
     real(kind=kind_real), intent(inout) :: dx(:,:)
-    type(bump_type),         intent(inout) :: horiz_convol    
+    type(bump_type),      intent(inout) :: horiz_convol    
     type(soca_geom),         intent(in) :: geom        
     real(kind=kind_real),    intent(in) :: pert_scale           
 
@@ -385,13 +342,8 @@ contains
   ! ------------------------------------------------------------------------------
   
   subroutine soca_struct2unstruct(dx_struct, geom, dx_unstruct)
-
-    use soca_geom_mod
-
-    implicit none
-
-    real(kind=kind_real),intent(in)                :: dx_struct(:,:)
-    type(soca_geom), intent(in)                    :: geom    
+    real(kind=kind_real),               intent(in) :: dx_struct(:,:)
+    type(soca_geom),                    intent(in) :: geom    
     real(kind=kind_real), allocatable, intent(out) :: dx_unstruct(:,:,:,:)
 
     integer :: isc, iec, jsc, jec, jjj, jz, il, ib, nc0a
@@ -409,12 +361,8 @@ contains
   ! ------------------------------------------------------------------------------
   
   subroutine soca_unstruct2struct(dx_struct, geom, dx_unstruct)
-    use soca_geom_mod
-
-    implicit none
-
-    real(kind=kind_real),intent(inout)               :: dx_struct(:,:)
-    type(soca_geom), intent(in)                      :: geom    
+    real(kind=kind_real),              intent(inout) :: dx_struct(:,:)
+    type(soca_geom),                      intent(in) :: geom    
     real(kind=kind_real), allocatable, intent(inout) :: dx_unstruct(:,:,:,:)
 
     integer :: isc, iec, jsc, jec, jjj, jz, il, ib, nc0a

@@ -11,7 +11,7 @@ module soca_fields
   use soca_mom6
   use MOM, only : MOM_control_struct
   use config_mod
-  use soca_geom_mod
+  use soca_geom_mod_c
   use soca_model_geom_type, only : geom_get_domain_indices
   use soca_utils
   use ufo_vars_mod
@@ -26,11 +26,14 @@ module soca_fields
        &free_restart_type, save_restart
   use datetime_mod
   use duration_mod  
-  use fckit_log_module, only : log
+  use fckit_log_module, only : log, fckit_log
   use fckit_mpi_module, only: fckit_mpi_comm, fckit_mpi_sum
   use MOM_remapping,       only : remapping_CS, initialize_remapping, remapping_core_h  
   use mpp_domains_mod, only : mpp_update_domains
-  
+  use unstructured_grid_mod
+  use tools_const, only: deg2rad
+
+
   implicit none
 
   private
@@ -90,15 +93,11 @@ contains
 #include "Utils/linkedList_c.f"
 
   ! ------------------------------------------------------------------------------
-
+  !> Create a field from geometry and variables
   subroutine create_constructor(self, geom, vars)
-    ! Construct a field from geom and vars
-    use ufo_vars_mod
-
-    implicit none
-    type(soca_field), intent(inout)          :: self
+    type(soca_field),          intent(inout) :: self
     type(soca_geom),  pointer, intent(inout) :: geom
-    type(ufo_vars),  intent(in)              :: vars
+    type(ufo_vars),               intent(in) :: vars
     integer :: ivar
 
     ! Allocate
@@ -121,10 +120,8 @@ contains
 
   subroutine create_copy(self, rhs_fld)
     ! Construct a field from an other field, lhs_fld=rhs_fld
-
-    implicit none
-    type(soca_field), intent(inout)          :: self
-    type(soca_field), intent(in)          :: rhs_fld
+    type(soca_field), intent(inout) :: self
+    type(soca_field), intent(in)    :: rhs_fld
     integer :: ivar!, unit, nxny(2)
 
     ! Allocate and copy fields
@@ -146,9 +143,6 @@ contains
   ! ------------------------------------------------------------------------------
   
   subroutine soca_field_alloc(self, geom)
-
-    implicit none
-
     type (soca_field), intent(inout) :: self
     type(soca_geom),      intent(in) :: geom
     
@@ -183,9 +177,6 @@ contains
   ! ------------------------------------------------------------------------------
   
   subroutine delete(self)
-
-    implicit none
-
     type (soca_field), intent(inout) :: self
 
     ! Deallocate ocean state
@@ -209,7 +200,6 @@ contains
   ! ------------------------------------------------------------------------------
 
   subroutine zeros(self)
-    implicit none
     type(soca_field), intent(inout) :: self
 
     call check(self)
@@ -226,7 +216,6 @@ contains
   ! ------------------------------------------------------------------------------
 
   subroutine ones(self)
-    implicit none
     type(soca_field), intent(inout) :: self
 
     call check(self)
@@ -244,10 +233,9 @@ contains
   ! ------------------------------------------------------------------------------
 
   subroutine dirac(self, c_conf)
-    use iso_c_binding
-    implicit none
     type(soca_field), intent(inout) :: self
-    type(c_ptr), intent(in)       :: c_conf   !< Configuration
+    type(c_ptr),         intent(in) :: c_conf   !< Configuration
+    
     integer :: ndir,idir,ildir,ifdir
     integer,allocatable :: ixdir(:),iydir(:)
     character(len=3) :: idirchar
@@ -266,8 +254,6 @@ contains
     end do
     ildir = config_get_int(c_conf,"ildir")
     ifdir = config_get_int(c_conf,"ifdir")
-
-
 
     ! Check
     if (ndir<1) call abor1_ftn("fields:dirac non-positive ndir")
@@ -290,8 +276,6 @@ contains
   ! ------------------------------------------------------------------------------
 
   subroutine random(self)
-
-    implicit none
     type(soca_field), intent(inout) :: self
 
     call check(self)
@@ -308,10 +292,9 @@ contains
   ! ------------------------------------------------------------------------------
 
   subroutine copy(self,rhs)
-
-    implicit none
     type(soca_field), intent(inout) :: self
-    type(soca_field), intent(in)    :: rhs
+    type(soca_field),    intent(in) :: rhs
+
     integer :: nf
 
     call check_resolution(self, rhs)
@@ -342,11 +325,9 @@ contains
   ! ------------------------------------------------------------------------------
 
   subroutine self_add(self,rhs)
-
-    implicit none
-
     type(soca_field), intent(inout) :: self
-    type(soca_field), intent(in)    :: rhs
+    type(soca_field),    intent(in) :: rhs
+    
     integer :: nf
 
     call check_resolution(self, rhs)
@@ -366,9 +347,9 @@ contains
   ! ------------------------------------------------------------------------------
 
   subroutine self_schur(self,rhs)
-    implicit none
     type(soca_field), intent(inout) :: self
-    type(soca_field), intent(in)    :: rhs
+    type(soca_field),    intent(in) :: rhs
+    
     integer :: nf
 
     call check_resolution(self, rhs)
@@ -389,9 +370,9 @@ contains
   ! ------------------------------------------------------------------------------
 
   subroutine self_sub(self,rhs)
-    implicit none
     type(soca_field), intent(inout) :: self
-    type(soca_field), intent(in)    :: rhs
+    type(soca_field),    intent(in) :: rhs
+    
     integer :: nf
 
     call check_resolution(self, rhs)
@@ -411,8 +392,7 @@ contains
   ! ------------------------------------------------------------------------------
 
   subroutine self_mul(self,zz)
-    implicit none
-    type(soca_field), intent(inout) :: self
+    type(soca_field),  intent(inout) :: self
     real(kind=kind_real), intent(in) :: zz
 
     call check(self)
@@ -430,10 +410,10 @@ contains
   ! ------------------------------------------------------------------------------
 
   subroutine axpy(self,zz,rhs)
-    implicit none
-    type(soca_field), intent(inout) :: self
+    type(soca_field),  intent(inout) :: self
     real(kind=kind_real), intent(in) :: zz
-    type(soca_field), intent(in)    :: rhs
+    type(soca_field),     intent(in) :: rhs
+    
     integer :: nf
 
     call check_resolution(self, rhs)
@@ -453,8 +433,6 @@ contains
   ! ------------------------------------------------------------------------------
 
   subroutine dot_prod(fld1,fld2,zprod)
-
-    implicit none
     type(soca_field),      intent(in) :: fld1
     type(soca_field),      intent(in) :: fld2    
     real(kind=kind_real), intent(out) :: zprod
@@ -517,7 +495,6 @@ contains
   ! ------------------------------------------------------------------------------
 
   subroutine add_incr(self,rhs)
-    implicit none
     type(soca_field), intent(inout) :: self
     type(soca_field), intent(in)    :: rhs
 
@@ -536,7 +513,6 @@ contains
   ! ------------------------------------------------------------------------------
 
   subroutine diff_incr(lhs,x1,x2)
-    implicit none
     type(soca_field), intent(inout) :: lhs
     type(soca_field), intent(in)    :: x1
     type(soca_field), intent(in)    :: x2
@@ -560,7 +536,6 @@ contains
   ! ------------------------------------------------------------------------------
 
   subroutine change_resol(fld,rhs)
-    implicit none
     type(soca_field), intent(inout) :: fld
     type(soca_field), intent(in)    :: rhs
 
@@ -574,21 +549,6 @@ contains
   ! ------------------------------------------------------------------------------
 
   subroutine read_file(fld, c_conf, vdate)
-
-    use MOM_remapping,       only : remapping_CS, initialize_remapping, remapping_core_h
-    use iso_c_binding
-    use datetime_mod
-    use fckit_log_module, only : log
-    use fms_mod,          only : read_data, set_domain
-    use fms_io_mod,       only : fms_io_init, fms_io_exit
-    use fms_io_mod,       only : register_restart_field, restart_file_type
-    use fms_io_mod,       only : restore_state, query_initialized
-    use fms_io_mod,       only : fms_io_init, fms_io_exit
-    use fms_mod,          only : read_data, write_data, fms_init, fms_end
-    use soca_utils
-    
-    implicit none
-
     type(soca_field), intent(inout) :: fld      !< Fields
     type(c_ptr),         intent(in) :: c_conf   !< Configuration
     type(datetime),   intent(inout) :: vdate    !< DateTime
@@ -740,14 +700,10 @@ contains
   ! ------------------------------------------------------------------------------
 
   subroutine write_file(fld, c_conf, vdate)
-    use iso_c_binding
-    use datetime_mod
-    use fckit_log_module, only : fckit_log
-
-    implicit none
     type(soca_field), intent(inout) :: fld    !< Fields
-    type(c_ptr), intent(in)    :: c_conf           !< Configuration
-    type(datetime), intent(inout) :: vdate         !< DateTime
+    type(c_ptr),         intent(in) :: c_conf !< Configuration
+    type(datetime),   intent(inout) :: vdate  !< DateTime
+    
     integer, parameter :: max_string_length=800    ! Yuk!
     character(len=max_string_length) :: filename
     character(len=1024):: buf
@@ -770,10 +726,10 @@ contains
   ! ------------------------------------------------------------------------------
 
   subroutine gpnorm(fld, nf, pstat)
-    implicit none
-    type(soca_field), intent(in) :: fld
-    integer, intent(in) :: nf
+    type(soca_field),        intent(in) :: fld
+    integer,                 intent(in) :: nf
     real(kind=kind_real), intent(inout) :: pstat(3, nf) !> [average, min, max]
+    
     real(kind=kind_real) :: zz
     integer :: jj, Nc2d, myrank
     character(len=1024):: buf
@@ -821,11 +777,9 @@ contains
   ! ------------------------------------------------------------------------------
 
   subroutine fldrms(fld, prms)
-
-    implicit none
-
-    type(soca_field), intent(in) :: fld
+    type(soca_field),      intent(in) :: fld
     real(kind=kind_real), intent(out) :: prms
+    
     integer :: jf,jy,jx,ii
     real(kind=kind_real) :: zz, ns, n2dfld
 
@@ -839,10 +793,7 @@ contains
   ! ------------------------------------------------------------------------------
 
   subroutine ug_size(self, ug)
-    use unstructured_grid_mod
-
-    implicit none
-    type(soca_field), intent(in) :: self
+    type(soca_field),           intent(in) :: self
     type(unstructured_grid), intent(inout) :: ug
 
     integer :: isc, iec, jsc, jec
@@ -882,12 +833,9 @@ contains
   ! ------------------------------------------------------------------------------
 
   subroutine ug_coord(self, ug, colocated)
-    use unstructured_grid_mod
-    use tools_const, only: deg2rad
-
-    implicit none
     type(soca_field), intent(in) :: self
-    integer, intent(in) :: colocated
+    integer,          intent(in) :: colocated
+    
     type(unstructured_grid), intent(inout) :: ug
 
     integer :: igrid
@@ -923,11 +871,8 @@ contains
   ! ------------------------------------------------------------------------------
 
   subroutine field_to_ug(self, ug, colocated)
-    use unstructured_grid_mod
-
-    implicit none
-    type(soca_field), intent(in) :: self
-    integer, intent(in) :: colocated
+    type(soca_field),           intent(in) :: self
+    integer,                    intent(in) :: colocated    
     type(unstructured_grid), intent(inout) :: ug
 
     integer :: isc, iec, jsc, jec, jk, incat, inzo, ncat, nzo
@@ -997,11 +942,7 @@ contains
   ! ------------------------------------------------------------------------------
 
   subroutine field_from_ug(self, ug)
-
-    use unstructured_grid_mod
-
-    implicit none
-    type(soca_field), intent(inout) :: self
+    type(soca_field),     intent(inout) :: self
     type(unstructured_grid), intent(in) :: ug
 
     integer :: isc, iec, jsc, jec, jk, incat, inzo, ncat, nzo
@@ -1055,9 +996,8 @@ contains
   ! ------------------------------------------------------------------------------
 
   function common_vars(x1, x2)
-
-    implicit none
     type(soca_field), intent(in) :: x1, x2
+    
     integer :: common_vars
     integer :: jf
 
@@ -1078,8 +1018,6 @@ contains
   ! ------------------------------------------------------------------------------
 
   subroutine check_resolution(x1, x2)
-
-    implicit none
     type(soca_field), intent(in) :: x1, x2
 
     ! NEEDS WORK !!!
@@ -1094,8 +1032,8 @@ contains
   ! ------------------------------------------------------------------------------
 
   subroutine check(self)
-    implicit none
     type(soca_field), intent(in) :: self
+    
     logical :: bad
 
     ! Doesn't do any thing ...
@@ -1114,9 +1052,6 @@ contains
   ! ------------------------------------------------------------------------------
   !> Save soca fields to file using fms write_data
   subroutine soca_fld2file(fld, filename)
-
-    implicit none
-    
     type(soca_field),   intent(in) :: fld    !< Fields
     character(len=800), intent(in) :: filename
     
@@ -1158,9 +1093,6 @@ contains
   ! ------------------------------------------------------------------------------
   !> Save soca fields in a restart format  
   subroutine soca_write_restart(fld, c_conf, vdate)
-
-    implicit none
-
     type(soca_field), intent(inout) :: fld      !< Fields
     type(c_ptr),         intent(in) :: c_conf   !< Configuration
     type(datetime),   intent(inout) :: vdate    !< DateTime
@@ -1214,24 +1146,18 @@ contains
   ! ------------------------------------------------------------------------------
   !> Generate filename (based on oops/qg)
   function soca_genfilename (c_conf,length,vdate, domain_type)
-    use iso_c_binding
-    use datetime_mod
-    use duration_mod
     type(c_ptr),                intent(in) :: c_conf
     integer,                    intent(in) :: length
     type(datetime),             intent(in) :: vdate
-    character(len=3), optional, intent(in) :: domain_type    
-    character(len=length)                  :: soca_genfilename
+    character(len=3), optional, intent(in) :: domain_type
 
+    character(len=length)                  :: soca_genfilename
     character(len=length) :: fdbdir, expver, typ, validitydate, referencedate, sstep, &
          & prefix, mmb
     type(datetime) :: rdate
     type(duration) :: step
     integer lenfn
 
-    ! here we should query the length and then allocate "string".
-    ! But Fortran 90 does not allow variable-length allocatable strings.
-    ! config_get_string checks the string length and aborts if too short.
     fdbdir = config_get_string(c_conf,len(fdbdir),"datadir")
     expver = config_get_string(c_conf,len(expver),"exp")
     typ    = config_get_string(c_conf,len(typ)   ,"type")
@@ -1278,9 +1204,6 @@ contains
   ! ------------------------------------------------------------------------------
   
   subroutine soca_column_model2da(fld)
-    
-    implicit none
-
     type(soca_field), intent(inout) :: fld      !< Fields
     
     type(remapping_CS)  :: remapCS
@@ -1306,8 +1229,6 @@ contains
   ! ------------------------------------------------------------------------------
 
   subroutine clean_ocean(fld)
-
-    implicit none
     type(soca_field), intent(inout) :: fld
 
     integer :: ii, jj, kk

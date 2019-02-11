@@ -10,7 +10,7 @@ module soca_model_mod
 
   use kinds
   use iso_c_binding
-  use soca_geom_mod
+  use soca_geom_mod_c
   use soca_mom6
   use soca_fields  
   use MOM,  only : step_MOM
@@ -52,10 +52,9 @@ contains
   !> Linked list implementation
 #include "Utils/linkedList_c.f"
 
+  ! ------------------------------------------------------------------------------
+  !> Initialize model's data structure
   subroutine soca_create(self, geom, c_conf)
-
-    implicit none
-    
     type(soca_model), intent(inout) :: self
     type(c_ptr),         intent(in) :: c_conf
     type(soca_geom),     intent(in) :: geom
@@ -65,11 +64,8 @@ contains
   end subroutine soca_create
 
   ! ------------------------------------------------------------------------------
-  
+  !> Advance MOM6 one baroclinic time step
   subroutine soca_propagate(self, flds)
-
-    implicit none
-    
     type(soca_model), intent(inout) :: self
     type(soca_field), intent(inout) :: flds
 
@@ -114,11 +110,8 @@ contains
   end subroutine soca_propagate
 
   ! ------------------------------------------------------------------------------
-  
+  !> Release memory
   subroutine soca_delete(self)
-
-    implicit none
-    
     type(soca_model), intent(inout) :: self
 
     ! Finalize MOM6

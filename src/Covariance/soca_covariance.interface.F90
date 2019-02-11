@@ -16,7 +16,7 @@ subroutine c_soca_b_setup(c_key_self, c_conf, c_key_geom, c_key_bkg) &
 
   use iso_c_binding
   use soca_covariance_mod
-  use soca_geom_mod
+  use soca_geom_mod_c
   use soca_fields
 
   implicit none
@@ -94,7 +94,7 @@ subroutine c_soca_b_linearize(c_key_self, c_key_geom) bind(c,name='soca_b_linear
 
   use iso_c_binding
   use soca_covariance_mod
-  use soca_geom_mod
+  use soca_geom_mod_c
   use soca_fields
 
   implicit none

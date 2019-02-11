@@ -6,19 +6,30 @@
 !
 
 module soca_model_geom_type
-
   use MOM_grid,                  only : ocean_grid_type
   use MOM_verticalGrid,          only : verticalGrid_type
   use soca_mom6
+  use soca_utils
   use kinds
   use fckit_mpi_module
   use mpp_domains_mod, only : mpp_get_compute_domain, mpp_get_data_domain
   use mpp_domains_mod, only : mpp_update_domains
-  
+  use kinds
+  use type_kdtree, only: kdtree_type
+  use type_mpl    
+  use tools_const, only: pi,req,deg2rad,rad2deg
+  use fms_mod,         only : get_mosaic_tile_grid, write_data, set_domain, read_data
+  use fms_io_mod,      only : fms_io_init, fms_io_exit
+  use mpi
+  use fckit_mpi_module, only: fckit_mpi_comm
+  use iso_c_binding
+
   implicit none
+  
   private
   public :: geom_infotofile, geom_get_domain_indices
-  
+
+  !> Geometry data structure 
   type, public :: soca_model_geom
      type(ocean_grid_type)            :: G          !< Ocean/sea-ice horizontal grid
      type(VerticalGrid_type), pointer :: GV         !< Ocean vertical grid
@@ -53,29 +64,19 @@ contains
   ! ------------------------------------------------------------------------------
 
   ! ------------------------------------------------------------------------------
-
+  !> Initialize and allocate memory for geometry object
   subroutine geom_init(self, c_conf)
-    
-    use kinds
-    use soca_mom6, only : soca_geom_init !, soca_ice_geom_init
-    use iso_c_binding
-  
-    implicit none
-
     class(soca_model_geom), intent(out) :: self
     type(c_ptr),             intent(in) :: c_conf
 
     call soca_geom_init(self%G, self%GV, self%ice_column, c_conf)
     call geom_allocate(self)
-    
+
   end subroutine geom_init
 
   ! ------------------------------------------------------------------------------
-  
-  subroutine geom_end(self)
-    
-    implicit none
-
+  !> Geometry destructor  
+  subroutine geom_end(self)    
     class(soca_model_geom),   intent(out)  :: self    
 
     if (allocated(self%lon)) deallocate(self%lon)
@@ -93,8 +94,8 @@ contains
     self%G%jsc = 0
     self%G%jec = 0
     self%G%ke = 0
-    
-    if (allocated(self%G%GeoLonT)) deallocate(self%G%GeoLonT)
+
+    if (allocated(self%G%GeoLonT)) deallocate(self%G%GeoLonT)       
     if (allocated(self%G%GeoLatT)) deallocate(self%G%GeoLatT)
     if (allocated(self%G%mask2dT)) deallocate(self%G%mask2dT)
     if (allocated(self%G%areaT)) deallocate(self%G%areaT)
@@ -102,26 +103,21 @@ contains
   end subroutine geom_end
 
   ! ------------------------------------------------------------------------------
-  
+  !> Clone, self = other  
   subroutine geom_clone(self, other)
-
-    implicit none
-
     class(soca_model_geom), intent(in)  :: self
     class(soca_model_geom), intent(out) :: other
 
     other%G = self%G
+    !other%GV = self%GV    
     other%ice_column = self%ice_column
     call geom_allocate(other)    
-    
+
   end subroutine geom_clone
 
   ! ------------------------------------------------------------------------------
-  
+  !> Allocate memory and point to mom6 data structure
   subroutine geom_allocate(self)
-
-    implicit none
-
     class(soca_model_geom), intent(inout)  :: self
 
     integer :: nxny(2), nx, ny
@@ -172,11 +168,8 @@ contains
   end subroutine geom_allocate
 
   ! ------------------------------------------------------------------------------
-
+  !> Print geometry info to std output
   subroutine geom_print(self)
-
-    implicit none
-
     class(soca_model_geom), intent(in) :: self
 
     print *, 'nx=', self%nx
@@ -185,19 +178,9 @@ contains
   end subroutine geom_print
 
   ! ------------------------------------------------------------------------------
-
+  !> Read and store Rossby Radius of deformation
+  !> TODO: Move out of geometry, use bilinear interp instead of nearest neighbor
   subroutine geom_rossby_radius(self)
-    use kinds
-    use type_kdtree, only: kdtree_type
-    use type_mpl    
-    use tools_const, only: pi,req,deg2rad,rad2deg
-    use fms_mod,         only : get_mosaic_tile_grid, write_data, set_domain, read_data
-    use fms_io_mod,      only : fms_io_init, fms_io_exit
-    use mpi
-    use fckit_mpi_module, only: fckit_mpi_comm
-    
-    implicit none
-
     class(soca_model_geom), intent(inout) :: self
 
     integer :: unit, i, j, n
@@ -266,16 +249,11 @@ contains
   end subroutine geom_rossby_radius
 
   ! ------------------------------------------------------------------------------
-  
+  !> Setup array of "valid index" to inline and pack structured geometry to
+  !> unstructured geometry
   subroutine geom_validindex(self)
     ! Ignores inland mask grid points and
     ! select wet gridpoints and shoreline mask
-    
-    use kinds
-    use type_kdtree, only: kdtree_type
-
-    implicit none
-
     class(soca_model_geom), intent(inout) :: self    
     integer :: is, ie, js, je
     integer :: i, j, ns, cnt
@@ -297,7 +275,7 @@ contains
     ns = int(sum(self%shoremask(is:ie,js:je)))
     allocate(self%ij(2,ns))
 
-    ! Save shoreline + ocean grid point
+!!$    ! Save shoreline + ocean grid point
 !!$    cnt = 1
 !!$    do i = is, ie
 !!$       do j = js, je
@@ -312,15 +290,10 @@ contains
   end subroutine geom_validindex
   
   ! ------------------------------------------------------------------------------
-
+  !> Write geometry info to file
   subroutine geom_infotofile(self)
-
-    use fms_mod,         only : get_mosaic_tile_grid, write_data, set_domain
-    use fms_io_mod,      only : fms_io_init, fms_io_exit
-    use soca_utils
-    
-    implicit none
     class(soca_model_geom), intent(in) :: self
+    
     character(len=256) :: geom_output_file = "geom_output.nc"
     character(len=256) :: geom_output_pe,varname
     integer :: pe
@@ -361,16 +334,13 @@ contains
   end subroutine geom_infotofile
 
   ! ------------------------------------------------------------------------------
-  
+  !> Get indices for compute or data domain  
   subroutine geom_get_domain_indices(self, domain_type, is, ie, js, je, local)
-    ! Short cut to extract array bounds of compute or data domain
+    class(soca_model_geom), intent(in) :: self
+    character(7),           intent(in) :: domain_type
+    integer,               intent(out) :: is, ie, js, je
+    logical,      optional, intent(in) :: local
     
-    implicit none
-
-    class(soca_model_geom),  intent(in) :: self
-    character(7),            intent(in) :: domain_type
-    integer,                intent(out) :: is, ie, js, je
-    logical,       optional, intent(in) :: local
     integer :: isc, iec, jsc, jec    
     integer :: isd, ied, jsd, jed
 
@@ -391,10 +361,9 @@ contains
 
   end subroutine geom_get_domain_indices
 
+  ! ------------------------------------------------------------------------------
+  !> Get layer depth from layer thicknesses  
   subroutine geom_thickness2depth(self, h, z) 
-
-    implicit none
-    
     class(soca_model_geom),    intent(in) :: self
     real(kind=kind_real),      intent(in) :: h(:,:,:) ! Layer thickness 
     real(kind=kind_real),   intent(inout) :: z(:,:,:) ! Mid-layer depth

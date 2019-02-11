@@ -30,10 +30,8 @@ module soca_interpfields_mod
   
 contains
   ! ------------------------------------------------------------------------------
+  !> Compute interpolation weights
   subroutine initialize_interph(fld, locs, horiz_interp, bumpid)    
-  
-    implicit none
-
     type(soca_field),         intent(in) :: fld
     type(ufo_locs),           intent(in) :: locs
     type(soca_bumpinterp2d), intent(out) :: horiz_interp    
@@ -57,10 +55,8 @@ contains
   end subroutine initialize_interph
   
   ! ------------------------------------------------------------------------------
+  !> Apply forward linearized interpolation (linearized about traj)
   subroutine getvalues_traj(fld, locs, vars, geovals, traj)
-
-    implicit none
-
     type(soca_field),      intent(inout) :: fld
     type(ufo_locs),           intent(in) :: locs
     type(ufo_vars),           intent(in) :: vars    
@@ -101,10 +97,8 @@ contains
   end subroutine getvalues_traj
 
   ! ------------------------------------------------------------------------------
+  !> Apply (possibly nonlinear) interpolation  
   subroutine getvalues_notraj(fld, locs, vars, geovals)
-
-    implicit none
-
     type(soca_field),   intent(inout) :: fld
     type(ufo_locs),        intent(in) :: locs
     type(ufo_vars),        intent(in) :: vars    
@@ -123,11 +117,8 @@ contains
   end subroutine getvalues_notraj
   
   ! ------------------------------------------------------------------------------
-
+  !> Apply backward interpolation
   subroutine getvalues_ad(fld, locs, vars, geovals, traj)
-    
-    implicit none
-
     type(soca_field),              intent(inout) :: fld
     type(ufo_locs),                   intent(in) :: locs
     type(ufo_vars),                   intent(in) :: vars        
@@ -207,10 +198,8 @@ contains
   end subroutine getvalues_ad
 
   ! ------------------------------------------------------------------------------
+  !> Interace to bump forward interpolation
   subroutine interp_tl(fld, locs, vars, geovals, horiz_interp)
-
-    implicit none
-
     type(soca_field),         intent(inout) :: fld
     type(ufo_locs),              intent(in) :: locs
     type(ufo_vars),              intent(in) :: vars    
@@ -304,10 +293,8 @@ contains
   end subroutine interp_tl
 
   ! ------------------------------------------------------------------------------
+  !> Get 3rd dimension of fld
   subroutine nlev_from_ufovar(fld, vars, index_vars, nval)
-
-    implicit none
-
     type(soca_field), intent(in) :: fld    
     type(ufo_vars),   intent(in) :: vars
     integer,          intent(in) :: index_vars    

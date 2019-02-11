@@ -6,11 +6,14 @@
 !
 
 module soca_bkgerr_mod
-
+  use config_mod
+  use datetime_mod  
+  use iso_c_binding
   use kinds
   use soca_fields
   use soca_model_geom_type, only : geom_get_domain_indices
-  
+  use soca_utils
+
   implicit none
 
   type :: soca_bkgerror_bounds
@@ -43,17 +46,8 @@ contains
   !> Linked list implementation
 #include "oops/util/linkedList_c.f"
   ! ------------------------------------------------------------------------------
+  !> Setup the static background error
   subroutine soca_bkgerr_setup(c_conf, self, bkg)
-
-    use kinds
-    use iso_c_binding
-    use config_mod
-    use soca_kst_mod
-    use datetime_mod
-    use mpi
-    
-    implicit none
-
     type(soca_bkgerr_config), intent(inout) :: self
     type(soca_field),    target, intent(in) :: bkg
     type(c_ptr),                 intent(in) :: c_conf
@@ -135,14 +129,8 @@ contains
   end subroutine soca_bkgerr_setup
 
   ! ------------------------------------------------------------------------------
-
+  !> Apply background error: dxm = D dxa
   subroutine soca_bkgerr_mult(self, dxa, dxm)
-
-    use kinds
-    use soca_model_geom_type, only : geom_get_domain_indices
-
-    implicit none
-
     type(soca_bkgerr_config),    intent(in) :: self    
     type(soca_field),            intent(in) :: dxa
     type(soca_field),         intent(inout) :: dxm
@@ -167,6 +155,8 @@ contains
 
   end subroutine soca_bkgerr_mult
 
+  ! ------------------------------------------------------------------------------
+  !> Apply bounds
   elemental function adjusted_std(std, minstd, maxstd)
     
     implicit none
@@ -179,12 +169,8 @@ contains
   end function adjusted_std
 
   ! ------------------------------------------------------------------------------
-  
+  !> Derive background error from vertial gradient of temperature 
   subroutine soca_bkgerr_tocn(self)
-    use kinds
-    use soca_utils
-    
-    implicit none
     type(soca_bkgerr_config), intent(inout) :: self
 
     real(kind=kind_real), allocatable :: temp(:), vmask(:)

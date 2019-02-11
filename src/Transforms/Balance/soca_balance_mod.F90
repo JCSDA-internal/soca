@@ -11,6 +11,10 @@ module soca_balance_mod
   use soca_fields
   use soca_kst_mod
   use soca_ksshts_mod
+  use iso_c_binding
+  use config_mod
+  use soca_model_geom_type, only : geom_get_domain_indices
+  use datetime_mod
   
   implicit none
 
@@ -37,19 +41,8 @@ contains
   !> Linked list implementation
 #include "oops/util/linkedList_c.f"
   ! ------------------------------------------------------------------------------
+  !> Initialization of the balance operator and its trajectory
   subroutine soca_balance_setup(c_conf, self, traj)
-
-    use kinds
-    use iso_c_binding
-    use config_mod
-    use soca_fields
-    use soca_model_geom_type, only : geom_get_domain_indices
-    use soca_kst_mod
-    use datetime_mod
-    use mpi
-    
-    implicit none
-
     type(soca_balance_config), intent(inout) :: self
     type(soca_field),    target, intent(in)  :: traj
     type(c_ptr),                 intent(in)  :: c_conf
@@ -124,18 +117,13 @@ contains
 
     ! Compute Kst
     allocate(self%kct(isc:iec,jsc:jec))    
-    self%kct = -0.01d0 ! HaHa    
+    self%kct = -0.01d0 ! TODO: Insert regression coef    
     
   end subroutine soca_balance_setup
 
   ! ------------------------------------------------------------------------------
+  !> Destructor for the balance oprator
   subroutine soca_balance_delete(self)
-
-    use kinds
-    use iso_c_binding
-
-    implicit none
-    
     type(soca_balance_config), intent(inout) :: self
 
     nullify(self%traj)
@@ -147,18 +135,8 @@ contains
   end subroutine soca_balance_delete
 
   ! ------------------------------------------------------------------------------
+  ! Apply forward balance operator
   subroutine soca_balance_mult(self, dxa, dxm)
-
-    !>    [ I       0   0  0 ]
-    !>    [ Kst     I   0  0 ]
-    !> K= [ Ketat Ketas I  0 ]
-    !>    [ Kct     0   0  I ]
-    
-    use kinds
-    use soca_model_geom_type, only : geom_get_domain_indices
-
-    implicit none
-
     type(soca_balance_config), intent(in) :: self    
     type(soca_field),          intent(in) :: dxa
     type(soca_field),       intent(inout) :: dxm
@@ -166,6 +144,11 @@ contains
     integer :: i, j, k
     real(kind=kind_real) :: deta, dxc
 
+    !>    [ I       0   0  0 ]
+    !>    [ Kst     I   0  0 ]
+    !> K= [ Ketat Ketas I  0 ]
+    !>    [ Kct     0   0  I ]
+    
     do i = self%isc, self%iec
        do j = self%jsc, self%jec
           ! Temperature
@@ -197,13 +180,8 @@ contains
   end subroutine soca_balance_mult
   
   ! ------------------------------------------------------------------------------
-  subroutine soca_balance_multad(self, dxa, dxm)
-
-    use kinds
-    use soca_model_geom_type, only : geom_get_domain_indices
-
-    implicit none
-
+  ! Apply backward balance operator  
+  subroutine soca_balance_multad(self, dxa, dxm)    
     type(soca_balance_config), intent(in) :: self
     type(soca_field),          intent(in) :: dxm    
     type(soca_field),       intent(inout) :: dxa
@@ -235,14 +213,9 @@ contains
 
   end subroutine soca_balance_multad
 
-  ! ------------------------------------------------------------------------------  
+  ! ------------------------------------------------------------------------------
+  ! Apply inverse of the forward balance operator  
   subroutine soca_balance_multinv(self, dxa, dxm)
-
-    use kinds
-    use soca_model_geom_type, only : geom_get_domain_indices
-
-    implicit none
-
     type(soca_balance_config), intent(in) :: self
     type(soca_field),          intent(in) :: dxm    
     type(soca_field),       intent(inout) :: dxa
@@ -279,13 +252,8 @@ contains
   end subroutine soca_balance_multinv
 
   ! ------------------------------------------------------------------------------
+  ! Apply inverse of the backward balance operator    
   subroutine soca_balance_multinvad(self, dxa, dxm)
-
-    use kinds
-    use soca_model_geom_type, only : geom_get_domain_indices
-
-    implicit none
-
     type(soca_balance_config), intent(in) :: self
     type(soca_field),       intent(inout) :: dxm    
     type(soca_field),          intent(in) :: dxa

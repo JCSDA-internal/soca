@@ -45,7 +45,7 @@ contains
 #include "oops/util/linkedList_c.f"
 
   ! ------------------------------------------------------------------------------
-
+  !> Setup trajectory for interpolation
   subroutine c_soca_getvaltraj_setup(c_key_self) bind(c,name='soca_getvaltraj_setup_f90')
 
     implicit none
@@ -68,7 +68,7 @@ contains
   end subroutine c_soca_getvaltraj_setup
 
   ! ------------------------------------------------------------------------------
-
+  !> Release memory
   subroutine c_soca_getvaltraj_delete(c_key_self) bind(c,name='soca_getvaltraj_delete_f90')
 
     implicit none

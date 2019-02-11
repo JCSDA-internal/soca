@@ -9,7 +9,8 @@ module soca_kst_mod
 
   use kinds
   use soca_fields
-  
+  use soca_utils
+
   implicit none
 
   !> Fortran derived type to hold the setup for Kst
@@ -41,12 +42,6 @@ contains
     ! jac    : Jacobian [ds1/dt1, ...,dsN/dtN];                [psu/deg C]
     !    
     !--------------------------------------------------------------------------
-
-    use kinds
-    use soca_utils
-    
-    implicit none
-
     real(kind=kind_real),                 intent(in) :: t(:), s(:), h(:)
     real(kind=kind_real),                 intent(in) :: dsdtmax, dsdzmin, dtdzmin
     real(kind=kind_real), allocatable, intent(inout) :: jac(:) ! jac=ds/dt
