@@ -593,7 +593,7 @@ contains
 
        call fms_io_init()
        do ii = 1, fld%nf
-
+          print *,fld%fldnames(ii)
           select case(fld%fldnames(ii))
           ! Ocean
           case ('ssh')

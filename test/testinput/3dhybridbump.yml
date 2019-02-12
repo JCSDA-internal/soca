@@ -30,6 +30,7 @@ cost_function:
      ocn_filename: MOM.res.nc
      ice_filename: ice_model.res.nc
      date: 2018-04-14T00:00:00Z
+     variables: [cicen, hicen, socn, tocn, ssh, hocn]       
   Covariance: 
    covariance: hybrid
    ensemble_weight: "0.3"
@@ -89,6 +90,7 @@ cost_function:
       ice_filename: ice.bkgerror.nc      
       date: 2018-04-14T00:00:00Z
       filename: std_bkgerror.nc
+      variables: [cicen, hicen, socn, tocn, ssh, hocn]
       t_min: 0.01
       t_max: 5.0
       s_min: 0.01
@@ -194,21 +196,25 @@ cost_function:
        basename: ./Data/
        ocn_filename: ocn.test.ens.1.2018-04-15T00:00:00Z.PT1H.nc
        ice_filename: ice.test.ens.1.2018-04-15T00:00:00Z.PT1H.nc
+       variables: [cicen, hicen, socn, tocn, ssh, hocn]
      - read_from_file: 1
        date: 2018-04-14T00:00:00Z
        basename: ./Data/
        ocn_filename: ocn.test.ens.2.2018-04-15T00:00:00Z.PT1H.nc
        ice_filename: ice.test.ens.2.2018-04-15T00:00:00Z.PT1H.nc
+       variables: [cicen, hicen, socn, tocn, ssh, hocn]
      - read_from_file: 1
        date: 2018-04-14T00:00:00Z
        basename: ./Data/
        ocn_filename: ocn.test.ens.3.2018-04-15T00:00:00Z.PT1H.nc
        ice_filename: ice.test.ens.3.2018-04-15T00:00:00Z.PT1H.nc
+       variables: [cicen, hicen, socn, tocn, ssh, hocn]
      - read_from_file: 1
        date: 2018-04-14T00:00:00Z
        basename: ./Data/
        ocn_filename: ocn.test.ens.4.2018-04-15T00:00:00Z.PT1H.nc
        ice_filename: ice.test.ens.4.2018-04-15T00:00:00Z.PT1H.nc
+       variables: [cicen, hicen, socn, tocn, ssh, hocn]
  Jo: 
   ObsTypes:
   - ObsType: ADT

@@ -1,4 +1,4 @@
-JEDI encapsulation of MOM6-SIS
+JEDI encapsulation of MOM6  
 
 (C) Copyright 2017 UCAR.
 

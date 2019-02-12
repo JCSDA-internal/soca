@@ -32,7 +32,7 @@ DOXYFILE_ENCODING      = UTF-8
 # title of most generated pages and in a few other places.
 # The default value is: My Project.
 
-PROJECT_NAME           = "Ocean Sea-Ice DA (MOM5-CICE5)"
+PROJECT_NAME           = "JEDI encapsulation of MOM6 (including a generic sea-ice state)"
 
 # The PROJECT_NUMBER tag can be used to enter a project or revision number. This
 # could be handy for archiving the generated documentation or if some version

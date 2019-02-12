@@ -97,6 +97,9 @@ namespace soca {
       void print(std::ostream &) const;
       boost::scoped_ptr<Fields> fields_;
       boost::scoped_ptr<Fields> stash_;
+      boost::shared_ptr<const Geometry> geom_;
+      oops::Variables vars_;
+      util::DateTime time_;
   };
   // -----------------------------------------------------------------------------
 
