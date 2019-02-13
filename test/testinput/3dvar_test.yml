@@ -20,6 +20,7 @@ model:
   name: SOCA
   tstep: PT1H
   advance_mom6: 0
+  variables: [cicen, hicen, socn, tocn, ssh, hocn]  
 cost_function:
   cost_type: 3D-Var
   window_begin: '2018-04-14T00:00:00Z'
@@ -27,11 +28,6 @@ cost_function:
   variables:
   - cicen
   - hicen
-  - hsnon
-  - tsfcn
-  - qsnon
-  - sicnk
-  - qicnk
   - socn
   - tocn
   - ssh
@@ -44,6 +40,7 @@ cost_function:
         ocn_filename: MOM.res.nc
         ice_filename: ice_model.res.nc
         date: '2018-04-15T00:00:00Z'
+        #variables: [cicen, hicen, socn, tocn, ssh, hocn]          
     Covariance:
       covariance: SocaError
       # General parameters
@@ -105,11 +102,6 @@ cost_function:
           variables:
           - cicen
           - hicen
-          - hsnon
-          - tsfcn
-          - qsnon
-          - sicnk
-          - qicnk
           - socn
           - tocn
           - ssh
@@ -118,11 +110,6 @@ cost_function:
           variables:
           - cicen
           - hicen
-          - hsnon
-          - tsfcn
-          - qsnon
-          - sicnk
-          - qicnk
           - socn
           - tocn
           - ssh
@@ -131,11 +118,6 @@ cost_function:
           variables:
           - cicen
           - hicen
-          - hsnon
-          - tsfcn
-          - qsnon
-          - sicnk
-          - qicnk
           - socn
           - tocn
           - ssh
@@ -145,11 +127,6 @@ cost_function:
           variables:
           - cicen
           - hicen
-          - hsnon
-          - tsfcn
-          - qsnon
-          - sicnk
-          - qicnk
           - socn
           - tocn
           - ssh
@@ -160,11 +137,6 @@ cost_function:
           variables:
           - cicen
           - hicen
-          - hsnon
-          - tsfcn
-          - qsnon
-          - sicnk
-          - qicnk
           - socn
           - tocn
           - ssh
@@ -173,11 +145,6 @@ cost_function:
           variables:
           - cicen
           - hicen
-          - hsnon
-          - tsfcn
-          - qsnon
-          - sicnk
-          - qicnk
           - socn
           - tocn
           - ssh
@@ -190,11 +157,6 @@ cost_function:
           variables:
           - cicen
           - hicen
-          - hsnon
-          - tsfcn
-          - qsnon
-          - sicnk
-          - qicnk
           - socn
           - tocn
           - ssh
@@ -203,11 +165,6 @@ cost_function:
           variables:
           - cicen
           - hicen
-          - hsnon
-          - tsfcn
-          - qsnon
-          - sicnk
-          - qicnk
           - socn
           - tocn
           - ssh
@@ -292,7 +249,8 @@ variational:
       varchange: Identity
       version: IdTLM
       tstep: PT1H
-      advance_mom6: 0      
+      advance_mom6: 0
+      variables: [cicen, hicen, socn, tocn, ssh, hocn]
     ninner: 1
     gradient_norm_reduction: 1e-15
     test: 'on'
@@ -307,6 +265,7 @@ variational:
 #      varchange: Identity      
 #      version: IdTLM
 #      tstep: PT1H
+#      variables: [cicen, hicen, socn, tocn, ssh, hocn]
 #    ninner: 15
 #    gradient_norm_reduction: 1e-15
 #    test: 'on'

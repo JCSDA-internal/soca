@@ -27,21 +27,10 @@ namespace soca {
   static oops::ModelMaker<Traits, Model> makermodel_("SOCA");
   // -----------------------------------------------------------------------------
   Model::Model(const Geometry & resol, const eckit::Configuration & model)
-    : keyConfig_(0), tstep_(0), geom_(resol),
-    vars_(std::vector<std::string>{
-          "cicen",
-          "hicen",
-          "hsnon",
-          "tsfcn",
-          "qsnon",
-          "sicnk",
-          "qicnk",
-          "socn",
-          "tocn",
-          "ssh",
-          "hocn"})
+    : keyConfig_(0), tstep_(0), geom_(resol), vars_(model)
   {
     Log::trace() << "Model::Model" << std::endl;
+    Log::trace() << "Model vars: " << vars_ << std::endl;    
     tstep_ = util::Duration(model.getString("tstep"));
     const eckit::Configuration * configc = &model;
     soca_setup_f90(&configc, geom_.toFortran(), keyConfig_);

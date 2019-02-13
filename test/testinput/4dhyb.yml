@@ -27,11 +27,6 @@ cost_function:
   variables:
   - cicen
   - hicen
-  - hsnon
-  - tsfcn
-  - qsnon
-  - sicnk
-  - qicnk
   - socn
   - tocn
   - ssh
@@ -108,11 +103,6 @@ cost_function:
           variables:
           - cicen
           - hicen
-          - hsnon
-          - tsfcn
-          - qsnon
-          - sicnk
-          - qicnk
           - socn
           - tocn
           - ssh
@@ -121,11 +111,6 @@ cost_function:
           variables:
           - cicen
           - hicen
-          - hsnon
-          - tsfcn
-          - qsnon
-          - sicnk
-          - qicnk
           - socn
           - tocn
           - ssh
@@ -134,11 +119,6 @@ cost_function:
           variables:
           - cicen
           - hicen
-          - hsnon
-          - tsfcn
-          - qsnon
-          - sicnk
-          - qicnk
           - socn
           - tocn
           - ssh
@@ -148,11 +128,6 @@ cost_function:
           variables:
           - cicen
           - hicen
-          - hsnon
-          - tsfcn
-          - qsnon
-          - sicnk
-          - qicnk
           - socn
           - tocn
           - ssh
@@ -163,11 +138,6 @@ cost_function:
           variables:
           - cicen
           - hicen
-          - hsnon
-          - tsfcn
-          - qsnon
-          - sicnk
-          - qicnk
           - socn
           - tocn
           - ssh
@@ -176,11 +146,6 @@ cost_function:
           variables:
           - cicen
           - hicen
-          - hsnon
-          - tsfcn
-          - qsnon
-          - sicnk
-          - qicnk
           - socn
           - tocn
           - ssh
@@ -193,11 +158,6 @@ cost_function:
           variables:
           - cicen
           - hicen
-          - hsnon
-          - tsfcn
-          - qsnon
-          - sicnk
-          - qicnk
           - socn
           - tocn
           - ssh
@@ -206,11 +166,6 @@ cost_function:
           variables:
           - cicen
           - hicen
-          - hsnon
-          - tsfcn
-          - qsnon
-          - sicnk
-          - qicnk
           - socn
           - tocn
           - ssh
@@ -223,11 +178,6 @@ cost_function:
        variables: 
        - cicen
        - hicen
-       - hsnon
-       - tsfcn
-       - qsnon
-       - sicnk
-       - qicnk
        - socn
        - tocn
        - ssh
@@ -239,11 +189,6 @@ cost_function:
         variables:
         - cicen
         - hicen
-        - hsnon
-        - tsfcn
-        - qsnon
-        - sicnk
-        - qicnk
         - socn
         - tocn
         - ssh
@@ -328,7 +273,8 @@ variational:
       varchange: Identity
       version: IdTLM
       tstep: PT1H
-      advance_mom6: 0      
+      advance_mom6: 0
+      variables: [cicen, hicen, socn, tocn, ssh, hocn]
     ninner: 1
     gradient_norm_reduction: 1e-15
     test: 'on'
@@ -340,7 +286,8 @@ variational:
       varchange: Identity
       version: IdTLM
       tstep: PT1H
-      advance_mom6: 0      
+      advance_mom6: 0
+      variables: [cicen, hicen, socn, tocn, ssh, hocn]
     ninner: 1
     gradient_norm_reduction: 1e-15
     test: 'on'    

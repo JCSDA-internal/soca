@@ -105,7 +105,6 @@ contains
     
     ! Interpolate T & S: Model --> DA 
     !call soca_column_model2da(flds)
-
     
   end subroutine soca_propagate
 

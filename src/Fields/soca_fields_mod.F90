@@ -749,25 +749,25 @@ contains
     pstat(1,2) = minval(fld%hicen)
     pstat(2,2) = maxval(fld%hicen)
     
-    pstat(1,8) = minval(fld%tocn)
-    pstat(2,8) = maxval(fld%tocn)
+    pstat(1,3) = minval(fld%tocn)
+    pstat(2,3) = maxval(fld%tocn)
 
-    pstat(1,9) = minval(fld%socn)
-    pstat(2,9) = maxval(fld%socn)
+    pstat(1,4) = minval(fld%socn)
+    pstat(2,4) = maxval(fld%socn)
 
-    pstat(1,10) = minval(fld%ssh)
-    pstat(2,10) = maxval(fld%ssh)
+    pstat(1,5) = minval(fld%ssh)
+    pstat(2,5) = maxval(fld%ssh)
 
     ! Output fields info
     call f_comm%barrier()
     myrank = f_comm%rank()
     WRITE(buf,*) '----------- myrank: ',myrank
     call log%info(buf,newl=.true.,flush=.true.)
-    WRITE(buf,*) 'ssh: min=',pstat(1,10),' max=',pstat(2,10)
+    WRITE(buf,*) 'ssh: min=',pstat(1,5),' max=',pstat(2,5)
     call log%info(buf,newl=.true.,flush=.true.)
-    WRITE(buf,*) 'T: min=',pstat(1,8),' max=',pstat(2,8)
+    WRITE(buf,*) 'T: min=',pstat(1,3),' max=',pstat(2,3)
     call log%info(buf,newl=.true.,flush=.true.)
-    WRITE(buf,*) 'S: min=',pstat(1,9),' max=',pstat(2,9)
+    WRITE(buf,*) 'S: min=',pstat(1,4),' max=',pstat(2,4)
     call log%info(buf,newl=.true.,flush=.true.)
     WRITE(buf,*) 'aice: min=',pstat(1,1),' max=',pstat(2,1)
     call log%info(buf,newl=.true.,flush=.true.)
@@ -1021,7 +1021,8 @@ contains
     type(soca_field), intent(in) :: x1, x2
 
     ! NEEDS WORK !!!
-    if (x1%geom%ocean%nx /= x2%geom%ocean%nx .or.  x1%geom%ocean%ny /= x2%geom%ocean%ny ) then
+    if (x1%geom%ocean%nx /= x2%geom%ocean%nx .or.  &
+       &x1%geom%ocean%ny /= x2%geom%ocean%ny ) then
        call abor1_ftn ("soca_fields: resolution error")
     endif
     call check(x1)
