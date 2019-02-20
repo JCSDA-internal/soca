@@ -181,7 +181,7 @@ contains
   subroutine soca_cov_sqrt_C_mult(self, dx)
     type(soca_cov),   intent(inout) :: self !< The covariance structure    
     type(soca_field), intent(inout) :: dx   !< Input: Increment
-                                            !< Output: C dx
+                                            !< Output: C^1/2 dx
 
     integer :: icat, izo
     
@@ -221,7 +221,7 @@ contains
     integer, allocatable :: imask(:,:)    
     
     real(kind_real), allocatable :: rh(:,:,:,:)     !< Horizontal support radius for covariance (in m)
-    real(kind_real), allocatable :: rv(:,:,:,:)     !< Vertical support radius for
+    real(kind_real), allocatable :: rv(:,:,:,:)     !< Vertical support radius 
     !type(fckit_mpi_comm) :: f_comm
 
     !f_comm = fckit_mpi_comm()
@@ -244,7 +244,7 @@ contains
     area = reshape( geom%ocean%cell_area(isc:iec, jsc:jec), (/nc0a/) )
     rosrad = reshape( geom%ocean%rossby_radius(isc:iec, jsc:jec), (/nc0a/) )
 
-    ! Setup land mask
+    ! Setup land or ice mask
     jz = 1
     if (domain.eq.'ocn') then
        imask(1:nc0a,jz) = int(reshape( geom%ocean%mask2d(isc:iec, jsc:jec), (/nc0a/)))
@@ -285,7 +285,8 @@ contains
     call horiz_convol%set_parameter('cor_rh',rh)    
     call horiz_convol%run_drivers()
 
-    deallocate( lon, lat, area, vunit, imask, lmask )
+    ! Clean up
+    deallocate(lon, lat, area, vunit, imask, lmask, rosrad)
     deallocate(rh,rv)       
 
   end subroutine soca_bump_correlation
@@ -298,11 +299,17 @@ contains
     type(soca_geom),         intent(in) :: geom        
 
     real(kind=kind_real), allocatable :: tmp_incr(:,:,:,:)
+    ! Allocate unstructured tmp_increment and make copy of dx    
+    call soca_struct2unstruct(dx(:,:), geom, tmp_incr)
 
     ! Apply 2D convolution
-    call soca_struct2unstruct(dx(:,:), geom, tmp_incr)
     call horiz_convol%apply_nicas(tmp_incr)
+
+    ! copy unstructured tmp_incr to structured dx    
     call soca_unstruct2struct(dx(:,:), geom, tmp_incr)
+
+    ! Clean up
+    if (allocated(tmp_incr)) deallocate(tmp_incr)
     
   end subroutine soca_2d_convol
 
@@ -319,7 +326,7 @@ contains
 
     integer :: nn
 
-    ! Apply 2D convolution
+    ! Allocate unstructured tmp_increment and make copy of dx
     call soca_struct2unstruct(dx(:,:), geom, tmp_incr)
 
     ! Get control variable size
@@ -336,6 +343,7 @@ contains
 
     ! Clean up
     deallocate(pcv)
+    if (allocated(tmp_incr)) deallocate(tmp_incr)
 
   end subroutine soca_2d_sqrt_convol
 

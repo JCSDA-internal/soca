@@ -18,11 +18,6 @@ LinearVariableChangeTests:
     variables:
     - cicen
     - hicen
-    - hsnon
-    - tsfcn
-    - qsnon
-    - sicnk
-    - qicnk
     - socn
     - tocn
     - ssh
@@ -34,11 +29,6 @@ LinearVariableChangeTests:
     variables:
     - cicen
     - hicen
-    - hsnon
-    - tsfcn
-    - qsnon
-    - sicnk
-    - qicnk
     - socn
     - tocn
     - ssh
@@ -47,11 +37,6 @@ LinearVariableChangeTests:
     variables:
     - cicen
     - hicen
-    - hsnon
-    - tsfcn
-    - qsnon
-    - sicnk
-    - qicnk
     - socn
     - tocn
     - ssh
