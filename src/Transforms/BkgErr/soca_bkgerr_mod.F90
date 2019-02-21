@@ -84,7 +84,7 @@ contains
        self%bounds%t_ml = 0.5_kind_real
     endif    
     self%bounds%s_min   = config_get_real(c_conf,"s_min")
-    self%bounds%s_max   = config_get_real(c_conf,"s_max")    
+    self%bounds%s_max   = config_get_real(c_conf,"s_max")
     self%bounds%ssh_min = config_get_real(c_conf,"ssh_min")
     self%bounds%ssh_max = config_get_real(c_conf,"ssh_max")
 
