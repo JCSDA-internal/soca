@@ -191,7 +191,7 @@ contains
     deallocate(self%cicen)
     deallocate(self%hicen)
 
-    ! Deallocate geometry
+    ! Deassociate geometry
     nullify(self%geom)
 
   end subroutine delete

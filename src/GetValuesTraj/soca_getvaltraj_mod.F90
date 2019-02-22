@@ -75,16 +75,15 @@ contains
     integer(c_int), intent(inout) :: c_key_self
     type(soca_getvaltraj), pointer :: self
 
-    ! Get key
+    ! Associate pointer/key
     call soca_getvaltraj_registry%get(c_key_self, self)
 
-    if (self%interph_initialized) then
-       call self%horiz_interp(1)%finalize()
-       deallocate(self%horiz_interp)
-       self%nobs = 0
-       self%bumpid = 0       
-       self%interph_initialized = .false.
-    endif
+    ! Clean up
+    call self%horiz_interp(1)%finalize()
+    deallocate(self%horiz_interp)
+    self%nobs = 0
+    self%bumpid = 0       
+    self%interph_initialized = .false.
 
     ! Remove key
     call soca_getvaltraj_registry%remove(c_key_self)

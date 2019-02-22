@@ -100,6 +100,8 @@ contains
     if (allocated(self%G%mask2dT)) deallocate(self%G%mask2dT)
     if (allocated(self%G%areaT)) deallocate(self%G%areaT)
     
+    nullify(self%GV)
+
   end subroutine geom_end
 
   ! ------------------------------------------------------------------------------
