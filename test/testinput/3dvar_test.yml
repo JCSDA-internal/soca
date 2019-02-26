@@ -92,10 +92,10 @@ cost_function:
         date: '2018-04-15T00:00:00Z'
         t_min: 0.0
         t_max: 5.0
-        s_min: 0.01 #0.0001
-        s_max: 0.0 #0.2
-        ssh_min: 0.01 #0.05
-        ssh_max: 0.0 #0.5
+        s_min: 0.0 #0.0001
+        s_max: 1.0 #0.2
+        ssh_min: 0.0 #0.05
+        ssh_max: 0.5 #0.5
         delta_z: 10.0
         efold_z: 1500.0	
         variables:                                
@@ -251,7 +251,7 @@ variational:
       tstep: PT1H
       advance_mom6: 0
       variables: [cicen, hicen, socn, tocn, ssh, hocn]
-    ninner: 1
+    ninner: 10
     gradient_norm_reduction: 1e-15
     test: 'on'
     prints:
