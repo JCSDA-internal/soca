@@ -13,7 +13,8 @@ module soca_bkgerr_mod
   use soca_fields
   use soca_model_geom_type, only : geom_get_domain_indices
   use soca_utils
-
+  use soca_omb_stats_mod
+  
   implicit none
 
   type :: soca_bkgerror_bounds
@@ -59,17 +60,18 @@ contains
     type(datetime) :: vdate
     character(len=800) :: fname = 'soca_bkgerror.nc'
     logical :: read_from_file = .false.
-    
+
+    ! Get number of ocean levels
     nl = size(bkg%hocn,3)
 
-    ! Read background error
+    ! Allocate memory for bkgerror
     call create_copy(self%std_bkgerr, bkg)
     !if (config_element_exists(c_conf,"ocn_filename")) then
     !   read_from_file = .true.
     !   call read_file(self%std_bkgerr, c_conf, vdate)
     !else
-       read_from_file = .false.
-       self%delta_z   = config_get_real(c_conf,"delta_z")
+    read_from_file = .false.    
+    self%delta_z   = config_get_real(c_conf,"delta_z")
     !end if
 
     ! Vertical e-folding scale
@@ -103,20 +105,20 @@ contains
     ! Apply config bounds to background error
     do i = isc, iec
        do j = jsc, jec
-!!$          ! Ocean
-!!$          self%std_bkgerr%ssh(i,j) = adjusted_std(abs(self%std_bkgerr%ssh(i,j)), &
-!!$               &self%bounds%ssh_min,&
-!!$               &self%bounds%ssh_max)
-!!$          do k = 1, nl
-!!$             efold = exp(-bkg%layer_depth(i,j,k)/self%efold_z)
-!!$             self%std_bkgerr%tocn(i,j,k) = adjusted_std(abs(self%std_bkgerr%tocn(i,j,k)),&
-!!$               &self%bounds%t_min,&
-!!$               &self%bounds%t_max) * efold
-!!$             self%std_bkgerr%socn(i,j,k) = adjusted_std(abs(self%std_bkgerr%socn(i,j,k)),&
-!!$               &self%bounds%s_min,&
-!!$               &self%bounds%s_max) * efold
-!!$          end do
-!!$
+          ! Ocean
+          self%std_bkgerr%ssh(i,j) = adjusted_std(abs(self%std_bkgerr%ssh(i,j)), &
+               &self%bounds%ssh_min,&
+               &self%bounds%ssh_max)
+          do k = 1, nl
+             efold = exp(-bkg%layer_depth(i,j,k)/self%efold_z)
+             self%std_bkgerr%tocn(i,j,k) = adjusted_std(abs(self%std_bkgerr%tocn(i,j,k)),&
+               &self%bounds%t_min,&
+               &self%bounds%t_max)
+             self%std_bkgerr%socn(i,j,k) = adjusted_std(abs(self%std_bkgerr%socn(i,j,k)),&
+               &self%bounds%s_min,&
+               &self%bounds%s_max)
+          end do
+
           ! Sea-ice
           self%std_bkgerr%cicen(i,j,:) = adjusted_std(abs(self%std_bkgerr%cicen(i,j,:)), 0.01d0, 0.5d0)
           self%std_bkgerr%hicen(i,j,:) = adjusted_std(abs(self%std_bkgerr%hicen(i,j,:)), 10d0, 100.0d0)
@@ -174,23 +176,28 @@ contains
     type(soca_bkgerr_config), intent(inout) :: self
 
     real(kind=kind_real), allocatable :: temp(:), sig1(:), sig2(:)
-    real(kind=kind_real) :: jac(2)
+    real(kind=kind_real), allocatable :: sst_bkgerr(:,:)
     integer :: is, ie, js, je, i, j, k
     integer :: ins, ns = 1, iter, niter = 1
+    type(soca_omb_stats) :: sst
 
+    
     ! Set all fields to zero
     call zeros(self%std_bkgerr)
 
-    ! Compute temperature gradient    
-    call geom_get_domain_indices(self%bkg%geom%ocean, "compute", is, ie, js, je)
+
+
     allocate(temp(self%bkg%geom%ocean%nzo))
     allocate(sig1(self%bkg%geom%ocean%nzo), sig2(self%bkg%geom%ocean%nzo))
 
-    self%std_bkgerr%tocn = 0.0_kind_real
+
+    ! Initialize sst background error to previously computed std of omb's
+    ! Currently hard-coded to read GODAS file
+    call sst%init()
+    call sst%bin(self%bkg%geom%ocean%lon, self%bkg%geom%ocean%lat)
     
-    ! Step 0: Read SST background error
-    ! TODO
-    
+    ! Loop over compute domain
+    call geom_get_domain_indices(self%bkg%geom%ocean, "compute", is, ie, js, je)    
     do i = is, ie
        do j = js, je
           if (self%bkg%geom%ocean%mask2d(i,j).eq.1) then
@@ -204,7 +211,8 @@ contains
              sig1(:) = self%delta_z * abs(sig1) ! Rescale background error
 
              ! Step 2: sigb based on efolding scale
-             sig2(:) = sig1(1)*exp(-self%bkg%layer_depth(i,j,:)/self%efold_z)
+             sig2(:) = sst%bgerr_model(i,j)*&
+                  &exp(-self%bkg%layer_depth(i,j,:)/self%efold_z)
              
              ! Step 3: sigb = max(sig1, sig2)
              do k = 1, self%bkg%geom%ocean%nzo
@@ -238,6 +246,7 @@ contains
     end do
 
     ! Release memory
+    call sst%exit()
     deallocate(temp)
     
   end subroutine soca_bkgerr_tocn

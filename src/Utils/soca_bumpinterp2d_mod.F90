@@ -72,7 +72,8 @@ contains
     self%bump%nam%obsop_interp = 'bilin'     ! Interpolation type (bilinear)
     self%bump%nam%default_seed = .true.
     self%bump%nam%new_obsop = .true.
-    
+    self%bump%nam%verbosity = 'none'
+
     !Initialize geometry
     allocate(area(ns))
     allocate(vunit(ns,1))

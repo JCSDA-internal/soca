@@ -24,6 +24,7 @@ list( APPEND soca_model_param
   ../test/Data/360x210x63/ice.bkgerror.nc
   ../test/Data/360x210x63/ocn.bkgerror.nc
   ../test/Data/rossrad.dat
+  ../test/Data/godas_sst_bgerr.nc  
 )
 
 list( APPEND soca_model_restarts
