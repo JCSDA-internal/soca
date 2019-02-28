@@ -72,7 +72,10 @@ contains
     self%bump%nam%obsop_interp = 'bilin'     ! Interpolation type (bilinear)
     self%bump%nam%default_seed = .true.
     self%bump%nam%new_obsop = .true.
-    
+    self%bump%nam%verbosity = 'none'
+    self%bump%nam%write_obsop = .false.
+    self%bump%nam%sam_write = .false.
+
     !Initialize geometry
     allocate(area(ns))
     allocate(vunit(ns,1))
@@ -83,6 +86,7 @@ contains
     allocate(tmp_lonmod(ns), tmp_latmod(ns), tmp_maskmod(ni, nj))
     tmp_lonmod(:) = reshape(mod_lon, (/ns/))
     tmp_latmod(:) = reshape(mod_lat, (/ns/))
+
     ! TODO: Fix interp with mask
 !!$   tmp_maskmod = .false.
 !!$    where(mod_mask==1.0)

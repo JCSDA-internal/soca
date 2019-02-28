@@ -29,7 +29,6 @@ sed -i "s/DD/${DD}/g" input.nml
 sed -i "s/HH/${HH}/g" input.nml
 
 # Prepare obs file
-WINDOW_MID='2018-07-23T00:00:00Z'
 
 #Jason-3
 OBS_ADT_J3=ADT-J3-${YYYY}${MM}${DD}${MM}${HH}
@@ -41,14 +40,13 @@ OBS_ADT_C2=ADT-C2-${YYYY}${MM}${DD}${MM}${HH}
 sed -i "s/OBS_ADT_C2/${OBS_ADT_C2}/g" 3dvarfgat-${WINDOW_BEGIN}.yml
 cp /home/gvernier/Data/FNMOC/ioda-converters/src/marine/altimeter/adt-ioda-c2-$YYYY$MM$DD$HH.nc ./Data/${OBS_ADT_C2}.nc
 
-#Cryosat-2
+#Sentinel
 OBS_ADT_SA=ADT-SA-${YYYY}${MM}${DD}${MM}${HH}
 sed -i "s/OBS_ADT_SA/${OBS_ADT_SA}/g" 3dvarfgat-${WINDOW_BEGIN}.yml
 cp /home/gvernier/Data/FNMOC/ioda-converters/src/marine/altimeter/adt-ioda-sa-$YYYY$MM$DD$HH.nc ./Data/${OBS_ADT_SA}.nc
 
 # Run DA
-mpirun -np 4 --oversubscribe ../../bin/soca_3dvar.x 3dvarfgat-${WINDOW_BEGIN}.yml
+#mpirun -np 4 --oversubscribe ../../bin/soca_3dvar.x 3dvarfgat-${WINDOW_BEGIN}.yml
 
 # Update IC
 mv ./RESTART/MOM.res.nc ./INPUT/
-

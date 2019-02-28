@@ -50,6 +50,7 @@ list( APPEND oops_soca_src_files
 ./Utils/random_f.cc
 ./Utils/random_f.h
 ./Utils/soca_bumpinterp2d_mod.F90
+./Utils/soca_omb_stats_mod.F90
 
 #GetValuesTraj
 ./GetValuesTraj/GetValuesTraj.cc

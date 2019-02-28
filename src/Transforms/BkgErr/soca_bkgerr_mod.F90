@@ -13,7 +13,8 @@ module soca_bkgerr_mod
   use soca_fields
   use soca_model_geom_type, only : geom_get_domain_indices
   use soca_utils
-
+  use soca_omb_stats_mod
+  
   implicit none
 
   type :: soca_bkgerror_bounds
@@ -59,18 +60,19 @@ contains
     type(datetime) :: vdate
     character(len=800) :: fname = 'soca_bkgerror.nc'
     logical :: read_from_file = .false.
-    
+
+    ! Get number of ocean levels
     nl = size(bkg%hocn,3)
 
-    ! Read background error
+    ! Allocate memory for bkgerror
     call create_copy(self%std_bkgerr, bkg)
-    if (config_element_exists(c_conf,"ocn_filename")) then
-       read_from_file = .true.
-       call read_file(self%std_bkgerr, c_conf, vdate)
-    else
-       read_from_file = .false.
-       self%delta_z   = config_get_real(c_conf,"delta_z")
-    end if
+    !if (config_element_exists(c_conf,"ocn_filename")) then
+    !   read_from_file = .true.
+    !   call read_file(self%std_bkgerr, c_conf, vdate)
+    !else
+    read_from_file = .false.    
+    self%delta_z   = config_get_real(c_conf,"delta_z")
+    !end if
 
     ! Vertical e-folding scale
     self%efold_z   = config_get_real(c_conf,"efold_z")
@@ -84,11 +86,11 @@ contains
        self%bounds%t_ml = 0.5_kind_real
     endif    
     self%bounds%s_min   = config_get_real(c_conf,"s_min")
-    self%bounds%s_max   = config_get_real(c_conf,"s_max")    
+    self%bounds%s_max   = config_get_real(c_conf,"s_max")
     self%bounds%ssh_min = config_get_real(c_conf,"ssh_min")
     self%bounds%ssh_max = config_get_real(c_conf,"ssh_max")
 
-    ! Store background
+    ! Associate background
     self%bkg => bkg
 
     ! Indices for compute domain (no halo)
@@ -111,10 +113,10 @@ contains
              efold = exp(-bkg%layer_depth(i,j,k)/self%efold_z)
              self%std_bkgerr%tocn(i,j,k) = adjusted_std(abs(self%std_bkgerr%tocn(i,j,k)),&
                &self%bounds%t_min,&
-               &self%bounds%t_max) * efold
+               &self%bounds%t_max)
              self%std_bkgerr%socn(i,j,k) = adjusted_std(abs(self%std_bkgerr%socn(i,j,k)),&
                &self%bounds%s_min,&
-               &self%bounds%s_max) * efold
+               &self%bounds%s_max)
           end do
 
           ! Sea-ice
@@ -173,43 +175,66 @@ contains
   subroutine soca_bkgerr_tocn(self)
     type(soca_bkgerr_config), intent(inout) :: self
 
-    real(kind=kind_real), allocatable :: temp(:), vmask(:)
-    real(kind=kind_real) :: jac(2)
+    real(kind=kind_real), allocatable :: temp(:), sig1(:), sig2(:)
+    type(soca_domain_indices), target :: domain    
     integer :: is, ie, js, je, i, j, k
-    integer :: ins, ns = 1
+    integer :: ins, ns = 1, iter, niter = 1
+    type(soca_omb_stats) :: sst
 
     ! Set all fields to zero
     call zeros(self%std_bkgerr)
 
-    ! Compute temperature gradient
+    ! Get compute domain indices
+    call geom_get_domain_indices(self%bkg%geom%ocean, "compute", &
+         &domain%is, domain%ie, domain%js, domain%je)
     
-    call geom_get_domain_indices(self%bkg%geom%ocean, "compute", is, ie, js, je)
-    allocate(temp(self%bkg%geom%ocean%nzo))
-    allocate(vmask(self%bkg%geom%ocean%nzo))
+    ! Get local compute domain indices
+    call geom_get_domain_indices(self%bkg%geom%ocean, "compute", &
+         &domain%isl, domain%iel, domain%jsl, domain%jel, local=.true.)
 
-    do i = is, ie
-       do j = js, je
+    ! Allocate temporary arrays
+    allocate(temp(self%bkg%geom%ocean%nzo))
+    allocate(sig1(self%bkg%geom%ocean%nzo), sig2(self%bkg%geom%ocean%nzo))
+
+    ! Initialize sst background error to previously computed std of omb's
+    ! Currently hard-coded to read GODAS file
+    call sst%init(domain)
+    call sst%bin(self%bkg%geom%ocean%lon, self%bkg%geom%ocean%lat)
+
+    ! Loop over compute domain
+    do i = domain%is, domain%ie
+       do j = domain%js, domain%je
           if (self%bkg%geom%ocean%mask2d(i,j).eq.1) then
 
              ! Make sure Temp values in thin layers are realistic
              temp(:) = self%bkg%tocn(i,j,:)
-             call soca_clean_vertical(self%bkg%hocn(i,j,:), temp(:))
+             !call soca_clean_vertical(self%bkg%hocn(i,j,:), temp(:))
 
-             ! T Bkg error from dT/dz 
-             call soca_diff(self%std_bkgerr%tocn(i,j,:),&
-                           &self%bkg%tocn(i,j,:),&
-                           &temp(:))
+             ! Step 1: sigb from dT/dz 
+             call soca_diff(sig1(:), temp(:), self%bkg%hocn(i,j,:))
+             sig1(:) = self%delta_z * abs(sig1) ! Rescale background error
 
-             ! Apply vertical mask
-             vmask = 1.0_kind_real
-             !where (self%bkg%hocn(i,j,:)<1.0d-6)
-             !   vmask = 0.0_kind_real
-             !end where             
+             ! Step 2: sigb based on efolding scale
+             sig2(:) = sst%bgerr_model(i,j)*&
+                  &exp(-self%bkg%layer_depth(i,j,:)/self%efold_z)
 
-             ! Scale background error
-             self%std_bkgerr%tocn(i,j,:) = abs(self%delta_z * &
-                  &(self%std_bkgerr%tocn(i,j,:) * vmask))
+             ! Step 3: sigb = max(sig1, sig2)
+             do k = 1, self%bkg%geom%ocean%nzo
+                self%std_bkgerr%tocn(i,j,k) = max(sig1(k), sig2(k))
+             end do
+             
+             ! Step 4: Vertical smoothing
+             do iter = 1, niter
+                do k = 2, self%bkg%geom%ocean%nzo-1
+                   self%std_bkgerr%tocn(i,j,k) = &
+                        &( self%std_bkgerr%tocn(i,j,k-1)*self%bkg%hocn(i,j,k-1) +&
+                        &  self%std_bkgerr%tocn(i,j,k)*self%bkg%hocn(i,j,k) +&
+                        &  self%std_bkgerr%tocn(i,j,k+1)*self%bkg%hocn(i,j,k+1) )/&
+                        & (sum(self%bkg%hocn(i,j,k-1:k+1)))
+                end do
+             end do
 
+             ! Apply bounds from yaml config
              do k = 1, self%bkg%geom%ocean%nzo
                 if (self%bkg%layer_depth(i,j,k)<self%bkg%mld(i,j)) then
                    self%std_bkgerr%tocn(i,j,k) = max(self%std_bkgerr%tocn(i,j,k),&
@@ -220,20 +245,14 @@ contains
                 end if
              end do
              
-!!$             do ins = 1, ns
-!!$                do k = 2, self%bkg%geom%ocean%nzo - 1 
-!!$                   self%std_bkgerr%tocn(i,j,k) = (self%std_bkgerr%tocn(i,j,k-1)+&
-!!$                        &self%std_bkgerr%tocn(i,j,k)+self%std_bkgerr%tocn(i,j,k+2))/3.0
-!!$                end do
-!!$             end do
-
           end if
        end do
     end do
 
     ! Release memory
-    deallocate(temp, vmask)
-    
+    call sst%exit()
+    deallocate(temp, sig1, sig2)
+
   end subroutine soca_bkgerr_tocn
 
   ! ------------------------------------------------------------------------------

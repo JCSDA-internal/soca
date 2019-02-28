@@ -9,7 +9,7 @@ module soca_utils
 
   private
   public :: write2pe, soca_clean_vertical
-  public :: soca_rho, soca_diff, soca_mld
+  public :: soca_rho, soca_diff, soca_mld, nc_check
 
 contains
 

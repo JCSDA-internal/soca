@@ -27,11 +27,6 @@ cost_function:
   variables:
   - cicen
   - hicen
-  - hsnon
-  - tsfcn
-  - qsnon
-  - sicnk
-  - qicnk
   - socn
   - tocn
   - ssh
@@ -101,11 +96,6 @@ cost_function:
           variables:
           - cicen
           - hicen
-          - hsnon
-          - tsfcn
-          - qsnon
-          - sicnk
-          - qicnk
           - socn
           - tocn
           - ssh
@@ -114,11 +104,6 @@ cost_function:
           variables:
           - cicen
           - hicen
-          - hsnon
-          - tsfcn
-          - qsnon
-          - sicnk
-          - qicnk
           - socn
           - tocn
           - ssh
@@ -127,11 +112,6 @@ cost_function:
           variables:
           - cicen
           - hicen
-          - hsnon
-          - tsfcn
-          - qsnon
-          - sicnk
-          - qicnk
           - socn
           - tocn
           - ssh
@@ -141,11 +121,6 @@ cost_function:
           variables:
           - cicen
           - hicen
-          - hsnon
-          - tsfcn
-          - qsnon
-          - sicnk
-          - qicnk
           - socn
           - tocn
           - ssh
@@ -156,11 +131,6 @@ cost_function:
           variables:
           - cicen
           - hicen
-          - hsnon
-          - tsfcn
-          - qsnon
-          - sicnk
-          - qicnk
           - socn
           - tocn
           - ssh
@@ -169,11 +139,6 @@ cost_function:
           variables:
           - cicen
           - hicen
-          - hsnon
-          - tsfcn
-          - qsnon
-          - sicnk
-          - qicnk
           - socn
           - tocn
           - ssh
@@ -186,11 +151,6 @@ cost_function:
           variables:
           - cicen
           - hicen
-          - hsnon
-          - tsfcn
-          - qsnon
-          - sicnk
-          - qicnk
           - socn
           - tocn
           - ssh
@@ -199,11 +159,6 @@ cost_function:
           variables:
           - cicen
           - hicen
-          - hsnon
-          - tsfcn
-          - qsnon
-          - sicnk
-          - qicnk
           - socn
           - tocn
           - ssh
