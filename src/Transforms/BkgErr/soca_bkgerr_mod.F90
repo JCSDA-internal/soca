@@ -181,7 +181,6 @@ contains
     integer :: ins, ns = 1, iter, niter = 1
     type(soca_omb_stats) :: sst
 
-    
     ! Set all fields to zero
     call zeros(self%std_bkgerr)
 

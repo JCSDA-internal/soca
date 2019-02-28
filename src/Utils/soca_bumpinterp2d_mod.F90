@@ -73,6 +73,8 @@ contains
     self%bump%nam%default_seed = .true.
     self%bump%nam%new_obsop = .true.
     self%bump%nam%verbosity = 'none'
+    self%bump%nam%write_obsop = .false.
+    self%bump%nam%sam_write = .false.
 
     !Initialize geometry
     allocate(area(ns))
@@ -84,6 +86,7 @@ contains
     allocate(tmp_lonmod(ns), tmp_latmod(ns), tmp_maskmod(ni, nj))
     tmp_lonmod(:) = reshape(mod_lon, (/ns/))
     tmp_latmod(:) = reshape(mod_lat, (/ns/))
+
     ! TODO: Fix interp with mask
 !!$   tmp_maskmod = .false.
 !!$    where(mod_mask==1.0)

@@ -25,7 +25,7 @@ LinearVariableChangeTests:
   s_max: 1.0
   ssh_min: 0.0
   ssh_max: 0.5
-  delta_z: 30.0
+  delta_z: 10.0
   efold_z: 1500.0  
   variables:                                
     variables:
