@@ -217,7 +217,7 @@ contains
              ! Step 2: sigb based on efolding scale
              sig2(:) = sst%bgerr_model(i,j)*&
                   &exp(-self%bkg%layer_depth(i,j,:)/self%efold_z)
-             print *,sig2(1)
+
              ! Step 3: sigb = max(sig1, sig2)
              do k = 1, self%bkg%geom%ocean%nzo
                 self%std_bkgerr%tocn(i,j,k) = max(sig1(k), sig2(k))
