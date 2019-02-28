@@ -176,7 +176,7 @@ contains
     type(soca_bkgerr_config), intent(inout) :: self
 
     real(kind=kind_real), allocatable :: temp(:), sig1(:), sig2(:)
-    real(kind=kind_real), allocatable :: sst_bkgerr(:,:)
+    type(soca_domain_indices), target :: domain    
     integer :: is, ie, js, je, i, j, k
     integer :: ins, ns = 1, iter, niter = 1
     type(soca_omb_stats) :: sst
@@ -185,21 +185,26 @@ contains
     ! Set all fields to zero
     call zeros(self%std_bkgerr)
 
+    ! Get compute domain indices
+    call geom_get_domain_indices(self%bkg%geom%ocean, "compute", &
+         &domain%is, domain%ie, domain%js, domain%je)
+    
+    ! Get local compute domain indices
+    call geom_get_domain_indices(self%bkg%geom%ocean, "compute", &
+         &domain%isl, domain%iel, domain%jsl, domain%jel, local=.true.)
 
-
+    ! Allocate temporary arrays
     allocate(temp(self%bkg%geom%ocean%nzo))
     allocate(sig1(self%bkg%geom%ocean%nzo), sig2(self%bkg%geom%ocean%nzo))
 
-
     ! Initialize sst background error to previously computed std of omb's
     ! Currently hard-coded to read GODAS file
-    call sst%init()
+    call sst%init(domain)
     call sst%bin(self%bkg%geom%ocean%lon, self%bkg%geom%ocean%lat)
-    
+
     ! Loop over compute domain
-    call geom_get_domain_indices(self%bkg%geom%ocean, "compute", is, ie, js, je)    
-    do i = is, ie
-       do j = js, je
+    do i = domain%is, domain%ie
+       do j = domain%js, domain%je
           if (self%bkg%geom%ocean%mask2d(i,j).eq.1) then
 
              ! Make sure Temp values in thin layers are realistic
@@ -213,7 +218,7 @@ contains
              ! Step 2: sigb based on efolding scale
              sig2(:) = sst%bgerr_model(i,j)*&
                   &exp(-self%bkg%layer_depth(i,j,:)/self%efold_z)
-             
+             print *,sig2(1)
              ! Step 3: sigb = max(sig1, sig2)
              do k = 1, self%bkg%geom%ocean%nzo
                 self%std_bkgerr%tocn(i,j,k) = max(sig1(k), sig2(k))
@@ -247,8 +252,8 @@ contains
 
     ! Release memory
     call sst%exit()
-    deallocate(temp)
-    
+    deallocate(temp, sig1, sig2)
+
   end subroutine soca_bkgerr_tocn
 
   ! ------------------------------------------------------------------------------

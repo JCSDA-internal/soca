@@ -17,12 +17,18 @@ module soca_omb_stats_mod
   implicit none
   private
 
+  type, public :: soca_domain_indices ! TODO: Move elsewhere!
+     integer :: is, ie, js, je     ! Compute domain indices
+     integer :: isl, iel, jsl, jel ! Local compute domain indices     
+  end type soca_domain_indices
+  
   type, public :: soca_omb_stats
-     integer                           :: nlocs     
-     real(kind=kind_real), allocatable :: lon(:)       
-     real(kind=kind_real), allocatable :: lat(:)       
-     real(kind=kind_real), allocatable :: bgerr(:)
-     real(kind=kind_real), allocatable :: bgerr_model(:,:)     
+     integer                            :: nlocs     
+     real(kind=kind_real),  allocatable :: lon(:)       
+     real(kind=kind_real),  allocatable :: lat(:)       
+     real(kind=kind_real),  allocatable :: bgerr(:)
+     real(kind=kind_real),  allocatable :: bgerr_model(:,:)
+     type(soca_domain_indices), pointer:: domain
    contains
      procedure :: init => soca_omb_stats_init
      procedure :: bin => soca_omb_stats_bin
@@ -32,9 +38,10 @@ module soca_omb_stats_mod
 contains
 
   ! ------------------------------------------------------------------------------  
-  subroutine soca_omb_stats_init(self)
-    class(soca_omb_stats), intent(inout) :: self
-
+  subroutine soca_omb_stats_init(self, domain)
+    class(soca_omb_stats),           intent(inout) :: self
+    type(soca_domain_indices), pointer, intent(in) :: domain
+    
     integer(kind=4) :: ncid
     integer(kind=4) :: dimid
     integer(kind=4) :: varid
@@ -68,7 +75,9 @@ contains
        self%lon=self%lon-360.0_kind_real
     end where
 
-    
+    ! Compute domain info
+    self%domain => domain
+
   end subroutine soca_omb_stats_init
 
   ! ------------------------------------------------------------------------------
@@ -77,44 +86,56 @@ contains
     real(kind=kind_real),     intent(in) :: lon(:,:)       
     real(kind=kind_real),     intent(in) :: lat(:,:) 
 
-    integer :: is, ie, js, je, i, j
+    integer :: is, ie, js, je
+    integer :: isl, iel, jsl, jel
+    integer :: i, j, il, jl
     type(mpl_type) :: mpl
     type(kdtree_type) :: kdtree
     integer :: index(1), nn=1
     real(kind=kind_real) :: lonm(1), latm(1), dist(1)
-    
-    ! Get local array bounds
-    is = lbound(lon,dim=1)
-    ie = ubound(lon,dim=1)
-    js = lbound(lon,dim=2)
-    je = ubound(lon,dim=2)        
+
+    ! Short cuts to global indices
+    is = self%domain%is
+    ie = self%domain%ie
+    js = self%domain%js
+    je = self%domain%je
+
+    ! Short cuts to local indices    
+    isl = self%domain%isl
+    iel = self%domain%iel
+    jsl = self%domain%jsl
+    jel = self%domain%jel
 
     allocate(self%bgerr_model(is:ie,js:je))
-    self%bgerr_model = 0.5_kind_real ! Set to dummy value for now
-                                     ! TODO: call to kdtree
+    self%bgerr_model = 0.0_kind_real
 
-    !--- Initialize kd-tree
+    ! Initialize kd-tree
     call mpl%init()
     call kdtree%alloc(mpl, self%nlocs)
     call kdtree%init(mpl, deg2rad*self%lon, deg2rad*self%lat)
 
+    ! Find nn neighbors to each model grid point
+    ! TODO: Hard coded to nearest neigbhor interpolation
+    il=isl
     do i = is, ie
+       jl=jsl
        do j = js, je
-          lonm=lon(i,j)
+          lonm(1)=lon(il,jl)
           if (lonm(1)>180.0_kind_real) lonm=lonm-360.0_kind_real
           lonm=deg2rad*lonm
-          latm(1)=deg2rad*lat(i,j)
+          latm(1)=deg2rad*lat(il,jl)
           call kdtree%find_nearest_neighbors(mpl,&
                                             &lonm(1),&
                                             &latm(1),&
                                             &nn,index,dist)
           self%bgerr_model(i,j)=self%bgerr(index(1))
+          jl = jl + 1 
        end do
+       il = il + 1
     end do
     
     ! Release memory
     call kdtree%dealloc()
-
     
   end subroutine soca_omb_stats_bin
 
@@ -123,6 +144,7 @@ contains
     class(soca_omb_stats), intent(inout) :: self
     
     deallocate(self%lon, self%lat, self%bgerr, self%bgerr_model)
+    nullify(self%domain)
     
   end subroutine soca_omb_stats_exit
 
