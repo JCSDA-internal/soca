@@ -13,7 +13,8 @@ module soca_omb_stats_mod
   use type_mpl
   use tools_const, only: deg2rad,rad2deg
   use type_kdtree, only: kdtree_type
-
+  use fckit_mpi_module
+  
   implicit none
   private
 
@@ -45,31 +46,49 @@ contains
     integer(kind=4) :: ncid
     integer(kind=4) :: dimid
     integer(kind=4) :: varid
+    type(fckit_mpi_comm) :: f_comm
+    integer :: myrank, root=0
 
-    ! TODO: reading from master only, then broadcast
-    call nc_check(nf90_open('godas_sst_bgerr.nc', nf90_nowrite,ncid))
+    ! Setup Communicator
+    f_comm = fckit_mpi_comm()
+    myrank = f_comm%rank()
 
-    ! Get the size of the horizontal grid
-    call nc_check(nf90_inq_dimid(ncid, 'nlocs', dimid))
-    call nc_check(nf90_inquire_dimension(ncid, dimid, len = self%nlocs))
+    if (myrank.eq.root) then
 
-    allocate(self%lon(self%nlocs), self%lat(self%nlocs), self%bgerr(self%nlocs))
+       call nc_check(nf90_open('godas_sst_bgerr.nc', nf90_nowrite,ncid))
 
-    ! Get longitude    
-    call nc_check(nf90_inq_varid(ncid,'longitude',varid))
-    call nc_check(nf90_get_var(ncid,varid,self%lon))
+       ! Get the size of the horizontal grid
+       call nc_check(nf90_inq_dimid(ncid, 'nlocs', dimid))
+       call nc_check(nf90_inquire_dimension(ncid, dimid, len = self%nlocs))
 
-    ! Get latitude
-    call nc_check(nf90_inq_varid(ncid,'latitude',varid))
-    call nc_check(nf90_get_var(ncid,varid,self%lat))
+       allocate(self%lon(self%nlocs), self%lat(self%nlocs), self%bgerr(self%nlocs))
 
-    ! Get omb stats
-    call nc_check(nf90_inq_varid(ncid,'sst_bgerr',varid))
-    call nc_check(nf90_get_var(ncid,varid,self%bgerr))        
+       ! Get longitude    
+       call nc_check(nf90_inq_varid(ncid,'longitude',varid))
+       call nc_check(nf90_get_var(ncid,varid,self%lon))
 
-    ! Close netcdf file
-    call nc_check(nf90_close(ncid))
+       ! Get latitude
+       call nc_check(nf90_inq_varid(ncid,'latitude',varid))
+       call nc_check(nf90_get_var(ncid,varid,self%lat))
 
+       ! Get omb stats
+       call nc_check(nf90_inq_varid(ncid,'sst_bgerr',varid))
+       call nc_check(nf90_get_var(ncid,varid,self%bgerr))        
+
+       ! Close netcdf file
+       call nc_check(nf90_close(ncid))
+    end if
+
+    ! Broadcast to all workers 
+    call f_comm%broadcast(self%nlocs, root)
+    if (myrank.ne.root) then
+       allocate(self%lon(self%nlocs), self%lat(self%nlocs), self%bgerr(self%nlocs))
+    end if
+    call f_comm%broadcast(self%lon, root)
+    call f_comm%broadcast(self%lat, root)
+    call f_comm%broadcast(self%bgerr, root)
+    call f_comm%barrier()
+    
     ! Rotate longitude
     where (self%lon>180.0_kind_real)
        self%lon=self%lon-360.0_kind_real

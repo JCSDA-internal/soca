@@ -14,6 +14,7 @@ module soca_bkgerr_mod
   use soca_model_geom_type, only : geom_get_domain_indices
   use soca_utils
   use soca_omb_stats_mod
+  use fckit_mpi_module
   
   implicit none
 
@@ -192,10 +193,12 @@ contains
     call geom_get_domain_indices(self%bkg%geom%ocean, "compute", &
          &domain%isl, domain%iel, domain%jsl, domain%jel, local=.true.)
 
+       
     ! Allocate temporary arrays
     allocate(temp(self%bkg%geom%ocean%nzo))
     allocate(sig1(self%bkg%geom%ocean%nzo), sig2(self%bkg%geom%ocean%nzo))
 
+       
     ! Initialize sst background error to previously computed std of omb's
     ! Currently hard-coded to read GODAS file
     call sst%init(domain)
