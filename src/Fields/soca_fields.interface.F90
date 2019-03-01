@@ -325,7 +325,7 @@ end subroutine soca_field_field_to_ug_c
 
 ! ------------------------------------------------------------------------------
 
-subroutine soca_field_field_from_ug_c(c_key_fld, c_key_ug, c_its) bind (c,name='soca_field_field_from_ug_f90')
+subroutine soca_field_field_from_ug_c(c_key_fld, c_key_ug, c_its) bind (c,name='soca_field_field_from_ug_f9S0')
   use iso_c_binding
   use soca_fields
   use unstructured_grid_mod
@@ -339,7 +339,7 @@ subroutine soca_field_field_from_ug_c(c_key_fld, c_key_ug, c_its) bind (c,name='
 
   call soca_field_registry%get(c_key_fld,fld)
   call unstructured_grid_registry%get(c_key_ug,ug)
-  its = c_its
+  its = c_its+1
 
   call field_from_ug(fld, ug, its)
 
