@@ -1,4 +1,5 @@
 list( APPEND soca_test_input
+  testinput/ensvariance.yml
   testinput/forecast.yml
   testinput/forecast_mom6.yml
   testinput/state_test.yml
