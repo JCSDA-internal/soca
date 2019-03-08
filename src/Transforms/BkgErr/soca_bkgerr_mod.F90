@@ -67,13 +67,20 @@ contains
 
     ! Allocate memory for bkgerror
     call create_copy(self%std_bkgerr, bkg)
-    !if (config_element_exists(c_conf,"ocn_filename")) then
-    !   read_from_file = .true.
-    !   call read_file(self%std_bkgerr, c_conf, vdate)
-    !else
-    read_from_file = .false.    
-    self%delta_z   = config_get_real(c_conf,"delta_z")
-    !end if
+    if (config_element_exists(c_conf,"ocn_filename")) then
+       read_from_file = .true.
+       
+       ! Read variance       
+       call read_file(self%std_bkgerr, c_conf, vdate)
+
+       ! Convert to standard deviation       
+       self%std_bkgerr%tocn = sqrt(self%std_bkgerr%tocn)
+       self%std_bkgerr%socn = sqrt(self%std_bkgerr%socn)       
+       self%std_bkgerr%ssh = sqrt(self%std_bkgerr%ssh)
+    else
+       read_from_file = .false.
+       self%delta_z   = config_get_real(c_conf,"delta_z")
+    end if
 
     ! Vertical e-folding scale
     self%efold_z   = config_get_real(c_conf,"efold_z")
