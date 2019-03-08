@@ -14,37 +14,35 @@ list( APPEND soca_exp_input
 )
 
 list( APPEND soca_model_param
-  ../test/Data/360x210x63/input-ymd.nml
-  ../test/Data/360x210x63/MOM_input
-  ../test/Data/360x210x63/MOM_override
-  ../test/Data/360x210x63/data_table
-  ../test/Data/360x210x63/diag_table
-  ../test/Data/360x210x63/field_table
-  ../test/Data/360x210x63/Vertical_coordinate.nc
-  ../test/Data/360x210x63/ice.bkgerror.nc
-  ../test/Data/360x210x63/ocn.bkgerror.nc
+  ../test/Data/360x210x75/input-ymd.nml
+  ../test/Data/360x210x75/MOM_input
+  ../test/Data/360x210x75/MOM_override
+  ../test/Data/360x210x75/data_table
+  ../test/Data/360x210x75/diag_table
+  ../test/Data/360x210x75/field_table
+  ../test/Data/360x210x75/ice.bkgerror.nc
+  ../test/Data/360x210x75/ocn.bkgerror.nc
   ../test/Data/rossrad.dat
   ../test/Data/godas_sst_bgerr.nc  
 )
 
 list( APPEND soca_model_restarts
-  ../test/Data/360x210x63/INPUT/MOM.res.nc
-  ../test/Data/360x210x63/INPUT/ice_model.res.nc
-  ../test/Data/360x210x63/INPUT/ocean_hgrid.nc
-  ../test/Data/360x210x63/INPUT/topog.nc
+  ../test/Data/360x210x75/INPUT/MOM.res.nc
+  ../test/Data/360x210x75/INPUT/ice_model.res.nc
+  ../test/Data/360x210x75/INPUT/ocean_hgrid.nc
+  ../test/Data/360x210x75/INPUT/topog.nc
 )
 
 
 list( APPEND soca_model_forcing
-  ../test/Data/360x210x63/INPUT/geothermal_heating_cm2g.nc
-  ../test/Data/360x210x63/INPUT/seawifs_1998-2006_GOLD_smoothed_2X.nc
-  ../test/Data/360x210x63/INPUT/tideamp.nc
-  ../test/Data/360x210x63/INPUT/topog.nc
-  ../test/Data/360x210x63/INPUT/OM3_zgrid.nc
-  ../test/Data/360x210x63/INPUT/gustiness_qscat.nc
-  ../test/Data/360x210x63/INPUT/ocean_forcing_daily.nc
-  ../test/Data/360x210x63/INPUT/ocean_precip_monthly.nc
-  ../test/Data/360x210x63/INPUT/sgs_h2.nc
+  ../test/Data/360x210x75/INPUT/geothermal_heating_cm2g.nc
+  ../test/Data/360x210x75/INPUT/seawifs_1998-2006_GOLD_smoothed_2X.nc
+  ../test/Data/360x210x75/INPUT/tideamp.nc
+  ../test/Data/360x210x75/INPUT/topog.nc
+  ../test/Data/360x210x75/INPUT/gustiness_qscat.nc
+  ../test/Data/360x210x75/INPUT/ocean_forcing_daily.nc
+  ../test/Data/360x210x75/INPUT/ocean_precip_monthly.nc
+  ../test/Data/360x210x75/INPUT/sgs_h2.nc
 )
 
 # Copy scripts
