@@ -559,9 +559,12 @@ contains
     character(len=20) :: sdate
     character(len=1024)  :: buf
     integer :: iread, ii
-
+    logical :: vert_remap=.false.
+    character(len=max_string_length) :: remap_filename
+     real(kind=kind_real), allocatable :: h_common(:,:,:)    !< layer thickness to remap to    
     type(restart_file_type) :: sis_restart
     type(restart_file_type) :: ocean_restart
+    type(restart_file_type) :: ocean_remap_restart    
     integer :: idr, idr_ocean
     integer            :: nobs, nval, pe, ierror
     integer :: is, ie, js, je, i, j, k, nl, nz
@@ -573,6 +576,27 @@ contains
        iread = config_get_int(c_conf,"read_from_file")
     endif
 
+    ! Check if vertical remapping needs to be applied 
+    if (config_element_exists(c_conf,"remap_filename")) then    
+       vert_remap = .true.
+       remap_filename = config_get_string(c_conf,len(remap_filename),"remap_filename")
+       remap_filename = trim(remap_filename)
+
+       ! Get Indices for data domain and allocate common layer depth array
+       call geom_get_domain_indices(fld%geom%ocean, "data   ", is, ie, js, je)
+       nz=size(fld%hocn, dim=3)       
+       allocate(h_common(is:ie,js:je,nz))
+
+       ! Read from file
+       call fms_io_init()       
+       idr_ocean = register_restart_field(ocean_remap_restart, remap_filename, 'h', fld%hocn(:,:,:), &
+                  domain=fld%geom%ocean%G%Domain%mpp_domain)
+       call restore_state(ocean_remap_restart, directory='')
+       call fms_io_exit()
+       h_common = fld%hocn
+       
+    end if
+    
     ! iread = 0: Invent state
     if (iread==0) then
        call log%warning("soca_fields:read_file: Inventing State",newl=.true.)
@@ -619,7 +643,6 @@ contains
              call log%warning("soca_fields:read_file: Not reading var "//fld%fldnames(ii))
           end select
        end do
-       
        call restore_state(sis_restart, directory='')
        call restore_state(ocean_restart, directory='')
        call fms_io_exit()
@@ -645,7 +668,18 @@ contains
                   &fld%geom%ocean%lat(i,j))
           end do
        end do
-       
+
+       ! Remap layers if needed
+       if (vert_remap) then 
+          do i = is, ie
+             do j = js, je
+                call soca_vertical_interp(fld%hocn(i,j,:), h_common(i,j,:), fld%tocn(i,j,:))
+                call soca_vertical_interp(fld%hocn(i,j,:), h_common(i,j,:), fld%tocn(i,j,:))             
+             end do
+          end do
+          fld%hocn = h_common          
+       end if
+
        ! Interpolate T & S: Model --> DA 
        !call soca_column_model2da(fld)
        
@@ -656,6 +690,7 @@ contains
           call log%info(buf,newl=.true.)
           call datetime_set(sdate, vdate)
        end if
+
        return
     end if
 

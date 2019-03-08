@@ -8,7 +8,7 @@ module soca_utils
   implicit none
 
   private
-  public :: write2pe, soca_clean_vertical
+  public :: write2pe, soca_vertical_interp
   public :: soca_rho, soca_diff, soca_mld, nc_check
 
 contains
@@ -90,36 +90,44 @@ contains
        dvdz(ik) = (v(ik+1)-v(ik-1))/(h(ik)+0.5*h(ik+1)+h(ik-1))
     end do
     dvdz(1) = dvdz(2)
-    dvdz(k) = dvdz(k-1)    
+    dvdz(k) = dvdz(k-1)
 
   end subroutine soca_diff
 
   ! ------------------------------------------------------------------------------
 
-  subroutine soca_clean_vertical(h, var)
+  subroutine soca_vertical_interp(h, hi, var)
     use kinds
     use vert_interp_mod
     implicit none
 
-    real(kind=kind_real),    intent(in) :: h(:)
-    real(kind=kind_real), intent(inout) :: var(:)
+    real(kind=kind_real),  intent(in) :: h(:)
+    real(kind=kind_real),  intent(in) :: hi(:)
+    real(kind=kind_real),  intent(inout) :: var(:)    
+
 
     real(kind=kind_real), allocatable :: tmp_var(:), tmp_h(:)
     real(kind=kind_real), allocatable :: depth(:), tmp_depth(:)
+    real(kind=kind_real), allocatable :: depthi(:)    
     integer :: nlev, ilev, nrlev, iilev
     integer, allocatable :: mask(:), mask_index(:)
     real(kind_real) :: wf
     integer :: wi
-
+    
     ! Get vertical dimension
     nlev = size(h,1)
 
     ! Thickness to depth
-    allocate(depth(nlev))
+    allocate(depth(nlev), depthi(nlev))
     depth(1)=0.5_kind_real*h(1)
     do ilev = 2, nlev
        depth(ilev)=sum(h(1:ilev-1))+0.5_kind_real*h(ilev)
     end do
+
+    depthi(1)=0.5_kind_real*hi(1)
+    do ilev = 2, nlev
+       depthi(ilev)=sum(hi(1:ilev-1))+0.5_kind_real*hi(ilev)
+    end do    
 
     ! Setup vertical mask
     allocate(mask(nlev))
@@ -134,7 +142,7 @@ contains
     end do
 
     ! Return if ocean depth is 0 or no vertical mask
-    if ((nrlev<2).or.(nrlev==nlev)) return
+    if (nrlev<2) return
 
     ! Setup valid var
     allocate(tmp_var(nrlev), tmp_h(nrlev), tmp_depth(nrlev),mask_index(nlev))
@@ -151,23 +159,15 @@ contains
 
     ! Interpolate
     do ilev = 1, nlev
-       if (mask(ilev)==0) then
-          call vert_interp_weights(nrlev, depth(ilev),&
-                                     & tmp_depth(:), wi, wf)
-          call vert_interp_apply(nlev, tmp_var(:), var(ilev), wi, wf)
 
-          if (isnan(var(ilev))) then
-             print *,'depth(ilev)=',var(ilev)
-             print *,'var(ilev)=',var(ilev)
-             !print *,'tmp_depth=',tmp_depth
-             print *,'tmp_var=',tmp_var
-             print *,'nrlev=',nrlev
-          end if
-       end if
+       call vert_interp_weights(nrlev, depthi(ilev),&
+                                     & tmp_depth(:), wi, wf)
+       call vert_interp_apply(nlev, tmp_var(:), var(ilev), wi, wf)
+
     end do
     deallocate(tmp_var, tmp_h, tmp_depth, mask_index, depth, mask)
 
-  end subroutine soca_clean_vertical
+  end subroutine soca_vertical_interp
 
   ! ------------------------------------------------------------------------------
 
