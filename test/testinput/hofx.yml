@@ -35,14 +35,14 @@ Observations:
         obsfile: ./Data/Jason-2-2018-04-15.nc
     Covariance:
       covariance: diagonal
-#  - ObsType: SeaSurfaceTemp
-#    ObsData:
-#      ObsDataOut:
-#        obsfile: ./Data/sst_obs-2018-04-15-hofx-out.nc4
-#      ObsDataIn:
-#        obsfile: ./Data/sst_obs-2018-04-15.nc4
-#    Covariance:
-#      covariance: diagonal      
+  - ObsType: SeaSurfaceTemp
+    ObsData:
+      ObsDataOut:
+        obsfile: ./Data/sst_obs-2018-04-15-hofx-out.nc4
+      ObsDataIn:
+        obsfile: ./Data/sst_obs-2018-04-15.nc4
+    Covariance:
+      covariance: diagonal      
 #  - ObsType: SeaIceFraction
 #    ObsData:
 #      ObsDataOut:

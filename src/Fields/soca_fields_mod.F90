@@ -17,6 +17,7 @@ module soca_fields
   use ufo_vars_mod
   use soca_bumpinterp2d_mod
   use soca_getvaltraj_mod
+  use soca_layer_remap_mod
   use kinds
   use iso_c_binding
   use fms_mod,    only: read_data, write_data, set_domain
@@ -28,7 +29,7 @@ module soca_fields
   use duration_mod  
   use fckit_log_module, only : log, fckit_log
   use fckit_mpi_module, only: fckit_mpi_comm, fckit_mpi_sum
-  use MOM_remapping,       only : remapping_CS, initialize_remapping, remapping_core_h  
+  use MOM_remapping,       only : remapping_CS, initialize_remapping, remapping_core_h, end_remapping
   use mpp_domains_mod, only : mpp_update_domains
   use unstructured_grid_mod
   use tools_const, only: deg2rad
@@ -45,7 +46,7 @@ module soca_fields
        & read_file, write_file, gpnorm, fldrms, soca_fld2file, &
        & change_resol, check, &
        & field_to_ug, field_from_ug, ug_coord
-  public :: soca_field_registry, soca_column_model2da
+  public :: soca_field_registry
 
   interface create
      module procedure create_constructor, create_copy
@@ -500,7 +501,6 @@ contains
 
     real(kind=kind_real), allocatable :: incr(:,:,:)
     integer :: is, ie, js, je, i, j, nz
-    type(remapping_CS)  :: remapCS
     
     call check(self)
     call check(rhs)
@@ -561,7 +561,8 @@ contains
     integer :: iread, ii
     logical :: vert_remap=.false.
     character(len=max_string_length) :: remap_filename
-     real(kind=kind_real), allocatable :: h_common(:,:,:)    !< layer thickness to remap to    
+    real(kind=kind_real), allocatable :: h_common(:,:,:)    !< layer thickness to remap to
+    type(soca_layer_remap) :: remaplayer
     type(restart_file_type) :: sis_restart
     type(restart_file_type) :: ocean_restart
     type(restart_file_type) :: ocean_remap_restart    
@@ -647,11 +648,6 @@ contains
        call restore_state(ocean_restart, directory='')
        call fms_io_exit()
 
-       ! Update halo
-       call mpp_update_domains(fld%tocn, fld%geom%ocean%G%Domain%mpp_domain)
-       call mpp_update_domains(fld%socn, fld%geom%ocean%G%Domain%mpp_domain)    
-       call mpp_update_domains(fld%ssh, fld%geom%ocean%G%Domain%mpp_domain)
-
        ! Indices for compute domain
        call geom_get_domain_indices(fld%geom%ocean, "compute", is, ie, js, je)
 
@@ -670,19 +666,40 @@ contains
        end do
 
        ! Remap layers if needed
-       if (vert_remap) then 
+       if (vert_remap) then
+          call initialize_remapping(remapCS,'PCM')
           do i = is, ie
              do j = js, je
-                call soca_vertical_interp(fld%hocn(i,j,:), h_common(i,j,:), fld%tocn(i,j,:))
-                call soca_vertical_interp(fld%hocn(i,j,:), h_common(i,j,:), fld%tocn(i,j,:))             
+                if (fld%geom%ocean%mask2d(i,j).eq.1) then
+                   call remapping_core_h(remapCS, nz, h_common(i,j,:), fld%tocn(i,j,:),&
+                        &nz, fld%hocn(i,j,:), fld%tocn(i,j,:))
+                   call remapping_core_h(remapCS, nz, h_common(i,j,:), fld%socn(i,j,:),&
+                                                 &nz, fld%hocn(i,j,:), fld%socn(i,j,:))                   
+                   
+                   ! Initialize remapping
+                   !call remaplayer%init(fld%hocn(i,j,:), h_common(i,j,:))
+                   
+                   ! Apply interpolation. TODO: Apply to list of var from config
+                   !call remaplayer%apply(fld%tocn(i,j,:), fld%tocn(i,j,:))
+                   !call remaplayer%apply(fld%socn(i,j,:), fld%socn(i,j,:))
+
+                   ! Cleanup
+                   !call remaplayer%finalize()
+                else
+                   fld%tocn(i,j,:) = 0.0_kind_real
+                   fld%socn(i,j,:) = 0.0_kind_real
+                end if
              end do
           end do
           fld%hocn = h_common          
        end if
-
-       ! Interpolate T & S: Model --> DA 
-       !call soca_column_model2da(fld)
+       call end_remapping(remapCS)
        
+       ! Update halo
+       call mpp_update_domains(fld%tocn, fld%geom%ocean%G%Domain%mpp_domain)
+       call mpp_update_domains(fld%socn, fld%geom%ocean%G%Domain%mpp_domain)    
+       call mpp_update_domains(fld%ssh, fld%geom%ocean%G%Domain%mpp_domain)
+
        ! Set vdate if reading state
        if (iread==1) then
           sdate = config_get_string(c_conf,len(sdate),"date")
@@ -747,7 +764,6 @@ contains
     call check(fld)
 
     !call geom_infotofile(fld%geom)
-    !call clean_ocean(fld)
     call soca_write_restart(fld, c_conf, vdate)
 
 !!$    filename = soca_genfilename(c_conf,max_string_length,vdate)
@@ -1236,70 +1252,7 @@ contains
          & call abor1_ftn("fields:genfilename: filename too long")
 
   end function soca_genfilename
-
-  ! ------------------------------------------------------------------------------
   
-  subroutine soca_column_model2da(fld)
-    type(soca_field), intent(inout) :: fld      !< Fields
-    
-    type(remapping_CS)  :: remapCS
-    integer :: is, ie, js, je, i, j, nz
-    
-    ! Indices for compute domain (no halo)
-    call geom_get_domain_indices(fld%geom%ocean, "data   ", is, ie, js, je)
-
-    ! Remap Temp and Salt to DA vertical coordinate
-    nz=fld%geom%ocean%nzo    
-    call initialize_remapping(remapCS,'PPM_H4')
-    do i=is,ie
-       do j=js,je
-!!$          call remapping_core_h(remapCS,nz, fld%hocn_model(i,j,:), fld%tocn(i,j,:),&
-!!$                  &nz, fld%hocn(i,j,:), fld%tocn(i,j,:))
-!!$          call remapping_core_h(remapCS,nz, fld%hocn_model(i,j,:), fld%socn(i,j,:),&
-!!$                                  &nz, fld%hocn(i,j,:), fld%socn(i,j,:))
-       end do
-    end do
-
-  end subroutine soca_column_model2da
-  
-  ! ------------------------------------------------------------------------------
-
-  subroutine clean_ocean(fld)
-    type(soca_field), intent(inout) :: fld
-
-    integer :: ii, jj, kk
-    integer :: is, ie, js, je, ncat, nzo
-    type(fckit_mpi_comm) :: f_comm
-    
-    ! Indices for compute domain (no halo)
-    call geom_get_domain_indices(fld%geom%ocean, "compute", is, ie, js, je)
-
-    ! Apply temp/salt bounds: Yuk but needed until constraint in ana 
-    where (fld%tocn<-3.0_kind_real) ! TODO: Min temp=Melt point
-       fld%tocn = -3.0_kind_real
-    end where
-    where (fld%tocn>40.0_kind_real)
-       fld%tocn = 40.0_kind_real
-    end where
-    where (fld%socn<1.0_kind_real)
-       fld%socn = 1.0_kind_real
-    end where
-    where (fld%socn>41.0_kind_real)
-       fld%socn = 41.0_kind_real
-    end where        
-    
-    ! Ocean levels TODO: Pass as option
-!!$    nzo = fld%geom%ocean%nzo
-!!$
-!!$    do ii = is, ie
-!!$       do jj = js, je
-!!$          call soca_clean_vertical(fld%hocn(ii,jj,:), fld%tocn(ii,jj,:))
-!!$          call soca_clean_vertical(fld%hocn(ii,jj,:), fld%socn(ii,jj,:))
-!!$       end do
-!!$    end do
-
-  end subroutine clean_ocean
-
   ! ------------------------------------------------------------------------------
   
 end module soca_fields

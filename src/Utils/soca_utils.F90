@@ -4,11 +4,12 @@
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
 
 module soca_utils
-
+  use kinds
+  
   implicit none
 
   private
-  public :: write2pe, soca_vertical_interp
+  public :: write2pe, htoz
   public :: soca_rho, soca_diff, soca_mld, nc_check
 
 contains
@@ -96,79 +97,19 @@ contains
 
   ! ------------------------------------------------------------------------------
 
-  subroutine soca_vertical_interp(h, hi, var)
-    use kinds
-    use vert_interp_mod
-    implicit none
+  subroutine htoz(h, z)
+    real(kind=kind_real),  intent(in) :: h(:) ! Layer thickness
+    real(kind=kind_real), intent(out) :: z(:) ! Mid-layer depth
 
-    real(kind=kind_real),  intent(in) :: h(:)
-    real(kind=kind_real),  intent(in) :: hi(:)
-    real(kind=kind_real),  intent(inout) :: var(:)    
+    integer :: nlev, ilev
 
-
-    real(kind=kind_real), allocatable :: tmp_var(:), tmp_h(:)
-    real(kind=kind_real), allocatable :: depth(:), tmp_depth(:)
-    real(kind=kind_real), allocatable :: depthi(:)    
-    integer :: nlev, ilev, nrlev, iilev
-    integer, allocatable :: mask(:), mask_index(:)
-    real(kind_real) :: wf
-    integer :: wi
-    
-    ! Get vertical dimension
     nlev = size(h,1)
-
-    ! Thickness to depth
-    allocate(depth(nlev), depthi(nlev))
-    depth(1)=0.5_kind_real*h(1)
+    z(1)=0.5_kind_real*h(1)
     do ilev = 2, nlev
-       depth(ilev)=sum(h(1:ilev-1))+0.5_kind_real*h(ilev)
+       z(ilev)=sum(h(1:ilev-1))+0.5_kind_real*h(ilev)
     end do
-
-    depthi(1)=0.5_kind_real*hi(1)
-    do ilev = 2, nlev
-       depthi(ilev)=sum(hi(1:ilev-1))+0.5_kind_real*hi(ilev)
-    end do    
-
-    ! Setup vertical mask
-    allocate(mask(nlev))
-    mask=1
-    nrlev=0
-    do ilev = 1, nlev
-       if (h(ilev)<1d-6) then 
-          mask(ilev)=0
-       else
-          nrlev = nrlev + 1
-       end if
-    end do
-
-    ! Return if ocean depth is 0 or no vertical mask
-    if (nrlev<2) return
-
-    ! Setup valid var
-    allocate(tmp_var(nrlev), tmp_h(nrlev), tmp_depth(nrlev),mask_index(nlev))
-    iilev=1
-    do ilev = 1, nlev
-       if (mask(ilev)==1) then
-          tmp_var(iilev)=var(ilev)
-          tmp_h(iilev)=h(ilev)
-          tmp_depth(iilev)=depth(ilev)
-          mask_index(iilev)=ilev
-          iilev=iilev+1
-       end if
-    end do
-
-    ! Interpolate
-    do ilev = 1, nlev
-
-       call vert_interp_weights(nrlev, depthi(ilev),&
-                                     & tmp_depth(:), wi, wf)
-       call vert_interp_apply(nlev, tmp_var(:), var(ilev), wi, wf)
-
-    end do
-    deallocate(tmp_var, tmp_h, tmp_depth, mask_index, depth, mask)
-
-  end subroutine soca_vertical_interp
-
+  end subroutine htoz
+    
   ! ------------------------------------------------------------------------------
 
   subroutine write2pe(vec,varname,filename,append)
