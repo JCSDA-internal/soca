@@ -810,18 +810,18 @@ contains
     pstat(2,5) = maxval(fld%ssh)
 
     ! Output fields info
-    call f_comm%barrier()
-    myrank = f_comm%rank()
-    WRITE(buf,*) '----------- myrank: ',myrank
-    call log%info(buf,newl=.true.,flush=.true.)
-    WRITE(buf,*) 'ssh: min=',pstat(1,5),' max=',pstat(2,5)
-    call log%info(buf,newl=.true.,flush=.true.)
-    WRITE(buf,*) 'T: min=',pstat(1,3),' max=',pstat(2,3)
-    call log%info(buf,newl=.true.,flush=.true.)
-    WRITE(buf,*) 'S: min=',pstat(1,4),' max=',pstat(2,4)
-    call log%info(buf,newl=.true.,flush=.true.)
-    WRITE(buf,*) 'aice: min=',pstat(1,1),' max=',pstat(2,1)
-    call log%info(buf,newl=.true.,flush=.true.)
+!!$    call f_comm%barrier()
+!!$    myrank = f_comm%rank()
+!!$    WRITE(buf,*) '----------- myrank: ',myrank
+!!$    call log%info(buf,newl=.true.,flush=.true.)
+!!$    WRITE(buf,*) 'ssh: min=',pstat(1,5),' max=',pstat(2,5)
+!!$    call log%info(buf,newl=.true.,flush=.true.)
+!!$    WRITE(buf,*) 'T: min=',pstat(1,3),' max=',pstat(2,3)
+!!$    call log%info(buf,newl=.true.,flush=.true.)
+!!$    WRITE(buf,*) 'S: min=',pstat(1,4),' max=',pstat(2,4)
+!!$    call log%info(buf,newl=.true.,flush=.true.)
+!!$    WRITE(buf,*) 'aice: min=',pstat(1,1),' max=',pstat(2,1)
+!!$    call log%info(buf,newl=.true.,flush=.true.)
 
   end subroutine gpnorm
 

@@ -9,7 +9,7 @@ module soca_utils
   implicit none
 
   private
-  public :: write2pe, htoz
+  public :: write2pe, htoz, soca_str2int
   public :: soca_rho, soca_diff, soca_mld, nc_check
 
 contains
@@ -167,5 +167,14 @@ contains
        stop "Stopped"
     end if
   end subroutine nc_check
+
+  ! ------------------------------------------------------------------------------  
+  
+  subroutine soca_str2int(str, int)
+    character(len=*),intent(in) :: str
+    integer,intent(out)         :: int
+
+    read(str,*)  int
+  end subroutine soca_str2int  
 
 end module soca_utils

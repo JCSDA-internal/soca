@@ -113,25 +113,29 @@ end subroutine c_soca_prepare_integration
   ! ------------------------------------------------------------------------------
 
 !> Perform a timestep of the model
-subroutine c_soca_propagate(c_key_model, c_key_state) bind(c,name='soca_propagate_f90')
+subroutine c_soca_propagate(c_key_model, c_key_state, c_key_date) bind(c,name='soca_propagate_f90')
 
   use iso_c_binding
+  use datetime_mod
   use soca_fields
   use soca_model_mod
 
   implicit none
   integer(c_int), intent(in) :: c_key_model  !< Config structure
-  integer(c_int), intent(in) :: c_key_state !< Model fields
-
+  integer(c_int), intent(in) :: c_key_state  !< Model fields
+  type(c_ptr), intent(inout) :: c_key_date   !< DateTime
+  
   type(soca_model), pointer :: model
-  type(soca_field),  pointer :: flds
-
+  type(soca_field), pointer :: flds
+  type(datetime)            :: fldsdate
+  
   call soca_model_registry%get(c_key_model, model)
   call soca_field_registry%get(c_key_state,flds)
-
+  call c_f_datetime(c_key_date, fldsdate)
+  
   if (model%advance_mom6==1) then
-     print *,"Advancing MOM6 1 time step"
-     call soca_propagate(model, flds)
+     print *,"============= Advancing MOM6 1 time step"
+     call soca_propagate(model, flds, fldsdate)
   else
      print *,"Not advancing MOM6: Persistence model"
   end if
