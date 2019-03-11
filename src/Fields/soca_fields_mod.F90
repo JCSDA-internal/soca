@@ -17,7 +17,6 @@ module soca_fields
   use ufo_vars_mod
   use soca_bumpinterp2d_mod
   use soca_getvaltraj_mod
-  use soca_layer_remap_mod
   use kinds
   use iso_c_binding
   use fms_mod,    only: read_data, write_data, set_domain
@@ -562,7 +561,6 @@ contains
     logical :: vert_remap=.false.
     character(len=max_string_length) :: remap_filename
     real(kind=kind_real), allocatable :: h_common(:,:,:)    !< layer thickness to remap to
-    type(soca_layer_remap) :: remaplayer
     type(restart_file_type) :: sis_restart
     type(restart_file_type) :: ocean_restart
     type(restart_file_type) :: ocean_remap_restart    
