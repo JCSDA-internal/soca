@@ -10,6 +10,7 @@ module soca_model_mod
 
   use kinds
   use iso_c_binding
+  use fckit_log_module, only : fckit_log, log
   use soca_geom_mod_c
   use soca_mom6
   use soca_utils
@@ -38,6 +39,7 @@ module soca_model_mod
      real(kind=kind_real) :: dt0  !< dimensional time (seconds)
      integer                :: advance_mom6 !< call mom6 step if true
      type(soca_mom6_config) :: mom6_config  !< MOM6 data structure
+     logical :: integration_initialized 
   end type soca_model
 
 #define LISTED_TYPE soca_model
@@ -56,10 +58,10 @@ contains
 
   ! ------------------------------------------------------------------------------
   !> Initialize model's data structure
-  subroutine soca_create(self, geom, c_conf)
+  subroutine soca_create(self)!, geom, c_conf)
     type(soca_model), intent(inout) :: self
-    type(c_ptr),         intent(in) :: c_conf
-    type(soca_geom),     intent(in) :: geom
+    !type(c_ptr),         intent(in) :: c_conf
+    !type(soca_geom),     intent(in) :: geom
 
     call soca_mom6_init(self%mom6_config)
 
@@ -76,7 +78,8 @@ contains
     type(time_type) :: ocean_time   ! The ocean model's clock.
     integer :: year, month, day, hour, minute, second
     character(len=20)  :: strdate
-    
+    character(len=1024)  :: buf
+
     ! Update halo
     call mpp_update_domains(flds%tocn, flds%geom%ocean%G%Domain%mpp_domain)
     call mpp_update_domains(flds%socn, flds%geom%ocean%G%Domain%mpp_domain)
@@ -95,7 +98,15 @@ contains
     call soca_str2int(strdate(18:19), second)    
     self%mom6_config%Time = set_date(year, month, day, hour, minute, second)
     ocean_time = self%mom6_config%Time
-    
+
+    WRITE(buf,*) 'Advancing MOM6 1 time step, starting from: '//&
+         &strdate(1:4)//'-'//&
+         &strdate(6:7)//'-'//&
+         &strdate(9:10)//' '//&
+         &strdate(12:13)//':'//&
+         &strdate(15:16)
+    call log%info(buf,newl=.true.)
+
     ! Advance MOM in a single step call (advance dyna and thermo)    
     call step_MOM(self%mom6_config%forces, &
                  &self%mom6_config%fluxes, &

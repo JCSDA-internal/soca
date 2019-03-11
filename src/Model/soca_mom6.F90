@@ -302,20 +302,6 @@ contains
          & mom6_config%Time, Time_step_ocean, mom6_config%grid, &
          surface_forcing_CSp)
 
-    ! Initialization of vertical remapping
-!!$    print *,' ============== init:',regrid_initialized
-!!$    if (regrid_initialized .eqv. .false.) then
-!!$       max_depth = 1.0
-!!$       coord_mode = REGRIDDING_SIGMA_STRING
-!!$       call initialize_regridding(regridCS, mom6_config%GV,&
-!!$         &real(max_depth,kind=8),param_file,'soca_mom6',coord_mode,'','')
-!!$    !call initialize_remapping(remapCS,'PLM')
-!!$    !call set_regrid_params(regridCS, min_thickness=real(0.,kind=8))
-!!$    !call mpp_get_data_domain(G%Domain%mpp_domain,isd,ied,jsd,jed)
-!!$       regrid_initialized = .true.
-!!$    end if
-!!$    print *,' ============== init:',regrid_initialized
-!!$    read(*,*)
   end subroutine soca_mom6_init
 
   ! ------------------------------------------------------------------------------

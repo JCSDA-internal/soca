@@ -14,7 +14,7 @@ subroutine c_soca_setup(c_confspec, c_key_geom, c_key_model) bind (c,name='soca_
   use config_mod
   use duration_mod
   use kinds
-  use fckit_log_module, only : fckit_log
+  use fckit_log_module, only : fckit_log, log
   use mpi,             only : mpi_comm_world
   use mpp_mod,         only : mpp_init
   use mpp_domains_mod, only : mpp_domains_init
@@ -53,7 +53,8 @@ subroutine c_soca_setup(c_confspec, c_key_geom, c_key_model) bind (c,name='soca_
 
   ! Initialize mom6
   if (model%advance_mom6==1) then
-     call soca_create(model, geom, c_confspec)
+     call soca_create(model)
+     model%integration_initialized = .true.
   else
      print *,"Not initializing MOM6"
   end if
@@ -77,6 +78,7 @@ subroutine c_soca_delete(c_key_conf) bind (c,name='soca_delete_f90')
   call soca_model_registry%get(c_key_conf, model)
   if (model%advance_mom6==1) then
      call soca_delete(model)
+     model%integration_initialized = .false.     
   end if  
   call soca_model_registry%remove(c_key_conf)
 
@@ -101,9 +103,8 @@ subroutine c_soca_prepare_integration(c_key_model, c_key_state) &
   integer(c_int), intent(in) :: c_key_state !< Model fields
 
   type(soca_model), pointer :: model
-  type(soca_field), pointer  :: flds
+  type(soca_field), pointer :: flds
   integer :: unit
-
 
   call soca_field_registry%get(c_key_state,flds)
   call soca_model_registry%get(c_key_model, model)
@@ -134,9 +135,9 @@ subroutine c_soca_propagate(c_key_model, c_key_state, c_key_date) bind(c,name='s
   call c_f_datetime(c_key_date, fldsdate)
   
   if (model%advance_mom6==1) then
-     print *,"============= Advancing MOM6 1 time step"
      call soca_propagate(model, flds, fldsdate)
   else
+     ! TODO: Read background from file
      print *,"Not advancing MOM6: Persistence model"
   end if
 
