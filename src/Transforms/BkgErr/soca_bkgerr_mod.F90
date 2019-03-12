@@ -22,6 +22,7 @@ module soca_bkgerr_mod
      real(kind=kind_real) :: t_min, t_max, t_ml
      real(kind=kind_real) :: s_min, s_max
      real(kind=kind_real) :: ssh_min, ssh_max
+     real(kind=kind_real) :: ocn_depth_min
   end type soca_bkgerror_bounds
   
   !> Fortran derived type to hold configuration D
@@ -97,7 +98,12 @@ contains
     self%bounds%s_max   = config_get_real(c_conf,"s_max")
     self%bounds%ssh_min = config_get_real(c_conf,"ssh_min")
     self%bounds%ssh_max = config_get_real(c_conf,"ssh_max")
-
+    if (config_element_exists(c_conf,"ocean_depth_min")) then
+       self%bounds%ocn_depth_min = config_get_real(c_conf,"ocean_depth_min")
+    else
+       self%bounds%ocn_depth_min = 200.0_kind_real
+    end if
+    
     ! Associate background
     self%bkg => bkg
 
@@ -113,20 +119,26 @@ contains
     ! Apply config bounds to background error
     do i = isc, iec
        do j = jsc, jec
-          ! Ocean
-          self%std_bkgerr%ssh(i,j) = adjusted_std(abs(self%std_bkgerr%ssh(i,j)), &
+          if (sum(bkg%hocn(i,j,:)).gt.self%bounds%ocn_depth_min) then
+             ! Ocean
+             self%std_bkgerr%ssh(i,j) = adjusted_std(abs(self%std_bkgerr%ssh(i,j)), &
                &self%bounds%ssh_min,&
                &self%bounds%ssh_max)
-          do k = 1, nl
-             efold = exp(-bkg%layer_depth(i,j,k)/self%efold_z)
-             self%std_bkgerr%tocn(i,j,k) = adjusted_std(abs(self%std_bkgerr%tocn(i,j,k)),&
-               &self%bounds%t_min,&
-               &self%bounds%t_max)
-             self%std_bkgerr%socn(i,j,k) = adjusted_std(abs(self%std_bkgerr%socn(i,j,k)),&
-               &self%bounds%s_min,&
-               &self%bounds%s_max)
-          end do
-
+             do k = 1, nl
+                efold = exp(-bkg%layer_depth(i,j,k)/self%efold_z)
+                self%std_bkgerr%tocn(i,j,k) = adjusted_std(abs(self%std_bkgerr%tocn(i,j,k)),&
+                     &self%bounds%t_min,&
+                     &self%bounds%t_max)
+                self%std_bkgerr%socn(i,j,k) = adjusted_std(abs(self%std_bkgerr%socn(i,j,k)),&
+                     &self%bounds%s_min,&
+                     &self%bounds%s_max)
+             end do
+          else
+             self%std_bkgerr%ssh(i,j) = 0.0_kind_real
+             self%std_bkgerr%tocn(i,j,:) = 0.0_kind_real
+             self%std_bkgerr%socn(i,j,:) = 0.0_kind_real
+          end if
+          
           ! Sea-ice
           self%std_bkgerr%cicen(i,j,:) = adjusted_std(abs(self%std_bkgerr%cicen(i,j,:)), 0.01d0, 0.5d0)
           self%std_bkgerr%hicen(i,j,:) = adjusted_std(abs(self%std_bkgerr%hicen(i,j,:)), 10d0, 100.0d0)
