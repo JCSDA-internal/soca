@@ -247,10 +247,10 @@ contains
        ! Extract fld3d from field 
        select case (trim(vars%fldnames(ivar)))
 
-       case ("sea_ice_area_fraction")
+       case ("sea_ice_category_area_fraction")
           fld3d = fld%cicen(isc:iec,jsc:jec,2:nval+1)
 
-       case ("sea_ice_thickness")
+       case ("sea_ice_category_thickness")
           fld3d = fld%hicen(isc:iec,jsc:jec,1:nval)
 
        case ("sea_surface_height_above_geoid")
@@ -302,8 +302,8 @@ contains
     
     ! Get number of levels or categories (nval)
     select case (trim(vars%fldnames(index_vars)))
-    case ("sea_ice_area_fraction", &
-          "sea_ice_thickness")
+    case ("sea_ice_category_area_fraction", &
+          "sea_ice_category_thickness")
        nval = fld%geom%ocean%ncat
 
     case ("sea_surface_height_above_geoid", &
