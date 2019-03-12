@@ -29,9 +29,10 @@ module soca_bkgerr_mod
   type :: soca_bkgerr_config
      type(soca_field),         pointer :: bkg
      type(soca_field)                  :: std_bkgerr
-     type(soca_bkgerror_bounds)        :: bounds
-     real(kind=kind_real)              :: delta_z     
-     real(kind=kind_real)              :: efold_z
+     type(soca_bkgerror_bounds)        :: bounds         ! Bounds for bkgerr
+     real(kind=kind_real)              :: delta_z        ! For rescaling of the vertical gradient
+     real(kind=kind_real)              :: efold_z        ! E-folding scale
+     real(kind=kind_real)              :: rescale_bkgerr ! Rescaling factor for bkgerr
      integer                           :: isc, iec, jsc, jec
   end type soca_bkgerr_config
 
@@ -98,10 +99,19 @@ contains
     self%bounds%s_max   = config_get_real(c_conf,"s_max")
     self%bounds%ssh_min = config_get_real(c_conf,"ssh_min")
     self%bounds%ssh_max = config_get_real(c_conf,"ssh_max")
+
+    ! Setup minimum ocean depth
     if (config_element_exists(c_conf,"ocean_depth_min")) then
        self%bounds%ocn_depth_min = config_get_real(c_conf,"ocean_depth_min")
     else
        self%bounds%ocn_depth_min = 200.0_kind_real
+    end if
+
+    ! Setup rescaling factor for bkgerr
+    if (config_element_exists(c_conf,"rescale_bkgerr")) then
+       self%rescale_bkgerr = config_get_real(c_conf,"rescale_bkgerr")
+    else
+       self%rescale_bkgerr = 1.0_kind_real
     end if
     
     ! Associate background
@@ -145,6 +155,12 @@ contains
        end do
     end do
 
+    ! Apply rescaling to bkgerror
+    ! TODO: Loop through variable to apply rescaling
+    self%std_bkgerr%tocn = self%rescale_bkgerr * self%std_bkgerr%tocn
+    self%std_bkgerr%socn = self%rescale_bkgerr * self%std_bkgerr%socn    
+    self%std_bkgerr%ssh = self%rescale_bkgerr * self%std_bkgerr%ssh
+    
     ! Save filtered background error
     call soca_fld2file(self%std_bkgerr, fname)
     

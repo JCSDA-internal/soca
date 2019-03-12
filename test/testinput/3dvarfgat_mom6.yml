@@ -85,10 +85,12 @@ cost_function:
       date: '2018-04-14T00:00:00Z'
       variable_changes:
       - varchange: BkgErrSOCA
-        #read_from_file: 3
-        #basename: ./
-        #ocn_filename: ocn.bkgerror.nc
-        #ice_filename: ice.bkgerror.nc
+        read_from_file: 3
+        basename: ./
+        ocn_filename: ocn.bkgerror.nc
+        ice_filename: ice.bkgerror.nc
+        ocean_depth_min: 1000        
+        rescale_bkgerr: 0.5        
         date: '2018-04-15T00:00:00Z'
         t_min: 0.0
         t_max: 1.5
