@@ -159,11 +159,11 @@ contains
 
        ! Copy fld3d into field
        select case (trim(vars%fldnames(ivar)))
-       case ("sea_ice_area_fraction")
+       case ("sea_ice_category_area_fraction")
           fld%cicen(isc:iec,jsc:jec,2:nval+1) = fld%cicen(isc:iec,jsc:jec,2:nval+1) +&
                &fld3d
 
-       case ("sea_ice_thickness")
+       case ("sea_ice_category_thickness")
           fld%hicen(isc:iec,jsc:jec,1:nval) = fld%hicen(isc:iec,jsc:jec,1:nval) +&
                &fld3d
 
