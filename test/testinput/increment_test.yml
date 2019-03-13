@@ -25,13 +25,13 @@ InterpTest:
     - 0.0
   GeoVaLs:
     variables:
-    - ocean_potential_temperature
-    - ocean_salinity
-    - ocean_layer_thickness
+    - sea_water_potential_temperature
+    - sea_water_practical_salinity
+    - sea_water_cell_thickness
     - sea_surface_height_above_geoid
-    - ocean_upper_level_temperature        
-    - ice_concentration
-    - ice_thickness
+    - sea_surface_temperature
+    - sea_ice_category_area_fraction
+    - sea_ice_category_thickness
 Variables:
   variables:  
   - cicen

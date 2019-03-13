@@ -159,11 +159,11 @@ contains
 
        ! Copy fld3d into field
        select case (trim(vars%fldnames(ivar)))
-       case ("ice_concentration")
+       case ("sea_ice_category_area_fraction")
           fld%cicen(isc:iec,jsc:jec,2:nval+1) = fld%cicen(isc:iec,jsc:jec,2:nval+1) +&
                &fld3d
-          
-       case ("ice_thickness")
+
+       case ("sea_ice_category_thickness")
           fld%hicen(isc:iec,jsc:jec,1:nval) = fld%hicen(isc:iec,jsc:jec,1:nval) +&
                &fld3d
 
@@ -171,19 +171,19 @@ contains
           fld%ssh(isc:iec,jsc:jec) = fld%ssh(isc:iec,jsc:jec) +&
                &fld3d(isc:iec,jsc:jec,1)
 
-       case ("ocean_potential_temperature")
+       case ("sea_water_potential_temperature")
           fld%tocn(isc:iec,jsc:jec,1:nval) = fld%tocn(isc:iec,jsc:jec,1:nval) +&
                &fld3d
 
-       case ("ocean_salinity")
+       case ("sea_water_practical_salinity")
           fld%socn(isc:iec,jsc:jec,1:nval) = fld%socn(isc:iec,jsc:jec,1:nval) +&
                &fld3d
 
-       case ("ocean_layer_thickness")
+       case ("sea_water_cell_thickness")
           fld%hocn(isc:iec,jsc:jec,1:nval) = fld%hocn(isc:iec,jsc:jec,1:nval) +&
                &fld3d  
 
-       case ("ocean_upper_level_temperature")
+       case ("sea_surface_temperature")
           fld%tocn(isc:iec,jsc:jec,1) = fld%tocn(isc:iec,jsc:jec,1) +&
                &fld3d(isc:iec,jsc:jec,1)
 
@@ -247,28 +247,28 @@ contains
        ! Extract fld3d from field 
        select case (trim(vars%fldnames(ivar)))
 
-       case ("ice_concentration")
+       case ("sea_ice_category_area_fraction")
           fld3d = fld%cicen(isc:iec,jsc:jec,2:nval+1)
 
-       case ("ice_thickness")
+       case ("sea_ice_category_thickness")
           fld3d = fld%hicen(isc:iec,jsc:jec,1:nval)
 
        case ("sea_surface_height_above_geoid")
           fld3d(isc:iec,jsc:jec,1) = fld%ssh(isc:iec,jsc:jec) 
 
-       case ("ocean_potential_temperature")
+       case ("sea_water_potential_temperature")
           fld3d = fld%tocn(isc:iec,jsc:jec,1:nval)
 
-       case ("ocean_salinity")
+       case ("sea_water_practical_salinity")
           fld3d = fld%socn(isc:iec,jsc:jec,1:nval)
 
-       case ("ocean_layer_thickness")
-          fld3d = fld%hocn(isc:iec,jsc:jec,1:nval)          
+       case ("sea_water_cell_thickness")
+          fld3d = fld%hocn(isc:iec,jsc:jec,1:nval)
 
-       case ("ocean_upper_level_temperature")
+       case ("sea_surface_temperature")
           fld3d(isc:iec,jsc:jec,1) = fld%tocn(isc:iec,jsc:jec,1)
-          
-       case ("ocean_fraction")
+
+       case ("sea_area_fraction")
           fld3d(isc:iec,jsc:jec,1) = real(fld%geom%ocean%mask2d(isc:iec,jsc:jec),kind=kind_real)
 
        case default
@@ -302,16 +302,18 @@ contains
     
     ! Get number of levels or categories (nval)
     select case (trim(vars%fldnames(index_vars)))
-    case ("ice_concentration","ice_thickness")
+    case ("sea_ice_category_area_fraction", &
+          "sea_ice_category_thickness")
        nval = fld%geom%ocean%ncat
-       
-    case ("steric_height",&
-         &"sea_surface_height_above_geoid",&
-         &"ocean_upper_level_temperature",&
-         &"ocean_fraction")
+
+    case ("sea_surface_height_above_geoid", &
+          "sea_surface_temperature", &
+          "sea_area_fraction")
        nval = 1
-       
-    case ("ocean_potential_temperature","ocean_salinity","ocean_layer_thickness")
+
+    case ("sea_water_potential_temperature", &
+          "sea_water_practical_salinity", &
+          "sea_water_cell_thickness")
        nval = fld%geom%ocean%nzo
        
     case default
