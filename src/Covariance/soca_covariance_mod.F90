@@ -18,6 +18,7 @@ module soca_covariance_mod
   use soca_fields
   use soca_geom_mod_c
   use soca_model_geom_type, only : geom_get_domain_indices
+  use soca_utils
   use type_bump
   use type_nam
 
@@ -196,7 +197,7 @@ contains
     do izo = 1,dx%geom%ocean%nzo
        call soca_2d_sqrt_convol(dx%tocn(:,:,izo), self%ocean_conv(1), dx%geom, self%pert_scale%T)
        call soca_2d_sqrt_convol(dx%socn(:,:,izo), self%ocean_conv(1), dx%geom, self%pert_scale%S)       
-    end do    
+    end do
 
   end subroutine soca_cov_sqrt_C_mult
   
@@ -300,13 +301,15 @@ contains
 
     real(kind=kind_real), allocatable :: tmp_incr(:,:,:,:)
     ! Allocate unstructured tmp_increment and make copy of dx    
-    call soca_struct2unstruct(dx(:,:), geom, tmp_incr)
+    !call soca_struct2unstruct(dx(:,:), geom, tmp_incr)
+    call geom%ocean%struct2unstruct(dx(:,:), tmp_incr)    
 
     ! Apply 2D convolution
     call horiz_convol%apply_nicas(tmp_incr)
 
-    ! copy unstructured tmp_incr to structured dx    
-    call soca_unstruct2struct(dx(:,:), geom, tmp_incr)
+    ! copy unstructured tmp_incr to structured dx
+    !call soca_unstruct2struct(dx(:,:), geom, tmp_incr)
+    call geom%ocean%unstruct2struct(dx(:,:), tmp_incr)    
 
     ! Clean up
     if (allocated(tmp_incr)) deallocate(tmp_incr)
@@ -327,8 +330,9 @@ contains
     integer :: nn
 
     ! Allocate unstructured tmp_increment and make copy of dx
-    call soca_struct2unstruct(dx(:,:), geom, tmp_incr)
-
+    !call soca_struct2unstruct(dx(:,:), geom, tmp_incr)
+    call geom%ocean%struct2unstruct(dx(:,:), tmp_incr)
+    
     ! Get control variable size
     call horiz_convol%get_cv_size(nn)
     allocate(pcv(nn))
@@ -339,8 +343,9 @@ contains
     call horiz_convol%apply_nicas_sqrt(pcv, tmp_incr)
 
     ! Back to structured grid
-    call soca_unstruct2struct(dx(:,:), geom, tmp_incr)
-
+    !call soca_unstruct2struct(dx(:,:), geom, tmp_incr)
+    call geom%ocean%unstruct2struct(dx(:,:), tmp_incr)
+    
     ! Clean up
     deallocate(pcv)
     if (allocated(tmp_incr)) deallocate(tmp_incr)
@@ -349,41 +354,41 @@ contains
 
   ! ------------------------------------------------------------------------------
   
-  subroutine soca_struct2unstruct(dx_struct, geom, dx_unstruct)
-    real(kind=kind_real),               intent(in) :: dx_struct(:,:)
-    type(soca_geom),                    intent(in) :: geom    
-    real(kind=kind_real), allocatable, intent(out) :: dx_unstruct(:,:,:,:)
-
-    integer :: isc, iec, jsc, jec, jjj, jz, il, ib, nc0a
-
-    ! Indices for compute domain (no halo)
-    call geom_get_domain_indices(geom%ocean, 'compute', &
-         &isc, iec, jsc, jec, local=.true.)
-
-    nc0a = (iec - isc + 1) * (jec - jsc + 1 )
-    allocate(dx_unstruct(nc0a,1,1,1))
-    dx_unstruct = reshape( dx_struct(isc:iec, jsc:jec), (/nc0a,1,1,1/) )
-
-  end subroutine soca_struct2unstruct
-
-  ! ------------------------------------------------------------------------------
-  
-  subroutine soca_unstruct2struct(dx_struct, geom, dx_unstruct)
-    real(kind=kind_real),              intent(inout) :: dx_struct(:,:)
-    type(soca_geom),                      intent(in) :: geom    
-    real(kind=kind_real), allocatable, intent(inout) :: dx_unstruct(:,:,:,:)
-
-    integer :: isc, iec, jsc, jec, jjj, jz, il, ib, nc0a
-
-    ! Indices for compute domain (no halo)
-    call geom_get_domain_indices(geom%ocean, 'compute', &
-         &isc, iec, jsc, jec, local=.true.)    
-    
-    dx_struct(isc:iec, jsc:jec) = reshape(dx_unstruct,(/size(dx_struct(isc:iec, jsc:jec),1),&
-                                                       &size(dx_struct(isc:iec, jsc:jec),2)/))
-
-    deallocate(dx_unstruct)
-    
-  end subroutine soca_unstruct2struct
+!!$  subroutine soca_struct2unstruct(dx_struct, geom, dx_unstruct)
+!!$    real(kind=kind_real),               intent(in) :: dx_struct(:,:)
+!!$    type(soca_geom),                    intent(in) :: geom    
+!!$    real(kind=kind_real), allocatable, intent(out) :: dx_unstruct(:,:,:,:)
+!!$
+!!$    integer :: isc, iec, jsc, jec, jjj, jz, il, ib, nc0a
+!!$
+!!$    ! Indices for compute domain (no halo)
+!!$    call geom_get_domain_indices(geom%ocean, 'compute', &
+!!$         &isc, iec, jsc, jec, local=.true.)
+!!$
+!!$    nc0a = (iec - isc + 1) * (jec - jsc + 1 )
+!!$    allocate(dx_unstruct(nc0a,1,1,1))
+!!$    dx_unstruct = reshape( dx_struct(isc:iec, jsc:jec), (/nc0a,1,1,1/) )
+!!$
+!!$  end subroutine soca_struct2unstruct
+!!$
+!!$  ! ------------------------------------------------------------------------------
+!!$  
+!!$  subroutine soca_unstruct2struct(dx_struct, geom, dx_unstruct)
+!!$    real(kind=kind_real),              intent(inout) :: dx_struct(:,:)
+!!$    type(soca_geom),                      intent(in) :: geom    
+!!$    real(kind=kind_real), allocatable, intent(inout) :: dx_unstruct(:,:,:,:)
+!!$
+!!$    integer :: isc, iec, jsc, jec, jjj, jz, il, ib, nc0a
+!!$
+!!$    ! Indices for compute domain (no halo)
+!!$    call geom_get_domain_indices(geom%ocean, 'compute', &
+!!$         &isc, iec, jsc, jec, local=.true.)    
+!!$    
+!!$    dx_struct(isc:iec, jsc:jec) = reshape(dx_unstruct,(/size(dx_struct(isc:iec, jsc:jec),1),&
+!!$                                                       &size(dx_struct(isc:iec, jsc:jec),2)/))
+!!$
+!!$    deallocate(dx_unstruct)
+!!$    
+!!$  end subroutine soca_unstruct2struct
   
 end module soca_covariance_mod
