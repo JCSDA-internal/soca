@@ -51,11 +51,6 @@ subroutine c_soca_horizconv_delete(c_key_self) bind(c,name='soca_horizconv_delet
 
   type(soca_horizconv), pointer :: self
 
-  ! Deallocate trajectory and backgroun
-  ! TODO
-  ! Deallocate ocean depth array
-  ! TODO
-  
   call soca_horizconv_registry%get(c_key_self, self)  
   
   !if (associated(self%traj)) nullify(self%traj)
@@ -98,7 +93,7 @@ subroutine c_soca_horizconv_mult_f90(c_key_a, c_key_m, c_key_self)&
   ! dxm = dxa
   call copy(dxm, dxa) 
 
-  ! Apply forward convolution operator to T & S
+  ! Apply forward convolution operator
   call soca_conv(self, dxm, dxa)
 
 end subroutine c_soca_horizconv_mult_f90

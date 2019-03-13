@@ -10,7 +10,8 @@ module soca_horizconv_mod
   use iso_c_binding  
   use kinds
   use soca_fields
-  use soca_model_geom_type, only : geom_get_domain_indices  
+  use soca_model_geom_type, only : geom_get_domain_indices
+  use soca_bumpcorr2d_mod
   use tools_func
   use type_mpl
   
@@ -18,10 +19,9 @@ module soca_horizconv_mod
 
   !> Fortran derived type to hold the setup for Horizconv
   type :: soca_horizconv
-     real(kind=kind_real)      :: lz                 !> Horizical decorrelation [m]
-     !type(soca_field),pointer  :: traj               !> Trajectory
-     type(soca_field), pointer :: bkg                !> Background     
-     integer                   :: isc, iec, jsc, jec !> Compute domain 
+     type(soca_bumpcorr2d_type) :: conv   !> Bump convolution data structure 
+     character(len=1024)        :: prefix !> File prefix for bump    
+     type(soca_field),  pointer :: bkg    !> Background
   end type soca_horizconv
 
 #define LISTED_TYPE soca_horizconv
@@ -42,44 +42,47 @@ contains
   subroutine soca_conv_setup (self, bkg, c_conf)
     type(soca_horizconv),   intent(inout) :: self
     type(soca_field), target, intent(in) :: bkg
-    !type(soca_field), target, intent(in) :: traj
     type(c_ptr),              intent(in) :: c_conf
 
     integer :: isc, iec, jsc, jec, i, j, k, nl
     
     nl = size(bkg%hocn,3)
   
-    ! Get configuration for horizical convolution
-    self%lz      = config_get_real(c_conf, "Lz")
+    ! Get configuration for horizontal smoothing decorrelation length scale
+    self%prefix = config_get_string(c_conf, len(self%prefix), "filter_prefix")
 
-    ! Store trajectory and background
-    !self%traj => traj
+    ! Associate background
     self%bkg => bkg
-    
-    ! Indices for compute domain (no halo)
-    call geom_get_domain_indices(bkg%geom%ocean, "compute", &
-         &isc, iec, jsc, jec)
-    self%isc=isc; self%iec=iec; self%jsc=jsc; self%jec=jec
+
+    ! Initialize bump
+    call self%conv%initialize(bkg%geom, c_conf, self%prefix)
   
   end subroutine soca_conv_setup
 
   ! ------------------------------------------------------------------------------
   !> Apply forward convolution  
   subroutine soca_conv (self, convdx, dx)
-    type(soca_horizconv), intent(in) :: self
-    type(soca_field),    intent(in) :: dx
-    type(soca_field),   intent(inout) :: convdx
+    type(soca_horizconv), intent(inout) :: self
+    type(soca_field),        intent(in) :: dx
+    type(soca_field),     intent(inout) :: convdx
 
-
+    ! Make copy of dx
+    !call create_copy(convdx, dx)
+    !call self%conv%apply(convdx, self%bkg%geom)
+    
   end subroutine soca_conv
 
   ! ------------------------------------------------------------------------------
   !> Apply backward convolution
   subroutine soca_conv_ad (self, convdx, dx)
-    type(soca_horizconv), intent(in) :: self
-    type(soca_field), intent(inout) :: dx     ! OUT
-    type(soca_field),    intent(in) :: convdx ! IN
+    type(soca_horizconv), intent(inout) :: self
+    type(soca_field),     intent(inout) :: dx     ! OUT
+    type(soca_field),        intent(in) :: convdx ! IN
 
+    ! Make copy of convdx
+    !call create_copy(dx, convdx)
+    !call self%conv%apply(convdx, self%bkg%geom)
+    
   end subroutine soca_conv_ad
 
 end module soca_horizconv_mod

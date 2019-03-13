@@ -18,6 +18,7 @@ module soca_kst_mod
      real(kind=kind_real) :: dsdtmax !> 1.0    [psu/K]
      real(kind=kind_real) :: dsdzmin !> 3.0e-3 [psu/m] 
      real(kind=kind_real) :: dtdzmin !> 1.0e-3 [K/m]
+     integer              :: nlayers 
      real(kind=kind_real), allocatable :: jacobian(:,:,:) !> dS/dT(i,j,k)
   end type soca_kst
 

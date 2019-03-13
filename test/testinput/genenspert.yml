@@ -97,7 +97,8 @@ Covariance:
  - varchange: BalanceSOCA
    dsdtmax: 1.0
    dsdzmin: 3.0e-3
-   dtdzmin: 1.0e-3 
+   dtdzmin: 1.0e-3
+   nlayers: 10   
    inputVariables:
      variables:
      - cicen

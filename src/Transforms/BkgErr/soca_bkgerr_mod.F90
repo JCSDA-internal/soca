@@ -135,20 +135,25 @@ contains
                &self%bounds%ssh_min,&
                &self%bounds%ssh_max)
              do k = 1, nl
-                efold = exp(-bkg%layer_depth(i,j,k)/self%efold_z)
-                self%std_bkgerr%tocn(i,j,k) = adjusted_std(abs(self%std_bkgerr%tocn(i,j,k)),&
+                if ( (bkg%hocn(i,j,k).gt.1e-3_kind_real) ) then
+                   efold = exp(-bkg%layer_depth(i,j,k)/self%efold_z)
+                   self%std_bkgerr%tocn(i,j,k) = adjusted_std(abs(self%std_bkgerr%tocn(i,j,k)),&
                      &self%bounds%t_min,&
                      &self%bounds%t_max)
-                self%std_bkgerr%socn(i,j,k) = adjusted_std(abs(self%std_bkgerr%socn(i,j,k)),&
+                   self%std_bkgerr%socn(i,j,k) = adjusted_std(abs(self%std_bkgerr%socn(i,j,k)),&
                      &self%bounds%s_min,&
                      &self%bounds%s_max)
+                else
+                   self%std_bkgerr%tocn(i,j,k) = 0.0_kind_real
+                   self%std_bkgerr%socn(i,j,k) = 0.0_kind_real
+                end if
              end do
           else
              self%std_bkgerr%ssh(i,j) = 0.0_kind_real
              self%std_bkgerr%tocn(i,j,:) = 0.0_kind_real
              self%std_bkgerr%socn(i,j,:) = 0.0_kind_real
           end if
-          
+
           ! Sea-ice
           self%std_bkgerr%cicen(i,j,:) = adjusted_std(abs(self%std_bkgerr%cicen(i,j,:)), 0.01d0, 0.5d0)
           self%std_bkgerr%hicen(i,j,:) = adjusted_std(abs(self%std_bkgerr%hicen(i,j,:)), 10d0, 100.0d0)

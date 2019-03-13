@@ -142,7 +142,8 @@ cost_function:
       - varchange: BalanceSOCA
         dsdtmax: 0.1
         dsdzmin: 3.0e-6
-        dtdzmin: 1.0e-6 
+        dtdzmin: 1.0e-6
+        nlayers: 10        
         inputVariables:
           variables:
           - cicen

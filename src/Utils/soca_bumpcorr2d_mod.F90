@@ -33,14 +33,14 @@ module soca_bumpcorr2d_mod
 contains
 
   ! ------------------------------------------------------------------------------
-  subroutine soca_corr_init(self, geom, c_conf)
-    class(soca_bumpcorr2d_type),  intent(inout) :: self   !< The covariance structure
-    type(soca_geom),    intent(in) :: geom
-    type(c_ptr),        intent(in) :: c_conf         !< Handle to configuration    
-
+  subroutine soca_corr_init(self, geom, c_conf, prefix)
+    class(soca_bumpcorr2d_type), intent(inout) :: self   
+    type(soca_geom),                intent(in) :: geom   !< Geometry
+    type(c_ptr),                    intent(in) :: c_conf    
+    character(len=1024),            intent(in) :: prefix !< File prefix for bump
+    
     !Grid stuff
     integer :: isc, iec, jsc, jec, jjj, jz, il, ib
-    character(len=1024) :: subr = 'model_write'
 
     !bump stuff
     integer :: nc0a, nl0, nv, nts
@@ -92,7 +92,7 @@ contains
     ! Initialize bump namelist/parameters
     call self%horizconv%nam%init()
     call bump_read_conf(c_conf, self%horizconv)
-    self%horizconv%nam%prefix = 'smooth' ! TODO: Pass as argument
+    self%horizconv%nam%prefix = prefix
 
     ! Compute convolution weight    
     call self%horizconv%setup_online(nc0a,nl0,nv,nts,lon,lat,area,vunit,lmask)
