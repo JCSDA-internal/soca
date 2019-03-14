@@ -30,7 +30,7 @@ namespace soca {
     : keyConfig_(0), tstep_(0), geom_(resol), vars_(model)
   {
     Log::trace() << "Model::Model" << std::endl;
-    Log::trace() << "Model vars: " << vars_ << std::endl;    
+    Log::trace() << "Model vars: " << vars_ << std::endl;
     tstep_ = util::Duration(model.getString("tstep"));
     const eckit::Configuration * configc = &model;
     soca_setup_f90(&configc, geom_.toFortran(), keyConfig_);
