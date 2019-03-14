@@ -15,7 +15,6 @@ list( APPEND soca_test_input
   testinput/balance.yml
   testinput/bkgerr.yml
   testinput/vertconv.yml
-  testinput/horizconv.yml  
   testinput/genenspert.yml
   testinput/ensvariance.yml
   testinput/static_SocaError_init.yml
@@ -296,13 +295,6 @@ ecbuild_add_test( TARGET test_soca_vertconv
 		  #MPI     4
                   SOURCES executables/TestVariableChange.cc
                   ARGS "testinput/vertconv.yml"
-                  LIBS    soca )		
-
-ecbuild_add_test( TARGET test_soca_horizconv
-                  BOOST
-		  #MPI     4
-                  SOURCES executables/TestVariableChange.cc
-                  ARGS "testinput/horizconv.yml"
                   LIBS    soca )		
 		
 #ecbuild_add_test( TARGET  test_soca_localization
