@@ -10,7 +10,6 @@
 
 #include "src/Transforms/Balance/Balance.h"
 #include "src/Transforms/BkgErr/BkgErr.h"
-#include "src/Transforms/HorizConv/HorizConv.h"
 #include "src/Transforms/VertConv/VertConv.h"
 #include "src/Traits.h"
 #include "oops/interface/LinearVariableChange.h"
@@ -18,9 +17,6 @@
 namespace soca {
 
 void instantiateBalanceOpFactory() {
-  static oops::LinearVariableChangeMaker<soca::Traits,
-              oops::LinearVariableChange<soca::Traits, soca::HorizConv> >
-              makerBalanceOpHorizConvSOCA_("HorizConvSOCA");  
   static oops::LinearVariableChangeMaker<soca::Traits,
               oops::LinearVariableChange<soca::Traits, soca::VertConv> >
               makerBalanceOpVertConvSOCA_("VertConvSOCA");
