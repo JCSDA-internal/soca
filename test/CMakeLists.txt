@@ -1,4 +1,5 @@
 list( APPEND soca_test_input
+  testinput/ensvariance.yml
   testinput/forecast.yml
   testinput/forecast_mom6.yml
   testinput/state_test.yml
@@ -15,6 +16,7 @@ list( APPEND soca_test_input
   testinput/bkgerr.yml
   testinput/vertconv.yml
   testinput/genenspert.yml
+  testinput/ensvariance.yml
   testinput/static_SocaError_init.yml
   testinput/static_SocaLoc_init.yml
   testinput/static_SocaError_test.yml
@@ -202,6 +204,13 @@ ecbuild_add_test( TARGET test_soca_enspert
 		  COMMAND "./run.sh"
                   ARGS "mpirun -np 2 ${CMAKE_BINARY_DIR}/bin/soca_enspert.x testinput/genenspert.yml"
                   DEPENDS soca_enspert.x )
+
+ecbuild_add_test( TARGET test_soca_ensvariance
+                  TYPE SCRIPT
+		  #MPI     4
+		  COMMAND "./run.sh"
+                  ARGS "mpirun -np 2 ${CMAKE_BINARY_DIR}/bin/soca_ensvariance.x testinput/ensvariance.yml"
+                  DEPENDS soca_ensvariance.x )
 		
 # Test below can take a few hours to complete. Commented out for now
 #ecbuild_add_test( TARGET test_soca_covar_lengthscale

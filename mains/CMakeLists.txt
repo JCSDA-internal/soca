@@ -39,7 +39,7 @@ ecbuild_add_executable( TARGET  soca_enspert.x
                         LIBS    soca
                       )		      
 
-#ecbuild_add_executable( TARGET  soca_moments.x
-#                        SOURCES Moments.cc
-#                        LIBS    soca
-#                      )
+ecbuild_add_executable( TARGET  soca_ensvariance.x
+                        SOURCES EnsVariance.cc
+                        LIBS    soca
+                      )

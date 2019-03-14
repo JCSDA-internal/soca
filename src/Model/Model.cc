@@ -50,11 +50,10 @@ namespace soca {
   // -----------------------------------------------------------------------------
   void Model::step(State & xx, const ModelBias &) const {
     ASSERT(xx.fields().isForModel(true));
-    Log::debug() << "Model::step fields in" << xx.fields() << std::endl;
     Log::trace() << "Model::Time: " << xx.validTime() << std::endl;
-    soca_propagate_f90(keyConfig_, xx.fields().toFortran());
+    util::DateTime * modeldate = &xx.validTime();
+    soca_propagate_f90(keyConfig_, xx.fields().toFortran(), &modeldate);
     xx.validTime() += tstep_;
-    Log::debug() << "Model::step fields out" << xx.fields() << std::endl;
   }
   // -----------------------------------------------------------------------------
   void Model::finalize(State & xx) const {
