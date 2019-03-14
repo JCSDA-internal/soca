@@ -85,7 +85,7 @@ contains
           if (self%bkg%geom%ocean%mask2d(id,jd).eq.1) then
              z(:) = self%bkg%layer_depth(id,jd,:)
              zp = z
-             lzd = max(lz,4.0_kind_real*abs(self%bkg%hocn(id,jd,:)))
+             lzd = max(lz,2.0_kind_real*abs(self%bkg%hocn(id,jd,:)))
              do j = 1, nl
                 convdx%tocn(id,jd,j) = 0.0d0
                 convdx%socn(id,jd,j) = 0.0d0             
@@ -127,7 +127,7 @@ contains
           if (self%bkg%geom%ocean%mask2d(id,jd).eq.1) then
              dx%tocn(id,jd,:) = 0.0d0
              dx%socn(id,jd,:) = 0.0d0
-             lzd = max(lz,4.0_kind_real*abs(self%bkg%hocn(id,jd,:)))
+             lzd = max(lz,2.0_kind_real*abs(self%bkg%hocn(id,jd,:)))
              do j = nl, 1, -1
                 do k = nl, 1, -1
                    dist2 = abs(z(j)-zp(k))

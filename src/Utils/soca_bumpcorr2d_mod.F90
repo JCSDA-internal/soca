@@ -93,6 +93,7 @@ contains
     call self%horizconv%nam%init()
     call bump_read_conf(c_conf, self%horizconv)
     self%horizconv%nam%prefix = prefix
+    print *,'prefix=',self%horizconv%nam%prefix
 
     ! Compute convolution weight    
     call self%horizconv%setup_online(nc0a,nl0,nv,nts,lon,lat,area,vunit,lmask)
@@ -123,7 +124,8 @@ contains
     call self%horizconv%get_cv_size(nn)
     allocate(pcv(nn))
     pcv = tmp_incr(:,1,1,1)
-
+    print *,'nn=',nn
+    
     ! Apply C^1/2
     call self%horizconv%apply_nicas_sqrt(pcv, tmp_incr)
 

@@ -44,7 +44,7 @@ Observations:
     Covariance:
       covariance: diagonal
     variables:
-    - ocean_upper_level_temperature
+    - sea_surface_temperature
 #  - ObsType: SeaIceFraction
 #    ObsData:
 #      ObsDataOut:

@@ -45,6 +45,7 @@ contains
     type(c_ptr),              intent(in) :: c_conf
 
     integer :: isc, iec, jsc, jec, i, j, k, nl
+    character(len=1024)        :: test
     
     nl = size(bkg%hocn,3)
   
@@ -56,7 +57,7 @@ contains
 
     ! Initialize bump
     call self%conv%initialize(bkg%geom, c_conf, self%prefix)
-  
+    
   end subroutine soca_conv_setup
 
   ! ------------------------------------------------------------------------------
@@ -66,9 +67,14 @@ contains
     type(soca_field),        intent(in) :: dx
     type(soca_field),     intent(inout) :: convdx
 
+    real(kind=kind_real), allocatable :: incr2d(:,:)
+    integer :: isc, iec, jsc, jec
+    
     ! Make copy of dx
-    !call create_copy(convdx, dx)
-    !call self%conv%apply(convdx, self%bkg%geom)
+    call copy(convdx, dx)
+
+    ! Hardcode var to smooth    
+    call self%conv%apply(convdx%socn(:,:,1), self%bkg%geom)
     
   end subroutine soca_conv
 
@@ -80,8 +86,10 @@ contains
     type(soca_field),        intent(in) :: convdx ! IN
 
     ! Make copy of convdx
-    !call create_copy(dx, convdx)
+    call copy(dx, convdx)
     !call self%conv%apply(convdx, self%bkg%geom)
+    ! Hardcode var to smooth    
+    call self%conv%applyad(dx%socn(:,:,1), self%bkg%geom)
     
   end subroutine soca_conv_ad
 
