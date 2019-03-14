@@ -133,8 +133,8 @@ cost_function:
           - tocn
           - ssh
           - hocn
-        Lz: 300.0
-        Ltemp: 10.0	
+        Lz: 10.0
+        scale_layer_thick: 3 
         inputVariables:
           variables:
           - cicen
