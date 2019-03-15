@@ -307,12 +307,6 @@ ecbuild_add_test( TARGET test_soca_3dvar
                   ARGS "testinput/3dvar_test.yml"
                   MPI ${MPIEXEC_MAX_NUMPROCS} )
 
-ecbuild_add_test( TARGET test_soca_3dvarfgat
-                  SOURCES ../mains/3DVar.cc
-                  LIBS soca
-                  ARGS "testinput/3dvarfgat_test.yml"
-                  MPI ${MPIEXEC_MAX_NUMPROCS} )
-
 ecbuild_add_test( TARGET test_soca_3dvarfgat_mom6
                   SOURCES ../mains/3DVar.cc
                   LIBS soca

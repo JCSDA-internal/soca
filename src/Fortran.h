@@ -195,7 +195,7 @@ namespace soca {
     void soca_bkgerr_multad_f90(const F90balopmat,
                                 F90balopmat &,
                                 const F90balopmat &);
-    
+
     // -----------------------------------------------------------------------------
     //  Localization matrix
     // -----------------------------------------------------------------------------

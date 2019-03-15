@@ -123,9 +123,9 @@ Covariance:
      - socn
      - tocn
      - ssh
-     - hocn  
-   Lz: 3000.0
-   Ltemp: 0.0   
+     - hocn
+   Lz: 10.0
+   scale_layer_thick: 1.5
    inputVariables:
      variables:
      - cicen
