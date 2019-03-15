@@ -21,7 +21,6 @@ list( APPEND soca_test_input
   testinput/static_SocaLoc_init.yml
   testinput/static_SocaError_test.yml
   compare.sh
-  run.sh
 )
 
 list( APPEND soca_testoutput
@@ -71,7 +70,7 @@ list( APPEND soca_obs
 # Create Data directory for test input and symlink all files
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/testinput)
 foreach(FILENAME ${soca_test_input})
-    execute_process( COMMAND ${CMAKE_COMMAND} -E copy #create_symlink
+    execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
            ${CMAKE_CURRENT_SOURCE_DIR}/${FILENAME}
            ${CMAKE_CURRENT_BINARY_DIR}/${FILENAME} )
 endforeach(FILENAME)
@@ -149,46 +148,43 @@ file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bump)
 
 
 #####################################################################
+# NOTE: MPI defaults can be overriden by specifying -DMPIEXEC_MAX_NUMPROCS=?
+#   when running ecbuild
+
 
 # Tests that create data other tests will use
 
-# Test of read/write restart, model advance = Id 
+# Test of read/write restart, model advance = Id
 ecbuild_add_test( TARGET test_soca_forecast
-                  TYPE SCRIPT
-		  #MPI     4
-                  COMMAND "./run.sh"
-                  ARGS "mpirun -np 2 ${CMAKE_BINARY_DIR}/bin/soca_forecast.x testinput/forecast.yml"
-                  DEPENDS soca_forecast.x )
+                  SOURCES ../mains/Forecast.cc
+                  LIBS soca
+                  ARGS "testinput/forecast.yml"
+                  MPI ${MPIEXEC_MAX_NUMPROCS})
 
-# Test mom6 forecast 
+# Test mom6 forecast
 ecbuild_add_test( TARGET test_soca_forecast_mom6
-                  TYPE SCRIPT
-		  #MPI     4
-                  COMMAND "./run.sh"
-                  ARGS "mpirun -np 2 ${CMAKE_BINARY_DIR}/bin/soca_forecast.x testinput/forecast_mom6.yml"
-                  DEPENDS soca_forecast.x )
+                  SOURCES ../mains/Forecast.cc
+                  LIBS soca
+                  ARGS "testinput/forecast_mom6.yml"
+                  MPI ${MPIEXEC_MAX_NUMPROCS} )
 
 # Initialize static error covariance model defined in soca, used for 3DVAR
 ecbuild_add_test( TARGET test_soca_socaerror_init
-                  TYPE SCRIPT
-		  #MPI     4
-		  COMMAND "./run.sh"
-                  ARGS "mpirun -np 2 ${CMAKE_BINARY_DIR}/bin/soca_staticbinit.x testinput/static_SocaError_init.yml"
-                  DEPENDS soca_staticbinit.x )
+                  SOURCES ../mains/StaticBInit.cc
+                  LIBS soca
+                  ARGS "testinput/static_SocaError_init.yml"
+                  MPI ${MPIEXEC_MAX_NUMPROCS} )
 
 ecbuild_add_test( TARGET test_soca_socaloc_init
-                  TYPE SCRIPT
-		  #MPI     4
-		  COMMAND "./run.sh"
-                  ARGS "mpirun -np 2 ${CMAKE_BINARY_DIR}/bin/soca_staticbinit.x testinput/static_SocaLoc_init.yml"
-                  DEPENDS soca_staticbinit.x )
-		
+                  SOURCES ../mains/StaticBInit.cc
+                  LIBS soca
+                  ARGS "testinput/static_SocaLoc_init.yml"
+                  MPI ${MPIEXEC_MAX_NUMPROCS} )
+
 ecbuild_add_test( TARGET test_soca_socaerror_serial_init
-                  TYPE SCRIPT
-		  #MPI     4
-		  COMMAND "./run.sh"
-                  ARGS "${CMAKE_BINARY_DIR}/bin/soca_staticbinit.x testinput/static_SocaError_init.yml"
-                  DEPENDS soca_staticbinit.x )
+                  SOURCES ../mains/StaticBInit.cc
+                  LIBS soca
+                  ARGS "testinput/static_SocaError_init.yml" )
 
 
 # Initialize static error covariance model for the generation of perturbation
@@ -199,19 +195,17 @@ ecbuild_add_test( TARGET test_soca_socaerror_serial_init
 #                  DEPENDS soca_staticbinit.x )
 
 ecbuild_add_test( TARGET test_soca_enspert
-                  TYPE SCRIPT
-		  #MPI     4
-		  COMMAND "./run.sh"
-                  ARGS "mpirun -np 2 ${CMAKE_BINARY_DIR}/bin/soca_enspert.x testinput/genenspert.yml"
-                  DEPENDS soca_enspert.x )
+                  SOURCES ../mains/GenEnsPertB.cc
+                  LIBS soca
+                  ARGS "testinput/genenspert.yml"
+                  MPI ${MPIEXEC_MAX_NUMPROCS} )
 
 ecbuild_add_test( TARGET test_soca_ensvariance
-                  TYPE SCRIPT
-		  #MPI     4
-		  COMMAND "./run.sh"
-                  ARGS "mpirun -np 2 ${CMAKE_BINARY_DIR}/bin/soca_ensvariance.x testinput/ensvariance.yml"
-                  DEPENDS soca_ensvariance.x )
-		
+                  SOURCES ../mains/EnsVariance.cc
+                  LIBS soca
+                  ARGS "testinput/ensvariance.yml"
+                  MPI ${MPIEXEC_MAX_NUMPROCS} )
+
 # Test below can take a few hours to complete. Commented out for now
 #ecbuild_add_test( TARGET test_soca_covar_lengthscale
 #                  TYPE SCRIPT
@@ -230,21 +224,18 @@ ecbuild_add_test( TARGET test_soca_ensvariance
 
 ecbuild_add_test( TARGET  test_soca_geometry
                   BOOST
-		  #MPI     4
                   SOURCES executables/TestGeometry.cc
                   ARGS    "testinput/geometry_test.yml"
                   LIBS    soca )
 
 ecbuild_add_test( TARGET  test_soca_linearmodel
                   BOOST
-		  #MPI     4		  
                   SOURCES executables/TestLinearModel.cc
                   ARGS    "testinput/linearmodel_test.yml"
                   LIBS    soca )
 
 ecbuild_add_test( TARGET  test_soca_state
                   BOOST
-		  #MPI     4
                   SOURCES executables/TestState.cc
                   ARGS    "testinput/state_test.yml"
                   LIBS    soca )
@@ -257,42 +248,36 @@ ecbuild_add_test( TARGET  test_soca_modelaux
 		  
 ecbuild_add_test( TARGET  test_soca_model
                   BOOST
-		  #MPI     4
                   SOURCES executables/TestModel.cc
                   ARGS    "testinput/model_test.yml"
                   LIBS    soca )
 		  
 ecbuild_add_test( TARGET  test_soca_increment
                   BOOST
-		  #MPI     4 		  
                   SOURCES executables/TestIncrement.cc
                   ARGS    "testinput/increment_test.yml"
                   LIBS    soca )
 
 ecbuild_add_test( TARGET  test_soca_errorcovariance
                   BOOST
-		  #MPI     4
                   SOURCES executables/TestErrorCovariance.cc
                   ARGS    "testinput/static_SocaError_test.yml"
                   LIBS    soca )
 
 ecbuild_add_test( TARGET test_soca_balance
                   BOOST
-		  #MPI     4
                   SOURCES executables/TestVariableChange.cc
                   ARGS "testinput/balance.yml"
                   LIBS    soca )
 
 ecbuild_add_test( TARGET test_soca_bkgerr
                   BOOST
-		  #MPI     4
                   SOURCES executables/TestVariableChange.cc
                   ARGS "testinput/bkgerr.yml"
                   LIBS    soca )
 
 ecbuild_add_test( TARGET test_soca_vertconv
                   BOOST
-		  #MPI     4
                   SOURCES executables/TestVariableChange.cc
                   ARGS "testinput/vertconv.yml"
                   LIBS    soca )		
@@ -311,44 +296,35 @@ ecbuild_add_test( TARGET test_soca_vertconv
 #                  LIBS    soca )
 
 ecbuild_add_test( TARGET test_soca_hofx
-                  TYPE SCRIPT
-		  #MPI     4
-                  COMMAND "./run.sh"
-                  ARGS "mpirun -np 2 ${CMAKE_BINARY_DIR}/bin/soca_hofx.x testinput/hofx.yml"             
-                  DEPENDS soca_hofx.x )
+                  SOURCES ../mains/HofX.cc
+                  LIBS soca
+                  ARGS "testinput/hofx.yml"
+                  MPI ${MPIEXEC_MAX_NUMPROCS} )
 
 ecbuild_add_test( TARGET test_soca_3dvar
-                  TYPE SCRIPT
-		  #MPI     4
-                  COMMAND "./run.sh"
-                  ARGS "mpirun -np 2 ${CMAKE_BINARY_DIR}/bin/soca_3dvar.x testinput/3dvar_test.yml"
-		         testoutput/3dvar.test
-                  DEPENDS soca_3dvar.x )
+                  SOURCES ../mains/3DVar.cc
+                  LIBS soca
+                  ARGS "testinput/3dvar_test.yml"
+                  MPI ${MPIEXEC_MAX_NUMPROCS} )
 
 ecbuild_add_test( TARGET test_soca_3dvarfgat
-                  TYPE SCRIPT
-		  #MPI     4
-                  COMMAND "./run.sh"
-                  ARGS "mpirun -np 2 ${CMAKE_BINARY_DIR}/bin/soca_3dvar.x testinput/3dvarfgat_test.yml"
-		         testoutput/3dvarfgat.test
-			 DEPENDS soca_3dvar.x )
+                  SOURCES ../mains/3DVar.cc
+                  LIBS soca
+                  ARGS "testinput/3dvarfgat_test.yml"
+                  MPI ${MPIEXEC_MAX_NUMPROCS} )
 
 ecbuild_add_test( TARGET test_soca_3dvarfgat_mom6
-                  TYPE SCRIPT
-		  #MPI     4
-                  COMMAND "./run.sh"
-                  ARGS "mpirun -np 2 ${CMAKE_BINARY_DIR}/bin/soca_3dvar.x testinput/3dvarfgat_mom6.yml"
-		         testoutput/3dvarfgatmom6.test
-                  DEPENDS soca_3dvar.x )	       
-		
+                  SOURCES ../mains/3DVar.cc
+                  LIBS soca
+                  ARGS "testinput/3dvarfgat_mom6.yml"
+                  MPI ${MPIEXEC_MAX_NUMPROCS} )
+
 ecbuild_add_test( TARGET test_soca_4dhybrid
-                  TYPE SCRIPT
-		  #MPI     4
-                  COMMAND "./run.sh"
-                  ARGS "mpirun -np 2 ${CMAKE_BINARY_DIR}/bin/soca_3dvar.x testinput/4dhyb.yml"
-		         testoutput/4dhybrid.test
-                  DEPENDS soca_3dvar.x )
-		  
+                  SOURCES ../mains/3DVar.cc
+                  LIBS soca
+                  ARGS "testinput/4dhyb.yml"
+                  MPI ${MPIEXEC_MAX_NUMPROCS} )
+
 #ecbuild_add_test( TARGET test_soca_dirac
 #                  TYPE SCRIPT
 #                  MPI     1		  
