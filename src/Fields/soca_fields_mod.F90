@@ -672,15 +672,6 @@ contains
                    call remapping_core_h(remapCS, nz, h_common(i,j,:), fld%socn(i,j,:),&
                                                  &nz, fld%hocn(i,j,:), fld%socn(i,j,:))                   
                    
-                   ! Initialize remapping
-                   !call remaplayer%init(fld%hocn(i,j,:), h_common(i,j,:))
-                   
-                   ! Apply interpolation. TODO: Apply to list of var from config
-                   !call remaplayer%apply(fld%tocn(i,j,:), fld%tocn(i,j,:))
-                   !call remaplayer%apply(fld%socn(i,j,:), fld%socn(i,j,:))
-
-                   ! Cleanup
-                   !call remaplayer%finalize()
                 else
                    fld%tocn(i,j,:) = 0.0_kind_real
                    fld%socn(i,j,:) = 0.0_kind_real
@@ -806,19 +797,20 @@ contains
     pstat(2,5) = maxval(fld%ssh)
 
     ! Output fields info
-!!$    call f_comm%barrier()
-!!$    myrank = f_comm%rank()
-!!$    WRITE(buf,*) '----------- myrank: ',myrank
-!!$    call log%info(buf,newl=.true.,flush=.true.)
-!!$    WRITE(buf,*) 'ssh: min=',pstat(1,5),' max=',pstat(2,5)
-!!$    call log%info(buf,newl=.true.,flush=.true.)
-!!$    WRITE(buf,*) 'T: min=',pstat(1,3),' max=',pstat(2,3)
-!!$    call log%info(buf,newl=.true.,flush=.true.)
-!!$    WRITE(buf,*) 'S: min=',pstat(1,4),' max=',pstat(2,4)
-!!$    call log%info(buf,newl=.true.,flush=.true.)
-!!$    WRITE(buf,*) 'aice: min=',pstat(1,1),' max=',pstat(2,1)
-!!$    call log%info(buf,newl=.true.,flush=.true.)
-
+    call f_comm%barrier()
+    myrank = f_comm%rank()
+    if (myrank.eq.0) then
+       ! TODO: allreduce for pstat
+       WRITE(buf,*) 'ssh: min=',pstat(1,5),' max=',pstat(2,5)
+       call log%info(buf,newl=.true.,flush=.true.)
+       WRITE(buf,*) 'T: min=',pstat(1,3),' max=',pstat(2,3)
+       call log%info(buf,newl=.true.,flush=.true.)
+       WRITE(buf,*) 'S: min=',pstat(1,4),' max=',pstat(2,4)
+       call log%info(buf,newl=.true.,flush=.true.)
+       WRITE(buf,*) 'aice: min=',pstat(1,1),' max=',pstat(2,1)
+       call log%info(buf,newl=.true.,flush=.true.)
+    end if
+    
   end subroutine gpnorm
 
   ! ------------------------------------------------------------------------------

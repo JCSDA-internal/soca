@@ -58,10 +58,8 @@ contains
 
   ! ------------------------------------------------------------------------------
   !> Initialize model's data structure
-  subroutine soca_create(self)!, geom, c_conf)
+  subroutine soca_create(self)
     type(soca_model), intent(inout) :: self
-    !type(c_ptr),         intent(in) :: c_conf
-    !type(soca_geom),     intent(in) :: geom
 
     call soca_mom6_init(self%mom6_config)
 

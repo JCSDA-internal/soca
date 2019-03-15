@@ -77,7 +77,8 @@ namespace soca {
                         const F90geom &, F90model &);
     void soca_delete_f90(F90model &);
     void soca_prepare_integration_f90(const F90model &, const F90flds &);
-    void soca_propagate_f90(const F90model &, const F90flds &, util::DateTime * const *);
+    void soca_propagate_f90(const F90model &, const F90flds &,
+                            util::DateTime * const *);
 
     // -----------------------------------------------------------------------------
     //  Fields
