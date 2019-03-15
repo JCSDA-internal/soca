@@ -100,7 +100,7 @@ cost_function:
         ssh_min: 0.0 #0.05
         ssh_max: 0.5 #0.5
         delta_z: 10.0
-        efold_z: 1500.0	
+        efold_z: 1000.0	
         variables:                                
           variables:
           - cicen
@@ -135,7 +135,7 @@ cost_function:
           - ssh
           - hocn
         Lz: 10.0
-        scale_layer_thick: 3
+        scale_layer_thick: 1.5
         inputVariables:
           variables:
           - cicen
@@ -230,21 +230,21 @@ cost_function:
 #        variables:
 #        - obs_sea_ice_thickness
 #        threshold: 3
-    - ObsType: SeaSurfaceTemp
-      ObsData:
-        ObsDataOut:
-          obsfile: ./Data/sst_obs-2018-04-15-soca-out.nc
-        ObsDataIn:
-          obsfile: ./Data/sst_obs-2018-04-15.nc4
-      Covariance:
-        covariance: diagonal
-      variables:
-      - sea_surface_temperature
-      ObsFilters:
-      - Filter: Background Check
-        variables:
-        - sea_surface_temperature
-        threshold: 3
+#    - ObsType: SeaSurfaceTemp
+#      ObsData:
+#        ObsDataOut:
+#          obsfile: ./Data/sst_obs-2018-04-15-soca-out.nc
+#        ObsDataIn:
+#          obsfile: ./Data/sst_obs-2018-04-15.nc4
+#      Covariance:
+#        covariance: diagonal
+#      variables:
+#      - sea_surface_temperature
+#      ObsFilters:
+#      - Filter: Background Check
+#        variables:
+#        - sea_surface_temperature
+#        threshold: 3
 variational:
   iteration:
   - resolution:
