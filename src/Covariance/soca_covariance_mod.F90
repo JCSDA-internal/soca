@@ -300,15 +300,14 @@ contains
     type(soca_geom),         intent(in) :: geom        
 
     real(kind=kind_real), allocatable :: tmp_incr(:,:,:,:)
+
     ! Allocate unstructured tmp_increment and make copy of dx    
-    !call soca_struct2unstruct(dx(:,:), geom, tmp_incr)
     call geom%ocean%struct2unstruct(dx(:,:), tmp_incr)    
 
     ! Apply 2D convolution
     call horiz_convol%apply_nicas(tmp_incr)
 
     ! copy unstructured tmp_incr to structured dx
-    !call soca_unstruct2struct(dx(:,:), geom, tmp_incr)
     call geom%ocean%unstruct2struct(dx(:,:), tmp_incr)    
 
     ! Clean up
@@ -330,7 +329,6 @@ contains
     integer :: nn
 
     ! Allocate unstructured tmp_increment and make copy of dx
-    !call soca_struct2unstruct(dx(:,:), geom, tmp_incr)
     call geom%ocean%struct2unstruct(dx(:,:), tmp_incr)
     
     ! Get control variable size
@@ -343,7 +341,6 @@ contains
     call horiz_convol%apply_nicas_sqrt(pcv, tmp_incr)
 
     ! Back to structured grid
-    !call soca_unstruct2struct(dx(:,:), geom, tmp_incr)
     call geom%ocean%unstruct2struct(dx(:,:), tmp_incr)
     
     ! Clean up
