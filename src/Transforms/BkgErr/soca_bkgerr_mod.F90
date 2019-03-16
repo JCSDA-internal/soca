@@ -32,6 +32,7 @@ module soca_bkgerr_mod
      type(soca_bkgerror_bounds)        :: bounds         ! Bounds for bkgerr
      real(kind=kind_real)              :: delta_z        ! For rescaling of the vertical gradient
      real(kind=kind_real)              :: efold_z        ! E-folding scale
+     real(kind=kind_real)              :: sst_bkgerr     ! Fixed bkgerr for sst    
      real(kind=kind_real)              :: rescale_bkgerr ! Rescaling factor for bkgerr
      integer                           :: isc, iec, jsc, jec
   end type soca_bkgerr_config
@@ -69,6 +70,7 @@ contains
 
     ! Allocate memory for bkgerror
     call create_copy(self%std_bkgerr, bkg)
+
     if (config_element_exists(c_conf,"ocn_filename")) then
        read_from_file = .true.
        
@@ -87,6 +89,11 @@ contains
     ! Vertical e-folding scale
     self%efold_z   = config_get_real(c_conf,"efold_z")
 
+    ! Fixed sst bkgerr
+    if (config_element_exists(c_conf,"sst_bkgerr")) then
+       self%sst_bkgerr   = config_get_real(c_conf,"sst_bkgerr")    
+    end if
+    
     ! Get bounds from configuration
     self%bounds%t_min   = config_get_real(c_conf,"t_min")
     self%bounds%t_max   = config_get_real(c_conf,"t_max")
@@ -120,12 +127,15 @@ contains
     ! Indices for compute domain (no halo)
     call geom_get_domain_indices(bkg%geom%ocean, "compute", isc, iec, jsc, jec)
     self%isc=isc; self%iec=iec; self%jsc=jsc; self%jec=jec
-
+    
     ! Std of bkg error for temperature based on dT/dz
     if (.not.read_from_file) then
        call soca_bkgerr_tocn(self)
     end if
-    
+
+    ! Set sst
+    self%std_bkgerr%tocn(:,:,1) = 0.5_kind_real
+
     ! Apply config bounds to background error
     do i = isc, iec
        do j = jsc, jec
@@ -214,8 +224,8 @@ contains
   ! ------------------------------------------------------------------------------
   !> Derive background error from vertial gradient of temperature 
   subroutine soca_bkgerr_tocn(self)
-    type(soca_bkgerr_config), intent(inout) :: self
-
+    type(soca_bkgerr_config),     intent(inout) :: self
+    
     real(kind=kind_real), allocatable :: temp(:), sig1(:), sig2(:)
     type(soca_domain_indices), target :: domain    
     integer :: is, ie, js, je, i, j, k
@@ -233,17 +243,15 @@ contains
     call geom_get_domain_indices(self%bkg%geom%ocean, "compute", &
          &domain%isl, domain%iel, domain%jsl, domain%jel, local=.true.)
 
-       
     ! Allocate temporary arrays
     allocate(temp(self%bkg%geom%ocean%nzo))
     allocate(sig1(self%bkg%geom%ocean%nzo), sig2(self%bkg%geom%ocean%nzo))
-
        
     ! Initialize sst background error to previously computed std of omb's
     ! Currently hard-coded to read GODAS file
     call sst%init(domain)
     call sst%bin(self%bkg%geom%ocean%lon, self%bkg%geom%ocean%lat)
-
+    
     ! Loop over compute domain
     do i = domain%is, domain%ie
        do j = domain%js, domain%je
