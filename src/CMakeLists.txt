@@ -71,7 +71,7 @@ list( APPEND oops_soca_src_files
 
 ./Transforms/BkgErr/BkgErr.cc
 ./Transforms/BkgErr/BkgErr.h
-./Transforms/BkgErrGodas/BkgErrFortran.h
+./Transforms/BkgErr/BkgErrFortran.h
 ./Transforms/BkgErr/soca_bkgerr.interface.F90
 ./Transforms/BkgErr/soca_bkgerr_mod.F90
 
