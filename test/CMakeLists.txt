@@ -8,12 +8,16 @@ list( APPEND soca_test_input
   testinput/geometry_test.yml
   testinput/increment_test.yml
   testinput/hofx.yml
-  testinput/3dvar_test.yml
+  testinput/3dvar_soca.yml
+  testinput/3dvar_godas.yml  
   testinput/3dvarfgat_test.yml
   testinput/3dvarfgat_mom6.yml  
   testinput/4dhyb.yml  
   testinput/balance.yml
   testinput/bkgerr.yml
+  testinput/bkgerrfilt.yml
+  testinput/bkgerrsoca.yml
+  testinput/bkgerrgodas.yml
   testinput/vertconv.yml
   testinput/genenspert.yml
   testinput/ensvariance.yml
@@ -270,12 +274,24 @@ ecbuild_add_test( TARGET test_soca_balance
                   ARGS "testinput/balance.yml"
                   LIBS    soca )
 
-ecbuild_add_test( TARGET test_soca_bkgerr
+ecbuild_add_test( TARGET test_soca_bkgerrfilt
                   BOOST
                   SOURCES executables/TestVariableChange.cc
-                  ARGS "testinput/bkgerr.yml"
+                  ARGS "testinput/bkgerrfilt.yml"
                   LIBS    soca )
 
+ecbuild_add_test( TARGET test_soca_bkgerrsoca
+                  BOOST
+                  SOURCES executables/TestVariableChange.cc
+                  ARGS "testinput/bkgerrsoca.yml"
+                  LIBS    soca )
+
+ecbuild_add_test( TARGET test_soca_bkgerrgodas
+                  BOOST
+                  SOURCES executables/TestVariableChange.cc
+                  ARGS "testinput/bkgerrgodas.yml"
+                  LIBS    soca )
+		
 ecbuild_add_test( TARGET test_soca_vertconv
                   BOOST
                   SOURCES executables/TestVariableChange.cc
@@ -301,11 +317,17 @@ ecbuild_add_test( TARGET test_soca_hofx
                   ARGS "testinput/hofx.yml"
                   MPI ${MPIEXEC_MAX_NUMPROCS} )
 
-ecbuild_add_test( TARGET test_soca_3dvar
+ecbuild_add_test( TARGET test_soca_3dvarsoca
                   SOURCES ../mains/3DVar.cc
                   LIBS soca
-                  ARGS "testinput/3dvar_test.yml"
+                  ARGS "testinput/3dvar_soca.yml"
                   MPI ${MPIEXEC_MAX_NUMPROCS} )
+
+ecbuild_add_test( TARGET test_soca_3dvargodas
+                  SOURCES ../mains/3DVar.cc
+                  LIBS soca
+                  ARGS "testinput/3dvar_godas.yml"
+                  MPI ${MPIEXEC_MAX_NUMPROCS} )		
 
 ecbuild_add_test( TARGET test_soca_3dvarfgat_mom6
                   SOURCES ../mains/3DVar.cc

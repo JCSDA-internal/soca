@@ -183,20 +183,6 @@ namespace soca {
                                     F90balopmat &);
 
     // -----------------------------------------------------------------------------
-    //  Standard deviation of background error
-    // -----------------------------------------------------------------------------
-    void soca_bkgerr_setup_f90(F90balopmat &,
-                               const eckit::Configuration * const *,
-                               const F90flds &);
-    void soca_bkgerr_delete_f90(F90balopmat &);
-    void soca_bkgerr_mult_f90(const F90balopmat &,
-                              const F90balopmat &,
-                              F90balopmat &);
-    void soca_bkgerr_multad_f90(const F90balopmat,
-                                F90balopmat &,
-                                const F90balopmat &);
-
-    // -----------------------------------------------------------------------------
     //  Localization matrix
     // -----------------------------------------------------------------------------
     void soca_localization_setup_f90(F90lclz &,

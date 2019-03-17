@@ -10,6 +10,8 @@
 
 #include "src/Transforms/Balance/Balance.h"
 #include "src/Transforms/BkgErr/BkgErr.h"
+#include "src/Transforms/BkgErrGodas/BkgErrGodas.h"
+#include "src/Transforms/BkgErrFilt/BkgErrFilt.h"
 #include "src/Transforms/VertConv/VertConv.h"
 #include "src/Traits.h"
 #include "oops/interface/LinearVariableChange.h"
@@ -23,6 +25,12 @@ void instantiateBalanceOpFactory() {
   static oops::LinearVariableChangeMaker<soca::Traits,
               oops::LinearVariableChange<soca::Traits, soca::BkgErr> >
               makerBalanceOpBkgErrSOCA_("BkgErrSOCA");
+  static oops::LinearVariableChangeMaker<soca::Traits,
+              oops::LinearVariableChange<soca::Traits, soca::BkgErrGodas> >
+              makerBalanceOpBkgErrGODAS_("BkgErrGODAS");
+  static oops::LinearVariableChangeMaker<soca::Traits,
+              oops::LinearVariableChange<soca::Traits, soca::BkgErrFilt> >
+              makerBalanceOpBkgErrFILT_("BkgErrFILT");
   static oops::LinearVariableChangeMaker<soca::Traits,
               oops::LinearVariableChange<soca::Traits, soca::Balance> >
               makerBalanceOpBalanceSOCA_("BalanceSOCA");

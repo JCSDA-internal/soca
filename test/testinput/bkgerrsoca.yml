@@ -20,12 +20,18 @@ LinearVariableChangeTests:
   ice_filename: ice.bkgerror.nc
   date: 2018-04-15T00:00:00Z
   t_min: 0.0
-  t_max: 5.0
-  s_min: 0.0
-  s_max: 1.0
-  ssh_min: 0.0
-  ssh_max: 0.5
-  variables:                                
+  t_max: 2.5
+  s_min: 0.0 
+  s_max: 0.2 
+  ssh_min: 0.0 # std ssh=0 => ssh balance applied as  
+  ssh_max: 0.0 #              strong constraint
+  cicen_min: 0.1
+  cicen_max: 0.5
+  hicen_min: 10.0
+  hicen_max: 100.0
+  #fixed_std_sst: 0.005 # OK to create pretty increments
+  #fixed_std_sss: 0.001 # but that option should not exist! 
+  variables:  
     variables:
     - cicen
     - hicen
@@ -49,3 +55,4 @@ LinearVariableChangeTests:
     - tocn
     - ssh
     - hocn
+

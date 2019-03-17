@@ -1242,5 +1242,5 @@ contains
   end function soca_genfilename
   
   ! ------------------------------------------------------------------------------
-  
+
 end module soca_fields

@@ -5,14 +5,14 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#include "src/Transforms/BkgErr/BkgErr.h"
+#include "src/Transforms/BkgErrGodas/BkgErrGodas.h"
 
 #include <ostream>
 #include <string>
 
 #include "oops/util/Logger.h"
 #include "eckit/config/Configuration.h"
-#include "BkgErrFortran.h"
+#include "BkgErrGodasFortran.h"
 #include "src/Increment/Increment.h"
 #include "src/State/State.h"
 #include "src/Geometry/Geometry.h"
@@ -21,41 +21,45 @@ using oops::Log;
 
 namespace soca {
   // -----------------------------------------------------------------------------
-  BkgErr::BkgErr(const State & bkg,
+  BkgErrGodas::BkgErrGodas(const State & bkg,
                  const State & traj,
                  const Geometry & geom,
                  const eckit::Configuration & conf): traj_(traj) {
     const eckit::Configuration * configc = &conf;
-    soca_bkgerr_setup_f90(keyFtnConfig_, &configc, traj_.fields().toFortran());
+    soca_bkgerrgodas_setup_f90(keyFtnConfig_,
+                               &configc,
+                               traj_.fields().toFortran());
   }
   // -----------------------------------------------------------------------------
-  BkgErr::~BkgErr() {
-    soca_bkgerr_delete_f90(keyFtnConfig_);
+  BkgErrGodas::~BkgErrGodas() {
+    soca_bkgerrgodas_delete_f90(keyFtnConfig_);
   }
   // -----------------------------------------------------------------------------
-  void BkgErr::multiply(const Increment & dxa, Increment & dxm) const {
+  void BkgErrGodas::multiply(const Increment & dxa, Increment & dxm) const {
     // dxm = K dxa
-    soca_bkgerr_mult_f90(keyFtnConfig_,
+    soca_bkgerrgodas_mult_f90(keyFtnConfig_,
                          dxa.fields().toFortran(),
                          dxm.fields().toFortran());
   }
   // -----------------------------------------------------------------------------
-  void BkgErr::multiplyInverse(const Increment & dxm, Increment & dxa) const {
+  void BkgErrGodas::multiplyInverse(const Increment & dxm,
+                                    Increment & dxa) const {
     dxa = dxm;
   }
   // -----------------------------------------------------------------------------
-  void BkgErr::multiplyAD(const Increment & dxm, Increment & dxa) const {
+  void BkgErrGodas::multiplyAD(const Increment & dxm, Increment & dxa) const {
     // dxa = K^T dxm
-    soca_bkgerr_mult_f90(keyFtnConfig_,
+    soca_bkgerrgodas_mult_f90(keyFtnConfig_,
                          dxm.fields().toFortran(),
                          dxa.fields().toFortran());
   }
   // -----------------------------------------------------------------------------
-  void BkgErr::multiplyInverseAD(const Increment & dxa, Increment & dxm) const {
+  void BkgErrGodas::multiplyInverseAD(const Increment & dxa,
+                                      Increment & dxm) const {
     dxm = dxa;
   }
   // -----------------------------------------------------------------------------
-  void BkgErr::print(std::ostream & os) const {
+  void BkgErrGodas::print(std::ostream & os) const {
     os << "SOCA change variable";
   }
   // -----------------------------------------------------------------------------

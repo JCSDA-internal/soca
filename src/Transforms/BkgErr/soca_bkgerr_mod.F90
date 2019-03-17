@@ -10,6 +10,7 @@ module soca_bkgerr_mod
   use datetime_mod  
   use iso_c_binding
   use kinds
+  use soca_bkgerrutil_mod    
   use soca_fields
   use soca_model_geom_type, only : geom_get_domain_indices
   use soca_utils
@@ -17,23 +18,14 @@ module soca_bkgerr_mod
   use fckit_mpi_module
   
   implicit none
-
-  type :: soca_bkgerror_bounds
-     real(kind=kind_real) :: t_min, t_max, t_ml
-     real(kind=kind_real) :: s_min, s_max
-     real(kind=kind_real) :: ssh_min, ssh_max
-     real(kind=kind_real) :: ocn_depth_min
-  end type soca_bkgerror_bounds
   
   !> Fortran derived type to hold configuration D
   type :: soca_bkgerr_config
      type(soca_field),         pointer :: bkg
      type(soca_field)                  :: std_bkgerr
-     type(soca_bkgerror_bounds)        :: bounds         ! Bounds for bkgerr
-     real(kind=kind_real)              :: delta_z        ! For rescaling of the vertical gradient
-     real(kind=kind_real)              :: efold_z        ! E-folding scale
-     real(kind=kind_real)              :: sst_bkgerr     ! Fixed bkgerr for sst    
-     real(kind=kind_real)              :: rescale_bkgerr ! Rescaling factor for bkgerr
+     type(soca_bkgerr_bounds_type)     :: bounds         ! Bounds for bkgerr
+     real(kind=kind_real)              :: std_sst
+     real(kind=kind_real)              :: std_sss     
      integer                           :: isc, iec, jsc, jec
   end type soca_bkgerr_config
 
@@ -58,11 +50,8 @@ contains
     type(c_ptr),                 intent(in) :: c_conf
 
     integer :: isc, iec, jsc, jec, i, j, k, nl
-    real(kind=kind_real), allocatable :: dvdz(:), v(:), h(:)
-    real(kind=kind_real) :: dt, ds, t0, s0, p, lon, lat
-    real(kind=kind_real) :: detas, efold
     type(datetime) :: vdate
-    character(len=800) :: fname = 'soca_bkgerror.nc'
+    character(len=800) :: fname = 'soca_bkgerrsoca.nc'
     logical :: read_from_file = .false.
 
     ! Get number of ocean levels
@@ -71,54 +60,26 @@ contains
     ! Allocate memory for bkgerror
     call create_copy(self%std_bkgerr, bkg)
 
-    if (config_element_exists(c_conf,"ocn_filename")) then
-       read_from_file = .true.
-       
-       ! Read variance       
-       call read_file(self%std_bkgerr, c_conf, vdate)
+    ! Read variance
+    ! Precomputed from an ensemble of (K^-1 dx) 
+    call read_file(self%std_bkgerr, c_conf, vdate)
 
-       ! Convert to standard deviation       
-       self%std_bkgerr%tocn = sqrt(self%std_bkgerr%tocn)
-       self%std_bkgerr%socn = sqrt(self%std_bkgerr%socn)       
-       self%std_bkgerr%ssh = sqrt(self%std_bkgerr%ssh)
-    else
-       read_from_file = .false.
-       self%delta_z   = config_get_real(c_conf,"delta_z")
-    end if
+    ! Convert to standard deviation       
+    self%std_bkgerr%tocn = sqrt(self%std_bkgerr%tocn)
+    self%std_bkgerr%socn = sqrt(self%std_bkgerr%socn)       
+    self%std_bkgerr%ssh = sqrt(self%std_bkgerr%ssh)
 
-    ! Vertical e-folding scale
-    self%efold_z   = config_get_real(c_conf,"efold_z")
-
-    ! Fixed sst bkgerr
-    if (config_element_exists(c_conf,"sst_bkgerr")) then
-       self%sst_bkgerr   = config_get_real(c_conf,"sst_bkgerr")    
-    end if
-    
     ! Get bounds from configuration
-    self%bounds%t_min   = config_get_real(c_conf,"t_min")
-    self%bounds%t_max   = config_get_real(c_conf,"t_max")
-    if (config_element_exists(c_conf,"t_ml")) then
-       self%bounds%t_ml = config_get_real(c_conf,"t_ml")
-    else
-       self%bounds%t_ml = 0.5_kind_real
-    endif    
-    self%bounds%s_min   = config_get_real(c_conf,"s_min")
-    self%bounds%s_max   = config_get_real(c_conf,"s_max")
-    self%bounds%ssh_min = config_get_real(c_conf,"ssh_min")
-    self%bounds%ssh_max = config_get_real(c_conf,"ssh_max")
+    call self%bounds%read(c_conf)
 
-    ! Setup minimum ocean depth
-    if (config_element_exists(c_conf,"ocean_depth_min")) then
-       self%bounds%ocn_depth_min = config_get_real(c_conf,"ocean_depth_min")
-    else
-       self%bounds%ocn_depth_min = 200.0_kind_real
+    ! Get constand background error for sst and sss
+    if (config_element_exists(c_conf,"fixed_std_sst")) then    
+       self%std_sst = config_get_real(c_conf,"fixed_std_sst")
+       self%std_bkgerr%tocn(:,:,1) = self%std_sst       
     end if
-
-    ! Setup rescaling factor for bkgerr
-    if (config_element_exists(c_conf,"rescale_bkgerr")) then
-       self%rescale_bkgerr = config_get_real(c_conf,"rescale_bkgerr")
-    else
-       self%rescale_bkgerr = 1.0_kind_real
+    if (config_element_exists(c_conf,"fixed_std_sss")) then    
+       self%std_sss = config_get_real(c_conf,"fixed_std_sss")
+       self%std_bkgerr%socn(:,:,1) = self%std_sss
     end if
     
     ! Associate background
@@ -127,54 +88,9 @@ contains
     ! Indices for compute domain (no halo)
     call geom_get_domain_indices(bkg%geom%ocean, "compute", isc, iec, jsc, jec)
     self%isc=isc; self%iec=iec; self%jsc=jsc; self%jec=jec
-    
-    ! Std of bkg error for temperature based on dT/dz
-    if (.not.read_from_file) then
-       call soca_bkgerr_tocn(self)
-    end if
-
-    ! Set sst
-    self%std_bkgerr%tocn(:,:,1) = 0.5_kind_real
 
     ! Apply config bounds to background error
-    do i = isc, iec
-       do j = jsc, jec
-          if (sum(bkg%hocn(i,j,:)).gt.self%bounds%ocn_depth_min) then
-             ! Ocean
-             self%std_bkgerr%ssh(i,j) = adjusted_std(abs(self%std_bkgerr%ssh(i,j)), &
-               &self%bounds%ssh_min,&
-               &self%bounds%ssh_max)
-             do k = 1, nl
-                if ( (bkg%hocn(i,j,k).gt.1e-3_kind_real) ) then
-                   efold = exp(-bkg%layer_depth(i,j,k)/self%efold_z)
-                   self%std_bkgerr%tocn(i,j,k) = adjusted_std(abs(self%std_bkgerr%tocn(i,j,k)),&
-                     &self%bounds%t_min,&
-                     &self%bounds%t_max)
-                   self%std_bkgerr%socn(i,j,k) = adjusted_std(abs(self%std_bkgerr%socn(i,j,k)),&
-                     &self%bounds%s_min,&
-                     &self%bounds%s_max)
-                else
-                   self%std_bkgerr%tocn(i,j,k) = 0.0_kind_real
-                   self%std_bkgerr%socn(i,j,k) = 0.0_kind_real
-                end if
-             end do
-          else
-             self%std_bkgerr%ssh(i,j) = 0.0_kind_real
-             self%std_bkgerr%tocn(i,j,:) = 0.0_kind_real
-             self%std_bkgerr%socn(i,j,:) = 0.0_kind_real
-          end if
-
-          ! Sea-ice
-          self%std_bkgerr%cicen(i,j,:) = adjusted_std(abs(self%std_bkgerr%cicen(i,j,:)), 0.01d0, 0.5d0)
-          self%std_bkgerr%hicen(i,j,:) = adjusted_std(abs(self%std_bkgerr%hicen(i,j,:)), 10d0, 100.0d0)
-       end do
-    end do
-
-    ! Apply rescaling to bkgerror
-    ! TODO: Loop through variable to apply rescaling
-    self%std_bkgerr%tocn = self%rescale_bkgerr * self%std_bkgerr%tocn
-    self%std_bkgerr%socn = self%rescale_bkgerr * self%std_bkgerr%socn    
-    self%std_bkgerr%ssh = self%rescale_bkgerr * self%std_bkgerr%ssh
+    call self%bounds%apply(self%std_bkgerr)
     
     ! Save filtered background error
     call soca_fld2file(self%std_bkgerr, fname)
@@ -195,116 +111,16 @@ contains
 
     do i = isc, iec
        do j = jsc, jec
-          if (self%bkg%geom%ocean%mask2d(i,j).eq.1) then
-             dxm%ssh(i,j) = self%std_bkgerr%ssh(i,j) * dxa%ssh(i,j)
-             dxm%tocn(i,j,:) = self%std_bkgerr%tocn(i,j,:) * dxa%tocn(i,j,:)
-             dxm%socn(i,j,:) = self%std_bkgerr%socn(i,j,:)  * dxa%socn(i,j,:)
+          dxm%ssh(i,j) = self%std_bkgerr%ssh(i,j) * dxa%ssh(i,j)
+          dxm%tocn(i,j,:) = self%std_bkgerr%tocn(i,j,:) * dxa%tocn(i,j,:)
+          dxm%socn(i,j,:) = self%std_bkgerr%socn(i,j,:)  * dxa%socn(i,j,:)
 
-             dxm%cicen(i,j,:) =  self%std_bkgerr%cicen(i,j,:) * dxa%cicen(i,j,:)
-             dxm%hicen(i,j,:) =  self%std_bkgerr%hicen(i,j,:) * dxa%hicen(i,j,:)
-          end if
+          dxm%cicen(i,j,:) =  self%std_bkgerr%cicen(i,j,:) * dxa%cicen(i,j,:)
+          dxm%hicen(i,j,:) =  self%std_bkgerr%hicen(i,j,:) * dxa%hicen(i,j,:)
        end do
     end do
 
   end subroutine soca_bkgerr_mult
-
-  ! ------------------------------------------------------------------------------
-  !> Apply bounds
-  elemental function adjusted_std(std, minstd, maxstd)
-    
-    implicit none
-    
-    real(kind=kind_real), intent(in)  :: std, minstd, maxstd
-    real(kind=kind_real) :: adjusted_std
-    
-    adjusted_std = min( max(std, minstd), maxstd)
-    
-  end function adjusted_std
-
-  ! ------------------------------------------------------------------------------
-  !> Derive background error from vertial gradient of temperature 
-  subroutine soca_bkgerr_tocn(self)
-    type(soca_bkgerr_config),     intent(inout) :: self
-    
-    real(kind=kind_real), allocatable :: temp(:), sig1(:), sig2(:)
-    type(soca_domain_indices), target :: domain    
-    integer :: is, ie, js, je, i, j, k
-    integer :: ins, ns = 1, iter, niter = 1
-    type(soca_omb_stats) :: sst
-
-    ! Set all fields to zero
-    call zeros(self%std_bkgerr)
-
-    ! Get compute domain indices
-    call geom_get_domain_indices(self%bkg%geom%ocean, "compute", &
-         &domain%is, domain%ie, domain%js, domain%je)
-    
-    ! Get local compute domain indices
-    call geom_get_domain_indices(self%bkg%geom%ocean, "compute", &
-         &domain%isl, domain%iel, domain%jsl, domain%jel, local=.true.)
-
-    ! Allocate temporary arrays
-    allocate(temp(self%bkg%geom%ocean%nzo))
-    allocate(sig1(self%bkg%geom%ocean%nzo), sig2(self%bkg%geom%ocean%nzo))
-       
-    ! Initialize sst background error to previously computed std of omb's
-    ! Currently hard-coded to read GODAS file
-    call sst%init(domain)
-    call sst%bin(self%bkg%geom%ocean%lon, self%bkg%geom%ocean%lat)
-    
-    ! Loop over compute domain
-    do i = domain%is, domain%ie
-       do j = domain%js, domain%je
-          if (self%bkg%geom%ocean%mask2d(i,j).eq.1) then
-
-             ! Make sure Temp values in thin layers are realistic
-             temp(:) = self%bkg%tocn(i,j,:)
-             !call soca_clean_vertical(self%bkg%hocn(i,j,:), temp(:))
-
-             ! Step 1: sigb from dT/dz 
-             call soca_diff(sig1(:), temp(:), self%bkg%hocn(i,j,:))
-             sig1(:) = self%delta_z * abs(sig1) ! Rescale background error
-
-             ! Step 2: sigb based on efolding scale
-             sig2(:) = sst%bgerr_model(i,j)*&
-                  &exp(-self%bkg%layer_depth(i,j,:)/self%efold_z)
-
-             ! Step 3: sigb = max(sig1, sig2)
-             do k = 1, self%bkg%geom%ocean%nzo
-                self%std_bkgerr%tocn(i,j,k) = max(sig1(k), sig2(k))
-             end do
-             
-             ! Step 4: Vertical smoothing
-             do iter = 1, niter
-                do k = 2, self%bkg%geom%ocean%nzo-1
-                   self%std_bkgerr%tocn(i,j,k) = &
-                        &( self%std_bkgerr%tocn(i,j,k-1)*self%bkg%hocn(i,j,k-1) +&
-                        &  self%std_bkgerr%tocn(i,j,k)*self%bkg%hocn(i,j,k) +&
-                        &  self%std_bkgerr%tocn(i,j,k+1)*self%bkg%hocn(i,j,k+1) )/&
-                        & (sum(self%bkg%hocn(i,j,k-1:k+1)))
-                end do
-             end do
-
-             ! Apply bounds from yaml config
-             do k = 1, self%bkg%geom%ocean%nzo
-                if (self%bkg%layer_depth(i,j,k)<self%bkg%mld(i,j)) then
-                   self%std_bkgerr%tocn(i,j,k) = max(self%std_bkgerr%tocn(i,j,k),&
-                        &self%bounds%t_ml)
-                else
-                   self%std_bkgerr%tocn(i,j,k) = max(self%std_bkgerr%tocn(i,j,k),&
-                        &self%bounds%t_min)                   
-                end if
-             end do
-             
-          end if
-       end do
-    end do
-
-    ! Release memory
-    call sst%exit()
-    deallocate(temp, sig1, sig2)
-
-  end subroutine soca_bkgerr_tocn
 
   ! ------------------------------------------------------------------------------
   
