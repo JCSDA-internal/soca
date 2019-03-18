@@ -29,6 +29,8 @@ list( APPEND soca_model_param
 list( APPEND soca_model_restarts
   ../test/Data/360x210x75/INPUT/MOM.res.nc
   ../test/Data/360x210x75/INPUT/ice_model.res.nc
+  ../test/Data/360x210x75/INPUT/layer_coord.nc
+  ../test/Data/360x210x75/INPUT/hycom1_75_800m.nc
   ../test/Data/360x210x75/INPUT/ocean_hgrid.nc
   ../test/Data/360x210x75/INPUT/topog.nc
 )
