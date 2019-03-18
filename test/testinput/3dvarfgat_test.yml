@@ -32,6 +32,7 @@ cost_function:
   - tocn
   - ssh
   - hocn  
+  varchange: Identity  
   Jb:
     Background:
       state:
@@ -131,8 +132,8 @@ cost_function:
           - tocn
           - ssh
           - hocn
-        Lz: 300.0
-        Ltemp: 10.0	
+        Lz: 10.0
+        scale_layer_thick: 1.5
         inputVariables:
           variables:
           - cicen
@@ -152,7 +153,8 @@ cost_function:
       - varchange: BalanceSOCA
         dsdtmax: 0.1
         dsdzmin: 3.0e-6
-        dtdzmin: 1.0e-6 
+        dtdzmin: 1.0e-6
+        nlayers: 10        
         inputVariables:
           variables:
           - cicen

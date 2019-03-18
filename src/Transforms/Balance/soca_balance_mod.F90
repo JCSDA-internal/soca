@@ -61,9 +61,11 @@ contains
     self%isc=isc; self%iec=iec; self%jsc=jsc; self%jec=jec
 
     ! Get configuration for Kst
-    self%kst%dsdtmax      = config_get_real(c_conf,"dsdtmax")
-    self%kst%dsdzmin      = config_get_real(c_conf,"dsdzmin")
-    self%kst%dtdzmin      = config_get_real(c_conf,"dtdzmin")
+    self%kst%dsdtmax = config_get_real(c_conf,"dsdtmax")
+    self%kst%dsdzmin = config_get_real(c_conf,"dsdzmin")
+    self%kst%dtdzmin = config_get_real(c_conf,"dtdzmin")
+    self%kst%nlayers = config_get_int(c_conf,"nlayers") ! Set jac to 0 in the
+                                                        ! nlayers top layers
 
     ! Compute and store Jacobian of Kst
     allocate(self%kst%jacobian(isc:iec,jsc:jec,traj%geom%ocean%nzo))
@@ -84,6 +86,7 @@ contains
              end if
           end do
           self%kst%jacobian(i,j,:) = jac(:)
+          self%kst%jacobian(i,j,1:self%kst%nlayers) =  0.0_kind_real
        end do
     end do
     deallocate(jac)
@@ -104,10 +107,6 @@ contains
                   &traj%hocn(i,j,k),&
                   &traj%geom%ocean%lon(i,j),&
                   &traj%geom%ocean%lat(i,j))
-             ! Set Jacobian to 0 above mixed layer
-             if (self%traj%layer_depth(i,j,k)<self%traj%mld(i,j)) then
-                jac = 0.0_kind_Real
-             end if             
              self%ksshts%kssht(i,j,k) = jac(1)
              self%ksshts%ksshs(i,j,k) = jac(2)
           end do

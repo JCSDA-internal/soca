@@ -56,6 +56,8 @@ module soca_model_geom_type
      procedure :: get_rossby_radius => geom_rossby_radius
      procedure :: validindex => geom_validindex
      procedure :: thickness2depth => geom_thickness2depth
+     procedure :: struct2unstruct => geom_struct2unstruct
+     procedure :: unstruct2struct => geom_unstruct2struct          
      procedure :: infotofile => geom_infotofile
   end type soca_model_geom
 
@@ -393,5 +395,47 @@ contains
        end do
     end do
   end subroutine geom_thickness2depth
+
+
+  ! ------------------------------------------------------------------------------
+  
+  subroutine geom_struct2unstruct(self, dx_struct, dx_unstruct)
+    class(soca_model_geom),             intent(in) :: self    
+    real(kind=kind_real),               intent(in) :: dx_struct(:,:)
+    real(kind=kind_real), allocatable, intent(out) :: dx_unstruct(:,:,:,:)
+
+    integer :: isc, iec, jsc, jec, jjj, jz, il, ib, nc0a
+
+    ! Indices for compute domain (no halo)
+    call geom_get_domain_indices(self, 'compute', &
+         &isc, iec, jsc, jec, local=.true.)
+
+    nc0a = (iec - isc + 1) * (jec - jsc + 1 )
+    allocate(dx_unstruct(nc0a,1,1,1))
+    dx_unstruct = reshape( dx_struct(isc:iec, jsc:jec), (/nc0a,1,1,1/) )
+
+  end subroutine geom_struct2unstruct
+
+  ! ------------------------------------------------------------------------------
+  
+  subroutine geom_unstruct2struct(self, dx_struct, dx_unstruct)
+    class(soca_model_geom),               intent(in) :: self        
+    real(kind=kind_real),              intent(inout) :: dx_struct(:,:)
+    real(kind=kind_real), allocatable, intent(inout) :: dx_unstruct(:,:,:,:)
+
+    integer :: isc, iec, jsc, jec, jjj, jz, il, ib, nc0a
+
+    ! Indices for compute domain (no halo)
+    call geom_get_domain_indices(self, 'compute', &
+         &isc, iec, jsc, jec, local=.true.)    
+    
+    dx_struct(isc:iec, jsc:jec) = reshape(dx_unstruct,(/size(dx_struct(isc:iec, jsc:jec),1),&
+                                                       &size(dx_struct(isc:iec, jsc:jec),2)/))
+
+    deallocate(dx_unstruct)
+    
+  end subroutine geom_unstruct2struct
+  
+
   
 end module soca_model_geom_type

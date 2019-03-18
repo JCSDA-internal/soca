@@ -472,7 +472,6 @@ contains
     end do
     call f_comm%barrier()
     myrank = f_comm%rank()
-    print *,'myrank=',myrank,' zprod=',zprod,' mask=',sum(fld1%geom%ocean%mask2d)
 
     !----- SEA-ICE
     do ii = is, ie
@@ -616,7 +615,6 @@ contains
 
        call fms_io_init()
        do ii = 1, fld%nf
-          print *,fld%fldnames(ii)
           select case(fld%fldnames(ii))
           ! Ocean
           case ('ssh')
@@ -1244,5 +1242,5 @@ contains
   end function soca_genfilename
   
   ! ------------------------------------------------------------------------------
-  
+
 end module soca_fields

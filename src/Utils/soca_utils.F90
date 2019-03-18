@@ -1,4 +1,4 @@
-! (C) Copyright 2017 UCAR
+! (C) Copyright 2017-2019 UCAR
 !
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -9,7 +9,7 @@ module soca_utils
   implicit none
 
   private
-  public :: write2pe, htoz, soca_str2int
+  public :: write2pe, htoz, soca_str2int, soca_adjust
   public :: soca_rho, soca_diff, soca_mld, nc_check
 
 contains
@@ -167,6 +167,16 @@ contains
        stop "Stopped"
     end if
   end subroutine nc_check
+
+  ! ------------------------------------------------------------------------------
+  !> Apply bounds
+  elemental function soca_adjust(std, minstd, maxstd)
+    real(kind=kind_real), intent(in)  :: std, minstd, maxstd
+    real(kind=kind_real) :: soca_adjust
+    
+    soca_adjust = min( max(std, minstd), maxstd)
+    
+  end function soca_adjust
 
   ! ------------------------------------------------------------------------------  
   

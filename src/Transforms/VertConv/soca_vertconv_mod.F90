@@ -18,7 +18,9 @@ module soca_vertconv_mod
 
   !> Fortran derived type to hold the setup for Vertconv
   type :: soca_vertconv
-     real(kind=kind_real)      :: lz                 !> Vertical decorrelation [m]
+     real(kind=kind_real)      :: lz          !> Vertical decorrelation [m]
+     real(kind=kind_real)      :: scale_layer_thick  !> Set the minimum decorrelation scale
+                                                     !> as a multiple of the layer thickness
      type(soca_field),pointer  :: traj               !> Trajectory
      type(soca_field), pointer :: bkg                !> Background     
      integer                   :: isc, iec, jsc, jec !> Compute domain 
@@ -51,7 +53,8 @@ contains
     nl = size(bkg%hocn,3)
   
     ! Get configuration for vertical convolution
-    self%lz      = config_get_real(c_conf, "Lz")
+    self%lz                = config_get_real(c_conf, "Lz")
+    self%scale_layer_thick = config_get_real(c_conf, "scale_layer_thick")
 
     ! Store trajectory and background
     self%traj => traj
@@ -78,14 +81,14 @@ contains
     
     lz = self%lz
     nl = size(self%bkg%layer_depth,3)
-
+    
     allocate(z(nl), zp(nl), lzd(nl))    
     do id = self%isc, self%iec
        do jd = self%jsc, self%jec
           if (self%bkg%geom%ocean%mask2d(id,jd).eq.1) then
              z(:) = self%bkg%layer_depth(id,jd,:)
              zp = z
-             lzd = max(lz,2.0_kind_real*abs(self%bkg%hocn(id,jd,:)))
+             lzd = max(lz,self%scale_layer_thick*abs(self%bkg%hocn(id,jd,:)))
              do j = 1, nl
                 convdx%tocn(id,jd,j) = 0.0d0
                 convdx%socn(id,jd,j) = 0.0d0             
@@ -127,7 +130,7 @@ contains
           if (self%bkg%geom%ocean%mask2d(id,jd).eq.1) then
              dx%tocn(id,jd,:) = 0.0d0
              dx%socn(id,jd,:) = 0.0d0
-             lzd = max(lz,2.0_kind_real*abs(self%bkg%hocn(id,jd,:)))
+             lzd = max(lz,self%scale_layer_thick*abs(self%bkg%hocn(id,jd,:)))
              do j = nl, 1, -1
                 do k = nl, 1, -1
                    dist2 = abs(z(j)-zp(k))
