@@ -60,17 +60,18 @@ Covariance:
  - varchange: BkgErrGODAS
    t_min: 0.0
    t_max: 2.5
-   s_min: 0.0 
-   s_max: 0.2
+   t_dz: 20
+   t_efold: 500.0
+   s_min: 0.0
+   s_max: 0.25
    ssh_min: 0.0
-   ssh_max: 0.0
+   ssh_max: 0.1
+   ssh_phi_ex: 20
    cicen_min: 0.1
    cicen_max: 0.5
    hicen_min: 10.0
    hicen_max: 100.0
-   delta_z: 100.0
-   efold_sst: 5.0
-   variables:  
+   variables:
      variables:
      - cicen
      - hicen
@@ -124,7 +125,9 @@ Covariance:
      - tocn
      - ssh
      - hocn
-   Lz: 10.0
+   Lz_min: 10.0
+   Lz_mld: 1
+   Lz_mld_max: 500.0
    scale_layer_thick: 1.5
    inputVariables:
      variables:

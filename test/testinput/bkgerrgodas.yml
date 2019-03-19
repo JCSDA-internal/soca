@@ -9,46 +9,27 @@ State:
   basename: ./INPUT/
   ocn_filename: MOM.res.nc
   ice_filename: ice_model.res.nc
-  variables: [cicen, hicen, socn, tocn, ssh, hocn]
+  variables: &soca_vars [cicen, hicen, socn, tocn, ssh, hocn]
 LinearVariableChangeTests:
 - varchange: BkgErrGODAS
   toleranceInverse: 1e-12
   testinverse: 1
   t_min: 0.0
-  t_max: 2.5
-  s_min: 0.0 
-  s_max: 0.2
-  ssh_min: 0.0 # std ssh=0 => ssh balance applied as  
-  ssh_max: 0.0 #              strong constraint
+  t_max: 2.0
+  t_dz:  20.0
+  t_efold: 500.0
+  s_min: 0.0
+  s_max: 0.25
+  ssh_min: 0.0 
+  ssh_max: 0.1
+  ssh_phi_ex: 20
   cicen_min: 0.1
   cicen_max: 0.5
   hicen_min: 10.0
   hicen_max: 100.0
-  delta_z: 100.0
-  efold_sst: 5.0
-  variables:  
-    variables:
-    - cicen
-    - hicen
-    - socn
-    - tocn
-    - ssh
-    - hocn
+  variables:
+    variables: *soca_vars
   inputVariables:
-    variables:
-    - cicen
-    - hicen
-    - socn
-    - tocn
-    - ssh
-    - hocn
+    variables: *soca_vars
   outputVariables:
-    variables:
-    - cicen
-    - hicen
-    - socn
-    - tocn
-    - ssh
-    - hocn
-
-
+    variables: *soca_vars
