@@ -10,7 +10,6 @@ list( APPEND soca_test_input
   testinput/hofx.yml
   testinput/3dvar_soca.yml
   testinput/3dvar_godas.yml  
-  testinput/3dvarfgat_test.yml
   testinput/3dvarfgat_mom6.yml  
   testinput/4dhyb.yml  
   testinput/balance.yml
