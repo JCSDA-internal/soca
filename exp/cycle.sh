@@ -9,8 +9,7 @@ YYYY=$(echo $CDATE | cut -c1-4)
 MM=$(echo $CDATE | cut -c5-6)
 DD=$(echo $CDATE | cut -c7-8)
 HH=$(echo $CDATE | cut -c9-10)
-echo $YYYY $MM $DD $HH
-exit
+
 export OMP_NUM_THREADS=1
 
 # Initialize B

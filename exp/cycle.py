@@ -59,8 +59,8 @@ if __name__ == '__main__':
         os.system(command)
         
         # Run DA
-        #command='./cycle.sh '+yyyy+' '+mm+' '+dd+' '+hh+' '+str(dt)
-        #os.system(command)
+        command='./cycle.sh '+yyyy+' '+mm+' '+dd+' '+hh+' '+str(dt)
+        os.system(command)
 
         # Update time
         ymdh = ymdh + timedelta(hours=dt)
