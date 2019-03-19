@@ -20,19 +20,13 @@ model:
   name: SOCA
   tstep: PT1H
   advance_mom6: 0
-  variables: [cicen, hicen, socn, tocn, ssh, hocn]  
+  variables: &soca_vars [cicen, hicen, socn, tocn, ssh, hocn]
 cost_function:
   cost_type: 3D-Var
   window_begin: '2018-04-14T00:00:00Z'
   window_length: P2D
-  variables:
-  - cicen
-  - hicen
-  - socn
-  - tocn
-  - ssh
-  - hocn
-  varchange: Identity  
+  variables: *soca_vars
+  varchange: Identity
   Jb:
     Background:
       state:
@@ -89,115 +83,55 @@ cost_function:
         ocean_depth_min: 1000 # [m]
         rescale_bkgerr: 1.0
         efold_z: 2500.0       # [m]
-        variables:                                
-          variables:
-          - cicen
-          - hicen
-          - socn
-          - tocn
-          - ssh
-          - hocn
+        variables:
+          variables: *soca_vars
         inputVariables:
-          variables:
-          - cicen
-          - hicen
-          - socn
-          - tocn
-          - ssh
-          - hocn
+          variables: *soca_vars
         outputVariables:
-          variables:
-          - cicen
-          - hicen
-          - socn
-          - tocn
-          - ssh
-          - hocn        
+          variables: *soca_vars
+
       - varchange: BkgErrGODAS
-        t_min: 0.0
-        t_max: 2.5
-        s_min: 0.0 
-        s_max: 0.2
-        ssh_min: 0.0 # std ssh=0 => ssh balance applied as  
-        ssh_max: 0.0 #              strong constraint
+        t_min: 0.1
+        t_max: 2.0
+        t_dz:  20.0
+        t_efold: 500.0
+        s_min: 0.0
+        s_max: 0.25
+        ssh_min: 0.0   # value at EQ
+        ssh_max: 0.1   # value in Extratropics
+        ssh_phi_ex: 20 # lat of transition from extratropics
         cicen_min: 0.1
         cicen_max: 0.5
         hicen_min: 10.0
         hicen_max: 100.0
-        delta_z: 100.0
-        efold_sst: 5.0
-        variables:                                
-          variables:
-          - cicen
-          - hicen
-          - socn
-          - tocn
-          - ssh
-          - hocn
+        variables:
+          variables: *soca_vars
         inputVariables:
-          variables:
-          - cicen
-          - hicen
-          - socn
-          - tocn
-          - ssh
-          - hocn
+          variables: *soca_vars
         outputVariables:
-          variables:
-          - cicen
-          - hicen
-          - socn
-          - tocn
-          - ssh
-          - hocn
+          variables: *soca_vars
+
       - varchange: VertConvSOCA
-        variables:                                
-          variables:
-          - cicen
-          - hicen
-          - socn
-          - tocn
-          - ssh
-          - hocn
-        Lz: 10.0
+        variables:
+          variables: *soca_vars
+        Lz_min: 2.0
+        Lz_mld: 1
+        Lz_mld_max: 500.0
         scale_layer_thick: 1.5
         inputVariables:
-          variables:
-          - cicen
-          - hicen
-          - socn
-          - tocn
-          - ssh
-          - hocn
+          variables: *soca_vars
         outputVariables:
-          variables:
-          - cicen
-          - hicen
-          - socn
-          - tocn
-          - ssh
-          - hocn
+          variables: *soca_vars
+
       - varchange: BalanceSOCA
         dsdtmax: 0.1
         dsdzmin: 3.0e-6
         dtdzmin: 1.0e-6
         nlayers: 10        
         inputVariables:
-          variables:
-          - cicen
-          - hicen
-          - socn
-          - tocn
-          - ssh
-          - hocn
+          variables: *soca_vars
         outputVariables:
-          variables:
-          - cicen
-          - hicen
-          - socn
-          - tocn
-          - ssh
-          - hocn
+          variables: *soca_vars
   Jo:
     ObsTypes:
     - ObsType: ADT
@@ -281,7 +215,7 @@ variational:
       version: IdTLM
       tstep: PT1H
       advance_mom6: 0
-      variables: [cicen, hicen, socn, tocn, ssh, hocn]
+      variables: *soca_vars
     ninner: 10
     gradient_norm_reduction: 1e-15
     test: 'on'
