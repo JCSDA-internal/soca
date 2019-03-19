@@ -26,9 +26,11 @@ LinearVariableChangeTests:
     - socn
     - tocn
     - ssh
-    - hocn  
-  Lz: 10.0
-  scale_layer_thick: 3 
+    - hocn
+  Lz_min: 10.0
+  Lz_mld: 1
+  Lz_mld_max: 500.0
+  scale_layer_thick: 1.5
   inputVariables:
     variables:
     - cicen

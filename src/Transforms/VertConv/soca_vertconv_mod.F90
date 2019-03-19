@@ -18,7 +18,9 @@ module soca_vertconv_mod
 
   !> Fortran derived type to hold the setup for Vertconv
   type :: soca_vertconv
-     real(kind=kind_real)      :: lz          !> Vertical decorrelation [m]
+     real(kind=kind_real)      :: lz_min             !> Vertical decorrelation minimum [m]
+     real(kind=kind_real)      :: lz_mld             !> if /= 0, Use MLD to calculate Lz
+     real(kind=kind_real)      :: lz_mld_max         !> if calculating Lz from MLD, max value to use
      real(kind=kind_real)      :: scale_layer_thick  !> Set the minimum decorrelation scale
                                                      !> as a multiple of the layer thickness
      type(soca_field),pointer  :: traj               !> Trajectory
@@ -53,7 +55,11 @@ contains
     nl = size(bkg%hocn,3)
   
     ! Get configuration for vertical convolution
-    self%lz                = config_get_real(c_conf, "Lz")
+    self%lz_min       = config_get_real(c_conf, "Lz_min")
+    self%lz_mld       = config_get_int(c_conf, "Lz_mld")
+    if ( self%lz_mld /= 0) then
+      self%lz_mld_max   = config_get_real(c_conf, "Lz_mld_max")
+    end if
     self%scale_layer_thick = config_get_real(c_conf, "scale_layer_thick")
 
     ! Store trajectory and background
@@ -68,45 +74,76 @@ contains
   end subroutine soca_conv_setup
 
   ! ------------------------------------------------------------------------------
-  !> Apply forward convolution  
+  !> Calculate vertical correlation lengths for a given column
+  subroutine soca_calc_lz(self, i, j, lz)
+    type(soca_vertconv), intent(in) :: self
+    integer, intent(in) :: i, j
+    real(kind=kind_real), intent(inout) :: lz(:)
+    real(kind=kind_real) :: mld, z
+    integer :: k
+    
+    ! minium scale is based on layer thickness
+    lz = self%lz_min
+    lz = max(lz, self%scale_layer_thick*abs(self%bkg%hocn(i,j,:)))
+    
+    ! if the upper Lz should be calculated from the MLD
+    ! interpolate values from top to bottom of ML
+    if ( self%lz_mld /= 0 ) then
+       mld = self%bkg%mld(i,j)
+       mld = min( mld, self%lz_mld_max)
+       mld = max( mld, self%lz_min)
+       do k=1, size(lz)
+          z = self%bkg%layer_depth(i,j, k)
+          if (z >= mld) exit  ! end of ML, exit loop
+          lz(k) = max(lz(k), lz(k) + (mld - lz(k)) * (1.0 - z/mld))
+       end do
+    end if
+    
+  end subroutine soca_calc_lz
+
+  
+  ! ------------------------------------------------------------------------------
+  !> Apply forward convolution
   subroutine soca_conv (self, convdx, dx)
     type(soca_vertconv), intent(in) :: self
     type(soca_field),    intent(in) :: dx
     type(soca_field),   intent(inout) :: convdx
 
-    real(kind=kind_real), allocatable :: z(:), zp(:), lzd(:)
-    real(kind=kind_real) :: dist2, coef, lz
+    real(kind=kind_real), allocatable :: z(:), lz(:)
+    real(kind=kind_real) :: dist2, coef, mld
     integer :: nl, j, k, id, jd
     type(mpl_type) :: mpl
-    
-    lz = self%lz
+
     nl = size(self%bkg%layer_depth,3)
-    
-    allocate(z(nl), zp(nl), lzd(nl))    
+
+    allocate(z(nl), lz(nl))
     do id = self%isc, self%iec
        do jd = self%jsc, self%jec
-          if (self%bkg%geom%ocean%mask2d(id,jd).eq.1) then
-             z(:) = self%bkg%layer_depth(id,jd,:)
-             zp = z
-             lzd = max(lz,self%scale_layer_thick*abs(self%bkg%hocn(id,jd,:)))
-             do j = 1, nl
-                convdx%tocn(id,jd,j) = 0.0d0
-                convdx%socn(id,jd,j) = 0.0d0             
-                do k = 1,nl
-                   dist2 = abs(z(j)-zp(k))
-                   coef = gc99(mpl, dist2/lzd(k))
-                   convdx%tocn(id,jd,j) = convdx%tocn(id,jd,j) &
-                        &+ dx%tocn(id,jd,k)*coef
-                   convdx%socn(id,jd,j) = convdx%socn(id,jd,j) &
-                        &+ dx%socn(id,jd,k)*coef
-                end do
-             end do
-          end if
+          ! skip land
+          if (self%bkg%geom%ocean%mask2d(id,jd) /= 1) cycle
+
+          ! get correlation lengths
+          call soca_calc_lz(self, id, jd, lz)
+          
+          ! perform convolution
+          z(:) = self%bkg%layer_depth(id,jd,:)
+          do j = 1, nl
+            convdx%tocn(id,jd,j) = 0.0d0
+            convdx%socn(id,jd,j) = 0.0d0
+            do k = 1,nl
+              dist2 = abs(z(j)-z(k))
+              coef = gc99(mpl, dist2/lz(k))
+              convdx%tocn(id,jd,j) = convdx%tocn(id,jd,j) &
+                &+ dx%tocn(id,jd,k)*coef
+              convdx%socn(id,jd,j) = convdx%socn(id,jd,j) &
+                &+ dx%socn(id,jd,k)*coef
+              end do
+          end do
        end do
     end do
-    deallocate(z, zp, lzd)
-
+    deallocate(z, lz)
   end subroutine soca_conv
+
 
   ! ------------------------------------------------------------------------------
   !> Apply backward convolution
@@ -115,35 +152,39 @@ contains
     type(soca_field), intent(inout) :: dx     ! OUT
     type(soca_field),    intent(in) :: convdx ! IN
 
-    real(kind=kind_real), allocatable :: z(:), zp(:), lzd(:)
-    real(kind=kind_real) :: dist2, coef, lz
+    real(kind=kind_real), allocatable :: z(:), lz(:)
+    real(kind=kind_real) :: dist2, coef
     integer :: nl, j, k, id, jd
     type(mpl_type) :: mpl
 
-    lz = self%lz
     nl = size(self%bkg%layer_depth,3)
-    allocate(z(nl), zp(nl), lzd(nl))
+    allocate(z(nl), lz(nl))
+    
     do id = self%isc, self%iec
        do jd = self%jsc, self%jec
+          ! skip land
+          if (self%bkg%geom%ocean%mask2d(id,jd) /= 1) cycle
+
+          ! get correlation lengths
+          call soca_calc_lz(self, id, jd, lz)
+
+          ! perform convolution
           z(:) = self%bkg%layer_depth(id,jd,:)
-          zp = z
-          if (self%bkg%geom%ocean%mask2d(id,jd).eq.1) then
-             dx%tocn(id,jd,:) = 0.0d0
-             dx%socn(id,jd,:) = 0.0d0
-             lzd = max(lz,self%scale_layer_thick*abs(self%bkg%hocn(id,jd,:)))
-             do j = nl, 1, -1
-                do k = nl, 1, -1
-                   dist2 = abs(z(j)-zp(k))
-                   coef = gc99(mpl, dist2/lzd(k))
-                   dx%tocn(id,jd,k) = dx%tocn(id,jd,k) + coef*convdx%tocn(id,jd,j)
-                   dx%socn(id,jd,k) = dx%socn(id,jd,k) + coef*convdx%socn(id,jd,j)
-                end do
+          dx%tocn(id,jd,:) = 0.0d0
+          dx%socn(id,jd,:) = 0.0d0
+          do j = nl, 1, -1
+             do k = nl, 1, -1
+                dist2 = abs(z(j)-z(k))
+                coef = gc99(mpl, dist2/lz(k))
+                dx%tocn(id,jd,k) = dx%tocn(id,jd,k) + coef*convdx%tocn(id,jd,j)
+                dx%socn(id,jd,k) = dx%socn(id,jd,k) + coef*convdx%socn(id,jd,j)
              end do
-          end if
+          end do
        end do
     end do
-    deallocate(z, zp, lzd)
+    deallocate(z, lz)
 
   end subroutine soca_conv_ad
+
 
 end module soca_vertconv_mod
