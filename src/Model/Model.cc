@@ -15,7 +15,7 @@
 #include "oops/util/Logger.h"
 
 #include "src/Fields/Fields.h"
-#include "src/Fortran.h"
+#include "ModelFortran.h"
 #include "src/Geometry/Geometry.h"
 #include "src/ModelBias.h"
 #include "src/State/State.h"
@@ -57,19 +57,21 @@ namespace soca {
   }
   // -----------------------------------------------------------------------------
   void Model::finalize(State & xx) const {
+    ASSERT(xx.fields().isForModel(true));
+    soca_finalize_integration_f90(keyConfig_, xx.fields().toFortran());    
     Log::debug() << "Model::finalize" << xx.fields() << std::endl;
   }
   // -----------------------------------------------------------------------------
   int Model::saveTrajectory(State & xx, const ModelBias &) const {
     ASSERT(xx.fields().isForModel(true));
     int ftraj = 0;
-    Log::debug() << "Model::saveTrajectory fields in" <<
-                    xx.fields() << std::endl;
+    //Log::debug() << "Model::saveTrajectory fields in" <<
+    //                xx.fields() << std::endl;
     // soca_prop_traj_f90(keyConfig_, xx.fields().toFortran(), ftraj);
     xx.validTime() += tstep_;
-    ASSERT(ftraj != 0);
-    Log::debug() << "Model::saveTrajectory fields out" <<
-                    xx.fields() << std::endl;
+    //ASSERT(ftraj != 0);
+    //Log::debug() << "Model::saveTrajectory fields out" <<
+    //                xx.fields() << std::endl;
     return ftraj;
   }
   // -----------------------------------------------------------------------------

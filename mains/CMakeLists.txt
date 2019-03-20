@@ -43,3 +43,8 @@ ecbuild_add_executable( TARGET  soca_ensvariance.x
                         SOURCES EnsVariance.cc
                         LIBS    soca
                       )
+
+ecbuild_add_executable( TARGET  soca_checkpoint_model.x
+                        SOURCES CheckpointModel.cc
+                        LIBS    soca
+                      )

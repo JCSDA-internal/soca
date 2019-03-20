@@ -29,6 +29,8 @@ module soca_model_mod
   public :: soca_model
   public :: soca_model_registry
   public :: soca_create
+  public :: soca_prep_integration
+  public :: soca_fin_integration    
   public :: soca_propagate
   public :: soca_delete
   
@@ -65,6 +67,28 @@ contains
 
   end subroutine soca_create
 
+  ! ------------------------------------------------------------------------------
+  !> Prepare MOM6 integration
+  subroutine soca_prep_integration(self, flds)
+    type(soca_model), intent(inout) :: self
+    type(soca_field), intent(inout) :: flds
+    
+    integer :: isc, iec, jsc, jec
+    type(time_type) :: ocean_time   ! The ocean model's clock.
+    integer :: year, month, day, hour, minute, second
+    character(len=20)  :: strdate
+    character(len=1024)  :: buf
+print *,"=========================== PREPARE INT ========================"
+    ! Update halo
+    call mpp_update_domains(flds%tocn, flds%geom%ocean%G%Domain%mpp_domain)
+    call mpp_update_domains(flds%socn, flds%geom%ocean%G%Domain%mpp_domain)
+
+    ! Update MOM's T and S to soca's
+    self%mom6_config%MOM_CSp%T = real(flds%tocn, kind=8)
+    self%mom6_config%MOM_CSp%S = real(flds%socn, kind=8)
+
+  end subroutine soca_prep_integration
+  
   ! ------------------------------------------------------------------------------
   !> Advance MOM6 one baroclinic time step
   subroutine soca_propagate(self, flds, fldsdate)
@@ -127,6 +151,37 @@ contains
     
   end subroutine soca_propagate
 
+  ! ------------------------------------------------------------------------------
+  !> Prepare MOM6 integration
+  subroutine soca_fin_integration(self, flds)
+    type(soca_model), intent(inout) :: self
+    type(soca_field), intent(inout) :: flds
+    
+    integer :: isc, iec, jsc, jec
+    type(time_type) :: ocean_time   ! The ocean model's clock.
+    integer :: year, month, day, hour, minute, second
+    character(len=20)  :: strdate
+    character(len=1024)  :: buf
+
+    ! Update halo
+    call mpp_update_domains(flds%tocn, flds%geom%ocean%G%Domain%mpp_domain)
+    call mpp_update_domains(flds%socn, flds%geom%ocean%G%Domain%mpp_domain)
+
+    ! Update MOM's T and S to soca's
+    self%mom6_config%MOM_CSp%T = real(flds%tocn, kind=8)
+    self%mom6_config%MOM_CSp%S = real(flds%socn, kind=8)
+
+    ! Checkpoint MOM
+    call save_restart(self%mom6_config%dirs%restart_output_dir, &
+                     &self%mom6_config%Time,&
+                     &self%mom6_config%grid,&
+                     &self%mom6_config%restart_CSp,&
+                     &GV=self%mom6_config%GV)
+
+    
+  end subroutine soca_fin_integration
+
+  
   ! ------------------------------------------------------------------------------
   !> Release memory
   subroutine soca_delete(self)

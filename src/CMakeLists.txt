@@ -23,6 +23,7 @@ list( APPEND oops_soca_src_files
 #Model
 ./Model/Model.cc
 ./Model/Model.h
+./Model/ModelFortran.h
 ./Model/soca_model.interface.F90
 ./Model/soca_model_mod.F90
 ./Model/soca_mom6.F90

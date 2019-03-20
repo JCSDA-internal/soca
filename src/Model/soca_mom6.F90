@@ -312,18 +312,18 @@ contains
 
     logical :: dump_restart0
 
-    ! by default, dump a restart, unless otherwise specified
-    dump_restart0 = .true.
-    if (present(dump_restart)) dump_restart0 = dump_restart
-
-    ! Dump restart state before calling model destructor
-    if (dump_restart0) then
-       call save_restart(mom6_config%dirs%restart_output_dir, &
-                     &mom6_config%Time,&
-                     &mom6_config%grid,&
-                     &mom6_config%restart_CSp,&
-                     &GV=mom6_config%GV)
-    end if
+!!$    ! by default, dump a restart, unless otherwise specified
+!!$    dump_restart0 = .true.
+!!$    if (present(dump_restart)) dump_restart0 = dump_restart
+!!$
+!!$    ! Dump restart state before calling model destructor
+!!$    if (dump_restart0) then
+!!$       call save_restart(mom6_config%dirs%restart_output_dir, &
+!!$                     &mom6_config%Time,&
+!!$                     &mom6_config%grid,&
+!!$                     &mom6_config%restart_CSp,&
+!!$                     &GV=mom6_config%GV)
+!!$    end if
     
     ! Finalize fms
     call io_infra_end ; call MOM_infra_end
