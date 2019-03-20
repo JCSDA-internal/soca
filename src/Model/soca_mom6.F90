@@ -306,25 +306,9 @@ contains
 
   ! ------------------------------------------------------------------------------
   !> Release memory and possibly dump mom6's restart 
-  subroutine soca_mom6_end(mom6_config, dump_restart)    
+  subroutine soca_mom6_end(mom6_config)
     type(soca_mom6_config), intent(inout) :: mom6_config
-    logical,         optional, intent(in) :: dump_restart
 
-    logical :: dump_restart0
-
-!!$    ! by default, dump a restart, unless otherwise specified
-!!$    dump_restart0 = .true.
-!!$    if (present(dump_restart)) dump_restart0 = dump_restart
-!!$
-!!$    ! Dump restart state before calling model destructor
-!!$    if (dump_restart0) then
-!!$       call save_restart(mom6_config%dirs%restart_output_dir, &
-!!$                     &mom6_config%Time,&
-!!$                     &mom6_config%grid,&
-!!$                     &mom6_config%restart_CSp,&
-!!$                     &GV=mom6_config%GV)
-!!$    end if
-    
     ! Finalize fms
     call io_infra_end ; call MOM_infra_end
 

@@ -43,24 +43,15 @@ TlmId::~TlmId() {
 // -----------------------------------------------------------------------------
 void TlmId::setTrajectory(const State &, State &, const ModelBias &) {}
 // -----------------------------------------------------------------------------
-void TlmId::initializeTL(Increment & dx) const {
-  ASSERT(dx.fields().isForModel(false));
-
-  Log::debug() << "TlmId::initializeTL" << dx.fields() << std::endl;
-}
+void TlmId::initializeTL(Increment & dx) const {}
 // -----------------------------------------------------------------------------
 void TlmId::stepTL(Increment & dx, const ModelBiasIncrement &) const {
   dx.updateTime(tstep_);
 }
 // -----------------------------------------------------------------------------
-void TlmId::finalizeTL(Increment & dx) const {
-  Log::debug() << "TlmId::finalizeTL" << dx.fields() << std::endl;
-}
+void TlmId::finalizeTL(Increment & dx) const {}
 // -----------------------------------------------------------------------------
-void TlmId::initializeAD(Increment & dx) const {
-  ASSERT(dx.fields().isForModel(false));
-  Log::debug() << "TlmId::initializeAD" << dx.fields() << std::endl;
-}
+void TlmId::initializeAD(Increment & dx) const {}
 // -----------------------------------------------------------------------------
 void TlmId::stepAD(Increment & dx, ModelBiasIncrement &) const {
   dx.updateTime(-tstep_);

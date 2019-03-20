@@ -52,8 +52,7 @@ subroutine c_soca_setup(c_confspec, c_key_geom, c_key_model) bind (c,name='soca_
   model%advance_mom6 = config_get_int(c_confspec,"advance_mom6")
 
   ! Initialize mom6
-  call soca_create(model)
-  model%integration_initialized = .true.
+  call soca_setup(model)
 
   return
 end subroutine c_soca_setup
@@ -72,10 +71,7 @@ subroutine c_soca_delete(c_key_conf) bind (c,name='soca_delete_f90')
   type(soca_model), pointer :: model
 
   call soca_model_registry%get(c_key_conf, model)
-  !if (model%advance_mom6==1) then
   call soca_delete(model)
-  model%integration_initialized = .false.     
-  !end if  
   call soca_model_registry%remove(c_key_conf)
 
   return
@@ -105,13 +101,13 @@ subroutine c_soca_prepare_integration(c_key_model, c_key_state) &
   call soca_field_registry%get(c_key_state,flds)
   call soca_model_registry%get(c_key_model, model)
 
-  call soca_prep_integration(model, flds)
+  call soca_prepare_integration(model, flds)
 
 end subroutine c_soca_prepare_integration
 
 ! ------------------------------------------------------------------------------
 
-subroutine c_soca_fin_integration(c_key_model, c_key_state) &
+subroutine c_soca_finalize_integration(c_key_model, c_key_state) &
      & bind(c,name='soca_finalize_integration_f90')
 
   use iso_c_binding
@@ -133,9 +129,9 @@ subroutine c_soca_fin_integration(c_key_model, c_key_state) &
   call soca_field_registry%get(c_key_state,flds)
   call soca_model_registry%get(c_key_model, model)
 
-  call soca_fin_integration(model, flds)
+  call soca_finalize_integration(model, flds)
 
-end subroutine c_soca_fin_integration
+end subroutine c_soca_finalize_integration
 
 ! ------------------------------------------------------------------------------
 
@@ -160,12 +156,7 @@ subroutine c_soca_propagate(c_key_model, c_key_state, c_key_date) bind(c,name='s
   call soca_field_registry%get(c_key_state,flds)
   call c_f_datetime(c_key_date, fldsdate)
 
-  if (model%advance_mom6==1) then
-     call soca_propagate(model, flds, fldsdate)
-  else
-     ! TODO: Read background from file
-     print *,"Not advancing MOM6: Persistence model"
-  end if
+  call soca_propagate(model, flds, fldsdate)
 
   return
 end subroutine c_soca_propagate

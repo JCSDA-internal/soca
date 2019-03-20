@@ -28,9 +28,9 @@ module soca_model_mod
   private
   public :: soca_model
   public :: soca_model_registry
-  public :: soca_create
-  public :: soca_prep_integration
-  public :: soca_fin_integration    
+  public :: soca_setup
+  public :: soca_prepare_integration
+  public :: soca_finalize_integration    
   public :: soca_propagate
   public :: soca_delete
   
@@ -41,7 +41,6 @@ module soca_model_mod
      real(kind=kind_real) :: dt0  !< dimensional time (seconds)
      integer                :: advance_mom6 !< call mom6 step if true
      type(soca_mom6_config) :: mom6_config  !< MOM6 data structure
-     logical :: integration_initialized 
   end type soca_model
 
 #define LISTED_TYPE soca_model
@@ -60,16 +59,16 @@ contains
 
   ! ------------------------------------------------------------------------------
   !> Initialize model's data structure
-  subroutine soca_create(self)
+  subroutine soca_setup(self)
     type(soca_model), intent(inout) :: self
 
     call soca_mom6_init(self%mom6_config)
 
-  end subroutine soca_create
+  end subroutine soca_setup
 
   ! ------------------------------------------------------------------------------
   !> Prepare MOM6 integration
-  subroutine soca_prep_integration(self, flds)
+  subroutine soca_prepare_integration(self, flds)
     type(soca_model), intent(inout) :: self
     type(soca_field), intent(inout) :: flds
     
@@ -78,7 +77,7 @@ contains
     integer :: year, month, day, hour, minute, second
     character(len=20)  :: strdate
     character(len=1024)  :: buf
-print *,"=========================== PREPARE INT ========================"
+
     ! Update halo
     call mpp_update_domains(flds%tocn, flds%geom%ocean%G%Domain%mpp_domain)
     call mpp_update_domains(flds%socn, flds%geom%ocean%G%Domain%mpp_domain)
@@ -87,7 +86,7 @@ print *,"=========================== PREPARE INT ========================"
     self%mom6_config%MOM_CSp%T = real(flds%tocn, kind=8)
     self%mom6_config%MOM_CSp%S = real(flds%socn, kind=8)
 
-  end subroutine soca_prep_integration
+  end subroutine soca_prepare_integration
   
   ! ------------------------------------------------------------------------------
   !> Advance MOM6 one baroclinic time step
@@ -128,17 +127,21 @@ print *,"=========================== PREPARE INT ========================"
          &strdate(12:13)//':'//&
          &strdate(15:16)
     call log%info(buf,newl=.true.)
-
-    ! Advance MOM in a single step call (advance dyna and thermo)    
-    call step_MOM(self%mom6_config%forces, &
-                 &self%mom6_config%fluxes, &
-                 &self%mom6_config%sfc_state, &
-                 &self%mom6_config%Time, &
-                 &real(self%mom6_config%dt_forcing, kind=8), &
-                 &self%mom6_config%MOM_CSp,&
-                 &start_cycle=.false.,&
-                 &cycle_length=self%mom6_config%MOM_CSp%dt)
     
+    if (self%advance_mom6==1) then
+       ! Advance MOM in a single step call (advance dyna and thermo)
+       call step_MOM(self%mom6_config%forces, &
+                     &self%mom6_config%fluxes, &
+                     &self%mom6_config%sfc_state, &
+                     &self%mom6_config%Time, &
+                     &real(self%mom6_config%dt_forcing, kind=8), &
+                     &self%mom6_config%MOM_CSp,&
+                     &start_cycle=.false.,&
+                     &cycle_length=self%mom6_config%MOM_CSp%dt)
+    else
+       !TODO: Read file
+    end if
+       
     ! Update ocean clock
     ocean_time = ocean_time + real_to_time(self%mom6_config%MOM_CSp%dt)
     self%mom6_config%Time = ocean_time
@@ -153,7 +156,7 @@ print *,"=========================== PREPARE INT ========================"
 
   ! ------------------------------------------------------------------------------
   !> Prepare MOM6 integration
-  subroutine soca_fin_integration(self, flds)
+  subroutine soca_finalize_integration(self, flds)
     type(soca_model), intent(inout) :: self
     type(soca_field), intent(inout) :: flds
     
@@ -178,16 +181,13 @@ print *,"=========================== PREPARE INT ========================"
                      &self%mom6_config%restart_CSp,&
                      &GV=self%mom6_config%GV)
 
-    
-  end subroutine soca_fin_integration
-
+  end subroutine soca_finalize_integration
   
   ! ------------------------------------------------------------------------------
   !> Release memory
   subroutine soca_delete(self)
     type(soca_model), intent(inout) :: self
 
-    ! Finalize MOM6
     call soca_mom6_end(self%mom6_config)
 
   end subroutine soca_delete
