@@ -11,8 +11,8 @@
 
 int main(int argc,  char ** argv) {
   oops::Run run(argc, argv);
-  soca::instantiateBalanceOpFactory();  
-  oops::EnsVariance<soca::Traits> ensvariance;  
+  soca::instantiateBalanceOpFactory();
+  oops::EnsVariance<soca::Traits> ensvariance;
   run.execute(ensvariance);
   return 0;
 }

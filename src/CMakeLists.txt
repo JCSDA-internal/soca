@@ -110,7 +110,7 @@ ecbuild_add_library( TARGET   soca
                     )
 
 # add soca coding norms test
-ecbuild_add_test( TARGET soca_coding_norms
+ecbuild_add_test( TARGET soca_src_coding_norms
                   TYPE SCRIPT
                   COMMAND ${CMAKE_BINARY_DIR}/bin/cpplint.py
                   ARGS --quiet --recursive ${CMAKE_CURRENT_SOURCE_DIR} )

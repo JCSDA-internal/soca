@@ -323,6 +323,12 @@ ecbuild_add_test( TARGET test_soca_3dvarsoca
                   ARGS "testinput/3dvar_soca.yml"
                   MPI ${MPIEXEC_MAX_NUMPROCS} )
 
+ecbuild_add_test( TARGET test_soca_checkpointmodel
+                  SOURCES ../mains/CheckpointModel.cc
+                  LIBS soca
+                  ARGS "testinput/checkpointmodel.yml"
+                  MPI ${MPIEXEC_MAX_NUMPROCS} )
+
 ecbuild_add_test( TARGET test_soca_3dvargodas
                   SOURCES ../mains/3DVar.cc
                   LIBS soca
@@ -339,12 +345,6 @@ ecbuild_add_test( TARGET test_soca_4dhybrid
                   SOURCES ../mains/3DVar.cc
                   LIBS soca
                   ARGS "testinput/4dhyb.yml"
-                  MPI ${MPIEXEC_MAX_NUMPROCS} )
-
-ecbuild_add_test( TARGET test_soca_checkpointmodel
-                  SOURCES ../mains/CheckpointModel.cc
-                  LIBS soca
-                  ARGS "testinput/checkpointmodel.yml"
                   MPI ${MPIEXEC_MAX_NUMPROCS} )
 
 #ecbuild_add_test( TARGET test_soca_dirac
