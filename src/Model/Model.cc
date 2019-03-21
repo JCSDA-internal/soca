@@ -44,7 +44,7 @@ namespace soca {
   // -----------------------------------------------------------------------------
   void Model::initialize(State & xx) const {
     ASSERT(xx.fields().isForModel(true));
-    soca_prepare_integration_f90(keyConfig_, xx.fields().toFortran());
+    soca_initialize_integration_f90(keyConfig_, xx.fields().toFortran());
     Log::debug() << "Model::initialize" << xx.fields() << std::endl;
   }
   // -----------------------------------------------------------------------------

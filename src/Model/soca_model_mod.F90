@@ -29,7 +29,7 @@ module soca_model_mod
   public :: soca_model
   public :: soca_model_registry
   public :: soca_setup
-  public :: soca_prepare_integration
+  public :: soca_initialize_integration
   public :: soca_finalize_integration    
   public :: soca_propagate
   public :: soca_delete
@@ -68,7 +68,7 @@ contains
 
   ! ------------------------------------------------------------------------------
   !> Prepare MOM6 integration
-  subroutine soca_prepare_integration(self, flds)
+  subroutine soca_initialize_integration(self, flds)
     type(soca_model), intent(inout) :: self
     type(soca_field), intent(inout) :: flds
     
@@ -86,7 +86,7 @@ contains
     self%mom6_config%MOM_CSp%T = real(flds%tocn, kind=8)
     self%mom6_config%MOM_CSp%S = real(flds%socn, kind=8)
 
-  end subroutine soca_prepare_integration
+  end subroutine soca_initialize_integration
   
   ! ------------------------------------------------------------------------------
   !> Advance MOM6 one baroclinic time step
@@ -140,6 +140,8 @@ contains
                      &cycle_length=self%mom6_config%MOM_CSp%dt)
     else
        !TODO: Read file
+       WRITE(buf,*) 'IO Advance of MOM6: NOT IMPLEMENTED'
+       call log%info(buf,newl=.true.)       
     end if
        
     ! Update ocean clock
@@ -155,7 +157,7 @@ contains
   end subroutine soca_propagate
 
   ! ------------------------------------------------------------------------------
-  !> Prepare MOM6 integration
+  !> Finalize MOM6 integration: Update mom6's state and checkpoint
   subroutine soca_finalize_integration(self, flds)
     type(soca_model), intent(inout) :: self
     type(soca_field), intent(inout) :: flds

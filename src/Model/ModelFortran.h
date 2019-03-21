@@ -21,7 +21,7 @@ namespace soca {
     void soca_setup_f90(const eckit::Configuration * const *,
                         const F90geom &, F90model &);
     void soca_delete_f90(F90model &);
-    void soca_prepare_integration_f90(const F90model &, const F90flds &);
+    void soca_initialize_integration_f90(const F90model &, const F90flds &);
     void soca_finalize_integration_f90(const F90model &, const F90flds &);
     void soca_propagate_f90(const F90model &, const F90flds &,
                             util::DateTime * const *);

@@ -4,6 +4,7 @@
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
 !
+
 !> Setup the model
 
 subroutine c_soca_setup(c_confspec, c_key_geom, c_key_model) bind (c,name='soca_setup_f90')
@@ -60,7 +61,6 @@ end subroutine c_soca_setup
 ! ------------------------------------------------------------------------------
 
 !> Delete the model
-
 subroutine c_soca_delete(c_key_conf) bind (c,name='soca_delete_f90')
 
   use soca_model_mod
@@ -78,9 +78,9 @@ subroutine c_soca_delete(c_key_conf) bind (c,name='soca_delete_f90')
 end subroutine c_soca_delete
 
 ! ------------------------------------------------------------------------------
-
-subroutine c_soca_prepare_integration(c_key_model, c_key_state) &
-     & bind(c,name='soca_prepare_integration_f90')
+!> Prepare the model or integration
+subroutine c_soca_initialize_integration(c_key_model, c_key_state) &
+     & bind(c,name='soca_initialize_integration_f90')
 
   use iso_c_binding
   use soca_fields
@@ -101,12 +101,13 @@ subroutine c_soca_prepare_integration(c_key_model, c_key_state) &
   call soca_field_registry%get(c_key_state,flds)
   call soca_model_registry%get(c_key_model, model)
 
-  call soca_prepare_integration(model, flds)
+  call soca_initialize_integration(model, flds)
 
-end subroutine c_soca_prepare_integration
+end subroutine c_soca_initialize_integration
 
 ! ------------------------------------------------------------------------------
 
+!> Checkpoint model
 subroutine c_soca_finalize_integration(c_key_model, c_key_state) &
      & bind(c,name='soca_finalize_integration_f90')
 
