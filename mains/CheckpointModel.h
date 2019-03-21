@@ -24,7 +24,7 @@ namespace soca {
 
   class CheckpointModel : public oops::Application {
    public:
-    static const std::string classname() {return "soca::ErrorCovariance";}
+    static const std::string classname() {return "soca::CheckpointModel";}
 
     int execute(const eckit::Configuration & fullConfig) const {
       //  Setup resolution

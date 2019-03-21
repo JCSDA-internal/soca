@@ -10,7 +10,6 @@ module soca_model_mod
 
   use kinds
   use iso_c_binding
-  use fckit_log_module, only : fckit_log, log
   use soca_geom_mod_c
   use soca_mom6
   use soca_utils
@@ -119,14 +118,6 @@ contains
     call soca_str2int(strdate(18:19), second)    
     self%mom6_config%Time = set_date(year, month, day, hour, minute, second)
     ocean_time = self%mom6_config%Time
-
-    WRITE(buf,*) 'Advancing MOM6 1 time step, starting from: '//&
-         &strdate(1:4)//'-'//&
-         &strdate(6:7)//'-'//&
-         &strdate(9:10)//' '//&
-         &strdate(12:13)//':'//&
-         &strdate(15:16)
-    call log%info(buf,newl=.true.)
     
     if (self%advance_mom6==1) then
        ! Advance MOM in a single step call (advance dyna and thermo)
@@ -138,10 +129,6 @@ contains
                      &self%mom6_config%MOM_CSp,&
                      &start_cycle=.false.,&
                      &cycle_length=self%mom6_config%MOM_CSp%dt)
-    else
-       !TODO: Read file
-       WRITE(buf,*) 'IO Advance of MOM6: NOT IMPLEMENTED'
-       call log%info(buf,newl=.true.)       
     end if
        
     ! Update ocean clock
