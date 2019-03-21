@@ -219,7 +219,6 @@ namespace soca {
     soca_field_sizes_f90(keyFlds_, nx, ny, nzo, nzi, ncat, nf);
     std::vector<double> zstat(3*nf);
     soca_field_gpnorm_f90(keyFlds_, nf, zstat[0]);
-    }
   }
   // -----------------------------------------------------------------------------
   bool Fields::isForModel(bool nonlinear) const {
