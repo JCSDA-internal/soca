@@ -597,11 +597,8 @@ contains
     
     ! iread = 0: Invent state
     if (iread==0) then
-       call log%warning("soca_fields:read_file: Inventing State",newl=.true.)
        call zeros(fld)
        sdate = config_get_string(c_conf,len(sdate),"date")
-       WRITE(buf,*) 'validity date is: '//sdate
-       call log%info(buf,newl=.true.)
        call datetime_set(sdate, vdate)
     end if
 
@@ -690,8 +687,6 @@ contains
        ! Set vdate if reading state
        if (iread==1) then
           sdate = config_get_string(c_conf,len(sdate),"date")
-          WRITE(buf,*) 'validity date is: '//sdate
-          call log%info(buf,newl=.true.)
           call datetime_set(sdate, vdate)
        end if
 
@@ -703,9 +698,6 @@ contains
        incr_filename = config_get_string(c_conf,len(incr_filename),"filename")
        call fms_io_init()
        do ii = 1, fld%nf
-          write(buf,*) 'OOPS_INFO soca_fields_mod::read_file::iread2: '//trim(fld%fldnames(ii))
-          call log%info(buf,newl=.true.)
-
           select case(fld%fldnames(ii))
              ! Ocean variables
           case ('ssh')

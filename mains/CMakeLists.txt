@@ -43,3 +43,14 @@ ecbuild_add_executable( TARGET  soca_ensvariance.x
                         SOURCES EnsVariance.cc
                         LIBS    soca
                       )
+
+ecbuild_add_executable( TARGET  soca_checkpoint_model.x
+                        SOURCES CheckpointModel.cc
+                        LIBS    soca
+                      )
+
+# add soca coding norms test
+ecbuild_add_test( TARGET soca_mains_coding_norms
+                  TYPE SCRIPT
+                  COMMAND ${CMAKE_BINARY_DIR}/bin/cpplint.py
+                  ARGS --quiet --recursive ${CMAKE_CURRENT_SOURCE_DIR} )

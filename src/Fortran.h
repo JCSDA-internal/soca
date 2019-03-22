@@ -70,17 +70,6 @@ namespace soca {
     void soca_finalize_f();
 
     // -----------------------------------------------------------------------------
-    //  Model
-    // -----------------------------------------------------------------------------
-
-    void soca_setup_f90(const eckit::Configuration * const *,
-                        const F90geom &, F90model &);
-    void soca_delete_f90(F90model &);
-    void soca_prepare_integration_f90(const F90model &, const F90flds &);
-    void soca_propagate_f90(const F90model &, const F90flds &,
-                            util::DateTime * const *);
-
-    // -----------------------------------------------------------------------------
     //  Fields
     // -----------------------------------------------------------------------------
     void soca_field_create_f90(F90flds &, const F90geom &,
