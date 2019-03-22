@@ -18,5 +18,5 @@ analysis:
   date: 2018-04-15T00:00:00Z
   basename: ./Data/
   ocn_filename: ocn.3dvar.an.2018-04-15T00:00:00Z.nc
-  ice_filename: ice.3dvar.an.2018-04-15T00:00:00Z.nc
+  ice_filename: ice.3dvarsoca.an.2018-04-15T00:00:00Z.nc
 
