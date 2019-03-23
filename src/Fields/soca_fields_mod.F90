@@ -32,7 +32,7 @@ module soca_fields
   use mpp_domains_mod, only : mpp_update_domains
   use unstructured_grid_mod
   use tools_const, only: deg2rad
-
+  use random_mod
 
   implicit none
 
@@ -277,15 +277,15 @@ contains
 
   subroutine random(self)
     type(soca_field), intent(inout) :: self
+    integer, parameter :: rseed = 1 ! constant for reproducability of tests
 
     call check(self)
 
-    call random_number(self%cicen); self%cicen=self%cicen-0.5_kind_real
-    call random_number(self%hicen); self%hicen=self%hicen-0.5_kind_real
-    
-    call random_number(self%tocn); self%tocn=self%tocn-0.5_kind_real
-    call random_number(self%socn); self%socn=self%socn-0.5_kind_real
-    call random_number(self%ssh); self%ssh=(self%ssh-0.5_kind_real)
+    call normal_distribution(self%cicen, 0.0_kind_real, 1.0_kind_real, rseed)
+    call normal_distribution(self%hicen, 0.0_kind_real, 1.0_kind_real, rseed)
+    call normal_distribution(self%tocn,  0.0_kind_real, 1.0_kind_real, rseed)
+    call normal_distribution(self%socn,  0.0_kind_real, 1.0_kind_real, rseed)
+    call normal_distribution(self%ssh,   0.0_kind_real, 1.0_kind_real, rseed)
 
   end subroutine random
 
