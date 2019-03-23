@@ -12,7 +12,7 @@
 
 int main(int argc,  char ** argv) {
   oops::Run run(argc, argv);
-  soca::instantiateBalanceOpFactory();  
+  soca::instantiateBalanceOpFactory();
   oops::GenEnsPertB<soca::Traits> ensgen;
   run.execute(ensgen);
   return 0;

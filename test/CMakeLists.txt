@@ -1,4 +1,5 @@
 list( APPEND soca_test_input
+  testinput/checkpointmodel.yml  
   testinput/ensvariance.yml
   testinput/forecast.yml
   testinput/forecast_mom6.yml
@@ -320,6 +321,12 @@ ecbuild_add_test( TARGET test_soca_3dvarsoca
                   SOURCES ../mains/3DVar.cc
                   LIBS soca
                   ARGS "testinput/3dvar_soca.yml"
+                  MPI ${MPIEXEC_MAX_NUMPROCS} )
+
+ecbuild_add_test( TARGET test_soca_checkpointmodel
+                  SOURCES ../mains/CheckpointModel.cc
+                  LIBS soca
+                  ARGS "testinput/checkpointmodel.yml"
                   MPI ${MPIEXEC_MAX_NUMPROCS} )
 
 ecbuild_add_test( TARGET test_soca_3dvargodas

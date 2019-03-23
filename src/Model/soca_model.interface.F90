@@ -4,6 +4,7 @@
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
 !
+
 !> Setup the model
 
 subroutine c_soca_setup(c_confspec, c_key_geom, c_key_model) bind (c,name='soca_setup_f90')
@@ -14,7 +15,6 @@ subroutine c_soca_setup(c_confspec, c_key_geom, c_key_model) bind (c,name='soca_
   use config_mod
   use duration_mod
   use kinds
-  use fckit_log_module, only : fckit_log, log
   use mpi,             only : mpi_comm_world
   use mpp_mod,         only : mpp_init
   use mpp_domains_mod, only : mpp_domains_init
@@ -52,12 +52,7 @@ subroutine c_soca_setup(c_confspec, c_key_geom, c_key_model) bind (c,name='soca_
   model%advance_mom6 = config_get_int(c_confspec,"advance_mom6")
 
   ! Initialize mom6
-  if (model%advance_mom6==1) then
-     call soca_create(model)
-     model%integration_initialized = .true.
-  else
-     print *,"Not initializing MOM6"
-  end if
+  call soca_setup(model)
 
   return
 end subroutine c_soca_setup
@@ -65,7 +60,6 @@ end subroutine c_soca_setup
 ! ------------------------------------------------------------------------------
 
 !> Delete the model
-
 subroutine c_soca_delete(c_key_conf) bind (c,name='soca_delete_f90')
 
   use soca_model_mod
@@ -76,19 +70,16 @@ subroutine c_soca_delete(c_key_conf) bind (c,name='soca_delete_f90')
   type(soca_model), pointer :: model
 
   call soca_model_registry%get(c_key_conf, model)
-  if (model%advance_mom6==1) then
-     call soca_delete(model)
-     model%integration_initialized = .false.     
-  end if  
+  call soca_delete(model)
   call soca_model_registry%remove(c_key_conf)
 
   return
 end subroutine c_soca_delete
 
 ! ------------------------------------------------------------------------------
-
-subroutine c_soca_prepare_integration(c_key_model, c_key_state) &
-     & bind(c,name='soca_prepare_integration_f90')
+!> Prepare the model or integration
+subroutine c_soca_initialize_integration(c_key_model, c_key_state) &
+     & bind(c,name='soca_initialize_integration_f90')
 
   use iso_c_binding
   use soca_fields
@@ -109,9 +100,40 @@ subroutine c_soca_prepare_integration(c_key_model, c_key_state) &
   call soca_field_registry%get(c_key_state,flds)
   call soca_model_registry%get(c_key_model, model)
 
-end subroutine c_soca_prepare_integration
+  call soca_initialize_integration(model, flds)
 
-  ! ------------------------------------------------------------------------------
+end subroutine c_soca_initialize_integration
+
+! ------------------------------------------------------------------------------
+
+!> Checkpoint model
+subroutine c_soca_finalize_integration(c_key_model, c_key_state) &
+     & bind(c,name='soca_finalize_integration_f90')
+
+  use iso_c_binding
+  use soca_fields
+  use soca_model_mod
+  use mpi,             only: mpi_comm_world
+  use mpp_mod,         only: mpp_init
+  use fms_mod,                 only: fms_init
+  use fms_io_mod, only : fms_io_init
+  use mpp_io_mod,              only: mpp_open, mpp_close
+  implicit none
+  integer(c_int), intent(in) :: c_key_model  !< Configuration structure
+  integer(c_int), intent(in) :: c_key_state !< Model fields
+
+  type(soca_model), pointer :: model
+  type(soca_field), pointer :: flds
+  integer :: unit
+
+  call soca_field_registry%get(c_key_state,flds)
+  call soca_model_registry%get(c_key_model, model)
+
+  call soca_finalize_integration(model, flds)
+
+end subroutine c_soca_finalize_integration
+
+! ------------------------------------------------------------------------------
 
 !> Perform a timestep of the model
 subroutine c_soca_propagate(c_key_model, c_key_state, c_key_date) bind(c,name='soca_propagate_f90')
@@ -125,21 +147,16 @@ subroutine c_soca_propagate(c_key_model, c_key_state, c_key_date) bind(c,name='s
   integer(c_int), intent(in) :: c_key_model  !< Config structure
   integer(c_int), intent(in) :: c_key_state  !< Model fields
   type(c_ptr), intent(inout) :: c_key_date   !< DateTime
-  
+
   type(soca_model), pointer :: model
   type(soca_field), pointer :: flds
   type(datetime)            :: fldsdate
-  
+
   call soca_model_registry%get(c_key_model, model)
   call soca_field_registry%get(c_key_state,flds)
   call c_f_datetime(c_key_date, fldsdate)
-  
-  if (model%advance_mom6==1) then
-     call soca_propagate(model, flds, fldsdate)
-  else
-     ! TODO: Read background from file
-     print *,"Not advancing MOM6: Persistence model"
-  end if
+
+  call soca_propagate(model, flds, fldsdate)
 
   return
 end subroutine c_soca_propagate
