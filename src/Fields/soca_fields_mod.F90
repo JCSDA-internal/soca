@@ -27,7 +27,7 @@ module soca_fields
   use datetime_mod
   use duration_mod  
   use fckit_log_module, only : log, fckit_log
-  use fckit_mpi_module, only: fckit_mpi_comm, fckit_mpi_sum
+  use fckit_mpi_module
   use MOM_remapping,       only : remapping_CS, initialize_remapping, remapping_core_h, end_remapping
   use mpp_domains_mod, only : mpp_update_domains
   use unstructured_grid_mod
@@ -266,7 +266,7 @@ contains
     do idir=1,ndir
        !self%qicnk(ixdir(idir),iydir(idir),1,4) = 1.0 ! Surface temp incr for cat 1
        !self%tsfcn(ixdir(idir),iydir(idir),1) = 1.0 ! Surface temp incr for cat 1
-       !self%tocn(ixdir(idir),iydir(idir)) = 1.0 ! Surface temp incr for cat 1
+       self%tocn(ixdir(idir),iydir(idir),1) = 1.0 ! Surface temp incr for cat 1
        !self%cicen(ixdir(idir),iydir(idir),3) = 1.0 ! Surface temp incr for cat 1
        self%ssh(ixdir(idir),iydir(idir)) = 1.0 ! Surface temp incr for cat 1
     end do
@@ -766,51 +766,65 @@ contains
   subroutine gpnorm(fld, nf, pstat)
     type(soca_field),        intent(in) :: fld
     integer,                 intent(in) :: nf
-    real(kind=kind_real), intent(inout) :: pstat(3, nf) !> [average, min, max]
-    
-    real(kind=kind_real) :: zz
-    integer :: jj, Nc2d, myrank
-    character(len=1024):: buf
+    real(kind=kind_real), intent(inout) :: pstat(3, nf) !> [min, max, average]
+
+    real(kind=kind_real) :: ocn_count, tmp(3)
+    integer :: jj,  myrank, is, ie, js, je
     type(fckit_mpi_comm) :: f_comm
-    
+
     ! Setup Communicator
     f_comm = fckit_mpi_comm()
 
     call check(fld)
 
-    Nc2d = sum(fld%geom%ocean%mask2d)
-
-    pstat=0.0
-    pstat(1,1) = minval(fld%cicen)
-    pstat(2,1) = maxval(fld%cicen)
+    ! get domain bounds
+    call geom_get_domain_indices(fld%geom%ocean, "compute", is, ie, js, je )
     
-    pstat(1,2) = minval(fld%hicen)
-    pstat(2,2) = maxval(fld%hicen)
-    
-    pstat(1,3) = minval(fld%tocn)
-    pstat(2,3) = maxval(fld%tocn)
+    ! get the total number of ocean grid cells
+    tmp(1) = sum(fld%geom%ocean%mask2d(is:ie, js:je))
+    call f_comm%allreduce(tmp(1), ocn_count, fckit_mpi_sum())
 
-    pstat(1,4) = minval(fld%socn)
-    pstat(2,4) = maxval(fld%socn)
+    ! calculate global min, max, mean for each field
+    ! Note: The following code makes object oriented programmers cry a little.
+    !  Most of the functions in this module should be rewritten to be
+    !  agnostic to the actual number/names of variables, sigh.
+    do jj=1, fld%nf
+      tmp=0.0
 
-    pstat(1,5) = minval(fld%ssh)
-    pstat(2,5) = maxval(fld%ssh)
+      ! get local min/max/sum of each variable
+      select case(fld%fldnames(jj))
+      case("tocn")
+        tmp(1) = minval(fld%tocn(is:ie,js:je,:))
+        tmp(2) = maxval(fld%tocn(is:ie,js:je,:))
+        tmp(3) =    sum(fld%tocn(is:ie,js:je,:))
+      case("socn")
+        tmp(1) = minval(fld%socn(is:ie,js:je,:))
+        tmp(2) = maxval(fld%socn(is:ie,js:je,:))
+        tmp(3) =    sum(fld%socn(is:ie,js:je,:))
+      case("hocn")
+        tmp(1) = minval(fld%hocn(is:ie,js:je,:))
+        tmp(2) = maxval(fld%hocn(is:ie,js:je,:))
+        tmp(3) =    sum(fld%hocn(is:ie,js:je,:))
+      case("ssh")
+        tmp(1) = minval(fld%ssh(is:ie,js:je))
+        tmp(2) = maxval(fld%ssh(is:ie,js:je))
+        tmp(3) =    sum(fld%ssh(is:ie,js:je))
+      case("hicen")
+        tmp(1) = minval(fld%hicen(is:ie,js:je,:))
+        tmp(2) = maxval(fld%hicen(is:ie,js:je,:))
+        tmp(3) =    sum(fld%hicen(is:ie,js:je,:))
+      case("cicen")
+        tmp(1) = minval(fld%cicen(is:ie,js:je,:))
+        tmp(2) = maxval(fld%cicen(is:ie,js:je,:))
+        tmp(3) =    sum(fld%cicen(is:ie,js:je,:))
+      end select
 
-    ! Output fields info
-    call f_comm%barrier()
-    myrank = f_comm%rank()
-    if (myrank.eq.0) then
-       ! TODO: allreduce for pstat
-       WRITE(buf,*) 'ssh: min=',pstat(1,5),' max=',pstat(2,5)
-       call log%info(buf,newl=.true.,flush=.true.)
-       WRITE(buf,*) 'T: min=',pstat(1,3),' max=',pstat(2,3)
-       call log%info(buf,newl=.true.,flush=.true.)
-       WRITE(buf,*) 'S: min=',pstat(1,4),' max=',pstat(2,4)
-       call log%info(buf,newl=.true.,flush=.true.)
-       WRITE(buf,*) 'aice: min=',pstat(1,1),' max=',pstat(2,1)
-       call log%info(buf,newl=.true.,flush=.true.)
-    end if
-    
+      ! calculate global min/max/mean
+      call f_comm%allreduce(tmp(1), pstat(1,jj), fckit_mpi_min())
+      call f_comm%allreduce(tmp(2), pstat(2,jj), fckit_mpi_max())
+      call f_comm%allreduce(tmp(3), pstat(3,jj), fckit_mpi_sum())
+      pstat(3,jj) = pstat(3,jj)/ocn_count
+    end do
   end subroutine gpnorm
 
   ! ------------------------------------------------------------------------------

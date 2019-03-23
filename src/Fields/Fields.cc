@@ -11,6 +11,7 @@
 #include <map>
 #include <string>
 #include <vector>
+#include <iomanip>
 
 #include "eckit/config/Configuration.h"
 #include "oops/generic/UnstructuredGrid.h"
@@ -217,14 +218,16 @@ namespace soca {
     int ncat = -1;
     int nf = -1;
     soca_field_sizes_f90(keyFlds_, nx, ny, nzo, nzi, ncat, nf);
-    // os << std::endl << "  Resolution = " << nx << ", " << ny
-    //   << ", Fields = " << nf;
+    os << std::endl << "  Resolution = " << nx << ", " << ny
+       << ", Fields = " << nf;
     std::vector<double> zstat(3*nf);
-    soca_field_gpnorm_f90(keyFlds_, nf, zstat[0]);
-    // for (int jj = 0; jj < nf; ++jj) {
-    //  os << std::endl << "Min=" << zstat[3*jj] <<
-    //                     " Max=" << zstat[3*jj+1];
-    //}
+    soca_field_gpnorm_f90(keyFlds_, nf, zstat[0]);    
+    for (int jj = 0; jj < nf; ++jj) {      
+      os << std::endl << std::right << std::setw(7) << vars_[jj]
+	 << "   min="  <<  std::fixed << std::setw(12) << std::right << zstat[3*jj]
+         << "   max="  <<  std::fixed << std::setw(12) << std::right << zstat[3*jj+1]
+	 << "   mean=" <<  std::fixed << std::setw(12) << std::right << zstat[3*jj+2];
+    }
   }
   // -----------------------------------------------------------------------------
   bool Fields::isForModel(bool nonlinear) const {

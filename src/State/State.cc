@@ -115,8 +115,8 @@ namespace soca {
   }
   // -----------------------------------------------------------------------------
   void State::print(std::ostream & os) const {
-    // os << std::endl << "  Valid time: " << validTime();
-    // os << *fields_;
+    os << std::endl << "  Valid time: " << validTime();
+    os << *fields_;
   }
   // -----------------------------------------------------------------------------
   /// For accumulator
