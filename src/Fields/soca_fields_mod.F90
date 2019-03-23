@@ -262,13 +262,12 @@ contains
 
     ! Setup Diracs
     call zeros(self)
-    !ioff = (ifdir-1)*self%nl
     do idir=1,ndir
-       !self%qicnk(ixdir(idir),iydir(idir),1,4) = 1.0 ! Surface temp incr for cat 1
-       !self%tsfcn(ixdir(idir),iydir(idir),1) = 1.0 ! Surface temp incr for cat 1
-       self%tocn(ixdir(idir),iydir(idir),1) = 1.0 ! Surface temp incr for cat 1
-       !self%cicen(ixdir(idir),iydir(idir),3) = 1.0 ! Surface temp incr for cat 1
-       self%ssh(ixdir(idir),iydir(idir)) = 1.0 ! Surface temp incr for cat 1
+       self%tocn(ixdir(idir),iydir(idir),1) = 1.0
+       self%socn(ixdir(idir),iydir(idir),1) = 1.0
+       self%ssh(ixdir(idir),iydir(idir)) = 1.0
+       self%cicen(ixdir(idir),iydir(idir),1) = 1.0
+       self%hicen(ixdir(idir),iydir(idir),1) = 1.0
     end do
 
   end subroutine dirac

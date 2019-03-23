@@ -218,8 +218,9 @@ namespace soca {
     int ncat = -1;
     int nf = -1;
     soca_field_sizes_f90(keyFlds_, nx, ny, nzo, nzi, ncat, nf);
-    os << std::endl << "  Resolution = " << nx << ", " << ny
-       << ", Fields = " << nf;
+    // TODO: fix this so that resolution is the global resolution
+    // os << std::endl << "  Resolution = " << nx << ", " << ny
+    //    << ", Fields = " << nf;
     std::vector<double> zstat(3*nf);
     soca_field_gpnorm_f90(keyFlds_, nf, zstat[0]);    
     for (int jj = 0; jj < nf; ++jj) {      
