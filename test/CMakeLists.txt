@@ -24,13 +24,15 @@ list( APPEND soca_test_input
   testinput/static_SocaError_init.yml
   testinput/static_SocaLoc_init.yml
   testinput/static_SocaError_test.yml
+  testinput/dirac.yml
   compare.sh
 )
 
 list( APPEND soca_testoutput
   testoutput/forecast.test
-  testoutput/hofx.test  
-  testoutput/3dvar.test  
+  testoutput/hofx.test
+  testoutput/3dvar.test
+  testoutput/dirac.test
 )
 
 list( APPEND soca_model_param
@@ -291,20 +293,27 @@ ecbuild_add_test( TARGET test_soca_bkgerrgodas
                   SOURCES executables/TestVariableChange.cc
                   ARGS "testinput/bkgerrgodas.yml"
                   LIBS    soca )
-		
+
 ecbuild_add_test( TARGET test_soca_vertconv
                   BOOST
                   SOURCES executables/TestVariableChange.cc
                   ARGS "testinput/vertconv.yml"
-                  LIBS    soca )		
-		
+                  LIBS    soca )
+
+ecbuild_add_test( TARGET test_soca_dirac
+                  TYPE SCRIPT
+                  COMMAND "./compare.sh"
+                  ARGS "${CMAKE_BINARY_DIR}/bin/soca_dirac.x testinput/dirac.yml"
+                       testoutput/dirac.test
+                  DEPENDS soca_dirac.x )
+
 #ecbuild_add_test( TARGET  test_soca_localization
 #                  BOOST
 #                  SOURCES executables/TestLocalization.cc
 #                  ARGS    "testinput/localization_test.yml"
 #                  MPI     1
 #                  LIBS    soca )
-		  
+
 #ecbuild_add_test( TARGET test_soca_obserrorcov
 #                  BOOST
 #                  SOURCES executables/TestObsErrorCovariance.cc
@@ -347,14 +356,7 @@ ecbuild_add_test( TARGET test_soca_4dhybrid
                   ARGS "testinput/4dhyb.yml"
                   MPI ${MPIEXEC_MAX_NUMPROCS} )
 
-#ecbuild_add_test( TARGET test_soca_dirac
-#                  TYPE SCRIPT
-#                  MPI     1		  
-#                  COMMAND "./compare.sh"
-#                  ARGS "${CMAKE_BINARY_DIR}/bin/soca_dirac.x testinput/nicas_test.yml"
-#                       testoutput/dirac.test
-#                  DEPENDS soca_3dvar.x )		  
-  
+
 #ecbuild_add_test( TARGET test_soca_parameters_bump_cov
 #                  TYPE SCRIPT
 #                  COMMAND ${CMAKE_BINARY_DIR}/bin/compare.sh
