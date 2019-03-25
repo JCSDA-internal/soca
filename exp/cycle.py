@@ -56,10 +56,12 @@ def main(argv):
         # Loop through list of databases
         for database in databases:
             obs2ioda = database['Obs2ioda']
+            binpath = database['binpath']
             databasepath = database['databasepath']
-            command = './'+obs2ioda+' --path '+databasepath+' --ic '+yyyy+mm+dd+hh+' --date '+mid_date+' --window '+str(dt)
+            
+            command = binpath+obs2ioda+' --path '+databasepath+' --ic '+yyyy+mm+dd+hh+' --date '+mid_date+' --window '+str(dt)
             os.system(command)
-        
+            sys.exit()
         # Run DA
         command='./cycle.sh '+yyyy+mm+dd+hh+' '+str(dt)
         os.system(command)

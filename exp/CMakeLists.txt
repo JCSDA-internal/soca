@@ -4,11 +4,6 @@ list( APPEND soca_scripts
   cycle.py  
   )
 
-# Observation database to ioda converters
-list( APPEND soca_obs2ioda
-  altimeter2ioda.py
-  )
-
 list( APPEND soca_exp_input
   socainput/3dvar.yml
   socainput/3dvarfgat.yml
