@@ -61,7 +61,7 @@ def main(argv):
             
             command = binpath+obs2ioda+' --path '+databasepath+' --ic '+yyyy+mm+dd+hh+' --date '+mid_date+' --window '+str(dt)
             os.system(command)
-            sys.exit()
+
         # Run DA
         command='./cycle.sh '+yyyy+mm+dd+hh+' '+str(dt)
         os.system(command)

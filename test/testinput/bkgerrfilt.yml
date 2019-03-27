@@ -3,13 +3,15 @@ Geometry:
   num_ice_cat: 5
   num_ice_lev: 4
   num_sno_lev: 1  
+
 State:
   read_from_file: 1
   date: 2018-04-15T00:00:00Z
   basename: ./INPUT/
   ocn_filename: MOM.res.nc
   ice_filename: ice_model.res.nc
-  variables: [cicen, hicen, socn, tocn, ssh, hocn]
+  variables: &soca_vars [cicen, hicen, socn, tocn, ssh, hocn]
+
 LinearVariableChangeTests:
 - varchange: BkgErrFILT
   toleranceInverse: 1e-12
@@ -18,26 +20,9 @@ LinearVariableChangeTests:
   rescale_bkgerr: 1.0
   efold_z: 1500.0       # [m]
   variables:                                
-    variables:
-    - cicen
-    - hicen
-    - socn
-    - tocn
-    - ssh
-    - hocn
+    variables: *soca_vars
   inputVariables:
-    variables:
-    - cicen
-    - hicen
-    - socn
-    - tocn
-    - ssh
-    - hocn
+    variables: *soca_vars
   outputVariables:
-    variables:
-    - cicen
-    - hicen
-    - socn
-    - tocn
-    - ssh
-    - hocn
+    variables: *soca_vars
+
