@@ -1,0 +1,8 @@
+Window_begin: 2018041500
+Window_length: 24
+Num_cycles: 1
+Observations:
+  - Obs2ioda: altimeter2ioda.py # Name of converter
+    binpath: ../../bin/         # Path to exec
+    databasepath: ../../../../../../Data/nesdis/rads/ # Path to obs database
+    
