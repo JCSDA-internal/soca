@@ -7,7 +7,8 @@ list( APPEND soca_scripts
 list( APPEND soca_exp_input
   socainput/3dvar.yml
   socainput/3dvarfgat.yml
-  socainput/4dhyb.yml  
+  socainput/4dhyb.yml
+  socainput/cycle.yml
   socainput/genenspert.yml
   socainput/static_SocaError_init.yml
   socainput/static_SocaLoc_init.yml
@@ -47,12 +48,26 @@ list( APPEND soca_model_forcing
   ../test/Data/360x210x75/INPUT/sgs_h2.nc
 )
 
+# Copy ioda converters
+foreach(FILENAME ${soca_obs2ioda})
+  get_filename_component(filename ${FILENAME} NAME )
+  execute_process( COMMAND ${CMAKE_COMMAND} -E copy
+           ${CMAKE_BINARY_DIR}/bin/${FILENAME}
+           ${CMAKE_CURRENT_BINARY_DIR}/${filename} )
+endforeach(FILENAME)
+
 # Copy scripts
-  message("================" ${soca_scripts})  
 foreach(FILENAME ${soca_scripts})
   get_filename_component(filename ${FILENAME} NAME )
-  message("================" $FILENAME)  
-  execute_process( COMMAND ${CMAKE_COMMAND} -E copy
+  execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
+           ${CMAKE_CURRENT_SOURCE_DIR}/${FILENAME}
+           ${CMAKE_CURRENT_BINARY_DIR}/${filename} )
+endforeach(FILENAME)
+
+# Copy scripts
+foreach(FILENAME ${soca_scripts})
+  get_filename_component(filename ${FILENAME} NAME )
+  execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
            ${CMAKE_CURRENT_SOURCE_DIR}/${FILENAME}
            ${CMAKE_CURRENT_BINARY_DIR}/${filename} )
 endforeach(FILENAME)
@@ -64,7 +79,7 @@ file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/Data)
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/expinput)
 foreach(FILENAME ${soca_exp_input})
   get_filename_component(filename ${FILENAME} NAME )
-  execute_process( COMMAND ${CMAKE_COMMAND} -E copy
+  execute_process( COMMAND ${CMAKE_COMMAND}  -E create_symlink #shitch back to copy when debugging is done -E copy
            ${CMAKE_CURRENT_SOURCE_DIR}/${FILENAME}
            ${CMAKE_CURRENT_BINARY_DIR}/expinput/${filename} )
 endforeach(FILENAME)
@@ -99,3 +114,10 @@ file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/RESTART)
 
 # Create directory for BUMP output
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bump)
+
+# Test cycling
+
+ecbuild_add_test( TARGET exp_soca_cycle
+                  TYPE SCRIPT
+                  COMMAND "./cycle.py"
+                  ARGS "./expinput/cycle.yml")

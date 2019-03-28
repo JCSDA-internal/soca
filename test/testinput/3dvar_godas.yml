@@ -16,11 +16,13 @@ resolution:
   num_ice_cat: 5
   num_ice_lev: 4
   num_sno_lev: 1
+
 model:
   name: SOCA
   tstep: PT1H
   advance_mom6: 0
   variables: &soca_vars [cicen, hicen, socn, tocn, ssh, hocn]
+
 cost_function:
   cost_type: 3D-Var
   window_begin: '2018-04-14T00:00:00Z'
@@ -34,22 +36,17 @@ cost_function:
         basename: "./INPUT/"
         ocn_filename: MOM.res.nc
         ice_filename: ice_model.res.nc
-        date: '2018-04-15T00:00:00Z'
-        #variables: [cicen, hicen, socn, tocn, ssh, hocn]          
+        date: &date 2018-04-15T00:00:00Z
     Covariance:
       covariance: SocaError
-      # General parameters
       default_seed: 1
       prefix: soca
       datadir: ./bump
-      # Driver parameters
       method: cor
-      #strategy: specific_univariate
       strategy: common      
 #      new_hdiag: 0
       new_nicas: 0   # 1: recomputes convol param
       load_nicas: 1  # 1: loads convol param (layout specific)
-      # Sampling parameters
       sam_read: 0
       sam_write: 1  
       mask_check: 1
@@ -60,24 +57,19 @@ cost_function:
       nc3: 10
       dc: 1000.0e3
       nl0r: 1
-      # Diag parameters
-      # Fit parameters
       minim_algo: "hooke"
       rvflt: 0.0
-      # NICAS parameters
       lsqrt: 1  
       resol: 8.0
       nicas_interp: bilin
       network: 1
       mpicom: 2 # Number of internal comm steps 
-      #NICAS parameters
       forced_radii: 1
       rh: 3000e3
       rv: 100
       advmode: 0
-      # Output parameters  
       diag_interp: bilin
-      date: '2018-04-15T00:00:00Z'
+      date: *date
       variable_changes:
       - varchange: BkgErrFILT
         ocean_depth_min: 1000 # [m]
@@ -89,7 +81,6 @@ cost_function:
           variables: *soca_vars
         outputVariables:
           variables: *soca_vars
-
       - varchange: BkgErrGODAS
         t_min: 0.1
         t_max: 2.0
@@ -110,7 +101,6 @@ cost_function:
           variables: *soca_vars
         outputVariables:
           variables: *soca_vars
-
       - varchange: VertConvSOCA
         variables:
           variables: *soca_vars
@@ -122,7 +112,6 @@ cost_function:
           variables: *soca_vars
         outputVariables:
           variables: *soca_vars
-
       - varchange: BalanceSOCA
         dsdtmax: 0.1
         dsdzmin: 3.0e-6
@@ -204,6 +193,7 @@ cost_function:
 #        variables:
 #        - sea_surface_temperature
 #        threshold: 3
+
 variational:
   iteration:
   - resolution:
@@ -240,10 +230,12 @@ variational:
 #      type: incr
 minimizer:
   algorithm: DRIPCG
+
 output:
   datadir: Data
   exp: 3dvargodas
   type: an
+
 final:
   diagnostics:
     departures: oman

@@ -6,16 +6,16 @@ This script cycles mom6 through multiple DA windows.
 
 Example:
 
-     <---------------------- window_length (24 hours) --------------------->
+     <---------------------- Window_length (24 hours) --------------------->
 
  ---|-----------|-----------|-----------|-----------|-----------|-----------|
     |                                   |                                   |      
- window_begin: 2014-04-14T12:00:00Z     |                           2015-04-15T12:00:00Z
+ Window_begin: 2014-04-14T12:00:00Z     |                           2015-04-15T12:00:00Z
                                         |
                     datetime in obsfile: 2015-04-15T00:00:00Z
 
 
-     $  ./cycle.py --ic 2018041412 --window 24 --num_cycles 10
+     $  ./cycle.py cycle.yml
 
 Todo:
 
@@ -26,41 +26,48 @@ import datetime
 from datetime import timedelta
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
 import sys, os
+import yaml
 
-if __name__ == '__main__':
-    description='Multiple DA Cycles. Ex: cycle.py --ic 2018041500 --window 24 --num_cycles 2'
-    parser = ArgumentParser(description=description,formatter_class=ArgumentDefaultsHelpFormatter)
-    parser.add_argument('--ic', help='initial condition, yyyymmddhh', type=str, required=True)    
-    parser.add_argument('--window', help='window length in hours', type=str, required=True)
-    parser.add_argument('--num_cycles', help='number of DA cycles', type=str, required=True)
-    parser.add_argument('--obs2ioda', help='path to the ioda converter script', type=str, default='../../bin/altimeter2ioda.py') 
-    parser.add_argument('--obs_path', help='path to the observations to convert', type=str, default='../../../../../../Data/nesdis/rads/')
-    args = parser.parse_args()
+def main(argv):
+    description='Multiple DA Cycles. Ex: cycle.py cycle.yml'
 
-    dt = int(args.window)
-    ic_date = args.ic
-    num_cycles = int(args.num_cycles)
+    # Parse yaml config file
+    configyml = sys.argv[1]
+    with open(configyml, 'r') as f:
+        config = yaml.load(f)
 
+    ic_date    = str(config['Window_begin'])
+    dt         = int(config['Window_length'])
+    databases  = config['Observations']
+    num_cycles = config['Num_cycles']
+    
     ymdh = datetime.datetime.strptime(ic_date,"%Y%m%d%H")
     for t in range(num_cycles):
-        # Extract year, month, day, hours from date
-        yyyy=str(ymdh.year).zfill(4)
-        mm=str(ymdh.month).zfill(2)
-        dd=str(ymdh.day).zfill(2)
-        hh=str(ymdh.hour).zfill(2)
+        # Extract year, month, day, hours from ic date
+        yyyy = str(ymdh.year).zfill(4)
+        mm   = str(ymdh.month).zfill(2)
+        dd   = str(ymdh.day).zfill(2)
+        hh   = str(ymdh.hour).zfill(2)
 
         # Get date for the middle of the window
-        ymdh_mid = ymdh + timedelta(hours=dt)
-        
-        # Prepare ADT observation files
+        ymdh_mid = ymdh + timedelta(hours=int(dt))
         mid_date = ymdh_mid.strftime("%Y%m%d%H")
-        #mid_date = str(ymdh_mid.year).zfill(4)+str(ymdh_mid.month).zfill(2)+str(ymdh_mid.day).zfill(2)+str(ymdh_mid.hour).zfill(2)
-        command=args.obs2ioda+' --path '+args.obs_path+' --ic '+yyyy+mm+dd+hh+' --date '+mid_date+' --window '+str(dt)
-        os.system(command)
-        
+
+        # Loop through list of databases
+        for database in databases:
+            obs2ioda = database['Obs2ioda']
+            binpath = database['binpath']
+            databasepath = database['databasepath']
+            
+            command = binpath+obs2ioda+' --path '+databasepath+' --ic '+yyyy+mm+dd+hh+' --date '+mid_date+' --window '+str(dt)
+            os.system(command)
+
         # Run DA
-        command='./cycle.sh '+yyyy+' '+mm+' '+dd+' '+hh+' '+str(dt)
+        command='./cycle.sh '+yyyy+mm+dd+hh+' '+str(dt)
         os.system(command)
 
         # Update time
         ymdh = ymdh + timedelta(hours=dt)
+
+if __name__ == '__main__':
+    main(sys.argv[1])

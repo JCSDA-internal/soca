@@ -6,7 +6,7 @@ resolution:
 model:
   name: SOCA
   tstep: PT1H
-  advance_mom6: 1
+  advance_mom6: 0
   variables: [cicen, hicen, socn, tocn, ssh, hocn]
 cost_function:
   cost_type: 4D-Var
@@ -141,7 +141,9 @@ cost_function:
           - tocn
           - ssh
           - hocn
-        Lz: 10.0
+        Lz_min: 10.0
+        Lz_mld: 0
+        Lz_mld_max: 20.0
         scale_layer_thick: 1.5
         inputVariables:
           variables:
@@ -219,7 +221,7 @@ variational:
       tstep: PT1H
       advance_mom6: 0      
       variables: [cicen, hicen, socn, tocn, ssh, hocn]
-    ninner: 10
+    ninner: 1
     gradient_norm_reduction: 1e-15
     test: on
     diagnostics:

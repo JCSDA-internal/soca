@@ -2,7 +2,8 @@ test_framework_runtime_config: "--log_level=test_suite"
 Geometry:
   num_ice_cat: 5
   num_ice_lev: 4
-  num_sno_lev: 1  
+  num_sno_lev: 1
+
 State:
   read_from_file: 1
   date: 2018-04-15T00:00:00Z
@@ -10,6 +11,7 @@ State:
   ocn_filename: MOM.res.nc
   ice_filename: ice_model.res.nc
   variables: &soca_vars [cicen, hicen, socn, tocn, ssh, hocn]
+
 LinearVariableChangeTests:
 - varchange: BkgErrGODAS
   toleranceInverse: 1e-12
