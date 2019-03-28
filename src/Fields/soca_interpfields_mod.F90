@@ -186,6 +186,10 @@ contains
           fld%tocn(isc:iec,jsc:jec,1) = fld%tocn(isc:iec,jsc:jec,1) +&
                &fld3d(isc:iec,jsc:jec,1)
 
+       case ("sea_surface_salinity")
+          fld%socn(isc:iec,jsc:jec,1) = fld%socn(isc:iec,jsc:jec,1) +&
+               &fld3d(isc:iec,jsc:jec,1)
+
        end select
 
        ! Deallocate temporary arrays
@@ -265,6 +269,9 @@ contains
        case ("sea_surface_temperature")
           fld3d(isc:iec,jsc:jec,1) = fld%tocn(isc:iec,jsc:jec,1)
 
+       case ("sea_surface_salinity")
+          fld3d(isc:iec,jsc:jec,1) = fld%socn(isc:iec,jsc:jec,1)
+
        case ("sea_area_fraction")
           fld3d(isc:iec,jsc:jec,1) = real(fld%geom%ocean%mask2d(isc:iec,jsc:jec),kind=kind_real)
 
@@ -305,6 +312,7 @@ contains
 
     case ("sea_surface_height_above_geoid", &
           "sea_surface_temperature", &
+          "sea_surface_salinity", &
           "sea_area_fraction")
        nval = 1
 
