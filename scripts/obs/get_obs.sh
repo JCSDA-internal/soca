@@ -16,11 +16,11 @@ while [[ $date -le $date_end ]]; do
 
     ##------------------------------------------------------------
     ## SSS
-    ## Note: you're best off using just the jpl_smap source
+    ## Note: best off using just the RSS 70km L2 for now
     ##------------------------------------------------------------
-    bash source.jpl_smap.sh $date $output_path
-    #bash source.nesdis_sss.sh smos $date $output_path
-    #bash source.nesdis_sss.sh smap $date $output_path
+    bash source.jpl_smap.sh rss_70km $date $output_path
+    #bash source.jpl_smap.sh rss_40km $date $output_path
+    #bash source.jpl_smap.sh jpl $date $output_path
 
 
     ##------------------------------------------------------------
