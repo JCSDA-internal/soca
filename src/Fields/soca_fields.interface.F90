@@ -284,7 +284,7 @@ end subroutine soca_field_change_resol_c
 
 ! ------------------------------------------------------------------------------
 
-subroutine soca_field_ug_coord_c(c_key_fld, c_key_ug, c_colocated) bind (c,name='soca_field_ug_coord_f90')
+subroutine soca_field_ug_coord_c(c_key_fld, c_key_ug) bind (c,name='soca_field_ug_coord_f90')
   use iso_c_binding
   use soca_fields
   use unstructured_grid_mod
@@ -325,7 +325,7 @@ end subroutine soca_field_field_to_ug_c
 
 ! ------------------------------------------------------------------------------
 
-subroutine soca_field_field_from_ug_c(c_key_fld, c_key_ug, c_its) bind (c,name='soca_field_field_from_ug_f9S0')
+subroutine soca_field_field_from_ug_c(c_key_fld, c_key_ug, c_its) bind (c,name='soca_field_field_from_ug_f90')
   use iso_c_binding
   use soca_fields
   use unstructured_grid_mod

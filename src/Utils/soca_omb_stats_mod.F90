@@ -144,8 +144,8 @@ contains
           lonm=deg2rad*lonm
           latm(1)=deg2rad*lat(il,jl)
           call tree%find_nearest_neighbors(lonm(1),&
-                                            &latm(1),&
-                                            &nn,index,dist)
+                                          &latm(1),&
+                                          &nn,index,dist)
           self%bgerr_model(i,j)=self%bgerr(index(1))
           jl = jl + 1 
        end do

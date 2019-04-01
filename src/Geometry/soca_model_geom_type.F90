@@ -238,9 +238,9 @@ contains
           if (lonm(1)>180.0) lonm=lonm-360.0
           lonm=deg2rad*lonm
           latm(1)=deg2rad*self%lat(i,j)
-          call tree%find_nearest_neighbors(&lonm(1),&
-                                            &latm(1),&
-                                            &nn,index,dist)
+          call tree%find_nearest_neighbors(lonm(1),&
+                                          &latm(1),&
+                                          &nn,index,dist)
           self%rossby_radius(i,j)=rr(index(1))*1e3
        end do
     end do

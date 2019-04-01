@@ -943,33 +943,33 @@ contains
     ! cicen
     jk=1
     do incat = 1, ncat
-       ug%grid(1)%fld(1:ni*nj, 1, jk, 1, its) = &
+       ug%grid(1)%fld(1:ni*nj, 1, jk, its) = &
             &reshape( self%cicen(isc:iec, jsc:jec, incat+1), (/ug%grid(1)%nmga/) )
        jk = jk + 1
     end do
 
     ! hicen
     do incat = 1, ncat
-       ug%grid(1)%fld(1:ni*nj, 1, jk, 1, its) = &
+       ug%grid(1)%fld(1:ni*nj, 1, jk, its) = &
             &reshape( self%hicen(isc:iec, jsc:jec, incat), (/ug%grid(1)%nmga/) )
        jk = jk + 1
     end do
 
     ! ssh
-    ug%grid(1)%fld(1:ni*nj, 1, jk, 1, its) = &
+    ug%grid(1)%fld(1:ni*nj, 1, jk, its) = &
          &reshape( self%ssh(isc:iec, jsc:jec), (/ug%grid(1)%nmga/) )
     jk = jk + 1
 
     ! tocn
     do inzo = 1, nzo
-       ug%grid(1)%fld(1:ni*nj, inzo, jk, 1, its) = &
+       ug%grid(1)%fld(1:ni*nj, inzo, jk, its) = &
             &reshape( self%tocn(isc:iec, jsc:jec,inzo), (/ug%grid(1)%nmga/) )
     end do
     jk = jk + 1
 
     ! socn
     do inzo = 1, nzo
-       ug%grid(1)%fld(1:ni*nj, inzo, jk, 1, its) = &
+       ug%grid(1)%fld(1:ni*nj, inzo, jk, its) = &
             &reshape( self%socn(isc:iec, jsc:jec,inzo), (/ug%grid(1)%nmga/) )
     end do
 
@@ -1001,31 +1001,31 @@ contains
     jk=1
     do incat = 1, ncat
        self%cicen(isc:iec, jsc:jec, incat+1) = &
-            &reshape( ug%grid(1)%fld(1:ni*nj, 1, jk, 1, its), (/ni, nj/))
+            &reshape( ug%grid(1)%fld(1:ni*nj, 1, jk, its), (/ni, nj/))
        jk = jk + 1
     end do
     ! hicen
     do incat = 1, ncat
        self%hicen(isc:iec, jsc:jec, incat) = &
-            &reshape( ug%grid(1)%fld(1:ni*nj, 1, jk, 1, its), (/ni, nj/) )
+            &reshape( ug%grid(1)%fld(1:ni*nj, 1, jk, its), (/ni, nj/) )
        jk = jk + 1
     end do
     ! ssh
     self%ssh(isc:iec, jsc:jec) = &
-         &reshape( ug%grid(1)%fld(1:ni*nj, 1, jk, 1, its), (/ni, nj/) )
+         &reshape( ug%grid(1)%fld(1:ni*nj, 1, jk, its), (/ni, nj/) )
     jk = jk + 1
 
     ! tocn
     do inzo = 1, nzo
        self%tocn(isc:iec, jsc:jec,inzo) = &
-            &reshape( ug%grid(1)%fld(1:ni*nj, inzo, jk, 1, its), (/ni, nj/) )
+            &reshape( ug%grid(1)%fld(1:ni*nj, inzo, jk, its), (/ni, nj/) )
     end do
 
     jk = jk + 1
     ! socn
     do inzo = 1, nzo
        self%socn(isc:iec, jsc:jec,inzo) = &
-            &reshape( ug%grid(1)%fld(1:ni*nj, inzo, jk, 1, its), (/ni, nj/) )
+            &reshape( ug%grid(1)%fld(1:ni*nj, inzo, jk, its), (/ni, nj/) )
     end do
 
   end subroutine field_from_ug
