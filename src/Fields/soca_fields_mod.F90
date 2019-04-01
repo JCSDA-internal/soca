@@ -31,7 +31,6 @@ module soca_fields
   use MOM_remapping,       only : remapping_CS, initialize_remapping, remapping_core_h, end_remapping
   use mpp_domains_mod, only : mpp_update_domains
   use unstructured_grid_mod
-  use tools_const, only: deg2rad
   use random_mod
 
   implicit none

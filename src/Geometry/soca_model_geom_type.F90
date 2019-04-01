@@ -11,17 +11,14 @@ module soca_model_geom_type
   use soca_mom6
   use soca_utils
   use kinds
-  use fckit_mpi_module
+  use fckit_kdtree_module, only: kdtree,kdtree_create,kdtree_destroy,kdtree_k_nearest_neighbors
+  use fckit_mpi_module, only: fckit_mpi_comm
   use mpp_domains_mod, only : mpp_get_compute_domain, mpp_get_data_domain
   use mpp_domains_mod, only : mpp_update_domains
   use kinds
-  use type_tree, only: tree_type
-  use type_mpl    
-  use tools_const, only: pi,req,deg2rad,rad2deg
   use fms_mod,         only : get_mosaic_tile_grid, write_data, set_domain, read_data
   use fms_io_mod,      only : fms_io_init, fms_io_exit
   use mpi
-  use fckit_mpi_module, only: fckit_mpi_comm
   use iso_c_binding
 
   implicit none
@@ -188,11 +185,10 @@ contains
     class(soca_model_geom), intent(inout) :: self
 
     integer :: unit, i, j, n
+    real(kind=kind_real) :: dum
     real(kind=kind_real), allocatable :: lon(:),lat(:),rr(:)
     logical, allocatable :: mask(:)    
-    type(tree_type) :: tree
-    type(mpl_type) :: mpl    
-    real(kind=kind_real) :: dum, dist(1),lonm(1),latm(1)
+    type(kdtree) :: kd
     integer :: isc, iec, jsc, jec
     integer :: index(1), nn, io
     character(len=256) :: geom_output_file = "geom_output.nc"
@@ -217,16 +213,9 @@ contains
     where (lon>180.0)
        lon=lon-360.0
     end where
-    lon=deg2rad*reshape(lon,(/n/))
-    lat=deg2rad*reshape(lat,(/n/))
-
-    call mpl%init()
-
-    ! Allocation
-    call tree%alloc(mpl, n)
 
     ! Initialization
-    call tree%init(lon, lat)
+    kd = kdtree_create(n, lon, lat)
 
     !--- Find nearest neighbor    
     call geom_get_domain_indices(self, "compute", isc, iec, jsc, jec)
@@ -234,19 +223,13 @@ contains
     nn=1 ! Num neighbors
     do i = isc, iec
        do j = jsc, jec
-          lonm=self%lon(i,j)
-          if (lonm(1)>180.0) lonm=lonm-360.0
-          lonm=deg2rad*lonm
-          latm(1)=deg2rad*self%lat(i,j)
-          call tree%find_nearest_neighbors(lonm(1),&
-                                          &latm(1),&
-                                          &nn,index,dist)
+          call kdtree_k_nearest_neighbors(kd,self%lon(i,j),self%lat(i,j),1,index)
           self%rossby_radius(i,j)=rr(index(1))*1e3
        end do
     end do
 
     ! Release memory
-    call tree%dealloc
+    call kdtree_destroy(kd)
 
   end subroutine geom_rossby_radius
 
