@@ -36,6 +36,7 @@ namespace soca {
 struct Traits {
   static std::string name() {return "SOCA";}
   static std::string nameCovar() {return "SocaError";}
+  static std::string nameCovar4D() {return "SocaError";}
 
   typedef soca::Geometry            Geometry;
   typedef soca::State               State;

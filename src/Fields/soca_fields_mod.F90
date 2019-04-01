@@ -876,10 +876,8 @@ contains
 
   ! ------------------------------------------------------------------------------
 
-  subroutine ug_coord(self, ug, colocated)
+  subroutine ug_coord(self, ug)
     type(soca_field), intent(in) :: self
-    integer,          intent(in) :: colocated
-    
     type(unstructured_grid), intent(inout) :: ug
 
     integer :: igrid
@@ -887,9 +885,6 @@ contains
 
     ! Indices for compute domain (no halo)
     call geom_get_domain_indices(self%geom%ocean, "compute", isc, iec, jsc, jec)
-
-    ! Copy colocate
-    ug%colocated = colocated
 
     ! Define size
     call ug_size(self, ug)
@@ -914,10 +909,10 @@ contains
 
   ! ------------------------------------------------------------------------------
 
-  subroutine field_to_ug(self, ug, colocated)
+  subroutine field_to_ug(self, ug, its)
     type(soca_field),           intent(in) :: self
-    integer,                    intent(in) :: colocated    
     type(unstructured_grid), intent(inout) :: ug
+    integer,                    intent(in) :: its
 
     integer :: isc, iec, jsc, jec, jk, incat, inzo, ncat, nzo
     integer :: ni, nj
@@ -928,9 +923,6 @@ contains
     ni = iec - isc + 1
     nj = jec - jsc + 1
     ncat = self%geom%ocean%ncat
-
-    ! Copy colocated
-    ug%colocated = colocated
 
     ! Define size
     call ug_size(self, ug)
@@ -946,38 +938,38 @@ contains
     nzo = ug%grid(1)%nl0!self%geom%ocean%nzo
 
     ! Copy field
-    ug%grid(1)%fld = 0.0_kind_real
+    ug%grid(1)%fld(:,:,:,its) = 0.0_kind_real
 
     ! cicen
     jk=1
     do incat = 1, ncat
-       ug%grid(1)%fld(1:ni*nj, 1, jk, 1) = &
+       ug%grid(1)%fld(1:ni*nj, 1, jk, 1, its) = &
             &reshape( self%cicen(isc:iec, jsc:jec, incat+1), (/ug%grid(1)%nmga/) )
        jk = jk + 1
     end do
 
     ! hicen
     do incat = 1, ncat
-       ug%grid(1)%fld(1:ni*nj, 1, jk, 1) = &
+       ug%grid(1)%fld(1:ni*nj, 1, jk, 1, its) = &
             &reshape( self%hicen(isc:iec, jsc:jec, incat), (/ug%grid(1)%nmga/) )
        jk = jk + 1
     end do
 
     ! ssh
-    ug%grid(1)%fld(1:ni*nj, 1, jk, 1) = &
+    ug%grid(1)%fld(1:ni*nj, 1, jk, 1, its) = &
          &reshape( self%ssh(isc:iec, jsc:jec), (/ug%grid(1)%nmga/) )
     jk = jk + 1
 
     ! tocn
     do inzo = 1, nzo
-       ug%grid(1)%fld(1:ni*nj, inzo, jk, 1) = &
+       ug%grid(1)%fld(1:ni*nj, inzo, jk, 1, its) = &
             &reshape( self%tocn(isc:iec, jsc:jec,inzo), (/ug%grid(1)%nmga/) )
     end do
     jk = jk + 1
 
     ! socn
     do inzo = 1, nzo
-       ug%grid(1)%fld(1:ni*nj, inzo, jk, 1) = &
+       ug%grid(1)%fld(1:ni*nj, inzo, jk, 1, its) = &
             &reshape( self%socn(isc:iec, jsc:jec,inzo), (/ug%grid(1)%nmga/) )
     end do
 
@@ -985,9 +977,10 @@ contains
 
   ! ------------------------------------------------------------------------------
 
-  subroutine field_from_ug(self, ug)
+  subroutine field_from_ug(self, ug, its)
     type(soca_field),     intent(inout) :: self
     type(unstructured_grid), intent(in) :: ug
+    integer,                 intent(in) :: its
 
     integer :: isc, iec, jsc, jec, jk, incat, inzo, ncat, nzo
     integer :: ni, nj
@@ -1008,31 +1001,31 @@ contains
     jk=1
     do incat = 1, ncat
        self%cicen(isc:iec, jsc:jec, incat+1) = &
-            &reshape( ug%grid(1)%fld(1:ni*nj, 1, jk, 1), (/ni, nj/))
+            &reshape( ug%grid(1)%fld(1:ni*nj, 1, jk, 1, its), (/ni, nj/))
        jk = jk + 1
     end do
     ! hicen
     do incat = 1, ncat
        self%hicen(isc:iec, jsc:jec, incat) = &
-            &reshape( ug%grid(1)%fld(1:ni*nj, 1, jk, 1), (/ni, nj/) )
+            &reshape( ug%grid(1)%fld(1:ni*nj, 1, jk, 1, its), (/ni, nj/) )
        jk = jk + 1
     end do
     ! ssh
     self%ssh(isc:iec, jsc:jec) = &
-         &reshape( ug%grid(1)%fld(1:ni*nj, 1, jk, 1), (/ni, nj/) )
+         &reshape( ug%grid(1)%fld(1:ni*nj, 1, jk, 1, its), (/ni, nj/) )
     jk = jk + 1
 
     ! tocn
     do inzo = 1, nzo
        self%tocn(isc:iec, jsc:jec,inzo) = &
-            &reshape( ug%grid(1)%fld(1:ni*nj, inzo, jk, 1), (/ni, nj/) )
+            &reshape( ug%grid(1)%fld(1:ni*nj, inzo, jk, 1, its), (/ni, nj/) )
     end do
 
     jk = jk + 1
     ! socn
     do inzo = 1, nzo
        self%socn(isc:iec, jsc:jec,inzo) = &
-            &reshape( ug%grid(1)%fld(1:ni*nj, inzo, jk, 1), (/ni, nj/) )
+            &reshape( ug%grid(1)%fld(1:ni*nj, inzo, jk, 1, its), (/ni, nj/) )
     end do
 
   end subroutine field_from_ug

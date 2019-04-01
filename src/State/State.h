@@ -24,7 +24,6 @@ namespace eckit {
 }
 
 namespace oops {
-  class UnstructuredGrid;
   class Variables;
 }
 
