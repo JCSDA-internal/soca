@@ -12,7 +12,7 @@ module soca_omb_stats_mod
   use soca_utils
   use type_mpl
   use tools_const, only: deg2rad,rad2deg
-  use type_kdtree, only: kdtree_type
+  use type_tree, only: tree_type
   use fckit_mpi_module
   
   implicit none
@@ -109,7 +109,7 @@ contains
     integer :: isl, iel, jsl, jel
     integer :: i, j, il, jl
     type(mpl_type) :: mpl
-    type(kdtree_type) :: kdtree
+    type(tree_type) :: tree
     integer :: index(1), nn=1
     real(kind=kind_real) :: lonm(1), latm(1), dist(1)
 
@@ -130,8 +130,8 @@ contains
 
     ! Initialize kd-tree
     call mpl%init()
-    call kdtree%alloc(mpl, self%nlocs)
-    call kdtree%init(mpl, deg2rad*self%lon, deg2rad*self%lat)
+    call tree%alloc(mpl, self%nlocs)
+    call tree%init(deg2rad*self%lon, deg2rad*self%lat)
 
     ! Find nn neighbors to each model grid point
     ! TODO: Hard coded to nearest neigbhor interpolation
@@ -143,8 +143,7 @@ contains
           if (lonm(1)>180.0_kind_real) lonm=lonm-360.0_kind_real
           lonm=deg2rad*lonm
           latm(1)=deg2rad*lat(il,jl)
-          call kdtree%find_nearest_neighbors(mpl,&
-                                            &lonm(1),&
+          call tree%find_nearest_neighbors(lonm(1),&
                                             &latm(1),&
                                             &nn,index,dist)
           self%bgerr_model(i,j)=self%bgerr(index(1))
@@ -154,7 +153,7 @@ contains
     end do
     
     ! Release memory
-    call kdtree%dealloc()
+    call tree%dealloc()
     
   end subroutine soca_omb_stats_bin
 

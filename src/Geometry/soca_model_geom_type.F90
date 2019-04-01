@@ -15,7 +15,7 @@ module soca_model_geom_type
   use mpp_domains_mod, only : mpp_get_compute_domain, mpp_get_data_domain
   use mpp_domains_mod, only : mpp_update_domains
   use kinds
-  use type_kdtree, only: kdtree_type
+  use type_tree, only: tree_type
   use type_mpl    
   use tools_const, only: pi,req,deg2rad,rad2deg
   use fms_mod,         only : get_mosaic_tile_grid, write_data, set_domain, read_data
@@ -190,7 +190,7 @@ contains
     integer :: unit, i, j, n
     real(kind=kind_real), allocatable :: lon(:),lat(:),rr(:)
     logical, allocatable :: mask(:)    
-    type(kdtree_type) :: kdtree
+    type(tree_type) :: tree
     type(mpl_type) :: mpl    
     real(kind=kind_real) :: dum, dist(1),lonm(1),latm(1)
     integer :: isc, iec, jsc, jec
@@ -222,12 +222,11 @@ contains
 
     call mpl%init()
 
-    !call kdtree%init(mpl, n, lon, lat,mask)
     ! Allocation
-    call kdtree%alloc(mpl, n)
+    call tree%alloc(mpl, n)
 
     ! Initialization
-    call kdtree%init(mpl, lon, lat)
+    call tree%init(lon, lat)
 
     !--- Find nearest neighbor    
     call geom_get_domain_indices(self, "compute", isc, iec, jsc, jec)
@@ -239,8 +238,7 @@ contains
           if (lonm(1)>180.0) lonm=lonm-360.0
           lonm=deg2rad*lonm
           latm(1)=deg2rad*self%lat(i,j)
-          call kdtree%find_nearest_neighbors(mpl,&
-                                            &lonm(1),&
+          call tree%find_nearest_neighbors(&lonm(1),&
                                             &latm(1),&
                                             &nn,index,dist)
           self%rossby_radius(i,j)=rr(index(1))*1e3
@@ -248,7 +246,7 @@ contains
     end do
 
     ! Release memory
-    call kdtree%dealloc
+    call tree%dealloc
 
   end subroutine geom_rossby_radius
 
