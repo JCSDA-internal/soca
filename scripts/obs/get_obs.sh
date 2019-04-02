@@ -39,14 +39,18 @@ while [[ $date -le $date_end ]]; do
 
     ##------------------------------------------------------------
     ## SST
-    ## Note: best off using just VIIRS L3U, unless you have
-    ##  a specific need for any of the others.
+    ## Note: best off using just VIIRS/AVHRR L3U, and the microwave
+    ## obs, unless you have a specific need for any of the others.
     ##  (L2 data is huge... especially for VIIRS)
     ##------------------------------------------------------------
+    bash source.ghrsst_sst.sh amsr2 l3u $date $output_path
+    bash source.ghrsst_sst.sh gmi l3u $date $output_path
+    #bash source.ghrsst_sst.sh goes16 l3u $date $output_path
+    bash source.ghrsst_sst.sh windsat l3u $date $output_path
     #bash source.nesdis_sst_viirs.sh l2p $date $output_path
     bash source.nesdis_sst_viirs.sh l3u $date $output_path
     #bash source.nesdis_sst_avhrr.sh l2p $date $output_path
-    #bash source.nesdis_sst_avhrr.sh l3u $date $output_path
+    bash source.nesdis_sst_avhrr.sh l3u $date $output_path
     
 date=$(date -d "$date + 1 day" +%Y%m%d)
     
