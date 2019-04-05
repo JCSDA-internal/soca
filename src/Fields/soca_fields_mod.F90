@@ -235,38 +235,53 @@ contains
     type(soca_field), intent(inout) :: self
     type(c_ptr),         intent(in) :: c_conf   !< Configuration
     
-    integer :: ndir,idir,ildir,ifdir
-    integer,allocatable :: ixdir(:),iydir(:)
+    integer :: ndir,idir,size,rank,info
+    integer,allocatable :: ixdir(:),iydir(:),izdir(:),ipdir(:),ifdir(:)
     character(len=3) :: idirchar
+    type(fckit_mpi_comm) :: f_comm
 
     call check(self)
 
-    ! Get Diracs positions
-    ndir = config_get_int(c_conf,"ndir")
+    ! Get MPI communicator
+    f_comm = fckit_mpi_comm()
+
+    ! Get Diracs size
+    ndir = config_get_data_dimension(c_conf,'ixdir')
+    if ((config_get_data_dimension(c_conf,'iydir')/=ndir).or.(config_get_data_dimension(c_conf,'izdir')/=ndir) &
+     & .or.(config_get_data_dimension(c_conf,'ipdir')/=ndir).or.(config_get_data_dimension(c_conf,'ifdir')/=ndir)) &
+     & call abor1_ftn('qg_fields_dirac: inconsistent sizes for ixdir, iydir, izdir, ipdir and ifdir')
+
+    ! Allocation
     allocate(ixdir(ndir))
     allocate(iydir(ndir))
-    do idir=1,ndir
-       write(idirchar,'(i3)') idir
-       ixdir(idir) = config_get_int(c_conf,"ixdir("//trim(adjustl(idirchar))//")")
-       iydir(idir) = config_get_int(c_conf,"iydir("//trim(adjustl(idirchar))//")")
+    allocate(izdir(ndir))
+    allocate(ipdir(ndir))
+    allocate(ifdir(ndir))
 
-    end do
-    ildir = config_get_int(c_conf,"ildir")
-    ifdir = config_get_int(c_conf,"ifdir")
+    ! Get Diracs positions
+    call config_get_int_vector(c_conf,'ixdir',ixdir)
+    call config_get_int_vector(c_conf,'iydir',iydir)
+    call config_get_int_vector(c_conf,'izdir',izdir)
+    call config_get_int_vector(c_conf,'ipdir',ipdir)
+    call config_get_int_vector(c_conf,'ifdir',ifdir)
 
     ! Check
     if (ndir<1) call abor1_ftn("fields:dirac non-positive ndir")
     if (any(ixdir<1).or.any(ixdir>self%geom%ocean%nx)) call abor1_ftn("fields:dirac invalid ixdir")
     if (any(iydir<1).or.any(iydir>self%geom%ocean%ny)) call abor1_ftn("fields:dirac invalid iydir")
+    if (any(ipdir<1).or.any(ipdir>f_comm%size())) call abor1_ftn("fields:dirac invalid ipdir")
+    if (any(ifdir<1).or.any(ifdir>5)) call abor1_ftn("fields:dirac invalid ifdir")
 
     ! Setup Diracs
     call zeros(self)
     do idir=1,ndir
-       self%tocn(ixdir(idir),iydir(idir),1) = 1.0
-       self%socn(ixdir(idir),iydir(idir),1) = 1.0
-       self%ssh(ixdir(idir),iydir(idir)) = 1.0
-       self%cicen(ixdir(idir),iydir(idir),1) = 1.0
-       self%hicen(ixdir(idir),iydir(idir),1) = 1.0
+       if (ipdir(idir)==f_comm%rank()+1) then
+         if (ifdir(idir)==1) self%tocn(ixdir(idir),iydir(idir),izdir(idir)) = 1.0
+         if (ifdir(idir)==2) self%socn(ixdir(idir),iydir(idir),izdir(idir)) = 1.0
+         if (ifdir(idir)==3) self%ssh(ixdir(idir),iydir(idir)) = 1.0
+         if (ifdir(idir)==4) self%cicen(ixdir(idir),iydir(idir),izdir(idir)) = 1.0
+         if (ifdir(idir)==5) self%hicen(ixdir(idir),iydir(idir),izdir(idir)) = 1.0
+      end if
     end do
 
   end subroutine dirac
@@ -847,30 +862,51 @@ contains
 
     ! Set number of grids ! Only 1 grid currently !
     if (ug%colocated==1) then
-       ! Colocatd
-       ug%ngrid = 1
+      ! Colocated
+      ug%ngrid = 1
     else
-       ! Not colocated
-       ug%ngrid = 1
+      ! Not colocated
+      ug%ngrid = 2
     end if
 
     ! Allocate grid instances
     if (.not.allocated(ug%grid)) allocate(ug%grid(ug%ngrid))
 
-    ! Colocated
+    ! First grid is 3D
+    igrid = 1
 
     ! Set local number of points
-    ug%grid(1)%nmga = (iec - isc + 1) * (jec - jsc + 1 )
+    ug%grid(igrid)%nmga = (iec - isc + 1) * (jec - jsc + 1 )
 
     ! Set number of levels
-    ug%grid(1)%nl0 = self%geom%ocean%nzo
+    ug%grid(igrid)%nl0 = self%geom%ocean%nzo
 
     ! Set number of variables
-    ug%grid(1)%nv = self%geom%ocean%ncat*2 + 3
+    if (ug%colocated==1) then
+      ug%grid(igrid)%nv = self%geom%ocean%ncat*2 + 3
+    else
+      ug%grid(igrid)%nv = 2
+    end if
 
     ! Set number of timeslots
-    ug%grid(1)%nts = 1
+    ug%grid(igrid)%nts = 1
 
+    if (ug%colocated==0) then
+      ! Second grid is 2D
+      igrid = 2
+
+      ! Set local number of points
+      ug%grid(igrid)%nmga = (iec - isc + 1) * (jec - jsc + 1 )
+
+      ! Set number of levels
+      ug%grid(igrid)%nl0 = 1
+
+      ! Set number of variables
+      ug%grid(igrid)%nv = self%geom%ocean%ncat*2 + 1
+
+      ! Set number of timeslots
+      ug%grid(igrid)%nts = 1
+    end if
   end subroutine ug_size
 
   ! ------------------------------------------------------------------------------
@@ -891,18 +927,31 @@ contains
     ! Allocate unstructured grid coordinates
     call allocate_unstructured_grid_coord(ug)
 
-    ! Define coordinates
-
-    ug%grid(1)%lon = &
-         &reshape( self%geom%ocean%lon(isc:iec, jsc:jec), (/ug%grid(1)%nmga/) )
-    ug%grid(1)%lat = &
-         &reshape( self%geom%ocean%lat(isc:iec, jsc:jec), (/ug%grid(1)%nmga/) )
-    ug%grid(1)%area = &
-         &reshape( self%geom%ocean%cell_area(isc:iec, jsc:jec), (/ug%grid(1)%nmga/) )
-    do jz = 1, ug%grid(1)%nl0
-       ug%grid(1)%vunit(:,jz) = real(jz)
-       ug%grid(1)%lmask(:,jz) = reshape( self%geom%ocean%mask2d(isc:iec, jsc:jec)==1, (/ug%grid(1)%nmga/) )
+    ! Define coordinates for 3D grid
+    igrid = 1
+    ug%grid(igrid)%lon = &
+         &reshape( self%geom%ocean%lon(isc:iec, jsc:jec), (/ug%grid(igrid)%nmga/) )
+    ug%grid(igrid)%lat = &
+         &reshape( self%geom%ocean%lat(isc:iec, jsc:jec), (/ug%grid(igrid)%nmga/) )
+    ug%grid(igrid)%area = &
+         &reshape( self%geom%ocean%cell_area(isc:iec, jsc:jec), (/ug%grid(igrid)%nmga/) )
+    do jz = 1, ug%grid(igrid)%nl0
+      ug%grid(igrid)%vunit(:,jz) = real(jz)
+      ug%grid(igrid)%lmask(:,jz) = reshape( self%geom%ocean%mask2d(isc:iec, jsc:jec)==1, (/ug%grid(igrid)%nmga/) )
     end do
+
+    if (ug%colocated==0) then
+      ! Define coordinates for 2D grid
+      igrid = 2
+      ug%grid(igrid)%lon = &
+           &reshape( self%geom%ocean%lon(isc:iec, jsc:jec), (/ug%grid(igrid)%nmga/) )
+      ug%grid(igrid)%lat = &
+           &reshape( self%geom%ocean%lat(isc:iec, jsc:jec), (/ug%grid(igrid)%nmga/) )
+      ug%grid(igrid)%area = &
+           &reshape( self%geom%ocean%cell_area(isc:iec, jsc:jec), (/ug%grid(igrid)%nmga/) )
+      ug%grid(igrid)%vunit(:,1) = 0.0_kind_real
+      ug%grid(igrid)%lmask(:,1) = reshape( self%geom%ocean%mask2d(isc:iec, jsc:jec)==1, (/ug%grid(igrid)%nmga/) )
+    end if
 
   end subroutine ug_coord
 
@@ -913,7 +962,7 @@ contains
     type(unstructured_grid), intent(inout) :: ug
     integer,                    intent(in) :: its
 
-    integer :: isc, iec, jsc, jec, jk, incat, inzo, ncat, nzo
+    integer :: isc, iec, jsc, jec, jk, incat, inzo, ncat, nzo, igrid
     integer :: ni, nj
 
     ! Indices for compute domain (no halo)
@@ -927,50 +976,56 @@ contains
     call ug_size(self, ug)
 
     ! Allocate unstructured grid field
-    ! ug%fld(nmga,nl0,nv,nts)
-    ! nmga !> Number of gridpoints (on a given MPI task)
-    ! nl0  !> Number of levels
-    ! nv   !> Number of variables
-    ! nts  !> Number of timeslots
     call allocate_unstructured_grid_field(ug)
     ncat = self%geom%ocean%ncat
-    nzo = ug%grid(1)%nl0!self%geom%ocean%nzo
+    nzo = ug%grid(1)%nl0
 
-    ! Copy field
-    ug%grid(1)%fld(:,:,:,its) = 0.0_kind_real
-
-    ! cicen
-    jk=1
-    do incat = 1, ncat
-       ug%grid(1)%fld(1:ni*nj, 1, jk, its) = &
-            &reshape( self%cicen(isc:iec, jsc:jec, incat+1), (/ug%grid(1)%nmga/) )
-       jk = jk + 1
-    end do
-
-    ! hicen
-    do incat = 1, ncat
-       ug%grid(1)%fld(1:ni*nj, 1, jk, its) = &
-            &reshape( self%hicen(isc:iec, jsc:jec, incat), (/ug%grid(1)%nmga/) )
-       jk = jk + 1
-    end do
-
-    ! ssh
-    ug%grid(1)%fld(1:ni*nj, 1, jk, its) = &
-         &reshape( self%ssh(isc:iec, jsc:jec), (/ug%grid(1)%nmga/) )
-    jk = jk + 1
+    ! Copy 3D field
+    igrid = 1
+    jk = 1
+    ug%grid(igrid)%fld(:,:,:,its) = 0.0_kind_real
 
     ! tocn
     do inzo = 1, nzo
-       ug%grid(1)%fld(1:ni*nj, inzo, jk, its) = &
-            &reshape( self%tocn(isc:iec, jsc:jec,inzo), (/ug%grid(1)%nmga/) )
+      ug%grid(igrid)%fld(1:ni*nj, inzo, jk, its) = &
+           &reshape( self%tocn(isc:iec, jsc:jec,inzo), (/ug%grid(igrid)%nmga/) )
     end do
     jk = jk + 1
 
     ! socn
     do inzo = 1, nzo
-       ug%grid(1)%fld(1:ni*nj, inzo, jk, its) = &
-            &reshape( self%socn(isc:iec, jsc:jec,inzo), (/ug%grid(1)%nmga/) )
+      ug%grid(igrid)%fld(1:ni*nj, inzo, jk, its) = &
+           &reshape( self%socn(isc:iec, jsc:jec,inzo), (/ug%grid(igrid)%nmga/) )
     end do
+    jk = jk + 1
+
+    if (ug%colocated==1) then
+      ! 2D variables copied as 3D variables
+      igrid = 1
+    else
+      ! 2D variables copied as 2D variables
+      igrid = 2
+      jk = 1
+    end if
+
+    ! cicen
+    do incat = 1, ncat
+      ug%grid(igrid)%fld(1:ni*nj, 1, jk, its) = &
+          &reshape( self%cicen(isc:iec, jsc:jec, incat+1), (/ug%grid(igrid)%nmga/) )
+      jk = jk + 1
+    end do
+
+    ! hicen
+    do incat = 1, ncat
+      ug%grid(igrid)%fld(1:ni*nj, 1, jk, its) = &
+           &reshape( self%hicen(isc:iec, jsc:jec, incat), (/ug%grid(igrid)%nmga/) )
+      jk = jk + 1
+    end do
+
+    ! ssh
+    ug%grid(igrid)%fld(1:ni*nj, 1, jk, its) = &
+         &reshape( self%ssh(isc:iec, jsc:jec), (/ug%grid(igrid)%nmga/) )
+    jk = jk + 1
 
   end subroutine field_to_ug
 
@@ -981,7 +1036,7 @@ contains
     type(unstructured_grid), intent(in) :: ug
     integer,                 intent(in) :: its
 
-    integer :: isc, iec, jsc, jec, jk, incat, inzo, ncat, nzo
+    integer :: isc, iec, jsc, jec, jk, incat, inzo, ncat, nzo, igrid
     integer :: ni, nj
 
     ! Indices for compute domain (no halo)
@@ -990,42 +1045,54 @@ contains
     ni = iec - isc + 1
     nj = jec - jsc + 1
     ncat = self%geom%ocean%ncat
-    nzo = ug%grid(1)%nl0
+    nzo = self%geom%ocean%nzo
 
+    ! Copy 3D field
+    igrid = 1
+    jk = 1
     call zeros(self)
-
-    ! Copy field
-
-    ! cicen
-    jk=1
-    do incat = 1, ncat
-       self%cicen(isc:iec, jsc:jec, incat+1) = &
-            &reshape( ug%grid(1)%fld(1:ni*nj, 1, jk, its), (/ni, nj/))
-       jk = jk + 1
-    end do
-    ! hicen
-    do incat = 1, ncat
-       self%hicen(isc:iec, jsc:jec, incat) = &
-            &reshape( ug%grid(1)%fld(1:ni*nj, 1, jk, its), (/ni, nj/) )
-       jk = jk + 1
-    end do
-    ! ssh
-    self%ssh(isc:iec, jsc:jec) = &
-         &reshape( ug%grid(1)%fld(1:ni*nj, 1, jk, its), (/ni, nj/) )
-    jk = jk + 1
 
     ! tocn
     do inzo = 1, nzo
        self%tocn(isc:iec, jsc:jec,inzo) = &
-            &reshape( ug%grid(1)%fld(1:ni*nj, inzo, jk, its), (/ni, nj/) )
+            &reshape( ug%grid(igrid)%fld(1:ni*nj, inzo, jk, its), (/ni, nj/) )
     end do
-
     jk = jk + 1
+
     ! socn
     do inzo = 1, nzo
        self%socn(isc:iec, jsc:jec,inzo) = &
-            &reshape( ug%grid(1)%fld(1:ni*nj, inzo, jk, its), (/ni, nj/) )
+            &reshape( ug%grid(igrid)%fld(1:ni*nj, inzo, jk, its), (/ni, nj/) )
     end do
+    jk = jk + 1
+
+    if (ug%colocated==1) then
+      ! 2D variables copied as 3D variables
+      igrid = 1
+    else
+      ! 2D variables copied as 2D variables
+      igrid = 2
+      jk = 1
+    end if
+
+    ! cicen
+    do incat = 1, ncat
+       self%cicen(isc:iec, jsc:jec, incat+1) = &
+            &reshape( ug%grid(igrid)%fld(1:ni*nj, 1, jk, its), (/ni, nj/))
+       jk = jk + 1
+    end do
+
+    ! hicen
+    do incat = 1, ncat
+       self%hicen(isc:iec, jsc:jec, incat) = &
+            &reshape( ug%grid(igrid)%fld(1:ni*nj, 1, jk, its), (/ni, nj/) )
+       jk = jk + 1
+    end do
+
+    ! ssh
+    self%ssh(isc:iec, jsc:jec) = &
+         &reshape( ug%grid(igrid)%fld(1:ni*nj, 1, jk, its), (/ni, nj/) )
+    jk = jk + 1
 
   end subroutine field_from_ug
 

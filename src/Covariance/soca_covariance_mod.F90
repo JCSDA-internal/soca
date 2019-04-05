@@ -237,14 +237,13 @@ contains
     nts = 1                                    !< Number of time slots
     nc0a = (iec - isc + 1) * (jec - jsc + 1 )  !< Total number of grid cells in the compute domain
 
-    allocate( lon(nc0a), lat(nc0a), area(nc0a), rosrad(nc0a) )
+    allocate( lon(nc0a), lat(nc0a), area(nc0a) )
     allocate( vunit(nc0a,nl0) )
     allocate( imask(nc0a, nl0), lmask(nc0a, nl0) )
 
     lon = reshape( geom%ocean%lon(isc:iec, jsc:jec), (/nc0a/) )
     lat = reshape( geom%ocean%lat(isc:iec, jsc:jec), (/nc0a/) )        
     area = reshape( geom%ocean%cell_area(isc:iec, jsc:jec), (/nc0a/) )
-    rosrad = reshape( geom%ocean%rossby_radius(isc:iec, jsc:jec), (/nc0a/) )
 
     ! Setup land or ice mask
     jz = 1
@@ -263,37 +262,51 @@ contains
     ! No vertical convolution, set dummy vertical unit    
     vunit = 1.0d0
 
-    ! Setup horizontal decorrelation length scales
-    allocate(rh(nc0a,nl0,nv,nts))
-    allocate(rv(nc0a,nl0,nv,nts))
-    allocate(var(nc0a,nl0,nv,nts))
-    if (domain.eq.'ocn') then
-       do jjj=1,nc0a
-          rh(jjj,1,1,1)=self%ocn_l0 + rosrad(jjj)
-       end do
-    end if
-    if (domain.eq.'ice') then
-       rh = self%ice_l0
-    end if
-    rv=1.0 ! Vertical scales not used, set to something
-    var=1.0
-
     ! Initialize bump namelist/parameters
     call horiz_convol%nam%init()
     call bump_read_conf(c_conf, horiz_convol)
     if (domain.eq.'ocn') horiz_convol%nam%prefix = 'ocn'
-    if (domain.eq.'ice') horiz_convol%nam%prefix = 'ice'     
+    if (domain.eq.'ice') horiz_convol%nam%prefix = 'ice'
 
-    ! Compute convolution weight    
+    ! Compute convolution weight
     call horiz_convol%setup_online(nc0a,nl0,nv,nts,lon,lat,area,vunit,lmask)
-    call horiz_convol%set_parameter('cor_rh',rh)
-    call horiz_convol%set_parameter('cor_rv',rv)
-    call horiz_convol%set_parameter('var',var)
+
+    if (horiz_convol%nam%new_nicas) then
+       ! Allocation
+       allocate(rosrad(nc0a))
+       allocate(rh(nc0a,nl0,nv,nts))
+       allocate(rv(nc0a,nl0,nv,nts))
+       allocate(var(nc0a,nl0,nv,nts))
+
+       ! Setup Rossby radius
+       rosrad = reshape( geom%ocean%rossby_radius(isc:iec, jsc:jec), (/nc0a/) )
+
+       ! Setup horizontal decorrelation length scales
+       if (domain.eq.'ocn') then
+          do jjj=1,nc0a
+             rh(jjj,1,1,1)=self%ocn_l0 + rosrad(jjj)
+          end do
+       end if
+       if (domain.eq.'ice') then
+          rh = self%ice_l0
+       end if
+       rv=1.0 ! Vertical scales not used, set to something
+       var=1.0
+
+       ! Copy length-scales into BUMP      
+       call horiz_convol%set_parameter('cor_rh',rh)
+       call horiz_convol%set_parameter('cor_rv',rv)
+       call horiz_convol%set_parameter('var',var)
+
+       ! Clean up
+       deallocate(rosrad,rh,rv,var)
+    end if
+
+    ! Run BUMP drivers
     call horiz_convol%run_drivers()
 
     ! Clean up
-    deallocate(lon, lat, area, vunit, imask, lmask, rosrad)
-    deallocate(rh,rv,var)
+    deallocate(lon, lat, area, vunit, imask, lmask)
 
   end subroutine soca_bump_correlation
 

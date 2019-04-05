@@ -24,7 +24,10 @@ list( APPEND soca_test_input
   testinput/static_SocaError_init.yml
   testinput/static_SocaLoc_init.yml
   testinput/static_SocaError_test.yml
-  testinput/dirac.yml
+  testinput/parameters_bump_cov_lct.yml
+  testinput/parameters_bump_cov_nicas.yml
+  testinput/dirac_bump_cov.yml
+  testinput/dirac_soca_cov.yml
   compare.sh
 )
 
@@ -32,7 +35,11 @@ list( APPEND soca_testoutput
   testoutput/forecast.test
   testoutput/hofx.test
   testoutput/3dvar.test
-  testoutput/dirac.test
+  testoutput/genenspert.test
+  testoutput/parameters_bump_cov_lct.test
+  testoutput/parameters_bump_cov_nicas.test
+  testoutput/dirac_bump_cov.test
+  testoutput/dirac_soca_cov.test
 )
 
 list( APPEND soca_model_param
@@ -190,20 +197,15 @@ ecbuild_add_test( TARGET test_soca_socaloc_init
 ecbuild_add_test( TARGET test_soca_socaerror_serial_init
                   SOURCES ../mains/StaticBInit.cc
                   LIBS soca
-                  ARGS "testinput/static_SocaError_init.yml" )
-
-
-# Initialize static error covariance model for the generation of perturbation
-#ecbuild_add_test( TARGET test_soca_enspert_B_init
-#                  TYPE SCRIPT
-#		  COMMAND "./run.sh"
-#                  ARGS "${CMAKE_BINARY_DIR}/bin/soca_staticbinit.x testinput/enspert_B_init.yml"
-#                  DEPENDS soca_staticbinit.x )
+                  ARGS "testinput/static_SocaError_init.yml"
+                  MPI ${MPIEXEC_MAX_NUMPROCS} )
 
 ecbuild_add_test( TARGET test_soca_enspert
-                  SOURCES ../mains/GenEnsPertB.cc
-                  LIBS soca
-                  ARGS "testinput/genenspert.yml"
+                  TYPE SCRIPT
+                  COMMAND "./compare.sh"
+                  ARGS "${CMAKE_BINARY_DIR}/bin/soca_enspert.x testinput/genenspert.yml"
+                       testoutput/genenspert.test
+                  DEPENDS soca_enspert.x
                   MPI ${MPIEXEC_MAX_NUMPROCS} )
 
 ecbuild_add_test( TARGET test_soca_ensvariance
@@ -300,12 +302,37 @@ ecbuild_add_test( TARGET test_soca_vertconv
                   ARGS "testinput/vertconv.yml"
                   LIBS    soca )
 
-ecbuild_add_test( TARGET test_soca_dirac
+ecbuild_add_test( TARGET test_soca_dirac_soca_cov
                   TYPE SCRIPT
                   COMMAND "./compare.sh"
-                  ARGS "${CMAKE_BINARY_DIR}/bin/soca_dirac.x testinput/dirac.yml"
-                       testoutput/dirac.test
-                  DEPENDS soca_dirac.x )
+                  ARGS "${CMAKE_BINARY_DIR}/bin/soca_dirac.x testinput/dirac_soca_cov.yml"
+                       testoutput/dirac_soca_cov.test
+                  DEPENDS soca_dirac.x 
+                  MPI ${MPIEXEC_MAX_NUMPROCS} )
+
+ecbuild_add_test( TARGET test_soca_parameters_bump_cov_lct
+                  TYPE SCRIPT
+                  COMMAND "./compare.sh"
+                  ARGS "${CMAKE_BINARY_DIR}/bin/soca_parameters.x testinput/parameters_bump_cov_lct.yml"
+                       testoutput/parameters_bump_cov_lct.test
+                  DEPENDS soca_parameters.x 
+                  MPI ${MPIEXEC_MAX_NUMPROCS} )
+
+ecbuild_add_test( TARGET test_soca_parameters_bump_cov_nicas
+                  TYPE SCRIPT
+                  COMMAND "./compare.sh"
+                  ARGS "${CMAKE_BINARY_DIR}/bin/soca_parameters.x testinput/parameters_bump_cov_nicas.yml"
+                       testoutput/parameters_bump_cov_nicas.test
+                  DEPENDS soca_parameters.x 
+                  MPI ${MPIEXEC_MAX_NUMPROCS} )
+
+ecbuild_add_test( TARGET test_soca_dirac_bump_cov
+                  TYPE SCRIPT
+                  COMMAND "./compare.sh"
+                  ARGS "${CMAKE_BINARY_DIR}/bin/soca_dirac.x testinput/dirac_bump_cov.yml"
+                       testoutput/dirac_bump_cov.test
+                  DEPENDS soca_dirac.x 
+                  MPI ${MPIEXEC_MAX_NUMPROCS} )
 
 #ecbuild_add_test( TARGET  test_soca_localization
 #                  BOOST
@@ -355,9 +382,3 @@ ecbuild_add_test( TARGET test_soca_4dhybrid
                   LIBS soca
                   ARGS "testinput/4dhyb.yml"
                   MPI ${MPIEXEC_MAX_NUMPROCS} )
-
-
-#ecbuild_add_test( TARGET test_soca_parameters_bump_cov
-#                  TYPE SCRIPT
-#                  COMMAND ${CMAKE_BINARY_DIR}/bin/compare.sh
-#                  ARGS "${CMAKE_BINARY_DIR}/bin/soca_parameters.x testinput/parametersbump.cov.yml" )

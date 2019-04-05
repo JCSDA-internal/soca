@@ -1,9 +1,9 @@
 Covariance:
   covariance: SocaError
-  strategy: specific_univariate
   load_nicas: 1
   lsqrt: 1
   mpicom: 2
+  strategy: common_univariate
   date: &date 2018-04-15T00:00:00Z
   variable_changes:
   - varchange: BkgErrFILT
@@ -56,28 +56,25 @@ Covariance:
       variables: *soca_vars
     outputVariables:
       variables: *soca_vars
-  pert_T: 0.1
-  pert_S: 0.1
-  pert_SSH: 0.1
-forecast_length: PT6H #P5D #PT1H
+dirac:
+  ixdir: [8,124,29,172,87,124,137,77,31]
+  iydir: [113,97,83,12,155,142,74,59,188]
+  izdir: [1,1,1,1,1,1,1,1,1]
+  ipdir: [2,1,1,1,2,2,2,2,2]
+  ifdir: [1,1,1,1,1,1,1,1,1]
 initial:
   read_from_file: 1
   basename: ./INPUT/
+  date: *date
   ocn_filename: MOM.res.nc
   ice_filename: ice_model.res.nc
+logging:
+  categories: Info, Test, Warning, Error, Trace
+output_B:
+  datadir: Data
   date: *date
-members: 10
-model: 
-  name: SOCA
-  tstep: PT6H
-  advance_mom6: 1
-  variables: *soca_vars
-output: 
- frequency: PT6H
- datadir: Data
- exp: pert
- type: ens
- date: *date
+  exp: dirac_soca_cov
+  type: an
 resolution:
   num_ice_cat: 5
   num_ice_lev: 4

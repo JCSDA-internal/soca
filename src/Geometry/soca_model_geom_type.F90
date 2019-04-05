@@ -187,7 +187,6 @@ contains
     integer :: unit, i, j, n
     real(kind=kind_real) :: dum
     real(kind=kind_real), allocatable :: lon(:),lat(:),rr(:)
-    logical, allocatable :: mask(:)    
     type(kdtree) :: kd
     integer :: isc, iec, jsc, jec
     integer :: index(1), nn, io
@@ -202,19 +201,13 @@ contains
        n = n+1
     end do
     rewind(unit)
-    allocate(lon(n),lat(n),rr(n),mask(n))
+    allocate(lon(n),lat(n),rr(n))
     do i = 1, n
        read(unit,*) lat(i),lon(i),dum,rr(i)
     end do
     close(unit)
 
     !--- Initialize kd-tree
-    mask=.true.
-    where (lon>180.0)
-       lon=lon-360.0
-    end where
-
-    ! Initialization
     kd = kdtree_create(n, lon, lat)
 
     !--- Find nearest neighbor    
