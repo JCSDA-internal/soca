@@ -860,7 +860,7 @@ contains
     ! Indices for compute domain (no halo)
     call geom_get_domain_indices(self%geom%ocean, "compute", isc, iec, jsc, jec)
 
-    ! Set number of grids ! Only 1 grid currently !
+    ! Set number of grids
     if (ug%colocated==1) then
       ! Colocated
       ug%ngrid = 1
@@ -872,41 +872,30 @@ contains
     ! Allocate grid instances
     if (.not.allocated(ug%grid)) allocate(ug%grid(ug%ngrid))
 
-    ! First grid is 3D
-    igrid = 1
-
-    ! Set local number of points
-    ug%grid(igrid)%nmga = (iec - isc + 1) * (jec - jsc + 1 )
-
-    ! Set number of levels
-    ug%grid(igrid)%nl0 = self%geom%ocean%nzo
-
-    ! Set number of variables
-    if (ug%colocated==1) then
-      ug%grid(igrid)%nv = self%geom%ocean%ncat*2 + 3
-    else
-      ug%grid(igrid)%nv = 2
-    end if
-
-    ! Set number of timeslots
-    ug%grid(igrid)%nts = 1
-
-    if (ug%colocated==0) then
-      ! Second grid is 2D
-      igrid = 2
-
+    do igrid=1,ug%ngrid
       ! Set local number of points
       ug%grid(igrid)%nmga = (iec - isc + 1) * (jec - jsc + 1 )
 
+      ! Set number of timeslots
+      ug%grid(igrid)%nts = ug%nts
+    end do
+
+    if (ug%colocated==1) then
       ! Set number of levels
-      ug%grid(igrid)%nl0 = 1
+      ug%grid(1)%nl0 = self%geom%ocean%nzo
 
       ! Set number of variables
-      ug%grid(igrid)%nv = self%geom%ocean%ncat*2 + 1
+      ug%grid(1)%nv = self%geom%ocean%ncat*2 + 3
+    else
+      ! Set number of levels
+      ug%grid(1)%nl0 = self%geom%ocean%nzo
+      ug%grid(2)%nl0 = 1
 
-      ! Set number of timeslots
-      ug%grid(igrid)%nts = 1
+      ! Set number of variables
+      ug%grid(1)%nv = 2
+      ug%grid(2)%nv = self%geom%ocean%ncat*2 + 1
     end if
+
   end subroutine ug_size
 
   ! ------------------------------------------------------------------------------
