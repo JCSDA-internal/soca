@@ -9,22 +9,22 @@
 
 subroutine c_soca_setup(c_confspec, c_key_geom, c_key_model) bind (c,name='soca_setup_f90')
 
+  use iso_c_binding
   use soca_model_mod
   use soca_geom_mod_c
-  use iso_c_binding
   use config_mod
   use duration_mod
   use kinds
-  use mpi,             only : mpi_comm_world
-  use mpp_mod,         only : mpp_init
+  use mpi, only : mpi_comm_world
+  use mpp_mod, only : mpp_init
   use mpp_domains_mod, only : mpp_domains_init
-  use fms_io_mod,      only : fms_io_init
+  use fms_io_mod, only : fms_io_init
 
   implicit none
 
-  type(c_ptr),       intent(in) :: c_confspec     !< pointer to object of class Config
-  integer(c_int),    intent(in) :: c_key_geom     !< Geometry
-  integer(c_int), intent(inout) :: c_key_model !< Key to configuration data
+  type(c_ptr),       intent(in) :: c_confspec   !< pointer to object of class Config
+  integer(c_int),    intent(in) :: c_key_geom   !< Geometry
+  integer(c_int), intent(inout) :: c_key_model  !< Key to configuration data
 
   type(soca_model), pointer :: model
   type(soca_geom),  pointer :: geom
@@ -40,16 +40,31 @@ subroutine c_soca_setup(c_confspec, c_key_geom, c_key_model) bind (c,name='soca_
   call soca_model_registry%get(c_key_model, model)
 
   ! Get local grid size
-  model%nx  = geom%ocean%nx
-  model%ny  = geom%ocean%ny
+  model%nx = geom%ocean%nx
+  model%ny = geom%ocean%ny
 
-  ! Setup time step 
+  ! Setup time step
   ststep = config_get_string(c_confspec,len(ststep),"tstep")
   dtstep = trim(ststep)
   model%dt0 = duration_seconds(dtstep)
 
   ! Setup mom6 advance or identity model
   model%advance_mom6 = config_get_int(c_confspec,"advance_mom6")
+
+  ! Setup for checkpointing the model
+  model%checkpoint = 0
+  if (config_element_exists(c_confspec,"checkpoint")) then
+    model%checkpoint = config_get_int(c_confspec,"checkpoint")
+  endif
+
+  if (model%checkpoint == 1) then
+    !model%tocn_minval = config_get_real(c_confspec,"tocn_minval")
+    !model%tocn_maxval = config_get_real(c_confspec,"tocn_maxval")
+    !model%socn_minval = config_get_real(c_confspec,"socn_minval")
+    !model%socn_maxval = config_get_real(c_confspec,"socn_maxval")
+    model%tocn_minmax = config_get_double_vector(c_confspec,"tocn_minmax")
+    model%socn_minmax = config_get_double_vector(c_confspec,"socn_minmax")
+  endif
 
   ! Initialize mom6
   call soca_setup(model)
@@ -66,7 +81,7 @@ subroutine c_soca_delete(c_key_conf) bind (c,name='soca_delete_f90')
   use iso_c_binding
 
   implicit none
-  integer(c_int), intent(inout) :: c_key_conf !< Key to configuration structure
+  integer(c_int), intent(inout) :: c_key_conf  !< Key to configuration structure
   type(soca_model), pointer :: model
 
   call soca_model_registry%get(c_key_conf, model)
@@ -84,14 +99,14 @@ subroutine c_soca_initialize_integration(c_key_model, c_key_state) &
   use iso_c_binding
   use soca_fields
   use soca_model_mod
-  use mpi,             only: mpi_comm_world
-  use mpp_mod,         only: mpp_init
-  use fms_mod,                 only: fms_init
+  use mpi, only: mpi_comm_world
+  use mpp_mod, only: mpp_init
+  use fms_mod, only: fms_init
   use fms_io_mod, only : fms_io_init
-  use mpp_io_mod,              only: mpp_open, mpp_close
+  use mpp_io_mod, only: mpp_open, mpp_close
   implicit none
   integer(c_int), intent(in) :: c_key_model  !< Configuration structure
-  integer(c_int), intent(in) :: c_key_state !< Model fields
+  integer(c_int), intent(in) :: c_key_state  !< Model fields
 
   type(soca_model), pointer :: model
   type(soca_field), pointer :: flds
@@ -108,19 +123,19 @@ end subroutine c_soca_initialize_integration
 
 !> Checkpoint model
 subroutine c_soca_finalize_integration(c_key_model, c_key_state) &
-     & bind(c,name='soca_finalize_integration_f90')
+           bind(c,name='soca_finalize_integration_f90')
 
   use iso_c_binding
   use soca_fields
   use soca_model_mod
-  use mpi,             only: mpi_comm_world
-  use mpp_mod,         only: mpp_init
-  use fms_mod,                 only: fms_init
+  use mpi, only: mpi_comm_world
+  use mpp_mod, only: mpp_init
+  use fms_mod, only: fms_init
   use fms_io_mod, only : fms_io_init
-  use mpp_io_mod,              only: mpp_open, mpp_close
+  use mpp_io_mod, only: mpp_open, mpp_close
   implicit none
   integer(c_int), intent(in) :: c_key_model  !< Configuration structure
-  integer(c_int), intent(in) :: c_key_state !< Model fields
+  integer(c_int), intent(in) :: c_key_state  !< Model fields
 
   type(soca_model), pointer :: model
   type(soca_field), pointer :: flds
