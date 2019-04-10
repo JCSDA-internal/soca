@@ -18,6 +18,7 @@ State:
   basename: ./INPUT/
   ocn_filename: MOM.res.nc
   ice_filename: ice_model.res.nc
+  
 Covariance:
   covariance: BUMP
   prefix: soca_loc

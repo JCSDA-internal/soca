@@ -21,7 +21,8 @@ module soca_covariance_mod
   use soca_utils
   use type_bump
   use type_nam
-
+  use random_mod
+  
   implicit none
 
   !> Fortran derived type to hold configuration data for the SOCA background/model covariance
@@ -343,7 +344,8 @@ contains
 
     real(kind=kind_real), allocatable :: tmp_incr(:,:,:,:)
     real(kind=kind_real), allocatable :: pcv(:)
-
+    integer, parameter :: rseed = 1 ! constant for reproducability of tests
+                                    ! TODO: pass seed through config
     integer :: nn
 
     ! Allocate unstructured tmp_increment and make copy of dx
@@ -353,7 +355,8 @@ contains
     call horiz_convol%get_cv_size(nn)
     allocate(pcv(nn))
     pcv = 0.0_kind_real
-    call random_number(pcv); pcv = pert_scale * (pcv - 0.5)
+    call normal_distribution(pcv, 0.0_kind_real, 1.0_kind_real, rseed)
+    pcv = pert_scale * pcv
 
     ! Apply C^1/2
     call horiz_convol%apply_nicas_sqrt(pcv, tmp_incr)

@@ -99,9 +99,9 @@ cost_function:
        date: *date_begin
        variables: 
         variables: *soca_vars
-       prefix: soca_loc #4dhybridbump
+       prefix: soca_loc
        default_seed: 1
-       method: loc #_norm
+       method: loc
        datadir: ./bump
        strategy: common
        new_hdiag: 0 #1

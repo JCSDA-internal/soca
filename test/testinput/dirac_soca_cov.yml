@@ -1,9 +1,11 @@
 Covariance:
   covariance: SocaError
+  prefix: soca
+  datadir: ./bump  
   load_nicas: 1
   lsqrt: 1
   mpicom: 2
-  strategy: common_univariate
+  strategy: specific_univariate
   date: &date 2018-04-15T00:00:00Z
   variable_changes:
   - varchange: BkgErrFILT

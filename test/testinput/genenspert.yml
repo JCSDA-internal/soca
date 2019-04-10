@@ -72,7 +72,7 @@ members: 10
 model: 
   name: SOCA
   tstep: PT6H
-  advance_mom6: 1
+  advance_mom6: 0
   variables: *soca_vars
 output: 
  frequency: PT6H
