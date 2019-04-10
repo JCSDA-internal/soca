@@ -7,6 +7,13 @@ model:
   tstep: "PT6H"
   advance_mom6: 0
   variables: [cicen, hicen, socn, tocn, ssh, hocn]
+  checkpoint: 1
+#  tocn_minval: -2.0
+#  tocn_maxval: 34.0
+#  socn_minval: 0.0
+#  socn_maxval: 45.0
+  tocn_minmax: [-2.0, 34.0]
+  socn_minmax: [0.0, 45.0]
 background:
   read_from_file: 1
   date: &date 2018-04-15T00:00:00Z
