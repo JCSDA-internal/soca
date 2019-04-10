@@ -37,10 +37,14 @@ set( SOCA_LINKER_LANGUAGE CXX )
 ################################################################################
 # Dependencies
 ################################################################################
+# fckit
+ecbuild_use_package( PROJECT fckit VERSION 0.4.1 REQUIRED )
+include_directories( ${FCKIT_INCLUDE_DIRS} )
+
 # Boost
 set( Boost_MINIMUM_VERSION "1.47" )
-find_package( Boost ${Boost_MINIMUM_VERSION} REQUIRED
-COMPONENTS unit_test_framework )
+#find_package( Boost ${Boost_MINIMUM_VERSION} REQUIRED
+#COMPONENTS unit_test_framework )
 include_directories( ${Boost_INCLUDE_DIR} )
 
 # oops
@@ -75,7 +79,7 @@ link_libraries(${MPI_CXX_LIBRARIES} ${MPI_Fortran_LIBRARIES})
 ################################################################################
 # Export package info
 ################################################################################
-list( APPEND SOCA_TPLS )
+list( APPEND SOCA_TPLS LAPACK MPI NetCDF eckit fckit )
 
 set( SOCA_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src
                        ${CMAKE_CURRENT_BINARY_DIR}/src )
@@ -103,6 +107,10 @@ add_subdirectory( mains )
 add_subdirectory( src )
 add_subdirectory( test )
 add_subdirectory( exp )
+
+if(ECBUILD_INSTALL_FORTRAN_MODULES)
+  install(DIRECTORY ${CMAKE_Fortran_MODULE_DIRECTORY}/${CMAKE_CFG_INTDIR} DESTINATION ${INSTALL_INCLUDE_DIR} )
+endif()
 
 # Build Doxygen documentation
 add_subdirectory( Documents )

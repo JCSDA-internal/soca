@@ -11,7 +11,7 @@ module soca_model_geom_type
   use soca_mom6
   use soca_utils
   use kinds
-  use fckit_kdtree_module, only: kdtree,kdtree_create,kdtree_destroy,kdtree_k_nearest_neighbors
+  use fckit_kdtree_module!, only: kdtree,kdtree_create,kdtree_destroy,kdtree_k_nearest_neighbors
   use fckit_mpi_module, only: fckit_mpi_comm
   use mpp_domains_mod, only : mpp_get_compute_domain, mpp_get_data_domain
   use mpp_domains_mod, only : mpp_update_domains

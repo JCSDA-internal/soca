@@ -85,7 +85,7 @@ contains
        if (traj%nobs>0) traj%noobs = .false.
        !if (.not.traj%noobs) return        ! Exit if no obs
        call initialize_interph(fld, locs, traj%horiz_interp(1), traj%bumpid)
-       call traj%horiz_interp(1)%info()
+       !call traj%horiz_interp(1)%info()
        traj%interph_initialized = .true.
        bumpid = bumpid + 1
     end if

@@ -33,10 +33,12 @@ cost_function:
         basename: ./INPUT/
         ocn_filename: MOM.res.nc
         ice_filename: ice_model.res.nc
-        date: &date_bkg 2018-04-15T00:00:00Z
+        date: &bkg_date 2018-04-15T00:00:00Z
     Covariance:
       covariance: SocaError
-      strategy: common_univariate
+      prefix: soca
+      datadir: ./bump
+      strategy: specific_univariate
       load_nicas: 1
       lsqrt: 1
       mpicom: 2
@@ -57,7 +59,7 @@ cost_function:
         basename: ./
         ocn_filename: ocn.bkgerror.nc
         ice_filename: ice.bkgerror.nc
-        date: *date_bkg
+        date: *bkg_date
         t_min: 0.0
         t_max: 2.5
         s_min: 0.0 
@@ -107,11 +109,11 @@ cost_function:
           obsfile: ./Data/Jason-2-2018-04-15.nc
       Covariance:
         covariance: diagonal
-      ObsFilters:
-      - Filter: Background Check
-        variables:
-        - obs_absolute_dynamic_topography
-        threshold: 3
+#      ObsFilters:
+#      - Filter: Background Check
+#        variables:
+#        - obs_absolute_dynamic_topography
+#        threshold: 3
 #      - Filter: GOMsaver
 #        filename: ./Data/testgeovl.nc
 #    - ObsType: InsituTemperature
@@ -205,7 +207,7 @@ variational:
 #      type: incr
 
 minimizer:
-  algorithm: DRIPCG
+  algorithm: RPCG #DRIPCG
 
 output:
   datadir: Data

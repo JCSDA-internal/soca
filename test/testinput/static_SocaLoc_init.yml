@@ -8,28 +8,24 @@ Variables:
   variables:
   - cicen
   - hicen
-  - hsnon
-  - tsfcn
-  - qsnon
-  - sicnk
-  - qicnk
+  - hocn
   - socn
   - tocn
   - ssh
 State:
   read_from_file: 1
-  date: '2018-04-15T00:00:00Z'
-  basename: "./INPUT/"
+  date: &date 2018-04-15T00:00:00Z
+  basename: ./INPUT/
   ocn_filename: MOM.res.nc
   ice_filename: ice_model.res.nc
 Covariance:
   covariance: BUMP
-  prefix: soca_loc #4dhybridbump
+  prefix: soca_loc
   datadir: ./bump
-  date: 2018-04-14T23:00:00Z  
+  date: *date
   ne: 4  
   default_seed: 1
-  method: loc #_norm
+  method: loc
   strategy: common
   new_hdiag: 0 #1
   new_nicas: 1

@@ -1,5 +1,7 @@
 Covariance:
   covariance: SocaError
+  prefix: soca
+  datadir: ./bump
   strategy: specific_univariate
   load_nicas: 1
   lsqrt: 1

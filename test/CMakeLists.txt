@@ -91,8 +91,6 @@ endforeach(FILENAME)
 # Create Data directory for reference output and symlink all files
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/testoutput)
 foreach(FILENAME ${soca_testoutput})
-    message(${FILENAME})
-    message(${CMAKE_CURRENT_SOURCE_DIR})    
     execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
            ${CMAKE_CURRENT_SOURCE_DIR}/${FILENAME}
            ${CMAKE_CURRENT_BINARY_DIR}/${FILENAME} )
@@ -109,9 +107,7 @@ endforeach(FILENAME)
 
 # MOM's resource files
 foreach(FILENAME ${soca_model_param})
-  get_filename_component(filename ${FILENAME} NAME )
-  message("filename=" ${filename})
-     message("FILENAME=" ${FILENAME})     
+     get_filename_component(filename ${FILENAME} NAME )
      execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
            ${CMAKE_CURRENT_SOURCE_DIR}/${FILENAME}
            ${CMAKE_CURRENT_BINARY_DIR}/${filename} )
@@ -119,9 +115,7 @@ endforeach(FILENAME)
 
 # MOM's forcing files
 foreach(FILENAME ${soca_model_forcing})
-  get_filename_component(filename ${FILENAME} NAME )
-  message("filename=" ${filename})
-     message("FILENAME=" ${FILENAME})     
+     get_filename_component(filename ${FILENAME} NAME )
      execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
            ${CMAKE_CURRENT_SOURCE_DIR}/${FILENAME}
            ${CMAKE_CURRENT_BINARY_DIR}/INPUT/${filename} )
@@ -148,9 +142,6 @@ endforeach(FILENAME)
 # Link to SOCA Marine obs
 foreach(FILENAME ${soca_obs})
      get_filename_component(filename ${FILENAME} NAME )
-     message("filename=" ${filename})
-     message("FILENAME=" ${FILENAME})
-     message(${CMAKE_CURRENT_BINARY_DIR})
      execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
            ${CMAKE_CURRENT_SOURCE_DIR}/${FILENAME}
            ${CMAKE_CURRENT_BINARY_DIR}/Data/${filename} )	   
@@ -198,7 +189,7 @@ ecbuild_add_test( TARGET test_soca_socaerror_serial_init
                   SOURCES ../mains/StaticBInit.cc
                   LIBS soca
                   ARGS "testinput/static_SocaError_init.yml"
-                  MPI ${MPIEXEC_MAX_NUMPROCS} )
+                  MPI 1 )
 
 ecbuild_add_test( TARGET test_soca_enspert
                   TYPE SCRIPT
