@@ -174,7 +174,7 @@ contains
           fld%tocn(isc:iec,jsc:jec,1:nval) = fld%tocn(isc:iec,jsc:jec,1:nval) +&
                &fld3d
 
-       case ("sea_water_practical_salinity")
+       case ("sea_water_practical_salinity", "sea_water_salinity")
           fld%socn(isc:iec,jsc:jec,1:nval) = fld%socn(isc:iec,jsc:jec,1:nval) +&
                &fld3d
 
@@ -260,7 +260,7 @@ contains
        case ("sea_water_potential_temperature")
           fld3d = fld%tocn(isc:iec,jsc:jec,1:nval)
 
-       case ("sea_water_practical_salinity")
+       case ("sea_water_practical_salinity", "sea_water_salinity")
           fld3d = fld%socn(isc:iec,jsc:jec,1:nval)
 
        case ("sea_water_cell_thickness")
@@ -318,6 +318,7 @@ contains
 
     case ("sea_water_potential_temperature", &
           "sea_water_practical_salinity", &
+          "sea_water_salinity", &
           "sea_water_cell_thickness")
        nval = fld%geom%ocean%nzo
        
