@@ -9,8 +9,8 @@
 
 module soca_interpfields_mod
 
+  use variables_mod, only: oops_vars
   use ufo_geovals_mod
-  use ufo_vars_mod
   use ufo_locs_mod
   use soca_getvaltraj_mod
   use soca_bumpinterp2d_mod
@@ -58,7 +58,7 @@ contains
   subroutine getvalues_traj(fld, locs, vars, geovals, traj)
     type(soca_field),      intent(inout) :: fld
     type(ufo_locs),           intent(in) :: locs
-    type(ufo_vars),           intent(in) :: vars    
+    type(oops_vars),          intent(in) :: vars
     type(ufo_geovals),     intent(inout) :: geovals
     type(soca_getvaltraj), intent(inout) :: traj    
 
@@ -100,7 +100,7 @@ contains
   subroutine getvalues_notraj(fld, locs, vars, geovals)
     type(soca_field),   intent(inout) :: fld
     type(ufo_locs),        intent(in) :: locs
-    type(ufo_vars),        intent(in) :: vars    
+    type(oops_vars),       intent(in) :: vars    
     type(ufo_geovals),  intent(inout) :: geovals
 
     type(soca_bumpinterp2d) :: horiz_interp    
@@ -120,7 +120,7 @@ contains
   subroutine getvalues_ad(fld, locs, vars, geovals, traj)
     type(soca_field),              intent(inout) :: fld
     type(ufo_locs),                   intent(in) :: locs
-    type(ufo_vars),                   intent(in) :: vars        
+    type(oops_vars),                  intent(in) :: vars
     type(ufo_geovals),             intent(inout) :: geovals
     type(soca_getvaltraj), target, intent(inout) :: traj    
 
@@ -205,11 +205,11 @@ contains
   subroutine interp_tl(fld, locs, vars, geovals, horiz_interp)
     type(soca_field),         intent(inout) :: fld
     type(ufo_locs),              intent(in) :: locs
-    type(ufo_vars),              intent(in) :: vars    
+    type(oops_vars),             intent(in) :: vars
     type(ufo_geovals),        intent(inout) :: geovals
     type(soca_bumpinterp2d),  intent(inout) :: horiz_interp
 
-    integer :: icat, ilev, ivar, nobs, nobs_window
+    integer :: icat, ilev, ivar, nlocs, nlocs_window
     integer :: ival, nval, indx    
     character(len=160) :: record
     integer :: isc, iec, jsc, jec
@@ -234,10 +234,9 @@ contains
        geovals%geovals(ivar)%nval = nval
        if (.not.(allocated(geovals%geovals(ivar)%vals))) then
           ! Number of obs in pe
-          nobs = geovals%geovals(ivar)%nobs
+          nlocs = geovals%geovals(ivar)%nlocs
           
-          allocate(geovals%geovals(ivar)%vals(nval,nobs))
-          geovals%lalloc = .true.       
+          allocate(geovals%geovals(ivar)%vals(nval,nlocs))
           geovals%linit = .true.
        end if
        
@@ -300,7 +299,7 @@ contains
   !> Get 3rd dimension of fld
   subroutine nlev_from_ufovar(fld, vars, index_vars, nval)
     type(soca_field), intent(in) :: fld    
-    type(ufo_vars),   intent(in) :: vars
+    type(oops_vars),  intent(in) :: vars
     integer,          intent(in) :: index_vars    
     integer,         intent(out) :: nval
     

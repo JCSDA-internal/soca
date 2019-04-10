@@ -11,7 +11,7 @@ subroutine soca_field_create_c(c_key_self, c_key_geom, c_vars) bind(c,name='soca
   use iso_c_binding
   use soca_fields
   use soca_geom_mod_c
-  use ufo_vars_mod  
+  use variables_mod
   implicit none
   integer(c_int), intent(inout) :: c_key_self !< Handle to field
   integer(c_int),    intent(in) :: c_key_geom !< Geometry
@@ -19,14 +19,14 @@ subroutine soca_field_create_c(c_key_self, c_key_geom, c_vars) bind(c,name='soca
   
   type(soca_field), pointer :: self
   type(soca_geom),  pointer :: geom
-  type(ufo_vars) :: vars
+  type(oops_vars) :: vars
 
   call soca_geom_registry%get(c_key_geom, geom)
   call soca_field_registry%init()
   call soca_field_registry%add(c_key_self)
   call soca_field_registry%get(c_key_self,self)
 
-  call ufo_vars_setup(vars, c_vars)  
+  call oops_vars_create(c_vars, vars)
   call create(self, geom, vars)
 
 end subroutine soca_field_create_c
@@ -446,7 +446,7 @@ subroutine soca_field_interp_tl_c(c_key_fld,c_key_loc,c_vars,c_key_gom) bind(c,n
   use ufo_locs_mod    
   use ufo_geovals_mod_c
   use ufo_geovals_mod
-  use ufo_vars_mod
+  use variables_mod
 
   implicit none
   integer(c_int), intent(in)  :: c_key_fld
@@ -456,10 +456,9 @@ subroutine soca_field_interp_tl_c(c_key_fld,c_key_loc,c_vars,c_key_gom) bind(c,n
   type(soca_field), pointer   :: fld
   type(ufo_locs),  pointer   :: locs  
   type(ufo_geovals),  pointer :: gom
-  type(ufo_vars) :: vars  
+  type(oops_vars) :: vars
 
-  
-  call ufo_vars_setup(vars, c_vars)
+  call oops_vars_create(c_vars, vars)
 
   call soca_field_registry%get(c_key_fld,fld)
   call ufo_locs_registry%get(c_key_loc,locs)  
@@ -479,7 +478,7 @@ subroutine soca_field_interp_tl_traj_c(c_key_fld,c_key_loc,c_vars,c_key_gom,c_ke
   use ufo_locs_mod    
   use ufo_geovals_mod_c
   use ufo_geovals_mod
-  use ufo_vars_mod
+  use variables_mod
   use soca_getvaltraj_mod, only: soca_getvaltraj, soca_getvaltraj_registry  
   implicit none
   integer(c_int),           intent(in) :: c_key_fld
@@ -490,10 +489,10 @@ subroutine soca_field_interp_tl_traj_c(c_key_fld,c_key_loc,c_vars,c_key_gom,c_ke
   type(soca_field), pointer   :: fld
   type(ufo_locs),  pointer   :: locs  
   type(ufo_geovals),  pointer :: gom
-  type(ufo_vars) :: vars  
+  type(oops_vars) :: vars
   type(soca_getvaltraj), pointer :: traj
 
-  call ufo_vars_setup(vars, c_vars)
+  call oops_vars_create(c_vars, vars)
 
   call soca_field_registry%get(c_key_fld,fld)
   call ufo_locs_registry%get(c_key_loc,locs)  
@@ -514,7 +513,7 @@ subroutine soca_field_interp_ad_c(c_key_fld,c_key_loc,c_vars,c_key_gom,c_key_tra
   use ufo_locs_mod  
   use ufo_geovals_mod_c
   use ufo_geovals_mod
-  use ufo_vars_mod
+  use variables_mod
   use soca_getvaltraj_mod, only: soca_getvaltraj, soca_getvaltraj_registry  
   implicit none
   integer(c_int), intent(in) :: c_key_fld
@@ -525,10 +524,10 @@ subroutine soca_field_interp_ad_c(c_key_fld,c_key_loc,c_vars,c_key_gom,c_key_tra
   type(soca_field),      pointer :: fld
   type(ufo_locs),       pointer :: locs  
   type(ufo_geovals),     pointer :: gom  
-  type(ufo_vars)                 :: vars
+  type(oops_vars)                :: vars
   type(soca_getvaltraj), pointer :: traj
   
-  call ufo_vars_setup(vars, c_vars)
+  call oops_vars_create(c_vars, vars)
 
   call soca_field_registry%get(c_key_fld,fld)
   call ufo_locs_registry%get(c_key_loc,locs)

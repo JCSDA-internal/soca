@@ -14,7 +14,7 @@ module soca_fields
   use soca_geom_mod_c
   use soca_model_geom_type, only : geom_get_domain_indices
   use soca_utils
-  use ufo_vars_mod
+  use variables_mod
   use soca_bumpinterp2d_mod
   use soca_getvaltraj_mod
   use kinds
@@ -97,7 +97,7 @@ contains
   subroutine create_constructor(self, geom, vars)
     type(soca_field),          intent(inout) :: self
     type(soca_geom),  pointer, intent(inout) :: geom
-    type(ufo_vars),               intent(in) :: vars
+    type(oops_vars),              intent(in) :: vars
     integer :: ivar
 
     ! Allocate
