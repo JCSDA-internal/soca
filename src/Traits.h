@@ -59,6 +59,7 @@ struct Traits {
   typedef ufo::Locations           Locations;
   typedef ioda::ObsSpace             ObsSpace;
   typedef ioda::ObsVector            ObsVector;
+  template <typename DATA> using ObsDataVector = ioda::ObsDataVector<DATA>;
 };
 
 }  // namespace soca
