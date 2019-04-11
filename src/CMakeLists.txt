@@ -104,7 +104,7 @@ ModelBiasCovariance.h
 
 ecbuild_add_library( TARGET   soca
                      SOURCES  ${oops_soca_src_files}
-                     LIBS     oops ioda ufo fms mom6 ${LAPACK_LIBRARIES} ${NETCDF_LIBRARIES}
+                     LIBS     oops ioda ufo fms mom6 fckit ${LAPACK_LIBRARIES} ${NETCDF_LIBRARIES} eckit_mpi eckit
                      INSTALL_HEADERS LISTED
                      LINKER_LANGUAGE ${OOPS_LINKER_LANGUAGE}
                     )

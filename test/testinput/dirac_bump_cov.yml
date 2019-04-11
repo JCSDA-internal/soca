@@ -1,0 +1,45 @@
+Covariance:
+  covariance: BUMP
+  bump:
+    colocated: 0
+    load_nicas: 1
+    lsqrt: 1
+    mpicom: 2
+    nonunit_diag: 1
+    prefix: soca_bump_cov
+    strategy: specific_univariate
+  date: &date 2018-04-15T00:00:00Z
+  variable_changes:
+  - varchange: BalanceSOCA
+    dsdtmax: 0.1
+    dsdzmin: 3.0e-6
+    dtdzmin: 1.0e-6
+    nlayers: 10        
+    inputVariables:
+      variables: &soca_vars [cicen, hicen, socn, tocn, ssh, hocn]
+    outputVariables:
+      variables: *soca_vars
+dirac:
+  ixdir: [8,124,29,172,87,124,137,77,31]
+  iydir: [113,97,83,12,155,142,74,59,188]
+  izdir: [1,1,1,1,1,1,1,1,1]
+  ipdir: [2,1,1,1,2,2,2,2,2]
+  ifdir: [1,1,1,1,1,1,1,1,1]
+initial:
+  read_from_file: 1
+  basename: ./INPUT/
+  date: *date
+  ocn_filename: MOM.res.nc
+  ice_filename: ice_model.res.nc
+logging:
+  categories: Info, Test, Warning, Error, Trace
+output_B:
+  datadir: Data
+  date: *date
+  exp: dirac_bump_cov
+  type: an
+resolution:
+  num_ice_cat: 5
+  num_ice_lev: 4
+  num_sno_lev: 1
+variables: *soca_vars
