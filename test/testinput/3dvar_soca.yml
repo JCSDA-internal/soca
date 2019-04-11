@@ -207,7 +207,7 @@ variational:
 #      type: incr
 
 minimizer:
-  algorithm: RPCG #DRIPCG
+  algorithm: RPCG
 
 output:
   datadir: Data

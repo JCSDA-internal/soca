@@ -75,7 +75,7 @@ model:
   advance_mom6: 0
   variables: *soca_vars
 output: 
- frequency: PT6H
+ frequency: PT1H
  datadir: Data
  exp: pert
  type: ens
