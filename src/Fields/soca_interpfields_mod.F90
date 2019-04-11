@@ -234,7 +234,7 @@ contains
        geovals%geovals(ivar)%nval = nval
        if (.not.(allocated(geovals%geovals(ivar)%vals))) then
           ! Number of obs in pe
-          nlocs = geovals%geovals(ivar)%nlocs
+          nlocs = geovals%geovals(ivar)%nobs
           
           allocate(geovals%geovals(ivar)%vals(nval,nlocs))
           geovals%linit = .true.
