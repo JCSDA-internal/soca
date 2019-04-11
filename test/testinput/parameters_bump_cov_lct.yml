@@ -1,0 +1,158 @@
+background:
+  read_from_file: 1
+  basename: ./INPUT/
+  date: &date 2018-04-15T06:00:00Z
+  ocn_filename: MOM.res.nc
+  ice_filename: ice_model.res.nc
+
+bump:
+  prefix: soca_bump_cov
+  datadir: ./bump
+  colocated: 0
+  default_seed: 1
+  diag_rhflt: 3000000.0
+  lct_nscales: 1
+  lct_diag: [0]
+  method: cor
+  minim_algo: hooke
+  nc1: 500
+  nc2: 500
+  nc3: 100
+  ne: 10
+  new_lct: 1
+  nl0r: 11
+  nrep: 2
+  ntry: 3
+  rvflt: 5.0
+  strategy: specific_univariate
+
+ensemble:
+  members:
+  - read_from_file: 1
+    date: *date
+    basename: ./Data/
+    ocn_filename: ocn.pert.ens.1.2018-04-15T00:00:00Z.PT6H.nc
+    ice_filename: ice.pert.ens.1.2018-04-15T00:00:00Z.PT6H.nc
+    remap_filename: &remap ./INPUT/MOM.res.nc    
+  - read_from_file: 1
+    date: *date
+    basename: ./Data/
+    ocn_filename: ocn.pert.ens.2.2018-04-15T00:00:00Z.PT6H.nc
+    ice_filename: ice.pert.ens.2.2018-04-15T00:00:00Z.PT6H.nc
+    remap_filename: *remap
+  - read_from_file: 1
+    date: *date
+    basename: ./Data/
+    ocn_filename: ocn.pert.ens.3.2018-04-15T00:00:00Z.PT6H.nc
+    ice_filename: ice.pert.ens.3.2018-04-15T00:00:00Z.PT6H.nc
+    remap_filename: *remap
+  - read_from_file: 1
+    date: *date
+    basename: ./Data/
+    ocn_filename: ocn.pert.ens.4.2018-04-15T00:00:00Z.PT6H.nc
+    ice_filename: ice.pert.ens.4.2018-04-15T00:00:00Z.PT6H.nc
+    remap_filename: *remap
+  - read_from_file: 1
+    date: *date
+    basename: ./Data/
+    ocn_filename: ocn.pert.ens.5.2018-04-15T00:00:00Z.PT6H.nc
+    ice_filename: ice.pert.ens.5.2018-04-15T00:00:00Z.PT6H.nc
+    remap_filename: *remap
+  - read_from_file: 1
+    date: *date
+    basename: ./Data/
+    ocn_filename: ocn.pert.ens.6.2018-04-15T00:00:00Z.PT6H.nc
+    ice_filename: ice.pert.ens.6.2018-04-15T00:00:00Z.PT6H.nc
+    remap_filename: *remap
+  - read_from_file: 1
+    date: *date
+    basename: ./Data/
+    ocn_filename: ocn.pert.ens.7.2018-04-15T00:00:00Z.PT6H.nc
+    ice_filename: ice.pert.ens.7.2018-04-15T00:00:00Z.PT6H.nc
+    remap_filename: *remap
+  - read_from_file: 1
+    date: *date
+    basename: ./Data/
+    ocn_filename: ocn.pert.ens.8.2018-04-15T00:00:00Z.PT6H.nc
+    ice_filename: ice.pert.ens.8.2018-04-15T00:00:00Z.PT6H.nc
+    remap_filename: *remap
+  - read_from_file: 1
+    date: *date
+    basename: ./Data/
+    ocn_filename: ocn.pert.ens.9.2018-04-15T00:00:00Z.PT6H.nc
+    ice_filename: ice.pert.ens.9.2018-04-15T00:00:00Z.PT6H.nc
+    remap_filename: *remap
+  - read_from_file: 1
+    date: *date
+    basename: ./Data/
+    ocn_filename: ocn.pert.ens.10.2018-04-15T00:00:00Z.PT6H.nc
+    ice_filename: ice.pert.ens.10.2018-04-15T00:00:00Z.PT6H.nc
+    remap_filename: *remap
+  variable_changes:
+  - varchange: BalanceSOCA
+    dsdtmax: 0.1
+    dsdzmin: 3.0e-6
+    dtdzmin: 1.0e-6
+    nlayers: 10        
+    inputVariables:
+      variables: &soca_vars [cicen, hicen, socn, tocn, ssh, hocn]
+    outputVariables:
+      variables: *soca_vars
+  variables: *soca_vars
+
+logging:
+  categories: Info, Test, Warning, Error, Trace
+
+output:
+- datadir: bump
+  date: *date
+  exp: parameters_bump_cov.var
+  parameter: var
+  type: an
+- datadir: bump
+  date: *date
+  exp: parameters_bump_cov.cor_rh
+  parameter: cor_rh
+  type: an
+- datadir: bump
+  date: *date
+  exp: parameters_bump_cov.cor_rv
+  parameter: cor_rv
+  type: an
+- datadir: bump
+  date: *date
+  exp: parameters_bump_cov.D11_1
+  parameter: D11_1
+  type: an
+- datadir: bump
+  date: *date
+  exp: parameters_bump_cov.D22_1
+  parameter: D22_1
+  type: an
+- datadir: bump
+  date: *date
+  exp: parameters_bump_cov.D33_1
+  parameter: D33_1
+  type: an
+- datadir: bump
+  date: *date
+  exp: parameters_bump_cov.D12_1
+  parameter: D12_1
+  type: an
+- datadir: bump
+  date: *date
+  exp: parameters_bump_cov.Dcoef_1
+  parameter: Dcoef_1
+  type: an
+- datadir: bump
+  date: *date
+  exp: parameters_bump_cov.DLh_1
+  parameter: DLh_1
+  type: an
+
+resolution:
+  num_ice_cat: 5
+  num_ice_lev: 4
+  num_sno_lev: 1
+
+variables: *soca_vars

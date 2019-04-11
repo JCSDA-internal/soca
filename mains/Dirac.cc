@@ -9,10 +9,12 @@
  */
 
 #include "src/Traits.h"
+#include "src/Transforms/instantiateBalanceOpFactory.h"
 #include "oops/runs/Dirac.h"
 #include "src/Run/Run.h"
 
 int main(int argc,  char ** argv) {
+  soca::instantiateBalanceOpFactory();
   soca::Run run(argc, argv);
   oops::Dirac<soca::Traits> dir;
   run.execute(dir);

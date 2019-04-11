@@ -25,7 +25,7 @@ model:
 
 cost_function:
   cost_type: 3D-Var
-  window_begin: '2018-04-14T00:00:00Z'
+  window_begin: 2018-04-14T00:00:00Z
   window_length: P2D
   variables: *soca_vars
   varchange: Identity
@@ -36,40 +36,16 @@ cost_function:
         basename: "./INPUT/"
         ocn_filename: MOM.res.nc
         ice_filename: ice_model.res.nc
-        date: &date 2018-04-15T00:00:00Z
+        date: &bkg_date 2018-04-15T00:00:00Z
     Covariance:
       covariance: SocaError
-      default_seed: 1
       prefix: soca
       datadir: ./bump
-      method: cor
-      strategy: common      
-#      new_hdiag: 0
-      new_nicas: 0   # 1: recomputes convol param
-      load_nicas: 1  # 1: loads convol param (layout specific)
-      sam_read: 0
-      sam_write: 1  
-      mask_check: 1
-      draw_type: random_uniform
-      nc1: 100
-      ntry: 3
-      nrep:  2
-      nc3: 10
-      dc: 1000.0e3
-      nl0r: 1
-      minim_algo: "hooke"
-      rvflt: 0.0
-      lsqrt: 1  
-      resol: 8.0
-      nicas_interp: bilin
-      network: 1
-      mpicom: 2 # Number of internal comm steps 
-      forced_radii: 1
-      rh: 3000e3
-      rv: 100
-      advmode: 0
-      diag_interp: bilin
-      date: *date
+      strategy: specific_univariate
+      load_nicas: 1
+      lsqrt: 1
+      mpicom: 2
+      date: *bkg_date
       variable_changes:
       - varchange: BkgErrFILT
         ocean_depth_min: 1000 # [m]

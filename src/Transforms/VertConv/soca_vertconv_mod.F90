@@ -98,10 +98,9 @@ contains
           lz(k) = max(lz(k), lz(k) + (mld - lz(k)) * (1.0 - z/mld))
        end do
     end if
-    
+
   end subroutine soca_calc_lz
 
-  
   ! ------------------------------------------------------------------------------
   !> Apply forward convolution
   subroutine soca_conv (self, convdx, dx)
