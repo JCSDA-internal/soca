@@ -118,7 +118,7 @@ contains
     type(soca_bkgerrgodas_config),     intent(inout) :: self
 
     real(kind=kind_real), allocatable :: sig1(:), sig2(:)
-    type(soca_domain_indices), target :: domain
+    type(soca_domain_indices), pointer :: domain
     integer :: is, ie, js, je, i, j, k
     integer :: ins, ns = 1, iter, niter = 1
     type(soca_omb_stats) :: sst
