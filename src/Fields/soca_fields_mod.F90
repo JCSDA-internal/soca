@@ -234,9 +234,10 @@ contains
   subroutine dirac(self, c_conf)
     type(soca_field), intent(inout) :: self
     type(c_ptr),         intent(in) :: c_conf   !< Configuration
-    
-    integer :: ndir,idir,size,rank,info
-    integer,allocatable :: ixdir(:),iydir(:),izdir(:),ipdir(:),ifdir(:)
+
+    integer :: isc, iec, jsc, jec
+    integer :: ndir,n,size,rank,info
+    integer,allocatable :: ixdir(:),iydir(:),izdir(:),ifdir(:)
     character(len=3) :: idirchar
     type(fckit_mpi_comm) :: f_comm
 
@@ -247,41 +248,38 @@ contains
 
     ! Get Diracs size
     ndir = config_get_data_dimension(c_conf,'ixdir')
-    if ((config_get_data_dimension(c_conf,'iydir')/=ndir).or.(config_get_data_dimension(c_conf,'izdir')/=ndir) &
-     & .or.(config_get_data_dimension(c_conf,'ipdir')/=ndir).or.(config_get_data_dimension(c_conf,'ifdir')/=ndir)) &
+    if ((config_get_data_dimension(c_conf,'iydir')/=ndir) .or. &
+        (config_get_data_dimension(c_conf,'izdir')/=ndir) .or. &
+        (config_get_data_dimension(c_conf,'ifdir')/=ndir)) &
      & call abor1_ftn('qg_fields_dirac: inconsistent sizes for ixdir, iydir, izdir, ipdir and ifdir')
 
     ! Allocation
     allocate(ixdir(ndir))
     allocate(iydir(ndir))
     allocate(izdir(ndir))
-    allocate(ipdir(ndir))
     allocate(ifdir(ndir))
 
     ! Get Diracs positions
     call config_get_int_vector(c_conf,'ixdir',ixdir)
     call config_get_int_vector(c_conf,'iydir',iydir)
     call config_get_int_vector(c_conf,'izdir',izdir)
-    call config_get_int_vector(c_conf,'ipdir',ipdir)
     call config_get_int_vector(c_conf,'ifdir',ifdir)
 
-    ! Check
-    if (ndir<1) call abor1_ftn("fields:dirac non-positive ndir")
-    if (any(ixdir<1).or.any(ixdir>self%geom%ocean%nx)) call abor1_ftn("fields:dirac invalid ixdir")
-    if (any(iydir<1).or.any(iydir>self%geom%ocean%ny)) call abor1_ftn("fields:dirac invalid iydir")
-    if (any(ipdir<1).or.any(ipdir>f_comm%size())) call abor1_ftn("fields:dirac invalid ipdir")
-    if (any(ifdir<1).or.any(ifdir>5)) call abor1_ftn("fields:dirac invalid ifdir")
+    ! get PE domain bounds
+    call geom_get_domain_indices(self%geom%ocean, "compute", isc, iec, jsc, jec)
 
     ! Setup Diracs
     call zeros(self)
-    do idir=1,ndir
-       if (ipdir(idir)==f_comm%rank()+1) then
-         if (ifdir(idir)==1) self%tocn(ixdir(idir),iydir(idir),izdir(idir)) = 1.0
-         if (ifdir(idir)==2) self%socn(ixdir(idir),iydir(idir),izdir(idir)) = 1.0
-         if (ifdir(idir)==3) self%ssh(ixdir(idir),iydir(idir)) = 1.0
-         if (ifdir(idir)==4) self%cicen(ixdir(idir),iydir(idir),izdir(idir)) = 1.0
-         if (ifdir(idir)==5) self%hicen(ixdir(idir),iydir(idir),izdir(idir)) = 1.0
-      end if
+    do n=1,ndir
+        ! skip this index if not in the bounds of this PE
+        if (ixdir(n) > iec .or. ixdir(n) < isc) cycle
+        if (iydir(n) > jec .or. iydir(n) < jsc) cycle
+
+        if (ifdir(n)==1) self%tocn(ixdir(n),iydir(n),izdir(n)) = 1.0
+        if (ifdir(n)==2) self%socn(ixdir(n),iydir(n),izdir(n)) = 1.0
+        if (ifdir(n)==3) self%ssh(ixdir(n),iydir(n)) = 1.0
+        if (ifdir(n)==4) self%cicen(ixdir(n),iydir(n),izdir(n)) = 1.0
+        if (ifdir(n)==5) self%hicen(ixdir(n),iydir(n),izdir(n)) = 1.0
     end do
 
   end subroutine dirac
@@ -1212,9 +1210,9 @@ contains
     idr_ocean = register_restart_field(ocean_restart, ocn_filename, 'ave_ssh', fld%ssh(:,:), &
          domain=fld%geom%ocean%G%Domain%mpp_domain)
     idr_ocean = register_restart_field(ocean_restart, ocn_filename, 'Temp', fld%tocn(:,:,:), &
-         domain=fld%geom%ocean%G%Domain%mpp_domain)             
+         domain=fld%geom%ocean%G%Domain%mpp_domain)
     idr_ocean = register_restart_field(ocean_restart, ocn_filename, 'Salt', fld%socn(:,:,:), &
-         domain=fld%geom%ocean%G%Domain%mpp_domain)             
+         domain=fld%geom%ocean%G%Domain%mpp_domain)
     idr_ocean = register_restart_field(ocean_restart, ocn_filename, 'h', fld%hocn(:,:,:), &
          domain=fld%geom%ocean%G%Domain%mpp_domain)
     idr_ocean = register_restart_field(ocean_restart, ocn_filename, 'mld', fld%mld(:,:), &
@@ -1293,7 +1291,7 @@ contains
          & call abor1_ftn("fields:genfilename: filename too long")
 
   end function soca_genfilename
-  
+
   ! ------------------------------------------------------------------------------
 
 end module soca_fields
