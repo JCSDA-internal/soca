@@ -1,68 +1,75 @@
 list( APPEND soca_test_input
-  testinput/checkpointmodel.yml  
+  compare.sh
+  testinput/3dvar_godas.yml
+  testinput/3dvar_soca.yml
+  testinput/3dvarfgat.yml
+  testinput/4dhyb.yml
+  testinput/balance.yml
+  testinput/bkgerrfilt.yml
+  testinput/bkgerrgodas.yml
+  testinput/bkgerrsoca.yml
+  testinput/checkpointmodel.yml
+  testinput/dirac_bump_cov.yml
+  testinput/dirac_soca_cov.yml
   testinput/ensvariance.yml
   testinput/forecast_identity.yml
   testinput/forecast_mom6.yml
-  testinput/state_test.yml
-  testinput/model_test.yml
-  testinput/linearmodel_test.yml
-  testinput/geometry_test.yml
-  testinput/increment_test.yml
-  testinput/hofx.yml
-  testinput/3dvar_soca.yml
-  testinput/3dvar_godas.yml  
-  testinput/3dvarfgat_mom6.yml  
-  testinput/4dhyb.yml  
-  testinput/balance.yml
-  testinput/bkgerrfilt.yml
-  testinput/bkgerrsoca.yml
-  testinput/bkgerrgodas.yml
-  testinput/vertconv.yml
   testinput/genenspert.yml
-  testinput/ensvariance.yml
-  testinput/static_SocaError_init.yml
-  testinput/static_SocaError_test.yml
+  testinput/geometry_test.yml
+  testinput/hofx.yml
+  testinput/increment_test.yml
+  testinput/linearmodel_test.yml
+  testinput/model_test.yml
   testinput/parameters_bump_cov_lct.yml
   testinput/parameters_bump_cov_nicas.yml
-  testinput/dirac_bump_cov.yml
-  testinput/dirac_soca_cov.yml
-  compare.sh
+  testinput/state_test.yml
+  testinput/static_SocaError_init.yml
+  testinput/static_SocaError_test.yml
+  testinput/vertconv.yml
 )
 
 list( APPEND soca_test_output
-  testoutput/forecast_identity.test
-  testoutput/forecast_mom6.test
-  testoutput/hofx.test
-  testoutput/3dvar.test
-  testoutput/genenspert.test
-  testoutput/parameters_bump_cov_lct.test
-  testoutput/parameters_bump_cov_nicas.test
+  testoutput/3dvar_godas.test
+  testoutput/3dvar_soca.test
+  testoutput/3dvarfgat.test
+  testoutput/4dhyb.test
+  testoutput/checkpointmodel.test
   testoutput/dirac_bump_cov.test
   testoutput/dirac_soca_cov.test
+  testoutput/ensvariance.test
+  testoutput/forecast_identity.test
+  testoutput/forecast_mom6.test
+  testoutput/genenspert.test
+  testoutput/hofx.test
+  testoutput/parameters_bump_cov_lct.test
+  testoutput/parameters_bump_cov_nicas.test
 )
 
 list( APPEND soca_model_param
-  Data/90x43x25/input.nml
-  Data/90x43x25/MOM_input
   Data/90x43x25/diag_table
   Data/90x43x25/field_table
   Data/90x43x25/ice.bkgerror.nc
+  Data/90x43x25/input.nml
+  Data/90x43x25/MOM_input
   Data/90x43x25/ocn.bkgerror.nc
-  Data/rossrad.dat
   Data/godas_sst_bgerr.nc
+  Data/rossrad.dat
 )
 
 list( APPEND soca_model_restarts
-  Data/90x43x25/INPUT/MOM.res.nc
+  Data/90x43x25/INPUT/hycom1_25.nc
   Data/90x43x25/INPUT/ice_model.res.nc
   Data/90x43x25/INPUT/layer_coord25.nc
-  Data/90x43x25/INPUT/hycom1_25.nc
+  Data/90x43x25/INPUT/MOM.res.nc
   Data/90x43x25/INPUT/ocean_hgrid.nc
   Data/90x43x25/INPUT/ocean_topog.nc
 )
 
 list( APPEND soca_obs
-  Data/Obs/Jason-2-2018-04-15-soca.nc
+  Data/Obs/adt.nc
+  Data/Obs/prof.nc
+  Data/Obs/sss.nc
+  Data/Obs/sst.nc
 )
 
 # Create Data directory for test input/output and symlink all files
@@ -99,23 +106,22 @@ ecbuild_add_resources( TARGET   soca_test_scripts
                        SOURCES_PACK
                        ${soca_test_input}
                        )
-		     
-# Link to IODA Marine obs
-file(GLOB ioda_obs "${ioda_SOURCE_DIR}/test/testinput/marine/*.nc*")
-file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/Data)
-foreach(FILENAME ${ioda_obs})
-     get_filename_component(filename ${FILENAME} NAME )
-     execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
-           ${FILENAME}
-           ${CMAKE_CURRENT_BINARY_DIR}/Data/${filename} )	   
-endforeach(FILENAME)
 
-# Link to SOCA Marine obs
+# Link to IODA/SOCA Marine obs
+#file(GLOB ioda_obs "${ioda_SOURCE_DIR}/test/testinput/marine/*.nc*")
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/Data)
+#foreach(FILENAME ${ioda_obs} ${soca_obs})
+#     get_filename_component(filename ${FILENAME} NAME )
+#     execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
+#           ${CMAKE_${FILENAME}
+#           ${CMAKE_CURRENT_BINARY_DIR}/Data/${filename} )
+#endforeach(FILENAME)
+
 foreach(FILENAME ${soca_obs})
      get_filename_component(filename ${FILENAME} NAME )
      execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
            ${CMAKE_CURRENT_SOURCE_DIR}/${FILENAME}
-           ${CMAKE_CURRENT_BINARY_DIR}/Data/${filename} )	   
+           ${CMAKE_CURRENT_BINARY_DIR}/Data/${filename} )
 endforeach(FILENAME)
 
 # Create directory for BUMP output
@@ -162,24 +168,23 @@ ecbuild_add_test( TARGET test_soca_socaerror_init
 ecbuild_add_test( TARGET test_soca_enspert
                   MPI ${MPI_SOCA_TESTS}
                   TYPE SCRIPT
-ecbuild_add_test( TARGET test_soca_ensvariance
-                  SOURCES ../mains/EnsVariance.cc
-                  LIBS soca
-                  ARGS "testinput/ensvariance.yml"
-                  MPI ${MPIEXEC_MAX_NUMPROCS} )
+                  COMMAND compare.sh
+                  ARGS
+                      "${CMAKE_BINARY_DIR}/bin/soca_enspert.x
+                      testinput/genenspert.yml"
+                      testoutput/genenspert.test
+                  DEPENDS soca_enspert.x)
 
-# Test below can take a few hours to complete. Commented out for now
-#ecbuild_add_test( TARGET test_soca_covar_lengthscale
-#                  TYPE SCRIPT
-#		  COMMAND "./run.sh"
-#                  ARGS "${CMAKE_BINARY_DIR}/bin/soca_staticbinit.x testinput/static_scale_binit.yml"
-#                  DEPENDS soca_staticbinit.x )
+# #Test below can take a few hours to complete. Commented out for now
+# ecbuild_add_test( TARGET test_soca_covar_lengthscale
+#                   TYPE SCRIPT
+# 		              COMMAND compare.sh
+#                   ARGS
+#                       "${CMAKE_BINARY_DIR}/bin/soca_staticbinit.x
+#                       testinput/static_scale_binit.yml"
+#                       testoutput/covar_lengthscale.test
+#                   DEPENDS soca_staticbinit.x)
 
-#ecbuild_add_test( TARGET test_soca_binit
-#                  TYPE SCRIPT
-#		  COMMAND "./run.sh"
-#                  ARGS "${CMAKE_BINARY_DIR}/bin/soca_staticbinit.x testinput/static_binit.yml"
-#                  DEPENDS soca_staticbinit.x )
 
 
 # Tests of class interfaces
@@ -262,36 +267,59 @@ ecbuild_add_test( TARGET test_soca_vertconv
 #  TEST output stream is compared against existing testoutput/ files
 #-------------------------------------------------------------------------------
 
+ecbuild_add_test( TARGET test_soca_ensvariance
+                  MPI ${MPI_SOCA_TESTS}
                   TYPE SCRIPT
-                  COMMAND "./compare.sh"
-                  ARGS "${CMAKE_BINARY_DIR}/bin/soca_dirac.x testinput/dirac_soca_cov.yml"
-                       testoutput/dirac_soca_cov.test
-                  DEPENDS soca_dirac.x 
-                  MPI ${MPIEXEC_MAX_NUMPROCS} )
+                  COMMAND compare.sh
+                  ARGS
+                      "${CMAKE_BINARY_DIR}/bin/soca_ensvariance.x
+                      testinput/ensvariance.yml"
+                      testoutput/ensvariance.test
+                  DEPENDS soca_ensvariance.x)
 
+
+# The following two tests are slow, how can we speed it up?
+# Use another model grid configuration with even fewer grid cells?
 ecbuild_add_test( TARGET test_soca_parameters_bump_cov_lct
+                  MPI ${MPI_SOCA_TESTS}
                   TYPE SCRIPT
-                  COMMAND "./compare.sh"
-                  ARGS "${CMAKE_BINARY_DIR}/bin/soca_parameters.x testinput/parameters_bump_cov_lct.yml"
+                  COMMAND ${CMAKE_BINARY_DIR}/bin/compare.sh
+                  ARGS "${CMAKE_BINARY_DIR}/bin/soca_parameters.x
+                       testinput/parameters_bump_cov_lct.yml"
                        testoutput/parameters_bump_cov_lct.test
-                  DEPENDS soca_parameters.x 
-                  MPI ${MPIEXEC_MAX_NUMPROCS} )
+                  DEPENDS soca_parameters.x)
+set_tests_properties(test_soca_parameters_bump_cov_lct PROPERTIES TIMEOUT 1)
 
 ecbuild_add_test( TARGET test_soca_parameters_bump_cov_nicas
+                  MPI ${MPI_SOCA_TESTS}
                   TYPE SCRIPT
-                  COMMAND "./compare.sh"
-                  ARGS "${CMAKE_BINARY_DIR}/bin/soca_parameters.x testinput/parameters_bump_cov_nicas.yml"
+                  COMMAND ${CMAKE_BINARY_DIR}/bin/compare.sh
+                  ARGS "${CMAKE_BINARY_DIR}/bin/soca_parameters.x
+                       testinput/parameters_bump_cov_nicas.yml"
                        testoutput/parameters_bump_cov_nicas.test
-                  DEPENDS soca_parameters.x 
-                  MPI ${MPIEXEC_MAX_NUMPROCS} )
+                  DEPENDS soca_parameters.x)
+#set_tests_properties(test_soca_parameters_bump_cov_nicas PROPERTIES TIMEOUT 5)
+
 
 ecbuild_add_test( TARGET test_soca_dirac_bump_cov
+                  MPI ${MPI_SOCA_TESTS}
                   TYPE SCRIPT
-                  COMMAND "./compare.sh"
-                  ARGS "${CMAKE_BINARY_DIR}/bin/soca_dirac.x testinput/dirac_bump_cov.yml"
-                       testoutput/dirac_bump_cov.test
-                  DEPENDS soca_dirac.x 
-                  MPI ${MPIEXEC_MAX_NUMPROCS} )
+                  COMMAND compare.sh
+                  ARGS
+                      "${CMAKE_BINARY_DIR}/bin/soca_dirac.x
+                      testinput/dirac_bump_cov.yml"
+                      testoutput/dirac_bump_cov.test
+                  DEPENDS soca_dirac.x )
+
+ecbuild_add_test( TARGET test_soca_dirac_soca_cov
+                  MPI ${MPI_SOCA_TESTS}
+                  TYPE SCRIPT
+                  COMMAND compare.sh
+                  ARGS
+                      "${CMAKE_BINARY_DIR}/bin/soca_dirac.x
+                      testinput/dirac_soca_cov.yml"
+                      testoutput/dirac_soca_cov.test
+                  DEPENDS soca_dirac.x )
 
 #ecbuild_add_test( TARGET  test_soca_localization
 #                  BOOST
@@ -305,39 +333,66 @@ ecbuild_add_test( TARGET test_soca_dirac_bump_cov
 #                  SOURCES executables/TestObsErrorCovariance.cc
 #                  ARGS "testinput/obserrorcovariance_test.yml"
 #                  LIBS    soca )
-
+#
 ecbuild_add_test( TARGET test_soca_hofx
-                  SOURCES ../mains/HofX.cc
-                  LIBS soca
-                  ARGS "testinput/hofx.yml"
-                  MPI ${MPIEXEC_MAX_NUMPROCS} )
+                  MPI ${MPI_SOCA_TESTS}
+                  TYPE SCRIPT
+                  COMMAND compare.sh
+                  ARGS
+                      "${CMAKE_BINARY_DIR}/bin/soca_hofx.x
+                      testinput/hofx.yml"
+                      testoutput/hofx.test
+                  DEPENDS soca_hofx.x)
 
 ecbuild_add_test( TARGET test_soca_3dvarsoca
-                  SOURCES ../mains/3DVar.cc
-                  LIBS soca
-                  ARGS "testinput/3dvar_soca.yml"
-                  MPI ${MPIEXEC_MAX_NUMPROCS} )
-
-ecbuild_add_test( TARGET test_soca_checkpointmodel
-                  SOURCES ../mains/CheckpointModel.cc
-                  LIBS soca
-                  ARGS "testinput/checkpointmodel.yml"
-                  MPI ${MPIEXEC_MAX_NUMPROCS} )
+                  MPI ${MPI_SOCA_TESTS}
+                  TYPE SCRIPT
+                  COMMAND compare.sh
+                  ARGS
+                      "${CMAKE_BINARY_DIR}/bin/soca_3dvar.x
+                      testinput/3dvar_soca.yml"
+                      testoutput/3dvar_soca.test
+                  DEPENDS soca_3dvar.x)
 
 ecbuild_add_test( TARGET test_soca_3dvargodas
-                  SOURCES ../mains/3DVar.cc
-                  LIBS soca
-                  ARGS "testinput/3dvar_godas.yml"
-                  MPI ${MPIEXEC_MAX_NUMPROCS} )		
+                  MPI ${MPI_SOCA_TESTS}
+                  TYPE SCRIPT
+                  COMMAND compare.sh
+                  ARGS
+                      "${CMAKE_BINARY_DIR}/bin/soca_3dvar.x
+                      testinput/3dvar_godas.yml"
+                      testoutput/3dvar_godas.test
+                  DEPENDS soca_3dvar.x)
 
-ecbuild_add_test( TARGET test_soca_3dvarfgat_mom6
-                  SOURCES ../mains/3DVar.cc
-                  LIBS soca
-                  ARGS "testinput/3dvarfgat_mom6.yml"
-                  MPI ${MPIEXEC_MAX_NUMPROCS} )
+ecbuild_add_test( TARGET test_soca_checkpointmodel
+                  MPI ${MPI_SOCA_TESTS}
+                  TYPE SCRIPT
+                  COMMAND compare.sh
+                  ARGS
+                      "${CMAKE_BINARY_DIR}/bin/soca_checkpoint_model.x
+                      testinput/checkpointmodel.yml"
+                      testoutput/checkpointmodel.test
+                  DEPENDS soca_checkpoint_model.x)
+
+ecbuild_add_test( TARGET test_soca_3dvarfgat
+                  MPI ${MPI_SOCA_TESTS}
+                  TYPE SCRIPT
+                  COMMAND compare.sh
+                  ARGS
+                      "${CMAKE_BINARY_DIR}/bin/soca_3dvar.x
+                      testinput/3dvarfgat.yml"
+                      testoutput/3dvarfgat.test
+                  DEPENDS soca_3dvar.x)
+
+# the above test hangs, leave the following line until the test can be fixed
+set_tests_properties(test_soca_3dvarfgat PROPERTIES TIMEOUT 6)
 
 ecbuild_add_test( TARGET test_soca_4dhybrid
-                  SOURCES ../mains/3DVar.cc
-                  LIBS soca
-                  ARGS "testinput/4dhyb.yml"
-                  MPI ${MPIEXEC_MAX_NUMPROCS} )
+                  MPI ${MPI_SOCA_TESTS}
+                  TYPE SCRIPT
+                  COMMAND compare.sh
+                  ARGS
+                      "${CMAKE_BINARY_DIR}/bin/soca_3dvar.x
+                      testinput/4dhyb.yml"
+                      testoutput/4dhyb.test
+                  DEPENDS soca_3dvar.x)

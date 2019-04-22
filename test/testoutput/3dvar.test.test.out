@@ -1,8 +1,0 @@
-Test     : CostJb   : Nonlinear Jb = 0
-Test     : CostJo   : Nonlinear Jo = inf, nobs = 309091, Jo/n = inf, err = 1.54331e+12
-Test     : CostFunction: Nonlinear J = inf
-Test     : DRIPCGMinimizer: reduction in residual norm = nan
-Test     : CostFunction::addIncrement: Analysis norm: -nan
-Test     : CostJb   : Nonlinear Jb = -nan
-Test     : CostJo   : Nonlinear Jo = -nan, nobs = 309091, Jo/n = -nan, err = 1.54331e+12
-Test     : CostFunction: Nonlinear J = -nan

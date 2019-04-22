@@ -2,54 +2,70 @@ Geometry:
   num_ice_cat: 5
   num_ice_lev: 4
   num_sno_lev: 1
+
 Model:
-  name: 'SOCA'
-  tstep: P1D #T1H
+  name: SOCA
+  tstep: P1D
   advance_mom6: 0
-  variables: [cicen, hicen, socn, tocn, ssh, hocn]  
+  variables: [cicen, hicen, socn, tocn, ssh, hocn]
+
 Initial Condition:
   read_from_file: 1
-  date: '2018-04-14T00:00:00Z'
-  basename: "./INPUT/"
+  date: 2018-04-15T00:00:00Z
+  basename: ./INPUT/
   ocn_filename: MOM.res.nc
   ice_filename: ice_model.res.nc
+
 Assimilation Window:
-  Begin: '2018-04-14T00:00:00Z'
-  End: '2018-04-02T10:00:00Z'
+  Begin: 2018-04-14T00:00:00Z
+  End: 2018-04-02T10:00:00Z
   Length: P2D
+
+_obsTypeHeader: &_obs
+  # All of the obs types will have this common header
+  Covariance:
+    covariance: diagonal
+
 Observations:
   ObsTypes:
-#  - ObsType: InsituTemperature
-#    ObsData:
-#      ObsDataOut:
-#        obsfile: Data/profile_2018-04-15-hofx-out.nc
-#      ObsDataIn:
-#        obsfile: ./Data/profile_2018-04-15.nc
-#    Covariance:
-#      covariance: diagonal
+
+  - ObsType: SeaSurfaceTemp
+    variables: [sea_surface_temperature]
+    ObsData:
+      ObsDataOut: {obsfile: ./Data/sst.out.nc}
+      ObsDataIn:  {obsfile: ./Data/sst.nc}
+    Covariance:
+      covariance: diagonal
+
+  - ObsType: SeaSurfaceSalinity
+    variables: [sea_surface_salinity]
+    ObsData:
+      ObsDataOut: {obsfile: ./Data/sss.out.nc}
+      ObsDataIn:  {obsfile: ./Data/sss.nc}
+    Covariance:
+      covariance: diagonal
+
   - ObsType: ADT
     ObsData:
-      ObsDataOut:
-        obsfile: Data/Jason-2-2018-04-15-hofx-out.nc
-      ObsDataIn:
-        obsfile: ./Data/Jason-2-2018-04-15.nc
+      ObsDataOut: {obsfile: ./Data/adt.out.nc}
+      ObsDataIn:  {obsfile: ./Data/adt.nc}
     Covariance:
       covariance: diagonal
-  - ObsType: SeaSurfaceTemp
+
+  - ObsType: InsituTemperature
     ObsData:
-      ObsDataOut:
-        obsfile: ./Data/sst_obs-2018-04-15-hofx-out.nc4
-      ObsDataIn:
-        obsfile: ./Data/sst_obs-2018-04-15.nc4
+      ObsDataOut: {obsfile: ./Data/prof.T.out.nc}
+      ObsDataIn:  {obsfile: ./Data/prof.nc}
     Covariance:
       covariance: diagonal
-    variables:
-    - sea_surface_temperature
-#  - ObsType: SeaIceFraction
-#    ObsData:
-#      ObsDataOut:
-#        obsfile: ./Data/icec-2018-04-15-hofx-out.nc
-#      ObsDataIn:
-#        obsfile: ./Data/icec-2018-04-15.nc
-#    Covariance:
-#      covariance: diagonal
+
+  - ObsType: InsituSalinity
+    variable: [sea_water_salinity]
+    ObsData:
+      ObsDataOut: {obsfile: ./Data/prof.S.out.nc}
+      ObsDataIn:  {obsfile: ./Data/prof.nc}
+    Covariance:
+      covariance: diagonal
+
+#    - ObsType: SeaIceFraction
+#    - ObsType: SeaIceThickness

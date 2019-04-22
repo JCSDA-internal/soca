@@ -1,0 +1,8 @@
+Test     : Variance: 
+Test     :   Valid time: 2018-04-15T00:00:00Z
+Test     :   cicen   min=    0.000000   max=    0.047292   mean=    0.018992
+Test     :   hicen   min=    0.000000   max=  447.973196   mean=  192.583031
+Test     :    socn   min=    0.000000   max=    7.822642   mean=    1.678422
+Test     :    tocn   min=    0.000000   max=    7.439284   mean=    0.478278
+Test     :     ssh   min=    0.000000   max=    0.011239   mean=    0.000287
+Test     :    hocn   min=    0.000000   max=    0.000000   mean=    0.000000
