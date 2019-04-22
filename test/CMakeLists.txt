@@ -1,7 +1,7 @@
 list( APPEND soca_test_input
   testinput/checkpointmodel.yml  
   testinput/ensvariance.yml
-  testinput/forecast.yml
+  testinput/forecast_identity.yml
   testinput/forecast_mom6.yml
   testinput/state_test.yml
   testinput/model_test.yml
@@ -30,8 +30,9 @@ list( APPEND soca_test_input
   compare.sh
 )
 
-list( APPEND soca_testoutput
-  testoutput/forecast.test
+list( APPEND soca_test_output
+  testoutput/forecast_identity.test
+  testoutput/forecast_mom6.test
   testoutput/hofx.test
   testoutput/3dvar.test
   testoutput/genenspert.test
@@ -65,17 +66,10 @@ list( APPEND soca_obs
   Data/Obs/Jason-2-2018-04-15-soca.nc
 )
 
-# Create Data directory for test input and symlink all files
+# Create Data directory for test input/output and symlink all files
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/testinput)
-foreach(FILENAME ${soca_test_input})
-    execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
-           ${CMAKE_CURRENT_SOURCE_DIR}/${FILENAME}
-           ${CMAKE_CURRENT_BINARY_DIR}/${FILENAME} )
-endforeach(FILENAME)
-
-# Create Data directory for reference output and symlink all files
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/testoutput)
-foreach(FILENAME ${soca_testoutput})
+foreach(FILENAME ${soca_test_input} ${soca_test_output})
     execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
            ${CMAKE_CURRENT_SOURCE_DIR}/${FILENAME}
            ${CMAKE_CURRENT_BINARY_DIR}/${FILENAME} )
@@ -98,13 +92,6 @@ foreach(FILENAME ${soca_model_param})
            ${CMAKE_CURRENT_BINARY_DIR}/${filename} )
 endforeach(FILENAME)
 
-# MOM's forcing files
-foreach(FILENAME ${soca_model_forcing})
-     get_filename_component(filename ${FILENAME} NAME )
-     execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
-           ${CMAKE_CURRENT_SOURCE_DIR}/${FILENAME}
-           ${CMAKE_CURRENT_BINARY_DIR}/INPUT/${filename} )
-endforeach(FILENAME)
 
 # MOM's output directory
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/RESTART)
@@ -137,47 +124,45 @@ file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bump)
 
 
 #####################################################################
-# NOTE: MPI defaults can be overriden by specifying -DMPIEXEC_MAX_NUMPROCS=?
-#   when running ecbuild
+set(MPI_SOCA_TESTS 2)
 
-
+#-------------------------------------------------------------------------------
 # Tests that create data other tests will use
+#-------------------------------------------------------------------------------
 
 # Test of read/write restart, model advance = Id
-ecbuild_add_test( TARGET test_soca_forecast
-                  SOURCES ../mains/Forecast.cc
-                  LIBS soca
-                  ARGS "testinput/forecast.yml"
-                  MPI ${MPIEXEC_MAX_NUMPROCS})
+ecbuild_add_test( TARGET test_soca_forecast_identity
+                  MPI ${MPI_SOCA_TESTS}
+                  TYPE SCRIPT
+                  COMMAND compare.sh
+                  ARGS
+                      "${CMAKE_BINARY_DIR}/bin/soca_forecast.x
+                      testinput/forecast_identity.yml"
+                      testoutput/forecast_identity.test
+                  DEPENDS soca_forecast.x)
 
 # Test mom6 forecast
 ecbuild_add_test( TARGET test_soca_forecast_mom6
-                  SOURCES ../mains/Forecast.cc
-                  LIBS soca
-                  ARGS "testinput/forecast_mom6.yml"
-                  MPI ${MPIEXEC_MAX_NUMPROCS} )
+                  MPI ${MPI_SOCA_TESTS}
+                  TYPE SCRIPT
+                  COMMAND compare.sh
+                  ARGS
+                      "${CMAKE_BINARY_DIR}/bin/soca_forecast.x
+                      testinput/forecast_mom6.yml"
+                      testoutput/forecast_mom6.test
+                  DEPENDS soca_forecast.x)
 
 # Initialize static error covariance model defined in soca, used for 3DVAR
 ecbuild_add_test( TARGET test_soca_socaerror_init
-                  SOURCES ../mains/StaticBInit.cc
-                  LIBS soca
-                  ARGS "testinput/static_SocaError_init.yml"
-                  MPI ${MPIEXEC_MAX_NUMPROCS} )
-
-#ecbuild_add_test( TARGET test_soca_socaerror_serial_init
-#                  SOURCES ../mains/StaticBInit.cc
-#                  LIBS soca
-#                  ARGS "testinput/static_SocaError_init.yml"
-#                  MPI 1 )
+                  MPI ${MPI_SOCA_TESTS}
+                  TYPE EXE
+                  COMMAND ${CMAKE_BINARY_DIR}/bin/soca_staticbinit.x
+                  ARGS testinput/static_SocaError_init.yml
+                  DEPENDS soca_staticbinit.x)
 
 ecbuild_add_test( TARGET test_soca_enspert
+                  MPI ${MPI_SOCA_TESTS}
                   TYPE SCRIPT
-                  COMMAND "./compare.sh"
-                  ARGS "${CMAKE_BINARY_DIR}/bin/soca_enspert.x testinput/genenspert.yml"
-                       testoutput/genenspert.test
-                  DEPENDS soca_enspert.x
-                  MPI ${MPIEXEC_MAX_NUMPROCS} )
-
 ecbuild_add_test( TARGET test_soca_ensvariance
                   SOURCES ../mains/EnsVariance.cc
                   LIBS soca
@@ -199,7 +184,7 @@ ecbuild_add_test( TARGET test_soca_ensvariance
 
 
 # Tests of class interfaces
-
+#-------------------------------------------------------------------------------
 ecbuild_add_test( TARGET  test_soca_geometry
                   BOOST
                   SOURCES executables/TestGeometry.cc
@@ -285,6 +270,12 @@ ecbuild_add_test( TARGET test_soca_vertconv
                   LIBS    soca )
 
 ecbuild_add_test( TARGET test_soca_dirac_soca_cov
+
+#-------------------------------------------------------------------------------
+# Tests using the main SOCA applications
+#  TEST output stream is compared against existing testoutput/ files
+#-------------------------------------------------------------------------------
+
                   TYPE SCRIPT
                   COMMAND "./compare.sh"
                   ARGS "${CMAKE_BINARY_DIR}/bin/soca_dirac.x testinput/dirac_soca_cov.yml"
