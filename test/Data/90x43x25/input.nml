@@ -17,6 +17,11 @@
             seconds = 0
             calendar = 'NOLEAP' /
 
+ &fms_io_nml
+      max_files_w=100
+      checksum_required=.false.
+/
+
  &fms_nml
        clock_grain='MODULE'
        domains_stack_size = 2000000

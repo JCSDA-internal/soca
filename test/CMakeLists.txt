@@ -14,7 +14,6 @@ list( APPEND soca_test_input
   testinput/3dvarfgat_mom6.yml  
   testinput/4dhyb.yml  
   testinput/balance.yml
-  testinput/bkgerr.yml
   testinput/bkgerrfilt.yml
   testinput/bkgerrsoca.yml
   testinput/bkgerrgodas.yml
@@ -186,90 +185,77 @@ ecbuild_add_test( TARGET test_soca_ensvariance
 # Tests of class interfaces
 #-------------------------------------------------------------------------------
 ecbuild_add_test( TARGET  test_soca_geometry
-                  BOOST
+                  MPI ${MPI_SOCA_TESTS}
                   SOURCES executables/TestGeometry.cc
                   ARGS    "testinput/geometry_test.yml"
-                  MPI ${MPIEXEC_MAX_NUMPROCS}
-                  LIBS    soca )
-
-ecbuild_add_test( TARGET  test_soca_linearmodel
-                  BOOST
-                  SOURCES executables/TestLinearModel.cc
-                  ARGS    "testinput/linearmodel_test.yml"
-                  MPI ${MPIEXEC_MAX_NUMPROCS}
                   LIBS    soca )
 
 ecbuild_add_test( TARGET  test_soca_state
-                  BOOST
+                  MPI ${MPI_SOCA_TESTS}
                   SOURCES executables/TestState.cc
                   ARGS    "testinput/state_test.yml"
-                  MPI ${MPIEXEC_MAX_NUMPROCS}
                   LIBS    soca )
-		  
+
 ecbuild_add_test( TARGET  test_soca_modelaux
-                  BOOST
+                  MPI ${MPI_SOCA_TESTS}
                   SOURCES executables/TestModelAuxControl.cc
                   ARGS    "testinput/model_test.yml"
-                  MPI ${MPIEXEC_MAX_NUMPROCS}
                   LIBS    soca )
-		  
+
 ecbuild_add_test( TARGET  test_soca_model
-                  BOOST
+                  MPI ${MPI_SOCA_TESTS}
                   SOURCES executables/TestModel.cc
                   ARGS    "testinput/model_test.yml"
-                  MPI ${MPIEXEC_MAX_NUMPROCS}
                   LIBS    soca )
-		  
+
 ecbuild_add_test( TARGET  test_soca_increment
-                  BOOST
+                  MPI ${MPI_SOCA_TESTS}
                   SOURCES executables/TestIncrement.cc
                   ARGS    "testinput/increment_test.yml"
-                  MPI ${MPIEXEC_MAX_NUMPROCS}		  
                   LIBS    soca )
 
 ecbuild_add_test( TARGET  test_soca_errorcovariance
-                  BOOST
+                  MPI ${MPI_SOCA_TESTS}
                   SOURCES executables/TestErrorCovariance.cc
                   ARGS    "testinput/static_SocaError_test.yml"
-                  MPI ${MPIEXEC_MAX_NUMPROCS}
+                  LIBS    soca )
+
+ecbuild_add_test( TARGET  test_soca_linearmodel
+                  MPI ${MPI_SOCA_TESTS}
+                  SOURCES executables/TestLinearModel.cc
+                  ARGS    "testinput/linearmodel_test.yml"
                   LIBS    soca )
 
 ecbuild_add_test( TARGET test_soca_balance
-                  BOOST
+                  MPI ${MPI_SOCA_TESTS}
                   SOURCES executables/TestVariableChange.cc
                   ARGS "testinput/balance.yml"
-                  MPI ${MPIEXEC_MAX_NUMPROCS}
                   LIBS    soca )
 
 ecbuild_add_test( TARGET test_soca_bkgerrfilt
-                  BOOST
+                  MPI ${MPI_SOCA_TESTS}
                   SOURCES executables/TestVariableChange.cc
                   ARGS "testinput/bkgerrfilt.yml"
-                  MPI ${MPIEXEC_MAX_NUMPROCS}
                   LIBS    soca )
 
 ecbuild_add_test( TARGET test_soca_bkgerrsoca
-                  BOOST
+                  MPI ${MPI_SOCA_TESTS}
                   SOURCES executables/TestVariableChange.cc
                   ARGS "testinput/bkgerrsoca.yml"
-                  MPI ${MPIEXEC_MAX_NUMPROCS}
                   LIBS    soca )
 
 ecbuild_add_test( TARGET test_soca_bkgerrgodas
-                  BOOST
+                  MPI ${MPI_SOCA_TESTS}
                   SOURCES executables/TestVariableChange.cc
                   ARGS "testinput/bkgerrgodas.yml"
-                  MPI ${MPIEXEC_MAX_NUMPROCS}
                   LIBS    soca )
 
 ecbuild_add_test( TARGET test_soca_vertconv
-                  BOOST
+                  MPI ${MPI_SOCA_TESTS}
                   SOURCES executables/TestVariableChange.cc
                   ARGS "testinput/vertconv.yml"
-                  MPI ${MPIEXEC_MAX_NUMPROCS}
                   LIBS    soca )
 
-ecbuild_add_test( TARGET test_soca_dirac_soca_cov
 
 #-------------------------------------------------------------------------------
 # Tests using the main SOCA applications
