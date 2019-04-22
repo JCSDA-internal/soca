@@ -42,37 +42,23 @@ list( APPEND soca_testoutput
 )
 
 list( APPEND soca_model_param
-  Data/360x210x75/input.nml
-  Data/360x210x75/MOM_input
-  Data/360x210x75/MOM_override
-  Data/360x210x75/data_table
-  Data/360x210x75/diag_table
-  Data/360x210x75/field_table
-  Data/360x210x75/ice.bkgerror.nc	
-  Data/360x210x75/ocn.bkgerror.nc
+  Data/90x43x25/input.nml
+  Data/90x43x25/MOM_input
+  Data/90x43x25/diag_table
+  Data/90x43x25/field_table
+  Data/90x43x25/ice.bkgerror.nc
+  Data/90x43x25/ocn.bkgerror.nc
   Data/rossrad.dat
-  Data/godas_sst_bgerr.nc  
+  Data/godas_sst_bgerr.nc
 )
 
 list( APPEND soca_model_restarts
-  Data/360x210x75/INPUT/MOM.res.nc
-  Data/360x210x75/INPUT/ice_model.res.nc
-  Data/360x210x75/INPUT/layer_coord.nc
-  Data/360x210x75/INPUT/hycom1_75_800m.nc
-  Data/360x210x75/INPUT/ocean_hgrid.nc
-  Data/360x210x75/INPUT/topog.nc
-)
-
-
-list( APPEND soca_model_forcing
-  Data/360x210x75/INPUT/geothermal_heating_cm2g.nc
-  Data/360x210x75/INPUT/seawifs_1998-2006_GOLD_smoothed_2X.nc
-  Data/360x210x75/INPUT/tideamp.nc
-  Data/360x210x75/INPUT/topog.nc
-  Data/360x210x75/INPUT/gustiness_qscat.nc
-  Data/360x210x75/INPUT/ocean_forcing_daily.nc
-  Data/360x210x75/INPUT/ocean_precip_monthly.nc
-  Data/360x210x75/INPUT/sgs_h2.nc
+  Data/90x43x25/INPUT/MOM.res.nc
+  Data/90x43x25/INPUT/ice_model.res.nc
+  Data/90x43x25/INPUT/layer_coord25.nc
+  Data/90x43x25/INPUT/hycom1_25.nc
+  Data/90x43x25/INPUT/ocean_hgrid.nc
+  Data/90x43x25/INPUT/ocean_topog.nc
 )
 
 list( APPEND soca_obs
