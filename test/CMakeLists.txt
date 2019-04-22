@@ -298,7 +298,7 @@ ecbuild_add_test( TARGET test_soca_parameters_bump_cov_nicas
                        testinput/parameters_bump_cov_nicas.yml"
                        testoutput/parameters_bump_cov_nicas.test
                   DEPENDS soca_parameters.x)
-#set_tests_properties(test_soca_parameters_bump_cov_nicas PROPERTIES TIMEOUT 5)
+set_tests_properties(test_soca_parameters_bump_cov_nicas PROPERTIES TIMEOUT 1)
 
 
 ecbuild_add_test( TARGET test_soca_dirac_bump_cov
