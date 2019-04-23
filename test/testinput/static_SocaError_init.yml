@@ -1,24 +1,18 @@
----
-test_framework_runtime_config: "--log_level=test_suite"
 Geometry:
   num_ice_cat: 5
   num_ice_lev: 4
   num_sno_lev: 1
+
 Variables:
-  variables:
-  - cicen
-  - hicen
-  - hocn
-  - socn
-  - tocn
-  - ssh
+  variables: [cicen, hicen, hocn, socn, tocn, ssh]
+
 State:
   read_from_file: 1
   date: &date 2018-04-15T00:00:00Z
   basename: ./INPUT/
-  ocn_sfc_filename: MOM.res.nc
   ocn_filename: MOM.res.nc
   ice_filename: ice_model.res.nc
+
 Covariance:
   covariance: SocaError
   default_seed: 1
@@ -30,11 +24,11 @@ Covariance:
   mask_check: 1
   ntry: 3
   nrep:  2
-  lsqrt: 1  
-  resol: 8.0
+  lsqrt: 1
+  resol: 6.0
   network: 1
   mpicom: 2
   forced_radii: 1
   date: *date
   ocean_corr_scale: 3000.0e3
-  ice_corr_scale: 3000.0e3
+  ice_corr_scale: 2000.0e3

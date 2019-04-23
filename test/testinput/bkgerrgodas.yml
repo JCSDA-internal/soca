@@ -1,4 +1,5 @@
 test_framework_runtime_config: "--log_level=test_suite"
+
 Geometry:
   num_ice_cat: 5
   num_ice_lev: 4
@@ -22,7 +23,7 @@ LinearVariableChangeTests:
   t_efold: 500.0
   s_min: 0.0
   s_max: 0.25
-  ssh_min: 0.0 
+  ssh_min: 0.0
   ssh_max: 0.1
   ssh_phi_ex: 20
   cicen_min: 0.1
