@@ -61,5 +61,11 @@ Observations:
     Covariance:
       covariance: diagonal
 
-#    - ObsType: SeaIceFraction
+  - ObsType: SeaIceFraction
+    ObsData:
+      ObsDataOut: {oubsfile: ./Data/icec.out.nc}
+      ObsDataIn:  {obsfile:  ./Data/icec.nc}
+    Covariance:
+      covariance: diagonal
+
 #    - ObsType: SeaIceThickness
