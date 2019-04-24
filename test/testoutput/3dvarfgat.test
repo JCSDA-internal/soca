@@ -4,6 +4,7 @@ Test     : CostJo   : Nonlinear Jo(SeaSurfaceSalinity) = 1.58217, nobs = 16, Jo/
 Test     : CostJo   : Nonlinear Jo(ADT) = 94.4856, nobs = 30, Jo/n = 3.14952, err = 0.1
 Test     : CostJo   : Nonlinear Jo(InsituTemperature) = 29.655, nobs = 30, Jo/n = 0.988499, err = 0.915904
 Test     : CostJo   : Nonlinear Jo(InsituSalinity) = 7.3741, nobs = 33, Jo/n = 0.223457, err = 0.61043
+Test     : CostJo   : Nonlinear Jo = 0 --- No Observations
 Test     : CostFunction: Nonlinear J = 407.064
 Test     : RPCGMinimizer: reduction in residual norm = 0.0142133
 Test     : CostFunction::addIncrement: Analysis: 
@@ -20,4 +21,5 @@ Test     : CostJo   : Nonlinear Jo(SeaSurfaceSalinity) = 1.417930, nobs = 16, Jo
 Test     : CostJo   : Nonlinear Jo(ADT) = 90.014552, nobs = 30, Jo/n = 3.000485, err = 0.100000
 Test     : CostJo   : Nonlinear Jo(InsituTemperature) = 24.363936, nobs = 30, Jo/n = 0.812131, err = 0.915904
 Test     : CostJo   : Nonlinear Jo(InsituSalinity) = 5.620721, nobs = 33, Jo/n = 0.170325, err = 0.610430
+Test     : CostJo   : Nonlinear Jo = 0.000000 --- No Observations
 Test     : CostFunction: Nonlinear J = 1274.948139

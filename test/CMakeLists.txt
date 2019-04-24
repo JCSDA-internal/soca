@@ -67,6 +67,7 @@ list( APPEND soca_model_restarts
 
 list( APPEND soca_obs
   Data/Obs/adt.nc
+  Data/Obs/icec.nc
   Data/Obs/prof.nc
   Data/Obs/sss.nc
   Data/Obs/sst.nc

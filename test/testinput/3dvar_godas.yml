@@ -169,9 +169,16 @@ cost_function:
       ObsFilters:
       - *Filter_mask
 
-#    - ObsType: SeaIceFraction
-#    - ObsType: SeaIceThickness
+    - ObsType: SeaIceFraction
+      ObsData:
+        ObsDataOut: {oubsfile: ./Data/icec.out.nc}
+        ObsDataIn:  {obsfile:  ./Data/icec.nc}
+      Covariance:
+        covariance: diagonal
+      ObsFilters:
+      - *Filter_mask
 
+#    - ObsType: SeaIceThickness
 
 variational:
   iteration:
