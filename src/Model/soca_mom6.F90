@@ -310,7 +310,10 @@ contains
     type(soca_mom6_config), intent(inout) :: mom6_config
 
     ! Finalize fms
-    call io_infra_end ; call MOM_infra_end
+    call io_infra_end
+
+    !! as a temporary workaround to MPI_Finalize() issues, MOM_infra_end is NOT called
+    ! call MOM_infra_end
 
     ! Finalize mom6
     call MOM_end(mom6_config%MOM_CSp)
