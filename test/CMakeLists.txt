@@ -343,8 +343,6 @@ ecbuild_add_test( TARGET test_soca_hofx
                       testinput/hofx.yml"
                       testoutput/hofx.test
                   DEPENDS soca_hofx.x)
-# the above test hangs, leave the following line until the test can be fixed
-set_tests_properties(test_soca_hofx PROPERTIES TIMEOUT 1)
 
 ecbuild_add_test( TARGET test_soca_3dvarsoca
                   MPI ${MPI_SOCA_TESTS}
@@ -385,9 +383,6 @@ ecbuild_add_test( TARGET test_soca_3dvarfgat
                       testinput/3dvarfgat.yml"
                       testoutput/3dvarfgat.test
                   DEPENDS soca_3dvar.x)
-
-# the above test hangs, leave the following line until the test can be fixed
-set_tests_properties(test_soca_3dvarfgat PROPERTIES TIMEOUT 6)
 
 ecbuild_add_test( TARGET test_soca_4dhybrid
                   MPI ${MPI_SOCA_TESTS}

@@ -42,8 +42,6 @@ contains
     ! Indices for compute domain (no halo)
     call geom_get_domain_indices(fld%geom%ocean, "compute", isc, iec, jsc, jec)
 
-    !if (locs%nlocs==0) return
-
     ! Compute interpolation weights
     call horiz_interp%initialize(&
             &      fld%geom%ocean%lon(isc:iec,jsc:jec),&
@@ -106,7 +104,6 @@ contains
     type(soca_bumpinterp2d) :: horiz_interp    
     integer, save :: bumpid = 2000
 
-    if (locs%nlocs==0) return
     call check(fld)
 
     call initialize_interph(fld, locs, horiz_interp, bumpid)
@@ -131,7 +128,6 @@ contains
     real(kind=kind_real), allocatable :: gom_window(:,:)
     real(kind=kind_real), allocatable :: fld3d(:,:,:)        
 
-    !if (traj%noobs) return
     
     horiz_interp_p => traj%horiz_interp(1)
 
@@ -216,8 +212,6 @@ contains
     real(kind=kind_real), allocatable :: gom_window(:,:)
     real(kind=kind_real), allocatable :: fld3d(:,:,:)        
     integer :: iii(3), bumpid=1111
-    ! Exit if no obs
-    !if (locs%nlocs==0) return
 
     ! Sanity check
     call check(fld)    
