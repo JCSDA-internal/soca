@@ -27,7 +27,7 @@ module soca_omb_stats_mod
      real(kind=kind_real),  allocatable :: lat(:)       
      real(kind=kind_real),  allocatable :: bgerr(:)
      real(kind=kind_real),  allocatable :: bgerr_model(:,:)
-     type(soca_domain_indices), pointer:: domain
+     type(soca_domain_indices)          :: domain
    contains
      procedure :: init => soca_omb_stats_init
      procedure :: bin => soca_omb_stats_bin
@@ -39,7 +39,7 @@ contains
   ! ------------------------------------------------------------------------------  
   subroutine soca_omb_stats_init(self, domain)
     class(soca_omb_stats),           intent(inout) :: self
-    type(soca_domain_indices), pointer, intent(in) :: domain
+    type(soca_domain_indices),       intent(in) :: domain
     
     integer(kind=4) :: ncid
     integer(kind=4) :: dimid
@@ -93,7 +93,7 @@ contains
     end where
 
     ! Compute domain info
-    self%domain => domain
+    self%domain = domain
 
   end subroutine soca_omb_stats_init
 
@@ -150,7 +150,6 @@ contains
     class(soca_omb_stats), intent(inout) :: self
     
     deallocate(self%lon, self%lat, self%bgerr, self%bgerr_model)
-    nullify(self%domain)
     
   end subroutine soca_omb_stats_exit
 
