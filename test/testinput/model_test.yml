@@ -2,33 +2,38 @@
 logging:
   categories: Warning, Error
 test_framework_runtime_config: "--log_level=test_suite"
+
 Geometry:
   num_ice_cat: 5
   num_ice_lev: 4
   num_sno_lev: 1
-ModelBias: 
+
+ModelBias:
+
 ModelTest:
   fclength: PT6H
-  finalnorm: 173981.16121994477
-  tolerance: '0.005'
+  finalnorm: 35983.715594339832
+  tolerance: 1e-12
+
 Model:
-  name: 'SOCA'
-  tstep: PT6H
+  name: SOCA
+  tstep: PT1H
   advance_mom6: 1
-  variables: [cicen, hicen, socn, tocn, ssh, hocn]  
+  variables: &soca_vars [cicen, hicen, socn, tocn, ssh, hocn]
+
 State:
   read_from_file: 1
-  date: '2018-04-15T00:00:00Z'
+  date: &date 2018-04-15T00:00:00Z
   basename: "./INPUT/"
   ocn_filename: MOM.res.nc
   ice_filename: ice_model.res.nc
-  variables: [cicen, hicen, socn, tocn, ssh, hocn]
-forecast_length: PT6H
+  variables: *soca_vars
+
+forecast_length: PT3H
+
 output:
-  frequency: PT6H
+  frequency: PT3H
   datadir: Data
   exp: example
-  date: '2018-04-15T00:00:00Z'
+  date: *date
   type: fc
-print:
-  frequency: PT3H

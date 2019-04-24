@@ -39,16 +39,20 @@ namespace soca {
       const eckit::LocalConfiguration backgroundConfig(fullConfig,
                                                        "background");
       State xb(resol, model.variables(), backgroundConfig);
+      oops::Log::test() << "input background: " << std::endl << xb << std::endl;
 
       //  Setup state to write in the restart
       const eckit::LocalConfiguration analysisConfig(fullConfig, "analysis");
       State xa(resol, model.variables(), analysisConfig);
+      oops::Log::test() << "analysis: " << std::endl << xa << std::endl;
 
       //  Initialize model
       model.initialize(xb);
 
       //  Set background to analysis
       xb = xa;
+      oops::Log::test() << "output background: " << std::endl << xb
+                        << std::endl;
 
       //  Finalize model (dump restart)
       model.finalize(xb);

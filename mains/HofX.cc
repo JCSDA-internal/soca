@@ -10,12 +10,12 @@
 
 #include "src/Traits.h"
 #include "oops/runs/HofX.h"
-// #include "src/instantiateObsFilterFactory.h"
+#include "src/instantiateObsFilterFactory.h"
 #include "src/Run/Run.h"
 
 int main(int argc,  char ** argv) {
   soca::Run run(argc, argv);
-  // soca::instantiateObsFilterFactory();
+  soca::instantiateObsFilterFactory();
   oops::HofX<soca::Traits> hofx;
   run.execute(hofx);
   return 0;

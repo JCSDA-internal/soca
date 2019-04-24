@@ -11,7 +11,6 @@
 #
 #
 
-test_framework_runtime_config: "--log_level=test_suite"
 resolution:
   num_ice_cat: 5
   num_ice_lev: 4
@@ -23,9 +22,16 @@ model:
   advance_mom6: 0
   variables: &soca_vars [cicen, hicen, socn, tocn, ssh, hocn]
 
+# common obsfilters used by all obs
+_: &Filter_mask
+  Filter: Domain Check
+  where:
+  - variable: sea_area_fraction@GeoVaLs
+    minvalue: 0.5
+
 cost_function:
   cost_type: 3D-Var
-  window_begin: '2018-04-14T00:00:00Z'
+  window_begin: 2018-04-14T00:00:00Z
   window_length: P2D
   variables: *soca_vars
   varchange: Identity
@@ -36,41 +42,19 @@ cost_function:
         basename: "./INPUT/"
         ocn_filename: MOM.res.nc
         ice_filename: ice_model.res.nc
-        date: &date 2018-04-15T00:00:00Z
+        date: &bkg_date 2018-04-15T00:00:00Z
+
     Covariance:
       covariance: SocaError
-      default_seed: 1
       prefix: soca
       datadir: ./bump
-      method: cor
-      strategy: common      
-#      new_hdiag: 0
-      new_nicas: 0   # 1: recomputes convol param
-      load_nicas: 1  # 1: loads convol param (layout specific)
-      sam_read: 0
-      sam_write: 1  
-      mask_check: 1
-      draw_type: random_uniform
-      nc1: 100
-      ntry: 3
-      nrep:  2
-      nc3: 10
-      dc: 1000.0e3
-      nl0r: 1
-      minim_algo: "hooke"
-      rvflt: 0.0
-      lsqrt: 1  
-      resol: 8.0
-      nicas_interp: bilin
-      network: 1
-      mpicom: 2 # Number of internal comm steps 
-      forced_radii: 1
-      rh: 3000e3
-      rv: 100
-      advmode: 0
-      diag_interp: bilin
-      date: *date
+      strategy: specific_univariate
+      load_nicas: 1
+      lsqrt: 1
+      mpicom: 2
+      date: *bkg_date
       variable_changes:
+
       - varchange: BkgErrFILT
         ocean_depth_min: 1000 # [m]
         rescale_bkgerr: 1.0
@@ -81,6 +65,7 @@ cost_function:
           variables: *soca_vars
         outputVariables:
           variables: *soca_vars
+
       - varchange: BkgErrGODAS
         t_min: 0.1
         t_max: 2.0
@@ -101,6 +86,7 @@ cost_function:
           variables: *soca_vars
         outputVariables:
           variables: *soca_vars
+
       - varchange: VertConvSOCA
         variables:
           variables: *soca_vars
@@ -112,87 +98,80 @@ cost_function:
           variables: *soca_vars
         outputVariables:
           variables: *soca_vars
+
       - varchange: BalanceSOCA
         dsdtmax: 0.1
         dsdzmin: 3.0e-6
         dtdzmin: 1.0e-6
-        nlayers: 10        
+        nlayers: 2
         inputVariables:
           variables: *soca_vars
         outputVariables:
           variables: *soca_vars
   Jo:
     ObsTypes:
-    - ObsType: ADT
+
+    - ObsType: SeaSurfaceTemp
+      variables: [sea_surface_temperature]
       ObsData:
-        ObsDataOut:
-          obsfile: ./Data/Jason-2-2018-04-15-soca-out.nc
-        ObsDataIn:
-          obsfile: ./Data/Jason-2-2018-04-15.nc
+        ObsDataOut: {obsfile: ./Data/sst.out.nc}
+        ObsDataIn:  {obsfile: ./Data/sst.nc}
       Covariance:
         covariance: diagonal
       ObsFilters:
+      - *Filter_mask
+      - Filter: Thinning
+        amount: 0.1
+        random_seed: 0
+
+    - ObsType: SeaSurfaceSalinity
+      variables: [sea_surface_salinity]
+      ObsData:
+        ObsDataOut: {obsfile: ./Data/sss.out.nc}
+        ObsDataIn:  {obsfile: ./Data/sss.nc}
+      Covariance:
+        covariance: diagonal
+      ObsFilters:
+      - *Filter_mask
+      - Filter: Domain Check
+        where:
+        - variable: sea_surface_temperature@GeoVaLs
+          minvalue: 15
+
+    - ObsType: ADT
+      ObsData:
+        ObsDataOut: {obsfile: ./Data/adt.out.nc}
+        ObsDataIn:  {obsfile: ./Data/adt.nc}
+      Covariance:
+        covariance: diagonal
+      ObsFilters:
+      - *Filter_mask
+
+    - ObsType: InsituTemperature
+      ObsData:
+        ObsDataOut: {obsfile: ./Data/prof.T.out.nc}
+        ObsDataIn:  {obsfile: ./Data/prof.nc}
+      Covariance:
+        covariance: diagonal
+      ObsFilters:
+      - *Filter_mask
       - Filter: Background Check
-        variables:
-        - obs_absolute_dynamic_topography
-        threshold: 3
-#      - Filter: GOMsaver
-#        filename: ./Data/testgeovl.nc
-#    - ObsType: InsituTemperature
-#      ObsData:
-#        ObsDataOut:
-#          obsfile: ./Data/profile_2018-04-15-out.nc
-#        ObsDataIn:
-#          obsfile: ./Data/profile_2018-04-15.nc
-#          #obsfile: /home/gvernier/Data/FNMOC/2018041500.profile.nc
-#      Covariance:
-#        covariance: diagonal
-#      ObsFilters:
-#      - Filter: Background Check
-#        variables:
-#        - sea_water_temperature
-#        threshold: 3
+        variables: [sea_water_temperature]
+        threshold: 5
+
+    - ObsType: InsituSalinity
+      variable: [sea_water_salinity]
+      ObsData:
+        ObsDataOut: {obsfile: ./Data/prof.S.out.nc}
+        ObsDataIn:  {obsfile: ./Data/prof.nc}
+      Covariance:
+        covariance: diagonal
+      ObsFilters:
+      - *Filter_mask
+
 #    - ObsType: SeaIceFraction
-#      ObsData:
-#        ObsDataOut:
-#          obsfile: ./Data/icec-2018-04-15-soca-out.nc
-#        ObsDataIn:
-#          obsfile: ./Data/icec-2018-04-15.nc
-#      Covariance:
-#        covariance: diagonal
-#      ObsFilters:
-#      - Filter: Background Check
-#        variables:
-#        - obs_sea_ice_concentration
-#        threshold: 3
 #    - ObsType: SeaIceThickness
-#      ObsData:
-#        ObsDataOut:
-#          obsfile: ./Data/cryosat2-2018-04-15-soca-out.nc
-#        ObsDataIn:
-#          obsfile: ./Data/cryosat2-2018-04-15.nc
-#      Covariance:
-#        covariance: diagonal
-#      ObsFilters:
-#      - Filter: Background Check
-#        variables:
-#        - obs_sea_ice_thickness
-#        threshold: 3
-#    - ObsType: SeaSurfaceTemp
-#      ObsData:
-#        ObsDataOut:
-#          obsfile: ./Data/sst_obs-2018-04-15-soca-out.nc
-#        ObsDataIn:
-#          obsfile: ./Data/sst_obs-2018-04-15.nc4
-#      Covariance:
-#        covariance: diagonal
-#      variables:
-#      - sea_surface_temperature
-#      ObsFilters:
-#      - Filter: Background Check
-#        variables:
-#        - sea_surface_temperature
-#        threshold: 3
+
 
 variational:
   iteration:
@@ -206,30 +185,15 @@ variational:
       tstep: PT1H
       advance_mom6: 0
       variables: *soca_vars
-    ninner: 1
+    ninner: 5
     gradient_norm_reduction: 1e-15
     test: 'on'
     prints:
     diagnostics:
       departures: ombg
-#  - resolution:
-#      num_ice_cat: 5
-#      num_ice_lev: 4
-#      num_sno_lev: 1
-#    linearmodel:
-#      varchange: Identity      
-#      version: IdTLM
-#      tstep: PT1H
-#      variables: [cicen, hicen, socn, tocn, ssh, hocn]
-#    ninner: 15
-#    gradient_norm_reduction: 1e-15
-#    test: 'on'
-#    output:
-#      datadir: Data
-#      exp: 3dvar
-#      type: incr
+
 minimizer:
-  algorithm: DRIPCG
+  algorithm: RPCG
 
 output:
   datadir: Data
