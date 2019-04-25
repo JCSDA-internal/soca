@@ -165,14 +165,10 @@ subroutine soca_finalize_integration(self, flds)
 
   ! Checkpoint SOCA fields before jamming into MOM restarts
   if (self%checkpoint == 1) then
-    !where( flds%tocn < self%tocn_minval ) flds%tocn = self%tocn_minval
-    !where( flds%tocn > self%tocn_maxval ) flds%tocn = self%tocn_maxval
-    !where( flds%socn < self%socn_minval ) flds%socn = self%socn_minval
-    !where( flds%socn > self%socn_maxval ) flds%socn = self%socn_maxval
-    where( flds%tocn < self%tocn_minmax[1] ) flds%tocn = self%tocn_minmax[1]
-    where( flds%tocn > self%tocn_minmax[2] ) flds%tocn = self%tocn_minmax[2]
-    where( flds%socn < self%socn_minmax[1] ) flds%socn = self%socn_minmax[1]
-    where( flds%socn > self%socn_minmax[2] ) flds%socn = self%socn_minmax[2]
+    where( flds%tocn < self%tocn_minmax(1) ) flds%tocn = self%tocn_minmax(1)
+    where( flds%tocn > self%tocn_minmax(2) ) flds%tocn = self%tocn_minmax(2)
+    where( flds%socn < self%socn_minmax(1) ) flds%socn = self%socn_minmax(1)
+    where( flds%socn > self%socn_minmax(2) ) flds%socn = self%socn_minmax(2)
   endif
 
   ! Update MOM's T and S to soca's

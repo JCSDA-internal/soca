@@ -58,12 +58,8 @@ subroutine c_soca_setup(c_confspec, c_key_geom, c_key_model) bind (c,name='soca_
   endif
 
   if (model%checkpoint == 1) then
-    !model%tocn_minval = config_get_real(c_confspec,"tocn_minval")
-    !model%tocn_maxval = config_get_real(c_confspec,"tocn_maxval")
-    !model%socn_minval = config_get_real(c_confspec,"socn_minval")
-    !model%socn_maxval = config_get_real(c_confspec,"socn_maxval")
-    model%tocn_minmax = config_get_double_vector(c_confspec,"tocn_minmax")
-    model%socn_minmax = config_get_double_vector(c_confspec,"socn_minmax")
+    call config_get_double_vector(c_confspec, "tocn_minmax", model%tocn_minmax)
+    call config_get_double_vector(c_confspec, "socn_minmax", model%socn_minmax)
   endif
 
   ! Initialize mom6
