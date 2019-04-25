@@ -17,6 +17,7 @@ list( APPEND soca_test_input
   testinput/genenspert.yml
   testinput/geometry_test.yml
   testinput/hofx.yml
+  testinput/hofx3d.yml
   testinput/increment_test.yml
   testinput/linearmodel_test.yml
   testinput/model_test.yml
@@ -41,6 +42,7 @@ list( APPEND soca_test_output
   testoutput/forecast_mom6.test
   testoutput/genenspert.test
   testoutput/hofx.test
+  testoutput/hofx3d.test
   testoutput/parameters_bump_cov_lct.test
   testoutput/parameters_bump_cov_nicas.test
 )
@@ -335,6 +337,16 @@ ecbuild_add_test( TARGET test_soca_dirac_soca_cov
 #                  ARGS "testinput/obserrorcovariance_test.yml"
 #                  LIBS    soca )
 #
+ecbuild_add_test( TARGET test_soca_hofx3d
+                  MPI ${MPI_SOCA_TESTS}
+                  TYPE SCRIPT
+                  COMMAND compare.sh
+                  ARGS
+                      "${CMAKE_BINARY_DIR}/bin/soca_hofx3d.x
+                      testinput/hofx3d.yml"
+                      testoutput/hofx3d.test
+                  DEPENDS soca_hofx3d.x)
+
 ecbuild_add_test( TARGET test_soca_hofx
                   MPI ${MPI_SOCA_TESTS}
                   TYPE SCRIPT

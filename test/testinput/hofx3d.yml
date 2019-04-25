@@ -1,0 +1,66 @@
+Geometry:
+  num_ice_cat: 5
+  num_ice_lev: 4
+  num_sno_lev: 1
+
+Initial Condition:
+  read_from_file: 1
+  date: 2018-04-15T00:00:00Z
+  basename: ./INPUT/
+  ocn_filename: MOM.res.nc
+  ice_filename: ice_model.res.nc
+  variables: [cicen, hicen, socn, tocn, ssh, hocn]
+
+Assimilation Window:
+  Begin: 2018-04-15T00:00:00Z
+  Length: P2D
+
+Observations:
+  ObsTypes:
+
+  - ObsType: SeaSurfaceTemp
+    variables: [sea_surface_temperature]
+    ObsData:
+      ObsDataOut: {obsfile: ./Data/sst.out.nc}
+      ObsDataIn:  {obsfile: ./Data/sst.nc}
+    Covariance:
+      covariance: diagonal
+
+  - ObsType: SeaSurfaceSalinity
+    variables: [sea_surface_salinity]
+    ObsData:
+      ObsDataOut: {obsfile: ./Data/sss.out.nc}
+      ObsDataIn:  {obsfile: ./Data/sss.nc}
+    Covariance:
+      covariance: diagonal
+
+  - ObsType: ADT
+    ObsData:
+      ObsDataOut: {obsfile: ./Data/adt.out.nc}
+      ObsDataIn:  {obsfile: ./Data/adt.nc}
+    Covariance:
+      covariance: diagonal
+
+  - ObsType: InsituTemperature
+    ObsData:
+      ObsDataOut: {obsfile: ./Data/prof.T.out.nc}
+      ObsDataIn:  {obsfile: ./Data/prof.nc}
+    Covariance:
+      covariance: diagonal
+
+  - ObsType: InsituSalinity
+    variable: [sea_water_salinity]
+    ObsData:
+      ObsDataOut: {obsfile: ./Data/prof.S.out.nc}
+      ObsDataIn:  {obsfile: ./Data/prof.nc}
+    Covariance:
+      covariance: diagonal
+
+  - ObsType: SeaIceFraction
+    ObsData:
+      ObsDataOut: {oubsfile: ./Data/icec.out.nc}
+      ObsDataIn:  {obsfile:  ./Data/icec.nc}
+    Covariance:
+      covariance: diagonal
+
+#    - ObsType: SeaIceThickness
