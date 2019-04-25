@@ -24,6 +24,11 @@ ecbuild_add_executable( TARGET  soca_hofx3d.x
                         LIBS    soca
                       )
 
+ecbuild_add_executable( TARGET  soca_enshofx.x
+                        SOURCES EnsHofX.cc
+                        LIBS    soca
+                      )
+
 ecbuild_add_executable( TARGET  soca_3dvar.x
                         SOURCES 3DVar.cc
                         LIBS    soca

@@ -11,6 +11,7 @@ list( APPEND soca_test_input
   testinput/checkpointmodel.yml
   testinput/dirac_bump_cov.yml
   testinput/dirac_soca_cov.yml
+  testinput/enshofx.yml
   testinput/ensvariance.yml
   testinput/forecast_identity.yml
   testinput/forecast_mom6.yml
@@ -37,6 +38,7 @@ list( APPEND soca_test_output
   testoutput/checkpointmodel.test
   testoutput/dirac_bump_cov.test
   testoutput/dirac_soca_cov.test
+  testoutput/enshofx.test
   testoutput/ensvariance.test
   testoutput/forecast_identity.test
   testoutput/forecast_mom6.test
@@ -355,6 +357,16 @@ ecbuild_add_test( TARGET test_soca_hofx
                       "${CMAKE_BINARY_DIR}/bin/soca_hofx.x
                       testinput/hofx.yml"
                       testoutput/hofx.test
+                  DEPENDS soca_hofx.x)
+
+ecbuild_add_test( TARGET test_soca_enshofx
+                  MPI ${MPI_SOCA_TESTS}
+                  TYPE SCRIPT
+                  COMMAND compare.sh
+                  ARGS
+                      "${CMAKE_BINARY_DIR}/bin/soca_enshofx.x
+                      testinput/enshofx.yml"
+                      testoutput/enshofx.test
                   DEPENDS soca_hofx.x)
 
 ecbuild_add_test( TARGET test_soca_3dvarsoca
