@@ -41,8 +41,6 @@ type :: soca_model
    real(kind=kind_real) :: dt0  !< dimensional time (seconds)
    type(soca_mom6_config) :: mom6_config  !< MOM6 data structure
    integer :: checkpoint        !< perform checkpointing if true
-   !real(kind_real) :: tocn_minval, tocn_maxval  !< min, max values for tocn
-   !real(kind_real) :: socn_minval, socn_maxval  !< min, max values for socn
    real(kind_real), dimension(2) :: tocn_minmax, socn_minmax  !< min, max values
 end type soca_model
 
