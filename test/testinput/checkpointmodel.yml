@@ -8,6 +8,8 @@ model:
   tstep: PT6H
   advance_mom6: 0
   variables: [cicen, hicen, socn, tocn, ssh, hocn]
+  tocn_minmax: [-1.8, 32.0]
+  socn_minmax: [0.1, 38.0]
 
 background:
   read_from_file: 1
