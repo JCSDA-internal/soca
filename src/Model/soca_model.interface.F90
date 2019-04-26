@@ -53,8 +53,8 @@ subroutine c_soca_setup(c_confspec, c_key_geom, c_key_model) bind (c,name='soca_
   model%advance_mom6 = config_get_int(c_confspec,"advance_mom6")
 
   ! Setup defaults for clamping values in the model
-  tocn_minmax=(/-2.0, 34.0/)
-  socn_minmax=(/0.0, 45.0/)
+  tocn_minmax=(/-999., -999./)
+  socn_minmax=(/-999., -999./)
   call config_get_double_vector(c_confspec, "tocn_minmax", model%tocn_minmax, tocn_minmax)
   call config_get_double_vector(c_confspec, "socn_minmax", model%socn_minmax, socn_minmax)
 
