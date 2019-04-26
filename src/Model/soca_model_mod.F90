@@ -40,7 +40,6 @@ type :: soca_model
    integer :: advance_mom6      !< call mom6 step if true
    real(kind=kind_real) :: dt0  !< dimensional time (seconds)
    type(soca_mom6_config) :: mom6_config  !< MOM6 data structure
-   integer :: checkpoint        !< perform checkpointing if true
    real(kind_real), dimension(2) :: tocn_minmax, socn_minmax  !< min, max values
 end type soca_model
 
@@ -161,13 +160,10 @@ subroutine soca_finalize_integration(self, flds)
   call mpp_update_domains(flds%tocn, flds%geom%ocean%G%Domain%mpp_domain)
   call mpp_update_domains(flds%socn, flds%geom%ocean%G%Domain%mpp_domain)
 
-  ! Checkpoint SOCA fields before jamming into MOM restarts
-  if (self%checkpoint == 1) then
-    where( flds%tocn < self%tocn_minmax(1) ) flds%tocn = self%tocn_minmax(1)
-    where( flds%tocn > self%tocn_minmax(2) ) flds%tocn = self%tocn_minmax(2)
-    where( flds%socn < self%socn_minmax(1) ) flds%socn = self%socn_minmax(1)
-    where( flds%socn > self%socn_minmax(2) ) flds%socn = self%socn_minmax(2)
-  endif
+  where( flds%tocn < self%tocn_minmax(1) ) flds%tocn = self%tocn_minmax(1)
+  where( flds%tocn > self%tocn_minmax(2) ) flds%tocn = self%tocn_minmax(2)
+  where( flds%socn < self%socn_minmax(1) ) flds%socn = self%socn_minmax(1)
+  where( flds%socn > self%socn_minmax(2) ) flds%socn = self%socn_minmax(2)
 
   ! Update MOM's T and S to soca's
   self%mom6_config%MOM_CSp%T = real(flds%tocn, kind=8)

@@ -33,6 +33,7 @@ subroutine c_soca_setup(c_confspec, c_key_geom, c_key_model) bind (c,name='soca_
   character(len=20) :: ststep
   character(len=160) :: record
   integer :: int_logical
+  real(c_double), dimension(2) :: tocn_minmax, socn_minmax
 
   call soca_geom_registry%get(c_key_geom, geom)
   call soca_model_registry%init()
@@ -51,16 +52,11 @@ subroutine c_soca_setup(c_confspec, c_key_geom, c_key_model) bind (c,name='soca_
   ! Setup mom6 advance or identity model
   model%advance_mom6 = config_get_int(c_confspec,"advance_mom6")
 
-  ! Setup for checkpointing the model
-  model%checkpoint = 0
-  if (config_element_exists(c_confspec,"checkpoint")) then
-    model%checkpoint = config_get_int(c_confspec,"checkpoint")
-  endif
-
-  if (model%checkpoint == 1) then
-    call config_get_double_vector(c_confspec, "tocn_minmax", model%tocn_minmax)
-    call config_get_double_vector(c_confspec, "socn_minmax", model%socn_minmax)
-  endif
+  ! Setup defaults for clamping values in the model
+  tocn_minmax=(/-2.0, 34.0/)
+  socn_minmax=(/0.0, 45.0/)
+  call config_get_double_vector(c_confspec, "tocn_minmax", model%tocn_minmax, tocn_minmax)
+  call config_get_double_vector(c_confspec, "socn_minmax", model%socn_minmax, socn_minmax)
 
   ! Initialize mom6
   call soca_setup(model)

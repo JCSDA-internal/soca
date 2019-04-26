@@ -51,11 +51,12 @@ namespace soca {
 
       //  Set background to analysis
       xb = xa;
-      oops::Log::test() << "output background: " << std::endl << xb
-                        << std::endl;
 
       //  Finalize model (dump restart)
       model.finalize(xb);
+
+      oops::Log::test() << "output background: " << std::endl << xb
+                        << std::endl;
 
       return 0;
     }
