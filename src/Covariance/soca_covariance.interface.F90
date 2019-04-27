@@ -17,7 +17,7 @@ subroutine c_soca_b_setup(c_key_self, c_conf, c_key_geom, c_key_bkg) &
   use iso_c_binding
   use soca_covariance_mod
   use soca_geom_mod_c
-  use soca_fields
+  use soca_fields_mod_c
 
   implicit none
   integer(c_int), intent(inout) :: c_key_self   !< The background covariance structure
@@ -64,7 +64,7 @@ subroutine c_soca_b_mult(c_key_self, c_key_in, c_key_out) bind(c,name='soca_b_mu
   !> xout = K D C^1/2 C^1/2^T D K^T xin 
   use iso_c_binding
   use soca_covariance_mod
-  use soca_fields
+  use soca_fields_mod_c
   use kinds
   use mpi
 
@@ -95,7 +95,7 @@ subroutine c_soca_b_linearize(c_key_self, c_key_geom) bind(c,name='soca_b_linear
   use iso_c_binding
   use soca_covariance_mod
   use soca_geom_mod_c
-  use soca_fields
+  use soca_fields_mod_c
 
   implicit none
 
@@ -115,7 +115,7 @@ subroutine c_soca_b_randomize(c_key_self, c_key_out) bind(c,name='soca_b_randomi
 
   use iso_c_binding
   use soca_covariance_mod
-  use soca_fields
+  use soca_fields_mod_c
   use random_vectors_mod
   use kinds
 

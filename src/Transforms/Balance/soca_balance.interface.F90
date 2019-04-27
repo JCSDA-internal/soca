@@ -12,7 +12,7 @@ subroutine c_soca_balance_setup(c_key_self, c_conf, c_key_traj) &
      &bind(c,name='soca_balance_setup_f90')
   use iso_c_binding
   use soca_balance_mod
-  use soca_fields
+  use soca_fields_mod_c
 
   integer(c_int), intent(inout) :: c_key_self   !< The D structure
   type(c_ptr),       intent(in) :: c_conf       !< The configuration
@@ -53,7 +53,7 @@ subroutine c_soca_balance_mult_f90(c_key_self, c_key_a, c_key_m)&
      &bind(c,name='soca_balance_mult_f90')
   use iso_c_binding
   use soca_balance_mod
-  use soca_fields
+  use soca_fields_mod_c
   use kinds
   use soca_kst_mod
   
@@ -81,7 +81,7 @@ subroutine c_soca_balance_multinv_f90(c_key_self, c_key_m, c_key_a)&
      &bind(c,name='soca_balance_multinv_f90')
   use iso_c_binding
   use soca_balance_mod
-  use soca_fields
+  use soca_fields_mod_c
   use kinds
   use soca_kst_mod
   
@@ -109,7 +109,7 @@ subroutine c_soca_balance_multad_f90(c_key_self, c_key_m, c_key_a)&
      &bind(c,name='soca_balance_multad_f90')
   use iso_c_binding
   use soca_balance_mod
-  use soca_fields
+  use soca_fields_mod_c
   use kinds
   use soca_kst_mod
   
@@ -137,7 +137,7 @@ subroutine c_soca_balance_multinvad_f90(c_key_self, c_key_a, c_key_m)&
      &bind(c,name='soca_balance_multinvad_f90')
   use iso_c_binding
   use soca_balance_mod
-  use soca_fields
+  use soca_fields_mod_c
   use kinds
   use soca_kst_mod
   

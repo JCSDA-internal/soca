@@ -6,10 +6,30 @@
 !> Interfaces to be called from C++ for Fortran handling of model fields
 
 ! ------------------------------------------------------------------------------
+module soca_fields_mod_c
+
+  use iso_c_binding
+  use soca_fields
+
+  implicit none
+  !private
+  
+#define LISTED_TYPE soca_field
+  
+  !> Linked list interface - defines registry_t type
+#include "Utils/linkedList_i.f"
+  
+  !> Global registry
+  type(registry_t) :: soca_field_registry
+
+contains
+  ! ------------------------------------------------------------------------------
+  !> Linked list implementation
+#include "Utils/linkedList_c.f"
 
 subroutine soca_field_create_c(c_key_self, c_key_geom, c_vars) bind(c,name='soca_field_create_f90')
   use iso_c_binding
-  use soca_fields
+
   use soca_geom_mod_c
   use ufo_vars_mod  
   implicit none
@@ -561,4 +581,4 @@ subroutine soca_fieldnum_c(c_key_fld, nx, ny, nzo, nzi, ncat, nf) bind(c,name='s
 
 end subroutine soca_fieldnum_c
 
-! ------------------------------------------------------------------------------
+end module soca_fields_mod_c

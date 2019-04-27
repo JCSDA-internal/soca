@@ -12,7 +12,7 @@ subroutine c_soca_bkgerrgodas_setup(c_key_self, c_conf, c_key_bkg) &
      &bind(c,name='soca_bkgerrgodas_setup_f90')
   use iso_c_binding
   use soca_bkgerrgodas_mod
-  use soca_fields
+  use soca_fields_mod_c
 
   integer(c_int), intent(inout) :: c_key_self   !< The D structure
   type(c_ptr),       intent(in) :: c_conf       !< The configuration
@@ -35,7 +35,7 @@ end subroutine c_soca_bkgerrgodas_setup
 subroutine c_soca_bkgerrgodas_delete(c_key_self) bind(c,name='soca_bkgerrgodas_delete_f90')
   use iso_c_binding
   use soca_bkgerrgodas_mod
-  use soca_fields
+  use soca_fields_mod_c
 
   implicit none
   integer(c_int), intent(inout) :: c_key_self
@@ -55,7 +55,7 @@ subroutine c_soca_bkgerrgodas_mult_f90(c_key_self, c_key_a, c_key_m)&
      &bind(c,name='soca_bkgerrgodas_mult_f90')
   use iso_c_binding
   use soca_bkgerrgodas_mod
-  use soca_fields
+  use soca_fields_mod_c
   use kinds
   use soca_kst_mod
   

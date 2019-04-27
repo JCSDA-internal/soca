@@ -17,6 +17,7 @@ module soca_fields
   use ufo_vars_mod
   use soca_bumpinterp2d_mod
   use soca_getvaltraj_mod
+  use soca_ocnsfc_mod
   use kinds
   use iso_c_binding
   use fms_mod,    only: read_data, write_data, set_domain
@@ -38,13 +39,12 @@ module soca_fields
   private
 
   public :: soca_field, &
-       & create, delete, zeros, ones, dirac, random, copy, create_copy,&
+       & create, delete, zeros, dirac, random, copy, create_copy,&
        & self_add, self_schur, self_sub, self_mul, axpy, &
        & dot_prod, add_incr, diff_incr, &
        & read_file, write_file, gpnorm, fldrms, soca_fld2file, &
        & change_resol, check, &
        & field_to_ug, field_from_ug, ug_coord
-  public :: soca_field_registry
 
   interface create
      module procedure create_constructor, create_copy
@@ -60,36 +60,27 @@ module soca_fields
      character(len=128)                :: momfname       !< Fields file name for mom
 
      ! Sea-ice state variables
-     real(kind=kind_real), allocatable :: cicen(:,:,:)   !< Sea-ice fraction                 (nx,ny,ncat+1)
-     real(kind=kind_real), allocatable :: hicen(:,:,:)   !< Sea-ice mass/m2                  (nx,ny,ncat) [kg/m2]
+     real(kind=kind_real), pointer :: cicen(:,:,:)   !< Sea-ice fraction                 (nx,ny,ncat+1)
+     real(kind=kind_real), pointer :: hicen(:,:,:)   !< Sea-ice mass/m2                  (nx,ny,ncat) [kg/m2]
 
      ! Ocean state variables
-     real(kind=kind_real), allocatable :: socn(:,:,:)    !< Ocean Practical Salinity         (nx,ny,nzo)
-     real(kind=kind_real), allocatable :: tocn(:,:,:)    !< Ocean Potential Temperature, ref to p=0      (nx,ny,nzo)
-     real(kind=kind_real), allocatable :: ssh(:,:)       !< Sea-surface height (nx,ny,nzo)
-     real(kind=kind_real), allocatable :: hocn(:,:,:)    !< DA layer thickness (nx,ny,nzo)
+     real(kind=kind_real), pointer :: socn(:,:,:)    !< Ocean Practical Salinity         (nx,ny,nzo)
+     real(kind=kind_real), pointer :: tocn(:,:,:)    !< Ocean Potential Temperature, ref to p=0      (nx,ny,nzo)
+     real(kind=kind_real), pointer :: ssh(:,:)       !< Sea-surface height (nx,ny)
+     real(kind=kind_real), pointer :: hocn(:,:,:)    !< DA layer thickness (nx,ny,nzo)
 
      ! Ocean diagnostics
-     real(kind=kind_real), allocatable :: mld(:,:)       !< Sea-surface height (nx,ny,nzo)
-     real(kind=kind_real), allocatable :: layer_depth(:,:,:) !< Sea-surface height (nx,ny,nz0)
-     
+     real(kind=kind_real), pointer :: mld(:,:)           !< Mixed layer depth (nx,ny)
+     real(kind=kind_real), pointer :: layer_depth(:,:,:) !< Mid-layer depth (nx,ny,nz0)
+
+     ! Ocean surface fields
+     !type(soca_ocnsfc_type), pointer :: ocnsfc(:) !< Surface fields needed for cool skin ufo
+
      character(len=5),     allocatable :: fldnames(:)    !< Variable identifiers             (nf)
 
   end type soca_field
 
-#define LISTED_TYPE soca_field
-
-  !> Linked list interface - defines registry_t type
-#include "Utils/linkedList_i.f"
-
-  !> Global registry
-  type(registry_t) :: soca_field_registry
-
-  ! ------------------------------------------------------------------------------
 contains
-  ! ------------------------------------------------------------------------------
-  !> Linked list implementation
-#include "Utils/linkedList_c.f"
 
   ! ------------------------------------------------------------------------------
   !> Create a field from geometry and variables
@@ -140,15 +131,15 @@ contains
   end subroutine create_copy
 
   ! ------------------------------------------------------------------------------
-  
+
   subroutine soca_field_alloc(self, geom)
     type (soca_field), intent(inout) :: self
     type(soca_geom),      intent(in) :: geom
-    
+
     integer :: isd, ied, jsd, jed, nzo, nzi, nzs
     integer :: ncat, km
     character(7) :: domain_type
-
+    
     ! Short cut to ice geometry
     ncat = geom%ocean%ice_column%ncat
     nzi = geom%ocean%ice_column%nzi
@@ -159,22 +150,27 @@ contains
     call geom_get_domain_indices(geom%ocean, "data   ", isd, ied, jsd, jed)    
 
     ! Allocate ocean state
-    if (.not.allocated(self%tocn)) allocate(self%tocn(isd:ied,jsd:jed,nzo))
-    if (.not.allocated(self%socn)) allocate(self%socn(isd:ied,jsd:jed,nzo))
-    if (.not.allocated(self%ssh)) allocate(self%ssh(isd:ied,jsd:jed))
-    if (.not.allocated(self%hocn)) allocate(self%hocn(isd:ied,jsd:jed,nzo))
-    if (.not.allocated(self%mld)) allocate(self%mld(isd:ied,jsd:jed))
-    if (.not.allocated(self%layer_depth)) allocate(self%layer_depth(isd:ied,jsd:jed,nzo))
+    allocate(self%tocn(isd:ied,jsd:jed,nzo))
+    allocate(self%socn(isd:ied,jsd:jed,nzo))
+    allocate(self%ssh(isd:ied,jsd:jed))
+    allocate(self%hocn(isd:ied,jsd:jed,nzo))
+    allocate(self%mld(isd:ied,jsd:jed))
+    allocate(self%layer_depth(isd:ied,jsd:jed,nzo))
 
     ! Allocate sea-ice state
     km = ncat + 1
-    if (.not.allocated(self%cicen)) allocate(self%cicen(isd:ied, jsd:jed, km))
-    if (.not.allocated(self%hicen)) allocate(self%hicen(isd:ied, jsd:jed, ncat))
+    allocate(self%cicen(isd:ied, jsd:jed, km))
+    allocate(self%hicen(isd:ied, jsd:jed, ncat))
+
+    ! Allocate surface fields for cool skin
+
+    !allocate(self%ocnsfc(1))
+    !call self%ocnsfc(1)%create(geom)
 
   end subroutine soca_field_alloc
 
   ! ------------------------------------------------------------------------------
-  
+
   subroutine delete(self)
     type (soca_field), intent(inout) :: self
 
@@ -190,12 +186,16 @@ contains
     deallocate(self%cicen)
     deallocate(self%hicen)
 
+    ! deallocate surface fields for cool skin
+    !call self%ocnsfc(1)%delete()
+    !deallocate(self%ocnsfc)
+
     ! Deassociate geometry
     nullify(self%geom)
 
   end subroutine delete
-  
-  
+
+
   ! ------------------------------------------------------------------------------
 
   subroutine zeros(self)
@@ -249,9 +249,9 @@ contains
     ! Get Diracs size
     ndir = config_get_data_dimension(c_conf,'ixdir')
     if ((config_get_data_dimension(c_conf,'iydir')/=ndir) .or. &
-        (config_get_data_dimension(c_conf,'izdir')/=ndir) .or. &
-        (config_get_data_dimension(c_conf,'ifdir')/=ndir)) &
-     & call abor1_ftn('qg_fields_dirac: inconsistent sizes for ixdir, iydir, izdir, ipdir and ifdir')
+         (config_get_data_dimension(c_conf,'izdir')/=ndir) .or. &
+         (config_get_data_dimension(c_conf,'ifdir')/=ndir)) &
+         & call abor1_ftn('qg_fields_dirac: inconsistent sizes for ixdir, iydir, izdir, ipdir and ifdir')
 
     ! Allocation
     allocate(ixdir(ndir))
@@ -271,15 +271,15 @@ contains
     ! Setup Diracs
     call zeros(self)
     do n=1,ndir
-        ! skip this index if not in the bounds of this PE
-        if (ixdir(n) > iec .or. ixdir(n) < isc) cycle
-        if (iydir(n) > jec .or. iydir(n) < jsc) cycle
+       ! skip this index if not in the bounds of this PE
+       if (ixdir(n) > iec .or. ixdir(n) < isc) cycle
+       if (iydir(n) > jec .or. iydir(n) < jsc) cycle
 
-        if (ifdir(n)==1) self%tocn(ixdir(n),iydir(n),izdir(n)) = 1.0
-        if (ifdir(n)==2) self%socn(ixdir(n),iydir(n),izdir(n)) = 1.0
-        if (ifdir(n)==3) self%ssh(ixdir(n),iydir(n)) = 1.0
-        if (ifdir(n)==4) self%cicen(ixdir(n),iydir(n),izdir(n)) = 1.0
-        if (ifdir(n)==5) self%hicen(ixdir(n),iydir(n),izdir(n)) = 1.0
+       if (ifdir(n)==1) self%tocn(ixdir(n),iydir(n),izdir(n)) = 1.0
+       if (ifdir(n)==2) self%socn(ixdir(n),iydir(n),izdir(n)) = 1.0
+       if (ifdir(n)==3) self%ssh(ixdir(n),iydir(n)) = 1.0
+       if (ifdir(n)==4) self%cicen(ixdir(n),iydir(n),izdir(n)) = 1.0
+       if (ifdir(n)==5) self%hicen(ixdir(n),iydir(n),izdir(n)) = 1.0
     end do
 
   end subroutine dirac
@@ -329,7 +329,7 @@ contains
     self%hocn  = rhs%hocn
     self%mld   = rhs%mld
     self%layer_depth   = rhs%layer_depth    
-    
+
     return
   end subroutine copy
 
@@ -338,7 +338,7 @@ contains
   subroutine self_add(self,rhs)
     type(soca_field), intent(inout) :: self
     type(soca_field),    intent(in) :: rhs
-    
+
     integer :: nf
 
     call check_resolution(self, rhs)
@@ -360,7 +360,7 @@ contains
   subroutine self_schur(self,rhs)
     type(soca_field), intent(inout) :: self
     type(soca_field),    intent(in) :: rhs
-    
+
     integer :: nf
 
     call check_resolution(self, rhs)
@@ -383,7 +383,7 @@ contains
   subroutine self_sub(self,rhs)
     type(soca_field), intent(inout) :: self
     type(soca_field),    intent(in) :: rhs
-    
+
     integer :: nf
 
     call check_resolution(self, rhs)
@@ -424,7 +424,7 @@ contains
     type(soca_field),  intent(inout) :: self
     real(kind=kind_real), intent(in) :: zz
     type(soca_field),     intent(in) :: rhs
-    
+
     integer :: nf
 
     call check_resolution(self, rhs)
@@ -452,7 +452,7 @@ contains
     integer :: ii, jj, kk
     integer :: is, ie, js, je, ncat, nzo, myrank
     type(fckit_mpi_comm) :: f_comm
-    
+
     ! Setup Communicator
     f_comm = fckit_mpi_comm()
 
@@ -463,7 +463,7 @@ contains
 
     ! Indices for compute domain (no halo)
     call geom_get_domain_indices(fld1%geom%ocean, "compute", is, ie, js, je)
-    
+
     ! Get ice categories and ocean levels 
     ncat = fld1%geom%ocean%ncat
     nzo = fld1%geom%ocean%nzo
@@ -474,10 +474,10 @@ contains
        do jj = js, je
           if (fld1%geom%ocean%mask2d(ii,jj)==1) then
              zprod = zprod + fld1%ssh(ii,jj)*fld2%ssh(ii,jj)               ! SSH
-          do kk = 1, nzo
+             do kk = 1, nzo
                 zprod = zprod + fld1%tocn(ii,jj,kk)*fld2%tocn(ii,jj,kk) &  ! TOCN
-                              + fld1%socn(ii,jj,kk)*fld2%socn(ii,jj,kk)    ! SOCN
-          end do
+                     + fld1%socn(ii,jj,kk)*fld2%socn(ii,jj,kk)    ! SOCN
+             end do
           end if
        end do
     end do
@@ -490,7 +490,7 @@ contains
           do kk = 1, ncat
              if (fld1%geom%ocean%mask2d(ii,jj)==1) then
                 zprod = zprod + fld1%cicen(ii,jj,kk+1)*fld2%cicen(ii,jj,kk+1) & !CICEN
-                              + fld1%hicen(ii,jj,kk)*fld2%hicen(ii,jj,kk)       !HICEN
+                     + fld1%hicen(ii,jj,kk)*fld2%hicen(ii,jj,kk)       !HICEN
              end if
           end do
        end do
@@ -510,7 +510,7 @@ contains
 
     real(kind=kind_real), allocatable :: incr(:,:,:)
     integer :: is, ie, js, je, i, j, nz
-    
+
     call check(self)
     call check(rhs)
 
@@ -599,13 +599,13 @@ contains
        ! Read from file
        call fms_io_init()       
        idr_ocean = register_restart_field(ocean_remap_restart, remap_filename, 'h', fld%hocn(:,:,:), &
-                  domain=fld%geom%ocean%G%Domain%mpp_domain)
+            domain=fld%geom%ocean%G%Domain%mpp_domain)
        call restore_state(ocean_remap_restart, directory='')
        call fms_io_exit()
        h_common = fld%hocn
-       
+
     end if
-    
+
     ! iread = 0: Invent state
     if (iread==0) then
        call zeros(fld)
@@ -624,7 +624,7 @@ contains
        call fms_io_init()
        do ii = 1, fld%nf
           select case(fld%fldnames(ii))
-          ! Ocean
+             ! Ocean
           case ('ssh')
              idr_ocean = register_restart_field(ocean_restart, ocn_filename, 'ave_ssh', fld%ssh(:,:), &
                   domain=fld%geom%ocean%G%Domain%mpp_domain)
@@ -637,7 +637,7 @@ contains
           case ('hocn')
              idr_ocean = register_restart_field(ocean_restart, ocn_filename, 'h', fld%hocn(:,:,:), &
                   domain=fld%geom%ocean%G%Domain%mpp_domain)
-          ! Sea-ice   
+             ! Sea-ice   
           case ('cicen')
              idr = register_restart_field(sis_restart, ice_filename, 'part_size', fld%cicen(:,:,:), &
                   domain=fld%geom%ocean%G%Domain%mpp_domain)
@@ -657,7 +657,7 @@ contains
 
        ! Initialize mid-layer depth from layer thickness
        call fld%geom%ocean%thickness2depth(fld%hocn, fld%layer_depth)
-       
+
        ! Compute mixed layer depth TODO: Move somewhere else ...
        do i = is, ie
           do j = js, je
@@ -678,8 +678,8 @@ contains
                    call remapping_core_h(remapCS, nz, h_common(i,j,:), fld%tocn(i,j,:),&
                         &nz, fld%hocn(i,j,:), fld%tocn(i,j,:))
                    call remapping_core_h(remapCS, nz, h_common(i,j,:), fld%socn(i,j,:),&
-                                                 &nz, fld%hocn(i,j,:), fld%socn(i,j,:))                   
-                   
+                        &nz, fld%hocn(i,j,:), fld%socn(i,j,:))                   
+
                 else
                    fld%tocn(i,j,:) = 0.0_kind_real
                    fld%socn(i,j,:) = 0.0_kind_real
@@ -689,7 +689,7 @@ contains
           fld%hocn = h_common          
        end if
        call end_remapping(remapCS)
-       
+
        ! Update halo
        call mpp_update_domains(fld%tocn, fld%geom%ocean%G%Domain%mpp_domain)
        call mpp_update_domains(fld%socn, fld%geom%ocean%G%Domain%mpp_domain)    
@@ -745,7 +745,7 @@ contains
     type(soca_field), intent(inout) :: fld    !< Fields
     type(c_ptr),         intent(in) :: c_conf !< Configuration
     type(datetime),   intent(inout) :: vdate  !< DateTime
-    
+
     integer, parameter :: max_string_length=800    ! Yuk!
     character(len=max_string_length) :: filename
     character(len=1024):: buf
@@ -782,7 +782,7 @@ contains
 
     ! get domain bounds
     call geom_get_domain_indices(fld%geom%ocean, "compute", is, ie, js, je )
-    
+
     ! get the total number of ocean grid cells
     tmp(1) = sum(fld%geom%ocean%mask2d(is:ie, js:je))
     call f_comm%allreduce(tmp(1), ocn_count, fckit_mpi_sum())
@@ -792,41 +792,41 @@ contains
     !  Most of the functions in this module should be rewritten to be
     !  agnostic to the actual number/names of variables, sigh.
     do jj=1, fld%nf
-      tmp=0.0
+       tmp=0.0
 
-      ! get local min/max/sum of each variable
-      select case(fld%fldnames(jj))
-      case("tocn")
-        tmp(1) = minval(fld%tocn(is:ie,js:je,:))
-        tmp(2) = maxval(fld%tocn(is:ie,js:je,:))
-        tmp(3) =    sum(fld%tocn(is:ie,js:je,:))
-      case("socn")
-        tmp(1) = minval(fld%socn(is:ie,js:je,:))
-        tmp(2) = maxval(fld%socn(is:ie,js:je,:))
-        tmp(3) =    sum(fld%socn(is:ie,js:je,:))
-      case("hocn")
-        tmp(1) = minval(fld%hocn(is:ie,js:je,:))
-        tmp(2) = maxval(fld%hocn(is:ie,js:je,:))
-        tmp(3) =    sum(fld%hocn(is:ie,js:je,:))
-      case("ssh")
-        tmp(1) = minval(fld%ssh(is:ie,js:je))
-        tmp(2) = maxval(fld%ssh(is:ie,js:je))
-        tmp(3) =    sum(fld%ssh(is:ie,js:je))
-      case("hicen")
-        tmp(1) = minval(fld%hicen(is:ie,js:je,:))
-        tmp(2) = maxval(fld%hicen(is:ie,js:je,:))
-        tmp(3) =    sum(fld%hicen(is:ie,js:je,:))
-      case("cicen")
-        tmp(1) = minval(fld%cicen(is:ie,js:je,:))
-        tmp(2) = maxval(fld%cicen(is:ie,js:je,:))
-        tmp(3) =    sum(fld%cicen(is:ie,js:je,:))
-      end select
+       ! get local min/max/sum of each variable
+       select case(fld%fldnames(jj))
+       case("tocn")
+          tmp(1) = minval(fld%tocn(is:ie,js:je,:))
+          tmp(2) = maxval(fld%tocn(is:ie,js:je,:))
+          tmp(3) =    sum(fld%tocn(is:ie,js:je,:))
+       case("socn")
+          tmp(1) = minval(fld%socn(is:ie,js:je,:))
+          tmp(2) = maxval(fld%socn(is:ie,js:je,:))
+          tmp(3) =    sum(fld%socn(is:ie,js:je,:))
+       case("hocn")
+          tmp(1) = minval(fld%hocn(is:ie,js:je,:))
+          tmp(2) = maxval(fld%hocn(is:ie,js:je,:))
+          tmp(3) =    sum(fld%hocn(is:ie,js:je,:))
+       case("ssh")
+          tmp(1) = minval(fld%ssh(is:ie,js:je))
+          tmp(2) = maxval(fld%ssh(is:ie,js:je))
+          tmp(3) =    sum(fld%ssh(is:ie,js:je))
+       case("hicen")
+          tmp(1) = minval(fld%hicen(is:ie,js:je,:))
+          tmp(2) = maxval(fld%hicen(is:ie,js:je,:))
+          tmp(3) =    sum(fld%hicen(is:ie,js:je,:))
+       case("cicen")
+          tmp(1) = minval(fld%cicen(is:ie,js:je,:))
+          tmp(2) = maxval(fld%cicen(is:ie,js:je,:))
+          tmp(3) =    sum(fld%cicen(is:ie,js:je,:))
+       end select
 
-      ! calculate global min/max/mean
-      call f_comm%allreduce(tmp(1), pstat(1,jj), fckit_mpi_min())
-      call f_comm%allreduce(tmp(2), pstat(2,jj), fckit_mpi_max())
-      call f_comm%allreduce(tmp(3), pstat(3,jj), fckit_mpi_sum())
-      pstat(3,jj) = pstat(3,jj)/ocn_count
+       ! calculate global min/max/mean
+       call f_comm%allreduce(tmp(1), pstat(1,jj), fckit_mpi_min())
+       call f_comm%allreduce(tmp(2), pstat(2,jj), fckit_mpi_max())
+       call f_comm%allreduce(tmp(3), pstat(3,jj), fckit_mpi_sum())
+       pstat(3,jj) = pstat(3,jj)/ocn_count
     end do
   end subroutine gpnorm
 
@@ -835,7 +835,7 @@ contains
   subroutine fldrms(fld, prms)
     type(soca_field),      intent(in) :: fld
     real(kind=kind_real), intent(out) :: prms
-    
+
     integer :: jf,jy,jx,ii
     real(kind=kind_real) :: zz, ns, n2dfld
 
@@ -860,38 +860,38 @@ contains
 
     ! Set number of grids
     if (ug%colocated==1) then
-      ! Colocated
-      ug%ngrid = 1
+       ! Colocated
+       ug%ngrid = 1
     else
-      ! Not colocated
-      ug%ngrid = 2
+       ! Not colocated
+       ug%ngrid = 2
     end if
 
     ! Allocate grid instances
     if (.not.allocated(ug%grid)) allocate(ug%grid(ug%ngrid))
 
     do igrid=1,ug%ngrid
-      ! Set local number of points
-      ug%grid(igrid)%nmga = (iec - isc + 1) * (jec - jsc + 1 )
+       ! Set local number of points
+       ug%grid(igrid)%nmga = (iec - isc + 1) * (jec - jsc + 1 )
 
-      ! Set number of timeslots
-      ug%grid(igrid)%nts = ug%nts
+       ! Set number of timeslots
+       ug%grid(igrid)%nts = ug%nts
     end do
 
     if (ug%colocated==1) then
-      ! Set number of levels
-      ug%grid(1)%nl0 = self%geom%ocean%nzo
+       ! Set number of levels
+       ug%grid(1)%nl0 = self%geom%ocean%nzo
 
-      ! Set number of variables
-      ug%grid(1)%nv = self%geom%ocean%ncat*2 + 3
+       ! Set number of variables
+       ug%grid(1)%nv = self%geom%ocean%ncat*2 + 3
     else
-      ! Set number of levels
-      ug%grid(1)%nl0 = self%geom%ocean%nzo
-      ug%grid(2)%nl0 = 1
+       ! Set number of levels
+       ug%grid(1)%nl0 = self%geom%ocean%nzo
+       ug%grid(2)%nl0 = 1
 
-      ! Set number of variables
-      ug%grid(1)%nv = 2
-      ug%grid(2)%nv = self%geom%ocean%ncat*2 + 1
+       ! Set number of variables
+       ug%grid(1)%nv = 2
+       ug%grid(2)%nv = self%geom%ocean%ncat*2 + 1
     end if
 
   end subroutine ug_size
@@ -923,21 +923,21 @@ contains
     ug%grid(igrid)%area = &
          &reshape( self%geom%ocean%cell_area(isc:iec, jsc:jec), (/ug%grid(igrid)%nmga/) )
     do jz = 1, ug%grid(igrid)%nl0
-      ug%grid(igrid)%vunit(:,jz) = real(jz)
-      ug%grid(igrid)%lmask(:,jz) = reshape( self%geom%ocean%mask2d(isc:iec, jsc:jec)==1, (/ug%grid(igrid)%nmga/) )
+       ug%grid(igrid)%vunit(:,jz) = real(jz)
+       ug%grid(igrid)%lmask(:,jz) = reshape( self%geom%ocean%mask2d(isc:iec, jsc:jec)==1, (/ug%grid(igrid)%nmga/) )
     end do
 
     if (ug%colocated==0) then
-      ! Define coordinates for 2D grid
-      igrid = 2
-      ug%grid(igrid)%lon = &
-           &reshape( self%geom%ocean%lon(isc:iec, jsc:jec), (/ug%grid(igrid)%nmga/) )
-      ug%grid(igrid)%lat = &
-           &reshape( self%geom%ocean%lat(isc:iec, jsc:jec), (/ug%grid(igrid)%nmga/) )
-      ug%grid(igrid)%area = &
-           &reshape( self%geom%ocean%cell_area(isc:iec, jsc:jec), (/ug%grid(igrid)%nmga/) )
-      ug%grid(igrid)%vunit(:,1) = 0.0_kind_real
-      ug%grid(igrid)%lmask(:,1) = reshape( self%geom%ocean%mask2d(isc:iec, jsc:jec)==1, (/ug%grid(igrid)%nmga/) )
+       ! Define coordinates for 2D grid
+       igrid = 2
+       ug%grid(igrid)%lon = &
+            &reshape( self%geom%ocean%lon(isc:iec, jsc:jec), (/ug%grid(igrid)%nmga/) )
+       ug%grid(igrid)%lat = &
+            &reshape( self%geom%ocean%lat(isc:iec, jsc:jec), (/ug%grid(igrid)%nmga/) )
+       ug%grid(igrid)%area = &
+            &reshape( self%geom%ocean%cell_area(isc:iec, jsc:jec), (/ug%grid(igrid)%nmga/) )
+       ug%grid(igrid)%vunit(:,1) = 0.0_kind_real
+       ug%grid(igrid)%lmask(:,1) = reshape( self%geom%ocean%mask2d(isc:iec, jsc:jec)==1, (/ug%grid(igrid)%nmga/) )
     end if
 
   end subroutine ug_coord
@@ -974,39 +974,39 @@ contains
 
     ! tocn
     do inzo = 1, nzo
-      ug%grid(igrid)%fld(1:ni*nj, inzo, jk, its) = &
-           &reshape( self%tocn(isc:iec, jsc:jec,inzo), (/ug%grid(igrid)%nmga/) )
+       ug%grid(igrid)%fld(1:ni*nj, inzo, jk, its) = &
+            &reshape( self%tocn(isc:iec, jsc:jec,inzo), (/ug%grid(igrid)%nmga/) )
     end do
     jk = jk + 1
 
     ! socn
     do inzo = 1, nzo
-      ug%grid(igrid)%fld(1:ni*nj, inzo, jk, its) = &
-           &reshape( self%socn(isc:iec, jsc:jec,inzo), (/ug%grid(igrid)%nmga/) )
+       ug%grid(igrid)%fld(1:ni*nj, inzo, jk, its) = &
+            &reshape( self%socn(isc:iec, jsc:jec,inzo), (/ug%grid(igrid)%nmga/) )
     end do
     jk = jk + 1
 
     if (ug%colocated==1) then
-      ! 2D variables copied as 3D variables
-      igrid = 1
+       ! 2D variables copied as 3D variables
+       igrid = 1
     else
-      ! 2D variables copied as 2D variables
-      igrid = 2
-      jk = 1
+       ! 2D variables copied as 2D variables
+       igrid = 2
+       jk = 1
     end if
 
     ! cicen
     do incat = 1, ncat
-      ug%grid(igrid)%fld(1:ni*nj, 1, jk, its) = &
-          &reshape( self%cicen(isc:iec, jsc:jec, incat+1), (/ug%grid(igrid)%nmga/) )
-      jk = jk + 1
+       ug%grid(igrid)%fld(1:ni*nj, 1, jk, its) = &
+            &reshape( self%cicen(isc:iec, jsc:jec, incat+1), (/ug%grid(igrid)%nmga/) )
+       jk = jk + 1
     end do
 
     ! hicen
     do incat = 1, ncat
-      ug%grid(igrid)%fld(1:ni*nj, 1, jk, its) = &
-           &reshape( self%hicen(isc:iec, jsc:jec, incat), (/ug%grid(igrid)%nmga/) )
-      jk = jk + 1
+       ug%grid(igrid)%fld(1:ni*nj, 1, jk, its) = &
+            &reshape( self%hicen(isc:iec, jsc:jec, incat), (/ug%grid(igrid)%nmga/) )
+       jk = jk + 1
     end do
 
     ! ssh
@@ -1054,12 +1054,12 @@ contains
     jk = jk + 1
 
     if (ug%colocated==1) then
-      ! 2D variables copied as 3D variables
-      igrid = 1
+       ! 2D variables copied as 3D variables
+       igrid = 1
     else
-      ! 2D variables copied as 2D variables
-      igrid = 2
-      jk = 1
+       ! 2D variables copied as 2D variables
+       igrid = 2
+       jk = 1
     end if
 
     ! cicen
@@ -1087,7 +1087,7 @@ contains
 
   function common_vars(x1, x2)
     type(soca_field), intent(in) :: x1, x2
-    
+
     integer :: common_vars
     integer :: jf
 
@@ -1112,7 +1112,7 @@ contains
 
     ! NEEDS WORK !!!
     if (x1%geom%ocean%nx /= x2%geom%ocean%nx .or.  &
-       &x1%geom%ocean%ny /= x2%geom%ocean%ny ) then
+         &x1%geom%ocean%ny /= x2%geom%ocean%ny ) then
        call abor1_ftn ("soca_fields: resolution error")
     endif
     call check(x1)
@@ -1124,7 +1124,7 @@ contains
 
   subroutine check(self)
     type(soca_field), intent(in) :: self
-    
+
     logical :: bad
 
     ! Doesn't do any thing ...
@@ -1145,13 +1145,13 @@ contains
   subroutine soca_fld2file(fld, filename)
     type(soca_field),   intent(in) :: fld    !< Fields
     character(len=800), intent(in) :: filename
-    
+
     integer :: ii
     character(len=1024):: buf
     character(len=800) :: fname    
 
     fname = trim(filename)
-    
+
     call check(fld)
 
     call fms_io_init()
