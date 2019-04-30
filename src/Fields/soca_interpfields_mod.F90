@@ -81,7 +81,6 @@ contains
        traj%bumpid = bumpid
        traj%nobs = locs%nlocs
        if (traj%nobs>0) traj%noobs = .false.
-       !if (.not.traj%noobs) return        ! Exit if no obs
        call initialize_interph(fld, locs, traj%horiz_interp(1), traj%bumpid)
        !call traj%horiz_interp(1)%info()
        traj%interph_initialized = .true.
@@ -142,7 +141,7 @@ contains
        allocate(gom_window(nval,locs%nlocs))
        allocate(fld3d(isc:iec,jsc:jec,1:nval))
        fld3d = 0.0_kind_real
-
+print *,trim(vars%fldnames(ivar))
        ! Apply backward interpolation: Obs ---> Model       
        do ival = 1, nval
           ! Fill proper geoval according to time window
@@ -186,6 +185,26 @@ contains
           fld%socn(isc:iec,jsc:jec,1) = fld%socn(isc:iec,jsc:jec,1) +&
                &fld3d(isc:iec,jsc:jec,1)
 
+       ! Cool skin
+       case ("net_downwelling_shortwave_radiation")
+          fld%ocnsfc%sw_rad(isc:iec,jsc:jec) = fld%ocnsfc%sw_rad(isc:iec,jsc:jec) +&
+               &fld3d(isc:iec,jsc:jec,1)
+
+       case ("net_downwelling_longwave_radiation")
+          fld%ocnsfc%lw_rad(isc:iec,jsc:jec) = fld%ocnsfc%lw_rad(isc:iec,jsc:jec) +&
+               &fld3d(isc:iec,jsc:jec,1)
+
+       case ("upward_latent_heat_flux_in_air")
+          fld%ocnsfc%latent_heat(isc:iec,jsc:jec) = fld%ocnsfc%latent_heat(isc:iec,jsc:jec) +&
+               &fld3d(isc:iec,jsc:jec,1)
+
+       case ("upward_sensible_heat_flux_in_air")
+          fld%ocnsfc%sens_heat(isc:iec,jsc:jec) = fld%ocnsfc%sens_heat(isc:iec,jsc:jec) +&
+               &fld3d(isc:iec,jsc:jec,1)
+
+       case ("friction_velocity_over_water")
+          fld%ocnsfc%fric_vel(isc:iec,jsc:jec) = fld%ocnsfc%fric_vel(isc:iec,jsc:jec) +&
+               &fld3d(isc:iec,jsc:jec,1)
        end select
 
        ! Deallocate temporary arrays
@@ -269,6 +288,21 @@ contains
        case ("sea_area_fraction")
           fld3d(isc:iec,jsc:jec,1) = real(fld%geom%ocean%mask2d(isc:iec,jsc:jec),kind=kind_real)
 
+       case ("net_downwelling_shortwave_radiation")
+          fld3d(isc:iec,jsc:jec,1) = fld%ocnsfc%sw_rad(isc:iec,jsc:jec)
+
+       case ("upward_latent_heat_flux_in_air")
+          fld3d(isc:iec,jsc:jec,1) = fld%ocnsfc%latent_heat(isc:iec,jsc:jec)
+          
+       case ("upward_sensible_heat_flux_in_air")
+          fld3d(isc:iec,jsc:jec,1) = fld%ocnsfc%sens_heat(isc:iec,jsc:jec)
+
+       case ("net_downwelling_longwave_radiation")
+          fld3d(isc:iec,jsc:jec,1) = fld%ocnsfc%lw_rad(isc:iec,jsc:jec)
+
+       case ("friction_velocity_over_water")
+          fld3d(isc:iec,jsc:jec,1) = fld%ocnsfc%fric_vel(isc:iec,jsc:jec)
+
        case default
           call abor1_ftn("soca_interpfields_mod: geoval does not exist")
        end select
@@ -307,7 +341,12 @@ contains
     case ("sea_surface_height_above_geoid", &
           "sea_surface_temperature", &
           "sea_surface_salinity", &
-          "sea_area_fraction")
+          "sea_area_fraction", &
+          "net_downwelling_shortwave_radiation", &
+          "upward_latent_heat_flux_in_air", &
+          "upward_sensible_heat_flux_in_air", &
+          "net_downwelling_longwave_radiation", &
+          "friction_velocity_over_water")
        nval = 1
 
     case ("sea_water_potential_temperature", &

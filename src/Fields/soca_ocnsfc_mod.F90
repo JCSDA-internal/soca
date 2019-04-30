@@ -32,7 +32,7 @@ module soca_ocnsfc_mod
      procedure :: sub => soca_ocnsfc_sub
      procedure :: mul => soca_ocnsfc_mul
      procedure :: axpy => soca_ocnsfc_axpy
-     procedure :: diff_incr => soca_ocnsfc_diff_incr          
+     procedure :: diff_incr => soca_ocnsfc_diff_incr
   end type soca_ocnsfc_type
 
 contains

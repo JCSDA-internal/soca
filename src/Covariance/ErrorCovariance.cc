@@ -58,6 +58,7 @@ namespace soca {
 
   void ErrorCovariance::multiply(const Increment & dxin, Increment & dxout)
     const {
+    dxout = dxin;
     soca_b_mult_f90(keyFtnConfig_, dxin.fields().toFortran(),
                     dxout.fields().toFortran());
     Log::trace() << "ErrorCovariance multiply" << std::endl;

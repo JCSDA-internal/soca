@@ -135,6 +135,8 @@ contains
           end if
        end do
     end do
+    ! Surface fields
+    call dxm%ocnsfc%copy(dxa%ocnsfc)
 
   end subroutine soca_bkgerrfilt_mult
 

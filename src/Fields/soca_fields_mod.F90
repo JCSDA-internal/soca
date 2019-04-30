@@ -60,21 +60,21 @@ module soca_fields
      character(len=128)                :: momfname       !< Fields file name for mom
 
      ! Sea-ice state variables
-     real(kind=kind_real), pointer :: cicen(:,:,:)   !< Sea-ice fraction                 (nx,ny,ncat+1)
-     real(kind=kind_real), pointer :: hicen(:,:,:)   !< Sea-ice mass/m2                  (nx,ny,ncat) [kg/m2]
+     real(kind=kind_real), allocatable :: cicen(:,:,:)   !< Sea-ice fraction                 (nx,ny,ncat+1)
+     real(kind=kind_real), allocatable :: hicen(:,:,:)   !< Sea-ice mass/m2                  (nx,ny,ncat) [kg/m2]
 
      ! Ocean state variables
-     real(kind=kind_real), pointer :: socn(:,:,:)    !< Ocean Practical Salinity         (nx,ny,nzo)
-     real(kind=kind_real), pointer :: tocn(:,:,:)    !< Ocean Potential Temperature, ref to p=0      (nx,ny,nzo)
-     real(kind=kind_real), pointer :: ssh(:,:)       !< Sea-surface height (nx,ny)
-     real(kind=kind_real), pointer :: hocn(:,:,:)    !< DA layer thickness (nx,ny,nzo)
+     real(kind=kind_real), allocatable :: socn(:,:,:)    !< Ocean Practical Salinity         (nx,ny,nzo)
+     real(kind=kind_real), allocatable :: tocn(:,:,:)    !< Ocean Potential Temperature, ref to p=0      (nx,ny,nzo)
+     real(kind=kind_real), allocatable :: ssh(:,:)       !< Sea-surface height (nx,ny)
+     real(kind=kind_real), allocatable :: hocn(:,:,:)    !< DA layer thickness (nx,ny,nzo)
 
      ! Ocean diagnostics
-     real(kind=kind_real), pointer :: mld(:,:)           !< Mixed layer depth (nx,ny)
-     real(kind=kind_real), pointer :: layer_depth(:,:,:) !< Mid-layer depth (nx,ny,nz0)
+     real(kind=kind_real), allocatable :: mld(:,:)           !< Mixed layer depth (nx,ny)
+     real(kind=kind_real), allocatable :: layer_depth(:,:,:) !< Mid-layer depth (nx,ny,nz0)
 
      ! Ocean surface fields
-     !type(soca_ocnsfc_type), pointer :: ocnsfc(:) !< Surface fields needed for cool skin ufo
+     type(soca_ocnsfc_type) :: ocnsfc !< Surface fields needed for cool skin ufo
 
      character(len=5),     allocatable :: fldnames(:)    !< Variable identifiers             (nf)
 
@@ -163,9 +163,7 @@ contains
     allocate(self%hicen(isd:ied, jsd:jed, ncat))
 
     ! Allocate surface fields for cool skin
-
-    !allocate(self%ocnsfc(1))
-    !call self%ocnsfc(1)%create(geom)
+    call self%ocnsfc%create(geom)
 
   end subroutine soca_field_alloc
 
@@ -186,10 +184,9 @@ contains
     deallocate(self%cicen)
     deallocate(self%hicen)
 
-    ! deallocate surface fields for cool skin
-    !call self%ocnsfc(1)%delete()
-    !deallocate(self%ocnsfc)
-
+    ! Deallocate surface fields for cool skin
+    call self%ocnsfc%delete()
+    
     ! Deassociate geometry
     nullify(self%geom)
 
@@ -210,6 +207,9 @@ contains
     self%tocn = 0.0_kind_real
     self%ssh = 0.0_kind_real
     self%hocn = 0.0_kind_real
+
+    call self%ocnsfc%zeros()
+    
   end subroutine zeros
 
   ! ------------------------------------------------------------------------------
@@ -297,6 +297,7 @@ contains
     call normal_distribution(self%tocn,  0.0_kind_real, 1.0_kind_real, rseed)
     call normal_distribution(self%socn,  0.0_kind_real, 1.0_kind_real, rseed)
     call normal_distribution(self%ssh,   0.0_kind_real, 1.0_kind_real, rseed)
+    call self%ocnsfc%random()
 
   end subroutine random
 
@@ -330,6 +331,9 @@ contains
     self%mld   = rhs%mld
     self%layer_depth   = rhs%layer_depth    
 
+    ! Ocean surface
+    call self%ocnsfc%copy(rhs%ocnsfc)
+
     return
   end subroutine copy
 
@@ -353,6 +357,9 @@ contains
     self%ssh = self%ssh + rhs%ssh
     self%hocn = self%hocn + rhs%hocn
 
+    ! Ocean surface
+    call self%ocnsfc%add(rhs%ocnsfc)
+
   end subroutine self_add
 
   ! ------------------------------------------------------------------------------
@@ -374,6 +381,9 @@ contains
     self%socn=self%socn*rhs%socn
     self%ssh=self%ssh*rhs%ssh
     self%hocn=self%hocn*rhs%hocn
+
+    ! Ocean surface
+    call self%ocnsfc%schur(rhs%ocnsfc)
 
     return
   end subroutine self_schur
@@ -398,6 +408,9 @@ contains
     self%ssh=self%ssh-rhs%ssh
     self%hocn=self%hocn-rhs%hocn
 
+    ! Ocean surface
+    call self%ocnsfc%sub(rhs%ocnsfc)
+
   end subroutine self_sub
 
   ! ------------------------------------------------------------------------------
@@ -415,6 +428,9 @@ contains
     self%socn = zz * self%socn
     self%ssh = zz * self%ssh
     self%hocn = zz * self%hocn
+
+    ! Ocean surface
+    call self%ocnsfc%mul(zz)
 
   end subroutine self_mul
 
@@ -439,6 +455,9 @@ contains
     self%ssh = self%ssh + zz * rhs%ssh
     self%hocn = self%hocn + zz * rhs%hocn
 
+    ! Ocean surface
+    call self%ocnsfc%axpy(zz, rhs%ocnsfc)
+    
   end subroutine axpy
 
   ! ------------------------------------------------------------------------------
@@ -496,6 +515,19 @@ contains
        end do
     end do
 
+!!$    !----- OCEAN Surface
+    do ii = is, ie
+       do jj = js, je
+          if (fld1%geom%ocean%mask2d(ii,jj)==1) then
+             zprod = zprod + fld1%ocnsfc%sw_rad(ii,jj)*fld2%ocnsfc%sw_rad(ii,jj) &
+                           + fld1%ocnsfc%lw_rad(ii,jj)*fld2%ocnsfc%lw_rad(ii,jj) &
+                           + fld1%ocnsfc%latent_heat(ii,jj)*fld2%ocnsfc%latent_heat(ii,jj) &
+                           + fld1%ocnsfc%sens_heat(ii,jj)*fld2%ocnsfc%sens_heat(ii,jj) &
+                           + fld1%ocnsfc%fric_vel(ii,jj)*fld2%ocnsfc%fric_vel(ii,jj)
+          end if
+       end do
+    end do
+    
     ! Get global dot product
     call f_comm%allreduce(zprod, zprod_allpes, fckit_mpi_sum())
     zprod = zprod_allpes
@@ -515,7 +547,8 @@ contains
     call check(rhs)
 
     call self_add(self,rhs)
-
+    call self%ocnsfc%add(rhs%ocnsfc)
+    
     return
   end subroutine add_incr
 
@@ -540,6 +573,8 @@ contains
     lhs%ssh = x1%ssh - x2%ssh
     lhs%hocn = x1%hocn - x2%hocn
 
+    call lhs%ocnsfc%diff_incr(x1%ocnsfc, x2%ocnsfc)
+    
   end subroutine diff_incr
 
   ! ------------------------------------------------------------------------------
@@ -551,6 +586,7 @@ contains
     call check(fld)
     call check(rhs)
     call copy(fld,rhs)
+    call fld%ocnsfc%copy(rhs%ocnsfc)
 
     return
   end subroutine change_resol

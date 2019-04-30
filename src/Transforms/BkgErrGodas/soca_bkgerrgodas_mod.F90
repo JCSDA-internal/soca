@@ -77,6 +77,11 @@ contains
     call soca_bkgerrgodas_socn(self)
     call soca_bkgerrgodas_ssh(self)
 
+    ! Invent background error for ocnsfc fields: set it
+    ! to 10% of the background for now ...
+    call self%std_bkgerr%ocnsfc%copy(bkg%ocnsfc)
+    call self%std_bkgerr%ocnsfc%mul(0.1_kind_real)
+    
     ! Apply config bounds to background error
     call self%bounds%apply(self%std_bkgerr)
 
@@ -109,6 +114,9 @@ contains
           end if
        end do
     end do
+    ! Surface fields
+    call dxm%ocnsfc%copy(dxa%ocnsfc)
+    call dxm%ocnsfc%schur(self%std_bkgerr%ocnsfc)
 
   end subroutine soca_bkgerrgodas_mult
 
