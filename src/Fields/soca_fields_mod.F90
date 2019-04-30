@@ -828,41 +828,42 @@ contains
     !  Most of the functions in this module should be rewritten to be
     !  agnostic to the actual number/names of variables, sigh.
     do jj=1, fld%nf
-       tmp=0.0
+      tmp=0.0
 
-       ! get local min/max/sum of each variable
-       select case(fld%fldnames(jj))
-       case("tocn")
-          tmp(1) = minval(fld%tocn(is:ie,js:je,:))
-          tmp(2) = maxval(fld%tocn(is:ie,js:je,:))
-          tmp(3) =    sum(fld%tocn(is:ie,js:je,:))
-       case("socn")
-          tmp(1) = minval(fld%socn(is:ie,js:je,:))
-          tmp(2) = maxval(fld%socn(is:ie,js:je,:))
-          tmp(3) =    sum(fld%socn(is:ie,js:je,:))
-       case("hocn")
-          tmp(1) = minval(fld%hocn(is:ie,js:je,:))
-          tmp(2) = maxval(fld%hocn(is:ie,js:je,:))
-          tmp(3) =    sum(fld%hocn(is:ie,js:je,:))
-       case("ssh")
-          tmp(1) = minval(fld%ssh(is:ie,js:je))
-          tmp(2) = maxval(fld%ssh(is:ie,js:je))
-          tmp(3) =    sum(fld%ssh(is:ie,js:je))
-       case("hicen")
-          tmp(1) = minval(fld%hicen(is:ie,js:je,:))
-          tmp(2) = maxval(fld%hicen(is:ie,js:je,:))
-          tmp(3) =    sum(fld%hicen(is:ie,js:je,:))
-       case("cicen")
-          tmp(1) = minval(fld%cicen(is:ie,js:je,:))
-          tmp(2) = maxval(fld%cicen(is:ie,js:je,:))
-          tmp(3) =    sum(fld%cicen(is:ie,js:je,:))
-       end select
+      ! get local min/max/sum of each variable
+      select case(fld%fldnames(jj))
+      case("tocn")
+        tmp(1) = minval(fld%tocn(is:ie,js:je,:))
+        tmp(2) = maxval(fld%tocn(is:ie,js:je,:))
+        tmp(3) =    sum(fld%tocn(is:ie,js:je,:))/size(fld%tocn,3)
+      case("socn")
+        tmp(1) = minval(fld%socn(is:ie,js:je,:))
+        tmp(2) = maxval(fld%socn(is:ie,js:je,:))
+        tmp(3) =    sum(fld%socn(is:ie,js:je,:))/size(fld%socn,3)
+      case("hocn")
+        tmp(1) = minval(fld%hocn(is:ie,js:je,:))
+        tmp(2) = maxval(fld%hocn(is:ie,js:je,:))
+        tmp(3) =    sum(fld%hocn(is:ie,js:je,:))/size(fld%hocn,3)
+      case("ssh")
+        tmp(1) = minval(fld%ssh(is:ie,js:je))
+        tmp(2) = maxval(fld%ssh(is:ie,js:je))
+        tmp(3) =    sum(fld%ssh(is:ie,js:je))
+      case("hicen")
+        tmp(1) = minval(fld%hicen(is:ie,js:je,:))
+        tmp(2) = maxval(fld%hicen(is:ie,js:je,:))
+        tmp(3) =    sum(fld%hicen(is:ie,js:je,:))/size(fld%hicen,3)
+      case("cicen")
+        tmp(1) = minval(fld%cicen(is:ie,js:je,:))
+        tmp(2) = maxval(fld%cicen(is:ie,js:je,:))
+        tmp(3) =    sum(fld%cicen(is:ie,js:je,:))/size(fld%cicen,3)
+      end select
 
-       ! calculate global min/max/mean
-       call f_comm%allreduce(tmp(1), pstat(1,jj), fckit_mpi_min())
-       call f_comm%allreduce(tmp(2), pstat(2,jj), fckit_mpi_max())
-       call f_comm%allreduce(tmp(3), pstat(3,jj), fckit_mpi_sum())
-       pstat(3,jj) = pstat(3,jj)/ocn_count
+      ! calculate global min/max/mean
+      call f_comm%allreduce(tmp(1), pstat(1,jj), fckit_mpi_min())
+      call f_comm%allreduce(tmp(2), pstat(2,jj), fckit_mpi_max())
+      call f_comm%allreduce(tmp(3), pstat(3,jj), fckit_mpi_sum())
+      pstat(3,jj) = pstat(3,jj)/ocn_count
+
     end do
   end subroutine gpnorm
 
