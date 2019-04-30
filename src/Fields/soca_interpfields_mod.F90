@@ -127,7 +127,6 @@ contains
     real(kind=kind_real), allocatable :: gom_window(:,:)
     real(kind=kind_real), allocatable :: fld3d(:,:,:)        
 
-    
     horiz_interp_p => traj%horiz_interp(1)
 
     ! Indices for compute domain (no halo)
@@ -141,7 +140,7 @@ contains
        allocate(gom_window(nval,locs%nlocs))
        allocate(fld3d(isc:iec,jsc:jec,1:nval))
        fld3d = 0.0_kind_real
-print *,trim(vars%fldnames(ivar))
+
        ! Apply backward interpolation: Obs ---> Model       
        do ival = 1, nval
           ! Fill proper geoval according to time window

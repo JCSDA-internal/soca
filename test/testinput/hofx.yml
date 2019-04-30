@@ -23,6 +23,13 @@ Assimilation Window:
 Observations:
   ObsTypes:
 
+  - ObsType: CoolSkin
+    ObsData:
+      ObsDataOut: {obsfile: ./Data/sst.out.nc}
+      ObsDataIn:  {obsfile: ./Data/sst.nc}
+    Covariance:
+      covariance: diagonal
+
   - ObsType: SeaSurfaceTemp
     variables: [sea_surface_temperature]
     ObsData:
