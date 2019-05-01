@@ -32,6 +32,7 @@ module soca_fields
   use soca_ocnsfc_mod
   use ufo_vars_mod
   use unstructured_grid_mod
+  use variables_mod
 
   implicit none
 
