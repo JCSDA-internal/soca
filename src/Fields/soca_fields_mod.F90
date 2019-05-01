@@ -7,33 +7,31 @@
 
 module soca_fields
 
-  use kinds
-  use soca_mom6
-  use MOM, only : MOM_control_struct
   use config_mod
-  use soca_fieldsutils_mod  
-  use soca_geom_mod_c
-  use soca_model_geom_type, only : geom_get_domain_indices
-  use soca_utils
-  use ufo_vars_mod
-  use soca_bumpinterp2d_mod
-  use soca_getvaltraj_mod
-  use soca_ocnsfc_mod
-  use kinds
-  use iso_c_binding
+  use datetime_mod
+  use duration_mod
+  use fckit_log_module, only : log, fckit_log
+  use fckit_mpi_module
   use fms_mod,    only: read_data, write_data, set_domain
   use fms_io_mod, only : fms_io_init, fms_io_exit,&
        &register_restart_field, restart_file_type,&
        &restore_state, query_initialized,&
-       &free_restart_type, save_restart
-  use datetime_mod
-  use duration_mod  
-  use fckit_log_module, only : log, fckit_log
-  use fckit_mpi_module
+       &free_restart_type, save_restart  
+  use iso_c_binding  
+  use kinds
   use MOM_remapping,       only : remapping_CS, initialize_remapping, remapping_core_h, end_remapping
   use mpp_domains_mod, only : mpp_update_domains
-  use unstructured_grid_mod
   use random_mod
+  use soca_fieldsutils_mod  
+  use soca_geom_mod_c
+  use soca_model_geom_type, only : geom_get_domain_indices
+  use soca_mom6
+  use soca_utils
+  use soca_bumpinterp2d_mod
+  use soca_getvaltraj_mod
+  use soca_ocnsfc_mod
+  use ufo_vars_mod
+  use unstructured_grid_mod
 
   implicit none
 
@@ -1230,7 +1228,7 @@ contains
     type(datetime),   intent(inout) :: vdate    !< DateTime
 
     integer, parameter :: max_string_length=800
-    character(len=max_string_length) :: ocn_filename
+    character(len=max_string_length) :: ocn_filename, ocnsfc_filename
     character(len=max_string_length) :: ice_filename, basename, incr_filename    
     character(len=20) :: sdate
     character(len=1024)  :: buf
@@ -1238,6 +1236,7 @@ contains
 
     type(restart_file_type) :: ice_restart
     type(restart_file_type) :: ocean_restart
+    type(restart_file_type) :: ocnsfc_restart    
     integer :: idr, idr_ocean
 
     integer            :: nobs, nval, pe, ierror
@@ -1245,6 +1244,7 @@ contains
     ! Generate file names
     ocn_filename = soca_genfilename(c_conf,max_string_length,vdate,"ocn")
     ice_filename = soca_genfilename(c_conf,max_string_length,vdate,"ice")
+    ocnsfc_filename = soca_genfilename(c_conf,max_string_length,vdate,"sfc")    
 
     call fms_io_init()
     ! Ocean State
@@ -1265,10 +1265,29 @@ contains
     idr = register_restart_field(ice_restart, ice_filename, 'h_ice', fld%hicen, &
          domain=fld%geom%ocean%G%Domain%mpp_domain)
 
+    ! Ocean-surface
+    idr = register_restart_field(ocnsfc_restart, ocnsfc_filename, &
+                                'sw_rad', fld%ocnsfc%sw_rad, &
+                                domain=fld%geom%ocean%G%Domain%mpp_domain)
+    idr = register_restart_field(ocnsfc_restart, ocnsfc_filename, &
+                                'lw_rad', fld%ocnsfc%lw_rad, &
+                                domain=fld%geom%ocean%G%Domain%mpp_domain)
+    idr = register_restart_field(ocnsfc_restart, ocnsfc_filename, &
+                                'latent_heat', fld%ocnsfc%latent_heat, &
+                                domain=fld%geom%ocean%G%Domain%mpp_domain)
+    idr = register_restart_field(ocnsfc_restart, ocnsfc_filename, &
+                                'sens_heat', fld%ocnsfc%sens_heat, &
+                                domain=fld%geom%ocean%G%Domain%mpp_domain)
+    idr = register_restart_field(ocnsfc_restart, ocnsfc_filename, &
+                                'fric_vel', fld%ocnsfc%fric_vel, &
+                                domain=fld%geom%ocean%G%Domain%mpp_domain)
+
     call save_restart(ocean_restart, directory='')
     call save_restart(ice_restart, directory='')
+    call save_restart(ocnsfc_restart, directory='')  
     call free_restart_type(ice_restart)
     call free_restart_type(ocean_restart)
+    call free_restart_type(ocnsfc_restart)
     call fms_io_exit()
 
     return
