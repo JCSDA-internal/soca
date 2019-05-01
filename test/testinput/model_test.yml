@@ -12,15 +12,14 @@ ModelBias:
 
 ModelTest:
   fclength: PT6H
-  finalnorm: 35983.715594339832
+  finalnorm: 47432.49628809125715634
   tolerance: 1e-12
 
 Model:
   name: SOCA
   tstep: PT1H
   advance_mom6: 1
-  variables: &soca_vars [cicen, hicen, socn, tocn, ssh, hocn]
-
+  variables: &soca_vars [cicen, hicen, socn, tocn, ssh, hocn, sw, lhf, shf, lw, us]
 State:
   read_from_file: 1
   date: &date 2018-04-15T00:00:00Z

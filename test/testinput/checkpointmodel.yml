@@ -7,7 +7,7 @@ model:
   name: SOCA
   tstep: PT6H
   advance_mom6: 0
-  variables: [cicen, hicen, socn, tocn, ssh, hocn]
+  variables: [cicen, hicen, socn, tocn, ssh, hocn, sw, lhf, shf, lw, us]
   tocn_minmax: [-1.8, 32.0]
   socn_minmax: [0.1, 38.0]
 

@@ -11,6 +11,7 @@ module soca_fields
   use soca_mom6
   use MOM, only : MOM_control_struct
   use config_mod
+  use soca_fieldsutils_mod  
   use soca_geom_mod_c
   use soca_model_geom_type, only : geom_get_domain_indices
   use soca_utils
@@ -651,6 +652,9 @@ contains
 
     ! iread = 1 (state) or 3 (increment): Read restart file
     if ((iread==1).or.(iread==3)) then
+       ! Read ocean surface fields
+       call fld%ocnsfc%read_file()
+
        basename = config_get_string(c_conf,len(basename),"basename")
        ocn_filename = config_get_string(c_conf,len(ocn_filename),"ocn_filename")
        ocn_filename = trim(basename)//trim(ocn_filename)
@@ -742,6 +746,9 @@ contains
 
     ! Read diagnostic file
     if (iread==2) then
+       ! Read ocean surface fields
+       call fld%ocnsfc%read_file()
+
        incr_filename = config_get_string(c_conf,len(incr_filename),"filename")
        call fms_io_init()
        do ii = 1, fld%nf
@@ -768,7 +775,6 @@ contains
           end select
        end do
        call fms_io_exit()
-
     endif
 
     call check(fld)
@@ -833,29 +839,27 @@ contains
       ! get local min/max/sum of each variable
       select case(fld%fldnames(jj))
       case("tocn")
-        tmp(1) = minval(fld%tocn(is:ie,js:je,:))
-        tmp(2) = maxval(fld%tocn(is:ie,js:je,:))
-        tmp(3) =    sum(fld%tocn(is:ie,js:je,:))/size(fld%tocn,3)
+        call fldinfo(fld%tocn(is:ie,js:je,:), tmp) 
       case("socn")
-        tmp(1) = minval(fld%socn(is:ie,js:je,:))
-        tmp(2) = maxval(fld%socn(is:ie,js:je,:))
-        tmp(3) =    sum(fld%socn(is:ie,js:je,:))/size(fld%socn,3)
+        call fldinfo(fld%socn(is:ie,js:je,:), tmp)         
       case("hocn")
-        tmp(1) = minval(fld%hocn(is:ie,js:je,:))
-        tmp(2) = maxval(fld%hocn(is:ie,js:je,:))
-        tmp(3) =    sum(fld%hocn(is:ie,js:je,:))/size(fld%hocn,3)
+        call fldinfo(fld%hocn(is:ie,js:je,:), tmp)
       case("ssh")
-        tmp(1) = minval(fld%ssh(is:ie,js:je))
-        tmp(2) = maxval(fld%ssh(is:ie,js:je))
-        tmp(3) =    sum(fld%ssh(is:ie,js:je))
+        call fldinfo(fld%ssh(is:ie,js:je), tmp)
       case("hicen")
-        tmp(1) = minval(fld%hicen(is:ie,js:je,:))
-        tmp(2) = maxval(fld%hicen(is:ie,js:je,:))
-        tmp(3) =    sum(fld%hicen(is:ie,js:je,:))/size(fld%hicen,3)
+        call fldinfo(fld%hicen(is:ie,js:je,:), tmp)
       case("cicen")
-        tmp(1) = minval(fld%cicen(is:ie,js:je,:))
-        tmp(2) = maxval(fld%cicen(is:ie,js:je,:))
-        tmp(3) =    sum(fld%cicen(is:ie,js:je,:))/size(fld%cicen,3)
+        call fldinfo(fld%cicen(is:ie,js:je,:), tmp)
+      case("sw")
+        call fldinfo(fld%ocnsfc%sw_rad(is:ie,js:je), tmp)
+      case("lw")
+        call fldinfo(fld%ocnsfc%lw_rad(is:ie,js:je), tmp)
+      case("lhf")
+        call fldinfo(fld%ocnsfc%latent_heat(is:ie,js:je), tmp)
+      case("shf")
+        call fldinfo(fld%ocnsfc%sens_heat(is:ie,js:je), tmp)
+      case("us")
+        call fldinfo(fld%ocnsfc%fric_vel(is:ie,js:je), tmp)
       end select
 
       ! calculate global min/max/mean

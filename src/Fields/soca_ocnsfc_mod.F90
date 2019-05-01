@@ -33,6 +33,7 @@ module soca_ocnsfc_mod
      procedure :: mul => soca_ocnsfc_mul
      procedure :: axpy => soca_ocnsfc_axpy
      procedure :: diff_incr => soca_ocnsfc_diff_incr
+     procedure :: read_file => soca_ocnsfc_read_file
   end type soca_ocnsfc_type
 
 contains
@@ -190,7 +191,7 @@ contains
   end subroutine soca_ocnsfc_diff_incr
 
   ! ------------------------------------------------------------------------------  
-  subroutine read_file(self)
+  subroutine soca_ocnsfc_read_file(self)
     ! HACK, TODO: Do something, like read a file!
     class(soca_ocnsfc_type), intent(inout) :: self
 
@@ -200,6 +201,6 @@ contains
     self%sens_heat   = 7.7_kind_real
     self%fric_vel    = 0.08_kind_real
     
-  end subroutine read_file
+  end subroutine soca_ocnsfc_read_file
   
 end module soca_ocnsfc_mod
