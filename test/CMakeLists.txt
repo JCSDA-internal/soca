@@ -144,7 +144,7 @@ set(MPI_SOCA_TESTS 2)
 ecbuild_add_test( TARGET test_soca_forecast_identity
                   MPI ${MPI_SOCA_TESTS}
                   TYPE SCRIPT
-                  COMMAND compare.sh
+                  COMMAND ./compare.sh
                   ARGS
                       "${CMAKE_BINARY_DIR}/bin/soca_forecast.x
                       testinput/forecast_identity.yml"
@@ -155,7 +155,7 @@ ecbuild_add_test( TARGET test_soca_forecast_identity
 ecbuild_add_test( TARGET test_soca_forecast_mom6
                   MPI ${MPI_SOCA_TESTS}
                   TYPE SCRIPT
-                  COMMAND compare.sh
+                  COMMAND ./compare.sh
                   ARGS
                       "${CMAKE_BINARY_DIR}/bin/soca_forecast.x
                       testinput/forecast_mom6.yml"
@@ -173,7 +173,7 @@ ecbuild_add_test( TARGET test_soca_socaerror_init
 ecbuild_add_test( TARGET test_soca_enspert
                   MPI ${MPI_SOCA_TESTS}
                   TYPE SCRIPT
-                  COMMAND compare.sh
+                  COMMAND ./compare.sh
                   ARGS
                       "${CMAKE_BINARY_DIR}/bin/soca_enspert.x
                       testinput/genenspert.yml"
@@ -183,7 +183,7 @@ ecbuild_add_test( TARGET test_soca_enspert
 # #Test below can take a few hours to complete. Commented out for now
 # ecbuild_add_test( TARGET test_soca_covar_lengthscale
 #                   TYPE SCRIPT
-# 		              COMMAND compare.sh
+# 		              COMMAND ./compare.sh
 #                   ARGS
 #                       "${CMAKE_BINARY_DIR}/bin/soca_staticbinit.x
 #                       testinput/static_scale_binit.yml"
@@ -275,7 +275,7 @@ ecbuild_add_test( TARGET test_soca_vertconv
 ecbuild_add_test( TARGET test_soca_ensvariance
                   MPI ${MPI_SOCA_TESTS}
                   TYPE SCRIPT
-                  COMMAND compare.sh
+                  COMMAND ./compare.sh
                   ARGS
                       "${CMAKE_BINARY_DIR}/bin/soca_ensvariance.x
                       testinput/ensvariance.yml"
@@ -309,7 +309,7 @@ set_tests_properties(test_soca_parameters_bump_cov_nicas PROPERTIES TIMEOUT 1)
 ecbuild_add_test( TARGET test_soca_dirac_bump_cov
                   MPI ${MPI_SOCA_TESTS}
                   TYPE SCRIPT
-                  COMMAND compare.sh
+                  COMMAND ./compare.sh
                   ARGS
                       "${CMAKE_BINARY_DIR}/bin/soca_dirac.x
                       testinput/dirac_bump_cov.yml"
@@ -319,7 +319,7 @@ ecbuild_add_test( TARGET test_soca_dirac_bump_cov
 ecbuild_add_test( TARGET test_soca_dirac_soca_cov
                   MPI ${MPI_SOCA_TESTS}
                   TYPE SCRIPT
-                  COMMAND compare.sh
+                  COMMAND ./compare.sh
                   ARGS
                       "${CMAKE_BINARY_DIR}/bin/soca_dirac.x
                       testinput/dirac_soca_cov.yml"
@@ -342,7 +342,7 @@ ecbuild_add_test( TARGET test_soca_dirac_soca_cov
 ecbuild_add_test( TARGET test_soca_hofx3d
                   MPI ${MPI_SOCA_TESTS}
                   TYPE SCRIPT
-                  COMMAND compare.sh
+                  COMMAND ./compare.sh
                   ARGS
                       "${CMAKE_BINARY_DIR}/bin/soca_hofx3d.x
                       testinput/hofx3d.yml"
@@ -352,7 +352,7 @@ ecbuild_add_test( TARGET test_soca_hofx3d
 ecbuild_add_test( TARGET test_soca_hofx
                   MPI ${MPI_SOCA_TESTS}
                   TYPE SCRIPT
-                  COMMAND compare.sh
+                  COMMAND ./compare.sh
                   ARGS
                       "${CMAKE_BINARY_DIR}/bin/soca_hofx.x
                       testinput/hofx.yml"
@@ -362,7 +362,7 @@ ecbuild_add_test( TARGET test_soca_hofx
 ecbuild_add_test( TARGET test_soca_enshofx
                   MPI ${MPI_SOCA_TESTS}
                   TYPE SCRIPT
-                  COMMAND compare.sh
+                  COMMAND ./compare.sh
                   ARGS
                       "${CMAKE_BINARY_DIR}/bin/soca_enshofx.x
                       testinput/enshofx.yml"
@@ -372,7 +372,7 @@ ecbuild_add_test( TARGET test_soca_enshofx
 ecbuild_add_test( TARGET test_soca_3dvarsoca
                   MPI ${MPI_SOCA_TESTS}
                   TYPE SCRIPT
-                  COMMAND compare.sh
+                  COMMAND ./compare.sh
                   ARGS
                       "${CMAKE_BINARY_DIR}/bin/soca_3dvar.x
                       testinput/3dvar_soca.yml"
@@ -382,7 +382,7 @@ ecbuild_add_test( TARGET test_soca_3dvarsoca
 ecbuild_add_test( TARGET test_soca_3dvargodas
                   MPI ${MPI_SOCA_TESTS}
                   TYPE SCRIPT
-                  COMMAND compare.sh
+                  COMMAND ./compare.sh
                   ARGS
                       "${CMAKE_BINARY_DIR}/bin/soca_3dvar.x
                       testinput/3dvar_godas.yml"
@@ -392,7 +392,7 @@ ecbuild_add_test( TARGET test_soca_3dvargodas
 ecbuild_add_test( TARGET test_soca_checkpointmodel
                   MPI ${MPI_SOCA_TESTS}
                   TYPE SCRIPT
-                  COMMAND compare.sh
+                  COMMAND ./compare.sh
                   ARGS
                       "${CMAKE_BINARY_DIR}/bin/soca_checkpoint_model.x
                       testinput/checkpointmodel.yml"
@@ -402,7 +402,7 @@ ecbuild_add_test( TARGET test_soca_checkpointmodel
 ecbuild_add_test( TARGET test_soca_3dvarfgat
                   MPI ${MPI_SOCA_TESTS}
                   TYPE SCRIPT
-                  COMMAND compare.sh
+                  COMMAND ./compare.sh
                   ARGS
                       "${CMAKE_BINARY_DIR}/bin/soca_3dvar.x
                       testinput/3dvarfgat.yml"
@@ -412,7 +412,7 @@ ecbuild_add_test( TARGET test_soca_3dvarfgat
 ecbuild_add_test( TARGET test_soca_4dhybrid
                   MPI ${MPI_SOCA_TESTS}
                   TYPE SCRIPT
-                  COMMAND compare.sh
+                  COMMAND ./compare.sh
                   ARGS
                       "${CMAKE_BINARY_DIR}/bin/soca_3dvar.x
                       testinput/4dhyb.yml"
