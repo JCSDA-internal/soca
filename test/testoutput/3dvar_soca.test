@@ -17,11 +17,11 @@ Test     :    tocn   min=   -4.081963   max=   30.766278   mean=    6.211768
 Test     :     ssh   min=   -2.119493   max=    0.914407   mean=   -0.296504
 Test     :    hocn   min=    0.001000   max= 1345.640000   mean=  130.682172
 Test     :      sw   min=  -57.179584   max=  -57.039606   mean=  -86.521766
-Test     :     lhf   min=  102.803483   max=  103.258958   mean=  156.072304
+Test     :     lhf   min=  102.803483   max=  103.258957   mean=  156.072304
 Test     :     shf   min=    7.698902   max=    7.701447   mean=   11.667577
 Test     :      lw   min=  599.741487   max=  600.196180   mean=  909.162621
 Test     :      us   min=    0.079780   max=    0.080290   mean=    0.121221
-Test     : CostJb   : Nonlinear Jb = 12160.108376
+Test     : CostJb   : Nonlinear Jb = 12160.108375
 Test     : CostJo   : Nonlinear Jo(CoolSkin) = 2436.446007, nobs = 173, Jo/n = 14.083503, err = 0.360942
 Test     : CostJo   : Nonlinear Jo(SeaSurfaceTemp) = 2556.563581, nobs = 147, Jo/n = 17.391589, err = 0.356000
 Test     : CostJo   : Nonlinear Jo(SeaSurfaceSalinity) = 67.462698, nobs = 51, Jo/n = 1.322798, err = 1.000000
