@@ -26,19 +26,19 @@ module soca_interpfields_mod
   interface getvalues
      procedure getvalues_traj, getvalues_notraj
   end interface getvalues
-  
+
 contains
   ! ------------------------------------------------------------------------------
   !> Compute interpolation weights
-  subroutine initialize_interph(fld, locs, horiz_interp, bumpid)    
+  subroutine initialize_interph(fld, locs, horiz_interp, bumpid)
     type(soca_field),         intent(in) :: fld
     type(ufo_locs),           intent(in) :: locs
-    type(soca_bumpinterp2d), intent(out) :: horiz_interp    
+    type(soca_bumpinterp2d), intent(out) :: horiz_interp
     integer,                  intent(in) :: bumpid
-    
+
     integer :: nobs
     integer :: isc, iec, jsc, jec
-    
+
     ! Indices for compute domain (no halo)
     call geom_get_domain_indices(fld%geom%ocean, "compute", isc, iec, jsc, jec)
 
@@ -52,7 +52,7 @@ contains
             &      locs%lon, locs%lat, bumpid)
 
   end subroutine initialize_interph
-  
+
   ! ------------------------------------------------------------------------------
   !> Apply forward linearized interpolation (linearized about traj)
   subroutine getvalues_traj(fld, locs, vars, geovals, traj)
@@ -60,7 +60,7 @@ contains
     type(ufo_locs),           intent(in) :: locs
     type(oops_vars),          intent(in) :: vars
     type(ufo_geovals),     intent(inout) :: geovals
-    type(soca_getvaltraj), intent(inout) :: traj    
+    type(soca_getvaltraj), intent(inout) :: traj
 
     integer, save :: bumpid = 1000
     type(fckit_mpi_comm) :: f_comm
@@ -71,7 +71,7 @@ contains
 
     ! Get local obs in [t, t+dt[
     nlocs = locs%nlocs
-    
+
     ! Get global nlocs in [t, t+dt[
     f_comm = fckit_mpi_comm()
     call f_comm%allreduce(nlocs, allpes_nlocs, fckit_mpi_sum())
@@ -91,19 +91,19 @@ contains
     end if
 
     ! Apply interpolation
-    call interp_tl(fld, locs, vars, geovals, traj%horiz_interp(1))    
+    call interp_tl(fld, locs, vars, geovals, traj%horiz_interp(1))
 
   end subroutine getvalues_traj
 
   ! ------------------------------------------------------------------------------
-  !> Apply (possibly nonlinear) interpolation  
+  !> Apply (possibly nonlinear) interpolation
   subroutine getvalues_notraj(fld, locs, vars, geovals)
     type(soca_field),   intent(inout) :: fld
     type(ufo_locs),        intent(in) :: locs
-    type(oops_vars),       intent(in) :: vars    
+    type(oops_vars),       intent(in) :: vars
     type(ufo_geovals),  intent(inout) :: geovals
 
-    type(soca_bumpinterp2d) :: horiz_interp    
+    type(soca_bumpinterp2d) :: horiz_interp
     integer, save :: bumpid = 2000
 
     if (locs%nlocs==0) return
@@ -114,7 +114,7 @@ contains
     bumpid = bumpid + 1
 
   end subroutine getvalues_notraj
-  
+
   ! ------------------------------------------------------------------------------
   !> Apply backward interpolation
   subroutine getvalues_ad(fld, locs, vars, geovals, traj)
@@ -122,17 +122,17 @@ contains
     type(ufo_locs),                   intent(in) :: locs
     type(oops_vars),                  intent(in) :: vars
     type(ufo_geovals),             intent(inout) :: geovals
-    type(soca_getvaltraj), target, intent(inout) :: traj    
+    type(soca_getvaltraj), target, intent(inout) :: traj
 
     type(soca_bumpinterp2d), pointer :: horiz_interp_p
     integer :: icat, ilev, ivar, nobs, nval, ival, indx
     character(len=160) :: record
     integer :: isc, iec, jsc, jec
     real(kind=kind_real), allocatable :: gom_window(:,:)
-    real(kind=kind_real), allocatable :: fld3d(:,:,:)        
+    real(kind=kind_real), allocatable :: fld3d(:,:,:)
 
     !if (traj%noobs) return
-    
+
     horiz_interp_p => traj%horiz_interp(1)
 
     ! Indices for compute domain (no halo)
@@ -147,12 +147,12 @@ contains
        allocate(fld3d(isc:iec,jsc:jec,1:nval))
        fld3d = 0.0_kind_real
 
-       ! Apply backward interpolation: Obs ---> Model       
+       ! Apply backward interpolation: Obs ---> Model
        do ival = 1, nval
           ! Fill proper geoval according to time window
           do indx = 1, locs%nlocs
              gom_window(ival, indx) = geovals%geovals(ivar)%vals(ival, locs%indx(indx))
-          end do          
+          end do
           call horiz_interp_p%applyad(fld3d(:,:,ival), gom_window(ival,1:locs%nlocs))
        end do
 
@@ -180,7 +180,7 @@ contains
 
        case ("sea_water_cell_thickness")
           fld%hocn(isc:iec,jsc:jec,1:nval) = fld%hocn(isc:iec,jsc:jec,1:nval) +&
-               &fld3d  
+               &fld3d
 
        case ("sea_surface_temperature")
           fld%tocn(isc:iec,jsc:jec,1) = fld%tocn(isc:iec,jsc:jec,1) +&
@@ -210,17 +210,17 @@ contains
     type(soca_bumpinterp2d),  intent(inout) :: horiz_interp
 
     integer :: icat, ilev, ivar, nlocs, nlocs_window
-    integer :: ival, nval, indx    
+    integer :: ival, nval, indx
     character(len=160) :: record
     integer :: isc, iec, jsc, jec
     real(kind=kind_real), allocatable :: gom_window(:,:)
-    real(kind=kind_real), allocatable :: fld3d(:,:,:)        
+    real(kind=kind_real), allocatable :: fld3d(:,:,:)
     integer :: iii(3), bumpid=1111
     ! Exit if no obs
     !if (locs%nlocs==0) return
 
     ! Sanity check
-    call check(fld)    
+    call check(fld)
 
     ! Indices for compute domain (no halo)
     call geom_get_domain_indices(fld%geom%ocean, "compute", isc, iec, jsc, jec)
@@ -234,17 +234,17 @@ contains
        geovals%geovals(ivar)%nval = nval
        if (.not.(allocated(geovals%geovals(ivar)%vals))) then
           ! Number of obs in pe
-          nlocs = geovals%geovals(ivar)%nobs
-          
+          nlocs = geovals%geovals(ivar)%nlocs
+
           allocate(geovals%geovals(ivar)%vals(nval,nlocs))
           geovals%linit = .true.
        end if
-       
+
        ! Allocate temporary geoval and 3d field for the current time window
        allocate(gom_window(nval,locs%nlocs))
        allocate(fld3d(isc:iec,jsc:jec,1:nval))
 
-       ! Extract fld3d from field 
+       ! Extract fld3d from field
        select case (trim(vars%fldnames(ivar)))
 
        case ("sea_ice_category_area_fraction")
@@ -254,7 +254,7 @@ contains
           fld3d = fld%hicen(isc:iec,jsc:jec,1:nval)
 
        case ("sea_surface_height_above_geoid")
-          fld3d(isc:iec,jsc:jec,1) = fld%ssh(isc:iec,jsc:jec) 
+          fld3d(isc:iec,jsc:jec,1) = fld%ssh(isc:iec,jsc:jec)
 
        case ("sea_water_potential_temperature")
           fld3d = fld%tocn(isc:iec,jsc:jec,1:nval)
@@ -290,7 +290,7 @@ contains
        ! Deallocate temporary arrays
        deallocate(fld3d)
        deallocate(gom_window)
-       
+
     end do
 
   end subroutine interp_tl
@@ -298,11 +298,11 @@ contains
   ! ------------------------------------------------------------------------------
   !> Get 3rd dimension of fld
   subroutine nlev_from_ufovar(fld, vars, index_vars, nval)
-    type(soca_field), intent(in) :: fld    
+    type(soca_field), intent(in) :: fld
     type(oops_vars),  intent(in) :: vars
-    integer,          intent(in) :: index_vars    
+    integer,          intent(in) :: index_vars
     integer,         intent(out) :: nval
-    
+
     ! Get number of levels or categories (nval)
     select case (trim(vars%fldnames(index_vars)))
     case ("sea_ice_category_area_fraction", &
@@ -320,12 +320,12 @@ contains
           "sea_water_salinity", &
           "sea_water_cell_thickness")
        nval = fld%geom%ocean%nzo
-       
+
     case default
        call abor1_ftn("soca_interpfields_mod: Could not set nval")
 
     end select
 
   end subroutine nlev_from_ufovar
-  
+
 end module soca_interpfields_mod
