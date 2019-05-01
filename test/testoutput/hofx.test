@@ -1,29 +1,24 @@
 Test     : Initial state: 
 Test     :   Valid time: 2018-04-15T00:00:00Z
-Test     :   Resolution = 368, 218, Fields = 11
-Test     : Min=0 Max=1 RMS=0.524221
-Test     : Min=0 Max=2756.94 RMS=286.785
-Test     : Min=0 Max=30.4111 RMS=0
-Test     : Min=-27.8498 Max=0 RMS=0
-Test     : Min=-382763 Max=0 RMS=0
-Test     : Min=0 Max=5 RMS=0
-Test     : Min=-372547 Max=0 RMS=0
-Test     : Min=-2 Max=37.6251 RMS=0
-Test     : Min=0 Max=40.6337 RMS=0
-Test     : Min=-1.7733 Max=1.11429 RMS=0
-Test     : Min=0 Max=0 RMS=0
+Test     :   cicen   min=    0.000000   max=    1.000000   mean=    0.252545
+Test     :   hicen   min=    0.000000   max= 2667.837408   mean=   98.606971
+Test     :    socn   min=    0.000000   max=   39.037978   mean=   34.507904
+Test     :    tocn   min=   -1.883330   max=   31.008851   mean=    6.153932
+Test     :     ssh   min=   -2.103854   max=    0.912143   mean=   -0.297046
+Test     :    hocn   min=    0.001000   max= 1345.640000   mean=  130.682172
 Test     : Final state: 
-Test     :   Valid time: 2018-04-15T12:00:00Z
-Test     :   Resolution = 368, 218, Fields = 11
-Test     : Min=0 Max=1 RMS=0.524221
-Test     : Min=0 Max=2756.94 RMS=286.785
-Test     : Min=0 Max=30.4111 RMS=0
-Test     : Min=-27.8498 Max=0 RMS=0
-Test     : Min=-382763 Max=0 RMS=0
-Test     : Min=0 Max=5 RMS=0
-Test     : Min=-372547 Max=0 RMS=0
-Test     : Min=-2 Max=37.6251 RMS=0
-Test     : Min=0 Max=40.6337 RMS=0
-Test     : Min=-1.7733 Max=1.11429 RMS=0
-Test     : Min=0 Max=0 RMS=0
-Test     : H(x): SeaIceThickness nobs= 8065 Min=0.463733, Max=2.54865, Average=1.63946SeaIceFraction nobs= 34329 Min=0, Max=1, Average=0.933331ADT nobs= 19266 Min=-1.41721, Max=1.1732, Average=0.106198InsituTemperature nobs= 20082 Min=0, Max=29.9166, Average=19.1836SeaSurfaceTemp nobs= 223966 Min=-1.77582, Max=27.8607, Average=20.3276
+Test     :   Valid time: 2018-04-15T03:00:00Z
+Test     :   cicen   min=    0.000000   max=    1.000000   mean=    0.252545
+Test     :   hicen   min=    0.000000   max= 2667.837408   mean=   98.606971
+Test     :    socn   min=    0.000000   max=   39.037648   mean=   34.508870
+Test     :    tocn   min=   -1.883288   max=   30.999315   mean=    6.154315
+Test     :     ssh   min=   -2.115299   max=    0.904582   mean=   -0.297181
+Test     :    hocn   min=    0.000957   max= 1345.949348   mean=  130.682168
+Test     : H(x): 
+Test     : SeaSurfaceTemp nobs= 21 Min=3.686794, Max=29.622029, RMS=25.925487
+Test     : SeaSurfaceSalinity nobs= 9 Min=33.176612, Max=35.830379, RMS=34.486325
+Test     : ADT nobs= 14 Min=-0.752536, Max=1.561914, RMS=1.019816
+Test     : InsituTemperature nobs= 10 Min=7.750185, Max=30.304328, RMS=23.490562
+Test     : InsituSalinity nobs= 10 Min=33.968657, Max=35.712908, RMS=35.031266
+Test     : SeaIceFraction nobs= 14 Min=0.000000, Max=0.999966, RMS=0.658284
+Test     : End H(x)

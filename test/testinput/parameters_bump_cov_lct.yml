@@ -1,3 +1,13 @@
+logging:
+  categories: Info, Test, Warning, Error, Trace
+
+resolution:
+  num_ice_cat: 5
+  num_ice_lev: 4
+  num_sno_lev: 1
+
+variables: &soca_vars [cicen, hicen, socn, tocn, ssh, hocn]
+
 background:
   read_from_file: 1
   basename: ./INPUT/
@@ -26,82 +36,41 @@ bump:
   rvflt: 5.0
   strategy: specific_univariate
 
+_: &ensfile
+  read_from_file: 1
+  date: *date
+  basename: ./Data/
+  remap_filename: ./INPUT/MOM.res.nc
+
 ensemble:
+  variables: *soca_vars
   members:
-  - read_from_file: 1
-    date: *date
-    basename: ./Data/
+  - <<: *ensfile
     ocn_filename: ocn.pert.ens.1.2018-04-15T00:00:00Z.PT6H.nc
     ice_filename: ice.pert.ens.1.2018-04-15T00:00:00Z.PT6H.nc
-    remap_filename: &remap ./INPUT/MOM.res.nc    
-  - read_from_file: 1
-    date: *date
-    basename: ./Data/
+  - <<: *ensfile
     ocn_filename: ocn.pert.ens.2.2018-04-15T00:00:00Z.PT6H.nc
     ice_filename: ice.pert.ens.2.2018-04-15T00:00:00Z.PT6H.nc
-    remap_filename: *remap
-  - read_from_file: 1
-    date: *date
-    basename: ./Data/
+  - <<: *ensfile
     ocn_filename: ocn.pert.ens.3.2018-04-15T00:00:00Z.PT6H.nc
     ice_filename: ice.pert.ens.3.2018-04-15T00:00:00Z.PT6H.nc
-    remap_filename: *remap
-  - read_from_file: 1
-    date: *date
-    basename: ./Data/
+  - <<: *ensfile
     ocn_filename: ocn.pert.ens.4.2018-04-15T00:00:00Z.PT6H.nc
     ice_filename: ice.pert.ens.4.2018-04-15T00:00:00Z.PT6H.nc
-    remap_filename: *remap
-  - read_from_file: 1
-    date: *date
-    basename: ./Data/
+  - <<: *ensfile
     ocn_filename: ocn.pert.ens.5.2018-04-15T00:00:00Z.PT6H.nc
     ice_filename: ice.pert.ens.5.2018-04-15T00:00:00Z.PT6H.nc
-    remap_filename: *remap
-  - read_from_file: 1
-    date: *date
-    basename: ./Data/
-    ocn_filename: ocn.pert.ens.6.2018-04-15T00:00:00Z.PT6H.nc
-    ice_filename: ice.pert.ens.6.2018-04-15T00:00:00Z.PT6H.nc
-    remap_filename: *remap
-  - read_from_file: 1
-    date: *date
-    basename: ./Data/
-    ocn_filename: ocn.pert.ens.7.2018-04-15T00:00:00Z.PT6H.nc
-    ice_filename: ice.pert.ens.7.2018-04-15T00:00:00Z.PT6H.nc
-    remap_filename: *remap
-  - read_from_file: 1
-    date: *date
-    basename: ./Data/
-    ocn_filename: ocn.pert.ens.8.2018-04-15T00:00:00Z.PT6H.nc
-    ice_filename: ice.pert.ens.8.2018-04-15T00:00:00Z.PT6H.nc
-    remap_filename: *remap
-  - read_from_file: 1
-    date: *date
-    basename: ./Data/
-    ocn_filename: ocn.pert.ens.9.2018-04-15T00:00:00Z.PT6H.nc
-    ice_filename: ice.pert.ens.9.2018-04-15T00:00:00Z.PT6H.nc
-    remap_filename: *remap
-  - read_from_file: 1
-    date: *date
-    basename: ./Data/
-    ocn_filename: ocn.pert.ens.10.2018-04-15T00:00:00Z.PT6H.nc
-    ice_filename: ice.pert.ens.10.2018-04-15T00:00:00Z.PT6H.nc
-    remap_filename: *remap
+
   variable_changes:
   - varchange: BalanceSOCA
     dsdtmax: 0.1
     dsdzmin: 3.0e-6
     dtdzmin: 1.0e-6
-    nlayers: 10        
+    nlayers: 10
     inputVariables:
-      variables: &soca_vars [cicen, hicen, socn, tocn, ssh, hocn]
+      variables: *soca_vars
     outputVariables:
       variables: *soca_vars
-  variables: *soca_vars
-
-logging:
-  categories: Info, Test, Warning, Error, Trace
 
 output:
 - datadir: bump
@@ -149,10 +118,3 @@ output:
   exp: parameters_bump_cov.DLh_1
   parameter: DLh_1
   type: an
-
-resolution:
-  num_ice_cat: 5
-  num_ice_lev: 4
-  num_sno_lev: 1
-
-variables: *soca_vars

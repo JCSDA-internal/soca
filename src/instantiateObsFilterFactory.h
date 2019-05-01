@@ -17,6 +17,7 @@
 #include "ufo/ObsBoundsCheck.h"
 #include "ufo/ObsDomainCheck.h"
 #include "ufo/ObsPreQC.h"
+#include "ufo/Thinning.h"
 
 namespace soca {
 
@@ -36,6 +37,9 @@ namespace soca {
     static oops::FilterMaker<Traits,
       oops::ObsFilter<Traits, ufo::BackgroundCheck>>
       makerBkgChk_("Background Check");
+    static oops::FilterMaker<Traits,
+      oops::ObsFilter<Traits, ufo::Thinning>>
+      makerThinning_("Thinning");
   }
 }  // namespace soca
 
