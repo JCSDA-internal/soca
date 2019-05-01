@@ -86,7 +86,7 @@ contains
   subroutine create_constructor(self, geom, vars)
     type(soca_field),          intent(inout) :: self
     type(soca_geom),  pointer, intent(inout) :: geom
-    type(ufo_vars),               intent(in) :: vars
+    type(oops_vars),              intent(in) :: vars
     integer :: ivar
 
     ! Allocate
