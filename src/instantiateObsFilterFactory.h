@@ -16,14 +16,19 @@
 #include "ufo/BlackList.h"
 #include "ufo/ObsBoundsCheck.h"
 #include "ufo/ObsDomainCheck.h"
-#include "ufo/ObsPreQC.h"
+#include "ufo/PreQC.h"
+#include "ufo/QCmanager.h"
 #include "ufo/Thinning.h"
 
 namespace soca {
 
   void instantiateObsFilterFactory() {
     oops::instantiateObsFilterFactory<Traits>();
-    static oops::FilterMaker<Traits, oops::ObsFilter<Traits, ufo::ObsPreQC>>
+    static oops::FilterMaker<Traits,
+      oops::ObsFilter<Traits, ufo::QCmanager>>
+      makerChkManager_("QCmanager");
+    static oops::FilterMaker<Traits,
+      oops::ObsFilter<Traits, ufo::PreQC>>
       makerChkpreqc_("PreQC");
     static oops::FilterMaker<Traits,
       oops::ObsFilter<Traits, ufo::ObsDomainCheck>>
