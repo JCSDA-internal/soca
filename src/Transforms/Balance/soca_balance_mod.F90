@@ -147,16 +147,18 @@ contains
     !>    [ Kst     I   0  0 ]
     !> K= [ Ketat Ketas I  0 ]
     !>    [ Kct     0   0  I ]
-    
+
     do i = self%isc, self%iec
        do j = self%jsc, self%jec
           ! Temperature
           dxc = sum(dxa%cicen(i,j,2:))
           dxm%tocn(i,j,1) = dxa%tocn(i,j,1) + self%kct(i,j) * dxc
           dxm%tocn(i,j,:) = dxa%tocn(i,j,:)
+          
           ! Salinity
           dxm%socn(i,j,:) = dxa%socn(i,j,:) +&
                &self%kst%jacobian(i,j,:) * dxa%tocn(i,j,:)
+          
           ! SSH
           deta = 0.0_kind_real
           do k = 1, size(self%traj%hocn,3)
@@ -171,10 +173,13 @@ contains
              dxm%cicen(i,j,k+1) =  dxm%cicen(i,j,k+1) +&
                   & self%kct(i,j) * dxa%tocn(i,j,1)
           end do
+          
           ! Ice thickness
-          dxm%hicen(i,j,:) =  dxa%hicen(i,j,:)
+          dxm%hicen(i,j,:) =  dxa%hicen(i,j,:)         
        end do
     end do
+    ! Surface fields
+    call dxm%ocnsfc%copy(dxa%ocnsfc)
 
   end subroutine soca_balance_mult
   
@@ -209,7 +214,9 @@ contains
           dxa%hicen(i,j,:) =  dxm%hicen(i,j,:)
        end do
     end do
-
+    ! Surface fields
+    call dxa%ocnsfc%copy(dxm%ocnsfc)
+    
   end subroutine soca_balance_multad
 
   ! ------------------------------------------------------------------------------
@@ -247,7 +254,8 @@ contains
           dxa%hicen(i,j,:) =  dxm%hicen(i,j,:)
        end do
     end do
-
+    ! Surface fields
+    call dxa%ocnsfc%copy(dxm%ocnsfc)
   end subroutine soca_balance_multinv
 
   ! ------------------------------------------------------------------------------
@@ -283,7 +291,9 @@ contains
           dxm%ssh(i,j)    = dxa%ssh(i,j)
        end do
     end do
-
+    ! Surface fields
+    call dxm%ocnsfc%copy(dxa%ocnsfc)
+    
   end subroutine soca_balance_multinvad
   
 end module soca_balance_mod

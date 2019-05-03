@@ -7,7 +7,7 @@ Geometry:
   num_sno_lev: 1
 
 Variables:
-  variables: &soca_vars [cicen, hicen, socn, tocn, ssh, hocn]
+  variables: &soca_vars [cicen, hicen, socn, tocn, ssh, hocn, sw, lhf, shf, lw, us]
 
 Model:
   name: SOCA
@@ -31,7 +31,7 @@ LinearModel:
   version: IdTLM
   tstep: PT1H
   advance_mom6: 0
-  variables: [cicen, hicen, socn, tocn, ssh, hocn]
+  variables: *soca_vars
 
 LinearModelTest:
   fclength: PT2H

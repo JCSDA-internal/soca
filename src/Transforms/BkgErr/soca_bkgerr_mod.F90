@@ -81,6 +81,11 @@ contains
        self%std_sss = config_get_real(c_conf,"fixed_std_sss")
        self%std_bkgerr%socn(:,:,1) = self%std_sss
     end if
+
+    ! Invent background error for ocnsfc fields: set it
+    ! to 10% of the background for now ...
+    call self%std_bkgerr%ocnsfc%copy(bkg%ocnsfc)
+    call self%std_bkgerr%ocnsfc%mul(0.1_kind_real)
     
     ! Associate background
     self%bkg => bkg
@@ -119,6 +124,9 @@ contains
           dxm%hicen(i,j,:) =  self%std_bkgerr%hicen(i,j,:) * dxa%hicen(i,j,:)
        end do
     end do
+    ! Surface fields
+    call dxm%ocnsfc%copy(dxa%ocnsfc)    
+    call dxm%ocnsfc%schur(self%std_bkgerr%ocnsfc)
 
   end subroutine soca_bkgerr_mult
 

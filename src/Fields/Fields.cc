@@ -239,7 +239,7 @@ namespace soca {
     int ncat = -1;
     int nf = -1;
     soca_field_sizes_f90(keyFlds_, nx, ny, nzo, nzi, ncat, nf);
-    bool ok = (nf == 6);    // <---- HARD CODED STUFF ... NEED TO CHANGE
+    bool ok = (nf == 11);    // <---- HARD CODED STUFF ... NEED TO CHANGE
     if (nonlinear) ok = ok;  // && (nb == 2);
     return ok;
   }

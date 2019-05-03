@@ -20,7 +20,7 @@ model:
   name: SOCA
   tstep: PT1H
   advance_mom6: 1
-  variables: &soca_vars [cicen, hicen, socn, tocn, ssh, hocn]
+  variables: &soca_vars [cicen, hicen, socn, tocn, ssh, hocn, sw, lhf, shf, lw, us]
 
 # common obsfilters used by all obs
 _: &Filter_mask
@@ -115,6 +115,13 @@ cost_function:
 
   Jo:
     ObsTypes:
+
+    - ObsType: CoolSkin
+      ObsData:
+        ObsDataOut: {obsfile: ./Data/sst.out.nc}
+        ObsDataIn:  {obsfile: ./Data/sst.nc}
+      Covariance:
+        covariance: diagonal
 
     - ObsType: SeaSurfaceTemp
       variables: [sea_surface_temperature]

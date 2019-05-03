@@ -6,6 +6,11 @@ Test     :    socn   min=    0.000000   max=   39.037978   mean=   34.507904
 Test     :    tocn   min=   -1.883330   max=   31.008851   mean=    6.153932
 Test     :     ssh   min=   -2.103854   max=    0.912143   mean=   -0.297046
 Test     :    hocn   min=    0.001000   max= 1345.640000   mean=  130.682172
+Test     :      sw   min=  -57.100000   max=  -57.100000   mean=  -86.521926
+Test     :     lhf   min=  103.000000   max=  103.000000   mean=  156.072827
+Test     :     shf   min=    7.700000   max=    7.700000   mean=   11.667580
+Test     :      lw   min=  600.000000   max=  600.000000   mean=  909.162099
+Test     :      us   min=    0.080000   max=    0.080000   mean=    0.121222
 Test     : Final state: 
 Test     :   Valid time: 2018-04-15T06:00:00Z
 Test     :   cicen   min=    0.000000   max=    1.000000   mean=    0.252545
@@ -14,3 +19,8 @@ Test     :    socn   min=    0.000000   max=   39.037978   mean=   34.507904
 Test     :    tocn   min=   -1.883330   max=   31.008851   mean=    6.153932
 Test     :     ssh   min=   -2.103854   max=    0.912143   mean=   -0.297046
 Test     :    hocn   min=    0.001000   max= 1345.640000   mean=  130.682172
+Test     :      sw   min=  -57.100000   max=  -57.100000   mean=  -86.521926
+Test     :     lhf   min=  103.000000   max=  103.000000   mean=  156.072827
+Test     :     shf   min=    7.700000   max=    7.700000   mean=   11.667580
+Test     :      lw   min=  600.000000   max=  600.000000   mean=  909.162099
+Test     :      us   min=    0.080000   max=    0.080000   mean=    0.121222

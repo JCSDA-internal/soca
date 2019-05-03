@@ -15,9 +15,10 @@ StateTest:
     basename: ./INPUT/
     ocn_filename: MOM.res.nc
     ice_filename: ice_model.res.nc
-    variables: &soca_vars [cicen, hicen, socn, tocn, ssh, hocn]
+    variables: &soca_vars [cicen, hicen, socn, tocn, ssh, hocn, sw, lhf, shf, lw, us]
+      
     remap_filename: ./INPUT/MOM.res.nc
-  norm-file: 35983.6823617
+  norm-file: 47432.471076845803
   date: *date
   StateGenerate:
     read_from_file: 0
