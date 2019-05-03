@@ -116,6 +116,7 @@ contains
 
     ! Allocate and copy fields
     call soca_field_alloc(self, rhs_fld%geom)
+    call zeros(self)
     !call copy(self,rhs_fld)
 
     ! Associate geometry
@@ -208,6 +209,8 @@ contains
     self%ssh = 0.0_kind_real
     self%hocn = 0.0_kind_real
 
+    self%mld = 0.0_kind_real
+
     call self%ocnsfc%zeros()
     
   end subroutine zeros
@@ -227,6 +230,7 @@ contains
     self%ssh = 1.0_kind_real
     self%hocn = 1.0_kind_real
 
+    self%mld = 1.0_kind_real
   end subroutine ones
 
   ! ------------------------------------------------------------------------------

@@ -218,8 +218,8 @@ contains
     ! This include declares and sets the variable "version".
 #include "version_variable.h"
     character(len=40)  :: mod_name = "soca_mom6" ! This module's name.
-    integer :: ocean_nthreads != 1
-    integer :: ncores_per_node != 36
+    integer :: ocean_nthreads = 1
+    integer :: ncores_per_node = 1
     logical :: use_hyper_thread = .false.
     integer :: omp_get_num_threads,omp_get_thread_num,get_cpu_affinity,adder,base_cpu
     namelist /ocean_solo_nml/ date_init, calendar, months, days, hours, minutes, seconds,&

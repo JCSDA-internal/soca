@@ -114,6 +114,8 @@ contains
     other%ice_column = self%ice_column
     call geom_allocate(other)    
 
+    other%rossby_radius = self%rossby_radius
+    
   end subroutine geom_clone
 
   ! ------------------------------------------------------------------------------

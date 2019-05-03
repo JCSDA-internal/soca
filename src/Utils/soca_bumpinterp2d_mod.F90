@@ -18,7 +18,7 @@ module soca_bumpinterp2d_mod
      integer                           :: nobs          !< Number of values to interpolate
      real(kind=kind_real), allocatable :: lono(:)       !< Longitude of destination
      real(kind=kind_real), allocatable :: lato(:)       !< Latitude of destination 
-     logical                           :: initialized   !< Initialization switch
+     logical                           :: initialized = .false. !< Initialization switch
    contains
      procedure :: initialize => interp_init
      procedure :: info => interp_info
@@ -75,6 +75,7 @@ contains
     self%bump%nam%verbosity = 'none'
     self%bump%nam%write_obsop = .false.
     self%bump%nam%sam_write = .false.
+    self%bump%nam%strategy = 'specific_univariate'
 
     !Initialize geometry
     allocate(area(ns))
