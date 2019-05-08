@@ -25,7 +25,7 @@ Test     :     shf   min=    7.700000   max=    7.700000   mean=   11.667580
 Test     :      lw   min=  600.000000   max=  600.000000   mean=  909.162099
 Test     :      us   min=    0.080000   max=    0.080000   mean=    0.121222
 Test     : H(x): 
-Test     : CoolSkin nobs= 21 Min=3.686794, Max=29.622029, RMS=25.925487
+Test     : CoolSkin nobs= 21 Min=3.672935, Max=29.608128, RMS=25.912199
 Test     : SeaSurfaceTemp nobs= 21 Min=3.686794, Max=29.622029, RMS=25.925487
 Test     : SeaSurfaceSalinity nobs= 9 Min=33.176612, Max=35.830379, RMS=34.486325
 Test     : ADT nobs= 14 Min=-0.752536, Max=1.561914, RMS=1.019816

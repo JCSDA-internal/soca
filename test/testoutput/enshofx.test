@@ -25,7 +25,7 @@ Test     :     shf   min=    7.700000   max=    7.700000   mean=   11.667580
 Test     :      lw   min=  600.000000   max=  600.000000   mean=  909.162099
 Test     :      us   min=    0.080000   max=    0.080000   mean=    0.121222
 Test     : H(x) for member 0:
-Test     : CoolSkin nobs= 17 Min=11.218102, Max=29.855749, RMS=23.731775
+Test     : CoolSkin nobs= 17 Min=11.204242, Max=29.841848, RMS=23.718238
 Test     : SeaSurfaceTemp nobs= 17 Min=11.218102, Max=29.855749, RMS=23.731775
 Test     : SeaSurfaceSalinity nobs= 14 Min=32.715026, Max=36.201326, RMS=34.905260
 Test     : ADT nobs= 11 Min=-0.959786, Max=0.952985, RMS=0.710538
@@ -60,7 +60,7 @@ Test     :     shf   min=    7.700000   max=    7.700000   mean=   11.667580
 Test     :      lw   min=  600.000000   max=  600.000000   mean=  909.162099
 Test     :      us   min=    0.080000   max=    0.080000   mean=    0.121222
 Test     : H(x) for member 1:
-Test     : CoolSkin nobs= 17 Min=11.075220, Max=29.855880, RMS=23.634269
+Test     : CoolSkin nobs= 17 Min=11.061360, Max=29.841979, RMS=23.620745
 Test     : SeaSurfaceTemp nobs= 17 Min=11.075220, Max=29.855880, RMS=23.634269
 Test     : SeaSurfaceSalinity nobs= 14 Min=33.079983, Max=35.767173, RMS=34.574174
 Test     : ADT nobs= 11 Min=-0.908611, Max=0.947450, RMS=0.687130
@@ -95,7 +95,7 @@ Test     :     shf   min=    7.700000   max=    7.700000   mean=   11.667580
 Test     :      lw   min=  600.000000   max=  600.000000   mean=  909.162099
 Test     :      us   min=    0.080000   max=    0.080000   mean=    0.121222
 Test     : H(x) for member 2:
-Test     : CoolSkin nobs= 17 Min=11.101515, Max=29.856066, RMS=23.720752
+Test     : CoolSkin nobs= 17 Min=11.087655, Max=29.842165, RMS=23.707222
 Test     : SeaSurfaceTemp nobs= 17 Min=11.101515, Max=29.856066, RMS=23.720752
 Test     : SeaSurfaceSalinity nobs= 14 Min=33.720039, Max=35.853467, RMS=34.851818
 Test     : ADT nobs= 11 Min=-0.927621, Max=0.943660, RMS=0.691436
