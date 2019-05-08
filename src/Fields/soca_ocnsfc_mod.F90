@@ -22,7 +22,6 @@ module soca_ocnsfc_mod
      real(kind=kind_real), allocatable :: latent_heat(:,:)       
      real(kind=kind_real), allocatable :: sens_heat(:,:)
      real(kind=kind_real), allocatable :: fric_vel(:,:)
-     real(kind=kind_real), allocatable :: mask(:,:)     
    contains
      procedure :: create => soca_ocnsfc_create
      procedure :: delete => soca_ocnsfc_delete
@@ -40,7 +39,6 @@ module soca_ocnsfc_mod
      procedure :: read_file => soca_ocnsfc_read_file
      procedure :: getforcing => soca_ocnsfc_getforcing
      procedure :: pushforcing => soca_ocnsfc_pushforcing     
-     procedure :: applymask => soca_ocnsfc_applymask     
   end type soca_ocnsfc_type
 
 contains
@@ -234,7 +232,6 @@ contains
     self%latent_heat = - real(fluxes%latent, kind=kind_real)
     self%sens_heat   = - real(fluxes%sens, kind=kind_real)
     self%fric_vel    = real(fluxes%ustar, kind=kind_real)
-    call soca_ocnsfc_applymask(self)
     
   end subroutine soca_ocnsfc_getforcing
 
@@ -251,18 +248,6 @@ contains
     fluxes%ustar  = real(self%fric_vel, kind=8)
     
   end subroutine soca_ocnsfc_pushforcing
-
-  ! ------------------------------------------------------------------------------  
-  subroutine soca_ocnsfc_applymask(self)
-    class(soca_ocnsfc_type), intent(inout) :: self
-    
-    self%sw_rad      = self%sw_rad      * self%mask 
-    self%lw_rad      = self%lw_rad      * self%mask 
-    self%latent_heat = self%latent_heat * self%mask 
-    self%sens_heat   = self%sens_heat   * self%mask 
-    self%fric_vel    = self%fric_vel    * self%mask 
-    
-  end subroutine soca_ocnsfc_applymask
 
   ! ------------------------------------------------------------------------------  
   subroutine soca_ocnsfc_read_file(self)
