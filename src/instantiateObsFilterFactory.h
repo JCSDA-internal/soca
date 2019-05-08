@@ -12,13 +12,13 @@
 #include "oops/base/instantiateObsFilterFactory.h"
 #include "oops/base/ObsFilterBase.h"
 #include "oops/interface/ObsFilter.h"
-#include "ufo/BackgroundCheck.h"
-#include "ufo/BlackList.h"
-#include "ufo/ObsBoundsCheck.h"
-#include "ufo/ObsDomainCheck.h"
-#include "ufo/PreQC.h"
-#include "ufo/QCmanager.h"
-#include "ufo/Thinning.h"
+#include "ufo/filters/BackgroundCheck.h"
+#include "ufo/filters/BlackList.h"
+#include "ufo/filters/ObsBoundsCheck.h"
+#include "ufo/filters/ObsDomainCheck.h"
+#include "ufo/filters/PreQC.h"
+#include "ufo/filters/QCmanager.h"
+#include "ufo/filters/Thinning.h"
 
 namespace soca {
 
