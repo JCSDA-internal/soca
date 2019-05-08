@@ -112,6 +112,9 @@ subroutine soca_propagate(self, flds, fldsdate)
   self%mom6_config%MOM_CSp%T = real(flds%tocn, kind=8)
   self%mom6_config%MOM_CSp%S = real(flds%socn, kind=8)
 
+  ! Update forcing
+  !call flds%ocnsfc%pushforcing(self%mom6_config%fluxes)
+  
   ! Set ocean clock
   call datetime_to_string(fldsdate, strdate)
   call soca_str2int(strdate(1:4), year)
@@ -179,9 +182,6 @@ subroutine soca_finalize_integration(self, flds)
   self%mom6_config%MOM_CSp%T = real(flds%tocn, kind=8)
   self%mom6_config%MOM_CSp%S = real(flds%socn, kind=8)
 
-  ! Update forcing
-  call flds%ocnsfc%pushforcing(self%mom6_config%fluxes)
-  
   ! Save MOM restarts with updated SOCA fields
   call save_restart(self%mom6_config%dirs%restart_output_dir, &
                    self%mom6_config%Time, &

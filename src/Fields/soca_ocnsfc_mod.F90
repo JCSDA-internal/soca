@@ -28,6 +28,7 @@ module soca_ocnsfc_mod
      procedure :: delete => soca_ocnsfc_delete
      procedure :: zeros => soca_ocnsfc_zeros
      procedure :: ones => soca_ocnsfc_ones
+     procedure :: abs => soca_ocnsfc_abs
      procedure :: random => soca_ocnsfc_random
      procedure :: copy => soca_ocnsfc_copy
      procedure :: add => soca_ocnsfc_add
@@ -101,6 +102,18 @@ contains
     self%fric_vel    = 1.0_kind_real
 
   end subroutine soca_ocnsfc_ones
+
+  ! ------------------------------------------------------------------------------  
+  subroutine soca_ocnsfc_abs(self)
+    class(soca_ocnsfc_type), intent(inout) :: self
+
+    self%sw_rad      = abs(self%sw_rad)
+    self%lw_rad      = abs(self%lw_rad)
+    self%latent_heat = abs(self%latent_heat)
+    self%sens_heat   = abs(self%sens_heat)
+    self%fric_vel    = abs(self%fric_vel)
+
+  end subroutine soca_ocnsfc_abs
 
   ! ------------------------------------------------------------------------------  
   subroutine soca_ocnsfc_random(self)

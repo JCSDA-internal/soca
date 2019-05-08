@@ -54,7 +54,6 @@ void TlmId::finalizeTL(Increment & dx) const {}
 void TlmId::initializeAD(Increment & dx) const {}
 // -----------------------------------------------------------------------------
 void TlmId::stepAD(Increment & dx, ModelBiasIncrement &) const {
-  Log::trace() << dx << std::endl;
   dx.updateTime(-tstep_);
 }
 // -----------------------------------------------------------------------------
