@@ -86,6 +86,9 @@ subroutine soca_initialize_integration(self, flds)
   self%mom6_config%MOM_CSp%T = real(flds%tocn, kind=8)
   self%mom6_config%MOM_CSp%S = real(flds%socn, kind=8)
 
+  ! Not initialized in State: Update soca forcing
+  call flds%ocnsfc%getforcing(self%mom6_config%fluxes)  
+  
 end subroutine soca_initialize_integration
 
 ! ------------------------------------------------------------------------------
@@ -142,6 +145,9 @@ subroutine soca_propagate(self, flds, fldsdate)
   flds%hocn = real(self%mom6_config%MOM_CSp%h, kind=kind_real)
   flds%ssh = real(self%mom6_config%MOM_CSp%ave_ssh_ibc, kind=kind_real)
 
+  ! Update soca forcing
+  call flds%ocnsfc%getforcing(self%mom6_config%fluxes)
+
 end subroutine soca_propagate
 
 ! ------------------------------------------------------------------------------
@@ -173,6 +179,9 @@ subroutine soca_finalize_integration(self, flds)
   self%mom6_config%MOM_CSp%T = real(flds%tocn, kind=8)
   self%mom6_config%MOM_CSp%S = real(flds%socn, kind=8)
 
+  ! Update forcing
+  call flds%ocnsfc%pushforcing(self%mom6_config%fluxes)
+  
   ! Save MOM restarts with updated SOCA fields
   call save_restart(self%mom6_config%dirs%restart_output_dir, &
                    self%mom6_config%Time, &

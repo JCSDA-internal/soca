@@ -8,6 +8,7 @@
 module soca_ocnsfc_mod
 
   use kinds
+  use MOM_forcing_type,    only : forcing  
   use soca_geom_mod_c
   use random_mod
   use soca_model_geom_type, only : geom_get_domain_indices
@@ -16,15 +17,17 @@ module soca_ocnsfc_mod
   private
 
   type, public :: soca_ocnsfc_type
-     real(kind=kind_real), allocatable:: sw_rad(:,:)
+     real(kind=kind_real), allocatable :: sw_rad(:,:)
      real(kind=kind_real), allocatable :: lw_rad(:,:)     
      real(kind=kind_real), allocatable :: latent_heat(:,:)       
      real(kind=kind_real), allocatable :: sens_heat(:,:)
      real(kind=kind_real), allocatable :: fric_vel(:,:)
+     real(kind=kind_real), allocatable :: mask(:,:)     
    contains
      procedure :: create => soca_ocnsfc_create
      procedure :: delete => soca_ocnsfc_delete
      procedure :: zeros => soca_ocnsfc_zeros
+     procedure :: ones => soca_ocnsfc_ones
      procedure :: random => soca_ocnsfc_random
      procedure :: copy => soca_ocnsfc_copy
      procedure :: add => soca_ocnsfc_add
@@ -34,6 +37,9 @@ module soca_ocnsfc_mod
      procedure :: axpy => soca_ocnsfc_axpy
      procedure :: diff_incr => soca_ocnsfc_diff_incr
      procedure :: read_file => soca_ocnsfc_read_file
+     procedure :: getforcing => soca_ocnsfc_getforcing
+     procedure :: pushforcing => soca_ocnsfc_pushforcing     
+     procedure :: applymask => soca_ocnsfc_applymask     
   end type soca_ocnsfc_type
 
 contains
@@ -54,7 +60,9 @@ contains
     if (.not.allocated(self%latent_heat)) allocate(self%latent_heat(isd:ied,jsd:jed))
     if (.not.allocated(self%sens_heat)) allocate(self%sens_heat(isd:ied,jsd:jed))    
     if (.not.allocated(self%fric_vel)) allocate(self%fric_vel(isd:ied,jsd:jed))
-
+    if (.not.allocated(self%mask)) allocate(self%mask(isd:ied,jsd:jed))
+    self%mask = geom%ocean%mask2d
+    
   end subroutine soca_ocnsfc_create
 
   ! ------------------------------------------------------------------------------  
@@ -81,6 +89,18 @@ contains
     self%fric_vel    = 0.0_kind_real
 
   end subroutine soca_ocnsfc_zeros
+
+  ! ------------------------------------------------------------------------------  
+  subroutine soca_ocnsfc_ones(self)
+    class(soca_ocnsfc_type), intent(inout) :: self
+
+    self%sw_rad      = 1.0_kind_real
+    self%lw_rad      = 1.0_kind_real
+    self%latent_heat = 1.0_kind_real
+    self%sens_heat   = 1.0_kind_real
+    self%fric_vel    = 1.0_kind_real
+
+  end subroutine soca_ocnsfc_ones
 
   ! ------------------------------------------------------------------------------  
   subroutine soca_ocnsfc_random(self)
@@ -189,6 +209,47 @@ contains
     self%fric_vel    = x1%fric_vel    - x2%fric_vel
     
   end subroutine soca_ocnsfc_diff_incr
+
+  ! ------------------------------------------------------------------------------  
+  subroutine soca_ocnsfc_getforcing(self, fluxes)
+    class(soca_ocnsfc_type), intent(inout) :: self
+    type(forcing),              intent(in) :: fluxes !< Thermodynamic forcing
+    
+    ! Get ocnsfc from mom6 forcing
+    self%sw_rad      = - real(fluxes%sw, kind=kind_real)
+    self%lw_rad      = - real(fluxes%lw, kind=kind_real)
+    self%latent_heat = - real(fluxes%latent, kind=kind_real)
+    self%sens_heat   = - real(fluxes%sens, kind=kind_real)
+    self%fric_vel    = real(fluxes%ustar, kind=kind_real)
+    call soca_ocnsfc_applymask(self)
+    
+  end subroutine soca_ocnsfc_getforcing
+
+  ! ------------------------------------------------------------------------------  
+  subroutine soca_ocnsfc_pushforcing(self, fluxes)
+    class(soca_ocnsfc_type), intent(in) :: self
+    type(forcing),        intent(inout) :: fluxes !< Thermodynamic forcing
+    
+    ! Push ocnsfc into mom6 forcing
+    fluxes%sw     = - real(self%sw_rad, kind=8)
+    fluxes%lw     = - real(self%lw_rad, kind=8)
+    fluxes%latent = - real(self%latent_heat, kind=8)
+    fluxes%sens   = - real(self%sens_heat, kind=8)
+    fluxes%ustar  = real(self%fric_vel, kind=8)
+    
+  end subroutine soca_ocnsfc_pushforcing
+
+  ! ------------------------------------------------------------------------------  
+  subroutine soca_ocnsfc_applymask(self)
+    class(soca_ocnsfc_type), intent(inout) :: self
+    
+    self%sw_rad      = self%sw_rad      * self%mask 
+    self%lw_rad      = self%lw_rad      * self%mask 
+    self%latent_heat = self%latent_heat * self%mask 
+    self%sens_heat   = self%sens_heat   * self%mask 
+    self%fric_vel    = self%fric_vel    * self%mask 
+    
+  end subroutine soca_ocnsfc_applymask
 
   ! ------------------------------------------------------------------------------  
   subroutine soca_ocnsfc_read_file(self)
