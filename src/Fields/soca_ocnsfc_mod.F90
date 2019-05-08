@@ -59,8 +59,6 @@ contains
     if (.not.allocated(self%latent_heat)) allocate(self%latent_heat(isd:ied,jsd:jed))
     if (.not.allocated(self%sens_heat)) allocate(self%sens_heat(isd:ied,jsd:jed))    
     if (.not.allocated(self%fric_vel)) allocate(self%fric_vel(isd:ied,jsd:jed))
-    if (.not.allocated(self%mask)) allocate(self%mask(isd:ied,jsd:jed))
-    self%mask = geom%ocean%mask2d
     
   end subroutine soca_ocnsfc_create
 
