@@ -30,56 +30,72 @@ Assimilation Window:
 Observations:
   ObsTypes:
 
-  - ObsType: CoolSkin
-    ObsData:
+  - ObsSpace:
+      name: CoolSkin
       ObsDataOut: {obsfile: ./Data/sst.out.nc}
       ObsDataIn:  {obsfile: ./Data/sst.nc}
+    ObsOperator:
+      name: CoolSkin
     Covariance:
       covariance: diagonal
     ObsFilter:
+    - Filter: GOMsaver
+      filename: ./Data/coolskingeovl.nc
 
-  - ObsType: SeaSurfaceTemp
-    variables: [sea_surface_temperature]
-    ObsData:
+  - ObsSpace:
+      name: SeaSurfaceTemp
       ObsDataOut: {obsfile: ./Data/sst.out.nc}
       ObsDataIn:  {obsfile: ./Data/sst.nc}
+    ObsOperator:
+      name: SeaSurfaceTemp
+      variables: [sea_surface_temperature]
     Covariance:
       covariance: diagonal
 
-  - ObsType: SeaSurfaceSalinity
-    variables: [sea_surface_salinity]
-    ObsData:
+  - ObsSpace:
+      name: SeaSurfaceSalinity
       ObsDataOut: {obsfile: ./Data/sss.out.nc}
       ObsDataIn:  {obsfile: ./Data/sss.nc}
+    ObsOperator:
+      name: SeaSurfaceSalinity      
+      variables: [sea_surface_salinity]
     Covariance:
       covariance: diagonal
 
-  - ObsType: ADT
-    ObsData:
+  - ObsSpace:
+      name: ADT
       ObsDataOut: {obsfile: ./Data/adt.out.nc}
       ObsDataIn:  {obsfile: ./Data/adt.nc}
+    ObsOperator:
+      name: ADT
     Covariance:
       covariance: diagonal
 
-  - ObsType: InsituTemperature
-    ObsData:
+  - ObsSpace:
+      name: InsituTemperature
       ObsDataOut: {obsfile: ./Data/prof.T.out.nc}
       ObsDataIn:  {obsfile: ./Data/prof.nc}
+    ObsOperator:
+      name: InsituTemperature      
     Covariance:
       covariance: diagonal
 
-  - ObsType: InsituSalinity
-    variable: [sea_water_salinity]
-    ObsData:
+  - ObsSpace:
+      name: InsituSalinity
       ObsDataOut: {obsfile: ./Data/prof.S.out.nc}
       ObsDataIn:  {obsfile: ./Data/prof.nc}
+    ObsOperator:
+      name: InsituSalinity
+      variable: [sea_water_salinity]
     Covariance:
       covariance: diagonal
 
-  - ObsType: SeaIceFraction
-    ObsData:
+  - ObsSpace:
+      name: SeaIceFraction
       ObsDataOut: {oubsfile: ./Data/icec.out.nc}
       ObsDataIn:  {obsfile:  ./Data/icec.nc}
+    ObsOperator:
+      name: SeaIceFraction
     Covariance:
       covariance: diagonal
 
