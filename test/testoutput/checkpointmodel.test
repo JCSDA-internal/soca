@@ -6,34 +6,34 @@ Test     :    socn   min=    0.000000   max=   39.037978   mean=   34.507904
 Test     :    tocn   min=   -1.883330   max=   31.008851   mean=    6.153932
 Test     :     ssh   min=   -2.103854   max=    0.912143   mean=   -0.297046
 Test     :    hocn   min=    0.001000   max= 1345.640000   mean=  130.682172
-Test     :      sw   min=  -57.100000   max=  -57.100000   mean=  -86.521926
-Test     :     lhf   min=  103.000000   max=  103.000000   mean=  156.072827
-Test     :     shf   min=    7.700000   max=    7.700000   mean=   11.667580
-Test     :      lw   min=  600.000000   max=  600.000000   mean=  909.162099
-Test     :      us   min=    0.080000   max=    0.080000   mean=    0.121222
+Test     :      sw   min=    0.000000   max=    0.000000   mean=    0.000000
+Test     :     lhf   min=    0.000000   max=    0.000000   mean=    0.000000
+Test     :     shf   min=    0.000000   max=    0.000000   mean=    0.000000
+Test     :      lw   min=    0.000000   max=    0.000000   mean=    0.000000
+Test     :      us   min=    0.000000   max=    0.000000   mean=    0.000000
 Test     : analysis: 
 Test     :   Valid time: 2018-04-15T00:00:00Z
-Test     :   cicen   min=   -0.089384   max=    1.011399   mean=    0.254198
+Test     :   cicen   min=   -0.000052   max=    1.000001   mean=    0.252544
 Test     :   hicen   min=    0.000000   max= 2667.837408   mean=   98.606971
-Test     :    socn   min=    0.000000   max=   39.013675   mean=   34.513954
-Test     :    tocn   min=   -2.850756   max=   33.244168   mean=    6.201349
-Test     :     ssh   min=   -2.138115   max=    0.927758   mean=   -0.298119
+Test     :    socn   min=    0.000000   max=   39.037976   mean=   34.507905
+Test     :    tocn   min=   -1.883330   max=   31.008182   mean=    6.154004
+Test     :     ssh   min=   -2.103837   max=    0.912145   mean=   -0.297044
 Test     :    hocn   min=    0.001000   max= 1345.640000   mean=  130.682172
-Test     :      sw   min=  -57.100000   max=  -57.100000   mean=  -86.521926
-Test     :     lhf   min=  103.000000   max=  103.000000   mean=  156.072827
-Test     :     shf   min=    7.700000   max=    7.700000   mean=   11.667580
-Test     :      lw   min=  600.000000   max=  600.000000   mean=  909.162099
-Test     :      us   min=    0.080000   max=    0.080000   mean=    0.121222
+Test     :      sw   min=    0.000000   max=    0.000000   mean=    0.000000
+Test     :     lhf   min=    0.000000   max=    0.000000   mean=    0.000000
+Test     :     shf   min=    0.000000   max=    0.000000   mean=    0.000000
+Test     :      lw   min=    0.000000   max=    0.000000   mean=    0.000000
+Test     :      us   min=    0.000000   max=    0.000000   mean=    0.000000
 Test     : output background: 
 Test     :   Valid time: 2018-04-15T00:00:00Z
-Test     :   cicen   min=   -0.089384   max=    1.011399   mean=    0.254198
+Test     :   cicen   min=   -0.000052   max=    1.000001   mean=    0.252544
 Test     :   hicen   min=    0.000000   max= 2667.837408   mean=   98.606971
-Test     :    socn   min=    0.100000   max=   38.000000   mean=   34.561816
-Test     :    tocn   min=   -1.800000   max=   32.000000   mean=    6.202948
-Test     :     ssh   min=   -2.138115   max=    0.927758   mean=   -0.298119
+Test     :    socn   min=    0.100000   max=   38.000000   mean=   34.555722
+Test     :    tocn   min=   -1.800000   max=   31.008182   mean=    6.154343
+Test     :     ssh   min=   -2.103837   max=    0.912145   mean=   -0.297044
 Test     :    hocn   min=    0.001000   max= 1345.640000   mean=  130.682172
-Test     :      sw   min=  -57.100000   max=  -57.100000   mean=  -86.521926
-Test     :     lhf   min=  103.000000   max=  103.000000   mean=  156.072827
-Test     :     shf   min=    7.700000   max=    7.700000   mean=   11.667580
-Test     :      lw   min=  600.000000   max=  600.000000   mean=  909.162099
-Test     :      us   min=    0.080000   max=    0.080000   mean=    0.121222
+Test     :      sw   min=    0.000000   max=    0.000000   mean=    0.000000
+Test     :     lhf   min=    0.000000   max=    0.000000   mean=    0.000000
+Test     :     shf   min=    0.000000   max=    0.000000   mean=    0.000000
+Test     :      lw   min=    0.000000   max=    0.000000   mean=    0.000000
+Test     :      us   min=    0.000000   max=    0.000000   mean=    0.000000

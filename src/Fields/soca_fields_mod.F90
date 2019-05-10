@@ -667,7 +667,7 @@ contains
     ! iread = 1 (state) or 3 (increment): Read restart file
     if ((iread==1).or.(iread==3)) then
        ! Read ocean surface fields
-       call fld%ocnsfc%read_file()
+       call fld%ocnsfc%read_restart(c_conf, fld%geom, fld%fldnames)
 
        basename = config_get_string(c_conf,len(basename),"basename")
        ocn_filename = config_get_string(c_conf,len(ocn_filename),"ocn_filename")
@@ -761,7 +761,7 @@ contains
     ! Read diagnostic file
     if (iread==2) then
        ! Read ocean surface fields
-       call fld%ocnsfc%read_file()
+       call fld%ocnsfc%read_diag(c_conf, fld%geom, fld%fldnames)
 
        incr_filename = config_get_string(c_conf,len(incr_filename),"filename")
        call fms_io_init()

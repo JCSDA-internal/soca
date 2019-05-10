@@ -113,6 +113,7 @@ subroutine soca_propagate(self, flds, fldsdate)
   self%mom6_config%MOM_CSp%S = real(flds%socn, kind=8)
 
   ! Update forcing
+  ! TODO: pass forcing back to MOM, line below doesn't do anything.
   !call flds%ocnsfc%pushforcing(self%mom6_config%fluxes)
   
   ! Set ocean clock

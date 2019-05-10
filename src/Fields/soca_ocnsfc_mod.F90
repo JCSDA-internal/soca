@@ -7,10 +7,17 @@
 
 module soca_ocnsfc_mod
 
+  use config_mod
+  use datetime_mod  
+  use fms_io_mod, only : fms_io_init, fms_io_exit,&
+       &register_restart_field, restart_file_type,&
+       &restore_state, free_restart_type
+  use fms_mod,    only: read_data  
+  use iso_c_binding  
   use kinds
   use MOM_forcing_type,    only : forcing  
-  use soca_geom_mod_c
   use random_mod
+  use soca_geom_mod_c  
   use soca_model_geom_type, only : geom_get_domain_indices
 
   implicit none
@@ -36,7 +43,8 @@ module soca_ocnsfc_mod
      procedure :: mul => soca_ocnsfc_mul
      procedure :: axpy => soca_ocnsfc_axpy
      procedure :: diff_incr => soca_ocnsfc_diff_incr
-     procedure :: read_file => soca_ocnsfc_read_file
+     procedure :: read_restart => soca_ocnsfc_read_rst
+     procedure :: read_diag => soca_ocnsfc_read_diag
      procedure :: getforcing => soca_ocnsfc_getforcing
      procedure :: pushforcing => soca_ocnsfc_pushforcing     
   end type soca_ocnsfc_type
@@ -248,16 +256,102 @@ contains
   end subroutine soca_ocnsfc_pushforcing
 
   ! ------------------------------------------------------------------------------  
-  subroutine soca_ocnsfc_read_file(self)
-    ! HACK, TODO: Do something, like read a file!
+  subroutine soca_ocnsfc_read_rst(self, c_conf, geom, fldnames)
     class(soca_ocnsfc_type), intent(inout) :: self
+    type(c_ptr),                intent(in) :: c_conf
+    type(soca_geom),            intent(in) :: geom    
+    character(len=5),           intent(in) :: fldnames(:)
 
-    self%sw_rad      = -57.1_kind_real
-    self%lw_rad      = 600.0_kind_real
-    self%latent_heat = 103.0_kind_real
-    self%sens_heat   = 7.7_kind_real
-    self%fric_vel    = 0.08_kind_real
-    
-  end subroutine soca_ocnsfc_read_file
+    integer, parameter :: max_string_length=800
+    integer :: idr, i
+    character(len=max_string_length) :: filename, basename
+    type(restart_file_type) :: restart
+
+    if (config_element_exists(c_conf,"sfc_filename")) then
+       basename = config_get_string(c_conf,len(basename),"basename")
+       filename = config_get_string(c_conf,len(filename),"sfc_filename")
+       filename = trim(basename)//trim(filename)       
+    else
+       call self%zeros()
+       return
+    end if
+
+    call fms_io_init()
+    do i = 1, size(fldnames)
+       select case(fldnames(i))
+       case('sw')
+          idr = register_restart_field(restart, filename, 'sw_rad', &
+                                       self%sw_rad(:,:), &
+                                       domain=geom%ocean%G%Domain%mpp_domain)
+       case('lw')
+          idr = register_restart_field(restart, filename, 'lw_rad', &
+                                       self%lw_rad(:,:), &
+                                       domain=geom%ocean%G%Domain%mpp_domain)
+       case('lhf')
+          idr = register_restart_field(restart, filename, 'latent_heat', &
+                                       self%latent_heat(:,:), &
+                                       domain=geom%ocean%G%Domain%mpp_domain)
+       case('shf')
+          idr = register_restart_field(restart, filename, 'sens_heat', &
+                                       self%sens_heat(:,:), &
+                                       domain=geom%ocean%G%Domain%mpp_domain)
+       case('us')
+          idr = register_restart_field(restart, filename, 'fric_vel', &
+                                       self%fric_vel(:,:), &
+                                       domain=geom%ocean%G%Domain%mpp_domain)
+       end select
+    end do
+    call restore_state(restart, directory='')
+    call free_restart_type(restart)    
+    call fms_io_exit()
+
+  end subroutine soca_ocnsfc_read_rst
+
+  ! ------------------------------------------------------------------------------  
+  subroutine soca_ocnsfc_read_diag(self, c_conf, geom, fldnames)
+    class(soca_ocnsfc_type), intent(inout) :: self
+    type(c_ptr),                intent(in) :: c_conf
+    type(soca_geom),            intent(in) :: geom    
+    character(len=5),           intent(in) :: fldnames(:)
+
+    integer, parameter :: max_string_length=800
+    integer :: i
+    character(len=max_string_length) :: filename
+
+    if (config_element_exists(c_conf,"filename")) then
+       filename = config_get_string(c_conf,len(filename),"filename")
+    else
+       call self%zeros()
+       return
+    end if
+
+    call fms_io_init()
+    do i = 1, size(fldnames)
+       select case(fldnames(i))
+       case('sw')
+          call read_data(filename,"sw_rad", &
+                         self%sw_rad(:,:), &
+                         domain=geom%ocean%G%Domain%mpp_domain)
+       case('lw')
+          call read_data(filename,"lw_rad", &
+                         self%lw_rad(:,:), &
+                         domain=geom%ocean%G%Domain%mpp_domain)
+       case('lhf')
+          call read_data(filename,"latent_heat", &
+                         self%latent_heat(:,:), &
+                         domain=geom%ocean%G%Domain%mpp_domain)
+       case('shf')
+          call read_data(filename,"sens_heat", &
+                         self%sens_heat(:,:), &
+                         domain=geom%ocean%G%Domain%mpp_domain)
+       case('us')
+          call read_data(filename,"fric_vel", &
+                         self%fric_vel(:,:), &
+                         domain=geom%ocean%G%Domain%mpp_domain)
+       end select
+    end do
+    call fms_io_exit()
+
+  end subroutine soca_ocnsfc_read_diag
   
 end module soca_ocnsfc_mod
