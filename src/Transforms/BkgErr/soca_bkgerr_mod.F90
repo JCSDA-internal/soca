@@ -84,6 +84,7 @@ contains
 
     ! Invent background error for ocnsfc fields: set it
     ! to 10% of the background for now ...
+    ! TODO: Read background error for ocnsfc from file
     call self%std_bkgerr%ocnsfc%copy(bkg%ocnsfc)
     call self%std_bkgerr%ocnsfc%abs()    
     call self%std_bkgerr%ocnsfc%mul(0.1_kind_real)

@@ -86,7 +86,7 @@ subroutine soca_initialize_integration(self, flds)
   self%mom6_config%MOM_CSp%T = real(flds%tocn, kind=8)
   self%mom6_config%MOM_CSp%S = real(flds%socn, kind=8)
 
-  ! Not initialized in State: Update soca forcing
+  ! Update soca forcing
   call flds%ocnsfc%getforcing(self%mom6_config%fluxes)  
   
 end subroutine soca_initialize_integration

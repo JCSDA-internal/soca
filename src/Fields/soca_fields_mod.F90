@@ -1250,7 +1250,7 @@ contains
   ! ------------------------------------------------------------------------------
   !> Save soca fields in a restart format  
   subroutine soca_write_restart(fld, c_conf, vdate)
-    type(soca_field),         intent(inout) :: fld      !< Fields
+    type(soca_field), intent(inout) :: fld      !< Fields
     type(c_ptr),         intent(in) :: c_conf   !< Configuration
     type(datetime),   intent(inout) :: vdate    !< DateTime
 
