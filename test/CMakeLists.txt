@@ -61,6 +61,8 @@ list( APPEND soca_model_param
 )
 
 list( APPEND soca_model_restarts
+  Data/90x43x25/INPUT/forcing_daily.nc
+  Data/90x43x25/INPUT/forcing_monthly.nc
   Data/90x43x25/INPUT/hycom1_25.nc
   Data/90x43x25/INPUT/ice_model.res.nc
   Data/90x43x25/INPUT/layer_coord25.nc
