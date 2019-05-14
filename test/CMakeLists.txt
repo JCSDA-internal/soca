@@ -28,6 +28,7 @@ list( APPEND soca_test_input
   testinput/static_SocaError_init.yml
   testinput/static_SocaError_test.yml
   testinput/vertconv.yml
+  testinput/marine2ioda.yml
 )
 
 list( APPEND soca_test_output
