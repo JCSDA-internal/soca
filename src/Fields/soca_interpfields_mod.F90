@@ -74,8 +74,6 @@ contains
     f_comm = fckit_mpi_comm()
     call f_comm%allreduce(nlocs, allpes_nlocs, fckit_mpi_sum())
 
-    ! Return if allpes_nlocs == 0 ???
-
     ! Initialize traj and interp
     if (.not.(traj%interph_initialized)) then
        traj%bumpid = bumpid
@@ -84,6 +82,10 @@ contains
        call initialize_interph(fld, locs, traj%horiz_interp(1), traj%bumpid)
        !call traj%horiz_interp(1)%info()
        traj%interph_initialized = .true.
+       ! TODO: Get T & S trajectory corresponding to the current time slot
+       ! Allocate
+       ! traj%temp = fld%tocn
+       ! traj%salt = fld%socn
        bumpid = bumpid + 1
     end if
 

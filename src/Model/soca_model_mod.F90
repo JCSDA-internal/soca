@@ -82,17 +82,6 @@ subroutine soca_initialize_integration(self, flds)
   call mpp_update_domains(flds%tocn, flds%geom%ocean%G%Domain%mpp_domain)
   call mpp_update_domains(flds%socn, flds%geom%ocean%G%Domain%mpp_domain)
 
-  ! Impose bounds to T & S
-  ! TODO: Replace by a change of variable.
-  if ( self%tocn_minmax(1) /= real(-999., kind=8) ) &
-    where( flds%tocn < self%tocn_minmax(1) ) flds%tocn = self%tocn_minmax(1)
-  if ( self%tocn_minmax(2) /= real(-999., kind=8) ) &
-    where( flds%tocn > self%tocn_minmax(2) ) flds%tocn = self%tocn_minmax(2)
-  if ( self%socn_minmax(1) /= real(-999., kind=8) ) &
-    where( flds%socn < self%socn_minmax(1) ) flds%socn = self%socn_minmax(1)
-  if ( self%socn_minmax(2) /= real(-999., kind=8) ) &
-    where( flds%socn > self%socn_minmax(2) ) flds%socn = self%socn_minmax(2)
-  
   ! Update MOM's T and S to soca's
   self%mom6_config%MOM_CSp%T = real(flds%tocn, kind=8)
   self%mom6_config%MOM_CSp%S = real(flds%socn, kind=8)
@@ -170,9 +159,7 @@ subroutine soca_finalize_integration(self, flds)
   ! Update halo
   call mpp_update_domains(flds%tocn, flds%geom%ocean%G%Domain%mpp_domain)
   call mpp_update_domains(flds%socn, flds%geom%ocean%G%Domain%mpp_domain)
- 
-  ! Impose bounds to T & S
-  ! TODO: Replace by a change of variable.
+
   if ( self%tocn_minmax(1) /= real(-999., kind=8) ) &
     where( flds%tocn < self%tocn_minmax(1) ) flds%tocn = self%tocn_minmax(1)
   if ( self%tocn_minmax(2) /= real(-999., kind=8) ) &

@@ -14,6 +14,7 @@ module soca_fields_mod_c
   use unstructured_grid_mod
   use datetime_mod
   use soca_interpfields_mod
+  use soca_geom_mod_c
   use ufo_locs_mod_c  
   use ufo_locs_mod    
   use ufo_geovals_mod_c

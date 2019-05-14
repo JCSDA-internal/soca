@@ -9,7 +9,6 @@
 
 module soca_getvaltraj_mod
 
-  !General JEDI uses
   use kinds
   use iso_c_binding
   use soca_bumpinterp2d_mod
@@ -25,6 +24,8 @@ module soca_getvaltraj_mod
      integer                 :: nobs
      logical                 :: noobs     
      type(soca_bumpinterp2d), allocatable :: horiz_interp(:)
+     real(kind=kind_real), allocatable :: temp(:,:,:)
+     real(kind=kind_real), allocatable :: salt(:,:,:)     
      integer                 :: bumpid     
      logical                 :: interph_initialized = .false.
      integer                 :: obstype_index
