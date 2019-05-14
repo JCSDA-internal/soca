@@ -118,6 +118,7 @@ file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bump)
 # Test cycling
 
 ecbuild_add_test( TARGET exp_soca_cycle
+                  ENABLED OFF
                   TYPE SCRIPT
                   COMMAND "./cycle.py"
                   ARGS "./expinput/cycle.yml")
