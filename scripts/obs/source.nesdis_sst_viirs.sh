@@ -17,7 +17,7 @@ lvl=$1
 if [[ $lvl == "l2p" ]]; then
     source="ftp://podaac-ftp.jpl.nasa.gov/allData/ghrsst/data/GDS2/L2P/VIIRS_NPP/OSPO/v2.41"
 elif [[ $lvl == "l3u" ]]; then    
-    source="ftp://ftp.star.nesdis.noaa.gov/pub/socd2/coastwatch/sst/ran/viirs/snpp/l3u"
+    source="ftp://ftp.star.nesdis.noaa.gov/pub/socd2/coastwatch/sst/ran/viirs/npp/l3u"
 else
     echo $usage
     exit 1
