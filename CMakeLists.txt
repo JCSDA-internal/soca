@@ -14,7 +14,7 @@ project( soca C CXX Fortran)
 
 set( CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake;${CMAKE_MODULE_PATH})
 
-set( ECBUILD_DEFAULT_BUILD_TYPE Release )
+#set( ECBUILD_DEFAULT_BUILD_TYPE Release )
 set( ENABLE_OS_TESTS           OFF CACHE BOOL "Disable OS tests" FORCE )
 set( ENABLE_LARGE_FILE_SUPPORT OFF CACHE BOOL "Disable testing of large file support" FORCE )
 set( ENABLE_MPI ON CACHE BOOL "Compile with MPI" )
@@ -105,6 +105,7 @@ add_subdirectory( mains )
 add_subdirectory( src )
 add_subdirectory( test )
 add_subdirectory( exp )
+add_subdirectory( scripts )
 
 if(ECBUILD_INSTALL_FORTRAN_MODULES)
   install(DIRECTORY ${CMAKE_Fortran_MODULE_DIRECTORY}/${CMAKE_CFG_INTDIR} DESTINATION ${INSTALL_INCLUDE_DIR} )
