@@ -78,6 +78,8 @@ contains
     ! Clean up
     call self%horiz_interp(1)%finalize()
     deallocate(self%horiz_interp)
+    if (allocated(self%temp)) deallocate(self%temp)
+    if (allocated(self%salt)) deallocate(self%salt)
     self%nobs = 0
     self%bumpid = 0       
     self%interph_initialized = .false.

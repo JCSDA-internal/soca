@@ -63,6 +63,7 @@ contains
     integer, save :: bumpid = 1000
     type(fckit_mpi_comm) :: f_comm
     integer :: allpes_nlocs, nlocs
+    integer :: isc, iec, jsc, jec
 
     ! Sanity check for fields
     call check(fld)
@@ -81,11 +82,13 @@ contains
        if (traj%nobs>0) traj%noobs = .false.
        call initialize_interph(fld, locs, traj%horiz_interp(1), traj%bumpid)
        !call traj%horiz_interp(1)%info()
-       traj%interph_initialized = .true.
-       ! TODO: Get T & S trajectory corresponding to the current time slot
-       ! Allocate
-       ! traj%temp = fld%tocn
-       ! traj%salt = fld%socn
+
+       ! Allocate T & S trajectory for the current time slot
+       call geom_get_domain_indices(fld%geom%ocean, "compute", isc, iec, jsc, jec)
+       allocate(traj%temp(isc:iec,jsc:jec,fld%geom%ocean%nzo))
+       allocate(traj%salt(isc:iec,jsc:jec,fld%geom%ocean%nzo))       
+
+       traj%interph_initialized = .true.       
        bumpid = bumpid + 1
     end if
 
