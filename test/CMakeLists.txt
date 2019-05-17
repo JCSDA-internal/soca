@@ -28,6 +28,7 @@ list( APPEND soca_test_input
   testinput/static_SocaError_init.yml
   testinput/static_SocaError_test.yml
   testinput/vertconv.yml
+  testinput/marine2ioda.yml
 )
 
 list( APPEND soca_test_output
@@ -67,6 +68,7 @@ list( APPEND soca_model_restarts
   Data/90x43x25/INPUT/ice_model.res.nc
   Data/90x43x25/INPUT/layer_coord25.nc
   Data/90x43x25/INPUT/MOM.res.nc
+  Data/90x43x25/INPUT/sfc.res.nc
   Data/90x43x25/INPUT/ocean_hgrid.nc
   Data/90x43x25/INPUT/ocean_topog.nc
 )
@@ -288,6 +290,7 @@ ecbuild_add_test( TARGET test_soca_ensvariance
 # The following two tests are slow, how can we speed it up?
 # Use another model grid configuration with even fewer grid cells?
 ecbuild_add_test( TARGET test_soca_parameters_bump_cov_lct
+                  ENABLED OFF
                   MPI ${MPI_SOCA_TESTS}
                   TYPE SCRIPT
                   COMMAND ${CMAKE_BINARY_DIR}/bin/compare.sh
@@ -295,9 +298,9 @@ ecbuild_add_test( TARGET test_soca_parameters_bump_cov_lct
                        testinput/parameters_bump_cov_lct.yml"
                        testoutput/parameters_bump_cov_lct.test
                   DEPENDS soca_parameters.x)
-set_tests_properties(test_soca_parameters_bump_cov_lct PROPERTIES TIMEOUT 1)
 
 ecbuild_add_test( TARGET test_soca_parameters_bump_cov_nicas
+                  ENABLED OFF
                   MPI ${MPI_SOCA_TESTS}
                   TYPE SCRIPT
                   COMMAND ${CMAKE_BINARY_DIR}/bin/compare.sh
@@ -305,10 +308,9 @@ ecbuild_add_test( TARGET test_soca_parameters_bump_cov_nicas
                        testinput/parameters_bump_cov_nicas.yml"
                        testoutput/parameters_bump_cov_nicas.test
                   DEPENDS soca_parameters.x)
-set_tests_properties(test_soca_parameters_bump_cov_nicas PROPERTIES TIMEOUT 1)
-
 
 ecbuild_add_test( TARGET test_soca_dirac_bump_cov
+                  ENABLED OFF
                   MPI ${MPI_SOCA_TESTS}
                   TYPE SCRIPT
                   COMMAND ./compare.sh
@@ -412,6 +414,7 @@ ecbuild_add_test( TARGET test_soca_3dvarfgat
                   DEPENDS soca_3dvar.x)
 
 ecbuild_add_test( TARGET test_soca_4dhybrid
+                  ENABLED OFF
                   MPI ${MPI_SOCA_TESTS}
                   TYPE SCRIPT
                   COMMAND ./compare.sh

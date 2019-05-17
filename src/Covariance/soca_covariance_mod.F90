@@ -160,11 +160,17 @@ contains
     type(soca_cov),   intent(inout) :: self !< The covariance structure    
     type(soca_field), intent(inout) :: dx   !< Input: Increment
                                             !< Output: C dx
-
     integer :: icat, izo
 
     ! Apply convolution to fields
     call soca_2d_convol(dx%ssh(:,:), self%ocean_conv(1), dx%geom)
+
+    ! Apply convolution to forcing
+    call soca_2d_convol(dx%ocnsfc%sw_rad(:,:),      self%ocean_conv(1), dx%geom)
+    call soca_2d_convol(dx%ocnsfc%lw_rad(:,:),      self%ocean_conv(1), dx%geom)
+    call soca_2d_convol(dx%ocnsfc%latent_heat(:,:), self%ocean_conv(1), dx%geom)
+    call soca_2d_convol(dx%ocnsfc%sens_heat(:,:),   self%ocean_conv(1), dx%geom)
+    call soca_2d_convol(dx%ocnsfc%fric_vel(:,:),    self%ocean_conv(1), dx%geom)
     
     do icat = 1, dx%geom%ocean%ncat
        call soca_2d_convol(dx%cicen(:,:,icat+1), self%seaice_conv(1), dx%geom)

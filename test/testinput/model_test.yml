@@ -12,7 +12,7 @@ ModelBias:
 
 ModelTest:
   fclength: PT6H
-  finalnorm: 47432.48579950715065934
+  finalnorm: 36957.55529596477572341
   tolerance: 1e-12
 
 Model:
@@ -26,6 +26,7 @@ State:
   basename: "./INPUT/"
   ocn_filename: MOM.res.nc
   ice_filename: ice_model.res.nc
+  sfc_filename: sfc.res.nc  
   variables: *soca_vars
 
 forecast_length: PT3H
