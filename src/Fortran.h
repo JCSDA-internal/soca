@@ -96,19 +96,20 @@ namespace soca {
     void soca_field_write_file_f90(const F90flds &,
                                    const eckit::Configuration * const *,
                                    const util::DateTime * const *);
-    void soca_field_interp_f90(const F90flds &,
-                               const F90locs &,
-                               const eckit::Configuration * const *,
-                               const F90goms &);
-    void soca_field_interp_tl_f90(const F90flds &,
+    void soca_field_interp_nl_f90(const F90flds &,
                                   const F90locs &,
                                   const eckit::Configuration * const *,
                                   const F90goms &);
-    void soca_field_interp_tl_traj_f90(const F90flds &,
+    void soca_field_interp_nl_traj_f90(const F90flds &,
                                        const F90locs &,
                                        const eckit::Configuration * const *,
                                        const F90goms &,
                                        const F90getvaltraj &);
+    void soca_field_interp_tl_f90(const F90flds &,
+                                  const F90locs &,
+                                  const eckit::Configuration * const *,
+                                  const F90goms &,
+                                  const F90getvaltraj &);
     void soca_field_interp_ad_f90(const F90flds &,
                                   const F90locs &,
                                   const eckit::Configuration * const *,

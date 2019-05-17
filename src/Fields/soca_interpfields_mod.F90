@@ -52,13 +52,14 @@ contains
   end subroutine initialize_interph
 
   ! ------------------------------------------------------------------------------
-  !> Apply forward linearized interpolation (linearized about traj)
-  subroutine getvalues_traj(fld, locs, vars, geovals, traj)
+  !> Apply forward interpolation (tl or nl)
+  subroutine getvalues_traj(fld, locs, vars, geovals, traj, interp_type)
     type(soca_field),      intent(inout) :: fld
     type(ufo_locs),           intent(in) :: locs
     type(oops_vars),          intent(in) :: vars
     type(ufo_geovals),     intent(inout) :: geovals
     type(soca_getvaltraj), intent(inout) :: traj
+    character(2),   optional, intent(in) :: interp_type
 
     integer, save :: bumpid = 1000
     type(fckit_mpi_comm) :: f_comm
@@ -93,12 +94,12 @@ contains
     end if
 
     ! Apply interpolation
-    call interp_tl(fld, locs, vars, geovals, traj%horiz_interp(1))
+    call interp(fld, locs, vars, geovals, traj%horiz_interp(1), interp_type)
 
   end subroutine getvalues_traj
 
   ! ------------------------------------------------------------------------------
-  !> Apply (possibly nonlinear) interpolation
+  !> Apply forward interpolation
   subroutine getvalues_notraj(fld, locs, vars, geovals)
     type(soca_field),   intent(inout) :: fld
     type(ufo_locs),        intent(in) :: locs
@@ -111,7 +112,7 @@ contains
     call check(fld)
 
     call initialize_interph(fld, locs, horiz_interp, bumpid)
-    call interp_tl(fld, locs, vars, geovals, horiz_interp)
+    call interp(fld, locs, vars, geovals, horiz_interp, interp_type='nl')
     bumpid = bumpid + 1
 
   end subroutine getvalues_notraj
@@ -152,6 +153,16 @@ contains
           do indx = 1, locs%nlocs
              gom_window(ival, indx) = geovals%geovals(ivar)%vals(ival, locs%indx(indx))
           end do
+          
+          ! Apply adjoint of transform <--- TODO: I think it goes here ...
+          select case (trim(vars%fldnames(ivar)))
+          case ("sea_water_potential_temperature")
+             !TODO: gom = transform_ad(gom)
+
+          case ("sea_water_practical_salinity", "sea_water_salinity")          
+             !TODO: gom = transform_ad(gom)
+          end select
+          
           call horiz_interp_p%applyad(fld3d(:,:,ival), gom_window(ival,1:locs%nlocs))
        end do
 
@@ -221,12 +232,13 @@ contains
 
   ! ------------------------------------------------------------------------------
   !> Interace to bump forward interpolation
-  subroutine interp_tl(fld, locs, vars, geovals, horiz_interp)
+  subroutine interp(fld, locs, vars, geovals, horiz_interp, interp_type)
     type(soca_field),         intent(inout) :: fld
     type(ufo_locs),              intent(in) :: locs
     type(oops_vars),             intent(in) :: vars
     type(ufo_geovals),        intent(inout) :: geovals
     type(soca_bumpinterp2d),  intent(inout) :: horiz_interp
+    character(2),      optional, intent(in) :: interp_type
 
     integer :: icat, ilev, ivar, nlocs, nlocs_window
     integer :: ival, nval, indx
@@ -310,6 +322,26 @@ contains
           call abor1_ftn("soca_interpfields_mod: geoval does not exist")
        end select
 
+       ! Apply transform
+       select case (trim(vars%fldnames(ivar)))
+       case ("sea_water_potential_temperature")
+          select case (interp_type)
+          case ("nl")
+             !TODO: fld3d = transform_nl(fld3d)
+          case ("tl")
+             !TODO: fld3d = transform_tl(fld3d)
+          end select
+          
+       case ("sea_water_practical_salinity", "sea_water_salinity")          
+          select case (interp_type)
+          case ("nl")
+             !TODO: fld3d = transform_nl(fld3d)
+          case ("tl")
+             !TODO: fld3d = transform_tl(fld3d)
+          end select       
+          
+       end select
+       
        ! Apply forward interpolation: Model ---> Obs
        do ival = 1, nval
           call horiz_interp%apply(fld3d(isc:iec,jsc:jec,ival), gom_window(ival,:))
@@ -325,7 +357,7 @@ contains
 
     end do
 
-  end subroutine interp_tl
+  end subroutine interp
 
   ! ------------------------------------------------------------------------------
   !> Get 3rd dimension of fld
