@@ -97,6 +97,9 @@ subroutine soca_initialize_integration(self, flds)
   self%mom6_config%MOM_CSp%T = real(flds%tocn, kind=8)
   self%mom6_config%MOM_CSp%S = real(flds%socn, kind=8)
 
+  ! Update soca forcing
+  call flds%ocnsfc%getforcing(self%mom6_config%fluxes)  
+  
 end subroutine soca_initialize_integration
 
 ! ------------------------------------------------------------------------------
@@ -120,6 +123,10 @@ subroutine soca_propagate(self, flds, fldsdate)
   self%mom6_config%MOM_CSp%T = real(flds%tocn, kind=8)
   self%mom6_config%MOM_CSp%S = real(flds%socn, kind=8)
 
+  ! Update forcing
+  ! TODO: pass forcing back to MOM, line below doesn't do anything.
+  !call flds%ocnsfc%pushforcing(self%mom6_config%fluxes)
+  
   ! Set ocean clock
   call datetime_to_string(fldsdate, strdate)
   call soca_str2int(strdate(1:4), year)
@@ -152,6 +159,9 @@ subroutine soca_propagate(self, flds, fldsdate)
   flds%socn = real(self%mom6_config%MOM_CSp%S, kind=kind_real)
   flds%hocn = real(self%mom6_config%MOM_CSp%h, kind=kind_real)
   flds%ssh = real(self%mom6_config%MOM_CSp%ave_ssh_ibc, kind=kind_real)
+
+  ! Update soca forcing
+  call flds%ocnsfc%getforcing(self%mom6_config%fluxes)
 
 end subroutine soca_propagate
 

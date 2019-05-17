@@ -68,6 +68,7 @@ list( APPEND soca_model_restarts
   Data/90x43x25/INPUT/ice_model.res.nc
   Data/90x43x25/INPUT/layer_coord25.nc
   Data/90x43x25/INPUT/MOM.res.nc
+  Data/90x43x25/INPUT/sfc.res.nc
   Data/90x43x25/INPUT/ocean_hgrid.nc
   Data/90x43x25/INPUT/ocean_topog.nc
 )

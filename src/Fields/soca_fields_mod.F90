@@ -544,14 +544,25 @@ contains
     type(soca_field), intent(inout) :: self
     type(soca_field), intent(in)    :: rhs
 
+    integer, save :: cnt_outer = 1 
     real(kind=kind_real), allocatable :: incr(:,:,:)
     integer :: is, ie, js, je, i, j, nz
-
+    character(len=800) :: filename, str_cnt
+    
     call check(self)
     call check(rhs)
 
+    ! Add increment to field
     call self_add(self,rhs)
     call self%ocnsfc%add(rhs%ocnsfc)
+
+    ! Save increment for outer loop cnt_outer
+    write(str_cnt,*) cnt_outer
+    filename='incr.'//adjustl(trim(str_cnt))//'.nc'
+    call soca_fld2file(rhs, filename)
+
+    ! Update outer loop counter
+    cnt_outer = cnt_outer + 1
     
     return
   end subroutine add_incr
@@ -656,7 +667,7 @@ contains
     ! iread = 1 (state) or 3 (increment): Read restart file
     if ((iread==1).or.(iread==3)) then
        ! Read ocean surface fields
-       call fld%ocnsfc%read_file()
+       call fld%ocnsfc%read_restart(c_conf, fld%geom, fld%fldnames)
 
        basename = config_get_string(c_conf,len(basename),"basename")
        ocn_filename = config_get_string(c_conf,len(ocn_filename),"ocn_filename")
@@ -750,7 +761,7 @@ contains
     ! Read diagnostic file
     if (iread==2) then
        ! Read ocean surface fields
-       call fld%ocnsfc%read_file()
+       call fld%ocnsfc%read_diag(c_conf, fld%geom, fld%fldnames)
 
        incr_filename = config_get_string(c_conf,len(incr_filename),"filename")
        call fms_io_init()
@@ -1216,6 +1227,17 @@ contains
           call write_data( fname, "hicen", fld%hicen, fld%geom%ocean%G%Domain%mpp_domain)
        case ('cicen')
           call write_data(fname, "cicen", fld%cicen, fld%geom%ocean%G%Domain%mpp_domain)
+       case ('sw')
+          call write_data(fname, "sw", fld%ocnsfc%sw_rad, fld%geom%ocean%G%Domain%mpp_domain)
+       case ('lw')
+          call write_data(fname, "lw", fld%ocnsfc%lw_rad, fld%geom%ocean%G%Domain%mpp_domain)
+       case ('lhf')
+          call write_data(fname, "lhf", fld%ocnsfc%latent_heat, fld%geom%ocean%G%Domain%mpp_domain)
+       case ('shf')
+          call write_data(fname, "shf", fld%ocnsfc%sens_heat, fld%geom%ocean%G%Domain%mpp_domain)
+       case ('us')
+          call write_data(fname, "us", fld%ocnsfc%fric_vel, fld%geom%ocean%G%Domain%mpp_domain)
+
        case default
 
        end select

@@ -15,6 +15,7 @@ initial:
   basename: ./INPUT/
   ocn_filename: MOM.res.nc
   ice_filename: ice_model.res.nc
+  sfc_filename: sfc.res.nc
 
 forecast_length: PT6H
 

@@ -179,7 +179,6 @@ contains
   end function soca_adjust
 
   ! ------------------------------------------------------------------------------  
-  
   subroutine soca_str2int(str, int)
     character(len=*),intent(in) :: str
     integer,intent(out)         :: int
