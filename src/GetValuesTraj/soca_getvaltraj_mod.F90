@@ -22,10 +22,7 @@ module soca_getvaltraj_mod
 
   type :: soca_getvaltraj
      integer                 :: nobs
-     logical                 :: noobs     
      type(soca_bumpinterp2d), allocatable :: horiz_interp(:)
-     real(kind=kind_real), allocatable :: temp(:,:,:)
-     real(kind=kind_real), allocatable :: salt(:,:,:)     
      integer                 :: bumpid     
      logical                 :: interph_initialized = .false.
      integer                 :: obstype_index
@@ -60,7 +57,6 @@ contains
     self%interph_initialized = .false.
     allocate(self%horiz_interp(1))
     self%nobs = 0
-    self%noobs = .true.
     self%bumpid = 0
     self%obstype_index = c_key_self
 
@@ -78,8 +74,6 @@ contains
     ! Clean up
     call self%horiz_interp(1)%finalize()
     deallocate(self%horiz_interp)
-    if (allocated(self%temp)) deallocate(self%temp)
-    if (allocated(self%salt)) deallocate(self%salt)
     self%nobs = 0
     self%bumpid = 0       
     self%interph_initialized = .false.
