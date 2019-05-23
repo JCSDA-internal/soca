@@ -106,6 +106,7 @@ contains
          &tmp_lonmod, tmp_latmod, area, vunit, tmp_maskmod(:,1),&
          &nobs=no, lonobs=obs_lon, latobs=obs_lat )
     call self%bump%run_drivers()
+    call self%bump%partial_dealloc
 
     self%initialized = .true.
     self%nobs = no
