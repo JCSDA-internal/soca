@@ -53,11 +53,11 @@ contains
 
   ! ------------------------------------------------------------------------------
   !> Apply forward interpolation (tl or nl)
-  subroutine getvalues_traj(fld, locs, vars, geovals, traj, interp_type)
+  subroutine getvalues_traj(fld, locs, vars, geoval, traj, interp_type)
     type(soca_field),      intent(inout) :: fld
     type(ufo_locs),           intent(in) :: locs
     type(oops_vars),          intent(in) :: vars
-    type(ufo_geovals),     intent(inout) :: geovals
+    type(ufo_geovals),     intent(inout) :: geoval
     type(soca_getvaltraj), intent(inout) :: traj
     character(2),   optional, intent(in) :: interp_type
 
@@ -90,21 +90,21 @@ contains
     select case (interp_type)
     case('tl')
        ! Apply interpolation with TL transform
-       call interp(fld, locs, vars, geovals, traj%horiz_interp(1), traj)
+       call interp(fld, locs, vars, geoval, traj%horiz_interp(1), traj)
     case('nl')
        ! Apply interpolation with NL transform
-       call interp(fld, locs, vars, geovals, traj%horiz_interp(1))
+       call interp(fld, locs, vars, geoval, traj%horiz_interp(1))
     end select
 
   end subroutine getvalues_traj
 
   ! ------------------------------------------------------------------------------
   !> Apply forward interpolation
-  subroutine getvalues_notraj(fld, locs, vars, geovals)
+  subroutine getvalues_notraj(fld, locs, vars, geoval)
     type(soca_field),   intent(inout) :: fld
     type(ufo_locs),        intent(in) :: locs
     type(oops_vars),       intent(in) :: vars
-    type(ufo_geovals),  intent(inout) :: geovals
+    type(ufo_geovals),  intent(inout) :: geoval
 
     type(soca_bumpinterp2d) :: horiz_interp
     integer, save :: bumpid = 2000
@@ -112,18 +112,18 @@ contains
     call check(fld)
     call initialize_interph(fld, locs, horiz_interp, bumpid)
     ! Apply interpolation with NL transform    
-    call interp(fld, locs, vars, geovals, horiz_interp)
+    call interp(fld, locs, vars, geoval, horiz_interp)
     bumpid = bumpid + 1
 
   end subroutine getvalues_notraj
 
   ! ------------------------------------------------------------------------------
   !> Interace to bump forward interpolation (NL and TL)
-  subroutine interp(fld, locs, vars, geovals, horiz_interp, traj)
+  subroutine interp(fld, locs, vars, geoval, horiz_interp, traj)
     type(soca_field),             intent(inout) :: fld
     type(ufo_locs),                  intent(in) :: locs
     type(oops_vars),                 intent(in) :: vars
-    type(ufo_geovals),            intent(inout) :: geovals
+    type(ufo_geovals),            intent(inout) :: geoval
     type(soca_bumpinterp2d),      intent(inout) :: horiz_interp
     type(soca_getvaltraj), optional, intent(in) :: traj  !< If present => TL case 
 
@@ -147,13 +147,13 @@ contains
        call nlev_from_ufovar(fld, vars, ivar, nval)
 
        ! Allocate GeoVaLs (fields at locations)
-       geovals%geovals(ivar)%nval = nval
-       if (.not.(allocated(geovals%geovals(ivar)%vals))) then
+       geoval%geovals(ivar)%nval = nval
+       if (.not.(allocated(geoval%geovals(ivar)%vals))) then
           ! Number of obs in pe
-          nlocs = geovals%geovals(ivar)%nlocs
+          nlocs = geoval%geovals(ivar)%nlocs
 
-          allocate(geovals%geovals(ivar)%vals(nval,nlocs))
-          geovals%linit = .true.
+          allocate(geoval%geovals(ivar)%vals(nval,nlocs))
+          geoval%linit = .true.
        end if
 
        ! Allocate temporary geoval and 3d field for the current time window
@@ -206,7 +206,7 @@ contains
           fld3d(isc:iec,jsc:jec,1) = fld%ocnsfc%fric_vel(isc:iec,jsc:jec)
 
        case default
-          call abor1_ftn("soca_interpfields_mod: geoval does not exist")
+          call abor1_ftn("soca_interpfields_mod:interp geoval does not exist")
        end select
 
        ! Apply forward interpolation: Model ---> Obs
@@ -214,7 +214,7 @@ contains
           call horiz_interp%apply(fld3d(isc:iec,jsc:jec,ival), gom_window(ival,:))
           ! Fill proper geoval according to time window
           do indx = 1, locs%nlocs
-             geovals%geovals(ivar)%vals(ival, locs%indx(indx)) = gom_window(ival, indx)
+             geoval%geovals(ivar)%vals(ival, locs%indx(indx)) = gom_window(ival, indx)
           end do
        end do
 
@@ -228,11 +228,11 @@ contains
 
   ! ------------------------------------------------------------------------------
   !> Apply backward interpolation
-  subroutine getvalues_ad(incr, locs, vars, geovals, traj)
+  subroutine getvalues_ad(incr, locs, vars, geoval, traj)
     type(soca_field),              intent(inout) :: incr
     type(ufo_locs),                   intent(in) :: locs
     type(oops_vars),                  intent(in) :: vars
-    type(ufo_geovals),             intent(inout) :: geovals
+    type(ufo_geovals),             intent(inout) :: geoval
     type(soca_getvaltraj), target, intent(inout) :: traj
 
     type(soca_bumpinterp2d), pointer :: horiz_interp_p
@@ -260,7 +260,7 @@ contains
        do ival = 1, nval
           ! Fill proper geoval according to time window
           do indx = 1, locs%nlocs
-             gom_window(ival, indx) = geovals%geovals(ivar)%vals(ival, locs%indx(indx))
+             gom_window(ival, indx) = geoval%geovals(ivar)%vals(ival, locs%indx(indx))
           end do   
           call horiz_interp_p%applyad(incr3d(:,:,ival), gom_window(ival,1:locs%nlocs))
        end do
@@ -319,6 +319,10 @@ contains
        case ("friction_velocity_over_water")
           incr%ocnsfc%fric_vel(isc:iec,jsc:jec) = incr%ocnsfc%fric_vel(isc:iec,jsc:jec) +&
                &incr3d(isc:iec,jsc:jec,1)
+
+       case default
+          call abor1_ftn("soca_interpfields_mod:getvalues_ad geoval does not exist")          
+
        end select
 
        ! Deallocate temporary arrays
