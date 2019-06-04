@@ -133,7 +133,7 @@ namespace soca {
                          const oops::Variables & vars,
                          ufo::GeoVaLs & gom) const {
     const eckit::Configuration * conf = &vars.toFortran();
-    soca_field_interp_tl_f90(keyFlds_, locs.toFortran(), &conf,
+    soca_field_interp_nl_f90(keyFlds_, locs.toFortran(), &conf,
                              gom.toFortran());
   }
 
@@ -143,7 +143,7 @@ namespace soca {
                          ufo::GeoVaLs & gom,
                          const GetValuesTraj & traj) const {
     const eckit::Configuration * conf = &vars.toFortran();
-    soca_field_interp_tl_traj_f90(keyFlds_, locs.toFortran(), &conf,
+    soca_field_interp_nl_traj_f90(keyFlds_, locs.toFortran(), &conf,
                                   gom.toFortran(), traj.toFortran());
   }
 
@@ -153,8 +153,8 @@ namespace soca {
                            ufo::GeoVaLs & gom,
                            const GetValuesTraj & traj) const {
     const eckit::Configuration * conf = &vars.toFortran();
-    soca_field_interp_tl_traj_f90(keyFlds_, locs.toFortran(), &conf,
-                                  gom.toFortran(), traj.toFortran());
+    soca_field_interp_tl_f90(keyFlds_, locs.toFortran(), &conf,
+                             gom.toFortran(), traj.toFortran());
   }
   // -----------------------------------------------------------------------------
   void Fields::getValuesAD(const ufo::Locations & locs,

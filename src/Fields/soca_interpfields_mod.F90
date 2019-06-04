@@ -52,17 +52,19 @@ contains
   end subroutine initialize_interph
 
   ! ------------------------------------------------------------------------------
-  !> Apply forward linearized interpolation (linearized about traj)
-  subroutine getvalues_traj(fld, locs, vars, geovals, traj)
+  !> Apply forward interpolation (tl or nl)
+  subroutine getvalues_traj(fld, locs, vars, geoval, traj, interp_type)
     type(soca_field),      intent(inout) :: fld
     type(ufo_locs),           intent(in) :: locs
     type(oops_vars),          intent(in) :: vars
-    type(ufo_geovals),     intent(inout) :: geovals
+    type(ufo_geovals),     intent(inout) :: geoval
     type(soca_getvaltraj), intent(inout) :: traj
+    character(2),   optional, intent(in) :: interp_type
 
     integer, save :: bumpid = 1000
     type(fckit_mpi_comm) :: f_comm
     integer :: allpes_nlocs, nlocs
+    integer :: isc, iec, jsc, jec
 
     ! Sanity check for fields
     call check(fld)
@@ -74,154 +76,56 @@ contains
     f_comm = fckit_mpi_comm()
     call f_comm%allreduce(nlocs, allpes_nlocs, fckit_mpi_sum())
 
-    ! Return if allpes_nlocs == 0 ???
-
     ! Initialize traj and interp
     if (.not.(traj%interph_initialized)) then
        traj%bumpid = bumpid
        traj%nobs = locs%nlocs
-       if (traj%nobs>0) traj%noobs = .false.
        call initialize_interph(fld, locs, traj%horiz_interp(1), traj%bumpid)
        !call traj%horiz_interp(1)%info()
-       traj%interph_initialized = .true.
+
+       traj%interph_initialized = .true.       
        bumpid = bumpid + 1
     end if
 
-    ! Apply interpolation
-    call interp_tl(fld, locs, vars, geovals, traj%horiz_interp(1))
+    select case (interp_type)
+    case('tl')
+       ! Apply interpolation with TL transform
+       call interp(fld, locs, vars, geoval, traj%horiz_interp(1), traj)
+    case('nl')
+       ! Apply interpolation with NL transform
+       call interp(fld, locs, vars, geoval, traj%horiz_interp(1))
+    end select
 
   end subroutine getvalues_traj
 
   ! ------------------------------------------------------------------------------
-  !> Apply (possibly nonlinear) interpolation
-  subroutine getvalues_notraj(fld, locs, vars, geovals)
+  !> Apply forward interpolation
+  subroutine getvalues_notraj(fld, locs, vars, geoval)
     type(soca_field),   intent(inout) :: fld
     type(ufo_locs),        intent(in) :: locs
     type(oops_vars),       intent(in) :: vars
-    type(ufo_geovals),  intent(inout) :: geovals
+    type(ufo_geovals),  intent(inout) :: geoval
 
     type(soca_bumpinterp2d) :: horiz_interp
     integer, save :: bumpid = 2000
 
     call check(fld)
-
     call initialize_interph(fld, locs, horiz_interp, bumpid)
-    call interp_tl(fld, locs, vars, geovals, horiz_interp)
+    ! Apply interpolation with NL transform    
+    call interp(fld, locs, vars, geoval, horiz_interp)
     bumpid = bumpid + 1
 
   end subroutine getvalues_notraj
 
   ! ------------------------------------------------------------------------------
-  !> Apply backward interpolation
-  subroutine getvalues_ad(fld, locs, vars, geovals, traj)
-    type(soca_field),              intent(inout) :: fld
-    type(ufo_locs),                   intent(in) :: locs
-    type(oops_vars),                  intent(in) :: vars
-    type(ufo_geovals),             intent(inout) :: geovals
-    type(soca_getvaltraj), target, intent(inout) :: traj
-
-    type(soca_bumpinterp2d), pointer :: horiz_interp_p
-    integer :: icat, ilev, ivar, nobs, nval, ival, indx
-    character(len=160) :: record
-    integer :: isc, iec, jsc, jec
-    real(kind=kind_real), allocatable :: gom_window(:,:)
-    real(kind=kind_real), allocatable :: fld3d(:,:,:)
-
-    horiz_interp_p => traj%horiz_interp(1)
-
-    ! Indices for compute domain (no halo)
-    call geom_get_domain_indices(fld%geom%ocean, "compute", isc, iec, jsc, jec)
-
-    do ivar = 1, vars%nv
-       ! Set number of levels/categories (nval)
-       call nlev_from_ufovar(fld, vars, ivar, nval)
-
-       ! Allocate temporary geoval and 3d field for the current time window
-       allocate(gom_window(nval,locs%nlocs))
-       allocate(fld3d(isc:iec,jsc:jec,1:nval))
-       fld3d = 0.0_kind_real
-
-       ! Apply backward interpolation: Obs ---> Model
-       do ival = 1, nval
-          ! Fill proper geoval according to time window
-          do indx = 1, locs%nlocs
-             gom_window(ival, indx) = geovals%geovals(ivar)%vals(ival, locs%indx(indx))
-          end do
-          call horiz_interp_p%applyad(fld3d(:,:,ival), gom_window(ival,1:locs%nlocs))
-       end do
-
-       ! Copy fld3d into field
-       select case (trim(vars%fldnames(ivar)))
-       case ("sea_ice_category_area_fraction")
-          fld%cicen(isc:iec,jsc:jec,2:nval+1) = fld%cicen(isc:iec,jsc:jec,2:nval+1) +&
-               &fld3d
-
-       case ("sea_ice_category_thickness")
-          fld%hicen(isc:iec,jsc:jec,1:nval) = fld%hicen(isc:iec,jsc:jec,1:nval) +&
-               &fld3d
-
-       case ("sea_surface_height_above_geoid")
-          fld%ssh(isc:iec,jsc:jec) = fld%ssh(isc:iec,jsc:jec) +&
-               &fld3d(isc:iec,jsc:jec,1)
-
-       case ("sea_water_potential_temperature")
-          fld%tocn(isc:iec,jsc:jec,1:nval) = fld%tocn(isc:iec,jsc:jec,1:nval) +&
-               &fld3d
-
-       case ("sea_water_practical_salinity", "sea_water_salinity")
-          fld%socn(isc:iec,jsc:jec,1:nval) = fld%socn(isc:iec,jsc:jec,1:nval) +&
-               &fld3d
-
-       case ("sea_water_cell_thickness")
-          fld%hocn(isc:iec,jsc:jec,1:nval) = fld%hocn(isc:iec,jsc:jec,1:nval) +&
-               &fld3d
-
-       case ("sea_surface_temperature")
-          fld%tocn(isc:iec,jsc:jec,1) = fld%tocn(isc:iec,jsc:jec,1) +&
-               &fld3d(isc:iec,jsc:jec,1)
-
-       case ("sea_surface_salinity")
-          fld%socn(isc:iec,jsc:jec,1) = fld%socn(isc:iec,jsc:jec,1) +&
-               &fld3d(isc:iec,jsc:jec,1)
-
-       ! Cool skin
-       case ("net_downwelling_shortwave_radiation")
-          fld%ocnsfc%sw_rad(isc:iec,jsc:jec) = fld%ocnsfc%sw_rad(isc:iec,jsc:jec) +&
-               &fld3d(isc:iec,jsc:jec,1)
-
-       case ("net_downwelling_longwave_radiation")
-          fld%ocnsfc%lw_rad(isc:iec,jsc:jec) = fld%ocnsfc%lw_rad(isc:iec,jsc:jec) +&
-               &fld3d(isc:iec,jsc:jec,1)
-
-       case ("upward_latent_heat_flux_in_air")
-          fld%ocnsfc%latent_heat(isc:iec,jsc:jec) = fld%ocnsfc%latent_heat(isc:iec,jsc:jec) +&
-               &fld3d(isc:iec,jsc:jec,1)
-
-       case ("upward_sensible_heat_flux_in_air")
-          fld%ocnsfc%sens_heat(isc:iec,jsc:jec) = fld%ocnsfc%sens_heat(isc:iec,jsc:jec) +&
-               &fld3d(isc:iec,jsc:jec,1)
-
-       case ("friction_velocity_over_water")
-          fld%ocnsfc%fric_vel(isc:iec,jsc:jec) = fld%ocnsfc%fric_vel(isc:iec,jsc:jec) +&
-               &fld3d(isc:iec,jsc:jec,1)
-       end select
-
-       ! Deallocate temporary arrays
-       deallocate(fld3d)
-       deallocate(gom_window)
-
-    end do
-
-  end subroutine getvalues_ad
-
-  ! ------------------------------------------------------------------------------
-  !> Interace to bump forward interpolation
-  subroutine interp_tl(fld, locs, vars, geovals, horiz_interp)
-    type(soca_field),         intent(inout) :: fld
-    type(ufo_locs),              intent(in) :: locs
-    type(oops_vars),             intent(in) :: vars
-    type(ufo_geovals),        intent(inout) :: geovals
-    type(soca_bumpinterp2d),  intent(inout) :: horiz_interp
+  !> Interace to bump forward interpolation (NL and TL)
+  subroutine interp(fld, locs, vars, geoval, horiz_interp, traj)
+    type(soca_field),             intent(inout) :: fld
+    type(ufo_locs),                  intent(in) :: locs
+    type(oops_vars),                 intent(in) :: vars
+    type(ufo_geovals),            intent(inout) :: geoval
+    type(soca_bumpinterp2d),      intent(inout) :: horiz_interp
+    type(soca_getvaltraj), optional, intent(in) :: traj  !< If present => TL case 
 
     integer :: icat, ilev, ivar, nlocs, nlocs_window
     integer :: ival, nval, indx
@@ -243,13 +147,13 @@ contains
        call nlev_from_ufovar(fld, vars, ivar, nval)
 
        ! Allocate GeoVaLs (fields at locations)
-       geovals%geovals(ivar)%nval = nval
-       if (.not.(allocated(geovals%geovals(ivar)%vals))) then
+       geoval%geovals(ivar)%nval = nval
+       if (.not.(allocated(geoval%geovals(ivar)%vals))) then
           ! Number of obs in pe
-          nlocs = geovals%geovals(ivar)%nlocs
+          nlocs = geoval%geovals(ivar)%nlocs
 
-          allocate(geovals%geovals(ivar)%vals(nval,nlocs))
-          geovals%linit = .true.
+          allocate(geoval%geovals(ivar)%vals(nval,nlocs))
+          geoval%linit = .true.
        end if
 
        ! Allocate temporary geoval and 3d field for the current time window
@@ -302,7 +206,7 @@ contains
           fld3d(isc:iec,jsc:jec,1) = fld%ocnsfc%fric_vel(isc:iec,jsc:jec)
 
        case default
-          call abor1_ftn("soca_interpfields_mod: geoval does not exist")
+          call abor1_ftn("soca_interpfields_mod:interp geoval does not exist")
        end select
 
        ! Apply forward interpolation: Model ---> Obs
@@ -310,7 +214,7 @@ contains
           call horiz_interp%apply(fld3d(isc:iec,jsc:jec,ival), gom_window(ival,:))
           ! Fill proper geoval according to time window
           do indx = 1, locs%nlocs
-             geovals%geovals(ivar)%vals(ival, locs%indx(indx)) = gom_window(ival, indx)
+             geoval%geovals(ivar)%vals(ival, locs%indx(indx)) = gom_window(ival, indx)
           end do
        end do
 
@@ -320,7 +224,114 @@ contains
 
     end do
 
-  end subroutine interp_tl
+  end subroutine interp
+
+  ! ------------------------------------------------------------------------------
+  !> Apply backward interpolation
+  subroutine getvalues_ad(incr, locs, vars, geoval, traj)
+    type(soca_field),              intent(inout) :: incr
+    type(ufo_locs),                   intent(in) :: locs
+    type(oops_vars),                  intent(in) :: vars
+    type(ufo_geovals),             intent(inout) :: geoval
+    type(soca_getvaltraj), target, intent(inout) :: traj
+
+    type(soca_bumpinterp2d), pointer :: horiz_interp_p
+    integer :: icat, ilev, ivar, nobs, nval, ival, indx
+    character(len=160) :: record
+    integer :: isc, iec, jsc, jec
+    real(kind=kind_real), allocatable :: gom_window(:,:)
+    real(kind=kind_real), allocatable :: incr3d(:,:,:)
+
+    horiz_interp_p => traj%horiz_interp(1)
+
+    ! Indices for compute domain (no halo)
+    call geom_get_domain_indices(incr%geom%ocean, "compute", isc, iec, jsc, jec)
+
+    do ivar = 1, vars%nv
+       ! Set number of levels/categories (nval)
+       call nlev_from_ufovar(incr, vars, ivar, nval)
+
+       ! Allocate temporary geoval and 3d field for the current time window
+       allocate(gom_window(nval,locs%nlocs))
+       allocate(incr3d(isc:iec,jsc:jec,1:nval))
+       incr3d = 0.0_kind_real
+
+       ! Apply backward interpolation: Obs ---> Model
+       do ival = 1, nval
+          ! Fill proper geoval according to time window
+          do indx = 1, locs%nlocs
+             gom_window(ival, indx) = geoval%geovals(ivar)%vals(ival, locs%indx(indx))
+          end do   
+          call horiz_interp_p%applyad(incr3d(:,:,ival), gom_window(ival,1:locs%nlocs))
+       end do
+
+       ! Copy incr3d into field
+       select case (trim(vars%fldnames(ivar)))
+       case ("sea_ice_category_area_fraction")
+          incr%cicen(isc:iec,jsc:jec,2:nval+1) = incr%cicen(isc:iec,jsc:jec,2:nval+1) +&
+               &incr3d
+
+       case ("sea_ice_category_thickness")
+          incr%hicen(isc:iec,jsc:jec,1:nval) = incr%hicen(isc:iec,jsc:jec,1:nval) +&
+               &incr3d
+
+       case ("sea_surface_height_above_geoid")
+          incr%ssh(isc:iec,jsc:jec) = incr%ssh(isc:iec,jsc:jec) +&
+               &incr3d(isc:iec,jsc:jec,1)
+
+       case ("sea_water_potential_temperature")
+          incr%tocn(isc:iec,jsc:jec,1:nval) = incr%tocn(isc:iec,jsc:jec,1:nval) +&
+               &incr3d
+
+       case ("sea_water_practical_salinity", "sea_water_salinity")
+          incr%socn(isc:iec,jsc:jec,1:nval) = incr%socn(isc:iec,jsc:jec,1:nval) +&
+               &incr3d
+
+       case ("sea_water_cell_thickness")
+          incr%hocn(isc:iec,jsc:jec,1:nval) = incr%hocn(isc:iec,jsc:jec,1:nval) +&
+               &incr3d
+
+       case ("sea_surface_temperature")
+          incr%tocn(isc:iec,jsc:jec,1) = incr%tocn(isc:iec,jsc:jec,1) +&
+               &incr3d(isc:iec,jsc:jec,1)
+
+       case ("sea_surface_salinity")
+          incr%socn(isc:iec,jsc:jec,1) = incr%socn(isc:iec,jsc:jec,1) +&
+               &incr3d(isc:iec,jsc:jec,1)
+
+       ! Cool skin
+       case ("net_downwelling_shortwave_radiation")
+          incr%ocnsfc%sw_rad(isc:iec,jsc:jec) = incr%ocnsfc%sw_rad(isc:iec,jsc:jec) +&
+               &incr3d(isc:iec,jsc:jec,1)
+
+       case ("net_downwelling_longwave_radiation")
+          incr%ocnsfc%lw_rad(isc:iec,jsc:jec) = incr%ocnsfc%lw_rad(isc:iec,jsc:jec) +&
+               &incr3d(isc:iec,jsc:jec,1)
+
+       case ("upward_latent_heat_flux_in_air")
+          incr%ocnsfc%latent_heat(isc:iec,jsc:jec) = incr%ocnsfc%latent_heat(isc:iec,jsc:jec) +&
+               &incr3d(isc:iec,jsc:jec,1)
+
+       case ("upward_sensible_heat_flux_in_air")
+          incr%ocnsfc%sens_heat(isc:iec,jsc:jec) = incr%ocnsfc%sens_heat(isc:iec,jsc:jec) +&
+               &incr3d(isc:iec,jsc:jec,1)
+
+       case ("friction_velocity_over_water")
+          incr%ocnsfc%fric_vel(isc:iec,jsc:jec) = incr%ocnsfc%fric_vel(isc:iec,jsc:jec) +&
+               &incr3d(isc:iec,jsc:jec,1)
+
+       case default
+          call abor1_ftn("soca_interpfields_mod:getvalues_ad geoval does not exist")          
+
+       end select
+
+       ! Deallocate temporary arrays
+       deallocate(incr3d)
+       deallocate(gom_window)
+
+    end do
+
+  end subroutine getvalues_ad
 
   ! ------------------------------------------------------------------------------
   !> Get 3rd dimension of fld

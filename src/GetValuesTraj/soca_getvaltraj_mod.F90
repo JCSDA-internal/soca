@@ -9,7 +9,6 @@
 
 module soca_getvaltraj_mod
 
-  !General JEDI uses
   use kinds
   use iso_c_binding
   use soca_bumpinterp2d_mod
@@ -23,7 +22,6 @@ module soca_getvaltraj_mod
 
   type :: soca_getvaltraj
      integer                 :: nobs
-     logical                 :: noobs     
      type(soca_bumpinterp2d), allocatable :: horiz_interp(:)
      integer                 :: bumpid     
      logical                 :: interph_initialized = .false.
@@ -47,8 +45,6 @@ contains
   ! ------------------------------------------------------------------------------
   !> Setup trajectory for interpolation
   subroutine c_soca_getvaltraj_setup(c_key_self) bind(c,name='soca_getvaltraj_setup_f90')
-
-    implicit none
     integer(c_int), intent(inout) :: c_key_self
     type(soca_getvaltraj), pointer :: self
 
@@ -61,7 +57,6 @@ contains
     self%interph_initialized = .false.
     allocate(self%horiz_interp(1))
     self%nobs = 0
-    self%noobs = .true.
     self%bumpid = 0
     self%obstype_index = c_key_self
 
@@ -70,8 +65,6 @@ contains
   ! ------------------------------------------------------------------------------
   !> Release memory
   subroutine c_soca_getvaltraj_delete(c_key_self) bind(c,name='soca_getvaltraj_delete_f90')
-
-    implicit none
     integer(c_int), intent(inout) :: c_key_self
     type(soca_getvaltraj), pointer :: self
 
