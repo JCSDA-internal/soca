@@ -164,10 +164,10 @@ contains
        select case (trim(vars%fldnames(ivar)))
 
        case ("sea_ice_category_area_fraction")
-          fld3d = fld%cicen(isc:iec,jsc:jec,2:nval+1)
+          fld3d = fld%seaice%cicen(isc:iec,jsc:jec,2:nval+1)
 
        case ("sea_ice_category_thickness")
-          fld3d = fld%hicen(isc:iec,jsc:jec,1:nval)
+          fld3d = fld%seaice%hicen(isc:iec,jsc:jec,1:nval)
 
        case ("sea_surface_height_above_geoid")
           fld3d(isc:iec,jsc:jec,1) = fld%ssh(isc:iec,jsc:jec)
@@ -268,11 +268,11 @@ contains
        ! Copy incr3d into field
        select case (trim(vars%fldnames(ivar)))
        case ("sea_ice_category_area_fraction")
-          incr%cicen(isc:iec,jsc:jec,2:nval+1) = incr%cicen(isc:iec,jsc:jec,2:nval+1) +&
+          incr%seaice%cicen(isc:iec,jsc:jec,2:nval+1) = incr%seaice%cicen(isc:iec,jsc:jec,2:nval+1) +&
                &incr3d
 
        case ("sea_ice_category_thickness")
-          incr%hicen(isc:iec,jsc:jec,1:nval) = incr%hicen(isc:iec,jsc:jec,1:nval) +&
+          incr%seaice%hicen(isc:iec,jsc:jec,1:nval) = incr%seaice%hicen(isc:iec,jsc:jec,1:nval) +&
                &incr3d
 
        case ("sea_surface_height_above_geoid")

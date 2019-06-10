@@ -115,7 +115,7 @@ contains
     self%seaice_mask = 0
     do i = is, ie
        do j = js, je
-          if (sum(bkg%cicen(i, j, 2:), 1) * bkg%geom%ocean%mask2d(i, j) .gt. 0.0) then
+          if (sum(bkg%seaice%cicen(i, j, 2:), 1) * bkg%geom%ocean%mask2d(i, j) .gt. 0.0) then
              self%seaice_mask(i, j) = 1
           else
              self%seaice_mask(i, j) = 0
@@ -173,8 +173,8 @@ contains
     call soca_2d_convol(dx%ocnsfc%fric_vel(:,:),    self%ocean_conv(1), dx%geom)
     
     do icat = 1, dx%geom%ocean%ncat
-       call soca_2d_convol(dx%cicen(:,:,icat+1), self%seaice_conv(1), dx%geom)
-       call soca_2d_convol(dx%hicen(:,:,icat), self%seaice_conv(1), dx%geom)
+       call soca_2d_convol(dx%seaice%cicen(:,:,icat+1), self%seaice_conv(1), dx%geom)
+       call soca_2d_convol(dx%seaice%hicen(:,:,icat), self%seaice_conv(1), dx%geom)
     end do    
 
     do izo = 1,dx%geom%ocean%nzo
@@ -197,8 +197,8 @@ contains
     call soca_2d_sqrt_convol(dx%ssh, self%ocean_conv(1), dx%geom, self%pert_scale%SSH)
     
     do icat = 1, dx%geom%ocean%ncat
-       call soca_2d_sqrt_convol(dx%cicen(:,:,icat+1), self%seaice_conv(1), dx%geom, self%pert_scale%AICE)
-       call soca_2d_sqrt_convol(dx%hicen(:,:,icat), self%seaice_conv(1), dx%geom, self%pert_scale%HICE)
+       call soca_2d_sqrt_convol(dx%seaice%cicen(:,:,icat+1), self%seaice_conv(1), dx%geom, self%pert_scale%AICE)
+       call soca_2d_sqrt_convol(dx%seaice%hicen(:,:,icat), self%seaice_conv(1), dx%geom, self%pert_scale%HICE)
     end do    
 
     do izo = 1,dx%geom%ocean%nzo

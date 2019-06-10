@@ -14,6 +14,7 @@ list( APPEND soca_test_input
   testinput/enshofx.yml
   testinput/ensvariance.yml
   testinput/forecast_identity.yml
+  testinput/forecast_identity_cice.yml
   testinput/forecast_mom6.yml
   testinput/genenspert.yml
   testinput/geometry_test.yml
@@ -42,6 +43,7 @@ list( APPEND soca_test_output
   testoutput/enshofx.test
   testoutput/ensvariance.test
   testoutput/forecast_identity.test
+  testoutput/forecast_identity_cice.test  
   testoutput/forecast_mom6.test
   testoutput/genenspert.test
   testoutput/hofx.test
@@ -66,6 +68,7 @@ list( APPEND soca_model_restarts
   Data/90x43x25/INPUT/forcing_monthly.nc
   Data/90x43x25/INPUT/hycom1_25.nc
   Data/90x43x25/INPUT/ice_model.res.nc
+  Data/90x43x25/INPUT/cice.res.nc
   Data/90x43x25/INPUT/layer_coord25.nc
   Data/90x43x25/INPUT/MOM.res.nc
   Data/90x43x25/INPUT/sfc.res.nc
@@ -144,7 +147,7 @@ set(MPI_SOCA_TESTS 2)
 # Tests that create data other tests will use
 #-------------------------------------------------------------------------------
 
-# Test of read/write restart, model advance = Id
+# Test of read/write restart for MOM6&SIS2, model advance = Id
 ecbuild_add_test( TARGET test_soca_forecast_identity
                   MPI ${MPI_SOCA_TESTS}
                   TYPE SCRIPT
@@ -155,6 +158,17 @@ ecbuild_add_test( TARGET test_soca_forecast_identity
                       testoutput/forecast_identity.test
                   DEPENDS soca_forecast.x)
 
+# Test of read/write restart for MOM6&CICE, model advance = Id
+ecbuild_add_test( TARGET test_soca_forecast_identity_cice
+                  MPI ${MPI_SOCA_TESTS}
+                  TYPE SCRIPT
+                  COMMAND ./compare.sh
+                  ARGS
+                      "${CMAKE_BINARY_DIR}/bin/soca_forecast.x
+                      testinput/forecast_identity_cice.yml"
+                      testoutput/forecast_identity_cice.test
+                  DEPENDS soca_forecast.x)
+		
 # Test mom6 forecast
 ecbuild_add_test( TARGET test_soca_forecast_mom6
                   MPI ${MPI_SOCA_TESTS}

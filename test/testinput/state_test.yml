@@ -19,7 +19,7 @@ StateTest:
     variables: &soca_vars [cicen, hicen, socn, tocn, ssh, hocn, sw, lhf, shf, lw, us]
       
     remap_filename: ./INPUT/MOM.res.nc
-  norm-file: 36957.536400437464
+  norm-file: 12408.467606143728
   date: *date
   StateGenerate:
     read_from_file: 0

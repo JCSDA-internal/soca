@@ -69,10 +69,10 @@ contains
           fld%socn(i,j,:) = soca_adjust(fld%socn(i,j,:),&
                                         &self%s_min,&
                                         &self%s_max)
-          fld%cicen(i,j,:) = soca_adjust(fld%cicen(i,j,:),&
+          fld%seaice%cicen(i,j,:) = soca_adjust(fld%seaice%cicen(i,j,:),&
                                         &self%cicen_min,&
                                         &self%cicen_max)
-          fld%hicen(i,j,:) = soca_adjust(fld%hicen(i,j,:),&
+          fld%seaice%hicen(i,j,:) = soca_adjust(fld%seaice%hicen(i,j,:),&
                                         &self%hicen_min,&
                                         &self%hicen_max)          
        end do

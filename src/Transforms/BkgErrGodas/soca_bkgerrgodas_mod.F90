@@ -109,8 +109,8 @@ contains
              dxm%tocn(i,j,:) = self%std_bkgerr%tocn(i,j,:) * dxa%tocn(i,j,:)
              dxm%socn(i,j,:) = self%std_bkgerr%socn(i,j,:)  * dxa%socn(i,j,:)
 
-             dxm%cicen(i,j,:) =  self%std_bkgerr%cicen(i,j,:) * dxa%cicen(i,j,:)
-             dxm%hicen(i,j,:) =  self%std_bkgerr%hicen(i,j,:) * dxa%hicen(i,j,:)
+             dxm%seaice%cicen(i,j,:) =  self%std_bkgerr%seaice%cicen(i,j,:) * dxa%seaice%cicen(i,j,:)
+             dxm%seaice%hicen(i,j,:) =  self%std_bkgerr%seaice%hicen(i,j,:) * dxa%seaice%hicen(i,j,:)
           end if
        end do
     end do

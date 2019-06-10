@@ -120,15 +120,16 @@ contains
        do j = jsc, jec
           dxm%ssh(i,j) = self%std_bkgerr%ssh(i,j) * dxa%ssh(i,j)
           dxm%tocn(i,j,:) = self%std_bkgerr%tocn(i,j,:) * dxa%tocn(i,j,:)
-          dxm%socn(i,j,:) = self%std_bkgerr%socn(i,j,:)  * dxa%socn(i,j,:)
-
-          dxm%cicen(i,j,:) =  self%std_bkgerr%cicen(i,j,:) * dxa%cicen(i,j,:)
-          dxm%hicen(i,j,:) =  self%std_bkgerr%hicen(i,j,:) * dxa%hicen(i,j,:)
+          dxm%socn(i,j,:) = self%std_bkgerr%socn(i,j,:) * dxa%socn(i,j,:)
        end do
     end do
     ! Surface fields
     call dxm%ocnsfc%copy(dxa%ocnsfc)    
     call dxm%ocnsfc%schur(self%std_bkgerr%ocnsfc)
+
+    ! Sea-ice
+    call dxm%seaice%copy(dxa%seaice)    
+    call dxm%seaice%schur(self%std_bkgerr%seaice)    
 
   end subroutine soca_bkgerr_mult
 
