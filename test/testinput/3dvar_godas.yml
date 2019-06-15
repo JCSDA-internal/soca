@@ -116,6 +116,8 @@ cost_function:
         name: CoolSkin
         ObsDataOut: {obsfile: ./Data/sst.out.nc}
         ObsDataIn:  {obsfile: ./Data/sst.nc}
+        simulate:
+          variables: [sea_surface_temperature]
       ObsOperator:
         name: CoolSkin
       Covariance:
@@ -125,9 +127,10 @@ cost_function:
         name: SeaSurfaceTemp
         ObsDataOut: {obsfile: ./Data/sst.out.nc}
         ObsDataIn:  {obsfile: ./Data/sst.nc}
+        simulate:
+          variables: [sea_surface_temperature]
       ObsOperator:
         name: SeaSurfaceTemp
-        variables: [sea_surface_temperature]
       Covariance:
         covariance: diagonal
       ObsFilters:
@@ -140,9 +143,10 @@ cost_function:
         name: SeaSurfaceSalinity
         ObsDataOut: {obsfile: ./Data/sss.out.nc}
         ObsDataIn:  {obsfile: ./Data/sss.nc}
+        simulate:
+          variables: [sea_surface_salinity]
       ObsOperator:
         name: SeaSurfaceSalinity      
-        variables: [sea_surface_salinity]
       Covariance:
         covariance: diagonal
       ObsFilters:
@@ -156,6 +160,8 @@ cost_function:
         name: ADT
         ObsDataOut: {obsfile: ./Data/adt.out.nc}
         ObsDataIn:  {obsfile: ./Data/adt.nc}
+        simulate:
+          variables: [obs_absolute_dynamic_topography]
       ObsOperator:
         name: ADT
       Covariance:
@@ -167,6 +173,8 @@ cost_function:
         name: InsituTemperature
         ObsDataOut: {obsfile: ./Data/prof.T.out.nc}
         ObsDataIn:  {obsfile: ./Data/prof.nc}
+        simulate:
+          variables: [sea_water_temperature]
       ObsOperator:
         name: InsituTemperature      
       Covariance:
@@ -181,9 +189,10 @@ cost_function:
         name: InsituSalinity
         ObsDataOut: {obsfile: ./Data/prof.S.out.nc}
         ObsDataIn:  {obsfile: ./Data/prof.nc}
+        simulate:
+          variables: [sea_water_salinity]
       ObsOperator:
         name: InsituSalinity
-        variable: [sea_water_salinity]
       Covariance:
         covariance: diagonal
       ObsFilters:
@@ -193,6 +202,8 @@ cost_function:
         name: SeaIceFraction
         ObsDataOut: {oubsfile: ./Data/icec.out.nc}
         ObsDataIn:  {obsfile:  ./Data/icec.nc}
+        simulate:
+          variables: [sea_ice_area_fraction]
       ObsOperator:
         name: SeaIceFraction
       Covariance:
