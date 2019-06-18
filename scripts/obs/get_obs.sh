@@ -36,6 +36,10 @@ while [[ $date -le $date_end ]]; do
     bash source.fnmoc.sh sfc  $date $output_path
     bash source.fnmoc.sh trak $date $output_path
     
+    ##------------------------------------------------------------
+    ## ice concentration
+    ##------------------------------------------------------------
+    bash source.nsidc_icec.sh $date $output_path
 
     ##------------------------------------------------------------
     ## SST
