@@ -27,7 +27,7 @@ while [[ $date -le $date_end ]]; do
     ## ADT
     ##------------------------------------------------------------
     bash source.nesdis_adt_rads.sh $date $output_path
-    
+
 
     ##------------------------------------------------------------
     ## insitu
@@ -35,7 +35,7 @@ while [[ $date -le $date_end ]]; do
     bash source.fnmoc.sh prof $date $output_path
     bash source.fnmoc.sh sfc  $date $output_path
     bash source.fnmoc.sh trak $date $output_path
-    
+
     ##------------------------------------------------------------
     ## ice concentration
     ##------------------------------------------------------------
@@ -55,7 +55,7 @@ while [[ $date -le $date_end ]]; do
     bash source.nesdis_sst_viirs.sh l3u $date $output_path
     #bash source.nesdis_sst_avhrr.sh l2p $date $output_path
     bash source.nesdis_sst_avhrr.sh l3u $date $output_path
-    
+
 date=$(date -d "$date + 1 day" +%Y%m%d)
-    
+
 done
