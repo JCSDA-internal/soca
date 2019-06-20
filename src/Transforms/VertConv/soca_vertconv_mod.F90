@@ -7,13 +7,13 @@
 
 module soca_vertconv_mod
   use config_mod
-  use iso_c_binding  
+  use iso_c_binding
   use kinds
   use soca_fields
-  use soca_model_geom_type, only : geom_get_domain_indices  
+  use soca_geom_mod, only : geom_get_domain_indices
   use tools_func
   use type_mpl
-  
+
   implicit none
 
   !> Fortran derived type to hold the setup for Vertconv
@@ -24,8 +24,8 @@ module soca_vertconv_mod
      real(kind=kind_real)      :: scale_layer_thick  !> Set the minimum decorrelation scale
                                                      !> as a multiple of the layer thickness
      type(soca_field),pointer  :: traj               !> Trajectory
-     type(soca_field), pointer :: bkg                !> Background     
-     integer                   :: isc, iec, jsc, jec !> Compute domain 
+     type(soca_field), pointer :: bkg                !> Background
+     integer                   :: isc, iec, jsc, jec !> Compute domain
   end type soca_vertconv
 
 #define LISTED_TYPE soca_vertconv
@@ -51,9 +51,9 @@ contains
     type(c_ptr),              intent(in) :: c_conf
 
     integer :: isc, iec, jsc, jec, i, j, k, nl
-    
+
     nl = size(bkg%hocn,3)
-  
+
     ! Get configuration for vertical convolution
     self%lz_min       = config_get_real(c_conf, "Lz_min")
     self%lz_mld       = config_get_int(c_conf, "Lz_mld")
@@ -65,12 +65,12 @@ contains
     ! Store trajectory and background
     self%traj => traj
     self%bkg => bkg
-    
+
     ! Indices for compute domain (no halo)
-    call geom_get_domain_indices(bkg%geom%ocean, "compute", &
+    call geom_get_domain_indices(bkg%geom, "compute", &
          &isc, iec, jsc, jec)
     self%isc=isc; self%iec=iec; self%jsc=jsc; self%jec=jec
-  
+
   end subroutine soca_conv_setup
 
   ! ------------------------------------------------------------------------------
@@ -81,11 +81,11 @@ contains
     real(kind=kind_real), intent(inout) :: lz(:)
     real(kind=kind_real) :: mld, z
     integer :: k
-    
+
     ! minium scale is based on layer thickness
     lz = self%lz_min
     lz = max(lz, self%scale_layer_thick*abs(self%bkg%hocn(i,j,:)))
-    
+
     ! if the upper Lz should be calculated from the MLD
     ! interpolate values from top to bottom of ML
     if ( self%lz_mld /= 0 ) then
@@ -119,11 +119,11 @@ contains
     do id = self%isc, self%iec
        do jd = self%jsc, self%jec
           ! skip land
-          if (self%bkg%geom%ocean%mask2d(id,jd) /= 1) cycle
+          if (self%bkg%geom%mask2d(id,jd) /= 1) cycle
 
           ! get correlation lengths
           call soca_calc_lz(self, id, jd, lz)
-          
+
           ! perform convolution
           z(:) = self%bkg%layer_depth(id,jd,:)
           do j = 1, nl
@@ -158,11 +158,11 @@ contains
 
     nl = size(self%bkg%layer_depth,3)
     allocate(z(nl), lz(nl))
-    
+
     do id = self%isc, self%iec
        do jd = self%jsc, self%jec
           ! skip land
-          if (self%bkg%geom%ocean%mask2d(id,jd) /= 1) cycle
+          if (self%bkg%geom%mask2d(id,jd) /= 1) cycle
 
           ! get correlation lengths
           call soca_calc_lz(self, id, jd, lz)

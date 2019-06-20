@@ -1,8 +1,8 @@
 ! (C) Copyright 2009-2016 ECMWF.
-! 
+!
 ! This software is licensed under the terms of the Apache Licence Version 2.0
-! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
-! In applying this licence, ECMWF does not waive the privileges and immunities 
+! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+! In applying this licence, ECMWF does not waive the privileges and immunities
 ! granted to it by virtue of its status as an intergovernmental organisation nor
 ! does it submit to any jurisdiction.
 
@@ -11,28 +11,28 @@
 
 module soca_covariance_mod
   use config_mod
-  use fckit_mpi_module, only: fckit_mpi_comm  
-  use iso_c_binding  
+  use fckit_mpi_module, only: fckit_mpi_comm
+  use iso_c_binding
   use kinds
   use oobump_mod, only: bump_read_conf
   use soca_fields
   use soca_geom_mod_c
-  use soca_model_geom_type, only : geom_get_domain_indices
+  use soca_geom_mod, only : geom_get_domain_indices
   use soca_utils
   use type_bump
   use type_nam
   use random_mod
-  
+
   implicit none
 
   !> Fortran derived type to hold configuration data for the SOCA background/model covariance
   type :: soca_pert
-    real(kind=kind_real) :: T, S, SSH, AICE, HICE     
+    real(kind=kind_real) :: T, S, SSH, AICE, HICE
   end type soca_pert
   type :: soca_cov
      type(bump_type), allocatable :: ocean_conv(:)  !< Ocean convolution op from bump
      type(bump_type), allocatable :: seaice_conv(:) !< Seaice convolution op from bump
-     integer,         allocatable :: seaice_mask(:,:)          
+     integer,         allocatable :: seaice_mask(:,:)
      type(soca_field),    pointer :: bkg            !< Background field (or first guess)
      logical                      :: initialized = .false.
      type(soca_pert)              :: pert_scale
@@ -64,58 +64,58 @@ contains
   !! error covariance structure.
 
   subroutine soca_cov_setup(self, c_conf, geom, bkg)
-    type(soca_cov),        intent(inout) :: self   !< The covariance structure    
+    type(soca_cov),        intent(inout) :: self   !< The covariance structure
     type(c_ptr),              intent(in) :: c_conf !< The configuration
     type(soca_geom),          intent(in) :: geom   !< Geometry
     type(soca_field), target, intent(in) :: bkg    !< Background
-    
+
     character(len=3)  :: domain
     integer :: is, ie, js, je, i, j
 
-    ! Set default ensemble perturbation scales to 1.0    
+    ! Set default ensemble perturbation scales to 1.0
     self%pert_scale%T = 1.0
     self%pert_scale%S = 1.0
     self%pert_scale%SSH = 1.0
     self%pert_scale%AICE = 1.0
     self%pert_scale%HICE = 1.0
-    
+
     ! Overwrite scales if they exist
     if (config_element_exists(c_conf,"pert_T")) then
        self%pert_scale%T = config_get_real(c_conf,"pert_T")
     end if
     if (config_element_exists(c_conf,"pert_S")) then
-       self%pert_scale%S = config_get_real(c_conf,"pert_S")       
+       self%pert_scale%S = config_get_real(c_conf,"pert_S")
     end if
     if (config_element_exists(c_conf,"pert_SSH")) then
-       self%pert_scale%SSH = config_get_real(c_conf,"pert_SSH")       
+       self%pert_scale%SSH = config_get_real(c_conf,"pert_SSH")
     end if
     if (config_element_exists(c_conf,"pert_AICE")) then
-       self%pert_scale%AICE = config_get_real(c_conf,"pert_AICE")       
+       self%pert_scale%AICE = config_get_real(c_conf,"pert_AICE")
     end if
     if (config_element_exists(c_conf,"pert_HICE")) then
-       self%pert_scale%HICE = config_get_real(c_conf,"pert_HICE")       
-    end if            
-    
+       self%pert_scale%HICE = config_get_real(c_conf,"pert_HICE")
+    end if
+
     ! Setup ocean and ice decorrelation length scales
     self%ocn_l0 = 500.0d3
-    self%ice_l0 = 500.0d3    
+    self%ice_l0 = 500.0d3
     if (config_element_exists(c_conf,"ocean_corr_scale")) then
        self%ocn_l0 = config_get_real(c_conf,"ocean_corr_scale")
-    end if   
+    end if
     if (config_element_exists(c_conf,"ice_corr_scale")) then
        self%ice_l0 = config_get_real(c_conf,"ice_corr_scale")
-    end if   
+    end if
 
     ! Associate background
     self%bkg => bkg
 
     ! Define seaice mask from background seaice fraction
-    call geom_get_domain_indices(bkg%geom%ocean, "compute", is, ie, js, je)
+    call geom_get_domain_indices(bkg%geom, "compute", is, ie, js, je)
     allocate(self%seaice_mask(is:ie, js:je))
     self%seaice_mask = 0
     do i = is, ie
        do j = js, je
-          if (sum(bkg%cicen(i, j, 2:), 1) * bkg%geom%ocean%mask2d(i, j) .gt. 0.0) then
+          if (sum(bkg%cicen(i, j, 2:), 1) * bkg%geom%mask2d(i, j) .gt. 0.0) then
              self%seaice_mask(i, j) = 1
           else
              self%seaice_mask(i, j) = 0
@@ -130,11 +130,11 @@ contains
 
     ! Initialize seaice bump
     domain = 'ice'
-    allocate(self%seaice_conv(1))    
-    call soca_bump_correlation(self, self%seaice_conv(1), geom, c_conf, domain)    
+    allocate(self%seaice_conv(1))
+    call soca_bump_correlation(self, self%seaice_conv(1), geom, c_conf, domain)
 
     self%initialized = .true.
-    
+
   end subroutine soca_cov_setup
 
   ! ------------------------------------------------------------------------------
@@ -142,7 +142,7 @@ contains
   !> Delete for the SOCA model's 3d error covariance matrices
 
   subroutine soca_cov_delete(self)
-    type(soca_cov), intent(inout) :: self       !< The covariance structure        
+    type(soca_cov), intent(inout) :: self       !< The covariance structure
 
     call self%ocean_conv(1)%dealloc()
     call self%seaice_conv(1)%dealloc()
@@ -151,13 +151,13 @@ contains
     nullify(self%bkg)
     deallocate(self%seaice_mask)
     self%initialized = .false.
-    
+
   end subroutine soca_cov_delete
 
   ! ------------------------------------------------------------------------------
 
   subroutine soca_cov_C_mult(self, dx)
-    type(soca_cov),   intent(inout) :: self !< The covariance structure    
+    type(soca_cov),   intent(inout) :: self !< The covariance structure
     type(soca_field), intent(inout) :: dx   !< Input: Increment
                                             !< Output: C dx
     integer :: icat, izo
@@ -171,52 +171,52 @@ contains
     call soca_2d_convol(dx%ocnsfc%latent_heat(:,:), self%ocean_conv(1), dx%geom)
     call soca_2d_convol(dx%ocnsfc%sens_heat(:,:),   self%ocean_conv(1), dx%geom)
     call soca_2d_convol(dx%ocnsfc%fric_vel(:,:),    self%ocean_conv(1), dx%geom)
-    
-    do icat = 1, dx%geom%ocean%ncat
+
+    do icat = 1, dx%geom%ncat
        call soca_2d_convol(dx%cicen(:,:,icat+1), self%seaice_conv(1), dx%geom)
        call soca_2d_convol(dx%hicen(:,:,icat), self%seaice_conv(1), dx%geom)
-    end do    
+    end do
 
-    do izo = 1,dx%geom%ocean%nzo
+    do izo = 1,dx%geom%nzo
        call soca_2d_convol(dx%tocn(:,:,izo), self%ocean_conv(1), dx%geom)
        call soca_2d_convol(dx%socn(:,:,izo), self%ocean_conv(1), dx%geom)
     end do
-    
+
   end subroutine soca_cov_C_mult
-  
+
   ! ------------------------------------------------------------------------------
 
   subroutine soca_cov_sqrt_C_mult(self, dx)
-    type(soca_cov),   intent(inout) :: self !< The covariance structure    
+    type(soca_cov),   intent(inout) :: self !< The covariance structure
     type(soca_field), intent(inout) :: dx   !< Input: Increment
                                             !< Output: C^1/2 dx
 
     integer :: icat, izo
-    
+
     ! Apply convolution to fields
     call soca_2d_sqrt_convol(dx%ssh, self%ocean_conv(1), dx%geom, self%pert_scale%SSH)
-    
-    do icat = 1, dx%geom%ocean%ncat
+
+    do icat = 1, dx%geom%ncat
        call soca_2d_sqrt_convol(dx%cicen(:,:,icat+1), self%seaice_conv(1), dx%geom, self%pert_scale%AICE)
        call soca_2d_sqrt_convol(dx%hicen(:,:,icat), self%seaice_conv(1), dx%geom, self%pert_scale%HICE)
-    end do    
+    end do
 
-    do izo = 1,dx%geom%ocean%nzo
+    do izo = 1,dx%geom%nzo
        call soca_2d_sqrt_convol(dx%tocn(:,:,izo), self%ocean_conv(1), dx%geom, self%pert_scale%T)
-       call soca_2d_sqrt_convol(dx%socn(:,:,izo), self%ocean_conv(1), dx%geom, self%pert_scale%S)       
+       call soca_2d_sqrt_convol(dx%socn(:,:,izo), self%ocean_conv(1), dx%geom, self%pert_scale%S)
     end do
 
   end subroutine soca_cov_sqrt_C_mult
-  
+
   ! ------------------------------------------------------------------------------
 
   subroutine soca_bump_correlation(self, horiz_convol, geom, c_conf, domain)
     type(soca_cov),  intent(inout) :: self   !< The covariance structure
     type(bump_type), intent(inout) :: horiz_convol
     type(soca_geom),    intent(in) :: geom
-    type(c_ptr),        intent(in) :: c_conf         !< Handle to configuration    
+    type(c_ptr),        intent(in) :: c_conf         !< Handle to configuration
     character(len=3),   intent(in) :: domain
-    
+
     !Grid stuff
     integer :: isc, iec, jsc, jec, jjj, jz, il, ib
     character(len=1024) :: subr = 'model_write'
@@ -224,10 +224,10 @@ contains
     !bump stuff
     integer :: nc0a, nl0, nv, nts
     real(kind=kind_real), allocatable :: lon(:), lat(:), area(:), vunit(:,:)
-    real(kind=kind_real), allocatable :: rosrad(:)    
+    real(kind=kind_real), allocatable :: rosrad(:)
     logical, allocatable :: lmask(:,:)
-    integer, allocatable :: imask(:,:)    
-    
+    integer, allocatable :: imask(:,:)
+
     real(kind_real), allocatable :: rh(:,:,:,:)     !< Horizontal support radius for covariance (in m)
     real(kind_real), allocatable :: rv(:,:,:,:)     !< Vertical support radius
     real(kind_real), allocatable :: var(:,:,:,:)
@@ -237,7 +237,7 @@ contains
 
     !--- Initialize geometry to be passed to NICAS
     ! Indices for compute domain (no halo)
-    call geom_get_domain_indices(geom%ocean, "compute", isc, iec, jsc, jec)
+    call geom_get_domain_indices(geom, "compute", isc, iec, jsc, jec)
 
     nv = 1                                     !< Number of variables
     nl0 = 1                                    !< Number of independent levels
@@ -248,14 +248,14 @@ contains
     allocate( vunit(nc0a,nl0) )
     allocate( imask(nc0a, nl0), lmask(nc0a, nl0) )
 
-    lon = reshape( geom%ocean%lon(isc:iec, jsc:jec), (/nc0a/) )
-    lat = reshape( geom%ocean%lat(isc:iec, jsc:jec), (/nc0a/) )        
-    area = reshape( geom%ocean%cell_area(isc:iec, jsc:jec), (/nc0a/) )
+    lon = reshape( geom%lon(isc:iec, jsc:jec), (/nc0a/) )
+    lat = reshape( geom%lat(isc:iec, jsc:jec), (/nc0a/) )
+    area = reshape( geom%cell_area(isc:iec, jsc:jec), (/nc0a/) )
 
     ! Setup land or ice mask
     jz = 1
     if (domain.eq.'ocn') then
-       imask(1:nc0a,jz) = int(reshape( geom%ocean%mask2d(isc:iec, jsc:jec), (/nc0a/)))
+       imask(1:nc0a,jz) = int(reshape( geom%mask2d(isc:iec, jsc:jec), (/nc0a/)))
     end if
     if (domain.eq.'ice') then
        imask(1:nc0a,jz) = int(reshape( self%seaice_mask(isc:iec, jsc:jec), (/nc0a/)))
@@ -266,7 +266,7 @@ contains
        lmask=.true.
     end where
 
-    ! No vertical convolution, set dummy vertical unit    
+    ! No vertical convolution, set dummy vertical unit
     vunit = 1.0d0
 
     ! Initialize bump namelist/parameters
@@ -286,7 +286,7 @@ contains
        allocate(var(nc0a,nl0,nv,nts))
 
        ! Setup Rossby radius
-       rosrad = reshape( geom%ocean%rossby_radius(isc:iec, jsc:jec), (/nc0a/) )
+       rosrad = reshape( geom%rossby_radius(isc:iec, jsc:jec), (/nc0a/) )
 
        ! Setup horizontal decorrelation length scales
        if (domain.eq.'ocn') then
@@ -300,7 +300,7 @@ contains
        rv=1.0 ! Vertical scales not used, set to something
        var=1.0
 
-       ! Copy length-scales into BUMP      
+       ! Copy length-scales into BUMP
        call horiz_convol%set_parameter('cor_rh',rh)
        call horiz_convol%set_parameter('cor_rv',rv)
        call horiz_convol%set_parameter('var',var)
@@ -321,32 +321,32 @@ contains
 
   subroutine soca_2d_convol(dx, horiz_convol, geom)
     real(kind=kind_real), intent(inout) :: dx(:,:)
-    type(bump_type),      intent(inout) :: horiz_convol    
-    type(soca_geom),         intent(in) :: geom        
+    type(bump_type),      intent(inout) :: horiz_convol
+    type(soca_geom),         intent(in) :: geom
 
     real(kind=kind_real), allocatable :: tmp_incr(:,:,:,:)
 
-    ! Allocate unstructured tmp_increment and make copy of dx    
-    call geom%ocean%struct2unstruct(dx(:,:), tmp_incr)    
+    ! Allocate unstructured tmp_increment and make copy of dx
+    call geom%struct2unstruct(dx(:,:), tmp_incr)
 
     ! Apply 2D convolution
     call horiz_convol%apply_nicas(tmp_incr)
 
     ! copy unstructured tmp_incr to structured dx
-    call geom%ocean%unstruct2struct(dx(:,:), tmp_incr)    
+    call geom%unstruct2struct(dx(:,:), tmp_incr)
 
     ! Clean up
     if (allocated(tmp_incr)) deallocate(tmp_incr)
-    
+
   end subroutine soca_2d_convol
 
   ! ------------------------------------------------------------------------------
 
   subroutine soca_2d_sqrt_convol(dx, horiz_convol, geom, pert_scale)
     real(kind=kind_real), intent(inout) :: dx(:,:)
-    type(bump_type),      intent(inout) :: horiz_convol    
-    type(soca_geom),         intent(in) :: geom        
-    real(kind=kind_real),    intent(in) :: pert_scale           
+    type(bump_type),      intent(inout) :: horiz_convol
+    type(soca_geom),         intent(in) :: geom
+    real(kind=kind_real),    intent(in) :: pert_scale
 
     real(kind=kind_real), allocatable :: tmp_incr(:,:,:,:)
     real(kind=kind_real), allocatable :: pcv(:)
@@ -355,8 +355,8 @@ contains
     integer :: nn
 
     ! Allocate unstructured tmp_increment and make copy of dx
-    call geom%ocean%struct2unstruct(dx(:,:), tmp_incr)
-    
+    call geom%struct2unstruct(dx(:,:), tmp_incr)
+
     ! Get control variable size
     call horiz_convol%get_cv_size(nn)
     allocate(pcv(nn))
@@ -368,12 +368,12 @@ contains
     call horiz_convol%apply_nicas_sqrt(pcv, tmp_incr)
 
     ! Back to structured grid
-    call geom%ocean%unstruct2struct(dx(:,:), tmp_incr)
-    
+    call geom%unstruct2struct(dx(:,:), tmp_incr)
+
     ! Clean up
     deallocate(pcv)
     if (allocated(tmp_incr)) deallocate(tmp_incr)
 
   end subroutine soca_2d_sqrt_convol
-  
+
 end module soca_covariance_mod

@@ -12,18 +12,14 @@ module soca_geom_mod_c
   use iso_c_binding
   use config_mod
   use kinds
-  use soca_model_geom_type
+  use soca_geom_mod
   use soca_mom6
   use fms_io_mod, only: fms_io_init, fms_io_exit
 
   implicit none
   private
-  public :: soca_geom_registry, soca_geom
+  public :: soca_geom_registry
 
-  type :: soca_geom
-     type( soca_model_geom ) :: ocean ! Includes sea-ice
-  end type soca_geom
-  
 #define LISTED_TYPE soca_geom
 
   !> Linked list interface - defines registry_t type
@@ -45,7 +41,7 @@ contains
 
     type(c_ptr),       intent(in) :: c_conf
     type(soca_geom),      pointer :: self
-    
+
     call soca_geom_registry%init()
     call soca_geom_registry%add(c_key_self)
     call soca_geom_registry%get(c_key_self,self)
@@ -54,7 +50,7 @@ contains
     call self%ocean%get_rossby_radius()
     call self%ocean%validindex() !BUG: Needs a halo of 2 to work
     call self%ocean%infotofile()
-    
+
   end subroutine c_soca_geo_setup
 
   ! ------------------------------------------------------------------------------
@@ -70,13 +66,13 @@ contains
     call soca_geom_registry%get(c_key_self , self )
 
     call self%ocean%clone(other%ocean)
-    
+
   end subroutine c_soca_geo_clone
 
   ! ------------------------------------------------------------------------------
   !> Geometry destructor
   subroutine c_soca_geo_delete(c_key_self) bind(c,name='soca_geo_delete_f90')
-    integer(c_int), intent(inout) :: c_key_self     
+    integer(c_int), intent(inout) :: c_key_self
 
     type(soca_geom), pointer :: self
 
@@ -95,8 +91,8 @@ contains
 
     call soca_geom_registry%get(c_key_self , self)
     call self%ocean%print()
-    call self%ocean%infotofile()    
-    
+    call self%ocean%infotofile()
+
   end subroutine c_soca_geo_info
 
   ! ------------------------------------------------------------------------------

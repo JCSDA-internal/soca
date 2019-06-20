@@ -13,9 +13,9 @@ module soca_balance_mod
   use soca_ksshts_mod
   use iso_c_binding
   use config_mod
-  use soca_model_geom_type, only : geom_get_domain_indices
+  use soca_geom_mod, only : geom_get_domain_indices
   use datetime_mod
-  
+
   implicit none
 
   !> Fortran derived type to hold configuration D
@@ -24,7 +24,7 @@ module soca_balance_mod
      integer                    :: isc, iec, jsc, jec  !> Compute domain
      type(soca_kst)             :: kst                 !> T/S balance
      type(soca_ksshts)          :: ksshts              !> SSH/T/S balance
-     real(kind=kind_real), allocatable :: kct(:,:)     !> C/T Jacobian     
+     real(kind=kind_real), allocatable :: kct(:,:)     !> C/T Jacobian
   end type soca_balance_config
 
 #define LISTED_TYPE soca_balance_config
@@ -49,7 +49,7 @@ contains
 
     integer :: isc, iec, jsc, jec, i, j, k, nl
     real(kind=kind_real), allocatable :: jac(:)
-    
+
     ! Number of ocean layer
     nl = size(traj%hocn,3)
 
@@ -57,7 +57,7 @@ contains
     self%traj => traj
 
     ! Indices for compute domain
-    call geom_get_domain_indices(traj%geom%ocean, "compute", isc, iec, jsc, jec)
+    call geom_get_domain_indices(traj%geom, "compute", isc, iec, jsc, jec)
     self%isc=isc; self%iec=iec; self%jsc=jsc; self%jec=jec
 
     ! Get configuration for Kst
@@ -68,7 +68,7 @@ contains
                                                         ! nlayers top layers
 
     ! Compute and store Jacobian of Kst
-    allocate(self%kst%jacobian(isc:iec,jsc:jec,traj%geom%ocean%nzo))
+    allocate(self%kst%jacobian(isc:iec,jsc:jec,traj%geom%nzo))
     allocate(jac(nl))
     self%kst%jacobian=0.0
     do i = isc, iec
@@ -90,13 +90,13 @@ contains
        end do
     end do
     deallocate(jac)
-    
+
     ! Compute Jacobian of Ksshts
-    allocate(self%ksshts%kssht(isc:iec,jsc:jec,traj%geom%ocean%nzo))
-    allocate(self%ksshts%ksshs(isc:iec,jsc:jec,traj%geom%ocean%nzo))
-    allocate(jac(2))    
+    allocate(self%ksshts%kssht(isc:iec,jsc:jec,traj%geom%nzo))
+    allocate(self%ksshts%ksshs(isc:iec,jsc:jec,traj%geom%nzo))
+    allocate(jac(2))
     self%ksshts%kssht=0.0
-    self%ksshts%ksshs=0.0    
+    self%ksshts%ksshs=0.0
     do i = isc, iec
        do j = jsc, jec
           do k = 1, nl
@@ -105,8 +105,8 @@ contains
                   &traj%socn(i,j,k),&
                   &self%traj%layer_depth(i,j,k),&
                   &traj%hocn(i,j,k),&
-                  &traj%geom%ocean%lon(i,j),&
-                  &traj%geom%ocean%lat(i,j))
+                  &traj%geom%lon(i,j),&
+                  &traj%geom%lat(i,j))
              self%ksshts%kssht(i,j,k) = jac(1)
              self%ksshts%ksshs(i,j,k) = jac(2)
           end do
@@ -115,9 +115,9 @@ contains
     deallocate(jac)
 
     ! Compute Kst
-    allocate(self%kct(isc:iec,jsc:jec))    
-    self%kct = -0.01d0 ! TODO: Insert regression coef    
-    
+    allocate(self%kct(isc:iec,jsc:jec))
+    self%kct = -0.01d0 ! TODO: Insert regression coef
+
   end subroutine soca_balance_setup
 
   ! ------------------------------------------------------------------------------
@@ -128,15 +128,15 @@ contains
     nullify(self%traj)
     deallocate(self%kst%jacobian)
     deallocate(self%ksshts%kssht)
-    deallocate(self%ksshts%ksshs)    
+    deallocate(self%ksshts%ksshs)
     deallocate(self%kct)
-    
+
   end subroutine soca_balance_delete
 
   ! ------------------------------------------------------------------------------
   ! Apply forward balance operator
   subroutine soca_balance_mult(self, dxa, dxm)
-    type(soca_balance_config), intent(in) :: self    
+    type(soca_balance_config), intent(in) :: self
     type(soca_field),          intent(in) :: dxa
     type(soca_field),       intent(inout) :: dxm
 
@@ -154,11 +154,11 @@ contains
           dxc = sum(dxa%cicen(i,j,2:))
           dxm%tocn(i,j,1) = dxa%tocn(i,j,1) + self%kct(i,j) * dxc
           dxm%tocn(i,j,:) = dxa%tocn(i,j,:)
-          
+
           ! Salinity
           dxm%socn(i,j,:) = dxa%socn(i,j,:) +&
                &self%kst%jacobian(i,j,:) * dxa%tocn(i,j,:)
-          
+
           ! SSH
           deta = 0.0_kind_real
           do k = 1, size(self%traj%hocn,3)
@@ -173,21 +173,21 @@ contains
              dxm%cicen(i,j,k+1) =  dxm%cicen(i,j,k+1) +&
                   & self%kct(i,j) * dxa%tocn(i,j,1)
           end do
-          
+
           ! Ice thickness
-          dxm%hicen(i,j,:) =  dxa%hicen(i,j,:)         
+          dxm%hicen(i,j,:) =  dxa%hicen(i,j,:)
        end do
     end do
     ! Surface fields
     call dxm%ocnsfc%copy(dxa%ocnsfc)
 
   end subroutine soca_balance_mult
-  
+
   ! ------------------------------------------------------------------------------
-  ! Apply backward balance operator  
-  subroutine soca_balance_multad(self, dxa, dxm)    
+  ! Apply backward balance operator
+  subroutine soca_balance_multad(self, dxa, dxm)
     type(soca_balance_config), intent(in) :: self
-    type(soca_field),          intent(in) :: dxm    
+    type(soca_field),          intent(in) :: dxm
     type(soca_field),       intent(inout) :: dxa
 
     real(kind=kind_real) :: dxc
@@ -195,7 +195,7 @@ contains
 
     do i = self%isc, self%iec
        do j = self%jsc, self%jec
-          ! Temperature          
+          ! Temperature
           dxa%tocn(i,j,1) = dxm%tocn(i,j,1) + &
                &self%kst%jacobian(i,j,1) * dxm%socn(i,j,1) + &
                &self%ksshts%kssht(i,j,1) * dxm%ssh(i,j) +&
@@ -216,14 +216,14 @@ contains
     end do
     ! Surface fields
     call dxa%ocnsfc%copy(dxm%ocnsfc)
-    
+
   end subroutine soca_balance_multad
 
   ! ------------------------------------------------------------------------------
-  ! Apply inverse of the forward balance operator  
+  ! Apply inverse of the forward balance operator
   subroutine soca_balance_multinv(self, dxa, dxm)
     type(soca_balance_config), intent(in) :: self
-    type(soca_field),          intent(in) :: dxm    
+    type(soca_field),          intent(in) :: dxm
     type(soca_field),       intent(inout) :: dxa
 
     real(kind=kind_real) :: dxc, deta
@@ -231,7 +231,7 @@ contains
 
     do i = self%isc, self%iec
        do j = self%jsc, self%jec
-          ! Temperature          
+          ! Temperature
           dxa%tocn(i,j,:) = dxm%tocn(i,j,:)
           ! Salinity
           dxa%socn(i,j,:) = dxm%socn(i,j,:) -&
@@ -249,7 +249,7 @@ contains
           do k = 1, size(self%traj%hicen,3)
              dxa%cicen(i,j,k+1) =  dxa%cicen(i,j,k+1) -&
                   & self%kct(i,j) * dxm%tocn(i,j,1)
-          end do          
+          end do
           ! Ice thickness
           dxa%hicen(i,j,:) =  dxm%hicen(i,j,:)
        end do
@@ -259,10 +259,10 @@ contains
   end subroutine soca_balance_multinv
 
   ! ------------------------------------------------------------------------------
-  ! Apply inverse of the backward balance operator    
+  ! Apply inverse of the backward balance operator
   subroutine soca_balance_multinvad(self, dxa, dxm)
     type(soca_balance_config), intent(in) :: self
-    type(soca_field),       intent(inout) :: dxm    
+    type(soca_field),       intent(inout) :: dxm
     type(soca_field),          intent(in) :: dxa
 
     real(kind=kind_real) :: dxc
@@ -273,8 +273,8 @@ contains
           ! Ice thickness
           dxm%hicen(i,j,:) =  dxa%hicen(i,j,:)
           ! Ice fraction
-          dxm%cicen(i,j,:) =  dxa%cicen(i,j,:)          
-          ! Temperature          
+          dxm%cicen(i,j,:) =  dxa%cicen(i,j,:)
+          ! Temperature
           dxm%tocn(i,j,1) = dxa%tocn(i,j,1) &
                & - self%kst%jacobian(i,j,1) * dxa%socn(i,j,1) &
                & + ( self%ksshts%ksshs(i,j,1) * self%kst%jacobian(i,j,1) &
@@ -293,9 +293,9 @@ contains
     end do
     ! Surface fields
     call dxm%ocnsfc%copy(dxa%ocnsfc)
-    
+
   end subroutine soca_balance_multinvad
-  
+
 end module soca_balance_mod
 
 
