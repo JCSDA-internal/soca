@@ -303,13 +303,13 @@ contains
     call close_param_file(param_file)
 
     ! Set the forcing for the first steps.
-     call set_forcing(mom6_config%sfc_state,&
-                      mom6_config%forces,&
-                      mom6_config%fluxes,&
-                      mom6_config%Time,&
-                      mom6_config%Time_step_ocean,&
-                      mom6_config%grid, &
-                      mom6_config%surface_forcing_CSp)
+    call set_forcing(mom6_config%sfc_state,&
+                     mom6_config%forces,&
+                     mom6_config%fluxes,&
+                     mom6_config%Time,&
+                     mom6_config%Time_step_ocean,&
+                     mom6_config%grid, &
+                     mom6_config%surface_forcing_CSp)
     
   end subroutine soca_mom6_init
 
