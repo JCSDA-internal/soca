@@ -19,7 +19,7 @@ module soca_seaice_mod
   use random_mod
   use soca_fieldsutils_mod
   use soca_geom_mod_c  
-  use soca_model_geom_type, only : geom_get_domain_indices
+  use soca_geom_mod
 
   implicit none
   private
@@ -58,11 +58,11 @@ contains
     integer :: isd, ied, jsd, jed
 
     ! Indices for data domain (with halo)
-    call geom_get_domain_indices(geom%ocean, "data   ", isd, ied, jsd, jed)    
+    call geom_get_domain_indices(geom, "data   ", isd, ied, jsd, jed)    
 
     ! Allocate sea-ice state
-    if (.not.allocated(self%cicen)) allocate(self%cicen(isd:ied,jsd:jed,geom%ocean%ice_column%ncat+1))
-    if (.not.allocated(self%hicen)) allocate(self%hicen(isd:ied,jsd:jed,geom%ocean%ice_column%ncat))
+    if (.not.allocated(self%cicen)) allocate(self%cicen(isd:ied,jsd:jed,geom%ice_column%ncat+1))
+    if (.not.allocated(self%hicen)) allocate(self%hicen(isd:ied,jsd:jed,geom%ice_column%ncat))
     
   end subroutine soca_seaice_create
 
@@ -223,11 +223,11 @@ contains
           case('cicen')
              idr = register_restart_field(restart, filename, 'part_size', &
                   self%cicen(:,:,:), &
-                  domain=geom%ocean%G%Domain%mpp_domain)
+                  domain=geom%G%Domain%mpp_domain)
           case('hicen')
              idr = register_restart_field(restart, filename, 'h_ice', &
                   self%hicen(:,:,:), &
-                  domain=geom%ocean%G%Domain%mpp_domain)
+                  domain=geom%G%Domain%mpp_domain)
           end select
        end do
        call restore_state(restart, directory='')
@@ -243,11 +243,11 @@ contains
           case('cicen')
              idr = register_restart_field(restart, filename, 'aicen', &
                   self%cicen(:,:,2:), &
-                  domain=geom%ocean%G%Domain%mpp_domain)
+                  domain=geom%G%Domain%mpp_domain)
           case('hicen')
              idr = register_restart_field(restart, filename, 'vicen', &
                   self%hicen(:,:,:), &
-                  domain=geom%ocean%G%Domain%mpp_domain)
+                  domain=geom%G%Domain%mpp_domain)
           end select
           ! Add ocean fraction
           self%cicen(:,:,1) = 1.0_kind_real - sum(self%cicen(:,:,2:), dim=3)
@@ -289,11 +289,11 @@ contains
        case('cicen')
           call read_data(filename,"cicen", &
                          self%cicen(:,:,:), &
-                         domain=geom%ocean%G%Domain%mpp_domain)
+                         domain=geom%G%Domain%mpp_domain)
        case('hicen')
           call read_data(filename,"hicen", &
                          self%hicen(:,:,:), &
-                         domain=geom%ocean%G%Domain%mpp_domain)
+                         domain=geom%G%Domain%mpp_domain)
        end select
     end do
     call fms_io_exit()
@@ -326,7 +326,7 @@ contains
     call fms_io_init()
 
     ! Allocate and compute aggregate variables
-    call geom_get_domain_indices(geom%ocean, "data   ", isd, ied, jsd, jed)    
+    call geom_get_domain_indices(geom, "data   ", isd, ied, jsd, jed)    
     allocate(aice(isd:ied,jsd:jed))
     allocate(hice(isd:ied,jsd:jed))
     aice(:,:) = sum(self%cicen(:,:,2:), dim=3)
@@ -339,14 +339,14 @@ contains
 
        ! Register sis2 variables
        idr = register_restart_field(restart, filename, 'part_size', self%cicen, &
-            domain=geom%ocean%G%Domain%mpp_domain)
+            domain=geom%G%Domain%mpp_domain)
        idr = register_restart_field(restart, filename, 'h_ice', self%hicen, &
-            domain=geom%ocean%G%Domain%mpp_domain)
+            domain=geom%G%Domain%mpp_domain)
 
     case('cice')
        ! Get ice volume
-       call geom_get_domain_indices(geom%ocean, "data   ", isd, ied, jsd, jed)    
-       allocate(vicen(isd:ied,jsd:jed,geom%ocean%ice_column%ncat))
+       call geom_get_domain_indices(geom, "data   ", isd, ied, jsd, jed)    
+       allocate(vicen(isd:ied,jsd:jed,geom%ice_column%ncat))
        vicen(:,:,:) = self%cicen(:,:,2:)*self%hicen(:,:,:)
        
        ! Generate file names
@@ -354,19 +354,19 @@ contains
 
        ! Register cice variables
        idr = register_restart_field(restart, filename, 'aicen', self%cicen(:,:,2:), &
-            domain=geom%ocean%G%Domain%mpp_domain)
+            domain=geom%G%Domain%mpp_domain)
 
        idr = register_restart_field(restart, filename, 'vicen', vicen, &
-            domain=geom%ocean%G%Domain%mpp_domain)
+            domain=geom%G%Domain%mpp_domain)
 
        deallocate(vicen)
     end select
 
     ! Register aggregate variables
     idr = register_restart_field(restart, filename, 'aice', aice, &
-         domain=geom%ocean%G%Domain%mpp_domain)
+         domain=geom%G%Domain%mpp_domain)
     idr = register_restart_field(restart, filename, 'hice', hice, &
-         domain=geom%ocean%G%Domain%mpp_domain)
+         domain=geom%G%Domain%mpp_domain)
 
     ! Write restart to disk
     call save_restart(restart, directory='')
