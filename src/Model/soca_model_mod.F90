@@ -9,6 +9,7 @@
 module soca_model_mod
 
 use iso_c_binding
+use fms_io_mod, only : fms_io_init, fms_io_exit
 use kinds
 use soca_geom_mod_c
 use soca_mom6
@@ -19,8 +20,10 @@ use mpp_domains_mod, only : mpp_update_domains
 use time_manager_mod, only : time_type, print_time, print_date, set_date
 use MOM, only : step_MOM
 use MOM_restart, only : save_restart
+use MOM_surface_forcing, only : set_forcing
 use MOM_time_manager, only : real_to_time, time_type_to_real
 use MOM_time_manager, only : operator(+)
+
 
 implicit none
 
@@ -139,6 +142,17 @@ subroutine soca_propagate(self, flds, fldsdate)
   ocean_time = self%mom6_config%Time
 
   if (self%advance_mom6==1) then
+     ! Set the forcing for the next steps.
+     call fms_io_init()
+     call set_forcing(self%mom6_config%sfc_state,&
+                      self%mom6_config%forces,&
+                      self%mom6_config%fluxes,&
+                      self%mom6_config%Time,&
+                      self%mom6_config%Time_step_ocean,&
+                      self%mom6_config%grid, &
+                      self%mom6_config%surface_forcing_CSp)
+     call fms_io_exit()
+     
      ! Advance MOM in a single step call (advance dyna and thermo)
      call step_MOM(self%mom6_config%forces, &
                    self%mom6_config%fluxes, &
