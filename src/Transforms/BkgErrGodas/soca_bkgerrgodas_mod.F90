@@ -7,12 +7,12 @@
 
 module soca_bkgerrgodas_mod
   use config_mod
-  use datetime_mod  
+  use datetime_mod
   use iso_c_binding
   use kinds
-  use soca_bkgerrutil_mod  
+  use soca_bkgerrutil_mod
   use soca_fields
-  use soca_model_geom_type, only : geom_get_domain_indices
+  use soca_geom_mod, only : geom_get_domain_indices
   use soca_utils
   use soca_omb_stats_mod
   use fckit_mpi_module
@@ -81,30 +81,30 @@ contains
     ! to 10% of the background for now ...
     call self%std_bkgerr%ocnsfc%copy(bkg%ocnsfc)
     call self%std_bkgerr%ocnsfc%mul(0.1_kind_real)
-    
+
     ! Apply config bounds to background error
     call self%bounds%apply(self%std_bkgerr)
 
     ! Save
     call soca_fld2file(self%std_bkgerr, fname)
-    
+
   end subroutine soca_bkgerrgodas_setup
 
   ! ------------------------------------------------------------------------------
   !> Apply background error: dxm = D dxa
   subroutine soca_bkgerrgodas_mult(self, dxa, dxm)
-    type(soca_bkgerrgodas_config),    intent(in) :: self    
+    type(soca_bkgerrgodas_config),    intent(in) :: self
     type(soca_field),            intent(in) :: dxa
     type(soca_field),         intent(inout) :: dxm
 
     integer :: isc, iec, jsc, jec, i, j, k
 
     ! Indices for compute domain (no halo)
-    call geom_get_domain_indices(self%bkg%geom%ocean, "compute", isc, iec, jsc, jec)
+    call geom_get_domain_indices(self%bkg%geom, "compute", isc, iec, jsc, jec)
 
     do i = isc, iec
        do j = jsc, jec
-          if (self%bkg%geom%ocean%mask2d(i,j).eq.1) then
+          if (self%bkg%geom%mask2d(i,j).eq.1) then
              dxm%ssh(i,j) = self%std_bkgerr%ssh(i,j) * dxa%ssh(i,j)
              dxm%tocn(i,j,:) = self%std_bkgerr%tocn(i,j,:) * dxa%tocn(i,j,:)
              dxm%socn(i,j,:) = self%std_bkgerr%socn(i,j,:)  * dxa%socn(i,j,:)
@@ -132,25 +132,25 @@ contains
     type(soca_omb_stats) :: sst
 
     ! Get compute domain indices
-    call geom_get_domain_indices(self%bkg%geom%ocean, "compute", &
+    call geom_get_domain_indices(self%bkg%geom, "compute", &
          &domain%is, domain%ie, domain%js, domain%je)
 
     ! Get local compute domain indices
-    call geom_get_domain_indices(self%bkg%geom%ocean, "compute", &
+    call geom_get_domain_indices(self%bkg%geom, "compute", &
          &domain%isl, domain%iel, domain%jsl, domain%jel, local=.true.)
 
     ! Allocate temporary arrays
-    allocate(sig1(self%bkg%geom%ocean%nzo), sig2(self%bkg%geom%ocean%nzo))
-       
+    allocate(sig1(self%bkg%geom%nzo), sig2(self%bkg%geom%nzo))
+
     ! Initialize sst background error to previously computed std of omb's
     ! Currently hard-coded to read GODAS file
     call sst%init(domain)
-    call sst%bin(self%bkg%geom%ocean%lon, self%bkg%geom%ocean%lat)
-    
+    call sst%bin(self%bkg%geom%lon, self%bkg%geom%lat)
+
     ! Loop over compute domain
     do i = domain%is, domain%ie
        do j = domain%js, domain%je
-          if (self%bkg%geom%ocean%mask2d(i,j).eq.1) then
+          if (self%bkg%geom%mask2d(i,j).eq.1) then
 
              ! Step 1: sigb from dT/dz
              call soca_diff(sig1(:), self%bkg%tocn(i,j,:), self%bkg%hocn(i,j,:))
@@ -162,14 +162,14 @@ contains
                     &/self%t_efold)
 
              ! Step 3: sigb = max(sig1, sig2)
-             do k = 1, self%bkg%geom%ocean%nzo
+             do k = 1, self%bkg%geom%nzo
                 self%std_bkgerr%tocn(i,j,k) = min( max(sig1(k), sig2(k)), &
                   & self%bounds%t_max)
              end do
 
              ! Step 4: Vertical smoothing
              do iter = 1, niter
-                do k = 2, self%bkg%geom%ocean%nzo-1
+                do k = 2, self%bkg%geom%nzo-1
                    self%std_bkgerr%tocn(i,j,k) = &
                         &( self%std_bkgerr%tocn(i,j,k-1)*self%bkg%hocn(i,j,k-1) +&
                         &  self%std_bkgerr%tocn(i,j,k)*self%bkg%hocn(i,j,k) +&
@@ -196,22 +196,22 @@ contains
     integer :: i, j, k
 
     ! Get compute domain indices
-    call geom_get_domain_indices(self%bkg%geom%ocean, "compute", &
+    call geom_get_domain_indices(self%bkg%geom, "compute", &
          &domain%is, domain%ie, domain%js, domain%je)
 
     ! Loop over compute domain
     do i = domain%is, domain%ie
        do j = domain%js, domain%je
-            if (self%bkg%geom%ocean%mask2d(i,j) .ne. 1) cycle
+            if (self%bkg%geom%mask2d(i,j) .ne. 1) cycle
 
-            if ( abs(self%bkg%geom%ocean%lat(i,j)) >= self%ssh_phi_ex) then
+            if ( abs(self%bkg%geom%lat(i,j)) >= self%ssh_phi_ex) then
               ! if in extratropics, set to max value
               self%std_bkgerr%ssh(i,j) = self%bounds%ssh_max
             else
               ! otherwise, taper to min value (0.0) toward equator
               self%std_bkgerr%ssh(i,j) = self%bounds%ssh_min + 0.5 * &
                 (self%bounds%ssh_max - self%bounds%ssh_min) * &
-                (1 - cos(pi * self%bkg%geom%ocean%lat(i,j) / self%ssh_phi_ex))
+                (1 - cos(pi * self%bkg%geom%lat(i,j) / self%ssh_phi_ex))
             end if
        end do
     end do
@@ -230,11 +230,11 @@ contains
 
 
     ! Get compute domain indices
-    call geom_get_domain_indices(self%bkg%geom%ocean, "compute", &
+    call geom_get_domain_indices(self%bkg%geom, "compute", &
          &domain%is, domain%ie, domain%js, domain%je)
     !
     ! Get local compute domain indices
-    call geom_get_domain_indices(self%bkg%geom%ocean, "compute", &
+    call geom_get_domain_indices(self%bkg%geom, "compute", &
          &domain%isl, domain%iel, domain%jsl, domain%jel, local=.true.)
 
     ! TODO read in a precomputed surface S background error
@@ -242,9 +242,9 @@ contains
     ! Loop over compute domain
     do i = domain%is, domain%ie
       do j = domain%js, domain%je
-        if (self%bkg%geom%ocean%mask2d(i,j) /= 1)  cycle
+        if (self%bkg%geom%mask2d(i,j) /= 1)  cycle
 
-        do k = 1, self%bkg%geom%ocean%nzo
+        do k = 1, self%bkg%geom%nzo
           if ( self%bkg%layer_depth(i,j,k) <= self%bkg%mld(i,j)) then
             ! if in the mixed layer, set to the maximum value
             self%std_bkgerr%socn(i,j,k) = self%bounds%s_max
