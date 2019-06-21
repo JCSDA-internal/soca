@@ -1,5 +1,4 @@
-!
-! (C) Copyright 2017 UCAR
+! (C) Copyright 2017- UCAR
 !
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -15,7 +14,7 @@ module soca_interpfields_mod
   use soca_getvaltraj_mod
   use soca_bumpinterp2d_mod
   use soca_fields
-  use soca_geom_mod, only : geom_get_domain_indices
+  use soca_geom_mod, only : soca_geom, geom_get_domain_indices
   use kinds
   use fckit_mpi_module, only: fckit_mpi_comm, fckit_mpi_sum
 

@@ -1,5 +1,4 @@
-!
-! (C) Copyright 2017 UCAR
+! (C) Copyright 2017- UCAR
 !
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -46,10 +45,10 @@ contains
     call soca_geom_registry%add(c_key_self)
     call soca_geom_registry%get(c_key_self,self)
 
-    call self%ocean%init(c_conf)
-    call self%ocean%get_rossby_radius()
-    call self%ocean%validindex() !BUG: Needs a halo of 2 to work
-    call self%ocean%infotofile()
+    call self%init(c_conf)
+    call self%get_rossby_radius()
+    call self%validindex() !BUG: Needs a halo of 2 to work
+    call self%infotofile()
 
   end subroutine c_soca_geo_setup
 
@@ -65,7 +64,7 @@ contains
     call soca_geom_registry%get(c_key_other, other)
     call soca_geom_registry%get(c_key_self , self )
 
-    call self%ocean%clone(other%ocean)
+    call self%clone(other)
 
   end subroutine c_soca_geo_clone
 
@@ -77,7 +76,7 @@ contains
     type(soca_geom), pointer :: self
 
     call soca_geom_registry%get(c_key_self, self)
-    call self%ocean%end()
+    call self%end()
     call soca_geom_registry%remove(c_key_self)
 
   end subroutine c_soca_geo_delete
@@ -90,8 +89,8 @@ contains
     type(soca_geom), pointer :: self
 
     call soca_geom_registry%get(c_key_self , self)
-    call self%ocean%print()
-    call self%ocean%infotofile()
+    call self%print()
+    call self%infotofile()
 
   end subroutine c_soca_geo_info
 

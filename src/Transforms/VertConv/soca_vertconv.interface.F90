@@ -1,5 +1,4 @@
-!
-! (C) Copyright 2017 UCAR
+! (C) Copyright 2017- UCAR
 !
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -13,7 +12,6 @@ subroutine c_soca_vertconv_setup(c_key_self, c_conf, c_key_traj, c_key_bkg) &
   use soca_vertconv_mod
   use config_mod
   use soca_fields_mod_c
-  use soca_geom_mod, only : geom_get_domain_indices
 
   implicit none
 

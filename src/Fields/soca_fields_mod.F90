@@ -1,4 +1,4 @@
-! (C) Copyright 2017 UCAR
+! (C) Copyright 2017- UCAR
 !
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -24,7 +24,7 @@ module soca_fields
   use random_mod
   use soca_fieldsutils_mod
   use soca_geom_mod_c
-  use soca_geom_mod, only : geom_get_domain_indices
+  use soca_geom_mod, only : soca_geom, geom_get_domain_indices
   use soca_mom6
   use soca_utils
   use soca_bumpinterp2d_mod

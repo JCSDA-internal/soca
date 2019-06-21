@@ -1,5 +1,4 @@
-!
-! (C) Copyright 2017-2019 UCAR
+! (C) Copyright 2017- UCAR
 !
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -18,7 +17,7 @@ module soca_ocnsfc_mod
   use MOM_forcing_type,    only : forcing
   use random_mod
   use soca_geom_mod_c
-  use soca_geom_mod, only : geom_get_domain_indices
+  use soca_geom_mod, only : soca_geom, geom_get_domain_indices
 
   implicit none
   private

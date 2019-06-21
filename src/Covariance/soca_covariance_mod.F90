@@ -1,10 +1,7 @@
-! (C) Copyright 2009-2016 ECMWF.
+! (C) Copyright 2017- UCAR.
 !
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
-! In applying this licence, ECMWF does not waive the privileges and immunities
-! granted to it by virtue of its status as an intergovernmental organisation nor
-! does it submit to any jurisdiction.
 
 !> Structure holding configuration variables for the 3d error
 !! covariance matrices of the SOCA analysis.
@@ -17,7 +14,7 @@ module soca_covariance_mod
   use oobump_mod, only: bump_read_conf
   use soca_fields
   use soca_geom_mod_c
-  use soca_geom_mod, only : geom_get_domain_indices
+  use soca_geom_mod, only : soca_geom, geom_get_domain_indices
   use soca_utils
   use type_bump
   use type_nam
