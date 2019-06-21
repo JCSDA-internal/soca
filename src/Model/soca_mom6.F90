@@ -104,13 +104,14 @@ module soca_mom6
                                      !< at the ocean surface.
     type(surface)      :: sfc_state  !< Pointers to the ocean surface state fields.
     real               :: dt_forcing !< Coupling time step in seconds.
+    type(time_type)    :: Time_step_ocean !< time_type version of dt_forcing        
     type(directories)  :: dirs       !< Relevant dirs/path
     type(time_type)    :: Time       !< Model's time before call to step_MOM.
     type(ocean_grid_type),    pointer :: grid !< Grid metrics
     type(verticalGrid_type),  pointer :: GV   !< Vertical grid     
     type(MOM_control_struct), pointer :: MOM_CSp  !< Tracer flow control structure.
     type(MOM_restart_CS),     pointer :: restart_CSp !< A pointer to the restart control structure
-
+    type(surface_forcing_CS), pointer :: surface_forcing_CSp => NULL()
  end type soca_mom6_config
   
 contains
@@ -212,7 +213,7 @@ contains
 
     type(tracer_flow_control_CS), pointer :: &
          tracer_flow_CSp => NULL()  !< A pointer to the tracer flow control structure
-    type(surface_forcing_CS),  pointer :: surface_forcing_CSp => NULL()
+    !type(surface_forcing_CS),  pointer :: surface_forcing_CSp => NULL()
     type(diag_ctrl), pointer :: diag => NULL() !< Diagnostic structure
     character(len=4), parameter :: vers_num = 'v2.0'
     ! This include declares and sets the variable "version".
@@ -285,23 +286,31 @@ contains
 
     ! Setup surface forcing
     call extract_surface_state(mom6_config%MOM_CSp, mom6_config%sfc_state)
-    call surface_forcing_init(mom6_config%Time, mom6_config%grid, param_file, diag, &
-         surface_forcing_CSp, tracer_flow_CSp)
+    call surface_forcing_init(mom6_config%Time,&
+                              mom6_config%grid,&
+                              param_file,&
+                              diag,&
+                              mom6_config%surface_forcing_CSp,&
+                              tracer_flow_CSp)
 
     ! Get time step from MOM config. TODO: Get DT from DA config
     call get_param(param_file, mod_name, "DT", param_int, fail_if_missing=.true.)
     dt = real(param_int)
     mom6_config%dt_forcing = dt
-    Time_step_ocean = real_to_time(real(mom6_config%dt_forcing, kind=8))
+    mom6_config%Time_step_ocean = real_to_time(real(mom6_config%dt_forcing, kind=8))
 
     ! Finalize file parsing
     call close_param_file(param_file)
 
-    ! Set the forcing for the next steps.
-    call set_forcing(mom6_config%sfc_state, mom6_config%forces, mom6_config%fluxes,&
-         & mom6_config%Time, Time_step_ocean, mom6_config%grid, &
-         surface_forcing_CSp)
-
+    ! Set the forcing for the first steps.
+     call set_forcing(mom6_config%sfc_state,&
+                      mom6_config%forces,&
+                      mom6_config%fluxes,&
+                      mom6_config%Time,&
+                      mom6_config%Time_step_ocean,&
+                      mom6_config%grid, &
+                      mom6_config%surface_forcing_CSp)
+    
   end subroutine soca_mom6_init
 
   ! ------------------------------------------------------------------------------
