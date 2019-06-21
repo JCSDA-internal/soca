@@ -7,15 +7,15 @@
 
 module soca_bkgerrfilt_mod
   use config_mod
-  use datetime_mod  
+  use datetime_mod
   use iso_c_binding
   use kinds
   use soca_fields
-  use soca_model_geom_type, only : geom_get_domain_indices
+  use soca_geom_mod, only : geom_get_domain_indices
   use soca_utils
   use soca_omb_stats_mod
   use fckit_mpi_module
-  
+
   implicit none
 
   !> Fortran derived type to hold configuration D
@@ -62,21 +62,21 @@ contains
     ! Allocate memory for bkgerrfiltor and set to zero
     call create_copy(self%filt, bkg)
     call zeros(self%filt)
-    
+
     ! Read parameters from config
     self%ocn_depth_min = config_get_real(c_conf,"ocean_depth_min")
     self%scale         = config_get_real(c_conf,"rescale_bkgerr")
     self%efold_z       = config_get_real(c_conf,"efold_z")
-    
+
     ! Associate background
     self%bkg => bkg
 
     ! Setup rescaling and masks
-    call geom_get_domain_indices(bkg%geom%ocean, "compute", isc, iec, jsc, jec)
+    call geom_get_domain_indices(bkg%geom, "compute", isc, iec, jsc, jec)
     self%isc=isc; self%iec=iec; self%jsc=jsc; self%jec=jec
     do i = isc, iec
        do j = jsc, jec
-          if (sum(bkg%hocn(i,j,:)).gt.self%ocn_depth_min) then             
+          if (sum(bkg%hocn(i,j,:)).gt.self%ocn_depth_min) then
              self%filt%ssh(i,j) = self%scale
              do k = 1, nl
                 if (bkg%hocn(i,j,k).gt.1e-3_kind_real) then
@@ -95,22 +95,22 @@ contains
              self%filt%tocn(i,j,:) = 0.0_kind_real
              self%filt%socn(i,j,:) = 0.0_kind_real
           end if
-          
+
           ! Do nothing for sea-ice
           self%filt%cicen(i,j,:) =  1.0_kind_real
           self%filt%hicen(i,j,:) =  1.0_kind_real
        end do
     end do
-    
+
     ! Save filtered background error
     call soca_fld2file(self%filt, fname)
-    
+
   end subroutine soca_bkgerrfilt_setup
 
   ! ------------------------------------------------------------------------------
   !> Apply background error: dxm = D dxa
   subroutine soca_bkgerrfilt_mult(self, dxa, dxm)
-    type(soca_bkgerrfilt_config),    intent(in) :: self    
+    type(soca_bkgerrfilt_config),    intent(in) :: self
     type(soca_field),            intent(in) :: dxa
     type(soca_field),         intent(inout) :: dxm
 
@@ -118,7 +118,7 @@ contains
 
     do i = self%isc, self%iec
        do j = self%jsc, self%jec
-          if (self%bkg%geom%ocean%mask2d(i,j).eq.1) then
+          if (self%bkg%geom%mask2d(i,j).eq.1) then
              dxm%ssh(i,j) = self%filt%ssh(i,j) * dxa%ssh(i,j)
              dxm%tocn(i,j,:) = self%filt%tocn(i,j,:) * dxa%tocn(i,j,:)
              dxm%socn(i,j,:) = self%filt%socn(i,j,:)  * dxa%socn(i,j,:)
@@ -131,7 +131,7 @@ contains
              dxm%socn(i,j,:) = 0.0_kind_real
 
              dxm%cicen(i,j,:) = 0.0_kind_real
-             dxm%hicen(i,j,:) = 0.0_kind_real 
+             dxm%hicen(i,j,:) = 0.0_kind_real
           end if
        end do
     end do
@@ -141,7 +141,7 @@ contains
   end subroutine soca_bkgerrfilt_mult
 
   ! ------------------------------------------------------------------------------
-  
+
 end module soca_bkgerrfilt_mod
 
 
