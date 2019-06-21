@@ -197,7 +197,6 @@ contains
 
     type(time_type) :: Start_time         ! The start time of the simulation.
     type(time_type) :: Time_in            ! 
-    type(time_type) :: Time_step_ocean    ! A time_type version of dt_forcing.
     real :: dt                      ! The baroclinic dynamics time step, in seconds.
     integer :: date_init(6)=0                ! The start date of the whole simulation.
     integer :: years=0, months=0, days=0     ! These may determine the segment run
@@ -213,7 +212,6 @@ contains
 
     type(tracer_flow_control_CS), pointer :: &
          tracer_flow_CSp => NULL()  !< A pointer to the tracer flow control structure
-    !type(surface_forcing_CS),  pointer :: surface_forcing_CSp => NULL()
     type(diag_ctrl), pointer :: diag => NULL() !< Diagnostic structure
     character(len=4), parameter :: vers_num = 'v2.0'
     ! This include declares and sets the variable "version".
