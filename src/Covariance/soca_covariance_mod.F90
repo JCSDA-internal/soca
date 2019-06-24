@@ -271,7 +271,9 @@ contains
 
     ! Initialize bump namelist/parameters
     call horiz_convol%nam%init()
+    horiz_convol%nam%verbosity = 'none'
     call bump_read_conf(c_conf, horiz_convol)
+
     if (domain.eq.'ocn') horiz_convol%nam%prefix = 'ocn'
     if (domain.eq.'ice') horiz_convol%nam%prefix = 'ice'
 
