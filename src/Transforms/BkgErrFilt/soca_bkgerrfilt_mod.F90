@@ -97,8 +97,8 @@ contains
           end if
 
           ! Do nothing for sea-ice
-          self%filt%cicen(i,j,:) =  1.0_kind_real
-          self%filt%hicen(i,j,:) =  1.0_kind_real
+          self%filt%seaice%cicen(i,j,:) =  1.0_kind_real
+          self%filt%seaice%hicen(i,j,:) =  1.0_kind_real
        end do
     end do
 
@@ -123,15 +123,15 @@ contains
              dxm%tocn(i,j,:) = self%filt%tocn(i,j,:) * dxa%tocn(i,j,:)
              dxm%socn(i,j,:) = self%filt%socn(i,j,:)  * dxa%socn(i,j,:)
 
-             dxm%cicen(i,j,:) =  self%filt%cicen(i,j,:) * dxa%cicen(i,j,:)
-             dxm%hicen(i,j,:) =  self%filt%hicen(i,j,:) * dxa%hicen(i,j,:)
+             dxm%seaice%cicen(i,j,:) =  self%filt%seaice%cicen(i,j,:) * dxa%seaice%cicen(i,j,:)
+             dxm%seaice%hicen(i,j,:) =  self%filt%seaice%hicen(i,j,:) * dxa%seaice%hicen(i,j,:)
           else
              dxm%ssh(i,j) = 0.0_kind_real
              dxm%tocn(i,j,:) = 0.0_kind_real
              dxm%socn(i,j,:) = 0.0_kind_real
 
-             dxm%cicen(i,j,:) = 0.0_kind_real
-             dxm%hicen(i,j,:) = 0.0_kind_real
+             dxm%seaice%cicen(i,j,:) = 0.0_kind_real
+             dxm%seaice%hicen(i,j,:) = 0.0_kind_real 
           end if
        end do
     end do

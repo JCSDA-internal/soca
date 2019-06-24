@@ -14,9 +14,9 @@ initial:
   date: 2018-04-15T00:00:00Z
   basename: ./INPUT/
   ocn_filename: MOM.res.nc
-  ice_filename: ice_model.res.nc
+  ice_filename: cice.res.nc
   sfc_filename: sfc.res.nc
-  seaice_model: sis2
+  seaice_model: cice
 
 forecast_length: PT6H
 
@@ -26,3 +26,4 @@ output:
   exp: Id
   date: 2018-04-15T00:00:00Z
   type: fc
+  seaice_model: cice  

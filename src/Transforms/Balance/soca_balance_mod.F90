@@ -151,7 +151,7 @@ contains
     do i = self%isc, self%iec
        do j = self%jsc, self%jec
           ! Temperature
-          dxc = sum(dxa%cicen(i,j,2:))
+          dxc = sum(dxa%seaice%cicen(i,j,2:))
           dxm%tocn(i,j,1) = dxa%tocn(i,j,1) + self%kct(i,j) * dxc
           dxm%tocn(i,j,:) = dxa%tocn(i,j,:)
 
@@ -168,14 +168,14 @@ contains
           dxm%ssh(i,j) = dxa%ssh(i,j) + deta
 
           ! Ice fraction
-          dxm%cicen(i,j,:) =  dxa%cicen(i,j,:)
-          do k = 1, size(self%traj%hicen,3)
-             dxm%cicen(i,j,k+1) =  dxm%cicen(i,j,k+1) +&
+          dxm%seaice%cicen(i,j,:) =  dxa%seaice%cicen(i,j,:)
+          do k = 1, size(self%traj%seaice%hicen,3)
+             dxm%seaice%cicen(i,j,k+1) =  dxm%seaice%cicen(i,j,k+1) +&
                   & self%kct(i,j) * dxa%tocn(i,j,1)
           end do
 
           ! Ice thickness
-          dxm%hicen(i,j,:) =  dxa%hicen(i,j,:)
+          dxm%seaice%hicen(i,j,:) =  dxa%seaice%hicen(i,j,:)         
        end do
     end do
     ! Surface fields
@@ -199,7 +199,7 @@ contains
           dxa%tocn(i,j,1) = dxm%tocn(i,j,1) + &
                &self%kst%jacobian(i,j,1) * dxm%socn(i,j,1) + &
                &self%ksshts%kssht(i,j,1) * dxm%ssh(i,j) +&
-               &self%kct(i,j) * sum(dxm%cicen(i,j,2:))
+               &self%kct(i,j) * sum(dxm%seaice%cicen(i,j,2:))
           dxa%tocn(i,j,2:) = dxm%tocn(i,j,2:) + &
                &self%kst%jacobian(i,j,2:) * dxm%socn(i,j,2:) + &
                &self%ksshts%kssht(i,j,2:) * dxm%ssh(i,j)
@@ -209,9 +209,9 @@ contains
           ! SSH
           dxa%ssh(i,j)    = dxm%ssh(i,j)
           ! Ice fraction
-          dxa%cicen(i,j,:) =  dxm%cicen(i,j,:)
+          dxa%seaice%cicen(i,j,:) =  dxm%seaice%cicen(i,j,:)
           ! Ice thickness
-          dxa%hicen(i,j,:) =  dxm%hicen(i,j,:)
+          dxa%seaice%hicen(i,j,:) =  dxm%seaice%hicen(i,j,:)
        end do
     end do
     ! Surface fields
@@ -245,13 +245,13 @@ contains
           end do
           dxa%ssh(i,j)    = dxm%ssh(i,j) + deta
           ! Ice fraction
-          dxa%cicen(i,j,:) =  dxm%cicen(i,j,:)
-          do k = 1, size(self%traj%hicen,3)
-             dxa%cicen(i,j,k+1) =  dxa%cicen(i,j,k+1) -&
+          dxa%seaice%cicen(i,j,:) =  dxm%seaice%cicen(i,j,:)
+          do k = 1, size(self%traj%seaice%hicen,3)
+             dxa%seaice%cicen(i,j,k+1) =  dxa%seaice%cicen(i,j,k+1) -&
                   & self%kct(i,j) * dxm%tocn(i,j,1)
           end do
           ! Ice thickness
-          dxa%hicen(i,j,:) =  dxm%hicen(i,j,:)
+          dxa%seaice%hicen(i,j,:) =  dxm%seaice%hicen(i,j,:)
        end do
     end do
     ! Surface fields
@@ -271,15 +271,15 @@ contains
     do i = self%isc, self%iec
        do j = self%jsc, self%jec
           ! Ice thickness
-          dxm%hicen(i,j,:) =  dxa%hicen(i,j,:)
+          dxm%seaice%hicen(i,j,:) =  dxa%seaice%hicen(i,j,:)          
           ! Ice fraction
-          dxm%cicen(i,j,:) =  dxa%cicen(i,j,:)
+          dxm%seaice%cicen(i,j,:) =  dxa%seaice%cicen(i,j,:)          
           ! Temperature
           dxm%tocn(i,j,1) = dxa%tocn(i,j,1) &
                & - self%kst%jacobian(i,j,1) * dxa%socn(i,j,1) &
                & + ( self%ksshts%ksshs(i,j,1) * self%kst%jacobian(i,j,1) &
                &     - self%ksshts%kssht(i,j,1) ) * dxa%ssh(i,j) &
-               & - self%kct(i,j) * sum(dxa%cicen(i,j,2:))
+               & - self%kct(i,j) * sum(dxa%seaice%cicen(i,j,2:))
           dxm%tocn(i,j,2:) = dxa%tocn(i,j,2:) &
                & - self%kst%jacobian(i,j,2:) * dxa%socn(i,j,2:) &
                & + ( self%ksshts%ksshs(i,j,2:) * self%kst%jacobian(i,j,2:) &
