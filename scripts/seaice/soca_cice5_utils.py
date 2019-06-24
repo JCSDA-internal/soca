@@ -14,7 +14,6 @@ import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import scipy.io.netcdf as netcdf
 import scipy
-import soca_cice5_thermo as thermo
 
 def readvar(fname, varname):
     """Function reading netcdf file
@@ -65,7 +64,7 @@ class SeaIceState:
                 self.ocnfname=ocnfname
                 self.Tocn = readvar(ocnfname, 'Temp'); self.Tocn=self.Tocn[0,:,:]
                 self.Socn = readvar(ocnfname, 'Salt'); self.Socn=self.Socn[0,:,:]
-                self.Tm = thermo.Tm(self.Socn)
+                self.Tm = -0.054*self.Socn
         else:
             print('No checkpoint file provided, initializing state to 0')
             self.ni=np.shape(self.x)[1]

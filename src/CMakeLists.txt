@@ -2,8 +2,8 @@ list( APPEND oops_soca_src_files
 #Geometry
 ./Geometry/Geometry.cc
 ./Geometry/Geometry.h
+./Geometry/soca_geom.interface.F90
 ./Geometry/soca_geom_mod.F90
-./Geometry/soca_model_geom_type.F90
 
 #Fields
 ./Fields/Fields.cc
@@ -12,6 +12,7 @@ list( APPEND oops_soca_src_files
 ./Fields/soca_fields.interface.F90
 ./Fields/soca_interpfields_mod.F90
 ./Fields/soca_ocnsfc_mod.F90
+./Fields/soca_seaice_mod.F90
 ./Fields/soca_fieldsutils_mod.F90
 
 #State

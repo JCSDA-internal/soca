@@ -12,6 +12,7 @@ subroutine c_soca_setup(c_confspec, c_key_geom, c_key_model) bind (c,name='soca_
   use iso_c_binding
   use soca_model_mod
   use soca_geom_mod_c
+  use soca_geom_mod, only: soca_geom
   use config_mod
   use duration_mod
   use kinds
@@ -41,8 +42,8 @@ subroutine c_soca_setup(c_confspec, c_key_geom, c_key_model) bind (c,name='soca_
   call soca_model_registry%get(c_key_model, model)
 
   ! Get local grid size
-  model%nx = geom%ocean%nx
-  model%ny = geom%ocean%ny
+  model%nx = geom%nx
+  model%ny = geom%ny
 
   ! Setup time step
   ststep = config_get_string(c_confspec,len(ststep),"tstep")

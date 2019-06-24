@@ -1,5 +1,4 @@
-!
-! (C) Copyright 2017 UCAR
+! (C) Copyright 2017- UCAR
 !
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -15,7 +14,7 @@ module soca_interpfields_mod
   use soca_getvaltraj_mod
   use soca_bumpinterp2d_mod
   use soca_fields
-  use soca_model_geom_type, only : geom_get_domain_indices
+  use soca_geom_mod, only : soca_geom, geom_get_domain_indices
   use kinds
   use fckit_mpi_module, only: fckit_mpi_comm, fckit_mpi_sum
 
@@ -40,13 +39,13 @@ contains
     integer :: isc, iec, jsc, jec
 
     ! Indices for compute domain (no halo)
-    call geom_get_domain_indices(fld%geom%ocean, "compute", isc, iec, jsc, jec)
+    call geom_get_domain_indices(fld%geom, "compute", isc, iec, jsc, jec)
 
     ! Compute interpolation weights
     call horiz_interp%initialize(&
-            &      fld%geom%ocean%lon(isc:iec,jsc:jec),&
-            &      fld%geom%ocean%lat(isc:iec,jsc:jec),&
-            &      fld%geom%ocean%mask2d(isc:iec,jsc:jec),&
+            &      fld%geom%lon(isc:iec,jsc:jec),&
+            &      fld%geom%lat(isc:iec,jsc:jec),&
+            &      fld%geom%mask2d(isc:iec,jsc:jec),&
             &      locs%lon, locs%lat, bumpid)
 
   end subroutine initialize_interph
@@ -83,7 +82,7 @@ contains
        call initialize_interph(fld, locs, traj%horiz_interp(1), traj%bumpid)
        !call traj%horiz_interp(1)%info()
 
-       traj%interph_initialized = .true.       
+       traj%interph_initialized = .true.
        bumpid = bumpid + 1
     end if
 
@@ -111,7 +110,7 @@ contains
 
     call check(fld)
     call initialize_interph(fld, locs, horiz_interp, bumpid)
-    ! Apply interpolation with NL transform    
+    ! Apply interpolation with NL transform
     call interp(fld, locs, vars, geoval, horiz_interp)
     bumpid = bumpid + 1
 
@@ -125,7 +124,7 @@ contains
     type(oops_vars),                 intent(in) :: vars
     type(ufo_geovals),            intent(inout) :: geoval
     type(soca_bumpinterp2d),      intent(inout) :: horiz_interp
-    type(soca_getvaltraj), optional, intent(in) :: traj  !< If present => TL case 
+    type(soca_getvaltraj), optional, intent(in) :: traj  !< If present => TL case
 
     integer :: icat, ilev, ivar, nlocs, nlocs_window
     integer :: ival, nval, indx
@@ -139,7 +138,7 @@ contains
     call check(fld)
 
     ! Indices for compute domain (no halo)
-    call geom_get_domain_indices(fld%geom%ocean, "compute", isc, iec, jsc, jec)
+    call geom_get_domain_indices(fld%geom, "compute", isc, iec, jsc, jec)
 
     ! Loop through ufo vars
     do ivar = 1, vars%nv
@@ -164,10 +163,10 @@ contains
        select case (trim(vars%fldnames(ivar)))
 
        case ("sea_ice_category_area_fraction")
-          fld3d = fld%cicen(isc:iec,jsc:jec,2:nval+1)
+          fld3d = fld%seaice%cicen(isc:iec,jsc:jec,2:nval+1)
 
        case ("sea_ice_category_thickness")
-          fld3d = fld%hicen(isc:iec,jsc:jec,1:nval)
+          fld3d = fld%seaice%hicen(isc:iec,jsc:jec,1:nval)
 
        case ("sea_surface_height_above_geoid")
           fld3d(isc:iec,jsc:jec,1) = fld%ssh(isc:iec,jsc:jec)
@@ -188,14 +187,14 @@ contains
           fld3d(isc:iec,jsc:jec,1) = fld%socn(isc:iec,jsc:jec,1)
 
        case ("sea_area_fraction")
-          fld3d(isc:iec,jsc:jec,1) = real(fld%geom%ocean%mask2d(isc:iec,jsc:jec),kind=kind_real)
+          fld3d(isc:iec,jsc:jec,1) = real(fld%geom%mask2d(isc:iec,jsc:jec),kind=kind_real)
 
        case ("net_downwelling_shortwave_radiation")
           fld3d(isc:iec,jsc:jec,1) = fld%ocnsfc%sw_rad(isc:iec,jsc:jec)
 
        case ("upward_latent_heat_flux_in_air")
           fld3d(isc:iec,jsc:jec,1) = fld%ocnsfc%latent_heat(isc:iec,jsc:jec)
-          
+
        case ("upward_sensible_heat_flux_in_air")
           fld3d(isc:iec,jsc:jec,1) = fld%ocnsfc%sens_heat(isc:iec,jsc:jec)
 
@@ -245,7 +244,7 @@ contains
     horiz_interp_p => traj%horiz_interp(1)
 
     ! Indices for compute domain (no halo)
-    call geom_get_domain_indices(incr%geom%ocean, "compute", isc, iec, jsc, jec)
+    call geom_get_domain_indices(incr%geom, "compute", isc, iec, jsc, jec)
 
     do ivar = 1, vars%nv
        ! Set number of levels/categories (nval)
@@ -261,18 +260,18 @@ contains
           ! Fill proper geoval according to time window
           do indx = 1, locs%nlocs
              gom_window(ival, indx) = geoval%geovals(ivar)%vals(ival, locs%indx(indx))
-          end do   
+          end do
           call horiz_interp_p%applyad(incr3d(:,:,ival), gom_window(ival,1:locs%nlocs))
        end do
 
        ! Copy incr3d into field
        select case (trim(vars%fldnames(ivar)))
        case ("sea_ice_category_area_fraction")
-          incr%cicen(isc:iec,jsc:jec,2:nval+1) = incr%cicen(isc:iec,jsc:jec,2:nval+1) +&
+          incr%seaice%cicen(isc:iec,jsc:jec,2:nval+1) = incr%seaice%cicen(isc:iec,jsc:jec,2:nval+1) +&
                &incr3d
 
        case ("sea_ice_category_thickness")
-          incr%hicen(isc:iec,jsc:jec,1:nval) = incr%hicen(isc:iec,jsc:jec,1:nval) +&
+          incr%seaice%hicen(isc:iec,jsc:jec,1:nval) = incr%seaice%hicen(isc:iec,jsc:jec,1:nval) +&
                &incr3d
 
        case ("sea_surface_height_above_geoid")
@@ -321,7 +320,7 @@ contains
                &incr3d(isc:iec,jsc:jec,1)
 
        case default
-          call abor1_ftn("soca_interpfields_mod:getvalues_ad geoval does not exist")          
+          call abor1_ftn("soca_interpfields_mod:getvalues_ad geoval does not exist")
 
        end select
 
@@ -345,7 +344,7 @@ contains
     select case (trim(vars%fldnames(index_vars)))
     case ("sea_ice_category_area_fraction", &
           "sea_ice_category_thickness")
-       nval = fld%geom%ocean%ncat
+       nval = fld%geom%ncat
 
     case ("sea_surface_height_above_geoid", &
           "sea_surface_temperature", &
@@ -362,7 +361,7 @@ contains
           "sea_water_practical_salinity", &
           "sea_water_salinity", &
           "sea_water_cell_thickness")
-       nval = fld%geom%ocean%nzo
+       nval = fld%geom%nzo
 
     case default
        call abor1_ftn("soca_interpfields_mod: Could not set nval")
