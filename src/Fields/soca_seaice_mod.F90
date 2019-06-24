@@ -1,5 +1,5 @@
 !
-! (C) Copyright 2017-2019 UCAR
+! (C) Copyright 2017- UCAR
 !
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -80,8 +80,8 @@ contains
   subroutine soca_seaice_zeros(self)
     class(soca_seaice_type), intent(inout) :: self
 
-    self%cicen      = 0.0_kind_real
-    self%hicen      = 0.0_kind_real
+    self%cicen = 0.0_kind_real
+    self%hicen = 0.0_kind_real
 
   end subroutine soca_seaice_zeros
 
@@ -89,8 +89,8 @@ contains
   subroutine soca_seaice_ones(self)
     class(soca_seaice_type), intent(inout) :: self
 
-    self%cicen      = 1.0_kind_real
-    self%hicen      = 1.0_kind_real
+    self%cicen = 1.0_kind_real
+    self%hicen = 1.0_kind_real
 
   end subroutine soca_seaice_ones
 
@@ -98,8 +98,8 @@ contains
   subroutine soca_seaice_abs(self)
     class(soca_seaice_type), intent(inout) :: self
 
-    self%cicen      = abs(self%cicen)
-    self%hicen      = abs(self%hicen)
+    self%cicen = abs(self%cicen)
+    self%hicen = abs(self%hicen)
 
   end subroutine soca_seaice_abs
 
@@ -119,8 +119,8 @@ contains
     class(soca_seaice_type), intent(inout) :: self
     class(soca_seaice_type),    intent(in) :: rhs    
 
-    self%cicen      = rhs%cicen
-    self%hicen      = rhs%hicen
+    self%cicen = rhs%cicen
+    self%hicen = rhs%hicen
     
   end subroutine soca_seaice_copy
 
@@ -129,8 +129,8 @@ contains
     class(soca_seaice_type), intent(inout) :: self
     class(soca_seaice_type),    intent(in) :: other    
 
-    self%cicen      = self%cicen      + other%cicen
-    self%hicen      = self%hicen      + other%hicen
+    self%cicen = self%cicen + other%cicen
+    self%hicen = self%hicen + other%hicen
     
   end subroutine soca_seaice_add
 
@@ -139,8 +139,8 @@ contains
     class(soca_seaice_type), intent(inout) :: self
     class(soca_seaice_type),    intent(in) :: other    
 
-    self%cicen      = self%cicen      * other%cicen
-    self%hicen      = self%hicen      * other%hicen
+    self%cicen = self%cicen * other%cicen
+    self%hicen = self%hicen * other%hicen
     
   end subroutine soca_seaice_schur
   
@@ -149,8 +149,8 @@ contains
     class(soca_seaice_type), intent(inout) :: self
     class(soca_seaice_type),    intent(in) :: other    
 
-    self%cicen      = self%cicen      - other%cicen
-    self%hicen      = self%hicen      - other%hicen
+    self%cicen = self%cicen - other%cicen
+    self%hicen = self%hicen - other%hicen
     
   end subroutine soca_seaice_sub
   
@@ -159,8 +159,8 @@ contains
     class(soca_seaice_type), intent(inout) :: self
     real(kind=kind_real),       intent(in) :: zz    
 
-    self%cicen      = zz * self%cicen
-    self%hicen      = zz * self%hicen
+    self%cicen = zz * self%cicen
+    self%hicen = zz * self%hicen
     
   end subroutine soca_seaice_mul
 
@@ -170,8 +170,8 @@ contains
     real(kind=kind_real),       intent(in) :: zz
     class(soca_seaice_type),    intent(in) :: other
 
-    self%cicen      = self%cicen      + zz * other%cicen
-    self%hicen      = self%hicen      + zz * other%hicen
+    self%cicen = self%cicen + zz * other%cicen
+    self%hicen = self%hicen + zz * other%hicen
     
   end subroutine soca_seaice_axpy
 
@@ -181,8 +181,8 @@ contains
     class(soca_seaice_type),    intent(in) :: x1
     class(soca_seaice_type),    intent(in) :: x2    
 
-    self%cicen      = x1%cicen      - x2%cicen
-    self%hicen      = x1%hicen      - x2%hicen
+    self%cicen = x1%cicen - x2%cicen
+    self%hicen = x1%hicen - x2%hicen
     
   end subroutine soca_seaice_diff_incr
 
