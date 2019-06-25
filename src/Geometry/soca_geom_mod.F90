@@ -27,7 +27,7 @@ module soca_geom_mod
   public :: geom_infotofile, geom_get_domain_indices
 
   !> Geometry data structure
-  type, public :: soca_geom
+  type :: soca_geom
      type(ocean_grid_type)            :: G          !< Ocean/sea-ice horizontal grid
      type(VerticalGrid_type), pointer :: GV         !< Ocean vertical grid
      type(soca_ice_column)            :: ice_column !< Sea-ice geometry
