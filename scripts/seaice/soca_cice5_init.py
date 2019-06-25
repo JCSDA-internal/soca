@@ -70,8 +70,14 @@ if __name__ == '__main__':
     
     # Read background & analysis
     #===========================
-    bkg  = soca_cice5_utils.SeaIceState(fname=bkg_fname, gridname=grid_fname, ocnfname=ocn_fname, descriptor='Background')
-    ana  = soca_cice5_utils.SeaIceState(fname=ana_fname, gridname=grid_fname, ocnfname=ocn_fname, descriptor='Analysis')
+    bkg  = soca_cice5_utils.SeaIceState(fname=bkg_fname,
+                                        gridname=grid_fname,
+                                        ocnfname=ocn_fname,
+                                        descriptor='Background')
+    ana  = soca_cice5_utils.SeaIceState(fname=ana_fname,
+                                        gridname=grid_fname,
+                                        ocnfname=ocn_fname,
+                                        descriptor='Analysis')
     bkg.info()
     ana.info()
 
