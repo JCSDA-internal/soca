@@ -530,8 +530,12 @@ contains
     call check(rhs)
 
     ! Add increment to field
-    call self_add(self,rhs)
-    call self%seaice%add(rhs%seaice)    
+    self%tocn = self%tocn + rhs%tocn
+    self%socn = self%socn + rhs%socn
+    self%ssh = self%ssh + rhs%ssh
+    self%hocn = self%hocn + rhs%hocn
+
+    call self%seaice%add_incr(rhs%seaice)    
     call self%ocnsfc%add(rhs%ocnsfc)
 
     ! Save increment for outer loop cnt_outer
@@ -826,7 +830,9 @@ contains
       case("ssh")
         call fldinfo(fld%ssh(is:ie,js:je), tmp)
       case("hicen")
-        call fldinfo(fld%seaice%hicen(is:ie,js:je,:), tmp)
+         call fldinfo(fld%seaice%hicen(is:ie,js:je,:), tmp)
+      case("hsnon")
+        call fldinfo(fld%seaice%hsnon(is:ie,js:je,:), tmp)
       case("cicen")
         call fldinfo(fld%seaice%cicen(is:ie,js:je,:), tmp)
       case("sw")

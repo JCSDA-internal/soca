@@ -20,7 +20,7 @@ model:
   name: SOCA
   tstep: PT1H
   advance_mom6: 0
-  variables: &soca_vars [cicen, hicen, socn, tocn, ssh, hocn, sw, lhf, shf, lw, us]
+  variables: &soca_vars [cicen, hicen, hsnon, socn, tocn, ssh, hocn, sw, lhf, shf, lw, us]
 
 # common obsfilters used by all obs
 _: &Filter_mask
@@ -41,9 +41,10 @@ cost_function:
       - read_from_file: 1
         basename: "./INPUT/"
         ocn_filename: MOM.res.nc
-        ice_filename: ice_model.res.nc
+        ice_filename: cice.res.nc
         sfc_filename: sfc.res.nc
         date: &bkg_date 2018-04-15T00:00:00Z
+        seaice_model: cice
 
     Covariance:
       covariance: SocaError
@@ -239,6 +240,7 @@ output:
   datadir: Data
   exp: 3dvargodas
   type: an
+  seaice_model: cice
 
 final:
   diagnostics:
