@@ -116,7 +116,14 @@ contains
 
     ! Compute Kst
     allocate(self%kct(isc:iec,jsc:jec))
-    self%kct = -0.01d0 ! TODO: Insert regression coef
+    self%kct = 0.0_kind_real
+    do i = isc, iec
+       do j = jsc, jec
+          if (sum(traj%seaice%cicen(i,j,2:)) > 1.0e-3_kind_real) then
+             self%kct = -0.01d0 ! TODO: Insert regression coef
+          end if
+       end do
+    end do
 
   end subroutine soca_balance_setup
 

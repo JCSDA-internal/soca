@@ -1,7 +1,8 @@
 Test     : input background: 
 Test     :   Valid time: 2018-04-15T00:00:00Z
 Test     :   cicen   min=    0.000000   max=    1.000000   mean=    0.252545
-Test     :   hicen   min=    0.000000   max=    2.947887   mean=    0.108958
+Test     :   hicen   min=    0.000000   max=    2.947887   mean=    0.102701
+Test     :   hsnon   min=    0.000000   max=    0.610656   mean=    0.024607
 Test     :    socn   min=    0.000000   max=   39.037978   mean=   34.507904
 Test     :    tocn   min=   -1.883330   max=   31.008851   mean=    6.153932
 Test     :     ssh   min=   -2.103854   max=    0.912143   mean=   -0.297046
@@ -13,8 +14,9 @@ Test     :      lw   min=    0.000000   max=    0.000000   mean=    0.000000
 Test     :      us   min=    0.000000   max=    0.000000   mean=    0.000000
 Test     : analysis: 
 Test     :   Valid time: 2018-04-15T00:00:00Z
-Test     :   cicen   min=   -0.002330   max=    1.000046   mean=    0.252498
-Test     :   hicen   min=    0.000000   max=    0.003257   mean=    0.000120
+Test     :   cicen   min=    0.000000   max=    1.000000   mean=    0.252545
+Test     :   hicen   min=    0.000000   max=    2.947887   mean=    0.102701
+Test     :   hsnon   min=    0.000000   max=    0.610656   mean=    0.024607
 Test     :    socn   min=    0.000000   max=   39.037923   mean=   34.507920
 Test     :    tocn   min=   -1.883330   max=   30.984600   mean=    6.155449
 Test     :     ssh   min=   -2.103644   max=    0.912206   mean=   -0.297001
@@ -26,8 +28,9 @@ Test     :      lw   min=    0.000000   max=    0.000000   mean=    0.000000
 Test     :      us   min=    0.000000   max=    0.000000   mean=    0.000000
 Test     : output background: 
 Test     :   Valid time: 2018-04-15T00:00:00Z
-Test     :   cicen   min=   -0.002330   max=    1.000046   mean=    0.252498
-Test     :   hicen   min=    0.000000   max=    0.003257   mean=    0.000120
+Test     :   cicen   min=    0.000000   max=    1.000000   mean=    0.252545
+Test     :   hicen   min=    0.000000   max=    2.947887   mean=    0.102701
+Test     :   hsnon   min=    0.000000   max=    0.610656   mean=    0.024607
 Test     :    socn   min=    0.100000   max=   38.000000   mean=   34.555737
 Test     :    tocn   min=   -1.800000   max=   30.984600   mean=    6.155785
 Test     :     ssh   min=   -2.103644   max=    0.912206   mean=   -0.297001

@@ -25,8 +25,16 @@ module soca_seaice_mod
   private
 
   type, public :: soca_seaice_type
-     real(kind=kind_real), allocatable :: cicen(:,:,:)
-     real(kind=kind_real), allocatable :: hicen(:,:,:)
+     real(kind=kind_real), allocatable :: cicen(:,:,:) !< Ice Fraction
+     real(kind=kind_real), allocatable :: hicen(:,:,:) !< Ice thickness
+     real(kind=kind_real), allocatable :: hsnon(:,:,:) !< Snow thickness
+     real(kind=kind_real), allocatable :: vicen(:,:,:) !< Ice volume
+     real(kind=kind_real), allocatable :: vsnon(:,:,:) !< Snow volume
+     integer :: isd, ied, jsd, jed                 !< Data domain indices
+     integer :: ncat                               !< Number of categories
+     ! TODO: Get densities of ice and snow from config
+     real(kind=kind_real) :: soca_rho_ice  = 905.0 !< [kg/m3]
+     real(kind=kind_real) :: soca_rho_snow = 330.0 !< [kg/m3]
    contains
      procedure :: create => soca_seaice_create
      procedure :: delete => soca_seaice_delete
@@ -36,6 +44,7 @@ module soca_seaice_mod
      procedure :: random => soca_seaice_random
      procedure :: copy => soca_seaice_copy
      procedure :: add => soca_seaice_add
+     procedure :: add_incr => soca_seaice_add_incr
      procedure :: schur => soca_seaice_schur
      procedure :: sub => soca_seaice_sub
      procedure :: mul => soca_seaice_mul
@@ -46,8 +55,6 @@ module soca_seaice_mod
      procedure :: write_restart => soca_seaice_write_rst     
   end type soca_seaice_type
 
-  real(kind=kind_real), parameter :: soca_rho_ice = 905.0 ! [kg/m3]
-  
 contains
 
   ! ------------------------------------------------------------------------------  
@@ -58,11 +65,19 @@ contains
     integer :: isd, ied, jsd, jed
 
     ! Indices for data domain (with halo)
-    call geom_get_domain_indices(geom, "data   ", isd, ied, jsd, jed)    
+    call geom_get_domain_indices(geom, "data   ", isd, ied, jsd, jed)
+    self%isd = isd
+    self%ied = ied
+    self%jsd = jsd
+    self%jed = jed
 
+    ! Get number of categories
+    self%ncat = geom%ncat
+    
     ! Allocate sea-ice state
     if (.not.allocated(self%cicen)) allocate(self%cicen(isd:ied,jsd:jed,geom%ice_column%ncat+1))
     if (.not.allocated(self%hicen)) allocate(self%hicen(isd:ied,jsd:jed,geom%ice_column%ncat))
+    if (.not.allocated(self%hsnon)) allocate(self%hsnon(isd:ied,jsd:jed,geom%ice_column%ncat))
     
   end subroutine soca_seaice_create
 
@@ -70,10 +85,15 @@ contains
   subroutine soca_seaice_delete(self)
     class(soca_seaice_type), intent(inout) :: self
 
-    ! Deallocate all ocean surface state
+    ! Deallocate default sea-ice field
     deallocate(self%cicen)
     deallocate(self%hicen)
+    deallocate(self%hsnon)
 
+    ! Deallocate volumes
+    if (allocated(self%vicen)) deallocate(self%vicen)
+    if (allocated(self%vsnon)) deallocate(self%vsnon)
+    
   end subroutine soca_seaice_delete
 
   ! ------------------------------------------------------------------------------  
@@ -82,6 +102,7 @@ contains
 
     self%cicen = 0.0_kind_real
     self%hicen = 0.0_kind_real
+    self%hsnon = 0.0_kind_real
 
   end subroutine soca_seaice_zeros
 
@@ -91,7 +112,8 @@ contains
 
     self%cicen = 1.0_kind_real
     self%hicen = 1.0_kind_real
-
+    self%hsnon = 1.0_kind_real
+    
   end subroutine soca_seaice_ones
 
   ! ------------------------------------------------------------------------------  
@@ -100,6 +122,7 @@ contains
 
     self%cicen = abs(self%cicen)
     self%hicen = abs(self%hicen)
+    self%hsnon = abs(self%hsnon)    
 
   end subroutine soca_seaice_abs
 
@@ -111,6 +134,7 @@ contains
     
     call normal_distribution(self%cicen, 0.0_kind_real, 1.0_kind_real, rseed)
     call normal_distribution(self%hicen, 0.0_kind_real, 1.0_kind_real, rseed)
+    call normal_distribution(self%hsnon, 0.0_kind_real, 1.0_kind_real, rseed)    
     
   end subroutine soca_seaice_random
 
@@ -121,6 +145,7 @@ contains
 
     self%cicen = rhs%cicen
     self%hicen = rhs%hicen
+    self%hsnon = rhs%hsnon
     
   end subroutine soca_seaice_copy
 
@@ -131,8 +156,93 @@ contains
 
     self%cicen = self%cicen + other%cicen
     self%hicen = self%hicen + other%hicen
+    self%hsnon = self%hsnon + other%hsnon
     
   end subroutine soca_seaice_add
+
+  ! ------------------------------------------------------------------------------  
+  subroutine soca_seaice_add_incr(self, incr)
+    class(soca_seaice_type), intent(inout) :: self  !< State
+    class(soca_seaice_type),    intent(in) :: incr  !< Increment   
+
+    real(kind=kind_real), allocatable :: aice_bkg(:,:), aice_ana(:,:)
+    real(kind=kind_real), allocatable :: aice_incr(:,:), alpha(:,:)
+    real(kind=kind_real) :: amin = 1e-6_kind_real
+    real(kind=kind_real) :: amax = 10.0_kind_real
+    real(kind=kind_real) :: min_ice = 1e-6_kind_real
+    integer :: k
+    integer :: isd, ied, jsd, jed, ncat
+
+    ! Short cut to domain indices
+    isd = self%isd
+    ied = self%ied
+    jsd = self%jsd
+    jed = self%jed
+    ncat = self%ncat
+
+    ! Allocate memory for temporary arrays
+    allocate(aice_bkg(isd:ied,jsd:jed))
+    allocate(aice_ana(isd:ied,jsd:jed))
+    allocate(aice_incr(isd:ied,jsd:jed))
+    allocate(alpha(isd:ied,jsd:jed))
+
+    ! Allocate ice and snow volume
+    if (.not.(allocated(self%vicen))) then
+       allocate(self%vicen(isd:ied,jsd:jed,1:ncat))
+       allocate(self%vsnon(isd:ied,jsd:jed,1:ncat))
+    end if
+
+    ! Compute ice and snow volume
+    self%vicen = self%hicen * self%cicen(:,:,2:)
+    self%vsnon = self%hsnon * self%cicen(:,:,2:)    
+    
+    ! Initialize aggregate fields
+    aice_bkg  = sum(self%cicen(:,:,2:), dim=3)
+    aice_incr = sum(incr%cicen(:,:,2:), dim=3)    
+    aice_ana  = aice_bkg + aice_incr
+
+    ! Fix out of bound values in aggregate ice fraction analysis
+    where (aice_ana < 0.0_kind_real)
+       aice_ana = 0.0_kind_real
+    end where
+    where (aice_ana > 1.0_kind_real)
+       aice_ana = 1.0_kind_real
+    end where    
+
+    ! Compute background rescaling
+    alpha = 1.0_kind_real
+    where (aice_bkg > min_ice)
+       alpha = aice_ana / aice_bkg
+    end where
+
+    ! Limit size of increment
+    where ( alpha > amax )
+       alpha = amax
+    end where
+    where ( alpha < amin )
+       alpha = amin
+    end where    
+    
+    ! Add increment for ice and snow thickness
+    ! TODO: check bounds ...
+    self%hicen = self%hicen + incr%hicen
+    self%hsnon = self%hsnon + incr%hsnon
+
+    ! Update ice and snow volume
+    self%vicen = self%hicen * self%cicen(:,:,2:)
+    self%vsnon = self%hsnon * self%cicen(:,:,2:)    
+
+    ! "Add" fraction increment and update volumes accordingly
+    do k = 1, self%ncat
+       self%cicen(:,:,k+1) = alpha * self%cicen(:,:,k+1)
+       self%vicen(:,:,k) = alpha * self%vicen(:,:,k)
+       self%vsnon(:,:,k) = alpha * self%vsnon(:,:,k)
+    end do
+
+    ! Clean-up memory
+    deallocate(aice_bkg, aice_ana, aice_incr, alpha)
+
+  end subroutine soca_seaice_add_incr
 
   ! ------------------------------------------------------------------------------  
   subroutine soca_seaice_schur(self, other)
@@ -141,6 +251,7 @@ contains
 
     self%cicen = self%cicen * other%cicen
     self%hicen = self%hicen * other%hicen
+    self%hsnon = self%hsnon * other%hsnon
     
   end subroutine soca_seaice_schur
   
@@ -151,6 +262,7 @@ contains
 
     self%cicen = self%cicen - other%cicen
     self%hicen = self%hicen - other%hicen
+    self%hsnon = self%hsnon - other%hsnon
     
   end subroutine soca_seaice_sub
   
@@ -161,6 +273,7 @@ contains
 
     self%cicen = zz * self%cicen
     self%hicen = zz * self%hicen
+    self%hsnon = zz * self%hsnon
     
   end subroutine soca_seaice_mul
 
@@ -172,6 +285,7 @@ contains
 
     self%cicen = self%cicen + zz * other%cicen
     self%hicen = self%hicen + zz * other%hicen
+    self%hsnon = self%hsnon + zz * other%hsnon    
     
   end subroutine soca_seaice_axpy
 
@@ -183,6 +297,7 @@ contains
 
     self%cicen = x1%cicen - x2%cicen
     self%hicen = x1%hicen - x2%hicen
+    self%hsnon = x1%hsnon - x2%hsnon    
     
   end subroutine soca_seaice_diff_incr
 
@@ -228,13 +343,18 @@ contains
              idr = register_restart_field(restart, filename, 'h_ice', &
                   self%hicen(:,:,:), &
                   domain=geom%G%Domain%mpp_domain)
+          case('hsnon')
+             idr = register_restart_field(restart, filename, 'h_snow', &
+                  self%hsnon(:,:,:), &
+                  domain=geom%G%Domain%mpp_domain)             
           end select
        end do
        call restore_state(restart, directory='')
        call free_restart_type(restart)    
        call fms_io_exit()
-       ! Convert hicen from [kg/m2] to [m]
-       self%hicen(:,:,:) = self%hicen(:,:,:)/soca_rho_ice
+       ! Convert hicen & hsnon from [kg/m2] to [m]
+       self%hicen(:,:,:) = self%hicen(:,:,:)/self%soca_rho_ice
+       self%hsnon(:,:,:) = self%hsnon(:,:,:)/self%soca_rho_snow       
 
     case('cice')
        call fms_io_init()
@@ -248,18 +368,26 @@ contains
              idr = register_restart_field(restart, filename, 'vicen', &
                   self%hicen(:,:,:), &
                   domain=geom%G%Domain%mpp_domain)
+          case('hsnon')
+             idr = register_restart_field(restart, filename, 'vsnon', &
+                  self%hsnon(:,:,:), &
+                  domain=geom%G%Domain%mpp_domain)
           end select
-          ! Add ocean fraction
-          self%cicen(:,:,1) = 1.0_kind_real - sum(self%cicen(:,:,2:), dim=3)
-          ! Convert to hicen
-          where(self%cicen(:,:,2:)>0.0_kind_real)
-             self%hicen(:,:,:) = self%hicen(:,:,:)/self%cicen(:,:,2:)
-          end where
+
        end do
        call restore_state(restart, directory='')
        call free_restart_type(restart)    
        call fms_io_exit()
-       
+
+       ! Add ocean fraction
+       self%cicen(:,:,1) = 1.0_kind_real - sum(self%cicen(:,:,2:), dim=3)
+
+       ! Convert to hicen and hsnon
+       where(self%cicen(:,:,2:)>0.0_kind_real)
+          self%hicen(:,:,:) = self%hicen(:,:,:)/self%cicen(:,:,2:)
+          self%hsnon(:,:,:) = self%hsnon(:,:,:)/self%cicen(:,:,2:)
+       end where
+
     case default
        call abor1_ftn("soca_seaice_mod: Reading for seaice model "//trim(seaice_model)//" not implemented")
     end select
@@ -294,6 +422,10 @@ contains
           call read_data(filename,"hicen", &
                          self%hicen(:,:,:), &
                          domain=geom%G%Domain%mpp_domain)
+       case('hsnon')
+          call read_data(filename,"hsnon", &
+                         self%hsnon(:,:,:), &
+                         domain=geom%G%Domain%mpp_domain)
        end select
     end do
     call fms_io_exit()
@@ -312,8 +444,8 @@ contains
     character(len=max_string_length) :: filename
     character(len=4) :: seaice_model
     type(restart_file_type) :: restart
-    real(kind=kind_real), allocatable :: vicen(:,:,:)
-    real(kind=kind_real), allocatable :: aice(:,:), hice(:,:) ! Aggregates
+    real(kind=kind_real), allocatable :: vicen(:,:,:), vsnon(:,:,:)
+    real(kind=kind_real), allocatable :: aice(:,:), hice(:,:), hsno(:,:) ! Aggregates
     integer :: isd, ied, jsd, jed
 
     ! Check what model we are reading a file from ('sis2' or 'cice')
@@ -329,9 +461,11 @@ contains
     call geom_get_domain_indices(geom, "data   ", isd, ied, jsd, jed)    
     allocate(aice(isd:ied,jsd:jed))
     allocate(hice(isd:ied,jsd:jed))
+    allocate(hsno(isd:ied,jsd:jed))    
     aice(:,:) = sum(self%cicen(:,:,2:), dim=3)
     hice(:,:) = sum(self%hicen(:,:,:), dim=3)
-    
+    hsno(:,:) = sum(self%hsnon(:,:,:), dim=3)
+
     select case(seaice_model)
     case('sis2')    
        ! Generate file names
@@ -340,14 +474,24 @@ contains
        ! Register sis2 variables
        idr = register_restart_field(restart, filename, 'part_size', self%cicen, &
             domain=geom%G%Domain%mpp_domain)
+       ! TODO (Guillaume): Rescale with density
        idr = register_restart_field(restart, filename, 'h_ice', self%hicen, &
+            domain=geom%G%Domain%mpp_domain) 
+       idr = register_restart_field(restart, filename, 'h_snow', self%hsnon, &
             domain=geom%G%Domain%mpp_domain)
 
     case('cice')
        ! Get ice volume
        call geom_get_domain_indices(geom, "data   ", isd, ied, jsd, jed)    
        allocate(vicen(isd:ied,jsd:jed,geom%ice_column%ncat))
-       vicen(:,:,:) = self%cicen(:,:,2:)*self%hicen(:,:,:)
+       allocate(vsnon(isd:ied,jsd:jed,geom%ice_column%ncat))
+       if (.not.allocated(self%vicen))then 
+          vicen(:,:,:) = self%cicen(:,:,2:)*self%hicen(:,:,:)
+          vsnon(:,:,:) = self%cicen(:,:,2:)*self%hsnon(:,:,:)
+       else
+          vicen(:,:,:) = self%vicen(:,:,:)
+          vsnon(:,:,:) = self%vsnon(:,:,:)
+       end if
        
        ! Generate file names
        filename = soca_genfilename(c_conf,max_string_length,vdate,"cice")
@@ -355,11 +499,10 @@ contains
        ! Register cice variables
        idr = register_restart_field(restart, filename, 'aicen', self%cicen(:,:,2:), &
             domain=geom%G%Domain%mpp_domain)
-
        idr = register_restart_field(restart, filename, 'vicen', vicen, &
             domain=geom%G%Domain%mpp_domain)
-
-       deallocate(vicen)
+       idr = register_restart_field(restart, filename, 'vsnon', vsnon, &
+            domain=geom%G%Domain%mpp_domain)
     end select
 
     ! Register aggregate variables
@@ -367,12 +510,18 @@ contains
          domain=geom%G%Domain%mpp_domain)
     idr = register_restart_field(restart, filename, 'hice', hice, &
          domain=geom%G%Domain%mpp_domain)
+    idr = register_restart_field(restart, filename, 'hsno', hsno, &
+         domain=geom%G%Domain%mpp_domain)
 
     ! Write restart to disk
     call save_restart(restart, directory='')
     call free_restart_type(restart)    
     call fms_io_exit()
 
+    ! Clean-up
+    if (allocated(vicen)) deallocate(vicen)
+    if (allocated(vsnon)) deallocate(vsnon)
+    deallocate(aice, hice, hsno)
     
   end subroutine soca_seaice_write_rst
   
