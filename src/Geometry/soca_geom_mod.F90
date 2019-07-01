@@ -5,6 +5,7 @@
 !
 
 module soca_geom_mod
+  use config_mod  
   use MOM_grid,                  only : ocean_grid_type
   use MOM_verticalGrid,          only : verticalGrid_type
   use soca_mom6
@@ -44,6 +45,7 @@ module soca_geom_mod
      integer,              allocatable :: ij(:,:)        ! index of ocean+shore line in compute grid
      real(kind=kind_real), allocatable :: cell_area(:,:)
      real(kind=kind_real), allocatable :: rossby_radius(:,:)
+     logical :: save_local_domain ! If true, save the local geometry for each pe.
    contains
      procedure :: init => geom_init
      procedure :: end => geom_end
@@ -68,7 +70,21 @@ contains
     class(soca_geom), intent(out) :: self
     type(c_ptr),      intent( in) :: c_conf
 
+    integer :: isave
+
     call soca_geom_init(self%G, self%GV, self%ice_column, c_conf)
+
+    ! Set output option for local geometry
+    self%save_local_domain = .false.
+    if (config_element_exists(c_conf,"save_local_domain")) then
+       isave = config_get_int(c_conf,"read_from_file")
+       if (isave.eq.1 ) then
+          self%save_local_domain = .true.
+       else
+          self%save_local_domain = .false.
+       end if
+    endif
+    
     call geom_allocate(self)
 
   end subroutine geom_init
@@ -272,8 +288,8 @@ contains
   ! ------------------------------------------------------------------------------
   !> Write geometry info to file
   subroutine geom_infotofile(self)
-    class(soca_geom), intent(in) :: self
-
+    class(soca_geom),  intent(in) :: self
+    
     character(len=256) :: geom_output_file = "geom_output.nc"
     character(len=256) :: geom_output_pe,varname
     integer :: pe
@@ -294,22 +310,24 @@ contains
     call write_data( geom_output_file, "mask2d", self%mask2d, self%G%Domain%mpp_domain)
     call fms_io_exit()
 
-    ! Save local compute grid
-    pe = f_comm%rank()
+    if (self%save_local_domain) then
+       ! Save local compute grid
+       pe = f_comm%rank()
 
-    write (strpe,fmt) pe
-    geom_output_pe='geom_output_'//trim(strpe)//'.nc'
+       write (strpe,fmt) pe
+       geom_output_pe='geom_output_'//trim(strpe)//'.nc'
 
-    call geom_get_domain_indices(self, "compute", is, ie, js, je)
-    ns = (ie - is + 1) * (je - js + 1 )
-    varname='shoremask'
-    call write2pe(reshape(self%shoremask,(/ns/)),varname,geom_output_pe,.false.)
-    varname='mask'
-    call write2pe(reshape(self%mask2d,(/ns/)),varname,geom_output_pe,.true.)
-    varname='lon'
-    call write2pe(reshape(self%lon,(/ns/)),varname,geom_output_pe,.true.)
-    varname='lat'
-    call write2pe(reshape(self%lat,(/ns/)),varname,geom_output_pe,.true.)
+       call geom_get_domain_indices(self, "compute", is, ie, js, je)
+       ns = (ie - is + 1) * (je - js + 1 )
+       varname='shoremask'
+       call write2pe(reshape(self%shoremask,(/ns/)),varname,geom_output_pe,.false.)
+       varname='mask'
+       call write2pe(reshape(self%mask2d,(/ns/)),varname,geom_output_pe,.true.)
+       varname='lon'
+       call write2pe(reshape(self%lon,(/ns/)),varname,geom_output_pe,.true.)
+       varname='lat'
+       call write2pe(reshape(self%lat,(/ns/)),varname,geom_output_pe,.true.)
+    end if
 
   end subroutine geom_infotofile
 
