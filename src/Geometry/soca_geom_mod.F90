@@ -287,7 +287,7 @@ contains
     class(soca_geom), intent(in) :: self
 
     character(len=256) :: geom_output_file = "geom_output.nc"
-    character(len=256) :: geom_output_pe,varname
+    character(len=256) :: geom_output_pe
     integer :: pe
     character(len=8) :: fmt = '(I5.5)'
     character(len=1024) :: strpe
