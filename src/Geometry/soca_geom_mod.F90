@@ -284,7 +284,7 @@ contains
   ! ------------------------------------------------------------------------------
   !> Write geometry info to file
   subroutine geom_infotofile(self)
-    class(soca_geom),  intent(in) :: self
+    class(soca_geom), intent(in) :: self
 
     character(len=256) :: geom_output_file = "geom_output.nc"
     character(len=256) :: geom_output_pe,varname
