@@ -78,13 +78,9 @@ contains
     self%save_local_domain = .false.
     if (config_element_exists(c_conf,"save_local_domain")) then
        isave = config_get_int(c_conf,"read_from_file")
-       if (isave.eq.1 ) then
-          self%save_local_domain = .true.
-       else
-          self%save_local_domain = .false.
-       end if
+       if (isave.eq.1 ) self%save_local_domain = .true.
     endif
-    
+
     call geom_allocate(self)
 
   end subroutine geom_init
@@ -289,7 +285,7 @@ contains
   !> Write geometry info to file
   subroutine geom_infotofile(self)
     class(soca_geom),  intent(in) :: self
-    
+
     character(len=256) :: geom_output_file = "geom_output.nc"
     character(len=256) :: geom_output_pe,varname
     integer :: pe
