@@ -120,7 +120,7 @@ contains
     implicit none
 
     real(kind=kind_real), intent(in) :: vec(:)
-    character(len=256),   intent(in) :: varname
+    character(len=*),     intent(in) :: varname
     character(len=256),   intent(in) :: filename
     logical,              intent(in) :: append
 
