@@ -54,7 +54,7 @@ module soca_fields
   ! ------------------------------------------------------------------------------
   !> Fortran derived type to hold fields
   type :: soca_field
-     type(soca_geom), pointer          :: geom           !< MOM6 & SIS2 Geometry
+     type(soca_geom), pointer          :: geom           !< MOM6 Geometry
      integer                           :: nf             !< Number of fields
      character(len=128)                :: gridfname      !< Grid file name
      character(len=128)                :: cicefname      !< Fields file name for cice
@@ -141,11 +141,10 @@ contains
     integer :: ncat, km
     character(7) :: domain_type
 
-    ! Short cut to ice geometry
+    ! Short cut to geometry
+    isd = geom%isd ; ied = geom%ied
+    jsd = geom%jsd ; jed = geom%jed
     nzo = geom%nzo
-
-    ! Indices for data domain (with halo)
-    call geom_get_domain_indices(geom, "data   ", isd, ied, jsd, jed)
 
     ! Allocate ocean state
     allocate(self%tocn(isd:ied,jsd:jed,nzo))
@@ -202,7 +201,7 @@ contains
     self%hocn = 0.0_kind_real
     self%mld = 0.0_kind_real
 
-    call self%seaice%zeros()    
+    call self%seaice%zeros()
     call self%ocnsfc%zeros()
 
   end subroutine zeros
@@ -222,7 +221,7 @@ contains
 
     call self%seaice%ones()
     call self%ocnsfc%ones()
-    
+
   end subroutine ones
 
   ! ------------------------------------------------------------------------------
@@ -262,7 +261,8 @@ contains
     call config_get_int_vector(c_conf,'ifdir',ifdir)
 
     ! get PE domain bounds
-    call geom_get_domain_indices(self%geom, "compute", isc, iec, jsc, jec)
+    isc = self%geom%isc ; iec = self%geom%iec
+    jsc = self%geom%jsc ; jec = self%geom%jec
 
     ! Setup Diracs
     call zeros(self)
@@ -292,7 +292,7 @@ contains
     call normal_distribution(self%socn,  0.0_kind_real, 1.0_kind_real, rseed)
     call normal_distribution(self%ssh,   0.0_kind_real, 1.0_kind_real, rseed)
     call self%ocnsfc%random()
-    call self%seaice%random()    
+    call self%seaice%random()
 
   end subroutine random
 
@@ -325,7 +325,7 @@ contains
 
     ! Sea-ice
     call self%seaice%copy(rhs%seaice)
-    
+
     ! Ocean surface
     call self%ocnsfc%copy(rhs%ocnsfc)
 
@@ -397,7 +397,7 @@ contains
     call self%seaice%sub(rhs%seaice)
     call self%ocnsfc%sub(rhs%ocnsfc)
 
-    
+
   end subroutine self_sub
 
   ! ------------------------------------------------------------------------------
@@ -436,7 +436,7 @@ contains
     self%ssh = self%ssh + zz * rhs%ssh
     self%hocn = self%hocn + zz * rhs%hocn
 
-    call self%seaice%axpy(zz, rhs%seaice)    
+    call self%seaice%axpy(zz, rhs%seaice)
     call self%ocnsfc%axpy(zz, rhs%ocnsfc)
 
   end subroutine axpy
@@ -450,7 +450,8 @@ contains
 
     real(kind=kind_real) :: zprod_allpes
     integer :: ii, jj, kk
-    integer :: is, ie, js, je, ncat, nzo, myrank
+    integer :: isc, iec, jsc, jec
+    integer :: ncat, nzo, myrank
     type(fckit_mpi_comm) :: f_comm
 
     ! Setup Communicator
@@ -462,7 +463,8 @@ contains
     endif
 
     ! Indices for compute domain (no halo)
-    call geom_get_domain_indices(fld1%geom, "compute", is, ie, js, je)
+    isc = fld1%geom%isc ; iec = fld1%geom%iec
+    jsc = fld1%geom%jsc ; jec = fld1%geom%jec
 
     ! Get ice categories and ocean levels
     ncat = fld1%geom%ncat
@@ -470,8 +472,8 @@ contains
 
     zprod = 0.0_kind_real
     !----- OCEAN
-    do ii = is, ie
-       do jj = js, je
+    do ii = isc, iec
+       do jj = jsc, jec
           if (fld1%geom%mask2d(ii,jj)==1) then
              zprod = zprod + fld1%ssh(ii,jj)*fld2%ssh(ii,jj)               ! SSH
              do kk = 1, nzo
@@ -485,8 +487,8 @@ contains
     myrank = f_comm%rank()
 
     !----- SEA-ICE. TODO: Move to seaice module
-    do ii = is, ie
-       do jj = js, je
+    do ii = isc, iec
+       do jj = jsc, jec
           do kk = 1, ncat
              if (fld1%geom%mask2d(ii,jj)==1) then
                 zprod = zprod + fld1%seaice%cicen(ii,jj,kk+1)*fld2%seaice%cicen(ii,jj,kk+1) & !CICEN
@@ -497,8 +499,8 @@ contains
     end do
 
 !!$    !----- OCEAN Surface. TODO: Move to ocnsfc module
-    do ii = is, ie
-       do jj = js, je
+    do ii = isc, iec
+       do jj = jsc, jec
           if (fld1%geom%mask2d(ii,jj)==1) then
              zprod = zprod + fld1%ocnsfc%sw_rad(ii,jj)*fld2%ocnsfc%sw_rad(ii,jj) &
                            + fld1%ocnsfc%lw_rad(ii,jj)*fld2%ocnsfc%lw_rad(ii,jj) &
@@ -523,7 +525,6 @@ contains
 
     integer, save :: cnt_outer = 1
     real(kind=kind_real), allocatable :: incr(:,:,:)
-    integer :: is, ie, js, je, i, j, nz
     character(len=800) :: filename, str_cnt
 
     call check(self)
@@ -535,7 +536,7 @@ contains
     self%ssh = self%ssh + rhs%ssh
     self%hocn = self%hocn + rhs%hocn
 
-    call self%seaice%add_incr(rhs%seaice)    
+    call self%seaice%add_incr(rhs%seaice)
     call self%ocnsfc%add(rhs%ocnsfc)
 
     ! Save increment for outer loop cnt_outer
@@ -582,7 +583,7 @@ contains
     call check(rhs)
     call copy(fld,rhs)
     call fld%ocnsfc%copy(rhs%ocnsfc)
-    call fld%seaice%copy(rhs%seaice)    
+    call fld%seaice%copy(rhs%seaice)
 
     return
   end subroutine change_resol
@@ -607,7 +608,9 @@ contains
     type(restart_file_type) :: ocean_remap_restart
     integer :: idr, idr_ocean
     integer            :: nobs, nval, pe, ierror
-    integer :: is, ie, js, je, i, j, k, nl, nz
+    integer :: isd, ied, jsd, jed
+    integer :: isc, iec, jsc, jec
+    integer :: i, j, k, nl, nz
     type(remapping_CS)  :: remapCS
 
     ! Set default iread to 0
@@ -623,12 +626,14 @@ contains
        remap_filename = trim(remap_filename)
 
        ! Get Indices for data domain and allocate common layer depth array
-       call geom_get_domain_indices(fld%geom, "data   ", is, ie, js, je)
+       isd = fld%geom%isd ; ied = fld%geom%ied
+       jsd = fld%geom%jsd ; jed = fld%geom%jed
+
        nz=size(fld%hocn, dim=3)
-       allocate(h_common(is:ie,js:je,nz))
+       allocate(h_common(isd:ied,jsd:jed,nz))
 
        ! Read common vertical coordinate from file
-       call fms_io_init()       
+       call fms_io_init()
        idr_ocean = register_restart_field(ocean_remap_restart, remap_filename, 'h', fld%hocn(:,:,:), &
             domain=fld%geom%G%Domain%mpp_domain)
        call restore_state(ocean_remap_restart, directory='')
@@ -650,7 +655,7 @@ contains
        call fld%ocnsfc%read_restart(c_conf, fld%geom, fld%fldnames)
 
        ! Read sea-ice
-       call fld%seaice%read_restart(c_conf, fld%geom, fld%fldnames)       
+       call fld%seaice%read_restart(c_conf, fld%geom, fld%fldnames)
 
        basename = config_get_string(c_conf,len(basename),"basename")
        ocn_filename = config_get_string(c_conf,len(ocn_filename),"ocn_filename")
@@ -680,14 +685,15 @@ contains
        call fms_io_exit()
 
        ! Indices for compute domain
-       call geom_get_domain_indices(fld%geom, "compute", is, ie, js, je)
+       isc = fld%geom%isc ; iec = fld%geom%iec
+       jsc = fld%geom%jsc ; jec = fld%geom%jec
 
        ! Initialize mid-layer depth from layer thickness
        call fld%geom%thickness2depth(fld%hocn, fld%layer_depth)
 
        ! Compute mixed layer depth TODO: Move somewhere else ...
-       do i = is, ie
-          do j = js, je
+       do i = isc, iec
+          do j = jsc, jec
              fld%mld(i,j) = soca_mld(fld%socn(i,j,:),&
                   &fld%tocn(i,j,:),&
                   &fld%layer_depth(i,j,:),&
@@ -699,8 +705,8 @@ contains
        ! Remap layers if needed
        if (vert_remap) then
           call initialize_remapping(remapCS,'PCM')
-          do i = is, ie
-             do j = js, je
+          do i = isc, iec
+             do j = jsc, jec
                 if (fld%geom%mask2d(i,j).eq.1) then
                    call remapping_core_h(remapCS, nz, h_common(i,j,:), fld%tocn(i,j,:),&
                         &nz, fld%hocn(i,j,:), fld%tocn(i,j,:))
@@ -737,7 +743,7 @@ contains
        call fld%ocnsfc%read_diag(c_conf, fld%geom, fld%fldnames)
 
        ! Read sea-ice fields
-       call fld%ocnsfc%read_diag(c_conf, fld%geom, fld%fldnames)       
+       call fld%ocnsfc%read_diag(c_conf, fld%geom, fld%fldnames)
 
        incr_filename = config_get_string(c_conf,len(incr_filename),"filename")
        call fms_io_init()
@@ -797,7 +803,8 @@ contains
     real(kind=kind_real), intent(inout) :: pstat(3, nf) !> [min, max, average]
 
     real(kind=kind_real) :: ocn_count, tmp(3)
-    integer :: jj,  myrank, is, ie, js, je
+    integer :: jj,  myrank
+    integer :: isc, iec, jsc, jec
     type(fckit_mpi_comm) :: f_comm
 
     ! Setup Communicator
@@ -805,11 +812,12 @@ contains
 
     call check(fld)
 
-    ! get domain bounds
-    call geom_get_domain_indices(fld%geom, "compute", is, ie, js, je )
+    ! Indices for compute domain
+    isc = fld%geom%isc ; iec = fld%geom%iec
+    jsc = fld%geom%jsc ; jec = fld%geom%jec
 
     ! get the total number of ocean grid cells
-    tmp(1) = sum(fld%geom%mask2d(is:ie, js:je))
+    tmp(1) = sum(fld%geom%mask2d(isc:iec, jsc:jec))
     call f_comm%allreduce(tmp(1), ocn_count, fckit_mpi_sum())
 
     ! calculate global min, max, mean for each field
@@ -822,29 +830,29 @@ contains
       ! get local min/max/sum of each variable
       select case(fld%fldnames(jj))
       case("tocn")
-        call fldinfo(fld%tocn(is:ie,js:je,:), tmp)
+        call fldinfo(fld%tocn(isc:iec,jsc:jec,:), tmp)
       case("socn")
-        call fldinfo(fld%socn(is:ie,js:je,:), tmp)
+        call fldinfo(fld%socn(isc:iec,jsc:jec,:), tmp)
       case("hocn")
-        call fldinfo(fld%hocn(is:ie,js:je,:), tmp)
+        call fldinfo(fld%hocn(isc:iec,jsc:jec,:), tmp)
       case("ssh")
-        call fldinfo(fld%ssh(is:ie,js:je), tmp)
+        call fldinfo(fld%ssh(isc:iec,jsc:jec), tmp)
       case("hicen")
-         call fldinfo(fld%seaice%hicen(is:ie,js:je,:), tmp)
+         call fldinfo(fld%seaice%hicen(isc:iec,jsc:jec,:), tmp)
       case("hsnon")
-        call fldinfo(fld%seaice%hsnon(is:ie,js:je,:), tmp)
+        call fldinfo(fld%seaice%hsnon(isc:iec,jsc:jec,:), tmp)
       case("cicen")
-        call fldinfo(fld%seaice%cicen(is:ie,js:je,:), tmp)
+        call fldinfo(fld%seaice%cicen(isc:iec,jsc:jec,:), tmp)
       case("sw")
-        call fldinfo(fld%ocnsfc%sw_rad(is:ie,js:je), tmp)
+        call fldinfo(fld%ocnsfc%sw_rad(isc:iec,jsc:jec), tmp)
       case("lw")
-        call fldinfo(fld%ocnsfc%lw_rad(is:ie,js:je), tmp)
+        call fldinfo(fld%ocnsfc%lw_rad(isc:iec,jsc:jec), tmp)
       case("lhf")
-        call fldinfo(fld%ocnsfc%latent_heat(is:ie,js:je), tmp)
+        call fldinfo(fld%ocnsfc%latent_heat(isc:iec,jsc:jec), tmp)
       case("shf")
-        call fldinfo(fld%ocnsfc%sens_heat(is:ie,js:je), tmp)
+        call fldinfo(fld%ocnsfc%sens_heat(isc:iec,jsc:jec), tmp)
       case("us")
-        call fldinfo(fld%ocnsfc%fric_vel(is:ie,js:je), tmp)
+        call fldinfo(fld%ocnsfc%fric_vel(isc:iec,jsc:jec), tmp)
       end select
 
       ! calculate global min/max/mean
@@ -861,9 +869,6 @@ contains
   subroutine fldrms(fld, prms)
     type(soca_field),      intent(in) :: fld
     real(kind=kind_real), intent(out) :: prms
-
-    integer :: jf,jy,jx,ii
-    real(kind=kind_real) :: zz, ns, n2dfld
 
     call check(fld)
 
@@ -882,7 +887,8 @@ contains
     integer :: igrid
 
     ! Indices for compute domain (no halo)
-    call geom_get_domain_indices(self%geom, "compute", isc, iec, jsc, jec)
+    isc = self%geom%isc ; iec = self%geom%iec
+    jsc = self%geom%jsc ; jec = self%geom%jec
 
     ! Set number of grids
     if (ug%colocated==1) then
@@ -932,7 +938,8 @@ contains
     integer :: isc, iec, jsc, jec, jz
 
     ! Indices for compute domain (no halo)
-    call geom_get_domain_indices(self%geom, "compute", isc, iec, jsc, jec)
+    isc = self%geom%isc ; iec = self%geom%iec
+    jsc = self%geom%jsc ; jec = self%geom%jec
 
     ! Define size
     call ug_size(self, ug)
@@ -979,7 +986,8 @@ contains
     integer :: ni, nj
 
     ! Indices for compute domain (no halo)
-    call geom_get_domain_indices(self%geom, "compute", isc, iec, jsc, jec)
+    isc = self%geom%isc ; iec = self%geom%iec
+    jsc = self%geom%jsc ; jec = self%geom%jec
 
     ni = iec - isc + 1
     nj = jec - jsc + 1
@@ -1053,7 +1061,8 @@ contains
     integer :: ni, nj
 
     ! Indices for compute domain (no halo)
-    call geom_get_domain_indices(self%geom, "compute", isc, iec, jsc, jec)
+    isc = self%geom%isc ; iec = self%geom%iec
+    jsc = self%geom%jsc ; jec = self%geom%jec
 
     ni = iec - isc + 1
     nj = jec - jsc + 1
@@ -1233,7 +1242,7 @@ contains
 
     ! Generate file names
     ocn_filename = soca_genfilename(c_conf,max_string_length,vdate,"ocn")
-    ocnsfc_filename = soca_genfilename(c_conf,max_string_length,vdate,"sfc")    
+    ocnsfc_filename = soca_genfilename(c_conf,max_string_length,vdate,"sfc")
 
     call fms_io_init()
     ! Ocean State
@@ -1266,14 +1275,14 @@ contains
                                 domain=fld%geom%G%Domain%mpp_domain)
 
     call save_restart(ocean_restart, directory='')
-    call save_restart(ocnsfc_restart, directory='')  
+    call save_restart(ocnsfc_restart, directory='')
     call free_restart_type(ocean_restart)
     call free_restart_type(ocnsfc_restart)
     call fms_io_exit()
 
     ! Save sea-ice restart
-    call fld%seaice%write_restart(c_conf, fld%geom, vdate)    
-    
+    call fld%seaice%write_restart(c_conf, fld%geom, vdate)
+
     return
 
   end subroutine soca_write_restart
