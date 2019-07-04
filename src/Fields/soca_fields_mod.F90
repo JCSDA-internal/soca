@@ -599,15 +599,14 @@ contains
     character(len=max_string_length) :: ocn_filename
     character(len=max_string_length) :: ice_filename, basename, incr_filename
     character(len=20) :: sdate
-    character(len=1024)  :: buf
+    character(len=1024) :: buf
     integer :: iread, ii
     logical :: vert_remap=.false.
     character(len=max_string_length) :: remap_filename
     real(kind=kind_real), allocatable :: h_common(:,:,:)    !< layer thickness to remap to
     type(restart_file_type) :: ocean_restart
     type(restart_file_type) :: ocean_remap_restart
-    integer :: idr, idr_ocean
-    integer            :: nobs, nval, pe, ierror
+    integer :: idr_ocean
     integer :: isd, ied, jsd, jed
     integer :: isc, iec, jsc, jec
     integer :: i, j, k, nl, nz
