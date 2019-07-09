@@ -3,7 +3,8 @@ list( APPEND soca_test_input
   testinput/3dvar_godas.yml
   testinput/3dvar_soca.yml
   testinput/3dvarfgat.yml
-  testinput/4dhyb.yml
+  testinput/3dhyb.yml  
+  testinput/3dhybfgat.yml
   testinput/balance.yml
   testinput/bkgerrfilt.yml
   testinput/bkgerrgodas.yml
@@ -11,6 +12,7 @@ list( APPEND soca_test_input
   testinput/checkpointmodel.yml
   testinput/dirac_bump_cov.yml
   testinput/dirac_soca_cov.yml
+  testinput/dirac_socahyb_cov.yml  
   testinput/enshofx.yml
   testinput/ensvariance.yml
   testinput/forecast_identity.yml
@@ -23,6 +25,7 @@ list( APPEND soca_test_input
   testinput/increment_test.yml
   testinput/linearmodel_test.yml
   testinput/model_test.yml
+  testinput/parameters_bump_loc.yml  
   testinput/parameters_bump_cov_lct.yml
   testinput/parameters_bump_cov_nicas.yml
   testinput/state_test.yml
@@ -36,10 +39,12 @@ list( APPEND soca_test_output
   testoutput/3dvar_godas.test
   testoutput/3dvar_soca.test
   testoutput/3dvarfgat.test
-  testoutput/4dhyb.test
+  testoutput/3dhyb.test
+  testoutput/3dhybfgat.test
   testoutput/checkpointmodel.test
   testoutput/dirac_bump_cov.test
   testoutput/dirac_soca_cov.test
+  testoutput/dirac_socahyb_cov.test
   testoutput/enshofx.test
   testoutput/ensvariance.test
   testoutput/forecast_identity.test
@@ -48,7 +53,7 @@ list( APPEND soca_test_output
   testoutput/genenspert.test
   testoutput/hofx.test
   testoutput/hofx3d.test
-  testoutput/parameters_bump_cov_lct.test
+  testoutput/parameters_bump_loc.test
   testoutput/parameters_bump_cov_nicas.test
 )
 
@@ -300,9 +305,18 @@ ecbuild_add_test( TARGET test_soca_ensvariance
                       testoutput/ensvariance.test
                   DEPENDS soca_ensvariance.x)
 
-
 # The following two tests are slow, how can we speed it up?
 # Use another model grid configuration with even fewer grid cells?
+ecbuild_add_test( TARGET test_soca_parameters_bump_loc
+                  MPI ${MPI_SOCA_TESTS}
+                  TYPE SCRIPT
+                  COMMAND ./compare.sh
+                  ARGS
+		      "${CMAKE_BINARY_DIR}/bin/soca_parameters.x
+                       testinput/parameters_bump_loc.yml"
+                       testoutput/parameters_bump_loc.test
+                  DEPENDS soca_parameters.x)
+
 ecbuild_add_test( TARGET test_soca_parameters_bump_cov_lct
                   ENABLED OFF
                   MPI ${MPI_SOCA_TESTS}
@@ -342,6 +356,16 @@ ecbuild_add_test( TARGET test_soca_dirac_soca_cov
                       "${CMAKE_BINARY_DIR}/bin/soca_dirac.x
                       testinput/dirac_soca_cov.yml"
                       testoutput/dirac_soca_cov.test
+                  DEPENDS soca_dirac.x )
+
+ecbuild_add_test( TARGET test_soca_dirac_socahyb_cov
+                  MPI ${MPI_SOCA_TESTS}
+                  TYPE SCRIPT
+                  COMMAND ./compare.sh
+                  ARGS
+                      "${CMAKE_BINARY_DIR}/bin/soca_dirac.x
+                      testinput/dirac_socahyb_cov.yml"
+                      testoutput/dirac_socahyb_cov.test
                   DEPENDS soca_dirac.x )
 
 #ecbuild_add_test( TARGET  test_soca_localization
@@ -405,6 +429,26 @@ ecbuild_add_test( TARGET test_soca_3dvargodas
                       "${CMAKE_BINARY_DIR}/bin/soca_3dvar.x
                       testinput/3dvar_godas.yml"
                       testoutput/3dvar_godas.test
+                  DEPENDS soca_3dvar.x)
+
+ecbuild_add_test( TARGET test_soca_3dhyb
+                  MPI ${MPI_SOCA_TESTS}
+                  TYPE SCRIPT
+                  COMMAND ./compare.sh
+                  ARGS
+                      "${CMAKE_BINARY_DIR}/bin/soca_3dvar.x
+                      testinput/3dhyb.yml"
+                      testoutput/3dhyb.test
+                  DEPENDS soca_3dvar.x)
+
+ecbuild_add_test( TARGET test_soca_3dhybfgat
+                  MPI ${MPI_SOCA_TESTS}
+                  TYPE SCRIPT
+                  COMMAND ./compare.sh
+                  ARGS
+                      "${CMAKE_BINARY_DIR}/bin/soca_3dvar.x
+                      testinput/3dhybfgat.yml"
+                      testoutput/3dhybfgat.test
                   DEPENDS soca_3dvar.x)
 
 ecbuild_add_test( TARGET test_soca_checkpointmodel
