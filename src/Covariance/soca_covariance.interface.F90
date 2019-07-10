@@ -7,132 +7,121 @@
 ! granted to it by virtue of its status as an intergovernmental organisation nor
 ! does it submit to any jurisdiction.
 
-! ------------------------------------------------------------------------------
-
-!> Setup for the SOCA model's background error covariance matrix
-
-subroutine c_soca_b_setup(c_key_self, c_conf, c_key_geom, c_key_bkg) &
-     & bind (c,name='soca_b_setup_f90')
-
+module c_soca_covariance_mod
   use iso_c_binding
-  use soca_covariance_mod
-  use soca_geom_mod_c
-  use soca_fields_mod_c
-
-  implicit none
-  integer(c_int), intent(inout) :: c_key_self   !< The background covariance structure
-  type(c_ptr),       intent(in) :: c_conf        !< The configuration
-  integer(c_int),    intent(in) :: c_key_geom    !< Geometry
-  integer(c_int),    intent(in) :: c_key_bkg     !< Background  
-
-  type(soca_cov),   pointer :: self
-  type(soca_geom),  pointer :: geom
-  type(soca_field), pointer :: bkg
-
-  call soca_geom_registry%get(c_key_geom, geom)
-  call soca_cov_registry%init()
-  call soca_cov_registry%add(c_key_self)
-  call soca_cov_registry%get(c_key_self, self)
-  call soca_field_registry%get(c_key_bkg,bkg)
-  call soca_cov_setup(self, c_conf, geom, bkg)
-
-end subroutine c_soca_b_setup
-
-! ------------------------------------------------------------------------------
-!> Delete for the SOCA model's background error covariance matrix
-
-subroutine c_soca_b_delete(c_key_self) bind (c,name='soca_b_delete_f90')
-
-  use iso_c_binding
-  use soca_covariance_mod
-
-  implicit none
-  integer(c_int), intent(inout) :: c_key_self  !< The background covariance structure
-  type(soca_cov),       pointer :: self
-
-  call soca_cov_registry%get(c_key_self,self)
-  call soca_cov_delete(self)
-  call soca_cov_registry%remove(c_key_self)
-  
-end subroutine c_soca_b_delete
-
-! ------------------------------------------------------------------------------
-
-!> Multiply by covariance
-
-subroutine c_soca_b_mult(c_key_self, c_key_in, c_key_out) bind(c,name='soca_b_mult_f90')  
-  !> xout = K D C^1/2 C^1/2^T D K^T xin 
-  use iso_c_binding
-  use soca_covariance_mod
-  use soca_fields_mod_c
-  use kinds
-  use mpi
-
-  implicit none
-  integer(c_int), intent(inout) :: c_key_self  !< The background covariance structure
-  integer(c_int), intent(in)    :: c_key_in    !<    "   to Increment in
-  integer(c_int), intent(in)    :: c_key_out   !<    "   to Increment out 
-
-  type(soca_cov),   pointer :: self
-  type(soca_field), pointer :: xin
-  type(soca_field), pointer :: xout
-
-  call soca_cov_registry%get(c_key_self, self)
-  call soca_field_registry%get(c_key_in, xin)
-  call soca_field_registry%get(c_key_out, xout)
-
-  call copy(xout,xin)              !< xout = xin
-  call soca_cov_C_mult(self, xout) !< xout = C.xout
-
-end subroutine c_soca_b_mult
-
-! ------------------------------------------------------------------------------
-
-!> Setup linearization parameters (traj, ...)
-
-subroutine c_soca_b_linearize(c_key_self, c_key_geom) bind(c,name='soca_b_linearize_f90')
-
-  use iso_c_binding
-  use soca_covariance_mod
-  use soca_geom_mod_c
-  use soca_fields_mod_c
+  use soca_covariance_mod !, only: soca_cov_setup, soca_cov_delete, soca_cov_C_mult, soca_cov_sqrt_C_mult, soca_cov, soca_cov_registry
+  use soca_geom_mod_c, only: soca_geom_registry
+  use soca_fields_mod_c, only: soca_field_registry
 
   implicit none
 
-  integer(c_int), intent(inout) :: c_key_self   !< The trajectory covariance structure
-  integer(c_int), intent(in)    :: c_key_geom   !< Geometry
+  private
+  public :: soca_cov_registry
 
-  ! Do nothing, current cov setup does not depend on the
-  ! trajectory
+#define LISTED_TYPE soca_cov
 
-end subroutine c_soca_b_linearize
+  !> Linked list interface - defines registry_t type
+#include "oops/util/linkedList_i.f"
 
-! ------------------------------------------------------------------------------
+  !> Global registry
+ type(registry_t) :: soca_cov_registry
 
-!> Generate randomized C^1/2 x increment
+  ! ------------------------------------------------------------------------------
+contains
+  ! ------------------------------------------------------------------------------
+  !> Linked list implementation
+#include "oops/util/linkedList_c.f"
+  ! ------------------------------------------------------------------------------
 
-subroutine c_soca_b_randomize(c_key_self, c_key_out) bind(c,name='soca_b_randomize_f90')
+  ! ------------------------------------------------------------------------------
+  !> Setup for the SOCA model's background error covariance matrix
 
-  use iso_c_binding
-  use soca_covariance_mod
-  use soca_fields_mod_c
-  use random_vectors_mod
-  use kinds
+  subroutine c_soca_b_setup(c_key_self, c_conf, c_key_geom, c_key_bkg) &
+       & bind (c,name='soca_b_setup_f90')
+    integer(c_int), intent(inout) :: c_key_self   !< The background covariance structure
+    type(c_ptr),       intent(in) :: c_conf        !< The configuration
+    integer(c_int),    intent(in) :: c_key_geom    !< Geometry
+    integer(c_int),    intent(in) :: c_key_bkg     !< Background  
 
-  implicit none
+    class(soca_cov),   pointer :: self
+    type(soca_geom),  pointer :: geom
+    type(soca_field), pointer :: bkg
 
-  integer(c_int), intent(in) :: c_key_self  !< covar config structure
-  integer(c_int), intent(in) :: c_key_out   !< Randomized increment
+    call soca_geom_registry%get(c_key_geom, geom)
+    call soca_cov_registry%init()
+    call soca_cov_registry%add(c_key_self)
+    call soca_cov_registry%get(c_key_self, self)
+    call soca_field_registry%get(c_key_bkg,bkg)
+    call soca_cov_setup(self, c_conf, geom, bkg)
 
-  type(soca_cov),   pointer :: self
-  type(soca_field), pointer :: xout
+  end subroutine c_soca_b_setup
 
-  call soca_cov_registry%get(c_key_self, self)
-  call soca_field_registry%get(c_key_out, xout)
+  ! ------------------------------------------------------------------------------
+  !> Delete for the SOCA model's background error covariance matrix
 
-  ! Randomize increment
-  call soca_cov_sqrt_C_mult(self, xout) !< xout = C^1/2.xout
+  subroutine c_soca_b_delete(c_key_self) bind (c,name='soca_b_delete_f90')
+    integer(c_int), intent(inout) :: c_key_self  !< The background covariance structure
 
-end subroutine c_soca_b_randomize
+    class(soca_cov),       pointer :: self
 
-! ------------------------------------------------------------------------------
+    call soca_cov_registry%get(c_key_self,self)
+    call self%delete()
+    call soca_cov_registry%remove(c_key_self)
+
+  end subroutine c_soca_b_delete
+
+  ! ------------------------------------------------------------------------------
+
+  !> Multiply by covariance
+
+  subroutine c_soca_b_mult(c_key_self, c_key_in, c_key_out) bind(c,name='soca_b_mult_f90')  
+    integer(c_int), intent(inout) :: c_key_self  !< The background covariance structure
+    integer(c_int), intent(in)    :: c_key_in    !<    "   to Increment in
+    integer(c_int), intent(in)    :: c_key_out   !<    "   to Increment out 
+
+    class(soca_cov),   pointer :: self
+    type(soca_field), pointer :: xin
+    type(soca_field), pointer :: xout
+
+    call soca_cov_registry%get(c_key_self, self)
+    call soca_field_registry%get(c_key_in, xin)
+    call soca_field_registry%get(c_key_out, xout)
+
+    call copy(xout,xin)              !< xout = xin
+    call self%mult(xout) !< xout = C.xout
+
+  end subroutine c_soca_b_mult
+
+  ! ------------------------------------------------------------------------------
+
+  !> Setup linearization parameters (traj, ...)
+
+  subroutine c_soca_b_linearize(c_key_self, c_key_geom) bind(c,name='soca_b_linearize_f90')
+    integer(c_int), intent(inout) :: c_key_self   !< The trajectory covariance structure
+    integer(c_int), intent(in)    :: c_key_geom   !< Geometry
+
+    ! Do nothing, current cov setup does not depend on the
+    ! trajectory
+
+  end subroutine c_soca_b_linearize
+
+  ! ------------------------------------------------------------------------------
+
+  !> Generate randomized C^1/2 x increment
+
+  subroutine c_soca_b_randomize(c_key_self, c_key_out) bind(c,name='soca_b_randomize_f90')
+    integer(c_int), intent(in) :: c_key_self  !< covar config structure
+    integer(c_int), intent(in) :: c_key_out   !< Randomized increment
+
+    class(soca_cov),   pointer :: self
+    type(soca_field), pointer :: xout
+
+    call soca_cov_registry%get(c_key_self, self)
+    call soca_field_registry%get(c_key_out, xout)
+
+    ! Randomize increment
+    call self%sqrt_C_mult(xout) !< xout = C^1/2.xout
+
+  end subroutine c_soca_b_randomize
+
+end module c_soca_covariance_mod

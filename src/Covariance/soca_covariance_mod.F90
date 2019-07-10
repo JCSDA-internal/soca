@@ -22,11 +22,13 @@ module soca_covariance_mod
 
   implicit none
 
+  public
+  
   !> Fortran derived type to hold configuration data for the SOCA background/model covariance
   type :: soca_pert
     real(kind=kind_real) :: T, S, SSH, AICE, HICE
   end type soca_pert
-  type :: soca_cov
+  type, public :: soca_cov
      type(bump_type), allocatable :: ocean_conv(:)  !< Ocean convolution op from bump
      type(bump_type), allocatable :: seaice_conv(:) !< Seaice convolution op from bump
      integer,         allocatable :: seaice_mask(:,:)
@@ -35,23 +37,15 @@ module soca_covariance_mod
      type(soca_pert)              :: pert_scale
      real(kind=kind_real)         :: ocn_l0
      real(kind=kind_real)         :: ice_l0
+   contains
+     procedure :: setup => soca_cov_setup
+     procedure :: delete => soca_cov_delete
+     procedure :: mult => soca_cov_C_mult
+     procedure :: sqrt_C_mult => soca_cov_sqrt_C_mult
   end type soca_cov
-
-#define LISTED_TYPE soca_cov
-
-  !> Linked list interface - defines registry_t type
-#include "oops/util/linkedList_i.f"
-
-  !> Global registry
- type(registry_t) :: soca_cov_registry
 
   ! ------------------------------------------------------------------------------
 contains
-  ! ------------------------------------------------------------------------------
-  !> Linked list implementation
-#include "oops/util/linkedList_c.f"
-  ! ------------------------------------------------------------------------------
-
   ! ------------------------------------------------------------------------------
 
   !> Setup for the SOCA model's 3d error covariance matrices (B and Q_i)
@@ -61,7 +55,7 @@ contains
   !! error covariance structure.
 
   subroutine soca_cov_setup(self, c_conf, geom, bkg)
-    type(soca_cov),        intent(inout) :: self   !< The covariance structure
+    class(soca_cov),       intent(inout) :: self   !< The covariance structure
     type(c_ptr),              intent(in) :: c_conf !< The configuration
     type(soca_geom),          intent(in) :: geom   !< Geometry
     type(soca_field), target, intent(in) :: bkg    !< Background
@@ -139,7 +133,7 @@ contains
   !> Delete for the SOCA model's 3d error covariance matrices
 
   subroutine soca_cov_delete(self)
-    type(soca_cov), intent(inout) :: self       !< The covariance structure
+    class(soca_cov), intent(inout) :: self       !< The covariance structure
 
     call self%ocean_conv(1)%dealloc()
     call self%seaice_conv(1)%dealloc()
@@ -154,7 +148,7 @@ contains
   ! ------------------------------------------------------------------------------
 
   subroutine soca_cov_C_mult(self, dx)
-    type(soca_cov),   intent(inout) :: self !< The covariance structure
+    class(soca_cov),  intent(inout) :: self !< The covariance structure
     type(soca_field), intent(inout) :: dx   !< Input: Increment
                                             !< Output: C dx
     integer :: icat, izo
@@ -184,7 +178,7 @@ contains
   ! ------------------------------------------------------------------------------
 
   subroutine soca_cov_sqrt_C_mult(self, dx)
-    type(soca_cov),   intent(inout) :: self !< The covariance structure
+    class(soca_cov),  intent(inout) :: self !< The covariance structure
     type(soca_field), intent(inout) :: dx   !< Input: Increment
                                             !< Output: C^1/2 dx
 
@@ -207,7 +201,7 @@ contains
   ! ------------------------------------------------------------------------------
 
   subroutine soca_bump_correlation(self, horiz_convol, geom, c_conf, domain)
-    type(soca_cov),  intent(inout) :: self   !< The covariance structure
+    class(soca_cov), intent(inout) :: self   !< The covariance structure
     type(bump_type), intent(inout) :: horiz_convol
     type(soca_geom),    intent(in) :: geom
     type(c_ptr),        intent(in) :: c_conf         !< Handle to configuration
