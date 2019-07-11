@@ -1,10 +1,10 @@
 list( APPEND soca_test_input
   compare.sh
+  testinput/3dhyb.yml
+  testinput/3dhybfgat.yml
   testinput/3dvar_godas.yml
   testinput/3dvar_soca.yml
   testinput/3dvarfgat.yml
-  testinput/3dhyb.yml
-  testinput/3dhybfgat.yml
   testinput/balance.yml
   testinput/bkgerrfilt.yml
   testinput/bkgerrgodas.yml
@@ -24,23 +24,23 @@ list( APPEND soca_test_input
   testinput/hofx3d.yml
   testinput/increment_test.yml
   testinput/linearmodel_test.yml
+  testinput/marine2ioda.yml
   testinput/model_test.yml
-  testinput/parameters_bump_loc.yml
   testinput/parameters_bump_cov_lct.yml
   testinput/parameters_bump_cov_nicas.yml
+  testinput/parameters_bump_loc.yml
   testinput/state_test.yml
   testinput/static_SocaError_init.yml
   testinput/static_SocaError_test.yml
   testinput/vertconv.yml
-  testinput/marine2ioda.yml
 )
 
 list( APPEND soca_test_output
+  testoutput/3dhyb.test
+  testoutput/3dhybfgat.test
   testoutput/3dvar_godas.test
   testoutput/3dvar_soca.test
   testoutput/3dvarfgat.test
-  testoutput/3dhyb.test
-  testoutput/3dhybfgat.test
   testoutput/checkpointmodel.test
   testoutput/dirac_bump_cov.test
   testoutput/dirac_soca_cov.test
@@ -53,8 +53,8 @@ list( APPEND soca_test_output
   testoutput/genenspert.test
   testoutput/hofx.test
   testoutput/hofx3d.test
-  testoutput/parameters_bump_loc.test
   testoutput/parameters_bump_cov_nicas.test
+  testoutput/parameters_bump_loc.test
 )
 
 list( APPEND soca_model_param
