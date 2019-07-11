@@ -13,7 +13,6 @@ module soca_balance_mod
   use soca_ksshts_mod
   use iso_c_binding
   use config_mod
-  use soca_geom_mod, only : geom_get_domain_indices
   use datetime_mod
 
   implicit none
@@ -57,8 +56,11 @@ contains
     self%traj => traj
 
     ! Indices for compute domain
-    call geom_get_domain_indices(traj%geom, "compute", isc, iec, jsc, jec)
-    self%isc=isc; self%iec=iec; self%jsc=jsc; self%jec=jec
+    isc=traj%geom%isc; iec=traj%geom%iec
+    jsc=traj%geom%jsc; jec=traj%geom%jec
+
+    self%isc=isc; self%iec=iec
+    self%jsc=jsc; self%jec=jec
 
     ! Get configuration for Kst
     self%kst%dsdtmax = config_get_real(c_conf,"dsdtmax")
@@ -182,7 +184,7 @@ contains
           end do
 
           ! Ice thickness
-          dxm%seaice%hicen(i,j,:) =  dxa%seaice%hicen(i,j,:)         
+          dxm%seaice%hicen(i,j,:) =  dxa%seaice%hicen(i,j,:)
        end do
     end do
     ! Surface fields
@@ -278,9 +280,9 @@ contains
     do i = self%isc, self%iec
        do j = self%jsc, self%jec
           ! Ice thickness
-          dxm%seaice%hicen(i,j,:) =  dxa%seaice%hicen(i,j,:)          
+          dxm%seaice%hicen(i,j,:) =  dxa%seaice%hicen(i,j,:)
           ! Ice fraction
-          dxm%seaice%cicen(i,j,:) =  dxa%seaice%cicen(i,j,:)          
+          dxm%seaice%cicen(i,j,:) =  dxa%seaice%cicen(i,j,:)
           ! Temperature
           dxm%tocn(i,j,1) = dxa%tocn(i,j,1) &
                & - self%kst%jacobian(i,j,1) * dxa%socn(i,j,1) &

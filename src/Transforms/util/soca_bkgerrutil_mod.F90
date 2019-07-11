@@ -10,7 +10,6 @@ module soca_bkgerrutil_mod
   use kinds
   use soca_fields
   use soca_utils
-  use soca_geom_mod, only : geom_get_domain_indices
 
   implicit none
   private
@@ -57,7 +56,9 @@ contains
     integer :: isc, iec, jsc, jec, i, j
 
     ! Apply config bounds to background error
-    call geom_get_domain_indices(fld%geom, "compute", isc, iec, jsc, jec)
+    isc = fld%geom%isc ; iec = fld%geom%iec
+    jsc = fld%geom%jsc ; jec = fld%geom%jec
+
     do i = isc, iec
        do j = jsc, jec
           ! Apply bounds

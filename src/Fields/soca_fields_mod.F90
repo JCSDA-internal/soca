@@ -24,7 +24,7 @@ module soca_fields
   use random_mod
   use soca_fieldsutils_mod
   use soca_geom_mod_c
-  use soca_geom_mod, only : soca_geom, geom_get_domain_indices
+  use soca_geom_mod, only : soca_geom
   use soca_mom6
   use soca_utils
   use soca_bumpinterp2d_mod

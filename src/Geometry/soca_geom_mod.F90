@@ -34,8 +34,10 @@ module soca_geom_mod
      type(soca_ice_column)            :: ice_column !< Sea-ice geometry
      integer :: nx, ny, nzo
      integer :: nzi, nzs, ncat
-     integer :: isc, iec, jsc, jec
-     integer :: isd, ied, jsd, jed
+     integer :: isc, iec, jsc, jec  !< indices of compute domain
+     integer :: isd, ied, jsd, jed  !< indices of data domain
+     integer :: iscl, iecl, jscl, jecl  !< indices of local compute domain
+     integer :: isdl, iedl, jsdl, jedl  !< indices of local data domain
      real(kind=kind_real), allocatable, dimension(:,:) :: lon, lat  !< horizontal grid type
                                                                    !< 2D array of longitude, latitude
      real(kind=kind_real), allocatable, dimension(:,:) :: mask2d    !< 0 = land 1 = ocean
@@ -139,6 +141,9 @@ contains
     ! Get indices of data and compute domain
     call geom_get_domain_indices(self, "compute", self%isc, self%iec, self%jsc, self%jec)
     call geom_get_domain_indices(self, "data", self%isd, self%ied, self%jsd, self%jed)
+
+    call geom_get_domain_indices(self, "compute", self%iscl, self%iecl, self%jscl, self%jecl, local=.true.)
+    call geom_get_domain_indices(self, "data", self%isdl, self%iedl, self%jsdl, self%jedl, local=.true.)
 
     nzo = self%G%ke
 
@@ -373,7 +378,6 @@ contains
     end do
   end subroutine geom_thickness2depth
 
-
   ! ------------------------------------------------------------------------------
 
   subroutine geom_struct2unstruct(self, dx_struct, dx_unstruct)
@@ -382,16 +386,11 @@ contains
     real(kind=kind_real), allocatable, intent(out) :: dx_unstruct(:,:,:,:)
 
     integer :: nc0a
-    integer :: isc, iec, jsc, jec
-    integer :: isd, ied, jsd, jed
 
-    ! Local indices for compute domain (no halo)
-    isc = self%isc - (self%isd-1) ; iec = self%iec - (self%isd-1) ; ied = self%ied - (self%isd-1) ; isd = 1
-    jsc = self%jsc - (self%jsd-1) ; jec = self%jec - (self%jsd-1) ; jed = self%jed - (self%jsd-1) ; jsd = 1
-
-    nc0a = (iec - isc + 1) * (jec - jsc + 1 )
+    nc0a = (self%iecl - self%iscl + 1) * (self%jecl - self%jscl + 1 )
     allocate(dx_unstruct(nc0a,1,1,1))
-    dx_unstruct = reshape( dx_struct(isc:iec, jsc:jec), (/nc0a,1,1,1/) )
+    dx_unstruct = &
+    &  reshape(dx_struct(self%iscl:self%iecl, self%jscl:self%jecl), (/nc0a,1,1,1/))
 
   end subroutine geom_struct2unstruct
 
@@ -407,16 +406,15 @@ contains
     integer :: isd, ied, jsd, jed
 
     ! Local indices for compute domain (no halo)
-    isc = self%isc - (self%isd-1) ; iec = self%iec - (self%isd-1) ; ied = self%ied - (self%isd-1) ; isd = 1
-    jsc = self%jsc - (self%jsd-1) ; jec = self%jec - (self%jsd-1) ; jed = self%jed - (self%jsd-1) ; jsd = 1
 
-    dx_struct(isc:iec, jsc:jec) = reshape(dx_unstruct,(/size(dx_struct(isc:iec, jsc:jec),1),&
-                                                       &size(dx_struct(isc:iec, jsc:jec),2)/))
+    dx_struct(self%isc:self%iec, self%jsc:self%jec) = &
+    & reshape(dx_unstruct, (/size(dx_struct(self%isc:self%iec, self%jsc:self%jec),1), &
+    &                        size(dx_struct(self%isc:self%iec, self%jsc:self%jec),2)/))
 
     deallocate(dx_unstruct)
 
   end subroutine geom_unstruct2struct
 
-
+  ! ------------------------------------------------------------------------------
 
 end module soca_geom_mod

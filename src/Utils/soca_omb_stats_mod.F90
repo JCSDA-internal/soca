@@ -12,19 +12,19 @@ module soca_omb_stats_mod
   use soca_utils
   use fckit_kdtree_module, only: kdtree,kdtree_create,kdtree_destroy,kdtree_k_nearest_neighbors
   use fckit_mpi_module
-  
+
   implicit none
   private
 
   type, public :: soca_domain_indices ! TODO: Move elsewhere!
      integer :: is, ie, js, je     ! Compute domain indices
-     integer :: isl, iel, jsl, jel ! Local compute domain indices     
+     integer :: isl, iel, jsl, jel ! Local compute domain indices
   end type soca_domain_indices
-  
+
   type, public :: soca_omb_stats
-     integer                            :: nlocs     
-     real(kind=kind_real),  allocatable :: lon(:)       
-     real(kind=kind_real),  allocatable :: lat(:)       
+     integer                            :: nlocs
+     real(kind=kind_real),  allocatable :: lon(:)
+     real(kind=kind_real),  allocatable :: lat(:)
      real(kind=kind_real),  allocatable :: bgerr(:)
      real(kind=kind_real),  allocatable :: bgerr_model(:,:)
      type(soca_domain_indices)          :: domain
@@ -36,11 +36,11 @@ module soca_omb_stats_mod
 
 contains
 
-  ! ------------------------------------------------------------------------------  
+  ! ------------------------------------------------------------------------------
   subroutine soca_omb_stats_init(self, domain)
     class(soca_omb_stats),           intent(inout) :: self
     type(soca_domain_indices),       intent(in) :: domain
-    
+
     integer(kind=4) :: ncid
     integer(kind=4) :: dimid
     integer(kind=4) :: varid
@@ -61,7 +61,7 @@ contains
 
        allocate(self%lon(self%nlocs), self%lat(self%nlocs), self%bgerr(self%nlocs))
 
-       ! Get longitude    
+       ! Get longitude
        call nc_check(nf90_inq_varid(ncid,'longitude',varid))
        call nc_check(nf90_get_var(ncid,varid,self%lon))
 
@@ -71,13 +71,13 @@ contains
 
        ! Get omb stats
        call nc_check(nf90_inq_varid(ncid,'sst_bgerr',varid))
-       call nc_check(nf90_get_var(ncid,varid,self%bgerr))        
+       call nc_check(nf90_get_var(ncid,varid,self%bgerr))
 
        ! Close netcdf file
        call nc_check(nf90_close(ncid))
     end if
 
-    ! Broadcast to all workers 
+    ! Broadcast to all workers
     call f_comm%broadcast(self%nlocs, root)
     if (myrank.ne.root) then
        allocate(self%lon(self%nlocs), self%lat(self%nlocs), self%bgerr(self%nlocs))
@@ -86,7 +86,7 @@ contains
     call f_comm%broadcast(self%lat, root)
     call f_comm%broadcast(self%bgerr, root)
     call f_comm%barrier()
-    
+
     ! Rotate longitude
     where (self%lon>180.0_kind_real)
        self%lon=self%lon-360.0_kind_real
@@ -100,8 +100,8 @@ contains
   ! ------------------------------------------------------------------------------
   subroutine soca_omb_stats_bin(self, lon, lat)
     class(soca_omb_stats), intent(inout) :: self
-    real(kind=kind_real),     intent(in) :: lon(:,:)       
-    real(kind=kind_real),     intent(in) :: lat(:,:) 
+    real(kind=kind_real),     intent(in) :: lon(:,:)
+    real(kind=kind_real),     intent(in) :: lat(:,:)
 
     integer :: is, ie, js, je
     integer :: isl, iel, jsl, jel
@@ -115,7 +115,7 @@ contains
     js = self%domain%js
     je = self%domain%je
 
-    ! Short cuts to local indices    
+    ! Short cuts to local indices
     isl = self%domain%isl
     iel = self%domain%iel
     jsl = self%domain%jsl
@@ -135,22 +135,22 @@ contains
        do j = js, je
           call kdtree_k_nearest_neighbors(kd,lon(il,jl),lat(il,jl),1,index)
           self%bgerr_model(i,j)=self%bgerr(index(1))
-          jl = jl + 1 
+          jl = jl + 1
        end do
        il = il + 1
     end do
-    
+
     ! Release memory
     call kdtree_destroy(kd)
-    
+
   end subroutine soca_omb_stats_bin
 
   ! ------------------------------------------------------------------------------
   subroutine soca_omb_stats_exit(self)
     class(soca_omb_stats), intent(inout) :: self
-    
+
     deallocate(self%lon, self%lat, self%bgerr, self%bgerr_model)
-    
+
   end subroutine soca_omb_stats_exit
 
 end module soca_omb_stats_mod

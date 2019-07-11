@@ -12,7 +12,6 @@ module soca_bkgerrgodas_mod
   use kinds
   use soca_bkgerrutil_mod
   use soca_fields
-  use soca_geom_mod, only : geom_get_domain_indices
   use soca_utils
   use soca_omb_stats_mod
   use fckit_mpi_module
@@ -100,7 +99,8 @@ contains
     integer :: isc, iec, jsc, jec, i, j, k
 
     ! Indices for compute domain (no halo)
-    call geom_get_domain_indices(self%bkg%geom, "compute", isc, iec, jsc, jec)
+    isc = self%bkg%geom%isc ; iec = self%bkg%geom%iec
+    jsc = self%bkg%geom%jsc ; jec = self%bkg%geom%jec
 
     do i = isc, iec
        do j = jsc, jec
@@ -132,12 +132,12 @@ contains
     type(soca_omb_stats) :: sst
 
     ! Get compute domain indices
-    call geom_get_domain_indices(self%bkg%geom, "compute", &
-         &domain%is, domain%ie, domain%js, domain%je)
+    domain%is = self%bkg%geom%isc ; domain%ie = self%bkg%geom%iec
+    domain%js = self%bkg%geom%jsc ; domain%je = self%bkg%geom%jec
 
     ! Get local compute domain indices
-    call geom_get_domain_indices(self%bkg%geom, "compute", &
-         &domain%isl, domain%iel, domain%jsl, domain%jel, local=.true.)
+    domain%isl = self%bkg%geom%iscl ; domain%iel = self%bkg%geom%iecl
+    domain%jsl = self%bkg%geom%jscl ; domain%jel = self%bkg%geom%jecl
 
     ! Allocate temporary arrays
     allocate(sig1(self%bkg%geom%nzo), sig2(self%bkg%geom%nzo))
@@ -196,8 +196,8 @@ contains
     integer :: i, j, k
 
     ! Get compute domain indices
-    call geom_get_domain_indices(self%bkg%geom, "compute", &
-         &domain%is, domain%ie, domain%js, domain%je)
+    domain%is = self%bkg%geom%isc ; domain%ie = self%bkg%geom%iec
+    domain%js = self%bkg%geom%jsc ; domain%je = self%bkg%geom%jec
 
     ! Loop over compute domain
     do i = domain%is, domain%ie
@@ -230,12 +230,12 @@ contains
 
 
     ! Get compute domain indices
-    call geom_get_domain_indices(self%bkg%geom, "compute", &
-         &domain%is, domain%ie, domain%js, domain%je)
+    domain%is = self%bkg%geom%isc ; domain%ie = self%bkg%geom%iec
+    domain%js = self%bkg%geom%jsc ; domain%je = self%bkg%geom%jec
     !
     ! Get local compute domain indices
-    call geom_get_domain_indices(self%bkg%geom, "compute", &
-         &domain%isl, domain%iel, domain%jsl, domain%jel, local=.true.)
+    domain%isl = self%bkg%geom%iscl ; domain%iel = self%bkg%geom%iecl
+    domain%jsl = self%bkg%geom%jscl ; domain%jel = self%bkg%geom%jecl
 
     ! TODO read in a precomputed surface S background error
 
