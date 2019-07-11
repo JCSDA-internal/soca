@@ -91,6 +91,12 @@ list( APPEND oops_soca_src_files
 ./Transforms/BkgErrFilt/soca_bkgerrfilt.interface.F90
 ./Transforms/BkgErrFilt/soca_bkgerrfilt_mod.F90
 
+./Transforms/HorizConv/HorizConv.cc
+./Transforms/HorizConv/HorizConv.h
+./Transforms/HorizConv/HorizConvFortran.h
+./Transforms/HorizConv/soca_horizconv.interface.F90
+./Transforms/HorizConv/soca_horizconv_mod.F90
+
 ./Transforms/VertConv/VertConv.cc
 ./Transforms/VertConv/VertConv.h
 ./Transforms/VertConv/soca_vertconv.interface.F90

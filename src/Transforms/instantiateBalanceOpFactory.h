@@ -12,6 +12,7 @@
 #include "src/Transforms/BkgErr/BkgErr.h"
 #include "src/Transforms/BkgErrGodas/BkgErrGodas.h"
 #include "src/Transforms/BkgErrFilt/BkgErrFilt.h"
+#include "src/Transforms/HorizConv/HorizConv.h"
 #include "src/Transforms/VertConv/VertConv.h"
 #include "src/Traits.h"
 #include "oops/interface/LinearVariableChange.h"
@@ -34,6 +35,9 @@ void instantiateBalanceOpFactory() {
   static oops::LinearVariableChangeMaker<soca::Traits,
               oops::LinearVariableChange<soca::Traits, soca::Balance> >
               makerBalanceOpBalanceSOCA_("BalanceSOCA");
+  static oops::LinearVariableChangeMaker<soca::Traits,
+              oops::LinearVariableChange<soca::Traits, soca::HorizConv> >
+              makerBalanceOpHorizConvSOCA_("HorizConvSOCA");  
 }
 }  // namespace soca
 
