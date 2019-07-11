@@ -17,7 +17,6 @@ _file: &_file
   date: *bkg_date
   basename: ./Data/
   remap_filename: ./INPUT/MOM.res.nc
-  seaice_model: cice
 
 cost_function:
   cost_type: 3D-Var
@@ -112,19 +111,19 @@ cost_function:
       members:
       - <<: *_file
         ocn_filename: ocn.pert.ens.1.2018-04-15T00:00:00Z.PT0S.nc
-        ice_filename: cic.pert.ens.1.2018-04-15T00:00:00Z.PT0S.nc
+        ice_filename: ice.pert.ens.1.2018-04-15T00:00:00Z.PT0S.nc
 
       - <<: *_file
         ocn_filename: ocn.pert.ens.2.2018-04-15T00:00:00Z.PT0S.nc
-        ice_filename: cic.pert.ens.2.2018-04-15T00:00:00Z.PT0S.nc
+        ice_filename: ice.pert.ens.2.2018-04-15T00:00:00Z.PT0S.nc
 
       - <<: *_file
         ocn_filename: ocn.pert.ens.3.2018-04-15T00:00:00Z.PT0S.nc
-        ice_filename: cic.pert.ens.3.2018-04-15T00:00:00Z.PT0S.nc        
+        ice_filename: ice.pert.ens.3.2018-04-15T00:00:00Z.PT0S.nc        
 
       - <<: *_file
         ocn_filename: ocn.pert.ens.4.2018-04-15T00:00:00Z.PT0S.nc
-        ice_filename: cic.pert.ens.4.2018-04-15T00:00:00Z.PT0S.nc
+        ice_filename: ice.pert.ens.4.2018-04-15T00:00:00Z.PT0S.nc
 
       localization:
        timeslots: ['2018-04-15T00:00:00Z']

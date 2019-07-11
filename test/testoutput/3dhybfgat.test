@@ -5,7 +5,7 @@ Test     : RPCGMinimizer: reduction in residual norm = 0.00161539
 Test     : CostFunction::addIncrement: Analysis: 
 Test     :   Valid time: 2018-04-15T00:00:00Z
 Test     :   cicen   min=    0.000000   max=    1.000000   mean=    0.252554
-Test     :   hicen   min=   -0.309731   max=    2.947887   mean=    0.102201
+Test     :   hicen   min=   -0.000489   max=    2.947887   mean=    0.102701
 Test     :    socn   min=    0.000000   max=   39.380464   mean=   34.513217
 Test     :    tocn   min=   -1.883330   max=   31.008679   mean=    6.150504
 Test     :     ssh   min=   -2.102463   max=    0.929888   mean=   -0.306214
@@ -15,6 +15,6 @@ Test     :     lhf   min=    0.000000   max=    0.000000   mean=    0.000000
 Test     :     shf   min=    0.000000   max=    0.000000   mean=    0.000000
 Test     :      lw   min=    0.000000   max=    0.000000   mean=    0.000000
 Test     :      us   min=    0.000000   max=    0.000000   mean=    0.000000
-Test     : CostJb   : Nonlinear Jb = 1.081062
+Test     : CostJb   : Nonlinear Jb = 1.250722
 Test     : CostJo   : Nonlinear Jo(ADT) = 86.546966, nobs = 31, Jo/n = 2.791838, err = 0.100000
-Test     : CostFunction: Nonlinear J = 87.628028
+Test     : CostFunction: Nonlinear J = 87.797688
