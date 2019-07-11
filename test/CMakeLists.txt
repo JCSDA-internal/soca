@@ -3,7 +3,7 @@ list( APPEND soca_test_input
   testinput/3dvar_godas.yml
   testinput/3dvar_soca.yml
   testinput/3dvarfgat.yml
-  testinput/3dhyb.yml  
+  testinput/3dhyb.yml
   testinput/3dhybfgat.yml
   testinput/balance.yml
   testinput/bkgerrfilt.yml
@@ -12,7 +12,7 @@ list( APPEND soca_test_input
   testinput/checkpointmodel.yml
   testinput/dirac_bump_cov.yml
   testinput/dirac_soca_cov.yml
-  testinput/dirac_socahyb_cov.yml  
+  testinput/dirac_socahyb_cov.yml
   testinput/enshofx.yml
   testinput/ensvariance.yml
   testinput/forecast_identity.yml
@@ -25,7 +25,7 @@ list( APPEND soca_test_input
   testinput/increment_test.yml
   testinput/linearmodel_test.yml
   testinput/model_test.yml
-  testinput/parameters_bump_loc.yml  
+  testinput/parameters_bump_loc.yml
   testinput/parameters_bump_cov_lct.yml
   testinput/parameters_bump_cov_nicas.yml
   testinput/state_test.yml
@@ -48,7 +48,7 @@ list( APPEND soca_test_output
   testoutput/enshofx.test
   testoutput/ensvariance.test
   testoutput/forecast_identity.test
-  testoutput/forecast_identity_cice.test  
+  testoutput/forecast_identity_cice.test
   testoutput/forecast_mom6.test
   testoutput/genenspert.test
   testoutput/hofx.test
@@ -173,7 +173,7 @@ ecbuild_add_test( TARGET test_soca_forecast_identity_cice
                       testinput/forecast_identity_cice.yml"
                       testoutput/forecast_identity_cice.test
                   DEPENDS soca_forecast.x)
-		
+
 # Test mom6 forecast
 ecbuild_add_test( TARGET test_soca_forecast_mom6
                   MPI ${MPI_SOCA_TESTS}
@@ -206,7 +206,7 @@ ecbuild_add_test( TARGET test_soca_enspert
 # #Test below can take a few hours to complete. Commented out for now
 # ecbuild_add_test( TARGET test_soca_covar_lengthscale
 #                   TYPE SCRIPT
-# 		              COMMAND ./compare.sh
+#                     COMMAND ./compare.sh
 #                   ARGS
 #                       "${CMAKE_BINARY_DIR}/bin/soca_staticbinit.x
 #                       testinput/static_scale_binit.yml"
@@ -262,31 +262,31 @@ ecbuild_add_test( TARGET  test_soca_linearmodel
 ecbuild_add_test( TARGET test_soca_balance
                   MPI ${MPI_SOCA_TESTS}
                   SOURCES executables/TestVariableChange.cc
-                  ARGS "testinput/balance.yml"
+                  ARGS    "testinput/balance.yml"
                   LIBS    soca )
 
 ecbuild_add_test( TARGET test_soca_bkgerrfilt
                   MPI ${MPI_SOCA_TESTS}
                   SOURCES executables/TestVariableChange.cc
-                  ARGS "testinput/bkgerrfilt.yml"
+                  ARGS    "testinput/bkgerrfilt.yml"
                   LIBS    soca )
 
 ecbuild_add_test( TARGET test_soca_bkgerrsoca
                   MPI ${MPI_SOCA_TESTS}
                   SOURCES executables/TestVariableChange.cc
-                  ARGS "testinput/bkgerrsoca.yml"
+                  ARGS    "testinput/bkgerrsoca.yml"
                   LIBS    soca )
 
 ecbuild_add_test( TARGET test_soca_bkgerrgodas
                   MPI ${MPI_SOCA_TESTS}
                   SOURCES executables/TestVariableChange.cc
-                  ARGS "testinput/bkgerrgodas.yml"
+                  ARGS    "testinput/bkgerrgodas.yml"
                   LIBS    soca )
 
 ecbuild_add_test( TARGET test_soca_vertconv
                   MPI ${MPI_SOCA_TESTS}
                   SOURCES executables/TestVariableChange.cc
-                  ARGS "testinput/vertconv.yml"
+                  ARGS    "testinput/vertconv.yml"
                   LIBS    soca )
 
 
@@ -312,9 +312,9 @@ ecbuild_add_test( TARGET test_soca_parameters_bump_loc
                   TYPE SCRIPT
                   COMMAND ./compare.sh
                   ARGS
-		      "${CMAKE_BINARY_DIR}/bin/soca_parameters.x
-                       testinput/parameters_bump_loc.yml"
-                       testoutput/parameters_bump_loc.test
+                      "${CMAKE_BINARY_DIR}/bin/soca_parameters.x
+                      testinput/parameters_bump_loc.yml"
+                      testoutput/parameters_bump_loc.test
                   DEPENDS soca_parameters.x)
 
 ecbuild_add_test( TARGET test_soca_parameters_bump_cov_lct
@@ -322,9 +322,10 @@ ecbuild_add_test( TARGET test_soca_parameters_bump_cov_lct
                   MPI ${MPI_SOCA_TESTS}
                   TYPE SCRIPT
                   COMMAND ${CMAKE_BINARY_DIR}/bin/compare.sh
-                  ARGS "${CMAKE_BINARY_DIR}/bin/soca_parameters.x
-                       testinput/parameters_bump_cov_lct.yml"
-                       testoutput/parameters_bump_cov_lct.test
+                  ARGS
+                      "${CMAKE_BINARY_DIR}/bin/soca_parameters.x
+                      testinput/parameters_bump_cov_lct.yml"
+                      testoutput/parameters_bump_cov_lct.test
                   DEPENDS soca_parameters.x)
 
 ecbuild_add_test( TARGET test_soca_parameters_bump_cov_nicas
@@ -332,9 +333,10 @@ ecbuild_add_test( TARGET test_soca_parameters_bump_cov_nicas
                   MPI ${MPI_SOCA_TESTS}
                   TYPE SCRIPT
                   COMMAND ${CMAKE_BINARY_DIR}/bin/compare.sh
-                  ARGS "${CMAKE_BINARY_DIR}/bin/soca_parameters.x
-                       testinput/parameters_bump_cov_nicas.yml"
-                       testoutput/parameters_bump_cov_nicas.test
+                  ARGS
+                      "${CMAKE_BINARY_DIR}/bin/soca_parameters.x
+                      testinput/parameters_bump_cov_nicas.yml"
+                      testoutput/parameters_bump_cov_nicas.test
                   DEPENDS soca_parameters.x)
 
 ecbuild_add_test( TARGET test_soca_dirac_bump_cov
