@@ -34,7 +34,7 @@ namespace soca {
   }
   // -----------------------------------------------------------------------------
   void HorizConv::multiply(const Increment & dxa, Increment & dxm) const {
-    // dxm = K dxa
+    // dxm = C dxa
     soca_horizconv_mult_f90(keyFtnConfig_,
                          dxa.fields().toFortran(),
                          dxm.fields().toFortran());
@@ -45,7 +45,7 @@ namespace soca {
   }
   // -----------------------------------------------------------------------------
   void HorizConv::multiplyAD(const Increment & dxm, Increment & dxa) const {
-    // dxa = K^T dxm
+    // dxa = C dxm (C = C^T)
     soca_horizconv_mult_f90(keyFtnConfig_,
                          dxm.fields().toFortran(),
                          dxa.fields().toFortran());
