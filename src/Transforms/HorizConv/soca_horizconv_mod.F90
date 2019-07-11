@@ -9,37 +9,24 @@ module soca_horizconv_mod
   use config_mod
   use datetime_mod
   use iso_c_binding
-  use kinds
   use soca_fields
-  use soca_geom_mod, only : geom_get_domain_indices
-  use soca_utils
-  use soca_omb_stats_mod
-  use fckit_mpi_module
 
   implicit none
 
+  private
+  public :: soca_horizconv_setup, soca_horizconv_mult, soca_horizconv_type
+    
   !> Fortran derived type to hold configuration D
-  type :: soca_horizconv_config
+  type :: soca_horizconv_type
 
-  end type soca_horizconv_config
+  end type soca_horizconv_type
 
-#define LISTED_TYPE soca_horizconv_config
-
-  !> Linked list interface - defines registry_t type
-#include "oops/util/linkedList_i.f"
-
-  !> Global registry
-  type(registry_t) :: soca_horizconv_registry
-
-  ! ------------------------------------------------------------------------------
 contains
-  ! ------------------------------------------------------------------------------
-  !> Linked list implementation
-#include "oops/util/linkedList_c.f"
+
   ! ------------------------------------------------------------------------------
   !> Setup the static background error
   subroutine soca_horizconv_setup(c_conf, self, bkg)
-    type(soca_horizconv_config), intent(inout) :: self
+    type(soca_horizconv_type), intent(inout) :: self
     type(soca_field),    target, intent(in) :: bkg
     type(c_ptr),                 intent(in) :: c_conf
 
@@ -50,7 +37,7 @@ contains
   ! ------------------------------------------------------------------------------
   !> Apply background error: dxm = D dxa
   subroutine soca_horizconv_mult(self, dxa, dxm)
-    type(soca_horizconv_config),    intent(in) :: self
+    type(soca_horizconv_type),    intent(in) :: self
     type(soca_field),            intent(in) :: dxa
     type(soca_field),         intent(inout) :: dxm
 

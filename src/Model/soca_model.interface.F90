@@ -91,6 +91,7 @@ subroutine c_soca_initialize_integration(c_key_model, c_key_state) &
 
   use iso_c_binding
   use soca_fields_mod_c
+  use soca_fields
   use soca_model_mod
   use mpi, only: mpi_comm_world
   use mpp_mod, only: mpp_init
@@ -120,6 +121,7 @@ subroutine c_soca_finalize_integration(c_key_model, c_key_state) &
 
   use iso_c_binding
   use soca_fields_mod_c
+  use soca_fields
   use soca_model_mod
   use mpi, only: mpi_comm_world
   use mpp_mod, only: mpp_init
@@ -149,6 +151,7 @@ subroutine c_soca_propagate(c_key_model, c_key_state, c_key_date) bind(c,name='s
   use iso_c_binding
   use datetime_mod
   use soca_fields_mod_c
+  use soca_fields
   use soca_model_mod
 
   implicit none
