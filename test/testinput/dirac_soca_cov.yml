@@ -23,7 +23,9 @@ Covariance:
   lsqrt: 1
   mpicom: 2
   strategy: specific_univariate
-  date: *date 
+  date: *date
+  variables: &soca_vars [cicen, hicen, socn, tocn, ssh, hocn]
+
   variable_changes:
 
   - varchange: BkgErrFILT

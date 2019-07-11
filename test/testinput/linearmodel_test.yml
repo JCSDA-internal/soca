@@ -48,3 +48,4 @@ Covariance:
   lsqrt: 1
   mpicom: 2
   date: *date
+  variables: *soca_vars
