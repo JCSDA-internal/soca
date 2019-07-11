@@ -1,9 +1,10 @@
 list( APPEND soca_test_input
   compare.sh
+  testinput/3dhyb.yml
+  testinput/3dhybfgat.yml
   testinput/3dvar_godas.yml
   testinput/3dvar_soca.yml
   testinput/3dvarfgat.yml
-  testinput/4dhyb.yml
   testinput/balance.yml
   testinput/bkgerrfilt.yml
   testinput/bkgerrgodas.yml
@@ -11,6 +12,7 @@ list( APPEND soca_test_input
   testinput/checkpointmodel.yml
   testinput/dirac_bump_cov.yml
   testinput/dirac_soca_cov.yml
+  testinput/dirac_socahyb_cov.yml
   testinput/enshofx.yml
   testinput/ensvariance.yml
   testinput/forecast_identity.yml
@@ -22,34 +24,37 @@ list( APPEND soca_test_input
   testinput/hofx3d.yml
   testinput/increment_test.yml
   testinput/linearmodel_test.yml
+  testinput/marine2ioda.yml
   testinput/model_test.yml
   testinput/parameters_bump_cov_lct.yml
   testinput/parameters_bump_cov_nicas.yml
+  testinput/parameters_bump_loc.yml
   testinput/state_test.yml
   testinput/static_SocaError_init.yml
   testinput/static_SocaError_test.yml
   testinput/vertconv.yml
-  testinput/marine2ioda.yml
 )
 
 list( APPEND soca_test_output
+  testoutput/3dhyb.test
+  testoutput/3dhybfgat.test
   testoutput/3dvar_godas.test
   testoutput/3dvar_soca.test
   testoutput/3dvarfgat.test
-  testoutput/4dhyb.test
   testoutput/checkpointmodel.test
   testoutput/dirac_bump_cov.test
   testoutput/dirac_soca_cov.test
+  testoutput/dirac_socahyb_cov.test
   testoutput/enshofx.test
   testoutput/ensvariance.test
   testoutput/forecast_identity.test
-  testoutput/forecast_identity_cice.test  
+  testoutput/forecast_identity_cice.test
   testoutput/forecast_mom6.test
   testoutput/genenspert.test
   testoutput/hofx.test
   testoutput/hofx3d.test
-  testoutput/parameters_bump_cov_lct.test
   testoutput/parameters_bump_cov_nicas.test
+  testoutput/parameters_bump_loc.test
 )
 
 list( APPEND soca_model_param
@@ -168,7 +173,7 @@ ecbuild_add_test( TARGET test_soca_forecast_identity_cice
                       testinput/forecast_identity_cice.yml"
                       testoutput/forecast_identity_cice.test
                   DEPENDS soca_forecast.x)
-		
+
 # Test mom6 forecast
 ecbuild_add_test( TARGET test_soca_forecast_mom6
                   MPI ${MPI_SOCA_TESTS}
@@ -201,7 +206,7 @@ ecbuild_add_test( TARGET test_soca_enspert
 # #Test below can take a few hours to complete. Commented out for now
 # ecbuild_add_test( TARGET test_soca_covar_lengthscale
 #                   TYPE SCRIPT
-# 		              COMMAND ./compare.sh
+#                     COMMAND ./compare.sh
 #                   ARGS
 #                       "${CMAKE_BINARY_DIR}/bin/soca_staticbinit.x
 #                       testinput/static_scale_binit.yml"
@@ -257,31 +262,31 @@ ecbuild_add_test( TARGET  test_soca_linearmodel
 ecbuild_add_test( TARGET test_soca_balance
                   MPI ${MPI_SOCA_TESTS}
                   SOURCES executables/TestVariableChange.cc
-                  ARGS "testinput/balance.yml"
+                  ARGS    "testinput/balance.yml"
                   LIBS    soca )
 
 ecbuild_add_test( TARGET test_soca_bkgerrfilt
                   MPI ${MPI_SOCA_TESTS}
                   SOURCES executables/TestVariableChange.cc
-                  ARGS "testinput/bkgerrfilt.yml"
+                  ARGS    "testinput/bkgerrfilt.yml"
                   LIBS    soca )
 
 ecbuild_add_test( TARGET test_soca_bkgerrsoca
                   MPI ${MPI_SOCA_TESTS}
                   SOURCES executables/TestVariableChange.cc
-                  ARGS "testinput/bkgerrsoca.yml"
+                  ARGS    "testinput/bkgerrsoca.yml"
                   LIBS    soca )
 
 ecbuild_add_test( TARGET test_soca_bkgerrgodas
                   MPI ${MPI_SOCA_TESTS}
                   SOURCES executables/TestVariableChange.cc
-                  ARGS "testinput/bkgerrgodas.yml"
+                  ARGS    "testinput/bkgerrgodas.yml"
                   LIBS    soca )
 
 ecbuild_add_test( TARGET test_soca_vertconv
                   MPI ${MPI_SOCA_TESTS}
                   SOURCES executables/TestVariableChange.cc
-                  ARGS "testinput/vertconv.yml"
+                  ARGS    "testinput/vertconv.yml"
                   LIBS    soca )
 
 
@@ -300,17 +305,27 @@ ecbuild_add_test( TARGET test_soca_ensvariance
                       testoutput/ensvariance.test
                   DEPENDS soca_ensvariance.x)
 
-
 # The following two tests are slow, how can we speed it up?
 # Use another model grid configuration with even fewer grid cells?
+ecbuild_add_test( TARGET test_soca_parameters_bump_loc
+                  MPI ${MPI_SOCA_TESTS}
+                  TYPE SCRIPT
+                  COMMAND ./compare.sh
+                  ARGS
+                      "${CMAKE_BINARY_DIR}/bin/soca_parameters.x
+                      testinput/parameters_bump_loc.yml"
+                      testoutput/parameters_bump_loc.test
+                  DEPENDS soca_parameters.x)
+
 ecbuild_add_test( TARGET test_soca_parameters_bump_cov_lct
                   ENABLED OFF
                   MPI ${MPI_SOCA_TESTS}
                   TYPE SCRIPT
                   COMMAND ${CMAKE_BINARY_DIR}/bin/compare.sh
-                  ARGS "${CMAKE_BINARY_DIR}/bin/soca_parameters.x
-                       testinput/parameters_bump_cov_lct.yml"
-                       testoutput/parameters_bump_cov_lct.test
+                  ARGS
+                      "${CMAKE_BINARY_DIR}/bin/soca_parameters.x
+                      testinput/parameters_bump_cov_lct.yml"
+                      testoutput/parameters_bump_cov_lct.test
                   DEPENDS soca_parameters.x)
 
 ecbuild_add_test( TARGET test_soca_parameters_bump_cov_nicas
@@ -318,9 +333,10 @@ ecbuild_add_test( TARGET test_soca_parameters_bump_cov_nicas
                   MPI ${MPI_SOCA_TESTS}
                   TYPE SCRIPT
                   COMMAND ${CMAKE_BINARY_DIR}/bin/compare.sh
-                  ARGS "${CMAKE_BINARY_DIR}/bin/soca_parameters.x
-                       testinput/parameters_bump_cov_nicas.yml"
-                       testoutput/parameters_bump_cov_nicas.test
+                  ARGS
+                      "${CMAKE_BINARY_DIR}/bin/soca_parameters.x
+                      testinput/parameters_bump_cov_nicas.yml"
+                      testoutput/parameters_bump_cov_nicas.test
                   DEPENDS soca_parameters.x)
 
 ecbuild_add_test( TARGET test_soca_dirac_bump_cov
@@ -342,6 +358,16 @@ ecbuild_add_test( TARGET test_soca_dirac_soca_cov
                       "${CMAKE_BINARY_DIR}/bin/soca_dirac.x
                       testinput/dirac_soca_cov.yml"
                       testoutput/dirac_soca_cov.test
+                  DEPENDS soca_dirac.x )
+
+ecbuild_add_test( TARGET test_soca_dirac_socahyb_cov
+                  MPI ${MPI_SOCA_TESTS}
+                  TYPE SCRIPT
+                  COMMAND ./compare.sh
+                  ARGS
+                      "${CMAKE_BINARY_DIR}/bin/soca_dirac.x
+                      testinput/dirac_socahyb_cov.yml"
+                      testoutput/dirac_socahyb_cov.test
                   DEPENDS soca_dirac.x )
 
 #ecbuild_add_test( TARGET  test_soca_localization
@@ -405,6 +431,26 @@ ecbuild_add_test( TARGET test_soca_3dvargodas
                       "${CMAKE_BINARY_DIR}/bin/soca_3dvar.x
                       testinput/3dvar_godas.yml"
                       testoutput/3dvar_godas.test
+                  DEPENDS soca_3dvar.x)
+
+ecbuild_add_test( TARGET test_soca_3dhyb
+                  MPI ${MPI_SOCA_TESTS}
+                  TYPE SCRIPT
+                  COMMAND ./compare.sh
+                  ARGS
+                      "${CMAKE_BINARY_DIR}/bin/soca_3dvar.x
+                      testinput/3dhyb.yml"
+                      testoutput/3dhyb.test
+                  DEPENDS soca_3dvar.x)
+
+ecbuild_add_test( TARGET test_soca_3dhybfgat
+                  MPI ${MPI_SOCA_TESTS}
+                  TYPE SCRIPT
+                  COMMAND ./compare.sh
+                  ARGS
+                      "${CMAKE_BINARY_DIR}/bin/soca_3dvar.x
+                      testinput/3dhybfgat.yml"
+                      testoutput/3dhybfgat.test
                   DEPENDS soca_3dvar.x)
 
 ecbuild_add_test( TARGET test_soca_checkpointmodel
