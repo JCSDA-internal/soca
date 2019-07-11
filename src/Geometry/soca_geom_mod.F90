@@ -137,10 +137,12 @@ contains
 
     integer :: nxny(2), nx, ny
     integer :: nzo, nzi, nzs
+    integer :: isd, ied, jsd, jed
 
     ! Get indices of data and compute domain
     call geom_get_domain_indices(self, "compute", self%isc, self%iec, self%jsc, self%jec)
-    call geom_get_domain_indices(self, "data", self%isd, self%ied, self%jsd, self%jed)
+    call geom_get_domain_indices(self, "data", isd, ied, jsd, jed)
+    self%isd = isd ;  self%ied = ied ; self%jsd = jsd; self%jed = jed
 
     call geom_get_domain_indices(self, "compute", self%iscl, self%iecl, self%jscl, self%jecl, local=.true.)
     call geom_get_domain_indices(self, "data", self%isdl, self%iedl, self%jsdl, self%jedl, local=.true.)
@@ -158,11 +160,11 @@ contains
     self%ny = ny
 
     ! Allocate arrays on compute domain
-    allocate(self%lon(self%isd:self%ied,self%jsd:self%jed))
-    allocate(self%lat(self%isd:self%ied,self%jsd:self%jed))
-    allocate(self%mask2d(self%isd:self%ied,self%jsd:self%jed))
-    allocate(self%cell_area(self%isd:self%ied,self%jsd:self%jed))
-    allocate(self%rossby_radius(self%isd:self%ied,self%jsd:self%jed))
+    allocate(self%lon(isd:ied,jsd:jed))
+    allocate(self%lat(isd:ied,jsd:jed))
+    allocate(self%mask2d(isd:ied,jsd:jed))
+    allocate(self%cell_area(isd:ied,jsd:jed))
+    allocate(self%rossby_radius(isd:ied,jsd:jed))
 
     self%lon = self%G%GeoLonT
     self%lat = self%G%GeoLatT
@@ -205,6 +207,7 @@ contains
     real(kind=kind_real) :: dum
     real(kind=kind_real), allocatable :: lon(:),lat(:),rr(:)
     type(kdtree) :: kd
+    integer :: isc, iec, jsc, jec
     integer :: index(1), nn, io
     character(len=256) :: geom_output_file = "geom_output.nc"
 
@@ -226,10 +229,12 @@ contains
     !--- Initialize kd-tree
     kd = kdtree_create(n, lon, lat)
 
+    isc = self%isc ;  iec = self%iec ; jsc = self%jsc ; jec = self%jec
+
     !--- Find nearest neighbor
     nn=1 ! Num neighbors
-    do i = self%isc, self%iec
-       do j = self%jsc, self%jec
+    do i = isc, iec
+       do j = jsc, jec
           call kdtree_k_nearest_neighbors(kd,self%lon(i,j),self%lat(i,j),1,index)
           self%rossby_radius(i,j)=rr(index(1))*1e3
        end do
@@ -248,27 +253,30 @@ contains
     ! select wet gridpoints and shoreline mask
     class(soca_geom), intent(inout) :: self
     integer :: i, j, ns, cnt
+    integer :: isc, iec, jsc, jec
     real(kind=kind_real) :: shoretest
 
+    isc = self%isc ; iec = self%iec ; jsc = self%jsc ; jec = self%jec
+
     ! Allocate shoremask
-    allocate(self%shoremask(self%isc:self%iec,self%jsc:self%jec))
+    allocate(self%shoremask(isc:iec,jsc:jec))
 
     ! Extend mask 2 grid point inland TODO:NEED HALO FOR MASK!!!
     self%shoremask = self%mask2d
-    do i = self%isc, self%iec
-       do j = self%jsc, self%jec
+    do i = isc, iec
+       do j = jsc, jec
           self%shoremask(i,j) = self%mask2d(i,j)
        end do
     end do
 
     ! Get number of valid points
-    ns = int(sum(self%shoremask(self%isc:self%iec,self%jsc:self%jec)))
+    ns = int(sum(self%shoremask(isc:iec,jsc:jec)))
     allocate(self%ij(2,ns))
 
 !!$    ! Save shoreline + ocean grid point
 !!$    cnt = 1
-!!$    do i = self%isc, self%iec
-!!$       do j = self%jsc, self%jec
+!!$    do i = isc, iec
+!!$       do j = jsc, jec
 !!$          if (shoretest.gt.0.0d0) then
 !!$             self%ij(1, cnt) = i
 !!$             self%ij(2, cnt) = j
@@ -400,10 +408,6 @@ contains
     class(soca_geom),                  intent(in   ) :: self
     real(kind=kind_real),              intent(inout) :: dx_struct(:,:)
     real(kind=kind_real), allocatable, intent(inout) :: dx_unstruct(:,:,:,:)
-
-    integer :: nc0a
-    integer :: isc, iec, jsc, jec
-    integer :: isd, ied, jsd, jed
 
     ! Local indices for compute domain (no halo)
 
