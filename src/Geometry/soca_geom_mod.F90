@@ -18,7 +18,6 @@ module soca_geom_mod
   use kinds
   use fms_mod,         only : get_mosaic_tile_grid, write_data, set_domain, read_data
   use fms_io_mod,      only : fms_io_init, fms_io_exit
-  use mpi
   use iso_c_binding
 
   implicit none
@@ -256,6 +255,7 @@ contains
     integer :: isc, iec, jsc, jec
     real(kind=kind_real) :: shoretest
 
+    ! Indices for compute domain (no halo)
     isc = self%isc ; iec = self%iec ; jsc = self%jsc ; jec = self%jec
 
     ! Allocate shoremask
@@ -409,11 +409,9 @@ contains
     real(kind=kind_real),              intent(inout) :: dx_struct(:,:)
     real(kind=kind_real), allocatable, intent(inout) :: dx_unstruct(:,:,:,:)
 
-    ! Local indices for compute domain (no halo)
-
-    dx_struct(self%isc:self%iec, self%jsc:self%jec) = &
-    & reshape(dx_unstruct, (/size(dx_struct(self%isc:self%iec, self%jsc:self%jec),1), &
-    &                        size(dx_struct(self%isc:self%iec, self%jsc:self%jec),2)/))
+    dx_struct(self%iscl:self%iecl, self%jscl:self%jecl) = &
+    & reshape(dx_unstruct, (/size(dx_struct(self%iscl:self%iecl, self%jscl:self%jecl),1), &
+    &                        size(dx_struct(self%iscl:self%iecl, self%jscl:self%jecl),2)/))
 
     deallocate(dx_unstruct)
 
