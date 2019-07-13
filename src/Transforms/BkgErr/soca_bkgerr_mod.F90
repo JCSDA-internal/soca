@@ -12,7 +12,6 @@ module soca_bkgerr_mod
   use kinds
   use soca_bkgerrutil_mod
   use soca_fields
-  use soca_geom_mod, only : geom_get_domain_indices
   use soca_utils
   use soca_omb_stats_mod
   use fckit_mpi_module
@@ -93,7 +92,9 @@ contains
     self%bkg => bkg
 
     ! Indices for compute domain (no halo)
-    call geom_get_domain_indices(bkg%geom, "compute", isc, iec, jsc, jec)
+    isc=bkg%geom%isc; iec=bkg%geom%iec
+    jsc=bkg%geom%jsc; jec=bkg%geom%jec
+
     self%isc=isc; self%iec=iec; self%jsc=jsc; self%jec=jec
 
     ! Apply config bounds to background error
@@ -114,7 +115,8 @@ contains
     integer :: isc, iec, jsc, jec, i, j, k
 
     ! Indices for compute domain (no halo)
-    call geom_get_domain_indices(self%bkg%geom, "compute", isc, iec, jsc, jec)
+    isc=self%bkg%geom%isc; iec=self%bkg%geom%iec
+    jsc=self%bkg%geom%jsc; jec=self%bkg%geom%jec
 
     do i = isc, iec
        do j = jsc, jec
@@ -128,8 +130,8 @@ contains
     call dxm%ocnsfc%schur(self%std_bkgerr%ocnsfc)
 
     ! Sea-ice
-    call dxm%seaice%copy(dxa%seaice)    
-    call dxm%seaice%schur(self%std_bkgerr%seaice)    
+    call dxm%seaice%copy(dxa%seaice)
+    call dxm%seaice%schur(self%std_bkgerr%seaice)
 
   end subroutine soca_bkgerr_mult
 

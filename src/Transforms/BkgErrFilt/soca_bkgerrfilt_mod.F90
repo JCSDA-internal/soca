@@ -11,7 +11,6 @@ module soca_bkgerrfilt_mod
   use iso_c_binding
   use kinds
   use soca_fields
-  use soca_geom_mod, only : geom_get_domain_indices
   use soca_utils
   use soca_omb_stats_mod
   use fckit_mpi_module
@@ -72,8 +71,8 @@ contains
     self%bkg => bkg
 
     ! Setup rescaling and masks
-    call geom_get_domain_indices(bkg%geom, "compute", isc, iec, jsc, jec)
-    self%isc=isc; self%iec=iec; self%jsc=jsc; self%jec=jec
+    isc=bkg%geom%isc ; self%isc=isc ; iec=bkg%geom%iec ; self%iec=iec
+    jsc=bkg%geom%jsc ; self%jsc=jsc ; jec=bkg%geom%jec ; self%jec=jec
     do i = isc, iec
        do j = jsc, jec
           if (sum(bkg%hocn(i,j,:)).gt.self%ocn_depth_min) then
@@ -131,7 +130,7 @@ contains
              dxm%socn(i,j,:) = 0.0_kind_real
 
              dxm%seaice%cicen(i,j,:) = 0.0_kind_real
-             dxm%seaice%hicen(i,j,:) = 0.0_kind_real 
+             dxm%seaice%hicen(i,j,:) = 0.0_kind_real
           end if
        end do
     end do

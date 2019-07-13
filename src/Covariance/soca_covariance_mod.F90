@@ -13,7 +13,7 @@ module soca_covariance_mod
   use oobump_mod, only: bump_read_conf
   use soca_fields
   use soca_geom_mod_c
-  use soca_geom_mod, only : soca_geom, geom_get_domain_indices
+  use soca_geom_mod, only : soca_geom
   use soca_utils
   use type_bump
   use type_nam
@@ -64,7 +64,7 @@ contains
     type(oops_vars),          intent(in) :: vars   !< List of variables
     
     character(len=3)  :: domain
-    integer :: is, ie, js, je, i, j, ivar
+    integer :: isc, iec, jsc, jec, i, j, ivar
     logical :: init_seaice, init_ocean
     
     ! Setup list of variables to apply B on
@@ -107,12 +107,15 @@ contains
     ! Associate background
     self%bkg => bkg
 
+    ! Indices for compute domain (no halo)
+    isc = bkg%geom%isc ; iec = bkg%geom%iec
+    jsc = bkg%geom%jsc ; jec = bkg%geom%jec
+
     ! Define seaice mask from background seaice fraction
-    call geom_get_domain_indices(bkg%geom, "compute", is, ie, js, je)
-    allocate(self%seaice_mask(is:ie, js:je))
+    allocate(self%seaice_mask(isc:iec, jsc:jec))
     self%seaice_mask = 0
-    do i = is, ie
-       do j = js, je
+    do i = isc, iec
+       do j = jsc, jec
           if (sum(bkg%seaice%cicen(i, j, 2:), 1) * bkg%geom%mask2d(i, j) .gt. 0.0) then
              self%seaice_mask(i, j) = 1
           else
@@ -219,6 +222,7 @@ contains
              end do
           end select
        end do
+
   end subroutine soca_cov_C_mult
 
   ! ------------------------------------------------------------------------------
@@ -227,7 +231,6 @@ contains
     class(soca_cov),  intent(inout) :: self !< The covariance structure
     type(soca_field), intent(inout) :: dx   !< Input: Increment
                                             !< Output: C^1/2 dx
-
     integer :: icat, izo, ivar
 
     do ivar = 1, self%vars%nv
@@ -306,7 +309,7 @@ contains
 
     !--- Initialize geometry to be passed to NICAS
     ! Indices for compute domain (no halo)
-    call geom_get_domain_indices(geom, "compute", isc, iec, jsc, jec)
+    isc = geom%isc ; iec = geom%iec ; jsc = geom%jsc ; jec = geom%jec
 
     nv = 1                                     !< Number of variables
     nl0 = 1                                    !< Number of independent levels

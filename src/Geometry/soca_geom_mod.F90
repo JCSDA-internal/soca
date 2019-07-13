@@ -5,7 +5,7 @@
 !
 
 module soca_geom_mod
-  use config_mod  
+  use config_mod
   use MOM_grid,                  only : ocean_grid_type
   use MOM_verticalGrid,          only : verticalGrid_type
   use soca_mom6
@@ -18,7 +18,6 @@ module soca_geom_mod
   use kinds
   use fms_mod,         only : get_mosaic_tile_grid, write_data, set_domain, read_data
   use fms_io_mod,      only : fms_io_init, fms_io_exit
-  use mpi
   use iso_c_binding
 
   implicit none
@@ -32,19 +31,19 @@ module soca_geom_mod
      type(ocean_grid_type)            :: G          !< Ocean/sea-ice horizontal grid
      type(VerticalGrid_type), pointer :: GV         !< Ocean vertical grid
      type(soca_ice_column)            :: ice_column !< Sea-ice geometry
-     integer :: nx
-     integer :: ny
-     integer :: nzo
-     integer :: nzi
-     integer :: nzs
-     integer :: ncat
-     real(kind=kind_real), allocatable :: lon(:,:)       !< The horizontal grid type     !< 2D array of longitude
-     real(kind=kind_real), allocatable :: lat(:,:)       !< 2D array of latitude
-     real(kind=kind_real), allocatable :: mask2d(:,:)    !< 0 = land 1 = ocean
-     real(kind=kind_real), allocatable :: shoremask(:,:) ! Includes shoreline as ocean point (useful for BUMP)
-     integer,              allocatable :: ij(:,:)        ! index of ocean+shore line in compute grid
-     real(kind=kind_real), allocatable :: cell_area(:,:)
-     real(kind=kind_real), allocatable :: rossby_radius(:,:)
+     integer :: nx, ny, nzo
+     integer :: nzi, nzs, ncat
+     integer :: isc, iec, jsc, jec  !< indices of compute domain
+     integer :: isd, ied, jsd, jed  !< indices of data domain
+     integer :: iscl, iecl, jscl, jecl  !< indices of local compute domain
+     integer :: isdl, iedl, jsdl, jedl  !< indices of local data domain
+     real(kind=kind_real), allocatable, dimension(:,:) :: lon, lat  !< horizontal grid type
+                                                                   !< 2D array of longitude, latitude
+     real(kind=kind_real), allocatable, dimension(:,:) :: mask2d    !< 0 = land 1 = ocean
+     real(kind=kind_real), allocatable, dimension(:,:) :: shoremask ! Includes shoreline as ocean point (useful for BUMP)
+     integer,              allocatable, dimension(:,:) :: ij        ! index of ocean+shore line in compute grid
+     real(kind=kind_real), allocatable, dimension(:,:) :: cell_area
+     real(kind=kind_real), allocatable, dimension(:,:) :: rossby_radius
      logical :: save_local_domain ! If true, save the local geometry for each pe.
    contains
      procedure :: init => geom_init
@@ -122,7 +121,7 @@ contains
     class(soca_geom), intent(out) :: other
 
     other%G = self%G
-    !other%GV = self%GV
+    !other%GV = self%GV  ! CAREFUL, GV is a pointer!!!
     other%ice_column = self%ice_column
     call geom_allocate(other)
 
@@ -136,12 +135,17 @@ contains
     class(soca_geom), intent(inout) :: self
 
     integer :: nxny(2), nx, ny
-    integer :: is, ie, js, je, nzo, nzi, nzs
+    integer :: nzo, nzi, nzs
     integer :: isd, ied, jsd, jed
 
     ! Get indices of data and compute domain
-    call geom_get_domain_indices(self, "compute", is, ie, js, je)
-    call geom_get_domain_indices(self, "data   ", isd, ied, jsd, jed)
+    call geom_get_domain_indices(self, "compute", self%isc, self%iec, self%jsc, self%jec)
+    call geom_get_domain_indices(self, "data", isd, ied, jsd, jed)
+    self%isd = isd ;  self%ied = ied ; self%jsd = jsd; self%jed = jed
+
+    call geom_get_domain_indices(self, "compute", self%iscl, self%iecl, self%jscl, self%jecl, local=.true.)
+    call geom_get_domain_indices(self, "data", self%isdl, self%iedl, self%jsdl, self%jedl, local=.true.)
+
     nzo = self%G%ke
 
     ! Extract geometry of interest from model's data structure.
@@ -224,9 +228,9 @@ contains
     !--- Initialize kd-tree
     kd = kdtree_create(n, lon, lat)
 
-    !--- Find nearest neighbor
-    call geom_get_domain_indices(self, "compute", isc, iec, jsc, jec)
+    isc = self%isc ;  iec = self%iec ; jsc = self%jsc ; jec = self%jec
 
+    !--- Find nearest neighbor
     nn=1 ! Num neighbors
     do i = isc, iec
        do j = jsc, jec
@@ -247,30 +251,32 @@ contains
     ! Ignores inland mask grid points and
     ! select wet gridpoints and shoreline mask
     class(soca_geom), intent(inout) :: self
-    integer :: is, ie, js, je
     integer :: i, j, ns, cnt
+    integer :: isc, iec, jsc, jec
     real(kind=kind_real) :: shoretest
 
+    ! Indices for compute domain (no halo)
+    isc = self%isc ; iec = self%iec ; jsc = self%jsc ; jec = self%jec
+
     ! Allocate shoremask
-    call geom_get_domain_indices(self, "compute", is, ie, js, je)
-    allocate(self%shoremask(is:ie,js:je))
+    allocate(self%shoremask(isc:iec,jsc:jec))
 
     ! Extend mask 2 grid point inland TODO:NEED HALO FOR MASK!!!
     self%shoremask = self%mask2d
-    do i = is, ie
-       do j = js, je
+    do i = isc, iec
+       do j = jsc, jec
           self%shoremask(i,j) = self%mask2d(i,j)
        end do
     end do
 
     ! Get number of valid points
-    ns = int(sum(self%shoremask(is:ie,js:je)))
+    ns = int(sum(self%shoremask(isc:iec,jsc:jec)))
     allocate(self%ij(2,ns))
 
 !!$    ! Save shoreline + ocean grid point
 !!$    cnt = 1
-!!$    do i = is, ie
-!!$       do j = js, je
+!!$    do i = isc, iec
+!!$       do j = jsc, jec
 !!$          if (shoretest.gt.0.0d0) then
 !!$             self%ij(1, cnt) = i
 !!$             self%ij(2, cnt) = j
@@ -291,7 +297,7 @@ contains
     integer :: pe
     character(len=8) :: fmt = '(I5.5)'
     character(len=1024) :: strpe
-    integer :: is, ie, js, je, ns
+    integer :: ns
     type(fckit_mpi_comm) :: f_comm
 
     ! Setup Communicator
@@ -313,8 +319,7 @@ contains
        write (strpe,fmt) pe
        geom_output_pe='geom_output_'//trim(strpe)//'.nc'
 
-       call geom_get_domain_indices(self, "compute", is, ie, js, je)
-       ns = (ie - is + 1) * (je - js + 1 )
+       ns = (self%iec - self%isc + 1) * (self%jec - self%jsc + 1 )
        call write2pe(reshape(self%shoremask,(/ns/)),'shoremask',geom_output_pe,.false.)
        call write2pe(reshape(self%mask2d,(/ns/)),'mask',geom_output_pe,.true.)
        call write2pe(reshape(self%lon,(/ns/)),'lon',geom_output_pe,.true.)
@@ -327,7 +332,7 @@ contains
   !> Get indices for compute or data domain
   subroutine geom_get_domain_indices(self, domain_type, is, ie, js, je, local)
     class(soca_geom), intent(in) :: self
-    character(7),           intent(in) :: domain_type
+    character(len=*),       intent(in) :: domain_type
     integer,               intent(out) :: is, ie, js, je
     logical,      optional, intent(in) :: local
 
@@ -365,7 +370,6 @@ contains
     ie = ubound(h,dim=1)
     js = lbound(h,dim=2)
     je = ubound(h,dim=2)
-    !call geom_get_domain_indices(self, "compute", is, ie, js, je)
 
     !allocate(z(is:ie, js:je, self%nzo))
 
@@ -382,7 +386,6 @@ contains
     end do
   end subroutine geom_thickness2depth
 
-
   ! ------------------------------------------------------------------------------
 
   subroutine geom_struct2unstruct(self, dx_struct, dx_unstruct)
@@ -390,15 +393,12 @@ contains
     real(kind=kind_real),              intent(in ) :: dx_struct(:,:)
     real(kind=kind_real), allocatable, intent(out) :: dx_unstruct(:,:,:,:)
 
-    integer :: isc, iec, jsc, jec, jjj, jz, il, ib, nc0a
+    integer :: nc0a
 
-    ! Indices for compute domain (no halo)
-    call geom_get_domain_indices(self, 'compute', &
-         &isc, iec, jsc, jec, local=.true.)
-
-    nc0a = (iec - isc + 1) * (jec - jsc + 1 )
+    nc0a = (self%iecl - self%iscl + 1) * (self%jecl - self%jscl + 1 )
     allocate(dx_unstruct(nc0a,1,1,1))
-    dx_unstruct = reshape( dx_struct(isc:iec, jsc:jec), (/nc0a,1,1,1/) )
+    dx_unstruct = &
+    &  reshape(dx_struct(self%iscl:self%iecl, self%jscl:self%jecl), (/nc0a,1,1,1/))
 
   end subroutine geom_struct2unstruct
 
@@ -409,19 +409,14 @@ contains
     real(kind=kind_real),              intent(inout) :: dx_struct(:,:)
     real(kind=kind_real), allocatable, intent(inout) :: dx_unstruct(:,:,:,:)
 
-    integer :: isc, iec, jsc, jec, jjj, jz, il, ib, nc0a
-
-    ! Indices for compute domain (no halo)
-    call geom_get_domain_indices(self, 'compute', &
-         &isc, iec, jsc, jec, local=.true.)
-
-    dx_struct(isc:iec, jsc:jec) = reshape(dx_unstruct,(/size(dx_struct(isc:iec, jsc:jec),1),&
-                                                       &size(dx_struct(isc:iec, jsc:jec),2)/))
+    dx_struct(self%iscl:self%iecl, self%jscl:self%jecl) = &
+    & reshape(dx_unstruct, (/size(dx_struct(self%iscl:self%iecl, self%jscl:self%jecl),1), &
+    &                        size(dx_struct(self%iscl:self%iecl, self%jscl:self%jecl),2)/))
 
     deallocate(dx_unstruct)
 
   end subroutine geom_unstruct2struct
 
-
+  ! ------------------------------------------------------------------------------
 
 end module soca_geom_mod

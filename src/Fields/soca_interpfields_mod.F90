@@ -14,7 +14,7 @@ module soca_interpfields_mod
   use soca_getvaltraj_mod
   use soca_bumpinterp2d_mod
   use soca_fields
-  use soca_geom_mod, only : soca_geom, geom_get_domain_indices
+  use soca_geom_mod, only : soca_geom
   use kinds
   use fckit_mpi_module, only: fckit_mpi_comm, fckit_mpi_sum
 
@@ -39,7 +39,8 @@ contains
     integer :: isc, iec, jsc, jec
 
     ! Indices for compute domain (no halo)
-    call geom_get_domain_indices(fld%geom, "compute", isc, iec, jsc, jec)
+    isc = fld%geom%isc ; iec = fld%geom%iec
+    jsc = fld%geom%jsc ; jec = fld%geom%jec
 
     ! Compute interpolation weights
     call horiz_interp%initialize(&
@@ -138,7 +139,8 @@ contains
     call check(fld)
 
     ! Indices for compute domain (no halo)
-    call geom_get_domain_indices(fld%geom, "compute", isc, iec, jsc, jec)
+    isc = fld%geom%isc ; iec = fld%geom%iec
+    jsc = fld%geom%jsc ; jec = fld%geom%jec
 
     ! Loop through ufo vars
     do ivar = 1, vars%nv
@@ -244,7 +246,8 @@ contains
     horiz_interp_p => traj%horiz_interp(1)
 
     ! Indices for compute domain (no halo)
-    call geom_get_domain_indices(incr%geom, "compute", isc, iec, jsc, jec)
+    isc = incr%geom%isc ; iec = incr%geom%iec
+    jsc = incr%geom%jsc ; jec = incr%geom%jec
 
     do ivar = 1, vars%nv
        ! Set number of levels/categories (nval)
