@@ -17,7 +17,7 @@ module soca_ocnsfc_mod
   use MOM_forcing_type,    only : forcing
   use random_mod
   use soca_geom_mod_c
-  use soca_geom_mod, only : soca_geom, geom_get_domain_indices
+  use soca_geom_mod, only : soca_geom
 
   implicit none
   private
@@ -58,7 +58,8 @@ contains
     integer :: isd, ied, jsd, jed
 
     ! Indices for data domain (with halo)
-    call geom_get_domain_indices(geom, "data   ", isd, ied, jsd, jed)
+    isd = geom%isd ; ied = geom%ied
+    jsd = geom%jsd ; jed = geom%jed
 
     ! Allocate ocean state
     if (.not.allocated(self%sw_rad)) allocate(self%sw_rad(isd:ied,jsd:jed))

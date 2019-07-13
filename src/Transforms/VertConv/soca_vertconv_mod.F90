@@ -9,7 +9,6 @@ module soca_vertconv_mod
   use iso_c_binding
   use kinds
   use soca_fields
-  use soca_geom_mod, only : geom_get_domain_indices
   use tools_func
   use type_mpl
 
@@ -49,10 +48,6 @@ contains
     type(soca_field), target, intent(in) :: traj
     type(c_ptr),              intent(in) :: c_conf
 
-    integer :: isc, iec, jsc, jec, i, j, k, nl
-
-    nl = size(bkg%hocn,3)
-
     ! Get configuration for vertical convolution
     self%lz_min       = config_get_real(c_conf, "Lz_min")
     self%lz_mld       = config_get_int(c_conf, "Lz_mld")
@@ -66,9 +61,8 @@ contains
     self%bkg => bkg
 
     ! Indices for compute domain (no halo)
-    call geom_get_domain_indices(bkg%geom, "compute", &
-         &isc, iec, jsc, jec)
-    self%isc=isc; self%iec=iec; self%jsc=jsc; self%jec=jec
+    self%isc=bkg%geom%isc; self%iec=bkg%geom%iec
+    self%jsc=bkg%geom%jsc; self%jec=bkg%geom%jec
 
   end subroutine soca_conv_setup
 

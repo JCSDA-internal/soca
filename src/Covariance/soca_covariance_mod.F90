@@ -14,7 +14,7 @@ module soca_covariance_mod
   use oobump_mod, only: bump_read_conf
   use soca_fields
   use soca_geom_mod_c
-  use soca_geom_mod, only : soca_geom, geom_get_domain_indices
+  use soca_geom_mod, only : soca_geom
   use soca_utils
   use type_bump
   use type_nam
@@ -67,7 +67,7 @@ contains
     type(soca_field), target, intent(in) :: bkg    !< Background
 
     character(len=3)  :: domain
-    integer :: is, ie, js, je, i, j
+    integer :: isc, iec, jsc, jec, i, j
 
     ! Set default ensemble perturbation scales to 1.0
     self%pert_scale%T = 1.0
@@ -106,12 +106,15 @@ contains
     ! Associate background
     self%bkg => bkg
 
+    ! Indices for compute domain (no halo)
+    isc = bkg%geom%isc ; iec = bkg%geom%iec
+    jsc = bkg%geom%jsc ; jec = bkg%geom%jec
+
     ! Define seaice mask from background seaice fraction
-    call geom_get_domain_indices(bkg%geom, "compute", is, ie, js, je)
-    allocate(self%seaice_mask(is:ie, js:je))
+    allocate(self%seaice_mask(isc:iec, jsc:jec))
     self%seaice_mask = 0
-    do i = is, ie
-       do j = js, je
+    do i = isc, iec
+       do j = jsc, jec
           if (sum(bkg%seaice%cicen(i, j, 2:), 1) * bkg%geom%mask2d(i, j) .gt. 0.0) then
              self%seaice_mask(i, j) = 1
           else
@@ -168,11 +171,11 @@ contains
     call soca_2d_convol(dx%ocnsfc%latent_heat(:,:), self%ocean_conv(1), dx%geom)
     call soca_2d_convol(dx%ocnsfc%sens_heat(:,:),   self%ocean_conv(1), dx%geom)
     call soca_2d_convol(dx%ocnsfc%fric_vel(:,:),    self%ocean_conv(1), dx%geom)
-    
+
     do icat = 1, dx%geom%ncat
        call soca_2d_convol(dx%seaice%cicen(:,:,icat+1), self%seaice_conv(1), dx%geom)
        call soca_2d_convol(dx%seaice%hicen(:,:,icat), self%seaice_conv(1), dx%geom)
-    end do    
+    end do
 
     do izo = 1,dx%geom%nzo
        call soca_2d_convol(dx%tocn(:,:,izo), self%ocean_conv(1), dx%geom)
@@ -195,7 +198,7 @@ contains
     do icat = 1, dx%geom%ncat
        call soca_2d_sqrt_convol(dx%seaice%cicen(:,:,icat+1), self%seaice_conv(1), dx%geom, self%pert_scale%AICE)
        call soca_2d_sqrt_convol(dx%seaice%hicen(:,:,icat), self%seaice_conv(1), dx%geom, self%pert_scale%HICE)
-    end do    
+    end do
 
     do izo = 1,dx%geom%nzo
        call soca_2d_sqrt_convol(dx%tocn(:,:,izo), self%ocean_conv(1), dx%geom, self%pert_scale%T)
@@ -233,7 +236,7 @@ contains
 
     !--- Initialize geometry to be passed to NICAS
     ! Indices for compute domain (no halo)
-    call geom_get_domain_indices(geom, "compute", isc, iec, jsc, jec)
+    isc = geom%isc ; iec = geom%iec ; jsc = geom%jsc ; jec = geom%jec
 
     nv = 1                                     !< Number of variables
     nl0 = 1                                    !< Number of independent levels
