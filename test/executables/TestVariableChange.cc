@@ -5,9 +5,9 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#include "src/Traits.h"
-#include "src/Run/Run.h"
-#include "src/Transforms/instantiateBalanceOpFactory.h"
+#include "soca/Traits.h"
+#include "soca/Run/Run.h"
+#include "soca/Transforms/instantiateBalanceOpFactory.h"
 #include "test/interface/LinearVariableChange.h"
 
 int main(int argc,  char ** argv) {

@@ -5,8 +5,8 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#include "src/Traits.h"
-#include "src/Run/Run.h"
+#include "soca/Traits.h"
+#include "soca/Run/Run.h"
 #include "test/interface/Increment.h"
 
 int main(int argc,  char ** argv) {
