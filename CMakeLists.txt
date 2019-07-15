@@ -1,4 +1,4 @@
-# (C) Copyright 2017 UCAR.
+# (C) Copyright 2017-2019 UCAR.
 #
 # This software is licensed under the terms of the Apache Licence Version 2.0
 # which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -80,7 +80,8 @@ link_libraries(${MPI_CXX_LIBRARIES} ${MPI_Fortran_LIBRARIES})
 list( APPEND SOCA_TPLS LAPACK MPI NetCDF eckit fckit )
 
 set( SOCA_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src
-                       ${CMAKE_CURRENT_BINARY_DIR}/src )
+                       ${CMAKE_CURRENT_BINARY_DIR}/src
+                       ${CMAKE_Fortran_MODULE_DIRECTORY} )
 set( SOCA_LIBRARIES soca )
 
 get_directory_property( SOCA_DEFINITIONS COMPILE_DEFINITIONS )
@@ -96,23 +97,19 @@ endforeach()
 # Sources
 ################################################################################
 include( soca_compiler_flags )
-include_directories( ${SOCA_INCLUDE_DIRS} ${SOCA_EXTRA_INCLUDE_DIRS}
-                     ${CMAKE_CURRENT_SOURCE_DIR}
-                     ${CMAKE_CURRENT_SOURCE_DIR}/src
-                   )
+include_directories( ${SOCA_INCLUDE_DIRS} ${SOCA_EXTRA_INCLUDE_DIRS} )
 
-add_subdirectory( mains )
 add_subdirectory( src )
 add_subdirectory( test )
 add_subdirectory( exp )
 add_subdirectory( scripts )
 
+# Build Doxygen documentation
+add_subdirectory( Documents )
+
 if(ECBUILD_INSTALL_FORTRAN_MODULES)
   install(DIRECTORY ${CMAKE_Fortran_MODULE_DIRECTORY}/${CMAKE_CFG_INTDIR} DESTINATION ${INSTALL_INCLUDE_DIR} )
 endif()
-
-# Build Doxygen documentation
-add_subdirectory( Documents )
 
 ################################################################################
 # Finalise configuration
