@@ -53,6 +53,8 @@ cost_function:
       lsqrt: 1
       mpicom: 2
       date: *bkg_date
+      variables: *soca_vars
+
       variable_changes:
 
       - varchange: BkgErrFILT

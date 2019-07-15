@@ -48,7 +48,8 @@ cost_function:
       lsqrt: 1
       mpicom: 2
       date: *bkg_date
-      
+      variables: *soca_vars
+
       variable_changes:
 
       - varchange: BkgErrFILT
@@ -164,7 +165,7 @@ variational:
       tstep: PT1H
       advance_mom6: 0
       variables: *soca_vars
-    ninner: 10
+    ninner: 1
     gradient_norm_reduction: 1e-15
     test: 'on'
 

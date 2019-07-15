@@ -8,7 +8,6 @@
 
 module soca_covariance_mod
   use config_mod
-  use fckit_mpi_module, only: fckit_mpi_comm
   use iso_c_binding
   use kinds
   use oobump_mod, only: bump_read_conf
@@ -19,14 +18,18 @@ module soca_covariance_mod
   use type_bump
   use type_nam
   use random_mod
+  use variables_mod
 
   implicit none
 
+  private
+  public :: soca_cov_setup, soca_cov_delete, soca_cov_C_mult, soca_cov_sqrt_C_mult
+  
   !> Fortran derived type to hold configuration data for the SOCA background/model covariance
   type :: soca_pert
     real(kind=kind_real) :: T, S, SSH, AICE, HICE
   end type soca_pert
-  type :: soca_cov
+  type, public :: soca_cov
      type(bump_type), allocatable :: ocean_conv(:)  !< Ocean convolution op from bump
      type(bump_type), allocatable :: seaice_conv(:) !< Seaice convolution op from bump
      integer,         allocatable :: seaice_mask(:,:)
@@ -35,23 +38,16 @@ module soca_covariance_mod
      type(soca_pert)              :: pert_scale
      real(kind=kind_real)         :: ocn_l0
      real(kind=kind_real)         :: ice_l0
+     type(oops_vars)              :: vars           !< Apply B to vars
+   contains
+     procedure :: setup => soca_cov_setup
+     procedure :: delete => soca_cov_delete
+     procedure :: mult => soca_cov_C_mult
+     procedure :: sqrt_C_mult => soca_cov_sqrt_C_mult
   end type soca_cov
-
-#define LISTED_TYPE soca_cov
-
-  !> Linked list interface - defines registry_t type
-#include "oops/util/linkedList_i.f"
-
-  !> Global registry
- type(registry_t) :: soca_cov_registry
 
   ! ------------------------------------------------------------------------------
 contains
-  ! ------------------------------------------------------------------------------
-  !> Linked list implementation
-#include "oops/util/linkedList_c.f"
-  ! ------------------------------------------------------------------------------
-
   ! ------------------------------------------------------------------------------
 
   !> Setup for the SOCA model's 3d error covariance matrices (B and Q_i)
@@ -60,15 +56,20 @@ contains
   !! covariance matrix, and stores the relevant values in the
   !! error covariance structure.
 
-  subroutine soca_cov_setup(self, c_conf, geom, bkg)
-    type(soca_cov),        intent(inout) :: self   !< The covariance structure
+  subroutine soca_cov_setup(self, c_conf, geom, bkg, vars)
+    class(soca_cov),       intent(inout) :: self   !< The covariance structure
     type(c_ptr),              intent(in) :: c_conf !< The configuration
     type(soca_geom),          intent(in) :: geom   !< Geometry
     type(soca_field), target, intent(in) :: bkg    !< Background
-
+    type(oops_vars),          intent(in) :: vars   !< List of variables
+    
     character(len=3)  :: domain
-    integer :: isc, iec, jsc, jec, i, j
-
+    integer :: isc, iec, jsc, jec, i, j, ivar
+    logical :: init_seaice, init_ocean
+    
+    ! Setup list of variables to apply B on
+    self%vars = vars
+    
     ! Set default ensemble perturbation scales to 1.0
     self%pert_scale%T = 1.0
     self%pert_scale%S = 1.0
@@ -123,16 +124,38 @@ contains
        end do
     end do
 
-    ! Initialize ocean bump
+    ! Determine what convolution op to initialize
+    init_seaice = .false.
+    init_ocean = .false.    
+    do ivar = 1, self%vars%nv
+       select case(trim(self%vars%fldnames(ivar)))
+       case('cicen')
+          init_seaice = .true.
+       case('hicen')
+          init_seaice = .true.
+       case('tocn')
+          init_ocean = .true.
+       case('socn')
+          init_ocean = .true.
+       case('ssh')
+          init_ocean = .true.
+       end select
+    end do
+    
+    ! Initialize ocean bump if tocn or socn or ssh are in self%vars
     domain = 'ocn'
     allocate(self%ocean_conv(1))
-    call soca_bump_correlation(self, self%ocean_conv(1), geom, c_conf, domain)
+    if (init_ocean) then    
+       call soca_bump_correlation(self, self%ocean_conv(1), geom, c_conf, domain)
+    end if
 
-    ! Initialize seaice bump
+    ! Initialize seaice bump if cicen or hicen are in self%vars
     domain = 'ice'
     allocate(self%seaice_conv(1))
-    call soca_bump_correlation(self, self%seaice_conv(1), geom, c_conf, domain)
-
+    if (init_seaice) then
+       call soca_bump_correlation(self, self%seaice_conv(1), geom, c_conf, domain)
+    end if
+    
     self%initialized = .true.
 
   end subroutine soca_cov_setup
@@ -142,7 +165,7 @@ contains
   !> Delete for the SOCA model's 3d error covariance matrices
 
   subroutine soca_cov_delete(self)
-    type(soca_cov), intent(inout) :: self       !< The covariance structure
+    class(soca_cov), intent(inout) :: self       !< The covariance structure
 
     call self%ocean_conv(1)%dealloc()
     call self%seaice_conv(1)%dealloc()
@@ -157,60 +180,113 @@ contains
   ! ------------------------------------------------------------------------------
 
   subroutine soca_cov_C_mult(self, dx)
-    type(soca_cov),   intent(inout) :: self !< The covariance structure
+    class(soca_cov),  intent(inout) :: self !< The covariance structure
     type(soca_field), intent(inout) :: dx   !< Input: Increment
                                             !< Output: C dx
-    integer :: icat, izo
+    integer :: icat, izo, ivar
 
-    ! Apply convolution to fields
-    call soca_2d_convol(dx%ssh(:,:), self%ocean_conv(1), dx%geom)
+    do ivar = 1, self%vars%nv
+       select case(trim(self%vars%fldnames(ivar)))
+          ! Apply convolution to forcing             
+          case('sw')
+             call soca_2d_convol(dx%ocnsfc%sw_rad(:,:),      self%ocean_conv(1), dx%geom)
+          case('lw')             
+             call soca_2d_convol(dx%ocnsfc%lw_rad(:,:),      self%ocean_conv(1), dx%geom)
+          case('lhf')
+             call soca_2d_convol(dx%ocnsfc%latent_heat(:,:), self%ocean_conv(1), dx%geom)
+          case('shf')             
+             call soca_2d_convol(dx%ocnsfc%sens_heat(:,:),   self%ocean_conv(1), dx%geom)
+          case('us')             
+             call soca_2d_convol(dx%ocnsfc%fric_vel(:,:),    self%ocean_conv(1), dx%geom)
 
-    ! Apply convolution to forcing
-    call soca_2d_convol(dx%ocnsfc%sw_rad(:,:),      self%ocean_conv(1), dx%geom)
-    call soca_2d_convol(dx%ocnsfc%lw_rad(:,:),      self%ocean_conv(1), dx%geom)
-    call soca_2d_convol(dx%ocnsfc%latent_heat(:,:), self%ocean_conv(1), dx%geom)
-    call soca_2d_convol(dx%ocnsfc%sens_heat(:,:),   self%ocean_conv(1), dx%geom)
-    call soca_2d_convol(dx%ocnsfc%fric_vel(:,:),    self%ocean_conv(1), dx%geom)
+          ! Apply convolution to ocean
+          case('ssh')
+             call soca_2d_convol(dx%ssh(:,:), self%ocean_conv(1), dx%geom)
+          case('tocn')             
+             do izo = 1,dx%geom%nzo
+                call soca_2d_convol(dx%tocn(:,:,izo), self%ocean_conv(1), dx%geom)
+             end do
+          case('socn')             
+             do izo = 1,dx%geom%nzo
+                call soca_2d_convol(dx%socn(:,:,izo), self%ocean_conv(1), dx%geom)
+             end do             
 
-    do icat = 1, dx%geom%ncat
-       call soca_2d_convol(dx%seaice%cicen(:,:,icat+1), self%seaice_conv(1), dx%geom)
-       call soca_2d_convol(dx%seaice%hicen(:,:,icat), self%seaice_conv(1), dx%geom)
-    end do
-
-    do izo = 1,dx%geom%nzo
-       call soca_2d_convol(dx%tocn(:,:,izo), self%ocean_conv(1), dx%geom)
-       call soca_2d_convol(dx%socn(:,:,izo), self%ocean_conv(1), dx%geom)
-    end do
+          ! Apply convolution to sea-ice
+          case('cicen')
+             do icat = 1, dx%geom%ncat
+                call soca_2d_convol(dx%seaice%cicen(:,:,icat+1), self%seaice_conv(1), dx%geom)
+             end do
+          case('hicen')                          
+             do icat = 1, dx%geom%ncat
+                call soca_2d_convol(dx%seaice%hicen(:,:,icat), self%seaice_conv(1), dx%geom)
+             end do
+          end select
+       end do
 
   end subroutine soca_cov_C_mult
 
   ! ------------------------------------------------------------------------------
 
   subroutine soca_cov_sqrt_C_mult(self, dx)
-    type(soca_cov),   intent(inout) :: self !< The covariance structure
+    class(soca_cov),  intent(inout) :: self !< The covariance structure
     type(soca_field), intent(inout) :: dx   !< Input: Increment
                                             !< Output: C^1/2 dx
+    integer :: icat, izo, ivar
 
-    integer :: icat, izo
+    do ivar = 1, self%vars%nv
+       select case(trim(self%vars%fldnames(ivar)))
+          ! Apply C^1/2 to forcing             
+          case('sw')
+             call soca_2d_sqrt_convol(dx%ocnsfc%sw_rad(:,:), &
+                  &self%ocean_conv(1), dx%geom, self%pert_scale%SSH)
+          case('lw')
+             call soca_2d_sqrt_convol(dx%ocnsfc%lw_rad(:,:), &
+                  &self%ocean_conv(1), dx%geom, self%pert_scale%SSH)
+          case('lhf')
+             call soca_2d_sqrt_convol(dx%ocnsfc%latent_heat(:,:), &
+                  &self%ocean_conv(1), dx%geom, self%pert_scale%SSH)
+          case('shf')
+             call soca_2d_sqrt_convol(dx%ocnsfc%sens_heat(:,:), &
+                  &self%ocean_conv(1), dx%geom, self%pert_scale%SSH)
+          case('us')
+             call soca_2d_sqrt_convol(dx%ocnsfc%fric_vel(:,:), &
+                  &self%ocean_conv(1), dx%geom, self%pert_scale%SSH)
 
-    ! Apply convolution to fields
-    call soca_2d_sqrt_convol(dx%ssh, self%ocean_conv(1), dx%geom, self%pert_scale%SSH)
-    do icat = 1, dx%geom%ncat
-       call soca_2d_sqrt_convol(dx%seaice%cicen(:,:,icat+1), self%seaice_conv(1), dx%geom, self%pert_scale%AICE)
-       call soca_2d_sqrt_convol(dx%seaice%hicen(:,:,icat), self%seaice_conv(1), dx%geom, self%pert_scale%HICE)
-    end do
+          ! Apply C^1/2 to ocean
+          case('ssh')
+             call soca_2d_sqrt_convol(dx%ssh, &
+                  &self%ocean_conv(1), dx%geom, self%pert_scale%SSH)             
+          case('tocn')             
+             do izo = 1,dx%geom%nzo
+                call soca_2d_sqrt_convol(dx%tocn(:,:,izo), &
+                     &self%ocean_conv(1), dx%geom, self%pert_scale%T)
+             end do
+          case('socn')             
+             do izo = 1,dx%geom%nzo
+                call soca_2d_sqrt_convol(dx%socn(:,:,izo), &
+                     &self%ocean_conv(1), dx%geom, self%pert_scale%S)
+             end do             
 
-    do izo = 1,dx%geom%nzo
-       call soca_2d_sqrt_convol(dx%tocn(:,:,izo), self%ocean_conv(1), dx%geom, self%pert_scale%T)
-       call soca_2d_sqrt_convol(dx%socn(:,:,izo), self%ocean_conv(1), dx%geom, self%pert_scale%S)
-    end do
+          ! Apply C^1/2 to sea-ice
+          case('cicen')                          
+             do icat = 1, dx%geom%ncat
+                call soca_2d_sqrt_convol(dx%seaice%cicen(:,:,icat+1), &
+                     &self%seaice_conv(1), dx%geom, self%pert_scale%AICE)
+             end do
+          case('hicen')                          
+             do icat = 1, dx%geom%ncat
+                call soca_2d_sqrt_convol(dx%seaice%hicen(:,:,icat), &
+                     &self%seaice_conv(1), dx%geom, self%pert_scale%HICE)
+             end do
+          end select
+       end do
 
   end subroutine soca_cov_sqrt_C_mult
 
   ! ------------------------------------------------------------------------------
 
   subroutine soca_bump_correlation(self, horiz_convol, geom, c_conf, domain)
-    type(soca_cov),  intent(inout) :: self   !< The covariance structure
+    class(soca_cov), intent(inout) :: self   !< The covariance structure
     type(bump_type), intent(inout) :: horiz_convol
     type(soca_geom),    intent(in) :: geom
     type(c_ptr),        intent(in) :: c_conf         !< Handle to configuration
@@ -230,9 +306,6 @@ contains
     real(kind_real), allocatable :: rh(:,:,:,:)     !< Horizontal support radius for covariance (in m)
     real(kind_real), allocatable :: rv(:,:,:,:)     !< Vertical support radius
     real(kind_real), allocatable :: var(:,:,:,:)
-    !type(fckit_mpi_comm) :: f_comm
-
-    !f_comm = fckit_mpi_comm()
 
     !--- Initialize geometry to be passed to NICAS
     ! Indices for compute domain (no halo)

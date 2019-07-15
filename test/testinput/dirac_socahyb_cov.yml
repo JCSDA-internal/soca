@@ -34,6 +34,7 @@ Covariance:
    lsqrt: 1
    mpicom: 2
    date: *date
+   variables: &soca_vars [cicen, hicen, socn, tocn, ssh, hocn]
 
    variable_changes:
 

@@ -23,6 +23,7 @@ module soca_fields_mod_c
   use soca_getvaltraj_mod, only: soca_getvaltraj, soca_getvaltraj_registry
 
   implicit none
+
   private
   public :: soca_field_registry
 

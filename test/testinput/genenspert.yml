@@ -29,7 +29,9 @@ Covariance:
   pert_S: 1.0
   pert_SSH: 1.0
   pert_AICE: 0.1
-  pert_HICE: 0.05  
+  pert_HICE: 0.05
+  variables: [ssh, cicen, hicen, tocn, socn]
+  
   variable_changes:
 
   - varchange: BkgErrFILT
