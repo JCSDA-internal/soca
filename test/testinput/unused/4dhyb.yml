@@ -1,0 +1,206 @@
+
+resolution:
+  num_ice_cat: 5
+  num_ice_lev: 4
+  num_sno_lev: 1
+
+model:
+  name: SOCA
+  tstep: PT1H
+  advance_mom6: 0
+  variables: &soca_vars [cicen, hicen, hsnon, socn, tocn, ssh, hocn]
+
+cost_function:
+  cost_type: 4D-Var
+  window_begin: &date_begin 2018-04-14T23:00:00Z
+  window_length: PT6H
+  variables: *soca_vars
+  Jb:
+    Background:
+      state:
+      - read_from_file: 1
+        basename: ./INPUT/
+        ocn_filename: MOM.res.nc
+        ice_filename: cice.res.nc
+        seaice_model: cice
+        date: *date_begin
+        variables: *soca_vars
+        
+    Covariance:
+     covariance: hybrid
+     ensemble_weight: 0.3
+     static: 
+      covariance: SocaError
+      prefix: soca
+      datadir: ./bump
+      strategy: specific_univariate
+      load_nicas: 1
+      lsqrt: 1
+      mpicom: 2
+      date: *date_begin
+
+     ensemble:
+      date: *date_begin
+
+      members:
+      - read_from_file: 1
+        date:  *date_begin
+        basename: ./Data/
+        ocn_filename: ocn.pert.ens.1.2018-04-15T00:00:00Z.PT0S.nc
+        ice_filename: cic.pert.ens.1.2018-04-15T00:00:00Z.PT0S.nc
+        seaice_model: cice
+        variables: *soca_vars
+      - read_from_file: 1
+        date:  *date_begin
+        basename: ./Data/
+        ocn_filename: ocn.pert.ens.2.2018-04-15T00:00:00Z.PT0S.nc
+        ice_filename: cic.pert.ens.2.2018-04-15T00:00:00Z.PT0S.nc
+        seaice_model: cice
+        variables: *soca_vars
+      - read_from_file: 1
+        date:  *date_begin
+        basename: ./Data/
+        ocn_filename: ocn.pert.ens.3.2018-04-15T00:00:00Z.PT0S.nc
+        ice_filename: cic.pert.ens.3.2018-04-15T00:00:00Z.PT0S.nc
+        seaice_model: cice
+        variables: *soca_vars
+      - read_from_file: 1
+        date:  *date_begin
+        basename: ./Data/
+        ocn_filename: ocn.pert.ens.4.2018-04-15T00:00:00Z.PT0S.nc
+        ice_filename: cic.pert.ens.4.2018-04-15T00:00:00Z.PT0S.nc
+        seaice_model: cice
+        variables: *soca_vars
+
+      localization:
+        localization: BUMP
+        variables: *soca_vars
+        timeslots: *date_begin
+        bump:
+          datadir: bump
+          prefix: socaloc
+          method: loc
+          strategy: common
+          load_nicas: 1
+          mpicom: 2
+          verbosity: main
+
+  Jo:
+    ObsTypes:
+
+    - ObsSpace:
+        name: SeaSurfaceTemp
+        ObsDataOut: {obsfile: ./Data/sst.out.nc}
+        ObsDataIn:  {obsfile: ./Data/sst.nc}
+        simulate:
+          variables: [sea_surface_temperature]
+      ObsOperator:
+        name: SeaSurfaceTemp
+      Covariance:
+        covariance: diagonal
+      ObsFilters:
+      - *Filter_mask
+      - Filter: Thinning
+        amount: 0.1
+        random_seed: 0
+
+    - ObsSpace:
+        name: SeaSurfaceSalinity
+        ObsDataOut: {obsfile: ./Data/sss.out.nc}
+        ObsDataIn:  {obsfile: ./Data/sss.nc}
+        simulate:
+          variables: [sea_surface_salinity]
+      ObsOperator:
+        name: SeaSurfaceSalinity      
+      Covariance:
+        covariance: diagonal
+      ObsFilters:
+      - *Filter_mask
+      - Filter: Domain Check
+        where:
+        - variable: sea_surface_temperature@GeoVaLs
+          minvalue: 15
+
+    - ObsSpace:
+        name: ADT
+        ObsDataOut: {obsfile: ./Data/adt.out.nc}
+        ObsDataIn:  {obsfile: ./Data/adt.nc}
+        simulate:
+          variables: [obs_absolute_dynamic_topography]
+      ObsOperator:
+        name: ADT
+      Covariance:
+        covariance: diagonal
+      ObsFilters:
+      - *Filter_mask
+
+    - ObsSpace:
+        name: InsituTemperature
+        ObsDataOut: {obsfile: ./Data/prof.T.out.nc}
+        ObsDataIn:  {obsfile: ./Data/prof.nc}
+        simulate:
+          variables: [sea_water_temperature]
+      ObsOperator:
+        name: InsituTemperature      
+      Covariance:
+        covariance: diagonal
+      ObsFilters:
+      - *Filter_mask
+      - Filter: Background Check
+        variables: [sea_water_temperature]
+        threshold: 5
+
+    - ObsSpace:
+        name: InsituSalinity
+        ObsDataOut: {obsfile: ./Data/prof.S.out.nc}
+        ObsDataIn:  {obsfile: ./Data/prof.nc}
+        simulate:
+          variables: [sea_water_salinity]
+      ObsOperator:
+        name: InsituSalinity
+      Covariance:
+        covariance: diagonal
+      ObsFilters:
+      - *Filter_mask
+
+    - ObsSpace:
+        name: SeaIceFraction
+        ObsDataOut: {oubsfile: ./Data/icec.out.nc}
+        ObsDataIn:  {obsfile:  ./Data/icec.nc}
+        simulate:
+          variables: [sea_ice_area_fraction]
+      ObsOperator:
+        name: SeaIceFraction
+      Covariance:
+        covariance: diagonal
+      ObsFilters:
+      - *Filter_mask
+
+variational:
+  iteration:
+  - resolution:
+      num_ice_cat: 5
+      num_ice_lev: 4
+      num_sno_lev: 1
+    linearmodel:
+      varchange: Identity
+      version: IdTLM
+      tstep: PT1H
+      advance_mom6: 0
+      variables: *soca_vars
+    ninner: 1
+    gradient_norm_reduction: 1e-15
+    test: 'on'
+
+minimizer:
+  algorithm: RPCG
+
+output:
+  datadir: Data
+  exp: 4dhbr
+  type: an
+  seaice_model: cice
+
+final:
+  diagnostics:
+    departures: oman
