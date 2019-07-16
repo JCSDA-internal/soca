@@ -1,16 +1,16 @@
 Test     : Increment: 
 Test     :   Valid time: 2018-04-15T00:00:00Z
 Test     :   cicen   min=   -0.039291   max=    0.005000   mean=   -0.000244
-Test     :   hicen   min=   -0.000069   max=   50.000000   mean=    0.142790
-Test     :    socn   min=   -0.070098   max=    0.151473   mean=    0.000504
-Test     :    tocn   min=   -0.004605   max=    4.327118   mean=    0.011613
-Test     :     ssh   min=   -0.009516   max=    0.050772   mean=    0.000291
+Test     :   hicen   min=   -0.000074   max=   50.000000   mean=    0.142790
+Test     :    socn   min=   -0.098835   max=    0.176265   mean=    0.000442
+Test     :    tocn   min=   -0.005738   max=    4.381662   mean=    0.011682
+Test     :     ssh   min=   -0.010054   max=    0.051230   mean=    0.000292
 Test     :    hocn   min=    0.000000   max=    0.000000   mean=    0.000000
 Test     : Increment: 
 Test     :   Valid time: 2018-04-15T00:00:00Z
-Test     :   cicen   min=    0.000000   max=    1.000000   mean=    0.054673
-Test     :   hicen   min=   -0.000000   max=    1.000000   mean=    0.065608
-Test     :    socn   min=   -0.000000   max=    1.000000   mean=    0.006404
-Test     :    tocn   min=   -0.000000   max=    1.000000   mean=    0.006404
-Test     :     ssh   min=   -0.000000   max=    1.000000   mean=    0.065608
+Test     :   cicen   min=    0.000000   max=    1.000000   mean=    0.072204
+Test     :   hicen   min=   -0.000000   max=    1.000000   mean=    0.086645
+Test     :    socn   min=   -0.000000   max=    1.000000   mean=    0.086638
+Test     :    tocn   min=   -0.000000   max=    1.000000   mean=    0.086638
+Test     :     ssh   min=   -0.000000   max=    1.000000   mean=    0.086645
 Test     :    hocn   min=    0.000000   max=    0.000000   mean=    0.000000

@@ -156,7 +156,7 @@ variational:
       version: IdTLM
       tstep: PT1H
       variables: *soca_vars
-    ninner: 5
+    ninner: 1
     gradient_norm_reduction: 1e-15
     test: 'on'
     prints:
