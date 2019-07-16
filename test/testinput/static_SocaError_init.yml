@@ -21,12 +21,12 @@ Covariance:
   method: cor
   strategy: specific_univariate
   new_nicas: 1
-  mask_check: 1
+  mask_check: 0
   ntry: 3
   nrep:  2
   lsqrt: 1
   resol: 6.0
-  network: 1
+  network: 0
   mpicom: 2
   forced_radii: 1
   date: *date
