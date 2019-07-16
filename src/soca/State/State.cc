@@ -9,18 +9,13 @@
 
 #include <algorithm>
 #include <string>
-#include <vector>
 #include <utility>
+#include <vector>
 
 #include "eckit/config/LocalConfiguration.h"
+#include "eckit/exception/Exceptions.h"
 
 #include "oops/base/Variables.h"
-#include "soca/ModelBias.h"
-#include "soca/Fields/Fields.h"
-#include "soca/Geometry/Geometry.h"
-#include "soca/Increment/Increment.h"
-#include "soca/Model/Model.h"
-#include "soca/GetValuesTraj/GetValuesTraj.h"
 #include "oops/util/DateTime.h"
 #include "oops/util/Duration.h"
 #include "oops/util/Logger.h"
@@ -28,6 +23,12 @@
 #include "ufo/GeoVaLs.h"
 #include "ufo/Locations.h"
 
+#include "soca/ModelBias.h"
+#include "soca/Fields/Fields.h"
+#include "soca/Geometry/Geometry.h"
+#include "soca/Increment/Increment.h"
+#include "soca/Model/Model.h"
+#include "soca/GetValuesTraj/GetValuesTraj.h"
 
 using oops::Log;
 
