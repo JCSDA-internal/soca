@@ -152,7 +152,8 @@ namespace soca {
     //  Background error
     // -----------------------------------------------------------------------------
     void soca_b_setup_f90(F90bmat &, const eckit::Configuration * const *,
-                          const F90geom &, const F90flds &);
+                          const F90geom &, const F90flds &,
+                          const eckit::Configuration * const *);
     void soca_b_delete_f90(F90bmat &);
     void soca_b_linearize_f90(const F90flds &, const F90geom &);
     void soca_b_mult_f90(const F90bmat &, const F90flds &,
