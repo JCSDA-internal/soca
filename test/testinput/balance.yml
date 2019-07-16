@@ -17,8 +17,6 @@ LinearVariableChangeTests:
 - varchange: BalanceSOCA
   toleranceInverse: 1e-12
   testinverse: 1
-  variables:
-    variables: *soca_vars
   dsdtmax: 1.0
   dsdzmin: 3.0e-3
   dtdzmin: 1.0e-3
