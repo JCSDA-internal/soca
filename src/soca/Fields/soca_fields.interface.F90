@@ -24,9 +24,8 @@ module soca_fields_mod_c
 
   implicit none
 
-  private
   public :: soca_field_registry
-
+  
 #define LISTED_TYPE soca_field
 
   !> Linked list interface - defines registry_t type
