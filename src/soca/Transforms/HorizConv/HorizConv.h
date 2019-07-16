@@ -15,6 +15,8 @@
 
 #include "oops/util/DateTime.h"
 #include "oops/util/Printable.h"
+#include "oops/base/Variables.h"
+#include "soca/Covariance/ErrorCovariance.h"
 #include "eckit/config/Configuration.h"
 
 // Forward declarations
@@ -46,8 +48,8 @@ class HorizConv: public util::Printable {
 
  private:
   void print(std::ostream &) const override;
-  int keyFtnConfig_;
-  const State & traj_;
+  ErrorCovariance cov2d_;
+  oops::Variables vars_;  
 };
 // -----------------------------------------------------------------------------
 

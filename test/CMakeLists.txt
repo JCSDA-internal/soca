@@ -22,6 +22,7 @@ list( APPEND soca_test_input
   testinput/geometry_test.yml
   testinput/hofx.yml
   testinput/hofx3d.yml
+  testinput/horizconv.yml  
   testinput/increment_test.yml
   testinput/linearmodel_test.yml
   testinput/marine2ioda.yml
@@ -265,6 +266,12 @@ ecbuild_add_test( TARGET test_soca_balance
                   ARGS    "testinput/balance.yml"
                   LIBS    soca )
 
+ecbuild_add_test( TARGET test_soca_horizconv
+                  MPI ${MPI_SOCA_TESTS}
+                  SOURCES executables/TestVariableChange.cc
+                  ARGS    "testinput/horizconv.yml"
+                  LIBS    soca )
+		
 ecbuild_add_test( TARGET test_soca_bkgerrfilt
                   MPI ${MPI_SOCA_TESTS}
                   SOURCES executables/TestVariableChange.cc

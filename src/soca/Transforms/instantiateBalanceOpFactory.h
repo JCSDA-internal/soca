@@ -12,6 +12,7 @@
 #include "soca/Transforms/BkgErr/BkgErr.h"
 #include "soca/Transforms/BkgErrGodas/BkgErrGodas.h"
 #include "soca/Transforms/BkgErrFilt/BkgErrFilt.h"
+#include "soca/Transforms/HorizConv/HorizConv.h"
 #include "soca/Transforms/VertConv/VertConv.h"
 #include "soca/Traits.h"
 #include "oops/interface/LinearVariableChange.h"

@@ -202,11 +202,11 @@ contains
           ! Apply convolution to ocean
           case('ssh')
              call soca_2d_convol(dx%ssh(:,:), self%ocean_conv(1), dx%geom)
-          case('tocn')             
+          case('tocn')
              do izo = 1,dx%geom%nzo
                 call soca_2d_convol(dx%tocn(:,:,izo), self%ocean_conv(1), dx%geom)
              end do
-          case('socn')             
+          case('socn')
              do izo = 1,dx%geom%nzo
                 call soca_2d_convol(dx%socn(:,:,izo), self%ocean_conv(1), dx%geom)
              end do             

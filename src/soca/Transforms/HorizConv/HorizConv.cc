@@ -5,17 +5,16 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#include "src/Transforms/HorizConv/HorizConv.h"
+#include "soca/Transforms/HorizConv/HorizConv.h"
 
 #include <ostream>
 #include <string>
 
 #include "oops/util/Logger.h"
 #include "eckit/config/Configuration.h"
-#include "HorizConvFortran.h"
-#include "src/Increment/Increment.h"
-#include "src/State/State.h"
-#include "src/Geometry/Geometry.h"
+#include "soca/Increment/Increment.h"
+#include "soca/State/State.h"
+#include "soca/Geometry/Geometry.h"
 
 using oops::Log;
 
@@ -24,20 +23,15 @@ namespace soca {
   HorizConv::HorizConv(const State & bkg,
                  const State & traj,
                  const Geometry & geom,
-                 const eckit::Configuration & conf): traj_(traj) {
-    const eckit::Configuration * configc = &conf;
-    soca_horizconv_setup_f90(keyFtnConfig_, &configc, traj_.fields().toFortran());
+		 const eckit::Configuration & conf):
+    vars_(conf), cov2d_(geom, vars_, conf, bkg, traj){
   }
   // -----------------------------------------------------------------------------
   HorizConv::~HorizConv() {
-    soca_horizconv_delete_f90(keyFtnConfig_);
   }
   // -----------------------------------------------------------------------------
   void HorizConv::multiply(const Increment & dxa, Increment & dxm) const {
-    // dxm = C dxa
-    soca_horizconv_mult_f90(keyFtnConfig_,
-                         dxa.fields().toFortran(),
-                         dxm.fields().toFortran());
+    cov2d_.multiply(dxa, dxm);
   }
   // -----------------------------------------------------------------------------
   void HorizConv::multiplyInverse(const Increment & dxm, Increment & dxa) const {
@@ -45,10 +39,7 @@ namespace soca {
   }
   // -----------------------------------------------------------------------------
   void HorizConv::multiplyAD(const Increment & dxm, Increment & dxa) const {
-    // dxa = C dxm (C = C^T)
-    soca_horizconv_mult_f90(keyFtnConfig_,
-                         dxm.fields().toFortran(),
-                         dxa.fields().toFortran());
+    cov2d_.multiply(dxm, dxa);
   }
   // -----------------------------------------------------------------------------
   void HorizConv::multiplyInverseAD(const Increment & dxa, Increment & dxm) const {
