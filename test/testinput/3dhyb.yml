@@ -56,8 +56,6 @@ cost_function:
         ocean_depth_min: 1000 # [m]
         rescale_bkgerr: 1.0
         efold_z: 2500.0       # [m]
-        variables:
-          variables: *soca_vars
         inputVariables:
           variables: *soca_vars
         outputVariables:
@@ -77,16 +75,12 @@ cost_function:
         cicen_max: 0.5
         hicen_min: 10.0
         hicen_max: 100.0
-        variables:
-          variables: *soca_vars
         inputVariables:
           variables: *soca_vars
         outputVariables:
           variables: *soca_vars
 
       - varchange: VertConvSOCA
-        variables:
-          variables: *soca_vars
         Lz_min: 2.0
         Lz_mld: 1
         Lz_mld_max: 500.0
