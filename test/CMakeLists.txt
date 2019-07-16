@@ -12,6 +12,7 @@ list( APPEND soca_test_input
   testinput/checkpointmodel.yml
   testinput/dirac_bump_cov.yml
   testinput/dirac_soca_cov.yml
+  testinput/dirac_soca_cov_2dfilt.yml
   testinput/dirac_socahyb_cov.yml
   testinput/enshofx.yml
   testinput/ensvariance.yml
@@ -45,6 +46,7 @@ list( APPEND soca_test_output
   testoutput/checkpointmodel.test
   testoutput/dirac_bump_cov.test
   testoutput/dirac_soca_cov.test
+  testoutput/dirac_soca_cov_2dfilt.test
   testoutput/dirac_socahyb_cov.test
   testoutput/enshofx.test
   testoutput/ensvariance.test
@@ -365,6 +367,16 @@ ecbuild_add_test( TARGET test_soca_dirac_soca_cov
                       "${CMAKE_BINARY_DIR}/bin/soca_dirac.x
                       testinput/dirac_soca_cov.yml"
                       testoutput/dirac_soca_cov.test
+                  DEPENDS soca_dirac.x )
+
+ecbuild_add_test( TARGET test_soca_dirac_soca_cov_2dfilt
+                  MPI ${MPI_SOCA_TESTS}
+                  TYPE SCRIPT
+                  COMMAND ./compare.sh
+                  ARGS
+                      "${CMAKE_BINARY_DIR}/bin/soca_dirac.x
+                      testinput/dirac_soca_cov_2dfilt.yml"
+                      testoutput/dirac_soca_cov_2dfilt.test
                   DEPENDS soca_dirac.x )
 
 ecbuild_add_test( TARGET test_soca_dirac_socahyb_cov

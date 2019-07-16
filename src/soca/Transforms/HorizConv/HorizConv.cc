@@ -25,6 +25,7 @@ namespace soca {
                  const Geometry & geom,
 		 const eckit::Configuration & conf):
     vars_(conf), cov2d_(geom, vars_, conf, bkg, traj){
+    std::cout << "=============== HORIZCONV ======================" << std::endl;
   }
   // -----------------------------------------------------------------------------
   HorizConv::~HorizConv() {
