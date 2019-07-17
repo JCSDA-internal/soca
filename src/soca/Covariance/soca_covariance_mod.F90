@@ -387,7 +387,7 @@ contains
 
     ! Run BUMP drivers
     call horiz_convol%run_drivers()
-print *,'**************** init bump'
+
     ! Clean up
     deallocate(lon, lat, area, vunit, imask, lmask)
 

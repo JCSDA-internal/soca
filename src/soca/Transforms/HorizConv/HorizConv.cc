@@ -16,8 +16,6 @@
 #include "soca/State/State.h"
 #include "soca/Geometry/Geometry.h"
 
-using oops::Log;
-
 namespace soca {
   // -----------------------------------------------------------------------------
   HorizConv::HorizConv(const State & bkg,
