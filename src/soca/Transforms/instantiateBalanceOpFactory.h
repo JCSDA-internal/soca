@@ -37,7 +37,7 @@ void instantiateBalanceOpFactory() {
               makerBalanceOpBalanceSOCA_("BalanceSOCA");
   static oops::LinearVariableChangeMaker<soca::Traits,
               oops::LinearVariableChange<soca::Traits, soca::HorizConv> >
-              makerBalanceOpHorizConvSOCA_("HorizConvSOCA");  
+    makerBalanceOpHorizConvSOCA_("HorizConvSOCA");
 }
 }  // namespace soca
 

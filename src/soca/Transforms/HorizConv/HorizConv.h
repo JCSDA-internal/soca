@@ -5,8 +5,8 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#ifndef SRC_TRANSFORMS_HORIZCONV_HORIZCONV_H_
-#define SRC_TRANSFORMS_HORIZCONV_HORIZCONV_H_
+#ifndef SOCA_TRANSFORMS_HORIZCONV_HORIZCONV_H_
+#define SOCA_TRANSFORMS_HORIZCONV_HORIZCONV_H_
 
 #include <ostream>
 #include <string>
@@ -49,9 +49,9 @@ class HorizConv: public util::Printable {
  private:
   void print(std::ostream &) const override;
   ErrorCovariance cov2d_;
-  oops::Variables vars_;  
+  oops::Variables vars_;
 };
 // -----------------------------------------------------------------------------
 
 }  // namespace soca
-#endif  // SRC_TRANSFORMS_HORIZCONV_HORIZCONV_H_
+#endif  // SOCA_TRANSFORMS_HORIZCONV_HORIZCONV_H_

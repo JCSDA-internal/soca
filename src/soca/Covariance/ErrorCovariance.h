@@ -49,8 +49,6 @@ namespace soca {
    private:
       void print(std::ostream &) const;
       int keyFtnConfig_;
-      boost::scoped_ptr<const Geometry> geom_;
-      boost::scoped_ptr<const State> traj_;
       util::DateTime time_;
   };
   // -----------------------------------------------------------------------------

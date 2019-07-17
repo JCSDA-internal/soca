@@ -37,7 +37,6 @@ namespace soca {
     const eckit::Configuration * configc = &conf;
     oops::Variables vars(conf);
     const eckit::Configuration * confvars = &vars.toFortran();
-    std::cout << "====ERRORCOV SETUP=========" << keyFtnConfig_ << std::endl;
     soca_b_setup_f90(keyFtnConfig_, &configc, resol.toFortran(),
                      bkg.fields().toFortran(), &confvars);
     Log::trace() << "ErrorCovariance created" << std::endl;
@@ -53,7 +52,6 @@ namespace soca {
   // -----------------------------------------------------------------------------
 
   void ErrorCovariance::linearize(const State & traj, const Geometry & resol) {
-    geom_.reset(new Geometry(resol));
     Log::trace() << "Trajectory for ErrorCovariance" << std::endl;
   }
 

@@ -29,19 +29,14 @@ Covariance:
   variable_changes:
     
   - varchange: HorizConvSOCA
-    toleranceInverse: 1e-12
-    testinverse: 0
+    prefix: soca
+    datadir: ./bump
+    strategy: specific_univariate
+    load_nicas: 1
+    lsqrt: 1
+    mpicom: 2
     date: *date
-    covariance:
-      prefix: soca
-      datadir: ./bump
-      strategy: specific_univariate
-      load_nicas: 1
-      lsqrt: 1
-      mpicom: 2
-      date: *date
-      variables: [tocn]    
-    variables: *soca_vars
+    variables: [tocn]
     inputVariables:
       variables: *soca_vars #[tocn, socn]
     outputVariables:

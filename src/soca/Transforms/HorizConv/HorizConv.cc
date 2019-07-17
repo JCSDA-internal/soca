@@ -23,9 +23,8 @@ namespace soca {
   HorizConv::HorizConv(const State & bkg,
                  const State & traj,
                  const Geometry & geom,
-		 const eckit::Configuration & conf):
-    vars_(conf), cov2d_(geom, vars_, conf, bkg, traj){
-    std::cout << "=============== HORIZCONV ======================" << std::endl;
+                 const eckit::Configuration & conf):
+    vars_(conf), cov2d_(geom, vars_, conf, bkg, traj) {
   }
   // -----------------------------------------------------------------------------
   HorizConv::~HorizConv() {
@@ -35,7 +34,8 @@ namespace soca {
     cov2d_.multiply(dxa, dxm);
   }
   // -----------------------------------------------------------------------------
-  void HorizConv::multiplyInverse(const Increment & dxm, Increment & dxa) const {
+  void HorizConv::multiplyInverse(const Increment & dxm, Increment & dxa)
+    const {
     dxa = dxm;
   }
   // -----------------------------------------------------------------------------
@@ -43,7 +43,8 @@ namespace soca {
     cov2d_.multiply(dxm, dxa);
   }
   // -----------------------------------------------------------------------------
-  void HorizConv::multiplyInverseAD(const Increment & dxa, Increment & dxm) const {
+  void HorizConv::multiplyInverseAD(const Increment & dxa, Increment & dxm)
+    const {
     dxm = dxa;
   }
   // -----------------------------------------------------------------------------

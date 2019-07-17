@@ -69,7 +69,7 @@ contains
     
     ! Setup list of variables to apply B on
     self%vars = vars
-    
+
     ! Set default ensemble perturbation scales to 1.0
     self%pert_scale%T = 1.0
     self%pert_scale%S = 1.0
@@ -141,7 +141,7 @@ contains
           init_ocean = .true.
        end select
     end do
-    
+    print *,'====================',init_ocean, init_seaice
     ! Initialize ocean bump if tocn or socn or ssh are in self%vars
     domain = 'ocn'
     allocate(self%ocean_conv(1))
@@ -202,11 +202,13 @@ contains
           ! Apply convolution to ocean
           case('ssh')
              call soca_2d_convol(dx%ssh(:,:), self%ocean_conv(1), dx%geom)
-          case('tocn')             
+          case('tocn')
+             print *,'-------------- tocn --------------------',sum(dx%tocn)
              do izo = 1,dx%geom%nzo
                 call soca_2d_convol(dx%tocn(:,:,izo), self%ocean_conv(1), dx%geom)
              end do
-          case('socn')             
+             print *,'-------------- C.tocn --------------------',sum(dx%tocn)
+          case('socn')
              do izo = 1,dx%geom%nzo
                 call soca_2d_convol(dx%socn(:,:,izo), self%ocean_conv(1), dx%geom)
              end do             
@@ -352,7 +354,7 @@ contains
     ! Compute convolution weight
     call horiz_convol%setup_online(nc0a,nl0,nv,nts,lon,lat,area,vunit,lmask)
 
-    if (horiz_convol%nam%new_nicas) then
+    !if (horiz_convol%nam%new_nicas) then
        ! Allocation
        allocate(rosrad(nc0a))
        allocate(rh(nc0a,nl0,nv,nts))
@@ -381,11 +383,11 @@ contains
 
        ! Clean up
        deallocate(rosrad,rh,rv,var)
-    end if
+    !end if
 
     ! Run BUMP drivers
     call horiz_convol%run_drivers()
-
+print *,'**************** init bump'
     ! Clean up
     deallocate(lon, lat, area, vunit, imask, lmask)
 
