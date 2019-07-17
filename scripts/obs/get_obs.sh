@@ -4,8 +4,8 @@
 #
 # Modify the start/end dates, and uncomment the desired sources below.
 
-date_start=19900415
-date_end=19910415
+date_start=20180415
+date_end=20180415
 output_path=./data
 
 
@@ -18,7 +18,7 @@ while [[ $date -le $date_end ]]; do
     ## SSS
     ## Note: best off using just the RSS 70km L2 for now
     ##------------------------------------------------------------
-    #bash source.jpl_smap.sh rss_70km $date $output_path
+    bash source.jpl_smap.sh rss_70km $date $output_path
     #bash source.jpl_smap.sh rss_40km $date $output_path
     #bash source.jpl_smap.sh jpl $date $output_path
 
@@ -26,15 +26,15 @@ while [[ $date -le $date_end ]]; do
     ##------------------------------------------------------------
     ## ADT
     ##------------------------------------------------------------
-    #bash source.nesdis_adt_rads.sh $date $output_path
+    bash source.nesdis_adt_rads.sh $date $output_path
 
 
     ##------------------------------------------------------------
     ## insitu
     ##------------------------------------------------------------
-    #bash source.fnmoc.sh prof $date $output_path
-    #bash source.fnmoc.sh sfc  $date $output_path
-    #bash source.fnmoc.sh trak $date $output_path
+    bash source.fnmoc.sh prof $date $output_path
+    bash source.fnmoc.sh sfc  $date $output_path
+    bash source.fnmoc.sh trak $date $output_path
 
     ##------------------------------------------------------------
     ## ice concentration
@@ -47,14 +47,14 @@ while [[ $date -le $date_end ]]; do
     ## obs, unless you have a specific need for any of the others.
     ##  (L2 data is huge... especially for VIIRS)
     ##------------------------------------------------------------
-    #bash source.ghrsst_sst.sh amsr2 l3u $date $output_path
-    #bash source.ghrsst_sst.sh gmi l3u $date $output_path
+    bash source.ghrsst_sst.sh amsr2 l3u $date $output_path
+    bash source.ghrsst_sst.sh gmi l3u $date $output_path
     #bash source.ghrsst_sst.sh goes16 l3u $date $output_path
-    #bash source.ghrsst_sst.sh windsat l3u $date $output_path
+    bash source.ghrsst_sst.sh windsat l3u $date $output_path
     #bash source.nesdis_sst_viirs.sh l2p $date $output_path
-    #bash source.nesdis_sst_viirs.sh l3u $date $output_path
+    bash source.nesdis_sst_viirs.sh l3u $date $output_path
     #bash source.nesdis_sst_avhrr.sh l2p $date $output_path
-    #bash source.nesdis_sst_avhrr.sh l3u $date $output_path
+    bash source.nesdis_sst_avhrr.sh l3u $date $output_path
 
 date=$(date -d "$date + 1 day" +%Y%m%d)
 

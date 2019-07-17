@@ -141,7 +141,7 @@ contains
           init_ocean = .true.
        end select
     end do
-    print *,'====================',init_ocean, init_seaice
+
     ! Initialize ocean bump if tocn or socn or ssh are in self%vars
     domain = 'ocn'
     allocate(self%ocean_conv(1))
@@ -203,11 +203,9 @@ contains
           case('ssh')
              call soca_2d_convol(dx%ssh(:,:), self%ocean_conv(1), dx%geom)
           case('tocn')
-             print *,'-------------- tocn --------------------',sum(dx%tocn)
              do izo = 1,dx%geom%nzo
                 call soca_2d_convol(dx%tocn(:,:,izo), self%ocean_conv(1), dx%geom)
              end do
-             print *,'-------------- C.tocn --------------------',sum(dx%tocn)
           case('socn')
              do izo = 1,dx%geom%nzo
                 call soca_2d_convol(dx%socn(:,:,izo), self%ocean_conv(1), dx%geom)
