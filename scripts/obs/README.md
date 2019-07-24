@@ -28,4 +28,9 @@ date_end=
 output_path=
 
 ```
+## Additional Information
+
+* When wget is called, the first call does not take into consideration the content of the ~/.netrc file, therefore it prompts a 401 error and it calls wget for a second time with the credentials from ~/.netrc and the observations are downloaded.
+
+* If there are no data for specific date, a error message will appear. This message can mislead the user. 
 
