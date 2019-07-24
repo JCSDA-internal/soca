@@ -15,7 +15,7 @@ dy=$(date -d "$date" "+%j")
 
 lvl=$1
 if [[ $lvl == "l2p" ]]; then
-    source="ftp://podaac-ftp.jpl.nasa.gov/allData/ghrsst/data/GDS2/L2P/VIIRS_NPP/OSPO/v2.41"
+    source="https://podaac-tools.jpl.nasa.gov/drive/files/allData/ghrsst/data/GDS2/L2P/VIIRS_NPP/OSPO/v2.41"
 elif [[ $lvl == "l3u" ]]; then    
     source="ftp://ftp.star.nesdis.noaa.gov/pub/socd2/coastwatch/sst/ran/viirs/npp/l3u"
 else
@@ -23,20 +23,17 @@ else
     exit 1
 fi
 
+file_sfx='*.nc'
+
 out_dir="$3/sst.viirs_${lvl}.nesdis"
 
 source_dir=$source/${yr}/${dy}/
 pwd=$(pwd)
+d=$out_dir/$date
+mkdir -p $d
+cd $d
 
-files=$(curl $source_dir -l)
-for f in $files; do
-    # ignore the .md5 files
-    fe=${f##*.}
-    [[ ! $fe == "nc" ]] && continue
-    
-    d=$out_dir/$date
-    mkdir -p $d
-    cd $d
-    wget $source_dir/$f
-    cd $pwd
-done
+wget -r -nc -np -nH -nd -A $file_sfx  $source_dir
+
+cd $pwd
+
