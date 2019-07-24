@@ -26,18 +26,18 @@ else
 fi
 
 sat=$1
-source_base="ftp://podaac-ftp.jpl.nasa.gov/allData/ghrsst/data/GDS2"
+source_base="https://podaac-tools.jpl.nasa.gov/drive/files/allData/ghrsst/data/GDS2"
 ignore="^$"
+file_sfx='*.nc'
+
 if [[ $sat == "amsr2" ]]; then
-    source="$source_base/$lvlU/AMSR2/REMSS/v8a/"
-    ignore="rt-"
+    source="$source_base/$lvlU/AMSR2/REMSS/v8a"
 elif [[ $sat == "gmi" ]]; then
-    source="$source_base/$lvlU/GMI/REMSS/v8.2a/"
+    source="$source_base/$lvlU/GMI/REMSS/v8.2a"
 elif [[ $sat == "goes16" ]]; then
-    source="$source_base/$lvlU/GOES16/OSPO/v2.5/"
+    source="$source_base/$lvlU/GOES16/OSPO/v2.5"
 elif [[ $sat == "windsat" ]]; then
-    source="$source_base/$lvlU/WindSat/REMSS/v7.0.1a/"
-    ignore="rt-"
+    source="$source_base/$lvlU/WindSat/REMSS/v7.0.1a"
 else
     echo $usage
     exit 1
@@ -49,23 +49,11 @@ pwd=$(pwd)
 
 source_dir=$source/$yr/$dy/
 echo $source_dir
-files=$(curl -lf $source_dir || echo "" )
-for f in $files; do
-    # ignore the .md5 files
-    fe=${f##*.}
-    [[ $fe == "md5" ]] && continue
 
-    # some other files need to be ignored, depending on the source
-    [[ $f =~ $ignore ]] && continue
-    
-    d=$out_dir/$date
-    
-    # skip if file already exists
-    [[ -e $d/$f ]] && continue
+d=$out_dir/$date
+mkdir -p $d
+cd $d
 
-    mkdir -p $d
-    cd $d
-    wget $source_dir/$f
-    cd $pwd
-done
+wget -r -nc -np -nH -nd -A $file_sfx  $source_dir
 
+cd $pwd
