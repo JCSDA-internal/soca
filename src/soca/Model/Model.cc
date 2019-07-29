@@ -5,17 +5,18 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#include <vector>
-
 #include "soca/Model/Model.h"
 
+#include <vector>
+
 #include "eckit/config/Configuration.h"
+#include "eckit/exception/Exceptions.h"
 
 #include "oops/util/DateTime.h"
 #include "oops/util/Logger.h"
 
 #include "soca/Fields/Fields.h"
-#include "ModelFortran.h"
+#include "soca/Model/ModelFortran.h"
 #include "soca/Geometry/Geometry.h"
 #include "soca/ModelBias.h"
 #include "soca/State/State.h"
