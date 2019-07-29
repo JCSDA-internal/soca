@@ -20,8 +20,6 @@ LinearVariableChangeTests:
   ocean_depth_min: 1000 # [m]
   rescale_bkgerr: 1.0
   efold_z: 1500.0       # [m]
-  variables:
-    variables: *soca_vars
   inputVariables:
     variables: *soca_vars
   outputVariables:

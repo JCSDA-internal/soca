@@ -17,8 +17,6 @@ LinearVariableChangeTests:
 - varchange: VertConvSOCA
   toleranceInverse: 1e-12
   testinverse: 0
-  variables:
-    variables: *soca_vars
   Lz_min: 10.0
   Lz_mld: 1
   Lz_mld_max: 500.0

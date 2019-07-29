@@ -34,8 +34,6 @@ LinearVariableChangeTests:
   hicen_max: 100.0
   #fixed_std_sst: 0.005 # OK to create pretty increments
   #fixed_std_sss: 0.001 # but that option should not exist!
-  variables:
-    variables: *soca_vars
   inputVariables:
     variables: *soca_vars
   outputVariables:

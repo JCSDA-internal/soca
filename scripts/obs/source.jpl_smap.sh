@@ -21,12 +21,17 @@ yr=${date:0:4}
 dy=$(date -d "$date" "+%j")
 
 
+source_base="https://podaac-tools.jpl.nasa.gov/drive/files/allData/smap/L2"
+
 if [[ $type == "jpl" ]]; then
-    source="ftp://podaac-ftp.jpl.nasa.gov/allData/smap/L2/JPL/V4.2"
+    source=$source_base"/JPL/V4.2"
+    file_sfx='*.h5'
 elif [[ $type == "rss_40km" ]]; then
-    source="ftp://podaac-ftp.jpl.nasa.gov/allData/smap/L2/RSS/V3/SCI/40KM"
+    source=$source_base"/RSS/V3/SCI/40KM"
+    file_sfx='*.nc'
 elif [[ $type == "rss_70km" ]]; then
-    source="ftp://podaac-ftp.jpl.nasa.gov/allData/smap/L2/RSS/V3/SCI/70KM"
+    source=$source_base"/RSS/V3/SCI/70KM"
+    file_sfx='*.nc'
 else
     echo $usage
     exit 1
@@ -36,16 +41,11 @@ out_dir="$output_path/sss.smap.$type"
 pwd=$(pwd)
 source_dir=$source/${yr}/${dy}/
 
+d=$out_dir/$date
+mkdir -p $d
+cd $d
 
-files=$(curl $source_dir -l)
-for f in $files; do
-    # ignore the .md5 files
-    fe=${f##*.}
-    [[  $fe == "md5" ]] && continue
-    
-    d=$out_dir/$date
-    mkdir -p $d
-    cd $d
-    wget $source_dir/$f
-    cd $pwd
-done
+wget -r -nc -np -nH -nd -A $file_sfx  $source_dir
+
+cd $pwd
+

@@ -30,8 +30,6 @@ LinearVariableChangeTests:
   cicen_max: 0.5
   hicen_min: 10.0
   hicen_max: 100.0
-  variables:
-    variables: *soca_vars
   inputVariables:
     variables: *soca_vars
   outputVariables:
