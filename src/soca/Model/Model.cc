@@ -28,18 +28,25 @@ namespace soca {
   static oops::ModelMaker<Traits, Model> makermodel_("SOCA");
   // -----------------------------------------------------------------------------
   Model::Model(const Geometry & resol, const eckit::Configuration & model)
-    : keyConfig_(0), tstep_(0), geom_(resol), vars_(model)
+    : keyConfig_(0), tstep_(0), geom_(resol), vars_(model), setup_mom6_(true)
   {
     Log::trace() << "Model::Model" << std::endl;
     Log::trace() << "Model vars: " << vars_ << std::endl;
     tstep_ = util::Duration(model.getString("tstep"));
-    const eckit::Configuration * configc = &model;
-    soca_setup_f90(&configc, geom_.toFortran(), keyConfig_);
-    Log::trace() << "Model created" << std::endl;
+    setup_mom6_ = model.getBool("setup_mom6", true);
+    if (setup_mom6_)
+      {
+        const eckit::Configuration * configc = &model;
+        soca_setup_f90(&configc, geom_.toFortran(), keyConfig_);
+      }
+        Log::trace() << "Model created" << std::endl;
   }
   // -----------------------------------------------------------------------------
   Model::~Model() {
-    soca_delete_f90(keyConfig_);
+    if (setup_mom6_)
+      {
+        soca_delete_f90(keyConfig_);
+      }
     Log::trace() << "Model destructed" << std::endl;
   }
   // -----------------------------------------------------------------------------
