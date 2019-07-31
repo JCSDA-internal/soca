@@ -87,7 +87,7 @@ Observations:
 
   - ObsSpace:
       name: SeaIceFraction
-      ObsDataOut: {oubsfile: ./Data/icec.out.nc}
+      ObsDataOut: {obsfile: ./Data/icec.out.nc}
       ObsDataIn:  {obsfile:  ./Data/icec.nc}
       simulate:
         variables: [sea_ice_area_fraction]
