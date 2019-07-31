@@ -16,7 +16,6 @@ resolution:
   num_ice_lev: 4
   num_sno_lev: 1
 
-setup_mom6: false
 model:
   name: SOCA
   setup_mom6: false
