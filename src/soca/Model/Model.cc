@@ -34,7 +34,7 @@ namespace soca {
     Log::trace() << "Model vars: " << vars_ << std::endl;
     tstep_ = util::Duration(model.getString("tstep"));
     setup_mom6_ = model.getBool("setup_mom6", true);
-        const eckit::Configuration * configc = &model;
+    const eckit::Configuration * configc = &model;
     if (setup_mom6_)
       {
         soca_setup_f90(&configc, geom_.toFortran(), keyConfig_);
