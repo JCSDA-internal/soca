@@ -18,7 +18,6 @@ resolution:
 
 model:
   name: SOCA
-  setup_mom6: false
   tstep: PT1H
   advance_mom6: 0
   setup_mom6: false
