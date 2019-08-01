@@ -203,7 +203,7 @@ cost_function:
 
     - ObsSpace:
         name: SeaIceFraction
-        ObsDataOut: {obsfile: ./Data/icec.out_SAF.nc}
+        ObsDataOut: {obsfile:  ./Data/icec.out_SAF.nc}
         ObsDataIn:  {obsfile:  ./Data/icec.nc}
         simulate:
           variables: [sea_ice_area_fraction]
