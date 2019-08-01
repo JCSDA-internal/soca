@@ -28,7 +28,7 @@ module soca_mom6
   use fckit_mpi_module, only: fckit_mpi_comm
   use fms_io_mod, only : fms_io_init, fms_io_exit
   use fms_mod,    only : read_data, write_data, fms_init, fms_end
-  use iso_c_binding  
+  use iso_c_binding
   use kinds
   use MOM_grid,                  only : ocean_grid_type
   use MOM_verticalGrid,          only : verticalGrid_type
@@ -43,17 +43,17 @@ module soca_mom6
   use MOM,                 only : step_offline
   use MOM_domains,         only : MOM_infra_init, MOM_infra_end
   use MOM_domains,         only : MOM_domains_init, clone_MOM_domain
-  use MOM_dyn_horgrid,     only : dyn_horgrid_type, create_dyn_horgrid, destroy_dyn_horgrid  
+  use MOM_dyn_horgrid,     only : dyn_horgrid_type, create_dyn_horgrid, destroy_dyn_horgrid
   use MOM_error_handler,   only : MOM_error, MOM_mesg, WARNING, FATAL, is_root_pe
   use MOM_error_handler,   only : callTree_enter, callTree_leave, callTree_waypoint
   use MOM_file_parser,     only : read_param, get_param, log_param, log_version, param_file_type
   use MOM_file_parser,     only : close_param_file
-  use MOM_fixed_initialization,  only : MOM_initialize_fixed  
+  use MOM_fixed_initialization,  only : MOM_initialize_fixed
   use MOM_forcing_type,    only : forcing, mech_forcing, forcing_diagnostics
   use MOM_forcing_type,    only : mech_forcing_diags, MOM_forcing_chksum, MOM_mech_forcing_chksum
-  use MOM_get_input,       only : directories, Get_MOM_Input, directories  
+  use MOM_get_input,       only : directories, Get_MOM_Input, directories
   use MOM_grid,            only : ocean_grid_type, MOM_grid_init
-  use MOM_hor_index,       only : hor_index_type, hor_index_init  
+  use MOM_hor_index,       only : hor_index_type, hor_index_init
   use MOM_io,              only : open_file, close_file
   use MOM_io,              only : check_nml_error, io_infra_init, io_infra_end
   use MOM_io,              only : APPEND_FILE, ASCII_FILE, READONLY_FILE, SINGLE_FILE
@@ -73,16 +73,17 @@ module soca_mom6
   use MOM_time_manager,    only : JULIAN, GREGORIAN, NOLEAP, THIRTY_DAY_MONTHS
   use MOM_time_manager,    only : NO_CALENDAR
   use MOM_tracer_flow_control, only : tracer_flow_control_CS
-  use MOM_transcribe_grid,     only : copy_dyngrid_to_MOM_grid  
+  use MOM_transcribe_grid,     only : copy_dyngrid_to_MOM_grid
+  use MOM_unit_scaling,        only : unit_scale_type
   use MOM_variables,       only : surface
   use MOM_verticalGrid,    only : verticalGrid_type
-  use MOM_verticalGrid,    only : verticalGrid_type, verticalGridInit, verticalGridEnd  
-  use mpp_mod,    only : mpp_init  
+  use MOM_verticalGrid,    only : verticalGrid_type, verticalGridInit, verticalGridEnd
+  use mpp_mod,    only : mpp_init
   use time_interp_external_mod, only : time_interp_external_init
-  use time_manager_mod,         only: time_type, print_time, print_date  
+  use time_manager_mod,         only: time_type, print_time, print_date
   use MOM_diag_mediator,   only : diag_ctrl, diag_mediator_close_registration
   use regrid_consts, only : REGRIDDING_SIGMA_STRING
-  
+
   implicit none
   private
 
@@ -90,7 +91,7 @@ module soca_mom6
   public :: soca_ice_column
   public :: soca_mom6_init, soca_mom6_config, soca_mom6_end
 
-  !> Simple Data structure for the generic sea-ice state 
+  !> Simple Data structure for the generic sea-ice state
   type soca_ice_column
      integer                        :: ncat ! Number of ice categories
      integer                        :: nzi  ! Number of ice levels
@@ -104,16 +105,17 @@ module soca_mom6
                                      !< at the ocean surface.
     type(surface)      :: sfc_state  !< Pointers to the ocean surface state fields.
     real               :: dt_forcing !< Coupling time step in seconds.
-    type(time_type)    :: Time_step_ocean !< time_type version of dt_forcing        
+    type(time_type)    :: Time_step_ocean !< time_type version of dt_forcing
     type(directories)  :: dirs       !< Relevant dirs/path
     type(time_type)    :: Time       !< Model's time before call to step_MOM.
+    type(unit_scale_type) :: scaling !< Unit conversion factors
     type(ocean_grid_type),    pointer :: grid !< Grid metrics
-    type(verticalGrid_type),  pointer :: GV   !< Vertical grid     
+    type(verticalGrid_type),  pointer :: GV   !< Vertical grid
     type(MOM_control_struct), pointer :: MOM_CSp  !< Tracer flow control structure.
     type(MOM_restart_CS),     pointer :: restart_CSp !< A pointer to the restart control structure
     type(surface_forcing_CS), pointer :: surface_forcing_CSp => NULL()
  end type soca_mom6_config
-  
+
 contains
 
   ! ------------------------------------------------------------------------------
@@ -123,7 +125,8 @@ contains
     use MOM_ALE, only : ALE_CS, ALE_initThicknessToCoord, ALE_init, ALE_updateVerticalGridType
     use mpp_domains_mod, only : mpp_get_compute_domain, mpp_get_data_domain
     use MOM_remapping,        only : remapping_core_h
-    
+    use MOM_unit_scaling,     only : unit_scale_type
+
     type(ocean_grid_type),            intent(out) :: G          !< The horizontal grid type (same for ice & ocean)
     type(verticalGrid_type), pointer, intent(out) :: GV         !< Ocean vertical grid
     type(soca_ice_column),            intent(out) :: ice_column !< Ice grid spec
@@ -138,13 +141,14 @@ contains
     type(ocean_OBC_type),          pointer :: OBC => NULL()             !< Ocean boundary condition
     type(fckit_mpi_comm) :: f_comm
 
+    type(unit_scale_type) :: US
     ! Regridding stuff
     type(regridding_CS) :: regridCS !< ALE control structure for regridding
     type(remapping_CS)  :: remapCS  !< ALE control structure for remapping
     real :: max_depth !<
     character(len=30) :: coord_mode
     logical, save :: regrid_initialized = .false.
-    type(ALE_CS), pointer :: ALECS=>NULL() !< ALE control structure for DA    
+    type(ALE_CS), pointer :: ALECS=>NULL() !< ALE control structure for DA
     real(kind=kind_real), allocatable :: h_da(:,:,:), h_model(:,:,:), t_da(:),t_model(:)
     integer :: isd,ied,jsd,jed,i,j,k,nz
     f_comm = fckit_mpi_comm()
@@ -167,11 +171,11 @@ contains
 
     ! Allocate grid arrays
     GV => NULL()
-    call verticalGridInit( param_file, GV )
+    call verticalGridInit( param_file, GV, US )
     call MOM_grid_init(G, param_file, HI, global_indexing=global_indexing)
 
     ! Read/Generate grid
-    call MOM_initialize_fixed(dG, OBC, param_file, write_geom_files, dirs%output_directory)
+    call MOM_initialize_fixed(dG, US, OBC, param_file, write_geom_files, dirs%output_directory)
     call copy_dyngrid_to_MOM_grid(dG, G)
     G%ke = GV%ke ; G%g_Earth = GV%g_Earth
 
@@ -196,7 +200,7 @@ contains
     type(soca_mom6_config), intent(out) :: mom6_config
 
     type(time_type) :: Start_time         ! The start time of the simulation.
-    type(time_type) :: Time_in            ! 
+    type(time_type) :: Time_in            !
     real :: dt                      ! The baroclinic dynamics time step, in seconds.
     integer :: date_init(6)=0                ! The start date of the whole simulation.
     integer :: years=0, months=0, days=0     ! These may determine the segment run
@@ -257,10 +261,10 @@ contains
 
     call time_interp_external_init
 
-    ! Nullify mom6_config pointers 
+    ! Nullify mom6_config pointers
     mom6_config%MOM_CSp => NULL()
     mom6_config%restart_CSp => NULL()
-    mom6_config%grid => NULL()    
+    mom6_config%grid => NULL()
     mom6_config%GV => NULL()
 
     ! Set mom6_config%Time to time parsed from mom6 config
@@ -286,6 +290,7 @@ contains
     call extract_surface_state(mom6_config%MOM_CSp, mom6_config%sfc_state)
     call surface_forcing_init(mom6_config%Time,&
                               mom6_config%grid,&
+                              mom6_config%scaling,&
                               param_file,&
                               diag,&
                               mom6_config%surface_forcing_CSp,&
@@ -307,12 +312,13 @@ contains
                      mom6_config%Time,&
                      mom6_config%Time_step_ocean,&
                      mom6_config%grid, &
+                     mom6_config%scaling, &
                      mom6_config%surface_forcing_CSp)
-    
+
   end subroutine soca_mom6_init
 
   ! ------------------------------------------------------------------------------
-  !> Release memory and possibly dump mom6's restart 
+  !> Release memory and possibly dump mom6's restart
   subroutine soca_mom6_end(mom6_config)
     type(soca_mom6_config), intent(inout) :: mom6_config
 

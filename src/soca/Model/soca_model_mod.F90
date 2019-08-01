@@ -150,9 +150,10 @@ subroutine soca_propagate(self, flds, fldsdate)
                       self%mom6_config%Time,&
                       self%mom6_config%Time_step_ocean,&
                       self%mom6_config%grid, &
+                      self%mom6_config%scaling, &
                       self%mom6_config%surface_forcing_CSp)
      call fms_io_exit()
-     
+
      ! Advance MOM in a single step call (advance dyna and thermo)
      call step_MOM(self%mom6_config%forces, &
                    self%mom6_config%fluxes, &
