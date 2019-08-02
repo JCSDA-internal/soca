@@ -66,6 +66,7 @@ namespace soca {
     void print(std::ostream &) const;
     int keyConfig_;
     util::Duration tstep_;
+    bool setup_mom6_;
     const Geometry geom_;
     const oops::Variables vars_;
   };
