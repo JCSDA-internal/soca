@@ -12,7 +12,7 @@ ModelBias:
 
 ModelTest:
   fclength: PT6H
-  finalnorm: 12408.52388470733239956
+  finalnorm: 9898.27953418391007290
   tolerance: 1e-12
 
 Model:

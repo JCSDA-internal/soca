@@ -1,11 +1,11 @@
 Test     : Initial state: 
 Test     :   Valid time: 2018-04-15T00:00:00Z
-Test     :   cicen   min=    0.000000   max=    1.000000   mean=    0.252545
-Test     :   hicen   min=    0.000000   max=    2.947887   mean=    0.108958
-Test     :    socn   min=    0.000000   max=   39.037978   mean=   34.507904
-Test     :    tocn   min=   -1.883330   max=   31.008851   mean=    6.153932
-Test     :     ssh   min=   -2.103854   max=    0.912143   mean=   -0.297046
-Test     :    hocn   min=    0.001000   max= 1345.640000   mean=  130.682172
+Test     :   cicen   min=    0.000000   max=    1.000000   mean=    0.255630
+Test     :   hicen   min=    0.000000   max=    2.265451   mean=    0.094250
+Test     :    socn   min=    0.000000   max=   40.441659   mean=   34.544390
+Test     :    tocn   min=   -1.888390   max=   31.700465   mean=    6.017565
+Test     :     ssh   min=   -1.924485   max=    0.927283   mean=   -0.263446
+Test     :    hocn   min=    0.001000   max= 1345.640000   mean=  128.628598
 Test     :      sw   min=    0.000000   max=    0.000000   mean=    0.000000
 Test     :     lhf   min=    0.000000   max=    0.000000   mean=    0.000000
 Test     :     shf   min=    0.000000   max=    0.000000   mean=    0.000000
@@ -13,23 +13,23 @@ Test     :      lw   min=    0.000000   max=    0.000000   mean=    0.000000
 Test     :      us   min=    0.000000   max=    0.000000   mean=    0.000000
 Test     : Final state: 
 Test     :   Valid time: 2018-04-15T03:00:00Z
-Test     :   cicen   min=    0.000000   max=    1.000000   mean=    0.252545
-Test     :   hicen   min=    0.000000   max=    2.947887   mean=    0.108958
-Test     :    socn   min=    0.000000   max=   39.037770   mean=   34.508909
-Test     :    tocn   min=   -1.885421   max=   31.016797   mean=    6.153956
-Test     :     ssh   min=   -2.115360   max=    0.903955   mean=   -0.297198
-Test     :    hocn   min=    0.000957   max= 1345.950587   mean=  130.682166
-Test     :      sw   min= -226.053650   max=   -0.000000   mean= -110.176189
-Test     :     lhf   min=  -85.418602   max=  317.347870   mean=   64.442333
-Test     :     shf   min= -121.299400   max=  242.676361   mean=    8.957396
-Test     :      lw   min=   -0.000000   max=   89.266090   mean=   47.830237
-Test     :      us   min=    0.004396   max=    0.021537   mean=    0.011925
+Test     :   cicen   min=    0.000000   max=    1.000000   mean=    0.255630
+Test     :   hicen   min=    0.000000   max=    2.265451   mean=    0.094250
+Test     :    socn   min=    0.000000   max=   40.441652   mean=   34.544503
+Test     :    tocn   min=   -1.888526   max=   31.722062   mean=    6.016930
+Test     :     ssh   min=   -1.908469   max=    0.909270   mean=   -0.263236
+Test     :    hocn   min=    0.000968   max= 1345.999321   mean=  128.628622
+Test     :      sw   min= -225.097763   max=   -0.000000   mean= -110.032311
+Test     :     lhf   min=  -38.137398   max=  256.597656   mean=   64.434146
+Test     :     shf   min=  -58.949295   max=  201.374298   mean=    9.318225
+Test     :      lw   min=    0.000000   max=   88.036087   mean=   48.153824
+Test     :      us   min=    0.004396   max=    0.019658   mean=    0.013258
 Test     : H(x): 
-Test     : CoolSkin nobs= 21 Min=0.076197, Max=23.962648, RMS=21.168156
-Test     : SeaSurfaceTemp nobs= 21 Min=3.686794, Max=29.635132, RMS=25.934347
-Test     : SeaSurfaceSalinity nobs= 9 Min=33.176554, Max=35.830379, RMS=34.486207
-Test     : ADT nobs= 14 Min=-0.752580, Max=1.562011, RMS=1.019883
-Test     : InsituTemperature nobs= 10 Min=7.750182, Max=30.329756, RMS=23.493833
-Test     : InsituSalinity nobs= 10 Min=33.964664, Max=35.712910, RMS=35.030880
-Test     : SeaIceFraction nobs= 14 Min=0.000000, Max=0.999966, RMS=0.658284
+Test     : CoolSkin nobs= 21 Min=0.786874, Max=24.863183, RMS=21.430696
+Test     : SeaSurfaceTemp nobs= 21 Min=4.211615, Max=29.767089, RMS=26.048637
+Test     : SeaSurfaceSalinity nobs= 9 Min=33.225032, Max=35.554280, RMS=34.437412
+Test     : ADT nobs= 14 Min=-0.374745, Max=1.490149, RMS=0.940998
+Test     : InsituTemperature nobs= 10 Min=8.006366, Max=30.400225, RMS=23.833963
+Test     : InsituSalinity nobs= 10 Min=34.136676, Max=35.699690, RMS=35.015511
+Test     : SeaIceFraction nobs= 14 Min=0.000003, Max=0.996590, RMS=0.634564
 Test     : End H(x)
