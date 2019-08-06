@@ -634,7 +634,7 @@ contains
        ! Read common vertical coordinate from file
        call fms_io_init()
        idr_ocean = register_restart_field(ocean_remap_restart, remap_filename, 'h', fld%hocn(:,:,:), &
-            domain=fld%geom%G%Domain%mpp_domain)
+            domain=fld%geom%Domain%mpp_domain)
        call restore_state(ocean_remap_restart, directory='')
        call fms_io_exit()
        h_common = fld%hocn
@@ -666,16 +666,16 @@ contains
              ! Ocean
           case ('ssh')
              idr_ocean = register_restart_field(ocean_restart, ocn_filename, 'ave_ssh', fld%ssh(:,:), &
-                  domain=fld%geom%G%Domain%mpp_domain)
+                  domain=fld%geom%Domain%mpp_domain)
           case ('tocn')
              idr_ocean = register_restart_field(ocean_restart, ocn_filename, 'Temp', fld%tocn(:,:,:), &
-                  domain=fld%geom%G%Domain%mpp_domain)
+                  domain=fld%geom%Domain%mpp_domain)
           case ('socn')
              idr_ocean = register_restart_field(ocean_restart, ocn_filename, 'Salt', fld%socn(:,:,:), &
-                  domain=fld%geom%G%Domain%mpp_domain)
+                  domain=fld%geom%Domain%mpp_domain)
           case ('hocn')
              idr_ocean = register_restart_field(ocean_restart, ocn_filename, 'h', fld%hocn(:,:,:), &
-                  domain=fld%geom%G%Domain%mpp_domain)
+                  domain=fld%geom%Domain%mpp_domain)
           case default
              call log%warning("soca_fields:read_file: Not reading var "//fld%fldnames(ii))
           end select
@@ -723,9 +723,9 @@ contains
        call end_remapping(remapCS)
 
        ! Update halo
-       call mpp_update_domains(fld%tocn, fld%geom%G%Domain%mpp_domain)
-       call mpp_update_domains(fld%socn, fld%geom%G%Domain%mpp_domain)
-       call mpp_update_domains(fld%ssh, fld%geom%G%Domain%mpp_domain)
+       call mpp_update_domains(fld%tocn, fld%geom%Domain%mpp_domain)
+       call mpp_update_domains(fld%socn, fld%geom%Domain%mpp_domain)
+       call mpp_update_domains(fld%ssh, fld%geom%Domain%mpp_domain)
 
        ! Set vdate if reading state
        if (iread==1) then
@@ -750,13 +750,13 @@ contains
           select case(fld%fldnames(ii))
              ! Ocean variables
           case ('ssh')
-             call read_data(incr_filename,"ssh",fld%ssh(:,:),domain=fld%geom%G%Domain%mpp_domain)
+             call read_data(incr_filename,"ssh",fld%ssh(:,:),domain=fld%geom%Domain%mpp_domain)
           case ('tocn')
-             call read_data(incr_filename,"temp",fld%tocn(:,:,:),domain=fld%geom%G%Domain%mpp_domain)
+             call read_data(incr_filename,"temp",fld%tocn(:,:,:),domain=fld%geom%Domain%mpp_domain)
           case ('socn')
-             call read_data(incr_filename,"salt",fld%socn(:,:,:),domain=fld%geom%G%Domain%mpp_domain)
+             call read_data(incr_filename,"salt",fld%socn(:,:,:),domain=fld%geom%Domain%mpp_domain)
           case ('hocn')
-             call read_data(incr_filename,"h",fld%hocn(:,:,:),domain=fld%geom%G%Domain%mpp_domain)
+             call read_data(incr_filename,"h",fld%hocn(:,:,:),domain=fld%geom%Domain%mpp_domain)
           case default
              write(buf,*) 'soca_fields_mod::read_file::increment. Not reading '//fld%fldnames(ii)
              call log%info(buf,newl=.true.)
@@ -1189,33 +1189,33 @@ contains
     call check(fld)
 
     call fms_io_init()
-    call set_domain( fld%geom%G%Domain%mpp_domain )
+    call set_domain( fld%geom%Domain%mpp_domain )
     do ii = 1, fld%nf
        select case(fld%fldnames(ii))
 
        case ('ssh')
-          call write_data( fname, "ssh", fld%ssh, fld%geom%G%Domain%mpp_domain)
-          call write_data( fname, "rossby_radius", fld%geom%rossby_radius, fld%geom%G%Domain%mpp_domain)
+          call write_data( fname, "ssh", fld%ssh, fld%geom%Domain%mpp_domain)
+          call write_data( fname, "rossby_radius", fld%geom%rossby_radius, fld%geom%Domain%mpp_domain)
        case ('tocn')
-          call write_data( fname, "temp", fld%tocn, fld%geom%G%Domain%mpp_domain)
+          call write_data( fname, "temp", fld%tocn, fld%geom%Domain%mpp_domain)
        case ('socn')
-          call write_data( fname, "salt", fld%socn, fld%geom%G%Domain%mpp_domain)
+          call write_data( fname, "salt", fld%socn, fld%geom%Domain%mpp_domain)
        case ('hocn')
-          call write_data( fname, "h", fld%hocn, fld%geom%G%Domain%mpp_domain)
+          call write_data( fname, "h", fld%hocn, fld%geom%Domain%mpp_domain)
        case ('hicen')
-          call write_data( fname, "hicen", fld%seaice%hicen, fld%geom%G%Domain%mpp_domain)
+          call write_data( fname, "hicen", fld%seaice%hicen, fld%geom%Domain%mpp_domain)
        case ('cicen')
-          call write_data(fname, "cicen", fld%seaice%cicen, fld%geom%G%Domain%mpp_domain)
+          call write_data(fname, "cicen", fld%seaice%cicen, fld%geom%Domain%mpp_domain)
        case ('sw')
-          call write_data(fname, "sw", fld%ocnsfc%sw_rad, fld%geom%G%Domain%mpp_domain)
+          call write_data(fname, "sw", fld%ocnsfc%sw_rad, fld%geom%Domain%mpp_domain)
        case ('lw')
-          call write_data(fname, "lw", fld%ocnsfc%lw_rad, fld%geom%G%Domain%mpp_domain)
+          call write_data(fname, "lw", fld%ocnsfc%lw_rad, fld%geom%Domain%mpp_domain)
        case ('lhf')
-          call write_data(fname, "lhf", fld%ocnsfc%latent_heat, fld%geom%G%Domain%mpp_domain)
+          call write_data(fname, "lhf", fld%ocnsfc%latent_heat, fld%geom%Domain%mpp_domain)
        case ('shf')
-          call write_data(fname, "shf", fld%ocnsfc%sens_heat, fld%geom%G%Domain%mpp_domain)
+          call write_data(fname, "shf", fld%ocnsfc%sens_heat, fld%geom%Domain%mpp_domain)
        case ('us')
-          call write_data(fname, "us", fld%ocnsfc%fric_vel, fld%geom%G%Domain%mpp_domain)
+          call write_data(fname, "us", fld%ocnsfc%fric_vel, fld%geom%Domain%mpp_domain)
 
        case default
 
@@ -1246,32 +1246,32 @@ contains
     call fms_io_init()
     ! Ocean State
     idr_ocean = register_restart_field(ocean_restart, ocn_filename, 'ave_ssh', fld%ssh(:,:), &
-         domain=fld%geom%G%Domain%mpp_domain)
+         domain=fld%geom%Domain%mpp_domain)
     idr_ocean = register_restart_field(ocean_restart, ocn_filename, 'Temp', fld%tocn(:,:,:), &
-         domain=fld%geom%G%Domain%mpp_domain)
+         domain=fld%geom%Domain%mpp_domain)
     idr_ocean = register_restart_field(ocean_restart, ocn_filename, 'Salt', fld%socn(:,:,:), &
-         domain=fld%geom%G%Domain%mpp_domain)
+         domain=fld%geom%Domain%mpp_domain)
     idr_ocean = register_restart_field(ocean_restart, ocn_filename, 'h', fld%hocn(:,:,:), &
-         domain=fld%geom%G%Domain%mpp_domain)
+         domain=fld%geom%Domain%mpp_domain)
     idr_ocean = register_restart_field(ocean_restart, ocn_filename, 'mld', fld%mld(:,:), &
-         domain=fld%geom%G%Domain%mpp_domain)
+         domain=fld%geom%Domain%mpp_domain)
 
     ! Ocean-surface
     idr = register_restart_field(ocnsfc_restart, ocnsfc_filename, &
                                 'sw_rad', fld%ocnsfc%sw_rad, &
-                                domain=fld%geom%G%Domain%mpp_domain)
+                                domain=fld%geom%Domain%mpp_domain)
     idr = register_restart_field(ocnsfc_restart, ocnsfc_filename, &
                                 'lw_rad', fld%ocnsfc%lw_rad, &
-                                domain=fld%geom%G%Domain%mpp_domain)
+                                domain=fld%geom%Domain%mpp_domain)
     idr = register_restart_field(ocnsfc_restart, ocnsfc_filename, &
                                 'latent_heat', fld%ocnsfc%latent_heat, &
-                                domain=fld%geom%G%Domain%mpp_domain)
+                                domain=fld%geom%Domain%mpp_domain)
     idr = register_restart_field(ocnsfc_restart, ocnsfc_filename, &
                                 'sens_heat', fld%ocnsfc%sens_heat, &
-                                domain=fld%geom%G%Domain%mpp_domain)
+                                domain=fld%geom%Domain%mpp_domain)
     idr = register_restart_field(ocnsfc_restart, ocnsfc_filename, &
                                 'fric_vel', fld%ocnsfc%fric_vel, &
-                                domain=fld%geom%G%Domain%mpp_domain)
+                                domain=fld%geom%Domain%mpp_domain)
 
     call save_restart(ocean_restart, directory='')
     call save_restart(ocnsfc_restart, directory='')

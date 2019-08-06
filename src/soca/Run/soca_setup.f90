@@ -21,7 +21,7 @@ subroutine soca_setup(c_conf) bind(c,name='soca_setup_f')
   type(c_ptr), intent(in) :: c_conf
   type(fckit_mpi_comm) :: f_comm
 
-  f_comm = fckit_mpi_comm()
+  !f_comm = fckit_mpi_comm()
   
   !call mpp_init(localcomm=f_comm%communicator())
   !call mpp_domains_init()  

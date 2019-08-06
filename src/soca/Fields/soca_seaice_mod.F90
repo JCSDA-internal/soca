@@ -337,15 +337,15 @@ contains
           case('cicen')
              idr = register_restart_field(restart, filename, 'part_size', &
                   self%cicen(:,:,:), &
-                  domain=geom%G%Domain%mpp_domain)
+                  domain=geom%Domain%mpp_domain)
           case('hicen')
              idr = register_restart_field(restart, filename, 'h_ice', &
                   self%hicen(:,:,:), &
-                  domain=geom%G%Domain%mpp_domain)
+                  domain=geom%Domain%mpp_domain)
           case('hsnon')
              idr = register_restart_field(restart, filename, 'h_snow', &
                   self%hsnon(:,:,:), &
-                  domain=geom%G%Domain%mpp_domain)
+                  domain=geom%Domain%mpp_domain)
           end select
        end do
        call restore_state(restart, directory='')
@@ -362,15 +362,15 @@ contains
           case('cicen')
              idr = register_restart_field(restart, filename, 'aicen', &
                   self%cicen(:,:,2:), &
-                  domain=geom%G%Domain%mpp_domain)
+                  domain=geom%Domain%mpp_domain)
           case('hicen')
              idr = register_restart_field(restart, filename, 'vicen', &
                   self%hicen(:,:,:), &
-                  domain=geom%G%Domain%mpp_domain)
+                  domain=geom%Domain%mpp_domain)
           case('hsnon')
              idr = register_restart_field(restart, filename, 'vsnon', &
                   self%hsnon(:,:,:), &
-                  domain=geom%G%Domain%mpp_domain)
+                  domain=geom%Domain%mpp_domain)
           end select
 
        end do
@@ -416,15 +416,15 @@ contains
        case('cicen')
           call read_data(filename,"cicen", &
                          self%cicen(:,:,:), &
-                         domain=geom%G%Domain%mpp_domain)
+                         domain=geom%Domain%mpp_domain)
        case('hicen')
           call read_data(filename,"hicen", &
                          self%hicen(:,:,:), &
-                         domain=geom%G%Domain%mpp_domain)
+                         domain=geom%Domain%mpp_domain)
        case('hsnon')
           call read_data(filename,"hsnon", &
                          self%hsnon(:,:,:), &
-                         domain=geom%G%Domain%mpp_domain)
+                         domain=geom%Domain%mpp_domain)
        end select
     end do
     call fms_io_exit()
@@ -473,12 +473,12 @@ contains
 
        ! Register sis2 variables
        idr = register_restart_field(restart, filename, 'part_size', self%cicen, &
-            domain=geom%G%Domain%mpp_domain)
+            domain=geom%Domain%mpp_domain)
        ! TODO (Guillaume): Rescale with density
        idr = register_restart_field(restart, filename, 'h_ice', self%hicen, &
-            domain=geom%G%Domain%mpp_domain)
+            domain=geom%Domain%mpp_domain)
        idr = register_restart_field(restart, filename, 'h_snow', self%hsnon, &
-            domain=geom%G%Domain%mpp_domain)
+            domain=geom%Domain%mpp_domain)
 
     case('cice')
        ! Get ice volume
@@ -497,20 +497,20 @@ contains
 
        ! Register cice variables
        idr = register_restart_field(restart, filename, 'aicen', self%cicen(:,:,2:), &
-            domain=geom%G%Domain%mpp_domain)
+            domain=geom%Domain%mpp_domain)
        idr = register_restart_field(restart, filename, 'vicen', vicen, &
-            domain=geom%G%Domain%mpp_domain)
+            domain=geom%Domain%mpp_domain)
        idr = register_restart_field(restart, filename, 'vsnon', vsnon, &
-            domain=geom%G%Domain%mpp_domain)
+            domain=geom%Domain%mpp_domain)
     end select
 
     ! Register aggregate variables
     idr = register_restart_field(restart, filename, 'aice', aice, &
-         domain=geom%G%Domain%mpp_domain)
+         domain=geom%Domain%mpp_domain)
     idr = register_restart_field(restart, filename, 'hice', hice, &
-         domain=geom%G%Domain%mpp_domain)
+         domain=geom%Domain%mpp_domain)
     idr = register_restart_field(restart, filename, 'hsno', hsno, &
-         domain=geom%G%Domain%mpp_domain)
+         domain=geom%Domain%mpp_domain)
 
     ! Write restart to disk
     call save_restart(restart, directory='')

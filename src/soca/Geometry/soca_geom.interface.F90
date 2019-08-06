@@ -46,9 +46,6 @@ contains
     call soca_geom_registry%get(c_key_self,self)
 
     call self%init(c_conf)
-    call self%get_rossby_radius()
-    call self%validindex() !BUG: Needs a halo of 2 to work
-    call self%infotofile()
 
   end subroutine c_soca_geo_setup
 
@@ -67,6 +64,24 @@ contains
     call self%clone(other)
 
   end subroutine c_soca_geo_clone
+
+  ! ------------------------------------------------------------------------------
+  !> Generate grid
+  subroutine c_soca_geo_gridgen(c_key_self, c_conf) bind(c,name='soca_geo_gridgen_f90')
+    integer(c_int), intent(inout) :: c_key_self
+    type(c_ptr),       intent(in) :: c_conf
+
+    type(soca_geom),      pointer :: self
+
+    call soca_geom_registry%get(c_key_self,self)
+
+    print *,'geom key = ',c_key_self
+    call self%gridgen()
+    !call self%get_rossby_radius()
+    !call self%validindex() !BUG: Needs a halo of 2 to work
+    !call self%infotofile()
+
+  end subroutine c_soca_geo_gridgen
 
   ! ------------------------------------------------------------------------------
   !> Geometry destructor
@@ -90,7 +105,6 @@ contains
 
     call soca_geom_registry%get(c_key_self , self)
     call self%print()
-    call self%infotofile()
 
   end subroutine c_soca_geo_info
 
