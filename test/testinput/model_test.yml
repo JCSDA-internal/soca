@@ -1,18 +1,14 @@
----
-logging:
-  categories: Warning, Error
-test_framework_runtime_config: "--log_level=test_suite"
-
 Geometry:
   num_ice_cat: 5
   num_ice_lev: 4
   num_sno_lev: 1
+  read_soca_grid: grid
 
 ModelBias:
 
 ModelTest:
   fclength: PT6H
-  finalnorm: 12408.52388470733239956
+  finalnorm: 9898.26819282811993617
   tolerance: 1e-12
 
 Model:

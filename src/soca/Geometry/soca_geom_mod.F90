@@ -6,17 +6,22 @@
 
 module soca_geom_mod
   use config_mod
-  use MOM_grid,                  only : ocean_grid_type
-  use MOM_verticalGrid,          only : verticalGrid_type
+  use MOM_domains, only : MOM_domain_type
+  use MOM_domains,         only : MOM_infra_init
+  use MOM_io,              only : io_infra_init  
   use soca_mom6
   use soca_utils
   use kinds
-  use fckit_kdtree_module!, only: kdtree,kdtree_create,kdtree_destroy,kdtree_k_nearest_neighbors
+  use fckit_kdtree_module
   use fckit_mpi_module, only: fckit_mpi_comm
+  use fms_io_mod, only : fms_io_init, fms_io_exit,&
+       &register_restart_field, restart_file_type,&
+       &restore_state, query_initialized,&
+       &free_restart_type, save_restart  
   use mpp_domains_mod, only : mpp_get_compute_domain, mpp_get_data_domain
   use mpp_domains_mod, only : mpp_update_domains
   use kinds
-  use fms_mod,         only : get_mosaic_tile_grid, write_data, set_domain, read_data
+  use fms_mod,         only : write_data, read_data
   use fms_io_mod,      only : fms_io_init, fms_io_exit
   use iso_c_binding
 
@@ -24,13 +29,12 @@ module soca_geom_mod
 
   private
   public :: soca_geom
-  public :: geom_infotofile, geom_get_domain_indices
+  public :: geom_write, geom_get_domain_indices
 
   !> Geometry data structure
   type :: soca_geom
-     type(ocean_grid_type)            :: G          !< Ocean/sea-ice horizontal grid
-     type(VerticalGrid_type), pointer :: GV         !< Ocean vertical grid
-     type(soca_ice_column)            :: ice_column !< Sea-ice geometry
+     type(MOM_domain_type), pointer :: Domain !< Ocean model domain
+     type(soca_ice_column) :: ice_column !< Sea-ice geometry
      integer :: nx, ny, nzo
      integer :: nzi, nzs, ncat
      integer :: isc, iec, jsc, jec  !< indices of compute domain
@@ -48,15 +52,15 @@ module soca_geom_mod
    contains
      procedure :: init => geom_init
      procedure :: end => geom_end
-     !procedure :: shortcuts => geom_allocate
      procedure :: clone => geom_clone
      procedure :: print => geom_print
      procedure :: get_rossby_radius => geom_rossby_radius
      procedure :: validindex => geom_validindex
+     procedure :: gridgen => geom_gridgen     
      procedure :: thickness2depth => geom_thickness2depth
      procedure :: struct2unstruct => geom_struct2unstruct
      procedure :: unstruct2struct => geom_unstruct2struct
-     procedure :: infotofile => geom_infotofile
+     procedure :: write => geom_write
   end type soca_geom
 
   ! ------------------------------------------------------------------------------
@@ -64,23 +68,42 @@ contains
   ! ------------------------------------------------------------------------------
 
   ! ------------------------------------------------------------------------------
-  !> Initialize and allocate memory for geometry object
+  !> Setup geometry object
   subroutine geom_init(self, c_conf)
     class(soca_geom), intent(out) :: self
     type(c_ptr),      intent( in) :: c_conf
 
     integer :: isave
+    type(fckit_mpi_comm) :: f_comm
+    integer :: isc,iec,jsc,jec
+    integer :: nk    
 
-    call soca_geom_init(self%G, self%GV, self%ice_column, c_conf)
+    ! Domain decomposition
+    call soca_geomdomain_init(self%Domain, self%nzo)
 
+    ! Initialize sea-ice grid
+    self%ice_column%ncat = config_get_int(c_conf,"num_ice_cat")
+    self%ice_column%nzi = config_get_int(c_conf,"num_ice_lev")
+    self%ice_column%nzs = config_get_int(c_conf,"num_sno_lev")
+
+    ! Sortcuts to sea-ice grid size
+    self%ncat = self%ice_column%ncat
+    self%nzi = self%ice_column%nzi
+    self%nzs = self%ice_column%nzs
+    
+    ! Allocate geometry arrays
+    call geom_allocate(self)
+
+    if (config_element_exists(c_conf,"read_soca_grid")) then
+       call geom_read(self)
+    end if
+   
     ! Set output option for local geometry
     self%save_local_domain = .false.
     if (config_element_exists(c_conf,"save_local_domain")) then
-       isave = config_get_int(c_conf,"read_from_file")
+       isave = config_get_int(c_conf,"save_local_domain")
        if (isave.eq.1 ) self%save_local_domain = .true.
     endif
-
-    call geom_allocate(self)
 
   end subroutine geom_init
 
@@ -89,28 +112,13 @@ contains
   subroutine geom_end(self)
     class(soca_geom), intent(out)  :: self
 
-    if (allocated(self%lon)) deallocate(self%lon)
-    if (allocated(self%lat)) deallocate(self%lat)
-    if (allocated(self%mask2d)) deallocate(self%mask2d)
-    if (allocated(self%shoremask)) deallocate(self%shoremask)
-    if (allocated(self%cell_area)) deallocate(self%cell_area)
+    if (allocated(self%lon))           deallocate(self%lon)
+    if (allocated(self%lat))           deallocate(self%lat)
+    if (allocated(self%mask2d))        deallocate(self%mask2d)
+    if (allocated(self%shoremask))     deallocate(self%shoremask)
+    if (allocated(self%cell_area))     deallocate(self%cell_area)
     if (allocated(self%rossby_radius)) deallocate(self%rossby_radius)
-
-    self%nx = 0
-    self%ny = 0
-
-    self%G%isc = 0
-    self%G%iec = 0
-    self%G%jsc = 0
-    self%G%jec = 0
-    self%G%ke = 0
-
-    if (allocated(self%G%GeoLonT)) deallocate(self%G%GeoLonT)
-    if (allocated(self%G%GeoLatT)) deallocate(self%G%GeoLatT)
-    if (allocated(self%G%mask2dT)) deallocate(self%G%mask2dT)
-    if (allocated(self%G%areaT)) deallocate(self%G%areaT)
-
-    nullify(self%GV)
+    if (allocated(self%ij))            deallocate(self%ij)    
 
   end subroutine geom_end
 
@@ -120,14 +128,46 @@ contains
     class(soca_geom), intent( in) :: self
     class(soca_geom), intent(out) :: other
 
-    other%G = self%G
-    !other%GV = self%GV  ! CAREFUL, GV is a pointer!!!
-    other%ice_column = self%ice_column
+    ! Clone fms domain and vertical levels
+    call soca_geomdomain_init(other%Domain, other%nzo)
+    
+    ! Clone sea-ice grid
+    other%ice_column = self%ice_column    
+    other%ncat = self%ncat
+    other%nzi = self%nzi
+    other%nzs = self%nzs
+
+    ! Allocate and clone geometry
     call geom_allocate(other)
-
+    other%lon = self%lon
+    other%lat = self%lat
+    other%mask2d = self%mask2d
+    other%cell_area = self%cell_area
     other%rossby_radius = self%rossby_radius
-
+    
   end subroutine geom_clone
+
+  ! ------------------------------------------------------------------------------
+  !> 
+  subroutine geom_gridgen(self)
+    class(soca_geom), intent(inout) :: self
+
+    type(soca_mom6_config) :: mom6_config
+
+    ! Generate grid
+    call soca_mom6_init(mom6_config, partial_init=.true.)
+    self%lon = mom6_config%grid%GeoLonT
+    self%lat = mom6_config%grid%GeoLatT
+    self%mask2d = mom6_config%grid%mask2dT
+    self%cell_area  = mom6_config%grid%areaT
+
+    ! Get Rossby Radius
+    call geom_rossby_radius(self)
+    
+    ! Output to file
+    call geom_write(self)
+    
+  end subroutine geom_gridgen
 
   ! ------------------------------------------------------------------------------
   !> Allocate memory and point to mom6 data structure
@@ -138,51 +178,37 @@ contains
     integer :: nzo, nzi, nzs
     integer :: isd, ied, jsd, jed
 
-    ! Get indices of data and compute domain
+    ! Get domain shape (number of levels, indices of data and compute domain)
     call geom_get_domain_indices(self, "compute", self%isc, self%iec, self%jsc, self%jec)
     call geom_get_domain_indices(self, "data", isd, ied, jsd, jed)
     self%isd = isd ;  self%ied = ied ; self%jsd = jsd; self%jed = jed
-
     call geom_get_domain_indices(self, "compute", self%iscl, self%iecl, self%jscl, self%jecl, local=.true.)
     call geom_get_domain_indices(self, "data", self%isdl, self%iedl, self%jsdl, self%jedl, local=.true.)
+    nzo = self%nzo
 
-    nzo = self%G%ke
+    ! Allocate arrays on compute domain
+    allocate(self%lon(isd:ied,jsd:jed));           self%lon = 0.0_kind_real
+    allocate(self%lat(isd:ied,jsd:jed));           self%lat = 0.0_kind_real
+    allocate(self%mask2d(isd:ied,jsd:jed));        self%mask2d = 0.0_kind_real
+    allocate(self%cell_area(isd:ied,jsd:jed));     self%cell_area = 0.0_kind_real
+    allocate(self%rossby_radius(isd:ied,jsd:jed)); self%rossby_radius = 0.0_kind_real
+    allocate(self%shoremask(isd:ied,jsd:jed));     self%shoremask = 0.0_kind_real
 
     ! Extract geometry of interest from model's data structure.
     ! Common to ocean & sea-ice
     ! No halo grid size
     ! TODO: Probably obsolete, remove
-    nxny = shape( self%G%GeoLonT )
+    nxny = shape( self%lon )
     nx = nxny(1)
     ny = nxny(2)
     self%nx = nx
     self%ny = ny
-
-    ! Allocate arrays on compute domain
-    allocate(self%lon(isd:ied,jsd:jed))
-    allocate(self%lat(isd:ied,jsd:jed))
-    allocate(self%mask2d(isd:ied,jsd:jed))
-    allocate(self%cell_area(isd:ied,jsd:jed))
-    allocate(self%rossby_radius(isd:ied,jsd:jed))
-
-    self%lon = self%G%GeoLonT
-    self%lat = self%G%GeoLatT
-    self%mask2d = self%G%mask2dT
-    self%cell_area  = self%G%areaT
-
+    
     ! Fill halo
-    call mpp_update_domains(self%lon, self%G%Domain%mpp_domain)
-    call mpp_update_domains(self%lat, self%G%Domain%mpp_domain)
-    call mpp_update_domains(self%mask2d, self%G%Domain%mpp_domain)
-    call mpp_update_domains(self%cell_area, self%G%Domain%mpp_domain)
-
-    ! Ocean levels
-    self%nzo = self%G%ke
-
-    ! Sea-ice categories and levels
-    self%ncat = self%ice_column%ncat
-    self%nzi = self%ice_column%nzi
-    self%nzs = self%ice_column%nzs
+    call mpp_update_domains(self%lon, self%Domain%mpp_domain)
+    call mpp_update_domains(self%lat, self%Domain%mpp_domain)
+    call mpp_update_domains(self%mask2d, self%Domain%mpp_domain)
+    call mpp_update_domains(self%cell_area, self%Domain%mpp_domain)
 
   end subroutine geom_allocate
 
@@ -258,9 +284,6 @@ contains
     ! Indices for compute domain (no halo)
     isc = self%isc ; iec = self%iec ; jsc = self%jsc ; jec = self%jec
 
-    ! Allocate shoremask
-    allocate(self%shoremask(isc:iec,jsc:jec))
-
     ! Extend mask 2 grid point inland TODO:NEED HALO FOR MASK!!!
     self%shoremask = self%mask2d
     do i = isc, iec
@@ -288,28 +311,52 @@ contains
   end subroutine geom_validindex
 
   ! ------------------------------------------------------------------------------
-  !> Write geometry info to file
-  subroutine geom_infotofile(self)
+  !> Write geometry to file
+  subroutine geom_write(self)
     class(soca_geom), intent(in) :: self
 
-    character(len=256) :: geom_output_file = "geom_output.nc"
+    character(len=256) :: geom_output_file = "soca_gridspec.nc"
     character(len=256) :: geom_output_pe
     integer :: pe
     character(len=8) :: fmt = '(I5.5)'
     character(len=1024) :: strpe
     integer :: ns
+    integer :: idr_geom
+    type(restart_file_type) :: geom_restart
     type(fckit_mpi_comm) :: f_comm
-
+    
     ! Setup Communicator
     f_comm = fckit_mpi_comm()
-
+ 
+    ! Save global domain   
     call fms_io_init()
-    ! Save global domain
-    call write_data( geom_output_file, "lon", self%lon, self%G%Domain%mpp_domain)
-    call write_data( geom_output_file, "lat", self%lat, self%G%Domain%mpp_domain)
-    call write_data( geom_output_file, "area", self%cell_area, self%G%Domain%mpp_domain)
-    call write_data( geom_output_file, "rossby_radius", self%rossby_radius, self%G%Domain%mpp_domain)
-    call write_data( geom_output_file, "mask2d", self%mask2d, self%G%Domain%mpp_domain)
+    idr_geom = register_restart_field(geom_restart, &
+                                     &geom_output_file, &
+                                     &'lon', &
+                                     &self%lon(:,:), &
+                                     domain=self%Domain%mpp_domain)
+    idr_geom = register_restart_field(geom_restart, &
+                                     &geom_output_file, &
+                                     &'lat', &
+                                     &self%lat(:,:), &
+                                     domain=self%Domain%mpp_domain)
+    idr_geom = register_restart_field(geom_restart, &
+                                     &geom_output_file, &
+                                     &'area', &
+                                     &self%cell_area(:,:), &
+                                     domain=self%Domain%mpp_domain)
+    idr_geom = register_restart_field(geom_restart, &
+                                     &geom_output_file, &
+                                     &'rossby_radius', &
+                                     &self%rossby_radius(:,:), &
+                                     domain=self%Domain%mpp_domain)
+    idr_geom = register_restart_field(geom_restart, &
+                                     &geom_output_file, &
+                                     &'mask2d', &
+                                     &self%mask2d(:,:), &
+                                     domain=self%Domain%mpp_domain)
+    call save_restart(geom_restart, directory='')
+    call free_restart_type(geom_restart)
     call fms_io_exit()
 
     if (self%save_local_domain) then
@@ -326,7 +373,48 @@ contains
        call write2pe(reshape(self%lat,(/ns/)),'lat',geom_output_pe,.true.)
     end if
 
-  end subroutine geom_infotofile
+  end subroutine geom_write
+  
+  ! ------------------------------------------------------------------------------
+  !> Read geometry from file
+  subroutine geom_read(self)
+    class(soca_geom), intent(in) :: self
+
+    character(len=256) :: geom_input_file = "soca_gridspec.nc"
+    integer :: idr_geom
+    type(restart_file_type) :: geom_restart
+
+    call fms_io_init()
+    idr_geom = register_restart_field(geom_restart, &
+                                     &geom_input_file, &
+                                     &'lon', &
+                                     &self%lon(:,:), &
+                                     domain=self%Domain%mpp_domain)
+    idr_geom = register_restart_field(geom_restart, &
+                                     &geom_input_file, &
+                                     &'lat', &
+                                     &self%lat(:,:), &
+                                     domain=self%Domain%mpp_domain)
+    idr_geom = register_restart_field(geom_restart, &
+                                     &geom_input_file, &
+                                     &'area', &
+                                     &self%cell_area(:,:), &
+                                     domain=self%Domain%mpp_domain)
+    idr_geom = register_restart_field(geom_restart, &
+                                     &geom_input_file, &
+                                     &'rossby_radius', &
+                                     &self%rossby_radius(:,:), &
+                                     domain=self%Domain%mpp_domain)
+    idr_geom = register_restart_field(geom_restart, &
+                                     &geom_input_file, &
+                                     &'mask2d', &
+                                     &self%mask2d(:,:), &
+                                     domain=self%Domain%mpp_domain)
+    call restore_state(geom_restart, directory='')    
+    call free_restart_type(geom_restart)
+    call fms_io_exit()
+
+  end subroutine geom_read
 
   ! ------------------------------------------------------------------------------
   !> Get indices for compute or data domain
@@ -339,8 +427,8 @@ contains
     integer :: isc, iec, jsc, jec
     integer :: isd, ied, jsd, jed
 
-    call mpp_get_compute_domain(self%G%Domain%mpp_domain,isc,iec,jsc,jec)
-    call mpp_get_data_domain(self%G%Domain%mpp_domain,isd,ied,jsd,jed)
+    call mpp_get_compute_domain(self%Domain%mpp_domain,isc,iec,jsc,jec)
+    call mpp_get_data_domain(self%Domain%mpp_domain,isd,ied,jsd,jed)
     if (present(local)) then
        isc = isc - (isd-1) ; iec = iec - (isd-1) ; ied = ied - (isd-1) ; isd = 1
        jsc = jsc - (jsd-1) ; jec = jec - (jsd-1) ; jed = jed - (jsd-1) ; jsd = 1

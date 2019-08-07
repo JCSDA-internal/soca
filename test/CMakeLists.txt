@@ -20,6 +20,7 @@ list( APPEND soca_test_input
   testinput/forecast_mom6.yml
   testinput/genenspert.yml
   testinput/geometry_test.yml
+  testinput/gridgen.yml
   testinput/hofx.yml
   testinput/hofx3d.yml
   testinput/increment_test.yml
@@ -51,6 +52,7 @@ list( APPEND soca_test_output
   testoutput/forecast_identity_cice.test
   testoutput/forecast_mom6.test
   testoutput/genenspert.test
+  testoutput/gridgen.test
   testoutput/hofx.test
   testoutput/hofx3d.test
   testoutput/parameters_bump_cov_nicas.test
@@ -58,27 +60,27 @@ list( APPEND soca_test_output
 )
 
 list( APPEND soca_model_param
-  Data/90x43x25/diag_table
-  Data/90x43x25/field_table
-  Data/90x43x25/ice.bkgerror.nc
-  Data/90x43x25/input.nml
-  Data/90x43x25/MOM_input
-  Data/90x43x25/ocn.bkgerror.nc
+  Data/72x35x25/diag_table
+  Data/72x35x25/field_table
+  Data/72x35x25/ice.bkgerror.nc
+  Data/72x35x25/input.nml
+  Data/72x35x25/MOM_input
+  Data/72x35x25/ocn.bkgerror.nc
   Data/godas_sst_bgerr.nc
   Data/rossrad.dat
 )
 
 list( APPEND soca_model_restarts
-  Data/90x43x25/INPUT/forcing_daily.nc
-  Data/90x43x25/INPUT/forcing_monthly.nc
-  Data/90x43x25/INPUT/hycom1_25.nc
-  Data/90x43x25/INPUT/ice_model.res.nc
-  Data/90x43x25/INPUT/cice.res.nc
-  Data/90x43x25/INPUT/layer_coord25.nc
-  Data/90x43x25/INPUT/MOM.res.nc
-  Data/90x43x25/INPUT/sfc.res.nc
-  Data/90x43x25/INPUT/ocean_hgrid.nc
-  Data/90x43x25/INPUT/ocean_topog.nc
+  Data/72x35x25/INPUT/forcing_daily.nc
+  Data/72x35x25/INPUT/forcing_monthly.nc
+  Data/72x35x25/INPUT/hycom1_25.nc
+  Data/72x35x25/INPUT/ice_model.res.nc
+  Data/72x35x25/INPUT/cice.res.nc
+  Data/72x35x25/INPUT/layer_coord25.nc
+  Data/72x35x25/INPUT/MOM.res.nc
+  Data/72x35x25/INPUT/sfc.res.nc
+  Data/72x35x25/INPUT/ocean_hgrid.nc
+  Data/72x35x25/INPUT/ocean_topog.nc
 )
 
 list( APPEND soca_obs
@@ -151,6 +153,17 @@ set(MPI_SOCA_TESTS 2)
 #-------------------------------------------------------------------------------
 # Tests that create data other tests will use
 #-------------------------------------------------------------------------------
+
+# Test of grid generation
+ecbuild_add_test( TARGET test_soca_generate_grid
+                  MPI ${MPI_SOCA_TESTS}
+                  TYPE SCRIPT
+                  COMMAND ./compare.sh
+                  ARGS
+                      "${CMAKE_BINARY_DIR}/bin/soca_gridgen.x
+                      testinput/gridgen.yml"
+                      testoutput/gridgen.test
+                  DEPENDS soca_gridgen.x)
 
 # Test of read/write restart for MOM6&SIS2, model advance = Id
 ecbuild_add_test( TARGET test_soca_forecast_identity

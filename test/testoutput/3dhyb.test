@@ -1,21 +1,21 @@
 Test     : CostJb   : Nonlinear Jb = 0
-Test     : CostJo   : Nonlinear Jo(ADT) = 209.78, nobs = 100, Jo/n = 2.0978, err = 0.1
-Test     : CostFunction: Nonlinear J = 209.78
-Test     : RPCGMinimizer: reduction in residual norm = 0.544449
+Test     : CostJo   : Nonlinear Jo(ADT) = 194.065, nobs = 100, Jo/n = 1.94065, err = 0.1
+Test     : CostFunction: Nonlinear J = 194.065
+Test     : RPCGMinimizer: reduction in residual norm = 0.603984
 Test     : CostFunction::addIncrement: Analysis: 
 Test     :   Valid time: 2018-04-15T00:00:00Z
-Test     :   cicen   min=    0.000000   max=    1.000000   mean=    0.252556
-Test     :   hicen   min=   -0.000389   max=    2.947887   mean=    0.102705
-Test     :   hsnon   min=    0.000000   max=    0.610656   mean=    0.024607
-Test     :    socn   min=    0.000000   max=   38.999706   mean=   34.520423
-Test     :    tocn   min=   -1.883330   max=   31.008840   mean=    6.151645
-Test     :     ssh   min=   -2.189378   max=    0.934031   mean=   -0.306380
-Test     :    hocn   min=    0.001000   max= 1345.640000   mean=  130.682172
-Test     :      sw   min= -226.053650   max=    0.000000   mean= -110.176189
-Test     :     lhf   min=  -85.418602   max=  317.347870   mean=   64.442333
-Test     :     shf   min= -121.299400   max=  242.676361   mean=    8.957396
-Test     :      lw   min=   -0.000000   max=   89.266090   mean=   47.830237
-Test     :      us   min=    0.004396   max=    0.021537   mean=    0.011925
-Test     : CostJb   : Nonlinear Jb = 3.431670
-Test     : CostJo   : Nonlinear Jo(ADT) = 149.317746, nobs = 100, Jo/n = 1.493177, err = 0.100000
-Test     : CostFunction: Nonlinear J = 152.749417
+Test     :   cicen   min=   -0.000000   max=    1.000000   mean=    0.255643
+Test     :   hicen   min=   -0.000431   max=    2.923064   mean=    0.160787
+Test     :   hsnon   min=    0.000000   max=    0.608625   mean=    0.036687
+Test     :    socn   min=    0.000000   max=   40.441659   mean=   34.569186
+Test     :    tocn   min=   -1.888390   max=   31.700465   mean=    6.013800
+Test     :     ssh   min=   -2.319329   max=    0.921396   mean=   -0.276942
+Test     :    hocn   min=    0.001000   max= 1345.640000   mean=  128.628598
+Test     :      sw   min= -225.097763   max=    0.000000   mean= -110.032311
+Test     :     lhf   min=  -38.137398   max=  256.597656   mean=   64.434146
+Test     :     shf   min=  -58.949295   max=  201.374298   mean=    9.318225
+Test     :      lw   min=    0.000000   max=   88.036087   mean=   48.153824
+Test     :      us   min=    0.004396   max=    0.019658   mean=    0.013258
+Test     : CostJb   : Nonlinear Jb = 3.365299
+Test     : CostJo   : Nonlinear Jo(ADT) = 141.275231, nobs = 100, Jo/n = 1.412752, err = 0.100000
+Test     : CostFunction: Nonlinear J = 144.640530

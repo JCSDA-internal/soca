@@ -282,23 +282,23 @@ contains
        case('sw')
           idr = register_restart_field(restart, filename, 'sw_rad', &
                                        self%sw_rad(:,:), &
-                                       domain=geom%G%Domain%mpp_domain)
+                                       domain=geom%Domain%mpp_domain)
        case('lw')
           idr = register_restart_field(restart, filename, 'lw_rad', &
                                        self%lw_rad(:,:), &
-                                       domain=geom%G%Domain%mpp_domain)
+                                       domain=geom%Domain%mpp_domain)
        case('lhf')
           idr = register_restart_field(restart, filename, 'latent_heat', &
                                        self%latent_heat(:,:), &
-                                       domain=geom%G%Domain%mpp_domain)
+                                       domain=geom%Domain%mpp_domain)
        case('shf')
           idr = register_restart_field(restart, filename, 'sens_heat', &
                                        self%sens_heat(:,:), &
-                                       domain=geom%G%Domain%mpp_domain)
+                                       domain=geom%Domain%mpp_domain)
        case('us')
           idr = register_restart_field(restart, filename, 'fric_vel', &
                                        self%fric_vel(:,:), &
-                                       domain=geom%G%Domain%mpp_domain)
+                                       domain=geom%Domain%mpp_domain)
        end select
     end do
     call restore_state(restart, directory='')
@@ -331,23 +331,23 @@ contains
        case('sw')
           call read_data(filename,"sw_rad", &
                          self%sw_rad(:,:), &
-                         domain=geom%G%Domain%mpp_domain)
+                         domain=geom%Domain%mpp_domain)
        case('lw')
           call read_data(filename,"lw_rad", &
                          self%lw_rad(:,:), &
-                         domain=geom%G%Domain%mpp_domain)
+                         domain=geom%Domain%mpp_domain)
        case('lhf')
           call read_data(filename,"latent_heat", &
                          self%latent_heat(:,:), &
-                         domain=geom%G%Domain%mpp_domain)
+                         domain=geom%Domain%mpp_domain)
        case('shf')
           call read_data(filename,"sens_heat", &
                          self%sens_heat(:,:), &
-                         domain=geom%G%Domain%mpp_domain)
+                         domain=geom%Domain%mpp_domain)
        case('us')
           call read_data(filename,"fric_vel", &
                          self%fric_vel(:,:), &
-                         domain=geom%G%Domain%mpp_domain)
+                         domain=geom%Domain%mpp_domain)
        end select
     end do
     call fms_io_exit()

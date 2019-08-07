@@ -82,8 +82,8 @@ subroutine soca_initialize_integration(self, flds)
   character(len=1024) :: buf
 
   ! Update halo
-  call mpp_update_domains(flds%tocn, flds%geom%G%Domain%mpp_domain)
-  call mpp_update_domains(flds%socn, flds%geom%G%Domain%mpp_domain)
+  call mpp_update_domains(flds%tocn, flds%geom%Domain%mpp_domain)
+  call mpp_update_domains(flds%socn, flds%geom%Domain%mpp_domain)
 
   ! Impose bounds to T & S
   ! TODO: Replace by a change of variable.
@@ -119,8 +119,8 @@ subroutine soca_propagate(self, flds, fldsdate)
   character(len=1024) :: buf
 
   ! Update halo
-  call mpp_update_domains(flds%tocn, flds%geom%G%Domain%mpp_domain)
-  call mpp_update_domains(flds%socn, flds%geom%G%Domain%mpp_domain)
+  call mpp_update_domains(flds%tocn, flds%geom%Domain%mpp_domain)
+  call mpp_update_domains(flds%socn, flds%geom%Domain%mpp_domain)
 
   ! Update MOM's T and S to soca's
   self%mom6_config%MOM_CSp%T = real(flds%tocn, kind=8)
@@ -193,8 +193,8 @@ subroutine soca_finalize_integration(self, flds)
   character(len=1024) :: buf
 
   ! Update halo
-  call mpp_update_domains(flds%tocn, flds%geom%G%Domain%mpp_domain)
-  call mpp_update_domains(flds%socn, flds%geom%G%Domain%mpp_domain)
+  call mpp_update_domains(flds%tocn, flds%geom%Domain%mpp_domain)
+  call mpp_update_domains(flds%socn, flds%geom%Domain%mpp_domain)
 
   ! Impose bounds to T & S
   ! TODO: Replace by a change of variable.

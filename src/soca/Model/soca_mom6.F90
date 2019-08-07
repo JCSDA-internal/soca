@@ -42,7 +42,7 @@ module soca_mom6
   use MOM,                 only : get_MOM_state_elements, MOM_state_is_synchronized
   use MOM,                 only : step_offline
   use MOM_domains,         only : MOM_infra_init, MOM_infra_end
-  use MOM_domains,         only : MOM_domains_init, clone_MOM_domain
+  use MOM_domains,         only : MOM_domains_init, clone_MOM_domain, MOM_domain_type
   use MOM_dyn_horgrid,     only : dyn_horgrid_type, create_dyn_horgrid, destroy_dyn_horgrid
   use MOM_error_handler,   only : MOM_error, MOM_mesg, WARNING, FATAL, is_root_pe
   use MOM_error_handler,   only : callTree_enter, callTree_leave, callTree_waypoint
@@ -87,7 +87,7 @@ module soca_mom6
   implicit none
   private
 
-  public :: soca_geom_init
+  public :: soca_geomdomain_init
   public :: soca_ice_column
   public :: soca_mom6_init, soca_mom6_config, soca_mom6_end
 
@@ -119,38 +119,17 @@ module soca_mom6
 contains
 
   ! ------------------------------------------------------------------------------
-  !> Initialize mom6's geometry
-  subroutine soca_geom_init(G, GV, ice_column, c_conf)
-    use regrid_consts, only : REGRIDDING_SIGMA_STRING
-    use MOM_ALE, only : ALE_CS, ALE_initThicknessToCoord, ALE_init, ALE_updateVerticalGridType
-    use mpp_domains_mod, only : mpp_get_compute_domain, mpp_get_data_domain
-    use MOM_remapping,        only : remapping_core_h
-    use MOM_unit_scaling,     only : unit_scale_type
+  !> Initialize mom6's domain
+  subroutine soca_geomdomain_init(Domain, nk)
+    type(MOM_domain_type), pointer, intent(in) :: Domain !< Ocean model domain
+    integer, intent(out) :: nk
 
-    type(ocean_grid_type),            intent(out) :: G          !< The horizontal grid type (same for ice & ocean)
-    type(verticalGrid_type), pointer, intent(out) :: GV         !< Ocean vertical grid
-    type(soca_ice_column),            intent(out) :: ice_column !< Ice grid spec
-    type(c_ptr),                       intent(in) :: c_conf
-
-    type(dyn_horgrid_type),       pointer  :: dG => NULL()              !< Dynamic grid
-    type(hor_index_type)                   :: HI                        !< Horiz index array extents
     type(param_file_type)                  :: param_file                !< Structure to parse for run-time parameters
     type(directories)                      :: dirs                      !< Structure containing several relevant directory paths
-    logical                                :: global_indexing = .false. !< If true use global horizontal index DOES NOT WORK
-    logical                                :: write_geom_files = .false.!<
-    type(ocean_OBC_type),          pointer :: OBC => NULL()             !< Ocean boundary condition
-    type(fckit_mpi_comm) :: f_comm
 
-    type(unit_scale_type) :: US
-    ! Regridding stuff
-    type(regridding_CS) :: regridCS !< ALE control structure for regridding
-    type(remapping_CS)  :: remapCS  !< ALE control structure for remapping
-    real :: max_depth !<
-    character(len=30) :: coord_mode
-    logical, save :: regrid_initialized = .false.
-    type(ALE_CS), pointer :: ALECS=>NULL() !< ALE control structure for DA
-    real(kind=kind_real), allocatable :: h_da(:,:,:), h_model(:,:,:), t_da(:),t_model(:)
-    integer :: isd,ied,jsd,jed,i,j,k,nz
+    type(fckit_mpi_comm) :: f_comm
+    character(len=40)  :: mod_name = "soca_mom6" ! This module's name.
+
     f_comm = fckit_mpi_comm()
     call mpp_init(localcomm=f_comm%communicator())
 
@@ -164,40 +143,22 @@ contains
     call Get_MOM_Input(param_file, dirs)
 
     ! Domain decomposition/Inintialize mpp domains
-    call MOM_domains_init(G%domain, param_file)
-    call hor_index_init(G%Domain, HI, param_file, local_indexing=.not.global_indexing)
-    call create_dyn_horgrid(dG, HI)
-    call clone_MOM_domain(G%Domain, dG%Domain)
+    call MOM_domains_init(Domain, param_file)
 
-    ! Allocate grid arrays
-    GV => NULL()
-    call verticalGridInit( param_file, GV, US )
-    call MOM_grid_init(G, param_file, HI, global_indexing=global_indexing)
-
-    ! Read/Generate grid
-    call MOM_initialize_fixed(dG, US, OBC, param_file, write_geom_files, dirs%output_directory)
-    call copy_dyngrid_to_MOM_grid(dG, G)
-    G%ke = GV%ke ; G%g_Earth = GV%g_Earth
-
-    ! Destructor for dynamic grid
-    call destroy_dyn_horgrid(dG)
-    dG => NULL()
-
-    ! Initialize sea-ice grid
-    ice_column%ncat = config_get_int(c_conf,"num_ice_cat")
-    ice_column%nzi = config_get_int(c_conf,"num_ice_lev")
-    ice_column%nzs = config_get_int(c_conf,"num_sno_lev")
+    ! Get number of levels
+    call get_param(param_file, mod_name, "NK", nk, fail_if_missing=.true.)
 
     call close_param_file(param_file)
 
     call fms_io_exit()
 
-  end subroutine soca_geom_init
+  end subroutine soca_geomdomain_init
 
   ! ------------------------------------------------------------------------------
   !> Setup/initialize/prepare mom6 for time integration
-  subroutine soca_mom6_init(mom6_config)
+  subroutine soca_mom6_init(mom6_config, partial_init)
     type(soca_mom6_config), intent(out) :: mom6_config
+    logical,       optional, intent(in) :: partial_init
 
     type(time_type) :: Start_time         ! The start time of the simulation.
     type(time_type) :: Time_in            !
@@ -232,8 +193,15 @@ contains
     type(remapping_CS)  :: remapCS  !< ALE control structure for remapping
     real :: max_depth !<
     character(len=30) :: coord_mode
+    logical :: a_partial_init = .false.
+    type(fckit_mpi_comm) :: f_comm
 
-    call MOM_infra_init() ; call io_infra_init()
+    ! Check if partial mom6 init is requiered
+    if (present(partial_init)) a_partial_init = partial_init
+
+    f_comm = fckit_mpi_comm()
+    call MOM_infra_init(localcomm=f_comm%communicator())
+    call io_infra_init()
 
     ! Provide for namelist specification of the run length and calendar data.
     call open_file(unit, 'input.nml', form=ASCII_FILE, action=READONLY_FILE)
@@ -285,6 +253,9 @@ contains
     ! Continue initialization
     call get_MOM_state_elements(mom6_config%MOM_CSp, G=mom6_config%grid, &
          &GV=mom6_config%GV, C_p=mom6_config%fluxes%C_p)
+
+    ! Exit here for partial initialization
+    if (a_partial_init) return
 
     ! Setup surface forcing
     call extract_surface_state(mom6_config%MOM_CSp, mom6_config%sfc_state)
