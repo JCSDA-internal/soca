@@ -1,32 +1,32 @@
 Test     : CostJb   : Nonlinear Jb = 0
-Test     : CostJo   : Nonlinear Jo(CoolSkin) = 3334.8, nobs = 48, Jo/n = 69.4751, err = 0.387632
-Test     : CostJo   : Nonlinear Jo(SeaSurfaceTemp) = 275.523, nobs = 46, Jo/n = 5.98963, err = 0.38937
-Test     : CostJo   : Nonlinear Jo(SeaSurfaceSalinity) = 1.57977, nobs = 16, Jo/n = 0.0987355, err = 1
-Test     : CostJo   : Nonlinear Jo(ADT) = 94.5156, nobs = 30, Jo/n = 3.15052, err = 0.1
-Test     : CostJo   : Nonlinear Jo(InsituTemperature) = 29.9701, nobs = 30, Jo/n = 0.999004, err = 0.915904
-Test     : CostJo   : Nonlinear Jo(InsituSalinity) = 7.38039, nobs = 33, Jo/n = 0.223648, err = 0.61043
-Test     : CostJo   : Nonlinear Jo(SeaIceFraction) = 47.095, nobs = 20, Jo/n = 2.35475, err = 0.1
-Test     : CostFunction: Nonlinear J = 3790.87
-Test     : RPCGMinimizer: reduction in residual norm = 0.705812
+Test     : CostJo   : Nonlinear Jo(CoolSkin) = 4963.55, nobs = 48, Jo/n = 103.407, err = 0.387632
+Test     : CostJo   : Nonlinear Jo(SeaSurfaceTemp) = 737.909, nobs = 46, Jo/n = 16.0415, err = 0.38937
+Test     : CostJo   : Nonlinear Jo(SeaSurfaceSalinity) = 1.89882, nobs = 16, Jo/n = 0.118676, err = 1
+Test     : CostJo   : Nonlinear Jo(ADT) = 31.2949, nobs = 28, Jo/n = 1.11767, err = 0.1
+Test     : CostJo   : Nonlinear Jo(InsituTemperature) = 37.4198, nobs = 31, Jo/n = 1.20709, err = 0.90894
+Test     : CostJo   : Nonlinear Jo(InsituSalinity) = 16.5727, nobs = 33, Jo/n = 0.502202, err = 0.61043
+Test     : CostJo   : Nonlinear Jo(SeaIceFraction) = 206.995, nobs = 24, Jo/n = 8.62478, err = 0.1
+Test     : CostFunction: Nonlinear J = 5995.64
+Test     : RPCGMinimizer: reduction in residual norm = 0.4987
 Test     : CostFunction::addIncrement: Analysis: 
 Test     :   Valid time: 2018-04-15T00:00:00Z
-Test     :   cicen   min=    0.000000   max=    1.000000   mean=    0.252881
-Test     :   hicen   min=    0.000000   max=    2.947887   mean=    0.108958
-Test     :    socn   min=    0.000000   max=   39.030702   mean=   34.508845
-Test     :    tocn   min=   -2.175325   max=   31.008856   mean=    6.169264
-Test     :     ssh   min=   -2.103569   max=    0.912630   mean=   -0.296483
-Test     :    hocn   min=    0.001000   max= 1345.640000   mean=  130.682172
+Test     :   cicen   min=    0.000000   max=    1.000000   mean=    0.258564
+Test     :   hicen   min=    0.000000   max=    2.265451   mean=    0.094250
+Test     :    socn   min=    0.000000   max=   40.441659   mean=   34.546562
+Test     :    tocn   min=   -3.691317   max=   31.700465   mean=    6.005335
+Test     :     ssh   min=   -1.923562   max=    0.927285   mean=   -0.264077
+Test     :    hocn   min=    0.001000   max= 1345.640000   mean=  128.628598
 Test     :      sw   min=    0.000000   max=    0.000000   mean=    0.000000
 Test     :     lhf   min=    0.000000   max=    0.000000   mean=    0.000000
 Test     :     shf   min=    0.000000   max=    0.000000   mean=    0.000000
 Test     :      lw   min=    0.000000   max=    0.000000   mean=    0.000000
 Test     :      us   min=    0.000000   max=    0.000000   mean=    0.000000
-Test     : CostJb   : Nonlinear Jb = 2844.205371
-Test     : CostJo   : Nonlinear Jo(CoolSkin) = 2687.682331, nobs = 48, Jo/n = 55.993382, err = 0.387632
-Test     : CostJo   : Nonlinear Jo(SeaSurfaceTemp) = 169.826256, nobs = 40, Jo/n = 4.245656, err = 0.391743
-Test     : CostJo   : Nonlinear Jo(SeaSurfaceSalinity) = 1.566437, nobs = 16, Jo/n = 0.097902, err = 1.000000
-Test     : CostJo   : Nonlinear Jo(ADT) = 93.522595, nobs = 30, Jo/n = 3.117420, err = 0.100000
-Test     : CostJo   : Nonlinear Jo(InsituTemperature) = 29.723890, nobs = 30, Jo/n = 0.990796, err = 0.915904
-Test     : CostJo   : Nonlinear Jo(InsituSalinity) = 7.086164, nobs = 33, Jo/n = 0.214732, err = 0.610430
-Test     : CostJo   : Nonlinear Jo(SeaIceFraction) = 38.811136, nobs = 20, Jo/n = 1.940557, err = 0.100000
-Test     : CostFunction: Nonlinear J = 5872.424178
+Test     : CostJb   : Nonlinear Jb = 1604.054830
+Test     : CostJo   : Nonlinear Jo(CoolSkin) = 4052.478156, nobs = 48, Jo/n = 84.426628, err = 0.387632
+Test     : CostJo   : Nonlinear Jo(SeaSurfaceTemp) = 568.801469, nobs = 40, Jo/n = 14.220037, err = 0.391743
+Test     : CostJo   : Nonlinear Jo(SeaSurfaceSalinity) = 1.878040, nobs = 16, Jo/n = 0.117377, err = 1.000000
+Test     : CostJo   : Nonlinear Jo(ADT) = 30.978574, nobs = 28, Jo/n = 1.106378, err = 0.100000
+Test     : CostJo   : Nonlinear Jo(InsituTemperature) = 36.546371, nobs = 31, Jo/n = 1.178915, err = 0.908940
+Test     : CostJo   : Nonlinear Jo(InsituSalinity) = 15.545317, nobs = 33, Jo/n = 0.471070, err = 0.610430
+Test     : CostJo   : Nonlinear Jo(SeaIceFraction) = 95.872880, nobs = 24, Jo/n = 3.994703, err = 0.100000
+Test     : CostFunction: Nonlinear J = 6406.155637
