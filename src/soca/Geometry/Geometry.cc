@@ -30,11 +30,11 @@ namespace soca {
     soca_geo_delete_f90(keyGeom_);
   }
   // -----------------------------------------------------------------------------
-  void Geometry::gridgen(const eckit::Configuration & config) const{
+  void Geometry::gridgen(const eckit::Configuration & config) const {
     const eckit::Configuration * conf = &config;
     Log::trace() << "Geometry::gridgen: " << keyGeom_ << std::endl;
     Log::trace() << conf << std::endl;
-    soca_geo_gridgen_f90(keyGeom_, &conf);    
+    soca_geo_gridgen_f90(keyGeom_, &conf);
   }
   // -----------------------------------------------------------------------------
   void Geometry::print(std::ostream & os) const {
