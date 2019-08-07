@@ -149,7 +149,6 @@ contains
     call get_param(param_file, mod_name, "NK", nk, fail_if_missing=.true.)
 
     call close_param_file(param_file)
-
     call fms_io_exit()
 
   end subroutine soca_geomdomain_init
