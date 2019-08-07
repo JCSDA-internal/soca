@@ -77,9 +77,6 @@ contains
 
     print *,'geom key = ',c_key_self
     call self%gridgen()
-    !call self%get_rossby_radius()
-    !call self%validindex() !BUG: Needs a halo of 2 to work
-    !call self%infotofile()
 
   end subroutine c_soca_geo_gridgen
 
