@@ -36,6 +36,7 @@ namespace soca {
 
       int& toFortran() {return keyGeom_;}
       const int& toFortran() const {return keyGeom_;}
+      void gridgen(const eckit::Configuration &) const;
 
    private:
       Geometry & operator=(const Geometry &);

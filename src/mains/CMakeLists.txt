@@ -58,3 +58,8 @@ ecbuild_add_executable( TARGET  soca_checkpoint_model.x
                         SOURCES CheckpointModel.cc
                         LIBS    soca
                       )
+
+ecbuild_add_executable( TARGET  soca_gridgen.x
+                        SOURCES GridGen.cc
+                        LIBS    soca
+                      )

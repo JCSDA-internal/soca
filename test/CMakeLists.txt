@@ -20,6 +20,7 @@ list( APPEND soca_test_input
   testinput/forecast_mom6.yml
   testinput/genenspert.yml
   testinput/geometry_test.yml
+  testinput/gridgen.yml
   testinput/hofx.yml
   testinput/hofx3d.yml
   testinput/increment_test.yml
@@ -51,6 +52,7 @@ list( APPEND soca_test_output
   testoutput/forecast_identity_cice.test
   testoutput/forecast_mom6.test
   testoutput/genenspert.test
+  testoutput/gridgen.test
   testoutput/hofx.test
   testoutput/hofx3d.test
   testoutput/parameters_bump_cov_nicas.test
@@ -151,6 +153,17 @@ set(MPI_SOCA_TESTS 2)
 #-------------------------------------------------------------------------------
 # Tests that create data other tests will use
 #-------------------------------------------------------------------------------
+
+# Test of grid generation
+ecbuild_add_test( TARGET test_soca_generate_grid
+                  MPI ${MPI_SOCA_TESTS}
+                  TYPE SCRIPT
+                  COMMAND ./compare.sh
+                  ARGS
+                      "${CMAKE_BINARY_DIR}/bin/soca_gridgen.x
+                      testinput/gridgen.yml"
+                      testoutput/gridgen.test
+                  DEPENDS soca_gridgen.x)
 
 # Test of read/write restart for MOM6&SIS2, model advance = Id
 ecbuild_add_test( TARGET test_soca_forecast_identity
