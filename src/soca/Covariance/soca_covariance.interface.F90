@@ -1,9 +1,10 @@
 
 ! (C) Copyright 2009-2016 ECMWF.
-! 
+! (C) Copyright 2016-2019 UCAR.
+!
 ! This software is licensed under the terms of the Apache Licence Version 2.0
-! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
-! In applying this licence, ECMWF does not waive the privileges and immunities 
+! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+! In applying this licence, ECMWF does not waive the privileges and immunities
 ! granted to it by virtue of its status as an intergovernmental organisation nor
 ! does it submit to any jurisdiction.
 
@@ -11,10 +12,11 @@ module c_soca_covariance_mod
   use iso_c_binding
   use soca_covariance_mod
   use soca_geom_mod_c, only: soca_geom_registry
-  use soca_geom_mod, only : soca_geom  
+  use soca_geom_mod, only : soca_geom
   use soca_fields_mod_c, only: soca_field_registry
   use soca_fields
   use variables_mod
+  use fckit_configuration_module, only: fckit_configuration
 
   implicit none
 
@@ -38,15 +40,15 @@ contains
 
   ! ------------------------------------------------------------------------------
   !> Setup for the SOCA model's background error covariance matrix
-  
+
   subroutine c_soca_b_setup(c_key_self, c_conf, c_key_geom, c_key_bkg, c_vars) &
        & bind (c,name='soca_b_setup_f90')
     integer(c_int), intent(inout) :: c_key_self   !< The background covariance structure
     type(c_ptr),       intent(in) :: c_conf       !< The configuration
     integer(c_int),    intent(in) :: c_key_geom   !< Geometry
-    integer(c_int),    intent(in) :: c_key_bkg    !< Background  
+    integer(c_int),    intent(in) :: c_key_bkg    !< Background
     type(c_ptr),       intent(in) :: c_vars       !< List of variables
-    
+
     type(soca_cov),   pointer :: self
     type(soca_geom),  pointer :: geom
     type(soca_field), pointer :: bkg
@@ -57,7 +59,7 @@ contains
     call soca_cov_registry%add(c_key_self)
     call soca_cov_registry%get(c_key_self, self)
     call soca_field_registry%get(c_key_bkg,bkg)
-    call oops_vars_create(c_vars, vars)
+    call oops_vars_create(fckit_configuration(c_vars), vars)
     call soca_cov_setup(self, c_conf, geom, bkg, vars)
 
   end subroutine c_soca_b_setup
@@ -80,10 +82,10 @@ contains
 
   !> Multiply by covariance
 
-  subroutine c_soca_b_mult(c_key_self, c_key_in, c_key_out) bind(c,name='soca_b_mult_f90')  
+  subroutine c_soca_b_mult(c_key_self, c_key_in, c_key_out) bind(c,name='soca_b_mult_f90')
     integer(c_int), intent(inout) :: c_key_self  !< The background covariance structure
     integer(c_int), intent(in)    :: c_key_in    !<    "   to Increment in
-    integer(c_int), intent(in)    :: c_key_out   !<    "   to Increment out 
+    integer(c_int), intent(in)    :: c_key_out   !<    "   to Increment out
 
     type(soca_cov),   pointer :: self
     type(soca_field), pointer :: xin
