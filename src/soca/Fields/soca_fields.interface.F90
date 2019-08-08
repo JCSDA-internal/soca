@@ -21,10 +21,11 @@ module soca_fields_mod_c
   use ufo_geovals_mod
   use variables_mod
   use soca_getvaltraj_mod, only: soca_getvaltraj, soca_getvaltraj_registry
+  use fckit_configuration_module, only: fckit_configuration
 
   implicit none
   public :: soca_field_registry
-  
+
 #define LISTED_TYPE soca_field
 
   !> Linked list interface - defines registry_t type
@@ -52,7 +53,7 @@ subroutine soca_field_create_c(c_key_self, c_key_geom, c_vars) bind(c,name='soca
   call soca_field_registry%add(c_key_self)
   call soca_field_registry%get(c_key_self,self)
 
-  call oops_vars_create(c_vars, vars)
+  call oops_vars_create(fckit_configuration(c_vars), vars)
   call create(self, geom, vars)
 
 end subroutine soca_field_create_c
@@ -416,7 +417,7 @@ subroutine soca_field_interp_nl_c(c_key_fld,c_key_loc,c_vars,c_key_gom) bind(c,n
   type(ufo_geovals), pointer :: gom
   type(oops_vars)            :: vars
 
-  call oops_vars_create(c_vars, vars)
+  call oops_vars_create(fckit_configuration(c_vars), vars)
 
   call soca_field_registry%get(c_key_fld,fld)
   call ufo_locs_registry%get(c_key_loc,locs)
@@ -441,7 +442,7 @@ subroutine soca_field_interp_nl_traj_c(c_key_fld,c_key_loc,c_vars,c_key_gom,c_ke
   type(ufo_geovals),     pointer :: gom
   type(soca_getvaltraj), pointer :: traj
 
-  call oops_vars_create(c_vars, vars)
+  call oops_vars_create(fckit_configuration(c_vars), vars)
 
   call soca_field_registry%get(c_key_fld,fld)
   call ufo_locs_registry%get(c_key_loc,locs)
@@ -467,7 +468,7 @@ subroutine soca_field_interp_tl_c(c_key_fld,c_key_loc,c_vars,c_key_gom,c_key_tra
   type(ufo_geovals),     pointer :: gom
   type(soca_getvaltraj), pointer :: traj
 
-  call oops_vars_create(c_vars, vars)
+  call oops_vars_create(fckit_configuration(c_vars), vars)
 
   call soca_field_registry%get(c_key_fld,fld)
   call ufo_locs_registry%get(c_key_loc,locs)
@@ -493,7 +494,7 @@ subroutine soca_field_interp_ad_c(c_key_fld,c_key_loc,c_vars,c_key_gom,c_key_tra
   type(ufo_geovals),     pointer :: gom
   type(soca_getvaltraj), pointer :: traj
 
-  call oops_vars_create(c_vars, vars)
+  call oops_vars_create(fckit_configuration(c_vars), vars)
 
   call soca_field_registry%get(c_key_fld,fld)
   call ufo_locs_registry%get(c_key_loc,locs)

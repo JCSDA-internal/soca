@@ -4,12 +4,12 @@
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
 
 module soca_fieldsutils_mod
-  use config_mod
+  use fckit_configuration_module, only: fckit_configuration
   use datetime_mod
   use duration_mod
-  use iso_c_binding    
+  use iso_c_binding
   use kinds
-  
+
   implicit none
 
   private
@@ -29,7 +29,7 @@ contains
 
     info(1) = minval(fld)
     info(2) = maxval(fld)
-    info(3) =    sum(fld)/size(fld,3)
+    info(3) = sum(fld)/size(fld,3)
 
   end subroutine fldinfo3d
 
@@ -41,7 +41,7 @@ contains
 
     info(1) = minval(fld)
     info(2) = maxval(fld)
-    info(3) =    sum(fld)
+    info(3) = sum(fld)
 
   end subroutine fldinfo2d
 
@@ -59,10 +59,16 @@ contains
     type(datetime) :: rdate
     type(duration) :: step
     integer lenfn
+    type(fckit_configuration) :: f_conf
 
-    fdbdir = config_get_string(c_conf,len(fdbdir),"datadir")
-    expver = config_get_string(c_conf,len(expver),"exp")
-    typ    = config_get_string(c_conf,len(typ)   ,"type")
+    f_conf = fckit_configuration(c_conf)
+
+    if ( f_conf%has("datadir") ) &
+        call f_conf%get_or_die("datadir", fdbdir)
+    if ( f_conf%has("exp") ) &
+        call f_conf%get_or_die("exp", expver)
+    if ( f_conf%has("type") ) &
+        call f_conf%get_or_die("type", typ)
 
     if (present(domain_type)) then
        expver = trim(domain_type)//"."//expver

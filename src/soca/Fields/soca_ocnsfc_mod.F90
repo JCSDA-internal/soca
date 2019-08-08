@@ -6,7 +6,7 @@
 
 module soca_ocnsfc_mod
 
-  use config_mod
+  use fckit_configuration_module, only: fckit_configuration
   use datetime_mod
   use fms_io_mod, only : fms_io_init, fms_io_exit,&
        &register_restart_field, restart_file_type,&
@@ -266,10 +266,13 @@ contains
     integer :: idr, i
     character(len=max_string_length) :: filename, basename
     type(restart_file_type) :: restart
+    type(fckit_configuration) :: f_conf
 
-    if (config_element_exists(c_conf,"sfc_filename")) then
-       basename = config_get_string(c_conf,len(basename),"basename")
-       filename = config_get_string(c_conf,len(filename),"sfc_filename")
+    f_conf = fckit_configuration(c_conf)
+
+    if ( f_conf%has("sfc_filename") ) then
+        call f_conf%get_or_die("basename", basename)
+        call f_conf%get_or_die("sfc_filename", filename)
        filename = trim(basename)//trim(filename)
     else
        call self%zeros()
@@ -317,9 +320,12 @@ contains
     integer, parameter :: max_string_length=800
     integer :: i
     character(len=max_string_length) :: filename
+    type(fckit_configuration) :: f_conf
 
-    if (config_element_exists(c_conf,"filename")) then
-       filename = config_get_string(c_conf,len(filename),"filename")
+    f_conf = fckit_configuration(c_conf)
+
+    if ( f_conf%has("filename") ) then
+        call f_conf%get_or_die("filename", filename)
     else
        call self%zeros()
        return
