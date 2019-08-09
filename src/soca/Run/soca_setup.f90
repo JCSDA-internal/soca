@@ -10,7 +10,6 @@
 
 subroutine soca_setup(c_conf) bind(c,name='soca_setup_f')
   use iso_c_binding
-  use config_mod
 
   implicit none
 

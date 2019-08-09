@@ -6,15 +6,14 @@
 !
 
 module soca_bkgerrgodas_mod
-  use config_mod
-  use datetime_mod
   use iso_c_binding
-  use kinds
+  use fckit_configuration_module, only: fckit_configuration
+  use datetime_mod, only: datetime
+  use kinds, only: kind_real
   use soca_bkgerrutil_mod
   use soca_fields
   use soca_utils
   use soca_omb_stats_mod
-  use fckit_mpi_module
   use tools_const, only : pi
 
   implicit none
@@ -52,6 +51,9 @@ contains
 
     type(datetime) :: vdate
     character(len=800) :: fname = 'soca_bkgerrgodas.nc'
+    type(fckit_configuration) :: f_conf
+
+    f_conf = fckit_configuration(c_conf)
 
     ! Allocate memory for bkgerrgodasor
     call create_copy(self%std_bkgerr, bkg)
@@ -60,9 +62,12 @@ contains
     call self%bounds%read(c_conf)
 
     ! get parameters not already included in self%bounds
-    self%t_dz   = config_get_real(c_conf,"t_dz")
-    self%t_efold   = config_get_real(c_conf,"t_efold")
-    self%ssh_phi_ex = config_get_real(c_conf, "ssh_phi_ex")
+    if ( f_conf%has("t_dz") ) &
+        call f_conf%get_or_die("t_dz", self%t_dz)
+    if ( f_conf%has("t_efold") ) &
+        call f_conf%get_or_die("t_efold", self%t_efold)
+    if ( f_conf%has("ssh_phi_ex") ) &
+        call f_conf%get_or_die("ssh_phi_ex", self%ssh_phi_ex)
 
     ! Associate background
     self%bkg => bkg

@@ -24,47 +24,47 @@
 !>
 !>
 module soca_mom6
-  use config_mod
   use fckit_mpi_module, only: fckit_mpi_comm
+  use mpp_mod,    only : mpp_init
   use fms_io_mod, only : fms_io_init, fms_io_exit
   use fms_mod,    only : read_data, write_data, fms_init, fms_end
-  use iso_c_binding
+  use time_interp_external_mod, only : time_interp_external_init
+  use time_manager_mod,         only: time_type
+
   use kinds
-  use MOM,                 only : initialize_MOM, step_MOM, MOM_control_struct, MOM_end
-  use MOM,                 only : extract_surface_state, finish_MOM_initialization
-  use MOM,                 only : get_MOM_state_elements
+
+  use MOM,                 only : initialize_MOM, step_MOM, MOM_control_struct, MOM_end, &
+                                  extract_surface_state, finish_MOM_initialization, &
+                                  get_MOM_state_elements
   use MOM_diag_mediator,   only : diag_ctrl
-  use MOM_domains,         only : MOM_infra_init, MOM_infra_end
-  use MOM_domains,         only : MOM_domains_init, clone_MOM_domain, MOM_domain_type
+  use MOM_domains,         only : MOM_infra_init, MOM_infra_end, &
+                                  MOM_domains_init, clone_MOM_domain, MOM_domain_type
   use MOM_error_handler,   only : MOM_error, MOM_mesg, WARNING, FATAL, is_root_pe
-  use MOM_file_parser,     only : get_param, param_file_type
-  use MOM_file_parser,     only : close_param_file
-  use MOM_forcing_type,    only : forcing, mech_forcing, forcing_diagnostics
-  use MOM_forcing_type,    only : mech_forcing_diags, MOM_forcing_chksum, MOM_mech_forcing_chksum
+  use MOM_file_parser,     only : get_param, param_file_type, close_param_file
+  use MOM_forcing_type,    only : forcing, mech_forcing, forcing_diagnostics, &
+                                  mech_forcing_diags, MOM_forcing_chksum, &
+                                  MOM_mech_forcing_chksum
   use MOM_get_input,       only : directories, Get_MOM_Input, directories
   use MOM_grid,            only : ocean_grid_type, MOM_grid_init
-  use MOM_io,              only : open_file, close_file
-  use MOM_io,              only : check_nml_error, io_infra_init, io_infra_end
-  use MOM_io,              only : ASCII_FILE, READONLY_FILE
+  use MOM_io,              only : open_file, close_file, &
+                                  check_nml_error, io_infra_init, io_infra_end, &
+                                  ASCII_FILE, READONLY_FILE
   use MOM_restart,         only : MOM_restart_CS
   use MOM_string_functions,only : uppercase
-  use MOM_surface_forcing, only : set_forcing, forcing_save_restart
-  use MOM_surface_forcing, only : surface_forcing_init, surface_forcing_CS
-  use MOM_time_manager,    only : time_type, set_date, get_date
-  use MOM_time_manager,    only : real_to_time, time_type_to_real
-  use MOM_time_manager,    only : operator(+), operator(-), operator(*), operator(/)
-  use MOM_time_manager,    only : operator(>), operator(<), operator(>=)
-  use MOM_time_manager,    only : increment_date, set_calendar_type, month_name
-  use MOM_time_manager,    only : JULIAN, GREGORIAN, NOLEAP, THIRTY_DAY_MONTHS
-  use MOM_time_manager,    only : NO_CALENDAR
+  use MOM_surface_forcing, only : set_forcing, forcing_save_restart, &
+                                  surface_forcing_init, surface_forcing_CS
+  use MOM_time_manager,    only : time_type, set_date, get_date, &
+                                  real_to_time, time_type_to_real, &
+                                  operator(+), operator(-), operator(*), operator(/), &
+                                  operator(>), operator(<), operator(>=), &
+                                  increment_date, set_calendar_type, month_name, &
+                                  JULIAN, GREGORIAN, NOLEAP, THIRTY_DAY_MONTHS, &
+                                  NO_CALENDAR
   use MOM_tracer_flow_control, only : tracer_flow_control_CS
   use MOM_unit_scaling,        only : unit_scale_type
   use MOM_variables,       only : surface
-  use MOM_verticalGrid,    only : verticalGrid_type
-  use MOM_verticalGrid,    only : verticalGrid_type, verticalGridInit, verticalGridEnd
-  use mpp_mod,    only : mpp_init
-  use time_interp_external_mod, only : time_interp_external_init
-  use time_manager_mod,         only: time_type
+  use MOM_verticalGrid,    only : verticalGrid_type, &
+                                  verticalGridInit, verticalGridEnd
 
   implicit none
   private
@@ -216,13 +216,13 @@ contains
     Time_in = mom6_config%Time
 
     call initialize_MOM(mom6_config%Time, &
-        &Start_time, &
-        &param_file, &
-        &mom6_config%dirs, &
-        &mom6_config%MOM_CSp, &
-        &mom6_config%restart_CSp, &
-        &offline_tracer_mode=offline_tracer_mode, diag_ptr=diag, &
-        &tracer_flow_CSp=tracer_flow_CSp, Time_in=Time_in)
+        Start_time, &
+        param_file, &
+        mom6_config%dirs, &
+        mom6_config%MOM_CSp, &
+        mom6_config%restart_CSp, &
+        offline_tracer_mode=offline_tracer_mode, diag_ptr=diag, &
+        tracer_flow_CSp=tracer_flow_CSp, Time_in=Time_in)
 
     !US => mom6_config%scaling
     ! Continue initialization

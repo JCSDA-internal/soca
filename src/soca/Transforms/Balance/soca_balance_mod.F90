@@ -7,13 +7,12 @@
 
 module soca_balance_mod
 
-  use kinds
+  use kinds, only: kind_real
   use soca_fields
   use soca_kst_mod
   use soca_ksshts_mod
   use iso_c_binding
-  use config_mod
-  use datetime_mod
+  use fckit_configuration_module, only: fckit_configuration
 
   implicit none
 
@@ -46,8 +45,11 @@ contains
     type(soca_field),    target, intent(in)  :: traj
     type(c_ptr),                 intent(in)  :: c_conf
 
+    type(fckit_configuration) :: f_conf
     integer :: isc, iec, jsc, jec, i, j, k, nl
     real(kind=kind_real), allocatable :: jac(:)
+
+    f_conf = fckit_configuration(c_conf)
 
     ! Number of ocean layer
     nl = size(traj%hocn,3)
@@ -63,11 +65,15 @@ contains
     self%jsc=jsc; self%jec=jec
 
     ! Get configuration for Kst
-    self%kst%dsdtmax = config_get_real(c_conf,"dsdtmax")
-    self%kst%dsdzmin = config_get_real(c_conf,"dsdzmin")
-    self%kst%dtdzmin = config_get_real(c_conf,"dtdzmin")
-    self%kst%nlayers = config_get_int(c_conf,"nlayers") ! Set jac to 0 in the
-                                                        ! nlayers top layers
+
+    if ( f_conf%has("dsdtmax") ) &
+        call f_conf%get_or_die("dsdtmax", self%kst%dsdtmax)
+    if ( f_conf%has("dsdzmin") ) &
+        call f_conf%get_or_die("dsdzmin", self%kst%dsdzmin)
+    if ( f_conf%has("dtdzmin") ) &
+        call f_conf%get_or_die("dtdzmin", self%kst%dtdzmin)
+    if ( f_conf%has("nlayers") ) &
+        call f_conf%get_or_die("nlayers", self%kst%nlayers) ! Set jac to 0 in the
 
     ! Compute and store Jacobian of Kst
     allocate(self%kst%jacobian(isc:iec,jsc:jec,traj%geom%nzo))

@@ -6,15 +6,14 @@
 !
 
 module soca_bkgerr_mod
-  use config_mod
-  use datetime_mod
   use iso_c_binding
-  use kinds
+  use fckit_configuration_module, only: fckit_configuration
+  use datetime_mod, only: datetime
+  use kinds, only: kind_real
   use soca_bkgerrutil_mod
   use soca_fields
   use soca_utils
   use soca_omb_stats_mod
-  use fckit_mpi_module
 
   implicit none
 
@@ -52,6 +51,9 @@ contains
     type(datetime) :: vdate
     character(len=800) :: fname = 'soca_bkgerrsoca.nc'
     logical :: read_from_file = .false.
+    type(fckit_configuration) :: f_conf
+
+    f_conf = fckit_configuration(c_conf)
 
     ! Get number of ocean levels
     nl = size(bkg%hocn,3)
@@ -72,13 +74,13 @@ contains
     call self%bounds%read(c_conf)
 
     ! Get constand background error for sst and sss
-    if (config_element_exists(c_conf,"fixed_std_sst")) then
-       self%std_sst = config_get_real(c_conf,"fixed_std_sst")
-       self%std_bkgerr%tocn(:,:,1) = self%std_sst
+    if ( f_conf%has("fixed_std_sst") ) then
+        call f_conf%get_or_die("fixed_std_sst", self%std_sst)
+        self%std_bkgerr%tocn(:,:,1) = self%std_sst
     end if
-    if (config_element_exists(c_conf,"fixed_std_sss")) then
-       self%std_sss = config_get_real(c_conf,"fixed_std_sss")
-       self%std_bkgerr%socn(:,:,1) = self%std_sss
+    if ( f_conf%has("fixed_std_sss") ) then
+        call f_conf%get_or_die("fixed_std_sss", self%std_sss)
+        self%std_bkgerr%socn(:,:,1) = self%std_sss
     end if
 
     ! Invent background error for ocnsfc fields: set it

@@ -9,11 +9,7 @@
 module soca_geom_mod_c
 
   use iso_c_binding
-  use config_mod
-  use kinds
   use soca_geom_mod
-  use soca_mom6
-  use fms_io_mod, only: fms_io_init, fms_io_exit
 
   implicit none
   private
@@ -37,9 +33,9 @@ contains
   !> Setup geometry object
   subroutine c_soca_geo_setup(c_key_self, c_conf) bind(c,name='soca_geo_setup_f90')
     integer(c_int), intent(inout) :: c_key_self
-
     type(c_ptr),       intent(in) :: c_conf
-    type(soca_geom),      pointer :: self
+
+    type(soca_geom), pointer :: self
 
     call soca_geom_registry%init()
     call soca_geom_registry%add(c_key_self)
@@ -71,7 +67,7 @@ contains
     integer(c_int), intent(inout) :: c_key_self
     type(c_ptr),       intent(in) :: c_conf
 
-    type(soca_geom),      pointer :: self
+    type(soca_geom), pointer :: self
 
     call soca_geom_registry%get(c_key_self,self)
 

@@ -5,9 +5,9 @@
 !
 
 module soca_vertconv_mod
-  use config_mod
   use iso_c_binding
-  use kinds
+  use fckit_configuration_module, only: fckit_configuration
+  use kinds, only: kind_real
   use soca_fields
   use tools_func
   use type_mpl
@@ -48,13 +48,21 @@ contains
     type(soca_field), target, intent(in) :: traj
     type(c_ptr),              intent(in) :: c_conf
 
+    type(fckit_configuration) :: f_conf
+
+    f_conf = fckit_configuration(c_conf)
+
     ! Get configuration for vertical convolution
-    self%lz_min       = config_get_real(c_conf, "Lz_min")
-    self%lz_mld       = config_get_int(c_conf, "Lz_mld")
+    if ( f_conf%has("Lz_min") ) &
+        call f_conf%get_or_die("Lz_min", self%lz_min )
+    if ( f_conf%has("Lz_mld") ) &
+        call f_conf%get_or_die("Lz_mld", self%lz_mld )
     if ( self%lz_mld /= 0) then
-      self%lz_mld_max   = config_get_real(c_conf, "Lz_mld_max")
+        if ( f_conf%has("Lz_mld_max") ) &
+            call f_conf%get_or_die("Lz_mld_max", self%lz_mld_max )
     end if
-    self%scale_layer_thick = config_get_real(c_conf, "scale_layer_thick")
+    if ( f_conf%has("scale_layer_thick") ) &
+        call f_conf%get_or_die("scale_layer_thick", self%scale_layer_thick )
 
     ! Store trajectory and background
     self%traj => traj

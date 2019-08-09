@@ -5,9 +5,9 @@
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
 
 module soca_bkgerrutil_mod
-  use config_mod
   use iso_c_binding
-  use kinds
+  use fckit_configuration_module, only: fckit_configuration
+  use kinds, only: kind_real
   use soca_fields
   use soca_utils
 
@@ -33,17 +33,29 @@ contains
     class(soca_bkgerr_bounds_type), intent(inout) :: self
     type(c_ptr),                       intent(in) :: c_conf
 
+    type(fckit_configuration) :: f_conf
+
     ! Get bounds from configuration
-    self%t_min   = config_get_real(c_conf,"t_min")
-    self%t_max   = config_get_real(c_conf,"t_max")
-    self%s_min   = config_get_real(c_conf,"s_min")
-    self%s_max   = config_get_real(c_conf,"s_max")
-    self%ssh_min = config_get_real(c_conf,"ssh_min")
-    self%ssh_max = config_get_real(c_conf,"ssh_max")
-    self%cicen_min = config_get_real(c_conf,"cicen_min")
-    self%cicen_max = config_get_real(c_conf,"cicen_max")
-    self%hicen_min = config_get_real(c_conf,"hicen_min")
-    self%hicen_max = config_get_real(c_conf,"hicen_max")
+    if ( f_conf%has("t_min") ) &
+        call f_conf%get_or_die("t_min", self%t_min)
+    if ( f_conf%has("t_max") ) &
+        call f_conf%get_or_die("t_max", self%t_max)
+    if ( f_conf%has("s_min") ) &
+        call f_conf%get_or_die("s_min", self%s_min)
+    if ( f_conf%has("s_max") ) &
+        call f_conf%get_or_die("s_max", self%s_max)
+    if ( f_conf%has("ssh_min") ) &
+        call f_conf%get_or_die("ssh_min", self%ssh_min)
+    if ( f_conf%has("ssh_max") ) &
+        call f_conf%get_or_die("ssh_max", self%ssh_max)
+    if ( f_conf%has("cicen_min") ) &
+        call f_conf%get_or_die("cicen_min", self%cicen_min)
+    if ( f_conf%has("cicen_max") ) &
+        call f_conf%get_or_die("cicen_max", self%cicen_max)
+    if ( f_conf%has("hicen_min") ) &
+        call f_conf%get_or_die("hicen_min", self%hicen_min)
+    if ( f_conf%has("hicen_max") ) &
+        call f_conf%get_or_die("hicen_max", self%hicen_max)
 
   end subroutine soca_bkgerr_readbounds
 

@@ -6,14 +6,13 @@
 !
 
 module soca_bkgerrfilt_mod
-  use config_mod
-  use datetime_mod
   use iso_c_binding
-  use kinds
+  use fckit_configuration_module
+  use datetime_mod, only: datetime
+  use kinds, only: kind_real
   use soca_fields
   use soca_utils
   use soca_omb_stats_mod
-  use fckit_mpi_module
 
   implicit none
 
@@ -54,6 +53,9 @@ contains
     type(datetime) :: vdate
     character(len=800) :: fname = 'soca_bkgerrfilt.nc'
     logical :: read_from_file = .false.
+    type(fckit_configuration) :: f_conf
+
+    f_conf = fckit_configuration(c_conf)
 
     ! Get number of ocean levels
     nl = size(bkg%hocn,3)
@@ -63,9 +65,12 @@ contains
     call zeros(self%filt)
 
     ! Read parameters from config
-    self%ocn_depth_min = config_get_real(c_conf,"ocean_depth_min")
-    self%scale         = config_get_real(c_conf,"rescale_bkgerr")
-    self%efold_z       = config_get_real(c_conf,"efold_z")
+    if ( f_conf%has("ocean_depth_min") ) &
+        call f_conf%get_or_die("ocean_depth_min", self%ocn_depth_min)
+    if ( f_conf%has("rescale_bkgerr") ) &
+        call f_conf%get_or_die("rescale_bkgerr", self%scale)
+    if ( f_conf%has("efold_z") ) &
+        call f_conf%get_or_die("efold_z", self%efold_z)
 
     ! Associate background
     self%bkg => bkg

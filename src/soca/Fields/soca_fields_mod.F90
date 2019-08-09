@@ -7,21 +7,21 @@
 
 module soca_fields
 
-  use config_mod
-  use datetime_mod
-  use duration_mod
-  use fckit_log_module, only : log, fckit_log
+  use datetime_mod, only: datetime, datetime_set
+  use duration_mod, only: duration
+  use fckit_configuration_module, only: fckit_configuration
+  use fckit_log_module, only: log, fckit_log
   use fckit_mpi_module
   use fms_mod,    only: read_data, write_data, set_domain
-  use fms_io_mod, only : fms_io_init, fms_io_exit,&
-       &register_restart_field, restart_file_type,&
-       &restore_state, query_initialized,&
-       &free_restart_type, save_restart
+  use fms_io_mod, only : fms_io_init, fms_io_exit, &
+                         register_restart_field, restart_file_type, &
+                         restore_state, query_initialized, &
+                         free_restart_type, save_restart
   use iso_c_binding
   use kinds
   use MOM_remapping,       only : remapping_CS, initialize_remapping, remapping_core_h, end_remapping
   use mpp_domains_mod, only : mpp_update_domains
-  use random_mod
+  use random_mod, only: normal_distribution
   use soca_fieldsutils_mod
   use soca_geom_mod_c
   use soca_geom_mod, only : soca_geom
@@ -231,10 +231,14 @@ contains
     type(c_ptr),         intent(in) :: c_conf   !< Configuration
 
     integer :: isc, iec, jsc, jec
-    integer :: ndir,n,size,rank,info
+    integer :: n,size,rank,info
+    integer :: ndir, niydir, nizdir, nifdir
     integer,allocatable :: ixdir(:),iydir(:),izdir(:),ifdir(:)
     character(len=3) :: idirchar
     type(fckit_mpi_comm) :: f_comm
+    type(fckit_configuration) :: f_conf
+
+    f_conf = fckit_configuration(c_conf)
 
     call check(self)
 
@@ -242,11 +246,19 @@ contains
     f_comm = fckit_mpi_comm()
 
     ! Get Diracs size
-    ndir = config_get_data_dimension(c_conf,'ixdir')
-    if ((config_get_data_dimension(c_conf,'iydir')/=ndir) .or. &
-         (config_get_data_dimension(c_conf,'izdir')/=ndir) .or. &
-         (config_get_data_dimension(c_conf,'ifdir')/=ndir)) &
-         & call abor1_ftn('qg_fields_dirac: inconsistent sizes for ixdir, iydir, izdir, ipdir and ifdir')
+    if ( f_conf%has("ixdir") ) &
+        call f_conf%get_or_die("ixdir", ndir)
+    if ( f_conf%has("iydir") ) &
+        call f_conf%get_or_die("iydir", niydir)
+    if ( f_conf%has("izdir") ) &
+        call f_conf%get_or_die("izdir", nizdir)
+    if ( f_conf%has("ifdir") ) &
+        call f_conf%get_or_die("ifdir", nifdir)
+
+    if ( (niydir /= ndir) .or. &
+         (nizdir /= ndir) .or. &
+         (nifdir /= ndir) ) &
+         call abor1_ftn('soca_fields_dirac: inconsistent sizes for ixdir, iydir, izdir, ipdir and ifdir')
 
     ! Allocation
     allocate(ixdir(ndir))
@@ -598,9 +610,9 @@ contains
     integer, parameter :: max_string_length=800
     character(len=max_string_length) :: ocn_filename
     character(len=max_string_length) :: ice_filename, basename, incr_filename
-    character(len=20) :: sdate
     character(len=1024) :: buf
-    integer :: iread, ii
+    integer :: iread = 0
+    integer :: ii
     logical :: vert_remap=.false.
     character(len=max_string_length) :: remap_filename
     real(kind=kind_real), allocatable :: h_common(:,:,:)    !< layer thickness to remap to
@@ -611,18 +623,19 @@ contains
     integer :: isc, iec, jsc, jec
     integer :: i, j, k, nl, nz
     type(remapping_CS)  :: remapCS
+    type(fckit_configuration) :: f_conf
+    character(len=:), allocatable :: str
 
-    ! Set default iread to 0
-    iread = 0
-    if (config_element_exists(c_conf,"read_from_file")) then
-       iread = config_get_int(c_conf,"read_from_file")
-    endif
+    f_conf = fckit_configuration(c_conf)
+
+    if ( f_conf%has("read_from_file") ) &
+        call f_conf%get_or_die("read_from_file", iread)
 
     ! Check if vertical remapping needs to be applied
-    if (config_element_exists(c_conf,"remap_filename")) then
+    if ( f_conf%has("remap_filename") ) then
        vert_remap = .true.
-       remap_filename = config_get_string(c_conf,len(remap_filename),"remap_filename")
-       remap_filename = trim(remap_filename)
+       call f_conf%get_or_die("remap_filename", str)
+       remap_filename = str
 
        ! Get Indices for data domain and allocate common layer depth array
        isd = fld%geom%isd ; ied = fld%geom%ied
@@ -644,8 +657,9 @@ contains
     ! iread = 0: Invent state
     if (iread==0) then
        call zeros(fld)
-       sdate = config_get_string(c_conf,len(sdate),"date")
-       call datetime_set(sdate, vdate)
+       if ( f_conf%has("date") ) &
+           call f_conf%get_or_die("date", str)
+       call datetime_set(str, vdate)
     end if
 
     ! iread = 1 (state) or 3 (increment): Read restart file
@@ -656,9 +670,14 @@ contains
        ! Read sea-ice
        call fld%seaice%read_restart(c_conf, fld%geom, fld%fldnames)
 
-       basename = config_get_string(c_conf,len(basename),"basename")
-       ocn_filename = config_get_string(c_conf,len(ocn_filename),"ocn_filename")
-       ocn_filename = trim(basename)//trim(ocn_filename)
+       if ( f_conf%has("basename") ) then
+           call f_conf%get_or_die("basename", str)
+           basename = str
+       endif
+       if ( f_conf%has("ocn_filename") ) then
+           call f_conf%get_or_die("ocn_filename", str)
+           ocn_filename = trim(basename) // trim(str)
+       endif
 
        call fms_io_init()
        do ii = 1, fld%nf
@@ -729,8 +748,9 @@ contains
 
        ! Set vdate if reading state
        if (iread==1) then
-          sdate = config_get_string(c_conf,len(sdate),"date")
-          call datetime_set(sdate, vdate)
+          if ( f_conf%has("date") ) &
+             call f_conf%get_or_die("date", str)
+          call datetime_set(str, vdate)
        end if
 
        return
@@ -744,7 +764,10 @@ contains
        ! Read sea-ice fields
        call fld%ocnsfc%read_diag(c_conf, fld%geom, fld%fldnames)
 
-       incr_filename = config_get_string(c_conf,len(incr_filename),"filename")
+       if ( f_conf%has("filename") ) then
+           call f_conf%get_or_die("filename", str)
+           incr_filename = str
+       endif
        call fms_io_init()
        do ii = 1, fld%nf
           select case(fld%fldnames(ii))
@@ -766,6 +789,8 @@ contains
     endif
 
     call check(fld)
+
+    if (allocated(str)) deallocate(str)
 
   end subroutine read_file
 
@@ -1238,10 +1263,13 @@ contains
     type(restart_file_type) :: ocean_restart
     type(restart_file_type) :: ocnsfc_restart
     integer :: idr, idr_ocean
+    type(fckit_configuration) :: f_conf
+
+    f_conf = fckit_configuration(c_conf)
 
     ! Generate file names
-    ocn_filename = soca_genfilename(c_conf,max_string_length,vdate,"ocn")
-    ocnsfc_filename = soca_genfilename(c_conf,max_string_length,vdate,"sfc")
+    ocn_filename = soca_genfilename(f_conf,max_string_length,vdate,"ocn")
+    ocnsfc_filename = soca_genfilename(f_conf,max_string_length,vdate,"sfc")
 
     call fms_io_init()
     ! Ocean State

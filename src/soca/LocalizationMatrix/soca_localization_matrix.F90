@@ -1,18 +1,16 @@
 ! (C) Copyright 2009-2016 ECMWF.
-! 
+!
 ! This software is licensed under the terms of the Apache Licence Version 2.0
-! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
-! In applying this licence, ECMWF does not waive the privileges and immunities 
+! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+! In applying this licence, ECMWF does not waive the privileges and immunities
 ! granted to it by virtue of its status as an intergovernmental organisation nor
 ! does it submit to any jurisdiction.
 
 module SOCALOCALIZATION
   use iso_c_binding
   use soca_fields
-  use kinds
   use soca_constants
   use soca_geom_mod_c
-  use config_mod
   use soca_covariance_mod
 
   implicit none
@@ -30,7 +28,7 @@ contains
 
     call soca_cov_registry%get(c_key_conf,conf)
     call soca_field_registry%get(c_key_xincr,xincr)
-    call abor1_ftn("localization: not implemented")             
+    call abor1_ftn("localization: not implemented")
 
   end subroutine soca_localization_mult
 
@@ -59,7 +57,7 @@ contains
     integer(c_int), intent(inout) :: c_key_self
     type(soca_cov), pointer :: self
 
-    call abor1_ftn("localization: not implemented")             
+    call abor1_ftn("localization: not implemented")
     call soca_cov_registry%get(c_key_self, self)
 
   end subroutine soca_localization_delete

@@ -9,8 +9,8 @@
 subroutine c_soca_vertconv_setup(c_key_self, c_conf, c_key_traj, c_key_bkg) &
      & bind(c,name='soca_vertconv_setup_f90')
   use iso_c_binding
+  use kinds, only: kind_real
   use soca_vertconv_mod
-  use config_mod
   use soca_fields_mod_c
 
   implicit none
@@ -71,8 +71,6 @@ subroutine c_soca_vertconv_mult_f90(c_key_a, c_key_m, c_key_traj, c_key_self)&
   use soca_vertconv_mod
   use soca_fields_mod_c
   use soca_utils
-  use kinds
-  use config_mod
 
   implicit none
 
@@ -108,7 +106,6 @@ subroutine c_soca_vertconv_multad_f90(c_key_m, c_key_a, c_key_traj, c_key_self)&
   use iso_c_binding
   use soca_vertconv_mod
   use soca_fields_mod_c
-  use kinds
 
   implicit none
 

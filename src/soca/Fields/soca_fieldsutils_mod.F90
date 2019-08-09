@@ -5,10 +5,10 @@
 
 module soca_fieldsutils_mod
   use fckit_configuration_module, only: fckit_configuration
-  use datetime_mod
-  use duration_mod
-  use iso_c_binding
-  use kinds
+  use datetime_mod, only: datetime, &
+                          datetime_to_string, datetime_create, datetime_diff
+  use duration_mod, only: duration, duration_to_string
+  use kinds, only: kind_real
 
   implicit none
 
@@ -47,8 +47,8 @@ contains
 
   ! ------------------------------------------------------------------------------
   !> Generate filename (based on oops/qg)
-  function soca_genfilename (c_conf,length,vdate, domain_type)
-    type(c_ptr),                intent(in) :: c_conf
+  function soca_genfilename (f_conf,length,vdate,domain_type)
+    type(fckit_configuration),  intent(in) :: f_conf
     integer,                    intent(in) :: length
     type(datetime),             intent(in) :: vdate
     character(len=3), optional, intent(in) :: domain_type
@@ -59,10 +59,7 @@ contains
     type(datetime) :: rdate
     type(duration) :: step
     integer lenfn
-    type(fckit_configuration) :: f_conf
     character(len=:), allocatable :: str
-
-    f_conf = fckit_configuration(c_conf)
 
     if ( f_conf%has("datadir") ) then
         call f_conf%get_or_die("datadir", str)
@@ -99,7 +96,7 @@ contains
             call f_conf%get_or_die("date", str)
             referencedate = str
         endif
-!       call datetime_to_string(vdate, validitydate)
+        call datetime_to_string(vdate, validitydate)
         call datetime_create(TRIM(referencedate), rdate)
         call datetime_diff(vdate, rdate, step)
         call duration_to_string(step, sstep)

@@ -7,16 +7,14 @@
 module soca_ocnsfc_mod
 
   use fckit_configuration_module, only: fckit_configuration
-  use datetime_mod
-  use fms_io_mod, only : fms_io_init, fms_io_exit,&
-       &register_restart_field, restart_file_type,&
-       &restore_state, free_restart_type
-  use fms_mod,    only: read_data
+  use fms_io_mod, only : fms_io_init, fms_io_exit, &
+                         register_restart_field, restart_file_type, &
+                         restore_state, free_restart_type
+  use fms_mod, only: read_data
   use iso_c_binding
-  use kinds
-  use MOM_forcing_type,    only : forcing
-  use random_mod
-  use soca_geom_mod_c
+  use kinds, only: kind_real
+  use MOM_forcing_type, only : forcing
+  use random_mod, only : normal_distribution
   use soca_geom_mod, only : soca_geom
 
   implicit none
@@ -267,13 +265,16 @@ contains
     character(len=max_string_length) :: filename, basename
     type(restart_file_type) :: restart
     type(fckit_configuration) :: f_conf
+    character(len=:), allocatable :: str
 
     f_conf = fckit_configuration(c_conf)
 
     if ( f_conf%has("sfc_filename") ) then
-        call f_conf%get_or_die("basename", basename)
-        call f_conf%get_or_die("sfc_filename", filename)
-       filename = trim(basename)//trim(filename)
+        call f_conf%get_or_die("basename", str)
+        basename = str
+        call f_conf%get_or_die("sfc_filename", str)
+       filename = trim(basename)//trim(str)
+       deallocate(str)
     else
        call self%zeros()
        return
@@ -320,12 +321,15 @@ contains
     integer, parameter :: max_string_length=800
     integer :: i
     character(len=max_string_length) :: filename
+    character(len=:), allocatable :: str
     type(fckit_configuration) :: f_conf
 
     f_conf = fckit_configuration(c_conf)
 
     if ( f_conf%has("filename") ) then
-        call f_conf%get_or_die("filename", filename)
+        call f_conf%get_or_die("filename", str)
+        filename = str
+        deallocate(str)
     else
        call self%zeros()
        return

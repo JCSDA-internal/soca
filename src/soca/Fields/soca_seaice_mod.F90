@@ -7,18 +7,16 @@
 
 module soca_seaice_mod
 
-  use config_mod
-  use datetime_mod
-  use fms_io_mod, only : fms_io_init, fms_io_exit,&
-       &register_restart_field, restart_file_type,&
-       &restore_state, free_restart_type, save_restart
-  use fms_mod,    only: read_data
+  use fckit_configuration_module, only: fckit_configuration
+  use fms_io_mod, only : fms_io_init, fms_io_exit, &
+                        register_restart_field, restart_file_type, &
+                        restore_state, free_restart_type, save_restart
+  use fms_mod, only: read_data
   use iso_c_binding
-  use kinds
-  use MOM_forcing_type,    only : forcing
-  use random_mod
+  use kinds, only: kind_real
+  use datetime_mod, only: datetime
+  use random_mod, only: normal_distribution
   use soca_fieldsutils_mod
-  use soca_geom_mod_c
   use soca_geom_mod
 
   implicit none
@@ -312,17 +310,24 @@ contains
     character(len=max_string_length) :: filename, basename
     character(len=4) :: seaice_model
     type(restart_file_type) :: restart
+    type(fckit_configuration) :: f_conf
+    character(len=:), allocatable :: str
+
+    f_conf = fckit_configuration(c_conf)
 
     ! Check what model we are reading a file from ('sis2' or 'cice')
     seaice_model = 'sis2' ! Default model is sis2
-    if (config_element_exists(c_conf,"seaice_model")) then
-       seaice_model = config_get_string(c_conf,len(seaice_model),"seaice_model")
-    end if
 
-    if (config_element_exists(c_conf,"ice_filename")) then
-       basename = config_get_string(c_conf,len(basename),"basename")
-       filename = config_get_string(c_conf,len(filename),"ice_filename")
-       filename = trim(basename)//trim(filename)
+    if ( f_conf%has("seaice_model") ) then
+        call f_conf%get_or_die("seaice_model", str)
+        seaice_model = str
+    endif
+
+    if ( f_conf%has("ice_filename") ) then
+        call f_conf%get_or_die("basename", str)
+        basename = str
+        call f_conf%get_or_die("ice_filename", str)
+       filename = trim(basename)//trim(str)
     else
        ! Set seaice state to 0 if no file provided
        call self%zeros()
@@ -390,6 +395,9 @@ contains
     case default
        call abor1_ftn("soca_seaice_mod: Reading for seaice model "//trim(seaice_model)//" not implemented")
     end select
+
+    if (allocated(str)) deallocate(str)
+
   end subroutine soca_seaice_read_rst
 
   ! ------------------------------------------------------------------------------
@@ -402,9 +410,14 @@ contains
     integer, parameter :: max_string_length=800
     integer :: i
     character(len=max_string_length) :: filename
+    type(fckit_configuration) :: f_conf
+    character(len=:), allocatable :: str
 
-    if (config_element_exists(c_conf,"filename")) then
-       filename = config_get_string(c_conf,len(filename),"filename")
+    f_conf = fckit_configuration(c_conf)
+
+    if ( f_conf%has("filename") ) then
+        call f_conf%get_or_die("filename", str)
+        filename = str
     else
        call self%zeros()
        return
@@ -446,12 +459,17 @@ contains
     real(kind=kind_real), allocatable :: vicen(:,:,:), vsnon(:,:,:)
     real(kind=kind_real), allocatable :: aice(:,:), hice(:,:), hsno(:,:) ! Aggregates
     integer :: isd, ied, jsd, jed
+    type(fckit_configuration) :: f_conf
+    character(len=:), allocatable :: str
+
+    f_conf = fckit_configuration(c_conf)
 
     ! Check what model we are reading a file from ('sis2' or 'cice')
     seaice_model = 'sis2' ! Default model is sis2
-    if (config_element_exists(c_conf,"seaice_model")) then
-       seaice_model = config_get_string(c_conf,len(seaice_model),"seaice_model")
-    end if
+    if ( f_conf%has("seaice_model") ) then
+        call f_conf%get_or_die("seaice_model", str)
+        seaice_model = str
+    endif
 
     ! Register sea-ice fields
     call fms_io_init()
@@ -469,7 +487,7 @@ contains
     select case(seaice_model)
     case('sis2')
        ! Generate file names
-       filename = soca_genfilename(c_conf,max_string_length,vdate,"ice")
+       filename = soca_genfilename(f_conf,max_string_length,vdate,"ice")
 
        ! Register sis2 variables
        idr = register_restart_field(restart, filename, 'part_size', self%cicen, &
@@ -493,7 +511,7 @@ contains
        end if
 
        ! Generate file names
-       filename = soca_genfilename(c_conf,max_string_length,vdate,"cice")
+       filename = soca_genfilename(f_conf,max_string_length,vdate,"cice")
 
        ! Register cice variables
        idr = register_restart_field(restart, filename, 'aicen', self%cicen(:,:,2:), &
