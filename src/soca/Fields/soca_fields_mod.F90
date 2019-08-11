@@ -656,8 +656,7 @@ contains
     ! iread = 0: Invent state
     if (iread==0) then
        call zeros(fld)
-       if ( f_conf%has("date") ) &
-           call f_conf%get_or_die("date", str)
+       call f_conf%get_or_die("date", str)
        call datetime_set(str, vdate)
     end if
 
@@ -669,14 +668,10 @@ contains
        ! Read sea-ice
        call fld%seaice%read_restart(c_conf, fld%geom, fld%fldnames)
 
-       if ( f_conf%has("basename") ) then
-           call f_conf%get_or_die("basename", str)
-           basename = str
-       endif
-       if ( f_conf%has("ocn_filename") ) then
-           call f_conf%get_or_die("ocn_filename", str)
-           ocn_filename = trim(basename) // trim(str)
-       endif
+       call f_conf%get_or_die("basename", str)
+       basename = str
+       call f_conf%get_or_die("ocn_filename", str)
+       ocn_filename = trim(basename) // trim(str)
 
        call fms_io_init()
        do ii = 1, fld%nf
@@ -747,8 +742,7 @@ contains
 
        ! Set vdate if reading state
        if (iread==1) then
-          if ( f_conf%has("date") ) &
-             call f_conf%get_or_die("date", str)
+          call f_conf%get_or_die("date", str)
           call datetime_set(str, vdate)
        end if
 
@@ -763,10 +757,8 @@ contains
        ! Read sea-ice fields
        call fld%ocnsfc%read_diag(c_conf, fld%geom, fld%fldnames)
 
-       if ( f_conf%has("filename") ) then
-           call f_conf%get_or_die("filename", str)
-           incr_filename = str
-       endif
+       call f_conf%get_or_die("filename", str)
+       incr_filename = str
        call fms_io_init()
        do ii = 1, fld%nf
           select case(fld%fldnames(ii))

@@ -66,14 +66,11 @@ contains
 
     ! Get configuration for Kst
 
-    if ( f_conf%has("dsdtmax") ) &
-        call f_conf%get_or_die("dsdtmax", self%kst%dsdtmax)
-    if ( f_conf%has("dsdzmin") ) &
-        call f_conf%get_or_die("dsdzmin", self%kst%dsdzmin)
-    if ( f_conf%has("dtdzmin") ) &
-        call f_conf%get_or_die("dtdzmin", self%kst%dtdzmin)
-    if ( f_conf%has("nlayers") ) &
-        call f_conf%get_or_die("nlayers", self%kst%nlayers) ! Set jac to 0 in the
+    call f_conf%get_or_die("dsdtmax", self%kst%dsdtmax)
+    call f_conf%get_or_die("dsdzmin", self%kst%dsdzmin)
+    call f_conf%get_or_die("dtdzmin", self%kst%dtdzmin)
+    call f_conf%get_or_die("nlayers", self%kst%nlayers) ! Set jac to 0 in the
+                                                        ! nlayers top layers
 
     ! Compute and store Jacobian of Kst
     allocate(self%kst%jacobian(isc:iec,jsc:jec,traj%geom%nzo))

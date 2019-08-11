@@ -53,16 +53,11 @@ contains
     f_conf = fckit_configuration(c_conf)
 
     ! Get configuration for vertical convolution
-    if ( f_conf%has("Lz_min") ) &
-        call f_conf%get_or_die("Lz_min", self%lz_min )
-    if ( f_conf%has("Lz_mld") ) &
-        call f_conf%get_or_die("Lz_mld", self%lz_mld )
-    if ( self%lz_mld /= 0) then
-        if ( f_conf%has("Lz_mld_max") ) &
-            call f_conf%get_or_die("Lz_mld_max", self%lz_mld_max )
-    end if
-    if ( f_conf%has("scale_layer_thick") ) &
-        call f_conf%get_or_die("scale_layer_thick", self%scale_layer_thick )
+    call f_conf%get_or_die("Lz_min", self%lz_min )
+    call f_conf%get_or_die("Lz_mld", self%lz_mld )
+    if ( self%lz_mld /= 0) &
+        call f_conf%get_or_die("Lz_mld_max", self%lz_mld_max )
+    call f_conf%get_or_die("scale_layer_thick", self%scale_layer_thick )
 
     ! Store trajectory and background
     self%traj => traj

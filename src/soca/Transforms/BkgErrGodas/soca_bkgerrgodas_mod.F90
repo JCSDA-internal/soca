@@ -62,12 +62,9 @@ contains
     call self%bounds%read(c_conf)
 
     ! get parameters not already included in self%bounds
-    if ( f_conf%has("t_dz") ) &
-        call f_conf%get_or_die("t_dz", self%t_dz)
-    if ( f_conf%has("t_efold") ) &
-        call f_conf%get_or_die("t_efold", self%t_efold)
-    if ( f_conf%has("ssh_phi_ex") ) &
-        call f_conf%get_or_die("ssh_phi_ex", self%ssh_phi_ex)
+    call f_conf%get_or_die("t_dz", self%t_dz)
+    call f_conf%get_or_die("t_efold", self%t_efold)
+    call f_conf%get_or_die("ssh_phi_ex", self%ssh_phi_ex)
 
     ! Associate background
     self%bkg => bkg

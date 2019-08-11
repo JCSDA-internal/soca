@@ -65,12 +65,9 @@ contains
     call zeros(self%filt)
 
     ! Read parameters from config
-    if ( f_conf%has("ocean_depth_min") ) &
-        call f_conf%get_or_die("ocean_depth_min", self%ocn_depth_min)
-    if ( f_conf%has("rescale_bkgerr") ) &
-        call f_conf%get_or_die("rescale_bkgerr", self%scale)
-    if ( f_conf%has("efold_z") ) &
-        call f_conf%get_or_die("efold_z", self%efold_z)
+    call f_conf%get_or_die("ocean_depth_min", self%ocn_depth_min)
+    call f_conf%get_or_die("rescale_bkgerr", self%scale)
+    call f_conf%get_or_die("efold_z", self%efold_z)
 
     ! Associate background
     self%bkg => bkg

@@ -35,27 +35,19 @@ contains
 
     type(fckit_configuration) :: f_conf
 
+    f_conf = fckit_configuration(c_conf)
+
     ! Get bounds from configuration
-    if ( f_conf%has("t_min") ) &
-        call f_conf%get_or_die("t_min", self%t_min)
-    if ( f_conf%has("t_max") ) &
-        call f_conf%get_or_die("t_max", self%t_max)
-    if ( f_conf%has("s_min") ) &
-        call f_conf%get_or_die("s_min", self%s_min)
-    if ( f_conf%has("s_max") ) &
-        call f_conf%get_or_die("s_max", self%s_max)
-    if ( f_conf%has("ssh_min") ) &
-        call f_conf%get_or_die("ssh_min", self%ssh_min)
-    if ( f_conf%has("ssh_max") ) &
-        call f_conf%get_or_die("ssh_max", self%ssh_max)
-    if ( f_conf%has("cicen_min") ) &
-        call f_conf%get_or_die("cicen_min", self%cicen_min)
-    if ( f_conf%has("cicen_max") ) &
-        call f_conf%get_or_die("cicen_max", self%cicen_max)
-    if ( f_conf%has("hicen_min") ) &
-        call f_conf%get_or_die("hicen_min", self%hicen_min)
-    if ( f_conf%has("hicen_max") ) &
-        call f_conf%get_or_die("hicen_max", self%hicen_max)
+    call f_conf%get_or_die("t_min", self%t_min)
+    call f_conf%get_or_die("t_max", self%t_max)
+    call f_conf%get_or_die("s_min", self%s_min)
+    call f_conf%get_or_die("s_max", self%s_max)
+    call f_conf%get_or_die("ssh_min", self%ssh_min)
+    call f_conf%get_or_die("ssh_max", self%ssh_max)
+    call f_conf%get_or_die("cicen_min", self%cicen_min)
+    call f_conf%get_or_die("cicen_max", self%cicen_max)
+    call f_conf%get_or_die("hicen_min", self%hicen_min)
+    call f_conf%get_or_die("hicen_max", self%hicen_max)
 
   end subroutine soca_bkgerr_readbounds
 

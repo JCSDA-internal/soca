@@ -61,47 +61,37 @@ contains
     integer lenfn
     character(len=:), allocatable :: str
 
-    if ( f_conf%has("datadir") ) then
-        call f_conf%get_or_die("datadir", str)
-        fdbdir = str
-    endif
-    if ( f_conf%has("exp") ) then
-        call f_conf%get_or_die("exp", str)
-        expver = str
-    endif
-    if ( f_conf%has("type") ) then
-        call f_conf%get_or_die("type", str)
-        typ = str
-    endif
+    call f_conf%get_or_die("datadir", str)
+    fdbdir = str
+    call f_conf%get_or_die("exp", str)
+    expver = str
+    call f_conf%get_or_die("type", str)
+    typ = str
 
     if (present(domain_type)) then
-        expver = trim(domain_type)//"."//expver
+       expver = trim(domain_type)//"."//expver
     else
-        expver = "ocn.ice."//expver
+       expver = "ocn.ice."//expver
     end if
     if (typ=="ens") then
-        if ( f_conf%has("member") ) then
-            call f_conf%get_or_die("member", str)
-            mmb = str
-        endif
-        lenfn = LEN_TRIM(fdbdir) + 1 + LEN_TRIM(expver) + 1 + LEN_TRIM(typ) + 1 + LEN_TRIM(mmb)
-        prefix = TRIM(fdbdir) // "/" // TRIM(expver) // "." // TRIM(typ) // "." // TRIM(mmb)
+       call f_conf%get_or_die("member", str)
+       mmb = str
+       lenfn = LEN_TRIM(fdbdir) + 1 + LEN_TRIM(expver) + 1 + LEN_TRIM(typ) + 1 + LEN_TRIM(mmb)
+       prefix = TRIM(fdbdir) // "/" // TRIM(expver) // "." // TRIM(typ) // "." // TRIM(mmb)
     else
-        lenfn = LEN_TRIM(fdbdir) + 1 + LEN_TRIM(expver) + 1 + LEN_TRIM(typ)
-        prefix = TRIM(fdbdir) // "/" // TRIM(expver) // "." // TRIM(typ)
+       lenfn = LEN_TRIM(fdbdir) + 1 + LEN_TRIM(expver) + 1 + LEN_TRIM(typ)
+       prefix = TRIM(fdbdir) // "/" // TRIM(expver) // "." // TRIM(typ)
     endif
 
     if (typ=="fc" .or. typ=="ens") then
-        if ( f_conf%has("date") ) then
-            call f_conf%get_or_die("date", str)
-            referencedate = str
-        endif
-        call datetime_to_string(vdate, validitydate)
-        call datetime_create(TRIM(referencedate), rdate)
-        call datetime_diff(vdate, rdate, step)
-        call duration_to_string(step, sstep)
-        lenfn = lenfn + 1 + LEN_TRIM(referencedate) + 1 + LEN_TRIM(sstep)
-        soca_genfilename = TRIM(prefix) // "." // TRIM(referencedate) // "." // TRIM(sstep)
+       call f_conf%get_or_die("date", str)
+       referencedate = str
+       call datetime_to_string(vdate, validitydate)
+       call datetime_create(TRIM(referencedate), rdate)
+       call datetime_diff(vdate, rdate, step)
+       call duration_to_string(step, sstep)
+       lenfn = lenfn + 1 + LEN_TRIM(referencedate) + 1 + LEN_TRIM(sstep)
+       soca_genfilename = TRIM(prefix) // "." // TRIM(referencedate) // "." // TRIM(sstep)
     endif
 
     if (typ=="an") then
