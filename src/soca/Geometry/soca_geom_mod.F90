@@ -119,6 +119,7 @@ contains
     if (allocated(self%cell_area))     deallocate(self%cell_area)
     if (allocated(self%rossby_radius)) deallocate(self%rossby_radius)
     if (allocated(self%ij))            deallocate(self%ij)
+    nullify(self%Domain)
 
   end subroutine geom_end
 
