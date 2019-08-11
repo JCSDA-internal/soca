@@ -11,9 +11,8 @@ subroutine c_soca_setup(c_conf, c_key_geom, c_key_model) bind (c,name='soca_setu
 
   use iso_c_binding
   use fckit_configuration_module, only: fckit_configuration
-  use soca_model_mod
-  use soca_geom_mod_c
-  use soca_geom_mod, only: soca_geom
+  use soca_model_mod, only: soca_setup, soca_model, soca_model_registry
+  use soca_geom_mod, only: soca_geom, soca_geom_registry
   use duration_mod, only: duration, duration_seconds
 
   implicit none
@@ -27,9 +26,7 @@ subroutine c_soca_setup(c_conf, c_key_geom, c_key_model) bind (c,name='soca_setu
 
   type(duration) :: dtstep
   character(len=20) :: ststep
-  character(len=160) :: record
-  integer :: int_logical
-  real(c_double), dimension(2) :: tocn_minmax, socn_minmax
+  real(c_double), allocatable :: tocn_minmax(:), socn_minmax(:)
   type(fckit_configuration) :: f_conf
   character(len=:), allocatable :: str
 
@@ -45,29 +42,32 @@ subroutine c_soca_setup(c_conf, c_key_geom, c_key_model) bind (c,name='soca_setu
   model%ny = geom%ny
 
   ! Setup time step
-  if ( f_conf%has("tstep") ) then
-      call f_conf%get_or_die("tstep", str)
-      ststep = str
-  endif
-!  dtstep = trim(ststep) ! RM: needs attention
+  call f_conf%get_or_die("tstep", str)
+  ststep = str
+  dtstep = trim(ststep) ! RM: Somehow it does not like it anymore, why???
   model%dt0 = duration_seconds(dtstep)
 
   ! Setup mom6 advance or identity model
   call f_conf%get_or_die("advance_mom6", model%advance_mom6)
 
   ! Setup defaults for clamping values in the model
-  tocn_minmax=(/-999., -999./)
-  socn_minmax=(/-999., -999./)
-! RM: needs attention
-!  call config_get_double_vector(c_conf, "tocn_minmax", model%tocn_minmax, tocn_minmax)
-!  call config_get_double_vector(c_conf, "socn_minmax", model%socn_minmax, socn_minmax)
-!  if ( f_conf%has("tocn_minmax") ) &
-!    call f_conf%get_or_die("tocn_minmax", model%tocn_minmax)
-!  if ( f_conf%has("socn_minmax") ) &
-!    call f_conf%get_or_die("socn_minmax", model%socn_minmax)
+  if ( f_conf%has("tocn_minmax") ) then
+    call f_conf%get_or_die("tocn_minmax", tocn_minmax)
+    model%tocn_minmax = tocn_minmax
+  else
+    model%tocn_minmax=(/-999., -999./)
+  endif
+  if ( f_conf%has("socn_minmax") ) then
+    call f_conf%get_or_die("socn_minmax", socn_minmax)
+    model%socn_minmax = socn_minmax
+  else
+    model%socn_minmax=(/-999., -999./)
+  endif
 
   ! Initialize mom6
   call soca_setup(model)
+
+  if (allocated(str)) deallocate(str)
 
   return
 end subroutine c_soca_setup

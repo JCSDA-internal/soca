@@ -11,7 +11,6 @@ module soca_model_mod
 use iso_c_binding
 use fms_io_mod, only : fms_io_init, fms_io_exit
 use kinds
-use soca_geom_mod_c
 use soca_mom6
 use soca_utils
 use soca_fields

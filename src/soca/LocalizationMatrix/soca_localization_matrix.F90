@@ -10,7 +10,7 @@ module SOCALOCALIZATION
   use iso_c_binding
   use soca_fields
   use soca_constants
-  use soca_geom_mod_c
+  use soca_geom_mod, only: soca_geom, soca_geom_registry
   use soca_covariance_mod
 
   implicit none

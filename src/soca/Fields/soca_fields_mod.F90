@@ -18,12 +18,11 @@ module soca_fields
                          restore_state, query_initialized, &
                          free_restart_type, save_restart
   use iso_c_binding
-  use kinds
+  use kinds, only: kind_real
   use MOM_remapping,       only : remapping_CS, initialize_remapping, remapping_core_h, end_remapping
   use mpp_domains_mod, only : mpp_update_domains
   use random_mod, only: normal_distribution
   use soca_fieldsutils_mod
-  use soca_geom_mod_c
   use soca_geom_mod, only : soca_geom
   use soca_mom6
   use soca_utils
@@ -267,10 +266,10 @@ contains
     allocate(ifdir(ndir))
 
     ! Get Diracs positions
-    call config_get_int_vector(c_conf,'ixdir',ixdir)
-    call config_get_int_vector(c_conf,'iydir',iydir)
-    call config_get_int_vector(c_conf,'izdir',izdir)
-    call config_get_int_vector(c_conf,'ifdir',ifdir)
+    call f_conf%get_or_die("ixdir", ixdir)
+    call f_conf%get_or_die("iydir", iydir)
+    call f_conf%get_or_die("izdir", izdir)
+    call f_conf%get_or_die("ifdir", ifdir)
 
     ! get PE domain bounds
     isc = self%geom%isc ; iec = self%geom%iec
