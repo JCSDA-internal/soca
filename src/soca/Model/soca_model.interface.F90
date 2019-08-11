@@ -13,7 +13,7 @@ subroutine c_soca_setup(c_conf, c_key_geom, c_key_model) bind (c,name='soca_setu
   use fckit_configuration_module, only: fckit_configuration
   use soca_model_mod, only: soca_setup, soca_model, soca_model_registry
   use soca_geom_mod, only: soca_geom, soca_geom_registry
-  use duration_mod, only: duration, duration_seconds
+  use duration_mod, only: duration, duration_seconds, assignment(=)
 
   implicit none
 
@@ -25,7 +25,6 @@ subroutine c_soca_setup(c_conf, c_key_geom, c_key_model) bind (c,name='soca_setu
   type(soca_geom),  pointer :: geom
 
   type(duration) :: dtstep
-  character(len=20) :: ststep
   real(c_double), allocatable :: tocn_minmax(:), socn_minmax(:)
   type(fckit_configuration) :: f_conf
   character(len=:), allocatable :: str
@@ -43,8 +42,7 @@ subroutine c_soca_setup(c_conf, c_key_geom, c_key_model) bind (c,name='soca_setu
 
   ! Setup time step
   call f_conf%get_or_die("tstep", str)
-  ststep = str
-  dtstep = trim(ststep) ! RM: Somehow it does not like it anymore, why???
+  dtstep = trim(str)
   model%dt0 = duration_seconds(dtstep)
 
   ! Setup mom6 advance or identity model
