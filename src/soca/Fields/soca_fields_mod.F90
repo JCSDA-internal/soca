@@ -242,8 +242,7 @@ contains
     type(fckit_configuration), intent(in)    :: f_conf   !< Configuration
 
     integer :: isc, iec, jsc, jec
-    integer :: n,size,rank,info
-    integer :: ndir, niydir, nizdir, nifdir
+    integer :: ndir,n,size,rank,info
     integer,allocatable :: ixdir(:),iydir(:),izdir(:),ifdir(:)
     character(len=3) :: idirchar
     type(fckit_mpi_comm) :: f_comm
@@ -254,19 +253,11 @@ contains
     f_comm = fckit_mpi_comm()
 
     ! Get Diracs size
-    if ( f_conf%has("ixdir") ) &
-        call f_conf%get_or_die("ixdir", ndir)
-    if ( f_conf%has("iydir") ) &
-        call f_conf%get_or_die("iydir", niydir)
-    if ( f_conf%has("izdir") ) &
-        call f_conf%get_or_die("izdir", nizdir)
-    if ( f_conf%has("ifdir") ) &
-        call f_conf%get_or_die("ifdir", nifdir)
-
-    if ( (niydir /= ndir) .or. &
-         (nizdir /= ndir) .or. &
-         (nifdir /= ndir) ) &
-         call abor1_ftn('soca_fields_dirac: inconsistent sizes for ixdir, iydir, izdir, ipdir and ifdir')
+    ndir = f_conf%get_size("ixdir")
+    if (( f_conf%get_size("iydir") /= ndir ) .or. &
+        ( f_conf%get_size("izdir") /= ndir ) .or. &
+        ( f_conf%get_size("ifdir") /= ndir )) &
+        call abor1_ftn('soca_fields_dirac: inconsistent sizes for ixdir, iydir, izdir, and ifdir')
 
     ! Allocation
     allocate(ixdir(ndir))
