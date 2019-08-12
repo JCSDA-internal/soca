@@ -6,8 +6,7 @@
 !
 
 module soca_bkgerrfilt_mod
-  use iso_c_binding
-  use fckit_configuration_module
+  use fckit_configuration_module, only: fckit_configuration
   use datetime_mod, only: datetime
   use kinds, only: kind_real
   use soca_fields
@@ -41,10 +40,10 @@ contains
 #include "oops/util/linkedList_c.f"
   ! ------------------------------------------------------------------------------
   !> Setup the static background error
-  subroutine soca_bkgerrfilt_setup(c_conf, self, bkg)
+  subroutine soca_bkgerrfilt_setup(f_conf, self, bkg)
     type(soca_bkgerrfilt_config), intent(inout) :: self
-    type(soca_field),    target, intent(in) :: bkg
-    type(c_ptr),                 intent(in) :: c_conf
+    type(soca_field), target,     intent(in)    :: bkg
+    type(fckit_configuration),    intent(in)    :: f_conf
 
     integer :: isc, iec, jsc, jec, i, j, k, nl
     real(kind=kind_real), allocatable :: dvdz(:), v(:), h(:)
@@ -53,9 +52,6 @@ contains
     type(datetime) :: vdate
     character(len=800) :: fname = 'soca_bkgerrfilt.nc'
     logical :: read_from_file = .false.
-    type(fckit_configuration) :: f_conf
-
-    f_conf = fckit_configuration(c_conf)
 
     ! Get number of ocean levels
     nl = size(bkg%hocn,3)

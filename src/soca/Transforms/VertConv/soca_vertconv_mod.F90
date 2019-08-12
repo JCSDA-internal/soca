@@ -5,10 +5,9 @@
 !
 
 module soca_vertconv_mod
-  use iso_c_binding
   use fckit_configuration_module, only: fckit_configuration
   use kinds, only: kind_real
-  use soca_fields
+  use soca_fields, only: soca_field
   use tools_func
   use type_mpl
 
@@ -42,15 +41,11 @@ contains
   ! ------------------------------------------------------------------------------
   ! Setup for the vertical convolution
   ! TODO: Investigate computing and storing weights in vertconc data structure
-  subroutine soca_conv_setup (self, bkg, traj, c_conf)
-    type(soca_vertconv),   intent(inout) :: self
-    type(soca_field), target, intent(in) :: bkg
-    type(soca_field), target, intent(in) :: traj
-    type(c_ptr),              intent(in) :: c_conf
-
-    type(fckit_configuration) :: f_conf
-
-    f_conf = fckit_configuration(c_conf)
+  subroutine soca_conv_setup (self, bkg, traj, f_conf)
+    type(soca_vertconv),    intent(inout) :: self
+    type(soca_field), target,  intent(in) :: bkg
+    type(soca_field), target,  intent(in) :: traj
+    type(fckit_configuration), intent(in) :: f_conf
 
     ! Get configuration for vertical convolution
     call f_conf%get_or_die("Lz_min", self%lz_min )

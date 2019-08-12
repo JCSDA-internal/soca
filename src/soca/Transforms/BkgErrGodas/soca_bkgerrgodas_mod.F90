@@ -1,12 +1,11 @@
 !
-! (C) Copyright 2017 UCAR
+! (C) Copyright 2017-2019 UCAR
 !
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
 !
 
 module soca_bkgerrgodas_mod
-  use iso_c_binding
   use fckit_configuration_module, only: fckit_configuration
   use datetime_mod, only: datetime
   use kinds, only: kind_real
@@ -44,22 +43,19 @@ contains
 #include "oops/util/linkedList_c.f"
   ! ------------------------------------------------------------------------------
   !> Setup the static background error
-  subroutine soca_bkgerrgodas_setup(c_conf, self, bkg)
+  subroutine soca_bkgerrgodas_setup(f_conf, self, bkg)
     type(soca_bkgerrgodas_config), intent(inout) :: self
     type(soca_field),         target, intent(in) :: bkg
-    type(c_ptr),                      intent(in) :: c_conf
+    type(fckit_configuration),        intent(in) :: f_conf
 
     type(datetime) :: vdate
     character(len=800) :: fname = 'soca_bkgerrgodas.nc'
-    type(fckit_configuration) :: f_conf
-
-    f_conf = fckit_configuration(c_conf)
 
     ! Allocate memory for bkgerrgodasor
     call create_copy(self%std_bkgerr, bkg)
 
     ! Get bounds from configuration
-    call self%bounds%read(c_conf)
+    call self%bounds%read(f_conf)
 
     ! get parameters not already included in self%bounds
     call f_conf%get_or_die("t_dz", self%t_dz)

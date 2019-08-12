@@ -6,7 +6,6 @@
 
 module soca_geom_mod
 
-use iso_c_binding
 use MOM_domains, only : MOM_domain_type, MOM_infra_init
 use MOM_io,      only : io_infra_init
 use soca_mom6, only: soca_mom6_config, soca_mom6_init, soca_ice_column, &
@@ -81,14 +80,11 @@ contains
 
 ! ------------------------------------------------------------------------------
 !> Setup geometry object
-subroutine geom_init(self, c_conf)
+subroutine geom_init(self, f_conf)
   class(soca_geom), intent(out) :: self
-  type(c_ptr),      intent( in) :: c_conf
+  type(fckit_configuration), intent(in) :: f_conf
 
   integer :: isave = 0
-  type(fckit_configuration) :: f_conf
-
-  f_conf = fckit_configuration(c_conf)
 
   ! Domain decomposition
   call soca_geomdomain_init(self%Domain, self%nzo)

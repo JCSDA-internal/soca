@@ -1,4 +1,5 @@
-! (C) Copyright 2017- UCAR
+!
+! (C) Copyright 2017-2019 UCAR
 !
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -9,9 +10,10 @@
 subroutine c_soca_vertconv_setup(c_key_self, c_conf, c_key_traj, c_key_bkg) &
      & bind(c,name='soca_vertconv_setup_f90')
   use iso_c_binding
+  use fckit_configuration_module, only: fckit_configuration
   use kinds, only: kind_real
   use soca_vertconv_mod
-  use soca_fields_mod_c
+  use soca_fields, only: soca_field, soca_field_registry
 
   implicit none
 
@@ -33,7 +35,7 @@ subroutine c_soca_vertconv_setup(c_key_self, c_conf, c_key_traj, c_key_bkg) &
   call soca_field_registry%get(c_key_traj, traj)
   call soca_field_registry%get(c_key_bkg, bkg)
 
-  call soca_conv_setup (self, bkg, traj, c_conf)
+  call soca_conv_setup (self, bkg, traj, fckit_configuration(c_conf))
 
 end subroutine c_soca_vertconv_setup
 
@@ -69,7 +71,7 @@ subroutine c_soca_vertconv_mult_f90(c_key_a, c_key_m, c_key_traj, c_key_self)&
      & bind(c,name='soca_vertconv_mult_f90')
   use iso_c_binding
   use soca_vertconv_mod
-  use soca_fields_mod_c
+  use soca_fields, only: soca_field, soca_field_registry, copy
   use soca_utils
 
   implicit none
@@ -105,7 +107,7 @@ subroutine c_soca_vertconv_multad_f90(c_key_m, c_key_a, c_key_traj, c_key_self)&
      & bind(c,name='soca_vertconv_multad_f90')
   use iso_c_binding
   use soca_vertconv_mod
-  use soca_fields_mod_c
+  use soca_fields, only: soca_field, soca_field_registry, copy
 
   implicit none
 

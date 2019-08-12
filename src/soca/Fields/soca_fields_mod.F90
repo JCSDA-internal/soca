@@ -1,9 +1,9 @@
-! (C) Copyright 2017- UCAR
+! (C) Copyright 2017-2019 UCAR
 !
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
 
-!> Handle fields for the  model
+!> Handle fields for the model
 
 module soca_fields
 
@@ -11,15 +11,15 @@ module soca_fields
   use duration_mod, only: duration
   use fckit_configuration_module, only: fckit_configuration
   use fckit_log_module, only: log, fckit_log
-  use fckit_mpi_module
+  use fckit_mpi_module, only: fckit_mpi_comm, fckit_mpi_min, fckit_mpi_max, &
+                              fckit_mpi_sum
   use fms_mod,    only: read_data, write_data, set_domain
-  use fms_io_mod, only : fms_io_init, fms_io_exit, &
-                         register_restart_field, restart_file_type, &
-                         restore_state, query_initialized, &
-                         free_restart_type, save_restart
-  use iso_c_binding
+  use fms_io_mod, only: fms_io_init, fms_io_exit, &
+                        register_restart_field, restart_file_type, &
+                        restore_state, query_initialized, &
+                        free_restart_type, save_restart
   use kinds, only: kind_real
-  use MOM_remapping,       only : remapping_CS, initialize_remapping, remapping_core_h, end_remapping
+  use MOM_remapping, only : remapping_CS, initialize_remapping, remapping_core_h, end_remapping
   use mpp_domains_mod, only : mpp_update_domains
   use random_mod, only: normal_distribution
   use soca_fieldsutils_mod
@@ -38,6 +38,7 @@ module soca_fields
 
   private
 
+  public :: soca_field_registry
   public :: soca_field, &
        & create, delete, zeros, dirac, random, copy, create_copy,&
        & self_add, self_schur, self_sub, self_mul, axpy, &
@@ -79,7 +80,18 @@ module soca_fields
 
   end type soca_field
 
+#define LISTED_TYPE soca_field
+
+!> Linked list interface - defines registry_t type
+#include "Utils/linkedList_i.f"
+
+  !> Global registry
+  type(registry_t) :: soca_field_registry
+
 contains
+
+!> Linked list implementation
+#include "Utils/linkedList_c.f"
 
   ! ------------------------------------------------------------------------------
   !> Create a field from geometry and variables
@@ -225,9 +237,9 @@ contains
 
   ! ------------------------------------------------------------------------------
 
-  subroutine dirac(self, c_conf)
-    type(soca_field), intent(inout) :: self
-    type(c_ptr),         intent(in) :: c_conf   !< Configuration
+  subroutine dirac(self, f_conf)
+    type(soca_field),          intent(inout) :: self
+    type(fckit_configuration), intent(in)    :: f_conf   !< Configuration
 
     integer :: isc, iec, jsc, jec
     integer :: n,size,rank,info
@@ -235,9 +247,6 @@ contains
     integer,allocatable :: ixdir(:),iydir(:),izdir(:),ifdir(:)
     character(len=3) :: idirchar
     type(fckit_mpi_comm) :: f_comm
-    type(fckit_configuration) :: f_conf
-
-    f_conf = fckit_configuration(c_conf)
 
     call check(self)
 
@@ -601,10 +610,10 @@ contains
 
   ! ------------------------------------------------------------------------------
 
-  subroutine read_file(fld, c_conf, vdate)
-    type(soca_field), intent(inout) :: fld      !< Fields
-    type(c_ptr),         intent(in) :: c_conf   !< Configuration
-    type(datetime),   intent(inout) :: vdate    !< DateTime
+  subroutine read_file(fld, f_conf, vdate)
+    type(soca_field),          intent(inout) :: fld     !< Fields
+    type(fckit_configuration), intent(in)    :: f_conf  !< Configuration
+    type(datetime),            intent(inout) :: vdate   !< DateTime
 
     integer, parameter :: max_string_length=800
     character(len=max_string_length) :: ocn_filename
@@ -622,10 +631,7 @@ contains
     integer :: isc, iec, jsc, jec
     integer :: i, j, k, nl, nz
     type(remapping_CS)  :: remapCS
-    type(fckit_configuration) :: f_conf
     character(len=:), allocatable :: str
-
-    f_conf = fckit_configuration(c_conf)
 
     if ( f_conf%has("read_from_file") ) &
         call f_conf%get_or_die("read_from_file", iread)
@@ -663,10 +669,10 @@ contains
     ! iread = 1 (state) or 3 (increment): Read restart file
     if ((iread==1).or.(iread==3)) then
        ! Read ocean surface fields
-       call fld%ocnsfc%read_restart(c_conf, fld%geom, fld%fldnames)
+       call fld%ocnsfc%read_restart(f_conf, fld%geom, fld%fldnames)
 
        ! Read sea-ice
-       call fld%seaice%read_restart(c_conf, fld%geom, fld%fldnames)
+       call fld%seaice%read_restart(f_conf, fld%geom, fld%fldnames)
 
        call f_conf%get_or_die("basename", str)
        basename = str
@@ -752,10 +758,10 @@ contains
     ! Read diagnostic file
     if (iread==2) then
        ! Read ocean surface fields
-       call fld%ocnsfc%read_diag(c_conf, fld%geom, fld%fldnames)
+       call fld%ocnsfc%read_diag(f_conf, fld%geom, fld%fldnames)
 
        ! Read sea-ice fields
-       call fld%ocnsfc%read_diag(c_conf, fld%geom, fld%fldnames)
+       call fld%ocnsfc%read_diag(f_conf, fld%geom, fld%fldnames)
 
        call f_conf%get_or_die("filename", str)
        incr_filename = str
@@ -787,10 +793,10 @@ contains
 
   ! ------------------------------------------------------------------------------
 
-  subroutine write_file(fld, c_conf, vdate)
-    type(soca_field), intent(inout) :: fld    !< Fields
-    type(c_ptr),         intent(in) :: c_conf !< Configuration
-    type(datetime),   intent(inout) :: vdate  !< DateTime
+  subroutine write_file(fld, f_conf, vdate)
+    type(soca_field),          intent(inout) :: fld    !< Fields
+    type(fckit_configuration), intent(in)    :: f_conf !< Configuration
+    type(datetime),            intent(inout) :: vdate  !< DateTime
 
     integer, parameter :: max_string_length=800    ! Yuk!
     character(len=max_string_length) :: filename
@@ -800,9 +806,9 @@ contains
     call check(fld)
 
     !call geom_infotofile(fld%geom)
-    call soca_write_restart(fld, c_conf, vdate)
+    call soca_write_restart(fld, f_conf, vdate)
 
-!!$    filename = soca_genfilename(c_conf,max_string_length,vdate)
+!!$    filename = soca_genfilename(f_conf,max_string_length,vdate)
 !!$    WRITE(buf,*) 'field:write_file: writing '//filename
 !!$    call fckit_log%info(buf)
 !!$
@@ -1244,19 +1250,16 @@ contains
 
   ! ------------------------------------------------------------------------------
   !> Save soca fields in a restart format
-  subroutine soca_write_restart(fld, c_conf, vdate)
-    type(soca_field), intent(inout) :: fld      !< Fields
-    type(c_ptr),         intent(in) :: c_conf   !< Configuration
-    type(datetime),   intent(inout) :: vdate    !< DateTime
+  subroutine soca_write_restart(fld, f_conf, vdate)
+    type(soca_field),          intent(inout) :: fld      !< Fields
+    type(fckit_configuration), intent(in)    :: f_conf   !< Configuration
+    type(datetime),            intent(inout) :: vdate    !< DateTime
 
     integer, parameter :: max_string_length=800
     character(len=max_string_length) :: ocn_filename, ocnsfc_filename
     type(restart_file_type) :: ocean_restart
     type(restart_file_type) :: ocnsfc_restart
     integer :: idr, idr_ocean
-    type(fckit_configuration) :: f_conf
-
-    f_conf = fckit_configuration(c_conf)
 
     ! Generate file names
     ocn_filename = soca_genfilename(f_conf,max_string_length,vdate,"ocn")
@@ -1299,7 +1302,7 @@ contains
     call fms_io_exit()
 
     ! Save sea-ice restart
-    call fld%seaice%write_restart(c_conf, fld%geom, vdate)
+    call fld%seaice%write_restart(f_conf, fld%geom, vdate)
 
     return
 

@@ -6,12 +6,11 @@
 !
 
 module soca_bkgerr_mod
-  use iso_c_binding
   use fckit_configuration_module, only: fckit_configuration
   use datetime_mod, only: datetime
   use kinds, only: kind_real
   use soca_bkgerrutil_mod
-  use soca_fields
+  use soca_fields, only: soca_field, create_copy, read_file, soca_fld2file
   use soca_utils
   use soca_omb_stats_mod
 
@@ -42,18 +41,15 @@ contains
 #include "oops/util/linkedList_c.f"
   ! ------------------------------------------------------------------------------
   !> Setup the static background error
-  subroutine soca_bkgerr_setup(c_conf, self, bkg)
+  subroutine soca_bkgerr_setup(f_conf, self, bkg)
     type(soca_bkgerr_config), intent(inout) :: self
     type(soca_field),    target, intent(in) :: bkg
-    type(c_ptr),                 intent(in) :: c_conf
+    type(fckit_configuration),   intent(in) :: f_conf
 
     integer :: isc, iec, jsc, jec, i, j, k, nl
     type(datetime) :: vdate
     character(len=800) :: fname = 'soca_bkgerrsoca.nc'
     logical :: read_from_file = .false.
-    type(fckit_configuration) :: f_conf
-
-    f_conf = fckit_configuration(c_conf)
 
     ! Get number of ocean levels
     nl = size(bkg%hocn,3)
@@ -63,7 +59,7 @@ contains
 
     ! Read variance
     ! Precomputed from an ensemble of (K^-1 dx)
-    call read_file(self%std_bkgerr, c_conf, vdate)
+    call read_file(self%std_bkgerr, f_conf, vdate)
 
     ! Convert to standard deviation
     self%std_bkgerr%tocn = sqrt(self%std_bkgerr%tocn)
@@ -71,7 +67,7 @@ contains
     self%std_bkgerr%ssh = sqrt(self%std_bkgerr%ssh)
 
     ! Get bounds from configuration
-    call self%bounds%read(c_conf)
+    call self%bounds%read(f_conf)
 
     ! Get constand background error for sst and sss
     if ( f_conf%has("fixed_std_sst") ) then

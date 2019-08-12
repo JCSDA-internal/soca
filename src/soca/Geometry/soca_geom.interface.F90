@@ -8,6 +8,7 @@
 !> Setup geometry object
 subroutine c_soca_geo_setup(c_key_self, c_conf) bind(c,name='soca_geo_setup_f90')
   use iso_c_binding
+  use fckit_configuration_module, only: fckit_configuration
   use soca_geom_mod, only: soca_geom, soca_geom_registry
   implicit none
   integer(c_int), intent(inout) :: c_key_self
@@ -19,7 +20,7 @@ subroutine c_soca_geo_setup(c_key_self, c_conf) bind(c,name='soca_geo_setup_f90'
   call soca_geom_registry%add(c_key_self)
   call soca_geom_registry%get(c_key_self,self)
 
-  call self%init(c_conf)
+  call self%init(fckit_configuration(c_conf))
 
 end subroutine c_soca_geo_setup
 
@@ -53,9 +54,8 @@ subroutine c_soca_geo_gridgen(c_key_self, c_conf) bind(c,name='soca_geo_gridgen_
 
   type(soca_geom), pointer :: self
 
-  call soca_geom_registry%get(c_key_self,self)
+  call soca_geom_registry%get(c_key_self, self)
 
-  print *,'geom key = ',c_key_self
   call self%gridgen()
 
 end subroutine c_soca_geo_gridgen

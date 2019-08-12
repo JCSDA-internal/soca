@@ -1,5 +1,5 @@
 !
-! (C) Copyright 2017 UCAR
+! (C) Copyright 2017-2019 UCAR
 !
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -8,12 +8,11 @@
 
 module soca_model_mod
 
-use iso_c_binding
 use fms_io_mod, only : fms_io_init, fms_io_exit
-use kinds
+use kinds, only: kind_real
 use soca_mom6
 use soca_utils
-use soca_fields
+use soca_fields, only: soca_field
 use datetime_mod
 use mpp_domains_mod, only : mpp_update_domains
 use time_manager_mod, only : time_type, print_time, print_date, set_date

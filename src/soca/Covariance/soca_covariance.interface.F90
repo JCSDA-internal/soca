@@ -12,7 +12,6 @@ module c_soca_covariance_mod
   use iso_c_binding
   use soca_covariance_mod
   use soca_geom_mod, only : soca_geom, soca_geom_registry
-  use soca_fields_mod_c, only: soca_field_registry
   use soca_fields
   use variables_mod
   use fckit_configuration_module, only: fckit_configuration
@@ -59,7 +58,7 @@ contains
     call soca_cov_registry%get(c_key_self, self)
     call soca_field_registry%get(c_key_bkg,bkg)
     call oops_vars_create(fckit_configuration(c_vars), vars)
-    call soca_cov_setup(self, c_conf, geom, bkg, vars)
+    call soca_cov_setup(self, fckit_configuration(c_conf), geom, bkg, vars)
 
   end subroutine c_soca_b_setup
 

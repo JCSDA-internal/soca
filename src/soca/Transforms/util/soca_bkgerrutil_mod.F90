@@ -5,7 +5,6 @@
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
 
 module soca_bkgerrutil_mod
-  use iso_c_binding
   use fckit_configuration_module, only: fckit_configuration
   use kinds, only: kind_real
   use soca_fields
@@ -29,13 +28,9 @@ contains
 
   ! ------------------------------------------------------------------------------
   !> Read bounds from config
-  subroutine soca_bkgerr_readbounds(self, c_conf)
+  subroutine soca_bkgerr_readbounds(self, f_conf)
     class(soca_bkgerr_bounds_type), intent(inout) :: self
-    type(c_ptr),                       intent(in) :: c_conf
-
-    type(fckit_configuration) :: f_conf
-
-    f_conf = fckit_configuration(c_conf)
+    type(fckit_configuration),      intent(in)    :: f_conf
 
     ! Get bounds from configuration
     call f_conf%get_or_die("t_min", self%t_min)

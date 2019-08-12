@@ -23,20 +23,10 @@ module soca_fields_mod_c
   use fckit_configuration_module, only: fckit_configuration
 
   implicit none
-  public :: soca_field_registry
-
-#define LISTED_TYPE soca_field
-
-  !> Linked list interface - defines registry_t type
-#include "Utils/linkedList_i.f"
-
-  !> Global registry
-  type(registry_t) :: soca_field_registry
 
 contains
-  ! ------------------------------------------------------------------------------
-  !> Linked list implementation
-#include "Utils/linkedList_c.f"
+
+! ------------------------------------------------------------------------------
 
 subroutine soca_field_create_c(c_key_self, c_key_geom, c_vars) bind(c,name='soca_field_create_f90')
   integer(c_int), intent(inout) :: c_key_self !< Handle to field
@@ -91,11 +81,9 @@ subroutine soca_field_dirac_c(c_key_self,c_conf) bind(c,name='soca_field_dirac_f
   type(soca_field),  pointer :: self
 
   call soca_field_registry%get(c_key_self,self)
-  call dirac(self,c_conf)
+  call dirac(self,fckit_configuration(c_conf))
 
 end subroutine soca_field_dirac_c
-
-! ------------------------------------------------------------------------------
 
 ! ------------------------------------------------------------------------------
 
@@ -342,7 +330,7 @@ subroutine soca_field_read_file_c(c_key_fld, c_conf, c_dt) bind(c,name='soca_fie
 
   call soca_field_registry%get(c_key_fld,fld)
   call c_f_datetime(c_dt, fdate)
-  call read_file(fld, c_conf, fdate)
+  call read_file(fld, fckit_configuration(c_conf), fdate)
 
 end subroutine soca_field_read_file_c
 
@@ -358,7 +346,7 @@ subroutine soca_field_write_file_c(c_key_fld, c_conf, c_dt) bind(c,name='soca_fi
 
   call soca_field_registry%get(c_key_fld,fld)
   call c_f_datetime(c_dt, fdate)
-  call write_file(fld, c_conf, fdate)
+  call write_file(fld, fckit_configuration(c_conf), fdate)
 
 end subroutine soca_field_write_file_c
 

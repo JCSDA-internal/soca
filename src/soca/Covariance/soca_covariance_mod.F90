@@ -7,9 +7,8 @@
 !! covariance matrices of the SOCA analysis.
 
 module soca_covariance_mod
-  use iso_c_binding
   use fckit_configuration_module, only: fckit_configuration
-  use kinds
+  use kinds, only: kind_real
   use oobump_mod, only: bump_read_conf
   use soca_fields
   use soca_geom_mod, only : soca_geom
@@ -55,18 +54,16 @@ contains
   !! covariance matrix, and stores the relevant values in the
   !! error covariance structure.
 
-  subroutine soca_cov_setup(self, c_conf, geom, bkg, vars)
-    class(soca_cov),       intent(inout) :: self   !< The covariance structure
-    type(c_ptr),              intent(in) :: c_conf !< The configuration
-    type(soca_geom),          intent(in) :: geom   !< Geometry
-    type(soca_field), target, intent(in) :: bkg    !< Background
-    type(oops_vars),          intent(in) :: vars   !< List of variables
+  subroutine soca_cov_setup(self, f_conf, geom, bkg, vars)
+    class(soca_cov),        intent(inout) :: self   !< The covariance structure
+    type(fckit_configuration), intent(in) :: f_conf !< The configuration
+    type(soca_geom),           intent(in) :: geom   !< Geometry
+    type(soca_field), target,  intent(in) :: bkg    !< Background
+    type(oops_vars),           intent(in) :: vars   !< List of variables
 
     character(len=3)  :: domain
     integer :: isc, iec, jsc, jec, i, j, ivar
     logical :: init_seaice, init_ocean
-
-    type(fckit_configuration) :: f_conf
 
     ! Setup list of variables to apply B on
     self%vars = vars
@@ -77,9 +74,6 @@ contains
     self%pert_scale%SSH = 1.0
     self%pert_scale%AICE = 1.0
     self%pert_scale%HICE = 1.0
-
-    ! Grab the fckit configuration handle from eckit configuration
-    f_conf = fckit_configuration(c_conf)
 
     ! Overwrite scales if they exist
     if ( f_conf%has("pert_T") ) &
@@ -143,14 +137,14 @@ contains
     domain = 'ocn'
     allocate(self%ocean_conv(1))
     if (init_ocean) then
-       call soca_bump_correlation(self, self%ocean_conv(1), geom, c_conf, domain)
+       call soca_bump_correlation(self, self%ocean_conv(1), geom, f_conf, domain)
     end if
 
     ! Initialize seaice bump if cicen or hicen are in self%vars
     domain = 'ice'
     allocate(self%seaice_conv(1))
     if (init_seaice) then
-       call soca_bump_correlation(self, self%seaice_conv(1), geom, c_conf, domain)
+       call soca_bump_correlation(self, self%seaice_conv(1), geom, f_conf, domain)
     end if
 
     self%initialized = .true.
@@ -282,12 +276,12 @@ contains
 
   ! ------------------------------------------------------------------------------
 
-  subroutine soca_bump_correlation(self, horiz_convol, geom, c_conf, domain)
-    class(soca_cov), intent(inout) :: self   !< The covariance structure
-    type(bump_type), intent(inout) :: horiz_convol
-    type(soca_geom),    intent(in) :: geom
-    type(c_ptr),        intent(in) :: c_conf         !< Handle to configuration
-    character(len=3),   intent(in) :: domain
+  subroutine soca_bump_correlation(self, horiz_convol, geom, f_conf, domain)
+    class(soca_cov),        intent(inout) :: self   !< The covariance structure
+    type(bump_type),        intent(inout) :: horiz_convol
+    type(soca_geom),           intent(in) :: geom
+    type(fckit_configuration), intent(in) :: f_conf !< Handle to configuration
+    character(len=3),          intent(in) :: domain
 
     !Grid stuff
     integer :: isc, iec, jsc, jec, jjj, jz, il, ib
@@ -341,7 +335,7 @@ contains
     ! Initialize bump namelist/parameters
     call horiz_convol%nam%init()
     horiz_convol%nam%verbosity = 'none'
-    call bump_read_conf(fckit_configuration(c_conf), horiz_convol)
+    call bump_read_conf(f_conf, horiz_convol)
 
     if (domain.eq.'ocn') horiz_convol%nam%prefix = 'ocn'
     if (domain.eq.'ice') horiz_convol%nam%prefix = 'ice'

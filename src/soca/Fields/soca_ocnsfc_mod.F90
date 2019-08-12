@@ -11,7 +11,6 @@ module soca_ocnsfc_mod
                          register_restart_field, restart_file_type, &
                          restore_state, free_restart_type
   use fms_mod, only: read_data
-  use iso_c_binding
   use kinds, only: kind_real
   use MOM_forcing_type, only : forcing
   use random_mod, only : normal_distribution
@@ -254,20 +253,17 @@ contains
   end subroutine soca_ocnsfc_pushforcing
 
   ! ------------------------------------------------------------------------------
-  subroutine soca_ocnsfc_read_rst(self, c_conf, geom, fldnames)
-    class(soca_ocnsfc_type), intent(inout) :: self
-    type(c_ptr),                intent(in) :: c_conf
-    type(soca_geom),            intent(in) :: geom
-    character(len=5),           intent(in) :: fldnames(:)
+  subroutine soca_ocnsfc_read_rst(self, f_conf, geom, fldnames)
+    class(soca_ocnsfc_type),   intent(inout) :: self
+    type(fckit_configuration), intent(in)    :: f_conf
+    type(soca_geom),           intent(in)    :: geom
+    character(len=5),          intent(in)    :: fldnames(:)
 
     integer, parameter :: max_string_length=800
     integer :: idr, i
     character(len=max_string_length) :: filename, basename
     type(restart_file_type) :: restart
-    type(fckit_configuration) :: f_conf
     character(len=:), allocatable :: str
-
-    f_conf = fckit_configuration(c_conf)
 
     if ( f_conf%has("sfc_filename") ) then
         call f_conf%get_or_die("basename", str)
@@ -312,19 +308,16 @@ contains
   end subroutine soca_ocnsfc_read_rst
 
   ! ------------------------------------------------------------------------------
-  subroutine soca_ocnsfc_read_diag(self, c_conf, geom, fldnames)
-    class(soca_ocnsfc_type), intent(inout) :: self
-    type(c_ptr),                intent(in) :: c_conf
-    type(soca_geom),            intent(in) :: geom
-    character(len=5),           intent(in) :: fldnames(:)
+  subroutine soca_ocnsfc_read_diag(self, f_conf, geom, fldnames)
+    class(soca_ocnsfc_type),   intent(inout) :: self
+    type(fckit_configuration), intent(in)    :: f_conf
+    type(soca_geom),           intent(in)    :: geom
+    character(len=5),          intent(in)    :: fldnames(:)
 
     integer, parameter :: max_string_length=800
     integer :: i
     character(len=max_string_length) :: filename
     character(len=:), allocatable :: str
-    type(fckit_configuration) :: f_conf
-
-    f_conf = fckit_configuration(c_conf)
 
     if ( f_conf%has("filename") ) then
         call f_conf%get_or_die("filename", str)

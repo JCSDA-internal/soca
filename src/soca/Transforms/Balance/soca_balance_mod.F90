@@ -8,10 +8,9 @@
 module soca_balance_mod
 
   use kinds, only: kind_real
-  use soca_fields
+  use soca_fields, only: soca_field
   use soca_kst_mod
   use soca_ksshts_mod
-  use iso_c_binding
   use fckit_configuration_module, only: fckit_configuration
 
   implicit none
@@ -40,16 +39,13 @@ contains
 #include "oops/util/linkedList_c.f"
   ! ------------------------------------------------------------------------------
   !> Initialization of the balance operator and its trajectory
-  subroutine soca_balance_setup(c_conf, self, traj)
+  subroutine soca_balance_setup(f_conf, self, traj)
     type(soca_balance_config), intent(inout) :: self
     type(soca_field),    target, intent(in)  :: traj
-    type(c_ptr),                 intent(in)  :: c_conf
+    type(fckit_configuration),   intent(in)  :: f_conf
 
-    type(fckit_configuration) :: f_conf
     integer :: isc, iec, jsc, jec, i, j, k, nl
     real(kind=kind_real), allocatable :: jac(:)
-
-    f_conf = fckit_configuration(c_conf)
 
     ! Number of ocean layer
     nl = size(traj%hocn,3)
