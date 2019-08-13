@@ -23,10 +23,13 @@ d=$out_dir/$date
 mkdir -p $d
 cd $d
 
-files=$(curl $source -l)
+files=$(curl $source/* -l)
+echo $files
 for f in $files; do
     # make sure it is the right day
-    [[ ! $f =~ ^CS*$yr$mm$dy*$ ]] && continue
-    wget $source/$f
+    if [[ $f == "CS"*$yr$mm$dy*".DBL" ]]; 
+    then
+      wget $source/$f 
+    fi 
 done
 cd $pwd
