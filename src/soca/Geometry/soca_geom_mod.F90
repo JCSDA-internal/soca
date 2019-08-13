@@ -127,6 +127,7 @@ subroutine geom_end(self)
   if (allocated(self%cell_area))     deallocate(self%cell_area)
   if (allocated(self%rossby_radius)) deallocate(self%rossby_radius)
   if (allocated(self%ij))            deallocate(self%ij)
+  nullify(self%Domain)
 
 end subroutine geom_end
 
@@ -137,7 +138,8 @@ subroutine geom_clone(self, other)
   class(soca_geom), intent(out) :: other
 
   ! Clone fms domain and vertical levels
-  call soca_geomdomain_init(other%Domain, other%nzo)
+  other%Domain => self%Domain
+  other%nzo = self%nzo
 
   ! Clone sea-ice grid
   other%ice_column = self%ice_column
