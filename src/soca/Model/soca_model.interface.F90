@@ -12,7 +12,8 @@ subroutine c_soca_setup(c_conf, c_key_geom, c_key_model) bind (c,name='soca_setu
   use iso_c_binding
   use fckit_configuration_module, only: fckit_configuration
   use soca_model_mod, only: soca_setup, soca_model, soca_model_registry
-  use soca_geom_mod, only: soca_geom, soca_geom_registry
+  use soca_geom_mod, only: soca_geom
+  use soca_geom_interface_mod, only: soca_geom_registry
   use duration_mod, only: duration, duration_seconds, assignment(=)
 
   implicit none

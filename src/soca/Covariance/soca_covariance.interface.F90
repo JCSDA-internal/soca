@@ -11,7 +11,8 @@
 module c_soca_covariance_mod
   use iso_c_binding
   use soca_covariance_mod
-  use soca_geom_mod, only : soca_geom, soca_geom_registry
+  use soca_geom_mod, only : soca_geom
+  use soca_geom_interface_mod, only : soca_geom_registry
   use soca_fields
   use variables_mod
   use fckit_configuration_module, only: fckit_configuration
