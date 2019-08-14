@@ -75,8 +75,8 @@ Transforms/util/soca_bkgerrutil_mod.F90
 
 Transforms/Balance/Balance.cc
 Transforms/Balance/Balance.h
-Transforms/Balance/soca_balance.interface.F90
 Transforms/Balance/soca_balance_mod.F90
+Transforms/Balance/soca_balance_interface_mod.F90
 Transforms/Balance/soca_kst_mod.F90
 Transforms/Balance/soca_ksshts_mod.F90
 
