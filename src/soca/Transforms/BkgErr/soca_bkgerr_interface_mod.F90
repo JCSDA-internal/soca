@@ -5,11 +5,11 @@
 
 module soca_bkgerr_interface_mod
 
-  use iso_c_binding
-  use soca_fields_mod, only: soca_field, copy, delete
-  use soca_fields_interface_mod, only: soca_field_registry
-  use soca_bkgerr_mod, only: soca_bkgerr_config, &
-                             soca_bkgerr_setup, soca_bkgerr_mult
+use iso_c_binding
+use soca_fields_mod, only: soca_field, copy, delete
+use soca_fields_interface_mod, only: soca_field_registry
+use soca_bkgerr_mod, only: soca_bkgerr_config, &
+                           soca_bkgerr_setup, soca_bkgerr_mult
 
 implicit none
 

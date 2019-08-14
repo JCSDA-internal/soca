@@ -95,8 +95,8 @@ Transforms/BkgErrGodas/soca_bkgerrgodas_interface_mod.F90
 Transforms/BkgErrFilt/BkgErrFilt.cc
 Transforms/BkgErrFilt/BkgErrFilt.h
 Transforms/BkgErrFilt/BkgErrFiltFortran.h
-Transforms/BkgErrFilt/soca_bkgerrfilt.interface.F90
 Transforms/BkgErrFilt/soca_bkgerrfilt_mod.F90
+Transforms/BkgErrFilt/soca_bkgerrfilt_interface_mod.F90
 
 Transforms/VertConv/VertConv.cc
 Transforms/VertConv/VertConv.h
