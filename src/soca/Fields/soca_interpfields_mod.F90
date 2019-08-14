@@ -188,6 +188,9 @@ contains
        case ("sea_surface_salinity")
           fld3d(isc:iec,jsc:jec,1) = fld%socn(isc:iec,jsc:jec,1)
 
+       case ("sea_water_depth")
+          fld3d(isc:iec,jsc:jec,1) = sum(fld%hocn(isc:iec,jsc:jec,:),DIM=3)
+
        case ("sea_area_fraction")
           fld3d(isc:iec,jsc:jec,1) = real(fld%geom%mask2d(isc:iec,jsc:jec),kind=kind_real)
 
@@ -352,6 +355,7 @@ contains
     case ("sea_surface_height_above_geoid", &
           "sea_surface_temperature", &
           "sea_surface_salinity", &
+          "sea_water_depth", &
           "sea_area_fraction", &
           "net_downwelling_shortwave_radiation", &
           "upward_latent_heat_flux_in_air", &

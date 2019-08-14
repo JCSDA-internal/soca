@@ -141,6 +141,13 @@ cost_function:
         covariance: diagonal
       ObsFilters:
       - *Filter_mask
+      - Filter: Bounds Check
+        variables: [sea_surface_temperature]
+        minvalue: 5.0
+        maxvalue: 30.0
+      - Filter: Background Check
+        variables: [sea_surface_temperature]
+        threshold: 8
       - Filter: Thinning
         amount: 0.1
         random_seed: 0
@@ -173,11 +180,14 @@ cost_function:
       Covariance:
         covariance: diagonal
       ObsFilters:
-      - *Filter_mask
+      - Filter: Domain Check 
+        where:
+        - variable: sea_water_depth@GeoVaLs
+          minvalue: 2000
 
     - ObsSpace:
         name: InsituTemperature
-        ObsDataOut: {obsfile: ./Data/prof.T.out.nc}
+        ObsDataOut: {obsfile: ./Data/prof.T.out.test.nc}
         ObsDataIn:  {obsfile: ./Data/prof.nc}
         simulate:
           variables: [sea_water_temperature]
