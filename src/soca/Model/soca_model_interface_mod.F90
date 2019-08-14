@@ -25,7 +25,7 @@ public :: soca_model_registry
 #define LISTED_TYPE soca_model
 
 !> Linked list interface - defines registry_t type
-#include "Utils/linkedList_i.f"
+#include "oops/util/linkedList_i.f"
 
 !> Global registry
 type(registry_t) :: soca_model_registry
@@ -35,7 +35,7 @@ contains
 ! ------------------------------------------------------------------------------
 
 !> Linked list implementation
-#include "Utils/linkedList_c.f"
+#include "oops/util/linkedList_c.f"
 
 subroutine c_soca_setup(c_conf, c_key_geom, c_key_model) bind (c,name='soca_setup_f90')
 

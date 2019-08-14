@@ -48,7 +48,7 @@ Covariance/ErrorCovariance.h
 Covariance/soca_covariance_mod.F90
 Covariance/soca_covariance_interface_mod.F90
 
-#LocalizationMatrix
+#Localization
 
 #Run
 Run/Run.cc
