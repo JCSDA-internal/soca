@@ -16,7 +16,6 @@ dy=$(date -d "$date" "+%j")
 lvl=$1
 if [[ $lvl == "l2p" ]]; then
     source="https://podaac-tools.jpl.nasa.gov/drive/files/allData/ghrsst/data/GDS2/L2P/VIIRS_NPP/OSPO/v2.41"
-#    source="ftp://ftp.star.nesdis.noaa.gov/pub/socd2/coastwatch/sst/ran/viirs/npp/l2p"
 elif [[ $lvl == "l3u" ]]; then    
     source="ftp://ftp.star.nesdis.noaa.gov/pub/socd2/coastwatch/sst/ran/viirs/npp/l3u"
 else

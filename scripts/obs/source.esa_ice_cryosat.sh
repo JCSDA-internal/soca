@@ -16,19 +16,18 @@ mm=${date:4:2}
 dy=${date:6:2}
 
 out_dir="$3/ice.cryosat_${radar}.esa"
-source="ftp://science-pds.cryosat.esa.int/SIR_${radar}_L2/${yr}/${mm}"
+source="ftp://science-pds.cryosat.esa.int/SIR_${radar}_L2/${yr}/${mm}/"
 
 pwd=$(pwd)
 d=$out_dir/$date
 mkdir -p $d
 cd $d
 
-files=$(curl $source/* -l)
+files=$(curl $source -l)
 echo $files
 for f in $files; do
     # make sure it is the right day
-    if [[ $f == "CS"*$yr$mm$dy*".DBL" ]]; 
-    then
+    if [[ $f == "CS"*$yr$mm$dy*".DBL" ]] || [[ $f == "CS"*$yr$mm$dy*".nc"]]; then
       wget $source/$f 
     fi 
 done
