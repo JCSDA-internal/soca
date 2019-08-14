@@ -1,9 +1,8 @@
-!
 ! (C) Copyright 2017-2019 UCAR
 !
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
-!
+
 !> Structure holding configuration variables for the model
 
 module soca_model_mod
@@ -13,7 +12,7 @@ use kinds, only: kind_real
 use soca_mom6
 use soca_utils
 use soca_fields_mod, only: soca_field
-use datetime_mod
+use datetime_mod, only: datetime, datetime_to_string
 use mpp_domains_mod, only : mpp_update_domains
 use time_manager_mod, only : time_type, print_time, print_date, set_date
 use MOM, only : step_MOM
@@ -22,12 +21,10 @@ use MOM_surface_forcing, only : set_forcing
 use MOM_time_manager, only : real_to_time, time_type_to_real
 use MOM_time_manager, only : operator(+)
 
-
 implicit none
 
 private
 public :: soca_model
-public :: soca_model_registry
 public :: soca_setup
 public :: soca_initialize_integration
 public :: soca_finalize_integration
@@ -44,19 +41,9 @@ type :: soca_model
    real(kind_real), dimension(2) :: tocn_minmax, socn_minmax  !< min, max values
 end type soca_model
 
-#define LISTED_TYPE soca_model
-
-!> Linked list interface - defines registry_t type
-#include "Utils/linkedList_i.f"
-
-!> Global registry
-type(registry_t) :: soca_model_registry
-
 ! ------------------------------------------------------------------------------
 contains
 ! ------------------------------------------------------------------------------
-!> Linked list implementation
-#include "Utils/linkedList_c.f"
 
 ! ------------------------------------------------------------------------------
 !> Initialize model's data structure
