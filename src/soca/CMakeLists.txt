@@ -89,8 +89,8 @@ Transforms/BkgErr/soca_bkgerr_mod.F90
 Transforms/BkgErrGodas/BkgErrGodas.cc
 Transforms/BkgErrGodas/BkgErrGodas.h
 Transforms/BkgErrGodas/BkgErrGodasFortran.h
-Transforms/BkgErrGodas/soca_bkgerrgodas.interface.F90
 Transforms/BkgErrGodas/soca_bkgerrgodas_mod.F90
+Transforms/BkgErrGodas/soca_bkgerrgodas_interface_mod.F90
 
 Transforms/BkgErrFilt/BkgErrFilt.cc
 Transforms/BkgErrFilt/BkgErrFilt.h
