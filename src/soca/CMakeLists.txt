@@ -83,8 +83,8 @@ Transforms/Balance/soca_ksshts_mod.F90
 Transforms/BkgErr/BkgErr.cc
 Transforms/BkgErr/BkgErr.h
 Transforms/BkgErr/BkgErrFortran.h
-Transforms/BkgErr/soca_bkgerr.interface.F90
 Transforms/BkgErr/soca_bkgerr_mod.F90
+Transforms/BkgErr/soca_bkgerr_interface_mod.F90
 
 Transforms/BkgErrGodas/BkgErrGodas.cc
 Transforms/BkgErrGodas/BkgErrGodas.h

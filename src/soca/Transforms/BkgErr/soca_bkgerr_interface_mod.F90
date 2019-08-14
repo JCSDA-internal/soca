@@ -1,19 +1,42 @@
-!
 ! (C) Copyright 2017-2019 UCAR
 !
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
-!
+
+module soca_bkgerr_interface_mod
+
+  use iso_c_binding
+  use soca_fields_mod, only: soca_field, copy, delete
+  use soca_fields_interface_mod, only: soca_field_registry
+  use soca_bkgerr_mod, only: soca_bkgerr_config, &
+                             soca_bkgerr_setup, soca_bkgerr_mult
+
+implicit none
+
+private
+public :: soca_bkgerr_registry
+
+#define LISTED_TYPE soca_bkgerr_config
+
+!> Linked list interface - defines registry_t type
+#include "oops/util/linkedList_i.f"
+
+!> Global registry
+type(registry_t) :: soca_bkgerr_registry
+
+! ------------------------------------------------------------------------------
+contains
+! ------------------------------------------------------------------------------
+
+!> Linked list implementation
+#include "oops/util/linkedList_c.f"
 
 ! ------------------------------------------------------------------------------
 !> Constructor for D (standard deviation of background error)
 subroutine c_soca_bkgerr_setup(c_key_self, c_conf, c_key_bkg) &
-     &bind(c,name='soca_bkgerr_setup_f90')
-  use iso_c_binding
+  bind(c,name='soca_bkgerr_setup_f90')
+
   use fckit_configuration_module, only: fckit_configuration
-  use soca_bkgerr_mod
-  use soca_fields_mod, only: soca_field
-  use soca_fields_interface_mod, only: soca_field_registry
 
   integer(c_int), intent(inout) :: c_key_self   !< The D structure
   type(c_ptr),       intent(in) :: c_conf       !< The configuration
@@ -34,11 +57,7 @@ end subroutine c_soca_bkgerr_setup
 ! ------------------------------------------------------------------------------
 !> Destructor for D
 subroutine c_soca_bkgerr_delete(c_key_self) bind(c,name='soca_bkgerr_delete_f90')
-  use iso_c_binding
-  use soca_bkgerr_mod
-  use soca_fields_mod, only: delete
 
-  implicit none
   integer(c_int), intent(inout) :: c_key_self
   type(soca_bkgerr_config), pointer :: self
 
@@ -53,14 +72,8 @@ end subroutine c_soca_bkgerr_delete
 ! ------------------------------------------------------------------------------
 !> Multiplication forward and adjoint
 subroutine c_soca_bkgerr_mult_f90(c_key_self, c_key_a, c_key_m)&
-     &bind(c,name='soca_bkgerr_mult_f90')
-  use iso_c_binding
-  use soca_bkgerr_mod
-  use soca_fields_mod, only: soca_field, copy
-  use soca_fields_interface_mod, only: soca_field_registry
-  use soca_kst_mod
+  bind(c,name='soca_bkgerr_mult_f90')
 
-  implicit none
   integer(c_int), intent(in) :: c_key_a     !<    "   to Increment in
   integer(c_int), intent(in) :: c_key_m     !<    "   to Increment out
   integer(c_int), intent(in) :: c_key_self
@@ -79,3 +92,4 @@ subroutine c_soca_bkgerr_mult_f90(c_key_self, c_key_a, c_key_m)&
 
 end subroutine c_soca_bkgerr_mult_f90
 
+end module soca_bkgerr_interface_mod
