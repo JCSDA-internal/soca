@@ -5,7 +5,7 @@
 
 !> Handle fields for the model
 
-module soca_fields
+module soca_fields_mod
 
   use datetime_mod, only: datetime, datetime_set
   use duration_mod, only: duration
@@ -38,7 +38,6 @@ module soca_fields
 
   private
 
-  public :: soca_field_registry
   public :: soca_field, &
        & create, delete, zeros, dirac, random, copy, create_copy,&
        & self_add, self_schur, self_sub, self_mul, axpy, &
@@ -80,18 +79,7 @@ module soca_fields
 
   end type soca_field
 
-#define LISTED_TYPE soca_field
-
-!> Linked list interface - defines registry_t type
-#include "Utils/linkedList_i.f"
-
-  !> Global registry
-  type(registry_t) :: soca_field_registry
-
 contains
-
-!> Linked list implementation
-#include "Utils/linkedList_c.f"
 
   ! ------------------------------------------------------------------------------
   !> Create a field from geometry and variables
@@ -1301,4 +1289,4 @@ contains
 
   ! ------------------------------------------------------------------------------
 
-end module soca_fields
+end module soca_fields_mod

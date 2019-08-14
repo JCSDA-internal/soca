@@ -10,7 +10,7 @@ module soca_covariance_mod
   use fckit_configuration_module, only: fckit_configuration
   use kinds, only: kind_real
   use oobump_mod, only: bump_read_conf
-  use soca_fields
+  use soca_fields_mod, only: soca_field
   use soca_geom_mod, only : soca_geom
   use soca_utils
   use type_bump

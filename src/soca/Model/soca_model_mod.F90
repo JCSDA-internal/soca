@@ -12,7 +12,7 @@ use fms_io_mod, only : fms_io_init, fms_io_exit
 use kinds, only: kind_real
 use soca_mom6
 use soca_utils
-use soca_fields, only: soca_field
+use soca_fields_mod, only: soca_field
 use datetime_mod
 use mpp_domains_mod, only : mpp_update_domains
 use time_manager_mod, only : time_type, print_time, print_date, set_date

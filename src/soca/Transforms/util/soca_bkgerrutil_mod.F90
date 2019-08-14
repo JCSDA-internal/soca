@@ -1,5 +1,4 @@
-!
-! (C) Copyright 2017- UCAR
+! (C) Copyright 2017-2019 UCAR
 !
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -7,7 +6,7 @@
 module soca_bkgerrutil_mod
   use fckit_configuration_module, only: fckit_configuration
   use kinds, only: kind_real
-  use soca_fields
+  use soca_fields_mod, only: soca_field
   use soca_utils
 
   implicit none

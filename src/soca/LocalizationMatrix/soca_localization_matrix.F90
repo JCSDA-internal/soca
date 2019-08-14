@@ -8,10 +8,11 @@
 
 module SOCALOCALIZATION
   use iso_c_binding
-  use soca_fields
   use soca_constants
   use soca_geom_mod, only: soca_geom
   use soca_geom_interface_mod, only: soca_geom_registry
+  use soca_fields_mod, only: soca_field
+  use soca_fields_interface_mod, only: soca_fields_registry
   use soca_covariance_mod
 
   implicit none

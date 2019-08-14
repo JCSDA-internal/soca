@@ -10,7 +10,7 @@ module soca_bkgerr_mod
   use datetime_mod, only: datetime
   use kinds, only: kind_real
   use soca_bkgerrutil_mod
-  use soca_fields, only: soca_field, create_copy, read_file, soca_fld2file
+  use soca_fields_mod, only: soca_field, create_copy, read_file, soca_fld2file
   use soca_utils
   use soca_omb_stats_mod
 

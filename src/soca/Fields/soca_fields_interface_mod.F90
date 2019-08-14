@@ -6,26 +6,43 @@
 !> Interfaces to be called from C++ for Fortran handling of model fields
 
 ! ------------------------------------------------------------------------------
-module soca_fields_mod_c
-  use iso_c_binding
-  use soca_fields
-  use kinds
-  use unstructured_grid_mod
-  use datetime_mod
-  use soca_interpfields_mod
-  use soca_geom_mod, only: soca_geom
-  use soca_geom_interface_mod, only: soca_geom_registry
-  use ufo_locs_mod_c
-  use ufo_locs_mod
-  use ufo_geovals_mod_c
-  use ufo_geovals_mod
-  use variables_mod
-  use soca_getvaltraj_mod, only: soca_getvaltraj, soca_getvaltraj_registry
-  use fckit_configuration_module, only: fckit_configuration
+module soca_fields_interface_mod
 
-  implicit none
+use iso_c_binding
+use fckit_configuration_module, only: fckit_configuration
+use kinds, only: kind_real
+use unstructured_grid_mod
+use datetime_mod, only: datetime, c_f_datetime
+use ufo_locs_mod_c
+use ufo_locs_mod
+use ufo_geovals_mod_c
+use ufo_geovals_mod
+use variables_mod
+use soca_interpfields_mod
+use soca_fields_mod!, only: soca_field
+use soca_geom_mod, only: soca_geom
+use soca_geom_interface_mod, only: soca_geom_registry
+use soca_getvaltraj_mod, only: soca_getvaltraj, soca_getvaltraj_registry
 
+implicit none
+
+private
+public :: soca_field_registry
+
+#define LISTED_TYPE soca_field
+
+!> Linked list interface - defines registry_t type
+#include "Utils/linkedList_i.f"
+
+!> Global registry
+type(registry_t) :: soca_field_registry
+
+! ------------------------------------------------------------------------------
 contains
+! ------------------------------------------------------------------------------
+
+!> Linked list implementation
+#include "Utils/linkedList_c.f"
 
 ! ------------------------------------------------------------------------------
 
@@ -512,4 +529,4 @@ subroutine soca_fieldnum_c(c_key_fld, nx, ny, nzo, nzi, ncat, nf) bind(c,name='s
 
 end subroutine soca_fieldnum_c
 
-end module soca_fields_mod_c
+end module soca_fields_interface_mod

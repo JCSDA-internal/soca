@@ -1,14 +1,12 @@
-!
-! (C) Copyright 2017 UCAR
+! (C) Copyright 2017-2019 UCAR
 !
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
-!
 
 module soca_kst_mod
 
-  use kinds
-  use soca_fields
+  use kinds, only: kind_real
+  use soca_fields_mod, only: soca_field
   use soca_utils
 
   implicit none
@@ -16,9 +14,9 @@ module soca_kst_mod
   !> Fortran derived type to hold the setup for Kst
   type :: soca_kst
      real(kind=kind_real) :: dsdtmax !> 1.0    [psu/K]
-     real(kind=kind_real) :: dsdzmin !> 3.0e-3 [psu/m] 
+     real(kind=kind_real) :: dsdzmin !> 3.0e-3 [psu/m]
      real(kind=kind_real) :: dtdzmin !> 1.0e-3 [K/m]
-     integer              :: nlayers 
+     integer              :: nlayers
      real(kind=kind_real), allocatable :: jacobian(:,:,:) !> dS/dT(i,j,k)
   end type soca_kst
 
@@ -41,7 +39,7 @@ contains
     ! Output:
     ! -------
     ! jac    : Jacobian [ds1/dt1, ...,dsN/dtN];                [psu/deg C]
-    !    
+    !
     !--------------------------------------------------------------------------
     real(kind=kind_real),                 intent(in) :: t(:), s(:), h(:)
     real(kind=kind_real),                 intent(in) :: dsdtmax, dsdzmin, dtdzmin
@@ -67,7 +65,7 @@ contains
     end where
     where (abs(dsdz)<dsdzmin)
        jac=0.0
-    end where    
+    end where
     where (abs(jac)>dsdtmax)
        jac=0.0
     end where

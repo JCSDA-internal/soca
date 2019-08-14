@@ -1,17 +1,16 @@
-!
-! (C) Copyright 2017 UCAR
+! (C) Copyright 2017-2019 UCAR
 !
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
-!
+
 module soca_thermo
 
   use soca_constants
-  !use soca_fields
+  !use soca_fields_mod
   !use mpi
   implicit none
 
-  
+
 contains
 
   function Tm(S)
@@ -33,15 +32,15 @@ contains
     !      Ti   (kind_real): Sea-Ice temperature
     !      Si   (kind_real): Sea-Ice salinity
     !
-    !  Return: 
-    !         (kind_real): Enthalpy of Sea-Ice     
+    !  Return:
+    !         (kind_real): Enthalpy of Sea-Ice
     !
     real(kind=kind_real) :: Si
     real(kind=kind_real) :: Ti
     real(kind=kind_real) :: Qi_nl
-    
+
     real(kind=kind_real) :: dum1, dum2, dum3
-    
+
     dum1 = c0 * (Tm(Si)-Ti)
     dum2 = L0 * (1-Tm(Si)/Ti)
     dum3 = cw * Tm(Si)
@@ -57,14 +56,14 @@ contains
     ! and background
     !dQ    μ⋅ρᵢ⋅(-L₀ + 2⋅T⋅c₀)
     !── =  ───────────────────
-    !dS            T         
+    !dS            T
     !
     !  Args:
     !      Ti   (kind_real): Sea-Ice temperature
     !      Si   (kind_real): Sea-Ice salinity
     !
-    !  Return: 
-    !         (kind_real): Enthalpy of Sea-Ice     
+    !  Return:
+    !         (kind_real): Enthalpy of Sea-Ice
     !
     real(kind=kind_real) :: Si
     real(kind=kind_real) :: Ti
@@ -90,19 +89,19 @@ contains
     !      Qi   (kind_real): Sea-Ice enthalpy
     !      Si   (kind_real): Sea-Ice salinity
     !
-    !  Return: 
-    !         (kind_real): Temperature of Sea-Ice     
+    !  Return:
+    !         (kind_real): Temperature of Sea-Ice
     !
     real(kind=kind_real) :: Si
     real(kind=kind_real) :: Qi
     real(kind=kind_real) :: Ti_nl
 
     real(kind=kind_real):: a, b, c
-    
+
     a = c0
     b = (cw-c0) * Tm(Si) - (Qi/rho_i) - L0
     c = L0 * Tm(Si)
-    
+
     Ti_nl = -(b+(b**2.0_kind_Real-4.0_kind_real*a*c)**0.5_kind_real)/(2.0_kind_real*a)
 
   end function Ti_nl
@@ -110,7 +109,7 @@ contains
   ! ------------------------------------------------------------------------------
 
   function dTi_tl(dQi, dSi, Qi,Si)
-    ! Sea-ice temperature increment given sea-ice enthalpy and salinity increment 
+    ! Sea-ice temperature increment given sea-ice enthalpy and salinity increment
     ! and background
     !  Args:
     !      dQi   (kind_real): Sea-Ice enthalpy increment
@@ -118,8 +117,8 @@ contains
     !      Qi    (kind_real): Background Sea-Ice enthalpy
     !      Si    (kind_real): Background Sea-Ice salinity
     !
-    !  Return: 
-    !         (kind_real): Temperature of Sea-Ice     
+    !  Return:
+    !         (kind_real): Temperature of Sea-Ice
     !
     real(kind=kind_real) :: Si
     real(kind=kind_real) :: Qi
@@ -128,11 +127,11 @@ contains
     real(kind=kind_real) :: dTi_tl
 
     real(kind=kind_real):: a, b, c
-    
+
     a = c0
     b = (cw-c0) * Tm(Si) - (qi/rho_i) - L0
     c = L0 * Tm(Si)
-    
+
     dTi_tl = -(b+(b**2.0_kind_Real-4.0_kind_real*a*c)**0.5_kind_real)/(2.0_kind_real*a)
 
   end function dTi_tl
@@ -144,17 +143,17 @@ contains
     !  Args:
     !      Qs   (kind_real): Sea-Ice enthalpy
     !
-    !  Return: 
-    !         (kind_real): Temperature of Sea-Ice     
+    !  Return:
+    !         (kind_real): Temperature of Sea-Ice
     !
     real(kind=kind_real) :: Qs
     real(kind=kind_real) :: Ts_nl
-    
+
     Ts_nl = (Qs+rho_s*L0)/(rho_s*c0)
 
   end function Ts_nl
 
-  
+
   ! ------------------------------------------------------------------------------
 
   function Ki_nl(Ti,Si)
@@ -164,8 +163,8 @@ contains
     !      Ti   (kind_real): Sea-Ice temperature
     !      Si   (kind_real): Sea-Ice salinity
     !
-    !  Return: 
-    !         (kind_real): Thermal conductivity of Sea-Ice     
+    !  Return:
+    !         (kind_real): Thermal conductivity of Sea-Ice
     !
     real(kind=kind_real):: Si
     real(kind=kind_real):: Ti

@@ -13,7 +13,8 @@ subroutine c_soca_vertconv_setup(c_key_self, c_conf, c_key_traj, c_key_bkg) &
   use fckit_configuration_module, only: fckit_configuration
   use kinds, only: kind_real
   use soca_vertconv_mod
-  use soca_fields, only: soca_field, soca_field_registry
+  use soca_fields_mod, only: soca_field
+  use soca_fields_interface_mod, only: soca_field_registry
 
   implicit none
 
@@ -71,7 +72,8 @@ subroutine c_soca_vertconv_mult_f90(c_key_a, c_key_m, c_key_traj, c_key_self)&
      & bind(c,name='soca_vertconv_mult_f90')
   use iso_c_binding
   use soca_vertconv_mod
-  use soca_fields, only: soca_field, soca_field_registry, copy
+  use soca_fields_mod, only: soca_field, copy
+  use soca_fields_interface_mod, only: soca_field_registry
   use soca_utils
 
   implicit none
@@ -107,7 +109,8 @@ subroutine c_soca_vertconv_multad_f90(c_key_m, c_key_a, c_key_traj, c_key_self)&
      & bind(c,name='soca_vertconv_multad_f90')
   use iso_c_binding
   use soca_vertconv_mod
-  use soca_fields, only: soca_field, soca_field_registry, copy
+  use soca_fields_mod, only: soca_field, copy
+  use soca_fields_interface_mod, only: soca_field_registry
 
   implicit none
 

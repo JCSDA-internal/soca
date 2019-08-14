@@ -1,9 +1,7 @@
-!
-! (C) Copyright 2017 UCAR
+! (C) Copyright 2017-2019 UCAR
 !
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
-!
 
 !> Setup the model
 
@@ -96,7 +94,8 @@ subroutine c_soca_initialize_integration(c_key_model, c_key_state) &
      & bind(c,name='soca_initialize_integration_f90')
 
   use iso_c_binding
-  use soca_fields, only: soca_field, soca_field_registry
+  use soca_fields_mod, only: soca_field
+  use soca_fields_interface_mod, only: soca_field_registry
   use soca_model_mod
   implicit none
   integer(c_int), intent(in) :: c_key_model  !< Configuration structure
@@ -120,7 +119,8 @@ subroutine c_soca_finalize_integration(c_key_model, c_key_state) &
            bind(c,name='soca_finalize_integration_f90')
 
   use iso_c_binding
-  use soca_fields, only: soca_field, soca_field_registry
+  use soca_fields_mod, only: soca_field
+  use soca_fields_interface_mod, only: soca_field_registry
   use soca_model_mod
   implicit none
   integer(c_int), intent(in) :: c_key_model  !< Configuration structure
@@ -144,7 +144,8 @@ subroutine c_soca_propagate(c_key_model, c_key_state, c_key_date) bind(c,name='s
 
   use iso_c_binding
   use datetime_mod, only: datetime, c_f_datetime
-  use soca_fields, only: soca_field, soca_field_registry
+  use soca_fields_mod, only: soca_field
+  use soca_fields_interface_mod, only: soca_field_registry
   use soca_model_mod
 
   implicit none

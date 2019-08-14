@@ -8,7 +8,7 @@
 module soca_balance_mod
 
   use kinds, only: kind_real
-  use soca_fields, only: soca_field
+  use soca_fields_mod, only: soca_field
   use soca_kst_mod
   use soca_ksshts_mod
   use fckit_configuration_module, only: fckit_configuration

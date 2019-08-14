@@ -9,7 +9,7 @@ module soca_bkgerrfilt_mod
   use fckit_configuration_module, only: fckit_configuration
   use datetime_mod, only: datetime
   use kinds, only: kind_real
-  use soca_fields
+  use soca_fields_mod, only: soca_field, create_copy, zeros, soca_fld2file
   use soca_utils
   use soca_omb_stats_mod
 

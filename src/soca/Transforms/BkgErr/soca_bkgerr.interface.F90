@@ -12,7 +12,8 @@ subroutine c_soca_bkgerr_setup(c_key_self, c_conf, c_key_bkg) &
   use iso_c_binding
   use fckit_configuration_module, only: fckit_configuration
   use soca_bkgerr_mod
-  use soca_fields, only: soca_field, soca_field_registry
+  use soca_fields_mod, only: soca_field
+  use soca_fields_interface_mod, only: soca_field_registry
 
   integer(c_int), intent(inout) :: c_key_self   !< The D structure
   type(c_ptr),       intent(in) :: c_conf       !< The configuration
@@ -35,7 +36,7 @@ end subroutine c_soca_bkgerr_setup
 subroutine c_soca_bkgerr_delete(c_key_self) bind(c,name='soca_bkgerr_delete_f90')
   use iso_c_binding
   use soca_bkgerr_mod
-  use soca_fields, only: delete
+  use soca_fields_mod, only: delete
 
   implicit none
   integer(c_int), intent(inout) :: c_key_self
@@ -55,7 +56,8 @@ subroutine c_soca_bkgerr_mult_f90(c_key_self, c_key_a, c_key_m)&
      &bind(c,name='soca_bkgerr_mult_f90')
   use iso_c_binding
   use soca_bkgerr_mod
-  use soca_fields, only: soca_field, soca_field_registry
+  use soca_fields_mod, only: soca_field, copy
+  use soca_fields_interface_mod, only: soca_field_registry
   use soca_kst_mod
 
   implicit none

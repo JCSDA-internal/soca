@@ -16,7 +16,7 @@ Geometry/soca_geom_mod.F90
 Fields/Fields.cc
 Fields/Fields.h
 Fields/soca_fields_mod.F90
-Fields/soca_fields.interface.F90
+Fields/soca_fields_interface_mod.F90
 Fields/soca_interpfields_mod.F90
 Fields/soca_ocnsfc_mod.F90
 Fields/soca_seaice_mod.F90
