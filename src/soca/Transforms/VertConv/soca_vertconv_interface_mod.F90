@@ -1,22 +1,43 @@
-!
 ! (C) Copyright 2017-2019 UCAR
 !
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
-!
+
+module soca_vertconv_interface_mod
+
+use iso_c_binding
+use kinds, only: kind_real
+use soca_fields_mod, only: soca_field, copy
+use soca_fields_interface_mod, only: soca_field_registry
+use soca_vertconv_mod, only: soca_vertconv, soca_conv_setup, &
+                             soca_conv, soca_conv_ad
+
+implicit none
+
+private
+public :: soca_vertconv_registry
+
+#define LISTED_TYPE soca_vertconv
+
+!> Linked list interface - defines registry_t type
+#include "oops/util/linkedList_i.f"
+
+!> Global registry
+type(registry_t) :: soca_vertconv_registry
+
+! ------------------------------------------------------------------------------
+contains
+! ------------------------------------------------------------------------------
+
+!> Linked list implementation
+#include "oops/util/linkedList_c.f"
 
 ! ------------------------------------------------------------------------------
 !> Constructor for Vertconv
 subroutine c_soca_vertconv_setup(c_key_self, c_conf, c_key_traj, c_key_bkg) &
-     & bind(c,name='soca_vertconv_setup_f90')
-  use iso_c_binding
-  use fckit_configuration_module, only: fckit_configuration
-  use kinds, only: kind_real
-  use soca_vertconv_mod
-  use soca_fields_mod, only: soca_field
-  use soca_fields_interface_mod, only: soca_field_registry
+  bind(c,name='soca_vertconv_setup_f90')
 
-  implicit none
+  use fckit_configuration_module, only: fckit_configuration
 
   integer(c_int), intent(inout) :: c_key_self   !< The Vertconv structure
   type(c_ptr),       intent(in) :: c_conf       !< The configuration
@@ -43,10 +64,6 @@ end subroutine c_soca_vertconv_setup
 ! ------------------------------------------------------------------------------
 !> Destructor for Vertconv
 subroutine c_soca_vertconv_delete(c_key_self) bind(c,name='soca_vertconv_delete_f90')
-  use iso_c_binding
-  use soca_vertconv_mod
-
-  implicit none
 
   integer(c_int), intent(inout) :: c_key_self  !< The background covariance structure
 
@@ -69,14 +86,7 @@ end subroutine c_soca_vertconv_delete
 ! ------------------------------------------------------------------------------
 !> Multiplication
 subroutine c_soca_vertconv_mult_f90(c_key_a, c_key_m, c_key_traj, c_key_self)&
-     & bind(c,name='soca_vertconv_mult_f90')
-  use iso_c_binding
-  use soca_vertconv_mod
-  use soca_fields_mod, only: soca_field, copy
-  use soca_fields_interface_mod, only: soca_field_registry
-  use soca_utils
-
-  implicit none
+  bind(c,name='soca_vertconv_mult_f90')
 
   integer(c_int), intent(in) :: c_key_a     !< Increment in
   integer(c_int), intent(in) :: c_key_m     !< Increment out
@@ -106,13 +116,7 @@ end subroutine c_soca_vertconv_mult_f90
 ! ------------------------------------------------------------------------------
 !> Multiplication adjoint
 subroutine c_soca_vertconv_multad_f90(c_key_m, c_key_a, c_key_traj, c_key_self)&
-     & bind(c,name='soca_vertconv_multad_f90')
-  use iso_c_binding
-  use soca_vertconv_mod
-  use soca_fields_mod, only: soca_field, copy
-  use soca_fields_interface_mod, only: soca_field_registry
-
-  implicit none
+  bind(c,name='soca_vertconv_multad_f90')
 
   integer(c_int), intent(in) :: c_key_a     !< Increment out
   integer(c_int), intent(in) :: c_key_m     !< Increment in
@@ -136,3 +140,5 @@ subroutine c_soca_vertconv_multad_f90(c_key_m, c_key_a, c_key_traj, c_key_self)&
   call soca_conv_ad(self, dxm, dxa)
 
 end subroutine c_soca_vertconv_multad_f90
+
+end module soca_vertconv_interface_mod

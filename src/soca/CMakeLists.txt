@@ -72,7 +72,6 @@ GetValuesTraj/soca_getvaltraj_mod.F90
 Transforms/instantiateBalanceOpFactory.h
 Transforms/util/soca_bkgerrutil_mod.F90
 
-
 Transforms/Balance/Balance.cc
 Transforms/Balance/Balance.h
 Transforms/Balance/soca_balance_mod.F90
@@ -100,8 +99,8 @@ Transforms/BkgErrFilt/soca_bkgerrfilt_interface_mod.F90
 
 Transforms/VertConv/VertConv.cc
 Transforms/VertConv/VertConv.h
-Transforms/VertConv/soca_vertconv.interface.F90
 Transforms/VertConv/soca_vertconv_mod.F90
+Transforms/VertConv/soca_vertconv_interface_mod.F90
 
 instantiateObsFilterFactory.h
 Traits.h
