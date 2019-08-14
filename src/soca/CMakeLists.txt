@@ -9,8 +9,8 @@ list( APPEND soca_src_files
 #Geometry
 Geometry/Geometry.cc
 Geometry/Geometry.h
-Geometry/soca_geom_interface_mod.F90
 Geometry/soca_geom_mod.F90
+Geometry/soca_geom_interface_mod.F90
 
 #Fields
 Fields/Fields.cc
@@ -34,8 +34,8 @@ Increment/Increment.h
 Model/Model.cc
 Model/Model.h
 Model/ModelFortran.h
-Model/soca_model_interface_mod.F90
 Model/soca_model_mod.F90
+Model/soca_model_interface_mod.F90
 Model/soca_mom6.F90
 
 #Linear Model
@@ -45,8 +45,8 @@ LinearModel/TlmId.h
 #Covariance
 Covariance/ErrorCovariance.cc
 Covariance/ErrorCovariance.h
-Covariance/soca_covariance.interface.F90
 Covariance/soca_covariance_mod.F90
+Covariance/soca_covariance_interface_mod.F90
 
 #LocalizationMatrix
 
