@@ -1,8 +1,8 @@
-! (C) Copyright 2017- UCAR
+! (C) Copyright 2017-2019 UCAR
 !
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
-!
+
 ! ------------------------------------------------------------------------------
 !> Interpolation interface for Fields
 
@@ -11,10 +11,10 @@ module soca_interpfields_mod
 use kinds, only: kind_real
 use fckit_mpi_module, only: fckit_mpi_comm, fckit_mpi_sum
 use variables_mod, only: oops_vars
-use ufo_geovals_mod
-use ufo_locs_mod
-use soca_getvaltraj_mod
-use soca_bumpinterp2d_mod
+use ufo_geovals_mod, only: ufo_geovals
+use ufo_locs_mod, only: ufo_locs
+use soca_getvaltraj_mod, only: soca_getvaltraj
+use soca_bumpinterp2d_mod, only: soca_bumpinterp2d
 use soca_fields_mod, only: soca_field, check
 use soca_geom_mod, only : soca_geom
 

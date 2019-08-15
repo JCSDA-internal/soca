@@ -67,6 +67,7 @@ Utils/soca_omb_stats_mod.F90
 GetValuesTraj/GetValuesTraj.cc
 GetValuesTraj/GetValuesTraj.h
 GetValuesTraj/soca_getvaltraj_mod.F90
+GetValuesTraj/soca_getvaltraj_interface_mod.F90
 
 #Variable transforms
 Transforms/instantiateBalanceOpFactory.h
