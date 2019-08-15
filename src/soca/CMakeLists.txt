@@ -10,13 +10,13 @@ list( APPEND soca_src_files
 Geometry/Geometry.cc
 Geometry/Geometry.h
 Geometry/soca_geom_mod.F90
-Geometry/soca_geom_interface_mod.F90
+Geometry/soca_geom.interface.F90
 
 #Fields
 Fields/Fields.cc
 Fields/Fields.h
 Fields/soca_fields_mod.F90
-Fields/soca_fields_interface_mod.F90
+Fields/soca_fields.interface.F90
 Fields/soca_interpfields_mod.F90
 Fields/soca_ocnsfc_mod.F90
 Fields/soca_seaice_mod.F90
@@ -35,7 +35,7 @@ Model/Model.cc
 Model/Model.h
 Model/ModelFortran.h
 Model/soca_model_mod.F90
-Model/soca_model_interface_mod.F90
+Model/soca_model.interface.F90
 Model/soca_mom6.F90
 
 #Linear Model
@@ -46,7 +46,7 @@ LinearModel/TlmId.h
 Covariance/ErrorCovariance.cc
 Covariance/ErrorCovariance.h
 Covariance/soca_covariance_mod.F90
-Covariance/soca_covariance_interface_mod.F90
+Covariance/soca_covariance.interface.F90
 
 #Localization
 
@@ -67,7 +67,7 @@ Utils/soca_omb_stats_mod.F90
 GetValuesTraj/GetValuesTraj.cc
 GetValuesTraj/GetValuesTraj.h
 GetValuesTraj/soca_getvaltraj_mod.F90
-GetValuesTraj/soca_getvaltraj_interface_mod.F90
+GetValuesTraj/soca_getvaltraj.interface.F90
 
 #Variable transforms
 Transforms/instantiateBalanceOpFactory.h
@@ -76,7 +76,7 @@ Transforms/util/soca_bkgerrutil_mod.F90
 Transforms/Balance/Balance.cc
 Transforms/Balance/Balance.h
 Transforms/Balance/soca_balance_mod.F90
-Transforms/Balance/soca_balance_interface_mod.F90
+Transforms/Balance/soca_balance.interface.F90
 Transforms/Balance/soca_kst_mod.F90
 Transforms/Balance/soca_ksshts_mod.F90
 
@@ -84,24 +84,24 @@ Transforms/BkgErr/BkgErr.cc
 Transforms/BkgErr/BkgErr.h
 Transforms/BkgErr/BkgErrFortran.h
 Transforms/BkgErr/soca_bkgerr_mod.F90
-Transforms/BkgErr/soca_bkgerr_interface_mod.F90
+Transforms/BkgErr/soca_bkgerr.interface.F90
 
 Transforms/BkgErrGodas/BkgErrGodas.cc
 Transforms/BkgErrGodas/BkgErrGodas.h
 Transforms/BkgErrGodas/BkgErrGodasFortran.h
 Transforms/BkgErrGodas/soca_bkgerrgodas_mod.F90
-Transforms/BkgErrGodas/soca_bkgerrgodas_interface_mod.F90
+Transforms/BkgErrGodas/soca_bkgerrgodas.interface.F90
 
 Transforms/BkgErrFilt/BkgErrFilt.cc
 Transforms/BkgErrFilt/BkgErrFilt.h
 Transforms/BkgErrFilt/BkgErrFiltFortran.h
 Transforms/BkgErrFilt/soca_bkgerrfilt_mod.F90
-Transforms/BkgErrFilt/soca_bkgerrfilt_interface_mod.F90
+Transforms/BkgErrFilt/soca_bkgerrfilt.interface.F90
 
 Transforms/VertConv/VertConv.cc
 Transforms/VertConv/VertConv.h
 Transforms/VertConv/soca_vertconv_mod.F90
-Transforms/VertConv/soca_vertconv_interface_mod.F90
+Transforms/VertConv/soca_vertconv.interface.F90
 
 instantiateObsFilterFactory.h
 Traits.h
