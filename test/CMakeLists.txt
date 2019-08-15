@@ -352,9 +352,12 @@ soca_add_test( NAME hofx3d
 soca_add_test( NAME hofx
                EXE  soca_hofx.x)
 
+# TODO enshofx currently breaks compare.py
+# Re-enable the comparison once that's fixed
 soca_add_test( NAME enshofx
-               EXE  soca_enshofx.x)
-
+               EXE  soca_enshofx.x
+               NOCOMPARE)
+	   
 # variational methods
 soca_add_test( NAME 3dvar_soca
                EXE  soca_3dvar.x)
