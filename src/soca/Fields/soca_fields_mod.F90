@@ -7,31 +7,30 @@
 
 module soca_fields_mod
 
-use datetime_mod, only: datetime, datetime_set
-use duration_mod, only: duration
 use fckit_configuration_module, only: fckit_configuration
 use fckit_log_module, only: log, fckit_log
 use fckit_mpi_module, only: fckit_mpi_comm, fckit_mpi_min, fckit_mpi_max, &
                             fckit_mpi_sum
+use unstructured_grid_mod, only: unstructured_grid, &
+                                 allocate_unstructured_grid_coord, &
+                                 allocate_unstructured_grid_field
+use datetime_mod, only: datetime, datetime_set
+use duration_mod, only: duration
+use kinds, only: kind_real
+use variables_mod, only: oops_vars
 use fms_mod,    only: read_data, write_data, set_domain
 use fms_io_mod, only: fms_io_init, fms_io_exit, &
                       register_restart_field, restart_file_type, &
                       restore_state, query_initialized, &
                       free_restart_type, save_restart
-use kinds, only: kind_real
-use MOM_remapping, only : remapping_CS, initialize_remapping, remapping_core_h, end_remapping
 use mpp_domains_mod, only : mpp_update_domains
+use MOM_remapping, only : remapping_CS, initialize_remapping, remapping_core_h, end_remapping
 use random_mod, only: normal_distribution
-use soca_fieldsutils_mod
 use soca_geom_mod, only : soca_geom
-use soca_mom6
-use soca_utils
-use soca_bumpinterp2d_mod
-use soca_ocnsfc_mod
-use soca_seaice_mod
-use ufo_vars_mod
-use unstructured_grid_mod
-use variables_mod
+use soca_fieldsutils_mod, only: soca_genfilename, fldinfo
+use soca_ocnsfc_mod, only: soca_ocnsfc_type
+use soca_seaice_mod, only: soca_seaice_type
+use soca_utils, only: soca_mld
 
 implicit none
 

@@ -9,8 +9,8 @@ module soca_model_mod
 
 use fms_io_mod, only : fms_io_init, fms_io_exit
 use kinds, only: kind_real
-use soca_mom6
-use soca_utils
+use soca_mom6, only: soca_mom6_config, soca_mom6_init, soca_mom6_end
+use soca_utils, only: soca_str2int
 use soca_fields_mod, only: soca_field
 use datetime_mod, only: datetime, datetime_to_string
 use mpp_domains_mod, only : mpp_update_domains

@@ -12,7 +12,8 @@ use soca_mom6, only: soca_mom6_config, soca_mom6_init, soca_ice_column, &
                      soca_geomdomain_init
 use soca_utils, only: write2pe
 use kinds, only: kind_real
-use fckit_kdtree_module
+use fckit_kdtree_module, only: kdtree, kdtree_create, kdtree_destroy, &
+                               kdtree_k_nearest_neighbors
 use fckit_configuration_module, only: fckit_configuration
 use fckit_mpi_module, only: fckit_mpi_comm
 use fms_io_mod, only : fms_io_init, fms_io_exit, &

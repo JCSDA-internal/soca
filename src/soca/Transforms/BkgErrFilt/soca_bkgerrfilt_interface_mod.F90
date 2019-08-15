@@ -6,9 +6,10 @@
 module soca_bkgerrfilt_interface_mod
 
 use iso_c_binding
-use soca_bkgerrfilt_mod
 use soca_fields_mod, only: soca_field, copy, delete
 use soca_fields_interface_mod, only: soca_field_registry
+use soca_bkgerrfilt_mod, only: soca_bkgerrfilt_config, &
+                               soca_bkgerrfilt_setup, soca_bkgerrfilt_mult
 
 implicit none
 
