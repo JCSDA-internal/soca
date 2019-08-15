@@ -182,12 +182,12 @@ cost_function:
       ObsFilters:
       - Filter: Domain Check 
         where:
-        - variable: sea_water_depth@GeoVaLs
+        - variable: sea_floor_depth_below_sea_surface@GeoVaLs
           minvalue: 2000
 
     - ObsSpace:
         name: InsituTemperature
-        ObsDataOut: {obsfile: ./Data/prof.T.out.test.nc}
+        ObsDataOut: {obsfile: ./Data/prof.T.out.nc}
         ObsDataIn:  {obsfile: ./Data/prof.nc}
         simulate:
           variables: [sea_water_temperature]
