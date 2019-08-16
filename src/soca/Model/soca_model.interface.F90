@@ -1,21 +1,44 @@
-!
-! (C) Copyright 2017 UCAR
+! (C) Copyright 2017-2019 UCAR
 !
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
-!
 
 !> Setup the model
 
+module soca_model_mod_c
+
+use iso_c_binding
+use fckit_configuration_module, only: fckit_configuration
+use datetime_mod, only: datetime, c_f_datetime
+use duration_mod, only: duration, duration_seconds, assignment(=)
+use soca_geom_mod, only: soca_geom
+use soca_geom_mod_c, only: soca_geom_registry
+use soca_fields_mod, only: soca_field
+use soca_fields_mod_c, only: soca_field_registry
+use soca_model_mod, only: soca_model, soca_setup, soca_delete, soca_propagate, &
+                          soca_initialize_integration, soca_finalize_integration
+
+implicit none
+
+private
+public :: soca_model_registry
+
+#define LISTED_TYPE soca_model
+
+!> Linked list interface - defines registry_t type
+#include "oops/util/linkedList_i.f"
+
+!> Global registry
+type(registry_t) :: soca_model_registry
+
+! ------------------------------------------------------------------------------
+contains
+! ------------------------------------------------------------------------------
+
+!> Linked list implementation
+#include "oops/util/linkedList_c.f"
+
 subroutine c_soca_setup(c_conf, c_key_geom, c_key_model) bind (c,name='soca_setup_f90')
-
-  use iso_c_binding
-  use fckit_configuration_module, only: fckit_configuration
-  use soca_model_mod, only: soca_setup, soca_model, soca_model_registry
-  use soca_geom_mod, only: soca_geom, soca_geom_registry
-  use duration_mod, only: duration, duration_seconds, assignment(=)
-
-  implicit none
 
   type(c_ptr),       intent(in) :: c_conf       !< pointer to object of class Config
   integer(c_int),    intent(in) :: c_key_geom   !< Geometry
@@ -75,10 +98,6 @@ end subroutine c_soca_setup
 !> Delete the model
 subroutine c_soca_delete(c_key_conf) bind (c,name='soca_delete_f90')
 
-  use soca_model_mod
-  use iso_c_binding
-
-  implicit none
   integer(c_int), intent(inout) :: c_key_conf  !< Key to configuration structure
   type(soca_model), pointer :: model
 
@@ -94,22 +113,18 @@ end subroutine c_soca_delete
 subroutine c_soca_initialize_integration(c_key_model, c_key_state) &
      & bind(c,name='soca_initialize_integration_f90')
 
-  use iso_c_binding
-  use soca_fields, only: soca_field, soca_field_registry
-  use soca_model_mod
-  implicit none
   integer(c_int), intent(in) :: c_key_model  !< Configuration structure
   integer(c_int), intent(in) :: c_key_state  !< Model fields
 
   type(soca_model), pointer :: model
   type(soca_field), pointer :: flds
-  integer :: unit
 
-  call soca_field_registry%get(c_key_state,flds)
+  call soca_field_registry%get(c_key_state, flds)
   call soca_model_registry%get(c_key_model, model)
 
   call soca_initialize_integration(model, flds)
 
+  return
 end subroutine c_soca_initialize_integration
 
 ! ------------------------------------------------------------------------------
@@ -118,22 +133,18 @@ end subroutine c_soca_initialize_integration
 subroutine c_soca_finalize_integration(c_key_model, c_key_state) &
            bind(c,name='soca_finalize_integration_f90')
 
-  use iso_c_binding
-  use soca_fields, only: soca_field, soca_field_registry
-  use soca_model_mod
-  implicit none
   integer(c_int), intent(in) :: c_key_model  !< Configuration structure
   integer(c_int), intent(in) :: c_key_state  !< Model fields
 
   type(soca_model), pointer :: model
   type(soca_field), pointer :: flds
-  integer :: unit
 
-  call soca_field_registry%get(c_key_state,flds)
+  call soca_field_registry%get(c_key_state, flds)
   call soca_model_registry%get(c_key_model, model)
 
   call soca_finalize_integration(model, flds)
 
+  return
 end subroutine c_soca_finalize_integration
 
 ! ------------------------------------------------------------------------------
@@ -141,12 +152,6 @@ end subroutine c_soca_finalize_integration
 !> Perform a timestep of the model
 subroutine c_soca_propagate(c_key_model, c_key_state, c_key_date) bind(c,name='soca_propagate_f90')
 
-  use iso_c_binding
-  use datetime_mod, only: datetime, c_f_datetime
-  use soca_fields, only: soca_field, soca_field_registry
-  use soca_model_mod
-
-  implicit none
   integer(c_int), intent(in) :: c_key_model  !< Config structure
   integer(c_int), intent(in) :: c_key_state  !< Model fields
   type(c_ptr), intent(inout) :: c_key_date   !< DateTime
@@ -156,10 +161,12 @@ subroutine c_soca_propagate(c_key_model, c_key_state, c_key_date) bind(c,name='s
   type(datetime)            :: fldsdate
 
   call soca_model_registry%get(c_key_model, model)
-  call soca_field_registry%get(c_key_state,flds)
+  call soca_field_registry%get(c_key_state, flds)
   call c_f_datetime(c_key_date, fldsdate)
 
   call soca_propagate(model, flds, fldsdate)
 
   return
 end subroutine c_soca_propagate
+
+end module soca_model_mod_c

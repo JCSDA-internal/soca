@@ -1,143 +1,135 @@
-!
 ! (C) Copyright 2017-2019 UCAR
 !
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
-!
 
 module soca_bkgerrfilt_mod
-  use fckit_configuration_module, only: fckit_configuration
-  use datetime_mod, only: datetime
-  use kinds, only: kind_real
-  use soca_fields
-  use soca_utils
-  use soca_omb_stats_mod
 
-  implicit none
+use fckit_configuration_module, only: fckit_configuration
+use datetime_mod, only: datetime
+use kinds, only: kind_real
+use soca_fields_mod, only: soca_field, create_copy, zeros, soca_fld2file
 
-  !> Fortran derived type to hold configuration D
-  type :: soca_bkgerrfilt_config
-     type(soca_field),    pointer :: bkg
-     type(soca_field)             :: filt
-     real(kind=kind_real)         :: efold_z           ! E-folding scale
-     real(kind=kind_real)         :: scale             ! Rescaling factor
-     real(kind=kind_real)         :: ocn_depth_min     ! Minimum depth
-     integer                      :: isc, iec, jsc, jec
-  end type soca_bkgerrfilt_config
+implicit none
 
-#define LISTED_TYPE soca_bkgerrfilt_config
+private
+public :: soca_bkgerrfilt_config, &
+          soca_bkgerrfilt_setup, soca_bkgerrfilt_mult
 
-  !> Linked list interface - defines registry_t type
-#include "oops/util/linkedList_i.f"
+!> Fortran derived type to hold configuration
+type :: soca_bkgerrfilt_config
+   type(soca_field),    pointer :: bkg
+   type(soca_field)             :: filt
+   real(kind=kind_real)         :: efold_z           ! E-folding scale
+   real(kind=kind_real)         :: scale             ! Rescaling factor
+   real(kind=kind_real)         :: ocn_depth_min     ! Minimum depth
+   integer                      :: isc, iec, jsc, jec
+end type soca_bkgerrfilt_config
 
-  !> Global registry
-  type(registry_t) :: soca_bkgerrfilt_registry
-
-  ! ------------------------------------------------------------------------------
+! ------------------------------------------------------------------------------
 contains
-  ! ------------------------------------------------------------------------------
-  !> Linked list implementation
-#include "oops/util/linkedList_c.f"
-  ! ------------------------------------------------------------------------------
-  !> Setup the static background error
-  subroutine soca_bkgerrfilt_setup(f_conf, self, bkg)
-    type(soca_bkgerrfilt_config), intent(inout) :: self
-    type(soca_field), target,     intent(in)    :: bkg
-    type(fckit_configuration),    intent(in)    :: f_conf
+! ------------------------------------------------------------------------------
 
-    integer :: isc, iec, jsc, jec, i, j, k, nl
-    real(kind=kind_real), allocatable :: dvdz(:), v(:), h(:)
-    real(kind=kind_real) :: dt, ds, t0, s0, p, lon, lat
-    real(kind=kind_real) :: detas, efold
-    type(datetime) :: vdate
-    character(len=800) :: fname = 'soca_bkgerrfilt.nc'
-    logical :: read_from_file = .false.
+! ------------------------------------------------------------------------------
+!> Setup the static background error
+subroutine soca_bkgerrfilt_setup(f_conf, self, bkg)
+  type(fckit_configuration),    intent(in)    :: f_conf
+  type(soca_bkgerrfilt_config), intent(inout) :: self
+  type(soca_field), target,     intent(in)    :: bkg
 
-    ! Get number of ocean levels
-    nl = size(bkg%hocn,3)
+  integer :: isc, iec, jsc, jec, i, j, k, nl
+  real(kind=kind_real), allocatable :: dvdz(:), v(:), h(:)
+  real(kind=kind_real) :: dt, ds, t0, s0, p, lon, lat
+  real(kind=kind_real) :: detas, efold
+  type(datetime) :: vdate
+  character(len=800) :: fname = 'soca_bkgerrfilt.nc'
+  logical :: read_from_file = .false.
 
-    ! Allocate memory for bkgerrfiltor and set to zero
-    call create_copy(self%filt, bkg)
-    call zeros(self%filt)
+  ! Get number of ocean levels
+  nl = size(bkg%hocn,3)
 
-    ! Read parameters from config
-    call f_conf%get_or_die("ocean_depth_min", self%ocn_depth_min)
-    call f_conf%get_or_die("rescale_bkgerr", self%scale)
-    call f_conf%get_or_die("efold_z", self%efold_z)
+  ! Allocate memory for bkgerrfiltor and set to zero
+  call create_copy(self%filt, bkg)
+  call zeros(self%filt)
 
-    ! Associate background
-    self%bkg => bkg
+  ! Read parameters from config
+  call f_conf%get_or_die("ocean_depth_min", self%ocn_depth_min)
+  call f_conf%get_or_die("rescale_bkgerr", self%scale)
+  call f_conf%get_or_die("efold_z", self%efold_z)
 
-    ! Setup rescaling and masks
-    isc=bkg%geom%isc ; self%isc=isc ; iec=bkg%geom%iec ; self%iec=iec
-    jsc=bkg%geom%jsc ; self%jsc=jsc ; jec=bkg%geom%jec ; self%jec=jec
-    do i = isc, iec
-       do j = jsc, jec
-          if (sum(bkg%hocn(i,j,:)).gt.self%ocn_depth_min) then
-             self%filt%ssh(i,j) = self%scale
-             do k = 1, nl
-                if (bkg%hocn(i,j,k).gt.1e-3_kind_real) then
-                   ! Only apply if layer is thick enough
-                   efold = self%scale*exp(-self%bkg%layer_depth(i,j,k)/self%efold_z)
-                else
-                   ! Set to zero if layer is too thin
-                   efold = 0.0_kind_real
-                end if
-                self%filt%tocn(i,j,k) = efold
-                self%filt%socn(i,j,k) = efold
-             end do
-          else
-             ! Set to zero if ocean is too shallow
-             self%filt%ssh(i,j)    = 0.0_kind_real
-             self%filt%tocn(i,j,:) = 0.0_kind_real
-             self%filt%socn(i,j,:) = 0.0_kind_real
-          end if
+  ! Associate background
+  self%bkg => bkg
 
-          ! Do nothing for sea-ice
-          self%filt%seaice%cicen(i,j,:) =  1.0_kind_real
-          self%filt%seaice%hicen(i,j,:) =  1.0_kind_real
-       end do
-    end do
+  ! Setup rescaling and masks
+  isc=bkg%geom%isc ; self%isc=isc ; iec=bkg%geom%iec ; self%iec=iec
+  jsc=bkg%geom%jsc ; self%jsc=jsc ; jec=bkg%geom%jec ; self%jec=jec
+  do i = isc, iec
+     do j = jsc, jec
+        if (sum(bkg%hocn(i,j,:)).gt.self%ocn_depth_min) then
+           self%filt%ssh(i,j) = self%scale
+           do k = 1, nl
+              if (bkg%hocn(i,j,k).gt.1e-3_kind_real) then
+                 ! Only apply if layer is thick enough
+                 efold = self%scale*exp(-self%bkg%layer_depth(i,j,k)/self%efold_z)
+              else
+                 ! Set to zero if layer is too thin
+                 efold = 0.0_kind_real
+              end if
+              self%filt%tocn(i,j,k) = efold
+              self%filt%socn(i,j,k) = efold
+           end do
+        else
+           ! Set to zero if ocean is too shallow
+           self%filt%ssh(i,j)    = 0.0_kind_real
+           self%filt%tocn(i,j,:) = 0.0_kind_real
+           self%filt%socn(i,j,:) = 0.0_kind_real
+        end if
 
-    ! Save filtered background error
-    call soca_fld2file(self%filt, fname)
+        ! Do nothing for sea-ice
+        self%filt%seaice%cicen(i,j,:) =  1.0_kind_real
+        self%filt%seaice%hicen(i,j,:) =  1.0_kind_real
+     end do
+  end do
 
-  end subroutine soca_bkgerrfilt_setup
+  ! Save filtered background error
+  call soca_fld2file(self%filt, fname)
 
-  ! ------------------------------------------------------------------------------
-  !> Apply background error: dxm = D dxa
-  subroutine soca_bkgerrfilt_mult(self, dxa, dxm)
-    type(soca_bkgerrfilt_config),    intent(in) :: self
-    type(soca_field),            intent(in) :: dxa
-    type(soca_field),         intent(inout) :: dxm
+end subroutine soca_bkgerrfilt_setup
 
-    integer :: i, j
+! ------------------------------------------------------------------------------
+!> Apply background error: dxm = D dxa
+subroutine soca_bkgerrfilt_mult(self, dxa, dxm)
+  type(soca_bkgerrfilt_config), intent(in) :: self
+  type(soca_field),             intent(in) :: dxa
+  type(soca_field),          intent(inout) :: dxm
 
-    do i = self%isc, self%iec
-       do j = self%jsc, self%jec
-          if (self%bkg%geom%mask2d(i,j).eq.1) then
-             dxm%ssh(i,j) = self%filt%ssh(i,j) * dxa%ssh(i,j)
-             dxm%tocn(i,j,:) = self%filt%tocn(i,j,:) * dxa%tocn(i,j,:)
-             dxm%socn(i,j,:) = self%filt%socn(i,j,:)  * dxa%socn(i,j,:)
+  integer :: i, j
 
-             dxm%seaice%cicen(i,j,:) =  self%filt%seaice%cicen(i,j,:) * dxa%seaice%cicen(i,j,:)
-             dxm%seaice%hicen(i,j,:) =  self%filt%seaice%hicen(i,j,:) * dxa%seaice%hicen(i,j,:)
-          else
-             dxm%ssh(i,j) = 0.0_kind_real
-             dxm%tocn(i,j,:) = 0.0_kind_real
-             dxm%socn(i,j,:) = 0.0_kind_real
+  do i = self%isc, self%iec
+     do j = self%jsc, self%jec
+        if (self%bkg%geom%mask2d(i,j).eq.1) then
+           dxm%ssh(i,j) = self%filt%ssh(i,j) * dxa%ssh(i,j)
+           dxm%tocn(i,j,:) = self%filt%tocn(i,j,:) * dxa%tocn(i,j,:)
+           dxm%socn(i,j,:) = self%filt%socn(i,j,:)  * dxa%socn(i,j,:)
 
-             dxm%seaice%cicen(i,j,:) = 0.0_kind_real
-             dxm%seaice%hicen(i,j,:) = 0.0_kind_real
-          end if
-       end do
-    end do
-    ! Surface fields
-    call dxm%ocnsfc%copy(dxa%ocnsfc)
+           dxm%seaice%cicen(i,j,:) =  self%filt%seaice%cicen(i,j,:) * dxa%seaice%cicen(i,j,:)
+           dxm%seaice%hicen(i,j,:) =  self%filt%seaice%hicen(i,j,:) * dxa%seaice%hicen(i,j,:)
+        else
+           dxm%ssh(i,j) = 0.0_kind_real
+           dxm%tocn(i,j,:) = 0.0_kind_real
+           dxm%socn(i,j,:) = 0.0_kind_real
 
-  end subroutine soca_bkgerrfilt_mult
+           dxm%seaice%cicen(i,j,:) = 0.0_kind_real
+           dxm%seaice%hicen(i,j,:) = 0.0_kind_real
+        end if
+     end do
+  end do
+  ! Surface fields
+  call dxm%ocnsfc%copy(dxa%ocnsfc)
 
-  ! ------------------------------------------------------------------------------
+end subroutine soca_bkgerrfilt_mult
+
+! ------------------------------------------------------------------------------
 
 end module soca_bkgerrfilt_mod
 

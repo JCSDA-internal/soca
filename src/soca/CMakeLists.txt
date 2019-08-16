@@ -15,8 +15,8 @@ Geometry/soca_geom_mod.F90
 #Fields
 Fields/Fields.cc
 Fields/Fields.h
-Fields/soca_fields_mod.F90
 Fields/soca_fields.interface.F90
+Fields/soca_fields_mod.F90
 Fields/soca_interpfields_mod.F90
 Fields/soca_ocnsfc_mod.F90
 Fields/soca_seaice_mod.F90
@@ -48,7 +48,7 @@ Covariance/ErrorCovariance.h
 Covariance/soca_covariance.interface.F90
 Covariance/soca_covariance_mod.F90
 
-#LocalizationMatrix
+#Localization
 
 #Run
 Run/Run.cc
@@ -66,12 +66,12 @@ Utils/soca_omb_stats_mod.F90
 #GetValuesTraj
 GetValuesTraj/GetValuesTraj.cc
 GetValuesTraj/GetValuesTraj.h
+GetValuesTraj/soca_getvaltraj.interface.F90
 GetValuesTraj/soca_getvaltraj_mod.F90
 
 #Variable transforms
 Transforms/instantiateBalanceOpFactory.h
 Transforms/util/soca_bkgerrutil_mod.F90
-
 
 Transforms/Balance/Balance.cc
 Transforms/Balance/Balance.h

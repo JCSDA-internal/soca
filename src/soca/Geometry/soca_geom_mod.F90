@@ -12,7 +12,8 @@ use soca_mom6, only: soca_mom6_config, soca_mom6_init, soca_ice_column, &
                      soca_geomdomain_init
 use soca_utils, only: write2pe
 use kinds, only: kind_real
-use fckit_kdtree_module
+use fckit_kdtree_module, only: kdtree, kdtree_create, kdtree_destroy, &
+                               kdtree_k_nearest_neighbors
 use fckit_configuration_module, only: fckit_configuration
 use fckit_mpi_module, only: fckit_mpi_comm
 use fms_io_mod, only : fms_io_init, fms_io_exit, &
@@ -27,9 +28,8 @@ use fms_io_mod,      only : fms_io_init, fms_io_exit
 implicit none
 
 private
-public :: soca_geom
-public :: soca_geom_registry
-public :: geom_write, geom_get_domain_indices
+public :: soca_geom, &
+          geom_write, geom_get_domain_indices
 
 !> Geometry data structure
 type :: soca_geom
@@ -63,20 +63,9 @@ type :: soca_geom
     procedure :: write => geom_write
 end type soca_geom
 
-#define LISTED_TYPE soca_geom
-
-!> Linked list interface - defines registry_t type
-#include "Utils/linkedList_i.f"
-
-!> Global registry
-type(registry_t) :: soca_geom_registry
-
 ! ------------------------------------------------------------------------------
 contains
 ! ------------------------------------------------------------------------------
-
-!> Linked list implementation
-#include "Utils/linkedList_c.f"
 
 ! ------------------------------------------------------------------------------
 !> Setup geometry object
