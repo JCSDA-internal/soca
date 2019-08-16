@@ -148,13 +148,34 @@ file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bump)
 
 #####################################################################
 
-# The number of PEs to use for MPI enabled tests
-set(MPI_SOCA_TESTS 2)
+# Configurable parameters for the subsequent tests
+
+set( SOCA_TESTS_MAX_MPI 2 CACHE STRING
+  "Maximum number of PEs to use for SOCA's MPI based tests.\
+  NOTE: should leave this at 2 to ensure all tests pass.")
+
+set( SOCA_TESTS_DEFAULT_TOL "1.0e-12;0" CACHE STRING
+  "Default test tolerances for compare.py based tests. (float_tol;int_tol) ")
+
+set( SOCA_TESTS_FORC_DEFAULT_TOL OFF CACHE BOOL
+  "If true, the specified test tolerances are ignored and\
+  SOCA_TESTS_DEFAULT_TOL is used" )
+
 
 # The following is a wrapper to simplify the generation of
 # tests that need to run an mpi executable then compare the test log
 # stream results with reference values.
+# Arguments:
+#  NOCOMPARE - if flag is present, no compare test is performed
+#  NAME      - the name of the test (with test_soca prepended), as well as the
+#              base name of the input confg file
+#  EXE       - name of executable to be used.
+#  TOL       - The tolerances to use for the test "float_tolerance int_tolerance"
+#              If none are given, ${SOCA_TESTS_DEFAULT_TOL} is used
+# TEST_DEPENDS - list of tests this test depends on
+#-------------------------------------------------------------------------------
 function(soca_add_test)
+  # parse the passed arguments
   set(prefix     ARG)
   set(novals     NOCOMPARE)
   set(singlevals NAME EXE)
@@ -163,9 +184,9 @@ function(soca_add_test)
                         "${novals}" "${singlevals}" "${multivals}"
                         ${ARGN})
 
-  # set the default tolerances to 0
-  IF(NOT ARG_TOL)
-    SET(ARG_TOL 0.0 0)
+  # set the tolerances to defaults if none given, or if we want to override
+  IF(NOT ARG_TOL OR SOCA_TESTS_FOC_DEFAULT_TOL)
+    SET(ARG_TOL ${SOCA_TESTS_DEFAULT_TOL})
   ENDIF()
 
   # run the test
@@ -174,7 +195,7 @@ function(soca_add_test)
                     COMMAND "${CMAKE_BINARY_DIR}/bin/${ARG_EXE}"
                     ARGS    testinput/${ARG_NAME}.yml
                             testoutput/${ARG_NAME}.log
-                    MPI     ${MPI_SOCA_TESTS}
+                    MPI     ${SOCA_TESTS_MAX_MPI}
                     DEPENDS ${ARG_EXE}
                     TEST_DEPENDS ${TEST_DEPENDS})
 
@@ -240,73 +261,73 @@ soca_add_test( NAME enspert
 # Tests of class interfaces
 #-------------------------------------------------------------------------------
 ecbuild_add_test( TARGET  test_soca_geometry
-                  MPI ${MPI_SOCA_TESTS}
+                  MPI ${SOCA_TESTS_MAX_MPI}
                   SOURCES executables/TestGeometry.cc
                   ARGS    "testinput/geometry_test.yml"
                   LIBS    soca )
 
 ecbuild_add_test( TARGET  test_soca_state
-                  MPI ${MPI_SOCA_TESTS}
+                  MPI ${SOCA_TESTS_MAX_MPI}
                   SOURCES executables/TestState.cc
                   ARGS    "testinput/state_test.yml"
                   LIBS    soca )
 
 ecbuild_add_test( TARGET  test_soca_modelaux
-                  MPI ${MPI_SOCA_TESTS}
+                  MPI ${SOCA_TESTS_MAX_MPI}
                   SOURCES executables/TestModelAuxControl.cc
                   ARGS    "testinput/model_test.yml"
                   LIBS    soca )
 
 ecbuild_add_test( TARGET  test_soca_model
-                  MPI ${MPI_SOCA_TESTS}
+                  MPI ${SOCA_TESTS_MAX_MPI}
                   SOURCES executables/TestModel.cc
                   ARGS    "testinput/model_test.yml"
                   LIBS    soca )
 
 ecbuild_add_test( TARGET  test_soca_increment
-                  MPI ${MPI_SOCA_TESTS}
+                  MPI ${SOCA_TESTS_MAX_MPI}
                   SOURCES executables/TestIncrement.cc
                   ARGS    "testinput/increment_test.yml"
                   LIBS    soca )
 
 ecbuild_add_test( TARGET  test_soca_errorcovariance
-                  MPI ${MPI_SOCA_TESTS}
+                  MPI ${SOCA_TESTS_MAX_MPI}
                   SOURCES executables/TestErrorCovariance.cc
                   ARGS    "testinput/static_error_test.yml"
                   LIBS    soca )
 
 ecbuild_add_test( TARGET  test_soca_linearmodel
-                  MPI ${MPI_SOCA_TESTS}
+                  MPI ${SOCA_TESTS_MAX_MPI}
                   SOURCES executables/TestLinearModel.cc
                   ARGS    "testinput/linearmodel_test.yml"
                   LIBS    soca )
 
 ecbuild_add_test( TARGET test_soca_balance
-                  MPI ${MPI_SOCA_TESTS}
+                  MPI ${SOCA_TESTS_MAX_MPI}
                   SOURCES executables/TestVariableChange.cc
                   ARGS    "testinput/balance.yml"
                   LIBS    soca )
 
 ecbuild_add_test( TARGET test_soca_bkgerrfilt
-                  MPI ${MPI_SOCA_TESTS}
+                  MPI ${SOCA_TESTS_MAX_MPI}
                   SOURCES executables/TestVariableChange.cc
                   ARGS    "testinput/bkgerrfilt.yml"
                   LIBS    soca )
 
 ecbuild_add_test( TARGET test_soca_bkgerrsoca
-                  MPI ${MPI_SOCA_TESTS}
+                  MPI ${SOCA_TESTS_MAX_MPI}
                   SOURCES executables/TestVariableChange.cc
                   ARGS    "testinput/bkgerrsoca.yml"
                   LIBS    soca )
 
 ecbuild_add_test( TARGET test_soca_bkgerrgodas
-                  MPI ${MPI_SOCA_TESTS}
+                  MPI ${SOCA_TESTS_MAX_MPI}
                   SOURCES executables/TestVariableChange.cc
                   ARGS    "testinput/bkgerrgodas.yml"
                   LIBS    soca )
 
 ecbuild_add_test( TARGET test_soca_vertconv
-                  MPI ${MPI_SOCA_TESTS}
+                  MPI ${SOCA_TESTS_MAX_MPI}
                   SOURCES executables/TestVariableChange.cc
                   ARGS    "testinput/vertconv.yml"
                   LIBS    soca )
@@ -368,7 +389,7 @@ soca_add_test( NAME hofx
 soca_add_test( NAME enshofx
                EXE  soca_enshofx.x
                NOCOMPARE)
-	   
+
 # variational methods
 soca_add_test( NAME 3dvar_soca
                EXE  soca_3dvar.x
