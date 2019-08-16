@@ -30,8 +30,8 @@ list( APPEND soca_test_input
   testinput/parameters_bump_cov_nicas.yml
   testinput/parameters_bump_loc.yml
   testinput/state_test.yml
-  testinput/static_error_init.yml
-  testinput/static_error_test.yml
+  testinput/static_socaerror_init.yml
+  testinput/static_socaerror_test.yml
   testinput/vertconv.yml
 )
 
@@ -237,7 +237,7 @@ soca_add_test( NAME forecast_mom6
                TEST_DEPENDS test_soca_gridgen )
 
 # Initialize static error covariance model defined in soca, used for 3DVAR
-soca_add_test( NAME static_error_init
+soca_add_test( NAME static_socaerror_init
                EXE  soca_staticbinit.x
                NOCOMPARE
                TEST_DEPENDS test_soca_gridgen )
@@ -247,7 +247,7 @@ soca_add_test( NAME enspert
                EXE  soca_enspert.x
                TOL 7.0e-4 0
                TEST_DEPENDS test_soca_gridgen
-                            test_soca_static_error_init)
+                            test_soca_static_socaerror_init)
 
 # TODO Test below can take a few hours to complete.
 # Revive once we have tiered testing?
@@ -295,11 +295,11 @@ ecbuild_add_test( TARGET  test_soca_increment
 
 ecbuild_add_test( TARGET  test_soca_errorcovariance
                   SOURCES executables/TestErrorCovariance.cc
-                  ARGS    "testinput/static_error_test.yml"
+                  ARGS    "testinput/static_socaerror_test.yml"
                   LIBS    soca
                   MPI     ${SOCA_TESTS_MAX_MPI}
                   TEST_DEPENDS test_soca_gridgen
-                               test_soca_static_error_init )
+                               test_soca_static_socaerror_init )
 
 ecbuild_add_test( TARGET  test_soca_linearmodel
                   SOURCES executables/TestLinearModel.cc
@@ -307,7 +307,7 @@ ecbuild_add_test( TARGET  test_soca_linearmodel
                   LIBS    soca
                   MPI     ${SOCA_TESTS_MAX_MPI}
                   TEST_DEPENDS test_soca_gridgen
-                               test_soca_static_error_init )
+                               test_soca_static_socaerror_init )
 
 ecbuild_add_test( TARGET test_soca_balance
                   SOURCES executables/TestVariableChange.cc
@@ -378,7 +378,7 @@ soca_add_test( NAME parameters_bump_loc
 soca_add_test( NAME dirac_soca_cov
                EXE  soca_dirac.x
                TOL  8.0e-3 0
-               TEST_DEPENDS test_soca_static_error_init)
+               TEST_DEPENDS test_soca_static_socaerror_init)
 
 soca_add_test( NAME dirac_socahyb_cov
                EXE  soca_dirac.x
@@ -418,33 +418,33 @@ soca_add_test( NAME enshofx
 soca_add_test( NAME 3dvar_soca
                EXE  soca_3dvar.x
                TOL  3.0e-5 0
-               TEST_DEPENDS test_soca_static_error_init )
+               TEST_DEPENDS test_soca_static_socaerror_init )
 
 soca_add_test( NAME 3dvar_godas
                EXE  soca_3dvar.x
                TOL  2e-2 0
-               TEST_DEPENDS test_soca_static_error_init )
+               TEST_DEPENDS test_soca_static_socaerror_init )
 
 soca_add_test( NAME 3dvarfgat
                EXE  soca_3dvar.x
                TOL  2e-4 0
-               TEST_DEPENDS test_soca_static_error_init )
+               TEST_DEPENDS test_soca_static_socaerror_init )
 
 soca_add_test( NAME 3dhyb
                EXE  soca_3dvar.x
                TOL  4e-4 0
-               TEST_DEPENDS test_soca_static_error_init
+               TEST_DEPENDS test_soca_static_socaerror_init
                             test_soca_parameters_bump_loc )
 
 soca_add_test( NAME 3dhybfgat
                EXE  soca_3dvar.x
                TOL  4e-3 0
-               TEST_DEPENDS test_soca_static_error_init
+               TEST_DEPENDS test_soca_static_socaerror_init
                             test_soca_parameters_bump_loc )
 
 # soca_add_test( NAME 4dhyb
 #                EXE  soca_3dvar.x
-#                TEST_DEPENDS test_soca_static_error_init
+#                TEST_DEPENDS test_soca_static_socaerror_init
 #                             test_soca_parameters_bump_loc )
 
 
