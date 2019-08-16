@@ -54,7 +54,7 @@ list( APPEND soca_test_ref
   testref/gridgen.test
   testref/hofx.test
   testref/hofx3d.test
-  testref/parameters_bump_lct_nicas.test
+  testref/parameters_bump_cov_lct.test
 )
 
 list( APPEND soca_model_param
@@ -167,8 +167,8 @@ set( SOCA_TESTS_FORC_DEFAULT_TOL OFF CACHE BOOL
 # stream results with reference values.
 # Arguments:
 #  NOCOMPARE - if flag is present, no compare test is performed
-#  NAME      - the name of the test (with test_soca prepended), as well as the
-#              base name of the input confg file
+#  NAME      - the name of the test (after test_soca is prepended), as well
+#              as the base name of the input confg file
 #  EXE       - name of executable to be used.
 #  TOL       - The tolerances to use for the test "float_tolerance int_tolerance"
 #              If none are given, ${SOCA_TESTS_DEFAULT_TOL} is used
@@ -197,7 +197,7 @@ function(soca_add_test)
                             testoutput/${ARG_NAME}.log
                     MPI     ${SOCA_TESTS_MAX_MPI}
                     DEPENDS ${ARG_EXE}
-                    TEST_DEPENDS ${TEST_DEPENDS})
+                    TEST_DEPENDS ${ARG_TEST_DEPENDS})
 
   IF(NOT ARG_NOCOMPARE)
     # compare the answers, if desired
@@ -224,113 +224,125 @@ soca_add_test( NAME gridgen
 # Test of read/write restart for MOM6&SIS2, model advance = Id
 soca_add_test( NAME forecast_identity
                EXE  soca_forecast.x
-               TEST_DEPENDS gridgen)
+               TEST_DEPENDS test_soca_gridgen)
 
 # Test of read/write restart for MOM6&CICE, model advance = Id
 soca_add_test( NAME forecast_identity_cice
                EXE  soca_forecast.x
-               TEST_DEPENDS gridgen )
+               TEST_DEPENDS test_soca_gridgen )
 
 # Test mom6 forecast
 soca_add_test( NAME forecast_mom6
                EXE  soca_forecast.x
-               TEST_DEPENDS gridgen )
+               TEST_DEPENDS test_soca_gridgen )
 
 # Initialize static error covariance model defined in soca, used for 3DVAR
 soca_add_test( NAME static_error_init
                EXE  soca_staticbinit.x
-               NOCOMPARE)
+               NOCOMPARE
+               TEST_DEPENDS test_soca_gridgen )
 
 # ensemble generation
 soca_add_test( NAME enspert
                EXE  soca_enspert.x
-               TOL 7.0e-4 0)
+               TOL 7.0e-4 0
+               TEST_DEPENDS test_soca_gridgen
+                            test_soca_static_error_init)
 
-# #Test below can take a few hours to complete. Commented out for now
-# ecbuild_add_test( TARGET test_soca_covar_lengthscale
-#                   TYPE SCRIPT
-#                     COMMAND ./compare.sh
-#                   ARGS
-#                       "${CMAKE_BINARY_DIR}/bin/soca_staticbinit.x
-#                       testinput/static_scale_binit.yml"
-#                       testoutput/covar_lengthscale.test
-#                   DEPENDS soca_staticbinit.x)
-
+# TODO Test below can take a few hours to complete.
+# Revive once we have tiered testing?
+#soca_add_test( NAME covar_lengthscale
+#               EXE  soca_staticbinit.x
+#               TEST_DEPENDS test_soca_gridgen)
 
 
 # Tests of class interfaces
 #-------------------------------------------------------------------------------
 ecbuild_add_test( TARGET  test_soca_geometry
-                  MPI ${SOCA_TESTS_MAX_MPI}
                   SOURCES executables/TestGeometry.cc
                   ARGS    "testinput/geometry_test.yml"
-                  LIBS    soca )
+                  LIBS    soca
+                  MPI     ${SOCA_TESTS_MAX_MPI}
+                  TEST_DEPENDS test_soca_gridgen )
 
 ecbuild_add_test( TARGET  test_soca_state
-                  MPI ${SOCA_TESTS_MAX_MPI}
                   SOURCES executables/TestState.cc
                   ARGS    "testinput/state_test.yml"
-                  LIBS    soca )
+                  LIBS    soca
+                  MPI     ${SOCA_TESTS_MAX_MPI}
+                  TEST_DEPENDS test_soca_gridgen )
 
 ecbuild_add_test( TARGET  test_soca_modelaux
-                  MPI ${SOCA_TESTS_MAX_MPI}
                   SOURCES executables/TestModelAuxControl.cc
                   ARGS    "testinput/model_test.yml"
-                  LIBS    soca )
+                  LIBS    soca
+                  MPI     ${SOCA_TESTS_MAX_MPI}
+                  TEST_DEPENDS test_soca_gridgen )
 
 ecbuild_add_test( TARGET  test_soca_model
-                  MPI ${SOCA_TESTS_MAX_MPI}
                   SOURCES executables/TestModel.cc
                   ARGS    "testinput/model_test.yml"
-                  LIBS    soca )
+                  LIBS    soca
+                  MPI     ${SOCA_TESTS_MAX_MPI}
+                  TEST_DEPENDS test_soca_gridgen )
 
 ecbuild_add_test( TARGET  test_soca_increment
-                  MPI ${SOCA_TESTS_MAX_MPI}
                   SOURCES executables/TestIncrement.cc
                   ARGS    "testinput/increment_test.yml"
-                  LIBS    soca )
+                  LIBS    soca
+                  MPI     ${SOCA_TESTS_MAX_MPI}
+                  TEST_DEPENDS test_soca_gridgen )
 
 ecbuild_add_test( TARGET  test_soca_errorcovariance
-                  MPI ${SOCA_TESTS_MAX_MPI}
                   SOURCES executables/TestErrorCovariance.cc
                   ARGS    "testinput/static_error_test.yml"
-                  LIBS    soca )
+                  LIBS    soca
+                  MPI     ${SOCA_TESTS_MAX_MPI}
+                  TEST_DEPENDS test_soca_gridgen
+                               test_soca_static_error_init )
 
 ecbuild_add_test( TARGET  test_soca_linearmodel
-                  MPI ${SOCA_TESTS_MAX_MPI}
                   SOURCES executables/TestLinearModel.cc
                   ARGS    "testinput/linearmodel_test.yml"
-                  LIBS    soca )
+                  LIBS    soca
+                  MPI     ${SOCA_TESTS_MAX_MPI}
+                  TEST_DEPENDS test_soca_gridgen
+                               test_soca_static_error_init )
 
 ecbuild_add_test( TARGET test_soca_balance
-                  MPI ${SOCA_TESTS_MAX_MPI}
                   SOURCES executables/TestVariableChange.cc
                   ARGS    "testinput/balance.yml"
-                  LIBS    soca )
+                  LIBS    soca
+                  MPI     ${SOCA_TESTS_MAX_MPI}
+                  TEST_DEPENDS test_soca_gridgen )
 
 ecbuild_add_test( TARGET test_soca_bkgerrfilt
-                  MPI ${SOCA_TESTS_MAX_MPI}
                   SOURCES executables/TestVariableChange.cc
                   ARGS    "testinput/bkgerrfilt.yml"
-                  LIBS    soca )
+                  LIBS    soca
+                  MPI     ${SOCA_TESTS_MAX_MPI}
+                  TEST_DEPENDS test_soca_gridgen )
 
 ecbuild_add_test( TARGET test_soca_bkgerrsoca
-                  MPI ${SOCA_TESTS_MAX_MPI}
                   SOURCES executables/TestVariableChange.cc
                   ARGS    "testinput/bkgerrsoca.yml"
-                  LIBS    soca )
+                  LIBS    soca
+                  MPI     ${SOCA_TESTS_MAX_MPI}
+                  TEST_DEPENDS test_soca_gridgen )
 
 ecbuild_add_test( TARGET test_soca_bkgerrgodas
-                  MPI ${SOCA_TESTS_MAX_MPI}
                   SOURCES executables/TestVariableChange.cc
                   ARGS    "testinput/bkgerrgodas.yml"
-                  LIBS    soca )
+                  LIBS    soca
+                  MPI     ${SOCA_TESTS_MAX_MPI}
+                  TEST_DEPENDS test_soca_gridgen )
 
 ecbuild_add_test( TARGET test_soca_vertconv
-                  MPI ${SOCA_TESTS_MAX_MPI}
                   SOURCES executables/TestVariableChange.cc
                   ARGS    "testinput/vertconv.yml"
-                  LIBS    soca )
+                  LIBS    soca
+                  MPI     ${SOCA_TESTS_MAX_MPI}
+                  TEST_DEPENDS test_soca_gridgen )
 
 
 #-------------------------------------------------------------------------------
@@ -339,39 +351,47 @@ ecbuild_add_test( TARGET test_soca_vertconv
 #-------------------------------------------------------------------------------
 soca_add_test( NAME ensvariance
                EXE  soca_ensvariance.x
-               TOL  3.0e-4 0)
+               TOL  3.0e-4 0
+               TEST_DEPENDS test_soca_enspert )
 
 soca_add_test( NAME parameters_bump_loc
                EXE  soca_parameters.x
-               NOCOMPARE)
+               NOCOMPARE
+               TEST_DEPENDS test_soca_enspert )
 
-#soca_add_test( NAME parameters_bump_cov_lct
-#               EXE  soca_parameters.x)
+# TODO the next couple of tests are a little slow.
+# Revive them once we have tiered testing?
+# soca_add_test( NAME parameters_bump_cov_lct
+#                EXE  soca_parameters.x
+#                TEST_DEPENDS test_soca_enspert )
+#
+# soca_add_test( NAME parameters_bump_cov_nicas
+#                EXE  soca_parameters.x
+#                TEST_DEPENDS test_soca_parameters_bump_cov_lct )
 
-#soca_add_test( NAME parameters_bump_cov_nicas
-#               EXE  soca_parameters.x )
+# soca_add_test( NAME dirac_bump_cov
+#                EXE  soca_dirac.x )
+
 
 # Dirac tests
-#soca_add_test( NAME dirac_bump_cov
-#               EXE  soca_dirac.x )
 
 soca_add_test( NAME dirac_soca_cov
                EXE  soca_dirac.x
-               TOL  8.0e-3 0)
+               TOL  8.0e-3 0
+               TEST_DEPENDS test_soca_static_error_init)
 
 soca_add_test( NAME dirac_socahyb_cov
                EXE  soca_dirac.x
-               TOL  5.0e-3 0)
+               TOL  5.0e-3 0
+               TEST_DEPENDS test_soca_parameters_bump_loc)
 
 #ecbuild_add_test( TARGET  test_soca_localization
-#                  BOOST
 #                  SOURCES executables/TestLocalization.cc
 #                  ARGS    "testinput/localization_test.yml"
 #                  MPI     1
 #                  LIBS    soca )
 
 #ecbuild_add_test( TARGET test_soca_obserrorcov
-#                  BOOST
 #                  SOURCES executables/TestObsErrorCovariance.cc
 #                  ARGS "testinput/obserrorcovariance_test.yml"
 #                  LIBS    soca )
@@ -379,42 +399,57 @@ soca_add_test( NAME dirac_socahyb_cov
 
 # h(x) executables
 soca_add_test( NAME hofx3d
-               EXE  soca_hofx3d.x)
+               EXE  soca_hofx3d.x
+               TEST_DEPENDS test_soca_gridgen )
 
 soca_add_test( NAME hofx
-               EXE  soca_hofx.x)
+               EXE  soca_hofx.x
+               TEST_DEPENDS test_soca_gridgen )
 
 # TODO enshofx currently breaks compare.py
 # Re-enable the comparison once that's fixed
 soca_add_test( NAME enshofx
                EXE  soca_enshofx.x
-               NOCOMPARE)
+               NOCOMPARE
+               TEST_DEPENDS test_soca_enspert )
+
 
 # variational methods
 soca_add_test( NAME 3dvar_soca
                EXE  soca_3dvar.x
-               TOL  3.0e-5 0)
+               TOL  3.0e-5 0
+               TEST_DEPENDS test_soca_static_error_init )
 
 soca_add_test( NAME 3dvar_godas
                EXE  soca_3dvar.x
-               TOL  2e-2 0)
+               TOL  2e-2 0
+               TEST_DEPENDS test_soca_static_error_init )
 
 soca_add_test( NAME 3dvarfgat
                EXE  soca_3dvar.x
-               TOL  2e-4 0)
+               TOL  2e-4 0
+               TEST_DEPENDS test_soca_static_error_init )
 
 soca_add_test( NAME 3dhyb
                EXE  soca_3dvar.x
-               TOL  4e-4 0)
+               TOL  4e-4 0
+               TEST_DEPENDS test_soca_static_error_init
+                            test_soca_parameters_bump_loc )
 
 soca_add_test( NAME 3dhybfgat
                EXE  soca_3dvar.x
-               TOL  4e-3 0)
+               TOL  4e-3 0
+               TEST_DEPENDS test_soca_static_error_init
+                            test_soca_parameters_bump_loc )
 
-#soca_add_test( NAME 4dhyb
-#               EXE  soca_3dvar.x)
+# soca_add_test( NAME 4dhyb
+#                EXE  soca_3dvar.x
+#                TEST_DEPENDS test_soca_static_error_init
+#                             test_soca_parameters_bump_loc )
+
 
 # restart checkpointing
 soca_add_test( NAME checkpointmodel
                EXE  soca_checkpoint_model.x
-               TOL  2e-6 0)
+               TOL  2e-6 0
+               TEST_DEPENDS test_soca_3dvar_godas)
