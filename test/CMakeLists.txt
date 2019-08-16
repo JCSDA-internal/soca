@@ -185,7 +185,7 @@ function(soca_add_test)
                         ${ARGN})
 
   # set the tolerances to defaults if none given, or if we want to override
-  IF(NOT ARG_TOL OR SOCA_TESTS_FOC_DEFAULT_TOL)
+  IF(NOT ARG_TOL OR SOCA_TESTS_FORC_DEFAULT_TOL)
     SET(ARG_TOL ${SOCA_TESTS_DEFAULT_TOL})
   ENDIF()
 
