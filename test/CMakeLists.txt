@@ -152,17 +152,23 @@ file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bump)
 set(MPI_SOCA_TESTS 2)
 
 # The following is a wrapper to simplify the generation of
-# tests that need to 1) run an mpi executable then 2)
-# compare the test log stream results with reference values.
+# tests that need to run an mpi executable then compare the test log
+# stream results with reference values.
 function(soca_add_test)
   set(prefix     ARG)
   set(novals     NOCOMPARE)
   set(singlevals NAME EXE)
-  set(multivals  TEST_DEPENDS)
+  set(multivals  TEST_DEPENDS TOL)
   cmake_parse_arguments(${prefix}
                         "${novals}" "${singlevals}" "${multivals}"
                         ${ARGN})
 
+  # set the default tolerances to 0
+  IF(NOT ARG_TOL)
+    SET(ARG_TOL 0.0 0)
+  ENDIF()
+
+  # run the test
   ecbuild_add_test( TARGET  test_soca_${ARG_NAME}
                     TYPE    EXE
                     COMMAND "${CMAKE_BINARY_DIR}/bin/${ARG_EXE}"
@@ -172,15 +178,16 @@ function(soca_add_test)
                     DEPENDS ${ARG_EXE}
                     TEST_DEPENDS ${TEST_DEPENDS})
 
-  IF(NOT ${ARG_NOCOMPARE})
+  IF(NOT ARG_NOCOMPARE)
+    # compare the answers, if desired
     ecbuild_add_test( TARGET  test_soca_${ARG_NAME}_compare
                       TYPE    SCRIPT
                       COMMAND "${CMAKE_BINARY_DIR}/bin/compare.py"
                       ARGS    testoutput/${ARG_NAME}.log
                               testref/${ARG_NAME}.test
-                              0.0 0
+                              ${ARG_TOL}
                      TEST_DEPENDS test_soca_${ARG_NAME})
-  endif()
+  ENDIF()
 endfunction()
 
 
@@ -215,7 +222,8 @@ soca_add_test( NAME static_error_init
 
 # ensemble generation
 soca_add_test( NAME enspert
-               EXE  soca_enspert.x)
+               EXE  soca_enspert.x
+               TOL 7.0e-4 0)
 
 # #Test below can take a few hours to complete. Commented out for now
 # ecbuild_add_test( TARGET test_soca_covar_lengthscale
@@ -309,7 +317,8 @@ ecbuild_add_test( TARGET test_soca_vertconv
 #  TEST output stream is compared against existing testoutput/ files
 #-------------------------------------------------------------------------------
 soca_add_test( NAME ensvariance
-               EXE  soca_ensvariance.x)
+               EXE  soca_ensvariance.x
+               TOL  3.0e-4 0)
 
 soca_add_test( NAME parameters_bump_loc
                EXE  soca_parameters.x
@@ -326,10 +335,12 @@ soca_add_test( NAME parameters_bump_loc
 #               EXE  soca_dirac.x )
 
 soca_add_test( NAME dirac_soca_cov
-               EXE  soca_dirac.x )
+               EXE  soca_dirac.x
+               TOL  8.0e-3 0)
 
 soca_add_test( NAME dirac_socahyb_cov
-               EXE  soca_dirac.x )
+               EXE  soca_dirac.x
+               TOL  5.0e-3 0)
 
 #ecbuild_add_test( TARGET  test_soca_localization
 #                  BOOST
@@ -360,23 +371,29 @@ soca_add_test( NAME enshofx
 	   
 # variational methods
 soca_add_test( NAME 3dvar_soca
-               EXE  soca_3dvar.x)
+               EXE  soca_3dvar.x
+               TOL  3.0e-5 0)
 
 soca_add_test( NAME 3dvar_godas
-               EXE  soca_3dvar.x)
+               EXE  soca_3dvar.x
+               TOL  2e-2 0)
 
 soca_add_test( NAME 3dvarfgat
-               EXE  soca_3dvar.x)
+               EXE  soca_3dvar.x
+               TOL  2e-4 0)
 
 soca_add_test( NAME 3dhyb
-               EXE  soca_3dvar.x)
+               EXE  soca_3dvar.x
+               TOL  4e-4 0)
 
 soca_add_test( NAME 3dhybfgat
-               EXE  soca_3dvar.x)
+               EXE  soca_3dvar.x
+               TOL  4e-3 0)
 
 #soca_add_test( NAME 4dhyb
 #               EXE  soca_3dvar.x)
 
 # restart checkpointing
 soca_add_test( NAME checkpointmodel
-               EXE  soca_checkpoint_model.x)
+               EXE  soca_checkpoint_model.x
+               TOL  2e-6 0)
