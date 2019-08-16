@@ -5,13 +5,18 @@
 
 module soca_bumpinterp2d_mod
 
+use fckit_mpi_module, only: fckit_mpi_comm
+use fckit_log_module, only : fckit_log
 use kinds, only: kind_real
 use type_bump, only: bump_type
 
 implicit none
 
 private
-public :: soca_bumpinterp2d
+public :: soca_bumpinterp2d, &
+          interp_init, interp_exit, &
+          interp_apply, interpad_apply, &
+          interp_info
 
 type :: soca_bumpinterp2d
    type(bump_type)                   :: bump          !< bump interp object
@@ -32,10 +37,6 @@ contains
 !--------------------------------------------
 subroutine interp_init(self, mod_lon, mod_lat, mod_mask, obs_lon, obs_lat, bumpid)
   ! Adapted from the fv3-jedi interface
-
-  use fckit_mpi_module, only: fckit_mpi_comm
-
-  implicit none
 
   class(soca_bumpinterp2d), intent(inout) :: self
   real(kind=kind_real),      intent(in) :: mod_lon(:,:)
@@ -169,10 +170,6 @@ end subroutine interpad_apply
 
 !--------------------------------------------
 subroutine interp_info(self)
-
-  use fckit_log_module, only : fckit_log
-
-  implicit none
 
   class(soca_bumpinterp2d), intent(in) :: self
   character(len=160) :: record

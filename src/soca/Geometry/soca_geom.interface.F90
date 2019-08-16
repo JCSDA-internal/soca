@@ -6,6 +6,7 @@
 module soca_geom_mod_c
 
 use iso_c_binding
+use fckit_configuration_module, only: fckit_configuration
 use soca_geom_mod, only: soca_geom
 
 implicit none
@@ -31,8 +32,7 @@ contains
 ! ------------------------------------------------------------------------------
 !> Setup geometry object
 subroutine c_soca_geo_setup(c_key_self, c_conf) bind(c,name='soca_geo_setup_f90')
-  use fckit_configuration_module, only: fckit_configuration
-  implicit none
+
   integer(c_int), intent(inout) :: c_key_self
   type(c_ptr),       intent(in) :: c_conf
 
@@ -49,7 +49,7 @@ end subroutine c_soca_geo_setup
 ! ------------------------------------------------------------------------------
 !> Clone geometry object
 subroutine c_soca_geo_clone(c_key_self, c_key_other) bind(c,name='soca_geo_clone_f90')
-  implicit none
+
   integer(c_int), intent(in   ) :: c_key_self
   integer(c_int), intent(inout) :: c_key_other
 
@@ -66,7 +66,7 @@ end subroutine c_soca_geo_clone
 ! ------------------------------------------------------------------------------
 !> Generate grid
 subroutine c_soca_geo_gridgen(c_key_self, c_conf) bind(c,name='soca_geo_gridgen_f90')
-  implicit none
+
   integer(c_int), intent(inout) :: c_key_self
   type(c_ptr),       intent(in) :: c_conf
 
@@ -81,7 +81,7 @@ end subroutine c_soca_geo_gridgen
 ! ------------------------------------------------------------------------------
 !> Geometry destructor
 subroutine c_soca_geo_delete(c_key_self) bind(c,name='soca_geo_delete_f90')
-  implicit none
+
   integer(c_int), intent(inout) :: c_key_self
 
   type(soca_geom), pointer :: self
@@ -95,7 +95,7 @@ end subroutine c_soca_geo_delete
 ! ------------------------------------------------------------------------------
 !> Dump basic geometry info in file and std output
 subroutine c_soca_geo_info(c_key_self) bind(c,name='soca_geo_info_f90')
-  implicit none
+
   integer(c_int), intent(in   ) :: c_key_self
 
   type(soca_geom), pointer :: self

@@ -6,6 +6,7 @@
 module soca_bkgerr_mod_c
 
 use iso_c_binding
+use fckit_configuration_module, only: fckit_configuration
 use soca_fields_mod, only: soca_field, copy, delete
 use soca_fields_mod_c, only: soca_field_registry
 use soca_bkgerr_mod, only: soca_bkgerr_config, &
@@ -35,8 +36,6 @@ contains
 !> Constructor for D (standard deviation of background error)
 subroutine c_soca_bkgerr_setup(c_key_self, c_conf, c_key_bkg) &
   bind(c,name='soca_bkgerr_setup_f90')
-
-  use fckit_configuration_module, only: fckit_configuration
 
   integer(c_int), intent(inout) :: c_key_self   !< The D structure
   type(c_ptr),       intent(in) :: c_conf       !< The configuration

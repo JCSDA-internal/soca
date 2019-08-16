@@ -28,8 +28,8 @@ use fms_io_mod,      only : fms_io_init, fms_io_exit
 implicit none
 
 private
-public :: soca_geom
-public :: geom_write, geom_get_domain_indices
+public :: soca_geom, &
+          geom_write, geom_get_domain_indices
 
 !> Geometry data structure
 type :: soca_geom

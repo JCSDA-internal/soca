@@ -27,8 +27,7 @@ end interface
 !-------------------------------------------------------------------------------
 interface
 subroutine random_c(kk, pp) bind(C,name='random_f')
-  use, intrinsic :: iso_c_binding
-  implicit none
+
   integer(c_int), intent(in) :: kk
   real(kind=c_double), intent(out) :: pp
 ! The line below:
@@ -46,7 +45,7 @@ contains
 
 !> Generate a random 1d array of reals
 subroutine random_vector_1(xx)
-implicit none
+
 real(kind=kind_real), intent(inout) :: xx(:)
 real(kind=c_double) :: zz(size(xx))
 integer(c_int) :: nn
@@ -61,7 +60,7 @@ end subroutine random_vector_1
 
 !> Generate a random 2d array of reals
 subroutine random_vector_2(xx)
-implicit none
+
 real(kind=kind_real), intent(inout) :: xx(:,:)
 real(kind=c_double) :: zz(size(xx))
 integer(c_int) :: nn
@@ -76,7 +75,7 @@ end subroutine random_vector_2
 
 !> Generate a random 3d array of reals
 subroutine random_vector_3(xx)
-implicit none
+
 real(kind=kind_real), intent(inout) :: xx(:,:,:)
 real(kind=c_double) :: zz(size(xx))
 integer(c_int) :: nn

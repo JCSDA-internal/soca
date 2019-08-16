@@ -7,6 +7,7 @@ module soca_utils
 
 use netcdf
 use kinds, only: kind_real
+use gsw_mod_toolbox, only : gsw_rho, gsw_sa_from_sp, gsw_ct_from_pt, gsw_mlp
 
 implicit none
 
@@ -21,7 +22,6 @@ contains
 ! ------------------------------------------------------------------------------
 
 elemental function soca_rho(sp, pt, p, lon, lat)
-  use gsw_mod_toolbox, only : gsw_rho, gsw_sa_from_sp, gsw_ct_from_pt
   real(kind=kind_real), intent(in)  :: pt, sp, p, lon, lat
   real(kind=kind_real) :: sa, ct, lon_rot, soca_rho, soca_mld
 
@@ -45,7 +45,6 @@ end function soca_rho
 ! ------------------------------------------------------------------------------
 
 function soca_mld(sp, pt, p, lon, lat)
-  use gsw_mod_toolbox, only : gsw_rho, gsw_sa_from_sp, gsw_ct_from_pt, gsw_mlp
   real(kind=kind_real), intent(in)  :: pt(:), sp(:), p(:), lon, lat
 
   real(kind=kind_real) :: lon_rot, soca_mld

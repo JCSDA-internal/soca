@@ -6,6 +6,7 @@
 module soca_balance_mod_c
 
 use iso_c_binding
+use fckit_configuration_module, only: fckit_configuration
 use soca_fields_mod, only: soca_field
 use soca_fields_mod_c, only: soca_field_registry
 use soca_balance_mod, only: soca_balance_config, &
@@ -38,8 +39,6 @@ contains
 subroutine c_soca_balance_setup(c_key_self, c_conf, c_key_traj) &
   bind(c,name='soca_balance_setup_f90')
 
-  use fckit_configuration_module, only: fckit_configuration
-
   integer(c_int), intent(inout) :: c_key_self   !< The D structure
   type(c_ptr),       intent(in) :: c_conf       !< The configuration
   integer(c_int), intent(in)    :: c_key_traj   !< Background field
@@ -60,7 +59,6 @@ end subroutine c_soca_balance_setup
 !> Destructor for D
 subroutine c_soca_balance_delete(c_key_self) bind(c,name='soca_balance_delete_f90')
 
-  implicit none
   integer(c_int), intent(inout) :: c_key_self
 
   type(soca_balance_config), pointer :: self

@@ -8,6 +8,7 @@
 module soca_model_mod_c
 
 use iso_c_binding
+use fckit_configuration_module, only: fckit_configuration
 use datetime_mod, only: datetime, c_f_datetime
 use duration_mod, only: duration, duration_seconds, assignment(=)
 use soca_geom_mod, only: soca_geom
@@ -38,8 +39,6 @@ contains
 #include "oops/util/linkedList_c.f"
 
 subroutine c_soca_setup(c_conf, c_key_geom, c_key_model) bind (c,name='soca_setup_f90')
-
-  use fckit_configuration_module, only: fckit_configuration
 
   type(c_ptr),       intent(in) :: c_conf       !< pointer to object of class Config
   integer(c_int),    intent(in) :: c_key_geom   !< Geometry

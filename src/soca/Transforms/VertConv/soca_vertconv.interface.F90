@@ -6,6 +6,7 @@
 module soca_vertconv_mod_c
 
 use iso_c_binding
+use fckit_configuration_module, only: fckit_configuration
 use kinds, only: kind_real
 use soca_fields_mod, only: soca_field, copy
 use soca_fields_mod_c, only: soca_field_registry
@@ -36,8 +37,6 @@ contains
 !> Constructor for Vertconv
 subroutine c_soca_vertconv_setup(c_key_self, c_conf, c_key_traj, c_key_bkg) &
   bind(c,name='soca_vertconv_setup_f90')
-
-  use fckit_configuration_module, only: fckit_configuration
 
   integer(c_int), intent(inout) :: c_key_self   !< The Vertconv structure
   type(c_ptr),       intent(in) :: c_conf       !< The configuration
