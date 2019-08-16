@@ -3,11 +3,11 @@
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
 
-module soca_bkgerrgodas_interface_mod
+module soca_bkgerrgodas_mod_c
 
 use iso_c_binding
 use soca_fields_mod, only: soca_field, delete, copy
-use soca_fields_interface_mod, only: soca_field_registry
+use soca_fields_mod_c, only: soca_field_registry
 use soca_bkgerrgodas_mod, only: soca_bkgerrgodas_config, &
                                 soca_bkgerrgodas_setup, soca_bkgerrgodas_mult
 
@@ -92,4 +92,4 @@ subroutine c_soca_bkgerrgodas_mult_f90(c_key_self, c_key_a, c_key_m)&
 
 end subroutine c_soca_bkgerrgodas_mult_f90
 
-end module soca_bkgerrgodas_interface_mod
+end module soca_bkgerrgodas_mod_c

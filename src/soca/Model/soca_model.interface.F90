@@ -5,15 +5,15 @@
 
 !> Setup the model
 
-module soca_model_interface_mod
+module soca_model_mod_c
 
 use iso_c_binding
 use datetime_mod, only: datetime, c_f_datetime
 use duration_mod, only: duration, duration_seconds, assignment(=)
 use soca_geom_mod, only: soca_geom
-use soca_geom_interface_mod, only: soca_geom_registry
+use soca_geom_mod_c, only: soca_geom_registry
 use soca_fields_mod, only: soca_field
-use soca_fields_interface_mod, only: soca_field_registry
+use soca_fields_mod_c, only: soca_field_registry
 use soca_model_mod, only: soca_model, soca_setup, soca_delete, soca_propagate, &
                           soca_initialize_integration, soca_finalize_integration
 
@@ -170,4 +170,4 @@ subroutine c_soca_propagate(c_key_model, c_key_state, c_key_date) bind(c,name='s
   return
 end subroutine c_soca_propagate
 
-end module soca_model_interface_mod
+end module soca_model_mod_c

@@ -3,11 +3,11 @@
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
 
-module soca_balance_interface_mod
+module soca_balance_mod_c
 
 use iso_c_binding
 use soca_fields_mod, only: soca_field
-use soca_fields_interface_mod, only: soca_field_registry
+use soca_fields_mod_c, only: soca_field_registry
 use soca_balance_mod, only: soca_balance_config, &
                             soca_balance_setup, soca_balance_delete, &
                             soca_balance_mult, soca_balance_multad, &
@@ -159,4 +159,4 @@ subroutine c_soca_balance_multinvad_f90(c_key_self, c_key_a, c_key_m)&
 
 end subroutine c_soca_balance_multinvad_f90
 
-end module soca_balance_interface_mod
+end module soca_balance_mod_c

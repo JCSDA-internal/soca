@@ -6,7 +6,7 @@
 !> Interfaces to be called from C++ for Fortran handling of model fields
 
 ! ------------------------------------------------------------------------------
-module soca_fields_interface_mod
+module soca_fields_mod_c
 
 use iso_c_binding
 use fckit_configuration_module, only: fckit_configuration
@@ -19,7 +19,7 @@ use ufo_locs_mod, only: ufo_locs
 use ufo_geovals_mod_c, only: ufo_geovals_registry
 use ufo_geovals_mod, only: ufo_geovals
 use soca_geom_mod, only: soca_geom
-use soca_geom_interface_mod, only: soca_geom_registry
+use soca_geom_mod_c, only: soca_geom_registry
 use soca_fields_mod, only: soca_field, &
                            create, delete, copy, zeros, dirac, &
                            add_incr, axpy, change_resol, diff_incr, &
@@ -28,7 +28,7 @@ use soca_fields_mod, only: soca_field, &
                            self_schur, self_sub, self_mul, self_add
 use soca_interpfields_mod, only: getvalues, getvalues_ad
 use soca_getvaltraj_mod, only: soca_getvaltraj
-use soca_getvaltraj_interface_mod, only: soca_getvaltraj_registry
+use soca_getvaltraj_mod_c, only: soca_getvaltraj_registry
 
 implicit none
 
@@ -535,4 +535,4 @@ subroutine soca_fieldnum_c(c_key_fld, nx, ny, nzo, nzi, ncat, nf) bind(c,name='s
 
 end subroutine soca_fieldnum_c
 
-end module soca_fields_interface_mod
+end module soca_fields_mod_c

@@ -3,7 +3,7 @@
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
 
-module soca_geom_interface_mod
+module soca_geom_mod_c
 
 use iso_c_binding
 use soca_geom_mod, only: soca_geom
@@ -107,4 +107,4 @@ end subroutine c_soca_geo_info
 
 ! ------------------------------------------------------------------------------
 
-end module soca_geom_interface_mod
+end module soca_geom_mod_c

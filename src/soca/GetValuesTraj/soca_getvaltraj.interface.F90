@@ -5,7 +5,7 @@
 
 !> Fortran module handling interpolation trajectory
 
-module soca_getvaltraj_interface_mod
+module soca_getvaltraj_mod_c
 
   use iso_c_binding
   use soca_getvaltraj_mod, only: soca_getvaltraj
@@ -75,4 +75,4 @@ subroutine c_soca_getvaltraj_delete(c_key_self) &
 
 end subroutine c_soca_getvaltraj_delete
 
-end module soca_getvaltraj_interface_mod
+end module soca_getvaltraj_mod_c

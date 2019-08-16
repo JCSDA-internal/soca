@@ -3,15 +3,15 @@
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
 
-module soca_localization_interface_mod
+module soca_localization_mod_c
 
 use iso_c_binding
 use soca_geom_mod, only: soca_geom
-use soca_geom_interface_mod, only: soca_geom_registry
+use soca_geom_mod_c, only: soca_geom_registry
 use soca_fields_mod, only: soca_field
-use soca_fields_interface_mod, only: soca_fields_registry
+use soca_fields_mod_c, only: soca_fields_registry
 use soca_covariance_mod, only: soca_cov
-use soca_covariance_interface_mod, only: soca_cov_registry
+use soca_covariance_mod_c, only: soca_cov_registry
 
 implicit none
 
@@ -77,4 +77,4 @@ subroutine soca_localization_delete(c_key_self) &
 
 end subroutine soca_localization_delete
 
-end module soca_localization_interface_mod
+end module soca_localization_mod_c

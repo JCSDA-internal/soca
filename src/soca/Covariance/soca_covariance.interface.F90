@@ -3,15 +3,15 @@
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
 
-module soca_covariance_interface_mod
+module soca_covariance_mod_c
 
 use iso_c_binding
 use fckit_configuration_module, only: fckit_configuration
 use variables_mod, only: oops_vars, oops_vars_create
 use soca_geom_mod, only : soca_geom
-use soca_geom_interface_mod, only : soca_geom_registry
+use soca_geom_mod_c, only : soca_geom_registry
 use soca_fields_mod, only: soca_field, copy
-use soca_fields_interface_mod, only: soca_field_registry
+use soca_fields_mod_c, only: soca_field_registry
 use soca_covariance_mod, only: soca_cov, soca_cov_setup, soca_cov_delete, &
                                soca_cov_C_mult, soca_cov_sqrt_C_mult
 
@@ -129,4 +129,4 @@ subroutine c_soca_b_randomize(c_key_self, c_key_out) bind(c,name='soca_b_randomi
 
 end subroutine c_soca_b_randomize
 
-end module soca_covariance_interface_mod
+end module soca_covariance_mod_c

@@ -3,12 +3,12 @@
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
 
-module soca_vertconv_interface_mod
+module soca_vertconv_mod_c
 
 use iso_c_binding
 use kinds, only: kind_real
 use soca_fields_mod, only: soca_field, copy
-use soca_fields_interface_mod, only: soca_field_registry
+use soca_fields_mod_c, only: soca_field_registry
 use soca_vertconv_mod, only: soca_vertconv, soca_conv_setup, &
                              soca_conv, soca_conv_ad
 
@@ -141,4 +141,4 @@ subroutine c_soca_vertconv_multad_f90(c_key_m, c_key_a, c_key_traj, c_key_self)&
 
 end subroutine c_soca_vertconv_multad_f90
 
-end module soca_vertconv_interface_mod
+end module soca_vertconv_mod_c
