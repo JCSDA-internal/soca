@@ -1,3 +1,26 @@
+Test     : CostJb   : Nonlinear Jb = 0
+Test     : CostJo   : Nonlinear Jo(CoolSkin) = 21630.6, nobs = 177, Jo/n = 122.207, err = 0.358623
+Test     : CostJo   : Nonlinear Jo(SeaSurfaceTemp) = 728.447, nobs = 131, Jo/n = 5.56066, err = 0.353957
+Test     : CostJo   : Nonlinear Jo(SeaSurfaceSalinity) = 105.064, nobs = 50, Jo/n = 2.10128, err = 1
+Test     : CostJo   : Nonlinear Jo(ADT) = 130.844, nobs = 87, Jo/n = 1.50396, err = 0.1
+Test     : CostJo   : Nonlinear Jo(InsituTemperature) = 398.357, nobs = 205, Jo/n = 1.9432, err = 0.897232
+Test     : CostJo   : Nonlinear Jo(InsituSalinity) = 2511.53, nobs = 218, Jo/n = 11.5208, err = 0.608197
+Test     : CostJo   : Nonlinear Jo(SeaIceFraction) = 632.528, nobs = 89, Jo/n = 7.10706, err = 0.1
+Test     : CostFunction: Nonlinear J = 26137.4
+Test     : RPCGMinimizer: reduction in residual norm = 0.196187
+Test     : CostFunction::addIncrement: Analysis: 
+Test     :   Valid time: 2018-04-15T00:00:00Z
+Test     :   cicen   min=    0.000000   max=    1.000000   mean=    0.255657
+Test     :   hicen   min=    0.000000   max=    2.265451   mean=    0.094250
+Test     :    socn   min=    0.000000   max=   40.441659   mean=   34.544410
+Test     :    tocn   min=   -1.888390   max=   31.700465   mean=    6.018891
+Test     :     ssh   min=   -1.924603   max=    0.927287   mean=   -0.263392
+Test     :    hocn   min=    0.001000   max= 1345.640000   mean=  128.628598
+Test     :      sw   min= -225.093594   max=   -0.000000   mean= -110.030553
+Test     :     lhf   min=  -38.137483   max=  256.595307   mean=   64.433539
+Test     :     shf   min=  -58.949293   max=  201.374248   mean=    9.318213
+Test     :      lw   min=    0.000000   max=   88.036094   mean=   48.153834
+Test     :      us   min=    0.004396   max=    0.019669   mean=    0.013335
 Test     : CostJb   : Nonlinear Jb = 2.528383
 Test     : CostJo   : Nonlinear Jo(CoolSkin) = 19969.905666, nobs = 168, Jo/n = 118.868486, err = 0.359475
 Test     : CostJo   : Nonlinear Jo(SeaSurfaceTemp) = 655.918499, nobs = 113, Jo/n = 5.804588, err = 0.349115
