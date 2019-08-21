@@ -22,6 +22,7 @@ list( APPEND soca_test_input
   testinput/gridgen.yml
   testinput/hofx.yml
   testinput/hofx3d.yml
+  testinput/horizfilt.yml  
   testinput/increment_test.yml
   testinput/linearmodel_test.yml
   testinput/marine2ioda.yml
@@ -322,6 +323,12 @@ ecbuild_add_test( TARGET test_soca_bkgerrfilt
                   LIBS    soca
                   MPI     ${SOCA_TESTS_MAX_MPI}
                   TEST_DEPENDS test_soca_gridgen )
+
+ecbuild_add_test( TARGET test_soca_horizfilt
+                  MPI ${MPI_SOCA_TESTS}
+                  SOURCES executables/TestVariableChange.cc
+                  ARGS    "testinput/horizfilt.yml"
+                  LIBS    soca )
 
 ecbuild_add_test( TARGET test_soca_bkgerrsoca
                   SOURCES executables/TestVariableChange.cc
