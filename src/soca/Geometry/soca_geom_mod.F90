@@ -8,7 +8,7 @@ module soca_geom_mod
   use config_mod
   use MOM_domains, only : MOM_domain_type
   use MOM_domains,         only : MOM_infra_init
-  use MOM_io,              only : io_infra_init  
+  use MOM_io,              only : io_infra_init
   use soca_mom6
   use soca_utils
   use kinds
@@ -17,7 +17,7 @@ module soca_geom_mod
   use fms_io_mod, only : fms_io_init, fms_io_exit,&
        &register_restart_field, restart_file_type,&
        &restore_state, query_initialized,&
-       &free_restart_type, save_restart  
+       &free_restart_type, save_restart
   use mpp_domains_mod, only : mpp_get_compute_domain, mpp_get_data_domain
   use mpp_domains_mod, only : mpp_update_domains
   use kinds
@@ -56,7 +56,7 @@ module soca_geom_mod
      procedure :: print => geom_print
      procedure :: get_rossby_radius => geom_rossby_radius
      procedure :: validindex => geom_validindex
-     procedure :: gridgen => geom_gridgen     
+     procedure :: gridgen => geom_gridgen
      procedure :: thickness2depth => geom_thickness2depth
      procedure :: struct2unstruct => geom_struct2unstruct
      procedure :: unstruct2struct => geom_unstruct2struct
@@ -76,7 +76,7 @@ contains
     integer :: isave
     type(fckit_mpi_comm) :: f_comm
     integer :: isc,iec,jsc,jec
-    integer :: nk    
+    integer :: nk
 
     ! Domain decomposition
     call soca_geomdomain_init(self%Domain, self%nzo)
@@ -90,14 +90,14 @@ contains
     self%ncat = self%ice_column%ncat
     self%nzi = self%ice_column%nzi
     self%nzs = self%ice_column%nzs
-    
+
     ! Allocate geometry arrays
     call geom_allocate(self)
 
     if (config_element_exists(c_conf,"read_soca_grid")) then
        call geom_read(self)
     end if
-   
+
     ! Set output option for local geometry
     self%save_local_domain = .false.
     if (config_element_exists(c_conf,"save_local_domain")) then
@@ -118,7 +118,7 @@ contains
     if (allocated(self%shoremask))     deallocate(self%shoremask)
     if (allocated(self%cell_area))     deallocate(self%cell_area)
     if (allocated(self%rossby_radius)) deallocate(self%rossby_radius)
-    if (allocated(self%ij))            deallocate(self%ij)    
+    if (allocated(self%ij))            deallocate(self%ij)
 
   end subroutine geom_end
 
@@ -129,10 +129,11 @@ contains
     class(soca_geom), intent(out) :: other
 
     ! Clone fms domain and vertical levels
-    call soca_geomdomain_init(other%Domain, other%nzo)
-    
+    other%Domain => self%Domain
+    other%nzo = self%nzo
+
     ! Clone sea-ice grid
-    other%ice_column = self%ice_column    
+    other%ice_column = self%ice_column
     other%ncat = self%ncat
     other%nzi = self%nzi
     other%nzs = self%nzs
@@ -144,11 +145,11 @@ contains
     other%mask2d = self%mask2d
     other%cell_area = self%cell_area
     other%rossby_radius = self%rossby_radius
-    
+
   end subroutine geom_clone
 
   ! ------------------------------------------------------------------------------
-  !> 
+  !>
   subroutine geom_gridgen(self)
     class(soca_geom), intent(inout) :: self
 
@@ -163,10 +164,10 @@ contains
 
     ! Get Rossby Radius
     call geom_rossby_radius(self)
-    
+
     ! Output to file
     call geom_write(self)
-    
+
   end subroutine geom_gridgen
 
   ! ------------------------------------------------------------------------------
@@ -203,7 +204,7 @@ contains
     ny = nxny(2)
     self%nx = nx
     self%ny = ny
-    
+
     ! Fill halo
     call mpp_update_domains(self%lon, self%Domain%mpp_domain)
     call mpp_update_domains(self%lat, self%Domain%mpp_domain)
@@ -324,11 +325,11 @@ contains
     integer :: idr_geom
     type(restart_file_type) :: geom_restart
     type(fckit_mpi_comm) :: f_comm
-    
+
     ! Setup Communicator
     f_comm = fckit_mpi_comm()
- 
-    ! Save global domain   
+
+    ! Save global domain
     call fms_io_init()
     idr_geom = register_restart_field(geom_restart, &
                                      &geom_output_file, &
@@ -374,7 +375,7 @@ contains
     end if
 
   end subroutine geom_write
-  
+
   ! ------------------------------------------------------------------------------
   !> Read geometry from file
   subroutine geom_read(self)
@@ -410,7 +411,7 @@ contains
                                      &'mask2d', &
                                      &self%mask2d(:,:), &
                                      domain=self%Domain%mpp_domain)
-    call restore_state(geom_restart, directory='')    
+    call restore_state(geom_restart, directory='')
     call free_restart_type(geom_restart)
     call fms_io_exit()
 
