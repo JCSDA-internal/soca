@@ -1,0 +1,24 @@
+codecov:
+  notify:
+    require_ci_to_pass: yes
+
+coverage:
+  precision: 2
+  round: down
+  range: "70...100"
+
+ignore:
+  - "jcsda/src_repo/fckit"
+  - "jcsda/src_repo/saber"
+  - "jcsda/src_repo/oops"
+  - "jcsda/src_repo/crtm"
+  - "jcsda/src_repo/ioda"
+  - "jcsda/src_repo/ioda-converters"
+  - "jcsda/src_repo/gsw"
+  - "jcsda/src_repo/ufo"
+  - "jcsda/src_repo/fms"
+  - "jcsda/src_repo/cvmix"
+  - "jcsda/src_repo/geokdtree"
+  - "jcsda/src_repo/mom6_da_hooks"
+  - "jcsda/src_repo/mom6"
+  - "jcsda/src_repo/soca/test"
