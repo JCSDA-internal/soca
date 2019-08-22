@@ -7,8 +7,9 @@
 
 #include <string>
 #include "oops/util/Logger.h"
-#include "soca/Geometry/Geometry.h"
 #include "soca/Fortran.h"
+#include "soca/Geometry/GeometryFortran.h"
+#include "soca/Geometry/Geometry.h"
 #include "eckit/config/Configuration.h"
 
 using oops::Log;

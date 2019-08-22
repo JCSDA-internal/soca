@@ -12,9 +12,11 @@
 #include <string>
 #include <vector>
 
-#include "soca/Fortran.h"
 #include "oops/util/ObjectCounter.h"
 #include "oops/util/Printable.h"
+
+#include "soca/Fortran.h"
+#include "soca/Geometry/GeometryFortran.h"
 
 namespace eckit {
   class Configuration;

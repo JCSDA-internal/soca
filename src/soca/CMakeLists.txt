@@ -9,6 +9,7 @@ list( APPEND soca_src_files
 #Geometry
 Geometry/Geometry.cc
 Geometry/Geometry.h
+Geometry/GeometryFortran.h
 Geometry/soca_geom.interface.F90
 Geometry/soca_geom_mod.F90
 
