@@ -13,12 +13,13 @@ services:
 before_install:
   - date
   - REPO_SOURCE_DIR=${TRAVIS_BUILD_DIR}/jcsda/src_repo
+#  create the same file structure on Travis VM and Docker container
   - mkdir -p ${TRAVIS_BUILD_DIR}/jcsda/src_repo
   - ls
   - pwd
   - mv !(jcsda) jcsda/src_repo
-#  create the same file structure on Travis VM and Docker container
-  - mkdir -p ${TRAVIS_BUILD_DIR}/jcsda/src_repo
+  - ls 
+  - ls jcsda/src_repo
 # echo branch info
   - echo $TRAVIS_PULL_REQUEST
   - echo $TRAVIS_PULL_REQUEST_BRANCH
