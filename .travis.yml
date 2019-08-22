@@ -13,6 +13,10 @@ services:
 before_install:
   - date
   - REPO_SOURCE_DIR=${TRAVIS_BUILD_DIR}/jcsda/src_repo
+  - mkdir -p /jcsda/src_repo
+  - cp -r ${TRAVIS_BUILD_DIR} /jcsda/src_repo/
+  - ls -ls /
+  - ls /jcsda/src_repo/
   - ls
   - pwd
   - cd ${TRAVIS_BUILD_DIR}
