@@ -87,7 +87,7 @@ before_install:
   - date  
 
 #  clone the testing branch of soca
-  - git clone -b $BRANCH https://github.com/jcsda/soca.git ${REPO_SOURCE_DIR}/soca-bundle/soca 
+#  - git clone -b $BRANCH https://github.com/jcsda/soca.git ${REPO_SOURCE_DIR}/soca-bundle/soca 
   - mv ${REPO_SOURCE_DIR}/soca ${REPO_SOURCE_DIR}/soca-bundle/
   - date  
 
