@@ -53,7 +53,6 @@ Covariance/soca_covariance_mod.F90
 #Run
 Run/Run.cc
 Run/Run.h
-Run/soca_setup.f90
 
 #Utils
 Utils/soca_utils.F90
