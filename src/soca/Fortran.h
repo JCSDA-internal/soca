@@ -44,7 +44,7 @@ namespace soca {
   typedef int F90hop;
   // Observation data base type
   typedef int F90odb;
-  // Localization matrix
+  // Localization
   typedef int F90lclz;
 
   /// Interface to Fortran SOCA model
@@ -173,7 +173,7 @@ namespace soca {
                                     F90balopmat &);
 
     // -----------------------------------------------------------------------------
-    //  Localization matrix
+    //  Localization
     // -----------------------------------------------------------------------------
     void soca_localization_setup_f90(F90lclz &,
                                      const eckit::Configuration * const *,

@@ -1,16 +1,12 @@
 /*
- * (C) Copyright 2009-2016 ECMWF.
  * (C) Copyright 2017-2019 UCAR.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
- * In applying this licence, ECMWF does not waive the privileges and immunities
- * granted to it by virtue of its status as an intergovernmental organisation nor
- * does it submit to any jurisdiction.
  */
 
-#ifndef SOCA_LOCALIZATIONMATRIX_LOCALIZATIONMATRIX_H_
-#define SOCA_LOCALIZATIONMATRIX_LOCALIZATIONMATRIX_H_
+#ifndef SOCA_LOCALIZATION_LOCALIZATION_H_
+#define SOCA_LOCALIZATION_LOCALIZATION_H_
 
 #include <ostream>
 #include <string>
@@ -28,17 +24,17 @@ namespace soca {
   class Geometry;
   class Increment;
 
-  /// Localization matrix for SOCA model.
+  // Localization for SOCA model.
 
   // -----------------------------------------------------------------------------
-  class LocalizationMatrix : public util::Printable,
+  class Localization : public util::Printable,
      private boost::noncopyable,
-     private util::ObjectCounter<LocalizationMatrix>{
+     private util::ObjectCounter<Localization>{
    public:
-      static const std::string classname() {return "soca::LocalizationMatrix";}
+      static const std::string classname() {return "soca::Localization";}
 
-      LocalizationMatrix(const Geometry &, const eckit::Configuration &);
-      ~LocalizationMatrix();
+      Localization(const Geometry &, const eckit::Configuration &);
+      ~Localization();
       void multiply(Increment &) const;
 
    private:
@@ -49,4 +45,4 @@ namespace soca {
 
 }  // namespace soca
 
-#endif  // SOCA_LOCALIZATIONMATRIX_LOCALIZATIONMATRIX_H_
+#endif  // SOCA_LOCALIZATION_LOCALIZATION_H_

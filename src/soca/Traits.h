@@ -14,7 +14,7 @@
 #include "soca/Increment/Increment.h"
 #include "soca/Covariance/ErrorCovariance.h"
 #include "soca/GetValuesTraj/GetValuesTraj.h"
-#include "soca/LocalizationMatrix/LocalizationMatrix.h"
+#include "soca/Localization/Localization.h"
 #include "soca/ModelBias.h"
 #include "soca/ModelBiasIncrement.h"
 #include "soca/ModelBiasCovariance.h"
@@ -47,7 +47,7 @@ struct Traits {
   typedef soca::ModelBias           ModelAuxControl;
   typedef soca::ModelBiasIncrement  ModelAuxIncrement;
   typedef soca::ModelBiasCovariance ModelAuxCovariance;
-  typedef soca::LocalizationMatrix  LocalizationMatrix;
+  typedef soca::Localization        Localization;
 
   typedef ufo::ObsBias              ObsAuxControl;
   typedef ufo::ObsBiasIncrement     ObsAuxIncrement;
