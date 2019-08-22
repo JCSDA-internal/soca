@@ -26,7 +26,7 @@ before_install:
 # Clone all repos
 #======================================================================
 #  checkout for the same branch name in soca-bundle
-  - git clone https://github.com/jcsda/soca-bundle1.git ${REPO_SOURCE_DIR}/soca-bundle
+  - git clone https://github.com/jcsda/soca-bundle.git ${REPO_SOURCE_DIR}/soca-bundle
   - cd ${REPO_SOURCE_DIR}/soca-bundle
   - git checkout $BRANCH || echo "No branch named $BRANCH in oops repo"
   - cd $REPO_SOURCE_DIR  
