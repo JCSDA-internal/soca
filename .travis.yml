@@ -13,6 +13,10 @@ services:
 before_install:
   - date
   - REPO_SOURCE_DIR=${TRAVIS_BUILD_DIR}/jcsda/src_repo
+  - ls
+  - pwd
+  - cd ${TRAVIS_BUILD_DIR}
+  - pwd
 #  create the same file structure on Travis VM and Docker container
   - mkdir -p ${TRAVIS_BUILD_DIR}/jcsda/src_repo
 # echo branch info
@@ -25,7 +29,7 @@ before_install:
 # Clone all repos
 #======================================================================
 #  checkout for the same branch name in soca-bundle
-  - git clone https://github.com/jcsda/soca-bundle.git ${REPO_SOURCE_DIR}/soca-bundle
+  - git clone https://github.com/jcsda/soca-bundle2.git ${REPO_SOURCE_DIR}/soca-bundle
   - cd ${REPO_SOURCE_DIR}/soca-bundle
   - git checkout $BRANCH || echo "No branch named $BRANCH in oops repo"
   - cd $REPO_SOURCE_DIR  
@@ -127,11 +131,4 @@ script:
   - date
   - docker exec jcsda_container bash -c 'cd /build_container/soca && ctest'
   - date
-##  run lcov inside container
-  - docker exec jcsda_container bash -c 'cd /build_container/soca && lcov --capture --directory . --output-file coverage.info'
-  - docker exec jcsda_container bash -c 'cd /build_container/soca && lcov --remove coverage.info "/usr/*" --output-file coverage.info'  #  filter system-files 
-  - docker exec jcsda_container bash -c 'cd /build_container/soca && lcov --list coverage.info'  #  debug info
-  - docker exec jcsda_container bash -c 'cp /jcsda/src_repo/soca/codecov.yml /build_container/soca/'  #  debug info
-
-    #  - docker exec jcsda_container bash -c 'cd /build_container/soca && bash <(curl -s https://codecov.io/bash) -t e23dfd1d-85be-4e0f-aaf3-81911fec7178  -X gcov -f coverage.info -R /jcsda/src_repo/soca/'
 
