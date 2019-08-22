@@ -86,14 +86,13 @@ before_install:
   - cd $REPO_SOURCE_DIR  
   - date  
 
-#  clone the testing branch of soca
-#  - git clone -b $BRANCH https://github.com/jcsda/soca.git ${REPO_SOURCE_DIR}/soca-bundle/soca 
+#  move soca to soca-bundle
   - mv ${REPO_SOURCE_DIR}/soca ${REPO_SOURCE_DIR}/soca-bundle/
   - date  
 
   - ls ${REPO_SOURCE_DIR}/soca-bundle/
 
-# do no switch to develop branch by removing 
+# not switch to develop branch by removing 
 # develop UPDATE in CMakeLists.txt in soca-bundle
 
   - cd soca-bundle
