@@ -14,12 +14,8 @@ before_install:
   - date
   - REPO_SOURCE_DIR=${TRAVIS_BUILD_DIR}/jcsda/src_repo
 #  create the same file structure on Travis VM and Docker container
-  - mkdir -p ${TRAVIS_BUILD_DIR}/jcsda/src_repo
-  - ls
-  - pwd
-  - mv !(jcsda) jcsda/src_repo
-  - ls 
-  - ls jcsda/src_repo
+  - mkdir -p ${TRAVIS_BUILD_DIR}/jcsda/src_repo/soca
+  - mv !(jcsda) jcsda/src_repo/soca
 # echo branch info
   - echo $TRAVIS_PULL_REQUEST
   - echo $TRAVIS_PULL_REQUEST_BRANCH
@@ -30,7 +26,7 @@ before_install:
 # Clone all repos
 #======================================================================
 #  checkout for the same branch name in soca-bundle
-  - git clone https://github.com/jcsda/soca-bundle2.git ${REPO_SOURCE_DIR}/soca-bundle
+  - git clone https://github.com/jcsda/soca-bundle1.git ${REPO_SOURCE_DIR}/soca-bundle
   - cd ${REPO_SOURCE_DIR}/soca-bundle
   - git checkout $BRANCH || echo "No branch named $BRANCH in oops repo"
   - cd $REPO_SOURCE_DIR  
@@ -92,7 +88,10 @@ before_install:
 
 #  clone the testing branch of soca
   - git clone -b $BRANCH https://github.com/jcsda/soca.git ${REPO_SOURCE_DIR}/soca-bundle/soca 
+  - mv ${REPO_SOURCE_DIR}/soca ${REPO_SOURCE_DIR}/soca-bundle/
   - date  
+
+  - ls ${REPO_SOURCE_DIR}/soca-bundle/
 
 # do no switch to develop branch by removing 
 # develop UPDATE in CMakeLists.txt in soca-bundle
