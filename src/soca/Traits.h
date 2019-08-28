@@ -26,8 +26,8 @@
 #include "ufo/GeoVaLs.h"
 #include "ufo/LinearObsOperator.h"
 #include "ufo/ObsBias.h"
-#include "ufo/ObsBiasIncrement.h"
 #include "ufo/ObsBiasCovariance.h"
+#include "ufo/ObsDiagnostics.h"
 #include "ufo/ObsOperator.h"
 #include "ufo/Locations.h"
 
@@ -50,8 +50,9 @@ struct Traits {
   typedef soca::Localization        Localization;
 
   typedef ufo::ObsBias              ObsAuxControl;
-  typedef ufo::ObsBiasIncrement     ObsAuxIncrement;
   typedef ufo::ObsBiasCovariance    ObsAuxCovariance;
+  typedef ufo::ObsBiasIncrement     ObsAuxIncrement;
+  typedef ufo::ObsDiagnostics       ObsDiagnostics;
   //  typedef ufo::ObsCheck             ObsCheck;
   typedef ufo::ObsOperator          ObsOperator;
   typedef ufo::LinearObsOperator    LinearObsOperator;
