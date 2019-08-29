@@ -58,9 +58,9 @@ struct Traits {
   typedef ufo::ObsOperator          ObsOperator;
   typedef ufo::LinearObsOperator    LinearObsOperator;
   typedef ufo::GeoVaLs              GeoVaLs;
-  typedef ufo::Locations           Locations;
-  typedef ioda::ObsSpace             ObsSpace;
-  typedef ioda::ObsVector            ObsVector;
+  typedef ufo::Locations            Locations;
+  typedef ioda::ObsSpace            ObsSpace;
+  typedef ioda::ObsVector           ObsVector;
   template <typename DATA> using ObsDataVector = ioda::ObsDataVector<DATA>;
 };
 
