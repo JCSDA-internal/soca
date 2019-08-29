@@ -23,13 +23,6 @@ model:
   advance_mom6: 1
   variables: &soca_vars [cicen, hicen, socn, tocn, ssh, hocn, sw, lhf, shf, lw, us]
 
-# common obsfilters used by all obs
-_: &Filter_mask
-  Filter: Domain Check
-  where:
-  - variable: sea_area_fraction@GeoVaLs
-    minvalue: 0.5
-
 cost_function:
   cost_type: 4D-Var
   window_begin: &date_begin 2018-04-15T00:00:00Z
@@ -135,7 +128,11 @@ cost_function:
       Covariance:
         covariance: diagonal
       ObsFilters:
-      - *Filter_mask
+      - Filter: Domain Check
+        variables: [sea_surface_temperature]
+        where:
+        - variable: sea_area_fraction@GeoVaLs
+          minvalue: 0.5
       - Filter: Thinning
         amount: 0.1
         random_seed: 0
@@ -151,8 +148,13 @@ cost_function:
       Covariance:
         covariance: diagonal
       ObsFilters:
-      - *Filter_mask
       - Filter: Domain Check
+        variables: [sea_surface_salinity]
+        where:
+        - variable: sea_area_fraction@GeoVaLs
+          minvalue: 0.5
+      - Filter: Domain Check
+        variables: [sea_surface_salinity]
         where:
         - variable: sea_surface_temperature@GeoVaLs
           minvalue: 15
@@ -168,7 +170,11 @@ cost_function:
       Covariance:
         covariance: diagonal
       ObsFilters:
-      - *Filter_mask
+      - Filter: Domain Check
+        variables: [obs_absolute_dynamic_topography]
+        where:
+        - variable: sea_area_fraction@GeoVaLs
+          minvalue: 0.5
 
     - ObsSpace:
         name: InsituTemperature
@@ -181,7 +187,11 @@ cost_function:
       Covariance:
         covariance: diagonal
       ObsFilters:
-      - *Filter_mask
+      - Filter: Domain Check
+        variables: [sea_water_temperature]
+        where:
+        - variable: sea_area_fraction@GeoVaLs
+          minvalue: 0.5
       - Filter: Background Check
         variables: [sea_water_temperature]
         threshold: 5
@@ -197,7 +207,11 @@ cost_function:
       Covariance:
         covariance: diagonal
       ObsFilters:
-      - *Filter_mask
+      - Filter: Domain Check
+        variables: [sea_water_salinity]
+        where:
+        - variable: sea_area_fraction@GeoVaLs
+          minvalue: 0.5
 
     - ObsSpace:
         name: SeaIceFraction
@@ -210,7 +224,11 @@ cost_function:
       Covariance:
         covariance: diagonal
       ObsFilters:
-      - *Filter_mask
+      - Filter: Domain Check
+        variables: [sea_ice_area_fraction]
+        where:
+        - variable: sea_area_fraction@GeoVaLs
+          minvalue: 0.5
 
 #    - ObsType: SeaIceThickness
 
