@@ -15,7 +15,6 @@ before_install:
   - REPO_SOURCE_DIR=${TRAVIS_BUILD_DIR}/jcsda/src_repo
 #  create the same file structure on Travis VM and Docker container
   - mkdir -p ${TRAVIS_BUILD_DIR}/jcsda/src_repo
-    #  - mv !(jcsda) jcsda/src_repo/soca
 # echo branch info
   - echo $TRAVIS_PULL_REQUEST
   - echo $TRAVIS_PULL_REQUEST_BRANCH
@@ -124,8 +123,6 @@ script:
   - docker exec jcsda_container ls
   - docker exec jcsda_container ls /jcsda/src_repo
   - docker exec jcsda_container bash -c 'cp -r /jcsda/.openmpi/ ~/'
-##  use cmake with flags to generate test coverage reports
-#  - docker exec jcsda_container bash -c 'cd /build_container && cmake -DCMAKE_MODULE_PATH=/usr/local/share/ecbuild/cmake/ -DCMAKE_BUILD_TYPE=Debug -DENABLE_GPROF=ON  /jcsda/src_repo' 
   - docker exec jcsda_container bash -c 'cd /build_container && ecbuild /jcsda/src_repo/' 
   - docker exec jcsda_container bash -c 'cd /build_container/soca && make -j4'
   - date
