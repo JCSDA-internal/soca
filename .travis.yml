@@ -14,8 +14,8 @@ before_install:
   - date
   - REPO_SOURCE_DIR=${TRAVIS_BUILD_DIR}/jcsda/src_repo
 #  create the same file structure on Travis VM and Docker container
-  - mkdir -p ${TRAVIS_BUILD_DIR}/jcsda/src_repo/soca
-  - mv !(jcsda) jcsda/src_repo/soca
+  - mkdir -p ${TRAVIS_BUILD_DIR}/jcsda/src_repo
+    #  - mv !(jcsda) jcsda/src_repo/soca
 # echo branch info
   - echo $TRAVIS_PULL_REQUEST
   - echo $TRAVIS_PULL_REQUEST_BRANCH
@@ -86,8 +86,9 @@ before_install:
   - cd $REPO_SOURCE_DIR  
   - date  
 
-#  move soca to soca-bundle
-  - mv ${REPO_SOURCE_DIR}/soca ${REPO_SOURCE_DIR}/soca-bundle/
+#  clone the testing branch of soca	#  clone the testing branch of soca
+  - git clone -b $BRANCH https://github.com/jcsda/soca.git ${REPO_SOURCE_DIR}/soca-bundle/soca
+
   - date  
 
   - ls ${REPO_SOURCE_DIR}/soca-bundle/
