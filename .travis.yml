@@ -129,6 +129,6 @@ script:
   - docker exec jcsda_container bash -c 'cd /build_container && ecbuild /jcsda/src_repo/' 
   - docker exec jcsda_container bash -c 'cd /build_container/soca && make -j4'
   - date
-  - docker exec jcsda_container bash -c 'cd /build_container/soca && ctest'
+  - docker exec jcsda_container bash -c 'cd /build_container/soca && ctest -V'
   - date
 
