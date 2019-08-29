@@ -191,6 +191,9 @@ subroutine interp(fld, locs, vars, geoval, horiz_interp, traj)
      case ("sea_surface_salinity")
         fld3d(isc:iec,jsc:jec,1) = fld%socn(isc:iec,jsc:jec,1)
 
+     case ("sea_floor_depth_below_sea_surface")
+        fld3d(isc:iec,jsc:jec,1) = sum(fld%hocn(isc:iec,jsc:jec,:),dim=3)
+
      case ("sea_area_fraction")
         fld3d(isc:iec,jsc:jec,1) = real(fld%geom%mask2d(isc:iec,jsc:jec),kind=kind_real)
 
@@ -355,6 +358,7 @@ subroutine nlev_from_ufovar(fld, vars, index_vars, nval)
   case ("sea_surface_height_above_geoid", &
         "sea_surface_temperature", &
         "sea_surface_salinity", &
+        "sea_floor_depth_below_sea_surface", &
         "sea_area_fraction", &
         "net_downwelling_shortwave_radiation", &
         "upward_latent_heat_flux_in_air", &
