@@ -417,7 +417,7 @@ soca_add_test( NAME enshofx
 # variational methods
 soca_add_test( NAME 3dvar_soca
                EXE  soca_3dvar.x
-               TOL  3.0e-5 0
+               TOL  2.3e-4 0
                TEST_DEPENDS test_soca_static_socaerror_init )
 
 soca_add_test( NAME 3dvar_godas
@@ -432,7 +432,7 @@ soca_add_test( NAME 3dvarfgat
 
 soca_add_test( NAME 3dhyb
                EXE  soca_3dvar.x
-               TOL  4e-4 0
+               TOL  5e-4 0
                TEST_DEPENDS test_soca_static_socaerror_init
                             test_soca_parameters_bump_loc )
 

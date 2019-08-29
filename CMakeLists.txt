@@ -37,13 +37,18 @@ set( SOCA_LINKER_LANGUAGE CXX )
 ################################################################################
 # Dependencies
 ################################################################################
-# fckit
-ecbuild_use_package( PROJECT fckit VERSION 0.4.1 REQUIRED )
-include_directories( ${FCKIT_INCLUDE_DIRS} )
-
 # Boost
 set( Boost_MINIMUM_VERSION "1.47" )
 include_directories( ${Boost_INCLUDE_DIR} )
+
+# eckit
+ecbuild_use_package( PROJECT eckit VERSION 1.1.0 REQUIRED )
+include_directories( ${ECKIT_INCLUDE_DIRS} )
+link_libraries( ${ECKIT_LIBRARIES} )
+
+# fckit
+ecbuild_use_package( PROJECT fckit VERSION 0.4.1 REQUIRED )
+include_directories( ${FCKIT_INCLUDE_DIRS} )
 
 # oops
 ecbuild_use_package( PROJECT oops VERSION 0.1.0 REQUIRED )
@@ -77,7 +82,7 @@ link_libraries(${MPI_CXX_LIBRARIES} ${MPI_Fortran_LIBRARIES})
 ################################################################################
 # Export package info
 ################################################################################
-list( APPEND SOCA_TPLS LAPACK MPI NetCDF eckit fckit )
+list( APPEND SOCA_TPLS LAPACK MPI NetCDF )
 
 set( SOCA_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src
                        ${CMAKE_CURRENT_BINARY_DIR}/src
