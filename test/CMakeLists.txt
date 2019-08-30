@@ -51,7 +51,6 @@ list( APPEND soca_test_ref
   testref/forecast_identity_cice.test
   testref/forecast_identity.test
   testref/forecast_mom6.test
-  testref/gridgen.test
   testref/hofx.test
   testref/hofx3d.test
   testref/parameters_bump_cov_lct.test
@@ -125,16 +124,8 @@ ecbuild_add_resources( TARGET   soca_test_scripts
                        ${soca_test_input}
                        )
 
-# Link to IODA/SOCA Marine obs
-#file(GLOB ioda_obs "${ioda_SOURCE_DIR}/test/testinput/marine/*.nc*")
+# Link to SOCA obs
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/Data)
-#foreach(FILENAME ${ioda_obs} ${soca_obs})
-#     get_filename_component(filename ${FILENAME} NAME )
-#     execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
-#           ${CMAKE_${FILENAME}
-#           ${CMAKE_CURRENT_BINARY_DIR}/Data/${filename} )
-#endforeach(FILENAME)
-
 foreach(FILENAME ${soca_obs})
      get_filename_component(filename ${FILENAME} NAME )
      execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
