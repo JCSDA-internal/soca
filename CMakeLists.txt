@@ -106,7 +106,6 @@ include_directories( ${SOCA_INCLUDE_DIRS} ${SOCA_EXTRA_INCLUDE_DIRS} )
 
 add_subdirectory( src )
 add_subdirectory( test )
-add_subdirectory( exp )
 add_subdirectory( scripts )
 
 # Build Doxygen documentation
