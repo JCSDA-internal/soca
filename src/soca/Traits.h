@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2017 UCAR
+ * (C) Copyright 2017-2019 UCAR
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -14,7 +14,7 @@
 #include "soca/Increment/Increment.h"
 #include "soca/Covariance/ErrorCovariance.h"
 #include "soca/GetValuesTraj/GetValuesTraj.h"
-#include "soca/LocalizationMatrix/LocalizationMatrix.h"
+#include "soca/Localization/Localization.h"
 #include "soca/ModelBias.h"
 #include "soca/ModelBiasIncrement.h"
 #include "soca/ModelBiasCovariance.h"
@@ -26,8 +26,9 @@
 #include "ufo/GeoVaLs.h"
 #include "ufo/LinearObsOperator.h"
 #include "ufo/ObsBias.h"
-#include "ufo/ObsBiasIncrement.h"
 #include "ufo/ObsBiasCovariance.h"
+#include "ufo/ObsBiasIncrement.h"
+#include "ufo/ObsDiagnostics.h"
 #include "ufo/ObsOperator.h"
 #include "ufo/Locations.h"
 
@@ -47,18 +48,19 @@ struct Traits {
   typedef soca::ModelBias           ModelAuxControl;
   typedef soca::ModelBiasIncrement  ModelAuxIncrement;
   typedef soca::ModelBiasCovariance ModelAuxCovariance;
-  typedef soca::LocalizationMatrix  LocalizationMatrix;
+  typedef soca::Localization        Localization;
 
   typedef ufo::ObsBias              ObsAuxControl;
-  typedef ufo::ObsBiasIncrement     ObsAuxIncrement;
   typedef ufo::ObsBiasCovariance    ObsAuxCovariance;
+  typedef ufo::ObsBiasIncrement     ObsAuxIncrement;
+  typedef ufo::ObsDiagnostics       ObsDiagnostics;
   //  typedef ufo::ObsCheck             ObsCheck;
   typedef ufo::ObsOperator          ObsOperator;
   typedef ufo::LinearObsOperator    LinearObsOperator;
   typedef ufo::GeoVaLs              GeoVaLs;
-  typedef ufo::Locations           Locations;
-  typedef ioda::ObsSpace             ObsSpace;
-  typedef ioda::ObsVector            ObsVector;
+  typedef ufo::Locations            Locations;
+  typedef ioda::ObsSpace            ObsSpace;
+  typedef ioda::ObsVector           ObsVector;
   template <typename DATA> using ObsDataVector = ioda::ObsDataVector<DATA>;
 };
 
