@@ -7,12 +7,12 @@
 
 #include "soca/Traits.h"
 #include "oops/runs/HofX3D.h"
-#include "soca/instantiateObsFilterFactory.h"
+#include "ufo/instantiateObsFilterFactory.h"
 #include "soca/Run/Run.h"
 
 int main(int argc,  char ** argv) {
   soca::Run run(argc, argv);
-  soca::instantiateObsFilterFactory();
+  ufo::instantiateObsFilterFactory<soca::Traits>();
   oops::HofX3D<soca::Traits> hofx;
   run.execute(hofx);
   return 0;
