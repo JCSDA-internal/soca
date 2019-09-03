@@ -12,7 +12,7 @@ module soca_horizfilt_mod
   use kinds
   use mpp_domains_mod, only : mpp_update_domains, mpp_update_domains_ad
   use oobump_mod, only: bump_read_conf
-  use soca_fields
+  use soca_fields_mod
   use soca_geom_mod_c
   use soca_geom_mod, only : soca_geom
   use soca_utils

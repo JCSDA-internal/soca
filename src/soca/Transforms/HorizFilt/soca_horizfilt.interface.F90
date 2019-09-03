@@ -1,18 +1,19 @@
 ! (C) Copyright 2009-2016 ECMWF.
-! 
+!
 ! This software is licensed under the terms of the Apache Licence Version 2.0
-! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
-! In applying this licence, ECMWF does not waive the privileges and immunities 
+! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+! In applying this licence, ECMWF does not waive the privileges and immunities
 ! granted to it by virtue of its status as an intergovernmental organisation nor
 ! does it submit to any jurisdiction.
 
 module c_soca_horizfilt_mod
   use iso_c_binding
+  use fckit_configuration_module, only: fckit_configuration
   use soca_horizfilt_mod
   use soca_geom_mod_c, only: soca_geom_registry
-  use soca_geom_mod, only : soca_geom  
+  use soca_geom_mod, only : soca_geom
   use soca_fields_mod_c, only: soca_field_registry
-  use soca_fields
+  use soca_fields_mod
   use variables_mod
 
   implicit none
@@ -37,14 +38,14 @@ contains
 
   ! ------------------------------------------------------------------------------
   !> Setup for the filtering operator
-  
+
   subroutine c_soca_horizfilt_setup(c_key_self, c_conf, c_key_geom, c_vars) &
        & bind (c,name='soca_horizfilt_setup_f90')
     integer(c_int), intent(inout) :: c_key_self   !< The filtering structure
     type(c_ptr),       intent(in) :: c_conf       !< The configuration
     integer(c_int),    intent(in) :: c_key_geom   !< Geometry
     type(c_ptr),       intent(in) :: c_vars       !< List of variables
-    
+
     type(soca_horizfilt_type), pointer :: self
     type(soca_geom),           pointer :: geom
     type(oops_vars)                    :: vars
@@ -53,7 +54,7 @@ contains
     call soca_horizfilt_registry%init()
     call soca_horizfilt_registry%add(c_key_self)
     call soca_horizfilt_registry%get(c_key_self, self)
-    call oops_vars_create(c_vars, vars)
+    call oops_vars_create(fckit_configuration(c_vars), vars)
     call soca_horizfilt_setup(self, c_conf, geom, vars)
 
   end subroutine c_soca_horizfilt_setup
@@ -79,7 +80,7 @@ contains
   subroutine c_soca_horizfilt_mult(c_key_self, c_key_in, c_key_out, c_key_geom) bind(c,name='soca_horizfilt_mult_f90')
     integer(c_int), intent(inout) :: c_key_self  !< The filtering structure
     integer(c_int), intent(in)    :: c_key_in    !<    "   to Increment in
-    integer(c_int), intent(in)    :: c_key_out   !<    "   to Increment out 
+    integer(c_int), intent(in)    :: c_key_out   !<    "   to Increment out
     integer(c_int), intent(in)    :: c_key_geom  !< Geometry
 
     type(soca_horizfilt_type),   pointer :: self
@@ -103,7 +104,7 @@ contains
   subroutine c_soca_horizfilt_mult_ad(c_key_self, c_key_in, c_key_out, c_key_geom) bind(c,name='soca_horizfilt_multad_f90')
     integer(c_int), intent(inout) :: c_key_self  !< The filtering structure
     integer(c_int), intent(in)    :: c_key_in    !<    "   to Increment in
-    integer(c_int), intent(in)    :: c_key_out   !<    "   to Increment out 
+    integer(c_int), intent(in)    :: c_key_out   !<    "   to Increment out
     integer(c_int), intent(in)    :: c_key_geom  !< Geometry
 
     type(soca_horizfilt_type),   pointer :: self
@@ -119,5 +120,5 @@ contains
     call soca_horizfilt_multad(self, xin, xout, geom) !< xout = C.xout
 
   end subroutine c_soca_horizfilt_mult_ad
-  
+
 end module c_soca_horizfilt_mod
