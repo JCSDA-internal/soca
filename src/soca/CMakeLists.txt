@@ -108,7 +108,6 @@ Transforms/VertConv/VertConv.h
 Transforms/VertConv/soca_vertconv.interface.F90
 Transforms/VertConv/soca_vertconv_mod.F90
 
-instantiateObsFilterFactory.h
 Traits.h
 Fortran.h
 

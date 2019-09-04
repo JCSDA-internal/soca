@@ -1,5 +1,0 @@
-# Basic parameters for soca/oops 3DVAR
-
-start_date: '2016-01-02T09:00:00Z'
-window_length: 6 #[hours]
-number_of_outer_loops: 1
