@@ -27,9 +27,9 @@ namespace soca {
     const eckit::Configuration * configc = &conf;
     const eckit::Configuration * confvars = &vars_.toFortran();
     soca_horizfilt_setup_f90(keyFtnConfig_,
-			     &configc,
-			     geom_->toFortran(),
-			     &confvars);
+                             &configc,
+                             geom_->toFortran(),
+                             &confvars);
   }
   // -----------------------------------------------------------------------------
   HorizFilt::~HorizFilt() {
@@ -37,11 +37,11 @@ namespace soca {
   }
   // -----------------------------------------------------------------------------
   void HorizFilt::multiply(const Increment & dxa, Increment & dxm) const {
-    //dxm = dxa;
+    dxm = dxa;
     soca_horizfilt_mult_f90(keyFtnConfig_,
-    			    dxa.fields().toFortran(),
-    			    dxm.fields().toFortran(),
-    			    geom_->toFortran());
+                            dxa.fields().toFortran(),
+                            dxm.fields().toFortran(),
+                            geom_->toFortran());
 
   }
   // -----------------------------------------------------------------------------
@@ -51,11 +51,11 @@ namespace soca {
   }
   // -----------------------------------------------------------------------------
   void HorizFilt::multiplyAD(const Increment & dxm, Increment & dxa) const {
-    //dxa = dxm;
+    dxa = dxm;
     soca_horizfilt_multad_f90(keyFtnConfig_,
-    			      dxm.fields().toFortran(),
-   			      dxa.fields().toFortran(),
-    			      geom_->toFortran());
+                              dxm.fields().toFortran(),
+                              dxa.fields().toFortran(),
+                              geom_->toFortran());
   }
   // -----------------------------------------------------------------------------
   void HorizFilt::multiplyInverseAD(const Increment & dxa, Increment & dxm)
