@@ -96,6 +96,10 @@ subroutine geom_init(self, f_conf)
 
   if ( f_conf%has("read_soca_grid") ) &
       call geom_read(self)
+      print *,'before lon = ',self%lon(:,1)
+
+
+      print *,'after lon = ',self%lon(:,1)
 
   ! Set output option for local geometry
   if ( f_conf%has("save_local_domain") ) &
@@ -412,6 +416,12 @@ subroutine geom_read(self)
   call restore_state(geom_restart, directory='')
   call free_restart_type(geom_restart)
   call fms_io_exit()
+
+  ! Halo update
+  call mpp_update_domains(self%lon, self%Domain%mpp_domain)
+  call mpp_update_domains(self%lat, self%Domain%mpp_domain)
+  call mpp_update_domains(self%mask2d, self%Domain%mpp_domain)
+  call mpp_update_domains(self%cell_area, self%Domain%mpp_domain)
 
 end subroutine geom_read
 

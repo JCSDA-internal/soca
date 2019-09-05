@@ -185,7 +185,7 @@ contains
        select case (trim(self%vars%fldnames(ivar)))
 
        case ("ssh")
-          call soca_filt2d_ad(self, dxin%ssh, dxout%ssh, geom)
+          call soca_filt2d(self, dxin%ssh, dxout%ssh, geom)
 
        case ("tocn")
           do k = 1, geom%nzo
@@ -230,29 +230,46 @@ contains
     type(soca_geom),                      intent(in) :: geom
 
     integer :: i, j
+    real(kind=kind_real), allocatable :: dxtmp(:,:)
 
-    dxout = 0.0_kind_real
+    ! Make a temporary copy of dxin
+    allocate(dxtmp(self%isd:self%ied,self%jsd:self%jed))
+    dxtmp = dxin
 
+    ! Update halo points of input array
+    dxtmp=0.0
+    dxtmp(self%isc:self%iec,self%jsc:self%jec)=1.0
+    print *,'before dxtmp:',sum(dxtmp)
+    call mpp_update_domains(dxtmp, geom%Domain%mpp_domain, complete=.true.)
+    print *,'after dxtmp:',sum(dxtmp)
     ! 9-point weighted average
+    dxout = 0.0_kind_real
     do i = self%isc, self%iec
        do j = self%jsc, self%jec
           if (geom%mask2d(i,j)==1) then
              dxout(i,j) = &
-               self%wgh(i,j,-1,1)*geom%mask2d(i-1,j+1)*dxin(i-1,j+1) + &
-               self%wgh(i,j,0,1)*geom%mask2d(i,j+1)*dxin(i,j+1) + &
-               self%wgh(i,j,1,1)*geom%mask2d(i+1,j+1)*dxin(i+1,j+1) + &
-               self%wgh(i,j,-1,0)*geom%mask2d(i-1,j)*dxin(i-1,j) + &
-               self%wgh(i,j,0,0)*geom%mask2d(i,j)*dxin(i,j) + &
-               self%wgh(i,j,1,0)*geom%mask2d(i+1,j)*dxin(i+1,j) + &
-               self%wgh(i,j,-1,-1)*geom%mask2d(i-1,j-1)*dxin(i-1,j-1) + &
-               self%wgh(i,j,0,-1)*geom%mask2d(i,j-1)*dxin(i,j-1) + &
-               self%wgh(i,j,1,-1)*geom%mask2d(i+1,j-1)*dxin(i+1,j-1)
+               self%wgh(i,j,-1,1)*geom%mask2d(i-1,j+1)*dxtmp(i-1,j+1) + &
+               self%wgh(i,j,0,1)*geom%mask2d(i,j+1)*dxtmp(i,j+1) + &
+               self%wgh(i,j,1,1)*geom%mask2d(i+1,j+1)*dxtmp(i+1,j+1) + &
+               self%wgh(i,j,-1,0)*geom%mask2d(i-1,j)*dxtmp(i-1,j) + &
+               self%wgh(i,j,0,0)*geom%mask2d(i,j)*dxtmp(i,j) + &
+               self%wgh(i,j,1,0)*geom%mask2d(i+1,j)*dxtmp(i+1,j) + &
+               self%wgh(i,j,-1,-1)*geom%mask2d(i-1,j-1)*dxtmp(i-1,j-1) + &
+               self%wgh(i,j,0,-1)*geom%mask2d(i,j-1)*dxtmp(i,j-1) + &
+               self%wgh(i,j,1,-1)*geom%mask2d(i+1,j-1)*dxtmp(i+1,j-1)
           end if
        end do
     end do
 
+    !dxout = 0.0
+    !dxout(self%isc:self%iec,self%jsc:self%jec)=1.0
+    print *,'before:',sum(dxout), sum(dxin)
     ! Update halo
     call mpp_update_domains(dxout, geom%Domain%mpp_domain, complete=.true.)
+    print *,'after:',sum(dxout), sum(dxin)
+    !print *,'dxout=',dxout(:1,1:10)
+    !print *,'dxin=',dxin(:1,1:10)
+    !print *,'dxtmp=',dxtmp(:1,1:10)
 
   end subroutine soca_filt2d
 
@@ -285,7 +302,7 @@ contains
     end do
 
     ! Update inner grid from halo
-    call mpp_update_domains(dxout, geom%Domain%mpp_domain, complete=.true.)
+    !call mpp_update_domains(dxout, geom%Domain%mpp_domain, complete=.true.)
 
     !call mpp_update_domains_ad(dxout, geom%Domain%mpp_domain)
 
