@@ -79,7 +79,7 @@ subroutine interp_init(self, mod_lon, mod_lat, mod_mask, obs_lon, obs_lat, bumpi
     bump%nam%obsop_interp = 'bilin'     ! Interpolation type (bilinear)
     bump%nam%default_seed = .true.
     bump%nam%new_obsop = .true.
-    bump%nam%verbosity = 'main'
+    bump%nam%verbosity = 'none'
     bump%nam%write_obsop = .false.
     bump%nam%sam_write = .false.
     bump%nam%strategy = 'specific_univariate'
