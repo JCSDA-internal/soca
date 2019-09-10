@@ -1,10 +1,8 @@
-! (C) Copyright 2017- UCAR.
+! (C) Copyright 2017-2019 UCAR.
 !
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
 
-!> Structure holding configuration variables for the 3d error
-!! horizfilt matrices of the SOCA analysis.
 
 module soca_horizfilt_mod
   use config_mod
@@ -45,7 +43,6 @@ module soca_horizfilt_mod
   ! ------------------------------------------------------------------------------
 contains
   ! ------------------------------------------------------------------------------
-
   !> Setup for the horizfilt operator
 
   subroutine soca_horizfilt_setup(self, c_conf, geom, vars)
@@ -59,29 +56,12 @@ contains
     logical :: init_seaice, init_ocean
     real(kind=kind_real) :: sum_dist, dist(-1:1,-1:1), sum_w
 
-    ! <M dx1, dx2> - <dx1, M^T dx2> = 0
-    real(kind=kind_real), allocatable :: dx1(:,:), dx2(:,:), mdx1(:,:),mtdx2(:,:)
-    real(kind=kind_real) :: dotprod
-    integer :: rseed=1
-
     ! Setup list of variables to apply filtering on
     self%vars = vars
 
     ! Indices for compute/data domain
     self%isd = geom%isd ;  self%ied = geom%ied ; self%jsd = geom%jsd; self%jed = geom%jed
     self%isc = geom%isc ;  self%iec = geom%iec ; self%jsc = geom%jsc; self%jec = geom%jec
-
-    ! HACK: dot prod test for mpp_update_domains
-    allocate(dx1(self%isd:self%ied,self%jsd:self%jed),dx2(self%isd:self%ied,self%jsd:self%jed))
-    allocate(mdx1(self%isd:self%ied,self%jsd:self%jed),mtdx2(self%isd:self%ied,self%jsd:self%jed))
-    call normal_distribution(dx1,  0.0_kind_real, 1.0_kind_real, rseed)
-    call normal_distribution(dx2,  0.0_kind_real, 1.0_kind_real, rseed)
-    mdx1=dx1
-    call mpp_update_domains(mdx1, geom%Domain%mpp_domain)!, complete=.true.)
-    mtdx2=dx2
-    call mpp_update_domains_ad(mtdx2, geom%Domain%mpp_domain)!, complete=.true.)
-    print *,'------------------------------------------'
-    print *,'dot prod test:',sum(mdx1*dx2),sum(dx1*mtdx2)
 
     ! Allocate and compute filtering weights
     allocate(self%wgh(self%isd:self%ied,self%jsd:self%jed,-1:1,-1:1))
@@ -120,7 +100,6 @@ contains
   end subroutine soca_horizfilt_setup
 
   ! ------------------------------------------------------------------------------
-
   !> Delete horizfilt
 
   subroutine soca_horizfilt_delete(self)
@@ -132,7 +111,7 @@ contains
   end subroutine soca_horizfilt_delete
 
   ! ------------------------------------------------------------------------------
-
+  ! Forward filtering
   subroutine soca_horizfilt_mult(self, dxin, dxout, geom)
     class(soca_horizfilt_type), intent(inout) :: self  !< The horizfilt structure
     type(soca_field),              intent(in) :: dxin  !< Input: Increment
@@ -186,7 +165,7 @@ contains
   end subroutine soca_horizfilt_mult
 
   ! ------------------------------------------------------------------------------
-
+  !> Backward filtering
   subroutine soca_horizfilt_multad(self, dxin, dxout, geom)
     class(soca_horizfilt_type), intent(inout) :: self  !< The horizfilt structure
     type(soca_field),              intent(in) :: dxin  !< Input:
@@ -240,7 +219,7 @@ contains
   end subroutine soca_horizfilt_multad
 
   ! ------------------------------------------------------------------------------
-
+  !> Forward filtering for 2D array
   subroutine soca_filt2d(self, dxin, dxout, geom)
     class(soca_horizfilt_type),           intent(in) :: self
     real(kind=kind_real),    allocatable, intent(in) :: dxin(:,:)
@@ -252,15 +231,16 @@ contains
 
     ! Make a temporary copy of dxin
     allocate(dxtmp(self%isd:self%ied,self%jsd:self%jed))
-    dxtmp = dxin
+    dxtmp = 0.0_kind_real
+    dxtmp(self%isc:self%iec,self%jsc:self%jec) = dxin(self%isc:self%iec,self%jsc:self%jec)
 
     ! Update halo points of input array
     call mpp_update_domains(dxtmp, geom%Domain%mpp_domain, complete=.true.)
 
     ! 9-point distance weighted average
     dxout = 0.0_kind_real
-    do i = self%isc+1, self%iec-1
-       do j = self%jsc+1, self%jec-1
+    do i = self%isc, self%iec
+       do j = self%jsc, self%jec
           if (geom%mask2d(i,j)==1) then
              dxout(i,j) = &
                self%wgh(i,j,-1,1)*dxtmp(i-1,j+1) + &
@@ -284,7 +264,7 @@ contains
   end subroutine soca_filt2d
 
   ! ------------------------------------------------------------------------------
-
+  !> Backward filtering for 2D array
   subroutine soca_filt2d_ad(self, dxin, dxout, geom)
     class(soca_horizfilt_type),           intent(in) :: self
     real(kind=kind_real),    allocatable, intent(in) :: dxin(:,:)
@@ -296,12 +276,13 @@ contains
 
     ! Make a temporary copy of dxin
     allocate(dxtmp(self%isd:self%ied,self%jsd:self%jed))
-    dxtmp = dxin
+    dxtmp = 0.0_kind_real
+    dxtmp(self%isc:self%iec,self%jsc:self%jec) = dxin(self%isc:self%iec,self%jsc:self%jec)
 
     dxout = 0.0_kind_real
     ! Adjoint of 9-point weighted average
-    do i =  self%iec-1, self%isc+1, -1
-       do j = self%jec-1, self%jsc+1, -1
+    do i =  self%iec, self%isc, -1
+       do j = self%jec, self%jsc, -1
           if (geom%mask2d(i,j)==1) then
              dxout(i-1,j+1) = dxout(i-1,j+1) + self%wgh(i,j,-1, 1)*dxtmp(i,j)
              dxout(i,j+1)   = dxout(i,j+1)   + self%wgh(i,j, 0, 1)*dxtmp(i,j)
@@ -317,7 +298,7 @@ contains
     end do
 
     ! Adjoint of halo update
-    !call mpp_update_domains_ad(dxout, geom%Domain%mpp_domain, complete=.true.)
+    call mpp_update_domains_ad(dxout, geom%Domain%mpp_domain, complete=.true.)
 
     deallocate(dxtmp)
 
