@@ -23,12 +23,13 @@ namespace soca {
                  const State & traj,
                  const Geometry & geom,
                  const eckit::Configuration & conf):
-    geom_(new Geometry(geom)), vars_(conf) {
+    geom_(new Geometry(geom)), vars_(conf), traj_(traj) {
     const eckit::Configuration * configc = &conf;
     const eckit::Configuration * confvars = &vars_.toFortran();
     soca_horizfilt_setup_f90(keyFtnConfig_,
                              &configc,
                              geom_->toFortran(),
+                             traj_.fields().toFortran(),
                              &confvars);
   }
   // -----------------------------------------------------------------------------
@@ -42,7 +43,6 @@ namespace soca {
                             dxa.fields().toFortran(),
                             dxm.fields().toFortran(),
                             geom_->toFortran());
-
   }
   // -----------------------------------------------------------------------------
   void HorizFilt::multiplyInverse(const Increment & dxm, Increment & dxa)
@@ -64,7 +64,7 @@ namespace soca {
   }
   // -----------------------------------------------------------------------------
   void HorizFilt::print(std::ostream & os) const {
-    os << "SOCA change variable";
+    os << "SOCA HorizFilt";
   }
   // -----------------------------------------------------------------------------
 }  // namespace soca

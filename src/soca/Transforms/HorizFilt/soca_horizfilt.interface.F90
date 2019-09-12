@@ -1,10 +1,7 @@
-! (C) Copyright 2009-2016 ECMWF.
+! (C) Copyright 2017-2019 UCAR.
 !
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
-! In applying this licence, ECMWF does not waive the privileges and immunities
-! granted to it by virtue of its status as an intergovernmental organisation nor
-! does it submit to any jurisdiction.
 
 module c_soca_horizfilt_mod
   use iso_c_binding
@@ -39,23 +36,30 @@ contains
   ! ------------------------------------------------------------------------------
   !> Setup for the filtering operator
 
-  subroutine c_soca_horizfilt_setup(c_key_self, c_conf, c_key_geom, c_vars) &
-       & bind (c,name='soca_horizfilt_setup_f90')
+  subroutine c_soca_horizfilt_setup(c_key_self, &
+                                    c_conf, &
+                                    c_key_geom, &
+                                    c_key_traj, &
+                                    c_vars) &
+          & bind (c,name='soca_horizfilt_setup_f90')
     integer(c_int), intent(inout) :: c_key_self   !< The filtering structure
     type(c_ptr),       intent(in) :: c_conf       !< The configuration
     integer(c_int),    intent(in) :: c_key_geom   !< Geometry
+    integer(c_int),    intent(in) :: c_key_traj   !< Trajectory
     type(c_ptr),       intent(in) :: c_vars       !< List of variables
 
     type(soca_horizfilt_type), pointer :: self
     type(soca_geom),           pointer :: geom
+    type(soca_field),          pointer :: traj
     type(oops_vars)                    :: vars
 
     call soca_geom_registry%get(c_key_geom, geom)
+    call soca_field_registry%get(c_key_traj, traj)
     call soca_horizfilt_registry%init()
     call soca_horizfilt_registry%add(c_key_self)
     call soca_horizfilt_registry%get(c_key_self, self)
     call oops_vars_create(fckit_configuration(c_vars), vars)
-    call soca_horizfilt_setup(self, c_conf, geom, vars)
+    call soca_horizfilt_setup(self, c_conf, geom, traj, vars)
 
   end subroutine c_soca_horizfilt_setup
 
@@ -74,7 +78,6 @@ contains
   end subroutine c_soca_horizfilt_delete
 
   ! ------------------------------------------------------------------------------
-
   !> Multiply
 
   subroutine c_soca_horizfilt_mult(c_key_self, c_key_in, c_key_out, c_key_geom) bind(c,name='soca_horizfilt_mult_f90')
@@ -98,10 +101,10 @@ contains
   end subroutine c_soca_horizfilt_mult
 
   ! ------------------------------------------------------------------------------
+  !> Multiply adjoint
 
-  !> Multiply
-
-  subroutine c_soca_horizfilt_mult_ad(c_key_self, c_key_in, c_key_out, c_key_geom) bind(c,name='soca_horizfilt_multad_f90')
+  subroutine c_soca_horizfilt_mult_ad(c_key_self, c_key_in, c_key_out, c_key_geom) &
+       bind(c,name='soca_horizfilt_multad_f90')
     integer(c_int), intent(inout) :: c_key_self  !< The filtering structure
     integer(c_int), intent(in)    :: c_key_in    !<    "   to Increment in
     integer(c_int), intent(in)    :: c_key_out   !<    "   to Increment out
@@ -117,7 +120,7 @@ contains
     call soca_field_registry%get(c_key_in, xin)
     call soca_field_registry%get(c_key_out, xout)
 
-    call soca_horizfilt_multad(self, xin, xout, geom) !< xout = C.xout
+    call soca_horizfilt_multad(self, xin, xout, geom) !< xout = C^T.xout
 
   end subroutine c_soca_horizfilt_mult_ad
 

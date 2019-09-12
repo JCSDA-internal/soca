@@ -44,11 +44,11 @@ module soca_horizfilt_mod
 contains
   ! ------------------------------------------------------------------------------
   !> Setup for the horizfilt operator
-
-  subroutine soca_horizfilt_setup(self, c_conf, geom, vars)
+  subroutine soca_horizfilt_setup(self, c_conf, geom, traj, vars)
     class(soca_horizfilt_type), intent(inout) :: self   !< The horizfilt structure
     type(c_ptr),                   intent(in) :: c_conf !< The configuration
     type(soca_geom),               intent(in) :: geom   !< Geometry
+    type(soca_field),              intent(in) :: traj   !< Trajectory
     type(oops_vars),               intent(in) :: vars   !< List of variables
 
     character(len=3)  :: domain
@@ -74,7 +74,9 @@ contains
           do ii = -1,1
              do jj = -1,1
                 dist(ii,jj) = geom%mask2d(i+ii,j+jj) * &
-                     sphere_distance(geom%lon(i,j), geom%lat(i,j), geom%lon(i+ii,j+jj), geom%lat(i+ii,j+jj) )
+                     1.0*sphere_distance(geom%lon(i,j), geom%lat(i,j), geom%lon(i+ii,j+jj), geom%lat(i+ii,j+jj) ) + &
+                     0.0*exp(-(traj%ssh(i,j) - traj%ssh(i+ii,j+jj))**2/(0.01**2))
+                     !
              end do
           end do
 
@@ -88,12 +90,15 @@ contains
 
           ! Normalize
           sum_w = sum(self%wgh(i,j,:,:))
-          do ii = -1,1
-             do jj = -1,1
-                self%wgh(i,j,ii,jj) = self%wgh(i,j,ii,jj) / sum_w
+          if (sum_w>0.0_kind_real) then
+             do ii = -1,1
+                do jj = -1,1
+                   self%wgh(i,j,ii,jj) = self%wgh(i,j,ii,jj) / sum_w
+                end do
              end do
-          end do
-
+          else
+             self%wgh(i,j,ii,jj) = 0.0_kind_real
+          end if
        end do
     end do
 
@@ -101,7 +106,6 @@ contains
 
   ! ------------------------------------------------------------------------------
   !> Delete horizfilt
-
   subroutine soca_horizfilt_delete(self)
     class(soca_horizfilt_type), intent(inout) :: self       !< The horizfilt structure
 
@@ -111,14 +115,14 @@ contains
   end subroutine soca_horizfilt_delete
 
   ! ------------------------------------------------------------------------------
-  ! Forward filtering
+  !> Forward filtering
   subroutine soca_horizfilt_mult(self, dxin, dxout, geom)
     class(soca_horizfilt_type), intent(inout) :: self  !< The horizfilt structure
     type(soca_field),              intent(in) :: dxin  !< Input: Increment
     type(soca_field),           intent(inout) :: dxout !< Output: filtered Increment
     type(soca_geom),               intent(in) :: geom
 
-    integer :: k, ivar
+    integer :: k, ivar, iter
     real(kind=kind_real), allocatable, dimension(:,:) :: dxi, dxo
 
     allocate(dxi(self%isd:self%ied,self%jsd:self%jed))
@@ -128,7 +132,9 @@ contains
        select case (trim(self%vars%fldnames(ivar)))
 
        case ("ssh")
-          call soca_filt2d(self, dxin%ssh, dxout%ssh, geom)
+          dxi = dxin%ssh(:,:)
+          call soca_filt2d(self, dxi, dxo, geom)
+          dxout%ssh(:,:) = dxo
 
        case ("tocn")
           do k = 1, geom%nzo
@@ -172,7 +178,7 @@ contains
     type(soca_field),           intent(inout) :: dxout !< Output:
     type(soca_geom),               intent(in) :: geom
 
-    integer :: k, ivar
+    integer :: k, ivar, iter
     real(kind=kind_real), allocatable, dimension(:,:) :: dxi, dxo
 
     allocate(dxi(self%isd:self%ied,self%jsd:self%jed))
@@ -182,7 +188,9 @@ contains
        select case (trim(self%vars%fldnames(ivar)))
 
        case ("ssh")
-          call soca_filt2d_ad(self, dxin%ssh, dxout%ssh, geom)
+          dxi = dxin%ssh(:,:)
+          call soca_filt2d_ad(self, dxi, dxo, geom)
+          dxout%ssh(:,:) = dxo
 
        case ("tocn")
           do k = 1, geom%nzo
