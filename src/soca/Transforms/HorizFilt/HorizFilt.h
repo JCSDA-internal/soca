@@ -51,6 +51,7 @@ class HorizFilt: public util::Printable {
   boost::shared_ptr<const Geometry> geom_;
   oops::Variables vars_;
   const State & traj_;
+  unsigned int niter_;
 };
 // -----------------------------------------------------------------------------
 

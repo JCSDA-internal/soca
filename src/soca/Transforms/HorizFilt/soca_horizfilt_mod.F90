@@ -6,17 +6,17 @@
 
 module soca_horizfilt_mod
   use config_mod
+  use fckit_configuration_module, only: fckit_configuration
   use fckit_geometry_module, only: sphere_distance
   use iso_c_binding
   use kinds
   use mpp_domains_mod, only : mpp_update_domains, mpp_update_domains_ad
-  use oobump_mod, only: bump_read_conf
   use soca_fields_mod
   use soca_geom_mod_c
   use soca_geom_mod, only : soca_geom
   use soca_utils
-  use type_bump
-  use type_nam
+  use tools_func, only: gc99
+  use type_mpl, only: mpl_type
   use random_mod
   use variables_mod
 
@@ -30,7 +30,11 @@ module soca_horizfilt_mod
   type, public :: soca_horizfilt_type
      type(soca_field),         pointer :: bkg            !< Background field (or first guess)
      type(oops_vars)                   :: vars           !< Apply filtering to vars
-     real(kind=kind_real), allocatable :: wgh(:,:,:,:)     !< Filtering weight
+     real(kind=kind_real), allocatable :: wgh(:,:,:,:)   !< Filtering weight
+     character(len=:),     allocatable :: filter_type    !< Two choices:
+                                                         !<   9 point weighted average: "wavg"
+                                                         !<   flow dependent: "flow"
+     real(kind=kind_real) :: l_ssh  !< Used with "flow" filter, sea surface height decorrelation scale
      integer :: isc, iec, jsc, jec  !< indices of compute domain
      integer :: isd, ied, jsd, jed  !< indices of data domain
    contains
@@ -44,9 +48,9 @@ module soca_horizfilt_mod
 contains
   ! ------------------------------------------------------------------------------
   !> Setup for the horizfilt operator
-  subroutine soca_horizfilt_setup(self, c_conf, geom, traj, vars)
+  subroutine soca_horizfilt_setup(self, f_conf, geom, traj, vars)
     class(soca_horizfilt_type), intent(inout) :: self   !< The horizfilt structure
-    type(c_ptr),                   intent(in) :: c_conf !< The configuration
+    type(fckit_configuration),     intent(in) :: f_conf !< The configuration
     type(soca_geom),               intent(in) :: geom   !< Geometry
     type(soca_field),              intent(in) :: traj   !< Trajectory
     type(oops_vars),               intent(in) :: vars   !< List of variables
@@ -54,10 +58,19 @@ contains
     character(len=3)  :: domain
     integer :: isc, iec, jsc, jec, i, j, ivar, ii, jj
     logical :: init_seaice, init_ocean
-    real(kind=kind_real) :: sum_dist, dist(-1:1,-1:1), sum_w
+    real(kind=kind_real) :: sum_dist, dist(-1:1,-1:1), sum_w, dist_tmp
+    type(mpl_type) :: mpl
+    character(len=4) :: filter_type
 
     ! Setup list of variables to apply filtering on
     self%vars = vars
+
+    ! Get filter type from configuration
+    call f_conf%get_or_die("filter_type", self%filter_type )
+
+    if (self%filter_type=="flow") then
+       call f_conf%get_or_die("l_ssh", self%l_ssh)
+    endif
 
     ! Indices for compute/data domain
     self%isd = geom%isd ;  self%ied = geom%ied ; self%jsd = geom%jsd; self%jed = geom%jed
@@ -73,10 +86,15 @@ contains
           ! Great circle distance
           do ii = -1,1
              do jj = -1,1
-                dist(ii,jj) = geom%mask2d(i+ii,j+jj) * &
-                     1.0*sphere_distance(geom%lon(i,j), geom%lat(i,j), geom%lon(i+ii,j+jj), geom%lat(i+ii,j+jj) ) + &
-                     0.0*exp(-(traj%ssh(i,j) - traj%ssh(i+ii,j+jj))**2/(0.01**2))
-                     !
+                select case (trim(self%filter_type))
+                case ("wavg")
+                   ! Great circle distance
+                   dist_tmp = sphere_distance(geom%lon(i,j), geom%lat(i,j), geom%lon(i+ii,j+jj), geom%lat(i+ii,j+jj) )
+                case ("flow")
+                   ! Following sea surface height
+                   dist_tmp = gc99(mpl, abs((traj%ssh(i,j) - traj%ssh(i+ii,j+jj))/(self%l_ssh)))
+                end select
+                dist(ii,jj) = geom%mask2d(i+ii,j+jj) * dist_tmp
              end do
           end do
 
@@ -311,4 +329,5 @@ contains
     deallocate(dxtmp)
 
   end subroutine soca_filt2d_ad
+
 end module soca_horizfilt_mod

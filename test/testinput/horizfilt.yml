@@ -16,7 +16,9 @@ LinearVariableChangeTests:
 - varchange: HorizFiltSOCA
   toleranceInverse: 1e-12
   testinverse: 0
-  variables: [ssh] #[cicen, hicen, socn, tocn, ssh, hocn]
+  niter: 3
+  filter_type: wavg
+  variables: [cicen, hicen, socn, tocn, ssh, hocn]
   inputVariables:
     variables: *soca_vars
   outputVariables:

@@ -59,7 +59,7 @@ contains
     call soca_horizfilt_registry%add(c_key_self)
     call soca_horizfilt_registry%get(c_key_self, self)
     call oops_vars_create(fckit_configuration(c_vars), vars)
-    call soca_horizfilt_setup(self, c_conf, geom, traj, vars)
+    call soca_horizfilt_setup(self, fckit_configuration(c_conf), geom, traj, vars)
 
   end subroutine c_soca_horizfilt_setup
 

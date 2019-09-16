@@ -63,7 +63,7 @@ Observations:
       simulate:
         variables: [sea_surface_salinity]
     ObsOperator:
-      name: SeaSurfaceSalinity      
+      name: SeaSurfaceSalinity
     Covariance:
       covariance: diagonal
 
@@ -85,7 +85,7 @@ Observations:
       simulate:
         variables: [sea_water_temperature]
     ObsOperator:
-      name: InsituTemperature      
+      name: InsituTemperature
     Covariance:
       covariance: diagonal
 
