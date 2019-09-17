@@ -36,6 +36,7 @@ type :: soca_model
    integer :: nx                !< Zonal grid dimension
    integer :: ny                !< Meridional grid dimension
    integer :: advance_mom6      !< call mom6 step if true
+   logical :: partial_init      !< Partial init of mom6 if true
    real(kind=kind_real) :: dt0  !< dimensional time (seconds)
    type(soca_mom6_config) :: mom6_config  !< MOM6 data structure
    real(kind_real), dimension(2) :: tocn_minmax, socn_minmax  !< min, max values
@@ -50,7 +51,7 @@ contains
 subroutine soca_setup(self)
   type(soca_model), intent(inout) :: self
 
-  call soca_mom6_init(self%mom6_config)
+  call soca_mom6_init(self%mom6_config, partial_init=self%partial_init)
 
 end subroutine soca_setup
 

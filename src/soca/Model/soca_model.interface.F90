@@ -71,6 +71,13 @@ subroutine c_soca_setup(c_conf, c_key_geom, c_key_model) bind (c,name='soca_setu
   ! Setup mom6 advance or identity model
   call f_conf%get_or_die("advance_mom6", model%advance_mom6)
 
+  ! Determine if this is a partial init of mom6
+  if ( f_conf%has("partial_init") ) then
+     call f_conf%get_or_die("partial_init", model%partial_init)
+  else
+     model%partial_init = .false. ! Full init as default
+  end if
+
   ! Setup defaults for clamping values in the model
   if ( f_conf%has("tocn_minmax") ) then
     call f_conf%get_or_die("tocn_minmax", tocn_minmax)
