@@ -8,7 +8,7 @@ module soca_vertconv_mod
 use fckit_configuration_module, only: fckit_configuration
 use kinds, only: kind_real
 use type_mpl, only: mpl_type
-use tools_func, only: gc99
+use tools_func, only: fit_func
 use soca_fields_mod, only: soca_field
 
 implicit none
@@ -117,7 +117,7 @@ subroutine soca_conv (self, convdx, dx)
           convdx%socn(id,jd,j) = 0.0d0
           do k = 1,nl
             dist2 = abs(z(j)-z(k))
-            coef = gc99(mpl, dist2/lz(k))
+            coef = fit_func(mpl, 'gc99', dist2/lz(k))
             convdx%tocn(id,jd,j) = convdx%tocn(id,jd,j) &
               &+ dx%tocn(id,jd,k)*coef
             convdx%socn(id,jd,j) = convdx%socn(id,jd,j) &
@@ -159,7 +159,7 @@ subroutine soca_conv_ad (self, convdx, dx)
         do j = nl, 1, -1
            do k = nl, 1, -1
               dist2 = abs(z(j)-z(k))
-              coef = gc99(mpl, dist2/lz(k))
+              coef = fit_func(mpl, 'gc99', dist2/lz(k))
               dx%tocn(id,jd,k) = dx%tocn(id,jd,k) + coef*convdx%tocn(id,jd,j)
               dx%socn(id,jd,k) = dx%socn(id,jd,k) + coef*convdx%socn(id,jd,j)
            end do
