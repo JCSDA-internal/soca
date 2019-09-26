@@ -1,21 +1,21 @@
 Test     : CostJb   : Nonlinear Jb = 0
-Test     : CostJo   : Nonlinear Jo(ADT) = 194.065, nobs = 100, Jo/n = 1.94065, err = 0.1
-Test     : CostFunction: Nonlinear J = 194.065
-Test     : RPCGMinimizer: reduction in residual norm = 0.603984
+Test     : CostJo   : Nonlinear Jo(ADT) = 214.644, nobs = 100, Jo/n = 2.14644, err = 0.1
+Test     : CostFunction: Nonlinear J = 214.644
+Test     : RPCGMinimizer: reduction in residual norm = 0.403048
 Test     : CostFunction::addIncrement: Analysis: 
 Test     :   Valid time: 2018-04-15T00:00:00Z
-Test     :   cicen   min=   -0.000000   max=    1.000000   mean=    0.255643
-Test     :   hicen   min=   -0.000431   max=    2.923064   mean=    0.160787
+Test     :   cicen   min=   -0.000000   max=    1.000000   mean=    0.255651
+Test     :   hicen   min=   -0.000625   max=    2.923064   mean=    0.160784
 Test     :   hsnon   min=    0.000000   max=    0.608625   mean=    0.036687
-Test     :    socn   min=    0.000000   max=   40.441659   mean=   34.569186
-Test     :    tocn   min=   -1.888390   max=   31.700465   mean=    6.013800
-Test     :     ssh   min=   -2.319329   max=    0.921396   mean=   -0.276942
+Test     :    socn   min=    0.000000   max=   40.441659   mean=   34.573562
+Test     :    tocn   min=   -1.947135   max=   31.700465   mean=    6.010636
+Test     :     ssh   min=   -2.250718   max=    0.921788   mean=   -0.279087
 Test     :    hocn   min=    0.001000   max= 1345.640000   mean=  128.628598
 Test     :      sw   min= -225.097763   max=    0.000000   mean= -110.032311
 Test     :     lhf   min=  -38.137398   max=  256.597656   mean=   64.434146
 Test     :     shf   min=  -58.949295   max=  201.374298   mean=    9.318225
 Test     :      lw   min=    0.000000   max=   88.036087   mean=   48.153824
 Test     :      us   min=    0.004396   max=    0.019658   mean=    0.013258
-Test     : CostJb   : Nonlinear Jb = 3.365299
-Test     : CostJo   : Nonlinear Jo(ADT) = 141.275231, nobs = 100, Jo/n = 1.412752, err = 0.100000
-Test     : CostFunction: Nonlinear J = 144.640530
+Test     : CostJb   : Nonlinear Jb = 4.610809
+Test     : CostJo   : Nonlinear Jo(ADT) = 146.364519, nobs = 100, Jo/n = 1.463645, err = 0.100000
+Test     : CostFunction: Nonlinear J = 150.975328
