@@ -22,8 +22,6 @@ else
    source="ftp://science-pds.cryosat.esa.int/SIR_${radar}_L2/${yr}/${mm}/"
 fi
 
-echo $source
-exit
 pwd=$(pwd)
 d=$out_dir/$date
 mkdir -p $d

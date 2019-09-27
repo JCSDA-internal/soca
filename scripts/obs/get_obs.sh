@@ -4,8 +4,8 @@
 #
 # Modify the start/end dates, and uncomment the desired sources below.
 
-date_start=20180716
-date_end=20180716
+date_start=20190716
+date_end=20190716
 output_path=/scratch2/NCEPDEV/marine/$USER/SOCA/obs_test
 
 
