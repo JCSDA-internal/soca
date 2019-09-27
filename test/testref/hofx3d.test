@@ -12,9 +12,9 @@ Test     :     shf   min=  -58.949295   max=  201.374298   mean=    9.318225
 Test     :      lw   min=    0.000000   max=   88.036087   mean=   48.153824
 Test     :      us   min=    0.004396   max=    0.019658   mean=    0.013258
 Test     : H(x): CoolSkin nobs= 201 Min=-4.180048, Max=25.207414, RMS=19.187170
-Test     : SeaSurfaceTemp nobs= 201 Min=-0.743529, Max=30.636756, RMS=23.326454
-Test     : SeaSurfaceSalinity nobs= 100 Min=14.686840, Max=37.080128, RMS=33.773035
-Test     : ADT nobs= 100 Min=-1.228055, Max=1.409004, RMS=0.731664
-Test     : InsituTemperature nobs= 218 Min=6.667944, Max=30.400120, RMS=21.103220
-Test     : InsituSalinity nobs= 218 Min=31.209987, Max=36.020936, RMS=34.807759
-Test     : SeaIceFraction nobs= 100 Min=0.000000, Max=1.000000, RMS=0.634493
+Test     : SeaSurfaceTemp nobs= 201 Min=-0.743529, Max=30.655820, RMS=23.171631
+Test     : SeaSurfaceSalinity nobs= 100 Min=14.686840, Max=37.067415, RMS=33.593276
+Test     : ADT nobs= 100 Min=-1.232813, Max=1.404247, RMS=0.728042
+Test     : InsituTemperature nobs= 218 Min=6.667499, Max=30.400120, RMS=21.104252
+Test     : InsituSalinity nobs= 218 Min=31.183151, Max=36.020936, RMS=34.805890
+Test     : SeaIceFraction nobs= 100 Min=0.000000, Max=1.000000, RMS=0.633071

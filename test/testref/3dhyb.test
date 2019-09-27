@@ -1,6 +1,6 @@
 Test     : CostJb   : Nonlinear Jb = 0
-Test     : CostJo   : Nonlinear Jo(ADT) = 214.644, nobs = 100, Jo/n = 2.14644, err = 0.1
-Test     : CostFunction: Nonlinear J = 214.644
+Test     : CostJo   : Nonlinear Jo(ADT) = 194.065, nobs = 100, Jo/n = 1.94065, err = 0.1
+Test     : CostFunction: Nonlinear J = 194.065
 Test     : RPCGMinimizer: reduction in residual norm = 0.403048
 Test     : CostFunction::addIncrement: Analysis: 
 Test     :   Valid time: 2018-04-15T00:00:00Z
@@ -17,5 +17,5 @@ Test     :     shf   min=  -58.949295   max=  201.374298   mean=    9.318225
 Test     :      lw   min=    0.000000   max=   88.036087   mean=   48.153824
 Test     :      us   min=    0.004396   max=    0.019658   mean=    0.013258
 Test     : CostJb   : Nonlinear Jb = 4.610809
-Test     : CostJo   : Nonlinear Jo(ADT) = 146.364519, nobs = 100, Jo/n = 1.463645, err = 0.100000
-Test     : CostFunction: Nonlinear J = 150.975328
+Test     : CostJo   : Nonlinear Jo(ADT) = 126.332974, nobs = 100, Jo/n = 1.263330, err = 0.100000
+Test     : CostFunction: Nonlinear J = 130.943783

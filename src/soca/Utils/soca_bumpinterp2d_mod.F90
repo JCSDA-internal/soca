@@ -123,6 +123,7 @@ subroutine interp_init(self, mod_lon, mod_lat, mod_mask, obs_lon, obs_lat, bumpi
   no = size(obs_lon, 1)
   call self%obsop%from(no, obs_lon, obs_lat)
   call self%obsop%run_obsop(bump%mpl,bump%rng,bump%nam,bump%geom)
+  if (bump%nam%default_seed) call bump%rng%reseed(bump%mpl)
 
   self%initialized = .true.
   self%nobs = no
