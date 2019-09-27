@@ -16,18 +16,25 @@ mm=${date:4:2}
 dy=${date:6:2}
 
 out_dir="$3/ice.cryosat_${radar}.esa"
-source="ftp://science-pds.cryosat.esa.int/SIR_${radar}_L2/${yr}/${mm}/"
+if [[ $radar == "GDR" ]]; then
+   source="ftp://science-pds.cryosat.esa.int/SIR_${radar}/${yr}/${mm}/"
+else
+   source="ftp://science-pds.cryosat.esa.int/SIR_${radar}_L2/${yr}/${mm}/"
+fi
 
+echo $source
+exit
 pwd=$(pwd)
 d=$out_dir/$date
 mkdir -p $d
 cd $d
 
 files=$(curl $source -l)
-echo $files
+#echo $files
+
 for f in $files; do
-    # make sure it is the right day
-    if [[ $f == "CS"*$yr$mm$dy*".DBL" ]] || [[ $f == "CS"*$yr$mm$dy*".nc"]]; then
+    # Only keep .dbl or .nc files
+    if [[ $f == *".DBL" ]] || [[ $f == *".nc" ]]; then 
       wget $source/$f 
     fi 
 done
