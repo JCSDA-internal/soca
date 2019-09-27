@@ -126,6 +126,7 @@ script:
   - docker exec jcsda_container bash -c 'cp -r /jcsda/.openmpi/ ~/'
   - docker exec jcsda_container bash -c 'cd /build_container && ecbuild /jcsda/src_repo/ -DSOCA_TESTS_FORC_DEFAULT_TOL=ON' 
   - docker exec jcsda_container bash -c 'cd /build_container/soca && make -j4'
+  - docker exec ulimit -s unlimited
   - date
   - docker exec jcsda_container bash -c 'cd /build_container/soca && ctest -V'
   - date
