@@ -4,9 +4,9 @@
 #
 # Modify the start/end dates, and uncomment the desired sources below.
 
-date_start=20180715
-date_end=20180715
-output_path=/scratch3/NCEPDEV/marine/scrub/$USER/obs_test
+date_start=20180716
+date_end=20180716
+output_path=/scratch2/NCEPDEV/marine/$USER/SOCA/obs_test
 
 
 # start the loop
@@ -41,9 +41,10 @@ while [[ $date -le $date_end ]]; do
     ## ice concentration
     ##------------------------------------------------------------
 #    bash source.nsidc_icec.sh $date $output_path
-    bash source.esa_ice_cryosat.sh LRM $date $output_path
-    bash source.esa_ice_cryosat.sh SAR $date $output_path
-    bash source.esa_ice_cryosat.sh SIN $date $output_path
+    bash source.esa_ice_cryosat.sh GDR $date $output_path
+#    bash source.esa_ice_cryosat.sh LRM $date $output_path
+#    bash source.esa_ice_cryosat.sh SAR $date $output_path
+#    bash source.esa_ice_cryosat.sh SIN $date $output_path
 
     ##------------------------------------------------------------
     ## SST
