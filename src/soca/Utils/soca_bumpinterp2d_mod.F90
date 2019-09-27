@@ -76,7 +76,6 @@ subroutine interp_init(self, mod_lon, mod_lat, mod_mask, obs_lon, obs_lat, bumpi
     ! Initialize bump parameters
     call bump%nam%init()
     bump%nam%prefix = bump_nam_prefix   ! Prefix for files output
-    bump%nam%obsop_interp = 'bilin'     ! Interpolation type (bilinear)
     bump%nam%default_seed = .true.
     bump%nam%new_obsop = .true.
     bump%nam%verbosity = 'none'
@@ -124,6 +123,7 @@ subroutine interp_init(self, mod_lon, mod_lat, mod_mask, obs_lon, obs_lat, bumpi
   no = size(obs_lon, 1)
   call self%obsop%from(no, obs_lon, obs_lat)
   call self%obsop%run_obsop(bump%mpl,bump%rng,bump%nam,bump%geom)
+  if (bump%nam%default_seed) call bump%rng%reseed(bump%mpl)
 
   self%initialized = .true.
   self%nobs = no
