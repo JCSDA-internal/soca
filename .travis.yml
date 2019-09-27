@@ -33,6 +33,7 @@ before_install:
 #  default/develop branch for these repos
   - git clone https://github.com/jcsda/GSW-Fortran.git ${REPO_SOURCE_DIR}/soca-bundle/gsw
   - git clone https://github.com/jcsda/fckit.git ${REPO_SOURCE_DIR}/soca-bundle/fckit
+  - git clone https://github.com/jcsda/soca-config.git ${REPO_SOURCE_DIR}/soca-bundle/soca-config
 
 #  specific branch for these repo
   - git clone -b dev/master-ecbuild https://github.com/JCSDA/FMS.git ${REPO_SOURCE_DIR}/soca-bundle/fms
