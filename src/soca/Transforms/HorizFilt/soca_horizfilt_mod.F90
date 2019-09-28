@@ -15,7 +15,7 @@ module soca_horizfilt_mod
   use soca_geom_mod_c
   use soca_geom_mod, only : soca_geom
   use soca_utils
-  use tools_func, only: gc99
+  use tools_func, only: fit_func
   use type_mpl, only: mpl_type
   use random_mod
   use variables_mod
@@ -92,7 +92,8 @@ contains
                    dist_tmp = sphere_distance(geom%lon(i,j), geom%lat(i,j), geom%lon(i+ii,j+jj), geom%lat(i+ii,j+jj) )
                 case ("flow")
                    ! Following sea surface height
-                   dist_tmp = gc99(mpl, abs((traj%ssh(i,j) - traj%ssh(i+ii,j+jj))/(self%l_ssh)))
+                   dist_tmp = fit_func(mpl, 'gc99', &
+                                       abs((traj%ssh(i,j) - traj%ssh(i+ii,j+jj))/(self%l_ssh)))
                 end select
                 dist(ii,jj) = geom%mask2d(i+ii,j+jj) * dist_tmp
              end do
