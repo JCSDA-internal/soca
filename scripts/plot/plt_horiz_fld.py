@@ -15,7 +15,7 @@ def plothor(x, y, z, map, varname='', clim=[-1,1], proj_type='reg', plot_type='p
     b=clim[1]
 
     if  proj_type == 'reg':
-        proj = ccrs.Mollweide()
+        proj = ccrs.Robinson() #Mollweide()
     if proj_type == 'north':
         proj = ccrs.NorthPolarStereo()
 
