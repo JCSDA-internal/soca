@@ -12,8 +12,20 @@ TestDate: &date 2018-04-15T00:00:00Z
 InterpTest:
   tolerance: 1e-12
   Locations:
-    lats: [  38.5,   0.0,   0.0,   2.0,  -2.0,  -2.0,   2.0, 89.0, -67.0]
-    lons: [ -14.5, -15.0, -25.0, -15.0, -25.0, -15.0, -25.0,  0.0,   0.0]
+    window_begin: 2018-04-14T00:00:00Z
+    window_end: 2018-04-15T00:00:00Z
+    ObsSpace:
+      name: Random Locations
+      simulate:
+        variables: []
+      Generate:
+        nobs: 10
+        lat1: -20
+        lat2: 20
+        lon1: -150
+        lon2: -140
+        obs_errors: []
+        random_seed: 1
   GeoVaLs:
     variables:
     - sea_water_potential_temperature
