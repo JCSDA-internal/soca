@@ -19,8 +19,9 @@ while [[ $date -le $date_end ]]; do
     ## Note: best off using just the RSS 70km L2 for now
     ##------------------------------------------------------------
     bash source.jpl_smap.sh rss_70km $date $output_path
-    bash source.jpl_smap.sh rss_40km $date $output_path
-    bash source.jpl_smap.sh jpl $date $output_path
+#    bash source.jpl_smap.sh rss_40km $date $output_path
+#    bash source.jpl_smap.sh jpl $date $output_path
+
 
     ##------------------------------------------------------------
     ## ADT
@@ -52,12 +53,13 @@ while [[ $date -le $date_end ]]; do
     ##------------------------------------------------------------
     bash source.ghrsst_sst.sh amsr2 l3u $date $output_path
     bash source.ghrsst_sst.sh gmi l3u $date $output_path
-    bash source.ghrsst_sst.sh goes16 l3u $date $output_path
+#    bash source.ghrsst_sst.sh goes16 l3u $date $output_path
     bash source.ghrsst_sst.sh windsat l3u $date $output_path
-    bash source.nesdis_sst_viirs.sh l2p $date $output_path
+#    bash source.nesdis_sst_viirs.sh l2p $date $output_path
     bash source.nesdis_sst_viirs.sh l3u $date $output_path
-    bash source.nesdis_sst_avhrr.sh l2p $date $output_path
+#    bash source.nesdis_sst_avhrr.sh l2p $date $output_path
     bash source.nesdis_sst_avhrr.sh l3u $date $output_path
+
 date=$(date -d "$date + 1 day" +%Y%m%d)
 
 done
