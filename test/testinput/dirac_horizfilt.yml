@@ -28,7 +28,7 @@ Covariance:
 
   - varchange: HorizFiltSOCA
     variables: [tocn, socn, ssh, cicen, hicen]
-    niter: 3
+    niter: 1
     filter_type: wavg
     inputVariables:
       variables: *soca_vars
@@ -37,7 +37,7 @@ Covariance:
 
   - varchange: HorizFiltSOCA
     variables: [tocn, socn, ssh, cicen, hicen]
-    niter: 3
+    niter: 1
     filter_type: flow
     l_ssh: 0.5
     inputVariables:
