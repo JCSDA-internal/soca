@@ -12,6 +12,7 @@ use fms_io_mod, only: fms_io_init, fms_io_exit, &
 use fms_mod, only: read_data
 use kinds, only: kind_real
 use datetime_mod, only: datetime
+use mpp_domains_mod, only : mpp_update_domains
 use random_mod, only: normal_distribution
 use soca_geom_mod, only: soca_geom
 use soca_fieldsutils_mod, only: soca_genfilename
@@ -28,6 +29,7 @@ type :: soca_seaice_type
    real(kind=kind_real), allocatable :: vicen(:,:,:) !< Ice volume
    real(kind=kind_real), allocatable :: vsnon(:,:,:) !< Snow volume
    integer :: isd, ied, jsd, jed                 !< Data domain indices
+   integer :: isc, iec, jsc, jec                 !< Compute domain indices
    integer :: ncat                               !< Number of categories
    ! TODO: Get densities of ice and snow from config
    real(kind=kind_real) :: soca_rho_ice  = 905.0 !< [kg/m3]
@@ -68,6 +70,12 @@ subroutine soca_seaice_create(self, geom)
   ied = geom%ied ; self%ied = ied
   jsd = geom%jsd ; self%jsd = jsd
   jed = geom%jed ; self%jed = jed
+
+  ! Indices for compute domain (no halo)
+  self%isc = geom%isc
+  self%iec = geom%iec
+  self%jsc = geom%jsc
+  self%jec = geom%jec
 
   ! Get number of categories
   ncat = geom%ncat ; self%ncat = ncat
@@ -170,24 +178,31 @@ subroutine soca_seaice_add_incr(self, incr)
   real(kind=kind_real) :: min_ice = 1e-6_kind_real
   integer :: k
   integer :: isd, ied, jsd, jed, ncat
+  integer :: isc, iec, jsc, jec
 
   ! Short cut to domain indices
   isd = self%isd
   ied = self%ied
   jsd = self%jsd
   jed = self%jed
-  ncat = self%ncat
 
+  isc = self%isc
+  iec = self%iec
+  jsc = self%jsc
+  jec = self%jec
+
+  ncat = self%ncat
+  print *,'---------------------------- max cicen = ',maxval(self%cicen)
   ! Allocate memory for temporary arrays
-  allocate(aice_bkg(isd:ied,jsd:jed))
-  allocate(aice_ana(isd:ied,jsd:jed))
-  allocate(aice_incr(isd:ied,jsd:jed))
-  allocate(alpha(isd:ied,jsd:jed))
+  allocate(aice_bkg(isc:iec,jsc:jec));  aice_bkg  = 0.0_kind_real
+  allocate(aice_ana(isc:iec,jsc:jec));  aice_ana  = 0.0_kind_real
+  allocate(aice_incr(isc:iec,jsc:jec)); aice_incr = 0.0_kind_real
+  allocate(alpha(isc:iec,jsc:jec));     alpha = 0.0_kind_real
 
   ! Allocate ice and snow volume
   if (.not.(allocated(self%vicen))) then
-     allocate(self%vicen(isd:ied,jsd:jed,1:ncat))
-     allocate(self%vsnon(isd:ied,jsd:jed,1:ncat))
+     allocate(self%vicen(isd:ied,jsd:jed,1:ncat)); self%vicen = 0.0_kind_real
+     allocate(self%vsnon(isd:ied,jsd:jed,1:ncat)); self%vsnon = 0.0_kind_real
   end if
 
   ! Compute ice and snow volume
@@ -195,8 +210,8 @@ subroutine soca_seaice_add_incr(self, incr)
   self%vsnon = self%hsnon * self%cicen(:,:,2:)
 
   ! Initialize aggregate fields
-  aice_bkg  = sum(self%cicen(:,:,2:), dim=3)
-  aice_incr = sum(incr%cicen(:,:,2:), dim=3)
+  aice_bkg  = sum(self%cicen(isc:iec,jsc:jec,2:ncat), dim=3)
+  aice_incr = sum(incr%cicen(isc:iec,jsc:jec,2:ncat), dim=3)
   aice_ana  = aice_bkg + aice_incr
 
   ! Fix out of bound values in aggregate ice fraction analysis
@@ -231,12 +246,13 @@ subroutine soca_seaice_add_incr(self, incr)
   self%vsnon = self%hsnon * self%cicen(:,:,2:)
 
   ! "Add" fraction increment and update volumes accordingly
+  print *,'before max cicen = ',maxval(self%cicen)
   do k = 1, self%ncat
-     self%cicen(:,:,k+1) = alpha * self%cicen(:,:,k+1)
-     self%vicen(:,:,k) = alpha * self%vicen(:,:,k)
-     self%vsnon(:,:,k) = alpha * self%vsnon(:,:,k)
+     self%cicen(isc:iec,jsc:jec,k+1) = alpha * self%cicen(isc:iec,jsc:jec,k+1)
+     self%vicen(isc:iec,jsc:jec,k) = alpha * self%vicen(isc:iec,jsc:jec,k)
+     self%vsnon(isc:iec,jsc:jec,k) = alpha * self%vsnon(isc:iec,jsc:jec,k)
   end do
-
+  print *,'after max cicen = ',maxval(self%cicen)
   ! Clean-up memory
   deallocate(aice_bkg, aice_ana, aice_incr, alpha)
 
@@ -331,7 +347,7 @@ subroutine soca_seaice_read_rst(self, f_conf, geom, fldnames)
      call self%zeros()
      return
   end if
-
+  call self%zeros()
   select case(seaice_model)
   case('sis2')
      call fms_io_init()
@@ -393,6 +409,16 @@ subroutine soca_seaice_read_rst(self, f_conf, geom, fldnames)
   case default
      call abor1_ftn("soca_seaice_mod: Reading for seaice model "//trim(seaice_model)//" not implemented")
   end select
+
+  ! Update halo
+  !call mpp_update_domains(self%cicen, geom%Domain%mpp_domain)
+  !call mpp_update_domains(self%hicen, geom%Domain%mpp_domain)
+  !call mpp_update_domains(self%hsnon, geom%Domain%mpp_domain)
+
+  print *,'********************************************************'
+  print *,'after reading max cicen = ',maxval(self%cicen)
+  print *,'after reading max hicen = ',maxval(self%hicen)
+  print *,'after reading max hsnon = ',maxval(self%hsnon)
 
   if (allocated(str)) deallocate(str)
 
