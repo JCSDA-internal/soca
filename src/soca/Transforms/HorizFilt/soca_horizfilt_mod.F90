@@ -81,8 +81,8 @@ contains
 
     ! Compute distance based weights
     self%wgh = 0.0_kind_real
-    do i = self%isc, self%iec
-       do j = self%jsc, self%jec
+    do j = self%jsc, self%jec
+       do i = self%isc, self%iec
           ! Great circle distance
           do ii = -1,1
              do jj = -1,1
@@ -101,8 +101,8 @@ contains
 
           ! Weighted to distance
           sum_dist=sum(dist)
-          do ii = -1,1
-             do jj = -1,1
+          do jj = -1,1
+             do ii = -1,1
                 self%wgh(i,j,ii,jj) = geom%mask2d(i+ii,j+jj) * ( sum_dist - dist(ii,jj) )
              end do
           end do
@@ -110,8 +110,8 @@ contains
           ! Normalize
           sum_w = sum(self%wgh(i,j,:,:))
           if (sum_w>0.0_kind_real) then
-             do ii = -1,1
-                do jj = -1,1
+             do jj = -1,1
+                do ii = -1,1
                    self%wgh(i,j,ii,jj) = self%wgh(i,j,ii,jj) / sum_w
                 end do
              end do
@@ -264,8 +264,8 @@ contains
 
     ! 9-point distance weighted average
     dxout = 0.0_kind_real
-    do i = self%isc, self%iec
-       do j = self%jsc, self%jec
+    do j = self%jsc, self%jec
+       do i = self%isc, self%iec
           if (geom%mask2d(i,j)==1) then
              dxout(i,j) = &
                self%wgh(i,j,-1,1)*dxtmp(i-1,j+1) + &
@@ -306,8 +306,8 @@ contains
 
     dxout = 0.0_kind_real
     ! Adjoint of 9-point weighted average
-    do i =  self%iec, self%isc, -1
-       do j = self%jec, self%jsc, -1
+    do j = self%jec, self%jsc, -1
+       do i =  self%iec, self%isc, -1
           if (geom%mask2d(i,j)==1) then
              dxout(i-1,j+1) = dxout(i-1,j+1) + self%wgh(i,j,-1, 1)*dxtmp(i,j)
              dxout(i,j+1)   = dxout(i,j+1)   + self%wgh(i,j, 0, 1)*dxtmp(i,j)
