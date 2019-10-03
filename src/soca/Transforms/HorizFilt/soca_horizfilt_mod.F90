@@ -115,8 +115,6 @@ contains
                    self%wgh(i,j,ii,jj) = self%wgh(i,j,ii,jj) / sum_w
                 end do
              end do
-          else
-             self%wgh(i,j,ii,jj) = 0.0_kind_real
           end if
        end do
     end do
