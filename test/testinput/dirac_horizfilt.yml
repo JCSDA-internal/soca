@@ -22,12 +22,12 @@ Covariance:
   mpicom: 2
   strategy: specific_univariate
   date: *date
-  variables: [none] #&soca_vars [cicen, hicen, socn, tocn, ssh, hocn]
+  variables: [none]
 
   variable_changes:
 
   - varchange: HorizFiltSOCA
-    variables: [tocn]
+    variables: [tocn, socn, ssh, cicen, hicen]
     niter: 3
     filter_type: wavg
     inputVariables:
@@ -35,11 +35,21 @@ Covariance:
     outputVariables:
       variables: *soca_vars
 
+  - varchange: HorizFiltSOCA
+    variables: [tocn, socn, ssh, cicen, hicen]
+    niter: 3
+    filter_type: flow
+    l_ssh: 0.5
+    inputVariables:
+      variables: *soca_vars
+    outputVariables:
+      variables: *soca_vars
+
 dirac:
-  ixdir: [1, 17, 41, 31, 51, 63, 81, 14, 16, 43, 14]
-  iydir: [8, 21, 19, 33, 29, 26, 16, 41,  5, 43, 34]
-  izdir: [1,  1,  1,  1,  1,  1,  1,  1,  1,  1, 1]
-  ifdir: [1,  1,  1,  1,  1,  1,  1,  1,  1,  1, 1]
+  ixdir: [1, 17, 41, 31, 51, 63, 81, 14, 16, 43]
+  iydir: [8, 21, 19, 33, 29, 26, 16, 41,  5, 43]
+  izdir: [1,  1,  1,  1,  1,  1,  1,  1,  3,  3]
+  ifdir: [1,  2,  3,  3,  3,  3,  3,  3,  4,  5]
 
 output_B:
   datadir: Data
