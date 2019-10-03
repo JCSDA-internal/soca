@@ -28,7 +28,6 @@ mkdir -p $d
 cd $d
 
 files=$(curl $source -l)
-#echo $files
 
 for f in $files; do
     # Only keep .dbl or .nc files
