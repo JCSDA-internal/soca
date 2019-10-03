@@ -19,17 +19,20 @@
 #include "oops/util/DateTime.h"
 #include "oops/util/Duration.h"
 #include "oops/util/Logger.h"
+#include "oops/parallel/mpi/mpi.h"
 
 namespace soca {
 
   class CheckpointModel : public oops::Application {
    public:
+    explicit CheckpointModel(const eckit::mpi::Comm & comm = oops::mpi::comm())
+      : Application(comm) {}
     static const std::string classname() {return "soca::CheckpointModel";}
 
     int execute(const eckit::Configuration & fullConfig) const {
       //  Setup resolution
       const eckit::LocalConfiguration resolConfig(fullConfig, "resolution");
-      const Geometry resol(resolConfig);
+      const Geometry resol(resolConfig, this->getComm());
 
       //  Setup Model
       const eckit::LocalConfiguration modelConfig(fullConfig, "model");
