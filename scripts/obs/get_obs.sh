@@ -37,9 +37,14 @@ while [[ $date -le $date_end ]]; do
     bash source.fnmoc.sh trak $date $output_path
 
     ##------------------------------------------------------------
-    ## ice freeboard/thickness
+    ## ice concentration
     ##------------------------------------------------------------
     bash source.nsidc_icec.sh $date $output_path
+    
+
+    ##------------------------------------------------------------
+    ## ice freeboard/thickness
+    ##------------------------------------------------------------
     bash source.esa_ice_cryosat.sh GDR $date $output_path
     #bash source.esa_ice_cryosat.sh LRM $date $output_path
     #bash source.esa_ice_cryosat.sh SAR $date $output_path
