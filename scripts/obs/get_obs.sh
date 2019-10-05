@@ -40,7 +40,6 @@ while [[ $date -le $date_end ]]; do
     ## ice concentration
     ##------------------------------------------------------------
     bash source.nsidc_icec.sh $date $output_path
-    
 
     ##------------------------------------------------------------
     ## ice freeboard/thickness
