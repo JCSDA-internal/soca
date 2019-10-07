@@ -28,10 +28,12 @@ mkdir -p $d
 cd $d
 
 files=$(curl $source -l)
+namelist1=*__$date*.DBL
+namelist2=*__$date*.nc
 
 for f in $files; do
     # Only keep .dbl or .nc files
-    if [[ $f == *".DBL" ]] || [[ $f == *".nc" ]]; then 
+    if [[ $f == $namelist1 ]] || [[ $f == $namelist2 ]]; then
       wget $source/$f 
     fi 
 done
