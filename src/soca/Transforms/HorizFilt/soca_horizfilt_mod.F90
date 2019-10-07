@@ -31,10 +31,9 @@ module soca_horizfilt_mod
      type(soca_field),         pointer :: bkg            !< Background field (or first guess)
      type(oops_vars)                   :: vars           !< Apply filtering to vars
      real(kind=kind_real), allocatable :: wgh(:,:,:,:)   !< Filtering weight
-     character(len=:),     allocatable :: filter_type    !< Two choices:
-                                                         !<   9 point weighted average: "wavg"
-                                                         !<   flow dependent: "flow"
-     real(kind=kind_real) :: l_ssh  !< Used with "flow" filter, sea surface height decorrelation scale
+     real(kind=kind_real) :: scale_flow  !< Used with "flow" filter, sea surface height decorrelation scale
+     real(kind=kind_real) :: scale_dist
+     real(kind=kind_real) :: niter
      integer :: isc, iec, jsc, jec  !< indices of compute domain
      integer :: isd, ied, jsd, jed  !< indices of data domain
    contains
@@ -58,19 +57,23 @@ contains
     character(len=3)  :: domain
     integer :: isc, iec, jsc, jec, i, j, ivar, ii, jj
     logical :: init_seaice, init_ocean
-    real(kind=kind_real) :: sum_dist, dist(-1:1,-1:1), sum_w, dist_tmp
+    real(kind=kind_real) :: dist(-1:1,-1:1), sum_w, r_dist, r_flow
     type(mpl_type) :: mpl
-    character(len=4) :: filter_type
+    real :: re = 6.371e6 ! radius of earth (m)
 
     ! Setup list of variables to apply filtering on
     self%vars = vars
 
-    ! Get filter type from configuration
-    call f_conf%get_or_die("filter_type", self%filter_type )
+    ! Get filter length scales from configuration
+    if (.not. f_conf%get("scale_dist", self%scale_dist)) self%scale_dist = -1
+    if (.not. f_conf%get("scale_flow", self%scale_flow)) self%scale_flow = -1
+    call f_conf%get_or_die("niter", self%niter)
 
-    if (self%filter_type=="flow") then
-       call f_conf%get_or_die("l_ssh", self%l_ssh)
-    endif
+    ! scale the gaussian length scales depending on the number of iterations
+    ! NOTE: numerical instability creeps in once niter is large and scale_dist
+    !  is much smaller than the size of a grid box
+    self%scale_dist = self%scale_dist / sqrt(self%niter)
+    self%scale_flow = self%scale_flow / sqrt(self%niter)
 
     ! Indices for compute/data domain
     self%isd = geom%isd ;  self%ied = geom%ied ; self%jsd = geom%jsd; self%jed = geom%jed
@@ -81,41 +84,35 @@ contains
 
     ! Compute distance based weights
     self%wgh = 0.0_kind_real
+    r_dist = 1.0
+    r_flow = 1.0
     do j = self%jsc, self%jec
        do i = self%isc, self%iec
-          ! Great circle distance
           do ii = -1,1
              do jj = -1,1
-                select case (trim(self%filter_type))
-                case ("wavg")
-                   ! Great circle distance
-                   dist_tmp = sphere_distance(geom%lon(i,j), geom%lat(i,j), geom%lon(i+ii,j+jj), geom%lat(i+ii,j+jj) )
-                case ("flow")
-                   ! Following sea surface height
-                   dist_tmp = fit_func(mpl, 'gc99', &
-                                       abs((traj%ssh(i,j) - traj%ssh(i+ii,j+jj))/(self%l_ssh)))
-                end select
-                dist(ii,jj) = geom%mask2d(i+ii,j+jj) * dist_tmp
-             end do
-          end do
+                ! Great circle distance
+                if(self%scale_dist > 0) then
+                  r_dist = sphere_distance(geom%lon(i,j), geom%lat(i,j), geom%lon(i+ii,j+jj), geom%lat(i+ii,j+jj) ) * re
+                  r_dist = exp(-0.5 * (r_dist/self%scale_dist) ** 2)
+                end if
 
-          ! Weighted to distance
-          sum_dist=sum(dist)
-          do jj = -1,1
-             do ii = -1,1
-                self%wgh(i,j,ii,jj) = geom%mask2d(i+ii,j+jj) * ( sum_dist - dist(ii,jj) )
+                ! flow based distance (ssh difference)
+                if(self%scale_flow > 0) then
+                  r_flow = abs(traj%ssh(i,j) - traj%ssh(i+ii,j+jj))
+                  r_flow = exp(-0.5 * ((r_flow / self%scale_flow) ** 2))
+                end if
+
+                ! multiply together and apply the land mask
+                dist(ii,jj) = geom%mask2d(i+ii,j+jj) * r_dist * r_flow
              end do
           end do
 
           ! Normalize
-          sum_w = sum(self%wgh(i,j,:,:))
+          sum_w = sum(dist)
           if (sum_w>0.0_kind_real) then
-             do jj = -1,1
-                do ii = -1,1
-                   self%wgh(i,j,ii,jj) = self%wgh(i,j,ii,jj) / sum_w
-                end do
-             end do
-          end if
+            self%wgh(i,j,:,:) = dist / sum_w
+          endif
+
        end do
     end do
 
