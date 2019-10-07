@@ -17,7 +17,8 @@ LinearVariableChangeTests:
   toleranceInverse: 1e-12
   testinverse: 0
   niter: 3
-  filter_type: wavg
+  scale_flow: 0.5
+  scale_dist: 1e6
   variables: [cicen, hicen, socn, tocn, ssh, hocn]
   inputVariables:
     variables: *soca_vars

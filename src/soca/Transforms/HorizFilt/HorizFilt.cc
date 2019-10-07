@@ -33,14 +33,6 @@ namespace soca {
                              traj_.fields().toFortran(),
                              &confvars);
 
-    // Abort if filter type is not one of ["wavg","flow"]
-    std::vector<std::string> listfilt{"wavg", "flow"};
-    std::string filt_type = configc->getString("filter_type");
-    if (std::find(std::begin(listfilt), std::end(listfilt), filt_type) == std::end(listfilt))
-      {
-        ABORT("soca::HorizFilt wrong filter type");
-      }
-
     // Get number of iterations
     niter_ = configc->getInt("niter");
   }
