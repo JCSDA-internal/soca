@@ -59,6 +59,8 @@ subroutine interp_init(self, mod_lon, mod_lat, mod_mask, obs_lon, obs_lat, bumpi
   character(len=5) :: cbumpcount
   character(len=23) :: bump_nam_prefix
 
+  type(fckit_mpi_comm) :: f_comm
+
   if (self%initialized) call interp_exit(self)
 
   ! Initialize the bump grid for the obs interpolation
@@ -108,7 +110,8 @@ subroutine interp_init(self, mod_lon, mod_lat, mod_mask, obs_lon, obs_lat, bumpi
     end where
 
     !Initialize the bump geometry
-    call bump%setup_online( ns, 1, 1, 1,&
+    f_comm = fckit_mpi_comm()
+    call bump%setup_online( f_comm, ns, 1, 1, 1,&
          &tmp_lonmod, tmp_latmod, area, vunit, tmp_maskmod(:,1))
 
     !Release memory
