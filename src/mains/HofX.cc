@@ -11,11 +11,11 @@
 
 #include "soca/Traits.h"
 #include "oops/runs/HofX.h"
+#include "oops/runs/Run.h"
 #include "ufo/instantiateObsFilterFactory.h"
-#include "soca/Run/Run.h"
 
 int main(int argc,  char ** argv) {
-  soca::Run run(argc, argv);
+  oops::Run run(argc, argv);
   ufo::instantiateObsFilterFactory<soca::Traits>();
   oops::HofX<soca::Traits> hofx;
   run.execute(hofx);

@@ -51,10 +51,6 @@ Covariance/soca_covariance_mod.F90
 
 #Localization
 
-#Run
-Run/Run.cc
-Run/Run.h
-
 #Utils
 Utils/soca_utils.F90
 Utils/random_vectors_mod.F90
