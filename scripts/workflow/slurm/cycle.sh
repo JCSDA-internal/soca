@@ -67,8 +67,8 @@ while true; do
        end_time=$(squeue -h -j $SLURM_JOB_ID -o %e)
        end_time=$(date -d "${end_time:0:10} ${end_time:11:8}" +%s)
        ((rem_time=end_time-cycle_start))
-       min_time=$(bc <<< "$cycle_avg_runtime * 1.2") # fudge factor of 1.2x for making sure
-                                                     # there is enough runtime left
+       min_time=$(bc <<< "$cycle_avg_runtime * 1.2 / 1") # fudge factor of 1.2x for making sure
+                                                         # there is enough runtime left
        echo "$rem_time seconds remaining for current SLURM job"
        if [[ "$rem_time" -lt "$min_time" ]]; then
 	   echo "Almost out of time, resubmitting a new job"
