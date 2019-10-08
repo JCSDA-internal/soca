@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2017 UCAR
+ * (C) Copyright 2017-2019 UCAR
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -7,10 +7,12 @@
 
 #include <string>
 #include "oops/util/Logger.h"
-#include "soca/Geometry/Geometry.h"
 #include "soca/Fortran.h"
+#include "soca/Geometry/GeometryFortran.h"
+#include "soca/Geometry/Geometry.h"
 #include "eckit/config/Configuration.h"
 
+using oops::Log;
 
 // -----------------------------------------------------------------------------
 namespace soca {
@@ -28,7 +30,13 @@ namespace soca {
   Geometry::~Geometry() {
     soca_geo_delete_f90(keyGeom_);
   }
-
+  // -----------------------------------------------------------------------------
+  void Geometry::gridgen(const eckit::Configuration & config) const {
+    const eckit::Configuration * conf = &config;
+    Log::trace() << "Geometry::gridgen: " << keyGeom_ << std::endl;
+    Log::trace() << conf << std::endl;
+    soca_geo_gridgen_f90(keyGeom_, &conf);
+  }
   // -----------------------------------------------------------------------------
   void Geometry::print(std::ostream & os) const {
     soca_geo_info_f90(keyGeom_);

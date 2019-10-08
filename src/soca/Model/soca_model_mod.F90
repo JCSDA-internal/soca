@@ -1,21 +1,18 @@
-!
-! (C) Copyright 2017 UCAR
+! (C) Copyright 2017-2019 UCAR
 !
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
-!
+
 !> Structure holding configuration variables for the model
 
 module soca_model_mod
 
-use iso_c_binding
 use fms_io_mod, only : fms_io_init, fms_io_exit
-use kinds
-use soca_geom_mod_c
-use soca_mom6
-use soca_utils
-use soca_fields
-use datetime_mod
+use kinds, only: kind_real
+use soca_mom6, only: soca_mom6_config, soca_mom6_init, soca_mom6_end
+use soca_utils, only: soca_str2int
+use soca_fields_mod, only: soca_field
+use datetime_mod, only: datetime, datetime_to_string
 use mpp_domains_mod, only : mpp_update_domains
 use time_manager_mod, only : time_type, print_time, print_date, set_date
 use MOM, only : step_MOM
@@ -24,12 +21,10 @@ use MOM_surface_forcing, only : set_forcing
 use MOM_time_manager, only : real_to_time, time_type_to_real
 use MOM_time_manager, only : operator(+)
 
-
 implicit none
 
 private
 public :: soca_model
-public :: soca_model_registry
 public :: soca_setup
 public :: soca_initialize_integration
 public :: soca_finalize_integration
@@ -46,19 +41,9 @@ type :: soca_model
    real(kind_real), dimension(2) :: tocn_minmax, socn_minmax  !< min, max values
 end type soca_model
 
-#define LISTED_TYPE soca_model
-
-!> Linked list interface - defines registry_t type
-#include "Utils/linkedList_i.f"
-
-!> Global registry
-type(registry_t) :: soca_model_registry
-
 ! ------------------------------------------------------------------------------
 contains
 ! ------------------------------------------------------------------------------
-!> Linked list implementation
-#include "Utils/linkedList_c.f"
 
 ! ------------------------------------------------------------------------------
 !> Initialize model's data structure
@@ -82,8 +67,8 @@ subroutine soca_initialize_integration(self, flds)
   character(len=1024) :: buf
 
   ! Update halo
-  call mpp_update_domains(flds%tocn, flds%geom%G%Domain%mpp_domain)
-  call mpp_update_domains(flds%socn, flds%geom%G%Domain%mpp_domain)
+  call mpp_update_domains(flds%tocn, flds%geom%Domain%mpp_domain)
+  call mpp_update_domains(flds%socn, flds%geom%Domain%mpp_domain)
 
   ! Impose bounds to T & S
   ! TODO: Replace by a change of variable.
@@ -119,8 +104,8 @@ subroutine soca_propagate(self, flds, fldsdate)
   character(len=1024) :: buf
 
   ! Update halo
-  call mpp_update_domains(flds%tocn, flds%geom%G%Domain%mpp_domain)
-  call mpp_update_domains(flds%socn, flds%geom%G%Domain%mpp_domain)
+  call mpp_update_domains(flds%tocn, flds%geom%Domain%mpp_domain)
+  call mpp_update_domains(flds%socn, flds%geom%Domain%mpp_domain)
 
   ! Update MOM's T and S to soca's
   self%mom6_config%MOM_CSp%T = real(flds%tocn, kind=8)
@@ -150,9 +135,10 @@ subroutine soca_propagate(self, flds, fldsdate)
                       self%mom6_config%Time,&
                       self%mom6_config%Time_step_ocean,&
                       self%mom6_config%grid, &
+                      self%mom6_config%scaling, &
                       self%mom6_config%surface_forcing_CSp)
      call fms_io_exit()
-     
+
      ! Advance MOM in a single step call (advance dyna and thermo)
      call step_MOM(self%mom6_config%forces, &
                    self%mom6_config%fluxes, &
@@ -192,8 +178,8 @@ subroutine soca_finalize_integration(self, flds)
   character(len=1024) :: buf
 
   ! Update halo
-  call mpp_update_domains(flds%tocn, flds%geom%G%Domain%mpp_domain)
-  call mpp_update_domains(flds%socn, flds%geom%G%Domain%mpp_domain)
+  call mpp_update_domains(flds%tocn, flds%geom%Domain%mpp_domain)
+  call mpp_update_domains(flds%socn, flds%geom%Domain%mpp_domain)
 
   ! Impose bounds to T & S
   ! TODO: Replace by a change of variable.

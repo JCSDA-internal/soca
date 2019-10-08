@@ -7,36 +7,50 @@
 
 ! ------------------------------------------------------------------------------
 module soca_fields_mod_c
-  use iso_c_binding
-  use soca_fields
-  use kinds
-  use unstructured_grid_mod
-  use datetime_mod
-  use soca_interpfields_mod
-  use soca_geom_mod_c
-  use soca_geom_mod, only: soca_geom
-  use ufo_locs_mod_c
-  use ufo_locs_mod
-  use ufo_geovals_mod_c
-  use ufo_geovals_mod
-  use variables_mod
-  use soca_getvaltraj_mod, only: soca_getvaltraj, soca_getvaltraj_registry
 
-  implicit none
-  public :: soca_field_registry
-  
+use iso_c_binding
+use fckit_configuration_module, only: fckit_configuration
+use kinds, only: kind_real
+use unstructured_grid_mod, only: unstructured_grid, unstructured_grid_registry
+use datetime_mod, only: datetime, c_f_datetime
+use variables_mod, only: oops_vars, oops_vars_create
+use ufo_locs_mod_c, only: ufo_locs_registry
+use ufo_locs_mod, only: ufo_locs
+use ufo_geovals_mod_c, only: ufo_geovals_registry
+use ufo_geovals_mod, only: ufo_geovals
+use soca_geom_mod, only: soca_geom
+use soca_geom_mod_c, only: soca_geom_registry
+use soca_fields_mod, only: soca_field, &
+                           create, delete, copy, zeros, dirac, &
+                           add_incr, axpy, change_resol, diff_incr, &
+                           dot_prod, field_from_ug, field_to_ug, ug_coord, fldrms, &
+                           gpnorm, random, read_file, write_file, &
+                           self_schur, self_sub, self_mul, self_add
+use soca_interpfields_mod, only: getvalues, getvalues_ad
+use soca_getvaltraj_mod, only: soca_getvaltraj
+use soca_getvaltraj_mod_c, only: soca_getvaltraj_registry
+
+implicit none
+
+private
+public :: soca_field_registry
+
 #define LISTED_TYPE soca_field
 
-  !> Linked list interface - defines registry_t type
-#include "Utils/linkedList_i.f"
+!> Linked list interface - defines registry_t type
+#include "oops/util/linkedList_i.f"
 
-  !> Global registry
-  type(registry_t) :: soca_field_registry
+!> Global registry
+type(registry_t) :: soca_field_registry
 
+! ------------------------------------------------------------------------------
 contains
-  ! ------------------------------------------------------------------------------
-  !> Linked list implementation
-#include "Utils/linkedList_c.f"
+! ------------------------------------------------------------------------------
+
+!> Linked list implementation
+#include "oops/util/linkedList_c.f"
+
+! ------------------------------------------------------------------------------
 
 subroutine soca_field_create_c(c_key_self, c_key_geom, c_vars) bind(c,name='soca_field_create_f90')
   integer(c_int), intent(inout) :: c_key_self !< Handle to field
@@ -52,7 +66,7 @@ subroutine soca_field_create_c(c_key_self, c_key_geom, c_vars) bind(c,name='soca
   call soca_field_registry%add(c_key_self)
   call soca_field_registry%get(c_key_self,self)
 
-  call oops_vars_create(c_vars, vars)
+  call oops_vars_create(fckit_configuration(c_vars), vars)
   call create(self, geom, vars)
 
 end subroutine soca_field_create_c
@@ -91,11 +105,9 @@ subroutine soca_field_dirac_c(c_key_self,c_conf) bind(c,name='soca_field_dirac_f
   type(soca_field),  pointer :: self
 
   call soca_field_registry%get(c_key_self,self)
-  call dirac(self,c_conf)
+  call dirac(self,fckit_configuration(c_conf))
 
 end subroutine soca_field_dirac_c
-
-! ------------------------------------------------------------------------------
 
 ! ------------------------------------------------------------------------------
 
@@ -342,7 +354,7 @@ subroutine soca_field_read_file_c(c_key_fld, c_conf, c_dt) bind(c,name='soca_fie
 
   call soca_field_registry%get(c_key_fld,fld)
   call c_f_datetime(c_dt, fdate)
-  call read_file(fld, c_conf, fdate)
+  call read_file(fld, fckit_configuration(c_conf), fdate)
 
 end subroutine soca_field_read_file_c
 
@@ -358,7 +370,7 @@ subroutine soca_field_write_file_c(c_key_fld, c_conf, c_dt) bind(c,name='soca_fi
 
   call soca_field_registry%get(c_key_fld,fld)
   call c_f_datetime(c_dt, fdate)
-  call write_file(fld, c_conf, fdate)
+  call write_file(fld, fckit_configuration(c_conf), fdate)
 
 end subroutine soca_field_write_file_c
 
@@ -416,7 +428,7 @@ subroutine soca_field_interp_nl_c(c_key_fld,c_key_loc,c_vars,c_key_gom) bind(c,n
   type(ufo_geovals), pointer :: gom
   type(oops_vars)            :: vars
 
-  call oops_vars_create(c_vars, vars)
+  call oops_vars_create(fckit_configuration(c_vars), vars)
 
   call soca_field_registry%get(c_key_fld,fld)
   call ufo_locs_registry%get(c_key_loc,locs)
@@ -441,7 +453,7 @@ subroutine soca_field_interp_nl_traj_c(c_key_fld,c_key_loc,c_vars,c_key_gom,c_ke
   type(ufo_geovals),     pointer :: gom
   type(soca_getvaltraj), pointer :: traj
 
-  call oops_vars_create(c_vars, vars)
+  call oops_vars_create(fckit_configuration(c_vars), vars)
 
   call soca_field_registry%get(c_key_fld,fld)
   call ufo_locs_registry%get(c_key_loc,locs)
@@ -467,7 +479,7 @@ subroutine soca_field_interp_tl_c(c_key_fld,c_key_loc,c_vars,c_key_gom,c_key_tra
   type(ufo_geovals),     pointer :: gom
   type(soca_getvaltraj), pointer :: traj
 
-  call oops_vars_create(c_vars, vars)
+  call oops_vars_create(fckit_configuration(c_vars), vars)
 
   call soca_field_registry%get(c_key_fld,fld)
   call ufo_locs_registry%get(c_key_loc,locs)
@@ -493,7 +505,7 @@ subroutine soca_field_interp_ad_c(c_key_fld,c_key_loc,c_vars,c_key_gom,c_key_tra
   type(ufo_geovals),     pointer :: gom
   type(soca_getvaltraj), pointer :: traj
 
-  call oops_vars_create(c_vars, vars)
+  call oops_vars_create(fckit_configuration(c_vars), vars)
 
   call soca_field_registry%get(c_key_fld,fld)
   call ufo_locs_registry%get(c_key_loc,locs)

@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2017 UCAR
+ * (C) Copyright 2017-2019 UCAR
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -9,23 +9,27 @@
 
 #include <algorithm>
 #include <string>
-#include <vector>
 #include <utility>
+#include <vector>
 
 #include "eckit/config/LocalConfiguration.h"
+#include "eckit/exception/Exceptions.h"
+
 #include "oops/base/Variables.h"
 #include "oops/generic/UnstructuredGrid.h"
 #include "oops/util/DateTime.h"
+#include "oops/util/Duration.h"
 #include "oops/util/Logger.h"
+
+#include "ufo/GeoVaLs.h"
+#include "ufo/Locations.h"
+
 #include "soca/ModelBiasIncrement.h"
 #include "soca/Covariance/ErrorCovariance.h"
 #include "soca/Fields/Fields.h"
 #include "soca/Geometry/Geometry.h"
 #include "soca/State/State.h"
 #include "soca/GetValuesTraj/GetValuesTraj.h"
-#include "oops/util/Duration.h"
-#include "ufo/GeoVaLs.h"
-#include "ufo/Locations.h"
 
 using oops::Log;
 

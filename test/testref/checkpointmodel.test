@@ -1,0 +1,42 @@
+Test     : input background: 
+Test     :   Valid time: 2018-04-15T00:00:00Z
+Test     :   cicen   min=   -0.000000   max=    1.000000   mean=    0.255630
+Test     :   hicen   min=    0.000000   max=    2.923064   mean=    0.160786
+Test     :   hsnon   min=    0.000000   max=    0.608625   mean=    0.036687
+Test     :    socn   min=    0.000000   max=   40.441659   mean=   34.544390
+Test     :    tocn   min=   -1.888390   max=   31.700465   mean=    6.017565
+Test     :     ssh   min=   -1.924485   max=    0.927283   mean=   -0.263446
+Test     :    hocn   min=    0.001000   max= 1345.640000   mean=  128.628598
+Test     :      sw   min=    0.000000   max=    0.000000   mean=    0.000000
+Test     :     lhf   min=    0.000000   max=    0.000000   mean=    0.000000
+Test     :     shf   min=    0.000000   max=    0.000000   mean=    0.000000
+Test     :      lw   min=    0.000000   max=    0.000000   mean=    0.000000
+Test     :      us   min=    0.000000   max=    0.000000   mean=    0.000000
+Test     : analysis: 
+Test     :   Valid time: 2018-04-15T00:00:00Z
+Test     :   cicen   min=    0.000000   max=    1.000000   mean=    0.255630
+Test     :   hicen   min=    0.000000   max=    2.923064   mean=    0.160786
+Test     :   hsnon   min=    0.000000   max=    0.608625   mean=    0.036687
+Test     :    socn   min=    0.000000   max=   40.441659   mean=   34.544422
+Test     :    tocn   min=   -1.888390   max=   31.700465   mean=    6.018471
+Test     :     ssh   min=   -1.924813   max=    0.927295   mean=   -0.263425
+Test     :    hocn   min=    0.001000   max= 1345.640000   mean=  128.628598
+Test     :      sw   min=    0.000000   max=    0.000000   mean=    0.000000
+Test     :     lhf   min=    0.000000   max=    0.000000   mean=    0.000000
+Test     :     shf   min=    0.000000   max=    0.000000   mean=    0.000000
+Test     :      lw   min=    0.000000   max=    0.000000   mean=    0.000000
+Test     :      us   min=    0.000000   max=    0.000000   mean=    0.000000
+Test     : output background: 
+Test     :   Valid time: 2018-04-15T00:00:00Z
+Test     :   cicen   min=    0.000000   max=    1.000000   mean=    0.255630
+Test     :   hicen   min=    0.000000   max=    2.923064   mean=    0.160786
+Test     :   hsnon   min=    0.000000   max=    0.608625   mean=    0.036687
+Test     :    socn   min=    0.100000   max=   38.000000   mean=   34.593180
+Test     :    tocn   min=   -1.800000   max=   31.700465   mean=    6.018610
+Test     :     ssh   min=   -1.924813   max=    0.927295   mean=   -0.263425
+Test     :    hocn   min=    0.001000   max= 1345.640000   mean=  128.628598
+Test     :      sw   min=    0.000000   max=    0.000000   mean=    0.000000
+Test     :     lhf   min=    0.000000   max=    0.000000   mean=    0.000000
+Test     :     shf   min=    0.000000   max=    0.000000   mean=    0.000000
+Test     :      lw   min=    0.000000   max=    0.000000   mean=    0.000000
+Test     :      us   min=    0.000000   max=    0.000000   mean=    0.000000

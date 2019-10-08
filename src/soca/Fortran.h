@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2017 UCAR
+ * (C) Copyright 2017-2019 UCAR
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -44,7 +44,7 @@ namespace soca {
   typedef int F90hop;
   // Observation data base type
   typedef int F90odb;
-  // Localization matrix
+  // Localization
   typedef int F90lclz;
 
   /// Interface to Fortran SOCA model
@@ -60,14 +60,9 @@ namespace soca {
     void soca_geo_setup_f90(F90geom &, const eckit::Configuration * const *);
     void soca_geo_clone_f90(const F90geom &, F90geom &);
     void soca_geo_info_f90(const F90geom &);
+    void soca_geo_gridgen_f90(const F90geom &,
+                              const eckit::Configuration * const *);
     void soca_geo_delete_f90(F90geom &);
-
-
-    // -----------------------------------------------------------------------------
-    //  Run
-    // -----------------------------------------------------------------------------
-    void soca_setup_f(const eckit::Configuration * const *);
-    void soca_finalize_f();
 
     // -----------------------------------------------------------------------------
     //  Fields
@@ -178,7 +173,7 @@ namespace soca {
                                     F90balopmat &);
 
     // -----------------------------------------------------------------------------
-    //  Localization matrix
+    //  Localization
     // -----------------------------------------------------------------------------
     void soca_localization_setup_f90(F90lclz &,
                                      const eckit::Configuration * const *,

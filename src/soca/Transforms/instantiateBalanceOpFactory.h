@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2017 UCAR
+ * (C) Copyright 2017-2019 UCAR
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -12,6 +12,7 @@
 #include "soca/Transforms/BkgErr/BkgErr.h"
 #include "soca/Transforms/BkgErrGodas/BkgErrGodas.h"
 #include "soca/Transforms/BkgErrFilt/BkgErrFilt.h"
+#include "soca/Transforms/HorizFilt/HorizFilt.h"
 #include "soca/Transforms/VertConv/VertConv.h"
 #include "soca/Traits.h"
 #include "oops/interface/LinearVariableChange.h"
@@ -34,6 +35,9 @@ void instantiateBalanceOpFactory() {
   static oops::LinearVariableChangeMaker<soca::Traits,
               oops::LinearVariableChange<soca::Traits, soca::Balance> >
               makerBalanceOpBalanceSOCA_("BalanceSOCA");
+  static oops::LinearVariableChangeMaker<soca::Traits,
+              oops::LinearVariableChange<soca::Traits, soca::HorizFilt> >
+              makerBalanceOpHorizFILT_("HorizFiltSOCA");
 }
 }  // namespace soca
 

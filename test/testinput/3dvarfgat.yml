@@ -15,19 +15,13 @@ resolution:
   num_ice_cat: 5
   num_ice_lev: 4
   num_sno_lev: 1
+  read_soca_grid: grid
 
 model:
   name: SOCA
   tstep: PT1H
   advance_mom6: 1
   variables: &soca_vars [cicen, hicen, socn, tocn, ssh, hocn, sw, lhf, shf, lw, us]
-
-# common obsfilters used by all obs
-_: &Filter_mask
-  Filter: Domain Check
-  where:
-  - variable: sea_area_fraction@GeoVaLs
-    minvalue: 0.5
 
 cost_function:
   cost_type: 4D-Var
@@ -130,11 +124,15 @@ cost_function:
         simulate:
           variables: [sea_surface_temperature]
       ObsOperator:
-        name: SeaSurfaceTemp
+        name: Identity
       Covariance:
         covariance: diagonal
       ObsFilters:
-      - *Filter_mask
+      - Filter: Domain Check
+        variables: [sea_surface_temperature]
+        where:
+        - variable: sea_area_fraction@GeoVaLs
+          minvalue: 0.5
       - Filter: Thinning
         amount: 0.1
         random_seed: 0
@@ -146,12 +144,17 @@ cost_function:
         simulate:
           variables: [sea_surface_salinity]
       ObsOperator:
-        name: SeaSurfaceSalinity      
+        name: Identity
       Covariance:
         covariance: diagonal
       ObsFilters:
-      - *Filter_mask
       - Filter: Domain Check
+        variables: [sea_surface_salinity]
+        where:
+        - variable: sea_area_fraction@GeoVaLs
+          minvalue: 0.5
+      - Filter: Domain Check
+        variables: [sea_surface_salinity]
         where:
         - variable: sea_surface_temperature@GeoVaLs
           minvalue: 15
@@ -167,7 +170,11 @@ cost_function:
       Covariance:
         covariance: diagonal
       ObsFilters:
-      - *Filter_mask
+      - Filter: Domain Check
+        variables: [obs_absolute_dynamic_topography]
+        where:
+        - variable: sea_area_fraction@GeoVaLs
+          minvalue: 0.5
 
     - ObsSpace:
         name: InsituTemperature
@@ -180,7 +187,11 @@ cost_function:
       Covariance:
         covariance: diagonal
       ObsFilters:
-      - *Filter_mask
+      - Filter: Domain Check
+        variables: [sea_water_temperature]
+        where:
+        - variable: sea_area_fraction@GeoVaLs
+          minvalue: 0.5
       - Filter: Background Check
         variables: [sea_water_temperature]
         threshold: 5
@@ -192,15 +203,19 @@ cost_function:
         simulate:
           variables: [sea_water_salinity]
       ObsOperator:
-        name: InsituSalinity
+        name: MarineVertInterp
       Covariance:
         covariance: diagonal
       ObsFilters:
-      - *Filter_mask
+      - Filter: Domain Check
+        variables: [sea_water_salinity]
+        where:
+        - variable: sea_area_fraction@GeoVaLs
+          minvalue: 0.5
 
     - ObsSpace:
         name: SeaIceFraction
-        ObsDataOut: {oubsfile: ./Data/icec.out.nc}
+        ObsDataOut: {obsfile: ./Data/icec.out.nc}
         ObsDataIn:  {obsfile:  ./Data/icec.nc}
         simulate:
           variables: [sea_ice_area_fraction]
@@ -209,7 +224,11 @@ cost_function:
       Covariance:
         covariance: diagonal
       ObsFilters:
-      - *Filter_mask
+      - Filter: Domain Check
+        variables: [sea_ice_area_fraction]
+        where:
+        - variable: sea_area_fraction@GeoVaLs
+          minvalue: 0.5
 
 #    - ObsType: SeaIceThickness
 
@@ -220,6 +239,7 @@ variational:
       num_ice_cat: 5
       num_ice_lev: 4
       num_sno_lev: 1
+      read_soca_grid: grid
     linearmodel:
       varchange: Identity
       version: IdTLM
