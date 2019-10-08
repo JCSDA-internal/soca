@@ -12,11 +12,11 @@
 #include "soca/Traits.h"
 #include "soca/Transforms/instantiateBalanceOpFactory.h"
 #include "oops/runs/Dirac.h"
-#include "soca/Run/Run.h"
+#include "oops/runs/Run.h"
 
 int main(int argc,  char ** argv) {
   soca::instantiateBalanceOpFactory();
-  soca::Run run(argc, argv);
+  oops::Run run(argc, argv);
   oops::Dirac<soca::Traits> dir;
   run.execute(dir);
   return 0;

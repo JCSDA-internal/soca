@@ -6,11 +6,13 @@
  */
 
 #include "soca/Traits.h"
+#include "oops/runs/Run.h"
 #include "oops/runs/StaticBInit.h"
-#include "soca/Run/Run.h"
+#include "soca/Transforms/instantiateBalanceOpFactory.h"
 
 int main(int argc,  char ** argv) {
-  soca::Run run(argc, argv);
+  oops::Run run(argc, argv);
+  soca::instantiateBalanceOpFactory();
   oops::StaticBInit<soca::Traits> bmat;
   run.execute(bmat);
   return 0;

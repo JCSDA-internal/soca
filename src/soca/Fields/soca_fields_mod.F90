@@ -287,6 +287,10 @@ subroutine random(self)
   call normal_distribution(self%tocn,  0.0_kind_real, 1.0_kind_real, rseed)
   call normal_distribution(self%socn,  0.0_kind_real, 1.0_kind_real, rseed)
   call normal_distribution(self%ssh,   0.0_kind_real, 1.0_kind_real, rseed)
+  call mpp_update_domains(self%tocn, self%geom%Domain%mpp_domain)
+  call mpp_update_domains(self%socn, self%geom%Domain%mpp_domain)
+  call mpp_update_domains(self%ssh, self%geom%Domain%mpp_domain)
+
   call self%ocnsfc%random()
   call self%seaice%random()
 
@@ -474,7 +478,7 @@ subroutine dot_prod(fld1,fld2,zprod)
            zprod = zprod + fld1%ssh(ii,jj)*fld2%ssh(ii,jj)               ! SSH
            do kk = 1, nzo
               zprod = zprod + fld1%tocn(ii,jj,kk)*fld2%tocn(ii,jj,kk) &  ! TOCN
-                   + fld1%socn(ii,jj,kk)*fld2%socn(ii,jj,kk)    ! SOCN
+                   + fld1%socn(ii,jj,kk)*fld2%socn(ii,jj,kk)             ! SOCN
            end do
         end if
      end do
