@@ -11,7 +11,7 @@
 #include "soca/Transforms/instantiateBalanceOpFactory.h"
 
 int main(int argc,  char ** argv) {
-  oops::Run run(argc, argv);  
+  oops::Run run(argc, argv);
   soca::instantiateBalanceOpFactory();
   oops::StaticBInit<soca::Traits> bmat;
   run.execute(bmat);
