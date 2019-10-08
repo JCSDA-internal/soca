@@ -67,8 +67,8 @@ while true; do
        end_time=$(squeue -h -j $SLURM_JOB_ID -o %e)
        end_time=$(date -d "${end_time:0:10} ${end_time:11:8}" +%s)
        ((rem_time=end_time-cycle_start))
-       ((min_time=cycle_avg_runtime*2)) # fudge factor of 2x for making sure
-                                        # there is enough runtime left
+       min_time=$(bc <<< "$cycle_avg_runtime * 1.2") # fudge factor of 1.2x for making sure
+                                                     # there is enough runtime left
        echo "$rem_time seconds remaining for current SLURM job"
        if [[ "$rem_time" -lt "$min_time" ]]; then
 	   echo "Almost out of time, resubmitting a new job"
@@ -82,7 +82,7 @@ while true; do
     ANA_TIME="$FCST_END_TIME"    
     SCRATCH_DIR_CYCLE=$SCRATCH_DIR/$(date -ud "$ANA_TIME" +%Y%m%d%H)
     LOG_DIR_CYCLE=$LOG_DIR/$(date -ud "$ANA_TIME" +%Y%m%d%H)
-    SCRIPT_DIR=$SOCA_SRC_DIR/scripts/workflow/subscripts
+    SCRIPT_DIR=$SOCA_BUNDLE_DIR/soca/scripts/workflow/subscripts
     
     # setup working/output directories
     mkdir -p $EXP_DIR/rst
@@ -117,15 +117,14 @@ while true; do
 	export FCST_RESTART
 	export FCST_START_TIME
 	export FORC_DIR=$SCRATCH_DIR_CYCLE/fcst.prep/forc/mem_0000
-	export MOM_CONFIG=$EXP_DIR/config/model
+	export MOM_CONFIG=$MODEL_CONFIG/model
+	export MOM_DATA=$MODEL_DATA/model
 	export MOM_EXE
 	export MOM_IC
-	export WORK_DIR=$SCRATCH_DIR_CYCLE/fcst.run
 	export RESTART_DIR_IN=$EXP_DIR/rst/$(date -ud "$FCST_START_TIME" +%Y%m%d%H)
-	time $SCRIPT_DIR/fcst.run.sh  &> $LOG_DIR_CYCLE/fcst.run
-    ) || { echo "ERROR in fcst.run"; exit 1; }
-
-    
+	export WORK_DIR=$SCRATCH_DIR_CYCLE/fcst.run
+	time $SCRIPT_DIR/fcst.run.sh &> $LOG_DIR_CYCLE/fcst.run
+    ) || { echo "ERROR in fcst.run"; exit 1; }    
 
     #------------------------------------------------------------
     # da.init.sh
@@ -135,10 +134,12 @@ while true; do
 	export DA_INIT_DIR=$EXP_DIR/da_init
 	export FCST_LEN
 	export FCST_START_TIME
-	export MOM_CONFIG=$EXP_DIR/config/model
+	export MOM_CONFIG=$MODEL_CONFIG/model
+	export MOM_DATA=$MODEL_DATA/model
 	export RESTART_DIR=$SCRATCH_DIR_CYCLE/fcst.run/RESTART
 	export SOCA_BIN_DIR
-	export SOCA_CONFIG=$EXP_DIR/config/soca
+	export SOCA_CONFIG=$MODEL_CONFIG/soca
+	export SOCA_DATA=$MODEL_DATA/soca
 	export WORK_DIR=$SCRATCH_DIR_CYCLE/da.init
 	time $SCRIPT_DIR/da.init.sh &> $LOG_DIR_CYCLE/da.init
     ) || { echo "ERROR in da.init"; exit 1; }
@@ -153,11 +154,13 @@ while true; do
 	export DA_INIT_DIR=$EXP_DIR/da_init
 	export FCST_LEN
 	export FCST_START_TIME
-	export MOM_CONFIG=$EXP_DIR/config/model
+	export MOM_CONFIG=$MODEL_CONFIG/model
+	export MOM_DATA=$MODEL_DATA/model	
 	export OBS_IODA
 	export RESTART_DIR=$SCRATCH_DIR_CYCLE/fcst.run/RESTART
 	export SOCA_BIN_DIR
-	export SOCA_CONFIG=$EXP_DIR/config/soca
+	export SOCA_CONFIG=$MODEL_CONFIG/soca
+	export SOCA_DATA=$MODEL_DATA/soca
 	export WORK_DIR=$SCRATCH_DIR_CYCLE/da.run
 	time $SCRIPT_DIR/da.run.sh &> $LOG_DIR_CYCLE/da.run
     ) || { echo "ERROR in da.run"; exit 1; }

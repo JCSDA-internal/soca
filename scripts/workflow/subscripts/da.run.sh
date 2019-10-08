@@ -41,10 +41,9 @@ mkdir Data
 
 # link mom6 static files
 ln -s $MOM_CONFIG/* .
-rm INPUT
 mkdir INPUT
 cd INPUT
-ln -s $MOM_CONFIG/INPUT/* .
+ln -s $MOM_DATA/* .
 cd ..
 
 
@@ -57,6 +56,7 @@ FCST_RST_OFST=$FCST_LEN
 ln -s $SOCA_CONFIG/* .
 . 3dvar.yml.sh > 3dvar.yml
 . checkpoint.yml.sh > checkpoint.yml
+ln -s $SOCA_DATA/* .
 
 # link bump / gridgen files
 ln -s $DA_INIT_DIR/* .

@@ -16,9 +16,11 @@ envar+=("DA_INIT_DIR")
 envar+=("FCST_LEN")
 envar+=("FCST_START_TIME")
 envar+=("MOM_CONFIG")
+envar+=("MOM_DATA")
 envar+=("RESTART_DIR")
 envar+=("SOCA_BIN_DIR")
 envar+=("SOCA_CONFIG")
+envar+=("SOCA_DATA")
 envar+=("WORK_DIR")
 
 # make sure required env vars exist
@@ -50,10 +52,9 @@ mkdir OUTPUT
 ln -s $MOM_CONFIG/* .
 
 # link model static input files
-rm INPUT
 mkdir INPUT
 cd INPUT
-ln -s $MOM_CONFIG/INPUT/* .
+ln -s $MOM_DATA/* .
 cd ..
 
 # create time dependent momt namelist file
@@ -63,6 +64,7 @@ FCST_RST_OFST=$FCST_LEN
 
 # link soca config files
 ln -s $SOCA_CONFIG/* .
+ln -s $SOCA_DATA/* .
 
 # link the input restart files
 cd INPUT

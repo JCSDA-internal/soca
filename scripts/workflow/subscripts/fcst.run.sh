@@ -19,6 +19,7 @@ envar+=("FCST_RESTART")
 envar+=("FCST_START_TIME")
 envar+=("FORC_DIR")
 envar+=("MOM_CONFIG")
+envar+=("MOM_DATA")
 envar+=("MOM_EXE")
 envar+=("MOM_IC")
 envar+=("WORK_DIR")
@@ -59,10 +60,9 @@ ln -s $MOM_CONFIG/* .
 ln -s $MOM_EXE .
 
 # link model static input files and ICs
-rm INPUT
 mkdir INPUT
 cd INPUT
-ln -s $MOM_CONFIG/INPUT/* .
+ln -s $MOM_DATA/* .
 if [[ $FCST_RESTART == 1 ]]; then
     ln -s $RESTART_DIR_IN/* .
 else
