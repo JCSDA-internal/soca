@@ -12,10 +12,10 @@
 
 #include "soca/Traits.h"
 #include "oops/runs/MakeObs.h"
-#include "soca/Run/Run.h"
+#include "oops/runs/Run.h"
 
 int main(int argc,  char ** argv) {
-  soca::Run run(argc, argv);
+  oops::Run run(argc, argv);
   oops::MakeObs<soca::Traits> mkobs;
   run.execute(mkobs);
   return 0;
