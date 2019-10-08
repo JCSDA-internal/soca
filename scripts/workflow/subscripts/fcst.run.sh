@@ -14,16 +14,16 @@ EOF
 
 # required environment variables:
 envar=()
-envar+=("FCST_LEN")
-envar+=("FCST_RESTART")
-envar+=("FCST_START_TIME")
-envar+=("FORC_DIR")
-envar+=("MOM_CONFIG")
-envar+=("MOM_DATA")
-envar+=("MOM_EXE")
-envar+=("MOM_IC")
-envar+=("WORK_DIR")
-envar+=("RESTART_DIR_IN")
+envar+=("FCST_LEN")          # Length of the forecast (hours)
+envar+=("FCST_RESTART")      # =1 if a restart file is used, otherwise T/S IC file is used
+envar+=("FCST_START_TIME")   # start of forecast (in any appropriate "date" command format)
+envar+=("FORC_DIR")          # path to input atmospheric forcing files
+envar+=("MOM_CONFIG")        # path to input model configuration files
+envar+=("MOM_DATA")          # path to input model static data
+envar+=("MOM_EXE")           # path to MOM6/SIS2 executable
+envar+=("MOM_IC")            # path to T/S IC. Only used if FCST_RESTART==0
+envar+=("RESTART_DIR_IN")    # path to restart files from previous cycle (if FCST_RESTART==1)
+envar+=("WORK_DIR")          # temporary working directory for this script
 
 # make sure required env vars exist
 set +u

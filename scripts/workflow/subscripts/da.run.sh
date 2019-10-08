@@ -12,6 +12,19 @@ EOF
 
 # Required environment variables:
 envar+=()
+envar+=("ANA_TIME")        # date and time of analysis (in any valid "date" command format)
+envar+=("CYCLE_RST_DIR")   # path to output restart directory for running next forecast
+envar+=("DA_INIT_DIR")     # path to soca bkgerr/geometry files
+envar+=("FCST_LEN")        # length of forecast (hours)
+envar+=("FCST_START_TIME") # date and time of start of forecast
+envar+=("MOM_CONFIG")      # path to input model configuration files
+envar+=("MOM_DATA")        # path to input model static data
+envar+=("OBS_IODA")        # path to observations already processed into ioda format
+envar+=("RESTART_DIR")     # path to input restart files for da background
+envar+=("SOCA_BIN_DIR")    # path to soca executables
+envar+=("SOCA_CONFIG")     # path to input soca configuration files
+envar+=("SOCA_DATA")       # path to input soca static data
+envar+=("WORK_DIR")        # temporary working directory for this script
 
 # make sure required env vars exist
 set +u

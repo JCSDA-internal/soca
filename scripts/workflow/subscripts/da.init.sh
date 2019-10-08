@@ -5,23 +5,25 @@ cat <<EOF
 #================================================================================
 #================================================================================
 # da.init.sh
-#  Initialize the static B if it has not already been initialized
+#  Initialize the static B if it has not already been initialized.
+#  Also initialize the geometry file if not already created.
+#  If these have already been created, this script will silently exit.
 #================================================================================
 
 EOF
 
 # Required environment variables:
 envar=()
-envar+=("DA_INIT_DIR")
-envar+=("FCST_LEN")
-envar+=("FCST_START_TIME")
-envar+=("MOM_CONFIG")
-envar+=("MOM_DATA")
-envar+=("RESTART_DIR")
-envar+=("SOCA_BIN_DIR")
-envar+=("SOCA_CONFIG")
-envar+=("SOCA_DATA")
-envar+=("WORK_DIR")
+envar+=("DA_INIT_DIR")     # path for output bkgerr/geometry files
+envar+=("FCST_LEN")        # length of forecast (hours)
+envar+=("FCST_START_TIME") # datetime of start of forecast (in any valid "date" command format)
+envar+=("MOM_CONFIG")      # path to input model configuration files
+envar+=("MOM_DATA")        # path to input model static data
+envar+=("RESTART_DIR")     # path to input restart files for DA background
+envar+=("SOCA_BIN_DIR")    # path to soca executables directory
+envar+=("SOCA_CONFIG")     # path to input soca configuration files
+envar+=("SOCA_DATA")       # path to input soca static data
+envar+=("WORK_DIR")        # temporary working directory for this script
 
 # make sure required env vars exist
 set +u
@@ -39,7 +41,6 @@ if [[ -e "$DA_INIT_DIR/valid" ]]; then
     echo "Static B has already been initialized."
     exit 0
 fi
-
 
 # create working directory
 rm -rf $WORK_DIR

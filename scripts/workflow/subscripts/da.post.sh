@@ -6,19 +6,20 @@ cat <<EOF
 #================================================================================
 # da.post.sh
 #  post processing of DA and forecast output.
+#  Currently this only does compression and moving of the desired files
 #================================================================================
 
 EOF
 
 # required environment variables
 envar+=()
-envar+=("ANA_TIME")
-envar+=("DA_ANA")
-envar+=("DA_BKG")
-envar+=("DA_OMB")
-envar+=("FCST_DIAG")
-envar+=("OUT_DIR")
-envar+=("WORK_DIR")
+envar+=("ANA_TIME")   # date and time of analysis (in any valid "date" command format)
+envar+=("DA_ANA")     # path to analysis file
+envar+=("DA_BKG")     # path to background file
+envar+=("DA_OMB")     # path to the O-F file(s)
+envar+=("FCST_DIAG")  # path to diagnostic files produced by the forecast run
+envar+=("OUT_DIR")    # experiment directory in which to place output compressed files
+envar+=("WORK_DIR")   # temporary working directory for this script
 	
 # make sure required env vars exist
 set +u
