@@ -10,6 +10,7 @@ list( APPEND soca_test_input
   testinput/bkgerrsoca.yml
   testinput/checkpointmodel.yml
   testinput/dirac_bump_cov.yml
+  testinput/dirac_horizfilt.yml
   testinput/dirac_soca_cov.yml
   testinput/dirac_socahyb_cov.yml
   testinput/enshofx.yml
@@ -22,6 +23,7 @@ list( APPEND soca_test_input
   testinput/gridgen.yml
   testinput/hofx.yml
   testinput/hofx3d.yml
+  testinput/horizfilt.yml
   testinput/increment_test.yml
   testinput/linearmodel_test.yml
   testinput/marine2ioda.yml
@@ -43,6 +45,7 @@ list( APPEND soca_test_ref
   testref/3dvarfgat.test
   testref/checkpointmodel.test
   testref/dirac_bump_cov.test
+  testref/dirac_horizfilt.test
   testref/dirac_soca_cov.test
   testref/dirac_socahyb_cov.test
   testref/enshofx.test
@@ -314,6 +317,12 @@ ecbuild_add_test( TARGET test_soca_bkgerrfilt
                   MPI     ${SOCA_TESTS_MAX_MPI}
                   TEST_DEPENDS test_soca_gridgen )
 
+ecbuild_add_test( TARGET test_soca_horizfilt
+                  MPI ${MPI_SOCA_TESTS}
+                  SOURCES executables/TestVariableChange.cc
+                  ARGS    "testinput/horizfilt.yml"
+                  LIBS    soca )
+
 ecbuild_add_test( TARGET test_soca_bkgerrsoca
                   SOURCES executables/TestVariableChange.cc
                   ARGS    "testinput/bkgerrsoca.yml"
@@ -375,6 +384,11 @@ soca_add_test( NAME dirac_socahyb_cov
                EXE  soca_dirac.x
                TOL  5.0e-3 0
                TEST_DEPENDS test_soca_parameters_bump_loc)
+
+soca_add_test( NAME dirac_horizfilt
+               EXE  soca_dirac.x
+               TOL  5.0e-3 0
+               TEST_DEPENDS test_soca_static_socaerror_init)
 
 #ecbuild_add_test( TARGET  test_soca_localization
 #                  SOURCES executables/TestLocalization.cc

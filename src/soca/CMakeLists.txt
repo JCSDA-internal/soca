@@ -94,6 +94,11 @@ Transforms/BkgErrFilt/BkgErrFiltFortran.h
 Transforms/BkgErrFilt/soca_bkgerrfilt.interface.F90
 Transforms/BkgErrFilt/soca_bkgerrfilt_mod.F90
 
+Transforms/HorizFilt/HorizFilt.cc
+Transforms/HorizFilt/HorizFilt.h
+Transforms/HorizFilt/soca_horizfilt.interface.F90
+Transforms/HorizFilt/soca_horizfilt_mod.F90
+
 Transforms/VertConv/VertConv.cc
 Transforms/VertConv/VertConv.h
 Transforms/VertConv/soca_vertconv.interface.F90

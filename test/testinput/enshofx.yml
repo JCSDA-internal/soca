@@ -85,7 +85,7 @@ Observations:
       simulate:
         variables: [sea_water_temperature]
     ObsOperator:
-      name: InsituTemperature      
+      name: InsituTemperature
     Covariance:
       covariance: diagonal
 
