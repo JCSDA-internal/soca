@@ -262,16 +262,19 @@ soca_add_test( NAME gridgen
 # Test of read/write restart for MOM6&SIS2, model advance = Id
 soca_add_test( NAME forecast_identity
                EXE  soca_forecast.x
+               NOTRAPFPE
                TEST_DEPENDS test_soca_gridgen)
 
 # Test of read/write restart for MOM6&CICE, model advance = Id
 soca_add_test( NAME forecast_identity_cice
                EXE  soca_forecast.x
+               NOTRAPFPE
                TEST_DEPENDS test_soca_gridgen )
 
 # Test mom6 forecast
 soca_add_test( NAME forecast_mom6
                EXE  soca_forecast.x
+               NOTRAPFPE
                TEST_DEPENDS test_soca_gridgen )
 
 # Initialize static error covariance model defined in soca, used for 3DVAR
@@ -284,6 +287,7 @@ soca_add_test( NAME static_socaerror_init
 soca_add_test( NAME enspert
                EXE  soca_enspert.x
                TOL 7.0e-4 0
+               NOTRAPFPE
                TEST_DEPENDS test_soca_gridgen
                             test_soca_static_socaerror_init)
 
@@ -306,6 +310,7 @@ soca_add_test( NAME state
 
 soca_add_test( NAME model
                SRC  TestModel.cc
+	       NOTRAPFPE
                TEST_DEPENDS test_soca_gridgen )
 
 soca_add_test( NAME modelaux
@@ -325,6 +330,7 @@ soca_add_test( NAME errorcovariance
 
 soca_add_test( NAME linearmodel
                SRC  TestLinearModel.cc
+               NOTRAPFPE
                TEST_DEPENDS test_soca_gridgen
                             test_soca_static_socaerror_init )
 
@@ -436,6 +442,7 @@ soca_add_test( NAME enshofx
 soca_add_test( NAME 3dvar_soca
                EXE  soca_3dvar.x
                TOL  2.3e-4 0
+	       NOTRAPFPE
                TEST_DEPENDS test_soca_static_socaerror_init )
 
 soca_add_test( NAME 3dvar_godas
@@ -452,12 +459,14 @@ soca_add_test( NAME 3dvarfgat
 soca_add_test( NAME 3dhyb
                EXE  soca_3dvar.x
                TOL  5e-4 0
+	       NOTRAPFPE
                TEST_DEPENDS test_soca_static_socaerror_init
                             test_soca_parameters_bump_loc )
 
 soca_add_test( NAME 3dhybfgat
                EXE  soca_3dvar.x
                TOL  4e-3 0
+	       NOTRAPFPE
                TEST_DEPENDS test_soca_static_socaerror_init
                             test_soca_parameters_bump_loc )
 
@@ -471,4 +480,5 @@ soca_add_test( NAME 3dhybfgat
 soca_add_test( NAME checkpointmodel
                EXE  soca_checkpoint_model.x
                TOL  2e-6 0
+	       NOTRAPFPE
                TEST_DEPENDS test_soca_3dvar_godas)
