@@ -310,7 +310,7 @@ soca_add_test( NAME state
 
 soca_add_test( NAME model
                SRC  TestModel.cc
-	       NOTRAPFPE
+               NOTRAPFPE
                TEST_DEPENDS test_soca_gridgen )
 
 soca_add_test( NAME modelaux
@@ -442,7 +442,7 @@ soca_add_test( NAME enshofx
 soca_add_test( NAME 3dvar_soca
                EXE  soca_3dvar.x
                TOL  2.3e-4 0
-	       NOTRAPFPE
+               NOTRAPFPE
                TEST_DEPENDS test_soca_static_socaerror_init )
 
 soca_add_test( NAME 3dvar_godas
@@ -459,14 +459,14 @@ soca_add_test( NAME 3dvarfgat
 soca_add_test( NAME 3dhyb
                EXE  soca_3dvar.x
                TOL  5e-4 0
-	       NOTRAPFPE
+               NOTRAPFPE
                TEST_DEPENDS test_soca_static_socaerror_init
                             test_soca_parameters_bump_loc )
 
 soca_add_test( NAME 3dhybfgat
                EXE  soca_3dvar.x
                TOL  4e-3 0
-	       NOTRAPFPE
+               NOTRAPFPE
                TEST_DEPENDS test_soca_static_socaerror_init
                             test_soca_parameters_bump_loc )
 
@@ -480,5 +480,5 @@ soca_add_test( NAME 3dhybfgat
 soca_add_test( NAME checkpointmodel
                EXE  soca_checkpoint_model.x
                TOL  2e-6 0
-	       NOTRAPFPE
+               NOTRAPFPE
                TEST_DEPENDS test_soca_3dvar_godas)
