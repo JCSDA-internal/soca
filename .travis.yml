@@ -84,7 +84,7 @@ before_install:
   - git clone -b $BRANCH https://github.com/jcsda/soca.git ${REPO_SOURCE_DIR}/soca-bundle/soca
 
   - cat ~/.gitconfig
-  - git lfs uninstall
+  - git lfs uninstall --skip-smudge
   - cat ~/.gitconfig
 
 #  checkout for the same branch name in saber
