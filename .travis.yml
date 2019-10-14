@@ -30,6 +30,12 @@ before_install:
   - git checkout $BRANCH || echo "No branch named $BRANCH in oops repo"
   - cd $REPO_SOURCE_DIR  
 
+#  clone the testing branch of soca	#  clone the testing branch of soca
+  - git clone -b $BRANCH https://github.com/jcsda/soca.git ${REPO_SOURCE_DIR}/soca-bundle/soca
+
+#  disable git-LFS 
+  - git lfs install --skip-smudge
+
 #  default/develop branch for these repos
   - git clone https://github.com/jcsda/GSW-Fortran.git ${REPO_SOURCE_DIR}/soca-bundle/gsw
   - git clone https://github.com/jcsda/fckit.git ${REPO_SOURCE_DIR}/soca-bundle/fckit
@@ -41,14 +47,6 @@ before_install:
   - git clone -b feature/ecbuild  https://github.com/JCSDA/geoKdTree.git ${REPO_SOURCE_DIR}/soca-bundle/geokdtree
   - git clone -b feature/ecbuild  https://github.com/JCSDA/MOM6_DA_hooks.git ${REPO_SOURCE_DIR}/soca-bundle/mom6_da_hooks
   - git clone -b dev/master-ecbuild https://github.com/JCSDA/MOM6.git ${REPO_SOURCE_DIR}/soca-bundle/mom6
-
-
-#  checkout for the same branch name in saber
-  - git clone https://github.com/jcsda/saber.git ${REPO_SOURCE_DIR}/soca-bundle/saber
-  - cd ${REPO_SOURCE_DIR}/soca-bundle/saber
-  - git checkout $BRANCH || echo "No branch named $BRANCH in saber repo"
-  - cd $REPO_SOURCE_DIR  
-  - date  
 
 #  checkout for the same branch name in oops
   - git clone https://github.com/jcsda/oops.git ${REPO_SOURCE_DIR}/soca-bundle/oops
@@ -86,9 +84,11 @@ before_install:
   - cd $REPO_SOURCE_DIR  
   - date  
 
-#  clone the testing branch of soca	#  clone the testing branch of soca
-  - git clone -b $BRANCH https://github.com/jcsda/soca.git ${REPO_SOURCE_DIR}/soca-bundle/soca
-
+#  checkout for the same branch name in saber
+  - git clone https://github.com/jcsda/saber.git ${REPO_SOURCE_DIR}/soca-bundle/saber
+  - cd ${REPO_SOURCE_DIR}/soca-bundle/saber
+  - git checkout $BRANCH || echo "No branch named $BRANCH in saber repo"
+  - cd $REPO_SOURCE_DIR  
   - date  
 
   - ls ${REPO_SOURCE_DIR}/soca-bundle/
