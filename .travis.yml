@@ -4,6 +4,7 @@
 branches:
   only:
     - develop
+    - feature/codebuild_test
 
 language: cpp
 
