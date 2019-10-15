@@ -3,6 +3,14 @@ FROM  jcsda/docker:latest
 RUN touch /env.txt
 RUN printenv > /env.txt
 
+RUN cd /usr/local/src \
+    && curl -L -O https://github.com/ccache/ccache/releases/download/v3.7.4/ccache-3.7.4.tar.gz \
+    && tar -xaf ccache-3.7.4.tar.gz \
+    && cd ccache-3.7.4 \
+    && ./configure \
+    && make \
+    && make install
+    
 RUN mkdir -p /var/run/sshd \
     && ssh-keygen -A \
     && sed -i 's/#PermitRootLogin yes/PermitRootLogin yes/g' /etc/ssh/sshd_config \
@@ -14,7 +22,7 @@ RUN adduser jcsdauser
 
 RUN mkdir -p /jcsda /build_container \
  &&  chown -R jcsdauser:jcsda /jcsda /build_container \
- &&  chmod 6755 /jcsda /build_container 
+ &&  chmod 6755 /jcsda /build_container
 
 
 RUN mkdir /jcsda/.ssh ; echo "StrictHostKeyChecking no" > /jcsda/.ssh/config

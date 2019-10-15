@@ -14,6 +14,8 @@ language: cpp
 services:
   - docker
 
+cache:
+  - ccache
 
 #======================================================================
 #======================================================================
@@ -58,27 +60,26 @@ before_install:
   # do not switch to branches specified in the bundle by removing "UPDATE"
   - "sed -i 's/UPDATE/) #/' ${REPO_SOURCE_DIR}/soca-bundle/CMakeLists.txt"
   - cd ${REPO_SOURCE_DIR} && find . -name \* -exec chmod 777 {} \;
-
+  - chmod 777 -R ~/.ccache
 
   #------------------------------------------------------------
   # get docker image from jcsda/docker:latest
   #------------------------------------------------------------
   - cd ${REPO_SOURCE_DIR}/soca-bundle/soca
-  - docker build -t jcsda/dockerl2 --build-arg=Dockerfile .  #Dockerfile handles ssh for mpi
+  - docker build -t jcsda/dockerl2 --build-arg=Dockerfile .  # Dockerfile handles ssh for mpi
   - docker images
-
-  # request codecov to detect CI environment to pass through to docker
-  - ci_env=`bash <(curl -s https://codecov.io/env)`
-  - docker run -d -t $ci_env -e BUILD_TYPE --name jcsda_container -v ${REPO_SOURCE_DIR}/soca-bundle:/jcsda/src_repo jcsda/dockerl2
+  - ci_env=`bash <(curl -s https://codecov.io/env)`          # request codecov to detect CI environment to pass through to docker
+  - docker run -d -t $ci_env -e BUILD_TYPE -e CCACHE_DIR=/ccache -v $HOME/.ccache:/ccache -v ${REPO_SOURCE_DIR}/soca-bundle:/jcsda/src_repo --name jcsda_container jcsda/dockerl2
   - docker ps -a
+  - docker exec jcsda_container bash -c 'cp -r /jcsda/.openmpi/ ~/ && ccache -z'
 
 
 #======================================================================
 # Here are the run steps
 #======================================================================
 script:
-  - docker exec jcsda_container bash -c 'cp -r /jcsda/.openmpi/ ~/'
-  - docker exec jcsda_container bash -c 'cd /build_container && ecbuild /jcsda/src_repo/ -DSOCA_TESTS_FORC_DEFAULT_TOL=ON -DCMAKE_BUILD_TYPE=$BUILD_TYPE'
+  - docker exec jcsda_container bash -c 'cd /build_container && ecbuild /jcsda/src_repo/ -DSOCA_TESTS_FORC_DEFAULT_TOL=ON -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DCMAKE_CXX_COMPILER_LAUNCHER=ccache'
   - docker exec jcsda_container bash -c 'cd /build_container/soca && make -j4'
-  - docker exec jcsda_container bash -c 'cd /build_container/soca && ctest -V -j2'
+  - docker exec jcsda_container bash -c 'cd /build_container/soca && ctest'
+  - docker exec jcsda_container bash -c 'ccache -s'
 
