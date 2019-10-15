@@ -3,13 +3,6 @@ FROM  jcsda/docker:latest
 RUN touch /env.txt
 RUN printenv > /env.txt
 
-#build lcov
-RUN cd /usr/local/src \
-    && curl -L -O http://downloads.sourceforge.net/ltp/lcov-1.14.tar.gz \
-    && tar -xvf lcov-1.14.tar.gz \
-    && cd lcov-1.14 \
-    && make install
-
 RUN mkdir -p /var/run/sshd \
     && ssh-keygen -A \
     && sed -i 's/#PermitRootLogin yes/PermitRootLogin yes/g' /etc/ssh/sshd_config \
@@ -20,8 +13,8 @@ RUN groupadd jcsda -g 9999
 RUN adduser jcsdauser
 
 RUN mkdir -p /jcsda /build_container \
- &&  chown -R jcsdauser:jcsda /jcsda /build_container  /usr/local \
- &&  chmod 6755 /jcsda /build_container /usr/local
+ &&  chown -R jcsdauser:jcsda /jcsda /build_container \
+ &&  chmod 6755 /jcsda /build_container 
 
 
 RUN mkdir /jcsda/.ssh ; echo "StrictHostKeyChecking no" > /jcsda/.ssh/config
