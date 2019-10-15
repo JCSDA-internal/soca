@@ -22,6 +22,7 @@ before_install:
   - echo $TRAVIS_BRANCH
   - export BRANCH=$(if [ "$TRAVIS_PULL_REQUEST" == "false" ]; then echo $TRAVIS_BRANCH; else echo $TRAVIS_PULL_REQUEST_BRANCH; fi)
   - echo "TRAVIS_BRANCH=$TRAVIS_BRANCH, PR=$PR, BRANCH=$BRANCH"
+
 #======================================================================
 # Clone all repos
 #======================================================================
@@ -56,13 +57,13 @@ before_install:
   - cd $REPO_SOURCE_DIR  
   - date  
 
-#  checkout for the same branch name in crtm
-  - date
-  - git clone https://github.com/jcsda/crtm.git ${REPO_SOURCE_DIR}/soca-bundle/crtm
-  - cd ${REPO_SOURCE_DIR}/soca-bundle/crtm
-  - git checkout $BRANCH || echo "No branch named $BRANCH in crtm repo"
-  - cd $REPO_SOURCE_DIR
-  - date  
+# #  checkout for the same branch name in crtm
+#   - date
+#   - git clone https://github.com/jcsda/crtm.git ${REPO_SOURCE_DIR}/soca-bundle/crtm
+#   - cd ${REPO_SOURCE_DIR}/soca-bundle/crtm
+#   - git checkout $BRANCH || echo "No branch named $BRANCH in crtm repo"
+#   - cd $REPO_SOURCE_DIR
+#   - date  
 
 #  checkout for the same branch name in ioda
   - git clone https://github.com/jcsda/ioda.git ${REPO_SOURCE_DIR}/soca-bundle/ioda
