@@ -156,8 +156,6 @@ subroutine soca_mom6_init(mom6_config, partial_init)
   type(tracer_flow_control_CS), pointer :: tracer_flow_CSp => NULL()
   type(diag_ctrl), pointer :: diag => NULL() !< Diagnostic structure
   character(len=4), parameter :: vers_num = 'v2.0'
-  ! This include declares and sets the variable "version".
-#include "version_variable.h"
   character(len=40)  :: mod_name = "soca_mom6" ! This module's name.
   integer :: ocean_nthreads = 1
   integer :: ncores_per_node = 1
