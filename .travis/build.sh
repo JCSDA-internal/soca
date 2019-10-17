@@ -42,8 +42,7 @@ for repo in $LIB_REPOS; do
 
     # run ecbuild
     ecbuild $src_dir -DCMAKE_INSTALL_PREFIX=${install_dir} -DCMAKE_BUILD_TYPE=${LIB_BUILD_TYPE} \
-    	    -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DENABLE_TESTS=OFF -DBUILD_TESTING=OFF \
-     	    ${LIB_ECBUILD_OPT}
+    	    -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DENABLE_TESTS=OFF -DBUILD_TESTING=OFF 
 
     # build and install
     make -j4
@@ -64,7 +63,7 @@ src_dir=$cwd/repo.src/${MAIN_REPO}
 build_dir=$cwd/repo.build/${MAIN_REPO}
 mkdir -p  $build_dir
 cd $build_dir
-ecbuild $src_dir -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_BUILD_TYPE=${MAIN_BUILD_TYPE} -DENABLE_GPROF=OFF
+ecbuild $src_dir -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_BUILD_TYPE=${MAIN_BUILD_TYPE} -DENABLE_GPROF=ON
 make -j4
 
 
