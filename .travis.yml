@@ -5,6 +5,7 @@ branches:
   only:
     - develop
     - feature/codebuild_test
+    - bugfix/cmake_install
 
 env:
   - BUILD_TYPE=Debug
@@ -15,71 +16,67 @@ services:
   - docker
 
 cache:
-  - ccache
+  ccache: true
+  directories:
+  - $HOME/repo.cache
+
+git:
+  lfs_skip_smudge: true
 
 #======================================================================
 #======================================================================
 before_install:
-  - REPO_SOURCE_DIR=${TRAVIS_BUILD_DIR}/jcsda/src_repo
-  - BRANCH=$( [[ "$TRAVIS_PULL_REQUEST" == "false" ]] && echo $TRAVIS_BRANCH || echo $TRAVIS_PULL_REQUEST_BRANCH )
+  - |
+    # setup the configurables that the subsequent scripts use
+    export LIB_REPOS="fms cvmix geokdtree mom6_da_hooks gsw mom6 fckit saber oops ioda ufo"
+    export LIB_BUILD_TYPE=RelWIthDebInfo
+    export MAIN_REPO=soca
+    export MAIN_BUILD_TYPE=${BUILD_TYPE}
+    export MATCH_REPOS="fms cvmix geokdtree mom6_da_hooks gsw mom6 oops ufo"
+    export LFS_REPOS="soca"
+    export BRANCH=$( [[ "$TRAVIS_PULL_REQUEST" == "false" ]] && \
+       echo $TRAVIS_BRANCH || echo $TRAVIS_PULL_REQUEST_BRANCH )
+    export BUNDLE_URL="https://github.com/JCSDA/soca-bundle.git"
+    export_vars="-e REPO_CACHE=/repo.cache -e LIB_REPOS -e LIB_BUILD_TYPE -e MAIN_REPO -e MAIN_BUILD_TYPE -e CCACHE_DIR=/ccache"
+        
+  - |
+    # clone and prep the repos
+    WORK_DIR=$HOME/work
+    mkdir -p $WORK_DIR; cd $WORK_DIR
+    ${TRAVIS_BUILD_DIR}/.travis/prep.sh
 
-  #------------------------------------------------------------
-  # Clone all repos
-  #------------------------------------------------------------  
-  - mkdir -p ${REPO_SOURCE_DIR}
-  
-  # checkout the bundle with the same branch name
-  - git clone https://github.com/jcsda/soca-bundle.git ${REPO_SOURCE_DIR}/soca-bundle
-  - cd ${REPO_SOURCE_DIR}/soca-bundle
-  - git checkout $BRANCH || echo "No branch named $BRANCH in soca-bundle repo"
+  - |
+    # alter file permissions
+    chmod 777 -R ~/.ccache
+    chmod 777 -R $HOME/repo.cache
+    cd ${WORK_DIR} && find . -name \* -exec chmod 777 {} \;
+    #cd $HOME/repo.cache && find . -name \* -exec chmod 777 {} \;
 
-  # clone the testing branch of soca
-  - git clone -b $BRANCH https://github.com/jcsda/soca.git ${REPO_SOURCE_DIR}/soca-bundle/soca
-
-  # disable git-LFS 
-  - git lfs install --skip-smudge
-
-  # default/develop branch for these repos
-  - git clone https://github.com/jcsda/GSW-Fortran.git ${REPO_SOURCE_DIR}/soca-bundle/gsw
-  - git clone https://github.com/jcsda/fckit.git       ${REPO_SOURCE_DIR}/soca-bundle/fckit
-  - git clone https://github.com/jcsda/soca-config.git ${REPO_SOURCE_DIR}/soca-bundle/soca-config
-
-  # specific branch for these repo
-  - git clone -b dev/master-ecbuild https://github.com/JCSDA/FMS.git           ${REPO_SOURCE_DIR}/soca-bundle/fms
-  - git clone -b feature/ecbuild    https://github.com/JCSDA/CVMix-src.git     ${REPO_SOURCE_DIR}/soca-bundle/cvmix
-  - git clone -b feature/ecbuild    https://github.com/JCSDA/geoKdTree.git     ${REPO_SOURCE_DIR}/soca-bundle/geokdtree
-  - git clone -b feature/ecbuild    https://github.com/JCSDA/MOM6_DA_hooks.git ${REPO_SOURCE_DIR}/soca-bundle/mom6_da_hooks
-  - git clone -b dev/master-ecbuild https://github.com/JCSDA/MOM6.git          ${REPO_SOURCE_DIR}/soca-bundle/mom6
-
-  # checkout the same branch name for the remaining JEDI repos (or the default branch if no same name branch as the soca test branch)
-  - for repo in oops ioda ioda-converters ufo saber; do
-      git clone https://github.com/jcsda/${repo}.git ${REPO_SOURCE_DIR}/soca-bundle/${repo};
-      ( cd ${REPO_SOURCE_DIR}/soca-bundle/${repo}; git checkout $BRANCH || echo "No branch named $BRANCH in $repo repo"; );
-    done
-
-  # do not switch to branches specified in the bundle by removing "UPDATE"
-  - "sed -i 's/UPDATE/) #/' ${REPO_SOURCE_DIR}/soca-bundle/CMakeLists.txt"
-  - cd ${REPO_SOURCE_DIR} && find . -name \* -exec chmod 777 {} \;
-  - chmod 777 -R ~/.ccache
-
-  #------------------------------------------------------------
-  # get docker image from jcsda/docker:latest
-  #------------------------------------------------------------
-  - cd ${REPO_SOURCE_DIR}/soca-bundle/soca
-  - docker build -t jcsda/dockerl2 --build-arg=Dockerfile .  # Dockerfile handles ssh for mpi
-  - docker images
-  - ci_env=`bash <(curl -s https://codecov.io/env)`          # request codecov to detect CI environment to pass through to docker
-  - docker run -d -t $ci_env -e BUILD_TYPE -e CCACHE_DIR=/ccache -v $HOME/.ccache:/ccache -v ${REPO_SOURCE_DIR}/soca-bundle:/jcsda/src_repo --name jcsda_container jcsda/dockerl2
-  - docker ps -a
-  - docker exec jcsda_container bash -c 'cp -r /jcsda/.openmpi/ ~/ && ccache -z'
+  - |
+    # prepare docker image from jcsda/docker:latest
+    cd ${TRAVIS_BUILD_DIR}/.travis
+    docker build -t jcsda/dockerl2 --build-arg=Dockerfile .
+    docker images
+    ci_env=`bash <(curl -s https://codecov.io/env)`
+    docker run -d -t $ci_env $export_vars\
+      -v ${WORK_DIR}:/jcsda/work \
+      -v $HOME/.ccache:/ccache \
+      -v $HOME/repo.cache:/repo.cache \
+      --name jcsda_container jcsda/dockerl2
+    docker ps -a
+    docker exec jcsda_container bash -c 'mkdir $HOME/.openmpi && cp /jcsda/work/repo.src/soca/.travis/default-mca-params.conf $HOME/.openmpi/mca-params.conf'
 
 
 #======================================================================
 # Here are the run steps
 #======================================================================
 script:
-  - docker exec jcsda_container bash -c 'cd /build_container && ecbuild /jcsda/src_repo/ -DSOCA_TESTS_FORC_DEFAULT_TOL=ON -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DCMAKE_CXX_COMPILER_LAUNCHER=ccache'
-  - docker exec jcsda_container bash -c 'cd /build_container/soca && make -j4'
-  - docker exec jcsda_container bash -c 'cd /build_container/soca && ctest'
-  - docker exec jcsda_container bash -c 'ccache -s'
+  - |
+    # Build code
+    docker exec jcsda_container bash \
+     -c 'cd /jcsda/work && /jcsda/work/repo.src/soca/.travis/build.sh'
 
+  - |
+    # run tests
+    docker exec jcsda_container bash \
+     -c 'cd /jcsda/work/repo.build/soca && ctest --output-on-failure'

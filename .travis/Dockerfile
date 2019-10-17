@@ -1,8 +1,5 @@
 FROM  jcsda/docker:latest
 
-RUN touch /env.txt
-RUN printenv > /env.txt
-
 RUN cd /usr/local/src \
     && curl -L -O https://github.com/ccache/ccache/releases/download/v3.7.4/ccache-3.7.4.tar.gz \
     && tar -xaf ccache-3.7.4.tar.gz \
@@ -17,17 +14,14 @@ RUN mkdir -p /var/run/sshd \
     && sed -i 's/#RSAAuthentication yes/RSAAuthentication yes/g' /etc/ssh/sshd_config \
     && sed -i 's/#PubkeyAuthentication yes/PubkeyAuthentication yes/g' /etc/ssh/sshd_config
 
-RUN groupadd jcsda -g 9999
-RUN adduser jcsdauser
+RUN groupadd jcsda -g 9999 \
+    && adduser jcsdauser \
+    && mkdir -p /jcsda \
+    && chown -R jcsdauser:jcsda /jcsda \
+    && chmod 6755 /jcsda 
 
-RUN mkdir -p /jcsda /build_container \
- &&  chown -R jcsdauser:jcsda /jcsda /build_container \
- &&  chmod 6755 /jcsda /build_container
-
-
-RUN mkdir /jcsda/.ssh ; echo "StrictHostKeyChecking no" > /jcsda/.ssh/config
-COPY default-mca-params.conf /jcsda/.openmpi/mca-params.conf
-RUN mkdir -p /jcsda/.openmpi
+RUN mkdir /jcsda/.ssh \
+    && echo "StrictHostKeyChecking no" > /jcsda/.ssh/config 
 RUN chown -R jcsdauser:jcsda /jcsda/
 
 USER jcsdauser
