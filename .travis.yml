@@ -50,7 +50,6 @@ before_install:
     chmod 777 -R ~/.ccache
     chmod 777 -R $HOME/repo.cache
     cd ${WORK_DIR} && find . -name \* -exec chmod 777 {} \;
-    #cd $HOME/repo.cache && find . -name \* -exec chmod 777 {} \;
 
   - |
     # prepare docker image from jcsda/docker:latest
@@ -64,7 +63,7 @@ before_install:
       -v $HOME/repo.cache:/repo.cache \
       --name jcsda_container jcsda/dockerl2
     docker ps -a
-    docker exec jcsda_container bash -c 'mkdir $HOME/.openmpi && cp /jcsda/work/repo.src/soca/.travis/default-mca-params.conf $HOME/.openmpi/mca-params.conf'
+#    docker exec jcsda_container bash -c 'mkdir $HOME/.openmpi && cp /jcsda/work/repo.src/soca/.travis/default-mca-params.conf $HOME/.openmpi/mca-params.conf'
 
 
 #======================================================================

@@ -20,18 +20,18 @@ RUN groupadd jcsda -g 9999 \
     && chown -R jcsdauser:jcsda /jcsda \
     && chmod 6755 /jcsda 
 
-RUN mkdir /jcsda/.ssh \
-    && echo "StrictHostKeyChecking no" > /jcsda/.ssh/config 
-RUN chown -R jcsdauser:jcsda /jcsda/
-
 USER jcsdauser
-WORKDIR /jcsda
 
-RUN ssh-keygen -f /jcsda/.ssh/id_rsa -t rsa -N '' \
+COPY default-mca-params.conf /jcsda/mca-params.conf
+
+RUN mkdir -p ~/.openmpi \
+    && cp /jcsda/mca-params.conf ~/.openmpi/
+
+RUN mkdir /jcsda/.ssh \
+    && echo "StrictHostKeyChecking no" > /jcsda/.ssh/config \
+    && ssh-keygen -f /jcsda/.ssh/id_rsa -t rsa -N '' \
     && chmod 600 /jcsda/.ssh/config \
     && chmod 700 /jcsda/.ssh \
     && cp /jcsda/.ssh/id_rsa.pub /jcsda/.ssh/authorized_keys
-
-VOLUME /jcsda
 
 CMD ["/bin/bash"]
