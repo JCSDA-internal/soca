@@ -30,14 +30,18 @@ before_install:
     # setup the configurables that the subsequent scripts use
     export LIB_REPOS="fms cvmix geokdtree mom6_da_hooks gsw mom6 fckit saber oops ioda ufo"
     export LIB_BUILD_TYPE=RelWIthDebInfo
+    export LIB_BUILD_OPT_OOPS="-DENABLE_OOPS_TOYMODELS=OFF"
     export MAIN_REPO=soca
     export MAIN_BUILD_TYPE=${BUILD_TYPE}
-    export MATCH_REPOS="fms cvmix geokdtree mom6_da_hooks gsw mom6 oops ufo"
+    export MATCH_REPOS="cvmix geokdtree mom6_da_hooks gsw mom6 oops ufo"
     export LFS_REPOS="soca"
+
     export BRANCH=$( [[ "$TRAVIS_PULL_REQUEST" == "false" ]] && \
-       echo $TRAVIS_BRANCH || echo $TRAVIS_PULL_REQUEST_BRANCH )
+                     echo $TRAVIS_BRANCH || echo $TRAVIS_PULL_REQUEST_BRANCH )
     export BUNDLE_URL="https://github.com/JCSDA/soca-bundle.git"
-    export_vars="-e REPO_CACHE=/repo.cache -e LIB_REPOS -e LIB_BUILD_TYPE -e MAIN_REPO -e MAIN_BUILD_TYPE -e CCACHE_DIR=/ccache"
+    export_vars="-e REPO_CACHE=/repo.cache -e LIB_REPOS -e LIB_BUILD_TYPE 
+                 -e MAIN_REPO -e MAIN_BUILD_TYPE -e CCACHE_DIR=/ccache
+                 -e LIB_BUILD_OPT_OOPS"
         
   - |
     # clone and prep the repos
