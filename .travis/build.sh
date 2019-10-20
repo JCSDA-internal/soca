@@ -2,9 +2,9 @@
 set -e
 
 cwd=$(pwd)
-ln -s ${REPO_CACHE} ./repo.install
 
 # zero out the ccache stats
+echo -e "\nzeroing out 'ccache' statistics"
 ccache -z
 
 # for each dependency repo, make install, if needed
@@ -17,7 +17,7 @@ for repo in $LIB_REPOS; do
     
     src_dir=$cwd/repo.src/$repo
     build_dir=$cwd/repo.build/$repo
-    install_dir=$cwd/repo.install/$repo
+    install_dir=${REPO_CACHE}/$repo
 
     # set the path for the install dir for subsequent repos to find
     typeset "${repo^^}_PATH=$install_dir"
@@ -37,6 +37,7 @@ for repo in $LIB_REPOS; do
     # if we are to build
     echo "Building $repo ..."
     rm -rf $build_dir
+    rm -rf $install_dir
     mkdir -p $build_dir
     cd $build_dir
 
@@ -70,4 +71,5 @@ make -j4
 
 
 # how useful was ccache?
+echo -e "\nccache statistics:"
 ccache -s
