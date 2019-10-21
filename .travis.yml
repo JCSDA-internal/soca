@@ -18,16 +18,12 @@ cache:
   directories:
   - $HOME/repo.cache
 
-git:
-  lfs_skip_smudge: true
 
 #======================================================================
 #======================================================================
 before_install:
   - |
     # setup the configurables that the subsequent scripts use
-
-    # see .travis/prep.sh for a full description of these env vars
     export BUNDLE_URL="https://github.com/JCSDA/soca-bundle.git"
     export MAIN_REPO=soca
     export MAIN_BUILD_TYPE=${BUILD_TYPE}    
@@ -37,9 +33,9 @@ before_install:
     export LIB_BUILD_OPT_OOPS="-DENABLE_OOPS_TOYMODELS=OFF"
     export MATCH_REPOS="saber oops ioda ioda-converters ufo soca soca-config"
     export LFS_REPOS="soca"
-
     export BRANCH=$( [[ "$TRAVIS_PULL_REQUEST" == "false" ]] && \
                      echo $TRAVIS_BRANCH || echo $TRAVIS_PULL_REQUEST_BRANCH )
+
     export_vars="-e REPO_CACHE=/repo.cache -e LIB_REPOS -e LIB_BUILD_TYPE 
                  -e MAIN_REPO -e MAIN_BUILD_TYPE -e CCACHE_DIR=/ccache
                  -e LIB_BUILD_OPT_OOPS"
@@ -49,6 +45,7 @@ before_install:
     WORK_DIR=$HOME/work
     mkdir -p $WORK_DIR; cd $WORK_DIR
     REPO_CACHE=$HOME/repo.cache ${TRAVIS_BUILD_DIR}/.travis/prep.sh
+    mv ${TRAVIS_BUILD_DIR} ${WORK_DIR}/repo.src/
 
   - |
     # alter file permissions
@@ -58,7 +55,7 @@ before_install:
 
   - |
     # prepare docker image from jcsda/docker:latest
-    cd ${TRAVIS_BUILD_DIR}/.travis
+    cd ${WORK_DIR}/repo.src/${MAIN_REPO}/.travis
     docker build -t jcsda/dockerl2 --build-arg=Dockerfile .
     docker images
     ci_env=`bash <(curl -s https://codecov.io/env)`

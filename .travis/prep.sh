@@ -29,6 +29,10 @@ for repo in $LIB_REPOS $MAIN_REPO; do
         fi
     done
 
+    # if this is the main test repo, don't download, assume
+    # it has already been downloaded by TravisCI
+    [[ $repo == $MAIN_REPO ]] && continue
+
     # determine the branch / git hash tag, based on the branch name in the original bundle
     repo_url=$(grep "PROJECT $repo" $repo_bundle_dir/CMakeLists.txt | awk '{print $5}' | sed 's|"||g')
     repo_branch=$(grep "PROJECT $repo" $repo_bundle_dir/CMakeLists.txt | awk '{print $8}')
@@ -59,8 +63,8 @@ for repo in $LIB_REPOS $MAIN_REPO; do
     # save the version info to a file
     verfile=$repo_bundle_dir/build.version
     rm -rf $verfile
-    echo "repo: $repo" > $verfile
-    echo "git_branch: $repo_branch"     >> $verfile
+    echo "repo: $repo"                  > $verfile
+    echo "git_branch: $repo_branch"    >> $verfile
     echo "git_hash: $repo_hash"        >> $verfile
     echo "build_type: $LIB_BUILD_TYPE" >> $verfile
     echo "dependency_repo: $prev_repo" >> $verfile
