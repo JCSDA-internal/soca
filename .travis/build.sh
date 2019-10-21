@@ -15,8 +15,9 @@ for repo in $LIB_REPOS; do
     install_dir=${REPO_CACHE}/$repo
 
     # set the path for the install dir for subsequent repos to find
-    typeset "${repo^^}_PATH=$install_dir"
-    export ${repo^^}_PATH
+    repo_upper=${repo/-/_}; repo_upper=${repo_upper^^}
+    typeset "${repo_upper}_PATH=$install_dir"
+    export ${repo_upper}_PATH
 
     # do we skip building this repo?
     [[ -e $bundle_dir/skip_rebuild ]] && continue
@@ -25,24 +26,24 @@ for repo in $LIB_REPOS; do
     echo -e "\n"
     echo "************************************************************"
     echo "  $repo"
-    echo "************************************************************"    
+    echo "************************************************************"
     rm -rf $build_dir
     rm -rf $install_dir
     mkdir -p $build_dir
     cd $build_dir
 
     # run ecbuild
-    build_opt_var=LIB_BUILD_OPT_${repo^^}
+    build_opt_var=LIB_BUILD_OPT_${repo_upper}
     build_opt=${!build_opt_var}
     time ecbuild $src_dir -DCMAKE_INSTALL_PREFIX=${install_dir} -DCMAKE_BUILD_TYPE=${LIB_BUILD_TYPE} \
-    	    -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DENABLE_TESTS=OFF -DBUILD_TESTING=OFF $build_opt
+            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DENABLE_TESTS=OFF -DBUILD_TESTING=OFF $build_opt
 
     # build and install
     time make -j4
     time make install
 
     # save compilation info
-    cp $bundle_dir/build.version $install_dir/    
+    cp $bundle_dir/build.version $install_dir/
 done
 
 

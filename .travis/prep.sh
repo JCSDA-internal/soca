@@ -24,9 +24,9 @@ for repo in $LIB_REPOS $MAIN_REPO; do
     mkdir -p $repo_bundle_dir
     cp $cwd/bundle/CMakeLists.txt $repo_bundle_dir/
     for r in $bundle_repos; do
-	if [[ $repo != $r ]]; then
-	    sed -i "/.* PROJECT $r .*/d" $repo_bundle_dir/CMakeLists.txt
-	fi
+        if [[ $repo != $r ]]; then
+           sed -i "/.* PROJECT $r .*/d" $repo_bundle_dir/CMakeLists.txt
+        fi
     done
 
     # determine the branch / git hash tag, based on the branch name in the original bundle
@@ -43,15 +43,15 @@ for repo in $LIB_REPOS $MAIN_REPO; do
     domatch=0
     for r in $MATCH_REPOS; do [[ $r == $repo ]] && domatch=1 ; done
     if [[ $domatch == 1 ]]; then
-	echo -n "* trying to match main test repo branch... "
-	line=$(echo "$remote_branches" | grep "refs/heads/$BRANCH" || echo "none")
-	if [[ "$line" != "none" ]]; then
-	    echo "match FOUND"
-	    repo_branch=$BRANCH
-	    repo_hash=$(echo "$line" | awk '{print $1}')
-	else
-	    echo "match NOT found"
-	fi
+        echo -n "* trying to match main test repo branch... "
+        line=$(echo "$remote_branches" | grep "refs/heads/$BRANCH" || echo "none")
+        if [[ "$line" != "none" ]]; then
+            echo "match FOUND"
+            repo_branch=$BRANCH
+            repo_hash=$(echo "$line" | awk '{print $1}')
+        else
+            echo "match NOT found"
+        fi
     fi
     echo "Branch:  $repo_branch"
     echo "githash: $repo_hash"
@@ -59,11 +59,11 @@ for repo in $LIB_REPOS $MAIN_REPO; do
     # save the version info to a file
     verfile=$repo_bundle_dir/build.version
     rm -rf $verfile
-    echo "repo:$repo" > $verfile    
-    echo "git_branch:repo_branch"     >> $verfile
-    echo "git_hash:$repo_hash"        >> $verfile
-    echo "build_type:$LIB_BUILD_TYPE" >> $verfile
-    echo "dependency_repo:$prev_repo" >> $verfile
+    echo "repo: $repo" > $verfile
+    echo "git_branch: $repo_branch"     >> $verfile
+    echo "git_hash: $repo_hash"        >> $verfile
+    echo "build_type: $LIB_BUILD_TYPE" >> $verfile
+    echo "dependency_repo: $prev_repo" >> $verfile
     prev_repo=$repo
 
     # if the repo cache is empty, or if the version mismatches,
@@ -74,15 +74,15 @@ for repo in $LIB_REPOS $MAIN_REPO; do
     [[ $rebuild == 0 && $vermatch == 0 ]] && rebuild=1
     if [[ $rebuild == 1 ]]; then
 
-	# download the repo
-	skip_lfs=1
-	for r in $LFS_REPOS; do [[ $r == $repo ]] && skip_lfs=0 ; done
-	[[ $skip_lfs == 0 ]] && echo "Using git-lfs"
-	repo_src_dir=repo.src/$repo
-	rm -rf $repo_src_dir
-	GIT_LFS_SKIP_SMUDGE=$skip_lfs git clone -b $repo_branch $repo_url $repo_src_dir
+        # download the repo
+        skip_lfs=1
+        for r in $LFS_REPOS; do [[ $r == $repo ]] && skip_lfs=0 ; done
+        [[ $skip_lfs == 0 ]] && echo "Using git-lfs"
+        repo_src_dir=repo.src/$repo
+        rm -rf $repo_src_dir
+        GIT_LFS_SKIP_SMUDGE=$skip_lfs git clone -b $repo_branch $repo_url $repo_src_dir
     else
-	touch $repo_bundle_dir/skip_rebuild
-	echo "Skipping rebuild"
+        touch $repo_bundle_dir/skip_rebuild
+        echo "Skipping rebuild"
     fi
 done
