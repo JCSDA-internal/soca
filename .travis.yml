@@ -4,9 +4,12 @@
 branches:
   only:
     - develop
-
+    - master
+    - /.*/travisci_.*$/
+    
 env:
-  - BUILD_TYPE=Debug
+  global:
+    - BUILD_TYPE=Debug
 
 language: cpp
 
@@ -18,16 +21,12 @@ cache:
   directories:
   - $HOME/repo.cache
 
-git:
-  lfs_skip_smudge: true
 
 #======================================================================
 #======================================================================
 before_install:
   - |
     # setup the configurables that the subsequent scripts use
-
-    # see .travis/prep.sh for a full description of these env vars
     export BUNDLE_URL="https://github.com/JCSDA/soca-bundle.git"
     export MAIN_REPO=soca
     export MAIN_BUILD_TYPE=${BUILD_TYPE}    
@@ -36,19 +35,23 @@ before_install:
     export LIB_BUILD_TYPE=RelWIthDebInfo
     export LIB_BUILD_OPT_OOPS="-DENABLE_OOPS_TOYMODELS=OFF"
     export MATCH_REPOS="saber oops ioda ioda-converters ufo soca soca-config"
-    export LFS_REPOS="soca"
-
+    export LFS_REPOS=""
     export BRANCH=$( [[ "$TRAVIS_PULL_REQUEST" == "false" ]] && \
                      echo $TRAVIS_BRANCH || echo $TRAVIS_PULL_REQUEST_BRANCH )
+
     export_vars="-e REPO_CACHE=/repo.cache -e LIB_REPOS -e LIB_BUILD_TYPE 
                  -e MAIN_REPO -e MAIN_BUILD_TYPE -e CCACHE_DIR=/ccache
                  -e LIB_BUILD_OPT_OOPS"
         
   - |
     # clone and prep the repos
+    # note: the main repo is not handled by the prep.sh script,
+    #  it is moved from what TravisCI auto checks out
+    #  (because TravisCI handles PR merges specially)
     WORK_DIR=$HOME/work
     mkdir -p $WORK_DIR; cd $WORK_DIR
     REPO_CACHE=$HOME/repo.cache ${TRAVIS_BUILD_DIR}/.travis/prep.sh
+    mv ${TRAVIS_BUILD_DIR} ${WORK_DIR}/repo.src/${MAIN_REPO}
 
   - |
     # alter file permissions
@@ -58,7 +61,7 @@ before_install:
 
   - |
     # prepare docker image from jcsda/docker:latest
-    cd ${TRAVIS_BUILD_DIR}/.travis
+    cd ${WORK_DIR}/repo.src/${MAIN_REPO}/.travis
     docker build -t jcsda/dockerl2 --build-arg=Dockerfile .
     docker images
     ci_env=`bash <(curl -s https://codecov.io/env)`
@@ -77,14 +80,16 @@ script:
   - |
     # Build code
     docker exec jcsda_container bash \
-     -c 'cd /jcsda/work && /jcsda/work/repo.src/soca/.travis/build.sh'
+     -c 'cd /jcsda/work && /jcsda/work/repo.src/${MAIN_REPO}/.travis/build.sh'
 
   - |
     # run tests
     docker exec jcsda_container bash \
-     -c 'cd /jcsda/work/repo.build/soca && ctest --output-on-failure'
+     -c 'cd /jcsda/work/repo.build/${MAIN_REPO} && ctest --output-on-failure'
 
   - |
     # upload code coverage
-    docker exec jcsda_container bash \
-     -c 'cd /jcsda/work/repo.src/soca && lcov -c -d . -d ../../repo.build/soca/ -o coverage.info  --no-external -q && bash <(curl -s https://codecov.io/bash)'
+    docker exec jcsda_container bash -c \
+      'cd /jcsda/work/repo.src/${MAIN_REPO}
+       && lcov -c -d . -d ../../repo.build/${MAIN_REPO}/ -o coverage.info  --no-external -q
+       && bash <(curl -s https://codecov.io/bash)'
