@@ -9,7 +9,13 @@ branches:
     
 env:
   global:
-    - BUILD_TYPE=Debug
+    - BUNDLE_URL="https://github.com/JCSDA/soca-bundle.git"
+    - MAIN_REPO=soca
+    - LIB_REPOS="fms cvmix geokdtree mom6_da_hooks gsw mom6
+                 fckit saber oops ioda ufo ioda-converters soca-config"
+    - LIB_BUILD_OPT_OOPS="-DENABLE_OOPS_TOYMODELS=OFF"
+    - MATCH_REPOS="saber oops ioda ioda-converters ufo soca soca-config"
+    - LFS_REPOS=""
 
 language: cpp
 
@@ -26,16 +32,9 @@ cache:
 #======================================================================
 before_install:
   - |
-    # setup the configurables that the subsequent scripts use
-    export BUNDLE_URL="https://github.com/JCSDA/soca-bundle.git"
-    export MAIN_REPO=soca
-    export MAIN_BUILD_TYPE=${BUILD_TYPE}    
-    export LIB_REPOS="fms cvmix geokdtree mom6_da_hooks gsw mom6
-                      fckit saber oops ioda ufo ioda-converters soca-config"
+    # setup other configurables that the subsequent scripts use
+    export MAIN_BUILD_TYPE=Debug
     export LIB_BUILD_TYPE=RelWIthDebInfo
-    export LIB_BUILD_OPT_OOPS="-DENABLE_OOPS_TOYMODELS=OFF"
-    export MATCH_REPOS="saber oops ioda ioda-converters ufo soca soca-config"
-    export LFS_REPOS=""
     export BRANCH=$( [[ "$TRAVIS_PULL_REQUEST" == "false" ]] && \
                      echo $TRAVIS_BRANCH || echo $TRAVIS_PULL_REQUEST_BRANCH )
 
@@ -49,7 +48,7 @@ before_install:
     #  it is moved from what TravisCI auto checks out
     #  (because TravisCI handles PR merges specially)
     WORK_DIR=$HOME/work
-    mkdir -p $WORK_DIR; cd $WORK_DIR
+    mkdir -p $WORK_DIR/repo.src; cd $WORK_DIR
     REPO_CACHE=$HOME/repo.cache ${TRAVIS_BUILD_DIR}/.travis/prep.sh
     mv ${TRAVIS_BUILD_DIR} ${WORK_DIR}/repo.src/${MAIN_REPO}
 
@@ -90,6 +89,6 @@ script:
   - |
     # upload code coverage
     docker exec jcsda_container bash -c \
-      'cd /jcsda/work/repo.src/${MAIN_REPO}
-       && lcov -c -d . -d ../../repo.build/${MAIN_REPO}/ -o coverage.info  --no-external -q
+      'cd /jcsda/work/repo.src/${MAIN_REPO} \
+       && lcov -c -d . -d ../../repo.build/${MAIN_REPO}/ -o coverage.info  --no-external -q \
        && bash <(curl -s https://codecov.io/bash)'
