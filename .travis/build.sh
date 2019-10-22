@@ -1,4 +1,15 @@
 #!/bin/bash
+#================================================================================
+# (C) Copyright 2019 UCAR
+# This software is licensed under the terms of the Apache Licence Version 2.0
+# which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+#
+# This script build each repo, in the order listed in "$LIB_REPO $MAIN_REPO", if
+# "prep.sh" has determined that it needs to be rebuilt.
+#
+# ccache is used to accelerate CXX files between builds. And upstream repos are
+# cached in ${REPO_CACHE}/{repo} and not rebuilt if they have not changed
+#================================================================================
 set -e
 
 cwd=$(pwd)
@@ -7,14 +18,14 @@ cwd=$(pwd)
 echo -e "\nzeroing out 'ccache' statistics"
 ccache -z
 
-# for each dependency repo, make install, if needed
+# for each dependency repo...
 for repo in $LIB_REPOS; do
     bundle_dir=$cwd/repo.bundle/$repo
     src_dir=$cwd/repo.src/$repo
     build_dir=$cwd/repo.build/$repo
     install_dir=${REPO_CACHE}/$repo
 
-    # set the path for the install dir for subsequent repos to find
+    # set the path to the install dir for subsequent repos to find
     repo_upper=${repo/-/_}; repo_upper=${repo_upper^^}
     typeset "${repo_upper}_PATH=$install_dir"
     export ${repo_upper}_PATH
@@ -42,7 +53,7 @@ for repo in $LIB_REPOS; do
     time make -j4
     time make install
 
-    # save compilation info
+    # save version info for next time
     cp $bundle_dir/build.version $install_dir/
 done
 
@@ -57,7 +68,8 @@ src_dir=$cwd/repo.src/${MAIN_REPO}
 build_dir=$cwd/repo.build/${MAIN_REPO}
 mkdir -p  $build_dir
 cd $build_dir
-time ecbuild $src_dir -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_BUILD_TYPE=${MAIN_BUILD_TYPE} -DENABLE_GPROF=ON
+time ecbuild $src_dir -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+       -DCMAKE_BUILD_TYPE=${MAIN_BUILD_TYPE} -DENABLE_GPROF=ON
 time make -j4
 
 

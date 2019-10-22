@@ -1,12 +1,21 @@
-#======================================================================
-# Project settings
-#======================================================================
-branches:
-  only:
-    - develop
-    - master
-    - /.*/travisci_.*$/
-    
+#================================================================================
+# TravisCI configuration script
+#
+# The following environment variables need to be defined:
+#   BUNDLE_URL  - location of the main bundle repository for this project
+#   MAIN_REPO   - The name of this repo being tested, as spelled in the bundle
+#   LIB_REPOS   - A list of the dependency repos, in the order that they are to be
+#                 built. If the script detects a repo needs to be rebuit, all repos
+#                 listed after it will be rebuilt as well. These repos will be
+#                 cached. (So try to list large, rarely chaning repos, first)
+#   LIB_BUILD_OPT_{REPO} - For each repo in $LIB_REPOS, optional arguments
+#                 to pass to ecbuild when compiling
+#   MATCH_REPOS - All repos in $LIB_REPO will use the branch listed in the bundle
+#                 unless listed in $MATCH_REPOS
+#   LFS_REPOS   - All repos in $LIB_REPO will not use git-lfs when checked out
+#                 unless listed in $LFS_REPOS
+#================================================================================
+
 env:
   global:
     - BUNDLE_URL="https://github.com/JCSDA/soca-bundle.git"
@@ -16,6 +25,12 @@ env:
     - LIB_BUILD_OPT_OOPS="-DENABLE_OOPS_TOYMODELS=OFF"
     - MATCH_REPOS="saber oops ioda ioda-converters ufo soca soca-config"
     - LFS_REPOS=""
+
+branches:
+  only:
+    - develop
+    - master
+    - /.*/travisci_.*$/
 
 language: cpp
 
@@ -28,8 +43,17 @@ cache:
   - $HOME/repo.cache
 
 
-#======================================================================
-#======================================================================
+#================================================================================
+# Download and prepare the repositories and setup the docker image
+# The working directory will then contain the following directories, with {repo}
+# being each repository listed in $LIB_REPOS and $MAIN_REPO
+#   ./bundle/             - The original main ecbuild bundle repository
+#   ./repo.bundle/{repo}/ - Modified versions of the bundle to individually build repos
+#   ./repo.src/{repo}/    - The source from github
+#   ./repo.build/{repo}/  - The build directory
+#   $HOME/repo.cache/{repo}/ - The cached results from `make install` for each
+#                           $LIB_REPOS from previous builds on TravisCI
+#================================================================================
 before_install:
   - |
     # setup other configurables that the subsequent scripts use
@@ -37,16 +61,14 @@ before_install:
     export LIB_BUILD_TYPE=RelWIthDebInfo
     export BRANCH=$( [[ "$TRAVIS_PULL_REQUEST" == "false" ]] && \
                      echo $TRAVIS_BRANCH || echo $TRAVIS_PULL_REQUEST_BRANCH )
-
-    export_vars="-e REPO_CACHE=/repo.cache -e LIB_REPOS -e LIB_BUILD_TYPE 
+    export_vars="-e REPO_CACHE=/repo.cache -e LIB_REPOS -e LIB_BUILD_TYPE
                  -e MAIN_REPO -e MAIN_BUILD_TYPE -e CCACHE_DIR=/ccache
                  -e LIB_BUILD_OPT_OOPS"
-        
+
   - |
     # clone and prep the repos
-    # note: the main repo is not handled by the prep.sh script,
-    #  it is moved from what TravisCI auto checks out
-    #  (because TravisCI handles PR merges specially)
+    # note: the main repo is not handled by the prep.sh script, it is moved from
+    # what TravisCI auto checks out (because TravisCI handles PR merges specially)
     WORK_DIR=$HOME/work
     mkdir -p $WORK_DIR/repo.src; cd $WORK_DIR
     REPO_CACHE=$HOME/repo.cache ${TRAVIS_BUILD_DIR}/.travis/prep.sh
@@ -61,7 +83,7 @@ before_install:
   - |
     # prepare docker image from jcsda/docker:latest
     cd ${WORK_DIR}/repo.src/${MAIN_REPO}/.travis
-    docker build -t jcsda/dockerl2 --build-arg=Dockerfile .
+    docker build -t jcsda/dockerl2 .
     docker images
     ci_env=`bash <(curl -s https://codecov.io/env)`
     docker run -d -t $ci_env $export_vars \

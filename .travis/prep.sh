@@ -1,24 +1,39 @@
 #!/bin/bash
+#================================================================================
+# (C) Copyright 2019 UCAR
+# This software is licensed under the terms of the Apache Licence Version 2.0
+# which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+#
+# This script downloads all the repos used by a bundle, and prepares them to be
+# compiled individually. (Not how we normally build a bundle, but this allows for
+# caching of the upstream repositories).
+#
+# see ../.travis.yml for a description of the input environment variables that
+# need to be defined
+#================================================================================
 set -e
 
 cwd=$(pwd)
 
-# checkout the bundle
+
+# checkout the bundle, and get a list of all repos listed in it
 rm -rf bundle
 git clone $BUNDLE_URL bundle
-(cd bundle && git checkout $BRANCH || echo "bundle does not have branch $BRANCH, keeping default branch")
+(cd bundle && git checkout $BRANCH ||
+ echo "bundle does not have branch $BRANCH, keeping default branch")
 bundle_repos=$(grep "ecbuild_bundle(" bundle/CMakeLists.txt | awk '{print $3}')
 
 
-# prepare a separate bundle for each lib repo, determine version,
-# and checkout the repo source if needed
+# prepare a separate bundle for each upstream repo, determine version information,
+# and checkout the repo source if needed. (We don't need to checkout, and build
+# if the version information matches that in the cached build)
 rm -rf repo.build
 prev_repo=""
 rebuild=0
 for repo in $LIB_REPOS $MAIN_REPO; do
     echo ""
-    
-    # setup src directory CMakeLists.txt
+
+    # create a new "bundle" for each repo
     repo_bundle_dir=repo.bundle/$repo
     rm -rf $repo_bundle_dir
     mkdir -p $repo_bundle_dir
@@ -29,8 +44,8 @@ for repo in $LIB_REPOS $MAIN_REPO; do
         fi
     done
 
-    # if this is the main test repo, don't download, assume
-    # it has already been downloaded by TravisCI
+    # if this is the main test repo, don't download from git, assume
+    # that it has already been downloaded by TravisCI
     [[ $repo == $MAIN_REPO ]] && continue
 
     # determine the branch / git hash tag, based on the branch name in the original bundle
@@ -70,15 +85,15 @@ for repo in $LIB_REPOS $MAIN_REPO; do
     echo "dependency_repo: $prev_repo" >> $verfile
     prev_repo=$repo
 
-    # if the repo cache is empty, or if the version mismatches,
-    # download the repo and mark it to be built
+    # if the repo cache is empty, the version mismatches that in the cache, or
+    # an upstream dependency needs to be rebuilt, download the repo and mark it to be built
     vermatch=0
     verfile_cache=$REPO_CACHE/$repo/build.version
     [[ -e $verfile_cache ]] && diff -q $verfile $verfile_cache && vermatch=1
     [[ $rebuild == 0 && $vermatch == 0 ]] && rebuild=1
     if [[ $rebuild == 1 ]]; then
 
-        # download the repo
+        # download the repo, using git-lfs only if the repo is listed in $LFS_REPOS
         skip_lfs=1
         for r in $LFS_REPOS; do [[ $r == $repo ]] && skip_lfs=0 ; done
         [[ $skip_lfs == 0 ]] && echo "Using git-lfs"

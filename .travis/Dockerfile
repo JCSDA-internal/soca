@@ -7,18 +7,12 @@ RUN cd /usr/local/src \
     && ./configure \
     && make \
     && make install
-    
-RUN mkdir -p /var/run/sshd \
-    && ssh-keygen -A \
-    && sed -i 's/#PermitRootLogin yes/PermitRootLogin yes/g' /etc/ssh/sshd_config \
-    && sed -i 's/#RSAAuthentication yes/RSAAuthentication yes/g' /etc/ssh/sshd_config \
-    && sed -i 's/#PubkeyAuthentication yes/PubkeyAuthentication yes/g' /etc/ssh/sshd_config
 
 RUN groupadd jcsda -g 9999 \
     && adduser jcsdauser \
     && mkdir -p /jcsda \
     && chown -R jcsdauser:jcsda /jcsda \
-    && chmod 6755 /jcsda 
+    && chmod 6755 /jcsda
 
 USER jcsdauser
 
@@ -26,12 +20,5 @@ COPY default-mca-params.conf /jcsda/mca-params.conf
 
 RUN mkdir -p ~/.openmpi \
     && cp /jcsda/mca-params.conf ~/.openmpi/
-
-RUN mkdir /jcsda/.ssh \
-    && echo "StrictHostKeyChecking no" > /jcsda/.ssh/config \
-    && ssh-keygen -f /jcsda/.ssh/id_rsa -t rsa -N '' \
-    && chmod 600 /jcsda/.ssh/config \
-    && chmod 700 /jcsda/.ssh \
-    && cp /jcsda/.ssh/id_rsa.pub /jcsda/.ssh/authorized_keys
 
 CMD ["/bin/bash"]
