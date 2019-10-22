@@ -1,6 +1,2 @@
 codecov:
   token: 7e489333-8f39-4b00-8377-402f46db4a15
-  
-ignore:
-  - "/usr/.*"
-  - "/jcsda/work/repo.install/.*"
