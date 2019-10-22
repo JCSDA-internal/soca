@@ -8,8 +8,7 @@
 #                 built. If the script detects a repo needs to be rebuit, all repos
 #                 listed after it will be rebuilt as well. These repos will be
 #                 cached. (So try to list large, rarely chaning repos, first)
-#   LIB_BUILD_OPT_{REPO} - For each repo in $LIB_REPOS, optional arguments
-#                 to pass to ecbuild when compiling
+#   BUILD_OPT_{REPO} - For each repo optional arguments to pass to ecbuild
 #   MATCH_REPOS - All repos in $LIB_REPO will use the branch listed in the bundle
 #                 unless listed in $MATCH_REPOS
 #   LFS_REPOS   - All repos in $LIB_REPO will not use git-lfs when checked out
@@ -22,7 +21,8 @@ env:
     - MAIN_REPO=soca
     - LIB_REPOS="fms cvmix geokdtree mom6_da_hooks gsw mom6
                  fckit saber oops ioda ufo ioda-converters soca-config"
-    - LIB_BUILD_OPT_OOPS="-DENABLE_OOPS_TOYMODELS=OFF"
+    - BUILD_OPT_OOPS="-DENABLE_OOPS_TOYMODELS=OFF"
+    - BUILD_OPT_SOCA="-DSOCA_TESTS_FORC_DEFAULT_TOL=ON"
     - MATCH_REPOS="saber oops ioda ioda-converters ufo soca soca-config"
     - LFS_REPOS=""
 
@@ -62,8 +62,10 @@ before_install:
     export BRANCH=$( [[ "$TRAVIS_PULL_REQUEST" == "false" ]] && \
                      echo $TRAVIS_BRANCH || echo $TRAVIS_PULL_REQUEST_BRANCH )
     export_vars="-e REPO_CACHE=/repo.cache -e LIB_REPOS -e LIB_BUILD_TYPE
-                 -e MAIN_REPO -e MAIN_BUILD_TYPE -e CCACHE_DIR=/ccache
-                 -e LIB_BUILD_OPT_OOPS"
+                 -e MAIN_REPO -e MAIN_BUILD_TYPE -e CCACHE_DIR=/ccache"
+    for v in $(env | grep BUILD_OPT_ | cut -d'=' -f 1); do
+      export_vars="$export_vars -e $v"
+    done
 
   - |
     # clone and prep the repos
