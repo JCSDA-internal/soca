@@ -14,9 +14,9 @@ Geometry/soca_geom.interface.F90
 Geometry/soca_geom_mod.F90
 
 #GeometryIterator
-GeometryIterator/GeometrySocaIterator.cc
-GeometryIterator/GeometrySocaIterator.h
-GeometryIterator/GeometrySocaIteratorFortran.h
+GeometryIterator/GeometryIterator.cc
+GeometryIterator/GeometryIterator.h
+GeometryIterator/GeometryIteratorFortran.h
 #GeometryIterator/soca_geom.interface.F90
 #GeometryIterator/soca_geom_mod.F90
 

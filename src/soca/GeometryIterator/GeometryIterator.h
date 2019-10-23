@@ -5,8 +5,8 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#ifndef JEDI_SRC_GEOMETRYITERATOR_GEOMETRYSOCAITERATOR_H_
-#define JEDI_SRC_GEOMETRYITERATOR_GEOMETRYSOCAITERATOR_H_
+#ifndef JEDI_SRC_GEOMETRYITERATOR_GEOMETRYITERATOR_H_
+#define JEDI_SRC_GEOMETRYITERATOR_GEOMETRYITERATOR_H_
 
 #include <iterator>
 #include <string>
@@ -24,21 +24,21 @@ namespace soca {
 class Geometry;
 
 // -----------------------------------------------------------------------------
-class GeometrySocaIterator: public std::iterator<std::forward_iterator_tag,
+class GeometryIterator: public std::iterator<std::forward_iterator_tag,
                                                eckit::geometry::Point2>,
                           public util::Printable,
-                          private util::ObjectCounter<GeometrySocaIterator> {
+                          private util::ObjectCounter<GeometryIterator> {
  public:
-  static const std::string classname() {return "soca::GeometrySocaIterator";}
+  static const std::string classname() {return "soca::GeometryIterator";}
 
-  GeometrySocaIterator(const GeometrySocaIterator &);
-  explicit GeometrySocaIterator(const Geometry & geom, const int & index = 1);
-  ~GeometrySocaIterator();
+  GeometryIterator(const GeometryIterator &);
+  explicit GeometryIterator(const Geometry & geom, const int & index = 1);
+  ~GeometryIterator();
 
-  bool operator==(const GeometrySocaIterator &) const;
-  bool operator!=(const GeometrySocaIterator &) const;
+  bool operator==(const GeometryIterator &) const;
+  bool operator!=(const GeometryIterator &) const;
   eckit::geometry::Point2 operator*() const;
-  GeometrySocaIterator& operator++();
+  GeometryIterator& operator++();
 
   F90iter & toFortran() {return keyIter_;}
   const F90iter & toFortran() const {return keyIter_;}
@@ -50,4 +50,4 @@ class GeometrySocaIterator: public std::iterator<std::forward_iterator_tag,
 
 }  // namespace soca
 
-#endif  // JEDI_SRC_GEOMETRYITERATOR_GEOMETRYSOCAITERATOR_H_
+#endif  // JEDI_SRC_GEOMETRYITERATOR_GEOMETRYITERATOR_H_

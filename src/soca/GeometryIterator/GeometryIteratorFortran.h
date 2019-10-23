@@ -5,8 +5,8 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#ifndef JEDI_SRC_GEOMETRYITERATOR_GEOMETRYSOCAITERATORFORTRAN_H_
-#define JEDI_SRC_GEOMETRYITERATOR_GEOMETRYSOCAITERATORFORTRAN_H_
+#ifndef JEDI_SRC_GEOMETRYITERATOR_GEOMETRYITERATORFORTRAN_H_
+#define JEDI_SRC_GEOMETRYITERATOR_GEOMETRYITERATORFORTRAN_H_
 
 #include "Fortran.h"
 
@@ -30,4 +30,4 @@ extern "C" {
 // -----------------------------------------------------------------------------
 
 }  // namespace soca
-#endif  // JEDI_SRC_GEOMETRYITERATOR_GEOMETRYSOCAITERATORFORTRAN_H_
+#endif  // JEDI_SRC_GEOMETRYITERATOR_GEOMETRYITERATORFORTRAN_H_
