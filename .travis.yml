@@ -60,7 +60,6 @@ cache:
 before_install:
   - |
     # setup other configurables that the subsequent scripts use
-    echo "GH_TOKEN: $GH_TOKEN"
     export MAIN_BUILD_TYPE=Debug
     export LIB_BUILD_TYPE=RelWIthDebInfo
     export BRANCH=$( [[ "$TRAVIS_PULL_REQUEST" == "false" ]] && \

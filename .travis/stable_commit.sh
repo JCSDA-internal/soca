@@ -12,17 +12,17 @@
 
 set -e
 
+echo ""
+
 RELEASE_BRANCH=${RELEASE_BRANCH:-release/stable-nightly}
 
 cwd=$(pwd)
-
-
 git clone ${BUNDLE_URL} bundle.stable
 cd bundle.stable
 
 # get the git commit hash for the relevant involved branches 
 ref_develop=$(git rev-parse HEAD)
-git checkout $RELEASE_BRANCH
+git checkout $RELEASE_BRANCH || git checkout -b $RELEASE_BRANCH
 ref_stable=$(git rev-parse HEAD)
 ref_common=$(git merge-base $ref_develop $ref_stable)
 
@@ -34,10 +34,15 @@ if [[ "$ref_common" != "$ref_develop" ]]; then
     amend="--amend"
 fi
 
+# setup git user info
+git config --global user.email "travis@travis-ci.org"
+git config --global user.name  "TravisCI"
+url=${BUNDLE_URL/github.com/"${GH_TOKEN}@github.com"}
+git remote add origin-auth $url
+
 # check in the changes
-msg="nightly stable branch $(date +%Y-%m-%d)"
-cat ../bundle/CMakeLists.new > CMakeLists.txt
+msg="nightly stable  $(date +%Y-%m-%d)"
+cat $cwd/bundle/CMakeLists.txt > CMakeLists.txt
 git add .
-git status
-git diff
 git commit -m "$msg" $amend
+git push --set-upstream origin-auth $RELEASE_BRANCH
