@@ -304,6 +304,10 @@ soca_add_test( NAME geometry
                SRC  TestGeometry.cc
                TEST_DEPENDS test_soca_gridgen )
 
+soca_add_test( NAME geometry_iterator
+               SRC  TestGeometryIterator.cc
+               TEST_DEPENDS test_soca_gridgen )
+
 soca_add_test( NAME state
                SRC  TestState.cc
                TEST_DEPENDS test_soca_gridgen )

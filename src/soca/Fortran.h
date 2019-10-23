@@ -22,6 +22,8 @@ namespace soca {
 
   // Geometry key type
   typedef int F90geom;
+  // Geometry iterator key type
+  typedef int F90iter;
   // Model key type
   typedef int F90model;
   // Locations key type

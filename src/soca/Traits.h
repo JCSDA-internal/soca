@@ -11,6 +11,7 @@
 #include <string>
 
 #include "soca/Geometry/Geometry.h"
+#include "soca/GeometryIterator/GeometrySocaIterator.h"
 #include "soca/Increment/Increment.h"
 #include "soca/Covariance/ErrorCovariance.h"
 #include "soca/GetValuesTraj/GetValuesTraj.h"
@@ -40,6 +41,7 @@ struct Traits {
   static std::string nameCovar4D() {return "SocaError";}
 
   typedef soca::Geometry            Geometry;
+  typedef soca::GeometrySocaIterator    GeometryIterator;
   typedef soca::State               State;
   typedef soca::Increment           Increment;
   typedef soca::ErrorCovariance     Covariance;
