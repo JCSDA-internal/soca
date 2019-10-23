@@ -116,3 +116,14 @@ script:
       'cd /jcsda/work/repo.src/${MAIN_REPO} \
        && lcov -c -d . -d ../../repo.build/${MAIN_REPO}/ -o coverage.info  --no-external -q \
        && bash <(curl -s https://codecov.io/bash)'
+
+
+
+#======================================================================
+#======================================================================
+after_success:
+  - |
+    # If this is a cron run, update the release/stable branch of the bundle
+    # TODO: add check for "develop" and "cron"
+    docker exec jcsda_container bash -c \
+      'cd /jcsda/work && repo.src/${MAIN_REPO}/.travis/mark_stable.sh'
