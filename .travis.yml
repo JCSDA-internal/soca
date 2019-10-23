@@ -127,7 +127,9 @@ script:
 after_success:
   - |
     # If this is a cron run, update the release/stable branch of the bundle
-    # TODO: add check for "develop" and "cron"
-    docker exec jcsda_container bash -c \
-      'cd /jcsda/work && repo.src/${MAIN_REPO}/.travis/stable_mark.sh'
-    cd ${WORK_DIR} && ${WORK_DIR}/repo.src/${MAIN_REPO}/.travis/stable_commit.sh
+    # TODO: add check for "develop"
+    if [[ "$TRAVIS_EVENT_TYPE" == "cron" ]]; then
+        docker exec jcsda_container bash -c \
+          'cd /jcsda/work && repo.src/${MAIN_REPO}/.travis/stable_mark.sh'
+        cd ${WORK_DIR} && ${WORK_DIR}/repo.src/${MAIN_REPO}/.travis/stable_commit.sh
+    fi
