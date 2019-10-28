@@ -134,6 +134,7 @@ cost_function:
         - variable: sea_area_fraction@GeoVaLs
           minvalue: 0.5
       - Filter: Thinning
+        variables: [sea_surface_temperature]
         amount: 0.1
         random_seed: 0
 
