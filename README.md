@@ -1,5 +1,6 @@
 [![travis_develop](https://travis-ci.com/JCSDA/soca.svg?token=Vu1Csdj6JEdxNw6xXKz8&branch=develop)](http://travis-ci.com/JCSDA/soca)
 [![codecov](https://codecov.io/gh/JCSDA/soca/branch/develop/graph/badge.svg?token=uFJ62a68D7)](https://codecov.io/gh/JCSDA/soca)
+[![Documentation Status](https://readthedocs.com/projects/jointcenterforsatellitedataassimilation-soca/badge/?version=latest)](https://jointcenterforsatellitedataassimilation-soca.readthedocs-hosted.com/en/latest/?badge=latest)
 
 JEDI encapsulation of MOM6  
 
