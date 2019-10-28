@@ -139,6 +139,12 @@ endforeach(FILENAME)
 # Create directory for BUMP output
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bump)
 
+# find compare.py, if not found assume it will be built by oops in this bundle
+find_file(COMPARE_BIN compare.py HINTS ${OOPS_PATH}/bin)
+if(NOT COMPARE_BIN)
+  set(COMPARE_BIN ${CMAKE_BINARY_DIR}/bin/compare.py)
+endif()
+
 
 #####################################################################
 
@@ -240,7 +246,7 @@ function(soca_add_test)
   IF(NOT ARG_NOCOMPARE)
     ecbuild_add_test( TARGET  test_soca_${ARG_NAME}_compare
                       TYPE    SCRIPT
-                      COMMAND "${CMAKE_BINARY_DIR}/bin/compare.py"
+                      COMMAND "${COMPARE_BIN}"
                       ARGS    testoutput/${ARG_NAME}.log
                               testref/${ARG_NAME}.test
                               ${ARG_TOL}

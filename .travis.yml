@@ -1,132 +1,118 @@
-#======================================================================
-# Project settings
-#======================================================================
+#================================================================================
+# TravisCI configuration script
+#
+# The following environment variables need to be defined:
+#   BUNDLE_URL  - location of the main bundle repository for this project
+#   MAIN_REPO   - The name of this repo being tested, as spelled in the bundle
+#   LIB_REPOS   - A list of the dependency repos, in the order that they are to be
+#                 built. If the script detects a repo needs to be rebuit, all repos
+#                 listed after it will be rebuilt as well. These repos will be
+#                 cached. (So try to list large, rarely chaning repos, first)
+#   BUILD_OPT_{REPO} - For each repo optional arguments to pass to ecbuild
+#   MATCH_REPOS - All repos in $LIB_REPO will use the branch listed in the bundle
+#                 unless listed in $MATCH_REPOS
+#   LFS_REPOS   - All repos in $LIB_REPO will not use git-lfs when checked out
+#                 unless listed in $LFS_REPOS
+#================================================================================
+
+env:
+  global:
+    - BUNDLE_URL="https://github.com/JCSDA/soca-bundle.git"
+    - MAIN_REPO=soca
+    - LIB_REPOS="fms cvmix geokdtree mom6_da_hooks gsw mom6
+                 fckit saber oops ioda ufo ioda-converters soca-config"
+    - BUILD_OPT_OOPS="-DENABLE_OOPS_TOYMODELS=OFF"
+    - BUILD_OPT_SOCA="-DSOCA_TESTS_FORC_DEFAULT_TOL=ON"
+    - MATCH_REPOS="saber oops ioda ioda-converters ufo soca soca-config"
+    - LFS_REPOS=""
+
 branches:
   only:
     - develop
+    - master
+    - /.*/travisci_.*$/
 
 language: cpp
 
 services:
   - docker
 
+cache:
+  ccache: true
+  directories:
+  - $HOME/repo.cache
+
+
+#================================================================================
+# Download and prepare the repositories and setup the docker image
+# The working directory will then contain the following directories, with {repo}
+# being each repository listed in $LIB_REPOS and $MAIN_REPO
+#   ./bundle/             - The original main ecbuild bundle repository
+#   ./repo.bundle/{repo}/ - Modified versions of the bundle to individually build repos
+#   ./repo.src/{repo}/    - The source from github
+#   ./repo.build/{repo}/  - The build directory
+#   $HOME/repo.cache/{repo}/ - The cached results from `make install` for each
+#                           $LIB_REPOS from previous builds on TravisCI
+#================================================================================
 before_install:
-  - date
-  - REPO_SOURCE_DIR=${TRAVIS_BUILD_DIR}/jcsda/src_repo
-#  create the same file structure on Travis VM and Docker container
-  - mkdir -p ${TRAVIS_BUILD_DIR}/jcsda/src_repo
-# echo branch info
-  - echo $TRAVIS_PULL_REQUEST
-  - echo $TRAVIS_PULL_REQUEST_BRANCH
-  - echo $TRAVIS_BRANCH
-  - export BRANCH=$(if [ "$TRAVIS_PULL_REQUEST" == "false" ]; then echo $TRAVIS_BRANCH; else echo $TRAVIS_PULL_REQUEST_BRANCH; fi)
-  - echo "TRAVIS_BRANCH=$TRAVIS_BRANCH, PR=$PR, BRANCH=$BRANCH"
-#======================================================================
-# Clone all repos
-#======================================================================
-#  checkout for the same branch name in soca-bundle
-  - git clone https://github.com/jcsda/soca-bundle.git ${REPO_SOURCE_DIR}/soca-bundle
-  - cd ${REPO_SOURCE_DIR}/soca-bundle
-  - git checkout $BRANCH || echo "No branch named $BRANCH in oops repo"
-  - cd $REPO_SOURCE_DIR  
+  - |
+    # setup other configurables that the subsequent scripts use
+    export MAIN_BUILD_TYPE=Debug
+    export LIB_BUILD_TYPE=RelWIthDebInfo
+    export BRANCH=$( [[ "$TRAVIS_PULL_REQUEST" == "false" ]] && \
+                     echo $TRAVIS_BRANCH || echo $TRAVIS_PULL_REQUEST_BRANCH )
+    export_vars="-e REPO_CACHE=/repo.cache -e LIB_REPOS -e LIB_BUILD_TYPE
+                 -e MAIN_REPO -e MAIN_BUILD_TYPE -e CCACHE_DIR=/ccache"
+    for v in $(env | grep BUILD_OPT_ | cut -d'=' -f 1); do
+      export_vars="$export_vars -e $v"
+    done
 
-#  clone the testing branch of soca	#  clone the testing branch of soca
-  - git clone -b $BRANCH https://github.com/jcsda/soca.git ${REPO_SOURCE_DIR}/soca-bundle/soca
+  - |
+    # clone and prep the repos
+    # note: the main repo is not handled by the prep.sh script, it is moved from
+    # what TravisCI auto checks out (because TravisCI handles PR merges specially)
+    WORK_DIR=$HOME/work
+    mkdir -p $WORK_DIR/repo.src; cd $WORK_DIR
+    REPO_CACHE=$HOME/repo.cache ${TRAVIS_BUILD_DIR}/.travis/prep.sh
+    mv ${TRAVIS_BUILD_DIR} ${WORK_DIR}/repo.src/${MAIN_REPO}
 
-#  disable git-LFS 
-  - git lfs install --skip-smudge
+  - |
+    # alter file permissions
+    chmod 777 -R ~/.ccache
+    chmod 777 -R $HOME/repo.cache
+    cd ${WORK_DIR} && find . -name \* -exec chmod 777 {} \;
 
-#  default/develop branch for these repos
-  - git clone https://github.com/jcsda/GSW-Fortran.git ${REPO_SOURCE_DIR}/soca-bundle/gsw
-  - git clone https://github.com/jcsda/fckit.git ${REPO_SOURCE_DIR}/soca-bundle/fckit
-  - git clone https://github.com/jcsda/soca-config.git ${REPO_SOURCE_DIR}/soca-bundle/soca-config
+  - |
+    # prepare docker image from jcsda/docker:latest
+    cd ${WORK_DIR}/repo.src/${MAIN_REPO}/.travis
+    docker build -t jcsda/dockerl2 .
+    docker images
+    ci_env=`bash <(curl -s https://codecov.io/env)`
+    docker run -d -t $ci_env $export_vars \
+      -v ${WORK_DIR}:/jcsda/work \
+      -v $HOME/.ccache:/ccache \
+      -v $HOME/repo.cache:/repo.cache \
+      --name jcsda_container jcsda/dockerl2
+    docker ps -a
 
-#  specific branch for these repo
-  - git clone -b dev/master-ecbuild https://github.com/JCSDA/FMS.git ${REPO_SOURCE_DIR}/soca-bundle/fms
-  - git clone -b feature/ecbuild  https://github.com/JCSDA/CVMix-src.git ${REPO_SOURCE_DIR}/soca-bundle/cvmix
-  - git clone -b feature/ecbuild  https://github.com/JCSDA/geoKdTree.git ${REPO_SOURCE_DIR}/soca-bundle/geokdtree
-  - git clone -b feature/ecbuild  https://github.com/JCSDA/MOM6_DA_hooks.git ${REPO_SOURCE_DIR}/soca-bundle/mom6_da_hooks
-  - git clone -b dev/master-ecbuild https://github.com/JCSDA/MOM6.git ${REPO_SOURCE_DIR}/soca-bundle/mom6
 
-#  checkout for the same branch name in oops
-  - git clone https://github.com/jcsda/oops.git ${REPO_SOURCE_DIR}/soca-bundle/oops
-  - cd ${REPO_SOURCE_DIR}/soca-bundle/oops
-  - git checkout $BRANCH || echo "No branch named $BRANCH in oops repo"
-  - cd $REPO_SOURCE_DIR  
-  - date  
-
-#  checkout for the same branch name in crtm
-  - date
-  - git clone https://github.com/jcsda/crtm.git ${REPO_SOURCE_DIR}/soca-bundle/crtm
-  - cd ${REPO_SOURCE_DIR}/soca-bundle/crtm
-  - git checkout $BRANCH || echo "No branch named $BRANCH in crtm repo"
-  - cd $REPO_SOURCE_DIR
-  - date  
-
-#  checkout for the same branch name in ioda
-  - git clone https://github.com/jcsda/ioda.git ${REPO_SOURCE_DIR}/soca-bundle/ioda
-  - cd ${REPO_SOURCE_DIR}/soca-bundle/ioda
-  - git checkout $BRANCH || echo "No branch named $BRANCH in ioda repo"
-  - cd $REPO_SOURCE_DIR  
-  - date  
-
-#  checkout for the same branch name in ioda-converters
-  - git clone https://github.com/jcsda/ioda-converters.git ${REPO_SOURCE_DIR}/soca-bundle/ioda-conventers
-  - cd ${REPO_SOURCE_DIR}/soca-bundle/ioda-conventers
-  - git checkout $BRANCH || echo "No branch named $BRANCH in ioda repo"
-  - cd $REPO_SOURCE_DIR  
-  - date  
-
-#  checkout for the same branch name in ufo
-  - git clone https://github.com/jcsda/ufo.git ${REPO_SOURCE_DIR}/soca-bundle/ufo
-  - cd ${REPO_SOURCE_DIR}/soca-bundle/ufo
-  - git checkout $BRANCH || echo "No branch named $BRANCH in ioda repo"
-  - cd $REPO_SOURCE_DIR  
-  - date  
-
-#  checkout for the same branch name in saber
-  - git clone https://github.com/jcsda/saber.git ${REPO_SOURCE_DIR}/soca-bundle/saber
-  - cd ${REPO_SOURCE_DIR}/soca-bundle/saber
-  - git checkout $BRANCH || echo "No branch named $BRANCH in saber repo"
-  - cd $REPO_SOURCE_DIR  
-  - date  
-
-  - ls ${REPO_SOURCE_DIR}/soca-bundle/
-
-# not switch to develop branch by removing 
-# develop UPDATE in CMakeLists.txt in soca-bundle
-
-  - cd soca-bundle
-  - sed -i 's/UPDATE BRANCH develop //' CMakeLists.txt
-  - cd ${REPO_SOURCE_DIR}
-  - ls ${REPO_SOURCE_DIR}
-  - ls ${REPO_SOURCE_DIR}/soca-bundle
-  - find . -name \* -exec chmod 777 {} \;
-
-#======================================================================
-# get docker image
-# FROM  jcsda/docker:latest
-#======================================================================
-  - cd ${REPO_SOURCE_DIR}/soca-bundle/soca
-  - date
-  - docker build -t jcsda/dockerl2 --build-arg=Dockerfile .  #Dockerfile handles ssh for mpi
-  - date
-  - docker images
-  # request codecov to detect CI environment to pass through to docker
-  - ci_env=`bash <(curl -s https://codecov.io/env)`
-  - docker run -d -t $ci_env --name jcsda_container -v ${REPO_SOURCE_DIR}/soca-bundle:/jcsda/src_repo jcsda/dockerl2
-  - docker ps -a
-  - date
 #======================================================================
 # Here are the run steps
 #======================================================================
 script:
-  - docker exec jcsda_container ls
-  - docker exec jcsda_container ls /jcsda/src_repo
-  - docker exec jcsda_container bash -c 'cp -r /jcsda/.openmpi/ ~/'
-  - docker exec jcsda_container bash -c 'cd /build_container && ecbuild /jcsda/src_repo/ -DSOCA_TESTS_FORC_DEFAULT_TOL=ON' 
-  - docker exec jcsda_container bash -c 'cd /build_container/soca && make -j4'
-  - date
-  - docker exec jcsda_container bash -c 'cd /build_container/soca && ctest -V'
-  - date
+  - |
+    # Build code
+    docker exec jcsda_container bash \
+     -c 'cd /jcsda/work && /jcsda/work/repo.src/${MAIN_REPO}/.travis/build.sh'
 
+  - |
+    # run tests
+    docker exec jcsda_container bash \
+     -c 'cd /jcsda/work/repo.build/${MAIN_REPO} && ctest --output-on-failure'
+
+  - |
+    # upload code coverage
+    docker exec jcsda_container bash -c \
+      'cd /jcsda/work/repo.src/${MAIN_REPO} \
+       && lcov -c -d . -d ../../repo.build/${MAIN_REPO}/ -o coverage.info  --no-external -q \
+       && bash <(curl -s https://codecov.io/bash)'
