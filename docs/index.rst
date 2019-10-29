@@ -6,18 +6,16 @@
 Sea-ice, Ocean, Coupled Assimilation (SOCA)
 =============================================
 
+.. TODO::
+   Insert a snazzy paragraph here about how awesome SOCA is and why everyone should use it!
+   
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
 
-   overview
-   installation
-   configuration
+   overview/index.rst
+   installation/index.rst
+   applications/index.rst
+   references/index.rst
 
 
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
