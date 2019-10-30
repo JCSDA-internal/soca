@@ -799,7 +799,9 @@ subroutine gpnorm(fld, nf, pstat)
   integer,                 intent(in) :: nf
   real(kind=kind_real), intent(inout) :: pstat(3, nf) !> [min, max, average]
 
+  logical :: mask(fld%geom%isc:fld%geom%iec, fld%geom%jsc:fld%geom%jec)
   real(kind=kind_real) :: ocn_count, tmp(3)
+  real(kind=kind_real) :: local_ocn_count
   integer :: jj,  myrank
   integer :: isc, iec, jsc, jec
   type(fckit_mpi_comm) :: f_comm
@@ -813,43 +815,43 @@ subroutine gpnorm(fld, nf, pstat)
   isc = fld%geom%isc ; iec = fld%geom%iec
   jsc = fld%geom%jsc ; jec = fld%geom%jec
 
-  ! get the total number of ocean grid cells
-  tmp(1) = sum(fld%geom%mask2d(isc:iec, jsc:jec))
-  call f_comm%allreduce(tmp(1), ocn_count, fckit_mpi_sum())
+  ! get the number of ocean grid cells
+  local_ocn_count = sum(fld%geom%mask2d(isc:iec, jsc:jec))
+  call f_comm%allreduce(local_ocn_count, ocn_count, fckit_mpi_sum())
+  mask = fld%geom%mask2d(isc:iec,jsc:jec) > 0.0
 
+  
   ! calculate global min, max, mean for each field
-  ! Note: The following code makes object oriented programmers cry a little.
-  !  Most of the functions in this module should be rewritten to be
-  !  agnostic to the actual number/names of variables, sigh.
+  ! NOTE: "cicen" category 1 (no ice) is not included in the stats
   do jj=1, fld%nf
     tmp=0.0
 
-    ! get local min/max/sum of each variable
+    ! get local min/max/sum of each variable    
     select case(fld%fldnames(jj))
     case("tocn")
-      call fldinfo(fld%tocn(isc:iec,jsc:jec,:), tmp)
+      call fldinfo(fld%tocn(isc:iec,jsc:jec,:), mask, tmp)
     case("socn")
-      call fldinfo(fld%socn(isc:iec,jsc:jec,:), tmp)
+      call fldinfo(fld%socn(isc:iec,jsc:jec,:), mask, tmp)
     case("hocn")
-      call fldinfo(fld%hocn(isc:iec,jsc:jec,:), tmp)
+      call fldinfo(fld%hocn(isc:iec,jsc:jec,:), mask, tmp)
     case("ssh")
-      call fldinfo(fld%ssh(isc:iec,jsc:jec), tmp)
+      call fldinfo(fld%ssh(isc:iec,jsc:jec),    mask, tmp)
     case("hicen")
-       call fldinfo(fld%seaice%hicen(isc:iec,jsc:jec,:), tmp)
+       call fldinfo(fld%seaice%hicen(isc:iec,jsc:jec,:), mask, tmp)
     case("hsnon")
-      call fldinfo(fld%seaice%hsnon(isc:iec,jsc:jec,:), tmp)
+       call fldinfo(fld%seaice%hsnon(isc:iec,jsc:jec,:),  mask, tmp)
     case("cicen")
-      call fldinfo(fld%seaice%cicen(isc:iec,jsc:jec,:), tmp)
+      call fldinfo(fld%seaice%cicen(isc:iec,jsc:jec,2:),  mask, tmp)
     case("sw")
-      call fldinfo(fld%ocnsfc%sw_rad(isc:iec,jsc:jec), tmp)
+      call fldinfo(fld%ocnsfc%sw_rad(isc:iec,jsc:jec),   mask, tmp)
     case("lw")
-      call fldinfo(fld%ocnsfc%lw_rad(isc:iec,jsc:jec), tmp)
+      call fldinfo(fld%ocnsfc%lw_rad(isc:iec,jsc:jec),   mask, tmp)
     case("lhf")
-      call fldinfo(fld%ocnsfc%latent_heat(isc:iec,jsc:jec), tmp)
+      call fldinfo(fld%ocnsfc%latent_heat(isc:iec,jsc:jec), mask, tmp)
     case("shf")
-      call fldinfo(fld%ocnsfc%sens_heat(isc:iec,jsc:jec), tmp)
+      call fldinfo(fld%ocnsfc%sens_heat(isc:iec,jsc:jec),   mask, tmp)
     case("us")
-      call fldinfo(fld%ocnsfc%fric_vel(isc:iec,jsc:jec), tmp)
+      call fldinfo(fld%ocnsfc%fric_vel(isc:iec,jsc:jec),    mask, tmp)
     end select
 
     ! calculate global min/max/mean

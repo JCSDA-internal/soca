@@ -26,25 +26,36 @@ contains
 
 ! ------------------------------------------------------------------------------
 
-subroutine fldinfo3d(fld, info)
+subroutine fldinfo3d(fld, mask, info)
   real(kind=kind_real),  intent(in) :: fld(:,:,:)
+  logical,               intent(in) :: mask(:,:)
   real(kind=kind_real), intent(out) :: info(3)
 
-  info(1) = minval(fld)
-  info(2) = maxval(fld)
-  info(3) = sum(fld)/size(fld,3)
+  integer :: z
+  real(kind=kind_real) :: tmp(3,size(fld, dim=3))
 
+!  print *, "DBG: ", size(fld,dim=3)
+  do z = 1, size(tmp, dim=2)
+     tmp(1,z) = minval(fld(:,:,z), mask=mask)
+     tmp(2,z) = maxval(fld(:,:,z), mask=mask)
+     tmp(3,z) = sum(   fld(:,:,z), mask=mask) / size(fld, dim=3)
+  end do
+
+  info(1) = minval(tmp(1,:))
+  info(2) = maxval(tmp(2,:))
+  info(3) = sum(   tmp(3,:))
 end subroutine fldinfo3d
 
 ! ------------------------------------------------------------------------------
 
-subroutine fldinfo2d(fld, info)
+subroutine fldinfo2d(fld, mask, info)
   real(kind=kind_real),  intent(in) :: fld(:,:)
+  logical,               intent(in) :: mask(:,:)  
   real(kind=kind_real), intent(out) :: info(3)
 
-  info(1) = minval(fld)
-  info(2) = maxval(fld)
-  info(3) = sum(fld)
+  info(1) = minval(fld, mask=mask)
+  info(2) = maxval(fld, mask=mask)
+  info(3) = sum(   fld, mask=mask)
 
 end subroutine fldinfo2d
 
