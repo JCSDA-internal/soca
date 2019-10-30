@@ -130,8 +130,8 @@ end subroutine create_copy
 ! ------------------------------------------------------------------------------
 
 subroutine soca_field_alloc(self, geom)
-  type (soca_field), intent(inout) :: self
-  type(soca_geom),      intent(in) :: geom
+  type (soca_field),     intent(inout) :: self
+  type(soca_geom), pointer, intent(in) :: geom
 
   integer :: isd, ied, jsd, jed, nzo
   integer :: ncat, km
@@ -263,16 +263,30 @@ end subroutine dirac
 subroutine random(self)
   type(soca_field), intent(inout) :: self
   integer, parameter :: rseed = 1 ! constant for reproducability of tests
-
+    ! NOTE: random seeds are not quite working the way expected,
+    !  it is only set the first time normal_distribution() is called with a seed
+  integer :: z
+  
   call check(self)
 
+  ! set random values
   call normal_distribution(self%tocn,  0.0_kind_real, 1.0_kind_real, rseed)
   call normal_distribution(self%socn,  0.0_kind_real, 1.0_kind_real, rseed)
   call normal_distribution(self%ssh,   0.0_kind_real, 1.0_kind_real, rseed)
+
+  ! mask out land, set to zero
+  self%ssh = self%ssh * self%geom%mask2d
+  do z=1,self%geom%nzo
+     self%tocn(:,:,z) = self%tocn(:,:,z) * self%geom%mask2d
+     self%socn(:,:,z) = self%socn(:,:,z) * self%geom%mask2d
+  end do
+
+  ! update domains
   call mpp_update_domains(self%tocn, self%geom%Domain%mpp_domain)
   call mpp_update_domains(self%socn, self%geom%Domain%mpp_domain)
-  call mpp_update_domains(self%ssh, self%geom%Domain%mpp_domain)
+  call mpp_update_domains(self%ssh,  self%geom%Domain%mpp_domain)
 
+  ! do the same for the non-ocean fields
   call self%ocnsfc%random()
   call self%seaice%random()
 
