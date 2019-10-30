@@ -30,7 +30,6 @@ type :: soca_ocnsfc_type
    procedure :: create => soca_ocnsfc_create
    procedure :: delete => soca_ocnsfc_delete
    procedure :: zeros => soca_ocnsfc_zeros
-   procedure :: ones => soca_ocnsfc_ones
    procedure :: abs => soca_ocnsfc_abs
    procedure :: random => soca_ocnsfc_random
    procedure :: copy => soca_ocnsfc_copy
@@ -94,18 +93,6 @@ subroutine soca_ocnsfc_zeros(self)
   self%fric_vel    = 0.0_kind_real
 
 end subroutine soca_ocnsfc_zeros
-
-! ------------------------------------------------------------------------------
-subroutine soca_ocnsfc_ones(self)
-  class(soca_ocnsfc_type), intent(inout) :: self
-
-  self%sw_rad      = 1.0_kind_real
-  self%lw_rad      = 1.0_kind_real
-  self%latent_heat = 1.0_kind_real
-  self%sens_heat   = 1.0_kind_real
-  self%fric_vel    = 1.0_kind_real
-
-end subroutine soca_ocnsfc_ones
 
 ! ------------------------------------------------------------------------------
 subroutine soca_ocnsfc_abs(self)

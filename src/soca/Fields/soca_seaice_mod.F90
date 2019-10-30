@@ -36,7 +36,6 @@ type :: soca_seaice_type
    procedure :: create => soca_seaice_create
    procedure :: delete => soca_seaice_delete
    procedure :: zeros => soca_seaice_zeros
-   procedure :: ones => soca_seaice_ones
    procedure :: abs => soca_seaice_abs
    procedure :: random => soca_seaice_random
    procedure :: copy => soca_seaice_copy
@@ -103,16 +102,6 @@ subroutine soca_seaice_zeros(self)
   self%hsnon = 0.0_kind_real
 
 end subroutine soca_seaice_zeros
-
-! ------------------------------------------------------------------------------
-subroutine soca_seaice_ones(self)
-  class(soca_seaice_type), intent(inout) :: self
-
-  self%cicen = 1.0_kind_real
-  self%hicen = 1.0_kind_real
-  self%hsnon = 1.0_kind_real
-
-end subroutine soca_seaice_ones
 
 ! ------------------------------------------------------------------------------
 subroutine soca_seaice_abs(self)

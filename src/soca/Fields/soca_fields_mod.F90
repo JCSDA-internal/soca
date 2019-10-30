@@ -204,24 +204,6 @@ end subroutine zeros
 
 ! ------------------------------------------------------------------------------
 
-subroutine ones(self)
-  type(soca_field), intent(inout) :: self
-
-  call check(self)
-
-  self%socn = 1.0_kind_real
-  self%tocn = 1.0_kind_real
-  self%ssh = 1.0_kind_real
-  self%hocn = 1.0_kind_real
-  self%mld = 1.0_kind_real
-
-  call self%seaice%ones()
-  call self%ocnsfc%ones()
-
-end subroutine ones
-
-! ------------------------------------------------------------------------------
-
 subroutine dirac(self, f_conf)
   type(soca_field),          intent(inout) :: self
   type(fckit_configuration), intent(in)    :: f_conf   !< Configuration
