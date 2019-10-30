@@ -6,8 +6,8 @@
  */
 
 #include "eckit/config/Configuration.h"
-#include "GeometryIterator.h"
-#include "GeometryIteratorFortran.h"
+#include "soca/GeometryIterator/GeometryIterator.h"
+#include "soca/GeometryIterator/GeometryIteratorFortran.h"
 #include "Fortran.h"
 #include "oops/util/Logger.h"
 
@@ -15,7 +15,7 @@
 
 namespace soca {
 
-/*
+
 // -----------------------------------------------------------------------------
 
 GeometryIterator::GeometryIterator(const GeometryIterator& iter) {
@@ -24,9 +24,9 @@ GeometryIterator::GeometryIterator(const GeometryIterator& iter) {
 
 // -----------------------------------------------------------------------------
 
-GeometryIterator::GeometryIterator(const GeometrySoca& geom,
-                                       const int & index) {
-  soca_geom_iter_setup_f90(keyIter_, geom.toFortran(), index);
+GeometryIterator::GeometryIterator(const Geometry& geom,
+                                       const int & iindex, const int & jindex) {
+  soca_geom_iter_setup_f90(keyIter_, geom.toFortran(), iindex, jindex);
 }
 
 
@@ -77,5 +77,4 @@ void GeometryIterator::print(std::ostream & os) const {
 
 // -----------------------------------------------------------------------------
 
-*/
 }  // namespace soca

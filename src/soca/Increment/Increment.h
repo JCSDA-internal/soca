@@ -21,7 +21,9 @@
 #include "soca/Fields/Fields.h"
 #include "soca/GetValuesTraj/GetValuesTraj.h"
 #include "soca/Geometry/Geometry.h"
+#include "soca/GeometryIterator/GeometryIterator.h"
 #include "oops/base/GeneralizedDepartures.h"
+#include "oops/base/GridPoint.h"
 #include "oops/util/DateTime.h"
 #include "oops/util/Duration.h"
 #include "oops/util/ObjectCounter.h"
@@ -82,6 +84,11 @@ namespace soca {
       void schur_product_with(const Increment &);
       void random();
       void dirac(const eckit::Configuration &);
+
+      /// Getpoint/Setpoint
+      oops::GridPoint getPoint(const GeometryIterator &) const;
+      void setPoint(const oops::GridPoint &, const GeometryIterator &);
+
       /// Interpolate to observation location
       void getValuesTL(const ufo::Locations &,
                        const oops::Variables &,

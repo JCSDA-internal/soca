@@ -16,6 +16,7 @@ list( APPEND soca_test_input
   testinput/forecast_identity_cice.yml
   testinput/forecast_mom6.yml
   testinput/geometry.yml
+  testinput/geometry_iterator.yml
   testinput/gridgen.yml
   testinput/hofx.yml
   testinput/hofx3d.yml

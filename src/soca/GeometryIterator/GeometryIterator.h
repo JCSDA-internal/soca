@@ -5,8 +5,8 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#ifndef JEDI_SRC_GEOMETRYITERATOR_GEOMETRYITERATOR_H_
-#define JEDI_SRC_GEOMETRYITERATOR_GEOMETRYITERATOR_H_
+#ifndef SOCA_GEOMETRYITERATOR_GEOMETRYITERATOR_H_
+#define SOCA_GEOMETRYITERATOR_GEOMETRYITERATOR_H_
 
 #include <iterator>
 #include <string>
@@ -32,7 +32,8 @@ class GeometryIterator: public std::iterator<std::forward_iterator_tag,
   static const std::string classname() {return "soca::GeometryIterator";}
 
   GeometryIterator(const GeometryIterator &);
-  explicit GeometryIterator(const Geometry & geom, const int & index = 1);
+  explicit GeometryIterator(const Geometry & geom,
+                            const int & iindex = 1, const int & jindex = 1);
   ~GeometryIterator();
 
   bool operator==(const GeometryIterator &) const;
@@ -50,4 +51,4 @@ class GeometryIterator: public std::iterator<std::forward_iterator_tag,
 
 }  // namespace soca
 
-#endif  // JEDI_SRC_GEOMETRYITERATOR_GEOMETRYITERATOR_H_
+#endif  // SOCA_GEOMETRYITERATOR_GEOMETRYITERATOR_H_

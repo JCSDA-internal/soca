@@ -135,6 +135,36 @@ namespace soca {
   void Increment::random() {
     fields_->random();
   }
+
+  // -----------------------------------------------------------------------------
+  oops::GridPoint Increment::getPoint(const GeometryIterator & iter) const {
+    std::vector<std::string> fields;
+/*
+    // Initialize fields
+    fields.push_back("U");
+    fields.push_back("V");
+    fields.push_back("H");
+
+    std::vector<int> varlens(fields.size());
+    std::vector<double> values(fields.size());
+
+    // Initialize variable lengths
+    for (int i=0; i< fields.size(); ++i) varlens[i] = 1;
+
+    // Get variable values
+    sw_increment_getpoint_f90(keyInc_, iter.toFortran(), values[0]);
+
+    return oops::GridPoint(oops::Variables(fields), values, varlens);
+*/
+  }
+
+  // -----------------------------------------------------------------------------
+  void Increment::setPoint(const oops::GridPoint & values,
+                             const GeometryIterator & iter) {
+  //  const std::vector<double> vals = values.getVals();
+  //  sw_increment_setpoint_f90(keyInc_, iter.toFortran(), vals[0]);
+  }
+
   /// Interpolate to observation location
   // -----------------------------------------------------------------------------
   void Increment::getValuesTL(const ufo::Locations & locs,
