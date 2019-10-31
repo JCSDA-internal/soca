@@ -22,7 +22,7 @@ private
 public :: soca_seaice_type
 
 type :: soca_seaice_type
-   type(soca_geom), pointer          :: geom
+   type(soca_geom),      pointer     :: geom
 
    ! Sea-ice state  variables
    real(kind=kind_real), allocatable :: cicen(:,:,:) !< Ice Fraction
