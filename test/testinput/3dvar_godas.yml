@@ -24,6 +24,13 @@ model:
   setup_mom6: false
   variables: &soca_vars [cicen, hicen, hsnon, socn, tocn, ssh, hocn, sw, lhf, shf, lw, us]
 
+# common filters used later on
+_: &land_mask
+  Filter: Domain Check
+  where:
+  - variable: {name: sea_area_fraction@GeoVaLs}
+    minvalue: 0.5
+
 cost_function:
   cost_type: 3D-Var
   window_begin: 2018-04-14T00:00:00Z
@@ -104,130 +111,96 @@ cost_function:
   Jo:
     ObsTypes:
 
-    - _: &var sea_surface_temperature
-      ObsSpace:
+    - ObsSpace:
         name: CoolSkin
         ObsDataOut: {obsfile: ./Data/sst.out.nc}
         ObsDataIn:  {obsfile: ./Data/sst.nc}
-        simulate:   {variables: [ *var ]}
+        simulate:   {variables: [ sea_surface_temperature ]}
       ObsOperator:
         name: CoolSkin
       Covariance:
         covariance: diagonal
 
-    - _: &var sea_surface_temperature
-      ObsSpace:
+    - ObsSpace:
         name: SeaSurfaceTemp
         ObsDataOut: {obsfile: ./Data/sst.out.nc}
         ObsDataIn:  {obsfile: ./Data/sst.nc}
-        simulate:   {variables: [ *var ]}
+        simulate:   {variables: [ sea_surface_temperature ]}
       ObsOperator:
         name: Identity
       Covariance:
         covariance: diagonal
       ObsFilters:
-      - Filter: Domain Check
-        filter variables: [{name: *var }]
-        where:
-        - variable: {name: sea_area_fraction@GeoVaLs}
-          minvalue: 0.5
+      - *land_mask
       - Filter: Thinning
-        filter variables: [{name: *var }]
         amount: 0.1
         random_seed: 0
 
-    - _: &var sea_surface_salinity
-      ObsSpace:
+    - ObsSpace:
         name: SeaSurfaceSalinity
         ObsDataOut: {obsfile: ./Data/sss.out.nc}
         ObsDataIn:  {obsfile: ./Data/sss.nc}
-        simulate:   {variables: [ *var ]}
+        simulate:   {variables: [ sea_surface_salinity ]}
       ObsOperator:
         name: Identity
       Covariance:
         covariance: diagonal
       ObsFilters:
+      - *land_mask
       - Filter: Domain Check
-        filter variables: [{name: *var }]
-        where:
-        - variable: {name: sea_area_fraction@GeoVaLs}
-          minvalue: 0.5
-      - Filter: Domain Check
-        filter variables: [{name: *var }]
         where:
         - variable: {name: sea_surface_temperature@GeoVaLs}
           minvalue: 15
 
-    - _: &var obs_absolute_dynamic_topography
-      ObsSpace:
+    - ObsSpace:
         name: ADT
         ObsDataOut: {obsfile: ./Data/adt.out.nc}
         ObsDataIn:  {obsfile: ./Data/adt.nc}
-        simulate:   {variables: [ *var ]}
+        simulate:   {variables: [ obs_absolute_dynamic_topography ]}
       ObsOperator:
         name: ADT
       Covariance:
         covariance: diagonal
       ObsFilters:
-      - Filter: Domain Check
-        filter variables: [{name: *var }]
-        where:
-        - variable: {name: sea_area_fraction@GeoVaLs}
-          minvalue: 0.5
+      - *land_mask
 
-    - _: &var sea_water_temperature
-      ObsSpace:
+    - ObsSpace:
         name: InsituTemperature
         ObsDataOut: {obsfile: ./Data/prof.T.out.nc}
         ObsDataIn:  {obsfile: ./Data/prof.nc}
-        simulate:   {variables: [ *var ]}
+        simulate:   {variables: [ sea_water_temperature ]}
       ObsOperator:
         name: InsituTemperature
       Covariance:
         covariance: diagonal
       ObsFilters:
-      - Filter: Domain Check
-        filter variables: [{name: *var }]
-        where:
-        - variable: {name: sea_area_fraction@GeoVaLs}
-          minvalue: 0.5
+      - *land_mask
       - Filter: Background Check
-        filter variables: [{name: *var }]
         threshold: 5
 
-    - _: &var sea_water_salinity
-      ObsSpace:
+    - ObsSpace:
         name: InsituSalinity
         ObsDataOut: {obsfile: ./Data/prof.S.out.nc}
         ObsDataIn:  {obsfile: ./Data/prof.nc}
-        simulate:   {variables: [ *var ]}
+        simulate:   {variables: [ sea_water_salinity ]}
       ObsOperator:
         name: MarineVertInterp
       Covariance:
         covariance: diagonal
       ObsFilters:
-      - Filter: Domain Check
-        filter variables: [{name: *var }]
-        where:
-        - variable: {name: sea_area_fraction@GeoVaLs}
-          minvalue: 0.5
+      - *land_mask
 
-    - _: &var sea_ice_area_fraction
-      ObsSpace:
+    - ObsSpace:
         name: SeaIceFraction
         ObsDataOut: {obsfile: ./Data/icec.out.nc}
         ObsDataIn:  {obsfile:  ./Data/icec.nc}
-        simulate:   {variables: [ *var ]}
+        simulate:   {variables: [ sea_ice_area_fraction ]}
       ObsOperator:
         name: SeaIceFraction
       Covariance:
         covariance: diagonal
       ObsFilters:
-      - Filter: Domain Check
-        filter variables: [{name: *var }]
-        where:
-        - variable: {name: sea_area_fraction@GeoVaLs}
-          minvalue: 0.5
+      - *land_mask
 
 #    - ObsType: SeaIceThickness
 
