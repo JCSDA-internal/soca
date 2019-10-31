@@ -21,6 +21,8 @@ private
 public :: soca_ocnsfc_type
 
 type :: soca_ocnsfc_type
+   type(soca_geom),      pointer     :: geom
+
    real(kind=kind_real), allocatable :: sw_rad(:,:)
    real(kind=kind_real), allocatable :: lw_rad(:,:)
    real(kind=kind_real), allocatable :: latent_heat(:,:)
@@ -30,7 +32,6 @@ type :: soca_ocnsfc_type
    procedure :: create => soca_ocnsfc_create
    procedure :: delete => soca_ocnsfc_delete
    procedure :: zeros => soca_ocnsfc_zeros
-   procedure :: ones => soca_ocnsfc_ones
    procedure :: abs => soca_ocnsfc_abs
    procedure :: random => soca_ocnsfc_random
    procedure :: copy => soca_ocnsfc_copy
@@ -53,9 +54,12 @@ contains
 ! ------------------------------------------------------------------------------
 subroutine soca_ocnsfc_create(self, geom)
   class(soca_ocnsfc_type), intent(inout) :: self
-  type(soca_geom),            intent(in) :: geom
+  type(soca_geom), pointer,   intent(in) :: geom
 
   integer :: isd, ied, jsd, jed
+
+  ! Associate geometry
+  self%geom => geom
 
   ! Indices for data domain (with halo)
   isd = geom%isd ; ied = geom%ied
@@ -96,18 +100,6 @@ subroutine soca_ocnsfc_zeros(self)
 end subroutine soca_ocnsfc_zeros
 
 ! ------------------------------------------------------------------------------
-subroutine soca_ocnsfc_ones(self)
-  class(soca_ocnsfc_type), intent(inout) :: self
-
-  self%sw_rad      = 1.0_kind_real
-  self%lw_rad      = 1.0_kind_real
-  self%latent_heat = 1.0_kind_real
-  self%sens_heat   = 1.0_kind_real
-  self%fric_vel    = 1.0_kind_real
-
-end subroutine soca_ocnsfc_ones
-
-! ------------------------------------------------------------------------------
 subroutine soca_ocnsfc_abs(self)
   class(soca_ocnsfc_type), intent(inout) :: self
 
@@ -125,12 +117,19 @@ subroutine soca_ocnsfc_random(self)
 
   integer :: rseed = 1
 
-  ! Deallocate all ocean surface state
+  ! set random values
   call normal_distribution(self%sw_rad, 0.0_kind_real, 1.0_kind_real, rseed)
   call normal_distribution(self%lw_rad, 0.0_kind_real, 1.0_kind_real, rseed)
   call normal_distribution(self%latent_heat, 0.0_kind_real, 1.0_kind_real, rseed)
   call normal_distribution(self%sens_heat, 0.0_kind_real, 1.0_kind_real, rseed)
   call normal_distribution(self%fric_vel, 0.0_kind_real, 1.0_kind_real, rseed)
+
+  ! mask out land, set to zero
+  self%sw_rad = self%sw_rad * self%geom%mask2d
+  self%lw_rad = self%lw_rad * self%geom%mask2d
+  self%latent_heat = self%latent_heat * self%geom%mask2d
+  self%sens_heat = self%sens_heat * self%geom%mask2d
+  self%fric_vel = self%fric_vel * self%geom%mask2d
 
 end subroutine soca_ocnsfc_random
 
@@ -139,6 +138,10 @@ subroutine soca_ocnsfc_copy(self, rhs)
   class(soca_ocnsfc_type), intent(inout) :: self
   class(soca_ocnsfc_type),    intent(in) :: rhs
 
+  ! associate geometry
+  self%geom => rhs%geom
+
+  ! copy fields
   self%sw_rad      = rhs%sw_rad
   self%lw_rad      = rhs%lw_rad
   self%latent_heat = rhs%latent_heat
