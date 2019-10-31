@@ -266,7 +266,7 @@ subroutine random(self)
     ! NOTE: random seeds are not quite working the way expected,
     !  it is only set the first time normal_distribution() is called with a seed
   integer :: z
-  
+
   call check(self)
 
   ! set random values
@@ -820,13 +820,13 @@ subroutine gpnorm(fld, nf, pstat)
   call f_comm%allreduce(local_ocn_count, ocn_count, fckit_mpi_sum())
   mask = fld%geom%mask2d(isc:iec,jsc:jec) > 0.0
 
-  
+
   ! calculate global min, max, mean for each field
   ! NOTE: "cicen" category 1 (no ice) is not included in the stats
   do jj=1, fld%nf
     tmp=0.0
 
-    ! get local min/max/sum of each variable    
+    ! get local min/max/sum of each variable
     select case(fld%fldnames(jj))
     case("tocn")
       call fldinfo(fld%tocn(isc:iec,jsc:jec,:), mask, tmp)
