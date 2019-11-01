@@ -24,6 +24,7 @@ use mpp_domains_mod, only : mpp_get_compute_domain, mpp_get_data_domain, &
                             mpp_update_domains
 use fms_mod,         only : write_data, read_data
 use fms_io_mod,      only : fms_io_init, fms_io_exit
+use fckit_geometry_module, only: sphere_distance
 
 implicit none
 
@@ -226,13 +227,15 @@ end subroutine geom_print
 !> TODO: Move out of geometry, use bilinear interp instead of nearest neighbor
 subroutine geom_rossby_radius(self)
   class(soca_geom), intent(inout) :: self
-
-  integer :: unit, i, j, n
+  integer, parameter :: nn = 9
+  
+  integer :: unit, i, j, n, nn2
   real(kind=kind_real) :: dum
   real(kind=kind_real), allocatable :: lon(:),lat(:),rr(:)
   type(kdtree) :: kd
   integer :: isc, iec, jsc, jec
-  integer :: index(1), nn, io
+  integer :: idx(nn), io
+  real(kind_real) :: dist(nn), w(nn), r, dmax
   character(len=256) :: geom_output_file = "geom_output.nc"
 
   unit = 20
@@ -255,15 +258,48 @@ subroutine geom_rossby_radius(self)
 
   isc = self%isc ;  iec = self%iec ; jsc = self%jsc ; jec = self%jec
 
-  !--- Find nearest neighbor
-  nn=1 ! Num neighbors
+  !--- Find nearest neighbors
   do i = isc, iec
      do j = jsc, jec
-        call kdtree_k_nearest_neighbors(kd,self%lon(i,j),self%lat(i,j),1,index)
-        self%rossby_radius(i,j)=rr(index(1))*1e3
+        ! get n nearest neighbors
+        call kdtree_k_nearest_neighbors(kd,self%lon(i,j),self%lat(i,j),nn,idx)
+        
+        ! get distances        
+        do n=1,nn
+           dist(n) = sphere_distance(self%lon(i,j), self%lat(i,j), lon(idx(n)), lat(idx(n)))
+        end do
+        dist = dist + 1e-6 ! so that there is never a dist of 0
+
+        ! truncate the list if the last points are the same distance
+        nn2=nn
+        do n=nn-1,1,-1
+           if (dist(n) == dist(nn)) then
+              nn2 = n-1
+           else
+              exit
+           endif
+        end do
+        if (nn2 <= 0) then
+           print *, "something very bad happened in soca_geom_mod, no points found, this should never happen."
+           stop 42
+        end if
+
+        ! calculate weights based on inverse distance
+        dmax=maxval(dist(1:nn2))
+        w = 0.0
+        do n=1,nn2
+           w(n) = ((dmax-dist(n)) / (dmax*dist(n))) ** 2
+        end do
+        w = w / sum(w)
+
+        ! calculate final value
+        r = 0.0
+        do n=1,nn2
+           r = r + rr(idx(n))*w(n)
+        end do
+        self%rossby_radius(i,j)=r*1e3
      end do
   end do
-
   ! Release memory
   call kdtree_destroy(kd)
 
