@@ -294,7 +294,6 @@ soca_add_test( NAME static_socaerror_init
 # ensemble generation
 soca_add_test( NAME enspert
                EXE  soca_enspert.x
-               TOL 7.0e-4 0
                NOTRAPFPE
                TEST_DEPENDS test_soca_gridgen
                             test_soca_static_socaerror_init)
@@ -374,7 +373,6 @@ soca_add_test( NAME varchange_vertconv
 #-------------------------------------------------------------------------------
 soca_add_test( NAME ensvariance
                EXE  soca_ensvariance.x
-               TOL  3.0e-4 0
                NOTRAPFPE
                TEST_DEPENDS test_soca_enspert )
 
@@ -407,18 +405,15 @@ soca_add_test( NAME ensrecenter
 
 soca_add_test( NAME dirac_soca_cov
                EXE  soca_dirac.x
-               TOL  8.0e-3 0
                TEST_DEPENDS test_soca_static_socaerror_init)
 
 soca_add_test( NAME dirac_socahyb_cov
                EXE  soca_dirac.x
-               TOL  5.0e-3 0
                TEST_DEPENDS test_soca_parameters_bump_loc)
 
 soca_add_test( NAME dirac_horizfilt
                EXE  soca_dirac.x
                NOTRAPFPE
-               TOL  5.0e-3 0
                TEST_DEPENDS test_soca_static_socaerror_init)
 
 #ecbuild_add_test( TARGET  test_soca_localization
@@ -455,31 +450,30 @@ soca_add_test( NAME enshofx
 # variational methods
 soca_add_test( NAME 3dvar_soca
                EXE  soca_3dvar.x
-               TOL  2.3e-4 0
+               TOL  1e-9 0
                NOTRAPFPE
                TEST_DEPENDS test_soca_static_socaerror_init )
 
 soca_add_test( NAME 3dvar_godas
                EXE  soca_3dvar.x
-               TOL  2e-2 0
+               TOL  1e-8 0
                TEST_DEPENDS test_soca_static_socaerror_init )
 
 soca_add_test( NAME 3dvarfgat
                EXE  soca_3dvar.x
-               TOL  2e-4 0
+               TOL  1e-6 0
                NOTRAPFPE
                TEST_DEPENDS test_soca_static_socaerror_init )
 
 soca_add_test( NAME 3dhyb
                EXE  soca_3dvar.x
-               TOL  5e-4 0
+               TOL  1e-8 0
                NOTRAPFPE
                TEST_DEPENDS test_soca_static_socaerror_init
                             test_soca_parameters_bump_loc )
 
 soca_add_test( NAME 3dhybfgat
                EXE  soca_3dvar.x
-               TOL  4e-3 0
                NOTRAPFPE
                TEST_DEPENDS test_soca_static_socaerror_init
                             test_soca_parameters_bump_loc )
@@ -493,6 +487,5 @@ soca_add_test( NAME 3dhybfgat
 # restart checkpointing
 soca_add_test( NAME checkpointmodel
                EXE  soca_checkpoint_model.x
-               TOL  2e-6 0
                NOTRAPFPE
                TEST_DEPENDS test_soca_3dvar_godas)
