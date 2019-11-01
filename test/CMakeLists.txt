@@ -11,6 +11,7 @@ list( APPEND soca_test_input
   testinput/dirac_socahyb_cov.yml
   testinput/enshofx.yml
   testinput/enspert.yml
+  testinput/ensrecenter.yml
   testinput/ensvariance.yml
   testinput/forecast_identity.yml
   testinput/forecast_identity_cice.yml
@@ -50,6 +51,7 @@ list( APPEND soca_test_ref
   testref/dirac_socahyb_cov.test
   testref/enshofx.test
   testref/enspert.test
+  testref/ensrecenter.test
   testref/ensvariance.test
   testref/forecast_identity_cice.test
   testref/forecast_identity.test
@@ -379,6 +381,12 @@ soca_add_test( NAME ensvariance
 soca_add_test( NAME parameters_bump_loc
                EXE  soca_parameters.x
                NOCOMPARE
+               TEST_DEPENDS test_soca_enspert )
+
+soca_add_test( NAME ensrecenter
+               EXE  soca_ensrecenter.x
+               TOL  3.0e-4 0
+               NOTRAPFPE
                TEST_DEPENDS test_soca_enspert )
 
 # TODO the next couple of tests are a little slow.
