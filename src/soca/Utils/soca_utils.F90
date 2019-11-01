@@ -191,7 +191,7 @@ subroutine soca_remap_idw(lon_src, lat_src, data_src, lon_dst, lat_dst, data_dst
   real(kind_real), intent(in) :: lat_dst(:,:)
   real(kind_real), intent(inout) :: data_dst(:,:)
 
-  integer, parameter :: nn_max = 9
+  integer, parameter :: nn_max = 10
   real(kind_real), parameter :: idw_pow = 2.0
 
   integer :: idx(nn_max)
@@ -218,8 +218,10 @@ subroutine soca_remap_idw(lon_src, lat_src, data_src, lon_dst, lat_dst, data_dst
       dist = dist + 1e-6
 
       ! truncate the list if the last points are the same distance.
-      ! This is needed to ensure reproducibility across machines
-      nn=nn_max
+      ! This is needed to ensure reproducibility across machines.
+      ! The last point is always removed (becuase we don't know if it would
+      ! have been identical to the one after it)
+      nn=nn_max-1
       do n=nn_max-1, 1, -1
         if (dist(n) /= dist(nn_max)) exit
         nn = n-1
