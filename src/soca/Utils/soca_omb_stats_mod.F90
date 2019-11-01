@@ -6,10 +6,9 @@
 module soca_omb_stats_mod
 
 use netcdf
-use fckit_kdtree_module, only: kdtree,kdtree_create,kdtree_destroy,kdtree_k_nearest_neighbors
 use fckit_mpi_module, only: fckit_mpi_comm
 use kinds, only: kind_real
-use soca_utils, only: nc_check
+use soca_utils, only: nc_check, soca_remap_idw
 
 implicit none
 
@@ -106,8 +105,6 @@ subroutine soca_omb_stats_bin(self, lon, lat)
   integer :: is, ie, js, je
   integer :: isl, iel, jsl, jel
   integer :: i, j, il, jl
-  type(kdtree) :: kd
-  integer :: index(1)
 
   ! Short cuts to global indices
   is = self%domain%is
@@ -123,25 +120,9 @@ subroutine soca_omb_stats_bin(self, lon, lat)
 
   allocate(self%bgerr_model(is:ie,js:je))
   self%bgerr_model = 0.0_kind_real
-
-  ! Initialize kd-tree
-  kd = kdtree_create(self%nlocs, self%lon, self%lat)
-
-  ! Find nn neighbors to each model grid point
-  ! TODO: Hard coded to nearest neigbhor interpolation
-  il=isl
-  do i = is, ie
-     jl=jsl
-     do j = js, je
-        call kdtree_k_nearest_neighbors(kd,lon(il,jl),lat(il,jl),1,index)
-        self%bgerr_model(i,j)=self%bgerr(index(1))
-        jl = jl + 1
-     end do
-     il = il + 1
-  end do
-
-  ! Release memory
-  call kdtree_destroy(kd)
+  call soca_remap_idw(self%lon, self%lat, self%bgerr,&
+                      lon(isl:iel,jsl:jel), lat(isl:iel,jsl:jel), &
+                      self%bgerr_model(is:ie,js:je))
 
 end subroutine soca_omb_stats_bin
 
