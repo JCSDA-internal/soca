@@ -8,12 +8,16 @@ module soca_utils
 use netcdf
 use kinds, only: kind_real
 use gsw_mod_toolbox, only : gsw_rho, gsw_sa_from_sp, gsw_ct_from_pt, gsw_mlp
+use fckit_kdtree_module, only: kdtree, kdtree_create, kdtree_destroy, &
+                               kdtree_k_nearest_neighbors
+use fckit_geometry_module, only: sphere_distance
+use fckit_exception_module, only: fckit_exception
 
 implicit none
 
 private
 public :: write2pe, htoz, soca_str2int, soca_adjust, &
-          soca_rho, soca_diff, soca_mld, nc_check
+          soca_rho, soca_diff, soca_mld, nc_check, soca_remap_idw
 
 ! ------------------------------------------------------------------------------
 contains
@@ -177,4 +181,73 @@ subroutine soca_str2int(str, int)
   read(str,*)  int
 end subroutine soca_str2int
 
+! ------------------------------------------------------------------------------
+! inverse distance weighted remaping (modified Shepard's method)
+subroutine soca_remap_idw(lon_src, lat_src, data_src, lon_dst, lat_dst, data_dst)
+  real(kind_real), intent(in) :: lon_src(:)
+  real(kind_real), intent(in) :: lat_src(:)
+  real(kind_real), intent(in) :: data_src(:)
+  real(kind_real), intent(in) :: lon_dst(:,:)
+  real(kind_real), intent(in) :: lat_dst(:,:)
+  real(kind_real), intent(inout) :: data_dst(:,:)
+
+  integer, parameter :: nn_max = 9
+  real(kind_real), parameter :: idw_pow = 2.0
+
+  integer :: idx(nn_max)
+  integer :: n_src, i, j, n, nn
+  real(kind_real) :: dmax, r, w(nn_max),  dist(nn_max)
+  type(kdtree) :: kd
+
+  ! create kd tree
+  n_src = size(lon_src)
+  kd = kdtree_create(n_src, lon_src, lat_src)
+
+  ! remap
+  do i = 1, size(data_dst, dim=1)
+    do j = 1, size(data_dst, dim=2)
+
+      ! get nn_max nearest neighbors
+      call kdtree_k_nearest_neighbors(kd, lon_dst(i,j), lat_dst(i,j), nn_max, idx)
+
+      ! get distances. Add a small offset so there is never any 0 values
+      do n=1,nn_max
+        dist(n) = sphere_distance(lon_dst(i,j), lat_dst(i,j), &
+                                  lon_src(idx(n)), lat_src(idx(n)))
+      end do
+      dist = dist + 1e-6
+
+      ! truncate the list if the last points are the same distance.
+      ! This is needed to ensure reproducibility across machines
+      nn=nn_max
+      do n=nn_max-1, 1, -1
+        if (dist(n) /= dist(nn_max)) exit
+        nn = n-1
+      end do
+      if (nn <= 0 ) call fckit_exception%abort( &
+        "No valid points found in IDW remapping, uh oh.")
+
+      ! calculate weights based on inverse distance
+      dmax = maxval(dist(1:nn))
+      w = 0.0
+      do n=1,nn
+        w(n) = ((dmax-dist(n)) / (dmax*dist(n))) ** idw_pow
+      end do
+      w = w / sum(w)
+
+      ! calculate final value
+      r = 0.0
+      do n=1,nn
+        r = r + data_src(idx(n))*w(n)
+      end do
+      data_dst(i,j) = r
+
+    end do
+  end do
+
+  ! done, cleanup
+  call kdtree_destroy(kd)
+end subroutine soca_remap_idw
+
+! ------------------------------------------------------------------------------
 end module soca_utils
