@@ -39,7 +39,7 @@ type :: soca_seaice_type
    ! TODO: Get densities of ice and snow from config
    real(kind=kind_real) :: soca_rho_ice  = 905.0 !< [kg/m3]
    real(kind=kind_real) :: soca_rho_snow = 330.0 !< [kg/m3]
-   
+
  contains
    procedure :: create => soca_seaice_create
    procedure :: delete => soca_seaice_delete
@@ -162,7 +162,7 @@ subroutine soca_seaice_copy(self, rhs)
   ! Associate geometry
   self%geom => rhs%geom
 
-  ! Copy fields 
+  ! Copy fields
   self%cicen = rhs%cicen
   self%hicen = rhs%hicen
   self%hsnon = rhs%hsnon
