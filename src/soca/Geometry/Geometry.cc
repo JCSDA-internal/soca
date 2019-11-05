@@ -17,12 +17,15 @@ using oops::Log;
 // -----------------------------------------------------------------------------
 namespace soca {
   // -----------------------------------------------------------------------------
-  Geometry::Geometry(const eckit::Configuration & conf) {
+  Geometry::Geometry(const eckit::Configuration & conf,
+                     const eckit::mpi::Comm & comm)
+    : comm_(comm) {
     const eckit::Configuration * configc = &conf;
     soca_geo_setup_f90(keyGeom_, &configc);
   }
   // -----------------------------------------------------------------------------
-  Geometry::Geometry(const Geometry & other) {
+  Geometry::Geometry(const Geometry & other)
+    : comm_(other.comm_) {
     const int key_geo = other.keyGeom_;
     soca_geo_clone_f90(key_geo, keyGeom_);
   }

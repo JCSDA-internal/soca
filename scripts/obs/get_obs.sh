@@ -42,6 +42,14 @@ while [[ $date -le $date_end ]]; do
     bash source.nsidc_icec.sh $date $output_path
 
     ##------------------------------------------------------------
+    ## ice freeboard/thickness
+    ##------------------------------------------------------------
+    bash source.esa_ice_cryosat.sh GDR $date $output_path
+    #bash source.esa_ice_cryosat.sh LRM $date $output_path
+    #bash source.esa_ice_cryosat.sh SAR $date $output_path
+    #bash source.esa_ice_cryosat.sh SIN $date $output_path
+
+    ##------------------------------------------------------------
     ## SST
     ## Note: best off using just VIIRS/AVHRR L3U, and the microwave
     ## obs, unless you have a specific need for any of the others.

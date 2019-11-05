@@ -50,7 +50,8 @@ subroutine soca_soft_jacobian (jac, t, s, h, dsdtmax, dsdzmin, dtdzmin)
   real(kind=kind_real), allocatable, intent(inout) :: jac(:) ! jac=ds/dt
 
   real(kind=kind_real), allocatable :: dtdz(:), dsdz(:)
-  integer :: nl
+  integer :: nl, z
+  real(kind=kind_real) :: j
 
   ! Allocate
   nl = size(t,1)
@@ -60,19 +61,23 @@ subroutine soca_soft_jacobian (jac, t, s, h, dsdtmax, dsdzmin, dtdzmin)
   call soca_diff(dtdz,t,h)
   call soca_diff(dsdz,s,h)
 
-  ! Jacobian of soft
-  jac=dsdz/dtdz
+  jac = 0.0
+  do z=1,nl
+    jac(z) = 0.0
 
-  ! Limit application of soft according to configuration
-  where (abs(dtdz)<dtdzmin)
-     jac=0.0
-  end where
-  where (abs(dsdz)<dsdzmin)
-     jac=0.0
-  end where
-  where (abs(jac)>dsdtmax)
-     jac=0.0
-  end where
+    ! Limit application of soft according to configuration
+    if ( abs(dtdz(z)) < dtdzmin ) cycle
+    if ( abs(dsdz(z)) < dsdzmin ) cycle
+
+    ! Jacobian of soft
+    j=dsdz(z)/dtdz(z)
+
+    ! Limit application of soft according to configuration
+    if ( abs(j) > dsdtmax ) cycle
+
+    ! if we reach this point in the code, the jacobian is usable
+    jac(z) = j;
+  end do
 
 end subroutine soca_soft_jacobian
 

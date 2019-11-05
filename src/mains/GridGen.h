@@ -10,23 +10,26 @@
 
 #include <string>
 
+#include "eckit/mpi/Comm.h"
 #include "eckit/config/LocalConfiguration.h"
 #include "oops/base/PostProcessor.h"
 #include "soca/Geometry/Geometry.h"
 #include "soca/Model/Model.h"
 #include "oops/runs/Application.h"
-
+#include "oops/parallel/mpi/mpi.h"
 
 namespace soca {
 
   class GridGen : public oops::Application {
    public:
+    explicit GridGen(const eckit::mpi::Comm & comm = oops::mpi::comm())
+      : Application(comm) {}
     static const std::string classname() {return "soca::GridGen";}
 
     int execute(const eckit::Configuration & fullConfig) const {
       //  Setup resolution
       const eckit::LocalConfiguration geomconfig(fullConfig, "geometry");
-      const Geometry geom(geomconfig);
+      const Geometry geom(geomconfig, this->getComm());
 
       //  Generate model grid
       const eckit::LocalConfiguration gridgenconfig(fullConfig, "gridgen");

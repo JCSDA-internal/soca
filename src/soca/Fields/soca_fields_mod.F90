@@ -130,8 +130,8 @@ end subroutine create_copy
 ! ------------------------------------------------------------------------------
 
 subroutine soca_field_alloc(self, geom)
-  type (soca_field), intent(inout) :: self
-  type(soca_geom),      intent(in) :: geom
+  type (soca_field),     intent(inout) :: self
+  type(soca_geom), pointer, intent(in) :: geom
 
   integer :: isd, ied, jsd, jed, nzo
   integer :: ncat, km
@@ -204,24 +204,6 @@ end subroutine zeros
 
 ! ------------------------------------------------------------------------------
 
-subroutine ones(self)
-  type(soca_field), intent(inout) :: self
-
-  call check(self)
-
-  self%socn = 1.0_kind_real
-  self%tocn = 1.0_kind_real
-  self%ssh = 1.0_kind_real
-  self%hocn = 1.0_kind_real
-  self%mld = 1.0_kind_real
-
-  call self%seaice%ones()
-  call self%ocnsfc%ones()
-
-end subroutine ones
-
-! ------------------------------------------------------------------------------
-
 subroutine dirac(self, f_conf)
   type(soca_field),          intent(inout) :: self
   type(fckit_configuration), intent(in)    :: f_conf   !< Configuration
@@ -281,12 +263,30 @@ end subroutine dirac
 subroutine random(self)
   type(soca_field), intent(inout) :: self
   integer, parameter :: rseed = 1 ! constant for reproducability of tests
+    ! NOTE: random seeds are not quite working the way expected,
+    !  it is only set the first time normal_distribution() is called with a seed
+  integer :: z
 
   call check(self)
 
+  ! set random values
   call normal_distribution(self%tocn,  0.0_kind_real, 1.0_kind_real, rseed)
   call normal_distribution(self%socn,  0.0_kind_real, 1.0_kind_real, rseed)
   call normal_distribution(self%ssh,   0.0_kind_real, 1.0_kind_real, rseed)
+
+  ! mask out land, set to zero
+  self%ssh = self%ssh * self%geom%mask2d
+  do z=1,self%geom%nzo
+     self%tocn(:,:,z) = self%tocn(:,:,z) * self%geom%mask2d
+     self%socn(:,:,z) = self%socn(:,:,z) * self%geom%mask2d
+  end do
+
+  ! update domains
+  call mpp_update_domains(self%tocn, self%geom%Domain%mpp_domain)
+  call mpp_update_domains(self%socn, self%geom%Domain%mpp_domain)
+  call mpp_update_domains(self%ssh,  self%geom%Domain%mpp_domain)
+
+  ! do the same for the non-ocean fields
   call self%ocnsfc%random()
   call self%seaice%random()
 
@@ -474,7 +474,7 @@ subroutine dot_prod(fld1,fld2,zprod)
            zprod = zprod + fld1%ssh(ii,jj)*fld2%ssh(ii,jj)               ! SSH
            do kk = 1, nzo
               zprod = zprod + fld1%tocn(ii,jj,kk)*fld2%tocn(ii,jj,kk) &  ! TOCN
-                   + fld1%socn(ii,jj,kk)*fld2%socn(ii,jj,kk)    ! SOCN
+                   + fld1%socn(ii,jj,kk)*fld2%socn(ii,jj,kk)             ! SOCN
            end do
         end if
      end do
@@ -799,7 +799,9 @@ subroutine gpnorm(fld, nf, pstat)
   integer,                 intent(in) :: nf
   real(kind=kind_real), intent(inout) :: pstat(3, nf) !> [min, max, average]
 
+  logical :: mask(fld%geom%isc:fld%geom%iec, fld%geom%jsc:fld%geom%jec)
   real(kind=kind_real) :: ocn_count, tmp(3)
+  real(kind=kind_real) :: local_ocn_count
   integer :: jj,  myrank
   integer :: isc, iec, jsc, jec
   type(fckit_mpi_comm) :: f_comm
@@ -813,43 +815,43 @@ subroutine gpnorm(fld, nf, pstat)
   isc = fld%geom%isc ; iec = fld%geom%iec
   jsc = fld%geom%jsc ; jec = fld%geom%jec
 
-  ! get the total number of ocean grid cells
-  tmp(1) = sum(fld%geom%mask2d(isc:iec, jsc:jec))
-  call f_comm%allreduce(tmp(1), ocn_count, fckit_mpi_sum())
+  ! get the number of ocean grid cells
+  local_ocn_count = sum(fld%geom%mask2d(isc:iec, jsc:jec))
+  call f_comm%allreduce(local_ocn_count, ocn_count, fckit_mpi_sum())
+  mask = fld%geom%mask2d(isc:iec,jsc:jec) > 0.0
+
 
   ! calculate global min, max, mean for each field
-  ! Note: The following code makes object oriented programmers cry a little.
-  !  Most of the functions in this module should be rewritten to be
-  !  agnostic to the actual number/names of variables, sigh.
+  ! NOTE: "cicen" category 1 (no ice) is not included in the stats
   do jj=1, fld%nf
     tmp=0.0
 
     ! get local min/max/sum of each variable
     select case(fld%fldnames(jj))
     case("tocn")
-      call fldinfo(fld%tocn(isc:iec,jsc:jec,:), tmp)
+      call fldinfo(fld%tocn(isc:iec,jsc:jec,:), mask, tmp)
     case("socn")
-      call fldinfo(fld%socn(isc:iec,jsc:jec,:), tmp)
+      call fldinfo(fld%socn(isc:iec,jsc:jec,:), mask, tmp)
     case("hocn")
-      call fldinfo(fld%hocn(isc:iec,jsc:jec,:), tmp)
+      call fldinfo(fld%hocn(isc:iec,jsc:jec,:), mask, tmp)
     case("ssh")
-      call fldinfo(fld%ssh(isc:iec,jsc:jec), tmp)
+      call fldinfo(fld%ssh(isc:iec,jsc:jec),    mask, tmp)
     case("hicen")
-       call fldinfo(fld%seaice%hicen(isc:iec,jsc:jec,:), tmp)
+       call fldinfo(fld%seaice%hicen(isc:iec,jsc:jec,:), mask, tmp)
     case("hsnon")
-      call fldinfo(fld%seaice%hsnon(isc:iec,jsc:jec,:), tmp)
+       call fldinfo(fld%seaice%hsnon(isc:iec,jsc:jec,:),  mask, tmp)
     case("cicen")
-      call fldinfo(fld%seaice%cicen(isc:iec,jsc:jec,:), tmp)
+      call fldinfo(fld%seaice%cicen(isc:iec,jsc:jec,2:),  mask, tmp)
     case("sw")
-      call fldinfo(fld%ocnsfc%sw_rad(isc:iec,jsc:jec), tmp)
+      call fldinfo(fld%ocnsfc%sw_rad(isc:iec,jsc:jec),   mask, tmp)
     case("lw")
-      call fldinfo(fld%ocnsfc%lw_rad(isc:iec,jsc:jec), tmp)
+      call fldinfo(fld%ocnsfc%lw_rad(isc:iec,jsc:jec),   mask, tmp)
     case("lhf")
-      call fldinfo(fld%ocnsfc%latent_heat(isc:iec,jsc:jec), tmp)
+      call fldinfo(fld%ocnsfc%latent_heat(isc:iec,jsc:jec), mask, tmp)
     case("shf")
-      call fldinfo(fld%ocnsfc%sens_heat(isc:iec,jsc:jec), tmp)
+      call fldinfo(fld%ocnsfc%sens_heat(isc:iec,jsc:jec),   mask, tmp)
     case("us")
-      call fldinfo(fld%ocnsfc%fric_vel(isc:iec,jsc:jec), tmp)
+      call fldinfo(fld%ocnsfc%fric_vel(isc:iec,jsc:jec),    mask, tmp)
     end select
 
     ! calculate global min/max/mean

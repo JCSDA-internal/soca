@@ -23,22 +23,27 @@ private
 public :: soca_seaice_type
 
 type :: soca_seaice_type
+   type(soca_geom),      pointer     :: geom
+
+   ! Sea-ice state  variables
    real(kind=kind_real), allocatable :: cicen(:,:,:) !< Ice Fraction
    real(kind=kind_real), allocatable :: hicen(:,:,:) !< Ice thickness
    real(kind=kind_real), allocatable :: hsnon(:,:,:) !< Snow thickness
    real(kind=kind_real), allocatable :: vicen(:,:,:) !< Ice volume
    real(kind=kind_real), allocatable :: vsnon(:,:,:) !< Snow volume
+
    integer :: isd, ied, jsd, jed                 !< Data domain indices
    integer :: isc, iec, jsc, jec                 !< Compute domain indices
    integer :: ncat                               !< Number of categories
+
    ! TODO: Get densities of ice and snow from config
    real(kind=kind_real) :: soca_rho_ice  = 905.0 !< [kg/m3]
    real(kind=kind_real) :: soca_rho_snow = 330.0 !< [kg/m3]
+   
  contains
    procedure :: create => soca_seaice_create
    procedure :: delete => soca_seaice_delete
    procedure :: zeros => soca_seaice_zeros
-   procedure :: ones => soca_seaice_ones
    procedure :: abs => soca_seaice_abs
    procedure :: random => soca_seaice_random
    procedure :: copy => soca_seaice_copy
@@ -61,9 +66,12 @@ contains
 ! ------------------------------------------------------------------------------
 subroutine soca_seaice_create(self, geom)
   class(soca_seaice_type), intent(inout) :: self
-  type(soca_geom),            intent(in) :: geom
+  type(soca_geom), pointer,   intent(in) :: geom
 
   integer :: isd, ied, jsd, jed, ncat
+
+  ! Associate geometry
+  self%geom => geom
 
   ! Indices for data domain (with halo)
   isd = geom%isd ; self%isd = isd
@@ -113,16 +121,6 @@ subroutine soca_seaice_zeros(self)
 end subroutine soca_seaice_zeros
 
 ! ------------------------------------------------------------------------------
-subroutine soca_seaice_ones(self)
-  class(soca_seaice_type), intent(inout) :: self
-
-  self%cicen = 1.0_kind_real
-  self%hicen = 1.0_kind_real
-  self%hsnon = 1.0_kind_real
-
-end subroutine soca_seaice_ones
-
-! ------------------------------------------------------------------------------
 subroutine soca_seaice_abs(self)
   class(soca_seaice_type), intent(inout) :: self
 
@@ -135,13 +133,25 @@ end subroutine soca_seaice_abs
 ! ------------------------------------------------------------------------------
 subroutine soca_seaice_random(self)
   class(soca_seaice_type), intent(inout) :: self
+  integer :: i
+  integer, parameter :: rseed = 1
 
-  integer :: rseed = 1
-
+  ! set random values
   call normal_distribution(self%cicen, 0.0_kind_real, 1.0_kind_real, rseed)
   call normal_distribution(self%hicen, 0.0_kind_real, 1.0_kind_real, rseed)
   call normal_distribution(self%hsnon, 0.0_kind_real, 1.0_kind_real, rseed)
 
+  ! mask out land, set to zero
+  do i=1, self%geom%ice_column%ncat+1
+     self%cicen(:,:,i) = self%cicen(:,:,i) * self%geom%mask2d
+  end do
+  do i=1, self%geom%ice_column%ncat
+     self%hicen(:,:,i) = self%hicen(:,:,i) * self%geom%mask2d
+     self%hsnon(:,:,i) = self%hsnon(:,:,i) * self%geom%mask2d
+  end do
+
+  ! update domains
+  ! TODO: if/when ever needed
 end subroutine soca_seaice_random
 
 ! ------------------------------------------------------------------------------
@@ -149,6 +159,10 @@ subroutine soca_seaice_copy(self, rhs)
   class(soca_seaice_type), intent(inout) :: self
   class(soca_seaice_type),    intent(in) :: rhs
 
+  ! Associate geometry
+  self%geom => rhs%geom
+
+  ! Copy fields 
   self%cicen = rhs%cicen
   self%hicen = rhs%hicen
   self%hsnon = rhs%hsnon
