@@ -12,6 +12,7 @@ use fms_io_mod, only: fms_io_init, fms_io_exit, &
 use fms_mod, only: read_data
 use kinds, only: kind_real
 use datetime_mod, only: datetime
+use mpp_domains_mod, only : mpp_update_domains
 use random_mod, only: normal_distribution
 use soca_geom_mod, only: soca_geom
 use soca_fieldsutils_mod, only: soca_genfilename
@@ -223,8 +224,8 @@ subroutine soca_seaice_add_incr(self, incr)
   self%vsnon = self%hsnon * self%cicen(:,:,2:)
 
   ! Initialize aggregate fields
-  aice_bkg  = sum(self%cicen(isc:iec,jsc:jec,2:ncat), dim=3)
-  aice_incr = sum(incr%cicen(isc:iec,jsc:jec,2:ncat), dim=3)
+  aice_bkg  = sum(self%cicen(isc:iec,jsc:jec,2:ncat+1), dim=3)
+  aice_incr = sum(incr%cicen(isc:iec,jsc:jec,2:ncat+1), dim=3)
   aice_ana  = aice_bkg + aice_incr
 
   ! Fix out of bound values in aggregate ice fraction analysis
@@ -421,6 +422,11 @@ subroutine soca_seaice_read_rst(self, f_conf, geom, fldnames)
   case default
      call abor1_ftn("soca_seaice_mod: Reading for seaice model "//trim(seaice_model)//" not implemented")
   end select
+
+  ! Update halo
+  call mpp_update_domains(self%cicen, geom%Domain%mpp_domain)
+  call mpp_update_domains(self%hicen, geom%Domain%mpp_domain)
+  call mpp_update_domains(self%hsnon, geom%Domain%mpp_domain)
 
   if (allocated(str)) deallocate(str)
 
