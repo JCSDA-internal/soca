@@ -52,7 +52,7 @@ for repo in $LIB_REPOS $MAIN_REPO; do
     repo_url=$(grep "PROJECT $repo" $repo_bundle_dir/CMakeLists.txt | awk '{print $5}' | sed 's|"||g')
     repo_branch=$(grep "PROJECT $repo" $repo_bundle_dir/CMakeLists.txt | awk '{print $8}')
     remote_branches=$(git ls-remote -q $repo_url)
-    repo_hash=$( echo "$remote_branches" | grep "refs/heads/$repo_branch" | awk '{print $1}')
+    repo_hash=$( echo "$remote_branches" | grep "refs/heads/$repo_branch\$" | awk '{print $1}')
 
     echo "Repo:    $repo"
     echo "URL:     $repo_url"
@@ -63,7 +63,7 @@ for repo in $LIB_REPOS $MAIN_REPO; do
     for r in $MATCH_REPOS; do [[ $r == $repo ]] && domatch=1 ; done
     if [[ $domatch == 1 ]]; then
         echo -n "* trying to match main test repo branch... "
-        line=$(echo "$remote_branches" | grep "refs/heads/$BRANCH" || echo "none")
+        line=$(echo "$remote_branches" | grep "refs/heads/$BRANCH\$" || echo "none")
         if [[ "$line" != "none" ]]; then
             echo "match FOUND"
             repo_branch=$BRANCH
