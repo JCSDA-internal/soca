@@ -383,7 +383,6 @@ soca_add_test( NAME parameters_bump_loc
 
 soca_add_test( NAME ensrecenter
                EXE  soca_ensrecenter.x
-               TOL  3.0e-4 0
                NOTRAPFPE
                TEST_DEPENDS test_soca_enspert )
 
