@@ -76,7 +76,7 @@ before_install:
     # what TravisCI auto checks out (because TravisCI handles PR merges specially)
     WORK_DIR=$HOME/work
     mkdir -p $WORK_DIR/repo.src; cd $WORK_DIR
-    REPO_CACHE=$HOME/repo.cache ${TRAVIS_BUILD_DIR}/.travis/prep.sh
+    REPO_CACHE=$HOME/repo.cache ${TRAVIS_BUILD_DIR}/.github/travisci/prep.sh
     mv ${TRAVIS_BUILD_DIR} ${WORK_DIR}/repo.src/${MAIN_REPO}
 
   - |
@@ -87,7 +87,7 @@ before_install:
 
   - |
     # prepare docker image from jcsda/docker:latest
-    cd ${WORK_DIR}/repo.src/${MAIN_REPO}/.travis
+    cd ${WORK_DIR}/repo.src/${MAIN_REPO}/.github/travisci
     docker build -t jcsda/dockerl2 .
     docker images
     ci_env=`bash <(curl -s https://codecov.io/env)`
@@ -106,7 +106,7 @@ script:
   - |
     # Build code
     docker exec jcsda_container bash \
-     -c 'cd /jcsda/work && /jcsda/work/repo.src/${MAIN_REPO}/.travis/build.sh'
+     -c 'cd /jcsda/work && /jcsda/work/repo.src/${MAIN_REPO}/.github/travisci/build.sh'
 
   - |
     # run tests
@@ -129,6 +129,6 @@ after_success:
     # If this is a cron run, update the release/stable branch of the bundle
     if [[ "$TRAVIS_EVENT_TYPE" == "cron" && "$TRAVIS_BRANCH" == "develop" ]]; then
         docker exec jcsda_container bash -c \
-          'cd /jcsda/work && repo.src/${MAIN_REPO}/.travis/stable_mark.sh'
-        cd ${WORK_DIR} && ${WORK_DIR}/repo.src/${MAIN_REPO}/.travis/stable_commit.sh
+          'cd /jcsda/work && repo.src/${MAIN_REPO}/.github/travisci/stable_mark.sh'
+        cd ${WORK_DIR} && ${WORK_DIR}/repo.src/${MAIN_REPO}/.github/travisci/stable_commit.sh
     fi

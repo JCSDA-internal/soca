@@ -1,0 +1,1 @@
+Please review the [JEDI-docs](https://jointcenterforsatellitedataassimilation-jedi-docs.readthedocs-hosted.com/en/latest/developer/developer_tools/index.html) for proper practices in the software development of JEDI related projects such as SOCA.
