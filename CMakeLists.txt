@@ -41,6 +41,10 @@ set( SOCA_LINKER_LANGUAGE CXX )
 set( Boost_MINIMUM_VERSION "1.47" )
 include_directories( ${Boost_INCLUDE_DIR} )
 
+# NetCDF
+find_package( NetCDF REQUIRED COMPONENTS F90 )
+include_directories( ${NETCDF_INCLUDE_DIRS} )
+
 # eckit
 ecbuild_use_package( PROJECT eckit VERSION 1.1.0 REQUIRED )
 include_directories( ${ECKIT_INCLUDE_DIRS} )
