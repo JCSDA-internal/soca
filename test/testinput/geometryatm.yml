@@ -9,5 +9,5 @@ Geometry:
     date_end: 2018-04-16T00:00:00Z
     ObsSpace:
       name: None
-      ObsDataIn:  {obsfile: ./Data/smap_obs_2018041500_m.nc4}
+      ObsDataIn:  {obsfile: ./Data/smap_tb.nc}
       simulate:   {variables: [ None ]}

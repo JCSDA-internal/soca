@@ -92,10 +92,7 @@ list( APPEND soca_obs
   Data/Obs/prof.nc
   Data/Obs/sss.nc
   Data/Obs/sst.nc
-)
-
-list( APPEND ioda_obs
-  ${ioda_SOURCE_DIR}/test/testinput/atmosphere/smap_obs_2018041500_m.nc4
+  Data/Obs/smap_tb.nc
 )
 
 # Create Data directory for test input/output and symlink all files
@@ -140,14 +137,6 @@ foreach(FILENAME ${soca_obs})
      get_filename_component(filename ${FILENAME} NAME )
      execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
            ${CMAKE_CURRENT_SOURCE_DIR}/${FILENAME}
-           ${CMAKE_CURRENT_BINARY_DIR}/Data/${filename} )
-endforeach(FILENAME)
-
-# Link to IODA obs
-foreach(FILENAME ${ioda_obs})
-     get_filename_component(filename ${FILENAME} NAME )
-     execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
-           ${FILENAME}
            ${CMAKE_CURRENT_BINARY_DIR}/Data/${filename} )
 endforeach(FILENAME)
 
