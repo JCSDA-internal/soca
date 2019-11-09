@@ -32,6 +32,13 @@ private
 public :: soca_geom, &
           geom_write, geom_get_domain_indices
 
+!> Atmospheric grid
+type :: soca_geom_atm
+   integer :: nlocs
+   real(kind=kind_real), allocatable, dimension(:) :: lon
+   real(kind=kind_real), allocatable, dimension(:) :: lat
+end type soca_geom_atm
+
 !> Geometry data structure
 type :: soca_geom
     type(MOM_domain_type), pointer :: Domain !< Ocean model domain
@@ -43,20 +50,18 @@ type :: soca_geom
     integer :: iscl, iecl, jscl, jecl  !< indices of local compute domain
     integer :: isdl, iedl, jsdl, jedl  !< indices of local data domain
     real(kind=kind_real), allocatable, dimension(:,:) :: lon, lat  !< horizontal grid type
-                                                                  !< 2D array of longitude, latitude
+                                                                   !< 2D array of longitude, latitude
     real(kind=kind_real), allocatable, dimension(:,:) :: mask2d    !< 0 = land 1 = ocean
-    real(kind=kind_real), allocatable, dimension(:,:) :: shoremask ! Includes shoreline as ocean point (useful for BUMP)
-    integer,              allocatable, dimension(:,:) :: ij        ! index of ocean+shore line in compute grid
     real(kind=kind_real), allocatable, dimension(:,:) :: cell_area
     real(kind=kind_real), allocatable, dimension(:,:) :: rossby_radius
     logical :: save_local_domain = .false. ! If true, save the local geometry for each pe.
+    type(soca_geom_atm) :: atm ! Amospheric grid
     contains
     procedure :: init => geom_init
     procedure :: end => geom_end
     procedure :: clone => geom_clone
     procedure :: print => geom_print
     procedure :: get_rossby_radius => geom_rossby_radius
-    procedure :: validindex => geom_validindex
     procedure :: gridgen => geom_gridgen
     procedure :: thickness2depth => geom_thickness2depth
     procedure :: struct2unstruct => geom_struct2unstruct
@@ -70,9 +75,12 @@ contains
 
 ! ------------------------------------------------------------------------------
 !> Setup geometry object
-subroutine geom_init(self, f_conf)
-  class(soca_geom), intent(out) :: self
+subroutine geom_init(self, f_conf, natm, latatm, lonatm)
+  class(soca_geom),         intent(out) :: self
   type(fckit_configuration), intent(in) :: f_conf
+  integer                               :: natm
+  real(kind=kind_real),      intent(in) :: latatm(natm)
+  real(kind=kind_real),      intent(in) :: lonatm(natm)
 
   integer :: isave = 0
 
@@ -87,6 +95,9 @@ subroutine geom_init(self, f_conf)
   if ( f_conf%has("num_sno_lev") ) &
       call f_conf%get_or_die("num_sno_lev", self%ice_column%nzs)
 
+  ! Get atmospheric grid size
+  self%atm%nlocs = natm
+
   ! Shortcuts to sea-ice grid size
   self%ncat = self%ice_column%ncat
   self%nzi = self%ice_column%nzi
@@ -97,6 +108,10 @@ subroutine geom_init(self, f_conf)
 
   if ( f_conf%has("read_soca_grid") ) &
       call geom_read(self)
+
+  ! Get atmospheric grid
+  self%atm%lon = lonatm
+  self%atm%lat = latatm
 
   ! Fill halo
   call mpp_update_domains(self%lon, self%Domain%mpp_domain)
@@ -119,11 +134,11 @@ subroutine geom_end(self)
   if (allocated(self%lon))           deallocate(self%lon)
   if (allocated(self%lat))           deallocate(self%lat)
   if (allocated(self%mask2d))        deallocate(self%mask2d)
-  if (allocated(self%shoremask))     deallocate(self%shoremask)
   if (allocated(self%cell_area))     deallocate(self%cell_area)
   if (allocated(self%rossby_radius)) deallocate(self%rossby_radius)
-  if (allocated(self%ij))            deallocate(self%ij)
   nullify(self%Domain)
+  if (allocated(self%atm%lon))       deallocate(self%atm%lon)
+  if (allocated(self%atm%lat))       deallocate(self%atm%lat)
 
 end subroutine geom_end
 
@@ -143,6 +158,9 @@ subroutine geom_clone(self, other)
   other%nzi = self%nzi
   other%nzs = self%nzs
 
+  ! Clone atm grid spec
+  other%atm%nlocs = self%atm%nlocs
+
   ! Allocate and clone geometry
   call geom_allocate(other)
   other%lon = self%lon
@@ -150,6 +168,8 @@ subroutine geom_clone(self, other)
   other%mask2d = self%mask2d
   other%cell_area = self%cell_area
   other%rossby_radius = self%rossby_radius
+  other%atm%lon = self%atm%lon
+  other%atm%lat = self%atm%lat
 
 end subroutine geom_clone
 
@@ -198,7 +218,10 @@ subroutine geom_allocate(self)
   allocate(self%mask2d(isd:ied,jsd:jed));        self%mask2d = 0.0_kind_real
   allocate(self%cell_area(isd:ied,jsd:jed));     self%cell_area = 0.0_kind_real
   allocate(self%rossby_radius(isd:ied,jsd:jed)); self%rossby_radius = 0.0_kind_real
-  allocate(self%shoremask(isd:ied,jsd:jed));     self%shoremask = 0.0_kind_real
+
+  ! Allocate atmospheric grid
+  allocate(self%atm%lat(self%atm%nlocs)); self%atm%lat(self%atm%nlocs) = 0.0_kind_real
+  allocate(self%atm%lon(self%atm%nlocs)); self%atm%lon(self%atm%nlocs) = 0.0_kind_real
 
   ! Extract geometry of interest from model's data structure.
   ! Common to ocean & sea-ice
@@ -263,46 +286,6 @@ subroutine geom_rossby_radius(self)
 end subroutine geom_rossby_radius
 
 ! ------------------------------------------------------------------------------
-!> Setup array of "valid index" to inline and pack structured geometry to
-!> unstructured geometry
-subroutine geom_validindex(self)
-  ! Ignores inland mask grid points and
-  ! select wet gridpoints and shoreline mask
-  class(soca_geom), intent(inout) :: self
-  integer :: i, j, ns, cnt
-  integer :: isc, iec, jsc, jec
-  real(kind=kind_real) :: shoretest
-
-  ! Indices for compute domain (no halo)
-  isc = self%isc ; iec = self%iec ; jsc = self%jsc ; jec = self%jec
-
-  ! Extend mask 2 grid point inland TODO:NEED HALO FOR MASK!!!
-  self%shoremask = self%mask2d
-  do i = isc, iec
-     do j = jsc, jec
-        self%shoremask(i,j) = self%mask2d(i,j)
-     end do
-  end do
-
-  ! Get number of valid points
-  ns = int(sum(self%shoremask(isc:iec,jsc:jec)))
-  allocate(self%ij(2,ns))
-
-!!$    ! Save shoreline + ocean grid point
-!!$    cnt = 1
-!!$    do i = isc, iec
-!!$       do j = jsc, jec
-!!$          if (shoretest.gt.0.0d0) then
-!!$             self%ij(1, cnt) = i
-!!$             self%ij(2, cnt) = j
-!!$             cnt = cnt + 1
-!!$          end if
-!!$       end do
-!!$    end do
-
-end subroutine geom_validindex
-
-! ------------------------------------------------------------------------------
 !> Write geometry to file
 subroutine geom_write(self)
   class(soca_geom), intent(in) :: self
@@ -359,7 +342,6 @@ subroutine geom_write(self)
      geom_output_pe='geom_output_'//trim(strpe)//'.nc'
 
      ns = (self%iec - self%isc + 1) * (self%jec - self%jsc + 1 )
-     call write2pe(reshape(self%shoremask,(/ns/)),'shoremask',geom_output_pe,.false.)
      call write2pe(reshape(self%mask2d,(/ns/)),'mask',geom_output_pe,.true.)
      call write2pe(reshape(self%lon,(/ns/)),'lon',geom_output_pe,.true.)
      call write2pe(reshape(self%lat,(/ns/)),'lat',geom_output_pe,.true.)

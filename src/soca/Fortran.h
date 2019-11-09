@@ -55,16 +55,6 @@ namespace soca {
 
   extern "C" {
     // -----------------------------------------------------------------------------
-    //  Geometry
-    // -----------------------------------------------------------------------------
-    void soca_geo_setup_f90(F90geom &, const eckit::Configuration * const *);
-    void soca_geo_clone_f90(const F90geom &, F90geom &);
-    void soca_geo_info_f90(const F90geom &);
-    void soca_geo_gridgen_f90(const F90geom &,
-                              const eckit::Configuration * const *);
-    void soca_geo_delete_f90(F90geom &);
-
-    // -----------------------------------------------------------------------------
     //  Fields
     // -----------------------------------------------------------------------------
     void soca_field_create_f90(F90flds &, const F90geom &,

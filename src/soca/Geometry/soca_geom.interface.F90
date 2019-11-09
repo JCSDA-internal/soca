@@ -8,6 +8,7 @@ module soca_geom_mod_c
 use iso_c_binding
 use fckit_configuration_module, only: fckit_configuration
 use soca_geom_mod, only: soca_geom
+use kinds
 
 implicit none
 
@@ -31,18 +32,26 @@ contains
 
 ! ------------------------------------------------------------------------------
 !> Setup geometry object
-subroutine c_soca_geo_setup(c_key_self, c_conf) bind(c,name='soca_geo_setup_f90')
-
+  subroutine c_soca_geo_setup(c_key_self, c_conf, nlocs, clats, clons) &
+       bind(c,name='soca_geo_setup_f90')
   integer(c_int), intent(inout) :: c_key_self
   type(c_ptr),       intent(in) :: c_conf
+  integer(c_int),    intent(in) :: nlocs
+  real(c_double),    intent(in) :: clats(nlocs)
+  real(c_double),    intent(in) :: clons(nlocs)
 
   type(soca_geom), pointer :: self
+  real(kind_real) :: atm_lats(nlocs)
+  real(kind_real) :: atm_lons(nlocs)
 
   call soca_geom_registry%init()
   call soca_geom_registry%add(c_key_self)
   call soca_geom_registry%get(c_key_self,self)
 
-  call self%init(fckit_configuration(c_conf))
+  atm_lats(:) = clats(:)
+  atm_lons(:) = clons(:)
+
+  call self%init(fckit_configuration(c_conf), nlocs, atm_lats, atm_lons)
 
 end subroutine c_soca_geo_setup
 

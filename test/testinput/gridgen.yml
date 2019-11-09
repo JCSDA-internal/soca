@@ -2,10 +2,17 @@ geometry:
   num_ice_cat: 5
   num_ice_lev: 4
   num_sno_lev: 1
+  atm_geom:
+    init: true
+    date_begin: 2018-04-14T00:00:00Z
+    date_end: 2018-04-16T00:00:00Z
+    ObsSpace:
+      name: None
+      ObsDataIn:  {obsfile: gmi_obs_test.nc4}
+      simulate:   {variables: [ sea_surface_temperature ]}
 
 gridgen:
   name: SOCA
   tstep: PT6H
   advance_mom6: 0
   variables: [cicen, hicen, hsnon, socn, tocn, ssh, hocn, sw, lhf, shf, lw, us]
-

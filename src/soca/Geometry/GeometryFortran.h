@@ -18,7 +18,11 @@ namespace eckit {
 namespace soca {
 
   extern "C" {
-    void soca_geo_setup_f90(F90geom &, const eckit::Configuration * const *);
+    void soca_geo_setup_f90(F90geom &,
+                            const eckit::Configuration * const *,
+                            const int  &,
+                            const double *,
+                            const double *);
     void soca_geo_clone_f90(const F90geom &, F90geom &);
     void soca_geo_info_f90(const F90geom &);
     void soca_geo_gridgen_f90(const F90geom &,
