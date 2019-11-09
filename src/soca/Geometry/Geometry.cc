@@ -32,13 +32,16 @@ namespace soca {
     if (init_atm_geom)
       {
         // Get Time Bounds
-        const util::DateTime bgn = util::DateTime(conf.getString("atm_geom.date_begin"));
-        const util::DateTime end = util::DateTime(conf.getString("atm_geom.date_end"));
+        const util::DateTime bgn =
+                    util::DateTime(conf.getString("atm_geom.date_begin"));
+        const util::DateTime end =
+                    util::DateTime(conf.getString("atm_geom.date_end"));
 
         // Create the Atmospheric Geometry in Observation Space
-        // Weird, but look at it as a time dependent unstructured grid for the atmosphere
+        // Weird, but look at it as a time dependent unstructured
+        // grid for the atmosphere
         const eckit::LocalConfiguration confatmgeom(conf, "atm_geom.ObsSpace");
-        ioda::ObsSpace atmobs( confatmgeom, comm, bgn, end);
+        ioda::ObsSpace atmobs(confatmgeom, comm, bgn, end);
 
         // Get grid size
         int nlocs = atmobs.nlocs();
@@ -49,8 +52,7 @@ namespace soca {
         atmobs.get_db("MetaData", "longitude", nlocs, lons.data());
         atmobs.get_db("MetaData", "latitude", nlocs, lats.data());
         soca_geo_setup_f90(keyGeom_, &configc, nlocs, &lats[0], &lons[0]);
-      } else
-      {
+      } else {
         int nlocs = 1;
         std::vector<double> lats(nlocs); lats[0] = 0.0;
         std::vector<double> lons(nlocs); lons[0] = 0.0;

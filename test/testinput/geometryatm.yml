@@ -1,0 +1,13 @@
+Geometry:
+  num_ice_cat: 5
+  num_ice_lev: 4
+  num_sno_lev: 1
+  read_soca_grid: grid
+  atm_geom:
+    init: true
+    date_begin: 2018-04-14T00:00:00Z
+    date_end: 2018-04-16T00:00:00Z
+    ObsSpace:
+      name: None
+      ObsDataIn:  {obsfile: ./Data/smap_obs_2018041500_m.nc4}
+      simulate:   {variables: [ None ]}

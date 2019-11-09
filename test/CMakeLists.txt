@@ -17,6 +17,7 @@ list( APPEND soca_test_input
   testinput/forecast_identity_cice.yml
   testinput/forecast_mom6.yml
   testinput/geometry.yml
+  testinput/geometryatm.yml
   testinput/gridgen.yml
   testinput/hofx.yml
   testinput/hofx3d.yml
@@ -93,6 +94,10 @@ list( APPEND soca_obs
   Data/Obs/sst.nc
 )
 
+list( APPEND ioda_obs
+  ${ioda_SOURCE_DIR}/test/testinput/atmosphere/smap_obs_2018041500_m.nc4
+)
+
 # Create Data directory for test input/output and symlink all files
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/testinput)
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/testoutput)
@@ -135,6 +140,14 @@ foreach(FILENAME ${soca_obs})
      get_filename_component(filename ${FILENAME} NAME )
      execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
            ${CMAKE_CURRENT_SOURCE_DIR}/${FILENAME}
+           ${CMAKE_CURRENT_BINARY_DIR}/Data/${filename} )
+endforeach(FILENAME)
+
+# Link to IODA obs
+foreach(FILENAME ${ioda_obs})
+     get_filename_component(filename ${FILENAME} NAME )
+     execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
+           ${FILENAME}
            ${CMAKE_CURRENT_BINARY_DIR}/Data/${filename} )
 endforeach(FILENAME)
 
@@ -308,6 +321,10 @@ soca_add_test( NAME enspert
 # Tests of class interfaces
 #-------------------------------------------------------------------------------
 soca_add_test( NAME geometry
+               SRC  TestGeometry.cc
+               TEST_DEPENDS test_soca_gridgen )
+
+soca_add_test( NAME geometryatm
                SRC  TestGeometry.cc
                TEST_DEPENDS test_soca_gridgen )
 
