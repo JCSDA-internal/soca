@@ -42,7 +42,7 @@ set( Boost_MINIMUM_VERSION "1.47" )
 include_directories( ${Boost_INCLUDE_DIR} )
 
 # NetCDF
-find_package( NetCDF REQUIRED COMPONENTS F90 )
+find_package( NetCDF REQUIRED COMPONENTS Fortran )
 include_directories( ${NETCDF_INCLUDE_DIRS} )
 
 # eckit
