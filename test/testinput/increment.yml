@@ -19,13 +19,14 @@ InterpTest:
       simulate:
         variables: []
       Generate:
-        nobs: 10
-        lat1: -20
-        lat2: 20
-        lon1: -150
-        lon2: -140
+        Random:
+          nobs: 1000
+          lat1: -75
+          lat2: 90
+          lon1: 0
+          lon2: 360
+          random_seed: 1
         obs_errors: []
-        random_seed: 1
   GeoVaLs:
     variables:
     - sea_water_potential_temperature

@@ -88,7 +88,6 @@ subroutine create_constructor(self, geom, vars)
 
   ! Allocate
   call soca_field_alloc(self, geom)
-  !call zeros(self)
 
   ! Associate geometry
   self%geom => geom
@@ -112,8 +111,6 @@ subroutine create_copy(self, rhs_fld)
 
   ! Allocate and copy fields
   call soca_field_alloc(self, rhs_fld%geom)
-  call zeros(self)
-  !call copy(self,rhs_fld)
 
   ! Associate geometry
   self%geom => rhs_fld%geom
@@ -156,6 +153,7 @@ subroutine soca_field_alloc(self, geom)
   ! Allocate surface fields for cool skin
   call self%ocnsfc%create(geom)
 
+  call zeros(self)
 end subroutine soca_field_alloc
 
 ! ------------------------------------------------------------------------------
