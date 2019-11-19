@@ -112,6 +112,24 @@ subroutine c_soca_geo_start_end(c_key_self, ist, iend, jst, jend) bind(c, name='
 end subroutine c_soca_geo_start_end
 
 ! ------------------------------------------------------------------------------
+!> return nx, ny, nzo for global grid
+subroutine c_soca_geo_global_grid_size(c_key_self, nx, ny, nzo) bind(c, name='soca_geo_global_grid_size_f90')
+
+  implicit none
+
+  integer(c_int), intent( in) :: c_key_self
+  integer(c_int), intent(out) :: nx, ny, nzo
+
+  type(soca_geom), pointer :: self
+  call soca_geom_registry%get(c_key_self, self)
+
+  nx   = self%nx
+  ny   = self%ny
+  nzo  = self%nzo
+
+end subroutine c_soca_geo_global_grid_size 
+
+! ------------------------------------------------------------------------------
 !> Dump basic geometry info in file and std output
 subroutine c_soca_geo_info(c_key_self) bind(c,name='soca_geo_info_f90')
 

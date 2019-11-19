@@ -54,8 +54,8 @@ contains
     self%geom => geom
 
     ! Define iind/jind for local tile
-    self%jind = iind
-    self%iind = jind
+    self%iind = iind
+    self%jind = jind
 
   end subroutine soca_geom_iter_setup
 
@@ -103,13 +103,19 @@ contains
     real(kind_real),    intent(out) :: lon  !< Longitude
 
     ! Check iind/jind
-    if (self%iind < self%geom%isc .OR. self%iind > self%geom%iec .OR. &
-        self%jind < self%geom%jsc .OR. self%jind > self%geom%jec) &
+    if (self%iind == -1 .AND. self%jind == -1) then
+      ! special case of {-1,-1} means end of the grid
+      lat = self%geom%lat(self%geom%iec,self%geom%jec)
+      lon = self%geom%lon(self%geom%iec,self%geom%jec) 
+    elseif (self%iind < self%geom%isc .OR. self%iind > self%geom%iec .OR. &
+            self%jind < self%geom%jsc .OR. self%jind > self%geom%jec) then
+      ! outside of the grid
       call abor1_ftn('soca_geom_iter_current: iterator out of bounds')
-
-    ! Get lat/lon
-    lat = self%geom%lat(self%iind,self%jind)
-    lon = self%geom%lon(self%iind,self%jind)
+    else
+      ! inside of the grid
+      lat = self%geom%lat(self%iind,self%jind)
+      lon = self%geom%lon(self%iind,self%jind)
+    endif
 
   end subroutine soca_geom_iter_current
 
@@ -124,7 +130,7 @@ contains
     iind = self%iind
     jind = self%jind
 
-    do while ((iind.lt.self%geom%iec).and.(jind.lt.self%geom%jec))
+    ! do while ((iind.lt.self%geom%iec).and.(jind.lt.self%geom%jec))
 
       ! increment by 1
       if (iind.lt.self%geom%iec) then 
@@ -134,14 +140,14 @@ contains
         jind = jind + 1
       end if
 
-      ! skip this point if it is on land
-      if (self%geom%mask2d(iind,jind).lt.1) then 
-        cycle
-      else
-        exit
-      endif
+     ! ! skip this point if it is on land
+     ! if (self%geom%mask2d(iind,jind).lt.1) then 
+     !   cycle
+     ! else
+     !   exit
+     ! endif
 
-    end do
+    ! end do
 
     self%iind = iind
     self%jind = jind

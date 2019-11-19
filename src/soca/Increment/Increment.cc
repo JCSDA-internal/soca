@@ -11,6 +11,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <numeric>
 
 #include "eckit/config/LocalConfiguration.h"
 #include "eckit/exception/Exceptions.h"
@@ -28,6 +29,7 @@
 #include "soca/Covariance/ErrorCovariance.h"
 #include "soca/Fields/Fields.h"
 #include "soca/Geometry/Geometry.h"
+#include "soca/Geometry/GeometryFortran.h"
 #include "soca/State/State.h"
 #include "soca/GetValuesTraj/GetValuesTraj.h"
 
@@ -138,31 +140,45 @@ namespace soca {
 
   // -----------------------------------------------------------------------------
   oops::GridPoint Increment::getPoint(const GeometryIterator & iter) const {
+ 
+    int nx, ny, nzo;
+    soca_geo_global_grid_size_f90(iter->geom->toFortran(), nx, ny, nzo);
+    oops::Log::info() << "Increment::getPoint: nzo " << nzo << std::endl;
+
+
+  //(1) retrieve number of vertical levels from Increment::fields.(nzo ?)
+  //(2) retrieve fields list from Increment::fields.(vars_ ?)
+        // however, there might be benefit in hardconding the oder of fields right here and in f90 code. 
+
+ /* 
     std::vector<std::string> fields;
-/*
-    // Initialize fields
-    fields.push_back("U");
-    fields.push_back("V");
-    fields.push_back("H");
+    std::vector<int> varlens ;
 
-    std::vector<int> varlens(fields.size());
-    std::vector<double> values(fields.size());
+    // Initialize fields and varlen
+    fields.push_back("socn"); varlens.push_back(nzo);
+    fields.push_back("tocn"); varlens.push_back(nzo);
+    fields.push_back("hocn");  varlens.push_back(1);
 
-    // Initialize variable lengths
-    for (int i=0; i< fields.size(); ++i) varlens[i] = 1;
+    int lenvalues;
+    lenvalues = std::accumulate(varlens.begin(), varlens.end(), 0);
+
+    std::vector<double> values(lenvalues);
 
     // Get variable values
-    sw_increment_getpoint_f90(keyInc_, iter.toFortran(), values[0]);
+    getpoint_f90(keyInc_, iter.toFortran(), values[0],);
 
-    return oops::GridPoint(oops::Variables(fields), values, varlens);
+    return oops::GridPoint(oops::Variables(fields), values, varlens, lenvalues, nzo);
+  
 */
   }
 
   // -----------------------------------------------------------------------------
   void Increment::setPoint(const oops::GridPoint & values,
                              const GeometryIterator & iter) {
-  //  const std::vector<double> vals = values.getVals();
-  //  sw_increment_setpoint_f90(keyInc_, iter.toFortran(), vals[0]);
+    /*
+    const std::vector<double> vals = values.getVals();
+    sw_increment_setpoint_f90(keyInc_, iter.toFortran(), vals[0]);
+    */
   }
 
   /// Interpolate to observation location

@@ -51,9 +51,12 @@ namespace soca {
   // -----------------------------------------------------------------------------
   GeometryIterator Geometry::end() const {
     // return end of the geometry on this mpi tile
-    int ist, iend, jst, jend;
-    soca_geo_start_end_f90(keyGeom_, ist, iend, jst, jend);
-    return GeometryIterator(*this, iend, jend);
+    // decided to return index out of bounds for the iterator loops to work
+
+    // int ist, iend, jst, jend;
+    // soca_geo_start_end_f90(keyGeom_, ist, iend, jst, jend);
+    // return GeometryIterator(*this, iend, jend+1);
+    return GeometryIterator(*this, -1, -1);
   }
   // -----------------------------------------------------------------------------
   void Geometry::print(std::ostream & os) const {

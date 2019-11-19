@@ -6,7 +6,7 @@ Geometry:
 
 Variables:
   #variables: [cicen, hicen, socn, tocn, ssh, hocn]
-  variables: [socn, tocn, ssh]
+  variables: [socn, tocn, hocn]
 
 TestDate: &date 2018-04-15T00:00:00Z
 

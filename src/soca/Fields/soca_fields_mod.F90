@@ -1288,6 +1288,42 @@ subroutine soca_write_restart(fld, f_conf, vdate)
 
 end subroutine soca_write_restart
 
+
+! ------------------------------------------------------------------------------
+
+!subroutine getpoint(self, geoiter, values, lenvalues, nzo)
+!
+!  type(soca_field),               intent(   in) :: self
+!  type(soca_geom_iter),           intent(   in) :: geoiter
+!  real(r8kind),                   intent(inout) :: values(lenvalues)
+!  integer                         intent(   in) :: nzo, lenvalues
+!
+!  call self%get_h_ptr(h)
+!
+!  values(1:nzo)       = self%socn(geoiter%ilon, geoiter%ilat,:)
+!  values(nzo+1:2*nzo) = self%tocn(geoiter%ilon, geoiter%ilat,:)
+!  values(2*nzo+1)     = self%hocn(geoiter%ilon, geoiter%ilat)
+!
+!end subroutine getpoint
+!
+!! ------------------------------------------------------------------------------
+!
+!subroutine setpoint(self, geoiter, values, lenvalues, nzo)
+!
+!  ! Passed variables
+!  type(shallow_water_state_type), intent(inout) :: self
+!  type(soca_geom_iter),           intent(   in) :: geoiter
+!  real(r8kind),                   intent(   in) :: values(lenvalues)
+!  integer                         intent(   in) :: nzo, lenvalues
+!
+!  ! Set values
+!  self%.socn(geoiter%ilon, geoiter%ilat,:) = values(1:nzo)
+!  self%.tocn(geoiter%ilon, geoiter%ilat,:) = values(nzo+1:2*nzo)
+!  self%.hocn(geoiter%ilon, geoiter%ilat) = values(2*nzo+1)
+!
+!end subroutine setpoint
+!
+
 ! ------------------------------------------------------------------------------
 
 end module soca_fields_mod
