@@ -86,22 +86,26 @@ for repo in $LIB_REPOS $MAIN_REPO; do
     prev_repo=$repo
 
     # if the repo cache is empty, the version mismatches that in the cache, or
-    # an upstream dependency needs to be rebuilt, download the repo and mark it to be built
+    # an upstream dependency needs to be rebuilt, mark the repo to be rebuilt
     vermatch=0
     verfile_cache=$REPO_CACHE/$repo/build.version
     [[ -e $verfile_cache ]] && diff -q $verfile $verfile_cache && vermatch=1
     [[ $rebuild == 0 && $vermatch == 0 ]] && rebuild=1
-    if [[ $rebuild == 1 ]]; then
-
-        # download the repo, using git-lfs only if the repo is listed in $LFS_REPOS
-        skip_lfs=1
-        for r in $LFS_REPOS; do [[ $r == $repo ]] && skip_lfs=0 ; done
-        [[ $skip_lfs == 0 ]] && echo "Using git-lfs"
-        repo_src_dir=repo.src/$repo
-        rm -rf $repo_src_dir
-        GIT_LFS_SKIP_SMUDGE=$skip_lfs git clone -b $repo_branch $repo_url $repo_src_dir
-    else
+    if [[ $rebuild == 0 ]]; then
         touch $repo_bundle_dir/skip_rebuild
         echo "Skipping rebuild"
     fi
+
+    # does the repo need LFS files downloaded?
+    skip_lfs=1
+    for r in $LFS_REPOS; do [[ $r == $repo ]] && skip_lfs=0 ; done
+    [[ $skip_lfs == 0 ]] && echo "Using git-lfs"
+
+    # if LFS files needed, OR rebuild required, download the repo
+    if [[ $rebuild == 1 || $skip_lfs == 0 ]]; then
+        repo_src_dir=repo.src/$repo
+        rm -rf $repo_src_dir
+        GIT_LFS_SKIP_SMUDGE=$skip_lfs git clone -b $repo_branch $repo_url $repo_src_dir
+    fi
+
 done
