@@ -332,11 +332,11 @@ soca_add_test( NAME enspert
 soca_add_test( NAME geometry
                SRC  TestGeometry.cc
                TEST_DEPENDS test_soca_gridgen )
-if( ${CRTM_FOUND} )
-  soca_add_test( NAME geometryatm
-                 SRC  TestGeometry.cc
-                 TEST_DEPENDS test_soca_gridgen )
-endif()
+
+soca_add_test( NAME geometryatm
+               SRC  TestGeometry.cc
+               TEST_DEPENDS test_soca_gridgen )
+
 
 soca_add_test( NAME state
                SRC  TestState.cc
