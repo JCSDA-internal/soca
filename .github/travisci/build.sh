@@ -45,7 +45,7 @@ for repo in $LIB_REPOS; do
 
     # run ecbuild
     build_opt_var=BUILD_OPT_${repo_upper}
-    build_opt=${!build_opt_var}
+    build_opt="$BUILD_OPT ${!build_opt_var}"
     time ecbuild $src_dir -DCMAKE_INSTALL_PREFIX=${install_dir} -DCMAKE_BUILD_TYPE=${LIB_BUILD_TYPE} \
             -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DENABLE_TESTS=OFF -DBUILD_TESTING=OFF $build_opt
 
