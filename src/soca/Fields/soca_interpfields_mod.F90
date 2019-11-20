@@ -9,6 +9,7 @@
 module soca_interpfields_mod
 
 use kinds, only: kind_real
+use fckit_log_module, only : fckit_log
 use fckit_mpi_module, only: fckit_mpi_comm, fckit_mpi_sum
 use variables_mod, only: oops_vars
 use ufo_geovals_mod, only: ufo_geovals
@@ -137,7 +138,7 @@ subroutine interp(fld, locs, vars, geoval, horiz_interp, traj)
   real(kind=kind_real), allocatable :: gom_window(:,:)
   real(kind=kind_real), allocatable :: fld3d(:,:,:)
   integer :: iii(3), bumpid=1111
-
+print *,"==================================== in"
   ! Sanity check
   call check(fld)
 
@@ -149,18 +150,19 @@ subroutine interp(fld, locs, vars, geoval, horiz_interp, traj)
   do ivar = 1, vars%nv
      ! Set number of levels/categories (nval)
      call nlev_from_ufovar(fld, vars, ivar, nval)
+     print *,'************* var *********** :',trim(vars%fldnames(ivar)), nval
+     if (nval==0) cycle
 
      ! Allocate GeoVaLs (fields at locations)
-     if (nval/=0) then
-        geoval%geovals(ivar)%nval = nval
-        if (.not.(allocated(geoval%geovals(ivar)%vals))) then
-           ! Number of obs in pe
-           nlocs = geoval%geovals(ivar)%nlocs
+     geoval%geovals(ivar)%nval = nval
+     if (.not.(allocated(geoval%geovals(ivar)%vals))) then
+        ! Number of obs in pe
+        nlocs = geoval%geovals(ivar)%nlocs
 
-           allocate(geoval%geovals(ivar)%vals(nval,nlocs))
-           geoval%linit = .true.
-        end if
+        allocate(geoval%geovals(ivar)%vals(nval,nlocs))
+        geoval%linit = .true.
      end if
+     print *,'************* nlocs *********** :',nlocs
 
      ! Allocate temporary geoval and 3d field for the current time window
      allocate(gom_window(nval,locs%nlocs))
@@ -187,8 +189,13 @@ subroutine interp(fld, locs, vars, geoval, horiz_interp, traj)
      case ("sea_water_cell_thickness")
         fld3d = fld%hocn(isc:iec,jsc:jec,1:nval)
 
-     case ("sea_surface_temperature","surface_temperature_where_sea")
+     case ("sea_surface_temperature")
         fld3d(isc:iec,jsc:jec,1) = fld%tocn(isc:iec,jsc:jec,1)
+
+     ! TODO: Move unit change elsewhere, check if surface_temperature_where_sea
+     ! is COARDS.
+     case ("surface_temperature_where_sea")
+        fld3d(isc:iec,jsc:jec,1) = fld%tocn(isc:iec,jsc:jec,1) + 273.15_kind_real
 
      case ("sea_surface_salinity")
         fld3d(isc:iec,jsc:jec,1) = fld%socn(isc:iec,jsc:jec,1)
@@ -215,7 +222,7 @@ subroutine interp(fld, locs, vars, geoval, horiz_interp, traj)
         fld3d(isc:iec,jsc:jec,1) = fld%ocnsfc%fric_vel(isc:iec,jsc:jec)
 
      case default
-        !call abor1_ftn("soca_interpfields_mod:interp geoval does not exist")
+        call fckit_log%debug("soca_interpfields_mod:interp geoval does not exist")
      end select
 
      ! Apply forward interpolation: Model ---> Obs
@@ -230,7 +237,7 @@ subroutine interp(fld, locs, vars, geoval, horiz_interp, traj)
      ! Deallocate temporary arrays
      deallocate(fld3d)
      deallocate(gom_window)
-
+print *,"==================================== out"
   end do
 
 end subroutine interp
@@ -378,7 +385,7 @@ subroutine nlev_from_ufovar(fld, vars, index_vars, nval)
 
   case default
      nval = 0
-     !call abor1_ftn("soca_interpfields_mod: Could not set nval")
+     call fckit_log%debug("soca_interpfields_mod:nlef_from_ufovar geoval does not exist")
 
   end select
 

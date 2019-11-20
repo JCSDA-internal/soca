@@ -84,16 +84,18 @@ namespace soca {
   void State::getValues(const ufo::Locations & locs,
                         const oops::Variables & vars,
                         ufo::GeoVaLs & cols) const {
+    std::cout << "77777777777777777777777777777777" << std::endl;
     if (fields_->geometry()->getAtmInit())
       {
+        // Get atm geovals
+        // The variables in vars that are also defined in soca will be
+        // over-written in the interpolation call bellow
         getValuesFromFile(locs, vars, cols);
-        std::cout << "before" << std::endl;
-        std::cout << cols << std::endl;
+        Log::trace() << cols << std::endl;
       }
-    // Get ocean geovals and over-write above geovals if necessary
+    // Get ocean geovals
     fields_->getValues(locs, vars, cols);
-    std::cout << "after:" << cols << std::endl;
-    std::cout << cols << std::endl;
+    Log::trace() << cols << std::endl;
   }
   // -----------------------------------------------------------------------------
   void State::getValues(const ufo::Locations & locs,
@@ -108,7 +110,6 @@ namespace soca {
   void State::getValuesFromFile(const ufo::Locations & locs,
                                 const oops::Variables & vars,
                                 ufo::GeoVaLs & atmgom) const {
-
     // Get Atm configuration
     eckit::LocalConfiguration conf(fields_->geometry()->getAtmConf());
 

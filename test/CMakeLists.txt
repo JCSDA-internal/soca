@@ -21,6 +21,7 @@ list( APPEND soca_test_input
   testinput/gridgen.yml
   testinput/hofx.yml
   testinput/hofx3d.yml
+  testinput/hofx3dcrtm.yml
   testinput/increment.yml
   testinput/linearmodel.yml
   testinput/marine2ioda.yml
@@ -59,6 +60,7 @@ list( APPEND soca_test_ref
   testref/forecast_mom6.test
   testref/hofx.test
   testref/hofx3d.test
+  testref/hofx3dcrtm.test
   testref/parameters_bump_cov_lct.test
 )
 
@@ -92,7 +94,18 @@ list( APPEND soca_obs
   Data/Obs/prof.nc
   Data/Obs/sss.nc
   Data/Obs/sst.nc
+  Data/Obs/gmi_gpm_geoval.nc
+  Data/Obs/gmi_gpm_obs.nc
 )
+
+list( APPEND crtm_coef
+  ${crtm_SOURCE_DIR}/fix/SpcCoeff/Little_Endian/gmi_gpm.SpcCoeff.bin
+  ${crtm_SOURCE_DIR}/fix/TauCoeff/ODPS/Little_Endian/gmi_gpm.TauCoeff.bin
+  ${crtm_SOURCE_DIR}/fix/CloudCoeff/Little_Endian/CloudCoeff.bin
+  ${crtm_SOURCE_DIR}/fix/AerosolCoeff/Little_Endian/AerosolCoeff.bin
+  ${crtm_SOURCE_DIR}/fix/EmisCoeff/MW_Water/Little_Endian/FASTEM6.MWwater.EmisCoeff.bin
+)
+
 
 # Create Data directory for test input/output and symlink all files
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/testinput)
@@ -129,13 +142,20 @@ ecbuild_add_resources( TARGET   soca_test_scripts
                        SOURCES_PACK
                        ${soca_test_input}
                        )
-
 # Link to SOCA obs
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/Data)
 foreach(FILENAME ${soca_obs})
      get_filename_component(filename ${FILENAME} NAME )
      execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
            ${CMAKE_CURRENT_SOURCE_DIR}/${FILENAME}
+           ${CMAKE_CURRENT_BINARY_DIR}/Data/${filename} )
+endforeach(FILENAME)
+
+# Link CRTM coeff
+foreach(FILENAME ${crtm_coef})
+     get_filename_component(filename ${FILENAME} NAME )
+     execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
+           ${FILENAME}
            ${CMAKE_CURRENT_BINARY_DIR}/Data/${filename} )
 endforeach(FILENAME)
 
@@ -434,6 +454,10 @@ soca_add_test( NAME dirac_horizfilt
 
 # h(x) executables
 soca_add_test( NAME hofx3d
+               EXE  soca_hofx3d.x
+               TEST_DEPENDS test_soca_gridgen )
+
+soca_add_test( NAME hofx3dcrtm
                EXE  soca_hofx3d.x
                TEST_DEPENDS test_soca_gridgen )
 
