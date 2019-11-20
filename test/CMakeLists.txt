@@ -17,6 +17,7 @@ list( APPEND soca_test_input
   testinput/forecast_identity_cice.yml
   testinput/forecast_mom6.yml
   testinput/geometry.yml
+  testinput/geometryatm.yml
   testinput/gridgen.yml
   testinput/hofx.yml
   testinput/hofx3d.yml
@@ -308,6 +309,10 @@ soca_add_test( NAME enspert
 # Tests of class interfaces
 #-------------------------------------------------------------------------------
 soca_add_test( NAME geometry
+               SRC  TestGeometry.cc
+               TEST_DEPENDS test_soca_gridgen )
+
+soca_add_test( NAME geometryatm
                SRC  TestGeometry.cc
                TEST_DEPENDS test_soca_gridgen )
 

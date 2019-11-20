@@ -151,13 +151,15 @@ subroutine interp(fld, locs, vars, geoval, horiz_interp, traj)
      call nlev_from_ufovar(fld, vars, ivar, nval)
 
      ! Allocate GeoVaLs (fields at locations)
-     geoval%geovals(ivar)%nval = nval
-     if (.not.(allocated(geoval%geovals(ivar)%vals))) then
-        ! Number of obs in pe
-        nlocs = geoval%geovals(ivar)%nlocs
+     if (nval/=0) then
+        geoval%geovals(ivar)%nval = nval
+        if (.not.(allocated(geoval%geovals(ivar)%vals))) then
+           ! Number of obs in pe
+           nlocs = geoval%geovals(ivar)%nlocs
 
-        allocate(geoval%geovals(ivar)%vals(nval,nlocs))
-        geoval%linit = .true.
+           allocate(geoval%geovals(ivar)%vals(nval,nlocs))
+           geoval%linit = .true.
+        end if
      end if
 
      ! Allocate temporary geoval and 3d field for the current time window
@@ -185,7 +187,7 @@ subroutine interp(fld, locs, vars, geoval, horiz_interp, traj)
      case ("sea_water_cell_thickness")
         fld3d = fld%hocn(isc:iec,jsc:jec,1:nval)
 
-     case ("sea_surface_temperature")
+     case ("sea_surface_temperature","surface_temperature_where_sea")
         fld3d(isc:iec,jsc:jec,1) = fld%tocn(isc:iec,jsc:jec,1)
 
      case ("sea_surface_salinity")
@@ -213,7 +215,7 @@ subroutine interp(fld, locs, vars, geoval, horiz_interp, traj)
         fld3d(isc:iec,jsc:jec,1) = fld%ocnsfc%fric_vel(isc:iec,jsc:jec)
 
      case default
-        call abor1_ftn("soca_interpfields_mod:interp geoval does not exist")
+        !call abor1_ftn("soca_interpfields_mod:interp geoval does not exist")
      end select
 
      ! Apply forward interpolation: Model ---> Obs
@@ -357,6 +359,7 @@ subroutine nlev_from_ufovar(fld, vars, index_vars, nval)
 
   case ("sea_surface_height_above_geoid", &
         "sea_surface_temperature", &
+        "surface_temperature_where_sea", &
         "sea_surface_salinity", &
         "sea_floor_depth_below_sea_surface", &
         "sea_area_fraction", &
@@ -374,7 +377,8 @@ subroutine nlev_from_ufovar(fld, vars, index_vars, nval)
      nval = fld%geom%nzo
 
   case default
-     call abor1_ftn("soca_interpfields_mod: Could not set nval")
+     nval = 0
+     !call abor1_ftn("soca_interpfields_mod: Could not set nval")
 
   end select
 

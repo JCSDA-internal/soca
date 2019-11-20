@@ -84,7 +84,16 @@ namespace soca {
   void State::getValues(const ufo::Locations & locs,
                         const oops::Variables & vars,
                         ufo::GeoVaLs & cols) const {
+    if (fields_->geometry()->getAtmInit())
+      {
+        getValuesFromFile(locs, vars, cols);
+        std::cout << "before" << std::endl;
+        std::cout << cols << std::endl;
+      }
+    // Get ocean geovals and over-write above geovals if necessary
     fields_->getValues(locs, vars, cols);
+    std::cout << "after:" << cols << std::endl;
+    std::cout << cols << std::endl;
   }
   // -----------------------------------------------------------------------------
   void State::getValues(const ufo::Locations & locs,
@@ -93,6 +102,30 @@ namespace soca {
                         GetValuesTraj & traj) const {
     fields_->getValues(locs, vars, cols, traj);
   }
+  // -----------------------------------------------------------------------------
+  /// Read Interpolated GeoVaLs from file
+  // -----------------------------------------------------------------------------
+  void State::getValuesFromFile(const ufo::Locations & locs,
+                                const oops::Variables & vars,
+                                ufo::GeoVaLs & atmgom) const {
+
+    // Get Atm configuration
+    eckit::LocalConfiguration conf(fields_->geometry()->getAtmConf());
+
+    // Get Time Bounds
+    util::DateTime bgn = util::DateTime(conf.getString("notocean.date_begin"));
+    util::DateTime end = util::DateTime(conf.getString("notocean.date_end"));
+
+    // Create the Atmospheric Geometry in Observation Space
+    eckit::LocalConfiguration confatmobs(conf, "notocean.ObsSpace");
+    ioda::ObsSpace atmobs(confatmobs, fields_->geometry()->getComm(),
+                                bgn, end);
+
+    // Get GeoVaLs from file
+    eckit::LocalConfiguration confatm(conf, "notocean");
+    atmgom.read(confatm, atmobs);
+  }
+
   // -----------------------------------------------------------------------------
   /// Interactions with Increments
   // -----------------------------------------------------------------------------

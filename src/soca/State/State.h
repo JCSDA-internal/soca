@@ -67,6 +67,10 @@ namespace soca {
                      ufo::GeoVaLs &,
                      GetValuesTraj &) const;
 
+      void getValuesFromFile(const ufo::Locations &,
+                                     const oops::Variables &,
+                                     ufo::GeoVaLs &) const;
+
       /// Interpolate full fields
       ///  void changeResolution(const State & xx);
 
