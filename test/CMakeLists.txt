@@ -98,15 +98,6 @@ list( APPEND soca_obs
   Data/Obs/gmi_gpm_obs.nc
 )
 
-list( APPEND crtm_coef
-  ${crtm_SOURCE_DIR}/fix/SpcCoeff/Little_Endian/gmi_gpm.SpcCoeff.bin
-  ${crtm_SOURCE_DIR}/fix/TauCoeff/ODPS/Little_Endian/gmi_gpm.TauCoeff.bin
-  ${crtm_SOURCE_DIR}/fix/CloudCoeff/Little_Endian/CloudCoeff.bin
-  ${crtm_SOURCE_DIR}/fix/AerosolCoeff/Little_Endian/AerosolCoeff.bin
-  ${crtm_SOURCE_DIR}/fix/EmisCoeff/MW_Water/Little_Endian/FASTEM6.MWwater.EmisCoeff.bin
-)
-
-
 # Create Data directory for test input/output and symlink all files
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/testinput)
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/testoutput)
@@ -151,13 +142,23 @@ foreach(FILENAME ${soca_obs})
            ${CMAKE_CURRENT_BINARY_DIR}/Data/${filename} )
 endforeach(FILENAME)
 
-# Link CRTM coeff
-foreach(FILENAME ${crtm_coef})
-     get_filename_component(filename ${FILENAME} NAME )
-     execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
-           ${FILENAME}
-           ${CMAKE_CURRENT_BINARY_DIR}/Data/${filename} )
-endforeach(FILENAME)
+if( ${CRTM_FOUND} )
+  list( APPEND crtm_coef
+    ${crtm_SOURCE_DIR}/fix/SpcCoeff/Little_Endian/gmi_gpm.SpcCoeff.bin
+    ${crtm_SOURCE_DIR}/fix/TauCoeff/ODPS/Little_Endian/gmi_gpm.TauCoeff.bin
+    ${crtm_SOURCE_DIR}/fix/CloudCoeff/Little_Endian/CloudCoeff.bin
+    ${crtm_SOURCE_DIR}/fix/AerosolCoeff/Little_Endian/AerosolCoeff.bin
+    ${crtm_SOURCE_DIR}/fix/EmisCoeff/MW_Water/Little_Endian/FASTEM6.MWwater.EmisCoeff.bin
+  )
+
+  # Link CRTM coeff
+  foreach(FILENAME ${crtm_coef})
+       get_filename_component(filename ${FILENAME} NAME )
+       execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
+             ${FILENAME}
+             ${CMAKE_CURRENT_BINARY_DIR}/Data/${filename} )
+  endforeach(FILENAME)
+endif()
 
 # Create directory for BUMP output
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bump)
@@ -331,10 +332,11 @@ soca_add_test( NAME enspert
 soca_add_test( NAME geometry
                SRC  TestGeometry.cc
                TEST_DEPENDS test_soca_gridgen )
-
-soca_add_test( NAME geometryatm
-               SRC  TestGeometry.cc
-               TEST_DEPENDS test_soca_gridgen )
+if( ${CRTM_FOUND} )
+  soca_add_test( NAME geometryatm
+                 SRC  TestGeometry.cc
+                 TEST_DEPENDS test_soca_gridgen )
+endif()
 
 soca_add_test( NAME state
                SRC  TestState.cc
@@ -457,9 +459,11 @@ soca_add_test( NAME hofx3d
                EXE  soca_hofx3d.x
                TEST_DEPENDS test_soca_gridgen )
 
-soca_add_test( NAME hofx3dcrtm
-               EXE  soca_hofx3d.x
-               TEST_DEPENDS test_soca_gridgen )
+if( ${CRTM_FOUND} )
+ soca_add_test( NAME hofx3dcrtm
+                EXE  soca_hofx3d.x
+                TEST_DEPENDS test_soca_gridgen )
+endif()
 
 soca_add_test( NAME hofx
                EXE  soca_hofx.x
