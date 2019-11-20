@@ -20,10 +20,10 @@ env:
     - BUNDLE_URL="https://github.com/JCSDA/soca-bundle.git"
     - MAIN_REPO=soca
     - LIB_REPOS="fms cvmix geokdtree mom6_da_hooks gsw mom6
-                 fckit saber oops ioda ufo ioda-converters soca-config"
+                 fckit saber oops ioda ufo ioda-converters soca-config crtm"
     - BUILD_OPT_OOPS="-DENABLE_OOPS_TOYMODELS=OFF"
     - BUILD_OPT_SOCA="-DSOCA_TESTS_FORC_DEFAULT_TOL=ON"
-    - MATCH_REPOS="saber oops ioda ioda-converters ufo soca soca-config"
+    - MATCH_REPOS="saber oops ioda ioda-converters ufo soca soca-config crtm"
     - LFS_REPOS=""
 
     # secure token used to push changes to GitHub (user: travissluka)
