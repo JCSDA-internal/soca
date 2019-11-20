@@ -19,12 +19,14 @@ env:
   global:
     - BUNDLE_URL="https://github.com/JCSDA/soca-bundle.git"
     - MAIN_REPO=soca
-    - LIB_REPOS="fms cvmix geokdtree mom6_da_hooks gsw mom6
+    - LIB_REPOS="fms cvmix geokdtree mom6_da_hooks gsw mom6 crtm
                  fckit saber oops ioda ufo ioda-converters soca-config"
+    - BUILD_OPT=""
+    - BUILD_OPT_CRTM="-DBUILD_CRTM=ON"
     - BUILD_OPT_OOPS="-DENABLE_OOPS_TOYMODELS=OFF"
     - BUILD_OPT_SOCA="-DSOCA_TESTS_FORC_DEFAULT_TOL=ON"
     - MATCH_REPOS="saber oops ioda ioda-converters ufo soca soca-config"
-    - LFS_REPOS=""
+    - LFS_REPOS="crtm"
 
     # secure token used to push changes to GitHub (user: travissluka)
     - secure: phYDV8BnMVQMhKbuyfpA0cUvelL3Jn9GrMunbAQAa4Hw6OInALu0BSoPAm5xd+lPAsVkhy3BwHlRvjqGYmhDr3NFuxUbZ/l1CcSOJZmV5Rp+5CY5nk0scQ9asuRSzt6jHBIaj9ncOyTWc7B3H6Vp88z6dBDgzeXWMaLy5A7u3fkTVI3dYAmvPAEd9wRp4nI6ij2lnTELIziTYZ07nrdIzYfAc6sqvPXhLkZfxYMkfDAbHHWZt+kGoJGPFfsjX1K7cgj32Ro+lm3Vl0u732QRCw3nUefhZrz3PkkGeX1U+GjQsz8liEgBqKng4ZxocepPsv5gwZj/frMCCtcXj59Pia5pmHy6vzdq4XCp/WpYwbbMEF9y9qVL35s9On9JnU20DEOV4r5c9rmJd8gbpsfK1reT8KOD5zJe9YBHRRXajweq23TFJPRyHVHlnSF8OtybOVG6OMLba9vvPTveQuaDIyc3kur5QtbM0HVv3uplef14m1frQYqji9I99h/pI5WcueRpcxARwagL1tnl3cfK4LyI3QWXidetDduE3MJQNfsKADlKKBVw9W2JyzNFCNj0J7x8r5SwObRX7Kj9YZfIPJGVt5rDc0OZm9wCt/BEZclTLyf4qbFibX/0glPiFoqhuYP/ZXAbQdYWI+si68gxcql33+PMkmbuhehA8qNZicE=
@@ -65,7 +67,7 @@ before_install:
     export BRANCH=$( [[ "$TRAVIS_PULL_REQUEST" == "false" ]] && \
                      echo $TRAVIS_BRANCH || echo $TRAVIS_PULL_REQUEST_BRANCH )
     export_vars="-e REPO_CACHE=/repo.cache -e LIB_REPOS -e LIB_BUILD_TYPE
-                 -e MAIN_REPO -e MAIN_BUILD_TYPE -e CCACHE_DIR=/ccache"
+                 -e MAIN_REPO -e MAIN_BUILD_TYPE -e CCACHE_DIR=/ccache -e BUILD_OPT"
     for v in $(env | grep BUILD_OPT_ | cut -d'=' -f 1); do
       export_vars="$export_vars -e $v"
     done
