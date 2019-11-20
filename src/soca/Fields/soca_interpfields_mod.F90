@@ -138,7 +138,7 @@ subroutine interp(fld, locs, vars, geoval, horiz_interp, traj)
   real(kind=kind_real), allocatable :: gom_window(:,:)
   real(kind=kind_real), allocatable :: fld3d(:,:,:)
   integer :: iii(3), bumpid=1111
-print *,"==================================== in"
+
   ! Sanity check
   call check(fld)
 
@@ -150,7 +150,6 @@ print *,"==================================== in"
   do ivar = 1, vars%nv
      ! Set number of levels/categories (nval)
      call nlev_from_ufovar(fld, vars, ivar, nval)
-     print *,'************* var *********** :',trim(vars%fldnames(ivar)), nval
      if (nval==0) cycle
 
      ! Allocate GeoVaLs (fields at locations)
@@ -162,7 +161,6 @@ print *,"==================================== in"
         allocate(geoval%geovals(ivar)%vals(nval,nlocs))
         geoval%linit = .true.
      end if
-     print *,'************* nlocs *********** :',nlocs
 
      ! Allocate temporary geoval and 3d field for the current time window
      allocate(gom_window(nval,locs%nlocs))
@@ -237,7 +235,7 @@ print *,"==================================== in"
      ! Deallocate temporary arrays
      deallocate(fld3d)
      deallocate(gom_window)
-print *,"==================================== out"
+
   end do
 
 end subroutine interp

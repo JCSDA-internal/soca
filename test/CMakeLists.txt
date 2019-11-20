@@ -463,6 +463,7 @@ soca_add_test( NAME hofx3dcrtm
 
 soca_add_test( NAME hofx
                EXE  soca_hofx.x
+               NOTRAPFPE
                TEST_DEPENDS test_soca_gridgen )
 
 # TODO enshofx currently breaks compare.py

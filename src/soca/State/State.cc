@@ -84,7 +84,6 @@ namespace soca {
   void State::getValues(const ufo::Locations & locs,
                         const oops::Variables & vars,
                         ufo::GeoVaLs & cols) const {
-    std::cout << "77777777777777777777777777777777" << std::endl;
     if (fields_->geometry()->getAtmInit())
       {
         // Get atm geovals
@@ -92,7 +91,7 @@ namespace soca {
         // over-written in the interpolation call bellow
         getValuesFromFile(locs, vars, cols);
         Log::trace() << cols << std::endl;
-      }
+        }
     // Get ocean geovals
     fields_->getValues(locs, vars, cols);
     Log::trace() << cols << std::endl;
