@@ -247,7 +247,6 @@ subroutine getvalues_ad(incr, locs, vars, geoval, traj)
   integer :: isc, iec, jsc, jec
   real(kind=kind_real), allocatable :: gom_window(:,:)
   real(kind=kind_real), allocatable :: incr3d(:,:,:)
-  real(kind=kind_real), allocatable :: incr2d(:,:)
   real(kind=kind_real), allocatable :: gom_window_ival(:)
 
   horiz_interp_p => traj%horiz_interp(1)
@@ -256,7 +255,6 @@ subroutine getvalues_ad(incr, locs, vars, geoval, traj)
   isc = incr%geom%isc ; iec = incr%geom%iec
   jsc = incr%geom%jsc ; jec = incr%geom%jec
 
-  allocate(incr2d(isc:iec,jsc:jec))
   allocate(gom_window_ival(locs%nlocs))
 
   do ivar = 1, vars%nv
@@ -274,10 +272,8 @@ subroutine getvalues_ad(incr, locs, vars, geoval, traj)
         do indx = 1, locs%nlocs
            gom_window(ival, indx) = geoval%geovals(ivar)%vals(ival, locs%indx(indx))
         end do
-        incr2d = 0.0_kind_real
         gom_window_ival = gom_window(ival,1:locs%nlocs)
-        call horiz_interp_p%applyad(incr2d, gom_window_ival)
-        incr3d(:,:,ival) = incr2d
+        call horiz_interp_p%applyad(incr3d(:,:,ival), gom_window_ival)
      end do
 
      ! Copy incr3d into field
@@ -346,7 +342,6 @@ subroutine getvalues_ad(incr, locs, vars, geoval, traj)
 
   end do
 
-  deallocate(incr2d)
   deallocate(gom_window_ival)
 
 end subroutine getvalues_ad
