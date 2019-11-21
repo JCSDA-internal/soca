@@ -1,0 +1,38 @@
+Geometry:
+  num_ice_cat: 5
+  num_ice_lev: 4
+  num_sno_lev: 1
+  read_soca_grid: grid
+  atm_state:
+    init: true
+    date_begin: 2018-04-14T00:00:00Z
+    date_end: 2018-04-16T00:00:00Z
+    variables: &atm_vars [air_temperature,
+                humidity_mixing_ratio,
+                air_pressure,
+                air_pressure_levels,
+                effective_radius_of_cloud_liquid_water_particle,
+                effective_radius_of_cloud_ice_particle,
+                mass_content_of_cloud_ice_in_atmosphere_layer,
+                mass_content_of_cloud_liquid_water_in_atmosphere_layer,
+                mole_fraction_of_carbon_dioxide_in_air,
+                mole_fraction_of_ozone_in_air,
+                surface_wind_from_direction,
+                soil_type,
+                leaf_area_index,
+                vegetation_type_index,
+                surface_wind_speed,
+                surface_snow_thickness,
+                vegetation_area_fraction,
+                land_type_index,
+                volume_fraction_of_condensed_water_in_soil,
+                soil_temperature,
+                surface_temperature_where_snow,
+                surface_temperature_where_ice,
+                surface_temperature_where_land,
+                surface_snow_area_fraction,
+                ice_area_fraction,
+                land_area_fraction,
+                water_area_fraction,
+                surface_temperature_where_sea ]
+    filename: gmi_gpm_geoval_2018041500_m.nc4

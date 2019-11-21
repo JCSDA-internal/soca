@@ -9,6 +9,7 @@
 module soca_interpfields_mod
 
 use kinds, only: kind_real
+use fckit_log_module, only : fckit_log
 use fckit_mpi_module, only: fckit_mpi_comm, fckit_mpi_sum
 use variables_mod, only: oops_vars
 use ufo_geovals_mod, only: ufo_geovals
@@ -149,6 +150,7 @@ subroutine interp(fld, locs, vars, geoval, horiz_interp, traj)
   do ivar = 1, vars%nv
      ! Set number of levels/categories (nval)
      call nlev_from_ufovar(fld, vars, ivar, nval)
+     if (nval==0) cycle
 
      ! Allocate GeoVaLs (fields at locations)
      geoval%geovals(ivar)%nval = nval
@@ -188,6 +190,11 @@ subroutine interp(fld, locs, vars, geoval, horiz_interp, traj)
      case ("sea_surface_temperature")
         fld3d(isc:iec,jsc:jec,1) = fld%tocn(isc:iec,jsc:jec,1)
 
+     ! TODO: Move unit change elsewhere, check if surface_temperature_where_sea
+     ! is COARDS.
+     case ("surface_temperature_where_sea")
+        fld3d(isc:iec,jsc:jec,1) = fld%tocn(isc:iec,jsc:jec,1) + 273.15_kind_real
+
      case ("sea_surface_salinity")
         fld3d(isc:iec,jsc:jec,1) = fld%socn(isc:iec,jsc:jec,1)
 
@@ -213,7 +220,7 @@ subroutine interp(fld, locs, vars, geoval, horiz_interp, traj)
         fld3d(isc:iec,jsc:jec,1) = fld%ocnsfc%fric_vel(isc:iec,jsc:jec)
 
      case default
-        call abor1_ftn("soca_interpfields_mod:interp geoval does not exist")
+        call fckit_log%debug("soca_interpfields_mod:interp geoval does not exist")
      end select
 
      ! Apply forward interpolation: Model ---> Obs
@@ -357,6 +364,7 @@ subroutine nlev_from_ufovar(fld, vars, index_vars, nval)
 
   case ("sea_surface_height_above_geoid", &
         "sea_surface_temperature", &
+        "surface_temperature_where_sea", &
         "sea_surface_salinity", &
         "sea_floor_depth_below_sea_surface", &
         "sea_area_fraction", &
@@ -374,7 +382,8 @@ subroutine nlev_from_ufovar(fld, vars, index_vars, nval)
      nval = fld%geom%nzo
 
   case default
-     call abor1_ftn("soca_interpfields_mod: Could not set nval")
+     nval = 0
+     call fckit_log%debug("soca_interpfields_mod:nlef_from_ufovar geoval does not exist")
 
   end select
 

@@ -84,6 +84,14 @@ namespace soca {
   void State::getValues(const ufo::Locations & locs,
                         const oops::Variables & vars,
                         ufo::GeoVaLs & cols) const {
+    if (fields_->geometry()->getAtmInit())
+      {
+        // Get atm geovals
+        // The variables in vars that are also defined in soca will be
+        // over-written in the interpolation call bellow
+        getValuesFromFile(locs, vars, cols);
+        }
+    // Get ocean geovals
     fields_->getValues(locs, vars, cols);
   }
   // -----------------------------------------------------------------------------
@@ -93,6 +101,29 @@ namespace soca {
                         GetValuesTraj & traj) const {
     fields_->getValues(locs, vars, cols, traj);
   }
+  // -----------------------------------------------------------------------------
+  /// Read Interpolated GeoVaLs from file
+  // -----------------------------------------------------------------------------
+  void State::getValuesFromFile(const ufo::Locations & locs,
+                                const oops::Variables & vars,
+                                ufo::GeoVaLs & atmgom) const {
+    // Get Atm configuration
+    eckit::LocalConfiguration conf(fields_->geometry()->getAtmConf());
+
+    // Get Time Bounds
+    util::DateTime bgn = util::DateTime(conf.getString("notocean.date_begin"));
+    util::DateTime end = util::DateTime(conf.getString("notocean.date_end"));
+
+    // Create the Atmospheric Geometry in Observation Space
+    eckit::LocalConfiguration confatmobs(conf, "notocean.ObsSpace");
+    ioda::ObsSpace atmobs(confatmobs, fields_->geometry()->getComm(),
+                                bgn, end);
+
+    // Get GeoVaLs from file
+    eckit::LocalConfiguration confatm(conf, "notocean");
+    atmgom.read(confatm, atmobs);
+  }
+
   // -----------------------------------------------------------------------------
   /// Interactions with Increments
   // -----------------------------------------------------------------------------

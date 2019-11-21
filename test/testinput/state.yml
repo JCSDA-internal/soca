@@ -13,7 +13,6 @@ StateTest:
     ice_filename: ice_model.res.nc
     sfc_filename: sfc.res.nc
     variables: &soca_vars [cicen, hicen, socn, tocn, ssh, hocn, sw, lhf, shf, lw, us]
-      
     remap_filename: ./INPUT/MOM.res.nc
   norm-file: 9898.1892609204206
   date: *date

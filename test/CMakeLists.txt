@@ -17,9 +17,11 @@ list( APPEND soca_test_input
   testinput/forecast_identity_cice.yml
   testinput/forecast_mom6.yml
   testinput/geometry.yml
+  testinput/geometryatm.yml
   testinput/gridgen.yml
   testinput/hofx.yml
   testinput/hofx3d.yml
+  testinput/hofx3dcrtm.yml
   testinput/increment.yml
   testinput/linearmodel.yml
   testinput/marine2ioda.yml
@@ -58,6 +60,7 @@ list( APPEND soca_test_ref
   testref/forecast_mom6.test
   testref/hofx.test
   testref/hofx3d.test
+  testref/hofx3dcrtm.test
   testref/parameters_bump_cov_lct.test
 )
 
@@ -91,6 +94,8 @@ list( APPEND soca_obs
   Data/Obs/prof.nc
   Data/Obs/sss.nc
   Data/Obs/sst.nc
+  Data/Obs/gmi_gpm_geoval.nc
+  Data/Obs/gmi_gpm_obs.nc
 )
 
 # Create Data directory for test input/output and symlink all files
@@ -128,7 +133,6 @@ ecbuild_add_resources( TARGET   soca_test_scripts
                        SOURCES_PACK
                        ${soca_test_input}
                        )
-
 # Link to SOCA obs
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/Data)
 foreach(FILENAME ${soca_obs})
@@ -137,6 +141,40 @@ foreach(FILENAME ${soca_obs})
            ${CMAKE_CURRENT_SOURCE_DIR}/${FILENAME}
            ${CMAKE_CURRENT_BINARY_DIR}/Data/${filename} )
 endforeach(FILENAME)
+
+
+# Link CRTM coeff
+if( ${CRTM_FOUND} )
+
+  # determine where to look for coefficients
+  set( CRTM_FIX_DIR_DOCSTRING
+      "Path to the CRTM fix directory, needs to be set if CRTM was not built as part of this bundle.")
+  set( CRTM_FIX_DIR NOTFOUND CACHE PATH ${CRTM_FIX_DIR_DOCSTRING})
+  if( NOT CRTM_FIX_DIR AND EXISTS ${crtm_SOURCE_DIR}/fix)
+    set( CRTM_FIX_DIR ${crtm_SOURCE_DIR}/fix CACHE PATH ${CRTM_FIX_DIR_DOCSTRING} FORCE)
+  elseif( NOT CRTM_FIX_DIR )
+    message(FATAL_ERROR
+      "CRTM was not built as part of the bundle, CRTM_FIX_DIR must be set")
+  endif()
+
+  # the coefficient files needed
+  list( APPEND crtm_coef
+    SpcCoeff/Little_Endian/gmi_gpm.SpcCoeff.bin
+    TauCoeff/ODPS/Little_Endian/gmi_gpm.TauCoeff.bin
+    CloudCoeff/Little_Endian/CloudCoeff.bin
+    AerosolCoeff/Little_Endian/AerosolCoeff.bin
+    EmisCoeff/MW_Water/Little_Endian/FASTEM6.MWwater.EmisCoeff.bin
+  )
+
+  # link the files
+  foreach(FILENAME ${crtm_coef})
+       get_filename_component(filename ${FILENAME} NAME )
+       execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
+             ${CRTM_FIX_DIR}/${FILENAME}
+             ${CMAKE_CURRENT_BINARY_DIR}/Data/${filename} )
+  endforeach(FILENAME)
+endif()
+
 
 # Create directory for BUMP output
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bump)
@@ -311,6 +349,11 @@ soca_add_test( NAME geometry
                SRC  TestGeometry.cc
                TEST_DEPENDS test_soca_gridgen )
 
+soca_add_test( NAME geometryatm
+               SRC  TestGeometry.cc
+               TEST_DEPENDS test_soca_gridgen )
+
+
 soca_add_test( NAME state
                SRC  TestState.cc
                TEST_DEPENDS test_soca_gridgen )
@@ -432,8 +475,15 @@ soca_add_test( NAME hofx3d
                EXE  soca_hofx3d.x
                TEST_DEPENDS test_soca_gridgen )
 
+if( ${CRTM_FOUND} )
+ soca_add_test( NAME hofx3dcrtm
+                EXE  soca_hofx3d.x
+                TEST_DEPENDS test_soca_gridgen )
+endif()
+
 soca_add_test( NAME hofx
                EXE  soca_hofx.x
+               NOTRAPFPE
                TEST_DEPENDS test_soca_gridgen )
 
 # TODO enshofx currently breaks compare.py

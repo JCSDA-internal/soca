@@ -50,7 +50,7 @@ namespace soca {
 
       /// Constructor, destructor
       State(const Geometry &, const oops::Variables &,
-            const util::DateTime &);  // Is it used?
+            const util::DateTime &);
       State(const Geometry &, const oops::Variables &,
             const eckit::Configuration &);
       State(const Geometry &, const State &);
@@ -66,6 +66,11 @@ namespace soca {
                      const oops::Variables &,
                      ufo::GeoVaLs &,
                      GetValuesTraj &) const;
+
+      /// Read interpolated GeoVaLs at observation location
+      void getValuesFromFile(const ufo::Locations &,
+                             const oops::Variables &,
+                             ufo::GeoVaLs &) const;
 
       /// Interpolate full fields
       ///  void changeResolution(const State & xx);
