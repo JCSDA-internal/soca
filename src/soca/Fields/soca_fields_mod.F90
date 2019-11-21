@@ -598,6 +598,7 @@ subroutine read_file(fld, f_conf, vdate)
   integer :: i, j, nz
   type(remapping_CS)  :: remapCS
   character(len=:), allocatable :: str
+  real(kind=kind_real), allocatable :: h_common_ij(:), hocn_ij(:), tsocn_ij(:), tsocn2_ij(:)
 
   if ( f_conf%has("read_from_file") ) &
       call f_conf%get_or_die("read_from_file", iread)
@@ -688,14 +689,23 @@ subroutine read_file(fld, f_conf, vdate)
 
      ! Remap layers if needed
      if (vert_remap) then
+        allocate(h_common_ij(nz), hocn_ij(nz), tsocn_ij(nz), tsocn2_ij(nz))
         call initialize_remapping(remapCS,'PCM')
         do i = isc, iec
            do j = jsc, jec
               if (fld%geom%mask2d(i,j).eq.1) then
-                 call remapping_core_h(remapCS, nz, h_common(i,j,:), fld%tocn(i,j,:),&
-                      &nz, fld%hocn(i,j,:), fld%tocn(i,j,:))
-                 call remapping_core_h(remapCS, nz, h_common(i,j,:), fld%socn(i,j,:),&
-                      &nz, fld%hocn(i,j,:), fld%socn(i,j,:))
+                 h_common_ij = h_common(i,j,:)
+                 hocn_ij = fld%hocn(i,j,:)
+
+                 tsocn_ij = fld%tocn(i,j,:)
+                 call remapping_core_h(remapCS, nz, h_common_ij, tsocn_ij,&
+                      &nz, hocn_ij, tsocn2_ij)
+                 fld%tocn(i,j,:) = tsocn2_ij
+
+                 tsocn_ij = fld%socn(i,j,:)
+                 call remapping_core_h(remapCS, nz, h_common_ij, tsocn_ij,&
+                      &nz, hocn_ij, tsocn2_ij)
+                 fld%socn(i,j,:) = tsocn2_ij
 
               else
                  fld%tocn(i,j,:) = 0.0_kind_real
@@ -704,6 +714,7 @@ subroutine read_file(fld, f_conf, vdate)
            end do
         end do
         fld%hocn = h_common
+        deallocate(h_common_ij, hocn_ij, tsocn_ij, tsocn2_ij)
      end if
      call end_remapping(remapCS)
 
