@@ -81,7 +81,6 @@ link_libraries(${MPI_CXX_LIBRARIES} ${MPI_Fortran_LIBRARIES})
 
 # crtm
 ecbuild_use_package( PROJECT crtm VERSION 2.2.3 )
-include_directories( ${CRTM_INCLUDE_DIRS} )
 
 ################################################################################
 # Definitions
