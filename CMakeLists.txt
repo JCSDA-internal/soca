@@ -66,10 +66,6 @@ include_directories( ${IODA_INCLUDE_DIRS} )
 ecbuild_use_package( PROJECT ufo VERSION 0.1.0 REQUIRED )
 include_directories( ${UFO_INCLUDE_DIRS} )
 
-# ufo
-ecbuild_use_package( PROJECT ufo VERSION 0.1.0 REQUIRED )
-include_directories( ${UFO_INCLUDE_DIRS} )
-
 # fms
 ecbuild_use_package( PROJECT fms REQUIRED )
 include_directories( ${FMS_INCLUDE_DIRS} )
