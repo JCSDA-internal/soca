@@ -193,8 +193,7 @@ subroutine soca_balance_multad(self, dxa, dxm)
   type(soca_field),          intent(in) :: dxm
   type(soca_field),       intent(inout) :: dxa
 
-  real(kind=kind_real) :: dxc
-  integer :: i, j, k
+  integer :: i, j
 
   do i = self%isc, self%iec
      do j = self%jsc, self%jec
@@ -229,7 +228,7 @@ subroutine soca_balance_multinv(self, dxa, dxm)
   type(soca_field),          intent(in) :: dxm
   type(soca_field),       intent(inout) :: dxa
 
-  real(kind=kind_real) :: dxc, deta
+  real(kind=kind_real) :: deta
   integer :: i, j, k
 
   do i = self%isc, self%iec
@@ -268,8 +267,7 @@ subroutine soca_balance_multinvad(self, dxa, dxm)
   type(soca_field),       intent(inout) :: dxm
   type(soca_field),          intent(in) :: dxa
 
-  real(kind=kind_real) :: dxc
-  integer :: i, j, k
+  integer :: i, j
 
   do i = self%isc, self%iec
      do j = self%jsc, self%jec

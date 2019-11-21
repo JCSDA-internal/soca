@@ -39,7 +39,6 @@ subroutine initialize_interph(fld, locs, horiz_interp, bumpid)
   type(soca_bumpinterp2d), intent(out) :: horiz_interp
   integer,                  intent(in) :: bumpid
 
-  integer :: nobs
   integer :: isc, iec, jsc, jec
 
   ! Indices for compute domain (no halo)
@@ -50,7 +49,6 @@ subroutine initialize_interph(fld, locs, horiz_interp, bumpid)
   call horiz_interp%initialize(&
           &      fld%geom%lon(isc:iec,jsc:jec),&
           &      fld%geom%lat(isc:iec,jsc:jec),&
-          &      fld%geom%mask2d(isc:iec,jsc:jec),&
           &      locs%lon, locs%lat, bumpid)
 
 end subroutine initialize_interph
@@ -68,7 +66,6 @@ subroutine getvalues_traj(fld, locs, vars, geoval, traj, interp_type)
   integer, save :: bumpid = 1000
   type(fckit_mpi_comm) :: f_comm
   integer :: allpes_nlocs, nlocs
-  integer :: isc, iec, jsc, jec
 
   ! Sanity check for fields
   call check(fld)
@@ -85,8 +82,6 @@ subroutine getvalues_traj(fld, locs, vars, geoval, traj, interp_type)
      traj%bumpid = bumpid
      traj%nobs = locs%nlocs
      call initialize_interph(fld, locs, traj%horiz_interp(1), traj%bumpid)
-     !call traj%horiz_interp(1)%info()
-
      traj%interph_initialized = .true.
      bumpid = bumpid + 1
   end if
@@ -94,7 +89,8 @@ subroutine getvalues_traj(fld, locs, vars, geoval, traj, interp_type)
   select case (interp_type)
   case('tl')
      ! Apply interpolation with TL transform
-     call interp(fld, locs, vars, geoval, traj%horiz_interp(1), traj)
+     ! TODO: pass in "traj" and do something with it, at some point?
+     call interp(fld, locs, vars, geoval, traj%horiz_interp(1))
   case('nl')
      ! Apply interpolation with NL transform
      call interp(fld, locs, vars, geoval, traj%horiz_interp(1))
@@ -123,21 +119,18 @@ end subroutine getvalues_notraj
 
 ! ------------------------------------------------------------------------------
 !> Interace to bump forward interpolation (NL and TL)
-subroutine interp(fld, locs, vars, geoval, horiz_interp, traj)
+subroutine interp(fld, locs, vars, geoval, horiz_interp)
   type(soca_field),             intent(inout) :: fld
   type(ufo_locs),                  intent(in) :: locs
   type(oops_vars),                 intent(in) :: vars
   type(ufo_geovals),            intent(inout) :: geoval
   type(soca_bumpinterp2d),      intent(inout) :: horiz_interp
-  type(soca_getvaltraj), optional, intent(in) :: traj  !< If present => TL case
 
-  integer :: icat, ilev, ivar, nlocs, nlocs_window
+  integer :: ivar, nlocs
   integer :: ival, nval, indx
-  character(len=160) :: record
   integer :: isc, iec, jsc, jec
   real(kind=kind_real), allocatable :: gom_window(:,:)
   real(kind=kind_real), allocatable :: fld3d(:,:,:)
-  integer :: iii(3), bumpid=1111
 
   ! Sanity check
   call check(fld)
@@ -250,8 +243,7 @@ subroutine getvalues_ad(incr, locs, vars, geoval, traj)
   type(soca_getvaltraj), target, intent(inout) :: traj
 
   type(soca_bumpinterp2d), pointer :: horiz_interp_p
-  integer :: icat, ilev, ivar, nobs, nval, ival, indx
-  character(len=160) :: record
+  integer :: ivar, nval, ival, indx
   integer :: isc, iec, jsc, jec
   real(kind=kind_real), allocatable :: gom_window(:,:)
   real(kind=kind_real), allocatable :: incr3d(:,:,:)

@@ -181,7 +181,7 @@ subroutine geom_allocate(self)
   class(soca_geom), intent(inout) :: self
 
   integer :: nxny(2), nx, ny
-  integer :: nzo, nzi, nzs
+  integer :: nzo
   integer :: isd, ied, jsd, jed
 
   ! Get domain shape (number of levels, indices of data and compute domain)
@@ -224,17 +224,14 @@ end subroutine geom_print
 
 ! ------------------------------------------------------------------------------
 !> Read and store Rossby Radius of deformation
-!> TODO: Move out of geometry, use bilinear interp instead of nearest neighbor
 subroutine geom_rossby_radius(self)
   class(soca_geom), intent(inout) :: self
 
   integer :: unit, i, n
   real(kind=kind_real) :: dum
   real(kind=kind_real), allocatable :: lon(:),lat(:),rr(:)
-  type(kdtree) :: kd
   integer :: isc, iec, jsc, jec
   integer :: io
-  character(len=256) :: geom_output_file = "geom_output.nc"
 
   ! read in the file
   unit = 20
@@ -269,9 +266,8 @@ subroutine geom_validindex(self)
   ! Ignores inland mask grid points and
   ! select wet gridpoints and shoreline mask
   class(soca_geom), intent(inout) :: self
-  integer :: i, j, ns, cnt
+  integer :: i, j, ns
   integer :: isc, iec, jsc, jec
-  real(kind=kind_real) :: shoretest
 
   ! Indices for compute domain (no halo)
   isc = self%isc ; iec = self%iec ; jsc = self%jsc ; jec = self%jec
@@ -287,18 +283,6 @@ subroutine geom_validindex(self)
   ! Get number of valid points
   ns = int(sum(self%shoremask(isc:iec,jsc:jec)))
   allocate(self%ij(2,ns))
-
-!!$    ! Save shoreline + ocean grid point
-!!$    cnt = 1
-!!$    do i = isc, iec
-!!$       do j = jsc, jec
-!!$          if (shoretest.gt.0.0d0) then
-!!$             self%ij(1, cnt) = i
-!!$             self%ij(2, cnt) = j
-!!$             cnt = cnt + 1
-!!$          end if
-!!$       end do
-!!$    end do
 
 end subroutine geom_validindex
 

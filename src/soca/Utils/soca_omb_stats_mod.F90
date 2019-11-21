@@ -104,7 +104,6 @@ subroutine soca_omb_stats_bin(self, lon, lat)
 
   integer :: is, ie, js, je
   integer :: isl, iel, jsl, jel
-  integer :: i, j, il, jl
 
   ! Short cuts to global indices
   is = self%domain%is

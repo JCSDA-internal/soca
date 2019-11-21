@@ -84,7 +84,6 @@ subroutine create_constructor(self, geom, vars)
   type(soca_field),          intent(inout) :: self
   type(soca_geom),  pointer, intent(inout) :: geom
   type(oops_vars),              intent(in) :: vars
-  integer :: ivar
 
   ! Allocate
   call soca_field_alloc(self, geom)
@@ -107,7 +106,6 @@ subroutine create_copy(self, rhs_fld)
   ! Construct a field from an other field, lhs_fld=rhs_fld
   type(soca_field), intent(inout) :: self
   type(soca_field), intent(in)    :: rhs_fld
-  integer :: ivar!, unit, nxny(2)
 
   ! Allocate and copy fields
   call soca_field_alloc(self, rhs_fld%geom)
@@ -131,8 +129,6 @@ subroutine soca_field_alloc(self, geom)
   type(soca_geom), pointer, intent(in) :: geom
 
   integer :: isd, ied, jsd, jed, nzo
-  integer :: ncat, km
-  character(7) :: domain_type
 
   ! Short cut to geometry
   isd = geom%isd ; ied = geom%ied
@@ -207,9 +203,8 @@ subroutine dirac(self, f_conf)
   type(fckit_configuration), intent(in)    :: f_conf   !< Configuration
 
   integer :: isc, iec, jsc, jec
-  integer :: ndir,n,size,rank,info
+  integer :: ndir,n
   integer,allocatable :: ixdir(:),iydir(:),izdir(:),ifdir(:)
-  character(len=3) :: idirchar
   type(fckit_mpi_comm) :: f_comm
 
   call check(self)
@@ -295,8 +290,6 @@ end subroutine random
 subroutine copy(self,rhs)
   type(soca_field), intent(inout) :: self
   type(soca_field),    intent(in) :: rhs
-
-  integer :: nf
 
   call check_resolution(self, rhs)
 
@@ -518,7 +511,6 @@ subroutine add_incr(self,rhs)
   type(soca_field), intent(in)    :: rhs
 
   integer, save :: cnt_outer = 1
-  real(kind=kind_real), allocatable :: incr(:,:,:)
   character(len=800) :: filename, str_cnt
 
   call check(self)
@@ -591,7 +583,7 @@ subroutine read_file(fld, f_conf, vdate)
 
   integer, parameter :: max_string_length=800
   character(len=max_string_length) :: ocn_filename
-  character(len=max_string_length) :: ice_filename, basename, incr_filename
+  character(len=max_string_length) :: basename, incr_filename
   character(len=1024) :: buf
   integer :: iread = 0
   integer :: ii
@@ -603,7 +595,7 @@ subroutine read_file(fld, f_conf, vdate)
   integer :: idr_ocean
   integer :: isd, ied, jsd, jed
   integer :: isc, iec, jsc, jec
-  integer :: i, j, k, nl, nz
+  integer :: i, j, nz
   type(remapping_CS)  :: remapCS
   character(len=:), allocatable :: str
 
@@ -773,20 +765,10 @@ subroutine write_file(fld, f_conf, vdate)
   type(datetime),            intent(inout) :: vdate  !< DateTime
 
   integer, parameter :: max_string_length=800    ! Yuk!
-  character(len=max_string_length) :: filename
-  character(len=1024):: buf
-  integer :: ii
 
   call check(fld)
 
-  !call geom_infotofile(fld%geom)
   call soca_write_restart(fld, f_conf, vdate)
-
-!!$    filename = soca_genfilename(f_conf,max_string_length,vdate)
-!!$    WRITE(buf,*) 'field:write_file: writing '//filename
-!!$    call fckit_log%info(buf)
-!!$
-!!$    call soca_fld2file(fld, filename)
 
 end subroutine write_file
 
@@ -800,7 +782,7 @@ subroutine gpnorm(fld, nf, pstat)
   logical :: mask(fld%geom%isc:fld%geom%iec, fld%geom%jsc:fld%geom%jec)
   real(kind=kind_real) :: ocn_count, tmp(3)
   real(kind=kind_real) :: local_ocn_count
-  integer :: jj,  myrank
+  integer :: jj
   integer :: isc, iec, jsc, jec
   type(fckit_mpi_comm) :: f_comm
 
@@ -1179,7 +1161,6 @@ subroutine soca_fld2file(fld, filename)
   character(len=800), intent(in) :: filename
 
   integer :: ii
-  character(len=1024):: buf
   character(len=800) :: fname
 
   fname = trim(filename)

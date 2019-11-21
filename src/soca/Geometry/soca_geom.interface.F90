@@ -65,10 +65,9 @@ end subroutine c_soca_geo_clone
 
 ! ------------------------------------------------------------------------------
 !> Generate grid
-subroutine c_soca_geo_gridgen(c_key_self, c_conf) bind(c,name='soca_geo_gridgen_f90')
+subroutine c_soca_geo_gridgen(c_key_self) bind(c,name='soca_geo_gridgen_f90')
 
   integer(c_int), intent(inout) :: c_key_self
-  type(c_ptr),       intent(in) :: c_conf
 
   type(soca_geom), pointer :: self
 
