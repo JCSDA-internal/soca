@@ -142,23 +142,39 @@ foreach(FILENAME ${soca_obs})
            ${CMAKE_CURRENT_BINARY_DIR}/Data/${filename} )
 endforeach(FILENAME)
 
+
+# Link CRTM coeff
 if( ${CRTM_FOUND} )
+
+  # determine where to look for coefficients
+  set( CRTM_FIX_DIR_DOCSTRING
+      "Path to the CRTM fix directory, needs to be set if CRTM was not built as part of this bundle.")
+  set( CRTM_FIX_DIR NOTFOUND CACHE PATH ${CRTM_FIX_DIR_DOCSTRING})
+  if( NOT CRTM_FIX_DIR AND EXISTS ${crtm_SOURCE_DIR}/fix)
+    set( CRTM_FIX_DIR ${crtm_SOURCE_DIR}/fix CACHE PATH ${CRTM_FIX_DIR_DOCSTRING} FORCE)
+  elseif( NOT CRTM_FIX_DIR )
+    message(FATAL_ERROR
+      "CRTM was not built as part of the bundle, CRTM_FIX_DIR must be set")
+  endif()
+
+  # the coefficient files needed
   list( APPEND crtm_coef
-    ${crtm_SOURCE_DIR}/fix/SpcCoeff/Little_Endian/gmi_gpm.SpcCoeff.bin
-    ${crtm_SOURCE_DIR}/fix/TauCoeff/ODPS/Little_Endian/gmi_gpm.TauCoeff.bin
-    ${crtm_SOURCE_DIR}/fix/CloudCoeff/Little_Endian/CloudCoeff.bin
-    ${crtm_SOURCE_DIR}/fix/AerosolCoeff/Little_Endian/AerosolCoeff.bin
-    ${crtm_SOURCE_DIR}/fix/EmisCoeff/MW_Water/Little_Endian/FASTEM6.MWwater.EmisCoeff.bin
+    SpcCoeff/Little_Endian/gmi_gpm.SpcCoeff.bin
+    TauCoeff/ODPS/Little_Endian/gmi_gpm.TauCoeff.bin
+    CloudCoeff/Little_Endian/CloudCoeff.bin
+    AerosolCoeff/Little_Endian/AerosolCoeff.bin
+    EmisCoeff/MW_Water/Little_Endian/FASTEM6.MWwater.EmisCoeff.bin
   )
 
-  # Link CRTM coeff
+  # link the files
   foreach(FILENAME ${crtm_coef})
        get_filename_component(filename ${FILENAME} NAME )
        execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
-             ${FILENAME}
+             ${CRTM_FIX_DIR}/${FILENAME}
              ${CMAKE_CURRENT_BINARY_DIR}/Data/${filename} )
   endforeach(FILENAME)
 endif()
+
 
 # Create directory for BUMP output
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bump)
