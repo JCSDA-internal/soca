@@ -90,11 +90,9 @@ namespace soca {
         // The variables in vars that are also defined in soca will be
         // over-written in the interpolation call bellow
         getValuesFromFile(locs, vars, cols);
-        Log::trace() << cols << std::endl;
         }
     // Get ocean geovals
     fields_->getValues(locs, vars, cols);
-    Log::trace() << cols << std::endl;
   }
   // -----------------------------------------------------------------------------
   void State::getValues(const ufo::Locations & locs,
