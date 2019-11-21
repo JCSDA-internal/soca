@@ -166,6 +166,25 @@ namespace soca {
                              gom.toFortran(), traj.toFortran());
   }
   // -----------------------------------------------------------------------------
+  void Fields::getPoint(const soca::GeometryIterator & iter,
+                std::vector<double> & values, 
+                const int nzo) const {
+    oops::Log::info() << "Before soca_getpoint_f90" << std::endl;
+    oops::Log::info() << "nzo=" << nzo << std::endl;
+    oops::Log::info() << "keyFlds_=" << keyFlds_ << std::endl;
+    oops::Log::info() << "iter.toFortran()=" << iter.toFortran() << std::endl;
+    oops::Log::info() << "values=" << values << std::endl;
+
+
+    soca_getpoint_f90(keyFlds_, iter.toFortran(), values[0], nzo);  
+  }
+  // -----------------------------------------------------------------------------
+  void Fields::setPoint(const soca::GeometryIterator & iter,
+                const std::vector<double> & values, 
+                const int nzo) {
+    soca_setpoint_f90(keyFlds_, iter.toFortran(), values[0], nzo);
+  }
+  // -----------------------------------------------------------------------------
   void Fields::changeResolution(const Fields & other) {
     soca_field_change_resol_f90(keyFlds_, other.keyFlds_);
   }

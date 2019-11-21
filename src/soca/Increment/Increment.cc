@@ -142,43 +142,35 @@ namespace soca {
   oops::GridPoint Increment::getPoint(const GeometryIterator & iter) const {
  
     int nx, ny, nzo;
-    soca_geo_global_grid_size_f90(iter->geom->toFortran(), nx, ny, nzo);
-    oops::Log::info() << "Increment::getPoint: nzo " << nzo << std::endl;
-
-
-  //(1) retrieve number of vertical levels from Increment::fields.(nzo ?)
-  //(2) retrieve fields list from Increment::fields.(vars_ ?)
-        // however, there might be benefit in hardconding the oder of fields right here and in f90 code. 
-
- /* 
-    std::vector<std::string> fields;
-    std::vector<int> varlens ;
+    soca_geo_global_grid_size_f90(geometry()->toFortran(), nx, ny, nzo);
 
     // Initialize fields and varlen
-    fields.push_back("socn"); varlens.push_back(nzo);
-    fields.push_back("tocn"); varlens.push_back(nzo);
-    fields.push_back("hocn");  varlens.push_back(1);
+    //idea: retrieve fields list from fields()->vars_
+    std::vector<std::string> fieldNames;
+    std::vector<int> varlens ;
 
-    int lenvalues;
-    lenvalues = std::accumulate(varlens.begin(), varlens.end(), 0);
+    fieldNames.push_back("socn"); varlens.push_back(nzo);
+    fieldNames.push_back("tocn"); varlens.push_back(nzo);
+    fieldNames.push_back("hocn"); varlens.push_back(nzo);
 
+    int lenvalues = std::accumulate(varlens.begin(), varlens.end(), 0);
     std::vector<double> values(lenvalues);
 
     // Get variable values
-    getpoint_f90(keyInc_, iter.toFortran(), values[0],);
+    Log::trace() << "Before fields_->getPoint" << std::endl;
+    fields_->getPoint(iter, values, nzo);
 
-    return oops::GridPoint(oops::Variables(fields), values, varlens, lenvalues, nzo);
-  
-*/
+    return oops::GridPoint(oops::Variables(fieldNames), values, varlens);
   }
 
   // -----------------------------------------------------------------------------
   void Increment::setPoint(const oops::GridPoint & values,
                              const GeometryIterator & iter) {
-    /*
+    int nx, ny, nzo;
+    soca_geo_global_grid_size_f90(geometry()->toFortran(), nx, ny, nzo);
+
     const std::vector<double> vals = values.getVals();
-    sw_increment_setpoint_f90(keyInc_, iter.toFortran(), vals[0]);
-    */
+    fields_->setPoint(iter, vals, nzo);
   }
 
   /// Interpolate to observation location

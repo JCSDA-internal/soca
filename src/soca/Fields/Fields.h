@@ -74,6 +74,12 @@ namespace soca {
       void getValuesAD(const ufo::Locations &, const oops::Variables &,
                        const ufo::GeoVaLs &, const GetValuesTraj &);
 
+      // access single grid point (column)
+      void getPoint(const soca::GeometryIterator &, 
+                    std::vector<double> &, const int) const;
+      void setPoint(const soca::GeometryIterator &,       
+                    const std::vector<double> &, const int);
+
       // Interpolate full fields
       void changeResolution(const Fields &);
       void add(const Fields &);

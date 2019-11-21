@@ -27,6 +27,7 @@ use mpp_domains_mod, only : mpp_update_domains
 use MOM_remapping, only : remapping_CS, initialize_remapping, remapping_core_h, end_remapping
 use random_mod, only: normal_distribution
 use soca_geom_mod, only : soca_geom
+use soca_geom_iter_mod, only : soca_geom_iter
 use soca_fieldsutils_mod, only: soca_genfilename, fldinfo
 use soca_ocnsfc_mod, only: soca_ocnsfc_type
 use soca_seaice_mod, only: soca_seaice_type
@@ -41,7 +42,8 @@ public :: soca_field, &
           dot_prod, add_incr, diff_incr, &
           read_file, write_file, gpnorm, fldrms, soca_fld2file, &
           change_resol, check, &
-          field_to_ug, field_from_ug, ug_coord
+          field_to_ug, field_from_ug, ug_coord, &
+          soca_getpoint, soca_setpoint
 
 interface create
    module procedure create_constructor, create_copy
@@ -1291,38 +1293,38 @@ end subroutine soca_write_restart
 
 ! ------------------------------------------------------------------------------
 
-!subroutine getpoint(self, geoiter, values, lenvalues, nzo)
-!
-!  type(soca_field),               intent(   in) :: self
-!  type(soca_geom_iter),           intent(   in) :: geoiter
-!  real(r8kind),                   intent(inout) :: values(lenvalues)
-!  integer                         intent(   in) :: nzo, lenvalues
-!
-!  call self%get_h_ptr(h)
-!
-!  values(1:nzo)       = self%socn(geoiter%ilon, geoiter%ilat,:)
-!  values(nzo+1:2*nzo) = self%tocn(geoiter%ilon, geoiter%ilat,:)
-!  values(2*nzo+1)     = self%hocn(geoiter%ilon, geoiter%ilat)
-!
-!end subroutine getpoint
-!
-!! ------------------------------------------------------------------------------
-!
-!subroutine setpoint(self, geoiter, values, lenvalues, nzo)
-!
-!  ! Passed variables
-!  type(shallow_water_state_type), intent(inout) :: self
-!  type(soca_geom_iter),           intent(   in) :: geoiter
-!  real(r8kind),                   intent(   in) :: values(lenvalues)
-!  integer                         intent(   in) :: nzo, lenvalues
-!
-!  ! Set values
-!  self%.socn(geoiter%ilon, geoiter%ilat,:) = values(1:nzo)
-!  self%.tocn(geoiter%ilon, geoiter%ilat,:) = values(nzo+1:2*nzo)
-!  self%.hocn(geoiter%ilon, geoiter%ilat) = values(2*nzo+1)
-!
-!end subroutine setpoint
-!
+subroutine soca_getpoint(self, geoiter, values, nzo)
+
+  type(soca_field),               intent(   in) :: self
+  type(soca_geom_iter),           intent(   in) :: geoiter
+  real(kind=kind_real),           intent(inout) :: values(nzo*3)
+  integer,                        intent(   in) :: nzo
+
+  print *, 'soca_getpoint: start'
+  print *, 'soca_getpoint: ', self%socn(geoiter%iind, geoiter%jind,1)
+
+  values(1:nzo)       = self%socn(geoiter%iind, geoiter%jind,:)
+  values(nzo+1:2*nzo) = self%tocn(geoiter%iind, geoiter%jind,:)
+  values(2*nzo+1:3*nzo)= self%hocn(geoiter%iind, geoiter%jind,:)
+
+end subroutine soca_getpoint
+
+! ------------------------------------------------------------------------------
+
+subroutine soca_setpoint(self, geoiter, values, nzo)
+
+  ! Passed variables
+  type(soca_field),               intent(inout) :: self
+  type(soca_geom_iter),           intent(   in) :: geoiter
+  real(kind=kind_real),           intent(   in) :: values(nzo*3)
+  integer,                        intent(   in) :: nzo
+
+  ! Set values
+  self%socn(geoiter%iind, geoiter%jind,:) = values(1:nzo)
+  self%tocn(geoiter%iind, geoiter%jind,:) = values(nzo+1:2*nzo)
+  self%hocn(geoiter%iind, geoiter%jind,:) = values(2*nzo+1:3*nzo)
+
+end subroutine soca_setpoint
 
 ! ------------------------------------------------------------------------------
 

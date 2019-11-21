@@ -149,6 +149,11 @@ contains
 
     ! end do
 
+    if (jind > self%geom%jec) then
+        iind=-1
+        jind=-1
+    end if
+
     self%iind = iind
     self%jind = jind
 
