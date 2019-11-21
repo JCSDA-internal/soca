@@ -48,8 +48,8 @@ subroutine soca_steric_jacobian (jac, t, s, p, h, lon, lat)
 
   real(kind=kind_real), intent(in)  :: t, s, p, h, lon, lat
   real(kind=kind_real), intent(out) :: jac(2)
-  real(kind=kind_real) :: rho0, sa, ct, lon_rot
-  real(kind=kind_real) :: drhods, drhodt, drhodp, eps=1.0e-8
+  real(kind=kind_real) :: rho0
+  real(kind=kind_real) :: drhods, drhodt, eps=1.0e-8
 
   ! Insitu density
   rho0 = soca_rho(s, t, p, lon, lat)

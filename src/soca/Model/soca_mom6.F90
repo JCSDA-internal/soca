@@ -145,7 +145,6 @@ subroutine soca_mom6_init(mom6_config, partial_init)
   integer :: date_init(6)=0                ! The start date of the whole simulation.
   integer :: years=0, months=0, days=0     ! These may determine the segment run
   integer :: hours=0, minutes=0, seconds=0 ! length, if read from a namelist.
-  integer :: yr, mon, day, hr, mins, sec   ! Temp variables for writing the date.
   type(param_file_type) :: param_file      ! The structure indicating the file(s)
   ! containing all run-time parameters.
   character(len=16) :: calendar = 'julian'

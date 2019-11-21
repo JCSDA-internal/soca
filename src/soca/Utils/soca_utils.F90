@@ -27,7 +27,7 @@ contains
 
 elemental function soca_rho(sp, pt, p, lon, lat)
   real(kind=kind_real), intent(in)  :: pt, sp, p, lon, lat
-  real(kind=kind_real) :: sa, ct, lon_rot, soca_rho, soca_mld
+  real(kind=kind_real) :: sa, ct, lon_rot, soca_rho
 
   !Rotate longitude if necessary
   lon_rot = lon

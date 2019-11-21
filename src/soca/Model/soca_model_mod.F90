@@ -60,12 +60,6 @@ subroutine soca_initialize_integration(self, flds)
   type(soca_model), intent(inout) :: self
   type(soca_field), intent(inout) :: flds
 
-  integer :: isc, iec, jsc, jec
-  type(time_type) :: ocean_time  ! The ocean model's clock.
-  integer :: year, month, day, hour, minute, second
-  character(len=20) :: strdate
-  character(len=1024) :: buf
-
   ! Update halo
   call mpp_update_domains(flds%tocn, flds%geom%Domain%mpp_domain)
   call mpp_update_domains(flds%socn, flds%geom%Domain%mpp_domain)
@@ -97,11 +91,9 @@ subroutine soca_propagate(self, flds, fldsdate)
   type(soca_field), intent(inout) :: flds
   type(datetime), intent(in):: fldsdate
 
-  integer :: isc, iec, jsc, jec
   type(time_type) :: ocean_time  ! The ocean model's clock.
   integer :: year, month, day, hour, minute, second
   character(len=20) :: strdate
-  character(len=1024) :: buf
 
   ! Update halo
   call mpp_update_domains(flds%tocn, flds%geom%Domain%mpp_domain)
@@ -170,12 +162,6 @@ end subroutine soca_propagate
 subroutine soca_finalize_integration(self, flds)
   type(soca_model), intent(inout) :: self
   type(soca_field), intent(inout) :: flds
-
-  integer :: isc, iec, jsc, jec
-  type(time_type) :: ocean_time  ! The ocean model's clock.
-  integer :: year, month, day, hour, minute, second
-  character(len=20) :: strdate
-  character(len=1024) :: buf
 
   ! Update halo
   call mpp_update_domains(flds%tocn, flds%geom%Domain%mpp_domain)

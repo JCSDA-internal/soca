@@ -46,9 +46,6 @@ subroutine c_soca_vertconv_setup(c_key_self, c_conf, c_key_traj, c_key_bkg) &
   type(soca_vertconv), pointer :: self
   type(soca_field), pointer :: traj
   type(soca_field), pointer :: bkg
-  real(kind=kind_real), allocatable :: jac(:)
-
-  integer :: isc, iec, jsc, jec, i, j, k, nl
 
   call soca_vertconv_registry%init()
   call soca_vertconv_registry%add(c_key_self)

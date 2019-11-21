@@ -54,9 +54,7 @@ type :: soca_geom
     procedure :: init => geom_init
     procedure :: end => geom_end
     procedure :: clone => geom_clone
-    procedure :: print => geom_print
     procedure :: get_rossby_radius => geom_rossby_radius
-    procedure :: validindex => geom_validindex
     procedure :: gridgen => geom_gridgen
     procedure :: thickness2depth => geom_thickness2depth
     procedure :: struct2unstruct => geom_struct2unstruct
@@ -181,7 +179,7 @@ subroutine geom_allocate(self)
   class(soca_geom), intent(inout) :: self
 
   integer :: nxny(2), nx, ny
-  integer :: nzo, nzi, nzs
+  integer :: nzo
   integer :: isd, ied, jsd, jed
 
   ! Get domain shape (number of levels, indices of data and compute domain)
@@ -213,28 +211,15 @@ subroutine geom_allocate(self)
 end subroutine geom_allocate
 
 ! ------------------------------------------------------------------------------
-!> Print geometry info to std output
-subroutine geom_print(self)
-  class(soca_geom), intent(in) :: self
-
-  print *, 'nx=', self%nx
-  print *, 'ny=', self%ny
-
-end subroutine geom_print
-
-! ------------------------------------------------------------------------------
 !> Read and store Rossby Radius of deformation
-!> TODO: Move out of geometry, use bilinear interp instead of nearest neighbor
 subroutine geom_rossby_radius(self)
   class(soca_geom), intent(inout) :: self
 
   integer :: unit, i, n
   real(kind=kind_real) :: dum
   real(kind=kind_real), allocatable :: lon(:),lat(:),rr(:)
-  type(kdtree) :: kd
   integer :: isc, iec, jsc, jec
   integer :: io
-  character(len=256) :: geom_output_file = "geom_output.nc"
 
   ! read in the file
   unit = 20
@@ -262,45 +247,6 @@ subroutine geom_rossby_radius(self)
 
 end subroutine geom_rossby_radius
 
-! ------------------------------------------------------------------------------
-!> Setup array of "valid index" to inline and pack structured geometry to
-!> unstructured geometry
-subroutine geom_validindex(self)
-  ! Ignores inland mask grid points and
-  ! select wet gridpoints and shoreline mask
-  class(soca_geom), intent(inout) :: self
-  integer :: i, j, ns, cnt
-  integer :: isc, iec, jsc, jec
-  real(kind=kind_real) :: shoretest
-
-  ! Indices for compute domain (no halo)
-  isc = self%isc ; iec = self%iec ; jsc = self%jsc ; jec = self%jec
-
-  ! Extend mask 2 grid point inland TODO:NEED HALO FOR MASK!!!
-  self%shoremask = self%mask2d
-  do i = isc, iec
-     do j = jsc, jec
-        self%shoremask(i,j) = self%mask2d(i,j)
-     end do
-  end do
-
-  ! Get number of valid points
-  ns = int(sum(self%shoremask(isc:iec,jsc:jec)))
-  allocate(self%ij(2,ns))
-
-!!$    ! Save shoreline + ocean grid point
-!!$    cnt = 1
-!!$    do i = isc, iec
-!!$       do j = jsc, jec
-!!$          if (shoretest.gt.0.0d0) then
-!!$             self%ij(1, cnt) = i
-!!$             self%ij(2, cnt) = j
-!!$             cnt = cnt + 1
-!!$          end if
-!!$       end do
-!!$    end do
-
-end subroutine geom_validindex
 
 ! ------------------------------------------------------------------------------
 !> Write geometry to file

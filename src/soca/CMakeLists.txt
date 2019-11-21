@@ -53,9 +53,6 @@ Covariance/soca_covariance_mod.F90
 
 #Utils
 Utils/soca_utils.F90
-Utils/random_vectors_mod.F90
-Utils/random_f.cc
-Utils/random_f.h
 Utils/soca_bumpinterp2d_mod.F90
 Utils/soca_omb_stats_mod.F90
 

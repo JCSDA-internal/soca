@@ -95,7 +95,7 @@ subroutine soca_conv (self, convdx, dx)
   type(soca_field),   intent(inout) :: convdx
 
   real(kind=kind_real), allocatable :: z(:), lz(:)
-  real(kind=kind_real) :: dist2, coef, mld
+  real(kind=kind_real) :: dist2, coef
   integer :: nl, j, k, id, jd
   type(mpl_type) :: mpl
 

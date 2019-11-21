@@ -286,8 +286,7 @@ subroutine soca_bump_correlation(self, horiz_convol, geom, f_conf, domain)
   character(len=3),          intent(in) :: domain
 
   !Grid stuff
-  integer :: isc, iec, jsc, jec, jjj, jz, il, ib
-  character(len=1024) :: subr = 'model_write'
+  integer :: isc, iec, jsc, jec, jjj, jz
 
   !bump stuff
   integer :: nc0a, nl0, nv, nts

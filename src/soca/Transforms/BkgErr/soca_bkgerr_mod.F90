@@ -38,10 +38,9 @@ subroutine soca_bkgerr_setup(f_conf, self, bkg)
   type(soca_bkgerr_config), intent(inout) :: self
   type(soca_field),    target, intent(in) :: bkg
 
-  integer :: isc, iec, jsc, jec, i, j, k, nl
+  integer :: isc, iec, jsc, jec, nl
   type(datetime) :: vdate
   character(len=800) :: fname = 'soca_bkgerrsoca.nc'
-  logical :: read_from_file = .false.
 
   ! Get number of ocean levels
   nl = size(bkg%hocn,3)
@@ -102,7 +101,7 @@ subroutine soca_bkgerr_mult(self, dxa, dxm)
   type(soca_field),            intent(in) :: dxa
   type(soca_field),         intent(inout) :: dxm
 
-  integer :: isc, iec, jsc, jec, i, j, k
+  integer :: isc, iec, jsc, jec, i, j
 
   ! Indices for compute domain (no halo)
   isc=self%bkg%geom%isc; iec=self%bkg%geom%iec
