@@ -54,9 +54,7 @@ type :: soca_geom
     procedure :: init => geom_init
     procedure :: end => geom_end
     procedure :: clone => geom_clone
-    procedure :: print => geom_print
     procedure :: get_rossby_radius => geom_rossby_radius
-    procedure :: validindex => geom_validindex
     procedure :: gridgen => geom_gridgen
     procedure :: thickness2depth => geom_thickness2depth
     procedure :: struct2unstruct => geom_struct2unstruct
@@ -213,16 +211,6 @@ subroutine geom_allocate(self)
 end subroutine geom_allocate
 
 ! ------------------------------------------------------------------------------
-!> Print geometry info to std output
-subroutine geom_print(self)
-  class(soca_geom), intent(in) :: self
-
-  print *, 'nx=', self%nx
-  print *, 'ny=', self%ny
-
-end subroutine geom_print
-
-! ------------------------------------------------------------------------------
 !> Read and store Rossby Radius of deformation
 subroutine geom_rossby_radius(self)
   class(soca_geom), intent(inout) :: self
@@ -259,32 +247,6 @@ subroutine geom_rossby_radius(self)
 
 end subroutine geom_rossby_radius
 
-! ------------------------------------------------------------------------------
-!> Setup array of "valid index" to inline and pack structured geometry to
-!> unstructured geometry
-subroutine geom_validindex(self)
-  ! Ignores inland mask grid points and
-  ! select wet gridpoints and shoreline mask
-  class(soca_geom), intent(inout) :: self
-  integer :: i, j, ns
-  integer :: isc, iec, jsc, jec
-
-  ! Indices for compute domain (no halo)
-  isc = self%isc ; iec = self%iec ; jsc = self%jsc ; jec = self%jec
-
-  ! Extend mask 2 grid point inland TODO:NEED HALO FOR MASK!!!
-  self%shoremask = self%mask2d
-  do i = isc, iec
-     do j = jsc, jec
-        self%shoremask(i,j) = self%mask2d(i,j)
-     end do
-  end do
-
-  ! Get number of valid points
-  ns = int(sum(self%shoremask(isc:iec,jsc:jec)))
-  allocate(self%ij(2,ns))
-
-end subroutine geom_validindex
 
 ! ------------------------------------------------------------------------------
 !> Write geometry to file

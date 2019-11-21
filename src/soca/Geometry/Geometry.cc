@@ -43,7 +43,7 @@ namespace soca {
   }
   // -----------------------------------------------------------------------------
   void Geometry::print(std::ostream & os) const {
-    soca_geo_info_f90(keyGeom_);
+    // TODO(Travis): Implement this correctly.
   }
   // -----------------------------------------------------------------------------
 }  // namespace soca

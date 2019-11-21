@@ -92,18 +92,5 @@ subroutine c_soca_geo_delete(c_key_self) bind(c,name='soca_geo_delete_f90')
 end subroutine c_soca_geo_delete
 
 ! ------------------------------------------------------------------------------
-!> Dump basic geometry info in file and std output
-subroutine c_soca_geo_info(c_key_self) bind(c,name='soca_geo_info_f90')
-
-  integer(c_int), intent(in   ) :: c_key_self
-
-  type(soca_geom), pointer :: self
-
-  call soca_geom_registry%get(c_key_self , self)
-  call self%print()
-
-end subroutine c_soca_geo_info
-
-! ------------------------------------------------------------------------------
 
 end module soca_geom_mod_c
