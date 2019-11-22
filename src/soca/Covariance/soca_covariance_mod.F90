@@ -63,7 +63,7 @@ subroutine soca_cov_setup(self, f_conf, geom, bkg, vars)
   type(oops_vars),           intent(in) :: vars   !< List of variables
 
   character(len=3)  :: domain
-  integer :: isc, iec, jsc, jec, i, j, ivar
+  integer :: isc, iec, jsc, jec, ivar
   logical :: init_seaice, init_ocean
 
   ! Setup list of variables to apply B on
