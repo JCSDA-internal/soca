@@ -169,13 +169,6 @@ namespace soca {
   void Fields::getPoint(const soca::GeometryIterator & iter,
                 std::vector<double> & values, 
                 const int nzo) const {
-    oops::Log::info() << "Before soca_getpoint_f90" << std::endl;
-    oops::Log::info() << "nzo=" << nzo << std::endl;
-    oops::Log::info() << "keyFlds_=" << keyFlds_ << std::endl;
-    oops::Log::info() << "iter.toFortran()=" << iter.toFortran() << std::endl;
-    oops::Log::info() << "values=" << values << std::endl;
-
-
     soca_getpoint_f90(keyFlds_, iter.toFortran(), values[0], nzo);  
   }
   // -----------------------------------------------------------------------------

@@ -157,7 +157,6 @@ namespace soca {
     std::vector<double> values(lenvalues);
 
     // Get variable values
-    Log::trace() << "Before fields_->getPoint" << std::endl;
     fields_->getPoint(iter, values, nzo);
 
     return oops::GridPoint(oops::Variables(fieldNames), values, varlens);
