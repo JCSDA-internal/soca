@@ -1,3 +1,6 @@
+EnsembleApplication:
+  members: 3
+
 Geometry:
   num_ice_cat: 5
   num_ice_lev: 4
@@ -33,7 +36,7 @@ Observations:
 
   - ObsSpace:
       name: CoolSkin
-      ObsDataOut: {obsfile: ./Data/sst.out.nc}
+      ObsDataOut: {obsfile: "./Data/enshofx.%{member}%.coolskin.nc"}
       ObsDataIn:  {obsfile: ./Data/sst.nc}
       simulate:
         variables: [sea_surface_temperature]
@@ -47,7 +50,7 @@ Observations:
 
   - ObsSpace:
       name: SeaSurfaceTemp
-      ObsDataOut: {obsfile: ./Data/sst.out.nc}
+      ObsDataOut: {obsfile: "./Data/enshofx.%{member}%.sst.nc"}
       ObsDataIn:  {obsfile: ./Data/sst.nc}
       simulate:
         variables: [sea_surface_temperature]
@@ -58,7 +61,7 @@ Observations:
 
   - ObsSpace:
       name: SeaSurfaceSalinity
-      ObsDataOut: {obsfile: ./Data/sss.out.nc}
+      ObsDataOut: {obsfile: "./Data/enshofx.%{member}%.sss.nc"}
       ObsDataIn:  {obsfile: ./Data/sss.nc}
       simulate:
         variables: [sea_surface_salinity]
@@ -69,7 +72,7 @@ Observations:
 
   - ObsSpace:
       name: ADT
-      ObsDataOut: {obsfile: ./Data/adt.out.nc}
+      ObsDataOut: {obsfile: "./Data/enshofx.%{member}%.adt.nc"}
       ObsDataIn:  {obsfile: ./Data/adt.nc}
       simulate:
         variables: [obs_absolute_dynamic_topography]
@@ -80,7 +83,7 @@ Observations:
 
   - ObsSpace:
       name: InsituTemperature
-      ObsDataOut: {obsfile: ./Data/prof.T.out.nc}
+      ObsDataOut: {obsfile: "./Data/enshofx.%{member}%.prof.T.nc"}
       ObsDataIn:  {obsfile: ./Data/prof.nc}
       simulate:
         variables: [sea_water_temperature]
@@ -91,7 +94,7 @@ Observations:
 
   - ObsSpace:
       name: InsituSalinity
-      ObsDataOut: {obsfile: ./Data/prof.S.out.nc}
+      ObsDataOut: {obsfile: "./Data/enshofx.%{member}%.prof.S.nc"}
       ObsDataIn:  {obsfile: ./Data/prof.nc}
       simulate:
         variables: [sea_water_salinity]
@@ -102,7 +105,7 @@ Observations:
 
   - ObsSpace:
       name: SeaIceFraction
-      ObsDataOut: {obsfile: ./Data/icec.out.nc}
+      ObsDataOut: {obsfile: "./Data/enshofx.%{member}%.icec.nc"}
       ObsDataIn:  {obsfile:  ./Data/icec.nc}
       simulate:
         variables: [sea_ice_area_fraction]
