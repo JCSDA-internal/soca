@@ -40,13 +40,12 @@ logical         :: bump_initialized = .false.
 contains
 
 !--------------------------------------------
-subroutine interp_init(self, mod_lon, mod_lat, mod_mask, obs_lon, obs_lat, bumpid)
+subroutine interp_init(self, mod_lon, mod_lat, obs_lon, obs_lat, bumpid)
   ! Adapted from the fv3-jedi interface
 
   class(soca_bumpinterp2d), intent(inout) :: self
   real(kind=kind_real),      intent(in) :: mod_lon(:,:)
   real(kind=kind_real),      intent(in) :: mod_lat(:,:)
-  real(kind=kind_real),      intent(in) :: mod_mask(:,:)
   real(kind=kind_real),      intent(in) :: obs_lon(:)
   real(kind=kind_real),      intent(in) :: obs_lat(:)
   integer,                   intent(in) :: bumpid

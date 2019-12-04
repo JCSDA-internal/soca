@@ -54,11 +54,8 @@ contains
     type(soca_field),              intent(in) :: traj   !< Trajectory
     type(oops_vars),               intent(in) :: vars   !< List of variables
 
-    character(len=3)  :: domain
-    integer :: isc, iec, jsc, jec, i, j, ivar, ii, jj
-    logical :: init_seaice, init_ocean
+    integer :: i, j, ii, jj
     real(kind=kind_real) :: dist(-1:1,-1:1), sum_w, r_dist, r_flow
-    type(mpl_type) :: mpl
     real :: re = 6.371e6 ! radius of earth (m)
 
     ! Setup list of variables to apply filtering on
@@ -136,7 +133,7 @@ contains
     type(soca_field),           intent(inout) :: dxout !< Output: filtered Increment
     type(soca_geom),               intent(in) :: geom
 
-    integer :: k, ivar, iter
+    integer :: k, ivar
     real(kind=kind_real), allocatable, dimension(:,:) :: dxi, dxo
 
     allocate(dxi(self%isd:self%ied,self%jsd:self%jed))
@@ -192,7 +189,7 @@ contains
     type(soca_field),           intent(inout) :: dxout !< Output:
     type(soca_geom),               intent(in) :: geom
 
-    integer :: k, ivar, iter
+    integer :: k, ivar
     real(kind=kind_real), allocatable, dimension(:,:) :: dxi, dxo
 
     allocate(dxi(self%isd:self%ied,self%jsd:self%jed))

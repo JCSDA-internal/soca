@@ -97,18 +97,6 @@ subroutine c_soca_b_mult(c_key_self, c_key_in, c_key_out) bind(c,name='soca_b_mu
 
 end subroutine c_soca_b_mult
 
-! ------------------------------------------------------------------------------
-
-!> Setup linearization parameters (traj, ...)
-
-subroutine c_soca_b_linearize(c_key_self, c_key_geom) bind(c,name='soca_b_linearize_f90')
-  integer(c_int), intent(inout) :: c_key_self   !< The trajectory covariance structure
-  integer(c_int), intent(in)    :: c_key_geom   !< Geometry
-
-  ! Do nothing, current cov setup does not depend on the
-  ! trajectory
-
-end subroutine c_soca_b_linearize
 
 ! ------------------------------------------------------------------------------
 

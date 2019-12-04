@@ -44,7 +44,6 @@ subroutine soca_bkgerrgodas_setup(f_conf, self, bkg)
   type(soca_bkgerrgodas_config), intent(inout) :: self
   type(soca_field),         target, intent(in) :: bkg
 
-  type(datetime) :: vdate
   character(len=800) :: fname = 'soca_bkgerrgodas.nc'
 
   ! Allocate memory for bkgerrgodasor
@@ -90,7 +89,7 @@ subroutine soca_bkgerrgodas_mult(self, dxa, dxm)
   type(soca_field),            intent(in) :: dxa
   type(soca_field),         intent(inout) :: dxm
 
-  integer :: isc, iec, jsc, jec, i, j, k
+  integer :: isc, iec, jsc, jec, i, j
 
   ! Indices for compute domain (no halo)
   isc = self%bkg%geom%isc ; iec = self%bkg%geom%iec
@@ -121,8 +120,8 @@ subroutine soca_bkgerrgodas_tocn(self)
 
   real(kind=kind_real), allocatable :: sig1(:), sig2(:)
   type(soca_domain_indices) :: domain
-  integer :: is, ie, js, je, i, j, k
-  integer :: ins, ns = 1, iter, niter = 1
+  integer :: i, j, k
+  integer :: iter, niter = 1
   type(soca_omb_stats) :: sst
 
   ! Get compute domain indices
@@ -187,7 +186,7 @@ end subroutine soca_bkgerrgodas_tocn
 subroutine soca_bkgerrgodas_ssh(self)
   type(soca_bkgerrgodas_config),     intent(inout) :: self
   type(soca_domain_indices), target :: domain
-  integer :: i, j, k
+  integer :: i, j
 
   ! Get compute domain indices
   domain%is = self%bkg%geom%isc ; domain%ie = self%bkg%geom%iec
@@ -217,9 +216,8 @@ end subroutine soca_bkgerrgodas_ssh
 subroutine soca_bkgerrgodas_socn(self)
   type(soca_bkgerrgodas_config),     intent(inout) :: self
   !
-  real(kind=kind_real), allocatable :: dsdz(:), dtdz(:)
   type(soca_domain_indices), target :: domain
-  integer :: is, ie, js, je, i, j, k
+  integer :: i, j, k
   real(kind=kind_real) :: r
 
 

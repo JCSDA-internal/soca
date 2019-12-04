@@ -10,7 +10,7 @@ use MOM_domains, only : MOM_domain_type, MOM_infra_init
 use MOM_io,      only : io_infra_init
 use soca_mom6, only: soca_mom6_config, soca_mom6_init, soca_ice_column, &
                      soca_geomdomain_init
-use soca_utils, only: write2pe
+use soca_utils, only: write2pe, soca_remap_idw
 use kinds, only: kind_real
 use fckit_kdtree_module, only: kdtree, kdtree_create, kdtree_destroy, &
                                kdtree_k_nearest_neighbors
@@ -24,6 +24,7 @@ use mpp_domains_mod, only : mpp_get_compute_domain, mpp_get_data_domain, &
                             mpp_update_domains
 use fms_mod,         only : write_data, read_data
 use fms_io_mod,      only : fms_io_init, fms_io_exit
+use fckit_geometry_module, only: sphere_distance
 
 implicit none
 
@@ -53,9 +54,7 @@ type :: soca_geom
     procedure :: init => geom_init
     procedure :: end => geom_end
     procedure :: clone => geom_clone
-    procedure :: print => geom_print
     procedure :: get_rossby_radius => geom_rossby_radius
-    procedure :: validindex => geom_validindex
     procedure :: gridgen => geom_gridgen
     procedure :: thickness2depth => geom_thickness2depth
     procedure :: struct2unstruct => geom_struct2unstruct
@@ -180,7 +179,7 @@ subroutine geom_allocate(self)
   class(soca_geom), intent(inout) :: self
 
   integer :: nxny(2), nx, ny
-  integer :: nzo, nzi, nzs
+  integer :: nzo
   integer :: isd, ied, jsd, jed
 
   ! Get domain shape (number of levels, indices of data and compute domain)
@@ -212,29 +211,17 @@ subroutine geom_allocate(self)
 end subroutine geom_allocate
 
 ! ------------------------------------------------------------------------------
-!> Print geometry info to std output
-subroutine geom_print(self)
-  class(soca_geom), intent(in) :: self
-
-  print *, 'nx=', self%nx
-  print *, 'ny=', self%ny
-
-end subroutine geom_print
-
-! ------------------------------------------------------------------------------
 !> Read and store Rossby Radius of deformation
-!> TODO: Move out of geometry, use bilinear interp instead of nearest neighbor
 subroutine geom_rossby_radius(self)
   class(soca_geom), intent(inout) :: self
 
-  integer :: unit, i, j, n
+  integer :: unit, i, n
   real(kind=kind_real) :: dum
   real(kind=kind_real), allocatable :: lon(:),lat(:),rr(:)
-  type(kdtree) :: kd
   integer :: isc, iec, jsc, jec
-  integer :: index(1), nn, io
-  character(len=256) :: geom_output_file = "geom_output.nc"
+  integer :: io
 
+  ! read in the file
   unit = 20
   open(unit=unit,file="rossrad.dat",status="old",action="read")
   n = 0
@@ -250,64 +237,16 @@ subroutine geom_rossby_radius(self)
   end do
   close(unit)
 
-  !--- Initialize kd-tree
-  kd = kdtree_create(n, lon, lat)
+  ! convert to meters
+  rr = rr * 1e3
 
+  ! remap
   isc = self%isc ;  iec = self%iec ; jsc = self%jsc ; jec = self%jec
-
-  !--- Find nearest neighbor
-  nn=1 ! Num neighbors
-  do i = isc, iec
-     do j = jsc, jec
-        call kdtree_k_nearest_neighbors(kd,self%lon(i,j),self%lat(i,j),1,index)
-        self%rossby_radius(i,j)=rr(index(1))*1e3
-     end do
-  end do
-
-  ! Release memory
-  call kdtree_destroy(kd)
+  call soca_remap_idw(lon, lat, rr, self%lon(isc:iec,jsc:jec), &
+                      self%lat(isc:iec,jsc:jec), self%rossby_radius(isc:iec,jsc:jec) )
 
 end subroutine geom_rossby_radius
 
-! ------------------------------------------------------------------------------
-!> Setup array of "valid index" to inline and pack structured geometry to
-!> unstructured geometry
-subroutine geom_validindex(self)
-  ! Ignores inland mask grid points and
-  ! select wet gridpoints and shoreline mask
-  class(soca_geom), intent(inout) :: self
-  integer :: i, j, ns, cnt
-  integer :: isc, iec, jsc, jec
-  real(kind=kind_real) :: shoretest
-
-  ! Indices for compute domain (no halo)
-  isc = self%isc ; iec = self%iec ; jsc = self%jsc ; jec = self%jec
-
-  ! Extend mask 2 grid point inland TODO:NEED HALO FOR MASK!!!
-  self%shoremask = self%mask2d
-  do i = isc, iec
-     do j = jsc, jec
-        self%shoremask(i,j) = self%mask2d(i,j)
-     end do
-  end do
-
-  ! Get number of valid points
-  ns = int(sum(self%shoremask(isc:iec,jsc:jec)))
-  allocate(self%ij(2,ns))
-
-!!$    ! Save shoreline + ocean grid point
-!!$    cnt = 1
-!!$    do i = isc, iec
-!!$       do j = jsc, jec
-!!$          if (shoretest.gt.0.0d0) then
-!!$             self%ij(1, cnt) = i
-!!$             self%ij(2, cnt) = j
-!!$             cnt = cnt + 1
-!!$          end if
-!!$       end do
-!!$    end do
-
-end subroutine geom_validindex
 
 ! ------------------------------------------------------------------------------
 !> Write geometry to file

@@ -86,11 +86,9 @@ subroutine create_constructor(self, geom, vars)
   type(soca_field),          intent(inout) :: self
   type(soca_geom),  pointer, intent(inout) :: geom
   type(oops_vars),              intent(in) :: vars
-  integer :: ivar
 
   ! Allocate
   call soca_field_alloc(self, geom)
-  !call zeros(self)
 
   ! Associate geometry
   self%geom => geom
@@ -110,12 +108,9 @@ subroutine create_copy(self, rhs_fld)
   ! Construct a field from an other field, lhs_fld=rhs_fld
   type(soca_field), intent(inout) :: self
   type(soca_field), intent(in)    :: rhs_fld
-  integer :: ivar!, unit, nxny(2)
 
   ! Allocate and copy fields
   call soca_field_alloc(self, rhs_fld%geom)
-  call zeros(self)
-  !call copy(self,rhs_fld)
 
   ! Associate geometry
   self%geom => rhs_fld%geom
@@ -132,12 +127,10 @@ end subroutine create_copy
 ! ------------------------------------------------------------------------------
 
 subroutine soca_field_alloc(self, geom)
-  type (soca_field), intent(inout) :: self
-  type(soca_geom),      intent(in) :: geom
+  type (soca_field),     intent(inout) :: self
+  type(soca_geom), pointer, intent(in) :: geom
 
   integer :: isd, ied, jsd, jed, nzo
-  integer :: ncat, km
-  character(7) :: domain_type
 
   ! Short cut to geometry
   isd = geom%isd ; ied = geom%ied
@@ -158,6 +151,7 @@ subroutine soca_field_alloc(self, geom)
   ! Allocate surface fields for cool skin
   call self%ocnsfc%create(geom)
 
+  call zeros(self)
 end subroutine soca_field_alloc
 
 ! ------------------------------------------------------------------------------
@@ -206,32 +200,13 @@ end subroutine zeros
 
 ! ------------------------------------------------------------------------------
 
-subroutine ones(self)
-  type(soca_field), intent(inout) :: self
-
-  call check(self)
-
-  self%socn = 1.0_kind_real
-  self%tocn = 1.0_kind_real
-  self%ssh = 1.0_kind_real
-  self%hocn = 1.0_kind_real
-  self%mld = 1.0_kind_real
-
-  call self%seaice%ones()
-  call self%ocnsfc%ones()
-
-end subroutine ones
-
-! ------------------------------------------------------------------------------
-
 subroutine dirac(self, f_conf)
   type(soca_field),          intent(inout) :: self
   type(fckit_configuration), intent(in)    :: f_conf   !< Configuration
 
   integer :: isc, iec, jsc, jec
-  integer :: ndir,n,size,rank,info
+  integer :: ndir,n
   integer,allocatable :: ixdir(:),iydir(:),izdir(:),ifdir(:)
-  character(len=3) :: idirchar
   type(fckit_mpi_comm) :: f_comm
 
   call check(self)
@@ -283,16 +258,30 @@ end subroutine dirac
 subroutine random(self)
   type(soca_field), intent(inout) :: self
   integer, parameter :: rseed = 1 ! constant for reproducability of tests
+    ! NOTE: random seeds are not quite working the way expected,
+    !  it is only set the first time normal_distribution() is called with a seed
+  integer :: z
 
   call check(self)
 
+  ! set random values
   call normal_distribution(self%tocn,  0.0_kind_real, 1.0_kind_real, rseed)
   call normal_distribution(self%socn,  0.0_kind_real, 1.0_kind_real, rseed)
   call normal_distribution(self%ssh,   0.0_kind_real, 1.0_kind_real, rseed)
+
+  ! mask out land, set to zero
+  self%ssh = self%ssh * self%geom%mask2d
+  do z=1,self%geom%nzo
+     self%tocn(:,:,z) = self%tocn(:,:,z) * self%geom%mask2d
+     self%socn(:,:,z) = self%socn(:,:,z) * self%geom%mask2d
+  end do
+
+  ! update domains
   call mpp_update_domains(self%tocn, self%geom%Domain%mpp_domain)
   call mpp_update_domains(self%socn, self%geom%Domain%mpp_domain)
-  call mpp_update_domains(self%ssh, self%geom%Domain%mpp_domain)
+  call mpp_update_domains(self%ssh,  self%geom%Domain%mpp_domain)
 
+  ! do the same for the non-ocean fields
   call self%ocnsfc%random()
   call self%seaice%random()
 
@@ -303,8 +292,6 @@ end subroutine random
 subroutine copy(self,rhs)
   type(soca_field), intent(inout) :: self
   type(soca_field),    intent(in) :: rhs
-
-  integer :: nf
 
   call check_resolution(self, rhs)
 
@@ -526,7 +513,6 @@ subroutine add_incr(self,rhs)
   type(soca_field), intent(in)    :: rhs
 
   integer, save :: cnt_outer = 1
-  real(kind=kind_real), allocatable :: incr(:,:,:)
   character(len=800) :: filename, str_cnt
 
   call check(self)
@@ -599,7 +585,7 @@ subroutine read_file(fld, f_conf, vdate)
 
   integer, parameter :: max_string_length=800
   character(len=max_string_length) :: ocn_filename
-  character(len=max_string_length) :: ice_filename, basename, incr_filename
+  character(len=max_string_length) :: basename, incr_filename
   character(len=1024) :: buf
   integer :: iread = 0
   integer :: ii
@@ -611,9 +597,10 @@ subroutine read_file(fld, f_conf, vdate)
   integer :: idr_ocean
   integer :: isd, ied, jsd, jed
   integer :: isc, iec, jsc, jec
-  integer :: i, j, k, nl, nz
+  integer :: i, j, nz
   type(remapping_CS)  :: remapCS
   character(len=:), allocatable :: str
+  real(kind=kind_real), allocatable :: h_common_ij(:), hocn_ij(:), tsocn_ij(:), tsocn2_ij(:)
 
   if ( f_conf%has("read_from_file") ) &
       call f_conf%get_or_die("read_from_file", iread)
@@ -704,14 +691,23 @@ subroutine read_file(fld, f_conf, vdate)
 
      ! Remap layers if needed
      if (vert_remap) then
+        allocate(h_common_ij(nz), hocn_ij(nz), tsocn_ij(nz), tsocn2_ij(nz))
         call initialize_remapping(remapCS,'PCM')
         do i = isc, iec
            do j = jsc, jec
               if (fld%geom%mask2d(i,j).eq.1) then
-                 call remapping_core_h(remapCS, nz, h_common(i,j,:), fld%tocn(i,j,:),&
-                      &nz, fld%hocn(i,j,:), fld%tocn(i,j,:))
-                 call remapping_core_h(remapCS, nz, h_common(i,j,:), fld%socn(i,j,:),&
-                      &nz, fld%hocn(i,j,:), fld%socn(i,j,:))
+                 h_common_ij = h_common(i,j,:)
+                 hocn_ij = fld%hocn(i,j,:)
+
+                 tsocn_ij = fld%tocn(i,j,:)
+                 call remapping_core_h(remapCS, nz, h_common_ij, tsocn_ij,&
+                      &nz, hocn_ij, tsocn2_ij)
+                 fld%tocn(i,j,:) = tsocn2_ij
+
+                 tsocn_ij = fld%socn(i,j,:)
+                 call remapping_core_h(remapCS, nz, h_common_ij, tsocn_ij,&
+                      &nz, hocn_ij, tsocn2_ij)
+                 fld%socn(i,j,:) = tsocn2_ij
 
               else
                  fld%tocn(i,j,:) = 0.0_kind_real
@@ -720,6 +716,7 @@ subroutine read_file(fld, f_conf, vdate)
            end do
         end do
         fld%hocn = h_common
+        deallocate(h_common_ij, hocn_ij, tsocn_ij, tsocn2_ij)
      end if
      call end_remapping(remapCS)
 
@@ -781,20 +778,10 @@ subroutine write_file(fld, f_conf, vdate)
   type(datetime),            intent(inout) :: vdate  !< DateTime
 
   integer, parameter :: max_string_length=800    ! Yuk!
-  character(len=max_string_length) :: filename
-  character(len=1024):: buf
-  integer :: ii
 
   call check(fld)
 
-  !call geom_infotofile(fld%geom)
   call soca_write_restart(fld, f_conf, vdate)
-
-!!$    filename = soca_genfilename(f_conf,max_string_length,vdate)
-!!$    WRITE(buf,*) 'field:write_file: writing '//filename
-!!$    call fckit_log%info(buf)
-!!$
-!!$    call soca_fld2file(fld, filename)
 
 end subroutine write_file
 
@@ -805,8 +792,10 @@ subroutine gpnorm(fld, nf, pstat)
   integer,                 intent(in) :: nf
   real(kind=kind_real), intent(inout) :: pstat(3, nf) !> [min, max, average]
 
+  logical :: mask(fld%geom%isc:fld%geom%iec, fld%geom%jsc:fld%geom%jec)
   real(kind=kind_real) :: ocn_count, tmp(3)
-  integer :: jj,  myrank
+  real(kind=kind_real) :: local_ocn_count
+  integer :: jj
   integer :: isc, iec, jsc, jec
   type(fckit_mpi_comm) :: f_comm
 
@@ -819,43 +808,43 @@ subroutine gpnorm(fld, nf, pstat)
   isc = fld%geom%isc ; iec = fld%geom%iec
   jsc = fld%geom%jsc ; jec = fld%geom%jec
 
-  ! get the total number of ocean grid cells
-  tmp(1) = sum(fld%geom%mask2d(isc:iec, jsc:jec))
-  call f_comm%allreduce(tmp(1), ocn_count, fckit_mpi_sum())
+  ! get the number of ocean grid cells
+  local_ocn_count = sum(fld%geom%mask2d(isc:iec, jsc:jec))
+  call f_comm%allreduce(local_ocn_count, ocn_count, fckit_mpi_sum())
+  mask = fld%geom%mask2d(isc:iec,jsc:jec) > 0.0
+
 
   ! calculate global min, max, mean for each field
-  ! Note: The following code makes object oriented programmers cry a little.
-  !  Most of the functions in this module should be rewritten to be
-  !  agnostic to the actual number/names of variables, sigh.
+  ! NOTE: "cicen" category 1 (no ice) is not included in the stats
   do jj=1, fld%nf
     tmp=0.0
 
     ! get local min/max/sum of each variable
     select case(fld%fldnames(jj))
     case("tocn")
-      call fldinfo(fld%tocn(isc:iec,jsc:jec,:), tmp)
+      call fldinfo(fld%tocn(isc:iec,jsc:jec,:), mask, tmp)
     case("socn")
-      call fldinfo(fld%socn(isc:iec,jsc:jec,:), tmp)
+      call fldinfo(fld%socn(isc:iec,jsc:jec,:), mask, tmp)
     case("hocn")
-      call fldinfo(fld%hocn(isc:iec,jsc:jec,:), tmp)
+      call fldinfo(fld%hocn(isc:iec,jsc:jec,:), mask, tmp)
     case("ssh")
-      call fldinfo(fld%ssh(isc:iec,jsc:jec), tmp)
+      call fldinfo(fld%ssh(isc:iec,jsc:jec),    mask, tmp)
     case("hicen")
-       call fldinfo(fld%seaice%hicen(isc:iec,jsc:jec,:), tmp)
+       call fldinfo(fld%seaice%hicen(isc:iec,jsc:jec,:), mask, tmp)
     case("hsnon")
-      call fldinfo(fld%seaice%hsnon(isc:iec,jsc:jec,:), tmp)
+       call fldinfo(fld%seaice%hsnon(isc:iec,jsc:jec,:),  mask, tmp)
     case("cicen")
-      call fldinfo(fld%seaice%cicen(isc:iec,jsc:jec,:), tmp)
+      call fldinfo(fld%seaice%cicen(isc:iec,jsc:jec,2:),  mask, tmp)
     case("sw")
-      call fldinfo(fld%ocnsfc%sw_rad(isc:iec,jsc:jec), tmp)
+      call fldinfo(fld%ocnsfc%sw_rad(isc:iec,jsc:jec),   mask, tmp)
     case("lw")
-      call fldinfo(fld%ocnsfc%lw_rad(isc:iec,jsc:jec), tmp)
+      call fldinfo(fld%ocnsfc%lw_rad(isc:iec,jsc:jec),   mask, tmp)
     case("lhf")
-      call fldinfo(fld%ocnsfc%latent_heat(isc:iec,jsc:jec), tmp)
+      call fldinfo(fld%ocnsfc%latent_heat(isc:iec,jsc:jec), mask, tmp)
     case("shf")
-      call fldinfo(fld%ocnsfc%sens_heat(isc:iec,jsc:jec), tmp)
+      call fldinfo(fld%ocnsfc%sens_heat(isc:iec,jsc:jec),   mask, tmp)
     case("us")
-      call fldinfo(fld%ocnsfc%fric_vel(isc:iec,jsc:jec), tmp)
+      call fldinfo(fld%ocnsfc%fric_vel(isc:iec,jsc:jec),    mask, tmp)
     end select
 
     ! calculate global min/max/mean
@@ -1185,7 +1174,6 @@ subroutine soca_fld2file(fld, filename)
   character(len=800), intent(in) :: filename
 
   integer :: ii
-  character(len=1024):: buf
   character(len=800) :: fname
 
   fname = trim(filename)

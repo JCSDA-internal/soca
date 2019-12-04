@@ -65,10 +65,9 @@ end subroutine c_soca_geo_clone
 
 ! ------------------------------------------------------------------------------
 !> Generate grid
-subroutine c_soca_geo_gridgen(c_key_self, c_conf) bind(c,name='soca_geo_gridgen_f90')
+subroutine c_soca_geo_gridgen(c_key_self) bind(c,name='soca_geo_gridgen_f90')
 
   integer(c_int), intent(inout) :: c_key_self
-  type(c_ptr),       intent(in) :: c_conf
 
   type(soca_geom), pointer :: self
 
@@ -128,19 +127,6 @@ subroutine c_soca_geo_global_grid_size(c_key_self, nx, ny, nzo) bind(c, name='so
   nzo  = self%nzo
 
 end subroutine c_soca_geo_global_grid_size 
-
-! ------------------------------------------------------------------------------
-!> Dump basic geometry info in file and std output
-subroutine c_soca_geo_info(c_key_self) bind(c,name='soca_geo_info_f90')
-
-  integer(c_int), intent(in   ) :: c_key_self
-
-  type(soca_geom), pointer :: self
-
-  call soca_geom_registry%get(c_key_self , self)
-  call self%print()
-
-end subroutine c_soca_geo_info
 
 ! ------------------------------------------------------------------------------
 

@@ -11,15 +11,18 @@ list( APPEND soca_test_input
   testinput/dirac_socahyb_cov.yml
   testinput/enshofx.yml
   testinput/enspert.yml
+  testinput/ensrecenter.yml
   testinput/ensvariance.yml
   testinput/forecast_identity.yml
   testinput/forecast_identity_cice.yml
   testinput/forecast_mom6.yml
   testinput/geometry.yml
   testinput/geometry_iterator.yml
+  testinput/geometryatm.yml
   testinput/gridgen.yml
   testinput/hofx.yml
   testinput/hofx3d.yml
+  testinput/hofx3dcrtm.yml
   testinput/increment.yml
   testinput/linearmodel.yml
   testinput/marine2ioda.yml
@@ -51,12 +54,14 @@ list( APPEND soca_test_ref
   testref/dirac_socahyb_cov.test
   testref/enshofx.test
   testref/enspert.test
+  testref/ensrecenter.test
   testref/ensvariance.test
   testref/forecast_identity_cice.test
   testref/forecast_identity.test
   testref/forecast_mom6.test
   testref/hofx.test
   testref/hofx3d.test
+  testref/hofx3dcrtm.test
   testref/parameters_bump_cov_lct.test
 )
 
@@ -90,6 +95,8 @@ list( APPEND soca_obs
   Data/Obs/prof.nc
   Data/Obs/sss.nc
   Data/Obs/sst.nc
+  Data/Obs/gmi_gpm_geoval.nc
+  Data/Obs/gmi_gpm_obs.nc
 )
 
 # Create Data directory for test input/output and symlink all files
@@ -127,7 +134,6 @@ ecbuild_add_resources( TARGET   soca_test_scripts
                        SOURCES_PACK
                        ${soca_test_input}
                        )
-
 # Link to SOCA obs
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/Data)
 foreach(FILENAME ${soca_obs})
@@ -137,8 +143,48 @@ foreach(FILENAME ${soca_obs})
            ${CMAKE_CURRENT_BINARY_DIR}/Data/${filename} )
 endforeach(FILENAME)
 
+
+# Link CRTM coeff
+if( ${CRTM_FOUND} )
+
+  # determine where to look for coefficients
+  set( CRTM_FIX_DIR_DOCSTRING
+      "Path to the CRTM fix directory, needs to be set if CRTM was not built as part of this bundle.")
+  set( CRTM_FIX_DIR NOTFOUND CACHE PATH ${CRTM_FIX_DIR_DOCSTRING})
+  if( NOT CRTM_FIX_DIR AND EXISTS ${crtm_SOURCE_DIR}/fix)
+    set( CRTM_FIX_DIR ${crtm_SOURCE_DIR}/fix CACHE PATH ${CRTM_FIX_DIR_DOCSTRING} FORCE)
+  elseif( NOT CRTM_FIX_DIR )
+    message(FATAL_ERROR
+      "CRTM was not built as part of the bundle, CRTM_FIX_DIR must be set")
+  endif()
+
+  # the coefficient files needed
+  list( APPEND crtm_coef
+    SpcCoeff/Little_Endian/gmi_gpm.SpcCoeff.bin
+    TauCoeff/ODPS/Little_Endian/gmi_gpm.TauCoeff.bin
+    CloudCoeff/Little_Endian/CloudCoeff.bin
+    AerosolCoeff/Little_Endian/AerosolCoeff.bin
+    EmisCoeff/MW_Water/Little_Endian/FASTEM6.MWwater.EmisCoeff.bin
+  )
+
+  # link the files
+  foreach(FILENAME ${crtm_coef})
+       get_filename_component(filename ${FILENAME} NAME )
+       execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
+             ${CRTM_FIX_DIR}/${FILENAME}
+             ${CMAKE_CURRENT_BINARY_DIR}/Data/${filename} )
+  endforeach(FILENAME)
+endif()
+
+
 # Create directory for BUMP output
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bump)
+
+# find compare.py, if not found assume it will be built by oops in this bundle
+find_file(COMPARE_BIN compare.py HINTS ${OOPS_PATH}/bin)
+if(NOT COMPARE_BIN)
+  set(COMPARE_BIN ${CMAKE_BINARY_DIR}/bin/compare.py)
+endif()
 
 
 #####################################################################
@@ -241,7 +287,7 @@ function(soca_add_test)
   IF(NOT ARG_NOCOMPARE)
     ecbuild_add_test( TARGET  test_soca_${ARG_NAME}_compare
                       TYPE    SCRIPT
-                      COMMAND "${CMAKE_BINARY_DIR}/bin/compare.py"
+                      COMMAND "${COMPARE_BIN}"
                       ARGS    testoutput/${ARG_NAME}.log
                               testref/${ARG_NAME}.test
                               ${ARG_TOL}
@@ -287,7 +333,6 @@ soca_add_test( NAME static_socaerror_init
 # ensemble generation
 soca_add_test( NAME enspert
                EXE  soca_enspert.x
-               TOL 7.0e-4 0
                NOTRAPFPE
                TEST_DEPENDS test_soca_gridgen
                             test_soca_static_socaerror_init)
@@ -309,6 +354,11 @@ soca_add_test( NAME geometry_iterator
                SRC  TestGeometryIterator.cc
                NOTRAPFPE
                TEST_DEPENDS test_soca_gridgen )
+
+soca_add_test( NAME geometryatm
+               SRC  TestGeometry.cc
+               TEST_DEPENDS test_soca_gridgen )
+
 
 soca_add_test( NAME state
                SRC  TestState.cc
@@ -372,13 +422,17 @@ soca_add_test( NAME varchange_vertconv
 #-------------------------------------------------------------------------------
 soca_add_test( NAME ensvariance
                EXE  soca_ensvariance.x
-               TOL  3.0e-4 0
                NOTRAPFPE
                TEST_DEPENDS test_soca_enspert )
 
 soca_add_test( NAME parameters_bump_loc
                EXE  soca_parameters.x
                NOCOMPARE
+               TEST_DEPENDS test_soca_enspert )
+
+soca_add_test( NAME ensrecenter
+               EXE  soca_ensrecenter.x
+               NOTRAPFPE
                TEST_DEPENDS test_soca_enspert )
 
 # TODO the next couple of tests are a little slow.
@@ -399,18 +453,15 @@ soca_add_test( NAME parameters_bump_loc
 
 soca_add_test( NAME dirac_soca_cov
                EXE  soca_dirac.x
-               TOL  8.0e-3 0
                TEST_DEPENDS test_soca_static_socaerror_init)
 
 soca_add_test( NAME dirac_socahyb_cov
                EXE  soca_dirac.x
-               TOL  5.0e-3 0
                TEST_DEPENDS test_soca_parameters_bump_loc)
 
 soca_add_test( NAME dirac_horizfilt
                EXE  soca_dirac.x
                NOTRAPFPE
-               TOL  5.0e-3 0
                TEST_DEPENDS test_soca_static_socaerror_init)
 
 #ecbuild_add_test( TARGET  test_soca_localization
@@ -430,6 +481,12 @@ soca_add_test( NAME hofx3d
                EXE  soca_hofx3d.x
                TEST_DEPENDS test_soca_gridgen )
 
+if( ${CRTM_FOUND} )
+ soca_add_test( NAME hofx3dcrtm
+                EXE  soca_hofx3d.x
+                TEST_DEPENDS test_soca_gridgen )
+endif()
+
 soca_add_test( NAME hofx
                EXE  soca_hofx.x
                NOTRAPFPE
@@ -447,31 +504,30 @@ soca_add_test( NAME enshofx
 # variational methods
 soca_add_test( NAME 3dvar_soca
                EXE  soca_3dvar.x
-               TOL  2.3e-4 0
+               TOL  1e-9 0
                NOTRAPFPE
                TEST_DEPENDS test_soca_static_socaerror_init )
 
 soca_add_test( NAME 3dvar_godas
                EXE  soca_3dvar.x
-               TOL  2e-2 0
+               TOL  1e-8 0
                TEST_DEPENDS test_soca_static_socaerror_init )
 
 soca_add_test( NAME 3dvarfgat
                EXE  soca_3dvar.x
-               TOL  2e-4 0
+               TOL  1e-6 0
                NOTRAPFPE
                TEST_DEPENDS test_soca_static_socaerror_init )
 
 soca_add_test( NAME 3dhyb
                EXE  soca_3dvar.x
-               TOL  5e-4 0
+               TOL  1e-8 0
                NOTRAPFPE
                TEST_DEPENDS test_soca_static_socaerror_init
                             test_soca_parameters_bump_loc )
 
 soca_add_test( NAME 3dhybfgat
                EXE  soca_3dvar.x
-               TOL  4e-3 0
                NOTRAPFPE
                TEST_DEPENDS test_soca_static_socaerror_init
                             test_soca_parameters_bump_loc )
@@ -485,6 +541,5 @@ soca_add_test( NAME 3dhybfgat
 # restart checkpointing
 soca_add_test( NAME checkpointmodel
                EXE  soca_checkpoint_model.x
-               TOL  2e-6 0
                NOTRAPFPE
                TEST_DEPENDS test_soca_3dvar_godas)

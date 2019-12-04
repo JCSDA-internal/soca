@@ -38,12 +38,8 @@ subroutine soca_bkgerrfilt_setup(f_conf, self, bkg)
   type(soca_field), target,     intent(in)    :: bkg
 
   integer :: isc, iec, jsc, jec, i, j, k, nl
-  real(kind=kind_real), allocatable :: dvdz(:), v(:), h(:)
-  real(kind=kind_real) :: dt, ds, t0, s0, p, lon, lat
-  real(kind=kind_real) :: detas, efold
-  type(datetime) :: vdate
+  real(kind=kind_real) :: efold
   character(len=800) :: fname = 'soca_bkgerrfilt.nc'
-  logical :: read_from_file = .false.
 
   ! Get number of ocean levels
   nl = size(bkg%hocn,3)

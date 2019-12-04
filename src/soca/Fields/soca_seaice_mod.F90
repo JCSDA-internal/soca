@@ -12,6 +12,7 @@ use fms_io_mod, only: fms_io_init, fms_io_exit, &
 use fms_mod, only: read_data
 use kinds, only: kind_real
 use datetime_mod, only: datetime
+use mpp_domains_mod, only : mpp_update_domains
 use random_mod, only: normal_distribution
 use soca_geom_mod, only: soca_geom
 use soca_fieldsutils_mod, only: soca_genfilename
@@ -22,22 +23,27 @@ private
 public :: soca_seaice_type
 
 type :: soca_seaice_type
+   type(soca_geom),      pointer     :: geom
+
+   ! Sea-ice state  variables
    real(kind=kind_real), allocatable :: cicen(:,:,:) !< Ice Fraction
    real(kind=kind_real), allocatable :: hicen(:,:,:) !< Ice thickness
    real(kind=kind_real), allocatable :: hsnon(:,:,:) !< Snow thickness
    real(kind=kind_real), allocatable :: vicen(:,:,:) !< Ice volume
    real(kind=kind_real), allocatable :: vsnon(:,:,:) !< Snow volume
+
    integer :: isd, ied, jsd, jed                 !< Data domain indices
+   integer :: isc, iec, jsc, jec                 !< Compute domain indices
    integer :: ncat                               !< Number of categories
+
    ! TODO: Get densities of ice and snow from config
    real(kind=kind_real) :: soca_rho_ice  = 905.0 !< [kg/m3]
    real(kind=kind_real) :: soca_rho_snow = 330.0 !< [kg/m3]
+
  contains
    procedure :: create => soca_seaice_create
    procedure :: delete => soca_seaice_delete
    procedure :: zeros => soca_seaice_zeros
-   procedure :: ones => soca_seaice_ones
-   procedure :: abs => soca_seaice_abs
    procedure :: random => soca_seaice_random
    procedure :: copy => soca_seaice_copy
    procedure :: add => soca_seaice_add
@@ -59,15 +65,24 @@ contains
 ! ------------------------------------------------------------------------------
 subroutine soca_seaice_create(self, geom)
   class(soca_seaice_type), intent(inout) :: self
-  type(soca_geom),            intent(in) :: geom
+  type(soca_geom), pointer,   intent(in) :: geom
 
   integer :: isd, ied, jsd, jed, ncat
+
+  ! Associate geometry
+  self%geom => geom
 
   ! Indices for data domain (with halo)
   isd = geom%isd ; self%isd = isd
   ied = geom%ied ; self%ied = ied
   jsd = geom%jsd ; self%jsd = jsd
   jed = geom%jed ; self%jed = jed
+
+  ! Indices for compute domain (no halo)
+  self%isc = geom%isc
+  self%iec = geom%iec
+  self%jsc = geom%jsc
+  self%jec = geom%jec
 
   ! Get number of categories
   ncat = geom%ncat ; self%ncat = ncat
@@ -105,35 +120,27 @@ subroutine soca_seaice_zeros(self)
 end subroutine soca_seaice_zeros
 
 ! ------------------------------------------------------------------------------
-subroutine soca_seaice_ones(self)
-  class(soca_seaice_type), intent(inout) :: self
-
-  self%cicen = 1.0_kind_real
-  self%hicen = 1.0_kind_real
-  self%hsnon = 1.0_kind_real
-
-end subroutine soca_seaice_ones
-
-! ------------------------------------------------------------------------------
-subroutine soca_seaice_abs(self)
-  class(soca_seaice_type), intent(inout) :: self
-
-  self%cicen = abs(self%cicen)
-  self%hicen = abs(self%hicen)
-  self%hsnon = abs(self%hsnon)
-
-end subroutine soca_seaice_abs
-
-! ------------------------------------------------------------------------------
 subroutine soca_seaice_random(self)
   class(soca_seaice_type), intent(inout) :: self
+  integer :: i
+  integer, parameter :: rseed = 1
 
-  integer :: rseed = 1
-
+  ! set random values
   call normal_distribution(self%cicen, 0.0_kind_real, 1.0_kind_real, rseed)
   call normal_distribution(self%hicen, 0.0_kind_real, 1.0_kind_real, rseed)
   call normal_distribution(self%hsnon, 0.0_kind_real, 1.0_kind_real, rseed)
 
+  ! mask out land, set to zero
+  do i=1, self%geom%ice_column%ncat+1
+     self%cicen(:,:,i) = self%cicen(:,:,i) * self%geom%mask2d
+  end do
+  do i=1, self%geom%ice_column%ncat
+     self%hicen(:,:,i) = self%hicen(:,:,i) * self%geom%mask2d
+     self%hsnon(:,:,i) = self%hsnon(:,:,i) * self%geom%mask2d
+  end do
+
+  ! update domains
+  ! TODO: if/when ever needed
 end subroutine soca_seaice_random
 
 ! ------------------------------------------------------------------------------
@@ -141,6 +148,10 @@ subroutine soca_seaice_copy(self, rhs)
   class(soca_seaice_type), intent(inout) :: self
   class(soca_seaice_type),    intent(in) :: rhs
 
+  ! Associate geometry
+  self%geom => rhs%geom
+
+  ! Copy fields
   self%cicen = rhs%cicen
   self%hicen = rhs%hicen
   self%hsnon = rhs%hsnon
@@ -170,24 +181,31 @@ subroutine soca_seaice_add_incr(self, incr)
   real(kind=kind_real) :: min_ice = 1e-6_kind_real
   integer :: k
   integer :: isd, ied, jsd, jed, ncat
+  integer :: isc, iec, jsc, jec
 
   ! Short cut to domain indices
   isd = self%isd
   ied = self%ied
   jsd = self%jsd
   jed = self%jed
+
+  isc = self%isc
+  iec = self%iec
+  jsc = self%jsc
+  jec = self%jec
+
   ncat = self%ncat
 
   ! Allocate memory for temporary arrays
-  allocate(aice_bkg(isd:ied,jsd:jed))
-  allocate(aice_ana(isd:ied,jsd:jed))
-  allocate(aice_incr(isd:ied,jsd:jed))
-  allocate(alpha(isd:ied,jsd:jed))
+  allocate(aice_bkg(isc:iec,jsc:jec));  aice_bkg  = 0.0_kind_real
+  allocate(aice_ana(isc:iec,jsc:jec));  aice_ana  = 0.0_kind_real
+  allocate(aice_incr(isc:iec,jsc:jec)); aice_incr = 0.0_kind_real
+  allocate(alpha(isc:iec,jsc:jec));     alpha = 0.0_kind_real
 
   ! Allocate ice and snow volume
   if (.not.(allocated(self%vicen))) then
-     allocate(self%vicen(isd:ied,jsd:jed,1:ncat))
-     allocate(self%vsnon(isd:ied,jsd:jed,1:ncat))
+     allocate(self%vicen(isd:ied,jsd:jed,1:ncat)); self%vicen = 0.0_kind_real
+     allocate(self%vsnon(isd:ied,jsd:jed,1:ncat)); self%vsnon = 0.0_kind_real
   end if
 
   ! Compute ice and snow volume
@@ -195,8 +213,8 @@ subroutine soca_seaice_add_incr(self, incr)
   self%vsnon = self%hsnon * self%cicen(:,:,2:)
 
   ! Initialize aggregate fields
-  aice_bkg  = sum(self%cicen(:,:,2:), dim=3)
-  aice_incr = sum(incr%cicen(:,:,2:), dim=3)
+  aice_bkg  = sum(self%cicen(isc:iec,jsc:jec,2:ncat+1), dim=3)
+  aice_incr = sum(incr%cicen(isc:iec,jsc:jec,2:ncat+1), dim=3)
   aice_ana  = aice_bkg + aice_incr
 
   ! Fix out of bound values in aggregate ice fraction analysis
@@ -232,9 +250,9 @@ subroutine soca_seaice_add_incr(self, incr)
 
   ! "Add" fraction increment and update volumes accordingly
   do k = 1, self%ncat
-     self%cicen(:,:,k+1) = alpha * self%cicen(:,:,k+1)
-     self%vicen(:,:,k) = alpha * self%vicen(:,:,k)
-     self%vsnon(:,:,k) = alpha * self%vsnon(:,:,k)
+     self%cicen(isc:iec,jsc:jec,k+1) = alpha * self%cicen(isc:iec,jsc:jec,k+1)
+     self%vicen(isc:iec,jsc:jec,k) = alpha * self%vicen(isc:iec,jsc:jec,k)
+     self%vsnon(isc:iec,jsc:jec,k) = alpha * self%vsnon(isc:iec,jsc:jec,k)
   end do
 
   ! Clean-up memory
@@ -331,7 +349,7 @@ subroutine soca_seaice_read_rst(self, f_conf, geom, fldnames)
      call self%zeros()
      return
   end if
-
+  call self%zeros()
   select case(seaice_model)
   case('sis2')
      call fms_io_init()
@@ -393,6 +411,11 @@ subroutine soca_seaice_read_rst(self, f_conf, geom, fldnames)
   case default
      call abor1_ftn("soca_seaice_mod: Reading for seaice model "//trim(seaice_model)//" not implemented")
   end select
+
+  ! Update halo
+  call mpp_update_domains(self%cicen, geom%Domain%mpp_domain)
+  call mpp_update_domains(self%hicen, geom%Domain%mpp_domain)
+  call mpp_update_domains(self%hsnon, geom%Domain%mpp_domain)
 
   if (allocated(str)) deallocate(str)
 

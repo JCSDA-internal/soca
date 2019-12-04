@@ -13,6 +13,7 @@
 #include <vector>
 
 #include "eckit/mpi/Comm.h"
+#include "eckit/config/LocalConfiguration.h"
 
 #include "oops/util/ObjectCounter.h"
 #include "oops/util/Printable.h"
@@ -50,12 +51,20 @@ namespace soca {
       const int& toFortran() const {return keyGeom_;}
       void gridgen(const eckit::Configuration &) const;
       const eckit::mpi::Comm & getComm() const {return comm_;}
+      eckit::LocalConfiguration  getAtmConf() const {return atmconf_;}
+      bool  getAtmInit() const {return initatm_;}
+      bool initAtm(const eckit::Configuration & conf) const
+      {
+        return conf.getBool("notocean.init", false);
+      }
 
    private:
       Geometry & operator=(const Geometry &);
       void print(std::ostream &) const;
       int keyGeom_;
       const eckit::mpi::Comm & comm_;
+      eckit::LocalConfiguration atmconf_;
+      bool initatm_;
   };
   // -----------------------------------------------------------------------------
 

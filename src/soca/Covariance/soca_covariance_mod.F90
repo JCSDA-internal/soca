@@ -32,7 +32,6 @@ end type soca_pert
 type :: soca_cov
    type(bump_type), allocatable :: ocean_conv(:)  !< Ocean convolution op from bump
    type(bump_type), allocatable :: seaice_conv(:) !< Seaice convolution op from bump
-   integer,         allocatable :: seaice_mask(:,:)
    type(soca_field),    pointer :: bkg            !< Background field (or first guess)
    logical                      :: initialized = .false.
    type(soca_pert)              :: pert_scale
@@ -64,7 +63,7 @@ subroutine soca_cov_setup(self, f_conf, geom, bkg, vars)
   type(oops_vars),           intent(in) :: vars   !< List of variables
 
   character(len=3)  :: domain
-  integer :: isc, iec, jsc, jec, i, j, ivar
+  integer :: isc, iec, jsc, jec, ivar
   logical :: init_seaice, init_ocean
 
   ! Setup list of variables to apply B on
@@ -103,19 +102,6 @@ subroutine soca_cov_setup(self, f_conf, geom, bkg, vars)
   ! Indices for compute domain (no halo)
   isc = bkg%geom%isc ; iec = bkg%geom%iec
   jsc = bkg%geom%jsc ; jec = bkg%geom%jec
-
-  ! Define seaice mask from background seaice fraction
-  allocate(self%seaice_mask(isc:iec, jsc:jec))
-  self%seaice_mask = 0
-  do i = isc, iec
-     do j = jsc, jec
-        if (sum(bkg%seaice%cicen(i, j, 2:), 1) * bkg%geom%mask2d(i, j) .gt. 0.0) then
-           self%seaice_mask(i, j) = 1
-        else
-           self%seaice_mask(i, j) = 0
-        end if
-     end do
-  end do
 
   ! Determine what convolution op to initialize
   init_seaice = .false.
@@ -165,7 +151,6 @@ subroutine soca_cov_delete(self)
   deallocate(self%ocean_conv)
   deallocate(self%seaice_conv)
   nullify(self%bkg)
-  deallocate(self%seaice_mask)
   self%initialized = .false.
 
 end subroutine soca_cov_delete
@@ -286,8 +271,7 @@ subroutine soca_bump_correlation(self, horiz_convol, geom, f_conf, domain)
   character(len=3),          intent(in) :: domain
 
   !Grid stuff
-  integer :: isc, iec, jsc, jec, jjj, jz, il, ib
-  character(len=1024) :: subr = 'model_write'
+  integer :: isc, iec, jsc, jec, jjj, jz
 
   !bump stuff
   integer :: nc0a, nl0, nv, nts
@@ -321,12 +305,7 @@ subroutine soca_bump_correlation(self, horiz_convol, geom, f_conf, domain)
 
   ! Setup land or ice mask
   jz = 1
-  if (domain.eq.'ocn') then
-     imask(1:nc0a,jz) = int(reshape( geom%mask2d(isc:iec, jsc:jec), (/nc0a/)))
-  end if
-  if (domain.eq.'ice') then
-     imask(1:nc0a,jz) = int(reshape( self%seaice_mask(isc:iec, jsc:jec), (/nc0a/)))
-  end if
+  imask(1:nc0a,jz) = int(reshape( geom%mask2d(isc:iec, jsc:jec), (/nc0a/)))
 
   lmask = .false.
   where (imask.eq.1)

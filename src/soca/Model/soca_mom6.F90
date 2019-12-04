@@ -145,7 +145,6 @@ subroutine soca_mom6_init(mom6_config, partial_init)
   integer :: date_init(6)=0                ! The start date of the whole simulation.
   integer :: years=0, months=0, days=0     ! These may determine the segment run
   integer :: hours=0, minutes=0, seconds=0 ! length, if read from a namelist.
-  integer :: yr, mon, day, hr, mins, sec   ! Temp variables for writing the date.
   type(param_file_type) :: param_file      ! The structure indicating the file(s)
   ! containing all run-time parameters.
   character(len=16) :: calendar = 'julian'
@@ -156,8 +155,6 @@ subroutine soca_mom6_init(mom6_config, partial_init)
   type(tracer_flow_control_CS), pointer :: tracer_flow_CSp => NULL()
   type(diag_ctrl), pointer :: diag => NULL() !< Diagnostic structure
   character(len=4), parameter :: vers_num = 'v2.0'
-  ! This include declares and sets the variable "version".
-#include "version_variable.h"
   character(len=40)  :: mod_name = "soca_mom6" ! This module's name.
   integer :: ocean_nthreads = 1
   integer :: ncores_per_node = 1
