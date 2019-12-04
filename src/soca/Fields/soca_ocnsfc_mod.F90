@@ -112,17 +112,28 @@ subroutine soca_ocnsfc_abs(self)
 end subroutine soca_ocnsfc_abs
 
 ! ------------------------------------------------------------------------------
-subroutine soca_ocnsfc_random(self)
+subroutine soca_ocnsfc_random(self, fields)
   class(soca_ocnsfc_type), intent(inout) :: self
+  character(len=5), allocatable, intent(in) :: fields(:)
 
+  integer :: ff
   integer :: rseed = 1
 
   ! set random values
-  call normal_distribution(self%sw_rad, 0.0_kind_real, 1.0_kind_real, rseed)
-  call normal_distribution(self%lw_rad, 0.0_kind_real, 1.0_kind_real, rseed)
-  call normal_distribution(self%latent_heat, 0.0_kind_real, 1.0_kind_real, rseed)
-  call normal_distribution(self%sens_heat, 0.0_kind_real, 1.0_kind_real, rseed)
-  call normal_distribution(self%fric_vel, 0.0_kind_real, 1.0_kind_real, rseed)
+  do ff = 1, size(fields)
+    select case(fields(ff))
+    case("sw")
+      call normal_distribution(self%sw_rad, 0.0_kind_real, 1.0_kind_real, rseed)
+    case("lw")
+      call normal_distribution(self%lw_rad, 0.0_kind_real, 1.0_kind_real, rseed)
+    case("lhf")
+      call normal_distribution(self%latent_heat, 0.0_kind_real, 1.0_kind_real, rseed)
+    case("shf")
+      call normal_distribution(self%sens_heat, 0.0_kind_real, 1.0_kind_real, rseed)
+    case("us")
+      call normal_distribution(self%fric_vel, 0.0_kind_real, 1.0_kind_real, rseed)
+    end select
+  end do
 
   ! mask out land, set to zero
   self%sw_rad = self%sw_rad * self%geom%mask2d
@@ -131,6 +142,8 @@ subroutine soca_ocnsfc_random(self)
   self%sens_heat = self%sens_heat * self%geom%mask2d
   self%fric_vel = self%fric_vel * self%geom%mask2d
 
+  ! update domains
+  ! TODO: if/when ever needed
 end subroutine soca_ocnsfc_random
 
 ! ------------------------------------------------------------------------------
