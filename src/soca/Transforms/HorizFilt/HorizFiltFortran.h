@@ -9,6 +9,7 @@
 #define SOCA_TRANSFORMS_HORIZFILT_HORIZFILTFORTRAN_H_
 
 #include "soca/Fortran.h"
+#include "oops/base/Variables.h"
 
 // Forward declarations
 namespace eckit {
@@ -22,7 +23,7 @@ namespace soca {
                                   const eckit::Configuration * const *,
                                   const F90geom &,
                                   const F90flds &,
-                                  const eckit::Configuration * const *);
+                                  const oops::Variables &);
     void soca_horizfilt_delete_f90(F90balopmat &);
     void soca_horizfilt_mult_f90(const F90balopmat &,
                                  const F90flds &,
