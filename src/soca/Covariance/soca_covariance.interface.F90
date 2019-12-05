@@ -7,7 +7,7 @@ module soca_covariance_mod_c
 
 use iso_c_binding
 use fckit_configuration_module, only: fckit_configuration
-use variables_mod, only: oops_vars, oops_vars_create
+use oops_variables_mod
 use soca_geom_mod, only : soca_geom
 use soca_geom_mod_c, only : soca_geom_registry
 use soca_fields_mod, only: soca_field, copy
@@ -44,19 +44,19 @@ subroutine c_soca_b_setup(c_key_self, c_conf, c_key_geom, c_key_bkg, c_vars) &
   type(c_ptr),       intent(in) :: c_conf       !< The configuration
   integer(c_int),    intent(in) :: c_key_geom   !< Geometry
   integer(c_int),    intent(in) :: c_key_bkg    !< Background
-  type(c_ptr),       intent(in) :: c_vars       !< List of variables
+  type(c_ptr),value, intent(in) :: c_vars       !< List of variables
 
   type(soca_cov),   pointer :: self
   type(soca_geom),  pointer :: geom
   type(soca_field), pointer :: bkg
-  type(oops_vars)           :: vars
+  type(oops_variables)      :: vars
 
   call soca_geom_registry%get(c_key_geom, geom)
   call soca_cov_registry%init()
   call soca_cov_registry%add(c_key_self)
   call soca_cov_registry%get(c_key_self, self)
   call soca_field_registry%get(c_key_bkg,bkg)
-  call oops_vars_create(fckit_configuration(c_vars), vars)
+  vars = oops_variables(c_vars)
   call soca_cov_setup(self, fckit_configuration(c_conf), geom, bkg, vars)
 
 end subroutine c_soca_b_setup

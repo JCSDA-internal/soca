@@ -11,7 +11,7 @@ module soca_interpfields_mod
 use kinds, only: kind_real
 use fckit_log_module, only : fckit_log
 use fckit_mpi_module, only: fckit_mpi_comm, fckit_mpi_sum
-use variables_mod, only: oops_vars
+use oops_variables_mod
 use ufo_geovals_mod, only: ufo_geovals
 use ufo_locs_mod, only: ufo_locs
 use soca_getvaltraj_mod, only: soca_getvaltraj
@@ -58,7 +58,7 @@ end subroutine initialize_interph
 subroutine getvalues_traj(fld, locs, vars, geoval, traj, interp_type)
   type(soca_field),      intent(inout) :: fld
   type(ufo_locs),           intent(in) :: locs
-  type(oops_vars),          intent(in) :: vars
+  type(oops_variables),     intent(in) :: vars
   type(ufo_geovals),     intent(inout) :: geoval
   type(soca_getvaltraj), intent(inout) :: traj
   character(2),   optional, intent(in) :: interp_type
@@ -103,7 +103,7 @@ end subroutine getvalues_traj
 subroutine getvalues_notraj(fld, locs, vars, geoval)
   type(soca_field),   intent(inout) :: fld
   type(ufo_locs),        intent(in) :: locs
-  type(oops_vars),       intent(in) :: vars
+  type(oops_variables),  intent(in) :: vars
   type(ufo_geovals),  intent(inout) :: geoval
 
   type(soca_bumpinterp2d) :: horiz_interp
@@ -122,7 +122,7 @@ end subroutine getvalues_notraj
 subroutine interp(fld, locs, vars, geoval, horiz_interp)
   type(soca_field),             intent(inout) :: fld
   type(ufo_locs),                  intent(in) :: locs
-  type(oops_vars),                 intent(in) :: vars
+  type(oops_variables),            intent(in) :: vars
   type(ufo_geovals),            intent(inout) :: geoval
   type(soca_bumpinterp2d),      intent(inout) :: horiz_interp
 
@@ -140,7 +140,7 @@ subroutine interp(fld, locs, vars, geoval, horiz_interp)
   jsc = fld%geom%jsc ; jec = fld%geom%jec
 
   ! Loop through ufo vars
-  do ivar = 1, vars%nv
+  do ivar = 1, vars%nvars()
      ! Set number of levels/categories (nval)
      call nlev_from_ufovar(fld, vars, ivar, nval)
      if (nval==0) cycle
@@ -160,7 +160,7 @@ subroutine interp(fld, locs, vars, geoval, horiz_interp)
      allocate(fld3d(isc:iec,jsc:jec,1:nval))
 
      ! Extract fld3d from field
-     select case (trim(vars%fldnames(ivar)))
+     select case (trim(vars%variable(ivar)))
 
      case ("sea_ice_category_area_fraction")
         fld3d = fld%seaice%cicen(isc:iec,jsc:jec,2:nval+1)
@@ -238,7 +238,7 @@ end subroutine interp
 subroutine getvalues_ad(incr, locs, vars, geoval, traj)
   type(soca_field),              intent(inout) :: incr
   type(ufo_locs),                   intent(in) :: locs
-  type(oops_vars),                  intent(in) :: vars
+  type(oops_variables),             intent(in) :: vars
   type(ufo_geovals),             intent(inout) :: geoval
   type(soca_getvaltraj), target, intent(inout) :: traj
 
@@ -257,7 +257,7 @@ subroutine getvalues_ad(incr, locs, vars, geoval, traj)
 
   allocate(gom_window_ival(locs%nlocs))
 
-  do ivar = 1, vars%nv
+  do ivar = 1, vars%nvars()
      ! Set number of levels/categories (nval)
      call nlev_from_ufovar(incr, vars, ivar, nval)
 
@@ -277,7 +277,7 @@ subroutine getvalues_ad(incr, locs, vars, geoval, traj)
      end do
 
      ! Copy incr3d into field
-     select case (trim(vars%fldnames(ivar)))
+     select case (trim(vars%variable(ivar)))
      case ("sea_ice_category_area_fraction")
         incr%seaice%cicen(isc:iec,jsc:jec,2:nval+1) = incr%seaice%cicen(isc:iec,jsc:jec,2:nval+1) +&
              &incr3d
@@ -349,13 +349,13 @@ end subroutine getvalues_ad
 ! ------------------------------------------------------------------------------
 !> Get 3rd dimension of fld
 subroutine nlev_from_ufovar(fld, vars, index_vars, nval)
-  type(soca_field), intent(in) :: fld
-  type(oops_vars),  intent(in) :: vars
-  integer,          intent(in) :: index_vars
-  integer,         intent(out) :: nval
+  type(soca_field),      intent(in) :: fld
+  type(oops_variables),  intent(in) :: vars
+  integer,               intent(in) :: index_vars
+  integer,              intent(out) :: nval
 
   ! Get number of levels or categories (nval)
-  select case (trim(vars%fldnames(index_vars)))
+  select case (trim(vars%variable(index_vars)))
   case ("sea_ice_category_area_fraction", &
         "sea_ice_category_thickness")
      nval = fld%geom%ncat

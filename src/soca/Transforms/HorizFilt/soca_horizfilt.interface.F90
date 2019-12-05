@@ -11,7 +11,7 @@ module c_soca_horizfilt_mod
   use soca_geom_mod, only : soca_geom
   use soca_fields_mod_c, only: soca_field_registry
   use soca_fields_mod
-  use variables_mod
+  use oops_variables_mod
 
   implicit none
 
@@ -46,19 +46,19 @@ contains
     type(c_ptr),       intent(in) :: c_conf       !< The configuration
     integer(c_int),    intent(in) :: c_key_geom   !< Geometry
     integer(c_int),    intent(in) :: c_key_traj   !< Trajectory
-    type(c_ptr),       intent(in) :: c_vars       !< List of variables
+    type(c_ptr),value, intent(in) :: c_vars       !< List of variables
 
     type(soca_horizfilt_type), pointer :: self
     type(soca_geom),           pointer :: geom
     type(soca_field),          pointer :: traj
-    type(oops_vars)                    :: vars
+    type(oops_variables)               :: vars
 
     call soca_geom_registry%get(c_key_geom, geom)
     call soca_field_registry%get(c_key_traj, traj)
     call soca_horizfilt_registry%init()
     call soca_horizfilt_registry%add(c_key_self)
     call soca_horizfilt_registry%get(c_key_self, self)
-    call oops_vars_create(fckit_configuration(c_vars), vars)
+    vars = oops_variables(c_vars)
     call soca_horizfilt_setup(self, fckit_configuration(c_conf), geom, traj, vars)
 
   end subroutine c_soca_horizfilt_setup
