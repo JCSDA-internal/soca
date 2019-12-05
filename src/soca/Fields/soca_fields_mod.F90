@@ -17,7 +17,7 @@ use unstructured_grid_mod, only: unstructured_grid, &
 use datetime_mod, only: datetime, datetime_set
 use duration_mod, only: duration
 use kinds, only: kind_real
-use variables_mod, only: oops_vars
+use oops_variables_mod
 use fms_mod,    only: read_data, write_data, set_domain
 use fms_io_mod, only: fms_io_init, fms_io_exit, &
                       register_restart_field, restart_file_type, &
@@ -83,7 +83,9 @@ contains
 subroutine create_constructor(self, geom, vars)
   type(soca_field),          intent(inout) :: self
   type(soca_geom),  pointer, intent(inout) :: geom
-  type(oops_vars),              intent(in) :: vars
+  type(oops_variables),         intent(in) :: vars
+
+  integer :: i
 
   ! Allocate
   call soca_field_alloc(self, geom)
@@ -92,9 +94,11 @@ subroutine create_constructor(self, geom, vars)
   self%geom => geom
 
   ! Set fields numbers and names
-  self%nf   = vars%nv
+  self%nf   = vars%nvars()
   allocate(self%fldnames(self%nf))
-  self%fldnames(:)=vars%fldnames(:)
+  do i=1,self%nf
+    self%fldnames(i)=vars%variable(i)
+  end do 
 
   call check(self)
 

@@ -13,7 +13,7 @@ use fckit_configuration_module, only: fckit_configuration
 use kinds, only: kind_real
 use unstructured_grid_mod, only: unstructured_grid, unstructured_grid_registry
 use datetime_mod, only: datetime, c_f_datetime
-use variables_mod, only: oops_vars, oops_vars_create
+use oops_variables_mod
 use ufo_locs_mod_c, only: ufo_locs_registry
 use ufo_locs_mod, only: ufo_locs
 use ufo_geovals_mod_c, only: ufo_geovals_registry
@@ -55,18 +55,18 @@ contains
 subroutine soca_field_create_c(c_key_self, c_key_geom, c_vars) bind(c,name='soca_field_create_f90')
   integer(c_int), intent(inout) :: c_key_self !< Handle to field
   integer(c_int),    intent(in) :: c_key_geom !< Geometry
-  type(c_ptr),       intent(in) :: c_vars     !< List of variables
+  type(c_ptr),value, intent(in) :: c_vars     !< List of variables
 
   type(soca_field), pointer :: self
   type(soca_geom),  pointer :: geom
-  type(oops_vars)           :: vars
+  type(oops_variables)      :: vars
 
   call soca_geom_registry%get(c_key_geom, geom)
   call soca_field_registry%init()
   call soca_field_registry%add(c_key_self)
   call soca_field_registry%get(c_key_self,self)
 
-  call oops_vars_create(fckit_configuration(c_vars), vars)
+  vars = oops_variables(c_vars)  
   call create(self, geom, vars)
 
 end subroutine soca_field_create_c
@@ -418,18 +418,18 @@ end subroutine soca_field_rms_c
 ! ------------------------------------------------------------------------------
 
 subroutine soca_field_interp_nl_c(c_key_fld,c_key_loc,c_vars,c_key_gom) bind(c,name='soca_field_interp_nl_f90')
-  integer(c_int), intent(in) :: c_key_fld
-  integer(c_int), intent(in) :: c_key_loc
-  type(c_ptr),    intent(in) :: c_vars     !< List of requested variables
-  integer(c_int), intent(in) :: c_key_gom
+  integer(c_int),     intent(in) :: c_key_fld
+  integer(c_int),     intent(in) :: c_key_loc
+  type(c_ptr), value, intent(in) :: c_vars     !< List of requested variables
+  integer(c_int),     intent(in) :: c_key_gom
 
   type(soca_field),  pointer :: fld
   type(ufo_locs),    pointer :: locs
   type(ufo_geovals), pointer :: gom
-  type(oops_vars)            :: vars
+  type(oops_variables)       :: vars
 
-  call oops_vars_create(fckit_configuration(c_vars), vars)
 
+  vars = oops_variables(c_vars)
   call soca_field_registry%get(c_key_fld,fld)
   call ufo_locs_registry%get(c_key_loc,locs)
   call ufo_geovals_registry%get(c_key_gom,gom)
@@ -443,17 +443,17 @@ end subroutine soca_field_interp_nl_c
 subroutine soca_field_interp_nl_traj_c(c_key_fld,c_key_loc,c_vars,c_key_gom,c_key_traj) bind(c,name='soca_field_interp_nl_traj_f90')
   integer(c_int),           intent(in) :: c_key_fld
   integer(c_int),           intent(in) :: c_key_loc
-  type(c_ptr),              intent(in) :: c_vars     !< List of requested variables
+  type(c_ptr), value,       intent(in) :: c_vars     !< List of requested variables
   integer(c_int),           intent(in) :: c_key_gom
   integer(c_int), optional, intent(in) :: c_key_traj !< Trajectory for interpolation/transforms
 
   type(soca_field),      pointer :: fld
   type(ufo_locs),        pointer :: locs
-  type(oops_vars)                :: vars
+  type(oops_variables)           :: vars
   type(ufo_geovals),     pointer :: gom
   type(soca_getvaltraj), pointer :: traj
 
-  call oops_vars_create(fckit_configuration(c_vars), vars)
+  vars = oops_variables(c_vars)
 
   call soca_field_registry%get(c_key_fld,fld)
   call ufo_locs_registry%get(c_key_loc,locs)
@@ -469,17 +469,17 @@ end subroutine soca_field_interp_nl_traj_c
 subroutine soca_field_interp_tl_c(c_key_fld,c_key_loc,c_vars,c_key_gom,c_key_traj) bind(c,name='soca_field_interp_tl_f90')
   integer(c_int),           intent(in) :: c_key_fld
   integer(c_int),           intent(in) :: c_key_loc
-  type(c_ptr),              intent(in) :: c_vars     !< List of requested variables
+  type(c_ptr), value,       intent(in) :: c_vars     !< List of requested variables
   integer(c_int),           intent(in) :: c_key_gom
   integer(c_int), optional, intent(in) :: c_key_traj !< Trajectory for interpolation/transforms
 
   type(soca_field),      pointer :: fld
   type(ufo_locs),        pointer :: locs
-  type(oops_vars)                :: vars
+  type(oops_variables)           :: vars
   type(ufo_geovals),     pointer :: gom
   type(soca_getvaltraj), pointer :: traj
 
-  call oops_vars_create(fckit_configuration(c_vars), vars)
+  vars = oops_variables(c_vars)
 
   call soca_field_registry%get(c_key_fld,fld)
   call ufo_locs_registry%get(c_key_loc,locs)
@@ -493,19 +493,19 @@ end subroutine soca_field_interp_tl_c
 ! ------------------------------------------------------------------------------
 
 subroutine soca_field_interp_ad_c(c_key_fld,c_key_loc,c_vars,c_key_gom,c_key_traj) bind(c,name='soca_field_interp_ad_f90')
-  integer(c_int), intent(in) :: c_key_fld
-  integer(c_int), intent(in) :: c_key_loc
-  type(c_ptr),    intent(in) :: c_vars     !< List of requested variables
-  integer(c_int), intent(in) :: c_key_gom
-  integer(c_int), intent(in) :: c_key_traj !< Trajectory for interpolation/transforms
+  integer(c_int),     intent(in) :: c_key_fld
+  integer(c_int),     intent(in) :: c_key_loc
+  type(c_ptr), value, intent(in) :: c_vars     !< List of requested variables
+  integer(c_int),     intent(in) :: c_key_gom
+  integer(c_int),     intent(in) :: c_key_traj !< Trajectory for interpolation/transforms
 
   type(soca_field),      pointer :: fld
   type(ufo_locs),        pointer :: locs
-  type(oops_vars)                :: vars
+  type(oops_variables)           :: vars
   type(ufo_geovals),     pointer :: gom
   type(soca_getvaltraj), pointer :: traj
 
-  call oops_vars_create(fckit_configuration(c_vars), vars)
+  vars = oops_variables(c_vars)
 
   call soca_field_registry%get(c_key_fld,fld)
   call ufo_locs_registry%get(c_key_loc,locs)
