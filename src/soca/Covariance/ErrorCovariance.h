@@ -52,6 +52,7 @@ namespace soca {
       boost::scoped_ptr<const Geometry> geom_;
       boost::scoped_ptr<const State> traj_;
       util::DateTime time_;
+      oops::Variables vars_;
   };
   // -----------------------------------------------------------------------------
 

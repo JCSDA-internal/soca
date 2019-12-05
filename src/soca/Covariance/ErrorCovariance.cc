@@ -35,10 +35,9 @@ namespace soca {
     // bkg: Background state, invariant wrt outer-loop.
     time_ = util::DateTime(conf.getString("date"));
     const eckit::Configuration * configc = &conf;
-    oops::Variables vars(conf);
-    const eckit::Configuration * confvars = &vars.toFortran();
+    vars_ = oops::Variables(conf);
     soca_b_setup_f90(keyFtnConfig_, &configc, resol.toFortran(),
-                     bkg.fields().toFortran(), &confvars);
+                     bkg.fields().toFortran(), vars_);
     Log::trace() << "ErrorCovariance created" << std::endl;
   }
 
