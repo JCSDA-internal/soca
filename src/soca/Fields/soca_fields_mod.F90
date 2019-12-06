@@ -1300,10 +1300,30 @@ subroutine soca_getpoint(self, geoiter, values, nzo)
   type(soca_geom_iter),           intent(   in) :: geoiter
   real(kind=kind_real),           intent(inout) :: values(:)
   integer,                        intent(   in) :: nzo
+  integer :: ff, ii
 
-  values(1:nzo)       = self%socn(geoiter%iind, geoiter%jind,:)
-  values(nzo+1:2*nzo) = self%tocn(geoiter%iind, geoiter%jind,:)
-  values(2*nzo+1:3*nzo)= self%hocn(geoiter%iind, geoiter%jind,:)
+!  values(1:nzo)       = self%socn(geoiter%iind, geoiter%jind,:)
+!  values(nzo+1:2*nzo) = self%tocn(geoiter%iind, geoiter%jind,:)
+!  values(2*nzo+1:3*nzo)= self%hocn(geoiter%iind, geoiter%jind,:)
+
+  ! get values
+  ii = 0 
+  do ff = 1, self%nf
+    select case(self%fldnames(ff))
+    case("tocn")
+      values(ii+1:ii+nzo) = self%tocn(geoiter%iind, geoiter%jind,:)
+      ii = ii + nzo
+    case("socn")
+      values(ii+1:ii+nzo) = self%socn(geoiter%iind, geoiter%jind,:)
+      ii = ii + nzo
+    case("hocn")
+      values(ii+1:ii+nzo) = self%hocn(geoiter%iind, geoiter%jind,:)
+      ii = ii + nzo
+    case("ssh")
+      values(ii+1)        = self%ssh(geoiter%iind, geoiter%jind)
+      ii = ii + 1
+    end select
+  end do
 
 end subroutine soca_getpoint
 
@@ -1316,11 +1336,31 @@ subroutine soca_setpoint(self, geoiter, values, nzo)
   type(soca_geom_iter),           intent(   in) :: geoiter
   real(kind=kind_real),           intent(   in) :: values(:)
   integer,                        intent(   in) :: nzo
+  integer :: ff, ii
 
   ! Set values
-  self%socn(geoiter%iind, geoiter%jind,:) = values(1:nzo)
-  self%tocn(geoiter%iind, geoiter%jind,:) = values(nzo+1:2*nzo)
-  self%hocn(geoiter%iind, geoiter%jind,:) = values(2*nzo+1:3*nzo)
+!  self%socn(geoiter%iind, geoiter%jind,:) = values(1:nzo)
+!  self%tocn(geoiter%iind, geoiter%jind,:) = values(nzo+1:2*nzo)
+!  self%hocn(geoiter%iind, geoiter%jind,:) = values(2*nzo+1:3*nzo)
+
+  ! set values
+  ii = 0
+  do ff = 1, self%nf
+    select case(self%fldnames(ff))
+    case("tocn")
+      self%tocn(geoiter%iind, geoiter%jind,:) = values(ii+1:ii+nzo)
+      ii = ii + nzo
+    case("socn")
+      self%socn(geoiter%iind, geoiter%jind,:) = values(ii+1:ii+nzo)
+      ii = ii + nzo
+    case("hocn")
+      self%hocn(geoiter%iind, geoiter%jind,:) = values(ii+1:ii+nzo)
+      ii = ii + nzo
+    case("ssh")
+      self%ssh(geoiter%iind, geoiter%jind) = values(ii+1)
+      ii = ii + 1
+    end select
+  end do
 
 end subroutine soca_setpoint
 
