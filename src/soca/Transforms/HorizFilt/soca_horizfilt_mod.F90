@@ -18,7 +18,7 @@ module soca_horizfilt_mod
   use tools_func, only: fit_func
   use type_mpl, only: mpl_type
   use random_mod
-  use variables_mod
+  use oops_variables_mod
 
   implicit none
 
@@ -29,7 +29,7 @@ module soca_horizfilt_mod
   !> Fortran derived type to hold configuration data for horizfilt
   type, public :: soca_horizfilt_type
      type(soca_field),         pointer :: bkg            !< Background field (or first guess)
-     type(oops_vars)                   :: vars           !< Apply filtering to vars
+     type(oops_variables)              :: vars           !< Apply filtering to vars
      real(kind=kind_real), allocatable :: wgh(:,:,:,:)   !< Filtering weight
      real(kind=kind_real) :: scale_flow  !< Used with "flow" filter, sea surface height decorrelation scale
      real(kind=kind_real) :: scale_dist
@@ -52,7 +52,7 @@ contains
     type(fckit_configuration),     intent(in) :: f_conf !< The configuration
     type(soca_geom),               intent(in) :: geom   !< Geometry
     type(soca_field),              intent(in) :: traj   !< Trajectory
-    type(oops_vars),               intent(in) :: vars   !< List of variables
+    type(oops_variables),          intent(in) :: vars   !< List of variables
 
     integer :: i, j, ii, jj
     real(kind=kind_real) :: dist(-1:1,-1:1), sum_w, r_dist, r_flow
@@ -139,8 +139,8 @@ contains
     allocate(dxi(self%isd:self%ied,self%jsd:self%jed))
     allocate(dxo(self%isd:self%ied,self%jsd:self%jed))
 
-    do ivar = 1, self%vars%nv
-       select case (trim(self%vars%fldnames(ivar)))
+    do ivar = 1, self%vars%nvars()
+       select case (trim(self%vars%variable(ivar)))
 
        case ("ssh")
           dxi = dxin%ssh(:,:)
@@ -195,8 +195,8 @@ contains
     allocate(dxi(self%isd:self%ied,self%jsd:self%jed))
     allocate(dxo(self%isd:self%ied,self%jsd:self%jed))
 
-    do ivar = 1, self%vars%nv
-       select case (trim(self%vars%fldnames(ivar)))
+    do ivar = 1, self%vars%nvars()
+       select case (trim(self%vars%variable(ivar)))
 
        case ("ssh")
           dxi = dxin%ssh(:,:)

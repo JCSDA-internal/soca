@@ -26,12 +26,11 @@ namespace soca {
                  const eckit::Configuration & conf):
     geom_(new Geometry(geom)), vars_(conf), traj_(traj) {
     const eckit::Configuration * configc = &conf;
-    const eckit::Configuration * confvars = &vars_.toFortran();
     soca_horizfilt_setup_f90(keyFtnConfig_,
                              &configc,
                              geom_->toFortran(),
                              traj_.fields().toFortran(),
-                             &confvars);
+                             vars_);
 
     // Get number of iterations
     niter_ = configc->getInt("niter");

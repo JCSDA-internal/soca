@@ -11,7 +11,7 @@ module soca_covariance_mod
 use fckit_configuration_module, only: fckit_configuration
 use fckit_mpi_module, only: fckit_mpi_comm
 use random_mod, only: normal_distribution
-use variables_mod, only: oops_vars
+use oops_variables_mod
 use oobump_mod, only: bump_read_conf
 use type_bump, only: bump_type
 use kinds, only: kind_real
@@ -37,7 +37,7 @@ type :: soca_cov
    type(soca_pert)              :: pert_scale
    real(kind=kind_real)         :: ocn_l0
    real(kind=kind_real)         :: ice_l0
-   type(oops_vars)              :: vars           !< Apply B to vars
+   type(oops_variables)         :: vars           !< Apply B to vars
  contains
    procedure :: setup => soca_cov_setup
    procedure :: delete => soca_cov_delete
@@ -60,7 +60,7 @@ subroutine soca_cov_setup(self, f_conf, geom, bkg, vars)
   type(fckit_configuration), intent(in) :: f_conf !< The configuration
   type(soca_geom),           intent(in) :: geom   !< Geometry
   type(soca_field), target,  intent(in) :: bkg    !< Background
-  type(oops_vars),           intent(in) :: vars   !< List of variables
+  type(oops_variables),      intent(in) :: vars   !< List of variables
 
   character(len=3)  :: domain
   integer :: isc, iec, jsc, jec, ivar
@@ -106,8 +106,8 @@ subroutine soca_cov_setup(self, f_conf, geom, bkg, vars)
   ! Determine what convolution op to initialize
   init_seaice = .false.
   init_ocean = .false.
-  do ivar = 1, self%vars%nv
-     select case(trim(self%vars%fldnames(ivar)))
+  do ivar = 1, self%vars%nvars()
+     select case(trim(self%vars%variable(ivar)))
      case('cicen')
         init_seaice = .true.
      case('hicen')
@@ -163,8 +163,8 @@ subroutine soca_cov_C_mult(self, dx)
                                           !< Output: C dx
   integer :: icat, izo, ivar
 
-  do ivar = 1, self%vars%nv
-     select case(trim(self%vars%fldnames(ivar)))
+  do ivar = 1, self%vars%nvars()
+     select case(trim(self%vars%variable(ivar)))
         ! Apply convolution to forcing
         case('sw')
            call soca_2d_convol(dx%ocnsfc%sw_rad(:,:),      self%ocean_conv(1), dx%geom)
@@ -211,8 +211,8 @@ subroutine soca_cov_sqrt_C_mult(self, dx)
                                           !< Output: C^1/2 dx
   integer :: icat, izo, ivar
 
-  do ivar = 1, self%vars%nv
-     select case(trim(self%vars%fldnames(ivar)))
+  do ivar = 1, self%vars%nvars()
+     select case(trim(self%vars%variable(ivar)))
         ! Apply C^1/2 to forcing
         case('sw')
            call soca_2d_sqrt_convol(dx%ocnsfc%sw_rad(:,:), &

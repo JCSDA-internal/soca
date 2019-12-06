@@ -32,15 +32,13 @@ namespace soca {
                  const util::DateTime & time):
     geom_(new Geometry(geom)), vars_(vars), time_(time)
   {
-    const eckit::Configuration * conf = &vars_.toFortran();
-    soca_field_create_f90(keyFlds_, geom_->toFortran(), &conf);
+    soca_field_create_f90(keyFlds_, geom_->toFortran(), vars_);
   }
   // -----------------------------------------------------------------------------
   Fields::Fields(const Fields & other, const bool copy)
     : geom_(other.geom_), vars_(other.vars_), time_(other.time_)
   {
-    const eckit::Configuration * conf = &vars_.toFortran();
-    soca_field_create_f90(keyFlds_, geom_->toFortran(), &conf);
+    soca_field_create_f90(keyFlds_, geom_->toFortran(), vars_);
     if (copy) {
       soca_field_copy_f90(keyFlds_, other.keyFlds_);
     } else {
@@ -51,24 +49,21 @@ namespace soca {
   Fields::Fields(const Fields & other)
     : geom_(other.geom_), vars_(other.vars_), time_(other.time_)
   {
-    const eckit::Configuration * conf = &vars_.toFortran();
-    soca_field_create_f90(keyFlds_, geom_->toFortran(), &conf);
+    soca_field_create_f90(keyFlds_, geom_->toFortran(), vars_);
     soca_field_copy_f90(keyFlds_, other.keyFlds_);
   }
   // -----------------------------------------------------------------------------
   Fields::Fields(const Fields & other, const Geometry & geom)
     : geom_(new Geometry(geom)), vars_(other.vars_), time_(other.time_)
   {
-    const eckit::Configuration * conf = &vars_.toFortran();
-    soca_field_create_f90(keyFlds_, geom_->toFortran(), &conf);
+    soca_field_create_f90(keyFlds_, geom_->toFortran(), vars_);
     soca_field_change_resol_f90(keyFlds_, other.keyFlds_);
   }
   // -----------------------------------------------------------------------------
   Fields::Fields(const Fields & other, const oops::Variables & vars)
     : geom_(other.geom_), vars_(vars), time_(other.time_)
   {
-    const eckit::Configuration * conf = &vars_.toFortran();
-    soca_field_create_f90(keyFlds_, geom_->toFortran(), &conf);
+    soca_field_create_f90(keyFlds_, geom_->toFortran(), vars_);
     soca_field_copy_f90(keyFlds_, other.keyFlds_);
   }
   // -----------------------------------------------------------------------------
@@ -132,8 +127,7 @@ namespace soca {
   void Fields::getValues(const ufo::Locations & locs,
                          const oops::Variables & vars,
                          ufo::GeoVaLs & gom) const {
-    const eckit::Configuration * conf = &vars.toFortran();
-    soca_field_interp_nl_f90(keyFlds_, locs.toFortran(), &conf,
+    soca_field_interp_nl_f90(keyFlds_, locs.toFortran(), vars,
                              gom.toFortran());
   }
 
@@ -142,8 +136,7 @@ namespace soca {
                          const oops::Variables & vars,
                          ufo::GeoVaLs & gom,
                          const GetValuesTraj & traj) const {
-    const eckit::Configuration * conf = &vars.toFortran();
-    soca_field_interp_nl_traj_f90(keyFlds_, locs.toFortran(), &conf,
+    soca_field_interp_nl_traj_f90(keyFlds_, locs.toFortran(), vars,
                                   gom.toFortran(), traj.toFortran());
   }
 
@@ -152,8 +145,7 @@ namespace soca {
                            const oops::Variables & vars,
                            ufo::GeoVaLs & gom,
                            const GetValuesTraj & traj) const {
-    const eckit::Configuration * conf = &vars.toFortran();
-    soca_field_interp_tl_f90(keyFlds_, locs.toFortran(), &conf,
+    soca_field_interp_tl_f90(keyFlds_, locs.toFortran(), vars,
                              gom.toFortran(), traj.toFortran());
   }
   // -----------------------------------------------------------------------------
@@ -161,8 +153,7 @@ namespace soca {
                            const oops::Variables & vars,
                            const ufo::GeoVaLs & gom,
                            const GetValuesTraj & traj) {
-    const eckit::Configuration * conf = &vars.toFortran();
-    soca_field_interp_ad_f90(keyFlds_, locs.toFortran(), &conf,
+    soca_field_interp_ad_f90(keyFlds_, locs.toFortran(), vars,
                              gom.toFortran(), traj.toFortran());
   }
   // -----------------------------------------------------------------------------

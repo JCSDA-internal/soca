@@ -227,13 +227,15 @@ set( SOCA_TESTS_FORC_TRAPFPE OFF CACHE BOOL
 #  TOL       - The tolerances to use for the test "float_tolerance int_tolerance"
 #              If none are given, ${SOCA_TESTS_DEFAULT_TOL} is used. Only used
 #              if an EXE with no NOCOMPARE flag set.
+#  MPI       - The number of MPI PEs to use. If not specified, ${SOCA_TESTS_MAX_MPI}
+#              will be used
 # TEST_DEPENDS - list of tests this test depends on
 #-------------------------------------------------------------------------------
 function(soca_add_test)
   # parse the passed arguments
   set(prefix     ARG)
   set(novals     NOCOMPARE NOTRAPFPE)
-  set(singlevals NAME EXE SRC CFG)
+  set(singlevals NAME EXE SRC CFG MPI)
   set(multivals  TEST_DEPENDS TOL)
   cmake_parse_arguments(${prefix}
                         "${novals}" "${singlevals}" "${multivals}"
@@ -258,6 +260,12 @@ function(soca_add_test)
     set ( CONFIG_FILE testinput/${ARG_NAME}.yml )
   endif()
 
+  # MPI PEs
+  set( MPI ${SOCA_TESTS_MAX_MPI} )
+  if ( ARG_MPI )
+    set( MPI ${ARG_MPI})
+  endif()
+
   # Are we building a unit test / or running a soca executable?
   if ( ARG_SRC )
     # building a unit test, therfore also assume no compare step
@@ -265,7 +273,7 @@ function(soca_add_test)
                       SOURCES executables/${ARG_SRC}
                       ARGS    ${CONFIG_FILE}
                       LIBS    soca
-                      MPI     ${SOCA_TESTS_MAX_MPI}
+                      MPI     ${MPI}
                       ENVIRONMENT ${TRAPFPE_ENV}
                       TEST_DEPENDS ${ARG_TEST_DEPENDS})
     set ( ARG_NOCOMPARE TRUE)
@@ -277,7 +285,7 @@ function(soca_add_test)
                       COMMAND "${CMAKE_BINARY_DIR}/bin/${ARG_EXE}"
                       ARGS    ${CONFIG_FILE}
                               testoutput/${ARG_NAME}.log
-                      MPI     ${SOCA_TESTS_MAX_MPI}
+                      MPI     ${MPI}
                       ENVIRONMENT ${TRAPFPE_ENV}
                       DEPENDS ${ARG_EXE}
                       TEST_DEPENDS ${ARG_TEST_DEPENDS})
@@ -496,6 +504,7 @@ soca_add_test( NAME hofx
 # Re-enable the comparison once that's fixed
 soca_add_test( NAME enshofx
                EXE  soca_enshofx.x
+               MPI 3
                NOCOMPARE
                NOTRAPFPE
                TEST_DEPENDS test_soca_enspert )

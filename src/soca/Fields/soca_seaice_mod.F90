@@ -120,15 +120,24 @@ subroutine soca_seaice_zeros(self)
 end subroutine soca_seaice_zeros
 
 ! ------------------------------------------------------------------------------
-subroutine soca_seaice_random(self)
+subroutine soca_seaice_random(self, fields)
   class(soca_seaice_type), intent(inout) :: self
-  integer :: i
+  character(len=5), allocatable, intent(in) :: fields(:)
+
+  integer :: i, ff
   integer, parameter :: rseed = 1
 
   ! set random values
-  call normal_distribution(self%cicen, 0.0_kind_real, 1.0_kind_real, rseed)
-  call normal_distribution(self%hicen, 0.0_kind_real, 1.0_kind_real, rseed)
-  call normal_distribution(self%hsnon, 0.0_kind_real, 1.0_kind_real, rseed)
+  do ff=1, size(fields)
+    select case(fields(ff))
+    case("cicen")
+      call normal_distribution(self%cicen, 0.0_kind_real, 1.0_kind_real, rseed)
+    case("hicen")
+      call normal_distribution(self%hicen, 0.0_kind_real, 1.0_kind_real, rseed)
+    case("hsnon")
+      call normal_distribution(self%hsnon, 0.0_kind_real, 1.0_kind_real, rseed)
+    end select
+  end do
 
   ! mask out land, set to zero
   do i=1, self%geom%ice_column%ncat+1

@@ -8,6 +8,8 @@
 #ifndef SOCA_FORTRAN_H_
 #define SOCA_FORTRAN_H_
 
+#include "oops/base/Variables.h"
+
 // Forward declarations
 namespace eckit {
   class Configuration;
@@ -60,7 +62,7 @@ namespace soca {
     //  Fields
     // -----------------------------------------------------------------------------
     void soca_field_create_f90(F90flds &, const F90geom &,
-                               const eckit::Configuration * const *);
+                               const oops::Variables &);
     void soca_field_delete_f90(F90flds &);
     void soca_field_copy_f90(const F90flds &, const F90flds &);
     void soca_field_zero_f90(const F90flds &);
@@ -85,21 +87,21 @@ namespace soca {
                                    const util::DateTime * const *);
     void soca_field_interp_nl_f90(const F90flds &,
                                   const F90locs &,
-                                  const eckit::Configuration * const *,
+                                  const oops::Variables &,
                                   const F90goms &);
     void soca_field_interp_nl_traj_f90(const F90flds &,
                                        const F90locs &,
-                                       const eckit::Configuration * const *,
+                                       const oops::Variables &,
                                        const F90goms &,
                                        const F90getvaltraj &);
     void soca_field_interp_tl_f90(const F90flds &,
                                   const F90locs &,
-                                  const eckit::Configuration * const *,
+                                  const oops::Variables &,
                                   const F90goms &,
                                   const F90getvaltraj &);
     void soca_field_interp_ad_f90(const F90flds &,
                                   const F90locs &,
-                                  const eckit::Configuration * const *,
+                                  const oops::Variables &,
                                   const F90goms &,
                                   const F90getvaltraj &);
 
@@ -142,7 +144,7 @@ namespace soca {
     // -----------------------------------------------------------------------------
     void soca_b_setup_f90(F90bmat &, const eckit::Configuration * const *,
                           const F90geom &, const F90flds &,
-                          const eckit::Configuration * const *);
+                          const oops::Variables &);
     void soca_b_delete_f90(F90bmat &);
     void soca_b_mult_f90(const F90bmat &, const F90flds &,
                          const F90flds &);

@@ -17,7 +17,7 @@ use unstructured_grid_mod, only: unstructured_grid, &
 use datetime_mod, only: datetime, datetime_set
 use duration_mod, only: duration
 use kinds, only: kind_real
-use variables_mod, only: oops_vars
+use oops_variables_mod
 use fms_mod,    only: read_data, write_data, set_domain
 use fms_io_mod, only: fms_io_init, fms_io_exit, &
                       register_restart_field, restart_file_type, &
@@ -85,7 +85,9 @@ contains
 subroutine create_constructor(self, geom, vars)
   type(soca_field),          intent(inout) :: self
   type(soca_geom),  pointer, intent(inout) :: geom
-  type(oops_vars),              intent(in) :: vars
+  type(oops_variables),         intent(in) :: vars
+
+  integer :: i
 
   ! Allocate
   call soca_field_alloc(self, geom)
@@ -94,9 +96,11 @@ subroutine create_constructor(self, geom, vars)
   self%geom => geom
 
   ! Set fields numbers and names
-  self%nf   = vars%nv
+  self%nf   = vars%nvars()
   allocate(self%fldnames(self%nf))
-  self%fldnames(:)=vars%fldnames(:)
+  do i=1,self%nf
+    self%fldnames(i)=vars%variable(i)
+  end do 
 
   call check(self)
 
@@ -260,14 +264,23 @@ subroutine random(self)
   integer, parameter :: rseed = 1 ! constant for reproducability of tests
     ! NOTE: random seeds are not quite working the way expected,
     !  it is only set the first time normal_distribution() is called with a seed
-  integer :: z
+  integer :: z, ff
 
   call check(self)
 
   ! set random values
-  call normal_distribution(self%tocn,  0.0_kind_real, 1.0_kind_real, rseed)
-  call normal_distribution(self%socn,  0.0_kind_real, 1.0_kind_real, rseed)
-  call normal_distribution(self%ssh,   0.0_kind_real, 1.0_kind_real, rseed)
+  do ff = 1, self%nf
+    select case(self%fldnames(ff))
+    case("tocn")
+      call normal_distribution(self%tocn,  0.0_kind_real, 1.0_kind_real, rseed)
+    case("socn")
+      call normal_distribution(self%socn,  0.0_kind_real, 1.0_kind_real, rseed)
+    !case("hocn")
+    ! NOTE: can't randomize "hocn", testIncrementInterpAD fails
+    case("ssh")
+      call normal_distribution(self%ssh,   0.0_kind_real, 1.0_kind_real, rseed)
+    end select
+  end do
 
   ! mask out land, set to zero
   self%ssh = self%ssh * self%geom%mask2d
@@ -282,8 +295,8 @@ subroutine random(self)
   call mpp_update_domains(self%ssh,  self%geom%Domain%mpp_domain)
 
   ! do the same for the non-ocean fields
-  call self%ocnsfc%random()
-  call self%seaice%random()
+  call self%ocnsfc%random(self%fldnames)
+  call self%seaice%random(self%fldnames)
 
 end subroutine random
 
@@ -438,7 +451,7 @@ subroutine dot_prod(fld1,fld2,zprod)
   real(kind=kind_real), intent(out) :: zprod
 
   real(kind=kind_real) :: zprod_allpes
-  integer :: ii, jj, kk
+  integer :: ii, jj, kk, ff
   integer :: isc, iec, jsc, jec
   integer :: ncat, nzo, myrank
   type(fckit_mpi_comm) :: f_comm
