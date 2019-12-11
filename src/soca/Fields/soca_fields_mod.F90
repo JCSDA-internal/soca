@@ -1295,14 +1295,14 @@ end subroutine soca_write_restart
 
 ! ------------------------------------------------------------------------------
 
-subroutine soca_getpoint(self, geoiter, values, nzo)
+subroutine soca_getpoint(self, geoiter, values)
 
   type(soca_field),               intent(   in) :: self
   type(soca_geom_iter),           intent(   in) :: geoiter
   real(kind=kind_real),           intent(inout) :: values(:)
-  integer,                        intent(   in) :: nzo
-  integer :: ff, ii
+  integer :: ff, ii, nzo
 
+  nzo = self%geom%nzo
 !  values(1:nzo)       = self%socn(geoiter%iind, geoiter%jind,:)
 !  values(nzo+1:2*nzo) = self%tocn(geoiter%iind, geoiter%jind,:)
 !  values(2*nzo+1:3*nzo)= self%hocn(geoiter%iind, geoiter%jind,:)
@@ -1330,16 +1330,15 @@ end subroutine soca_getpoint
 
 ! ------------------------------------------------------------------------------
 
-subroutine soca_setpoint(self, geoiter, values, nzo)
+subroutine soca_setpoint(self, geoiter, values)
 
   ! Passed variables
   type(soca_field),               intent(inout) :: self
   type(soca_geom_iter),           intent(   in) :: geoiter
   real(kind=kind_real),           intent(   in) :: values(:)
-  integer,                        intent(   in) :: nzo
 
-  integer :: ff, ii
-
+  integer :: ff, ii, nzo
+  nzo = self%geom%nzo
   ! Set values
 !  self%socn(geoiter%iind, geoiter%jind,:) = values(1:nzo)
 !  self%tocn(geoiter%iind, geoiter%jind,:) = values(nzo+1:2*nzo)

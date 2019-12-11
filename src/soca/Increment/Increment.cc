@@ -144,34 +144,28 @@ namespace soca {
   oops::GridPoint Increment::getPoint(const GeometryIterator & iter) const {
 
     int nx, ny, nzo, nzi, ncat, nf;
-//    soca_fieldnum_f90(fields_->toFortran(), nx, ny, nzo, nzi, ncat, nf);
-    nzo=25;
-    ncat=5;
+    soca_field_sizes_f90(fields_->toFortran(), nx, ny, nzo, nzi, ncat, nf);
 
     oops::Variables fieldNames=fields_->variables();
-    std::vector<int> varlens(nf) ;
-
-    std::cout <<  "fieldNames" <<fieldNames;
+    std::vector<int> varlens(fieldNames.size()) ;
 
     for (int ii = 0; ii < fieldNames.size(); ii++) {
       if (fieldNames[ii] == "tocn") varlens[ii]=nzo;
-      if (fieldNames[ii] == "socn") varlens[ii]=nzo;
-      if (fieldNames[ii] == "hocn") varlens[ii]=nzo;
-      if (fieldNames[ii] == "cicen") varlens[ii]=ncat + 1;
-      if (fieldNames[ii] == "hicen") varlens[ii]=ncat;
-      if (fieldNames[ii] == "hsnon") varlens[ii]=ncat;
+      else if (fieldNames[ii] == "socn") varlens[ii]=nzo;
+      else if (fieldNames[ii] == "hocn") varlens[ii]=nzo;
+      else if (fieldNames[ii] == "cicen") varlens[ii]=ncat + 1;
+      else if (fieldNames[ii] == "hicen") varlens[ii]=ncat;
+      else if (fieldNames[ii] == "hsnon") varlens[ii]=ncat;
       else varlens[ii]=1;
     }
 
-    std::cout <<  "varlens" <<varlens;
 
     int lenvalues = std::accumulate(varlens.begin(), varlens.end(), 0);
     std::vector<double> values(lenvalues);
 
-    std::cout <<  "lenvalues" <<lenvalues;
 
     // Get variable values
-    fields_->getPoint(iter, values, nzo);
+    fields_->getPoint(iter, values, lenvalues);
 
     return oops::GridPoint(oops::Variables(fieldNames), values, varlens);
   }
@@ -183,7 +177,7 @@ namespace soca {
     soca_geo_global_grid_size_f90(geometry()->toFortran(), nx, ny, nzo);
 
     const std::vector<double> vals = values.getVals();
-    fields_->setPoint(iter, vals, nzo);
+    fields_->setPoint(iter, vals, vals.size());
   }
 
   /// Interpolate to observation location
