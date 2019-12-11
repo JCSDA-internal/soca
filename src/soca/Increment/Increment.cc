@@ -33,8 +33,6 @@
 #include "soca/State/State.h"
 #include "soca/GetValuesTraj/GetValuesTraj.h"
 
-#include <iostream>
-
 using oops::Log;
 
 namespace soca {
@@ -142,12 +140,11 @@ namespace soca {
 
   // -----------------------------------------------------------------------------
   oops::GridPoint Increment::getPoint(const GeometryIterator & iter) const {
-
     int nx, ny, nzo, nzi, ncat, nf;
     soca_field_sizes_f90(fields_->toFortran(), nx, ny, nzo, nzi, ncat, nf);
 
-    oops::Variables fieldNames=fields_->variables();
-    std::vector<int> varlens(fieldNames.size()) ;
+    oops::Variables fieldNames = fields_->variables();
+    std::vector<int> varlens(fieldNames.size());
 
     for (int ii = 0; ii < fieldNames.size(); ii++) {
       if (fieldNames[ii] == "tocn") varlens[ii]=nzo;
@@ -156,7 +153,8 @@ namespace soca {
       else if (fieldNames[ii] == "cicen") varlens[ii]=ncat + 1;
       else if (fieldNames[ii] == "hicen") varlens[ii]=ncat;
       else if (fieldNames[ii] == "hsnon") varlens[ii]=ncat;
-      else varlens[ii]=1;
+      else
+          varlens[ii] = 1;
     }
 
 
@@ -173,8 +171,8 @@ namespace soca {
   // -----------------------------------------------------------------------------
   void Increment::setPoint(const oops::GridPoint & values,
                              const GeometryIterator & iter) {
-    int nx, ny, nzo;
-    soca_geo_global_grid_size_f90(geometry()->toFortran(), nx, ny, nzo);
+//    int nx, ny, nzo;
+//    soca_geo_global_grid_size_f90(geometry()->toFortran(), nx, ny, nzo);
 
     const std::vector<double> vals = values.getVals();
     fields_->setPoint(iter, vals, vals.size());
