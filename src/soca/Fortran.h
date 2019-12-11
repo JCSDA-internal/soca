@@ -116,8 +116,11 @@ namespace soca {
     void soca_field_gpnorm_f90(const F90flds &, const int &, double &);
     void soca_getpoint_f90(const F90flds &, const F90iter &, double &, const int &);
     void soca_setpoint_f90(F90flds &, const F90iter &, const double &, const int &);
+    void soca_getpoint_vector_length_f90(F90flds &, const F90geom &, int &, int &, int &);
     void soca_field_sizes_f90(const F90flds &, int &, int &, int &,
                               int &, int &, int &);
+    void soca_fieldnum_f90(const F90flds &, int &, int &, int &, int &, int &, int &);
+
     void soca_field_rms_f90(const F90flds &, double &);
 
     // -----------------------------------------------------------------------------

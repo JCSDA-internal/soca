@@ -26,7 +26,8 @@ use soca_fields_mod, only: soca_field, &
                            dot_prod, field_from_ug, field_to_ug, ug_coord, fldrms, &
                            gpnorm, random, read_file, write_file, &
                            self_schur, self_sub, self_mul, self_add,&
-                           soca_getpoint,soca_setpoint 
+                           soca_getpoint,soca_setpoint, &
+                           soca_getpoint_vector_length 
 use soca_interpfields_mod, only: getvalues, getvalues_ad
 use soca_getvaltraj_mod, only: soca_getvaltraj
 use soca_getvaltraj_mod_c, only: soca_getvaltraj_registry
@@ -523,7 +524,7 @@ end subroutine soca_field_interp_ad_c
 subroutine soca_getpoint_c(c_key_fld,c_key_iter,values, nzo) bind(c,name='soca_getpoint_f90')
   integer(c_int), intent(in) :: c_key_fld
   integer(c_int), intent(in) :: c_key_iter
-  real(c_double), intent(inout) :: values(nzo*3)
+  real(c_double), intent(inout) :: values(:)
   integer(c_int), intent(in) :: nzo
 
   type(soca_field),      pointer :: fld
@@ -541,7 +542,7 @@ end subroutine soca_getpoint_c
 subroutine soca_setpoint_c(c_key_fld,c_key_iter,values, nzo) bind(c,name='soca_setpoint_f90')
   integer(c_int), intent(inout) :: c_key_fld
   integer(c_int), intent(in) :: c_key_iter
-  real(c_double), intent(in) :: values(nzo*3)
+  real(c_double), intent(in) :: values(:)
   integer(c_int), intent(in) :: nzo
 
   type(soca_field),      pointer :: fld
@@ -553,6 +554,25 @@ subroutine soca_setpoint_c(c_key_fld,c_key_iter,values, nzo) bind(c,name='soca_s
   call soca_setpoint(fld, iter, values, nzo)    
 
 end subroutine soca_setpoint_c
+
+! ------------------------------------------------------------------------------
+
+subroutine soca_getpoint_vector_length_c(c_key_fld, c_key_geom, lenvector, nzo, ncat) bind(c,name='soca_getpoint_vector_length_f90')
+  integer(c_int),     intent(in) :: c_key_fld
+  integer(c_int),     intent(in) :: c_key_geom
+  integer(c_int),     intent(out) :: nzo, ncat
+  integer(c_int),     intent(out) :: lenvector(:)
+
+
+  type(soca_field), pointer :: fld
+  type(soca_geom),  pointer :: geom
+
+  call soca_field_registry%get(c_key_fld,fld)
+  call soca_geom_registry%get(c_key_geom, geom)
+
+  call soca_getpoint_vector_length(fld, geom, lenvector, nzo, ncat)
+
+end subroutine soca_getpoint_vector_length_c
 
 ! ------------------------------------------------------------------------------
 

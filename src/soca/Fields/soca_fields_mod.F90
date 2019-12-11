@@ -43,7 +43,8 @@ public :: soca_field, &
           read_file, write_file, gpnorm, fldrms, soca_fld2file, &
           change_resol, check, &
           field_to_ug, field_from_ug, ug_coord, &
-          soca_getpoint, soca_setpoint
+          soca_getpoint, soca_setpoint, &
+          soca_getpoint_vector_length
 
 interface create
    module procedure create_constructor, create_copy
@@ -1336,6 +1337,7 @@ subroutine soca_setpoint(self, geoiter, values, nzo)
   type(soca_geom_iter),           intent(   in) :: geoiter
   real(kind=kind_real),           intent(   in) :: values(:)
   integer,                        intent(   in) :: nzo
+
   integer :: ff, ii
 
   ! Set values
@@ -1365,5 +1367,41 @@ subroutine soca_setpoint(self, geoiter, values, nzo)
 end subroutine soca_setpoint
 
 ! ------------------------------------------------------------------------------
+!> return the length of the data vector returned by soca_getpoint
+subroutine soca_getpoint_vector_length(self, geom, lenvector, nzo, ncat)
+
+  ! Passed variables
+  type(soca_field),               intent(inout) :: self
+  type(soca_geom),                intent(   in) :: geom
+  integer,                        intent(inout) :: lenvector(self%nf)
+  integer,                        intent(  out) :: nzo, ncat
+
+  integer :: ff
+
+  nzo=geom%nzo
+  ncat=geom%ncat
+
+  lenvector = 0
+  do ff = 1, self%nf
+    select case(self%fldnames(ff))
+    case("tocn")
+      lenvector(ff) = nzo
+    case("socn")
+      lenvector(ff) = nzo
+    case("hocn")
+      lenvector(ff) = nzo
+    case("cicen")
+      lenvector(ff) = ncat + 1
+    case("hicen")
+      lenvector(ff) = ncat
+    case("hsnon")
+      lenvector(ff) = ncat
+    case default
+      ! assume 2D fields, eg. ocnsfc or ssh
+      lenvector = lenvector + 1
+    end select
+  end do
+
+end subroutine soca_getpoint_vector_length
 
 end module soca_fields_mod

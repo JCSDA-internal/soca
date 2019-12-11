@@ -33,6 +33,8 @@
 #include "soca/State/State.h"
 #include "soca/GetValuesTraj/GetValuesTraj.h"
 
+#include <iostream>
+
 using oops::Log;
 
 namespace soca {
@@ -140,21 +142,33 @@ namespace soca {
 
   // -----------------------------------------------------------------------------
   oops::GridPoint Increment::getPoint(const GeometryIterator & iter) const {
- 
-    int nx, ny, nzo;
-    soca_geo_global_grid_size_f90(geometry()->toFortran(), nx, ny, nzo);
 
-    // Initialize fields and varlen
-    //idea: retrieve fields list from fields()->vars_
-    std::vector<std::string> fieldNames;
-    std::vector<int> varlens ;
+    int nx, ny, nzo, nzi, ncat, nf;
+//    soca_fieldnum_f90(fields_->toFortran(), nx, ny, nzo, nzi, ncat, nf);
+    nzo=25;
+    ncat=5;
 
-    fieldNames.push_back("socn"); varlens.push_back(nzo);
-    fieldNames.push_back("tocn"); varlens.push_back(nzo);
-    fieldNames.push_back("hocn"); varlens.push_back(nzo);
+    oops::Variables fieldNames=fields_->variables();
+    std::vector<int> varlens(nf) ;
+
+    std::cout <<  "fieldNames" <<fieldNames;
+
+    for (int ii = 0; ii < fieldNames.size(); ii++) {
+      if (fieldNames[ii] == "tocn") varlens[ii]=nzo;
+      if (fieldNames[ii] == "socn") varlens[ii]=nzo;
+      if (fieldNames[ii] == "hocn") varlens[ii]=nzo;
+      if (fieldNames[ii] == "cicen") varlens[ii]=ncat + 1;
+      if (fieldNames[ii] == "hicen") varlens[ii]=ncat;
+      if (fieldNames[ii] == "hsnon") varlens[ii]=ncat;
+      else varlens[ii]=1;
+    }
+
+    std::cout <<  "varlens" <<varlens;
 
     int lenvalues = std::accumulate(varlens.begin(), varlens.end(), 0);
     std::vector<double> values(lenvalues);
+
+    std::cout <<  "lenvalues" <<lenvalues;
 
     // Get variable values
     fields_->getPoint(iter, values, nzo);
