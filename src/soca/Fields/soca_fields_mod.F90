@@ -1299,12 +1299,10 @@ subroutine soca_getpoint(self, geoiter, values)
   type(soca_field),               intent(   in) :: self
   type(soca_geom_iter),           intent(   in) :: geoiter
   real(kind=kind_real),           intent(inout) :: values(:)
-  integer :: ff, ii, nzo
+  integer :: ff, ii, nzo, ncat
 
   nzo = self%geom%nzo
-!  values(1:nzo)       = self%socn(geoiter%iind, geoiter%jind,:)
-!  values(nzo+1:2*nzo) = self%tocn(geoiter%iind, geoiter%jind,:)
-!  values(2*nzo+1:3*nzo)= self%hocn(geoiter%iind, geoiter%jind,:)
+  ncat = self%geom%ncat
 
   ! get values
   ii = 0 
@@ -1322,6 +1320,15 @@ subroutine soca_getpoint(self, geoiter, values)
     case("ssh")
       values(ii+1)        = self%ssh(geoiter%iind, geoiter%jind)
       ii = ii + 1
+    case("cicen")
+      values(ii+1:ii+ncat+1) = self%seaice%cicen(geoiter%iind, geoiter%jind,:)
+      ii = ii + ncat + 1
+    case("hicen")
+      values(ii+1:ii+ncat) = self%seaice%hicen(geoiter%iind, geoiter%jind,:)
+      ii = ii + ncat
+    case("hsnon")
+      values(ii+1:ii+ncat) = self%seaice%hsnon(geoiter%iind, geoiter%jind,:)
+      ii = ii + ncat
     end select
   end do
 
@@ -1335,15 +1342,12 @@ subroutine soca_setpoint(self, geoiter, values)
   type(soca_field),               intent(inout) :: self
   type(soca_geom_iter),           intent(   in) :: geoiter
   real(kind=kind_real),           intent(   in) :: values(:)
+  integer :: ff, ii, nzo, ncat
 
-  integer :: ff, ii, nzo
   nzo = self%geom%nzo
-  ! Set values
-!  self%socn(geoiter%iind, geoiter%jind,:) = values(1:nzo)
-!  self%tocn(geoiter%iind, geoiter%jind,:) = values(nzo+1:2*nzo)
-!  self%hocn(geoiter%iind, geoiter%jind,:) = values(2*nzo+1:3*nzo)
+  ncat = self%geom%ncat
 
-  ! set values
+  ! Set values
   ii = 0
   do ff = 1, self%nf
     select case(self%fldnames(ff))
@@ -1359,6 +1363,15 @@ subroutine soca_setpoint(self, geoiter, values)
     case("ssh")
       self%ssh(geoiter%iind, geoiter%jind) = values(ii+1)
       ii = ii + 1
+    case("cicen")
+      self%seaice%cicen(geoiter%iind, geoiter%jind,:) = values(ii+1:ii+ncat+1)
+      ii = ii + ncat + 1
+    case("hicen")
+      self%seaice%hicen(geoiter%iind, geoiter%jind,:) = values(ii+1:ii+ncat)
+      ii = ii + ncat
+    case("hsnon")
+      self%seaice%hsnon(geoiter%iind, geoiter%jind,:) = values(ii+1:ii+ncat)
+      ii = ii + ncat
     end select
   end do
 
