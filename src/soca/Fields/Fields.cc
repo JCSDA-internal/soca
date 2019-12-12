@@ -158,15 +158,13 @@ namespace soca {
   }
   // -----------------------------------------------------------------------------
   void Fields::getPoint(const soca::GeometryIterator & iter,
-                std::vector<double> & values,
-                const int nzo) const {
-    soca_getpoint_f90(keyFlds_, iter.toFortran(), values[0], nzo);
+                std::vector<double> & values) const {
+    soca_getpoint_f90(keyFlds_, iter.toFortran(), values[0], values.size());
   }
   // -----------------------------------------------------------------------------
   void Fields::setPoint(const soca::GeometryIterator & iter,
-                const std::vector<double> & values,
-                const int nzo) {
-    soca_setpoint_f90(keyFlds_, iter.toFortran(), values[0], nzo);
+                const std::vector<double> & values) {
+    soca_setpoint_f90(keyFlds_, iter.toFortran(), values[0], values.size());
   }
   // -----------------------------------------------------------------------------
   void Fields::changeResolution(const Fields & other) {

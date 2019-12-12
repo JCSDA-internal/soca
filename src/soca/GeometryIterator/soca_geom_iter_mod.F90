@@ -42,7 +42,7 @@ contains
 #include "oops/util/linkedList_c.f"
 
   ! ------------------------------------------------------------------------------
-  !> Setup for the SW model's geometry iterator
+  !> Setup for the geometry iterator
   subroutine soca_geom_iter_setup(self, geom, iind, jind)
 
     ! Passed variables
@@ -60,7 +60,7 @@ contains
   end subroutine soca_geom_iter_setup
 
   ! ------------------------------------------------------------------------------
-  !> Clone for the SW model's geometry iterator
+  !> Clone for the geometry iterator
   subroutine soca_geom_iter_clone(self, other)
 
     ! Passed variables
@@ -77,7 +77,7 @@ contains
   end subroutine soca_geom_iter_clone
 
   ! ------------------------------------------------------------------------------
-  !> Check for the SW model's geometry iterator equality
+  !> Check for the geometry iterator equality
   subroutine soca_geom_iter_equals(self, other, equals)
 
     ! Passed variables

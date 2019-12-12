@@ -157,13 +157,12 @@ namespace soca {
           varlens[ii] = 1;
     }
 
-
     int lenvalues = std::accumulate(varlens.begin(), varlens.end(), 0);
     std::vector<double> values(lenvalues);
 
 
     // Get variable values
-    fields_->getPoint(iter, values, lenvalues);
+    fields_->getPoint(iter, values);
 
     return oops::GridPoint(oops::Variables(fieldNames), values, varlens);
   }
@@ -175,7 +174,7 @@ namespace soca {
 //    soca_geo_global_grid_size_f90(geometry()->toFortran(), nx, ny, nzo);
 
     const std::vector<double> vals = values.getVals();
-    fields_->setPoint(iter, vals, vals.size());
+    fields_->setPoint(iter, vals);
   }
 
   /// Interpolate to observation location

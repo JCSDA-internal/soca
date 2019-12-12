@@ -77,9 +77,9 @@ namespace soca {
 
       // access single grid point (column)
       void getPoint(const soca::GeometryIterator &,
-                    std::vector<double> &, const int) const;
+                    std::vector<double> &) const;
       void setPoint(const soca::GeometryIterator &,
-                    const std::vector<double> &, const int);
+                    const std::vector<double> &);
 
       // Interpolate full fields
       void changeResolution(const Fields &);
