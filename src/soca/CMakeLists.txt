@@ -44,6 +44,11 @@ Model/soca_model.interface.F90
 Model/soca_model_mod.F90
 Model/soca_mom6.F90
 
+#ModelBias
+ModelBias/ModelBias.h
+ModelBias/ModelBiasIncrement.h
+ModelBias/ModelBiasCovariance.h
+
 #Linear Model
 LinearModel/TlmId.cc
 LinearModel/TlmId.h
@@ -107,10 +112,6 @@ Transforms/VertConv/soca_vertconv_mod.F90
 
 Traits.h
 Fortran.h
-
-ModelBias.h
-ModelBiasIncrement.h
-ModelBiasCovariance.h
 )
 
 ecbuild_add_library( TARGET   soca

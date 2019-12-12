@@ -9,28 +9,29 @@
 #define SOCA_TRANSFORMS_HORIZFILT_HORIZFILT_H_
 
 #include <ostream>
+#include <memory>
 #include <string>
-#include <boost/scoped_ptr.hpp>
-#include <boost/shared_ptr.hpp>
 
+#include "oops/base/Variables.h"
 #include "oops/util/DateTime.h"
 #include "oops/util/Printable.h"
-#include "oops/base/Variables.h"
-#include "eckit/config/Configuration.h"
 
 // Forward declarations
 namespace eckit {
   class Configuration;
 }
-
 namespace soca {
+  class Fields;
   class State;
   class Increment;
   class Geometry;
+}
 
 // -----------------------------------------------------------------------------
-/// SOCA linear change of variable
 
+namespace soca {
+
+/// SOCA linear change of variable
 class HorizFilt: public util::Printable {
  public:
   static const std::string classname() {return "soca::HorizFilt";}
@@ -48,7 +49,7 @@ class HorizFilt: public util::Printable {
  private:
   void print(std::ostream &) const override;
   int keyFtnConfig_;
-  boost::shared_ptr<const Geometry> geom_;
+  std::unique_ptr<const Geometry> geom_;
   oops::Variables vars_;
   const State & traj_;
   unsigned int niter_;

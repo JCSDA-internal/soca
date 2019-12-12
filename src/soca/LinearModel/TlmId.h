@@ -17,20 +17,26 @@
 #include <boost/noncopyable.hpp>
 
 #include "oops/base/LinearModelBase.h"
-
 #include "oops/util/Duration.h"
 #include "oops/util/ObjectCounter.h"
 #include "oops/util/Printable.h"
-
-#include "soca/Traits.h"
 
 // Forward declarations
 namespace eckit {
   class Configuration;
 }
+namespace soca {
+  class Geometry;
+  class Increment;
+  class ModelBias;
+  class State;
+  struct Traits;
+}
+
+// -----------------------------------------------------------------------------
 
 namespace soca {
-// -----------------------------------------------------------------------------
+
 ///  linear identity model definition.
 /*!
  *   linear identity model definition and configuration parameters.

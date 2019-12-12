@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2017-2019 UCAR
+ * (C) Copyright 2017-2020 UCAR
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -14,32 +14,36 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include "soca/Geometry/Geometry.h"
-#include "oops/base/GridPoint.h"
+#include "soca/Fortran.h"
+
 #include "oops/base/Variables.h"
 #include "oops/util/DateTime.h"
 #include "oops/util/Duration.h"
 #include "oops/util/ObjectCounter.h"
 #include "oops/util/Printable.h"
-#include "soca/GetValuesTraj/GetValuesTraj.h"
 
 // Forward declarations
 namespace eckit {
   class Configuration;
 }
-
 namespace oops {
+  class GridPoint;
   class UnstructuredGrid;
 }
-
 namespace ufo {
   class GeoVaLs;
   class Locations;
 }
+namespace soca {
+  class Geometry;
+  class GeometryIterator;
+  class GetValuesTraj;
+}
+
+// -----------------------------------------------------------------------------
 
 namespace soca {
 
-  // -----------------------------------------------------------------------------
   /// Class to represent a FieldSet for the SOCA model
   class Fields : public util::Printable,
     private util::ObjectCounter<Fields> {

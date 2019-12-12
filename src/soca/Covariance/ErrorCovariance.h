@@ -10,26 +10,30 @@
 
 #include <ostream>
 #include <string>
+
 #include <boost/noncopyable.hpp>
 #include <boost/scoped_ptr.hpp>
 
-#include "soca/Fields/Fields.h"
-#include "soca/Geometry/Geometry.h"
-#include "eckit/config/Configuration.h"
+#include "oops/base/Variables.h"
 #include "oops/util/DateTime.h"
 #include "oops/util/ObjectCounter.h"
 #include "oops/util/Printable.h"
-#include "oops/base/Variables.h"
 
 // Forward declarations
+namespace eckit {
+  class Configuration;
+}
 namespace soca {
+  class Geometry;
   class Increment;
   class State;
-  // class Variables;
+}
 
-  // -----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+
+namespace soca {
+
   // Background error covariance matrix for SOCA model.
-
   class ErrorCovariance : public util::Printable,
     private boost::noncopyable,
     private util::ObjectCounter<ErrorCovariance> {

@@ -8,9 +8,11 @@
 #ifndef SOCA_LOCALIZATION_INSTANTIATELOCALIZATIONFACTORY_H_
 #define SOCA_LOCALIZATION_INSTANTIATELOCALIZATIONFACTORY_H_
 
-#include "oops/interface/LocalizationBase.h"
-#include "soca/Localization/Localization.h"
 #include "soca/Traits.h"
+
+#include "soca/Localization/Localization.h"
+
+#include "oops/interface/LocalizationBase.h"
 
 namespace soca {
 

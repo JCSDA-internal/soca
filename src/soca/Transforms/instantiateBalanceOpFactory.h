@@ -8,14 +8,14 @@
 #ifndef SOCA_TRANSFORMS_INSTANTIATEBALANCEOPFACTORY_H_
 #define SOCA_TRANSFORMS_INSTANTIATEBALANCEOPFACTORY_H_
 
+#include "oops/interface/LinearVariableChange.h"
+#include "soca/Traits.h"
 #include "soca/Transforms/Balance/Balance.h"
 #include "soca/Transforms/BkgErr/BkgErr.h"
-#include "soca/Transforms/BkgErrGodas/BkgErrGodas.h"
 #include "soca/Transforms/BkgErrFilt/BkgErrFilt.h"
+#include "soca/Transforms/BkgErrGodas/BkgErrGodas.h"
 #include "soca/Transforms/HorizFilt/HorizFilt.h"
 #include "soca/Transforms/VertConv/VertConv.h"
-#include "soca/Traits.h"
-#include "oops/interface/LinearVariableChange.h"
 
 namespace soca {
 

@@ -5,23 +5,28 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#ifndef SOCA_MODELBIASCOVARIANCE_H_
-#define SOCA_MODELBIASCOVARIANCE_H_
+#ifndef SOCA_MODELBIAS_MODELBIASCOVARIANCE_H_
+#define SOCA_MODELBIAS_MODELBIASCOVARIANCE_H_
 
 #include <ostream>
 #include <string>
+
 #include <boost/noncopyable.hpp>
 
 #include "eckit/config/LocalConfiguration.h"
 #include "oops/util/ObjectCounter.h"
 #include "oops/util/Printable.h"
 
+// Forward declarations
 namespace soca {
+  class Geometry;
   class ModelBias;
   class ModelBiasIncrement;
-  class Geometry;
+}
 
 // -----------------------------------------------------------------------------
+
+namespace soca {
 
 class ModelBiasCovariance : public util::Printable,
                             private boost::noncopyable,
@@ -36,8 +41,9 @@ class ModelBiasCovariance : public util::Printable,
 
 /// Linear algebra operators
   void linearize(const ModelBias &, const Geometry &) {}
-  void multiply(const ModelBiasIncrement &, ModelBiasIncrement) const {}
-  void inverseMultiply(const ModelBiasIncrement &, ModelBiasIncrement) const {}
+  void multiply(const ModelBiasIncrement &, ModelBiasIncrement &) const {}
+  void inverseMultiply(const ModelBiasIncrement &,
+                       ModelBiasIncrement &) const {}
   void randomize(ModelBiasIncrement &) const {}
 
   const eckit::Configuration & config() const {return conf_;}
@@ -51,4 +57,4 @@ class ModelBiasCovariance : public util::Printable,
 
 }  // namespace soca
 
-#endif  // SOCA_MODELBIASCOVARIANCE_H_
+#endif  // SOCA_MODELBIAS_MODELBIASCOVARIANCE_H_

@@ -18,36 +18,37 @@
 #include <boost/scoped_ptr.hpp>
 #include <boost/shared_ptr.hpp>
 
-#include "soca/Fields/Fields.h"
-#include "soca/GetValuesTraj/GetValuesTraj.h"
-#include "soca/Geometry/Geometry.h"
-#include "soca/GeometryIterator/GeometryIterator.h"
 #include "oops/base/GeneralizedDepartures.h"
 #include "oops/base/GridPoint.h"
 #include "oops/util/DateTime.h"
 #include "oops/util/Duration.h"
 #include "oops/util/ObjectCounter.h"
 #include "oops/util/Printable.h"
-#include "oops/util/dot_product.h"
 
+// Forward declarations
 namespace eckit {
   class Configuration;
 }
-
 namespace oops {
   class UnstructuredGrid;
   class Variables;
 }
-
 namespace ufo {
   class GeoVaLs;
   class Locations;
 }
+namespace soca {
+  class ErrorCovariance;
+  class Fields;
+  class Geometry;
+  class GetValuesTraj;
+  class ModelBiasIncrement;
+  class State;
+}
+
+// -----------------------------------------------------------------------------
 
 namespace soca {
-  class ModelBiasIncrement;
-  class ErrorCovariance;
-  class State;
 
   /// Increment Class: Difference between two states
   /*!
@@ -55,7 +56,6 @@ namespace soca {
    *  an Increment. The Increment contains everything that is needed by
    *  the tangent-linear and adjoint models.
    */
-  // -----------------------------------------------------------------------------
 
   class Increment : public oops::GeneralizedDepartures,
     public util::Printable,
@@ -102,10 +102,10 @@ namespace soca {
       /// I/O and diagnostics
       void read(const eckit::Configuration &);
       void write(const eckit::Configuration &) const;
-      double norm() const {return fields_->norm();}
-      const util::DateTime & validTime() const {return fields_->time();}
-      util::DateTime & validTime() {return fields_->time();}
-      void updateTime(const util::Duration & dt) {fields_->time() += dt;}
+      double norm() const;
+      const util::DateTime & validTime() const;
+      util::DateTime & validTime();
+      void updateTime(const util::Duration & dt);
 
 
       /// Unstructured grid
@@ -114,12 +114,10 @@ namespace soca {
       void field_from_ug(const oops::UnstructuredGrid &, const int &);
 
       /// Access to fields
-      Fields & fields() {return *fields_;}
-      const Fields & fields() const {return *fields_;}
+      Fields & fields();
+      const Fields & fields() const;
 
-      boost::shared_ptr<const Geometry> geometry() const {
-       return fields_->geometry();
-      }
+      boost::shared_ptr<const Geometry> geometry() const;
 
       /// Other
       void accumul(const double &, const State &);

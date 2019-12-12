@@ -12,28 +12,27 @@
 #include <string>
 #include <vector>
 
-#include "eckit/mpi/Comm.h"
-#include "eckit/config/LocalConfiguration.h"
+#include "soca/Fortran.h"
+#include "soca/Geometry/GeometryFortran.h"
 
+#include "eckit/config/LocalConfiguration.h"
+#include "eckit/mpi/Comm.h"
 #include "oops/util/ObjectCounter.h"
 #include "oops/util/Printable.h"
 
-#include "soca/Fortran.h"
-#include "soca/Geometry/GeometryFortran.h"
-#include "soca/GeometryIterator/GeometryIterator.h"
-
-
+// forward declarations
 namespace eckit {
   class Configuration;
 }
+namespace soca {
+  class GeometryIterator;
+}
+
+// -----------------------------------------------------------------------------
 
 namespace soca {
 
-  class GeometryIterator;
-
-  // -----------------------------------------------------------------------------
   /// Geometry handles geometry for SOCA model.
-
   class Geometry : public util::Printable,
     private util::ObjectCounter<Geometry> {
    public:

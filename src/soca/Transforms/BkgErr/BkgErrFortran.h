@@ -15,6 +15,8 @@ namespace eckit {
   class Configuration;
 }
 
+// -----------------------------------------------------------------------------
+
 namespace soca {
 
   extern "C" {

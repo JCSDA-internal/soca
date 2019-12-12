@@ -10,6 +10,7 @@
  */
 
 #include "soca/Traits.h"
+
 #include "oops/runs/HofX.h"
 #include "oops/runs/Run.h"
 #include "ufo/instantiateObsFilterFactory.h"

@@ -9,6 +9,7 @@
 #define SOCA_TRANSFORMS_HORIZFILT_HORIZFILTFORTRAN_H_
 
 #include "soca/Fortran.h"
+
 #include "oops/base/Variables.h"
 
 // Forward declarations

@@ -10,26 +10,26 @@
 
 #include <ostream>
 #include <string>
-#include <boost/scoped_ptr.hpp>
-#include <boost/shared_ptr.hpp>
 
 #include "oops/util/DateTime.h"
 #include "oops/util/Printable.h"
-#include "eckit/config/Configuration.h"
 
 // Forward declarations
 namespace eckit {
   class Configuration;
 }
-
 namespace soca {
+  class Fields;
   class State;
   class Increment;
   class Geometry;
+}
 
 // -----------------------------------------------------------------------------
-/// SOCA linear change of variable
 
+namespace soca {
+
+/// SOCA linear change of variable
 class BkgErrGodas: public util::Printable {
  public:
   static const std::string classname() {return "soca::BkgErrGodas";}

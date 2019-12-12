@@ -10,8 +10,10 @@
 
 #include <ostream>
 
-#include "oops/util/Printable.h"
 #include "soca/Fortran.h"
+
+#include "oops/util/Printable.h"
+
 
 namespace soca {
 

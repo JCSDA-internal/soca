@@ -5,11 +5,12 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#include <mpi.h>
+#include "soca/Fortran.h"
 #include "soca/GetValuesTraj/GetValuesTraj.h"
-#include "oops/util/Logger.h"
-#include "Fortran.h"
+
 #include "eckit/config/Configuration.h"
+
+#include "oops/util/Logger.h"
 
 // -----------------------------------------------------------------------------
 namespace soca {

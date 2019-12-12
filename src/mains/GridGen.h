@@ -10,13 +10,16 @@
 
 #include <string>
 
-#include "eckit/mpi/Comm.h"
-#include "eckit/config/LocalConfiguration.h"
-#include "oops/base/PostProcessor.h"
+#include "soca/Traits.h"
+
 #include "soca/Geometry/Geometry.h"
 #include "soca/Model/Model.h"
-#include "oops/runs/Application.h"
+
+#include "eckit/config/LocalConfiguration.h"
+#include "eckit/mpi/Comm.h"
+#include "oops/base/PostProcessor.h"
 #include "oops/parallel/mpi/mpi.h"
+#include "oops/runs/Application.h"
 
 namespace soca {
 

@@ -5,23 +5,26 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#ifndef SOCA_MODELBIASINCREMENT_H_
-#define SOCA_MODELBIASINCREMENT_H_
+#ifndef SOCA_MODELBIAS_MODELBIASINCREMENT_H_
+#define SOCA_MODELBIAS_MODELBIASINCREMENT_H_
 
-#include <iostream>
+#include <ostream>
 
 #include "oops/util/Printable.h"
 
+// Forward declarations
 namespace eckit {
   class Configuration;
 }
-
 namespace soca {
+  class Geometry;
   class ModelBias;
   class ModelBiasCovariance;
-  class Geometry;
+}
 
 // -----------------------------------------------------------------------------
+
+namespace soca {
 
 class ModelBiasIncrement : public util::Printable {
  public:
@@ -56,4 +59,4 @@ class ModelBiasIncrement : public util::Printable {
 
 }  // namespace soca
 
-#endif  // SOCA_MODELBIASINCREMENT_H_
+#endif  // SOCA_MODELBIAS_MODELBIASINCREMENT_H_

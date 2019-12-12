@@ -5,18 +5,20 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#include "soca/Transforms/HorizFilt/HorizFilt.h"
-
 #include <ostream>
 #include <string>
 
-#include "oops/util/Logger.h"
-#include "oops/util/abor1_cpp.h"
-#include "eckit/config/Configuration.h"
+#include "soca/Fields/Fields.h"
+#include "soca/Geometry/Geometry.h"
 #include "soca/Increment/Increment.h"
 #include "soca/State/State.h"
-#include "soca/Geometry/Geometry.h"
+#include "soca/Transforms/HorizFilt/HorizFilt.h"
 #include "soca/Transforms/HorizFilt/HorizFiltFortran.h"
+
+#include "eckit/config/Configuration.h"
+
+#include "oops/util/abor1_cpp.h"
+#include "oops/util/Logger.h"
 
 namespace soca {
   // -----------------------------------------------------------------------------
