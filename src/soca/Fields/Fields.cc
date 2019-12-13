@@ -179,10 +179,10 @@ namespace soca {
     int lenvalues = std::accumulate(varlens.begin(), varlens.end(), 0);
     std::vector<double> values(lenvalues);
 
-    soca_field_getpoint_f90(keyFlds_, iter.toFortran(), values[0], values.size());
+    soca_field_getpoint_f90(keyFlds_, iter.toFortran(), values[0],
+                            values.size());
 
     return oops::GridPoint(oops::Variables(fieldNames), values, varlens);
-
   }
   // -----------------------------------------------------------------------------
   void Fields::setPoint(const soca::GeometryIterator & iter,
