@@ -25,10 +25,12 @@ use soca_fields_mod, only: soca_field, &
                            add_incr, axpy, change_resol, diff_incr, &
                            dot_prod, field_from_ug, field_to_ug, ug_coord, fldrms, &
                            gpnorm, random, read_file, write_file, &
-                           self_schur, self_sub, self_mul, self_add
+                           self_schur, self_sub, self_mul, self_add,&
+                           soca_getpoint,soca_setpoint
 use soca_interpfields_mod, only: getvalues, getvalues_ad
 use soca_getvaltraj_mod, only: soca_getvaltraj
 use soca_getvaltraj_mod_c, only: soca_getvaltraj_registry
+use soca_geom_iter_mod, only: soca_geom_iter, soca_geom_iter_registry
 
 implicit none
 
@@ -515,6 +517,42 @@ subroutine soca_field_interp_ad_c(c_key_fld,c_key_loc,c_vars,c_key_gom,c_key_tra
   call getvalues_ad(fld, locs, vars, gom, traj)
 
 end subroutine soca_field_interp_ad_c
+
+! ------------------------------------------------------------------------------
+
+subroutine soca_field_getpoint_c(c_key_fld,c_key_iter,values, values_len) bind(c,name='soca_field_getpoint_f90')
+  integer(c_int), intent(in) :: c_key_fld
+  integer(c_int), intent(in) :: c_key_iter
+  integer(c_int), intent(in) :: values_len
+  real(c_double), intent(inout) :: values(values_len)
+
+  type(soca_field),      pointer :: fld
+  type(soca_geom_iter), pointer :: iter
+
+  call soca_field_registry%get(c_key_fld,fld)
+  call soca_geom_iter_registry%get(c_key_iter,iter)
+
+  call soca_getpoint(fld, iter, values) 
+
+end subroutine soca_field_getpoint_c
+
+! ------------------------------------------------------------------------------
+
+subroutine soca_field_setpoint_c(c_key_fld,c_key_iter,values, values_len) bind(c,name='soca_field_setpoint_f90')
+  integer(c_int), intent(inout) :: c_key_fld
+  integer(c_int), intent(in) :: c_key_iter
+  integer(c_int), intent(in) :: values_len
+  real(c_double), intent(in) :: values(values_len)
+
+  type(soca_field),      pointer :: fld
+  type(soca_geom_iter), pointer :: iter
+
+  call soca_field_registry%get(c_key_fld,fld)
+  call soca_geom_iter_registry%get(c_key_iter,iter)
+
+  call soca_setpoint(fld, iter, values)    
+
+end subroutine soca_field_setpoint_c
 
 ! ------------------------------------------------------------------------------
 

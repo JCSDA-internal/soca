@@ -15,6 +15,7 @@
 
 #include "eckit/config/Configuration.h"
 #include "oops/generic/UnstructuredGrid.h"
+#include "oops/base/GridPoint.h"
 #include "oops/base/Variables.h"
 #include "oops/util/DateTime.h"
 #include "oops/util/Logger.h"
@@ -155,6 +156,39 @@ namespace soca {
                            const GetValuesTraj & traj) {
     soca_field_interp_ad_f90(keyFlds_, locs.toFortran(), vars,
                              gom.toFortran(), traj.toFortran());
+  }
+  // -----------------------------------------------------------------------------
+  oops::GridPoint Fields::getPoint(const soca::GeometryIterator & iter) {
+    int nx, ny, nzo, nzi, ncat, nf;
+    soca_field_sizes_f90(toFortran(), nx, ny, nzo, nzi, ncat, nf);
+
+    oops::Variables fieldNames = variables();
+    std::vector<int> varlens(fieldNames.size());
+
+    for (int ii = 0; ii < fieldNames.size(); ii++) {
+      if (fieldNames[ii] == "tocn") varlens[ii]=nzo;
+      else if (fieldNames[ii] == "socn") varlens[ii]=nzo;
+      else if (fieldNames[ii] == "hocn") varlens[ii]=nzo;
+      else if (fieldNames[ii] == "cicen") varlens[ii]=ncat + 1;
+      else if (fieldNames[ii] == "hicen") varlens[ii]=ncat;
+      else if (fieldNames[ii] == "hsnon") varlens[ii]=ncat;
+      else
+          varlens[ii] = 1;
+    }
+
+    int lenvalues = std::accumulate(varlens.begin(), varlens.end(), 0);
+    std::vector<double> values(lenvalues);
+
+    soca_field_getpoint_f90(keyFlds_, iter.toFortran(), values[0],
+                            values.size());
+
+    return oops::GridPoint(oops::Variables(fieldNames), values, varlens);
+  }
+  // -----------------------------------------------------------------------------
+  void Fields::setPoint(const soca::GeometryIterator & iter,
+                const oops::GridPoint & values) {
+    const std::vector<double> vals = values.getVals();
+    soca_field_setpoint_f90(keyFlds_, iter.toFortran(), vals[0], vals.size());
   }
   // -----------------------------------------------------------------------------
   void Fields::changeResolution(const Fields & other) {

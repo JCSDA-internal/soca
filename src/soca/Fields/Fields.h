@@ -10,10 +10,12 @@
 
 #include <ostream>
 #include <string>
+#include <vector>
 
 #include <boost/shared_ptr.hpp>
 
 #include "soca/Geometry/Geometry.h"
+#include "oops/base/GridPoint.h"
 #include "oops/base/Variables.h"
 #include "oops/util/DateTime.h"
 #include "oops/util/Duration.h"
@@ -74,6 +76,11 @@ namespace soca {
       void getValuesAD(const ufo::Locations &, const oops::Variables &,
                        const ufo::GeoVaLs &, const GetValuesTraj &);
 
+      // access single grid point (column)
+      oops::GridPoint getPoint(const soca::GeometryIterator &);
+      void setPoint(const soca::GeometryIterator &,
+                    const oops::GridPoint &);
+
       // Interpolate full fields
       void changeResolution(const Fields &);
       void add(const Fields &);
@@ -89,6 +96,7 @@ namespace soca {
       void write(const eckit::Configuration &) const;
       double norm() const;
       boost::shared_ptr<const Geometry> geometry() const {return geom_;}
+      const oops::Variables & variables() const { return vars_; }
 
       const util::DateTime & time() const {return time_;}
       util::DateTime & time() {return time_;}

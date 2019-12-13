@@ -20,12 +20,16 @@
 
 #include "soca/Fortran.h"
 #include "soca/Geometry/GeometryFortran.h"
+#include "soca/GeometryIterator/GeometryIterator.h"
+
 
 namespace eckit {
   class Configuration;
 }
 
 namespace soca {
+
+  class GeometryIterator;
 
   // -----------------------------------------------------------------------------
   /// Geometry handles geometry for SOCA model.
@@ -38,6 +42,10 @@ namespace soca {
       explicit Geometry(const eckit::Configuration &, const eckit::mpi::Comm &);
       Geometry(const Geometry &);
       ~Geometry();
+
+      GeometryIterator begin() const;
+      GeometryIterator end() const;
+
 
       int& toFortran() {return keyGeom_;}
       const int& toFortran() const {return keyGeom_;}

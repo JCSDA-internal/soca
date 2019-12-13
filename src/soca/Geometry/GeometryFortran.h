@@ -22,6 +22,7 @@ namespace soca {
     void soca_geo_clone_f90(const F90geom &, F90geom &);
     void soca_geo_gridgen_f90(const F90geom &);
     void soca_geo_delete_f90(F90geom &);
+    void soca_geo_start_end_f90(const F90geom &, int &, int &, int &, int &);
   }
 }  // namespace soca
 #endif  // SOCA_GEOMETRY_GEOMETRYFORTRAN_H_

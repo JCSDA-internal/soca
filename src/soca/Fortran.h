@@ -24,6 +24,8 @@ namespace soca {
 
   // Geometry key type
   typedef int F90geom;
+  // Geometry iterator key type
+  typedef int F90iter;
   // Model key type
   typedef int F90model;
   // Locations key type
@@ -112,8 +114,14 @@ namespace soca {
                                       const int &);
 
     void soca_field_gpnorm_f90(const F90flds &, const int &, double &);
+    void soca_field_getpoint_f90(const F90flds &, const F90iter &, double &,
+                           const int &);
+    void soca_field_setpoint_f90(F90flds &, const F90iter &, const double &,
+                           const int &);
     void soca_field_sizes_f90(const F90flds &, int &, int &, int &,
                               int &, int &, int &);
+
+
     void soca_field_rms_f90(const F90flds &, double &);
 
     // -----------------------------------------------------------------------------

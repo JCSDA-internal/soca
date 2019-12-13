@@ -11,6 +11,7 @@
 #include "soca/Geometry/GeometryFortran.h"
 #include "soca/Geometry/Geometry.h"
 #include "eckit/config/Configuration.h"
+#include "soca/GeometryIterator/GeometryIteratorFortran.h"
 
 using oops::Log;
 
@@ -40,6 +41,19 @@ namespace soca {
     Log::trace() << "Geometry::gridgen: " << keyGeom_ << std::endl;
     Log::trace() << config << std::endl;
     soca_geo_gridgen_f90(keyGeom_);
+  }
+  // -----------------------------------------------------------------------------
+  GeometryIterator Geometry::begin() const {
+    // return start of the geometry on this mpi tile
+    int ist, iend, jst, jend;
+    soca_geo_start_end_f90(keyGeom_, ist, iend, jst, jend);
+    return GeometryIterator(*this, ist, jst);
+  }
+  // -----------------------------------------------------------------------------
+  GeometryIterator Geometry::end() const {
+    // return end of the geometry on this mpi tile
+    // decided to return index out of bounds for the iterator loops to work
+    return GeometryIterator(*this, -1, -1);
   }
   // -----------------------------------------------------------------------------
   void Geometry::print(std::ostream & os) const {

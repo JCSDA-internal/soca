@@ -11,6 +11,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <numeric>
 
 #include "eckit/config/LocalConfiguration.h"
 #include "eckit/exception/Exceptions.h"
@@ -28,6 +29,7 @@
 #include "soca/Covariance/ErrorCovariance.h"
 #include "soca/Fields/Fields.h"
 #include "soca/Geometry/Geometry.h"
+#include "soca/Geometry/GeometryFortran.h"
 #include "soca/State/State.h"
 #include "soca/GetValuesTraj/GetValuesTraj.h"
 
@@ -135,6 +137,18 @@ namespace soca {
   void Increment::random() {
     fields_->random();
   }
+
+  // -----------------------------------------------------------------------------
+  oops::GridPoint Increment::getPoint(const GeometryIterator & iter) const {
+    return fields_->getPoint(iter);
+  }
+
+  // -----------------------------------------------------------------------------
+  void Increment::setPoint(const oops::GridPoint & values,
+                             const GeometryIterator & iter) {
+    fields_->setPoint(iter, values);
+  }
+
   /// Interpolate to observation location
   // -----------------------------------------------------------------------------
   void Increment::getValuesTL(const ufo::Locations & locs,

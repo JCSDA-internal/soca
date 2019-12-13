@@ -27,6 +27,7 @@ use mpp_domains_mod, only : mpp_update_domains
 use MOM_remapping, only : remapping_CS, initialize_remapping, remapping_core_h, end_remapping
 use random_mod, only: normal_distribution
 use soca_geom_mod, only : soca_geom
+use soca_geom_iter_mod, only : soca_geom_iter
 use soca_fieldsutils_mod, only: soca_genfilename, fldinfo
 use soca_ocnsfc_mod, only: soca_ocnsfc_type
 use soca_seaice_mod, only: soca_seaice_type
@@ -41,7 +42,8 @@ public :: soca_field, &
           dot_prod, add_incr, diff_incr, &
           read_file, write_file, gpnorm, fldrms, soca_fld2file, &
           change_resol, check, &
-          field_to_ug, field_from_ug, ug_coord
+          field_to_ug, field_from_ug, ug_coord, &
+          soca_getpoint, soca_setpoint
 
 interface create
    module procedure create_constructor, create_copy
@@ -1289,6 +1291,90 @@ subroutine soca_write_restart(fld, f_conf, vdate)
 
 end subroutine soca_write_restart
 
+
 ! ------------------------------------------------------------------------------
+
+subroutine soca_getpoint(self, geoiter, values)
+
+  type(soca_field),               intent(   in) :: self
+  type(soca_geom_iter),           intent(   in) :: geoiter
+  real(kind=kind_real),           intent(inout) :: values(:)
+  integer :: ff, ii, nzo, ncat
+
+  nzo = self%geom%nzo
+  ncat = self%geom%ncat
+
+  ! get values
+  ii = 0 
+  do ff = 1, self%nf
+    select case(self%fldnames(ff))
+    case("tocn")
+      values(ii+1:ii+nzo) = self%tocn(geoiter%iind, geoiter%jind,:)
+      ii = ii + nzo
+    case("socn")
+      values(ii+1:ii+nzo) = self%socn(geoiter%iind, geoiter%jind,:)
+      ii = ii + nzo
+    case("hocn")
+      values(ii+1:ii+nzo) = self%hocn(geoiter%iind, geoiter%jind,:)
+      ii = ii + nzo
+    case("ssh")
+      values(ii+1)        = self%ssh(geoiter%iind, geoiter%jind)
+      ii = ii + 1
+    case("cicen")
+      values(ii+1:ii+ncat+1) = self%seaice%cicen(geoiter%iind, geoiter%jind,:)
+      ii = ii + ncat + 1
+    case("hicen")
+      values(ii+1:ii+ncat) = self%seaice%hicen(geoiter%iind, geoiter%jind,:)
+      ii = ii + ncat
+    case("hsnon")
+      values(ii+1:ii+ncat) = self%seaice%hsnon(geoiter%iind, geoiter%jind,:)
+      ii = ii + ncat
+    end select
+  end do
+
+end subroutine soca_getpoint
+
+! ------------------------------------------------------------------------------
+
+subroutine soca_setpoint(self, geoiter, values)
+
+  ! Passed variables
+  type(soca_field),               intent(inout) :: self
+  type(soca_geom_iter),           intent(   in) :: geoiter
+  real(kind=kind_real),           intent(   in) :: values(:)
+  integer :: ff, ii, nzo, ncat
+
+  nzo = self%geom%nzo
+  ncat = self%geom%ncat
+
+  ! Set values
+  ii = 0
+  do ff = 1, self%nf
+    select case(self%fldnames(ff))
+    case("tocn")
+      self%tocn(geoiter%iind, geoiter%jind,:) = values(ii+1:ii+nzo)
+      ii = ii + nzo
+    case("socn")
+      self%socn(geoiter%iind, geoiter%jind,:) = values(ii+1:ii+nzo)
+      ii = ii + nzo
+    case("hocn")
+      self%hocn(geoiter%iind, geoiter%jind,:) = values(ii+1:ii+nzo)
+      ii = ii + nzo
+    case("ssh")
+      self%ssh(geoiter%iind, geoiter%jind) = values(ii+1)
+      ii = ii + 1
+    case("cicen")
+      self%seaice%cicen(geoiter%iind, geoiter%jind,:) = values(ii+1:ii+ncat+1)
+      ii = ii + ncat + 1
+    case("hicen")
+      self%seaice%hicen(geoiter%iind, geoiter%jind,:) = values(ii+1:ii+ncat)
+      ii = ii + ncat
+    case("hsnon")
+      self%seaice%hsnon(geoiter%iind, geoiter%jind,:) = values(ii+1:ii+ncat)
+      ii = ii + ncat
+    end select
+  end do
+
+end subroutine soca_setpoint
 
 end module soca_fields_mod
