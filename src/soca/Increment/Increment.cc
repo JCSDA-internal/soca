@@ -160,7 +160,6 @@ namespace soca {
     int lenvalues = std::accumulate(varlens.begin(), varlens.end(), 0);
     std::vector<double> values(lenvalues);
 
-
     // Get variable values
     fields_->getPoint(iter, values);
 
@@ -170,8 +169,6 @@ namespace soca {
   // -----------------------------------------------------------------------------
   void Increment::setPoint(const oops::GridPoint & values,
                              const GeometryIterator & iter) {
-//    int nx, ny, nzo;
-//    soca_geo_global_grid_size_f90(geometry()->toFortran(), nx, ny, nzo);
 
     const std::vector<double> vals = values.getVals();
     fields_->setPoint(iter, vals);

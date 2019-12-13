@@ -520,11 +520,11 @@ end subroutine soca_field_interp_ad_c
 
 ! ------------------------------------------------------------------------------
 
-subroutine soca_getpoint_c(c_key_fld,c_key_iter,values, values_len) bind(c,name='soca_getpoint_f90')
+subroutine soca_field_getpoint_c(c_key_fld,c_key_iter,values, values_len) bind(c,name='soca_field_getpoint_f90')
   integer(c_int), intent(in) :: c_key_fld
   integer(c_int), intent(in) :: c_key_iter
-  real(c_double), intent(inout) :: values(values_len)
   integer(c_int), intent(in) :: values_len
+  real(c_double), intent(inout) :: values(values_len)
 
   type(soca_field),      pointer :: fld
   type(soca_geom_iter), pointer :: iter
@@ -534,15 +534,15 @@ subroutine soca_getpoint_c(c_key_fld,c_key_iter,values, values_len) bind(c,name=
 
   call soca_getpoint(fld, iter, values) 
 
-end subroutine soca_getpoint_c
+end subroutine soca_field_getpoint_c
 
 ! ------------------------------------------------------------------------------
 
-subroutine soca_setpoint_c(c_key_fld,c_key_iter,values, values_len) bind(c,name='soca_setpoint_f90')
+subroutine soca_field_setpoint_c(c_key_fld,c_key_iter,values, values_len) bind(c,name='soca_field_setpoint_f90')
   integer(c_int), intent(inout) :: c_key_fld
   integer(c_int), intent(in) :: c_key_iter
-  real(c_double), intent(in) :: values(values_len)
   integer(c_int), intent(in) :: values_len
+  real(c_double), intent(in) :: values(values_len)
 
   type(soca_field),      pointer :: fld
   type(soca_geom_iter), pointer :: iter
@@ -552,7 +552,7 @@ subroutine soca_setpoint_c(c_key_fld,c_key_iter,values, values_len) bind(c,name=
 
   call soca_setpoint(fld, iter, values)    
 
-end subroutine soca_setpoint_c
+end subroutine soca_field_setpoint_c
 
 ! ------------------------------------------------------------------------------
 
