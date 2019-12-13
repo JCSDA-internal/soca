@@ -15,6 +15,7 @@
 #include <boost/shared_ptr.hpp>
 
 #include "soca/Geometry/Geometry.h"
+#include "oops/base/GridPoint.h"
 #include "oops/base/Variables.h"
 #include "oops/util/DateTime.h"
 #include "oops/util/Duration.h"
@@ -76,10 +77,9 @@ namespace soca {
                        const ufo::GeoVaLs &, const GetValuesTraj &);
 
       // access single grid point (column)
-      void getPoint(const soca::GeometryIterator &,
-                    std::vector<double> &) const;
+      oops::GridPoint getPoint(const soca::GeometryIterator &);
       void setPoint(const soca::GeometryIterator &,
-                    const std::vector<double> &);
+                    const oops::GridPoint &);
 
       // Interpolate full fields
       void changeResolution(const Fields &);

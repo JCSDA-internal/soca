@@ -140,38 +140,13 @@ namespace soca {
 
   // -----------------------------------------------------------------------------
   oops::GridPoint Increment::getPoint(const GeometryIterator & iter) const {
-    int nx, ny, nzo, nzi, ncat, nf;
-    soca_field_sizes_f90(fields_->toFortran(), nx, ny, nzo, nzi, ncat, nf);
-
-    oops::Variables fieldNames = fields_->variables();
-    std::vector<int> varlens(fieldNames.size());
-
-    for (int ii = 0; ii < fieldNames.size(); ii++) {
-      if (fieldNames[ii] == "tocn") varlens[ii]=nzo;
-      else if (fieldNames[ii] == "socn") varlens[ii]=nzo;
-      else if (fieldNames[ii] == "hocn") varlens[ii]=nzo;
-      else if (fieldNames[ii] == "cicen") varlens[ii]=ncat + 1;
-      else if (fieldNames[ii] == "hicen") varlens[ii]=ncat;
-      else if (fieldNames[ii] == "hsnon") varlens[ii]=ncat;
-      else
-          varlens[ii] = 1;
-    }
-
-    int lenvalues = std::accumulate(varlens.begin(), varlens.end(), 0);
-    std::vector<double> values(lenvalues);
-
-    // Get variable values
-    fields_->getPoint(iter, values);
-
-    return oops::GridPoint(oops::Variables(fieldNames), values, varlens);
+    return fields_->getPoint(iter);
   }
 
   // -----------------------------------------------------------------------------
   void Increment::setPoint(const oops::GridPoint & values,
                              const GeometryIterator & iter) {
-
-    const std::vector<double> vals = values.getVals();
-    fields_->setPoint(iter, vals);
+    fields_->setPoint(iter, values);
   }
 
   /// Interpolate to observation location
