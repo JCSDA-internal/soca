@@ -68,3 +68,8 @@ ecbuild_add_executable( TARGET  soca_gridgen.x
                         SOURCES GridGen.cc
                         LIBS    soca
                       )
+
+ecbuild_add_executable( TARGET  soca_letkf.x
+                        SOURCES LETKF.cc
+                        LIBS    soca
+)

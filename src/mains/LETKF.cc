@@ -8,9 +8,11 @@
 #include "soca/Traits.h"
 #include "oops/runs/LETKF.h"
 #include "oops/runs/Run.h"
+#include "ufo/instantiateObsFilterFactory.h"
 
 int main(int argc,  char ** argv) {
   oops::Run run(argc, argv);
+  ufo::instantiateObsFilterFactory<soca::Traits>();
   oops::LETKF<soca::Traits> letkf;
   run.execute(letkf);
   return 0;
