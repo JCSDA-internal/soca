@@ -95,7 +95,7 @@ contains
 
   ! ------------------------------------------------------------------------------
   !> Get geometry iterator current lat/lon
-  subroutine soca_geom_iter_current(self, lat, lon)
+  subroutine soca_geom_iter_current(self, lon, lat)
 
     ! Passed variables
     type(soca_geom_iter), intent( in) :: self !< Geometry iterator

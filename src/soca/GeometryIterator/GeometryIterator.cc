@@ -56,7 +56,7 @@ bool GeometryIterator::operator!=(const GeometryIterator & other) const {
 
 eckit::geometry::Point2 GeometryIterator::operator*() const {
   double lat, lon;
-  soca_geom_iter_current_f90(keyIter_, lat, lon);
+  soca_geom_iter_current_f90(keyIter_, lon, lat);
   return eckit::geometry::Point2(lon, lat);
 }
 
