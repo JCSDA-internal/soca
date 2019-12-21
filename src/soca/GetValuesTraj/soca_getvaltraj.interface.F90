@@ -45,7 +45,6 @@ subroutine c_soca_getvaltraj_setup(c_key_self) &
   call soca_getvaltraj_registry%get(c_key_self,self)
 
   self%interph_initialized = .false.
-  allocate(self%horiz_interp(1))
   self%nobs = 0
   self%bumpid = 0
   self%obstype_index = c_key_self
@@ -64,8 +63,7 @@ subroutine c_soca_getvaltraj_delete(c_key_self) &
   call soca_getvaltraj_registry%get(c_key_self, self)
 
   ! Clean up
-  call self%horiz_interp(1)%finalize()
-  deallocate(self%horiz_interp)
+  call self%horiz_interp%delete()
   self%nobs = 0
   self%bumpid = 0
   self%interph_initialized = .false.

@@ -17,8 +17,7 @@ public :: soca_getvaltraj
 
 type :: soca_getvaltraj
  integer                 :: nobs
- type(soca_bumpinterp2d), allocatable :: horiz_interp(:)
- type(unstrc_interp)     :: horiz_interp_oops
+ type(unstrc_interp)     :: horiz_interp
  integer                 :: bumpid
  logical                 :: interph_initialized = .false.
  integer                 :: obstype_index
