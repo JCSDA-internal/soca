@@ -46,8 +46,6 @@ subroutine c_soca_getvaltraj_setup(c_key_self) &
 
   self%interph_initialized = .false.
   self%nobs = 0
-  self%bumpid = 0
-  self%obstype_index = c_key_self
 
 end subroutine c_soca_getvaltraj_setup
 
@@ -65,7 +63,6 @@ subroutine c_soca_getvaltraj_delete(c_key_self) &
   ! Clean up
   call self%horiz_interp%delete()
   self%nobs = 0
-  self%bumpid = 0
   self%interph_initialized = .false.
 
   ! Remove key

@@ -7,7 +7,6 @@
 
 module soca_getvaltraj_mod
 
-use soca_bumpinterp2d_mod, only: soca_bumpinterp2d
 use unstructured_interpolation_mod
 
 implicit none
@@ -18,9 +17,7 @@ public :: soca_getvaltraj
 type :: soca_getvaltraj
  integer                 :: nobs
  type(unstrc_interp)     :: horiz_interp
- integer                 :: bumpid
  logical                 :: interph_initialized = .false.
- integer                 :: obstype_index
 end type soca_getvaltraj
 
 end module soca_getvaltraj_mod

@@ -15,7 +15,6 @@ use oops_variables_mod
 use ufo_geovals_mod, only: ufo_geovals
 use ufo_locs_mod, only: ufo_locs
 use soca_getvaltraj_mod, only: soca_getvaltraj
-use soca_bumpinterp2d_mod, only: soca_bumpinterp2d
 use soca_fields_mod, only: soca_field, check
 use soca_geom_mod, only : soca_geom
 use unstructured_interpolation_mod
@@ -45,31 +44,22 @@ subroutine initialize_interph(fld, locs, horiz_interp)
   character(len=8) :: wtype = 'barycent'
   real(kind=kind_real), allocatable :: lats_in(:), lons_in(:)
 
-  type(soca_bumpinterp2d) :: horiz_bumpinterp_test ! Keep for testing
-
   ! Indices for compute domain (no halo)
   isc = fld%geom%isc ; iec = fld%geom%iec
   jsc = fld%geom%jsc ; jec = fld%geom%jec
-
-!!$  ! Compute interpolation weights
-!!$  call horiz_interp%initialize(&
-!!$          &      fld%geom%lon(isc:iec,jsc:jec),&
-!!$          &      fld%geom%lat(isc:iec,jsc:jec),&
-!!$          &      locs%lon, locs%lat, bumpid)
 
   f_comm = fckit_mpi_comm()
   ni = iec - isc + 1
   nj = jec - jsc + 1
   ngrid_in = ni * nj
   ngrid_out = locs%nlocs
-  nn = 4
+  nn = 3
   allocate(lats_in(ngrid_in), lons_in(ngrid_in))
   lons_in = reshape(fld%geom%lon(isc:iec,jsc:jec), (/ngrid_in/))
   lats_in = reshape(fld%geom%lat(isc:iec,jsc:jec), (/ngrid_in/))
   call horiz_interp%create(f_comm, nn, wtype, &
                            ngrid_in, lats_in, lons_in, &
                            ngrid_out, locs%lat, locs%lon)
-
 
 end subroutine initialize_interph
 
@@ -83,7 +73,6 @@ subroutine getvalues_traj(fld, locs, vars, geoval, traj, interp_type)
   type(soca_getvaltraj), intent(inout) :: traj
   character(2),   optional, intent(in) :: interp_type
 
-  integer, save :: bumpid = 1000
   type(fckit_mpi_comm) :: f_comm
   integer :: allpes_nlocs, nlocs
 
@@ -99,11 +88,9 @@ subroutine getvalues_traj(fld, locs, vars, geoval, traj, interp_type)
 
   ! Initialize traj and interp
   if (.not.(traj%interph_initialized)) then
-     traj%bumpid = bumpid
      traj%nobs = locs%nlocs
      call initialize_interph(fld, locs, traj%horiz_interp)
      traj%interph_initialized = .true.
-     bumpid = bumpid + 1
   end if
 
   select case (interp_type)
@@ -126,30 +113,17 @@ subroutine getvalues_notraj(fld, locs, vars, geoval)
   type(oops_variables),  intent(in) :: vars
   type(ufo_geovals),  intent(inout) :: geoval
 
-  !type(soca_bumpinterp2d) :: horiz_interp
-  !integer, save :: bumpid = 2000
   type(unstrc_interp) :: horiz_interp
 
-  real :: start, finish
-
-!!$  call cpu_time(start)
-!!$  call initialize_interph(fld, locs, horiz_interp, bumpid, horiz_interp_oops)
-!!$  call cpu_time(finish)
-!!$  print *,"oops interp Time = ", finish-start
-
-  call cpu_time(start)
   call initialize_interph(fld, locs, horiz_interp)
-  call cpu_time(finish)
-  print *,"interp init Time = ", finish-start
 
   ! Apply interpolation with NL transform
   call interp(fld, locs, vars, geoval, horiz_interp)
-  !bumpid = bumpid + 1
 
 end subroutine getvalues_notraj
 
 ! ------------------------------------------------------------------------------
-!> Interace to bump forward interpolation (NL and TL)
+!> Interace to forward interpolation (NL and TL)
 subroutine interp(fld, locs, vars, geoval, horiz_interp)
   type(soca_field),        intent(inout) :: fld
   type(ufo_locs),             intent(in) :: locs
