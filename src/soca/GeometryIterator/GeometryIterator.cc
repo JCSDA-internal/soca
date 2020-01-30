@@ -71,7 +71,7 @@ GeometryIterator& GeometryIterator::operator++() {
 
 void GeometryIterator::print(std::ostream & os) const {
   double lat, lon;
-  soca_geom_iter_current_f90(keyIter_, lat, lon);
+  soca_geom_iter_current_f90(keyIter_, lon, lat);
   os << "GeometryIterator, lat/lon: " << lat << " / " << lon << std::endl;
 }
 
