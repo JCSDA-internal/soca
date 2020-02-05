@@ -1,4 +1,4 @@
-FROM  jcsda/docker:latest
+FROM  jcsda/docker-gnu-openmpi-dev:latest
 
 RUN cd /usr/local/src \
     && curl -L -O https://github.com/ccache/ccache/releases/download/v3.7.4/ccache-3.7.4.tar.gz \
