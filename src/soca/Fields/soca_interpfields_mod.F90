@@ -15,9 +15,9 @@ use oops_variables_mod
 use ufo_geovals_mod, only: ufo_geovals
 use ufo_locs_mod, only: ufo_locs
 use soca_getvaltraj_mod, only: soca_getvaltraj
-use soca_bumpinterp2d_mod, only: soca_bumpinterp2d
 use soca_fields_mod, only: soca_field, check
 use soca_geom_mod, only : soca_geom
+use unstructured_interpolation_mod
 
 implicit none
 private
@@ -33,23 +33,33 @@ contains
 
 ! ------------------------------------------------------------------------------
 !> Compute interpolation weights
-subroutine initialize_interph(fld, locs, horiz_interp, bumpid)
-  type(soca_field),         intent(in) :: fld
-  type(ufo_locs),           intent(in) :: locs
-  type(soca_bumpinterp2d), intent(out) :: horiz_interp
-  integer,                  intent(in) :: bumpid
+subroutine initialize_interph(fld, locs, horiz_interp)
+  type(soca_field),    intent(in) :: fld
+  type(ufo_locs),      intent(in) :: locs
+  type(unstrc_interp), intent(out) :: horiz_interp
 
-  integer :: isc, iec, jsc, jec
+  integer :: isc, iec, jsc, jec, ni, nj
+  type(fckit_mpi_comm) :: f_comm
+  integer :: nn, ngrid_in, ngrid_out
+  character(len=8) :: wtype = 'barycent'
+  real(kind=kind_real), allocatable :: lats_in(:), lons_in(:)
 
   ! Indices for compute domain (no halo)
   isc = fld%geom%isc ; iec = fld%geom%iec
   jsc = fld%geom%jsc ; jec = fld%geom%jec
 
-  ! Compute interpolation weights
-  call horiz_interp%initialize(&
-          &      fld%geom%lon(isc:iec,jsc:jec),&
-          &      fld%geom%lat(isc:iec,jsc:jec),&
-          &      locs%lon, locs%lat, bumpid)
+  f_comm = fckit_mpi_comm()
+  ni = iec - isc + 1
+  nj = jec - jsc + 1
+  ngrid_in = ni * nj
+  ngrid_out = locs%nlocs
+  nn = 3
+  allocate(lats_in(ngrid_in), lons_in(ngrid_in))
+  lons_in = reshape(fld%geom%lon(isc:iec,jsc:jec), (/ngrid_in/))
+  lats_in = reshape(fld%geom%lat(isc:iec,jsc:jec), (/ngrid_in/))
+  call horiz_interp%create(f_comm, nn, wtype, &
+                           ngrid_in, lats_in, lons_in, &
+                           ngrid_out, locs%lat, locs%lon)
 
 end subroutine initialize_interph
 
@@ -63,7 +73,6 @@ subroutine getvalues_traj(fld, locs, vars, geoval, traj, interp_type)
   type(soca_getvaltraj), intent(inout) :: traj
   character(2),   optional, intent(in) :: interp_type
 
-  integer, save :: bumpid = 1000
   type(fckit_mpi_comm) :: f_comm
   integer :: allpes_nlocs, nlocs
 
@@ -79,21 +88,19 @@ subroutine getvalues_traj(fld, locs, vars, geoval, traj, interp_type)
 
   ! Initialize traj and interp
   if (.not.(traj%interph_initialized)) then
-     traj%bumpid = bumpid
      traj%nobs = locs%nlocs
-     call initialize_interph(fld, locs, traj%horiz_interp(1), traj%bumpid)
+     call initialize_interph(fld, locs, traj%horiz_interp)
      traj%interph_initialized = .true.
-     bumpid = bumpid + 1
   end if
 
   select case (interp_type)
   case('tl')
      ! Apply interpolation with TL transform
      ! TODO: pass in "traj" and do something with it, at some point?
-     call interp(fld, locs, vars, geoval, traj%horiz_interp(1))
+     call interp(fld, locs, vars, geoval, traj%horiz_interp)
   case('nl')
      ! Apply interpolation with NL transform
-     call interp(fld, locs, vars, geoval, traj%horiz_interp(1))
+     call interp(fld, locs, vars, geoval, traj%horiz_interp)
   end select
 
 end subroutine getvalues_traj
@@ -106,31 +113,30 @@ subroutine getvalues_notraj(fld, locs, vars, geoval)
   type(oops_variables),  intent(in) :: vars
   type(ufo_geovals),  intent(inout) :: geoval
 
-  type(soca_bumpinterp2d) :: horiz_interp
-  integer, save :: bumpid = 2000
+  type(unstrc_interp) :: horiz_interp
 
-  call check(fld)
-  call initialize_interph(fld, locs, horiz_interp, bumpid)
+  call initialize_interph(fld, locs, horiz_interp)
+
   ! Apply interpolation with NL transform
   call interp(fld, locs, vars, geoval, horiz_interp)
-  bumpid = bumpid + 1
 
 end subroutine getvalues_notraj
 
 ! ------------------------------------------------------------------------------
-!> Interace to bump forward interpolation (NL and TL)
+!> Interace to forward interpolation (NL and TL)
 subroutine interp(fld, locs, vars, geoval, horiz_interp)
-  type(soca_field),             intent(inout) :: fld
-  type(ufo_locs),                  intent(in) :: locs
-  type(oops_variables),            intent(in) :: vars
-  type(ufo_geovals),            intent(inout) :: geoval
-  type(soca_bumpinterp2d),      intent(inout) :: horiz_interp
+  type(soca_field),        intent(inout) :: fld
+  type(ufo_locs),             intent(in) :: locs
+  type(oops_variables),       intent(in) :: vars
+  type(ufo_geovals),       intent(inout) :: geoval
+  type(unstrc_interp),     intent(inout) :: horiz_interp
 
   integer :: ivar, nlocs
   integer :: ival, nval, indx
   integer :: isc, iec, jsc, jec
+  integer :: ni, nj, ns
   real(kind=kind_real), allocatable :: gom_window(:,:)
-  real(kind=kind_real), allocatable :: fld3d(:,:,:)
+  real(kind=kind_real), allocatable :: fld3d(:,:,:), fld3d_un(:)
 
   ! Sanity check
   call check(fld)
@@ -217,8 +223,13 @@ subroutine interp(fld, locs, vars, geoval, horiz_interp)
      end select
 
      ! Apply forward interpolation: Model ---> Obs
+     ni = iec - isc + 1
+     nj = jec - jsc + 1
+     ns = ni * nj
+     allocate(fld3d_un(ns))
      do ival = 1, nval
-        call horiz_interp%apply(fld3d(isc:iec,jsc:jec,ival), gom_window(ival,:))
+        fld3d_un = reshape(fld3d(isc:iec,jsc:jec,ival), (/ns/))
+        call horiz_interp%apply(fld3d_un(1:ns), gom_window(ival,:))
         ! Fill proper geoval according to time window
         do indx = 1, locs%nlocs
            geoval%geovals(ivar)%vals(ival, locs%indx(indx)) = gom_window(ival, indx)
@@ -226,6 +237,7 @@ subroutine interp(fld, locs, vars, geoval, horiz_interp)
      end do
 
      ! Deallocate temporary arrays
+     deallocate(fld3d_un)
      deallocate(fld3d)
      deallocate(gom_window)
 
@@ -242,14 +254,15 @@ subroutine getvalues_ad(incr, locs, vars, geoval, traj)
   type(ufo_geovals),             intent(inout) :: geoval
   type(soca_getvaltraj), target, intent(inout) :: traj
 
-  type(soca_bumpinterp2d), pointer :: horiz_interp_p
+  type(unstrc_interp), pointer :: horiz_interp_p
   integer :: ivar, nval, ival, indx
   integer :: isc, iec, jsc, jec
+  integer :: ni, nj, ns
   real(kind=kind_real), allocatable :: gom_window(:,:)
-  real(kind=kind_real), allocatable :: incr3d(:,:,:)
+  real(kind=kind_real), allocatable :: incr3d(:,:,:), incr3d_un(:)
   real(kind=kind_real), allocatable :: gom_window_ival(:)
 
-  horiz_interp_p => traj%horiz_interp(1)
+  horiz_interp_p => traj%horiz_interp
 
   ! Indices for compute domain (no halo)
   isc = incr%geom%isc ; iec = incr%geom%iec
@@ -267,13 +280,20 @@ subroutine getvalues_ad(incr, locs, vars, geoval, traj)
      incr3d = 0.0_kind_real
 
      ! Apply backward interpolation: Obs ---> Model
+     ni = iec - isc + 1
+     nj = jec - jsc + 1
+     ns = ni * nj
+     if (.not.allocated(incr3d_un)) allocate(incr3d_un(ns))
      do ival = 1, nval
         ! Fill proper geoval according to time window
         do indx = 1, locs%nlocs
            gom_window(ival, indx) = geoval%geovals(ivar)%vals(ival, locs%indx(indx))
         end do
         gom_window_ival = gom_window(ival,1:locs%nlocs)
-        call horiz_interp_p%applyad(incr3d(:,:,ival), gom_window_ival)
+
+        incr3d_un = reshape(incr3d(isc:iec,jsc:jec,ival), (/ns/))
+        call horiz_interp_p%apply_ad(incr3d_un(1:ns), gom_window_ival)
+        incr3d(isc:iec,jsc:jec,ival) = reshape(incr3d_un(1:ns),(/ni,nj/))
      end do
 
      ! Copy incr3d into field
