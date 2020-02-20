@@ -512,7 +512,7 @@ soca_add_test( NAME enshofx
 # variational methods
 soca_add_test( NAME 3dvar_soca
                EXE  soca_3dvar.x
-               TOL  2e-9 0
+               TOL  4e-9 0
                NOTRAPFPE
                TEST_DEPENDS test_soca_static_socaerror_init )
 
