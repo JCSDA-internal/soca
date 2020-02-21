@@ -17,6 +17,7 @@ public :: soca_getvaltraj
 type :: soca_getvaltraj
  integer                 :: nobs
  type(unstrc_interp)     :: horiz_interp
+ type(unstrc_interp)     :: horiz_interp_masked
  logical                 :: interph_initialized = .false.
 end type soca_getvaltraj
 

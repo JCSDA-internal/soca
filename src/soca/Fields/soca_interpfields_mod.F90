@@ -33,10 +33,11 @@ contains
 
 ! ------------------------------------------------------------------------------
 !> Compute interpolation weights
-subroutine initialize_interph(fld, locs, horiz_interp)
+subroutine initialize_interph(fld, locs, horiz_interp, horiz_interp_masked)
   type(soca_field),    intent(in) :: fld
   type(ufo_locs),      intent(in) :: locs
   type(unstrc_interp), intent(out) :: horiz_interp
+  type(unstrc_interp), intent(out) :: horiz_interp_masked
 
   integer :: isc, iec, jsc, jec, ni, nj
   type(fckit_mpi_comm) :: f_comm
@@ -49,11 +50,13 @@ subroutine initialize_interph(fld, locs, horiz_interp)
   jsc = fld%geom%jsc ; jec = fld%geom%jec
 
   f_comm = fckit_mpi_comm()
+  ngrid_out = locs%nlocs
+  nn = 3
+
+  ! create interpolation weights for fields that do NOT use the land mask
   ni = iec - isc + 1
   nj = jec - jsc + 1
   ngrid_in = ni * nj
-  ngrid_out = locs%nlocs
-  nn = 3
   allocate(lats_in(ngrid_in), lons_in(ngrid_in))
   lons_in = reshape(fld%geom%lon(isc:iec,jsc:jec), (/ngrid_in/))
   lats_in = reshape(fld%geom%lat(isc:iec,jsc:jec), (/ngrid_in/))
@@ -61,6 +64,14 @@ subroutine initialize_interph(fld, locs, horiz_interp)
                            ngrid_in, lats_in, lons_in, &
                            ngrid_out, locs%lat, locs%lon)
 
+  ! create interpolation weights for fields that DO use the land mask
+  deallocate(lats_in, lons_in)
+  ngrid_in = count(fld%geom%mask2d(isc:iec,jsc:jec) > 0)
+  lons_in = pack(fld%geom%lon(isc:iec,jsc:jec), mask=fld%geom%mask2d(isc:iec,jsc:jec) > 0)
+  lats_in = pack(fld%geom%lat(isc:iec,jsc:jec), mask=fld%geom%mask2d(isc:iec,jsc:jec) > 0)
+  call horiz_interp_masked%create(f_comm, nn, wtype, &
+                           ngrid_in, lats_in, lons_in, &
+                           ngrid_out, locs%lat, locs%lon)
 end subroutine initialize_interph
 
 ! ------------------------------------------------------------------------------
@@ -89,7 +100,7 @@ subroutine getvalues_traj(fld, locs, vars, geoval, traj, interp_type)
   ! Initialize traj and interp
   if (.not.(traj%interph_initialized)) then
      traj%nobs = locs%nlocs
-     call initialize_interph(fld, locs, traj%horiz_interp)
+     call initialize_interph(fld, locs, traj%horiz_interp, traj%horiz_interp_masked)
      traj%interph_initialized = .true.
   end if
 
@@ -97,10 +108,10 @@ subroutine getvalues_traj(fld, locs, vars, geoval, traj, interp_type)
   case('tl')
      ! Apply interpolation with TL transform
      ! TODO: pass in "traj" and do something with it, at some point?
-     call interp(fld, locs, vars, geoval, traj%horiz_interp)
+     call interp(fld, locs, vars, geoval, traj%horiz_interp, traj%horiz_interp_masked)
   case('nl')
      ! Apply interpolation with NL transform
-     call interp(fld, locs, vars, geoval, traj%horiz_interp)
+     call interp(fld, locs, vars, geoval, traj%horiz_interp, traj%horiz_interp_masked)
   end select
 
 end subroutine getvalues_traj
@@ -114,27 +125,30 @@ subroutine getvalues_notraj(fld, locs, vars, geoval)
   type(ufo_geovals),  intent(inout) :: geoval
 
   type(unstrc_interp) :: horiz_interp
+  type(unstrc_interp) :: horiz_interp_masked
 
-  call initialize_interph(fld, locs, horiz_interp)
+  call initialize_interph(fld, locs, horiz_interp, horiz_interp_masked)
 
   ! Apply interpolation with NL transform
-  call interp(fld, locs, vars, geoval, horiz_interp)
+  call interp(fld, locs, vars, geoval, horiz_interp, horiz_interp_masked)
 
 end subroutine getvalues_notraj
 
 ! ------------------------------------------------------------------------------
 !> Interace to forward interpolation (NL and TL)
-subroutine interp(fld, locs, vars, geoval, horiz_interp)
+subroutine interp(fld, locs, vars, geoval, horiz_interp, horiz_interp_masked)
   type(soca_field),        intent(inout) :: fld
   type(ufo_locs),             intent(in) :: locs
   type(oops_variables),       intent(in) :: vars
   type(ufo_geovals),       intent(inout) :: geoval
   type(unstrc_interp),     intent(inout) :: horiz_interp
+  type(unstrc_interp),     intent(inout) :: horiz_interp_masked  
 
+  logical :: masked
   integer :: ivar, nlocs
   integer :: ival, nval, indx
   integer :: isc, iec, jsc, jec
-  integer :: ni, nj, ns
+  integer :: ns
   real(kind=kind_real), allocatable :: gom_window(:,:)
   real(kind=kind_real), allocatable :: fld3d(:,:,:), fld3d_un(:)
 
@@ -166,6 +180,9 @@ subroutine interp(fld, locs, vars, geoval, horiz_interp)
      allocate(fld3d(isc:iec,jsc:jec,1:nval))
 
      ! Extract fld3d from field
+     masked = .true. ! by default fields are assumed to need a land mask applied,
+                     ! (Currently only sea area fraction is unmasked)
+
      select case (trim(vars%variable(ivar)))
 
      case ("sea_ice_category_area_fraction")
@@ -202,6 +219,7 @@ subroutine interp(fld, locs, vars, geoval, horiz_interp)
 
      case ("sea_area_fraction")
         fld3d(isc:iec,jsc:jec,1) = real(fld%geom%mask2d(isc:iec,jsc:jec),kind=kind_real)
+        masked = .false.
 
      case ("net_downwelling_shortwave_radiation")
         fld3d(isc:iec,jsc:jec,1) = fld%ocnsfc%sw_rad(isc:iec,jsc:jec)
@@ -222,14 +240,20 @@ subroutine interp(fld, locs, vars, geoval, horiz_interp)
         call fckit_log%debug("soca_interpfields_mod:interp geoval does not exist")
      end select
 
-     ! Apply forward interpolation: Model ---> Obs
-     ni = iec - isc + 1
-     nj = jec - jsc + 1
-     ns = ni * nj
-     allocate(fld3d_un(ns))
+     ! Apply forward interpolation: Model ---> Obs    
      do ival = 1, nval
-        fld3d_un = reshape(fld3d(isc:iec,jsc:jec,ival), (/ns/))
-        call horiz_interp%apply(fld3d_un(1:ns), gom_window(ival,:))
+        if (masked) then
+          ns = count(fld%geom%mask2d(isc:iec,jsc:jec) > 0 )
+          if (.not. allocated(fld3d_un)) allocate(fld3d_un(ns))
+          fld3d_un = pack(fld3d(isc:iec,jsc:jec,ival), mask=fld%geom%mask2d(isc:iec,jsc:jec) > 0)
+          call horiz_interp_masked%apply(fld3d_un, gom_window(ival,:))
+        else          
+          ns = (iec - isc + 1) * (jec - jsc + 1)
+          if (.not. allocated(fld3d_un)) allocate(fld3d_un(ns))
+          fld3d_un = reshape(fld3d(isc:iec,jsc:jec,ival), (/ns/))
+          call horiz_interp%apply(fld3d_un(1:ns), gom_window(ival,:))
+        end if        
+
         ! Fill proper geoval according to time window
         do indx = 1, locs%nlocs
            geoval%geovals(ivar)%vals(ival, locs%indx(indx)) = gom_window(ival, indx)
@@ -254,7 +278,7 @@ subroutine getvalues_ad(incr, locs, vars, geoval, traj)
   type(ufo_geovals),             intent(inout) :: geoval
   type(soca_getvaltraj), target, intent(inout) :: traj
 
-  type(unstrc_interp), pointer :: horiz_interp_p
+  logical :: masked
   integer :: ivar, nval, ival, indx
   integer :: isc, iec, jsc, jec
   integer :: ni, nj, ns
@@ -262,7 +286,6 @@ subroutine getvalues_ad(incr, locs, vars, geoval, traj)
   real(kind=kind_real), allocatable :: incr3d(:,:,:), incr3d_un(:)
   real(kind=kind_real), allocatable :: gom_window_ival(:)
 
-  horiz_interp_p => traj%horiz_interp
 
   ! Indices for compute domain (no halo)
   isc = incr%geom%isc ; iec = incr%geom%iec
@@ -279,11 +302,20 @@ subroutine getvalues_ad(incr, locs, vars, geoval, traj)
      allocate(incr3d(isc:iec,jsc:jec,1:nval))
      incr3d = 0.0_kind_real
 
+     ! determine if this variable should use the masked grid
+     ! (currently all of them, perhaps have atm vars use unmasked interp at some point??)
+     masked = .true.
+
      ! Apply backward interpolation: Obs ---> Model
-     ni = iec - isc + 1
-     nj = jec - jsc + 1
-     ns = ni * nj
+     if (masked) then
+      ns = count(incr%geom%mask2d(isc:iec,jsc:jec) > 0)      
+     else
+      ni = iec - isc + 1
+      nj = jec - jsc + 1
+      ns = ni * nj
+     end if
      if (.not.allocated(incr3d_un)) allocate(incr3d_un(ns))
+
      do ival = 1, nval
         ! Fill proper geoval according to time window
         do indx = 1, locs%nlocs
@@ -291,9 +323,17 @@ subroutine getvalues_ad(incr, locs, vars, geoval, traj)
         end do
         gom_window_ival = gom_window(ival,1:locs%nlocs)
 
-        incr3d_un = reshape(incr3d(isc:iec,jsc:jec,ival), (/ns/))
-        call horiz_interp_p%apply_ad(incr3d_un(1:ns), gom_window_ival)
-        incr3d(isc:iec,jsc:jec,ival) = reshape(incr3d_un(1:ns),(/ni,nj/))
+        if (masked) then
+          incr3d_un = pack(incr3d(isc:iec,jsc:jec,ival), mask = incr%geom%mask2d(isc:iec,jsc:jec) >0)
+          call traj%horiz_interp_masked%apply_ad(incr3d_un, gom_window_ival)
+          incr3d(isc:iec,jsc:jec,ival) = unpack(incr3d_un, &
+                mask = incr%geom%mask2d(isc:iec,jsc:jec) >0, &
+                field = incr3d(isc:iec,jsc:jec,ival))          
+        else
+          incr3d_un = reshape(incr3d(isc:iec,jsc:jec,ival), (/ns/))
+          call traj%horiz_interp%apply_ad(incr3d_un(1:ns), gom_window_ival)
+          incr3d(isc:iec,jsc:jec,ival) = reshape(incr3d_un(1:ns),(/ni,nj/))
+        end if
      end do
 
      ! Copy incr3d into field
