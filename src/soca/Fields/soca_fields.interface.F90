@@ -20,7 +20,7 @@ use ufo_geovals_mod_c, only: ufo_geovals_registry
 use ufo_geovals_mod, only: ufo_geovals
 use soca_geom_mod, only: soca_geom
 use soca_geom_mod_c, only: soca_geom_registry
-use soca_fields_mod, only: soca_field, &
+use soca_fields_mod, only: soca_fields, &
                            create, delete, copy, zeros, dirac, &
                            add_incr, axpy, change_resol, diff_incr, &
                            dot_prod, field_from_ug, field_to_ug, ug_coord, fldrms, &
@@ -37,7 +37,7 @@ implicit none
 private
 public :: soca_field_registry
 
-#define LISTED_TYPE soca_field
+#define LISTED_TYPE soca_fields
 
 !> Linked list interface - defines registry_t type
 #include "oops/util/linkedList_i.f"
@@ -59,7 +59,7 @@ subroutine soca_field_create_c(c_key_self, c_key_geom, c_vars) bind(c,name='soca
   integer(c_int),    intent(in) :: c_key_geom !< Geometry
   type(c_ptr),value, intent(in) :: c_vars     !< List of variables
 
-  type(soca_field), pointer :: self
+  type(soca_fields),pointer :: self
   type(soca_geom),  pointer :: geom
   type(oops_variables)      :: vars
 
@@ -78,7 +78,7 @@ end subroutine soca_field_create_c
 subroutine soca_field_delete_c(c_key_self) bind(c,name='soca_field_delete_f90')
   integer(c_int), intent(inout) :: c_key_self
 
-  type(soca_field),     pointer :: self
+  type(soca_fields),    pointer :: self
 
   call soca_field_registry%get(c_key_self,self)
   call delete(self)
@@ -91,7 +91,7 @@ end subroutine soca_field_delete_c
 subroutine soca_field_zero_c(c_key_self) bind(c,name='soca_field_zero_f90')
   integer(c_int), intent(in) :: c_key_self
 
-  type(soca_field),  pointer :: self
+  type(soca_fields), pointer :: self
 
   call soca_field_registry%get(c_key_self,self)
   call zeros(self)
@@ -104,7 +104,7 @@ subroutine soca_field_dirac_c(c_key_self,c_conf) bind(c,name='soca_field_dirac_f
   integer(c_int), intent(in) :: c_key_self
   type(c_ptr),    intent(in) :: c_conf !< Configuration
 
-  type(soca_field),  pointer :: self
+  type(soca_fields), pointer :: self
 
   call soca_field_registry%get(c_key_self,self)
   call dirac(self,fckit_configuration(c_conf))
@@ -116,7 +116,7 @@ end subroutine soca_field_dirac_c
 subroutine soca_field_random_c(c_key_self) bind(c,name='soca_field_random_f90')
   integer(c_int), intent(in) :: c_key_self
 
-  type(soca_field),  pointer :: self
+  type(soca_fields), pointer :: self
 
   call soca_field_registry%get(c_key_self,self)
   call random(self)
@@ -129,8 +129,8 @@ subroutine soca_field_copy_c(c_key_self,c_key_rhs) bind(c,name='soca_field_copy_
   integer(c_int), intent(in) :: c_key_self
   integer(c_int), intent(in) :: c_key_rhs
 
-  type(soca_field), pointer :: self
-  type(soca_field), pointer :: rhs
+  type(soca_fields), pointer :: self
+  type(soca_fields), pointer :: rhs
 
   call soca_field_registry%get(c_key_self,self)
   call soca_field_registry%get(c_key_rhs,rhs)
@@ -145,8 +145,8 @@ subroutine soca_field_self_add_c(c_key_self,c_key_rhs) bind(c,name='soca_field_s
   integer(c_int), intent(in) :: c_key_self
   integer(c_int), intent(in) :: c_key_rhs
 
-  type(soca_field), pointer :: self
-  type(soca_field), pointer :: rhs
+  type(soca_fields), pointer :: self
+  type(soca_fields), pointer :: rhs
 
   call soca_field_registry%get(c_key_self,self)
   call soca_field_registry%get(c_key_rhs,rhs)
@@ -161,8 +161,8 @@ subroutine soca_field_self_schur_c(c_key_self,c_key_rhs) bind(c,name='soca_field
   integer(c_int), intent(in) :: c_key_self
   integer(c_int), intent(in) :: c_key_rhs
 
-  type(soca_field), pointer :: self
-  type(soca_field), pointer :: rhs
+  type(soca_fields), pointer :: self
+  type(soca_fields), pointer :: rhs
 
   call soca_field_registry%get(c_key_self,self)
   call soca_field_registry%get(c_key_rhs,rhs)
@@ -177,8 +177,8 @@ subroutine soca_field_self_sub_c(c_key_self,c_key_rhs) bind(c,name='soca_field_s
   integer(c_int), intent(in) :: c_key_self
   integer(c_int), intent(in) :: c_key_rhs
 
-  type(soca_field), pointer :: self
-  type(soca_field), pointer :: rhs
+  type(soca_fields), pointer :: self
+  type(soca_fields), pointer :: rhs
 
   call soca_field_registry%get(c_key_self,self)
   call soca_field_registry%get(c_key_rhs,rhs)
@@ -193,7 +193,7 @@ subroutine soca_field_self_mul_c(c_key_self,c_zz) bind(c,name='soca_field_self_m
   integer(c_int), intent(in) :: c_key_self
   real(c_double), intent(in) :: c_zz
 
-  type(soca_field), pointer :: self
+  type(soca_fields), pointer :: self
   real(kind=kind_real) :: zz
 
   call soca_field_registry%get(c_key_self,self)
@@ -210,9 +210,9 @@ subroutine soca_field_axpy_c(c_key_self,c_zz,c_key_rhs) bind(c,name='soca_field_
   real(c_double), intent(in) :: c_zz
   integer(c_int), intent(in) :: c_key_rhs
 
-  type(soca_field), pointer :: self
+  type(soca_fields), pointer :: self
   real(kind=kind_real)      :: zz
-  type(soca_field), pointer :: rhs
+  type(soca_fields), pointer :: rhs
 
   call soca_field_registry%get(c_key_self,self)
   call soca_field_registry%get(c_key_rhs,rhs)
@@ -228,7 +228,7 @@ subroutine soca_field_dot_prod_c(c_key_fld1,c_key_fld2,c_prod) bind(c,name='soca
   integer(c_int),    intent(in) :: c_key_fld1, c_key_fld2
   real(c_double), intent(inout) :: c_prod
 
-  type(soca_field), pointer :: fld1, fld2
+  type(soca_fields), pointer :: fld1, fld2
   real(kind=kind_real) :: zz
 
   call soca_field_registry%get(c_key_fld1,fld1)
@@ -246,8 +246,8 @@ subroutine soca_field_add_incr_c(c_key_self,c_key_rhs) bind(c,name='soca_field_a
   integer(c_int), intent(in) :: c_key_self
   integer(c_int), intent(in) :: c_key_rhs
 
-  type(soca_field), pointer :: self
-  type(soca_field), pointer :: rhs
+  type(soca_fields), pointer :: self
+  type(soca_fields), pointer :: rhs
 
   call soca_field_registry%get(c_key_self,self)
   call soca_field_registry%get(c_key_rhs,rhs)
@@ -263,9 +263,9 @@ subroutine soca_field_diff_incr_c(c_key_lhs,c_key_x1,c_key_x2) bind(c,name='soca
   integer(c_int), intent(in) :: c_key_x1
   integer(c_int), intent(in) :: c_key_x2
 
-  type(soca_field), pointer :: lhs
-  type(soca_field), pointer :: x1
-  type(soca_field), pointer :: x2
+  type(soca_fields), pointer :: lhs
+  type(soca_fields), pointer :: x1
+  type(soca_fields), pointer :: x2
 
   call soca_field_registry%get(c_key_lhs,lhs)
   call soca_field_registry%get(c_key_x1,x1)
@@ -281,7 +281,7 @@ subroutine soca_field_change_resol_c(c_key_fld,c_key_rhs) bind(c,name='soca_fiel
   integer(c_int), intent(in) :: c_key_fld
   integer(c_int), intent(in) :: c_key_rhs
 
-  type(soca_field), pointer :: fld, rhs
+  type(soca_fields), pointer :: fld, rhs
 
   call soca_field_registry%get(c_key_fld,fld)
   call soca_field_registry%get(c_key_rhs,rhs)
@@ -296,7 +296,7 @@ subroutine soca_field_ug_coord_c(c_key_fld, c_key_ug) bind (c,name='soca_field_u
   integer(c_int), intent(in) :: c_key_fld
   integer(c_int), intent(in) :: c_key_ug
 
-  type(soca_field), pointer :: fld
+  type(soca_fields), pointer :: fld
   type(unstructured_grid), pointer :: ug
 
   call soca_field_registry%get(c_key_fld,fld)
@@ -313,7 +313,7 @@ subroutine soca_field_field_to_ug_c(c_key_fld, c_key_ug, c_its) bind (c,name='so
   integer(c_int), intent(in) :: c_key_ug
   integer(c_int), intent(in) :: c_its
 
-  type(soca_field),        pointer :: fld
+  type(soca_fields),        pointer :: fld
   type(unstructured_grid), pointer :: ug
   integer                          :: its
 
@@ -332,7 +332,7 @@ subroutine soca_field_field_from_ug_c(c_key_fld, c_key_ug, c_its) bind (c,name='
   integer(c_int), intent(in) :: c_key_ug
   integer(c_int), intent(in) :: c_its
 
-  type(soca_field),        pointer :: fld
+  type(soca_fields),        pointer :: fld
   type(unstructured_grid), pointer :: ug
   integer                          :: its
 
@@ -351,7 +351,7 @@ subroutine soca_field_read_file_c(c_key_fld, c_conf, c_dt) bind(c,name='soca_fie
   type(c_ptr),    intent(in) :: c_conf     !< Configuration
   type(c_ptr), intent(inout) :: c_dt       !< DateTime
 
-  type(soca_field), pointer :: fld
+  type(soca_fields), pointer :: fld
   type(datetime)            :: fdate
 
   call soca_field_registry%get(c_key_fld,fld)
@@ -367,7 +367,7 @@ subroutine soca_field_write_file_c(c_key_fld, c_conf, c_dt) bind(c,name='soca_fi
   type(c_ptr),    intent(in) :: c_conf     !< Configuration
   type(c_ptr),    intent(in) :: c_dt       !< DateTime
 
-  type(soca_field), pointer :: fld
+  type(soca_fields), pointer :: fld
   type(datetime)            :: fdate
 
   call soca_field_registry%get(c_key_fld,fld)
@@ -383,7 +383,7 @@ subroutine soca_field_gpnorm_c(c_key_fld, kf, pstat) bind(c,name='soca_field_gpn
   integer(c_int),    intent(in) :: kf
   real(c_double), intent(inout) :: pstat(3*kf)
 
-  type(soca_field), pointer :: fld
+  type(soca_fields), pointer :: fld
   real(kind=kind_real)      :: zstat(3, kf)
   integer :: jj, js, jf
 
@@ -406,7 +406,7 @@ subroutine soca_field_rms_c(c_key_fld, prms) bind(c,name='soca_field_rms_f90')
   integer(c_int),    intent(in) :: c_key_fld
   real(c_double), intent(inout) :: prms
 
-  type(soca_field), pointer :: fld
+  type(soca_fields), pointer :: fld
   real(kind=kind_real)      :: zz
 
   call soca_field_registry%get(c_key_fld,fld)
@@ -425,7 +425,7 @@ subroutine soca_field_interp_nl_c(c_key_fld,c_key_loc,c_vars,c_key_gom) bind(c,n
   type(c_ptr), value, intent(in) :: c_vars     !< List of requested variables
   integer(c_int),     intent(in) :: c_key_gom
 
-  type(soca_field),  pointer :: fld
+  type(soca_fields),  pointer :: fld
   type(ufo_locs),    pointer :: locs
   type(ufo_geovals), pointer :: gom
   type(oops_variables)       :: vars
@@ -449,7 +449,7 @@ subroutine soca_field_interp_nl_traj_c(c_key_fld,c_key_loc,c_vars,c_key_gom,c_ke
   integer(c_int),           intent(in) :: c_key_gom
   integer(c_int), optional, intent(in) :: c_key_traj !< Trajectory for interpolation/transforms
 
-  type(soca_field),      pointer :: fld
+  type(soca_fields),      pointer :: fld
   type(ufo_locs),        pointer :: locs
   type(oops_variables)           :: vars
   type(ufo_geovals),     pointer :: gom
@@ -475,7 +475,7 @@ subroutine soca_field_interp_tl_c(c_key_fld,c_key_loc,c_vars,c_key_gom,c_key_tra
   integer(c_int),           intent(in) :: c_key_gom
   integer(c_int), optional, intent(in) :: c_key_traj !< Trajectory for interpolation/transforms
 
-  type(soca_field),      pointer :: fld
+  type(soca_fields),      pointer :: fld
   type(ufo_locs),        pointer :: locs
   type(oops_variables)           :: vars
   type(ufo_geovals),     pointer :: gom
@@ -501,7 +501,7 @@ subroutine soca_field_interp_ad_c(c_key_fld,c_key_loc,c_vars,c_key_gom,c_key_tra
   integer(c_int),     intent(in) :: c_key_gom
   integer(c_int),     intent(in) :: c_key_traj !< Trajectory for interpolation/transforms
 
-  type(soca_field),      pointer :: fld
+  type(soca_fields),      pointer :: fld
   type(ufo_locs),        pointer :: locs
   type(oops_variables)           :: vars
   type(ufo_geovals),     pointer :: gom
@@ -526,7 +526,7 @@ subroutine soca_field_getpoint_c(c_key_fld,c_key_iter,values, values_len) bind(c
   integer(c_int), intent(in) :: values_len
   real(c_double), intent(inout) :: values(values_len)
 
-  type(soca_field),      pointer :: fld
+  type(soca_fields),      pointer :: fld
   type(soca_geom_iter), pointer :: iter
 
   call soca_field_registry%get(c_key_fld,fld)
@@ -544,7 +544,7 @@ subroutine soca_field_setpoint_c(c_key_fld,c_key_iter,values, values_len) bind(c
   integer(c_int), intent(in) :: values_len
   real(c_double), intent(in) :: values(values_len)
 
-  type(soca_field),      pointer :: fld
+  type(soca_fields),      pointer :: fld
   type(soca_geom_iter), pointer :: iter
 
   call soca_field_registry%get(c_key_fld,fld)
@@ -560,7 +560,7 @@ subroutine soca_fieldnum_c(c_key_fld, nx, ny, nzo, nzi, ncat, nf) bind(c,name='s
   integer(c_int),         intent(in) :: c_key_fld
   integer(kind=c_int), intent(inout) :: nx, ny, nzo, nzi, ncat, nf
 
-  type(soca_field), pointer :: fld
+  type(soca_fields), pointer :: fld
 
   call soca_field_registry%get(c_key_fld,fld)
 

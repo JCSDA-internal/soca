@@ -14,7 +14,7 @@ use random_mod, only: normal_distribution
 use oops_variables_mod
 use type_bump, only: bump_type
 use kinds, only: kind_real
-use soca_fields_mod, only: soca_field
+use soca_fields_mod, only: soca_fields
 use soca_geom_mod, only : soca_geom
 
 implicit none
@@ -31,7 +31,7 @@ end type soca_pert
 type :: soca_cov
    type(bump_type), allocatable :: ocean_conv(:)  !< Ocean convolution op from bump
    type(bump_type), allocatable :: seaice_conv(:) !< Seaice convolution op from bump
-   type(soca_field),    pointer :: bkg            !< Background field (or first guess)
+   type(soca_fields),   pointer :: bkg            !< Background field (or first guess)
    logical                      :: initialized = .false.
    type(soca_pert)              :: pert_scale
    real(kind=kind_real)         :: ocn_l0
@@ -58,7 +58,7 @@ subroutine soca_cov_setup(self, f_conf, geom, bkg, vars)
   class(soca_cov),        intent(inout) :: self   !< The covariance structure
   type(fckit_configuration), intent(in) :: f_conf !< The configuration
   type(soca_geom),           intent(in) :: geom   !< Geometry
-  type(soca_field), target,  intent(in) :: bkg    !< Background
+  type(soca_fields), target, intent(in) :: bkg    !< Background
   type(oops_variables),      intent(in) :: vars   !< List of variables
 
   character(len=3)  :: domain
@@ -158,7 +158,7 @@ end subroutine soca_cov_delete
 
 subroutine soca_cov_C_mult(self, dx)
   class(soca_cov),  intent(inout) :: self !< The covariance structure
-  type(soca_field), intent(inout) :: dx   !< Input: Increment
+  type(soca_fields),intent(inout) :: dx   !< Input: Increment
                                           !< Output: C dx
   integer :: icat, izo, ivar
 
@@ -206,7 +206,7 @@ end subroutine soca_cov_C_mult
 
 subroutine soca_cov_sqrt_C_mult(self, dx)
   class(soca_cov),  intent(inout) :: self !< The covariance structure
-  type(soca_field), intent(inout) :: dx   !< Input: Increment
+  type(soca_fields),intent(inout) :: dx   !< Input: Increment
                                           !< Output: C^1/2 dx
   integer :: icat, izo, ivar
 

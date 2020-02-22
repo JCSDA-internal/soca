@@ -8,7 +8,7 @@ module soca_bkgerr_mod
 use fckit_configuration_module, only: fckit_configuration
 use datetime_mod, only: datetime
 use kinds, only: kind_real
-use soca_fields_mod, only: soca_field, create_copy, read_file, soca_fld2file
+use soca_fields_mod, only: soca_fields, create_copy, read_file, soca_fld2file
 use soca_bkgerrutil_mod, only: soca_bkgerr_bounds_type
 
 implicit none
@@ -19,8 +19,8 @@ public :: soca_bkgerr_config, &
 
 !> Fortran derived type to hold configuration D
 type :: soca_bkgerr_config
-   type(soca_field),         pointer :: bkg
-   type(soca_field)                  :: std_bkgerr
+   type(soca_fields),        pointer :: bkg
+   type(soca_fields)                 :: std_bkgerr
    type(soca_bkgerr_bounds_type)     :: bounds         ! Bounds for bkgerr
    real(kind=kind_real)              :: std_sst
    real(kind=kind_real)              :: std_sss
@@ -36,7 +36,7 @@ contains
 subroutine soca_bkgerr_setup(f_conf, self, bkg)
   type(fckit_configuration),   intent(in) :: f_conf
   type(soca_bkgerr_config), intent(inout) :: self
-  type(soca_field),    target, intent(in) :: bkg
+  type(soca_fields),   target, intent(in) :: bkg
 
   integer :: isc, iec, jsc, jec, nl
   type(datetime) :: vdate
@@ -98,8 +98,8 @@ end subroutine soca_bkgerr_setup
 !> Apply background error: dxm = D dxa
 subroutine soca_bkgerr_mult(self, dxa, dxm)
   type(soca_bkgerr_config),    intent(in) :: self
-  type(soca_field),            intent(in) :: dxa
-  type(soca_field),         intent(inout) :: dxm
+  type(soca_fields),           intent(in) :: dxa
+  type(soca_fields),        intent(inout) :: dxm
 
   integer :: isc, iec, jsc, jec, i, j
 

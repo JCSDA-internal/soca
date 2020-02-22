@@ -9,7 +9,7 @@ use fckit_configuration_module, only: fckit_configuration
 use tools_const, only : pi
 use datetime_mod, only: datetime
 use kinds, only: kind_real
-use soca_fields_mod, only: soca_field, zeros, create_copy, soca_fld2file
+use soca_fields_mod, only: soca_fields, zeros, create_copy, soca_fld2file
 use soca_utils, only: soca_diff
 use soca_bkgerrutil_mod, only: soca_bkgerr_bounds_type
 use soca_omb_stats_mod, only: soca_omb_stats, soca_domain_indices
@@ -24,8 +24,8 @@ public :: soca_bkgerrgodas_config, &
 
 !> Fortran derived type to hold configuration D
 type :: soca_bkgerrgodas_config
-   type(soca_field),         pointer :: bkg
-   type(soca_field)                  :: std_bkgerr
+   type(soca_fields),        pointer :: bkg
+   type(soca_fields)                 :: std_bkgerr
    type(soca_bkgerr_bounds_type)     :: bounds         ! Bounds for bkgerrgodas
    real(kind=kind_real)              :: t_dz           ! For rescaling of the vertical gradient
    real(kind=kind_real)              :: t_efold        ! E-folding scale for surf based T min
@@ -42,7 +42,7 @@ contains
 subroutine soca_bkgerrgodas_setup(f_conf, self, bkg)
   type(fckit_configuration),        intent(in) :: f_conf
   type(soca_bkgerrgodas_config), intent(inout) :: self
-  type(soca_field),         target, intent(in) :: bkg
+  type(soca_fields),        target, intent(in) :: bkg
 
   character(len=800) :: fname = 'soca_bkgerrgodas.nc'
 
@@ -86,8 +86,8 @@ end subroutine soca_bkgerrgodas_setup
 !> Apply background error: dxm = D dxa
 subroutine soca_bkgerrgodas_mult(self, dxa, dxm)
   type(soca_bkgerrgodas_config),    intent(in) :: self
-  type(soca_field),            intent(in) :: dxa
-  type(soca_field),         intent(inout) :: dxm
+  type(soca_fields),           intent(in) :: dxa
+  type(soca_fields),        intent(inout) :: dxm
 
   integer :: isc, iec, jsc, jec, i, j
 

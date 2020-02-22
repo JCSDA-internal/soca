@@ -28,7 +28,7 @@ module soca_horizfilt_mod
 
   !> Fortran derived type to hold configuration data for horizfilt
   type, public :: soca_horizfilt_type
-     type(soca_field),         pointer :: bkg            !< Background field (or first guess)
+     type(soca_fields),        pointer :: bkg            !< Background field (or first guess)
      type(oops_variables)              :: vars           !< Apply filtering to vars
      real(kind=kind_real), allocatable :: wgh(:,:,:,:)   !< Filtering weight
      real(kind=kind_real) :: scale_flow  !< Used with "flow" filter, sea surface height decorrelation scale
@@ -51,7 +51,7 @@ contains
     class(soca_horizfilt_type), intent(inout) :: self   !< The horizfilt structure
     type(fckit_configuration),     intent(in) :: f_conf !< The configuration
     type(soca_geom),               intent(in) :: geom   !< Geometry
-    type(soca_field),              intent(in) :: traj   !< Trajectory
+    type(soca_fields),             intent(in) :: traj   !< Trajectory
     type(oops_variables),          intent(in) :: vars   !< List of variables
 
     integer :: i, j, ii, jj
@@ -129,8 +129,8 @@ contains
   !> Forward filtering
   subroutine soca_horizfilt_mult(self, dxin, dxout, geom)
     class(soca_horizfilt_type), intent(inout) :: self  !< The horizfilt structure
-    type(soca_field),              intent(in) :: dxin  !< Input: Increment
-    type(soca_field),           intent(inout) :: dxout !< Output: filtered Increment
+    type(soca_fields),             intent(in) :: dxin  !< Input: Increment
+    type(soca_fields),          intent(inout) :: dxout !< Output: filtered Increment
     type(soca_geom),               intent(in) :: geom
 
     integer :: k, ivar
@@ -185,8 +185,8 @@ contains
   !> Backward filtering
   subroutine soca_horizfilt_multad(self, dxin, dxout, geom)
     class(soca_horizfilt_type), intent(inout) :: self  !< The horizfilt structure
-    type(soca_field),              intent(in) :: dxin  !< Input:
-    type(soca_field),           intent(inout) :: dxout !< Output:
+    type(soca_fields),             intent(in) :: dxin  !< Input:
+    type(soca_fields),          intent(inout) :: dxout !< Output:
     type(soca_geom),               intent(in) :: geom
 
     integer :: k, ivar

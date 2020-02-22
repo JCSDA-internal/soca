@@ -7,7 +7,7 @@ module soca_balance_mod
 
 use fckit_configuration_module, only: fckit_configuration
 use kinds, only: kind_real
-use soca_fields_mod, only: soca_field
+use soca_fields_mod, only: soca_fields
 use soca_kst_mod, only: soca_kst, soca_soft_jacobian
 use soca_ksshts_mod, only: soca_ksshts, soca_steric_jacobian
 
@@ -21,7 +21,7 @@ public :: soca_balance_config, &
 
 !> Fortran derived type to hold configuration D
 type :: soca_balance_config
-   type(soca_field),  pointer :: traj                !> Trajectory
+   type(soca_fields), pointer :: traj                !> Trajectory
    integer                    :: isc, iec, jsc, jec  !> Compute domain
    type(soca_kst)             :: kst                 !> T/S balance
    type(soca_ksshts)          :: ksshts              !> SSH/T/S balance
@@ -37,7 +37,7 @@ contains
 subroutine soca_balance_setup(f_conf, self, traj)
   type(fckit_configuration),   intent(in)  :: f_conf
   type(soca_balance_config), intent(inout) :: self
-  type(soca_field),    target, intent(in)  :: traj
+  type(soca_fields),   target, intent(in)  :: traj
 
   integer :: isc, iec, jsc, jec, i, j, k, nl
   real(kind=kind_real), allocatable :: jac(:)
@@ -140,8 +140,8 @@ end subroutine soca_balance_delete
 ! Apply forward balance operator
 subroutine soca_balance_mult(self, dxa, dxm)
   type(soca_balance_config), intent(in) :: self
-  type(soca_field),          intent(in) :: dxa
-  type(soca_field),       intent(inout) :: dxm
+  type(soca_fields),         intent(in) :: dxa
+  type(soca_fields),      intent(inout) :: dxm
 
   integer :: i, j, k
   real(kind=kind_real) :: deta, dxc
@@ -190,8 +190,8 @@ end subroutine soca_balance_mult
 ! Apply backward balance operator
 subroutine soca_balance_multad(self, dxa, dxm)
   type(soca_balance_config), intent(in) :: self
-  type(soca_field),          intent(in) :: dxm
-  type(soca_field),       intent(inout) :: dxa
+  type(soca_fields),         intent(in) :: dxm
+  type(soca_fields),      intent(inout) :: dxa
 
   integer :: i, j
 
@@ -225,8 +225,8 @@ end subroutine soca_balance_multad
 ! Apply inverse of the forward balance operator
 subroutine soca_balance_multinv(self, dxa, dxm)
   type(soca_balance_config), intent(in) :: self
-  type(soca_field),          intent(in) :: dxm
-  type(soca_field),       intent(inout) :: dxa
+  type(soca_fields),         intent(in) :: dxm
+  type(soca_fields),      intent(inout) :: dxa
 
   real(kind=kind_real) :: deta
   integer :: i, j, k
@@ -264,8 +264,8 @@ end subroutine soca_balance_multinv
 ! Apply inverse of the backward balance operator
 subroutine soca_balance_multinvad(self, dxa, dxm)
   type(soca_balance_config), intent(in) :: self
-  type(soca_field),       intent(inout) :: dxm
-  type(soca_field),          intent(in) :: dxa
+  type(soca_fields),      intent(inout) :: dxm
+  type(soca_fields),         intent(in) :: dxa
 
   integer :: i, j
 

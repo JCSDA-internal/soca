@@ -6,7 +6,6 @@
 module soca_kst_mod
 
 use kinds, only: kind_real
-use soca_fields_mod, only: soca_field
 use soca_utils, only: soca_diff
 
 implicit none

@@ -36,7 +36,7 @@ use soca_utils, only: soca_mld
 implicit none
 
 private
-public :: soca_field, &
+public :: soca_fields, &
           create, delete, zeros, dirac, random, copy, create_copy,&
           self_add, self_schur, self_sub, self_mul, axpy, &
           dot_prod, add_incr, diff_incr, &
@@ -52,11 +52,24 @@ end interface create
 ! ------------------------------------------------------------------------------
 !> Fortran derived type to hold fields
 type :: soca_field
+  character(len=:),     allocatable :: name
+  character(len=:),     allocatable :: io_name
+  character(len=:),     allocatable :: io_file
+  character(len=:),     allocatable :: vgrid
+  character(len=:),     allocatable :: hgrid
+  integer                           :: nz
+  real(kind=kind_real), allocatable :: val(:,:,:)  
+end type soca_field
+
+
+type :: soca_fields
    type(soca_geom), pointer          :: geom           !< MOM6 Geometry
    integer                           :: nf             !< Number of fields
    character(len=128)                :: gridfname      !< Grid file name
    character(len=128)                :: cicefname      !< Fields file name for cice
    character(len=128)                :: momfname       !< Fields file name for mom
+
+   type(soca_field),     allocatable :: fields(:)
 
    ! Sea-ice state variables
    type(soca_seaice_type)            :: seaice         !< Sea-ice state
@@ -76,14 +89,14 @@ type :: soca_field
 
    character(len=5),     allocatable :: fldnames(:)    !< Variable identifiers             (nf)
 
-end type soca_field
+end type soca_fields
 
 contains
 
 ! ------------------------------------------------------------------------------
 !> Create a field from geometry and variables
 subroutine create_constructor(self, geom, vars)
-  type(soca_field),          intent(inout) :: self
+  type(soca_fields),         intent(inout) :: self
   type(soca_geom),  pointer, intent(inout) :: geom
   type(oops_variables),         intent(in) :: vars
 
@@ -110,8 +123,8 @@ end subroutine create_constructor
 
 subroutine create_copy(self, rhs_fld)
   ! Construct a field from an other field, lhs_fld=rhs_fld
-  type(soca_field), intent(inout) :: self
-  type(soca_field), intent(in)    :: rhs_fld
+  type(soca_fields), intent(inout) :: self
+  type(soca_fields), intent(in)    :: rhs_fld
 
   ! Allocate and copy fields
   call soca_field_alloc(self, rhs_fld%geom)
@@ -131,7 +144,7 @@ end subroutine create_copy
 ! ------------------------------------------------------------------------------
 
 subroutine soca_field_alloc(self, geom)
-  type (soca_field),     intent(inout) :: self
+  type (soca_fields),    intent(inout) :: self
   type(soca_geom), pointer, intent(in) :: geom
 
   integer :: isd, ied, jsd, jed, nzo
@@ -161,7 +174,7 @@ end subroutine soca_field_alloc
 ! ------------------------------------------------------------------------------
 
 subroutine delete(self)
-  type (soca_field), intent(inout) :: self
+  type (soca_fields), intent(inout) :: self
 
   ! Deallocate ocean state
   deallocate(self%tocn)
@@ -187,7 +200,7 @@ end subroutine delete
 ! ------------------------------------------------------------------------------
 
 subroutine zeros(self)
-  type(soca_field), intent(inout) :: self
+  type(soca_fields), intent(inout) :: self
 
   call check(self)
 
@@ -205,7 +218,7 @@ end subroutine zeros
 ! ------------------------------------------------------------------------------
 
 subroutine dirac(self, f_conf)
-  type(soca_field),          intent(inout) :: self
+  type(soca_fields),         intent(inout) :: self
   type(fckit_configuration), intent(in)    :: f_conf   !< Configuration
 
   integer :: isc, iec, jsc, jec
@@ -260,7 +273,7 @@ end subroutine dirac
 ! ------------------------------------------------------------------------------
 
 subroutine random(self)
-  type(soca_field), intent(inout) :: self
+  type(soca_fields), intent(inout) :: self
   integer, parameter :: rseed = 1 ! constant for reproducability of tests
     ! NOTE: random seeds are not quite working the way expected,
     !  it is only set the first time normal_distribution() is called with a seed
@@ -303,8 +316,8 @@ end subroutine random
 ! ------------------------------------------------------------------------------
 
 subroutine copy(self,rhs)
-  type(soca_field), intent(inout) :: self
-  type(soca_field),    intent(in) :: rhs
+  type(soca_fields), intent(inout) :: self
+  type(soca_fields),    intent(in) :: rhs
 
   call check_resolution(self, rhs)
 
@@ -337,8 +350,8 @@ end subroutine copy
 ! ------------------------------------------------------------------------------
 
 subroutine self_add(self,rhs)
-  type(soca_field), intent(inout) :: self
-  type(soca_field),    intent(in) :: rhs
+  type(soca_fields), intent(inout) :: self
+  type(soca_fields),    intent(in) :: rhs
 
   integer :: nf
 
@@ -359,8 +372,8 @@ end subroutine self_add
 ! ------------------------------------------------------------------------------
 
 subroutine self_schur(self,rhs)
-  type(soca_field), intent(inout) :: self
-  type(soca_field),    intent(in) :: rhs
+  type(soca_fields), intent(inout) :: self
+  type(soca_fields),    intent(in) :: rhs
 
   integer :: nf
 
@@ -382,8 +395,8 @@ end subroutine self_schur
 ! ------------------------------------------------------------------------------
 
 subroutine self_sub(self,rhs)
-  type(soca_field), intent(inout) :: self
-  type(soca_field),    intent(in) :: rhs
+  type(soca_fields), intent(inout) :: self
+  type(soca_fields),    intent(in) :: rhs
 
   integer :: nf
 
@@ -405,7 +418,7 @@ end subroutine self_sub
 ! ------------------------------------------------------------------------------
 
 subroutine self_mul(self,zz)
-  type(soca_field),  intent(inout) :: self
+  type(soca_fields), intent(inout) :: self
   real(kind=kind_real), intent(in) :: zz
 
   call check(self)
@@ -423,9 +436,9 @@ end subroutine self_mul
 ! ------------------------------------------------------------------------------
 
 subroutine axpy(self,zz,rhs)
-  type(soca_field),  intent(inout) :: self
+  type(soca_fields), intent(inout) :: self
   real(kind=kind_real), intent(in) :: zz
-  type(soca_field),     intent(in) :: rhs
+  type(soca_fields),    intent(in) :: rhs
 
   integer :: nf
 
@@ -446,8 +459,8 @@ end subroutine axpy
 ! ------------------------------------------------------------------------------
 
 subroutine dot_prod(fld1,fld2,zprod)
-  type(soca_field),      intent(in) :: fld1
-  type(soca_field),      intent(in) :: fld2
+  type(soca_fields),     intent(in) :: fld1
+  type(soca_fields),     intent(in) :: fld2
   real(kind=kind_real), intent(out) :: zprod
 
   real(kind=kind_real) :: zprod_allpes
@@ -522,8 +535,8 @@ end subroutine dot_prod
 ! ------------------------------------------------------------------------------
 
 subroutine add_incr(self,rhs)
-  type(soca_field), intent(inout) :: self
-  type(soca_field), intent(in)    :: rhs
+  type(soca_fields), intent(inout) :: self
+  type(soca_fields), intent(in)    :: rhs
 
   integer, save :: cnt_outer = 1
   character(len=800) :: filename, str_cnt
@@ -554,9 +567,9 @@ end subroutine add_incr
 ! ------------------------------------------------------------------------------
 
 subroutine diff_incr(lhs,x1,x2)
-  type(soca_field), intent(inout) :: lhs
-  type(soca_field), intent(in)    :: x1
-  type(soca_field), intent(in)    :: x2
+  type(soca_fields), intent(inout) :: lhs
+  type(soca_fields), intent(in)    :: x1
+  type(soca_fields), intent(in)    :: x2
 
   call check(lhs)
   call check(x1)
@@ -577,8 +590,8 @@ end subroutine diff_incr
 ! ------------------------------------------------------------------------------
 
 subroutine change_resol(fld,rhs)
-  type(soca_field), intent(inout) :: fld
-  type(soca_field), intent(in)    :: rhs
+  type(soca_fields), intent(inout) :: fld
+  type(soca_fields), intent(in)    :: rhs
 
   call check(fld)
   call check(rhs)
@@ -592,7 +605,7 @@ end subroutine change_resol
 ! ------------------------------------------------------------------------------
 
 subroutine read_file(fld, f_conf, vdate)
-  type(soca_field),          intent(inout) :: fld     !< Fields
+  type(soca_fields),         intent(inout) :: fld     !< Fields
   type(fckit_configuration), intent(in)    :: f_conf  !< Configuration
   type(datetime),            intent(inout) :: vdate   !< DateTime
 
@@ -786,7 +799,7 @@ end subroutine read_file
 ! ------------------------------------------------------------------------------
 
 subroutine write_file(fld, f_conf, vdate)
-  type(soca_field),          intent(inout) :: fld    !< Fields
+  type(soca_fields),         intent(inout) :: fld    !< Fields
   type(fckit_configuration), intent(in)    :: f_conf !< Configuration
   type(datetime),            intent(inout) :: vdate  !< DateTime
 
@@ -801,7 +814,7 @@ end subroutine write_file
 ! ------------------------------------------------------------------------------
 
 subroutine gpnorm(fld, nf, pstat)
-  type(soca_field),        intent(in) :: fld
+  type(soca_fields),       intent(in) :: fld
   integer,                 intent(in) :: nf
   real(kind=kind_real), intent(inout) :: pstat(3, nf) !> [min, max, average]
 
@@ -872,7 +885,7 @@ end subroutine gpnorm
 ! ------------------------------------------------------------------------------
 
 subroutine fldrms(fld, prms)
-  type(soca_field),      intent(in) :: fld
+  type(soca_fields),     intent(in) :: fld
   real(kind=kind_real), intent(out) :: prms
 
   call check(fld)
@@ -885,7 +898,7 @@ end subroutine fldrms
 ! ------------------------------------------------------------------------------
 
 subroutine ug_size(self, ug)
-  type(soca_field),           intent(in) :: self
+  type(soca_fields),          intent(in) :: self
   type(unstructured_grid), intent(inout) :: ug
 
   integer :: isc, iec, jsc, jec
@@ -936,7 +949,7 @@ end subroutine ug_size
 ! ------------------------------------------------------------------------------
 
 subroutine ug_coord(self, ug)
-  type(soca_field), intent(in) :: self
+  type(soca_fields), intent(in) :: self
   type(unstructured_grid), intent(inout) :: ug
 
   integer :: igrid
@@ -983,7 +996,7 @@ end subroutine ug_coord
 ! ------------------------------------------------------------------------------
 
 subroutine field_to_ug(self, ug, its)
-  type(soca_field),           intent(in) :: self
+  type(soca_fields),          intent(in) :: self
   type(unstructured_grid), intent(inout) :: ug
   integer,                    intent(in) :: its
 
@@ -1058,7 +1071,7 @@ end subroutine field_to_ug
 ! ------------------------------------------------------------------------------
 
 subroutine field_from_ug(self, ug, its)
-  type(soca_field),     intent(inout) :: self
+  type(soca_fields),    intent(inout) :: self
   type(unstructured_grid), intent(in) :: ug
   integer,                 intent(in) :: its
 
@@ -1126,7 +1139,7 @@ end subroutine field_from_ug
 ! ------------------------------------------------------------------------------
 
 function common_vars(x1, x2)
-  type(soca_field), intent(in) :: x1, x2
+  type(soca_fields), intent(in) :: x1, x2
 
   integer :: common_vars
   integer :: jf
@@ -1148,7 +1161,7 @@ end function common_vars
 ! ------------------------------------------------------------------------------
 
 subroutine check_resolution(x1, x2)
-  type(soca_field), intent(in) :: x1, x2
+  type(soca_fields), intent(in) :: x1, x2
 
   ! NEEDS WORK !!!
   if (x1%geom%nx /= x2%geom%nx .or.  &
@@ -1163,7 +1176,7 @@ end subroutine check_resolution
 ! ------------------------------------------------------------------------------
 
 subroutine check(self)
-  type(soca_field), intent(in) :: self
+  type(soca_fields), intent(in) :: self
 
   logical :: bad
 
@@ -1183,7 +1196,7 @@ end subroutine check
 ! ------------------------------------------------------------------------------
 !> Save soca fields to file using fms write_data
 subroutine soca_fld2file(fld, filename)
-  type(soca_field),   intent(in) :: fld    !< Fields
+  type(soca_fields),  intent(in) :: fld    !< Fields
   character(len=800), intent(in) :: filename
 
   integer :: ii
@@ -1234,7 +1247,7 @@ end subroutine soca_fld2file
 ! ------------------------------------------------------------------------------
 !> Save soca fields in a restart format
 subroutine soca_write_restart(fld, f_conf, vdate)
-  type(soca_field),          intent(inout) :: fld      !< Fields
+  type(soca_fields),         intent(inout) :: fld      !< Fields
   type(fckit_configuration), intent(in)    :: f_conf   !< Configuration
   type(datetime),            intent(inout) :: vdate    !< DateTime
 
@@ -1296,7 +1309,7 @@ end subroutine soca_write_restart
 
 subroutine soca_getpoint(self, geoiter, values)
 
-  type(soca_field),               intent(   in) :: self
+  type(soca_fields),              intent(   in) :: self
   type(soca_geom_iter),           intent(   in) :: geoiter
   real(kind=kind_real),           intent(inout) :: values(:)
   integer :: ff, ii, nzo, ncat
@@ -1339,7 +1352,7 @@ end subroutine soca_getpoint
 subroutine soca_setpoint(self, geoiter, values)
 
   ! Passed variables
-  type(soca_field),               intent(inout) :: self
+  type(soca_fields),              intent(inout) :: self
   type(soca_geom_iter),           intent(   in) :: geoiter
   real(kind=kind_real),           intent(   in) :: values(:)
   integer :: ff, ii, nzo, ncat

@@ -7,7 +7,7 @@ module soca_bkgerrutil_mod
 
 use fckit_configuration_module, only: fckit_configuration
 use kinds, only: kind_real
-use soca_fields_mod, only: soca_field
+use soca_fields_mod, only: soca_fields
 use soca_utils, only: soca_adjust
 
 implicit none
@@ -53,7 +53,7 @@ end subroutine soca_bkgerr_readbounds
 !> Setup the static background error
 subroutine soca_bkgerr_applybounds(self, fld)
   class(soca_bkgerr_bounds_type), intent(inout) :: self
-  type(soca_field),               intent(inout) :: fld
+  type(soca_fields),              intent(inout) :: fld
 
   integer :: isc, iec, jsc, jec, i, j
 
