@@ -8,7 +8,7 @@ module soca_vertconv_mod_c
 use iso_c_binding
 use fckit_configuration_module, only: fckit_configuration
 use kinds, only: kind_real
-use soca_fields_mod, only: soca_fields, copy
+use soca_fields_mod, only: soca_fields
 use soca_fields_mod_c, only: soca_field_registry
 use soca_vertconv_mod, only: soca_vertconv, soca_conv_setup, &
                              soca_conv, soca_conv_ad
@@ -102,7 +102,7 @@ subroutine c_soca_vertconv_mult_f90(c_key_a, c_key_m, c_key_traj, c_key_self)&
   !< Computes dxm = Vertconv dxa
 
   ! dxm = dxa
-  call copy(dxm, dxa)
+  call dxm%copy( dxa)
 
   ! Apply forward convolution operator to T & S
   call soca_conv(self, dxm, dxa)
@@ -130,7 +130,7 @@ subroutine c_soca_vertconv_multad_f90(c_key_m, c_key_a, c_key_traj, c_key_self)&
   call soca_vertconv_registry%get(c_key_self, self)
 
   ! dxa = dxm
-  call copy(dxa,dxm)
+  call dxa%copy(dxm)
 
   ! Apply adjoint of convolution operator
   call soca_conv_ad(self, dxm, dxa)

@@ -8,7 +8,7 @@ module soca_bkgerr_mod
 use fckit_configuration_module, only: fckit_configuration
 use datetime_mod, only: datetime
 use kinds, only: kind_real
-use soca_fields_mod, only: soca_fields, create_copy, read_file, soca_fld2file
+use soca_fields_mod, only: soca_fields, read_file, soca_fld2file
 use soca_bkgerrutil_mod, only: soca_bkgerr_bounds_type
 
 implicit none
@@ -46,7 +46,8 @@ subroutine soca_bkgerr_setup(f_conf, self, bkg)
   nl = size(bkg%hocn,3)
 
   ! Allocate memory for bkgerror
-  call create_copy(self%std_bkgerr, bkg)
+  call self%std_bkgerr%copy(bkg)
+  !call create_copy(self%std_bkgerr, bkg)
 
   ! Read variance
   ! Precomputed from an ensemble of (K^-1 dx)

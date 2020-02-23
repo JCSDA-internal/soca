@@ -10,7 +10,7 @@ use fckit_configuration_module, only: fckit_configuration
 use oops_variables_mod
 use soca_geom_mod, only : soca_geom
 use soca_geom_mod_c, only : soca_geom_registry
-use soca_fields_mod, only: soca_fields, copy
+use soca_fields_mod, only: soca_fields
 use soca_fields_mod_c, only: soca_field_registry
 use soca_covariance_mod, only: soca_cov, soca_cov_setup, soca_cov_delete, &
                                soca_cov_C_mult, soca_cov_sqrt_C_mult
@@ -92,7 +92,7 @@ subroutine c_soca_b_mult(c_key_self, c_key_in, c_key_out) bind(c,name='soca_b_mu
   call soca_field_registry%get(c_key_in, xin)
   call soca_field_registry%get(c_key_out, xout)
 
-  call copy(xout,xin)              !< xout = xin
+  call xout%copy(xin)              !< xout = xin
   call soca_cov_C_mult(self, xout) !< xout = C.xout
 
 end subroutine c_soca_b_mult

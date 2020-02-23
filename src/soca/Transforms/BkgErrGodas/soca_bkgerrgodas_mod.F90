@@ -9,7 +9,7 @@ use fckit_configuration_module, only: fckit_configuration
 use tools_const, only : pi
 use datetime_mod, only: datetime
 use kinds, only: kind_real
-use soca_fields_mod, only: soca_fields, zeros, create_copy, soca_fld2file
+use soca_fields_mod, only: soca_fields, zeros, soca_fld2file
 use soca_utils, only: soca_diff
 use soca_bkgerrutil_mod, only: soca_bkgerr_bounds_type
 use soca_omb_stats_mod, only: soca_omb_stats, soca_domain_indices
@@ -47,7 +47,8 @@ subroutine soca_bkgerrgodas_setup(f_conf, self, bkg)
   character(len=800) :: fname = 'soca_bkgerrgodas.nc'
 
   ! Allocate memory for bkgerrgodasor
-  call create_copy(self%std_bkgerr, bkg)
+  call self%std_bkgerr%copy(bkg)
+  !call create_copy(self%std_bkgerr, bkg)
 
   ! Get bounds from configuration
   call self%bounds%read(f_conf)

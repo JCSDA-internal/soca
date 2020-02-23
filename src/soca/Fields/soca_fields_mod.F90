@@ -37,7 +37,7 @@ implicit none
 
 private
 public :: soca_fields, &
-          create, delete, zeros, dirac, random, copy, create_copy,&
+          zeros, dirac, random,  &
           self_add, self_schur, self_sub, self_mul, axpy, &
           dot_prod, add_incr, diff_incr, &
           read_file, write_file, gpnorm, fldrms, soca_fld2file, &
@@ -45,18 +45,18 @@ public :: soca_fields, &
           field_to_ug, field_from_ug, ug_coord, &
           soca_getpoint, soca_setpoint
 
-interface create
-   module procedure create_constructor, create_copy
-end interface create
+! interface create
+!    module procedure create_constructor, create_copy
+! end interface create
 
 ! ------------------------------------------------------------------------------
 !> Fortran derived type to hold fields
 type :: soca_field
   character(len=:),     allocatable :: name
-  character(len=:),     allocatable :: io_name
-  character(len=:),     allocatable :: io_file
-  character(len=:),     allocatable :: vgrid
-  character(len=:),     allocatable :: hgrid
+  !character(len=:),     allocatable :: io_name
+  !character(len=:),     allocatable :: io_file
+  !character(len=:),     allocatable :: vgrid
+  !character(len=:),     allocatable :: hgrid
   integer                           :: nz
   real(kind=kind_real), allocatable :: val(:,:,:)  
 end type soca_field
@@ -65,9 +65,9 @@ end type soca_field
 type :: soca_fields
    type(soca_geom), pointer          :: geom           !< MOM6 Geometry
    integer                           :: nf             !< Number of fields
-   character(len=128)                :: gridfname      !< Grid file name
-   character(len=128)                :: cicefname      !< Fields file name for cice
-   character(len=128)                :: momfname       !< Fields file name for mom
+   !character(len=128)                :: gridfname      !< Grid file name
+   !character(len=128)                :: cicefname      !< Fields file name for cice
+   !character(len=128)                :: momfname       !< Fields file name for mom
 
    type(soca_field),     allocatable :: fields(:)
 
@@ -89,9 +89,38 @@ type :: soca_fields
 
    character(len=5),     allocatable :: fldnames(:)    !< Variable identifiers             (nf)
 
+contains 
+  procedure :: create => soca_fields_create
+  procedure :: delete => soca_fields_delete
+  procedure :: copy   => soca_fields_copy
 end type soca_fields
 
 contains
+
+
+subroutine soca_fields_create(self, geom, vars)
+  class(soca_fields),        intent(inout) :: self
+  type(soca_geom),  pointer, intent(inout) :: geom
+  type(oops_variables),         intent(in) :: vars
+
+  call create_constructor(self, geom, vars)
+end subroutine
+
+subroutine soca_fields_delete(self)
+  class(soca_fields), intent(inout) :: self
+  call delete(self)
+end subroutine
+
+subroutine soca_fields_copy(self, rhs)
+  ! Construct a field from an other field
+  class(soca_fields), intent(inout) :: self
+  type(soca_fields),  intent(in)    :: rhs
+  
+  if (.not. allocated(self%fldnames)) then
+    call create_copy(self, rhs)
+  end if
+  call copy(self, rhs)
+end subroutine 
 
 ! ------------------------------------------------------------------------------
 !> Create a field from geometry and variables
@@ -595,7 +624,7 @@ subroutine change_resol(fld,rhs)
 
   call check(fld)
   call check(rhs)
-  call copy(fld,rhs)
+  call fld%copy(rhs)
   call fld%ocnsfc%copy(rhs%ocnsfc)
   call fld%seaice%copy(rhs%seaice)
 

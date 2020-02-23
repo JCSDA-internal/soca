@@ -21,7 +21,7 @@ use ufo_geovals_mod, only: ufo_geovals
 use soca_geom_mod, only: soca_geom
 use soca_geom_mod_c, only: soca_geom_registry
 use soca_fields_mod, only: soca_fields, &
-                           create, delete, copy, zeros, dirac, &
+                           zeros, dirac, &
                            add_incr, axpy, change_resol, diff_incr, &
                            dot_prod, field_from_ug, field_to_ug, ug_coord, fldrms, &
                            gpnorm, random, read_file, write_file, &
@@ -69,7 +69,7 @@ subroutine soca_field_create_c(c_key_self, c_key_geom, c_vars) bind(c,name='soca
   call soca_field_registry%get(c_key_self,self)
 
   vars = oops_variables(c_vars)  
-  call create(self, geom, vars)
+  call self%create(geom, vars)
 
 end subroutine soca_field_create_c
 
@@ -81,7 +81,7 @@ subroutine soca_field_delete_c(c_key_self) bind(c,name='soca_field_delete_f90')
   type(soca_fields),    pointer :: self
 
   call soca_field_registry%get(c_key_self,self)
-  call delete(self)
+  call self%delete( )
   call soca_field_registry%remove(c_key_self)
 
 end subroutine soca_field_delete_c
@@ -135,7 +135,7 @@ subroutine soca_field_copy_c(c_key_self,c_key_rhs) bind(c,name='soca_field_copy_
   call soca_field_registry%get(c_key_self,self)
   call soca_field_registry%get(c_key_rhs,rhs)
 
-  call copy(self, rhs)
+  call self%copy(rhs)
 
 end subroutine soca_field_copy_c
 

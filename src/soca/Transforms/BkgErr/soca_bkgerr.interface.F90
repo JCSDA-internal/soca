@@ -7,7 +7,7 @@ module soca_bkgerr_mod_c
 
 use iso_c_binding
 use fckit_configuration_module, only: fckit_configuration
-use soca_fields_mod, only: soca_fields, copy, delete
+use soca_fields_mod, only: soca_fields
 use soca_fields_mod_c, only: soca_field_registry
 use soca_bkgerr_mod, only: soca_bkgerr_config, &
                            soca_bkgerr_setup, soca_bkgerr_mult
@@ -62,7 +62,7 @@ subroutine c_soca_bkgerr_delete(c_key_self) bind(c,name='soca_bkgerr_delete_f90'
 
   call soca_bkgerr_registry%get(c_key_self, self)
   if (associated(self%bkg)) nullify(self%bkg)
-  call delete(self%std_bkgerr)
+  call self%std_bkgerr%delete()
 
   call soca_bkgerr_registry%remove(c_key_self)
 
@@ -86,7 +86,7 @@ subroutine c_soca_bkgerr_mult_f90(c_key_self, c_key_a, c_key_m)&
   call soca_bkgerr_registry%get(c_key_self,self)
 
   !< Computes dxm = D dxa
-  call copy(dxm, dxa)
+  call dxm%copy(dxa)
   call soca_bkgerr_mult(self, dxa, dxm)
 
 end subroutine c_soca_bkgerr_mult_f90

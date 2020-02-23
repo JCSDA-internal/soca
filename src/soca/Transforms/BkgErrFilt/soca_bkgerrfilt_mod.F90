@@ -8,7 +8,7 @@ module soca_bkgerrfilt_mod
 use fckit_configuration_module, only: fckit_configuration
 use datetime_mod, only: datetime
 use kinds, only: kind_real
-use soca_fields_mod, only: soca_fields, create_copy, zeros, soca_fld2file
+use soca_fields_mod, only: soca_fields,  zeros, soca_fld2file
 
 implicit none
 
@@ -45,7 +45,8 @@ subroutine soca_bkgerrfilt_setup(f_conf, self, bkg)
   nl = size(bkg%hocn,3)
 
   ! Allocate memory for bkgerrfiltor and set to zero
-  call create_copy(self%filt, bkg)
+  !call create_copy(self%filt, bkg)
+  call self%filt%copy(bkg)
   call zeros(self%filt)
 
   ! Read parameters from config
