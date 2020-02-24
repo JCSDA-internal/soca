@@ -37,7 +37,7 @@ implicit none
 
 private
 public :: soca_fields, &
-          zeros, dirac, random,  &
+          dirac, random,  &
           self_add, self_schur, self_sub, self_mul, axpy, &
           dot_prod, add_incr, diff_incr, &
           read_file, write_file, gpnorm, fldrms, soca_fld2file, &
@@ -59,6 +59,9 @@ type :: soca_field
   !character(len=:),     allocatable :: hgrid
   integer                           :: nz
   real(kind=kind_real), allocatable :: val(:,:,:)  
+contains 
+  procedure :: delete => soca_field_delete
+  procedure :: copy   => soca_field_copy
 end type soca_field
 
 
@@ -91,35 +94,160 @@ type :: soca_fields
 
 contains 
   procedure :: create => soca_fields_create
-  procedure :: delete => soca_fields_delete
-  procedure :: copy   => soca_fields_copy
+  procedure :: copy   => soca_fields_copy  
+  procedure :: delete => soca_fields_delete  
+  procedure :: zeros  => soca_fields_zeros
 end type soca_fields
 
 contains
 
+! ------------------------------------------------------------------------------
+! ------------------------------------------------------------------------------
+
+subroutine soca_field_copy(self, rhs)
+  ! TODO, check to see if allocated??
+  class(soca_field), intent(inout) :: self
+  type(soca_field),  intent(in)    :: rhs
+
+  integer :: i
+
+  if ( self%nz /= rhs%nz ) call abor1_ftn("soca_field::copy():  self%nz /= rhs%nz")
+
+  ! make sure val array sizes are congruent
+  if ( size(shape(self%val)) /= size(shape(rhs%val)) ) call abor1_ftn("soca_field::copy():  shape of self%val /= rhs%val")
+  do i =1, size(shape(self%val))
+    if (size(self%val, dim=i) /= size(rhs%val, dim=i)) &
+      call abor1_ftn("soca_field::copy():  shape of self%val /= rhs%val")
+  end do
+
+  self%name = rhs%name
+  self%nz = rhs%nz
+  self%val = rhs%val
+
+end subroutine
+
+! ------------------------------------------------------------------------------
+
+subroutine soca_field_delete(self)
+  class(soca_field), intent(inout) :: self
+
+  ! TODO, is this really necessary?
+  deallocate(self%name)
+  deallocate(self%val)
+end subroutine
+
+! ------------------------------------------------------------------------------
 
 subroutine soca_fields_create(self, geom, vars)
   class(soca_fields),        intent(inout) :: self
   type(soca_geom),  pointer, intent(inout) :: geom
   type(oops_variables),         intent(in) :: vars
 
+  integer :: i, nz
+
+  self%geom => geom
+  ! todo allocate extra for internal fields??
+  allocate(self%fields(vars%nvars()))
+  do i=1,vars%nvars()
+    self%fields(i)%name = trim(vars%variable(i))
+    
+    ! determine number of levels, and allocate space
+    select case(self%fields(i)%name)
+    case ('tocn','socn','hocn')
+      nz = geom%nzo
+    case ('cicen','hicen')
+      nz = geom%nzi
+    case ('hsnon')
+      nz = geom%nzs
+    case ('ssh', 'sw', 'lhf', 'shf', 'lw', 'us')
+      nz = 1
+    case default
+      call abor1_ftn('soca_fields::create(): unknown field '// self%fields(i)%name)
+    end select
+    self%fields(i)%nz = nz
+    allocate(self%fields(i)%val(&
+      geom%isd:geom%ied, &
+      geom%jsd:geom%jed, &
+      nz ))
+  end do  
+
+  ! TODO delete the following line eventually
   call create_constructor(self, geom, vars)
+
+  call self%zeros()
+  
 end subroutine
+
+! ------------------------------------------------------------------------------
+! ------------------------------------------------------------------------------
 
 subroutine soca_fields_delete(self)
   class(soca_fields), intent(inout) :: self
+  
+  integer :: i
+
+  nullify(self%geom)
+  do i = 1, size(self%fields)
+    call self%fields(i)%delete()
+  end do
+  deallocate(self%fields)
+
+  ! TODO delete this line
   call delete(self)
+
 end subroutine
+
+
+! ------------------------------------------------------------------------------
+! ------------------------------------------------------------------------------
 
 subroutine soca_fields_copy(self, rhs)
   ! Construct a field from an other field
   class(soca_fields), intent(inout) :: self
   type(soca_fields),  intent(in)    :: rhs
   
+  integer :: i, nz
+
+  ! TODO combine the following with create
+  if (.not. allocated(self%fields)) then
+    self%geom => rhs%geom
+    ! todo allocate extra for internal fields??
+    allocate(self%fields(size(rhs%fields)))
+    do i=1, size(rhs%fields)
+      self%fields(i)%name = rhs%fields(i)%name
+      
+      ! determine number of levels, and allocate space
+      select case(self%fields(i)%name)
+      case ('tocn','socn','hocn')
+        nz =  self%geom%nzo
+      case ('cicen','hicen')
+        nz =  self%geom%nzi
+      case ('hsnon')
+        nz =  self%geom%nzs
+      case ('ssh', 'sw', 'lhf', 'shf', 'lw', 'us')
+        nz = 1
+      case default
+        call abor1_ftn('soca_fields::create(): unknown field '// self%fields(i)%name)
+      end select
+      self%fields(i)%nz = nz
+      allocate(self%fields(i)%val(&
+        self%geom%isd: self%geom%ied, &
+        self%geom%jsd: self%geom%jed, &
+        nz ))
+    end do    
+  end if 
+
+  ! copy values
+  do i=1,size(self%fields)
+    call self%fields(i)%copy(rhs%fields(i))
+  end do
+
+  ! TODO delete the following lines
   if (.not. allocated(self%fldnames)) then
     call create_copy(self, rhs)
   end if
   call copy(self, rhs)
+
 end subroutine 
 
 ! ------------------------------------------------------------------------------
@@ -197,7 +325,7 @@ subroutine soca_field_alloc(self, geom)
   ! Allocate surface fields for cool skin
   call self%ocnsfc%create(geom)
 
-  call zeros(self)
+  call self%zeros()
 end subroutine soca_field_alloc
 
 ! ------------------------------------------------------------------------------
@@ -228,9 +356,18 @@ end subroutine delete
 
 ! ------------------------------------------------------------------------------
 
-subroutine zeros(self)
-  type(soca_fields), intent(inout) :: self
+subroutine soca_fields_zeros(self)
+  class(soca_fields), intent(inout) :: self
 
+  integer :: i
+    
+  print *, "DBG ", allocated(self%fields), self%nf
+  do i = 1, size(self%fields)
+    print *, "DBG ", allocated(self%fields(i)%val), shape(self%fields(i)%val)
+    self%fields(i)%val = 0.0_kind_real
+  end do
+  
+  ! TODO delete the following
   call check(self)
 
   self%socn = 0.0_kind_real
@@ -242,7 +379,7 @@ subroutine zeros(self)
   call self%seaice%zeros()
   call self%ocnsfc%zeros()
 
-end subroutine zeros
+end subroutine soca_fields_zeros
 
 ! ------------------------------------------------------------------------------
 
@@ -284,7 +421,7 @@ subroutine dirac(self, f_conf)
   jsc = self%geom%jsc ; jec = self%geom%jec
 
   ! Setup Diracs
-  call zeros(self)
+  call self%zeros()
   do n=1,ndir
      ! skip this index if not in the bounds of this PE
      if (ixdir(n) > iec .or. ixdir(n) < isc) cycle
@@ -604,7 +741,7 @@ subroutine diff_incr(lhs,x1,x2)
   call check(x1)
   call check(x2)
 
-  call zeros(lhs)
+  call lhs%zeros()
 
   lhs%tocn = x1%tocn - x2%tocn
   lhs%socn = x1%socn - x2%socn
@@ -685,7 +822,7 @@ subroutine read_file(fld, f_conf, vdate)
 
   ! iread = 0: Invent state
   if (iread==0) then
-     call zeros(fld)
+     call fld%zeros()
      call f_conf%get_or_die("date", str)
      call datetime_set(str, vdate)
   end if
@@ -1119,7 +1256,7 @@ subroutine field_from_ug(self, ug, its)
   ! Copy 3D field
   igrid = 1
   jk = 1
-  call zeros(self)
+  call self%zeros()
 
   ! tocn
   do inzo = 1, nzo

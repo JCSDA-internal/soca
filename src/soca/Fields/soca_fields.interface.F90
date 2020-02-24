@@ -21,7 +21,7 @@ use ufo_geovals_mod, only: ufo_geovals
 use soca_geom_mod, only: soca_geom
 use soca_geom_mod_c, only: soca_geom_registry
 use soca_fields_mod, only: soca_fields, &
-                           zeros, dirac, &
+                           dirac, &
                            add_incr, axpy, change_resol, diff_incr, &
                            dot_prod, field_from_ug, field_to_ug, ug_coord, fldrms, &
                            gpnorm, random, read_file, write_file, &
@@ -94,7 +94,7 @@ subroutine soca_field_zero_c(c_key_self) bind(c,name='soca_field_zero_f90')
   type(soca_fields), pointer :: self
 
   call soca_field_registry%get(c_key_self,self)
-  call zeros(self)
+  call self%zeros()
 
 end subroutine soca_field_zero_c
 

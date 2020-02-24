@@ -9,7 +9,7 @@ use fckit_configuration_module, only: fckit_configuration
 use tools_const, only : pi
 use datetime_mod, only: datetime
 use kinds, only: kind_real
-use soca_fields_mod, only: soca_fields, zeros, soca_fld2file
+use soca_fields_mod, only: soca_fields, soca_fld2file
 use soca_utils, only: soca_diff
 use soca_bkgerrutil_mod, only: soca_bkgerr_bounds_type
 use soca_omb_stats_mod, only: soca_omb_stats, soca_domain_indices
@@ -62,7 +62,7 @@ subroutine soca_bkgerrgodas_setup(f_conf, self, bkg)
   self%bkg => bkg
 
   ! Set all fields to zero
-  call zeros(self%std_bkgerr)
+  call self%std_bkgerr%zeros()
 
   ! Std of bkg error for T/S/SSH based on background.
   ! S and SSH error are only for the unbalanced portion of S/SSH
