@@ -9,7 +9,7 @@ use fckit_configuration_module, only: fckit_configuration
 use kinds, only: kind_real
 use type_mpl, only: mpl_type
 use tools_func, only: fit_func
-use soca_fields_mod, only: soca_fields
+use soca_fields_mod, only: soca_fields, soca_field
 
 implicit none
 
@@ -99,7 +99,12 @@ subroutine soca_conv (self, convdx, dx)
   integer :: nl, j, k, id, jd
   type(mpl_type) :: mpl
 
+  type(soca_field), pointer :: field_dx, field_convdx
+
   nl = size(self%bkg%layer_depth,3)
+
+  call dx%get("tocn", field_dx)
+  call convdx%get("tocn", field_convdx)
 
   allocate(z(nl), lz(nl))
   do id = self%isc, self%iec
@@ -113,13 +118,13 @@ subroutine soca_conv (self, convdx, dx)
         ! perform convolution
         z(:) = self%bkg%layer_depth(id,jd,:)
         do j = 1, nl
-          convdx%tocn(id,jd,j) = 0.0d0
+          field_convdx%val(id,jd,j) = 0.0d0
           convdx%socn(id,jd,j) = 0.0d0
           do k = 1,nl
             dist2 = abs(z(j)-z(k))
             coef = fit_func(mpl, 'gc99', dist2/lz(k))
-            convdx%tocn(id,jd,j) = convdx%tocn(id,jd,j) &
-              &+ dx%tocn(id,jd,k)*coef
+            field_convdx%val(id,jd,j) = field_convdx%val(id,jd,j) &
+              &+ field_dx%val(id,jd,k)*coef
             convdx%socn(id,jd,j) = convdx%socn(id,jd,j) &
               &+ dx%socn(id,jd,k)*coef
             end do
@@ -140,6 +145,10 @@ subroutine soca_conv_ad (self, convdx, dx)
   real(kind=kind_real) :: dist2, coef
   integer :: nl, j, k, id, jd
   type(mpl_type) :: mpl
+  type(soca_field), pointer :: field_dx, field_convdx
+
+  call dx%get("tocn", field_dx)
+  call convdx%get("tocn", field_convdx)
 
   nl = size(self%bkg%layer_depth,3)
   allocate(z(nl), lz(nl))
@@ -154,13 +163,13 @@ subroutine soca_conv_ad (self, convdx, dx)
 
         ! perform convolution
         z(:) = self%bkg%layer_depth(id,jd,:)
-        dx%tocn(id,jd,:) = 0.0d0
+        field_dx%val(id,jd,:) = 0.0d0
         dx%socn(id,jd,:) = 0.0d0
         do j = nl, 1, -1
            do k = nl, 1, -1
               dist2 = abs(z(j)-z(k))
               coef = fit_func(mpl, 'gc99', dist2/lz(k))
-              dx%tocn(id,jd,k) = dx%tocn(id,jd,k) + coef*convdx%tocn(id,jd,j)
+              field_dx%val(id,jd,k) = field_dx%val(id,jd,k) + coef*field_convdx%val(id,jd,j)
               dx%socn(id,jd,k) = dx%socn(id,jd,k) + coef*convdx%socn(id,jd,j)
            end do
         end do

@@ -36,7 +36,7 @@ use soca_utils, only: soca_mld
 implicit none
 
 private
-public :: soca_fields, &
+public :: soca_fields, soca_field, &
           dirac, random,  &
           self_add, self_schur, self_sub, self_mul, axpy, &
           dot_prod, add_incr, diff_incr, &
@@ -72,14 +72,14 @@ type :: soca_fields
    !character(len=128)                :: cicefname      !< Fields file name for cice
    !character(len=128)                :: momfname       !< Fields file name for mom
 
-   type(soca_field),     allocatable :: fields(:)
+   type(soca_field),     pointer :: fields(:) => null()
 
    ! Sea-ice state variables
    type(soca_seaice_type)            :: seaice         !< Sea-ice state
 
    ! Ocean state variables
    real(kind=kind_real), allocatable :: socn(:,:,:)    !< Ocean Practical Salinity         (nx,ny,nzo)
-   real(kind=kind_real), allocatable :: tocn(:,:,:)    !< Ocean Potential Temperature, ref to p=0      (nx,ny,nzo)
+   !real(kind=kind_real), allocatable :: tocn(:,:,:)    !< Ocean Potential Temperature, ref to p=0      (nx,ny,nzo)
    real(kind=kind_real), allocatable :: ssh(:,:)       !< Sea-surface height (nx,ny)
    real(kind=kind_real), allocatable :: hocn(:,:,:)    !< DA layer thickness (nx,ny,nzo)
 
@@ -97,6 +97,8 @@ contains
   procedure :: copy   => soca_fields_copy  
   procedure :: delete => soca_fields_delete  
   procedure :: zeros  => soca_fields_zeros
+  !procedure :: has    => soca_fields_has
+  procedure :: get    => soca_fields_get
 end type soca_fields
 
 contains
@@ -175,7 +177,7 @@ subroutine soca_fields_create(self, geom, vars)
   call create_constructor(self, geom, vars)
 
   call self%zeros()
-  
+
 end subroutine
 
 ! ------------------------------------------------------------------------------
@@ -191,6 +193,7 @@ subroutine soca_fields_delete(self)
     call self%fields(i)%delete()
   end do
   deallocate(self%fields)
+  nullify(self%fields)
 
   ! TODO delete this line
   call delete(self)
@@ -208,9 +211,10 @@ subroutine soca_fields_copy(self, rhs)
   
   integer :: i, nz
 
+
   ! TODO combine the following with create
-  if (.not. allocated(self%fields)) then
-    self%geom => rhs%geom
+  if (.not. associated(self%fields)) then
+      self%geom => rhs%geom
     ! todo allocate extra for internal fields??
     allocate(self%fields(size(rhs%fields)))
     do i=1, size(rhs%fields)
@@ -249,6 +253,26 @@ subroutine soca_fields_copy(self, rhs)
   call copy(self, rhs)
 
 end subroutine 
+
+! ------------------------------------------------------------------------------
+
+subroutine soca_fields_get(self, name, field)
+  class(soca_fields),         intent(in) :: self
+  character(len=*),           intent(in) :: name
+  type(soca_field), pointer, intent(out) :: field
+  
+  integer :: i
+
+  do i=1,size(self%fields)
+    if (trim(name) == self%fields(i)%name) then
+      field => self%fields(i)
+      return
+    end if
+  end do
+
+  call abor1_ftn("soca_fields::get():  cannot find field "//trim(name))
+
+end subroutine
 
 ! ------------------------------------------------------------------------------
 !> Create a field from geometry and variables
@@ -312,7 +336,7 @@ subroutine soca_field_alloc(self, geom)
   nzo = geom%nzo
 
   ! Allocate ocean state
-  allocate(self%tocn(isd:ied,jsd:jed,nzo))
+  !allocate(self%tocn(isd:ied,jsd:jed,nzo))
   allocate(self%socn(isd:ied,jsd:jed,nzo))
   allocate(self%ssh(isd:ied,jsd:jed))
   allocate(self%hocn(isd:ied,jsd:jed,nzo))
@@ -334,7 +358,7 @@ subroutine delete(self)
   type (soca_fields), intent(inout) :: self
 
   ! Deallocate ocean state
-  deallocate(self%tocn)
+  !deallocate(self%tocn)
   deallocate(self%socn)
   deallocate(self%ssh)
   deallocate(self%hocn)
@@ -361,9 +385,7 @@ subroutine soca_fields_zeros(self)
 
   integer :: i
     
-  print *, "DBG ", allocated(self%fields), self%nf
   do i = 1, size(self%fields)
-    print *, "DBG ", allocated(self%fields(i)%val), shape(self%fields(i)%val)
     self%fields(i)%val = 0.0_kind_real
   end do
   
@@ -371,7 +393,7 @@ subroutine soca_fields_zeros(self)
   call check(self)
 
   self%socn = 0.0_kind_real
-  self%tocn = 0.0_kind_real
+  !self%tocn = 0.0_kind_real
   self%ssh = 0.0_kind_real
   self%hocn = 0.0_kind_real
   self%mld = 0.0_kind_real
@@ -391,6 +413,8 @@ subroutine dirac(self, f_conf)
   integer :: ndir,n
   integer,allocatable :: ixdir(:),iydir(:),izdir(:),ifdir(:)
   type(fckit_mpi_comm) :: f_comm
+
+  type(soca_field), pointer :: field
 
   call check(self)
 
@@ -427,7 +451,11 @@ subroutine dirac(self, f_conf)
      if (ixdir(n) > iec .or. ixdir(n) < isc) cycle
      if (iydir(n) > jec .or. iydir(n) < jsc) cycle
 
-     if (ifdir(n)==1) self%tocn(ixdir(n),iydir(n),izdir(n)) = 1.0
+     !if (ifdir(n)==1) self%tocn(ixdir(n),iydir(n),izdir(n)) = 1.0
+     if (ifdir(n)==1) then
+      call self%get("tocn", field)      
+      field%val(ixdir(n),iydir(n),izdir(n)) = 1.0
+     end if
      if (ifdir(n)==2) self%socn(ixdir(n),iydir(n),izdir(n)) = 1.0
      if (ifdir(n)==3) self%ssh(ixdir(n),iydir(n)) = 1.0
      if (ifdir(n)==4) self%seaice%cicen(ixdir(n),iydir(n),izdir(n)) = 1.0
@@ -445,13 +473,16 @@ subroutine random(self)
     !  it is only set the first time normal_distribution() is called with a seed
   integer :: z, ff
 
+  type(soca_field), pointer :: field
+
   call check(self)
 
   ! set random values
   do ff = 1, self%nf
     select case(self%fldnames(ff))
     case("tocn")
-      call normal_distribution(self%tocn,  0.0_kind_real, 1.0_kind_real, rseed)
+      call self%get("tocn", field)
+      call normal_distribution(field%val,  0.0_kind_real, 1.0_kind_real, rseed)
     case("socn")
       call normal_distribution(self%socn,  0.0_kind_real, 1.0_kind_real, rseed)
     !case("hocn")
@@ -464,12 +495,15 @@ subroutine random(self)
   ! mask out land, set to zero
   self%ssh = self%ssh * self%geom%mask2d
   do z=1,self%geom%nzo
-     self%tocn(:,:,z) = self%tocn(:,:,z) * self%geom%mask2d
+    call self%get("tocn", field)    
+    field%val(:,:,z) = field%val(:,:,z) * self%geom%mask2d
+    !self%tocn(:,:,z) = self%tocn(:,:,z) * self%geom%mask2d
      self%socn(:,:,z) = self%socn(:,:,z) * self%geom%mask2d
   end do
 
   ! update domains
-  call mpp_update_domains(self%tocn, self%geom%Domain%mpp_domain)
+  call self%get("tocn", field)    
+  call mpp_update_domains(field%val, self%geom%Domain%mpp_domain)
   call mpp_update_domains(self%socn, self%geom%Domain%mpp_domain)
   call mpp_update_domains(self%ssh,  self%geom%Domain%mpp_domain)
 
@@ -498,7 +532,7 @@ subroutine copy(self,rhs)
   self%fldnames(:)=rhs%fldnames(:)
 
   self%socn  = rhs%socn
-  self%tocn  = rhs%tocn
+  !self%tocn  = rhs%tocn
   self%ssh   = rhs%ssh
   self%hocn  = rhs%hocn
   self%mld   = rhs%mld
@@ -520,12 +554,13 @@ subroutine self_add(self,rhs)
   type(soca_fields),    intent(in) :: rhs
 
   integer :: nf
+  integer :: i
 
   call check_resolution(self, rhs)
 
   nf = common_vars(self, rhs)
 
-  self%tocn = self%tocn + rhs%tocn
+  !self%tocn = self%tocn + rhs%tocn
   self%socn = self%socn + rhs%socn
   self%ssh = self%ssh + rhs%ssh
   self%hocn = self%hocn + rhs%hocn
@@ -533,6 +568,10 @@ subroutine self_add(self,rhs)
   call self%seaice%add(rhs%seaice)
   call self%ocnsfc%add(rhs%ocnsfc)
 
+  do i=1,size(self%fields)
+    ! TODO, check to make sure size/name is the same
+    self%fields(i)%val = self%fields(i)%val + rhs%fields(i)%val
+  end do
 end subroutine self_add
 
 ! ------------------------------------------------------------------------------
@@ -542,12 +581,13 @@ subroutine self_schur(self,rhs)
   type(soca_fields),    intent(in) :: rhs
 
   integer :: nf
+  integer :: i
 
   call check_resolution(self, rhs)
 
   nf = common_vars(self, rhs)
 
-  self%tocn=self%tocn*rhs%tocn
+  !self%tocn=self%tocn*rhs%tocn
   self%socn=self%socn*rhs%socn
   self%ssh=self%ssh*rhs%ssh
   self%hocn=self%hocn*rhs%hocn
@@ -555,7 +595,10 @@ subroutine self_schur(self,rhs)
   call self%seaice%schur(rhs%seaice)
   call self%ocnsfc%schur(rhs%ocnsfc)
 
-  return
+  do i=1,size(self%fields)
+    ! TODO, check to make sure size/name is the same
+    self%fields(i)%val = self%fields(i)%val * rhs%fields(i)%val
+  end do
 end subroutine self_schur
 
 ! ------------------------------------------------------------------------------
@@ -565,19 +608,23 @@ subroutine self_sub(self,rhs)
   type(soca_fields),    intent(in) :: rhs
 
   integer :: nf
-
+  integer :: i
   call check_resolution(self, rhs)
 
   nf = common_vars(self, rhs)
 
   self%socn=self%socn-rhs%socn
-  self%tocn=self%tocn-rhs%tocn
+  !self%tocn=self%tocn-rhs%tocn
   self%ssh=self%ssh-rhs%ssh
   self%hocn=self%hocn-rhs%hocn
 
   call self%seaice%sub(rhs%seaice)
   call self%ocnsfc%sub(rhs%ocnsfc)
 
+  do i=1,size(self%fields)
+    ! TODO, check to make sure size/name is the same
+    self%fields(i)%val = self%fields(i)%val - rhs%fields(i)%val
+  end do
 
 end subroutine self_sub
 
@@ -587,15 +634,22 @@ subroutine self_mul(self,zz)
   type(soca_fields), intent(inout) :: self
   real(kind=kind_real), intent(in) :: zz
 
+  integer :: i
+
   call check(self)
 
-  self%tocn = zz * self%tocn
+  !self%tocn = zz * self%tocn
   self%socn = zz * self%socn
   self%ssh = zz * self%ssh
   self%hocn = zz * self%hocn
 
   call self%seaice%mul(zz)
   call self%ocnsfc%mul(zz)
+
+  do i=1,size(self%fields)
+    ! TODO, check to make sure size/name is the same
+    self%fields(i)%val = zz * self%fields(i)%val
+  end do
 
 end subroutine self_mul
 
@@ -606,19 +660,25 @@ subroutine axpy(self,zz,rhs)
   real(kind=kind_real), intent(in) :: zz
   type(soca_fields),    intent(in) :: rhs
 
+  integer :: i
   integer :: nf
 
   call check_resolution(self, rhs)
 
   nf = common_vars(self, rhs)
 
-  self%tocn = self%tocn + zz * rhs%tocn
+  !self%tocn = self%tocn + zz * rhs%tocn
   self%socn = self%socn + zz * rhs%socn
   self%ssh = self%ssh + zz * rhs%ssh
   self%hocn = self%hocn + zz * rhs%hocn
 
   call self%seaice%axpy(zz, rhs%seaice)
   call self%ocnsfc%axpy(zz, rhs%ocnsfc)
+
+  do i=1,size(self%fields)
+    ! TODO, check to make sure size/name is the same
+    self%fields(i)%val = self%fields(i)%val + zz* rhs%fields(i)%val
+  end do
 
 end subroutine axpy
 
@@ -634,6 +694,9 @@ subroutine dot_prod(fld1,fld2,zprod)
   integer :: isc, iec, jsc, jec
   integer :: ncat, nzo, myrank
   type(fckit_mpi_comm) :: f_comm
+
+  type(soca_field), pointer :: field1, field2
+
 
   ! Setup Communicator
   f_comm = fckit_mpi_comm()
@@ -652,14 +715,19 @@ subroutine dot_prod(fld1,fld2,zprod)
   nzo = fld1%geom%nzo
 
   zprod = 0.0_kind_real
+  call fld1%get("tocn", field1)
+  call fld2%get("tocn", field2)
+
   !----- OCEAN
   do ii = isc, iec
      do jj = jsc, jec
         if (fld1%geom%mask2d(ii,jj)==1) then
            zprod = zprod + fld1%ssh(ii,jj)*fld2%ssh(ii,jj)               ! SSH
            do kk = 1, nzo
-              zprod = zprod + fld1%tocn(ii,jj,kk)*fld2%tocn(ii,jj,kk) &  ! TOCN
-                   + fld1%socn(ii,jj,kk)*fld2%socn(ii,jj,kk)             ! SOCN
+            zprod = zprod + field1%val(ii,jj,kk)*field2%val(ii,jj,kk) &  ! TOCN
+            + fld1%socn(ii,jj,kk)*fld2%socn(ii,jj,kk)             ! SOCN            
+!              zprod = zprod + fld1%tocn(ii,jj,kk)*fld2%tocn(ii,jj,kk) &  ! TOCN
+                   !+ fld1%socn(ii,jj,kk)*fld2%socn(ii,jj,kk)             ! SOCN
            end do
         end if
      end do
@@ -707,17 +775,23 @@ subroutine add_incr(self,rhs)
   integer, save :: cnt_outer = 1
   character(len=800) :: filename, str_cnt
 
+  integer :: i
   call check(self)
   call check(rhs)
 
   ! Add increment to field
-  self%tocn = self%tocn + rhs%tocn
+  !self%tocn = self%tocn + rhs%tocn
   self%socn = self%socn + rhs%socn
   self%ssh = self%ssh + rhs%ssh
   self%hocn = self%hocn + rhs%hocn
 
   call self%seaice%add_incr(rhs%seaice)
   call self%ocnsfc%add(rhs%ocnsfc)
+
+  do i=1,size(self%fields)
+    ! TODO, check to make sure size/name is the same
+    self%fields(i)%val = self%fields(i)%val + rhs%fields(i)%val
+  end do
 
   ! Save increment for outer loop cnt_outer
   write(str_cnt,*) cnt_outer
@@ -727,30 +801,34 @@ subroutine add_incr(self,rhs)
   ! Update outer loop counter
   cnt_outer = cnt_outer + 1
 
-  return
 end subroutine add_incr
 
 ! ------------------------------------------------------------------------------
 
-subroutine diff_incr(lhs,x1,x2)
-  type(soca_fields), intent(inout) :: lhs
+subroutine diff_incr(self,x1,x2)
+  type(soca_fields), intent(inout) :: self
   type(soca_fields), intent(in)    :: x1
   type(soca_fields), intent(in)    :: x2
+  integer :: i
 
-  call check(lhs)
+  call check(self)
   call check(x1)
   call check(x2)
 
-  call lhs%zeros()
+  call self%zeros()
 
-  lhs%tocn = x1%tocn - x2%tocn
-  lhs%socn = x1%socn - x2%socn
-  lhs%ssh = x1%ssh - x2%ssh
-  lhs%hocn = x1%hocn - x2%hocn
+  !self%tocn = x1%tocn - x2%tocn
+  self%socn = x1%socn - x2%socn
+  self%ssh = x1%ssh - x2%ssh
+  self%hocn = x1%hocn - x2%hocn
 
-  call lhs%seaice%diff_incr(x1%seaice, x2%seaice)
-  call lhs%ocnsfc%diff_incr(x1%ocnsfc, x2%ocnsfc)
+  call self%seaice%diff_incr(x1%seaice, x2%seaice)
+  call self%ocnsfc%diff_incr(x1%ocnsfc, x2%ocnsfc)
 
+  do i=1,size(self%fields)
+    ! TODO, check to make sure size/name is the same
+    self%fields(i)%val = x1%fields(i)%val - x2%fields(i)%val
+  end do
 end subroutine diff_incr
 
 ! ------------------------------------------------------------------------------
@@ -765,7 +843,6 @@ subroutine change_resol(fld,rhs)
   call fld%ocnsfc%copy(rhs%ocnsfc)
   call fld%seaice%copy(rhs%seaice)
 
-  return
 end subroutine change_resol
 
 ! ------------------------------------------------------------------------------
@@ -793,6 +870,8 @@ subroutine read_file(fld, f_conf, vdate)
   type(remapping_CS)  :: remapCS
   character(len=:), allocatable :: str
   real(kind=kind_real), allocatable :: h_common_ij(:), hocn_ij(:), tsocn_ij(:), tsocn2_ij(:)
+
+  type(soca_field), pointer :: field
 
   if ( f_conf%has("read_from_file") ) &
       call f_conf%get_or_die("read_from_file", iread)
@@ -848,7 +927,8 @@ subroutine read_file(fld, f_conf, vdate)
            idr_ocean = register_restart_field(ocean_restart, ocn_filename, 'ave_ssh', fld%ssh(:,:), &
                 domain=fld%geom%Domain%mpp_domain)
         case ('tocn')
-           idr_ocean = register_restart_field(ocean_restart, ocn_filename, 'Temp', fld%tocn(:,:,:), &
+          call fld%get("tocn", field)
+           idr_ocean = register_restart_field(ocean_restart, ocn_filename, 'Temp', field%val, &
                 domain=fld%geom%Domain%mpp_domain)
         case ('socn')
            idr_ocean = register_restart_field(ocean_restart, ocn_filename, 'Salt', fld%socn(:,:,:), &
@@ -871,10 +951,11 @@ subroutine read_file(fld, f_conf, vdate)
      call fld%geom%thickness2depth(fld%hocn, fld%layer_depth)
 
      ! Compute mixed layer depth TODO: Move somewhere else ...
+     call fld%get("tocn", field)     
      do i = isc, iec
-        do j = jsc, jec
+        do j = jsc, jec          
            fld%mld(i,j) = soca_mld(fld%socn(i,j,:),&
-                &fld%tocn(i,j,:),&
+                &field%val(i,j,:),&
                 &fld%layer_depth(i,j,:),&
                 &fld%geom%lon(i,j),&
                 &fld%geom%lat(i,j))
@@ -891,10 +972,11 @@ subroutine read_file(fld, f_conf, vdate)
                  h_common_ij = h_common(i,j,:)
                  hocn_ij = fld%hocn(i,j,:)
 
-                 tsocn_ij = fld%tocn(i,j,:)
+                 call fld%get("tocn", field)
+                 tsocn_ij = field%val(i,j,:)
                  call remapping_core_h(remapCS, nz, h_common_ij, tsocn_ij,&
                       &nz, hocn_ij, tsocn2_ij)
-                 fld%tocn(i,j,:) = tsocn2_ij
+                 field%val(i,j,:) = tsocn2_ij
 
                  tsocn_ij = fld%socn(i,j,:)
                  call remapping_core_h(remapCS, nz, h_common_ij, tsocn_ij,&
@@ -902,7 +984,8 @@ subroutine read_file(fld, f_conf, vdate)
                  fld%socn(i,j,:) = tsocn2_ij
 
               else
-                 fld%tocn(i,j,:) = 0.0_kind_real
+                call fld%get("tocn", field)
+                field%val(i,j,:) = 0.0_kind_real
                  fld%socn(i,j,:) = 0.0_kind_real
               end if
            end do
@@ -913,7 +996,8 @@ subroutine read_file(fld, f_conf, vdate)
      call end_remapping(remapCS)
 
      ! Update halo
-     call mpp_update_domains(fld%tocn, fld%geom%Domain%mpp_domain)
+     call fld%get("tocn", field)
+     call mpp_update_domains(field%val, fld%geom%Domain%mpp_domain)
      call mpp_update_domains(fld%socn, fld%geom%Domain%mpp_domain)
      call mpp_update_domains(fld%ssh, fld%geom%Domain%mpp_domain)
 
@@ -943,7 +1027,8 @@ subroutine read_file(fld, f_conf, vdate)
         case ('ssh')
            call read_data(incr_filename,"ssh",fld%ssh(:,:),domain=fld%geom%Domain%mpp_domain)
         case ('tocn')
-           call read_data(incr_filename,"temp",fld%tocn(:,:,:),domain=fld%geom%Domain%mpp_domain)
+          call fld%get("tocn", field)
+          call read_data(incr_filename,"temp",field%val(:,:,:),domain=fld%geom%Domain%mpp_domain)
         case ('socn')
            call read_data(incr_filename,"salt",fld%socn(:,:,:),domain=fld%geom%Domain%mpp_domain)
         case ('hocn')
@@ -991,6 +1076,8 @@ subroutine gpnorm(fld, nf, pstat)
   integer :: isc, iec, jsc, jec
   type(fckit_mpi_comm) :: f_comm
 
+  type(soca_field), pointer :: field  
+
   ! Setup Communicator
   f_comm = fckit_mpi_comm()
 
@@ -1014,7 +1101,8 @@ subroutine gpnorm(fld, nf, pstat)
     ! get local min/max/sum of each variable
     select case(fld%fldnames(jj))
     case("tocn")
-      call fldinfo(fld%tocn(isc:iec,jsc:jec,:), mask, tmp)
+      call fld%get("tocn", field)      
+      call fldinfo(field%val(isc:iec,jsc:jec,:), mask, tmp)
     case("socn")
       call fldinfo(fld%socn(isc:iec,jsc:jec,:), mask, tmp)
     case("hocn")
@@ -1169,6 +1257,8 @@ subroutine field_to_ug(self, ug, its)
   integer :: isc, iec, jsc, jec, jk, incat, inzo, ncat, nzo, igrid
   integer :: ni, nj
 
+  type(soca_field), pointer :: field
+
   ! Indices for compute domain (no halo)
   isc = self%geom%isc ; iec = self%geom%iec
   jsc = self%geom%jsc ; jec = self%geom%jec
@@ -1191,9 +1281,10 @@ subroutine field_to_ug(self, ug, its)
   ug%grid(igrid)%fld(:,:,:,its) = 0.0_kind_real
 
   ! tocn
+  call self%get("tocn", field)
   do inzo = 1, nzo
      ug%grid(igrid)%fld(1:ni*nj, inzo, jk, its) = &
-          &reshape( self%tocn(isc:iec, jsc:jec,inzo), (/ug%grid(igrid)%nmga/) )
+          &reshape( field%val(isc:iec, jsc:jec,inzo), (/ug%grid(igrid)%nmga/) )
   end do
   jk = jk + 1
 
@@ -1243,6 +1334,8 @@ subroutine field_from_ug(self, ug, its)
 
   integer :: isc, iec, jsc, jec, jk, incat, inzo, ncat, nzo, igrid
   integer :: ni, nj
+  type(soca_field), pointer :: field
+
 
   ! Indices for compute domain (no halo)
   isc = self%geom%isc ; iec = self%geom%iec
@@ -1259,8 +1352,9 @@ subroutine field_from_ug(self, ug, its)
   call self%zeros()
 
   ! tocn
+  call self%get("tocn", field)
   do inzo = 1, nzo
-     self%tocn(isc:iec, jsc:jec,inzo) = &
+     field%val(isc:iec, jsc:jec,inzo) = &
           &reshape( ug%grid(igrid)%fld(1:ni*nj, inzo, jk, its), (/ni, nj/) )
   end do
   jk = jk + 1
@@ -1368,6 +1462,8 @@ subroutine soca_fld2file(fld, filename)
   integer :: ii
   character(len=800) :: fname
 
+  type(soca_field), pointer :: field
+
   fname = trim(filename)
 
   call check(fld)
@@ -1381,7 +1477,8 @@ subroutine soca_fld2file(fld, filename)
         call write_data( fname, "ssh", fld%ssh, fld%geom%Domain%mpp_domain)
         call write_data( fname, "rossby_radius", fld%geom%rossby_radius, fld%geom%Domain%mpp_domain)
      case ('tocn')
-        call write_data( fname, "temp", fld%tocn, fld%geom%Domain%mpp_domain)
+      call fld%get("tocn", field)
+      call write_data( fname, "temp", field%val, fld%geom%Domain%mpp_domain)
      case ('socn')
         call write_data( fname, "salt", fld%socn, fld%geom%Domain%mpp_domain)
      case ('hocn')
@@ -1422,7 +1519,9 @@ subroutine soca_write_restart(fld, f_conf, vdate)
   type(restart_file_type) :: ocean_restart
   type(restart_file_type) :: ocnsfc_restart
   integer :: idr, idr_ocean
+  type(soca_field), pointer :: field
 
+  
   ! Generate file names
   ocn_filename = soca_genfilename(f_conf,max_string_length,vdate,"ocn")
   ocnsfc_filename = soca_genfilename(f_conf,max_string_length,vdate,"sfc")
@@ -1431,7 +1530,8 @@ subroutine soca_write_restart(fld, f_conf, vdate)
   ! Ocean State
   idr_ocean = register_restart_field(ocean_restart, ocn_filename, 'ave_ssh', fld%ssh(:,:), &
        domain=fld%geom%Domain%mpp_domain)
-  idr_ocean = register_restart_field(ocean_restart, ocn_filename, 'Temp', fld%tocn(:,:,:), &
+  call fld%get("tocn", field)       
+  idr_ocean = register_restart_field(ocean_restart, ocn_filename, 'Temp', field%val(:,:,:), &
        domain=fld%geom%Domain%mpp_domain)
   idr_ocean = register_restart_field(ocean_restart, ocn_filename, 'Salt', fld%socn(:,:,:), &
        domain=fld%geom%Domain%mpp_domain)
@@ -1480,6 +1580,7 @@ subroutine soca_getpoint(self, geoiter, values)
   real(kind=kind_real),           intent(inout) :: values(:)
   integer :: ff, ii, nzo, ncat
 
+  type(soca_field), pointer :: field
   nzo = self%geom%nzo
   ncat = self%geom%ncat
 
@@ -1488,7 +1589,8 @@ subroutine soca_getpoint(self, geoiter, values)
   do ff = 1, self%nf
     select case(self%fldnames(ff))
     case("tocn")
-      values(ii+1:ii+nzo) = self%tocn(geoiter%iind, geoiter%jind,:)
+      call self%get("tocn", field)
+      values(ii+1:ii+nzo) = field%val(geoiter%iind, geoiter%jind,:)
       ii = ii + nzo
     case("socn")
       values(ii+1:ii+nzo) = self%socn(geoiter%iind, geoiter%jind,:)
@@ -1523,6 +1625,9 @@ subroutine soca_setpoint(self, geoiter, values)
   real(kind=kind_real),           intent(   in) :: values(:)
   integer :: ff, ii, nzo, ncat
 
+  type(soca_field), pointer :: field
+
+
   nzo = self%geom%nzo
   ncat = self%geom%ncat
 
@@ -1531,7 +1636,8 @@ subroutine soca_setpoint(self, geoiter, values)
   do ff = 1, self%nf
     select case(self%fldnames(ff))
     case("tocn")
-      self%tocn(geoiter%iind, geoiter%jind,:) = values(ii+1:ii+nzo)
+      call self%get("tocn", field)
+      field%val(geoiter%iind, geoiter%jind,:) = values(ii+1:ii+nzo)
       ii = ii + nzo
     case("socn")
       self%socn(geoiter%iind, geoiter%jind,:) = values(ii+1:ii+nzo)

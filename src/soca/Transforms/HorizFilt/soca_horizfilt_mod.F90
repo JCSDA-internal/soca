@@ -133,6 +133,8 @@ contains
     type(soca_fields),          intent(inout) :: dxout !< Output: filtered Increment
     type(soca_geom),               intent(in) :: geom
 
+    type(soca_field), pointer :: field_i, field_o
+
     integer :: k, ivar
     real(kind=kind_real), allocatable, dimension(:,:) :: dxi, dxo
 
@@ -148,10 +150,12 @@ contains
           dxout%ssh(:,:) = dxo
 
        case ("tocn")
+         call dxin%get("tocn", field_i)
+         call dxout%get("tocn", field_o)
           do k = 1, geom%nzo
-             dxi = dxin%tocn(:,:,k)
+             dxi = field_i%val(:,:,k)
              call soca_filt2d(self, dxi, dxo, geom)
-             dxout%tocn(:,:,k) = dxo
+             field_o%val(:,:,k) = dxo
           end do
 
        case ("socn")
@@ -189,6 +193,7 @@ contains
     type(soca_fields),          intent(inout) :: dxout !< Output:
     type(soca_geom),               intent(in) :: geom
 
+    type(soca_field), pointer :: field_i, field_o
     integer :: k, ivar
     real(kind=kind_real), allocatable, dimension(:,:) :: dxi, dxo
 
@@ -204,10 +209,12 @@ contains
           dxout%ssh(:,:) = dxo
 
        case ("tocn")
+         call dxin%get("tocn", field_i)
+         call dxout%get("tocn", field_o)
           do k = 1, geom%nzo
-             dxi = dxin%tocn(:,:,k)
+             dxi = field_i%val(:,:,k)
              call soca_filt2d_ad(self, dxi, dxo, geom)
-             dxout%tocn(:,:,k) = dxo
+             field_o%val(:,:,k) = dxo
           end do
 
        case ("socn")

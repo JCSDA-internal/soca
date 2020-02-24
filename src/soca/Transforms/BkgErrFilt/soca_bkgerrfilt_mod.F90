@@ -8,7 +8,7 @@ module soca_bkgerrfilt_mod
 use fckit_configuration_module, only: fckit_configuration
 use datetime_mod, only: datetime
 use kinds, only: kind_real
-use soca_fields_mod, only: soca_fields, soca_fld2file
+use soca_fields_mod, only: soca_fields, soca_field, soca_fld2file
 
 implicit none
 
@@ -40,6 +40,7 @@ subroutine soca_bkgerrfilt_setup(f_conf, self, bkg)
   integer :: isc, iec, jsc, jec, i, j, k, nl
   real(kind=kind_real) :: efold
   character(len=800) :: fname = 'soca_bkgerrfilt.nc'
+  type(soca_field), pointer :: tocn
 
   ! Get number of ocean levels
   nl = size(bkg%hocn,3)
@@ -57,6 +58,8 @@ subroutine soca_bkgerrfilt_setup(f_conf, self, bkg)
   ! Associate background
   self%bkg => bkg
 
+  call self%filt%get("tocn", tocn)
+
   ! Setup rescaling and masks
   isc=bkg%geom%isc ; self%isc=isc ; iec=bkg%geom%iec ; self%iec=iec
   jsc=bkg%geom%jsc ; self%jsc=jsc ; jec=bkg%geom%jec ; self%jec=jec
@@ -72,13 +75,13 @@ subroutine soca_bkgerrfilt_setup(f_conf, self, bkg)
                  ! Set to zero if layer is too thin
                  efold = 0.0_kind_real
               end if
-              self%filt%tocn(i,j,k) = efold
+              tocn%val(i,j,k) = efold
               self%filt%socn(i,j,k) = efold
            end do
         else
            ! Set to zero if ocean is too shallow
            self%filt%ssh(i,j)    = 0.0_kind_real
-           self%filt%tocn(i,j,:) = 0.0_kind_real
+           tocn%val(i,j,:) = 0.0_kind_real
            self%filt%socn(i,j,:) = 0.0_kind_real
         end if
 
@@ -101,19 +104,25 @@ subroutine soca_bkgerrfilt_mult(self, dxa, dxm)
   type(soca_fields),         intent(inout) :: dxm
 
   integer :: i, j
+  type(soca_field), pointer :: field, field_a, field_m
+
+
+  call self%filt%get("tocn", field)
+  call dxa%get("tocn", field_a)
+  call dxm%get("tocn", field_m)
 
   do i = self%isc, self%iec
      do j = self%jsc, self%jec
         if (self%bkg%geom%mask2d(i,j).eq.1) then
            dxm%ssh(i,j) = self%filt%ssh(i,j) * dxa%ssh(i,j)
-           dxm%tocn(i,j,:) = self%filt%tocn(i,j,:) * dxa%tocn(i,j,:)
+           field_m%val(i,j,:) = field%val(i,j,:) * field_a%val(i,j,:)
            dxm%socn(i,j,:) = self%filt%socn(i,j,:)  * dxa%socn(i,j,:)
 
            dxm%seaice%cicen(i,j,:) =  self%filt%seaice%cicen(i,j,:) * dxa%seaice%cicen(i,j,:)
            dxm%seaice%hicen(i,j,:) =  self%filt%seaice%hicen(i,j,:) * dxa%seaice%hicen(i,j,:)
         else
            dxm%ssh(i,j) = 0.0_kind_real
-           dxm%tocn(i,j,:) = 0.0_kind_real
+           field_m%val(i,j,:) = 0.0_kind_real
            dxm%socn(i,j,:) = 0.0_kind_real
 
            dxm%seaice%cicen(i,j,:) = 0.0_kind_real

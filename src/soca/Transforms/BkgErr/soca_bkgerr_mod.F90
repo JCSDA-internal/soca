@@ -8,7 +8,7 @@ module soca_bkgerr_mod
 use fckit_configuration_module, only: fckit_configuration
 use datetime_mod, only: datetime
 use kinds, only: kind_real
-use soca_fields_mod, only: soca_fields, read_file, soca_fld2file
+use soca_fields_mod, only: soca_fields, soca_field, read_file, soca_fld2file
 use soca_bkgerrutil_mod, only: soca_bkgerr_bounds_type
 
 implicit none
@@ -38,6 +38,8 @@ subroutine soca_bkgerr_setup(f_conf, self, bkg)
   type(soca_bkgerr_config), intent(inout) :: self
   type(soca_fields),   target, intent(in) :: bkg
 
+  type(soca_field), pointer :: field
+
   integer :: isc, iec, jsc, jec, nl
   type(datetime) :: vdate
   character(len=800) :: fname = 'soca_bkgerrsoca.nc'
@@ -54,7 +56,9 @@ subroutine soca_bkgerr_setup(f_conf, self, bkg)
   call read_file(self%std_bkgerr, f_conf, vdate)
 
   ! Convert to standard deviation
-  self%std_bkgerr%tocn = sqrt(self%std_bkgerr%tocn)
+  call self%std_bkgerr%get("tocn", field)
+  field%val = sqrt(field%val)
+
   self%std_bkgerr%socn = sqrt(self%std_bkgerr%socn)
   self%std_bkgerr%ssh = sqrt(self%std_bkgerr%ssh)
 
@@ -63,8 +67,9 @@ subroutine soca_bkgerr_setup(f_conf, self, bkg)
 
   ! Get constand background error for sst and sss
   if ( f_conf%has("fixed_std_sst") ) then
-      call f_conf%get_or_die("fixed_std_sst", self%std_sst)
-      self%std_bkgerr%tocn(:,:,1) = self%std_sst
+    call f_conf%get_or_die("fixed_std_sst", self%std_sst)
+    call self%std_bkgerr%get("tocn", field)    
+    field%val(:,:,1) = self%std_sst
   end if
   if ( f_conf%has("fixed_std_sss") ) then
       call f_conf%get_or_die("fixed_std_sss", self%std_sss)
@@ -102,16 +107,26 @@ subroutine soca_bkgerr_mult(self, dxa, dxm)
   type(soca_fields),           intent(in) :: dxa
   type(soca_fields),        intent(inout) :: dxm
 
+  type(soca_field), pointer :: field_m, field_a, field_e
+
   integer :: isc, iec, jsc, jec, i, j
 
   ! Indices for compute domain (no halo)
   isc=self%bkg%geom%isc; iec=self%bkg%geom%iec
   jsc=self%bkg%geom%jsc; jec=self%bkg%geom%jec
 
+  call dxm%get("tocn", field_m)
+  call dxa%get("tocn", field_a)
+  call self%std_bkgerr%get("tocn", field_e)
+  do i = isc, iec
+    do j = jsc, jec
+      field_m%val(i,j,:) = field_e%val(i,j,:) * field_a%val(i,j,:)
+    end do
+  end do
+
   do i = isc, iec
      do j = jsc, jec
         dxm%ssh(i,j) = self%std_bkgerr%ssh(i,j) * dxa%ssh(i,j)
-        dxm%tocn(i,j,:) = self%std_bkgerr%tocn(i,j,:) * dxa%tocn(i,j,:)
         dxm%socn(i,j,:) = self%std_bkgerr%socn(i,j,:) * dxa%socn(i,j,:)
      end do
   end do

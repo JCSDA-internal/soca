@@ -15,7 +15,7 @@ use oops_variables_mod
 use ufo_geovals_mod, only: ufo_geovals
 use ufo_locs_mod, only: ufo_locs
 use soca_getvaltraj_mod, only: soca_getvaltraj
-use soca_fields_mod, only: soca_fields, check
+use soca_fields_mod, only: soca_fields, soca_field, check
 use soca_geom_mod, only : soca_geom
 use unstructured_interpolation_mod
 
@@ -151,6 +151,7 @@ subroutine interp(fld, locs, vars, geoval, horiz_interp, horiz_interp_masked)
   integer :: ns
   real(kind=kind_real), allocatable :: gom_window(:,:)
   real(kind=kind_real), allocatable :: fld3d(:,:,:), fld3d_un(:)
+  type(soca_field), pointer :: fldptr
 
   ! Sanity check
   call check(fld)
@@ -178,6 +179,7 @@ subroutine interp(fld, locs, vars, geoval, horiz_interp, horiz_interp_masked)
      ! Allocate temporary geoval and 3d field for the current time window
      allocate(gom_window(nval,locs%nlocs))
      allocate(fld3d(isc:iec,jsc:jec,1:nval))
+     nullify(fldptr)
 
      ! Extract fld3d from field
      masked = .true. ! by default fields are assumed to need a land mask applied,
@@ -195,7 +197,8 @@ subroutine interp(fld, locs, vars, geoval, horiz_interp, horiz_interp_masked)
         fld3d(isc:iec,jsc:jec,1) = fld%ssh(isc:iec,jsc:jec)
 
      case ("sea_water_potential_temperature")
-        fld3d = fld%tocn(isc:iec,jsc:jec,1:nval)
+        call fld%get("tocn", fldptr)
+        fld3d = fldptr%val(isc:iec,jsc:jec,1:nval)
 
      case ("sea_water_practical_salinity", "sea_water_salinity")
         fld3d = fld%socn(isc:iec,jsc:jec,1:nval)
@@ -204,12 +207,14 @@ subroutine interp(fld, locs, vars, geoval, horiz_interp, horiz_interp_masked)
         fld3d = fld%hocn(isc:iec,jsc:jec,1:nval)
 
      case ("sea_surface_temperature")
-        fld3d(isc:iec,jsc:jec,1) = fld%tocn(isc:iec,jsc:jec,1)
+        call fld%get("tocn", fldptr)
+        fld3d(isc:iec,jsc:jec,1) = fldptr%val(isc:iec,jsc:jec,1)
 
      ! TODO: Move unit change elsewhere, check if surface_temperature_where_sea
      ! is COARDS.
      case ("surface_temperature_where_sea")
-        fld3d(isc:iec,jsc:jec,1) = fld%tocn(isc:iec,jsc:jec,1) + 273.15_kind_real
+        call fld%get("tocn", fldptr)
+        fld3d(isc:iec,jsc:jec,1) = fldptr%val(isc:iec,jsc:jec,1) + 273.15_kind_real
 
      case ("sea_surface_salinity")
         fld3d(isc:iec,jsc:jec,1) = fld%socn(isc:iec,jsc:jec,1)
@@ -285,7 +290,7 @@ subroutine getvalues_ad(incr, locs, vars, geoval, traj)
   real(kind=kind_real), allocatable :: gom_window(:,:)
   real(kind=kind_real), allocatable :: incr3d(:,:,:), incr3d_un(:)
   real(kind=kind_real), allocatable :: gom_window_ival(:)
-
+  type(soca_field), pointer :: field
 
   ! Indices for compute domain (no halo)
   isc = incr%geom%isc ; iec = incr%geom%iec
@@ -351,7 +356,8 @@ subroutine getvalues_ad(incr, locs, vars, geoval, traj)
              &incr3d(isc:iec,jsc:jec,1)
 
      case ("sea_water_potential_temperature")
-        incr%tocn(isc:iec,jsc:jec,1:nval) = incr%tocn(isc:iec,jsc:jec,1:nval) +&
+        call incr%get("tocn", field)
+        field%val(isc:iec,jsc:jec,1:nval) = field%val(isc:iec,jsc:jec,1:nval) +&
              &incr3d
 
      case ("sea_water_practical_salinity", "sea_water_salinity")
@@ -363,8 +369,9 @@ subroutine getvalues_ad(incr, locs, vars, geoval, traj)
              &incr3d
 
      case ("sea_surface_temperature")
-        incr%tocn(isc:iec,jsc:jec,1) = incr%tocn(isc:iec,jsc:jec,1) +&
-             &incr3d(isc:iec,jsc:jec,1)
+        call incr%get("tocn", field)
+        field%val(isc:iec,jsc:jec,1:nval) = field%val(isc:iec,jsc:jec,1:nval) +&
+           &incr3d
 
      case ("sea_surface_salinity")
         incr%socn(isc:iec,jsc:jec,1) = incr%socn(isc:iec,jsc:jec,1) +&

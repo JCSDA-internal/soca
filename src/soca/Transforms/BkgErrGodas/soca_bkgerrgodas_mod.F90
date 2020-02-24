@@ -9,7 +9,7 @@ use fckit_configuration_module, only: fckit_configuration
 use tools_const, only : pi
 use datetime_mod, only: datetime
 use kinds, only: kind_real
-use soca_fields_mod, only: soca_fields, soca_fld2file
+use soca_fields_mod, only: soca_fields, soca_field, soca_fld2file
 use soca_utils, only: soca_diff
 use soca_bkgerrutil_mod, only: soca_bkgerr_bounds_type
 use soca_omb_stats_mod, only: soca_omb_stats, soca_domain_indices
@@ -90,17 +90,28 @@ subroutine soca_bkgerrgodas_mult(self, dxa, dxm)
   type(soca_fields),           intent(in) :: dxa
   type(soca_fields),        intent(inout) :: dxm
 
+  type(soca_field), pointer :: field_m, field_e, field_a
   integer :: isc, iec, jsc, jec, i, j
 
   ! Indices for compute domain (no halo)
   isc = self%bkg%geom%isc ; iec = self%bkg%geom%iec
   jsc = self%bkg%geom%jsc ; jec = self%bkg%geom%jec
 
+  call dxm%get("tocn", field_m)
+  call dxa%get("tocn", field_a)
+  call self%std_bkgerr%get("tocn", field_e)
+  do i = isc, iec
+    do j = jsc, jec
+       if (self%bkg%geom%mask2d(i,j).eq.1) then
+        field_m%val(i,j,:) = field_e%val(i,j,:) * field_a%val(i,j,:)
+       end if
+    end do
+ end do
+
   do i = isc, iec
      do j = jsc, jec
         if (self%bkg%geom%mask2d(i,j).eq.1) then
            dxm%ssh(i,j) = self%std_bkgerr%ssh(i,j) * dxa%ssh(i,j)
-           dxm%tocn(i,j,:) = self%std_bkgerr%tocn(i,j,:) * dxa%tocn(i,j,:)
            dxm%socn(i,j,:) = self%std_bkgerr%socn(i,j,:)  * dxa%socn(i,j,:)
 
            dxm%seaice%cicen(i,j,:) =  self%std_bkgerr%seaice%cicen(i,j,:) * dxa%seaice%cicen(i,j,:)
@@ -124,6 +135,7 @@ subroutine soca_bkgerrgodas_tocn(self)
   integer :: i, j, k
   integer :: iter, niter = 1
   type(soca_omb_stats) :: sst
+  type(soca_field), pointer :: tocn_b, tocn_e
 
   ! Get compute domain indices
   domain%is = self%bkg%geom%isc ; domain%ie = self%bkg%geom%iec
@@ -141,13 +153,16 @@ subroutine soca_bkgerrgodas_tocn(self)
   call sst%init(domain)
   call sst%bin(self%bkg%geom%lon, self%bkg%geom%lat)
 
+  call self%bkg%get("tocn", tocn_b)
+  call self%std_bkgerr%get("tocn", tocn_e)
+
   ! Loop over compute domain
   do i = domain%is, domain%ie
      do j = domain%js, domain%je
         if (self%bkg%geom%mask2d(i,j).eq.1) then
 
            ! Step 1: sigb from dT/dz
-           call soca_diff(sig1(:), self%bkg%tocn(i,j,:), self%bkg%hocn(i,j,:))
+           call soca_diff(sig1(:), tocn_b%val(i,j,:), self%bkg%hocn(i,j,:))
            sig1(:) = self%t_dz * abs(sig1) ! Rescale background error
 
            ! Step 2: sigb based on efolding scale
@@ -157,17 +172,17 @@ subroutine soca_bkgerrgodas_tocn(self)
 
            ! Step 3: sigb = max(sig1, sig2)
            do k = 1, self%bkg%geom%nzo
-              self%std_bkgerr%tocn(i,j,k) = min( max(sig1(k), sig2(k)), &
+              tocn_e%val(i,j,k) = min( max(sig1(k), sig2(k)), &
                 & self%bounds%t_max)
            end do
 
            ! Step 4: Vertical smoothing
            do iter = 1, niter
               do k = 2, self%bkg%geom%nzo-1
-                 self%std_bkgerr%tocn(i,j,k) = &
-                      &( self%std_bkgerr%tocn(i,j,k-1)*self%bkg%hocn(i,j,k-1) +&
-                      &  self%std_bkgerr%tocn(i,j,k)*self%bkg%hocn(i,j,k) +&
-                      &  self%std_bkgerr%tocn(i,j,k+1)*self%bkg%hocn(i,j,k+1) )/&
+                 tocn_e%val(i,j,k) = &
+                      &( tocn_e%val(i,j,k-1)*self%bkg%hocn(i,j,k-1) +&
+                      &  tocn_e%val(i,j,k)*self%bkg%hocn(i,j,k) +&
+                      &  tocn_e%val(i,j,k+1)*self%bkg%hocn(i,j,k+1) )/&
                       & (sum(self%bkg%hocn(i,j,k-1:k+1)))
               end do
            end do

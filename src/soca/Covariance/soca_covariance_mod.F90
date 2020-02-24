@@ -14,7 +14,7 @@ use random_mod, only: normal_distribution
 use oops_variables_mod
 use type_bump, only: bump_type
 use kinds, only: kind_real
-use soca_fields_mod, only: soca_fields
+use soca_fields_mod, only: soca_fields, soca_field
 use soca_geom_mod, only : soca_geom
 
 implicit none
@@ -161,8 +161,17 @@ subroutine soca_cov_C_mult(self, dx)
   type(soca_fields),intent(inout) :: dx   !< Input: Increment
                                           !< Output: C dx
   integer :: icat, izo, ivar
+  type(soca_field), pointer :: field
 
   do ivar = 1, self%vars%nvars()
+    select case(trim(self%vars%variable(ivar)))
+    case ('tocn')
+      call dx%get("tocn", field)
+      do izo = 1,dx%geom%nzo
+        call soca_2d_convol(field%val(:,:,izo), self%ocean_conv(1), dx%geom)
+     end do      
+    end select
+
      select case(trim(self%vars%variable(ivar)))
         ! Apply convolution to forcing
         case('sw')
@@ -179,10 +188,6 @@ subroutine soca_cov_C_mult(self, dx)
         ! Apply convolution to ocean
         case('ssh')
            call soca_2d_convol(dx%ssh(:,:), self%ocean_conv(1), dx%geom)
-        case('tocn')
-           do izo = 1,dx%geom%nzo
-              call soca_2d_convol(dx%tocn(:,:,izo), self%ocean_conv(1), dx%geom)
-           end do
         case('socn')
            do izo = 1,dx%geom%nzo
               call soca_2d_convol(dx%socn(:,:,izo), self%ocean_conv(1), dx%geom)
@@ -198,7 +203,7 @@ subroutine soca_cov_C_mult(self, dx)
               call soca_2d_convol(dx%seaice%hicen(:,:,icat), self%seaice_conv(1), dx%geom)
            end do
         end select
-     end do
+  end do
 
 end subroutine soca_cov_C_mult
 
@@ -209,8 +214,19 @@ subroutine soca_cov_sqrt_C_mult(self, dx)
   type(soca_fields),intent(inout) :: dx   !< Input: Increment
                                           !< Output: C^1/2 dx
   integer :: icat, izo, ivar
+  type(soca_field), pointer :: field
+
 
   do ivar = 1, self%vars%nvars()
+    select case(trim(self%vars%variable(ivar)))
+    case('tocn')
+      call dx%get("tocn", field)
+      do izo = 1,dx%geom%nzo
+         call soca_2d_sqrt_convol(field%val(:,:,izo), &
+              &self%ocean_conv(1), dx%geom, self%pert_scale%T)
+      end do      
+    end select
+
      select case(trim(self%vars%variable(ivar)))
         ! Apply C^1/2 to forcing
         case('sw')
@@ -233,11 +249,7 @@ subroutine soca_cov_sqrt_C_mult(self, dx)
         case('ssh')
            call soca_2d_sqrt_convol(dx%ssh, &
                 &self%ocean_conv(1), dx%geom, self%pert_scale%SSH)
-        case('tocn')
-           do izo = 1,dx%geom%nzo
-              call soca_2d_sqrt_convol(dx%tocn(:,:,izo), &
-                   &self%ocean_conv(1), dx%geom, self%pert_scale%T)
-           end do
+
         case('socn')
            do izo = 1,dx%geom%nzo
               call soca_2d_sqrt_convol(dx%socn(:,:,izo), &
