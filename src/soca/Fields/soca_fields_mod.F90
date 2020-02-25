@@ -131,27 +131,24 @@ end subroutine
 
 ! ------------------------------------------------------------------------------
 
-subroutine soca_fields_create(self, geom, vars)
-  class(soca_fields),        intent(inout) :: self
-  type(soca_geom),  pointer, intent(inout) :: geom
-  type(oops_variables),         intent(in) :: vars
-
+subroutine soca_fields_init_vars(self, vars)
+  type(soca_fields),          intent(inout) :: self
+  character(len=:), allocatable, intent(in) :: vars(:)
+  
   integer :: i, nz
 
-  self%geom => geom
-  ! todo allocate extra for internal fields??
-  allocate(self%fields(vars%nvars()))
-  do i=1,vars%nvars()
-    self%fields(i)%name = trim(vars%variable(i))
+  allocate(self%fields(size(vars)))
+  do i=1,size(vars)
+    self%fields(i)%name = vars(i)
     
     ! determine number of levels, and allocate space
     select case(self%fields(i)%name)
     case ('tocn','socn','hocn')
-      nz = geom%nzo
+      nz = self%geom%nzo
     case ('cicen','hicen')
-      nz = geom%nzi
+      nz = self%geom%nzi
     case ('hsnon')
-      nz = geom%nzs
+      nz = self%geom%nzs
     case ('ssh', 'sw', 'lhf', 'shf', 'lw', 'us')
       nz = 1
     case default
@@ -160,19 +157,40 @@ subroutine soca_fields_create(self, geom, vars)
     self%fields(i)%masked = .true.
     self%fields(i)%nz = nz
     allocate(self%fields(i)%val(&
-      geom%isd:geom%ied, &
-      geom%jsd:geom%jed, &
+      self%geom%isd:self%geom%ied, &
+      self%geom%jsd:self%geom%jed, &
       nz ))
   end do  
+end subroutine
+
+! ------------------------------------------------------------------------------
+
+subroutine soca_fields_create(self, geom, vars)
+  class(soca_fields),        intent(inout) :: self
+  type(soca_geom),  pointer, intent(inout) :: geom
+  type(oops_variables),         intent(in) :: vars
+
+  character(len=:), allocatable :: vars_str(:)
+  integer :: i
+
+  ! associate geometry
+  self%geom => geom
+
+  ! todo allocate extra for internal fields??
+  ! initialize  the variable parameters
+  allocate(character(len=1024) :: vars_str(vars%nvars()))
+  do i=1,vars%nvars()
+    vars_str(i) = trim(vars%variable(i))
+  end do
+  call soca_fields_init_vars(self, vars_str)
 
   ! TODO delete the following line eventually
   call create_constructor(self, geom, vars)
 
+  ! set everything to zero
   call self%zeros()
+end subroutine soca_fields_create
 
-end subroutine
-
-! ------------------------------------------------------------------------------
 ! ------------------------------------------------------------------------------
 
 subroutine soca_fields_delete(self)
@@ -192,8 +210,6 @@ subroutine soca_fields_delete(self)
 
 end subroutine
 
-
-! ------------------------------------------------------------------------------
 ! ------------------------------------------------------------------------------
 
 subroutine soca_fields_copy(self, rhs)
@@ -201,40 +217,21 @@ subroutine soca_fields_copy(self, rhs)
   class(soca_fields), intent(inout) :: self
   type(soca_fields),  intent(in)    :: rhs
   
-  integer :: i, nz
+  character(len=:), allocatable :: vars_str(:)
+  integer :: i
 
-
-  ! TODO combine the following with create
+  ! initialize the variable parameters
   if (.not. associated(self%fields)) then
-      self%geom => rhs%geom
+    self%geom => rhs%geom
     ! todo allocate extra for internal fields??
-    allocate(self%fields(size(rhs%fields)))
-    do i=1, size(rhs%fields)
-      self%fields(i)%name = rhs%fields(i)%name
-      
-      ! determine number of levels, and allocate space
-      select case(self%fields(i)%name)
-      case ('tocn','socn','hocn')
-        nz =  self%geom%nzo
-      case ('cicen','hicen')
-        nz =  self%geom%nzi
-      case ('hsnon')
-        nz =  self%geom%nzs
-      case ('ssh', 'sw', 'lhf', 'shf', 'lw', 'us')
-        nz = 1
-      case default
-        call abor1_ftn('soca_fields::create(): unknown field '// self%fields(i)%name)
-      end select
-      self%fields(i)%masked = .true.
-      self%fields(i)%nz = nz
-      allocate(self%fields(i)%val(&
-        self%geom%isd: self%geom%ied, &
-        self%geom%jsd: self%geom%jed, &
-        nz ))
-    end do    
+    allocate(character(len=1024) :: vars_str(size(rhs%fields)))
+    do i=1, size(vars_str)
+      vars_str(i) = rhs%fields(i)%name
+    end do
+    call soca_fields_init_vars(self, vars_str)
   end if 
 
-  ! copy values
+  ! copy values from rhs to self
   do i=1,size(self%fields)
     call self%fields(i)%copy(rhs%fields(i))
   end do
@@ -264,7 +261,6 @@ subroutine soca_fields_get(self, name, field)
   end do
 
   call abor1_ftn("soca_fields::get():  cannot find field "//trim(name))
-
 end subroutine
 
 ! ------------------------------------------------------------------------------
