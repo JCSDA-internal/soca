@@ -41,8 +41,7 @@ public :: soca_fields, soca_field, &
           self_add, self_schur, self_sub, self_mul, axpy, &
           dot_prod, add_incr, diff_incr, &
           read_file, write_file, gpnorm, fldrms, soca_fld2file, &
-          change_resol, check, &
-          field_to_ug, field_from_ug, ug_coord, &
+          change_resol, field_to_ug, field_from_ug, ug_coord, &
           soca_getpoint, soca_setpoint
 
 ! interface create
@@ -289,9 +288,6 @@ subroutine create_constructor(self, geom, vars)
   do i=1,self%nf
     self%fldnames(i)=vars%variable(i)
   end do 
-
-  call check(self)
-
 end subroutine create_constructor
 
 ! ------------------------------------------------------------------------------
@@ -311,9 +307,6 @@ subroutine create_copy(self, rhs_fld)
   self%nf   = rhs_fld%nf
   allocate(self%fldnames(self%nf))
   self%fldnames(:)=rhs_fld%fldnames(:)
-
-  call check(self)
-
 end subroutine create_copy
 
 ! ------------------------------------------------------------------------------
@@ -396,8 +389,6 @@ subroutine dirac(self, f_conf)
 
   type(soca_field), pointer :: field 
 
-  call check(self)
-
   ! Get MPI communicator
   f_comm = fckit_mpi_comm()
 
@@ -465,8 +456,6 @@ subroutine random(self)
 
   type(soca_field), pointer :: field
 
-  call check(self)
-
   ! set random values
   do i = 1, size(self%fields)
     field => self%fields(i)
@@ -524,8 +513,6 @@ subroutine copy(self,rhs)
 
   ! Ocean surface
   call self%ocnsfc%copy(rhs%ocnsfc)
-
-  return
 end subroutine copy
 
 ! ------------------------------------------------------------------------------
@@ -718,8 +705,6 @@ subroutine add_incr(self,rhs)
   character(len=800) :: filename, str_cnt
 
   integer :: i
-  call check(self)
-  call check(rhs)
 
   ! Add increment to field
   call self%seaice%add_incr(rhs%seaice)
@@ -748,12 +733,6 @@ subroutine diff_incr(self,x1,x2)
   type(soca_fields), intent(in)    :: x2
   integer :: i
 
-  call check(self)
-  call check(x1)
-  call check(x2)
-
-  call self%zeros()
-
   call self%seaice%diff_incr(x1%seaice, x2%seaice)
   call self%ocnsfc%diff_incr(x1%ocnsfc, x2%ocnsfc)
 
@@ -769,12 +748,9 @@ subroutine change_resol(fld,rhs)
   type(soca_fields), intent(inout) :: fld
   type(soca_fields), intent(in)    :: rhs
 
-  call check(fld)
-  call check(rhs)
   call fld%copy(rhs)
   call fld%ocnsfc%copy(rhs%ocnsfc)
   call fld%seaice%copy(rhs%seaice)
-
 end subroutine change_resol
 
 ! ------------------------------------------------------------------------------
@@ -991,11 +967,6 @@ subroutine read_file(fld, f_conf, vdate)
      end do
      call fms_io_exit()
   endif
-
-  call check(fld)
-
-  if (allocated(str)) deallocate(str)
-
 end subroutine read_file
 
 ! ------------------------------------------------------------------------------
@@ -1005,10 +976,7 @@ subroutine write_file(fld, f_conf, vdate)
   type(fckit_configuration), intent(in)    :: f_conf !< Configuration
   type(datetime),            intent(inout) :: vdate  !< DateTime
 
-  integer, parameter :: max_string_length=800    ! Yuk!
-
-  call check(fld)
-
+  ! TODO why does this subroutine exist??
   call soca_write_restart(fld, f_conf, vdate)
 
 end subroutine write_file
@@ -1032,8 +1000,6 @@ subroutine gpnorm(fld, nf, pstat)
   ! Setup Communicator
   f_comm = fckit_mpi_comm()
 
-  call check(fld)
-
   ! Indices for compute domain
   isc = fld%geom%isc ; iec = fld%geom%iec
   jsc = fld%geom%jsc ; jec = fld%geom%jec
@@ -1042,7 +1008,6 @@ subroutine gpnorm(fld, nf, pstat)
   local_ocn_count = sum(fld%geom%mask2d(isc:iec, jsc:jec))
   call f_comm%allreduce(local_ocn_count, ocn_count, fckit_mpi_sum())
   mask = fld%geom%mask2d(isc:iec,jsc:jec) > 0.0
-
 
   ! calculate global min, max, mean for each field
   ! NOTE: "cicen" category 1 (no ice) is not included in the stats
@@ -1087,11 +1052,8 @@ subroutine fldrms(fld, prms)
   type(soca_fields),     intent(in) :: fld
   real(kind=kind_real), intent(out) :: prms
 
-  call check(fld)
-
   call dot_prod(fld,fld,prms) ! Global value
   prms=sqrt(prms)
-
 end subroutine fldrms
 
 ! ------------------------------------------------------------------------------
@@ -1371,30 +1333,7 @@ subroutine check_resolution(x1, x2)
        &x1%geom%ny /= x2%geom%ny ) then
      call abor1_ftn ("soca_fields: resolution error")
   endif
-  call check(x1)
-  call check(x2)
-
 end subroutine check_resolution
-
-! ------------------------------------------------------------------------------
-
-subroutine check(self)
-  type(soca_fields), intent(in) :: self
-
-  logical :: bad
-
-  ! Doesn't do any thing ...
-  bad = .false.
-  !bad = bad .or. (size(self%cicen, 1) /= self%geom%nx)
-
-  ! add more test here ...
-
-  if (bad) then
-     write(0,*)'nx, ny, nf, nzi, nzo = ',self%geom%nx,self%geom%ny
-     call abor1_ftn ("soca_fields: field not consistent")
-  endif
-
-end subroutine check
 
 ! ------------------------------------------------------------------------------
 !> Save soca fields to file using fms write_data
@@ -1408,8 +1347,6 @@ subroutine soca_fld2file(fld, filename)
   type(soca_field), pointer :: field
 
   fname = trim(filename)
-
-  call check(fld)
 
   call fms_io_init()
   call set_domain( fld%geom%Domain%mpp_domain )
@@ -1443,14 +1380,10 @@ subroutine soca_fld2file(fld, filename)
         call write_data(fname, "shf", fld%ocnsfc%sens_heat, fld%geom%Domain%mpp_domain)
      case ('us')
         call write_data(fname, "us", fld%ocnsfc%fric_vel, fld%geom%Domain%mpp_domain)
-
      case default
-
      end select
-
   end do
   call fms_io_exit()
-
 end subroutine soca_fld2file
 
 ! ------------------------------------------------------------------------------
@@ -1467,7 +1400,7 @@ subroutine soca_write_restart(fld, f_conf, vdate)
   integer :: idr, idr_ocean
   type(soca_field), pointer :: field
 
-  
+
   ! Generate file names
   ocn_filename = soca_genfilename(f_conf,max_string_length,vdate,"ocn")
   ocnsfc_filename = soca_genfilename(f_conf,max_string_length,vdate,"sfc")
@@ -1514,11 +1447,7 @@ subroutine soca_write_restart(fld, f_conf, vdate)
 
   ! Save sea-ice restart
   call fld%seaice%write_restart(f_conf, fld%geom, vdate)
-
-  return
-
 end subroutine soca_write_restart
-
 
 ! ------------------------------------------------------------------------------
 
@@ -1553,7 +1482,6 @@ subroutine soca_getpoint(self, geoiter, values)
       ii = ii + ncat
     end select
   end do
-
 end subroutine soca_getpoint
 
 ! ------------------------------------------------------------------------------

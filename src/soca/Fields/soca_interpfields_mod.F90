@@ -15,7 +15,7 @@ use oops_variables_mod
 use ufo_geovals_mod, only: ufo_geovals
 use ufo_locs_mod, only: ufo_locs
 use soca_getvaltraj_mod, only: soca_getvaltraj
-use soca_fields_mod, only: soca_fields, soca_field, check
+use soca_fields_mod, only: soca_fields, soca_field
 use soca_geom_mod, only : soca_geom
 use unstructured_interpolation_mod
 
@@ -87,9 +87,6 @@ subroutine getvalues_traj(fld, locs, vars, geoval, traj, interp_type)
   type(fckit_mpi_comm) :: f_comm
   integer :: allpes_nlocs, nlocs
 
-  ! Sanity check for fields
-  call check(fld)
-
   ! Get local obs in [t, t+dt[
   nlocs = locs%nlocs
 
@@ -152,9 +149,6 @@ subroutine interp(fld, locs, vars, geoval, horiz_interp, horiz_interp_masked)
   real(kind=kind_real), allocatable :: gom_window(:,:)
   real(kind=kind_real), allocatable :: fld3d(:,:,:), fld3d_un(:)
   type(soca_field), pointer :: fldptr
-
-  ! Sanity check
-  call check(fld)
 
   ! Indices for compute domain (no halo)
   isc = fld%geom%isc ; iec = fld%geom%iec
