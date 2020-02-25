@@ -206,7 +206,8 @@ subroutine interp(fld, locs, vars, geoval, horiz_interp, horiz_interp_masked)
         fld3d = fldptr%val(isc:iec,jsc:jec,1:nval)
 
      case ("sea_water_cell_thickness")
-        fld3d = fld%hocn(isc:iec,jsc:jec,1:nval)
+      call fld%get("hocn", fldptr)      
+        fld3d = fldptr%val(isc:iec,jsc:jec,1:nval)
 
      case ("sea_surface_temperature")
         call fld%get("tocn", fldptr)
@@ -223,7 +224,8 @@ subroutine interp(fld, locs, vars, geoval, horiz_interp, horiz_interp_masked)
         fld3d(isc:iec,jsc:jec,1) = fldptr%val(isc:iec,jsc:jec,1)
 
      case ("sea_floor_depth_below_sea_surface")
-        fld3d(isc:iec,jsc:jec,1) = sum(fld%hocn(isc:iec,jsc:jec,:),dim=3)
+      call fld%get("hocn", fldptr)
+        fld3d(isc:iec,jsc:jec,1) = sum(fldptr%val(isc:iec,jsc:jec,:),dim=3)
 
      case ("sea_area_fraction")
         fld3d(isc:iec,jsc:jec,1) = real(fld%geom%mask2d(isc:iec,jsc:jec),kind=kind_real)
@@ -370,7 +372,8 @@ subroutine getvalues_ad(incr, locs, vars, geoval, traj)
              &incr3d
 
      case ("sea_water_cell_thickness")
-        incr%hocn(isc:iec,jsc:jec,1:nval) = incr%hocn(isc:iec,jsc:jec,1:nval) +&
+      call incr%get("hocn", field)      
+        field%val(isc:iec,jsc:jec,1:nval) = field%val(isc:iec,jsc:jec,1:nval) +&
              &incr3d
 
      case ("sea_surface_temperature")

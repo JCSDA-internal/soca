@@ -67,10 +67,12 @@ subroutine soca_calc_lz(self, i, j, lz)
   real(kind=kind_real), intent(inout) :: lz(:)
   real(kind=kind_real) :: mld, z
   integer :: k
+  type(soca_field), pointer :: hocn
 
   ! minium scale is based on layer thickness
+  call self%bkg%get("hocn", hocn)
   lz = self%lz_min
-  lz = max(lz, self%scale_layer_thick*abs(self%bkg%hocn(i,j,:)))
+  lz = max(lz, self%scale_layer_thick*abs(hocn%val(i,j,:)))
 
   ! if the upper Lz should be calculated from the MLD
   ! interpolate values from top to bottom of ML

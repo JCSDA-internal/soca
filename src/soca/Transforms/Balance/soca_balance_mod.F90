@@ -41,10 +41,7 @@ subroutine soca_balance_setup(f_conf, self, traj)
 
   integer :: isc, iec, jsc, jec, i, j, k, nl
   real(kind=kind_real), allocatable :: jac(:)
-  type(soca_field), pointer :: tocn, socn
-
-  ! Number of ocean layer
-  nl = size(traj%hocn,3)
+  type(soca_field), pointer :: tocn, socn, hocn
 
   ! Store trajectory
   self%traj => traj
@@ -67,6 +64,8 @@ subroutine soca_balance_setup(f_conf, self, traj)
   ! Compute and store Jacobian of Kst
   call traj%get("tocn", tocn)
   call traj%get("socn", socn)
+  call traj%get("hocn", hocn)
+  nl = hocn%nz
 
   allocate(self%kst%jacobian(isc:iec,jsc:jec,traj%geom%nzo))
   allocate(jac(nl))
@@ -77,7 +76,7 @@ subroutine soca_balance_setup(f_conf, self, traj)
         call soca_soft_jacobian(jac,&
              &tocn%val(i,j,:),&
              &socn%val(i,j,:),&
-             &traj%hocn(i,j,:),&
+             &hocn%val(i,j,:),&
              &self%kst%dsdtmax, self%kst%dsdzmin, self%kst%dtdzmin)
         ! Set Jacobian to 0 above mixed layer
         do k=1,nl
@@ -104,7 +103,7 @@ subroutine soca_balance_setup(f_conf, self, traj)
                 tocn%val(i,j,k), &
                 socn%val(i,j,k), &
                 &self%traj%layer_depth(i,j,k),&
-                &traj%hocn(i,j,k),&
+                &hocn%val(i,j,k),&
                 &traj%geom%lon(i,j),&
                 &traj%geom%lat(i,j))
            self%ksshts%kssht(i,j,k) = jac(1)
@@ -180,7 +179,7 @@ subroutine soca_balance_mult(self, dxa, dxm)
 
         ! SSH
         deta = 0.0_kind_real
-        do k = 1, size(self%traj%hocn,3)
+        do k = 1, tocn_a%nz
            deta = deta + self%ksshts%kssht(i,j,k) * tocn_a%val(i,j,k) +&
                 &self%ksshts%ksshs(i,j,k) * socn_a%val(i,j,k)
         end do
@@ -277,7 +276,7 @@ subroutine soca_balance_multinv(self, dxa, dxm)
              &self%kst%jacobian(i,j,:) * tocn_m%val(i,j,:)
         ! SSH
         deta = 0.0d0
-        do k = 1, size(self%traj%hocn,3)
+        do k = 1, tocn_a%nz
            deta = deta + ( self%ksshts%ksshs(i,j,k) * self%kst%jacobian(i,j,k) - &
                 &self%ksshts%kssht(i,j,k) ) * tocn_m%val(i,j,k) - &
                 &self%ksshts%ksshs(i,j,k) * socn_m%val(i,j,k)

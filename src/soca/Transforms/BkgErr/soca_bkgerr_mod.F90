@@ -40,12 +40,9 @@ subroutine soca_bkgerr_setup(f_conf, self, bkg)
 
   type(soca_field), pointer :: field
 
-  integer :: isc, iec, jsc, jec, nl, i
+  integer :: isc, iec, jsc, jec, i
   type(datetime) :: vdate
   character(len=800) :: fname = 'soca_bkgerrsoca.nc'
-
-  ! Get number of ocean levels
-  nl = size(bkg%hocn,3)
 
   ! Allocate memory for bkgerror
   call self%std_bkgerr%copy(bkg)

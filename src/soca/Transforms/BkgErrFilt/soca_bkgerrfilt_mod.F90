@@ -37,16 +37,12 @@ subroutine soca_bkgerrfilt_setup(f_conf, self, bkg)
   type(soca_bkgerrfilt_config), intent(inout) :: self
   type(soca_fields), target,    intent(in)    :: bkg
 
-  integer :: isc, iec, jsc, jec, i, j, k, nl
+  integer :: isc, iec, jsc, jec, i, j, k
   real(kind=kind_real) :: efold
   character(len=800) :: fname = 'soca_bkgerrfilt.nc'
-  type(soca_field), pointer :: tocn, socn, ssh
-
-  ! Get number of ocean levels
-  nl = size(bkg%hocn,3)
+  type(soca_field), pointer :: tocn, socn, ssh, hocn
 
   ! Allocate memory for bkgerrfiltor and set to zero
-  !call create_copy(self%filt, bkg)
   call self%filt%copy(bkg)
   call self%filt%zeros()
 
@@ -61,16 +57,17 @@ subroutine soca_bkgerrfilt_setup(f_conf, self, bkg)
   call self%filt%get("tocn", tocn)
   call self%filt%get("socn", socn)
   call self%filt%get("ssh", ssh)
+  call bkg%get("hocn", hocn)
 
   ! Setup rescaling and masks
   isc=bkg%geom%isc ; self%isc=isc ; iec=bkg%geom%iec ; self%iec=iec
   jsc=bkg%geom%jsc ; self%jsc=jsc ; jec=bkg%geom%jec ; self%jec=jec
   do i = isc, iec
      do j = jsc, jec
-        if (sum(bkg%hocn(i,j,:)).gt.self%ocn_depth_min) then
+        if (sum(hocn%val(i,j,:)).gt.self%ocn_depth_min) then
            ssh%val(i,j,:) = self%scale
-           do k = 1, nl
-              if (bkg%hocn(i,j,k).gt.1e-3_kind_real) then
+           do k = 1, hocn%nz
+              if (hocn%val(i,j,k).gt.1e-3_kind_real) then
                  ! Only apply if layer is thick enough
                  efold = self%scale*exp(-self%bkg%layer_depth(i,j,k)/self%efold_z)
               else

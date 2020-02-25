@@ -138,7 +138,7 @@ subroutine soca_bkgerrgodas_tocn(self)
   integer :: i, j, k
   integer :: iter, niter = 1
   type(soca_omb_stats) :: sst
-  type(soca_field), pointer :: tocn_b, tocn_e
+  type(soca_field), pointer :: tocn_b, tocn_e, hocn
 
   ! Get compute domain indices
   domain%is = self%bkg%geom%isc ; domain%ie = self%bkg%geom%iec
@@ -158,6 +158,7 @@ subroutine soca_bkgerrgodas_tocn(self)
 
   call self%bkg%get("tocn", tocn_b)
   call self%std_bkgerr%get("tocn", tocn_e)
+  call self%bkg%get("hocn", hocn)
 
   ! Loop over compute domain
   do i = domain%is, domain%ie
@@ -165,7 +166,7 @@ subroutine soca_bkgerrgodas_tocn(self)
         if (self%bkg%geom%mask2d(i,j).eq.1) then
 
            ! Step 1: sigb from dT/dz
-           call soca_diff(sig1(:), tocn_b%val(i,j,:), self%bkg%hocn(i,j,:))
+           call soca_diff(sig1(:), tocn_b%val(i,j,:), hocn%val(i,j,:))
            sig1(:) = self%t_dz * abs(sig1) ! Rescale background error
 
            ! Step 2: sigb based on efolding scale
@@ -183,10 +184,10 @@ subroutine soca_bkgerrgodas_tocn(self)
            do iter = 1, niter
               do k = 2, self%bkg%geom%nzo-1
                  tocn_e%val(i,j,k) = &
-                      &( tocn_e%val(i,j,k-1)*self%bkg%hocn(i,j,k-1) +&
-                      &  tocn_e%val(i,j,k)*self%bkg%hocn(i,j,k) +&
-                      &  tocn_e%val(i,j,k+1)*self%bkg%hocn(i,j,k+1) )/&
-                      & (sum(self%bkg%hocn(i,j,k-1:k+1)))
+                      &( tocn_e%val(i,j,k-1)*hocn%val(i,j,k-1) +&
+                      &  tocn_e%val(i,j,k)*hocn%val(i,j,k) +&
+                      &  tocn_e%val(i,j,k+1)*hocn%val(i,j,k+1) )/&
+                      & (sum(hocn%val(i,j,k-1:k+1)))
               end do
            end do
 

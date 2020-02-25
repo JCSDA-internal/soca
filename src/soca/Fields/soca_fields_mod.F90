@@ -69,16 +69,11 @@ end type soca_field
 type :: soca_fields
    type(soca_geom), pointer          :: geom           !< MOM6 Geometry
    integer                           :: nf             !< Number of fields
-   !character(len=128)                :: gridfname      !< Grid file name
-   !character(len=128)                :: cicefname      !< Fields file name for cice
-   !character(len=128)                :: momfname       !< Fields file name for mom
 
    type(soca_field),     pointer :: fields(:) => null()
 
    ! Sea-ice state variables
    type(soca_seaice_type)            :: seaice         !< Sea-ice state
-
-   real(kind=kind_real), allocatable :: hocn(:,:,:)    !< DA layer thickness (nx,ny,nzo)
 
    ! Ocean diagnostics
    real(kind=kind_real), allocatable :: mld(:,:)           !< Mixed layer depth (nx,ny)
@@ -335,7 +330,6 @@ subroutine soca_field_alloc(self, geom)
   nzo = geom%nzo
 
   ! Allocate ocean state
-  allocate(self%hocn(isd:ied,jsd:jed,nzo))
   allocate(self%mld(isd:ied,jsd:jed))
   allocate(self%layer_depth(isd:ied,jsd:jed,nzo))
 
@@ -354,7 +348,6 @@ subroutine delete(self)
   type (soca_fields), intent(inout) :: self
 
   ! Deallocate ocean state
-  deallocate(self%hocn)
   deallocate(self%mld)
   deallocate(self%layer_depth)
 
@@ -383,7 +376,6 @@ subroutine soca_fields_zeros(self)
   end do
   
   ! TODO delete the following
-  self%hocn = 0.0_kind_real
   self%mld = 0.0_kind_real
 
   call self%seaice%zeros()
@@ -481,7 +473,6 @@ subroutine random(self)
     select case(field%name)
     case("tocn", "socn", "ssh")
      call normal_distribution(field%val,  0.0_kind_real, 1.0_kind_real, rseed)
-    !case("hocn")
     ! NOTE: can't randomize "hocn", testIncrementInterpAD fails
     end select
   end do
@@ -525,7 +516,6 @@ subroutine copy(self,rhs)
   if (.not.allocated(self%fldnames)) allocate(self%fldnames(self%nf))
   self%fldnames(:)=rhs%fldnames(:)
 
-  self%hocn  = rhs%hocn
   self%mld   = rhs%mld
   self%layer_depth   = rhs%layer_depth
 
@@ -548,8 +538,6 @@ subroutine self_add(self,rhs)
 
   call check_resolution(self, rhs)
 
-  self%hocn = self%hocn + rhs%hocn
-
   call self%seaice%add(rhs%seaice)
   call self%ocnsfc%add(rhs%ocnsfc)
 
@@ -569,8 +557,6 @@ subroutine self_schur(self,rhs)
 
   call check_resolution(self, rhs)
 
-  self%hocn=self%hocn*rhs%hocn
-
   call self%seaice%schur(rhs%seaice)
   call self%ocnsfc%schur(rhs%ocnsfc)
 
@@ -589,8 +575,6 @@ subroutine self_sub(self,rhs)
   integer :: i
   call check_resolution(self, rhs)
 
-  self%hocn=self%hocn-rhs%hocn
-
   call self%seaice%sub(rhs%seaice)
   call self%ocnsfc%sub(rhs%ocnsfc)
 
@@ -608,10 +592,6 @@ subroutine self_mul(self,zz)
   real(kind=kind_real), intent(in) :: zz
 
   integer :: i
-
-  call check(self)
-
-  self%hocn = zz * self%hocn
 
   call self%seaice%mul(zz)
   call self%ocnsfc%mul(zz)
@@ -633,8 +613,6 @@ subroutine axpy(self,zz,rhs)
   integer :: i
   
   call check_resolution(self, rhs)
-
-  self%hocn = self%hocn + zz * rhs%hocn
 
   call self%seaice%axpy(zz, rhs%seaice)
   call self%ocnsfc%axpy(zz, rhs%ocnsfc)
@@ -744,8 +722,6 @@ subroutine add_incr(self,rhs)
   call check(rhs)
 
   ! Add increment to field
-  self%hocn = self%hocn + rhs%hocn
-
   call self%seaice%add_incr(rhs%seaice)
   call self%ocnsfc%add(rhs%ocnsfc)
 
@@ -777,8 +753,6 @@ subroutine diff_incr(self,x1,x2)
   call check(x2)
 
   call self%zeros()
-
-  self%hocn = x1%hocn - x2%hocn
 
   call self%seaice%diff_incr(x1%seaice, x2%seaice)
   call self%ocnsfc%diff_incr(x1%ocnsfc, x2%ocnsfc)
@@ -829,12 +803,15 @@ subroutine read_file(fld, f_conf, vdate)
   character(len=:), allocatable :: str
   real(kind=kind_real), allocatable :: h_common_ij(:), hocn_ij(:), tsocn_ij(:), tsocn2_ij(:)
 
-  type(soca_field), pointer :: field, field2
+  type(soca_field), pointer :: field, field2, hocn
 
   if ( f_conf%has("read_from_file") ) &
       call f_conf%get_or_die("read_from_file", iread)
 
+  call fld%get("hocn", hocn)
+
   ! Check if vertical remapping needs to be applied
+  nz = hocn%nz
   if ( f_conf%has("remap_filename") ) then
      vert_remap = .true.
      call f_conf%get_or_die("remap_filename", str)
@@ -844,16 +821,15 @@ subroutine read_file(fld, f_conf, vdate)
      isd = fld%geom%isd ; ied = fld%geom%ied
      jsd = fld%geom%jsd ; jed = fld%geom%jed
 
-     nz=size(fld%hocn, dim=3)
      allocate(h_common(isd:ied,jsd:jed,nz))
 
      ! Read common vertical coordinate from file
      call fms_io_init()
-     idr_ocean = register_restart_field(ocean_remap_restart, remap_filename, 'h', fld%hocn(:,:,:), &
+     idr_ocean = register_restart_field(ocean_remap_restart, remap_filename, 'h', hocn%val(:,:,:), &
           domain=fld%geom%Domain%mpp_domain)
      call restore_state(ocean_remap_restart, directory='')
      call fms_io_exit()
-     h_common = fld%hocn
+     h_common = hocn%val
 
   end if
 
@@ -894,7 +870,8 @@ subroutine read_file(fld, f_conf, vdate)
            idr_ocean = register_restart_field(ocean_restart, ocn_filename, 'Salt', field%val, &
                 domain=fld%geom%Domain%mpp_domain)
         case ('hocn')
-           idr_ocean = register_restart_field(ocean_restart, ocn_filename, 'h', fld%hocn(:,:,:), &
+          call fld%get("hocn", field)
+           idr_ocean = register_restart_field(ocean_restart, ocn_filename, 'h', hocn%val(:,:,:), &
                 domain=fld%geom%Domain%mpp_domain)
         case default
            call log%warning("soca_fields:read_file: Not reading var "//fld%fldnames(ii))
@@ -908,7 +885,7 @@ subroutine read_file(fld, f_conf, vdate)
      jsc = fld%geom%jsc ; jec = fld%geom%jec
 
      ! Initialize mid-layer depth from layer thickness
-     call fld%geom%thickness2depth(fld%hocn, fld%layer_depth)
+     call fld%geom%thickness2depth(hocn%val, fld%layer_depth)
 
      ! Compute mixed layer depth TODO: Move somewhere else ...
      call fld%get("tocn", field)
@@ -932,7 +909,7 @@ subroutine read_file(fld, f_conf, vdate)
            do j = jsc, jec
               if (fld%geom%mask2d(i,j).eq.1) then
                  h_common_ij = h_common(i,j,:)
-                 hocn_ij = fld%hocn(i,j,:)
+                 hocn_ij = hocn%val(i,j,:)
 
                  call fld%get("tocn", field)
                  tsocn_ij = field%val(i,j,:)
@@ -954,7 +931,7 @@ subroutine read_file(fld, f_conf, vdate)
               end if
            end do
         end do
-        fld%hocn = h_common
+        hocn%val = h_common
         deallocate(h_common_ij, hocn_ij, tsocn_ij, tsocn2_ij)
      end if
      call end_remapping(remapCS)
@@ -1005,7 +982,8 @@ subroutine read_file(fld, f_conf, vdate)
           call fld%get("socn", field)
           call read_data(incr_filename,"salt",field%val(:,:,:),domain=fld%geom%Domain%mpp_domain)
         case ('hocn')
-           call read_data(incr_filename,"h",fld%hocn(:,:,:),domain=fld%geom%Domain%mpp_domain)
+          call fld%get("hocn", field)
+           call read_data(incr_filename,"h",hocn%val(:,:,:),domain=fld%geom%Domain%mpp_domain)
         case default
            write(buf,*) 'soca_fields_mod::read_file::increment. Not reading '//fld%fldnames(ii)
            call log%info(buf,newl=.true.)
@@ -1073,11 +1051,9 @@ subroutine gpnorm(fld, nf, pstat)
 
     ! get local min/max/sum of each variable
     select case(fld%fldnames(jj))
-    case("tocn", "socn", "ssh")
+    case("tocn", "socn", "ssh", "hocn")
       call fld%get(fld%fldnames(jj), field)      
       call fldinfo(field%val(isc:iec,jsc:jec,:), mask, tmp)
-    case("hocn")
-      call fldinfo(fld%hocn(isc:iec,jsc:jec,:), mask, tmp)
     case("hicen")
        call fldinfo(fld%seaice%hicen(isc:iec,jsc:jec,:), mask, tmp)
     case("hsnon")
@@ -1451,7 +1427,8 @@ subroutine soca_fld2file(fld, filename)
       call fld%get("socn", field)
       call write_data( fname, "salt", field%val, fld%geom%Domain%mpp_domain)
      case ('hocn')
-        call write_data( fname, "h", fld%hocn, fld%geom%Domain%mpp_domain)
+      call fld%get("hocn", field)
+        call write_data( fname, "h", field%val, fld%geom%Domain%mpp_domain)
      case ('hicen')
         call write_data( fname, "hicen", fld%seaice%hicen, fld%geom%Domain%mpp_domain)
      case ('cicen')
@@ -1506,7 +1483,8 @@ subroutine soca_write_restart(fld, f_conf, vdate)
   call fld%get("socn", field)       
   idr_ocean = register_restart_field(ocean_restart, ocn_filename, 'Salt', field%val(:,:,:), &
        domain=fld%geom%Domain%mpp_domain)
-  idr_ocean = register_restart_field(ocean_restart, ocn_filename, 'h', fld%hocn(:,:,:), &
+  call fld%get("hocn", field)              
+  idr_ocean = register_restart_field(ocean_restart, ocn_filename, 'h', field%val(:,:,:), &
        domain=fld%geom%Domain%mpp_domain)
   idr_ocean = register_restart_field(ocean_restart, ocn_filename, 'mld', fld%mld(:,:), &
        domain=fld%geom%Domain%mpp_domain)
@@ -1559,14 +1537,11 @@ subroutine soca_getpoint(self, geoiter, values)
   ii = 0 
   do ff = 1, self%nf
     select case(self%fldnames(ff))
-    case("tocn", "socn", "ssh")
+    case("tocn", "socn", "ssh", "hocn")
       call self%get(self%fldnames(ff), field)
       nz = field%nz
       values(ii+1:ii+nz) = field%val(geoiter%iind, geoiter%jind,:)
       ii = ii + nz
-    case("hocn")
-      values(ii+1:ii+nzo) = self%hocn(geoiter%iind, geoiter%jind,:)
-      ii = ii + nzo
     case("cicen")
       values(ii+1:ii+ncat+1) = self%seaice%cicen(geoiter%iind, geoiter%jind,:)
       ii = ii + ncat + 1
@@ -1601,14 +1576,11 @@ subroutine soca_setpoint(self, geoiter, values)
   ii = 0
   do ff = 1, self%nf
     select case(self%fldnames(ff))
-    case("tocn", "socn", "ssh")
+    case("tocn", "socn", "ssh", "hocn")
       call self%get(self%fldnames(ff), field)
       nz = field%nz
       field%val(geoiter%iind, geoiter%jind,:) = values(ii+1:ii+nz)
       ii = ii + nz
-    case("hocn")
-      self%hocn(geoiter%iind, geoiter%jind,:) = values(ii+1:ii+nzo)
-      ii = ii + nzo
     case("cicen")
       self%seaice%cicen(geoiter%iind, geoiter%jind,:) = values(ii+1:ii+ncat+1)
       ii = ii + ncat + 1
