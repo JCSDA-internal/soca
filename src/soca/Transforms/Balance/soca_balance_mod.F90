@@ -41,7 +41,7 @@ subroutine soca_balance_setup(f_conf, self, traj)
 
   integer :: isc, iec, jsc, jec, i, j, k, nl
   real(kind=kind_real), allocatable :: jac(:)
-  type(soca_field), pointer :: tocn
+  type(soca_field), pointer :: tocn, socn
 
   ! Number of ocean layer
   nl = size(traj%hocn,3)
@@ -66,6 +66,7 @@ subroutine soca_balance_setup(f_conf, self, traj)
 
   ! Compute and store Jacobian of Kst
   call traj%get("tocn", tocn)
+  call traj%get("socn", socn)
 
   allocate(self%kst%jacobian(isc:iec,jsc:jec,traj%geom%nzo))
   allocate(jac(nl))
@@ -75,7 +76,7 @@ subroutine soca_balance_setup(f_conf, self, traj)
         jac=0.0
         call soca_soft_jacobian(jac,&
              &tocn%val(i,j,:),&
-             &traj%socn(i,j,:),&
+             &socn%val(i,j,:),&
              &traj%hocn(i,j,:),&
              &self%kst%dsdtmax, self%kst%dsdzmin, self%kst%dtdzmin)
         ! Set Jacobian to 0 above mixed layer
@@ -100,8 +101,8 @@ subroutine soca_balance_setup(f_conf, self, traj)
      do j = jsc, jec
         do k = 1, nl
            call soca_steric_jacobian (jac, &
-                tocn%val(i,j,k),&
-                &traj%socn(i,j,k),&
+                tocn%val(i,j,k), &
+                socn%val(i,j,k), &
                 &self%traj%layer_depth(i,j,k),&
                 &traj%hocn(i,j,k),&
                 &traj%geom%lon(i,j),&
@@ -147,6 +148,7 @@ subroutine soca_balance_mult(self, dxa, dxm)
   type(soca_fields),      intent(inout) :: dxm
 
   type(soca_field), pointer :: tocn_m, tocn_a
+  type(soca_field), pointer :: socn_m, socn_a
 
   integer :: i, j, k
   real(kind=kind_real) :: deta, dxc
@@ -158,6 +160,8 @@ subroutine soca_balance_mult(self, dxa, dxm)
 
   call dxm%get("tocn",tocn_m)
   call dxa%get("tocn",tocn_a)
+  call dxm%get("socn",socn_m)
+  call dxa%get("socn",socn_a)
 
   do i = self%isc, self%iec
      do j = self%jsc, self%jec
@@ -167,14 +171,14 @@ subroutine soca_balance_mult(self, dxa, dxm)
         tocn_m%val(i,j,:) = tocn_a%val(i,j,:)
 
         ! Salinity
-        dxm%socn(i,j,:) = dxa%socn(i,j,:) +&
+        socn_m%val(i,j,:) = socn_a%val(i,j,:) +&
              &self%kst%jacobian(i,j,:) * tocn_a%val(i,j,:)
 
         ! SSH
         deta = 0.0_kind_real
         do k = 1, size(self%traj%hocn,3)
            deta = deta + self%ksshts%kssht(i,j,k) * tocn_a%val(i,j,k) +&
-                &self%ksshts%ksshs(i,j,k) * dxa%socn(i,j,k)
+                &self%ksshts%ksshs(i,j,k) * socn_a%val(i,j,k)
         end do
         dxm%ssh(i,j) = dxa%ssh(i,j) + deta
 
@@ -202,23 +206,26 @@ subroutine soca_balance_multad(self, dxa, dxm)
   type(soca_fields),      intent(inout) :: dxa
 
   type(soca_field), pointer :: tocn_a, tocn_m
+  type(soca_field), pointer :: socn_a, socn_m
   integer :: i, j
 
   call dxa%get("tocn", tocn_a)
   call dxm%get("tocn", tocn_m)
+  call dxa%get("socn", socn_a)
+  call dxm%get("socn", socn_m)
 
   do i = self%isc, self%iec
      do j = self%jsc, self%jec
         ! Temperature
         tocn_a%val(i,j,1) = tocn_m%val(i,j,1) + &
-             &self%kst%jacobian(i,j,1) * dxm%socn(i,j,1) + &
+             &self%kst%jacobian(i,j,1) * socn_m%val(i,j,1) + &
              &self%ksshts%kssht(i,j,1) * dxm%ssh(i,j) +&
              &self%kct(i,j) * sum(dxm%seaice%cicen(i,j,2:))
         tocn_a%val(i,j,2:) = tocn_m%val(i,j,2:) + &
-             &self%kst%jacobian(i,j,2:) * dxm%socn(i,j,2:) + &
+             &self%kst%jacobian(i,j,2:) * socn_m%val(i,j,2:) + &
              &self%ksshts%kssht(i,j,2:) * dxm%ssh(i,j)
         ! Salinity
-        dxa%socn(i,j,:) = dxm%socn(i,j,:) + &
+        socn_a%val(i,j,:) = socn_m%val(i,j,:) + &
              &self%ksshts%ksshs(i,j,:) * dxm%ssh(i,j)
         ! SSH
         dxa%ssh(i,j)    = dxm%ssh(i,j)
@@ -243,23 +250,28 @@ subroutine soca_balance_multinv(self, dxa, dxm)
   real(kind=kind_real) :: deta
   integer :: i, j, k
   type(soca_field), pointer :: tocn_m, tocn_a
+  type(soca_field), pointer :: socn_m, socn_a
 
   call dxm%get("tocn", tocn_m)
   call dxa%get("tocn", tocn_a)
+  call dxm%get("socn", socn_m)
+  call dxa%get("socn", socn_a)
+
 
   do i = self%isc, self%iec
      do j = self%jsc, self%jec
         ! Temperature
         tocn_a%val(i,j,:) = tocn_m%val(i,j,:)
+        
         ! Salinity
-        dxa%socn(i,j,:) = dxm%socn(i,j,:) -&
+        socn_a%val(i,j,:) = socn_m%val(i,j,:) -&
              &self%kst%jacobian(i,j,:) * tocn_m%val(i,j,:)
         ! SSH
         deta = 0.0d0
         do k = 1, size(self%traj%hocn,3)
            deta = deta + ( self%ksshts%ksshs(i,j,k) * self%kst%jacobian(i,j,k) - &
                 &self%ksshts%kssht(i,j,k) ) * tocn_m%val(i,j,k) - &
-                &self%ksshts%ksshs(i,j,k) * dxm%socn(i,j,k)
+                &self%ksshts%ksshs(i,j,k) * socn_m%val(i,j,k)
         end do
         dxa%ssh(i,j)    = dxm%ssh(i,j) + deta
         ! Ice fraction
@@ -285,9 +297,12 @@ subroutine soca_balance_multinvad(self, dxa, dxm)
 
   integer :: i, j
   type(soca_field), pointer :: tocn_a, tocn_m
+  type(soca_field), pointer :: socn_a, socn_m
 
   call dxm%get("tocn", tocn_m)  
   call dxa%get("tocn", tocn_a)
+  call dxm%get("socn", socn_m)  
+  call dxa%get("socn", socn_a)
 
   do i = self%isc, self%iec
      do j = self%jsc, self%jec
@@ -297,16 +312,16 @@ subroutine soca_balance_multinvad(self, dxa, dxm)
         dxm%seaice%cicen(i,j,:) =  dxa%seaice%cicen(i,j,:)
         ! Temperature
         tocn_m%val(i,j,1) = tocn_a%val(i,j,1) &
-             & - self%kst%jacobian(i,j,1) * dxa%socn(i,j,1) &
+             & - self%kst%jacobian(i,j,1) * socn_a%val(i,j,1) &
              & + ( self%ksshts%ksshs(i,j,1) * self%kst%jacobian(i,j,1) &
              &     - self%ksshts%kssht(i,j,1) ) * dxa%ssh(i,j) &
              & - self%kct(i,j) * sum(dxa%seaice%cicen(i,j,2:))
         tocn_m%val(i,j,2:) = tocn_a%val(i,j,2:) &
-             & - self%kst%jacobian(i,j,2:) * dxa%socn(i,j,2:) &
+             & - self%kst%jacobian(i,j,2:) * socn_a%val(i,j,2:) &
              & + ( self%ksshts%ksshs(i,j,2:) * self%kst%jacobian(i,j,2:) &
              &     - self%ksshts%kssht(i,j,2:) ) * dxa%ssh(i,j)
         ! Salinity
-        dxm%socn(i,j,:) = dxa%socn(i,j,:) - &
+        socn_m%val(i,j,:) = socn_a%val(i,j,:) - &
              &self%ksshts%ksshs(i,j,:) * dxa%ssh(i,j)
         ! SSH
         dxm%ssh(i,j)    = dxa%ssh(i,j)

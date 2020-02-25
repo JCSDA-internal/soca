@@ -149,20 +149,13 @@ contains
           call soca_filt2d(self, dxi, dxo, geom)
           dxout%ssh(:,:) = dxo
 
-       case ("tocn")
-         call dxin%get("tocn", field_i)
-         call dxout%get("tocn", field_o)
+       case ("tocn", "socn")
+         call dxin%get(trim(self%vars%variable(ivar)),  field_i)
+         call dxout%get(trim(self%vars%variable(ivar)), field_o)
           do k = 1, geom%nzo
              dxi = field_i%val(:,:,k)
              call soca_filt2d(self, dxi, dxo, geom)
              field_o%val(:,:,k) = dxo
-          end do
-
-       case ("socn")
-          do k = 1, geom%nzo
-             dxi = dxin%socn(:,:,k)
-             call soca_filt2d(self, dxi, dxo, geom)
-             dxout%socn(:,:,k) = dxo
           end do
 
        case ("cicen")
@@ -208,20 +201,13 @@ contains
           call soca_filt2d_ad(self, dxi, dxo, geom)
           dxout%ssh(:,:) = dxo
 
-       case ("tocn")
-         call dxin%get("tocn", field_i)
-         call dxout%get("tocn", field_o)
+       case ("tocn", "socn")
+         call dxin%get(trim(self%vars%variable(ivar)),  field_i)
+         call dxout%get(trim(self%vars%variable(ivar)), field_o)
           do k = 1, geom%nzo
              dxi = field_i%val(:,:,k)
              call soca_filt2d_ad(self, dxi, dxo, geom)
              field_o%val(:,:,k) = dxo
-          end do
-
-       case ("socn")
-          do k = 1, geom%nzo
-             dxi = dxin%socn(:,:,k)
-             call soca_filt2d_ad(self, dxi, dxo, geom)
-             dxout%socn(:,:,k) = dxo
           end do
 
        case ("cicen")

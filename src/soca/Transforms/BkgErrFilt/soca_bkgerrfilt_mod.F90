@@ -40,7 +40,7 @@ subroutine soca_bkgerrfilt_setup(f_conf, self, bkg)
   integer :: isc, iec, jsc, jec, i, j, k, nl
   real(kind=kind_real) :: efold
   character(len=800) :: fname = 'soca_bkgerrfilt.nc'
-  type(soca_field), pointer :: tocn
+  type(soca_field), pointer :: tocn, socn
 
   ! Get number of ocean levels
   nl = size(bkg%hocn,3)
@@ -59,6 +59,7 @@ subroutine soca_bkgerrfilt_setup(f_conf, self, bkg)
   self%bkg => bkg
 
   call self%filt%get("tocn", tocn)
+  call self%filt%get("socn", socn)
 
   ! Setup rescaling and masks
   isc=bkg%geom%isc ; self%isc=isc ; iec=bkg%geom%iec ; self%iec=iec
@@ -76,13 +77,13 @@ subroutine soca_bkgerrfilt_setup(f_conf, self, bkg)
                  efold = 0.0_kind_real
               end if
               tocn%val(i,j,k) = efold
-              self%filt%socn(i,j,k) = efold
+              socn%val(i,j,k) = efold
            end do
         else
            ! Set to zero if ocean is too shallow
            self%filt%ssh(i,j)    = 0.0_kind_real
            tocn%val(i,j,:) = 0.0_kind_real
-           self%filt%socn(i,j,:) = 0.0_kind_real
+           socn%val(i,j,:) = 0.0_kind_real
         end if
 
         ! Do nothing for sea-ice
@@ -103,27 +104,37 @@ subroutine soca_bkgerrfilt_mult(self, dxa, dxm)
   type(soca_fields),            intent(in) :: dxa
   type(soca_fields),         intent(inout) :: dxm
 
-  integer :: i, j
+  integer :: i, j,n 
   type(soca_field), pointer :: field, field_a, field_m
 
-
-  call self%filt%get("tocn", field)
-  call dxa%get("tocn", field_a)
-  call dxm%get("tocn", field_m)
+  do n=1,size(self%filt%fields)    
+    field => self%filt%fields(n)
+    select case(field%name)
+    case ("tocn", "socn")
+      call dxa%get(field%name, field_a)
+      call dxm%get(field%name, field_m)
+      do i = self%isc, self%iec
+        do j = self%jsc, self%jec
+          if (self%bkg%geom%mask2d(i,j).eq.1) then
+            field_m%val(i,j,:) = field%val(i,j,:) * field_a%val(i,j,:)
+          else
+            field_m%val(i,j,:) = 0.0_kind_real
+          end if
+        end do
+      end do
+    end select
+  end do  
+   
 
   do i = self%isc, self%iec
      do j = self%jsc, self%jec
         if (self%bkg%geom%mask2d(i,j).eq.1) then
            dxm%ssh(i,j) = self%filt%ssh(i,j) * dxa%ssh(i,j)
-           field_m%val(i,j,:) = field%val(i,j,:) * field_a%val(i,j,:)
-           dxm%socn(i,j,:) = self%filt%socn(i,j,:)  * dxa%socn(i,j,:)
 
            dxm%seaice%cicen(i,j,:) =  self%filt%seaice%cicen(i,j,:) * dxa%seaice%cicen(i,j,:)
            dxm%seaice%hicen(i,j,:) =  self%filt%seaice%hicen(i,j,:) * dxa%seaice%hicen(i,j,:)
         else
            dxm%ssh(i,j) = 0.0_kind_real
-           field_m%val(i,j,:) = 0.0_kind_real
-           dxm%socn(i,j,:) = 0.0_kind_real
 
            dxm%seaice%cicen(i,j,:) = 0.0_kind_real
            dxm%seaice%hicen(i,j,:) = 0.0_kind_real

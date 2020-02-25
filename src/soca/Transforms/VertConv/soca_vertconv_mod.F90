@@ -96,40 +96,42 @@ subroutine soca_conv (self, convdx, dx)
 
   real(kind=kind_real), allocatable :: z(:), lz(:)
   real(kind=kind_real) :: dist2, coef
-  integer :: nl, j, k, id, jd
+  integer :: nl, j, k, id, jd, n
   type(mpl_type) :: mpl
 
   type(soca_field), pointer :: field_dx, field_convdx
 
   nl = size(self%bkg%layer_depth,3)
 
-  call dx%get("tocn", field_dx)
-  call convdx%get("tocn", field_convdx)
-
   allocate(z(nl), lz(nl))
-  do id = self%isc, self%iec
-     do jd = self%jsc, self%jec
-        ! skip land
-        if (self%bkg%geom%mask2d(id,jd) /= 1) cycle
 
-        ! get correlation lengths
-        call soca_calc_lz(self, id, jd, lz)
+  do n=1,size(dx%fields)
+    select case(dx%fields(n)%name)
+    case ("tocn","socn")
+      call dx%get(dx%fields(n)%name, field_dx)
+      call convdx%get(dx%fields(n)%name, field_convdx)
+      do id = self%isc, self%iec
+        do jd = self%jsc, self%jec
+          ! skip land
+          if (self%bkg%geom%mask2d(id,jd) /= 1) cycle
 
-        ! perform convolution
-        z(:) = self%bkg%layer_depth(id,jd,:)
-        do j = 1, nl
-          field_convdx%val(id,jd,j) = 0.0d0
-          convdx%socn(id,jd,j) = 0.0d0
-          do k = 1,nl
-            dist2 = abs(z(j)-z(k))
-            coef = fit_func(mpl, 'gc99', dist2/lz(k))
-            field_convdx%val(id,jd,j) = field_convdx%val(id,jd,j) &
-              &+ field_dx%val(id,jd,k)*coef
-            convdx%socn(id,jd,j) = convdx%socn(id,jd,j) &
-              &+ dx%socn(id,jd,k)*coef
+          ! get correlation lengths
+          call soca_calc_lz(self, id, jd, lz)
+
+          ! perform convolution
+          z(:) = self%bkg%layer_depth(id,jd,:)
+          do j = 1, nl
+            field_convdx%val(id,jd,j) = 0.0d0
+            do k = 1,nl
+              dist2 = abs(z(j)-z(k))
+              coef = fit_func(mpl, 'gc99', dist2/lz(k))
+              field_convdx%val(id,jd,j) = field_convdx%val(id,jd,j) &
+                &+ field_dx%val(id,jd,k)*coef
             end do
+          end do
         end do
-     end do
+      end do
+    end select
   end do
   deallocate(z, lz)
 end subroutine soca_conv
@@ -143,37 +145,39 @@ subroutine soca_conv_ad (self, convdx, dx)
 
   real(kind=kind_real), allocatable :: z(:), lz(:)
   real(kind=kind_real) :: dist2, coef
-  integer :: nl, j, k, id, jd
+  integer :: nl, j, k, id, jd, n
   type(mpl_type) :: mpl
   type(soca_field), pointer :: field_dx, field_convdx
-
-  call dx%get("tocn", field_dx)
-  call convdx%get("tocn", field_convdx)
 
   nl = size(self%bkg%layer_depth,3)
   allocate(z(nl), lz(nl))
 
-  do id = self%isc, self%iec
-     do jd = self%jsc, self%jec
-        ! skip land
-        if (self%bkg%geom%mask2d(id,jd) /= 1) cycle
+  do n=1,size(dx%fields)
+    select case(dx%fields(n)%name)
+    case ("tocn","socn")
+      call dx%get(dx%fields(n)%name, field_dx)
+      call convdx%get(dx%fields(n)%name, field_convdx)
+      do id = self%isc, self%iec
+        do jd = self%jsc, self%jec
+          ! skip land
+          if (self%bkg%geom%mask2d(id,jd) /= 1) cycle
 
-        ! get correlation lengths
-        call soca_calc_lz(self, id, jd, lz)
+          ! get correlation lengths
+          call soca_calc_lz(self, id, jd, lz)
 
-        ! perform convolution
-        z(:) = self%bkg%layer_depth(id,jd,:)
-        field_dx%val(id,jd,:) = 0.0d0
-        dx%socn(id,jd,:) = 0.0d0
-        do j = nl, 1, -1
-           do k = nl, 1, -1
+          ! perform convolution
+          z(:) = self%bkg%layer_depth(id,jd,:)
+          field_dx%val(id,jd,:) = 0.0d0
+          do j = nl, 1, -1
+            do k = nl, 1, -1
               dist2 = abs(z(j)-z(k))
               coef = fit_func(mpl, 'gc99', dist2/lz(k))
               field_dx%val(id,jd,k) = field_dx%val(id,jd,k) + coef*field_convdx%val(id,jd,j)
-              dx%socn(id,jd,k) = dx%socn(id,jd,k) + coef*convdx%socn(id,jd,j)
-           end do
+            end do
+          end do
         end do
-     end do
+      end do
+    end select
   end do
   deallocate(z, lz)
 

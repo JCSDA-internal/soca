@@ -111,9 +111,7 @@ subroutine soca_cov_setup(self, f_conf, geom, bkg, vars)
         init_seaice = .true.
      case('hicen')
         init_seaice = .true.
-     case('tocn')
-        init_ocean = .true.
-     case('socn')
+     case('tocn', 'socn')
         init_ocean = .true.
      case('ssh')
         init_ocean = .true.
@@ -165,8 +163,8 @@ subroutine soca_cov_C_mult(self, dx)
 
   do ivar = 1, self%vars%nvars()
     select case(trim(self%vars%variable(ivar)))
-    case ('tocn')
-      call dx%get("tocn", field)
+    case ('tocn', 'socn')
+      call dx%get(trim(self%vars%variable(ivar)), field)
       do izo = 1,dx%geom%nzo
         call soca_2d_convol(field%val(:,:,izo), self%ocean_conv(1), dx%geom)
      end do      
@@ -188,10 +186,6 @@ subroutine soca_cov_C_mult(self, dx)
         ! Apply convolution to ocean
         case('ssh')
            call soca_2d_convol(dx%ssh(:,:), self%ocean_conv(1), dx%geom)
-        case('socn')
-           do izo = 1,dx%geom%nzo
-              call soca_2d_convol(dx%socn(:,:,izo), self%ocean_conv(1), dx%geom)
-           end do
 
         ! Apply convolution to sea-ice
         case('cicen')
@@ -215,19 +209,26 @@ subroutine soca_cov_sqrt_C_mult(self, dx)
                                           !< Output: C^1/2 dx
   integer :: icat, izo, ivar
   type(soca_field), pointer :: field
-
-
+  real(kind=kind_real) :: scale
   do ivar = 1, self%vars%nvars()
+    scale = -1
     select case(trim(self%vars%variable(ivar)))
     case('tocn')
-      call dx%get("tocn", field)
-      do izo = 1,dx%geom%nzo
-         call soca_2d_sqrt_convol(field%val(:,:,izo), &
-              &self%ocean_conv(1), dx%geom, self%pert_scale%T)
-      end do      
+      scale = self%pert_scale%T
+    case ('socn')
+      scale = self%pert_scale%S
     end select
 
-     select case(trim(self%vars%variable(ivar)))
+    if (scale > 0) then
+      call dx%get(trim(self%vars%variable(ivar)), field)
+      do izo = 1,dx%geom%nzo
+        call soca_2d_sqrt_convol(field%val(:,:,izo), &
+             &self%ocean_conv(1), dx%geom, scale)
+      end do
+    end if
+  
+      
+      select case(trim(self%vars%variable(ivar)))
         ! Apply C^1/2 to forcing
         case('sw')
            call soca_2d_sqrt_convol(dx%ocnsfc%sw_rad(:,:), &
@@ -250,12 +251,6 @@ subroutine soca_cov_sqrt_C_mult(self, dx)
            call soca_2d_sqrt_convol(dx%ssh, &
                 &self%ocean_conv(1), dx%geom, self%pert_scale%SSH)
 
-        case('socn')
-           do izo = 1,dx%geom%nzo
-              call soca_2d_sqrt_convol(dx%socn(:,:,izo), &
-                   &self%ocean_conv(1), dx%geom, self%pert_scale%S)
-           end do
-
         ! Apply C^1/2 to sea-ice
         case('cicen')
            do icat = 1, dx%geom%ncat
@@ -267,8 +262,8 @@ subroutine soca_cov_sqrt_C_mult(self, dx)
               call soca_2d_sqrt_convol(dx%seaice%hicen(:,:,icat), &
                    &self%seaice_conv(1), dx%geom, self%pert_scale%HICE)
            end do
-        end select
-     end do
+        end select   
+  end do
 
 end subroutine soca_cov_sqrt_C_mult
 

@@ -201,7 +201,8 @@ subroutine interp(fld, locs, vars, geoval, horiz_interp, horiz_interp_masked)
         fld3d = fldptr%val(isc:iec,jsc:jec,1:nval)
 
      case ("sea_water_practical_salinity", "sea_water_salinity")
-        fld3d = fld%socn(isc:iec,jsc:jec,1:nval)
+        call fld%get("socn", fldptr)
+        fld3d = fldptr%val(isc:iec,jsc:jec,1:nval)
 
      case ("sea_water_cell_thickness")
         fld3d = fld%hocn(isc:iec,jsc:jec,1:nval)
@@ -217,7 +218,8 @@ subroutine interp(fld, locs, vars, geoval, horiz_interp, horiz_interp_masked)
         fld3d(isc:iec,jsc:jec,1) = fldptr%val(isc:iec,jsc:jec,1) + 273.15_kind_real
 
      case ("sea_surface_salinity")
-        fld3d(isc:iec,jsc:jec,1) = fld%socn(isc:iec,jsc:jec,1)
+        call fld%get("socn", fldptr)
+        fld3d(isc:iec,jsc:jec,1) = fldptr%val(isc:iec,jsc:jec,1)
 
      case ("sea_floor_depth_below_sea_surface")
         fld3d(isc:iec,jsc:jec,1) = sum(fld%hocn(isc:iec,jsc:jec,:),dim=3)
@@ -361,7 +363,8 @@ subroutine getvalues_ad(incr, locs, vars, geoval, traj)
              &incr3d
 
      case ("sea_water_practical_salinity", "sea_water_salinity")
-        incr%socn(isc:iec,jsc:jec,1:nval) = incr%socn(isc:iec,jsc:jec,1:nval) +&
+        call incr%get("socn", field)
+        field%val(isc:iec,jsc:jec,1:nval) = field%val(isc:iec,jsc:jec,1:nval) +&
              &incr3d
 
      case ("sea_water_cell_thickness")
@@ -374,7 +377,8 @@ subroutine getvalues_ad(incr, locs, vars, geoval, traj)
            &incr3d
 
      case ("sea_surface_salinity")
-        incr%socn(isc:iec,jsc:jec,1) = incr%socn(isc:iec,jsc:jec,1) +&
+      call incr%get("socn", field)
+      field%val(isc:iec,jsc:jec,1) = field%val(isc:iec,jsc:jec,1) +&
              &incr3d(isc:iec,jsc:jec,1)
 
      ! Cool skin

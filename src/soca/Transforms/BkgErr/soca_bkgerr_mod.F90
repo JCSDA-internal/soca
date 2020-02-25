@@ -40,7 +40,7 @@ subroutine soca_bkgerr_setup(f_conf, self, bkg)
 
   type(soca_field), pointer :: field
 
-  integer :: isc, iec, jsc, jec, nl
+  integer :: isc, iec, jsc, jec, nl, i
   type(datetime) :: vdate
   character(len=800) :: fname = 'soca_bkgerrsoca.nc'
 
@@ -58,8 +58,16 @@ subroutine soca_bkgerr_setup(f_conf, self, bkg)
   ! Convert to standard deviation
   call self%std_bkgerr%get("tocn", field)
   field%val = sqrt(field%val)
+  call self%std_bkgerr%get("socn", field)
+  field%val = sqrt(field%val)
 
-  self%std_bkgerr%socn = sqrt(self%std_bkgerr%socn)
+  ! do i=1,size(self%std_bkgerr%fields)
+  !   select case(trim(self%std_bkgerr%fields(i)%name))
+  !   case ("tocn","socn")
+  !     field => self%std_bkgerr%fields(i)    
+  !     field%val = sqrt(field%val)
+  !   end select
+  ! end do
   self%std_bkgerr%ssh = sqrt(self%std_bkgerr%ssh)
 
   ! Get bounds from configuration
@@ -73,7 +81,8 @@ subroutine soca_bkgerr_setup(f_conf, self, bkg)
   end if
   if ( f_conf%has("fixed_std_sss") ) then
       call f_conf%get_or_die("fixed_std_sss", self%std_sss)
-      self%std_bkgerr%socn(:,:,1) = self%std_sss
+      call self%std_bkgerr%get("socn", field)    
+      field%val(:,:,1) = self%std_sss
   end if
 
   ! Invent background error for ocnsfc fields: set it
@@ -109,7 +118,7 @@ subroutine soca_bkgerr_mult(self, dxa, dxm)
 
   type(soca_field), pointer :: field_m, field_a, field_e
 
-  integer :: isc, iec, jsc, jec, i, j
+  integer :: isc, iec, jsc, jec, i, j, n
 
   ! Indices for compute domain (no halo)
   isc=self%bkg%geom%isc; iec=self%bkg%geom%iec
@@ -124,10 +133,33 @@ subroutine soca_bkgerr_mult(self, dxa, dxm)
     end do
   end do
 
+  call dxm%get("socn", field_m)
+  call dxa%get("socn", field_a)
+  call self%std_bkgerr%get("socn", field_e)
+  do i = isc, iec
+    do j = jsc, jec
+      field_m%val(i,j,:) = field_e%val(i,j,:) * field_a%val(i,j,:)
+    end do
+  end do
+
+
+  ! do n=1,size(self%std_bkgerr%fields)
+  !   select case(self%std_bkgerr%fields(n)%name)
+  !   case ("tocn","socn")
+  !     field_e => self%std_bkgerr%fields(n)
+  !     call dxm%get(self%std_bkgerr%fields(n)%name, field_m)
+  !     call dxa%get(self%std_bkgerr%fields(n)%name, field_a)
+  !     do i = isc, iec
+  !       do j = jsc, jec
+  !         field_m%val(i,j,:) = field_e%val(i,j,:) * field_a%val(i,j,:)
+  !       end do
+  !     end do
+  !   end select
+  ! end do
+
   do i = isc, iec
      do j = jsc, jec
         dxm%ssh(i,j) = self%std_bkgerr%ssh(i,j) * dxa%ssh(i,j)
-        dxm%socn(i,j,:) = self%std_bkgerr%socn(i,j,:) * dxa%socn(i,j,:)
      end do
   end do
   ! Surface fields

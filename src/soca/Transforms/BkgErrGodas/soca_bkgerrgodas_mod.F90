@@ -91,34 +91,39 @@ subroutine soca_bkgerrgodas_mult(self, dxa, dxm)
   type(soca_fields),        intent(inout) :: dxm
 
   type(soca_field), pointer :: field_m, field_e, field_a
-  integer :: isc, iec, jsc, jec, i, j
+  integer :: isc, iec, jsc, jec, i, j, n
 
   ! Indices for compute domain (no halo)
   isc = self%bkg%geom%isc ; iec = self%bkg%geom%iec
   jsc = self%bkg%geom%jsc ; jec = self%bkg%geom%jec
 
-  call dxm%get("tocn", field_m)
-  call dxa%get("tocn", field_a)
-  call self%std_bkgerr%get("tocn", field_e)
+  do n=1,size(self%std_bkgerr%fields)
+    field_e => self%std_bkgerr%fields(n)
+    select case(field_e%name)
+    case ("tocn","socn")
+      call dxm%get(field_e%name, field_m)
+      call dxa%get(field_e%name, field_a)
+      do i = isc, iec
+        do j = jsc, jec          
+          if (self%bkg%geom%mask2d(i,j).eq.1) then
+            field_m%val(i,j,:) = field_e%val(i,j,:) * field_a%val(i,j,:)
+          end if
+        end do
+      end do
+    end select
+  end do
+
+     
   do i = isc, iec
     do j = jsc, jec
-       if (self%bkg%geom%mask2d(i,j).eq.1) then
-        field_m%val(i,j,:) = field_e%val(i,j,:) * field_a%val(i,j,:)
-       end if
+      if (self%bkg%geom%mask2d(i,j).eq.1) then
+       dxm%ssh(i,j) = self%std_bkgerr%ssh(i,j) * dxa%ssh(i,j)
+       dxm%seaice%cicen(i,j,:) =  self%std_bkgerr%seaice%cicen(i,j,:) * dxa%seaice%cicen(i,j,:)
+       dxm%seaice%hicen(i,j,:) =  self%std_bkgerr%seaice%hicen(i,j,:) * dxa%seaice%hicen(i,j,:)
+      end if
     end do
- end do
-
-  do i = isc, iec
-     do j = jsc, jec
-        if (self%bkg%geom%mask2d(i,j).eq.1) then
-           dxm%ssh(i,j) = self%std_bkgerr%ssh(i,j) * dxa%ssh(i,j)
-           dxm%socn(i,j,:) = self%std_bkgerr%socn(i,j,:)  * dxa%socn(i,j,:)
-
-           dxm%seaice%cicen(i,j,:) =  self%std_bkgerr%seaice%cicen(i,j,:) * dxa%seaice%cicen(i,j,:)
-           dxm%seaice%hicen(i,j,:) =  self%std_bkgerr%seaice%hicen(i,j,:) * dxa%seaice%hicen(i,j,:)
-        end if
-     end do
   end do
+
   ! Surface fields
   call dxm%ocnsfc%copy(dxa%ocnsfc)
   call dxm%ocnsfc%schur(self%std_bkgerr%ocnsfc)
@@ -233,6 +238,7 @@ subroutine soca_bkgerrgodas_socn(self)
   type(soca_bkgerrgodas_config),     intent(inout) :: self
   !
   type(soca_domain_indices), target :: domain
+  type(soca_field), pointer :: field
   integer :: i, j, k
   real(kind=kind_real) :: r
 
@@ -248,6 +254,7 @@ subroutine soca_bkgerrgodas_socn(self)
   ! TODO read in a precomputed surface S background error
 
   ! Loop over compute domain
+  call self%std_bkgerr%get("socn", field)  
   do i = domain%is, domain%ie
     do j = domain%js, domain%je
       if (self%bkg%geom%mask2d(i,j) /= 1)  cycle
@@ -255,12 +262,12 @@ subroutine soca_bkgerrgodas_socn(self)
       do k = 1, self%bkg%geom%nzo
         if ( self%bkg%layer_depth(i,j,k) <= self%bkg%mld(i,j)) then
           ! if in the mixed layer, set to the maximum value
-          self%std_bkgerr%socn(i,j,k) = self%bounds%s_max
+          field%val(i,j,k) = self%bounds%s_max
         else
           ! otherwise, taper to the minium value below MLD
           r = 0.1 + 0.45 * (1-tanh( 2 * log( &
             & self%bkg%layer_depth(i,j,k) / self%bkg%mld(i,j) )))
-          self%std_bkgerr%socn(i,j,k) = max(self%bounds%s_min, r*self%bounds%s_max)
+          field%val(i,j,k) = max(self%bounds%s_min, r*self%bounds%s_max)
         end if
       end do
     end do
