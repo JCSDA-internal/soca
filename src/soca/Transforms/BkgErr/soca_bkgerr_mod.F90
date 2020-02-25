@@ -38,7 +38,7 @@ subroutine soca_bkgerr_setup(f_conf, self, bkg)
   type(soca_bkgerr_config), intent(inout) :: self
   type(soca_fields),   target, intent(in) :: bkg
 
-  type(soca_field), pointer :: field
+  type(soca_field), pointer :: field, field_bkg
 
   integer :: isc, iec, jsc, jec, i
   type(datetime) :: vdate
@@ -79,9 +79,14 @@ subroutine soca_bkgerr_setup(f_conf, self, bkg)
   ! Invent background error for ocnsfc fields: set it
   ! to 10% of the background for now ...
   ! TODO: Read background error for ocnsfc from file
-  call self%std_bkgerr%ocnsfc%copy(bkg%ocnsfc)
-  call self%std_bkgerr%ocnsfc%abs()
-  call self%std_bkgerr%ocnsfc%mul(0.1_kind_real)
+  do i=1,size(self%std_bkgerr%fields)
+    field => self%std_bkgerr%fields(i)
+    select case(field%name)
+    case ('sw','lw','lhf','shf','us')
+      call bkg%get(field%name, field_bkg)
+      field%val = abs(field_bkg%val) * 0.1_kind_real
+    end select
+  end do
 
   ! Associate background
   self%bkg => bkg
@@ -89,7 +94,6 @@ subroutine soca_bkgerr_setup(f_conf, self, bkg)
   ! Indices for compute domain (no halo)
   isc=bkg%geom%isc; iec=bkg%geom%iec
   jsc=bkg%geom%jsc; jec=bkg%geom%jec
-
   self%isc=isc; self%iec=iec; self%jsc=jsc; self%jec=jec
 
   ! Apply config bounds to background error
@@ -118,7 +122,8 @@ subroutine soca_bkgerr_mult(self, dxa, dxm)
   do n=1,size(self%std_bkgerr%fields)
     field_e => self%std_bkgerr%fields(n)
     select case(field_e%name)
-    case ("tocn", "socn", "ssh")
+    case ("tocn", "socn", "ssh", &
+          'sw','lw','lhf','shf','us')
       call dxm%get(field_e%name, field_m)
       call dxa%get(field_e%name, field_a)
       do i = isc, iec
@@ -128,10 +133,6 @@ subroutine soca_bkgerr_mult(self, dxa, dxm)
       end do
     end select
   end do
-
-  ! Surface fields
-  call dxm%ocnsfc%copy(dxa%ocnsfc)
-  call dxm%ocnsfc%schur(self%std_bkgerr%ocnsfc)
 
   ! Sea-ice
   call dxm%seaice%copy(dxa%seaice)

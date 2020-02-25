@@ -44,6 +44,8 @@ subroutine soca_bkgerrgodas_setup(f_conf, self, bkg)
   type(soca_bkgerrgodas_config), intent(inout) :: self
   type(soca_fields),        target, intent(in) :: bkg
 
+  type(soca_field), pointer :: field, field_bkg
+  integer :: i
   character(len=800) :: fname = 'soca_bkgerrgodas.nc'
 
   ! Allocate memory for bkgerrgodasor
@@ -72,8 +74,15 @@ subroutine soca_bkgerrgodas_setup(f_conf, self, bkg)
 
   ! Invent background error for ocnsfc fields: set it
   ! to 10% of the background for now ...
-  call self%std_bkgerr%ocnsfc%copy(bkg%ocnsfc)
-  call self%std_bkgerr%ocnsfc%mul(0.1_kind_real)
+  do i=1,size(self%std_bkgerr%fields)
+    field => self%std_bkgerr%fields(i)
+    select case(field%name)
+    case ('sw','lw','lhf','shf','us')
+      call bkg%get(field%name, field_bkg)
+      field%val = abs(field_bkg%val)
+      field%val = 0.1_kind_real * field%val
+    end select
+  end do
 
   ! Apply config bounds to background error
   call self%bounds%apply(self%std_bkgerr)
@@ -113,6 +122,17 @@ subroutine soca_bkgerrgodas_mult(self, dxa, dxm)
     end select
   end do
      
+  do n=1,size(self%std_bkgerr%fields)
+    field_e => self%std_bkgerr%fields(n)
+    select case(field_e%name)
+    case ("sw","lw","lhf","shf","us")
+      call dxm%get(field_e%name, field_m)
+      call dxa%get(field_e%name, field_a)
+      field_m%val = field_a%val
+      field_m%val = field_m%val * field_e%val
+    end select
+  end do
+
   do i = isc, iec
     do j = jsc, jec
       if (self%bkg%geom%mask2d(i,j).eq.1) then
@@ -121,10 +141,6 @@ subroutine soca_bkgerrgodas_mult(self, dxa, dxm)
       end if
     end do
   end do
-
-  ! Surface fields
-  call dxm%ocnsfc%copy(dxa%ocnsfc)
-  call dxm%ocnsfc%schur(self%std_bkgerr%ocnsfc)
 
 end subroutine soca_bkgerrgodas_mult
 

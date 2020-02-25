@@ -93,7 +93,19 @@ subroutine soca_initialize_integration(self, flds)
   self%mom6_config%MOM_CSp%S = real(field%val, kind=8)
 
   ! Update soca forcing
-  call flds%ocnsfc%getforcing(self%mom6_config%fluxes)
+  ! TODO, test for each name separately ?
+  if (flds%has("sw")) then
+    call flds%get("sw", field)
+    field%val(:,:,1) = - real(self%mom6_config%fluxes%sw, kind=kind_real)
+    call flds%get("lw", field)
+    field%val(:,:,1) = - real(self%mom6_config%fluxes%lw, kind=kind_real)  
+    call flds%get("lhf", field)
+    field%val(:,:,1) = - real(self%mom6_config%fluxes%latent, kind=kind_real)
+    call flds%get("shf", field)
+    field%val(:,:,1) = - real(self%mom6_config%fluxes%sens, kind=kind_real)
+    call flds%get("us", field)
+    field%val(:,:,1) = real(self%mom6_config%fluxes%ustar, kind=kind_real)
+  end if
 
 end subroutine soca_initialize_integration
 
@@ -179,7 +191,19 @@ subroutine soca_propagate(self, flds, fldsdate)
   field%val(:,:,1) = real(self%mom6_config%MOM_CSp%ave_ssh_ibc, kind=kind_real)
 
   ! Update soca forcing
-  call flds%ocnsfc%getforcing(self%mom6_config%fluxes)
+  ! TODO test for each name separately
+  if (flds%has("sw")) then
+    call flds%get("sw", field)
+    field%val(:,:,1) = - real(self%mom6_config%fluxes%sw, kind=kind_real)
+    call flds%get("lw", field)
+    field%val(:,:,1) = - real(self%mom6_config%fluxes%lw, kind=kind_real)  
+    call flds%get("lhf", field)
+    field%val(:,:,1) = - real(self%mom6_config%fluxes%latent, kind=kind_real)
+    call flds%get("shf", field)
+    field%val(:,:,1) = - real(self%mom6_config%fluxes%sens, kind=kind_real)
+    call flds%get("us", field)
+    field%val(:,:,1) = real(self%mom6_config%fluxes%ustar, kind=kind_real)
+  end if
 
 end subroutine soca_propagate
 

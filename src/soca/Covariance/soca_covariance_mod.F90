@@ -161,7 +161,8 @@ subroutine soca_cov_C_mult(self, dx)
 
   do ivar = 1, self%vars%nvars()
     select case(trim(self%vars%variable(ivar)))
-    case ('tocn', 'socn', 'ssh')
+    case ('tocn', 'socn', 'ssh', &
+          'sw', 'lw', 'lhf', 'shf', 'us')
       call dx%get(trim(self%vars%variable(ivar)), field)
       nz = field%nz
       do izo = 1,nz
@@ -169,29 +170,17 @@ subroutine soca_cov_C_mult(self, dx)
       end do      
     end select
 
-     select case(trim(self%vars%variable(ivar)))
-        ! Apply convolution to forcing
-        case('sw')
-           call soca_2d_convol(dx%ocnsfc%sw_rad(:,:),      self%ocean_conv(1), dx%geom)
-        case('lw')
-           call soca_2d_convol(dx%ocnsfc%lw_rad(:,:),      self%ocean_conv(1), dx%geom)
-        case('lhf')
-           call soca_2d_convol(dx%ocnsfc%latent_heat(:,:), self%ocean_conv(1), dx%geom)
-        case('shf')
-           call soca_2d_convol(dx%ocnsfc%sens_heat(:,:),   self%ocean_conv(1), dx%geom)
-        case('us')
-           call soca_2d_convol(dx%ocnsfc%fric_vel(:,:),    self%ocean_conv(1), dx%geom)
-
-        ! Apply convolution to sea-ice
-        case('cicen')
-           do icat = 1, dx%geom%ncat
-              call soca_2d_convol(dx%seaice%cicen(:,:,icat+1), self%seaice_conv(1), dx%geom)
-           end do
-        case('hicen')
-           do icat = 1, dx%geom%ncat
-              call soca_2d_convol(dx%seaice%hicen(:,:,icat), self%seaice_conv(1), dx%geom)
-           end do
-        end select
+    select case(trim(self%vars%variable(ivar)))
+    ! Apply convolution to sea-ice
+    case('cicen')
+      do icat = 1, dx%geom%ncat
+        call soca_2d_convol(dx%seaice%cicen(:,:,icat+1), self%seaice_conv(1), dx%geom)
+      end do
+    case('hicen')
+      do icat = 1, dx%geom%ncat
+        call soca_2d_convol(dx%seaice%hicen(:,:,icat), self%seaice_conv(1), dx%geom)
+      end do
+    end select
   end do
 
 end subroutine soca_cov_C_mult
@@ -225,39 +214,26 @@ subroutine soca_cov_sqrt_C_mult(self, dx)
       end do
     end if
   
-      
-      select case(trim(self%vars%variable(ivar)))
-        ! Apply C^1/2 to forcing
-        case('sw')
-           call soca_2d_sqrt_convol(dx%ocnsfc%sw_rad(:,:), &
-                &self%ocean_conv(1), dx%geom, self%pert_scale%SSH)
-        case('lw')
-           call soca_2d_sqrt_convol(dx%ocnsfc%lw_rad(:,:), &
-                &self%ocean_conv(1), dx%geom, self%pert_scale%SSH)
-        case('lhf')
-           call soca_2d_sqrt_convol(dx%ocnsfc%latent_heat(:,:), &
-                &self%ocean_conv(1), dx%geom, self%pert_scale%SSH)
-        case('shf')
-           call soca_2d_sqrt_convol(dx%ocnsfc%sens_heat(:,:), &
-                &self%ocean_conv(1), dx%geom, self%pert_scale%SSH)
-        case('us')
-           call soca_2d_sqrt_convol(dx%ocnsfc%fric_vel(:,:), &
+    select case(trim(self%vars%variable(ivar)))      
+    ! Apply C^1/2 to forcing
+    case('sw', 'lw', 'lhf', 'shf', 'us')
+      call dx%get(trim(self%vars%variable(ivar)), field)
+      call soca_2d_sqrt_convol(field%val(:,:,1), &
                 &self%ocean_conv(1), dx%geom, self%pert_scale%SSH)
 
-        ! Apply C^1/2 to sea-ice
-        case('cicen')
-           do icat = 1, dx%geom%ncat
-              call soca_2d_sqrt_convol(dx%seaice%cicen(:,:,icat+1), &
+    ! Apply C^1/2 to sea-ice
+    case('cicen')
+      do icat = 1, dx%geom%ncat
+        call soca_2d_sqrt_convol(dx%seaice%cicen(:,:,icat+1), &
                    &self%seaice_conv(1), dx%geom, self%pert_scale%AICE)
-           end do
-        case('hicen')
-           do icat = 1, dx%geom%ncat
-              call soca_2d_sqrt_convol(dx%seaice%hicen(:,:,icat), &
-                   &self%seaice_conv(1), dx%geom, self%pert_scale%HICE)
-           end do
-        end select   
+      end do
+    case('hicen')
+      do icat = 1, dx%geom%ncat
+        call soca_2d_sqrt_convol(dx%seaice%hicen(:,:,icat), &
+                 &self%seaice_conv(1), dx%geom, self%pert_scale%HICE)
+      end do
+    end select   
   end do
-
 end subroutine soca_cov_sqrt_C_mult
 
 ! ------------------------------------------------------------------------------

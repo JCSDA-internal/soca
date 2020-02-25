@@ -108,7 +108,7 @@ subroutine soca_bkgerrfilt_mult(self, dxa, dxm)
   do n=1,size(self%filt%fields)    
     field => self%filt%fields(n)
     select case(field%name)
-    case ("tocn", "socn", "ssh")
+    case ("tocn", "socn", "ssh", 'sw','lw','shf','lhf','us')
       call dxa%get(field%name, field_a)
       call dxm%get(field%name, field_m)
       do i = self%isc, self%iec
@@ -122,7 +122,16 @@ subroutine soca_bkgerrfilt_mult(self, dxa, dxm)
       end do
     end select
   end do  
-   
+
+  ! copy sfc vars without filtering
+  do n=1,size(dxa%fields)    
+    field_a => dxa%fields(n)
+    field_m => dxm%fields(n)
+    select case(field_a%name)
+    case ('sw','lw','shf','lhf','us')
+      field_m%val = field_a%val
+    end select
+  end do     
 
   do i = self%isc, self%iec
      do j = self%jsc, self%jec
@@ -135,8 +144,6 @@ subroutine soca_bkgerrfilt_mult(self, dxa, dxm)
         end if
      end do
   end do
-  ! Surface fields
-  call dxm%ocnsfc%copy(dxa%ocnsfc)
 
 end subroutine soca_bkgerrfilt_mult
 

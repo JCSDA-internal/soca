@@ -5,7 +5,7 @@ Geometry:
   read_soca_grid: grid
 
 Variables:
-  variables: [cicen, hicen, socn, tocn, ssh, hocn]
+  variables: [cicen, hicen, socn, tocn, ssh, hocn, sw, lw, lhf, shf, us]
 
 TestDate: &date 2018-04-15T00:00:00Z
 

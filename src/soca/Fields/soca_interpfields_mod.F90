@@ -156,93 +156,95 @@ subroutine interp(fld, locs, vars, geoval, horiz_interp, horiz_interp_masked)
 
   ! Loop through ufo vars
   do ivar = 1, vars%nvars()
-     ! Set number of levels/categories (nval)
-     call nlev_from_ufovar(fld, vars, ivar, nval)
+    ! Set number of levels/categories (nval)
+    call nlev_from_ufovar(fld, vars, ivar, nval)
      if (nval==0) cycle
 
-     ! Allocate GeoVaLs (fields at locations)
-     geoval%geovals(ivar)%nval = nval
-     if (.not.(allocated(geoval%geovals(ivar)%vals))) then
-        ! Number of obs in pe
-        nlocs = geoval%geovals(ivar)%nlocs
+    ! Allocate GeoVaLs (fields at locations)
+    geoval%geovals(ivar)%nval = nval
+    if (.not.(allocated(geoval%geovals(ivar)%vals))) then
+      ! Number of obs in pe
+      nlocs = geoval%geovals(ivar)%nlocs
+      allocate(geoval%geovals(ivar)%vals(nval,nlocs))
+      geoval%linit = .true.
+    end if
 
-        allocate(geoval%geovals(ivar)%vals(nval,nlocs))
-        geoval%linit = .true.
-     end if
+    ! Allocate temporary geoval and 3d field for the current time window
+    allocate(gom_window(nval,locs%nlocs))
+    allocate(fld3d(isc:iec,jsc:jec,1:nval))
+    nullify(fldptr)
 
-     ! Allocate temporary geoval and 3d field for the current time window
-     allocate(gom_window(nval,locs%nlocs))
-     allocate(fld3d(isc:iec,jsc:jec,1:nval))
-     nullify(fldptr)
+    ! Extract fld3d from field
+    masked = .true. ! by default fields are assumed to need a land mask applied,
+                    ! (Currently only sea area fraction is unmasked)
 
-     ! Extract fld3d from field
-     masked = .true. ! by default fields are assumed to need a land mask applied,
-                     ! (Currently only sea area fraction is unmasked)
+    select case (trim(vars%variable(ivar)))
+    case ("sea_ice_category_area_fraction")
+      fld3d = fld%seaice%cicen(isc:iec,jsc:jec,2:nval+1)
 
-     select case (trim(vars%variable(ivar)))
+    case ("sea_ice_category_thickness")
+      fld3d = fld%seaice%hicen(isc:iec,jsc:jec,1:nval)
 
-     case ("sea_ice_category_area_fraction")
-        fld3d = fld%seaice%cicen(isc:iec,jsc:jec,2:nval+1)
+    case ("sea_surface_height_above_geoid")
+      call fld%get("ssh", fldptr)
+      fld3d(isc:iec,jsc:jec,1) = fldptr%val(isc:iec,jsc:jec, 1)
 
-     case ("sea_ice_category_thickness")
-        fld3d = fld%seaice%hicen(isc:iec,jsc:jec,1:nval)
+    case ("sea_water_potential_temperature")
+      call fld%get("tocn", fldptr)
+      fld3d = fldptr%val(isc:iec,jsc:jec,1:nval)
 
-     case ("sea_surface_height_above_geoid")
-        call fld%get("ssh", fldptr)
-        fld3d(isc:iec,jsc:jec,1) = fldptr%val(isc:iec,jsc:jec, 1)
+    case ("sea_water_practical_salinity", "sea_water_salinity")
+      call fld%get("socn", fldptr)
+      fld3d = fldptr%val(isc:iec,jsc:jec,1:nval)
 
-     case ("sea_water_potential_temperature")
-        call fld%get("tocn", fldptr)
-        fld3d = fldptr%val(isc:iec,jsc:jec,1:nval)
-
-     case ("sea_water_practical_salinity", "sea_water_salinity")
-        call fld%get("socn", fldptr)
-        fld3d = fldptr%val(isc:iec,jsc:jec,1:nval)
-
-     case ("sea_water_cell_thickness")
+    case ("sea_water_cell_thickness")
       call fld%get("hocn", fldptr)      
-        fld3d = fldptr%val(isc:iec,jsc:jec,1:nval)
+      fld3d = fldptr%val(isc:iec,jsc:jec,1:nval)
 
-     case ("sea_surface_temperature")
-        call fld%get("tocn", fldptr)
-        fld3d(isc:iec,jsc:jec,1) = fldptr%val(isc:iec,jsc:jec,1)
+    case ("sea_surface_temperature")
+      call fld%get("tocn", fldptr)
+      fld3d(isc:iec,jsc:jec,1) = fldptr%val(isc:iec,jsc:jec,1)
 
-     ! TODO: Move unit change elsewhere, check if surface_temperature_where_sea
-     ! is COARDS.
-     case ("surface_temperature_where_sea")
-        call fld%get("tocn", fldptr)
-        fld3d(isc:iec,jsc:jec,1) = fldptr%val(isc:iec,jsc:jec,1) + 273.15_kind_real
+    ! TODO: Move unit change elsewhere, check if surface_temperature_where_sea
+    ! is COARDS.
+    case ("surface_temperature_where_sea")
+      call fld%get("tocn", fldptr)
+      fld3d(isc:iec,jsc:jec,1) = fldptr%val(isc:iec,jsc:jec,1) + 273.15_kind_real
 
-     case ("sea_surface_salinity")
-        call fld%get("socn", fldptr)
-        fld3d(isc:iec,jsc:jec,1) = fldptr%val(isc:iec,jsc:jec,1)
+    case ("sea_surface_salinity")
+      call fld%get("socn", fldptr)
+      fld3d(isc:iec,jsc:jec,1) = fldptr%val(isc:iec,jsc:jec,1)
 
-     case ("sea_floor_depth_below_sea_surface")
+    case ("sea_floor_depth_below_sea_surface")
       call fld%get("hocn", fldptr)
-        fld3d(isc:iec,jsc:jec,1) = sum(fldptr%val(isc:iec,jsc:jec,:),dim=3)
+      fld3d(isc:iec,jsc:jec,1) = sum(fldptr%val(isc:iec,jsc:jec,:),dim=3)
 
-     case ("sea_area_fraction")
-        fld3d(isc:iec,jsc:jec,1) = real(fld%geom%mask2d(isc:iec,jsc:jec),kind=kind_real)
-        masked = .false.
+    case ("sea_area_fraction")
+      fld3d(isc:iec,jsc:jec,1) = real(fld%geom%mask2d(isc:iec,jsc:jec),kind=kind_real)
+      masked = .false.
 
-     case ("net_downwelling_shortwave_radiation")
-        fld3d(isc:iec,jsc:jec,1) = fld%ocnsfc%sw_rad(isc:iec,jsc:jec)
+    case ("net_downwelling_shortwave_radiation")
+      call fld%get("sw", fldptr)
+      fld3d(isc:iec,jsc:jec,1) = fldptr%val(isc:iec,jsc:jec, 1)
 
-     case ("upward_latent_heat_flux_in_air")
-        fld3d(isc:iec,jsc:jec,1) = fld%ocnsfc%latent_heat(isc:iec,jsc:jec)
+    case ("upward_latent_heat_flux_in_air")
+      call fld%get("lhf", fldptr)
+      fld3d(isc:iec,jsc:jec,1) = fldptr%val(isc:iec,jsc:jec, 1)
 
-     case ("upward_sensible_heat_flux_in_air")
-        fld3d(isc:iec,jsc:jec,1) = fld%ocnsfc%sens_heat(isc:iec,jsc:jec)
+    case ("upward_sensible_heat_flux_in_air")
+      call fld%get("shf", fldptr)
+      fld3d(isc:iec,jsc:jec,1) = fldptr%val(isc:iec,jsc:jec, 1)
 
-     case ("net_downwelling_longwave_radiation")
-        fld3d(isc:iec,jsc:jec,1) = fld%ocnsfc%lw_rad(isc:iec,jsc:jec)
+    case ("net_downwelling_longwave_radiation")
+      call fld%get("lw", fldptr)
+      fld3d(isc:iec,jsc:jec,1) = fldptr%val(isc:iec,jsc:jec, 1)
 
-     case ("friction_velocity_over_water")
-        fld3d(isc:iec,jsc:jec,1) = fld%ocnsfc%fric_vel(isc:iec,jsc:jec)
-
-     case default
-        call fckit_log%debug("soca_interpfields_mod:interp geoval does not exist")
-     end select
+    case ("friction_velocity_over_water")
+      call fld%get("us", fldptr)
+      fld3d(isc:iec,jsc:jec,1) = fldptr%val(isc:iec,jsc:jec, 1)
+    case default
+      call fckit_log%debug("soca_interpfields_mod:interp geoval does not exist")
+    end select
 
      ! Apply forward interpolation: Model ---> Obs    
      do ival = 1, nval
@@ -298,117 +300,108 @@ subroutine getvalues_ad(incr, locs, vars, geoval, traj)
   allocate(gom_window_ival(locs%nlocs))
 
   do ivar = 1, vars%nvars()
-     ! Set number of levels/categories (nval)
-     call nlev_from_ufovar(incr, vars, ivar, nval)
+    ! Set number of levels/categories (nval)
+    call nlev_from_ufovar(incr, vars, ivar, nval)
 
-     ! Allocate temporary geoval and 3d field for the current time window
-     allocate(gom_window(nval,locs%nlocs))
-     allocate(incr3d(isc:iec,jsc:jec,1:nval))
-     incr3d = 0.0_kind_real
+    ! Allocate temporary geoval and 3d field for the current time window
+    allocate(gom_window(nval,locs%nlocs))
+    allocate(incr3d(isc:iec,jsc:jec,1:nval))
+    incr3d = 0.0_kind_real
 
-     ! determine if this variable should use the masked grid
-     ! (currently all of them, perhaps have atm vars use unmasked interp at some point??)
-     masked = .true.
+    ! determine if this variable should use the masked grid
+    ! (currently all of them, perhaps have atm vars use unmasked interp at some point??)
+    masked = .true.
 
-     ! Apply backward interpolation: Obs ---> Model
-     if (masked) then
+    ! Apply backward interpolation: Obs ---> Model
+    if (masked) then
       ns = count(incr%geom%mask2d(isc:iec,jsc:jec) > 0)      
-     else
+    else
       ni = iec - isc + 1
       nj = jec - jsc + 1
       ns = ni * nj
-     end if
-     if (.not.allocated(incr3d_un)) allocate(incr3d_un(ns))
+    end if
+    if (.not.allocated(incr3d_un)) allocate(incr3d_un(ns))
 
-     do ival = 1, nval
-        ! Fill proper geoval according to time window
-        do indx = 1, locs%nlocs
-           gom_window(ival, indx) = geoval%geovals(ivar)%vals(ival, locs%indx(indx))
-        end do
-        gom_window_ival = gom_window(ival,1:locs%nlocs)
+    do ival = 1, nval
+      ! Fill proper geoval according to time window
+      do indx = 1, locs%nlocs
+        gom_window(ival, indx) = geoval%geovals(ivar)%vals(ival, locs%indx(indx))
+      end do
+      gom_window_ival = gom_window(ival,1:locs%nlocs)
 
-        if (masked) then
-          incr3d_un = pack(incr3d(isc:iec,jsc:jec,ival), mask = incr%geom%mask2d(isc:iec,jsc:jec) >0)
-          call traj%horiz_interp_masked%apply_ad(incr3d_un, gom_window_ival)
-          incr3d(isc:iec,jsc:jec,ival) = unpack(incr3d_un, &
-                mask = incr%geom%mask2d(isc:iec,jsc:jec) >0, &
-                field = incr3d(isc:iec,jsc:jec,ival))          
-        else
-          incr3d_un = reshape(incr3d(isc:iec,jsc:jec,ival), (/ns/))
-          call traj%horiz_interp%apply_ad(incr3d_un(1:ns), gom_window_ival)
-          incr3d(isc:iec,jsc:jec,ival) = reshape(incr3d_un(1:ns),(/ni,nj/))
-        end if
-     end do
+      if (masked) then
+        incr3d_un = pack(incr3d(isc:iec,jsc:jec,ival), mask = incr%geom%mask2d(isc:iec,jsc:jec) >0)
+        call traj%horiz_interp_masked%apply_ad(incr3d_un, gom_window_ival)
+        incr3d(isc:iec,jsc:jec,ival) = unpack(incr3d_un, &
+              mask = incr%geom%mask2d(isc:iec,jsc:jec) >0, &
+              field = incr3d(isc:iec,jsc:jec,ival))          
+      else
+        incr3d_un = reshape(incr3d(isc:iec,jsc:jec,ival), (/ns/))
+        call traj%horiz_interp%apply_ad(incr3d_un(1:ns), gom_window_ival)
+        incr3d(isc:iec,jsc:jec,ival) = reshape(incr3d_un(1:ns),(/ni,nj/))
+      end if
+    end do
 
-     ! Copy incr3d into field
-     select case (trim(vars%variable(ivar)))
-     case ("sea_ice_category_area_fraction")
-        incr%seaice%cicen(isc:iec,jsc:jec,2:nval+1) = incr%seaice%cicen(isc:iec,jsc:jec,2:nval+1) +&
-             &incr3d
+    ! Copy incr3d into field
+    select case (trim(vars%variable(ivar)))
+    case ("sea_ice_category_area_fraction")      
+      incr%seaice%cicen(isc:iec,jsc:jec,2:nval+1) = incr%seaice%cicen(isc:iec,jsc:jec,2:nval+1) + incr3d
+    
+    case ("sea_ice_category_thickness")
+      incr%seaice%hicen(isc:iec,jsc:jec,1:nval) = incr%seaice%hicen(isc:iec,jsc:jec,1:nval) +incr3d
 
-     case ("sea_ice_category_thickness")
-        incr%seaice%hicen(isc:iec,jsc:jec,1:nval) = incr%seaice%hicen(isc:iec,jsc:jec,1:nval) +&
-             &incr3d
-
-     case ("sea_surface_height_above_geoid")
+    case ("sea_surface_height_above_geoid")
       call incr%get("ssh", field)      
-        field%val(isc:iec,jsc:jec,1) = field%val(isc:iec,jsc:jec,1) +&
-             &incr3d(isc:iec,jsc:jec,1)
+      field%val(isc:iec,jsc:jec,1) = field%val(isc:iec,jsc:jec,1) +incr3d(isc:iec,jsc:jec,1)
 
-     case ("sea_water_potential_temperature")
-        call incr%get("tocn", field)
-        field%val(isc:iec,jsc:jec,1:nval) = field%val(isc:iec,jsc:jec,1:nval) +&
-             &incr3d
+    case ("sea_water_potential_temperature")
+      call incr%get("tocn", field)
+      field%val(isc:iec,jsc:jec,1:nval) = field%val(isc:iec,jsc:jec,1:nval) + incr3d
 
-     case ("sea_water_practical_salinity", "sea_water_salinity")
-        call incr%get("socn", field)
-        field%val(isc:iec,jsc:jec,1:nval) = field%val(isc:iec,jsc:jec,1:nval) +&
-             &incr3d
-
-     case ("sea_water_cell_thickness")
-      call incr%get("hocn", field)      
-        field%val(isc:iec,jsc:jec,1:nval) = field%val(isc:iec,jsc:jec,1:nval) +&
-             &incr3d
-
-     case ("sea_surface_temperature")
-        call incr%get("tocn", field)
-        field%val(isc:iec,jsc:jec,1:nval) = field%val(isc:iec,jsc:jec,1:nval) +&
-           &incr3d
-
-     case ("sea_surface_salinity")
+    case ("sea_water_practical_salinity", "sea_water_salinity")
       call incr%get("socn", field)
-      field%val(isc:iec,jsc:jec,1) = field%val(isc:iec,jsc:jec,1) +&
-             &incr3d(isc:iec,jsc:jec,1)
+      field%val(isc:iec,jsc:jec,1:nval) = field%val(isc:iec,jsc:jec,1:nval) + incr3d
 
-     ! Cool skin
-     case ("net_downwelling_shortwave_radiation")
-        incr%ocnsfc%sw_rad(isc:iec,jsc:jec) = incr%ocnsfc%sw_rad(isc:iec,jsc:jec) +&
-             &incr3d(isc:iec,jsc:jec,1)
+    case ("sea_water_cell_thickness")
+      call incr%get("hocn", field)      
+      field%val(isc:iec,jsc:jec,1:nval) = field%val(isc:iec,jsc:jec,1:nval) + incr3d
 
-     case ("net_downwelling_longwave_radiation")
-        incr%ocnsfc%lw_rad(isc:iec,jsc:jec) = incr%ocnsfc%lw_rad(isc:iec,jsc:jec) +&
-             &incr3d(isc:iec,jsc:jec,1)
+    case ("sea_surface_temperature")
+      call incr%get("tocn", field)
+      field%val(isc:iec,jsc:jec,1:nval) = field%val(isc:iec,jsc:jec,1:nval) + incr3d
 
-     case ("upward_latent_heat_flux_in_air")
-        incr%ocnsfc%latent_heat(isc:iec,jsc:jec) = incr%ocnsfc%latent_heat(isc:iec,jsc:jec) +&
-             &incr3d(isc:iec,jsc:jec,1)
+    case ("sea_surface_salinity")
+      call incr%get("socn", field)
+      field%val(isc:iec,jsc:jec,1) = field%val(isc:iec,jsc:jec,1) + incr3d(isc:iec,jsc:jec,1)
 
-     case ("upward_sensible_heat_flux_in_air")
-        incr%ocnsfc%sens_heat(isc:iec,jsc:jec) = incr%ocnsfc%sens_heat(isc:iec,jsc:jec) +&
-             &incr3d(isc:iec,jsc:jec,1)
+    case ("net_downwelling_shortwave_radiation")
+      call incr%get("sw", field)
+      field%val(isc:iec,jsc:jec,1) = field%val(isc:iec,jsc:jec, 1) + incr3d(isc:iec,jsc:jec,1)
 
-     case ("friction_velocity_over_water")
-        incr%ocnsfc%fric_vel(isc:iec,jsc:jec) = incr%ocnsfc%fric_vel(isc:iec,jsc:jec) +&
-             &incr3d(isc:iec,jsc:jec,1)
+    case ("net_downwelling_longwave_radiation")
+      call incr%get("lw", field)
+      field%val(isc:iec,jsc:jec,1) = field%val(isc:iec,jsc:jec, 1) + incr3d(isc:iec,jsc:jec,1)
 
-     case default
-        call abor1_ftn("soca_interpfields_mod:getvalues_ad geoval does not exist")
+    case ("upward_latent_heat_flux_in_air")
+      call incr%get("lhf", field)
+      field%val(isc:iec,jsc:jec,1) = field%val(isc:iec,jsc:jec, 1) + incr3d(isc:iec,jsc:jec,1)
 
-     end select
+    case ("upward_sensible_heat_flux_in_air")
+      call incr%get("shf", field)
+      field%val(isc:iec,jsc:jec,1) = field%val(isc:iec,jsc:jec, 1) + incr3d(isc:iec,jsc:jec,1)
 
-     ! Deallocate temporary arrays
-     deallocate(incr3d)
-     deallocate(gom_window)
+    case ("friction_velocity_over_water")
+      call incr%get("us", field)
+      field%val(isc:iec,jsc:jec,1) = field%val(isc:iec,jsc:jec, 1) + incr3d(isc:iec,jsc:jec,1)
+    
+    case default
+      call abor1_ftn("soca_interpfields_mod:getvalues_ad geoval does not exist")
+
+    end select
+
+    ! Deallocate temporary arrays
+    deallocate(incr3d)
+    deallocate(gom_window)
 
   end do
 

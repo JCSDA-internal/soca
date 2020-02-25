@@ -146,6 +146,7 @@ subroutine soca_balance_mult(self, dxa, dxm)
   type(soca_fields),         intent(in) :: dxa
   type(soca_fields),      intent(inout) :: dxm
 
+  type(soca_field), pointer :: fld_m, fld_a
   type(soca_field), pointer :: tocn_m, tocn_a
   type(soca_field), pointer :: socn_m, socn_a
   type(soca_field), pointer :: ssh_m, ssh_a
@@ -196,9 +197,18 @@ subroutine soca_balance_mult(self, dxa, dxm)
         dxm%seaice%hicen(i,j,:) =  dxa%seaice%hicen(i,j,:)
      end do
   end do
-  ! Surface fields
-  call dxm%ocnsfc%copy(dxa%ocnsfc)
 
+  ! copy surface fields 
+  ! TODO do this to all fields not explicitly handled above?
+  do i=1, size(dxa%fields)
+    fld_a => dxa%fields(i)
+    call dxm%get(fld_a%name, fld_m)
+    select case(fld_a%name)
+    case ('sw','lw','lhf','shf','us')
+      call fld_m%copy(fld_a)
+    end select
+  end do
+  
 end subroutine soca_balance_mult
 
 ! ------------------------------------------------------------------------------
@@ -208,6 +218,7 @@ subroutine soca_balance_multad(self, dxa, dxm)
   type(soca_fields),         intent(in) :: dxm
   type(soca_fields),      intent(inout) :: dxa
 
+  type(soca_field), pointer :: fld_a, fld_m
   type(soca_field), pointer :: tocn_a, tocn_m
   type(soca_field), pointer :: socn_a, socn_m
   type(soca_field), pointer :: ssh_a, ssh_m
@@ -241,8 +252,17 @@ subroutine soca_balance_multad(self, dxa, dxm)
         dxa%seaice%hicen(i,j,:) =  dxm%seaice%hicen(i,j,:)
      end do
   end do
-  ! Surface fields
-  call dxa%ocnsfc%copy(dxm%ocnsfc)
+
+  ! copy surface fields 
+  ! TODO do this to all fields not explicitly handled above?
+  do i=1, size(dxm%fields)
+    fld_m => dxm%fields(i)
+    call dxa%get(fld_m%name, fld_a)
+    select case(fld_m%name)
+    case ('sw','lw','lhf','shf','us')
+      call fld_a%copy(fld_m)
+    end select
+  end do
 
 end subroutine soca_balance_multad
 
@@ -255,6 +275,7 @@ subroutine soca_balance_multinv(self, dxa, dxm)
 
   real(kind=kind_real) :: deta
   integer :: i, j, k
+  type(soca_field), pointer :: fld_m, fld_a
   type(soca_field), pointer :: tocn_m, tocn_a
   type(soca_field), pointer :: socn_m, socn_a
   type(soca_field), pointer :: ssh_m,  ssh_a
@@ -292,8 +313,17 @@ subroutine soca_balance_multinv(self, dxa, dxm)
         dxa%seaice%hicen(i,j,:) =  dxm%seaice%hicen(i,j,:)
      end do
   end do
-  ! Surface fields
-  call dxa%ocnsfc%copy(dxm%ocnsfc)
+
+  ! copy surface fields 
+  ! TODO do this to all fields not explicitly handled above?
+  do i=1, size(dxm%fields)
+    fld_m => dxm%fields(i)
+    call dxa%get(fld_m%name, fld_a)
+    select case(fld_m%name)
+    case ('sw','lw','lhf','shf','us')
+      call fld_a%copy(fld_m)
+    end select
+  end do
 end subroutine soca_balance_multinv
 
 ! ------------------------------------------------------------------------------
@@ -304,6 +334,7 @@ subroutine soca_balance_multinvad(self, dxa, dxm)
   type(soca_fields),         intent(in) :: dxa
 
   integer :: i, j
+  type(soca_field), pointer :: fld_a, fld_m
   type(soca_field), pointer :: tocn_a, tocn_m
   type(soca_field), pointer :: socn_a, socn_m
   type(soca_field), pointer :: ssh_a,  ssh_m
@@ -338,8 +369,17 @@ subroutine soca_balance_multinvad(self, dxa, dxm)
         ssh_m%val(i,j,:) = ssh_a%val(i,j,:)
      end do
   end do
-  ! Surface fields
-  call dxm%ocnsfc%copy(dxa%ocnsfc)
+
+  ! copy surface fields 
+  ! TODO do this to all fields not explicitly handled above?
+  do i=1, size(dxa%fields)
+    fld_a => dxa%fields(i)
+    call dxm%get(fld_a%name, fld_m)
+    select case(fld_a%name)
+    case ('sw','lw','lhf','shf','us')
+      call fld_m%copy(fld_a)
+    end select
+  end do
 
 end subroutine soca_balance_multinvad
 
