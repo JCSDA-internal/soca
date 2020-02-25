@@ -40,7 +40,7 @@ subroutine soca_bkgerrfilt_setup(f_conf, self, bkg)
   integer :: isc, iec, jsc, jec, i, j, k, nl
   real(kind=kind_real) :: efold
   character(len=800) :: fname = 'soca_bkgerrfilt.nc'
-  type(soca_field), pointer :: tocn, socn
+  type(soca_field), pointer :: tocn, socn, ssh
 
   ! Get number of ocean levels
   nl = size(bkg%hocn,3)
@@ -60,6 +60,7 @@ subroutine soca_bkgerrfilt_setup(f_conf, self, bkg)
 
   call self%filt%get("tocn", tocn)
   call self%filt%get("socn", socn)
+  call self%filt%get("ssh", ssh)
 
   ! Setup rescaling and masks
   isc=bkg%geom%isc ; self%isc=isc ; iec=bkg%geom%iec ; self%iec=iec
@@ -67,7 +68,7 @@ subroutine soca_bkgerrfilt_setup(f_conf, self, bkg)
   do i = isc, iec
      do j = jsc, jec
         if (sum(bkg%hocn(i,j,:)).gt.self%ocn_depth_min) then
-           self%filt%ssh(i,j) = self%scale
+           ssh%val(i,j,:) = self%scale
            do k = 1, nl
               if (bkg%hocn(i,j,k).gt.1e-3_kind_real) then
                  ! Only apply if layer is thick enough
@@ -81,7 +82,7 @@ subroutine soca_bkgerrfilt_setup(f_conf, self, bkg)
            end do
         else
            ! Set to zero if ocean is too shallow
-           self%filt%ssh(i,j)    = 0.0_kind_real
+           ssh%val(i,j,:)    = 0.0_kind_real
            tocn%val(i,j,:) = 0.0_kind_real
            socn%val(i,j,:) = 0.0_kind_real
         end if
@@ -110,7 +111,7 @@ subroutine soca_bkgerrfilt_mult(self, dxa, dxm)
   do n=1,size(self%filt%fields)    
     field => self%filt%fields(n)
     select case(field%name)
-    case ("tocn", "socn")
+    case ("tocn", "socn", "ssh")
       call dxa%get(field%name, field_a)
       call dxm%get(field%name, field_m)
       do i = self%isc, self%iec
@@ -129,13 +130,9 @@ subroutine soca_bkgerrfilt_mult(self, dxa, dxm)
   do i = self%isc, self%iec
      do j = self%jsc, self%jec
         if (self%bkg%geom%mask2d(i,j).eq.1) then
-           dxm%ssh(i,j) = self%filt%ssh(i,j) * dxa%ssh(i,j)
-
            dxm%seaice%cicen(i,j,:) =  self%filt%seaice%cicen(i,j,:) * dxa%seaice%cicen(i,j,:)
            dxm%seaice%hicen(i,j,:) =  self%filt%seaice%hicen(i,j,:) * dxa%seaice%hicen(i,j,:)
         else
-           dxm%ssh(i,j) = 0.0_kind_real
-
            dxm%seaice%cicen(i,j,:) = 0.0_kind_real
            dxm%seaice%hicen(i,j,:) = 0.0_kind_real
         end if

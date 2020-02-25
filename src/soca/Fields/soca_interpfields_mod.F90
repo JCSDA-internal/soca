@@ -194,7 +194,8 @@ subroutine interp(fld, locs, vars, geoval, horiz_interp, horiz_interp_masked)
         fld3d = fld%seaice%hicen(isc:iec,jsc:jec,1:nval)
 
      case ("sea_surface_height_above_geoid")
-        fld3d(isc:iec,jsc:jec,1) = fld%ssh(isc:iec,jsc:jec)
+        call fld%get("ssh", fldptr)
+        fld3d(isc:iec,jsc:jec,1) = fldptr%val(isc:iec,jsc:jec, 1)
 
      case ("sea_water_potential_temperature")
         call fld%get("tocn", fldptr)
@@ -354,7 +355,8 @@ subroutine getvalues_ad(incr, locs, vars, geoval, traj)
              &incr3d
 
      case ("sea_surface_height_above_geoid")
-        incr%ssh(isc:iec,jsc:jec) = incr%ssh(isc:iec,jsc:jec) +&
+      call incr%get("ssh", field)      
+        field%val(isc:iec,jsc:jec,1) = field%val(isc:iec,jsc:jec,1) +&
              &incr3d(isc:iec,jsc:jec,1)
 
      case ("sea_water_potential_temperature")

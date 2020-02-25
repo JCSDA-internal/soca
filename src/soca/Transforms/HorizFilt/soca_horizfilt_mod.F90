@@ -54,6 +54,8 @@ contains
     type(soca_fields),             intent(in) :: traj   !< Trajectory
     type(oops_variables),          intent(in) :: vars   !< List of variables
 
+    type(soca_field), pointer :: ssh
+
     integer :: i, j, ii, jj
     real(kind=kind_real) :: dist(-1:1,-1:1), sum_w, r_dist, r_flow
     real :: re = 6.371e6 ! radius of earth (m)
@@ -95,7 +97,8 @@ contains
 
                 ! flow based distance (ssh difference)
                 if(self%scale_flow > 0) then
-                  r_flow = abs(traj%ssh(i,j) - traj%ssh(i+ii,j+jj))
+                  call traj%get("ssh", ssh)
+                  r_flow = abs(ssh%val(i,j,1) - ssh%val(i+ii,j+jj,1))
                   r_flow = exp(-0.5 * ((r_flow / self%scale_flow) ** 2))
                 end if
 
@@ -135,7 +138,7 @@ contains
 
     type(soca_field), pointer :: field_i, field_o
 
-    integer :: k, ivar
+    integer :: k, ivar, nz
     real(kind=kind_real), allocatable, dimension(:,:) :: dxi, dxo
 
     allocate(dxi(self%isd:self%ied,self%jsd:self%jed))
@@ -143,16 +146,10 @@ contains
 
     do ivar = 1, self%vars%nvars()
        select case (trim(self%vars%variable(ivar)))
-
-       case ("ssh")
-          dxi = dxin%ssh(:,:)
-          call soca_filt2d(self, dxi, dxo, geom)
-          dxout%ssh(:,:) = dxo
-
-       case ("tocn", "socn")
+       case ("tocn", "socn", "ssh")
          call dxin%get(trim(self%vars%variable(ivar)),  field_i)
          call dxout%get(trim(self%vars%variable(ivar)), field_o)
-          do k = 1, geom%nzo
+          do k = 1, field_i%nz
              dxi = field_i%val(:,:,k)
              call soca_filt2d(self, dxi, dxo, geom)
              field_o%val(:,:,k) = dxo
@@ -195,16 +192,10 @@ contains
 
     do ivar = 1, self%vars%nvars()
        select case (trim(self%vars%variable(ivar)))
-
-       case ("ssh")
-          dxi = dxin%ssh(:,:)
-          call soca_filt2d_ad(self, dxi, dxo, geom)
-          dxout%ssh(:,:) = dxo
-
-       case ("tocn", "socn")
+       case ("tocn", "socn", "ssh")
          call dxin%get(trim(self%vars%variable(ivar)),  field_i)
          call dxout%get(trim(self%vars%variable(ivar)), field_o)
-          do k = 1, geom%nzo
+          do k = 1, field_i%nz
              dxi = field_i%val(:,:,k)
              call soca_filt2d_ad(self, dxi, dxo, geom)
              field_o%val(:,:,k) = dxo

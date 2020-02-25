@@ -1,4 +1,4 @@
-! (C) Copyright 2017-2019 UCAR
+! (C) Copyright 2017-2020 UCAR
 !
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -78,10 +78,6 @@ type :: soca_fields
    ! Sea-ice state variables
    type(soca_seaice_type)            :: seaice         !< Sea-ice state
 
-   ! Ocean state variables
-   !real(kind=kind_real), allocatable :: socn(:,:,:)    !< Ocean Practical Salinity         (nx,ny,nzo)
-   !real(kind=kind_real), allocatable :: tocn(:,:,:)    !< Ocean Potential Temperature, ref to p=0      (nx,ny,nzo)
-   real(kind=kind_real), allocatable :: ssh(:,:)       !< Sea-surface height (nx,ny)
    real(kind=kind_real), allocatable :: hocn(:,:,:)    !< DA layer thickness (nx,ny,nzo)
 
    ! Ocean diagnostics
@@ -158,7 +154,6 @@ subroutine soca_fields_create(self, geom, vars)
     select case(self%fields(i)%name)
     case ('tocn','socn','hocn')
       nz = geom%nzo
-      self%fields(i)%masked = .true.
     case ('cicen','hicen')
       nz = geom%nzi
     case ('hsnon')
@@ -168,6 +163,7 @@ subroutine soca_fields_create(self, geom, vars)
     case default
       call abor1_ftn('soca_fields::create(): unknown field '// self%fields(i)%name)
     end select
+    self%fields(i)%masked = .true.
     self%fields(i)%nz = nz
     allocate(self%fields(i)%val(&
       geom%isd:geom%ied, &
@@ -226,7 +222,6 @@ subroutine soca_fields_copy(self, rhs)
       select case(self%fields(i)%name)
       case ('tocn','socn','hocn')
         nz =  self%geom%nzo
-        self%fields(i)%masked = .true.
       case ('cicen','hicen')
         nz =  self%geom%nzi
       case ('hsnon')
@@ -236,6 +231,7 @@ subroutine soca_fields_copy(self, rhs)
       case default
         call abor1_ftn('soca_fields::create(): unknown field '// self%fields(i)%name)
       end select
+      self%fields(i)%masked = .true.
       self%fields(i)%nz = nz
       allocate(self%fields(i)%val(&
         self%geom%isd: self%geom%ied, &
@@ -339,7 +335,6 @@ subroutine soca_field_alloc(self, geom)
   nzo = geom%nzo
 
   ! Allocate ocean state
-  allocate(self%ssh(isd:ied,jsd:jed))
   allocate(self%hocn(isd:ied,jsd:jed,nzo))
   allocate(self%mld(isd:ied,jsd:jed))
   allocate(self%layer_depth(isd:ied,jsd:jed,nzo))
@@ -359,7 +354,6 @@ subroutine delete(self)
   type (soca_fields), intent(inout) :: self
 
   ! Deallocate ocean state
-  deallocate(self%ssh)
   deallocate(self%hocn)
   deallocate(self%mld)
   deallocate(self%layer_depth)
@@ -389,9 +383,6 @@ subroutine soca_fields_zeros(self)
   end do
   
   ! TODO delete the following
-  call check(self)
-
-  self%ssh = 0.0_kind_real
   self%hocn = 0.0_kind_real
   self%mld = 0.0_kind_real
 
@@ -454,11 +445,10 @@ subroutine dirac(self, f_conf)
       call self%get("tocn", field)
     case (2)
       call self%get("socn", field)
+    case (3)
+      call self%get("ssh", field)
     case default
-      ! TODO print error that out range
-     
-     !if (ifdir(n)==2) thenself%socn(ixdir(n),iydir(n),izdir(n)) = 1.0
-     if (ifdir(n)==3) self%ssh(ixdir(n),iydir(n)) = 1.0
+      ! TODO print error that out range     
      if (ifdir(n)==4) self%seaice%cicen(ixdir(n),iydir(n),izdir(n)) = 1.0
      if (ifdir(n)==5) self%seaice%hicen(ixdir(n),iydir(n),izdir(n)) = 1.0
     end select
@@ -486,27 +476,21 @@ subroutine random(self)
   call check(self)
 
   ! set random values
-  do ff = 1, self%nf
-    select case(self%fldnames(ff))
-    case("tocn")
-      call self%get("tocn", field)
-      call normal_distribution(field%val,  0.0_kind_real, 1.0_kind_real, rseed)
-    case("socn")
-      call self%get("socn", field)
-      call normal_distribution(field%val,  0.0_kind_real, 1.0_kind_real, rseed)
+  do i = 1, size(self%fields)
+    field => self%fields(i)
+    select case(field%name)
+    case("tocn", "socn", "ssh")
+     call normal_distribution(field%val,  0.0_kind_real, 1.0_kind_real, rseed)
     !case("hocn")
     ! NOTE: can't randomize "hocn", testIncrementInterpAD fails
-    case("ssh")
-      call normal_distribution(self%ssh,   0.0_kind_real, 1.0_kind_real, rseed)
     end select
   end do
 
   ! mask out land, set to zero
-  self%ssh = self%ssh * self%geom%mask2d
   do i=1,size(self%fields)
     field => self%fields(i)
     if (.not. field%masked ) cycle
-    do z=1,self%geom%nzo
+    do z=1,field%nz
       field%val(:,:,z) = field%val(:,:,z) * self%geom%mask2d
     end do    
   end do
@@ -516,7 +500,6 @@ subroutine random(self)
     field => self%fields(i)
     call mpp_update_domains(field%val, self%geom%Domain%mpp_domain)
   end do  
-  call mpp_update_domains(self%ssh,  self%geom%Domain%mpp_domain)
 
   ! do the same for the non-ocean fields
   call self%ocnsfc%random(self%fldnames)
@@ -542,7 +525,6 @@ subroutine copy(self,rhs)
   if (.not.allocated(self%fldnames)) allocate(self%fldnames(self%nf))
   self%fldnames(:)=rhs%fldnames(:)
 
-  self%ssh   = rhs%ssh
   self%hocn  = rhs%hocn
   self%mld   = rhs%mld
   self%layer_depth   = rhs%layer_depth
@@ -562,14 +544,10 @@ subroutine self_add(self,rhs)
   type(soca_fields), intent(inout) :: self
   type(soca_fields),    intent(in) :: rhs
 
-  integer :: nf
   integer :: i
 
   call check_resolution(self, rhs)
 
-  nf = common_vars(self, rhs)
-
-  self%ssh = self%ssh + rhs%ssh
   self%hocn = self%hocn + rhs%hocn
 
   call self%seaice%add(rhs%seaice)
@@ -587,14 +565,10 @@ subroutine self_schur(self,rhs)
   type(soca_fields), intent(inout) :: self
   type(soca_fields),    intent(in) :: rhs
 
-  integer :: nf
   integer :: i
 
   call check_resolution(self, rhs)
 
-  nf = common_vars(self, rhs)
-
-  self%ssh=self%ssh*rhs%ssh
   self%hocn=self%hocn*rhs%hocn
 
   call self%seaice%schur(rhs%seaice)
@@ -612,13 +586,9 @@ subroutine self_sub(self,rhs)
   type(soca_fields), intent(inout) :: self
   type(soca_fields),    intent(in) :: rhs
 
-  integer :: nf
   integer :: i
   call check_resolution(self, rhs)
 
-  nf = common_vars(self, rhs)
-
-  self%ssh=self%ssh-rhs%ssh
   self%hocn=self%hocn-rhs%hocn
 
   call self%seaice%sub(rhs%seaice)
@@ -641,7 +611,6 @@ subroutine self_mul(self,zz)
 
   call check(self)
 
-  self%ssh = zz * self%ssh
   self%hocn = zz * self%hocn
 
   call self%seaice%mul(zz)
@@ -662,13 +631,9 @@ subroutine axpy(self,zz,rhs)
   type(soca_fields),    intent(in) :: rhs
 
   integer :: i
-  integer :: nf
-
+  
   call check_resolution(self, rhs)
 
-  nf = common_vars(self, rhs)
-
-  self%ssh = self%ssh + zz * rhs%ssh
   self%hocn = self%hocn + zz * rhs%hocn
 
   call self%seaice%axpy(zz, rhs%seaice)
@@ -689,12 +654,12 @@ subroutine dot_prod(fld1,fld2,zprod)
   real(kind=kind_real), intent(out) :: zprod
 
   real(kind=kind_real) :: zprod_allpes
-  integer :: ii, jj, kk, ff
+  integer :: ii, jj, kk, ff, n
   integer :: isc, iec, jsc, jec
   integer :: ncat, nzo, myrank
   type(fckit_mpi_comm) :: f_comm
 
-  type(soca_field), pointer :: field1, field2, socn1, socn2
+  type(soca_field), pointer :: field1, field2
 
 
   ! Setup Communicator
@@ -714,24 +679,24 @@ subroutine dot_prod(fld1,fld2,zprod)
   nzo = fld1%geom%nzo
 
   zprod = 0.0_kind_real
-  call fld1%get("tocn", field1)
-  call fld2%get("tocn", field2)
-  call fld1%get("socn", socn1)
-  call fld2%get("socn", socn2)
+
   !----- OCEAN
-  do ii = isc, iec
-     do jj = jsc, jec
-        if (fld1%geom%mask2d(ii,jj)==1) then
-           zprod = zprod + fld1%ssh(ii,jj)*fld2%ssh(ii,jj)               ! SSH
-           do kk = 1, nzo
-            zprod = zprod &
-            + field1%val(ii,jj,kk)*field2%val(ii,jj,kk) &  ! TOCN
-            + socn1%val(ii,jj,kk) *socn2%val(ii,jj,kk)             ! SOCN            
-           end do
-        end if
-     end do
+  do n=1,size(fld1%fields)
+    field1 => fld1%fields(n)
+    call fld2%get(field1%name, field2)
+    select case(field1%name)
+    case ("tocn","socn","ssh")
+      do ii = isc, iec
+        do jj = jsc, jec
+          if (.not. fld1%geom%mask2d(ii,jj) == 1 ) cycle
+          do kk=1,field1%nz
+            zprod = zprod + field1%val(ii,jj,kk) * field2%val(ii,jj,kk)
+          end do
+         end do
+      end do
+    end select
   end do
-  call f_comm%barrier()
+  call f_comm%barrier() ! why is this barrier here???
   myrank = f_comm%rank()
 
   !----- SEA-ICE. TODO: Move to seaice module
@@ -779,7 +744,6 @@ subroutine add_incr(self,rhs)
   call check(rhs)
 
   ! Add increment to field
-  self%ssh = self%ssh + rhs%ssh
   self%hocn = self%hocn + rhs%hocn
 
   call self%seaice%add_incr(rhs%seaice)
@@ -814,7 +778,6 @@ subroutine diff_incr(self,x1,x2)
 
   call self%zeros()
 
-  self%ssh = x1%ssh - x2%ssh
   self%hocn = x1%hocn - x2%hocn
 
   call self%seaice%diff_incr(x1%seaice, x2%seaice)
@@ -861,7 +824,7 @@ subroutine read_file(fld, f_conf, vdate)
   integer :: idr_ocean
   integer :: isd, ied, jsd, jed
   integer :: isc, iec, jsc, jec
-  integer :: i, j, nz
+  integer :: i, j, nz, n
   type(remapping_CS)  :: remapCS
   character(len=:), allocatable :: str
   real(kind=kind_real), allocatable :: h_common_ij(:), hocn_ij(:), tsocn_ij(:), tsocn2_ij(:)
@@ -919,7 +882,8 @@ subroutine read_file(fld, f_conf, vdate)
         select case(fld%fldnames(ii))
            ! Ocean
         case ('ssh')
-           idr_ocean = register_restart_field(ocean_restart, ocn_filename, 'ave_ssh', fld%ssh(:,:), &
+          call fld%get("ssh", field)
+           idr_ocean = register_restart_field(ocean_restart, ocn_filename, 'ave_ssh', field%val(:,:,1), &
                 domain=fld%geom%Domain%mpp_domain)
         case ('tocn')
           call fld%get("tocn", field)
@@ -996,11 +960,17 @@ subroutine read_file(fld, f_conf, vdate)
      call end_remapping(remapCS)
 
      ! Update halo
-     call fld%get("tocn", field)
-     call mpp_update_domains(field%val, fld%geom%Domain%mpp_domain)
-     call fld%get("socn", field)     
-     call mpp_update_domains(field%val, fld%geom%Domain%mpp_domain)     
-     call mpp_update_domains(fld%ssh, fld%geom%Domain%mpp_domain)
+     do n=1,size(fld%fields)
+      field => fld%fields(n)
+      select case(field%name)
+      case ("tocn", "socn", "ssh")
+        if (field%nz == 1) then
+          call mpp_update_domains(field%val(:,:,1), fld%geom%Domain%mpp_domain)
+        else
+          call mpp_update_domains(field%val, fld%geom%Domain%mpp_domain)
+        end if
+      end select
+    end do
 
      ! Set vdate if reading state
      if (iread==1) then
@@ -1026,7 +996,8 @@ subroutine read_file(fld, f_conf, vdate)
         select case(fld%fldnames(ii))
            ! Ocean variables
         case ('ssh')
-           call read_data(incr_filename,"ssh",fld%ssh(:,:),domain=fld%geom%Domain%mpp_domain)
+          call fld%get("ssh", field)          
+           call read_data(incr_filename,"ssh",field%val(:,:,1),domain=fld%geom%Domain%mpp_domain)
         case ('tocn')
           call fld%get("tocn", field)
           call read_data(incr_filename,"temp",field%val(:,:,:),domain=fld%geom%Domain%mpp_domain)
@@ -1102,13 +1073,11 @@ subroutine gpnorm(fld, nf, pstat)
 
     ! get local min/max/sum of each variable
     select case(fld%fldnames(jj))
-    case("tocn", "socn")
+    case("tocn", "socn", "ssh")
       call fld%get(fld%fldnames(jj), field)      
       call fldinfo(field%val(isc:iec,jsc:jec,:), mask, tmp)
     case("hocn")
       call fldinfo(fld%hocn(isc:iec,jsc:jec,:), mask, tmp)
-    case("ssh")
-      call fldinfo(fld%ssh(isc:iec,jsc:jec),    mask, tmp)
     case("hicen")
        call fldinfo(fld%seaice%hicen(isc:iec,jsc:jec,:), mask, tmp)
     case("hsnon")
@@ -1317,8 +1286,9 @@ subroutine field_to_ug(self, ug, its)
   end do
 
   ! ssh
+  call self%get("ssh", field)
   ug%grid(igrid)%fld(1:ni*nj, 1, jk, its) = &
-       &reshape( self%ssh(isc:iec, jsc:jec), (/ug%grid(igrid)%nmga/) )
+       &reshape( field%val(isc:iec, jsc:jec, 1), (/ug%grid(igrid)%nmga/) )
   jk = jk + 1
 
 end subroutine field_to_ug
@@ -1386,7 +1356,8 @@ subroutine field_from_ug(self, ug, its)
   end do
 
   ! ssh
-  self%ssh(isc:iec, jsc:jec) = &
+  call self%get("ssh", field)
+  field%val(isc:iec, jsc:jec, 1) = &
        &reshape( ug%grid(igrid)%fld(1:ni*nj, 1, jk, its), (/ni, nj/) )
   jk = jk + 1
 
@@ -1470,7 +1441,8 @@ subroutine soca_fld2file(fld, filename)
      select case(fld%fldnames(ii))
 
      case ('ssh')
-        call write_data( fname, "ssh", fld%ssh, fld%geom%Domain%mpp_domain)
+      call fld%get("ssh", field)
+        call write_data( fname, "ssh", field%val(:,:,1), fld%geom%Domain%mpp_domain)
         call write_data( fname, "rossby_radius", fld%geom%rossby_radius, fld%geom%Domain%mpp_domain)
      case ('tocn')
       call fld%get("tocn", field)
@@ -1525,7 +1497,8 @@ subroutine soca_write_restart(fld, f_conf, vdate)
 
   call fms_io_init()
   ! Ocean State
-  idr_ocean = register_restart_field(ocean_restart, ocn_filename, 'ave_ssh', fld%ssh(:,:), &
+  call fld%get("ssh", field)
+  idr_ocean = register_restart_field(ocean_restart, ocn_filename, 'ave_ssh', field%val(:,:,1), &
        domain=fld%geom%Domain%mpp_domain)
   call fld%get("tocn", field)       
   idr_ocean = register_restart_field(ocean_restart, ocn_filename, 'Temp', field%val(:,:,:), &
@@ -1576,7 +1549,7 @@ subroutine soca_getpoint(self, geoiter, values)
   type(soca_fields),              intent(   in) :: self
   type(soca_geom_iter),           intent(   in) :: geoiter
   real(kind=kind_real),           intent(inout) :: values(:)
-  integer :: ff, ii, nzo, ncat
+  integer :: ff, ii, nzo, ncat, nz
 
   type(soca_field), pointer :: field
   nzo = self%geom%nzo
@@ -1586,16 +1559,14 @@ subroutine soca_getpoint(self, geoiter, values)
   ii = 0 
   do ff = 1, self%nf
     select case(self%fldnames(ff))
-    case("tocn", "socn")
+    case("tocn", "socn", "ssh")
       call self%get(self%fldnames(ff), field)
-      values(ii+1:ii+nzo) = field%val(geoiter%iind, geoiter%jind,:)
-      ii = ii + nzo
+      nz = field%nz
+      values(ii+1:ii+nz) = field%val(geoiter%iind, geoiter%jind,:)
+      ii = ii + nz
     case("hocn")
       values(ii+1:ii+nzo) = self%hocn(geoiter%iind, geoiter%jind,:)
       ii = ii + nzo
-    case("ssh")
-      values(ii+1)        = self%ssh(geoiter%iind, geoiter%jind)
-      ii = ii + 1
     case("cicen")
       values(ii+1:ii+ncat+1) = self%seaice%cicen(geoiter%iind, geoiter%jind,:)
       ii = ii + ncat + 1
@@ -1618,7 +1589,7 @@ subroutine soca_setpoint(self, geoiter, values)
   type(soca_fields),              intent(inout) :: self
   type(soca_geom_iter),           intent(   in) :: geoiter
   real(kind=kind_real),           intent(   in) :: values(:)
-  integer :: ff, ii, nzo, ncat
+  integer :: ff, ii, nzo, ncat, nz
 
   type(soca_field), pointer :: field
 
@@ -1630,16 +1601,14 @@ subroutine soca_setpoint(self, geoiter, values)
   ii = 0
   do ff = 1, self%nf
     select case(self%fldnames(ff))
-    case("tocn", "socn")
+    case("tocn", "socn", "ssh")
       call self%get(self%fldnames(ff), field)
-      field%val(geoiter%iind, geoiter%jind,:) = values(ii+1:ii+nzo)
-      ii = ii + nzo
+      nz = field%nz
+      field%val(geoiter%iind, geoiter%jind,:) = values(ii+1:ii+nz)
+      ii = ii + nz
     case("hocn")
       self%hocn(geoiter%iind, geoiter%jind,:) = values(ii+1:ii+nzo)
       ii = ii + nzo
-    case("ssh")
-      self%ssh(geoiter%iind, geoiter%jind) = values(ii+1)
-      ii = ii + 1
     case("cicen")
       self%seaice%cicen(geoiter%iind, geoiter%jind,:) = values(ii+1:ii+ncat+1)
       ii = ii + ncat + 1

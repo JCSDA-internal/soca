@@ -100,7 +100,7 @@ subroutine soca_bkgerrgodas_mult(self, dxa, dxm)
   do n=1,size(self%std_bkgerr%fields)
     field_e => self%std_bkgerr%fields(n)
     select case(field_e%name)
-    case ("tocn","socn")
+    case ("tocn","socn", "ssh")
       call dxm%get(field_e%name, field_m)
       call dxa%get(field_e%name, field_a)
       do i = isc, iec
@@ -112,12 +112,10 @@ subroutine soca_bkgerrgodas_mult(self, dxa, dxm)
       end do
     end select
   end do
-
      
   do i = isc, iec
     do j = jsc, jec
       if (self%bkg%geom%mask2d(i,j).eq.1) then
-       dxm%ssh(i,j) = self%std_bkgerr%ssh(i,j) * dxa%ssh(i,j)
        dxm%seaice%cicen(i,j,:) =  self%std_bkgerr%seaice%cicen(i,j,:) * dxa%seaice%cicen(i,j,:)
        dxm%seaice%hicen(i,j,:) =  self%std_bkgerr%seaice%hicen(i,j,:) * dxa%seaice%hicen(i,j,:)
       end if
@@ -208,10 +206,13 @@ subroutine soca_bkgerrgodas_ssh(self)
   type(soca_bkgerrgodas_config),     intent(inout) :: self
   type(soca_domain_indices), target :: domain
   integer :: i, j
+  type(soca_field), pointer :: ssh
 
   ! Get compute domain indices
   domain%is = self%bkg%geom%isc ; domain%ie = self%bkg%geom%iec
   domain%js = self%bkg%geom%jsc ; domain%je = self%bkg%geom%jec
+
+  call self%std_bkgerr%get("ssh", ssh)
 
   ! Loop over compute domain
   do i = domain%is, domain%ie
@@ -220,10 +221,10 @@ subroutine soca_bkgerrgodas_ssh(self)
 
           if ( abs(self%bkg%geom%lat(i,j)) >= self%ssh_phi_ex) then
             ! if in extratropics, set to max value
-            self%std_bkgerr%ssh(i,j) = self%bounds%ssh_max
+            ssh%val(i,j,:) = self%bounds%ssh_max
           else
             ! otherwise, taper to min value (0.0) toward equator
-            self%std_bkgerr%ssh(i,j) = self%bounds%ssh_min + 0.5 * &
+            ssh%val(i,j,:) = self%bounds%ssh_min + 0.5 * &
               (self%bounds%ssh_max - self%bounds%ssh_min) * &
               (1 - cos(pi * self%bkg%geom%lat(i,j) / self%ssh_phi_ex))
           end if

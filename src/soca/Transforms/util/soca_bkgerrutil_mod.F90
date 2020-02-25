@@ -58,7 +58,8 @@ subroutine soca_bkgerr_applybounds(self, fld)
   type(soca_field), pointer :: field
 
   integer :: isc, iec, jsc, jec, i, j, n
-  
+  real(kind=kind_real) :: vmin, vmax
+
   ! Apply config bounds to background error
   isc = fld%geom%isc ; iec = fld%geom%iec
   jsc = fld%geom%jsc ; jec = fld%geom%jec
@@ -67,26 +68,29 @@ subroutine soca_bkgerr_applybounds(self, fld)
     field => fld%fields(n)
     select case(field%name)
     case ("tocn")
-      do i = isc, iec
-        do j = jsc, jec
-          field%val(i,j,:) = soca_adjust(field%val(i,j,:), self%t_min, self%t_max)
-        end do  
-      end do
+      vmin = self%t_min
+      vmax = self%t_max
+
     case ("socn")
-      do i = isc, iec
-        do j = jsc, jec
-          field%val(i,j,:) = soca_adjust(field%val(i,j,:), self%s_min, self%s_max)
-        end do  
-      end do
+      vmin = self%s_min
+      vmax = self%s_max
+    case ("ssh")
+      vmin = self%ssh_min
+      vmax = self%ssh_max
+    case default
+      cycle
     end select
+    
+    do i = isc, iec
+      do j = jsc, jec
+        field%val(i,j,:) = soca_adjust(field%val(i,j,:), vmin, vmax)
+      end do  
+    end do
   end do
 
   do i = isc, iec
     do j = jsc, jec
         ! Apply bounds
-        fld%ssh(i,j) = soca_adjust(fld%ssh(i,j), &
-                                  &self%ssh_min,&
-                                  &self%ssh_max)
         fld%seaice%cicen(i,j,:) = soca_adjust(fld%seaice%cicen(i,j,:),&
                                       &self%cicen_min,&
                                       &self%cicen_max)

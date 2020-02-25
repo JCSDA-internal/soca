@@ -174,7 +174,8 @@ subroutine soca_propagate(self, flds, fldsdate)
   call flds%get("socn", field)
   field%val = real(self%mom6_config%MOM_CSp%S, kind=kind_real)
   flds%hocn = real(self%mom6_config%MOM_CSp%h, kind=kind_real)
-  flds%ssh = real(self%mom6_config%MOM_CSp%ave_ssh_ibc, kind=kind_real)
+  call flds%get("ssh", field)
+  field%val(:,:,1) = real(self%mom6_config%MOM_CSp%ave_ssh_ibc, kind=kind_real)
 
   ! Update soca forcing
   call flds%ocnsfc%getforcing(self%mom6_config%fluxes)
