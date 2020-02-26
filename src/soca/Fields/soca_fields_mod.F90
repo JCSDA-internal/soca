@@ -43,16 +43,14 @@ public :: soca_fields, soca_field, &
           change_resol, field_to_ug, field_from_ug, ug_coord, &
           soca_getpoint, soca_setpoint
 
-! interface create
-!    module procedure create_constructor, create_copy
-! end interface create
 
 ! ------------------------------------------------------------------------------
 !> Fortran derived type to hold fields
 type :: soca_field
   character(len=:),     allocatable :: name
-  !character(len=:),     allocatable :: io_name
-  !character(len=:),     allocatable :: io_file
+  character(len=:),     allocatable :: cf_name
+  character(len=:),     allocatable :: io_name
+  character(len=:),     allocatable :: io_file
   !character(len=:),     allocatable :: vgrid
   !character(len=:),     allocatable :: hgrid
   integer                           :: nz
@@ -101,6 +99,7 @@ subroutine soca_field_copy(self, rhs)
   integer :: i
 
   if ( self%nz /= rhs%nz ) call abor1_ftn("soca_field::copy():  self%nz /= rhs%nz")
+  if ( self%name /= rhs%name ) call abor1_ftn("soca_field::copy():  self%name /= rhs%name")
 
   ! make sure val array sizes are congruent
   if ( size(shape(self%val)) /= size(shape(rhs%val)) ) call abor1_ftn("soca_field::copy():  shape of self%val /= rhs%val")
@@ -109,10 +108,13 @@ subroutine soca_field_copy(self, rhs)
       call abor1_ftn("soca_field::copy():  shape of self%val /= rhs%val")
   end do
 
+  ! copy fields
   self%name = rhs%name
   self%nz = rhs%nz
   self%val = rhs%val
-
+  self%cf_name = rhs%cf_name
+  self%io_name = rhs%io_name
+  self%io_file = rhs%io_file
 end subroutine
 
 ! ------------------------------------------------------------------------------
@@ -133,6 +135,7 @@ subroutine soca_fields_init_vars(self, vars)
   
   integer :: i, nz
 
+  ! TODO all of this should be moved (eventually) into a yaml config
   allocate(self%fields(size(vars)))
   do i=1,size(vars)
     self%fields(i)%name = vars(i)
@@ -157,12 +160,58 @@ subroutine soca_fields_init_vars(self, vars)
     case default
       call abor1_ftn('soca_fields::create(): unknown field '// self%fields(i)%name)
     end select
-
+    
     self%fields(i)%nz = nz
     allocate(self%fields(i)%val(&
       self%geom%isd:self%geom%ied, &
       self%geom%jsd:self%geom%jed, &
       nz ))
+
+    ! other variables associated with each field      
+    self%fields(i)%cf_name = ""
+    self%fields(i)%io_name = ""
+
+    select case(self%fields(i)%name)
+    case ('tocn')
+      self%fields(i)%cf_name = "sea_water_potential_temperature"
+      self%fields(i)%io_file = "ocn"
+      self%fields(i)%io_name = "Temp"
+    case ('socn')
+      self%fields(i)%cf_name = "sea_water_practical_salinity"
+      self%fields(i)%io_file = "ocn"
+      self%fields(i)%io_name = "Salt"
+    case ('ssh')
+      self%fields(i)%cf_name = "sea_surface_height_above_geoid"
+      self%fields(i)%io_file = "ocn"
+      self%fields(i)%io_name = "ave_ssh"
+    case ('hocn')
+      self%fields(i)%cf_name = "sea_water_cell_thickness"
+      self%fields(i)%io_file = "ocn"
+      self%fields(i)%io_name = "h"
+    ! case ('hicen')
+    !   self%fields(i)%cf_name = "sea_ice_category_thickness"
+    case ('sw')
+      self%fields(i)%cf_name = "net_downwelling_shortwave_radiation"
+      self%fields(i)%io_file = "sfc"
+      self%fields(i)%io_name = "sw_rad"
+    case ('lw')
+      self%fields(i)%cf_name = "net_downwelling_longwave_radiation"
+      self%fields(i)%io_file = "sfc"
+      self%fields(i)%io_name = "lw_rad"
+    case ('lhf')
+      self%fields(i)%cf_name = "upward_latent_heat_flux_in_air"
+      self%fields(i)%io_file = "sfc"
+      self%fields(i)%io_name = "latent_heat"
+    case ('shf')      
+      self%fields(i)%cf_name = "upward_sensible_heat_flux_in_air"
+      self%fields(i)%io_file = "sfc"
+      self%fields(i)%io_name = "sens_heat"
+    case ('us')      
+      self%fields(i)%cf_name = "friction_velocity_over_water"
+      self%fields(i)%io_file = "sfc"
+      self%fields(i)%io_name = "fric_vel"
+    end select
+
   end do  
 end subroutine
 
@@ -188,7 +237,12 @@ subroutine soca_fields_create(self, geom, vars)
   call soca_fields_init_vars(self, vars_str)
 
   ! TODO delete the following line eventually
-  call create_constructor(self, geom, vars)
+  call soca_field_alloc(self, geom)
+  self%nf   = vars%nvars()
+  allocate(self%fldnames(self%nf))
+  do i=1,self%nf
+    self%fldnames(i)=vars%variable(i)
+  end do   
 
   ! set everything to zero
   call self%zeros()
@@ -208,9 +262,10 @@ subroutine soca_fields_delete(self)
   deallocate(self%fields)
   nullify(self%fields)
 
-  ! TODO delete this line
-  call delete(self)
-
+  ! TODO delete these lines
+  deallocate(self%mld)
+  deallocate(self%layer_depth)
+  call self%seaice%delete()
 end subroutine
 
 ! ------------------------------------------------------------------------------
@@ -287,30 +342,8 @@ function soca_fields_has(self, name) result(res)
 end function
 
 ! ------------------------------------------------------------------------------
-!> Create a field from geometry and variables
-subroutine create_constructor(self, geom, vars)
-  type(soca_fields),         intent(inout) :: self
-  type(soca_geom),  pointer, intent(inout) :: geom
-  type(oops_variables),         intent(in) :: vars
 
-  integer :: i
-
-  ! Allocate
-  call soca_field_alloc(self, geom)
-
-  ! Associate geometry
-  self%geom => geom
-
-  ! Set fields numbers and names
-  self%nf   = vars%nvars()
-  allocate(self%fldnames(self%nf))
-  do i=1,self%nf
-    self%fldnames(i)=vars%variable(i)
-  end do 
-end subroutine create_constructor
-
-! ------------------------------------------------------------------------------
-
+  ! TODO delete all this
 subroutine create_copy(self, rhs_fld)
   ! Construct a field from an other field, lhs_fld=rhs_fld
   type(soca_fields), intent(inout) :: self
@@ -334,40 +367,12 @@ subroutine soca_field_alloc(self, geom)
   type (soca_fields),    intent(inout) :: self
   type(soca_geom), pointer, intent(in) :: geom
 
-  integer :: isd, ied, jsd, jed, nzo
-
-  ! Short cut to geometry
-  isd = geom%isd ; ied = geom%ied
-  jsd = geom%jsd ; jed = geom%jed
-  nzo = geom%nzo
-
   ! Allocate ocean state
-  allocate(self%mld(isd:ied,jsd:jed))
-  allocate(self%layer_depth(isd:ied,jsd:jed,nzo))
-
-  ! Allocate sea-ice state
+  allocate(self%mld(geom%isd:geom%ied,geom%jsd:geom%jed))
+  allocate(self%layer_depth(geom%isd:geom%ied,geom%jsd:geom%jed,geom%nzo))
   call self%seaice%create(geom)
-
   call self%zeros()
 end subroutine soca_field_alloc
-
-! ------------------------------------------------------------------------------
-
-subroutine delete(self)
-  type (soca_fields), intent(inout) :: self
-
-  ! Deallocate ocean state
-  deallocate(self%mld)
-  deallocate(self%layer_depth)
-
-  ! Deallocate sea-ice state
-  call self%seaice%delete()
-
-  ! Deassociate geometry
-  nullify(self%geom)
-
-end subroutine delete
-
 
 ! ------------------------------------------------------------------------------
 
@@ -381,7 +386,6 @@ subroutine soca_fields_zeros(self)
   
   ! TODO delete the following
   self%mld = 0.0_kind_real
-
   call self%seaice%zeros()
 end subroutine soca_fields_zeros
 
@@ -743,7 +747,7 @@ subroutine read_file(fld, f_conf, vdate)
   type(datetime),            intent(inout) :: vdate   !< DateTime
 
   integer, parameter :: max_string_length=800
-  character(len=max_string_length) :: ocn_filename, sfc_filename
+  character(len=max_string_length) :: ocn_filename, sfc_filename, filename
   character(len=max_string_length) :: basename, incr_filename
   character(len=1024) :: buf
   integer :: iread = 0
@@ -751,8 +755,9 @@ subroutine read_file(fld, f_conf, vdate)
   logical :: vert_remap=.false.
   character(len=max_string_length) :: remap_filename
   real(kind=kind_real), allocatable :: h_common(:,:,:)    !< layer thickness to remap to
-  type(restart_file_type) :: ocean_restart, sfc_restart
+  type(restart_file_type), target :: ocean_restart, sfc_restart
   type(restart_file_type) :: ocean_remap_restart
+  type(restart_file_type), pointer :: restart
   integer :: idr
   integer :: isd, ied, jsd, jed
   integer :: isc, iec, jsc, jec
@@ -760,7 +765,7 @@ subroutine read_file(fld, f_conf, vdate)
   type(remapping_CS)  :: remapCS
   character(len=:), allocatable :: str
   real(kind=kind_real), allocatable :: h_common_ij(:), hocn_ij(:), tsocn_ij(:), tsocn2_ij(:)
-  logical :: write_sfc
+  logical :: read_sfc
 
   type(soca_field), pointer :: field, field2, hocn
 
@@ -813,7 +818,7 @@ subroutine read_file(fld, f_conf, vdate)
     ocn_filename = trim(basename) // trim(str)
 
     ! filename for ocn sfc
-    write_sfc = .false.
+    read_sfc = .false.
     sfc_filename=""
     if ( f_conf%has("sfc_filename") ) then
       call f_conf%get_or_die("basename", str)
@@ -823,56 +828,38 @@ subroutine read_file(fld, f_conf, vdate)
     end if
 
     call fms_io_init()
-    do ii = 1, fld%nf
-      select case(fld%fldnames(ii))
-      case ('ssh')
-        call fld%get("ssh", field)
-        idr = register_restart_field(ocean_restart, ocn_filename, 'ave_ssh', field%val(:,:,1), &
-              domain=fld%geom%Domain%mpp_domain)
-      case ('tocn')
-        call fld%get("tocn", field)
-        idr = register_restart_field(ocean_restart, ocn_filename, 'Temp', field%val, &
-              domain=fld%geom%Domain%mpp_domain)
-      case ('socn')
-        call fld%get("socn", field)
-        idr = register_restart_field(ocean_restart, ocn_filename, 'Salt', field%val, &
-                domain=fld%geom%Domain%mpp_domain)
-      case ('hocn')
-        call fld%get("hocn", field)
-        idr = register_restart_field(ocean_restart, ocn_filename, 'h', field%val(:,:,:), &
-              domain=fld%geom%Domain%mpp_domain)
-      case('sw')
-        if (sfc_filename == "") cycle
-        call fld%get("sw", field)        
-        idr = register_restart_field(sfc_restart, sfc_filename, 'sw_rad', field%val(:,:,1), &
-              domain=fld%geom%Domain%mpp_domain)
-      case('lw')
-        if (sfc_filename == "") cycle
-        call fld%get("lw", field)
-        idr = register_restart_field(sfc_restart, sfc_filename, 'lw_rad', field%val(:,:,1), &
-              domain=fld%geom%Domain%mpp_domain)
-      case('lhf')
-        if (sfc_filename == "") cycle
-        call fld%get("lhf", field)
-        idr = register_restart_field(sfc_restart, sfc_filename, 'latent_heat', field%val(:,:,1), &
-              domain=fld%geom%Domain%mpp_domain)
-      case('shf')
-        if (sfc_filename == "") cycle
-        call fld%get("shf", field)
-        idr = register_restart_field(sfc_restart, sfc_filename, 'sens_heat', field%val(:,:, 1), &
-              domain=fld%geom%Domain%mpp_domain)
-      case('us')
-        if (sfc_filename == "") cycle
-        call fld%get("us", field)
-        idr = register_restart_field(sfc_restart, sfc_filename, 'fric_vel', field%val(:,:,1), &
-              domain=fld%geom%Domain%mpp_domain)                
-      case default
-        call log%warning("soca_fields:read_file: Not reading var "//fld%fldnames(ii))
-      end select
-     end do
-     call restore_state(ocean_restart, directory='')
-     if (sfc_filename /= "") call restore_state(sfc_restart, directory='')
-     call fms_io_exit()
+
+    ! built-in variables
+    do i=1,size(fld%fields)
+      if(fld%fields(i)%io_name /= "") then
+        ! which file are we reading from?
+        select case(fld%fields(i)%io_file)
+        case ('ocn')
+          filename = ocn_filename
+          restart => ocean_restart
+        case ('sfc')
+          if (sfc_filename == "") cycle ! we have sfc fields, but no file to read from
+          filename = sfc_filename
+          restart => sfc_restart
+          read_sfc = .true.
+        case default
+          call abor1_ftn('read_file(): illegal io_file: '//fld%fields(i)%io_file)
+        end select
+
+      ! setup to read
+        if (fld%fields(i)%nz == 1) then
+          idr = register_restart_field(restart, filename, fld%fields(i)%io_name, &
+            fld%fields(i)%val(:,:,1), domain=fld%geom%Domain%mpp_domain)  
+        else 
+          idr = register_restart_field(restart, filename, fld%fields(i)%io_name, &
+          fld%fields(i)%val(:,:,:), domain=fld%geom%Domain%mpp_domain)  
+        end if
+      end if
+    end do
+
+    call restore_state(ocean_restart, directory='')
+    if (read_sfc) call restore_state(sfc_restart, directory='')
+    call fms_io_exit()
 
      ! Indices for compute domain
      isc = fld%geom%isc ; iec = fld%geom%iec
@@ -1404,52 +1391,54 @@ subroutine soca_write_restart(fld, f_conf, vdate)
   type(datetime),            intent(inout) :: vdate    !< DateTime
 
   integer, parameter :: max_string_length=800
-  character(len=max_string_length) :: ocn_filename, ocnsfc_filename
-  type(restart_file_type) :: ocean_restart
-  type(restart_file_type) :: ocnsfc_restart
-  integer :: idr, idr_ocean
+  character(len=max_string_length) :: ocn_filename, ocnsfc_filename, filename
+  type(restart_file_type), target :: ocean_restart, ocnsfc_restart
+  type(restart_file_type), pointer :: restart
+  integer :: idr, idr_ocean, i
   type(soca_field), pointer :: field
 
   call fms_io_init()
 
-  ! Ocean State
+  ! filenames
   ocn_filename = soca_genfilename(f_conf,max_string_length,vdate,"ocn")
-  call fld%get("ssh", field)
-  idr_ocean = register_restart_field(ocean_restart, ocn_filename, 'ave_ssh', field%val(:,:,1), &
-       domain=fld%geom%Domain%mpp_domain)
-  call fld%get("tocn", field)       
-  idr_ocean = register_restart_field(ocean_restart, ocn_filename, 'Temp', field%val(:,:,:), &
-       domain=fld%geom%Domain%mpp_domain)
-  call fld%get("socn", field)       
-  idr_ocean = register_restart_field(ocean_restart, ocn_filename, 'Salt', field%val(:,:,:), &
-       domain=fld%geom%Domain%mpp_domain)
-  call fld%get("hocn", field)              
-  idr_ocean = register_restart_field(ocean_restart, ocn_filename, 'h', field%val(:,:,:), &
-       domain=fld%geom%Domain%mpp_domain)
+  ocnsfc_filename = soca_genfilename(f_conf,max_string_length,vdate,"sfc")
+
+  ! built in variables
+  do i=1,size(fld%fields)
+    if (fld%fields(i)%io_name /= "") then
+      ! which file are we writing to
+      select case(fld%fields(i)%io_file)
+      case ('ocn')        
+        filename = ocn_filename
+        restart => ocean_restart
+      case ('sfc')
+        filename = ocnsfc_filename
+        restart => ocnsfc_restart
+      case default
+        call abor1_ftn('soca_write_restart(): illegal io_file: '//fld%fields(i)%io_file)
+      end select
+
+      ! write
+      if (fld%fields(i)%nz == 1) then
+        idr = register_restart_field( restart, filename, fld%fields(i)%io_name, &
+          fld%fields(i)%val(:,:,1), domain=fld%geom%Domain%mpp_domain)  
+      else 
+        idr = register_restart_field( restart, filename, fld%fields(i)%io_name, &
+        fld%fields(i)%val(:,:,:), domain=fld%geom%Domain%mpp_domain)  
+      end if
+    end if  
+  end do
+
+  ! derived variables
   idr_ocean = register_restart_field(ocean_restart, ocn_filename, 'mld', fld%mld(:,:), &
        domain=fld%geom%Domain%mpp_domain)
+
   call save_restart(ocean_restart, directory='')
   call free_restart_type(ocean_restart)
      
   ! Ocean-surface
   ! TODO test for each var name separately?
-  if (fld%has("sw")) then
-    ocnsfc_filename = soca_genfilename(f_conf,max_string_length,vdate,"sfc")
-    call fld%get("sw", field)       
-    idr = register_restart_field(ocnsfc_restart, ocnsfc_filename, 'sw_rad', field%val(:,:,1), &
-          domain=fld%geom%Domain%mpp_domain)
-    call fld%get("lw", field)                              
-    idr = register_restart_field(ocnsfc_restart, ocnsfc_filename, 'lw_rad', field%val(:,:,1), &
-          domain=fld%geom%Domain%mpp_domain)
-    call fld%get("lhf", field)
-    idr = register_restart_field(ocnsfc_restart, ocnsfc_filename, 'latent_heat', field%val(:,:,1), &
-          domain=fld%geom%Domain%mpp_domain)
-    call fld%get("shf", field)
-    idr = register_restart_field(ocnsfc_restart, ocnsfc_filename, 'sens_heat', field%val(:,:,1), &
-          domain=fld%geom%Domain%mpp_domain)
-    call fld%get("us", field)
-    idr = register_restart_field(ocnsfc_restart, ocnsfc_filename, 'fric_vel', field%val(:,:,1), &
-          domain=fld%geom%Domain%mpp_domain)
+  if (fld%has("sw")) then    
     call save_restart(ocnsfc_restart, directory='')
     call free_restart_type(ocnsfc_restart)
   end if

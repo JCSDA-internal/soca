@@ -142,7 +142,7 @@ subroutine interp(fld, locs, vars, geoval, horiz_interp, horiz_interp_masked)
   type(unstrc_interp),     intent(inout) :: horiz_interp_masked  
 
   logical :: masked
-  integer :: ivar, nlocs
+  integer :: ivar, nlocs, n
   integer :: ival, nval, indx
   integer :: isc, iec, jsc, jec
   integer :: ns
@@ -157,7 +157,7 @@ subroutine interp(fld, locs, vars, geoval, horiz_interp, horiz_interp_masked)
   ! Loop through ufo vars
   do ivar = 1, vars%nvars()
     ! Set number of levels/categories (nval)
-    call nlev_from_ufovar(fld, vars, ivar, nval)
+    nval = nlev_from_ufovar(fld, vars%variable(ivar))
      if (nval==0) cycle
 
     ! Allocate GeoVaLs (fields at locations)
@@ -178,35 +178,30 @@ subroutine interp(fld, locs, vars, geoval, horiz_interp, horiz_interp_masked)
     masked = .true. ! by default fields are assumed to need a land mask applied,
                     ! (Currently only sea area fraction is unmasked)
 
+    ! if we are lucky and this variable is a non-derived type, check the fields structure
+    do n=1,size(fld%fields)
+      if (fld%fields(n)%cf_name == vars%variable(ivar)) then
+        fld3d = fld%fields(n)%val(isc:iec,jsc:jec,1:nval)
+      end if
+    end do
+
+    ! otherwise, we are dealing with a derived type, prepare for a long "select case" statement
     select case (trim(vars%variable(ivar)))
     case ("sea_ice_category_area_fraction")
       fld3d = fld%seaice%cicen(isc:iec,jsc:jec,2:nval+1)
-
+    
     case ("sea_ice_category_thickness")
       fld3d = fld%seaice%hicen(isc:iec,jsc:jec,1:nval)
 
-    case ("sea_surface_height_above_geoid")
-      call fld%get("ssh", fldptr)
-      fld3d(isc:iec,jsc:jec,1) = fldptr%val(isc:iec,jsc:jec, 1)
-
-    case ("sea_water_potential_temperature")
-      call fld%get("tocn", fldptr)
-      fld3d = fldptr%val(isc:iec,jsc:jec,1:nval)
-
-    case ("sea_water_practical_salinity", "sea_water_salinity")
+    case ("sea_water_salinity")
       call fld%get("socn", fldptr)
-      fld3d = fldptr%val(isc:iec,jsc:jec,1:nval)
-
-    case ("sea_water_cell_thickness")
-      call fld%get("hocn", fldptr)      
       fld3d = fldptr%val(isc:iec,jsc:jec,1:nval)
 
     case ("sea_surface_temperature")
       call fld%get("tocn", fldptr)
       fld3d(isc:iec,jsc:jec,1) = fldptr%val(isc:iec,jsc:jec,1)
 
-    ! TODO: Move unit change elsewhere, check if surface_temperature_where_sea
-    ! is COARDS.
+    ! TODO: Move unit change elsewhere, check if is COARDS.
     case ("surface_temperature_where_sea")
       call fld%get("tocn", fldptr)
       fld3d(isc:iec,jsc:jec,1) = fldptr%val(isc:iec,jsc:jec,1) + 273.15_kind_real
@@ -223,25 +218,6 @@ subroutine interp(fld, locs, vars, geoval, horiz_interp, horiz_interp_masked)
       fld3d(isc:iec,jsc:jec,1) = real(fld%geom%mask2d(isc:iec,jsc:jec),kind=kind_real)
       masked = .false.
 
-    case ("net_downwelling_shortwave_radiation")
-      call fld%get("sw", fldptr)
-      fld3d(isc:iec,jsc:jec,1) = fldptr%val(isc:iec,jsc:jec, 1)
-
-    case ("upward_latent_heat_flux_in_air")
-      call fld%get("lhf", fldptr)
-      fld3d(isc:iec,jsc:jec,1) = fldptr%val(isc:iec,jsc:jec, 1)
-
-    case ("upward_sensible_heat_flux_in_air")
-      call fld%get("shf", fldptr)
-      fld3d(isc:iec,jsc:jec,1) = fldptr%val(isc:iec,jsc:jec, 1)
-
-    case ("net_downwelling_longwave_radiation")
-      call fld%get("lw", fldptr)
-      fld3d(isc:iec,jsc:jec,1) = fldptr%val(isc:iec,jsc:jec, 1)
-
-    case ("friction_velocity_over_water")
-      call fld%get("us", fldptr)
-      fld3d(isc:iec,jsc:jec,1) = fldptr%val(isc:iec,jsc:jec, 1)
     case default
       call fckit_log%debug("soca_interpfields_mod:interp geoval does not exist")
     end select
@@ -287,11 +263,13 @@ subroutine getvalues_ad(incr, locs, vars, geoval, traj)
   logical :: masked
   integer :: ivar, nval, ival, indx
   integer :: isc, iec, jsc, jec
-  integer :: ni, nj, ns
+  integer :: ni, nj, ns, n
   real(kind=kind_real), allocatable :: gom_window(:,:)
   real(kind=kind_real), allocatable :: incr3d(:,:,:), incr3d_un(:)
   real(kind=kind_real), allocatable :: gom_window_ival(:)
   type(soca_field), pointer :: field
+  logical :: found
+
 
   ! Indices for compute domain (no halo)
   isc = incr%geom%isc ; iec = incr%geom%iec
@@ -301,7 +279,7 @@ subroutine getvalues_ad(incr, locs, vars, geoval, traj)
 
   do ivar = 1, vars%nvars()
     ! Set number of levels/categories (nval)
-    call nlev_from_ufovar(incr, vars, ivar, nval)
+    nval = nlev_from_ufovar(incr, vars%variable(ivar))
 
     ! Allocate temporary geoval and 3d field for the current time window
     allocate(gom_window(nval,locs%nlocs))
@@ -342,63 +320,44 @@ subroutine getvalues_ad(incr, locs, vars, geoval, traj)
       end if
     end do
 
-    ! Copy incr3d into field
-    select case (trim(vars%variable(ivar)))
-    case ("sea_ice_category_area_fraction")      
-      incr%seaice%cicen(isc:iec,jsc:jec,2:nval+1) = incr%seaice%cicen(isc:iec,jsc:jec,2:nval+1) + incr3d
+    ! if we are lucky and this variable is a non-derived type, check the fields structure
+    found = .false.
+    do n=1,size(incr%fields)
+      if (incr%fields(n)%cf_name == vars%variable(ivar)) then
+        incr%fields(n)%val(isc:iec,jsc:jec,1:nval) = &
+          incr%fields(n)%val(isc:iec,jsc:jec,1:nval) + incr3d(isc:iec,jsc:jec,1:nval)
+        found = .true.
+        exit 
+      end if
+    end do
+
+    ! otherwise, we are dealing with a derived type, prepare for a long "select case" statement
+    if (.not. found) then
+      select case (trim(vars%variable(ivar)))
+      case ("sea_ice_category_area_fraction")      
+        incr%seaice%cicen(isc:iec,jsc:jec,2:nval+1) = incr%seaice%cicen(isc:iec,jsc:jec,2:nval+1) + incr3d
+      
+      case ("sea_ice_category_thickness")
+        incr%seaice%hicen(isc:iec,jsc:jec,1:nval) = incr%seaice%hicen(isc:iec,jsc:jec,1:nval) +incr3d
+
+      case ("sea_water_salinity")
+        call incr%get("socn", field)
+        field%val(isc:iec,jsc:jec,1:nval) = field%val(isc:iec,jsc:jec,1:nval) + incr3d
+
+      case ("sea_surface_temperature")
+        call incr%get("tocn", field)
+        field%val(isc:iec,jsc:jec,1:nval) = field%val(isc:iec,jsc:jec,1:nval) + incr3d
+
+      case ("sea_surface_salinity")
+        call incr%get("socn", field)
+        field%val(isc:iec,jsc:jec,1) = field%val(isc:iec,jsc:jec,1) + incr3d(isc:iec,jsc:jec,1)
+
+      case default
+        call abor1_ftn("soca_interpfields_mod:getvalues_ad geoval does not exist")
+
+      end select
+    end if
     
-    case ("sea_ice_category_thickness")
-      incr%seaice%hicen(isc:iec,jsc:jec,1:nval) = incr%seaice%hicen(isc:iec,jsc:jec,1:nval) +incr3d
-
-    case ("sea_surface_height_above_geoid")
-      call incr%get("ssh", field)      
-      field%val(isc:iec,jsc:jec,1) = field%val(isc:iec,jsc:jec,1) +incr3d(isc:iec,jsc:jec,1)
-
-    case ("sea_water_potential_temperature")
-      call incr%get("tocn", field)
-      field%val(isc:iec,jsc:jec,1:nval) = field%val(isc:iec,jsc:jec,1:nval) + incr3d
-
-    case ("sea_water_practical_salinity", "sea_water_salinity")
-      call incr%get("socn", field)
-      field%val(isc:iec,jsc:jec,1:nval) = field%val(isc:iec,jsc:jec,1:nval) + incr3d
-
-    case ("sea_water_cell_thickness")
-      call incr%get("hocn", field)      
-      field%val(isc:iec,jsc:jec,1:nval) = field%val(isc:iec,jsc:jec,1:nval) + incr3d
-
-    case ("sea_surface_temperature")
-      call incr%get("tocn", field)
-      field%val(isc:iec,jsc:jec,1:nval) = field%val(isc:iec,jsc:jec,1:nval) + incr3d
-
-    case ("sea_surface_salinity")
-      call incr%get("socn", field)
-      field%val(isc:iec,jsc:jec,1) = field%val(isc:iec,jsc:jec,1) + incr3d(isc:iec,jsc:jec,1)
-
-    case ("net_downwelling_shortwave_radiation")
-      call incr%get("sw", field)
-      field%val(isc:iec,jsc:jec,1) = field%val(isc:iec,jsc:jec, 1) + incr3d(isc:iec,jsc:jec,1)
-
-    case ("net_downwelling_longwave_radiation")
-      call incr%get("lw", field)
-      field%val(isc:iec,jsc:jec,1) = field%val(isc:iec,jsc:jec, 1) + incr3d(isc:iec,jsc:jec,1)
-
-    case ("upward_latent_heat_flux_in_air")
-      call incr%get("lhf", field)
-      field%val(isc:iec,jsc:jec,1) = field%val(isc:iec,jsc:jec, 1) + incr3d(isc:iec,jsc:jec,1)
-
-    case ("upward_sensible_heat_flux_in_air")
-      call incr%get("shf", field)
-      field%val(isc:iec,jsc:jec,1) = field%val(isc:iec,jsc:jec, 1) + incr3d(isc:iec,jsc:jec,1)
-
-    case ("friction_velocity_over_water")
-      call incr%get("us", field)
-      field%val(isc:iec,jsc:jec,1) = field%val(isc:iec,jsc:jec, 1) + incr3d(isc:iec,jsc:jec,1)
-    
-    case default
-      call abor1_ftn("soca_interpfields_mod:getvalues_ad geoval does not exist")
-
-    end select
-
     ! Deallocate temporary arrays
     deallocate(incr3d)
     deallocate(gom_window)
@@ -411,43 +370,43 @@ end subroutine getvalues_ad
 
 ! ------------------------------------------------------------------------------
 !> Get 3rd dimension of fld
-subroutine nlev_from_ufovar(fld, vars, index_vars, nval)
-  type(soca_fields),     intent(in) :: fld
-  type(oops_variables),  intent(in) :: vars
-  integer,               intent(in) :: index_vars
-  integer,              intent(out) :: nval
+function nlev_from_ufovar(fld, var) result(nval)
+  type(soca_fields), intent(in) :: fld
+  character(len=*),  intent(in) :: var
+  integer                       :: nval
+  
+  integer :: i
 
-  ! Get number of levels or categories (nval)
-  select case (trim(vars%variable(index_vars)))
+  ! fields that are not derived (i.e. the "cf_name" is set for a given field)
+  do i=1,size(fld%fields)
+    if (fld%fields(i)%cf_name == var) then
+      nval = fld%fields(i)%nz
+      return
+    end if
+  end do
+
+  ! otherwise, the ufovar name is a derived type
+  select case (var)
   case ("sea_ice_category_area_fraction", &
         "sea_ice_category_thickness")
      nval = fld%geom%ncat
 
-  case ("sea_surface_height_above_geoid", &
-        "sea_surface_temperature", &
+  case ("sea_surface_temperature", &
         "surface_temperature_where_sea", &
         "sea_surface_salinity", &
         "sea_floor_depth_below_sea_surface", &
-        "sea_area_fraction", &
-        "net_downwelling_shortwave_radiation", &
-        "upward_latent_heat_flux_in_air", &
-        "upward_sensible_heat_flux_in_air", &
-        "net_downwelling_longwave_radiation", &
-        "friction_velocity_over_water")
+        "sea_area_fraction")
      nval = 1
 
-  case ("sea_water_potential_temperature", &
-        "sea_water_practical_salinity", &
-        "sea_water_salinity", &
-        "sea_water_cell_thickness")
+  case ("sea_water_salinity")
      nval = fld%geom%nzo
 
   case default
      nval = 0
-     call fckit_log%debug("soca_interpfields_mod:nlef_from_ufovar geoval does not exist")
+     call fckit_log%debug("soca_interpfields_mod:nlef_from_ufovar geoval does not exist: "//var)
 
   end select
 
-end subroutine nlev_from_ufovar
+end function nlev_from_ufovar
 
 end module soca_interpfields_mod
