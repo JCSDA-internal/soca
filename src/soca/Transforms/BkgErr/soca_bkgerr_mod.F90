@@ -123,7 +123,8 @@ subroutine soca_bkgerr_mult(self, dxa, dxm)
     field_e => self%std_bkgerr%fields(n)
     select case(field_e%name)
     case ("tocn", "socn", "ssh", &
-          'sw','lw','lhf','shf','us')
+          'sw','lw','lhf','shf','us', &
+          'cicen','hicen','hsnon')
       call dxm%get(field_e%name, field_m)
       call dxa%get(field_e%name, field_a)
       do i = isc, iec
@@ -133,11 +134,6 @@ subroutine soca_bkgerr_mult(self, dxa, dxm)
       end do
     end select
   end do
-
-  ! Sea-ice
-  call dxm%seaice%copy(dxa%seaice)
-  call dxm%seaice%schur(self%std_bkgerr%seaice)
-
 end subroutine soca_bkgerr_mult
 
 ! ------------------------------------------------------------------------------

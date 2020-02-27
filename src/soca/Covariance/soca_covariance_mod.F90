@@ -107,9 +107,7 @@ subroutine soca_cov_setup(self, f_conf, geom, bkg, vars)
   init_ocean = .false.
   do ivar = 1, self%vars%nvars()
      select case(trim(self%vars%variable(ivar)))
-     case('cicen')
-        init_seaice = .true.
-     case('hicen')
+     case('cicen','hicen')
         init_seaice = .true.
      case('tocn', 'socn', 'ssh')
         init_ocean = .true.
@@ -160,29 +158,23 @@ subroutine soca_cov_C_mult(self, dx)
   type(soca_field), pointer :: field
 
   do ivar = 1, self%vars%nvars()
-    select case(trim(self%vars%variable(ivar)))
-    case ('tocn', 'socn', 'ssh', &
-          'sw', 'lw', 'lhf', 'shf', 'us')
-      call dx%get(trim(self%vars%variable(ivar)), field)
-      nz = field%nz
-      do izo = 1,nz
-        call soca_2d_convol(field%val(:,:,izo), self%ocean_conv(1), dx%geom)
+    if (.not. dx%has(self%vars%variable(ivar))) cycle ! why is this sometimes getting an "empty" list with "none" in it?
+    call dx%get(trim(self%vars%variable(ivar)), field)
+    nz = field%nz
+    do izo = 1,nz
+      select case(trim(self%vars%variable(ivar)))
+      case ('tocn', 'socn', 'ssh', 'sw', 'lw', 'lhf', 'shf', 'us')            
+        call soca_2d_convol(field%val(:,:,izo), self%ocean_conv(1), dx%geom)  
+      case ('hicen')
+        call soca_2d_convol(field%val(:,:,izo), self%seaice_conv(1), dx%geom)        
+      end select
+    end do
+    if (self%vars%variable(ivar) == 'cicen') then
+      do icat = 1, dx%geom%ncat
+        call soca_2d_convol(field%val(:,:,icat+1), self%seaice_conv(1), dx%geom)
       end do      
-    end select
-
-    select case(trim(self%vars%variable(ivar)))
-    ! Apply convolution to sea-ice
-    case('cicen')
-      do icat = 1, dx%geom%ncat
-        call soca_2d_convol(dx%seaice%cicen(:,:,icat+1), self%seaice_conv(1), dx%geom)
-      end do
-    case('hicen')
-      do icat = 1, dx%geom%ncat
-        call soca_2d_convol(dx%seaice%hicen(:,:,icat), self%seaice_conv(1), dx%geom)
-      end do
-    end select
+    end if  
   end do
-
 end subroutine soca_cov_C_mult
 
 ! ------------------------------------------------------------------------------
@@ -204,7 +196,6 @@ subroutine soca_cov_sqrt_C_mult(self, dx)
     case ('ssh')
       scale = self%pert_scale%SSH
     end select
-
     if (scale > 0) then
       call dx%get(trim(self%vars%variable(ivar)), field)
       nz = field%nz
@@ -213,23 +204,26 @@ subroutine soca_cov_sqrt_C_mult(self, dx)
              &self%ocean_conv(1), dx%geom, scale)
       end do
     end if
-  
-    select case(trim(self%vars%variable(ivar)))      
+
     ! Apply C^1/2 to forcing
-    case('sw', 'lw', 'lhf', 'shf', 'us')
-      call dx%get(trim(self%vars%variable(ivar)), field)
+    select case(trim(self%vars%variable(ivar)))
+    case('sw', 'lw', 'lhf', 'shf', 'us')      
       call soca_2d_sqrt_convol(field%val(:,:,1), &
                 &self%ocean_conv(1), dx%geom, self%pert_scale%SSH)
+    end select
 
-    ! Apply C^1/2 to sea-ice
+    ! ice
+    select case (trim(self%vars%variable(ivar)))
     case('cicen')
+      call dx%get("cicen", field)
       do icat = 1, dx%geom%ncat
-        call soca_2d_sqrt_convol(dx%seaice%cicen(:,:,icat+1), &
+        call soca_2d_sqrt_convol(field%val(:,:,icat+1), &
                    &self%seaice_conv(1), dx%geom, self%pert_scale%AICE)
       end do
     case('hicen')
+      call dx%get("hicen", field)      
       do icat = 1, dx%geom%ncat
-        call soca_2d_sqrt_convol(dx%seaice%hicen(:,:,icat), &
+        call soca_2d_sqrt_convol(field%val(:,:,icat), &
                  &self%seaice_conv(1), dx%geom, self%pert_scale%HICE)
       end do
     end select   

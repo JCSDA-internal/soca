@@ -79,15 +79,19 @@ subroutine soca_bkgerrfilt_setup(f_conf, self, bkg)
            end do
         else
            ! Set to zero if ocean is too shallow
-           ssh%val(i,j,:)    = 0.0_kind_real
+           ssh%val(i,j,:)  = 0.0_kind_real
            tocn%val(i,j,:) = 0.0_kind_real
            socn%val(i,j,:) = 0.0_kind_real
         end if
-
-        ! Do nothing for sea-ice
-        self%filt%seaice%cicen(i,j,:) =  1.0_kind_real
-        self%filt%seaice%hicen(i,j,:) =  1.0_kind_real
      end do
+  end do
+
+  ! set other things to 1
+  do i=1,size(self%filt%fields)
+    select case(self%filt%fields(i)%name)
+    case ('cicen','hicen')
+      self%filt%fields(i)%val = 1.0_kind_real
+    end select
   end do
 
   ! Save filtered background error
@@ -133,17 +137,23 @@ subroutine soca_bkgerrfilt_mult(self, dxa, dxm)
     end select
   end do     
 
-  do i = self%isc, self%iec
-     do j = self%jsc, self%jec
-        if (self%bkg%geom%mask2d(i,j).eq.1) then
-           dxm%seaice%cicen(i,j,:) =  self%filt%seaice%cicen(i,j,:) * dxa%seaice%cicen(i,j,:)
-           dxm%seaice%hicen(i,j,:) =  self%filt%seaice%hicen(i,j,:) * dxa%seaice%hicen(i,j,:)
-        else
-           dxm%seaice%cicen(i,j,:) = 0.0_kind_real
-           dxm%seaice%hicen(i,j,:) = 0.0_kind_real
-        end if
-     end do
-  end do
+  do n=1,size(self%filt%fields)    
+    field => self%filt%fields(n)
+    call dxa%get(field%name, field_a)
+    call dxm%get(field%name, field_m)    
+    select case(field%name)
+    case ('cicen', 'hicen')
+      do i = self%isc, self%iec
+        do j = self%jsc, self%jec
+          if (self%bkg%geom%mask2d(i,j).eq.1) then
+            field_m%val(i,j,:) = field%val(i,j,:) * field_a%val(i,j,:)
+          else
+            field_m%val(i,j,:) = 0.0_kind_real
+          end if
+        end do
+      end do
+    end select
+  end do 
 
 end subroutine soca_bkgerrfilt_mult
 

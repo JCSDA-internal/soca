@@ -70,13 +70,18 @@ subroutine soca_bkgerr_applybounds(self, fld)
     case ("tocn")
       vmin = self%t_min
       vmax = self%t_max
-
     case ("socn")
       vmin = self%s_min
       vmax = self%s_max
     case ("ssh")
       vmin = self%ssh_min
       vmax = self%ssh_max
+    case ("cicen")
+      vmin = self%cicen_min
+      vmax = self%cicen_max
+    case ("hicen")
+      vmin = self%hicen_min
+      vmax = self%hicen_max
     case default
       cycle
     end select
@@ -85,18 +90,6 @@ subroutine soca_bkgerr_applybounds(self, fld)
       do j = jsc, jec
         field%val(i,j,:) = soca_adjust(field%val(i,j,:), vmin, vmax)
       end do  
-    end do
-  end do
-
-  do i = isc, iec
-    do j = jsc, jec
-        ! Apply bounds
-        fld%seaice%cicen(i,j,:) = soca_adjust(fld%seaice%cicen(i,j,:),&
-                                      &self%cicen_min,&
-                                      &self%cicen_max)
-        fld%seaice%hicen(i,j,:) = soca_adjust(fld%seaice%hicen(i,j,:),&
-                                      &self%hicen_min,&
-                                      &self%hicen_max)
     end do
   end do
 

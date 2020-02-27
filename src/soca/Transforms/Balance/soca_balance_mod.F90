@@ -41,7 +41,7 @@ subroutine soca_balance_setup(f_conf, self, traj)
 
   integer :: isc, iec, jsc, jec, i, j, k, nl
   real(kind=kind_real), allocatable :: jac(:)
-  type(soca_field), pointer :: tocn, socn, hocn
+  type(soca_field), pointer :: tocn, socn, hocn, cicen
 
   ! Store trajectory
   self%traj => traj
@@ -65,6 +65,7 @@ subroutine soca_balance_setup(f_conf, self, traj)
   call traj%get("tocn", tocn)
   call traj%get("socn", socn)
   call traj%get("hocn", hocn)
+  call traj%get("cicen", cicen)
   nl = hocn%nz
 
   allocate(self%kst%jacobian(isc:iec,jsc:jec,traj%geom%nzo))
@@ -118,7 +119,7 @@ subroutine soca_balance_setup(f_conf, self, traj)
   self%kct = 0.0_kind_real
   do i = isc, iec
      do j = jsc, jec
-        if (sum(traj%seaice%cicen(i,j,2:)) > 1.0e-3_kind_real) then
+        if (sum(cicen%val(i,j,2:)) > 1.0e-3_kind_real) then
            self%kct = -0.01d0 ! TODO: Insert regression coef
         end if
      end do
@@ -150,6 +151,7 @@ subroutine soca_balance_mult(self, dxa, dxm)
   type(soca_field), pointer :: tocn_m, tocn_a
   type(soca_field), pointer :: socn_m, socn_a
   type(soca_field), pointer :: ssh_m, ssh_a
+  type(soca_field), pointer :: cicen_m, cicen_a
 
   integer :: i, j, k
   real(kind=kind_real) :: deta, dxc
@@ -166,11 +168,13 @@ subroutine soca_balance_mult(self, dxa, dxm)
   call dxa%get("socn",socn_a)
   call dxm%get("ssh",ssh_m)
   call dxa%get("ssh",ssh_a)
+  call dxm%get("cicen",cicen_m)
+  call dxa%get("cicen",cicen_a)  
 
   do i = self%isc, self%iec
      do j = self%jsc, self%jec
         ! Temperature
-        dxc = sum(dxa%seaice%cicen(i,j,2:))
+        dxc = sum(cicen_a%val(i,j,2:))
         tocn_m%val(i,j,1) = tocn_a%val(i,j,1) + self%kct(i,j) * dxc
         tocn_m%val(i,j,:) = tocn_a%val(i,j,:)
 
@@ -187,14 +191,11 @@ subroutine soca_balance_mult(self, dxa, dxm)
         ssh_m%val(i,j,:) = ssh_a%val(i,j,:) + deta
 
         ! Ice fraction
-        dxm%seaice%cicen(i,j,:) =  dxa%seaice%cicen(i,j,:)
-        do k = 1, size(self%traj%seaice%hicen,3)
-           dxm%seaice%cicen(i,j,k+1) =  dxm%seaice%cicen(i,j,k+1) +&
+        cicen_m%val(i,j,:) = cicen_a%val(i,j,:)
+        do k = 1, cicen_m%nz-1
+           cicen_m%val(i,j,k+1) = cicen_m%val(i,j,k+1) +&
                 & self%kct(i,j) * tocn_a%val(i,j,1)
         end do
-
-        ! Ice thickness
-        dxm%seaice%hicen(i,j,:) =  dxa%seaice%hicen(i,j,:)
      end do
   end do
 
@@ -204,8 +205,8 @@ subroutine soca_balance_mult(self, dxa, dxm)
     fld_a => dxa%fields(i)
     call dxm%get(fld_a%name, fld_m)
     select case(fld_a%name)
-    case ('sw','lw','lhf','shf','us')
-      call fld_m%copy(fld_a)
+    case ('sw','lw','lhf','shf','us','hicen')
+      fld_m%val = fld_a%val
     end select
   end do
   
@@ -222,6 +223,7 @@ subroutine soca_balance_multad(self, dxa, dxm)
   type(soca_field), pointer :: tocn_a, tocn_m
   type(soca_field), pointer :: socn_a, socn_m
   type(soca_field), pointer :: ssh_a, ssh_m
+  type(soca_field), pointer :: cicen_m  
   integer :: i, j
 
   call dxa%get("tocn", tocn_a)
@@ -230,6 +232,7 @@ subroutine soca_balance_multad(self, dxa, dxm)
   call dxm%get("socn", socn_m)
   call dxa%get("ssh",  ssh_a)
   call dxm%get("ssh",  ssh_m)
+  call dxm%get("cicen",cicen_m)
 
   do i = self%isc, self%iec
      do j = self%jsc, self%jec
@@ -237,7 +240,7 @@ subroutine soca_balance_multad(self, dxa, dxm)
         tocn_a%val(i,j,1) = tocn_m%val(i,j,1) + &
              &self%kst%jacobian(i,j,1) * socn_m%val(i,j,1) + &
              &self%ksshts%kssht(i,j,1) * ssh_m%val(i,j,1) +&
-             &self%kct(i,j) * sum(dxm%seaice%cicen(i,j,2:))
+             &self%kct(i,j) * sum(cicen_m%val(i,j,2:))
         tocn_a%val(i,j,2:) = tocn_m%val(i,j,2:) + &
              &self%kst%jacobian(i,j,2:) * socn_m%val(i,j,2:) + &
              &self%ksshts%kssht(i,j,2:) * ssh_m%val(i,j,1)
@@ -246,10 +249,6 @@ subroutine soca_balance_multad(self, dxa, dxm)
              &self%ksshts%ksshs(i,j,:) * ssh_m%val(i,j, 1)
         ! SSH
         ssh_a%val(i,j,:) = ssh_m%val(i,j,:)
-        ! Ice fraction
-        dxa%seaice%cicen(i,j,:) =  dxm%seaice%cicen(i,j,:)
-        ! Ice thickness
-        dxa%seaice%hicen(i,j,:) =  dxm%seaice%hicen(i,j,:)
      end do
   end do
 
@@ -259,7 +258,7 @@ subroutine soca_balance_multad(self, dxa, dxm)
     fld_m => dxm%fields(i)
     call dxa%get(fld_m%name, fld_a)
     select case(fld_m%name)
-    case ('sw','lw','lhf','shf','us')
+    case ('sw','lw','lhf','shf','us','cicen','hicen')
       call fld_a%copy(fld_m)
     end select
   end do
@@ -279,6 +278,7 @@ subroutine soca_balance_multinv(self, dxa, dxm)
   type(soca_field), pointer :: tocn_m, tocn_a
   type(soca_field), pointer :: socn_m, socn_a
   type(soca_field), pointer :: ssh_m,  ssh_a
+  type(soca_field), pointer :: cicen_m, cicen_a
 
   call dxm%get("tocn", tocn_m)
   call dxa%get("tocn", tocn_a)
@@ -286,6 +286,8 @@ subroutine soca_balance_multinv(self, dxa, dxm)
   call dxa%get("socn", socn_a)
   call dxm%get("ssh",  ssh_m)
   call dxa%get("ssh",  ssh_a)
+  call dxm%get("cicen",cicen_m)
+  call dxa%get("cicen",cicen_a)
 
   do i = self%isc, self%iec
      do j = self%jsc, self%jec
@@ -304,13 +306,11 @@ subroutine soca_balance_multinv(self, dxa, dxm)
         end do
         ssh_a%val(i,j, :) = ssh_m%val(i,j, :) + deta
         ! Ice fraction
-        dxa%seaice%cicen(i,j,:) =  dxm%seaice%cicen(i,j,:)
-        do k = 1, size(self%traj%seaice%hicen,3)
-           dxa%seaice%cicen(i,j,k+1) =  dxa%seaice%cicen(i,j,k+1) -&
+        cicen_a%val(i,j,:) =  cicen_m%val(i,j,:)
+        do k = 1, cicen_a%nz-1
+           cicen_a%val(i,j,k+1) = cicen_a%val(i,j,k+1) -&
                 & self%kct(i,j) * tocn_m%val(i,j,1)
         end do
-        ! Ice thickness
-        dxa%seaice%hicen(i,j,:) =  dxm%seaice%hicen(i,j,:)
      end do
   end do
 
@@ -320,7 +320,7 @@ subroutine soca_balance_multinv(self, dxa, dxm)
     fld_m => dxm%fields(i)
     call dxa%get(fld_m%name, fld_a)
     select case(fld_m%name)
-    case ('sw','lw','lhf','shf','us')
+    case ('sw','lw','lhf','shf','us', 'hicen')
       call fld_a%copy(fld_m)
     end select
   end do
@@ -338,6 +338,7 @@ subroutine soca_balance_multinvad(self, dxa, dxm)
   type(soca_field), pointer :: tocn_a, tocn_m
   type(soca_field), pointer :: socn_a, socn_m
   type(soca_field), pointer :: ssh_a,  ssh_m
+  type(soca_field), pointer :: cicen_a  
 
   call dxm%get("tocn", tocn_m)  
   call dxa%get("tocn", tocn_a)
@@ -345,19 +346,16 @@ subroutine soca_balance_multinvad(self, dxa, dxm)
   call dxa%get("socn", socn_a)
   call dxm%get("ssh",  ssh_m)  
   call dxa%get("ssh",  ssh_a)
+  call dxa%get("cicen",cicen_a)
 
   do i = self%isc, self%iec
      do j = self%jsc, self%jec
-        ! Ice thickness
-        dxm%seaice%hicen(i,j,:) =  dxa%seaice%hicen(i,j,:)
-        ! Ice fraction
-        dxm%seaice%cicen(i,j,:) =  dxa%seaice%cicen(i,j,:)
         ! Temperature
         tocn_m%val(i,j,1) = tocn_a%val(i,j,1) &
              & - self%kst%jacobian(i,j,1) * socn_a%val(i,j,1) &
              & + ( self%ksshts%ksshs(i,j,1) * self%kst%jacobian(i,j,1) &
              &     - self%ksshts%kssht(i,j,1) ) * ssh_a%val(i,j,1) &
-             & - self%kct(i,j) * sum(dxa%seaice%cicen(i,j,2:))
+             & - self%kct(i,j) * sum(cicen_a%val(i,j,2:))
         tocn_m%val(i,j,2:) = tocn_a%val(i,j,2:) &
              & - self%kst%jacobian(i,j,2:) * socn_a%val(i,j,2:) &
              & + ( self%ksshts%ksshs(i,j,2:) * self%kst%jacobian(i,j,2:) &
@@ -376,8 +374,8 @@ subroutine soca_balance_multinvad(self, dxa, dxm)
     fld_a => dxa%fields(i)
     call dxm%get(fld_a%name, fld_m)
     select case(fld_a%name)
-    case ('sw','lw','lhf','shf','us')
-      call fld_m%copy(fld_a)
+    case ('sw','lw','lhf','shf','us','hicen','cicen')
+      fld_m%val = fld_a%val
     end select
   end do
 
