@@ -20,13 +20,7 @@ use ufo_geovals_mod_c, only: ufo_geovals_registry
 use ufo_geovals_mod, only: ufo_geovals
 use soca_geom_mod, only: soca_geom
 use soca_geom_mod_c, only: soca_geom_registry
-use soca_fields_mod, only: soca_fields, &
-                           dirac, &
-                           add_incr, axpy, change_resol, diff_incr, &
-                           dot_prod, field_from_ug, field_to_ug, ug_coord, fldrms, &
-                           gpnorm, random, read_file, write_file, &
-                           self_schur, self_sub, self_mul, self_add,&
-                           soca_getpoint,soca_setpoint
+use soca_fields_mod
 use soca_interpfields_mod, only: getvalues, getvalues_ad
 use soca_getvaltraj_mod, only: soca_getvaltraj
 use soca_getvaltraj_mod_c, only: soca_getvaltraj_registry
@@ -107,7 +101,7 @@ subroutine soca_field_dirac_c(c_key_self,c_conf) bind(c,name='soca_field_dirac_f
   type(soca_fields), pointer :: self
 
   call soca_field_registry%get(c_key_self,self)
-  call dirac(self,fckit_configuration(c_conf))
+  call self%dirac(fckit_configuration(c_conf))
 
 end subroutine soca_field_dirac_c
 
@@ -119,7 +113,7 @@ subroutine soca_field_random_c(c_key_self) bind(c,name='soca_field_random_f90')
   type(soca_fields), pointer :: self
 
   call soca_field_registry%get(c_key_self,self)
-  call random(self)
+  call self%random()
 
 end subroutine soca_field_random_c
 
@@ -151,7 +145,7 @@ subroutine soca_field_self_add_c(c_key_self,c_key_rhs) bind(c,name='soca_field_s
   call soca_field_registry%get(c_key_self,self)
   call soca_field_registry%get(c_key_rhs,rhs)
 
-  call self_add(self,rhs)
+  call self%add(rhs)
 
 end subroutine soca_field_self_add_c
 
@@ -167,7 +161,7 @@ subroutine soca_field_self_schur_c(c_key_self,c_key_rhs) bind(c,name='soca_field
   call soca_field_registry%get(c_key_self,self)
   call soca_field_registry%get(c_key_rhs,rhs)
 
-  call self_schur(self,rhs)
+  call self%schur(rhs)
 
 end subroutine soca_field_self_schur_c
 
@@ -183,7 +177,7 @@ subroutine soca_field_self_sub_c(c_key_self,c_key_rhs) bind(c,name='soca_field_s
   call soca_field_registry%get(c_key_self,self)
   call soca_field_registry%get(c_key_rhs,rhs)
 
-  call self_sub(self,rhs)
+  call self%sub(rhs)
 
 end subroutine soca_field_self_sub_c
 
@@ -199,7 +193,7 @@ subroutine soca_field_self_mul_c(c_key_self,c_zz) bind(c,name='soca_field_self_m
   call soca_field_registry%get(c_key_self,self)
   zz = c_zz
 
-  call self_mul(self,zz)
+  call self%mul(zz)
 
 end subroutine soca_field_self_mul_c
 
@@ -218,7 +212,7 @@ subroutine soca_field_axpy_c(c_key_self,c_zz,c_key_rhs) bind(c,name='soca_field_
   call soca_field_registry%get(c_key_rhs,rhs)
   zz = c_zz
 
-  call axpy(self,zz,rhs)
+  call self%axpy(zz,rhs)
 
 end subroutine soca_field_axpy_c
 
@@ -234,7 +228,7 @@ subroutine soca_field_dot_prod_c(c_key_fld1,c_key_fld2,c_prod) bind(c,name='soca
   call soca_field_registry%get(c_key_fld1,fld1)
   call soca_field_registry%get(c_key_fld2,fld2)
 
-  call dot_prod(fld1,fld2,zz)
+  call fld1%dot_prod(fld2,zz)
 
   c_prod = zz
 
@@ -569,7 +563,7 @@ subroutine soca_fieldnum_c(c_key_fld, nx, ny, nzo, nzi, ncat, nf) bind(c,name='s
   nzo = fld%geom%nzo
   nzi = fld%geom%nzi
   ncat = fld%geom%ncat
-  nf = fld%nf
+  nf = size(fld%fields)
 
 end subroutine soca_fieldnum_c
 
