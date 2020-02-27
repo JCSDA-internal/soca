@@ -12,7 +12,6 @@ use fckit_configuration_module, only: fckit_configuration
 use fckit_mpi_module, only: fckit_mpi_comm
 use random_mod, only: normal_distribution
 use oops_variables_mod
-use oobump_mod, only: bump_read_conf
 use type_bump, only: bump_type
 use kinds, only: kind_real
 use soca_fields_mod, only: soca_field
@@ -318,7 +317,7 @@ subroutine soca_bump_correlation(self, horiz_convol, geom, f_conf, domain)
   ! Initialize bump namelist/parameters
   call horiz_convol%nam%init()
   horiz_convol%nam%verbosity = 'none'
-  call bump_read_conf(f_conf, horiz_convol)
+  call horiz_convol%nam%from_conf(f_conf)
 
   if (domain.eq.'ocn') horiz_convol%nam%prefix = 'ocn'
   if (domain.eq.'ice') horiz_convol%nam%prefix = 'ice'
