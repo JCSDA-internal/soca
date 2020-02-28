@@ -246,7 +246,7 @@ subroutine soca_field_add_incr_c(c_key_self,c_key_rhs) bind(c,name='soca_field_a
   call soca_field_registry%get(c_key_self,self)
   call soca_field_registry%get(c_key_rhs,rhs)
 
-  call add_incr(self,rhs)
+  call self%add_incr(rhs)
 
 end subroutine soca_field_add_incr_c
 
@@ -265,7 +265,7 @@ subroutine soca_field_diff_incr_c(c_key_lhs,c_key_x1,c_key_x2) bind(c,name='soca
   call soca_field_registry%get(c_key_x1,x1)
   call soca_field_registry%get(c_key_x2,x2)
 
-  call diff_incr(lhs,x1,x2)
+  call lhs%diff_incr(x1,x2)
 
 end subroutine soca_field_diff_incr_c
 
@@ -280,7 +280,8 @@ subroutine soca_field_change_resol_c(c_key_fld,c_key_rhs) bind(c,name='soca_fiel
   call soca_field_registry%get(c_key_fld,fld)
   call soca_field_registry%get(c_key_rhs,rhs)
 
-  call change_resol(fld,rhs)
+  ! TODO implement a proper change of resolution, just copying for now
+  call fld%copy(rhs)
 
 end subroutine soca_field_change_resol_c
 
@@ -366,7 +367,7 @@ subroutine soca_field_write_file_c(c_key_fld, c_conf, c_dt) bind(c,name='soca_fi
 
   call soca_field_registry%get(c_key_fld,fld)
   call c_f_datetime(c_dt, fdate)
-  call write_file(fld, fckit_configuration(c_conf), fdate)
+  call fld%write(fckit_configuration(c_conf), fdate)
 
 end subroutine soca_field_write_file_c
 
@@ -383,7 +384,7 @@ subroutine soca_field_gpnorm_c(c_key_fld, kf, pstat) bind(c,name='soca_field_gpn
 
   call soca_field_registry%get(c_key_fld,fld)
 
-  call gpnorm(fld, kf, zstat)
+  call fld%gpnorm(kf, zstat)
   jj=0
   do jf = 1, kf
      do js = 1, 3
@@ -405,9 +406,8 @@ subroutine soca_field_rms_c(c_key_fld, prms) bind(c,name='soca_field_rms_f90')
 
   call soca_field_registry%get(c_key_fld,fld)
 
-  call fldrms(fld, zz)
-
-  prms = zz
+  call fld%dot_prod(fld, zz)
+  prms = sqrt(zz)
 
 end subroutine soca_field_rms_c
 
