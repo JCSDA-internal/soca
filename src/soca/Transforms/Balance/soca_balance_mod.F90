@@ -66,11 +66,12 @@ subroutine soca_balance_setup(f_conf, self, traj)
   call traj%get("socn", socn)
   call traj%get("hocn", hocn)
   call traj%get("cicen", cicen)
+  
   nl = hocn%nz
-
   allocate(self%kst%jacobian(isc:iec,jsc:jec,traj%geom%nzo))
   allocate(jac(nl))
   self%kst%jacobian=0.0
+
   do i = isc, iec
      do j = jsc, jec
         jac=0.0
@@ -92,8 +93,8 @@ subroutine soca_balance_setup(f_conf, self, traj)
   deallocate(jac)
 
   ! Compute Jacobian of Ksshts
-  allocate(self%ksshts%kssht(isc:iec,jsc:jec,traj%geom%nzo))
-  allocate(self%ksshts%ksshs(isc:iec,jsc:jec,traj%geom%nzo))
+  allocate(self%ksshts%kssht, mold=self%kst%jacobian)
+  allocate(self%ksshts%ksshs, mold=self%kst%jacobian)
   allocate(jac(2))
   self%ksshts%kssht=0.0
   self%ksshts%ksshs=0.0
@@ -115,7 +116,7 @@ subroutine soca_balance_setup(f_conf, self, traj)
   deallocate(jac)
 
   ! Compute Kst
-  allocate(self%kct(isc:iec,jsc:jec))
+  allocate(self%kct, mold=self%kst%jacobian(:,:,1))
   self%kct = 0.0_kind_real
   do i = isc, iec
      do j = jsc, jec
@@ -192,8 +193,8 @@ subroutine soca_balance_mult(self, dxa, dxm)
 
         ! Ice fraction
         cicen_m%val(i,j,:) = cicen_a%val(i,j,:)
-        do k = 1, cicen_m%nz-1
-           cicen_m%val(i,j,k+1) = cicen_m%val(i,j,k+1) +&
+        do k = 1, cicen_m%nz
+           cicen_m%val(i,j,k) = cicen_m%val(i,j,k) +&
                 & self%kct(i,j) * tocn_a%val(i,j,1)
         end do
      end do
@@ -240,7 +241,7 @@ subroutine soca_balance_multad(self, dxa, dxm)
         tocn_a%val(i,j,1) = tocn_m%val(i,j,1) + &
              &self%kst%jacobian(i,j,1) * socn_m%val(i,j,1) + &
              &self%ksshts%kssht(i,j,1) * ssh_m%val(i,j,1) +&
-             &self%kct(i,j) * sum(cicen_m%val(i,j,2:))
+             &self%kct(i,j) * sum(cicen_m%val(i,j,:))
         tocn_a%val(i,j,2:) = tocn_m%val(i,j,2:) + &
              &self%kst%jacobian(i,j,2:) * socn_m%val(i,j,2:) + &
              &self%ksshts%kssht(i,j,2:) * ssh_m%val(i,j,1)
@@ -307,8 +308,8 @@ subroutine soca_balance_multinv(self, dxa, dxm)
         ssh_a%val(i,j, :) = ssh_m%val(i,j, :) + deta
         ! Ice fraction
         cicen_a%val(i,j,:) =  cicen_m%val(i,j,:)
-        do k = 1, cicen_a%nz-1
-           cicen_a%val(i,j,k+1) = cicen_a%val(i,j,k+1) -&
+        do k = 1, cicen_a%nz
+           cicen_a%val(i,j,k) = cicen_a%val(i,j,k) -&
                 & self%kct(i,j) * tocn_m%val(i,j,1)
         end do
      end do
@@ -355,7 +356,7 @@ subroutine soca_balance_multinvad(self, dxa, dxm)
              & - self%kst%jacobian(i,j,1) * socn_a%val(i,j,1) &
              & + ( self%ksshts%ksshs(i,j,1) * self%kst%jacobian(i,j,1) &
              &     - self%ksshts%kssht(i,j,1) ) * ssh_a%val(i,j,1) &
-             & - self%kct(i,j) * sum(cicen_a%val(i,j,2:))
+             & - self%kct(i,j) * sum(cicen_a%val(i,j,:))
         tocn_m%val(i,j,2:) = tocn_a%val(i,j,2:) &
              & - self%kst%jacobian(i,j,2:) * socn_a%val(i,j,2:) &
              & + ( self%ksshts%ksshs(i,j,2:) * self%kst%jacobian(i,j,2:) &

@@ -187,10 +187,6 @@ subroutine interp(fld, locs, vars, geoval, horiz_interp, horiz_interp_masked)
 
     ! otherwise, we are dealing with a derived type, prepare for a long "select case" statement
     select case (trim(vars%variable(ivar)))
-    case ("sea_ice_category_area_fraction")
-      call fld%get("cicen", fldptr)      
-      fld3d = fldptr%val(isc:iec,jsc:jec,2:nval+1)
-    
     case ("sea_water_salinity")
       call fld%get("socn", fldptr)
       fld3d = fldptr%val(isc:iec,jsc:jec,1:nval)
@@ -332,10 +328,6 @@ subroutine getvalues_ad(incr, locs, vars, geoval, traj)
     ! otherwise, we are dealing with a derived type, prepare for a long "select case" statement
     if (.not. found) then
       select case (trim(vars%variable(ivar)))
-      case ("sea_ice_category_area_fraction")
-        call incr%get("cicen", field)
-        field%val(isc:iec,jsc:jec,2:nval+1) = field%val(isc:iec,jsc:jec,2:nval+1) + incr3d
-      
       case ("sea_water_salinity")
         call incr%get("socn", field)
         field%val(isc:iec,jsc:jec,1:nval) = field%val(isc:iec,jsc:jec,1:nval) + incr3d
@@ -383,10 +375,6 @@ function nlev_from_ufovar(fld, var) result(nval)
 
   ! otherwise, the ufovar name is a derived type
   select case (var)
-  case ("sea_ice_category_area_fraction", &
-        "sea_ice_category_thickness")
-     nval = fld%geom%ncat
-
   case ("sea_surface_temperature", &
         "surface_temperature_where_sea", &
         "sea_surface_salinity", &

@@ -8,7 +8,7 @@ model:
   name: SOCA
   tstep: PT6H
   advance_mom6: 1
-  variables: &soca_vars [cicen, hicen, socn, tocn, ssh, hocn, sw, lhf, shf, lw, us]
+  variables: &soca_vars [cicen, hicen, hsnon, socn, tocn, ssh, hocn, sw, lhf, shf, lw, us]
 
 initial:
   read_from_file: 1

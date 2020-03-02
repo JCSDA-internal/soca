@@ -63,50 +63,43 @@ subroutine soca_initialize_integration(self, flds)
 
   integer :: i
   
-  ! Update halo
+  ! for each field
   do i=1,size(flds%fields)
-    select case(flds%fields(i)%name)
-    case ("tocn", "socn")
-      call flds%get(flds%fields(i)%name, field)
-      call mpp_update_domains(field%val, flds%geom%Domain%mpp_domain)
+    call flds%get(flds%fields(i)%name, field)    
+    
+    ! Update halos  
+    call mpp_update_domains(field%val, flds%geom%Domain%mpp_domain)
+
+    ! impose bounds, and set MOM6 state
+    select case (field%name)
+    case ("tocn")
+      if ( self%tocn_minmax(1) /= real(-999., kind=8) ) &
+        where( field%val < self%tocn_minmax(1) ) field%val = self%tocn_minmax(1)
+      if ( self%tocn_minmax(2) /= real(-999., kind=8) ) &
+        where( field%val > self%tocn_minmax(2) ) field%val = self%tocn_minmax(2)
+      self%mom6_config%MOM_CSp%T = real(field%val, kind=8)        
+    case ("socn")
+      if ( self%socn_minmax(1) /= real(-999., kind=8) ) &
+        where( field%val < self%socn_minmax(1) ) field%val = self%socn_minmax(1)
+      if ( self%socn_minmax(2) /= real(-999., kind=8) ) &
+        where( field%val > self%socn_minmax(2) ) field%val = self%socn_minmax(2)
+      self%mom6_config%MOM_CSp%S = real(field%val, kind=8)
     end select
+
+    ! update forcing
+    select case(field%name)
+    case ("sw")
+      field%val(:,:,1) = - real(self%mom6_config%fluxes%sw, kind=kind_real)
+    case ("lw")
+      field%val(:,:,1) = - real(self%mom6_config%fluxes%lw, kind=kind_real)  
+    case ("lhf")      
+      field%val(:,:,1) = - real(self%mom6_config%fluxes%latent, kind=kind_real)
+    case ("shf")      
+      field%val(:,:,1) = - real(self%mom6_config%fluxes%sens, kind=kind_real)
+    case ("us")
+      field%val(:,:,1) =   real(self%mom6_config%fluxes%ustar, kind=kind_real)
+    end select      
   end do
-
-  ! Impose bounds to T & S
-  ! TODO: Replace by a change of variable.
-  call flds%get("tocn", field)
-  if ( self%tocn_minmax(1) /= real(-999., kind=8) ) &
-    where( field%val < self%tocn_minmax(1) ) field%val = self%tocn_minmax(1)
-  if ( self%tocn_minmax(2) /= real(-999., kind=8) ) &
-    where( field%val > self%tocn_minmax(2) ) field%val = self%tocn_minmax(2)
-  
-  call flds%get("socn", field)
-  if ( self%socn_minmax(1) /= real(-999., kind=8) ) &
-    where( field%val < self%socn_minmax(1) ) field%val = self%socn_minmax(1)
-  if ( self%socn_minmax(2) /= real(-999., kind=8) ) &
-    where( field%val > self%socn_minmax(2) ) field%val = self%socn_minmax(2)
-
-  ! Update MOM's T and S to soca's
-  call flds%get("tocn", field)
-  self%mom6_config%MOM_CSp%T = real(field%val, kind=8)
-  call flds%get("socn", field)  
-  self%mom6_config%MOM_CSp%S = real(field%val, kind=8)
-
-  ! Update soca forcing
-  ! TODO, test for each name separately ?
-  if (flds%has("sw")) then
-    call flds%get("sw", field)
-    field%val(:,:,1) = - real(self%mom6_config%fluxes%sw, kind=kind_real)
-    call flds%get("lw", field)
-    field%val(:,:,1) = - real(self%mom6_config%fluxes%lw, kind=kind_real)  
-    call flds%get("lhf", field)
-    field%val(:,:,1) = - real(self%mom6_config%fluxes%latent, kind=kind_real)
-    call flds%get("shf", field)
-    field%val(:,:,1) = - real(self%mom6_config%fluxes%sens, kind=kind_real)
-    call flds%get("us", field)
-    field%val(:,:,1) = real(self%mom6_config%fluxes%ustar, kind=kind_real)
-  end if
-
 end subroutine soca_initialize_integration
 
 ! ------------------------------------------------------------------------------
@@ -122,24 +115,22 @@ subroutine soca_propagate(self, flds, fldsdate)
   integer :: year, month, day, hour, minute, second, i
   character(len=20) :: strdate
 
-  ! Update halo
+  ! for each field
   do i=1,size(flds%fields)
-    select case(flds%fields(i)%name)
-    case ("tocn", "socn")
-      call flds%get(flds%fields(i)%name, field)
-      call mpp_update_domains(field%val, flds%geom%Domain%mpp_domain)
+    field => flds%fields(i)
+
+    ! update halos   
+    call mpp_update_domains(field%val, flds%geom%Domain%mpp_domain)
+
+    ! update MOM state
+    select case(field%name)
+    case ("tocn")
+      self%mom6_config%MOM_CSp%T = real(field%val, kind=8)
+    case ("socn")
+      self%mom6_config%MOM_CSp%S = real(field%val, kind=8)
+    ! TODO: pass forcing back to MOM      
     end select
   end do
-
-  ! Update MOM's T and S to soca's
-  call flds%get("tocn", field)
-  self%mom6_config%MOM_CSp%T = real(field%val, kind=8)
-  call flds%get("socn", field)  
-  self%mom6_config%MOM_CSp%S = real(field%val, kind=8)
-
-  ! Update forcing
-  ! TODO: pass forcing back to MOM, line below doesn't do anything.
-  !call flds%ocnsfc%pushforcing(self%mom6_config%fluxes)
 
   ! Set ocean clock
   call datetime_to_string(fldsdate, strdate)
@@ -181,30 +172,29 @@ subroutine soca_propagate(self, flds, fldsdate)
   self%mom6_config%Time = ocean_time
 
   ! Update soca fields
-  call flds%get("tocn", field)
-  field%val = real(self%mom6_config%MOM_CSp%T, kind=kind_real)
-  call flds%get("socn", field)
-  field%val = real(self%mom6_config%MOM_CSp%S, kind=kind_real)
-  call flds%get("hocn", field)
-  field%val = real(self%mom6_config%MOM_CSp%h, kind=kind_real)
-  call flds%get("ssh", field)
-  field%val(:,:,1) = real(self%mom6_config%MOM_CSp%ave_ssh_ibc, kind=kind_real)
-
-  ! Update soca forcing
-  ! TODO test for each name separately
-  if (flds%has("sw")) then
-    call flds%get("sw", field)
-    field%val(:,:,1) = - real(self%mom6_config%fluxes%sw, kind=kind_real)
-    call flds%get("lw", field)
-    field%val(:,:,1) = - real(self%mom6_config%fluxes%lw, kind=kind_real)  
-    call flds%get("lhf", field)
-    field%val(:,:,1) = - real(self%mom6_config%fluxes%latent, kind=kind_real)
-    call flds%get("shf", field)
-    field%val(:,:,1) = - real(self%mom6_config%fluxes%sens, kind=kind_real)
-    call flds%get("us", field)
-    field%val(:,:,1) = real(self%mom6_config%fluxes%ustar, kind=kind_real)
-  end if
-
+  do i=1,size(flds%fields)
+    field => flds%fields(i)
+    select case(field%name)
+    case ("tocn")
+      field%val = real(self%mom6_config%MOM_CSp%T, kind=kind_real)
+    case ("socn")
+      field%val = real(self%mom6_config%MOM_CSp%S, kind=kind_real)
+    case ("hocn")
+      field%val = real(self%mom6_config%MOM_CSp%h, kind=kind_real)
+    case ("ssh")
+      field%val(:,:,1) = real(self%mom6_config%MOM_CSp%ave_ssh_ibc, kind=kind_real)
+    case ("sw")
+      field%val(:,:,1) = - real(self%mom6_config%fluxes%sw, kind=kind_real)
+    case ("lw")
+      field%val(:,:,1) = - real(self%mom6_config%fluxes%lw, kind=kind_real)  
+    case ("lhf")
+      field%val(:,:,1) = - real(self%mom6_config%fluxes%latent, kind=kind_real)
+    case ("shf")      
+      field%val(:,:,1) = - real(self%mom6_config%fluxes%sens, kind=kind_real)
+    case ("us")
+      field%val(:,:,1) = real(self%mom6_config%fluxes%ustar, kind=kind_real)
+    end select
+  end do
 end subroutine soca_propagate
 
 ! ------------------------------------------------------------------------------
@@ -216,34 +206,29 @@ subroutine soca_finalize_integration(self, flds)
   type(soca_field), pointer :: field
   integer :: i
 
-  ! Update halo
+  ! for each field
   do i=1,size(flds%fields)
-    select case(flds%fields(i)%name)
-    case ("tocn", "socn")
-      call flds%get(flds%fields(i)%name, field)
-      call mpp_update_domains(field%val, flds%geom%Domain%mpp_domain)
-    end select
+    field => flds%fields(i)
+    
+    ! update halos
+    call mpp_update_domains(field%val, flds%geom%Domain%mpp_domain)
+
+    ! impose bounds and update MOM6
+    select case(field%name)
+    case ("tocn")
+      if ( self%tocn_minmax(1) /= real(-999., kind=8) ) &
+        where( field%val < self%tocn_minmax(1) ) field%val = self%tocn_minmax(1)
+      if ( self%tocn_minmax(2) /= real(-999., kind=8) ) &
+        where( field%val > self%tocn_minmax(2) ) field%val = self%tocn_minmax(2)
+      self%mom6_config%MOM_CSp%T = real(field%val, kind=8)
+    case ("socn")
+      if ( self%socn_minmax(1) /= real(-999., kind=8) ) &
+        where( field%val < self%socn_minmax(1) ) field%val = self%socn_minmax(1)
+      if ( self%socn_minmax(2) /= real(-999., kind=8) ) &
+        where( field%val > self%socn_minmax(2) ) field%val = self%socn_minmax(2)
+      self%mom6_config%MOM_CSp%S = real(field%val, kind=8)
+    end select  
   end do
-
-  ! Impose bounds to T & S
-  ! TODO: Replace by a change of variable.
-  call flds%get("tocn", field)
-  if ( self%tocn_minmax(1) /= real(-999., kind=8) ) &
-    where( field%val < self%tocn_minmax(1) ) field%val = self%tocn_minmax(1)
-  if ( self%tocn_minmax(2) /= real(-999., kind=8) ) &
-    where( field%val > self%tocn_minmax(2) ) field%val = self%tocn_minmax(2)
-
-  call flds%get("socn", field)
-  if ( self%socn_minmax(1) /= real(-999., kind=8) ) &
-    where( field%val < self%socn_minmax(1) ) field%val = self%socn_minmax(1)
-  if ( self%socn_minmax(2) /= real(-999., kind=8) ) &
-    where( field%val > self%socn_minmax(2) ) field%val = self%socn_minmax(2)
-
-  ! Update MOM's T and S to soca's
-  call flds%get("tocn", field)
-  self%mom6_config%MOM_CSp%T = real(field%val, kind=8)
-  call flds%get("socn", field)  
-  self%mom6_config%MOM_CSp%S = real(field%val, kind=8)
 
   ! Save MOM restarts with updated SOCA fields
   call save_restart(self%mom6_config%dirs%restart_output_dir, &
