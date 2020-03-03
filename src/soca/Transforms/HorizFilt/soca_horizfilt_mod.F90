@@ -138,24 +138,20 @@ contains
 
     type(soca_field), pointer :: field_i, field_o
 
-    integer :: k, ivar, nz
+    integer :: k, ivar
     real(kind=kind_real), allocatable, dimension(:,:) :: dxi, dxo
 
     allocate(dxi(self%isd:self%ied,self%jsd:self%jed))
     allocate(dxo(self%isd:self%ied,self%jsd:self%jed))
 
-    ! TODO use the full list of vars?
     do ivar = 1, self%vars%nvars()
-       select case (trim(self%vars%variable(ivar)))
-       case ("tocn", "socn", "ssh", "cicen", "hicen")
-         call dxin%get(trim(self%vars%variable(ivar)),  field_i)
-         call dxout%get(trim(self%vars%variable(ivar)), field_o)
-          do k = 1, field_i%nz
-             dxi = field_i%val(:,:,k)
-             call soca_filt2d(self, dxi, dxo, geom)
-             field_o%val(:,:,k) = dxo
-          end do
-       end select
+      call dxin%get(trim(self%vars%variable(ivar)),  field_i)
+      call dxout%get(trim(self%vars%variable(ivar)), field_o)
+      do k = 1, field_i%nz
+        dxi = field_i%val(:,:,k)
+        call soca_filt2d(self, dxi, dxo, geom)
+        field_o%val(:,:,k) = dxo
+      end do
     end do
     deallocate(dxi, dxo)
 
@@ -177,16 +173,13 @@ contains
     allocate(dxo(self%isd:self%ied,self%jsd:self%jed))
 
     do ivar = 1, self%vars%nvars()
-       select case (trim(self%vars%variable(ivar)))
-       case ("tocn", "socn", "ssh", "cicen", "hicen")
-         call dxin%get(trim(self%vars%variable(ivar)),  field_i)
-         call dxout%get(trim(self%vars%variable(ivar)), field_o)
-          do k = 1, field_i%nz
-             dxi = field_i%val(:,:,k)
-             call soca_filt2d_ad(self, dxi, dxo, geom)
-             field_o%val(:,:,k) = dxo
-          end do
-       end select
+      call dxin%get(trim(self%vars%variable(ivar)),  field_i)
+      call dxout%get(trim(self%vars%variable(ivar)), field_o)
+       do k = 1, field_i%nz
+          dxi = field_i%val(:,:,k)
+          call soca_filt2d_ad(self, dxi, dxo, geom)
+          field_o%val(:,:,k) = dxo
+       end do
     end do
     deallocate(dxi, dxo)
 
