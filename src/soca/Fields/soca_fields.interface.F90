@@ -297,7 +297,7 @@ subroutine soca_field_ug_coord_c(c_key_fld, c_key_ug) bind (c,name='soca_field_u
   call soca_field_registry%get(c_key_fld,fld)
   call unstructured_grid_registry%get(c_key_ug,ug)
 
-  call ug_coord(fld, ug)
+  call fld%ug_coord(ug)
 
 end subroutine soca_field_ug_coord_c
 
@@ -308,7 +308,7 @@ subroutine soca_field_field_to_ug_c(c_key_fld, c_key_ug, c_its) bind (c,name='so
   integer(c_int), intent(in) :: c_key_ug
   integer(c_int), intent(in) :: c_its
 
-  type(soca_fields),        pointer :: fld
+  type(soca_fields),       pointer :: fld
   type(unstructured_grid), pointer :: ug
   integer                          :: its
 
@@ -316,7 +316,7 @@ subroutine soca_field_field_to_ug_c(c_key_fld, c_key_ug, c_its) bind (c,name='so
   call unstructured_grid_registry%get(c_key_ug,ug)
   its = c_its+1
 
-  call field_to_ug(fld, ug, its)
+  call fld%to_ug(ug, its)
 
 end subroutine soca_field_field_to_ug_c
 
@@ -327,7 +327,7 @@ subroutine soca_field_field_from_ug_c(c_key_fld, c_key_ug, c_its) bind (c,name='
   integer(c_int), intent(in) :: c_key_ug
   integer(c_int), intent(in) :: c_its
 
-  type(soca_fields),        pointer :: fld
+  type(soca_fields),       pointer :: fld
   type(unstructured_grid), pointer :: ug
   integer                          :: its
 
@@ -335,7 +335,7 @@ subroutine soca_field_field_from_ug_c(c_key_fld, c_key_ug, c_its) bind (c,name='
   call unstructured_grid_registry%get(c_key_ug,ug)
   its = c_its+1
 
-  call field_from_ug(fld, ug, its)
+  call fld%from_ug(ug, its)
 
 end subroutine soca_field_field_from_ug_c
 
@@ -351,7 +351,7 @@ subroutine soca_field_read_file_c(c_key_fld, c_conf, c_dt) bind(c,name='soca_fie
 
   call soca_field_registry%get(c_key_fld,fld)
   call c_f_datetime(c_dt, fdate)
-  call read_file(fld, fckit_configuration(c_conf), fdate)
+  call fld%read(fckit_configuration(c_conf), fdate)
 
 end subroutine soca_field_read_file_c
 
@@ -367,7 +367,7 @@ subroutine soca_field_write_file_c(c_key_fld, c_conf, c_dt) bind(c,name='soca_fi
 
   call soca_field_registry%get(c_key_fld,fld)
   call c_f_datetime(c_dt, fdate)
-  call fld%write(fckit_configuration(c_conf), fdate)
+  call fld%write_rst(fckit_configuration(c_conf), fdate)
 
 end subroutine soca_field_write_file_c
 
@@ -526,7 +526,7 @@ subroutine soca_field_getpoint_c(c_key_fld,c_key_iter,values, values_len) bind(c
   call soca_field_registry%get(c_key_fld,fld)
   call soca_geom_iter_registry%get(c_key_iter,iter)
 
-  call soca_getpoint(fld, iter, values) 
+  call fld%getpoint(iter, values) 
 
 end subroutine soca_field_getpoint_c
 
@@ -544,7 +544,7 @@ subroutine soca_field_setpoint_c(c_key_fld,c_key_iter,values, values_len) bind(c
   call soca_field_registry%get(c_key_fld,fld)
   call soca_geom_iter_registry%get(c_key_iter,iter)
 
-  call soca_setpoint(fld, iter, values)    
+  call fld%setpoint(iter, values)    
 
 end subroutine soca_field_setpoint_c
 

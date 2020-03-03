@@ -150,6 +150,7 @@ subroutine soca_cov_C_mult(self, dx)
     if (.not. dx%has(self%vars%variable(i))) cycle ! why is this sometimes getting an "empty" list with "none" in it?
     call dx%get(trim(self%vars%variable(i)), field)
 
+    ! TODO remove the hardcoded variables
     ! ice or ocean convolution ?
     select case(field%name)
     case ('tocn', 'socn', 'ssh', 'sw', 'lw', 'lhf', 'shf', 'us')

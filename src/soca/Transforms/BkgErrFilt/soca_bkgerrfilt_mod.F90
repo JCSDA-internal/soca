@@ -8,7 +8,7 @@ module soca_bkgerrfilt_mod
 use fckit_configuration_module, only: fckit_configuration
 use datetime_mod, only: datetime
 use kinds, only: kind_real
-use soca_fields_mod, only: soca_fields, soca_field, soca_fld2file
+use soca_fields_mod
 
 implicit none
 
@@ -97,7 +97,7 @@ subroutine soca_bkgerrfilt_setup(f_conf, self, bkg)
   end do
 
   ! Save filtered background error
-  call soca_fld2file(self%filt, fname)
+  call self%filt%write_file(fname)
 
 end subroutine soca_bkgerrfilt_setup
 

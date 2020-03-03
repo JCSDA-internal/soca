@@ -8,7 +8,7 @@ module soca_bkgerr_mod
 use fckit_configuration_module, only: fckit_configuration
 use datetime_mod, only: datetime
 use kinds, only: kind_real
-use soca_fields_mod, only: soca_fields, soca_field, read_file, soca_fld2file
+use soca_fields_mod
 use soca_bkgerrutil_mod, only: soca_bkgerr_bounds_type
 
 implicit none
@@ -50,7 +50,7 @@ subroutine soca_bkgerr_setup(f_conf, self, bkg)
 
   ! Read variance
   ! Precomputed from an ensemble of (K^-1 dx)
-  call read_file(self%std_bkgerr, f_conf, vdate)
+  call self%std_bkgerr%read(f_conf, vdate)
 
   ! Convert to standard deviation
   do i=1,size(self%std_bkgerr%fields)
@@ -100,7 +100,7 @@ subroutine soca_bkgerr_setup(f_conf, self, bkg)
   call self%bounds%apply(self%std_bkgerr)
 
   ! Save filtered background error
-  call soca_fld2file(self%std_bkgerr, fname)
+  call self%std_bkgerr%write_file(fname)
 
 end subroutine soca_bkgerr_setup
 
