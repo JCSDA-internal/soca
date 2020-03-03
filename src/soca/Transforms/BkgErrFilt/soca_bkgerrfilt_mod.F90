@@ -89,7 +89,9 @@ subroutine soca_bkgerrfilt_setup(f_conf, self, bkg)
   ! set other things to 1
   do i=1,size(self%filt%fields)
     select case(self%filt%fields(i)%name)
-    case ('cicen','hicen')
+    case ('ssh','tocn','socn')
+      continue
+    case default
       self%filt%fields(i)%val = 1.0_kind_real
     end select
   end do
@@ -106,55 +108,23 @@ subroutine soca_bkgerrfilt_mult(self, dxa, dxm)
   type(soca_fields),            intent(in) :: dxa
   type(soca_fields),         intent(inout) :: dxm
 
-  integer :: i, j,n 
+  integer :: i, j, n 
   type(soca_field), pointer :: field, field_a, field_m
 
   do n=1,size(self%filt%fields)    
     field => self%filt%fields(n)
-    select case(field%name)
-    case ("tocn", "socn", "ssh", 'sw','lw','shf','lhf','us')
-      call dxa%get(field%name, field_a)
-      call dxm%get(field%name, field_m)
-      do i = self%isc, self%iec
-        do j = self%jsc, self%jec
-          if (self%bkg%geom%mask2d(i,j).eq.1) then
-            field_m%val(i,j,:) = field%val(i,j,:) * field_a%val(i,j,:)
-          else
-            field_m%val(i,j,:) = 0.0_kind_real
-          end if
-        end do
-      end do
-    end select
-  end do  
-
-  ! copy sfc vars without filtering
-  do n=1,size(dxa%fields)    
-    field_a => dxa%fields(n)
-    field_m => dxm%fields(n)
-    select case(field_a%name)
-    case ('sw','lw','shf','lhf','us')
-      field_m%val = field_a%val
-    end select
-  end do     
-
-  do n=1,size(self%filt%fields)    
-    field => self%filt%fields(n)
     call dxa%get(field%name, field_a)
-    call dxm%get(field%name, field_m)    
-    select case(field%name)
-    case ('cicen', 'hicen')
-      do i = self%isc, self%iec
-        do j = self%jsc, self%jec
-          if (self%bkg%geom%mask2d(i,j).eq.1) then
-            field_m%val(i,j,:) = field%val(i,j,:) * field_a%val(i,j,:)
-          else
-            field_m%val(i,j,:) = 0.0_kind_real
-          end if
-        end do
+    call dxm%get(field%name, field_m)
+    do i = self%isc, self%iec
+      do j = self%jsc, self%jec
+        if (self%bkg%geom%mask2d(i,j).eq.1) then
+          field_m%val(i,j,:) = field%val(i,j,:) * field_a%val(i,j,:)
+        else
+          field_m%val(i,j,:) = 0.0_kind_real
+        end if
       end do
-    end select
-  end do 
-
+    end do
+  end do  
 end subroutine soca_bkgerrfilt_mult
 
 ! ------------------------------------------------------------------------------

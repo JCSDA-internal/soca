@@ -121,18 +121,13 @@ subroutine soca_bkgerr_mult(self, dxa, dxm)
 
   do n=1,size(self%std_bkgerr%fields)
     field_e => self%std_bkgerr%fields(n)
-    select case(field_e%name)
-    case ("tocn", "socn", "ssh", &
-          'sw','lw','lhf','shf','us', &
-          'cicen','hicen','hsnon')
-      call dxm%get(field_e%name, field_m)
-      call dxa%get(field_e%name, field_a)
-      do i = isc, iec
-        do j = jsc, jec
-          field_m%val(i,j,:) = field_e%val(i,j,:) * field_a%val(i,j,:)
-        end do
+    call dxm%get(field_e%name, field_m)
+    call dxa%get(field_e%name, field_a)
+    do i = isc, iec
+      do j = jsc, jec
+        field_m%val(i,j,:) = field_e%val(i,j,:) * field_a%val(i,j,:)
       end do
-    end select
+    end do
   end do
 end subroutine soca_bkgerr_mult
 

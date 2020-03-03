@@ -108,31 +108,16 @@ subroutine soca_bkgerrgodas_mult(self, dxa, dxm)
 
   do n=1,size(self%std_bkgerr%fields)
     field_e => self%std_bkgerr%fields(n)
-    select case(field_e%name)
-    case ("tocn","socn", "ssh","cicen","hicen")
-      call dxm%get(field_e%name, field_m)
-      call dxa%get(field_e%name, field_a)
-      do i = isc, iec
-        do j = jsc, jec          
-          if (self%bkg%geom%mask2d(i,j).eq.1) then
-            field_m%val(i,j,:) = field_e%val(i,j,:) * field_a%val(i,j,:)
-          end if
-        end do
+    call dxm%get(field_e%name, field_m)
+    call dxa%get(field_e%name, field_a)
+    do i = isc, iec
+      do j = jsc, jec          
+        if (self%bkg%geom%mask2d(i,j).eq.1) then
+          field_m%val(i,j,:) = field_e%val(i,j,:) * field_a%val(i,j,:)
+        end if
       end do
-    end select
+    end do
   end do
-     
-  do n=1,size(self%std_bkgerr%fields)
-    field_e => self%std_bkgerr%fields(n)
-    select case(field_e%name)
-    case ("sw","lw","lhf","shf","us")
-      call dxm%get(field_e%name, field_m)
-      call dxa%get(field_e%name, field_a)
-      field_m%val = field_a%val
-      field_m%val = field_m%val * field_e%val
-    end select
-  end do
-
 end subroutine soca_bkgerrgodas_mult
 
 ! ------------------------------------------------------------------------------
