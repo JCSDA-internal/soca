@@ -44,14 +44,12 @@ subroutine c_soca_bkgerr_setup(c_key_self, c_conf, c_key_bkg) &
   type(soca_fields), pointer :: bkg
   type(soca_bkgerr_config), pointer :: self
 
-  print *, "DBG 1 S"
   call soca_bkgerr_registry%init()
   call soca_bkgerr_registry%add(c_key_self)
   call soca_bkgerr_registry%get(c_key_self, self)
   call soca_field_registry%get(c_key_bkg, bkg)
 
   call soca_bkgerr_setup(fckit_configuration(c_conf), self, bkg)
-  print *, "DBG 1 E"
 end subroutine c_soca_bkgerr_setup
 
 ! ------------------------------------------------------------------------------

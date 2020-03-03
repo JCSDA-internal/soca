@@ -1023,7 +1023,6 @@ subroutine soca_fields_gpnorm(fld, nf, pstat)
   type(fckit_mpi_comm) :: f_comm
   type(soca_field), pointer :: field  
 
-  print *, "DBG AHHHH"
   f_comm = fckit_mpi_comm()
 
   ! Indices for compute domain
