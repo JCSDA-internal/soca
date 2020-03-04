@@ -130,6 +130,7 @@ subroutine soca_field_copy(self, rhs)
   self%cf_name = rhs%cf_name
   self%io_name = rhs%io_name
   self%io_file = rhs%io_file
+  self%mask => rhs%mask
 end subroutine soca_field_copy
 
 
