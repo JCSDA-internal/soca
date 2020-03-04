@@ -460,10 +460,12 @@ soca_add_test( NAME ensrecenter
 
 soca_add_test( NAME dirac_soca_cov
                EXE  soca_dirac.x
+               NOTRAPFPE
                TEST_DEPENDS test_soca_static_socaerror_init)
 
 soca_add_test( NAME dirac_socahyb_cov
                EXE  soca_dirac.x
+               NOTRAPFPE
                TEST_DEPENDS test_soca_parameters_bump_loc)
 
 soca_add_test( NAME dirac_horizfilt
