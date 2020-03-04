@@ -30,6 +30,7 @@ use soca_geom_mod, only : soca_geom
 use soca_geom_iter_mod, only : soca_geom_iter
 use soca_fieldsutils_mod, only: soca_genfilename, fldinfo
 use soca_utils, only: soca_mld
+use soca_geostrophy_mod
 
 implicit none
 
@@ -671,6 +672,9 @@ subroutine soca_fields_add_incr(self,rhs)
   real(kind=kind_real) :: amin = 1e-6_kind_real
   real(kind=kind_real) :: amax = 10.0_kind_real
   real(kind=kind_real), allocatable :: alpha(:,:), aice_bkg(:,:), aice_ana(:,:)
+  type(soca_geostrophy_type) :: geostrophy
+  type(soca_fields) :: incr_geo
+  type(soca_field), pointer :: t, s, u, v, h, dt, ds, du, dv
 
   ! make sure fields are same shape
   call self%check_congruent(rhs)
@@ -713,7 +717,32 @@ subroutine soca_fields_add_incr(self,rhs)
   ! Save increment for outer loop cnt_outer
   write(str_cnt,*) cnt_outer
   filename='incr.'//adjustl(trim(str_cnt))//'.nc'
-  call rhs%write_file(filename)
+
+  ! Compute geostrophic increment
+  if (rhs%has('tocn').and.rhs%has('tocn').and.rhs%has('socn').and.&
+      rhs%has('uocn').and.rhs%has('vocn')) then
+     call self%get("tocn", t)
+     call self%get("socn", s)
+     call self%get("hocn", h)
+     call soca_fields_copy(incr_geo, rhs)
+     call incr_geo%get("tocn", dt)
+     call incr_geo%get("socn", ds)
+     call incr_geo%get("uocn", du)
+     call incr_geo%get("vocn", dv)
+     call geostrophy%setup(self%geom, h%val)
+     call geostrophy%tl(h%val, t%val, s%val,&
+          dt%val, ds%val, du%val, dv%val, self%geom)
+     call geostrophy%delete()
+     call incr_geo%write_file(filename)
+
+     ! Add geostrophic increment to state
+     call self%get("uocn", u)
+     call self%get("vocn", v)
+     u%val = u%val + du%val
+     v%val = v%val + dv%val
+  else
+     call rhs%write_file(filename)
+  end if
 
   ! Update outer loop counter
   cnt_outer = cnt_outer + 1
@@ -970,7 +999,7 @@ subroutine soca_fields_read(fld, f_conf, vdate)
             field => fld%fields(n)
             select case(field%name)
             ! TODO remove hardcoded variable names here
-            ! TODO Add u and v. Remapping u and v will require interpolating h 
+            ! TODO Add u and v. Remapping u and v will require interpolating h
             case ('tocn','socn')
               if (associated(field%mask) .and. field%mask(i,j).eq.1) then
                 varocn_ij = field%val(i,j,:)
