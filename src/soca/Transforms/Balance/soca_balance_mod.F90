@@ -33,7 +33,9 @@ contains
 ! ------------------------------------------------------------------------------
 
 ! ------------------------------------------------------------------------------
-!> Initialization of the balance operator and its trajectory
+!> Initialization of the balance operator and its trajectory.
+!> balances always used: T,S,SSH
+!> optional balances depending on input fields: cicen
 subroutine soca_balance_setup(f_conf, self, traj)
   type(fckit_configuration),   intent(in)  :: f_conf
   type(soca_balance_config), intent(inout) :: self
@@ -63,7 +65,7 @@ subroutine soca_balance_setup(f_conf, self, traj)
   call traj%get("tocn", tocn)
   call traj%get("socn", socn)
   call traj%get("hocn", hocn)
-  call traj%get("cicen", cicen)
+  if (traj%has("cicen"))  call traj%get("cicen", cicen)
 
   ! allocate space
   nl = hocn%nz
@@ -116,15 +118,17 @@ subroutine soca_balance_setup(f_conf, self, traj)
   deallocate(jac)
 
   ! Compute Kct
-  allocate(self%kct(isc:iec,jsc:jec))
-  self%kct = 0.0_kind_real
-  do i = isc, iec
-     do j = jsc, jec
-        if (sum(cicen%val(i,j,:)) > 1.0e-3_kind_real) then
-           self%kct = -0.01d0 ! TODO: Insert regression coef
-        end if
-     end do
-  end do
+  if (traj%has("cicen")) then
+    allocate(self%kct(isc:iec,jsc:jec))
+    self%kct = 0.0_kind_real
+    do i = isc, iec
+      do j = jsc, jec
+          if (sum(cicen%val(i,j,:)) > 1.0e-3_kind_real) then
+            self%kct = -0.01d0 ! TODO: Insert regression coef
+          end if
+      end do
+    end do
+  end if
 
 end subroutine soca_balance_setup
 
@@ -133,11 +137,14 @@ end subroutine soca_balance_setup
 subroutine soca_balance_delete(self)
   type(soca_balance_config), intent(inout) :: self
 
+  ! the following always exist
   nullify(self%traj)
   deallocate(self%kst%jacobian)
   deallocate(self%ksshts%kssht)
   deallocate(self%ksshts%ksshs)
-  deallocate(self%kct)
+
+  ! only exists if cicen was given
+  if (allocated(self%kct)) deallocate(self%kct)
 
 end subroutine soca_balance_delete
 
@@ -206,9 +213,11 @@ subroutine soca_balance_multad(self, dxa, dxm)
   type(soca_field), pointer :: socn_m, ssh_m, cicen_m
   integer :: i, j, n
 
+  cicen_m => null()
+
   call dxm%get("socn", socn_m)
   call dxm%get("ssh",  ssh_m)
-  call dxm%get("cicen",cicen_m)
+  if (dxm%has("cicen")) call dxm%get("cicen",cicen_m)
 
   do n = 1, size(dxa%fields)
     fld_a => dxa%fields(n)
@@ -224,8 +233,11 @@ subroutine soca_balance_multad(self, dxa, dxm)
           fld_a%val(i,j,:) = fld_m%val(i,j,:) + &
             & self%kst%jacobian(i,j,:) * socn_m%val(i,j,:) + &
             & self%ksshts%kssht(i,j,:) * ssh_m%val(i,j,1)
-          fld_a%val(i,j,1) = fld_a%val(i,j,1) + &
-            & self%kct(i,j) * sum(cicen_m%val(i,j,:))
+
+          if (associated(cicen_m)) then ! use cicen only if present
+            fld_a%val(i,j,1) = fld_a%val(i,j,1) + &
+              & self%kct(i,j) * sum(cicen_m%val(i,j,:))
+          end if
 
         case ("socn") ! Salinity
           fld_a%val(i,j,:) = fld_m%val(i,j,:) + &
@@ -298,9 +310,11 @@ subroutine soca_balance_multinvad(self, dxa, dxm)
   type(soca_field), pointer :: fld_a, fld_m
   type(soca_field), pointer :: socn_a, ssh_a, cicen_a
 
+  cicen_a => null()
+
   call dxa%get("socn", socn_a)
   call dxa%get("ssh",  ssh_a)
-  call dxa%get("cicen",cicen_a)
+  if (dxa%has("cicen")) call dxa%get("cicen",cicen_a)
 
   do n = 1, size(dxm%fields)
     fld_m => dxm%fields(n)
@@ -317,8 +331,11 @@ subroutine soca_balance_multinvad(self, dxa, dxm)
             & - self%kst%jacobian(i,j,:) * socn_a%val(i,j,:) &
             & + ( self%ksshts%ksshs(i,j,:) * self%kst%jacobian(i,j,:) &
             &     - self%ksshts%kssht(i,j,:) ) * ssh_a%val(i,j,1)
-          fld_m%val(i,j,1) = fld_m%val(i,j,1) &
-             & - self%kct(i,j) * sum(cicen_a%val(i,j,:))
+
+          if (associated(cicen_a)) then ! use cicen only if present
+            fld_m%val(i,j,1) = fld_m%val(i,j,1) &
+              & - self%kct(i,j) * sum(cicen_a%val(i,j,:))
+          end if
 
         case ('socn') ! Salinity
           fld_m%val(i,j,:) = fld_a%val(i,j,:) - &

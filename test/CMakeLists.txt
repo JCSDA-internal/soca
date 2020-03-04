@@ -34,6 +34,7 @@ list( APPEND soca_test_input
   testinput/static_socaerror_init.yml
   testinput/static_socaerror_test.yml
   testinput/varchange_balance.yml
+  testinput/varchange_balance_TSSSH.yml
   testinput/varchange_bkgerrfilt.yml
   testinput/varchange_bkgerrgodas.yml
   testinput/varchange_bkgerrsoca.yml
@@ -398,6 +399,10 @@ soca_add_test( NAME linearmodel
                             test_soca_static_socaerror_init )
 
 soca_add_test( NAME varchange_balance
+               SRC  TestVariableChange.cc
+               TEST_DEPENDS test_soca_gridgen )
+
+soca_add_test( NAME varchange_balance_TSSSH
                SRC  TestVariableChange.cc
                TEST_DEPENDS test_soca_gridgen )
 
