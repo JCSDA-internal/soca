@@ -4,7 +4,7 @@
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
 
 module soca_vertconv_mod
-   
+
 use fckit_configuration_module, only: fckit_configuration
 use kinds, only: kind_real
 use type_mpl, only: mpl_type
@@ -157,7 +157,7 @@ subroutine soca_conv_ad (self, convdx, dx)
 
   do n=1,size(dx%fields)
     select case(dx%fields(n)%name)
-   ! TODO remove these hardcoded values, use the yaml file      
+   ! TODO remove these hardcoded values, use the yaml file
     case ("tocn","socn")
       call dx%get(dx%fields(n)%name, field_dx)
       call convdx%get(dx%fields(n)%name, field_convdx)

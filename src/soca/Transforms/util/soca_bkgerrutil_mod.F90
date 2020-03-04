@@ -85,11 +85,11 @@ subroutine soca_bkgerr_applybounds(self, fld)
     case default
       cycle
     end select
-    
+
     do i = isc, iec
       do j = jsc, jec
         field%val(i,j,:) = soca_adjust(field%val(i,j,:), vmin, vmax)
-      end do  
+      end do
     end do
   end do
 

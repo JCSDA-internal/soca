@@ -111,7 +111,7 @@ subroutine soca_bkgerrgodas_mult(self, dxa, dxm)
     call dxm%get(field_e%name, field_m)
     call dxa%get(field_e%name, field_a)
     do i = isc, iec
-      do j = jsc, jec          
+      do j = jsc, jec
         if (self%bkg%geom%mask2d(i,j).eq.1) then
           field_m%val(i,j,:) = field_e%val(i,j,:) * field_a%val(i,j,:)
         end if
@@ -248,7 +248,7 @@ subroutine soca_bkgerrgodas_socn(self)
   ! TODO read in a precomputed surface S background error
 
   ! Loop over compute domain
-  call self%std_bkgerr%get("socn", field)  
+  call self%std_bkgerr%get("socn", field)
   do i = domain%is, domain%ie
     do j = domain%js, domain%je
       if (self%bkg%geom%mask2d(i,j) /= 1)  cycle

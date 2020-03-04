@@ -62,7 +62,7 @@ subroutine soca_field_create_c(c_key_self, c_key_geom, c_vars) bind(c,name='soca
   call soca_field_registry%add(c_key_self)
   call soca_field_registry%get(c_key_self,self)
 
-  vars = oops_variables(c_vars)  
+  vars = oops_variables(c_vars)
   call self%create(geom, vars)
 
 end subroutine soca_field_create_c
@@ -526,7 +526,7 @@ subroutine soca_field_getpoint_c(c_key_fld,c_key_iter,values, values_len) bind(c
   call soca_field_registry%get(c_key_fld,fld)
   call soca_geom_iter_registry%get(c_key_iter,iter)
 
-  call fld%getpoint(iter, values) 
+  call fld%getpoint(iter, values)
 
 end subroutine soca_field_getpoint_c
 
@@ -544,7 +544,7 @@ subroutine soca_field_setpoint_c(c_key_fld,c_key_iter,values, values_len) bind(c
   call soca_field_registry%get(c_key_fld,fld)
   call soca_geom_iter_registry%get(c_key_iter,iter)
 
-  call fld%setpoint(iter, values)    
+  call fld%setpoint(iter, values)
 
 end subroutine soca_field_setpoint_c
 

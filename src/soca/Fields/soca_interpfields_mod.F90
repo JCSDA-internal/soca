@@ -139,7 +139,7 @@ subroutine interp(fld, locs, vars, geoval, horiz_interp, horiz_interp_masked)
   type(oops_variables),       intent(in) :: vars
   type(ufo_geovals),       intent(inout) :: geoval
   type(unstrc_interp),     intent(inout) :: horiz_interp
-  type(unstrc_interp),     intent(inout) :: horiz_interp_masked  
+  type(unstrc_interp),     intent(inout) :: horiz_interp_masked
 
   logical :: masked
   integer :: ivar, nlocs, n
@@ -216,19 +216,19 @@ subroutine interp(fld, locs, vars, geoval, horiz_interp, horiz_interp_masked)
       call fckit_log%debug("soca_interpfields_mod:interp geoval does not exist")
     end select
 
-     ! Apply forward interpolation: Model ---> Obs    
+     ! Apply forward interpolation: Model ---> Obs
      do ival = 1, nval
         if (masked) then
           ns = count(fld%geom%mask2d(isc:iec,jsc:jec) > 0 )
           if (.not. allocated(fld3d_un)) allocate(fld3d_un(ns))
           fld3d_un = pack(fld3d(isc:iec,jsc:jec,ival), mask=fld%geom%mask2d(isc:iec,jsc:jec) > 0)
           call horiz_interp_masked%apply(fld3d_un, gom_window(ival,:))
-        else          
+        else
           ns = (iec - isc + 1) * (jec - jsc + 1)
           if (.not. allocated(fld3d_un)) allocate(fld3d_un(ns))
           fld3d_un = reshape(fld3d(isc:iec,jsc:jec,ival), (/ns/))
           call horiz_interp%apply(fld3d_un(1:ns), gom_window(ival,:))
-        end if        
+        end if
 
         ! Fill proper geoval according to time window
         do indx = 1, locs%nlocs
@@ -286,7 +286,7 @@ subroutine getvalues_ad(incr, locs, vars, geoval, traj)
 
     ! Apply backward interpolation: Obs ---> Model
     if (masked) then
-      ns = count(incr%geom%mask2d(isc:iec,jsc:jec) > 0)      
+      ns = count(incr%geom%mask2d(isc:iec,jsc:jec) > 0)
     else
       ni = iec - isc + 1
       nj = jec - jsc + 1
@@ -306,7 +306,7 @@ subroutine getvalues_ad(incr, locs, vars, geoval, traj)
         call traj%horiz_interp_masked%apply_ad(incr3d_un, gom_window_ival)
         incr3d(isc:iec,jsc:jec,ival) = unpack(incr3d_un, &
               mask = incr%geom%mask2d(isc:iec,jsc:jec) >0, &
-              field = incr3d(isc:iec,jsc:jec,ival))          
+              field = incr3d(isc:iec,jsc:jec,ival))
       else
         incr3d_un = reshape(incr3d(isc:iec,jsc:jec,ival), (/ns/))
         call traj%horiz_interp%apply_ad(incr3d_un(1:ns), gom_window_ival)
@@ -321,7 +321,7 @@ subroutine getvalues_ad(incr, locs, vars, geoval, traj)
         incr%fields(n)%val(isc:iec,jsc:jec,1:nval) = &
           incr%fields(n)%val(isc:iec,jsc:jec,1:nval) + incr3d(isc:iec,jsc:jec,1:nval)
         found = .true.
-        exit 
+        exit
       end if
     end do
 
@@ -345,7 +345,7 @@ subroutine getvalues_ad(incr, locs, vars, geoval, traj)
 
       end select
     end if
-    
+
     ! Deallocate temporary arrays
     deallocate(incr3d)
     deallocate(gom_window)
@@ -362,7 +362,7 @@ function nlev_from_ufovar(fld, var) result(nval)
   type(soca_fields), intent(in) :: fld
   character(len=*),  intent(in) :: var
   integer                       :: nval
-  
+
   integer :: i
 
   ! fields that are not derived (i.e. the "cf_name" is set for a given field)

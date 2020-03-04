@@ -182,7 +182,7 @@ subroutine soca_cov_sqrt_C_mult(self, dx)
   do i = 1, self%vars%nvars()
     conv => null()
     call dx%get(trim(self%vars%variable(i)), field)
-    
+
     select case(field%name)
     case('tocn')
       scale = self%pert_scale%T

@@ -60,19 +60,19 @@ subroutine soca_bkgerr_setup(f_conf, self, bkg)
       field%val = sqrt(field%val)
     end select
   end do
-  
+
   ! Get bounds from configuration
   call self%bounds%read(f_conf)
 
   ! Get constand background error for sst and sss
   if ( f_conf%has("fixed_std_sst") ) then
     call f_conf%get_or_die("fixed_std_sst", self%std_sst)
-    call self%std_bkgerr%get("tocn", field)    
+    call self%std_bkgerr%get("tocn", field)
     field%val(:,:,1) = self%std_sst
   end if
   if ( f_conf%has("fixed_std_sss") ) then
       call f_conf%get_or_die("fixed_std_sss", self%std_sss)
-      call self%std_bkgerr%get("socn", field)    
+      call self%std_bkgerr%get("socn", field)
       field%val(:,:,1) = self%std_sss
   end if
 

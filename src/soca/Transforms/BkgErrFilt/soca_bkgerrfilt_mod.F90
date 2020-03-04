@@ -108,10 +108,10 @@ subroutine soca_bkgerrfilt_mult(self, dxa, dxm)
   type(soca_fields),            intent(in) :: dxa
   type(soca_fields),         intent(inout) :: dxm
 
-  integer :: i, j, n 
+  integer :: i, j, n
   type(soca_field), pointer :: field, field_a, field_m
 
-  do n=1,size(self%filt%fields)    
+  do n=1,size(self%filt%fields)
     field => self%filt%fields(n)
     call dxa%get(field%name, field_a)
     call dxm%get(field%name, field_m)
@@ -124,7 +124,7 @@ subroutine soca_bkgerrfilt_mult(self, dxa, dxm)
         end if
       end do
     end do
-  end do  
+  end do
 end subroutine soca_bkgerrfilt_mult
 
 ! ------------------------------------------------------------------------------
