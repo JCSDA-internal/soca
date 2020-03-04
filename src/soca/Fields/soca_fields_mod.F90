@@ -43,7 +43,6 @@ public :: soca_fields, soca_field
 type :: soca_field
   character(len=:),     allocatable :: name       !< the internally used name of the field
   integer                           :: nz         !< the number of levels
-  logical                           :: masked     !< if true, land mask should be applied
   real(kind=kind_real), allocatable :: val(:,:,:) !< the actual data
   real(kind=kind_real),     pointer :: mask(:,:) => null() !< field mask
   character(len=:),     allocatable :: cf_name    !< the (optional) name needed by UFO
@@ -180,28 +179,22 @@ subroutine soca_fields_init_vars(self, vars)
     self%fields(i)%name = trim(vars(i))
 
     ! determine number of levels, and if masked
-    self%fields(i)%masked = .false.
     select case(self%fields(i)%name)
     case ('tocn','socn','hocn')
       nz = self%geom%nzo
-      self%fields(i)%masked = .true.
-      self%fields(i)%mask =>self%geom%mask2d
+      self%fields(i)%mask => self%geom%mask2d
     case ('uocn')
       nz = self%geom%nzo
-      self%fields(i)%masked = .true.
-      self%fields(i)%mask =>self%geom%mask2du
+      self%fields(i)%mask => self%geom%mask2du
     case ('vocn')
       nz = self%geom%nzo
-      self%fields(i)%masked = .true.
-      self%fields(i)%mask =>self%geom%mask2dv
+      self%fields(i)%mask => self%geom%mask2dv
     case ('hicen','hsnon', 'cicen')
       nz = self%geom%ncat
-      self%fields(i)%masked = .true.
-      self%fields(i)%mask =>self%geom%mask2d
+      self%fields(i)%mask => self%geom%mask2d
     case ('ssh')
       nz = 1
-      self%fields(i)%masked = .true.
-      self%fields(i)%mask =>self%geom%mask2d
+      self%fields(i)%mask => self%geom%mask2d
     case ('sw', 'lhf', 'shf', 'lw', 'us')
       nz = 1
     case default
@@ -518,7 +511,7 @@ subroutine soca_fields_random(self)
   ! mask out land, set to zero
   do i=1,size(self%fields)
     field => self%fields(i)
-    if (.not. field%masked ) cycle
+    if (.not. associated(field%mask) ) cycle
     do z=1,field%nz
       field%val(:,:,z) = field%val(:,:,z) * field%mask(:,:)
     end do
