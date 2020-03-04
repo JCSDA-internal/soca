@@ -794,11 +794,13 @@ subroutine soca_fields_read(fld, f_conf, vdate)
   ! iread = 1 (state) or 3 (increment): Read restart file
   if ((iread==1).or.(iread==3)) then
     ! Read sea-ice
-    if(.not. f_conf%get("seaice_model", seaice_model)) seaice_model = "sis2"
+    seaice_model = ""
     if(f_conf%get("ice_filename", str)) then
       call f_conf%get_or_die("basename", basename)
       filename = trim(basename)//trim(str)
+      if(.not. f_conf%get("seaice_model", seaice_model)) seaice_model = "sis2"
     end if
+
     select case(seaice_model)
     case ('sis2')
       call fms_io_init()
@@ -868,7 +870,6 @@ subroutine soca_fields_read(fld, f_conf, vdate)
       end do
 
     end select
-
 
     ! filename for ocean
     call f_conf%get_or_die("basename", str)
