@@ -9,7 +9,7 @@ use fckit_configuration_module, only: fckit_configuration
 use tools_const, only : pi
 use datetime_mod, only: datetime
 use kinds, only: kind_real
-use soca_fields_mod, only: soca_field, zeros, create_copy, soca_fld2file
+use soca_fields_mod
 use soca_utils, only: soca_diff
 use soca_bkgerrutil_mod, only: soca_bkgerr_bounds_type
 use soca_omb_stats_mod, only: soca_omb_stats, soca_domain_indices
@@ -24,8 +24,8 @@ public :: soca_bkgerrgodas_config, &
 
 !> Fortran derived type to hold configuration D
 type :: soca_bkgerrgodas_config
-   type(soca_field),         pointer :: bkg
-   type(soca_field)                  :: std_bkgerr
+   type(soca_fields),        pointer :: bkg
+   type(soca_fields)                 :: std_bkgerr
    type(soca_bkgerr_bounds_type)     :: bounds         ! Bounds for bkgerrgodas
    real(kind=kind_real)              :: t_dz           ! For rescaling of the vertical gradient
    real(kind=kind_real)              :: t_efold        ! E-folding scale for surf based T min
@@ -42,12 +42,15 @@ contains
 subroutine soca_bkgerrgodas_setup(f_conf, self, bkg)
   type(fckit_configuration),        intent(in) :: f_conf
   type(soca_bkgerrgodas_config), intent(inout) :: self
-  type(soca_field),         target, intent(in) :: bkg
+  type(soca_fields),        target, intent(in) :: bkg
 
+  type(soca_field), pointer :: field, field_bkg
+  integer :: i
   character(len=800) :: fname = 'soca_bkgerrgodas.nc'
 
   ! Allocate memory for bkgerrgodasor
-  call create_copy(self%std_bkgerr, bkg)
+  call self%std_bkgerr%copy(bkg)
+  !call create_copy(self%std_bkgerr, bkg)
 
   ! Get bounds from configuration
   call self%bounds%read(f_conf)
@@ -61,7 +64,7 @@ subroutine soca_bkgerrgodas_setup(f_conf, self, bkg)
   self%bkg => bkg
 
   ! Set all fields to zero
-  call zeros(self%std_bkgerr)
+  call self%std_bkgerr%zeros()
 
   ! Std of bkg error for T/S/SSH based on background.
   ! S and SSH error are only for the unbalanced portion of S/SSH
@@ -71,14 +74,21 @@ subroutine soca_bkgerrgodas_setup(f_conf, self, bkg)
 
   ! Invent background error for ocnsfc fields: set it
   ! to 10% of the background for now ...
-  call self%std_bkgerr%ocnsfc%copy(bkg%ocnsfc)
-  call self%std_bkgerr%ocnsfc%mul(0.1_kind_real)
+  do i=1,size(self%std_bkgerr%fields)
+    field => self%std_bkgerr%fields(i)
+    select case(field%name)
+    case ('sw','lw','lhf','shf','us')
+      call bkg%get(field%name, field_bkg)
+      field%val = abs(field_bkg%val)
+      field%val = 0.1_kind_real * field%val
+    end select
+  end do
 
   ! Apply config bounds to background error
   call self%bounds%apply(self%std_bkgerr)
 
   ! Save
-  call soca_fld2file(self%std_bkgerr, fname)
+  call self%std_bkgerr%write_file(fname)
 
 end subroutine soca_bkgerrgodas_setup
 
@@ -86,31 +96,28 @@ end subroutine soca_bkgerrgodas_setup
 !> Apply background error: dxm = D dxa
 subroutine soca_bkgerrgodas_mult(self, dxa, dxm)
   type(soca_bkgerrgodas_config),    intent(in) :: self
-  type(soca_field),            intent(in) :: dxa
-  type(soca_field),         intent(inout) :: dxm
+  type(soca_fields),           intent(in) :: dxa
+  type(soca_fields),        intent(inout) :: dxm
 
-  integer :: isc, iec, jsc, jec, i, j
+  type(soca_field), pointer :: field_m, field_e, field_a
+  integer :: isc, iec, jsc, jec, i, j, n
 
   ! Indices for compute domain (no halo)
   isc = self%bkg%geom%isc ; iec = self%bkg%geom%iec
   jsc = self%bkg%geom%jsc ; jec = self%bkg%geom%jec
 
-  do i = isc, iec
-     do j = jsc, jec
+  do n=1,size(self%std_bkgerr%fields)
+    field_e => self%std_bkgerr%fields(n)
+    call dxm%get(field_e%name, field_m)
+    call dxa%get(field_e%name, field_a)
+    do i = isc, iec
+      do j = jsc, jec
         if (self%bkg%geom%mask2d(i,j).eq.1) then
-           dxm%ssh(i,j) = self%std_bkgerr%ssh(i,j) * dxa%ssh(i,j)
-           dxm%tocn(i,j,:) = self%std_bkgerr%tocn(i,j,:) * dxa%tocn(i,j,:)
-           dxm%socn(i,j,:) = self%std_bkgerr%socn(i,j,:)  * dxa%socn(i,j,:)
-
-           dxm%seaice%cicen(i,j,:) =  self%std_bkgerr%seaice%cicen(i,j,:) * dxa%seaice%cicen(i,j,:)
-           dxm%seaice%hicen(i,j,:) =  self%std_bkgerr%seaice%hicen(i,j,:) * dxa%seaice%hicen(i,j,:)
+          field_m%val(i,j,:) = field_e%val(i,j,:) * field_a%val(i,j,:)
         end if
-     end do
+      end do
+    end do
   end do
-  ! Surface fields
-  call dxm%ocnsfc%copy(dxa%ocnsfc)
-  call dxm%ocnsfc%schur(self%std_bkgerr%ocnsfc)
-
 end subroutine soca_bkgerrgodas_mult
 
 ! ------------------------------------------------------------------------------
@@ -123,6 +130,7 @@ subroutine soca_bkgerrgodas_tocn(self)
   integer :: i, j, k
   integer :: iter, niter = 1
   type(soca_omb_stats) :: sst
+  type(soca_field), pointer :: tocn_b, tocn_e, hocn
 
   ! Get compute domain indices
   domain%is = self%bkg%geom%isc ; domain%ie = self%bkg%geom%iec
@@ -140,13 +148,17 @@ subroutine soca_bkgerrgodas_tocn(self)
   call sst%init(domain)
   call sst%bin(self%bkg%geom%lon, self%bkg%geom%lat)
 
+  call self%bkg%get("tocn", tocn_b)
+  call self%std_bkgerr%get("tocn", tocn_e)
+  call self%bkg%get("hocn", hocn)
+
   ! Loop over compute domain
   do i = domain%is, domain%ie
      do j = domain%js, domain%je
         if (self%bkg%geom%mask2d(i,j).eq.1) then
 
            ! Step 1: sigb from dT/dz
-           call soca_diff(sig1(:), self%bkg%tocn(i,j,:), self%bkg%hocn(i,j,:))
+           call soca_diff(sig1(:), tocn_b%val(i,j,:), hocn%val(i,j,:))
            sig1(:) = self%t_dz * abs(sig1) ! Rescale background error
 
            ! Step 2: sigb based on efolding scale
@@ -156,18 +168,18 @@ subroutine soca_bkgerrgodas_tocn(self)
 
            ! Step 3: sigb = max(sig1, sig2)
            do k = 1, self%bkg%geom%nzo
-              self%std_bkgerr%tocn(i,j,k) = min( max(sig1(k), sig2(k)), &
+              tocn_e%val(i,j,k) = min( max(sig1(k), sig2(k)), &
                 & self%bounds%t_max)
            end do
 
            ! Step 4: Vertical smoothing
            do iter = 1, niter
               do k = 2, self%bkg%geom%nzo-1
-                 self%std_bkgerr%tocn(i,j,k) = &
-                      &( self%std_bkgerr%tocn(i,j,k-1)*self%bkg%hocn(i,j,k-1) +&
-                      &  self%std_bkgerr%tocn(i,j,k)*self%bkg%hocn(i,j,k) +&
-                      &  self%std_bkgerr%tocn(i,j,k+1)*self%bkg%hocn(i,j,k+1) )/&
-                      & (sum(self%bkg%hocn(i,j,k-1:k+1)))
+                 tocn_e%val(i,j,k) = &
+                      &( tocn_e%val(i,j,k-1)*hocn%val(i,j,k-1) +&
+                      &  tocn_e%val(i,j,k)*hocn%val(i,j,k) +&
+                      &  tocn_e%val(i,j,k+1)*hocn%val(i,j,k+1) )/&
+                      & (sum(hocn%val(i,j,k-1:k+1)))
               end do
            end do
 
@@ -187,10 +199,13 @@ subroutine soca_bkgerrgodas_ssh(self)
   type(soca_bkgerrgodas_config),     intent(inout) :: self
   type(soca_domain_indices), target :: domain
   integer :: i, j
+  type(soca_field), pointer :: ssh
 
   ! Get compute domain indices
   domain%is = self%bkg%geom%isc ; domain%ie = self%bkg%geom%iec
   domain%js = self%bkg%geom%jsc ; domain%je = self%bkg%geom%jec
+
+  call self%std_bkgerr%get("ssh", ssh)
 
   ! Loop over compute domain
   do i = domain%is, domain%ie
@@ -199,10 +214,10 @@ subroutine soca_bkgerrgodas_ssh(self)
 
           if ( abs(self%bkg%geom%lat(i,j)) >= self%ssh_phi_ex) then
             ! if in extratropics, set to max value
-            self%std_bkgerr%ssh(i,j) = self%bounds%ssh_max
+            ssh%val(i,j,:) = self%bounds%ssh_max
           else
             ! otherwise, taper to min value (0.0) toward equator
-            self%std_bkgerr%ssh(i,j) = self%bounds%ssh_min + 0.5 * &
+            ssh%val(i,j,:) = self%bounds%ssh_min + 0.5 * &
               (self%bounds%ssh_max - self%bounds%ssh_min) * &
               (1 - cos(pi * self%bkg%geom%lat(i,j) / self%ssh_phi_ex))
           end if
@@ -217,6 +232,7 @@ subroutine soca_bkgerrgodas_socn(self)
   type(soca_bkgerrgodas_config),     intent(inout) :: self
   !
   type(soca_domain_indices), target :: domain
+  type(soca_field), pointer :: field
   integer :: i, j, k
   real(kind=kind_real) :: r
 
@@ -232,6 +248,7 @@ subroutine soca_bkgerrgodas_socn(self)
   ! TODO read in a precomputed surface S background error
 
   ! Loop over compute domain
+  call self%std_bkgerr%get("socn", field)
   do i = domain%is, domain%ie
     do j = domain%js, domain%je
       if (self%bkg%geom%mask2d(i,j) /= 1)  cycle
@@ -239,12 +256,12 @@ subroutine soca_bkgerrgodas_socn(self)
       do k = 1, self%bkg%geom%nzo
         if ( self%bkg%layer_depth(i,j,k) <= self%bkg%mld(i,j)) then
           ! if in the mixed layer, set to the maximum value
-          self%std_bkgerr%socn(i,j,k) = self%bounds%s_max
+          field%val(i,j,k) = self%bounds%s_max
         else
           ! otherwise, taper to the minium value below MLD
           r = 0.1 + 0.45 * (1-tanh( 2 * log( &
             & self%bkg%layer_depth(i,j,k) / self%bkg%mld(i,j) )))
-          self%std_bkgerr%socn(i,j,k) = max(self%bounds%s_min, r*self%bounds%s_max)
+          field%val(i,j,k) = max(self%bounds%s_min, r*self%bounds%s_max)
         end if
       end do
     end do

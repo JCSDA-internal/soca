@@ -50,7 +50,7 @@ contains
 
     type(soca_horizfilt_type), pointer :: self
     type(soca_geom),           pointer :: geom
-    type(soca_field),          pointer :: traj
+    type(soca_fields),          pointer :: traj
     type(oops_variables)               :: vars
 
     call soca_geom_registry%get(c_key_geom, geom)
@@ -87,8 +87,8 @@ contains
     integer(c_int), intent(in)    :: c_key_geom  !< Geometry
 
     type(soca_horizfilt_type),   pointer :: self
-    type(soca_field), pointer :: xin
-    type(soca_field), pointer :: xout
+    type(soca_fields), pointer :: xin
+    type(soca_fields), pointer :: xout
     type(soca_geom), pointer :: geom
 
     call soca_geom_registry%get(c_key_geom, geom)
@@ -111,8 +111,8 @@ contains
     integer(c_int), intent(in)    :: c_key_geom  !< Geometry
 
     type(soca_horizfilt_type),   pointer :: self
-    type(soca_field), pointer :: xin
-    type(soca_field), pointer :: xout
+    type(soca_fields), pointer :: xin
+    type(soca_fields), pointer :: xout
     type(soca_geom), pointer :: geom
 
     call soca_geom_registry%get(c_key_geom, geom)

@@ -28,7 +28,7 @@ module soca_horizfilt_mod
 
   !> Fortran derived type to hold configuration data for horizfilt
   type, public :: soca_horizfilt_type
-     type(soca_field),         pointer :: bkg            !< Background field (or first guess)
+     type(soca_fields),        pointer :: bkg            !< Background field (or first guess)
      type(oops_variables)              :: vars           !< Apply filtering to vars
      real(kind=kind_real), allocatable :: wgh(:,:,:,:)   !< Filtering weight
      real(kind=kind_real) :: scale_flow  !< Used with "flow" filter, sea surface height decorrelation scale
@@ -51,8 +51,10 @@ contains
     class(soca_horizfilt_type), intent(inout) :: self   !< The horizfilt structure
     type(fckit_configuration),     intent(in) :: f_conf !< The configuration
     type(soca_geom),               intent(in) :: geom   !< Geometry
-    type(soca_field),              intent(in) :: traj   !< Trajectory
+    type(soca_fields),             intent(in) :: traj   !< Trajectory
     type(oops_variables),          intent(in) :: vars   !< List of variables
+
+    type(soca_field), pointer :: ssh
 
     integer :: i, j, ii, jj
     real(kind=kind_real) :: dist(-1:1,-1:1), sum_w, r_dist, r_flow
@@ -95,7 +97,8 @@ contains
 
                 ! flow based distance (ssh difference)
                 if(self%scale_flow > 0) then
-                  r_flow = abs(traj%ssh(i,j) - traj%ssh(i+ii,j+jj))
+                  call traj%get("ssh", ssh)
+                  r_flow = abs(ssh%val(i,j,1) - ssh%val(i+ii,j+jj,1))
                   r_flow = exp(-0.5 * ((r_flow / self%scale_flow) ** 2))
                 end if
 
@@ -129,9 +132,11 @@ contains
   !> Forward filtering
   subroutine soca_horizfilt_mult(self, dxin, dxout, geom)
     class(soca_horizfilt_type), intent(inout) :: self  !< The horizfilt structure
-    type(soca_field),              intent(in) :: dxin  !< Input: Increment
-    type(soca_field),           intent(inout) :: dxout !< Output: filtered Increment
+    type(soca_fields),             intent(in) :: dxin  !< Input: Increment
+    type(soca_fields),          intent(inout) :: dxout !< Output: filtered Increment
     type(soca_geom),               intent(in) :: geom
+
+    type(soca_field), pointer :: field_i, field_o
 
     integer :: k, ivar
     real(kind=kind_real), allocatable, dimension(:,:) :: dxi, dxo
@@ -140,42 +145,13 @@ contains
     allocate(dxo(self%isd:self%ied,self%jsd:self%jed))
 
     do ivar = 1, self%vars%nvars()
-       select case (trim(self%vars%variable(ivar)))
-
-       case ("ssh")
-          dxi = dxin%ssh(:,:)
-          call soca_filt2d(self, dxi, dxo, geom)
-          dxout%ssh(:,:) = dxo
-
-       case ("tocn")
-          do k = 1, geom%nzo
-             dxi = dxin%tocn(:,:,k)
-             call soca_filt2d(self, dxi, dxo, geom)
-             dxout%tocn(:,:,k) = dxo
-          end do
-
-       case ("socn")
-          do k = 1, geom%nzo
-             dxi = dxin%socn(:,:,k)
-             call soca_filt2d(self, dxi, dxo, geom)
-             dxout%socn(:,:,k) = dxo
-          end do
-
-       case ("cicen")
-          do k = 1, geom%ncat
-             dxi = dxin%seaice%cicen(:,:,k)
-             call soca_filt2d(self, dxi, dxo, geom)
-             dxout%seaice%cicen(:,:,k) = dxo
-          end do
-
-       case ("hicen")
-          do k = 1, geom%ncat
-             dxi = dxin%seaice%hicen(:,:,k)
-             call soca_filt2d(self, dxi, dxo, geom)
-             dxout%seaice%hicen(:,:,k) = dxo
-          end do
-
-       end select
+      call dxin%get(trim(self%vars%variable(ivar)),  field_i)
+      call dxout%get(trim(self%vars%variable(ivar)), field_o)
+      do k = 1, field_i%nz
+        dxi = field_i%val(:,:,k)
+        call soca_filt2d(self, dxi, dxo, geom)
+        field_o%val(:,:,k) = dxo
+      end do
     end do
     deallocate(dxi, dxo)
 
@@ -185,10 +161,11 @@ contains
   !> Backward filtering
   subroutine soca_horizfilt_multad(self, dxin, dxout, geom)
     class(soca_horizfilt_type), intent(inout) :: self  !< The horizfilt structure
-    type(soca_field),              intent(in) :: dxin  !< Input:
-    type(soca_field),           intent(inout) :: dxout !< Output:
+    type(soca_fields),             intent(in) :: dxin  !< Input:
+    type(soca_fields),          intent(inout) :: dxout !< Output:
     type(soca_geom),               intent(in) :: geom
 
+    type(soca_field), pointer :: field_i, field_o
     integer :: k, ivar
     real(kind=kind_real), allocatable, dimension(:,:) :: dxi, dxo
 
@@ -196,42 +173,13 @@ contains
     allocate(dxo(self%isd:self%ied,self%jsd:self%jed))
 
     do ivar = 1, self%vars%nvars()
-       select case (trim(self%vars%variable(ivar)))
-
-       case ("ssh")
-          dxi = dxin%ssh(:,:)
+      call dxin%get(trim(self%vars%variable(ivar)),  field_i)
+      call dxout%get(trim(self%vars%variable(ivar)), field_o)
+       do k = 1, field_i%nz
+          dxi = field_i%val(:,:,k)
           call soca_filt2d_ad(self, dxi, dxo, geom)
-          dxout%ssh(:,:) = dxo
-
-       case ("tocn")
-          do k = 1, geom%nzo
-             dxi = dxin%tocn(:,:,k)
-             call soca_filt2d_ad(self, dxi, dxo, geom)
-             dxout%tocn(:,:,k) = dxo
-          end do
-
-       case ("socn")
-          do k = 1, geom%nzo
-             dxi = dxin%socn(:,:,k)
-             call soca_filt2d_ad(self, dxi, dxo, geom)
-             dxout%socn(:,:,k) = dxo
-          end do
-
-       case ("cicen")
-          do k = 1, geom%ncat
-             dxi = dxin%seaice%cicen(:,:,k)
-             call soca_filt2d_ad(self, dxi, dxo, geom)
-             dxout%seaice%cicen(:,:,k) = dxo
-          end do
-
-       case ("hicen")
-          do k = 1, geom%ncat
-             dxi = dxin%seaice%hicen(:,:,k)
-             call soca_filt2d_ad(self, dxi, dxo, geom)
-             dxout%seaice%hicen(:,:,k) = dxo
-          end do
-
-       end select
+          field_o%val(:,:,k) = dxo
+       end do
     end do
     deallocate(dxi, dxo)
 

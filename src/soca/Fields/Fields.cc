@@ -165,11 +165,12 @@ namespace soca {
     oops::Variables fieldNames = variables();
     std::vector<int> varlens(fieldNames.size());
 
+    // TODO(Travis) remove the hardcoded variable names
     for (int ii = 0; ii < fieldNames.size(); ii++) {
       if (fieldNames[ii] == "tocn") varlens[ii]=nzo;
       else if (fieldNames[ii] == "socn") varlens[ii]=nzo;
       else if (fieldNames[ii] == "hocn") varlens[ii]=nzo;
-      else if (fieldNames[ii] == "cicen") varlens[ii]=ncat + 1;
+      else if (fieldNames[ii] == "cicen") varlens[ii]=ncat;
       else if (fieldNames[ii] == "hicen") varlens[ii]=ncat;
       else if (fieldNames[ii] == "hsnon") varlens[ii]=ncat;
       else

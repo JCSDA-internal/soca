@@ -7,7 +7,7 @@ module soca_bkgerrutil_mod
 
 use fckit_configuration_module, only: fckit_configuration
 use kinds, only: kind_real
-use soca_fields_mod, only: soca_field
+use soca_fields_mod, only: soca_fields, soca_field
 use soca_utils, only: soca_adjust
 
 implicit none
@@ -53,35 +53,45 @@ end subroutine soca_bkgerr_readbounds
 !> Setup the static background error
 subroutine soca_bkgerr_applybounds(self, fld)
   class(soca_bkgerr_bounds_type), intent(inout) :: self
-  type(soca_field),               intent(inout) :: fld
+  type(soca_fields),              intent(inout) :: fld
 
-  integer :: isc, iec, jsc, jec, i, j
+  type(soca_field), pointer :: field
+
+  integer :: isc, iec, jsc, jec, i, j, n
+  real(kind=kind_real) :: vmin, vmax
 
   ! Apply config bounds to background error
   isc = fld%geom%isc ; iec = fld%geom%iec
   jsc = fld%geom%jsc ; jec = fld%geom%jec
 
-  do i = isc, iec
-     do j = jsc, jec
-        ! Apply bounds
-        fld%ssh(i,j) = soca_adjust(fld%ssh(i,j), &
-                                   &self%ssh_min,&
-                                   &self%ssh_max)
-        fld%tocn(i,j,:) = soca_adjust(fld%tocn(i,j,:),&
-                                      &self%t_min,&
-                                      &self%t_max)
-        fld%socn(i,j,:) = soca_adjust(fld%socn(i,j,:),&
-                                      &self%s_min,&
-                                      &self%s_max)
-        fld%seaice%cicen(i,j,:) = soca_adjust(fld%seaice%cicen(i,j,:),&
-                                      &self%cicen_min,&
-                                      &self%cicen_max)
-        fld%seaice%hicen(i,j,:) = soca_adjust(fld%seaice%hicen(i,j,:),&
-                                      &self%hicen_min,&
-                                      &self%hicen_max)
-     end do
-  end do
+  do n=1,size(fld%fields)
+    field => fld%fields(n)
+    select case(field%name)
+    case ("tocn")
+      vmin = self%t_min
+      vmax = self%t_max
+    case ("socn")
+      vmin = self%s_min
+      vmax = self%s_max
+    case ("ssh")
+      vmin = self%ssh_min
+      vmax = self%ssh_max
+    case ("cicen")
+      vmin = self%cicen_min
+      vmax = self%cicen_max
+    case ("hicen")
+      vmin = self%hicen_min
+      vmax = self%hicen_max
+    case default
+      cycle
+    end select
 
+    do i = isc, iec
+      do j = jsc, jec
+        field%val(i,j,:) = soca_adjust(field%val(i,j,:), vmin, vmax)
+      end do
+    end do
+  end do
 
 end subroutine soca_bkgerr_applybounds
 
