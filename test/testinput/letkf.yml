@@ -44,13 +44,18 @@ Observations:
   ObsTypes:
     - ObsSpace:
         name: SeaSurfaceTemp
+        distribution: InefficientDistribution
         ObsDataOut: {obsfile: ./Data/sst.letkf.nc}
-        ObsDataIn:  {obsfile: ./Data/sst.nc}
+#        ObsDataIn:  {obsfile: ./Data/sst.nc}
+        ObsDataIn:  {obsfile: ./Data/sst_aghulas.nc}
         simulate:   {variables: [ sea_surface_temperature ]}
       ObsOperator:
         name: Identity
       Covariance:
         covariance: diagonal
+      Localization:
+        localization: Gaspari-Cohn
+        lengthscale: 5000e3
       ObsFilters:
       - *land_mask
       - Filter: Bounds Check
@@ -63,11 +68,11 @@ Observations:
         random_seed: 0
 
 Localization:
-  distance: 1000e3
+  distance: 5000e3
   max_nobs: -1
 
 letkf:
-  - nothing
+  rtppCoeff: -1.
 
 output:
   datadir: Data
