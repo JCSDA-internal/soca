@@ -43,8 +43,8 @@ public :: soca_fields, soca_field
 type :: soca_field
   character(len=:),     allocatable :: name       !< the internally used name of the field
   integer                           :: nz         !< the number of levels
-  logical                           :: masked     !< if true, land mask should be applied
   real(kind=kind_real), allocatable :: val(:,:,:) !< the actual data
+  real(kind=kind_real),     pointer :: mask(:,:) => null() !< field mask
   character(len=:),     allocatable :: cf_name    !< the (optional) name needed by UFO
   character(len=:),     allocatable :: io_name    !< the (optional) name use in the restart IO
   character(len=:),     allocatable :: io_file    !< the (optional) restart file domain
@@ -130,6 +130,7 @@ subroutine soca_field_copy(self, rhs)
   self%cf_name = rhs%cf_name
   self%io_name = rhs%io_name
   self%io_file = rhs%io_file
+  self%mask => rhs%mask
 end subroutine soca_field_copy
 
 
@@ -179,17 +180,22 @@ subroutine soca_fields_init_vars(self, vars)
     self%fields(i)%name = trim(vars(i))
 
     ! determine number of levels, and if masked
-    self%fields(i)%masked = .false.
     select case(self%fields(i)%name)
     case ('tocn','socn','hocn')
       nz = self%geom%nzo
-      self%fields(i)%masked = .true.
+      self%fields(i)%mask => self%geom%mask2d
+    case ('uocn')
+      nz = self%geom%nzo
+      self%fields(i)%mask => self%geom%mask2du
+    case ('vocn')
+      nz = self%geom%nzo
+      self%fields(i)%mask => self%geom%mask2dv
     case ('hicen','hsnon', 'cicen')
       nz = self%geom%ncat
-      self%fields(i)%masked = .true.
+      self%fields(i)%mask => self%geom%mask2d
     case ('ssh')
       nz = 1
-      self%fields(i)%masked = .true.
+      self%fields(i)%mask => self%geom%mask2d
     case ('sw', 'lhf', 'shf', 'lw', 'us')
       nz = 1
     case default
@@ -223,6 +229,14 @@ subroutine soca_fields_init_vars(self, vars)
       self%fields(i)%cf_name = "sea_water_cell_thickness"
       self%fields(i)%io_file = "ocn"
       self%fields(i)%io_name = "h"
+   case ('uocn')
+      self%fields(i)%cf_name = "sea_water_zonal_current"
+      self%fields(i)%io_file = "ocn"
+      self%fields(i)%io_name = "u"
+   case ('vocn')
+      self%fields(i)%cf_name = "sea_water_meridional_current"
+      self%fields(i)%io_file = "ocn"
+      self%fields(i)%io_name = "v"
     case ('hicen')
       self%fields(i)%cf_name = "sea_ice_category_thickness"
       self%fields(i)%io_file = "ice"
@@ -498,9 +512,9 @@ subroutine soca_fields_random(self)
   ! mask out land, set to zero
   do i=1,size(self%fields)
     field => self%fields(i)
-    if (.not. field%masked ) cycle
+    if (.not. associated(field%mask) ) cycle
     do z=1,field%nz
-      field%val(:,:,z) = field%val(:,:,z) * self%geom%mask2d
+      field%val(:,:,z) = field%val(:,:,z) * field%mask(:,:)
     end do
   end do
 
@@ -616,7 +630,8 @@ subroutine soca_fields_dotprod(fld1,fld2,zprod)
     ! determine which fields to use
     ! TODO: use all fields (this will change answers in the ctests)
     select case(field1%name)
-    case ("tocn","socn","ssh", "hicen", "sw", "lhf", "shf", "lw", "us", "cicen")
+    case ("tocn","socn","ssh","uocn","vocn",&
+          "hicen", "sw", "lhf", "shf", "lw", "us", "cicen")
       continue
     case default
       cycle
@@ -750,7 +765,7 @@ subroutine soca_fields_read(fld, f_conf, vdate)
   integer :: i, j, nz, n
   type(remapping_CS)  :: remapCS
   character(len=:), allocatable :: str, seaice_model
-  real(kind=kind_real), allocatable :: h_common_ij(:), hocn_ij(:), tsocn_ij(:), tsocn2_ij(:)
+  real(kind=kind_real), allocatable :: h_common_ij(:), hocn_ij(:), varocn_ij(:), varocn2_ij(:)
   logical :: read_sfc
   type(soca_field), pointer :: field, field2, hocn, cicen
   real(kind=kind_real) :: soca_rho_ice  = 905.0 !< [kg/m3]
@@ -944,7 +959,7 @@ subroutine soca_fields_read(fld, f_conf, vdate)
 
     ! Remap layers if needed
     if (vert_remap) then
-      allocate(h_common_ij(nz), hocn_ij(nz), tsocn_ij(nz), tsocn2_ij(nz))
+      allocate(h_common_ij(nz), hocn_ij(nz), varocn_ij(nz), varocn2_ij(nz))
       call initialize_remapping(remapCS,'PCM')
       do i = isc, iec
         do j = jsc, jec
@@ -955,12 +970,13 @@ subroutine soca_fields_read(fld, f_conf, vdate)
             field => fld%fields(n)
             select case(field%name)
             ! TODO remove hardcoded variable names here
+            ! TODO Add u and v. Remapping u and v will require interpolating h 
             case ('tocn','socn')
-              if (fld%geom%mask2d(i,j).eq.1) then
-                tsocn_ij = field%val(i,j,:)
-                call remapping_core_h(remapCS, nz, h_common_ij, tsocn_ij,&
-                      &nz, hocn_ij, tsocn2_ij)
-                field%val(i,j,:) = tsocn2_ij
+              if (associated(field%mask) .and. field%mask(i,j).eq.1) then
+                varocn_ij = field%val(i,j,:)
+                call remapping_core_h(remapCS, nz, h_common_ij, varocn_ij,&
+                      &nz, hocn_ij, varocn2_ij)
+                field%val(i,j,:) = varocn2_ij
               else
                 field%val(i,j,:) = 0.0_kind_real
               end if
@@ -969,7 +985,7 @@ subroutine soca_fields_read(fld, f_conf, vdate)
         end do
       end do
       hocn%val = h_common
-      deallocate(h_common_ij, hocn_ij, tsocn_ij, tsocn2_ij)
+      deallocate(h_common_ij, hocn_ij, varocn_ij, varocn2_ij)
     end if
     call end_remapping(remapCS)
 
@@ -1041,7 +1057,8 @@ subroutine soca_fields_gpnorm(fld, nf, pstat)
     ! get local min/max/sum of each variable
     ! TODO: use all fields (this will change answers in the ctests)
     select case(fld%fields(jj)%name)
-    case("tocn", "socn", "ssh", "hocn", "sw", "lw", "lhf", "shf", "us", "hicen", "hsnon", "cicen")
+    case("tocn", "socn", "ssh", "hocn", "uocn", "vocn", &
+         "sw", "lw", "lhf", "shf", "us", "hicen", "hsnon", "cicen")
       continue
     case default
       cycle

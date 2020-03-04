@@ -62,12 +62,12 @@ subroutine soca_initialize_integration(self, flds)
   type(soca_field), pointer :: field
 
   integer :: i
-  
+
   ! for each field
   do i=1,size(flds%fields)
-    call flds%get(flds%fields(i)%name, field)    
-    
-    ! Update halos  
+    call flds%get(flds%fields(i)%name, field)
+
+    ! Update halos
     call mpp_update_domains(field%val, flds%geom%Domain%mpp_domain)
 
     ! impose bounds, and set MOM6 state
@@ -77,13 +77,17 @@ subroutine soca_initialize_integration(self, flds)
         where( field%val < self%tocn_minmax(1) ) field%val = self%tocn_minmax(1)
       if ( self%tocn_minmax(2) /= real(-999., kind=8) ) &
         where( field%val > self%tocn_minmax(2) ) field%val = self%tocn_minmax(2)
-      self%mom6_config%MOM_CSp%T = real(field%val, kind=8)        
+      self%mom6_config%MOM_CSp%T = real(field%val, kind=8)
     case ("socn")
       if ( self%socn_minmax(1) /= real(-999., kind=8) ) &
         where( field%val < self%socn_minmax(1) ) field%val = self%socn_minmax(1)
       if ( self%socn_minmax(2) /= real(-999., kind=8) ) &
         where( field%val > self%socn_minmax(2) ) field%val = self%socn_minmax(2)
       self%mom6_config%MOM_CSp%S = real(field%val, kind=8)
+    case ("uocn")
+      self%mom6_config%MOM_CSp%u = real(field%val, kind=8)
+    case ("vocn")
+      self%mom6_config%MOM_CSp%v = real(field%val, kind=8)
     end select
 
     ! update forcing
@@ -91,14 +95,14 @@ subroutine soca_initialize_integration(self, flds)
     case ("sw")
       field%val(:,:,1) = - real(self%mom6_config%fluxes%sw, kind=kind_real)
     case ("lw")
-      field%val(:,:,1) = - real(self%mom6_config%fluxes%lw, kind=kind_real)  
-    case ("lhf")      
+      field%val(:,:,1) = - real(self%mom6_config%fluxes%lw, kind=kind_real)
+    case ("lhf")
       field%val(:,:,1) = - real(self%mom6_config%fluxes%latent, kind=kind_real)
-    case ("shf")      
+    case ("shf")
       field%val(:,:,1) = - real(self%mom6_config%fluxes%sens, kind=kind_real)
     case ("us")
       field%val(:,:,1) =   real(self%mom6_config%fluxes%ustar, kind=kind_real)
-    end select      
+    end select
   end do
 end subroutine soca_initialize_integration
 
@@ -119,7 +123,7 @@ subroutine soca_propagate(self, flds, fldsdate)
   do i=1,size(flds%fields)
     field => flds%fields(i)
 
-    ! update halos   
+    ! update halos
     call mpp_update_domains(field%val, flds%geom%Domain%mpp_domain)
 
     ! update MOM state
@@ -128,7 +132,11 @@ subroutine soca_propagate(self, flds, fldsdate)
       self%mom6_config%MOM_CSp%T = real(field%val, kind=8)
     case ("socn")
       self%mom6_config%MOM_CSp%S = real(field%val, kind=8)
-    ! TODO: pass forcing back to MOM      
+    case ("uocn")
+      self%mom6_config%MOM_CSp%u = real(field%val, kind=8)
+    case ("vocn")
+      self%mom6_config%MOM_CSp%v = real(field%val, kind=8)
+    ! TODO: pass forcing back to MOM
     end select
   end do
 
@@ -183,13 +191,17 @@ subroutine soca_propagate(self, flds, fldsdate)
       field%val = real(self%mom6_config%MOM_CSp%h, kind=kind_real)
     case ("ssh")
       field%val(:,:,1) = real(self%mom6_config%MOM_CSp%ave_ssh_ibc, kind=kind_real)
+    case ("uocn")
+      field%val = real(self%mom6_config%MOM_CSp%u, kind=kind_real)
+    case ("vocn")
+      field%val = real(self%mom6_config%MOM_CSp%v, kind=kind_real)
     case ("sw")
       field%val(:,:,1) = - real(self%mom6_config%fluxes%sw, kind=kind_real)
     case ("lw")
-      field%val(:,:,1) = - real(self%mom6_config%fluxes%lw, kind=kind_real)  
+      field%val(:,:,1) = - real(self%mom6_config%fluxes%lw, kind=kind_real)
     case ("lhf")
       field%val(:,:,1) = - real(self%mom6_config%fluxes%latent, kind=kind_real)
-    case ("shf")      
+    case ("shf")
       field%val(:,:,1) = - real(self%mom6_config%fluxes%sens, kind=kind_real)
     case ("us")
       field%val(:,:,1) = real(self%mom6_config%fluxes%ustar, kind=kind_real)
@@ -202,14 +214,14 @@ end subroutine soca_propagate
 subroutine soca_finalize_integration(self, flds)
   type(soca_model), intent(inout) :: self
   type(soca_fields),intent(inout) :: flds
-  
+
   type(soca_field), pointer :: field
   integer :: i
 
   ! for each field
   do i=1,size(flds%fields)
     field => flds%fields(i)
-    
+
     ! update halos
     call mpp_update_domains(field%val, flds%geom%Domain%mpp_domain)
 
@@ -227,7 +239,7 @@ subroutine soca_finalize_integration(self, flds)
       if ( self%socn_minmax(2) /= real(-999., kind=8) ) &
         where( field%val > self%socn_minmax(2) ) field%val = self%socn_minmax(2)
       self%mom6_config%MOM_CSp%S = real(field%val, kind=8)
-    end select  
+    end select
   end do
 
   ! Save MOM restarts with updated SOCA fields

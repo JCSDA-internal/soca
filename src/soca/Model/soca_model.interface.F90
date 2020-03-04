@@ -60,8 +60,8 @@ subroutine c_soca_setup(c_conf, c_key_geom, c_key_model) bind (c,name='soca_setu
   call soca_model_registry%get(c_key_model, model)
 
   ! Get local grid size
-  model%nx = geom%nx
-  model%ny = geom%ny
+  model%nx =  size(geom%lon,1)
+  model%ny = size(geom%lon,2)
 
   ! Setup time step
   call f_conf%get_or_die("tstep", str)

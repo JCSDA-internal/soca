@@ -558,8 +558,8 @@ subroutine soca_fieldnum_c(c_key_fld, nx, ny, nzo, nzi, ncat, nf) bind(c,name='s
 
   call soca_field_registry%get(c_key_fld,fld)
 
-  nx = fld%geom%nx
-  ny = fld%geom%ny
+  nx = size(fld%geom%lon,1)
+  ny = size(fld%geom%lon,2)
   nzo = fld%geom%nzo
   nzi = fld%geom%nzi
   ncat = fld%geom%ncat
