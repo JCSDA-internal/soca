@@ -45,7 +45,7 @@ type :: soca_field
   integer                           :: nz         !< the number of levels
   logical                           :: masked     !< if true, land mask should be applied
   real(kind=kind_real), allocatable :: val(:,:,:) !< the actual data
-  real(kind=kind_real),     pointer :: mask(:,:)  !< field mask
+  real(kind=kind_real),     pointer :: mask(:,:) => null() !< field mask
   character(len=:),     allocatable :: cf_name    !< the (optional) name needed by UFO
   character(len=:),     allocatable :: io_name    !< the (optional) name use in the restart IO
   character(len=:),     allocatable :: io_file    !< the (optional) restart file domain
