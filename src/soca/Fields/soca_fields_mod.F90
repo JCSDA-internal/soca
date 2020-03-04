@@ -970,7 +970,7 @@ subroutine soca_fields_read(fld, f_conf, vdate)
             ! TODO remove hardcoded variable names here
             ! TODO Add u and v. Remapping u and v will require interpolating h 
             case ('tocn','socn')
-              if (field%mask(i,j).eq.1) then
+              if (associated(field%mask) .and. field%mask(i,j).eq.1) then
                 varocn_ij = field%val(i,j,:)
                 call remapping_core_h(remapCS, nz, h_common_ij, varocn_ij,&
                       &nz, hocn_ij, varocn2_ij)
