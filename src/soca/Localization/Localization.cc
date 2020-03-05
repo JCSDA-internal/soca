@@ -5,10 +5,10 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#include "soca/Fortran.h"
 #include "soca/Geometry/Geometry.h"
 #include "soca/Increment/Increment.h"
 #include "soca/Localization/Localization.h"
+#include "soca/Localization/LocalizationFortran.h"
 
 #include "eckit/config/Configuration.h"
 

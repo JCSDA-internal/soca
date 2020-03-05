@@ -1,6 +1,7 @@
 soca_target_sources(
   Balance.cc
   Balance.h
+  BalanceFortran.h
   soca_balance_mod.F90
   soca_balance.interface.F90
   soca_ksshts_mod.F90

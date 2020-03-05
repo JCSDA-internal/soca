@@ -9,10 +9,10 @@
 #include <string>
 
 #include "soca/Fields/Fields.h"
-#include "soca/Fortran.h"
 #include "soca/Increment/Increment.h"
 #include "soca/State/State.h"
 #include "soca/Transforms/VertConv/VertConv.h"
+#include "soca/Transforms/VertConv/VertConvFortran.h"
 
 #include "eckit/config/Configuration.h"
 

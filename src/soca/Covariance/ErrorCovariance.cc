@@ -8,8 +8,8 @@
 #include <cmath>
 
 #include "soca/Covariance/ErrorCovariance.h"
+#include "soca/Covariance/ErrorCovarianceFortran.h"
 #include "soca/Fields/Fields.h"
-#include "soca/Fortran.h"
 #include "soca/Geometry/Geometry.h"
 #include "soca/Increment/Increment.h"
 #include "soca/State/State.h"

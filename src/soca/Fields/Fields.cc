@@ -12,7 +12,7 @@
 #include <vector>
 
 #include "soca/Fields/Fields.h"
-#include "soca/Fortran.h"
+#include "soca/Fields/FieldsFortran.h"
 #include "soca/Geometry/Geometry.h"
 #include "soca/GeometryIterator/GeometryIterator.h"
 #include "soca/GetValuesTraj/GetValuesTraj.h"

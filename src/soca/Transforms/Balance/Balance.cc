@@ -9,11 +9,11 @@
 #include <string>
 
 #include "soca/Fields/Fields.h"
-#include "soca/Fortran.h"
 #include "soca/Geometry/Geometry.h"
 #include "soca/Increment/Increment.h"
 #include "soca/State/State.h"
 #include "soca/Transforms/Balance/Balance.h"
+#include "soca/Transforms/Balance/BalanceFortran.h"
 
 #include "eckit/config/Configuration.h"
 

@@ -8,7 +8,6 @@
 #include "eckit/config/Configuration.h"
 #include "soca/GeometryIterator/GeometryIterator.h"
 #include "soca/GeometryIterator/GeometryIteratorFortran.h"
-#include "Fortran.h"
 #include "oops/util/Logger.h"
 
 // -----------------------------------------------------------------------------

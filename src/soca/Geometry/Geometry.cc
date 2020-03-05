@@ -7,7 +7,6 @@
 
 #include <string>
 
-#include "soca/Fortran.h"
 #include "soca/Geometry/Geometry.h"
 #include "soca/Geometry/GeometryFortran.h"
 #include "soca/GeometryIterator/GeometryIterator.h"
