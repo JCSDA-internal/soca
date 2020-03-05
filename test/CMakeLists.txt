@@ -434,7 +434,6 @@ soca_add_test( NAME varchange_vertconv
 #-------------------------------------------------------------------------------
 soca_add_test( NAME ensvariance
                EXE  soca_ensvariance.x
-               NOTRAPFPE
                TEST_DEPENDS test_soca_enspert )
 
 soca_add_test( NAME parameters_bump_loc
@@ -444,7 +443,6 @@ soca_add_test( NAME parameters_bump_loc
 
 soca_add_test( NAME ensrecenter
                EXE  soca_ensrecenter.x
-               NOTRAPFPE
                TEST_DEPENDS test_soca_enspert )
 
 # TODO the next couple of tests are a little slow.
@@ -465,17 +463,14 @@ soca_add_test( NAME ensrecenter
 
 soca_add_test( NAME dirac_soca_cov
                EXE  soca_dirac.x
-               NOTRAPFPE
                TEST_DEPENDS test_soca_static_socaerror_init)
 
 soca_add_test( NAME dirac_socahyb_cov
                EXE  soca_dirac.x
-               NOTRAPFPE
                TEST_DEPENDS test_soca_parameters_bump_loc)
 
 soca_add_test( NAME dirac_horizfilt
                EXE  soca_dirac.x
-               NOTRAPFPE
                TEST_DEPENDS test_soca_static_socaerror_init)
 
 #ecbuild_add_test( TARGET  test_soca_localization
