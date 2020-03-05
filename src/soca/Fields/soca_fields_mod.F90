@@ -816,14 +816,15 @@ subroutine soca_fields_read(fld, f_conf, vdate)
      call f_conf%get_or_die("remap_filename", str)
      remap_filename = str
      allocate(h_common(isd:ied,jsd:jed,nz))
+     h_common = 0.0_kind_real
 
      ! Read common vertical coordinate from file
      call fms_io_init()
-     idr = register_restart_field(ocean_remap_restart, remap_filename, 'h', hocn%val(:,:,:), &
+     idr = register_restart_field(ocean_remap_restart, remap_filename, 'h', h_common, &
           domain=fld%geom%Domain%mpp_domain)
      call restore_state(ocean_remap_restart, directory='')
+     call free_restart_type(ocean_remap_restart)
      call fms_io_exit()
-     h_common = hocn%val
   end if
 
   ! iread = 0: Invent state
@@ -852,6 +853,7 @@ subroutine soca_fields_read(fld, f_conf, vdate)
         select case(fld%fields(i)%name)
         case ('cicen')
           allocate(cicen_val(isd:ied, jsd:jed, fld%fields(i)%nz + 1))
+          cicen_val = 0.0_kind_real
           idr = register_restart_field(ice_restart, filename, 'part_size', &
                   cicen_val, &
                   domain=fld%geom%Domain%mpp_domain)
@@ -962,7 +964,11 @@ subroutine soca_fields_read(fld, f_conf, vdate)
     end do
 
     call restore_state(ocean_restart, directory='')
-    if (read_sfc) call restore_state(sfc_restart, directory='')
+    call free_restart_type(ocean_restart)
+    if (read_sfc) then
+      call restore_state(sfc_restart, directory='')
+      call free_restart_type(sfc_restart)
+    end if
     call fms_io_exit()
 
     ! Indices for compute domain
@@ -1015,17 +1021,13 @@ subroutine soca_fields_read(fld, f_conf, vdate)
       end do
       hocn%val = h_common
       deallocate(h_common_ij, hocn_ij, varocn_ij, varocn2_ij)
+      call end_remapping(remapCS)
     end if
-    call end_remapping(remapCS)
 
     ! Update halo
     do n=1,size(fld%fields)
       field => fld%fields(n)
-      if (field%nz == 1) then
-        call mpp_update_domains(field%val(:,:,1), fld%geom%Domain%mpp_domain)
-      else
-        call mpp_update_domains(field%val, fld%geom%Domain%mpp_domain)
-      end if
+      call mpp_update_domains(field%val, fld%geom%Domain%mpp_domain)
     end do
 
     ! Set vdate if reading state

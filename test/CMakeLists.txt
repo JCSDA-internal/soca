@@ -280,28 +280,31 @@ function(soca_add_test)
     set ( ARG_NOCOMPARE TRUE)
 
   else()
-    # running a soca executable
+    LIST(GET ARG_TOL 0 TOL_F)
+    LIST(GET ARG_TOL 1 TOL_I)
+
+    # find the MPI command
+    set(MPI_CMD "${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} ${MPI}")
+
+    # running a soca executable.
+    # This is run with the run wrapper, which will also optionally
+    # run the comapre.py script afterwards
     ecbuild_add_test( TARGET  test_soca_${ARG_NAME}
-                      TYPE    EXE
-                      COMMAND "${CMAKE_BINARY_DIR}/bin/${ARG_EXE}"
-                      ARGS    ${CONFIG_FILE}
-                              testoutput/${ARG_NAME}.log
-                      MPI     ${MPI}
-                      ENVIRONMENT ${TRAPFPE_ENV}
+                      TYPE    SCRIPT
+                      COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/test_wrapper.sh"
+                      ARGS    "${CMAKE_BINARY_DIR}/bin/${ARG_EXE}"
+                              ${CONFIG_FILE}
+                      ENVIRONMENT
+                              ${TRAPFPE_ENV}
+                              COMPARE_SCRIPT=${COMPARE_BIN}
+                              COMPARE_TESTNAME=${ARG_NAME}
+                              COMPARE_TOL_F=${TOL_F}
+                              COMPARE_TOL_I=${TOL_I}
+                              MPI_CMD=${MPI_CMD}
+                              SKIP_COMPARE=${ARG_NOCOMPARE}
                       DEPENDS ${ARG_EXE}
                       TEST_DEPENDS ${ARG_TEST_DEPENDS})
   endif()
-
-  # compare the answers, if desired
-  IF(NOT ARG_NOCOMPARE)
-    ecbuild_add_test( TARGET  test_soca_${ARG_NAME}_compare
-                      TYPE    SCRIPT
-                      COMMAND "${COMPARE_BIN}"
-                      ARGS    testoutput/${ARG_NAME}.log
-                              testref/${ARG_NAME}.test
-                              ${ARG_TOL}
-                     TEST_DEPENDS test_soca_${ARG_NAME})
-  ENDIF()
 endfunction()
 
 
@@ -434,7 +437,6 @@ soca_add_test( NAME varchange_vertconv
 #-------------------------------------------------------------------------------
 soca_add_test( NAME ensvariance
                EXE  soca_ensvariance.x
-               NOTRAPFPE
                TEST_DEPENDS test_soca_enspert )
 
 soca_add_test( NAME parameters_bump_loc
@@ -444,7 +446,6 @@ soca_add_test( NAME parameters_bump_loc
 
 soca_add_test( NAME ensrecenter
                EXE  soca_ensrecenter.x
-               NOTRAPFPE
                TEST_DEPENDS test_soca_enspert )
 
 # TODO the next couple of tests are a little slow.
@@ -465,17 +466,14 @@ soca_add_test( NAME ensrecenter
 
 soca_add_test( NAME dirac_soca_cov
                EXE  soca_dirac.x
-               NOTRAPFPE
                TEST_DEPENDS test_soca_static_socaerror_init)
 
 soca_add_test( NAME dirac_socahyb_cov
                EXE  soca_dirac.x
-               NOTRAPFPE
                TEST_DEPENDS test_soca_parameters_bump_loc)
 
 soca_add_test( NAME dirac_horizfilt
                EXE  soca_dirac.x
-               NOTRAPFPE
                TEST_DEPENDS test_soca_static_socaerror_init)
 
 #ecbuild_add_test( TARGET  test_soca_localization
