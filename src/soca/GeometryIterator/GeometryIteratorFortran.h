@@ -8,7 +8,7 @@
 #ifndef SOCA_GEOMETRYITERATOR_GEOMETRYITERATORFORTRAN_H_
 #define SOCA_GEOMETRYITERATOR_GEOMETRYITERATORFORTRAN_H_
 
-#include "Fortran.h"
+#include "soca/Fortran.h"
 
 // Forward declarations
 namespace eckit {
