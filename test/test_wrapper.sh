@@ -5,7 +5,7 @@ echo ""
 echo "==============================================================================="
 echo "Running test executable"
 echo "==============================================================================="
-mpirun -n $MPI_PES $1 $2 testoutput/${COMPARE_TESTNAME}.log
+${MPI_CMD} $1 $2 testoutput/${COMPARE_TESTNAME}.log
 e=$?
 if [[ $e -gt 0 ]]; then
     echo -e "Failed to run executable. Error code: $e \n"

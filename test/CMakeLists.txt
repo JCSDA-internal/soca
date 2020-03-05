@@ -283,6 +283,9 @@ function(soca_add_test)
     LIST(GET ARG_TOL 0 TOL_F)
     LIST(GET ARG_TOL 1 TOL_I)
 
+    # find the MPI command
+    set(MPI_CMD "${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} ${MPI}")
+
     # running a soca executable.
     # This is run with the run wrapper, which will also optionally
     # run the comapre.py script afterwards
@@ -297,7 +300,7 @@ function(soca_add_test)
                               COMPARE_TESTNAME=${ARG_NAME}
                               COMPARE_TOL_F=${TOL_F}
                               COMPARE_TOL_I=${TOL_I}
-                              MPI_PES=${MPI}
+                              MPI_CMD=${MPI_CMD}
                               SKIP_COMPARE=${ARG_NOCOMPARE}
                       DEPENDS ${ARG_EXE}
                       TEST_DEPENDS ${ARG_TEST_DEPENDS})
