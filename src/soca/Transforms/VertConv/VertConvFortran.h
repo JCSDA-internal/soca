@@ -5,8 +5,8 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#ifndef SOCA_VERTCONV_VERTCONVFORTRAN_H_
-#define SOCA_VERTCONV_VERTCONVFORTRAN_H_
+#ifndef SOCA_TRANSFORMS_VERTCONV_VERTCONVFORTRAN_H_
+#define SOCA_TRANSFORMS_VERTCONV_VERTCONVFORTRAN_H_
 
 #include "soca/Fortran.h"
 
@@ -29,4 +29,4 @@ namespace soca {
                                   const F90balopmat &, const F90balopmat &);
   }
 }  // namespace soca
-#endif  // SOCA_VERTCONV_VERTCONVFORTRAN_H_
+#endif  // SOCA_TRANSFORMS_VERTCONV_VERTCONVFORTRAN_H_

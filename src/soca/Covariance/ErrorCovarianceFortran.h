@@ -5,8 +5,8 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#ifndef SOCA_ERRORCOVARIANCE_ERRORCOVARIANCEFORTRAN_H_
-#define SOCA_ERRORCOVARIANCE_ERRORCOVARIANCEFORTRAN_H_
+#ifndef SOCA_COVARIANCE_ERRORCOVARIANCEFORTRAN_H_
+#define SOCA_COVARIANCE_ERRORCOVARIANCEFORTRAN_H_
 
 #include "soca/Fortran.h"
 
@@ -28,4 +28,4 @@ namespace soca {
     void soca_b_randomize_f90(const F90bmat &, const F90flds &);
   }
 }  // namespace soca
-#endif  // SOCA_ERRORCOVARIANCE_ERRORCOVARIANCEFORTRAN_H_
+#endif  // SOCA_COVARIANCE_ERRORCOVARIANCEFORTRAN_H_
