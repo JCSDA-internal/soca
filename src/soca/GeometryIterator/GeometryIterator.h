@@ -11,18 +11,23 @@
 #include <iterator>
 #include <string>
 
-#include "eckit/geometry/Point2.h"
-
-#include "soca/Geometry/Geometry.h"
 #include "soca/Fortran.h"
 
 #include "oops/util/ObjectCounter.h"
 #include "oops/util/Printable.h"
 
+// Forward declarations
+namespace eckit {
+  namespace geometry {
+    class Point2;
+  }
+}
 namespace soca {
+  class Geometry;
+}
 
-class Geometry;
 
+namespace soca {
 // -----------------------------------------------------------------------------
 class GeometryIterator: public std::iterator<std::forward_iterator_tag,
                                                eckit::geometry::Point2>,

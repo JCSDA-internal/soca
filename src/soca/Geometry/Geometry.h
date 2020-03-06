@@ -13,7 +13,6 @@
 #include <vector>
 
 #include "soca/Fortran.h"
-#include "soca/Geometry/GeometryFortran.h"
 
 #include "eckit/config/LocalConfiguration.h"
 #include "eckit/mpi/Comm.h"

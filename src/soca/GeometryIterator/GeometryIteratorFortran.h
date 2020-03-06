@@ -12,8 +12,6 @@
 
 namespace soca {
 
-  typedef int F90iter;
-
   extern "C" {
     void soca_geom_iter_setup_f90(F90iter &, const F90geom &,
                                   const int &, const int &);

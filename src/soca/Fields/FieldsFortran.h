@@ -24,8 +24,6 @@ namespace util {
 
 namespace soca {
 
-  typedef int F90flds;
-
   extern "C" {
     void soca_field_create_f90(F90flds &, const F90geom &,
                                const oops::Variables &);

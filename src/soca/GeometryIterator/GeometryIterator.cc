@@ -5,9 +5,12 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#include "eckit/config/Configuration.h"
+#include "soca/Geometry/Geometry.h"
 #include "soca/GeometryIterator/GeometryIterator.h"
 #include "soca/GeometryIterator/GeometryIteratorFortran.h"
+
+#include "eckit/config/Configuration.h"
+#include "eckit/geometry/Point2.h"
 #include "oops/util/Logger.h"
 
 // -----------------------------------------------------------------------------

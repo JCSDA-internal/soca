@@ -19,7 +19,6 @@
 #include <boost/shared_ptr.hpp>
 
 #include "oops/base/GeneralizedDepartures.h"
-#include "oops/base/GridPoint.h"
 #include "oops/util/DateTime.h"
 #include "oops/util/Duration.h"
 #include "oops/util/ObjectCounter.h"
@@ -30,6 +29,7 @@ namespace eckit {
   class Configuration;
 }
 namespace oops {
+  class GridPoint;
   class UnstructuredGrid;
   class Variables;
 }
