@@ -1,28 +1,29 @@
 /*
- * (C) Copyright 2017-2019 UCAR
+ * (C) Copyright 2017-2020 UCAR
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#include "soca/Fields/Fields.h"
-
 #include <cmath>
+#include <iomanip>
 #include <map>
 #include <string>
 #include <vector>
-#include <iomanip>
+
+#include "soca/Fields/Fields.h"
+#include "soca/Fields/FieldsFortran.h"
+#include "soca/Geometry/Geometry.h"
+#include "soca/GeometryIterator/GeometryIterator.h"
+#include "soca/GetValuesTraj/GetValuesTraj.h"
 
 #include "eckit/config/Configuration.h"
-#include "oops/generic/UnstructuredGrid.h"
 #include "oops/base/GridPoint.h"
 #include "oops/base/Variables.h"
+#include "oops/generic/UnstructuredGrid.h"
 #include "oops/util/DateTime.h"
 #include "oops/util/Logger.h"
 #include "ufo/GeoVaLs.h"
-#include "soca/Fortran.h"
-#include "soca/Geometry/Geometry.h"
-#include "soca/GetValuesTraj/GetValuesTraj.h"
 #include "ufo/Locations.h"
 
 // -----------------------------------------------------------------------------

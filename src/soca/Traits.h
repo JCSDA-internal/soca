@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2017-2019 UCAR
+ * (C) Copyright 2017-2020 UCAR
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -10,15 +10,15 @@
 
 #include <string>
 
+#include "soca/Covariance/ErrorCovariance.h"
 #include "soca/Geometry/Geometry.h"
 #include "soca/GeometryIterator/GeometryIterator.h"
-#include "soca/Increment/Increment.h"
-#include "soca/Covariance/ErrorCovariance.h"
 #include "soca/GetValuesTraj/GetValuesTraj.h"
+#include "soca/Increment/Increment.h"
 #include "soca/Localization/Localization.h"
-#include "soca/ModelBias.h"
-#include "soca/ModelBiasIncrement.h"
-#include "soca/ModelBiasCovariance.h"
+#include "soca/ModelBias/ModelBias.h"
+#include "soca/ModelBias/ModelBiasCovariance.h"
+#include "soca/ModelBias/ModelBiasIncrement.h"
 #include "soca/State/State.h"
 
 #include "ioda/ObsSpace.h"
@@ -26,12 +26,12 @@
 
 #include "ufo/GeoVaLs.h"
 #include "ufo/LinearObsOperator.h"
+#include "ufo/Locations.h"
 #include "ufo/ObsBias.h"
 #include "ufo/ObsBiasCovariance.h"
 #include "ufo/ObsBiasIncrement.h"
 #include "ufo/ObsDiagnostics.h"
 #include "ufo/ObsOperator.h"
-#include "ufo/Locations.h"
 
 namespace soca {
 

@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2017-2019 UCAR
+ * (C) Copyright 2017-2020 UCAR
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -12,28 +12,26 @@
 #include <string>
 #include <vector>
 
-#include "eckit/mpi/Comm.h"
-#include "eckit/config/LocalConfiguration.h"
+#include "soca/Fortran.h"
 
+#include "eckit/config/LocalConfiguration.h"
+#include "eckit/mpi/Comm.h"
 #include "oops/util/ObjectCounter.h"
 #include "oops/util/Printable.h"
 
-#include "soca/Fortran.h"
-#include "soca/Geometry/GeometryFortran.h"
-#include "soca/GeometryIterator/GeometryIterator.h"
-
-
+// forward declarations
 namespace eckit {
   class Configuration;
 }
+namespace soca {
+  class GeometryIterator;
+}
+
+// -----------------------------------------------------------------------------
 
 namespace soca {
 
-  class GeometryIterator;
-
-  // -----------------------------------------------------------------------------
   /// Geometry handles geometry for SOCA model.
-
   class Geometry : public util::Printable,
     private util::ObjectCounter<Geometry> {
    public:

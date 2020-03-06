@@ -20,7 +20,7 @@
 # -- Project information -----------------------------------------------------
 
 project = u'soca'
-copyright = u'2019, Joint Center for Satellite Data Assimilation'
+copyright = u'2020, Joint Center for Satellite Data Assimilation'
 author = u'Joint Center for Satellite Data Assimilation'
 
 # The short X.Y version
