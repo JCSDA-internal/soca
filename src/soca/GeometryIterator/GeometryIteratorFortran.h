@@ -9,11 +9,12 @@
 #define SOCA_GEOMETRYITERATOR_GEOMETRYITERATORFORTRAN_H_
 
 #include "soca/Fortran.h"
+#include "soca/Geometry/Geometry.h"
 
 namespace soca {
 
   extern "C" {
-    void soca_geom_iter_setup_f90(F90iter &, const F90geom &,
+    void soca_geom_iter_setup_f90(F90iter &, const Geometry::Ftn * const &,
                                   const int &, const int &);
     void soca_geom_iter_clone_f90(F90iter &, const F90iter &);
     void soca_geom_iter_delete_f90(F90iter &);

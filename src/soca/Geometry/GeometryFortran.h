@@ -8,7 +8,7 @@
 #ifndef SOCA_GEOMETRY_GEOMETRYFORTRAN_H_
 #define SOCA_GEOMETRY_GEOMETRYFORTRAN_H_
 
-#include "soca/Fortran.h"
+#include "soca/Geometry/Geometry.h"
 
 // Forward declarations
 namespace eckit {
@@ -18,11 +18,13 @@ namespace eckit {
 namespace soca {
 
   extern "C" {
-    void soca_geo_setup_f90(F90geom &, const eckit::Configuration * const *);
-    void soca_geo_clone_f90(const F90geom &, F90geom &);
-    void soca_geo_gridgen_f90(const F90geom &);
-    void soca_geo_delete_f90(F90geom &);
-    void soca_geo_start_end_f90(const F90geom &, int &, int &, int &, int &);
+    void soca_geo_setup_f90(Geometry::Ftn * &,
+                            const eckit::Configuration * const *);
+    void soca_geo_clone_f90(Geometry::Ftn * &, const Geometry::Ftn * const &);
+    void soca_geo_gridgen_f90(const Geometry::Ftn * const &);
+    void soca_geo_delete_f90(Geometry::Ftn * &);
+    void soca_geo_start_end_f90(const Geometry::Ftn * const &,
+                                int &, int &, int &, int &);
   }
 }  // namespace soca
 #endif  // SOCA_GEOMETRY_GEOMETRYFORTRAN_H_

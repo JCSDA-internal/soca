@@ -10,37 +10,22 @@ use fckit_configuration_module, only: fckit_configuration
 use soca_geom_mod, only: soca_geom
 
 implicit none
-
 private
-public :: soca_geom_registry
-
-#define LISTED_TYPE soca_geom
-
-!> Linked list interface - defines registry_t type
-#include "oops/util/linkedList_i.f"
-
-!> Global registry
-type(registry_t) :: soca_geom_registry
 
 ! ------------------------------------------------------------------------------
 contains
 ! ------------------------------------------------------------------------------
 
-!> Linked list implementation
-#include "oops/util/linkedList_c.f"
-
 ! ------------------------------------------------------------------------------
 !> Setup geometry object
-subroutine c_soca_geo_setup(c_key_self, c_conf) bind(c,name='soca_geo_setup_f90')
-
-  integer(c_int), intent(inout) :: c_key_self
-  type(c_ptr),       intent(in) :: c_conf
+subroutine c_soca_geo_setup(c_self, c_conf) bind(c,name='soca_geo_setup_f90')
+  type(c_ptr), intent(inout) :: c_self
+  type(c_ptr),    intent(in) :: c_conf
 
   type(soca_geom), pointer :: self
 
-  call soca_geom_registry%init()
-  call soca_geom_registry%add(c_key_self)
-  call soca_geom_registry%get(c_key_self,self)
+  allocate(self)
+  c_self = c_loc(self)
 
   call self%init(fckit_configuration(c_conf))
 
@@ -48,16 +33,15 @@ end subroutine c_soca_geo_setup
 
 ! ------------------------------------------------------------------------------
 !> Clone geometry object
-subroutine c_soca_geo_clone(c_key_self, c_key_other) bind(c,name='soca_geo_clone_f90')
-
-  integer(c_int), intent(in   ) :: c_key_self
-  integer(c_int), intent(inout) :: c_key_other
+subroutine c_soca_geo_clone(c_self, c_other) bind(c,name='soca_geo_clone_f90')
+  type(c_ptr), intent(inout) :: c_self
+  type(c_ptr),    intent(in) :: c_other
 
   type(soca_geom), pointer :: self, other
 
-  call soca_geom_registry%add(c_key_other)
-  call soca_geom_registry%get(c_key_other, other)
-  call soca_geom_registry%get(c_key_self , self )
+  allocate(self)
+  c_self = c_loc(self)
+  call c_f_pointer(c_other, other)
 
   call self%clone(other)
 
@@ -65,13 +49,11 @@ end subroutine c_soca_geo_clone
 
 ! ------------------------------------------------------------------------------
 !> Generate grid
-subroutine c_soca_geo_gridgen(c_key_self) bind(c,name='soca_geo_gridgen_f90')
-
-  integer(c_int), intent(inout) :: c_key_self
+subroutine c_soca_geo_gridgen(c_self) bind(c,name='soca_geo_gridgen_f90')
+  type(c_ptr), intent(in) :: c_self
 
   type(soca_geom), pointer :: self
-
-  call soca_geom_registry%get(c_key_self, self)
+  call c_f_pointer(c_self, self)
 
   call self%gridgen()
 
@@ -79,29 +61,28 @@ end subroutine c_soca_geo_gridgen
 
 ! ------------------------------------------------------------------------------
 !> Geometry destructor
-subroutine c_soca_geo_delete(c_key_self) bind(c,name='soca_geo_delete_f90')
-
-  integer(c_int), intent(inout) :: c_key_self
+subroutine c_soca_geo_delete(c_self) bind(c,name='soca_geo_delete_f90')
+  type(c_ptr), intent(inout) :: c_self
 
   type(soca_geom), pointer :: self
 
-  call soca_geom_registry%get(c_key_self, self)
+  call c_f_pointer(c_self, self)
+
   call self%end()
-  call soca_geom_registry%remove(c_key_self)
+
+  deallocate(self)
 
 end subroutine c_soca_geo_delete
 
 ! ------------------------------------------------------------------------------
-!> return begin and end of local geometry 
-subroutine c_soca_geo_start_end(c_key_self, ist, iend, jst, jend) bind(c, name='soca_geo_start_end_f90')
-
-  implicit none
-
-  integer(c_int), intent( in) :: c_key_self
-  integer(c_int), intent(out) :: ist, iend, jst, jend 
+!> return begin and end of local geometry
+subroutine c_soca_geo_start_end(c_self, ist, iend, jst, jend) bind(c, name='soca_geo_start_end_f90')
+  type(c_ptr),      intent(in):: c_self
+  integer(c_int), intent(out) :: ist, iend, jst, jend
 
   type(soca_geom), pointer :: self
-  call soca_geom_registry%get(c_key_self, self)
+
+  call c_f_pointer(c_self, self)
 
   ist  = self%isc
   iend = self%iec

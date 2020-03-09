@@ -9,7 +9,6 @@ module soca_geom_iter_interface
   use iso_c_binding
   use kinds
   use soca_geom_iter_mod
-  use soca_geom_mod_c,  only : soca_geom_registry
   use soca_geom_mod, only: soca_geom
 
   implicit none
@@ -20,13 +19,13 @@ contains
 
   ! ------------------------------------------------------------------------------
   !> Setup geometry iterator
-  subroutine soca_geom_iter_setup_c(c_key_self, c_key_geom, c_iindex, c_jindex) bind(c, name='soca_geom_iter_setup_f90')
+  subroutine soca_geom_iter_setup_c(c_key_self, c_geom, c_iindex, c_jindex) bind(c, name='soca_geom_iter_setup_f90')
 
     ! Passed variables
-    integer(c_int), intent(inout) :: c_key_self !< Geometry iterator
-    integer(c_int), intent(   in) :: c_key_geom !< Geometry
-    integer(c_int), intent(   in) :: c_iindex    !< Index
-    integer(c_int), intent(   in) :: c_jindex    !< Index
+    integer(c_int),   intent(inout) :: c_key_self !< Geometry iterator
+    type(c_ptr), target, intent(in) :: c_geom !< Geometry
+    integer(c_int),   intent(   in) :: c_iindex    !< Index
+    integer(c_int),   intent(   in) :: c_jindex    !< Index
 
     ! Local variables
     type(soca_geom_iter),     pointer :: self
@@ -36,7 +35,7 @@ contains
     call soca_geom_iter_registry%init()
     call soca_geom_iter_registry%add(c_key_self)
     call soca_geom_iter_registry%get(c_key_self, self)
-    call soca_geom_registry%get(c_key_geom, geom)
+    call c_f_pointer(c_geom, geom)
 
     ! Call Fortran
     call soca_geom_iter_setup(self, geom, c_iindex, c_jindex)

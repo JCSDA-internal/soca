@@ -9,6 +9,7 @@
 #define SOCA_TRANSFORMS_HORIZFILT_HORIZFILTFORTRAN_H_
 
 #include "soca/Fortran.h"
+#include "soca/Geometry/Geometry.h"
 
 #include "oops/base/Variables.h"
 
@@ -22,18 +23,16 @@ namespace soca {
   extern "C" {
     void soca_horizfilt_setup_f90(F90balopmat &,
                                   const eckit::Configuration * const *,
-                                  const F90geom &,
+                                  const Geometry::Ftn * const &,
                                   const F90flds &,
                                   const oops::Variables &);
     void soca_horizfilt_delete_f90(F90balopmat &);
     void soca_horizfilt_mult_f90(const F90balopmat &,
                                  const F90flds &,
-                                 F90flds &,
-                                 const F90geom &);
+                                 F90flds &);
     void soca_horizfilt_multad_f90(const F90balopmat &,
                                    const F90flds &,
-                                   F90flds &,
-                                   const F90geom &);
+                                   F90flds &);
   }
 }  // namespace soca
 

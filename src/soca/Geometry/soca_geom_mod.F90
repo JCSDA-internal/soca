@@ -144,34 +144,34 @@ end subroutine geom_end
 ! ------------------------------------------------------------------------------
 !> Clone, self = other
 subroutine geom_clone(self, other)
-  class(soca_geom), intent( in) :: self
-  class(soca_geom), intent(out) :: other
+  class(soca_geom), intent(inout) :: self
+  class(soca_geom),    intent(in) :: other
 
   ! Clone fms domain and vertical levels
-  other%Domain => self%Domain
-  other%nzo = self%nzo
+  self%Domain => other%Domain
+  self%nzo = other%nzo
 
   ! Clone sea-ice grid
-  other%ice_column = self%ice_column
-  other%ncat = self%ncat
-  other%nzi = self%nzi
-  other%nzs = self%nzs
+  self%ice_column = other%ice_column
+  self%ncat = other%ncat
+  self%nzi = other%nzi
+  self%nzs = other%nzs
 
   ! Allocate and clone geometry
-  call geom_allocate(other)
-  other%lon = self%lon
-  other%lat = self%lat
-  other%lonu = self%lonu
-  other%latu = self%latu
-  other%lonv = self%lonv
-  other%latv = self%latv
-  other%sin_rot = self%sin_rot
-  other%cos_rot = self%cos_rot
-  other%mask2d = self%mask2d
-  other%mask2du = self%mask2du
-  other%mask2dv = self%mask2dv
-  other%cell_area = self%cell_area
-  other%rossby_radius = self%rossby_radius
+  call geom_allocate(self)
+  self%lon = other%lon
+  self%lat = other%lat
+  self%lonu = other%lonu
+  self%latu = other%latu
+  self%lonv = other%lonv
+  self%latv = other%latv
+  self%sin_rot = other%sin_rot
+  self%cos_rot = other%cos_rot
+  self%mask2d = other%mask2d
+  self%mask2du = other%mask2du
+  self%mask2dv = other%mask2dv
+  self%cell_area = other%cell_area
+  self%rossby_radius = other%rossby_radius
 
 end subroutine geom_clone
 

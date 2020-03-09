@@ -9,6 +9,7 @@
 #define SOCA_COVARIANCE_ERRORCOVARIANCEFORTRAN_H_
 
 #include "soca/Fortran.h"
+#include "soca/Geometry/Geometry.h"
 
 // Forward declarations
 namespace eckit {
@@ -19,7 +20,7 @@ namespace soca {
 
   extern "C" {
     void soca_b_setup_f90(F90bmat &, const eckit::Configuration * const *,
-                          const F90geom &, const F90flds &,
+                          const Geometry::Ftn * const &, const F90flds &,
                           const oops::Variables &);
     void soca_b_delete_f90(F90bmat &);
     void soca_b_mult_f90(const F90bmat &, const F90flds &,

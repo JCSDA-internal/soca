@@ -9,6 +9,7 @@
 #define SOCA_MODEL_MODELFORTRAN_H_
 
 #include "soca/Fortran.h"
+#include "soca/Geometry/Geometry.h"
 
 // Forward declarations
 namespace eckit {
@@ -19,7 +20,7 @@ namespace soca {
 
   extern "C" {
     void soca_setup_f90(const eckit::Configuration * const *,
-                        const F90geom &, F90model &);
+                        const Geometry::Ftn * const &, F90model &);
     void soca_delete_f90(F90model &);
     void soca_initialize_integration_f90(const F90model &, const F90flds &);
     void soca_finalize_integration_f90(const F90model &, const F90flds &);

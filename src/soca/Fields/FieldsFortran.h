@@ -9,6 +9,7 @@
 #define SOCA_FIELDS_FIELDSFORTRAN_H_
 
 #include "soca/Fortran.h"
+#include "soca/Geometry/Geometry.h"
 
 #include "oops/base/Variables.h"
 
@@ -25,7 +26,7 @@ namespace util {
 namespace soca {
 
   extern "C" {
-    void soca_field_create_f90(F90flds &, const F90geom &,
+    void soca_field_create_f90(F90flds &, const Geometry::Ftn * const &,
                                const oops::Variables &);
     void soca_field_delete_f90(F90flds &);
     void soca_field_copy_f90(const F90flds &, const F90flds &);

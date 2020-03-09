@@ -12,7 +12,6 @@ module soca_horizfilt_mod
   use kinds
   use mpp_domains_mod, only : mpp_update_domains, mpp_update_domains_ad
   use soca_fields_mod
-  use soca_geom_mod_c
   use soca_geom_mod, only : soca_geom
   use soca_utils
   use tools_func, only: fit_func
@@ -31,6 +30,7 @@ module soca_horizfilt_mod
      type(soca_fields),        pointer :: bkg            !< Background field (or first guess)
      type(oops_variables)              :: vars           !< Apply filtering to vars
      real(kind=kind_real), allocatable :: wgh(:,:,:,:)   !< Filtering weight
+     type(soca_geom),          pointer :: geom
      real(kind=kind_real) :: scale_flow  !< Used with "flow" filter, sea surface height decorrelation scale
      real(kind=kind_real) :: scale_dist
      real(kind=kind_real) :: niter
@@ -50,7 +50,7 @@ contains
   subroutine soca_horizfilt_setup(self, f_conf, geom, traj, vars)
     class(soca_horizfilt_type), intent(inout) :: self   !< The horizfilt structure
     type(fckit_configuration),     intent(in) :: f_conf !< The configuration
-    type(soca_geom),               intent(in) :: geom   !< Geometry
+    type(soca_geom), target,       intent(in) :: geom   !< Geometry
     type(soca_fields),             intent(in) :: traj   !< Trajectory
     type(oops_variables),          intent(in) :: vars   !< List of variables
 
@@ -59,6 +59,8 @@ contains
     integer :: i, j, ii, jj
     real(kind=kind_real) :: dist(-1:1,-1:1), sum_w, r_dist, r_flow
     real :: re = 6.371e6 ! radius of earth (m)
+
+    self%geom => geom
 
     ! Setup list of variables to apply filtering on
     self%vars = vars
@@ -130,11 +132,10 @@ contains
 
   ! ------------------------------------------------------------------------------
   !> Forward filtering
-  subroutine soca_horizfilt_mult(self, dxin, dxout, geom)
+  subroutine soca_horizfilt_mult(self, dxin, dxout)
     class(soca_horizfilt_type), intent(inout) :: self  !< The horizfilt structure
     type(soca_fields),             intent(in) :: dxin  !< Input: Increment
     type(soca_fields),          intent(inout) :: dxout !< Output: filtered Increment
-    type(soca_geom),               intent(in) :: geom
 
     type(soca_field), pointer :: field_i, field_o
 
@@ -149,7 +150,7 @@ contains
       call dxout%get(trim(self%vars%variable(ivar)), field_o)
       do k = 1, field_i%nz
         dxi = field_i%val(:,:,k)
-        call soca_filt2d(self, dxi, dxo, geom)
+        call soca_filt2d(self, dxi, dxo, self%geom)
         field_o%val(:,:,k) = dxo
       end do
     end do
@@ -159,11 +160,10 @@ contains
 
   ! ------------------------------------------------------------------------------
   !> Backward filtering
-  subroutine soca_horizfilt_multad(self, dxin, dxout, geom)
+  subroutine soca_horizfilt_multad(self, dxin, dxout)
     class(soca_horizfilt_type), intent(inout) :: self  !< The horizfilt structure
     type(soca_fields),             intent(in) :: dxin  !< Input:
     type(soca_fields),          intent(inout) :: dxout !< Output:
-    type(soca_geom),               intent(in) :: geom
 
     type(soca_field), pointer :: field_i, field_o
     integer :: k, ivar
@@ -177,7 +177,7 @@ contains
       call dxout%get(trim(self%vars%variable(ivar)), field_o)
        do k = 1, field_i%nz
           dxi = field_i%val(:,:,k)
-          call soca_filt2d_ad(self, dxi, dxo, geom)
+          call soca_filt2d_ad(self, dxi, dxo, self%geom)
           field_o%val(:,:,k) = dxo
        end do
     end do

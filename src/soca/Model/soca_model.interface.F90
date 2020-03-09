@@ -12,7 +12,6 @@ use fckit_configuration_module, only: fckit_configuration
 use datetime_mod, only: datetime, c_f_datetime
 use duration_mod, only: duration, duration_seconds, assignment(=)
 use soca_geom_mod, only: soca_geom
-use soca_geom_mod_c, only: soca_geom_registry
 use soca_fields_mod, only: soca_fields
 use soca_fields_mod_c, only: soca_field_registry
 use soca_model_mod, only: soca_model, soca_setup, soca_delete, soca_propagate, &
@@ -38,11 +37,11 @@ contains
 !> Linked list implementation
 #include "oops/util/linkedList_c.f"
 
-subroutine c_soca_setup(c_conf, c_key_geom, c_key_model) bind (c,name='soca_setup_f90')
+subroutine c_soca_setup(c_conf, c_geom, c_key_model) bind (c,name='soca_setup_f90')
 
-  type(c_ptr),       intent(in) :: c_conf       !< pointer to object of class Config
-  integer(c_int),    intent(in) :: c_key_geom   !< Geometry
-  integer(c_int), intent(inout) :: c_key_model  !< Key to configuration data
+  type(c_ptr),         intent(in) :: c_conf       !< pointer to object of class Config
+  type(c_ptr), target, intent(in) :: c_geom   !< Geometry
+  integer(c_int),   intent(inout) :: c_key_model  !< Key to configuration data
 
   type(soca_model), pointer :: model
   type(soca_geom),  pointer :: geom
@@ -54,7 +53,8 @@ subroutine c_soca_setup(c_conf, c_key_geom, c_key_model) bind (c,name='soca_setu
 
   f_conf = fckit_configuration(c_conf)
 
-  call soca_geom_registry%get(c_key_geom, geom)
+  call c_f_pointer(c_geom, geom)
+
   call soca_model_registry%init()
   call soca_model_registry%add(c_key_model)
   call soca_model_registry%get(c_key_model, model)

@@ -35,6 +35,7 @@ namespace soca {
   class Geometry : public util::Printable,
     private util::ObjectCounter<Geometry> {
    public:
+      struct Ftn{};
       static const std::string classname() {return "soca::Geometry";}
 
       explicit Geometry(const eckit::Configuration &, const eckit::mpi::Comm &);
@@ -45,8 +46,8 @@ namespace soca {
       GeometryIterator end() const;
 
 
-      int& toFortran() {return keyGeom_;}
-      const int& toFortran() const {return keyGeom_;}
+      Ftn* & toFortran() {return ftn_;}
+      Ftn* const & toFortran() const {return ftn_;}
       void gridgen(const eckit::Configuration &) const;
       const eckit::mpi::Comm & getComm() const {return comm_;}
       eckit::LocalConfiguration  getAtmConf() const {return atmconf_;}
@@ -59,7 +60,7 @@ namespace soca {
    private:
       Geometry & operator=(const Geometry &);
       void print(std::ostream &) const;
-      int keyGeom_;
+      Ftn * ftn_;
       const eckit::mpi::Comm & comm_;
       eckit::LocalConfiguration atmconf_;
       bool initatm_;

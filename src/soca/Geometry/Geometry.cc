@@ -25,31 +25,30 @@ namespace soca {
                      const eckit::mpi::Comm & comm)
     : comm_(comm), atmconf_(conf), initatm_(initAtm(conf)) {
     const eckit::Configuration * configc = &conf;
-    soca_geo_setup_f90(keyGeom_, &configc);
+    soca_geo_setup_f90(ftn_, &configc);
   }
   // -----------------------------------------------------------------------------
   Geometry::Geometry(const Geometry & other)
     : comm_(other.comm_),
       atmconf_(other.atmconf_),
       initatm_(initAtm(other.atmconf_)) {
-    const int key_geo = other.keyGeom_;
-    soca_geo_clone_f90(key_geo, keyGeom_);
+    soca_geo_clone_f90(ftn_, other.ftn_);
   }
   // -----------------------------------------------------------------------------
   Geometry::~Geometry() {
-    soca_geo_delete_f90(keyGeom_);
+    soca_geo_delete_f90(ftn_);
   }
   // -----------------------------------------------------------------------------
   void Geometry::gridgen(const eckit::Configuration & config) const {
-    Log::trace() << "Geometry::gridgen: " << keyGeom_ << std::endl;
+    Log::trace() << "Geometry::gridgen: " << std::endl;
     Log::trace() << config << std::endl;
-    soca_geo_gridgen_f90(keyGeom_);
+    soca_geo_gridgen_f90(ftn_);
   }
   // -----------------------------------------------------------------------------
   GeometryIterator Geometry::begin() const {
     // return start of the geometry on this mpi tile
     int ist, iend, jst, jend;
-    soca_geo_start_end_f90(keyGeom_, ist, iend, jst, jend);
+    soca_geo_start_end_f90(ftn_, ist, iend, jst, jend);
     return GeometryIterator(*this, ist, jst);
   }
   // -----------------------------------------------------------------------------

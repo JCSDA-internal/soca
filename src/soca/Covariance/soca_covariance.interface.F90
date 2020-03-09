@@ -9,7 +9,6 @@ use iso_c_binding
 use fckit_configuration_module, only: fckit_configuration
 use oops_variables_mod
 use soca_geom_mod, only : soca_geom
-use soca_geom_mod_c, only : soca_geom_registry
 use soca_fields_mod, only: soca_fields
 use soca_fields_mod_c, only: soca_field_registry
 use soca_covariance_mod, only: soca_cov, soca_cov_setup, soca_cov_delete, &
@@ -38,11 +37,11 @@ contains
 ! ------------------------------------------------------------------------------
 !> Setup for the SOCA model's background error covariance matrix
 
-subroutine c_soca_b_setup(c_key_self, c_conf, c_key_geom, c_key_bkg, c_vars) &
+subroutine c_soca_b_setup(c_key_self, c_conf, c_geom, c_key_bkg, c_vars) &
      & bind (c,name='soca_b_setup_f90')
   integer(c_int), intent(inout) :: c_key_self   !< The background covariance structure
   type(c_ptr),       intent(in) :: c_conf       !< The configuration
-  integer(c_int),    intent(in) :: c_key_geom   !< Geometry
+  type(c_ptr),       intent(in) :: c_geom       !< Geometry
   integer(c_int),    intent(in) :: c_key_bkg    !< Background
   type(c_ptr),value, intent(in) :: c_vars       !< List of variables
 
@@ -51,12 +50,13 @@ subroutine c_soca_b_setup(c_key_self, c_conf, c_key_geom, c_key_bkg, c_vars) &
   type(soca_fields),pointer :: bkg
   type(oops_variables)      :: vars
 
-  call soca_geom_registry%get(c_key_geom, geom)
+  call c_f_pointer(c_geom, geom)
   call soca_cov_registry%init()
   call soca_cov_registry%add(c_key_self)
   call soca_cov_registry%get(c_key_self, self)
   call soca_field_registry%get(c_key_bkg,bkg)
   vars = oops_variables(c_vars)
+
   call soca_cov_setup(self, fckit_configuration(c_conf), geom, bkg, vars)
 
 end subroutine c_soca_b_setup

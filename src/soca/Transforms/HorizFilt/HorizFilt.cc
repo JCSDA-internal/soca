@@ -49,8 +49,7 @@ namespace soca {
       dx_tmp = dxout;
       soca_horizfilt_mult_f90(keyFtnConfig_,
                               dx_tmp.fields().toFortran(),
-                              dxout.fields().toFortran(),
-                              geom_->toFortran());
+                              dxout.fields().toFortran());
     }
   }
   // -----------------------------------------------------------------------------
@@ -66,8 +65,7 @@ namespace soca {
       dx_tmp = dxout;
       soca_horizfilt_multad_f90(keyFtnConfig_,
                                 dx_tmp.fields().toFortran(),
-                                dxout.fields().toFortran(),
-                                geom_->toFortran());
+                                dxout.fields().toFortran());
     }
   }
   // -----------------------------------------------------------------------------

@@ -15,6 +15,7 @@ use soca_balance_mod, only: soca_balance_config, &
                             soca_balance_multinv, soca_balance_multinvad
 
 implicit none
+private
 
 ! ------------------------------------------------------------------------------
 contains

@@ -7,7 +7,6 @@ module c_soca_horizfilt_mod
   use iso_c_binding
   use fckit_configuration_module, only: fckit_configuration
   use soca_horizfilt_mod
-  use soca_geom_mod_c, only: soca_geom_registry
   use soca_geom_mod, only : soca_geom
   use soca_fields_mod_c, only: soca_field_registry
   use soca_fields_mod
@@ -38,13 +37,13 @@ contains
 
   subroutine c_soca_horizfilt_setup(c_key_self, &
                                     c_conf, &
-                                    c_key_geom, &
+                                    c_geom, &
                                     c_key_traj, &
                                     c_vars) &
           & bind (c,name='soca_horizfilt_setup_f90')
     integer(c_int), intent(inout) :: c_key_self   !< The filtering structure
     type(c_ptr),       intent(in) :: c_conf       !< The configuration
-    integer(c_int),    intent(in) :: c_key_geom   !< Geometry
+    type(c_ptr), target, intent(in) :: c_geom   !< Geometry
     integer(c_int),    intent(in) :: c_key_traj   !< Trajectory
     type(c_ptr),value, intent(in) :: c_vars       !< List of variables
 
@@ -53,7 +52,7 @@ contains
     type(soca_fields),          pointer :: traj
     type(oops_variables)               :: vars
 
-    call soca_geom_registry%get(c_key_geom, geom)
+    call c_f_pointer(c_geom, geom)
     call soca_field_registry%get(c_key_traj, traj)
     call soca_horizfilt_registry%init()
     call soca_horizfilt_registry%add(c_key_self)
@@ -80,47 +79,41 @@ contains
   ! ------------------------------------------------------------------------------
   !> Multiply
 
-  subroutine c_soca_horizfilt_mult(c_key_self, c_key_in, c_key_out, c_key_geom) bind(c,name='soca_horizfilt_mult_f90')
+  subroutine c_soca_horizfilt_mult(c_key_self, c_key_in, c_key_out) bind(c,name='soca_horizfilt_mult_f90')
     integer(c_int), intent(inout) :: c_key_self  !< The filtering structure
     integer(c_int), intent(in)    :: c_key_in    !<    "   to Increment in
     integer(c_int), intent(in)    :: c_key_out   !<    "   to Increment out
-    integer(c_int), intent(in)    :: c_key_geom  !< Geometry
 
     type(soca_horizfilt_type),   pointer :: self
     type(soca_fields), pointer :: xin
     type(soca_fields), pointer :: xout
-    type(soca_geom), pointer :: geom
 
-    call soca_geom_registry%get(c_key_geom, geom)
     call soca_horizfilt_registry%get(c_key_self, self)
     call soca_field_registry%get(c_key_in, xin)
     call soca_field_registry%get(c_key_out, xout)
 
-    call soca_horizfilt_mult(self, xin, xout, geom) !< xout = C.xout
+    call soca_horizfilt_mult(self, xin, xout) !< xout = C.xout
 
   end subroutine c_soca_horizfilt_mult
 
   ! ------------------------------------------------------------------------------
   !> Multiply adjoint
 
-  subroutine c_soca_horizfilt_mult_ad(c_key_self, c_key_in, c_key_out, c_key_geom) &
+  subroutine c_soca_horizfilt_mult_ad(c_key_self, c_key_in, c_key_out) &
        bind(c,name='soca_horizfilt_multad_f90')
     integer(c_int), intent(inout) :: c_key_self  !< The filtering structure
     integer(c_int), intent(in)    :: c_key_in    !<    "   to Increment in
     integer(c_int), intent(in)    :: c_key_out   !<    "   to Increment out
-    integer(c_int), intent(in)    :: c_key_geom  !< Geometry
 
     type(soca_horizfilt_type),   pointer :: self
     type(soca_fields), pointer :: xin
     type(soca_fields), pointer :: xout
-    type(soca_geom), pointer :: geom
 
-    call soca_geom_registry%get(c_key_geom, geom)
     call soca_horizfilt_registry%get(c_key_self, self)
     call soca_field_registry%get(c_key_in, xin)
     call soca_field_registry%get(c_key_out, xout)
 
-    call soca_horizfilt_multad(self, xin, xout, geom) !< xout = C^T.xout
+    call soca_horizfilt_multad(self, xin, xout) !< xout = C^T.xout
 
   end subroutine c_soca_horizfilt_mult_ad
 

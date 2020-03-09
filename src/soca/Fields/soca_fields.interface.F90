@@ -19,7 +19,6 @@ use ufo_locs_mod, only: ufo_locs
 use ufo_geovals_mod_c, only: ufo_geovals_registry
 use ufo_geovals_mod, only: ufo_geovals
 use soca_geom_mod, only: soca_geom
-use soca_geom_mod_c, only: soca_geom_registry
 use soca_fields_mod
 use soca_interpfields_mod, only: getvalues, getvalues_ad
 use soca_getvaltraj_mod, only: soca_getvaltraj
@@ -48,16 +47,16 @@ contains
 
 ! ------------------------------------------------------------------------------
 
-subroutine soca_field_create_c(c_key_self, c_key_geom, c_vars) bind(c,name='soca_field_create_f90')
+subroutine soca_field_create_c(c_key_self, c_geom, c_vars) bind(c,name='soca_field_create_f90')
   integer(c_int), intent(inout) :: c_key_self !< Handle to field
-  integer(c_int),    intent(in) :: c_key_geom !< Geometry
+  type(c_ptr),       intent(in) :: c_geom !< Geometry
   type(c_ptr),value, intent(in) :: c_vars     !< List of variables
 
   type(soca_fields),pointer :: self
   type(soca_geom),  pointer :: geom
   type(oops_variables)      :: vars
 
-  call soca_geom_registry%get(c_key_geom, geom)
+  call c_f_pointer(c_geom, geom)
   call soca_field_registry%init()
   call soca_field_registry%add(c_key_self)
   call soca_field_registry%get(c_key_self,self)
