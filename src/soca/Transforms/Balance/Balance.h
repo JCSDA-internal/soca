@@ -31,6 +31,8 @@ namespace soca {
 /// SOCA linear change of variable
 class Balance: public util::Printable {
  public:
+  struct Ftn{};
+
   static const std::string classname() {return "soca::Balance";}
 
   explicit Balance(const State &, const State &,
@@ -45,8 +47,8 @@ class Balance: public util::Printable {
 
  private:
   void print(std::ostream &) const override;
-  int keyFtnConfig_;
   const State & traj_;
+  Ftn * ftn_;
 };
 // -----------------------------------------------------------------------------
 
