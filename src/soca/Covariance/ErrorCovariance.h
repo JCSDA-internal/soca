@@ -38,6 +38,7 @@ namespace soca {
     private boost::noncopyable,
     private util::ObjectCounter<ErrorCovariance> {
    public:
+      struct Ftn{};
       static const std::string classname() {return "soca::ErrorCovariance";}
 
       ErrorCovariance(const Geometry &, const oops::Variables &,
@@ -52,7 +53,7 @@ namespace soca {
 
    private:
       void print(std::ostream &) const;
-      int keyFtnConfig_;
+      Ftn * ftn_;
       boost::scoped_ptr<const Geometry> geom_;
       boost::scoped_ptr<const State> traj_;
       util::DateTime time_;

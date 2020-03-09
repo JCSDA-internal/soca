@@ -8,7 +8,8 @@
 #ifndef SOCA_TRANSFORMS_BKGERRGODAS_BKGERRGODASFORTRAN_H_
 #define SOCA_TRANSFORMS_BKGERRGODAS_BKGERRGODASFORTRAN_H_
 
-#include "soca/Fortran.h"
+#include "soca/Fields/Fields.h"
+#include "soca/Transforms/BkgErrGodas/BkgErrGodas.h"
 
 // Forward declarations
 namespace eckit {
@@ -18,16 +19,16 @@ namespace eckit {
 namespace soca {
 
   extern "C" {
-    void soca_bkgerrgodas_setup_f90(F90balopmat &,
+    void soca_bkgerrgodas_setup_f90(BkgErrGodas::Ftn * &,
                                     const eckit::Configuration * const *,
-                                    const F90flds &);
-    void soca_bkgerrgodas_delete_f90(F90balopmat &);
-    void soca_bkgerrgodas_mult_f90(const F90balopmat &,
-                                   const F90flds &,
-                                   F90flds &);
-    void soca_bkgerrgodas_multad_f90(const F90balopmat,
-                                     F90flds &,
-                                     const F90flds &);
+                                    const Fields::Ftn * const &);
+    void soca_bkgerrgodas_delete_f90(BkgErrGodas::Ftn * &);
+    void soca_bkgerrgodas_mult_f90(const BkgErrGodas::Ftn * const &,
+                                   const Fields::Ftn * const &,
+                                   const Fields::Ftn * const &);
+    void soca_bkgerrgodas_multad_f90(const BkgErrGodas::Ftn * const &,
+                                     const Fields::Ftn * const &,
+                                     const Fields::Ftn * const &);
   }
 }  // namespace soca
 #endif  // SOCA_TRANSFORMS_BKGERRGODAS_BKGERRGODASFORTRAN_H_

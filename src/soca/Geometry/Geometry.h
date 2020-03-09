@@ -12,8 +12,6 @@
 #include <string>
 #include <vector>
 
-#include "soca/Fortran.h"
-
 #include "eckit/config/LocalConfiguration.h"
 #include "eckit/mpi/Comm.h"
 #include "oops/util/ObjectCounter.h"

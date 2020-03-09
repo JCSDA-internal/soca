@@ -28,7 +28,7 @@ namespace soca {
                      const eckit::Configuration & conf): traj_(traj) {
     const eckit::Configuration * configc = &conf;
     oops::Log::trace() << "soca::VertConv::setup " << std::endl;
-    soca_vertconv_setup_f90(keyFtnConfig_,
+    soca_vertconv_setup_f90(ftn_,
                             &configc,
                             traj_.fields().toFortran(),
                             bkg.fields().toFortran());
@@ -36,16 +36,14 @@ namespace soca {
   // -----------------------------------------------------------------------------
   VertConv::~VertConv() {
     oops::Log::trace() << "soca::VertConv::delete " << std::endl;
-    soca_vertconv_delete_f90(keyFtnConfig_);
+    soca_vertconv_delete_f90(ftn_);
   }
   // -----------------------------------------------------------------------------
   void VertConv::multiply(const Increment & dxa, Increment & dxm) const {
     // dxm = K dxa
     oops::Log::trace() << "soca::VertConv::multiply " << std::endl;
-    soca_vertconv_mult_f90(dxa.fields().toFortran(),
-                      dxm.fields().toFortran(),
-                      traj_.fields().toFortran(),
-                      keyFtnConfig_);
+    soca_vertconv_mult_f90(ftn_, dxa.fields().toFortran(),
+                      dxm.fields().toFortran());
   }
   // -----------------------------------------------------------------------------
   void VertConv::multiplyInverse(const Increment & dxm, Increment & dxa) const {
@@ -56,10 +54,8 @@ namespace soca {
   void VertConv::multiplyAD(const Increment & dxm, Increment & dxa) const {
     // dxa = K^T dxm
     oops::Log::trace() << "soca::VertConv::multiplyAD " << std::endl;
-    soca_vertconv_multad_f90(dxm.fields().toFortran(),
-                        dxa.fields().toFortran(),
-                        traj_.fields().toFortran(),
-                        keyFtnConfig_);
+    soca_vertconv_multad_f90(ftn_, dxm.fields().toFortran(),
+                        dxa.fields().toFortran());
   }
   // -----------------------------------------------------------------------------
   void VertConv::multiplyInverseAD(const Increment & dxa,

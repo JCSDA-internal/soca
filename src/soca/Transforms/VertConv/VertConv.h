@@ -31,6 +31,7 @@ namespace soca {
 /// SOCA linear change of variable
 class VertConv: public util::Printable {
  public:
+  struct Ftn{};
   static const std::string classname() {return "soca::VertConv";}
 
   explicit VertConv(const State &, const State &, const Geometry &,
@@ -45,7 +46,7 @@ class VertConv: public util::Printable {
 
  private:
   void print(std::ostream &) const override;
-  int keyFtnConfig_;
+  Ftn * ftn_;
   const State & traj_;
 };
 // -----------------------------------------------------------------------------

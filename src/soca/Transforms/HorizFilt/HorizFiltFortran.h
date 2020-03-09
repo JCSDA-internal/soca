@@ -8,8 +8,9 @@
 #ifndef SOCA_TRANSFORMS_HORIZFILT_HORIZFILTFORTRAN_H_
 #define SOCA_TRANSFORMS_HORIZFILT_HORIZFILTFORTRAN_H_
 
-#include "soca/Fortran.h"
+#include "soca/Fields/Fields.h"
 #include "soca/Geometry/Geometry.h"
+#include "soca/Transforms/HorizFilt/HorizFilt.h"
 
 #include "oops/base/Variables.h"
 
@@ -21,18 +22,18 @@ namespace eckit {
 namespace soca {
 
   extern "C" {
-    void soca_horizfilt_setup_f90(F90balopmat &,
+    void soca_horizfilt_setup_f90(HorizFilt::Ftn * &,
                                   const eckit::Configuration * const *,
                                   const Geometry::Ftn * const &,
-                                  const F90flds &,
+                                  const Fields::Ftn * const &,
                                   const oops::Variables &);
-    void soca_horizfilt_delete_f90(F90balopmat &);
-    void soca_horizfilt_mult_f90(const F90balopmat &,
-                                 const F90flds &,
-                                 F90flds &);
-    void soca_horizfilt_multad_f90(const F90balopmat &,
-                                   const F90flds &,
-                                   F90flds &);
+    void soca_horizfilt_delete_f90(HorizFilt::Ftn * &);
+    void soca_horizfilt_mult_f90(const HorizFilt::Ftn * const &,
+                                 const Fields::Ftn * const &,
+                                 const Fields::Ftn * const &);
+    void soca_horizfilt_multad_f90(const HorizFilt::Ftn * const &,
+                                   const Fields::Ftn * const &,
+                                   const Fields::Ftn * const &);
   }
 }  // namespace soca
 

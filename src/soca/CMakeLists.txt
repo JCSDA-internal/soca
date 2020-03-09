@@ -9,7 +9,6 @@ include_directories( ${CMAKE_CURRENT_SOURCE_DIR} )
 # are handled through the subdirectory's respective CMakeLists.txt
 list( APPEND soca_src_files
   Traits.h
-  Fortran.h
 )
 
 # a convenience function to make adding source files from subdirectories easier

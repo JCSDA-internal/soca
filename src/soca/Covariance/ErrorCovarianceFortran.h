@@ -8,7 +8,8 @@
 #ifndef SOCA_COVARIANCE_ERRORCOVARIANCEFORTRAN_H_
 #define SOCA_COVARIANCE_ERRORCOVARIANCEFORTRAN_H_
 
-#include "soca/Fortran.h"
+#include "soca/Covariance/ErrorCovariance.h"
+#include "soca/Fields/Fields.h"
 #include "soca/Geometry/Geometry.h"
 
 // Forward declarations
@@ -19,14 +20,20 @@ namespace eckit {
 namespace soca {
 
   extern "C" {
-    void soca_b_setup_f90(F90bmat &, const eckit::Configuration * const *,
-                          const Geometry::Ftn * const &, const F90flds &,
+    void soca_b_setup_f90(ErrorCovariance::Ftn * &,
+                          const eckit::Configuration * const *,
+                          const Geometry::Ftn * const &,
+                          const Fields::Ftn * const &,
                           const oops::Variables &);
-    void soca_b_delete_f90(F90bmat &);
-    void soca_b_mult_f90(const F90bmat &, const F90flds &,
-                         const F90flds &);
-    void soca_b_invmult_f90(const F90bmat &, const F90flds &, const F90flds &);
-    void soca_b_randomize_f90(const F90bmat &, const F90flds &);
+    void soca_b_delete_f90(ErrorCovariance::Ftn * &);
+    void soca_b_mult_f90(const ErrorCovariance::Ftn * const &,
+                         const Fields::Ftn * const &,
+                         const Fields::Ftn * const &);
+    void soca_b_invmult_f90(const ErrorCovariance::Ftn * const &,
+                            const Fields::Ftn * const &,
+                            const Fields::Ftn * const &);
+    void soca_b_randomize_f90(const ErrorCovariance::Ftn * const &,
+                              const Fields::Ftn * const &);
   }
 }  // namespace soca
 #endif  // SOCA_COVARIANCE_ERRORCOVARIANCEFORTRAN_H_

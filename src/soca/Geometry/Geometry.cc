@@ -10,7 +10,6 @@
 #include "soca/Geometry/Geometry.h"
 #include "soca/Geometry/GeometryFortran.h"
 #include "soca/GeometryIterator/GeometryIterator.h"
-#include "soca/GeometryIterator/GeometryIteratorFortran.h"
 
 #include "eckit/config/Configuration.h"
 

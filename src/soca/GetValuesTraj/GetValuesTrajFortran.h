@@ -8,13 +8,13 @@
 #ifndef SOCA_GETVALUESTRAJ_GETVALUESTRAJFORTRAN_H_
 #define SOCA_GETVALUESTRAJ_GETVALUESTRAJFORTRAN_H_
 
-#include "soca/Fortran.h"
+#include "soca/GetValuesTraj/GetValuesTraj.h"
 
 namespace soca {
 
   extern "C" {
-    void soca_getvaltraj_setup_f90(const F90getvaltraj &);
-    void soca_getvaltraj_delete_f90(const F90getvaltraj &);
+    void soca_getvaltraj_setup_f90(GetValuesTraj::Ftn * &);
+    void soca_getvaltraj_delete_f90(GetValuesTraj::Ftn * &);
   }
 }  // namespace soca
 #endif  // SOCA_GETVALUESTRAJ_GETVALUESTRAJFORTRAN_H_

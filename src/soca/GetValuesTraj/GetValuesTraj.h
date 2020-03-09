@@ -10,10 +10,7 @@
 
 #include <ostream>
 
-#include "soca/Fortran.h"
-
 #include "oops/util/Printable.h"
-
 
 namespace soca {
 
@@ -21,15 +18,16 @@ namespace soca {
 
 class GetValuesTraj : public util::Printable {
  public:
+  struct Ftn{};
   GetValuesTraj();
   ~GetValuesTraj();
 
-  int & toFortran() {return keyGetValuesTraj_;}
-  const int & toFortran() const {return keyGetValuesTraj_;}
+  Ftn * & toFortran() {return ftn_;}
+  Ftn * const & toFortran() const {return ftn_;}
 
  private:
   void print(std::ostream &) const {}
-  F90getvaltraj keyGetValuesTraj_;
+  Ftn * ftn_;
 };
 
 // -----------------------------------------------------------------------------

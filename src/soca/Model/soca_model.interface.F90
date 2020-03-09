@@ -13,37 +13,22 @@ use datetime_mod, only: datetime, c_f_datetime
 use duration_mod, only: duration, duration_seconds, assignment(=)
 use soca_geom_mod, only: soca_geom
 use soca_fields_mod, only: soca_fields
-use soca_fields_mod_c, only: soca_field_registry
 use soca_model_mod, only: soca_model, soca_setup, soca_delete, soca_propagate, &
                           soca_initialize_integration, soca_finalize_integration
 
 implicit none
-
 private
-public :: soca_model_registry
-
-#define LISTED_TYPE soca_model
-
-!> Linked list interface - defines registry_t type
-#include "oops/util/linkedList_i.f"
-
-!> Global registry
-type(registry_t) :: soca_model_registry
 
 ! ------------------------------------------------------------------------------
 contains
 ! ------------------------------------------------------------------------------
 
-!> Linked list implementation
-#include "oops/util/linkedList_c.f"
+subroutine c_soca_setup(c_self, c_conf, c_geom) bind (c,name='soca_setup_f90')
+  type(c_ptr),      intent(inout) :: c_self  !< Key to configuration data
+  type(c_ptr),         intent(in) :: c_conf  !< pointer to object of class Config
+  type(c_ptr), target, intent(in) :: c_geom  !< Geometry
 
-subroutine c_soca_setup(c_conf, c_geom, c_key_model) bind (c,name='soca_setup_f90')
-
-  type(c_ptr),         intent(in) :: c_conf       !< pointer to object of class Config
-  type(c_ptr), target, intent(in) :: c_geom   !< Geometry
-  integer(c_int),   intent(inout) :: c_key_model  !< Key to configuration data
-
-  type(soca_model), pointer :: model
+  type(soca_model), pointer :: self
   type(soca_geom),  pointer :: geom
 
   type(duration) :: dtstep
@@ -53,40 +38,38 @@ subroutine c_soca_setup(c_conf, c_geom, c_key_model) bind (c,name='soca_setup_f9
 
   f_conf = fckit_configuration(c_conf)
 
+  allocate(self)
+  c_self = c_loc(self)
   call c_f_pointer(c_geom, geom)
 
-  call soca_model_registry%init()
-  call soca_model_registry%add(c_key_model)
-  call soca_model_registry%get(c_key_model, model)
-
   ! Get local grid size
-  model%nx =  size(geom%lon,1)
-  model%ny = size(geom%lon,2)
+  self%nx =  size(geom%lon,1)
+  self%ny = size(geom%lon,2)
 
   ! Setup time step
   call f_conf%get_or_die("tstep", str)
   dtstep = trim(str)
-  model%dt0 = duration_seconds(dtstep)
+  self%dt0 = duration_seconds(dtstep)
 
   ! Setup mom6 advance or identity model
-  call f_conf%get_or_die("advance_mom6", model%advance_mom6)
+  call f_conf%get_or_die("advance_mom6", self%advance_mom6)
 
   ! Setup defaults for clamping values in the model
   if ( f_conf%has("tocn_minmax") ) then
     call f_conf%get_or_die("tocn_minmax", tocn_minmax)
-    model%tocn_minmax = tocn_minmax
+    self%tocn_minmax = tocn_minmax
   else
-    model%tocn_minmax=(/-999., -999./)
+    self%tocn_minmax=(/-999., -999./)
   endif
   if ( f_conf%has("socn_minmax") ) then
     call f_conf%get_or_die("socn_minmax", socn_minmax)
-    model%socn_minmax = socn_minmax
+    self%socn_minmax = socn_minmax
   else
-    model%socn_minmax=(/-999., -999./)
+    self%socn_minmax=(/-999., -999./)
   endif
 
   ! Initialize mom6
-  call soca_setup(model)
+  call soca_setup(self)
 
   if (allocated(str)) deallocate(str)
 
@@ -96,77 +79,74 @@ end subroutine c_soca_setup
 ! ------------------------------------------------------------------------------
 
 !> Delete the model
-subroutine c_soca_delete(c_key_conf) bind (c,name='soca_delete_f90')
+subroutine c_soca_delete(c_self) bind (c,name='soca_delete_f90')
+  type(c_ptr), intent(inout) :: c_self
 
-  integer(c_int), intent(inout) :: c_key_conf  !< Key to configuration structure
-  type(soca_model), pointer :: model
+  type(soca_model), pointer :: self
 
-  call soca_model_registry%get(c_key_conf, model)
-  call soca_delete(model)
-  call soca_model_registry%remove(c_key_conf)
+  call c_f_pointer(c_self, self)
 
-  return
+  call soca_delete(self)
+  deallocate(self)
+
 end subroutine c_soca_delete
 
 ! ------------------------------------------------------------------------------
 !> Prepare the model or integration
-subroutine c_soca_initialize_integration(c_key_model, c_key_state) &
+subroutine c_soca_initialize_integration(c_self, c_state) &
      & bind(c,name='soca_initialize_integration_f90')
 
-  integer(c_int), intent(in) :: c_key_model  !< Configuration structure
-  integer(c_int), intent(in) :: c_key_state  !< Model fields
+  type(c_ptr),    intent(in) :: c_self       !< Configuration structure
+  type(c_ptr),    intent(in) :: c_state  !< Model fields
 
-  type(soca_model), pointer :: model
+  type(soca_model), pointer :: self
   type(soca_fields),pointer :: flds
 
-  call soca_field_registry%get(c_key_state, flds)
-  call soca_model_registry%get(c_key_model, model)
+  call c_f_pointer(c_self, self)
+  call c_f_pointer(c_state, flds)
 
-  call soca_initialize_integration(model, flds)
+  call soca_initialize_integration(self, flds)
 
-  return
 end subroutine c_soca_initialize_integration
 
 ! ------------------------------------------------------------------------------
 
 !> Checkpoint model
-subroutine c_soca_finalize_integration(c_key_model, c_key_state) &
-           bind(c,name='soca_finalize_integration_f90')
+subroutine c_soca_finalize_integration(c_self, c_state) &
+    bind(c,name='soca_finalize_integration_f90')
 
-  integer(c_int), intent(in) :: c_key_model  !< Configuration structure
-  integer(c_int), intent(in) :: c_key_state  !< Model fields
+  type(c_ptr), intent(in) :: c_self       !< Configuration structure
+  type(c_ptr), intent(in) :: c_state  !< Model fields
 
-  type(soca_model), pointer :: model
+  type(soca_model), pointer :: self
   type(soca_fields),pointer :: flds
 
-  call soca_field_registry%get(c_key_state, flds)
-  call soca_model_registry%get(c_key_model, model)
+  call c_f_pointer(c_self, self)
+  call c_f_pointer(c_state, flds)
 
-  call soca_finalize_integration(model, flds)
+  call soca_finalize_integration(self, flds)
 
-  return
 end subroutine c_soca_finalize_integration
 
 ! ------------------------------------------------------------------------------
 
 !> Perform a timestep of the model
-subroutine c_soca_propagate(c_key_model, c_key_state, c_key_date) bind(c,name='soca_propagate_f90')
+subroutine c_soca_propagate(c_self, c_state, c_date) bind(c,name='soca_propagate_f90')
 
-  integer(c_int), intent(in) :: c_key_model  !< Config structure
-  integer(c_int), intent(in) :: c_key_state  !< Model fields
-  type(c_ptr), intent(inout) :: c_key_date   !< DateTime
+  type(c_ptr),    intent(in) :: c_self  !< Config structure
+  type(c_ptr),    intent(in) :: c_state  !< Model fields
+  type(c_ptr), intent(inout) :: c_date   !< DateTime
 
-  type(soca_model), pointer :: model
+  type(soca_model), pointer :: self
   type(soca_fields),pointer :: flds
   type(datetime)            :: fldsdate
 
-  call soca_model_registry%get(c_key_model, model)
-  call soca_field_registry%get(c_key_state, flds)
-  call c_f_datetime(c_key_date, fldsdate)
+  call c_f_pointer(c_self, self)
+  call c_f_pointer(c_state, flds)
+  call c_f_datetime(c_date, fldsdate)
 
-  call soca_propagate(model, flds, fldsdate)
+  call soca_propagate(self, flds, fldsdate)
 
-  return
 end subroutine c_soca_propagate
 
 end module soca_model_mod_c

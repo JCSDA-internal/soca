@@ -14,32 +14,20 @@ module soca_geom_iter_mod
 
   private
   public :: soca_geom_iter
-  public :: soca_geom_iter_registry
   public :: soca_geom_iter_setup, soca_geom_iter_clone, soca_geom_iter_equals
   public :: soca_geom_iter_current, soca_geom_iter_next
 
   type :: soca_geom_iter
     type(soca_geom), pointer :: geom => null() !< Geometry
     integer :: iind = 1  !< index e.g. lat(iind,jind)
-    integer :: jind = 1  !< 
+    integer :: jind = 1  !<
   end type soca_geom_iter
-
-#define LISTED_TYPE soca_geom_iter
-
-  !> Linked list interface - defines registry_t type
-#include "oops/util/linkedList_i.f"
-
-  !> Global registry
-  type(registry_t) :: soca_geom_iter_registry
 
 contains
 
   ! ------------------------------------------------------------------------------
   ! Public
   ! ------------------------------------------------------------------------------
-
-  !> Linked list implementation
-#include "oops/util/linkedList_c.f"
 
   ! ------------------------------------------------------------------------------
   !> Setup for the geometry iterator
@@ -106,7 +94,7 @@ contains
     if (self%iind == -1 .AND. self%jind == -1) then
       ! special case of {-1,-1} means end of the grid
       lat = self%geom%lat(self%geom%iec,self%geom%jec)
-      lon = self%geom%lon(self%geom%iec,self%geom%jec) 
+      lon = self%geom%lon(self%geom%iec,self%geom%jec)
     elseif (self%iind < self%geom%isc .OR. self%iind > self%geom%iec .OR. &
             self%jind < self%geom%jsc .OR. self%jind > self%geom%jec) then
       ! outside of the grid
@@ -133,7 +121,7 @@ contains
     ! do while ((iind.lt.self%geom%iec).and.(jind.lt.self%geom%jec))
 
       ! increment by 1
-      if (iind.lt.self%geom%iec) then 
+      if (iind.lt.self%geom%iec) then
         iind = iind + 1
       elseif (iind.eq.self%geom%iec) then
         iind = self%geom%isc
@@ -141,7 +129,7 @@ contains
       end if
 
      ! ! skip this point if it is on land
-     ! if (self%geom%mask2d(iind,jind).lt.1) then 
+     ! if (self%geom%mask2d(iind,jind).lt.1) then
      !   cycle
      ! else
      !   exit

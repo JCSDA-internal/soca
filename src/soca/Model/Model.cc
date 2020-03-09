@@ -29,7 +29,7 @@ namespace soca {
   static oops::ModelMaker<Traits, Model> makermodel_("SOCA");
   // -----------------------------------------------------------------------------
   Model::Model(const Geometry & resol, const eckit::Configuration & model)
-    : keyConfig_(0), tstep_(0), geom_(new Geometry(resol)), vars_(model),
+    : tstep_(0), geom_(new Geometry(resol)), vars_(model),
       setup_mom6_(true)
   {
     Log::trace() << "Model::Model" << std::endl;
@@ -39,7 +39,7 @@ namespace soca {
     const eckit::Configuration * configc = &model;
     if (setup_mom6_)
       {
-        soca_setup_f90(&configc, geom_->toFortran(), keyConfig_);
+        soca_setup_f90(ftn_, &configc, geom_->toFortran());
       }
         Log::trace() << "Model created" << std::endl;
   }
@@ -47,14 +47,14 @@ namespace soca {
   Model::~Model() {
     if (setup_mom6_)
       {
-        soca_delete_f90(keyConfig_);
+        soca_delete_f90(ftn_);
       }
     Log::trace() << "Model destructed" << std::endl;
   }
   // -----------------------------------------------------------------------------
   void Model::initialize(State & xx) const {
     ASSERT(xx.fields().isForModel(true));
-    soca_initialize_integration_f90(keyConfig_, xx.fields().toFortran());
+    soca_initialize_integration_f90(ftn_, xx.fields().toFortran());
     Log::debug() << "Model::initialize" << xx.fields() << std::endl;
   }
   // -----------------------------------------------------------------------------
@@ -62,13 +62,13 @@ namespace soca {
     ASSERT(xx.fields().isForModel(true));
     Log::trace() << "Model::Time: " << xx.validTime() << std::endl;
     util::DateTime * modeldate = &xx.validTime();
-    soca_propagate_f90(keyConfig_, xx.fields().toFortran(), &modeldate);
+    soca_propagate_f90(ftn_, xx.fields().toFortran(), &modeldate);
     xx.validTime() += tstep_;
   }
   // -----------------------------------------------------------------------------
   void Model::finalize(State & xx) const {
     ASSERT(xx.fields().isForModel(true));
-    soca_finalize_integration_f90(keyConfig_, xx.fields().toFortran());
+    soca_finalize_integration_f90(ftn_, xx.fields().toFortran());
     Log::debug() << "Model::finalize" << xx.fields() << std::endl;
   }
   // -----------------------------------------------------------------------------

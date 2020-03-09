@@ -36,7 +36,7 @@ namespace soca {
     time_ = util::DateTime(conf.getString("date"));
     const eckit::Configuration * configc = &conf;
     vars_ = oops::Variables(conf);
-    soca_b_setup_f90(keyFtnConfig_, &configc, resol.toFortran(),
+    soca_b_setup_f90(ftn_, &configc, resol.toFortran(),
                      bkg.fields().toFortran(), vars_);
     Log::trace() << "ErrorCovariance created" << std::endl;
   }
@@ -44,7 +44,7 @@ namespace soca {
   // -----------------------------------------------------------------------------
 
   ErrorCovariance::~ErrorCovariance() {
-    soca_b_delete_f90(keyFtnConfig_);
+    soca_b_delete_f90(ftn_);
     Log::trace() << "ErrorCovariance destructed" << std::endl;
   }
 
@@ -60,7 +60,7 @@ namespace soca {
   void ErrorCovariance::multiply(const Increment & dxin, Increment & dxout)
     const {
     dxout = dxin;
-    soca_b_mult_f90(keyFtnConfig_, dxin.fields().toFortran(),
+    soca_b_mult_f90(ftn_, dxin.fields().toFortran(),
                     dxout.fields().toFortran());
     Log::trace() << "ErrorCovariance multiply" << std::endl;
   }
@@ -80,7 +80,7 @@ namespace soca {
 
   //  void ErrorCovariance::doRandomize(Increment & dx) const {
   void ErrorCovariance::randomize(Increment & dx) const {
-    soca_b_randomize_f90(keyFtnConfig_, dx.fields().toFortran());
+    soca_b_randomize_f90(ftn_, dx.fields().toFortran());
   }
 
   // -----------------------------------------------------------------------------

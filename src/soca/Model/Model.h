@@ -15,8 +15,6 @@
 #include <boost/noncopyable.hpp>
 #include <boost/scoped_ptr.hpp>
 
-#include "soca/Fortran.h"
-
 #include "oops/base/ModelBase.h"
 #include "oops/base/Variables.h"
 #include "oops/util/Duration.h"
@@ -47,6 +45,7 @@ namespace soca {
   class Model:public oops::ModelBase<Traits>, private util::ObjectCounter<Model>
   {
    public:
+    struct Ftn{};
     static const std::string classname() {return "soca::Model";}
 
     Model(const Geometry &, const eckit::Configuration &);
@@ -68,7 +67,7 @@ namespace soca {
 
    private:
     void print(std::ostream &) const;
-    int keyConfig_;
+    Ftn * ftn_;
     util::Duration tstep_;
     bool setup_mom6_;
     std::unique_ptr<const Geometry> geom_;

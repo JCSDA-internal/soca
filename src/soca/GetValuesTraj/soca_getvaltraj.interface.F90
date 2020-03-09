@@ -11,38 +11,21 @@ module soca_getvaltraj_mod_c
   use soca_getvaltraj_mod, only: soca_getvaltraj
 
   implicit none
-
   private
-  public :: soca_getvaltraj_registry
-
-#define LISTED_TYPE soca_getvaltraj
-
-!> Linked list interface - defines registry_t type
-#include "oops/util/linkedList_i.f"
-
-!> Global registry
-type(registry_t) :: soca_getvaltraj_registry
 
 ! ------------------------------------------------------------------------------
 contains
 ! ------------------------------------------------------------------------------
-
-!> Linked list implementation
-#include "oops/util/linkedList_c.f"
-
 ! ------------------------------------------------------------------------------
 !> Setup trajectory for interpolation
-subroutine c_soca_getvaltraj_setup(c_key_self) &
-  bind(c,name='soca_getvaltraj_setup_f90')
+subroutine c_soca_getvaltraj_setup(c_self) &
+    bind(c,name='soca_getvaltraj_setup_f90')
+  type(c_ptr), intent(inout) :: c_self
 
-  integer(c_int), intent(inout) :: c_key_self
   type(soca_getvaltraj), pointer :: self
 
-  ! Init, add and get key
-  ! ---------------------
-  call soca_getvaltraj_registry%init()
-  call soca_getvaltraj_registry%add(c_key_self)
-  call soca_getvaltraj_registry%get(c_key_self,self)
+  allocate(self)
+  c_self = c_loc(self)
 
   self%interph_initialized = .false.
   self%nobs = 0
@@ -51,22 +34,19 @@ end subroutine c_soca_getvaltraj_setup
 
 ! ------------------------------------------------------------------------------
 !> Release memory
-subroutine c_soca_getvaltraj_delete(c_key_self) &
-  bind(c,name='soca_getvaltraj_delete_f90')
+subroutine c_soca_getvaltraj_delete(c_self) &
+    bind(c,name='soca_getvaltraj_delete_f90')
+  type(c_ptr), intent(inout) :: c_self
 
-  integer(c_int), intent(inout) :: c_key_self
   type(soca_getvaltraj), pointer :: self
 
-  ! Associate pointer/key
-  call soca_getvaltraj_registry%get(c_key_self, self)
+  call c_f_pointer(c_self, self)
 
   ! Clean up
   call self%horiz_interp%delete()
   self%nobs = 0
   self%interph_initialized = .false.
-
-  ! Remove key
-  call soca_getvaltraj_registry%remove(c_key_self)
+  deallocate(self)
 
 end subroutine c_soca_getvaltraj_delete
 

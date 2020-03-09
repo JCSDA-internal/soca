@@ -8,7 +8,8 @@
 #ifndef SOCA_TRANSFORMS_BKGERR_BKGERRFORTRAN_H_
 #define SOCA_TRANSFORMS_BKGERR_BKGERRFORTRAN_H_
 
-#include "soca/Fortran.h"
+#include "soca/Fields/Fields.h"
+#include "soca/Transforms/BkgErr/BkgErr.h"
 
 // Forward declarations
 namespace eckit {
@@ -20,16 +21,16 @@ namespace eckit {
 namespace soca {
 
   extern "C" {
-    void soca_bkgerr_setup_f90(F90balopmat &,
+    void soca_bkgerr_setup_f90(BkgErr::Ftn * &,
                                const eckit::Configuration * const *,
-                               const F90flds &);
-    void soca_bkgerr_delete_f90(F90balopmat &);
-    void soca_bkgerr_mult_f90(const F90balopmat &,
-                              const F90flds &,
-                                  F90flds &);
-    void soca_bkgerr_multad_f90(const F90balopmat,
-                                F90flds &,
-                                const F90flds &);
+                               const Fields::Ftn * const &);
+    void soca_bkgerr_delete_f90(BkgErr::Ftn * &);
+    void soca_bkgerr_mult_f90(const BkgErr::Ftn * const &,
+                              const Fields::Ftn * const &,
+                              const Fields::Ftn * const &);
+    void soca_bkgerr_multad_f90(const BkgErr::Ftn * const &,
+                                const Fields::Ftn * const &,
+                                const Fields::Ftn * const &);
   }
 }  // namespace soca
 

@@ -13,8 +13,6 @@
 
 #include <boost/scoped_ptr.hpp>
 
-#include "soca/Fortran.h"
-
 #include "oops/util/DateTime.h"
 #include "oops/util/ObjectCounter.h"
 

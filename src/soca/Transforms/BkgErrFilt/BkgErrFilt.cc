@@ -28,18 +28,18 @@ namespace soca {
                  const Geometry & geom,
                  const eckit::Configuration & conf): traj_(traj) {
     const eckit::Configuration * configc = &conf;
-    soca_bkgerrfilt_setup_f90(keyFtnConfig_,
+    soca_bkgerrfilt_setup_f90(ftn_,
                               &configc,
                               traj_.fields().toFortran());
   }
   // -----------------------------------------------------------------------------
   BkgErrFilt::~BkgErrFilt() {
-    soca_bkgerrfilt_delete_f90(keyFtnConfig_);
+    soca_bkgerrfilt_delete_f90(ftn_);
   }
   // -----------------------------------------------------------------------------
   void BkgErrFilt::multiply(const Increment & dxa, Increment & dxm) const {
     // dxm = K dxa
-    soca_bkgerrfilt_mult_f90(keyFtnConfig_,
+    soca_bkgerrfilt_mult_f90(ftn_,
                          dxa.fields().toFortran(),
                          dxm.fields().toFortran());
   }
@@ -51,7 +51,7 @@ namespace soca {
   // -----------------------------------------------------------------------------
   void BkgErrFilt::multiplyAD(const Increment & dxm, Increment & dxa) const {
     // dxa = K^T dxm
-    soca_bkgerrfilt_mult_f90(keyFtnConfig_,
+    soca_bkgerrfilt_mult_f90(ftn_,
                          dxm.fields().toFortran(),
                          dxa.fields().toFortran());
   }

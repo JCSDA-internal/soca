@@ -11,8 +11,6 @@
 #include <iterator>
 #include <string>
 
-#include "soca/Fortran.h"
-
 #include "oops/util/ObjectCounter.h"
 #include "oops/util/Printable.h"
 
@@ -34,6 +32,7 @@ class GeometryIterator: public std::iterator<std::forward_iterator_tag,
                           public util::Printable,
                           private util::ObjectCounter<GeometryIterator> {
  public:
+  struct Ftn{};
   static const std::string classname() {return "soca::GeometryIterator";}
 
   GeometryIterator(const GeometryIterator &);
@@ -46,12 +45,12 @@ class GeometryIterator: public std::iterator<std::forward_iterator_tag,
   eckit::geometry::Point2 operator*() const;
   GeometryIterator& operator++();
 
-  F90iter & toFortran() {return keyIter_;}
-  const F90iter & toFortran() const {return keyIter_;}
+  Ftn * & toFortran() {return ftn_;}
+  Ftn * const & toFortran() const {return ftn_;}
 
  private:
   void print(std::ostream &) const;
-  F90iter keyIter_;
+  Ftn * ftn_;
 };
 
 }  // namespace soca

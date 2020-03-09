@@ -21,28 +21,28 @@ namespace soca {
 // -----------------------------------------------------------------------------
 
 GeometryIterator::GeometryIterator(const GeometryIterator& iter) {
-  soca_geom_iter_clone_f90(keyIter_, iter.toFortran());
+  soca_geom_iter_clone_f90(ftn_, iter.toFortran());
 }
 
 // -----------------------------------------------------------------------------
 
 GeometryIterator::GeometryIterator(const Geometry& geom,
                                        const int & iindex, const int & jindex) {
-  soca_geom_iter_setup_f90(keyIter_, geom.toFortran(), iindex, jindex);
+  soca_geom_iter_setup_f90(ftn_, geom.toFortran(), iindex, jindex);
 }
 
 
 // -----------------------------------------------------------------------------
 
 GeometryIterator::~GeometryIterator() {
-  soca_geom_iter_delete_f90(keyIter_);
+  soca_geom_iter_delete_f90(ftn_);
 }
 
 // -----------------------------------------------------------------------------
 
 bool GeometryIterator::operator==(const GeometryIterator & other) const {
   int equals = 0;
-  soca_geom_iter_equals_f90(keyIter_, other.toFortran(), equals);
+  soca_geom_iter_equals_f90(ftn_, other.toFortran(), equals);
   return (equals == 1);
 }
 
@@ -50,7 +50,7 @@ bool GeometryIterator::operator==(const GeometryIterator & other) const {
 
 bool GeometryIterator::operator!=(const GeometryIterator & other) const {
   int equals = 0;
-  soca_geom_iter_equals_f90(keyIter_, other.toFortran(), equals);
+  soca_geom_iter_equals_f90(ftn_, other.toFortran(), equals);
   return (equals == 0);
 }
 
@@ -58,14 +58,14 @@ bool GeometryIterator::operator!=(const GeometryIterator & other) const {
 
 eckit::geometry::Point2 GeometryIterator::operator*() const {
   double lat, lon;
-  soca_geom_iter_current_f90(keyIter_, lat, lon);
+  soca_geom_iter_current_f90(ftn_, lat, lon);
   return eckit::geometry::Point2(lon, lat);
 }
 
 // -----------------------------------------------------------------------------
 
 GeometryIterator& GeometryIterator::operator++() {
-  soca_geom_iter_next_f90(keyIter_);
+  soca_geom_iter_next_f90(ftn_);
   return *this;
 }
 
@@ -73,7 +73,7 @@ GeometryIterator& GeometryIterator::operator++() {
 
 void GeometryIterator::print(std::ostream & os) const {
   double lat, lon;
-  soca_geom_iter_current_f90(keyIter_, lat, lon);
+  soca_geom_iter_current_f90(ftn_, lat, lon);
   os << "GeometryIterator, lat/lon: " << lat << " / " << lon << std::endl;
 }
 

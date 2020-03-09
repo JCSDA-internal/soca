@@ -32,6 +32,7 @@ namespace soca {
 /// SOCA linear change of variable
 class BkgErrGodas: public util::Printable {
  public:
+  struct Ftn{};
   static const std::string classname() {return "soca::BkgErrGodas";}
 
   explicit BkgErrGodas(const State &, const State &, const Geometry &,
@@ -46,7 +47,7 @@ class BkgErrGodas: public util::Printable {
 
  private:
   void print(std::ostream &) const override;
-  int keyFtnConfig_;
+  Ftn * ftn_;
   const State & traj_;
 };
 // -----------------------------------------------------------------------------

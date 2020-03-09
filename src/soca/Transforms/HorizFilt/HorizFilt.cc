@@ -28,7 +28,7 @@ namespace soca {
                  const eckit::Configuration & conf):
     geom_(new Geometry(geom)), vars_(conf), traj_(traj) {
     const eckit::Configuration * configc = &conf;
-    soca_horizfilt_setup_f90(keyFtnConfig_,
+    soca_horizfilt_setup_f90(ftn_,
                              &configc,
                              geom_->toFortran(),
                              traj_.fields().toFortran(),
@@ -39,7 +39,7 @@ namespace soca {
   }
   // -----------------------------------------------------------------------------
   HorizFilt::~HorizFilt() {
-    soca_horizfilt_delete_f90(keyFtnConfig_);
+    soca_horizfilt_delete_f90(ftn_);
   }
   // -----------------------------------------------------------------------------
   void HorizFilt::multiply(const Increment & dxin, Increment & dxout) const {
@@ -47,7 +47,7 @@ namespace soca {
     Increment dx_tmp(dxin);
     for (unsigned int iter = 0; iter < niter_; ++iter) {
       dx_tmp = dxout;
-      soca_horizfilt_mult_f90(keyFtnConfig_,
+      soca_horizfilt_mult_f90(ftn_,
                               dx_tmp.fields().toFortran(),
                               dxout.fields().toFortran());
     }
@@ -63,7 +63,7 @@ namespace soca {
     Increment dx_tmp(dxin);
     for (unsigned int iter = 0; iter < niter_; ++iter) {
       dx_tmp = dxout;
-      soca_horizfilt_multad_f90(keyFtnConfig_,
+      soca_horizfilt_multad_f90(ftn_,
                                 dx_tmp.fields().toFortran(),
                                 dxout.fields().toFortran());
     }

@@ -8,7 +8,8 @@
 #ifndef SOCA_TRANSFORMS_VERTCONV_VERTCONVFORTRAN_H_
 #define SOCA_TRANSFORMS_VERTCONV_VERTCONVFORTRAN_H_
 
-#include "soca/Fortran.h"
+#include "soca/Fields/Fields.h"
+#include "soca/Transforms/VertConv/VertConv.h"
 
 // Forward declarations
 namespace eckit {
@@ -18,15 +19,17 @@ namespace eckit {
 namespace soca {
 
   extern "C" {
-    void soca_vertconv_setup_f90(F90balopmat &,
+    void soca_vertconv_setup_f90(VertConv::Ftn * &,
                                  const eckit::Configuration * const *,
-                                 const F90flds &,
-                                 const F90flds &);
-    void soca_vertconv_delete_f90(F90balopmat &);
-    void soca_vertconv_mult_f90(const F90balopmat &, F90balopmat &,
-                                const F90balopmat &, const F90balopmat &);
-    void soca_vertconv_multad_f90(const F90balopmat &, F90balopmat &,
-                                  const F90balopmat &, const F90balopmat &);
+                                 const Fields::Ftn * const &,
+                                 const Fields::Ftn * const &);
+    void soca_vertconv_delete_f90(VertConv::Ftn * &);
+    void soca_vertconv_mult_f90(const VertConv::Ftn * const &,
+                                const Fields::Ftn * const &,
+                                const Fields::Ftn * const &);
+    void soca_vertconv_multad_f90(const VertConv::Ftn * const &,
+                                  const Fields::Ftn * const &,
+                                  const Fields::Ftn * const &);
   }
 }  // namespace soca
 #endif  // SOCA_TRANSFORMS_VERTCONV_VERTCONVFORTRAN_H_

@@ -14,8 +14,6 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include "soca/Fortran.h"
-
 #include "oops/base/Variables.h"
 #include "oops/util/DateTime.h"
 #include "oops/util/Duration.h"
@@ -48,6 +46,7 @@ namespace soca {
   class Fields : public util::Printable,
     private util::ObjectCounter<Fields> {
    public:
+      struct Ftn{};
       static const std::string classname() {return "soca::Fields";}
 
       // Constructors and basic operators
@@ -105,14 +104,14 @@ namespace soca {
       const util::DateTime & time() const {return time_;}
       util::DateTime & time() {return time_;}
 
-      int & toFortran() {return keyFlds_;}
-      const int & toFortran() const {return keyFlds_;}
+      Ftn * & toFortran() {return ftn_;}
+      Ftn * const & toFortran() const {return ftn_;}
 
       bool isForModel(const bool) const;
 
    private:
       void print(std::ostream &) const;
-      F90flds keyFlds_;
+      Ftn * ftn_;
       boost::shared_ptr<const Geometry> geom_;
       oops::Variables vars_;
       util::DateTime time_;

@@ -15,7 +15,6 @@
 #include "soca/Traits.h"
 
 #include "soca/Fields/Fields.h"
-#include "soca/Fortran.h"
 #include "soca/Geometry/Geometry.h"
 #include "soca/Increment/Increment.h"
 #include "soca/LinearModel/TlmId.h"

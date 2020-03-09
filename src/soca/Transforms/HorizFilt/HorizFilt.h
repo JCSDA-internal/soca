@@ -34,6 +34,7 @@ namespace soca {
 /// SOCA linear change of variable
 class HorizFilt: public util::Printable {
  public:
+  struct Ftn{};
   static const std::string classname() {return "soca::HorizFilt";}
 
   explicit HorizFilt(const State &, const State &, const Geometry &,
@@ -48,7 +49,7 @@ class HorizFilt: public util::Printable {
 
  private:
   void print(std::ostream &) const override;
-  int keyFtnConfig_;
+  Ftn * ftn_;
   std::unique_ptr<const Geometry> geom_;
   oops::Variables vars_;
   const State & traj_;
