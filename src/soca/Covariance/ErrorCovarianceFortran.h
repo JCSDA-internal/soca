@@ -21,19 +21,16 @@ namespace soca {
 
   extern "C" {
     void soca_b_setup_f90(ErrorCovariance::Ftn * &,
-                          const eckit::Configuration * const *,
+                          const eckit::Configuration * const &,
                           const Geometry::Ftn * const &,
                           const Fields::Ftn * const &,
                           const oops::Variables &);
-    void soca_b_delete_f90(ErrorCovariance::Ftn * &);
+    void soca_b_delete_f90(ErrorCovariance::Ftn * const &);
     void soca_b_mult_f90(const ErrorCovariance::Ftn * const &,
                          const Fields::Ftn * const &,
-                         const Fields::Ftn * const &);
-    void soca_b_invmult_f90(const ErrorCovariance::Ftn * const &,
-                            const Fields::Ftn * const &,
-                            const Fields::Ftn * const &);
+                         Fields::Ftn * const &);
     void soca_b_randomize_f90(const ErrorCovariance::Ftn * const &,
-                              const Fields::Ftn * const &);
+                              Fields::Ftn * const &);
   }
 }  // namespace soca
 #endif  // SOCA_COVARIANCE_ERRORCOVARIANCEFORTRAN_H_

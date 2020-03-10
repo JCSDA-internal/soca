@@ -104,8 +104,7 @@ namespace soca {
   }
   // -----------------------------------------------------------------------------
   void Fields::dirac(const eckit::Configuration & config) {
-    const eckit::Configuration * conf = &config;
-    soca_field_dirac_f90(ftn_, &conf);
+    soca_field_dirac_f90(ftn_, &config);
   }
   // -----------------------------------------------------------------------------
   void Fields::axpy(const double & zz, const Fields & rhs) {
@@ -220,9 +219,7 @@ namespace soca {
   }
   // -----------------------------------------------------------------------------
   void Fields::read(const eckit::Configuration & config) {
-    const eckit::Configuration * conf = &config;
-    util::DateTime * dtp = &time_;
-    soca_field_read_file_f90(ftn_, &conf, &dtp);
+    soca_field_read_file_f90(ftn_, &config, &time_);
   }
   // -----------------------------------------------------------------------------
   void Fields::write(const eckit::Configuration & config) const {

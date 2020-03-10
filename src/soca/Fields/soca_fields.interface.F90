@@ -33,7 +33,8 @@ contains
 
 ! ------------------------------------------------------------------------------
 
-subroutine soca_field_create_c(c_self, c_geom, c_vars) bind(c,name='soca_field_create_f90')
+subroutine soca_field_create_c(c_self, c_geom, c_vars) &
+  & bind(c,name='soca_field_create_f90')
   type(c_ptr)   , intent(inout) :: c_self !< Handle to field
   type(c_ptr),       intent(in) :: c_geom !< Geometry
   type(c_ptr),value, intent(in) :: c_vars     !< List of variables
@@ -53,7 +54,8 @@ end subroutine soca_field_create_c
 
 ! ------------------------------------------------------------------------------
 
-subroutine soca_field_delete_c(c_self) bind(c,name='soca_field_delete_f90')
+subroutine soca_field_delete_c(c_self) &
+  & bind(c,name='soca_field_delete_f90')
   type(c_ptr), intent(inout) :: c_self
 
   type(soca_fields), pointer :: self
@@ -67,8 +69,9 @@ end subroutine soca_field_delete_c
 
 ! ------------------------------------------------------------------------------
 
-subroutine soca_field_zero_c(c_self) bind(c,name='soca_field_zero_f90')
-  type(c_ptr), intent(in) :: c_self
+subroutine soca_field_zero_c(c_self) &
+  & bind(c,name='soca_field_zero_f90')
+  type(c_ptr), intent(inout) :: c_self
 
   type(soca_fields), pointer :: self
 
@@ -80,9 +83,10 @@ end subroutine soca_field_zero_c
 
 ! ------------------------------------------------------------------------------
 
-subroutine soca_field_dirac_c(c_self,c_conf) bind(c,name='soca_field_dirac_f90')
-  type(c_ptr),  intent(in) :: c_self
-  type(c_ptr),  intent(in) :: c_conf !< Configuration
+subroutine soca_field_dirac_c(c_self,c_conf) &
+  & bind(c,name='soca_field_dirac_f90')
+  type(c_ptr),  intent(inout) :: c_self
+  type(c_ptr),     intent(in) :: c_conf !< Configuration
 
   type(soca_fields), pointer :: self
 
@@ -95,7 +99,7 @@ end subroutine soca_field_dirac_c
 ! ------------------------------------------------------------------------------
 
 subroutine soca_field_random_c(c_self) bind(c,name='soca_field_random_f90')
-  type(c_ptr), intent(in) :: c_self
+  type(c_ptr), intent(inout) :: c_self
 
   type(soca_fields), pointer :: self
 
@@ -107,8 +111,10 @@ end subroutine soca_field_random_c
 
 ! ------------------------------------------------------------------------------
 
-subroutine soca_field_copy_c(c_self, c_rhs) bind(c,name='soca_field_copy_f90')
-  type(c_ptr), intent(in) :: c_self, c_rhs
+subroutine soca_field_copy_c(c_self, c_rhs) &
+  & bind(c,name='soca_field_copy_f90')
+  type(c_ptr), intent(inout) :: c_self
+  type(c_ptr),     intent(in):: c_rhs
 
   type(soca_fields), pointer :: self, rhs
 
@@ -121,8 +127,10 @@ end subroutine soca_field_copy_c
 
 ! ------------------------------------------------------------------------------
 
-subroutine soca_field_self_add_c(c_self, c_rhs) bind(c,name='soca_field_self_add_f90')
-  type(c_ptr), intent(in) :: c_self, c_rhs
+subroutine soca_field_self_add_c(c_self, c_rhs) &
+  & bind(c,name='soca_field_self_add_f90')
+  type(c_ptr), intent(inout) :: c_self
+  type(c_ptr),    intent(in) :: c_rhs
 
   type(soca_fields), pointer :: self, rhs
 
@@ -135,8 +143,9 @@ end subroutine soca_field_self_add_c
 
 ! ------------------------------------------------------------------------------
 
-subroutine soca_field_self_schur_c(c_self,c_rhs) bind(c,name='soca_field_self_schur_f90')
-  type(c_ptr), intent(in) :: c_self, c_rhs
+subroutine soca_field_self_schur_c(c_self, c_rhs) bind(c,name='soca_field_self_schur_f90')
+  type(c_ptr), intent(inout) :: c_self
+  type(c_ptr),    intent(in) :: c_rhs
 
   type(soca_fields), pointer :: self, rhs
 
@@ -149,8 +158,10 @@ end subroutine soca_field_self_schur_c
 
 ! ------------------------------------------------------------------------------
 
-subroutine soca_field_self_sub_c(c_self, c_rhs) bind(c,name='soca_field_self_sub_f90')
-  type(c_ptr), intent(in) :: c_self, c_rhs
+subroutine soca_field_self_sub_c(c_self, c_rhs) &
+  & bind(c,name='soca_field_self_sub_f90')
+  type(c_ptr), intent(inout) :: c_self
+  type(c_ptr),    intent(in) :: c_rhs
 
   type(soca_fields), pointer :: self, rhs
 
@@ -163,7 +174,8 @@ end subroutine soca_field_self_sub_c
 
 ! ------------------------------------------------------------------------------
 
-subroutine soca_field_self_mul_c(c_self,c_zz) bind(c,name='soca_field_self_mul_f90')
+subroutine soca_field_self_mul_c(c_self, c_zz) &
+  & bind(c,name='soca_field_self_mul_f90')
   type(c_ptr), intent(in) :: c_self
   real(c_double), intent(in) :: c_zz
 
@@ -179,14 +191,14 @@ end subroutine soca_field_self_mul_c
 
 ! ------------------------------------------------------------------------------
 
-subroutine soca_field_axpy_c(c_self, c_zz, c_rhs) bind(c,name='soca_field_axpy_f90')
-  type(c_ptr),    intent(in) :: c_self
-  real(c_double), intent(in) :: c_zz
-  type(c_ptr),    intent(in) :: c_rhs
+subroutine soca_field_axpy_c(c_self, c_zz, c_rhs) &
+  & bind(c,name='soca_field_axpy_f90')
+  type(c_ptr),    intent(inout) :: c_self
+  real(c_double),    intent(in) :: c_zz
+  type(c_ptr),       intent(in) :: c_rhs
 
-  type(soca_fields), pointer :: self
+  type(soca_fields), pointer :: self, rhs
   real(kind=kind_real)       :: zz
-  type(soca_fields), pointer :: rhs
 
   call c_f_pointer(c_self, self)
   call c_f_pointer(c_rhs, rhs)
@@ -198,7 +210,8 @@ end subroutine soca_field_axpy_c
 
 ! ------------------------------------------------------------------------------
 
-subroutine soca_field_dot_prod_c(c_fld1, c_fld2, c_prod) bind(c,name='soca_field_dot_prod_f90')
+subroutine soca_field_dot_prod_c(c_fld1, c_fld2, c_prod) &
+  & bind(c,name='soca_field_dot_prod_f90')
   type(c_ptr),       intent(in) :: c_fld1, c_fld2
   real(c_double), intent(inout) :: c_prod
 
@@ -215,8 +228,10 @@ end subroutine soca_field_dot_prod_c
 
 ! ------------------------------------------------------------------------------
 
-subroutine soca_field_add_incr_c(c_self, c_rhs) bind(c,name='soca_field_add_incr_f90')
-  type(c_ptr), intent(in) :: c_self, c_rhs
+subroutine soca_field_add_incr_c(c_self, c_rhs) &
+  & bind(c,name='soca_field_add_incr_f90')
+  type(c_ptr), intent(inout) :: c_self
+  type(c_ptr),    intent(in) :: c_rhs
 
   type(soca_fields), pointer :: self, rhs
 
@@ -229,8 +244,10 @@ end subroutine soca_field_add_incr_c
 
 ! ------------------------------------------------------------------------------
 
-subroutine soca_field_diff_incr_c(c_lhs, c_x1, c_x2) bind(c,name='soca_field_diff_incr_f90')
-  type(c_ptr), intent(in) :: c_lhs, c_x1, c_x2
+subroutine soca_field_diff_incr_c(c_lhs, c_x1, c_x2) &
+  & bind(c,name='soca_field_diff_incr_f90')
+  type(c_ptr), intent(inout) :: c_lhs
+  type(c_ptr),    intent(in) :: c_x1, c_x2
 
   type(soca_fields), pointer :: lhs, x1, x2
 
@@ -244,8 +261,10 @@ end subroutine soca_field_diff_incr_c
 
 ! ------------------------------------------------------------------------------
 
-subroutine soca_field_change_resol_c(c_fld, c_rhs) bind(c,name='soca_field_change_resol_f90')
-  type(c_ptr), intent(in) :: c_fld, c_rhs
+subroutine soca_field_change_resol_c(c_fld, c_rhs) &
+  & bind(c,name='soca_field_change_resol_f90')
+  type(c_ptr), intent(inout) :: c_fld
+  type(c_ptr),    intent(in) :: c_rhs
 
   type(soca_fields), pointer :: fld, rhs
 
@@ -259,7 +278,8 @@ end subroutine soca_field_change_resol_c
 
 ! ------------------------------------------------------------------------------
 
-subroutine soca_field_ug_coord_c(c_fld, c_key_ug) bind (c,name='soca_field_ug_coord_f90')
+subroutine soca_field_ug_coord_c(c_fld, c_key_ug) &
+  & bind (c,name='soca_field_ug_coord_f90')
   type(c_ptr),    intent(in) :: c_fld
   integer(c_int), intent(in) :: c_key_ug
 
@@ -275,7 +295,8 @@ end subroutine soca_field_ug_coord_c
 
 ! ------------------------------------------------------------------------------
 
-subroutine soca_field_field_to_ug_c(c_fld, c_key_ug, c_its) bind (c,name='soca_field_field_to_ug_f90')
+subroutine soca_field_field_to_ug_c(c_fld, c_key_ug, c_its) &
+  & bind (c,name='soca_field_field_to_ug_f90')
   type(c_ptr),    intent(in) :: c_fld
   integer(c_int), intent(in) :: c_key_ug
   integer(c_int), intent(in) :: c_its
@@ -294,10 +315,11 @@ end subroutine soca_field_field_to_ug_c
 
 ! ------------------------------------------------------------------------------
 
-subroutine soca_field_field_from_ug_c(c_fld, c_key_ug, c_its) bind (c,name='soca_field_field_from_ug_f90')
-  type(c_ptr),    intent(in) :: c_fld
-  integer(c_int), intent(in) :: c_key_ug
-  integer(c_int), intent(in) :: c_its
+subroutine soca_field_field_from_ug_c(c_fld, c_key_ug, c_its) &
+  & bind (c,name='soca_field_field_from_ug_f90')
+  type(c_ptr),    intent(inout) :: c_fld
+  integer(c_int),    intent(in) :: c_key_ug
+  integer(c_int),     intent(in) :: c_its
 
   type(soca_fields),       pointer :: fld
   type(unstructured_grid), pointer :: ug
@@ -313,8 +335,9 @@ end subroutine soca_field_field_from_ug_c
 
 ! ------------------------------------------------------------------------------
 
-subroutine soca_field_read_file_c(c_fld, c_conf, c_dt) bind(c,name='soca_field_read_file_f90')
-  type(c_ptr),    intent(in) :: c_fld  !< Fields
+subroutine soca_field_read_file_c(c_fld, c_conf, c_dt) &
+  & bind(c,name='soca_field_read_file_f90')
+  type(c_ptr), intent(inout) :: c_fld  !< Fields
   type(c_ptr),    intent(in) :: c_conf     !< Configuration
   type(c_ptr), intent(inout) :: c_dt       !< DateTime
 
@@ -329,10 +352,11 @@ end subroutine soca_field_read_file_c
 
 ! ------------------------------------------------------------------------------
 
-subroutine soca_field_write_file_c(c_fld, c_conf, c_dt) bind(c,name='soca_field_write_file_f90')
-  type(c_ptr),    intent(in) :: c_fld  !< Fields
-  type(c_ptr),    intent(in) :: c_conf     !< Configuration
-  type(c_ptr),    intent(in) :: c_dt       !< DateTime
+subroutine soca_field_write_file_c(c_fld, c_conf, c_dt) &
+  & bind(c,name='soca_field_write_file_f90')
+  type(c_ptr), intent(in) :: c_fld  !< Fields
+  type(c_ptr), intent(in) :: c_conf     !< Configuration
+  type(c_ptr), intent(in) :: c_dt       !< DateTime
 
   type(soca_fields), pointer :: fld
   type(datetime)             :: fdate
@@ -346,7 +370,8 @@ end subroutine soca_field_write_file_c
 
 ! ------------------------------------------------------------------------------
 
-subroutine soca_field_gpnorm_c(c_fld, kf, pstat) bind(c,name='soca_field_gpnorm_f90')
+subroutine soca_field_gpnorm_c(c_fld, kf, pstat) &
+  & bind(c,name='soca_field_gpnorm_f90')
   type(c_ptr),       intent(in) :: c_fld
   integer(c_int),    intent(in) :: kf
   real(c_double), intent(inout) :: pstat(3*kf)
@@ -370,7 +395,8 @@ end subroutine soca_field_gpnorm_c
 
 ! ------------------------------------------------------------------------------
 
-subroutine soca_field_rms_c(c_fld, prms) bind(c,name='soca_field_rms_f90')
+subroutine soca_field_rms_c(c_fld, prms) &
+  & bind(c,name='soca_field_rms_f90')
   type(c_ptr),       intent(in) :: c_fld
   real(c_double), intent(inout) :: prms
 
@@ -386,7 +412,8 @@ end subroutine soca_field_rms_c
 
 ! ------------------------------------------------------------------------------
 
-subroutine soca_field_interp_nl_c(c_fld, c_key_loc, c_vars, c_key_gom) bind(c,name='soca_field_interp_nl_f90')
+subroutine soca_field_interp_nl_c(c_fld, c_key_loc, c_vars, c_key_gom) &
+  & bind(c,name='soca_field_interp_nl_f90')
   type(c_ptr),        intent(in) :: c_fld
   integer(c_int),     intent(in) :: c_key_loc
   type(c_ptr), value, intent(in) :: c_vars     !< List of requested variables
@@ -408,12 +435,13 @@ end subroutine soca_field_interp_nl_c
 
 ! ------------------------------------------------------------------------------
 
-subroutine soca_field_interp_nl_traj_c(c_fld, c_key_loc, c_vars, c_key_gom, c_traj) bind(c,name='soca_field_interp_nl_traj_f90')
-  type(c_ptr),          intent(in) :: c_fld
-  integer(c_int),       intent(in) :: c_key_loc
-  type(c_ptr), value,   intent(in) :: c_vars     !< List of requested variables
-  integer(c_int),       intent(in) :: c_key_gom
-  type(c_ptr),          intent(in) :: c_traj !< Trajectory for interpolation/transforms
+subroutine soca_field_interp_nl_traj_c(c_fld, c_key_loc, c_vars, c_key_gom, c_traj) &
+  & bind(c,name='soca_field_interp_nl_traj_f90')
+  type(c_ptr),        intent(in) :: c_fld
+  integer(c_int),     intent(in) :: c_key_loc
+  type(c_ptr), value, intent(in) :: c_vars     !< List of requested variables
+  integer(c_int),     intent(in) :: c_key_gom
+  type(c_ptr),        intent(in) :: c_traj !< Trajectory for interpolation/transforms
 
   type(soca_fields),     pointer :: fld
   type(ufo_locs),        pointer :: locs
@@ -433,12 +461,13 @@ end subroutine soca_field_interp_nl_traj_c
 
 ! ------------------------------------------------------------------------------
 
-subroutine soca_field_interp_tl_c(c_fld, c_key_loc, c_vars, c_key_gom, c_traj) bind(c,name='soca_field_interp_tl_f90')
-  type(c_ptr),         intent(in) :: c_fld
-  integer(c_int),      intent(in) :: c_key_loc
-  type(c_ptr), value,  intent(in) :: c_vars     !< List of requested variables
-  integer(c_int),      intent(in) :: c_key_gom
-  type(c_ptr),         intent(in) :: c_traj !< Trajectory for interpolation/transforms
+subroutine soca_field_interp_tl_c(c_fld, c_key_loc, c_vars, c_key_gom, c_traj) &
+  & bind(c,name='soca_field_interp_tl_f90')
+  type(c_ptr),        intent(in) :: c_fld
+  integer(c_int),     intent(in) :: c_key_loc
+  type(c_ptr), value, intent(in) :: c_vars     !< List of requested variables
+  integer(c_int),     intent(in) :: c_key_gom
+  type(c_ptr),        intent(in) :: c_traj !< Trajectory for interpolation/transforms
 
   type(soca_fields),     pointer :: fld
   type(ufo_locs),        pointer :: locs
@@ -458,12 +487,13 @@ end subroutine soca_field_interp_tl_c
 
 ! ------------------------------------------------------------------------------
 
-subroutine soca_field_interp_ad_c(c_fld, c_key_loc, c_vars, c_key_gom, c_traj) bind(c,name='soca_field_interp_ad_f90')
-  type(c_ptr),        intent(in) :: c_fld
-  integer(c_int),     intent(in) :: c_key_loc
-  type(c_ptr), value, intent(in) :: c_vars     !< List of requested variables
-  integer(c_int),     intent(in) :: c_key_gom
-  type(c_ptr),        intent(in) :: c_traj !< Trajectory for interpolation/transforms
+subroutine soca_field_interp_ad_c(c_fld, c_key_loc, c_vars, c_key_gom, c_traj) &
+  & bind(c,name='soca_field_interp_ad_f90')
+  type(c_ptr),        intent(inout) :: c_fld
+  integer(c_int),        intent(in) :: c_key_loc
+  type(c_ptr), value,    intent(in) :: c_vars     !< List of requested variables
+  integer(c_int),        intent(in) :: c_key_gom
+  type(c_ptr),           intent(in) :: c_traj !< Trajectory for interpolation/transforms
 
   type(soca_fields),     pointer :: fld
   type(ufo_locs),        pointer :: locs
@@ -483,7 +513,8 @@ end subroutine soca_field_interp_ad_c
 
 ! ------------------------------------------------------------------------------
 
-subroutine soca_field_getpoint_c(c_fld, c_iter, values, values_len) bind(c,name='soca_field_getpoint_f90')
+subroutine soca_field_getpoint_c(c_fld, c_iter, values, values_len) &
+  & bind(c,name='soca_field_getpoint_f90')
   type(c_ptr),    intent(in) :: c_fld
   type(c_ptr),    intent(in) :: c_iter
   integer(c_int), intent(in) :: values_len
@@ -501,7 +532,8 @@ end subroutine soca_field_getpoint_c
 
 ! ------------------------------------------------------------------------------
 
-subroutine soca_field_setpoint_c(c_fld, c_iter, values, values_len) bind(c,name='soca_field_setpoint_f90')
+subroutine soca_field_setpoint_c(c_fld, c_iter, values, values_len) &
+  & bind(c,name='soca_field_setpoint_f90')
   type(c_ptr), intent(inout) :: c_fld
   type(c_ptr),    intent(in) :: c_iter
   integer(c_int), intent(in) :: values_len
@@ -519,7 +551,8 @@ end subroutine soca_field_setpoint_c
 
 ! ------------------------------------------------------------------------------
 
-subroutine soca_fieldnum_c(c_fld, nx, ny, nzo, nzi, ncat, nf) bind(c,name='soca_field_sizes_f90')
+subroutine soca_fieldnum_c(c_fld, nx, ny, nzo, nzi, ncat, nf) &
+  & bind(c,name='soca_field_sizes_f90')
   type(c_ptr),            intent(in) :: c_fld
   integer(kind=c_int), intent(inout) :: nx, ny, nzo, nzi, ncat, nf
 

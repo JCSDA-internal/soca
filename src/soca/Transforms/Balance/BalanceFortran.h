@@ -20,21 +20,21 @@ namespace soca {
 
   extern "C" {
     void soca_balance_setup_f90(Balance::Ftn * &,
-                                const eckit::Configuration * const *,
+                                const eckit::Configuration * const &,
                                 const Fields::Ftn * const &);
-    void soca_balance_delete_f90(Balance::Ftn * &);
-    void soca_balance_mult_f90(Balance::Ftn * const &,
+    void soca_balance_delete_f90(Balance::Ftn * const &);
+    void soca_balance_mult_f90(const Balance::Ftn * const &,
                                const Fields::Ftn * const &,
-                               Fields::Ftn * &);
-    void soca_balance_multinv_f90(Balance::Ftn * const &,
+                               Fields::Ftn * const &);
+    void soca_balance_multinv_f90(const Balance::Ftn * const &,
                                   const Fields::Ftn * const &,
-                                  Fields::Ftn * &);
-    void soca_balance_multad_f90(Balance::Ftn * const &,
+                                  Fields::Ftn * const &);
+    void soca_balance_multad_f90(const Balance::Ftn * const &,
                                  const Fields::Ftn * const &,
-                                 Fields::Ftn * &);
-    void soca_balance_multinvad_f90(Balance::Ftn * const &,
+                                 Fields::Ftn * const &);
+    void soca_balance_multinvad_f90(const Balance::Ftn * const &,
                                     const Fields::Ftn * const &,
-                                    Fields::Ftn * &);
+                                    Fields::Ftn * const &);
   }
 }  // namespace soca
 #endif  // SOCA_TRANSFORMS_BALANCE_BALANCEFORTRAN_H_

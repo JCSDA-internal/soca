@@ -50,7 +50,7 @@ end subroutine c_soca_geo_clone
 ! ------------------------------------------------------------------------------
 !> Generate grid
 subroutine c_soca_geo_gridgen(c_self) bind(c,name='soca_geo_gridgen_f90')
-  type(c_ptr), intent(in) :: c_self
+  type(c_ptr), intent(inout) :: c_self
 
   type(soca_geom), pointer :: self
   call c_f_pointer(c_self, self)
@@ -77,7 +77,7 @@ end subroutine c_soca_geo_delete
 ! ------------------------------------------------------------------------------
 !> return begin and end of local geometry
 subroutine c_soca_geo_start_end(c_self, ist, iend, jst, jend) bind(c, name='soca_geo_start_end_f90')
-  type(c_ptr),      intent(in):: c_self
+  type(c_ptr),     intent(in) :: c_self
   integer(c_int), intent(out) :: ist, iend, jst, jend
 
   type(soca_geom), pointer :: self

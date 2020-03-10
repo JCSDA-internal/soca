@@ -20,15 +20,12 @@ namespace soca {
 
   extern "C" {
     void soca_bkgerrfilt_setup_f90(BkgErrFilt::Ftn * &,
-                                   const eckit::Configuration * const *,
+                                   const eckit::Configuration * const &,
                                    const Fields::Ftn * const &);
-    void soca_bkgerrfilt_delete_f90(BkgErrFilt::Ftn * &);
+    void soca_bkgerrfilt_delete_f90(BkgErrFilt::Ftn * const &);
     void soca_bkgerrfilt_mult_f90(const BkgErrFilt::Ftn * const &,
                                   const Fields::Ftn * const &,
-                                  const Fields::Ftn * const &);
-    void soca_bkgerrfilt_multad_f90(const BkgErrFilt::Ftn * const &,
-                                    const Fields::Ftn * const &,
-                                    const Fields::Ftn * const &);
+                                  Fields::Ftn * const &);
   }
 }  // namespace soca
 

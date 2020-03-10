@@ -23,11 +23,10 @@ contains
 ! ------------------------------------------------------------------------------
 !> Constructor for D (standard deviation of background error)
 subroutine c_soca_balance_setup(c_self, c_conf, c_traj) &
-  bind(c,name='soca_balance_setup_f90')
-
+  & bind(c,name='soca_balance_setup_f90')
   type(c_ptr), intent(inout) :: c_self
   type(c_ptr),    intent(in) :: c_conf       !< The configuration
-  type(c_ptr),  intent(in)   :: c_traj   !< Background field
+  type(c_ptr),    intent(in) :: c_traj   !< Background field
 
   type(soca_fields), pointer :: traj
   type(soca_balance_config), pointer :: self
@@ -43,9 +42,9 @@ end subroutine c_soca_balance_setup
 
 ! ------------------------------------------------------------------------------
 !> Destructor for D
-subroutine c_soca_balance_delete(c_self) bind(c,name='soca_balance_delete_f90')
-
-  type(c_ptr), intent(in) :: c_self
+subroutine c_soca_balance_delete(c_self) &
+  & bind(c,name='soca_balance_delete_f90')
+  type(c_ptr), intent(inout) :: c_self
 
   type(soca_balance_config), pointer :: self
 
@@ -58,14 +57,12 @@ end subroutine c_soca_balance_delete
 ! ------------------------------------------------------------------------------
 !> Multiplication forward
 subroutine c_soca_balance_mult_f90(c_self, c_a, c_m)&
-  bind(c,name='soca_balance_mult_f90')
+  & bind(c,name='soca_balance_mult_f90')
+  type(c_ptr),    intent(in) :: c_self
+  type(c_ptr),    intent(in) :: c_a     !<    "   to Increment in
+  type(c_ptr), intent(inout) :: c_m     !<    "   to Increment out
 
-  type(c_ptr), intent(in) :: c_self
-  type(c_ptr), intent(in) :: c_a     !<    "   to Increment in
-  type(c_ptr), intent(in) :: c_m     !<    "   to Increment out
-
-  type(soca_fields), pointer :: dxa
-  type(soca_fields), pointer :: dxm
+  type(soca_fields),         pointer :: dxa, dxm
   type(soca_balance_config), pointer :: self
 
   call c_f_pointer(c_self, self)
@@ -80,14 +77,12 @@ end subroutine c_soca_balance_mult_f90
 ! ------------------------------------------------------------------------------
 !> Multiplication inverse
 subroutine c_soca_balance_multinv_f90(c_self, c_m, c_a)&
-  bind(c,name='soca_balance_multinv_f90')
+  & bind(c,name='soca_balance_multinv_f90')
+  type(c_ptr),    intent(in) :: c_self
+  type(c_ptr),    intent(in) :: c_m     !<    "   to Increment out
+  type(c_ptr), intent(inout) :: c_a     !<    "   to Increment in
 
-  type(c_ptr), intent(in) :: c_self
-  type(c_ptr), intent(in) :: c_a     !<    "   to Increment in
-  type(c_ptr), intent(in) :: c_m     !<    "   to Increment out
-
-  type(soca_fields), pointer :: dxa
-  type(soca_fields), pointer :: dxm
+  type(soca_fields),         pointer :: dxa, dxm
   type(soca_balance_config), pointer :: self
 
   call c_f_pointer(c_self, self)
@@ -102,14 +97,12 @@ end subroutine c_soca_balance_multinv_f90
 ! ------------------------------------------------------------------------------
 !> Multiplication adjoint
 subroutine c_soca_balance_multad_f90(c_self, c_m, c_a)&
-  bind(c,name='soca_balance_multad_f90')
+  & bind(c,name='soca_balance_multad_f90')
+  type(c_ptr),    intent(in) :: c_self
+  type(c_ptr),    intent(in) :: c_m     !<    "   to Increment out
+  type(c_ptr), intent(inout) :: c_a     !<    "   to Increment in
 
-  type(c_ptr), intent(in) :: c_self
-  type(c_ptr), intent(in) :: c_a     !<    "   to Increment in
-  type(c_ptr), intent(in) :: c_m     !<    "   to Increment out
-
-  type(soca_fields), pointer :: dxa
-  type(soca_fields), pointer :: dxm
+  type(soca_fields),         pointer :: dxa, dxm
   type(soca_balance_config), pointer :: self
 
   call c_f_pointer(c_self, self)
@@ -124,14 +117,12 @@ end subroutine c_soca_balance_multad_f90
 ! ------------------------------------------------------------------------------
 !> Multiplication inverse adjoint
 subroutine c_soca_balance_multinvad_f90(c_self, c_a, c_m)&
-  bind(c,name='soca_balance_multinvad_f90')
+  & bind(c,name='soca_balance_multinvad_f90')
+  type(c_ptr),    intent(in) :: c_self
+  type(c_ptr),    intent(in) :: c_a     !<    "   to Increment in
+  type(c_ptr), intent(inout) :: c_m     !<    "   to Increment out
 
-  type(c_ptr), intent(in) :: c_self
-  type(c_ptr), intent(in) :: c_a     !<    "   to Increment in
-  type(c_ptr), intent(in) :: c_m     !<    "   to Increment out
-
-  type(soca_fields), pointer :: dxa
-  type(soca_fields), pointer :: dxm
+  type(soca_fields),         pointer :: dxa, dxm
   type(soca_balance_config), pointer :: self
 
   call c_f_pointer(c_self, self)

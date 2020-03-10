@@ -22,12 +22,12 @@ contains
 ! ------------------------------------------------------------------------------
 !> Constructor for D (standard deviation of background error)
 subroutine c_soca_bkgerrfilt_setup(c_self, c_conf, c_bkg) &
-    bind(c,name='soca_bkgerrfilt_setup_f90')
+  & bind(c,name='soca_bkgerrfilt_setup_f90')
   type(c_ptr), intent(inout) :: c_self   !< The D structure
   type(c_ptr),    intent(in) :: c_conf       !< The configuration
-  type(c_ptr), intent(in)    :: c_bkg    !< Background field
+  type(c_ptr),    intent(in) :: c_bkg    !< Background field
 
-  type(soca_fields), pointer :: bkg
+  type(soca_fields),            pointer :: bkg
   type(soca_bkgerrfilt_config), pointer :: self
 
   allocate(self)
@@ -40,7 +40,8 @@ end subroutine c_soca_bkgerrfilt_setup
 
 ! ------------------------------------------------------------------------------
 !> Destructor for D
-subroutine c_soca_bkgerrfilt_delete(c_self) bind(c,name='soca_bkgerrfilt_delete_f90')
+subroutine c_soca_bkgerrfilt_delete(c_self) &
+  & bind(c,name='soca_bkgerrfilt_delete_f90')
   type(c_ptr), intent(inout) :: c_self
 
   type(soca_bkgerrfilt_config), pointer :: self
@@ -48,7 +49,6 @@ subroutine c_soca_bkgerrfilt_delete(c_self) bind(c,name='soca_bkgerrfilt_delete_
   call c_f_pointer(c_self, self)
   if (associated(self%bkg)) nullify(self%bkg)
   call self%filt%delete()
-  !call delete(self%std_bkgerrfilt)
   deallocate(self)
 
 end subroutine c_soca_bkgerrfilt_delete
@@ -56,13 +56,12 @@ end subroutine c_soca_bkgerrfilt_delete
 ! ------------------------------------------------------------------------------
 !> Multiplication forward and adjoint
 subroutine c_soca_bkgerrfilt_mult_f90(c_self, c_a, c_m)&
-    bind(c,name='soca_bkgerrfilt_mult_f90')
-  type(c_ptr), intent(in) :: c_self
-  type(c_ptr), intent(in) :: c_a     !<    "   to Increment in
-  type(c_ptr), intent(in) :: c_m     !<    "   to Increment out
+  & bind(c,name='soca_bkgerrfilt_mult_f90')
+  type(c_ptr),    intent(in) :: c_self
+  type(c_ptr),    intent(in) :: c_a     !<    "   to Increment in
+  type(c_ptr), intent(inout) :: c_m     !<    "   to Increment out
 
-  type(soca_fields), pointer :: dxa
-  type(soca_fields), pointer :: dxm
+  type(soca_fields),            pointer :: dxa, dxm
   type(soca_bkgerrfilt_config), pointer :: self
 
   call c_f_pointer(c_self, self)

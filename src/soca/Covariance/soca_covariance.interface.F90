@@ -22,7 +22,7 @@ contains
 ! ------------------------------------------------------------------------------
 !> Setup for the SOCA model's background error covariance matrix
 subroutine c_soca_b_setup(c_self, c_conf, c_geom, c_bkg, c_vars) &
-     & bind (c,name='soca_b_setup_f90')
+  & bind (c,name='soca_b_setup_f90')
   type(c_ptr),    intent(inout) :: c_self   !< The background covariance structure
   type(c_ptr),       intent(in) :: c_conf       !< The configuration
   type(c_ptr),       intent(in) :: c_geom       !< Geometry
@@ -47,7 +47,8 @@ end subroutine c_soca_b_setup
 ! ------------------------------------------------------------------------------
 !> Delete for the SOCA model's background error covariance matrix
 
-subroutine c_soca_b_delete(c_self) bind (c,name='soca_b_delete_f90')
+subroutine c_soca_b_delete(c_self) &
+  & bind (c,name='soca_b_delete_f90')
   type(c_ptr), intent(inout) :: c_self  !< The background covariance structure
 
   type(soca_cov),       pointer :: self
@@ -63,14 +64,15 @@ end subroutine c_soca_b_delete
 
 !> Multiply by covariance
 
-subroutine c_soca_b_mult(c_self, c_in, c_out) bind(c,name='soca_b_mult_f90')
-  type(c_ptr), intent(inout) :: c_self  !< The background covariance structure
-  type(c_ptr), intent(in)    :: c_in    !<    "   to Increment in
-  type(c_ptr), intent(in)    :: c_out   !<    "   to Increment out
+subroutine c_soca_b_mult(c_self, c_in, c_out) &
+  & bind(c,name='soca_b_mult_f90')
+  type(c_ptr),    intent(in) :: c_self  !< The background covariance structure
+  type(c_ptr),    intent(in) :: c_in    !<    "   to Increment in
+  type(c_ptr), intent(inout) :: c_out   !<    "   to Increment out
 
   type(soca_cov),    pointer :: self
-  type(soca_fields), pointer :: xin
-  type(soca_fields), pointer :: xout
+  type(soca_fields), pointer :: xin, xout
+
 
   call c_f_pointer(c_self, self)
   call c_f_pointer(c_in, xin)
@@ -86,9 +88,10 @@ end subroutine c_soca_b_mult
 
 !> Generate randomized C^1/2 x increment
 
-subroutine c_soca_b_randomize(c_self, c_out) bind(c,name='soca_b_randomize_f90')
-  type(c_ptr), intent(in) :: c_self  !< covar config structure
-  type(c_ptr), intent(in) :: c_out   !< Randomized increment
+subroutine c_soca_b_randomize(c_self, c_out) &
+  & bind(c,name='soca_b_randomize_f90')
+  type(c_ptr),    intent(in) :: c_self  !< covar config structure
+  type(c_ptr), intent(inout) :: c_out   !< Randomized increment
 
   type(soca_cov),   pointer :: self
   type(soca_fields),pointer :: xout

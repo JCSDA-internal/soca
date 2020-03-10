@@ -94,10 +94,9 @@ end subroutine c_soca_delete
 ! ------------------------------------------------------------------------------
 !> Prepare the model or integration
 subroutine c_soca_initialize_integration(c_self, c_state) &
-     & bind(c,name='soca_initialize_integration_f90')
-
-  type(c_ptr),    intent(in) :: c_self       !< Configuration structure
-  type(c_ptr),    intent(in) :: c_state  !< Model fields
+  & bind(c,name='soca_initialize_integration_f90')
+  type(c_ptr), intent(inout) :: c_self       !< Configuration structure
+  type(c_ptr), intent(inout) :: c_state  !< Model fields
 
   type(soca_model), pointer :: self
   type(soca_fields),pointer :: flds
@@ -113,10 +112,9 @@ end subroutine c_soca_initialize_integration
 
 !> Checkpoint model
 subroutine c_soca_finalize_integration(c_self, c_state) &
-    bind(c,name='soca_finalize_integration_f90')
-
-  type(c_ptr), intent(in) :: c_self       !< Configuration structure
-  type(c_ptr), intent(in) :: c_state  !< Model fields
+  & bind(c,name='soca_finalize_integration_f90')
+  type(c_ptr), intent(inout) :: c_self       !< Configuration structure
+  type(c_ptr), intent(inout) :: c_state  !< Model fields
 
   type(soca_model), pointer :: self
   type(soca_fields),pointer :: flds
@@ -131,10 +129,10 @@ end subroutine c_soca_finalize_integration
 ! ------------------------------------------------------------------------------
 
 !> Perform a timestep of the model
-subroutine c_soca_propagate(c_self, c_state, c_date) bind(c,name='soca_propagate_f90')
-
-  type(c_ptr),    intent(in) :: c_self  !< Config structure
-  type(c_ptr),    intent(in) :: c_state  !< Model fields
+subroutine c_soca_propagate(c_self, c_state, c_date) &
+  & bind(c,name='soca_propagate_f90')
+  type(c_ptr), intent(inout) :: c_self  !< Config structure
+  type(c_ptr), intent(inout) :: c_state  !< Model fields
   type(c_ptr), intent(inout) :: c_date   !< DateTime
 
   type(soca_model), pointer :: self

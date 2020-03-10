@@ -27,8 +27,7 @@ namespace soca {
                    const State & traj,
                    const Geometry & geom,
                    const eckit::Configuration & conf): traj_(traj) {
-    const eckit::Configuration * configc = &conf;
-    soca_balance_setup_f90(ftn_, &configc, traj_.fields().toFortran());
+    soca_balance_setup_f90(ftn_, &conf, traj_.fields().toFortran());
   }
   // -----------------------------------------------------------------------------
   Balance::~Balance() {

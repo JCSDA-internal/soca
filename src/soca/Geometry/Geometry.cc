@@ -23,8 +23,7 @@ namespace soca {
   Geometry::Geometry(const eckit::Configuration & conf,
                      const eckit::mpi::Comm & comm)
     : comm_(comm), atmconf_(conf), initatm_(initAtm(conf)) {
-    const eckit::Configuration * configc = &conf;
-    soca_geo_setup_f90(ftn_, &configc);
+    soca_geo_setup_f90(ftn_, &conf);
   }
   // -----------------------------------------------------------------------------
   Geometry::Geometry(const Geometry & other)

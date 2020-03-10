@@ -23,17 +23,17 @@ namespace soca {
 
   extern "C" {
     void soca_horizfilt_setup_f90(HorizFilt::Ftn * &,
-                                  const eckit::Configuration * const *,
+                                  const eckit::Configuration * const &,
                                   const Geometry::Ftn * const &,
                                   const Fields::Ftn * const &,
                                   const oops::Variables &);
-    void soca_horizfilt_delete_f90(HorizFilt::Ftn * &);
+    void soca_horizfilt_delete_f90(HorizFilt::Ftn * const &);
     void soca_horizfilt_mult_f90(const HorizFilt::Ftn * const &,
                                  const Fields::Ftn * const &,
-                                 const Fields::Ftn * const &);
+                                 Fields::Ftn * const &);
     void soca_horizfilt_multad_f90(const HorizFilt::Ftn * const &,
                                    const Fields::Ftn * const &,
-                                   const Fields::Ftn * const &);
+                                    Fields::Ftn * const &);
   }
 }  // namespace soca
 

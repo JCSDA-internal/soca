@@ -27,9 +27,8 @@ namespace soca {
                  const State & traj,
                  const Geometry & geom,
                  const eckit::Configuration & conf): traj_(traj) {
-    const eckit::Configuration * configc = &conf;
     soca_bkgerrfilt_setup_f90(ftn_,
-                              &configc,
+                              &conf,
                               traj_.fields().toFortran());
   }
   // -----------------------------------------------------------------------------

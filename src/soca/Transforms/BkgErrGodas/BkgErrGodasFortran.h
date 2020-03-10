@@ -20,15 +20,12 @@ namespace soca {
 
   extern "C" {
     void soca_bkgerrgodas_setup_f90(BkgErrGodas::Ftn * &,
-                                    const eckit::Configuration * const *,
+                                    const eckit::Configuration * const &,
                                     const Fields::Ftn * const &);
-    void soca_bkgerrgodas_delete_f90(BkgErrGodas::Ftn * &);
+    void soca_bkgerrgodas_delete_f90(BkgErrGodas::Ftn * const &);
     void soca_bkgerrgodas_mult_f90(const BkgErrGodas::Ftn * const &,
                                    const Fields::Ftn * const &,
-                                   const Fields::Ftn * const &);
-    void soca_bkgerrgodas_multad_f90(const BkgErrGodas::Ftn * const &,
-                                     const Fields::Ftn * const &,
-                                     const Fields::Ftn * const &);
+                                   Fields::Ftn * const &);
   }
 }  // namespace soca
 #endif  // SOCA_TRANSFORMS_BKGERRGODAS_BKGERRGODASFORTRAN_H_

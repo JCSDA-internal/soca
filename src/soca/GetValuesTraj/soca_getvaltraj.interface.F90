@@ -19,7 +19,7 @@ contains
 ! ------------------------------------------------------------------------------
 !> Setup trajectory for interpolation
 subroutine c_soca_getvaltraj_setup(c_self) &
-    bind(c,name='soca_getvaltraj_setup_f90')
+  & bind(c,name='soca_getvaltraj_setup_f90')
   type(c_ptr), intent(inout) :: c_self
 
   type(soca_getvaltraj), pointer :: self
@@ -35,7 +35,7 @@ end subroutine c_soca_getvaltraj_setup
 ! ------------------------------------------------------------------------------
 !> Release memory
 subroutine c_soca_getvaltraj_delete(c_self) &
-    bind(c,name='soca_getvaltraj_delete_f90')
+  & bind(c,name='soca_getvaltraj_delete_f90')
   type(c_ptr), intent(inout) :: c_self
 
   type(soca_getvaltraj), pointer :: self

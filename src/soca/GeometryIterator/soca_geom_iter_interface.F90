@@ -19,9 +19,8 @@ contains
 
   ! ------------------------------------------------------------------------------
   !> Setup geometry iterator
-  subroutine soca_geom_iter_setup_c(c_self, c_geom, c_iindex, c_jindex) bind(c, name='soca_geom_iter_setup_f90')
-
-    ! Passed variables
+  subroutine soca_geom_iter_setup_c(c_self, c_geom, c_iindex, c_jindex) &
+    & bind(c, name='soca_geom_iter_setup_f90')
     type(c_ptr),      intent(inout) :: c_self !< Geometry iterator
     type(c_ptr), target, intent(in) :: c_geom !< Geometry
     integer(c_int),   intent(   in) :: c_iindex    !< Index
@@ -43,9 +42,8 @@ contains
 
   ! ------------------------------------------------------------------------------
   !> Clone geometry iterator
-  subroutine soca_geom_iter_clone_c(c_self, c_other) bind(c, name='soca_geom_iter_clone_f90')
-
-    ! Passed variables
+  subroutine soca_geom_iter_clone_c(c_self, c_other) &
+    & bind(c, name='soca_geom_iter_clone_f90')
     type(c_ptr), intent(inout) :: c_self  !< Geometry iterator
     type(c_ptr), intent(   in) :: c_other !< Other geometry iterator
 
@@ -64,9 +62,8 @@ contains
 
   ! ------------------------------------------------------------------------------
   !> Delete geometry iterator
-  subroutine soca_geom_iter_delete_c(c_self) bind(c, name='soca_geom_iter_delete_f90')
-
-    ! Passed variables
+  subroutine soca_geom_iter_delete_c(c_self) &
+    & bind(c, name='soca_geom_iter_delete_f90')
     type(c_ptr), intent(inout) :: c_self !< Geometry iterator
 
     type(soca_geom_iter), pointer :: self
@@ -79,10 +76,9 @@ contains
 
   ! ------------------------------------------------------------------------------
   !> Check geometry iterator equality
-  subroutine soca_geom_iter_equals_c(c_self, c_other, c_equals) bind(c, name='soca_geom_iter_equals_f90')
-
-    ! Passed variables
-    type(c_ptr),    intent(inout) :: c_self  !< Geometry iterator
+  subroutine soca_geom_iter_equals_c(c_self, c_other, c_equals) &
+    & bind(c, name='soca_geom_iter_equals_f90')
+    type(c_ptr),    intent(   in) :: c_self  !< Geometry iterator
     type(c_ptr),    intent(   in) :: c_other !< Other geometry iterator
     integer(c_int), intent(inout) :: c_equals!< Equality flag
 
@@ -100,9 +96,8 @@ contains
 
   ! ------------------------------------------------------------------------------
   !> Get geometry iterator current lat/lon
-  subroutine soca_geom_iter_current_c(c_self, c_lat, c_lon) bind(c, name='soca_geom_iter_current_f90')
-
-    ! Passed variables
+  subroutine soca_geom_iter_current_c(c_self, c_lat, c_lon) &
+    & bind(c, name='soca_geom_iter_current_f90')
     type(c_ptr),    intent(   in) :: c_self !< Geometry iterator
     real(c_double), intent(inout) :: c_lat      !< Latitude
     real(c_double), intent(inout) :: c_lon      !< Longitude
@@ -120,9 +115,8 @@ contains
 
   ! ------------------------------------------------------------------------------
   !> Update geometry iterator to next point
-  subroutine soca_geom_iter_next_c(c_self) bind(c, name='soca_geom_iter_next_f90')
-
-    ! Passed variables
+  subroutine soca_geom_iter_next_c(c_self) &
+    & bind(c, name='soca_geom_iter_next_f90')
     type(c_ptr), intent(in) :: c_self !< Geometry iterator
 
     ! Local variables

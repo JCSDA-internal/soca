@@ -27,15 +27,14 @@ namespace soca {
                  const Geometry & geom,
                  const eckit::Configuration & conf):
     geom_(new Geometry(geom)), vars_(conf), traj_(traj) {
-    const eckit::Configuration * configc = &conf;
     soca_horizfilt_setup_f90(ftn_,
-                             &configc,
+                             &conf,
                              geom_->toFortran(),
                              traj_.fields().toFortran(),
                              vars_);
 
     // Get number of iterations
-    niter_ = configc->getInt("niter");
+    niter_ = conf.getInt("niter");
   }
   // -----------------------------------------------------------------------------
   HorizFilt::~HorizFilt() {

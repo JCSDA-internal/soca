@@ -22,15 +22,14 @@ contains
 ! ------------------------------------------------------------------------------
 !> Constructor for Vertconv
 subroutine c_soca_vertconv_setup(c_self, c_conf, c_traj, c_bkg) &
-    bind(c,name='soca_vertconv_setup_f90')
+  & bind(c,name='soca_vertconv_setup_f90')
   type(c_ptr), intent(inout) :: c_self   !< The Vertconv structure
   type(c_ptr),    intent(in) :: c_conf       !< The configuration
   type(c_ptr),    intent(in) :: c_traj   !< trajectory
   type(c_ptr),    intent(in) :: c_bkg    !< background
 
   type(soca_vertconv), pointer :: self
-  type(soca_fields),   pointer :: traj
-  type(soca_fields),   pointer :: bkg
+  type(soca_fields),   pointer :: traj, bkg
 
   allocate(self)
   c_self = c_loc(self)
@@ -43,15 +42,11 @@ end subroutine c_soca_vertconv_setup
 
 ! ------------------------------------------------------------------------------
 !> Destructor for Vertconv
-subroutine c_soca_vertconv_delete(c_self) bind(c,name='soca_vertconv_delete_f90')
+subroutine c_soca_vertconv_delete(c_self) &
+  & bind(c,name='soca_vertconv_delete_f90')
   type(c_ptr), intent(inout) :: c_self  !< The background covariance structure
 
   type(soca_vertconv), pointer :: self
-
-  ! Deallocate trajectory and backgroun
-  ! TODO
-  ! Deallocate ocean depth array
-  ! TODO
 
   call c_f_pointer(c_self, self)
 
@@ -63,17 +58,14 @@ end subroutine c_soca_vertconv_delete
 
 ! ------------------------------------------------------------------------------
 !> Multiplication
-subroutine c_soca_vertconv_mult_f90(c_self, c_a, c_m)&
-    bind(c,name='soca_vertconv_mult_f90')
-  type(c_ptr), intent(in) :: c_self  !< config
-  type(c_ptr), intent(in) :: c_a     !< Increment in
-  type(c_ptr), intent(in) :: c_m     !< Increment out
+subroutine c_soca_vertconv_mult_f90(c_self, c_a, c_m) &
+  & bind(c,name='soca_vertconv_mult_f90')
+  type(c_ptr),    intent(in) :: c_self  !< config
+  type(c_ptr),    intent(in) :: c_a     !< Increment in
+  type(c_ptr), intent(inout) :: c_m     !< Increment out
 
   type(soca_vertconv), pointer :: self
-  type(soca_fields),   pointer :: dxa  ! in
-  type(soca_fields),   pointer :: dxm  ! out
-  type(soca_fields),   pointer :: traj
-
+  type(soca_fields),   pointer :: dxa, dxm
 
   call c_f_pointer(c_self, self)
   call c_f_pointer(c_a, dxa)
@@ -90,15 +82,14 @@ end subroutine c_soca_vertconv_mult_f90
 
 ! ------------------------------------------------------------------------------
 !> Multiplication adjoint
-subroutine c_soca_vertconv_multad_f90(c_self, c_m, c_a)&
-    bind(c,name='soca_vertconv_multad_f90')
-  type(c_ptr), intent(in) :: c_self  !< config
-  type(c_ptr), intent(in) :: c_a     !< Increment out
-  type(c_ptr), intent(in) :: c_m     !< Increment in
+subroutine c_soca_vertconv_multad_f90(c_self, c_m, c_a) &
+  & bind(c,name='soca_vertconv_multad_f90')
+  type(c_ptr),    intent(in) :: c_self  !< config
+  type(c_ptr),    intent(in) :: c_m     !< Increment in
+  type(c_ptr), intent(inout) :: c_a     !< Increment out
 
-  type(soca_vertconv),    pointer :: self
-  type(soca_fields),      pointer :: dxa
-  type(soca_fields),      pointer :: dxm
+  type(soca_vertconv), pointer :: self
+  type(soca_fields),   pointer :: dxa, dxm
 
   call c_f_pointer(c_self, self)
   call c_f_pointer(c_a, dxa)

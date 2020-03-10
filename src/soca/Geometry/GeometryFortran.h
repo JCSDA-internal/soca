@@ -19,10 +19,11 @@ namespace soca {
 
   extern "C" {
     void soca_geo_setup_f90(Geometry::Ftn * &,
-                            const eckit::Configuration * const *);
-    void soca_geo_clone_f90(Geometry::Ftn * &, const Geometry::Ftn * const &);
-    void soca_geo_gridgen_f90(const Geometry::Ftn * const &);
-    void soca_geo_delete_f90(Geometry::Ftn * &);
+                            const eckit::Configuration * const &);
+    void soca_geo_clone_f90(Geometry::Ftn * &,
+                            const Geometry::Ftn * const &);
+    void soca_geo_gridgen_f90(Geometry::Ftn * const &);
+    void soca_geo_delete_f90(Geometry::Ftn * const &);
     void soca_geo_start_end_f90(const Geometry::Ftn * const &,
                                 int &, int &, int &, int &);
   }

@@ -26,10 +26,9 @@ namespace soca {
                      const State & traj,
                      const Geometry & geom,
                      const eckit::Configuration & conf): traj_(traj) {
-    const eckit::Configuration * configc = &conf;
     oops::Log::trace() << "soca::VertConv::setup " << std::endl;
     soca_vertconv_setup_f90(ftn_,
-                            &configc,
+                            &conf,
                             traj_.fields().toFortran(),
                             bkg.fields().toFortran());
   }

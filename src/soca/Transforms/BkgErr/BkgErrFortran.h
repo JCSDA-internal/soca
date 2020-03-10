@@ -22,15 +22,12 @@ namespace soca {
 
   extern "C" {
     void soca_bkgerr_setup_f90(BkgErr::Ftn * &,
-                               const eckit::Configuration * const *,
+                               const eckit::Configuration * const &,
                                const Fields::Ftn * const &);
-    void soca_bkgerr_delete_f90(BkgErr::Ftn * &);
+    void soca_bkgerr_delete_f90(BkgErr::Ftn * const &);
     void soca_bkgerr_mult_f90(const BkgErr::Ftn * const &,
                               const Fields::Ftn * const &,
-                              const Fields::Ftn * const &);
-    void soca_bkgerr_multad_f90(const BkgErr::Ftn * const &,
-                                const Fields::Ftn * const &,
-                                const Fields::Ftn * const &);
+                              Fields::Ftn * const &);
   }
 }  // namespace soca
 

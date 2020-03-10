@@ -21,16 +21,16 @@ namespace soca {
 
   extern "C" {
     void soca_setup_f90(Model::Ftn * &,
-                        const eckit::Configuration * const *,
+                        const eckit::Configuration * const &,
                         const Geometry::Ftn * const &);
-    void soca_delete_f90(Model::Ftn * &);
-    void soca_initialize_integration_f90(const Model::Ftn * const &,
-                                         const Fields::Ftn * const &);
-    void soca_finalize_integration_f90(const Model::Ftn * const &,
-                                       const Fields::Ftn * const &);
-    void soca_propagate_f90(const Model::Ftn * const &,
-                            const Fields::Ftn * const &,
-                            util::DateTime * const *);
+    void soca_delete_f90(Model::Ftn * const &);
+    void soca_initialize_integration_f90(Model::Ftn * const &,
+                                         Fields::Ftn * const &);
+    void soca_finalize_integration_f90(Model::Ftn * const &,
+                                       Fields::Ftn * const &);
+    void soca_propagate_f90(Model::Ftn * const &,
+                            Fields::Ftn * const &,
+                            const util::DateTime * const &);
   }
 }  // namespace soca
 

@@ -1352,9 +1352,9 @@ end subroutine soca_fields_write_file
 !> Save soca fields in a restart format
 !> TODO this can be generalized even more
 subroutine soca_fields_write_rst(fld, f_conf, vdate)
-  class(soca_fields),         intent(inout) :: fld      !< Fields
-  type(fckit_configuration), intent(in)    :: f_conf   !< Configuration
-  type(datetime),            intent(inout) :: vdate    !< DateTime
+  class(soca_fields),        intent(in) :: fld      !< Fields
+  type(fckit_configuration), intent(in) :: f_conf   !< Configuration
+  type(datetime),            intent(in) :: vdate    !< DateTime
 
   integer, parameter :: max_string_length=800
   character(len=:), allocatable :: seaice_model
