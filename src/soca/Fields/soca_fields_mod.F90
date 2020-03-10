@@ -719,27 +719,37 @@ subroutine soca_fields_add_incr(self,rhs)
   filename='incr.'//adjustl(trim(str_cnt))//'.nc'
 
   ! Compute geostrophic increment
-  if (rhs%has('tocn').and.rhs%has('tocn').and.rhs%has('socn').and.&
-      rhs%has('uocn').and.rhs%has('vocn')) then
+  if (self%has('hocn').and.self%has('tocn').and.self%has('socn').and.&
+       self%has('uocn').and.self%has('vocn')) then
+     ! Get necessary background fields needed to compute geostrophic perturbations
      call self%get("tocn", t)
      call self%get("socn", s)
      call self%get("hocn", h)
-     call soca_fields_copy(incr_geo, rhs)
+
+     ! Make a copy of the increment and get the needed pointers
+     call incr_geo%copy(rhs)
      call incr_geo%get("tocn", dt)
      call incr_geo%get("socn", ds)
      call incr_geo%get("uocn", du)
      call incr_geo%get("vocn", dv)
+
+     ! Compute the geostrophic increment
      call geostrophy%setup(self%geom, h%val)
      call geostrophy%tl(h%val, t%val, s%val,&
           dt%val, ds%val, du%val, dv%val, self%geom)
      call geostrophy%delete()
-     call incr_geo%write_file(filename)
 
      ! Add geostrophic increment to state
      call self%get("uocn", u)
      call self%get("vocn", v)
-     u%val = u%val + du%val
-     v%val = v%val + dv%val
+     where( (du%val**2 + dv%val**2)<0.25)
+        u%val = u%val + du%val
+        v%val = v%val + dv%val
+     end where
+
+     ! Save increment and clean memory
+     call incr_geo%write_file(filename)
+     call incr_geo%delete()
   else
      call rhs%write_file(filename)
   end if
