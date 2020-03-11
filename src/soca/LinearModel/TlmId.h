@@ -1,6 +1,6 @@
 /*
  * (C) Copyright 2009-2016 ECMWF.
- * (C) Copyright 2017-2019 UCAR.
+ * (C) Copyright 2017-2020 UCAR.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -17,20 +17,26 @@
 #include <boost/noncopyable.hpp>
 
 #include "oops/base/LinearModelBase.h"
-
 #include "oops/util/Duration.h"
 #include "oops/util/ObjectCounter.h"
 #include "oops/util/Printable.h"
-
-#include "soca/Traits.h"
 
 // Forward declarations
 namespace eckit {
   class Configuration;
 }
+namespace soca {
+  class Geometry;
+  class Increment;
+  class ModelBias;
+  class State;
+  struct Traits;
+}
+
+// -----------------------------------------------------------------------------
 
 namespace soca {
-// -----------------------------------------------------------------------------
+
 ///  linear identity model definition.
 /*!
  *   linear identity model definition and configuration parameters.

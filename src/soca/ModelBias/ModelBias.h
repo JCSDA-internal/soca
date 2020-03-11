@@ -1,27 +1,33 @@
 /*
- * (C) Copyright 2017-2019 UCAR
+ * (C) Copyright 2017-2020 UCAR
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#ifndef SOCA_MODELBIAS_H_
-#define SOCA_MODELBIAS_H_
+#ifndef SOCA_MODELBIAS_MODELBIAS_H_
+#define SOCA_MODELBIAS_MODELBIAS_H_
 
 #include <iostream>
 #include <string>
+
 #include <boost/noncopyable.hpp>
 
 #include "oops/util/ObjectCounter.h"
 #include "oops/util/Printable.h"
 
+// Forward declarations
 namespace eckit {
   class Configuration;
 }
-
 namespace soca {
   class Geometry;
   class ModelBiasIncrement;
+}
+
+// -----------------------------------------------------------------------------
+
+namespace soca {
 
 /// Model error for the SOCA model.
 /*!
@@ -32,9 +38,6 @@ namespace soca {
  * control variable in the litterature.
  * The augmented state is understood here as an augmented 4D state.
  */
-
-// -----------------------------------------------------------------------------
-
 class ModelBias : public util::Printable,
                   private boost::noncopyable,
                   private util::ObjectCounter<ModelBias> {
@@ -61,4 +64,4 @@ class ModelBias : public util::Printable,
 
 }  // namespace soca
 
-#endif  // SOCA_MODELBIAS_H_
+#endif  // SOCA_MODELBIAS_MODELBIAS_H_

@@ -1,37 +1,37 @@
 /*
- * (C) Copyright 2017-2019 UCAR
+ * (C) Copyright 2017-2020 UCAR
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#include "soca/Increment/Increment.h"
-
 #include <algorithm>
+#include <numeric>
 #include <string>
 #include <utility>
 #include <vector>
-#include <numeric>
+
+#include "soca/Covariance/ErrorCovariance.h"
+#include "soca/Fields/Fields.h"
+#include "soca/Geometry/Geometry.h"
+#include "soca/GetValuesTraj/GetValuesTraj.h"
+#include "soca/Increment/Increment.h"
+#include "soca/ModelBias/ModelBiasIncrement.h"
+#include "soca/State/State.h"
 
 #include "eckit/config/LocalConfiguration.h"
 #include "eckit/exception/Exceptions.h"
 
+#include "oops/base/GridPoint.h"
 #include "oops/base/Variables.h"
 #include "oops/generic/UnstructuredGrid.h"
 #include "oops/util/DateTime.h"
+#include "oops/util/dot_product.h"
 #include "oops/util/Duration.h"
 #include "oops/util/Logger.h"
 
 #include "ufo/GeoVaLs.h"
 #include "ufo/Locations.h"
-
-#include "soca/ModelBiasIncrement.h"
-#include "soca/Covariance/ErrorCovariance.h"
-#include "soca/Fields/Fields.h"
-#include "soca/Geometry/Geometry.h"
-#include "soca/Geometry/GeometryFortran.h"
-#include "soca/State/State.h"
-#include "soca/GetValuesTraj/GetValuesTraj.h"
 
 using oops::Log;
 
@@ -200,6 +200,35 @@ namespace soca {
   void Increment::print(std::ostream & os) const {
     os << std::endl << "  Valid time: " << validTime();
     os << *fields_;
+  }
+  // -----------------------------------------------------------------------------
+
+  double Increment::norm() const {return fields_->norm();}
+
+  // -----------------------------------------------------------------------------
+
+  const util::DateTime & Increment::validTime() const {return fields_->time();}
+
+  // -----------------------------------------------------------------------------
+
+  util::DateTime & Increment::validTime() {return fields_->time();}
+
+  // -----------------------------------------------------------------------------
+
+  void Increment::updateTime(const util::Duration & dt) {fields_->time() += dt;}
+
+  // -----------------------------------------------------------------------------
+
+  Fields & Increment::fields() {return *fields_;}
+
+  // -----------------------------------------------------------------------------
+
+  const Fields & Increment::fields() const {return *fields_;}
+
+  // -----------------------------------------------------------------------------
+
+  boost::shared_ptr<const Geometry> Increment::geometry() const {
+    return fields_->geometry();
   }
   // -----------------------------------------------------------------------------
 

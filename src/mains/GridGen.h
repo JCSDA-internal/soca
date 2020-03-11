@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2017-2019 UCAR
+ * (C) Copyright 2017-2020 UCAR
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -10,13 +10,16 @@
 
 #include <string>
 
-#include "eckit/mpi/Comm.h"
-#include "eckit/config/LocalConfiguration.h"
-#include "oops/base/PostProcessor.h"
+#include "soca/Traits.h"
+
 #include "soca/Geometry/Geometry.h"
 #include "soca/Model/Model.h"
-#include "oops/runs/Application.h"
+
+#include "eckit/config/LocalConfiguration.h"
+#include "eckit/mpi/Comm.h"
+#include "oops/base/PostProcessor.h"
 #include "oops/parallel/mpi/mpi.h"
+#include "oops/runs/Application.h"
 
 namespace soca {
 

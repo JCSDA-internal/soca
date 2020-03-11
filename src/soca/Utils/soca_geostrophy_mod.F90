@@ -40,7 +40,6 @@ module soca_geostrophy_mod
      procedure :: delete => soca_geostrophy_delete
      procedure :: grad => soca_grad
      procedure :: tl => soca_geostrophy_tl
-     !procedure :: rot2grid => soca_rotate2logicalgrid
   end type soca_geostrophy_type
 
   ! ------------------------------------------------------------------------------
@@ -61,7 +60,7 @@ contains
     real(kind=kind_real), allocatable, dimension(:,:,:) :: dzdj
     real(kind=kind_real), allocatable, dimension(:,:,:) :: z
     real(kind=kind_real), allocatable, dimension(:,:) :: wb
-    real(kind=kind_real) :: Lb, beta
+    real(kind=kind_real) :: Lb
     integer :: i, j, k
 
     ! Allocate inverse transformation metrics
@@ -117,6 +116,7 @@ contains
     self%dzdk = h
 
     ! Compute transformation metrics
+    self%Jac = 0.0
     do k = 1, geom%nzo
        self%Jac(:,:,k) = dlondi(:,:)*dlatdj(:,:)*self%dzdk(:,:,k) - &
                          dlondj(:,:)*dlatdi(:,:)*self%dzdk(:,:,k)
@@ -136,15 +136,20 @@ contains
     end do
     self%dkdz = dlondi*dlatdj-dlondj*dlatdi
 
-    ! Compute weights related to eq beta-plane and f-plane
+    ! Zero out weights close to equator (no beta-plane proxi yet)
     Lb = 1.55
-    beta = 2.28e-11
     allocate(wb(geom%isd:geom%ied,geom%jsd:geom%jed))
     wb  =exp(-geom%lat**2/(2*Lb**2))
-    self%icorio = (1.0-wb)/(2.0*1035.0*sin(deg2rad*geom%lat)*7.2921e-5)
+    self%icorio = 0.0
+    where (geom%lat.ne.0.0)
+       self%icorio = (1.0-wb)/(2.0*1035.0*sin(deg2rad*geom%lat)*7.2921e-5)
+    end where
 
     ! Compute weights for zonal and meridional derivatives
-    self%dxwgt = 1.0/(req*cos(deg2rad*geom%lat))
+    self%dxwgt = 0.0
+    where (geom%lat.ne.0.0)
+       self%dxwgt = 1.0/(req*cos(deg2rad*geom%lat))
+    end where
     self%dywgt = 1.0/req
 
     ! Fill halo of grid metric parameters
@@ -297,7 +302,9 @@ contains
                         self%dkdlon(i,j,k)*(fldtmp(i,j,k+1)-fldtmp(i,j,k-1))
                 end do
              end do
-             dflddxy(:,:,k) = 0.5*geom%mask2d*self%dxwgt*dflddxy(:,:,k)/self%Jac(:,:,k)
+             where (self%Jac(:,:,k).ne.0.0)
+                dflddxy(:,:,k) = 0.5*geom%mask2d*self%dxwgt*dflddxy(:,:,k)/self%Jac(:,:,k)
+             end where
           end do
 
        case("lat")
@@ -313,7 +320,9 @@ contains
                         self%dkdlat(i,j,k)*(fldtmp(i,j,k+1)-fldtmp(i,j,k-1))
                 end do
              end do
-             dflddxy(:,:,k) = 0.5*geom%mask2d*self%dywgt*dflddxy(:,:,k)/self%Jac(:,:,k)
+             where (self%Jac(:,:,k).ne.0.0)
+                dflddxy(:,:,k) = 0.5*geom%mask2d*self%dywgt*dflddxy(:,:,k)/self%Jac(:,:,k)
+             end where
           end do
        end select
 
