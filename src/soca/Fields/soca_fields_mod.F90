@@ -708,6 +708,11 @@ subroutine soca_fields_add_incr(self,rhs)
         fld%val(:,:,k) = alpha * fld%val(:,:,k)
       end do
 
+    case ('uocn', 'vocn')
+      ! Do not add the velocity increment for now
+      ! TODO This will need to be removed when assimilating current observations
+      cycle
+
     case default
       ! everyone else is normal
       fld%val = fld%val + fld_r%val
@@ -719,8 +724,11 @@ subroutine soca_fields_add_incr(self,rhs)
   filename='incr.'//adjustl(trim(str_cnt))//'.nc'
 
   ! Compute geostrophic increment
+  ! TODO Move inside of the balance operator.
+  !      Will need to be removed when assimilating ocean current or when using
+  !      ensemble derived increments (ensemble cross-covariances that include currents)
   if (self%has('hocn').and.self%has('tocn').and.self%has('socn').and.&
-       self%has('uocn').and.self%has('vocn')) then
+      self%has('uocn').and.self%has('vocn')) then
      ! Get necessary background fields needed to compute geostrophic perturbations
      call self%get("tocn", t)
      call self%get("socn", s)
@@ -739,7 +747,7 @@ subroutine soca_fields_add_incr(self,rhs)
           dt%val, ds%val, du%val, dv%val, self%geom)
      call geostrophy%delete()
 
-     ! Add geostrophic increment to state
+     ! Add geostrophic increment to state where geostrophic currents < 0.5 m/s
      call self%get("uocn", u)
      call self%get("vocn", v)
      where( (du%val**2 + dv%val**2)<0.25)

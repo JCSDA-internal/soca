@@ -17,7 +17,6 @@ module soca_geostrophy_mod
   implicit none
 
   private
-  !public :: soca_grad
 
   !> Coordinate transform (logical <-> spherical) for tracer grid points only
   !> Fortran derived type for differentiation operators
@@ -43,8 +42,8 @@ module soca_geostrophy_mod
      procedure :: setup => soca_geostrophy_setup
      procedure :: delete => soca_geostrophy_delete
      procedure :: grad => soca_grad
-     procedure :: sfc_geo => soca_barotropic_geostrophy
      procedure :: tl => soca_geostrophy_tl
+     !procedure :: rot2grid => soca_rotate2logicalgrid
   end type soca_geostrophy_type
 
   ! ------------------------------------------------------------------------------
@@ -190,30 +189,7 @@ contains
   end subroutine soca_geostrophy_delete
 
   ! ------------------------------------------------------------------------------
-  !> Barotropic currents
-  subroutine soca_barotropic_geostrophy(self, ssh, us_geo, vs_geo, geom)
-    class(soca_geostrophy_type),              intent(in) :: self
-    real(kind=kind_real),    allocatable, intent(in) :: ssh(:,:)
-    real(kind=kind_real), allocatable, intent(inout) :: us_geo(:,:,:)
-    real(kind=kind_real), allocatable, intent(inout) :: vs_geo(:,:,:)
-    type(soca_geom),                      intent(in) :: geom
-
-    real(kind=kind_real), allocatable :: ssh_tmp(:,:,:)
-
-    allocate(ssh_tmp(geom%isd:geom%ied,geom%jsd:geom%jed,1))
-    ssh_tmp(:,:,1) = ssh
-    us_geo = 0.0_kind_real
-    vs_geo = 0.0_kind_real
-    call self%grad(ssh_tmp, us_geo, geom, 'lat')
-    call self%grad(ssh_tmp, vs_geo, geom, 'lon')
-
-    us_geo(:,:,1) = -9.81*us_geo(:,:,1)*geom%mask2d(:,:)/(2.0*sin(deg2rad*geom%lat(:,:))*7.2921e-5)
-    vs_geo(:,:,1) = 9.81*vs_geo(:,:,1)*geom%mask2d(:,:)/(2.0*sin(deg2rad*geom%lat(:,:))*7.2921e-5)
-
-  end subroutine soca_barotropic_geostrophy
-
-  ! ------------------------------------------------------------------------------
-  !> Geostrophic currents
+  !> Linear geostrophy  (Loosely based on Weaver, 2005)
   subroutine soca_geostrophy_tl(self, h, t, s, dt, ds, dug, dvg, geom)
     class(soca_geostrophy_type),              intent(in) :: self
     real(kind=kind_real),    allocatable, intent(in) :: h(:,:,:)
@@ -283,7 +259,7 @@ contains
        where( h(:,:,k)<0.1 )
           mask = 0.0
        end where
-       dug(:,:,k) = -mask*(dug(:,:,k)*self%icorio ) !+ dugb(:,:,k)*self%ibeta)
+       dug(:,:,k) = -mask*( dug(:,:,k)*self%icorio ) + dugb(:,:,k)*self%ibeta )
        dvg(:,:,k) =  mask*dvg(:,:,k)*self%icorio
     end do
 
