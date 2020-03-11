@@ -265,7 +265,7 @@ subroutine soca_bump_correlation(self, horiz_convol, geom, f_conf, domain)
   vunit = 1.0d0
 
   ! Initialize bump namelist/parameters
-  call horiz_convol%nam%init()
+  call horiz_convol%nam%init(f_comm%size())
   horiz_convol%nam%verbosity = 'none'
   call horiz_convol%nam%from_conf(f_conf)
 
