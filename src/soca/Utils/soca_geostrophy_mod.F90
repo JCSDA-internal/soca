@@ -9,7 +9,6 @@ module soca_geostrophy_mod
   use mpp_domains_mod, only : mpp_update_domains, mpp_update_domains_ad
   use soca_geom_mod_c
   use soca_geom_mod, only : soca_geom
-  use soca_utils
   use tools_const, only: deg2rad, req
   use soca_utils, only : soca_rho
   use soca_ksshts_mod
@@ -33,8 +32,6 @@ module soca_geostrophy_mod
      real(kind=kind_real), allocatable, dimension(:,:) :: dkdz
 
      real(kind=kind_real), allocatable, dimension(:,:) :: icorio
-     real(kind=kind_real), allocatable, dimension(:,:) :: ibeta
-
      real(kind=kind_real), allocatable, dimension(:,:) :: dxwgt
      real(kind=kind_real), allocatable, dimension(:,:) :: dywgt
 
@@ -91,9 +88,8 @@ contains
     allocate(self%dxwgt(geom%isd:geom%ied,geom%jsd:geom%jed))
     allocate(self%dywgt(geom%isd:geom%ied,geom%jsd:geom%jed))
 
-    ! Allocate wf/f^-1 and wb/beta^-1
+    ! Allocate wf/f^-1
     allocate(self%icorio(geom%isd:geom%ied,geom%jsd:geom%jed))
-    allocate(self%ibeta(geom%isd:geom%ied,geom%jsd:geom%jed))
 
     ! Compute horizontal inverse transformation metrics
     do j = geom%jsc, geom%jec
@@ -145,7 +141,6 @@ contains
     beta = 2.28e-11
     allocate(wb(geom%isd:geom%ied,geom%jsd:geom%jed))
     wb  =exp(-geom%lat**2/(2*Lb**2))
-    self%ibeta = wb/(1035.0*beta)
     self%icorio = (1.0-wb)/(2.0*1035.0*sin(deg2rad*geom%lat)*7.2921e-5)
 
     ! Compute weights for zonal and meridional derivatives
@@ -180,7 +175,6 @@ contains
     deallocate(self%dkdlat)
     deallocate(self%dkdz)
 
-    deallocate(self%ibeta)
     deallocate(self%icorio)
 
     deallocate(self%dxwgt)
@@ -249,17 +243,13 @@ contains
     call soca_grad(self, dpressure, dug, geom, 'lat')
     call soca_grad(self, dpressure, dvg, geom, 'lon')
 
-    ! Beta-plane pressure gradient
-    allocate(dugb(isd:ied,jsd:jed,1:geom%nzo))
-    call soca_grad(self, dug, dugb, geom, 'lat')
-
     ! Baroclinic currents
     do k = 1,nl
        mask = 1.0
        where( h(:,:,k)<0.1 )
           mask = 0.0
        end where
-       dug(:,:,k) = -mask*( dug(:,:,k)*self%icorio ) + dugb(:,:,k)*self%ibeta )
+       dug(:,:,k) = -mask*dug(:,:,k)*self%icorio
        dvg(:,:,k) =  mask*dvg(:,:,k)*self%icorio
     end do
 
