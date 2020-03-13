@@ -4,7 +4,7 @@
 #     <---------------------- window_length (6 hours) ---------------------->
 #
 # ---|-----------|-----------|-----------|-----------|-----------|-----------|
-#    |                                   |                                   |      
+#    |                                   |                                   |
 # window_begin: 2018-04-14T21:00:00Z     |                           2015-04-15T3:00:00Z
 #                                        |
 #                       bkg/ana/incr: 2018-04-15T00:00:00Z
@@ -36,7 +36,7 @@ cost_function:
   window_begin: 2018-04-14T00:00:00Z
   window_length: P2D
   variables: *soca_vars
-  varchange: Identity
+  varchange: Ana2Model #Identity
   Jb:
     Background:
       state:

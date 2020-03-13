@@ -123,6 +123,24 @@ namespace soca {
   }
 
   // -----------------------------------------------------------------------------
+  /// grid 2 grid and rotations
+  // -----------------------------------------------------------------------------
+  void State::rotate2north() const {
+    Log::trace() << "State::State rotate from logical to geographical North." << std::endl;
+  }
+  // -----------------------------------------------------------------------------
+  void State::rotate2grid() const {
+    Log::trace() << "State::State rotate from geographical to logical North." << std::endl;
+  }
+  // -----------------------------------------------------------------------------
+  void State::uvgrid2agrid() const {
+    Log::trace() << "State::State interpolate from uv-grid 2 a-grid" << std::endl;
+  }
+  // -----------------------------------------------------------------------------
+  void State::agrid2uvgrid() const {
+    Log::trace() << "State::State interpolate from a-grid to uv-grid" << std::endl;
+  }
+  // -----------------------------------------------------------------------------
   /// Interactions with Increments
   // -----------------------------------------------------------------------------
   State & State::operator+=(const Increment & dx) {
@@ -148,6 +166,7 @@ namespace soca {
     os << std::endl << "  Valid time: " << validTime();
     os << *fields_;
   }
+
   // -----------------------------------------------------------------------------
   /// For accumulator
   // -----------------------------------------------------------------------------

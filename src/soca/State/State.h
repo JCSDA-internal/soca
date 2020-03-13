@@ -75,6 +75,12 @@ namespace soca {
                              const oops::Variables &,
                              ufo::GeoVaLs &) const;
 
+      /// Grid 2 grid and rotations
+      void rotate2north() const;
+      void rotate2grid() const;
+      void uvgrid2agrid() const;
+      void agrid2uvgrid() const;
+
       /// Interpolate full fields
       ///  void changeResolution(const State & xx);
 
@@ -95,6 +101,7 @@ namespace soca {
       boost::shared_ptr<const Geometry> geometry() const;
 
       /// Other
+
       void zero();
       void accumul(const double &, const State &);
 
