@@ -1,4 +1,4 @@
-! (C) Copyright 2017-2019 UCAR
+! (C) Copyright 2017-2020 UCAR
 !
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -45,10 +45,7 @@ subroutine c_soca_getvaltraj_setup(c_key_self) &
   call soca_getvaltraj_registry%get(c_key_self,self)
 
   self%interph_initialized = .false.
-  allocate(self%horiz_interp(1))
   self%nobs = 0
-  self%bumpid = 0
-  self%obstype_index = c_key_self
 
 end subroutine c_soca_getvaltraj_setup
 
@@ -64,10 +61,8 @@ subroutine c_soca_getvaltraj_delete(c_key_self) &
   call soca_getvaltraj_registry%get(c_key_self, self)
 
   ! Clean up
-  call self%horiz_interp(1)%finalize()
-  deallocate(self%horiz_interp)
+  call self%horiz_interp%delete()
   self%nobs = 0
-  self%bumpid = 0
   self%interph_initialized = .false.
 
   ! Remove key

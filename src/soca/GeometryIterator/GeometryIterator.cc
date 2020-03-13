@@ -1,14 +1,16 @@
 /*
- * (C) Copyright 2019 UCAR
+ * (C) Copyright 2019-2020 UCAR
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#include "eckit/config/Configuration.h"
+#include "soca/Geometry/Geometry.h"
 #include "soca/GeometryIterator/GeometryIterator.h"
 #include "soca/GeometryIterator/GeometryIteratorFortran.h"
-#include "Fortran.h"
+
+#include "eckit/config/Configuration.h"
+#include "eckit/geometry/Point2.h"
 #include "oops/util/Logger.h"
 
 // -----------------------------------------------------------------------------

@@ -1,25 +1,25 @@
 /*
- * (C) Copyright 2017-2019 UCAR
+ * (C) Copyright 2017-2020 UCAR
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#include "soca/Covariance/ErrorCovariance.h"
-
 #include <cmath>
 
-#include "oops/util/Logger.h"
+#include "soca/Covariance/ErrorCovariance.h"
+#include "soca/Covariance/ErrorCovarianceFortran.h"
 #include "soca/Fields/Fields.h"
-#include "soca/Fortran.h"
 #include "soca/Geometry/Geometry.h"
 #include "soca/Increment/Increment.h"
 #include "soca/State/State.h"
-#include "eckit/config/Configuration.h"
-#include "oops/base/Variables.h"
-#include "oops/base/IdentityMatrix.h"
-#include "oops/assimilation/GMRESR.h"
 
+#include "eckit/config/Configuration.h"
+
+#include "oops/assimilation/GMRESR.h"
+#include "oops/base/IdentityMatrix.h"
+#include "oops/base/Variables.h"
+#include "oops/util/Logger.h"
 
 using oops::Log;
 

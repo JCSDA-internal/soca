@@ -1,15 +1,16 @@
 /*
- * (C) Copyright 2018-2019 UCAR
+ * (C) Copyright 2018-2020 UCAR
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#include <mpi.h>
 #include "soca/GetValuesTraj/GetValuesTraj.h"
-#include "oops/util/Logger.h"
-#include "Fortran.h"
+#include "soca/GetValuesTraj/GetValuesTrajFortran.h"
+
 #include "eckit/config/Configuration.h"
+
+#include "oops/util/Logger.h"
 
 // -----------------------------------------------------------------------------
 namespace soca {

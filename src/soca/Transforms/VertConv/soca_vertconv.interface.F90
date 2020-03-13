@@ -1,4 +1,4 @@
-! (C) Copyright 2017-2019 UCAR
+! (C) Copyright 2017-2020 UCAR
 !
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -8,7 +8,7 @@ module soca_vertconv_mod_c
 use iso_c_binding
 use fckit_configuration_module, only: fckit_configuration
 use kinds, only: kind_real
-use soca_fields_mod, only: soca_field, copy
+use soca_fields_mod, only: soca_fields
 use soca_fields_mod_c, only: soca_field_registry
 use soca_vertconv_mod, only: soca_vertconv, soca_conv_setup, &
                              soca_conv, soca_conv_ad
@@ -44,8 +44,8 @@ subroutine c_soca_vertconv_setup(c_key_self, c_conf, c_key_traj, c_key_bkg) &
   integer(c_int),    intent(in) :: c_key_bkg    !< background
 
   type(soca_vertconv), pointer :: self
-  type(soca_field), pointer :: traj
-  type(soca_field), pointer :: bkg
+  type(soca_fields), pointer :: traj
+  type(soca_fields), pointer :: bkg
 
   call soca_vertconv_registry%init()
   call soca_vertconv_registry%add(c_key_self)
@@ -89,9 +89,9 @@ subroutine c_soca_vertconv_mult_f90(c_key_a, c_key_m, c_key_traj, c_key_self)&
   integer(c_int), intent(in) :: c_key_traj  !< trajectory
   integer(c_int), intent(in) :: c_key_self  !< config
 
-  type(soca_field), pointer :: dxa  ! in
-  type(soca_field), pointer :: dxm  ! out
-  type(soca_field), pointer :: traj
+  type(soca_fields), pointer :: dxa  ! in
+  type(soca_fields), pointer :: dxm  ! out
+  type(soca_fields), pointer :: traj
   type(soca_vertconv),   pointer :: self
 
   call soca_field_registry%get(c_key_a, dxa)
@@ -102,7 +102,7 @@ subroutine c_soca_vertconv_mult_f90(c_key_a, c_key_m, c_key_traj, c_key_self)&
   !< Computes dxm = Vertconv dxa
 
   ! dxm = dxa
-  call copy(dxm, dxa)
+  call dxm%copy( dxa)
 
   ! Apply forward convolution operator to T & S
   call soca_conv(self, dxm, dxa)
@@ -119,10 +119,10 @@ subroutine c_soca_vertconv_multad_f90(c_key_m, c_key_a, c_key_traj, c_key_self)&
   integer(c_int), intent(in) :: c_key_traj  !< Trajectory
   integer(c_int), intent(in) :: c_key_self  !< config
 
-  type(soca_field),      pointer :: dxa
-  type(soca_field),      pointer :: dxm
-  type(soca_field),      pointer :: traj
-  type(soca_vertconv),   pointer :: self
+  type(soca_fields),      pointer :: dxa
+  type(soca_fields),      pointer :: dxm
+  type(soca_fields),      pointer :: traj
+  type(soca_vertconv),    pointer :: self
 
   call soca_field_registry%get(c_key_a,dxa)
   call soca_field_registry%get(c_key_m,dxm)
@@ -130,7 +130,7 @@ subroutine c_soca_vertconv_multad_f90(c_key_m, c_key_a, c_key_traj, c_key_self)&
   call soca_vertconv_registry%get(c_key_self, self)
 
   ! dxa = dxm
-  call copy(dxa,dxm)
+  call dxa%copy(dxm)
 
   ! Apply adjoint of convolution operator
   call soca_conv_ad(self, dxm, dxa)

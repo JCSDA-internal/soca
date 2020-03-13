@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2017-2019 UCAR
+ * (C) Copyright 2017-2020 UCAR
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -8,14 +8,14 @@
 #ifndef SOCA_TRANSFORMS_INSTANTIATEBALANCEOPFACTORY_H_
 #define SOCA_TRANSFORMS_INSTANTIATEBALANCEOPFACTORY_H_
 
+#include "oops/interface/LinearVariableChange.h"
+#include "soca/Traits.h"
 #include "soca/Transforms/Balance/Balance.h"
 #include "soca/Transforms/BkgErr/BkgErr.h"
-#include "soca/Transforms/BkgErrGodas/BkgErrGodas.h"
 #include "soca/Transforms/BkgErrFilt/BkgErrFilt.h"
+#include "soca/Transforms/BkgErrGodas/BkgErrGodas.h"
 #include "soca/Transforms/HorizFilt/HorizFilt.h"
 #include "soca/Transforms/VertConv/VertConv.h"
-#include "soca/Traits.h"
-#include "oops/interface/LinearVariableChange.h"
 
 namespace soca {
 

@@ -1,4 +1,4 @@
-! (C) Copyright 2017-2019 UCAR.
+! (C) Copyright 2017-2020 UCAR.
 !
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -12,10 +12,9 @@ use fckit_configuration_module, only: fckit_configuration
 use fckit_mpi_module, only: fckit_mpi_comm
 use random_mod, only: normal_distribution
 use oops_variables_mod
-use oobump_mod, only: bump_read_conf
 use type_bump, only: bump_type
 use kinds, only: kind_real
-use soca_fields_mod, only: soca_field
+use soca_fields_mod, only: soca_fields, soca_field
 use soca_geom_mod, only : soca_geom
 
 implicit none
@@ -30,9 +29,9 @@ type :: soca_pert
 end type soca_pert
 
 type :: soca_cov
-   type(bump_type), allocatable :: ocean_conv(:)  !< Ocean convolution op from bump
-   type(bump_type), allocatable :: seaice_conv(:) !< Seaice convolution op from bump
-   type(soca_field),    pointer :: bkg            !< Background field (or first guess)
+   type(bump_type),     pointer :: ocean_conv(:)  !< Ocean convolution op from bump
+   type(bump_type),     pointer :: seaice_conv(:) !< Seaice convolution op from bump
+   type(soca_fields),   pointer :: bkg            !< Background field (or first guess)
    logical                      :: initialized = .false.
    type(soca_pert)              :: pert_scale
    real(kind=kind_real)         :: ocn_l0
@@ -59,7 +58,7 @@ subroutine soca_cov_setup(self, f_conf, geom, bkg, vars)
   class(soca_cov),        intent(inout) :: self   !< The covariance structure
   type(fckit_configuration), intent(in) :: f_conf !< The configuration
   type(soca_geom),           intent(in) :: geom   !< Geometry
-  type(soca_field), target,  intent(in) :: bkg    !< Background
+  type(soca_fields), target, intent(in) :: bkg    !< Background
   type(oops_variables),      intent(in) :: vars   !< List of variables
 
   character(len=3)  :: domain
@@ -69,24 +68,12 @@ subroutine soca_cov_setup(self, f_conf, geom, bkg, vars)
   ! Setup list of variables to apply B on
   self%vars = vars
 
-  ! Set default ensemble perturbation scales to 1.0
-  self%pert_scale%T = 1.0
-  self%pert_scale%S = 1.0
-  self%pert_scale%SSH = 1.0
-  self%pert_scale%AICE = 1.0
-  self%pert_scale%HICE = 1.0
-
-  ! Overwrite scales if they exist
-  if ( f_conf%has("pert_T") ) &
-      call f_conf%get_or_die("pert_T", self%pert_scale%T)
-  if ( f_conf%has("pert_S") ) &
-      call f_conf%get_or_die("pert_S", self%pert_scale%S)
-  if ( f_conf%has("pert_SSH") ) &
-      call f_conf%get_or_die("pert_SSH", self%pert_scale%SSH)
-  if ( f_conf%has("pert_AICE") ) &
-      call f_conf%get_or_die("pert_AICE", self%pert_scale%AICE)
-  if ( f_conf%has("pert_HICE") ) &
-      call f_conf%get_or_die("pert_HICE", self%pert_scale%HICE)
+  ! Set default ensemble perturbation scales to 1.0, overwrite scales if they exist
+  if (.not. f_conf%get("pert_T", self%pert_scale%T))       self%pert_scale%T = 1.0
+  if (.not. f_conf%get("pert_S", self%pert_scale%S))       self%pert_scale%S = 1.0
+  if (.not. f_conf%get("pert_SSH", self%pert_scale%SSH))   self%pert_scale%SSH = 1.0
+  if (.not. f_conf%get("pert_AICE", self%pert_scale%AICE)) self%pert_scale%AICE = 1.0
+  if (.not. f_conf%get("pert_HICE", self%pert_scale%HICE)) self%pert_scale%HICE = 1.0
 
   ! Setup ocean and ice decorrelation length scales
   self%ocn_l0 = 500.0d3
@@ -108,15 +95,9 @@ subroutine soca_cov_setup(self, f_conf, geom, bkg, vars)
   init_ocean = .false.
   do ivar = 1, self%vars%nvars()
      select case(trim(self%vars%variable(ivar)))
-     case('cicen')
+     case('cicen','hicen')
         init_seaice = .true.
-     case('hicen')
-        init_seaice = .true.
-     case('tocn')
-        init_ocean = .true.
-     case('socn')
-        init_ocean = .true.
-     case('ssh')
+     case('tocn', 'socn', 'ssh')
         init_ocean = .true.
      end select
   end do
@@ -159,106 +140,74 @@ end subroutine soca_cov_delete
 
 subroutine soca_cov_C_mult(self, dx)
   class(soca_cov),  intent(inout) :: self !< The covariance structure
-  type(soca_field), intent(inout) :: dx   !< Input: Increment
+  type(soca_fields),intent(inout) :: dx   !< Input: Increment
                                           !< Output: C dx
-  integer :: icat, izo, ivar
+  integer :: i, z
+  type(soca_field), pointer :: field
+  type(bump_type), pointer :: conv
 
-  do ivar = 1, self%vars%nvars()
-     select case(trim(self%vars%variable(ivar)))
-        ! Apply convolution to forcing
-        case('sw')
-           call soca_2d_convol(dx%ocnsfc%sw_rad(:,:),      self%ocean_conv(1), dx%geom)
-        case('lw')
-           call soca_2d_convol(dx%ocnsfc%lw_rad(:,:),      self%ocean_conv(1), dx%geom)
-        case('lhf')
-           call soca_2d_convol(dx%ocnsfc%latent_heat(:,:), self%ocean_conv(1), dx%geom)
-        case('shf')
-           call soca_2d_convol(dx%ocnsfc%sens_heat(:,:),   self%ocean_conv(1), dx%geom)
-        case('us')
-           call soca_2d_convol(dx%ocnsfc%fric_vel(:,:),    self%ocean_conv(1), dx%geom)
+  do i = 1, self%vars%nvars()
+    if (.not. dx%has(self%vars%variable(i))) cycle ! why is this sometimes getting an "empty" list with "none" in it?
+    call dx%get(trim(self%vars%variable(i)), field)
 
-        ! Apply convolution to ocean
-        case('ssh')
-           call soca_2d_convol(dx%ssh(:,:), self%ocean_conv(1), dx%geom)
-        case('tocn')
-           do izo = 1,dx%geom%nzo
-              call soca_2d_convol(dx%tocn(:,:,izo), self%ocean_conv(1), dx%geom)
-           end do
-        case('socn')
-           do izo = 1,dx%geom%nzo
-              call soca_2d_convol(dx%socn(:,:,izo), self%ocean_conv(1), dx%geom)
-           end do
+    ! TODO remove the hardcoded variables
+    ! ice or ocean convolution ?
+    select case(field%name)
+    case ('tocn', 'socn', 'ssh', 'sw', 'lw', 'lhf', 'shf', 'us')
+      conv => self%ocean_conv(1)
+    case ('hicen','cicen')
+      conv => self%seaice_conv(1)
+    case default
+      cycle
+    end select
 
-        ! Apply convolution to sea-ice
-        case('cicen')
-           do icat = 1, dx%geom%ncat
-              call soca_2d_convol(dx%seaice%cicen(:,:,icat+1), self%seaice_conv(1), dx%geom)
-           end do
-        case('hicen')
-           do icat = 1, dx%geom%ncat
-              call soca_2d_convol(dx%seaice%hicen(:,:,icat), self%seaice_conv(1), dx%geom)
-           end do
-        end select
-     end do
-
+    ! apply convolution on each level
+    do z = 1, field%nz
+      call soca_2d_convol(field%val(:,:,z), conv, dx%geom)
+    end do
+  end do
 end subroutine soca_cov_C_mult
 
 ! ------------------------------------------------------------------------------
 
 subroutine soca_cov_sqrt_C_mult(self, dx)
   class(soca_cov),  intent(inout) :: self !< The covariance structure
-  type(soca_field), intent(inout) :: dx   !< Input: Increment
+  type(soca_fields),intent(inout) :: dx   !< Input: Increment
                                           !< Output: C^1/2 dx
-  integer :: icat, izo, ivar
+  integer :: i, z
+  type(soca_field), pointer :: field
+  real(kind=kind_real) :: scale
+  type(bump_type), pointer :: conv
 
-  do ivar = 1, self%vars%nvars()
-     select case(trim(self%vars%variable(ivar)))
-        ! Apply C^1/2 to forcing
-        case('sw')
-           call soca_2d_sqrt_convol(dx%ocnsfc%sw_rad(:,:), &
-                &self%ocean_conv(1), dx%geom, self%pert_scale%SSH)
-        case('lw')
-           call soca_2d_sqrt_convol(dx%ocnsfc%lw_rad(:,:), &
-                &self%ocean_conv(1), dx%geom, self%pert_scale%SSH)
-        case('lhf')
-           call soca_2d_sqrt_convol(dx%ocnsfc%latent_heat(:,:), &
-                &self%ocean_conv(1), dx%geom, self%pert_scale%SSH)
-        case('shf')
-           call soca_2d_sqrt_convol(dx%ocnsfc%sens_heat(:,:), &
-                &self%ocean_conv(1), dx%geom, self%pert_scale%SSH)
-        case('us')
-           call soca_2d_sqrt_convol(dx%ocnsfc%fric_vel(:,:), &
-                &self%ocean_conv(1), dx%geom, self%pert_scale%SSH)
+  do i = 1, self%vars%nvars()
+    conv => null()
+    call dx%get(trim(self%vars%variable(i)), field)
 
-        ! Apply C^1/2 to ocean
-        case('ssh')
-           call soca_2d_sqrt_convol(dx%ssh, &
-                &self%ocean_conv(1), dx%geom, self%pert_scale%SSH)
-        case('tocn')
-           do izo = 1,dx%geom%nzo
-              call soca_2d_sqrt_convol(dx%tocn(:,:,izo), &
-                   &self%ocean_conv(1), dx%geom, self%pert_scale%T)
-           end do
-        case('socn')
-           do izo = 1,dx%geom%nzo
-              call soca_2d_sqrt_convol(dx%socn(:,:,izo), &
-                   &self%ocean_conv(1), dx%geom, self%pert_scale%S)
-           end do
+    select case(field%name)
+    case('tocn')
+      scale = self%pert_scale%T
+      conv => self%ocean_conv(1)
+    case ('socn')
+      scale = self%pert_scale%S
+      conv => self%ocean_conv(1)
+    case ('ssh', 'sw', 'lw', 'lhf', 'shf', 'us')
+      scale = self%pert_scale%SSH
+      conv => self%ocean_conv(1)
+    case('cicen')
+      scale = self%pert_scale%AICE
+      conv => self%seaice_conv(1)
+    case ('hicen')
+      scale = self%pert_scale%HICE
+      conv => self%seaice_conv(1)
+    end select
 
-        ! Apply C^1/2 to sea-ice
-        case('cicen')
-           do icat = 1, dx%geom%ncat
-              call soca_2d_sqrt_convol(dx%seaice%cicen(:,:,icat+1), &
-                   &self%seaice_conv(1), dx%geom, self%pert_scale%AICE)
-           end do
-        case('hicen')
-           do icat = 1, dx%geom%ncat
-              call soca_2d_sqrt_convol(dx%seaice%hicen(:,:,icat), &
-                   &self%seaice_conv(1), dx%geom, self%pert_scale%HICE)
-           end do
-        end select
-     end do
+    if (associated(conv)) then
+      do z = 1,field%nz
+        call soca_2d_sqrt_convol(field%val(:,:,z), conv, dx%geom, scale)
+      end do
+    end if
 
+  end do
 end subroutine soca_cov_sqrt_C_mult
 
 ! ------------------------------------------------------------------------------
@@ -316,9 +265,9 @@ subroutine soca_bump_correlation(self, horiz_convol, geom, f_conf, domain)
   vunit = 1.0d0
 
   ! Initialize bump namelist/parameters
-  call horiz_convol%nam%init()
+  call horiz_convol%nam%init(f_comm%size())
   horiz_convol%nam%verbosity = 'none'
-  call bump_read_conf(f_conf, horiz_convol)
+  call horiz_convol%nam%from_conf(f_conf)
 
   if (domain.eq.'ocn') horiz_convol%nam%prefix = 'ocn'
   if (domain.eq.'ice') horiz_convol%nam%prefix = 'ice'

@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2017-2019  UCAR.
+ * (C) Copyright 2017-2020  UCAR.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -9,6 +9,7 @@
 #define SOCA_TRANSFORMS_HORIZFILT_HORIZFILTFORTRAN_H_
 
 #include "soca/Fortran.h"
+
 #include "oops/base/Variables.h"
 
 // Forward declarations

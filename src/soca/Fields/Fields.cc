@@ -1,28 +1,29 @@
 /*
- * (C) Copyright 2017-2019 UCAR
+ * (C) Copyright 2017-2020 UCAR
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#include "soca/Fields/Fields.h"
-
 #include <cmath>
+#include <iomanip>
 #include <map>
 #include <string>
 #include <vector>
-#include <iomanip>
+
+#include "soca/Fields/Fields.h"
+#include "soca/Fields/FieldsFortran.h"
+#include "soca/Geometry/Geometry.h"
+#include "soca/GeometryIterator/GeometryIterator.h"
+#include "soca/GetValuesTraj/GetValuesTraj.h"
 
 #include "eckit/config/Configuration.h"
-#include "oops/generic/UnstructuredGrid.h"
 #include "oops/base/GridPoint.h"
 #include "oops/base/Variables.h"
+#include "oops/generic/UnstructuredGrid.h"
 #include "oops/util/DateTime.h"
 #include "oops/util/Logger.h"
 #include "ufo/GeoVaLs.h"
-#include "soca/Fortran.h"
-#include "soca/Geometry/Geometry.h"
-#include "soca/GetValuesTraj/GetValuesTraj.h"
 #include "ufo/Locations.h"
 
 // -----------------------------------------------------------------------------
@@ -165,11 +166,12 @@ namespace soca {
     oops::Variables fieldNames = variables();
     std::vector<int> varlens(fieldNames.size());
 
+    // TODO(Travis) remove the hardcoded variable names
     for (int ii = 0; ii < fieldNames.size(); ii++) {
       if (fieldNames[ii] == "tocn") varlens[ii]=nzo;
       else if (fieldNames[ii] == "socn") varlens[ii]=nzo;
       else if (fieldNames[ii] == "hocn") varlens[ii]=nzo;
-      else if (fieldNames[ii] == "cicen") varlens[ii]=ncat + 1;
+      else if (fieldNames[ii] == "cicen") varlens[ii]=ncat;
       else if (fieldNames[ii] == "hicen") varlens[ii]=ncat;
       else if (fieldNames[ii] == "hsnon") varlens[ii]=ncat;
       else

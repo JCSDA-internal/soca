@@ -1,16 +1,21 @@
 /*
- * (C) Copyright 2017-2019 UCAR
+ * (C) Copyright 2017-2020 UCAR
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#include "soca/State/State.h"
-
 #include <algorithm>
 #include <string>
 #include <utility>
 #include <vector>
+
+#include "soca/Fields/Fields.h"
+#include "soca/Geometry/Geometry.h"
+#include "soca/GetValuesTraj/GetValuesTraj.h"
+#include "soca/Increment/Increment.h"
+#include "soca/ModelBias/ModelBias.h"
+#include "soca/State/State.h"
 
 #include "eckit/config/LocalConfiguration.h"
 #include "eckit/exception/Exceptions.h"
@@ -22,13 +27,6 @@
 
 #include "ufo/GeoVaLs.h"
 #include "ufo/Locations.h"
-
-#include "soca/ModelBias.h"
-#include "soca/Fields/Fields.h"
-#include "soca/Geometry/Geometry.h"
-#include "soca/Increment/Increment.h"
-#include "soca/Model/Model.h"
-#include "soca/GetValuesTraj/GetValuesTraj.h"
 
 using oops::Log;
 
@@ -161,5 +159,18 @@ namespace soca {
     fields_->axpy(zz, *xx.fields_);
   }
   // -----------------------------------------------------------------------------
-
+  double State::norm() const {return fields_->norm();}
+  // -----------------------------------------------------------------------------
+  const util::DateTime & State::validTime() const {return fields_->time();}
+  // -----------------------------------------------------------------------------
+  util::DateTime & State::validTime() {return fields_->time();}
+  // -----------------------------------------------------------------------------
+  Fields & State::fields() {return *fields_;}
+  // -----------------------------------------------------------------------------
+  const Fields & State::fields() const {return *fields_;}
+  // -----------------------------------------------------------------------------
+  boost::shared_ptr<const Geometry> State::geometry() const {
+    return fields_->geometry();
+  }
+  // -----------------------------------------------------------------------------
 }  // namespace soca
