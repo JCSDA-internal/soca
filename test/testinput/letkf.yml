@@ -46,13 +46,11 @@ Observations:
         name: SeaSurfaceTemp
         distribution: InefficientDistribution
         ObsDataOut: {obsfile: ./Data/sst.letkf.nc}
-#        ObsDataIn:  {obsfile: ./Data/sst.nc}
-        ObsDataIn:  {obsfile: ./Data/sst_aghulas.nc}
+        ObsDataIn:  {obsfile: ./Data/sst.nc}
         simulate:   {variables: [ sea_surface_temperature ]}
       ObsOperator:
         name: Identity
-      Covariance:
-        covariance: diagonal
+      covariance: localized diagonal
       Localization:
         localization: Gaspari-Cohn
         lengthscale: 5000e3
