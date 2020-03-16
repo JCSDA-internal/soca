@@ -28,8 +28,8 @@ Initial Condition:
     ocn_filename: ../Data/ocn.pert.ens.3.2018-04-15T00:00:00Z.PT6H.nc
 
 Assimilation Window:
-  Begin: 2018-04-15T06:00:00Z
-  Length: PT2H
+  window_begin: 2018-04-15T06:00:00Z
+  window_length: PT2H
 
 Observations:
   ObsTypes:
