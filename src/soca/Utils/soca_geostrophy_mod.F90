@@ -7,7 +7,6 @@
 module soca_geostrophy_mod
   use kinds
   use mpp_domains_mod, only : mpp_update_domains, mpp_update_domains_ad
-  use soca_geom_mod_c
   use soca_geom_mod, only : soca_geom
   use tools_const, only: deg2rad, req
   use soca_utils, only : soca_rho
@@ -204,7 +203,6 @@ contains
     real(kind=kind_real), allocatable :: dpressure(:,:,:)
     real(kind=kind_real), allocatable :: drhoh(:,:,:)
     real(kind=kind_real), allocatable :: z(:,:,:)
-    real(kind=kind_real), allocatable :: dugb(:,:,:)
     real(kind=kind_real), allocatable :: mask(:,:), rho0(:,:)
     real(kind=kind_real) :: jac(2)
     integer :: isd, ied, jsd, jed
