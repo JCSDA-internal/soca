@@ -119,27 +119,6 @@ subroutine soca_propagate(self, flds, fldsdate)
   integer :: year, month, day, hour, minute, second, i
   character(len=20) :: strdate
 
-!!$  ! for each field
-!!$  do i=1,size(flds%fields)
-!!$    field => flds%fields(i)
-!!$
-!!$    ! update halos
-!!$    call mpp_update_domains(field%val, flds%geom%Domain%mpp_domain)
-!!$
-!!$    ! update MOM state
-!!$    select case(field%name)
-!!$    case ("tocn")
-!!$      self%mom6_config%MOM_CSp%T = real(field%val, kind=8)
-!!$    case ("socn")
-!!$      self%mom6_config%MOM_CSp%S = real(field%val, kind=8)
-!!$    case ("uocn")
-!!$      self%mom6_config%MOM_CSp%u = real(field%val, kind=8)
-!!$    case ("vocn")
-!!$      self%mom6_config%MOM_CSp%v = real(field%val, kind=8)
-!!$    ! TODO: pass forcing back to MOM
-!!$    end select
-!!$  end do
-
   ! Set ocean clock
   call datetime_to_string(fldsdate, strdate)
   call soca_str2int(strdate(1:4), year)
