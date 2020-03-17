@@ -19,14 +19,9 @@ using oops::Log;
 
 namespace soca {
 // -----------------------------------------------------------------------------
-Ana2Model::Ana2Model(const Geometry & resol, const eckit::Configuration & conf):
-  geom_(new Geometry(resol)),
-  rotate_(rotate(conf)),
-  changegrid_(changegrid(conf))
+Ana2Model::Ana2Model(const Geometry & resol, const eckit::Configuration & conf)
 {
   Log::trace() << "Ana2Model::Ana2Model start" << std::endl;
-  Log::trace() << "Ana2Model::Ana2Model rotate:" << rotate_ << std::endl;
-  Log::trace() << "Ana2Model::Ana2Model change grid:" << changegrid_ << std::endl;
   Log::trace() << "Ana2Model::Ana2Model done" << std::endl;
 }
 // -----------------------------------------------------------------------------
@@ -41,7 +36,6 @@ void Ana2Model::changeVar(const State & xa,
   util::DateTime * vtime = &xm.validTime();
   xm = xa;
   xm.rotate2grid();
-  xa.agrid2uvgrid();
   xm.validTime() = xa.validTime();
   Log::trace() << "Ana2Model::changeVar done" << xm << std::endl;
 }
@@ -52,7 +46,6 @@ void Ana2Model::changeVarInverse(const State & xm,
                         std::endl;
   util::DateTime * vtime = &xa.validTime();
   xa = xm;
-  xa.uvgrid2agrid();
   xa.rotate2north();
   xa.validTime() = xm.validTime();
   Log::trace() << "Ana2Model::changeVarInverse done" << xa << std::endl;

@@ -126,12 +126,14 @@ namespace soca {
   /// grid 2 grid and rotations
   // -----------------------------------------------------------------------------
   void State::rotate2north() const {
-    Log::trace() << "State::State rotate from logical to geographical North." << std::endl;
+    Log::trace() << "State::State rotate from logical to geographical North."
+                 << std::endl;
     fields_->rotate2north();
   }
   // -----------------------------------------------------------------------------
   void State::rotate2grid() const {
-    Log::trace() << "State::State rotate from geographical to logical North." << std::endl;
+    Log::trace() << "State::State rotate from geographical to logical North."
+    << std::endl;
     fields_->rotate2grid();
   }
   // -----------------------------------------------------------------------------

@@ -45,7 +45,6 @@ void instantiateBalanceOpFactory() {
                oops::VariableChange<soca::Traits,
                soca::Ana2Model> >
                    makerAna2Model_("Ana2Model");
-
 }
 }  // namespace soca
 
