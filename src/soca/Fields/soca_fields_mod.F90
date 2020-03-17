@@ -93,6 +93,7 @@ contains
   procedure :: schur    => soca_fields_schur
   procedure :: sub      => soca_fields_sub
   procedure :: zeros    => soca_fields_zeros
+  procedure :: rotate    => soca_fields_rotate
 
   ! IO
   procedure :: from_ug   => soca_fields_from_ug
@@ -1470,6 +1471,54 @@ subroutine soca_fields_write_rst(fld, f_conf, vdate)
   call fms_io_exit()
 
 end subroutine soca_fields_write_rst
+
+! ------------------------------------------------------------------------------
+!> Rotate horizontal vector
+subroutine soca_fields_rotate(self, coordinate)
+  class(soca_fields), intent(inout) :: self
+  character(len=*)                  :: coordinate ! "north" or "grid"
+  integer :: z, i
+
+  type(soca_field), pointer :: uocn, vocn
+  real(kind=kind_real), allocatable :: un(:,:,:), vn(:,:,:)
+
+  ! get (uocn, vocn) and make a copy
+  if (self%has("uocn").and.self%has("vocn")) then
+    call self%get("uocn", uocn)
+    call self%get("vocn", vocn)
+  else
+    ! If no current found, we're done.
+    return
+  end if
+  allocate(un(size(uocn%val,1),size(uocn%val,2),size(uocn%val,3)))
+  allocate(vn(size(uocn%val,1),size(uocn%val,2),size(uocn%val,3)))
+  un = uocn%val
+  vn = vocn%val
+
+  select case(trim(coordinate))
+  case("north")   ! rotate (uocn, vocn) to geo north
+    do z=1,uocn%nz
+      uocn%val(:,:,z) = &
+      (self%geom%cos_rot(:,:)*un(:,:,z) + self%geom%sin_rot(:,:)*vn(:,:,z)) * uocn%mask(:,:)
+      vocn%val(:,:,z) = &
+      (- self%geom%sin_rot(:,:)*un(:,:,z) + self%geom%cos_rot(:,:)*vn(:,:,z)) * vocn%mask(:,:)
+    end do
+  case("grid")
+    do z=1,uocn%nz
+      uocn%val(:,:,z) = &
+      (self%geom%cos_rot(:,:)*un(:,:,z) - self%geom%sin_rot(:,:)*vn(:,:,z)) * uocn%mask(:,:)
+      vocn%val(:,:,z) = &
+      (self%geom%sin_rot(:,:)*un(:,:,z) + self%geom%cos_rot(:,:)*vn(:,:,z)) * vocn%mask(:,:)
+    end do
+  end select
+
+  ! deallocate, just to be safe
+  deallocate(un, vn)
+
+  ! update halos
+  call mpp_update_domains(uocn%val, self%geom%Domain%mpp_domain)
+  call mpp_update_domains(vocn%val, self%geom%Domain%mpp_domain)
+end subroutine soca_fields_rotate
 
 ! ------------------------------------------------------------------------------
 

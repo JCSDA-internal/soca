@@ -127,18 +127,12 @@ namespace soca {
   // -----------------------------------------------------------------------------
   void State::rotate2north() const {
     Log::trace() << "State::State rotate from logical to geographical North." << std::endl;
+    fields_->rotate2north();
   }
   // -----------------------------------------------------------------------------
   void State::rotate2grid() const {
     Log::trace() << "State::State rotate from geographical to logical North." << std::endl;
-  }
-  // -----------------------------------------------------------------------------
-  void State::uvgrid2agrid() const {
-    Log::trace() << "State::State interpolate from uv-grid 2 a-grid" << std::endl;
-  }
-  // -----------------------------------------------------------------------------
-  void State::agrid2uvgrid() const {
-    Log::trace() << "State::State interpolate from a-grid to uv-grid" << std::endl;
+    fields_->rotate2grid();
   }
   // -----------------------------------------------------------------------------
   /// Interactions with Increments

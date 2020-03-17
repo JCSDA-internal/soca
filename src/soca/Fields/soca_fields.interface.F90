@@ -514,6 +514,30 @@ end subroutine soca_field_interp_ad_c
 
 ! ------------------------------------------------------------------------------
 
+subroutine soca_field_rotate2grid_c(c_key_self) bind(c,name='soca_field_rotate2grid_f90')
+  integer(c_int), intent(in) :: c_key_self
+
+  type(soca_fields), pointer :: self
+
+  call soca_field_registry%get(c_key_self,self)
+  call self%rotate(coordinate="grid")
+
+end subroutine soca_field_rotate2grid_c
+
+! ------------------------------------------------------------------------------
+
+subroutine soca_field_rotate2north_c(c_key_self) bind(c,name='soca_field_rotate2north_f90')
+  integer(c_int), intent(in) :: c_key_self
+
+  type(soca_fields), pointer :: self
+
+  call soca_field_registry%get(c_key_self,self)
+  call self%rotate(coordinate="north")
+
+end subroutine soca_field_rotate2north_c
+
+! ------------------------------------------------------------------------------
+
 subroutine soca_field_getpoint_c(c_key_fld,c_key_iter,values, values_len) bind(c,name='soca_field_getpoint_f90')
   integer(c_int), intent(in) :: c_key_fld
   integer(c_int), intent(in) :: c_key_iter

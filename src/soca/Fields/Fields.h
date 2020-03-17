@@ -80,6 +80,10 @@ namespace soca {
       void getValuesAD(const ufo::Locations &, const oops::Variables &,
                        const ufo::GeoVaLs &, const GetValuesTraj &);
 
+      // Grid 2 grid and rotations
+      void rotate2north() const;
+      void rotate2grid() const;
+
       // access single grid point (column)
       oops::GridPoint getPoint(const soca::GeometryIterator &);
       void setPoint(const soca::GeometryIterator &,

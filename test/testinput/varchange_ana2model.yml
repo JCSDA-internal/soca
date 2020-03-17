@@ -12,8 +12,8 @@ VariableChangeTests:
     basename: ./INPUT/
     ocn_filename: MOM.res.nc
     ice_filename: ice_model.res.nc
-    variables: &soca_vars [cicen, hicen, socn, tocn, ssh, hocn]
-  toleranceInverse: 1e-1
+    variables: &soca_vars [cicen, tocn, socn, hocn, uocn, vocn]
+  toleranceInverse: 1e-8
   inputVariables:
     variables: *soca_vars
   outputVariables:
