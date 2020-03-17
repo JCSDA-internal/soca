@@ -4,7 +4,7 @@
 #     <---------------------- window_length (6 hours) ---------------------->
 #
 # ---|-----------|-----------|-----------|-----------|-----------|-----------|
-#    |                                   |                                   |      
+#    |                                   |                                   |
 # window_begin: 2018-04-14T21:00:00Z     |                           2015-04-15T3:00:00Z
 #                                        |
 #                       bkg/ana/incr: 2018-04-15T00:00:00Z
@@ -22,7 +22,7 @@ model:
   tstep: PT1H
   advance_mom6: 0
   setup_mom6: false
-  variables: &soca_vars [cicen, hicen, hsnon, socn, tocn, ssh, hocn, sw, lhf, shf, lw, us]
+  variables: &soca_vars [cicen, hicen, hsnon, socn, tocn, ssh, hocn, sw, lhf, shf, lw, us, uocn, vocn]
 
 # common filters used later on
 _: &land_mask
