@@ -514,25 +514,37 @@ end subroutine soca_field_interp_ad_c
 
 ! ------------------------------------------------------------------------------
 
-subroutine soca_field_rotate2grid_c(c_key_self) bind(c,name='soca_field_rotate2grid_f90')
-  integer(c_int), intent(in) :: c_key_self
+subroutine soca_field_rotate2grid_c(c_key_self, c_uvars, c_vvars) bind(c,name='soca_field_rotate2grid_f90')
+  integer(c_int), intent(in)     :: c_key_self
+  type(c_ptr), value, intent(in) :: c_uvars
+  type(c_ptr), value, intent(in) :: c_vvars
 
   type(soca_fields), pointer :: self
+  type(oops_variables) :: uvars, vvars
+
+  uvars = oops_variables(c_uvars)
+  vvars = oops_variables(c_vvars)
 
   call soca_field_registry%get(c_key_self,self)
-  call self%rotate(coordinate="grid")
+  call self%rotate(coordinate="grid", uvars=uvars, vvars=vvars)
 
 end subroutine soca_field_rotate2grid_c
 
 ! ------------------------------------------------------------------------------
 
-subroutine soca_field_rotate2north_c(c_key_self) bind(c,name='soca_field_rotate2north_f90')
-  integer(c_int), intent(in) :: c_key_self
+subroutine soca_field_rotate2north_c(c_key_self, c_uvars, c_vvars) bind(c,name='soca_field_rotate2north_f90')
+  integer(c_int),     intent(in) :: c_key_self
+  type(c_ptr), value, intent(in) :: c_uvars
+  type(c_ptr), value, intent(in) :: c_vvars
 
   type(soca_fields), pointer :: self
+  type(oops_variables) :: uvars, vvars
+
+  uvars = oops_variables(c_uvars)
+  vvars = oops_variables(c_vvars)
 
   call soca_field_registry%get(c_key_self,self)
-  call self%rotate(coordinate="north")
+  call self%rotate(coordinate="north", uvars=uvars, vvars=vvars)
 
 end subroutine soca_field_rotate2north_c
 

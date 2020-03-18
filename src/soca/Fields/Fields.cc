@@ -159,23 +159,25 @@ namespace soca {
                              gom.toFortran(), traj.toFortran());
   }
   // -----------------------------------------------------------------------------
-  void Fields::rotate2north() const {
+  void Fields::rotate2north(const oops::Variables & u,
+                            const oops::Variables & v) const {
     // rotate2north:
     //     Rotate horizontal vector (u_t,v_t) from logical to true North
     // u_t =   cos(theta) u_l + sin(theta) v_l
     // v_t = - sin(theta) u_l + cos(theta) v_l
     // Assumes u_t and v_t are colocated
-    soca_field_rotate2north_f90(keyFlds_);
+    soca_field_rotate2north_f90(keyFlds_, u, v);
   }
   // -----------------------------------------------------------------------------
-  void Fields::rotate2grid() const {
+  void Fields::rotate2grid(const oops::Variables & u,
+                           const oops::Variables & v) const {
     // Inverse of rotate2north:
     //     Rotate horizontal vector (u_t,v_t) from true zonal/meridional
     //                           to (u_l,v_l) in local coordinates
     // u_l = cos(theta) u_t - sin(theta) v_t
     // v_l = sin(theta) u_t + cos(theta) v_t
     // Assumes u_t and v_t are colocated
-    soca_field_rotate2grid_f90(keyFlds_);
+    soca_field_rotate2grid_f90(keyFlds_, u, v);
   }
   // -----------------------------------------------------------------------------
   oops::GridPoint Fields::getPoint(const soca::GeometryIterator & iter) {

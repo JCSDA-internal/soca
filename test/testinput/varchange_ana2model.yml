@@ -14,6 +14,9 @@ VariableChangeTests:
     ice_filename: ice_model.res.nc
     variables: &soca_vars [cicen, tocn, socn, hocn, uocn, vocn]
   toleranceInverse: 1e-8
+  rotate:
+    u: [uocn, taux, tocn]
+    v: [vocn, tauy, socn]
   inputVariables:
     variables: *soca_vars
   outputVariables:

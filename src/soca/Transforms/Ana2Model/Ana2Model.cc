@@ -14,14 +14,19 @@
 #include "soca/Geometry/Geometry.h"
 #include "soca/State/State.h"
 #include "oops/util/Logger.h"
+#include "eckit/exception/Exceptions.h"
 
 using oops::Log;
 
 namespace soca {
 // -----------------------------------------------------------------------------
 Ana2Model::Ana2Model(const Geometry & resol, const eckit::Configuration & conf)
+: uvars_(initRotate(conf, "u")), vvars_(initRotate(conf, "v"))
 {
   Log::trace() << "Ana2Model::Ana2Model start" << std::endl;
+  ASSERT(uvars_.size() == vvars_.size());
+  Log::trace() << "Ana2Model::Ana2Model Rotating:"
+               << " u = " << uvars_ << " v = " << vvars_ << std::endl;
   Log::trace() << "Ana2Model::Ana2Model done" << std::endl;
 }
 // -----------------------------------------------------------------------------
@@ -35,7 +40,7 @@ void Ana2Model::changeVar(const State & xa,
                         std::endl;
   util::DateTime * vtime = &xm.validTime();
   xm = xa;
-  xm.rotate2grid();
+  xm.rotate2grid(uvars_, vvars_);
   xm.validTime() = xa.validTime();
   Log::trace() << "Ana2Model::changeVar done" << xm << std::endl;
 }
@@ -46,7 +51,7 @@ void Ana2Model::changeVarInverse(const State & xm,
                         std::endl;
   util::DateTime * vtime = &xa.validTime();
   xa = xm;
-  xa.rotate2north();
+  xa.rotate2north(uvars_, vvars_);
   xa.validTime() = xm.validTime();
   Log::trace() << "Ana2Model::changeVarInverse done" << xa << std::endl;
 }

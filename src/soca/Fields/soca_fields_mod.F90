@@ -230,11 +230,11 @@ subroutine soca_fields_init_vars(self, vars)
       self%fields(i)%cf_name = "sea_water_cell_thickness"
       self%fields(i)%io_file = "ocn"
       self%fields(i)%io_name = "h"
-   case ('uocn')
+    case ('uocn')
       self%fields(i)%cf_name = "sea_water_zonal_current"
       self%fields(i)%io_file = "ocn"
       self%fields(i)%io_name = "u"
-   case ('vocn')
+    case ('vocn')
       self%fields(i)%cf_name = "sea_water_meridional_current"
       self%fields(i)%io_file = "ocn"
       self%fields(i)%io_name = "v"
@@ -1474,50 +1474,57 @@ end subroutine soca_fields_write_rst
 
 ! ------------------------------------------------------------------------------
 !> Rotate horizontal vector
-subroutine soca_fields_rotate(self, coordinate)
+subroutine soca_fields_rotate(self, coordinate, uvars, vvars)
   class(soca_fields), intent(inout) :: self
-  character(len=*)                  :: coordinate ! "north" or "grid"
-  integer :: z, i
+  character(len=*),      intent(in) :: coordinate ! "north" or "grid"
+  type(oops_variables),  intent(in) :: uvars
+  type(oops_variables),  intent(in) :: vvars
 
+  integer :: z, i
   type(soca_field), pointer :: uocn, vocn
   real(kind=kind_real), allocatable :: un(:,:,:), vn(:,:,:)
+  character(len=64) :: u_names, v_names
 
-  ! get (uocn, vocn) and make a copy
-  if (self%has("uocn").and.self%has("vocn")) then
-    call self%get("uocn", uocn)
-    call self%get("vocn", vocn)
-  else
-    ! If no current found, we're done.
-    return
-  end if
-  allocate(un(size(uocn%val,1),size(uocn%val,2),size(uocn%val,3)))
-  allocate(vn(size(uocn%val,1),size(uocn%val,2),size(uocn%val,3)))
-  un = uocn%val
-  vn = vocn%val
+  do i=1, uvars%nvars()
+    ! get (u, v) pair and make a copy
+    u_names = trim(uvars%variable(i))
+    v_names = trim(vvars%variable(i))
+    if (self%has(u_names).and.self%has(v_names)) then
+      call fckit_log%info("rotating "//trim(u_names)//" "//trim(v_names))
+      call self%get(u_names, uocn)
+      call self%get(v_names, vocn)
+    else
+      ! Skip if no pair found.
+      call fckit_log%info("not rotating "//trim(u_names)//" "//trim(v_names))
+      cycle
+    end if
+    allocate(un(size(uocn%val,1),size(uocn%val,2),size(uocn%val,3)))
+    allocate(vn(size(uocn%val,1),size(uocn%val,2),size(uocn%val,3)))
+    un = uocn%val
+    vn = vocn%val
 
-  select case(trim(coordinate))
-  case("north")   ! rotate (uocn, vocn) to geo north
-    do z=1,uocn%nz
-      uocn%val(:,:,z) = &
-      (self%geom%cos_rot(:,:)*un(:,:,z) + self%geom%sin_rot(:,:)*vn(:,:,z)) * uocn%mask(:,:)
-      vocn%val(:,:,z) = &
-      (- self%geom%sin_rot(:,:)*un(:,:,z) + self%geom%cos_rot(:,:)*vn(:,:,z)) * vocn%mask(:,:)
-    end do
-  case("grid")
-    do z=1,uocn%nz
-      uocn%val(:,:,z) = &
-      (self%geom%cos_rot(:,:)*un(:,:,z) - self%geom%sin_rot(:,:)*vn(:,:,z)) * uocn%mask(:,:)
-      vocn%val(:,:,z) = &
-      (self%geom%sin_rot(:,:)*un(:,:,z) + self%geom%cos_rot(:,:)*vn(:,:,z)) * vocn%mask(:,:)
-    end do
-  end select
+    select case(trim(coordinate))
+    case("north")   ! rotate (uocn, vocn) to geo north
+      do z=1,uocn%nz
+        uocn%val(:,:,z) = &
+        (self%geom%cos_rot(:,:)*un(:,:,z) + self%geom%sin_rot(:,:)*vn(:,:,z)) * uocn%mask(:,:)
+        vocn%val(:,:,z) = &
+        (- self%geom%sin_rot(:,:)*un(:,:,z) + self%geom%cos_rot(:,:)*vn(:,:,z)) * vocn%mask(:,:)
+      end do
+    case("grid")
+      do z=1,uocn%nz
+        uocn%val(:,:,z) = &
+        (self%geom%cos_rot(:,:)*un(:,:,z) - self%geom%sin_rot(:,:)*vn(:,:,z)) * uocn%mask(:,:)
+        vocn%val(:,:,z) = &
+        (self%geom%sin_rot(:,:)*un(:,:,z) + self%geom%cos_rot(:,:)*vn(:,:,z)) * vocn%mask(:,:)
+      end do
+    end select
+    deallocate(un, vn)
 
-  ! deallocate, just to be safe
-  deallocate(un, vn)
-
-  ! update halos
-  call mpp_update_domains(uocn%val, self%geom%Domain%mpp_domain)
-  call mpp_update_domains(vocn%val, self%geom%Domain%mpp_domain)
+    ! update halos
+    call mpp_update_domains(uocn%val, self%geom%Domain%mpp_domain)
+    call mpp_update_domains(vocn%val, self%geom%Domain%mpp_domain)
+  end do
 end subroutine soca_fields_rotate
 
 ! ------------------------------------------------------------------------------

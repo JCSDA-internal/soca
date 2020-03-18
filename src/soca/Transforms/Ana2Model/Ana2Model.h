@@ -10,10 +10,12 @@
 
 #include <ostream>
 #include <string>
+#include <vector>
 
 #include "eckit/config/Configuration.h"
 #include "soca/Geometry/Geometry.h"
 #include "oops/util/Printable.h"
+#include "oops/base/Variables.h"
 
 // Forward declarations
 namespace eckit {
@@ -38,8 +40,16 @@ class Ana2Model: public util::Printable {
   void changeVar(const State &, State &) const;
   void changeVarInverse(const State &, State &) const;
 
+  std::vector<std::string> initRotate(const eckit::Configuration & conf,
+                                      const std::string & uv) const
+  {
+    return conf.getStringVector("rotate."+uv);
+  }
+
  private:
   void print(std::ostream &) const override;
+  const oops::Variables uvars_;
+  const oops::Variables vvars_;
 };
 // -----------------------------------------------------------------------------
 }  // namespace soca

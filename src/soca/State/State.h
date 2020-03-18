@@ -76,8 +76,8 @@ namespace soca {
                              ufo::GeoVaLs &) const;
 
       /// Rotations
-      void rotate2north() const;
-      void rotate2grid() const;
+      void rotate2north(const oops::Variables &, const oops::Variables &) const;
+      void rotate2grid(const oops::Variables &, const oops::Variables &) const;
 
       /// Interpolate full fields
       ///  void changeResolution(const State & xx);

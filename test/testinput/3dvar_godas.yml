@@ -37,6 +37,9 @@ cost_function:
   window_length: P2D
   variables: *soca_vars
   varchange: Ana2Model #Identity
+  rotate:
+    u: [uocn]
+    v: [vocn]  
   Jb:
     Background:
       state:
