@@ -30,6 +30,7 @@ use soca_geom_mod, only : soca_geom
 use soca_geom_iter_mod, only : soca_geom_iter
 use soca_fieldsutils_mod, only: soca_genfilename, fldinfo
 use soca_utils, only: soca_mld
+use soca_geostrophy_mod
 
 implicit none
 
@@ -671,6 +672,9 @@ subroutine soca_fields_add_incr(self,rhs)
   real(kind=kind_real) :: amin = 1e-6_kind_real
   real(kind=kind_real) :: amax = 10.0_kind_real
   real(kind=kind_real), allocatable :: alpha(:,:), aice_bkg(:,:), aice_ana(:,:)
+  type(soca_geostrophy_type) :: geostrophy
+  type(soca_fields) :: incr_geo
+  type(soca_field), pointer :: t, s, u, v, h, dt, ds, du, dv
 
   ! make sure fields are same shape
   call self%check_congruent(rhs)
@@ -704,6 +708,11 @@ subroutine soca_fields_add_incr(self,rhs)
         fld%val(:,:,k) = alpha * fld%val(:,:,k)
       end do
 
+    case ('uocn', 'vocn')
+      ! Do not add the velocity increment for now
+      ! TODO This will need to be removed when assimilating current observations
+      cycle
+
     case default
       ! everyone else is normal
       fld%val = fld%val + fld_r%val
@@ -713,7 +722,45 @@ subroutine soca_fields_add_incr(self,rhs)
   ! Save increment for outer loop cnt_outer
   write(str_cnt,*) cnt_outer
   filename='incr.'//adjustl(trim(str_cnt))//'.nc'
-  call rhs%write_file(filename)
+
+  ! Compute geostrophic increment
+  ! TODO Move inside of the balance operator.
+  !      Will need to be removed when assimilating ocean current or when using
+  !      ensemble derived increments (ensemble cross-covariances that include currents)
+  if (self%has('hocn').and.self%has('tocn').and.self%has('socn').and.&
+      self%has('uocn').and.self%has('vocn')) then
+     ! Get necessary background fields needed to compute geostrophic perturbations
+     call self%get("tocn", t)
+     call self%get("socn", s)
+     call self%get("hocn", h)
+
+     ! Make a copy of the increment and get the needed pointers
+     call incr_geo%copy(rhs)
+     call incr_geo%get("tocn", dt)
+     call incr_geo%get("socn", ds)
+     call incr_geo%get("uocn", du)
+     call incr_geo%get("vocn", dv)
+
+     ! Compute the geostrophic increment
+     call geostrophy%setup(self%geom, h%val)
+     call geostrophy%tl(h%val, t%val, s%val,&
+          dt%val, ds%val, du%val, dv%val, self%geom)
+     call geostrophy%delete()
+
+     ! Add geostrophic increment to state where geostrophic currents < 0.5 m/s
+     call self%get("uocn", u)
+     call self%get("vocn", v)
+     where( (du%val**2 + dv%val**2)<0.25)
+        u%val = u%val + du%val
+        v%val = v%val + dv%val
+     end where
+
+     ! Save increment and clean memory
+     call incr_geo%write_file(filename)
+     call incr_geo%delete()
+  else
+     call rhs%write_file(filename)
+  end if
 
   ! Update outer loop counter
   cnt_outer = cnt_outer + 1
