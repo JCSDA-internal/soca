@@ -37,7 +37,7 @@ namespace soca {
     const eckit::Configuration * configc = &conf;
     vars_ = oops::Variables(conf);
     soca_b_setup_f90(keyFtnConfig_, &configc, resol.toFortran(),
-                     bkg.fields().toFortran(), vars_);
+                     bkg.toFortran(), vars_);
     Log::trace() << "ErrorCovariance created" << std::endl;
   }
 

@@ -30,8 +30,8 @@ namespace soca {
     oops::Log::trace() << "soca::VertConv::setup " << std::endl;
     soca_vertconv_setup_f90(keyFtnConfig_,
                             &configc,
-                            traj_.fields().toFortran(),
-                            bkg.fields().toFortran());
+                            traj_.toFortran(),
+                            bkg.toFortran());
   }
   // -----------------------------------------------------------------------------
   VertConv::~VertConv() {
@@ -44,7 +44,7 @@ namespace soca {
     oops::Log::trace() << "soca::VertConv::multiply " << std::endl;
     soca_vertconv_mult_f90(dxa.fields().toFortran(),
                       dxm.fields().toFortran(),
-                      traj_.fields().toFortran(),
+                      traj_.toFortran(),
                       keyFtnConfig_);
   }
   // -----------------------------------------------------------------------------
@@ -58,7 +58,7 @@ namespace soca {
     oops::Log::trace() << "soca::VertConv::multiplyAD " << std::endl;
     soca_vertconv_multad_f90(dxm.fields().toFortran(),
                         dxa.fields().toFortran(),
-                        traj_.fields().toFortran(),
+                        traj_.toFortran(),
                         keyFtnConfig_);
   }
   // -----------------------------------------------------------------------------

@@ -13,6 +13,7 @@
 
 #include "soca/Covariance/ErrorCovariance.h"
 #include "soca/Fields/Fields.h"
+#include "soca/Fields/FieldsFortran.h"
 #include "soca/Geometry/Geometry.h"
 #include "soca/GetValuesTraj/GetValuesTraj.h"
 #include "soca/Increment/Increment.h"
@@ -76,9 +77,10 @@ namespace soca {
     ASSERT(this->validTime() == x1.validTime());
     ASSERT(this->validTime() == x2.validTime());
     Log::debug() << "Increment:diff incr " << *fields_ << std::endl;
-    Log::debug() << "Increment:diff x1 " << x1.fields() << std::endl;
-    Log::debug() << "Increment:diff x2 " << x2.fields() << std::endl;
-    fields_->diff(x1.fields(), x2.fields());
+    Log::debug() << "Increment:diff x1 " << x1 << std::endl;
+    Log::debug() << "Increment:diff x2 " << x2 << std::endl;
+    soca_field_diff_incr_f90(fields_->toFortran(), x1.toFortran(),
+                             x2.toFortran());
   }
   // -----------------------------------------------------------------------------
   Increment & Increment::operator=(const Increment & rhs) {
@@ -123,7 +125,7 @@ namespace soca {
   }
   // -----------------------------------------------------------------------------
   void Increment::accumul(const double & zz, const State & xx) {
-    fields_->axpy(zz, xx.fields());
+    soca_field_axpy_f90(fields_->toFortran(), zz, xx.toFortran());
   }
   // -----------------------------------------------------------------------------
   void Increment::schur_product_with(const Increment & dx) {

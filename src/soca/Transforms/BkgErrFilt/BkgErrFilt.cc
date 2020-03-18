@@ -30,7 +30,7 @@ namespace soca {
     const eckit::Configuration * configc = &conf;
     soca_bkgerrfilt_setup_f90(keyFtnConfig_,
                               &configc,
-                              traj_.fields().toFortran());
+                              traj_.toFortran());
   }
   // -----------------------------------------------------------------------------
   BkgErrFilt::~BkgErrFilt() {

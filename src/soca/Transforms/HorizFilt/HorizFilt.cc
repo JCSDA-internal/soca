@@ -31,7 +31,7 @@ namespace soca {
     soca_horizfilt_setup_f90(keyFtnConfig_,
                              &configc,
                              geom_->toFortran(),
-                             traj_.fields().toFortran(),
+                             traj_.toFortran(),
                              vars_);
 
     // Get number of iterations
