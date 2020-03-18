@@ -9,7 +9,6 @@
 
 #include "soca/Traits.h"
 
-#include "soca/Fields/Fields.h"
 #include "soca/Geometry/Geometry.h"
 #include "soca/Model/Model.h"
 #include "soca/Model/ModelFortran.h"

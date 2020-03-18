@@ -11,7 +11,6 @@
 #include <utility>
 #include <vector>
 
-#include "soca/Fields/Fields.h"
 #include "soca/Fields/FieldsFortran.h"
 #include "soca/Geometry/Geometry.h"
 #include "soca/GetValuesTraj/GetValuesTraj.h"
@@ -41,7 +40,7 @@ namespace soca {
                const util::DateTime & vt)
     : time_(vt), vars_(vars), geom_(new Geometry(geom))
   {
-    soca_field_create_f90(keyFlds_, geom_->toFortran(), vars_),
+    soca_field_create_f90(keyFlds_, geom_->toFortran(), vars_);
     Log::trace() << "State::State created." << std::endl;
   }
   // -----------------------------------------------------------------------------
@@ -137,7 +136,7 @@ namespace soca {
   // -----------------------------------------------------------------------------
   State & State::operator+=(const Increment & dx) {
     ASSERT(validTime() == dx.validTime());
-    soca_field_add_incr_f90(toFortran(), dx.fields().toFortran());
+    soca_field_add_incr_f90(toFortran(), dx.toFortran());
     return *this;
   }
   // -----------------------------------------------------------------------------
