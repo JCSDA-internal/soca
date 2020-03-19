@@ -218,6 +218,10 @@ subroutine soca_finalize_integration(self, flds)
       if ( self%socn_minmax(2) /= real(-999., kind=8) ) &
         where( field%val > self%socn_minmax(2) ) field%val = self%socn_minmax(2)
       self%mom6_config%MOM_CSp%S = real(field%val, kind=8)
+    case ("uocn")
+      self%mom6_config%MOM_CSp%u = real(field%val, kind=8)
+    case ("vocn")
+      self%mom6_config%MOM_CSp%v = real(field%val, kind=8)
     end select
   end do
 

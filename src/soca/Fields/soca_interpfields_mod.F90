@@ -146,7 +146,7 @@ subroutine interp(fld, locs, vars, geoval, horiz_interp, horiz_interp_masked)
   integer :: ival, nval, indx
   integer :: isc, iec, jsc, jec
   integer :: ns
-  real(kind=kind_real), allocatable :: gom_window(:,:)
+  real(kind=kind_real), allocatable :: gom_window(:)
   real(kind=kind_real), allocatable :: fld3d(:,:,:), fld3d_un(:)
   type(soca_field), pointer :: fldptr
 
@@ -170,7 +170,7 @@ subroutine interp(fld, locs, vars, geoval, horiz_interp, horiz_interp_masked)
     end if
 
     ! Allocate temporary geoval and 3d field for the current time window
-    allocate(gom_window(nval,locs%nlocs))
+    allocate(gom_window(locs%nlocs))
     allocate(fld3d(isc:iec,jsc:jec,1:nval))
     nullify(fldptr)
 
@@ -222,17 +222,17 @@ subroutine interp(fld, locs, vars, geoval, horiz_interp, horiz_interp_masked)
           ns = count(fld%geom%mask2d(isc:iec,jsc:jec) > 0 )
           if (.not. allocated(fld3d_un)) allocate(fld3d_un(ns))
           fld3d_un = pack(fld3d(isc:iec,jsc:jec,ival), mask=fld%geom%mask2d(isc:iec,jsc:jec) > 0)
-          call horiz_interp_masked%apply(fld3d_un, gom_window(ival,:))
+          call horiz_interp_masked%apply(fld3d_un, gom_window)
         else
           ns = (iec - isc + 1) * (jec - jsc + 1)
           if (.not. allocated(fld3d_un)) allocate(fld3d_un(ns))
           fld3d_un = reshape(fld3d(isc:iec,jsc:jec,ival), (/ns/))
-          call horiz_interp%apply(fld3d_un(1:ns), gom_window(ival,:))
+          call horiz_interp%apply(fld3d_un(1:ns), gom_window)
         end if
 
         ! Fill proper geoval according to time window
         do indx = 1, locs%nlocs
-           geoval%geovals(ivar)%vals(ival, locs%indx(indx)) = gom_window(ival, indx)
+           geoval%geovals(ivar)%vals(ival, locs%indx(indx)) = gom_window(indx)
         end do
      end do
 

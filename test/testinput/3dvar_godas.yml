@@ -22,7 +22,7 @@ model:
   tstep: PT1H
   advance_mom6: 0
   setup_mom6: false
-  variables: &soca_vars [cicen, hicen, hsnon, socn, tocn, ssh, hocn, sw, lhf, shf, lw, us]
+  variables: &soca_vars [cicen, hicen, hsnon, socn, tocn, ssh, hocn, sw, lhf, shf, lw, us, uocn, vocn]
 
 # common filters used later on
 _: &land_mask
