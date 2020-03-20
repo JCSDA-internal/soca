@@ -11,7 +11,8 @@ use fms_io_mod, only : fms_io_init, fms_io_exit
 use kinds, only: kind_real
 use soca_mom6, only: soca_mom6_config, soca_mom6_init, soca_mom6_end
 use soca_utils, only: soca_str2int
-use soca_fields_mod, only: soca_fields, soca_field
+use soca_state_mod
+use soca_fields_mod
 use datetime_mod, only: datetime, datetime_to_string
 use mpp_domains_mod, only : mpp_update_domains
 use time_manager_mod, only : time_type, print_time, print_date, set_date
@@ -58,7 +59,7 @@ end subroutine soca_setup
 !> Prepare MOM6 integration
 subroutine soca_initialize_integration(self, flds)
   type(soca_model), intent(inout) :: self
-  type(soca_fields),intent(inout) :: flds
+  type(soca_state), intent(inout) :: flds
   type(soca_field), pointer :: field
 
   integer :: i
@@ -110,8 +111,8 @@ end subroutine soca_initialize_integration
 !> Advance MOM6 one baroclinic time step
 subroutine soca_propagate(self, flds, fldsdate)
   type(soca_model), intent(inout) :: self
-  type(soca_fields),intent(inout) :: flds
-  type(datetime), intent(in):: fldsdate
+  type(soca_state), intent(inout) :: flds
+  type(datetime),      intent(in) :: fldsdate
 
   type(soca_field), pointer :: field
 
@@ -213,7 +214,7 @@ end subroutine soca_propagate
 !> Finalize MOM6 integration: Update mom6's state and checkpoint
 subroutine soca_finalize_integration(self, flds)
   type(soca_model), intent(inout) :: self
-  type(soca_fields),intent(inout) :: flds
+  type(soca_state), intent(inout) :: flds
 
   type(soca_field), pointer :: field
   integer :: i

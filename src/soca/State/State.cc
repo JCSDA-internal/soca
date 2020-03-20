@@ -11,12 +11,12 @@
 #include <utility>
 #include <vector>
 
-#include "soca/Fields/FieldsFortran.h"
 #include "soca/Geometry/Geometry.h"
 #include "soca/GetValuesTraj/GetValuesTraj.h"
 #include "soca/Increment/Increment.h"
 #include "soca/ModelBias/ModelBias.h"
 #include "soca/State/State.h"
+#include "soca/State/StateFortran.h"
 
 #include "eckit/config/LocalConfiguration.h"
 #include "eckit/exception/Exceptions.h"
@@ -40,7 +40,7 @@ namespace soca {
                const util::DateTime & vt)
     : time_(vt), vars_(vars), geom_(new Geometry(geom))
   {
-    soca_field_create_f90(keyFlds_, geom_->toFortran(), vars_);
+    soca_state_create_f90(keyFlds_, geom_->toFortran(), vars_);
     Log::trace() << "State::State created." << std::endl;
   }
   // -----------------------------------------------------------------------------
@@ -49,29 +49,29 @@ namespace soca {
     : time_(), vars_(vars), geom_(new Geometry(geom))
   {
     util::DateTime * dtp = &time_;
-    soca_field_create_f90(keyFlds_, geom_->toFortran(), vars_);
-    soca_field_read_file_f90(toFortran(), &file, &dtp);
+    soca_state_create_f90(keyFlds_, geom_->toFortran(), vars_);
+    soca_state_read_file_f90(toFortran(), &file, &dtp);
     Log::trace() << "State::State created and read in." << std::endl;
   }
   // -----------------------------------------------------------------------------
   State::State(const Geometry & geom, const State & other)
     : vars_(other.vars_), time_(other.time_), geom_(new Geometry(geom))
   {
-    soca_field_create_f90(keyFlds_, geom_->toFortran(), vars_);
-    soca_field_copy_f90(toFortran(), other.keyFlds_);
+    soca_state_create_f90(keyFlds_, geom_->toFortran(), vars_);
+    soca_state_copy_f90(toFortran(), other.keyFlds_);
     Log::trace() << "State::State created by interpolation." << std::endl;
   }
   // -----------------------------------------------------------------------------
   State::State(const State & other)
     : vars_(other.vars_), time_(other.time_), geom_(new Geometry(*other.geom_))
   {
-    soca_field_create_f90(keyFlds_, geom_->toFortran(), vars_);
-    soca_field_copy_f90(toFortran(), other.toFortran());
+    soca_state_create_f90(keyFlds_, geom_->toFortran(), vars_);
+    soca_state_copy_f90(toFortran(), other.toFortran());
     Log::trace() << "State::State copied." << std::endl;
   }
   // -----------------------------------------------------------------------------
   State::~State() {
-    soca_field_delete_f90(toFortran());
+    soca_state_delete_f90(toFortran());
     Log::trace() << "State::State destructed." << std::endl;
   }
   // -----------------------------------------------------------------------------
@@ -79,7 +79,7 @@ namespace soca {
   // -----------------------------------------------------------------------------
   State & State::operator=(const State & rhs) {
     time_ = rhs.time_;
-    soca_field_copy_f90(toFortran(), rhs.toFortran());
+    soca_state_copy_f90(toFortran(), rhs.toFortran());
     return *this;
   }
   // -----------------------------------------------------------------------------
@@ -96,7 +96,7 @@ namespace soca {
         getValuesFromFile(locs, vars, cols);
         }
     // Get ocean geovals
-    soca_field_interp_nl_f90(toFortran(), locs.toFortran(), vars,
+    soca_state_interp_nl_f90(toFortran(), locs.toFortran(), vars,
                              cols.toFortran());
   }
   // -----------------------------------------------------------------------------
@@ -104,7 +104,7 @@ namespace soca {
                         const oops::Variables & vars,
                         ufo::GeoVaLs & cols,
                         GetValuesTraj & traj) const {
-    soca_field_interp_nl_traj_f90(toFortran(), locs.toFortran(), vars,
+    soca_state_interp_nl_traj_f90(toFortran(), locs.toFortran(), vars,
                                   cols.toFortran(), traj.toFortran());
   }
   // -----------------------------------------------------------------------------
@@ -135,7 +135,7 @@ namespace soca {
   // -----------------------------------------------------------------------------
   State & State::operator+=(const Increment & dx) {
     ASSERT(validTime() == dx.validTime());
-    soca_field_add_incr_f90(toFortran(), dx.toFortran());
+    soca_state_add_incr_f90(toFortran(), dx.toFortran());
     return *this;
   }
   // -----------------------------------------------------------------------------
@@ -144,21 +144,21 @@ namespace soca {
   void State::read(const eckit::Configuration & files) {
     Log::trace() << "State::State read started." << std::endl;
     util::DateTime * dtp = &time_;
-    soca_field_read_file_f90(toFortran(), &files, &dtp);
+    soca_state_read_file_f90(toFortran(), &files, &dtp);
     Log::trace() << "State::State read done." << std::endl;
   }
   // -----------------------------------------------------------------------------
   void State::write(const eckit::Configuration & files) const {
     const util::DateTime * dtp = &time_;
-    soca_field_write_file_f90(toFortran(), &files, &dtp);
+    soca_state_write_file_f90(toFortran(), &files, &dtp);
   }
   // -----------------------------------------------------------------------------
   void State::print(std::ostream & os) const {
     os << std::endl << "  Valid time: " << validTime();
     int n0, nf;
-    soca_field_sizes_f90(toFortran(), n0, n0, n0, n0, n0, nf);
+    soca_state_sizes_f90(toFortran(), n0, n0, n0, n0, n0, nf);
     std::vector<double> zstat(3*nf);
-    soca_field_gpnorm_f90(toFortran(), nf, zstat[0]);
+    soca_state_gpnorm_f90(toFortran(), nf, zstat[0]);
     for (int jj = 0; jj < nf; ++jj) {
       os << std::endl << std::right << std::setw(7) << vars_[jj]
          << "   min="  <<  std::fixed << std::setw(12) <<
@@ -173,16 +173,16 @@ namespace soca {
   /// For accumulator
   // -----------------------------------------------------------------------------
   void State::zero() {
-    soca_field_zero_f90(toFortran());
+    soca_state_zero_f90(toFortran());
   }
   // -----------------------------------------------------------------------------
   void State::accumul(const double & zz, const State & xx) {
-    soca_field_axpy_f90(toFortran(), zz, xx.toFortran());
+    soca_state_axpy_f90(toFortran(), zz, xx.toFortran());
   }
   // -----------------------------------------------------------------------------
   double State::norm() const {
     double zz = 0.0;
-    soca_field_rms_f90(toFortran(), zz);
+    soca_state_rms_f90(toFortran(), zz);
     return zz;
   }
   // -----------------------------------------------------------------------------

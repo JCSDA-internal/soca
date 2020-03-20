@@ -9,6 +9,8 @@ use fckit_configuration_module, only: fckit_configuration
 use datetime_mod, only: datetime
 use kinds, only: kind_real
 use soca_fields_mod
+use soca_increment_mod
+use soca_state_mod
 
 implicit none
 
@@ -18,7 +20,7 @@ public :: soca_bkgerrfilt_config, &
 
 !> Fortran derived type to hold configuration
 type :: soca_bkgerrfilt_config
-   type(soca_fields),   pointer :: bkg
+   type(soca_state),    pointer :: bkg
    type(soca_fields)            :: filt
    real(kind=kind_real)         :: efold_z           ! E-folding scale
    real(kind=kind_real)         :: scale             ! Rescaling factor
@@ -35,7 +37,7 @@ contains
 subroutine soca_bkgerrfilt_setup(f_conf, self, bkg)
   type(fckit_configuration),    intent(in)    :: f_conf
   type(soca_bkgerrfilt_config), intent(inout) :: self
-  type(soca_fields), target,    intent(in)    :: bkg
+  type(soca_state),  target,    intent(in)    :: bkg
 
   integer :: isc, iec, jsc, jec, i, j, k
   real(kind=kind_real) :: efold
@@ -105,8 +107,8 @@ end subroutine soca_bkgerrfilt_setup
 !> Apply background error: dxm = D dxa
 subroutine soca_bkgerrfilt_mult(self, dxa, dxm)
   type(soca_bkgerrfilt_config), intent(in) :: self
-  type(soca_fields),            intent(in) :: dxa
-  type(soca_fields),         intent(inout) :: dxm
+  type(soca_increment),         intent(in) :: dxa
+  type(soca_increment),      intent(inout) :: dxm
 
   integer :: i, j, n
   type(soca_field), pointer :: field, field_a, field_m

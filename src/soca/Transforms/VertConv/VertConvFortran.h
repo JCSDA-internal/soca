@@ -24,9 +24,9 @@ namespace soca {
                                  const F90flds &);
     void soca_vertconv_delete_f90(F90balopmat &);
     void soca_vertconv_mult_f90(const F90balopmat &, F90balopmat &,
-                                const F90balopmat &, const F90balopmat &);
+                                const F90balopmat &);
     void soca_vertconv_multad_f90(const F90balopmat &, F90balopmat &,
-                                  const F90balopmat &, const F90balopmat &);
+                                  const F90balopmat &);
   }
 }  // namespace soca
 #endif  // SOCA_TRANSFORMS_VERTCONV_VERTCONVFORTRAN_H_

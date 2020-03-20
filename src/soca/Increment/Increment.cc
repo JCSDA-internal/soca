@@ -13,7 +13,7 @@
 #include <vector>
 
 #include "soca/Covariance/ErrorCovariance.h"
-#include "soca/Fields/FieldsFortran.h"
+#include "soca/Increment/IncrementFortran.h"
 #include "soca/Geometry/Geometry.h"
 #include "soca/GeometryIterator/GeometryIterator.h"
 #include "soca/GetValuesTraj/GetValuesTraj.h"
@@ -46,27 +46,27 @@ namespace soca {
                        const util::DateTime & vt)
     : time_(vt), vars_(vars), geom_(new Geometry(geom))
   {
-    soca_field_create_f90(keyFlds_, geom_->toFortran(), vars_);
-    soca_field_zero_f90(toFortran());
+    soca_increment_create_f90(keyFlds_, geom_->toFortran(), vars_);
+    soca_increment_zero_f90(toFortran());
     Log::trace() << "Increment constructed." << std::endl;
   }
   // -----------------------------------------------------------------------------
   Increment::Increment(const Geometry & geom, const Increment & other)
     : time_(other.time_), vars_(other.vars_), geom_(new Geometry(geom))
   {
-    soca_field_create_f90(keyFlds_, geom_->toFortran(), vars_);
-    soca_field_change_resol_f90(toFortran(), other.keyFlds_);
+    soca_increment_create_f90(keyFlds_, geom_->toFortran(), vars_);
+    soca_increment_change_resol_f90(toFortran(), other.keyFlds_);
     Log::trace() << "Increment constructed from other." << std::endl;
   }
   // -----------------------------------------------------------------------------
   Increment::Increment(const Increment & other, const bool copy)
     : time_(other.time_), vars_(other.vars_), geom_(new Geometry(*other.geom_))
   {
-    soca_field_create_f90(keyFlds_, geom_->toFortran(), vars_);
+    soca_increment_create_f90(keyFlds_, geom_->toFortran(), vars_);
     if (copy) {
-      soca_field_copy_f90(toFortran(), other.toFortran());
+      soca_increment_copy_f90(toFortran(), other.toFortran());
     } else {
-      soca_field_zero_f90(toFortran());
+      soca_increment_zero_f90(toFortran());
     }
     Log::trace() << "Increment copy-created." << std::endl;
   }
@@ -74,13 +74,13 @@ namespace soca {
   Increment::Increment(const Increment & other)
     : time_(other.time_), vars_(other.vars_), geom_(new Geometry(*other.geom_))
   {
-    soca_field_create_f90(keyFlds_, geom_->toFortran(), vars_);
-    soca_field_copy_f90(toFortran(), other.toFortran());
+    soca_increment_create_f90(keyFlds_, geom_->toFortran(), vars_);
+    soca_increment_copy_f90(toFortran(), other.toFortran());
     Log::trace() << "Increment copy-created." << std::endl;
   }
   // -----------------------------------------------------------------------------
   Increment::~Increment() {
-    soca_field_delete_f90(toFortran());
+    soca_increment_delete_f90(toFortran());
     Log::trace() << "Increment destructed" << std::endl;
   }
   // -----------------------------------------------------------------------------
@@ -92,39 +92,39 @@ namespace soca {
     Log::debug() << "Increment:diff incr " << *this << std::endl;
     Log::debug() << "Increment:diff x1 " << x1 << std::endl;
     Log::debug() << "Increment:diff x2 " << x2 << std::endl;
-    soca_field_diff_incr_f90(toFortran(), x1.toFortran(),
+    soca_increment_diff_incr_f90(toFortran(), x1.toFortran(),
                              x2.toFortran());
   }
   // -----------------------------------------------------------------------------
   Increment & Increment::operator=(const Increment & rhs) {
     time_ = rhs.time_;
-    soca_field_copy_f90(toFortran(), rhs.toFortran());
+    soca_increment_copy_f90(toFortran(), rhs.toFortran());
     return *this;
   }
   // -----------------------------------------------------------------------------
   Increment & Increment::operator+=(const Increment & dx) {
     ASSERT(this->validTime() == dx.validTime());
-    soca_field_self_add_f90(toFortran(), dx.toFortran());
+    soca_increment_self_add_f90(toFortran(), dx.toFortran());
     return *this;
   }
   // -----------------------------------------------------------------------------
   Increment & Increment::operator-=(const Increment & dx) {
     ASSERT(this->validTime() == dx.validTime());
-    soca_field_self_sub_f90(toFortran(), dx.toFortran());
+    soca_increment_self_sub_f90(toFortran(), dx.toFortran());
     return *this;
   }
   // -----------------------------------------------------------------------------
   Increment & Increment::operator*=(const double & zz) {
-    soca_field_self_mul_f90(toFortran(), zz);
+    soca_increment_self_mul_f90(toFortran(), zz);
     return *this;
   }
   // -----------------------------------------------------------------------------
   void Increment::zero() {
-    soca_field_zero_f90(toFortran());
+    soca_increment_zero_f90(toFortran());
   }
   // -----------------------------------------------------------------------------
   void Increment::dirac(const eckit::Configuration & config) {
-    soca_field_dirac_f90(toFortran(), &config);
+    soca_increment_dirac_f90(toFortran(), &config);
     Log::trace() << "Increment dirac initialized" << std::endl;
   }
   // -----------------------------------------------------------------------------
@@ -136,31 +136,31 @@ namespace soca {
   void Increment::axpy(const double & zz, const Increment & dx,
                        const bool check) {
     ASSERT(!check || validTime() == dx.validTime());
-    soca_field_axpy_f90(toFortran(), zz, dx.toFortran());
+    soca_increment_axpy_f90(toFortran(), zz, dx.toFortran());
   }
   // -----------------------------------------------------------------------------
   void Increment::accumul(const double & zz, const State & xx) {
-    soca_field_axpy_f90(toFortran(), zz, xx.toFortran());
+    soca_increment_axpy_f90(toFortran(), zz, xx.toFortran());
   }
   // -----------------------------------------------------------------------------
   void Increment::schur_product_with(const Increment & dx) {
-    soca_field_self_schur_f90(toFortran(), dx.toFortran());
+    soca_increment_self_schur_f90(toFortran(), dx.toFortran());
   }
   // -----------------------------------------------------------------------------
   double Increment::dot_product_with(const Increment & other) const {
     double zz;
-    soca_field_dot_prod_f90(toFortran(), other.toFortran(), zz);
+    soca_increment_dot_prod_f90(toFortran(), other.toFortran(), zz);
     return zz;
   }
   // -----------------------------------------------------------------------------
   void Increment::random() {
-    soca_field_random_f90(toFortran());
+    soca_increment_random_f90(toFortran());
   }
 
   // -----------------------------------------------------------------------------
   oops::GridPoint Increment::getPoint(const GeometryIterator & iter) const {
     int nx, ny, nzo, nzi, ncat, nf;
-    soca_field_sizes_f90(toFortran(), nx, ny, nzo, nzi, ncat, nf);
+    soca_increment_sizes_f90(toFortran(), nx, ny, nzo, nzi, ncat, nf);
 
     std::vector<int> varlens(vars_.size());
 
@@ -179,7 +179,7 @@ namespace soca {
     int lenvalues = std::accumulate(varlens.begin(), varlens.end(), 0);
     std::vector<double> values(lenvalues);
 
-    soca_field_getpoint_f90(keyFlds_, iter.toFortran(), values[0],
+    soca_increment_getpoint_f90(keyFlds_, iter.toFortran(), values[0],
                             values.size());
 
     return oops::GridPoint(vars_, values, varlens);
@@ -189,7 +189,7 @@ namespace soca {
   void Increment::setPoint(const oops::GridPoint & values,
                              const GeometryIterator & iter) {
     const std::vector<double> vals = values.getVals();
-    soca_field_setpoint_f90(toFortran(), iter.toFortran(), vals[0],
+    soca_increment_setpoint_f90(toFortran(), iter.toFortran(), vals[0],
                             vals.size());
   }
 
@@ -200,7 +200,7 @@ namespace soca {
                               ufo::GeoVaLs & cols,
                               const GetValuesTraj & traj) const {
     Log::debug() << "Increment::interpolateTL fields in" << *this << std::endl;
-    soca_field_interp_tl_f90(toFortran(), locs.toFortran(), vars,
+    soca_increment_interp_tl_f90(toFortran(), locs.toFortran(), vars,
                              cols.toFortran(), traj.toFortran());
     Log::debug() << "Increment::interpolateTL " << cols << std::endl;
   }
@@ -212,44 +212,44 @@ namespace soca {
     Log::debug() << "Increment::interpolateAD gom " << cols << std::endl;
     Log::debug() << "Increment::interpolateAD fields in" <<
                     *this << std::endl;
-    soca_field_interp_ad_f90(toFortran(), locs.toFortran(), vars,
+    soca_increment_interp_ad_f90(toFortran(), locs.toFortran(), vars,
                              cols.toFortran(), traj.toFortran());
   }
   // -----------------------------------------------------------------------------
   /// Unstructured grid
   // -----------------------------------------------------------------------------
   void Increment::ug_coord(oops::UnstructuredGrid & ug) const {
-    soca_field_ug_coord_f90(toFortran(), ug.toFortran());
+    soca_increment_ug_coord_f90(toFortran(), ug.toFortran());
   }
   // -----------------------------------------------------------------------------
   void Increment::field_to_ug(oops::UnstructuredGrid & ug,
                               const int & its) const {
-    soca_field_field_to_ug_f90(toFortran(), ug.toFortran(), its);
+    soca_increment_field_to_ug_f90(toFortran(), ug.toFortran(), its);
   }
   // -----------------------------------------------------------------------------
   void Increment::field_from_ug(const oops::UnstructuredGrid & ug,
                                 const int & its) {
-    soca_field_field_from_ug_f90(toFortran(), ug.toFortran(), its);
+    soca_increment_field_from_ug_f90(toFortran(), ug.toFortran(), its);
   }
   // -----------------------------------------------------------------------------
   /// I/O and diagnostics
   // -----------------------------------------------------------------------------
   void Increment::read(const eckit::Configuration & files) {
     util::DateTime * dtp = &time_;
-    soca_field_read_file_f90(toFortran(), &files, &dtp);
+    soca_increment_read_file_f90(toFortran(), &files, &dtp);
   }
   // -----------------------------------------------------------------------------
   void Increment::write(const eckit::Configuration & files) const {
     const util::DateTime * dtp = &time_;
-    soca_field_write_file_f90(toFortran(), &files, &dtp);
+    soca_increment_write_file_f90(toFortran(), &files, &dtp);
   }
   // -----------------------------------------------------------------------------
   void Increment::print(std::ostream & os) const {
     os << std::endl << "  Valid time: " << validTime();
     int n0, nf;
-    soca_field_sizes_f90(keyFlds_, n0, n0, n0, n0, n0, nf);
+    soca_increment_sizes_f90(keyFlds_, n0, n0, n0, n0, n0, nf);
     std::vector<double> zstat(3*nf);
-    soca_field_gpnorm_f90(keyFlds_, nf, zstat[0]);
+    soca_increment_gpnorm_f90(keyFlds_, nf, zstat[0]);
     for (int jj = 0; jj < nf; ++jj) {
       os << std::endl << std::right << std::setw(7) << vars_[jj]
          << "   min="  <<  std::fixed << std::setw(12) <<
@@ -264,7 +264,7 @@ namespace soca {
 
   double Increment::norm() const {
     double zz = 0.0;
-    soca_field_rms_f90(toFortran(), zz);
+    soca_increment_rms_f90(toFortran(), zz);
     return zz;
   }
 
