@@ -1,4 +1,4 @@
-! (C) Copyright 2017-2019 UCAR
+! (C) Copyright 2017-2020 UCAR
 !
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -7,7 +7,7 @@ module soca_bkgerr_mod_c
 
 use iso_c_binding
 use fckit_configuration_module, only: fckit_configuration
-use soca_fields_mod, only: soca_field, copy, delete
+use soca_fields_mod, only: soca_fields
 use soca_fields_mod_c, only: soca_field_registry
 use soca_bkgerr_mod, only: soca_bkgerr_config, &
                            soca_bkgerr_setup, soca_bkgerr_mult
@@ -41,7 +41,7 @@ subroutine c_soca_bkgerr_setup(c_key_self, c_conf, c_key_bkg) &
   type(c_ptr),       intent(in) :: c_conf       !< The configuration
   integer(c_int), intent(in)    :: c_key_bkg    !< Background field
 
-  type(soca_field), pointer :: bkg
+  type(soca_fields), pointer :: bkg
   type(soca_bkgerr_config), pointer :: self
 
   call soca_bkgerr_registry%init()
@@ -50,7 +50,6 @@ subroutine c_soca_bkgerr_setup(c_key_self, c_conf, c_key_bkg) &
   call soca_field_registry%get(c_key_bkg, bkg)
 
   call soca_bkgerr_setup(fckit_configuration(c_conf), self, bkg)
-
 end subroutine c_soca_bkgerr_setup
 
 ! ------------------------------------------------------------------------------
@@ -62,7 +61,7 @@ subroutine c_soca_bkgerr_delete(c_key_self) bind(c,name='soca_bkgerr_delete_f90'
 
   call soca_bkgerr_registry%get(c_key_self, self)
   if (associated(self%bkg)) nullify(self%bkg)
-  call delete(self%std_bkgerr)
+  call self%std_bkgerr%delete()
 
   call soca_bkgerr_registry%remove(c_key_self)
 
@@ -77,8 +76,8 @@ subroutine c_soca_bkgerr_mult_f90(c_key_self, c_key_a, c_key_m)&
   integer(c_int), intent(in) :: c_key_m     !<    "   to Increment out
   integer(c_int), intent(in) :: c_key_self
 
-  type(soca_field), pointer :: dxa
-  type(soca_field), pointer :: dxm
+  type(soca_fields), pointer :: dxa
+  type(soca_fields), pointer :: dxm
   type(soca_bkgerr_config), pointer :: self
 
   call soca_field_registry%get(c_key_a,dxa)
@@ -86,7 +85,7 @@ subroutine c_soca_bkgerr_mult_f90(c_key_self, c_key_a, c_key_m)&
   call soca_bkgerr_registry%get(c_key_self,self)
 
   !< Computes dxm = D dxa
-  call copy(dxm, dxa)
+  call dxm%copy(dxa)
   call soca_bkgerr_mult(self, dxa, dxm)
 
 end subroutine c_soca_bkgerr_mult_f90

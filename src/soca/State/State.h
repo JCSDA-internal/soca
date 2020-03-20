@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2017-2019 UCAR
+ * (C) Copyright 2017-2020 UCAR
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -8,41 +8,45 @@
 #ifndef SOCA_STATE_STATE_H_
 #define SOCA_STATE_STATE_H_
 
+#include <memory>
 #include <ostream>
 #include <string>
 
-#include <boost/scoped_ptr.hpp>
+#include <boost/shared_ptr.hpp>
 
-#include "soca/Fields/Fields.h"
-#include "soca/GetValuesTraj/GetValuesTraj.h"
+#include "soca/Fortran.h"
+
+#include "oops/base/Variables.h"
 #include "oops/util/DateTime.h"
 #include "oops/util/ObjectCounter.h"
 #include "oops/util/Printable.h"
 
+// Forward declarations
 namespace eckit {
   class Configuration;
 }
-
 namespace oops {
   class Variables;
 }
-
 namespace ufo {
   class GeoVaLs;
   class Locations;
 }
-
 namespace soca {
   class Geometry;
+  class GetValuesTraj;
   class Increment;
+}
+
+//-----------------------------------------------------------------------------
+
+namespace soca {
 
   /// SOCA model state
   /*!
    * A State contains everything that is needed to propagate the state
    * forward in time.
    */
-
-// -----------------------------------------------------------------------------
   class State : public util::Printable,
     private util::ObjectCounter<State> {
    public:
@@ -81,17 +85,13 @@ namespace soca {
       /// I/O and diagnostics
       void read(const eckit::Configuration &);
       void write(const eckit::Configuration &) const;
-      double norm() const {return fields_->norm();}
-      const util::DateTime & validTime() const {return fields_->time();}
-      util::DateTime & validTime() {return fields_->time();}
+      double norm() const;
+      const util::DateTime & validTime() const;
+      util::DateTime & validTime();
 
-      /// Access to fields
-      Fields & fields() {return *fields_;}
-      const Fields & fields() const {return *fields_;}
-
-      boost::shared_ptr<const Geometry> geometry() const {
-        return fields_->geometry();
-      }
+      int & toFortran() {return keyFlds_;}
+      const int & toFortran() const {return keyFlds_;}
+      boost::shared_ptr<const Geometry> geometry() const;
 
       /// Other
       void zero();
@@ -99,8 +99,9 @@ namespace soca {
 
    private:
       void print(std::ostream &) const;
-      boost::scoped_ptr<Fields> fields_;
-      boost::scoped_ptr<Fields> stash_;
+
+      F90flds keyFlds_;
+
       boost::shared_ptr<const Geometry> geom_;
       oops::Variables vars_;
       util::DateTime time_;

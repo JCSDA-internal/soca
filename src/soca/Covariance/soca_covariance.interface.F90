@@ -1,4 +1,4 @@
-! (C) Copyright 2017-2019 UCAR.
+! (C) Copyright 2017-2020 UCAR.
 !
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -10,7 +10,7 @@ use fckit_configuration_module, only: fckit_configuration
 use oops_variables_mod
 use soca_geom_mod, only : soca_geom
 use soca_geom_mod_c, only : soca_geom_registry
-use soca_fields_mod, only: soca_field, copy
+use soca_fields_mod, only: soca_fields
 use soca_fields_mod_c, only: soca_field_registry
 use soca_covariance_mod, only: soca_cov, soca_cov_setup, soca_cov_delete, &
                                soca_cov_C_mult, soca_cov_sqrt_C_mult
@@ -48,7 +48,7 @@ subroutine c_soca_b_setup(c_key_self, c_conf, c_key_geom, c_key_bkg, c_vars) &
 
   type(soca_cov),   pointer :: self
   type(soca_geom),  pointer :: geom
-  type(soca_field), pointer :: bkg
+  type(soca_fields),pointer :: bkg
   type(oops_variables)      :: vars
 
   call soca_geom_registry%get(c_key_geom, geom)
@@ -84,15 +84,15 @@ subroutine c_soca_b_mult(c_key_self, c_key_in, c_key_out) bind(c,name='soca_b_mu
   integer(c_int), intent(in)    :: c_key_in    !<    "   to Increment in
   integer(c_int), intent(in)    :: c_key_out   !<    "   to Increment out
 
-  type(soca_cov),   pointer :: self
-  type(soca_field), pointer :: xin
-  type(soca_field), pointer :: xout
+  type(soca_cov),    pointer :: self
+  type(soca_fields), pointer :: xin
+  type(soca_fields), pointer :: xout
 
   call soca_cov_registry%get(c_key_self, self)
   call soca_field_registry%get(c_key_in, xin)
   call soca_field_registry%get(c_key_out, xout)
 
-  call copy(xout,xin)              !< xout = xin
+  call xout%copy(xin)              !< xout = xin
   call soca_cov_C_mult(self, xout) !< xout = C.xout
 
 end subroutine c_soca_b_mult
@@ -107,7 +107,7 @@ subroutine c_soca_b_randomize(c_key_self, c_key_out) bind(c,name='soca_b_randomi
   integer(c_int), intent(in) :: c_key_out   !< Randomized increment
 
   type(soca_cov),   pointer :: self
-  type(soca_field), pointer :: xout
+  type(soca_fields),pointer :: xout
 
   call soca_cov_registry%get(c_key_self, self)
   call soca_field_registry%get(c_key_out, xout)

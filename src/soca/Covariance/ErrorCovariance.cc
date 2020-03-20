@@ -1,25 +1,24 @@
 /*
- * (C) Copyright 2017-2019 UCAR
+ * (C) Copyright 2017-2020 UCAR
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#include "soca/Covariance/ErrorCovariance.h"
-
 #include <cmath>
 
-#include "oops/util/Logger.h"
-#include "soca/Fields/Fields.h"
-#include "soca/Fortran.h"
+#include "soca/Covariance/ErrorCovariance.h"
+#include "soca/Covariance/ErrorCovarianceFortran.h"
 #include "soca/Geometry/Geometry.h"
 #include "soca/Increment/Increment.h"
 #include "soca/State/State.h"
-#include "eckit/config/Configuration.h"
-#include "oops/base/Variables.h"
-#include "oops/base/IdentityMatrix.h"
-#include "oops/assimilation/GMRESR.h"
 
+#include "eckit/config/Configuration.h"
+
+#include "oops/assimilation/GMRESR.h"
+#include "oops/base/IdentityMatrix.h"
+#include "oops/base/Variables.h"
+#include "oops/util/Logger.h"
 
 using oops::Log;
 
@@ -37,7 +36,7 @@ namespace soca {
     const eckit::Configuration * configc = &conf;
     vars_ = oops::Variables(conf);
     soca_b_setup_f90(keyFtnConfig_, &configc, resol.toFortran(),
-                     bkg.fields().toFortran(), vars_);
+                     bkg.toFortran(), vars_);
     Log::trace() << "ErrorCovariance created" << std::endl;
   }
 
@@ -60,8 +59,7 @@ namespace soca {
   void ErrorCovariance::multiply(const Increment & dxin, Increment & dxout)
     const {
     dxout = dxin;
-    soca_b_mult_f90(keyFtnConfig_, dxin.fields().toFortran(),
-                    dxout.fields().toFortran());
+    soca_b_mult_f90(keyFtnConfig_, dxin.toFortran(), dxout.toFortran());
     Log::trace() << "ErrorCovariance multiply" << std::endl;
   }
 
@@ -80,7 +78,7 @@ namespace soca {
 
   //  void ErrorCovariance::doRandomize(Increment & dx) const {
   void ErrorCovariance::randomize(Increment & dx) const {
-    soca_b_randomize_f90(keyFtnConfig_, dx.fields().toFortran());
+    soca_b_randomize_f90(keyFtnConfig_, dx.toFortran());
   }
 
   // -----------------------------------------------------------------------------

@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2017-2019 UCAR
+ * (C) Copyright 2017-2020 UCAR
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -8,11 +8,14 @@
 #ifndef SOCA_MODEL_MODEL_H_
 #define SOCA_MODEL_MODEL_H_
 
+#include <memory>
 #include <ostream>
 #include <string>
 
 #include <boost/noncopyable.hpp>
 #include <boost/scoped_ptr.hpp>
+
+#include "soca/Fortran.h"
 
 #include "oops/base/ModelBase.h"
 #include "oops/base/Variables.h"
@@ -20,21 +23,21 @@
 #include "oops/util/ObjectCounter.h"
 #include "oops/util/Printable.h"
 
-#include "soca/Fortran.h"
-#include "soca/Traits.h"
-#include "soca/Geometry/Geometry.h"
-
 // Forward declarations
 namespace eckit {
   class Configuration;
 }
+namespace soca {
+  class Geometry;
+  class ModelBias;
+  class State;
+  struct Traits;
+}
+
+// -----------------------------------------------------------------------------
 
 namespace soca {
-  class ModelBias;
-  class Fields;
-  class State;
 
-  // -----------------------------------------------------------------------------
   /// SOCA model definition.
   /*!
    *  SOCA nonlinear model definition and configuration parameters.
@@ -67,7 +70,7 @@ namespace soca {
     int keyConfig_;
     util::Duration tstep_;
     bool setup_mom6_;
-    const Geometry geom_;
+    std::unique_ptr<const Geometry> geom_;
     const oops::Variables vars_;
   };
   // -----------------------------------------------------------------------------

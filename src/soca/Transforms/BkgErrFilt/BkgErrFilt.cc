@@ -1,21 +1,22 @@
 /*
- * (C) Copyright 2017-2019  UCAR.
+ * (C) Copyright 2017-2020  UCAR.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#include "soca/Transforms/BkgErrFilt/BkgErrFilt.h"
-
 #include <ostream>
 #include <string>
 
-#include "oops/util/Logger.h"
-#include "eckit/config/Configuration.h"
-#include "BkgErrFiltFortran.h"
+#include "soca/Geometry/Geometry.h"
 #include "soca/Increment/Increment.h"
 #include "soca/State/State.h"
-#include "soca/Geometry/Geometry.h"
+#include "soca/Transforms/BkgErrFilt/BkgErrFilt.h"
+#include "soca/Transforms/BkgErrFilt/BkgErrFiltFortran.h"
+
+#include "eckit/config/Configuration.h"
+
+#include "oops/util/Logger.h"
 
 using oops::Log;
 
@@ -28,7 +29,7 @@ namespace soca {
     const eckit::Configuration * configc = &conf;
     soca_bkgerrfilt_setup_f90(keyFtnConfig_,
                               &configc,
-                              traj_.fields().toFortran());
+                              traj_.toFortran());
   }
   // -----------------------------------------------------------------------------
   BkgErrFilt::~BkgErrFilt() {
@@ -37,9 +38,7 @@ namespace soca {
   // -----------------------------------------------------------------------------
   void BkgErrFilt::multiply(const Increment & dxa, Increment & dxm) const {
     // dxm = K dxa
-    soca_bkgerrfilt_mult_f90(keyFtnConfig_,
-                         dxa.fields().toFortran(),
-                         dxm.fields().toFortran());
+    soca_bkgerrfilt_mult_f90(keyFtnConfig_, dxa.toFortran(), dxm.toFortran());
   }
   // -----------------------------------------------------------------------------
   void BkgErrFilt::multiplyInverse(const Increment & dxm,
@@ -49,9 +48,7 @@ namespace soca {
   // -----------------------------------------------------------------------------
   void BkgErrFilt::multiplyAD(const Increment & dxm, Increment & dxa) const {
     // dxa = K^T dxm
-    soca_bkgerrfilt_mult_f90(keyFtnConfig_,
-                         dxm.fields().toFortran(),
-                         dxa.fields().toFortran());
+    soca_bkgerrfilt_mult_f90(keyFtnConfig_, dxm.toFortran(), dxa.toFortran());
   }
   // -----------------------------------------------------------------------------
   void BkgErrFilt::multiplyInverseAD(const Increment & dxa,

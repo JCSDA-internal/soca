@@ -1,6 +1,6 @@
 /*
  * (C) Copyright 2009-2016 ECMWF.
- * (C) Copyright 2017-2019 UCAR.
+ * (C) Copyright 2017-2020 UCAR.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -9,21 +9,23 @@
  * does it submit to any jurisdiction.
  */
 
-#include "soca/LinearModel/TlmId.h"
-
+#include <ostream>
 #include <vector>
 
-#include "eckit/config/LocalConfiguration.h"
-#include "oops/util/Logger.h"
-#include "soca/ModelBiasIncrement.h"
+#include "soca/Traits.h"
+
 #include "soca/Fortran.h"
 #include "soca/Geometry/Geometry.h"
 #include "soca/Increment/Increment.h"
+#include "soca/LinearModel/TlmId.h"
+#include "soca/ModelBias/ModelBiasIncrement.h"
 #include "soca/State/State.h"
-#include "soca/Traits.h"
-#include "oops/util/DateTime.h"
-#include "oops/util/abor1_cpp.h"
 
+#include "eckit/config/LocalConfiguration.h"
+
+#include "oops/util/abor1_cpp.h"
+#include "oops/util/DateTime.h"
+#include "oops/util/Logger.h"
 
 using oops::Log;
 
@@ -59,7 +61,7 @@ void TlmId::stepAD(Increment & dx, ModelBiasIncrement &) const {
 }
 // -----------------------------------------------------------------------------
 void TlmId::finalizeAD(Increment & dx) const {
-  Log::debug() << "TlmId::finalizeAD" << dx.fields() << std::endl;
+  Log::debug() << "TlmId::finalizeAD" << dx << std::endl;
 }
 // -----------------------------------------------------------------------------
 void TlmId::print(std::ostream & os) const {
