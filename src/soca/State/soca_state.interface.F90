@@ -255,6 +255,42 @@ end subroutine soca_state_interp_nl_traj_c
 
 ! ------------------------------------------------------------------------------
 
+subroutine soca_state_rotate2grid_c(c_key_self, c_uvars, c_vvars) bind(c,name='soca_state_rotate2grid_f90')
+  integer(c_int), intent(in)     :: c_key_self
+  type(c_ptr), value, intent(in) :: c_uvars
+  type(c_ptr), value, intent(in) :: c_vvars
+
+  type(soca_state), pointer :: self
+  type(oops_variables) :: uvars, vvars
+
+  uvars = oops_variables(c_uvars)
+  vvars = oops_variables(c_vvars)
+
+  call soca_state_registry%get(c_key_self,self)
+  call self%rotate(coordinate="grid", uvars=uvars, vvars=vvars)
+
+end subroutine soca_state_rotate2grid_c
+
+! ------------------------------------------------------------------------------
+
+subroutine soca_state_rotate2north_c(c_key_self, c_uvars, c_vvars) bind(c,name='soca_state_rotate2north_f90')
+  integer(c_int),     intent(in) :: c_key_self
+  type(c_ptr), value, intent(in) :: c_uvars
+  type(c_ptr), value, intent(in) :: c_vvars
+
+  type(soca_state), pointer :: self
+  type(oops_variables) :: uvars, vvars
+
+  uvars = oops_variables(c_uvars)
+  vvars = oops_variables(c_vvars)
+
+  call soca_state_registry%get(c_key_self,self)
+  call self%rotate(coordinate="north", uvars=uvars, vvars=vvars)
+
+end subroutine soca_state_rotate2north_c
+
+! ------------------------------------------------------------------------------
+
 subroutine soca_state_sizes_c(c_key_fld, nx, ny, nzo, nzi, ncat, nf) bind(c,name='soca_state_sizes_f90')
     integer(c_int),         intent(in) :: c_key_fld
     integer(kind=c_int), intent(inout) :: nx, ny, nzo, nzi, ncat, nf

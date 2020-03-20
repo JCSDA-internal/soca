@@ -46,6 +46,12 @@ namespace soca {
                                        const oops::Variables &,
                                        const F90goms &,
                                        const F90getvaltraj &);
+    void soca_state_rotate2grid_f90(const F90flds &,
+                                    const oops::Variables &,
+                                    const oops::Variables &);
+    void soca_state_rotate2north_f90(const F90flds &,
+                                     const oops::Variables &,
+                                     const oops::Variables &);
     void soca_state_gpnorm_f90(const F90flds &, const int &, double &);
     void soca_state_sizes_f90(const F90flds &, int &, int &, int &,
                               int &, int &, int &);
