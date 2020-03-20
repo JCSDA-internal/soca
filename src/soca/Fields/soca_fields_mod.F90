@@ -25,7 +25,6 @@ use fms_io_mod, only: fms_io_init, fms_io_exit, &
                       free_restart_type, save_restart
 use mpp_domains_mod, only : mpp_update_domains
 use MOM_remapping, only : remapping_CS, initialize_remapping, remapping_core_h, end_remapping
-use random_mod, only: normal_distribution
 use soca_geom_mod, only : soca_geom
 use soca_fieldsutils_mod, only: soca_genfilename, fldinfo
 use soca_utils, only: soca_mld
@@ -88,7 +87,6 @@ contains
   procedure :: dot_prod => soca_fields_dotprod
   procedure :: gpnorm   => soca_fields_gpnorm
   procedure :: mul      => soca_fields_mul
-  procedure :: random   => soca_fields_random
   procedure :: schur    => soca_fields_schur
   procedure :: sub      => soca_fields_sub
   procedure :: zeros    => soca_fields_zeros
@@ -414,42 +412,6 @@ subroutine soca_fields_zeros(self)
   self%mld = 0.0_kind_real
   self%layer_depth = 0.0_kind_real
 end subroutine soca_fields_zeros
-
-
-! ------------------------------------------------------------------------------
-!> initialize fields with random normal distribution
-subroutine soca_fields_random(self)
-  class(soca_fields), intent(inout) :: self
-  integer, parameter :: rseed = 1 ! constant for reproducability of tests
-    ! NOTE: random seeds are not quite working the way expected,
-    !  it is only set the first time normal_distribution() is called with a seed
-  integer :: z, i
-
-  type(soca_field), pointer :: field
-
-  ! set random values
-  do i = 1, size(self%fields)
-    field => self%fields(i)
-    ! NOTE: can't randomize "hocn", testIncrementInterpAD fails
-    if (field%name == 'hocn') cycle
-    call normal_distribution(field%val,  0.0_kind_real, 1.0_kind_real, rseed)
-  end do
-
-  ! mask out land, set to zero
-  do i=1,size(self%fields)
-    field => self%fields(i)
-    if (.not. associated(field%mask) ) cycle
-    do z=1,field%nz
-      field%val(:,:,z) = field%val(:,:,z) * field%mask(:,:)
-    end do
-  end do
-
-  ! update domains
-  do i=1, size(self%fields)
-    field => self%fields(i)
-    call mpp_update_domains(field%val, self%geom%Domain%mpp_domain)
-  end do
-end subroutine soca_fields_random
 
 
 ! ------------------------------------------------------------------------------

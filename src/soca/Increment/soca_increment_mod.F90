@@ -10,6 +10,9 @@ use soca_geom_iter_mod, only : soca_geom_iter
 use kinds, only: kind_real
 use fckit_configuration_module, only: fckit_configuration
 use fckit_mpi_module, only: fckit_mpi_comm
+! TODO remove this once update is added to field
+use mpp_domains_mod, only : mpp_update_domains
+use random_mod, only: normal_distribution
 
 implicit none
 private
@@ -18,6 +21,7 @@ type, public, extends(soca_fields) :: soca_increment
 
 contains
   procedure :: dirac     => soca_increment_dirac
+  procedure :: random    => soca_increment_random
 
   procedure :: getpoint  => soca_increment_getpoint
   procedure :: setpoint  => soca_increment_setpoint
@@ -25,6 +29,42 @@ end type
 
 
 contains
+
+! ------------------------------------------------------------------------------
+!> initialize fields with random normal distribution
+subroutine soca_increment_random(self)
+  class(soca_increment), intent(inout) :: self
+  integer, parameter :: rseed = 1 ! constant for reproducability of tests
+    ! NOTE: random seeds are not quite working the way expected,
+    !  it is only set the first time normal_distribution() is called with a seed
+  integer :: z, i
+
+  type(soca_field), pointer :: field
+
+  ! set random values
+  do i = 1, size(self%fields)
+    field => self%fields(i)
+    ! TODO remove this once increment / state are fully separated
+    ! NOTE: can't randomize "hocn", testIncrementInterpAD fails
+    if (field%name == 'hocn') cycle
+    call normal_distribution(field%val,  0.0_kind_real, 1.0_kind_real, rseed)
+  end do
+
+  ! mask out land, set to zero
+  do i=1,size(self%fields)
+    field => self%fields(i)
+    if (.not. associated(field%mask) ) cycle
+    do z=1,field%nz
+      field%val(:,:,z) = field%val(:,:,z) * field%mask(:,:)
+    end do
+  end do
+
+  ! update domains
+  do i=1, size(self%fields)
+    field => self%fields(i)
+    call mpp_update_domains(field%val, self%geom%Domain%mpp_domain)
+  end do
+end subroutine soca_increment_random
 
 ! ------------------------------------------------------------------------------
 
