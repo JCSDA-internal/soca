@@ -20,9 +20,9 @@ list( APPEND soca_test_input
   testinput/geometry_iterator.yml
   testinput/geometryatm.yml
   testinput/gridgen.yml
-  testinput/hofx.yml
-  testinput/hofx3d.yml
-  testinput/hofx3dcrtm.yml
+  testinput/hofx_3d.yml
+  testinput/hofx_3dcrtm.yml
+  testinput/hofx_4d.yml
   testinput/increment.yml
   testinput/linearmodel.yml
   testinput/marine2ioda.yml
@@ -61,9 +61,9 @@ list( APPEND soca_test_ref
   testref/forecast_identity_cice.test
   testref/forecast_identity.test
   testref/forecast_mom6.test
-  testref/hofx.test
-  testref/hofx3d.test
-  testref/hofx3dcrtm.test
+  testref/hofx_3d.test
+  testref/hofx_3dcrtm.test
+  testref/hofx_4d.test
   testref/parameters_bump_cov_lct.test
 )
 
@@ -494,17 +494,17 @@ soca_add_test( NAME dirac_horizfilt
 #
 
 # h(x) executables
-soca_add_test( NAME hofx3d
-               EXE  soca_hofx3d.x
+soca_add_test( NAME hofx_3d
+               EXE  soca_hofx_nomodel.x
                TEST_DEPENDS test_soca_gridgen )
 
 if( ${CRTM_FOUND} )
- soca_add_test( NAME hofx3dcrtm
-                EXE  soca_hofx3d.x
+ soca_add_test( NAME hofx_3dcrtm
+                EXE  soca_hofx_nomodel.x
                 TEST_DEPENDS test_soca_gridgen )
 endif()
 
-soca_add_test( NAME hofx
+soca_add_test( NAME hofx_4d
                EXE  soca_hofx.x
                NOTRAPFPE
                TEST_DEPENDS test_soca_gridgen )
