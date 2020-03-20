@@ -49,9 +49,11 @@ type :: soca_field
   character(len=:),     allocatable :: io_file    !< the (optional) restart file domain
                                                   ! (ocn, sfc, ice)
 contains
-  procedure :: delete  => soca_field_delete
-  procedure :: copy    => soca_field_copy
+  procedure :: copy            => soca_field_copy
+  procedure :: delete          => soca_field_delete
+
   procedure :: check_congruent => soca_field_check_congruent
+  procedure :: update_halo     => soca_field_update_halo
 end type soca_field
 
 ! ------------------------------------------------------------------------------
@@ -78,6 +80,8 @@ contains
   procedure :: get    => soca_fields_get
   procedure :: has    => soca_fields_has
   procedure :: check_congruent => soca_fields_check_congruent
+
+  procedure :: update_halos => soca_fields_update_halos
 
   ! math
   procedure :: add      => soca_fields_add
@@ -126,6 +130,17 @@ subroutine soca_field_copy(self, rhs)
   self%io_file = rhs%io_file
   self%mask => rhs%mask
 end subroutine soca_field_copy
+
+
+! ------------------------------------------------------------------------------
+!
+subroutine soca_field_update_halo(self, geom)
+  class(soca_field),     intent(inout) :: self
+  type(soca_geom), pointer, intent(in) :: geom
+
+  ! TODO have field keep a pointer to its relevant sections of geom
+  call mpp_update_domains(self%val, geom%Domain%mpp_domain)
+end subroutine soca_field_update_halo
 
 
 ! ------------------------------------------------------------------------------
@@ -397,6 +412,15 @@ function soca_fields_has(self, name) result(res)
   end do
 end function
 
+! ------------------------------------------------------------------------------
+subroutine soca_fields_update_halos(self)
+  class(soca_fields), intent(inout) :: self
+  integer :: i
+
+  do i=1,size(self%fields)
+    call self%fields(i)%update_halo(self%geom)
+  end do
+end subroutine soca_fields_update_halos
 
 ! ------------------------------------------------------------------------------
 !> reset all fields to zero

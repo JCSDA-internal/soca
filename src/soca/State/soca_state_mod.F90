@@ -10,8 +10,6 @@ use soca_fields_mod
 use oops_variables_mod
 use kinds, only: kind_real
 use fckit_log_module, only: log, fckit_log
-use mpp_domains_mod, only : mpp_update_domains
-! TODO, have a field method to update domains
 
 implicit none
 private
@@ -93,8 +91,8 @@ subroutine soca_state_rotate(self, coordinate, uvars, vvars)
     deallocate(un, vn)
 
     ! update halos
-    call mpp_update_domains(uocn%val, self%geom%Domain%mpp_domain)
-    call mpp_update_domains(vocn%val, self%geom%Domain%mpp_domain)
+    call uocn%update_halo(self%geom)
+    call vocn%update_halo(self%geom)
   end do
 end subroutine soca_state_rotate
 

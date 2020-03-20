@@ -10,8 +10,6 @@ use soca_geom_iter_mod, only : soca_geom_iter
 use kinds, only: kind_real
 use fckit_configuration_module, only: fckit_configuration
 use fckit_mpi_module, only: fckit_mpi_comm
-! TODO remove this once update is added to field
-use mpp_domains_mod, only : mpp_update_domains
 use random_mod, only: normal_distribution
 
 implicit none
@@ -60,10 +58,7 @@ subroutine soca_increment_random(self)
   end do
 
   ! update domains
-  do i=1, size(self%fields)
-    field => self%fields(i)
-    call mpp_update_domains(field%val, self%geom%Domain%mpp_domain)
-  end do
+  call self%update_halos()
 end subroutine soca_increment_random
 
 ! ------------------------------------------------------------------------------
