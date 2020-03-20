@@ -137,14 +137,14 @@ namespace soca {
                            const oops::Variables & v) const {
     Log::trace() << "State::State rotate from logical to geographical North."
                  << std::endl;
-    fields_->rotate2north(u, v);
+    soca_field_rotate2north_f90(toFortran(), u, v);
   }
   // -----------------------------------------------------------------------------
   void State::rotate2grid(const oops::Variables & u,
                           const oops::Variables & v) const {
     Log::trace() << "State::State rotate from geographical to logical North."
     << std::endl;
-    fields_->rotate2grid(u, v);
+    soca_field_rotate2grid_f90(toFortran(), u, v);
   }
   // -----------------------------------------------------------------------------
   /// Interactions with Increments
