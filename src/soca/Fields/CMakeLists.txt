@@ -1,6 +1,4 @@
 soca_target_sources(
-  Fields.cc
-  Fields.h
   FieldsFortran.h
   soca_fields_mod.F90
   soca_fields.interface.F90

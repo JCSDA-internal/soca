@@ -8,7 +8,6 @@
 #include <ostream>
 #include <string>
 
-#include "soca/Fields/Fields.h"
 #include "soca/Geometry/Geometry.h"
 #include "soca/Increment/Increment.h"
 #include "soca/State/State.h"
@@ -31,7 +30,7 @@ namespace soca {
     soca_horizfilt_setup_f90(keyFtnConfig_,
                              &configc,
                              geom_->toFortran(),
-                             traj_.fields().toFortran(),
+                             traj_.toFortran(),
                              vars_);
 
     // Get number of iterations
@@ -48,8 +47,8 @@ namespace soca {
     for (unsigned int iter = 0; iter < niter_; ++iter) {
       dx_tmp = dxout;
       soca_horizfilt_mult_f90(keyFtnConfig_,
-                              dx_tmp.fields().toFortran(),
-                              dxout.fields().toFortran(),
+                              dx_tmp.toFortran(),
+                              dxout.toFortran(),
                               geom_->toFortran());
     }
   }
@@ -65,8 +64,8 @@ namespace soca {
     for (unsigned int iter = 0; iter < niter_; ++iter) {
       dx_tmp = dxout;
       soca_horizfilt_multad_f90(keyFtnConfig_,
-                                dx_tmp.fields().toFortran(),
-                                dxout.fields().toFortran(),
+                                dx_tmp.toFortran(),
+                                dxout.toFortran(),
                                 geom_->toFortran());
     }
   }

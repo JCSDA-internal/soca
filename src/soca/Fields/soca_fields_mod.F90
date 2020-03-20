@@ -424,8 +424,8 @@ end subroutine soca_fields_zeros
 ! ------------------------------------------------------------------------------
 ! TODO, generalize by removing the hardcoded int=>field_name
 subroutine soca_fields_dirac(self, f_conf)
-  class(soca_fields),         intent(inout) :: self
-  type(fckit_configuration), intent(in)    :: f_conf   !< Configuration
+  class(soca_fields),           intent(inout) :: self
+  type(fckit_configuration), value, intent(in):: f_conf   !< Configuration
 
   integer :: isc, iec, jsc, jec
   integer :: ndir,n, z
