@@ -4,22 +4,19 @@ Geometry:
   num_sno_lev: 1
   read_soca_grid: grid
 
-Model:
-  name: SOCA
-  tstep: PT1H
-  advance_mom6: 1
+Forecasts:
   variables: [cicen, hicen, socn, tocn, ssh, hocn, sw, lhf, shf, lw, us]
-
-Initial Condition:
-  read_from_file: 1
-  date: 2018-04-15T00:00:00Z
-  basename: ./INPUT/
-  ocn_filename: MOM.res.nc
-  ice_filename: ice_model.res.nc
+  state:
+  - date: 2018-04-15T00:00:00Z
+    read_from_file: 1
+    basename: ./INPUT/
+    ocn_filename: MOM.res.nc
+    ice_filename: ice_model.res.nc
+    sfc_filename: sfc.res.nc
 
 Assimilation Window:
-  Begin: 2018-04-15T00:00:00Z
-  Length: PT3H
+  window_begin: 2018-04-14T00:00:00Z
+  window_length: P2D
 
 Observations:
   ObsTypes:
@@ -34,9 +31,6 @@ Observations:
       name: CoolSkin
     Covariance:
       covariance: diagonal
-    ObsFilter:
-    - Filter: GOMsaver
-      filename: ./Data/coolskingeovl.nc
 
   - ObsSpace:
       name: SeaSurfaceTemp
@@ -105,3 +99,4 @@ Observations:
       covariance: diagonal
 
 #    - ObsType: SeaIceThickness
+
