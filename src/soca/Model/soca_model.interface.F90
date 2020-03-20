@@ -14,7 +14,7 @@ use duration_mod, only: duration, duration_seconds, assignment(=)
 use soca_geom_mod, only: soca_geom
 use soca_geom_mod_c, only: soca_geom_registry
 use soca_state_mod
-use soca_state_mod_c
+use soca_state_reg
 use soca_model_mod, only: soca_model, soca_setup, soca_delete, soca_propagate, &
                           soca_initialize_integration, soca_finalize_integration
 

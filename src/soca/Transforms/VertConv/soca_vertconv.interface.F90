@@ -9,9 +9,9 @@ use iso_c_binding
 use fckit_configuration_module, only: fckit_configuration
 use kinds, only: kind_real
 use soca_increment_mod
-use soca_increment_mod_c
+use soca_increment_reg
 use soca_state_mod
-use soca_state_mod_c
+use soca_state_reg
 use soca_vertconv_mod, only: soca_vertconv, soca_conv_setup, &
                              soca_conv, soca_conv_ad
 

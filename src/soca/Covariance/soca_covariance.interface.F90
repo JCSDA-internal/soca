@@ -11,9 +11,9 @@ use oops_variables_mod
 use soca_geom_mod, only : soca_geom
 use soca_geom_mod_c, only : soca_geom_registry
 use soca_increment_mod
-use soca_increment_mod_c
+use soca_increment_reg
 use soca_state_mod
-use soca_state_mod_c
+use soca_state_reg
 use soca_covariance_mod, only: soca_cov, soca_cov_setup, soca_cov_delete, &
                                soca_cov_C_mult, soca_cov_sqrt_C_mult
 

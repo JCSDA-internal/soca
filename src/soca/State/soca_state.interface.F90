@@ -21,32 +21,22 @@ use ufo_geovals_mod, only: ufo_geovals
 use soca_geom_mod, only: soca_geom
 use soca_geom_mod_c, only: soca_geom_registry
 use soca_state_mod
+use soca_increment_mod
+use soca_increment_reg
 use soca_interpfields_mod, only: getvalues, getvalues_ad
 use soca_getvaltraj_mod, only: soca_getvaltraj
 use soca_getvaltraj_mod_c, only: soca_getvaltraj_registry
 use soca_geom_iter_mod, only: soca_geom_iter, soca_geom_iter_registry
+use soca_state_reg
 
 implicit none
 
 private
-public :: soca_state_registry
-
-#define LISTED_TYPE soca_state
-
-!> Linked list interface - defines registry_t type
-#include "oops/util/linkedList_i.f"
-
-!> Global registry
-type(registry_t) :: soca_state_registry
 
 ! ------------------------------------------------------------------------------
 contains
 ! ------------------------------------------------------------------------------
 
-!> Linked list implementation
-#include "oops/util/linkedList_c.f"
-
-! ------------------------------------------------------------------------------
 
 subroutine soca_state_create_c(c_key_self, c_key_geom, c_vars) bind(c,name='soca_state_create_f90')
     integer(c_int), intent(inout) :: c_key_self !< Handle to field
@@ -134,11 +124,11 @@ subroutine soca_state_add_incr_c(c_key_self,c_key_rhs) bind(c,name='soca_state_a
     integer(c_int), intent(in) :: c_key_self
     integer(c_int), intent(in) :: c_key_rhs
 
-    type(soca_state), pointer :: self
-    type(soca_state), pointer :: rhs
+    type(soca_state),     pointer :: self
+    type(soca_increment), pointer :: rhs
 
     call soca_state_registry%get(c_key_self,self)
-    call soca_state_registry%get(c_key_rhs,rhs)
+    call soca_increment_registry%get(c_key_rhs,rhs)
 
     call self%add_incr(rhs)
 

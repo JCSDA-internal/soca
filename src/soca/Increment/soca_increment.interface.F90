@@ -22,18 +22,14 @@ use soca_getvaltraj_mod, only: soca_getvaltraj
 use soca_getvaltraj_mod_c, only: soca_getvaltraj_registry
 use soca_geom_iter_mod, only: soca_geom_iter, soca_geom_iter_registry
 use soca_increment_mod
+use soca_increment_reg
+use soca_state_mod
+use soca_state_reg
 
 implicit none
 private
 
-#define LISTED_TYPE soca_increment
-#include "oops/util/linkedList_i.f"
-type(registry_t), public :: soca_increment_registry
-
 contains
-
-#include "oops/util/linkedList_c.f"
-
 
 subroutine soca_increment_create_c(c_key_self, c_key_geom, c_vars) bind(c,name='soca_increment_create_f90')
     integer(c_int), intent(inout) :: c_key_self !< Handle to field
@@ -229,12 +225,12 @@ subroutine soca_increment_create_c(c_key_self, c_key_geom, c_vars) bind(c,name='
     integer(c_int), intent(in) :: c_key_x2
 
     type(soca_increment), pointer :: lhs
-    type(soca_increment), pointer :: x1
-    type(soca_increment), pointer :: x2
+    type(soca_state),     pointer :: x1
+    type(soca_state),     pointer :: x2
 
     call soca_increment_registry%get(c_key_lhs,lhs)
-    call soca_increment_registry%get(c_key_x1,x1)
-    call soca_increment_registry%get(c_key_x2,x2)
+    call soca_state_registry%get(c_key_x1,x1)
+    call soca_state_registry%get(c_key_x2,x2)
 
     call lhs%diff_incr(x1,x2)
 

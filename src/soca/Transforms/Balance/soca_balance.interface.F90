@@ -8,9 +8,9 @@ module soca_balance_mod_c
 use iso_c_binding
 use fckit_configuration_module, only: fckit_configuration
 use soca_state_mod
-use soca_state_mod_c
+use soca_state_reg
 use soca_increment_mod
-use soca_increment_mod_c
+use soca_increment_reg
 use soca_balance_mod, only: soca_balance_config, &
                             soca_balance_setup, soca_balance_delete, &
                             soca_balance_mult, soca_balance_multad, &

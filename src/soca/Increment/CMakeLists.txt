@@ -4,4 +4,5 @@ soca_target_sources(
   IncrementFortran.h
   soca_increment_mod.F90
   soca_increment.interface.F90
+  soca_increment.reg.F90
 )

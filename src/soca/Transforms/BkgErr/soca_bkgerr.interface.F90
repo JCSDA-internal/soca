@@ -8,9 +8,9 @@ module soca_bkgerr_mod_c
 use iso_c_binding
 use fckit_configuration_module, only: fckit_configuration
 use soca_state_mod
-use soca_state_mod_c
+use soca_state_reg
 use soca_increment_mod
-use soca_increment_mod_c
+use soca_increment_reg
 use soca_bkgerr_mod, only: soca_bkgerr_config, &
                            soca_bkgerr_setup, soca_bkgerr_mult
 
