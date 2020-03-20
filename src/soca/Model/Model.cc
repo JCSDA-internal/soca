@@ -9,7 +9,6 @@
 
 #include "soca/Traits.h"
 
-#include "soca/Fields/Fields.h"
 #include "soca/Geometry/Geometry.h"
 #include "soca/Model/Model.h"
 #include "soca/Model/ModelFortran.h"
@@ -53,27 +52,23 @@ namespace soca {
   }
   // -----------------------------------------------------------------------------
   void Model::initialize(State & xx) const {
-    ASSERT(xx.fields().isForModel(true));
-    soca_initialize_integration_f90(keyConfig_, xx.fields().toFortran());
-    Log::debug() << "Model::initialize" << xx.fields() << std::endl;
+    soca_initialize_integration_f90(keyConfig_, xx.toFortran());
+    Log::debug() << "Model::initialize" << std::endl;
   }
   // -----------------------------------------------------------------------------
   void Model::step(State & xx, const ModelBias &) const {
-    ASSERT(xx.fields().isForModel(true));
     Log::trace() << "Model::Time: " << xx.validTime() << std::endl;
     util::DateTime * modeldate = &xx.validTime();
-    soca_propagate_f90(keyConfig_, xx.fields().toFortran(), &modeldate);
+    soca_propagate_f90(keyConfig_, xx.toFortran(), &modeldate);
     xx.validTime() += tstep_;
   }
   // -----------------------------------------------------------------------------
   void Model::finalize(State & xx) const {
-    ASSERT(xx.fields().isForModel(true));
-    soca_finalize_integration_f90(keyConfig_, xx.fields().toFortran());
-    Log::debug() << "Model::finalize" << xx.fields() << std::endl;
+    soca_finalize_integration_f90(keyConfig_, xx.toFortran());
+    Log::debug() << "Model::finalize" << std::endl;
   }
   // -----------------------------------------------------------------------------
   int Model::saveTrajectory(State & xx, const ModelBias &) const {
-    ASSERT(xx.fields().isForModel(true));
     int ftraj = 0;
     xx.validTime() += tstep_;
     return ftraj;

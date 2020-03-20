@@ -9,7 +9,6 @@
 
 #include "soca/Covariance/ErrorCovariance.h"
 #include "soca/Covariance/ErrorCovarianceFortran.h"
-#include "soca/Fields/Fields.h"
 #include "soca/Geometry/Geometry.h"
 #include "soca/Increment/Increment.h"
 #include "soca/State/State.h"
@@ -37,7 +36,7 @@ namespace soca {
     const eckit::Configuration * configc = &conf;
     vars_ = oops::Variables(conf);
     soca_b_setup_f90(keyFtnConfig_, &configc, resol.toFortran(),
-                     bkg.fields().toFortran(), vars_);
+                     bkg.toFortran(), vars_);
     Log::trace() << "ErrorCovariance created" << std::endl;
   }
 
@@ -60,8 +59,7 @@ namespace soca {
   void ErrorCovariance::multiply(const Increment & dxin, Increment & dxout)
     const {
     dxout = dxin;
-    soca_b_mult_f90(keyFtnConfig_, dxin.fields().toFortran(),
-                    dxout.fields().toFortran());
+    soca_b_mult_f90(keyFtnConfig_, dxin.toFortran(), dxout.toFortran());
     Log::trace() << "ErrorCovariance multiply" << std::endl;
   }
 
@@ -80,7 +78,7 @@ namespace soca {
 
   //  void ErrorCovariance::doRandomize(Increment & dx) const {
   void ErrorCovariance::randomize(Increment & dx) const {
-    soca_b_randomize_f90(keyFtnConfig_, dx.fields().toFortran());
+    soca_b_randomize_f90(keyFtnConfig_, dx.toFortran());
   }
 
   // -----------------------------------------------------------------------------

@@ -8,7 +8,6 @@
 #include <ostream>
 #include <string>
 
-#include "soca/Fields/Fields.h"
 #include "soca/Geometry/Geometry.h"
 #include "soca/Increment/Increment.h"
 #include "soca/State/State.h"
@@ -30,7 +29,7 @@ namespace soca {
     const eckit::Configuration * configc = &conf;
     soca_bkgerrfilt_setup_f90(keyFtnConfig_,
                               &configc,
-                              traj_.fields().toFortran());
+                              traj_.toFortran());
   }
   // -----------------------------------------------------------------------------
   BkgErrFilt::~BkgErrFilt() {
@@ -39,9 +38,7 @@ namespace soca {
   // -----------------------------------------------------------------------------
   void BkgErrFilt::multiply(const Increment & dxa, Increment & dxm) const {
     // dxm = K dxa
-    soca_bkgerrfilt_mult_f90(keyFtnConfig_,
-                         dxa.fields().toFortran(),
-                         dxm.fields().toFortran());
+    soca_bkgerrfilt_mult_f90(keyFtnConfig_, dxa.toFortran(), dxm.toFortran());
   }
   // -----------------------------------------------------------------------------
   void BkgErrFilt::multiplyInverse(const Increment & dxm,
@@ -51,9 +48,7 @@ namespace soca {
   // -----------------------------------------------------------------------------
   void BkgErrFilt::multiplyAD(const Increment & dxm, Increment & dxa) const {
     // dxa = K^T dxm
-    soca_bkgerrfilt_mult_f90(keyFtnConfig_,
-                         dxm.fields().toFortran(),
-                         dxa.fields().toFortran());
+    soca_bkgerrfilt_mult_f90(keyFtnConfig_, dxm.toFortran(), dxa.toFortran());
   }
   // -----------------------------------------------------------------------------
   void BkgErrFilt::multiplyInverseAD(const Increment & dxa,

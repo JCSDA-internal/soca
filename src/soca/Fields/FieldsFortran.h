@@ -38,16 +38,16 @@ namespace soca {
     void soca_field_self_schur_f90(const F90flds &, const F90flds &);
     void soca_field_random_f90(const F90flds &);
     void soca_field_dirac_f90(const F90flds &,
-                              const eckit::Configuration * const *);
+                              const eckit::Configuration * const &);
     void soca_field_add_incr_f90(const F90flds &, const F90flds &);
     void soca_field_diff_incr_f90(const F90flds &, const F90flds &,
                                   const F90flds &);
     void soca_field_change_resol_f90(const F90flds &, const F90flds &);
     void soca_field_read_file_f90(const F90flds &,
-                                  const eckit::Configuration * const *,
+                                  const eckit::Configuration * const &,
                                   util::DateTime * const *);
     void soca_field_write_file_f90(const F90flds &,
-                                   const eckit::Configuration * const *,
+                                   const eckit::Configuration * const &,
                                    const util::DateTime * const *);
     void soca_field_interp_nl_f90(const F90flds &,
                                   const F90locs &,
