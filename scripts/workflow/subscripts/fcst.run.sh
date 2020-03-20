@@ -4,11 +4,11 @@ cat <<EOF
 
 
 
-#================================================================================ 
-#================================================================================ 
+#================================================================================
+#================================================================================
 # fcst.run.sh
 #  Runs a MOM6/SIS2 forecast
-#================================================================================ 
+#================================================================================
 
 EOF
 
@@ -29,7 +29,7 @@ envar+=("WORK_DIR")          # temporary working directory for this script
 set +u
 for v in ${envar[@]}; do
     if [[ -z "${!v}" ]]; then
-	echo "ERROR: env var $v is not set."; exit 1
+    echo "ERROR: env var $v is not set."; exit 1
     fi
     echo " $v = ${!v}"
 done
@@ -59,6 +59,12 @@ mkdir RESTART
 ln -s $MOM_CONFIG/* .
 ln -s $MOM_EXE .
 
+if [[ "${FORC_ATM}" == "cfsr" ]]; then
+    ln -sf data_table.cfsr data_table
+elif [[ "${FORC_ATM}" == "merra2" ]]; then
+    ln -sf data_table.merra2 data_table
+fi
+
 # link model static input files and ICs
 mkdir INPUT
 cd INPUT
@@ -66,11 +72,11 @@ ln -s $MOM_DATA/* .
 if [[ $FCST_RESTART == 1 ]]; then
     ln -s $RESTART_DIR_IN/* .
 else
-    ln -s $MOM_IC ic.nc   
+    ln -s $MOM_IC ic.nc
 fi
 cd ../
 
-# link the forcing 
+# link the forcing
 ln -s $FORC_DIR FORC
 
 # create the time dependent mom6 namelist file
