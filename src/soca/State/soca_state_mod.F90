@@ -5,15 +5,98 @@
 
 module soca_state_mod
 
-    use soca_fields_mod
+use soca_geom_mod
+use soca_fields_mod
+use oops_variables_mod
+use kinds, only: kind_real
+use fckit_log_module, only: log, fckit_log
+use mpp_domains_mod, only : mpp_update_domains
+! TODO, have a field method to update domains
 
-    implicit none
-    private
+implicit none
+private
 
-    type, public, extends(soca_fields) :: soca_state
+type, public, extends(soca_fields) :: soca_state
 
-    contains
-    end type
+contains
+
+  ! constructors / destructors
+  procedure :: create => soca_state_create
+
+  procedure :: rotate => soca_state_rotate
+end type
+
+!------------------------------------------------------------------------------
+contains
+!------------------------------------------------------------------------------
+
+!------------------------------------------------------------------------------
+subroutine soca_state_create(self, geom, vars)
+  class(soca_state),         intent(inout) :: self
+  type(soca_geom),  pointer, intent(inout) :: geom
+  type(oops_variables),         intent(in) :: vars
+
+  ! additional internal fields need to be created
+  ! TODO
+
+  call self%soca_fields%create(geom, vars)
+end subroutine soca_state_create
 
 
-    end module
+! ------------------------------------------------------------------------------
+!> Rotate horizontal vector
+subroutine soca_state_rotate(self, coordinate, uvars, vvars)
+  class(soca_state),  intent(inout) :: self
+  character(len=*),      intent(in) :: coordinate ! "north" or "grid"
+  type(oops_variables),  intent(in) :: uvars
+  type(oops_variables),  intent(in) :: vvars
+
+  integer :: z, i
+  type(soca_field), pointer :: uocn, vocn
+  real(kind=kind_real), allocatable :: un(:,:,:), vn(:,:,:)
+  character(len=64) :: u_names, v_names
+
+  do i=1, uvars%nvars()
+    ! get (u, v) pair and make a copy
+    u_names = trim(uvars%variable(i))
+    v_names = trim(vvars%variable(i))
+    if (self%has(u_names).and.self%has(v_names)) then
+      call fckit_log%info("rotating "//trim(u_names)//" "//trim(v_names))
+      call self%get(u_names, uocn)
+      call self%get(v_names, vocn)
+    else
+      ! Skip if no pair found.
+      call fckit_log%info("not rotating "//trim(u_names)//" "//trim(v_names))
+      cycle
+    end if
+    allocate(un(size(uocn%val,1),size(uocn%val,2),size(uocn%val,3)))
+    allocate(vn(size(uocn%val,1),size(uocn%val,2),size(uocn%val,3)))
+    un = uocn%val
+    vn = vocn%val
+
+    select case(trim(coordinate))
+    case("north")   ! rotate (uocn, vocn) to geo north
+      do z=1,uocn%nz
+        uocn%val(:,:,z) = &
+        (self%geom%cos_rot(:,:)*un(:,:,z) + self%geom%sin_rot(:,:)*vn(:,:,z)) * uocn%mask(:,:)
+        vocn%val(:,:,z) = &
+        (- self%geom%sin_rot(:,:)*un(:,:,z) + self%geom%cos_rot(:,:)*vn(:,:,z)) * vocn%mask(:,:)
+      end do
+    case("grid")
+      do z=1,uocn%nz
+        uocn%val(:,:,z) = &
+        (self%geom%cos_rot(:,:)*un(:,:,z) - self%geom%sin_rot(:,:)*vn(:,:,z)) * uocn%mask(:,:)
+        vocn%val(:,:,z) = &
+        (self%geom%sin_rot(:,:)*un(:,:,z) + self%geom%cos_rot(:,:)*vn(:,:,z)) * vocn%mask(:,:)
+      end do
+    end select
+    deallocate(un, vn)
+
+    ! update halos
+    call mpp_update_domains(uocn%val, self%geom%Domain%mpp_domain)
+    call mpp_update_domains(vocn%val, self%geom%Domain%mpp_domain)
+  end do
+end subroutine soca_state_rotate
+
+
+end module
