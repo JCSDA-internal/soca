@@ -104,14 +104,18 @@ subroutine soca_bkgerrgodas_mult(self, dxa, dxm)
   type(soca_field), pointer :: field_m, field_e, field_a
   integer :: isc, iec, jsc, jec, i, j, n
 
+  ! make sure fields are the right shape
+  call dxa%check_congruent(dxm)
+  call dxa%check_subset(self%std_bkgerr)
+
   ! Indices for compute domain (no halo)
   isc = self%bkg%geom%isc ; iec = self%bkg%geom%iec
   jsc = self%bkg%geom%jsc ; jec = self%bkg%geom%jec
 
-  do n=1,size(self%std_bkgerr%fields)
-    field_e => self%std_bkgerr%fields(n)
-    call dxm%get(field_e%name, field_m)
-    call dxa%get(field_e%name, field_a)
+  do n=1,size(dxa%fields)
+    field_a => dxa%fields(n)
+    call self%std_bkgerr%get(field_a%name, field_e)
+    call dxm%get(field_a%name, field_m)
     do i = isc, iec
       do j = jsc, jec
         if (self%bkg%geom%mask2d(i,j).eq.1) then
@@ -132,7 +136,7 @@ subroutine soca_bkgerrgodas_tocn(self)
   integer :: i, j, k
   integer :: iter, niter = 1
   type(soca_omb_stats) :: sst
-  type(soca_field), pointer :: tocn_b, tocn_e, hocn
+  type(soca_field), pointer :: tocn_b, tocn_e, hocn, layer_depth
 
   ! Get compute domain indices
   domain%is = self%bkg%geom%isc ; domain%ie = self%bkg%geom%iec
@@ -153,6 +157,7 @@ subroutine soca_bkgerrgodas_tocn(self)
   call self%bkg%get("tocn", tocn_b)
   call self%std_bkgerr%get("tocn", tocn_e)
   call self%bkg%get("hocn", hocn)
+  call self%bkg%get("layer_depth",layer_depth)
 
   ! Loop over compute domain
   do i = domain%is, domain%ie
@@ -165,7 +170,7 @@ subroutine soca_bkgerrgodas_tocn(self)
 
            ! Step 2: sigb based on efolding scale
            sig2(:) = self%bounds%t_min + (sst%bgerr_model(i,j)-self%bounds%t_min)*&
-                &exp((self%bkg%layer_depth(i,j,1)-self%bkg%layer_depth(i,j,:))&
+                &exp((layer_depth%val(i,j,1)-layer_depth%val(i,j,:))&
                   &/self%t_efold)
 
            ! Step 3: sigb = max(sig1, sig2)
@@ -234,7 +239,7 @@ subroutine soca_bkgerrgodas_socn(self)
   type(soca_bkgerrgodas_config),     intent(inout) :: self
   !
   type(soca_domain_indices), target :: domain
-  type(soca_field), pointer :: field
+  type(soca_field), pointer :: field, mld, layer_depth
   integer :: i, j, k
   real(kind=kind_real) :: r
 
@@ -251,18 +256,21 @@ subroutine soca_bkgerrgodas_socn(self)
 
   ! Loop over compute domain
   call self%std_bkgerr%get("socn", field)
+  call self%bkg%get("mld", mld)
+  call self%bkg%get("layer_depth", layer_depth)
+
   do i = domain%is, domain%ie
     do j = domain%js, domain%je
       if (self%bkg%geom%mask2d(i,j) /= 1)  cycle
 
       do k = 1, self%bkg%geom%nzo
-        if ( self%bkg%layer_depth(i,j,k) <= self%bkg%mld(i,j)) then
+        if ( layer_depth%val(i,j,k) <= mld%val(i,j,1)) then
           ! if in the mixed layer, set to the maximum value
           field%val(i,j,k) = self%bounds%s_max
         else
           ! otherwise, taper to the minium value below MLD
           r = 0.1 + 0.45 * (1-tanh( 2 * log( &
-            & self%bkg%layer_depth(i,j,k) / self%bkg%mld(i,j) )))
+            & layer_depth%val(i,j,k) / mld%val(i,j,1) )))
           field%val(i,j,k) = max(self%bounds%s_min, r*self%bounds%s_max)
         end if
       end do

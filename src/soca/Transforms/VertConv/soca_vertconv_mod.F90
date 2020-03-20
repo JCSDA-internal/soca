@@ -69,21 +69,23 @@ subroutine soca_calc_lz(self, i, j, lz)
   real(kind=kind_real), intent(inout) :: lz(:)
   real(kind=kind_real) :: mld, z
   integer :: k
-  type(soca_field), pointer :: hocn
+  type(soca_field), pointer :: hocn, mld_fld, layer_depth
 
   ! minium scale is based on layer thickness
   call self%bkg%get("hocn", hocn)
+  call self%bkg%get("mld", mld_fld)
+  call self%bkg%get("layer_depth", layer_depth)
   lz = self%lz_min
   lz = max(lz, self%scale_layer_thick*abs(hocn%val(i,j,:)))
 
   ! if the upper Lz should be calculated from the MLD
   ! interpolate values from top to bottom of ML
   if ( self%lz_mld /= 0 ) then
-     mld = self%bkg%mld(i,j)
+     mld = mld_fld%val(i,j, 1)
      mld = min( mld, self%lz_mld_max)
      mld = max( mld, self%lz_min)
      do k=1, size(lz)
-        z = self%bkg%layer_depth(i,j, k)
+        z = layer_depth%val(i,j, k)
         if (z >= mld) exit  ! end of ML, exit loop
         lz(k) = max(lz(k), lz(k) + (mld - lz(k)) * (1.0 - z/mld))
      end do
@@ -103,9 +105,10 @@ subroutine soca_conv (self, convdx, dx)
   integer :: nl, j, k, id, jd, n
   type(mpl_type) :: mpl
 
-  type(soca_field), pointer :: field_dx, field_convdx
+  type(soca_field), pointer :: field_dx, field_convdx, layer_depth
 
-  nl = size(self%bkg%layer_depth,3)
+  call self%bkg%get("layer_depth", layer_depth)
+  nl = layer_depth%nz
 
   allocate(z(nl), lz(nl))
 
@@ -124,7 +127,7 @@ subroutine soca_conv (self, convdx, dx)
           call soca_calc_lz(self, id, jd, lz)
 
           ! perform convolution
-          z(:) = self%bkg%layer_depth(id,jd,:)
+          z(:) = layer_depth%val(id,jd,:)
           do j = 1, nl
             field_convdx%val(id,jd,j) = 0.0d0
             do k = 1,nl
@@ -152,9 +155,10 @@ subroutine soca_conv_ad (self, convdx, dx)
   real(kind=kind_real) :: dist2, coef
   integer :: nl, j, k, id, jd, n
   type(mpl_type) :: mpl
-  type(soca_field), pointer :: field_dx, field_convdx
+  type(soca_field), pointer :: field_dx, field_convdx, layer_depth
 
-  nl = size(self%bkg%layer_depth,3)
+  call self%bkg%get("layer_depth", layer_depth)
+  nl = layer_depth%nz
   allocate(z(nl), lz(nl))
 
   do n=1,size(dx%fields)
@@ -172,7 +176,7 @@ subroutine soca_conv_ad (self, convdx, dx)
           call soca_calc_lz(self, id, jd, lz)
 
           ! perform convolution
-          z(:) = self%bkg%layer_depth(id,jd,:)
+          z(:) = layer_depth%val(id,jd,:)
           field_dx%val(id,jd,:) = 0.0d0
           do j = nl, 1, -1
             do k = nl, 1, -1
