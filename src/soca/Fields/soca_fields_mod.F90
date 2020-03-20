@@ -11,9 +11,6 @@ use fckit_configuration_module, only: fckit_configuration
 use fckit_log_module, only: log, fckit_log
 use fckit_mpi_module, only: fckit_mpi_comm, fckit_mpi_min, fckit_mpi_max, &
                             fckit_mpi_sum
-use unstructured_grid_mod, only: unstructured_grid, &
-                                 allocate_unstructured_grid_coord, &
-                                 allocate_unstructured_grid_field
 use datetime_mod, only: datetime, datetime_set
 use duration_mod, only: duration
 use kinds, only: kind_real
@@ -28,7 +25,6 @@ use MOM_remapping, only : remapping_CS, initialize_remapping, remapping_core_h, 
 use soca_geom_mod, only : soca_geom
 use soca_fieldsutils_mod, only: soca_genfilename, fldinfo
 use soca_utils, only: soca_mld
-use soca_geostrophy_mod
 
 implicit none
 
@@ -68,38 +64,33 @@ type :: soca_fields
 
 contains
   ! constructors / destructors
-  procedure :: copy   => soca_fields_copy
   procedure :: create => soca_fields_create
+  procedure :: copy   => soca_fields_copy
   procedure :: delete => soca_fields_delete
 
-  ! field getters
+  ! field getters/checkers
   procedure :: get    => soca_fields_get
   procedure :: has    => soca_fields_has
   procedure :: check_congruent => soca_fields_check_congruent
   procedure :: check_subset    => soca_fields_check_subset
 
-  procedure :: update_halos => soca_fields_update_halos
-
   ! math
   procedure :: add      => soca_fields_add
-  procedure :: add_incr => soca_fields_add_incr
   procedure :: axpy     => soca_fields_axpy
-  procedure :: diff_incr=> soca_fields_diff_incr
   procedure :: dot_prod => soca_fields_dotprod
   procedure :: gpnorm   => soca_fields_gpnorm
   procedure :: mul      => soca_fields_mul
-  procedure :: schur    => soca_fields_schur
   procedure :: sub      => soca_fields_sub
   procedure :: zeros    => soca_fields_zeros
 
   ! IO
-  procedure :: from_ug   => soca_fields_from_ug
-  procedure :: to_ug     => soca_fields_to_ug
-  procedure :: ug_coord  => soca_fields_ug_coord
-
   procedure :: read      => soca_fields_read
   procedure :: write_file=> soca_fields_write_file
   procedure :: write_rst => soca_fields_write_rst
+
+  ! misc
+  procedure :: update_halos => soca_fields_update_halos
+
 end type soca_fields
 
 
@@ -437,23 +428,6 @@ end subroutine soca_fields_add
 
 
 ! ------------------------------------------------------------------------------
-!> perform a shur product between two sets of fields
-subroutine soca_fields_schur(self,rhs)
-  class(soca_fields), intent(inout) :: self
-  class(soca_fields),     intent(in) :: rhs
-  integer :: i
-
-  ! make sure fields are same shape
-  call self%check_congruent(rhs)
-
-  ! schur product
-  do i=1,size(self%fields)
-    self%fields(i)%val = self%fields(i)%val * rhs%fields(i)%val
-  end do
-end subroutine soca_fields_schur
-
-
-! ------------------------------------------------------------------------------
 !> subtract two sets of fields
 subroutine soca_fields_sub(self,rhs)
   class(soca_fields), intent(inout) :: self
@@ -551,141 +525,6 @@ subroutine soca_fields_dotprod(fld1,fld2,zprod)
   f_comm = fckit_mpi_comm()
   call f_comm%allreduce(local_zprod, zprod, fckit_mpi_sum())
 end subroutine soca_fields_dotprod
-
-
-! ------------------------------------------------------------------------------
-!> add a set of increments to the set of fields
-subroutine soca_fields_add_incr(self, rhs)
-  class(soca_fields), intent(inout) :: self
-  class(soca_fields),  intent(in)    :: rhs
-
-  integer, save :: cnt_outer = 1
-  character(len=800) :: filename, str_cnt
-  type(soca_field), pointer :: fld, fld_r
-  integer :: i, k
-
-  real(kind=kind_real) :: min_ice = 1e-6_kind_real
-  real(kind=kind_real) :: amin = 1e-6_kind_real
-  real(kind=kind_real) :: amax = 10.0_kind_real
-  real(kind=kind_real), allocatable :: alpha(:,:), aice_bkg(:,:), aice_ana(:,:)
-  type(soca_geostrophy_type) :: geostrophy
-  type(soca_fields) :: incr_geo
-  type(soca_field), pointer :: t, s, u, v, h, dt, ds, du, dv
-
-
-  ! make sure rhs is a subset of self
-  call rhs%check_subset(self)
-
-  ! for each field that exists in rhs, add to self
-  do i=1,size(rhs%fields)
-    fld_r => rhs%fields(i)
-    call self%get(fld_r%name, fld)
-
-    select case (fld%name)
-    case ('cicen')
-      ! NOTE: sea ice concentration is special
-
-      ! compute background rescaling
-      allocate(alpha, mold=fld_r%val(:,:,1))
-      allocate(aice_bkg, mold=alpha)
-      allocate(aice_ana, mold=alpha)
-      aice_bkg  = sum(fld%val(:,:,:), dim=3)
-      aice_ana  = aice_bkg + sum(fld_r%val(:,:,:), dim=3)
-      where (aice_ana < 0.0_kind_real) aice_ana = 0.0_kind_real
-      where (aice_ana > 1.0_kind_real) aice_ana = 1.0_kind_real
-      alpha = 1.0_kind_real
-      where ( aice_bkg > min_ice) alpha = aice_ana / aice_bkg
-
-      ! limit size of increment
-      where ( alpha > amax ) alpha = amax
-      where ( alpha < amin ) alpha = amin
-
-      ! add fraction of increment
-      do k=1,fld%nz
-        fld%val(:,:,k) = alpha * fld%val(:,:,k)
-      end do
-
-    case ('uocn', 'vocn')
-      ! Do not add the velocity increment for now
-      ! TODO This will need to be removed when assimilating current observations
-      cycle
-
-    case default
-      ! everyone else is normal
-      fld%val = fld%val + fld_r%val
-    end select
-  end do
-
-  ! Save increment for outer loop cnt_outer
-  write(str_cnt,*) cnt_outer
-  filename='incr.'//adjustl(trim(str_cnt))//'.nc'
-
-  ! Compute geostrophic increment
-  ! TODO Move inside of the balance operator.
-  !      Will need to be removed when assimilating ocean current or when using
-  !      ensemble derived increments (ensemble cross-covariances that include currents)
-  if (self%has('hocn').and.self%has('tocn').and.self%has('socn').and.&
-      self%has('uocn').and.self%has('vocn')) then
-     ! Get necessary background fields needed to compute geostrophic perturbations
-     call self%get("tocn", t)
-     call self%get("socn", s)
-     call self%get("hocn", h)
-
-     ! Make a copy of the increment and get the needed pointers
-     call incr_geo%copy(rhs)
-     call incr_geo%get("tocn", dt)
-     call incr_geo%get("socn", ds)
-     call incr_geo%get("uocn", du)
-     call incr_geo%get("vocn", dv)
-
-     ! Compute the geostrophic increment
-     call geostrophy%setup(self%geom, h%val)
-     call geostrophy%tl(h%val, t%val, s%val,&
-          dt%val, ds%val, du%val, dv%val, self%geom)
-     call geostrophy%delete()
-
-     ! Add geostrophic increment to state where geostrophic currents < 0.5 m/s
-     call self%get("uocn", u)
-     call self%get("vocn", v)
-     where( (du%val**2 + dv%val**2)<0.25)
-        u%val = u%val + du%val
-        v%val = v%val + dv%val
-     end where
-
-     ! Save increment and clean memory
-     call incr_geo%write_file(filename)
-     call incr_geo%delete()
-  else
-     call rhs%write_file(filename)
-  end if
-
-  ! Update outer loop counter
-  cnt_outer = cnt_outer + 1
-
-end subroutine soca_fields_add_incr
-
-
-! ------------------------------------------------------------------------------
-!> subtract two sets of fields, saving the results separately
-subroutine soca_fields_diff_incr(self, x1, x2)
-  class(soca_fields), intent(inout) :: self
-  class(soca_fields),  intent(in)    :: x1
-  class(soca_fields),  intent(in)    :: x2
-  integer :: i
-
-  type(soca_field), pointer :: f1, f2
-
-  ! make sure fields correct shapes
-  call self%check_subset(x2)
-  call x2%check_subset(x1)
-
-  ! subtract
-  do i=1,size(self%fields)
-    call x1%get(self%fields(i)%name, f1)
-    call x2%get(self%fields(i)%name, f2)
-    self%fields(i)%val = f1%val - f2%val
-  end do
-end subroutine soca_fields_diff_incr
 
 
 ! ------------------------------------------------------------------------------
@@ -1027,227 +866,6 @@ subroutine soca_fields_gpnorm(fld, nf, pstat)
     pstat(3,jj) = pstat(3,jj)/ocn_count
   end do
 end subroutine soca_fields_gpnorm
-
-
-! ------------------------------------------------------------------------------
-! TODO remove hardcoded number of variables
-subroutine ug_size(self, ug)
-  class(soca_fields),          intent(in) :: self
-  type(unstructured_grid), intent(inout) :: ug
-
-  integer :: isc, iec, jsc, jec
-  integer :: igrid
-
-  ! Indices for compute domain (no halo)
-  isc = self%geom%isc ; iec = self%geom%iec
-  jsc = self%geom%jsc ; jec = self%geom%jec
-
-  ! Set number of grids
-  if (ug%colocated==1) then
-     ! Colocated
-     ug%ngrid = 1
-  else
-     ! Not colocated
-     ug%ngrid = 2
-  end if
-
-  ! Allocate grid instances
-  if (.not.allocated(ug%grid)) allocate(ug%grid(ug%ngrid))
-
-  do igrid=1,ug%ngrid
-     ! Set local number of points
-     ug%grid(igrid)%nmga = (iec - isc + 1) * (jec - jsc + 1 )
-
-     ! Set number of timeslots
-     ug%grid(igrid)%nts = ug%nts
-  end do
-
-  if (ug%colocated==1) then
-     ! Set number of levels
-     ug%grid(1)%nl0 = self%geom%nzo
-
-     ! Set number of variables
-     ug%grid(1)%nv = self%geom%ncat*2 + 3
-  else
-     ! Set number of levels
-     ug%grid(1)%nl0 = self%geom%nzo
-     ug%grid(2)%nl0 = 1
-
-     ! Set number of variables
-     ug%grid(1)%nv = 2
-     ug%grid(2)%nv = self%geom%ncat*2 + 1
-  end if
-
-end subroutine ug_size
-
-! ------------------------------------------------------------------------------
-
-subroutine soca_fields_ug_coord(self, ug)
-  class(soca_fields), intent(in) :: self
-  type(unstructured_grid), intent(inout) :: ug
-
-  integer :: igrid
-  integer :: isc, iec, jsc, jec, jz
-
-  ! Indices for compute domain (no halo)
-  isc = self%geom%isc ; iec = self%geom%iec
-  jsc = self%geom%jsc ; jec = self%geom%jec
-
-  ! Define size
-  call ug_size(self, ug)
-
-  ! Allocate unstructured grid coordinates
-  call allocate_unstructured_grid_coord(ug)
-
-  ! Define coordinates for 3D grid
-  igrid = 1
-  ug%grid(igrid)%lon = &
-       &reshape( self%geom%lon(isc:iec, jsc:jec), (/ug%grid(igrid)%nmga/) )
-  ug%grid(igrid)%lat = &
-       &reshape( self%geom%lat(isc:iec, jsc:jec), (/ug%grid(igrid)%nmga/) )
-  ug%grid(igrid)%area = &
-       &reshape( self%geom%cell_area(isc:iec, jsc:jec), (/ug%grid(igrid)%nmga/) )
-  do jz = 1, ug%grid(igrid)%nl0
-     ug%grid(igrid)%vunit(:,jz) = real(jz)
-     ug%grid(igrid)%lmask(:,jz) = reshape( self%geom%mask2d(isc:iec, jsc:jec)==1, (/ug%grid(igrid)%nmga/) )
-  end do
-
-  if (ug%colocated==0) then
-     ! Define coordinates for 2D grid
-     igrid = 2
-     ug%grid(igrid)%lon = &
-          &reshape( self%geom%lon(isc:iec, jsc:jec), (/ug%grid(igrid)%nmga/) )
-     ug%grid(igrid)%lat = &
-          &reshape( self%geom%lat(isc:iec, jsc:jec), (/ug%grid(igrid)%nmga/) )
-     ug%grid(igrid)%area = &
-          &reshape( self%geom%cell_area(isc:iec, jsc:jec), (/ug%grid(igrid)%nmga/) )
-     ug%grid(igrid)%vunit(:,1) = 0.0_kind_real
-     ug%grid(igrid)%lmask(:,1) = reshape( self%geom%mask2d(isc:iec, jsc:jec)==1, (/ug%grid(igrid)%nmga/) )
-  end if
-
-end subroutine soca_fields_ug_coord
-
-! ------------------------------------------------------------------------------
-! TODO generalize to use all vars
-subroutine soca_fields_to_ug(self, ug, its)
-  class(soca_fields),         intent(in) :: self
-  type(unstructured_grid), intent(inout) :: ug
-  integer,                    intent(in) :: its
-
-  integer :: isc, iec, jsc, jec, jk, igrid
-  integer :: ni, nj, i, z
-
-  type(soca_field), pointer :: field
-
-  ! Indices for compute domain (no halo)
-  isc = self%geom%isc ; iec = self%geom%iec
-  jsc = self%geom%jsc ; jec = self%geom%jec
-
-  ni = iec - isc + 1
-  nj = jec - jsc + 1
-
-  ! Allocate unstructured grid field
-  call ug_size(self, ug)
-  call allocate_unstructured_grid_field(ug)
-
-  ! Copy 3D field
-  igrid = 1
-  jk = 1
-  ug%grid(igrid)%fld(:,:,:,its) = 0.0_kind_real
-  do i=1,size(self%fields)
-    field => self%fields(i)
-    select case(field%name)
-    case ('tocn','socn')
-      do z = 1, field%nz
-        ug%grid(igrid)%fld(1:ni*nj, z, jk, its) = &
-          &reshape( field%val(isc:iec, jsc:jec,z), (/ug%grid(igrid)%nmga/) )
-      end do
-      jk = jk + 1
-    end select
-  end do
-
-  if (ug%colocated==1) then
-     ! 2D variables copied as 3D variables
-     igrid = 1
-  else
-     ! 2D variables copied as 2D variables
-     igrid = 2
-     jk = 1
-  end if
-
-  ! 2d fields
-  do i=1,size(self%fields)
-    field => self%fields(i)
-    select case(field%name)
-    case ('hicen', 'cicen', 'ssh')
-      do z = 1, field%nz
-        ug%grid(igrid)%fld(1:ni*nj, 1, jk, its) = &
-            &reshape( field%val(isc:iec, jsc:jec, z), (/ug%grid(igrid)%nmga/) )
-        jk = jk + 1
-      end do
-    end select
-  end do
-
-end subroutine soca_fields_to_ug
-
-! ------------------------------------------------------------------------------
-! Generalize variable names used
-subroutine soca_fields_from_ug(self, ug, its)
-  class(soca_fields),   intent(inout) :: self
-  type(unstructured_grid), intent(in) :: ug
-  integer,                 intent(in) :: its
-
-  integer :: isc, iec, jsc, jec, jk, igrid
-  integer :: ni, nj, i, z
-  type(soca_field), pointer :: field
-
-  ! Indices for compute domain (no halo)
-  isc = self%geom%isc ; iec = self%geom%iec
-  jsc = self%geom%jsc ; jec = self%geom%jec
-
-  ni = iec - isc + 1
-  nj = jec - jsc + 1
-
-  igrid = 1
-  jk = 1
-  call self%zeros()
-
-  ! 3d fields
-  do i=1,size(self%fields)
-    field => self%fields(i)
-    select case(field%name)
-    case ("tocn", "socn")
-      do z = 1, field%nz
-        field%val(isc:iec, jsc:jec,z) = &
-          &reshape( ug%grid(igrid)%fld(1:ni*nj, z, jk, its), (/ni, nj/) )
-      end do
-      jk = jk + 1
-    end select
-  end do
-
-  if (ug%colocated==1) then
-     ! 2D variables copied as 3D variables
-     igrid = 1
-  else
-     ! 2D variables copied as 2D variables
-     igrid = 2
-     jk = 1
-  end if
-
-  ! 2d fields
-  do i=1,size(self%fields)
-    field => self%fields(i)
-    select case(field%name)
-    case ('hicen', 'cicen', 'ssh')
-      do z = 1, field%nz
-        field%val(isc:iec, jsc:jec, z) = &
-          &reshape( ug%grid(igrid)%fld(1:ni*nj, 1, jk, its), (/ni, nj/) )
-        jk = jk + 1
-      end do
-    end select
-  end do
-
-end subroutine soca_fields_from_ug
 
 
 ! ------------------------------------------------------------------------------

@@ -11,6 +11,9 @@ use kinds, only: kind_real
 use fckit_configuration_module, only: fckit_configuration
 use fckit_mpi_module, only: fckit_mpi_comm
 use random_mod, only: normal_distribution
+use unstructured_grid_mod, only: unstructured_grid, &
+                                 allocate_unstructured_grid_coord, &
+                                 allocate_unstructured_grid_field
 
 implicit none
 private
@@ -18,11 +21,19 @@ private
 type, public, extends(soca_fields) :: soca_increment
 
 contains
-  procedure :: dirac     => soca_increment_dirac
-  procedure :: random    => soca_increment_random
-
+  ! get/set a single point
   procedure :: getpoint  => soca_increment_getpoint
   procedure :: setpoint  => soca_increment_setpoint
+
+  ! unstructured grid I/O
+  procedure :: from_ug   => soca_increment_from_ug
+  procedure :: to_ug     => soca_increment_to_ug
+  procedure :: ug_coord  => soca_increment_ug_coord
+
+  ! misc
+  procedure :: dirac     => soca_increment_dirac
+  procedure :: random    => soca_increment_random
+  procedure :: schur     => soca_increment_schur
 end type
 
 
@@ -60,6 +71,23 @@ subroutine soca_increment_random(self)
   ! update domains
   call self%update_halos()
 end subroutine soca_increment_random
+
+
+! ------------------------------------------------------------------------------
+!> perform a shur product between two sets of fields
+subroutine soca_increment_schur(self,rhs)
+  class(soca_increment), intent(inout) :: self
+  class(soca_increment),    intent(in) :: rhs
+  integer :: i
+
+  ! make sure fields are same shape
+  call self%check_congruent(rhs)
+
+  ! schur product
+  do i=1,size(self%fields)
+    self%fields(i)%val = self%fields(i)%val * rhs%fields(i)%val
+  end do
+end subroutine soca_increment_schur
 
 ! ------------------------------------------------------------------------------
 
@@ -178,5 +206,228 @@ subroutine soca_increment_dirac(self, f_conf)
     end if
   end do
 end subroutine soca_increment_dirac
+
+
+! ------------------------------------------------------------------------------
+! TODO remove hardcoded number of variables
+subroutine ug_size(self, ug)
+  class(soca_increment),      intent(in) :: self
+  type(unstructured_grid), intent(inout) :: ug
+
+  integer :: isc, iec, jsc, jec
+  integer :: igrid
+
+  ! Indices for compute domain (no halo)
+  isc = self%geom%isc ; iec = self%geom%iec
+  jsc = self%geom%jsc ; jec = self%geom%jec
+
+  ! Set number of grids
+  if (ug%colocated==1) then
+     ! Colocated
+     ug%ngrid = 1
+  else
+     ! Not colocated
+     ug%ngrid = 2
+  end if
+
+  ! Allocate grid instances
+  if (.not.allocated(ug%grid)) allocate(ug%grid(ug%ngrid))
+
+  do igrid=1,ug%ngrid
+     ! Set local number of points
+     ug%grid(igrid)%nmga = (iec - isc + 1) * (jec - jsc + 1 )
+
+     ! Set number of timeslots
+     ug%grid(igrid)%nts = ug%nts
+  end do
+
+  if (ug%colocated==1) then
+     ! Set number of levels
+     ug%grid(1)%nl0 = self%geom%nzo
+
+     ! Set number of variables
+     ug%grid(1)%nv = self%geom%ncat*2 + 3
+  else
+     ! Set number of levels
+     ug%grid(1)%nl0 = self%geom%nzo
+     ug%grid(2)%nl0 = 1
+
+     ! Set number of variables
+     ug%grid(1)%nv = 2
+     ug%grid(2)%nv = self%geom%ncat*2 + 1
+  end if
+
+end subroutine ug_size
+
+! ------------------------------------------------------------------------------
+
+subroutine soca_increment_ug_coord(self, ug)
+  class(soca_increment),      intent(in) :: self
+  type(unstructured_grid), intent(inout) :: ug
+
+  integer :: igrid
+  integer :: isc, iec, jsc, jec, jz
+
+  ! Indices for compute domain (no halo)
+  isc = self%geom%isc ; iec = self%geom%iec
+  jsc = self%geom%jsc ; jec = self%geom%jec
+
+  ! Define size
+  call ug_size(self, ug)
+
+  ! Allocate unstructured grid coordinates
+  call allocate_unstructured_grid_coord(ug)
+
+  ! Define coordinates for 3D grid
+  igrid = 1
+  ug%grid(igrid)%lon = &
+       &reshape( self%geom%lon(isc:iec, jsc:jec), (/ug%grid(igrid)%nmga/) )
+  ug%grid(igrid)%lat = &
+       &reshape( self%geom%lat(isc:iec, jsc:jec), (/ug%grid(igrid)%nmga/) )
+  ug%grid(igrid)%area = &
+       &reshape( self%geom%cell_area(isc:iec, jsc:jec), (/ug%grid(igrid)%nmga/) )
+  do jz = 1, ug%grid(igrid)%nl0
+     ug%grid(igrid)%vunit(:,jz) = real(jz)
+     ug%grid(igrid)%lmask(:,jz) = reshape( self%geom%mask2d(isc:iec, jsc:jec)==1, (/ug%grid(igrid)%nmga/) )
+  end do
+
+  if (ug%colocated==0) then
+     ! Define coordinates for 2D grid
+     igrid = 2
+     ug%grid(igrid)%lon = &
+          &reshape( self%geom%lon(isc:iec, jsc:jec), (/ug%grid(igrid)%nmga/) )
+     ug%grid(igrid)%lat = &
+          &reshape( self%geom%lat(isc:iec, jsc:jec), (/ug%grid(igrid)%nmga/) )
+     ug%grid(igrid)%area = &
+          &reshape( self%geom%cell_area(isc:iec, jsc:jec), (/ug%grid(igrid)%nmga/) )
+     ug%grid(igrid)%vunit(:,1) = 0.0_kind_real
+     ug%grid(igrid)%lmask(:,1) = reshape( self%geom%mask2d(isc:iec, jsc:jec)==1, (/ug%grid(igrid)%nmga/) )
+  end if
+
+end subroutine soca_increment_ug_coord
+
+
+! ------------------------------------------------------------------------------
+! TODO generalize to use all vars
+subroutine soca_increment_to_ug(self, ug, its)
+  class(soca_increment),      intent(in) :: self
+  type(unstructured_grid), intent(inout) :: ug
+  integer,                    intent(in) :: its
+
+  integer :: isc, iec, jsc, jec, jk, igrid
+  integer :: ni, nj, i, z
+
+  type(soca_field), pointer :: field
+
+  ! Indices for compute domain (no halo)
+  isc = self%geom%isc ; iec = self%geom%iec
+  jsc = self%geom%jsc ; jec = self%geom%jec
+
+  ni = iec - isc + 1
+  nj = jec - jsc + 1
+
+  ! Allocate unstructured grid field
+  call ug_size(self, ug)
+  call allocate_unstructured_grid_field(ug)
+
+  ! Copy 3D field
+  igrid = 1
+  jk = 1
+  ug%grid(igrid)%fld(:,:,:,its) = 0.0_kind_real
+  do i=1,size(self%fields)
+    field => self%fields(i)
+    select case(field%name)
+    case ('tocn','socn')
+      do z = 1, field%nz
+        ug%grid(igrid)%fld(1:ni*nj, z, jk, its) = &
+          &reshape( field%val(isc:iec, jsc:jec,z), (/ug%grid(igrid)%nmga/) )
+      end do
+      jk = jk + 1
+    end select
+  end do
+
+  if (ug%colocated==1) then
+     ! 2D variables copied as 3D variables
+     igrid = 1
+  else
+     ! 2D variables copied as 2D variables
+     igrid = 2
+     jk = 1
+  end if
+
+  ! 2d fields
+  do i=1,size(self%fields)
+    field => self%fields(i)
+    select case(field%name)
+    case ('hicen', 'cicen', 'ssh')
+      do z = 1, field%nz
+        ug%grid(igrid)%fld(1:ni*nj, 1, jk, its) = &
+            &reshape( field%val(isc:iec, jsc:jec, z), (/ug%grid(igrid)%nmga/) )
+        jk = jk + 1
+      end do
+    end select
+  end do
+
+end subroutine soca_increment_to_ug
+
+! ------------------------------------------------------------------------------
+! Generalize variable names used
+subroutine soca_increment_from_ug(self, ug, its)
+  class(soca_increment), intent(inout) :: self
+  type(unstructured_grid),  intent(in) :: ug
+  integer,                  intent(in) :: its
+
+  integer :: isc, iec, jsc, jec, jk, igrid
+  integer :: ni, nj, i, z
+  type(soca_field), pointer :: field
+
+  ! Indices for compute domain (no halo)
+  isc = self%geom%isc ; iec = self%geom%iec
+  jsc = self%geom%jsc ; jec = self%geom%jec
+
+  ni = iec - isc + 1
+  nj = jec - jsc + 1
+
+  igrid = 1
+  jk = 1
+  call self%zeros()
+
+  ! 3d fields
+  do i=1,size(self%fields)
+    field => self%fields(i)
+    select case(field%name)
+    case ("tocn", "socn")
+      do z = 1, field%nz
+        field%val(isc:iec, jsc:jec,z) = &
+          &reshape( ug%grid(igrid)%fld(1:ni*nj, z, jk, its), (/ni, nj/) )
+      end do
+      jk = jk + 1
+    end select
+  end do
+
+  if (ug%colocated==1) then
+     ! 2D variables copied as 3D variables
+     igrid = 1
+  else
+     ! 2D variables copied as 2D variables
+     igrid = 2
+     jk = 1
+  end if
+
+  ! 2d fields
+  do i=1,size(self%fields)
+    field => self%fields(i)
+    select case(field%name)
+    case ('hicen', 'cicen', 'ssh')
+      do z = 1, field%nz
+        field%val(isc:iec, jsc:jec, z) = &
+          &reshape( ug%grid(igrid)%fld(1:ni*nj, 1, jk, its), (/ni, nj/) )
+        jk = jk + 1
+      end do
+    end select
+  end do
+
+end subroutine soca_increment_from_ug
+
 
 end module soca_increment_mod
