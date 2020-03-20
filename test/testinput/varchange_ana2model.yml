@@ -1,0 +1,23 @@
+Geometry:
+  num_ice_cat: 5
+  num_ice_lev: 4
+  num_sno_lev: 1
+  read_soca_grid: grid
+
+VariableChangeTests:
+- varchange: Ana2Model
+  state:
+    read_from_file: 1
+    date: 2018-04-15T00:00:00Z
+    basename: ./INPUT/
+    ocn_filename: MOM.res.nc
+    ice_filename: ice_model.res.nc
+    variables: &soca_vars [cicen, tocn, socn, hocn, uocn, vocn]
+  toleranceInverse: 1e-8
+  rotate:
+    u: [uocn, taux, tocn]
+    v: [vocn, tauy, socn]
+  inputVariables:
+    variables: *soca_vars
+  outputVariables:
+    variables: *soca_vars

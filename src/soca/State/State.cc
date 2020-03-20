@@ -131,6 +131,22 @@ namespace soca {
   }
 
   // -----------------------------------------------------------------------------
+  /// Rotations
+  // -----------------------------------------------------------------------------
+  void State::rotate2north(const oops::Variables & u,
+                           const oops::Variables & v) const {
+    Log::trace() << "State::State rotate from logical to geographical North."
+                 << std::endl;
+    soca_field_rotate2north_f90(toFortran(), u, v);
+  }
+  // -----------------------------------------------------------------------------
+  void State::rotate2grid(const oops::Variables & u,
+                          const oops::Variables & v) const {
+    Log::trace() << "State::State rotate from geographical to logical North."
+    << std::endl;
+    soca_field_rotate2grid_f90(toFortran(), u, v);
+  }
+  // -----------------------------------------------------------------------------
   /// Interactions with Increments
   // -----------------------------------------------------------------------------
   State & State::operator+=(const Increment & dx) {
@@ -169,6 +185,7 @@ namespace soca {
                            std::right << zstat[3*jj+2];
     }
   }
+
   // -----------------------------------------------------------------------------
   /// For accumulator
   // -----------------------------------------------------------------------------
