@@ -25,9 +25,6 @@
 namespace eckit {
   class Configuration;
 }
-namespace oops {
-  class Variables;
-}
 namespace ufo {
   class GeoVaLs;
   class Locations;
@@ -75,9 +72,6 @@ namespace soca {
       void getValuesFromFile(const ufo::Locations &,
                              const oops::Variables &,
                              ufo::GeoVaLs &) const;
-
-      /// Interpolate full fields
-      ///  void changeResolution(const State & xx);
 
       /// Interactions with Increment
       State & operator+=(const Increment &);

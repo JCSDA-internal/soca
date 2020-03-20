@@ -5,25 +5,21 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#include <algorithm>
 #include <iomanip>
-#include <string>
-#include <utility>
 #include <vector>
 
 #include "soca/Geometry/Geometry.h"
 #include "soca/GetValuesTraj/GetValuesTraj.h"
 #include "soca/Increment/Increment.h"
-#include "soca/ModelBias/ModelBias.h"
 #include "soca/State/State.h"
 #include "soca/State/StateFortran.h"
 
 #include "eckit/config/LocalConfiguration.h"
 #include "eckit/exception/Exceptions.h"
 
-#include "oops/base/Variables.h"
-#include "oops/util/DateTime.h"
-#include "oops/util/Duration.h"
+// #include "oops/base/Variables.h"
+// #include "oops/util/DateTime.h"
+// #include "oops/util/Duration.h"
 #include "oops/util/Logger.h"
 
 #include "ufo/GeoVaLs.h"

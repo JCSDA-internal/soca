@@ -9,28 +9,26 @@
 module soca_state_mod_c
 
 use iso_c_binding
+
+use datetime_mod, only: datetime, c_f_datetime
 use fckit_configuration_module, only: fckit_configuration
 use kinds, only: kind_real
-use unstructured_grid_mod, only: unstructured_grid, unstructured_grid_registry
-use datetime_mod, only: datetime, c_f_datetime
 use oops_variables_mod
-use ufo_locs_mod_c, only: ufo_locs_registry
-use ufo_locs_mod, only: ufo_locs
-use ufo_geovals_mod_c, only: ufo_geovals_registry
-use ufo_geovals_mod, only: ufo_geovals
-use soca_geom_mod, only: soca_geom
 use soca_geom_mod_c, only: soca_geom_registry
-use soca_state_mod
+use soca_geom_mod, only: soca_geom
+use soca_getvaltraj_mod_c, only: soca_getvaltraj_registry
+use soca_getvaltraj_mod, only: soca_getvaltraj
 use soca_increment_mod
 use soca_increment_reg
 use soca_interpfields_mod, only: getvalues, getvalues_ad
-use soca_getvaltraj_mod, only: soca_getvaltraj
-use soca_getvaltraj_mod_c, only: soca_getvaltraj_registry
-use soca_geom_iter_mod, only: soca_geom_iter, soca_geom_iter_registry
+use soca_state_mod
 use soca_state_reg
+use ufo_geovals_mod_c, only: ufo_geovals_registry
+use ufo_geovals_mod, only: ufo_geovals
+use ufo_locs_mod_c, only: ufo_locs_registry
+use ufo_locs_mod, only: ufo_locs
 
 implicit none
-
 private
 
 ! ------------------------------------------------------------------------------

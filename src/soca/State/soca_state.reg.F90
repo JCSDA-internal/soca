@@ -9,17 +9,14 @@ module soca_state_reg
 use soca_state_mod
 
 implicit none
-
 private
-public :: soca_state_registry
-
-#define LISTED_TYPE soca_state
 
 !> Linked list interface - defines registry_t type
+#define LISTED_TYPE soca_state
 #include "oops/util/linkedList_i.f"
 
 !> Global registry
-type(registry_t) :: soca_state_registry
+type(registry_t), public:: soca_state_registry
 
 ! ------------------------------------------------------------------------------
 contains

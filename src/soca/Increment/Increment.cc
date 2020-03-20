@@ -5,30 +5,23 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#include <algorithm>
+// #include <algorithm>
 #include <iomanip>
-#include <numeric>
-#include <string>
-#include <utility>
 #include <vector>
 
-#include "soca/Covariance/ErrorCovariance.h"
-#include "soca/Increment/IncrementFortran.h"
 #include "soca/Geometry/Geometry.h"
 #include "soca/GeometryIterator/GeometryIterator.h"
 #include "soca/GetValuesTraj/GetValuesTraj.h"
 #include "soca/Increment/Increment.h"
-#include "soca/ModelBias/ModelBiasIncrement.h"
+#include "soca/Increment/IncrementFortran.h"
 #include "soca/State/State.h"
 
-#include "eckit/config/LocalConfiguration.h"
 #include "eckit/exception/Exceptions.h"
 
 #include "oops/base/GridPoint.h"
 #include "oops/base/Variables.h"
 #include "oops/generic/UnstructuredGrid.h"
 #include "oops/util/DateTime.h"
-#include "oops/util/dot_product.h"
 #include "oops/util/Duration.h"
 #include "oops/util/Logger.h"
 
