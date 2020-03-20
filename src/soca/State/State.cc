@@ -48,10 +48,9 @@ namespace soca {
                const eckit::Configuration & file)
     : time_(), vars_(vars), geom_(new Geometry(geom))
   {
-    const eckit::Configuration * conf = &file;
     util::DateTime * dtp = &time_;
     soca_field_create_f90(keyFlds_, geom_->toFortran(), vars_);
-    soca_field_read_file_f90(toFortran(), &conf, &dtp);
+    soca_field_read_file_f90(toFortran(), &file, &dtp);
     Log::trace() << "State::State created and read in." << std::endl;
   }
   // -----------------------------------------------------------------------------
@@ -144,27 +143,20 @@ namespace soca {
   // -----------------------------------------------------------------------------
   void State::read(const eckit::Configuration & files) {
     Log::trace() << "State::State read started." << std::endl;
-    const eckit::Configuration * conf = &files;
     util::DateTime * dtp = &time_;
-    soca_field_read_file_f90(toFortran(), &conf, &dtp);
+    soca_field_read_file_f90(toFortran(), &files, &dtp);
     Log::trace() << "State::State read done." << std::endl;
   }
   // -----------------------------------------------------------------------------
   void State::write(const eckit::Configuration & files) const {
-    const eckit::Configuration * conf = &files;
     const util::DateTime * dtp = &time_;
-    soca_field_write_file_f90(toFortran(), &conf, &dtp);
+    soca_field_write_file_f90(toFortran(), &files, &dtp);
   }
   // -----------------------------------------------------------------------------
   void State::print(std::ostream & os) const {
     os << std::endl << "  Valid time: " << validTime();
-    int nx = -1;
-    int ny = -1;
-    int nzo = -1;
-    int nzi = -1;
-    int ncat = -1;
-    int nf = -1;
-    soca_field_sizes_f90(toFortran(), nx, ny, nzo, nzi, ncat, nf);
+    int n0, nf;
+    soca_field_sizes_f90(toFortran(), n0, n0, n0, n0, n0, nf);
     std::vector<double> zstat(3*nf);
     soca_field_gpnorm_f90(toFortran(), nf, zstat[0]);
     for (int jj = 0; jj < nf; ++jj) {

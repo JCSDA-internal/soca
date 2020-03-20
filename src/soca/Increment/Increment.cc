@@ -124,8 +124,7 @@ namespace soca {
   }
   // -----------------------------------------------------------------------------
   void Increment::dirac(const eckit::Configuration & config) {
-    const eckit::Configuration * conf = &config;
-    soca_field_dirac_f90(toFortran(), &conf);
+    soca_field_dirac_f90(toFortran(), &config);
     Log::trace() << "Increment dirac initialized" << std::endl;
   }
   // -----------------------------------------------------------------------------
@@ -236,26 +235,19 @@ namespace soca {
   /// I/O and diagnostics
   // -----------------------------------------------------------------------------
   void Increment::read(const eckit::Configuration & files) {
-    const eckit::Configuration * conf = &files;
     util::DateTime * dtp = &time_;
-    soca_field_read_file_f90(toFortran(), &conf, &dtp);
+    soca_field_read_file_f90(toFortran(), &files, &dtp);
   }
   // -----------------------------------------------------------------------------
   void Increment::write(const eckit::Configuration & files) const {
-    const eckit::Configuration * conf = &files;
     const util::DateTime * dtp = &time_;
-    soca_field_write_file_f90(toFortran(), &conf, &dtp);
+    soca_field_write_file_f90(toFortran(), &files, &dtp);
   }
   // -----------------------------------------------------------------------------
   void Increment::print(std::ostream & os) const {
     os << std::endl << "  Valid time: " << validTime();
-    int nx = -1;
-    int ny = -1;
-    int nzo = -1;
-    int nzi = -1;
-    int ncat = -1;
-    int nf = -1;
-    soca_field_sizes_f90(keyFlds_, nx, ny, nzo, nzi, ncat, nf);
+    int n0, nf;
+    soca_field_sizes_f90(keyFlds_, n0, n0, n0, n0, n0, nf);
     std::vector<double> zstat(3*nf);
     soca_field_gpnorm_f90(keyFlds_, nf, zstat[0]);
     for (int jj = 0; jj < nf; ++jj) {
