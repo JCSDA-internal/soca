@@ -34,7 +34,7 @@ contains
 ! ------------------------------------------------------------------------------
 !> Compute interpolation weights
 subroutine initialize_interph(fld, locs, horiz_interp, horiz_interp_masked)
-  type(soca_fields),   intent(in) :: fld
+  class(soca_fields),   intent(in) :: fld
   type(ufo_locs),      intent(in) :: locs
   type(unstrc_interp), intent(out) :: horiz_interp
   type(unstrc_interp), intent(out) :: horiz_interp_masked
@@ -77,7 +77,7 @@ end subroutine initialize_interph
 ! ------------------------------------------------------------------------------
 !> Apply forward interpolation (tl or nl)
 subroutine getvalues_traj(fld, locs, vars, geoval, traj, interp_type)
-  type(soca_fields),     intent(inout) :: fld
+  class(soca_fields),     intent(inout) :: fld
   type(ufo_locs),           intent(in) :: locs
   type(oops_variables),     intent(in) :: vars
   type(ufo_geovals),     intent(inout) :: geoval
@@ -116,7 +116,7 @@ end subroutine getvalues_traj
 ! ------------------------------------------------------------------------------
 !> Apply forward interpolation
 subroutine getvalues_notraj(fld, locs, vars, geoval)
-  type(soca_fields),  intent(inout) :: fld
+  class(soca_fields),  intent(inout) :: fld
   type(ufo_locs),        intent(in) :: locs
   type(oops_variables),  intent(in) :: vars
   type(ufo_geovals),  intent(inout) :: geoval
@@ -134,7 +134,7 @@ end subroutine getvalues_notraj
 ! ------------------------------------------------------------------------------
 !> Interace to forward interpolation (NL and TL)
 subroutine interp(fld, locs, vars, geoval, horiz_interp, horiz_interp_masked)
-  type(soca_fields),       intent(inout) :: fld
+  class(soca_fields),       intent(inout) :: fld
   type(ufo_locs),             intent(in) :: locs
   type(oops_variables),       intent(in) :: vars
   type(ufo_geovals),       intent(inout) :: geoval
@@ -248,7 +248,7 @@ end subroutine interp
 ! ------------------------------------------------------------------------------
 !> Apply backward interpolation
 subroutine getvalues_ad(incr, locs, vars, geoval, traj)
-  type(soca_fields),             intent(inout) :: incr
+  class(soca_fields),             intent(inout) :: incr
   type(ufo_locs),                   intent(in) :: locs
   type(oops_variables),             intent(in) :: vars
   type(ufo_geovals),             intent(inout) :: geoval
@@ -359,7 +359,7 @@ end subroutine getvalues_ad
 ! ------------------------------------------------------------------------------
 !> Get 3rd dimension of fld
 function nlev_from_ufovar(fld, var) result(nval)
-  type(soca_fields), intent(in) :: fld
+  class(soca_fields), intent(in) :: fld
   character(len=*),  intent(in) :: var
   integer                       :: nval
 

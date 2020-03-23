@@ -13,8 +13,8 @@ use datetime_mod, only: datetime, c_f_datetime
 use duration_mod, only: duration, duration_seconds, assignment(=)
 use soca_geom_mod, only: soca_geom
 use soca_geom_mod_c, only: soca_geom_registry
-use soca_fields_mod, only: soca_fields
-use soca_fields_mod_c, only: soca_field_registry
+use soca_state_mod
+use soca_state_reg
 use soca_model_mod, only: soca_model, soca_setup, soca_delete, soca_propagate, &
                           soca_initialize_integration, soca_finalize_integration
 
@@ -117,9 +117,9 @@ subroutine c_soca_initialize_integration(c_key_model, c_key_state) &
   integer(c_int), intent(in) :: c_key_state  !< Model fields
 
   type(soca_model), pointer :: model
-  type(soca_fields),pointer :: flds
+  type(soca_state),pointer :: flds
 
-  call soca_field_registry%get(c_key_state, flds)
+  call soca_state_registry%get(c_key_state, flds)
   call soca_model_registry%get(c_key_model, model)
 
   call soca_initialize_integration(model, flds)
@@ -137,9 +137,9 @@ subroutine c_soca_finalize_integration(c_key_model, c_key_state) &
   integer(c_int), intent(in) :: c_key_state  !< Model fields
 
   type(soca_model), pointer :: model
-  type(soca_fields),pointer :: flds
+  type(soca_state),pointer :: flds
 
-  call soca_field_registry%get(c_key_state, flds)
+  call soca_state_registry%get(c_key_state, flds)
   call soca_model_registry%get(c_key_model, model)
 
   call soca_finalize_integration(model, flds)
@@ -157,11 +157,11 @@ subroutine c_soca_propagate(c_key_model, c_key_state, c_key_date) bind(c,name='s
   type(c_ptr), intent(inout) :: c_key_date   !< DateTime
 
   type(soca_model), pointer :: model
-  type(soca_fields),pointer :: flds
+  type(soca_state),pointer :: flds
   type(datetime)            :: fldsdate
 
   call soca_model_registry%get(c_key_model, model)
-  call soca_field_registry%get(c_key_state, flds)
+  call soca_state_registry%get(c_key_state, flds)
   call c_f_datetime(c_key_date, fldsdate)
 
   call soca_propagate(model, flds, fldsdate)

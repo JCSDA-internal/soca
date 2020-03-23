@@ -172,7 +172,7 @@ end subroutine
 ! NOTE: this information should be moved into a yaml file
 ! TODO, allocate space for derived variables
 subroutine soca_fields_init_vars(self, vars)
-  type(soca_fields),          intent(inout) :: self
+  class(soca_fields),          intent(inout) :: self
   character(len=:), allocatable, intent(in) :: vars(:)
 
   integer :: i, nz
@@ -332,7 +332,7 @@ end subroutine
 !> names in rhs if not already initialized
 subroutine soca_fields_copy(self, rhs)
   class(soca_fields), intent(inout) :: self
-  type(soca_fields),  intent(in)    :: rhs
+  class(soca_fields),  intent(in)    :: rhs
 
   character(len=:), allocatable :: vars_str(:)
   integer :: i
@@ -532,7 +532,7 @@ end subroutine soca_fields_random
 !> add two sets of fields together
 subroutine soca_fields_add(self,rhs)
   class(soca_fields), intent(inout) :: self
-  type(soca_fields),     intent(in) :: rhs
+  class(soca_fields),     intent(in) :: rhs
   integer :: i
 
   ! make sure fields are same shape
@@ -549,7 +549,7 @@ end subroutine soca_fields_add
 !> perform a shur product between two sets of fields
 subroutine soca_fields_schur(self,rhs)
   class(soca_fields), intent(inout) :: self
-  type(soca_fields),     intent(in) :: rhs
+  class(soca_fields),     intent(in) :: rhs
   integer :: i
 
   ! make sure fields are same shape
@@ -566,7 +566,7 @@ end subroutine soca_fields_schur
 !> subtract two sets of fields
 subroutine soca_fields_sub(self,rhs)
   class(soca_fields), intent(inout) :: self
-  type(soca_fields),     intent(in) :: rhs
+  class(soca_fields),     intent(in) :: rhs
   integer :: i
 
   ! make sure fields are same shape
@@ -597,7 +597,7 @@ end subroutine soca_fields_mul
 subroutine soca_fields_axpy(self,zz,rhs)
   class(soca_fields), intent(inout) :: self
   real(kind=kind_real),  intent(in) :: zz
-  type(soca_fields),     intent(in) :: rhs
+  class(soca_fields),     intent(in) :: rhs
   integer :: i
 
   ! make sure fields are same shape
@@ -612,7 +612,7 @@ end subroutine soca_fields_axpy
 !> calculate the global dot product of two sets of fields
 subroutine soca_fields_dotprod(fld1,fld2,zprod)
   class(soca_fields),     intent(in) :: fld1
-  type(soca_fields),      intent(in) :: fld2
+  class(soca_fields),      intent(in) :: fld2
   real(kind=kind_real),  intent(out) :: zprod
 
   real(kind=kind_real) :: local_zprod
@@ -662,7 +662,7 @@ end subroutine soca_fields_dotprod
 !> add a set of increments to the set of fields
 subroutine soca_fields_add_incr(self,rhs)
   class(soca_fields), intent(inout) :: self
-  type(soca_fields),  intent(in)    :: rhs
+  class(soca_fields),  intent(in)    :: rhs
 
   integer, save :: cnt_outer = 1
   character(len=800) :: filename, str_cnt
@@ -773,8 +773,8 @@ end subroutine soca_fields_add_incr
 !> subtract two sets of fields, saving the results separately
 subroutine soca_fields_diff_incr(self,x1,x2)
   class(soca_fields), intent(inout) :: self
-  type(soca_fields),  intent(in)    :: x1
-  type(soca_fields),  intent(in)    :: x2
+  class(soca_fields),  intent(in)    :: x1
+  class(soca_fields),  intent(in)    :: x2
   integer :: i
 
   ! make sure fields are same shape
@@ -1130,7 +1130,7 @@ end subroutine soca_fields_gpnorm
 ! ------------------------------------------------------------------------------
 ! TODO remove hardcoded number of variables
 subroutine ug_size(self, ug)
-  type(soca_fields),          intent(in) :: self
+  class(soca_fields),          intent(in) :: self
   type(unstructured_grid), intent(inout) :: ug
 
   integer :: isc, iec, jsc, jec

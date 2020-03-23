@@ -15,7 +15,6 @@
 #include <ostream>
 #include <string>
 
-#include <boost/scoped_ptr.hpp>
 #include <boost/shared_ptr.hpp>
 
 #include "soca/Fortran.h"
@@ -34,18 +33,15 @@ namespace eckit {
 namespace oops {
   class GridPoint;
   class UnstructuredGrid;
-  class Variables;
 }
 namespace ufo {
   class GeoVaLs;
   class Locations;
 }
 namespace soca {
-  class ErrorCovariance;
   class Geometry;
   class GeometryIterator;
   class GetValuesTraj;
-  class ModelBiasIncrement;
   class State;
 }
 

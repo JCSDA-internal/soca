@@ -25,9 +25,6 @@
 namespace eckit {
   class Configuration;
 }
-namespace oops {
-  class Variables;
-}
 namespace ufo {
   class GeoVaLs;
   class Locations;
@@ -79,9 +76,6 @@ namespace soca {
       /// Rotations
       void rotate2north(const oops::Variables &, const oops::Variables &) const;
       void rotate2grid(const oops::Variables &, const oops::Variables &) const;
-
-      /// Interpolate full fields
-      ///  void changeResolution(const State & xx);
 
       /// Interactions with Increment
       State & operator+=(const Increment &);

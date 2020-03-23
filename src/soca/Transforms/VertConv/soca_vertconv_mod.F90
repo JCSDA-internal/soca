@@ -9,7 +9,9 @@ use fckit_configuration_module, only: fckit_configuration
 use kinds, only: kind_real
 use type_mpl, only: mpl_type
 use tools_func, only: fit_func
-use soca_fields_mod, only: soca_fields, soca_field
+use soca_fields_mod
+use soca_increment_mod
+use soca_state_mod
 
 implicit none
 
@@ -24,8 +26,8 @@ type :: soca_vertconv
    real(kind=kind_real)      :: lz_mld_max         !> if calculating Lz from MLD, max value to use
    real(kind=kind_real)      :: scale_layer_thick  !> Set the minimum decorrelation scale
                                                    !> as a multiple of the layer thickness
-   type(soca_fields),pointer :: traj               !> Trajectory
-   type(soca_fields),pointer :: bkg                !> Background
+   type(soca_state),pointer :: traj               !> Trajectory
+   type(soca_state),pointer :: bkg                !> Background
    integer                   :: isc, iec, jsc, jec !> Compute domain
 end type soca_vertconv
 
@@ -39,8 +41,8 @@ contains
 subroutine soca_conv_setup (self, bkg, traj, f_conf)
   type(fckit_configuration), intent(in) :: f_conf
   type(soca_vertconv),    intent(inout) :: self
-  type(soca_fields), target, intent(in) :: bkg
-  type(soca_fields), target, intent(in) :: traj
+  type(soca_state), target, intent(in) :: bkg
+  type(soca_state), target, intent(in) :: traj
 
   ! Get configuration for vertical convolution
   call f_conf%get_or_die("Lz_min", self%lz_min )
@@ -93,8 +95,8 @@ end subroutine soca_calc_lz
 !> Apply forward convolution
 subroutine soca_conv (self, convdx, dx)
   type(soca_vertconv), intent(in) :: self
-  type(soca_fields),   intent(in) :: dx
-  type(soca_fields),intent(inout) :: convdx
+  type(soca_increment),   intent(in) :: dx
+  type(soca_increment),intent(inout) :: convdx
 
   real(kind=kind_real), allocatable :: z(:), lz(:)
   real(kind=kind_real) :: dist2, coef
@@ -143,8 +145,8 @@ end subroutine soca_conv
 !> Apply backward convolution
 subroutine soca_conv_ad (self, convdx, dx)
   type(soca_vertconv), intent(in) :: self
-  type(soca_fields),intent(inout) :: dx     ! OUT
-  type(soca_fields),   intent(in) :: convdx ! IN
+  type(soca_increment),intent(inout) :: dx     ! OUT
+  type(soca_increment),   intent(in) :: convdx ! IN
 
   real(kind=kind_real), allocatable :: z(:), lz(:)
   real(kind=kind_real) :: dist2, coef

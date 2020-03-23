@@ -10,6 +10,8 @@ use tools_const, only : pi
 use datetime_mod, only: datetime
 use kinds, only: kind_real
 use soca_fields_mod
+use soca_state_mod
+use soca_increment_mod
 use soca_utils, only: soca_diff
 use soca_bkgerrutil_mod, only: soca_bkgerr_bounds_type
 use soca_omb_stats_mod, only: soca_omb_stats, soca_domain_indices
@@ -24,7 +26,7 @@ public :: soca_bkgerrgodas_config, &
 
 !> Fortran derived type to hold configuration D
 type :: soca_bkgerrgodas_config
-   type(soca_fields),        pointer :: bkg
+   type(soca_state),         pointer :: bkg
    type(soca_fields)                 :: std_bkgerr
    type(soca_bkgerr_bounds_type)     :: bounds         ! Bounds for bkgerrgodas
    real(kind=kind_real)              :: t_dz           ! For rescaling of the vertical gradient
@@ -42,7 +44,7 @@ contains
 subroutine soca_bkgerrgodas_setup(f_conf, self, bkg)
   type(fckit_configuration),        intent(in) :: f_conf
   type(soca_bkgerrgodas_config), intent(inout) :: self
-  type(soca_fields),        target, intent(in) :: bkg
+  type(soca_state),         target, intent(in) :: bkg
 
   type(soca_field), pointer :: field, field_bkg
   integer :: i
@@ -95,9 +97,9 @@ end subroutine soca_bkgerrgodas_setup
 ! ------------------------------------------------------------------------------
 !> Apply background error: dxm = D dxa
 subroutine soca_bkgerrgodas_mult(self, dxa, dxm)
-  type(soca_bkgerrgodas_config),    intent(in) :: self
-  type(soca_fields),           intent(in) :: dxa
-  type(soca_fields),        intent(inout) :: dxm
+  type(soca_bkgerrgodas_config),  intent(in) :: self
+  type(soca_increment),           intent(in) :: dxa
+  type(soca_increment),        intent(inout) :: dxm
 
   type(soca_field), pointer :: field_m, field_e, field_a
   integer :: isc, iec, jsc, jec, i, j, n
