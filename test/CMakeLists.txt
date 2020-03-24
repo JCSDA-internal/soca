@@ -561,9 +561,11 @@ soca_add_test( NAME 3dhybfgat
 # restart checkpointing
 soca_add_test( NAME checkpointmodel
                EXE  soca_checkpoint_model.x
-               NOTRAPFPE )
+               NOTRAPFPE
+               TEST_DEPENDS test_soca_3dvar_godas)
 
 # Remapping MOM6 (horiz+vertical intterpolation)
 soca_add_test( NAME convertstate
                EXE  soca_convertstate.x
-               NOTRAPFPE )
+               NOTRAPFPE
+               TEST_DEPENDS test_soca_gridgen )
