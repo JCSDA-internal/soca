@@ -16,7 +16,7 @@ use fckit_exception_module, only: fckit_exception
 implicit none
 
 private
-public :: write2pe, htoz, soca_str2int, soca_adjust, &
+public :: write2pe, soca_str2int, soca_adjust, &
           soca_rho, soca_diff, soca_mld, nc_check, soca_remap_idw
 
 ! ------------------------------------------------------------------------------
@@ -96,21 +96,6 @@ subroutine soca_diff(dvdz,v,h)
   dvdz(k) = dvdz(k-1)
 
 end subroutine soca_diff
-
-! ------------------------------------------------------------------------------
-
-subroutine htoz(h, z)
-  real(kind=kind_real),  intent(in) :: h(:) ! Layer thickness
-  real(kind=kind_real), intent(out) :: z(:) ! Mid-layer depth
-
-  integer :: nlev, ilev
-
-  nlev = size(h,1)
-  z(1)=0.5_kind_real*h(1)
-  do ilev = 2, nlev
-     z(ilev)=sum(h(1:ilev-1))+0.5_kind_real*h(ilev)
-  end do
-end subroutine htoz
 
 ! ------------------------------------------------------------------------------
 

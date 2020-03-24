@@ -117,14 +117,19 @@ subroutine soca_bkgerr_mult(self, dxa, dxm)
 
   integer :: isc, iec, jsc, jec, i, j, n
 
+  ! make sure fields are correct shape
+  call dxa%check_congruent(dxm)
+  call dxa%check_subset(self%std_bkgerr)
+
   ! Indices for compute domain (no halo)
   isc=self%bkg%geom%isc; iec=self%bkg%geom%iec
   jsc=self%bkg%geom%jsc; jec=self%bkg%geom%jec
 
-  do n=1,size(self%std_bkgerr%fields)
-    field_e => self%std_bkgerr%fields(n)
-    call dxm%get(field_e%name, field_m)
-    call dxa%get(field_e%name, field_a)
+  ! multiply
+  do n=1,size(dxa%fields)
+    field_a => dxa%fields(n)
+    call self%std_bkgerr%get(field_a%name, field_e)
+    call dxm%get(field_a%name, field_m)
     do i = isc, iec
       do j = jsc, jec
         field_m%val(i,j,:) = field_e%val(i,j,:) * field_a%val(i,j,:)

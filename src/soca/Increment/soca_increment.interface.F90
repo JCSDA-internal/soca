@@ -231,8 +231,7 @@ subroutine soca_increment_create_c(c_key_self, c_key_geom, c_vars) bind(c,name='
     call soca_increment_registry%get(c_key_lhs,lhs)
     call soca_state_registry%get(c_key_x1,x1)
     call soca_state_registry%get(c_key_x2,x2)
-
-    call lhs%diff_incr(x1,x2)
+    call x1%diff_incr(x2, lhs)
 
   end subroutine soca_increment_diff_incr_c
 

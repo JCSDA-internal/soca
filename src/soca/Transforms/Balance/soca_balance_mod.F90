@@ -45,7 +45,7 @@ subroutine soca_balance_setup(f_conf, self, traj)
 
   integer :: isc, iec, jsc, jec, i, j, k, nl
   real(kind=kind_real), allocatable :: jac(:)
-  type(soca_field), pointer :: tocn, socn, hocn, cicen
+  type(soca_field), pointer :: tocn, socn, hocn, cicen, mld, layer_depth
 
   ! Store trajectory
   self%traj => traj
@@ -67,6 +67,8 @@ subroutine soca_balance_setup(f_conf, self, traj)
   call traj%get("tocn", tocn)
   call traj%get("socn", socn)
   call traj%get("hocn", hocn)
+  call traj%get("mld", mld)
+  call traj%get("layer_depth", layer_depth)
   if (traj%has("cicen"))  call traj%get("cicen", cicen)
 
   ! allocate space
@@ -86,7 +88,7 @@ subroutine soca_balance_setup(f_conf, self, traj)
              &self%kst%dsdtmax, self%kst%dsdzmin, self%kst%dtdzmin)
         ! Set Jacobian to 0 above mixed layer
         do k=1,nl
-           if (self%traj%layer_depth(i,j,k)<self%traj%mld(i,j)) then
+           if (layer_depth%val(i,j,k) < mld%val(i,j,1)) then
               jac(k) = 0.0_kind_Real
            end if
         end do
@@ -108,7 +110,7 @@ subroutine soca_balance_setup(f_conf, self, traj)
            call soca_steric_jacobian (jac, &
                 tocn%val(i,j,k), &
                 socn%val(i,j,k), &
-                &self%traj%layer_depth(i,j,k),&
+                &layer_depth%val(i,j,k),&
                 &hocn%val(i,j,k),&
                 &traj%geom%lon(i,j),&
                 &traj%geom%lat(i,j))
