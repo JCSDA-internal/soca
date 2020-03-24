@@ -56,6 +56,7 @@ namespace soca {
     void soca_state_sizes_f90(const F90flds &, int &, int &, int &,
                               int &, int &, int &);
     void soca_state_rms_f90(const F90flds &, double &);
+    void soca_state_change_resol_f90(const F90flds &, const F90flds &);
   }
 }  // namespace soca
 #endif  // SOCA_STATE_STATEFORTRAN_H_

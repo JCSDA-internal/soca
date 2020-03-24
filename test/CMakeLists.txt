@@ -5,6 +5,7 @@ list( APPEND soca_test_input
   testinput/3dvar_soca.yml
   testinput/3dvarfgat.yml
   testinput/checkpointmodel.yml
+  testinput/convertstate.yml
   testinput/dirac_bump_cov.yml
   testinput/dirac_horizfilt.yml
   testinput/dirac_soca_cov.yml
@@ -50,6 +51,7 @@ list( APPEND soca_test_ref
   testref/3dvar_soca.test
   testref/3dvarfgat.test
   testref/checkpointmodel.test
+  testref/convertstate.test
   testref/dirac_bump_cov.test
   testref/dirac_horizfilt.test
   testref/dirac_soca_cov.test
@@ -561,3 +563,9 @@ soca_add_test( NAME checkpointmodel
                EXE  soca_checkpoint_model.x
                NOTRAPFPE
                TEST_DEPENDS test_soca_3dvar_godas)
+
+# Remapping MOM6 (horiz+vertical intterpolation)
+soca_add_test( NAME convertstate
+               EXE  soca_convertstate.x
+               NOTRAPFPE
+               TEST_DEPENDS test_soca_gridgen )

@@ -307,5 +307,20 @@ subroutine soca_state_sizes_c(c_key_fld, nx, ny, nzo, nzi, ncat, nf) bind(c,name
     nf = size(fld%fields)
 
 end subroutine soca_state_sizes_c
+  ! ------------------------------------------------------------------------------
+
+subroutine soca_state_change_resol_c(c_key_fld,c_key_rhs) bind(c,name='soca_state_change_resol_f90')
+    integer(c_int), intent(in) :: c_key_fld
+    integer(c_int), intent(in) :: c_key_rhs
+
+    type(soca_state), pointer :: fld, rhs
+
+    call soca_state_registry%get(c_key_fld,fld)
+    call soca_state_registry%get(c_key_rhs,rhs)
+
+    ! TODO implement a proper change of resolution, just copying for now
+    call fld%copy(rhs)
+
+end subroutine soca_state_change_resol_c
 
 end module soca_state_mod_c

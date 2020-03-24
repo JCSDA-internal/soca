@@ -67,3 +67,8 @@ ecbuild_add_executable( TARGET  soca_gridgen.x
                         SOURCES GridGen.cc
                         LIBS    soca
                       )
+
+ecbuild_add_executable( TARGET  soca_convertstate.x
+                        SOURCES ConvertState.cc
+                        LIBS    soca
+                      )
