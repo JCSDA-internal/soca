@@ -376,6 +376,7 @@ subroutine geom_write(self)
 
      write (strpe,fmt) pe
      geom_output_pe='geom_output_'//trim(strpe)//'.nc'
+
      ns = (self%iec - self%isc + 1) * (self%jec - self%jsc + 1 )
      call write2pe(reshape(self%mask2d,(/ns/)),'mask',geom_output_pe,.true.)
      call write2pe(reshape(self%lon,(/ns/)),'lon',geom_output_pe,.true.)
