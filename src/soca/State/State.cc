@@ -53,7 +53,7 @@ namespace soca {
     : vars_(other.vars_), time_(other.time_), geom_(new Geometry(geom))
   {
     soca_state_create_f90(keyFlds_, geom_->toFortran(), vars_);
-    soca_state_copy_f90(toFortran(), other.keyFlds_);
+    soca_state_change_resol_f90(toFortran(), other.keyFlds_);
     Log::trace() << "State::State created by interpolation." << std::endl;
   }
   // -----------------------------------------------------------------------------
