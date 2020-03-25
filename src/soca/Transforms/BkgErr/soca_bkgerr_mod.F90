@@ -9,6 +9,8 @@ use fckit_configuration_module, only: fckit_configuration
 use datetime_mod, only: datetime
 use kinds, only: kind_real
 use soca_fields_mod
+use soca_state_mod
+use soca_increment_mod
 use soca_bkgerrutil_mod, only: soca_bkgerr_bounds_type
 
 implicit none
@@ -19,7 +21,7 @@ public :: soca_bkgerr_config, &
 
 !> Fortran derived type to hold configuration D
 type :: soca_bkgerr_config
-   type(soca_fields),        pointer :: bkg
+   type(soca_state),         pointer :: bkg
    type(soca_fields)                 :: std_bkgerr
    type(soca_bkgerr_bounds_type)     :: bounds         ! Bounds for bkgerr
    real(kind=kind_real)              :: std_sst
@@ -36,7 +38,7 @@ contains
 subroutine soca_bkgerr_setup(f_conf, self, bkg)
   type(fckit_configuration),   intent(in) :: f_conf
   type(soca_bkgerr_config), intent(inout) :: self
-  type(soca_fields),   target, intent(in) :: bkg
+  type(soca_state),    target, intent(in) :: bkg
 
   type(soca_field), pointer :: field, field_bkg
 
@@ -108,21 +110,26 @@ end subroutine soca_bkgerr_setup
 !> Apply background error: dxm = D dxa
 subroutine soca_bkgerr_mult(self, dxa, dxm)
   type(soca_bkgerr_config),    intent(in) :: self
-  type(soca_fields),           intent(in) :: dxa
-  type(soca_fields),        intent(inout) :: dxm
+  type(soca_increment),        intent(in) :: dxa
+  type(soca_increment),     intent(inout) :: dxm
 
   type(soca_field), pointer :: field_m, field_a, field_e
 
   integer :: isc, iec, jsc, jec, i, j, n
 
+  ! make sure fields are correct shape
+  call dxa%check_congruent(dxm)
+  call dxa%check_subset(self%std_bkgerr)
+
   ! Indices for compute domain (no halo)
   isc=self%bkg%geom%isc; iec=self%bkg%geom%iec
   jsc=self%bkg%geom%jsc; jec=self%bkg%geom%jec
 
-  do n=1,size(self%std_bkgerr%fields)
-    field_e => self%std_bkgerr%fields(n)
-    call dxm%get(field_e%name, field_m)
-    call dxa%get(field_e%name, field_a)
+  ! multiply
+  do n=1,size(dxa%fields)
+    field_a => dxa%fields(n)
+    call self%std_bkgerr%get(field_a%name, field_e)
+    call dxm%get(field_a%name, field_m)
     do i = isc, iec
       do j = jsc, jec
         field_m%val(i,j,:) = field_e%val(i,j,:) * field_a%val(i,j,:)

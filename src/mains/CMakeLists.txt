@@ -13,14 +13,13 @@ ecbuild_add_executable( TARGET  soca_makeobs.x
                         LIBS    soca
                       )
 
+ecbuild_add_executable( TARGET  soca_hofx_nomodel.x
+                        SOURCES HofXNoModel.cc
+                        LIBS    soca
+)
 
 ecbuild_add_executable( TARGET  soca_hofx.x
                         SOURCES HofX.cc
-                        LIBS    soca
-                      )
-
-ecbuild_add_executable( TARGET  soca_hofx3d.x
-                        SOURCES HofX3D.cc
                         LIBS    soca
                       )
 
@@ -72,4 +71,8 @@ ecbuild_add_executable( TARGET  soca_gridgen.x
 ecbuild_add_executable( TARGET  soca_letkf.x
                         SOURCES LETKF.cc
                         LIBS    soca
-)
+                      )
+ecbuild_add_executable( TARGET  soca_convertstate.x
+                        SOURCES ConvertState.cc
+                        LIBS    soca
+                      )

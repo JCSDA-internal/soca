@@ -14,6 +14,8 @@
 
 #include <boost/shared_ptr.hpp>
 
+#include "soca/Fortran.h"
+
 #include "oops/base/Variables.h"
 #include "oops/util/DateTime.h"
 #include "oops/util/ObjectCounter.h"
@@ -23,15 +25,11 @@
 namespace eckit {
   class Configuration;
 }
-namespace oops {
-  class Variables;
-}
 namespace ufo {
   class GeoVaLs;
   class Locations;
 }
 namespace soca {
-  class Fields;
   class Geometry;
   class GetValuesTraj;
   class Increment;
@@ -75,8 +73,9 @@ namespace soca {
                              const oops::Variables &,
                              ufo::GeoVaLs &) const;
 
-      /// Interpolate full fields
-      ///  void changeResolution(const State & xx);
+      /// Rotations
+      void rotate2north(const oops::Variables &, const oops::Variables &) const;
+      void rotate2grid(const oops::Variables &, const oops::Variables &) const;
 
       /// Interactions with Increment
       State & operator+=(const Increment &);
@@ -88,10 +87,8 @@ namespace soca {
       const util::DateTime & validTime() const;
       util::DateTime & validTime();
 
-      /// Access to fields
-      Fields & fields();
-      const Fields & fields() const;
-
+      int & toFortran() {return keyFlds_;}
+      const int & toFortran() const {return keyFlds_;}
       boost::shared_ptr<const Geometry> geometry() const;
 
       /// Other
@@ -100,8 +97,9 @@ namespace soca {
 
    private:
       void print(std::ostream &) const;
-      std::unique_ptr<Fields> fields_;
-      std::unique_ptr<Fields> stash_;
+
+      F90flds keyFlds_;
+
       boost::shared_ptr<const Geometry> geom_;
       oops::Variables vars_;
       util::DateTime time_;

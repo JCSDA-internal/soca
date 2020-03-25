@@ -10,8 +10,10 @@ use fckit_configuration_module, only: fckit_configuration
 use oops_variables_mod
 use soca_geom_mod, only : soca_geom
 use soca_geom_mod_c, only : soca_geom_registry
-use soca_fields_mod, only: soca_fields
-use soca_fields_mod_c, only: soca_field_registry
+use soca_increment_mod
+use soca_increment_reg
+use soca_state_mod
+use soca_state_reg
 use soca_covariance_mod, only: soca_cov, soca_cov_setup, soca_cov_delete, &
                                soca_cov_C_mult, soca_cov_sqrt_C_mult
 
@@ -48,14 +50,14 @@ subroutine c_soca_b_setup(c_key_self, c_conf, c_key_geom, c_key_bkg, c_vars) &
 
   type(soca_cov),   pointer :: self
   type(soca_geom),  pointer :: geom
-  type(soca_fields),pointer :: bkg
+  type(soca_state), pointer :: bkg
   type(oops_variables)      :: vars
 
   call soca_geom_registry%get(c_key_geom, geom)
   call soca_cov_registry%init()
   call soca_cov_registry%add(c_key_self)
   call soca_cov_registry%get(c_key_self, self)
-  call soca_field_registry%get(c_key_bkg,bkg)
+  call soca_state_registry%get(c_key_bkg,bkg)
   vars = oops_variables(c_vars)
   call soca_cov_setup(self, fckit_configuration(c_conf), geom, bkg, vars)
 
@@ -84,13 +86,13 @@ subroutine c_soca_b_mult(c_key_self, c_key_in, c_key_out) bind(c,name='soca_b_mu
   integer(c_int), intent(in)    :: c_key_in    !<    "   to Increment in
   integer(c_int), intent(in)    :: c_key_out   !<    "   to Increment out
 
-  type(soca_cov),    pointer :: self
-  type(soca_fields), pointer :: xin
-  type(soca_fields), pointer :: xout
+  type(soca_cov),       pointer :: self
+  type(soca_increment), pointer :: xin
+  type(soca_increment), pointer :: xout
 
   call soca_cov_registry%get(c_key_self, self)
-  call soca_field_registry%get(c_key_in, xin)
-  call soca_field_registry%get(c_key_out, xout)
+  call soca_increment_registry%get(c_key_in, xin)
+  call soca_increment_registry%get(c_key_out, xout)
 
   call xout%copy(xin)              !< xout = xin
   call soca_cov_C_mult(self, xout) !< xout = C.xout
@@ -106,11 +108,11 @@ subroutine c_soca_b_randomize(c_key_self, c_key_out) bind(c,name='soca_b_randomi
   integer(c_int), intent(in) :: c_key_self  !< covar config structure
   integer(c_int), intent(in) :: c_key_out   !< Randomized increment
 
-  type(soca_cov),   pointer :: self
-  type(soca_fields),pointer :: xout
+  type(soca_cov),       pointer :: self
+  type(soca_increment), pointer :: xout
 
   call soca_cov_registry%get(c_key_self, self)
-  call soca_field_registry%get(c_key_out, xout)
+  call soca_increment_registry%get(c_key_out, xout)
 
   ! Randomize increment
   call soca_cov_sqrt_C_mult(self, xout) !< xout = C^1/2.xout

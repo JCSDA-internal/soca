@@ -47,18 +47,19 @@ Geometry:
                 surface_temperature_where_sea ]
     filename: Data/gmi_gpm_geoval.nc
 
-Initial Condition:
-  read_from_file: 1
-  date: 2018-04-15T00:00:00Z
-  basename: ./INPUT/
-  ocn_filename: MOM.res.nc
-  ice_filename: ice_model.res.nc
-  sfc_filename: sfc.res.nc
+Forecasts:
   variables: [cicen, hicen, socn, tocn, ssh, hocn, sw, lhf, shf, lw, us]
+  state:
+  - date: 2018-04-15T00:00:00Z
+    read_from_file: 1
+    basename: ./INPUT/
+    ocn_filename: MOM.res.nc
+    ice_filename: ice_model.res.nc
+    sfc_filename: sfc.res.nc
 
 Assimilation Window:
-  Begin: 2018-04-15T00:00:00Z
-  Length: P2D
+  window_begin: 2018-04-14T00:00:00Z
+  window_length: P2D
 
 Observations:
   ObsTypes:

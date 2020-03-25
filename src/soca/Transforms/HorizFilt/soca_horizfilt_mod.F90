@@ -12,6 +12,8 @@ module soca_horizfilt_mod
   use kinds
   use mpp_domains_mod, only : mpp_update_domains, mpp_update_domains_ad
   use soca_fields_mod
+  use soca_increment_mod
+  use soca_state_mod
   use soca_geom_mod_c
   use soca_geom_mod, only : soca_geom
   use soca_utils
@@ -28,7 +30,7 @@ module soca_horizfilt_mod
 
   !> Fortran derived type to hold configuration data for horizfilt
   type, public :: soca_horizfilt_type
-     type(soca_fields),        pointer :: bkg            !< Background field (or first guess)
+     type(soca_state),         pointer :: bkg            !< Background field (or first guess)
      type(oops_variables)              :: vars           !< Apply filtering to vars
      real(kind=kind_real), allocatable :: wgh(:,:,:,:)   !< Filtering weight
      real(kind=kind_real) :: scale_flow  !< Used with "flow" filter, sea surface height decorrelation scale
@@ -51,7 +53,7 @@ contains
     class(soca_horizfilt_type), intent(inout) :: self   !< The horizfilt structure
     type(fckit_configuration),     intent(in) :: f_conf !< The configuration
     type(soca_geom),               intent(in) :: geom   !< Geometry
-    type(soca_fields),             intent(in) :: traj   !< Trajectory
+    type(soca_state),              intent(in) :: traj   !< Trajectory
     type(oops_variables),          intent(in) :: vars   !< List of variables
 
     type(soca_field), pointer :: ssh
@@ -132,8 +134,8 @@ contains
   !> Forward filtering
   subroutine soca_horizfilt_mult(self, dxin, dxout, geom)
     class(soca_horizfilt_type), intent(inout) :: self  !< The horizfilt structure
-    type(soca_fields),             intent(in) :: dxin  !< Input: Increment
-    type(soca_fields),          intent(inout) :: dxout !< Output: filtered Increment
+    type(soca_increment),          intent(in) :: dxin  !< Input: Increment
+    type(soca_increment),       intent(inout) :: dxout !< Output: filtered Increment
     type(soca_geom),               intent(in) :: geom
 
     type(soca_field), pointer :: field_i, field_o
@@ -161,8 +163,8 @@ contains
   !> Backward filtering
   subroutine soca_horizfilt_multad(self, dxin, dxout, geom)
     class(soca_horizfilt_type), intent(inout) :: self  !< The horizfilt structure
-    type(soca_fields),             intent(in) :: dxin  !< Input:
-    type(soca_fields),          intent(inout) :: dxout !< Output:
+    type(soca_increment),          intent(in) :: dxin  !< Input:
+    type(soca_increment),       intent(inout) :: dxout !< Output:
     type(soca_geom),               intent(in) :: geom
 
     type(soca_field), pointer :: field_i, field_o

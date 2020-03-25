@@ -8,7 +8,7 @@ Test     : CostJo   : Nonlinear Jo(InsituSalinity) = 355.419, nobs = 218, Jo/n =
 Test     : CostJo   : Nonlinear Jo(SeaIceFraction) = 370.055, nobs = 89, Jo/n = 4.15792, err = 0.1
 Test     : CostFunction: Nonlinear J = 20180.3
 Test     : RPCGMinimizer: reduction in residual norm = 0.125615
-Test     : CostFunction::addIncrement: Analysis: 
+Test     : CostFunction::addIncrement: Analysis:
 Test     :   Valid time: 2018-04-15T00:00:00Z
 Test     :   cicen   min=    0.000000   max=    1.000000   mean=    0.023945
 Test     :   hicen   min=    0.000000   max=    2.923064   mean=    0.115987
@@ -22,7 +22,9 @@ Test     :     lhf   min=  -38.137508   max=  256.595607   mean=   64.433604
 Test     :     shf   min=  -58.949308   max=  201.374218   mean=    9.318213
 Test     :      lw   min=    0.000000   max=   88.036091   mean=   48.153834
 Test     :      us   min=    0.004396   max=    0.019669   mean=    0.009428
-Test     : CostJb   : Nonlinear Jb = 0.731596
+Test     :    uocn   min=   -0.858174   max=    0.700064   mean=   -0.000241
+Test     :    vocn   min=   -0.766109   max=    1.437777   mean=    0.002019
+Test     : CostJb   : Nonlinear Jb = 0.731599
 Test     : CostJo   : Nonlinear Jo(CoolSkin) = 16668.369841, nobs = 201, Jo/n = 82.927213, err = 0.364832
 Test     : CostJo   : Nonlinear Jo(SeaSurfaceTemp) = 1232.946942, nobs = 154, Jo/n = 8.006149, err = 0.356997
 Test     : CostJo   : Nonlinear Jo(SeaSurfaceSalinity) = 49.012443, nobs = 51, Jo/n = 0.961028, err = 1.000000
@@ -30,4 +32,4 @@ Test     : CostJo   : Nonlinear Jo(ADT) = 212.797293, nobs = 95, Jo/n = 2.239972
 Test     : CostJo   : Nonlinear Jo(InsituTemperature) = 346.983203, nobs = 206, Jo/n = 1.684384, err = 0.897281
 Test     : CostJo   : Nonlinear Jo(InsituSalinity) = 353.912276, nobs = 218, Jo/n = 1.623451, err = 0.608197
 Test     : CostJo   : Nonlinear Jo(SeaIceFraction) = 368.686290, nobs = 89, Jo/n = 4.142543, err = 0.100000
-Test     : CostFunction: Nonlinear J = 19233.439884
+Test     : CostFunction: Nonlinear J = 19233.439887

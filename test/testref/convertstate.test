@@ -1,0 +1,12 @@
+Test     : Input state: 
+Test     :   Valid time: 2018-04-15T00:00:00Z
+Test     :    tocn   min=   -1.888390   max=   31.700465   mean=    6.017565
+Test     :    socn   min=   10.721046   max=   40.441659   mean=   34.544390
+Test     :    hocn   min=    0.001000   max= 1345.640000   mean=  128.628064
+Test     :   cicen   min=    0.000000   max=    1.000000   mean=    0.023937
+Test     : Output state: 
+Test     :   Valid time: 2018-04-15T00:00:00Z
+Test     :    tocn   min=   -1.888390   max=   31.700465   mean=    6.017565
+Test     :    socn   min=   10.721046   max=   40.441659   mean=   34.544390
+Test     :    hocn   min=    0.001000   max= 1345.640000   mean=  128.628064
+Test     :   cicen   min=    0.000000   max=    1.000000   mean=    0.023937

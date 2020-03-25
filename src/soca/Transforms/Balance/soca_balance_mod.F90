@@ -7,7 +7,9 @@ module soca_balance_mod
 
 use fckit_configuration_module, only: fckit_configuration
 use kinds, only: kind_real
-use soca_fields_mod, only: soca_fields, soca_field
+use soca_fields_mod
+use soca_increment_mod
+use soca_state_mod
 use soca_kst_mod, only: soca_kst, soca_soft_jacobian
 use soca_ksshts_mod, only: soca_ksshts, soca_steric_jacobian
 
@@ -21,7 +23,7 @@ public :: soca_balance_config, &
 
 !> Fortran derived type to hold configuration D
 type :: soca_balance_config
-   type(soca_fields), pointer :: traj                !> Trajectory
+   type(soca_state ), pointer :: traj                !> Trajectory
    integer                    :: isc, iec, jsc, jec  !> Compute domain
    type(soca_kst)             :: kst                 !> T/S balance
    type(soca_ksshts)          :: ksshts              !> SSH/T/S balance
@@ -39,11 +41,11 @@ contains
 subroutine soca_balance_setup(f_conf, self, traj)
   type(fckit_configuration),   intent(in)  :: f_conf
   type(soca_balance_config), intent(inout) :: self
-  type(soca_fields),   target, intent(in)  :: traj
+  type(soca_state),   target, intent(in)  :: traj
 
   integer :: isc, iec, jsc, jec, i, j, k, nl
   real(kind=kind_real), allocatable :: jac(:)
-  type(soca_field), pointer :: tocn, socn, hocn, cicen
+  type(soca_field), pointer :: tocn, socn, hocn, cicen, mld, layer_depth
 
   ! Store trajectory
   self%traj => traj
@@ -65,6 +67,8 @@ subroutine soca_balance_setup(f_conf, self, traj)
   call traj%get("tocn", tocn)
   call traj%get("socn", socn)
   call traj%get("hocn", hocn)
+  call traj%get("mld", mld)
+  call traj%get("layer_depth", layer_depth)
   if (traj%has("cicen"))  call traj%get("cicen", cicen)
 
   ! allocate space
@@ -84,7 +88,7 @@ subroutine soca_balance_setup(f_conf, self, traj)
              &self%kst%dsdtmax, self%kst%dsdzmin, self%kst%dtdzmin)
         ! Set Jacobian to 0 above mixed layer
         do k=1,nl
-           if (self%traj%layer_depth(i,j,k)<self%traj%mld(i,j)) then
+           if (layer_depth%val(i,j,k) < mld%val(i,j,1)) then
               jac(k) = 0.0_kind_Real
            end if
         end do
@@ -106,7 +110,7 @@ subroutine soca_balance_setup(f_conf, self, traj)
            call soca_steric_jacobian (jac, &
                 tocn%val(i,j,k), &
                 socn%val(i,j,k), &
-                &self%traj%layer_depth(i,j,k),&
+                &layer_depth%val(i,j,k),&
                 &hocn%val(i,j,k),&
                 &traj%geom%lon(i,j),&
                 &traj%geom%lat(i,j))
@@ -152,8 +156,8 @@ end subroutine soca_balance_delete
 ! Apply forward balance operator
 subroutine soca_balance_mult(self, dxa, dxm)
   type(soca_balance_config), intent(in) :: self
-  type(soca_fields),         intent(in) :: dxa
-  type(soca_fields),      intent(inout) :: dxm
+  type(soca_increment),      intent(in) :: dxa
+  type(soca_increment),   intent(inout) :: dxm
 
   type(soca_field), pointer :: fld_m, fld_a
   type(soca_field), pointer :: tocn_a, socn_a
@@ -206,8 +210,8 @@ end subroutine soca_balance_mult
 ! Apply backward balance operator
 subroutine soca_balance_multad(self, dxa, dxm)
   type(soca_balance_config), intent(in) :: self
-  type(soca_fields),         intent(in) :: dxm
-  type(soca_fields),      intent(inout) :: dxa
+  type(soca_increment),      intent(in) :: dxm
+  type(soca_increment),   intent(inout) :: dxa
 
   type(soca_field), pointer :: fld_a, fld_m
   type(soca_field), pointer :: socn_m, ssh_m, cicen_m
@@ -253,8 +257,8 @@ end subroutine soca_balance_multad
 ! Apply inverse of the forward balance operator
 subroutine soca_balance_multinv(self, dxa, dxm)
   type(soca_balance_config), intent(in) :: self
-  type(soca_fields),         intent(in) :: dxm
-  type(soca_fields),      intent(inout) :: dxa
+  type(soca_increment),      intent(in) :: dxm
+  type(soca_increment),   intent(inout) :: dxa
 
   integer :: i, j, k, n
   type(soca_field), pointer :: fld_m, fld_a
@@ -303,8 +307,8 @@ end subroutine soca_balance_multinv
 ! Apply inverse of the backward balance operator
 subroutine soca_balance_multinvad(self, dxa, dxm)
   type(soca_balance_config), intent(in) :: self
-  type(soca_fields),      intent(inout) :: dxm
-  type(soca_fields),         intent(in) :: dxa
+  type(soca_increment),   intent(inout) :: dxm
+  type(soca_increment),      intent(in) :: dxa
 
   integer :: i, j, n
   type(soca_field), pointer :: fld_a, fld_m

@@ -15,10 +15,12 @@
 #include <ostream>
 #include <string>
 
-#include <boost/scoped_ptr.hpp>
 #include <boost/shared_ptr.hpp>
 
+#include "soca/Fortran.h"
+
 #include "oops/base/GeneralizedDepartures.h"
+#include "oops/base/Variables.h"
 #include "oops/util/DateTime.h"
 #include "oops/util/Duration.h"
 #include "oops/util/ObjectCounter.h"
@@ -31,18 +33,15 @@ namespace eckit {
 namespace oops {
   class GridPoint;
   class UnstructuredGrid;
-  class Variables;
 }
 namespace ufo {
   class GeoVaLs;
   class Locations;
 }
 namespace soca {
-  class ErrorCovariance;
-  class Fields;
   class Geometry;
+  class GeometryIterator;
   class GetValuesTraj;
-  class ModelBiasIncrement;
   class State;
 }
 
@@ -113,20 +112,21 @@ namespace soca {
       void field_to_ug(oops::UnstructuredGrid &, const int &) const;
       void field_from_ug(const oops::UnstructuredGrid &, const int &);
 
-      /// Access to fields
-      Fields & fields();
-      const Fields & fields() const;
-
-      boost::shared_ptr<const Geometry> geometry() const;
-
       /// Other
       void accumul(const double &, const State &);
+      int & toFortran() {return keyFlds_;}
+      const int & toFortran() const {return keyFlds_;}
+      boost::shared_ptr<const Geometry> geometry() const;
+
 
       /// Data
    private:
       void print(std::ostream &) const;
-      boost::scoped_ptr<Fields> fields_;
-      boost::scoped_ptr<Fields> stash_;
+
+      F90flds keyFlds_;
+      oops::Variables vars_;
+      util::DateTime time_;
+      boost::shared_ptr<const Geometry> geom_;
   };
   // -----------------------------------------------------------------------------
 

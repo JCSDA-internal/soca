@@ -14,7 +14,6 @@
 
 #include "soca/Traits.h"
 
-#include "soca/Fields/Fields.h"
 #include "soca/Fortran.h"
 #include "soca/Geometry/Geometry.h"
 #include "soca/Increment/Increment.h"
@@ -62,7 +61,7 @@ void TlmId::stepAD(Increment & dx, ModelBiasIncrement &) const {
 }
 // -----------------------------------------------------------------------------
 void TlmId::finalizeAD(Increment & dx) const {
-  Log::debug() << "TlmId::finalizeAD" << dx.fields() << std::endl;
+  Log::debug() << "TlmId::finalizeAD" << dx << std::endl;
 }
 // -----------------------------------------------------------------------------
 void TlmId::print(std::ostream & os) const {
