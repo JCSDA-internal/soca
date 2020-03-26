@@ -11,8 +11,8 @@ Model:
   variables: &soca_vars [socn, tocn, ssh, hocn]
 
 Assimilation Window:
-  Begin: &date 2018-04-15T00:00:00Z
-  Length: P2D
+  window_begin: &date 2018-04-14T00:00:00Z
+  window_length: P2D
 
 Initial Condition:
   _: &state
@@ -50,10 +50,11 @@ Observations:
         simulate:   {variables: [ sea_surface_temperature ]}
       ObsOperator:
         name: Identity
-      covariance: localized diagonal
-      Localization:
-        localization: Gaspari-Cohn
-        lengthscale: 5000e3
+      Covariance:
+        covariance: localized diagonal
+        Localization:
+          localization: Gaspari-Cohn
+          lengthscale: 5000e3
       ObsFilters:
       - *land_mask
       - Filter: Bounds Check
@@ -70,7 +71,9 @@ Localization:
   max_nobs: -1
 
 letkf:
-  rtppCoeff: -1.
+  inflation:
+    rtpp: 0.0
+    mult: 1.0
 
 output:
   datadir: Data
