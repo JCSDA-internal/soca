@@ -9,8 +9,10 @@ module c_soca_horizfilt_mod
   use soca_horizfilt_mod
   use soca_geom_mod_c, only: soca_geom_registry
   use soca_geom_mod, only : soca_geom
-  use soca_fields_mod_c, only: soca_field_registry
-  use soca_fields_mod
+  use soca_increment_mod
+  use soca_increment_reg
+  use soca_state_mod
+  use soca_state_reg
   use oops_variables_mod
 
   implicit none
@@ -50,11 +52,11 @@ contains
 
     type(soca_horizfilt_type), pointer :: self
     type(soca_geom),           pointer :: geom
-    type(soca_fields),          pointer :: traj
+    type(soca_state),          pointer :: traj
     type(oops_variables)               :: vars
 
     call soca_geom_registry%get(c_key_geom, geom)
-    call soca_field_registry%get(c_key_traj, traj)
+    call soca_state_registry%get(c_key_traj, traj)
     call soca_horizfilt_registry%init()
     call soca_horizfilt_registry%add(c_key_self)
     call soca_horizfilt_registry%get(c_key_self, self)
@@ -86,15 +88,15 @@ contains
     integer(c_int), intent(in)    :: c_key_out   !<    "   to Increment out
     integer(c_int), intent(in)    :: c_key_geom  !< Geometry
 
-    type(soca_horizfilt_type),   pointer :: self
-    type(soca_fields), pointer :: xin
-    type(soca_fields), pointer :: xout
-    type(soca_geom), pointer :: geom
+    type(soca_horizfilt_type), pointer :: self
+    type(soca_increment),      pointer :: xin
+    type(soca_increment),      pointer :: xout
+    type(soca_geom),           pointer :: geom
 
     call soca_geom_registry%get(c_key_geom, geom)
     call soca_horizfilt_registry%get(c_key_self, self)
-    call soca_field_registry%get(c_key_in, xin)
-    call soca_field_registry%get(c_key_out, xout)
+    call soca_increment_registry%get(c_key_in, xin)
+    call soca_increment_registry%get(c_key_out, xout)
 
     call soca_horizfilt_mult(self, xin, xout, geom) !< xout = C.xout
 
@@ -110,15 +112,15 @@ contains
     integer(c_int), intent(in)    :: c_key_out   !<    "   to Increment out
     integer(c_int), intent(in)    :: c_key_geom  !< Geometry
 
-    type(soca_horizfilt_type),   pointer :: self
-    type(soca_fields), pointer :: xin
-    type(soca_fields), pointer :: xout
-    type(soca_geom), pointer :: geom
+    type(soca_horizfilt_type), pointer :: self
+    type(soca_increment),      pointer :: xin
+    type(soca_increment),      pointer :: xout
+    type(soca_geom),           pointer :: geom
 
     call soca_geom_registry%get(c_key_geom, geom)
     call soca_horizfilt_registry%get(c_key_self, self)
-    call soca_field_registry%get(c_key_in, xin)
-    call soca_field_registry%get(c_key_out, xout)
+    call soca_increment_registry%get(c_key_in, xin)
+    call soca_increment_registry%get(c_key_out, xout)
 
     call soca_horizfilt_multad(self, xin, xout, geom) !< xout = C^T.xout
 

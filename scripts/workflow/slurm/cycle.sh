@@ -116,6 +116,7 @@ while true; do
 	export FCST_LEN
 	export FCST_RESTART
 	export FCST_START_TIME
+	export FORC_ATM
 	export FORC_DIR=$SCRATCH_DIR_CYCLE/fcst.prep/forc/mem_0000
 	export MOM_CONFIG=$MODEL_CONFIG/model
 	export MOM_DATA=$MODEL_DATA/model

@@ -9,6 +9,8 @@ use fckit_configuration_module, only: fckit_configuration
 use datetime_mod, only: datetime
 use kinds, only: kind_real
 use soca_fields_mod
+use soca_increment_mod
+use soca_state_mod
 
 implicit none
 
@@ -18,7 +20,7 @@ public :: soca_bkgerrfilt_config, &
 
 !> Fortran derived type to hold configuration
 type :: soca_bkgerrfilt_config
-   type(soca_fields),   pointer :: bkg
+   type(soca_state),    pointer :: bkg
    type(soca_fields)            :: filt
    real(kind=kind_real)         :: efold_z           ! E-folding scale
    real(kind=kind_real)         :: scale             ! Rescaling factor
@@ -35,12 +37,12 @@ contains
 subroutine soca_bkgerrfilt_setup(f_conf, self, bkg)
   type(fckit_configuration),    intent(in)    :: f_conf
   type(soca_bkgerrfilt_config), intent(inout) :: self
-  type(soca_fields), target,    intent(in)    :: bkg
+  type(soca_state),  target,    intent(in)    :: bkg
 
   integer :: isc, iec, jsc, jec, i, j, k
   real(kind=kind_real) :: efold
   character(len=800) :: fname = 'soca_bkgerrfilt.nc'
-  type(soca_field), pointer :: tocn, socn, ssh, hocn
+  type(soca_field), pointer :: tocn, socn, ssh, hocn, layer_depth
 
   ! Allocate memory for bkgerrfiltor and set to zero
   call self%filt%copy(bkg)
@@ -58,6 +60,7 @@ subroutine soca_bkgerrfilt_setup(f_conf, self, bkg)
   call self%filt%get("socn", socn)
   call self%filt%get("ssh", ssh)
   call bkg%get("hocn", hocn)
+  call bkg%get("layer_depth", layer_depth)
 
   ! Setup rescaling and masks
   isc=bkg%geom%isc ; self%isc=isc ; iec=bkg%geom%iec ; self%iec=iec
@@ -69,7 +72,7 @@ subroutine soca_bkgerrfilt_setup(f_conf, self, bkg)
            do k = 1, hocn%nz
               if (hocn%val(i,j,k).gt.1e-3_kind_real) then
                  ! Only apply if layer is thick enough
-                 efold = self%scale*exp(-self%bkg%layer_depth(i,j,k)/self%efold_z)
+                 efold = self%scale*exp(-layer_depth%val(i,j,k)/self%efold_z)
               else
                  ! Set to zero if layer is too thin
                  efold = 0.0_kind_real
@@ -105,20 +108,25 @@ end subroutine soca_bkgerrfilt_setup
 !> Apply background error: dxm = D dxa
 subroutine soca_bkgerrfilt_mult(self, dxa, dxm)
   type(soca_bkgerrfilt_config), intent(in) :: self
-  type(soca_fields),            intent(in) :: dxa
-  type(soca_fields),         intent(inout) :: dxm
+  type(soca_increment),         intent(in) :: dxa
+  type(soca_increment),      intent(inout) :: dxm
 
   integer :: i, j, n
-  type(soca_field), pointer :: field, field_a, field_m
+  type(soca_field), pointer :: field_f, field_a, field_m
 
-  do n=1,size(self%filt%fields)
-    field => self%filt%fields(n)
-    call dxa%get(field%name, field_a)
-    call dxm%get(field%name, field_m)
+  ! make sure fields are the right shape
+  call dxa%check_congruent(dxm)
+  call dxa%check_subset(self%filt)
+
+  ! multiply
+  do n=1,size(dxa%fields)
+    field_a => dxa%fields(n)
+    call self%filt%get(field_a%name, field_f)
+    call dxm%get(field_a%name, field_m)
     do i = self%isc, self%iec
       do j = self%jsc, self%jec
         if (self%bkg%geom%mask2d(i,j).eq.1) then
-          field_m%val(i,j,:) = field%val(i,j,:) * field_a%val(i,j,:)
+          field_m%val(i,j,:) = field_f%val(i,j,:) * field_a%val(i,j,:)
         else
           field_m%val(i,j,:) = 0.0_kind_real
         end if

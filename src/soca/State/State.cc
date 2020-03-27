@@ -5,24 +5,20 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#include <algorithm>
-#include <string>
-#include <utility>
+#include <iomanip>
 #include <vector>
 
-#include "soca/Fields/Fields.h"
 #include "soca/Geometry/Geometry.h"
 #include "soca/GetValuesTraj/GetValuesTraj.h"
 #include "soca/Increment/Increment.h"
-#include "soca/ModelBias/ModelBias.h"
 #include "soca/State/State.h"
+#include "soca/State/StateFortran.h"
 
 #include "eckit/config/LocalConfiguration.h"
 #include "eckit/exception/Exceptions.h"
 
 #include "oops/base/Variables.h"
 #include "oops/util/DateTime.h"
-#include "oops/util/Duration.h"
 #include "oops/util/Logger.h"
 
 #include "ufo/GeoVaLs.h"
@@ -35,45 +31,50 @@ namespace soca {
   // -----------------------------------------------------------------------------
   /// Constructor, destructor
   // -----------------------------------------------------------------------------
-  State::State(const Geometry & resol, const oops::Variables & vars,
+  State::State(const Geometry & geom, const oops::Variables & vars,
                const util::DateTime & vt)
-    : fields_(new Fields(resol, vars, vt)), stash_()
+    : time_(vt), vars_(vars), geom_(new Geometry(geom))
   {
+    soca_state_create_f90(keyFlds_, geom_->toFortran(), vars_);
     Log::trace() << "State::State created." << std::endl;
   }
   // -----------------------------------------------------------------------------
-  State::State(const Geometry & resol, const oops::Variables & vars,
+  State::State(const Geometry & geom, const oops::Variables & vars,
                const eckit::Configuration & file)
+    : time_(), vars_(vars), geom_(new Geometry(geom))
   {
-    fields_.reset(new Fields(resol, vars, util::DateTime()));
-    fields_->read(file);
-    ASSERT(fields_);
+    util::DateTime * dtp = &time_;
+    soca_state_create_f90(keyFlds_, geom_->toFortran(), vars_);
+    soca_state_read_file_f90(toFortran(), &file, &dtp);
     Log::trace() << "State::State created and read in." << std::endl;
   }
   // -----------------------------------------------------------------------------
-  State::State(const Geometry & resol, const State & other)
-    : fields_(new Fields(*other.fields_, resol)), stash_()
+  State::State(const Geometry & geom, const State & other)
+    : vars_(other.vars_), time_(other.time_), geom_(new Geometry(geom))
   {
-    ASSERT(fields_);
+    soca_state_create_f90(keyFlds_, geom_->toFortran(), vars_);
+    soca_state_change_resol_f90(toFortran(), other.keyFlds_);
     Log::trace() << "State::State created by interpolation." << std::endl;
   }
   // -----------------------------------------------------------------------------
   State::State(const State & other)
-    : fields_(new Fields(*other.fields_)), stash_()
+    : vars_(other.vars_), time_(other.time_), geom_(new Geometry(*other.geom_))
   {
-    ASSERT(fields_);
+    soca_state_create_f90(keyFlds_, geom_->toFortran(), vars_);
+    soca_state_copy_f90(toFortran(), other.toFortran());
     Log::trace() << "State::State copied." << std::endl;
   }
   // -----------------------------------------------------------------------------
   State::~State() {
+    soca_state_delete_f90(toFortran());
     Log::trace() << "State::State destructed." << std::endl;
   }
   // -----------------------------------------------------------------------------
   /// Basic operators
   // -----------------------------------------------------------------------------
   State & State::operator=(const State & rhs) {
-    ASSERT(fields_);
-    *fields_ = *rhs.fields_;
+    time_ = rhs.time_;
+    soca_state_copy_f90(toFortran(), rhs.toFortran());
     return *this;
   }
   // -----------------------------------------------------------------------------
@@ -82,7 +83,7 @@ namespace soca {
   void State::getValues(const ufo::Locations & locs,
                         const oops::Variables & vars,
                         ufo::GeoVaLs & cols) const {
-    if (fields_->geometry()->getAtmInit())
+    if (geom_->getAtmInit())
       {
         // Get atm geovals
         // The variables in vars that are also defined in soca will be
@@ -90,14 +91,16 @@ namespace soca {
         getValuesFromFile(locs, vars, cols);
         }
     // Get ocean geovals
-    fields_->getValues(locs, vars, cols);
+    soca_state_interp_nl_f90(toFortran(), locs.toFortran(), vars,
+                             cols.toFortran());
   }
   // -----------------------------------------------------------------------------
   void State::getValues(const ufo::Locations & locs,
                         const oops::Variables & vars,
                         ufo::GeoVaLs & cols,
                         GetValuesTraj & traj) const {
-    fields_->getValues(locs, vars, cols, traj);
+    soca_state_interp_nl_traj_f90(toFortran(), locs.toFortran(), vars,
+                                  cols.toFortran(), traj.toFortran());
   }
   // -----------------------------------------------------------------------------
   /// Read Interpolated GeoVaLs from file
@@ -106,7 +109,7 @@ namespace soca {
                                 const oops::Variables & vars,
                                 ufo::GeoVaLs & atmgom) const {
     // Get Atm configuration
-    eckit::LocalConfiguration conf(fields_->geometry()->getAtmConf());
+    eckit::LocalConfiguration conf(geom_->getAtmConf());
 
     // Get Time Bounds
     util::DateTime bgn = util::DateTime(conf.getString("notocean.date_begin"));
@@ -114,7 +117,7 @@ namespace soca {
 
     // Create the Atmospheric Geometry in Observation Space
     eckit::LocalConfiguration confatmobs(conf, "notocean.ObsSpace");
-    ioda::ObsSpace atmobs(confatmobs, fields_->geometry()->getComm(),
+    ioda::ObsSpace atmobs(confatmobs, geom_->getComm(),
                                 bgn, end);
 
     // Get GeoVaLs from file
@@ -123,12 +126,27 @@ namespace soca {
   }
 
   // -----------------------------------------------------------------------------
+  /// Rotations
+  // -----------------------------------------------------------------------------
+  void State::rotate2north(const oops::Variables & u,
+                           const oops::Variables & v) const {
+    Log::trace() << "State::State rotate from logical to geographical North."
+                 << std::endl;
+    soca_state_rotate2north_f90(toFortran(), u, v);
+  }
+  // -----------------------------------------------------------------------------
+  void State::rotate2grid(const oops::Variables & u,
+                          const oops::Variables & v) const {
+    Log::trace() << "State::State rotate from geographical to logical North."
+    << std::endl;
+    soca_state_rotate2grid_f90(toFortran(), u, v);
+  }
+  // -----------------------------------------------------------------------------
   /// Interactions with Increments
   // -----------------------------------------------------------------------------
   State & State::operator+=(const Increment & dx) {
-    ASSERT(this->validTime() == dx.validTime());
-    ASSERT(fields_);
-    fields_->add(dx.fields());
+    ASSERT(validTime() == dx.validTime());
+    soca_state_add_incr_f90(toFortran(), dx.toFortran());
     return *this;
   }
   // -----------------------------------------------------------------------------
@@ -136,41 +154,59 @@ namespace soca {
   // -----------------------------------------------------------------------------
   void State::read(const eckit::Configuration & files) {
     Log::trace() << "State::State read started." << std::endl;
-    fields_->read(files);
+    util::DateTime * dtp = &time_;
+    soca_state_read_file_f90(toFortran(), &files, &dtp);
     Log::trace() << "State::State read done." << std::endl;
   }
   // -----------------------------------------------------------------------------
   void State::write(const eckit::Configuration & files) const {
-    fields_->write(files);
+    const util::DateTime * dtp = &time_;
+    soca_state_write_file_f90(toFortran(), &files, &dtp);
   }
   // -----------------------------------------------------------------------------
   void State::print(std::ostream & os) const {
     os << std::endl << "  Valid time: " << validTime();
-    os << *fields_;
+    int n0, nf;
+    soca_state_sizes_f90(toFortran(), n0, n0, n0, n0, n0, nf);
+    std::vector<double> zstat(3*nf);
+    soca_state_gpnorm_f90(toFortran(), nf, zstat[0]);
+    for (int jj = 0; jj < nf; ++jj) {
+      // TODO(travis) remove this once answers ready to be changed
+      if (vars_[jj] == "mld" || vars_[jj] == "layer_depth") {
+        continue;
+      }
+
+      os << std::endl << std::right << std::setw(7) << vars_[jj]
+         << "   min="  <<  std::fixed << std::setw(12) <<
+                           std::right << zstat[3*jj]
+         << "   max="  <<  std::fixed << std::setw(12) <<
+                           std::right << zstat[3*jj+1]
+         << "   mean=" <<  std::fixed << std::setw(12) <<
+                           std::right << zstat[3*jj+2];
+    }
   }
+
   // -----------------------------------------------------------------------------
   /// For accumulator
   // -----------------------------------------------------------------------------
   void State::zero() {
-    fields_->zero();
+    soca_state_zero_f90(toFortran());
   }
   // -----------------------------------------------------------------------------
   void State::accumul(const double & zz, const State & xx) {
-    fields_->axpy(zz, *xx.fields_);
+    soca_state_axpy_f90(toFortran(), zz, xx.toFortran());
   }
   // -----------------------------------------------------------------------------
-  double State::norm() const {return fields_->norm();}
-  // -----------------------------------------------------------------------------
-  const util::DateTime & State::validTime() const {return fields_->time();}
-  // -----------------------------------------------------------------------------
-  util::DateTime & State::validTime() {return fields_->time();}
-  // -----------------------------------------------------------------------------
-  Fields & State::fields() {return *fields_;}
-  // -----------------------------------------------------------------------------
-  const Fields & State::fields() const {return *fields_;}
-  // -----------------------------------------------------------------------------
-  boost::shared_ptr<const Geometry> State::geometry() const {
-    return fields_->geometry();
+  double State::norm() const {
+    double zz = 0.0;
+    soca_state_rms_f90(toFortran(), zz);
+    return zz;
   }
+  // -----------------------------------------------------------------------------
+  const util::DateTime & State::validTime() const {return time_;}
+  // -----------------------------------------------------------------------------
+  util::DateTime & State::validTime() {return time_;}
+  // -----------------------------------------------------------------------------
+  boost::shared_ptr<const Geometry> State::geometry() const {return geom_;}
   // -----------------------------------------------------------------------------
 }  // namespace soca

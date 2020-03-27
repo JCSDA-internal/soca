@@ -5,6 +5,7 @@ list( APPEND soca_test_input
   testinput/3dvar_soca.yml
   testinput/3dvarfgat.yml
   testinput/checkpointmodel.yml
+  testinput/convertstate.yml
   testinput/dirac_bump_cov.yml
   testinput/dirac_horizfilt.yml
   testinput/dirac_soca_cov.yml
@@ -20,9 +21,9 @@ list( APPEND soca_test_input
   testinput/geometry_iterator.yml
   testinput/geometryatm.yml
   testinput/gridgen.yml
-  testinput/hofx.yml
-  testinput/hofx3d.yml
-  testinput/hofx3dcrtm.yml
+  testinput/hofx_3d.yml
+  testinput/hofx_3dcrtm.yml
+  testinput/hofx_4d.yml
   testinput/increment.yml
   testinput/linearmodel.yml
   testinput/marine2ioda.yml
@@ -33,6 +34,7 @@ list( APPEND soca_test_input
   testinput/state.yml
   testinput/static_socaerror_init.yml
   testinput/static_socaerror_test.yml
+  testinput/varchange_ana2model.yml
   testinput/varchange_balance.yml
   testinput/varchange_balance_TSSSH.yml
   testinput/varchange_bkgerrfilt.yml
@@ -49,6 +51,7 @@ list( APPEND soca_test_ref
   testref/3dvar_soca.test
   testref/3dvarfgat.test
   testref/checkpointmodel.test
+  testref/convertstate.test
   testref/dirac_bump_cov.test
   testref/dirac_horizfilt.test
   testref/dirac_soca_cov.test
@@ -60,9 +63,9 @@ list( APPEND soca_test_ref
   testref/forecast_identity_cice.test
   testref/forecast_identity.test
   testref/forecast_mom6.test
-  testref/hofx.test
-  testref/hofx3d.test
-  testref/hofx3dcrtm.test
+  testref/hofx_3d.test
+  testref/hofx_3dcrtm.test
+  testref/hofx_4d.test
   testref/parameters_bump_cov_lct.test
 )
 
@@ -401,6 +404,10 @@ soca_add_test( NAME linearmodel
                TEST_DEPENDS test_soca_gridgen
                             test_soca_static_socaerror_init )
 
+soca_add_test( NAME varchange_ana2model
+               SRC  TestNLVariableChange.cc
+               TEST_DEPENDS test_soca_gridgen )
+
 soca_add_test( NAME varchange_balance
                SRC  TestVariableChange.cc
                TEST_DEPENDS test_soca_gridgen )
@@ -411,7 +418,7 @@ soca_add_test( NAME varchange_balance_TSSSH
 
 soca_add_test( NAME varchange_bkgerrfilt
                SRC TestVariableChange.cc
-                         TEST_DEPENDS test_soca_gridgen )
+               TEST_DEPENDS test_soca_gridgen )
 
 soca_add_test( NAME varchange_horizfilt
                SRC TestVariableChange.cc
@@ -489,17 +496,17 @@ soca_add_test( NAME dirac_horizfilt
 #
 
 # h(x) executables
-soca_add_test( NAME hofx3d
-               EXE  soca_hofx3d.x
+soca_add_test( NAME hofx_3d
+               EXE  soca_hofx_nomodel.x
                TEST_DEPENDS test_soca_gridgen )
 
 if( ${CRTM_FOUND} )
- soca_add_test( NAME hofx3dcrtm
-                EXE  soca_hofx3d.x
+ soca_add_test( NAME hofx_3dcrtm
+                EXE  soca_hofx_nomodel.x
                 TEST_DEPENDS test_soca_gridgen )
 endif()
 
-soca_add_test( NAME hofx
+soca_add_test( NAME hofx_4d
                EXE  soca_hofx.x
                NOTRAPFPE
                TEST_DEPENDS test_soca_gridgen )
@@ -556,3 +563,9 @@ soca_add_test( NAME checkpointmodel
                EXE  soca_checkpoint_model.x
                NOTRAPFPE
                TEST_DEPENDS test_soca_3dvar_godas)
+
+# Remapping MOM6 (horiz+vertical intterpolation)
+soca_add_test( NAME convertstate
+               EXE  soca_convertstate.x
+               NOTRAPFPE
+               TEST_DEPENDS test_soca_gridgen )

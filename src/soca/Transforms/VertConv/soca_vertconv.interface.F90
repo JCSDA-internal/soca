@@ -8,8 +8,10 @@ module soca_vertconv_mod_c
 use iso_c_binding
 use fckit_configuration_module, only: fckit_configuration
 use kinds, only: kind_real
-use soca_fields_mod, only: soca_fields
-use soca_fields_mod_c, only: soca_field_registry
+use soca_increment_mod
+use soca_increment_reg
+use soca_state_mod
+use soca_state_reg
 use soca_vertconv_mod, only: soca_vertconv, soca_conv_setup, &
                              soca_conv, soca_conv_ad
 
@@ -44,14 +46,14 @@ subroutine c_soca_vertconv_setup(c_key_self, c_conf, c_key_traj, c_key_bkg) &
   integer(c_int),    intent(in) :: c_key_bkg    !< background
 
   type(soca_vertconv), pointer :: self
-  type(soca_fields), pointer :: traj
-  type(soca_fields), pointer :: bkg
+  type(soca_state), pointer :: traj
+  type(soca_state), pointer :: bkg
 
   call soca_vertconv_registry%init()
   call soca_vertconv_registry%add(c_key_self)
   call soca_vertconv_registry%get(c_key_self, self)
-  call soca_field_registry%get(c_key_traj, traj)
-  call soca_field_registry%get(c_key_bkg, bkg)
+  call soca_state_registry%get(c_key_traj, traj)
+  call soca_state_registry%get(c_key_bkg, bkg)
 
   call soca_conv_setup (self, bkg, traj, fckit_configuration(c_conf))
 
@@ -81,22 +83,19 @@ end subroutine c_soca_vertconv_delete
 
 ! ------------------------------------------------------------------------------
 !> Multiplication
-subroutine c_soca_vertconv_mult_f90(c_key_a, c_key_m, c_key_traj, c_key_self)&
+subroutine c_soca_vertconv_mult_f90(c_key_a, c_key_m, c_key_self)&
   bind(c,name='soca_vertconv_mult_f90')
 
   integer(c_int), intent(in) :: c_key_a     !< Increment in
   integer(c_int), intent(in) :: c_key_m     !< Increment out
-  integer(c_int), intent(in) :: c_key_traj  !< trajectory
   integer(c_int), intent(in) :: c_key_self  !< config
 
-  type(soca_fields), pointer :: dxa  ! in
-  type(soca_fields), pointer :: dxm  ! out
-  type(soca_fields), pointer :: traj
-  type(soca_vertconv),   pointer :: self
+  type(soca_increment), pointer :: dxa  ! in
+  type(soca_increment), pointer :: dxm  ! out
+  type(soca_vertconv),  pointer :: self
 
-  call soca_field_registry%get(c_key_a, dxa)
-  call soca_field_registry%get(c_key_m, dxm)
-  call soca_field_registry%get(c_key_traj, traj)
+  call soca_increment_registry%get(c_key_a, dxa)
+  call soca_increment_registry%get(c_key_m, dxm)
   call soca_vertconv_registry%get(c_key_self, self)
 
   !< Computes dxm = Vertconv dxa
@@ -111,22 +110,19 @@ end subroutine c_soca_vertconv_mult_f90
 
 ! ------------------------------------------------------------------------------
 !> Multiplication adjoint
-subroutine c_soca_vertconv_multad_f90(c_key_m, c_key_a, c_key_traj, c_key_self)&
+subroutine c_soca_vertconv_multad_f90(c_key_m, c_key_a, c_key_self)&
   bind(c,name='soca_vertconv_multad_f90')
 
   integer(c_int), intent(in) :: c_key_a     !< Increment out
   integer(c_int), intent(in) :: c_key_m     !< Increment in
-  integer(c_int), intent(in) :: c_key_traj  !< Trajectory
   integer(c_int), intent(in) :: c_key_self  !< config
 
-  type(soca_fields),      pointer :: dxa
-  type(soca_fields),      pointer :: dxm
-  type(soca_fields),      pointer :: traj
+  type(soca_increment),   pointer :: dxa
+  type(soca_increment),   pointer :: dxm
   type(soca_vertconv),    pointer :: self
 
-  call soca_field_registry%get(c_key_a,dxa)
-  call soca_field_registry%get(c_key_m,dxm)
-  call soca_field_registry%get(c_key_traj,traj)
+  call soca_increment_registry%get(c_key_a,dxa)
+  call soca_increment_registry%get(c_key_m,dxm)
   call soca_vertconv_registry%get(c_key_self, self)
 
   ! dxa = dxm

@@ -28,7 +28,6 @@ namespace eckit {
   class Configuration;
 }
 namespace soca {
-  class Fields;
   class Geometry;
   class ModelBias;
   class State;
