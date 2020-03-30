@@ -532,7 +532,7 @@ soca_add_test( NAME 3dvar_soca
 
 soca_add_test( NAME 3dvar_godas
                EXE  soca_3dvar.x
-               TOL  1e-8 0
+               TOL  2e-6 0
                TEST_DEPENDS test_soca_static_socaerror_init )
 
 soca_add_test( NAME 3dvarfgat
