@@ -67,6 +67,7 @@ list( APPEND soca_test_ref
   testref/hofx_3d.test
   testref/hofx_3dcrtm.test
   testref/hofx_4d.test
+  testref/letkf.test
   testref/parameters_bump_cov_lct.test
 )
 
@@ -562,6 +563,7 @@ soca_add_test( NAME letkf
                EXE  soca_letkf.x
                NOCOMPARE
                TEST_DEPENDS test_soca_enspert )
+
 
 # restart checkpointing
 soca_add_test( NAME checkpointmodel

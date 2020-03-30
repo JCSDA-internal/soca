@@ -72,8 +72,8 @@ Localization:
 
 letkf:
   inflation:
-    rtpp: 0.0
-    mult: 1.0
+    rtpp: 0.5
+    mult: 1.1
 
 output:
   datadir: Data
