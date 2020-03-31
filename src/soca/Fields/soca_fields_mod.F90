@@ -27,7 +27,8 @@ use soca_fieldsutils_mod, only: soca_genfilename, fldinfo
 use soca_utils, only: soca_mld
 
 use horiz_interp_mod, only : horiz_interp_type
-use horiz_interp_spherical_mod, only : horiz_interp_spherical_new, horiz_interp_spherical
+use horiz_interp_spherical_mod, only : horiz_interp_spherical
+use horiz_interp_spherical_mod, only : horiz_interp_spherical_new, horiz_interp_spherical_del
 use tools_const, only: deg2rad
 
 implicit none
@@ -847,9 +848,9 @@ subroutine soca_fields_read(fld, f_conf, vdate)
       field => fld%fields(ii)
       if (field%io_name == "" ) cycle
       if ( field%nz == 1) then
-        call read_data(incr_filename, field%io_name, field%val(:,:,1), domain=fld%geom%Domain%mpp_domain)
+        call read_data(incr_filename, field%name, field%val(:,:,1), domain=fld%geom%Domain%mpp_domain)
       else
-        call read_data(incr_filename, field%io_name, field%val(:,:,:), domain=fld%geom%Domain%mpp_domain)
+        call read_data(incr_filename, field%name, field%val(:,:,:), domain=fld%geom%Domain%mpp_domain)
       end if
     end do
     call fms_io_exit()
@@ -1166,6 +1167,8 @@ subroutine soca_fields_colocate(self, cgridlocout)
     end select
 
  end do
+ call horiz_interp_spherical_del(interp2d)
+
 end subroutine soca_fields_colocate
 
 end module soca_fields_mod

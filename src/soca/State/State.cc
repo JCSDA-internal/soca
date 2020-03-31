@@ -23,7 +23,7 @@
 
 #include "ufo/GeoVaLs.h"
 #include "ufo/Locations.h"
-
+#include "ioda/IodaTrait.h"
 using oops::Log;
 
 namespace soca {

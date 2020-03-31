@@ -1,3 +1,5 @@
+inputVariables:
+  variables: &soca_vars [tocn, socn, hocn, cicen, uocn, vocn]
 inputresolution:
   num_ice_cat: 5
   num_ice_lev: 4
@@ -8,8 +10,15 @@ outputresolution:
   num_ice_lev: 4
   num_sno_lev: 1
   read_soca_grid: grid
+varchange: Ana2Model
+rotate:
+  u: [uocn]
+  v: [vocn]
 inputVariables:
-  variables: [tocn, socn, hocn, cicen]
+  variables: *soca_vars
+outputVariables:
+  variables: *soca_vars
+
 states:
 - input:
      read_from_file: 1
