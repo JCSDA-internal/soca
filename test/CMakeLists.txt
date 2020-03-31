@@ -561,7 +561,6 @@ soca_add_test( NAME 3dhybfgat
 
 soca_add_test( NAME letkf
                EXE  soca_letkf.x
-               NOCOMPARE
                TEST_DEPENDS test_soca_enspert )
 
 
