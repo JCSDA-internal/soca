@@ -164,7 +164,6 @@ subroutine soca_state_add_incr(self, rhs)
   ! for each field that exists in incr, add to self
   do i=1,size(incr%fields)
     fld_r => incr%fields(i)
-    print *,'--------- adding incr for ',fld_r%name
     call self%get(fld_r%name, fld)
 
     select case (fld%name)
