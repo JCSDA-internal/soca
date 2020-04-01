@@ -51,6 +51,7 @@ type :: soca_geom
     real(kind=kind_real), allocatable, dimension(:,:) :: mask2dv   !< v        "   . 0 = land 1 = ocean
     real(kind=kind_real), allocatable, dimension(:,:) :: cell_area
     real(kind=kind_real), allocatable, dimension(:,:) :: rossby_radius
+    character(len=:), allocatable :: geom_grid_file, param_file ! user-defined grid filename and mom6 param filename 
     logical :: save_local_domain = .false. ! If true, save the local geometry for each pe.
     contains
     procedure :: init => geom_init
@@ -76,8 +77,15 @@ subroutine geom_init(self, f_conf)
 
   integer :: isave = 0
 
-  ! Domain decomposition
-  call soca_geomdomain_init(self%Domain, self%nzo)
+  ! User-defined param_file (MOM_input-like file)
+  if ( f_conf%has("param_file") ) then
+    ! Domain decomposition with user-deinfed param_file
+    call f_conf%get_or_die("param_file", self%param_file)
+    call soca_geomdomain_init(self%Domain, self%nzo, self%param_file)
+  else
+    ! Domain decomposition with default param_file (MOM_input)
+    call soca_geomdomain_init(self%Domain, self%nzo)
+  end if
 
   ! Initialize sea-ice grid
   if ( f_conf%has("num_ice_cat") ) &
@@ -92,11 +100,21 @@ subroutine geom_init(self, f_conf)
   self%nzi = self%ice_column%nzi
   self%nzs = self%ice_column%nzs
 
+  ! User-defined grid filename
+  if ( f_conf%has("geom_grid_file") ) then
+    call f_conf%get_or_die("geom_grid_file", self%geom_grid_file)
+  else
+    self%geom_grid_file = "soca_gridspec.nc"
+  end if
+
   ! Allocate geometry arrays
   call geom_allocate(self)
 
-  if ( f_conf%has("read_soca_grid") ) &
-      call geom_read(self)
+  ! read user-defined grid geometry
+  if ( f_conf%has("read_soca_grid") ) then
+    call f_conf%get_or_die("read_soca_grid", self%geom_grid_file)
+    call geom_read(self)
+  end if
 
   ! Fill halo
   call mpp_update_domains(self%lon, self%Domain%mpp_domain)
@@ -286,7 +304,7 @@ end subroutine geom_rossby_radius
 subroutine geom_write(self)
   class(soca_geom), intent(in) :: self
 
-  character(len=256) :: geom_output_file = "soca_gridspec.nc"
+  character(len=256) :: geom_output_file != "soca_gridspec.nc"
   character(len=256) :: geom_output_pe
   integer :: pe
   character(len=8) :: fmt = '(I5.5)'
@@ -298,6 +316,9 @@ subroutine geom_write(self)
 
   ! Setup Communicator
   f_comm = fckit_mpi_comm()
+
+  !setup output grid filename
+  geom_output_file = self%geom_grid_file
 
   ! Save global domain
   call fms_io_init()
@@ -390,9 +411,12 @@ end subroutine geom_write
 subroutine geom_read(self)
   class(soca_geom), intent(in) :: self
 
-  character(len=256) :: geom_input_file = "soca_gridspec.nc"
+  character(len=256) :: geom_input_file != "soca_gridspec.nc"
   integer :: idr_geom
   type(restart_file_type) :: geom_restart
+
+  !setup grid filename
+  geom_input_file = self%geom_grid_file
 
   call fms_io_init()
   idr_geom = register_restart_field(geom_restart, &
