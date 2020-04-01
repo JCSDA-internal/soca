@@ -113,6 +113,7 @@ subroutine geom_init(self, f_conf)
   ! read user-defined grid geometry
   if ( f_conf%has("read_soca_grid") ) then
     call f_conf%get_or_die("read_soca_grid", self%geom_grid_file)
+    if (self%geom_grid_file=="grid") self%geom_grid_file = "soca_gridspec.nc" !temp fix for other tests
     call geom_read(self)
   end if
 
