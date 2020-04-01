@@ -102,16 +102,14 @@ contains
 
 ! ------------------------------------------------------------------------------
 !> Initialize mom6's domain
-subroutine soca_geomdomain_init(Domain, nk, filename)
+subroutine soca_geomdomain_init(Domain, nk)
   type(MOM_domain_type), pointer, intent(in) :: Domain !< Ocean model domain
   integer, intent(out) :: nk
-  character(len=*), optional, intent(in) :: filename !< user-defined param filename
 
   type(param_file_type) :: param_file                !< Structure to parse for run-time parameters
   type(directories)     :: dirs                      !< Structure containing several relevant directory paths
   type(fckit_mpi_comm) :: f_comm
   character(len=40)  :: mod_name = "soca_mom6" ! This module's name.
-  character(len=256) :: input_filename
 
   f_comm = fckit_mpi_comm()
   call mpp_init(localcomm=f_comm%communicator())
@@ -123,14 +121,7 @@ subroutine soca_geomdomain_init(Domain, nk, filename)
   call fms_io_init()
 
   ! Parse grid inputs
-  if (present (filename)) then
-    ! User-define param filename
-    input_filename = trim(filename)
-    call open_param_file(input_filename, param_file)
-  else
-    ! default MOM_input
-    call Get_MOM_Input(param_file, dirs)
-  end if
+  call Get_MOM_Input(param_file, dirs)
 
   ! Domain decomposition/Inintialize mpp domains
   call MOM_domains_init(Domain, param_file)
