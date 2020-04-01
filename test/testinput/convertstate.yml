@@ -2,12 +2,14 @@ inputresolution:
   num_ice_cat: 5
   num_ice_lev: 4
   num_sno_lev: 1
-  read_soca_grid: grid
+  param_file: MOM_input
+  read_soca_grid: input_grid.nc
 outputresolution:
   num_ice_cat: 5
   num_ice_lev: 4
   num_sno_lev: 1
-  read_soca_grid: grid
+  param_file: MOM_regional_input 
+  read_soca_grid: output_grid.nc
 inputVariables:
   variables: [tocn, socn, hocn, cicen]
 states:
