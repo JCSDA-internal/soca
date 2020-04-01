@@ -29,6 +29,7 @@ contains
 
   ! misc
   procedure :: rotate => soca_state_rotate
+  procedure :: change_resol => soca_state_change_resol
 
 end type
 
@@ -241,5 +242,10 @@ subroutine soca_state_diff_incr(x1, x2, inc)
   end do
 end subroutine soca_state_diff_incr
 
+!module for change of resolution
+subroutine soca_state_change_resol(self, rhs)
+  class(soca_state),  intent(inout) :: self
+  class(soca_state), intent(in) :: rhs
+end subroutine soca_state_change_resol
 
 end module
