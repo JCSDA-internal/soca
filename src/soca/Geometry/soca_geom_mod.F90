@@ -77,15 +77,8 @@ subroutine geom_init(self, f_conf)
 
   integer :: isave = 0
 
-  ! User-defined param_file (MOM_input-like file)
-  if ( f_conf%has("param_file") ) then
-    ! Domain decomposition with user-deinfed param_file
-    call f_conf%get_or_die("param_file", self%param_file)
-    call soca_geomdomain_init(self%Domain, self%nzo, self%param_file)
-  else
-    ! Domain decomposition with default param_file (MOM_input)
-    call soca_geomdomain_init(self%Domain, self%nzo)
-  end if
+  ! Domain decomposition with default param_file (MOM_input)
+  call soca_geomdomain_init(self%Domain, self%nzo)
 
   ! Initialize sea-ice grid
   if ( f_conf%has("num_ice_cat") ) &
