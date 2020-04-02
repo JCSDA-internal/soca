@@ -1115,12 +1115,13 @@ subroutine soca_fields_colocate(self, cgridlocout)
 
   ! Associate lon_out and lat_out according to cgridlocout
   select case(cgridlocout)
-  case ('u')
-    lon_out => self%geom%lonu
-    lat_out => self%geom%latu
-  case ('v')
-    lon_out => self%geom%lonv
-    lat_out => self%geom%latv
+  ! TODO: Test colocation to u and v grid
+  !case ('u')
+  !  lon_out => self%geom%lonu
+  !  lat_out => self%geom%latu
+  !case ('v')
+  !  lon_out => self%geom%lonv
+  !  lat_out => self%geom%latv
   case ('h')
     lon_out => self%geom%lon
     lat_out => self%geom%lat
@@ -1155,12 +1156,13 @@ subroutine soca_fields_colocate(self, cgridlocout)
     ! Update c-grid location
     self%fields(i)%c_grid_loc = cgridlocout
     select case(cgridlocout)
-    case ('u')
-      self%fields(i)%lon => self%geom%lonu
-      self%fields(i)%lat => self%geom%latu
-    case ('v')
-      self%fields(i)%lon => self%geom%lonv
-      self%fields(i)%lat => self%geom%latv
+    ! TODO: Test colocation to u and v grid
+    !case ('u')
+    !  self%fields(i)%lon => self%geom%lonu
+    !  self%fields(i)%lat => self%geom%latu
+    !case ('v')
+    !  self%fields(i)%lon => self%geom%lonv
+    !  self%fields(i)%lat => self%geom%latv
     case ('h')
       self%fields(i)%lon => self%geom%lon
       self%fields(i)%lat => self%geom%lat

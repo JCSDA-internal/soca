@@ -535,8 +535,10 @@ soca_add_test( NAME 3dvar_godas
                TOL  2e-6 0
                TEST_DEPENDS test_soca_static_socaerror_init )
 
+# TODO: Remove NOCOMPARE when oops PR#585 is merged
 soca_add_test( NAME addincrement
                EXE  soca_addincrement.x
+               NOCOMPARE
                TEST_DEPENDS 3dvar_godas )
 
 soca_add_test( NAME 3dvarfgat
