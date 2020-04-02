@@ -95,11 +95,8 @@ subroutine geom_init(self, f_conf)
   self%nzs = self%ice_column%nzs
 
   ! User-defined grid filename
-  if ( f_conf%has("geom_grid_file") ) then
-    call f_conf%get_or_die("geom_grid_file", self%geom_grid_file)
-  else
-    self%geom_grid_file = "soca_gridspec.nc"
-  end if
+  if ( .not. f_conf%get("geom_grid_file", self%geom_grid_file) ) &
+     self%geom_grid_file = "soca_gridspec.nc" ! default if not found
 
   ! Allocate geometry arrays
   call geom_allocate(self)
