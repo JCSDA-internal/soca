@@ -319,8 +319,8 @@ subroutine soca_state_change_resol_c(c_key_fld,c_key_rhs) bind(c,name='soca_stat
     call soca_state_registry%get(c_key_rhs,rhs)
 
     ! TODO implement a proper change of resolution, just copying for now
-    call fld%change_resol(rhs)
-    !call fld%copy(rhs)
+    !call fld%change_resol(rhs) !not ready for test
+    call fld%copy(rhs)
 
 end subroutine soca_state_change_resol_c
 
