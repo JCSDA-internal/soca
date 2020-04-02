@@ -52,6 +52,8 @@ type :: soca_geom
     real(kind=kind_real), allocatable, dimension(:,:) :: cell_area
     real(kind=kind_real), allocatable, dimension(:,:) :: rossby_radius
     logical :: save_local_domain = .false. ! If true, save the local geometry for each pe.
+    character(len=:), allocatable :: geom_grid_file
+
     contains
     procedure :: init => geom_init
     procedure :: end => geom_end
@@ -91,6 +93,13 @@ subroutine geom_init(self, f_conf)
   self%ncat = self%ice_column%ncat
   self%nzi = self%ice_column%nzi
   self%nzs = self%ice_column%nzs
+
+  ! User-defined grid filename
+  if ( f_conf%has("geom_grid_file") ) then
+    call f_conf%get_or_die("geom_grid_file", self%geom_grid_file)
+  else
+    self%geom_grid_file = "soca_gridspec.nc"
+  end if
 
   ! Allocate geometry arrays
   call geom_allocate(self)
@@ -286,7 +295,6 @@ end subroutine geom_rossby_radius
 subroutine geom_write(self)
   class(soca_geom), intent(in) :: self
 
-  character(len=256) :: geom_output_file = "soca_gridspec.nc"
   character(len=256) :: geom_output_pe
   integer :: pe
   character(len=8) :: fmt = '(I5.5)'
@@ -302,67 +310,67 @@ subroutine geom_write(self)
   ! Save global domain
   call fms_io_init()
   idr_geom = register_restart_field(geom_restart, &
-                                   &geom_output_file, &
+                                   &self%geom_grid_file, &
                                    &'lon', &
                                    &self%lon(:,:), &
                                    domain=self%Domain%mpp_domain)
   idr_geom = register_restart_field(geom_restart, &
-                                   &geom_output_file, &
+                                   &self%geom_grid_file, &
                                    &'lat', &
                                    &self%lat(:,:), &
                                    domain=self%Domain%mpp_domain)
   idr_geom = register_restart_field(geom_restart, &
-                                   &geom_output_file, &
+                                   &self%geom_grid_file, &
                                    &'lonu', &
                                    &self%lonu(:,:), &
                                    domain=self%Domain%mpp_domain)
   idr_geom = register_restart_field(geom_restart, &
-                                   &geom_output_file, &
+                                   &self%geom_grid_file, &
                                    &'latu', &
                                    &self%latu(:,:), &
                                    domain=self%Domain%mpp_domain)
   idr_geom = register_restart_field(geom_restart, &
-                                   &geom_output_file, &
+                                   &self%geom_grid_file, &
                                    &'lonv', &
                                    &self%lonv(:,:), &
                                    domain=self%Domain%mpp_domain)
   idr_geom = register_restart_field(geom_restart, &
-                                   &geom_output_file, &
+                                   &self%geom_grid_file, &
                                    &'latv', &
                                    &self%latv(:,:), &
                                    domain=self%Domain%mpp_domain)
   idr_geom = register_restart_field(geom_restart, &
-                                   &geom_output_file, &
+                                   &self%geom_grid_file, &
                                    &'sin_rot', &
                                    &self%sin_rot(:,:), &
                                    domain=self%Domain%mpp_domain)
   idr_geom = register_restart_field(geom_restart, &
-                                   &geom_output_file, &
+                                   &self%geom_grid_file, &
                                    &'cos_rot', &
                                    &self%cos_rot(:,:), &
                                    domain=self%Domain%mpp_domain)
   idr_geom = register_restart_field(geom_restart, &
-                                   &geom_output_file, &
+                                   &self%geom_grid_file, &
                                    &'area', &
                                    &self%cell_area(:,:), &
                                    domain=self%Domain%mpp_domain)
   idr_geom = register_restart_field(geom_restart, &
-                                   &geom_output_file, &
+                                   &self%geom_grid_file, &
                                    &'rossby_radius', &
                                    &self%rossby_radius(:,:), &
                                    domain=self%Domain%mpp_domain)
   idr_geom = register_restart_field(geom_restart, &
-                                   &geom_output_file, &
+                                   &self%geom_grid_file, &
                                    &'mask2d', &
                                    &self%mask2d(:,:), &
                                    domain=self%Domain%mpp_domain)
   idr_geom = register_restart_field(geom_restart, &
-                                   &geom_output_file, &
+                                   &self%geom_grid_file, &
                                    &'mask2du', &
                                    &self%mask2du(:,:), &
                                    domain=self%Domain%mpp_domain)
   idr_geom = register_restart_field(geom_restart, &
-                                   &geom_output_file, &
+                                   &self%geom_grid_file, &
                                    &'mask2dv', &
                                    &self%mask2dv(:,:), &
                                    domain=self%Domain%mpp_domain)
@@ -390,73 +398,72 @@ end subroutine geom_write
 subroutine geom_read(self)
   class(soca_geom), intent(in) :: self
 
-  character(len=256) :: geom_input_file = "soca_gridspec.nc"
   integer :: idr_geom
   type(restart_file_type) :: geom_restart
 
   call fms_io_init()
   idr_geom = register_restart_field(geom_restart, &
-                                   &geom_input_file, &
+                                   &self%geom_grid_file, &
                                    &'lon', &
                                    &self%lon(:,:), &
                                    domain=self%Domain%mpp_domain)
   idr_geom = register_restart_field(geom_restart, &
-                                   &geom_input_file, &
+                                   &self%geom_grid_file, &
                                    &'lat', &
                                    &self%lat(:,:), &
                                    domain=self%Domain%mpp_domain)
   idr_geom = register_restart_field(geom_restart, &
-                                   &geom_input_file, &
+                                   &self%geom_grid_file, &
                                    &'lonu', &
                                    &self%lonu(:,:), &
                                    domain=self%Domain%mpp_domain)
   idr_geom = register_restart_field(geom_restart, &
-                                   &geom_input_file, &
+                                   &self%geom_grid_file, &
                                    &'latu', &
                                    &self%latu(:,:), &
                                    domain=self%Domain%mpp_domain)
   idr_geom = register_restart_field(geom_restart, &
-                                   &geom_input_file, &
+                                   &self%geom_grid_file, &
                                    &'lonv', &
                                    &self%lonv(:,:), &
                                    domain=self%Domain%mpp_domain)
   idr_geom = register_restart_field(geom_restart, &
-                                   &geom_input_file, &
+                                   &self%geom_grid_file, &
                                    &'latv', &
                                    &self%latv(:,:), &
                                    domain=self%Domain%mpp_domain)
   idr_geom = register_restart_field(geom_restart, &
-                                   &geom_input_file, &
+                                   &self%geom_grid_file, &
                                    &'sin_rot', &
                                    &self%sin_rot(:,:), &
                                    domain=self%Domain%mpp_domain)
   idr_geom = register_restart_field(geom_restart, &
-                                   &geom_input_file, &
+                                   &self%geom_grid_file, &
                                    &'cos_rot', &
                                    &self%cos_rot(:,:), &
                                    domain=self%Domain%mpp_domain)
   idr_geom = register_restart_field(geom_restart, &
-                                   &geom_input_file, &
+                                   &self%geom_grid_file, &
                                    &'area', &
                                    &self%cell_area(:,:), &
                                    domain=self%Domain%mpp_domain)
   idr_geom = register_restart_field(geom_restart, &
-                                   &geom_input_file, &
+                                   &self%geom_grid_file, &
                                    &'rossby_radius', &
                                    &self%rossby_radius(:,:), &
                                    domain=self%Domain%mpp_domain)
   idr_geom = register_restart_field(geom_restart, &
-                                   &geom_input_file, &
+                                   &self%geom_grid_file, &
                                    &'mask2d', &
                                    &self%mask2d(:,:), &
                                    domain=self%Domain%mpp_domain)
   idr_geom = register_restart_field(geom_restart, &
-                                   &geom_input_file, &
+                                   &self%geom_grid_file, &
                                    &'mask2du', &
                                    &self%mask2du(:,:), &
                                    domain=self%Domain%mpp_domain)
   idr_geom = register_restart_field(geom_restart, &
-                                   &geom_input_file, &
+                                   &self%geom_grid_file, &
                                    &'mask2dv', &
                                    &self%mask2dv(:,:), &
                                    domain=self%Domain%mpp_domain)
