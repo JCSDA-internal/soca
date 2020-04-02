@@ -1,0 +1,83 @@
+Geometry:
+  num_ice_cat: 5
+  num_ice_lev: 4
+  num_sno_lev: 1
+  read_soca_grid: grid
+
+Model:
+  name: SOCA
+  tstep: PT1H
+  advance_mom6: 0
+  variables: &soca_vars [socn, tocn, ssh, hocn]
+
+Assimilation Window:
+  window_begin: &date 2018-04-14T00:00:00Z
+  window_length: P2D
+
+Initial Condition:
+  _: &state
+    date: 2018-04-15T00:00:00Z
+    read_from_file: 1
+    basename: ./Data/
+    variables: *soca_vars
+  members:
+  - <<: *state
+    ocn_filename: ocn.pert.ens.1.2018-04-15T00:00:00Z.PT6H.nc
+  - <<: *state
+    ocn_filename: ocn.pert.ens.2.2018-04-15T00:00:00Z.PT6H.nc
+  - <<: *state
+    ocn_filename: ocn.pert.ens.3.2018-04-15T00:00:00Z.PT6H.nc
+  - <<: *state
+    ocn_filename: ocn.pert.ens.4.2018-04-15T00:00:00Z.PT6H.nc
+  - <<: *state
+    ocn_filename: ocn.pert.ens.5.2018-04-15T00:00:00Z.PT6H.nc
+
+
+# common filters used later on
+_: &land_mask
+  Filter: Domain Check
+  where:
+  - variable: {name: sea_area_fraction@GeoVaLs}
+    minvalue: 0.5
+
+Observations:
+  ObsTypes:
+    - ObsSpace:
+        name: SeaSurfaceTemp
+        distribution: InefficientDistribution
+        ObsDataOut: {obsfile: ./Data/sst.letkf.nc}
+        ObsDataIn:  {obsfile: ./Data/sst.nc}
+        simulate:   {variables: [ sea_surface_temperature ]}
+      ObsOperator:
+        name: Identity
+      Covariance:
+        covariance: localized diagonal
+        Localization:
+          localization: Gaspari-Cohn
+          lengthscale: 5000e3
+      ObsFilters:
+      - *land_mask
+      - Filter: Bounds Check
+        minvalue: 5.0
+        maxvalue: 30.0
+      - Filter: Background Check
+        threshold: 8
+      - Filter: Thinning
+        amount: 0.1
+        random_seed: 0
+
+Localization:
+  distance: 5000e3
+  max_nobs: -1
+
+letkf:
+  inflation:
+    rtpp: 0.5
+    mult: 1.1
+
+output:
+  datadir: Data
+  date: *date
+  exp: letkf
+  type: ens
+
