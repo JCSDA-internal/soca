@@ -25,6 +25,7 @@ list( APPEND soca_test_input
   testinput/hofx_3dcrtm.yml
   testinput/hofx_4d.yml
   testinput/increment.yml
+  testinput/letkf.yml
   testinput/linearmodel.yml
   testinput/marine2ioda.yml
   testinput/model.yml
@@ -66,6 +67,7 @@ list( APPEND soca_test_ref
   testref/hofx_3d.test
   testref/hofx_3dcrtm.test
   testref/hofx_4d.test
+  testref/letkf.test
   testref/parameters_bump_cov_lct.test
 )
 
@@ -556,6 +558,11 @@ soca_add_test( NAME 3dhybfgat
 #                EXE  soca_3dvar.x
 #                TEST_DEPENDS test_soca_static_socaerror_init
 #                             test_soca_parameters_bump_loc )
+
+soca_add_test( NAME letkf
+               EXE  soca_letkf.x
+               NOTRAPFPE
+               TEST_DEPENDS test_soca_enspert )
 
 
 # restart checkpointing
