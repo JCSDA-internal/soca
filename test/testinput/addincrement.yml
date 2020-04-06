@@ -1,0 +1,32 @@
+stateResol:
+  num_ice_cat: 5
+  num_ice_lev: 4
+  num_sno_lev: 1
+  read_soca_grid: grid
+
+incrementResol:
+  num_ice_cat: 5
+  num_ice_lev: 4
+  num_sno_lev: 1
+  read_soca_grid: grid
+
+state:
+  read_from_file: 1
+  basename: ./INPUT/
+  ocn_filename: MOM.res.nc
+  ice_filename: cice.res.nc
+  sfc_filename: sfc.res.nc
+  date: &bkg_date 2018-04-15T00:00:00Z
+  seaice_model: cice
+  variables: [cicen, hicen, hsnon, socn, tocn, ssh, hocn, uocn, vocn]
+
+increment:
+  read_from_file: 2
+  filename: ./incr.1.nc
+  variables: [hsnon, socn, tocn, hocn, uocn, vocn]
+
+output:
+  datadir: Data
+  exp: addincrement
+  type: an
+  seaice_model: cice
