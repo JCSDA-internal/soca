@@ -16,6 +16,18 @@ use oops_variables_mod
 use datetime_mod, only: datetime, c_f_datetime
 use fckit_configuration_module, only: fckit_configuration
 
+use soca_geom_mod, only: soca_geom
+use soca_geom_mod_c, only: soca_geom_registry
+use soca_getvalues_mod
+use soca_getvalues_reg
+use soca_state_mod
+use soca_state_reg
+
+use ufo_geovals_mod_c, only: ufo_geovals_registry
+use ufo_geovals_mod, only: ufo_geovals
+use ufo_locs_mod_c, only: ufo_locs_registry
+use ufo_locs_mod, only: ufo_locs
+
 
 implicit none
 private
@@ -44,7 +56,7 @@ call soca_geom_registry%get(c_key_geom, geom)
 call ufo_locs_registry%get(c_key_locs, locs)
 
 ! Call method
-!call self%create(geom, locs)
+call self%create(geom, locs)
 
 end subroutine soca_getvalues_create_c
 
@@ -59,7 +71,7 @@ type(soca_getvalues), pointer :: self
 call soca_getvalues_registry%get(c_key_self, self)
 
 ! Call method
-!call self%delete()
+call self%delete()
 
 ! Remove object
 call soca_getvalues_registry%remove(c_key_self)
@@ -69,7 +81,7 @@ end subroutine soca_getvalues_delete_c
 ! --------------------------------------------------------------------------------------------------
 
 subroutine soca_getvalues_fill_geovals_c(c_key_self, c_key_geom, c_key_state, c_t1, c_t2, &
-                                            c_key_locs, c_key_geovals) &
+                                         c_key_locs, c_key_geovals) &
            bind (c, name='soca_getvalues_fill_geovals_f90')
 
 integer(c_int), intent(in) :: c_key_self
@@ -98,7 +110,7 @@ call ufo_locs_registry%get(c_key_locs, locs)
 call ufo_geovals_registry%get(c_key_geovals, geovals)
 
 ! Call method
-!call self%fill_geovals(geom, state%fields, t1, t2, locs, geovals)
+call self%fill_geovals(geom, state, t1, t2, locs, geovals)
 
 end subroutine soca_getvalues_fill_geovals_c
 

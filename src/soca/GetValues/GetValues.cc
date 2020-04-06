@@ -24,7 +24,7 @@ namespace soca {
 // -----------------------------------------------------------------------------
 GetValues::GetValues(const Geometry & geom, const ufo::Locations & locs) :
     locs_(locs), geom_(new Geometry(geom)) {
-  //soca_getvalues_create_f90(key_, geom.toFortran(), locs.toFortran());
+  soca_getvalues_create_f90(keyGetValues_, geom.toFortran(), locs.toFortran());
 }
 // -----------------------------------------------------------------------------
 GetValues::~GetValues() {
@@ -34,12 +34,17 @@ GetValues::~GetValues() {
 /// Get state values at observation locations
 // -----------------------------------------------------------------------------
 void GetValues::fillGeoVaLs(const State & state,
-                            const util::DateTime & t1, const util::DateTime & t2,
-                            ufo::GeoVaLs & gom) const {
-  const util::DateTime * pt1 = &t1;
-  const util::DateTime * pt2 = &t2;
-  //soca_getvalues_interp_f90(key_, state.fields().toFortran(),
-  //                        &pt1, &pt2, gom.toFortran());
+                            const util::DateTime & t1,
+                            const util::DateTime & t2,
+                            ufo::GeoVaLs & geovals) const {
+  const util::DateTime * t1p = &t1;
+  const util::DateTime * t2p = &t2;
+  soca_getvalues_fill_geovals_f90(keyGetValues_,
+                                  geom_->toFortran(),
+                                  state.toFortran(),
+                                  &t1p, &t2p,
+                                  locs_.toFortran(),
+                                  geovals.toFortran());
 }
 // -----------------------------------------------------------------------------
 void GetValues::print(std::ostream & os) const {

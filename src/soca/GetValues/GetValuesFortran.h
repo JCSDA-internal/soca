@@ -23,9 +23,9 @@ namespace util {
 namespace soca {
 
 extern "C" {
-  void soca_getvalues_create_f90(F90getvalues &, const F90geom &, const F90locs &);
-  void soca_getvalues_delete_f90(F90getvalues &);
-  void soca_getvalues_fill_geovals_f90(const F90getvalues &, const F90geom &, const F90state &,
+  void soca_getvalues_create_f90(F90getval &, const F90geom &, const F90locs &);
+  void soca_getvalues_delete_f90(F90getval &);
+  void soca_getvalues_fill_geovals_f90(const F90getval &, const F90geom &, const F90flds &,
                                        const util::DateTime **, const util::DateTime **,
                                        const F90locs &, const F90goms &);
 
