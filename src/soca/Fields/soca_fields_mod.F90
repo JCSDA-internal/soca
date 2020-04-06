@@ -26,6 +26,11 @@ use soca_geom_mod, only : soca_geom
 use soca_fieldsutils_mod, only: soca_genfilename, fldinfo
 use soca_utils, only: soca_mld
 
+use horiz_interp_mod, only : horiz_interp_type
+use horiz_interp_spherical_mod, only : horiz_interp_spherical
+use horiz_interp_spherical_mod, only : horiz_interp_spherical_new, horiz_interp_spherical_del
+use tools_const, only: deg2rad
+
 implicit none
 
 private
@@ -40,6 +45,9 @@ type :: soca_field
   integer                           :: nz         !< the number of levels
   real(kind=kind_real), allocatable :: val(:,:,:) !< the actual data
   real(kind=kind_real),     pointer :: mask(:,:) => null() !< field mask
+  real(kind=kind_real),     pointer :: lon(:,:) => null()  !< field lon
+  real(kind=kind_real),     pointer :: lat(:,:) => null()  !< field lat
+  character(len=1)                  :: c_grid_loc !< "h", "u" or "v"
   character(len=:),     allocatable :: cf_name    !< the (optional) name needed by UFO
   character(len=:),     allocatable :: io_name    !< the (optional) name use in the restart IO
   character(len=:),     allocatable :: io_file    !< the (optional) restart file domain
@@ -50,6 +58,8 @@ contains
 
   procedure :: check_congruent => soca_field_check_congruent
   procedure :: update_halo     => soca_field_update_halo
+  procedure :: stencil_interp  => soca_field_stencil_interp
+
 end type soca_field
 
 ! ------------------------------------------------------------------------------
@@ -90,6 +100,7 @@ contains
 
   ! misc
   procedure :: update_halos => soca_fields_update_halos
+  procedure :: colocate  => soca_fields_colocate
 
 end type soca_fields
 
@@ -119,7 +130,6 @@ subroutine soca_field_copy(self, rhs)
   self%mask => rhs%mask
 end subroutine soca_field_copy
 
-
 ! ------------------------------------------------------------------------------
 !
 subroutine soca_field_update_halo(self, geom)
@@ -130,6 +140,25 @@ subroutine soca_field_update_halo(self, geom)
   call mpp_update_domains(self%val, geom%Domain%mpp_domain)
 end subroutine soca_field_update_halo
 
+! ------------------------------------------------------------------------------
+!
+subroutine soca_field_stencil_interp(self, geom, interp2d)
+  class(soca_field),     intent(inout) :: self
+  type(soca_geom), pointer, intent(in) :: geom
+  type(horiz_interp_type),  intent(in) :: interp2d
+
+  integer :: k
+  real(kind=kind_real), allocatable :: val(:,:,:)
+
+  allocate(val, mold=self%val)
+  val = self%val
+  do k = 1, self%nz
+     call horiz_interp_spherical(interp2d, &
+          & val(geom%isd:geom%ied, geom%jsd:geom%jed,k), &
+          & self%val(geom%isc:geom%iec, geom%jsc:geom%jec,k))
+  end do
+  call self%update_halo(geom)
+end subroutine soca_field_stencil_interp
 
 ! ------------------------------------------------------------------------------
 ! make sure the two fields are the same in terms of name, size, shape
@@ -176,6 +205,10 @@ subroutine soca_fields_init_vars(self, vars)
   do i=1,size(vars)
     self%fields(i)%name = trim(vars(i))
 
+    ! Default stencil grid loc is h-point
+    self%fields(i)%lon => self%geom%lon
+    self%fields(i)%lat => self%geom%lat
+
     ! determine number of levels, and if masked
     select case(self%fields(i)%name)
     case ('tocn','socn', 'hocn', 'layer_depth')
@@ -184,9 +217,13 @@ subroutine soca_fields_init_vars(self, vars)
     case ('uocn')
       nz = self%geom%nzo
       self%fields(i)%mask => self%geom%mask2du
+      self%fields(i)%lon => self%geom%lonu
+      self%fields(i)%lat => self%geom%latu
     case ('vocn')
       nz = self%geom%nzo
       self%fields(i)%mask => self%geom%mask2dv
+      self%fields(i)%lon => self%geom%lonv
+      self%fields(i)%lat => self%geom%latv
     case ('hicen','hsnon', 'cicen')
       nz = self%geom%ncat
       self%fields(i)%mask => self%geom%mask2d
@@ -209,6 +246,7 @@ subroutine soca_fields_init_vars(self, vars)
     ! set other variables associated with each field
     self%fields(i)%cf_name = ""
     self%fields(i)%io_name = ""
+    self%fields(i)%c_grid_loc = "h"
     select case(self%fields(i)%name)
     case ('tocn')
       self%fields(i)%cf_name = "sea_water_potential_temperature"
@@ -230,10 +268,12 @@ subroutine soca_fields_init_vars(self, vars)
       self%fields(i)%cf_name = "sea_water_zonal_current"
       self%fields(i)%io_file = "ocn"
       self%fields(i)%io_name = "u"
+      self%fields(i)%c_grid_loc = "u"
     case ('vocn')
       self%fields(i)%cf_name = "sea_water_meridional_current"
       self%fields(i)%io_file = "ocn"
       self%fields(i)%io_name = "v"
+      self%fields(i)%c_grid_loc = "v"
     case ('hicen')
       self%fields(i)%cf_name = "sea_ice_category_thickness"
       self%fields(i)%io_file = "ice"
@@ -808,9 +848,9 @@ subroutine soca_fields_read(fld, f_conf, vdate)
       field => fld%fields(ii)
       if (field%io_name == "" ) cycle
       if ( field%nz == 1) then
-        call read_data(incr_filename, field%io_name, field%val(:,:,1), domain=fld%geom%Domain%mpp_domain)
+        call read_data(incr_filename, field%name, field%val(:,:,1), domain=fld%geom%Domain%mpp_domain)
       else
-        call read_data(incr_filename, field%io_name, field%val(:,:,:), domain=fld%geom%Domain%mpp_domain)
+        call read_data(incr_filename, field%name, field%val(:,:,:), domain=fld%geom%Domain%mpp_domain)
       end if
     end do
     call fms_io_exit()
@@ -1059,5 +1099,78 @@ subroutine soca_fields_write_rst(fld, f_conf, vdate)
   call fms_io_exit()
 
 end subroutine soca_fields_write_rst
+
+! ------------------------------------------------------------------------------
+!
+subroutine soca_fields_colocate(self, cgridlocout)
+  class(soca_fields),    intent(inout) :: self
+  character(len=1),         intent(in) :: cgridlocout !< colocate to cgridloc (u, v or h)
+
+  integer :: i, k
+  real(kind=kind_real), allocatable :: val(:,:,:)
+  real(kind=kind_real), pointer :: lon_out(:,:) => null()
+  real(kind=kind_real), pointer :: lat_out(:,:) => null()
+  type(soca_geom),  pointer :: g => null()
+  type(horiz_interp_type) :: interp2d
+
+  ! Associate lon_out and lat_out according to cgridlocout
+  select case(cgridlocout)
+  ! TODO: Test colocation to u and v grid
+  !case ('u')
+  !  lon_out => self%geom%lonu
+  !  lat_out => self%geom%latu
+  !case ('v')
+  !  lon_out => self%geom%lonv
+  !  lat_out => self%geom%latv
+  case ('h')
+    lon_out => self%geom%lon
+    lat_out => self%geom%lat
+  case default
+    call abor1_ftn('soca_fields::colocate(): unknown c-grid location '// cgridlocout)
+  end select
+
+  ! Apply interpolation to all fields, when necessary
+  do i=1,size(self%fields)
+
+    ! Check if already colocated
+    if (self%fields(i)%c_grid_loc == cgridlocout) cycle
+
+    ! Initialize fms spherical idw interpolation
+     g => self%geom
+     call horiz_interp_spherical_new(interp2d, &
+       & real(deg2rad*self%fields(i)%lon(g%isd:g%ied,g%jsd:g%jed), 8), &
+       & real(deg2rad*self%fields(i)%lat(g%isd:g%ied,g%jsd:g%jed), 8), &
+       & real(deg2rad*lon_out(g%isc:g%iec,g%jsc:g%jec), 8), &
+       & real(deg2rad*lat_out(g%isc:g%iec,g%jsc:g%jec), 8))
+
+    ! Make a temporary copy of field
+    if (allocated(val)) deallocate(val)
+    allocate(val, mold=self%fields(i)%val)
+    val = self%fields(i)%val
+
+    ! Interpolate all levels
+    do k = 1, self%fields(i)%nz
+      call self%fields(i)%stencil_interp(self%geom, interp2d)
+    end do
+
+    ! Update c-grid location
+    self%fields(i)%c_grid_loc = cgridlocout
+    select case(cgridlocout)
+    ! TODO: Test colocation to u and v grid
+    !case ('u')
+    !  self%fields(i)%lon => self%geom%lonu
+    !  self%fields(i)%lat => self%geom%latu
+    !case ('v')
+    !  self%fields(i)%lon => self%geom%lonv
+    !  self%fields(i)%lat => self%geom%latv
+    case ('h')
+      self%fields(i)%lon => self%geom%lon
+      self%fields(i)%lat => self%geom%lat
+    end select
+
+ end do
+ call horiz_interp_spherical_del(interp2d)
+
+end subroutine soca_fields_colocate
 
 end module soca_fields_mod

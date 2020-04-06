@@ -4,6 +4,7 @@ list( APPEND soca_test_input
   testinput/3dvar_godas.yml
   testinput/3dvar_soca.yml
   testinput/3dvarfgat.yml
+  testinput/addincrement.yml
   testinput/checkpointmodel.yml
   testinput/convertstate.yml
   testinput/dirac_bump_cov.yml
@@ -51,6 +52,7 @@ list( APPEND soca_test_ref
   testref/3dvar_godas.test
   testref/3dvar_soca.test
   testref/3dvarfgat.test
+  testref/addincrement.test
   testref/checkpointmodel.test
   testref/convertstate.test
   testref/dirac_bump_cov.test
@@ -534,6 +536,12 @@ soca_add_test( NAME 3dvar_godas
                EXE  soca_3dvar.x
                TOL  2e-6 0
                TEST_DEPENDS test_soca_static_socaerror_init )
+
+# TODO: Remove NOCOMPARE when oops PR#585 is merged
+soca_add_test( NAME addincrement
+               EXE  soca_addincrement.x
+               NOCOMPARE
+               TEST_DEPENDS 3dvar_godas )
 
 soca_add_test( NAME 3dvarfgat
                EXE  soca_3dvar.x
