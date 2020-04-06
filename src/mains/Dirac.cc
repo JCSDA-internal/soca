@@ -13,10 +13,12 @@
 #include "soca/Transforms/instantiateBalanceOpFactory.h"
 #include "oops/runs/Dirac.h"
 #include "oops/runs/Run.h"
+#include "saber/oops/instantiateLocalizationFactory.h"
 
 int main(int argc,  char ** argv) {
-  soca::instantiateBalanceOpFactory();
   oops::Run run(argc, argv);
+  soca::instantiateBalanceOpFactory();
+  saber::instantiateLocalizationFactory<soca::Traits>();
   oops::Dirac<soca::Traits> dir;
   run.execute(dir);
   return 0;
