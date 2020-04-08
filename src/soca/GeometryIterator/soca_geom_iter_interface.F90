@@ -100,7 +100,7 @@ contains
 
   ! ------------------------------------------------------------------------------
   !> Get geometry iterator current lat/lon
-  subroutine soca_geom_iter_current_c(c_key_self, c_lat, c_lon) bind(c, name='soca_geom_iter_current_f90')
+  subroutine soca_geom_iter_current_c(c_key_self, c_lon, c_lat) bind(c, name='soca_geom_iter_current_f90')
 
     ! Passed variables
     integer(c_int), intent(   in) :: c_key_self !< Geometry iterator

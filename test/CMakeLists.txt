@@ -4,6 +4,7 @@ list( APPEND soca_test_input
   testinput/3dvar_godas.yml
   testinput/3dvar_soca.yml
   testinput/3dvarfgat.yml
+  testinput/addincrement.yml
   testinput/checkpointmodel.yml
   testinput/convertstate.yml
   testinput/dirac_bump_cov.yml
@@ -25,6 +26,7 @@ list( APPEND soca_test_input
   testinput/hofx_3dcrtm.yml
   testinput/hofx_4d.yml
   testinput/increment.yml
+  testinput/letkf.yml
   testinput/linearmodel.yml
   testinput/marine2ioda.yml
   testinput/model.yml
@@ -50,6 +52,7 @@ list( APPEND soca_test_ref
   testref/3dvar_godas.test
   testref/3dvar_soca.test
   testref/3dvarfgat.test
+  testref/addincrement.test
   testref/checkpointmodel.test
   testref/convertstate.test
   testref/dirac_bump_cov.test
@@ -66,6 +69,7 @@ list( APPEND soca_test_ref
   testref/hofx_3d.test
   testref/hofx_3dcrtm.test
   testref/hofx_4d.test
+  testref/letkf.test
   testref/parameters_bump_cov_lct.test
 )
 
@@ -533,6 +537,12 @@ soca_add_test( NAME 3dvar_godas
                TOL  2e-6 0
                TEST_DEPENDS test_soca_static_socaerror_init )
 
+# TODO: Remove NOCOMPARE when oops PR#585 is merged
+soca_add_test( NAME addincrement
+               EXE  soca_addincrement.x
+               NOCOMPARE
+               TEST_DEPENDS 3dvar_godas )
+
 soca_add_test( NAME 3dvarfgat
                EXE  soca_3dvar.x
                TOL  1e-6 0
@@ -556,6 +566,11 @@ soca_add_test( NAME 3dhybfgat
 #                EXE  soca_3dvar.x
 #                TEST_DEPENDS test_soca_static_socaerror_init
 #                             test_soca_parameters_bump_loc )
+
+soca_add_test( NAME letkf
+               EXE  soca_letkf.x
+               NOTRAPFPE
+               TEST_DEPENDS test_soca_enspert )
 
 
 # restart checkpointing
