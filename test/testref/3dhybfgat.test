@@ -15,6 +15,6 @@ Test     :     lhf   min=    0.000000   max=    0.000000   mean=    0.000000
 Test     :     shf   min=    0.000000   max=    0.000000   mean=    0.000000
 Test     :      lw   min=    0.000000   max=    0.000000   mean=    0.000000
 Test     :      us   min=    0.000000   max=    0.000000   mean=    0.000000
-Test     : CostJb   : Nonlinear Jb = 3.861444
-Test     : CostJo   : Nonlinear Jo(ADT) = 70.535264, nobs = 31, Jo/n = 2.275331, err = 0.100000
-Test     : CostFunction: Nonlinear J = 74.396708
+Test     : CostJb   : Nonlinear Jb = 3.861479
+Test     : CostJo   : Nonlinear Jo(ADT) = 70.535275, nobs = 31, Jo/n = 2.275331, err = 0.100000
+Test     : CostFunction: Nonlinear J = 74.396754
