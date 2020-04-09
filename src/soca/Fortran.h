@@ -24,8 +24,6 @@ namespace soca {
   typedef int F90flds;
   // Trajectory key type
   typedef int F90traj;
-  // GetValuesTraj key type
-  typedef int F90getvaltraj;
   // GetValues key type
   typedef int F90getval;
   // LinearGetValues key type

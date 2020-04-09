@@ -28,7 +28,7 @@ GetValues::GetValues(const Geometry & geom, const ufo::Locations & locs) :
 }
 // -----------------------------------------------------------------------------
 GetValues::~GetValues() {
-  //soca_getvalues_delete_f90(key_);
+  soca_getvalues_delete_f90(keyGetValues_);
 }
 // -----------------------------------------------------------------------------
 /// Get state values at observation locations
