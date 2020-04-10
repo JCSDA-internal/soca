@@ -69,7 +69,7 @@ class LinearGetValues : public util::Printable,
 
  private:
   void print(std::ostream &) const;
-  F90lingetval keyLinearGetValues_;
+  F90getval keyLinearGetValues_;
   ufo::Locations locs_;
   std::shared_ptr<const Geometry> geom_;
 };

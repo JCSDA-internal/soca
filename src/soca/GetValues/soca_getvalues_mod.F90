@@ -115,24 +115,25 @@ subroutine soca_getvalues_fillgeovals(self, geom, fld, t1, t2, locs, geovals)
   ! Get mask for locations in this time window
   call ufo_locs_time_mask(locs, t1, t2, time_mask)
 
-  ! Allocate geovals
-  if (.not. geovals%linit) then
-    do ivar = 1, geovals%nvar
-      ! Set number of levels/categories (nval)
-      nval = nlev_from_ufovar(fld, geovals%variables(ivar))
-      if (nval==0) cycle ! should we abort?
-      geovals%geovals(ivar)%nval = nval
-      !print *,nval, geovals%geovals(ivar)%nlocs
+  ! Allocate temporary geoval and 3d field for the current time window
+  do ivar = 1, geovals%nvar
+
+    ! Set number of levels/categories (nval)
+    nval = nlev_from_ufovar(fld, geovals%variables(ivar))
+    print *,ivar, trim(geovals%variables(ivar)),nval,geovals%geovals(ivar)%nlocs
+    read(*,*)
+    if (nval==0) cycle ! should we abort?
+
+    ! Allocate geovals
+    geovals%geovals(ivar)%nval = nval
+    if (.not. geovals%linit) then
       allocate(geovals%geovals(ivar)%vals(nval, geovals%geovals(ivar)%nlocs))
       geovals%geovals(ivar)%vals = 0.0_kind_real
-    end do
-  end if
+    end if
 
-  geovals%linit = .true.
-  if ( geovals%geovals(ivar)%nlocs == 0 ) return
+    ! Return if no observations
+    if ( geovals%geovals(ivar)%nlocs == 0 ) return
 
-  do ivar = 1, geovals%nvar
-    ! Allocate temporary geoval and 3d field for the current time window
     allocate(gom_window(locs%nlocs))
     allocate(fld3d(isc:iec,jsc:jec,1:nval))
     nullify(fldptr)
@@ -181,7 +182,6 @@ subroutine soca_getvalues_fillgeovals(self, geom, fld, t1, t2, locs, geovals)
 
     ! Apply forward interpolation: Model ---> Obs
     do ival = 1, nval
-      print *,ival,nval
       if (masked) then
         ns = count(fld%geom%mask2d(isc:iec,jsc:jec) > 0 )
         if (.not. allocated(fld3d_un)) allocate(fld3d_un(ns))
@@ -201,12 +201,15 @@ subroutine soca_getvalues_fillgeovals(self, geom, fld, t1, t2, locs, geovals)
         end if
       end do
     end do
-
+print *,'*********************',geovals%geovals(ivar)%vals, trim(geovals%variables(ivar))
     ! Deallocate temporary arrays
     deallocate(fld3d_un)
     deallocate(fld3d)
     deallocate(gom_window)
   end do
+
+  ! If we reach this point, geovals has been initialized
+  geovals%linit = .true.
 end subroutine soca_getvalues_fillgeovals
 
 ! ------------------------------------------------------------------------------

@@ -53,10 +53,15 @@ class GetValues : public util::Printable,
   GetValues(const Geometry &, const ufo::Locations & locs);
   virtual ~GetValues();
 
-/// fills in geovals for all observations in the timeframe (t1, t2],
-/// geovals are interpolated trilinearly from state at the nearest gridpoints
+  /// fills in geovals for all observations in the timeframe (t1, t2],
+  /// geovals are interpolated trilinearly from state at the nearest gridpoints
   void fillGeoVaLs(const State &, const util::DateTime & t1,
-                   const util::DateTime & t2, ufo::GeoVaLs &) const;
+    const util::DateTime & t2, ufo::GeoVaLs &) const;
+
+  /// Read interpolated GeoVaLs at observation location
+  void getValuesFromFile(const ufo::Locations &,
+                         const oops::Variables &,
+                         ufo::GeoVaLs &) const;
 
  private:
   void print(std::ostream &) const;

@@ -18,7 +18,6 @@ use soca_geom_mod_c, only: soca_geom_registry
 use soca_geom_mod, only: soca_geom
 use soca_increment_mod
 use soca_increment_reg
-use soca_interpfields_mod, only: getvalues, getvalues_ad
 use soca_state_mod
 use soca_state_reg
 use ufo_geovals_mod_c, only: ufo_geovals_registry

@@ -1,0 +1,37 @@
+Geometry:
+  num_ice_cat: 5
+  num_ice_lev: 4
+  num_sno_lev: 1
+  read_soca_grid: soca_gridspec.nc
+
+GetValuesTest:
+  interp_tolerance: 1.0e-2
+  StateGenerate:
+    read_from_file: 1
+    date: &date 2018-04-15T00:00:00Z
+    basename: ./INPUT/
+    ocn_filename: MOM.res.nc
+    ice_filename: ice_model.res.nc
+    sfc_filename: sfc.res.nc
+    variables: &soca_vars [cicen, socn, tocn, hocn] #[cicen, hicen, socn, tocn, ssh, hocn, sw, lhf, shf, lw, us]
+    remap_filename: ./INPUT/MOM.res.nc
+
+GeoVaLsVariables:
+  variables: *soca_vars
+
+Locations:
+  window_begin: 2018-04-15T00:00:00Z
+  window_end: 2018-04-15T03:00:00Z
+  ObsSpace:
+    name: Random Locations
+    simulate:
+      variables: []
+    Generate:
+      Random:
+        nobs: 1000
+        lat1: -75
+        lat2: 90
+        lon1: 0
+        lon2: 360
+        random_seed: 1
+      obs_errors: []
