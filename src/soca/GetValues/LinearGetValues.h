@@ -16,6 +16,7 @@
 
 #include "soca/Fortran.h"
 #include "soca/Increment/Increment.h"
+#include "soca/State/State.h"
 
 #include "oops/util/DateTime.h"
 #include "oops/util/Logger.h"

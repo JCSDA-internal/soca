@@ -22,6 +22,8 @@ use soca_getvalues_mod
 use soca_getvalues_reg
 use soca_state_mod
 use soca_state_reg
+use soca_increment_mod
+use soca_increment_reg
 
 use ufo_geovals_mod_c, only: ufo_geovals_registry
 use ufo_geovals_mod, only: ufo_geovals
@@ -113,5 +115,77 @@ call ufo_geovals_registry%get(c_key_geovals, geovals)
 call self%fill_geovals(geom, state, t1, t2, locs, geovals)
 
 end subroutine soca_getvalues_fill_geovals_c
+
+! --------------------------------------------------------------------------------------------------
+
+subroutine soca_getvalues_fill_geovals_tl_c(c_key_self, c_key_geom, c_key_incr, c_t1, c_t2, &
+                                         c_key_locs, c_key_geovals) &
+           bind (c, name='soca_getvalues_fill_geovals_tl_f90')
+
+integer(c_int), intent(in) :: c_key_self
+integer(c_int), intent(in) :: c_key_geom
+integer(c_int), intent(in) :: c_key_incr
+type(c_ptr),    intent(in) :: c_t1
+type(c_ptr),    intent(in) :: c_t2
+integer(c_int), intent(in) :: c_key_locs
+integer(c_int), intent(in) :: c_key_geovals
+
+type(soca_getvalues), pointer :: self
+type(soca_geom),      pointer :: geom
+type(soca_increment), pointer :: incr
+type(datetime)                :: t1
+type(datetime)                :: t2
+type(ufo_locs),       pointer :: locs
+type(ufo_geovals),    pointer :: geovals
+
+! Get objects
+call soca_getvalues_registry%get(c_key_self, self)
+call soca_geom_registry%get(c_key_geom, geom)
+call soca_increment_registry%get(c_key_incr, incr)
+call c_f_datetime(c_t1, t1)
+call c_f_datetime(c_t2, t2)
+call ufo_locs_registry%get(c_key_locs, locs)
+call ufo_geovals_registry%get(c_key_geovals, geovals)
+
+! Call method
+call self%fill_geovals(geom, incr, t1, t2, locs, geovals)
+
+end subroutine soca_getvalues_fill_geovals_tl_c
+
+! --------------------------------------------------------------------------------------------------
+
+subroutine soca_getvalues_fill_geovals_ad_c(c_key_self, c_key_geom, c_key_incr, c_t1, c_t2, &
+                                            c_key_locs, c_key_geovals) &
+           bind (c, name='soca_getvalues_fill_geovals_ad_f90')
+
+integer(c_int), intent(in) :: c_key_self
+integer(c_int), intent(in) :: c_key_geom
+integer(c_int), intent(in) :: c_key_incr
+type(c_ptr),    intent(in) :: c_t1
+type(c_ptr),    intent(in) :: c_t2
+integer(c_int), intent(in) :: c_key_locs
+integer(c_int), intent(in) :: c_key_geovals
+
+type(soca_getvalues), pointer :: self
+type(soca_geom),      pointer :: geom
+type(soca_increment), pointer :: incr
+type(datetime)                :: t1
+type(datetime)                :: t2
+type(ufo_locs),       pointer :: locs
+type(ufo_geovals),    pointer :: geovals
+
+! Get objects
+call soca_getvalues_registry%get(c_key_self, self)
+call soca_geom_registry%get(c_key_geom, geom)
+call soca_increment_registry%get(c_key_incr, incr)
+call c_f_datetime(c_t1, t1)
+call c_f_datetime(c_t2, t2)
+call ufo_locs_registry%get(c_key_locs, locs)
+call ufo_geovals_registry%get(c_key_geovals, geovals)
+
+! Call method
+call self%fill_geovals_ad(geom, incr, t1, t2, locs, geovals)
+
+end subroutine soca_getvalues_fill_geovals_ad_c
 
 end module soca_getvalue_mod_c

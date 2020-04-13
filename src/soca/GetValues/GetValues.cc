@@ -39,7 +39,6 @@ void GetValues::fillGeoVaLs(const State & state,
                             ufo::GeoVaLs & geovals) const {
   const util::DateTime * t1p = &t1;
   const util::DateTime * t2p = &t2;
-
   // Get atm geovals
   if (geom_->getAtmInit())
   {
@@ -73,8 +72,7 @@ void GetValues::getValuesFromFile(const ufo::Locations & locs,
 
     // Create the Atmospheric Geometry in Observation Space
     eckit::LocalConfiguration confatmobs(conf, "notocean.ObsSpace");
-    ioda::ObsSpace atmobs(confatmobs, geom_->getComm(),
-    bgn, end);
+    ioda::ObsSpace atmobs(confatmobs, geom_->getComm(), bgn, end);
 
     // Get GeoVaLs from file
     eckit::LocalConfiguration confatm(conf, "notocean");

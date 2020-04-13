@@ -42,7 +42,12 @@ void LinearGetValues::setTrajectory(const State & state,
   oops::Log::trace() << "LinearGetValues::setTrajectory starting" << std::endl;
   const util::DateTime * t1p = &t1;
   const util::DateTime * t2p = &t2;
-  //soca_getvalues_create_f90(keyLinearGetValues_, geom_->toFortran(), locs_.toFortran());
+  soca_getvalues_fill_geovals_f90(keyLinearGetValues_,
+                                  geom_->toFortran(),
+                                  state.toFortran(),
+                                  &t1p, &t2p,
+                                  locs_.toFortran(),
+                                  geovals.toFortran());
   oops::Log::trace() << "LinearGetValues::setTrajectory done" << std::endl;
 }
 // -------------------------------------------------------------------------------------------------
@@ -50,32 +55,29 @@ void LinearGetValues::fillGeoVaLsTL(const Increment & incr,
                                     const util::DateTime & t1, const util::DateTime & t2,
                                     ufo::GeoVaLs & geovals) const {
   oops::Log::trace() << "LinearGetValues::fillGeovalsTL starting" << std::endl;
-  Increment incr_geovals(*geom_, geovals.getVars(), incr.validTime());
   const util::DateTime * t1p = &t1;
   const util::DateTime * t2p = &t2;
-  //soca_getvalues_fill_geovals_f90(keyLinearGetValues_,
-  //                                geom_->toFortran(),
-  //                                incr_geovals.toFortran(),
-  //                                &t1p, &t2p,
-  //                                locs_.toFortran(),
-  //                                geovals.toFortran());
+  soca_getvalues_fill_geovals_tl_f90(keyLinearGetValues_,
+                                     geom_->toFortran(),
+                                     incr.toFortran(),
+                                     &t1p, &t2p,
+                                     locs_.toFortran(),
+                                     geovals.toFortran());
   oops::Log::trace() << "LinearGetValues::fillGeovalsTL done" << std::endl;
 }
-
 // -------------------------------------------------------------------------------------------------
-
 void LinearGetValues::fillGeoVaLsAD(Increment & incr,
                                     const util::DateTime & t1, const util::DateTime & t2,
                                     const ufo::GeoVaLs & geovals) const {
   oops::Log::trace() << "LinearGetValues::fillGeovalsAD starting" << std::endl;
-  Increment incr_geovals(*geom_, geovals.getVars(), incr.validTime());
   const util::DateTime * t1p = &t1;
   const util::DateTime * t2p = &t2;
-  util::Timer timergv(classname(), "fillGeoVaLsAD");
-  //soca_lineargetvalues_fill_geovals_ad_f90(keyLinearGetValues_,
-  //                                            geom_->toFortran(),
-  //                                            incr_geovals.toFortran(), &t1p, &t2p,
-  //                                            locs_.toFortran(), geovals.toFortran());
+  soca_getvalues_fill_geovals_ad_f90(keyLinearGetValues_,
+                                     geom_->toFortran(),
+                                     incr.toFortran(),
+                                     &t1p, &t2p,
+                                     locs_.toFortran(),
+                                     geovals.toFortran());
   oops::Log::trace() << "LinearGetValues::fillGeovalsAD done" << std::endl;
 }
 

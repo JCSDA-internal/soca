@@ -28,6 +28,12 @@ extern "C" {
   void soca_getvalues_fill_geovals_f90(const F90getval &, const F90geom &, const F90flds &,
                                        const util::DateTime **, const util::DateTime **,
                                        const F90locs &, const F90goms &);
+  void soca_getvalues_fill_geovals_tl_f90(const F90getval &, const F90geom &, const F90flds &,
+                                       const util::DateTime **, const util::DateTime **,
+                                       const F90locs &, const F90goms &);
+  void soca_getvalues_fill_geovals_ad_f90(const F90getval &, const F90geom &, const F90flds &,
+                                       const util::DateTime **, const util::DateTime **,
+                                       const F90locs &, const F90goms &);
 
 };  // extern "C"
 

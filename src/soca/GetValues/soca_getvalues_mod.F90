@@ -6,7 +6,7 @@
 module soca_getvalues_mod
 
 use soca_geom_mod, only: soca_geom
-use soca_state_mod, only: soca_state
+!use soca_state_mod, only: soca_state
 use soca_fields_mod, only: soca_fields, soca_field
 use datetime_mod, only: datetime
 use kinds, only: kind_real
@@ -30,6 +30,7 @@ contains
 
   ! apply interpolation
   procedure :: fill_geovals=> soca_getvalues_fillgeovals
+  procedure :: fill_geovals_ad=> soca_getvalues_fillgeovals_ad
 
 end type
 
@@ -92,7 +93,7 @@ end subroutine soca_getvalues_delete
 subroutine soca_getvalues_fillgeovals(self, geom, fld, t1, t2, locs, geovals)
   class(soca_getvalues), intent(inout) :: self
   type(soca_geom),          intent(in) :: geom
-  type(soca_state),         intent(in) :: fld
+  class(soca_fields),       intent(in) :: fld
   type(datetime),           intent(in) :: t1
   type(datetime),           intent(in) :: t2
   type(ufo_locs),           intent(in) :: locs
@@ -117,16 +118,14 @@ subroutine soca_getvalues_fillgeovals(self, geom, fld, t1, t2, locs, geovals)
 
   ! Allocate temporary geoval and 3d field for the current time window
   do ivar = 1, geovals%nvar
-
     ! Set number of levels/categories (nval)
     nval = nlev_from_ufovar(fld, geovals%variables(ivar))
-    print *,ivar, trim(geovals%variables(ivar)),nval,geovals%geovals(ivar)%nlocs
-    read(*,*)
     if (nval==0) cycle ! should we abort?
 
     ! Allocate geovals
-    geovals%geovals(ivar)%nval = nval
     if (.not. geovals%linit) then
+    !if (.not. allocated(geovals%geovals(ivar)%vals)) then
+      geovals%geovals(ivar)%nval = nval
       allocate(geovals%geovals(ivar)%vals(nval, geovals%geovals(ivar)%nlocs))
       geovals%geovals(ivar)%vals = 0.0_kind_real
     end if
@@ -201,7 +200,7 @@ subroutine soca_getvalues_fillgeovals(self, geom, fld, t1, t2, locs, geovals)
         end if
       end do
     end do
-print *,'*********************',geovals%geovals(ivar)%vals, trim(geovals%variables(ivar))
+
     ! Deallocate temporary arrays
     deallocate(fld3d_un)
     deallocate(fld3d)
@@ -212,10 +211,127 @@ print *,'*********************',geovals%geovals(ivar)%vals, trim(geovals%variabl
   geovals%linit = .true.
 end subroutine soca_getvalues_fillgeovals
 
+!------------------------------------------------------------------------------
+subroutine soca_getvalues_fillgeovals_ad(self, geom, incr, t1, t2, locs, geovals)
+  class(soca_getvalues), intent(inout) :: self
+  type(soca_geom),          intent(in) :: geom
+  class(soca_fields),    intent(inout) :: incr
+  type(datetime),           intent(in) :: t1
+  type(datetime),           intent(in) :: t2
+  type(ufo_locs),           intent(in) :: locs
+  type(ufo_geovals),     intent(in) :: geovals
+
+  logical, allocatable :: time_mask(:)
+  logical :: masked
+  integer :: ivar, nlocs, n
+  integer :: ival, nval, indx
+    integer :: ni, nj
+  integer :: isc, iec, jsc, jec
+  integer :: ns
+  real(kind=kind_real), allocatable :: gom_window(:,:)
+    real(kind=kind_real), allocatable :: gom_window_ival(:)
+  real(kind=kind_real), allocatable :: incr3d(:,:,:), incr3d_un(:)
+  type(soca_field), pointer :: field
+    logical :: found
+
+
+  ! Indices for compute domain (no halo)
+  isc = geom%isc ; iec = geom%iec
+  jsc = geom%jsc ; jec = geom%jec
+
+  ! Get mask for locations in this time window
+  call ufo_locs_time_mask(locs, t1, t2, time_mask)
+  allocate(gom_window_ival(locs%nlocs))
+
+  do ivar = 1, geovals%nvar
+    ! Set number of levels/categories (nval)
+    nval = nlev_from_ufovar(incr, geovals%variables(ivar))
+
+    ! Allocate temporary geoval and 3d field for the current time window
+    allocate(gom_window(nval,locs%nlocs))
+    allocate(incr3d(isc:iec,jsc:jec,1:nval))
+    incr3d = 0.0_kind_real
+
+    ! determine if this variable should use the masked grid
+    ! (currently all of them, perhaps have atm vars use unmasked interp at some point??)
+    masked = .true.
+
+    ! Apply backward interpolation: Obs ---> Model
+    if (masked) then
+      ns = count(incr%geom%mask2d(isc:iec,jsc:jec) > 0)
+    else
+      ni = iec - isc + 1
+      nj = jec - jsc + 1
+      ns = ni * nj
+    end if
+    if (.not.allocated(incr3d_un)) allocate(incr3d_un(ns))
+
+    do ival = 1, nval
+      ! Fill proper geoval according to time window
+      do indx = 1, locs%nlocs
+        gom_window(ival, indx) = geovals%geovals(ivar)%vals(ival, locs%indx(indx))
+      end do
+      gom_window_ival = gom_window(ival,1:locs%nlocs)
+
+      if (masked) then
+        incr3d_un = pack(incr3d(isc:iec,jsc:jec,ival), mask = incr%geom%mask2d(isc:iec,jsc:jec) >0)
+        call self%horiz_interp_masked%apply_ad(incr3d_un, gom_window_ival)
+        incr3d(isc:iec,jsc:jec,ival) = unpack(incr3d_un, &
+              mask = incr%geom%mask2d(isc:iec,jsc:jec) >0, &
+              field = incr3d(isc:iec,jsc:jec,ival))
+      else
+        incr3d_un = reshape(incr3d(isc:iec,jsc:jec,ival), (/ns/))
+        call self%horiz_interp%apply_ad(incr3d_un(1:ns), gom_window_ival)
+        incr3d(isc:iec,jsc:jec,ival) = reshape(incr3d_un(1:ns),(/ni,nj/))
+      end if
+    end do
+
+    ! if we are lucky and this variable is a non-derived type, check the fields structure
+    found = .false.
+    do n=1,size(incr%fields)
+      if (incr%fields(n)%cf_name == geovals%variables(ivar)) then
+        incr%fields(n)%val(isc:iec,jsc:jec,1:nval) = &
+          incr%fields(n)%val(isc:iec,jsc:jec,1:nval) + incr3d(isc:iec,jsc:jec,1:nval)
+        found = .true.
+        exit
+      end if
+    end do
+
+    ! otherwise, we are dealing with a derived type, prepare for a long "select case" statement
+    if (.not. found) then
+      select case (trim(geovals%variables(ivar)))
+      case ("sea_water_salinity")
+        call incr%get("socn", field)
+        field%val(isc:iec,jsc:jec,1:nval) = field%val(isc:iec,jsc:jec,1:nval) + incr3d
+
+      case ("sea_surface_temperature")
+        call incr%get("tocn", field)
+        field%val(isc:iec,jsc:jec,1:nval) = field%val(isc:iec,jsc:jec,1:nval) + incr3d
+
+      case ("sea_surface_salinity")
+        call incr%get("socn", field)
+        field%val(isc:iec,jsc:jec,1) = field%val(isc:iec,jsc:jec,1) + incr3d(isc:iec,jsc:jec,1)
+
+      case default
+        call abor1_ftn("soca_interpfields_mod:getvalues_ad geoval does not exist")
+
+      end select
+    end if
+
+    ! Deallocate temporary arrays
+    deallocate(incr3d)
+    deallocate(gom_window)
+
+  end do
+
+  deallocate(gom_window_ival)
+
+end subroutine soca_getvalues_fillgeovals_ad
+
 ! ------------------------------------------------------------------------------
 !> Get 3rd dimension of fld
 function nlev_from_ufovar(fld, var) result(nval)
-  type(soca_state), intent(in) :: fld
+  class(soca_fields), intent(in) :: fld
   character(len=*),  intent(in) :: var
   integer                       :: nval
 
@@ -223,6 +339,7 @@ function nlev_from_ufovar(fld, var) result(nval)
 
   ! fields that are not derived (i.e. the "cf_name" is set for a given field)
   do i=1,size(fld%fields)
+
     if (fld%fields(i)%cf_name == var) then
       nval = fld%fields(i)%nz
       return

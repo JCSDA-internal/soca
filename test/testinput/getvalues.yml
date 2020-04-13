@@ -13,11 +13,24 @@ GetValuesTest:
     ocn_filename: MOM.res.nc
     ice_filename: ice_model.res.nc
     sfc_filename: sfc.res.nc
-    variables: &soca_vars [cicen, socn, tocn, hocn] #[cicen, hicen, socn, tocn, ssh, hocn, sw, lhf, shf, lw, us]
+    variables: &soca_vars [cicen, hicen, socn, tocn, ssh, hocn, sw, lhf, shf, lw, us]
     remap_filename: ./INPUT/MOM.res.nc
 
 GeoVaLsVariables:
-  variables: *soca_vars
+  variables:
+  - sea_water_potential_temperature
+  - sea_water_practical_salinity
+  - sea_water_cell_thickness
+  - sea_surface_height_above_geoid
+  - sea_surface_temperature
+  - sea_ice_category_area_fraction
+  - sea_ice_category_thickness
+  - net_downwelling_shortwave_radiation
+  - upward_latent_heat_flux_in_air
+  - upward_sensible_heat_flux_in_air
+  - net_downwelling_longwave_radiation
+  - friction_velocity_over_water
+
 
 Locations:
   window_begin: 2018-04-15T00:00:00Z
