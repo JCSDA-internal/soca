@@ -22,12 +22,14 @@ namespace soca {
 // -----------------------------------------------------------------------------
 /// Constructor, destructor
 // -----------------------------------------------------------------------------
-GetValues::GetValues(const Geometry & geom, const ufo::Locations & locs) :
-    locs_(locs), geom_(new Geometry(geom)) {
+GetValues::GetValues(const Geometry & geom,
+                     const ufo::Locations & locs)
+  : locs_(locs), geom_(new Geometry(geom)) {
   soca_getvalues_create_f90(keyGetValues_, geom.toFortran(), locs.toFortran());
 }
 // -----------------------------------------------------------------------------
-GetValues::~GetValues() {
+GetValues::~GetValues()
+{
   soca_getvalues_delete_f90(keyGetValues_);
 }
 // -----------------------------------------------------------------------------
@@ -58,7 +60,7 @@ void GetValues::fillGeoVaLs(const State & state,
 }
 // -----------------------------------------------------------------------------
 /// Read Interpolated GeoVaLs from file
-//  TODO 3D only, make it 4D
+// TODO(Guillaume) 3D only, make it 4D
 // -----------------------------------------------------------------------------
 void GetValues::getValuesFromFile(const ufo::Locations & locs,
                               const oops::Variables & vars,

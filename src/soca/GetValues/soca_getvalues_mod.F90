@@ -6,7 +6,6 @@
 module soca_getvalues_mod
 
 use soca_geom_mod, only: soca_geom
-!use soca_state_mod, only: soca_state
 use soca_fields_mod, only: soca_fields, soca_field
 use datetime_mod, only: datetime
 use kinds, only: kind_real
@@ -124,7 +123,6 @@ subroutine soca_getvalues_fillgeovals(self, geom, fld, t1, t2, locs, geovals)
 
     ! Allocate geovals
     if (.not. geovals%linit) then
-    !if (.not. allocated(geovals%geovals(ivar)%vals)) then
       geovals%geovals(ivar)%nval = nval
       allocate(geovals%geovals(ivar)%vals(nval, geovals%geovals(ivar)%nlocs))
       geovals%geovals(ivar)%vals = 0.0_kind_real
@@ -251,6 +249,7 @@ subroutine soca_getvalues_fillgeovals_ad(self, geom, incr, t1, t2, locs, geovals
     allocate(gom_window(nval,locs%nlocs))
     allocate(incr3d(isc:iec,jsc:jec,1:nval))
     incr3d = 0.0_kind_real
+    gom_window = 0.0_kind_real
 
     ! determine if this variable should use the masked grid
     ! (currently all of them, perhaps have atm vars use unmasked interp at some point??)
@@ -269,7 +268,9 @@ subroutine soca_getvalues_fillgeovals_ad(self, geom, incr, t1, t2, locs, geovals
     do ival = 1, nval
       ! Fill proper geoval according to time window
       do indx = 1, locs%nlocs
-        gom_window(ival, indx) = geovals%geovals(ivar)%vals(ival, locs%indx(indx))
+        if (time_mask(indx)) then
+          gom_window(ival, indx) = geovals%geovals(ivar)%vals(ival, locs%indx(indx))
+        end if
       end do
       gom_window_ival = gom_window(ival,1:locs%nlocs)
 

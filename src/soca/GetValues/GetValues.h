@@ -10,6 +10,7 @@
 
 #include <ostream>
 #include <string>
+#include <memory>
 
 #include "eckit/config/Configuration.h"
 #include "eckit/exception/Exceptions.h"
@@ -21,6 +22,7 @@
 #include "oops/util/ObjectCounter.h"
 #include "oops/util/Printable.h"
 #include "oops/util/Timer.h"
+
 #include "ufo/Locations.h"
 
 // Forward declarations
@@ -40,7 +42,7 @@ namespace soca {
 
 namespace soca {
 
-  /// SOCA LinearGetValues
+  /// SOCA GetValues
   /*!
    * GetValues: interpolate State to observation locations
    */
@@ -55,8 +57,10 @@ class GetValues : public util::Printable,
 
   /// fills in geovals for all observations in the timeframe (t1, t2],
   /// geovals are interpolated trilinearly from state at the nearest gridpoints
-  void fillGeoVaLs(const State &, const util::DateTime & t1,
-    const util::DateTime & t2, ufo::GeoVaLs &) const;
+  void fillGeoVaLs(const State &,
+                   const util::DateTime & t1,
+                   const util::DateTime & t2,
+                   ufo::GeoVaLs &) const;
 
   /// Read interpolated GeoVaLs at observation location
   void getValuesFromFile(const ufo::Locations &,

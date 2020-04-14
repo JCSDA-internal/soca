@@ -10,6 +10,7 @@
 
 #include <ostream>
 #include <string>
+#include <memory>
 
 #include "eckit/config/Configuration.h"
 #include "eckit/exception/Exceptions.h"
@@ -34,18 +35,14 @@ namespace ufo {
   class GeoVaLs;
   class Locations;
 }
-namespace soca {
-  class Geometry;
-  class State;
-}
 
 //-----------------------------------------------------------------------------
 
 namespace soca {
 
-  /// SOCA GetValues
+  /// SOCA LinearGetValues
   /*!
-   * GetValues interpolates State to observation locations
+   * LinearGetValues interpolates Increment and State trajectory to observation locations
    */
 class LinearGetValues : public util::Printable,
                         private util::ObjectCounter<LinearGetValues> {
@@ -57,15 +54,19 @@ class LinearGetValues : public util::Printable,
   virtual ~LinearGetValues();
 
   /// Trajectory for the linearized interpolation
-  void setTrajectory(const State & state, const util::DateTime & t1, const util::DateTime & t2,
-                     ufo::GeoVaLs & geovals);
+  void setTrajectory(const State & state,
+                     const util::DateTime & t1,
+                     const util::DateTime & t2,
+                     ufo::GeoVaLs & geovals);  // NOLINT
 
   /// Forward and backward interpolation
   void fillGeoVaLsTL(const Increment & inc,
-                     const util::DateTime & t1, const util::DateTime & t2,
-                     ufo::GeoVaLs & geovals) const;
-  void fillGeoVaLsAD(Increment & inc,
-                     const util::DateTime & t1, const util::DateTime & t2,
+                     const util::DateTime & t1,
+                     const util::DateTime & t2,
+                     ufo::GeoVaLs & geovals) const;  // NOLINT
+  void fillGeoVaLsAD(Increment & inc,   // NOLINT
+                     const util::DateTime & t1,
+                     const util::DateTime & t2,
                      const ufo::GeoVaLs & geovals) const;
 
  private:
