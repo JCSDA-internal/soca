@@ -17,6 +17,14 @@ chmod 600 ~/.netrc
 echo 'machine podaac-tools.jpl.nasa.gov login USERNAME_from_Drive_API_Credentials password PASSWORD_from_Drive_API_Credentials' >> ~/.netrc
 ```
 
+Similarly, for ocean color data hosted at the NASA's Ocean Biology Processing Group (OBPG/OB.DAAC), e.g. from MODIS-Aqua, data access requires users to login to the OceanColor Web's data access points using their Earthdata Login credentials:
+
+* Users need to register at https://urs.earthdata.nasa.gov and record USERNAME and PASSWD as their Earthdata Login credentials.
+
+* Users need to modify the following script before attempting to download MODIS-Aqua ocean color data:
+  source.coastwatch_oc_viirs_modis.sh: replacing USERNAME and PASSWD with their Login credentials in the following line:
+  wget -q -O - $source_dir |grep OC| wget --user=USERNAME --password=PASSWD --auth-no-challenge=on --base https://oceandata.sci.gsfc.nasa.gov/ -N --wait=0.5 --random-wait --force-html -i -
+     
 ## How to use
 The users have to modify the following three variables at the get_obs.sh, according to their choices:
 
