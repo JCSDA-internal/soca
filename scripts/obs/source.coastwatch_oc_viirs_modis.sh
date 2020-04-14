@@ -43,7 +43,7 @@ mkdir -p $d
 cd $d
 
 if [[ $lvl == "aqua" ]]; then
-    wget -q -O - $source_dir |grep OC| wget --user=liuxiao37k --password=myEMC2020 --auth-no-challenge=on --base https://oceandata.sci.gsfc.nasa.gov/ -N --wait=0.5 --random-wait --force-html -i -
+    wget -q -O - $source_dir |grep OC| wget --user=USERNAME --password=PASSWD --auth-no-challenge=on --base https://oceandata.sci.gsfc.nasa.gov/ -N --wait=0.5 --random-wait --force-html -i -
 else
     wget -r -nc -np -nH -nd -A $file_sfx  $source_dir
 fi
