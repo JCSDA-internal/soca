@@ -68,7 +68,16 @@ ecbuild_add_executable( TARGET  soca_gridgen.x
                         LIBS    soca
                       )
 
+ecbuild_add_executable( TARGET  soca_letkf.x
+                        SOURCES LETKF.cc
+                        LIBS    soca
+                      )
 ecbuild_add_executable( TARGET  soca_convertstate.x
                         SOURCES ConvertState.cc
+                        LIBS    soca
+                      )
+
+ecbuild_add_executable( TARGET  soca_addincrement.x
+                        SOURCES AddIncrement.cc
                         LIBS    soca
                       )
