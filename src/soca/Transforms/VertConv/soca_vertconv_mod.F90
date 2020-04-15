@@ -132,7 +132,7 @@ subroutine soca_conv (self, convdx, dx)
             field_convdx%val(id,jd,j) = 0.0d0
             do k = 1,nl
               dist2 = abs(z(j)-z(k))
-              coef = fit_func(mpl, 'gc99', dist2/lz(k))
+              coef = fit_func(mpl, dist2/lz(k))
               field_convdx%val(id,jd,j) = field_convdx%val(id,jd,j) &
                 &+ field_dx%val(id,jd,k)*coef
             end do
@@ -181,7 +181,7 @@ subroutine soca_conv_ad (self, convdx, dx)
           do j = nl, 1, -1
             do k = nl, 1, -1
               dist2 = abs(z(j)-z(k))
-              coef = fit_func(mpl, 'gc99', dist2/lz(k))
+              coef = fit_func(mpl, dist2/lz(k))
               field_dx%val(id,jd,k) = field_dx%val(id,jd,k) + coef*field_convdx%val(id,jd,j)
             end do
           end do
