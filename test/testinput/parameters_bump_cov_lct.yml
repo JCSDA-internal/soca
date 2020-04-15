@@ -73,11 +73,6 @@ ensemble:
 output:
 - datadir: bump
   date: *date
-  exp: parameters_bump_cov.var
-  parameter: var
-  type: an
-- datadir: bump
-  date: *date
   exp: parameters_bump_cov.cor_rh
   parameter: cor_rh
   type: an

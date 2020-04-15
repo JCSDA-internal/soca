@@ -558,7 +558,7 @@ soca_add_test( NAME 3dvarfgat
 
 soca_add_test( NAME 3dhyb
                EXE  soca_3dvar.x
-               TOL  1e-8 0
+               TOL  2e-7 0
                NOTRAPFPE
                TEST_DEPENDS test_soca_static_socaerror_init
                             test_soca_parameters_bump_loc )

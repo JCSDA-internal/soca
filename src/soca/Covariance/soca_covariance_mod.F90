@@ -299,12 +299,10 @@ subroutine soca_bump_correlation(self, horiz_convol, geom, f_conf, domain)
         rh = self%ice_l0
      end if
      rv=1.0 ! Vertical scales not used, set to something
-     var=1.0
 
      ! Copy length-scales into BUMP
      call horiz_convol%set_parameter('cor_rh',rh)
      call horiz_convol%set_parameter('cor_rv',rv)
-     call horiz_convol%set_parameter('var',var)
 
      ! Clean up
      deallocate(rosrad,rh,rv,var)
