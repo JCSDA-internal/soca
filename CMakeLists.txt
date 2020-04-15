@@ -58,6 +58,10 @@ include_directories( ${FCKIT_INCLUDE_DIRS} )
 ecbuild_use_package( PROJECT oops VERSION 0.1.0 REQUIRED )
 include_directories( ${OOPS_INCLUDE_DIRS} )
 
+# saber
+ecbuild_use_package( PROJECT saber VERSION 0.0.1 REQUIRED )
+include_directories( ${SABER_INCLUDE_DIRS} )
+
 # ioda
 ecbuild_use_package( PROJECT ioda VERSION 0.1.0 REQUIRED )
 include_directories( ${IODA_INCLUDE_DIRS} )
