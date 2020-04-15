@@ -8,7 +8,7 @@ Test     : CostJo   : Nonlinear Jo(InsituSalinity) = 14.7824, nobs = 33, Jo/n = 
 Test     : CostJo   : Nonlinear Jo(SeaIceFraction) = 255.973, nobs = 24, Jo/n = 10.6655, err = 0.1
 Test     : CostFunction: Nonlinear J = 3826.16
 Test     : RPCGMinimizer: reduction in residual norm = 0.629105
-Test     : CostFunction::addIncrement: Analysis: 
+Test     : CostFunction::addIncrement: Analysis:
 Test     :   Valid time: 2018-04-15T00:00:00Z
 Test     :   cicen   min=    0.000000   max=    0.999998   mean=    0.026564
 Test     :   hicen   min=    0.000000   max=    2.265451   mean=    0.094250

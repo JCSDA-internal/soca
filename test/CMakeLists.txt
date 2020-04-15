@@ -28,6 +28,7 @@ list( APPEND soca_test_input
   testinput/increment.yml
   testinput/letkf.yml
   testinput/linearmodel.yml
+  testinput/makeobs.yml
   testinput/marine2ioda.yml
   testinput/model.yml
   testinput/parameters_bump_cov_lct.yml
@@ -70,6 +71,7 @@ list( APPEND soca_test_ref
   testref/hofx_3dcrtm.test
   testref/hofx_4d.test
   testref/letkf.test
+  testref/makeobs.test
   testref/parameters_bump_cov_lct.test
 )
 
@@ -362,6 +364,11 @@ soca_add_test( NAME enspert
 #               EXE  soca_staticbinit.x
 #               TEST_DEPENDS test_soca_gridgen)
 
+# Generate synthetic observations
+soca_add_test( NAME makeobs
+               EXE  soca_makeobs.x
+               NOTRAPFPE
+               TEST_DEPENDS test_soca_gridgen )
 
 # Tests of class interfaces
 #-------------------------------------------------------------------------------
