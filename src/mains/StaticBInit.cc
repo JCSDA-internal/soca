@@ -14,6 +14,5 @@ int main(int argc,  char ** argv) {
   oops::Run run(argc, argv);
   soca::instantiateBalanceOpFactory();
   oops::StaticBInit<soca::Traits> bmat;
-  run.execute(bmat);
-  return 0;
+  return run.execute(bmat);
 }

@@ -16,6 +16,5 @@ int main(int argc,  char ** argv) {
   ioda::instantiateObsLocFactory<soca::Traits>();
   ufo::instantiateObsFilterFactory<soca::Traits>();
   oops::LETKF<soca::Traits> letkf;
-  run.execute(letkf);
-  return 0;
+  return run.execute(letkf);
 }

@@ -14,6 +14,5 @@ int main(int argc,  char ** argv) {
   oops::Run run(argc, argv);
   soca::instantiateBalanceOpFactory();
   oops::GenEnsPertB<soca::Traits> ensgen;
-  run.execute(ensgen);
-  return 0;
+  return run.execute(ensgen);
 }

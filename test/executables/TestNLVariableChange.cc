@@ -14,6 +14,5 @@ int main(int argc,  char ** argv) {
   oops::Run run(argc, argv);
   soca::instantiateBalanceOpFactory();
   test::VariableChange<soca::Traits> tests;
-  run.execute(tests);
-  return 0;
+  return run.execute(tests);
 }

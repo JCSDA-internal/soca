@@ -12,6 +12,5 @@
 int main(int argc,  char ** argv) {
   oops::Run run(argc, argv);
   oops::Forecast<soca::Traits> fc;
-  run.execute(fc);
-  return 0;
+  return run.execute(fc);
 }

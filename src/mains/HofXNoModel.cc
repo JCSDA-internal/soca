@@ -14,6 +14,5 @@ int main(int argc,  char ** argv) {
   oops::Run run(argc, argv);
   ufo::instantiateObsFilterFactory<soca::Traits>();
   oops::HofXNoModel<soca::Traits> hofx;
-  run.execute(hofx);
-  return 0;
+  return run.execute(hofx);
 }

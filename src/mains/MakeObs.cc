@@ -17,6 +17,5 @@
 int main(int argc,  char ** argv) {
   oops::Run run(argc, argv);
   oops::MakeObs<soca::Traits> mkobs;
-  run.execute(mkobs);
-  return 0;
+  return run.execute(mkobs);
 }

@@ -14,6 +14,5 @@ int main(int argc,  char ** argv) {
   oops::Run run(argc, argv);
   soca::instantiateBalanceOpFactory();
   oops::ConvertState<soca::Traits> convertstate;
-  run.execute(convertstate);
-  return 0;
+  return run.execute(convertstate);
 }
