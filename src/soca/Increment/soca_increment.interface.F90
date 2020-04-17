@@ -17,9 +17,6 @@ use ufo_geovals_mod_c, only: ufo_geovals_registry
 use ufo_geovals_mod, only: ufo_geovals
 use soca_geom_mod, only: soca_geom
 use soca_geom_mod_c, only: soca_geom_registry
-use soca_interpfields_mod, only: getvalues, getvalues_ad
-use soca_getvaltraj_mod, only: soca_getvaltraj
-use soca_getvaltraj_mod_c, only: soca_getvaltraj_registry
 use soca_geom_iter_mod, only: soca_geom_iter, soca_geom_iter_registry
 use soca_increment_mod
 use soca_increment_reg
@@ -376,58 +373,6 @@ subroutine soca_increment_create_c(c_key_self, c_key_geom, c_vars) bind(c,name='
     prms = sqrt(zz)
 
   end subroutine soca_increment_rms_c
-
-  ! ------------------------------------------------------------------------------
-
-  subroutine soca_increment_interp_tl_c(c_key_fld,c_key_loc,c_vars,c_key_gom,c_key_traj) bind(c,name='soca_increment_interp_tl_f90')
-    integer(c_int),           intent(in) :: c_key_fld
-    integer(c_int),           intent(in) :: c_key_loc
-    type(c_ptr), value,       intent(in) :: c_vars     !< List of requested variables
-    integer(c_int),           intent(in) :: c_key_gom
-    integer(c_int), optional, intent(in) :: c_key_traj !< Trajectory for interpolation/transforms
-
-    type(soca_increment),      pointer :: fld
-    type(ufo_locs),        pointer :: locs
-    type(oops_variables)           :: vars
-    type(ufo_geovals),     pointer :: gom
-    type(soca_getvaltraj), pointer :: traj
-
-    vars = oops_variables(c_vars)
-
-    call soca_increment_registry%get(c_key_fld,fld)
-    call ufo_locs_registry%get(c_key_loc,locs)
-    call ufo_geovals_registry%get(c_key_gom,gom)
-    call soca_getvaltraj_registry%get(c_key_traj,traj)
-
-    call getvalues(fld, locs, vars, gom, traj, interp_type='tl')
-
-  end subroutine soca_increment_interp_tl_c
-
-  ! ------------------------------------------------------------------------------
-
-  subroutine soca_increment_interp_ad_c(c_key_fld,c_key_loc,c_vars,c_key_gom,c_key_traj) bind(c,name='soca_increment_interp_ad_f90')
-    integer(c_int),     intent(in) :: c_key_fld
-    integer(c_int),     intent(in) :: c_key_loc
-    type(c_ptr), value, intent(in) :: c_vars     !< List of requested variables
-    integer(c_int),     intent(in) :: c_key_gom
-    integer(c_int),     intent(in) :: c_key_traj !< Trajectory for interpolation/transforms
-
-    type(soca_increment),      pointer :: fld
-    type(ufo_locs),        pointer :: locs
-    type(oops_variables)           :: vars
-    type(ufo_geovals),     pointer :: gom
-    type(soca_getvaltraj), pointer :: traj
-
-    vars = oops_variables(c_vars)
-
-    call soca_increment_registry%get(c_key_fld,fld)
-    call ufo_locs_registry%get(c_key_loc,locs)
-    call ufo_geovals_registry%get(c_key_gom,gom)
-    call soca_getvaltraj_registry%get(c_key_traj,traj)
-
-    call getvalues_ad(fld, locs, vars, gom, traj)
-
-  end subroutine soca_increment_interp_ad_c
 
   ! ------------------------------------------------------------------------------
 

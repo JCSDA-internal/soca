@@ -50,16 +50,6 @@ namespace soca {
     void soca_increment_write_file_f90(const F90flds &,
                                    const eckit::Configuration * const &,
                                    const util::DateTime * const *);
-    void soca_increment_interp_tl_f90(const F90flds &,
-                                  const F90locs &,
-                                  const oops::Variables &,
-                                  const F90goms &,
-                                  const F90getvaltraj &);
-    void soca_increment_interp_ad_f90(const F90flds &,
-                                  const F90locs &,
-                                  const oops::Variables &,
-                                  const F90goms &,
-                                  const F90getvaltraj &);
     void soca_increment_ug_coord_f90(const F90flds &, const int &);
     void soca_increment_field_to_ug_f90(const F90flds &,
                                     const int &,

@@ -41,7 +41,6 @@ namespace ufo {
 namespace soca {
   class Geometry;
   class GeometryIterator;
-  class GetValuesTraj;
   class State;
 }
 
@@ -87,16 +86,6 @@ namespace soca {
       /// Getpoint/Setpoint
       oops::GridPoint getPoint(const GeometryIterator &) const;
       void setPoint(const oops::GridPoint &, const GeometryIterator &);
-
-      /// Interpolate to observation location
-      void getValuesTL(const ufo::Locations &,
-                       const oops::Variables &,
-                       ufo::GeoVaLs &,
-                       const GetValuesTraj &) const;
-      void getValuesAD(const ufo::Locations &,
-                       const oops::Variables &,
-                       const ufo::GeoVaLs &,
-                       const GetValuesTraj &);
 
       /// I/O and diagnostics
       void read(const eckit::Configuration &);
