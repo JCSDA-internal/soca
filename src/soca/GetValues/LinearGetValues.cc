@@ -5,11 +5,13 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#include "oops/util/Logger.h"
+#include "oops/util/DateTime.h"
 
 #include "soca/Geometry/Geometry.h"
-#include "soca/GetValues/LinearGetValues.h"
 #include "soca/GetValues/GetValuesFortran.h"
+#include "soca/GetValues/LinearGetValues.h"
+#include "soca/Increment/Increment.h"
+#include "soca/State/State.h"
 
 #include "ufo/GeoVaLs.h"
 #include "ufo/Locations.h"

@@ -5,7 +5,9 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#include "oops/util/Logger.h"
+#include "eckit/config/LocalConfiguration.h"
+
+#include "oops/util/DateTime.h"
 
 #include "soca/Geometry/Geometry.h"
 #include "soca/GetValues/GetValues.h"
@@ -14,8 +16,6 @@
 
 #include "ufo/GeoVaLs.h"
 #include "ufo/Locations.h"
-
-using oops::Log;
 
 namespace soca {
 

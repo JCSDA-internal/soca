@@ -12,26 +12,16 @@
 #include <string>
 #include <memory>
 
-#include "eckit/config/Configuration.h"
-#include "eckit/exception/Exceptions.h"
-
 #include "soca/Fortran.h"
 
-#include "oops/util/DateTime.h"
-#include "oops/util/Logger.h"
 #include "oops/util/ObjectCounter.h"
 #include "oops/util/Printable.h"
-#include "oops/util/Timer.h"
 
 #include "ufo/Locations.h"
 
 // Forward declarations
-namespace eckit {
-  class Configuration;
-}
 namespace ufo {
   class GeoVaLs;
-  class Locations;
 }
 namespace soca {
   class Geometry;
