@@ -13,6 +13,5 @@
 int main(int argc,  char ** argv) {
   oops::Run run(argc, argv);
   soca::GridGen makegrid;
-  run.execute(makegrid);
-  return 0;
+  return run.execute(makegrid);
 }

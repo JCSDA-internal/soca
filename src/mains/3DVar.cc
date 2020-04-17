@@ -22,6 +22,5 @@ int main(int argc,  char ** argv) {
   ufo::instantiateObsFilterFactory<soca::Traits>();
   saber::instantiateLocalizationFactory<soca::Traits>();
   oops::Variational<soca::Traits> var;
-  run.execute(var);
-  return 0;
+  return run.execute(var);
 }

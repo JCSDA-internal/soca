@@ -18,6 +18,5 @@ int main(int argc,  char ** argv) {
   soca::instantiateBalanceOpFactory();
   oops::Run run(argc, argv);
   saber::EstimateParams<soca::Traits> dir;
-  run.execute(dir);
-  return 0;
+  return run.execute(dir);
 }

@@ -20,6 +20,5 @@ int main(int argc,  char ** argv) {
   soca::instantiateBalanceOpFactory();
   saber::instantiateLocalizationFactory<soca::Traits>();
   oops::Dirac<soca::Traits> dir;
-  run.execute(dir);
-  return 0;
+  return run.execute(dir);
 }

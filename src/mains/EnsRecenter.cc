@@ -11,6 +11,5 @@
 int main(int argc,  char ** argv) {
   oops::Run run(argc, argv);
   oops::EnsRecenter<soca::Traits> var;
-  run.execute(var);
-  return 0;
+  return run.execute(var);
 }

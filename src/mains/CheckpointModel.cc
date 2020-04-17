@@ -13,6 +13,5 @@
 int main(int argc,  char ** argv) {
   oops::Run run(argc, argv);
   soca::CheckpointModel checkpoint;
-  run.execute(checkpoint);
-  return 0;
+  return run.execute(checkpoint);
 }
