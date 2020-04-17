@@ -31,7 +31,6 @@ namespace ufo {
 }
 namespace soca {
   class Geometry;
-  class GetValuesTraj;
   class Increment;
 }
 
@@ -58,20 +57,6 @@ namespace soca {
       State(const State &);
       virtual ~State();
       State & operator=(const State &);
-
-      /// Interpolate to observation location
-      void getValues(const ufo::Locations &,
-                     const oops::Variables &,
-                     ufo::GeoVaLs &) const;
-      void getValues(const ufo::Locations &,
-                     const oops::Variables &,
-                     ufo::GeoVaLs &,
-                     GetValuesTraj &) const;
-
-      /// Read interpolated GeoVaLs at observation location
-      void getValuesFromFile(const ufo::Locations &,
-                             const oops::Variables &,
-                             ufo::GeoVaLs &) const;
 
       /// Rotations
       void rotate2north(const oops::Variables &, const oops::Variables &) const;

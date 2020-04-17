@@ -10,7 +10,6 @@
 
 #include "soca/Geometry/Geometry.h"
 #include "soca/GeometryIterator/GeometryIterator.h"
-#include "soca/GetValuesTraj/GetValuesTraj.h"
 #include "soca/Increment/Increment.h"
 #include "soca/Increment/IncrementFortran.h"
 #include "soca/State/State.h"
@@ -185,28 +184,6 @@ namespace soca {
                             vals.size());
   }
 
-  /// Interpolate to observation location
-  // -----------------------------------------------------------------------------
-  void Increment::getValuesTL(const ufo::Locations & locs,
-                              const oops::Variables & vars,
-                              ufo::GeoVaLs & cols,
-                              const GetValuesTraj & traj) const {
-    Log::debug() << "Increment::interpolateTL fields in" << *this << std::endl;
-    soca_increment_interp_tl_f90(toFortran(), locs.toFortran(), vars,
-                             cols.toFortran(), traj.toFortran());
-    Log::debug() << "Increment::interpolateTL " << cols << std::endl;
-  }
-  // -----------------------------------------------------------------------------
-  void Increment::getValuesAD(const ufo::Locations & locs,
-                              const oops::Variables & vars,
-                              const ufo::GeoVaLs & cols,
-                              const GetValuesTraj & traj) {
-    Log::debug() << "Increment::interpolateAD gom " << cols << std::endl;
-    Log::debug() << "Increment::interpolateAD fields in" <<
-                    *this << std::endl;
-    soca_increment_interp_ad_f90(toFortran(), locs.toFortran(), vars,
-                             cols.toFortran(), traj.toFortran());
-  }
   // -----------------------------------------------------------------------------
   /// Unstructured grid
   // -----------------------------------------------------------------------------

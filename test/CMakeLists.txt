@@ -21,12 +21,14 @@ list( APPEND soca_test_input
   testinput/geometry.yml
   testinput/geometry_iterator.yml
   testinput/geometryatm.yml
+  testinput/getvalues.yml
   testinput/gridgen.yml
   testinput/hofx_3d.yml
   testinput/hofx_3dcrtm.yml
   testinput/hofx_4d.yml
   testinput/increment.yml
   testinput/letkf.yml
+  testinput/lineargetvalues.yml
   testinput/linearmodel.yml
   testinput/makeobs.yml
   testinput/marine2ioda.yml
@@ -389,6 +391,10 @@ soca_add_test( NAME state
                SRC  TestState.cc
                TEST_DEPENDS test_soca_gridgen )
 
+soca_add_test( NAME getvalues
+               SRC  TestGetValues.cc
+               TEST_DEPENDS test_soca_gridgen )
+
 soca_add_test( NAME model
                SRC  TestModel.cc
                NOTRAPFPE
@@ -401,6 +407,10 @@ soca_add_test( NAME modelaux
 
 soca_add_test( NAME increment
                SRC  TestIncrement.cc
+               TEST_DEPENDS test_soca_gridgen )
+
+soca_add_test( NAME lineargetvalues
+               SRC  TestLinearGetValues.cc
                TEST_DEPENDS test_soca_gridgen )
 
 soca_add_test( NAME errorcovariance

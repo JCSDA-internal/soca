@@ -13,7 +13,8 @@
 #include "soca/Covariance/ErrorCovariance.h"
 #include "soca/Geometry/Geometry.h"
 #include "soca/GeometryIterator/GeometryIterator.h"
-#include "soca/GetValuesTraj/GetValuesTraj.h"
+#include "soca/GetValues/GetValues.h"
+#include "soca/GetValues/LinearGetValues.h"
 #include "soca/Increment/Increment.h"
 #include "soca/Localization/Localization.h"
 #include "soca/ModelBias/ModelBias.h"
@@ -45,7 +46,8 @@ struct Traits {
   typedef soca::State               State;
   typedef soca::Increment           Increment;
   typedef soca::ErrorCovariance     Covariance;
-  typedef soca::GetValuesTraj       InterpolatorTraj;
+  typedef soca::GetValues           GetValues;
+  typedef soca::LinearGetValues     LinearGetValues;
 
   typedef soca::ModelBias           ModelAuxControl;
   typedef soca::ModelBiasIncrement  ModelAuxIncrement;
@@ -56,7 +58,6 @@ struct Traits {
   typedef ufo::ObsBiasCovariance    ObsAuxCovariance;
   typedef ufo::ObsBiasIncrement     ObsAuxIncrement;
   typedef ufo::ObsDiagnostics       ObsDiagnostics;
-  //  typedef ufo::ObsCheck             ObsCheck;
   typedef ufo::ObsOperator          ObsOperator;
   typedef ufo::LinearObsOperator    LinearObsOperator;
   typedef ufo::GeoVaLs              GeoVaLs;

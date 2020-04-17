@@ -37,15 +37,6 @@ namespace soca {
     void soca_state_write_file_f90(const F90flds &,
                                    const eckit::Configuration * const &,
                                    const util::DateTime * const *);
-    void soca_state_interp_nl_f90(const F90flds &,
-                                  const F90locs &,
-                                  const oops::Variables &,
-                                  const F90goms &);
-    void soca_state_interp_nl_traj_f90(const F90flds &,
-                                       const F90locs &,
-                                       const oops::Variables &,
-                                       const F90goms &,
-                                       const F90getvaltraj &);
     void soca_state_rotate2grid_f90(const F90flds &,
                                     const oops::Variables &,
                                     const oops::Variables &);
