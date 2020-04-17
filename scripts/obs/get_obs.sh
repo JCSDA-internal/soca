@@ -64,6 +64,14 @@ while [[ $date -le $date_end ]]; do
     #bash source.nesdis_sst_avhrr.sh l2p $date $output_path
     bash source.nesdis_sst_avhrr.sh l3u $date $output_path
 
+    ##------------------------------------------------------------
+    ## Ocean Color
+    ## L2 data from VIIRS/JPSS1, VIIRS/SNPP, MODIS-Aqua
+    ##------------------------------------------------------------
+    #bash source.coastwatch_oc_viirs_modis.sh snpp $date $output_path
+    bash source.coastwatch_oc_viirs_modis.sh jpss1 $date $output_path
+    bash source.coastwatch_oc_viirs_modis.sh aqua $date $output_path 
+
 date=$(date -d "$date + 1 day" +%Y%m%d)
 
 done
