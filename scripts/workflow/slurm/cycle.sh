@@ -19,8 +19,9 @@ LOG_DIR=$EXP_DIR/logs
 mkdir -p $LOG_DIR
 
 # are we under SLURM? If not resubmit this script under sbatch
+# TODO (Guillaume) pass qos as a variable
 function submitjob {
-    sbatch -N $JOB_NODES --time=$JOB_TIME -A $JOB_ACCT -J $JOB_NAME \
+    sbatch -N $JOB_NODES --time=$JOB_TIME --qos=debug -A $JOB_ACCT -J $JOB_NAME \
 	   -o $LOG_DIR/slurm.log \
 	   $EXP_DIR/cycle.sh    
 }
@@ -33,6 +34,8 @@ if [[ -z "$SLURM_JOB_ID" ]]; then
 fi
 set -u
 
+# TODO (Guillaume) source machine dependent modules
+source soca.discover
 
 #================================================================================
 # Start of loop

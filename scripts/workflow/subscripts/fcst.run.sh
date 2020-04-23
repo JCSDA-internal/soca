@@ -83,4 +83,4 @@ ln -s $FORC_DIR FORC
 . input.nml.sh > input.nml
 
 # run it!
-mpirun ./MOM6
+mpirun $MOM_EXE
