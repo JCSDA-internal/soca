@@ -54,7 +54,6 @@ cache:
 # Download and prepare the repositories and setup the docker image
 # The working directory will then contain the following directories, with {repo}
 # being each repository listed in $LIB_REPOS and $MAIN_REPO
-#   ./bundle/             - The original main ecbuild bundle repository
 #   ./repo.bundle/{repo}/ - Modified versions of the bundle to individually build repos
 #   ./repo.src/{repo}/    - The source from github
 #   ./repo.build/{repo}/  - The build directory
@@ -131,8 +130,8 @@ script:
 after_success:
   - |
     # If this is a cron run, update the release/stable branch of the bundle
-    if [[ "$TRAVIS_EVENT_TYPE" == "cron" && "$TRAVIS_BRANCH" == "develop" ]]; then
+    #if [[ "$TRAVIS_EVENT_TYPE" == "cron" && "$TRAVIS_BRANCH" == "develop" ]]; then
         docker exec jcsda_container bash -c \
           'cd /jcsda/work && repo.src/${MAIN_REPO}/.github/travisci/stable_mark.sh'
         cd ${WORK_DIR} && ${WORK_DIR}/repo.src/${MAIN_REPO}/.github/travisci/stable_commit.sh
-    fi
+    #fi

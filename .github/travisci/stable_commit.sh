@@ -17,7 +17,7 @@ echo ""
 RELEASE_BRANCH=${RELEASE_BRANCH:-release/stable-nightly}
 
 cwd=$(pwd)
-cd ${WORK_DIR}/repo.src/${MAIN_REPO}/bundle
+cd repo.src/${MAIN_REPO}/bundle
 cp CMakeLists.txt CMakeLists.txt.new
 
 # get the git commit hash for the relevant involved branches 
