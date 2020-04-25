@@ -1,6 +1,6 @@
 #!/bin/bash
 #================================================================================
-# (C) Copyright 2019 UCAR
+# (C) Copyright 2019-2020 UCAR
 # This software is licensed under the terms of the Apache Licence Version 2.0
 # which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
 #
@@ -18,7 +18,7 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
 # figure out what git hash is associated with each repo in the bundle.
 # Note that there are several places where this repo could exist.
-bundle_dir=$cwd/bundle
+bundle_dir=${WORK_DIR}/repo.src/${MAIN_REPO}/bundle
 bundle_repos=$(grep "ecbuild_bundle(" $bundle_dir/CMakeLists.txt | awk '{print $3}')
 for r in $bundle_repos; do
 

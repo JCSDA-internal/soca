@@ -1,6 +1,6 @@
 #!/bin/bash
 #================================================================================
-# (C) Copyright 2019 UCAR
+# (C) Copyright 2019-2020 UCAR
 # This software is licensed under the terms of the Apache Licence Version 2.0
 # which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
 #
@@ -17,8 +17,8 @@ echo ""
 RELEASE_BRANCH=${RELEASE_BRANCH:-release/stable-nightly}
 
 cwd=$(pwd)
-git clone ${BUNDLE_URL} bundle.stable
-cd bundle.stable
+cd ${WORK_DIR}/repo.src/${MAIN_REPO}/bundle
+cp CMakeLists.txt CMakeLists.txt.new
 
 # get the git commit hash for the relevant involved branches 
 ref_develop=$(git rev-parse HEAD)
@@ -37,12 +37,13 @@ fi
 # setup git user info
 git config --global user.email "travis@travis-ci.org"
 git config --global user.name  "TravisCI"
-url=${BUNDLE_URL/github.com/"${GH_TOKEN}@github.com"}
+url=$(git remote get-url origin)
+url=${url/github.com/"${GH_TOKEN}@github.com"}
 git remote add origin-auth $url
 
 # check in the changes
 msg="nightly stable  $(date +%Y-%m-%d)"
-cat $cwd/bundle/CMakeLists.txt > CMakeLists.txt
+mv CMakeLists.txt.new CMakeLists.txt
 git add .
 git commit -m "$msg" $amend
 git push --set-upstream origin-auth $RELEASE_BRANCH

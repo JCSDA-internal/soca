@@ -2,7 +2,6 @@
 # TravisCI configuration script
 #
 # The following environment variables need to be defined:
-#   BUNDLE_URL  - location of the main bundle repository for this project
 #   MAIN_REPO   - The name of this repo being tested, as spelled in the bundle
 #   LIB_REPOS   - A list of the dependency repos, in the order that they are to be
 #                 built. If the script detects a repo needs to be rebuit, all repos
@@ -13,11 +12,13 @@
 #                 unless listed in $MATCH_REPOS
 #   LFS_REPOS   - All repos in $LIB_REPO will not use git-lfs when checked out
 #                 unless listed in $LFS_REPOS
+#
+# NOTE: these scripts have been changed to assume the bundle CMakeLists.txt
+#  is in this repository directly
 #================================================================================
 
 env:
   global:
-    - BUNDLE_URL="https://github.com/JCSDA/soca-bundle.git"
     - MAIN_REPO=soca
     - LIB_REPOS="fms cvmix geokdtree mom6_da_hooks gsw mom6 crtm
                  fckit atlas oops saber ioda ufo ioda-converters soca-config"
