@@ -16,7 +16,7 @@ set -e
 cwd=$(pwd)
 
 # we assume the MAIN_REPO contains its own bundle
-bundle_file=${WORK_DIR}/repo.src/${MAIN_REPO}/bundle/CMakeLists.txt
+bundle_file=$cwd/repo.src/${MAIN_REPO}/bundle/CMakeLists.txt
 
 
 # get a list of all repos listed in the bundle

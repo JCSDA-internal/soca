@@ -80,8 +80,8 @@ before_install:
     # what TravisCI auto checks out (because TravisCI handles PR merges specially)
     WORK_DIR=$HOME/work
     mkdir -p $WORK_DIR/repo.src; cd $WORK_DIR
-    REPO_CACHE=$HOME/repo.cache ${TRAVIS_BUILD_DIR}/.github/travisci/prep.sh
     mv ${TRAVIS_BUILD_DIR} ${WORK_DIR}/repo.src/${MAIN_REPO}
+    REPO_CACHE=$HOME/repo.cache ${WORK_DIR}/repo.src/${MAIN_REPO}/.github/travisci/prep.sh
 
   - |
     # alter file permissions
