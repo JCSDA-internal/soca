@@ -20,7 +20,7 @@ envar+=("DA_OMB")     # path to the O-F file(s)
 envar+=("FCST_DIAG")  # path to diagnostic files produced by the forecast run
 envar+=("OUT_DIR")    # experiment directory in which to place output compressed files
 envar+=("WORK_DIR")   # temporary working directory for this script
-	
+
 # make sure required env vars exist
 set +u
 for v in ${envar[@]}; do
@@ -50,7 +50,7 @@ ncks -O -7 -L 4 --ppc default=.2 -v Temp,Salt $DA_ANA $OUT_DIR/ana/ana.$ymdh.nc 
 # move/compress the background
 echo "compressing the background files..."
 mkdir -p $OUT_DIR/bkg
-ncks -O -7 -L 4 --ppc default=.2 -v Temp,Salt $DA_BKG $OUT_DIR/bkg/bkg.$ymdh.nc &
+ncks -O -7 -L 4 --ppc default=.2 -v Temp,Salt,ave_ssh $DA_BKG $OUT_DIR/bkg/bkg.$ymdh.nc &
 
 wait
 
@@ -67,4 +67,3 @@ wait
 cd $WORK_DIR/omb
 tar -caf $ymdh.tgz *.nc
 mv $ymdh.tgz $OUT_DIR/omb
-
