@@ -1,0 +1,37 @@
+EXP_DIR=$(readlink -f .)
+
+# parameters used by SLURM
+WORKLOAD_MANAGER=SLURM # none or SLURM
+MACHINE=discover # singularity, ubuntu, discover, orion, hera
+JOB_NAME=exp3
+JOB_NODES=1
+JOB_TIME=00:30:00
+JOB_ACCT=g0613
+
+# experiment start/stop times
+EXP_START_TIME=20151201Z12
+EXP_END_TIME=20151231Z12
+FCST_LEN=24
+
+# various directory locations
+SCRATCH_DIR=${EXP_DIR}/WRK
+SOCA_BUNDLE_DIR=/home/gvernier/nobackup/soca/soca-bundle
+SOCA_BIN_DIR=/home/gvernier/nobackup/soca/soca-bundle/build-gnu/bin
+
+MOM_EXE=${SOCA_BIN_DIR}/mom6.x
+
+# model/soca configuration to be used
+model_res=1deg   # other options for now are 05deg and 025deg
+MODEL_CONFIG=${SOCA_BUNDLE_DIR}/soca-config/discover/mom6sis2_global/${model_res}
+MODEL_DATA=/discover/nobackup/tsluka/jedi/soca.data/mom6sis2_global/${model_res}
+
+# initial conditions for model
+MOM_IC=/discover/nobackup/tsluka/DATA/ic/soda_3.3.1_20151130.nc
+
+# forcing
+FORC_ATM="cfsr"
+FORC_MEAN_FILE=/discover/nobackup/tsluka/DATA/fluxes/cfsr/%Y/%Y%m%d/cfsr.%Y%m%d.'#var#'.nc
+FORC_VAR=DLWRF.sfc,DSWRF.sfc,PRATE,SLP,TMP.2m,SPFH.2m,UGRD.10m,VGRD.10m
+
+# observations
+OBS_IODA=/discover/nobackup/tsluka/DATA/obs.ioda
