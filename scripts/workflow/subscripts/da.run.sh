@@ -20,6 +20,9 @@ envar+=("FCST_START_TIME") # date and time of start of forecast
 envar+=("MOM_CONFIG")      # path to input model configuration files
 envar+=("MOM_DATA")        # path to input model static data
 envar+=("OBS_IODA")        # path to observations already processed into ioda format
+envar+=("OBS_ADT")         # directory name for adt
+envar+=("OBS_INSITU")      # directory name for insitu
+envar+=("OBS_SST")         # directory name for sst
 envar+=("RESTART_DIR")     # path to input restart files for da background
 envar+=("SOCA_BIN_DIR")    # path to soca executables
 envar+=("SOCA_CONFIG")     # path to input soca configuration files
@@ -83,9 +86,9 @@ cd ..
 # TODO make obs list configurable
 cd obs
 ymd=$(date -u -d "$ANA_TIME" +%Y%m%d)
-ln -s $OBS_IODA/adt.nesdis/${ymd:0:4}/$ymd.nc adt.nc
-ln -s $OBS_IODA/insitu.hgodas/${ymd:0:4}/$ymd.nc insitu.nc
-ln -s $OBS_IODA/sst.hgodas/${ymd:0:4}/$ymd.nc sst.nc
+ln -s $OBS_IODA/$OBS_ADT/${ymd:0:4}/$ymd.nc adt.nc
+ln -s $OBS_IODA/$OBS_INSITU/${ymd:0:4}/$ymd.nc insitu.nc
+ln -s $OBS_IODA/$OBS_SST/${ymd:0:4}/$ymd.nc sst.nc
 cd ..
 
 # run the 3dvar

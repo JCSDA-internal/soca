@@ -147,6 +147,9 @@ while true; do
         export MOM_CONFIG=$MODEL_CONFIG/model
         export MOM_DATA=$MODEL_DATA/model
         export OBS_IODA
+        export OBS_ADT
+        export OBS_INSITU
+        export OBS_SST
         export RESTART_DIR=$SCRATCH_DIR_CYCLE/fcst.run/RESTART
         export SOCA_BIN_DIR
         export SOCA_CONFIG=$MODEL_CONFIG/soca
