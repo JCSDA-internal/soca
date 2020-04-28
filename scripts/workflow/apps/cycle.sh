@@ -50,7 +50,7 @@ while true; do
 
     # resubmit this job if we are almost out of time.
     # (don't check this until cycle has run at least once, obviously)
-    if [[ $WORKLOAD_MANAGER==SLURM ]]; then
+    if [[ $WORKLOAD_MANAGER == SLURM ]]; then
       if [[ $cycle_avg_count -gt 0 ]]; then
         end_time=$(squeue -h -j $SLURM_JOB_ID -o %e)
         end_time=$(date -d "${end_time:0:10} ${end_time:11:8}" +%s)
