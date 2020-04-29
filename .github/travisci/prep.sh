@@ -1,6 +1,6 @@
 #!/bin/bash
 #================================================================================
-# (C) Copyright 2019 UCAR
+# (C) Copyright 2019-2020 UCAR
 # This software is licensed under the terms of the Apache Licence Version 2.0
 # which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
 #
@@ -15,13 +15,12 @@ set -e
 
 cwd=$(pwd)
 
+# we assume the MAIN_REPO contains its own bundle
+bundle_file=$cwd/repo.src/${MAIN_REPO}/bundle/CMakeLists.txt
 
-# checkout the bundle, and get a list of all repos listed in it
-rm -rf bundle
-git clone $BUNDLE_URL bundle
-(cd bundle && git checkout $BRANCH ||
- echo "bundle does not have branch $BRANCH, keeping default branch")
-bundle_repos=$(grep "ecbuild_bundle(" bundle/CMakeLists.txt | awk '{print $3}')
+
+# get a list of all repos listed in the bundle
+bundle_repos=$(grep "ecbuild_bundle(" $bundle_file | awk '{print $3}')
 
 
 # prepare a separate bundle for each upstream repo, determine version information,
@@ -37,7 +36,7 @@ for repo in $LIB_REPOS $MAIN_REPO; do
     repo_bundle_dir=repo.bundle/$repo
     rm -rf $repo_bundle_dir
     mkdir -p $repo_bundle_dir
-    cp $cwd/bundle/CMakeLists.txt $repo_bundle_dir/
+    cp $bundle_file $repo_bundle_dir/
     for r in $bundle_repos; do
         if [[ $repo != $r ]]; then
            sed -i "/.* PROJECT $r .*/d" $repo_bundle_dir/CMakeLists.txt
