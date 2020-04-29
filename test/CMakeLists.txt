@@ -83,6 +83,8 @@ list( APPEND soca_model_param
   Data/72x35x25/ice.bkgerror.nc
   Data/72x35x25/input.nml
   Data/72x35x25/MOM_input
+  Data/72x35x25/MOM_regional_input
+  Data/72x35x25/output_grid.nc
   Data/72x35x25/ocn.bkgerror.nc
   Data/godas_sst_bgerr.nc
   Data/rossrad.dat
@@ -99,6 +101,8 @@ list( APPEND soca_model_restarts
   Data/72x35x25/INPUT/sfc.res.nc
   Data/72x35x25/INPUT/ocean_hgrid.nc
   Data/72x35x25/INPUT/ocean_topog.nc
+  Data/72x35x25/INPUT/regional_ocean_hgrid.nc
+  Data/72x35x25/INPUT/regional_ocean_topog.nc
 )
 
 list( APPEND soca_obs

@@ -39,7 +39,8 @@ use MOM_diag_mediator,   only : diag_ctrl
 use MOM_domains,         only : MOM_infra_init, MOM_infra_end, &
                                 MOM_domains_init, clone_MOM_domain, MOM_domain_type
 use MOM_error_handler,   only : MOM_error, MOM_mesg, WARNING, FATAL, is_root_pe
-use MOM_file_parser,     only : get_param, param_file_type, close_param_file
+use MOM_file_parser,     only : get_param, param_file_type, close_param_file, &
+                                open_param_file
 use MOM_forcing_type,    only : forcing, mech_forcing, forcing_diagnostics, &
                                 mech_forcing_diags, MOM_forcing_chksum, &
                                 MOM_mech_forcing_chksum
@@ -101,9 +102,10 @@ contains
 
 ! ------------------------------------------------------------------------------
 !> Initialize mom6's domain
-subroutine soca_geomdomain_init(Domain, nk)
+subroutine soca_geomdomain_init(Domain, nk, filename)
   type(MOM_domain_type), pointer, intent(in) :: Domain !< Ocean model domain
   integer, intent(out) :: nk
+  character(len=*), optional, intent(in) :: filename
 
   type(param_file_type) :: param_file                !< Structure to parse for run-time parameters
   type(directories)     :: dirs                      !< Structure containing several relevant directory paths
@@ -120,7 +122,11 @@ subroutine soca_geomdomain_init(Domain, nk)
   call fms_io_init()
 
   ! Parse grid inputs
-  call Get_MOM_Input(param_file, dirs)
+  if (present (filename)) then
+    call open_param_file(trim(filename), param_file)
+  else
+    call Get_MOM_Input(param_file, dirs)
+  end if
 
   ! Domain decomposition/Inintialize mpp domains
   call MOM_domains_init(Domain, param_file)

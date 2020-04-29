@@ -52,7 +52,7 @@ type :: soca_geom
     real(kind=kind_real), allocatable, dimension(:,:) :: cell_area
     real(kind=kind_real), allocatable, dimension(:,:) :: rossby_radius
     logical :: save_local_domain = .false. ! If true, save the local geometry for each pe.
-    character(len=:), allocatable :: geom_grid_file
+    character(len=:), allocatable :: geom_grid_file, param_file !tmp fix
 
     contains
     procedure :: init => geom_init
@@ -79,7 +79,12 @@ subroutine geom_init(self, f_conf)
   integer :: isave = 0
 
   ! Domain decomposition
-  call soca_geomdomain_init(self%Domain, self%nzo)
+  ! tmp-fix to allow mutiple domain decomposition layouts
+  if ( .not. f_conf%get("param_file", self%param_file) ) then
+    call soca_geomdomain_init(self%Domain, self%nzo)
+  else
+    call soca_geomdomain_init(self%Domain, self%nzo, self%param_file)
+  end if
 
   ! Initialize sea-ice grid
   if ( f_conf%has("num_ice_cat") ) &

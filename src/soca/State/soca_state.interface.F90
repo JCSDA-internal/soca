@@ -267,7 +267,12 @@ subroutine soca_state_change_resol_c(c_key_fld,c_key_rhs) bind(c,name='soca_stat
     call soca_state_registry%get(c_key_rhs,rhs)
 
     ! TODO implement a proper change of resolution, just copying for now
-    call fld%copy(rhs)
+    ! change_resol=> 0: no change; 1: vertical only; 2: both vertical & horizontal
+    if(rhs%change_resol > 0) then
+      call fld%convert(rhs)
+    else
+      call fld%copy(rhs)
+    end if
 
 end subroutine soca_state_change_resol_c
 
