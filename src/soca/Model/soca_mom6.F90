@@ -95,6 +95,7 @@ type soca_mom6_config
   type(MOM_control_struct), pointer :: MOM_CSp  !< Tracer flow control structure.
   type(MOM_restart_CS),     pointer :: restart_CSp !< A pointer to the restart control structure
   type(surface_forcing_CS), pointer :: surface_forcing_CSp => NULL()
+  type(tracer_flow_control_CS), pointer :: tracer_flow_CSp  !< user-specfied tracer flow control structure.
 end type soca_mom6_config
 
 contains
@@ -152,7 +153,7 @@ subroutine soca_mom6_init(mom6_config, partial_init)
   integer :: unit, io_status, ierr
   logical :: offline_tracer_mode = .false.
 
-  type(tracer_flow_control_CS), pointer :: tracer_flow_CSp => NULL()
+  !type(tracer_flow_control_CS), pointer :: tracer_flow_CSp => NULL()
   type(diag_ctrl), pointer :: diag => NULL() !< Diagnostic structure
   character(len=4), parameter :: vers_num = 'v2.0'
   character(len=40)  :: mod_name = "soca_mom6" ! This module's name.
@@ -204,6 +205,7 @@ subroutine soca_mom6_init(mom6_config, partial_init)
   mom6_config%restart_CSp => NULL()
   mom6_config%grid => NULL()
   mom6_config%GV => NULL()
+  mom6_config%tracer_flow_CSp => NULL()
 
   ! Set mom6_config%Time to time parsed from mom6 config
   mom6_config%Time = Start_time
@@ -218,7 +220,7 @@ subroutine soca_mom6_init(mom6_config, partial_init)
       mom6_config%MOM_CSp, &
       mom6_config%restart_CSp, &
       offline_tracer_mode=offline_tracer_mode, diag_ptr=diag, &
-      tracer_flow_CSp=tracer_flow_CSp, Time_in=Time_in)
+      tracer_flow_CSp=mom6_config%tracer_flow_CSp, Time_in=Time_in)
 
   !US => mom6_config%scaling
   ! Continue initialization
@@ -239,7 +241,7 @@ subroutine soca_mom6_init(mom6_config, partial_init)
                             param_file,&
                             diag,&
                             mom6_config%surface_forcing_CSp,&
-                            tracer_flow_CSp)
+                            tracer_flow_CSp=mom6_config%tracer_flow_CSp)
 
   ! Get time step from MOM config. TODO: Get DT from DA config
   call get_param(param_file, mod_name, "DT", param_int, fail_if_missing=.true.)

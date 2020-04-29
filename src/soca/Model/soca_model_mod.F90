@@ -21,6 +21,9 @@ use MOM_restart, only : save_restart
 use MOM_surface_forcing, only : set_forcing
 use MOM_time_manager, only : real_to_time, time_type_to_real
 use MOM_time_manager, only : operator(+)
+use MOM_tracer_flow_control, only : get_chl_from_model
+use MOM_grid, only : ocean_grid_type
+#include <MOM_memory.h>
 
 implicit none
 
@@ -63,6 +66,8 @@ subroutine soca_initialize_integration(self, flds)
   type(soca_field), pointer :: field
 
   integer :: i
+  real(kind=8), dimension(SZI_(self%mom6_config%grid), &
+                          SZJ_(self%mom6_config%grid),SZK_(self%mom6_config%GV)) :: chl_array
 
   ! for each field
   do i=1,size(flds%fields)
@@ -89,6 +94,8 @@ subroutine soca_initialize_integration(self, flds)
       self%mom6_config%MOM_CSp%u = real(field%val, kind=8)
     case ("vocn")
       self%mom6_config%MOM_CSp%v = real(field%val, kind=8)
+    case ("chl")
+      chl_array = real(field%val, kind=8)
     end select
 
     ! update forcing
@@ -119,6 +126,8 @@ subroutine soca_propagate(self, flds, fldsdate)
   type(time_type) :: ocean_time  ! The ocean model's clock.
   integer :: year, month, day, hour, minute, second, i
   character(len=20) :: strdate
+  real(kind=8), dimension(SZI_(self%mom6_config%grid), &
+                          SZJ_(self%mom6_config%grid),SZK_(self%mom6_config%GV)) :: chl_array
 
   ! Set ocean clock
   call datetime_to_string(fldsdate, strdate)
@@ -175,6 +184,9 @@ subroutine soca_propagate(self, flds, fldsdate)
       field%val = real(self%mom6_config%MOM_CSp%u, kind=kind_real)
     case ("vocn")
       field%val = real(self%mom6_config%MOM_CSp%v, kind=kind_real)
+    case ("chl")
+      call get_chl_from_model(chl_array, self%mom6_config%grid, self%mom6_config%tracer_flow_CSp)
+      field%val = real(chl_array, kind=kind_real)
     case ("sw")
       field%val(:,:,1) = - real(self%mom6_config%fluxes%sw, kind=kind_real)
     case ("lw")
@@ -197,6 +209,8 @@ subroutine soca_finalize_integration(self, flds)
 
   type(soca_field), pointer :: field
   integer :: i
+  real(kind=8), dimension(SZI_(self%mom6_config%grid), &
+                          SZJ_(self%mom6_config%grid),SZK_(self%mom6_config%GV)) :: chl_array 
 
   ! for each field
   do i=1,size(flds%fields)
@@ -223,6 +237,8 @@ subroutine soca_finalize_integration(self, flds)
       self%mom6_config%MOM_CSp%u = real(field%val, kind=8)
     case ("vocn")
       self%mom6_config%MOM_CSp%v = real(field%val, kind=8)
+    case ("chl")
+      chl_array = real(field%val, kind=8)
     end select
   end do
 

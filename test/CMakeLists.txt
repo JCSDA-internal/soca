@@ -18,6 +18,7 @@ list( APPEND soca_test_input
   testinput/forecast_identity.yml
   testinput/forecast_identity_cice.yml
   testinput/forecast_mom6.yml
+  testinput/forecast_mom6_bgc.yml
   testinput/geometry.yml
   testinput/geometry_iterator.yml
   testinput/geometryatm.yml
@@ -69,6 +70,7 @@ list( APPEND soca_test_ref
   testref/forecast_identity_cice.test
   testref/forecast_identity.test
   testref/forecast_mom6.test
+  testref/forecast_mom6_bgc.test
   testref/hofx_3d.test
   testref/hofx_3dcrtm.test
   testref/hofx_4d.test
@@ -83,6 +85,7 @@ list( APPEND soca_model_param
   Data/72x35x25/ice.bkgerror.nc
   Data/72x35x25/input.nml
   Data/72x35x25/MOM_input
+  Data/72x35x25/MOM_override
   Data/72x35x25/ocn.bkgerror.nc
   Data/godas_sst_bgerr.nc
   Data/rossrad.dat
@@ -96,6 +99,7 @@ list( APPEND soca_model_restarts
   Data/72x35x25/INPUT/cice.res.nc
   Data/72x35x25/INPUT/layer_coord25.nc
   Data/72x35x25/INPUT/MOM.res.nc
+  Data/72x35x25/INPUT/MOM.res.bgc.nc
   Data/72x35x25/INPUT/sfc.res.nc
   Data/72x35x25/INPUT/ocean_hgrid.nc
   Data/72x35x25/INPUT/ocean_topog.nc
@@ -343,6 +347,12 @@ soca_add_test( NAME forecast_identity_cice
 
 # Test mom6 forecast
 soca_add_test( NAME forecast_mom6
+               EXE  soca_forecast.x
+               NOTRAPFPE
+               TEST_DEPENDS test_soca_gridgen )
+
+# Test mom6_bgc forecast
+soca_add_test( NAME forecast_mom6_bgc
                EXE  soca_forecast.x
                NOTRAPFPE
                TEST_DEPENDS test_soca_gridgen )

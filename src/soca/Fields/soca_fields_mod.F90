@@ -211,7 +211,7 @@ subroutine soca_fields_init_vars(self, vars)
 
     ! determine number of levels, and if masked
     select case(self%fields(i)%name)
-    case ('tocn','socn', 'hocn', 'layer_depth')
+    case ('tocn','socn', 'hocn', 'layer_depth','chl')
       nz = self%geom%nzo
       self%fields(i)%mask => self%geom%mask2d
     case ('uocn')
@@ -274,6 +274,10 @@ subroutine soca_fields_init_vars(self, vars)
       self%fields(i)%io_file = "ocn"
       self%fields(i)%io_name = "v"
       self%fields(i)%c_grid_loc = "v"
+    case ('chl')
+      self%fields(i)%cf_name = "chlorophyll_concentration"
+      self%fields(i)%io_file = "ocn"
+      self%fields(i)%io_name = "chl"
     case ('hicen')
       self%fields(i)%cf_name = "sea_ice_category_thickness"
       self%fields(i)%io_file = "ice"
@@ -541,7 +545,7 @@ subroutine soca_fields_dotprod(fld1,fld2,zprod)
     ! determine which fields to use
     ! TODO: use all fields (this will change answers in the ctests)
     select case(field1%name)
-    case ("tocn","socn","ssh","uocn","vocn",&
+    case ("tocn","socn","ssh","uocn","vocn","chl",&
           "hicen", "sw", "lhf", "shf", "lw", "us", "cicen")
       continue
     case default
@@ -888,7 +892,7 @@ subroutine soca_fields_gpnorm(fld, nf, pstat)
     ! get local min/max/sum of each variable
     ! TODO: use all fields (this will change answers in the ctests)
     select case(fld%fields(jj)%name)
-    case("tocn", "socn", "ssh", "hocn", "uocn", "vocn", &
+    case("tocn", "socn", "ssh", "hocn", "uocn", "vocn", "chl",&
          "sw", "lw", "lhf", "shf", "us", "hicen", "hsnon", "cicen")
       continue
     case default
