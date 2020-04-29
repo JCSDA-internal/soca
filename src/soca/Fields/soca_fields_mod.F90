@@ -71,6 +71,8 @@ end type soca_field
 type :: soca_fields
    type(soca_geom),  pointer :: geom           !< MOM6 Geometry
    type(soca_field), pointer :: fields(:) => null()
+   character(len=:),     allocatable :: vertical_grid_fixz, bathy_file !<tmp-fix
+   integer :: change_resol = 0
 
 contains
   ! constructors / destructors
@@ -636,6 +638,14 @@ subroutine soca_fields_read(fld, f_conf, vdate)
 
   ! iread = 1 (state) or 3 (increment): Read restart file
   if ((iread==1).or.(iread==3)) then
+    !tmp-fix for change_resol=> 0: no change; 1: vertical only; 2: both vertical &
+    !horizonal
+    if (f_conf%has("change_resol")) call f_conf%get_or_die("change_resol", fld%change_resol)
+    ! tmp-fix>0: read user-defined vertical cell thickness & bathy
+    if (fld%change_resol > 0 ) then
+      if (f_conf%get("vertical_grid_fixz", str)) fld%vertical_grid_fixz = trim(str)
+      if (f_conf%get("bathy_file", str)) fld%bathy_file = trim(str)
+    end if !change_resol > 0
     ! Read sea-ice
     seaice_model = ""
     if(f_conf%get("ice_filename", str)) then
