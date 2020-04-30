@@ -14,7 +14,5 @@ if [[ -z "$SLURM_JOB_ID" ]]; then
     echo "launching under SLURM..."
     submitjob
     exit 0
-if [[ $WORKLOAD_MANAGER==SLURM ]]; then
-  echo "prout"
 fi
 set -u
