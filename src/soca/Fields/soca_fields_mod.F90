@@ -281,6 +281,7 @@ subroutine soca_fields_init_vars(self, vars)
       self%fields(i)%cf_name = "sea_ice_category_area_fraction"
       self%fields(i)%io_file = "ice"
     case ('hsnon')
+      self%fields(i)%cf_name = "sea_ice_category_snow_thickness"
       self%fields(i)%io_file = "ice"
     case ('sw')
       self%fields(i)%cf_name = "net_downwelling_shortwave_radiation"
