@@ -109,6 +109,7 @@ list( APPEND soca_obs
   Data/Obs/sst.nc
   Data/Obs/gmi_gpm_geoval.nc
   Data/Obs/gmi_gpm_obs.nc
+  Data/Obs/cryosat2.freeboard.nc
 )
 
 # Create Data directory for test input/output and symlink all files
