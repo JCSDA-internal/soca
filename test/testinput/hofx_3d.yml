@@ -97,5 +97,15 @@ Observations:
       name: SeaIceFraction
     Covariance:
       covariance: diagonal
+  - ObsSpace:
+      name: SeaIceThickness
+      ObsDataIn: {obsfile: ./Data/cryosat2.freeboard.nc}
+      ObsDataOut: {obsfile: ./Data/cryosat2.freeboard.out.nc}
+      simulate:
+        variables: [sea_ice_freeboard]
+    ObsOperator:
+      name: SeaIceThickness
+    Covariance:
+      covariance: diagonal
 
 #    - ObsType: SeaIceThickness
