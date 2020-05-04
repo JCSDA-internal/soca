@@ -44,7 +44,7 @@ subroutine c_soca_geo_setup(c_key_self, c_conf, c_comm) bind(c,name='soca_geo_se
   call soca_geom_registry%add(c_key_self)
   call soca_geom_registry%get(c_key_self,self)
 
-  call self%init(fckit_configuration(c_conf), fckit_mpi_comm(c_comm) ) !f_comm)
+  call self%init(fckit_configuration(c_conf), fckit_mpi_comm(c_comm) )
 
 end subroutine c_soca_geo_setup
 

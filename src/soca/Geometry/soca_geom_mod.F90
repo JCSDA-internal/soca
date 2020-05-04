@@ -74,9 +74,9 @@ contains
 ! ------------------------------------------------------------------------------
 !> Setup geometry object
 subroutine geom_init(self, f_conf, f_comm)
-  class(soca_geom), intent(out) :: self
+  class(soca_geom),         intent(out) :: self
   type(fckit_configuration), intent(in) :: f_conf
-  type(fckit_mpi_comm),        intent(in)    :: f_comm
+  type(fckit_mpi_comm),   intent(in)    :: f_comm
 
   integer :: isave = 0
 
