@@ -150,6 +150,10 @@ subroutine soca_state_add_incr(self, rhs)
      call incr%get("uocn", du)
      call incr%get("vocn", dv)
 
+     ! Initialize du and dv to 0
+     du%val = 0.0_kind_real
+     dv%val = 0.0_kind_real
+
      ! Compute the geostrophic increment
      call geostrophy%setup(self%geom, h%val)
      call geostrophy%tl(h%val, t%val, s%val,&
