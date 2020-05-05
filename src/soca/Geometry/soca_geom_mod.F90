@@ -158,6 +158,9 @@ subroutine geom_clone(self, other)
   class(soca_geom), intent( in) :: self
   class(soca_geom), intent(out) :: other
 
+  ! Clone communicator
+  other%f_comm = self%f_comm
+
   ! Clone fms domain and vertical levels
   other%Domain => self%Domain
   other%nzo = self%nzo
