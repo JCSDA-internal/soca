@@ -79,6 +79,7 @@ subroutine geom_init(self, f_conf, f_comm)
   type(fckit_mpi_comm),   intent(in)    :: f_comm
 
   integer :: isave = 0
+  logical :: full_init = .false.
 
   ! MPI communicator
   self%f_comm = f_comm
@@ -106,8 +107,12 @@ subroutine geom_init(self, f_conf, f_comm)
   ! Allocate geometry arrays
   call geom_allocate(self)
 
-  ! Read the geometry (created by gridgen)
-  call geom_read(self)
+  ! Check if a full initialization is requiered, default to false
+  if ( .not. f_conf%get("full_init", full_init) ) full_init = .false.
+
+  ! Read the geometry from file by default,
+  ! skip this step if a full init is requiered
+  if ( .not. full_init) call geom_read(self)
 
   ! Fill halo
   call mpp_update_domains(self%lon, self%Domain%mpp_domain)
