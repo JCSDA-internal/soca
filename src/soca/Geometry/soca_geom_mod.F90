@@ -53,6 +53,7 @@ type :: soca_geom
     real(kind=kind_real), allocatable, dimension(:,:) :: rossby_radius
     logical :: save_local_domain = .false. ! If true, save the local geometry for each pe.
     character(len=:), allocatable :: geom_grid_file
+    type(fckit_mpi_comm) :: f_comm
 
     contains
     procedure :: init => geom_init
@@ -72,14 +73,18 @@ contains
 
 ! ------------------------------------------------------------------------------
 !> Setup geometry object
-subroutine geom_init(self, f_conf)
-  class(soca_geom), intent(out) :: self
+subroutine geom_init(self, f_conf, f_comm)
+  class(soca_geom),         intent(out) :: self
   type(fckit_configuration), intent(in) :: f_conf
+  type(fckit_mpi_comm),   intent(in)    :: f_comm
 
   integer :: isave = 0
 
+  ! MPI communicator
+  self%f_comm = f_comm
+
   ! Domain decomposition
-  call soca_geomdomain_init(self%Domain, self%nzo)
+  call soca_geomdomain_init(self%Domain, self%nzo, f_comm)
 
   ! Initialize sea-ice grid
   if ( f_conf%has("num_ice_cat") ) &
@@ -152,6 +157,9 @@ end subroutine geom_end
 subroutine geom_clone(self, other)
   class(soca_geom), intent( in) :: self
   class(soca_geom), intent(out) :: other
+
+  ! Clone communicator
+  other%f_comm = self%f_comm
 
   ! Clone fms domain and vertical levels
   other%Domain => self%Domain
@@ -299,10 +307,6 @@ subroutine geom_write(self)
   integer :: ns
   integer :: idr_geom
   type(restart_file_type) :: geom_restart
-  type(fckit_mpi_comm) :: f_comm
-
-  ! Setup Communicator
-  f_comm = fckit_mpi_comm()
 
   ! Save global domain
   call fms_io_init()
@@ -377,7 +381,7 @@ subroutine geom_write(self)
 
   if (self%save_local_domain) then
      ! Save local compute grid
-     pe = f_comm%rank()
+     pe = self%f_comm%rank()
 
      write (strpe,fmt) pe
      geom_output_pe='geom_output_'//trim(strpe)//'.nc'
