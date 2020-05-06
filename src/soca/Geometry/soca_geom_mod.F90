@@ -78,7 +78,6 @@ subroutine geom_init(self, f_conf, f_comm)
   type(fckit_configuration), intent(in) :: f_conf
   type(fckit_mpi_comm),   intent(in)    :: f_comm
 
-  integer :: isave = 0
   logical :: full_init = .false.
 
   ! MPI communicator
@@ -107,11 +106,11 @@ subroutine geom_init(self, f_conf, f_comm)
   ! Allocate geometry arrays
   call geom_allocate(self)
 
-  ! Check if a full initialization is requiered, default to false
+  ! Check if a full initialization is required, default to false
   if ( .not. f_conf%get("full_init", full_init) ) full_init = .false.
 
   ! Read the geometry from file by default,
-  ! skip this step if a full init is requiered
+  ! skip this step if a full init is required
   if ( .not. full_init) call geom_read(self)
 
   ! Fill halo
@@ -129,9 +128,9 @@ subroutine geom_init(self, f_conf, f_comm)
   call mpp_update_domains(self%cell_area, self%Domain%mpp_domain)
 
   ! Set output option for local geometry
-  if ( f_conf%has("save_local_domain") ) &
-      call f_conf%get_or_die("save_local_domain", isave)
-  if ( isave == 1 ) self%save_local_domain = .true.
+  if ( .not. f_conf%get("save_local_domain", self%save_local_domain) ) &
+     self%save_local_domain = .false.
+
 
 end subroutine geom_init
 

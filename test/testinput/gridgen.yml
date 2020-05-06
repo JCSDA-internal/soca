@@ -3,8 +3,8 @@ geometry:
   num_ice_lev: 4
   num_sno_lev: 1
   geom_grid_file: soca_gridspec.nc
-  save_local_domain: 1
-  full_init: 1
+  save_local_domain: true
+  full_init: true
 gridgen:
   name: SOCA
   tstep: PT6H
