@@ -5,10 +5,9 @@
 
 
 module soca_horizfilt_mod
-  use atlas_module
+  use atlas_module, only: atlas_geometry
   use config_mod
   use fckit_configuration_module, only: fckit_configuration
-  use fckit_geometry_module, only: sphere_distance
   use iso_c_binding
   use kinds
   use mpp_domains_mod, only : mpp_update_domains, mpp_update_domains_ad

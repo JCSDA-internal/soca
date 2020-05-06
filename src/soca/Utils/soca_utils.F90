@@ -5,7 +5,7 @@
 
 module soca_utils
 
-use atlas_module
+use atlas_module, only: atlas_geometry, atlas_indexkdtree
 use netcdf
 use kinds, only: kind_real
 use gsw_mod_toolbox, only : gsw_rho, gsw_sa_from_sp, gsw_ct_from_pt, gsw_mlp
