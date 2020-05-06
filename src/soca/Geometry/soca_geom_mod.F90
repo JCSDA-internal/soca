@@ -106,8 +106,8 @@ subroutine geom_init(self, f_conf, f_comm)
   ! Allocate geometry arrays
   call geom_allocate(self)
 
-  if ( f_conf%has("read_soca_grid") ) &
-      call geom_read(self)
+  ! Read the geometry (created by gridgen)
+  call geom_read(self)
 
   ! Fill halo
   call mpp_update_domains(self%lon, self%Domain%mpp_domain)
@@ -387,7 +387,7 @@ subroutine geom_write(self)
      geom_output_pe='geom_output_'//trim(strpe)//'.nc'
 
      ns = (self%iec - self%isc + 1) * (self%jec - self%jsc + 1 )
-     call write2pe(reshape(self%mask2d,(/ns/)),'mask',geom_output_pe,.true.)
+     call write2pe(reshape(self%mask2d,(/ns/)),'mask',geom_output_pe,.false.)
      call write2pe(reshape(self%lon,(/ns/)),'lon',geom_output_pe,.true.)
      call write2pe(reshape(self%lat,(/ns/)),'lat',geom_output_pe,.true.)
   end if
