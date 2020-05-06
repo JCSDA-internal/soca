@@ -2,7 +2,6 @@ Geometry:
   num_ice_cat: 5
   num_ice_lev: 4
   num_sno_lev: 1
-  read_soca_grid: grid
 
 Assimilation Window:
   window_begin: &date 2018-04-14T00:00:00Z
@@ -71,4 +70,3 @@ output:
   date: *date
   exp: letkf
   type: ens
-

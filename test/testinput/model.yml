@@ -2,7 +2,6 @@ Geometry:
   num_ice_cat: 5
   num_ice_lev: 4
   num_sno_lev: 1
-  read_soca_grid: grid
 
 ModelBias:
 
@@ -23,7 +22,7 @@ State:
   basename: "./INPUT/"
   ocn_filename: MOM.res.nc
   ice_filename: ice_model.res.nc
-  sfc_filename: sfc.res.nc  
+  sfc_filename: sfc.res.nc
   variables: *soca_vars
 
 forecast_length: PT3H
