@@ -211,7 +211,7 @@ subroutine soca_fields_init_vars(self, vars)
 
     ! determine number of levels, and if masked
     select case(self%fields(i)%name)
-    case ('tocn','socn', 'hocn', 'layer_depth')
+    case ('tocn','socn', 'hocn', 'layer_depth', 'chl')
       nz = self%geom%nzo
       self%fields(i)%mask => self%geom%mask2d
     case ('uocn')
@@ -302,6 +302,10 @@ subroutine soca_fields_init_vars(self, vars)
       self%fields(i)%cf_name = "friction_velocity_over_water"
       self%fields(i)%io_file = "sfc"
       self%fields(i)%io_name = "fric_vel"
+    case ('chl')
+      self%fields(i)%cf_name = "mass_concentration_of_chlorophyll_in_sea_water"
+      self%fields(i)%io_file = "ocn"
+      self%fields(i)%io_name = "chl"
     end select
 
   end do
@@ -884,7 +888,7 @@ subroutine soca_fields_gpnorm(fld, nf, pstat)
     ! TODO: use all fields (this will change answers in the ctests)
     select case(fld%fields(jj)%name)
     case("tocn", "socn", "ssh", "hocn", "uocn", "vocn", &
-         "sw", "lw", "lhf", "shf", "us", "hicen", "hsnon", "cicen")
+         "sw", "lw", "lhf", "shf", "us", "hicen", "hsnon", "cicen", "chl")
       continue
     case default
       cycle
