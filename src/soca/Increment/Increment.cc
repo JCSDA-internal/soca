@@ -16,7 +16,7 @@
 
 #include "eckit/exception/Exceptions.h"
 
-#include "oops/base/GridPoint.h"
+#include "oops/base/LocalIncrement.h"
 #include "oops/base/Variables.h"
 #include "oops/generic/UnstructuredGrid.h"
 #include "oops/util/DateTime.h"
@@ -149,7 +149,7 @@ namespace soca {
   }
 
   // -----------------------------------------------------------------------------
-  oops::GridPoint Increment::getPoint(const GeometryIterator & iter) const {
+  oops::LocalIncrement Increment::getLocal(const GeometryIterator & iter) const {
     int nx, ny, nzo, nzi, ncat, nf;
     soca_increment_sizes_f90(toFortran(), nx, ny, nzo, nzi, ncat, nf);
 
@@ -173,11 +173,11 @@ namespace soca {
     soca_increment_getpoint_f90(keyFlds_, iter.toFortran(), values[0],
                             values.size());
 
-    return oops::GridPoint(vars_, values, varlens);
+    return oops::LocalIncrement(vars_, values, varlens);
   }
 
   // -----------------------------------------------------------------------------
-  void Increment::setPoint(const oops::GridPoint & values,
+  void Increment::setLocal(const oops::LocalIncrement & values,
                              const GeometryIterator & iter) {
     const std::vector<double> vals = values.getVals();
     soca_increment_setpoint_f90(toFortran(), iter.toFortran(), vals[0],
