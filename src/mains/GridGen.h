@@ -35,8 +35,7 @@ namespace soca {
       const Geometry geom(geomconfig, this->getComm());
 
       //  Generate model grid
-      const eckit::LocalConfiguration gridgenconfig(fullConfig, "gridgen");
-      geom.gridgen(gridgenconfig);
+      geom.gridgen();
 
       return 0;
     }
