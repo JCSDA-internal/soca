@@ -149,7 +149,8 @@ namespace soca {
   }
 
   // -----------------------------------------------------------------------------
-  oops::LocalIncrement Increment::getLocal(const GeometryIterator & iter) const {
+  oops::LocalIncrement Increment::getLocal(
+                        const GeometryIterator & iter) const {
     int nx, ny, nzo, nzi, ncat, nf;
     soca_increment_sizes_f90(toFortran(), nx, ny, nzo, nzi, ncat, nf);
 
