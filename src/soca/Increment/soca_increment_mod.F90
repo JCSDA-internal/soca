@@ -9,7 +9,6 @@ use soca_fields_mod
 use soca_geom_iter_mod, only : soca_geom_iter
 use kinds, only: kind_real
 use fckit_configuration_module, only: fckit_configuration
-use fckit_mpi_module, only: fckit_mpi_comm
 use random_mod, only: normal_distribution
 use unstructured_grid_mod, only: unstructured_grid, &
                                  allocate_unstructured_grid_coord, &
@@ -147,12 +146,8 @@ subroutine soca_increment_dirac(self, f_conf)
   integer :: isc, iec, jsc, jec
   integer :: ndir,n, z
   integer,allocatable :: ixdir(:),iydir(:),izdir(:),ifdir(:)
-  type(fckit_mpi_comm) :: f_comm
 
   type(soca_field), pointer :: field
-
-  ! Get MPI communicator
-  f_comm = fckit_mpi_comm()
 
   ! Get Diracs size
   ndir = f_conf%get_size("ixdir")

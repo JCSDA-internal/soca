@@ -1,10 +1,10 @@
 #!/bin/bash
 #================================================================================
-# (C) Copyright 2019 UCAR
+# (C) Copyright 2019-2020 UCAR
 # This software is licensed under the terms of the Apache Licence Version 2.0
 # which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
 #
-# This script build each repo, in the order listed in "$LIB_REPO $MAIN_REPO", if
+# This script builds each repo, in the order listed in "$LIB_REPO $MAIN_REPO", if
 # "prep.sh" has determined that it needs to be rebuilt.
 #
 # ccache is used to accelerate CXX files between builds. And upstream repos are

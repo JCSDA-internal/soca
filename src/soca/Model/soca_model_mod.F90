@@ -7,8 +7,10 @@
 
 module soca_model_mod
 
+use fckit_mpi_module, only: fckit_mpi_comm
 use fms_io_mod, only : fms_io_init, fms_io_exit
 use kinds, only: kind_real
+use soca_geom_mod, only: soca_geom
 use soca_mom6, only: soca_mom6_config, soca_mom6_init, soca_mom6_end
 use soca_utils, only: soca_str2int
 use soca_state_mod
@@ -34,8 +36,6 @@ public :: soca_delete
 
 !> Fortran derived type to hold configuration data for the model
 type :: soca_model
-   integer :: nx                !< Zonal grid dimension
-   integer :: ny                !< Meridional grid dimension
    integer :: advance_mom6      !< call mom6 step if true
    real(kind=kind_real) :: dt0  !< dimensional time (seconds)
    type(soca_mom6_config) :: mom6_config  !< MOM6 data structure
@@ -48,9 +48,11 @@ contains
 
 ! ------------------------------------------------------------------------------
 !> Initialize model's data structure
-subroutine soca_setup(self)
+subroutine soca_setup(self, geom)
   type(soca_model), intent(inout) :: self
+  type(soca_geom),     intent(in) :: geom
 
+  self%mom6_config%f_comm = geom%f_comm
   call soca_mom6_init(self%mom6_config)
 
 end subroutine soca_setup

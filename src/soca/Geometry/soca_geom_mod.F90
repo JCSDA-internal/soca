@@ -53,6 +53,7 @@ type :: soca_geom
     real(kind=kind_real), allocatable, dimension(:,:) :: rossby_radius
     logical :: save_local_domain = .false. ! If true, save the local geometry for each pe.
     character(len=:), allocatable :: geom_grid_file
+    type(fckit_mpi_comm) :: f_comm
 
     contains
     procedure :: init => geom_init
@@ -72,14 +73,18 @@ contains
 
 ! ------------------------------------------------------------------------------
 !> Setup geometry object
-subroutine geom_init(self, f_conf)
-  class(soca_geom), intent(out) :: self
+subroutine geom_init(self, f_conf, f_comm)
+  class(soca_geom),         intent(out) :: self
   type(fckit_configuration), intent(in) :: f_conf
+  type(fckit_mpi_comm),   intent(in)    :: f_comm
 
-  integer :: isave = 0
+  logical :: full_init = .false.
+
+  ! MPI communicator
+  self%f_comm = f_comm
 
   ! Domain decomposition
-  call soca_geomdomain_init(self%Domain, self%nzo)
+  call soca_geomdomain_init(self%Domain, self%nzo, f_comm)
 
   ! Initialize sea-ice grid
   if ( f_conf%has("num_ice_cat") ) &
@@ -101,8 +106,12 @@ subroutine geom_init(self, f_conf)
   ! Allocate geometry arrays
   call geom_allocate(self)
 
-  if ( f_conf%has("read_soca_grid") ) &
-      call geom_read(self)
+  ! Check if a full initialization is required, default to false
+  if ( .not. f_conf%get("full_init", full_init) ) full_init = .false.
+
+  ! Read the geometry from file by default,
+  ! skip this step if a full init is required
+  if ( .not. full_init) call geom_read(self)
 
   ! Fill halo
   call mpp_update_domains(self%lon, self%Domain%mpp_domain)
@@ -119,9 +128,9 @@ subroutine geom_init(self, f_conf)
   call mpp_update_domains(self%cell_area, self%Domain%mpp_domain)
 
   ! Set output option for local geometry
-  if ( f_conf%has("save_local_domain") ) &
-      call f_conf%get_or_die("save_local_domain", isave)
-  if ( isave == 1 ) self%save_local_domain = .true.
+  if ( .not. f_conf%get("save_local_domain", self%save_local_domain) ) &
+     self%save_local_domain = .false.
+
 
 end subroutine geom_init
 
@@ -152,6 +161,9 @@ end subroutine geom_end
 subroutine geom_clone(self, other)
   class(soca_geom), intent( in) :: self
   class(soca_geom), intent(out) :: other
+
+  ! Clone communicator
+  other%f_comm = self%f_comm
 
   ! Clone fms domain and vertical levels
   other%Domain => self%Domain
@@ -299,10 +311,6 @@ subroutine geom_write(self)
   integer :: ns
   integer :: idr_geom
   type(restart_file_type) :: geom_restart
-  type(fckit_mpi_comm) :: f_comm
-
-  ! Setup Communicator
-  f_comm = fckit_mpi_comm()
 
   ! Save global domain
   call fms_io_init()
@@ -377,13 +385,13 @@ subroutine geom_write(self)
 
   if (self%save_local_domain) then
      ! Save local compute grid
-     pe = f_comm%rank()
+     pe = self%f_comm%rank()
 
      write (strpe,fmt) pe
      geom_output_pe='geom_output_'//trim(strpe)//'.nc'
 
      ns = (self%iec - self%isc + 1) * (self%jec - self%jsc + 1 )
-     call write2pe(reshape(self%mask2d,(/ns/)),'mask',geom_output_pe,.true.)
+     call write2pe(reshape(self%mask2d,(/ns/)),'mask',geom_output_pe,.false.)
      call write2pe(reshape(self%lon,(/ns/)),'lon',geom_output_pe,.true.)
      call write2pe(reshape(self%lat,(/ns/)),'lat',geom_output_pe,.true.)
   end if

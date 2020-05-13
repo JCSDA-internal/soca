@@ -145,11 +145,14 @@ subroutine soca_state_add_incr(self, rhs)
      call self%get("hocn", h)
 
      ! Make a copy of the increment and get the needed pointers
-     !call incr_geo%copy(rhs)
      call incr%get("tocn", dt)
      call incr%get("socn", ds)
      call incr%get("uocn", du)
      call incr%get("vocn", dv)
+
+     ! Initialize du and dv to 0
+     du%val = 0.0_kind_real
+     dv%val = 0.0_kind_real
 
      ! Compute the geostrophic increment
      call geostrophy%setup(self%geom, h%val)

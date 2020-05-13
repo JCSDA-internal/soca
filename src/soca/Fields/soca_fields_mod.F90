@@ -526,7 +526,6 @@ subroutine soca_fields_dotprod(fld1,fld2,zprod)
 
   real(kind=kind_real) :: local_zprod
   integer :: ii, jj, kk, n
-  type(fckit_mpi_comm) :: f_comm
   type(soca_field), pointer :: field1, field2
 
   ! make sure fields are same shape
@@ -562,8 +561,7 @@ subroutine soca_fields_dotprod(fld1,fld2,zprod)
   end do
 
   ! Get global dot product
-  f_comm = fckit_mpi_comm()
-  call f_comm%allreduce(local_zprod, zprod, fckit_mpi_sum())
+  call fld1%geom%f_comm%allreduce(local_zprod, zprod, fckit_mpi_sum())
 end subroutine soca_fields_dotprod
 
 
@@ -868,10 +866,7 @@ subroutine soca_fields_gpnorm(fld, nf, pstat)
   logical :: mask(fld%geom%isc:fld%geom%iec, fld%geom%jsc:fld%geom%jec)
   real(kind=kind_real) :: ocn_count, local_ocn_count, tmp(3)
   integer :: jj, isc, iec, jsc, jec
-  type(fckit_mpi_comm) :: f_comm
   type(soca_field), pointer :: field
-
-  f_comm = fckit_mpi_comm()
 
   ! Indices for compute domain
   isc = fld%geom%isc ; iec = fld%geom%iec
@@ -879,7 +874,7 @@ subroutine soca_fields_gpnorm(fld, nf, pstat)
 
   ! get the number of ocean grid cells
   local_ocn_count = sum(fld%geom%mask2d(isc:iec, jsc:jec))
-  call f_comm%allreduce(local_ocn_count, ocn_count, fckit_mpi_sum())
+  call fld%geom%f_comm%allreduce(local_ocn_count, ocn_count, fckit_mpi_sum())
   mask = fld%geom%mask2d(isc:iec,jsc:jec) > 0.0
 
   ! calculate global min, max, mean for each field
@@ -900,9 +895,9 @@ subroutine soca_fields_gpnorm(fld, nf, pstat)
     call fldinfo(field%val(isc:iec,jsc:jec,:), mask, tmp)
 
     ! calculate global min/max/mean
-    call f_comm%allreduce(tmp(1), pstat(1,jj), fckit_mpi_min())
-    call f_comm%allreduce(tmp(2), pstat(2,jj), fckit_mpi_max())
-    call f_comm%allreduce(tmp(3), pstat(3,jj), fckit_mpi_sum())
+    call fld%geom%f_comm%allreduce(tmp(1), pstat(1,jj), fckit_mpi_min())
+    call fld%geom%f_comm%allreduce(tmp(2), pstat(2,jj), fckit_mpi_max())
+    call fld%geom%f_comm%allreduce(tmp(3), pstat(3,jj), fckit_mpi_sum())
     pstat(3,jj) = pstat(3,jj)/ocn_count
   end do
 end subroutine soca_fields_gpnorm
