@@ -5,5 +5,5 @@ the directory of the workflow system you want to use (only option right now is S
 of the system being run on and the workflow type being used
 
 ## workflow system ##
-* `apps/` - cycling script that should work on any HPC that uses the slurm job managemnt system
-or singularity containers
+* `apps/` - cycling script that should work on any HPC that uses the slurm job
+managemnt system or workstation with no workload management.

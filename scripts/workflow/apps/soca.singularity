@@ -1,3 +1,0 @@
-function submitjob {
-echo "Cycling inside singularity containers."
-}

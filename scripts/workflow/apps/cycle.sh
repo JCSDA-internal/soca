@@ -18,8 +18,11 @@ source exp.config
 LOG_DIR=$EXP_DIR/logs
 mkdir -p $LOG_DIR
 
-# Source machine dependent modules and submit function
-source soca.$MACHINE
+# Source machine dependent modules
+source soca.modules.$MACHINE
+
+# Setup the submit function
+source soca.workload_manager.$WORKLOAD_MANAGER
 
 #================================================================================
 # Start of loop

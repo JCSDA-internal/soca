@@ -1,5 +1,5 @@
 The `cycle.sh` script in this directory can be used to run cycling experiments on any HPC
-system that uses SLURM or singularity containers. It implements a very
+system that uses SLURM or workstations. It implements a very
 simple strategy of using a single job to
 run all the steps of the cycle. At the end of a cycle the script checks to see if there is
 is enough time remaining to keep going, and if there is not enough time, the script resubmits itself
