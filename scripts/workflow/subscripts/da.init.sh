@@ -76,11 +76,11 @@ cd ..
 ulimit -s unlimited
 export OMP_NUM_THREADS=1
 echo "generating grid..."
-time mpirun $SOCA_BIN_DIR/soca_gridgen.x gridgen.yml
+time mpirun -np 360 $SOCA_BIN_DIR/soca_gridgen.x gridgen.yml
 
 # run static B init
 echo "generating static b..."
-time mpirun $SOCA_BIN_DIR/soca_staticbinit.x staticbinit.yml
+time mpirun -np 360 $SOCA_BIN_DIR/soca_staticbinit.x staticbinit.yml
 
 # move output files
 rm -rf $DA_INIT_DIR

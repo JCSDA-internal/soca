@@ -81,6 +81,6 @@ ln -s $FORC_DIR FORC
 
 # create the time dependent mom6 namelist file
 . input.nml.sh > input.nml
-
+exit 1
 # run it!
 mpirun $MOM_EXE

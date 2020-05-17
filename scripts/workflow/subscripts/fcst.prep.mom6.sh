@@ -6,7 +6,7 @@ cat << EOF
 
 #================================================================================
 #================================================================================
-# fcst.prep.sh 
+# fcst.prep.sh
 #   MOM6/SIS2 ocean/seaice ensemble member forecast preparation.
 #   (Stolen from the Hybrid-GODAS repository)
 #   Processes control forcing, ensemble perturbations, and climatological
@@ -57,7 +57,7 @@ fi
 envar+=("FORC_CORR")        # If =1, a monthly bias correction is done to FORC_MEAN_FILE
 FORC_CORR=${FORC_CORR:-0}
 if [[ ! $FORC_CORR -eq 0 ]]; then
-    
+
     envar+=("FORC_CORR_DIR")  # path to the monthly flux bias correction files
 
     envar+=("FORC_CORR_ADD")  # comma separated list of variables that have additive correction done
@@ -88,13 +88,13 @@ if [[ ! $IC_GEN -eq 0 ]]; then
 
     envar+=("IC_DIR")
 fi
- 
+
 #================================================================================
 #================================================================================
 
 
 # make sure required env vars exist
-set +u 
+set +u
 for v in ${envar[@]}; do
     if [[ -z "${!v}" ]]; then
 	echo "ERROR: env var $v is not set."; exit 1
@@ -356,15 +356,15 @@ if [[ "$ENS_SIZE" -gt 1 ]]; then
      # generate remap weights
      # (assuming all variables use the same grid
      echo '  Generating "ens->mean" interpolation weights...'
-     v=${forc_var_ens[0]} 
-     cdo -s --no_warnings -L gen${interp},mem_0000/$v.nc work/ens_mean/$v.nc work/remap_weights.nc     
+     v=${forc_var_ens[0]}
+     cdo -s --no_warnings -L gen${interp},mem_0000/$v.nc work/ens_mean/$v.nc work/remap_weights.nc
 
      # remap the ens means and calculate mean-ens_mean
      echo '  Calculating "mean - ens_mean"...'
      mkdir -p work/ens_offset
      for f in ${forc_var_ens[@]}; do
  	 cdo -s --no_warnings -L remap,mem_0000/$f.nc,work/remap_weights.nc work/ens_mean/$f.nc tmp.nc
-	 cdo -s --no_warnings -L sub mem_0000/$f.nc tmp.nc work/ens_offset/$f.nc	 
+	 cdo -s --no_warnings -L sub mem_0000/$f.nc tmp.nc work/ens_offset/$f.nc
      done
 
      # generate the final individual ensemble forcing files
@@ -410,4 +410,3 @@ for m in $ens_list; do
 	ncatted -O -a calendar,,m,c,gregorian $f
     done
 done
-

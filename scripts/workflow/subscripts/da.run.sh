@@ -93,14 +93,15 @@ cd ..
 
 # run the 3dvar
 echo "Starting 3dvar..."
-time mpirun $SOCA_BIN_DIR/soca_3dvar.x 3dvar.yml
+time mpirun -np 360 $SOCA_BIN_DIR/soca_3dvar.x 3dvar.yml
 
 # do the checkpointing
 echo "Starting checkpointing..."
-time mpirun $SOCA_BIN_DIR/soca_checkpoint_model.x checkpoint.yml
+time mpirun -np 360 $SOCA_BIN_DIR/soca_checkpoint_model.x checkpoint.yml
 
 # move the restart files to a non-scratch space
 echo "Moving restart files..."
 mkdir -p $CYCLE_RST_DIR
 cp $WORK_DIR/INPUT/*.res* $CYCLE_RST_DIR/
+cp $WORK_DIR/INPUT/*_rst $CYCLE_RST_DIR/
 cp $WORK_DIR/RESTART/* $CYCLE_RST_DIR/
