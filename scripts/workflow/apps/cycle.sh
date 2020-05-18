@@ -96,7 +96,7 @@ while true; do
         export FORC_VAR_POS=" "
         export IC_GEN=0
         export WORK_DIR=$SCRATCH_DIR_CYCLE/fcst.prep
-        time $SCRIPT_DIR/fcst.prep.sh &> $LOG_DIR_CYCLE/fcst.prep
+        time $SCRIPT_DIR/fcst.prep.$MODEL.sh &> $LOG_DIR_CYCLE/fcst.prep
     ) || { echo "ERROR in fcst.prep"; exit 1; }
 
 
@@ -114,9 +114,13 @@ while true; do
         export MOM_DATA=$MODEL_DATA/model
         export MOM_EXE
         export MOM_IC
+        export MPIRUN
+        export JOB_NPES
+        export GEOS_GCMRUN
+        export GEOS_IC
         export RESTART_DIR_IN=$EXP_DIR/rst/$(date -ud "$FCST_START_TIME" +%Y%m%d%H)
         export WORK_DIR=$SCRATCH_DIR_CYCLE/fcst.run
-        time $SCRIPT_DIR/fcst.run.sh &> $LOG_DIR_CYCLE/fcst.run
+        time $SCRIPT_DIR/fcst.run.$MODEL.sh &> $LOG_DIR_CYCLE/fcst.run
     ) || { echo "ERROR in fcst.run"; exit 1; }
 
     #------------------------------------------------------------
@@ -127,6 +131,8 @@ while true; do
         export DA_INIT_DIR=$EXP_DIR/da_init
         export FCST_LEN
         export FCST_START_TIME
+        export MPIRUN
+        export JOB_NPES
         export MOM_CONFIG=$MODEL_CONFIG/model
         export MOM_DATA=$MODEL_DATA/model
         export RESTART_DIR=$SCRATCH_DIR_CYCLE/fcst.run/RESTART
@@ -147,6 +153,8 @@ while true; do
         export DA_INIT_DIR=$EXP_DIR/da_init
         export FCST_LEN
         export FCST_START_TIME
+        export MPIRUN
+        export JOB_NPES
         export MOM_CONFIG=$MODEL_CONFIG/model
         export MOM_DATA=$MODEL_DATA/model
         export OBS_IODA
@@ -181,10 +189,10 @@ while true; do
     #============================================================
     # done with this day of the cycle, cleanup and prepare for the next cycle
     echo "$ANA_TIME" > $CYCLE_STATUS_FILE
-    rm -r $SCRATCH_DIR_CYCLE
-    if [[ $FCST_RESTART == 1 ]]; then
-        rm -r $EXP_DIR/rst/$(date -ud "$FCST_START_TIME" +%Y%m%d%H)
-    fi
+    #rm -r $SCRATCH_DIR_CYCLE
+    #if [[ $FCST_RESTART == 1 ]]; then
+    #    rm -r $EXP_DIR/rst/$(date -ud "$FCST_START_TIME" +%Y%m%d%H)
+    #fi
 
     # update statistics on average cycle runtime
     cycle_end=$(date +%s)

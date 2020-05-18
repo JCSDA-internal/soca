@@ -23,6 +23,8 @@ envar+=("MOM_EXE")           # path to MOM6/SIS2 executable
 envar+=("MOM_IC")            # path to T/S IC. Only used if FCST_RESTART==0
 envar+=("RESTART_DIR_IN")    # path to restart files from previous cycle (if FCST_RESTART==1)
 envar+=("WORK_DIR")          # temporary working directory for this script
+envar+=("GEOS_IC")           # tarball of geos agcm restarts. Only used if FCST_RESTART==0
+envar+=("GEOS_GCMRUN")       # gcm_run.j script to run the geos forecast
 
 # make sure required env vars exist
 set +u
@@ -49,14 +51,12 @@ cd $WORK_DIR
 mkdir OUTPUT
 mkdir RESTART
 
-geos_scripts=/home/gvernier/nobackup/geos-santha/ #TODO(Guillaume) move upstream
-
 # prepare resource files for geos
 cp -r /home/gvernier/nobackup/geos-santha/geos-scratch/* $WORK_DIR
 
 # generate cap_restart
 cap_restart=$(date --utc "+%Y%m%d %H%M%S" -d "$FCST_START_TIME")
-cat <<EOF > cap_restart 
+cat <<EOF > cap_restart
 $(date --utc "+%Y%m%d %H%M%S" -d "$FCST_START_TIME")
 EOF
 
@@ -80,17 +80,14 @@ cd ../
 if [[ $FCST_RESTART == 1 ]]; then
     cp $RESTART_DIR_IN/*_rst .
 else
-    #TODO(Guillaume) make location of initial agcm restarts user defined
-    date_str=$(date --utc "+%Y%m%d_%H%M%S" -d "$FCST_START_TIME")
-    /bin/cp /home/gvernier/nobackup/geos-santha/soca-cpld/util/rst_atm_${date_str}.tar $WORK_DIR
-    tar -xvf rst_atm_${date_str}.tar
+    tar -xvf $GEOS_IC --directory $WORK_DIR
 fi
 
 # create the time dependent mom6 namelist file
 . input.nml.sh > input.nml
 
 # run geos
-$geos_scripts/gcm_run.j
+$GEOS_GCMRUN
 
 # prepare aogcm restart for next cycle
 mv ./scratch/RESTART/* ./RESTART/

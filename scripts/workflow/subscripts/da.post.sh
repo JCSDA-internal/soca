@@ -25,7 +25,7 @@ envar+=("WORK_DIR")   # temporary working directory for this script
 set +u
 for v in ${envar[@]}; do
     if [[ -z "${!v}" ]]; then
-	echo "ERROR: env var $v is not set."; exit 1
+        echo "ERROR: env var $v is not set."; exit 1
     fi
     echo " $v = ${!v}"
 done

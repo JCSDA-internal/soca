@@ -24,6 +24,8 @@ envar+=("MOM_EXE")           # path to MOM6/SIS2 executable
 envar+=("MOM_IC")            # path to T/S IC. Only used if FCST_RESTART==0
 envar+=("RESTART_DIR_IN")    # path to restart files from previous cycle (if FCST_RESTART==1)
 envar+=("WORK_DIR")          # temporary working directory for this script
+envar+=("MPIRUN")            # exec to run mpi
+envar+=("JOB_NPES")          # exec to run mpi
 
 # make sure required env vars exist
 set +u
@@ -81,6 +83,6 @@ ln -s $FORC_DIR FORC
 
 # create the time dependent mom6 namelist file
 . input.nml.sh > input.nml
-exit 1
+
 # run it!
-mpirun $MOM_EXE
+$MPIRUN -np $JOB_NPES $MOM_EXE

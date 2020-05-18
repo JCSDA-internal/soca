@@ -28,12 +28,14 @@ envar+=("SOCA_BIN_DIR")    # path to soca executables
 envar+=("SOCA_CONFIG")     # path to input soca configuration files
 envar+=("SOCA_DATA")       # path to input soca static data
 envar+=("WORK_DIR")        # temporary working directory for this script
+envar+=("MPIRUN")          # exec to run mpi
+envar+=("JOB_NPES")        # exec to run mpi
 
 # make sure required env vars exist
 set +u
 for v in ${envar[@]}; do
     if [[ -z "${!v}" ]]; then
-	echo "ERROR: env var $v is not set."; exit 1
+        echo "ERROR: env var $v is not set."; exit 1
     fi
     echo " $v = ${!v}"
 done
@@ -93,15 +95,15 @@ cd ..
 
 # run the 3dvar
 echo "Starting 3dvar..."
-time mpirun -np 360 $SOCA_BIN_DIR/soca_3dvar.x 3dvar.yml
+time $MPIRUN -np $JOB_NPES $SOCA_BIN_DIR/soca_3dvar.x 3dvar.yml
 
 # do the checkpointing
 echo "Starting checkpointing..."
-time mpirun -np 360 $SOCA_BIN_DIR/soca_checkpoint_model.x checkpoint.yml
+time $MPIRUN -np $JOB_NPES $SOCA_BIN_DIR/soca_checkpoint_model.x checkpoint.yml
 
 # move the restart files to a non-scratch space
 echo "Moving restart files..."
 mkdir -p $CYCLE_RST_DIR
 cp $WORK_DIR/INPUT/*.res* $CYCLE_RST_DIR/
-cp $WORK_DIR/INPUT/*_rst $CYCLE_RST_DIR/
+rsync -av --ignore-missing-args $WORK_DIR/INPUT/*_rst $CYCLE_RST_DIR/ #TODO cp of geos rst need to go somewhere else
 cp $WORK_DIR/RESTART/* $CYCLE_RST_DIR/
