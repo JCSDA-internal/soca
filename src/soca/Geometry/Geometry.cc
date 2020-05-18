@@ -5,33 +5,27 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#include <string>
-
 #include "soca/Geometry/Geometry.h"
-#include "soca/Geometry/GeometryFortran.h"
-#include "soca/GeometryIterator/GeometryIterator.h"
-#include "soca/GeometryIterator/GeometryIteratorFortran.h"
-
-#include "eckit/config/Configuration.h"
-
-#include "oops/util/Logger.h"
-
-using oops::Log;
 
 // -----------------------------------------------------------------------------
 namespace soca {
   // -----------------------------------------------------------------------------
   Geometry::Geometry(const eckit::Configuration & conf,
                      const eckit::mpi::Comm & comm)
-    : comm_(comm), atmconf_(conf), initatm_(initAtm(conf)) {
+    : comm_(comm),
+      atmconf_(conf),
+      initatm_(initAtm(conf)),
+      fmsinput_(comm, conf) {
     const eckit::Configuration * configc = &conf;
+    fmsinput_.updateNameList();
     soca_geo_setup_f90(keyGeom_, &configc, &comm);
   }
   // -----------------------------------------------------------------------------
   Geometry::Geometry(const Geometry & other)
     : comm_(other.comm_),
       atmconf_(other.atmconf_),
-      initatm_(initAtm(other.atmconf_)) {
+      initatm_(initAtm(other.atmconf_)),
+      fmsinput_(other.fmsinput_) {
     const int key_geo = other.keyGeom_;
     soca_geo_clone_f90(key_geo, keyGeom_);
   }
@@ -40,9 +34,7 @@ namespace soca {
     soca_geo_delete_f90(keyGeom_);
   }
   // -----------------------------------------------------------------------------
-  void Geometry::gridgen(const eckit::Configuration & config) const {
-    Log::trace() << "Geometry::gridgen: " << keyGeom_ << std::endl;
-    Log::trace() << config << std::endl;
+  void Geometry::gridgen() const {
     soca_geo_gridgen_f90(keyGeom_);
   }
   // -----------------------------------------------------------------------------
