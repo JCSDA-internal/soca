@@ -109,7 +109,6 @@ list( APPEND soca_obs
   Data/Obs/sst.nc
   Data/Obs/gmi_gpm_geoval.nc
   Data/Obs/gmi_gpm_obs.nc
-  Data/Obs/viirs_jpss1_oc_l2.nc
 )
 
 # Create Data directory for test input/output and symlink all files
