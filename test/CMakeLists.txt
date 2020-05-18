@@ -23,6 +23,7 @@ list( APPEND soca_test_input
   testinput/geometryatm.yml
   testinput/getvalues.yml
   testinput/gridgen.yml
+  testinput/gridgen_small.yml
   testinput/hofx_3d.yml
   testinput/hofx_3dcrtm.yml
   testinput/hofx_4d.yml
@@ -81,11 +82,19 @@ list( APPEND soca_model_param
   Data/72x35x25/diag_table
   Data/72x35x25/field_table
   Data/72x35x25/ice.bkgerror.nc
-  Data/72x35x25/input.nml
-  Data/72x35x25/MOM_input
   Data/72x35x25/ocn.bkgerror.nc
   Data/godas_sst_bgerr.nc
   Data/rossrad.dat
+)
+
+list( APPEND soca_model_param_copy
+  Data/72x35x25/MOM_input
+  Data/72x35x25/MOM_input_small
+)
+
+list( APPEND soca_model_namelist
+  Data/72x35x25/input.nml
+  Data/72x35x25/input_small.nml
 )
 
 list( APPEND soca_model_restarts
@@ -138,6 +147,21 @@ foreach(FILENAME ${soca_model_param})
            ${CMAKE_CURRENT_BINARY_DIR}/${filename} )
 endforeach(FILENAME)
 
+# MOM's resource files that may be overwritten during the testing
+foreach(FILENAME ${soca_model_param_copy})
+     get_filename_component(filename ${FILENAME} NAME )
+     execute_process( COMMAND ${CMAKE_COMMAND} -E copy
+           ${CMAKE_CURRENT_SOURCE_DIR}/${FILENAME}
+           ${CMAKE_CURRENT_BINARY_DIR}/${filename} )
+endforeach(FILENAME)
+
+# FMS input.nml that may be overwritten during the testing
+foreach(FILENAME ${soca_model_namelist})
+     get_filename_component(filename ${FILENAME} NAME )
+     execute_process( COMMAND ${CMAKE_COMMAND} -E copy
+           ${CMAKE_CURRENT_SOURCE_DIR}/${FILENAME}
+           ${CMAKE_CURRENT_BINARY_DIR}/inputnml/${filename} )
+endforeach(FILENAME)
 
 # MOM's output directory
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/RESTART)
@@ -324,7 +348,18 @@ endfunction()
 # Tests that create data other tests will use
 #-------------------------------------------------------------------------------
 
-# Test of grid generation
+# Create subsampled netcdf files
+add_test ( test_soca_subsample_netcdf
+           bash
+           ${CMAKE_CURRENT_SOURCE_DIR}/Data/subsample_mom6files.sh )
+
+# Test of grid generation and create subsampled grid
+soca_add_test( NAME gridgen_small
+               EXE  soca_gridgen.x
+               NOCOMPARE
+               TEST_DEPENDS test_soca_subsample_netcdf )
+
+# Test of grid generation and create regular grid
 soca_add_test( NAME gridgen
                EXE  soca_gridgen.x
                NOCOMPARE )
