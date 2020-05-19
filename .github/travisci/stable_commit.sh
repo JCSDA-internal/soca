@@ -18,7 +18,7 @@ RELEASE_BRANCH=${RELEASE_BRANCH:-release/stable-nightly}
 
 cwd=$(pwd)
 cd repo.src/${MAIN_REPO}/bundle
-cp CMakeLists.txt CMakeLists.txt.new
+mv CMakeLists.txt CMakeLists.txt.new
 
 # get the git commit hash for the relevant involved branches 
 ref_develop=$(git rev-parse HEAD)
