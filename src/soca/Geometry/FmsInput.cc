@@ -27,7 +27,7 @@ namespace soca {
     comm_.broadcast(inputnml_sn_, 0);
 
     // Check that inputnml_sn_ is a valid serial #
-    ASSERT(inputnml_sn_ > 0);
+    ASSERT(abs(inputnml_sn_) > 1);
     comm_.barrier();
   }
   // -----------------------------------------------------------------------------
