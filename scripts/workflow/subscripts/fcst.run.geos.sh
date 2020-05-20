@@ -24,6 +24,7 @@ envar+=("MOM_IC")            # path to T/S IC. Only used if FCST_RESTART==0
 envar+=("RESTART_DIR_IN")    # path to restart files from previous cycle (if FCST_RESTART==1)
 envar+=("WORK_DIR")          # temporary working directory for this script
 envar+=("GEOS_IC")           # tarball of geos agcm restarts. Only used if FCST_RESTART==0
+envar+=("GEOS_RC")           # resource files
 envar+=("GEOS_GCMRUN")       # gcm_run.j script to run the geos forecast
 
 # make sure required env vars exist
@@ -52,7 +53,7 @@ mkdir OUTPUT
 mkdir RESTART
 
 # prepare resource files for geos
-cp -r /home/gvernier/nobackup/geos-santha/geos-scratch/* $WORK_DIR
+cp -r $GEOS_RC/* $WORK_DIR
 
 # generate cap_restart
 cap_restart=$(date --utc "+%Y%m%d %H%M%S" -d "$FCST_START_TIME")

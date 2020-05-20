@@ -118,6 +118,7 @@ while true; do
         export JOB_NPES
         export GEOS_GCMRUN
         export GEOS_IC
+        export GEOS_RC
         export RESTART_DIR_IN=$EXP_DIR/rst/$(date -ud "$FCST_START_TIME" +%Y%m%d%H)
         export WORK_DIR=$SCRATCH_DIR_CYCLE/fcst.run
         time $SCRIPT_DIR/fcst.run.$MODEL.sh &> $LOG_DIR_CYCLE/fcst.run
