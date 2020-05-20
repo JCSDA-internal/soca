@@ -20,6 +20,7 @@
 #include "soca/Fortran.h"
 
 #include "oops/base/GeneralizedDepartures.h"
+#include "oops/base/LocalIncrement.h"
 #include "oops/base/Variables.h"
 #include "oops/util/DateTime.h"
 #include "oops/util/Duration.h"
@@ -31,7 +32,6 @@ namespace eckit {
   class Configuration;
 }
 namespace oops {
-  class GridPoint;
   class UnstructuredGrid;
 }
 namespace ufo {
@@ -84,8 +84,8 @@ namespace soca {
       void dirac(const eckit::Configuration &);
 
       /// Getpoint/Setpoint
-      oops::GridPoint getPoint(const GeometryIterator &) const;
-      void setPoint(const oops::GridPoint &, const GeometryIterator &);
+      oops::LocalIncrement getLocal(const GeometryIterator &) const;
+      void setLocal(const oops::LocalIncrement &, const GeometryIterator &);
 
       /// I/O and diagnostics
       void read(const eckit::Configuration &);
