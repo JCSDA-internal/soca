@@ -26,12 +26,9 @@ source_base="https://podaac-tools.jpl.nasa.gov/drive/files/allData/smap/L2"
 if [[ $type == "jpl" ]]; then
     source=$source_base"/JPL/V4.2"
     file_sfx='h5'
-elif [[ $type == "rss_40km" ]]; then
+elif [[ $type == "rss" ]]; then
     source=$source_base"/RSS/V4/SCI"
     file_sfx='nc'
-elif [[ $type == "rss_70km" ]]; then
-    source=$source_base"/RSS/V4/SCI/70KM"
-    file_sfx='h5'
 else
     echo $usage
     exit 1
@@ -45,6 +42,6 @@ d=$out_dir/$date
 mkdir -p $d
 cd $d
 
-wget -nd -r -A $file_sfx --user=guillaume.vernieres2 --password=lkBbv77oOWyfCfLuv6R $source_dir
+wget -nd -r -A $file_sfx --user=myusername --password=mypassword $source_dir
 
 cd $pwd

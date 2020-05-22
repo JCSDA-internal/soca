@@ -54,6 +54,6 @@ d=$out_dir/$date
 mkdir -p $d
 cd $d
 
-wget --user=guillaume.vernieres2 --password=Tri2011Proa --auth-no-challenge=on -r -nc -np -nH -nd -A $file_sfx  $source_dir
+wget -nd -r -A $file_sfx --user=myusername --password=mypassword $source_dir
 
 cd $pwd
