@@ -41,7 +41,7 @@ elif [[ $sat == "windsat" ]]; then
 else
     echo $usage
     exit 1
-fi 
+fi
 
 out_dir="$4/sst.${sat}_${lvl}.ghrsst"
 
@@ -54,6 +54,6 @@ d=$out_dir/$date
 mkdir -p $d
 cd $d
 
-wget -r -nc -np -nH -nd -A $file_sfx  $source_dir
+wget --user=guillaume.vernieres2 --password=Tri2011Proa --auth-no-challenge=on -r -nc -np -nH -nd -A $file_sfx  $source_dir
 
 cd $pwd
