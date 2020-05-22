@@ -62,6 +62,7 @@ Observations:
         random_seed: 0
 
 letkf:
+  solver: LETKF_OOPS
   inflation:
     rtpp: 0.5
     mult: 1.1
