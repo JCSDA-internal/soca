@@ -1,13 +1,13 @@
 EXP_DIR=$(readlink -f .)
 
-WORKLOAD_MANAGER=slurm # none or slurm
-MACHINE=discover       # default or discover (default is a Linux workstation, no modules loaded)
+WORKLOAD_MANAGER=none  # none or slurm
+MACHINE=default        # default or discover (default is a Linux workstation, no modules loaded)
                        # TODO(Guillaume) add Hera and Orion
 MPIRUN=mpirun          #TODO could probably get the info from somewhere else
 
 # parameters used by SLURM
 JOB_NAME=test
-JOB_NPES=360
+JOB_NPES=6
 JOB_TIME=1:00:00
 JOB_ACCT=g0613
 
@@ -18,20 +18,20 @@ FCST_LEN=24
 
 # various directory locations
 SCRATCH_DIR=${EXP_DIR}/WRK
-SOCA_BUNDLE_DIR=/home/gvernier/nobackup/soca/soca-bundle
-SOCA_BIN_DIR=/home/gvernier/nobackup/soca/soca-bundle/build-gnu/bin
+SOCA_BUNDLE_DIR=/home/gvernier/sandboxes/soca/soca-bundle/
+SOCA_BIN_DIR=/home/gvernier/sandboxes/soca/soca-bundle/build/bin/
 
 # model/soca configuration to be used
-MODEL=geos                         # options: mom6 or geos
+MODEL=mom6                         # options: mom6 or geos
                                    # TODO add EMC's MOM6-CICE
 MOM_EXE=${SOCA_BIN_DIR}/mom6.x     # only used when model is mom6
 model_res=1deg                     # other options for now are 05deg and 025deg
-MODEL_CONFIG=/discover/nobackup/gvernier/soca/runs/test/soca-config/jcsda/mom6-geos/${model_res}
-MODEL_DATA=/discover/nobackup/tsluka/jedi/soca.data/mom6sis2_global/${model_res}
+MODEL_CONFIG=/home/gvernier/sandboxes/soca/soca-bundle/soca-config/jcsda/mom6sis2_global/${model_res}
+MODEL_DATA=/home/gvernier/sandboxes/soca/runs/mom6sis2_global/${model_res}
 
 # initial conditions for model
 # TODO 1 year spin-up so we can start doing science!
-MOM_IC=/discover/nobackup/tsluka/DATA/ic/soda_3.3.1_20151130.nc
+MOM_IC=/home/gvernier/sandboxes/soca/runs/DATA/ic/soda_3.3.1_20151130.nc
 
 # geos specific configuration
 # TODO move somewhere else
@@ -41,11 +41,11 @@ GEOS_IC=/home/gvernier/nobackup/geos-santha/soca-cpld/util/rst_atm_20151201_1200
 
 # forcing (unused when model is geos)
 FORC_ATM="cfsr"
-FORC_MEAN_FILE=/discover/nobackup/tsluka/DATA/fluxes/cfsr/%Y/%Y%m%d/cfsr.%Y%m%d.'#var#'.nc
+FORC_MEAN_FILE=/home/gvernier/sandboxes/soca/runs/DATA/fluxes/cfsr/%Y/%Y%m%d/cfsr.%Y%m%d.'#var#'.nc
 FORC_VAR=DLWRF.sfc,DSWRF.sfc,PRATE,SLP,TMP.2m,SPFH.2m,UGRD.10m,VGRD.10m
 
 # observations
-OBS_IODA=/discover/nobackup/tsluka/DATA/obs.ioda
+OBS_IODA=/home/gvernier/sandboxes/soca/runs/Data/obs_ioda
 OBS_LIST="adt sst sss insitu" # TODO split per instrument, point to EMC's ObsTypes
                               # Elements $o of the list is used to:
                               #   1. Locate ioda file $OBS_IODA/${ymd}/$o/$o.$ymd.nc

@@ -63,7 +63,7 @@ cd ..
 # create time dependent momt namelist file
 FCST_RESTART=1
 FCST_RST_OFST=$FCST_LEN
-. input.nml.sh > input.nml
+. input.nml.sh > input-mom6.nml
 
 # link soca config files
 ln -s $SOCA_CONFIG/* .
