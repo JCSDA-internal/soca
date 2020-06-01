@@ -1,5 +1,5 @@
 inputVariables:
-  variables: &soca_vars [tocn, socn, hocn, cicen, uocn, vocn]
+  variables: &soca_vars [ssh, tocn, socn, hocn, cicen, uocn, vocn]
 inputresolution:
   num_ice_cat: 5
   num_ice_lev: 4
@@ -10,8 +10,8 @@ outputresolution:
   num_ice_cat: 5
   num_ice_lev: 4
   num_sno_lev: 1
-  geom_grid_file: soca_gridspec.regional.nc
-  mom6_input_nml: ./inputnml/input_regional.nml
+  geom_grid_file: soca_gridspec.small.nc 
+  mom6_input_nml: ./inputnml/input_small.nml
 inputVariables:
   variables: *soca_vars
 outputVariables:

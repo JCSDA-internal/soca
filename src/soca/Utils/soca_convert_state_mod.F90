@@ -4,20 +4,20 @@
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
 ! ------------------------------------------------------------------------------
 
-module soca_convert_statse_mod
+module soca_convert_state_mod
 
   use soca_geom_mod
   use soca_fields_mod
+  use soca_utils, only: soca_remap_idw
   use kinds, only: kind_real
-  use MOM_coms, only : max_across_PEs ! will remove in the future
   use fms_io_mod, only: read_data, write_data, fms_io_init, fms_io_exit 
   use MOM_remapping, only : remapping_CS, initialize_remapping, remapping_core_h
-  use MOM_domains, only : pass_var, sum_across_PEs, root_PE
+  use MOM_domains, only : pass_var, root_PE, sum_across_pes
   use mpp_mod, only     : mpp_broadcast, mpp_sync, mpp_sync_self
   use MOM_error_handler, only : MOM_mesg, MOM_error, FATAL, WARNING, is_root_pe
   use mpp_domains_mod, only  : mpp_global_field, mpp_update_domains
   use horiz_interp_mod, only : horiz_interp_new, horiz_interp, horiz_interp_type
-!  use MOM_horizontal_regridding, only : meshgrid, fill_miss_2d 
+  use MOM_horizontal_regridding, only : meshgrid, fill_miss_2d 
   use MOM_grid, only : ocean_grid_type 
 !
   implicit none
@@ -94,7 +94,7 @@ subroutine soca_convertstate_change_resol(self, field_src, field_des, geom_src, 
   type(soca_geom),                intent(inout) :: geom_src, geom_des 
 
   !local
-  integer :: i, j, k, n, tmp_nz, nz_
+  integer :: i, j, k, n, cnt, ncount, tmp_nz, nz_
   integer :: isc1, iec1, jsc1, jec1, isd1, ied1, jsd1, jed1, isg, ieg, jsg, jeg 
   integer :: isc2, iec2, jsc2, jec2, isd2, ied2, jsd2, jed2 
   type(remapping_CS)  :: remapCS2
@@ -105,6 +105,7 @@ subroutine soca_convertstate_change_resol(self, field_src, field_des, geom_src, 
   real(kind=kind_real), dimension(geom_src%jsg:geom_src%jeg) :: lat_in 
   real(kind=kind_real), dimension(geom_des%isd:geom_des%ied,geom_des%jsd:geom_des%jed) :: mask_
   real(kind=kind_real), allocatable :: tmp(:,:,:), tmp2(:,:,:), gdata(:,:,:)
+  real(kind=kind_real), allocatable :: mask_src(:,:), gdata_src(:,:), lon_src(:,:), lat_src(:,:)
   real(kind=kind_real), allocatable :: h1(:), h2(:)
   real(kind=kind_real), dimension(geom_src%isd:geom_src%ied,geom_src%jsd:geom_src%jed,1:geom_src%nzo_zstar) :: h_new1
   real(kind=kind_real), dimension(geom_des%isd:geom_des%ied,geom_des%jsd:geom_des%jed,1:geom_des%nzo_zstar) :: h_new2
@@ -144,12 +145,13 @@ subroutine soca_convertstate_change_resol(self, field_src, field_des, geom_src, 
   ! Converts src grid to zstar coordinate 
   nz_ = geom_src%nzo_zstar 
   if (field_src%nz == 1 .or. field_src%io_file=="ice") nz_ = field_src%nz
+  allocate(mask_src(isg:ieg,jsg:jeg),lon_src(isg:ieg,jsg:jeg),lat_src(isg:ieg,jsg:jeg))
   allocate(tmp(isd1:ied1,jsd1:jed1,1:nz_),gdata(isg:ieg,jsg:jeg,1:nz_),tmp2(isd2:ied2,jsd2:jed2,1:nz_))
   allocate(h1(field_src%nz),h2(nz_))
   tmp = 0.d0 ; gdata = 0.d0 ; tmp2 = 0.d0;
   if ( field_src%nz > 1 .and. field_src%io_file/="ice") then
-    do i = isc1-1, iec1+1
-      do j = jsc1-1, jec1+1
+    do j = jsc1, jec1
+      do i = isc1, iec1
         tmp_nz = field_src%nz 
         if(field_src%name =="uocn") then
           if (field_src%mask(i,j)>0.) then   
@@ -171,8 +173,8 @@ subroutine soca_convertstate_change_resol(self, field_src, field_des, geom_src, 
                                   nz_, h_new1(i,j,1:nz_), tmp(i,j,1:nz_))
           endif
         end if
-      end do !j
-    end do !i
+      end do !i
+    end do !j
   else
     if (field_src%io_file=="ocn") tmp(:,:,1) = field_src%val(:,:,1)*field_src%mask(:,:) !2D 
     if (field_src%io_file=="sfc") tmp(:,:,1) = field_src%val(:,:,1) !2D no mask
@@ -182,7 +184,12 @@ subroutine soca_convertstate_change_resol(self, field_src, field_des, geom_src, 
 
   ! horizontal interp: convert src field to target field at zstar coord 
   call mpp_global_field (geom_src%Domain%mpp_domain, tmp(:,:,1:nz_), gdata(:,:,1:nz_) )
-  call soca_hinterp(geom_des,tmp2(:,:,1:nz_),gdata,mask_(:,:),nz_,missing,lon_in,lat_in,field_des%lon,field_des%lat) 
+  call mpp_global_field (geom_src%Domain%mpp_domain, field_src%mask(:,:), mask_src(:,:) )
+  call mpp_global_field (geom_src%Domain%mpp_domain, field_src%lon(:,:), lon_src(:,:) )
+  call mpp_global_field (geom_src%Domain%mpp_domain, field_src%lat(:,:), lat_src(:,:) )
+  !
+  call soca_hinterp(geom_des,tmp2(:,:,1:nz_),gdata,mask_(:,:),nz_,missing,lon_in,lat_in,field_des%lon,field_des%lat, &
+                    mask_src,lon_src,lat_src) 
 
   call mpp_update_domains(tmp2, geom_des%Domain%mpp_domain)
 
@@ -191,8 +198,8 @@ subroutine soca_convertstate_change_resol(self, field_src, field_des, geom_src, 
   if(allocated(h2)) deallocate(h2) 
   allocate(h1(nz_),h2(field_des%nz))
   if ( field_des%nz > 1 .and. field_des%io_file/="ice") then
-    do i = isc2-1, iec2+1
-      do j = jsc2-1, jec2+1
+    do j = jsc2, jec2
+      do i = isc2, iec2
         tmp_nz = nz_ !assume geom_src%nzo_zstar == geom%des%nzo_zstar  
         if(field_des%name =="uocn") then
           if (field_des%mask(i,j)>0.) then
@@ -214,8 +221,8 @@ subroutine soca_convertstate_change_resol(self, field_src, field_des, geom_src, 
                                   field_des%nz, self%hocn_des(i,j,1:field_des%nz), field_des%val(i,j,1:field_des%nz))
           end if 
         end if  
-      end do !i
-    end do !j
+      end do !j
+    end do !i
   else
    if (field_des%io_file=="ocn") field_des%val(:,:,1) = tmp2(:,:,1)*field_des%mask(:,:) ! 2D
    if (field_des%io_file=="sfc") field_des%val(:,:,1) = tmp2(:,:,1) ! 2D no mask
@@ -227,7 +234,7 @@ subroutine soca_convertstate_change_resol(self, field_src, field_des, geom_src, 
 end subroutine soca_convertstate_change_resol         
 
 ! ------------------------------------------------------------------------------
-subroutine soca_hinterp(self,field2,gdata,mask2,nz,missing,lon_in,lat_in,lon_out,lat_out)
+subroutine soca_hinterp(self,field2,gdata,mask2,nz,missing,lon_in,lat_in,lon_out,lat_out, mask_src,lon2d_in,lat2d_in)
   class(soca_geom),  intent(inout) :: self
   real(kind=kind_real), dimension(self%isd:self%ied,self%jsd:self%jed,1:nz), intent(inout) :: field2
   real(kind=kind_real), dimension(:,:,:), intent(in) :: gdata
@@ -236,20 +243,20 @@ subroutine soca_hinterp(self,field2,gdata,mask2,nz,missing,lon_in,lat_in,lon_out
   real(kind=kind_real), intent(in) :: missing
   real(kind=kind_real), dimension(:), intent(in) :: lon_in, lat_in 
   real(kind=kind_real), dimension(self%isd:self%ied,self%jsd:self%jed), intent(in) :: lon_out, lat_out 
+  real(kind=kind_real), dimension(:,:), intent(in) :: mask_src, lon2d_in, lat2d_in
 
   !local variables
   integer :: i, j, k, isg, ieg, jsg, jeg, jeg1
-  integer :: isc2, iec2, jsc2, jec2
-  integer :: npoints
-  real(kind=kind_real) :: roundoff = 1.e-9
+  integer :: isc2, iec2, jsc2, jec2, npoints, cnt, ncount 
+  real(kind=kind_real) :: roundoff = 1.e-13
   real(kind=kind_real) :: PI_180
   type(horiz_interp_type) :: Interp
   type(ocean_grid_type) :: grid 
-  real(kind_real), dimension(:), allocatable :: lath_inp 
-  real(kind_real), dimension(:,:), allocatable :: lon_inp, lat_inp, tr_inp
+  real(kind_real), dimension(:), allocatable :: lath_inp, lon1d_src, lat1d_src 
+  real(kind_real), dimension(:,:), allocatable :: lon_inp, lat_inp, tr_inp, mask_in_, gdata1d_src
   real(kind_real), dimension(self%isd:self%ied,self%jsd:self%jed) :: tr_out, fill, good, prev, mask_out_ 
-  real(kind=kind_real) :: max_lat,min_lat,pole,npole, varavg
-  real(kind=kind_real), dimension(:), allocatable :: last_row, lonh, lath 
+  real(kind=kind_real) :: max_lat,min_lat, pole, npole, varavg
+  real(kind=kind_real), dimension(:), allocatable :: last_row, lonh, lath
   logical :: add_np, add_sp 
   !
   PI_180=atan(1.0d0)/45.0d0 
@@ -298,8 +305,9 @@ subroutine soca_hinterp(self,field2,gdata,mask2,nz,missing,lon_in,lat_in,lon_out
 
   allocate(lon_inp(isg:ieg,jsg:jeg1))
   allocate(lat_inp(isg:ieg,jsg:jeg1))
-  call soca_meshgrid(lonh,lath,lon_inp,lat_inp)
-  
+  call meshgrid(lonh,lath,lon_inp,lat_inp)
+ 
+  allocate(mask_in_(isg:ieg,jsg:jeg1)) 
   allocate(tr_inp(isg:ieg,jsg:jeg1)) ; allocate(last_row(isg:ieg))
   do k = 1, nz
     ! extrapolate the input data to the north pole using the northerm-most latitude 
@@ -341,27 +349,26 @@ subroutine soca_hinterp(self,field2,gdata,mask2,nz,missing,lon_in,lat_in,lon_out
     call mpp_broadcast(tr_inp, ieg*jeg1, root_PE())
     call mpp_sync_self()
 
+    mask_in_ = 1.d0
     do j=jsg,jeg1 ; do i=isg,ieg
-      if (abs(tr_inp(i,j)-missing) <= abs(roundoff)) tr_inp(i,j) = missing 
+      if (abs(tr_inp(i,j)-missing) <= abs(roundoff)) then 
+        tr_inp(i,j) = missing
+        mask_in_(i,j) = 0.d0;
+      end if 
     enddo ; enddo
 
     tr_out(:,:) = 0.d0
     ! initialize horizontal remapping 
     if (k==1) call horiz_interp_new(Interp, lon_inp(:,:)*PI_180, lat_inp(:,:)*PI_180, lon_out(isc2:iec2,jsc2:jec2)*PI_180, &
-       lat_out(isc2:iec2,jsc2:jec2)*PI_180, interp_method='bilinear', src_modulo=.true.)
+       lat_out(isc2:iec2,jsc2:jec2)*PI_180, interp_method='bilinear', src_modulo=.true., mask_in=mask_in_)
 
-    call horiz_interp(Interp,tr_inp,tr_out(isc2:iec2,jsc2:jec2),&
-         missing_value=missing, new_missing_handle=.true.)
+    call horiz_interp(Interp, tr_inp, tr_out(isc2:iec2,jsc2:jec2), missing_value=missing, new_missing_handle=.true.)
 
     mask_out_ = 1.d0 ; fill = 0.d0 ; good = 0.d0
+    npoints = 0 ; varavg = 0.d0
     do j=jsc2,jec2
       do i=isc2,iec2
         if (abs(tr_out(i,j)-missing) < abs(roundoff)) mask_out_(i,j)=0.d0
-      end do
-    end do 
-    npoints = 0 ; varavg = 0.d0 
-    do j=jsc2,jec2
-      do i=isc2,iec2
         if (mask_out_(i,j) < 1.0d0) then
           tr_out(i,j) = missing
         else 
@@ -369,17 +376,47 @@ subroutine soca_hinterp(self,field2,gdata,mask2,nz,missing,lon_in,lat_in,lon_out
           npoints = npoints + 1
           varavg = varavg + tr_out(i,j)
         endif
-        if (mask2(i,j) == 1.d0 .and. mask_out_(i,j) < 1.0d0) fill(i,j) = 1.d0        
+        if (mask2(i,j) == 1.d0 .and. mask_out_(i,j) < 1.0d0) fill(i,j) = 1.d0       
       end do !i
     end do !j
     call pass_var(fill, self%Domain) ; call pass_var(good, self%Domain)
     call sum_across_pes(npoints) ; call sum_across_pes(varavg)
     if (npoints > 0) then
       varavg = varavg/real(npoints)
-    end if
+    end if 
 
     if (k==1) prev(:,:) = tr_out(:,:)
-    call soca_fill_miss_2d(tr_out, good, fill, prev=prev, G=grid, smooth=.true.)
+    call fill_miss_2d(tr_out, good, fill, prev=prev, G=grid, smooth=.true.)
+
+    ! In case fill_miss_2d failed at surface (k=1), use IDW to fill data pt that is located in mask
+    if (k==1) then
+      cnt = 0
+      do j = jsg, jeg
+        do i = isg,ieg
+          if (mask_src(i,j)>0.d0) cnt = cnt+1
+        end do !i
+      end do !j
+      allocate(lon1d_src(cnt),lat1d_src(cnt),gdata1d_src(cnt,1))
+      ncount = 0
+      do j = jsg, jeg
+        do i = isg,ieg
+          if (mask_src(i,j)>0.d0) then
+            ncount = ncount + 1
+            lon1d_src(ncount) = lon2d_in(i,j)
+            lat1d_src(ncount) = lat2d_in(i,j)
+            gdata1d_src(ncount,1) = gdata(i,j,1)
+          end if
+        end do !i
+      end do !j
+
+      do j=jsc2,jec2
+        do i=isc2,iec2
+          if (abs(tr_out(i,j)-missing) < abs(roundoff).and.mask2(i,j)==1.d0) then
+            call soca_remap_idw(lon1d_src(:), lat1d_src(:), gdata1d_src(:,k), lon_out(i:i,j:j), lat_out(i:i,j:j), tr_out(i:i,j:j))
+          end if
+        end do
+      end do
+    end if !k==1 
 
     field2(:,:,k) = tr_out(:,:)*mask2(:,:) 
     prev(:,:) = field2(:,:,k)
@@ -388,167 +425,4 @@ subroutine soca_hinterp(self,field2,gdata,mask2,nz,missing,lon_in,lat_in,lon_out
 
 end subroutine soca_hinterp
 
-! ------------------------------------------------------------------------------
-!TODO: Remove the below 2 subroutines: meshgrid, fill_miss_2d once they become public in MOM6
-! ------------------------------------------------------------------------------
-!> Create a 2d-mesh of grid coordinates from 1-d arrays.
-subroutine soca_meshgrid(x, y, x_T, y_T)
-  real(kind=kind_real), dimension(:),                   intent(in)    :: x  !< input 1-dimensional vector
-  real(kind=kind_real), dimension(:),                   intent(in)    :: y  !< input 1-dimensional vector
-  real(kind=kind_real), dimension(size(x,1),size(y,1)), intent(inout) :: x_T !< output 2-dimensional array
-  real(kind=kind_real), dimension(size(x,1),size(y,1)), intent(inout) :: y_T !< output 2-dimensional array
-
-  integer :: ni,nj,i,j
-
-  ni=size(x,1) ; nj=size(y,1)
-
-  do j=1,nj ; do i=1,ni
-    x_T(i,j) = x(i)
-  enddo ; enddo
-
-  do j=1,nj ; do i=1,ni
-    y_T(i,j) = y(j)
-  enddo ; enddo
-
-end subroutine soca_meshgrid
-
-! ------------------------------------------------------------------------------
-subroutine soca_fill_miss_2d(aout, good, fill, prev, G, smooth, num_pass, relc, crit )
-
-  type(ocean_grid_type), intent(inout) :: G
-  real(kind=kind_real), dimension(G%isd:G%ied,G%jsd:G%jed), intent(inout) :: aout
-  real(kind=kind_real), dimension(G%isd:G%ied,G%jsd:G%jed), intent(in) :: good,fill
-  real(kind=kind_real), dimension(G%isd:G%ied,G%jsd:G%jed), optional, intent(in) :: prev
-  logical,     optional, intent(in)    :: smooth ! If present and true, apply a number of
-                                                 ! Laplan iterations to the interpolated data
-  integer,     optional, intent(in)    :: num_pass ! The maximum number of iterations
-  real(kind=kind_real),        optional, intent(in)    :: relc ! A relaxation coefficient for Laplacian (ND)
-  real(kind=kind_real),        optional, intent(in)    :: crit ! A minimal value for deltas between iterations.
-
-  real(kind=kind_real), dimension(G%isd:G%ied,G%jsd:G%jed) :: b,r
-  real(kind=kind_real), dimension(G%isd:G%ied,G%jsd:G%jed) :: fill_pts, good_, good_new
-
-  character(len=256) :: mesg  ! The text of an error message
-  integer :: i,j,k
-  real(kind=kind_real)    :: east,west,north,south,sor
-  real(kind=kind_real)    :: ge,gw,gn,gs,ngood
-  logical :: do_smooth,siena_bug
-  real(kind=kind_real)    :: nfill, nfill_prev
-  integer, parameter :: num_pass_default = 10000
-  real(kind=kind_real), parameter :: relc_default = 0.25, crit_default = 1.e-3
-
-  integer :: npass
-  integer :: is, ie, js, je
-  real(kind=kind_real)    :: relax_coeff, acrit, ares
-
-  is = G%isc ; ie = G%iec ; js = G%jsc ; je = G%jec
-
-  npass = num_pass_default
-  if (PRESENT(num_pass)) npass = num_pass
-
-  relax_coeff = relc_default
-  if (PRESENT(relc)) relax_coeff = relc
-
-  acrit = crit_default
-  if (PRESENT(crit)) acrit = crit
-
-  do_smooth=.false.
-  if (PRESENT(smooth)) do_smooth=smooth
-
-  fill_pts(:,:) = fill(:,:)
-
-  nfill = sum(fill(is:ie,js:je))
-  call sum_across_PEs(nfill)
-
-  nfill_prev = nfill
-  good_(:,:) = good(:,:)
-  r(:,:) = 0.0
-
-  do while (nfill > 0.0)
-
-    call pass_var(good_, G%Domain)
-    call pass_var(aout, G%Domain)
-
-    b(:,:)=aout(:,:)
-    good_new(:,:)=good_(:,:)
-
-    do j=js,je ; do i=is,ie
-
-      if (good_(i,j) == 1.0 .or. fill(i,j) == 0.) cycle
-
-      ge=good_(i+1,j) ; gw=good_(i-1,j)
-      gn=good_(i,j+1) ; gs=good_(i,j-1)
-      east=0.0 ; west=0.0 ; north=0.0 ; south=0.0
-      if (ge == 1.0) east = aout(i+1,j)*ge
-      if (gw == 1.0) west = aout(i-1,j)*gw
-      if (gn == 1.0) north = aout(i,j+1)*gn
-      if (gs == 1.0) south = aout(i,j-1)*gs
-
-      ngood = ge+gw+gn+gs
-
-      if (ngood > 0.) then
-        b(i,j)=(east+west+north+south)/ngood
-        fill_pts(i,j) = 0.0
-        good_new(i,j) = 1.0
-      endif
-    enddo ; enddo
-
-    aout(is:ie,js:je) = b(is:ie,js:je)
-    good_(is:ie,js:je) = good_new(is:ie,js:je)
-    nfill_prev = nfill
-    nfill = sum(fill_pts(is:ie,js:je))
-    call sum_across_PEs(nfill)
-
-    if (nfill == nfill_prev .and. PRESENT(prev)) then
-      do j=js,je ; do i=is,ie ; if (fill_pts(i,j) == 1.0) then
-        aout(i,j) = prev(i,j)
-        fill_pts(i,j) = 0.0
-      endif ; enddo ; enddo
-    elseif (nfill == nfill_prev) then
-      call MOM_error(WARNING, &
-           'Unable to fill missing points using either data at the same vertical level from a connected basin'//&
-           'or using a point from a previous vertical level.  Make sure that the original data has some valid'//&
-           'data in all basins.', .true.)
-      write(mesg,*) 'nfill=',nfill
-      call MOM_error(WARNING, mesg, .true.)
-    endif
-
-    nfill = sum(fill_pts(is:ie,js:je))
-    call sum_across_PEs(nfill)
-
-  enddo
-    
-  if (do_smooth) then ; do k=1,npass
-    call pass_var(aout,G%Domain)
-    do j=js,je ; do i=is,ie
-      if (fill(i,j) == 1) then
-        east = max(good(i+1,j),fill(i+1,j)) ; west = max(good(i-1,j),fill(i-1,j))
-        north = max(good(i,j+1),fill(i,j+1)) ; south = max(good(i,j-1),fill(i,j-1))
-        r(i,j) = relax_coeff*(south*aout(i,j-1)+north*aout(i,j+1) + &
-                              west*aout(i-1,j)+east*aout(i+1,j) - &
-                             (south+north+west+east)*aout(i,j))
-      else
-        r(i,j) = 0.
-      endif
-    enddo ; enddo
-    ares = 0.0
-    do j=js,je ; do i=is,ie
-      aout(i,j) = r(i,j) + aout(i,j)
-      ares = max(ares, abs(r(i,j)))
-    enddo ; enddo
-    call max_across_PEs(ares)
-    if (ares <= acrit) exit
-  enddo ; endif
-
-  do j=js,je ; do i=is,ie
-    if (good_(i,j) == 0.0 .and. fill_pts(i,j) == 1.0) then
-      write(mesg,*) 'In fill_miss, fill, good,i,j=',fill_pts(i,j),good_(i,j),i,j
-      call MOM_error(WARNING, mesg, .true.)
-      call MOM_error(FATAL, "MOM_initialize: "// &
-           "fill is true and good is false after fill_miss, how did this happen?")
-    endif
- enddo ; enddo
-
-end subroutine soca_fill_miss_2d
-
-end module soca_convert_statse_mod  
+end module soca_convert_state_mod  

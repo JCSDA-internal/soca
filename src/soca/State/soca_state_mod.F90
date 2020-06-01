@@ -8,7 +8,7 @@ module soca_state_mod
 use soca_geom_mod
 use soca_fields_mod
 use soca_increment_mod
-use soca_convert_statse_mod
+use soca_convert_state_mod
 use oops_variables_mod
 use soca_geostrophy_mod
 use kinds, only: kind_real
