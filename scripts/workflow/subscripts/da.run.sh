@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e
+set -ev
 cat <<EOF
 
 #================================================================================
@@ -119,8 +119,9 @@ echo "Moving restart files..."
 mkdir -p $CYCLE_RST_DIR
 cp $WORK_DIR/INPUT/*.res* $CYCLE_RST_DIR/
 
-if [[ -f $WORK_DIR/INPUT/*_rst ]]; then
-    cp $WORK_DIR/INPUT/*_rst $CYCLE_RST_DIR/ #TODO cp of geos rst need to go somewhere else
-fi
-#rsync -av --ignore-missing-args $WORK_DIR/INPUT/*_rst $CYCLE_RST_DIR/ #TODO cp of geos rst need to go somewhere else
+#if [[ -f $WORK_DIR/INPUT/*_rst ]]; then
+#    cp $WORK_DIR/INPUT/*_rst $CYCLE_RST_DIR/ #TODO cp of geos rst need to go somewhere else
+#fi
+
+rsync -av --copy-links --ignore-missing-args $WORK_DIR/INPUT/*_rst $CYCLE_RST_DIR/ #TODO cp of geos rst need to go somewhere else
 cp $WORK_DIR/RESTART/* $CYCLE_RST_DIR/
