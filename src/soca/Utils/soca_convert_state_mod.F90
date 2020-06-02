@@ -94,7 +94,7 @@ subroutine soca_convertstate_change_resol(self, field_src, field_des, geom_src, 
   type(soca_geom),                intent(inout) :: geom_src, geom_des 
 
   !local
-  integer :: i, j, k, n, cnt, ncount, tmp_nz, nz_
+  integer :: i, j, k, tmp_nz, nz_
   integer :: isc1, iec1, jsc1, jec1, isd1, ied1, jsd1, jed1, isg, ieg, jsg, jeg 
   integer :: isc2, iec2, jsc2, jec2, isd2, ied2, jsd2, jed2 
   type(remapping_CS)  :: remapCS2
@@ -102,10 +102,10 @@ subroutine soca_convertstate_change_resol(self, field_src, field_des, geom_src, 
   real(kind=kind_real) :: missing = 0.d0
   real(kind=kind_real) :: PI_180, z_tot 
   real(kind=kind_real), dimension(geom_src%isg:geom_src%ieg) :: lon_in
-  real(kind=kind_real), dimension(geom_src%jsg:geom_src%jeg) :: lat_in 
+  real(kind=kind_real), dimension(geom_src%jsg:geom_src%jeg) :: lat_in
+  real(kind=kind_real), dimension(geom_des%isd:geom_des%ied,geom_des%jsd:geom_des%jed) :: lon_out, lat_out 
   real(kind=kind_real), dimension(geom_des%isd:geom_des%ied,geom_des%jsd:geom_des%jed) :: mask_
   real(kind=kind_real), allocatable :: tmp(:,:,:), tmp2(:,:,:), gdata(:,:,:)
-  real(kind=kind_real), allocatable :: mask_src(:,:), gdata_src(:,:), lon_src(:,:), lat_src(:,:)
   real(kind=kind_real), allocatable :: h1(:), h2(:)
   real(kind=kind_real), dimension(geom_src%isd:geom_src%ied,geom_src%jsd:geom_src%jed,1:geom_src%nzo_zstar) :: h_new1
   real(kind=kind_real), dimension(geom_des%isd:geom_des%ied,geom_des%jsd:geom_des%jed,1:geom_des%nzo_zstar) :: h_new2
@@ -126,7 +126,7 @@ subroutine soca_convertstate_change_resol(self, field_src, field_des, geom_src, 
   call initialize_remapping(remapCS2,'PPM_IH4') 
 
   ! Set grid thickness based on zstar level for src & target grid 
-  if (field_des%io_file=="ocn") then
+  if (field_des%io_file=="ocn".or.field_des%io_file=='ice') then
     mask_ = field_des%mask 
     h_new1 = geom_src%h_zstar 
     h_new2 = geom_des%h_zstar  
@@ -141,11 +141,13 @@ subroutine soca_convertstate_change_resol(self, field_src, field_des, geom_src, 
   lon_in = geom_src%lonh ; lat_in = geom_src%lath
   if (field_src%name == "uocn" .and. field_des%name == "uocn") lon_in = geom_src%lonq
   if (field_src%name == "vocn" .and. field_des%name == "vocn") lat_in = geom_src%latq
+!  call meshgrid(geom_des%lonh(isd2:ied2),geom_des%lath(jsd2:jed2),lon_out,lat_out)
+!  if (field_des%name == "uocn") call meshgrid(geom_des%lonq(isd2:ied2),geom_des%lath(jsd2:jed2),lon_out,lat_out)
+!  if (field_des%name == "vocn") call meshgrid(geom_des%lonh(isd2:ied2),geom_des%latq(jsd2:jed2),lon_out,lat_out)
 
   ! Converts src grid to zstar coordinate 
   nz_ = geom_src%nzo_zstar 
   if (field_src%nz == 1 .or. field_src%io_file=="ice") nz_ = field_src%nz
-  allocate(mask_src(isg:ieg,jsg:jeg),lon_src(isg:ieg,jsg:jeg),lat_src(isg:ieg,jsg:jeg))
   allocate(tmp(isd1:ied1,jsd1:jed1,1:nz_),gdata(isg:ieg,jsg:jeg,1:nz_),tmp2(isd2:ied2,jsd2:jed2,1:nz_))
   allocate(h1(field_src%nz),h2(nz_))
   tmp = 0.d0 ; gdata = 0.d0 ; tmp2 = 0.d0;
@@ -184,12 +186,7 @@ subroutine soca_convertstate_change_resol(self, field_src, field_des, geom_src, 
 
   ! horizontal interp: convert src field to target field at zstar coord 
   call mpp_global_field (geom_src%Domain%mpp_domain, tmp(:,:,1:nz_), gdata(:,:,1:nz_) )
-  call mpp_global_field (geom_src%Domain%mpp_domain, field_src%mask(:,:), mask_src(:,:) )
-  call mpp_global_field (geom_src%Domain%mpp_domain, field_src%lon(:,:), lon_src(:,:) )
-  call mpp_global_field (geom_src%Domain%mpp_domain, field_src%lat(:,:), lat_src(:,:) )
-  !
-  call soca_hinterp(geom_des,tmp2(:,:,1:nz_),gdata,mask_(:,:),nz_,missing,lon_in,lat_in,field_des%lon,field_des%lat, &
-                    mask_src,lon_src,lat_src) 
+  call soca_hinterp(geom_des,tmp2(:,:,1:nz_),gdata,mask_(:,:),nz_,missing,lon_in,lat_in,field_des%lon,field_des%lat) !,lon_out,lat_out)
 
   call mpp_update_domains(tmp2, geom_des%Domain%mpp_domain)
 
@@ -234,7 +231,7 @@ subroutine soca_convertstate_change_resol(self, field_src, field_des, geom_src, 
 end subroutine soca_convertstate_change_resol         
 
 ! ------------------------------------------------------------------------------
-subroutine soca_hinterp(self,field2,gdata,mask2,nz,missing,lon_in,lat_in,lon_out,lat_out, mask_src,lon2d_in,lat2d_in)
+subroutine soca_hinterp(self,field2,gdata,mask2,nz,missing,lon_in,lat_in,lon_out,lat_out)
   class(soca_geom),  intent(inout) :: self
   real(kind=kind_real), dimension(self%isd:self%ied,self%jsd:self%jed,1:nz), intent(inout) :: field2
   real(kind=kind_real), dimension(:,:,:), intent(in) :: gdata
@@ -243,24 +240,23 @@ subroutine soca_hinterp(self,field2,gdata,mask2,nz,missing,lon_in,lat_in,lon_out
   real(kind=kind_real), intent(in) :: missing
   real(kind=kind_real), dimension(:), intent(in) :: lon_in, lat_in 
   real(kind=kind_real), dimension(self%isd:self%ied,self%jsd:self%jed), intent(in) :: lon_out, lat_out 
-  real(kind=kind_real), dimension(:,:), intent(in) :: mask_src, lon2d_in, lat2d_in
 
   !local variables
   integer :: i, j, k, isg, ieg, jsg, jeg, jeg1
-  integer :: isc2, iec2, jsc2, jec2, npoints, cnt, ncount 
-  real(kind=kind_real) :: roundoff = 1.e-13
+  integer :: isc2, iec2, jsc2, jec2, npoints 
+  real(kind=kind_real) :: roundoff = 1.e-16
   real(kind=kind_real) :: PI_180
   type(horiz_interp_type) :: Interp
   type(ocean_grid_type) :: grid 
-  real(kind_real), dimension(:), allocatable :: lath_inp, lon1d_src, lat1d_src 
-  real(kind_real), dimension(:,:), allocatable :: lon_inp, lat_inp, tr_inp, mask_in_, gdata1d_src
+  real(kind_real), dimension(:), allocatable :: lath_inp 
+  real(kind_real), dimension(:,:), allocatable :: lon_inp, lat_inp, tr_inp, mask_in_ 
   real(kind_real), dimension(self%isd:self%ied,self%jsd:self%jed) :: tr_out, fill, good, prev, mask_out_ 
   real(kind=kind_real) :: max_lat,min_lat, pole, npole, varavg
   real(kind=kind_real), dimension(:), allocatable :: last_row, lonh, lath
   logical :: add_np, add_sp 
   !
   PI_180=atan(1.0d0)/45.0d0 
-!  roundoff=3.0*epsilon(missing)
+!  first_call = .true.
   !
   isg = 1; jsg = 1;
   ieg = size(gdata,1); jeg = size(gdata,2)
@@ -362,7 +358,7 @@ subroutine soca_hinterp(self,field2,gdata,mask2,nz,missing,lon_in,lat_in,lon_out
     if (k==1) call horiz_interp_new(Interp, lon_inp(:,:)*PI_180, lat_inp(:,:)*PI_180, lon_out(isc2:iec2,jsc2:jec2)*PI_180, &
        lat_out(isc2:iec2,jsc2:jec2)*PI_180, interp_method='bilinear', src_modulo=.true., mask_in=mask_in_)
 
-    call horiz_interp(Interp, tr_inp, tr_out(isc2:iec2,jsc2:jec2), missing_value=missing, new_missing_handle=.true.)
+    call horiz_interp(Interp, tr_inp, tr_out(isc2:iec2,jsc2:jec2), mask_in=mask_in_, missing_value=missing, missing_permit=3)!,new_missing_handle=.true.)
 
     mask_out_ = 1.d0 ; fill = 0.d0 ; good = 0.d0
     npoints = 0 ; varavg = 0.d0
@@ -388,35 +384,8 @@ subroutine soca_hinterp(self,field2,gdata,mask2,nz,missing,lon_in,lat_in,lon_out
     if (k==1) prev(:,:) = tr_out(:,:)
     call fill_miss_2d(tr_out, good, fill, prev=prev, G=grid, smooth=.true.)
 
-    ! In case fill_miss_2d failed at surface (k=1), use IDW to fill data pt that is located in mask
-    if (k==1) then
-      cnt = 0
-      do j = jsg, jeg
-        do i = isg,ieg
-          if (mask_src(i,j)>0.d0) cnt = cnt+1
-        end do !i
-      end do !j
-      allocate(lon1d_src(cnt),lat1d_src(cnt),gdata1d_src(cnt,1))
-      ncount = 0
-      do j = jsg, jeg
-        do i = isg,ieg
-          if (mask_src(i,j)>0.d0) then
-            ncount = ncount + 1
-            lon1d_src(ncount) = lon2d_in(i,j)
-            lat1d_src(ncount) = lat2d_in(i,j)
-            gdata1d_src(ncount,1) = gdata(i,j,1)
-          end if
-        end do !i
-      end do !j
-
-      do j=jsc2,jec2
-        do i=isc2,iec2
-          if (abs(tr_out(i,j)-missing) < abs(roundoff).and.mask2(i,j)==1.d0) then
-            call soca_remap_idw(lon1d_src(:), lat1d_src(:), gdata1d_src(:,k), lon_out(i:i,j:j), lat_out(i:i,j:j), tr_out(i:i,j:j))
-          end if
-        end do
-      end do
-    end if !k==1 
+    !TODO: In case fill_miss_2d failed at surface (k=1), use IDW to fill data pt that is located in ocean mask
+    !Problem: IDW is compiler-dependent
 
     field2(:,:,k) = tr_out(:,:)*mask2(:,:) 
     prev(:,:) = field2(:,:,k)
