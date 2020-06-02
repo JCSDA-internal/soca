@@ -4,4 +4,6 @@ soca_target_sources(
   GeometryFortran.h
   soca_geom_mod.F90
   soca_geom.interface.F90
+  FmsInput.cc
+  FmsInput.h
 )

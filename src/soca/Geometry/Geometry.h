@@ -8,24 +8,23 @@
 #ifndef SOCA_GEOMETRY_GEOMETRY_H_
 #define SOCA_GEOMETRY_GEOMETRY_H_
 
+#include <fstream>
 #include <ostream>
 #include <string>
 #include <vector>
 
-#include "soca/Fortran.h"
-
+#include "eckit/config/Configuration.h"
 #include "eckit/config/LocalConfiguration.h"
 #include "eckit/mpi/Comm.h"
+
+#include "soca/Fortran.h"
+#include "soca/Geometry/FmsInput.h"
+#include "soca/Geometry/GeometryFortran.h"
+#include "soca/GeometryIterator/GeometryIterator.h"
+#include "soca/GeometryIterator/GeometryIteratorFortran.h"
+
 #include "oops/util/ObjectCounter.h"
 #include "oops/util/Printable.h"
-
-// forward declarations
-namespace eckit {
-  class Configuration;
-}
-namespace soca {
-  class GeometryIterator;
-}
 
 // -----------------------------------------------------------------------------
 
@@ -47,7 +46,7 @@ namespace soca {
 
       int& toFortran() {return keyGeom_;}
       const int& toFortran() const {return keyGeom_;}
-      void gridgen(const eckit::Configuration &) const;
+      void gridgen() const;
       const eckit::mpi::Comm & getComm() const {return comm_;}
       eckit::LocalConfiguration  getAtmConf() const {return atmconf_;}
       bool  getAtmInit() const {return initatm_;}
@@ -63,6 +62,7 @@ namespace soca {
       const eckit::mpi::Comm & comm_;
       eckit::LocalConfiguration atmconf_;
       bool initatm_;
+      FmsInput fmsinput_;
   };
   // -----------------------------------------------------------------------------
 

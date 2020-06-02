@@ -20,17 +20,22 @@ envar+=("FCST_START_TIME") # date and time of start of forecast
 envar+=("MOM_CONFIG")      # path to input model configuration files
 envar+=("MOM_DATA")        # path to input model static data
 envar+=("OBS_IODA")        # path to observations already processed into ioda format
+envar+=("OBS_ADT")         # directory name for adt
+envar+=("OBS_INSITU")      # directory name for insitu
+envar+=("OBS_SST")         # directory name for sst
 envar+=("RESTART_DIR")     # path to input restart files for da background
 envar+=("SOCA_BIN_DIR")    # path to soca executables
 envar+=("SOCA_CONFIG")     # path to input soca configuration files
 envar+=("SOCA_DATA")       # path to input soca static data
 envar+=("WORK_DIR")        # temporary working directory for this script
+envar+=("MPIRUN")          # exec to run mpi
+envar+=("JOB_NPES")        # exec to run mpi
 
 # make sure required env vars exist
 set +u
 for v in ${envar[@]}; do
     if [[ -z "${!v}" ]]; then
-	echo "ERROR: env var $v is not set."; exit 1
+        echo "ERROR: env var $v is not set."; exit 1
     fi
     echo " $v = ${!v}"
 done
@@ -83,21 +88,22 @@ cd ..
 # TODO make obs list configurable
 cd obs
 ymd=$(date -u -d "$ANA_TIME" +%Y%m%d)
-ln -s $OBS_IODA/adt.nesdis/${ymd:0:4}/$ymd.nc adt.nc
-ln -s $OBS_IODA/insitu.hgodas/${ymd:0:4}/$ymd.nc insitu.nc
-ln -s $OBS_IODA/sst.hgodas/${ymd:0:4}/$ymd.nc sst.nc
+ln -s $OBS_IODA/$OBS_ADT/${ymd:0:4}/$ymd.nc adt.nc
+ln -s $OBS_IODA/$OBS_INSITU/${ymd:0:4}/$ymd.nc insitu.nc
+ln -s $OBS_IODA/$OBS_SST/${ymd:0:4}/$ymd.nc sst.nc
 cd ..
 
 # run the 3dvar
 echo "Starting 3dvar..."
-time mpirun $SOCA_BIN_DIR/soca_3dvar.x 3dvar.yml
+time $MPIRUN -np $JOB_NPES $SOCA_BIN_DIR/soca_3dvar.x 3dvar.yml
 
 # do the checkpointing
 echo "Starting checkpointing..."
-time mpirun $SOCA_BIN_DIR/soca_checkpoint_model.x checkpoint.yml
+time $MPIRUN -np $JOB_NPES $SOCA_BIN_DIR/soca_checkpoint_model.x checkpoint.yml
 
 # move the restart files to a non-scratch space
 echo "Moving restart files..."
 mkdir -p $CYCLE_RST_DIR
 cp $WORK_DIR/INPUT/*.res* $CYCLE_RST_DIR/
+rsync -av --ignore-missing-args $WORK_DIR/INPUT/*_rst $CYCLE_RST_DIR/ #TODO cp of geos rst need to go somewhere else
 cp $WORK_DIR/RESTART/* $CYCLE_RST_DIR/

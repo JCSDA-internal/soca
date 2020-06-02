@@ -2,7 +2,7 @@ resolution:
   num_ice_cat: 5
   num_ice_lev: 4
   num_sno_lev: 1
-  read_soca_grid: grid
+  mom6_input_nml: ./inputnml/input.nml
 
 model:
   name: SOCA
@@ -11,13 +11,13 @@ model:
   variables: &soca_vars [cicen, hicen, socn, tocn, ssh, hocn, sw, lhf, shf, lw, us]
 
 _date_begin: &date_begin 2018-04-15T00:00:00Z
-  
+
 _file: &_file
   read_from_file: 1
   date: *date_begin
   basename: ./Data/
   remap_filename: ./INPUT/MOM.res.nc
-    
+
 cost_function:
   cost_type: 4D-Var
   window_begin: *date_begin
@@ -38,7 +38,7 @@ cost_function:
      covariance: hybrid
      static_weight: 0.5
      ensemble_weight: 0.5
-     static: 
+     static:
       covariance: SocaError
       prefix: soca
       datadir: ./bump
@@ -113,7 +113,7 @@ cost_function:
 
       - <<: *_file
         ocn_filename: ocn.pert.ens.3.2018-04-15T00:00:00Z.PT0S.nc
-        ice_filename: ice.pert.ens.3.2018-04-15T00:00:00Z.PT0S.nc        
+        ice_filename: ice.pert.ens.3.2018-04-15T00:00:00Z.PT0S.nc
 
       - <<: *_file
         ocn_filename: ocn.pert.ens.4.2018-04-15T00:00:00Z.PT0S.nc
@@ -152,7 +152,7 @@ variational:
       num_ice_cat: 5
       num_ice_lev: 4
       num_sno_lev: 1
-      read_soca_grid: grid
+      mom6_input_nml: ./inputnml/input.nml
     linearmodel:
       varchange: Identity
       version: IdTLM

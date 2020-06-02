@@ -9,7 +9,6 @@
 module soca_covariance_mod
 
 use fckit_configuration_module, only: fckit_configuration
-use fckit_mpi_module, only: fckit_mpi_comm
 use random_mod, only: normal_distribution
 use oops_variables_mod
 use type_bump, only: bump_type
@@ -236,8 +235,6 @@ subroutine soca_bump_correlation(self, horiz_convol, geom, f_conf, domain)
   real(kind_real), allocatable :: rv(:,:,:,:)     !< Vertical support radius
   real(kind_real), allocatable :: var(:,:,:,:)
 
-  type(fckit_mpi_comm) :: f_comm
-
   !--- Initialize geometry to be passed to NICAS
   ! Indices for compute domain (no halo)
   isc = geom%isc ; iec = geom%iec ; jsc = geom%jsc ; jec = geom%jec
@@ -268,7 +265,7 @@ subroutine soca_bump_correlation(self, horiz_convol, geom, f_conf, domain)
   vunit = 1.0d0
 
   ! Initialize bump namelist/parameters
-  call horiz_convol%nam%init(f_comm%size())
+  call horiz_convol%nam%init(geom%f_comm%size())
   horiz_convol%nam%verbosity = 'none'
   call horiz_convol%nam%from_conf(f_conf)
 
@@ -276,8 +273,7 @@ subroutine soca_bump_correlation(self, horiz_convol, geom, f_conf, domain)
   if (domain.eq.'ice') horiz_convol%nam%prefix = 'ice'
 
   ! Compute convolution weight
-  f_comm = fckit_mpi_comm()
-  call horiz_convol%setup_online(f_comm,nc0a,nl0,nv,nts,lon,lat,area,vunit,lmask)
+  call horiz_convol%setup_online(geom%f_comm,nc0a,nl0,nv,nts,lon,lat,area,vunit,lmask)
 
   if (horiz_convol%nam%new_nicas) then
      ! Allocation

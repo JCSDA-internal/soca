@@ -2,7 +2,7 @@ resolution:
   num_ice_cat: 5
   num_ice_lev: 4
   num_sno_lev: 1
-  read_soca_grid: grid
+  mom6_input_nml: ./inputnml/input.nml
 
 model:
   name: SOCA
@@ -27,4 +27,4 @@ output:
   exp: Id
   date: 2018-04-15T00:00:00Z
   type: fc
-  seaice_model: cice  
+  seaice_model: cice

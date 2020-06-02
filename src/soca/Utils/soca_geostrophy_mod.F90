@@ -92,10 +92,10 @@ contains
     ! Compute horizontal inverse transformation metrics
     do j = geom%jsc, geom%jec
        do i = geom%isc, geom%iec
-          dlondi(i,j) = 0.5*deg2rad*(geom%lon(i+1,j)-geom%lon(i-1,j))
-          dlondj(i,j) = 0.5*deg2rad*(geom%lon(i,j+1)-geom%lon(i,j-1))
-          dlatdi(i,j) = 0.5*deg2rad*(geom%lat(i+1,j)-geom%lat(i-1,j))
-          dlatdj(i,j) = 0.5*deg2rad*(geom%lat(i,j+1)-geom%lat(i,j-1))
+          dlondi(i,j) = 0.5_kind_real*deg2rad*(geom%lon(i+1,j)-geom%lon(i-1,j))
+          dlondj(i,j) = 0.5_kind_real*deg2rad*(geom%lon(i,j+1)-geom%lon(i,j-1))
+          dlatdi(i,j) = 0.5_kind_real*deg2rad*(geom%lat(i+1,j)-geom%lat(i-1,j))
+          dlatdj(i,j) = 0.5_kind_real*deg2rad*(geom%lat(i,j+1)-geom%lat(i,j-1))
        end do
     end do
 
@@ -107,8 +107,8 @@ contains
     do k = 1, geom%nzo
        do j = geom%jsc, geom%jec
           do i = geom%isc, geom%iec
-             dzdi(i,j,k) = 0.5*(z(i+1,j,k)-z(i-1,j,k))
-             dzdj(i,j,k) = 0.5*(z(i,j+1,k)-z(i,j-1,k))
+             dzdi(i,j,k) = 0.5_kind_real*(z(i+1,j,k)-z(i-1,j,k))
+             dzdj(i,j,k) = 0.5_kind_real*(z(i,j+1,k)-z(i,j-1,k))
           end do
        end do
     end do
@@ -136,20 +136,21 @@ contains
     self%dkdz = dlondi*dlatdj-dlondj*dlatdi
 
     ! Zero out weights close to equator (no beta-plane proxi yet)
-    Lb = 1.55
+    Lb = 1.55_kind_real
     allocate(wb(geom%isd:geom%ied,geom%jsd:geom%jed))
     wb  =exp(-geom%lat**2/(2*Lb**2))
     self%icorio = 0.0
     where (geom%lat.ne.0.0)
-       self%icorio = (1.0-wb)/(2.0*1035.0*sin(deg2rad*geom%lat)*7.2921e-5)
+       self%icorio = (1.0_kind_real-wb)/&
+            (2.0_kind_real*1035.0_kind_real*sin(deg2rad*geom%lat)*7.2921e-5_kind_real)
     end where
 
     ! Compute weights for zonal and meridional derivatives
-    self%dxwgt = 0.0
-    where (geom%lat.ne.0.0)
-       self%dxwgt = 1.0/(req*cos(deg2rad*geom%lat))
+    self%dxwgt = 0.0_kind_real
+    where (geom%lat.ne.0.0_kind_real)
+       self%dxwgt = 1.0_kind_real/(req*cos(deg2rad*geom%lat))
     end where
-    self%dywgt = 1.0/req
+    self%dywgt = 1.0_kind_real/req
 
     ! Fill halo of grid metric parameters
     call mpp_update_domains(self%Jac, geom%Domain%mpp_domain)
@@ -221,7 +222,7 @@ contains
     call geom%thickness2depth(h, z)
 
     ! Density increment scaled by layer thickness at level k
-    drhoh = 0.0
+    drhoh = 0.0_kind_real
     do k = 1, nl
        rho0 = soca_rho(s(:,:,k), t(:,:,k), z(:,:,k), geom%lon, geom%lat)
        do j = geom%jsc, geom%jec
