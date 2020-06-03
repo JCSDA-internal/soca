@@ -1040,7 +1040,7 @@ subroutine soca_fields_write_rst(fld, f_conf, vdate)
       idr = register_restart_field( ice_restart, ice_filename, "vsnon", &
         vsnon, domain=fld%geom%Domain%mpp_domain)
 
-    else if (field%io_file /= "") then
+    else if (len(field%io_file) /= 0) then
       ! which file are we writing to
       select case(field%io_file)
       case ('ocn')
