@@ -2,8 +2,8 @@ EXP_DIR=$(readlink -f .)
 
 WORKLOAD_MANAGER=slurm  # none or slurm
 MACHINE=discover        # default or discover (default is a Linux workstation, no modules loaded)
-                       # TODO(Guillaume) add Hera and Orion
-MPIRUN=mpirun          #TODO could probably get the info from somewhere else
+                        # TODO(Guillaume) add Hera and Orion
+MPIRUN=mpirun           # TODO could probably get the info from somewhere else
 
 # parameters used by SLURM
 JOB_NAME=exp13
@@ -18,7 +18,7 @@ FCST_LEN=24
 
 # various directory locations
 SCRATCH_DIR=${EXP_DIR}/WRK
-SOCA_BUNDLE_DIR=/home/gvernier/nobackup/soca/soca-bundle/
+SOCA_BUNDLE_DIR=/path/to/soca-bundle/
 SOCA_BIN_DIR=${SOCA_BUNDLE_DIR}/build-gnu/bin/
 
 # model/soca configuration to be used
@@ -31,13 +31,7 @@ MODEL_DATA=/discover/nobackup/tsluka/jedi/soca.data/mom6sis2_global/${model_res}
 
 # initial conditions for model
 # TODO 1 year spin-up so we can start doing science!
-MOM_IC=/home/gvernier/nobackup/soca/runs/exp12/rst/2015123112/MOM.res.nc
-
-# geos specific configuration
-# TODO move somewhere else
-GEOS_RC=/home/gvernier/nobackup/geos-santha/geos-scratch
-GEOS_GCMRUN=${GEOS_RC}/gcm_run.j
-GEOS_IC=/home/gvernier/nobackup/geos-santha/soca-cpld/util/rst_atm_20151201_120000.tar
+MOM_IC=/path/to/initial/restart/MOM.res.nc
 
 # forcing (unused when model is geos)
 FORC_ATM="cfsr"
@@ -45,8 +39,14 @@ FORC_MEAN_FILE=/discover/nobackup/tsluka/DATA/fluxes/cfsr/%Y/%Y%m%d/cfsr.%Y%m%d.
 FORC_VAR=DLWRF.sfc,DSWRF.sfc,PRATE,SLP,TMP.2m,SPFH.2m,UGRD.10m,VGRD.10m
 
 # observations
-OBS_IODA=/home/gvernier/nobackup/soca/runs/obs_ioda
+OBS_IODA=/path/to/obs_ioda
 OBS_LIST="adt sst sss insitu" # TODO split per instrument, point to EMC's ObsTypes
-                          # Elements $o of the list is used to:
-                          #   1. Locate ioda file $OBS_IODA/${ymd}/$o/$o.$ymd.nc
-                          #   2. Add ObsSpace $o.yml to the ObsTypes in 3dvar.yml
+                              # Elements $o of the list is used to:
+                              #   1. Locate ioda file $OBS_IODA/${ymd}/$o/$o.$ymd.nc
+                              #   2. Add ObsSpace $o.yml to the ObsTypes in 3dvar.yml
+
+# Set unused variables to dummy values
+# TODO(Guillaume) GEOS_* are currently needed in cycle.sh. Implement differently!
+GEOS_RC=NA
+GEOS_GCMRUN=NA
+GEOS_IC=NA
