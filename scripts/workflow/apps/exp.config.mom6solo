@@ -46,7 +46,7 @@ OBS_LIST="adt sst sss insitu" # TODO split per instrument, point to EMC's ObsTyp
                               #   2. Add ObsSpace $o.yml to the ObsTypes in 3dvar.yml
 
 # Set unused variables to dummy values
-# TODO(Guillaume) GEOS_* are currently needed in cycle.sh. Move the model needed variable to a dedicated script.
+# TODO(Guillaume) GEOS_* are currently needed in cycle.sh. Implement differently!
 GEOS_RC=NA
 GEOS_GCMRUN=NA
 GEOS_IC=NA
