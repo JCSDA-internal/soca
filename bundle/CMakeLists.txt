@@ -24,7 +24,7 @@ ecbuild_requires_macro_version( 2.7 )
 
 option(BUILD_ECKIT "download and build eckit (not needed if in a jedi container)")
 if ( BUILD_ECKIT )
-  ecbuild_bundle( PROJECT eckit         GIT "https://github.com/JCSDA/eckit.git"           UPDATE BRANCH develop )
+  ecbuild_bundle( PROJECT eckit         GIT "https://github.com/JCSDA/eckit.git"           UPDATE BRANCH release-stable )
 endif ()
 
 option(BUILD_CRTM  "download and build CRTM")
@@ -40,8 +40,8 @@ endif ()
 
 # required repositories
 
-ecbuild_bundle( PROJECT fckit           GIT "https://github.com/JCSDA/fckit.git"           UPDATE BRANCH develop )
-ecbuild_bundle( PROJECT atlas           GIT "https://github.com/JCSDA/atlas.git"           UPDATE BRANCH develop )
+ecbuild_bundle( PROJECT fckit           GIT "https://github.com/JCSDA/fckit.git"           UPDATE BRANCH release-stable )
+ecbuild_bundle( PROJECT atlas           GIT "https://github.com/JCSDA/atlas.git"           UPDATE BRANCH release-stable )
 ecbuild_bundle( PROJECT oops            GIT "https://github.com/JCSDA/oops.git"            UPDATE BRANCH develop )
 ecbuild_bundle( PROJECT saber           GIT "https://github.com/JCSDA/saber.git"           UPDATE BRANCH develop )
 ecbuild_bundle( PROJECT ioda            GIT "https://github.com/JCSDA/ioda.git"            UPDATE BRANCH develop )
