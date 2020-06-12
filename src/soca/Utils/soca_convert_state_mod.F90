@@ -19,7 +19,8 @@ module soca_convert_state_mod
   use horiz_interp_mod, only : horiz_interp_new, horiz_interp, horiz_interp_type
   use MOM_horizontal_regridding, only : meshgrid, fill_miss_2d 
   use MOM_grid, only : ocean_grid_type 
-!
+  use fckit_exception_module, only: fckit_exception
+
   implicit none
   private
 
@@ -43,7 +44,6 @@ subroutine soca_convertstate_setup(self, src, des, hocn, hocn2)
   !local
   integer :: tmp(1)
 
-  !
   call fms_io_init()
   
   call read_data(trim(src%geom_grid_file), 'nzo_zstar', tmp(1), domain=src%Domain%mpp_domain)
@@ -52,8 +52,9 @@ subroutine soca_convertstate_setup(self, src, des, hocn, hocn2)
   call read_data(trim(des%geom_grid_file), 'nzo_zstar', tmp(1), domain=des%Domain%mpp_domain)
   des%nzo_zstar = tmp(1)
   
-  if (des%nzo_zstar /= src%nzo_zstar) & 
-    call MOM_error(FATAL, "target nzo_zstar /= source nzo_zstar! Reset maximum depth in target grid MOM_input file and re-run soca gridgen")
+  if (des%nzo_zstar /= src%nzo_zstar) call fckit_exception%abort(&
+     "target nzo_zstar /= source nzo_zstar! Reset maximum depth in target grid MOM_input file and re-run soca gridgen")
+
 
   if (allocated(src%h_zstar)) deallocate(src%h_zstar)
   allocate(src%h_zstar(src%isd:src%ied,src%jsd:src%jed,1:src%nzo_zstar))
@@ -65,13 +66,11 @@ subroutine soca_convertstate_setup(self, src, des, hocn, hocn2)
 
   call fms_io_exit()  
 
-  !
   allocate(self%hocn_src(src%isd:src%ied,src%jsd:src%jed,1:src%nzo))
   allocate(self%hocn_des(des%isd:des%ied,des%jsd:des%jed,1:des%nzo))
 
   ! set hocn for target grid
   hocn2%val = des%h
-  !
   self%hocn_src = hocn%val
   self%hocn_des = hocn2%val
 
@@ -110,7 +109,6 @@ subroutine soca_convertstate_change_resol(self, field_src, field_des, geom_src, 
   real(kind=kind_real), dimension(geom_src%isd:geom_src%ied,geom_src%jsd:geom_src%jed,1:geom_src%nzo_zstar) :: h_new1
   real(kind=kind_real), dimension(geom_des%isd:geom_des%ied,geom_des%jsd:geom_des%jed,1:geom_des%nzo_zstar) :: h_new2
 
-  !
   PI_180=atan(1.0d0)/45.0d0
 
   ! Indices for compute, data, and global domain for source
@@ -184,9 +182,9 @@ subroutine soca_convertstate_change_resol(self, field_src, field_des, geom_src, 
   end if ! field_src%nz > 1
   call mpp_update_domains(tmp, geom_src%Domain%mpp_domain)
 
-  ! horizontal interp: convert src field to target field at zstar coord 
+  ! Convert src field to target field at zstar coord 
   call mpp_global_field (geom_src%Domain%mpp_domain, tmp(:,:,1:nz_), gdata(:,:,1:nz_) )
-  call soca_hinterp(geom_des,tmp2(:,:,1:nz_),gdata,mask_(:,:),nz_,missing,lon_in,lat_in,field_des%lon,field_des%lat) !,lon_out,lat_out)
+  call soca_hinterp(geom_des,tmp2(:,:,1:nz_),gdata,mask_(:,:),nz_,missing,lon_in,lat_in,field_des%lon,field_des%lat)
 
   call mpp_update_domains(tmp2, geom_des%Domain%mpp_domain)
 
@@ -244,7 +242,7 @@ subroutine soca_hinterp(self,field2,gdata,mask2,nz,missing,lon_in,lat_in,lon_out
   !local variables
   integer :: i, j, k, isg, ieg, jsg, jeg, jeg1
   integer :: isc2, iec2, jsc2, jec2, npoints 
-  real(kind=kind_real) :: roundoff = 1.e-16
+  real(kind=kind_real) :: roundoff = 1.e-5
   real(kind=kind_real) :: PI_180
   type(horiz_interp_type) :: Interp
   type(ocean_grid_type) :: grid 
@@ -254,17 +252,15 @@ subroutine soca_hinterp(self,field2,gdata,mask2,nz,missing,lon_in,lat_in,lon_out
   real(kind=kind_real) :: max_lat,min_lat, pole, npole, varavg
   real(kind=kind_real), dimension(:), allocatable :: last_row, lonh, lath
   logical :: add_np, add_sp 
-  !
+  
   PI_180=atan(1.0d0)/45.0d0 
-!  first_call = .true.
-  !
+  
   isg = 1; jsg = 1;
   ieg = size(gdata,1); jeg = size(gdata,2)
 
   ! Indices for compute domain for regional model
   isc2 = self%isc ; iec2 = self%iec ; jsc2 = self%jsc ; jec2 = self%jec
 
-  !
   grid%isc = self%isc ; grid%iec = self%iec ; grid%jsc = self%jsc ; grid%jec = self%jec
   grid%isd = self%isd ; grid%ied = self%ied ; grid%jsd = self%jsd ; grid%jed = self%jed
   grid%Domain => self%Domain
@@ -358,7 +354,7 @@ subroutine soca_hinterp(self,field2,gdata,mask2,nz,missing,lon_in,lat_in,lon_out
     if (k==1) call horiz_interp_new(Interp, lon_inp(:,:)*PI_180, lat_inp(:,:)*PI_180, lon_out(isc2:iec2,jsc2:jec2)*PI_180, &
        lat_out(isc2:iec2,jsc2:jec2)*PI_180, interp_method='bilinear', src_modulo=.true., mask_in=mask_in_)
 
-    call horiz_interp(Interp, tr_inp, tr_out(isc2:iec2,jsc2:jec2), mask_in=mask_in_, missing_value=missing, missing_permit=3)!,new_missing_handle=.true.)
+    call horiz_interp(Interp, tr_inp, tr_out(isc2:iec2,jsc2:jec2), mask_in=mask_in_, missing_value=missing, missing_permit=3)
 
     mask_out_ = 1.d0 ; fill = 0.d0 ; good = 0.d0
     npoints = 0 ; varavg = 0.d0

@@ -1,5 +1,5 @@
 inputVariables:
-  variables: &soca_vars [ssh, tocn, socn, hocn, cicen]
+  variables: &soca_vars [ssh, tocn, socn, uocn, vocn, hocn, cicen]
 inputresolution:
   num_ice_cat: 5
   num_ice_lev: 4
