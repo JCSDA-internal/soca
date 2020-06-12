@@ -14,7 +14,6 @@ background:
   ice_filename: ice_model.res.nc
 
 bump:
-  prefix: soca_bump_loc
   datadir: ./bump
   method: loc
   strategy: common
@@ -30,3 +29,6 @@ bump:
   forced_radii: 1
   rh: 2500000.0
   rv: 500
+  grids:
+  - prefix: soca_bump_loc
+    varname: [socn, tocn, cicen_01, cicen_02, cicen_03, cicen_04, cicen_05, hicen_01, hicen_02, hicen_03, hicen_04, hicen_05, ssh]

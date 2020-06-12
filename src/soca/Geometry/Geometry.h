@@ -9,9 +9,13 @@
 #define SOCA_GEOMETRY_GEOMETRY_H_
 
 #include <fstream>
+#include <memory>
 #include <ostream>
 #include <string>
 #include <vector>
+
+#include "atlas/field.h"
+#include "atlas/functionspace.h"
 
 #include "eckit/config/Configuration.h"
 #include "eckit/config/LocalConfiguration.h"
@@ -55,6 +59,11 @@ namespace soca {
         return conf.getBool("notocean.init", false);
       }
 
+      atlas::FunctionSpace * atlasFunctionSpace() const
+        {return atlasFunctionSpace_.get();}
+      atlas::FieldSet * atlasFieldSet() const
+        {return atlasFieldSet_.get();}
+
    private:
       Geometry & operator=(const Geometry &);
       void print(std::ostream &) const;
@@ -63,6 +72,8 @@ namespace soca {
       eckit::LocalConfiguration atmconf_;
       bool initatm_;
       FmsInput fmsinput_;
+      std::unique_ptr<atlas::functionspace::PointCloud> atlasFunctionSpace_;
+      std::unique_ptr<atlas::FieldSet> atlasFieldSet_;
   };
   // -----------------------------------------------------------------------------
 

@@ -8,8 +8,8 @@
 #ifndef SOCA_INCREMENT_INCREMENTFORTRAN_H_
 #define SOCA_INCREMENT_INCREMENTFORTRAN_H_
 
+#include "atlas/field.h"
 #include "soca/Fortran.h"
-
 #include "oops/base/Variables.h"
 
 // Forward declarations
@@ -50,13 +50,21 @@ namespace soca {
     void soca_increment_write_file_f90(const F90flds &,
                                    const eckit::Configuration * const &,
                                    const util::DateTime * const *);
-    void soca_increment_ug_coord_f90(const F90flds &, const int &);
-    void soca_increment_field_to_ug_f90(const F90flds &,
-                                    const int &,
-                                    const int &);
-    void soca_increment_field_from_ug_f90(const F90flds &,
-                                      const int &,
-                                      const int &);
+    void soca_increment_set_atlas_f90(const F90flds &,
+                                  const F90geom &,
+                                  const oops::Variables &,
+                                  const util::DateTime * const *,
+                                  atlas::field::FieldSetImpl *);
+    void soca_increment_to_atlas_f90(const F90flds &,
+                                 const F90geom &,
+                                 const oops::Variables &,
+                                 const util::DateTime * const *,
+                                 atlas::field::FieldSetImpl *);
+    void soca_increment_from_atlas_f90(const F90flds &,
+                                   const F90geom &,
+                                   const oops::Variables &,
+                                   const util::DateTime * const *,
+                                   atlas::field::FieldSetImpl *);
     void soca_increment_gpnorm_f90(const F90flds &, const int &, double &);
     void soca_increment_getpoint_f90(const F90flds &, const F90iter &, double &,
                            const int &);

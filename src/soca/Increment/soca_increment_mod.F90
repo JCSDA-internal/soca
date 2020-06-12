@@ -5,14 +5,15 @@
 
 module soca_increment_mod
 
+use atlas_module
 use soca_fields_mod
+use soca_geom_mod, only : soca_geom
 use soca_geom_iter_mod, only : soca_geom_iter
 use kinds, only: kind_real
 use fckit_configuration_module, only: fckit_configuration
 use random_mod, only: normal_distribution
-use unstructured_grid_mod, only: unstructured_grid, &
-                                 allocate_unstructured_grid_coord, &
-                                 allocate_unstructured_grid_field
+use datetime_mod
+use oops_variables_mod, only: oops_variables
 
 implicit none
 private
@@ -21,18 +22,18 @@ type, public, extends(soca_fields) :: soca_increment
 
 contains
   ! get/set a single point
-  procedure :: getpoint  => soca_increment_getpoint
-  procedure :: setpoint  => soca_increment_setpoint
+  procedure :: getpoint   => soca_increment_getpoint
+  procedure :: setpoint   => soca_increment_setpoint
 
-  ! unstructured grid I/O
-  procedure :: from_ug   => soca_increment_from_ug
-  procedure :: to_ug     => soca_increment_to_ug
-  procedure :: ug_coord  => soca_increment_ug_coord
+  ! atlas
+  procedure :: set_atlas  => soca_increment_set_atlas
+  procedure :: to_atlas   => soca_increment_to_atlas
+  procedure :: from_atlas => soca_increment_from_atlas
 
   ! misc
-  procedure :: dirac     => soca_increment_dirac
-  procedure :: random    => soca_increment_random
-  procedure :: schur     => soca_increment_schur
+  procedure :: dirac      => soca_increment_dirac
+  procedure :: random     => soca_increment_random
+  procedure :: schur      => soca_increment_schur
 end type
 
 
@@ -45,7 +46,7 @@ subroutine soca_increment_random(self)
   integer, parameter :: rseed = 1 ! constant for reproducability of tests
     ! NOTE: random seeds are not quite working the way expected,
     !  it is only set the first time normal_distribution() is called with a seed
-  integer :: z, i
+  integer :: jz, i
 
   type(soca_field), pointer :: field
 
@@ -62,8 +63,8 @@ subroutine soca_increment_random(self)
   do i=1,size(self%fields)
     field => self%fields(i)
     if (.not. associated(field%mask) ) cycle
-    do z=1,field%nz
-      field%val(:,:,z) = field%val(:,:,z) * field%mask(:,:)
+    do jz=1,field%nz
+      field%val(:,:,jz) = field%val(:,:,jz) * field%mask(:,:)
     end do
   end do
 
@@ -144,7 +145,7 @@ subroutine soca_increment_dirac(self, f_conf)
   type(fckit_configuration), value, intent(in):: f_conf   !< Configuration
 
   integer :: isc, iec, jsc, jec
-  integer :: ndir,n, z
+  integer :: ndir,n, jz
   integer,allocatable :: ixdir(:),iydir(:),izdir(:),ifdir(:)
 
   type(soca_field), pointer :: field
@@ -195,8 +196,8 @@ subroutine soca_increment_dirac(self, f_conf)
       ! TODO print error that out of range
     end select
     if (associated(field)) then
-      z = 1
-      if (field%nz > 1) z = izdir(n)
+      jz = 1
+      if (field%nz > 1) jz = izdir(n)
       field%val(ixdir(n),iydir(n),izdir(n)) = 1.0
     end if
   end do
@@ -204,225 +205,226 @@ end subroutine soca_increment_dirac
 
 
 ! ------------------------------------------------------------------------------
-! TODO remove hardcoded number of variables
-subroutine ug_size(self, ug)
-  class(soca_increment),      intent(in) :: self
-  type(unstructured_grid), intent(inout) :: ug
+subroutine soca_increment_set_atlas(self, geom, vars, vdate, afieldset)
+  class(soca_increment), intent(in)      :: self
+  type(soca_geom),      intent(in)       :: geom
+  type(oops_variables),    intent(in)    :: vars
+  type(datetime),          intent(in)    :: vdate
+  type(atlas_fieldset),    intent(inout) :: afieldset
 
-  integer :: isc, iec, jsc, jec
-  integer :: igrid
-
-  ! Indices for compute domain (no halo)
-  isc = self%geom%isc ; iec = self%geom%iec
-  jsc = self%geom%jsc ; jec = self%geom%jec
-
-  ! Set number of grids
-  if (ug%colocated==1) then
-     ! Colocated
-     ug%ngrid = 1
-  else
-     ! Not colocated
-     ug%ngrid = 2
-  end if
-
-  ! Allocate grid instances
-  if (.not.allocated(ug%grid)) allocate(ug%grid(ug%ngrid))
-
-  do igrid=1,ug%ngrid
-     ! Set local number of points
-     ug%grid(igrid)%nmga = (iec - isc + 1) * (jec - jsc + 1 )
-
-     ! Set number of timeslots
-     ug%grid(igrid)%nts = ug%nts
-  end do
-
-  if (ug%colocated==1) then
-     ! Set number of levels
-     ug%grid(1)%nl0 = self%geom%nzo
-
-     ! Set number of variables
-     ug%grid(1)%nv = self%geom%ncat*2 + 3
-  else
-     ! Set number of levels
-     ug%grid(1)%nl0 = self%geom%nzo
-     ug%grid(2)%nl0 = 1
-
-     ! Set number of variables
-     ug%grid(1)%nv = 2
-     ug%grid(2)%nv = self%geom%ncat*2 + 1
-  end if
-
-end subroutine ug_size
-
-! ------------------------------------------------------------------------------
-
-subroutine soca_increment_ug_coord(self, ug)
-  class(soca_increment),      intent(in) :: self
-  type(unstructured_grid), intent(inout) :: ug
-
-  integer :: igrid
-  integer :: isc, iec, jsc, jec, jz
-
-  ! Indices for compute domain (no halo)
-  isc = self%geom%isc ; iec = self%geom%iec
-  jsc = self%geom%jsc ; jec = self%geom%jec
-
-  ! Define size
-  call ug_size(self, ug)
-
-  ! Allocate unstructured grid coordinates
-  call allocate_unstructured_grid_coord(ug)
-
-  ! Define coordinates for 3D grid
-  igrid = 1
-  ug%grid(igrid)%lon = &
-       &reshape( self%geom%lon(isc:iec, jsc:jec), (/ug%grid(igrid)%nmga/) )
-  ug%grid(igrid)%lat = &
-       &reshape( self%geom%lat(isc:iec, jsc:jec), (/ug%grid(igrid)%nmga/) )
-  ug%grid(igrid)%area = &
-       &reshape( self%geom%cell_area(isc:iec, jsc:jec), (/ug%grid(igrid)%nmga/) )
-  do jz = 1, ug%grid(igrid)%nl0
-     ug%grid(igrid)%vunit(:,jz) = real(jz)
-     ug%grid(igrid)%lmask(:,jz) = reshape( self%geom%mask2d(isc:iec, jsc:jec)==1, (/ug%grid(igrid)%nmga/) )
-  end do
-
-  if (ug%colocated==0) then
-     ! Define coordinates for 2D grid
-     igrid = 2
-     ug%grid(igrid)%lon = &
-          &reshape( self%geom%lon(isc:iec, jsc:jec), (/ug%grid(igrid)%nmga/) )
-     ug%grid(igrid)%lat = &
-          &reshape( self%geom%lat(isc:iec, jsc:jec), (/ug%grid(igrid)%nmga/) )
-     ug%grid(igrid)%area = &
-          &reshape( self%geom%cell_area(isc:iec, jsc:jec), (/ug%grid(igrid)%nmga/) )
-     ug%grid(igrid)%vunit(:,1) = 0.0_kind_real
-     ug%grid(igrid)%lmask(:,1) = reshape( self%geom%mask2d(isc:iec, jsc:jec)==1, (/ug%grid(igrid)%nmga/) )
-  end if
-
-end subroutine soca_increment_ug_coord
-
-
-! ------------------------------------------------------------------------------
-! TODO generalize to use all vars
-subroutine soca_increment_to_ug(self, ug, its)
-  class(soca_increment),      intent(in) :: self
-  type(unstructured_grid), intent(inout) :: ug
-  integer,                    intent(in) :: its
-
-  integer :: isc, iec, jsc, jec, jk, igrid
-  integer :: ni, nj, i, z
-
+  integer :: jvar, i, jz
+  logical :: var_found
+  character(len=20) :: sdate
+  character(len=1024) :: fieldname
   type(soca_field), pointer :: field
+  type(atlas_field) :: afield
 
-  ! Indices for compute domain (no halo)
-  isc = self%geom%isc ; iec = self%geom%iec
-  jsc = self%geom%jsc ; jec = self%geom%jec
+  ! Set date
+  call datetime_to_string(vdate,sdate)
 
-  ni = iec - isc + 1
-  nj = jec - jsc + 1
+  do jvar = 1,vars%nvars()
+    var_found = .false.
+    do i=1,size(self%fields)
+      field => self%fields(i)
+      if (trim(vars%variable(jvar))==trim(field%name)) then
+        select case (trim(field%name))
+        case ('hicen', 'cicen')
+          do jz=1,field%nz
+            ! Get or create field
+            write(fieldname,'(a,a,i2.2,a,a)') trim(vars%variable(jvar)),'_',jz,'_',sdate
+            if (afieldset%has_field(trim(fieldname))) then
+              ! Get field
+              afield = afieldset%field(trim(fieldname))
+            else
+              ! Create field
+              afield = geom%afunctionspace%create_field(name=trim(fieldname),kind=atlas_real(kind_real),levels=0)
 
-  ! Allocate unstructured grid field
-  call ug_size(self, ug)
-  call allocate_unstructured_grid_field(ug)
+              ! Add field
+              call afieldset%add(afield)
+            end if
 
-  ! Copy 3D field
-  igrid = 1
-  jk = 1
-  ug%grid(igrid)%fld(:,:,:,its) = 0.0_kind_real
-  do i=1,size(self%fields)
-    field => self%fields(i)
-    select case(field%name)
-    case ('tocn','socn')
-      do z = 1, field%nz
-        ug%grid(igrid)%fld(1:ni*nj, z, jk, its) = &
-          &reshape( field%val(isc:iec, jsc:jec,z), (/ug%grid(igrid)%nmga/) )
-      end do
-      jk = jk + 1
-    end select
+            ! Release pointer
+            call afield%final()
+          end do
+        case default
+          ! Get or create field
+          fieldname = trim(vars%variable(jvar))//'_'//sdate
+          if (afieldset%has_field(trim(fieldname))) then
+            ! Get field
+            afield = afieldset%field(trim(fieldname))
+          else
+            ! Create field
+            afield = geom%afunctionspace%create_field(name=trim(fieldname),kind=atlas_real(kind_real),levels=field%nz)
+
+            ! Add field
+            call afieldset%add(afield)
+          end if
+
+          ! Release pointer
+          call afield%final()
+        end select
+
+        ! Set flag
+        var_found = .true.
+        exit
+      end if
+    end do
+    if (.not.var_found) call abor1_ftn('variable '//trim(vars%variable(jvar))//' not found in increment')
   end do
 
-  if (ug%colocated==1) then
-     ! 2D variables copied as 3D variables
-     igrid = 1
-  else
-     ! 2D variables copied as 2D variables
-     igrid = 2
-     jk = 1
-  end if
+end subroutine soca_increment_set_atlas
 
-  ! 2d fields
-  do i=1,size(self%fields)
-    field => self%fields(i)
-    select case(field%name)
-    case ('hicen', 'cicen', 'ssh')
-      do z = 1, field%nz
-        ug%grid(igrid)%fld(1:ni*nj, 1, jk, its) = &
-            &reshape( field%val(isc:iec, jsc:jec, z), (/ug%grid(igrid)%nmga/) )
-        jk = jk + 1
-      end do
-    end select
-  end do
-
-end subroutine soca_increment_to_ug
 
 ! ------------------------------------------------------------------------------
-! Generalize variable names used
-subroutine soca_increment_from_ug(self, ug, its)
+subroutine soca_increment_to_atlas(self, geom, vars, vdate, afieldset)
+  class(soca_increment), intent(in)      :: self
+  type(soca_geom),      intent(in)       :: geom
+  type(oops_variables),    intent(in)    :: vars
+  type(datetime),          intent(in)    :: vdate
+  type(atlas_fieldset),    intent(inout) :: afieldset
+
+  integer :: jvar, i, jz
+  real(kind=kind_real), pointer :: real_ptr_1(:), real_ptr_2(:,:)
+  logical :: var_found
+  character(len=20) :: sdate
+  character(len=1024) :: fieldname
+  type(soca_field), pointer :: field
+  type(atlas_field) :: afield
+
+  ! Set date
+  call datetime_to_string(vdate,sdate)
+
+  do jvar = 1,vars%nvars()
+    var_found = .false.
+    do i=1,size(self%fields)
+      field => self%fields(i)
+      if (trim(vars%variable(jvar))==trim(field%name)) then
+        select case (trim(field%name))
+        case ('hicen', 'cicen')
+          do jz=1,field%nz
+            ! Get or create field
+            write(fieldname,'(a,a,i2.2,a,a)') trim(vars%variable(jvar)),'_',jz,'_',sdate
+            if (afieldset%has_field(trim(fieldname))) then
+              ! Get field
+              afield = afieldset%field(trim(fieldname))
+            else
+              ! Create field
+              afield = geom%afunctionspace%create_field(name=trim(fieldname),kind=atlas_real(kind_real),levels=0)
+
+              ! Add field
+              call afieldset%add(afield)
+            end if
+
+            ! Copy data
+            call afield%data(real_ptr_1)
+            real_ptr_1 = pack(field%val(geom%isc:geom%iec,geom%jsc:geom%jec,jz),.true.)
+
+            ! Release pointer
+            call afield%final()
+          end do
+        case default
+          ! Get or create field
+          fieldname = trim(vars%variable(jvar))//'_'//sdate
+          if (afieldset%has_field(trim(fieldname))) then
+            ! Get field
+            afield = afieldset%field(trim(fieldname))
+          else
+            ! Create field
+            afield = geom%afunctionspace%create_field(name=trim(fieldname),kind=atlas_real(kind_real),levels=field%nz)
+
+            ! Add field
+            call afieldset%add(afield)
+          end if
+
+          ! Copy data
+          call afield%data(real_ptr_2)
+          do jz=1,field%nz
+            real_ptr_2(jz,:) = pack(field%val(geom%isc:geom%iec,geom%jsc:geom%jec,jz),.true.)
+          end do
+
+          ! Release pointer
+          call afield%final()
+        end select
+
+        ! Set flag
+        var_found = .true.
+        exit
+      end if
+    end do
+  if (.not.var_found) call abor1_ftn('variable '//trim(vars%variable(jvar))//' not found in increment')
+end do
+
+end subroutine soca_increment_to_atlas
+
+
+! ------------------------------------------------------------------------------
+subroutine soca_increment_from_atlas(self, geom, vars, vdate, afieldset)
   class(soca_increment), intent(inout) :: self
-  type(unstructured_grid),  intent(in) :: ug
-  integer,                  intent(in) :: its
+  type(soca_geom),      intent(in)     :: geom
+  type(oops_variables),    intent(in)  :: vars
+  type(datetime),          intent(in)  :: vdate
+  type(atlas_fieldset),    intent(in)  :: afieldset
 
-  integer :: isc, iec, jsc, jec, jk, igrid
-  integer :: ni, nj, i, z
+  integer :: jvar, i, jz
+  real(kind=kind_real), pointer :: real_ptr_1(:), real_ptr_2(:,:)
+  logical :: umask(geom%isc:geom%iec,geom%jsc:geom%jec),var_found
+  character(len=20) :: sdate
+  character(len=1024) :: fieldname
   type(soca_field), pointer :: field
+  type(atlas_field) :: afield
 
-  ! Indices for compute domain (no halo)
-  isc = self%geom%isc ; iec = self%geom%iec
-  jsc = self%geom%jsc ; jec = self%geom%jec
+  ! Set date
+  call datetime_to_string(vdate,sdate)
 
-  ni = iec - isc + 1
-  nj = jec - jsc + 1
-
-  igrid = 1
-  jk = 1
+  ! Initialization
   call self%zeros()
+  umask = .true.
 
-  ! 3d fields
-  do i=1,size(self%fields)
-    field => self%fields(i)
-    select case(field%name)
-    case ("tocn", "socn")
-      do z = 1, field%nz
-        field%val(isc:iec, jsc:jec,z) = &
-          &reshape( ug%grid(igrid)%fld(1:ni*nj, z, jk, its), (/ni, nj/) )
-      end do
-      jk = jk + 1
-    end select
+  do jvar = 1,vars%nvars()
+    var_found = .false.
+    do i=1,size(self%fields)
+      field => self%fields(i)
+      if (trim(vars%variable(jvar))==trim(field%name)) then
+        select case (trim(field%name))
+        case ('hicen', 'cicen')
+          do jz=1,field%nz
+            ! Get field
+            write(fieldname,'(a,a,i2.2,a,a)') trim(vars%variable(jvar)),'_',jz,'_',sdate
+            afield = afieldset%field(trim(fieldname))
+
+            ! Copy data
+            call afield%data(real_ptr_1)
+            field%val(geom%isc:geom%iec,geom%jsc:geom%jec,jz) = unpack(real_ptr_1, &
+          & umask,field%val(geom%isc:geom%iec,geom%jsc:geom%jec,jz))
+
+            ! Release pointer
+            call afield%final()
+          end do
+        case default
+          ! Get field
+          fieldname = trim(vars%variable(jvar))//'_'//sdate
+          afield = afieldset%field(trim(fieldname))
+
+          ! Copy data
+          call afield%data(real_ptr_2)
+          do jz=1,field%nz
+            field%val(geom%isc:geom%iec,geom%jsc:geom%jec,jz) = unpack(real_ptr_2(jz,:), &
+          & umask,field%val(geom%isc:geom%iec,geom%jsc:geom%jec,jz))
+          end do
+
+          ! Release pointer
+          call afield%final()
+        end select
+
+        ! Set flag
+        var_found = .true.
+        exit
+      end if
+    end do
+    if (.not.var_found) call abor1_ftn('variable '//trim(vars%variable(jvar))//' not found in increment')
   end do
 
-  if (ug%colocated==1) then
-     ! 2D variables copied as 3D variables
-     igrid = 1
-  else
-     ! 2D variables copied as 2D variables
-     igrid = 2
-     jk = 1
-  end if
-
-  ! 2d fields
-  do i=1,size(self%fields)
-    field => self%fields(i)
-    select case(field%name)
-    case ('hicen', 'cicen', 'ssh')
-      do z = 1, field%nz
-        field%val(isc:iec, jsc:jec, z) = &
-          &reshape( ug%grid(igrid)%fld(1:ni*nj, 1, jk, its), (/ni, nj/) )
-        jk = jk + 1
-      end do
-    end select
-  end do
-
-end subroutine soca_increment_from_ug
+end subroutine soca_increment_from_atlas
 
 
 end module soca_increment_mod

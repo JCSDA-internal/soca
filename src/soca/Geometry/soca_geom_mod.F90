@@ -6,6 +6,7 @@
 
 module soca_geom_mod
 
+use atlas_module
 use MOM_domains, only : MOM_domain_type, MOM_infra_init
 use MOM_io,      only : io_infra_init
 use soca_mom6, only: soca_mom6_config, soca_mom6_init, soca_ice_column, &
@@ -54,6 +55,8 @@ type :: soca_geom
     logical :: save_local_domain = .false. ! If true, save the local geometry for each pe.
     character(len=:), allocatable :: geom_grid_file
     type(fckit_mpi_comm) :: f_comm
+    type(atlas_functionspace) :: afunctionspace
+    type(atlas_fieldset) :: afieldset
 
     contains
     procedure :: init => geom_init
@@ -62,9 +65,11 @@ type :: soca_geom
     procedure :: get_rossby_radius => geom_rossby_radius
     procedure :: gridgen => geom_gridgen
     procedure :: thickness2depth => geom_thickness2depth
-    procedure :: struct2unstruct => geom_struct2unstruct
-    procedure :: unstruct2struct => geom_unstruct2struct
+    procedure :: struct2atlas => geom_struct2atlas
+    procedure :: atlas2struct => geom_atlas2struct
     procedure :: write => geom_write
+    procedure :: set_atlas_lonlat => geom_set_atlas_lonlat
+    procedure :: fill_atlas_fieldset => geom_fill_atlas_fieldset
 end type soca_geom
 
 ! ------------------------------------------------------------------------------
@@ -538,35 +543,100 @@ end subroutine geom_thickness2depth
 
 ! ------------------------------------------------------------------------------
 
-subroutine geom_struct2unstruct(self, dx_struct, dx_unstruct)
-  class(soca_geom),                  intent(in ) :: self
-  real(kind=kind_real),              intent(in ) :: dx_struct(:,:)
-  real(kind=kind_real), allocatable, intent(out) :: dx_unstruct(:,:,:,:)
+subroutine geom_struct2atlas(self, dx_struct, dx_atlas)
+  class(soca_geom),     intent(in ) :: self
+  real(kind=kind_real), intent(in ) :: dx_struct(:,:)
+  type(atlas_fieldset), intent(out) :: dx_atlas
 
-  integer :: nc0a
+  real(kind_real), pointer :: real_ptr(:)
+  type(atlas_field) :: afield
 
-  nc0a = (self%iecl - self%iscl + 1) * (self%jecl - self%jscl + 1 )
-  allocate(dx_unstruct(nc0a,1,1,1))
-  dx_unstruct = &
-  &  reshape(dx_struct(self%iscl:self%iecl, self%jscl:self%jecl), (/nc0a,1,1,1/))
+  dx_atlas = atlas_fieldset()
+  afield = self%afunctionspace%create_field('var_00',kind=atlas_real(kind_real),levels=0)
+  call dx_atlas%add(afield)
+  call afield%data(real_ptr)
+  real_ptr = pack(dx_struct(self%iscl:self%iecl, self%jscl:self%jecl),.true.)
+  call afield%final()
+   
+end subroutine geom_struct2atlas
 
-end subroutine geom_struct2unstruct
+! ------------------------------------------------------------------------------
+
+subroutine geom_atlas2struct(self, dx_struct, dx_atlas)
+  class(soca_geom),     intent(in   ) :: self
+  real(kind=kind_real), intent(inout) :: dx_struct(:,:)
+  type(atlas_fieldset), intent(inout) :: dx_atlas
+
+  real(kind_real), pointer :: real_ptr(:)
+  logical :: umask(self%iscl:self%iecl,self%jscl:self%jecl)
+  type(atlas_field) :: afield
+
+  umask = .true.
+  afield = dx_atlas%field('var_00')
+  call afield%data(real_ptr)
+  dx_struct(self%iscl:self%iecl, self%jscl:self%jecl) = unpack(real_ptr,umask,dx_struct(self%iscl:self%iecl, self%jscl:self%jecl))
+  call afield%final()
+
+end subroutine geom_atlas2struct
+
+! --------------------------------------------------------------------------------------------------
+
+subroutine geom_set_atlas_lonlat(self, afieldset)
+  class(soca_geom),  intent(inout) :: self
+  type(atlas_fieldset), intent(inout) :: afieldset
+
+  real(kind_real), pointer :: real_ptr(:,:)
+  type(atlas_field) :: afield
+
+  ! Create lon/lat field
+  afield = atlas_field(name="lonlat", kind=atlas_real(kind_real), shape=(/2,(self%iec-self%isc+1)*(self%jec-self%jsc+1)/))
+  call afield%data(real_ptr)
+  real_ptr(1,:) = pack(self%lon(self%isc:self%iec,self%jsc:self%jec),.true.)
+  real_ptr(2,:) = pack(self%lat(self%isc:self%iec,self%jsc:self%jec),.true.)
+  call afieldset%add(afield)
+
+end subroutine geom_set_atlas_lonlat
+
+! --------------------------------------------------------------------------------------------------
+
+subroutine geom_fill_atlas_fieldset(self, afieldset)
+  class(soca_geom),  intent(inout) :: self
+  type(atlas_fieldset), intent(inout) :: afieldset
+
+  integer :: i, jz, n
+  integer, pointer :: int_ptr_2(:,:)
+  real(kind=kind_real), pointer :: real_ptr_1(:), real_ptr_2(:,:)
+  type(atlas_field) :: afield
+
+  ! Add area
+  afield = self%afunctionspace%create_field(name='area', kind=atlas_real(kind_real), levels=0)
+  call afield%data(real_ptr_1)
+  real_ptr_1 = pack(self%cell_area(self%isc:self%iec,self%jsc:self%jec),.true.)
+  call afieldset%add(afield)
+  call afield%final()
+
+  ! Add vertical unit
+  afield = self%afunctionspace%create_field(name='vunit', kind=atlas_real(kind_real), levels=self%nzo)
+  call afield%data(real_ptr_2)
+  do jz=1,self%nzo
+    real_ptr_2(jz,:) = real(jz, kind_real)
+  end do
+  call afieldset%add(afield)
+  call afield%final()
+
+  ! Add geographical mask
+  afield = self%afunctionspace%create_field(name='gmask', kind=atlas_integer(kind(0)), levels=self%nzo)
+  call afield%data(int_ptr_2)
+  do jz=1,self%nzo
+    int_ptr_2(jz,:) = int(pack(self%mask2d(self%isc:self%iec,self%jsc:self%jec),.true.))
+  end do
+  call afieldset%add(afield)
+  call afield%final()
+
+end subroutine geom_fill_atlas_fieldset
+
 
 ! ------------------------------------------------------------------------------
 
-subroutine geom_unstruct2struct(self, dx_struct, dx_unstruct)
-  class(soca_geom),                  intent(in   ) :: self
-  real(kind=kind_real),              intent(inout) :: dx_struct(:,:)
-  real(kind=kind_real), allocatable, intent(inout) :: dx_unstruct(:,:,:,:)
-
-  dx_struct(self%iscl:self%iecl, self%jscl:self%jecl) = &
-  & reshape(dx_unstruct, (/size(dx_struct(self%iscl:self%iecl, self%jscl:self%jecl),1), &
-  &                        size(dx_struct(self%iscl:self%iecl, self%jscl:self%jecl),2)/))
-
-  deallocate(dx_unstruct)
-
-end subroutine geom_unstruct2struct
-
-! ------------------------------------------------------------------------------
 
 end module soca_geom_mod
