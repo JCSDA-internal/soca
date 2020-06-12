@@ -588,3 +588,13 @@ FLUXCONST = 0.5                 !   [m day-1]
 ! === module MOM_restart ===
 
 ! === module MOM_file_parser ===
+
+! === module sponge ===
+!SPONGE = True
+!SPONGE_CONFIG = file
+!SPONGE_DAMPING_FILE
+!SPONGE_STATE_FILE
+!SPONGE_PTEMP_VAR
+!SPONGE_SALT_VAR
+!SPONGE_ETA_VAR
+!SPONGE_IDAMP_VAR
