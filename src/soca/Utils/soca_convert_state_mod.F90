@@ -126,8 +126,11 @@ subroutine soca_convertstate_change_resol(self, field_src, field_des, geom_src, 
   ! Set grid thickness based on zstar level for src & target grid 
   if (field_des%io_file=="ocn".or.field_des%io_file=='ice') then
     mask_ = field_des%mask 
-    h_new1 = geom_src%h_zstar 
-    h_new2 = geom_des%h_zstar  
+    h_new1(isc1:iec1,jsc1:jec1,1:geom_src%nzo_zstar) = geom_src%h_zstar(isc1:iec1,jsc1:jec1,1:geom_src%nzo_zstar)
+    h_new2(isc2:iec2,jsc2:jec2,1:geom_des%nzo_zstar) = geom_des%h_zstar(isc2:iec2,jsc2:jec2,1:geom_des%nzo_zstar)
+    call mpp_update_domains(mask_, geom_des%Domain%mpp_domain)
+    call mpp_update_domains(h_new1, geom_src%Domain%mpp_domain)
+    call mpp_update_domains(h_new2, geom_des%Domain%mpp_domain)
   else
     mask_ = 1.d0 
   end if 
