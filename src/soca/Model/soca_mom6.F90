@@ -96,6 +96,7 @@ type soca_mom6_config
   type(MOM_restart_CS),     pointer :: restart_CSp !< A pointer to the restart control structure
   type(surface_forcing_CS), pointer :: surface_forcing_CSp => NULL()
   type(fckit_mpi_comm) :: f_comm
+  type(param_file_type) :: param_file
 end type soca_mom6_config
 
 contains
@@ -226,6 +227,7 @@ subroutine soca_mom6_init(mom6_config, partial_init)
                               US=mom6_config%scaling,&
                               C_p=mom6_config%fluxes%C_p)
 
+  mom6_config%param_file = param_file
   ! Exit here for partial initialization
   if (a_partial_init) return
 

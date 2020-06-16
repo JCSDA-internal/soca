@@ -21,10 +21,13 @@ use fms_io_mod, only : fms_io_init, fms_io_exit, &
                        restore_state, query_initialized, &
                        free_restart_type, save_restart
 use mpp_domains_mod, only : mpp_get_compute_domain, mpp_get_data_domain, &
-                            mpp_update_domains
+                            mpp_get_global_domain, mpp_update_domains
 use fms_mod,         only : write_data, read_data
-use fms_io_mod,      only : fms_io_init, fms_io_exit
+use fms_io_mod,      only : fms_io_init, fms_io_exit 
 use fckit_geometry_module, only: sphere_distance
+use MOM_diag_remap,  only : diag_remap_ctrl, diag_remap_init, diag_remap_configure_axes, &
+                            diag_remap_end, diag_remap_update 
+use MOM_EOS,         only : EOS_type
 
 implicit none
 
@@ -36,11 +39,14 @@ public :: soca_geom, &
 type :: soca_geom
     type(MOM_domain_type), pointer :: Domain !< Ocean model domain
     type(soca_ice_column) :: ice_column !< Sea-ice geometry
-    integer :: nzo, nzi, nzs, ncat
+    integer :: nzo, nzo_zstar, nzi, nzs, ncat
     integer :: isc, iec, jsc, jec  !< indices of compute domain
     integer :: isd, ied, jsd, jed  !< indices of data domain
+    integer :: isg, ieg, jsg, jeg  !< indices of global domain
     integer :: iscl, iecl, jscl, jecl  !< indices of local compute domain
     integer :: isdl, iedl, jsdl, jedl  !< indices of local data domain
+    real(kind=kind_real), allocatable, dimension(:)   :: lonh, lath
+    real(kind=kind_real), allocatable, dimension(:)   :: lonq, latq   
     real(kind=kind_real), allocatable, dimension(:,:) :: lon, lat !< Tracer point grid
     real(kind=kind_real), allocatable, dimension(:,:) :: lonu, latu !< Zonal velocity grid
     real(kind=kind_real), allocatable, dimension(:,:) :: lonv, latv !< Meridional velocity grid
@@ -51,6 +57,8 @@ type :: soca_geom
     real(kind=kind_real), allocatable, dimension(:,:) :: mask2dv   !< v        "   . 0 = land 1 = ocean
     real(kind=kind_real), allocatable, dimension(:,:) :: cell_area
     real(kind=kind_real), allocatable, dimension(:,:) :: rossby_radius
+    real(kind=kind_real), allocatable, dimension(:,:,:) :: h
+    real(kind=kind_real), allocatable, dimension(:,:,:) :: h_zstar
     logical :: save_local_domain = .false. ! If true, save the local geometry for each pe.
     character(len=:), allocatable :: geom_grid_file
     type(fckit_mpi_comm) :: f_comm
@@ -131,7 +139,6 @@ subroutine geom_init(self, f_conf, f_comm)
   if ( .not. f_conf%get("save_local_domain", self%save_local_domain) ) &
      self%save_local_domain = .false.
 
-
 end subroutine geom_init
 
 ! ------------------------------------------------------------------------------
@@ -139,6 +146,10 @@ end subroutine geom_init
 subroutine geom_end(self)
   class(soca_geom), intent(out)  :: self
 
+  if (allocated(self%lonh))          deallocate(self%lonh)
+  if (allocated(self%lath))          deallocate(self%lath)
+  if (allocated(self%lonq))          deallocate(self%lonq)
+  if (allocated(self%latq))          deallocate(self%latq)          
   if (allocated(self%lon))           deallocate(self%lon)
   if (allocated(self%lat))           deallocate(self%lat)
   if (allocated(self%lonu))          deallocate(self%lonu)
@@ -152,6 +163,8 @@ subroutine geom_end(self)
   if (allocated(self%mask2dv))       deallocate(self%mask2dv)
   if (allocated(self%cell_area))     deallocate(self%cell_area)
   if (allocated(self%rossby_radius)) deallocate(self%rossby_radius)
+  if (allocated(self%h))             deallocate(self%h)
+  if (allocated(self%h_zstar))       deallocate(self%h_zstar) 
   nullify(self%Domain)
 
 end subroutine geom_end
@@ -169,6 +182,9 @@ subroutine geom_clone(self, other)
   other%Domain => self%Domain
   other%nzo = self%nzo
 
+  !
+  other%geom_grid_file = self%geom_grid_file
+
   ! Clone sea-ice grid
   other%ice_column = self%ice_column
   other%ncat = self%ncat
@@ -177,6 +193,10 @@ subroutine geom_clone(self, other)
 
   ! Allocate and clone geometry
   call geom_allocate(other)
+  other%lonh = self%lonh
+  other%lath = self%lath
+  other%lonq = self%lonq
+  other%latq = self%latq  
   other%lon = self%lon
   other%lat = self%lat
   other%lonu = self%lonu
@@ -190,6 +210,7 @@ subroutine geom_clone(self, other)
   other%mask2dv = self%mask2dv
   other%cell_area = self%cell_area
   other%rossby_radius = self%rossby_radius
+  other%h = self%h
 
 end subroutine geom_clone
 
@@ -198,10 +219,19 @@ end subroutine geom_clone
 subroutine geom_gridgen(self)
   class(soca_geom), intent(inout) :: self
 
+  ! allocate variables for regridding to zstar coord       
   type(soca_mom6_config) :: mom6_config
+  type(diag_remap_ctrl) :: remap_ctrl
+  type(EOS_type), pointer :: eqn_of_state
+  integer :: k
+  real(kind=kind_real), allocatable :: T(:,:,:), S(:,:,:)
 
   ! Generate grid
   call soca_mom6_init(mom6_config, partial_init=.true.)
+  self%lonh = mom6_config%grid%gridlont
+  self%lath = mom6_config%grid%gridlatt
+  self%lonq = mom6_config%grid%gridlonb
+  self%latq = mom6_config%grid%gridlatb  
   self%lon = mom6_config%grid%GeoLonT
   self%lat = mom6_config%grid%GeoLatT
   self%lonu = mom6_config%grid%geoLonCu
@@ -216,6 +246,21 @@ subroutine geom_gridgen(self)
   self%mask2du = mom6_config%grid%mask2dCu
   self%mask2dv = mom6_config%grid%mask2dCv
   self%cell_area  = mom6_config%grid%areaT
+  self%h = mom6_config%MOM_CSp%h
+
+  !Generate new grid based on zstar coordinate
+  allocate(T(self%isd:self%ied, self%jsd:self%jed, self%nzo))
+  allocate(S(self%isd:self%ied, self%jsd:self%jed, self%nzo))
+  T = 0.d0 !fake temp
+  S = 0.d0 !fake salinity
+  call diag_remap_init(remap_ctrl, coord_tuple='ZSTAR, ZSTAR, ZSTAR')
+  call diag_remap_configure_axes(remap_ctrl, mom6_config%GV, mom6_config%scaling, mom6_config%param_file)
+  call diag_remap_update(remap_ctrl, mom6_config%grid, mom6_config%GV, mom6_config%scaling, self%h, T, S, eqn_of_state)
+  self%nzo_zstar = remap_ctrl%nz
+  if (allocated(self%h_zstar)) deallocate(self%h_zstar)
+  allocate(self%h_zstar(self%isd:self%ied, self%jsd:self%jed, 1:remap_ctrl%nz))
+  self%h_zstar = remap_ctrl%h 
+  call diag_remap_end(remap_ctrl)
 
   ! Get Rossby Radius
   call geom_rossby_radius(self)
@@ -237,11 +282,16 @@ subroutine geom_allocate(self)
   call geom_get_domain_indices(self, "compute", self%isc, self%iec, self%jsc, self%jec)
   call geom_get_domain_indices(self, "data", isd, ied, jsd, jed)
   self%isd = isd ;  self%ied = ied ; self%jsd = jsd; self%jed = jed
+  call geom_get_domain_indices(self, "global", self%isg, self%ieg, self%jsg, self%jeg)
   call geom_get_domain_indices(self, "compute", self%iscl, self%iecl, self%jscl, self%jecl, local=.true.)
   call geom_get_domain_indices(self, "data", self%isdl, self%iedl, self%jsdl, self%jedl, local=.true.)
   nzo = self%nzo
 
   ! Allocate arrays on compute domain
+  allocate(self%lonh(self%isg:self%ieg));        self%lonh = 0.0_kind_real
+  allocate(self%lath(self%jsg:self%jeg));        self%lath = 0.0_kind_real
+  allocate(self%lonq(self%isg:self%ieg));        self%lonq = 0.0_kind_real
+  allocate(self%latq(self%jsg:self%jeg));        self%latq = 0.0_kind_real  
   allocate(self%lon(isd:ied,jsd:jed));           self%lon = 0.0_kind_real
   allocate(self%lat(isd:ied,jsd:jed));           self%lat = 0.0_kind_real
   allocate(self%lonu(isd:ied,jsd:jed));          self%lonu = 0.0_kind_real
@@ -258,6 +308,7 @@ subroutine geom_allocate(self)
 
   allocate(self%cell_area(isd:ied,jsd:jed));     self%cell_area = 0.0_kind_real
   allocate(self%rossby_radius(isd:ied,jsd:jed)); self%rossby_radius = 0.0_kind_real
+  allocate(self%h(isd:ied,jsd:jed,1:nzo));       self%h = 0.0_kind_real
 
 end subroutine geom_allocate
 
@@ -316,6 +367,26 @@ subroutine geom_write(self)
   call fms_io_init()
   idr_geom = register_restart_field(geom_restart, &
                                    &self%geom_grid_file, &
+                                   &'lonh', &
+                                   &self%lonh(:), &
+                                   domain=self%Domain%mpp_domain)
+  idr_geom = register_restart_field(geom_restart, &
+                                   &self%geom_grid_file, &
+                                   &'lath', &
+                                   &self%lath(:), &
+                                   domain=self%Domain%mpp_domain)
+  idr_geom = register_restart_field(geom_restart, &
+                                   &self%geom_grid_file, &
+                                   &'lonq', &
+                                   &self%lonq(:), &
+                                   domain=self%Domain%mpp_domain)
+  idr_geom = register_restart_field(geom_restart, &
+                                   &self%geom_grid_file, &
+                                   &'latq', &
+                                   &self%latq(:), &
+                                   domain=self%Domain%mpp_domain)  
+  idr_geom = register_restart_field(geom_restart, &
+                                   &self%geom_grid_file, &
                                    &'lon', &
                                    &self%lon(:,:), &
                                    domain=self%Domain%mpp_domain)
@@ -378,6 +449,21 @@ subroutine geom_write(self)
                                    &self%geom_grid_file, &
                                    &'mask2dv', &
                                    &self%mask2dv(:,:), &
+                                   domain=self%Domain%mpp_domain)
+  idr_geom = register_restart_field(geom_restart, &
+                                   &self%geom_grid_file, &
+                                   &'h', &
+                                   &self%h(:,:,:), &
+                                   domain=self%Domain%mpp_domain)          
+  idr_geom = register_restart_field(geom_restart, &
+                                   &self%geom_grid_file, &
+                                   &'nzo_zstar', &
+                                   &self%nzo_zstar, &
+                                   domain=self%Domain%mpp_domain)
+  idr_geom = register_restart_field(geom_restart, &
+                                   &self%geom_grid_file, &
+                                   &'h_zstar', &
+                                   &self%h_zstar(:,:,:), &
                                    domain=self%Domain%mpp_domain)
   call save_restart(geom_restart, directory='')
   call free_restart_type(geom_restart)
@@ -401,12 +487,32 @@ end subroutine geom_write
 ! ------------------------------------------------------------------------------
 !> Read geometry from file
 subroutine geom_read(self)
-  class(soca_geom), intent(in) :: self
+  class(soca_geom), intent(inout) :: self
 
   integer :: idr_geom
   type(restart_file_type) :: geom_restart
 
   call fms_io_init()
+  idr_geom = register_restart_field(geom_restart, &
+                                   &self%geom_grid_file, &
+                                   &'lonh', &
+                                   &self%lonh(:), &
+                                   domain=self%Domain%mpp_domain)
+  idr_geom = register_restart_field(geom_restart, &
+                                   &self%geom_grid_file, &
+                                   &'lath', &
+                                   &self%lath(:), &
+                                   domain=self%Domain%mpp_domain)
+  idr_geom = register_restart_field(geom_restart, &
+                                   &self%geom_grid_file, &
+                                   &'lonq', &
+                                   &self%lonq(:), &
+                                   domain=self%Domain%mpp_domain)
+  idr_geom = register_restart_field(geom_restart, &
+                                   &self%geom_grid_file, &
+                                   &'latq', &
+                                   &self%latq(:), &
+                                   domain=self%Domain%mpp_domain)  
   idr_geom = register_restart_field(geom_restart, &
                                    &self%geom_grid_file, &
                                    &'lon', &
@@ -472,6 +578,11 @@ subroutine geom_read(self)
                                    &'mask2dv', &
                                    &self%mask2dv(:,:), &
                                    domain=self%Domain%mpp_domain)
+  idr_geom = register_restart_field(geom_restart, &
+                                   &self%geom_grid_file, &
+                                   &'h', &
+                                   &self%h(:,:,:), &
+                                   domain=self%Domain%mpp_domain)
   call restore_state(geom_restart, directory='')
   call free_restart_type(geom_restart)
   call fms_io_exit()
@@ -488,9 +599,11 @@ subroutine geom_get_domain_indices(self, domain_type, is, ie, js, je, local)
 
   integer :: isc, iec, jsc, jec
   integer :: isd, ied, jsd, jed
+  integer :: isg, ieg, jsg, jeg 
 
   call mpp_get_compute_domain(self%Domain%mpp_domain,isc,iec,jsc,jec)
   call mpp_get_data_domain(self%Domain%mpp_domain,isd,ied,jsd,jed)
+  call mpp_get_global_domain(self%Domain%mpp_domain, isg, ieg, jsg, jeg)
   if (present(local)) then
      isc = isc - (isd-1) ; iec = iec - (isd-1) ; ied = ied - (isd-1) ; isd = 1
      jsc = jsc - (jsd-1) ; jec = jec - (jsd-1) ; jed = jed - (jsd-1) ; jsd = 1
@@ -501,7 +614,8 @@ subroutine geom_get_domain_indices(self, domain_type, is, ie, js, je, local)
      is = isc; ie = iec; js = jsc; je = jec;
   case ("data")
      is = isd; ie = ied; js = jsd; je = jed;
-
+  case ("global")
+     is = isg; ie = ieg; js = jsg; je = jeg;
   end select
 
 end subroutine geom_get_domain_indices
