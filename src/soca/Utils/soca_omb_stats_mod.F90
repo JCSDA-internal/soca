@@ -81,7 +81,6 @@ subroutine soca_omb_stats_init(self, domain)
   if (myrank.ne.root) then
      allocate(self%lon(self%nlocs), self%lat(self%nlocs), self%bgerr(self%nlocs))
   end if
-  call f_comm%broadcast(self%lon, root)
   call f_comm%broadcast(self%lat, root)
   call f_comm%broadcast(self%bgerr, root)
   call f_comm%barrier()

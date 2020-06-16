@@ -243,8 +243,16 @@ subroutine soca_increment_create_c(c_key_self, c_key_geom, c_vars) bind(c,name='
     call soca_increment_registry%get(c_key_fld,fld)
     call soca_increment_registry%get(c_key_rhs,rhs)
 
-    ! TODO implement a proper change of resolution, just copying for now
-    call fld%copy(rhs)
+    ! TODO (Guillaume or Travis) implement == in geometry or something to that effect.
+    if (size(fld%geom%lon,1)==size(rhs%geom%lon,1) .and. size(fld%geom%lat,2)==size(rhs%geom%lat,2) .and. &
+         fld%geom%nzo==rhs%geom%nzo ) then
+       call fld%copy(rhs)
+    else
+       call fld%copy(rhs)
+       !call fld%convert(rhs)
+    endif
+
+    !call fld%copy(rhs)
 
   end subroutine soca_increment_change_resol_c
 

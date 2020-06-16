@@ -76,6 +76,15 @@ namespace soca {
     soca_state_copy_f90(toFortran(), rhs.toFortran());
     return *this;
   }
+  // -----------------------------------------------------------------------------
+  /// Interpolate full fields
+  // -----------------------------------------------------------------------------
+  void State::changeResolution(const State & other) {
+    Log::trace() << "State::State rotate from logical to geographical North."
+                 << std::endl;
+    soca_state_change_resol_f90(toFortran(), other.keyFlds_);
+    oops::Log::trace() << "StateQG interpolated" << std::endl;
+  }
 
   // -----------------------------------------------------------------------------
   /// Rotations

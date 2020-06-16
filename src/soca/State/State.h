@@ -58,6 +58,9 @@ namespace soca {
       virtual ~State();
       State & operator=(const State &);
 
+      // Interpolate state
+      void changeResolution(const State & xx);
+
       /// Rotations
       void rotate2north(const oops::Variables &, const oops::Variables &) const;
       void rotate2grid(const oops::Variables &, const oops::Variables &) const;
