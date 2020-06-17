@@ -11,7 +11,7 @@ model:
   variables: [cicen, hicen, hsnon, socn, tocn, ssh, hocn, sw, lhf, shf, lw, us]
   tocn_minmax: [-1.8, 32.0]
   socn_minmax: [0.1, 38.0]
-  output_sponge: True   # output sponge file
+  output_sponge: 1   # output sponge file
   sponge_idamp: 0.1  # [s^-1]
 
 background:
