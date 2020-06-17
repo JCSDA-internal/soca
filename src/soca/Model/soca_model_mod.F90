@@ -9,7 +9,7 @@ module soca_model_mod
 
 use fckit_mpi_module, only: fckit_mpi_comm
 use fms_io_mod, only : fms_io_init, fms_io_exit
-use fms_io_mod, only : register_restart_field, restart_file_type
+use fms_mod, only : write_data, set_domain
 use kinds, only: kind_real
 use soca_geom_mod, only: soca_geom
 use soca_mom6, only: soca_mom6_config, soca_mom6_init, soca_mom6_end
@@ -21,7 +21,7 @@ use mpp_domains_mod, only : mpp_update_domains
 use time_manager_mod, only : time_type, print_time, print_date, set_date
 use MOM, only : step_MOM
 use MOM_interface_heights, only : find_eta
-use MOM_restart, only : save_restart, MOM_restart_CS
+use MOM_restart, only : save_restart
 use MOM_surface_forcing, only : set_forcing
 use MOM_time_manager, only : real_to_time, time_type_to_real
 use MOM_time_manager, only : operator(+)
@@ -42,6 +42,8 @@ type :: soca_model
    real(kind=kind_real) :: dt0  !< dimensional time (seconds)
    type(soca_mom6_config) :: mom6_config  !< MOM6 data structure
    real(kind_real), dimension(2) :: tocn_minmax, socn_minmax  !< min, max values
+   logical :: output_sponge !< If true, create a sponge file
+   real(kind_real) :: sponge_idamp !< Inverse damping scale for sponge
 end type soca_model
 
 ! ------------------------------------------------------------------------------
@@ -199,12 +201,9 @@ subroutine soca_finalize_integration(self, flds)
   type(soca_model), intent(inout) :: self
   type(soca_state), intent(inout) :: flds
 
-  type(soca_field), pointer :: field
+  type(soca_field), pointer :: field, tocn, socn
   integer :: i
-  real(kind=8), allocatable :: eta(:,:,:)
-  !type(MOM_restart_CS), pointer :: restart_CSp_sponge => NULL()
-  type(restart_file_type) :: ocean_restart_sponge
-  integer :: idr
+  real(kind=8), allocatable :: eta(:,:,:), idamp(:,:)
 
   ! for each field
   do i=1,size(flds%fields)
@@ -221,12 +220,14 @@ subroutine soca_finalize_integration(self, flds)
       if ( self%tocn_minmax(2) /= real(-999., kind=8) ) &
         where( field%val > self%tocn_minmax(2) ) field%val = self%tocn_minmax(2)
       self%mom6_config%MOM_CSp%T = real(field%val, kind=8)
+      tocn => flds%fields(i)
     case ("socn")
       if ( self%socn_minmax(1) /= real(-999., kind=8) ) &
         where( field%val < self%socn_minmax(1) ) field%val = self%socn_minmax(1)
       if ( self%socn_minmax(2) /= real(-999., kind=8) ) &
         where( field%val > self%socn_minmax(2) ) field%val = self%socn_minmax(2)
       self%mom6_config%MOM_CSp%S = real(field%val, kind=8)
+      socn => flds%fields(i)
     case ("uocn")
       self%mom6_config%MOM_CSp%u = real(field%val, kind=8)
     case ("vocn")
@@ -234,21 +235,42 @@ subroutine soca_finalize_integration(self, flds)
     end select
   end do
 
-  ! save sponge fields
-  !allocate(restart_CSp_sponge)
-  !restart_CSp_sponge = self%mom6_config%restart_CSp
+  ! setup and save sponge fields
+  if (self%output_sponge) then
 
-  ! compute interface depths
-  allocate(eta(self%mom6_config%grid%isd:self%mom6_config%grid%ied, &
-               self%mom6_config%grid%jsd:self%mom6_config%grid%jed, &
-               self%mom6_config%GV%ke+1 ))
-  eta = 0.0
-  call find_eta(self%mom6_config%MOM_CSp%h, &
-                self%mom6_config%MOM_CSp%tv, &
-                self%mom6_config%grid, &
-                self%mom6_config%GV, &
-                self%mom6_config%scaling, &
-                eta )
+     ! Add error trap for cases when tocn or socn are not associated
+
+     ! compute interface depths
+     allocate(eta(self%mom6_config%grid%isd:self%mom6_config%grid%ied, &
+          self%mom6_config%grid%jsd:self%mom6_config%grid%jed, &
+          self%mom6_config%GV%ke+1 ))
+     eta = 0.0_kind_real
+     call find_eta(self%mom6_config%MOM_CSp%h, &
+          self%mom6_config%MOM_CSp%tv, &
+          self%mom6_config%grid, &
+          self%mom6_config%GV, &
+          self%mom6_config%scaling, &
+          eta )
+
+     ! setup inverse damping weights
+     allocate(idamp(self%mom6_config%grid%isd:self%mom6_config%grid%ied, &
+          self%mom6_config%grid%jsd:self%mom6_config%grid%jed ))
+     idamp = 0.0_kind_real
+     !where ( flds%geom%mask2d == 1.0_kind_real )
+     !   idamp = self%sponge_idamp
+     !end where
+     idamp = self%sponge_idamp
+
+     call fms_io_init()
+     call set_domain( flds%geom%Domain%mpp_domain )
+     call write_data( "sponge.nc", "eta", eta, flds%geom%Domain%mpp_domain)
+     call write_data( "sponge.nc", "Idamp", idamp, flds%geom%Domain%mpp_domain)
+     call write_data( "sponge.nc", "ptemp", tocn%val(:,:,:), flds%geom%Domain%mpp_domain)
+     call write_data( "sponge.nc", "salt", socn%val(:,:,:), flds%geom%Domain%mpp_domain)
+     !call write_data( "sponge.nc", "Layer", self%mom6_config%GV%RLay, flds%geom%Domain%mpp_domain)
+     !call write_data( "sponge.nc", "Interface", self%mom6_config%GV%sInterface, flds%geom%Domain%mpp_domain)
+     call fms_io_exit()
+  end if
 
   ! register interface depths
   ! Save MOM restarts with updated SOCA fields

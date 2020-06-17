@@ -1,8 +1,6 @@
 ! This file was written by the model and records the non-default parameters used at run-time.
 
 ! === module MOM ===
-SAVE_INITIAL_CONDS = True
-!IC_OUTPUT_FILE = "IC.nc"
 
 ! === module MOM_unit_scaling ===
 ! Parameters for doing unit scaling of variables.
@@ -591,12 +589,14 @@ FLUXCONST = 0.5                 !   [m day-1]
 
 ! === module MOM_file_parser ===
 
-! === module sponge ===
+! === sponge use example ===
 !SPONGE = True
+!NEW_SPONGES = False
 !SPONGE_CONFIG = file
-!SPONGE_DAMPING_FILE
-!SPONGE_STATE_FILE
-!SPONGE_PTEMP_VAR
-!SPONGE_SALT_VAR
-!SPONGE_ETA_VAR
-!SPONGE_IDAMP_VAR
+!SPONGE_DAMPING_FILE = "sponge.nc"
+!SPONGE_STATE_FILE = "sponge.nc"
+!SPONGE_PTEMP_VAR = "ptemp"
+!SPONGE_SALT_VAR = "Salt"
+!SPONGE_ETA_VAR = "eta"
+!SPONGE_IDAMP_VAR = "Idamp"
+

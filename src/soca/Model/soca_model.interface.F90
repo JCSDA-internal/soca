@@ -81,6 +81,10 @@ subroutine c_soca_setup(c_conf, c_key_geom, c_key_model) bind (c,name='soca_setu
     model%socn_minmax=(/-999., -999./)
   endif
 
+  ! Setup sponge output if needed (possibly used when running the checkpoint app)
+  if ( .not. f_conf%get("output_sponge", model%output_sponge) ) model%output_sponge = .false.
+  if ( .not. f_conf%get("sponge_idamp", model%sponge_idamp) ) model%sponge_idamp = 1.0
+
   ! Initialize mom6
   call soca_setup(model, geom)
 
