@@ -5,7 +5,6 @@
 
 
 module soca_horizfilt_mod
-  use config_mod
   use fckit_configuration_module, only: fckit_configuration
   use fckit_geometry_module, only: sphere_distance
   use iso_c_binding
