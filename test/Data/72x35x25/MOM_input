@@ -1,6 +1,8 @@
 ! This file was written by the model and records the non-default parameters used at run-time.
 
 ! === module MOM ===
+SAVE_INITIAL_CONDS = True
+!IC_OUTPUT_FILE = "IC.nc"
 
 ! === module MOM_unit_scaling ===
 ! Parameters for doing unit scaling of variables.

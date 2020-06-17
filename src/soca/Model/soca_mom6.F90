@@ -261,6 +261,7 @@ subroutine soca_mom6_init(mom6_config, partial_init)
                    mom6_config%surface_forcing_CSp)
 
   ! Do more stuff for mom init ...
+  mom6_config%MOM_CSp%write_IC = .true.
   call finish_MOM_initialization(mom6_config%Time,&
                                  mom6_config%dirs,&
                                  mom6_config%MOM_CSp,&
