@@ -25,10 +25,6 @@ namespace soca {
       inputnml_sn_ = getFileSN(inputnml_orig_);
     }
     comm_.broadcast(inputnml_sn_, 0);
-
-    // Check that inputnml_sn_ is a valid serial #
-    ASSERT(inputnml_sn_ > 0);
-    comm_.barrier();
   }
   // -----------------------------------------------------------------------------
   FmsInput::FmsInput(const FmsInput & other)
