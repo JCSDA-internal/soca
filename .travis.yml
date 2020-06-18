@@ -20,7 +20,7 @@
 env:
   global:
     - MAIN_REPO=soca
-    - LIB_REPOS="fms cvmix geokdtree mom6_da_hooks gsw mom6 crtm
+    - LIB_REPOS="fms gsw mom6 crtm
                  fckit atlas oops saber ioda ufo ioda-converters soca-config"
     - BUILD_OPT=""
     - BUILD_OPT_CRTM="-DBUILD_CRTM=ON"

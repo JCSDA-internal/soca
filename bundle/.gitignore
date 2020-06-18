@@ -1,15 +1,12 @@
 atlas/
 crtm/
-cvmix/
 eckit/
 fckit/
 fms/
-geokdtree/
 gsw/
 ioda-converters/
 ioda/
 mom6/
-mom6_da_hooks/
 oops/
 saber/
 soca
