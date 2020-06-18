@@ -125,14 +125,14 @@ cost_function:
        localization: BUMP
        bump:
         datadir: ./bump
+        prefix: soca_bump_loc
         method: loc
         strategy: common
         load_nicas: 1
         mpicom: 2
         verbosity: main
         grids:
-        - prefix: soca_bump_loc
-          varname: [socn, tocn, cicen_01, cicen_02, cicen_03, cicen_04, cicen_05, hicen_01, hicen_02, hicen_03, hicen_04, hicen_05, ssh]
+        - varname: [socn, tocn, cicen_01, cicen_02, cicen_03, cicen_04, cicen_05, hicen_01, hicen_02, hicen_03, hicen_04, hicen_05, ssh]
 
   Jo:
     ObsTypes:

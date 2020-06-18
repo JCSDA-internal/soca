@@ -24,10 +24,10 @@ use fms_io_mod, only : fms_io_init, fms_io_exit, &
 use mpp_domains_mod, only : mpp_get_compute_domain, mpp_get_data_domain, &
                             mpp_get_global_domain, mpp_update_domains
 use fms_mod,         only : write_data, read_data
-use fms_io_mod,      only : fms_io_init, fms_io_exit 
+use fms_io_mod,      only : fms_io_init, fms_io_exit
 use fckit_geometry_module, only: sphere_distance
 use MOM_diag_remap,  only : diag_remap_ctrl, diag_remap_init, diag_remap_configure_axes, &
-                            diag_remap_end, diag_remap_update 
+                            diag_remap_end, diag_remap_update
 use MOM_EOS,         only : EOS_type
 
 implicit none
@@ -47,7 +47,7 @@ type :: soca_geom
     integer :: iscl, iecl, jscl, jecl  !< indices of local compute domain
     integer :: isdl, iedl, jsdl, jedl  !< indices of local data domain
     real(kind=kind_real), allocatable, dimension(:)   :: lonh, lath
-    real(kind=kind_real), allocatable, dimension(:)   :: lonq, latq   
+    real(kind=kind_real), allocatable, dimension(:)   :: lonq, latq
     real(kind=kind_real), allocatable, dimension(:,:) :: lon, lat !< Tracer point grid
     real(kind=kind_real), allocatable, dimension(:,:) :: lonu, latu !< Zonal velocity grid
     real(kind=kind_real), allocatable, dimension(:,:) :: lonv, latv !< Meridional velocity grid
@@ -154,7 +154,7 @@ subroutine geom_end(self)
   if (allocated(self%lonh))          deallocate(self%lonh)
   if (allocated(self%lath))          deallocate(self%lath)
   if (allocated(self%lonq))          deallocate(self%lonq)
-  if (allocated(self%latq))          deallocate(self%latq)          
+  if (allocated(self%latq))          deallocate(self%latq)  
   if (allocated(self%lon))           deallocate(self%lon)
   if (allocated(self%lat))           deallocate(self%lat)
   if (allocated(self%lonu))          deallocate(self%lonu)
@@ -169,7 +169,7 @@ subroutine geom_end(self)
   if (allocated(self%cell_area))     deallocate(self%cell_area)
   if (allocated(self%rossby_radius)) deallocate(self%rossby_radius)
   if (allocated(self%h))             deallocate(self%h)
-  if (allocated(self%h_zstar))       deallocate(self%h_zstar) 
+  if (allocated(self%h_zstar))       deallocate(self%h_zstar)
   nullify(self%Domain)
 
 end subroutine geom_end
@@ -201,7 +201,7 @@ subroutine geom_clone(self, other)
   other%lonh = self%lonh
   other%lath = self%lath
   other%lonq = self%lonq
-  other%latq = self%latq  
+  other%latq = self%latq
   other%lon = self%lon
   other%lat = self%lat
   other%lonu = self%lonu
@@ -224,7 +224,7 @@ end subroutine geom_clone
 subroutine geom_gridgen(self)
   class(soca_geom), intent(inout) :: self
 
-  ! allocate variables for regridding to zstar coord       
+  ! allocate variables for regridding to zstar coord
   type(soca_mom6_config) :: mom6_config
   type(diag_remap_ctrl) :: remap_ctrl
   type(EOS_type), pointer :: eqn_of_state
@@ -236,7 +236,7 @@ subroutine geom_gridgen(self)
   self%lonh = mom6_config%grid%gridlont
   self%lath = mom6_config%grid%gridlatt
   self%lonq = mom6_config%grid%gridlonb
-  self%latq = mom6_config%grid%gridlatb  
+  self%latq = mom6_config%grid%gridlatb
   self%lon = mom6_config%grid%GeoLonT
   self%lat = mom6_config%grid%GeoLatT
   self%lonu = mom6_config%grid%geoLonCu
@@ -264,7 +264,7 @@ subroutine geom_gridgen(self)
   self%nzo_zstar = remap_ctrl%nz
   if (allocated(self%h_zstar)) deallocate(self%h_zstar)
   allocate(self%h_zstar(self%isd:self%ied, self%jsd:self%jed, 1:remap_ctrl%nz))
-  self%h_zstar = remap_ctrl%h 
+  self%h_zstar = remap_ctrl%h
   call diag_remap_end(remap_ctrl)
 
   ! Get Rossby Radius
@@ -296,7 +296,7 @@ subroutine geom_allocate(self)
   allocate(self%lonh(self%isg:self%ieg));        self%lonh = 0.0_kind_real
   allocate(self%lath(self%jsg:self%jeg));        self%lath = 0.0_kind_real
   allocate(self%lonq(self%isg:self%ieg));        self%lonq = 0.0_kind_real
-  allocate(self%latq(self%jsg:self%jeg));        self%latq = 0.0_kind_real  
+  allocate(self%latq(self%jsg:self%jeg));        self%latq = 0.0_kind_real
   allocate(self%lon(isd:ied,jsd:jed));           self%lon = 0.0_kind_real
   allocate(self%lat(isd:ied,jsd:jed));           self%lat = 0.0_kind_real
   allocate(self%lonu(isd:ied,jsd:jed));          self%lonu = 0.0_kind_real
@@ -389,7 +389,7 @@ subroutine geom_write(self)
                                    &self%geom_grid_file, &
                                    &'latq', &
                                    &self%latq(:), &
-                                   domain=self%Domain%mpp_domain)  
+                                   domain=self%Domain%mpp_domain)
   idr_geom = register_restart_field(geom_restart, &
                                    &self%geom_grid_file, &
                                    &'lon', &
@@ -459,7 +459,7 @@ subroutine geom_write(self)
                                    &self%geom_grid_file, &
                                    &'h', &
                                    &self%h(:,:,:), &
-                                   domain=self%Domain%mpp_domain)          
+                                   domain=self%Domain%mpp_domain)  
   idr_geom = register_restart_field(geom_restart, &
                                    &self%geom_grid_file, &
                                    &'nzo_zstar', &
@@ -517,7 +517,7 @@ subroutine geom_read(self)
                                    &self%geom_grid_file, &
                                    &'latq', &
                                    &self%latq(:), &
-                                   domain=self%Domain%mpp_domain)  
+                                   domain=self%Domain%mpp_domain)
   idr_geom = register_restart_field(geom_restart, &
                                    &self%geom_grid_file, &
                                    &'lon', &
@@ -604,7 +604,7 @@ subroutine geom_get_domain_indices(self, domain_type, is, ie, js, je, local)
 
   integer :: isc, iec, jsc, jec
   integer :: isd, ied, jsd, jed
-  integer :: isg, ieg, jsg, jeg 
+  integer :: isg, ieg, jsg, jeg
 
   call mpp_get_compute_domain(self%Domain%mpp_domain,isc,iec,jsc,jec)
   call mpp_get_data_domain(self%Domain%mpp_domain,isd,ied,jsd,jed)
@@ -671,7 +671,7 @@ subroutine geom_struct2atlas(self, dx_struct, dx_atlas)
   call afield%data(real_ptr)
   real_ptr = pack(dx_struct(self%iscl:self%iecl, self%jscl:self%jecl),.true.)
   call afield%final()
-   
+
 end subroutine geom_struct2atlas
 
 ! ------------------------------------------------------------------------------
