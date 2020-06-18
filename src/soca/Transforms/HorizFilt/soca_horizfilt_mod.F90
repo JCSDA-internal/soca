@@ -6,7 +6,6 @@
 
 module soca_horizfilt_mod
   use atlas_module, only: atlas_geometry
-  use config_mod
   use fckit_configuration_module, only: fckit_configuration
   use iso_c_binding
   use kinds
