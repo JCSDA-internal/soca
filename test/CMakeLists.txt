@@ -621,6 +621,7 @@ soca_add_test( NAME 3dhybfgat
 
 soca_add_test( NAME letkf
                EXE  soca_letkf.x
+               TOL  2e-5 0
                NOTRAPFPE
                TEST_DEPENDS test_soca_enspert )
 
