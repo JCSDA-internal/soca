@@ -49,6 +49,57 @@ subroutine c_soca_geo_setup(c_key_self, c_conf, c_comm) bind(c,name='soca_geo_se
 
 end subroutine c_soca_geo_setup
 
+! --------------------------------------------------------------------------------------------------
+!> Set ATLAS lonlat fieldset
+subroutine c_soca_geo_set_atlas_lonlat(c_key_self, c_afieldset)  bind(c,name='soca_geo_set_atlas_lonlat_f90')
+
+  integer(c_int), intent(in) :: c_key_self
+  type(c_ptr), intent(in), value :: c_afieldset
+
+  type(soca_geom), pointer :: self
+  type(atlas_fieldset) :: afieldset
+
+  call soca_geom_registry%get(c_key_self,self)
+  afieldset = atlas_fieldset(c_afieldset)
+
+  call self%set_atlas_lonlat(afieldset)
+
+end subroutine c_soca_geo_set_atlas_lonlat
+
+! --------------------------------------------------------------------------------------------------
+!> Set ATLAS functionspace pointer
+subroutine c_soca_geo_set_atlas_functionspace_pointer(c_key_self,c_afunctionspace) &
+ & bind(c,name='soca_geo_set_atlas_functionspace_pointer_f90')
+
+  integer(c_int), intent(in)     :: c_key_self
+  type(c_ptr), intent(in), value :: c_afunctionspace
+
+  type(soca_geom),pointer :: self
+
+  call soca_geom_registry%get(c_key_self,self)
+
+  self%afunctionspace = atlas_functionspace_nodecolumns(c_afunctionspace)
+
+end subroutine c_soca_geo_set_atlas_functionspace_pointer
+
+! --------------------------------------------------------------------------------------------------
+!> Fill ATLAS fieldset
+subroutine c_soca_geo_fill_atlas_fieldset(c_key_self, c_afieldset) &
+ & bind(c,name='soca_geo_fill_atlas_fieldset_f90')
+
+  integer(c_int),     intent(in) :: c_key_self
+  type(c_ptr), value, intent(in) :: c_afieldset
+
+  type(soca_geom), pointer :: self
+  type(atlas_fieldset) :: afieldset
+
+  call soca_geom_registry%get(c_key_self,self)
+  afieldset = atlas_fieldset(c_afieldset)
+
+  call self%fill_atlas_fieldset(afieldset)
+
+end subroutine c_soca_geo_fill_atlas_fieldset
+
 ! ------------------------------------------------------------------------------
 !> Clone geometry object
 subroutine c_soca_geo_clone(c_key_self, c_key_other) bind(c,name='soca_geo_clone_f90')
@@ -93,57 +144,6 @@ subroutine c_soca_geo_delete(c_key_self) bind(c,name='soca_geo_delete_f90')
   call soca_geom_registry%remove(c_key_self)
 
 end subroutine c_soca_geo_delete
-
-! --------------------------------------------------------------------------------------------------
-
-subroutine c_soca_geo_set_atlas_lonlat(c_key_self, c_afieldset)  bind(c,name='soca_geo_set_atlas_lonlat_f90')
-
-  integer(c_int), intent(in) :: c_key_self
-  type(c_ptr), intent(in), value :: c_afieldset
-
-  type(soca_geom), pointer :: self
-  type(atlas_fieldset) :: afieldset
-
-  call soca_geom_registry%get(c_key_self,self)
-  afieldset = atlas_fieldset(c_afieldset)
-
-  call self%set_atlas_lonlat(afieldset)
-
-end subroutine c_soca_geo_set_atlas_lonlat
-
-! --------------------------------------------------------------------------------------------------
-
-subroutine c_soca_geo_set_atlas_functionspace_pointer(c_key_self,c_afunctionspace) &
- & bind(c,name='soca_geo_set_atlas_functionspace_pointer_f90')
-
-  integer(c_int), intent(in)     :: c_key_self
-  type(c_ptr), intent(in), value :: c_afunctionspace
-
-  type(soca_geom),pointer :: self
-
-  call soca_geom_registry%get(c_key_self,self)
-
-  self%afunctionspace = atlas_functionspace_nodecolumns(c_afunctionspace)
-
-end subroutine c_soca_geo_set_atlas_functionspace_pointer
-
-! --------------------------------------------------------------------------------------------------
-
-subroutine c_soca_geo_fill_atlas_fieldset(c_key_self, c_afieldset) &
- & bind(c,name='soca_geo_fill_atlas_fieldset_f90')
-
-  integer(c_int),     intent(in) :: c_key_self
-  type(c_ptr), value, intent(in) :: c_afieldset
-
-  type(soca_geom), pointer :: self
-  type(atlas_fieldset) :: afieldset
-
-  call soca_geom_registry%get(c_key_self,self)
-  afieldset = atlas_fieldset(c_afieldset)
-
-  call self%fill_atlas_fieldset(afieldset)
-
-end subroutine c_soca_geo_fill_atlas_fieldset
 
 ! ------------------------------------------------------------------------------
 !> return begin and end of local geometry

@@ -69,6 +69,8 @@ type :: soca_geom
     contains
     procedure :: init => geom_init
     procedure :: end => geom_end
+    procedure :: set_atlas_lonlat => geom_set_atlas_lonlat
+    procedure :: fill_atlas_fieldset => geom_fill_atlas_fieldset
     procedure :: clone => geom_clone
     procedure :: get_rossby_radius => geom_rossby_radius
     procedure :: gridgen => geom_gridgen
@@ -76,8 +78,6 @@ type :: soca_geom
     procedure :: struct2atlas => geom_struct2atlas
     procedure :: atlas2struct => geom_atlas2struct
     procedure :: write => geom_write
-    procedure :: set_atlas_lonlat => geom_set_atlas_lonlat
-    procedure :: fill_atlas_fieldset => geom_fill_atlas_fieldset
 end type soca_geom
 
 ! ------------------------------------------------------------------------------
@@ -173,6 +173,62 @@ subroutine geom_end(self)
   nullify(self%Domain)
 
 end subroutine geom_end
+
+! --------------------------------------------------------------------------------------------------
+!> Set ATLAS lonlat fieldset
+subroutine geom_set_atlas_lonlat(self, afieldset)
+  class(soca_geom),  intent(inout) :: self
+  type(atlas_fieldset), intent(inout) :: afieldset
+
+  real(kind_real), pointer :: real_ptr(:,:)
+  type(atlas_field) :: afield
+
+  ! Create lon/lat field
+  afield = atlas_field(name="lonlat", kind=atlas_real(kind_real), shape=(/2,(self%iec-self%isc+1)*(self%jec-self%jsc+1)/))
+  call afield%data(real_ptr)
+  real_ptr(1,:) = pack(self%lon(self%isc:self%iec,self%jsc:self%jec),.true.)
+  real_ptr(2,:) = pack(self%lat(self%isc:self%iec,self%jsc:self%jec),.true.)
+  call afieldset%add(afield)
+
+end subroutine geom_set_atlas_lonlat
+
+! --------------------------------------------------------------------------------------------------
+!> Fill ATLAS fieldset
+subroutine geom_fill_atlas_fieldset(self, afieldset)
+  class(soca_geom),  intent(inout) :: self
+  type(atlas_fieldset), intent(inout) :: afieldset
+
+  integer :: i, jz, n
+  integer, pointer :: int_ptr_2(:,:)
+  real(kind=kind_real), pointer :: real_ptr_1(:), real_ptr_2(:,:)
+  type(atlas_field) :: afield
+
+  ! Add area
+  afield = self%afunctionspace%create_field(name='area', kind=atlas_real(kind_real), levels=0)
+  call afield%data(real_ptr_1)
+  real_ptr_1 = pack(self%cell_area(self%isc:self%iec,self%jsc:self%jec),.true.)
+  call afieldset%add(afield)
+  call afield%final()
+
+  ! Add vertical unit
+  afield = self%afunctionspace%create_field(name='vunit', kind=atlas_real(kind_real), levels=self%nzo)
+  call afield%data(real_ptr_2)
+  do jz=1,self%nzo
+    real_ptr_2(jz,:) = real(jz, kind_real)
+  end do
+  call afieldset%add(afield)
+  call afield%final()
+
+  ! Add geographical mask
+  afield = self%afunctionspace%create_field(name='gmask', kind=atlas_integer(kind(0)), levels=self%nzo)
+  call afield%data(int_ptr_2)
+  do jz=1,self%nzo
+    int_ptr_2(jz,:) = int(pack(self%mask2d(self%isc:self%iec,self%jsc:self%jec),.true.))
+  end do
+  call afieldset%add(afield)
+  call afield%final()
+
+end subroutine geom_fill_atlas_fieldset
 
 ! ------------------------------------------------------------------------------
 !> Clone, self = other
@@ -656,7 +712,7 @@ subroutine geom_thickness2depth(self, h, z)
 end subroutine geom_thickness2depth
 
 ! ------------------------------------------------------------------------------
-
+!> Copy a structured field into an ATLAS fieldset
 subroutine geom_struct2atlas(self, dx_struct, dx_atlas)
   class(soca_geom),     intent(in ) :: self
   real(kind=kind_real), intent(in ) :: dx_struct(:,:)
@@ -675,7 +731,7 @@ subroutine geom_struct2atlas(self, dx_struct, dx_atlas)
 end subroutine geom_struct2atlas
 
 ! ------------------------------------------------------------------------------
-
+!> Copy a structured field from an ATLAS fieldset
 subroutine geom_atlas2struct(self, dx_struct, dx_atlas)
   class(soca_geom),     intent(in   ) :: self
   real(kind=kind_real), intent(inout) :: dx_struct(:,:)
@@ -693,64 +749,6 @@ subroutine geom_atlas2struct(self, dx_struct, dx_atlas)
 
 end subroutine geom_atlas2struct
 
-! --------------------------------------------------------------------------------------------------
-
-subroutine geom_set_atlas_lonlat(self, afieldset)
-  class(soca_geom),  intent(inout) :: self
-  type(atlas_fieldset), intent(inout) :: afieldset
-
-  real(kind_real), pointer :: real_ptr(:,:)
-  type(atlas_field) :: afield
-
-  ! Create lon/lat field
-  afield = atlas_field(name="lonlat", kind=atlas_real(kind_real), shape=(/2,(self%iec-self%isc+1)*(self%jec-self%jsc+1)/))
-  call afield%data(real_ptr)
-  real_ptr(1,:) = pack(self%lon(self%isc:self%iec,self%jsc:self%jec),.true.)
-  real_ptr(2,:) = pack(self%lat(self%isc:self%iec,self%jsc:self%jec),.true.)
-  call afieldset%add(afield)
-
-end subroutine geom_set_atlas_lonlat
-
-! --------------------------------------------------------------------------------------------------
-
-subroutine geom_fill_atlas_fieldset(self, afieldset)
-  class(soca_geom),  intent(inout) :: self
-  type(atlas_fieldset), intent(inout) :: afieldset
-
-  integer :: i, jz, n
-  integer, pointer :: int_ptr_2(:,:)
-  real(kind=kind_real), pointer :: real_ptr_1(:), real_ptr_2(:,:)
-  type(atlas_field) :: afield
-
-  ! Add area
-  afield = self%afunctionspace%create_field(name='area', kind=atlas_real(kind_real), levels=0)
-  call afield%data(real_ptr_1)
-  real_ptr_1 = pack(self%cell_area(self%isc:self%iec,self%jsc:self%jec),.true.)
-  call afieldset%add(afield)
-  call afield%final()
-
-  ! Add vertical unit
-  afield = self%afunctionspace%create_field(name='vunit', kind=atlas_real(kind_real), levels=self%nzo)
-  call afield%data(real_ptr_2)
-  do jz=1,self%nzo
-    real_ptr_2(jz,:) = real(jz, kind_real)
-  end do
-  call afieldset%add(afield)
-  call afield%final()
-
-  ! Add geographical mask
-  afield = self%afunctionspace%create_field(name='gmask', kind=atlas_integer(kind(0)), levels=self%nzo)
-  call afield%data(int_ptr_2)
-  do jz=1,self%nzo
-    int_ptr_2(jz,:) = int(pack(self%mask2d(self%isc:self%iec,self%jsc:self%jec),.true.))
-  end do
-  call afieldset%add(afield)
-  call afield%final()
-
-end subroutine geom_fill_atlas_fieldset
-
-
 ! ------------------------------------------------------------------------------
-
 
 end module soca_geom_mod
