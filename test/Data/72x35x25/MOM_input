@@ -130,6 +130,7 @@ DTFREEZE_DP = -7.75E-08         !   [deg C Pa-1] default = 0.0
                                 ! temperature with pressure.
 
 ! === module MOM_restart ===
+RESTART_CHECKSUMS_REQUIRED = False
 
 ! === module MOM_tracer_flow_control ===
 
