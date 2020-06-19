@@ -9,10 +9,11 @@
 #include "oops/runs/HofXNoModel.h"
 #include "oops/runs/Run.h"
 #include "ufo/instantiateObsFilterFactory.h"
+#include "ufo/UfoTrait.h"
 
 int main(int argc,  char ** argv) {
   oops::Run run(argc, argv);
-  ufo::instantiateObsFilterFactory<soca::Traits>();
-  oops::HofXNoModel<soca::Traits> hofx;
+  ufo::instantiateObsFilterFactory();
+  oops::HofXNoModel<soca::Traits, ufo::UfoTrait> hofx;
   return run.execute(hofx);
 }

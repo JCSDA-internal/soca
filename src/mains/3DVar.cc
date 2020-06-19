@@ -11,6 +11,7 @@
 
 #include "soca/Traits.h"
 #include "soca/Transforms/instantiateBalanceOpFactory.h"
+#include "ufo/UfoTrait.h"
 #include "ufo/instantiateObsFilterFactory.h"
 #include "oops/runs/Run.h"
 #include "oops/runs/Variational.h"
@@ -19,8 +20,8 @@
 int main(int argc,  char ** argv) {
   oops::Run run(argc, argv);
   soca::instantiateBalanceOpFactory();
-  ufo::instantiateObsFilterFactory<soca::Traits>();
+  ufo::instantiateObsFilterFactory();
   saber::instantiateLocalizationFactory<soca::Traits>();
-  oops::Variational<soca::Traits> var;
+  oops::Variational<soca::Traits, ufo::UfoTrait> var;
   return run.execute(var);
 }
