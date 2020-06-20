@@ -8,11 +8,11 @@
 #include "soca/Traits.h"
 #include "oops/runs/Run.h"
 #include "test/interface/GetValues.h"
-#include "ufo/UfoTrait.h"
+#include "ufo/ObsTraits.h"
 
 int main(int argc,  char ** argv) {
   oops::Run run(argc, argv);
-  test::GetValues<soca::Traits, ufo::UfoTrait> tests;
+  test::GetValues<soca::Traits, ufo::ObsTraits> tests;
   run.execute(tests);
   return 0;
 }

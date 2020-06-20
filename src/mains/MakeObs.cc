@@ -13,10 +13,10 @@
 #include "soca/Traits.h"
 #include "oops/runs/MakeObs.h"
 #include "oops/runs/Run.h"
-#include "ufo/UfoTrait.h"
+#include "ufo/ObsTraits.h"
 
 int main(int argc,  char ** argv) {
   oops::Run run(argc, argv);
-  oops::MakeObs<soca::Traits, ufo::UfoTrait> mkobs;
+  oops::MakeObs<soca::Traits, ufo::ObsTraits> mkobs;
   return run.execute(mkobs);
 }

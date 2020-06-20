@@ -14,11 +14,11 @@
 #include "oops/runs/HofX.h"
 #include "oops/runs/Run.h"
 #include "ufo/instantiateObsFilterFactory.h"
-#include "ufo/UfoTrait.h"
+#include "ufo/ObsTraits.h"
 
 int main(int argc,  char ** argv) {
   oops::Run run(argc, argv);
-  ufo::instantiateObsFilterFactory();
-  oops::HofX<soca::Traits, ufo::UfoTrait> hofx;
+  ufo::instantiateObsFilterFactory<ufo::ObsTraits>();
+  oops::HofX<soca::Traits, ufo::ObsTraits> hofx;
   return run.execute(hofx);
 }
