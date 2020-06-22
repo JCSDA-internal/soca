@@ -5,8 +5,8 @@
 
 
 module soca_horizfilt_mod
+  use atlas_module, only: atlas_geometry
   use fckit_configuration_module, only: fckit_configuration
-  use fckit_geometry_module, only: sphere_distance
   use iso_c_binding
   use kinds
   use mpp_domains_mod, only : mpp_update_domains, mpp_update_domains_ad
@@ -59,7 +59,7 @@ contains
 
     integer :: i, j, ii, jj
     real(kind=kind_real) :: dist(-1:1,-1:1), sum_w, r_dist, r_flow
-    real :: re = 6.371e6 ! radius of earth (m)
+    type(atlas_geometry) :: ageometry
 
     ! Setup list of variables to apply filtering on
     self%vars = vars
@@ -82,6 +82,9 @@ contains
     ! Allocate and compute filtering weights
     allocate(self%wgh(self%isd:self%ied,self%jsd:self%jed,-1:1,-1:1))
 
+    ! Create UnitSphere geometry
+    ageometry = atlas_geometry("Earth")
+
     ! Compute distance based weights
     self%wgh = 0.0_kind_real
     r_dist = 1.0
@@ -92,7 +95,7 @@ contains
              do jj = -1,1
                 ! Great circle distance
                 if(self%scale_dist > 0) then
-                  r_dist = sphere_distance(geom%lon(i,j), geom%lat(i,j), geom%lon(i+ii,j+jj), geom%lat(i+ii,j+jj) ) * re
+                  r_dist = ageometry%distance(geom%lon(i,j), geom%lat(i,j), geom%lon(i+ii,j+jj), geom%lat(i+ii,j+jj) )
                   r_dist = exp(-0.5 * (r_dist/self%scale_dist) ** 2)
                 end if
 
