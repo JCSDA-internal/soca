@@ -24,7 +24,7 @@ endfunction()
 ecbuild_add_library( TARGET   soca
                      SOURCES ${soca_src_files}
                      LIBS     ${LAPACK_LIBRARIES} ${NETCDF_LIBRARIES}
-                              eckit eckit_mpi fckit oops saber ioda ufo fms mom6
+                              eckit eckit_mpi fckit atlas atlas_f oops saber ioda ufo fms mom6
                      INSTALL_HEADERS LISTED
                      LINKER_LANGUAGE ${SOCA_LINKER_LANGUAGE}
                     )
