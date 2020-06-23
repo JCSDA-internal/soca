@@ -635,5 +635,6 @@ soca_add_test( NAME checkpointmodel
 # Remapping MOM6 (horiz+vertical intterpolation)
 soca_add_test( NAME convertstate
                EXE  soca_convertstate.x
+               TOL  2e-5 0
                NOTRAPFPE
                TEST_DEPENDS test_soca_gridgen )
