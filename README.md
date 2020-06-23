@@ -27,7 +27,7 @@ make -j 4
 3. If building the same way travis-ci builds the MOM6 SOCA bundle:
 ```
 export MAIN_REPO=soca
-export LIB_REPOS="fms cvmix geokdtree mom6_da_hooks gsw mom6 crtm fckit atlas oops saber ioda ufo ioda-converters soca-config"
+export LIB_REPOS="fms gsw mom6 crtm fckit atlas oops saber ioda ufo ioda-converters soca-config"
 export BUILD_OPT=""
 export BUILD_OPT_CRTM="-DBUILD_CRTM=ON"
 export BUILD_OPT_OOPS="-DENABLE_OOPS_TOYMODELS=OFF"
