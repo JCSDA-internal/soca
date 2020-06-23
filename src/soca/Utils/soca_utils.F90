@@ -5,12 +5,10 @@
 
 module soca_utils
 
+use atlas_module, only: atlas_geometry, atlas_indexkdtree
 use netcdf
 use kinds, only: kind_real
 use gsw_mod_toolbox, only : gsw_rho, gsw_sa_from_sp, gsw_ct_from_pt, gsw_mlp
-use fckit_kdtree_module, only: kdtree, kdtree_create, kdtree_destroy, &
-                               kdtree_k_nearest_neighbors
-use fckit_geometry_module, only: sphere_distance
 use fckit_exception_module, only: fckit_exception
 
 implicit none
@@ -182,23 +180,26 @@ subroutine soca_remap_idw(lon_src, lat_src, data_src, lon_dst, lat_dst, data_dst
   integer :: idx(nn_max)
   integer :: n_src, i, j, n, nn
   real(kind_real) :: dmax, r, w(nn_max),  dist(nn_max)
-  type(kdtree) :: kd
+  type(atlas_geometry) :: ageometry
+  type(atlas_indexkdtree) :: kd
 
   ! create kd tree
   n_src = size(lon_src)
-  kd = kdtree_create(n_src, lon_src, lat_src)
+  ageometry = atlas_geometry("UnitSphere")
+  kd = atlas_indexkdtree(ageometry)
+  call kd%build(n_src, lon_src, lat_src)
 
   ! remap
   do i = 1, size(data_dst, dim=1)
     do j = 1, size(data_dst, dim=2)
 
       ! get nn_max nearest neighbors
-      call kdtree_k_nearest_neighbors(kd, lon_dst(i,j), lat_dst(i,j), nn_max, idx)
+      call kd%closestPoints(lon_dst(i,j), lat_dst(i,j), nn_max, idx)
 
       ! get distances. Add a small offset so there is never any 0 values
       do n=1,nn_max
-        dist(n) = sphere_distance(lon_dst(i,j), lat_dst(i,j), &
-                                  lon_src(idx(n)), lat_src(idx(n)))
+        dist(n) = ageometry%distance(lon_dst(i,j), lat_dst(i,j), &
+                                     lon_src(idx(n)), lat_src(idx(n)))
       end do
       dist = dist + 1e-6
 
@@ -233,7 +234,7 @@ subroutine soca_remap_idw(lon_src, lat_src, data_src, lon_dst, lat_dst, data_dst
   end do
 
   ! done, cleanup
-  call kdtree_destroy(kd)
+  call kd%final()
 end subroutine soca_remap_idw
 
 ! ------------------------------------------------------------------------------
