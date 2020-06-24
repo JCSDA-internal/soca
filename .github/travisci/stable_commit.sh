@@ -17,38 +17,40 @@ echo ""
 RELEASE_BRANCH=${RELEASE_BRANCH:-release/stable-nightly}
 
 cwd=$(pwd)
-cd repo.src/${MAIN_REPO}/bundle
-mv CMakeLists.txt CMakeLists.txt.new
 
-# by default TravisCI only fetches the single branch that is going to be tested,
-# this makes sure the release branch is retrieved as well
-git remote set-branches --add origin $RELEASE_BRANCH
-git fetch --all
-
-# get the git commit hash for the relevant involved branches
+# get the hash for this branch
+cd repo.src/$MAIN_REPO
 ref_develop=$(git rev-parse HEAD)
+
+# get a modified source url... we have to modify it
+# with a credentials token so that we can later push to github
+url=$(git remote get-url origin)
+url=${url/github.com/"${GH_TOKEN}@github.com"}
+
+# check out release branch in a new directory
+# (otherwise, if we do it here, this script may change!)
+git clone $url $cwd/repo.release
+cd $cwd/repo.release
 git checkout $RELEASE_BRANCH || git checkout -b $RELEASE_BRANCH
-ref_stable=$(git rev-parse HEAD)
-ref_common=$(git merge-base $ref_develop $ref_stable)
 
 # do we need to update the ancestors after merging changes?
 # (needs to be done when develop has been updated since the last release tag)
 amend=""
+ref_stable=$(git rev-parse HEAD)
+ref_common=$(git merge-base $ref_develop $ref_stable)
 if [[ "$ref_common" != "$ref_develop" ]]; then
     git merge -s ours $BRANCH -m "temporary branch"
     amend="--amend"
 fi
 
-# setup git user info
-git config --global user.email "travis@travis-ci.org"
-git config --global user.name  "TravisCI"
-url=$(git remote get-url origin)
-url=${url/github.com/"${GH_TOKEN}@github.com"}
-git remote add origin-auth $url
+# replace the CMakeLists with the tagged version
+cd bundle
+cp $cwd/repo.src/${MAIN_REPO}/bundle/CMakeLists.txt .
 
 # check in the changes
+git config --global user.email "travis@travis-ci.org"
+git config --global user.name  "TravisCI"
 msg="nightly stable  $(date +%Y-%m-%d)"
-mv CMakeLists.txt.new CMakeLists.txt
 git add .
 git commit -m "$msg" $amend
-git push --set-upstream origin-auth $RELEASE_BRANCH
+git push --set-upstream origin $RELEASE_BRANCH
