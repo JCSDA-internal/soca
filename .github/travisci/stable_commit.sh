@@ -39,7 +39,7 @@ amend=""
 ref_stable=$(git rev-parse HEAD)
 ref_common=$(git merge-base $ref_develop $ref_stable)
 if [[ "$ref_common" != "$ref_develop" ]]; then
-    git merge -s ours $BRANCH -m "temporary branch"
+    git merge -s ours origin/$BRANCH -m "temporary branch"
     amend="--amend"
 fi
 
