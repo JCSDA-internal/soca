@@ -20,7 +20,12 @@ cwd=$(pwd)
 cd repo.src/${MAIN_REPO}/bundle
 mv CMakeLists.txt CMakeLists.txt.new
 
-# get the git commit hash for the relevant involved branches 
+# by default TravisCI only fetches the single branch that is going to be tested,
+# this makes sure the release branch is retrieved as well
+git remote set-branches --add origin $RELEASE_BRANCH
+git fetch --all
+
+# get the git commit hash for the relevant involved branches
 ref_develop=$(git rev-parse HEAD)
 git checkout $RELEASE_BRANCH || git checkout -b $RELEASE_BRANCH
 ref_stable=$(git rev-parse HEAD)
@@ -30,7 +35,7 @@ ref_common=$(git merge-base $ref_develop $ref_stable)
 # (needs to be done when develop has been updated since the last release tag)
 amend=""
 if [[ "$ref_common" != "$ref_develop" ]]; then
-    git merge -s ours develop -m "temporary branch"
+    git merge -s ours $BRANCH -m "temporary branch"
     amend="--amend"
 fi
 
