@@ -31,6 +31,7 @@ url=${url/github.com/"${GH_TOKEN}@github.com"}
 # (otherwise, if we do it here, this script may change!)
 git clone $url $cwd/repo.release
 cd $cwd/repo.release
+git checkout $BRANCH
 git checkout $RELEASE_BRANCH || git checkout -b $RELEASE_BRANCH
 ref_release=$(git rev-parse HEAD)
 
