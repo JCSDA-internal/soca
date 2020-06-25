@@ -1,21 +1,21 @@
 Test     : CostJb   : Nonlinear Jb = 0
 Test     : CostJo   : Nonlinear Jo(ADT) = 224.622, nobs = 100, Jo/n = 2.24622, err = 0.1
 Test     : CostFunction: Nonlinear J = 224.622
-Test     : RPCGMinimizer: reduction in residual norm = 0.63425
+Test     : RPCGMinimizer: reduction in residual norm = 0.567965
 Test     : CostFunction::addIncrement: Analysis: 
 Test     :   Valid time: 2018-04-15T00:00:00Z
-Test     :   cicen   min=    0.000000   max=    1.000000   mean=    0.023969
-Test     :   hicen   min=   -0.000769   max=    2.923064   mean=    0.115988
+Test     :   cicen   min=    0.000000   max=    1.000000   mean=    0.023980
+Test     :   hicen   min=   -0.000651   max=    2.923064   mean=    0.115988
 Test     :   hsnon   min=    0.000000   max=    0.608625   mean=    0.028358
-Test     :    socn   min=   10.721046   max=   40.441659   mean=   34.574256
-Test     :    tocn   min=   -1.888390   max=   31.700465   mean=    6.011836
-Test     :     ssh   min=   -2.375283   max=    0.925792   mean=   -0.289317
+Test     :    socn   min=   10.721046   max=   40.441659   mean=   34.562480
+Test     :    tocn   min=   -1.906592   max=   31.700465   mean=    6.011523
+Test     :     ssh   min=   -2.340322   max=    0.921891   mean=   -0.287161
 Test     :    hocn   min=    0.001000   max= 1345.640000   mean=  128.628064
 Test     :      sw   min= -225.097763   max=   -0.033703   mean= -110.032311
 Test     :     lhf   min=  -38.137398   max=  256.597656   mean=   64.434146
 Test     :     shf   min=  -58.949295   max=  201.374298   mean=    9.318225
 Test     :      lw   min=    0.000000   max=   88.036087   mean=   48.153824
 Test     :      us   min=    0.004396   max=    0.019658   mean=    0.009356
-Test     : CostJb   : Nonlinear Jb = 7.231785
-Test     : CostJo   : Nonlinear Jo(ADT) = 137.800465, nobs = 100, Jo/n = 1.378005, err = 0.100000
-Test     : CostFunction: Nonlinear J = 145.032250
+Test     : CostJb   : Nonlinear Jb = 5.036183
+Test     : CostJo   : Nonlinear Jo(ADT) = 142.443940, nobs = 100, Jo/n = 1.424439, err = 0.100000
+Test     : CostFunction: Nonlinear J = 147.480123
