@@ -18,12 +18,12 @@ RELEASE_BRANCH=${RELEASE_BRANCH:-release/stable-nightly}
 
 cwd=$(pwd)
 
-# get the hash for this branch
+# get the hash for this branch of the repo
 cd repo.src/$MAIN_REPO
 ref_develop=$(git rev-parse HEAD)
 
-# get a modified source url... we have to modify it
-# with a credentials token so that we can later push to github
+# get a modified source url.
+# (We have to modify it with a credential token so we can later push to github)
 url=$(git remote get-url origin)
 url=${url/github.com/"${GH_TOKEN}@github.com"}
 
@@ -32,14 +32,22 @@ url=${url/github.com/"${GH_TOKEN}@github.com"}
 git clone $url $cwd/repo.release
 cd $cwd/repo.release
 git checkout $RELEASE_BRANCH || git checkout -b $RELEASE_BRANCH
+ref_release=$(git rev-parse HEAD)
 
 # do we need to update the ancestors after merging changes?
-# (needs to be done when develop has been updated since the last release tag)
+# (needs to be done when develop has been updated since the last release tag,
+# otherwise the git history for release branch will not be continuous and not
+# connected properly to develop
 amend=""
-ref_stable=$(git rev-parse HEAD)
-ref_common=$(git merge-base $ref_develop $ref_stable)
+ref_common=$(git merge-base $ref_develop $ref_release)
 if [[ "$ref_common" != "$ref_develop" ]]; then
-    git merge -s ours origin/$BRANCH -m "temporary branch"
+    # this "merges" the branches by taking an exact copy of
+    # what is in the develop branch
+    git merge -s ours $BRANCH -m "temporary branch"
+    git branch temporary
+    git reset --hard $BRANCH
+    git reset --soft temporary
+    git branch -D temporary
     amend="--amend"
 fi
 
@@ -51,6 +59,6 @@ cp $cwd/repo.src/${MAIN_REPO}/bundle/CMakeLists.txt .
 git config --global user.email "travis@travis-ci.org"
 git config --global user.name  "TravisCI"
 msg="nightly stable  $(date +%Y-%m-%d)"
-git add .
+git add CMakeLists.txt
 git commit -m "$msg" $amend
 git push --set-upstream origin $RELEASE_BRANCH
