@@ -1,0 +1,52 @@
+EXP_DIR=$(readlink -f .)
+
+WORKLOAD_MANAGER=slurm  # none or slurm
+MACHINE=orion           # default or discover (default is a Linux workstation, no modules loaded)
+                        # TODO(Guillaume) add Hera and Orion
+MPIRUN=`which mpirun`   # TODO could probably get the info from somewhere else
+
+# parameters used by SLURM
+JOB_NAME=exp1
+JOB_NPES=100
+JOB_TIME=00:30:00
+JOB_ACCT=marine-cpu
+
+# experiment start/stop times
+EXP_START_TIME=20160101Z12
+EXP_END_TIME=20160630Z12
+FCST_LEN=24
+
+# various directory locations
+SCRATCH_DIR=${EXP_DIR}/WRK
+SOCA_BUNDLE_DIR=/work/noaa/marine/Guillaume.Vernieres/sandboxes/
+SOCA_BIN_DIR=/work/noaa/marine/Guillaume.Vernieres/sandboxes/soca/build/bin/
+
+# model/soca configuration to be used
+MODEL=mom6                         # options: mom6 or geos
+                                   # TODO add EMC's MOM6-CICE
+MOM_EXE=${SOCA_BIN_DIR}/mom6.x     # only used when model is mom6
+model_res=1deg                     # other options for now are 05deg and 025deg
+MODEL_CONFIG=${EXP_DIR}/soca-config/jcsda/mom6sis2_global/${model_res}
+MODEL_DATA=/work/noaa/marine/Guillaume.Vernieres/mom6sis2_global/${model_res}
+
+# initial conditions for model
+# TODO 1 year spin-up so we can start doing science!
+MOM_IC=/work/noaa/marine/Guillaume.Vernieres/DATA/ic/soda_3.3.1_20151130.nc
+
+# forcing (unused when model is geos)
+FORC_ATM="cfsr"
+FORC_MEAN_FILE=/work/noaa/marine/Guillaume.Vernieres/DATA/fluxes/cfsr/%Y/%Y%m%d/cfsr.%Y%m%d.'#var#'.nc
+FORC_VAR=DLWRF.sfc,DSWRF.sfc,PRATE,SLP,TMP.2m,SPFH.2m,UGRD.10m,VGRD.10m
+
+# observations
+OBS_IODA=/work/noaa/marine/Guillaume.Vernieres/OBS/obs_ioda/
+OBS_LIST="sst sss insitu" # TODO split per instrument, point to EMC's ObsTypes
+                              # Elements $o of the list is used to:
+                              #   1. Locate ioda file $OBS_IODA/${ymd}/$o/$o.$ymd.nc
+                              #   2. Add ObsSpace $o.yml to the ObsTypes in 3dvar.yml
+
+# Set unused variables to dummy values
+# TODO(Guillaume) GEOS_* are currently needed in cycle.sh. Move the model needed variable to a dedicated script.
+GEOS_RC=NA
+GEOS_GCMRUN=NA
+GEOS_IC=NA

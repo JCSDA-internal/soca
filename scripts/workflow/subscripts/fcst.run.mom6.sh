@@ -11,7 +11,7 @@ cat <<EOF
 #================================================================================
 
 EOF
-
+module list
 # required environment variables:
 envar=()
 envar+=("FCST_LEN")          # Length of the forecast (hours)
