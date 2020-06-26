@@ -11,8 +11,6 @@
 #================================================================================
 set -e
 
-RELEASE_BRANCH=${RELEASE_BRANCH:-release/stable-nightly}
-
 cwd=$(pwd)
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
@@ -66,6 +64,6 @@ for r in $bundle_repos; do
     if [[ $hash != "none" ]]; then
         hash=${hash:0:7}
         echo "changing $r to $hash"
-        sed -i "s/\(.* PROJECT $r .*\) \(BRANCH\|TAG\) .*/\1 TAG $hash \)/" $bundle_dir/CMakeLists.txt
+        sed -i "s/\(.*PROJECT \+$r .*\)\(BRANCH\|TAG\) *\([a-zA-Z0-9\/\_\.\-]*\)\(.*\)/\1TAG $hash\4/g" $bundle_dir/CMakeLists.txt
     fi
 done
