@@ -1,19 +1,17 @@
 inputVariables:
-  variables: &soca_vars [tocn, socn, hocn, cicen, uocn, vocn]
+  variables: &soca_vars [ssh, tocn, socn, uocn, vocn, hocn, cicen]
 inputresolution:
   num_ice_cat: 5
   num_ice_lev: 4
   num_sno_lev: 1
-  read_soca_grid: grid
+  geom_grid_file: soca_gridspec.nc
+  mom6_input_nml: ./inputnml/input.nml
 outputresolution:
   num_ice_cat: 5
   num_ice_lev: 4
   num_sno_lev: 1
-  read_soca_grid: grid
-varchange: Ana2Model
-rotate:
-  u: [uocn]
-  v: [vocn]
+  geom_grid_file: soca_gridspec.small.nc 
+  mom6_input_nml: ./inputnml/input_small.nml
 inputVariables:
   variables: *soca_vars
 outputVariables:

@@ -12,7 +12,6 @@ use kinds, only: kind_real
 use ufo_geovals_mod, only: ufo_geovals
 use ufo_locs_mod, only: ufo_locs, ufo_locs_time_mask
 use unstructured_interpolation_mod, only: unstrc_interp
-use fckit_mpi_module, only: fckit_mpi_comm
 use fckit_log_module, only : fckit_log
 
 implicit none
@@ -44,7 +43,6 @@ subroutine soca_getvalues_create(self, geom, locs)
   type(ufo_locs),           intent(in) :: locs
 
   integer :: isc, iec, jsc, jec, ni, nj
-  type(fckit_mpi_comm) :: f_comm
   integer :: nn, ngrid_in, ngrid_out
   character(len=8) :: wtype = 'barycent'
   real(kind=kind_real), allocatable :: lats_in(:), lons_in(:)
@@ -53,7 +51,6 @@ subroutine soca_getvalues_create(self, geom, locs)
   isc = geom%isc ; iec = geom%iec
   jsc = geom%jsc ; jec = geom%jec
 
-  f_comm = fckit_mpi_comm()
   ngrid_out = locs%nlocs
   nn = 3
 
@@ -65,7 +62,7 @@ subroutine soca_getvalues_create(self, geom, locs)
 
   lons_in = reshape(geom%lon(isc:iec,jsc:jec), (/ngrid_in/))
   lats_in = reshape(geom%lat(isc:iec,jsc:jec), (/ngrid_in/))
-  call self%horiz_interp%create(f_comm, nn, wtype, &
+  call self%horiz_interp%create(geom%f_comm, nn, wtype, &
                            ngrid_in, lats_in, lons_in, &
                            ngrid_out, locs%lat, locs%lon)
 
@@ -74,7 +71,7 @@ subroutine soca_getvalues_create(self, geom, locs)
   ngrid_in = count(geom%mask2d(isc:iec,jsc:jec) > 0)
   lons_in = pack(geom%lon(isc:iec,jsc:jec), mask=geom%mask2d(isc:iec,jsc:jec) > 0)
   lats_in = pack(geom%lat(isc:iec,jsc:jec), mask=geom%mask2d(isc:iec,jsc:jec) > 0)
-  call self%horiz_interp_masked%create(f_comm, nn, wtype, &
+  call self%horiz_interp_masked%create(geom%f_comm, nn, wtype, &
                            ngrid_in, lats_in, lons_in, &
                            ngrid_out, locs%lat, locs%lon)
 end subroutine soca_getvalues_create

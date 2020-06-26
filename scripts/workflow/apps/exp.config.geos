@@ -1,0 +1,52 @@
+EXP_DIR=$(readlink -f .)
+
+WORKLOAD_MANAGER=slurm  # none or slurm
+MACHINE=discover        # default or discover (default is a Linux workstation, no modules loaded)
+                        # TODO(Guillaume) add Hera and Orion
+MPIRUN=mpirun           #TODO could probably get the info from somewhere else
+
+# parameters used by SLURM
+JOB_NAME=exp13
+JOB_NPES=100
+JOB_TIME=1:00:00
+JOB_ACCT=g0613
+
+# experiment start/stop times
+EXP_START_TIME=20160101Z12
+EXP_END_TIME=20160102Z12
+FCST_LEN=24
+
+# various directory locations
+SCRATCH_DIR=${EXP_DIR}/WRK
+SOCA_BUNDLE_DIR=/path/to/soca-bundle/
+SOCA_BIN_DIR=${SOCA_BUNDLE_DIR}/build-gnu/bin/
+
+# model/soca configuration to be used
+MODEL=geos                         # options: mom6 or geos
+                                   # TODO add EMC's MOM6-CICE
+MOM_EXE=NA                         # only used when model is mom6
+model_res=1deg                     # other options for now are 05deg and 025deg
+MODEL_CONFIG=${EXP_DIR}/soca-config/jcsda/mom6sis2_global/${model_res}
+MODEL_DATA=/discover/nobackup/tsluka/jedi/soca.data/mom6sis2_global/${model_res}
+
+# initial conditions for model
+# TODO 1 year spin-up so we can start doing science!
+MOM_IC=/path/to/initial/restart/MOM.res.nc
+
+# geos specific configuration
+# TODO move somewhere else
+GEOS_RC=/path/to/geos/rc           # resource files for geos
+GEOS_GCMRUN=/path/to/gcm_run.j     # geos run script
+GEOS_IC=/path/to/non-mom6/initial/restart/rst_atm_20151201_120000.tar
+
+# forcing (unused when model is geos)
+FORC_ATM=NA
+FORC_MEAN_FILE=NA
+FORC_VAR=NA
+
+# observations
+OBS_IODA=/path/to/obs_ioda
+OBS_LIST="adt sst sss insitu" # TODO split per instrument, point to EMC's ObsTypes
+                              # Elements $o of the list is used to:
+                              #   1. Locate ioda file $OBS_IODA/${ymd}/$o/$o.$ymd.nc
+                              #   2. Add ObsSpace $o.yml to the ObsTypes in 3dvar.yml

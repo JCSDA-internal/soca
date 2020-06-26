@@ -98,7 +98,11 @@ namespace soca {
   // -----------------------------------------------------------------------------
   State & State::operator+=(const Increment & dx) {
     ASSERT(validTime() == dx.validTime());
-    soca_state_add_incr_f90(toFortran(), dx.toFortran());
+    // Interpolate increment to analysis grid
+    Increment dx_hr(*geom_, dx);
+
+    // Add increment to background state
+    soca_state_add_incr_f90(toFortran(), dx_hr.toFortran());
     return *this;
   }
   // -----------------------------------------------------------------------------

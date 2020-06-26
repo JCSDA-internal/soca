@@ -24,12 +24,14 @@ envar+=("SOCA_BIN_DIR")    # path to soca executables directory
 envar+=("SOCA_CONFIG")     # path to input soca configuration files
 envar+=("SOCA_DATA")       # path to input soca static data
 envar+=("WORK_DIR")        # temporary working directory for this script
+envar+=("MPIRUN")          # exec to run mpi
+envar+=("JOB_NPES")        # exec to run mpi
 
 # make sure required env vars exist
 set +u
 for v in ${envar[@]}; do
     if [[ -z "${!v}" ]]; then
-	echo "ERROR: env var $v is not set."; exit 1
+        echo "ERROR: env var $v is not set."; exit 1
     fi
     echo " $v = ${!v}"
 done
@@ -61,7 +63,7 @@ cd ..
 # create time dependent momt namelist file
 FCST_RESTART=1
 FCST_RST_OFST=$FCST_LEN
-. input.nml.sh > input.nml
+. input.nml.sh > input-mom6.nml
 
 # link soca config files
 ln -s $SOCA_CONFIG/* .
@@ -76,11 +78,11 @@ cd ..
 ulimit -s unlimited
 export OMP_NUM_THREADS=1
 echo "generating grid..."
-time mpirun $SOCA_BIN_DIR/soca_gridgen.x gridgen.yml
+time $MPIRUN -np $JOB_NPES $SOCA_BIN_DIR/soca_gridgen.x gridgen.yml
 
 # run static B init
 echo "generating static b..."
-time mpirun $SOCA_BIN_DIR/soca_staticbinit.x staticbinit.yml
+time $MPIRUN -np $JOB_NPES $SOCA_BIN_DIR/soca_staticbinit.x staticbinit.yml
 
 # move output files
 rm -rf $DA_INIT_DIR

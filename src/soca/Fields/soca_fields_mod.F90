@@ -211,7 +211,7 @@ subroutine soca_fields_init_vars(self, vars)
 
     ! determine number of levels, and if masked
     select case(self%fields(i)%name)
-    case ('tocn','socn', 'hocn', 'layer_depth')
+    case ('tocn','socn', 'hocn', 'layer_depth', 'chl')
       nz = self%geom%nzo
       self%fields(i)%mask => self%geom%mask2d
     case ('uocn')
@@ -302,6 +302,10 @@ subroutine soca_fields_init_vars(self, vars)
       self%fields(i)%cf_name = "friction_velocity_over_water"
       self%fields(i)%io_file = "sfc"
       self%fields(i)%io_name = "fric_vel"
+    case ('chl')
+      self%fields(i)%cf_name = "mass_concentration_of_chlorophyll_in_sea_water"
+      self%fields(i)%io_file = "ocn"
+      self%fields(i)%io_name = "chl"
     end select
 
   end do
@@ -526,7 +530,6 @@ subroutine soca_fields_dotprod(fld1,fld2,zprod)
 
   real(kind=kind_real) :: local_zprod
   integer :: ii, jj, kk, n
-  type(fckit_mpi_comm) :: f_comm
   type(soca_field), pointer :: field1, field2
 
   ! make sure fields are same shape
@@ -562,8 +565,7 @@ subroutine soca_fields_dotprod(fld1,fld2,zprod)
   end do
 
   ! Get global dot product
-  f_comm = fckit_mpi_comm()
-  call f_comm%allreduce(local_zprod, zprod, fckit_mpi_sum())
+  call fld1%geom%f_comm%allreduce(local_zprod, zprod, fckit_mpi_sum())
 end subroutine soca_fields_dotprod
 
 
@@ -868,10 +870,7 @@ subroutine soca_fields_gpnorm(fld, nf, pstat)
   logical :: mask(fld%geom%isc:fld%geom%iec, fld%geom%jsc:fld%geom%jec)
   real(kind=kind_real) :: ocn_count, local_ocn_count, tmp(3)
   integer :: jj, isc, iec, jsc, jec
-  type(fckit_mpi_comm) :: f_comm
   type(soca_field), pointer :: field
-
-  f_comm = fckit_mpi_comm()
 
   ! Indices for compute domain
   isc = fld%geom%isc ; iec = fld%geom%iec
@@ -879,7 +878,7 @@ subroutine soca_fields_gpnorm(fld, nf, pstat)
 
   ! get the number of ocean grid cells
   local_ocn_count = sum(fld%geom%mask2d(isc:iec, jsc:jec))
-  call f_comm%allreduce(local_ocn_count, ocn_count, fckit_mpi_sum())
+  call fld%geom%f_comm%allreduce(local_ocn_count, ocn_count, fckit_mpi_sum())
   mask = fld%geom%mask2d(isc:iec,jsc:jec) > 0.0
 
   ! calculate global min, max, mean for each field
@@ -889,7 +888,7 @@ subroutine soca_fields_gpnorm(fld, nf, pstat)
     ! TODO: use all fields (this will change answers in the ctests)
     select case(fld%fields(jj)%name)
     case("tocn", "socn", "ssh", "hocn", "uocn", "vocn", &
-         "sw", "lw", "lhf", "shf", "us", "hicen", "hsnon", "cicen")
+         "sw", "lw", "lhf", "shf", "us", "hicen", "hsnon", "cicen", "chl")
       continue
     case default
       cycle
@@ -900,9 +899,9 @@ subroutine soca_fields_gpnorm(fld, nf, pstat)
     call fldinfo(field%val(isc:iec,jsc:jec,:), mask, tmp)
 
     ! calculate global min/max/mean
-    call f_comm%allreduce(tmp(1), pstat(1,jj), fckit_mpi_min())
-    call f_comm%allreduce(tmp(2), pstat(2,jj), fckit_mpi_max())
-    call f_comm%allreduce(tmp(3), pstat(3,jj), fckit_mpi_sum())
+    call fld%geom%f_comm%allreduce(tmp(1), pstat(1,jj), fckit_mpi_min())
+    call fld%geom%f_comm%allreduce(tmp(2), pstat(2,jj), fckit_mpi_max())
+    call fld%geom%f_comm%allreduce(tmp(3), pstat(3,jj), fckit_mpi_sum())
     pstat(3,jj) = pstat(3,jj)/ocn_count
   end do
 end subroutine soca_fields_gpnorm
@@ -1041,7 +1040,7 @@ subroutine soca_fields_write_rst(fld, f_conf, vdate)
       idr = register_restart_field( ice_restart, ice_filename, "vsnon", &
         vsnon, domain=fld%geom%Domain%mpp_domain)
 
-    else if (field%io_file /= "") then
+    else if (len_trim(field%io_file) /= 0) then
       ! which file are we writing to
       select case(field%io_file)
       case ('ocn')

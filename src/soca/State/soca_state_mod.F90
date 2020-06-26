@@ -8,6 +8,7 @@ module soca_state_mod
 use soca_geom_mod
 use soca_fields_mod
 use soca_increment_mod
+use soca_convert_state_mod
 use oops_variables_mod
 use soca_geostrophy_mod
 use kinds, only: kind_real
@@ -29,6 +30,7 @@ contains
 
   ! misc
   procedure :: rotate => soca_state_rotate
+  procedure :: convert => soca_state_convert
 
 end type
 
@@ -145,11 +147,14 @@ subroutine soca_state_add_incr(self, rhs)
      call self%get("hocn", h)
 
      ! Make a copy of the increment and get the needed pointers
-     !call incr_geo%copy(rhs)
      call incr%get("tocn", dt)
      call incr%get("socn", ds)
      call incr%get("uocn", du)
      call incr%get("vocn", dv)
+
+     ! Initialize du and dv to 0
+     du%val = 0.0_kind_real
+     dv%val = 0.0_kind_real
 
      ! Compute the geostrophic increment
      call geostrophy%setup(self%geom, h%val)
@@ -232,5 +237,25 @@ subroutine soca_state_diff_incr(x1, x2, inc)
   end do
 end subroutine soca_state_diff_incr
 
+! ------------------------------------------------------------------------------
+!> ConvertState app
+subroutine soca_state_convert(self, rhs)
+  class(soca_state), intent(inout) :: self ! target
+  class(soca_state), intent(in)   :: rhs   ! source
+  integer :: n
+  type(soca_convertstate_type) :: convert_state
+  type(soca_field), pointer :: field1, field2, hocn1, hocn2 
+
+  call rhs%get("hocn", hocn1)
+  call self%get("hocn", hocn2)
+  call convert_state%setup(rhs%geom, self%geom, hocn1, hocn2)
+  do n = 1, size(rhs%fields)
+    field1 => rhs%fields(n)
+    call self%get(trim(field1%name),field2)
+    if (field1%io_file=="ocn" .or. field1%io_file=="sfc" .or. field1%io_file=="ice")  &
+    call convert_state%change_resol(field1, field2, rhs%geom, self%geom)
+  end do !n
+  call convert_state%clean()
+end subroutine soca_state_convert
 
 end module

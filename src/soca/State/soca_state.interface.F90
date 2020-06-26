@@ -266,8 +266,13 @@ subroutine soca_state_change_resol_c(c_key_fld,c_key_rhs) bind(c,name='soca_stat
     call soca_state_registry%get(c_key_fld,fld)
     call soca_state_registry%get(c_key_rhs,rhs)
 
-    ! TODO implement a proper change of resolution, just copying for now
-    call fld%copy(rhs)
+    ! TODO (Guillaume or Travis) implement == in geometry or something to that effect.
+    if (size(fld%geom%lon,1)==size(rhs%geom%lon,1) .and. size(fld%geom%lat,2)==size(rhs%geom%lat,2) .and. &
+      fld%geom%nzo==rhs%geom%nzo ) then
+      call fld%copy(rhs)
+    else
+      call fld%convert(rhs)      
+    endif
 
 end subroutine soca_state_change_resol_c
 

@@ -104,7 +104,7 @@ for repo in $LIB_REPOS $MAIN_REPO; do
     if [[ $rebuild == 1 || $skip_lfs == 0 ]]; then
         repo_src_dir=repo.src/$repo
         rm -rf $repo_src_dir
-        GIT_LFS_SKIP_SMUDGE=$skip_lfs git clone -b $repo_branch $repo_url $repo_src_dir
+        GIT_LFS_SKIP_SMUDGE=$skip_lfs git clone --recursive -b $repo_branch $repo_url $repo_src_dir
     fi
 
 done

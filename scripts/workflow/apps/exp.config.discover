@@ -1,10 +1,12 @@
 EXP_DIR=$(readlink -f .)
 
 # parameters used by SLURM
-JOB_NAME=exp1
-JOB_NODES=5
-JOB_TIME=1:00:00
-JOB_ACCT=s2127
+WORKLOAD_MANAGER=SLURM # none or SLURM
+MACHINE=discover # singularity, ubuntu, discover, orion, hera
+JOB_NAME=exp3
+JOB_NODES=1
+JOB_TIME=00:30:00
+JOB_ACCT=g0613
 
 # experiment start/stop times
 EXP_START_TIME=20151201Z12
@@ -13,10 +15,10 @@ FCST_LEN=24
 
 # various directory locations
 SCRATCH_DIR=${EXP_DIR}/WRK
-SOCA_BUNDLE_DIR=/discover/nobackup/tsluka/jedi/soca.src
-SOCA_BIN_DIR=/discover/nobackup/tsluka/jedi/soca.release/gcc/bin
+SOCA_BUNDLE_DIR=/home/gvernier/nobackup/soca/soca-bundle
+SOCA_BIN_DIR=/home/gvernier/nobackup/soca/soca-bundle/build-gnu/bin
 
-MOM_EXE=/discover/nobackup/tsluka/mom6/build/gcc/MOM6_SIS2/repro/MOM6
+MOM_EXE=${SOCA_BIN_DIR}/mom6.x
 
 # model/soca configuration to be used
 model_res=1deg   # other options for now are 05deg and 025deg
