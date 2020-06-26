@@ -49,10 +49,7 @@ ecbuild_bundle( PROJECT ioda-converters GIT "https://github.com/JCSDA/ioda-conve
 ecbuild_bundle( PROJECT gsw             GIT "https://github.com/JCSDA/GSW-Fortran.git"     UPDATE BRANCH develop )
 ecbuild_bundle( PROJECT ufo             GIT "https://github.com/JCSDA/ufo.git"             UPDATE BRANCH develop )
 ecbuild_bundle( PROJECT fms             GIT "https://github.com/JCSDA/FMS.git"             UPDATE BRANCH dev/master-ecbuild )
-ecbuild_bundle( PROJECT cvmix           GIT "https://github.com/JCSDA/CVMix-src.git"       UPDATE BRANCH feature/ecbuild )
-ecbuild_bundle( PROJECT geokdtree       GIT "https://github.com/JCSDA/geoKdTree.git"       UPDATE BRANCH feature/ecbuild )
-ecbuild_bundle( PROJECT mom6_da_hooks   GIT "https://github.com/JCSDA/MOM6_DA_hooks.git"   UPDATE BRANCH feature/ecbuild )
-ecbuild_bundle( PROJECT mom6            GIT "https://github.com/JCSDA/MOM6.git"            UPDATE BRANCH dev/master-ecbuild )
+ecbuild_bundle( PROJECT mom6            GIT "https://github.com/JCSDA/MOM6.git"            UPDATE BRANCH dev/master-ecbuild RECURSIVE)
 ecbuild_bundle( PROJECT soca-config     GIT "https://github.com/JCSDA/soca-config.git"     UPDATE BRANCH develop )
 ecbuild_bundle( PROJECT soca            SOURCE "../" )
 

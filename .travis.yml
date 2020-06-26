@@ -20,14 +20,14 @@
 env:
   global:
     - MAIN_REPO=soca
-    - LIB_REPOS="fms cvmix geokdtree mom6_da_hooks gsw mom6 crtm
+    - LIB_REPOS="fms gsw mom6 crtm
                  fckit atlas oops saber ioda ufo ioda-converters soca-config"
     - BUILD_OPT=""
     - BUILD_OPT_CRTM="-DBUILD_CRTM=ON"
     - BUILD_OPT_OOPS="-DENABLE_OOPS_TOYMODELS=OFF"
     - BUILD_OPT_UFO="-DLOCAL_PATH_TESTFILES_IODA=NONE"
     - BUILD_OPT_SOCA="-DSOCA_TESTS_FORC_DEFAULT_TOL=ON -DCRTM_FIX_DIR=../../repo.src/crtm/fix"
-    - MATCH_REPOS="saber oops ioda ioda-converters ufo soca soca-config"
+    - MATCH_REPOS="saber oops ioda ioda-converters ufo mom6 soca soca-config"
     - LFS_REPOS="crtm"
 
     # secure token used to push changes to GitHub (user: travissluka)
