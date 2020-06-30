@@ -98,7 +98,6 @@ list( APPEND soca_model_param_copy
 list( APPEND soca_model_namelist
   Data/72x35x25/input.nml
   Data/72x35x25/input_small.nml
-  Data/72x35x25/input_bgc.nml
 )
 
 list( APPEND soca_model_restarts
