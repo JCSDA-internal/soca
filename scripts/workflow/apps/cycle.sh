@@ -18,11 +18,12 @@ source exp.config
 LOG_DIR=$EXP_DIR/logs
 mkdir -p $LOG_DIR
 
-# Source machine dependent modules
-source soca.modules.$MACHINE
 
 # Setup the submit function
 source soca.workload_manager.$WORKLOAD_MANAGER
+
+# Source machine dependent modules
+source soca.modules.$MACHINE
 
 #================================================================================
 # Start of loop
@@ -53,19 +54,17 @@ while true; do
 
     # resubmit this job if we are almost out of time.
     # (don't check this until cycle has run at least once, obviously)
-    if [[ $WORKLOAD_MANAGER == SLURM ]]; then
-      if [[ $cycle_avg_count -gt 0 ]]; then
-        end_time=$(squeue -h -j $SLURM_JOB_ID -o %e)
-        end_time=$(date -d "${end_time:0:10} ${end_time:11:8}" +%s)
-        ((rem_time=end_time-cycle_start))
-        min_time=$(bc <<< "$cycle_avg_runtime * 1.2 / 1") # fudge factor of 1.2x for making sure
-        # there is enough runtime left
-        echo "$rem_time seconds remaining for current SLURM job"
-        if [[ "$rem_time" -lt "$min_time" ]]; then
-          echo "Almost out of time, resubmitting a new job"
-          submitjob
-          exit 0
-        fi
+    if [[ $cycle_avg_count -gt 0 ]]; then
+      end_time=$(squeue -h -j $SLURM_JOB_ID -o %e)
+      end_time=$(date -d "${end_time:0:10} ${end_time:11:8}" +%s)
+      ((rem_time=end_time-cycle_start))
+      min_time=$(bc <<< "$cycle_avg_runtime * 1.2 / 1") # fudge factor of 1.2x for making sure
+      # there is enough runtime left
+      echo "$rem_time seconds remaining for current SLURM job"
+      if [[ "$rem_time" -lt "$min_time" ]]; then
+        echo "Almost out of time, resubmitting a new job"
+        submitjob
+        exit 0
       fi
     fi
 

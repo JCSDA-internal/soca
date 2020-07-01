@@ -1,7 +1,3 @@
-export OPT=/discover/swdev/jcsda/modules
-module use $OPT/modulefiles
-module load apps/jedi/gnu-impi
-
 function submitjob {
     sbatch --ntasks $JOB_NPES --time=$JOB_TIME --qos=debug -A $JOB_ACCT -J $JOB_NAME \
           -o $LOG_DIR/slurm.log \
