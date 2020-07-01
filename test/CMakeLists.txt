@@ -7,6 +7,7 @@ list( APPEND soca_test_input
   testinput/addincrement.yml
   testinput/checkpointmodel.yml
   testinput/convertstate.yml
+  testinput/diffstates.yml
   testinput/dirac_bump_cov.yml
   testinput/dirac_horizfilt.yml
   testinput/dirac_soca_cov.yml
@@ -594,6 +595,10 @@ soca_add_test( NAME addincrement
                EXE  soca_addincrement.x
                NOCOMPARE
                TEST_DEPENDS 3dvar_godas )
+
+soca_add_test( NAME diffstates
+               EXE  soca_diffstates.x
+               NOCOMPARE )
 
 soca_add_test( NAME 3dvarfgat
                EXE  soca_3dvar.x
