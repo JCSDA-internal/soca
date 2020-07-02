@@ -235,9 +235,9 @@ subroutine soca_bump_correlation(self, horiz_convol, geom, f_conf, domain)
   call f_grid%set('prefix', domain)
   call f_grid%set('nl', 1)
   call f_grid%set('nv', 1)
-  call f_grid%set('varname', ['var  '])
+  call f_grid%set('variables', ['var'])
   call f_grid%set('nts', 1)
-  call f_grid%set('timeslot', ['00   '])
+  call f_grid%set('timeslots', ['00'])
 
   ! Geometry fieldset setup
   afieldset = atlas_fieldset()
