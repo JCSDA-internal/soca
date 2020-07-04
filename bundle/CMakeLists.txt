@@ -49,7 +49,7 @@ ecbuild_bundle( PROJECT ioda-converters GIT "https://github.com/JCSDA/ioda-conve
 ecbuild_bundle( PROJECT gsw             GIT "https://github.com/JCSDA/GSW-Fortran.git"     UPDATE TAG 8987bf8 )
 ecbuild_bundle( PROJECT ufo             GIT "https://github.com/JCSDA/ufo.git"             UPDATE TAG d914fba )
 ecbuild_bundle( PROJECT fms             GIT "https://github.com/JCSDA/FMS.git"             UPDATE TAG 82689f3 )
-ecbuild_bundle( PROJECT mom6            GIT "https://github.com/JCSDA/MOM6.git"            UPDATE TAG 41b23f8 RECURSIVE)
+ecbuild_bundle( PROJECT mom6            GIT "https://github.com/JCSDA/MOM6.git"            UPDATE TAG 4469d6d RECURSIVE)
 ecbuild_bundle( PROJECT soca-config     GIT "https://github.com/JCSDA/soca-config.git"     UPDATE TAG 7415936 )
 ecbuild_bundle( PROJECT soca            SOURCE "../" )
 
