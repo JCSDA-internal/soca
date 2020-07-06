@@ -26,9 +26,9 @@ for repo in $LIB_REPOS; do
     install_dir=${REPO_CACHE}/$repo
 
     # set the path to the install dir for subsequent repos to find
-    repo_upper=${repo/-/_}; repo_upper=${repo_upper^^}
-    typeset "${repo_upper}_PATH=$install_dir"
-    export ${repo_upper}_PATH
+    repo_underscore=${repo/-/_}
+    typeset "${repo_underscore}_DIR=$install_dir"
+    export ${repo_underscore}_DIR
 
     # do we skip building this repo?
     [[ -e $bundle_dir/skip_rebuild ]] && continue
