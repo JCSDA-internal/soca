@@ -216,12 +216,8 @@ endif()
 # Create directory for BUMP output
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bump)
 
-# find compare.py, if not found assume it will be built by oops in this bundle
-find_file(COMPARE_BIN compare.py HINTS ${OOPS_PATH}/bin)
-if(NOT COMPARE_BIN)
-  set(COMPARE_BIN ${CMAKE_BINARY_DIR}/bin/compare.py)
-endif()
-
+# find compare.py provided by oops
+find_file(COMPARE_BIN oops_compare.py HINTS ${oops_BINDIR})
 
 #####################################################################
 
