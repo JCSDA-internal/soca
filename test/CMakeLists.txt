@@ -18,6 +18,7 @@ list( APPEND soca_test_input
   testinput/forecast_identity.yml
   testinput/forecast_identity_cice.yml
   testinput/forecast_mom6.yml
+  testinput/forecast_mom6_bgc.yml
   testinput/geometry.yml
   testinput/geometry_iterator.yml
   testinput/geometryatm.yml
@@ -70,6 +71,7 @@ list( APPEND soca_test_ref
   testref/forecast_identity_cice.test
   testref/forecast_identity.test
   testref/forecast_mom6.test
+  testref/forecast_mom6_bgc.test
   testref/hofx_3d.test
   testref/hofx_3dcrtm.test
   testref/hofx_4d.test
@@ -90,6 +92,7 @@ list( APPEND soca_model_param
 list( APPEND soca_model_param_copy
   Data/72x35x25/MOM_input
   Data/72x35x25/MOM_input_small
+  Data/72x35x25/MOM_override
 )
 
 list( APPEND soca_model_namelist
@@ -216,12 +219,8 @@ endif()
 # Create directory for BUMP output
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bump)
 
-# find compare.py, if not found assume it will be built by oops in this bundle
-find_file(COMPARE_BIN compare.py HINTS ${OOPS_PATH}/bin)
-if(NOT COMPARE_BIN)
-  set(COMPARE_BIN ${CMAKE_BINARY_DIR}/bin/compare.py)
-endif()
-
+# find compare.py provided by oops
+find_file(COMPARE_BIN oops_compare.py HINTS ${oops_BINDIR})
 
 #####################################################################
 
@@ -381,6 +380,14 @@ soca_add_test( NAME forecast_mom6
                EXE  soca_forecast.x
                NOTRAPFPE
                TEST_DEPENDS test_soca_gridgen )
+
+# Test mom6_bgc forecast (optional)
+if ( ENABLE_OCEAN_BGC )
+soca_add_test( NAME forecast_mom6_bgc
+               EXE  soca_forecast.x
+               NOTRAPFPE
+               TEST_DEPENDS test_soca_gridgen )
+endif()
 
 # Initialize static error covariance model defined in soca, used for 3DVAR
 soca_add_test( NAME static_socaerror_init
