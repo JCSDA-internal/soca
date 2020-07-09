@@ -92,11 +92,12 @@ list( APPEND soca_model_param
 list( APPEND soca_model_param_copy
   Data/72x35x25/MOM_input
   Data/72x35x25/MOM_input_small
-  Data/72x35x25/MOM_override
+  Data/72x35x25/MOM_override_bgc
 )
 
 list( APPEND soca_model_namelist
   Data/72x35x25/input.nml
+  Data/72x35x25/input_bgc.nml
   Data/72x35x25/input_small.nml
 )
 

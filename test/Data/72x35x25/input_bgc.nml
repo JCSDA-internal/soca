@@ -3,7 +3,8 @@
         input_filename = 'r'
         restart_input_dir = 'INPUT/',
         restart_output_dir = 'RESTART/',
-        parameter_filename = 'MOM_input' /
+        parameter_filename = 'MOM_input'
+                             'MOM_override_bgc' /
 
  &diag_manager_nml
  /
@@ -26,3 +27,18 @@
        clock_grain='MODULE'
        domains_stack_size = 2000000
        clock_flags='SYNC' /
+
+ &generic_tracer_nml
+       do_generic_tracer=.true.
+       do_generic_age=.false.
+       do_generic_COBALT=.false.
+       do_generic_BLING=.true.
+       do_generic_miniBLING=.false.
+       do_generic_TOPAZ=.false.
+       force_update_fluxes=.true. /
+
+ &generic_bling_nml
+      do_carbon=.false.
+      bury_caco3=.false.
+      bury_pop=.false.
+      co2_calc='mocsy' /
