@@ -21,7 +21,7 @@ initial:
 forecast_length: PT6H
 
 output:
-  frequency: PT6H
+  frequency: PT1H
   datadir: Data
   exp: mom6
   date: *date
