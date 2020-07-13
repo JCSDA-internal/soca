@@ -61,6 +61,7 @@ list( APPEND soca_test_ref
   testref/addincrement.test
   testref/checkpointmodel.test
   testref/convertstate.test
+  testref/diffstates.test
   testref/dirac_bump_cov.test
   testref/dirac_horizfilt.test
   testref/dirac_soca_cov.test
@@ -606,7 +607,7 @@ soca_add_test( NAME addincrement
 
 soca_add_test( NAME diffstates
                EXE  soca_diffstates.x
-               NOCOMPARE )
+               TEST_DEPENDS test_soca_gridgen )
 
 soca_add_test( NAME 3dvarfgat
                EXE  soca_3dvar.x
