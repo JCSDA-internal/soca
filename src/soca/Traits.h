@@ -22,18 +22,6 @@
 #include "soca/ModelBias/ModelBiasIncrement.h"
 #include "soca/State/State.h"
 
-#include "ioda/ObsSpace.h"
-#include "ioda/ObsVector.h"
-
-#include "ufo/GeoVaLs.h"
-#include "ufo/LinearObsOperator.h"
-#include "ufo/Locations.h"
-#include "ufo/ObsBias.h"
-#include "ufo/ObsBiasCovariance.h"
-#include "ufo/ObsBiasIncrement.h"
-#include "ufo/ObsDiagnostics.h"
-#include "ufo/ObsOperator.h"
-
 namespace soca {
 
 struct Traits {
@@ -53,18 +41,6 @@ struct Traits {
   typedef soca::ModelBiasIncrement  ModelAuxIncrement;
   typedef soca::ModelBiasCovariance ModelAuxCovariance;
   typedef soca::Localization        Localization;
-
-  typedef ufo::ObsBias              ObsAuxControl;
-  typedef ufo::ObsBiasCovariance    ObsAuxCovariance;
-  typedef ufo::ObsBiasIncrement     ObsAuxIncrement;
-  typedef ufo::ObsDiagnostics       ObsDiagnostics;
-  typedef ufo::ObsOperator          ObsOperator;
-  typedef ufo::LinearObsOperator    LinearObsOperator;
-  typedef ufo::GeoVaLs              GeoVaLs;
-  typedef ufo::Locations            Locations;
-  typedef ioda::ObsSpace            ObsSpace;
-  typedef ioda::ObsVector           ObsVector;
-  template <typename DATA> using ObsDataVector = ioda::ObsDataVector<DATA>;
 };
 
 }  // namespace soca

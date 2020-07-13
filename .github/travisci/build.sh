@@ -26,9 +26,9 @@ for repo in $LIB_REPOS; do
     install_dir=${REPO_CACHE}/$repo
 
     # set the path to the install dir for subsequent repos to find
-    repo_upper=${repo/-/_}; repo_upper=${repo_upper^^}
-    typeset "${repo_upper}_PATH=$install_dir"
-    export ${repo_upper}_PATH
+    repo_underscore=${repo/-/_}
+    typeset "${repo_underscore}_DIR=$install_dir"
+    export ${repo_underscore}_DIR
 
     # do we skip building this repo?
     [[ -e $bundle_dir/skip_rebuild ]] && continue
@@ -44,7 +44,7 @@ for repo in $LIB_REPOS; do
     cd $build_dir
 
     # run ecbuild
-    build_opt_var=BUILD_OPT_${repo_upper}
+    build_opt_var=BUILD_OPT_${repo_underscore}
     build_opt="$BUILD_OPT ${!build_opt_var}"
     time ecbuild $src_dir -DCMAKE_INSTALL_PREFIX=${install_dir} -DCMAKE_BUILD_TYPE=${LIB_BUILD_TYPE} \
             -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DENABLE_TESTS=OFF -DBUILD_TESTING=OFF $build_opt
@@ -69,8 +69,7 @@ build_dir=$cwd/repo.build/${MAIN_REPO}
 mkdir -p  $build_dir
 cd $build_dir
 
-repo_upper=${MAIN_REPO/-/_}; repo_upper=${repo_upper^^}
-build_opt_var=BUILD_OPT_${repo_upper}
+build_opt_var=BUILD_OPT_${MAIN_REPO/-/_}
 build_opt=${!build_opt_var}
 
 time ecbuild $src_dir -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \

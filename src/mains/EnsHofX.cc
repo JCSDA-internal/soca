@@ -9,10 +9,11 @@
 #include "oops/runs/EnsHofX.h"
 #include "oops/runs/Run.h"
 #include "ufo/instantiateObsFilterFactory.h"
+#include "ufo/ObsTraits.h"
 
 int main(int argc,  char ** argv) {
   oops::Run run(argc, argv);
-  ufo::instantiateObsFilterFactory<soca::Traits>();
-  oops::EnsHofX<soca::Traits> hofx;
+  ufo::instantiateObsFilterFactory<ufo::ObsTraits>();
+  oops::EnsHofX<soca::Traits, ufo::ObsTraits> hofx;
   return run.execute(hofx);
 }
