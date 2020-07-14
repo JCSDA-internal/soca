@@ -15,10 +15,12 @@
 #include "ufo/instantiateObsFilterFactory.h"
 #include "oops/runs/Run.h"
 #include "oops/runs/Variational.h"
+#include "oops/generic/instantiateModelFactory.h"
 #include "saber/oops/instantiateLocalizationFactory.h"
 
 int main(int argc,  char ** argv) {
   oops::Run run(argc, argv);
+  oops::instantiateModelFactory<soca::Traits>();
   soca::instantiateBalanceOpFactory();
   ufo::instantiateObsFilterFactory<ufo::ObsTraits>();
   saber::instantiateLocalizationFactory<soca::Traits>();
