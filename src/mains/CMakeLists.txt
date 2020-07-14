@@ -84,3 +84,8 @@ ecbuild_add_executable( TARGET  soca_addincrement.x
                         SOURCES AddIncrement.cc
                         LIBS    soca
                       )
+
+ecbuild_add_executable( TARGET  soca_diffstates.x
+                        SOURCES DiffStates.cc
+                        LIBS    soca
+                      )
