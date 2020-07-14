@@ -401,7 +401,7 @@ endif()
 # Test PseudoModel forecast
 soca_add_test( NAME forecast_pseudo
                EXE  soca_forecast.x
-             TEST_DEPENDS test_soca_forecast_mom6 )
+               TEST_DEPENDS test_soca_forecast_mom6 )
 
 # Initialize static error covariance model defined in soca, used for 3DVAR
 soca_add_test( NAME static_socaerror_init
@@ -633,7 +633,7 @@ soca_add_test( NAME 3dvarfgat
 soca_add_test( NAME 3dvarfgat_pseudo
                EXE  soca_3dvar.x
                TOL  1e-6 0
-               NOTRAPFPE               
+               NOTRAPFPE
                TEST_DEPENDS test_soca_static_socaerror_init )
 
 soca_add_test( NAME 3dhyb
