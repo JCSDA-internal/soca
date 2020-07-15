@@ -8,12 +8,17 @@
 #ifndef SOCA_GEOMETRY_GEOMETRYFORTRAN_H_
 #define SOCA_GEOMETRY_GEOMETRYFORTRAN_H_
 
-#include "atlas/field.h"
-#include "atlas/functionspace.h"
-
 #include "soca/Fortran.h"
 
 // Forward declarations
+namespace atlas {
+  namespace field {
+    class FieldSetImpl;
+  }
+  namespace functionspace {
+    class FunctionSpaceImpl;
+  }
+}
 namespace eckit {
   class Configuration;
 }

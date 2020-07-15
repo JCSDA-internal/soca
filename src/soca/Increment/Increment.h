@@ -15,8 +15,6 @@
 #include <ostream>
 #include <string>
 
-#include "atlas/field.h"
-
 #include <boost/shared_ptr.hpp>
 
 #include "soca/Fortran.h"
@@ -30,6 +28,9 @@
 #include "oops/util/Printable.h"
 
 // Forward declarations
+namespace atlas {
+  class FieldSet;
+}
 namespace eckit {
   class Configuration;
 }

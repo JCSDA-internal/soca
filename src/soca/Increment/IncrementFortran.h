@@ -8,11 +8,15 @@
 #ifndef SOCA_INCREMENT_INCREMENTFORTRAN_H_
 #define SOCA_INCREMENT_INCREMENTFORTRAN_H_
 
-#include "atlas/field.h"
 #include "soca/Fortran.h"
 #include "oops/base/Variables.h"
 
 // Forward declarations
+namespace atlas {
+  namespace field {
+    class FieldSetImpl;
+  }
+}
 namespace eckit {
   class Configuration;
 }

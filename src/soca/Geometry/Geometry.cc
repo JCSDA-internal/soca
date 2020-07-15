@@ -85,4 +85,12 @@ namespace soca {
     // TODO(Travis): Implement this correctly.
   }
   // -----------------------------------------------------------------------------
+  atlas::FunctionSpace * Geometry::atlasFunctionSpace() const {
+    return atlasFunctionSpace_.get();
+  }
+  // -----------------------------------------------------------------------------
+  atlas::FieldSet * Geometry::atlasFieldSet() const {
+    return atlasFieldSet_.get();
+  }
+  // -----------------------------------------------------------------------------
 }  // namespace soca

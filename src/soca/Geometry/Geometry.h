@@ -14,9 +14,6 @@
 #include <string>
 #include <vector>
 
-#include "atlas/field.h"
-#include "atlas/functionspace.h"
-
 #include "eckit/config/Configuration.h"
 #include "eckit/config/LocalConfiguration.h"
 #include "eckit/mpi/Comm.h"
@@ -29,6 +26,15 @@
 
 #include "oops/util/ObjectCounter.h"
 #include "oops/util/Printable.h"
+
+// Forward declarations
+namespace atlas {
+  class FieldSet;
+  class FunctionSpace;
+  namespace functionspace {
+    class PointCloud;
+  }
+}
 
 // -----------------------------------------------------------------------------
 
@@ -59,10 +65,8 @@ namespace soca {
         return conf.getBool("notocean.init", false);
       }
 
-      atlas::FunctionSpace * atlasFunctionSpace() const
-        {return atlasFunctionSpace_.get();}
-      atlas::FieldSet * atlasFieldSet() const
-        {return atlasFieldSet_.get();}
+      atlas::FunctionSpace * atlasFunctionSpace() const;
+      atlas::FieldSet * atlasFieldSet() const;
 
    private:
       Geometry & operator=(const Geometry &);
