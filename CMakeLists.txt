@@ -61,6 +61,7 @@ include_directories( ${ATLAS_INCLUDE_DIRS} )
 # oops
 ecbuild_use_package( PROJECT oops VERSION 0.1.0 REQUIRED )
 include_directories( ${OOPS_INCLUDE_DIRS} )
+add_definitions(-DATLASIFIED=1)
 
 # saber
 ecbuild_use_package( PROJECT saber VERSION 0.0.1 REQUIRED )
@@ -97,7 +98,7 @@ ecbuild_use_package( PROJECT crtm VERSION 2.2.3 )
 ################################################################################
 # Export package info
 ################################################################################
-list( APPEND SOCA_TPLS LAPACK MPI NetCDF )
+list( APPEND SOCA_TPLS atlas atlas_f LAPACK MPI NetCDF )
 
 set( SOCA_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src
                        ${CMAKE_CURRENT_BINARY_DIR}/src

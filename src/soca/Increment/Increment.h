@@ -28,6 +28,9 @@
 #include "oops/util/Printable.h"
 
 // Forward declarations
+namespace atlas {
+  class FieldSet;
+}
 namespace eckit {
   class Configuration;
 }
@@ -87,6 +90,11 @@ namespace soca {
       oops::LocalIncrement getLocal(const GeometryIterator &) const;
       void setLocal(const oops::LocalIncrement &, const GeometryIterator &);
 
+      /// ATLAS
+      void setAtlas(atlas::FieldSet *) const;
+      void toAtlas(atlas::FieldSet *) const;
+      void fromAtlas(atlas::FieldSet *);
+
       /// I/O and diagnostics
       void read(const eckit::Configuration &);
       void write(const eckit::Configuration &) const;
@@ -94,12 +102,6 @@ namespace soca {
       const util::DateTime & validTime() const;
       util::DateTime & validTime();
       void updateTime(const util::Duration & dt);
-
-
-      /// Unstructured grid
-      void ug_coord(oops::UnstructuredGrid &) const;
-      void field_to_ug(oops::UnstructuredGrid &, const int &) const;
-      void field_from_ug(const oops::UnstructuredGrid &, const int &);
 
       /// Other
       void accumul(const double &, const State &);
