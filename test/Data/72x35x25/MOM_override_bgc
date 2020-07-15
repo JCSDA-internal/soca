@@ -1,0 +1,5 @@
+! Blank file in which we can put "overrides" for parameters specific to
+! the biogeochemistry runs
+USE_generic_tracer = True
+!----------------------------------
+
