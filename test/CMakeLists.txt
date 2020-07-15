@@ -4,9 +4,11 @@ list( APPEND soca_test_input
   testinput/3dvar_godas.yml
   testinput/3dvar_soca.yml
   testinput/3dvarfgat.yml
+  testinput/3dvarfgat_pseudo.yml
   testinput/addincrement.yml
   testinput/checkpointmodel.yml
   testinput/convertstate.yml
+  testinput/diffstates.yml
   testinput/dirac_bump_cov.yml
   testinput/dirac_horizfilt.yml
   testinput/dirac_soca_cov.yml
@@ -19,6 +21,7 @@ list( APPEND soca_test_input
   testinput/forecast_identity_cice.yml
   testinput/forecast_mom6.yml
   testinput/forecast_mom6_bgc.yml
+  testinput/forecast_pseudo.yml
   testinput/geometry.yml
   testinput/geometry_iterator.yml
   testinput/geometryatm.yml
@@ -28,6 +31,7 @@ list( APPEND soca_test_input
   testinput/hofx_3d.yml
   testinput/hofx_3dcrtm.yml
   testinput/hofx_4d.yml
+  testinput/hofx_4d_pseudo.yml
   testinput/increment.yml
   testinput/letkf.yml
   testinput/lineargetvalues.yml
@@ -57,9 +61,11 @@ list( APPEND soca_test_ref
   testref/3dvar_godas.test
   testref/3dvar_soca.test
   testref/3dvarfgat.test
+  testref/3dvarfgat_pseudo.test
   testref/addincrement.test
   testref/checkpointmodel.test
   testref/convertstate.test
+  testref/diffstates.test
   testref/dirac_bump_cov.test
   testref/dirac_horizfilt.test
   testref/dirac_soca_cov.test
@@ -72,9 +78,11 @@ list( APPEND soca_test_ref
   testref/forecast_identity.test
   testref/forecast_mom6.test
   testref/forecast_mom6_bgc.test
+  testref/forecast_pseudo.test
   testref/hofx_3d.test
   testref/hofx_3dcrtm.test
   testref/hofx_4d.test
+  testref/hofx_4d_pseudo.test
   testref/letkf.test
   testref/makeobs.test
   testref/parameters_bump_cov_lct.test
@@ -390,6 +398,11 @@ soca_add_test( NAME forecast_mom6_bgc
                TEST_DEPENDS test_soca_gridgen )
 endif()
 
+# Test PseudoModel forecast
+soca_add_test( NAME forecast_pseudo
+               EXE  soca_forecast.x
+               TEST_DEPENDS test_soca_forecast_mom6 )
+
 # Initialize static error covariance model defined in soca, used for 3DVAR
 soca_add_test( NAME static_socaerror_init
                EXE  soca_staticbinit.x
@@ -575,6 +588,10 @@ soca_add_test( NAME hofx_4d
                NOTRAPFPE
                TEST_DEPENDS test_soca_gridgen )
 
+soca_add_test( NAME hofx_4d_pseudo
+               EXE  soca_hofx.x
+               TEST_DEPENDS test_soca_forecast_mom6 )
+
 # TODO enshofx currently breaks compare.py
 # Re-enable the comparison once that's fixed
 soca_add_test( NAME enshofx
@@ -603,7 +620,17 @@ soca_add_test( NAME addincrement
                NOCOMPARE
                TEST_DEPENDS 3dvar_godas )
 
+soca_add_test( NAME diffstates
+               EXE  soca_diffstates.x
+               TEST_DEPENDS test_soca_gridgen )
+
 soca_add_test( NAME 3dvarfgat
+               EXE  soca_3dvar.x
+               TOL  1e-6 0
+               NOTRAPFPE
+               TEST_DEPENDS test_soca_static_socaerror_init )
+
+soca_add_test( NAME 3dvarfgat_pseudo
                EXE  soca_3dvar.x
                TOL  1e-6 0
                NOTRAPFPE
