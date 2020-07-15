@@ -168,6 +168,8 @@ subroutine geom_end(self)
   if (allocated(self%h))             deallocate(self%h)
   if (allocated(self%h_zstar))       deallocate(self%h_zstar) 
   nullify(self%Domain)
+  call self%afunctionspace%final()
+  call self%afieldset%final()
 
 end subroutine geom_end
 
