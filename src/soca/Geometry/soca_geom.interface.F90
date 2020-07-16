@@ -5,6 +5,7 @@
 
 module soca_geom_mod_c
 
+use atlas_module
 use iso_c_binding
 use fckit_configuration_module, only: fckit_configuration
 use fckit_mpi_module,           only: fckit_mpi_comm
@@ -47,6 +48,57 @@ subroutine c_soca_geo_setup(c_key_self, c_conf, c_comm) bind(c,name='soca_geo_se
   call self%init(fckit_configuration(c_conf), fckit_mpi_comm(c_comm) )
 
 end subroutine c_soca_geo_setup
+
+! --------------------------------------------------------------------------------------------------
+!> Set ATLAS lonlat fieldset
+subroutine c_soca_geo_set_atlas_lonlat(c_key_self, c_afieldset)  bind(c,name='soca_geo_set_atlas_lonlat_f90')
+
+  integer(c_int), intent(in) :: c_key_self
+  type(c_ptr), intent(in), value :: c_afieldset
+
+  type(soca_geom), pointer :: self
+  type(atlas_fieldset) :: afieldset
+
+  call soca_geom_registry%get(c_key_self,self)
+  afieldset = atlas_fieldset(c_afieldset)
+
+  call self%set_atlas_lonlat(afieldset)
+
+end subroutine c_soca_geo_set_atlas_lonlat
+
+! --------------------------------------------------------------------------------------------------
+!> Set ATLAS functionspace pointer
+subroutine c_soca_geo_set_atlas_functionspace_pointer(c_key_self,c_afunctionspace) &
+ & bind(c,name='soca_geo_set_atlas_functionspace_pointer_f90')
+
+  integer(c_int), intent(in)     :: c_key_self
+  type(c_ptr), intent(in), value :: c_afunctionspace
+
+  type(soca_geom),pointer :: self
+
+  call soca_geom_registry%get(c_key_self,self)
+
+  self%afunctionspace = atlas_functionspace_nodecolumns(c_afunctionspace)
+
+end subroutine c_soca_geo_set_atlas_functionspace_pointer
+
+! --------------------------------------------------------------------------------------------------
+!> Fill ATLAS fieldset
+subroutine c_soca_geo_fill_atlas_fieldset(c_key_self, c_afieldset) &
+ & bind(c,name='soca_geo_fill_atlas_fieldset_f90')
+
+  integer(c_int),     intent(in) :: c_key_self
+  type(c_ptr), value, intent(in) :: c_afieldset
+
+  type(soca_geom), pointer :: self
+  type(atlas_fieldset) :: afieldset
+
+  call soca_geom_registry%get(c_key_self,self)
+  afieldset = atlas_fieldset(c_afieldset)
+
+  call self%fill_atlas_fieldset(afieldset)
+
+end subroutine c_soca_geo_fill_atlas_fieldset
 
 ! ------------------------------------------------------------------------------
 !> Clone geometry object

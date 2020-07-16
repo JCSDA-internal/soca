@@ -90,6 +90,10 @@ contains
     allocate(self%icorio(geom%isd:geom%ied,geom%jsd:geom%jed))
 
     ! Compute horizontal inverse transformation metrics
+    dlondi = 0.0_kind_real
+    dlondj = 0.0_kind_real
+    dlatdi = 0.0_kind_real
+    dlatdj = 0.0_kind_real
     do j = geom%jsc, geom%jec
        do i = geom%isc, geom%iec
           dlondi(i,j) = 0.5_kind_real*deg2rad*(geom%lon(i+1,j)-geom%lon(i-1,j))

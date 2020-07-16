@@ -8,6 +8,8 @@
 
 module soca_covariance_mod
 
+use atlas_module
+use, intrinsic :: iso_c_binding, only : c_char
 use fckit_configuration_module, only: fckit_configuration
 use random_mod, only: normal_distribution
 use oops_variables_mod
@@ -221,94 +223,78 @@ subroutine soca_bump_correlation(self, horiz_convol, geom, f_conf, domain)
   type(fckit_configuration), intent(in) :: f_conf !< Handle to configuration
   character(len=3),          intent(in) :: domain
 
-  !Grid stuff
-  integer :: isc, iec, jsc, jec, jjj, jz
+  integer, pointer :: int_ptr_2(:,:)
+  real(kind=kind_real), pointer :: real_ptr_1(:), real_ptr_2(:,:)
+  type(atlas_fieldset) :: afieldset, rh, rv
+  type(atlas_field) :: afield
+  type(fckit_configuration) :: f_grid
 
-  !bump stuff
-  integer :: nc0a, nl0, nv, nts
-  real(kind=kind_real), allocatable :: lon(:), lat(:), area(:), vunit(:,:)
-  real(kind=kind_real), allocatable :: rosrad(:)
-  logical, allocatable :: lmask(:,:)
-  integer, allocatable :: imask(:,:)
+  ! Grid setup
+  f_grid = fckit_configuration()
+  call f_grid%set('verbosity', 'none')
+  call f_grid%set('prefix', domain)
+  call f_grid%set('nl', 1)
+  call f_grid%set('nv', 1)
+  call f_grid%set('variables', ['var'])
+  call f_grid%set('nts', 1)
+  call f_grid%set('timeslots', ['00'])
 
-  real(kind_real), allocatable :: rh(:,:,:,:)     !< Horizontal support radius for covariance (in m)
-  real(kind_real), allocatable :: rv(:,:,:,:)     !< Vertical support radius
-  real(kind_real), allocatable :: var(:,:,:,:)
+  ! Geometry fieldset setup
+  afieldset = atlas_fieldset()
 
-  !--- Initialize geometry to be passed to NICAS
-  ! Indices for compute domain (no halo)
-  isc = geom%isc ; iec = geom%iec ; jsc = geom%jsc ; jec = geom%jec
+  ! Add area
+  afield = geom%afunctionspace%create_field(name='area', kind=atlas_real(kind_real), levels=0)
+  call afield%data(real_ptr_1)
+  real_ptr_1 = pack(geom%cell_area(geom%isc:geom%iec,geom%jsc:geom%jec),.true.)
+  call afieldset%add(afield)
+  call afield%final()
 
-  nv = 1                                     !< Number of variables
-  nl0 = 1                                    !< Number of independent levels
-  nts = 1                                    !< Number of time slots
-  nc0a = (iec - isc + 1) * (jec - jsc + 1 )  !< Total number of grid cells in the compute domain
+  ! Add vertical unit
+  afield = geom%afunctionspace%create_field(name='vunit', kind=atlas_real(kind_real), levels=1)
+  call afield%data(real_ptr_2)
+  real_ptr_2(1,:) = 1.0
+  call afieldset%add(afield)
+  call afield%final()
 
-  allocate( lon(nc0a), lat(nc0a), area(nc0a) )
-  allocate( vunit(nc0a,nl0) )
-  allocate( imask(nc0a, nl0), lmask(nc0a, nl0) )
+  ! Add geographical mask
+  afield = geom%afunctionspace%create_field(name='gmask', kind=atlas_integer(kind(0)), levels=1)
+  call afield%data(int_ptr_2)
+  int_ptr_2(1,:) = int(pack(geom%mask2d(geom%isc:geom%iec,geom%jsc:geom%jec),.true.))
+  call afieldset%add(afield)
+  call afield%final()
 
-  lon = reshape( geom%lon(isc:iec, jsc:jec), (/nc0a/) )
-  lat = reshape( geom%lat(isc:iec, jsc:jec), (/nc0a/) )
-  area = reshape( geom%cell_area(isc:iec, jsc:jec), (/nc0a/) )
-
-  ! Setup land or ice mask
-  jz = 1
-  imask(1:nc0a,jz) = int(reshape( geom%mask2d(isc:iec, jsc:jec), (/nc0a/)))
-
-  lmask = .false.
-  where (imask.eq.1)
-     lmask=.true.
-  end where
-
-  ! No vertical convolution, set dummy vertical unit
-  vunit = 1.0d0
-
-  ! Initialize bump namelist/parameters
-  call horiz_convol%nam%init(geom%f_comm%size())
-  horiz_convol%nam%verbosity = 'none'
-  call horiz_convol%nam%from_conf(f_conf)
-
-  if (domain.eq.'ocn') horiz_convol%nam%prefix = 'ocn'
-  if (domain.eq.'ice') horiz_convol%nam%prefix = 'ice'
-
-  ! Compute convolution weight
-  call horiz_convol%setup_online(geom%f_comm,nc0a,nl0,nv,nts,lon,lat,area,vunit,lmask)
+  ! Create BUMP object
+  call horiz_convol%create(geom%f_comm,geom%afunctionspace,afieldset,f_conf,f_grid)
 
   if (horiz_convol%nam%new_nicas) then
-     ! Allocation
-     allocate(rosrad(nc0a))
-     allocate(rh(nc0a,nl0,nv,nts))
-     allocate(rv(nc0a,nl0,nv,nts))
-     allocate(var(nc0a,nl0,nv,nts))
+     ! rh
+     rh = atlas_fieldset()
+     afield = geom%afunctionspace%create_field('var_00',kind=atlas_real(kind_real),levels=0)
+     call rh%add(afield)
+     call afield%data(real_ptr_1)
+     if (domain.eq.'ocn') real_ptr_1 = self%ocn_l0+pack(geom%rossby_radius(geom%isc:geom%iec,geom%jsc:geom%jec), .true.)
+     if (domain.eq.'ice') real_ptr_1 = self%ice_l0
+     call afield%final()
 
-     ! Setup Rossby radius
-     rosrad = reshape( geom%rossby_radius(isc:iec, jsc:jec), (/nc0a/) )
-
-     ! Setup horizontal decorrelation length scales
-     if (domain.eq.'ocn') then
-        do jjj=1,nc0a
-           rh(jjj,1,1,1)=self%ocn_l0 + rosrad(jjj)
-        end do
-     end if
-     if (domain.eq.'ice') then
-        rh = self%ice_l0
-     end if
-     rv=1.0 ! Vertical scales not used, set to something
+     ! rv
+     rv = atlas_fieldset()
+     afield = geom%afunctionspace%create_field('var_00',kind=atlas_real(kind_real),levels=0)
+     call rv%add(afield)
+     call afield%data(real_ptr_1)
+     real_ptr_1 = 1.0
+     call afield%final()
 
      ! Copy length-scales into BUMP
-     call horiz_convol%set_parameter('cor_rh',rh)
-     call horiz_convol%set_parameter('cor_rv',rv)
+     call horiz_convol%set_parameter('cor_rh', rh)
+     call horiz_convol%set_parameter('cor_rv', rv)
 
      ! Clean up
-     deallocate(rosrad,rh,rv,var)
+     call rh%final()
+     call rv%final()
   end if
 
   ! Run BUMP drivers
   call horiz_convol%run_drivers()
-
-  ! Clean up
-  deallocate(lon, lat, area, vunit, imask, lmask)
 
 end subroutine soca_bump_correlation
 
@@ -319,19 +305,19 @@ subroutine soca_2d_convol(dx, horiz_convol, geom)
   type(bump_type),      intent(inout) :: horiz_convol
   type(soca_geom),         intent(in) :: geom
 
-  real(kind=kind_real), allocatable :: tmp_incr(:,:,:,:)
+  type(atlas_fieldset) :: tmp_incr
 
-  ! Allocate unstructured tmp_increment and make copy of dx
-  call geom%struct2unstruct(dx(:,:), tmp_incr)
+  ! Allocate ATLAS tmp_increment and make copy of dx
+  call geom%struct2atlas(dx(:,:), tmp_incr)
 
   ! Apply 2D convolution
   call horiz_convol%apply_nicas(tmp_incr)
 
-  ! copy unstructured tmp_incr to structured dx
-  call geom%unstruct2struct(dx(:,:), tmp_incr)
+  ! Copy ATLAS tmp_incr to structured dx
+  call geom%atlas2struct(dx(:,:), tmp_incr)
 
   ! Clean up
-  if (allocated(tmp_incr)) deallocate(tmp_incr)
+  call tmp_incr%final()
 
 end subroutine soca_2d_convol
 
@@ -343,14 +329,14 @@ subroutine soca_2d_sqrt_convol(dx, horiz_convol, geom, pert_scale)
   type(soca_geom),         intent(in) :: geom
   real(kind=kind_real),    intent(in) :: pert_scale
 
-  real(kind=kind_real), allocatable :: tmp_incr(:,:,:,:)
+  type(atlas_fieldset) :: tmp_incr
   real(kind=kind_real), allocatable :: pcv(:)
   integer, parameter :: rseed = 1 ! constant for reproducability of tests
                                   ! TODO: pass seed through config
   integer :: nn
 
-  ! Allocate unstructured tmp_increment and make copy of dx
-  call geom%struct2unstruct(dx(:,:), tmp_incr)
+  ! Allocate ATLAS tmp_increment and make copy of dx
+  call geom%struct2atlas(dx(:,:), tmp_incr)
 
   ! Get control variable size
   call horiz_convol%get_cv_size(nn)
@@ -363,11 +349,11 @@ subroutine soca_2d_sqrt_convol(dx, horiz_convol, geom, pert_scale)
   call horiz_convol%apply_nicas_sqrt(pcv, tmp_incr)
 
   ! Back to structured grid
-  call geom%unstruct2struct(dx(:,:), tmp_incr)
+  call geom%atlas2struct(dx(:,:), tmp_incr)
 
   ! Clean up
   deallocate(pcv)
-  if (allocated(tmp_incr)) deallocate(tmp_incr)
+  call tmp_incr%final()
 
 end subroutine soca_2d_sqrt_convol
 
