@@ -45,3 +45,13 @@ Ensemble:
   - <<: *_file
     ocn_filename: ocn.pert.ens.5.2018-04-15T00:00:00Z.PT6H.nc
     ice_filename: ice.pert.ens.5.2018-04-15T00:00:00Z.PT6H.nc
+  variable_changes:
+  - varchange: BalanceSOCA
+    dsdtmax: 1.0
+    dsdzmin: 3.0e-3
+    dtdzmin: 1.0e-3
+    nlayers: 10
+    inputVariables:
+      variables: *soca_vars
+    outputVariables:
+      variables: *soca_vars

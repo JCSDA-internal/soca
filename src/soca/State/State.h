@@ -58,6 +58,9 @@ namespace soca {
       virtual ~State();
       State & operator=(const State &);
 
+      /// Needed by PseudoModel
+      void updateTime(const util::Duration & dt) {time_ += dt;}
+
       /// Rotations
       void rotate2north(const oops::Variables &, const oops::Variables &) const;
       void rotate2grid(const oops::Variables &, const oops::Variables &) const;
