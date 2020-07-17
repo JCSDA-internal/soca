@@ -22,7 +22,7 @@ LinearVariableChangeTests:
   dsdzmin: 3.0e-3
   dtdzmin: 1.0e-3
   dcdt:
-    filename: ./Data/dcdt.nc
+    filename: ./Data/kmask.nc
     name: dcdt
   nlayers: 10
   inputVariables:

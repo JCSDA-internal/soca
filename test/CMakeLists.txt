@@ -363,12 +363,6 @@ add_test ( test_soca_subsample_netcdf
            bash
            ${CMAKE_CURRENT_SOURCE_DIR}/Data/subsample_mom6files.sh )
 
-# Create dc/dt file for ocean/ice balance
-add_test ( test_soca_create_dcdt
-           python
-           ${CMAKE_CURRENT_SOURCE_DIR}/Data/create_dcdt.py )
-
-
 # Test of grid generation and create subsampled grid
 soca_add_test( NAME gridgen_small
                EXE  soca_gridgen.x
@@ -416,6 +410,18 @@ soca_add_test( NAME static_socaerror_init
                EXE  soca_staticbinit.x
                NOCOMPARE
                TEST_DEPENDS test_soca_gridgen )
+
+# Use the soca_dirac.x application to create a mask for the dynamic height Jacobians
+soca_add_test( NAME balance_mask
+               EXE  soca_dirac.x
+               TEST_DEPENDS test_soca_gridgen )
+
+# Create dc/dt file for ocean/ice balance and convert dirac file into a mask
+add_test ( test_soca_create_kmask
+           python
+           ${CMAKE_CURRENT_SOURCE_DIR}/Data/create_kmask.py
+           TEST_DEPENDS test_static_socaerror_init
+                        test_balance_mask )
 
 # ensemble generation
 soca_add_test( NAME enspert
@@ -491,10 +497,6 @@ soca_add_test( NAME linearmodel
 
 soca_add_test( NAME varchange_ana2model
                SRC  TestNLVariableChange.cc
-               TEST_DEPENDS test_soca_gridgen )
-
-soca_add_test( NAME balance_mask
-               EXE  soca_dirac.x
                TEST_DEPENDS test_soca_gridgen )
 
 soca_add_test( NAME varchange_balance

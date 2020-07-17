@@ -85,8 +85,6 @@ subroutine soca_balance_setup(f_conf, self, traj)
     call fms_io_init()
     call read_data(filename, mask_name, jac_mask, domain=traj%geom%Domain%mpp_domain)
     call fms_io_exit()
-    ! jac_mask is constructed with the dirac application, convert into a mask
-    jac_mask = 1.0_kind_real -jac_mask
     where(jac_mask<threshold)
       jac_mask = 0.0_kind_real
     end where
@@ -138,8 +136,8 @@ subroutine soca_balance_setup(f_conf, self, traj)
   allocate(self%ksshts%kssht, mold=self%kst%jacobian)
   allocate(self%ksshts%ksshs, mold=self%kst%jacobian)
   allocate(jac(2))
-  self%ksshts%kssht=0.0
-  self%ksshts%ksshs=0.0
+  self%ksshts%kssht=0.0_kind_real
+  self%ksshts%ksshs=0.0_kind_real
   do i = isc, iec
      do j = jsc, jec
         do k = 1, nl
@@ -150,12 +148,13 @@ subroutine soca_balance_setup(f_conf, self, traj)
                 &hocn%val(i,j,k),&
                 &traj%geom%lon(i,j),&
                 &traj%geom%lat(i,j))
-           self%ksshts%kssht(i,j,k) = jac(1) !*jac_mask(i,j)
-           self%ksshts%ksshs(i,j,k) = jac(2) !*jac_mask(i,j)
+           self%ksshts%kssht(i,j,k) = jac(1)*jac_mask(i,j)
+           self%ksshts%ksshs(i,j,k) = jac(2)*jac_mask(i,j)
         end do
-        !if (nlayers>0) then
-        !  self%ksshts%kssht(i,j,1:nlayers) =  0.0_kind_real
-        !  self%ksshts%ksshs(i,j,1:nlayers) =  0.0_kind_real
+        if (nlayers>0) then
+          self%ksshts%kssht(i,j,1:nlayers) =  0.0_kind_real
+          self%ksshts%ksshs(i,j,1:nlayers) =  0.0_kind_real
+        end if
        end do
   end do
   deallocate(jac)
@@ -177,7 +176,7 @@ subroutine soca_balance_setup(f_conf, self, traj)
     do i = isc, iec
       do j = jsc, jec
           if (sum(cicen%val(i,j,:)) > 1.0e-3_kind_real) then
-            self%kct = -0.01d0 !kct(i,j)
+            self%kct = kct(i,j)
           end if
       end do
     end do
