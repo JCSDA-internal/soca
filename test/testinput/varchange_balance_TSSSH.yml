@@ -21,6 +21,11 @@ LinearVariableChangeTests:
   dsdzmin: 3.0e-3
   dtdzmin: 1.0e-3
   nlayers: 10
+  jac_mask:
+    filename: ./Data/ocn.balance_mask.an.2018-04-15T00:00:00Z.nc
+    name: ave_ssh
+    threshold: 0.3
+    nlayers: 10
   inputVariables:
     variables: *soca_vars
   outputVariables:

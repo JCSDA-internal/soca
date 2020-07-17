@@ -6,6 +6,7 @@ list( APPEND soca_test_input
   testinput/3dvarfgat.yml
   testinput/3dvarfgat_pseudo.yml
   testinput/addincrement.yml
+  testinput/balance_mask.yml
   testinput/checkpointmodel.yml
   testinput/convertstate.yml
   testinput/diffstates.yml
@@ -63,6 +64,7 @@ list( APPEND soca_test_ref
   testref/3dvarfgat.test
   testref/3dvarfgat_pseudo.test
   testref/addincrement.test
+  testref/balance_mask.test
   testref/checkpointmodel.test
   testref/convertstate.test
   testref/diffstates.test
@@ -361,6 +363,12 @@ add_test ( test_soca_subsample_netcdf
            bash
            ${CMAKE_CURRENT_SOURCE_DIR}/Data/subsample_mom6files.sh )
 
+# Create dc/dt file for ocean/ice balance
+add_test ( test_soca_create_dcdt
+           python
+           ${CMAKE_CURRENT_SOURCE_DIR}/Data/create_dcdt.py )
+
+
 # Test of grid generation and create subsampled grid
 soca_add_test( NAME gridgen_small
                EXE  soca_gridgen.x
@@ -485,9 +493,14 @@ soca_add_test( NAME varchange_ana2model
                SRC  TestNLVariableChange.cc
                TEST_DEPENDS test_soca_gridgen )
 
+soca_add_test( NAME balance_mask
+               EXE  soca_dirac.x
+               TEST_DEPENDS test_soca_gridgen )
+
 soca_add_test( NAME varchange_balance
                SRC  TestVariableChange.cc
-               TEST_DEPENDS test_soca_gridgen )
+               TEST_DEPENDS test_soca_gridgen
+                            test_soca_create_dcdt )
 
 soca_add_test( NAME varchange_balance_TSSSH
                SRC  TestVariableChange.cc
