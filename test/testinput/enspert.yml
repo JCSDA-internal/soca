@@ -81,7 +81,7 @@ Covariance:
     dtdzmin: 1.0e-6
     nlayers: 10
     dcdt:
-      filename: ./Data/dcdt.nc
+      filename: ./Data/kmask.nc
       name: dcdt
 
     inputVariables:

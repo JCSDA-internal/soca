@@ -15,25 +15,35 @@ variables: &soca_vars [cicen, hicen, socn, tocn, ssh, hocn]
 #variables: &soca_vars [socn, tocn, ssh, hocn]
 
 Covariance:
+  #covariance: SocaError
+  #default_seed: 1
+  #prefix: soca-kmask
+#  datadir: ./bump-kmask
+#  method: cor
+#  strategy: specific_univariate
+#  new_nicas: 1
+#  mask_check: 1
+#  ntry: 3
+#  nrep:  2
+#  lsqrt: 1
+#  resol: 6.0
+#  network: 1
+#  mpicom: 2
+#  forced_radii: 1
+#  date: *date
+#  ocean_corr_scale: 6000.0e3
+#  ice_corr_scale: 6000.0e3
+#
   covariance: SocaError
-  default_seed: 1
   prefix: soca
   datadir: ./bump
-  method: cor
-  strategy: specific_univariate
-  new_nicas: 1
-  mask_check: 1
-  ntry: 3
-  nrep:  2
+  load_nicas: 1
   lsqrt: 1
-  resol: 6.0
-  network: 1
   mpicom: 2
-  forced_radii: 1
+  strategy: specific_univariate
   date: *date
-  ocean_corr_scale: 6000.0e3
-  ice_corr_scale: 6000.0e3
-  variables: &soca_vars [ssh]
+
+  variables: [ssh]
 
 dirac:
   # NOTE ice (ifdir=4) was not being correctly tested, need to fix

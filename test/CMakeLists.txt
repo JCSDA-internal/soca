@@ -229,6 +229,7 @@ endif()
 
 # Create directory for BUMP output
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bump)
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bump-kmask)
 
 # find compare.py provided by oops
 find_file(COMPARE_BIN oops_compare.py HINTS ${oops_BINDIR})
