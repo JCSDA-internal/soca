@@ -51,6 +51,10 @@ Ensemble:
     dsdzmin: 3.0e-3
     dtdzmin: 1.0e-3
     nlayers: 10
+    dcdt:
+      filename: ./Data/kmask.nc
+      name: dcdt
+
     inputVariables:
       variables: *soca_vars
     outputVariables:
