@@ -25,6 +25,8 @@ LinearVariableChangeTests:
     filename: ./Data/kmask.nc
     name: kmask
     threshold: 0.3
+    detadt: false
+    detads: false
     nlayers: 10
   inputVariables:
     variables: *soca_vars

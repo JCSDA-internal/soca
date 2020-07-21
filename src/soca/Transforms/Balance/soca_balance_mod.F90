@@ -53,9 +53,11 @@ subroutine soca_balance_setup(f_conf, self, traj)
 
   ! declarations related to the dynamic height Jacobians
   character(len=:), allocatable :: filename, mask_name
-  real(kind=kind_real), allocatable :: jac_mask(:,:) !> Mask for Jacobian
+  real(kind=kind_real), allocatable :: jac_mask(:,:) !> mask for Jacobian
   real(kind=kind_real) :: threshold
-  integer :: nlayers !> dynamic height Jac=0 in nlayers upper layers
+  integer :: nlayers               !> dynamic height Jac=0 in nlayers upper layers
+  logical :: mask_detadt = .false. !> if true, set deta/dt to 0
+  logical :: mask_detads = .false. !> if true, set deta/ds to 0
 
   ! declarations related to the sea-ice Jacobian
   character(len=:), allocatable :: kct_name
@@ -82,6 +84,8 @@ subroutine soca_balance_setup(f_conf, self, traj)
     call f_conf%get_or_die("jac_mask.name", mask_name)
     call f_conf%get_or_die("jac_mask.threshold", threshold)
     call f_conf%get_or_die("jac_mask.nlayers", nlayers)
+    call f_conf%get_or_die("jac_mask.detadt", mask_detadt)
+    call f_conf%get_or_die("jac_mask.detads", mask_detads)
     call fms_io_init()
     call read_data(filename, mask_name, jac_mask, domain=traj%geom%Domain%mpp_domain)
     call fms_io_exit()
@@ -139,25 +143,29 @@ subroutine soca_balance_setup(f_conf, self, traj)
   self%ksshts%kssht=0.0_kind_real
   self%ksshts%ksshs=0.0_kind_real
   do i = isc, iec
-     do j = jsc, jec
-        do k = 1, nl
-           call soca_steric_jacobian (jac, &
-                tocn%val(i,j,k), &
-                socn%val(i,j,k), &
-                &layer_depth%val(i,j,k),&
-                &hocn%val(i,j,k),&
-                &traj%geom%lon(i,j),&
-                &traj%geom%lat(i,j))
-           self%ksshts%kssht(i,j,k) = jac(1)*jac_mask(i,j)
-           self%ksshts%ksshs(i,j,k) = jac(2)*jac_mask(i,j)
-        end do
-        if (nlayers>0) then
-          self%ksshts%kssht(i,j,1:nlayers) =  0.0_kind_real
-          self%ksshts%ksshs(i,j,1:nlayers) =  0.0_kind_real
-        end if
-       end do
+    do j = jsc, jec
+      do k = 1, nl
+        call soca_steric_jacobian (jac, &
+        tocn%val(i,j,k), &
+        socn%val(i,j,k), &
+        &layer_depth%val(i,j,k),&
+        &hocn%val(i,j,k),&
+        &traj%geom%lon(i,j),&
+        &traj%geom%lat(i,j))
+        self%ksshts%kssht(i,j,k) = jac(1)*jac_mask(i,j)
+        self%ksshts%ksshs(i,j,k) = jac(2)*jac_mask(i,j)
+      end do
+      if (nlayers>0) then
+        self%ksshts%kssht(i,j,1:nlayers) =  0.0_kind_real
+        self%ksshts%ksshs(i,j,1:nlayers) =  0.0_kind_real
+      end if
+    end do
   end do
   deallocate(jac)
+
+  ! Zero-out Jacobians if required by configuration
+  if (mask_detadt) self%ksshts%kssht = 0.0_kind_real
+  if (mask_detads) self%ksshts%ksshs = 0.0_kind_real
 
   ! Compute Kct
   if (traj%has("cicen")) then
