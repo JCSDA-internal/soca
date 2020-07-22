@@ -6,6 +6,7 @@ list( APPEND soca_test_input
   testinput/3dvarfgat.yml
   testinput/3dvarfgat_pseudo.yml
   testinput/addincrement.yml
+  testinput/balance_mask.yml
   testinput/checkpointmodel.yml
   testinput/convertstate.yml
   testinput/diffstates.yml
@@ -63,6 +64,7 @@ list( APPEND soca_test_ref
   testref/3dvarfgat.test
   testref/3dvarfgat_pseudo.test
   testref/addincrement.test
+  testref/balance_mask.test
   testref/checkpointmodel.test
   testref/convertstate.test
   testref/diffstates.test
@@ -227,6 +229,7 @@ endif()
 
 # Create directory for BUMP output
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bump)
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bump-kmask)
 
 # find compare.py provided by oops
 find_file(COMPARE_BIN oops_compare.py HINTS ${oops_BINDIR})
@@ -409,6 +412,18 @@ soca_add_test( NAME static_socaerror_init
                NOCOMPARE
                TEST_DEPENDS test_soca_gridgen )
 
+# Use the soca_dirac.x application to create a mask for the dynamic height Jacobians
+soca_add_test( NAME balance_mask
+               EXE  soca_dirac.x
+               TEST_DEPENDS test_soca_gridgen )
+
+# Create dc/dt file for ocean/ice balance and convert dirac file into a mask
+add_test ( test_soca_create_kmask
+           python
+           ${CMAKE_CURRENT_SOURCE_DIR}/Data/create_kmask.py
+           TEST_DEPENDS test_static_socaerror_init
+                        test_balance_mask )
+
 # ensemble generation
 soca_add_test( NAME enspert
                EXE  soca_enspert.x
@@ -487,7 +502,8 @@ soca_add_test( NAME varchange_ana2model
 
 soca_add_test( NAME varchange_balance
                SRC  TestVariableChange.cc
-               TEST_DEPENDS test_soca_gridgen )
+               TEST_DEPENDS test_soca_gridgen
+                            test_soca_create_dcdt )
 
 soca_add_test( NAME varchange_balance_TSSSH
                SRC  TestVariableChange.cc

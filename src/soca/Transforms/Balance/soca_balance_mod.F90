@@ -6,6 +6,8 @@
 module soca_balance_mod
 
 use fckit_configuration_module, only: fckit_configuration
+use fms_mod, only: read_data
+use fms_io_mod, only: fms_io_init, fms_io_exit
 use kinds, only: kind_real
 use soca_fields_mod
 use soca_increment_mod
@@ -23,7 +25,7 @@ public :: soca_balance_config, &
 
 !> Fortran derived type to hold configuration D
 type :: soca_balance_config
-   type(soca_state ), pointer :: traj                !> Trajectory
+   type(soca_state),  pointer :: traj                !> Trajectory
    integer                    :: isc, iec, jsc, jec  !> Compute domain
    type(soca_kst)             :: kst                 !> T/S balance
    type(soca_ksshts)          :: ksshts              !> SSH/T/S balance
@@ -41,11 +43,25 @@ contains
 subroutine soca_balance_setup(f_conf, self, traj)
   type(fckit_configuration),   intent(in)  :: f_conf
   type(soca_balance_config), intent(inout) :: self
-  type(soca_state),   target, intent(in)  :: traj
+  type(soca_state),    target, intent(in)  :: traj
 
-  integer :: isc, iec, jsc, jec, i, j, k, nl
+  integer :: isc, iec, jsc, jec
+  integer :: isd, ied, jsd, jed
+  integer :: i, j, k, nl
   real(kind=kind_real), allocatable :: jac(:)
   type(soca_field), pointer :: tocn, socn, hocn, cicen, mld, layer_depth
+
+  ! declarations related to the dynamic height Jacobians
+  character(len=:), allocatable :: filename, mask_name
+  real(kind=kind_real), allocatable :: jac_mask(:,:) !> mask for Jacobian
+  real(kind=kind_real) :: threshold
+  integer :: nlayers               !> dynamic height Jac=0 in nlayers upper layers
+  logical :: mask_detadt = .false. !> if true, set deta/dt to 0
+  logical :: mask_detads = .false. !> if true, set deta/ds to 0
+
+  ! declarations related to the sea-ice Jacobian
+  character(len=:), allocatable :: kct_name
+  real(kind=kind_real), allocatable :: kct(:,:) !> dc/dT
 
   ! Store trajectory
   self%traj => traj
@@ -53,8 +69,30 @@ subroutine soca_balance_setup(f_conf, self, traj)
   ! Indices for compute domain
   isc=traj%geom%isc; iec=traj%geom%iec
   jsc=traj%geom%jsc; jec=traj%geom%jec
+  isd=traj%geom%isd; ied=traj%geom%ied
+  jsd=traj%geom%jsd; jed=traj%geom%jed
   self%isc=isc; self%iec=iec
   self%jsc=jsc; self%jec=jec
+
+  ! Setup mask for Jacobians related to the dynamic height balance
+  allocate(jac_mask(isd:ied,jsd:jed))
+  jac_mask = 1.0_kind_real
+  nlayers = 0.0_kind_real
+  if ( f_conf%has("jac_mask") ) then
+    jac_mask = 0.0_kind_real
+    call f_conf%get_or_die("jac_mask.filename", filename)
+    call f_conf%get_or_die("jac_mask.name", mask_name)
+    call f_conf%get_or_die("jac_mask.threshold", threshold)
+    call f_conf%get_or_die("jac_mask.nlayers", nlayers)
+    call f_conf%get_or_die("jac_mask.detadt", mask_detadt)
+    call f_conf%get_or_die("jac_mask.detads", mask_detads)
+    call fms_io_init()
+    call read_data(filename, mask_name, jac_mask, domain=traj%geom%Domain%mpp_domain)
+    call fms_io_exit()
+    where(jac_mask<threshold)
+      jac_mask = 0.0_kind_real
+    end where
+  end if
 
   ! Get configuration for Kst
   call f_conf%get_or_die("dsdtmax", self%kst%dsdtmax)
@@ -102,33 +140,51 @@ subroutine soca_balance_setup(f_conf, self, traj)
   allocate(self%ksshts%kssht, mold=self%kst%jacobian)
   allocate(self%ksshts%ksshs, mold=self%kst%jacobian)
   allocate(jac(2))
-  self%ksshts%kssht=0.0
-  self%ksshts%ksshs=0.0
+  self%ksshts%kssht=0.0_kind_real
+  self%ksshts%ksshs=0.0_kind_real
   do i = isc, iec
-     do j = jsc, jec
-        do k = 1, nl
-           call soca_steric_jacobian (jac, &
-                tocn%val(i,j,k), &
-                socn%val(i,j,k), &
-                &layer_depth%val(i,j,k),&
-                &hocn%val(i,j,k),&
-                &traj%geom%lon(i,j),&
-                &traj%geom%lat(i,j))
-           self%ksshts%kssht(i,j,k) = jac(1)
-           self%ksshts%ksshs(i,j,k) = jac(2)
-        end do
-     end do
+    do j = jsc, jec
+      do k = 1, nl
+        call soca_steric_jacobian (jac, &
+        tocn%val(i,j,k), &
+        socn%val(i,j,k), &
+        &layer_depth%val(i,j,k),&
+        &hocn%val(i,j,k),&
+        &traj%geom%lon(i,j),&
+        &traj%geom%lat(i,j))
+        self%ksshts%kssht(i,j,k) = jac(1)*jac_mask(i,j)
+        self%ksshts%ksshs(i,j,k) = jac(2)*jac_mask(i,j)
+      end do
+      if (nlayers>0) then
+        self%ksshts%kssht(i,j,1:nlayers) =  0.0_kind_real
+        self%ksshts%ksshs(i,j,1:nlayers) =  0.0_kind_real
+      end if
+    end do
   end do
   deallocate(jac)
 
+  ! Zero-out Jacobians if required by configuration
+  if (mask_detadt) self%ksshts%kssht = 0.0_kind_real
+  if (mask_detads) self%ksshts%ksshs = 0.0_kind_real
+
   ! Compute Kct
   if (traj%has("cicen")) then
+    ! Setup dc/dT
+    allocate(kct(isd:ied,jsd:jed))
+    kct = 0.0_kind_real
+    if ( f_conf%has("dcdt") ) then
+      call f_conf%get_or_die("dcdt.filename", filename)
+      call f_conf%get_or_die("dcdt.name", kct_name)
+      call fms_io_init()
+      call read_data(filename, kct_name, kct, domain=traj%geom%Domain%mpp_domain)
+      call fms_io_exit()
+    end if
     allocate(self%kct(isc:iec,jsc:jec))
     self%kct = 0.0_kind_real
     do i = isc, iec
       do j = jsc, jec
           if (sum(cicen%val(i,j,:)) > 1.0e-3_kind_real) then
-            self%kct = -0.01d0 ! TODO: Insert regression coef
+            self%kct = kct(i,j)
           end if
       end do
     end do
