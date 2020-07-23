@@ -73,6 +73,9 @@ Covariance:
     dsdzmin: 3.0e-6
     dtdzmin: 1.0e-6
     nlayers: 2
+    dcdt:
+      filename: ./Data/kmask.nc
+      name: dcdt
     inputVariables:
       variables: *soca_vars
     outputVariables:

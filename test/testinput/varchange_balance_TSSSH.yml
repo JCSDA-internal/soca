@@ -21,6 +21,13 @@ LinearVariableChangeTests:
   dsdzmin: 3.0e-3
   dtdzmin: 1.0e-3
   nlayers: 10
+  jac_mask:
+    filename: ./Data/kmask.nc
+    name: kmask
+    threshold: 0.3
+    detadt: false
+    detads: false
+    nlayers: 10
   inputVariables:
     variables: *soca_vars
   outputVariables:
