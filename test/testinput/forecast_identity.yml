@@ -1,4 +1,4 @@
-resolution:
+geometry:
   num_ice_cat: 5
   num_ice_lev: 4
   num_sno_lev: 1
@@ -8,9 +8,9 @@ model:
   name: SOCA
   tstep: PT1H
   advance_mom6: 0
-  variables: [cicen, hicen, socn, tocn, ssh, hocn, sw, lhf, shf, lw, us, chl]
+  model variables: [cicen, hicen, socn, tocn, ssh, hocn] #, sw, lhf, shf, lw, us, chl]
 
-initial:
+initial condition:
   read_from_file: 1
   date: 2018-04-15T00:00:00Z
   basename: ./INPUT/
@@ -18,8 +18,9 @@ initial:
   ice_filename: ice_model.res.nc
   sfc_filename: sfc.res.nc
   seaice_model: sis2
+  state variables: [cicen, hicen, socn, tocn, ssh, hocn] #, sw, lhf, shf, lw, us, chl]
 
-forecast_length: PT6H
+forecast length: PT6H
 
 output:
   frequency: PT6H

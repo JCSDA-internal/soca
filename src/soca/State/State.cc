@@ -38,12 +38,12 @@ namespace soca {
     Log::trace() << "State::State created." << std::endl;
   }
   // -----------------------------------------------------------------------------
-  State::State(const Geometry & geom, const oops::Variables & vars,
-               const eckit::Configuration & file)
-    : time_(), vars_(vars), geom_(new Geometry(geom))
+  State::State(const Geometry & geom, const eckit::Configuration & file)
+    : time_(), vars_(file, "state variables"), geom_(new Geometry(geom))
   {
     util::DateTime * dtp = &time_;
-    soca_state_create_f90(keyFlds_, geom_->toFortran(), vars_);
+    oops::Variables vars(file, "state variables");
+    soca_state_create_f90(keyFlds_, geom_->toFortran(), vars);
     soca_state_read_file_f90(toFortran(), &file, &dtp);
     Log::trace() << "State::State created and read in." << std::endl;
   }
