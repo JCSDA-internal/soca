@@ -13,6 +13,5 @@
 int main(int argc,  char ** argv) {
   oops::Run run(argc, argv);
   test::LinearGetValues<soca::Traits, ufo::ObsTraits> tests;
-  run.execute(tests);
-  return 0;
+  return run.execute(tests);
 }
