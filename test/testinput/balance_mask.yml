@@ -10,12 +10,12 @@ initial condition:
   date: &date 2018-04-15T00:00:00Z
   ocn_filename: MOM.res.nc
   ice_filename: ice_model.res.nc
+  state variables: &soca_vars [cicen, hicen, socn, tocn, ssh, hocn]
 
-variables: &soca_vars [cicen, hicen, socn, tocn, ssh, hocn]
-#variables: &soca_vars [socn, tocn, ssh, hocn]
+variables: *soca_vars
 
-Covariance:
-  covariance: SocaError
+background error:
+  covariance model: SocaError
   prefix: soca
   datadir: ./bump
   load_nicas: 1
@@ -23,8 +23,7 @@ Covariance:
   mpicom: 2
   strategy: specific_univariate
   date: *date
-
-  variables: [ssh]
+  analysis variables: [ssh]
 
 dirac:
   # NOTE ice (ifdir=4) was not being correctly tested, need to fix
@@ -33,7 +32,7 @@ dirac:
   izdir: [1,  1,  1,  1,  1,  1,  1,  1,  1]
   ifdir: [3,  3,  3,  3,  3,  3,  3,  3,  3]
 
-output_B:
+output B:
   datadir: Data
   date: *date
   exp: balance_mask

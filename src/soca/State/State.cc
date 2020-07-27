@@ -126,7 +126,8 @@ namespace soca {
     soca_state_sizes_f90(toFortran(), n0, n0, n0, n0, n0, nf);
     std::vector<double> zstat(3*nf);
     soca_state_gpnorm_f90(toFortran(), nf, zstat[0]);
-    for (int jj = 0; jj < nf; ++jj) {
+    std::cout << vars_ << nf << std::endl;
+    for (int jj = 0; jj < nf-2; ++jj) {
       // TODO(travis) remove this once answers ready to be changed
       if (vars_[jj] == "mld" || vars_[jj] == "layer_depth") {
         continue;
