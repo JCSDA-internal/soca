@@ -1,107 +1,80 @@
-Geometry:
+geometry:
   num_ice_cat: 5
   num_ice_lev: 4
   num_sno_lev: 1
   mom6_input_nml: ./inputnml/input.nml
 
-Model:
+model:
   name: SOCA
   tstep: PT1H
   advance_mom6: 1
-  variables: [cicen, hicen, socn, tocn, ssh, hocn, sw, lhf, shf, lw, us]
+  model variables: [cicen, hicen, socn, tocn, ssh, hocn, sw, lhf, shf, lw, us]
 
-Initial Condition:
+initial condition:
   read_from_file: 1
   date: 2018-04-15T00:00:00Z
   basename: ./INPUT/
   ocn_filename: MOM.res.nc
   ice_filename: ice_model.res.nc
+  state variables: [cicen, hicen, socn, tocn, ssh, hocn, sw, lhf, shf, lw, us]
 
-Assimilation Window:
-  window_begin: 2018-04-15T00:00:00Z
-  window_length: PT3H
+window begin: 2018-04-15T00:00:00Z
+window length: PT3H
+forecast length: PT3H
 
-Observations:
-  ObsTypes:
-
-  - ObsSpace:
+observations:
+  - obs space:
       name: CoolSkin
-      ObsDataOut: {obsfile: ./Data/sst.out.nc}
-      ObsDataIn:  {obsfile: ./Data/sst.nc}
-      simulate:
-        variables: [sea_surface_temperature]
-    ObsOperator:
+      obsdataout: {obsfile: ./Data/sst.out.nc}
+      obsdatain:  {obsfile: ./Data/sst.nc}
+      simulated variables: [sea_surface_temperature]
+    obs operator:
       name: CoolSkin
-    Covariance:
-      covariance: diagonal
-    ObsFilter:
-    - Filter: GOMsaver
-      filename: ./Data/coolskingeovl.nc
 
-  - ObsSpace:
+  - obs space:
       name: SeaSurfaceTemp
-      ObsDataOut: {obsfile: ./Data/sst.out.nc}
-      ObsDataIn:  {obsfile: ./Data/sst.nc}
-      simulate:
-        variables: [sea_surface_temperature]
-    ObsOperator:
+      obsdataout: {obsfile: ./Data/sst.out.nc}
+      obsdatain:  {obsfile: ./Data/sst.nc}
+      simulated variables: [sea_surface_temperature]
+    obs operator:
       name: Identity
-    Covariance:
-      covariance: diagonal
 
-  - ObsSpace:
+  - obs space:
       name: SeaSurfaceSalinity
-      ObsDataOut: {obsfile: ./Data/sss.out.nc}
-      ObsDataIn:  {obsfile: ./Data/sss.nc}
-      simulate:
-        variables: [sea_surface_salinity]
-    ObsOperator:
+      obsdataout: {obsfile: ./Data/sss.out.nc}
+      obsdatain:  {obsfile: ./Data/sss.nc}
+      simulated variables: [sea_surface_salinity]
+    obs operator:
       name: Identity
-    Covariance:
-      covariance: diagonal
 
-  - ObsSpace:
+  - obs space:
       name: ADT
-      ObsDataOut: {obsfile: ./Data/adt.out.nc}
-      ObsDataIn:  {obsfile: ./Data/adt.nc}
-      simulate:
-        variables: [obs_absolute_dynamic_topography]
-    ObsOperator:
+      obsdataout: {obsfile: ./Data/adt.out.nc}
+      obsdatain:  {obsfile: ./Data/adt.nc}
+      simulated variables: [obs_absolute_dynamic_topography]
+    obs operator:
       name: ADT
-    Covariance:
-      covariance: diagonal
 
-  - ObsSpace:
+  - obs space:
       name: InsituTemperature
-      ObsDataOut: {obsfile: ./Data/prof.T.out.nc}
-      ObsDataIn:  {obsfile: ./Data/prof.nc}
-      simulate:
-        variables: [sea_water_temperature]
-    ObsOperator:
+      obsdataout: {obsfile: ./Data/prof.T.out.nc}
+      obsdatain:  {obsfile: ./Data/prof.nc}
+      simulated variables: [sea_water_temperature]
+    obs operator:
       name: InsituTemperature
-    Covariance:
-      covariance: diagonal
 
-  - ObsSpace:
+  - obs space:
       name: InsituSalinity
-      ObsDataOut: {obsfile: ./Data/prof.S.out.nc}
-      ObsDataIn:  {obsfile: ./Data/prof.nc}
-      simulate:
-        variables: [sea_water_salinity]
-    ObsOperator:
+      obsdataout: {obsfile: ./Data/prof.S.out.nc}
+      obsdatain:  {obsfile: ./Data/prof.nc}
+      simulated variables: [sea_water_salinity]
+    obs operator:
       name: MarineVertInterp
-    Covariance:
-      covariance: diagonal
 
-  - ObsSpace:
+  - obs space:
       name: SeaIceFraction
-      ObsDataOut: {obsfile: ./Data/icec.out.nc}
-      ObsDataIn:  {obsfile:  ./Data/icec.nc}
-      simulate:
-        variables: [sea_ice_area_fraction]
-    ObsOperator:
+      obsdataout: {obsfile: ./Data/icec.out.nc}
+      obsdatain:  {obsfile:  ./Data/icec.nc}
+      simulated variables: [sea_ice_area_fraction]
+    obs operator:
       name: SeaIceFraction
-    Covariance:
-      covariance: diagonal
-
-#    - ObsType: SeaIceThickness

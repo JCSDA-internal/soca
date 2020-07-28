@@ -13,7 +13,6 @@ _file: &_file
 
 recenter variables:  *soca_vars
 
-
 center:
   <<: *_file
   ocn_filename: ../INPUT/MOM.res.nc

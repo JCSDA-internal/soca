@@ -1,45 +1,44 @@
-resolution:
-  num_ice_cat: 5
-  num_ice_lev: 4
-  num_sno_lev: 1
-  mom6_input_nml: ./inputnml/input.nml
-
-model:
-  name: SOCA
-  tstep: PT1H
-  advance_mom6: 1
-  variables: &soca_vars [cicen, hicen, socn, tocn, ssh, hocn, sw, lhf, shf, lw, us]
-
 _date_begin: &date_begin 2018-04-15T00:00:00Z
+cost function:
+  cost type: 4D-Var
+  window begin: *date_begin
+  window length: PT6H
+  analysis variables: &soca_vars [cicen, hicen, hsnon, socn, tocn, ssh, hocn, sw, lhf, shf, lw, us]
+  geometry:
+    num_ice_cat: 5
+    num_ice_lev: 4
+    num_sno_lev: 1
+    mom6_input_nml: ./inputnml/input.nml
 
-_file: &_file
-  read_from_file: 1
-  date: *date_begin
-  basename: ./Data/
-  remap_filename: ./INPUT/MOM.res.nc
+  model:
+    name: SOCA
+    tstep: PT1H
+    advance_mom6: 0
+    model variables: *soca_vars
 
-cost_function:
-  cost_type: 4D-Var
-  window_begin: *date_begin
-  window_length: PT6H
-  variables: *soca_vars
-  varchange: Identity
-  Jb:
-    Background:
-      state:
-      - read_from_file: 1
-        basename: ./INPUT/
-        ocn_filename: MOM.res.nc
-        ice_filename: cice.res.nc
-        seaice_model: cice
-        date: *date_begin
+  background:
+    read_from_file: 1
+    basename: ./INPUT/
+    ocn_filename: MOM.res.nc
+    ice_filename: cice.res.nc
+    sfc_filename: sfc.res.nc
+    date: *date_begin
+    seaice_model: cice
+    state variables: *soca_vars
 
-    Covariance:
-     covariance: hybrid
-     static_weight: 0.5
-     ensemble_weight: 0.5
-     static:
-      covariance: SocaError
+  _file: &_file
+    read_from_file: 1
+    date: *date_begin
+    basename: ./Data/
+    remap_filename: ./INPUT/MOM.res.nc
+    state variables: *soca_vars
+
+  background error:
+    covariance model: hybrid
+    static weight: 0.5
+    ensemble weight: 0.5
+    static:
+      covariance model: SocaError
       prefix: soca
       datadir: ./bump
       strategy: specific_univariate
@@ -47,20 +46,18 @@ cost_function:
       lsqrt: 1
       mpicom: 2
       date: *date_begin
-      variables: *soca_vars
+      analysis variables: *soca_vars
 
-      variable_changes:
+      variable changes:
 
-      - varchange: BkgErrFILT
+      - variable change: BkgErrFILT
         ocean_depth_min: 1000 # [m]
         rescale_bkgerr: 1.0
         efold_z: 2500.0       # [m]
-        inputVariables:
-          variables: *soca_vars
-        outputVariables:
-          variables: *soca_vars
+        input variables: *soca_vars
+        output variables: *soca_vars
 
-      - varchange: BkgErrGODAS
+      - variable change: BkgErrGODAS
         t_min: 0.1
         t_max: 2.0
         t_dz:  20.0
@@ -74,22 +71,18 @@ cost_function:
         cicen_max: 0.5
         hicen_min: 10.0
         hicen_max: 100.0
-        inputVariables:
-          variables: *soca_vars
-        outputVariables:
-          variables: *soca_vars
+        input variables: *soca_vars
+        output variables: *soca_vars
 
-      - varchange: VertConvSOCA
+      - variable change: VertConvSOCA
         Lz_min: 2.0
         Lz_mld: 1
         Lz_mld_max: 500.0
         scale_layer_thick: 1.5
-        inputVariables:
-          variables: *soca_vars
-        outputVariables:
-          variables: *soca_vars
+        input variables: *soca_vars
+        output variables: *soca_vars
 
-      - varchange: BalanceSOCA
+      - variable change: BalanceSOCA
         dsdtmax: 0.1
         dsdzmin: 3.0e-6
         dtdzmin: 1.0e-6
@@ -97,12 +90,10 @@ cost_function:
         dcdt:
           filename: ./Data/kmask.nc
           name: dcdt
-        inputVariables:
-          variables: *soca_vars
-        outputVariables:
-          variables: *soca_vars
+        input variables: *soca_vars
+        output variables: *soca_vars
 
-     ensemble:
+    ensemble:
       date: *date_begin
       variables: *soca_vars
       members:
@@ -122,10 +113,11 @@ cost_function:
         ocn_filename: ocn.pert.ens.4.2018-04-15T00:00:00Z.PT0S.nc
         ice_filename: ice.pert.ens.4.2018-04-15T00:00:00Z.PT0S.nc
 
+
       localization:
        timeslots: ['2018-04-15T00:00:00Z']
-       variables: *soca_vars
-       localization: BUMP
+       localization variables: [socn, tocn, ssh]
+       localization method: BUMP
        bump:
         datadir: ./bump
         prefix: soca_bump_loc
@@ -135,48 +127,46 @@ cost_function:
         mpicom: 2
         verbosity: main
         grids:
-        - variables: [socn, tocn, cicen_01, cicen_02, cicen_03, cicen_04, cicen_05, hicen_01, hicen_02, hicen_03, hicen_04, hicen_05, ssh]
+        - localization variables: [socn, tocn, ssh]
 
-  Jo:
-    ObsTypes:
 
-    - ObsSpace:
-        name: ADT
-        ObsDataOut: {obsfile: ./Data/adt.out.nc}
-        ObsDataIn:  {obsfile: ./Data/adt.nc}
-        simulate:
-          variables: [obs_absolute_dynamic_topography]
-      ObsOperator:
-        name: ADT
-      Covariance:
-        covariance: diagonal
+  observations:
+
+  - obs space:
+      name: ADT
+      obsdataout: {obsfile: ./Data/adt.out.nc}
+      obsdatain:  {obsfile: ./Data/adt.nc}
+      simulated variables: [obs_absolute_dynamic_topography]
+    obs operator:
+      name: ADT
+    obs error:
+      covariance model: diagonal
 
 variational:
-  iteration:
-  - resolution:
+  minimizer:
+    algorithm: RPCG
+  iterations:
+  - geometry:
       num_ice_cat: 5
       num_ice_lev: 4
       num_sno_lev: 1
       mom6_input_nml: ./inputnml/input.nml
-    linearmodel:
-      varchange: Identity
-      version: IdTLM
+    linear model:
+      variable change: Identity
+      name: IdTLM
       tstep: PT1H
-      variables: *soca_vars
+      lm variables: *soca_vars
     ninner: 1
-    gradient_norm_reduction: 1e-15
-    test: 'on'
-    prints:
+    gradient norm reduction: 1e-15
+    test: on
     diagnostics:
       departures: ombg
 
-minimizer:
-  algorithm: RPCG
-
 output:
   datadir: Data
-  exp: 3dvarfgat
+  exp: 3dhbr
   type: an
+  seaice_model: cice
 
 final:
   diagnostics:

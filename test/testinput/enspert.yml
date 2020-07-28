@@ -34,18 +34,16 @@ background error:
   pert_HICE: 0.05
   analysis variables: [ssh, cicen, hicen, tocn, socn]
 
-  variable_changes:
+  variable changes:
 
-  - varchange: BkgErrFILT
+  - variable change: BkgErrFILT
     ocean_depth_min: 1000 # [m]
     rescale_bkgerr: 1.0
     efold_z: 2500.0       # [m]
-    inputVariables:
-      variables: *soca_vars
-    outputVariables:
-      variables: *soca_vars
+    input variables: *soca_vars
+    output variables: *soca_vars
 
-  - varchange: BkgErrGODAS
+  - variable change: BkgErrGODAS
     t_min: 0.25
     t_max: 1.0
     t_dz:  20.0
@@ -59,24 +57,18 @@ background error:
     cicen_max: 0.5
     hicen_min: 10.0
     hicen_max: 100.0
-    inputVariables:
-      variables: *soca_vars
-    outputVariables:
-      variables: *soca_vars
+    input variables: *soca_vars
+    output variables: *soca_vars
 
-  - varchange: VertConvSOCA
-    variables:
-      variables: *soca_vars
+  - variable change: VertConvSOCA
     Lz_min: 2.0
     Lz_mld: 1
     Lz_mld_max: 500.0
     scale_layer_thick: 1.5
-    inputVariables:
-      variables: *soca_vars
-    outputVariables:
-      variables: *soca_vars
+    input variables: *soca_vars
+    output variables: *soca_vars
 
-  - varchange: BalanceSOCA
+  - variable change: BalanceSOCA
     dsdtmax: 0.1
     dsdzmin: 3.0e-6
     dtdzmin: 1.0e-6
@@ -84,11 +76,8 @@ background error:
     dcdt:
       filename: ./Data/kmask.nc
       name: dcdt
-
-    inputVariables:
-      variables: *soca_vars
-    outputVariables:
-      variables: *soca_vars
+    input variables: *soca_vars
+    output variables: *soca_vars
 
 members: 5
 perturbed variables: *soca_vars
