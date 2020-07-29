@@ -30,7 +30,7 @@ linear model:
   lm variables: *soca_vars
 
 linear model test:
-  fc length: PT2H
+  forecast length: PT2H
   first multiplier TL: 0.01
   iterations TL: 1
   tolerance TL: 999.9e1 # Not testing tlm
