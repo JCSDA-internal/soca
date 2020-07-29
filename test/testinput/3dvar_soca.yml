@@ -104,6 +104,9 @@ cost function:
       covariance model: diagonal
     obs filters:
     - *land_mask
+    - filter: Thinning
+      amount: 0.1
+      random seed: 0
 
   - obs space:
       name: SeaSurfaceTemp
@@ -121,10 +124,9 @@ cost function:
       maxvalue: 30.0
     - filter: Background Check
       threshold: 8
-    # TODO (soca people) thinning is no reproducible
-    # - filter: Thinning
-    #   amount: 0.1
-    #   random_seed: 0
+    - filter: Thinning
+      amount: 0.1
+      random seed: 0
 
   - obs space:
       name: SeaSurfaceSalinity
