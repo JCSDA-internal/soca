@@ -19,7 +19,7 @@ cost function:
   model:
     name: SOCA
     tstep: PT1H
-    advance_mom6: 0
+    advance_mom6: 1
     model variables: *soca_vars
 
   background:
@@ -113,15 +113,9 @@ cost function:
       covariance model: diagonal
     obs filters:
     - *land_mask
-    - filter: Bounds Check
-      minvalue: 5.0
-      maxvalue: 30.0
-    - filter: Background Check
-      threshold: 8
-    # TODO (soca people) thinning is no reproducible
-    # - filter: Thinning
-    #   amount: 0.1
-    #   random_seed: 0
+    - filter: Thinning
+      amount: 0.1
+      random seed: 0
 
   - obs space:
       name: SeaSurfaceSalinity
@@ -149,10 +143,7 @@ cost function:
     obs error:
       covariance model: diagonal
     obs filters:
-    - filter: Domain Check
-      where:
-      - variable: {name: sea_floor_depth_below_sea_surface@GeoVaLs}
-        minvalue: 2000
+    - *land_mask
 
   - obs space:
       name: InsituTemperature

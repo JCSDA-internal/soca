@@ -37,7 +37,7 @@ background error:
    variable changes:
 
    - variable change: BkgErrFILT
-     ocean_depth_min: 100 # [m]
+     ocean_depth_min: 1000 # [m]
      rescale_bkgerr: 1.0
      efold_z: 2500.0       # [m]
      input variables: &invars [cicen, hicen, socn, tocn, ssh, hocn, mld, layer_depth]
@@ -69,7 +69,7 @@ background error:
      output variables: *outvars
 
    - variable change: BalanceSOCA
-     dsdtmax: 1
+     dsdtmax: 0.1
      dsdzmin: 3.0e-6
      dtdzmin: 1.0e-6
      nlayers: 2
