@@ -73,7 +73,7 @@ void GetValues::getValuesFromFile(const ufo::Locations & locs,
     util::DateTime end = util::DateTime(conf.getString("notocean.date_end"));
 
     // Create the Atmospheric Geometry in Observation Space
-    eckit::LocalConfiguration confatmobs(conf, "notocean.ObsSpace");
+    eckit::LocalConfiguration confatmobs(conf, "notocean.obs space");
     ioda::ObsSpace atmobs(confatmobs, geom_->getComm(), bgn, end);
 
     // Get GeoVaLs from file
