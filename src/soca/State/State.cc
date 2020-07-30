@@ -42,7 +42,7 @@ namespace soca {
     : time_(), vars_(file, "state variables"), geom_(new Geometry(geom))
   {
     util::DateTime * dtp = &time_;
-    oops::Variables vars(file, "state variables");
+    oops::Variables vars(vars_);
     soca_state_create_f90(keyFlds_, geom_->toFortran(), vars);
     soca_state_read_file_f90(toFortran(), &file, &dtp);
     Log::trace() << "State::State created and read in." << std::endl;
@@ -126,7 +126,6 @@ namespace soca {
     soca_state_sizes_f90(toFortran(), n0, n0, n0, n0, n0, nf);
     std::vector<double> zstat(3*nf);
     soca_state_gpnorm_f90(toFortran(), nf, zstat[0]);
-    std::cout << vars_ << nf << std::endl;
     for (int jj = 0; jj < nf-2; ++jj) {
       // TODO(travis) remove this once answers ready to be changed
       if (vars_[jj] == "mld" || vars_[jj] == "layer_depth") {
