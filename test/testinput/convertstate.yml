@@ -1,21 +1,20 @@
 inputVariables:
   variables: &soca_vars [ssh, tocn, socn, uocn, vocn, hocn, cicen]
-inputresolution:
+input geometry:
   num_ice_cat: 5
   num_ice_lev: 4
   num_sno_lev: 1
   geom_grid_file: soca_gridspec.nc
   mom6_input_nml: ./inputnml/input.nml
-outputresolution:
+output geometry:
   num_ice_cat: 5
   num_ice_lev: 4
   num_sno_lev: 1
-  geom_grid_file: soca_gridspec.small.nc 
+  geom_grid_file: soca_gridspec.small.nc
   mom6_input_nml: ./inputnml/input_small.nml
-inputVariables:
-  variables: *soca_vars
-outputVariables:
-  variables: *soca_vars
+#inputVariables:
+#variables: *soca_vars
+output variables: *soca_vars
 
 states:
 - input:
@@ -26,6 +25,7 @@ states:
      sfc_filename: sfc.res.nc
      date: &bkg_date 2018-04-15T00:00:00Z
      seaice_model: cice
+     state variables: *soca_vars
   output:
      datadir: Data
      exp: remapped
