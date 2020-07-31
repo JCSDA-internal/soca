@@ -8,7 +8,7 @@
 
 module soca_covariance_mod
 
-use atlas_module
+use atlas_module, only: atlas_fieldset, atlas_field, atlas_real, atlas_integer
 use, intrinsic :: iso_c_binding, only : c_char
 use fckit_configuration_module, only: fckit_configuration
 use random_mod, only: normal_distribution
