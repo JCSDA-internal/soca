@@ -61,7 +61,6 @@ type :: soca_geom
     character(len=:), allocatable :: geom_grid_file
     type(fckit_mpi_comm) :: f_comm
     type(atlas_functionspace) :: afunctionspace
-    type(atlas_fieldset) :: afieldset
 
     contains
     procedure :: init => geom_init
@@ -169,7 +168,6 @@ subroutine geom_end(self)
   if (allocated(self%h_zstar))       deallocate(self%h_zstar)
   nullify(self%Domain)
   call self%afunctionspace%final()
-  call self%afieldset%final()
 
 end subroutine geom_end
 
