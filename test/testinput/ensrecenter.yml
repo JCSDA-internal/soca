@@ -1,4 +1,4 @@
-Geometry:
+geometry:
   num_ice_cat: 5
   num_ice_lev: 4
   num_sno_lev: 1
@@ -9,17 +9,16 @@ _file: &_file
   date: &date_bkg 2018-04-15T00:00:00Z
   basename: ./Data/
   remap_filename: ./INPUT/MOM.res.nc
+  state variables:  &soca_vars [cicen, hicen, socn, tocn, ssh, hocn]
 
-Variables:
-  variables:  &soca_vars [cicen, hicen, socn, tocn, ssh, hocn]
+recenter variables:  *soca_vars
 
-
-Center:
+center:
   <<: *_file
   ocn_filename: ../INPUT/MOM.res.nc
   ice_filename: ../INPUT/ice_model.res.nc
 
-Ensemble:
+ensemble:
 - <<: *_file
   ocn_filename: ocn.pert.ens.1.2018-04-15T00:00:00Z.PT6H.nc
   ice_filename: ice.pert.ens.1.2018-04-15T00:00:00Z.PT6H.nc
@@ -36,7 +35,7 @@ Ensemble:
   ocn_filename: ocn.pert.ens.5.2018-04-15T00:00:00Z.PT6H.nc
   ice_filename: ice.pert.ens.5.2018-04-15T00:00:00Z.PT6H.nc
 
-RecenterOut:
+recentered output:
   datadir: Data
   exp: recenter
   type: ens
