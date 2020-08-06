@@ -38,12 +38,12 @@ namespace soca {
     Log::trace() << "State::State created." << std::endl;
   }
   // -----------------------------------------------------------------------------
-  State::State(const Geometry & geom, const oops::Variables & vars,
-               const eckit::Configuration & file)
-    : time_(), vars_(vars), geom_(new Geometry(geom))
+  State::State(const Geometry & geom, const eckit::Configuration & file)
+    : time_(), vars_(file, "state variables"), geom_(new Geometry(geom))
   {
     util::DateTime * dtp = &time_;
-    soca_state_create_f90(keyFlds_, geom_->toFortran(), vars_);
+    oops::Variables vars(vars_);
+    soca_state_create_f90(keyFlds_, geom_->toFortran(), vars);
     soca_state_read_file_f90(toFortran(), &file, &dtp);
     Log::trace() << "State::State created and read in." << std::endl;
   }
@@ -109,7 +109,8 @@ namespace soca {
     ASSERT(validTime() == dx.validTime());
     // Interpolate increment to analysis grid
     Increment dx_hr(*geom_, dx);
-
+std::cout << "dx:" << dx << std::endl;
+std::cout << "dx_hr:" << dx_hr << std::endl;
     // Add increment to background state
     soca_state_add_incr_f90(toFortran(), dx_hr.toFortran());
     return *this;
@@ -135,7 +136,7 @@ namespace soca {
     soca_state_sizes_f90(toFortran(), n0, n0, n0, n0, n0, nf);
     std::vector<double> zstat(3*nf);
     soca_state_gpnorm_f90(toFortran(), nf, zstat[0]);
-    for (int jj = 0; jj < nf; ++jj) {
+    for (int jj = 0; jj < nf-2; ++jj) {
       // TODO(travis) remove this once answers ready to be changed
       if (vars_[jj] == "mld" || vars_[jj] == "layer_depth") {
         continue;

@@ -1,0 +1,51 @@
+geometry:
+  num_ice_cat: 5
+  num_ice_lev: 4
+  num_sno_lev: 1
+  mom6_input_nml: ./inputnml/input.nml
+
+model:
+  name: PseudoModel
+  tstep: PT1H
+  state variables: [socn, tocn, ssh, hocn, uocn, vocn]
+  states:
+  - date: 2018-04-15T01:00:00Z
+    basename: ./Data/
+    ocn_filename: ocn.mom6.fc.2018-04-15T00:00:00Z.PT1H.nc
+    read_from_file: 1
+  - date: 2018-04-15T02:00:00Z
+    basename: ./Data/
+    ocn_filename: ocn.mom6.fc.2018-04-15T00:00:00Z.PT2H.nc
+    read_from_file: 1
+  - date: 2018-04-15T03:00:00Z
+    basename: ./Data/
+    ocn_filename: ocn.mom6.fc.2018-04-15T00:00:00Z.PT3H.nc
+    read_from_file: 1
+  - date: 2018-04-15T04:00:00Z
+    basename: ./Data/
+    ocn_filename: ocn.mom6.fc.2018-04-15T00:00:00Z.PT4H.nc
+    read_from_file: 1
+  - date: 2018-04-15T05:00:00Z
+    basename: ./Data/
+    ocn_filename: ocn.mom6.fc.2018-04-15T00:00:00Z.PT5H.nc
+    read_from_file: 1
+  - date: 2018-04-15T06:00:00Z
+    basename: ./Data/
+    ocn_filename: ocn.mom6.fc.2018-04-15T00:00:00Z.PT6H.nc
+    read_from_file: 1
+
+initial condition:
+  read_from_file: 1
+  date: &date 2018-04-15T00:00:00Z
+  basename: ./INPUT/
+  ocn_filename: MOM.res.nc
+  state variables: [socn, tocn, ssh, hocn, uocn, vocn]
+
+forecast length: PT6H
+
+output:
+  frequency: PT6H
+  datadir: Data
+  exp: pseudomodel
+  date: *date
+  type: fc

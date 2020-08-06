@@ -5,6 +5,11 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
+#include "atlas/field.h"
+#include "atlas/functionspace.h"
+#include "atlas/grid.h"
+#include "atlas/util/Config.h"
+
 #include "soca/Geometry/Geometry.h"
 
 // -----------------------------------------------------------------------------
@@ -19,6 +24,22 @@ namespace soca {
     const eckit::Configuration * configc = &conf;
     fmsinput_.updateNameList();
     soca_geo_setup_f90(keyGeom_, &configc, &comm);
+
+    // Set ATLAS lon/lat field
+    atlasFieldSet_.reset(new atlas::FieldSet());
+    soca_geo_set_atlas_lonlat_f90(keyGeom_, atlasFieldSet_->get());
+    atlas::Field atlasField = atlasFieldSet_->field("lonlat");
+
+    // Create ATLAS function space
+    atlasFunctionSpace_.reset(new atlas::functionspace::PointCloud(atlasField));
+
+    // Set ATLAS function space pointer in Fortran
+    soca_geo_set_atlas_functionspace_pointer_f90(keyGeom_,
+      atlasFunctionSpace_->get());
+
+    // Fill ATLAS fieldset
+    atlasFieldSet_.reset(new atlas::FieldSet());
+    soca_geo_fill_atlas_fieldset_f90(keyGeom_, atlasFieldSet_->get());
   }
   // -----------------------------------------------------------------------------
   Geometry::Geometry(const Geometry & other)
@@ -28,6 +49,15 @@ namespace soca {
       fmsinput_(other.fmsinput_) {
     const int key_geo = other.keyGeom_;
     soca_geo_clone_f90(key_geo, keyGeom_);
+    atlasFunctionSpace_.reset(new atlas::functionspace::PointCloud(
+                              other.atlasFunctionSpace_->lonlat()));
+    soca_geo_set_atlas_functionspace_pointer_f90(keyGeom_,
+      atlasFunctionSpace_->get());
+    atlasFieldSet_.reset(new atlas::FieldSet());
+    for (int jfield = 0; jfield < other.atlasFieldSet_->size(); ++jfield) {
+      atlas::Field atlasField = other.atlasFieldSet_->field(jfield);
+      atlasFieldSet_->add(atlasField);
+    }
   }
   // -----------------------------------------------------------------------------
   Geometry::~Geometry() {
@@ -53,6 +83,14 @@ namespace soca {
   // -----------------------------------------------------------------------------
   void Geometry::print(std::ostream & os) const {
     // TODO(Travis): Implement this correctly.
+  }
+  // -----------------------------------------------------------------------------
+  atlas::FunctionSpace * Geometry::atlasFunctionSpace() const {
+    return atlasFunctionSpace_.get();
+  }
+  // -----------------------------------------------------------------------------
+  atlas::FieldSet * Geometry::atlasFieldSet() const {
+    return atlasFieldSet_.get();
   }
   // -----------------------------------------------------------------------------
 }  // namespace soca

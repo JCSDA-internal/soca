@@ -34,7 +34,7 @@ namespace soca {
 static oops::LinearModelMaker<Traits, TlmId> makerIdTLM_("IdTLM");
 // -----------------------------------------------------------------------------
 TlmId::TlmId(const Geometry & resol, const eckit::Configuration & tlConf)
-  : keyConfig_(0), tstep_(), resol_(resol), linvars_(tlConf)
+  : keyConfig_(0), tstep_(), resol_(resol), linvars_(tlConf, "lm variables")
 {
   tstep_ = util::Duration(tlConf.getString("tstep"));
   Log::trace() << "TlmId created" << std::endl;

@@ -5,10 +5,10 @@
 
 module soca_increment_mod_c
 
+use atlas_module
 use iso_c_binding
 use fckit_configuration_module, only: fckit_configuration
 use kinds, only: kind_real
-use unstructured_grid_mod, only: unstructured_grid, unstructured_grid_registry
 use datetime_mod, only: datetime, c_f_datetime
 use oops_variables_mod
 use ufo_locs_mod_c, only: ufo_locs_registry
@@ -243,14 +243,14 @@ subroutine soca_increment_create_c(c_key_self, c_key_geom, c_vars) bind(c,name='
     call soca_increment_registry%get(c_key_fld,fld)
     call soca_increment_registry%get(c_key_rhs,rhs)
 
-    ! TODO (Guillaume or Travis) implement == in geometry or something to that effect.
-    if (size(fld%geom%lon,1)==size(rhs%geom%lon,1) .and. size(fld%geom%lat,2)==size(rhs%geom%lat,2) .and. &
-         fld%geom%nzo==rhs%geom%nzo ) then
-       call fld%copy(rhs)
-    else
-       call fld%copy(rhs)
-       !call fld%convert(rhs)
-    endif
+    ! ! TODO (Guillaume or Travis) implement == in geometry or something to that effect.
+    ! if (size(fld%geom%lon,1)==size(rhs%geom%lon,1) .and. size(fld%geom%lat,2)==size(rhs%geom%lat,2) .and. &
+    !      fld%geom%nzo==rhs%geom%nzo ) then
+    !    call fld%copy(rhs)
+    ! else
+    !    !call fld%copy(rhs)
+       call fld%convert(rhs)
+    ! endif
 
     !call fld%copy(rhs)
 
@@ -258,57 +258,87 @@ subroutine soca_increment_create_c(c_key_self, c_key_geom, c_vars) bind(c,name='
 
   ! ------------------------------------------------------------------------------
 
-  subroutine soca_increment_ug_coord_c(c_key_fld, c_key_ug) bind (c,name='soca_increment_ug_coord_f90')
-    integer(c_int), intent(in) :: c_key_fld
-    integer(c_int), intent(in) :: c_key_ug
+  subroutine soca_increment_set_atlas_c(c_key_self,c_key_geom,c_vars,c_dt,c_afieldset) &
+   & bind (c,name='soca_increment_set_atlas_f90')
 
-    type(soca_increment), pointer :: fld
-    type(unstructured_grid), pointer :: ug
+  implicit none
+  integer(c_int), intent(in) :: c_key_self
+  integer(c_int), intent(in) :: c_key_geom
+  type(c_ptr), value, intent(in) :: c_vars
+  type(c_ptr),intent(inout) :: c_dt
+  type(c_ptr), intent(in), value :: c_afieldset
 
-    call soca_increment_registry%get(c_key_fld,fld)
-    call unstructured_grid_registry%get(c_key_ug,ug)
+  type(soca_increment), pointer :: self
+  type(soca_geom),  pointer :: geom
+  type(oops_variables) :: vars
+  type(datetime) :: fdate
+  type(atlas_fieldset) :: afieldset
 
-    call fld%ug_coord(ug)
+  call soca_increment_registry%get(c_key_self,self)
+  call soca_geom_registry%get(c_key_geom, geom)
+  vars = oops_variables(c_vars)
+  call c_f_datetime(c_dt, fdate)
+  afieldset = atlas_fieldset(c_afieldset)
 
-  end subroutine soca_increment_ug_coord_c
+  call self%set_atlas(geom, vars, fdate, afieldset)
 
-  ! ------------------------------------------------------------------------------
-
-  subroutine soca_increment_field_to_ug_c(c_key_fld, c_key_ug, c_its) bind (c,name='soca_increment_field_to_ug_f90')
-    integer(c_int), intent(in) :: c_key_fld
-    integer(c_int), intent(in) :: c_key_ug
-    integer(c_int), intent(in) :: c_its
-
-    type(soca_increment),       pointer :: fld
-    type(unstructured_grid), pointer :: ug
-    integer                          :: its
-
-    call soca_increment_registry%get(c_key_fld,fld)
-    call unstructured_grid_registry%get(c_key_ug,ug)
-    its = c_its+1
-
-    call fld%to_ug(ug, its)
-
-  end subroutine soca_increment_field_to_ug_c
+  end subroutine soca_increment_set_atlas_c
 
   ! ------------------------------------------------------------------------------
 
-  subroutine soca_increment_field_from_ug_c(c_key_fld, c_key_ug, c_its) bind (c,name='soca_increment_field_from_ug_f90')
-    integer(c_int), intent(in) :: c_key_fld
-    integer(c_int), intent(in) :: c_key_ug
-    integer(c_int), intent(in) :: c_its
+  subroutine soca_increment_to_atlas_c(c_key_self,c_key_geom,c_vars,c_dt,c_afieldset) &
+   & bind (c,name='soca_increment_to_atlas_f90')
 
-    type(soca_increment),       pointer :: fld
-    type(unstructured_grid), pointer :: ug
-    integer                          :: its
+  implicit none
+  integer(c_int), intent(in) :: c_key_self
+  integer(c_int), intent(in) :: c_key_geom
+  type(c_ptr), value, intent(in) :: c_vars
+  type(c_ptr),intent(inout) :: c_dt
+  type(c_ptr), intent(in), value :: c_afieldset
 
-    call soca_increment_registry%get(c_key_fld,fld)
-    call unstructured_grid_registry%get(c_key_ug,ug)
-    its = c_its+1
+  type(soca_increment), pointer :: self
+  type(soca_geom),  pointer :: geom
+  type(oops_variables) :: vars
+  type(datetime) :: fdate
+  type(atlas_fieldset) :: afieldset
 
-    call fld%from_ug(ug, its)
+  call soca_increment_registry%get(c_key_self,self)
+  call soca_geom_registry%get(c_key_geom, geom)
+  vars = oops_variables(c_vars)
+  call c_f_datetime(c_dt, fdate)
+  afieldset = atlas_fieldset(c_afieldset)
 
-  end subroutine soca_increment_field_from_ug_c
+  call self%to_atlas(geom, vars, fdate, afieldset)
+
+  end subroutine soca_increment_to_atlas_c
+
+  ! ------------------------------------------------------------------------------
+
+  subroutine soca_increment_from_atlas_c(c_key_self,c_key_geom,c_vars,c_dt,c_afieldset) &
+   & bind (c,name='soca_increment_from_atlas_f90')
+
+  implicit none
+  integer(c_int), intent(in) :: c_key_self
+  integer(c_int), intent(in) :: c_key_geom
+  type(c_ptr), value, intent(in) :: c_vars
+  type(c_ptr),intent(inout) :: c_dt
+  type(c_ptr), intent(in), value :: c_afieldset
+
+  type(soca_increment), pointer :: self
+  type(soca_geom),  pointer :: geom
+  type(oops_variables) :: vars
+  type(datetime) :: fdate
+  type(atlas_fieldset) :: afieldset
+
+  call soca_increment_registry%get(c_key_self, self)
+  call soca_geom_registry%get(c_key_geom, geom)
+  vars = oops_variables(c_vars)
+  call c_f_datetime(c_dt, fdate)
+  afieldset = atlas_fieldset(c_afieldset)
+
+  call self%from_atlas(geom, vars, fdate, afieldset)
+
+  end subroutine soca_increment_from_atlas_c
 
   ! ------------------------------------------------------------------------------
 

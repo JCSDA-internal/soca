@@ -248,12 +248,24 @@ subroutine soca_state_convert(self, rhs)
 
   call rhs%get("hocn", hocn1)
   call self%get("hocn", hocn2)
+
   call convert_state%setup(rhs%geom, self%geom, hocn1, hocn2)
   do n = 1, size(rhs%fields)
     field1 => rhs%fields(n)
     call self%get(trim(field1%name),field2)
+
+    if (field1%name == "ssh" ) then
+      print *,"******* SSH !!!!!",rhs%fields(n)%mask
+
+      ! stop "done"
+    end if
+
     if (field1%io_file=="ocn" .or. field1%io_file=="sfc" .or. field1%io_file=="ice")  &
     call convert_state%change_resol(field1, field2, rhs%geom, self%geom)
+    print *,'------------- minmax x1',trim(field1%name),': ',minval(field1%val), maxval(field1%val)
+    print *,'------------- minmax x2',trim(field1%name),': ',minval(field2%val), maxval(field2%val)
+    print *,'------------- minmax h1: ',minval(hocn1%val), maxval(hocn1%val)
+    print *,'------------- minmax h2: ',minval(hocn2%val), maxval(hocn2%val)
   end do !n
   call convert_state%clean()
 end subroutine soca_state_convert

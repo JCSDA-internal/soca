@@ -1,10 +1,10 @@
-resolution:
+geometry:
   num_ice_cat: 5
   num_ice_lev: 4
   num_sno_lev: 1
   mom6_input_nml: ./inputnml/input.nml
 
-variables: &soca_vars [cicen, hicen, hsnon, socn, tocn, ssh, hocn]
+input variables: &soca_vars [cicen, hicen, hsnon, socn, tocn, ssh, hocn]
 
 background:
   read_from_file: 1
@@ -12,10 +12,11 @@ background:
   date: &date 2018-04-15T06:00:00Z
   ocn_filename: MOM.res.nc
   ice_filename: ice_model.res.nc
+  state variables: *soca_vars
 
 bump:
-  prefix: soca_bump_loc
   datadir: ./bump
+  prefix: soca_bump_loc
   method: loc
   strategy: common
   new_nicas: 1
@@ -30,3 +31,5 @@ bump:
   forced_radii: 1
   rh: 2500000.0
   rv: 500
+  grids:
+  - variables: [socn, tocn, cicen_01, cicen_02, cicen_03, cicen_04, cicen_05, hicen_01, hicen_02, hicen_03, hicen_04, hicen_05, ssh]

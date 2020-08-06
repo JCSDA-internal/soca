@@ -46,7 +46,6 @@ namespace soca {
   // -----------------------------------------------------------------------------
   void Balance::multiplyAD(const Increment & dxm, Increment & dxa) const {
     // dxa = K^T dxm
-    // dxa = dxm;
     soca_balance_multad_f90(keyFtnConfig_, dxm.toFortran(), dxa.toFortran());
   }
   // -----------------------------------------------------------------------------

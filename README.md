@@ -27,12 +27,12 @@ make -j 4
 3. If building the same way travis-ci builds the MOM6 SOCA bundle:
 ```
 export MAIN_REPO=soca
-export LIB_REPOS="fms cvmix geokdtree mom6_da_hooks gsw mom6 crtm fckit atlas oops saber ioda ufo ioda-converters soca-config"
+export LIB_REPOS="fms gsw mom6 crtm fckit atlas oops saber ioda ufo ioda-converters soca-config"
 export BUILD_OPT=""
-export BUILD_OPT_CRTM="-DBUILD_CRTM=ON"
-export BUILD_OPT_OOPS="-DENABLE_OOPS_TOYMODELS=OFF"
-export BUILD_OPT_UFO="-DLOCAL_PATH_TESTFILES_IODA=NONE"
-export BUILD_OPT_SOCA="-DSOCA_TESTS_FORC_DEFAULT_TOL=ON -DCRTM_FIX_DIR=../../repo.src/crtm/fix"
+export BUILD_OPT_crtm="-DBUILD_CRTM=ON"
+export BUILD_OPT_oops="-DENABLE_QG_MODEL=OFF -DENABLE_LORENZ95_MODEL=OFF"
+export BUILD_OPT_ufo="-DLOCAL_PATH_TESTFILES_IODA=NONE"
+export BUILD_OPT_soca="-DSOCA_TESTS_FORC_DEFAULT_TOL=ON -DCRTM_FIX_DIR=../../repo.src/crtm/fix"
 export MATCH_REPOS="atlas oops saber ioda ioda-converters ufo soca soca-config"
 export LFS_REPOS="crtm"
 export REPO_CACHE="/path/to/somewhere/repo.cache"

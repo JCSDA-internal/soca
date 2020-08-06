@@ -1,30 +1,30 @@
-resolution:
+geometry:
   num_ice_cat: 5
   num_ice_lev: 4
   num_sno_lev: 1
   mom6_input_nml: ./inputnml/input.nml
 
-initial:
+initial condition:
   read_from_file: 1
   basename: ./INPUT/
   date: &date 2018-04-15T00:00:00Z
   ocn_filename: MOM.res.nc
   ice_filename: ice_model.res.nc
+  state variables: &soca_vars [cicen, hicen, socn, tocn, ssh, hocn]
 
 _file: &_file
   read_from_file: 1
   date: *date
   basename: ./Data/
   remap_filename: ./INPUT/MOM.res.nc
+  state variables: *soca_vars
 
-variables: &soca_vars [cicen, hicen, socn, tocn, ssh, hocn]
-
-Covariance:
-  covariance: hybrid
-  static_weight: 0.5
-  ensemble_weight: 0.5
+background error:
+  covariance model: hybrid
+  static weight: 0.5
+  ensemble weight: 0.5
   static:
-   covariance: SocaError
+   covariance model: SocaError
    prefix: soca
    datadir: ./bump
    strategy: specific_univariate
@@ -32,57 +32,52 @@ Covariance:
    lsqrt: 1
    mpicom: 2
    date: *date
-   variables: &soca_vars [cicen, hicen, socn, tocn, ssh, hocn]
+   analysis variables: &soca_vars [cicen, hicen, socn, tocn, ssh, hocn]
 
-   variable_changes:
+   variable changes:
 
-   - varchange: BkgErrFILT
+   - variable change: BkgErrFILT
      ocean_depth_min: 1000 # [m]
      rescale_bkgerr: 1.0
      efold_z: 2500.0       # [m]
-     inputVariables:
-       variables: *soca_vars
-     outputVariables:
-       variables: *soca_vars
+     input variables: &invars [cicen, hicen, socn, tocn, ssh, hocn, mld, layer_depth]
+     output variables: &outvars [cicen, hicen, socn, tocn, ssh, hocn, mld, layer_depth]
 
-   - varchange: BkgErrGODAS
+   - variable change: BkgErrGODAS
      t_min: 0.1
      t_max: 2.0
      t_dz:  20.0
      t_efold: 500.0
      s_min: 0.0
      s_max: 0.25
-     ssh_min: 0.0# value at EQ
+     ssh_min: 0.0   # value at EQ
      ssh_max: 0.1   # value in Extratropics
      ssh_phi_ex: 20 # lat of transition from extratropics
      cicen_min: 0.1
      cicen_max: 0.5
      hicen_min: 10.0
      hicen_max: 100.0
-     inputVariables:
-       variables: *soca_vars
-     outputVariables:
-       variables: *soca_vars
+     input variables: *invars
+     output variables: *outvars
 
-   - varchange: VertConvSOCA
+   - variable change: VertConvSOCA
      Lz_min: 2.0
      Lz_mld: 1
      Lz_mld_max: 500.0
      scale_layer_thick: 1.5
-     inputVariables:
-       variables: *soca_vars
-     outputVariables:
-       variables: *soca_vars
+     input variables: *invars
+     output variables: *outvars
 
-   - varchange: BalanceSOCA
+   - variable change: BalanceSOCA
      dsdtmax: 0.1
      dsdzmin: 3.0e-6
      dtdzmin: 1.0e-6
      nlayers: 2
-     inputVariables:
-       variables: *soca_vars
-     outputVariables:
-       variables: *soca_vars
+     dcdt:
+       filename: ./Data/kmask.nc
+       name: dcdt
+     input variables: *invars
+     output variables: *outvars
 
   ensemble:
    date: *date
@@ -106,16 +101,18 @@ Covariance:
 
    localization:
     timeslots: ['2018-04-15T00:00:00Z']
-    variables: *soca_vars
-    localization: BUMP
+    localization variables:  [socn, tocn, ssh]
+    localization method: BUMP
     bump:
-     prefix: soca_bump_loc
      datadir: ./bump
+     prefix: soca_bump_loc
      method: loc
      strategy: common
      load_nicas: 1
      mpicom: 2
      verbosity: main
+     grids:
+     - variables: [socn, tocn, ssh]
 
 dirac:
   # NOTE ice (ifdir=4) was not being correctly tested, need to fix
@@ -124,13 +121,13 @@ dirac:
   izdir: [1,  5,  1,  1,  1,  1,  1,  1,  1]
   ifdir: [1,  1,  3,  2,  1,  1,  1,  5,  5]
 
-output_B:
+output B:
   datadir: Data
   date: *date
   exp: dirac_socahyb_cov
   type: an
 
-output_localization:
+output localization:
   datadir: Data
   date: *date
   exp: dirac_socahyb_loc

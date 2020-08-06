@@ -6,14 +6,13 @@
 
 module soca_geom_mod
 
+use atlas_module
 use MOM_domains, only : MOM_domain_type, MOM_infra_init
 use MOM_io,      only : io_infra_init
 use soca_mom6, only: soca_mom6_config, soca_mom6_init, soca_ice_column, &
                      soca_geomdomain_init
 use soca_utils, only: write2pe, soca_remap_idw
 use kinds, only: kind_real
-use fckit_kdtree_module, only: kdtree, kdtree_create, kdtree_destroy, &
-                               kdtree_k_nearest_neighbors
 use fckit_configuration_module, only: fckit_configuration
 use fckit_mpi_module, only: fckit_mpi_comm
 use fms_io_mod, only : fms_io_init, fms_io_exit, &
@@ -22,11 +21,10 @@ use fms_io_mod, only : fms_io_init, fms_io_exit, &
                        free_restart_type, save_restart
 use mpp_domains_mod, only : mpp_get_compute_domain, mpp_get_data_domain, &
                             mpp_get_global_domain, mpp_update_domains
-use fms_mod,         only : write_data, read_data
-use fms_io_mod,      only : fms_io_init, fms_io_exit 
-use fckit_geometry_module, only: sphere_distance
+use fms_mod,         only : write_data
+use fms_io_mod,      only : fms_io_init, fms_io_exit
 use MOM_diag_remap,  only : diag_remap_ctrl, diag_remap_init, diag_remap_configure_axes, &
-                            diag_remap_end, diag_remap_update 
+                            diag_remap_end, diag_remap_update
 use MOM_EOS,         only : EOS_type
 
 implicit none
@@ -46,7 +44,7 @@ type :: soca_geom
     integer :: iscl, iecl, jscl, jecl  !< indices of local compute domain
     integer :: isdl, iedl, jsdl, jedl  !< indices of local data domain
     real(kind=kind_real), allocatable, dimension(:)   :: lonh, lath
-    real(kind=kind_real), allocatable, dimension(:)   :: lonq, latq   
+    real(kind=kind_real), allocatable, dimension(:)   :: lonq, latq
     real(kind=kind_real), allocatable, dimension(:,:) :: lon, lat !< Tracer point grid
     real(kind=kind_real), allocatable, dimension(:,:) :: lonu, latu !< Zonal velocity grid
     real(kind=kind_real), allocatable, dimension(:,:) :: lonv, latv !< Meridional velocity grid
@@ -62,16 +60,20 @@ type :: soca_geom
     logical :: save_local_domain = .false. ! If true, save the local geometry for each pe.
     character(len=:), allocatable :: geom_grid_file
     type(fckit_mpi_comm) :: f_comm
+    type(atlas_functionspace) :: afunctionspace
+    type(atlas_fieldset) :: afieldset
 
     contains
     procedure :: init => geom_init
     procedure :: end => geom_end
+    procedure :: set_atlas_lonlat => geom_set_atlas_lonlat
+    procedure :: fill_atlas_fieldset => geom_fill_atlas_fieldset
     procedure :: clone => geom_clone
     procedure :: get_rossby_radius => geom_rossby_radius
     procedure :: gridgen => geom_gridgen
     procedure :: thickness2depth => geom_thickness2depth
-    procedure :: struct2unstruct => geom_struct2unstruct
-    procedure :: unstruct2struct => geom_unstruct2struct
+    procedure :: struct2atlas => geom_struct2atlas
+    procedure :: atlas2struct => geom_atlas2struct
     procedure :: write => geom_write
 end type soca_geom
 
@@ -149,7 +151,7 @@ subroutine geom_end(self)
   if (allocated(self%lonh))          deallocate(self%lonh)
   if (allocated(self%lath))          deallocate(self%lath)
   if (allocated(self%lonq))          deallocate(self%lonq)
-  if (allocated(self%latq))          deallocate(self%latq)          
+  if (allocated(self%latq))          deallocate(self%latq)
   if (allocated(self%lon))           deallocate(self%lon)
   if (allocated(self%lat))           deallocate(self%lat)
   if (allocated(self%lonu))          deallocate(self%lonu)
@@ -164,10 +166,68 @@ subroutine geom_end(self)
   if (allocated(self%cell_area))     deallocate(self%cell_area)
   if (allocated(self%rossby_radius)) deallocate(self%rossby_radius)
   if (allocated(self%h))             deallocate(self%h)
-  if (allocated(self%h_zstar))       deallocate(self%h_zstar) 
+  if (allocated(self%h_zstar))       deallocate(self%h_zstar)
   nullify(self%Domain)
+  call self%afunctionspace%final()
+  call self%afieldset%final()
 
 end subroutine geom_end
+
+! --------------------------------------------------------------------------------------------------
+!> Set ATLAS lonlat fieldset
+subroutine geom_set_atlas_lonlat(self, afieldset)
+  class(soca_geom),  intent(inout) :: self
+  type(atlas_fieldset), intent(inout) :: afieldset
+
+  real(kind_real), pointer :: real_ptr(:,:)
+  type(atlas_field) :: afield
+
+  ! Create lon/lat field
+  afield = atlas_field(name="lonlat", kind=atlas_real(kind_real), shape=(/2,(self%iec-self%isc+1)*(self%jec-self%jsc+1)/))
+  call afield%data(real_ptr)
+  real_ptr(1,:) = pack(self%lon(self%isc:self%iec,self%jsc:self%jec),.true.)
+  real_ptr(2,:) = pack(self%lat(self%isc:self%iec,self%jsc:self%jec),.true.)
+  call afieldset%add(afield)
+
+end subroutine geom_set_atlas_lonlat
+
+! --------------------------------------------------------------------------------------------------
+!> Fill ATLAS fieldset
+subroutine geom_fill_atlas_fieldset(self, afieldset)
+  class(soca_geom),  intent(inout) :: self
+  type(atlas_fieldset), intent(inout) :: afieldset
+
+  integer :: i, jz, n
+  integer, pointer :: int_ptr_2(:,:)
+  real(kind=kind_real), pointer :: real_ptr_1(:), real_ptr_2(:,:)
+  type(atlas_field) :: afield
+
+  ! Add area
+  afield = self%afunctionspace%create_field(name='area', kind=atlas_real(kind_real), levels=0)
+  call afield%data(real_ptr_1)
+  real_ptr_1 = pack(self%cell_area(self%isc:self%iec,self%jsc:self%jec),.true.)
+  call afieldset%add(afield)
+  call afield%final()
+
+  ! Add vertical unit
+  afield = self%afunctionspace%create_field(name='vunit', kind=atlas_real(kind_real), levels=self%nzo)
+  call afield%data(real_ptr_2)
+  do jz=1,self%nzo
+    real_ptr_2(jz,:) = real(jz, kind_real)
+  end do
+  call afieldset%add(afield)
+  call afield%final()
+
+  ! Add geographical mask
+  afield = self%afunctionspace%create_field(name='gmask', kind=atlas_integer(kind(0)), levels=self%nzo)
+  call afield%data(int_ptr_2)
+  do jz=1,self%nzo
+    int_ptr_2(jz,:) = int(pack(self%mask2d(self%isc:self%iec,self%jsc:self%jec),.true.))
+  end do
+  call afieldset%add(afield)
+  call afield%final()
+
+end subroutine geom_fill_atlas_fieldset
 
 ! ------------------------------------------------------------------------------
 !> Clone, self = other
@@ -196,7 +256,7 @@ subroutine geom_clone(self, other)
   other%lonh = self%lonh
   other%lath = self%lath
   other%lonq = self%lonq
-  other%latq = self%latq  
+  other%latq = self%latq
   other%lon = self%lon
   other%lat = self%lat
   other%lonu = self%lonu
@@ -219,7 +279,7 @@ end subroutine geom_clone
 subroutine geom_gridgen(self)
   class(soca_geom), intent(inout) :: self
 
-  ! allocate variables for regridding to zstar coord       
+  ! allocate variables for regridding to zstar coord
   type(soca_mom6_config) :: mom6_config
   type(diag_remap_ctrl) :: remap_ctrl
   type(EOS_type), pointer :: eqn_of_state
@@ -231,7 +291,7 @@ subroutine geom_gridgen(self)
   self%lonh = mom6_config%grid%gridlont
   self%lath = mom6_config%grid%gridlatt
   self%lonq = mom6_config%grid%gridlonb
-  self%latq = mom6_config%grid%gridlatb  
+  self%latq = mom6_config%grid%gridlatb
   self%lon = mom6_config%grid%GeoLonT
   self%lat = mom6_config%grid%GeoLatT
   self%lonu = mom6_config%grid%geoLonCu
@@ -259,7 +319,7 @@ subroutine geom_gridgen(self)
   self%nzo_zstar = remap_ctrl%nz
   if (allocated(self%h_zstar)) deallocate(self%h_zstar)
   allocate(self%h_zstar(self%isd:self%ied, self%jsd:self%jed, 1:remap_ctrl%nz))
-  self%h_zstar = remap_ctrl%h 
+  self%h_zstar = remap_ctrl%h
   call diag_remap_end(remap_ctrl)
 
   ! Get Rossby Radius
@@ -291,7 +351,7 @@ subroutine geom_allocate(self)
   allocate(self%lonh(self%isg:self%ieg));        self%lonh = 0.0_kind_real
   allocate(self%lath(self%jsg:self%jeg));        self%lath = 0.0_kind_real
   allocate(self%lonq(self%isg:self%ieg));        self%lonq = 0.0_kind_real
-  allocate(self%latq(self%jsg:self%jeg));        self%latq = 0.0_kind_real  
+  allocate(self%latq(self%jsg:self%jeg));        self%latq = 0.0_kind_real
   allocate(self%lon(isd:ied,jsd:jed));           self%lon = 0.0_kind_real
   allocate(self%lat(isd:ied,jsd:jed));           self%lat = 0.0_kind_real
   allocate(self%lonu(isd:ied,jsd:jed));          self%lonu = 0.0_kind_real
@@ -384,7 +444,7 @@ subroutine geom_write(self)
                                    &self%geom_grid_file, &
                                    &'latq', &
                                    &self%latq(:), &
-                                   domain=self%Domain%mpp_domain)  
+                                   domain=self%Domain%mpp_domain)
   idr_geom = register_restart_field(geom_restart, &
                                    &self%geom_grid_file, &
                                    &'lon', &
@@ -454,7 +514,7 @@ subroutine geom_write(self)
                                    &self%geom_grid_file, &
                                    &'h', &
                                    &self%h(:,:,:), &
-                                   domain=self%Domain%mpp_domain)          
+                                   domain=self%Domain%mpp_domain)
   idr_geom = register_restart_field(geom_restart, &
                                    &self%geom_grid_file, &
                                    &'nzo_zstar', &
@@ -512,7 +572,7 @@ subroutine geom_read(self)
                                    &self%geom_grid_file, &
                                    &'latq', &
                                    &self%latq(:), &
-                                   domain=self%Domain%mpp_domain)  
+                                   domain=self%Domain%mpp_domain)
   idr_geom = register_restart_field(geom_restart, &
                                    &self%geom_grid_file, &
                                    &'lon', &
@@ -599,7 +659,7 @@ subroutine geom_get_domain_indices(self, domain_type, is, ie, js, je, local)
 
   integer :: isc, iec, jsc, jec
   integer :: isd, ied, jsd, jed
-  integer :: isg, ieg, jsg, jeg 
+  integer :: isg, ieg, jsg, jeg
 
   call mpp_get_compute_domain(self%Domain%mpp_domain,isc,iec,jsc,jec)
   call mpp_get_data_domain(self%Domain%mpp_domain,isd,ied,jsd,jed)
@@ -651,35 +711,42 @@ subroutine geom_thickness2depth(self, h, z)
 end subroutine geom_thickness2depth
 
 ! ------------------------------------------------------------------------------
+!> Copy a structured field into an ATLAS fieldset
+subroutine geom_struct2atlas(self, dx_struct, dx_atlas)
+  class(soca_geom),     intent(in ) :: self
+  real(kind=kind_real), intent(in ) :: dx_struct(:,:)
+  type(atlas_fieldset), intent(out) :: dx_atlas
 
-subroutine geom_struct2unstruct(self, dx_struct, dx_unstruct)
-  class(soca_geom),                  intent(in ) :: self
-  real(kind=kind_real),              intent(in ) :: dx_struct(:,:)
-  real(kind=kind_real), allocatable, intent(out) :: dx_unstruct(:,:,:,:)
+  real(kind_real), pointer :: real_ptr(:)
+  type(atlas_field) :: afield
 
-  integer :: nc0a
+  dx_atlas = atlas_fieldset()
+  afield = self%afunctionspace%create_field('var_00',kind=atlas_real(kind_real),levels=0)
+  call dx_atlas%add(afield)
+  call afield%data(real_ptr)
+  real_ptr = pack(dx_struct(self%iscl:self%iecl, self%jscl:self%jecl),.true.)
+  call afield%final()
 
-  nc0a = (self%iecl - self%iscl + 1) * (self%jecl - self%jscl + 1 )
-  allocate(dx_unstruct(nc0a,1,1,1))
-  dx_unstruct = &
-  &  reshape(dx_struct(self%iscl:self%iecl, self%jscl:self%jecl), (/nc0a,1,1,1/))
-
-end subroutine geom_struct2unstruct
+end subroutine geom_struct2atlas
 
 ! ------------------------------------------------------------------------------
+!> Copy a structured field from an ATLAS fieldset
+subroutine geom_atlas2struct(self, dx_struct, dx_atlas)
+  class(soca_geom),     intent(in   ) :: self
+  real(kind=kind_real), intent(inout) :: dx_struct(:,:)
+  type(atlas_fieldset), intent(inout) :: dx_atlas
 
-subroutine geom_unstruct2struct(self, dx_struct, dx_unstruct)
-  class(soca_geom),                  intent(in   ) :: self
-  real(kind=kind_real),              intent(inout) :: dx_struct(:,:)
-  real(kind=kind_real), allocatable, intent(inout) :: dx_unstruct(:,:,:,:)
+  real(kind_real), pointer :: real_ptr(:)
+  logical :: umask(self%iscl:self%iecl,self%jscl:self%jecl)
+  type(atlas_field) :: afield
 
-  dx_struct(self%iscl:self%iecl, self%jscl:self%jecl) = &
-  & reshape(dx_unstruct, (/size(dx_struct(self%iscl:self%iecl, self%jscl:self%jecl),1), &
-  &                        size(dx_struct(self%iscl:self%iecl, self%jscl:self%jecl),2)/))
+  umask = .true.
+  afield = dx_atlas%field('var_00')
+  call afield%data(real_ptr)
+  dx_struct(self%iscl:self%iecl, self%jscl:self%jecl) = unpack(real_ptr,umask,dx_struct(self%iscl:self%iecl, self%jscl:self%jecl))
+  call afield%final()
 
-  deallocate(dx_unstruct)
-
-end subroutine geom_unstruct2struct
+end subroutine geom_atlas2struct
 
 ! ------------------------------------------------------------------------------
 

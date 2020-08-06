@@ -8,6 +8,8 @@
 #include <iomanip>
 #include <vector>
 
+#include "atlas/field.h"
+
 #include "soca/Geometry/Geometry.h"
 #include "soca/GeometryIterator/GeometryIterator.h"
 #include "soca/Increment/Increment.h"
@@ -46,6 +48,7 @@ namespace soca {
     : time_(other.time_), vars_(other.vars_), geom_(new Geometry(geom))
   {
     soca_increment_create_f90(keyFlds_, geom_->toFortran(), vars_);
+    //soca_increment_zero_f90(toFortran());
     soca_increment_change_resol_f90(toFortran(), other.keyFlds_);
     Log::trace() << "Increment constructed from other." << std::endl;
   }
@@ -83,8 +86,11 @@ namespace soca {
     Log::debug() << "Increment:diff incr " << *this << std::endl;
     Log::debug() << "Increment:diff x1 " << x1 << std::endl;
     Log::debug() << "Increment:diff x2 " << x2 << std::endl;
-    soca_increment_diff_incr_f90(toFortran(), x1.toFortran(),
-                             x2.toFortran());
+    State x1_lr(*geom_, x1);
+    State x2_lr(*geom_, x2);
+    soca_increment_diff_incr_f90(toFortran(), x1_lr.toFortran(),
+                                              x2_lr.toFortran());
+    Log::debug() << "Increment:diff incr " << *this << std::endl;
   }
   // -----------------------------------------------------------------------------
   Increment & Increment::operator=(const Increment & rhs) {
@@ -184,22 +190,25 @@ namespace soca {
     soca_increment_setpoint_f90(toFortran(), iter.toFortran(), vals[0],
                             vals.size());
   }
-
   // -----------------------------------------------------------------------------
-  /// Unstructured grid
+  /// ATLAS
   // -----------------------------------------------------------------------------
-  void Increment::ug_coord(oops::UnstructuredGrid & ug) const {
-    soca_increment_ug_coord_f90(toFortran(), ug.toFortran());
+  void Increment::setAtlas(atlas::FieldSet * afieldset) const {
+    const util::DateTime * dtp = &time_;
+    soca_increment_set_atlas_f90(toFortran(), geom_->toFortran(), vars_, &dtp,
+                                 afieldset->get());
   }
   // -----------------------------------------------------------------------------
-  void Increment::field_to_ug(oops::UnstructuredGrid & ug,
-                              const int & its) const {
-    soca_increment_field_to_ug_f90(toFortran(), ug.toFortran(), its);
+  void Increment::toAtlas(atlas::FieldSet * afieldset) const {
+    const util::DateTime * dtp = &time_;
+    soca_increment_to_atlas_f90(toFortran(), geom_->toFortran(), vars_, &dtp,
+                                afieldset->get());
   }
   // -----------------------------------------------------------------------------
-  void Increment::field_from_ug(const oops::UnstructuredGrid & ug,
-                                const int & its) {
-    soca_increment_field_from_ug_f90(toFortran(), ug.toFortran(), its);
+  void Increment::fromAtlas(atlas::FieldSet * afieldset) {
+    const util::DateTime * dtp = &time_;
+    soca_increment_from_atlas_f90(toFortran(), geom_->toFortran(), vars_, &dtp,
+                                  afieldset->get());
   }
   // -----------------------------------------------------------------------------
   /// I/O and diagnostics

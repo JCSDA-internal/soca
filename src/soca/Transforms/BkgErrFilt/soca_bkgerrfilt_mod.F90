@@ -43,6 +43,8 @@ subroutine soca_bkgerrfilt_setup(f_conf, self, bkg)
   real(kind=kind_real) :: efold
   character(len=800) :: fname = 'soca_bkgerrfilt.nc'
   type(soca_field), pointer :: tocn, socn, ssh, hocn, layer_depth
+  print *,"-------------------- BkgErrFILT:"
+  print *,"-------------------------------------:"
 
   ! Allocate memory for bkgerrfiltor and set to zero
   call self%filt%copy(bkg)
@@ -61,7 +63,9 @@ subroutine soca_bkgerrfilt_setup(f_conf, self, bkg)
   call self%filt%get("ssh", ssh)
   call bkg%get("hocn", hocn)
   call bkg%get("layer_depth", layer_depth)
-
+print *,"-------------------- BkgErrFILT:"
+print *,"-------------------------------------:"
+print *,"-------------------- bkg:",size(tocn%val,1),size(tocn%val,2),size(tocn%val,3)
   ! Setup rescaling and masks
   isc=bkg%geom%isc ; self%isc=isc ; iec=bkg%geom%iec ; self%iec=iec
   jsc=bkg%geom%jsc ; self%jsc=jsc ; jec=bkg%geom%jec ; self%jec=jec
@@ -113,11 +117,12 @@ subroutine soca_bkgerrfilt_mult(self, dxa, dxm)
 
   integer :: i, j, n
   type(soca_field), pointer :: field_f, field_a, field_m
-
+print *,'************************************1'
   ! make sure fields are the right shape
   call dxa%check_congruent(dxm)
   call dxa%check_subset(self%filt)
-
+  print *,"************ MASK:",associated(self%bkg%geom)
+!print *,'***** mask:',size(self%bkg%geom%mask2d,1),size(self%bkg%geom%mask2d,2)
   ! multiply
   do n=1,size(dxa%fields)
     field_a => dxa%fields(n)
@@ -125,11 +130,12 @@ subroutine soca_bkgerrfilt_mult(self, dxa, dxm)
     call dxm%get(field_a%name, field_m)
     do i = self%isc, self%iec
       do j = self%jsc, self%jec
-        if (self%bkg%geom%mask2d(i,j).eq.1) then
-          field_m%val(i,j,:) = field_f%val(i,j,:) * field_a%val(i,j,:)
-        else
+        print *,i,j
+        !if (self%bkg%geom%mask2d(i,j).eq.1) then
+        !  field_m%val(i,j,:) = field_f%val(i,j,:) * field_a%val(i,j,:)
+        !else
           field_m%val(i,j,:) = 0.0_kind_real
-        end if
+        !end if
       end do
     end do
   end do
@@ -138,5 +144,3 @@ end subroutine soca_bkgerrfilt_mult
 ! ------------------------------------------------------------------------------
 
 end module soca_bkgerrfilt_mod
-
-

@@ -54,9 +54,14 @@ link_libraries( ${ECKIT_LIBRARIES} )
 ecbuild_use_package( PROJECT fckit VERSION 0.4.1 REQUIRED )
 include_directories( ${FCKIT_INCLUDE_DIRS} )
 
+# atlas
+ecbuild_use_package( PROJECT atlas VERSION 0.18.1 REQUIRED )
+include_directories( ${ATLAS_INCLUDE_DIRS} )
+
 # oops
 ecbuild_use_package( PROJECT oops VERSION 0.1.0 REQUIRED )
 include_directories( ${OOPS_INCLUDE_DIRS} )
+add_definitions(-DATLASIFIED=1)
 
 # saber
 ecbuild_use_package( PROJECT saber VERSION 0.0.1 REQUIRED )
@@ -93,7 +98,7 @@ ecbuild_use_package( PROJECT crtm VERSION 2.2.3 )
 ################################################################################
 # Export package info
 ################################################################################
-list( APPEND SOCA_TPLS LAPACK MPI NetCDF )
+list( APPEND SOCA_TPLS atlas atlas_f LAPACK MPI NetCDF )
 
 set( SOCA_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src
                        ${CMAKE_CURRENT_BINARY_DIR}/src
@@ -117,7 +122,6 @@ include_directories( ${SOCA_INCLUDE_DIRS} ${SOCA_EXTRA_INCLUDE_DIRS} )
 
 add_subdirectory( src )
 add_subdirectory( test )
-add_subdirectory( scripts )
 
 # Build Doxygen documentation
 add_subdirectory( Documents )

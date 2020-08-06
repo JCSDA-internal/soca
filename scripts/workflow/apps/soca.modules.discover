@@ -1,3 +1,0 @@
-export OPT=/discover/swdev/jcsda/modules
-module use $OPT/modulefiles
-module load apps/jedi/gnu-impi

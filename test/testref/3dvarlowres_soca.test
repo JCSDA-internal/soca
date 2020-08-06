@@ -1,0 +1,25 @@
+Test     : CostJb   : Nonlinear Jb = 0
+Test     : CostJo   : Nonlinear Jo(SeaSurfaceTemp) = 768.422, nobs = 147, Jo/n = 5.22736, err = 0.361776
+Test     : CostJo   : Nonlinear Jo(SeaSurfaceSalinity) = 49.0095, nobs = 51, Jo/n = 0.96097, err = 1
+Test     : CostJo   : Nonlinear Jo(ADT) = 159.451, nobs = 92, Jo/n = 1.73316, err = 0.1
+Test     : CostJo   : Nonlinear Jo(InsituTemperature) = 343.523, nobs = 206, Jo/n = 1.66759, err = 0.897281
+Test     : CostJo   : Nonlinear Jo(InsituSalinity) = 350.504, nobs = 218, Jo/n = 1.60782, err = 0.608197
+Test     : CostJo   : Nonlinear Jo(SeaIceFraction) = 679.22, nobs = 89, Jo/n = 7.63169, err = 0.1
+Test     : CostFunction: Nonlinear J = 2350.13
+Test     : RPCGMinimizer: reduction in residual norm = 0.240419
+Test     : CostFunction::addIncrement: Analysis: 
+Test     :   Valid time: 2018-04-15T00:00:00Z
+Test     :   cicen   min=    0.000000   max=    1.000000   mean=    0.025853
+Test     :   hicen   min=    0.000000   max=    2.265451   mean=    0.094250
+Test     :    socn   min=   10.721046   max=   40.441659   mean=   34.544390
+Test     :    tocn   min=   -1.888390   max=   31.700465   mean=    6.017565
+Test     :     ssh   min=  -98.512608   max=   75.766020   mean=    1.301888
+Test     :    hocn   min=    0.002000   max= 2691.280000   mean=  257.256128
+Test     : CostJb   : Nonlinear Jb = 414379224.452166
+Test     : CostJo   : Nonlinear Jo(SeaSurfaceTemp) = 691.239723, nobs = 132, Jo/n = 5.236665, err = 0.365221
+Test     : CostJo   : Nonlinear Jo(SeaSurfaceSalinity) = 49.009467, nobs = 51, Jo/n = 0.960970, err = 1.000000
+Test     : CostJo   : Nonlinear Jo(ADT) = 2331651.943248, nobs = 92, Jo/n = 25344.042861, err = 0.100000
+Test     : CostJo   : Nonlinear Jo(InsituTemperature) = 282.761671, nobs = 124, Jo/n = 2.280336, err = 0.948070
+Test     : CostJo   : Nonlinear Jo(InsituSalinity) = 552.766474, nobs = 218, Jo/n = 2.535626, err = 0.608197
+Test     : CostJo   : Nonlinear Jo(SeaIceFraction) = 397.722876, nobs = 89, Jo/n = 4.468796, err = 0.100000
+Test     : CostFunction: Nonlinear J = 416712849.895624
