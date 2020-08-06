@@ -28,7 +28,10 @@ namespace soca {
   static oops::ModelMaker<Traits, Model> makermodel_("SOCA");
   // -----------------------------------------------------------------------------
   Model::Model(const Geometry & resol, const eckit::Configuration & model)
-    : keyConfig_(0), tstep_(0), geom_(new Geometry(resol)), vars_(model),
+    : keyConfig_(0),
+      tstep_(0),
+      geom_(new Geometry(resol)),
+      vars_(model, "model variables"),
       setup_mom6_(true)
   {
     Log::trace() << "Model::Model" << std::endl;

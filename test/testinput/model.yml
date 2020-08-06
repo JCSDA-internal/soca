@@ -1,32 +1,31 @@
-Geometry:
+geometry:
   num_ice_cat: 5
   num_ice_lev: 4
   num_sno_lev: 1
   mom6_input_nml: ./inputnml/input.nml
 
-ModelBias:
+model aux control:
 
-ModelTest:
-  fclength: PT6H
-  finalnorm: 9898.26819282811993617
+model test:
+  forecast length: PT6H
+  final norm: 9898.26819282811993617
   tolerance: 1e-12
-  testreforecast: false
+  test reforecast: false
 
-Model:
+model:
   name: SOCA
   tstep: PT1H
   advance_mom6: 1
-  variables: &soca_vars [cicen, hicen, socn, tocn, ssh, hocn, sw, lhf, shf, lw, us]
-State:
+  model variables: &soca_vars [cicen, hicen, socn, tocn, ssh, hocn, sw, lhf, shf, lw, us]
+
+initial condition:
   read_from_file: 1
   date: &date 2018-04-15T00:00:00Z
   basename: "./INPUT/"
   ocn_filename: MOM.res.nc
   ice_filename: ice_model.res.nc
   sfc_filename: sfc.res.nc
-  variables: *soca_vars
-
-forecast_length: PT3H
+  state variables: *soca_vars
 
 output:
   frequency: PT3H

@@ -1,4 +1,4 @@
-resolution:
+geometry:
   num_ice_cat: 5
   num_ice_lev: 4
   num_sno_lev: 1
@@ -7,7 +7,7 @@ resolution:
 model:
   name: PseudoModel
   tstep: PT1H
-  variables: [socn, tocn, ssh, hocn, uocn, vocn]
+  state variables: [socn, tocn, ssh, hocn, uocn, vocn]
   states:
   - date: 2018-04-15T01:00:00Z
     basename: ./Data/
@@ -34,13 +34,14 @@ model:
     ocn_filename: ocn.mom6.fc.2018-04-15T00:00:00Z.PT6H.nc
     read_from_file: 1
 
-initial:
+initial condition:
   read_from_file: 1
   date: &date 2018-04-15T00:00:00Z
   basename: ./INPUT/
   ocn_filename: MOM.res.nc
+  state variables: [socn, tocn, ssh, hocn, uocn, vocn]
 
-forecast_length: PT6H
+forecast length: PT6H
 
 output:
   frequency: PT6H

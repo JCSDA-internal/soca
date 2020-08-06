@@ -51,8 +51,7 @@ namespace soca {
       /// Constructor, destructor
       State(const Geometry &, const oops::Variables &,
             const util::DateTime &);
-      State(const Geometry &, const oops::Variables &,
-            const eckit::Configuration &);
+      State(const Geometry &, const eckit::Configuration &);
       State(const Geometry &, const State &);
       State(const State &);
       virtual ~State();
@@ -78,6 +77,7 @@ namespace soca {
       int & toFortran() {return keyFlds_;}
       const int & toFortran() const {return keyFlds_;}
       boost::shared_ptr<const Geometry> geometry() const;
+      const oops::Variables & variables() const {return vars_;}
 
       /// Other
       void zero();
