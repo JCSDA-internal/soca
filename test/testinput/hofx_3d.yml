@@ -74,9 +74,9 @@ observations:
       name: SeaIceFraction
 
   - obs space:
-      name: SeaIceFraction
+      name: Chlorophyll
       obsdataout: {obsfile: ./Data/chl.out.nc}
       obsdatain:  {obsfile:  ./Data/chl.nc}
       simulated variables: [mass_concentration_of_chlorophyll_in_sea_water]
     obs operator:
-      name: ChlEuzIntegr
+      name: Chlorophyll Ocean Color

@@ -34,5 +34,5 @@ Test     : ADT nobs= 100 Min=-1.250816, Max=1.421506, RMS=0.757217
 Test     : InsituTemperature nobs= 218 Min=7.832734, Max=30.431111, RMS=21.295562
 Test     : InsituSalinity nobs= 218 Min=34.160244, Max=35.992907, RMS=35.044654
 Test     : SeaIceFraction nobs= 100 Min=0.000000, Max=1.000000, RMS=0.694504
-Test     : Chlorophyll nobs= 137 Min=0.001246, Max=1.287378, RMS=0.221149
+Test     : Chlorophyll nobs= 137 Min=0.001273, Max=2.410599, RMS=0.357860
 Test     : End H(x)
