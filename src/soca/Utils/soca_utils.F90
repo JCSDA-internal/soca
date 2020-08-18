@@ -187,6 +187,7 @@ subroutine soca_remap_idw(lon_src, lat_src, data_src, lon_dst, lat_dst, data_dst
   n_src = size(lon_src)
   ageometry = atlas_geometry("UnitSphere")
   kd = atlas_indexkdtree(ageometry)
+  call kd%reserve(n_src)
   call kd%build(n_src, lon_src, lat_src)
 
   ! remap
