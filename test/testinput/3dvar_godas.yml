@@ -188,7 +188,7 @@ cost function:
 
 variational:
   minimizer:
-    algorithm: DRIPCG #RPCG
+    algorithm: RPCG
   iterations:
   - geometry:
       num_ice_cat: 5

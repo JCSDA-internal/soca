@@ -30,6 +30,7 @@ module soca_convert_state_mod
    contains
      procedure :: setup => soca_convertstate_setup
      procedure :: change_resol => soca_convertstate_change_resol
+     procedure :: change_resol2d => soca_convertstate_change_resol2d
      procedure :: clean => soca_convertstate_delete
   end type soca_convertstate_type
 
@@ -85,6 +86,58 @@ end subroutine soca_convertstate_setup
     deallocate(self%hocn_des)
 
   end subroutine soca_convertstate_delete
+
+! ------------------------------------------------------------------------------
+subroutine soca_convertstate_change_resol2d(self, field_src, field_des, geom_src, geom_des)
+  class(soca_convertstate_type),  intent(inout) :: self
+  type(soca_field), pointer,      intent(inout) :: field_src, field_des
+  type(soca_geom),                intent(inout) :: geom_src, geom_des
+
+  !local
+  integer :: i, j, k, tmp_nz, nz_
+  integer :: isc1, iec1, jsc1, jec1, isd1, ied1, jsd1, jed1, isg, ieg, jsg, jeg
+  integer :: isc2, iec2, jsc2, jec2, isd2, ied2, jsd2, jed2
+  type(remapping_CS)  :: remapCS2
+  type(horiz_interp_type) :: Interp
+  real(kind=kind_real) :: missing = 0.d0
+  real(kind=kind_real) :: z_tot
+  real(kind=kind_real), dimension(geom_src%isg:geom_src%ieg) :: lon_in
+  real(kind=kind_real), dimension(geom_src%jsg:geom_src%jeg) :: lat_in
+  real(kind=kind_real), dimension(geom_des%isd:geom_des%ied,geom_des%jsd:geom_des%jed) :: lon_out, lat_out
+  real(kind=kind_real), dimension(geom_des%isd:geom_des%ied,geom_des%jsd:geom_des%jed) :: mask_
+  real(kind=kind_real), allocatable :: tmp(:,:,:), tmp2(:,:,:), gdata(:,:,:)
+
+  ! Indices for compute, data, and global domain for source
+  isc1 = geom_src%isc ; iec1 = geom_src%iec ; jsc1 = geom_src%jsc ; jec1 = geom_src%jec
+  isd1 = geom_src%isd ; ied1 = geom_src%ied ; jsd1 = geom_src%jsd ; jed1 = geom_src%jed
+  isg = geom_src%isg ; ieg = geom_src%ieg ; jsg = geom_src%jsg ; jeg = geom_src%jeg
+
+  ! Indices for compute and data domain for des
+  isc2 = geom_des%isc ; iec2 = geom_des%iec ; jsc2 = geom_des%jsc ; jec2 = geom_des%jec
+  isd2 = geom_des%isd ; ied2 = geom_des%ied ; jsd2 = geom_des%jsd ; jed2 = geom_des%jed
+
+  lon_in = geom_src%lonh ; lat_in = geom_src%lath
+  if (field_src%name == "uocn" .and. field_des%name == "uocn") lon_in = geom_src%lonq
+  if (field_src%name == "vocn" .and. field_des%name == "vocn") lat_in = geom_src%latq
+
+  ! Initialize work arrays
+  nz_ = field_src%nz
+  allocate(tmp(isd1:ied1,jsd1:jed1,1:nz_),gdata(isg:ieg,jsg:jeg,1:nz_),tmp2(isd2:ied2,jsd2:jed2,1:nz_))
+  tmp = 0.d0 ; gdata = 0.d0 ; tmp2 = 0.d0;
+  tmp(:,:,1:nz_) = field_src%val(:,:,1:nz_)
+
+  ! Reconstruct global input field
+  call mpp_update_domains(tmp, geom_src%Domain%mpp_domain)
+  mask_ = field_des%mask
+  call mpp_global_field (geom_src%Domain%mpp_domain, tmp(:,:,1:nz_), gdata(:,:,1:nz_) )
+
+  ! Interpolate to destination geometry
+  call soca_hinterp(geom_des,field_des%val,gdata,mask_(:,:),nz_,missing,lon_in,lat_in,field_des%lon,field_des%lat)
+
+  ! Update halos
+  call mpp_update_domains(field_des%val, geom_des%Domain%mpp_domain)
+
+end subroutine soca_convertstate_change_resol2d
 
 ! ------------------------------------------------------------------------------
 subroutine soca_convertstate_change_resol(self, field_src, field_des, geom_src, geom_des)
@@ -183,15 +236,7 @@ subroutine soca_convertstate_change_resol(self, field_src, field_des, geom_src, 
     if (field_src%io_file=="sfc") tmp(:,:,1) = field_src%val(:,:,1) !2D no mask
     if (field_src%io_file=="ice") tmp(:,:,1:nz_) = field_src%val(:,:,1:nz_)
   end if ! field_src%nz > 1
-
-  ! if (field_des%name == "ssh" ) print *,"---- 0 in convert: ",maxval(field_src%val(:,:,1)),maxval(tmp(:,:,1:nz_)),maxval(gdata(:,:,1:nz_))
-  ! if (field_des%name == "ssh" ) print *,"---- 0 in convert fld: ",maxval(field_src%val),maxval(field_des%val),field_src%io_file
-
   call mpp_update_domains(tmp, geom_src%Domain%mpp_domain)
-
-  ! if (field_des%name == "ssh" ) print *,"---- 1 in convert: ",maxval(tmp(:,:,1:nz_)),maxval(gdata(:,:,1:nz_))
-  ! if (field_des%name == "ssh" ) print *,"---- 1 in convert fld: ",maxval(field_src%val),maxval(field_des%val),field_src%io_file
-
 
   ! Convert src field to target field at zstar coord
   call mpp_global_field (geom_src%Domain%mpp_domain, tmp(:,:,1:nz_), gdata(:,:,1:nz_) )
@@ -238,6 +283,7 @@ subroutine soca_convertstate_change_resol(self, field_src, field_des, geom_src, 
   call mpp_update_domains(field_des%val, geom_des%Domain%mpp_domain)
 
 end subroutine soca_convertstate_change_resol
+
 
 ! ------------------------------------------------------------------------------
 subroutine soca_hinterp(self,field2,gdata,mask2,nz,missing,lon_in,lat_in,lon_out,lat_out)

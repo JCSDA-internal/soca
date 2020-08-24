@@ -187,6 +187,7 @@ subroutine soca_getvalues_fillgeovals(self, geom, fld, t1, t2, locs, geovals)
         fld3d_un = reshape(fld3d(isc:iec,jsc:jec,ival), (/ns/))
         call self%horiz_interp%apply(fld3d_un(1:ns), gom_window)
       end if
+
       ! Fill proper geoval according to time window
       do indx = 1, locs%nlocs
         if (time_mask(indx)) then

@@ -15,8 +15,8 @@
 #include "soca/Transforms/BkgErr/BkgErrFortran.h"
 
 #include "eckit/config/Configuration.h"
+#include "eckit/config/LocalConfiguration.h"
 
-#include "oops/base/Variables.h"
 #include "oops/util/Logger.h"
 
 using oops::Log;
@@ -26,9 +26,16 @@ namespace soca {
   BkgErr::BkgErr(const State & bkg,
                  const State & traj,
                  const Geometry & geom,
-                 const eckit::Configuration & conf): traj_(traj) {
+                 const eckit::Configuration & conf) :
+      bkgerr_variance_(initBkgErr(geom, conf)) {
+    oops::Log::trace() << "soca::BkgErr::setup " << std::endl;
     const eckit::Configuration * configc = &conf;
-    soca_bkgerr_setup_f90(keyFtnConfig_, &configc, traj_.toFortran());
+
+    // Setup diagonal standard deviation of the background error
+    soca_bkgerr_setup_f90(keyFtnConfig_,
+                          &configc,
+                          bkgerr_variance_.toFortran(),
+                          geom.toFortran());
   }
   // -----------------------------------------------------------------------------
   BkgErr::~BkgErr() {
@@ -36,7 +43,7 @@ namespace soca {
   }
   // -----------------------------------------------------------------------------
   void BkgErr::multiply(const Increment & dxa, Increment & dxm) const {
-    // dxm = K dxa
+    // dxm = D dxa
     soca_bkgerr_mult_f90(keyFtnConfig_, dxa.toFortran(), dxm.toFortran());
   }
   // -----------------------------------------------------------------------------
@@ -45,7 +52,7 @@ namespace soca {
   }
   // -----------------------------------------------------------------------------
   void BkgErr::multiplyAD(const Increment & dxm, Increment & dxa) const {
-    // dxa = K^T dxm
+    // dxa = D dxm
     soca_bkgerr_mult_f90(keyFtnConfig_, dxm.toFortran(), dxa.toFortran());
   }
   // -----------------------------------------------------------------------------

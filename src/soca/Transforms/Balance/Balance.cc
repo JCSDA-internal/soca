@@ -25,38 +25,50 @@ namespace soca {
   Balance::Balance(const State & bkg,
                    const State & traj,
                    const Geometry & geom,
-                   const eckit::Configuration & conf): traj_(traj) {
+                   const eckit::Configuration & conf) :
+          traj_lr_(geom, traj), geom_(geom) {
+    oops::Log::trace() << "soca::Balance::setup " << std::endl;
     const eckit::Configuration * configc = &conf;
-    soca_balance_setup_f90(keyFtnConfig_, &configc, traj_.toFortran());
+
+    // Compute Jacobians of the balance wrt traj
+    soca_balance_setup_f90(keyFtnConfig_,
+                           &configc,
+                           traj_lr_.toFortran(),
+                           geom_.toFortran());
   }
   // -----------------------------------------------------------------------------
   Balance::~Balance() {
+    oops::Log::trace() << "soca::Balance::delete " << std::endl;
     soca_balance_delete_f90(keyFtnConfig_);
   }
   // -----------------------------------------------------------------------------
   void Balance::multiply(const Increment & dxa, Increment & dxm) const {
     // dxm = K dxa
+    oops::Log::trace() << "soca::Balance::multiply " << std::endl;
     soca_balance_mult_f90(keyFtnConfig_, dxa.toFortran(), dxm.toFortran());
   }
   // -----------------------------------------------------------------------------
   void Balance::multiplyInverse(const Increment & dxm, Increment & dxa) const {
     // dxa = K^-1 dxm
+    oops::Log::trace() << "soca::Balance::multiplyInverse " << std::endl;
     soca_balance_multinv_f90(keyFtnConfig_, dxm.toFortran(), dxa.toFortran());
   }
   // -----------------------------------------------------------------------------
   void Balance::multiplyAD(const Increment & dxm, Increment & dxa) const {
     // dxa = K^T dxm
+    oops::Log::trace() << "soca::Balance::multiplyAD " << std::endl;
     soca_balance_multad_f90(keyFtnConfig_, dxm.toFortran(), dxa.toFortran());
   }
   // -----------------------------------------------------------------------------
   void Balance::multiplyInverseAD(const Increment & dxa,
                                   Increment & dxm) const {
     // dxm = (K^-1)^T dxa
+    oops::Log::trace() << "soca::Balance::multiplyInverseAD " << std::endl;
     soca_balance_multinvad_f90(keyFtnConfig_, dxa.toFortran(), dxm.toFortran());
   }
   // -----------------------------------------------------------------------------
   void Balance::print(std::ostream & os) const {
-    os << "SOCA change variable";
+    os << "SOCA change variable: Balance";
   }
   // -----------------------------------------------------------------------------
 }  // namespace soca

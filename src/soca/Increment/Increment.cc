@@ -48,8 +48,9 @@ namespace soca {
     : time_(other.time_), vars_(other.vars_), geom_(new Geometry(geom))
   {
     soca_increment_create_f90(keyFlds_, geom_->toFortran(), vars_);
-    //soca_increment_zero_f90(toFortran());
     soca_increment_change_resol_f90(toFortran(), other.keyFlds_);
+    Log::debug() << "dx_other" << other << std::endl;
+    Log::debug() << "dx_lr" << *this << std::endl;
     Log::trace() << "Increment constructed from other." << std::endl;
   }
   // -----------------------------------------------------------------------------
@@ -83,14 +84,10 @@ namespace soca {
   void Increment::diff(const State & x1, const State & x2) {
     ASSERT(this->validTime() == x1.validTime());
     ASSERT(this->validTime() == x2.validTime());
-    Log::debug() << "Increment:diff incr " << *this << std::endl;
-    Log::debug() << "Increment:diff x1 " << x1 << std::endl;
-    Log::debug() << "Increment:diff x2 " << x2 << std::endl;
     State x1_lr(*geom_, x1);
     State x2_lr(*geom_, x2);
     soca_increment_diff_incr_f90(toFortran(), x1_lr.toFortran(),
                                               x2_lr.toFortran());
-    Log::debug() << "Increment:diff incr " << *this << std::endl;
   }
   // -----------------------------------------------------------------------------
   Increment & Increment::operator=(const Increment & rhs) {
@@ -117,6 +114,7 @@ namespace soca {
   }
   // -----------------------------------------------------------------------------
   void Increment::zero() {
+    Log::trace() << "soca::Increment::zero()" << std::endl;
     soca_increment_zero_f90(toFortran());
   }
   // -----------------------------------------------------------------------------
@@ -126,6 +124,7 @@ namespace soca {
   }
   // -----------------------------------------------------------------------------
   void Increment::zero(const util::DateTime & vt) {
+    Log::trace() << "soca::Increment::zero(datetime)" << std::endl;
     zero();
     time_ = vt;
   }

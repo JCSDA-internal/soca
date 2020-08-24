@@ -37,6 +37,14 @@ class BkgErr: public util::Printable {
                   const eckit::Configuration &);
   ~BkgErr();
 
+  /// Read variance of background error, conf needs to be consistent with geom
+  State initBkgErr(Geometry geom, const eckit::Configuration & conf) const
+  {
+    const eckit::LocalConfiguration lconf(conf, "background error variance");
+    State bkgerr_variance(geom, lconf);
+    return bkgerr_variance;
+  }
+
 /// Perform linear transforms
   void multiply(const Increment &, Increment &) const;
   void multiplyInverse(const Increment &, Increment &) const;
@@ -46,7 +54,7 @@ class BkgErr: public util::Printable {
  private:
   void print(std::ostream &) const override;
   int keyFtnConfig_;
-  const State & traj_;
+  State bkgerr_variance_;
 };
 // -----------------------------------------------------------------------------
 

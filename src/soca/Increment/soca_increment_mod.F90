@@ -430,21 +430,13 @@ subroutine soca_increment_change_resol(self, rhs)
 
   call rhs%get("hocn", hocn1)
   call self%get("hocn", hocn2)
-  hocn1%val = hocn2%val
-  call convert_state%setup(rhs%geom, self%geom, hocn1, hocn1)
+
+  call convert_state%setup(rhs%geom, self%geom, hocn1, hocn2)
   do n = 1, size(rhs%fields)
+    if (trim(rhs%fields(n)%name)=="hocn") cycle ! skip layer thickness
     field1 => rhs%fields(n)
     call self%get(trim(field1%name),field2)
-    field2%val = 0.0_kind_real
-    print *,"********************* changing resol for : ",trim(field1%name)
-    if (trim(field1%name)=="ssh") print *,field1%val
-    !if (field1%io_file=="ocn" .or. field1%io_file=="sfc" .or. field1%io_file=="ice")  &
-    call convert_state%change_resol(field1, field2, rhs%geom, self%geom)
-    print *,'------------- max dx1:',maxval(field1%val)
-    print *,'------------- max dx2:',maxval(field2%val)
-    print *,'------------- max h1:',maxval(hocn1%val)
-    print *,'------------- max h2:',maxval(hocn2%val)
-
+    call convert_state%change_resol2d(field1, field2, rhs%geom, self%geom)
   end do !n
   call convert_state%clean()
 end subroutine soca_increment_change_resol

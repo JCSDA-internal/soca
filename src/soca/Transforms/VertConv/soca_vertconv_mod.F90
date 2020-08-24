@@ -9,6 +9,7 @@ use fckit_configuration_module, only: fckit_configuration
 use kinds, only: kind_real
 use type_mpl, only: mpl_type
 use tools_func, only: fit_func
+use soca_geom_mod
 use soca_fields_mod
 use soca_increment_mod
 use soca_state_mod
@@ -26,8 +27,8 @@ type :: soca_vertconv
    real(kind=kind_real)      :: lz_mld_max         !> if calculating Lz from MLD, max value to use
    real(kind=kind_real)      :: scale_layer_thick  !> Set the minimum decorrelation scale
                                                    !> as a multiple of the layer thickness
-   type(soca_state),pointer :: traj               !> Trajectory
-   type(soca_state),pointer :: bkg                !> Background
+   type(soca_state), pointer :: bkg                !> Background
+   type(soca_geom),  pointer :: geom               !> Geometry
    integer                   :: isc, iec, jsc, jec !> Compute domain
 end type soca_vertconv
 
@@ -38,11 +39,11 @@ contains
 ! ------------------------------------------------------------------------------
 ! Setup for the vertical convolution
 ! TODO: Investigate computing and storing weights in vertconc data structure
-subroutine soca_conv_setup (self, bkg, traj, f_conf)
+subroutine soca_conv_setup (self, bkg, geom, f_conf)
   type(fckit_configuration), intent(in) :: f_conf
   type(soca_vertconv),    intent(inout) :: self
-  type(soca_state), target, intent(in) :: bkg
-  type(soca_state), target, intent(in) :: traj
+  type(soca_state),  target, intent(in) :: bkg
+  type(soca_geom),   target, intent(in) :: geom
 
   ! Get configuration for vertical convolution
   call f_conf%get_or_die("Lz_min", self%lz_min )
@@ -51,13 +52,13 @@ subroutine soca_conv_setup (self, bkg, traj, f_conf)
       call f_conf%get_or_die("Lz_mld_max", self%lz_mld_max )
   call f_conf%get_or_die("scale_layer_thick", self%scale_layer_thick )
 
-  ! Store trajectory and background
-  self%traj => traj
+  ! Associate background and geometry
   self%bkg => bkg
+  self%geom => geom
 
   ! Indices for compute domain (no halo)
-  self%isc=bkg%geom%isc; self%iec=bkg%geom%iec
-  self%jsc=bkg%geom%jsc; self%jec=bkg%geom%jec
+  self%isc=geom%isc; self%iec=geom%iec
+  self%jsc=geom%jsc; self%jec=geom%jec
 
 end subroutine soca_conv_setup
 
@@ -121,7 +122,7 @@ subroutine soca_conv (self, convdx, dx)
       do id = self%isc, self%iec
         do jd = self%jsc, self%jec
           ! skip land
-          if (self%bkg%geom%mask2d(id,jd) /= 1) cycle
+          if (self%geom%mask2d(id,jd) /= 1) cycle
 
           ! get correlation lengths
           call soca_calc_lz(self, id, jd, lz)
@@ -170,7 +171,7 @@ subroutine soca_conv_ad (self, convdx, dx)
       do id = self%isc, self%iec
         do jd = self%jsc, self%jec
           ! skip land
-          if (self%bkg%geom%mask2d(id,jd) /= 1) cycle
+          if (self%geom%mask2d(id,jd) /= 1) cycle
 
           ! get correlation lengths
           call soca_calc_lz(self, id, jd, lz)

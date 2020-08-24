@@ -25,7 +25,9 @@ namespace soca {
                  const State & traj,
                  const Geometry & geom,
                  const eckit::Configuration & conf):
-    geom_(new Geometry(geom)), vars_(conf, "filter variables"), traj_(traj) {
+    geom_(new Geometry(geom)),
+    vars_(conf, "filter variables"),
+    traj_(geom, traj) {
     const eckit::Configuration * configc = &conf;
     soca_horizfilt_setup_f90(keyFtnConfig_,
                              &configc,

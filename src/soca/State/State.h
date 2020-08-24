@@ -57,7 +57,7 @@ namespace soca {
       virtual ~State();
       State & operator=(const State &);
 
-      // Interpolate state
+      /// Interpolate state
       void changeResolution(const State & xx);
 
       /// Needed by PseudoModel

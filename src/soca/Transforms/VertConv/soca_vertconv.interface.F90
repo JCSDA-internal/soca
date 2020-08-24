@@ -8,6 +8,8 @@ module soca_vertconv_mod_c
 use iso_c_binding
 use fckit_configuration_module, only: fckit_configuration
 use kinds, only: kind_real
+use soca_geom_mod
+use soca_geom_mod_c
 use soca_increment_mod
 use soca_increment_reg
 use soca_state_mod
@@ -37,25 +39,25 @@ contains
 
 ! ------------------------------------------------------------------------------
 !> Constructor for Vertconv
-subroutine c_soca_vertconv_setup(c_key_self, c_conf, c_key_traj, c_key_bkg) &
+subroutine c_soca_vertconv_setup(c_key_self, c_conf, c_key_bkg, c_key_geom) &
   bind(c,name='soca_vertconv_setup_f90')
 
   integer(c_int), intent(inout) :: c_key_self   !< The Vertconv structure
   type(c_ptr),       intent(in) :: c_conf       !< The configuration
-  integer(c_int),    intent(in) :: c_key_traj   !< trajectory
   integer(c_int),    intent(in) :: c_key_bkg    !< background
+  integer(c_int),    intent(in) :: c_key_geom   !< geometry
 
   type(soca_vertconv), pointer :: self
-  type(soca_state), pointer :: traj
   type(soca_state), pointer :: bkg
+  type(soca_geom), pointer :: geom
 
   call soca_vertconv_registry%init()
   call soca_vertconv_registry%add(c_key_self)
   call soca_vertconv_registry%get(c_key_self, self)
-  call soca_state_registry%get(c_key_traj, traj)
   call soca_state_registry%get(c_key_bkg, bkg)
+  call soca_geom_registry%get(c_key_geom, geom)
 
-  call soca_conv_setup (self, bkg, traj, fckit_configuration(c_conf))
+  call soca_conv_setup (self, bkg, geom, fckit_configuration(c_conf))
 
 end subroutine c_soca_vertconv_setup
 
@@ -67,14 +69,13 @@ subroutine c_soca_vertconv_delete(c_key_self) bind(c,name='soca_vertconv_delete_
 
   type(soca_vertconv), pointer :: self
 
-  ! Deallocate trajectory and backgroun
+  ! Deallocate background
   ! TODO
   ! Deallocate ocean depth array
   ! TODO
 
   call soca_vertconv_registry%get(c_key_self, self)
 
-  if (associated(self%traj)) nullify(self%traj)
   if (associated(self%bkg)) nullify(self%bkg)
 
   call soca_vertconv_registry%remove(c_key_self)

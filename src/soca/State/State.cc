@@ -39,7 +39,9 @@ namespace soca {
   }
   // -----------------------------------------------------------------------------
   State::State(const Geometry & geom, const eckit::Configuration & file)
-    : time_(), vars_(file, "state variables"), geom_(new Geometry(geom))
+    : time_(9999, 1, 1, 1, 0, 0),
+      vars_(file, "state variables"),
+      geom_(new Geometry(geom))
   {
     util::DateTime * dtp = &time_;
     oops::Variables vars(vars_);
@@ -80,10 +82,7 @@ namespace soca {
   /// Interpolate full fields
   // -----------------------------------------------------------------------------
   void State::changeResolution(const State & other) {
-    Log::trace() << "State::State rotate from logical to geographical North."
-                 << std::endl;
     soca_state_change_resol_f90(toFortran(), other.keyFlds_);
-    oops::Log::trace() << "StateQG interpolated" << std::endl;
   }
 
   // -----------------------------------------------------------------------------
@@ -109,8 +108,7 @@ namespace soca {
     ASSERT(validTime() == dx.validTime());
     // Interpolate increment to analysis grid
     Increment dx_hr(*geom_, dx);
-std::cout << "dx:" << dx << std::endl;
-std::cout << "dx_hr:" << dx_hr << std::endl;
+
     // Add increment to background state
     soca_state_add_incr_f90(toFortran(), dx_hr.toFortran());
     return *this;

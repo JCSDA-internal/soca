@@ -8,6 +8,7 @@
 #include <ostream>
 #include <string>
 
+#include "soca/Geometry/Geometry.h"
 #include "soca/Increment/Increment.h"
 #include "soca/State/State.h"
 #include "soca/Transforms/VertConv/VertConv.h"
@@ -24,13 +25,16 @@ namespace soca {
   VertConv::VertConv(const State & bkg,
                      const State & traj,
                      const Geometry & geom,
-                     const eckit::Configuration & conf): traj_(traj) {
-    const eckit::Configuration * configc = &conf;
+                     const eckit::Configuration & conf) :
+          bkg_lr_(geom, bkg), geom_(geom) {
     oops::Log::trace() << "soca::VertConv::setup " << std::endl;
+    const eckit::Configuration * configc = &conf;
+
+    // Compute convolution weights
     soca_vertconv_setup_f90(keyFtnConfig_,
                             &configc,
-                            traj_.toFortran(),
-                            bkg.toFortran());
+                            bkg_lr_.toFortran(),
+                            geom.toFortran());
   }
   // -----------------------------------------------------------------------------
   VertConv::~VertConv() {
@@ -62,7 +66,7 @@ namespace soca {
   }
   // -----------------------------------------------------------------------------
   void VertConv::print(std::ostream & os) const {
-    os << "SOCA change variable";
+    os << "SOCA change variable: VertConv";
   }
   // -----------------------------------------------------------------------------
 }  // namespace soca

@@ -20,7 +20,8 @@ namespace soca {
   extern "C" {
     void soca_bkgerrgodas_setup_f90(F90balopmat &,
                                     const eckit::Configuration * const *,
-                                    const F90flds &);
+                                    const F90flds &,
+                                    const F90geom &);
     void soca_bkgerrgodas_delete_f90(F90balopmat &);
     void soca_bkgerrgodas_mult_f90(const F90balopmat &,
                                    const F90flds &,

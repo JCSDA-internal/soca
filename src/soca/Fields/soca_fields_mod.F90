@@ -367,7 +367,7 @@ subroutine soca_fields_copy(self, rhs)
 
   character(len=:), allocatable :: vars_str(:)
   integer :: i
-  type(soca_field), pointer :: rhs_fld
+  type(soca_field), pointer :: rhs_fld, layer_depth
 
   ! initialize the variables based on the names in rhs
   if (.not. associated(self%fields)) then
@@ -382,6 +382,7 @@ subroutine soca_fields_copy(self, rhs)
   ! copy values from rhs to self, only if the variable exists
   !  in self
   do i=1,size(self%fields)
+    !print *,'var=',rhs%fields(i)%name,self%fields(i)%name
     call rhs%get(self%fields(i)%name, rhs_fld)
     call self%fields(i)%copy(rhs_fld)
   end do
@@ -897,10 +898,7 @@ subroutine soca_fields_gpnorm(fld, nf, pstat)
     ! TODO only mask fields that should be masked (will change answers)
     call fld%get(fld%fields(jj)%name, field)
     call fldinfo(field%val(isc:iec,jsc:jec,:), mask, tmp)
-if (fld%fields(jj)%name=="ssh") then
-  print *,fld%fields(jj)%mask,'= incr mask2d'
-  print *,fld%geom%mask2d,'= geom mask2d'
-end if
+
     ! calculate global min/max/mean
     call fld%geom%f_comm%allreduce(tmp(1), pstat(1,jj), fckit_mpi_min())
     call fld%geom%f_comm%allreduce(tmp(2), pstat(2,jj), fckit_mpi_max())

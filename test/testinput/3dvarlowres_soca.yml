@@ -41,6 +41,56 @@ cost function:
     date: 2018-04-15T00:00:00Z
     analysis variables: [tocn, socn, ssh] #*soca_vars
 
+    variable changes:
+
+    - variable change: VertConvSOCA
+      Lz_min: 2.0
+      Lz_mld: 1
+      Lz_mld_max: 500.0
+      scale_layer_thick: 1.5
+      input variables: *soca_vars
+      output variables: *soca_vars
+
+    - variable change: BkgErrFILT
+      ocean_depth_min: 1000 # [m]
+      rescale_bkgerr: 1.0
+      efold_z: 2500.0       # [m]
+      input variables: *soca_vars
+      output variables: *soca_vars
+
+    - variable change: BkgErrGODAS
+      t_min: 0.1
+      t_max: 2.0
+      t_dz:  20.0
+      t_efold: 500.0
+      s_min: 0.0
+      s_max: 0.25
+      ssh_min: 0.0   # value at EQ
+      ssh_max: 0.1   # value in Extratropics
+      ssh_phi_ex: 20 # lat of transition from extratropics
+      cicen_min: 0.1
+      cicen_max: 0.5
+      hicen_min: 10.0
+      hicen_max: 100.0
+      input variables: *soca_vars
+      output variables: *soca_vars
+
+    # - variable change: HorizFiltSOCA
+    #   niter: 1
+    #   scale_flow: 0.5
+    #   scale_dist: 1e6
+    #   filter variables: [tocn, socn, ssh]
+    #   input variables: *soca_vars
+    #   output variables: *soca_vars
+    #
+    # - variable change: BalanceSOCA
+    #   dsdtmax: 0.1
+    #   dsdzmin: 3.0e-6
+    #   dtdzmin: 1.0e-6
+    #   nlayers: 2
+    #   input variables: *soca_vars
+    #   output variables: *soca_vars
+
   observations:
 
   - obs space:
@@ -135,24 +185,8 @@ variational:
       variable change: Identity
       name: IdTLM
       tstep: PT1H
-      lm variables: [tocn, socn, ssh, hocn] #*soca_vars
-    ninner: 25
-    gradient norm reduction: 1e-15
-    test: on
-    diagnostics:
-      departures: ombg
-  - geometry:
-      num_ice_cat: 5
-      num_ice_lev: 4
-      num_sno_lev: 1
-      geom_grid_file: soca_gridspec.small.nc
-      mom6_input_nml: ./inputnml/input_small.nml
-    linear model:
-      variable change: Identity
-      name: IdTLM
-      tstep: PT1H
-      lm variables: [tocn, socn, ssh, hocn] #*soca_vars
-    ninner: 25
+      lm variables: [tocn, socn, ssh, hocn]
+    ninner: 5
     gradient norm reduction: 1e-15
     test: on
     diagnostics:
