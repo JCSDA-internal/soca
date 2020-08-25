@@ -52,13 +52,11 @@ cost function:
       output variables: *soca_vars
 
     - variable change: BkgErrSOCA
-      background error variance:
-        read_from_file: 3
-        basename: ./
-        ocn_filename: ocn.bkgerror.nc
-        ice_filename: ice.bkgerror.nc
-        state variables: *soca_vars
-        date: *bkg_date
+      read_from_file: 3
+      basename: ./
+      ocn_filename: ocn.bkgerror.nc
+      ice_filename: ice.bkgerror.nc
+      date: *bkg_date
       t_min: 0.0
       t_max: 2.5
       s_min: 0.0

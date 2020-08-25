@@ -16,7 +16,6 @@
 #include "oops/runs/Run.h"
 #include "oops/runs/Variational.h"
 #include "oops/generic/instantiateModelFactory.h"
-#include "saber/oops/instantiateCovarFactory.h"
 #include "saber/oops/instantiateLocalizationFactory.h"
 
 int main(int argc,  char ** argv) {
@@ -25,7 +24,6 @@ int main(int argc,  char ** argv) {
   soca::instantiateBalanceOpFactory();
   ufo::instantiateObsFilterFactory<ufo::ObsTraits>();
   saber::instantiateLocalizationFactory<soca::Traits>();
-  saber::instantiateCovarFactory<soca::Traits>();
   oops::Variational<soca::Traits, ufo::ObsTraits> var;
   return run.execute(var);
 }

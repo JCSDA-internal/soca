@@ -58,7 +58,7 @@ namespace soca {
       State & operator=(const State &);
 
       /// Interpolate state
-      void changeResolution(const State & xx);
+      void changeResolution(const State &);
 
       /// Needed by PseudoModel
       void updateTime(const util::Duration & dt) {time_ += dt;}

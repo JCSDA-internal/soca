@@ -367,7 +367,7 @@ subroutine soca_fields_copy(self, rhs)
 
   character(len=:), allocatable :: vars_str(:)
   integer :: i
-  type(soca_field), pointer :: rhs_fld, layer_depth
+  type(soca_field), pointer :: rhs_fld
 
   ! initialize the variables based on the names in rhs
   if (.not. associated(self%fields)) then
@@ -382,7 +382,6 @@ subroutine soca_fields_copy(self, rhs)
   ! copy values from rhs to self, only if the variable exists
   !  in self
   do i=1,size(self%fields)
-    !print *,'var=',rhs%fields(i)%name,self%fields(i)%name
     call rhs%get(self%fields(i)%name, rhs_fld)
     call self%fields(i)%copy(rhs_fld)
   end do

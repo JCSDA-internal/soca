@@ -75,21 +75,21 @@ cost function:
       input variables: *soca_vars
       output variables: *soca_vars
 
-    # - variable change: HorizFiltSOCA
-    #   niter: 1
-    #   scale_flow: 0.5
-    #   scale_dist: 1e6
-    #   filter variables: [tocn, socn, ssh]
-    #   input variables: *soca_vars
-    #   output variables: *soca_vars
-    #
-    # - variable change: BalanceSOCA
-    #   dsdtmax: 0.1
-    #   dsdzmin: 3.0e-6
-    #   dtdzmin: 1.0e-6
-    #   nlayers: 2
-    #   input variables: *soca_vars
-    #   output variables: *soca_vars
+    - variable change: HorizFiltSOCA
+      niter: 1
+      scale_flow: 0.5
+      scale_dist: 1e6
+      filter variables: [tocn, socn, ssh]
+      input variables: *soca_vars
+      output variables: *soca_vars
+   
+    - variable change: BalanceSOCA
+      dsdtmax: 0.1
+      dsdzmin: 3.0e-6
+      dtdzmin: 1.0e-6
+      nlayers: 2
+      input variables: *soca_vars
+      output variables: *soca_vars
 
   observations:
 

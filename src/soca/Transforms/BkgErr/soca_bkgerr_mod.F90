@@ -1,3 +1,4 @@
+! (C) Copyright 2017-2020 UCAR
 !
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -7,7 +8,6 @@ module soca_bkgerr_mod
 use fckit_configuration_module, only: fckit_configuration
 use datetime_mod, only: datetime
 use kinds, only: kind_real
-use soca_geom_mod
 use soca_fields_mod
 use soca_state_mod
 use soca_increment_mod
@@ -21,7 +21,8 @@ public :: soca_bkgerr_config, &
 
 !> Fortran derived type to hold configuration D
 type :: soca_bkgerr_config
-   type(soca_state)                  :: std_bkgerr
+   type(soca_state),         pointer :: bkg
+   type(soca_fields)                 :: std_bkgerr
    type(soca_bkgerr_bounds_type)     :: bounds         ! Bounds for bkgerr
    real(kind=kind_real)              :: std_sst
    real(kind=kind_real)              :: std_sss
@@ -34,11 +35,10 @@ contains
 
 ! ------------------------------------------------------------------------------
 !> Setup the static background error
-subroutine soca_bkgerr_setup(f_conf, self, std_bkgerr, geom)
+subroutine soca_bkgerr_setup(f_conf, self, bkg)
   type(fckit_configuration),   intent(in) :: f_conf
   type(soca_bkgerr_config), intent(inout) :: self
-  type(soca_state),            intent(in) :: std_bkgerr
-  type(soca_geom),             intent(in) :: geom
+  type(soca_state),    target, intent(in) :: bkg
 
   type(soca_field), pointer :: field, field_bkg
 
@@ -46,8 +46,13 @@ subroutine soca_bkgerr_setup(f_conf, self, std_bkgerr, geom)
   type(datetime) :: vdate
   character(len=800) :: fname = 'soca_bkgerrsoca.nc'
 
-  ! Make a copy of bkgerror
-  call self%std_bkgerr%copy(std_bkgerr)
+  ! Allocate memory for bkgerror
+  call self%std_bkgerr%copy(bkg)
+  !call create_copy(self%std_bkgerr, bkg)
+
+  ! Read variance
+  ! Precomputed from an ensemble of (K^-1 dx)
+  call self%std_bkgerr%read(f_conf, vdate)
 
   ! Convert to standard deviation
   do i=1,size(self%std_bkgerr%fields)
@@ -80,18 +85,21 @@ subroutine soca_bkgerr_setup(f_conf, self, std_bkgerr, geom)
     field => self%std_bkgerr%fields(i)
     select case(field%name)
     case ('sw','lw','lhf','shf','us')
-      call std_bkgerr%get(field%name, field_bkg)
+      call bkg%get(field%name, field_bkg)
       field%val = abs(field_bkg%val) * 0.1_kind_real
     end select
   end do
 
+  ! Associate background
+  self%bkg => bkg
+
   ! Indices for compute domain (no halo)
-  isc=geom%isc; iec=geom%iec
-  jsc=geom%jsc; jec=geom%jec
+  isc=bkg%geom%isc; iec=bkg%geom%iec
+  jsc=bkg%geom%jsc; jec=bkg%geom%jec
   self%isc=isc; self%iec=iec; self%jsc=jsc; self%jec=jec
 
   ! Apply config bounds to background error
-  !call self%bounds%apply(self%std_bkgerr)
+  call self%bounds%apply(self%std_bkgerr)
 
   ! Save filtered background error
   call self%std_bkgerr%write_file(fname)
@@ -114,8 +122,8 @@ subroutine soca_bkgerr_mult(self, dxa, dxm)
   call dxa%check_subset(self%std_bkgerr)
 
   ! Indices for compute domain (no halo)
-  isc=self%isc; iec=self%iec
-  jsc=self%jsc; jec=self%jec
+  isc=self%bkg%geom%isc; iec=self%bkg%geom%iec
+  jsc=self%bkg%geom%jsc; jec=self%bkg%geom%jec
 
   ! multiply
   do n=1,size(dxa%fields)
