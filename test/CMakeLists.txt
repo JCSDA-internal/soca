@@ -646,7 +646,7 @@ soca_add_test( NAME addincrement
 
 soca_add_test( NAME 3dvarlowres_soca
                EXE  soca_3dvar.x
-               TOL  4e-9 0
+               TOL  0.1 0
                NOTRAPFPE
              TEST_DEPENDS test_soca_static_socaerrorsmall_init )
 
