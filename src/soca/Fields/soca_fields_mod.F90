@@ -884,16 +884,6 @@ subroutine soca_fields_gpnorm(fld, nf, pstat)
   ! calculate global min, max, mean for each field
   do jj=1, size(fld%fields)
 
-    ! get local min/max/sum of each variable
-    ! TODO: use all fields (this will change answers in the ctests)
-    select case(fld%fields(jj)%name)
-    case("tocn", "socn", "ssh", "hocn", "uocn", "vocn", &
-         "sw", "lw", "lhf", "shf", "us", "hicen", "hsnon", "cicen", "chl")
-      continue
-    case default
-      cycle
-    end select
-
     ! TODO only mask fields that should be masked (will change answers)
     call fld%get(fld%fields(jj)%name, field)
     call fldinfo(field%val(isc:iec,jsc:jec,:), mask, tmp)
