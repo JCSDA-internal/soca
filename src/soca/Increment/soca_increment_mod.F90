@@ -5,7 +5,7 @@
 
 module soca_increment_mod
 
-use atlas_module
+use atlas_module, only: atlas_fieldset, atlas_field, atlas_real
 use soca_fields_mod
 use soca_convert_state_mod
 use soca_geom_mod, only : soca_geom

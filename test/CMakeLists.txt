@@ -448,7 +448,7 @@ soca_add_test( NAME enspert
 
 # Generate synthetic observations
 soca_add_test( NAME makeobs
-               EXE  soca_makeobs.x
+               EXE  soca_hofx.x
                NOTRAPFPE
                TEST_DEPENDS test_soca_gridgen )
 

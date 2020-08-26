@@ -5,7 +5,7 @@
 
 module soca_increment_mod_c
 
-use atlas_module
+use atlas_module, only: atlas_fieldset
 use iso_c_binding
 use fckit_configuration_module, only: fckit_configuration
 use kinds, only: kind_real
