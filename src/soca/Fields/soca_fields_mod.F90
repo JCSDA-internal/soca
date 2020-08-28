@@ -120,14 +120,11 @@ subroutine soca_field_copy(self, rhs)
 
   call self%check_congruent(rhs)
 
-  ! copy fields
-  self%name = rhs%name
-  self%nz = rhs%nz
+  ! the only variable that should be different is %val
   self%val = rhs%val
-  self%cf_name = rhs%cf_name
-  self%io_name = rhs%io_name
-  self%io_file = rhs%io_file
-  self%mask => rhs%mask
+
+  ! NOTE: the pointers (mask, lat, lon) will be different, but should NOT
+  ! be changed to point to rhs pointers. Bad things happen
 end subroutine soca_field_copy
 
 ! ------------------------------------------------------------------------------
@@ -541,22 +538,15 @@ subroutine soca_fields_dotprod(fld1,fld2,zprod)
     field1 => fld1%fields(n)
     field2 => fld2%fields(n)
 
-    ! determine which fields to use
-    ! TODO: use all fields (this will change answers in the ctests)
-    select case(field1%name)
-    case ("tocn","socn","ssh","uocn","vocn",&
-          "hicen", "sw", "lhf", "shf", "lw", "us", "cicen")
-      continue
-    case default
-      cycle
-    end select
-
     ! add the given field to the dot product (only using the compute domain)
     do ii = fld1%geom%isc, fld1%geom%iec
       do jj = fld1%geom%jsc, fld1%geom%jec
-        ! TODO masking is wrong, but this will change answers, should be:
-        ! if (field1%masked .and. .not. fld1%geom%mask2d(ii,jj) == 1 ) cycle
-        if (.not. fld1%geom%mask2d(ii,jj) == 1 ) cycle
+        ! masking
+        if (associated(field1%mask)) then
+          if (field1%mask(ii,jj) < 1) cycle
+        endif
+
+        ! add to dot product
         do kk=1,field1%nz
           local_zprod = local_zprod + field1%val(ii,jj,kk) * field2%val(ii,jj,kk)
         end do
@@ -876,19 +866,21 @@ subroutine soca_fields_gpnorm(fld, nf, pstat)
   isc = fld%geom%isc ; iec = fld%geom%iec
   jsc = fld%geom%jsc ; jec = fld%geom%jec
 
-  ! get the number of ocean grid cells
-  local_ocn_count = sum(fld%geom%mask2d(isc:iec, jsc:jec))
-  call fld%geom%f_comm%allreduce(local_ocn_count, ocn_count, fckit_mpi_sum())
-  mask = fld%geom%mask2d(isc:iec,jsc:jec) > 0.0
-
   ! calculate global min, max, mean for each field
   do jj=1, size(fld%fields)
-
-    ! TODO only mask fields that should be masked (will change answers)
     call fld%get(fld%fields(jj)%name, field)
-    call fldinfo(field%val(isc:iec,jsc:jec,:), mask, tmp)
+
+    ! get the mask and the total number of grid cells
+    if (.not. associated(field%mask)) then
+       mask = .true.
+     else
+       mask = field%mask(isc:iec, jsc:jec) > 0.0
+     end if
+    local_ocn_count = count(mask)
+    call fld%geom%f_comm%allreduce(local_ocn_count, ocn_count, fckit_mpi_sum())
 
     ! calculate global min/max/mean
+    call fldinfo(field%val(isc:iec,jsc:jec,:), mask, tmp)
     call fld%geom%f_comm%allreduce(tmp(1), pstat(1,jj), fckit_mpi_min())
     call fld%geom%f_comm%allreduce(tmp(2), pstat(2,jj), fckit_mpi_max())
     call fld%geom%f_comm%allreduce(tmp(3), pstat(3,jj), fckit_mpi_sum())
