@@ -17,13 +17,13 @@ Test     :    socn   min=   10.721046   max=   40.441659   mean=   34.544421
 Test     :    tocn   min=   -1.888390   max=   31.700465   mean=    6.018244
 Test     :     ssh   min=   -1.924842   max=    0.927291   mean=   -0.276780
 Test     :    hocn   min=    0.001000   max= 1345.640000   mean=  128.628064
-Test     :      sw   min= -225.094442   max=   -0.033703   mean= -110.030892
-Test     :     lhf   min=  -38.137469   max=  256.595677   mean=   64.433667
-Test     :     shf   min=  -58.949304   max=  201.374227   mean=    9.318215
-Test     :      lw   min=    0.000000   max=   88.036091   mean=   48.153833
-Test     :      us   min=    0.004396   max=    0.019667   mean=    0.009419
-Test     :    uocn   min=   -0.858170   max=    0.700095   mean=   -0.000241
-Test     :    vocn   min=   -0.766110   max=    1.437777   mean=    0.002019
+Test     :      sw   min= -225.094442   max=    0.000000   mean=  -71.738395
+Test     :     lhf   min=  -38.137469   max=  256.595677   mean=   42.009728
+Test     :     shf   min=  -58.949304   max=  201.374227   mean=    6.075328
+Test     :      lw   min=    0.000000   max=   88.036091   mean=   31.395534
+Test     :      us   min=    0.004396   max=    0.019667   mean=    0.008686
+Test     :    uocn   min=   -0.858170   max=    0.700095   mean=   -0.000260
+Test     :    vocn   min=   -0.766110   max=    1.437777   mean=    0.002197
 Test     : CostJb   : Nonlinear Jb = 0.529476
 Test     : CostJo   : Nonlinear Jo(CoolSkin) = 16677.044891, nobs = 201, Jo/n = 82.970373, err = 0.364832
 Test     : CostJo   : Nonlinear Jo(SeaSurfaceTemp) = 1520.629195, nobs = 158, Jo/n = 9.624235, err = 0.366233

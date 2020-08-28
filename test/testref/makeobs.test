@@ -19,11 +19,11 @@ Test     :    socn   min=   10.719748   max=   40.441647   mean=   34.544468
 Test     :    tocn   min=   -1.888350   max=   31.732789   mean=    6.017616
 Test     :     ssh   min=   -1.908126   max=    0.908462   mean=   -0.276583
 Test     :    hocn   min=    0.001000   max= 1345.640000   mean=  128.628088
-Test     :      sw   min= -225.097763   max=   -0.033703   mean= -110.032311
-Test     :     lhf   min=  -38.137398   max=  256.597656   mean=   64.434146
-Test     :     shf   min=  -58.949295   max=  201.374298   mean=    9.318225
-Test     :      lw   min=   -0.000000   max=   88.036087   mean=   48.153824
-Test     :      us   min=    0.004396   max=    0.019658   mean=    0.009356
+Test     :      sw   min= -225.097763   max=   -0.000000   mean=  -71.739321
+Test     :     lhf   min=  -38.137398   max=  256.597656   mean=   42.010040
+Test     :     shf   min=  -58.949295   max=  201.374298   mean=    6.075334
+Test     :      lw   min=    0.000000   max=   88.036087   mean=   31.395529
+Test     :      us   min=    0.004396   max=    0.019658   mean=    0.008644
 Test     : H(x): 
 Test     : InsituTemperature nobs= 10 Min=8.008760, Max=30.370147, RMS=23.734703
 Test     : End H(x)
