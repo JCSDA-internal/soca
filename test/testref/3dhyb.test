@@ -11,11 +11,11 @@ Test     :    socn   min=   10.721046   max=   40.441659   mean=   34.574256
 Test     :    tocn   min=   -1.888390   max=   31.700465   mean=    6.011836
 Test     :     ssh   min=   -2.375283   max=    0.925792   mean=   -0.289317
 Test     :    hocn   min=    0.001000   max= 1345.640000   mean=  128.628064
-Test     :      sw   min= -225.097763   max=   -0.033703   mean= -110.032311
-Test     :     lhf   min=  -38.137398   max=  256.597656   mean=   64.434146
-Test     :     shf   min=  -58.949295   max=  201.374298   mean=    9.318225
-Test     :      lw   min=    0.000000   max=   88.036087   mean=   48.153824
-Test     :      us   min=    0.004396   max=    0.019658   mean=    0.009356
+Test     :      sw   min= -225.097763   max=    0.000000   mean=  -71.739321
+Test     :     lhf   min=  -38.137398   max=  256.597656   mean=   42.010040
+Test     :     shf   min=  -58.949295   max=  201.374298   mean=    6.075334
+Test     :      lw   min=    0.000000   max=   88.036087   mean=   31.395529
+Test     :      us   min=    0.004396   max=    0.019658   mean=    0.008644
 Test     : CostJb   : Nonlinear Jb = 7.622714
 Test     : CostJo   : Nonlinear Jo(ADT) = 137.800465, nobs = 100, Jo/n = 1.378005, err = 0.100000
 Test     : CostFunction: Nonlinear J = 145.423179
