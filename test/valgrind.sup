@@ -72,6 +72,25 @@
    fun:nc4_rec_write_metadata
 }
 
+{
+   H5
+   Memcheck:Param
+   pwrite64(buf)
+   fun:__libc_pwrite64
+   fun:pwrite
+   fun:H5FD_sec2_write
+   fun:H5FD_write
+   fun:H5F__accum_write
+   fun:H5PB_write
+   fun:H5F_block_write
+   fun:H5D__flush_sieve_buf
+   fun:H5D__contig_flush
+   fun:H5D__flush_real
+   fun:H5D__flush_all_cb
+   fun:H5I__iterate_cb
+   fun:H5SL_iterate
+}
+
 
 ################################################################################
 # fms
@@ -99,11 +118,16 @@
    fms_io_exit
    Memcheck:Param
    write(buf)
-   fun:write
    ...
    fun:__fms_io_mod_MOD_fms_io_exit
 }
-
+{
+   fms
+   Memcheck:Param
+   write(buf)
+   ...
+   fun:__mpp_io_mod_MOD_write_record_default
+}
 
 ################################################################################
 # mom
@@ -152,6 +176,15 @@
 {
    oops_print
    Memcheck:Cond
+   ...
+   fun:operator<<
+   fun:_ZN4oops13DualMinimizerIN4soca6TraitsEN3ufo9ObsTraitsEE10doMinimizeERKN5eckit13ConfigurationE
+   fun:minimize
+}
+{
+   oops_print
+   Memcheck:Param
+   write(buf)
    ...
    fun:operator<<
    fun:_ZN4oops13DualMinimizerIN4soca6TraitsEN3ufo9ObsTraitsEE10doMinimizeERKN5eckit13ConfigurationE
@@ -322,8 +355,22 @@
    <insert_a_suppression_name_here>
    Memcheck:Cond
    ...
+   fun:__soca_fields_mod_MOD_soca_fields_gpnorm
+   fun:soca_increment_gpnorm_f90
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   ...
    fun:operator<<
    fun:_ZNK4soca5State5printERSo
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   ...
+   fun:operator<<
+   fun:_ZNK4soca9Increment5printERSo
 }
 {
    <insert_a_suppression_name_here>
