@@ -246,6 +246,12 @@ set( SOCA_TESTS_FORC_TRAPFPE OFF CACHE BOOL
 set( SOCA_TESTS_VALGRIND OFF CACHE BOOL
   "If true, some tests are run under valgrind")
 
+
+if ( SOCA_TESTS_VALGRIND )
+  find_file(VALGRIND_OPENMPI_SUP openmpi-valgrind.supp HINTS $ENV{MPI_ROOT}/share/openmpi/)
+endif()
+
+
 #-------------------------------------------------------------------------------
 # The following is a wrapper to simplify the generation of tests.
 # There are two types of tests:
@@ -356,6 +362,7 @@ function(soca_add_test)
                       MPI ${MPI}
                       COMMAND valgrind
                       ARGS -q --error-exitcode=42
+                           --suppressions=${VALGRIND_OPENMPI_SUP}
                            --suppressions=${CMAKE_CURRENT_SOURCE_DIR}/valgrind.sup
                            --gen-suppressions=all
                            ${EXE} ${CONFIG_FILE}

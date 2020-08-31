@@ -1,3 +1,6 @@
+################################################################################
+# mpi
+################################################################################
 {
    mpi
    Memcheck:Param
@@ -11,21 +14,52 @@
    fun:start_thread
    fun:clone
 }
+{
+   mpi
+   Memcheck:Param
+   socketcall.sendto(msg)
+   fun:send
+   fun:mca_btl_tcp_send_blocking
+   ...
+   fun:opal_progress
+}
+{
+   mpi
+   Memcheck:Param
+   write(buf)
+   fun:write
+   fun:sem_open
+   fun:mca_sharedfp_sm_file_open
+   fun:mca_common_ompio_file_open
+   fun:mca_io_ompio_file_open
+   fun:mca_io_base_file_select
+   fun:ompi_file_open
+}
+{
+   mpi
+   Memcheck:Param
+   writev(vector[...])
+   fun:writev
+   fun:mca_btl_tcp_frag_send
+   fun:mca_btl_tcp_endpoint_send_handler
+   fun:event_persist_closure
+   fun:event_process_active_single_queue
+   fun:event_process_active
+   fun:opal_libevent2022_event_base_loop
+   fun:opal_progress
+   fun:ompi_request_default_wait
+   fun:PMPI_Wait
+   fun:PMPI_WAIT
+}
 
 
+################################################################################
+# Netcdf /hdf5
+################################################################################
 {
    netcdf
    Memcheck:Cond
-   fun:H5C__flush_single_entry
-   fun:H5C__flush_invalidate_cache
-   fun:H5C_dest
-   fun:H5AC_dest
-   fun:H5F__dest
-   fun:H5F_try_close
-   fun:H5F__close_cb
-   fun:H5I_dec_ref
-   fun:H5I_dec_app_ref
-   fun:H5F__close
+   ...
    fun:H5Fclose
    fun:nc4_close_netcdf4_file
 }
@@ -39,21 +73,41 @@
 }
 
 
+################################################################################
+# fms
+################################################################################
 {
-   fms
+   fms_save_restart
    Memcheck:Cond
-   fun:__mpp_io_mod_MOD_mpp_open
-   fun:__fms_io_mod_MOD_save_default_restart.constprop.0
+   ...
    fun:__fms_io_mod_MOD_save_restart
 }
 {
-   fms
+   fms_save_restart
+   Memcheck:Param
+   write(buf)
+   ...
+   fun:__fms_io_mod_MOD_save_restart
+}
+{
+   fms_io_exit
    Memcheck:Cond
-   fun:__mpp_io_mod_MOD_mpp_open
+   ...
+   fun:__fms_io_mod_MOD_fms_io_exit
+}
+{
+   fms_io_exit
+   Memcheck:Param
+   write(buf)
+   fun:write
+   ...
    fun:__fms_io_mod_MOD_fms_io_exit
 }
 
 
+################################################################################
+# mom
+################################################################################
 {
    mom
    Memcheck:Cond
@@ -68,12 +122,246 @@
 {
    mom
    Memcheck:Cond
-   fun:__generic_bling_MOD_generic_bling_update_from_source
-   fun:__generic_tracer_MOD_generic_tracer_source
-   fun:__mom_generic_tracer_MOD_mom_generic_tracer_column_physics
-   fun:__mom_tracer_flow_control_MOD_call_tracer_column_fns
-   fun:__mom_diabatic_driver_MOD_diabatic
-   fun:__mom_MOD_step_mom_thermo
+   ...
    fun:__mom_MOD_step_mom
    fun:__soca_model_mod_MOD_soca_propagate
+}
+{
+   mom
+   Memcheck:Value8
+   ...
+   fun:__mom_MOD_step_mom
+   fun:__soca_model_mod_MOD_soca_propagate
+}
+
+################################################################################
+# JEDI (these should probably be fixed!)
+################################################################################
+{
+   ioda
+   Memcheck:Cond
+   fun:__string_f_c_mod_MOD_c_f_string
+   fun:__obsspace_mod_MOD_obsspace_get_comm
+   fun:__ufo_adt_mod_MOD_ufo_adt_simobs
+   fun:__ufo_basis_mod_MOD_opr_simobs_
+   fun:ufo_adt_simobs_f90
+}
+
+############################
+# bugs within prints
+{
+   oops_print
+   Memcheck:Cond
+   ...
+   fun:operator<<
+   fun:_ZN4oops13DualMinimizerIN4soca6TraitsEN3ufo9ObsTraitsEE10doMinimizeERKN5eckit13ConfigurationE
+   fun:minimize
+}
+{
+   oops_print
+   Memcheck:Value8
+   ...
+   fun:operator<<
+   fun:_ZN4oops13DualMinimizerIN4soca6TraitsEN3ufo9ObsTraitsEE10doMinimizeERKN5eckit13ConfigurationE
+   fun:minimize
+}
+{
+   oops_print
+   Memcheck:Param
+   write(buf)
+   fun:write
+   ...
+   fun:operator<<
+   fun:_ZN4oops13DualMinimizerIN4soca6TraitsEN3ufo9ObsTraitsEE10doMinimizeERKN5eckit13ConfigurationE
+   fun:minimize
+}
+{
+   oops_print
+   Memcheck:Cond
+   ...
+   fun:operator<<
+   fun:_ZNK4oops11CostJbTotalIN4soca6TraitsEN3ufo9ObsTraitsEE8evaluateERKNS_16ControlIncrementIS2_S4_EE
+}
+{
+   oops_print
+   Memcheck:Cond
+   ...
+   fun:operator<<
+   fun:_ZN4oops12CostFunctionIN4soca6TraitsEN3ufo9ObsTraitsEE8evaluateERKNS_15ControlVariableIS2_S4_EERKN5eckit13ConfigurationENS_13PostProcessorINS_5StateIS2_EEEE
+}
+{
+   oops_print
+   Memcheck:Cond
+   ...
+   fun:operator<<
+   fun:_ZNK4oops9ObsVectorIN3ufo9ObsTraitsEE5printERSo
+}
+{
+   oops_print
+   Memcheck:Value8
+   ...
+   fun:operator<<
+   fun:_ZNK4oops9ObsVectorIN3ufo9ObsTraitsEE5printERSo
+}
+{
+   oops_print
+   Memcheck:Cond
+    ...
+   fun:operator<<
+   fun:_ZNK4oops6CostJoIN4soca6TraitsEN3ufo9ObsTraitsEE7printJoERKNS_10DeparturesIS4_EES9_
+}
+{
+   oops_print
+   Memcheck:Value8
+    ...
+   fun:operator<<
+   fun:_ZNK4oops6CostJoIN4soca6TraitsEN3ufo9ObsTraitsEE7printJoERKNS_10DeparturesIS4_EES9_
+}
+{
+   oops_print
+   Memcheck:Value8
+   ...
+   fun:operator<<
+   ...
+   fun:_ZN4oops6GMRESRINS_9IncrementIN4soca6TraitsEEENS_16HybridCovarianceIS3_EENS_14IdentityMatrixIS4_EEEEdRT_RKS9_RKT0_RKT1_id
+   fun:_ZNK4oops16HybridCovarianceIN4soca6TraitsEE17doInverseMultiplyERKNS_9IncrementIS2_EERS5_
+}
+
+
+############################
+# other stuff
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   ...
+   fun:_ZNK3ufo10FilterBase8doFilterEv
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   fun:_ZNK3ufo9QCmanager10postFilterERKN4ioda9ObsVectorERKNS_14ObsDiagnosticsE
+   fun:_ZNK4oops9ObsFilterIN3ufo9ObsTraitsENS1_9QCmanagerEE10postFilterERKNS_9ObsVectorIS2_EERKNS_14ObsDiagnosticsIS2_EE
+   fun:postFilter
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   fun:_ZNK4oops11CostJbTotalIN4soca6TraitsEN3ufo9ObsTraitsEE8evaluateERKNS_16ControlIncrementIS2_S4_EE
+   fun:_ZNK4oops11CostJbTotalIN4soca6TraitsEN3ufo9ObsTraitsEE8finalizeEPNS_6JqTermIS2_EE
+}
+
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   fun:_ZN4ioda14ConvertVarTypeIdfEEvRKSt6vectorIT_SaIS2_EERS1_IT0_SaIS7_EE
+   fun:_ZN4ioda7ObsData6put_dbERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEES8_RKSt6vectorIdSaIdEE
+   fun:_ZNK4ioda9ObsVector4saveERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE
+   fun:_ZNK4oops9ObsVectorIN3ufo9ObsTraitsEE4saveERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   fun:_ZN4ioda9ObsVector*
+   fun:_ZN4oops9ObsVectorIN3ufo9ObsTraitsEE*
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   fun:_ZNK4ioda9ObsVector16dot_product_withERKS0_
+   fun:_ZNK4oops9ObsVectorIN3ufo9ObsTraitsEE16dot_product_withERKS3_
+   fun:dot_product<oops::ObsVector<ufo::ObsTraits> >
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   fun:_ZNK4ioda9ObsVector4nobsEv
+   fun:nobs
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   ...
+   fun:_Destroy<std::shared_ptr<oops::ObsSpace<ufo::ObsTraits> > >
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Param
+   pwrite64(buf)
+   fun:pwrite
+   ...
+   fun:~unique_ptr
+   fun:_ZN4ioda7ObsData10SaveToFileERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEm
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   ...
+   fun:_ZN4oops6GMRESRINS_9IncrementIN4soca6TraitsEEENS_16HybridCovarianceIS3_EENS_14IdentityMatrixIS4_EEEEdRT_RKS9_RKT0_RKT1_id
+   fun:_ZNK4oops16HybridCovarianceIN4soca6TraitsEE17doInverseMultiplyERKNS_9IncrementIS2_EERS5_
+}
+
+
+
+################################################################################
+# SOCA things that definitely should be fixed
+################################################################################
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   fun:__soca_state_mod_MOD_soca_state_add_incr
+   fun:soca_state_add_incr_f90
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   fun:__soca_fieldsutils_mod_MOD_fldinfo3d
+   fun:__soca_fields_mod_MOD_soca_fields_gpnorm
+   fun:soca_state_gpnorm_f90
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   ...
+   fun:operator<<
+   fun:_ZNK4soca5State5printERSo
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Value8
+   ...
+   fun:operator<<
+   fun:_ZNK4soca5State5printERSo
+}
+{
+  <insert_a_suppression_name_here>
+   Memcheck:Value8
+   ...
+   fun:operator<<
+   fun:_ZNK4soca9Increment5printERSo
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   ...
+   fun:__ufo_coolskin_mod_MOD_ufo_coolskin_simobs
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Value8
+   ...
+   fun:__ufo_coolskin_mod_MOD_ufo_coolskin_simobs
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   ...
+   fun:__ufo_insitutemperature_mod_MOD_ufo_insitutemperature_simobs
+   fun:__ufo_basis_mod_MOD_opr_simobs_
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   ...
+   fun:__ufo_marinevertinterp_mod_MOD_ufo_marinevertinterp_simobs
+   fun:ufo_marinevertinterp_simobs_f90
 }
