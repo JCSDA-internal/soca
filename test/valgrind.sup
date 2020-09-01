@@ -51,6 +51,22 @@
    fun:PMPI_Wait
    fun:PMPI_WAIT
 }
+{
+   mpi
+   Memcheck:Param
+   writev(vector[...])
+   fun:writev
+   ...
+   fun:PMPI_Isend
+}
+{
+   mpi
+   Memcheck:Param
+   writev(vector[...])
+   fun:writev
+   ...
+   fun:PMPI_Alltoallv
+}
 
 
 ################################################################################
@@ -332,8 +348,22 @@
    fun:_ZN4oops6GMRESRINS_9IncrementIN4soca6TraitsEEENS_16HybridCovarianceIS3_EENS_14IdentityMatrixIS4_EEEEdRT_RKS9_RKT0_RKT1_id
    fun:_ZNK4oops16HybridCovarianceIN4soca6TraitsEE17doInverseMultiplyERKNS_9IncrementIS2_EERS5_
 }
-
-
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   ...
+   fun:_ZNKSt7num_putIcSt19ostreambuf_iteratorIcSt11char_traitsIcEEE15_M_insert_floatIdEES3_S3_RSt8ios_baseccT_
+   fun:_ZNSo9_M_insertIdEERSoT_
+   fun:_ZN4oops13DualMinimizerIN4soca6TraitsEN3ufo9ObsTraitsEE10doMinimizeERKN5eckit13ConfigurationE
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Value8
+   ...
+   fun:_ZNKSt7num_putIcSt19ostreambuf_iteratorIcSt11char_traitsIcEEE15_M_insert_floatIdEES3_S3_RSt8ios_baseccT_
+   fun:_ZNSo9_M_insertIdEERSoT_
+   fun:_ZN4oops13DualMinimizerIN4soca6TraitsEN3ufo9ObsTraitsEE10doMinimizeERKN5eckit13ConfigurationE
+}
 
 ################################################################################
 # SOCA things that definitely should be fixed
