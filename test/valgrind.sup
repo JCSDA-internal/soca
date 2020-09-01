@@ -73,11 +73,10 @@
 # Netcdf /hdf5
 ################################################################################
 {
-   netcdf
+   H5
    Memcheck:Cond
    ...
-   fun:H5Fclose
-   fun:nc4_close_netcdf4_file
+   fun:H5*
 }
 {
    netcdf
@@ -87,24 +86,12 @@
    fun:write_attlist
    fun:nc4_rec_write_metadata
 }
-
 {
    H5
    Memcheck:Param
    pwrite64(buf)
-   fun:__libc_pwrite64
-   fun:pwrite
-   fun:H5FD_sec2_write
-   fun:H5FD_write
-   fun:H5F__accum_write
-   fun:H5PB_write
-   fun:H5F_block_write
-   fun:H5D__flush_sieve_buf
-   fun:H5D__contig_flush
-   fun:H5D__flush_real
-   fun:H5D__flush_all_cb
-   fun:H5I__iterate_cb
-   fun:H5SL_iterate
+   ...
+   fun:H5*
 }
 
 
@@ -188,42 +175,6 @@
 }
 
 ############################
-# bugs within prints
-{
-   oops_print
-   Memcheck:Cond
-   ...
-   fun:operator<<
-   fun:_ZN4oops13DualMinimizerIN4soca6TraitsEN3ufo9ObsTraitsEE10doMinimizeERKN5eckit13ConfigurationE
-   fun:minimize
-}
-{
-   oops_print
-   Memcheck:Param
-   write(buf)
-   ...
-   fun:operator<<
-   fun:_ZN4oops13DualMinimizerIN4soca6TraitsEN3ufo9ObsTraitsEE10doMinimizeERKN5eckit13ConfigurationE
-   fun:minimize
-}
-{
-   oops_print
-   Memcheck:Value8
-   ...
-   fun:operator<<
-   fun:_ZN4oops13DualMinimizerIN4soca6TraitsEN3ufo9ObsTraitsEE10doMinimizeERKN5eckit13ConfigurationE
-   fun:minimize
-}
-{
-   oops_print
-   Memcheck:Param
-   write(buf)
-   fun:write
-   ...
-   fun:operator<<
-   fun:_ZN4oops13DualMinimizerIN4soca6TraitsEN3ufo9ObsTraitsEE10doMinimizeERKN5eckit13ConfigurationE
-   fun:minimize
-}
 {
    oops_print
    Memcheck:Cond
@@ -238,6 +189,7 @@
    fun:operator<<
    fun:_ZN4oops12CostFunctionIN4soca6TraitsEN3ufo9ObsTraitsEE8evaluateERKNS_15ControlVariableIS2_S4_EERKN5eckit13ConfigurationENS_13PostProcessorINS_5StateIS2_EEEE
 }
+
 {
    oops_print
    Memcheck:Cond
@@ -252,6 +204,7 @@
    fun:operator<<
    fun:_ZNK4oops9ObsVectorIN3ufo9ObsTraitsEE5printERSo
 }
+
 {
    oops_print
    Memcheck:Cond
@@ -266,15 +219,7 @@
    fun:operator<<
    fun:_ZNK4oops6CostJoIN4soca6TraitsEN3ufo9ObsTraitsEE7printJoERKNS_10DeparturesIS4_EES9_
 }
-{
-   oops_print
-   Memcheck:Value8
-   ...
-   fun:operator<<
-   ...
-   fun:_ZN4oops6GMRESRINS_9IncrementIN4soca6TraitsEEENS_16HybridCovarianceIS3_EENS_14IdentityMatrixIS4_EEEEdRT_RKS9_RKT0_RKT1_id
-   fun:_ZNK4oops16HybridCovarianceIN4soca6TraitsEE17doInverseMultiplyERKNS_9IncrementIS2_EERS5_
-}
+
 
 
 ############################
@@ -332,6 +277,7 @@
    ...
    fun:_Destroy<std::shared_ptr<oops::ObsSpace<ufo::ObsTraits> > >
 }
+
 {
    <insert_a_suppression_name_here>
    Memcheck:Param
@@ -341,33 +287,53 @@
    fun:~unique_ptr
    fun:_ZN4ioda7ObsData10SaveToFileERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEm
 }
+
+# hybridcov inverse multiply
 {
    <insert_a_suppression_name_here>
    Memcheck:Cond
    ...
-   fun:_ZN4oops6GMRESRINS_9IncrementIN4soca6TraitsEEENS_16HybridCovarianceIS3_EENS_14IdentityMatrixIS4_EEEEdRT_RKS9_RKT0_RKT1_id
    fun:_ZNK4oops16HybridCovarianceIN4soca6TraitsEE17doInverseMultiplyERKNS_9IncrementIS2_EERS5_
 }
 {
+   oops
+   Memcheck:Value8
+   ...
+   fun:_ZNK4oops16HybridCovarianceIN4soca6TraitsEE17doInverseMultiplyERKNS_9IncrementIS2_EERS5_
+}
+
+# eckit Configuration
+{
    <insert_a_suppression_name_here>
    Memcheck:Cond
    ...
-   fun:_ZNKSt7num_putIcSt19ostreambuf_iteratorIcSt11char_traitsIcEEE15_M_insert_floatIdEES3_S3_RSt8ios_baseccT_
-   fun:_ZNSo9_M_insertIdEERSoT_
    fun:_ZN4oops13DualMinimizerIN4soca6TraitsEN3ufo9ObsTraitsEE10doMinimizeERKN5eckit13ConfigurationE
 }
 {
    <insert_a_suppression_name_here>
    Memcheck:Value8
    ...
-   fun:_ZNKSt7num_putIcSt19ostreambuf_iteratorIcSt11char_traitsIcEEE15_M_insert_floatIdEES3_S3_RSt8ios_baseccT_
-   fun:_ZNSo9_M_insertIdEERSoT_
    fun:_ZN4oops13DualMinimizerIN4soca6TraitsEN3ufo9ObsTraitsEE10doMinimizeERKN5eckit13ConfigurationE
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Param
+   write(buf)
+   ...
+   fun:_ZN4oops13DualMinimizerIN4soca6TraitsEN3ufo9ObsTraitsEE10doMinimizeERKN5eckit13ConfigurationE
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   ...
+   fun:_ZNK4oops11VariationalIN4soca6TraitsEN3ufo9ObsTraitsEE7executeERKN5eckit13ConfigurationE
 }
 
 ################################################################################
 # SOCA things that definitely should be fixed
 ################################################################################
+
+# soca state
 {
    <insert_a_suppression_name_here>
    Memcheck:Cond
@@ -385,6 +351,22 @@
    <insert_a_suppression_name_here>
    Memcheck:Cond
    ...
+   fun:operator<<
+   fun:_ZNK4soca5State5printERSo
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Value8
+   ...
+   fun:operator<<
+   fun:_ZNK4soca5State5printERSo
+}
+
+# soca increment
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   ...
    fun:__soca_fields_mod_MOD_soca_fields_gpnorm
    fun:soca_increment_gpnorm_f90
 }
@@ -393,21 +375,13 @@
    Memcheck:Cond
    ...
    fun:operator<<
-   fun:_ZNK4soca5State5printERSo
-}
-{
-   <insert_a_suppression_name_here>
-   Memcheck:Cond
-   ...
-   fun:operator<<
    fun:_ZNK4soca9Increment5printERSo
 }
 {
    <insert_a_suppression_name_here>
    Memcheck:Value8
    ...
-   fun:operator<<
-   fun:_ZNK4soca5State5printERSo
+   fun:_ZNK4soca9Increment5printERSo
 }
 {
   <insert_a_suppression_name_here>
@@ -416,6 +390,8 @@
    fun:operator<<
    fun:_ZNK4soca9Increment5printERSo
 }
+
+# soca related UFOs
 {
    <insert_a_suppression_name_here>
    Memcheck:Cond

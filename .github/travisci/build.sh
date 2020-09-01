@@ -72,8 +72,16 @@ cd $build_dir
 build_opt_var=BUILD_OPT_${MAIN_REPO/-/_}
 build_opt=${!build_opt_var}
 
+# valgrind and gprof are mutually exclusive
+if [[ "$ENABLE_VALGRIND" == "ON"]]; then
+    $build_opt="$build_opt -DSOCA_TESTS_VALGRIND=ON"
+else
+    $build_opt="$build_opt -DENABLE_GPROF=ON"
+fi
+
+
 time ecbuild $src_dir -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
-       -DCMAKE_BUILD_TYPE=${MAIN_BUILD_TYPE} -DENABLE_GPROF=ON $build_opt
+       -DCMAKE_BUILD_TYPE=${MAIN_BUILD_TYPE} $build_opt
 time make -j4
 
 
