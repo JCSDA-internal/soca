@@ -40,32 +40,7 @@
    Memcheck:Param
    writev(vector[...])
    fun:writev
-   fun:mca_btl_tcp_frag_send
-   fun:mca_btl_tcp_endpoint_send_handler
-   fun:event_persist_closure
-   fun:event_process_active_single_queue
-   fun:event_process_active
-   fun:opal_libevent2022_event_base_loop
-   fun:opal_progress
-   fun:ompi_request_default_wait
-   fun:PMPI_Wait
-   fun:PMPI_WAIT
-}
-{
-   mpi
-   Memcheck:Param
-   writev(vector[...])
-   fun:writev
-   ...
-   fun:PMPI_Isend
-}
-{
-   mpi
-   Memcheck:Param
-   writev(vector[...])
-   fun:writev
-   ...
-   fun:PMPI_Alltoallv
+   fun:PMPI_*
 }
 
 
@@ -73,18 +48,18 @@
 # Netcdf /hdf5
 ################################################################################
 {
-   H5
-   Memcheck:Cond
-   ...
-   fun:H5*
-}
-{
    netcdf
    Memcheck:Cond
    ...
    fun:put_att_grpa
    fun:write_attlist
    fun:nc4_rec_write_metadata
+}
+{
+   H5
+   Memcheck:Cond
+   ...
+   fun:H5*
 }
 {
    H5
@@ -182,14 +157,6 @@
    fun:operator<<
    fun:_ZNK4oops11CostJbTotalIN4soca6TraitsEN3ufo9ObsTraitsEE8evaluateERKNS_16ControlIncrementIS2_S4_EE
 }
-{
-   oops_print
-   Memcheck:Cond
-   ...
-   fun:operator<<
-   fun:_ZN4oops12CostFunctionIN4soca6TraitsEN3ufo9ObsTraitsEE8evaluateERKNS_15ControlVariableIS2_S4_EERKN5eckit13ConfigurationENS_13PostProcessorINS_5StateIS2_EEEE
-}
-
 {
    oops_print
    Memcheck:Cond
@@ -307,26 +274,20 @@
    <insert_a_suppression_name_here>
    Memcheck:Cond
    ...
-   fun:_ZN4oops13DualMinimizerIN4soca6TraitsEN3ufo9ObsTraitsEE10doMinimizeERKN5eckit13ConfigurationE
+   fun:*oops*eckit13Configuration*
 }
 {
    <insert_a_suppression_name_here>
    Memcheck:Value8
    ...
-   fun:_ZN4oops13DualMinimizerIN4soca6TraitsEN3ufo9ObsTraitsEE10doMinimizeERKN5eckit13ConfigurationE
+   fun:*oops*eckit13Configuration*
 }
 {
    <insert_a_suppression_name_here>
    Memcheck:Param
    write(buf)
    ...
-   fun:_ZN4oops13DualMinimizerIN4soca6TraitsEN3ufo9ObsTraitsEE10doMinimizeERKN5eckit13ConfigurationE
-}
-{
-   <insert_a_suppression_name_here>
-   Memcheck:Cond
-   ...
-   fun:_ZNK4oops11VariationalIN4soca6TraitsEN3ufo9ObsTraitsEE7executeERKN5eckit13ConfigurationE
+   fun:*oops*eckit13Configuration*
 }
 
 ################################################################################
