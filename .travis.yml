@@ -78,6 +78,7 @@ before_install:
     # clone and prep the repos
     # note: the main repo is not handled by the prep.sh script, it is moved from
     # what TravisCI auto checks out (because TravisCI handles PR merges specially)
+    git config --global url.https://${GH_TOKEN}@github.com/.insteadOf https://github.com/
     WORK_DIR=$HOME/work
     mkdir -p $WORK_DIR/repo.src; cd $WORK_DIR
     mv ${TRAVIS_BUILD_DIR} ${WORK_DIR}/repo.src/${MAIN_REPO}
@@ -101,7 +102,6 @@ before_install:
       -v $HOME/repo.cache:/repo.cache \
       --name jcsda_container jcsda/dockerl2
     docker ps -a
-
 
 #======================================================================
 # Here are the run steps
