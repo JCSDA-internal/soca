@@ -6,7 +6,7 @@
 
 module soca_geom_mod
 
-use atlas_module
+use atlas_module, only: atlas_functionspace_pointcloud, atlas_fieldset, atlas_field, atlas_real, atlas_integer
 use MOM_domains, only : MOM_domain_type, MOM_infra_init
 use MOM_io,      only : io_infra_init
 use soca_mom6, only: soca_mom6_config, soca_mom6_init, soca_ice_column, &
@@ -60,8 +60,7 @@ type :: soca_geom
     logical :: save_local_domain = .false. ! If true, save the local geometry for each pe.
     character(len=:), allocatable :: geom_grid_file
     type(fckit_mpi_comm) :: f_comm
-    type(atlas_functionspace) :: afunctionspace
-    type(atlas_fieldset) :: afieldset
+    type(atlas_functionspace_pointcloud) :: afunctionspace
 
     contains
     procedure :: init => geom_init
@@ -169,7 +168,6 @@ subroutine geom_end(self)
   if (allocated(self%h_zstar))       deallocate(self%h_zstar)
   nullify(self%Domain)
   call self%afunctionspace%final()
-  call self%afieldset%final()
 
 end subroutine geom_end
 

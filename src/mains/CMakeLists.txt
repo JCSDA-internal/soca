@@ -9,11 +9,6 @@ ecbuild_add_executable( TARGET  soca_forecast.x
                         LIBS    soca
                       )
 
-ecbuild_add_executable( TARGET  soca_makeobs.x
-                        SOURCES MakeObs.cc
-                        LIBS    soca
-                      )
-
 ecbuild_add_executable( TARGET  soca_hofx_nomodel.x
                         SOURCES HofXNoModel.cc
                         LIBS    soca

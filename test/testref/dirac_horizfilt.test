@@ -6,5 +6,5 @@ Test     :    socn   min=    0.000000   max=    0.061218   mean=    0.000024
 Test     :    tocn   min=    0.000000   max=    0.065041   mean=    0.000024
 Test     :     ssh   min=    0.000000   max=    0.476189   mean=    0.001854
 Test     :    hocn   min=    0.000000   max=    0.000000   mean=    0.000000
-Test     :     mld   min=   19.000000   max=   20.000000   mean=   21.000000
-Test     : layer_depth   min=   22.000000   max=   23.000000   mean=   24.000000
+Test     :     mld   min=    0.000000   max=    0.000000   mean=    0.000000
+Test     : layer_depth   min=    0.000000   max=    0.000000   mean=    0.000000
