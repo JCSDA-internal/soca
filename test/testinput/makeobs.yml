@@ -32,3 +32,5 @@ observations:
       name: InsituTemperature
     obs error:
       covariance model: diagonal
+
+make obs: true

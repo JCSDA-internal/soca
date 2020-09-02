@@ -8,7 +8,7 @@ model aux control:
 
 model test:
   forecast length: PT6H
-  final norm: 9898.26819282811993617
+  final norm: 387790.89522246213164181
   tolerance: 1e-12
   test reforecast: false
 

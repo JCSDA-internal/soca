@@ -8,7 +8,7 @@
 
 module soca_covariance_mod
 
-use atlas_module
+use atlas_module, only: atlas_fieldset, atlas_field, atlas_real, atlas_integer, atlas_functionspace
 use, intrinsic :: iso_c_binding, only : c_char
 use fckit_configuration_module, only: fckit_configuration
 use random_mod, only: normal_distribution
@@ -225,6 +225,7 @@ subroutine soca_bump_correlation(self, horiz_convol, geom, f_conf, domain)
 
   integer, pointer :: int_ptr_2(:,:)
   real(kind=kind_real), pointer :: real_ptr_1(:), real_ptr_2(:,:)
+  type(atlas_functionspace) :: afunctionspace
   type(atlas_fieldset) :: afieldset, rh, rv
   type(atlas_field) :: afield
   type(fckit_configuration) :: f_grid
@@ -238,6 +239,9 @@ subroutine soca_bump_correlation(self, horiz_convol, geom, f_conf, domain)
   call f_grid%set('variables', ['var'])
   call f_grid%set('nts', 1)
   call f_grid%set('timeslots', ['00'])
+
+  ! Wrap functionspace
+  afunctionspace = atlas_functionspace(geom%afunctionspace%c_ptr())
 
   ! Geometry fieldset setup
   afieldset = atlas_fieldset()
@@ -264,7 +268,7 @@ subroutine soca_bump_correlation(self, horiz_convol, geom, f_conf, domain)
   call afield%final()
 
   ! Create BUMP object
-  call horiz_convol%create(geom%f_comm,geom%afunctionspace,afieldset,f_conf,f_grid)
+  call horiz_convol%create(geom%f_comm,afunctionspace,afieldset,f_conf,f_grid)
 
   if (horiz_convol%nam%new_nicas) then
      ! rh

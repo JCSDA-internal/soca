@@ -14,7 +14,7 @@ state test:
     sfc_filename: sfc.res.nc
     state variables: &soca_vars [cicen, hicen, socn, tocn, ssh, hocn, sw, lhf, shf, lw, us]
     remap_filename: ./INPUT/MOM.res.nc
-  norm file: 9898.1892609204206
+  norm file: 387790.8913881866
   date: *date
   StateGenerate:
     read_from_file: 0
