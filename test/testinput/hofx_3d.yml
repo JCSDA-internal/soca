@@ -98,10 +98,10 @@ observations:
         maxvalue:  60.0
       action:
         name: reject
-      #where:
-      #- variable:
-      #    name: mass_concentration_of_chlorophyll_in_sea_water@PreQC
-      #  any_bit_set_of: 0,1,3,4,5,8,9,10,12,14,15,16,19,21,22,25
-      #action:
-      #  name: inflate error
-      #  inflation factor: 2.0
+      where:
+      - variable:
+          name: mass_concentration_of_chlorophyll_in_sea_water@PreQC
+        any_bit_set_of: 0,1,3,4,5,8,9,10,12,14,15,16,19,21,22,25
+      action:
+        name: inflate error
+        inflation factor: 2.0
