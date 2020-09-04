@@ -11,6 +11,7 @@ Test     :     lhf   min=  -38.137398   max=  256.597656   mean=   42.010040
 Test     :     shf   min=  -58.949295   max=  201.374298   mean=    6.075334
 Test     :      lw   min=    0.000000   max=   88.036087   mean=   31.395529
 Test     :      us   min=    0.004396   max=    0.019658   mean=    0.008644
+Test     :     chl   min=    0.000010   max=    4.671990   mean=    0.118483
 Test     : Final state: 
 Test     :   Valid time: 2018-04-15T00:00:00Z
 Test     :   cicen   min=    0.000000   max=    1.000000   mean=    0.023503
@@ -24,6 +25,7 @@ Test     :     lhf   min=  -38.137398   max=  256.597656   mean=   42.010040
 Test     :     shf   min=  -58.949295   max=  201.374298   mean=    6.075334
 Test     :      lw   min=    0.000000   max=   88.036087   mean=   31.395529
 Test     :      us   min=    0.004396   max=    0.019658   mean=    0.008644
+Test     :     chl   min=    0.000010   max=    4.671990   mean=    0.118483
 Test     : H(x): 
 Test     : CoolSkin nobs= 201 Min=-4.375751, Max=25.239587, RMS=20.067013
 Test     : SeaSurfaceTemp nobs= 201 Min=-0.992614, Max=30.649473, RMS=24.170310
@@ -32,4 +34,5 @@ Test     : ADT nobs= 100 Min=-1.250816, Max=1.421506, RMS=0.757217
 Test     : InsituTemperature nobs= 218 Min=7.832734, Max=30.431111, RMS=21.295562
 Test     : InsituSalinity nobs= 218 Min=34.160244, Max=35.992907, RMS=35.044654
 Test     : SeaIceFraction nobs= 100 Min=0.000000, Max=1.000000, RMS=0.694504
+Test     : Chlorophyll nobs= 137 Min=0.001273, Max=2.410599, RMS=0.357860
 Test     : End H(x)
