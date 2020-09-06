@@ -198,17 +198,6 @@ endforeach(FILENAME)
 # Link CRTM coeff
 if( ${CRTM_FOUND} )
 
-  # determine where to look for coefficients
-  set( CRTM_FIX_DIR_DOCSTRING
-      "Path to the CRTM fix directory, needs to be set if CRTM was not built as part of this bundle.")
-  set( CRTM_FIX_DIR NOTFOUND CACHE PATH ${CRTM_FIX_DIR_DOCSTRING})
-  if( NOT CRTM_FIX_DIR AND EXISTS ${crtm_SOURCE_DIR}/fix)
-    set( CRTM_FIX_DIR ${crtm_SOURCE_DIR}/fix CACHE PATH ${CRTM_FIX_DIR_DOCSTRING} FORCE)
-  elseif( NOT CRTM_FIX_DIR )
-    message(FATAL_ERROR
-      "CRTM was not built as part of the bundle, CRTM_FIX_DIR must be set")
-  endif()
-
   # the coefficient files needed
   list( APPEND crtm_coef
     SpcCoeff/Little_Endian/gmi_gpm.SpcCoeff.bin
@@ -222,7 +211,7 @@ if( ${CRTM_FOUND} )
   foreach(FILENAME ${crtm_coef})
        get_filename_component(filename ${FILENAME} NAME )
        execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
-             ${CRTM_FIX_DIR}/${FILENAME}
+             ${crtm_COEFFICIENT_DIR}/${FILENAME}
              ${CMAKE_CURRENT_BINARY_DIR}/Data/${filename} )
   endforeach(FILENAME)
 endif()
