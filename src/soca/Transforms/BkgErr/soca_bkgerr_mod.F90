@@ -58,7 +58,7 @@ subroutine soca_bkgerr_setup(f_conf, self, bkg)
   do i=1,size(self%std_bkgerr%fields)
     field => self%std_bkgerr%fields(i)
     select case(field%name)
-    case ("tocn", "socn", "ssh")
+    case ("tocn", "socn", "ssh", "chl")
       field%val = sqrt(field%val)
     end select
   end do

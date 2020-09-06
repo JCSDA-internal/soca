@@ -170,6 +170,10 @@ subroutine soca_getvalues_fillgeovals(self, geom, fld, t1, t2, locs, geovals)
       fld3d(isc:iec,jsc:jec,1) = real(fld%geom%mask2d(isc:iec,jsc:jec),kind=kind_real)
       masked = .false.
 
+    case ("sea_surface_chlorophyll")
+      call fld%get("chl", fldptr)
+      fld3d(isc:iec,jsc:jec,1) = fldptr%val(isc:iec,jsc:jec,1)
+
     case default
       call fckit_log%debug("soca_interpfields_mod:interp geoval does not exist")
     end select
@@ -308,6 +312,10 @@ subroutine soca_getvalues_fillgeovals_ad(self, geom, incr, t1, t2, locs, geovals
 
       case ("sea_surface_salinity")
         call incr%get("socn", field)
+        field%val(isc:iec,jsc:jec,1) = field%val(isc:iec,jsc:jec,1) + incr3d(isc:iec,jsc:jec,1)
+
+      case ("sea_surface_chlorophyll")
+        call incr%get("chl", field)
         field%val(isc:iec,jsc:jec,1) = field%val(isc:iec,jsc:jec,1) + incr3d(isc:iec,jsc:jec,1)
 
       case default

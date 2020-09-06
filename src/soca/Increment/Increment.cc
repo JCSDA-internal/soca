@@ -166,6 +166,7 @@ namespace soca {
       else if (vars_[ii] == "cicen") varlens[ii]=ncat;
       else if (vars_[ii] == "hicen") varlens[ii]=ncat;
       else if (vars_[ii] == "hsnon") varlens[ii]=ncat;
+      else if (vars_[ii] == "chl") varlens[ii]=nzo;
       else
           varlens[ii] = 1;
     }

@@ -9,7 +9,7 @@ cost function:
   cost type: 3D-Var
   window begin: &date_begin 2018-04-14T00:00:00Z
   window length: P2D
-  analysis variables: &soca_vars [cicen, hicen, socn, tocn, ssh, hocn, sw, lhf, shf, lw, us]
+  analysis variables: &soca_vars [cicen, hicen, socn, tocn, ssh, hocn, sw, lhf, shf, lw, us, chl]
   geometry:
     num_ice_cat: 5
     num_ice_lev: 4
@@ -196,6 +196,42 @@ cost function:
       covariance model: diagonal
     obs filters:
     - *land_mask
+
+  - obs space:
+      name: Chlorophyll
+      obsdataout: {obsfile: ./Data/chl.out.nc}
+      obsdatain:  {obsfile: ./Data/chl.nc}
+      simulated variables: [mass_concentration_of_chlorophyll_in_sea_water]
+    obs operator:
+      name: Identity
+    obs error:
+      covariance model: diagonal
+    obs filters:
+    - *land_mask
+    - filter: Gaussian_Thinning
+      horizontal_mesh:   111
+      use_reduced_horizontal_grid: false
+    - filter: Domain Check
+      filter variables:
+      - name: mass_concentration_of_chlorophyll_in_sea_water
+      where:
+      - variable:
+          name: mass_concentration_of_chlorophyll_in_sea_water@ObsValue
+        minvalue: 0.001
+        maxvalue: 10.0
+      - variable:
+          name: latitude@MetaData
+        minvalue: -60.0
+        maxvalue:  60.0
+      action:
+        name: reject
+      where:
+      - variable:
+          name: mass_concentration_of_chlorophyll_in_sea_water@PreQC
+        any_bit_set_of: 0,1,3,4,5,8,9,10,12,14,15,16,19,21,22,25
+      action:
+        name: inflate error
+        inflation factor: 2.0
 
 variational:
   minimizer:
