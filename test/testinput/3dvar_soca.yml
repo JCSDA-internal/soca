@@ -16,12 +16,6 @@ cost function:
     num_sno_lev: 1
     mom6_input_nml: ./inputnml/input.nml
 
-  model:
-    name: SOCA
-    tstep: PT1H
-    advance_mom6: 0
-    model variables: *soca_vars
-
   background:
     read_from_file: 1
     basename: ./INPUT/
@@ -206,11 +200,6 @@ variational:
       num_ice_lev: 4
       num_sno_lev: 1
       mom6_input_nml: ./inputnml/input.nml
-    linear model:
-      variable change: Identity
-      name: IdTLM
-      tstep: PT1H
-      lm variables: *soca_vars
     ninner: 5
     gradient norm reduction: 1e-15
     test: on
