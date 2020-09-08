@@ -120,8 +120,7 @@ script:
   - |
     # upload code coverage
     docker exec jcsda_container bash -c \
-      'cd /jcsda/work/repo.src/${MAIN_REPO} \
-       && lcov -c -d . -d ../../repo.build/${MAIN_REPO}/ -o coverage.info  --no-external -q \
+      'cd /jcsda/work/repo.build/${MAIN_REPO} \
        && bash <(curl -s https://codecov.io/bash)'
 
 
