@@ -121,7 +121,7 @@ script:
     # upload code coverage
     docker exec jcsda_container bash -c \
       'cd /jcsda/work/repo.build/${MAIN_REPO} \
-       && bash <(curl -s https://codecov.io/bash)'
+       && bash <(curl -s https://codecov.io/bash) -X gcovout -R /jcsda/work/repo.src/${MAIN_REPO}'
 
 
 
