@@ -74,9 +74,9 @@ build_opt=${!build_opt_var}
 
 # valgrind and gprof are mutually exclusive
 if [[ "$ENABLE_VALGRIND" == "ON" ]]; then
-    $build_opt="$build_opt -DSOCA_TESTS_VALGRIND=ON"
+    build_opt="$build_opt -DSOCA_TESTS_VALGRIND=ON"
 else
-    $build_opt="$build_opt -DENABLE_GPROF=ON"
+    build_opt="$build_opt -DENABLE_GPROF=ON"
 fi
 
 
