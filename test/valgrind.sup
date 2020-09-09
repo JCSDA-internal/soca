@@ -244,7 +244,12 @@
    ...
    fun:_Destroy<std::shared_ptr<oops::ObsSpace<ufo::ObsTraits> > >
 }
-
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   ...
+   fun:_ZNK4ioda9ObsVector5printERSo
+}
 {
    <insert_a_suppression_name_here>
    Memcheck:Param
@@ -312,14 +317,12 @@
    <insert_a_suppression_name_here>
    Memcheck:Cond
    ...
-   fun:operator<<
    fun:_ZNK4soca5State5printERSo
 }
 {
    <insert_a_suppression_name_here>
    Memcheck:Value8
    ...
-   fun:operator<<
    fun:_ZNK4soca5State5printERSo
 }
 
@@ -335,7 +338,6 @@
    <insert_a_suppression_name_here>
    Memcheck:Cond
    ...
-   fun:operator<<
    fun:_ZNK4soca9Increment5printERSo
 }
 {
