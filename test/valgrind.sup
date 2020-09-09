@@ -39,7 +39,7 @@
    mpi
    Memcheck:Param
    writev(vector[...])
-   fun:writev
+   ...
    fun:PMPI_*
 }
 
