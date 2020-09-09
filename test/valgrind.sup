@@ -259,6 +259,16 @@
    fun:~unique_ptr
    fun:_ZN4ioda7ObsData10SaveToFileERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEm
 }
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   ...
+   fun:_ZN4ioda7ObsData10SaveToFile*
+   ...
+   fun:~shared_ptr
+}
+
+
 
 # hybridcov inverse multiply
 {
