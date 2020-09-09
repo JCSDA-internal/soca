@@ -18,14 +18,14 @@
 #include "eckit/config/LocalConfiguration.h"
 #include "eckit/mpi/Comm.h"
 #include "oops/base/PostProcessor.h"
-#include "oops/parallel/mpi/mpi.h"
+#include "oops/mpi/mpi.h"
 #include "oops/runs/Application.h"
 
 namespace soca {
 
   class GridGen : public oops::Application {
    public:
-    explicit GridGen(const eckit::mpi::Comm & comm = oops::mpi::comm())
+    explicit GridGen(const eckit::mpi::Comm & comm = oops::mpi::world())
       : Application(comm) {}
     static const std::string classname() {return "soca::GridGen";}
 
