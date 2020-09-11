@@ -78,7 +78,6 @@ subroutine soca_cov_setup(self, f_conf, geom, bkg, vars)
   if (.not. f_conf%get("pert_SSH", self%pert_scale%SSH))   self%pert_scale%SSH = 1.0
   if (.not. f_conf%get("pert_AICE", self%pert_scale%AICE)) self%pert_scale%AICE = 1.0
   if (.not. f_conf%get("pert_HICE", self%pert_scale%HICE)) self%pert_scale%HICE = 1.0
-  if (.not. f_conf%get("pert_CHL", self%pert_scale%CHL))   self%pert_scale%CHL = 1.0
 
   ! Setup ocean and ice decorrelation length scales
   self%ocn_l0 = 500.0d3
