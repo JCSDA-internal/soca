@@ -29,7 +29,7 @@ public :: soca_cov, soca_cov_setup, soca_cov_delete, &
 
 !> Fortran derived type to hold configuration data for the SOCA background/model covariance
 type :: soca_pert
-  real(kind=kind_real) :: T, S, SSH, AICE, HICE, CHL
+  real(kind=kind_real) :: T, S, SSH, AICE, HICE
 end type soca_pert
 
 type :: soca_cov
