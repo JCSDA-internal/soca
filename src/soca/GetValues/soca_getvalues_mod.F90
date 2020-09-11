@@ -170,7 +170,7 @@ subroutine soca_getvalues_fillgeovals(self, geom, fld, t1, t2, locs, geovals)
       fld3d(isc:iec,jsc:jec,1) = real(fld%geom%mask2d(isc:iec,jsc:jec),kind=kind_real)
       masked = .false.
 
-    case ("mass_concentration_of_chlorophyll_in_sea_water")
+    case ("sea_surface_chlorophyll")
       call fld%get("chl", fldptr)
       fld3d(isc:iec,jsc:jec,1) = fldptr%val(isc:iec,jsc:jec,1)
 
@@ -314,7 +314,7 @@ subroutine soca_getvalues_fillgeovals_ad(self, geom, incr, t1, t2, locs, geovals
         call incr%get("socn", field)
         field%val(isc:iec,jsc:jec,1) = field%val(isc:iec,jsc:jec,1) + incr3d(isc:iec,jsc:jec,1)
 
-      case ("mass_concentration_of_chlorophyll_in_sea_water")
+      case ("sea_surface_chlorophyll")
         call incr%get("chl", field)
         field%val(isc:iec,jsc:jec,1) = field%val(isc:iec,jsc:jec,1) + incr3d(isc:iec,jsc:jec,1)
 
@@ -359,7 +359,7 @@ function nlev_from_ufovar(fld, var) result(nval)
         "sea_surface_salinity", &
         "sea_floor_depth_below_sea_surface", &
         "sea_area_fraction", &
-        "mass_concentration_of_chlorophyll_in_sea_water")
+        "sea_surface_chlorophyll")
      nval = 1
 
   case ("sea_water_salinity")

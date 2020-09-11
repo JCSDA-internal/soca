@@ -192,10 +192,10 @@ cost function:
     - *land_mask
 
   - obs space:
-      name: Chlorophyll
+      name: SeaSurfaceChlorophyll
       obsdataout: {obsfile: ./Data/chl.out.nc}
       obsdatain:  {obsfile: ./Data/chl.nc}
-      simulated variables: [mass_concentration_of_chlorophyll_in_sea_water]
+      simulated variables: [sea_surface_chlorophyll]
     obs operator:
       name: Identity
     obs error:
@@ -207,10 +207,10 @@ cost function:
       use_reduced_horizontal_grid: false
     - filter: Domain Check
       filter variables:
-      - name: mass_concentration_of_chlorophyll_in_sea_water
+      - name: sea_surface_chlorophyll
       where:
       - variable:
-          name: mass_concentration_of_chlorophyll_in_sea_water@ObsValue
+          name: sea_surface_chlorophyll@ObsValue
         minvalue: 0.001
         maxvalue: 10.0
       - variable:
@@ -221,7 +221,7 @@ cost function:
         name: reject
       where:
       - variable:
-          name: mass_concentration_of_chlorophyll_in_sea_water@PreQC
+          name: sea_surface_chlorophyll@PreQC
         any_bit_set_of: 0,1,3,4,5,8,9,10,12,14,15,16,19,21,22,25
       action:
         name: inflate error
