@@ -204,9 +204,6 @@ subroutine soca_cov_sqrt_C_mult(self, dx)
     case ('hicen')
       scale = self%pert_scale%HICE
       conv => self%seaice_conv(1)
-    case ('chl')
-      scale = self%pert_scale%CHL
-      conv => self%ocean_conv(1)
     end select
 
     if (associated(conv)) then
