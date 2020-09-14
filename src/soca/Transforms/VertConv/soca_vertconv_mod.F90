@@ -116,7 +116,7 @@ subroutine soca_conv (self, convdx, dx)
   do n=1,size(dx%fields)
     ! TODO remove these hardcoded values, use the yaml file
     select case(dx%fields(n)%name)
-    case ("tocn","socn")
+    case ("tocn","socn","chl")
       call dx%get(dx%fields(n)%name, field_dx)
       call convdx%get(dx%fields(n)%name, field_convdx)
       do id = self%isc, self%iec
@@ -165,7 +165,7 @@ subroutine soca_conv_ad (self, convdx, dx)
   do n=1,size(dx%fields)
     select case(dx%fields(n)%name)
    ! TODO remove these hardcoded values, use the yaml file
-    case ("tocn","socn")
+    case ("tocn","socn","chl")
       call dx%get(dx%fields(n)%name, field_dx)
       call convdx%get(dx%fields(n)%name, field_convdx)
       do id = self%isc, self%iec

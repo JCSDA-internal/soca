@@ -107,7 +107,7 @@ subroutine soca_increment_getpoint(self, geoiter, values)
   do ff = 1, size(self%fields)
     field => self%fields(ff)
     select case(field%name)
-    case("tocn", "socn", "ssh", "hocn", "cicen", "hicen","hsnon")
+    case("tocn", "socn", "ssh", "hocn", "cicen", "hicen","hsnon", "chl")
       nz = field%nz
       values(ii+1:ii+nz) = field%val(geoiter%iind, geoiter%jind,:)
       ii = ii + nz
@@ -131,7 +131,7 @@ subroutine soca_increment_setpoint(self, geoiter, values)
   do ff = 1, size(self%fields)
     field => self%fields(ff)
     select case(field%name)
-    case("tocn", "socn", "ssh", "hocn", "cicen", "hicen","hsnon")
+    case("tocn", "socn", "ssh", "hocn", "cicen", "hicen","hsnon", "chl")
       nz = field%nz
       field%val(geoiter%iind, geoiter%jind,:) = values(ii+1:ii+nz)
       ii = ii + nz
@@ -194,6 +194,8 @@ subroutine soca_increment_dirac(self, f_conf)
       call self%get("cicen", field)
     case (5)
       call self%get("hicen", field)
+    case (6)
+      call self%get("chl", field)
     case default
       ! TODO print error that out of range
     end select

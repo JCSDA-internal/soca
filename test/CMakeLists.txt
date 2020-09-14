@@ -133,6 +133,7 @@ list( APPEND soca_obs
   Data/Obs/prof.nc
   Data/Obs/sss.nc
   Data/Obs/sst.nc
+  Data/Obs/chl.nc
   Data/Obs/gmi_gpm_geoval.nc
   Data/Obs/gmi_gpm_obs.nc
 )
@@ -200,17 +201,6 @@ endforeach(FILENAME)
 # Link CRTM coeff
 if( ${CRTM_FOUND} )
 
-  # determine where to look for coefficients
-  set( CRTM_FIX_DIR_DOCSTRING
-      "Path to the CRTM fix directory, needs to be set if CRTM was not built as part of this bundle.")
-  set( CRTM_FIX_DIR NOTFOUND CACHE PATH ${CRTM_FIX_DIR_DOCSTRING})
-  if( NOT CRTM_FIX_DIR AND EXISTS ${crtm_SOURCE_DIR}/fix)
-    set( CRTM_FIX_DIR ${crtm_SOURCE_DIR}/fix CACHE PATH ${CRTM_FIX_DIR_DOCSTRING} FORCE)
-  elseif( NOT CRTM_FIX_DIR )
-    message(FATAL_ERROR
-      "CRTM was not built as part of the bundle, CRTM_FIX_DIR must be set")
-  endif()
-
   # the coefficient files needed
   list( APPEND crtm_coef
     SpcCoeff/Little_Endian/gmi_gpm.SpcCoeff.bin
@@ -224,7 +214,7 @@ if( ${CRTM_FOUND} )
   foreach(FILENAME ${crtm_coef})
        get_filename_component(filename ${FILENAME} NAME )
        execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
-             ${CRTM_FIX_DIR}/${FILENAME}
+             ${crtm_COEFFICIENT_DIR}/${FILENAME}
              ${CMAKE_CURRENT_BINARY_DIR}/Data/${filename} )
   endforeach(FILENAME)
 endif()
@@ -257,6 +247,9 @@ set( SOCA_TESTS_FORC_TRAPFPE OFF CACHE BOOL
   "If true, the specified per-test trapping on/off flag is ignored\
   and is forced to ON for all tests" )
 
+set( SOCA_TESTS_VALGRIND OFF CACHE BOOL
+  "If true, some tests are run under valgrind")
+
 
 #-------------------------------------------------------------------------------
 # The following is a wrapper to simplify the generation of tests.
@@ -285,7 +278,7 @@ set( SOCA_TESTS_FORC_TRAPFPE OFF CACHE BOOL
 function(soca_add_test)
   # parse the passed arguments
   set(prefix     ARG)
-  set(novals     NOCOMPARE NOTRAPFPE)
+  set(novals     NOCOMPARE NOTRAPFPE NOVALGRIND)
   set(singlevals NAME EXE SRC CFG MPI)
   set(multivals  TEST_DEPENDS TOL)
   cmake_parse_arguments(${prefix}
@@ -302,6 +295,10 @@ function(soca_add_test)
     set ( TRAPFPE_ENV "OOPS_TRAPFPE=0")
   else()
     set ( TRAPFPE_ENV "OOPS_TRAPFPE=1")
+  endif()
+
+  if ( NOT SOCA_TESTS_VALGRIND )
+    set ( ARG_NOVALGRIND TRUE)
   endif()
 
   # determine the default config file name
@@ -327,7 +324,7 @@ function(soca_add_test)
                       MPI     ${MPI}
                       ENVIRONMENT ${TRAPFPE_ENV}
                       TEST_DEPENDS ${ARG_TEST_DEPENDS})
-    set ( ARG_NOCOMPARE TRUE)
+    set( EXE ./test_soca_${ARG_NAME})
 
   else()
     LIST(GET ARG_TOL 0 TOL_F)
@@ -354,6 +351,21 @@ function(soca_add_test)
                               SKIP_COMPARE=${ARG_NOCOMPARE}
                       DEPENDS ${ARG_EXE}
                       TEST_DEPENDS ${ARG_TEST_DEPENDS})
+    set( EXE ${CMAKE_BINARY_DIR}/bin/${ARG_EXE})
+
+  endif()
+
+  # optional valgrind tests
+  if ( NOT ARG_NOVALGRIND )
+    ecbuild_add_test( TARGET test_soca_${ARG_NAME}_valgrind
+                      MPI ${MPI}
+                      COMMAND valgrind
+                      ARGS -q --error-exitcode=42
+                           --suppressions=${CMAKE_CURRENT_SOURCE_DIR}/valgrind.sup
+                           --gen-suppressions=all
+                           ${EXE} ${CONFIG_FILE}
+                      TEST_DEPENDS test_soca_${ARG_NAME}
+                    )
   endif()
 endfunction()
 
