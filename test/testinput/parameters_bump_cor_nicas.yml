@@ -4,19 +4,19 @@ geometry:
   num_sno_lev: 1
   mom6_input_nml: ./inputnml/input.nml
 
-input variables: &soca_vars  [socn, tocn, ssh]
+input variables: &soca_vars  [hocn, socn, tocn, ssh]
 
 background:
   read_from_file: 1
   date: &date 2018-04-15T00:00:00Z
   basename: ./INPUT/
   ocn_filename: MOM.res.nc
-  ice_filename: ice_model.res.nc
-  state variables: [cicen, hicen, hocn, socn, tocn, ssh]
+  #ice_filename: ice_model.res.nc
+  state variables: [hocn, socn, tocn, ssh]
 
 bump:
   default_seed: 1
-  prefix: soca
+  prefix: bump3d
   datadir: ./bump
   method: cor
   strategy: specific_univariate
