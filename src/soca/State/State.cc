@@ -39,7 +39,7 @@ namespace soca {
   }
   // -----------------------------------------------------------------------------
   State::State(const Geometry & geom, const eckit::Configuration & file)
-    : time_(9999, 1, 1, 1, 0, 0),
+    : time_(),
       vars_(file, "state variables"),
       geom_(new Geometry(geom))
   {
@@ -78,13 +78,6 @@ namespace soca {
     soca_state_copy_f90(toFortran(), rhs.toFortran());
     return *this;
   }
-  // -----------------------------------------------------------------------------
-  /// Interpolate full fields
-  // -----------------------------------------------------------------------------
-  void State::changeResolution(const State & other) {
-    soca_state_change_resol_f90(toFortran(), other.keyFlds_);
-  }
-
   // -----------------------------------------------------------------------------
   /// Rotations
   // -----------------------------------------------------------------------------
