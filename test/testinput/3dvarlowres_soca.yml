@@ -17,12 +17,6 @@ cost function:
     geom_grid_file: soca_gridspec.nc
     mom6_input_nml: ./inputnml/input.nml
 
-  model:
-    name: SOCA
-    tstep: PT1H
-    advance_mom6: 0
-    model variables: *soca_vars
-
   background:
     read_from_file: 1
     basename: ./INPUT/
@@ -82,7 +76,7 @@ cost function:
       filter variables: [tocn, socn, ssh]
       input variables: *soca_vars
       output variables: *soca_vars
-   
+
     - variable change: BalanceSOCA
       dsdtmax: 0.1
       dsdzmin: 3.0e-6
@@ -181,11 +175,6 @@ variational:
       num_sno_lev: 1
       geom_grid_file: soca_gridspec.small.nc
       mom6_input_nml: ./inputnml/input_small.nml
-    linear model:
-      variable change: Identity
-      name: IdTLM
-      tstep: PT1H
-      lm variables: [tocn, socn, ssh, hocn]
     ninner: 5
     gradient norm reduction: 1e-15
     test: on
