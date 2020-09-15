@@ -2,16 +2,16 @@ geometry:
   num_ice_cat: 5
   num_ice_lev: 4
   num_sno_lev: 1
-  mom6_input_nml: ./inputnml/input.nml
+  mom6_input_nml: ./inputnml/input_small.nml
+  geom_grid_file: soca_gridspec.small.nc
 
 input variables: &soca_vars  [hocn, socn, tocn, ssh]
 
 background:
   read_from_file: 1
   date: &date 2018-04-15T00:00:00Z
-  basename: ./INPUT/
-  ocn_filename: MOM.res.nc
-  #ice_filename: ice_model.res.nc
+  basename: ./Data/
+  ocn_filename: ocn.remapped.fc.2018-04-15T00:00:00Z.PT0S.nc
   state variables: [hocn, socn, tocn, ssh]
 
 bump:
@@ -30,5 +30,17 @@ bump:
   mpicom: 2
   forced_radii: 1
   date: *date
-  rh: 3000.0e3
-  rv: 5
+  rh: 6000.0e3
+  rv: 100
+
+output:
+- datadir: bump
+  date: *date
+  exp: parameters_bump_cor_nicas.cor_rh
+  parameter: cor_rh
+  type: an
+- datadir: bump
+  date: *date
+  exp: parameters_bump_cor_nicas.cor_rv
+  parameter: cor_rv
+  type: an
