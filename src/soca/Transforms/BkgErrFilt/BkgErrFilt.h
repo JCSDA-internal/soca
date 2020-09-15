@@ -46,7 +46,6 @@ class BkgErrFilt: public util::Printable {
  private:
   void print(std::ostream &) const override;
   int keyFtnConfig_;
-  Geometry geom_;
 };
 // -----------------------------------------------------------------------------
 

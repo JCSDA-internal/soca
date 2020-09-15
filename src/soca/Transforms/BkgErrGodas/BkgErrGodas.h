@@ -47,8 +47,6 @@ class BkgErrGodas: public util::Printable {
  private:
   void print(std::ostream &) const override;
   int keyFtnConfig_;
-  State traj_lr_;
-  Geometry geom_;
 };
 // -----------------------------------------------------------------------------
 

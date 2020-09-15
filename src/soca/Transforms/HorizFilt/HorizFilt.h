@@ -51,7 +51,6 @@ class HorizFilt: public util::Printable {
   int keyFtnConfig_;
   std::unique_ptr<const Geometry> geom_;
   oops::Variables vars_;
-  const State traj_;
   unsigned int niter_;
 };
 // -----------------------------------------------------------------------------

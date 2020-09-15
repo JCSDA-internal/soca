@@ -25,16 +25,18 @@ namespace soca {
   Balance::Balance(const State & bkg,
                    const State & traj,
                    const Geometry & geom,
-                   const eckit::Configuration & conf) :
-          traj_lr_(geom, traj), geom_(geom) {
+                   const eckit::Configuration & conf) {
     oops::Log::trace() << "soca::Balance::setup " << std::endl;
     const eckit::Configuration * configc = &conf;
+
+    // Interpolate trajectory to the geom resolution
+    State traj_at_geomres(geom, traj);
 
     // Compute Jacobians of the balance wrt traj
     soca_balance_setup_f90(keyFtnConfig_,
                            &configc,
-                           traj_lr_.toFortran(),
-                           geom_.toFortran());
+                           traj_at_geomres.toFortran(),
+                           geom.toFortran());
   }
   // -----------------------------------------------------------------------------
   Balance::~Balance() {
