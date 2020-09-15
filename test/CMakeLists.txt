@@ -14,6 +14,9 @@ list( APPEND soca_test_input
   testinput/dirac_horizfilt.yml
   testinput/dirac_soca_cov.yml
   testinput/dirac_socahyb_cov.yml
+  testinput/enshofx_1.yml
+  testinput/enshofx_2.yml
+  testinput/enshofx_3.yml
   testinput/enshofx.yml
   testinput/enspert.yml
   testinput/ensrecenter.yml
