@@ -391,6 +391,13 @@ soca_add_test( NAME gridgen
                EXE  soca_gridgen.x
                NOCOMPARE )
 
+# Remapping MOM6 (horiz+vertical intterpolation)
+soca_add_test( NAME convertstate
+               EXE  soca_convertstate.x
+               TOL  2e-5 0
+               NOTRAPFPE
+               TEST_DEPENDS test_soca_gridgen )
+
 # Test of read/write restart for MOM6&SIS2, model advance = Id
 soca_add_test( NAME forecast_identity
                EXE  soca_forecast.x
@@ -579,7 +586,8 @@ soca_add_test( NAME ensrecenter
 
 soca_add_test( NAME parameters_bump_cor_nicas
                EXE  soca_parameters.x
-               TEST_DEPENDS test_soca_gridgen_small )
+               TEST_DEPENDS test_soca_gridgen_small
+                            test_soca_convertstate)
 
 
 # Dirac tests
@@ -708,10 +716,3 @@ soca_add_test( NAME checkpointmodel
                EXE  soca_checkpoint_model.x
                NOTRAPFPE
                TEST_DEPENDS test_soca_3dvar_godas)
-
-# Remapping MOM6 (horiz+vertical intterpolation)
-soca_add_test( NAME convertstate
-               EXE  soca_convertstate.x
-               TOL  2e-5 0
-               NOTRAPFPE
-               TEST_DEPENDS test_soca_gridgen )
