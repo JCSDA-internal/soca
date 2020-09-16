@@ -26,6 +26,7 @@
 #include "oops/util/Duration.h"
 #include "oops/util/ObjectCounter.h"
 #include "oops/util/Printable.h"
+#include "oops/util/Serializable.h"
 
 // Forward declarations
 namespace atlas {
@@ -60,6 +61,7 @@ namespace soca {
 
   class Increment : public oops::GeneralizedDepartures,
     public util::Printable,
+    public util::Serializable,
     private util::ObjectCounter<Increment> {
    public:
       static const std::string classname() {return "soca::Increment";}
@@ -103,6 +105,11 @@ namespace soca {
       util::DateTime & validTime();
       void updateTime(const util::Duration & dt);
 
+      /// Serialize and deserialize
+      size_t serialSize() const override {return 0;}
+      void serialize(std::vector<double> &) const override {}
+      void deserialize(const std::vector<double> &, size_t &) override {}
+
       /// Other
       void accumul(const double &, const State &);
       int & toFortran() {return keyFlds_;}
@@ -112,7 +119,7 @@ namespace soca {
 
       /// Data
    private:
-      void print(std::ostream &) const;
+      void print(std::ostream &) const override;
 
       F90flds keyFlds_;
       oops::Variables vars_;
