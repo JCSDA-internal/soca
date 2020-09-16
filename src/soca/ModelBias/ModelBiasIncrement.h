@@ -9,6 +9,7 @@
 #define SOCA_MODELBIAS_MODELBIASINCREMENT_H_
 
 #include <ostream>
+#include <vector>
 
 #include "oops/util/Printable.h"
 #include "oops/util/Serializable.h"
