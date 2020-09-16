@@ -198,6 +198,22 @@
    fun:operator<<
    fun:_ZNK4oops6CostJoIN4soca6TraitsEN3ufo9ObsTraitsEE7printJoERKNS_10DeparturesIS4_EES9_
 }
+{
+  <insert_a_suppression_name_here>
+  Memcheck:Cond
+  ...
+  fun:operator<<
+  ...
+  fun:inverseMultiplyNicas
+}
+{
+  <insert_a_suppression_name_here>
+  Memcheck:Value8
+  ...
+  fun:operator<<
+  ...
+  fun:inverseMultiplyNicas
+}
 
 
 
