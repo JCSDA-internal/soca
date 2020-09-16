@@ -7,6 +7,7 @@ module soca_increment_mod
 
 use atlas_module, only: atlas_fieldset, atlas_field, atlas_real
 use soca_fields_mod
+use soca_convert_state_mod
 use soca_geom_mod, only : soca_geom
 use soca_geom_iter_mod, only : soca_geom_iter
 use kinds, only: kind_real
@@ -34,6 +35,7 @@ contains
   procedure :: dirac      => soca_increment_dirac
   procedure :: random     => soca_increment_random
   procedure :: schur      => soca_increment_schur
+  procedure :: convert    => soca_increment_change_resol
 end type
 
 
@@ -417,6 +419,29 @@ subroutine soca_increment_from_atlas(self, geom, vars, vdate, afieldset)
   end do
 
 end subroutine soca_increment_from_atlas
+
+! ------------------------------------------------------------------------------
+!> Change resolution
+subroutine soca_increment_change_resol(self, rhs)
+  class(soca_increment), intent(inout) :: self  ! target
+  class(soca_increment),    intent(in) :: rhs   ! source
+
+  integer :: n
+  type(soca_convertstate_type) :: convert_state
+  type(soca_field), pointer :: field1, field2, hocn1, hocn2
+
+  call rhs%get("hocn", hocn1)
+  call self%get("hocn", hocn2)
+
+  call convert_state%setup(rhs%geom, self%geom, hocn1, hocn2)
+  do n = 1, size(rhs%fields)
+    if (trim(rhs%fields(n)%name)=="hocn") cycle ! skip layer thickness
+    field1 => rhs%fields(n)
+    call self%get(trim(field1%name),field2)
+    call convert_state%change_resol2d(field1, field2, rhs%geom, self%geom)
+  end do !n
+  call convert_state%clean()
+end subroutine soca_increment_change_resol
 
 
 end module soca_increment_mod

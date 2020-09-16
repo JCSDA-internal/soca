@@ -9,6 +9,7 @@ use fckit_configuration_module, only: fckit_configuration
 use datetime_mod, only: datetime
 use kinds, only: kind_real
 use soca_fields_mod
+use soca_geom_mod
 use soca_increment_mod
 use soca_state_mod
 
@@ -20,7 +21,7 @@ public :: soca_bkgerrfilt_config, &
 
 !> Fortran derived type to hold configuration
 type :: soca_bkgerrfilt_config
-   type(soca_state),    pointer :: bkg
+   type(soca_geom),     pointer :: geom
    type(soca_fields)            :: filt
    real(kind=kind_real)         :: efold_z           ! E-folding scale
    real(kind=kind_real)         :: scale             ! Rescaling factor
@@ -34,10 +35,11 @@ contains
 
 ! ------------------------------------------------------------------------------
 !> Setup the static background error
-subroutine soca_bkgerrfilt_setup(f_conf, self, bkg)
+subroutine soca_bkgerrfilt_setup(f_conf, self, bkg, geom)
   type(fckit_configuration),    intent(in)    :: f_conf
   type(soca_bkgerrfilt_config), intent(inout) :: self
-  type(soca_state),  target,    intent(in)    :: bkg
+  type(soca_state),                intent(in) :: bkg
+  type(soca_geom),        target, intent(in ) :: geom
 
   integer :: isc, iec, jsc, jec, i, j, k
   real(kind=kind_real) :: efold
@@ -53,8 +55,8 @@ subroutine soca_bkgerrfilt_setup(f_conf, self, bkg)
   call f_conf%get_or_die("rescale_bkgerr", self%scale)
   call f_conf%get_or_die("efold_z", self%efold_z)
 
-  ! Associate background
-  self%bkg => bkg
+  ! Associate geometry
+  self%geom => geom
 
   call self%filt%get("tocn", tocn)
   call self%filt%get("socn", socn)
@@ -63,8 +65,8 @@ subroutine soca_bkgerrfilt_setup(f_conf, self, bkg)
   call bkg%get("layer_depth", layer_depth)
 
   ! Setup rescaling and masks
-  isc=bkg%geom%isc ; self%isc=isc ; iec=bkg%geom%iec ; self%iec=iec
-  jsc=bkg%geom%jsc ; self%jsc=jsc ; jec=bkg%geom%jec ; self%jec=jec
+  isc=geom%isc ; self%isc=isc ; iec=geom%iec ; self%iec=iec
+  jsc=geom%jsc ; self%jsc=jsc ; jec=geom%jec ; self%jec=jec
   do i = isc, iec
      do j = jsc, jec
         if (sum(hocn%val(i,j,:)).gt.self%ocn_depth_min) then
@@ -125,7 +127,7 @@ subroutine soca_bkgerrfilt_mult(self, dxa, dxm)
     call dxm%get(field_a%name, field_m)
     do i = self%isc, self%iec
       do j = self%jsc, self%jec
-        if (self%bkg%geom%mask2d(i,j).eq.1) then
+        if (self%geom%mask2d(i,j).eq.1) then
           field_m%val(i,j,:) = field_f%val(i,j,:) * field_a%val(i,j,:)
         else
           field_m%val(i,j,:) = 0.0_kind_real
@@ -138,5 +140,3 @@ end subroutine soca_bkgerrfilt_mult
 ! ------------------------------------------------------------------------------
 
 end module soca_bkgerrfilt_mod
-
-

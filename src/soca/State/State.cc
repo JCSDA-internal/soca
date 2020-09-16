@@ -39,7 +39,9 @@ namespace soca {
   }
   // -----------------------------------------------------------------------------
   State::State(const Geometry & geom, const eckit::Configuration & file)
-    : time_(), vars_(file, "state variables"), geom_(new Geometry(geom))
+    : time_(),
+      vars_(file, "state variables"),
+      geom_(new Geometry(geom))
   {
     util::DateTime * dtp = &time_;
     oops::Variables vars(vars_);
@@ -76,7 +78,6 @@ namespace soca {
     soca_state_copy_f90(toFortran(), rhs.toFortran());
     return *this;
   }
-
   // -----------------------------------------------------------------------------
   /// Rotations
   // -----------------------------------------------------------------------------

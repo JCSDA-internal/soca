@@ -1,0 +1,191 @@
+# common filters used later on
+_: &land_mask
+  filter: Domain Check
+  where:
+  - variable: {name: sea_area_fraction@GeoVaLs}
+    minvalue: 0.5
+
+cost function:
+  cost type: 3D-Var
+  window begin: &date_begin 2018-04-14T00:00:00Z
+  window length: P2D
+  analysis variables: &soca_vars [socn, tocn, ssh, hocn]
+  geometry:
+    num_ice_cat: 5
+    num_ice_lev: 4
+    num_sno_lev: 1
+    geom_grid_file: soca_gridspec.nc
+    mom6_input_nml: ./inputnml/input.nml
+
+  background:
+    read_from_file: 1
+    basename: ./INPUT/
+    ocn_filename: MOM.res.nc
+    date: &bkg_date 2018-04-15T00:00:00Z
+    state variables: *soca_vars
+
+  background error:
+    covariance model: SocaError
+    prefix: soca
+    datadir: ./bump_lowres
+    strategy: specific_univariate
+    load_nicas: 1
+    lsqrt: 1
+    mpicom: 2
+    date: 2018-04-15T00:00:00Z
+    analysis variables: [tocn, socn, ssh] #*soca_vars
+
+    variable changes:
+
+    - variable change: VertConvSOCA
+      Lz_min: 2.0
+      Lz_mld: 1
+      Lz_mld_max: 500.0
+      scale_layer_thick: 1.5
+      input variables: *soca_vars
+      output variables: *soca_vars
+
+    - variable change: BkgErrFILT
+      ocean_depth_min: 1000 # [m]
+      rescale_bkgerr: 1.0
+      efold_z: 2500.0       # [m]
+      input variables: *soca_vars
+      output variables: *soca_vars
+
+    - variable change: BkgErrGODAS
+      t_min: 0.1
+      t_max: 2.0
+      t_dz:  20.0
+      t_efold: 500.0
+      s_min: 0.0
+      s_max: 0.25
+      ssh_min: 0.0   # value at EQ
+      ssh_max: 0.1   # value in Extratropics
+      ssh_phi_ex: 20 # lat of transition from extratropics
+      cicen_min: 0.1
+      cicen_max: 0.5
+      hicen_min: 10.0
+      hicen_max: 100.0
+      input variables: *soca_vars
+      output variables: *soca_vars
+
+    - variable change: HorizFiltSOCA
+      niter: 1
+      scale_flow: 0.5
+      scale_dist: 1e6
+      filter variables: [tocn, socn, ssh]
+      input variables: *soca_vars
+      output variables: *soca_vars
+
+    - variable change: BalanceSOCA
+      dsdtmax: 0.1
+      dsdzmin: 3.0e-6
+      dtdzmin: 1.0e-6
+      nlayers: 2
+      input variables: *soca_vars
+      output variables: *soca_vars
+
+  observations:
+
+  - obs space:
+      name: SeaSurfaceTemp
+      obsdataout: {obsfile: ./Data/sst.out.nc}
+      obsdatain:  {obsfile: ./Data/sst.nc}
+      simulated variables: [sea_surface_temperature]
+    obs operator:
+      name: Identity
+    obs error:
+      covariance model: diagonal
+    obs filters:
+    - *land_mask
+    - filter: Bounds Check
+      minvalue: 5.0
+      maxvalue: 30.0
+    - filter: Background Check
+      threshold: 8
+    - filter: Thinning
+      amount: 0.1
+      random seed: 0
+
+  - obs space:
+      name: SeaSurfaceSalinity
+      obsdataout: {obsfile: ./Data/sss.out.nc}
+      obsdatain:  {obsfile: ./Data/sss.nc}
+      simulated variables: [sea_surface_salinity]
+    obs operator:
+      name: Identity
+    obs error:
+      covariance model: diagonal
+    obs filters:
+    - *land_mask
+    - filter: Domain Check
+      where:
+      - variable: {name: sea_surface_temperature@GeoVaLs}
+        minvalue: 15
+
+  - obs space:
+      name: ADT
+      obsdataout: {obsfile: ./Data/adt.out.nc}
+      obsdatain:  {obsfile: ./Data/adt.nc}
+      simulated variables: [obs_absolute_dynamic_topography]
+    obs operator:
+      name: ADT
+    obs error:
+      covariance model: diagonal
+    obs filters:
+    - *land_mask
+    - filter: Domain Check
+      where:
+      - variable: {name: sea_floor_depth_below_sea_surface@GeoVaLs}
+        minvalue: 2000
+
+  - obs space:
+      name: InsituTemperature
+      obsdataout: {obsfile: ./Data/prof.T.out.nc}
+      obsdatain:  {obsfile: ./Data/prof.nc}
+      simulated variables: [sea_water_temperature]
+    obs operator:
+      name: InsituTemperature
+    obs error:
+      covariance model: diagonal
+    obs filters:
+    - *land_mask
+    - filter: Background Check
+      threshold: 5
+
+  - obs space:
+      name: InsituSalinity
+      obsdataout: {obsfile: ./Data/prof.S.out.nc}
+      obsdatain:  {obsfile: ./Data/prof.nc}
+      simulated variables: [sea_water_salinity]
+    obs operator:
+      name: MarineVertInterp
+    obs error:
+      covariance model: diagonal
+    obs filters:
+    - *land_mask
+
+variational:
+  minimizer:
+    algorithm: RPCG
+  iterations:
+  - geometry:
+      num_ice_cat: 5
+      num_ice_lev: 4
+      num_sno_lev: 1
+      geom_grid_file: soca_gridspec.small.nc
+      mom6_input_nml: ./inputnml/input_small.nml
+    ninner: 5
+    gradient norm reduction: 1e-15
+    test: on
+    diagnostics:
+      departures: ombg
+
+output:
+  datadir: Data
+  exp: 3dvarsoca
+  type: an
+
+final:
+  diagnostics:
+    departures: oman

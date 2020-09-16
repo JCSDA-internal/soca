@@ -25,11 +25,17 @@ namespace soca {
   BkgErrFilt::BkgErrFilt(const State & bkg,
                  const State & traj,
                  const Geometry & geom,
-                 const eckit::Configuration & conf): traj_(traj) {
+                 const eckit::Configuration & conf) {
     const eckit::Configuration * configc = &conf;
+
+    // Interpolate trajectory to the geom resolution
+    State traj_at_geomres(geom, traj);
+
+    // Setup background error filter
     soca_bkgerrfilt_setup_f90(keyFtnConfig_,
                               &configc,
-                              traj_.toFortran());
+                              traj_at_geomres.toFortran(),
+                              geom.toFortran());
   }
   // -----------------------------------------------------------------------------
   BkgErrFilt::~BkgErrFilt() {

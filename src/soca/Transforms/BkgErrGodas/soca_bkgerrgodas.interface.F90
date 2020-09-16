@@ -7,6 +7,8 @@ module soca_bkgerrgodas_mod_c
 
 use iso_c_binding
 use fckit_configuration_module, only: fckit_configuration
+use soca_geom_mod
+use soca_geom_mod_c
 use soca_state_mod
 use soca_state_reg
 use soca_increment_mod
@@ -36,22 +38,25 @@ contains
 
 ! ------------------------------------------------------------------------------
 !> Constructor for D (standard deviation of background error)
-subroutine c_soca_bkgerrgodas_setup(c_key_self, c_conf, c_key_bkg) &
+subroutine c_soca_bkgerrgodas_setup(c_key_self, c_conf, c_key_bkg, c_key_geom) &
   bind(c,name='soca_bkgerrgodas_setup_f90')
 
   integer(c_int), intent(inout) :: c_key_self   !< The D structure
   type(c_ptr),       intent(in) :: c_conf       !< The configuration
   integer(c_int), intent(in)    :: c_key_bkg    !< Background field
+  integer(c_int), intent(in)    :: c_key_geom    !< Geometry
 
   type(soca_state), pointer :: bkg
+  type(soca_geom), pointer :: geom
   type(soca_bkgerrgodas_config), pointer :: self
 
   call soca_bkgerrgodas_registry%init()
   call soca_bkgerrgodas_registry%add(c_key_self)
   call soca_bkgerrgodas_registry%get(c_key_self, self)
   call soca_state_registry%get(c_key_bkg, bkg)
+  call soca_geom_registry%get(c_key_geom, geom)
 
-  call soca_bkgerrgodas_setup(fckit_configuration(c_conf), self, bkg)
+  call soca_bkgerrgodas_setup(fckit_configuration(c_conf), self, bkg, geom)
 
 end subroutine c_soca_bkgerrgodas_setup
 

@@ -3,6 +3,7 @@ list( APPEND soca_test_input
   testinput/3dhybfgat.yml
   testinput/3dvar_godas.yml
   testinput/3dvar_soca.yml
+  testinput/3dvarlowres_soca.yml
   testinput/3dvarfgat.yml
   testinput/3dvarfgat_pseudo.yml
   testinput/addincrement.yml
@@ -45,6 +46,7 @@ list( APPEND soca_test_input
   testinput/parameters_bump_loc.yml
   testinput/state.yml
   testinput/static_socaerror_init.yml
+  testinput/static_socaerrorlowres_init.yml
   testinput/static_socaerror_test.yml
   testinput/varchange_ana2model.yml
   testinput/varchange_balance.yml
@@ -61,6 +63,7 @@ list( APPEND soca_test_ref
   testref/3dhybfgat.test
   testref/3dvar_godas.test
   testref/3dvar_soca.test
+  testref/3dvarlowres_soca.test  
   testref/3dvarfgat.test
   testref/3dvarfgat_pseudo.test
   testref/addincrement.test
@@ -219,6 +222,7 @@ endif()
 
 # Create directory for BUMP output
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bump)
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bump_lowres)
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bump-kmask)
 
 # find compare.py provided by oops
@@ -420,6 +424,11 @@ soca_add_test( NAME forecast_pseudo
 
 # Initialize static error covariance model defined in soca, used for 3DVAR
 soca_add_test( NAME static_socaerror_init
+               EXE  soca_staticbinit.x
+               NOCOMPARE
+               TEST_DEPENDS test_soca_gridgen )
+
+soca_add_test( NAME static_socaerrorlowres_init
                EXE  soca_staticbinit.x
                NOCOMPARE
                TEST_DEPENDS test_soca_gridgen )
@@ -647,6 +656,12 @@ soca_add_test( NAME addincrement
                EXE  soca_addincrement.x
                NOCOMPARE
                TEST_DEPENDS 3dvar_godas )
+
+soca_add_test( NAME 3dvarlowres_soca
+               EXE  soca_3dvar.x
+               TOL  0.1 0
+               NOTRAPFPE
+             TEST_DEPENDS test_soca_static_socaerrorsmall_init )
 
 soca_add_test( NAME diffstates
                EXE  soca_diffstates.x
