@@ -256,85 +256,76 @@ end subroutine soca_increment_change_resol_c
 
   ! ------------------------------------------------------------------------------
 
-  subroutine soca_increment_set_atlas_c(c_key_self,c_key_geom,c_vars,c_dt,c_afieldset) &
+  subroutine soca_increment_set_atlas_c(c_key_self,c_key_geom,c_vars,c_afieldset) &
    & bind (c,name='soca_increment_set_atlas_f90')
 
   implicit none
   integer(c_int), intent(in) :: c_key_self
   integer(c_int), intent(in) :: c_key_geom
   type(c_ptr), value, intent(in) :: c_vars
-  type(c_ptr),intent(inout) :: c_dt
   type(c_ptr), intent(in), value :: c_afieldset
 
   type(soca_increment), pointer :: self
   type(soca_geom),  pointer :: geom
   type(oops_variables) :: vars
-  type(datetime) :: fdate
   type(atlas_fieldset) :: afieldset
 
   call soca_increment_registry%get(c_key_self,self)
   call soca_geom_registry%get(c_key_geom, geom)
   vars = oops_variables(c_vars)
-  call c_f_datetime(c_dt, fdate)
   afieldset = atlas_fieldset(c_afieldset)
 
-  call self%set_atlas(geom, vars, fdate, afieldset)
+  call self%set_atlas(geom, vars, afieldset)
 
   end subroutine soca_increment_set_atlas_c
 
   ! ------------------------------------------------------------------------------
 
-  subroutine soca_increment_to_atlas_c(c_key_self,c_key_geom,c_vars,c_dt,c_afieldset) &
+  subroutine soca_increment_to_atlas_c(c_key_self,c_key_geom,c_vars,c_afieldset) &
    & bind (c,name='soca_increment_to_atlas_f90')
 
   implicit none
   integer(c_int), intent(in) :: c_key_self
   integer(c_int), intent(in) :: c_key_geom
   type(c_ptr), value, intent(in) :: c_vars
-  type(c_ptr),intent(inout) :: c_dt
   type(c_ptr), intent(in), value :: c_afieldset
 
   type(soca_increment), pointer :: self
   type(soca_geom),  pointer :: geom
   type(oops_variables) :: vars
-  type(datetime) :: fdate
   type(atlas_fieldset) :: afieldset
 
   call soca_increment_registry%get(c_key_self,self)
   call soca_geom_registry%get(c_key_geom, geom)
   vars = oops_variables(c_vars)
-  call c_f_datetime(c_dt, fdate)
   afieldset = atlas_fieldset(c_afieldset)
 
-  call self%to_atlas(geom, vars, fdate, afieldset)
+  call self%to_atlas(geom, vars, afieldset)
 
   end subroutine soca_increment_to_atlas_c
 
   ! ------------------------------------------------------------------------------
 
-  subroutine soca_increment_from_atlas_c(c_key_self,c_key_geom,c_vars,c_dt,c_afieldset) &
+  subroutine soca_increment_from_atlas_c(c_key_self,c_key_geom,c_vars,c_afieldset) &
    & bind (c,name='soca_increment_from_atlas_f90')
 
   implicit none
   integer(c_int), intent(in) :: c_key_self
   integer(c_int), intent(in) :: c_key_geom
   type(c_ptr), value, intent(in) :: c_vars
-  type(c_ptr),intent(inout) :: c_dt
   type(c_ptr), intent(in), value :: c_afieldset
 
   type(soca_increment), pointer :: self
   type(soca_geom),  pointer :: geom
   type(oops_variables) :: vars
-  type(datetime) :: fdate
   type(atlas_fieldset) :: afieldset
 
   call soca_increment_registry%get(c_key_self, self)
   call soca_geom_registry%get(c_key_geom, geom)
   vars = oops_variables(c_vars)
-  call c_f_datetime(c_dt, fdate)
   afieldset = atlas_fieldset(c_afieldset)
 
-  call self%from_atlas(geom, vars, fdate, afieldset)
+  call self%from_atlas(geom, vars, afieldset)
 
   end subroutine soca_increment_from_atlas_c
 

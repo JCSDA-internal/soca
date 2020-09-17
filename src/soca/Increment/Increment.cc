@@ -190,21 +190,15 @@ namespace soca {
   /// ATLAS
   // -----------------------------------------------------------------------------
   void Increment::setAtlas(atlas::FieldSet * afieldset) const {
-    const util::DateTime * dtp = &time_;
-    soca_increment_set_atlas_f90(toFortran(), geom_->toFortran(), vars_, &dtp,
-                                 afieldset->get());
+    soca_increment_set_atlas_f90(toFortran(), geom_->toFortran(), vars_, afieldset->get());
   }
   // -----------------------------------------------------------------------------
   void Increment::toAtlas(atlas::FieldSet * afieldset) const {
-    const util::DateTime * dtp = &time_;
-    soca_increment_to_atlas_f90(toFortran(), geom_->toFortran(), vars_, &dtp,
-                                afieldset->get());
+    soca_increment_to_atlas_f90(toFortran(), geom_->toFortran(), vars_, afieldset->get());
   }
   // -----------------------------------------------------------------------------
   void Increment::fromAtlas(atlas::FieldSet * afieldset) {
-    const util::DateTime * dtp = &time_;
-    soca_increment_from_atlas_f90(toFortran(), geom_->toFortran(), vars_, &dtp,
-                                  afieldset->get());
+    soca_increment_from_atlas_f90(toFortran(), geom_->toFortran(), vars_, afieldset->get());
   }
   // -----------------------------------------------------------------------------
   /// I/O and diagnostics

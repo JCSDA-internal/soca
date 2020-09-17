@@ -209,22 +209,17 @@ end subroutine soca_increment_dirac
 
 
 ! ------------------------------------------------------------------------------
-subroutine soca_increment_set_atlas(self, geom, vars, vdate, afieldset)
+subroutine soca_increment_set_atlas(self, geom, vars, afieldset)
   class(soca_increment), intent(in)    :: self
   type(soca_geom),       intent(in)    :: geom
   type(oops_variables),  intent(in)    :: vars
-  type(datetime),        intent(in)    :: vdate
   type(atlas_fieldset),  intent(inout) :: afieldset
 
   integer :: jvar, i, jz
   logical :: var_found
-  character(len=20) :: sdate
   character(len=1024) :: fieldname
   type(soca_field), pointer :: field
   type(atlas_field) :: afield
-
-  ! Set date
-  call datetime_to_string(vdate,sdate)
 
   do jvar = 1,vars%nvars()
     var_found = .false.
@@ -234,10 +229,10 @@ subroutine soca_increment_set_atlas(self, geom, vars, vdate, afieldset)
         select case (trim(field%name))
         case ('hicen', 'cicen')
           do jz=1,field%nz
-            write(fieldname,'(a,a,i2.2,a,a)') trim(vars%variable(jvar)),'_',jz,'_',sdate
-            if (.not.afieldset%has_field(trim(fieldname))) then
+            write(fieldname,'(a,a,i2.2)') trim(vars%variable(jvar)),'_',jz
+            if (.not.afieldset%has_field(fieldname)) then
               ! Create field
-              afield = geom%afunctionspace%create_field(name=trim(fieldname),kind=atlas_real(kind_real),levels=0)
+              afield = geom%afunctionspace%create_field(name=fieldname,kind=atlas_real(kind_real),levels=0)
 
               ! Add field
               call afieldset%add(afield)
@@ -247,10 +242,9 @@ subroutine soca_increment_set_atlas(self, geom, vars, vdate, afieldset)
             end if
           end do
         case default
-          fieldname = trim(vars%variable(jvar))//'_'//sdate
-          if (.not.afieldset%has_field(trim(fieldname))) then
+          if (.not.afieldset%has_field(vars%variable(jvar))) then
             ! Create field
-            afield = geom%afunctionspace%create_field(name=trim(fieldname),kind=atlas_real(kind_real),levels=field%nz)
+            afield = geom%afunctionspace%create_field(name=vars%variable(jvar),kind=atlas_real(kind_real),levels=field%nz)
 
             ! Add field
             call afieldset%add(afield)
@@ -272,23 +266,18 @@ end subroutine soca_increment_set_atlas
 
 
 ! ------------------------------------------------------------------------------
-subroutine soca_increment_to_atlas(self, geom, vars, vdate, afieldset)
+subroutine soca_increment_to_atlas(self, geom, vars, afieldset)
   class(soca_increment), intent(in)    :: self
   type(soca_geom),       intent(in)    :: geom
   type(oops_variables),  intent(in)    :: vars
-  type(datetime),        intent(in)    :: vdate
   type(atlas_fieldset),  intent(inout) :: afieldset
 
   integer :: jvar, i, jz
   real(kind=kind_real), pointer :: real_ptr_1(:), real_ptr_2(:,:)
   logical :: var_found
-  character(len=20) :: sdate
   character(len=1024) :: fieldname
   type(soca_field), pointer :: field
   type(atlas_field) :: afield
-
-  ! Set date
-  call datetime_to_string(vdate,sdate)
 
   do jvar = 1,vars%nvars()
     var_found = .false.
@@ -298,13 +287,13 @@ subroutine soca_increment_to_atlas(self, geom, vars, vdate, afieldset)
         select case (trim(field%name))
         case ('hicen', 'cicen')
           do jz=1,field%nz
-            write(fieldname,'(a,a,i2.2,a,a)') trim(vars%variable(jvar)),'_',jz,'_',sdate
-            if (afieldset%has_field(trim(fieldname))) then
+            write(fieldname,'(a,a,i2.2)') trim(vars%variable(jvar)),'_',jz
+            if (afieldset%has_field(fieldname)) then
               ! Get field
-              afield = afieldset%field(trim(fieldname))
+              afield = afieldset%field(fieldname)
             else
               ! Create field
-              afield = geom%afunctionspace%create_field(name=trim(fieldname),kind=atlas_real(kind_real),levels=0)
+              afield = geom%afunctionspace%create_field(name=fieldname,kind=atlas_real(kind_real),levels=0)
 
               ! Add field
               call afieldset%add(afield)
@@ -318,13 +307,12 @@ subroutine soca_increment_to_atlas(self, geom, vars, vdate, afieldset)
             call afield%final()
           end do
         case default
-          fieldname = trim(vars%variable(jvar))//'_'//sdate
-          if (afieldset%has_field(trim(fieldname))) then
+          if (afieldset%has_field(vars%variable(jvar))) then
             ! Get field
-            afield = afieldset%field(trim(fieldname))
+            afield = afieldset%field(vars%variable(jvar))
           else
             ! Create field
-            afield = geom%afunctionspace%create_field(name=trim(fieldname),kind=atlas_real(kind_real),levels=field%nz)
+            afield = geom%afunctionspace%create_field(name=vars%variable(jvar),kind=atlas_real(kind_real),levels=field%nz)
 
             ! Add field
             call afieldset%add(afield)
@@ -352,23 +340,18 @@ end subroutine soca_increment_to_atlas
 
 
 ! ------------------------------------------------------------------------------
-subroutine soca_increment_from_atlas(self, geom, vars, vdate, afieldset)
+subroutine soca_increment_from_atlas(self, geom, vars, afieldset)
   class(soca_increment), intent(inout) :: self
   type(soca_geom),       intent(in)    :: geom
   type(oops_variables),  intent(in)    :: vars
-  type(datetime),        intent(in)    :: vdate
   type(atlas_fieldset),  intent(in)    :: afieldset
 
   integer :: jvar, i, jz
   real(kind=kind_real), pointer :: real_ptr_1(:), real_ptr_2(:,:)
   logical :: umask(geom%isc:geom%iec,geom%jsc:geom%jec),var_found
-  character(len=20) :: sdate
   character(len=1024) :: fieldname
   type(soca_field), pointer :: field
   type(atlas_field) :: afield
-
-  ! Set date
-  call datetime_to_string(vdate,sdate)
 
   ! Initialization
   call self%zeros()
@@ -383,8 +366,8 @@ subroutine soca_increment_from_atlas(self, geom, vars, vdate, afieldset)
         case ('hicen', 'cicen')
           do jz=1,field%nz
             ! Get field
-            write(fieldname,'(a,a,i2.2,a,a)') trim(vars%variable(jvar)),'_',jz,'_',sdate
-            afield = afieldset%field(trim(fieldname))
+            write(fieldname,'(a,a,i2.2)') trim(vars%variable(jvar)),'_',jz
+            afield = afieldset%field(fieldname)
 
             ! Copy data
             call afield%data(real_ptr_1)
@@ -396,8 +379,7 @@ subroutine soca_increment_from_atlas(self, geom, vars, vdate, afieldset)
           end do
         case default
           ! Get field
-          fieldname = trim(vars%variable(jvar))//'_'//sdate
-          afield = afieldset%field(trim(fieldname))
+          afield = afieldset%field(vars%variable(jvar))
 
           ! Copy data
           call afield%data(real_ptr_2)

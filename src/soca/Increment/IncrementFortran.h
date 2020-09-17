@@ -57,17 +57,14 @@ namespace soca {
     void soca_increment_set_atlas_f90(const F90flds &,
                                   const F90geom &,
                                   const oops::Variables &,
-                                  const util::DateTime * const *,
                                   atlas::field::FieldSetImpl *);
     void soca_increment_to_atlas_f90(const F90flds &,
                                  const F90geom &,
                                  const oops::Variables &,
-                                 const util::DateTime * const *,
                                  atlas::field::FieldSetImpl *);
     void soca_increment_from_atlas_f90(const F90flds &,
                                    const F90geom &,
                                    const oops::Variables &,
-                                   const util::DateTime * const *,
                                    atlas::field::FieldSetImpl *);
     void soca_increment_gpnorm_f90(const F90flds &, const int &, double &);
     void soca_increment_getpoint_f90(const F90flds &, const F90iter &, double &,

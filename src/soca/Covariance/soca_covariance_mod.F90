@@ -237,8 +237,6 @@ subroutine soca_bump_correlation(self, horiz_convol, geom, f_conf, domain)
   call f_grid%set('nl', 1)
   call f_grid%set('nv', 1)
   call f_grid%set('variables', ['var'])
-  call f_grid%set('nts', 1)
-  call f_grid%set('timeslots', ['00'])
 
   ! Wrap functionspace
   afunctionspace = atlas_functionspace(geom%afunctionspace%c_ptr())
@@ -273,7 +271,7 @@ subroutine soca_bump_correlation(self, horiz_convol, geom, f_conf, domain)
   if (horiz_convol%nam%new_nicas) then
      ! rh
      rh = atlas_fieldset()
-     afield = geom%afunctionspace%create_field('var_00',kind=atlas_real(kind_real),levels=0)
+     afield = geom%afunctionspace%create_field('var',kind=atlas_real(kind_real),levels=0)
      call rh%add(afield)
      call afield%data(real_ptr_1)
      if (domain.eq.'ocn') real_ptr_1 = self%ocn_l0+pack(geom%rossby_radius(geom%isc:geom%iec,geom%jsc:geom%jec), .true.)
@@ -282,7 +280,7 @@ subroutine soca_bump_correlation(self, horiz_convol, geom, f_conf, domain)
 
      ! rv
      rv = atlas_fieldset()
-     afield = geom%afunctionspace%create_field('var_00',kind=atlas_real(kind_real),levels=0)
+     afield = geom%afunctionspace%create_field('var',kind=atlas_real(kind_real),levels=0)
      call rv%add(afield)
      call afield%data(real_ptr_1)
      real_ptr_1 = 1.0
