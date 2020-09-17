@@ -14,6 +14,7 @@
 
 #include <ostream>
 #include <string>
+#include <vector>
 
 #include <boost/shared_ptr.hpp>
 
@@ -102,6 +103,11 @@ namespace soca {
       const util::DateTime & validTime() const;
       util::DateTime & validTime();
       void updateTime(const util::Duration & dt);
+
+      /// Serialization
+      size_t serialSize() const;
+      void serialize(std::vector<double> &) const;
+      void deserialize(const std::vector<double> &, size_t &);
 
       /// Other
       void accumul(const double &, const State &);

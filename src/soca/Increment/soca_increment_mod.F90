@@ -23,19 +23,24 @@ type, public, extends(soca_fields) :: soca_increment
 
 contains
   ! get/set a single point
-  procedure :: getpoint   => soca_increment_getpoint
-  procedure :: setpoint   => soca_increment_setpoint
+  procedure :: getpoint    => soca_increment_getpoint
+  procedure :: setpoint    => soca_increment_setpoint
 
   ! atlas
-  procedure :: set_atlas  => soca_increment_set_atlas
-  procedure :: to_atlas   => soca_increment_to_atlas
-  procedure :: from_atlas => soca_increment_from_atlas
+  procedure :: set_atlas   => soca_increment_set_atlas
+  procedure :: to_atlas    => soca_increment_to_atlas
+  procedure :: from_atlas  => soca_increment_from_atlas
 
   ! misc
-  procedure :: dirac      => soca_increment_dirac
-  procedure :: random     => soca_increment_random
-  procedure :: schur      => soca_increment_schur
-  procedure :: convert    => soca_increment_change_resol
+  procedure :: dirac       => soca_increment_dirac
+  procedure :: random      => soca_increment_random
+  procedure :: schur       => soca_increment_schur
+  procedure :: convert     => soca_increment_change_resol
+
+  ! serialization
+  procedure :: serial_size => soca_increment_serial_size
+  procedure :: serialize   => soca_increment_serialize
+  procedure :: deserialize => soca_increment_deserialize
 end type
 
 
@@ -424,6 +429,83 @@ subroutine soca_increment_change_resol(self, rhs)
   end do !n
   call convert_state%clean()
 end subroutine soca_increment_change_resol
+
+! ------------------------------------------------------------------------------
+subroutine soca_increment_serial_size(self, geom, vec_size)
+  class(soca_increment), intent(in)  :: self
+  type(soca_geom),       intent(in)  :: geom
+  integer,               intent(out) :: vec_size
+
+  integer :: i
+  type(soca_field), pointer :: field
+
+  ! Initialization
+  vec_size = 0
+
+  ! Loop over fields, levels and horizontal points
+  do i=1,size(self%fields)
+    field => self%fields(i)
+    vec_size = vec_size+(geom%iec-geom%isc+1)*(geom%jec-geom%jsc+1)*field%nz
+  end do
+
+end subroutine soca_increment_serial_size
+
+
+! ------------------------------------------------------------------------------
+subroutine soca_increment_serialize(self, geom, vec_size, vec)
+  class(soca_increment), intent(in)  :: self
+  type(soca_geom),       intent(in)  :: geom
+  integer,               intent(in)  :: vec_size
+  real(kind=kind_real),  intent(out) :: vec(vec_size)
+
+  integer :: index, i, jx, jy, jz
+  type(soca_field), pointer :: field
+
+  ! Initialization
+  index = 0
+
+  ! Loop over fields, levels and horizontal points
+  do i=1,size(self%fields)
+    field => self%fields(i)
+    do jz=1,field%nz
+      do jy=geom%jsc,geom%jec
+        do jx=geom%isc,geom%iec
+          vec(index+1) = field%val(jx,jy,jz)
+          index = index+1
+        end do
+      end do
+    end do
+  end do
+
+end subroutine soca_increment_serialize
+
+
+! ------------------------------------------------------------------------------
+subroutine soca_increment_deserialize(self, geom, vec_size, vec, index)
+  class(soca_increment), intent(inout) :: self
+  type(soca_geom),       intent(in)    :: geom
+  integer,               intent(in)    :: vec_size
+  real(kind=kind_real),  intent(in)    :: vec(vec_size)
+  integer,               intent(inout) :: index
+
+
+  integer :: i, jx, jy, jz
+  type(soca_field), pointer :: field
+
+  ! Loop over fields, levels and horizontal points
+  do i=1,size(self%fields)
+    field => self%fields(i)
+    do jz=1,field%nz
+      do jy=geom%jsc,geom%jec
+        do jx=geom%isc,geom%iec
+          field%val(jx,jy,jz) = vec(index+1)
+          index = index+1
+        end do
+      end do
+    end do
+  end do
+
+end subroutine soca_increment_deserialize
 
 
 end module soca_increment_mod

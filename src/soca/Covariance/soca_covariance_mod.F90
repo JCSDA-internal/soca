@@ -232,11 +232,11 @@ subroutine soca_bump_correlation(self, horiz_convol, geom, f_conf, domain)
 
   ! Grid setup
   f_grid = fckit_configuration()
-  call f_grid%set('verbosity', 'none')
+  call f_grid%set('verbosity', 'main')
   call f_grid%set('prefix', domain)
   call f_grid%set('nl', 1)
-  call f_grid%set('nv', 1)
-  call f_grid%set('variables', ['var'])
+  call f_grid%set('nv', 2)
+  call f_grid%set('variables', ['cicen','hicen'])
 
   ! Wrap functionspace
   afunctionspace = atlas_functionspace(geom%afunctionspace%c_ptr())

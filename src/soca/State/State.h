@@ -11,6 +11,7 @@
 #include <memory>
 #include <ostream>
 #include <string>
+#include <vector>
 
 #include <boost/shared_ptr.hpp>
 
@@ -78,6 +79,11 @@ namespace soca {
       const int & toFortran() const {return keyFlds_;}
       boost::shared_ptr<const Geometry> geometry() const;
       const oops::Variables & variables() const {return vars_;}
+
+      /// Serialization
+      size_t serialSize() const;
+      void serialize(std::vector<double> &) const;
+      void deserialize(const std::vector<double> &, size_t &);
 
       /// Other
       void zero();

@@ -456,4 +456,64 @@ end subroutine soca_increment_change_resol_c
 
   end subroutine soca_incrementnum_c
 
+  ! ------------------------------------------------------------------------------
+
+  subroutine soca_increment_serial_size_c(c_key_self,c_key_geom,c_vec_size) bind (c,name='soca_increment_serial_size_f90')
+
+  implicit none
+  integer(c_int), intent(in) :: c_key_self
+  integer(c_int), intent(in) :: c_key_geom
+  integer(c_int), intent(out) :: c_vec_size
+
+  type(soca_increment), pointer :: self
+  type(soca_geom),  pointer :: geom
+
+  call soca_increment_registry%get(c_key_self,self)
+  call soca_geom_registry%get(c_key_geom,geom)
+
+  call self%serial_size(geom,c_vec_size)
+
+  end subroutine soca_increment_serial_size_c
+
+  ! ------------------------------------------------------------------------------
+
+  subroutine soca_increment_serialize_c(c_key_self,c_key_geom,c_vec_size,c_vec) bind (c,name='soca_increment_serialize_f90')
+
+  implicit none
+  integer(c_int), intent(in) :: c_key_self
+  integer(c_int), intent(in) :: c_key_geom
+  integer(c_int), intent(in) :: c_vec_size
+  real(c_double), intent(out) :: c_vec(c_vec_size)
+
+  type(soca_increment), pointer :: self
+  type(soca_geom),  pointer :: geom
+
+  call soca_increment_registry%get(c_key_self,self)
+  call soca_geom_registry%get(c_key_geom,geom)
+
+  call self%serialize(geom,c_vec_size,c_vec)
+
+  end subroutine soca_increment_serialize_c
+
+  ! ------------------------------------------------------------------------------
+
+  subroutine soca_increment_deserialize_c(c_key_self,c_key_geom,c_vec_size,c_vec,c_index) bind (c,name='soca_increment_deserialize_f90')
+
+  implicit none
+  integer(c_int), intent(in) :: c_key_self
+  integer(c_int), intent(in) :: c_key_geom
+  integer(c_int), intent(in) :: c_vec_size
+  real(c_double), intent(in) :: c_vec(c_vec_size)
+  integer(c_int), intent(inout) :: c_index
+
+  type(soca_increment), pointer :: self
+  type(soca_geom),  pointer :: geom
+
+  call soca_increment_registry%get(c_key_self,self)
+  call soca_geom_registry%get(c_key_geom,geom)
+
+  call self%deserialize(geom,c_vec_size,c_vec,c_index)
+
+  end subroutine soca_increment_deserialize_c
+
 end module
