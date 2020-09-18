@@ -2,7 +2,7 @@
 [![Documentation Status](https://readthedocs.com/projects/jointcenterforsatellitedataassimilation-soca/badge/?version=develop)](https://jointcenterforsatellitedataassimilation-soca.readthedocs-hosted.com/en/develop/?badge=develop)
 [![codecov](https://codecov.io/gh/JCSDA/soca/branch/develop/graph/badge.svg?token=uFJ62a68D7)](https://codecov.io/gh/JCSDA/soca)
 
-JEDI encapsulation of MOM6  
+JEDI encapsulation of MOM6
 
 (C) Copyright 2017-2020 UCAR.
 
@@ -27,13 +27,13 @@ make -j 4
 3. If building the same way travis-ci builds the MOM6 SOCA bundle:
 ```
 export MAIN_REPO=soca
-export LIB_REPOS="fms gsw mom6 crtm fckit atlas oops saber ioda ufo ioda-converters soca-config"
+export LIB_REPOS="fms gsw mom6 crtm fckit atlas oops saber ioda ufo ioda-converters"
 export BUILD_OPT=""
 export BUILD_OPT_crtm="-DBUILD_CRTM=ON"
 export BUILD_OPT_oops="-DENABLE_QG_MODEL=OFF -DENABLE_LORENZ95_MODEL=OFF"
 export BUILD_OPT_ufo="-DLOCAL_PATH_TESTFILES_IODA=NONE"
 export BUILD_OPT_soca="-DSOCA_TESTS_FORC_DEFAULT_TOL=ON -DCRTM_FIX_DIR=../../repo.src/crtm/fix"
-export MATCH_REPOS="atlas oops saber ioda ioda-converters ufo soca soca-config"
+export MATCH_REPOS="atlas oops saber ioda ioda-converters ufo soca"
 export LFS_REPOS="crtm"
 export REPO_CACHE="/path/to/somewhere/repo.cache"
 mkdir -p repo.src
