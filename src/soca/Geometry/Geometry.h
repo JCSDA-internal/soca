@@ -52,7 +52,7 @@ namespace soca {
 
       GeometryIterator begin() const;
       GeometryIterator end() const;
-
+      std::vector<double> verticalCoord(std::string &) const {return {};}
 
       int& toFortran() {return keyGeom_;}
       const int& toFortran() const {return keyGeom_;}

@@ -244,7 +244,7 @@ subroutine soca_state_convert(self, rhs)
   class(soca_state), intent(in)   :: rhs   ! source
   integer :: n
   type(soca_convertstate_type) :: convert_state
-  type(soca_field), pointer :: field1, field2, hocn1, hocn2 
+  type(soca_field), pointer :: field1, field2, hocn1, hocn2
 
   call rhs%get("hocn", hocn1)
   call self%get("hocn", hocn2)

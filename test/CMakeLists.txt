@@ -1,8 +1,10 @@
 list( APPEND soca_test_input
   testinput/3dhyb.yml
   testinput/3dhybfgat.yml
+  testinput/3dvarbump.yml
   testinput/3dvar_godas.yml
   testinput/3dvar_soca.yml
+  testinput/3dvarlowres_soca.yml
   testinput/3dvarfgat.yml
   testinput/3dvarfgat_pseudo.yml
   testinput/addincrement.yml
@@ -43,11 +45,13 @@ list( APPEND soca_test_input
   testinput/makeobs.yml
   testinput/marine2ioda.yml
   testinput/model.yml
+  testinput/parameters_bump_cor_nicas.yml
   testinput/parameters_bump_cov_lct.yml
   testinput/parameters_bump_cov_nicas.yml
   testinput/parameters_bump_loc.yml
   testinput/state.yml
   testinput/static_socaerror_init.yml
+  testinput/static_socaerrorlowres_init.yml
   testinput/static_socaerror_test.yml
   testinput/varchange_ana2model.yml
   testinput/varchange_balance.yml
@@ -62,8 +66,10 @@ list( APPEND soca_test_input
 list( APPEND soca_test_ref
   testref/3dhyb.test
   testref/3dhybfgat.test
+  testref/3dvarbump.test
   testref/3dvar_godas.test
   testref/3dvar_soca.test
+  testref/3dvarlowres_soca.test  
   testref/3dvarfgat.test
   testref/3dvarfgat_pseudo.test
   testref/addincrement.test
@@ -90,6 +96,7 @@ list( APPEND soca_test_ref
   testref/hofx_4d_pseudo.test
   testref/letkf.test
   testref/makeobs.test
+  testref/parameters_bump_cor_nicas.test
   testref/parameters_bump_cov_lct.test
 )
 
@@ -222,6 +229,7 @@ endif()
 
 # Create directory for BUMP output
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bump)
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bump_lowres)
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bump-kmask)
 
 # find compare.py provided by oops
@@ -390,6 +398,13 @@ soca_add_test( NAME gridgen
                EXE  soca_gridgen.x
                NOCOMPARE )
 
+# Remapping MOM6 (horiz+vertical intterpolation)
+soca_add_test( NAME convertstate
+               EXE  soca_convertstate.x
+               TOL  2e-5 0
+               NOTRAPFPE
+               TEST_DEPENDS test_soca_gridgen )
+
 # Test of read/write restart for MOM6&SIS2, model advance = Id
 soca_add_test( NAME forecast_identity
                EXE  soca_forecast.x
@@ -423,6 +438,11 @@ soca_add_test( NAME forecast_pseudo
 
 # Initialize static error covariance model defined in soca, used for 3DVAR
 soca_add_test( NAME static_socaerror_init
+               EXE  soca_staticbinit.x
+               NOCOMPARE
+               TEST_DEPENDS test_soca_gridgen )
+
+soca_add_test( NAME static_socaerrorlowres_init
                EXE  soca_staticbinit.x
                NOCOMPARE
                TEST_DEPENDS test_soca_gridgen )
@@ -576,6 +596,11 @@ soca_add_test( NAME ensrecenter
 # soca_add_test( NAME dirac_bump_cov
 #                EXE  soca_dirac.x )
 
+soca_add_test( NAME parameters_bump_cor_nicas
+               EXE  soca_parameters.x
+               TEST_DEPENDS test_soca_gridgen_small
+                            test_soca_convertstate)
+
 
 # Dirac tests
 
@@ -640,6 +665,12 @@ soca_add_test( NAME 3dvar_soca
                NOTRAPFPE
                TEST_DEPENDS test_soca_static_socaerror_init )
 
+soca_add_test( NAME 3dvarbump
+               EXE  soca_3dvar.x
+               TOL  4e-9 0
+               NOTRAPFPE
+               TEST_DEPENDS test_soca_parameters_bump_cor_nicas )
+
 soca_add_test( NAME 3dvar_godas
                EXE  soca_3dvar.x
                TOL  2e-6 0
@@ -650,6 +681,12 @@ soca_add_test( NAME addincrement
                EXE  soca_addincrement.x
                NOCOMPARE
                TEST_DEPENDS 3dvar_godas )
+
+soca_add_test( NAME 3dvarlowres_soca
+               EXE  soca_3dvar.x
+               TOL  0.1 0
+               NOTRAPFPE
+             TEST_DEPENDS test_soca_static_socaerrorsmall_init )
 
 soca_add_test( NAME diffstates
                EXE  soca_diffstates.x
@@ -697,10 +734,3 @@ soca_add_test( NAME checkpointmodel
                EXE  soca_checkpoint_model.x
                NOTRAPFPE
                TEST_DEPENDS test_soca_3dvar_godas)
-
-# Remapping MOM6 (horiz+vertical intterpolation)
-soca_add_test( NAME convertstate
-               EXE  soca_convertstate.x
-               TOL  2e-5 0
-               NOTRAPFPE
-               TEST_DEPENDS test_soca_gridgen )

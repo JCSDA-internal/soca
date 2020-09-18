@@ -26,9 +26,17 @@ namespace soca {
   BkgErr::BkgErr(const State & bkg,
                  const State & traj,
                  const Geometry & geom,
-                 const eckit::Configuration & conf): traj_(traj) {
+                 const eckit::Configuration & conf) {
     const eckit::Configuration * configc = &conf;
-    soca_bkgerr_setup_f90(keyFtnConfig_, &configc, traj_.toFortran());
+
+    // Interpolate trajectory to the geom resolution
+    State traj_at_geomres(geom, traj);
+
+    // Read/setup the diagonal of B
+    soca_bkgerr_setup_f90(keyFtnConfig_,
+                          &configc,
+                          traj_at_geomres.toFortran(),
+                          geom.toFortran());
   }
   // -----------------------------------------------------------------------------
   BkgErr::~BkgErr() {

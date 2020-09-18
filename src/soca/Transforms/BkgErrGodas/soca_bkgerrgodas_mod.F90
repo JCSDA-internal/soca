@@ -9,6 +9,7 @@ use fckit_configuration_module, only: fckit_configuration
 use tools_const, only : pi
 use datetime_mod, only: datetime
 use kinds, only: kind_real
+use soca_geom_mod
 use soca_fields_mod
 use soca_state_mod
 use soca_increment_mod
@@ -27,6 +28,7 @@ public :: soca_bkgerrgodas_config, &
 !> Fortran derived type to hold configuration D
 type :: soca_bkgerrgodas_config
    type(soca_state),         pointer :: bkg
+   type(soca_geom),          pointer :: geom
    type(soca_fields)                 :: std_bkgerr
    type(soca_bkgerr_bounds_type)     :: bounds         ! Bounds for bkgerrgodas
    real(kind=kind_real)              :: t_dz           ! For rescaling of the vertical gradient
@@ -41,10 +43,11 @@ contains
 
 ! ------------------------------------------------------------------------------
 !> Setup the static background error
-subroutine soca_bkgerrgodas_setup(f_conf, self, bkg)
+subroutine soca_bkgerrgodas_setup(f_conf, self, bkg, geom)
   type(fckit_configuration),        intent(in) :: f_conf
   type(soca_bkgerrgodas_config), intent(inout) :: self
   type(soca_state),         target, intent(in) :: bkg
+  type(soca_geom),          target, intent(in) :: geom
 
   type(soca_field), pointer :: field, field_bkg
   integer :: i
@@ -62,8 +65,9 @@ subroutine soca_bkgerrgodas_setup(f_conf, self, bkg)
   call f_conf%get_or_die("t_efold", self%t_efold)
   call f_conf%get_or_die("ssh_phi_ex", self%ssh_phi_ex)
 
-  ! Associate background
+  ! Associate background and geometry
   self%bkg => bkg
+  self%geom => geom
 
   ! Set all fields to zero
   call self%std_bkgerr%zeros()
@@ -109,8 +113,8 @@ subroutine soca_bkgerrgodas_mult(self, dxa, dxm)
   call dxa%check_subset(self%std_bkgerr)
 
   ! Indices for compute domain (no halo)
-  isc = self%bkg%geom%isc ; iec = self%bkg%geom%iec
-  jsc = self%bkg%geom%jsc ; jec = self%bkg%geom%jec
+  isc = self%geom%isc ; iec = self%geom%iec
+  jsc = self%geom%jsc ; jec = self%geom%jec
 
   do n=1,size(dxa%fields)
     field_a => dxa%fields(n)
@@ -118,7 +122,7 @@ subroutine soca_bkgerrgodas_mult(self, dxa, dxm)
     call dxm%get(field_a%name, field_m)
     do i = isc, iec
       do j = jsc, jec
-        if (self%bkg%geom%mask2d(i,j).eq.1) then
+        if (self%geom%mask2d(i,j).eq.1) then
           field_m%val(i,j,:) = field_e%val(i,j,:) * field_a%val(i,j,:)
         end if
       end do
@@ -139,20 +143,20 @@ subroutine soca_bkgerrgodas_tocn(self)
   type(soca_field), pointer :: tocn_b, tocn_e, hocn, layer_depth
 
   ! Get compute domain indices
-  domain%is = self%bkg%geom%isc ; domain%ie = self%bkg%geom%iec
-  domain%js = self%bkg%geom%jsc ; domain%je = self%bkg%geom%jec
+  domain%is = self%geom%isc ; domain%ie = self%geom%iec
+  domain%js = self%geom%jsc ; domain%je = self%geom%jec
 
   ! Get local compute domain indices
-  domain%isl = self%bkg%geom%iscl ; domain%iel = self%bkg%geom%iecl
-  domain%jsl = self%bkg%geom%jscl ; domain%jel = self%bkg%geom%jecl
+  domain%isl = self%geom%iscl ; domain%iel = self%geom%iecl
+  domain%jsl = self%geom%jscl ; domain%jel = self%geom%jecl
 
   ! Allocate temporary arrays
-  allocate(sig1(self%bkg%geom%nzo), sig2(self%bkg%geom%nzo))
+  allocate(sig1(self%geom%nzo), sig2(self%geom%nzo))
 
   ! Initialize sst background error to previously computed std of omb's
   ! Currently hard-coded to read GODAS file
   call sst%init(domain)
-  call sst%bin(self%bkg%geom%lon, self%bkg%geom%lat)
+  call sst%bin(self%geom%lon, self%geom%lat)
 
   call self%bkg%get("tocn", tocn_b)
   call self%std_bkgerr%get("tocn", tocn_e)
@@ -162,7 +166,7 @@ subroutine soca_bkgerrgodas_tocn(self)
   ! Loop over compute domain
   do i = domain%is, domain%ie
      do j = domain%js, domain%je
-        if (self%bkg%geom%mask2d(i,j).eq.1) then
+        if (self%geom%mask2d(i,j).eq.1) then
 
            ! Step 1: sigb from dT/dz
            call soca_diff(sig1(:), tocn_b%val(i,j,:), hocn%val(i,j,:))
@@ -174,14 +178,14 @@ subroutine soca_bkgerrgodas_tocn(self)
                   &/self%t_efold)
 
            ! Step 3: sigb = max(sig1, sig2)
-           do k = 1, self%bkg%geom%nzo
+           do k = 1, self%geom%nzo
               tocn_e%val(i,j,k) = min( max(sig1(k), sig2(k)), &
                 & self%bounds%t_max)
            end do
 
            ! Step 4: Vertical smoothing
            do iter = 1, niter
-              do k = 2, self%bkg%geom%nzo-1
+              do k = 2, self%geom%nzo-1
                  tocn_e%val(i,j,k) = &
                       &( tocn_e%val(i,j,k-1)*hocn%val(i,j,k-1) +&
                       &  tocn_e%val(i,j,k)*hocn%val(i,j,k) +&
@@ -209,24 +213,24 @@ subroutine soca_bkgerrgodas_ssh(self)
   type(soca_field), pointer :: ssh
 
   ! Get compute domain indices
-  domain%is = self%bkg%geom%isc ; domain%ie = self%bkg%geom%iec
-  domain%js = self%bkg%geom%jsc ; domain%je = self%bkg%geom%jec
+  domain%is = self%geom%isc ; domain%ie = self%geom%iec
+  domain%js = self%geom%jsc ; domain%je = self%geom%jec
 
   call self%std_bkgerr%get("ssh", ssh)
 
   ! Loop over compute domain
   do i = domain%is, domain%ie
      do j = domain%js, domain%je
-          if (self%bkg%geom%mask2d(i,j) .ne. 1) cycle
+          if (self%geom%mask2d(i,j) .ne. 1) cycle
 
-          if ( abs(self%bkg%geom%lat(i,j)) >= self%ssh_phi_ex) then
+          if ( abs(self%geom%lat(i,j)) >= self%ssh_phi_ex) then
             ! if in extratropics, set to max value
             ssh%val(i,j,:) = self%bounds%ssh_max
           else
             ! otherwise, taper to min value (0.0) toward equator
             ssh%val(i,j,:) = self%bounds%ssh_min + 0.5 * &
               (self%bounds%ssh_max - self%bounds%ssh_min) * &
-              (1 - cos(pi * self%bkg%geom%lat(i,j) / self%ssh_phi_ex))
+              (1 - cos(pi * self%geom%lat(i,j) / self%ssh_phi_ex))
           end if
      end do
   end do
@@ -245,12 +249,12 @@ subroutine soca_bkgerrgodas_socn(self)
 
 
   ! Get compute domain indices
-  domain%is = self%bkg%geom%isc ; domain%ie = self%bkg%geom%iec
-  domain%js = self%bkg%geom%jsc ; domain%je = self%bkg%geom%jec
+  domain%is = self%geom%isc ; domain%ie = self%geom%iec
+  domain%js = self%geom%jsc ; domain%je = self%geom%jec
   !
   ! Get local compute domain indices
-  domain%isl = self%bkg%geom%iscl ; domain%iel = self%bkg%geom%iecl
-  domain%jsl = self%bkg%geom%jscl ; domain%jel = self%bkg%geom%jecl
+  domain%isl = self%geom%iscl ; domain%iel = self%geom%iecl
+  domain%jsl = self%geom%jscl ; domain%jel = self%geom%jecl
 
   ! TODO read in a precomputed surface S background error
 
@@ -261,9 +265,9 @@ subroutine soca_bkgerrgodas_socn(self)
 
   do i = domain%is, domain%ie
     do j = domain%js, domain%je
-      if (self%bkg%geom%mask2d(i,j) /= 1)  cycle
+      if (self%geom%mask2d(i,j) /= 1)  cycle
 
-      do k = 1, self%bkg%geom%nzo
+      do k = 1, self%geom%nzo
         if ( layer_depth%val(i,j,k) <= mld%val(i,j,1)) then
           ! if in the mixed layer, set to the maximum value
           field%val(i,j,k) = self%bounds%s_max

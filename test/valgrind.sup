@@ -135,6 +135,18 @@
    fun:__mom_MOD_step_mom
    fun:__soca_model_mod_MOD_soca_propagate
 }
+{
+   mom
+   Memcheck:Cond
+   ...
+   fun:__mom_remapping_MOD_remapping_core_h
+}
+{
+   mom
+   Memcheck:Cond
+   ...
+   fun:__mom_horizontal_regridding_MOD_fill_miss_2d
+}
 
 ################################################################################
 # JEDI (these should probably be fixed!)
@@ -185,6 +197,22 @@
     ...
    fun:operator<<
    fun:_ZNK4oops6CostJoIN4soca6TraitsEN3ufo9ObsTraitsEE7printJoERKNS_10DeparturesIS4_EES9_
+}
+{
+  <insert_a_suppression_name_here>
+  Memcheck:Cond
+  ...
+  fun:operator<<
+  ...
+  fun:inverseMultiplyNicas
+}
+{
+  <insert_a_suppression_name_here>
+  Memcheck:Value8
+  ...
+  fun:operator<<
+  ...
+  fun:inverseMultiplyNicas
 }
 
 

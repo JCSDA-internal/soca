@@ -20,7 +20,8 @@ namespace soca {
   extern "C" {
     void soca_balance_setup_f90(F90balopmat &,
                                 const eckit::Configuration * const *,
-                                const F90flds &);
+                                const F90flds &,
+                                const F90geom &);
     void soca_balance_delete_f90(F90balopmat &);
     void soca_balance_mult_f90(const F90balopmat &, const F90balopmat &,
                                F90balopmat &);

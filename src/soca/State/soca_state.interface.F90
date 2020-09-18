@@ -271,7 +271,7 @@ subroutine soca_state_change_resol_c(c_key_fld,c_key_rhs) bind(c,name='soca_stat
       fld%geom%nzo==rhs%geom%nzo ) then
       call fld%copy(rhs)
     else
-      call fld%convert(rhs)      
+      call fld%convert(rhs)
     endif
 
 end subroutine soca_state_change_resol_c
