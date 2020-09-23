@@ -11,7 +11,7 @@ forecasts:
     ocn_filename: MOM.res.nc
     ice_filename: ice_model.res.nc
     sfc_filename: sfc.res.nc
-    state variables: [cicen, hicen, socn, tocn, ssh, hocn, sw, lhf, shf, lw, us, chl]
+    state variables: [cicen, hicen, hsnon, socn, tocn, ssh, hocn, sw, lhf, shf, lw, us, chl]
 
 window begin: 2018-04-14T00:00:00Z
 window length: P2D
@@ -72,6 +72,14 @@ observations:
       simulated variables: [sea_ice_area_fraction]
     obs operator:
       name: SeaIceFraction
+
+  - obs space:
+      name: SeaIceFreeboard
+      obsdataout: {obsfile: ./Data/icefb.out.nc}
+      obsdatain:  {obsfile:  ./Data/icefb.nc}
+      simulated variables: [sea_ice_freeboard]
+    obs operator:
+      name: SeaIceThickness
 
   - obs space:
       name: Chlorophyll
