@@ -66,7 +66,7 @@ list( APPEND soca_test_ref
   testref/3dvarbump.test
   testref/3dvar_godas.test
   testref/3dvar_soca.test
-  testref/3dvarlowres_soca.test  
+  testref/3dvarlowres_soca.test
   testref/3dvarfgat.test
   testref/3dvarfgat_pseudo.test
   testref/addincrement.test
@@ -134,6 +134,7 @@ list( APPEND soca_model_restarts
 list( APPEND soca_obs
   Data/Obs/adt.nc
   Data/Obs/icec.nc
+  Data/Obs/icefb.nc
   Data/Obs/prof.nc
   Data/Obs/sss.nc
   Data/Obs/sst.nc
