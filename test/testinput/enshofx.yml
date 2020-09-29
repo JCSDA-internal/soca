@@ -1,4 +1,4 @@
 files:
-  - "testinput/enshofx_1.yaml"
-  - "testinput/enshofx_2.yaml"
-  - "testinput/enshofx_3.yaml"
+  - "testinput/enshofx_1.yml"
+  - "testinput/enshofx_2.yml"
+  - "testinput/enshofx_3.yml"
