@@ -48,6 +48,18 @@ namespace soca {
                               int &, int &, int &);
     void soca_state_rms_f90(const F90flds &, double &);
     void soca_state_change_resol_f90(const F90flds &, const F90flds &);
+    void soca_state_serial_size_f90(const F90flds &,
+                                    const F90geom &,
+                                    size_t &);
+    void soca_state_serialize_f90(const F90flds &,
+                                  const F90geom &,
+                                  const size_t &,
+                                  double[]);
+    void soca_state_deserialize_f90(const F90flds &,
+                                    const F90geom &,
+                                    const size_t &,
+                                    const double[],
+                                    size_t &);
   }
 }  // namespace soca
 #endif  // SOCA_STATE_STATEFORTRAN_H_

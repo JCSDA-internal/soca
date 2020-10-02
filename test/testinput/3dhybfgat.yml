@@ -114,7 +114,6 @@ cost function:
 
 
       localization:
-       timeslots: ['2018-04-15T00:00:00Z']
        localization variables: [socn, tocn, ssh]
        localization method: BUMP
        bump:

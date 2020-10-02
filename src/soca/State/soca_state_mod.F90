@@ -32,6 +32,11 @@ contains
   procedure :: rotate => soca_state_rotate
   procedure :: convert => soca_state_convert
 
+  ! serialization
+  procedure :: serial_size => soca_state_serial_size
+  procedure :: serialize   => soca_state_serialize
+  procedure :: deserialize => soca_state_deserialize
+
 end type
 
 !------------------------------------------------------------------------------
@@ -257,5 +262,82 @@ subroutine soca_state_convert(self, rhs)
   end do !n
   call convert_state%clean()
 end subroutine soca_state_convert
+
+! ------------------------------------------------------------------------------
+subroutine soca_state_serial_size(self, geom, vec_size)
+  class(soca_state), intent(in)  :: self
+  type(soca_geom),   intent(in)  :: geom
+  integer,           intent(out) :: vec_size
+
+  integer :: i
+  type(soca_field), pointer :: field
+
+  ! Initialization
+  vec_size = 0
+
+  ! Loop over fields, levels and horizontal points
+  do i=1,size(self%fields)
+    field => self%fields(i)
+    vec_size = vec_size+(geom%iec-geom%isc+1)*(geom%jec-geom%jsc+1)*field%nz
+  end do
+
+end subroutine soca_state_serial_size
+
+
+! ------------------------------------------------------------------------------
+subroutine soca_state_serialize(self, geom, vec_size, vec)
+  class(soca_state),    intent(in)  :: self
+  type(soca_geom),      intent(in)  :: geom
+  integer,              intent(in)  :: vec_size
+  real(kind=kind_real), intent(out) :: vec(vec_size)
+
+  integer :: index, i, jx, jy, jz
+  type(soca_field), pointer :: field
+
+  ! Initialization
+  index = 0
+
+  ! Loop over fields, levels and horizontal points
+  do i=1,size(self%fields)
+    field => self%fields(i)
+    do jz=1,field%nz
+      do jy=geom%jsc,geom%jec
+        do jx=geom%isc,geom%iec
+          vec(index+1) = field%val(jx,jy,jz)
+          index = index+1
+        end do
+      end do
+    end do
+  end do
+
+end subroutine soca_state_serialize
+
+
+! ------------------------------------------------------------------------------
+subroutine soca_state_deserialize(self, geom, vec_size, vec, index)
+  class(soca_state),    intent(inout) :: self
+  type(soca_geom),      intent(in)    :: geom
+  integer,              intent(in)    :: vec_size
+  real(kind=kind_real), intent(in)    :: vec(vec_size)
+  integer,              intent(inout) :: index
+
+
+  integer :: i, jx, jy, jz
+  type(soca_field), pointer :: field
+
+  ! Loop over fields, levels and horizontal points
+  do i=1,size(self%fields)
+    field => self%fields(i)
+    do jz=1,field%nz
+      do jy=geom%jsc,geom%jec
+        do jx=geom%isc,geom%iec
+          field%val(jx,jy,jz) = vec(index+1)
+          index = index+1
+        end do
+      end do
+    end do
+  end do
+
+end subroutine soca_state_deserialize
 
 end module
