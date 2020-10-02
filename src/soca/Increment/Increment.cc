@@ -256,9 +256,6 @@ namespace soca {
   /// Serialization
   // -----------------------------------------------------------------------------
   size_t Increment::serialSize() const {
-    return 0;
-    // TOOD (someone) figure out why testIncrementSerialize fails
-
     // Field
     size_t nn;
     soca_increment_serial_size_f90(toFortran(), geom_->toFortran(), nn);
@@ -273,13 +270,11 @@ namespace soca {
   // -----------------------------------------------------------------------------
   constexpr double SerializeCheckValue = -54321.98765;
   void Increment::serialize(std::vector<double> & vect) const {
-    return;
-    // TOOD (someone) figure out why testIncrementSerialize fails
-
     // Serialize the field
     size_t nn;
     soca_increment_serial_size_f90(toFortran(), geom_->toFortran(), nn);
     std::vector<double> vect_field(nn, 0);
+    vect.reserve(vect.size() + nn + 1 + time_.serialSize());
     soca_increment_serialize_f90(toFortran(), geom_->toFortran(), nn,
                                  vect_field.data());
     vect.insert(vect.end(), vect_field.begin(), vect_field.end());
@@ -293,10 +288,8 @@ namespace soca {
   // -----------------------------------------------------------------------------
   void Increment::deserialize(const std::vector<double> & vect,
                               size_t & index) {
-    return;
-    // TOOD (someone) figure out why testIncrementSerialize fails
+    // Deserialize the field
 
-    // Deserialize te field
     soca_increment_deserialize_f90(toFortran(), geom_->toFortran(), vect.size(),
                                    vect.data(), index);
 

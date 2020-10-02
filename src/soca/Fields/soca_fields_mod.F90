@@ -102,6 +102,11 @@ contains
   procedure :: update_halos => soca_fields_update_halos
   procedure :: colocate  => soca_fields_colocate
 
+  ! serialization
+  procedure :: serial_size => soca_fields_serial_size
+  procedure :: serialize   => soca_fields_serialize
+  procedure :: deserialize => soca_fields_deserialize
+
 end type soca_fields
 
 
@@ -1154,5 +1159,64 @@ subroutine soca_fields_colocate(self, cgridlocout)
  call horiz_interp_spherical_del(interp2d)
 
 end subroutine soca_fields_colocate
+
+! ------------------------------------------------------------------------------
+
+subroutine soca_fields_serial_size(self, geom, vec_size)
+  class(soca_fields),    intent(in)  :: self
+  type(soca_geom),       intent(in)  :: geom
+  integer,               intent(out) :: vec_size
+
+  integer :: i
+
+  ! Loop over fields
+  vec_size = 0
+  do i=1,size(self%fields)
+    vec_size = vec_size + size(self%fields(i)%val)
+  end do
+
+end subroutine soca_fields_serial_size
+
+! ------------------------------------------------------------------------------
+
+subroutine soca_fields_serialize(self, geom, vec_size, vec)
+  class(soca_fields),    intent(in)  :: self
+  type(soca_geom),       intent(in)  :: geom
+  integer,               intent(in)  :: vec_size
+  real(kind=kind_real),  intent(out) :: vec(vec_size)
+
+  integer :: index, i, nn
+
+  ! Loop over fields, levels and horizontal points
+  index = 1
+  do i=1,size(self%fields)
+    nn = size(self%fields(i)%val)
+    vec(index:index+nn-1) = reshape(self%fields(i)%val, (/ nn /) )
+    index = index + nn
+  end do
+
+end subroutine soca_fields_serialize
+
+! ------------------------------------------------------------------------------
+
+subroutine soca_fields_deserialize(self, geom, vec_size, vec, index)
+  class(soca_fields), intent(inout) :: self
+  type(soca_geom),       intent(in)    :: geom
+  integer,               intent(in)    :: vec_size
+  real(kind=kind_real),  intent(in)    :: vec(vec_size)
+  integer,               intent(inout) :: index
+
+  integer :: i, nn
+
+  ! Loop over fields, levels and horizontal points
+  do i=1,size(self%fields)
+    nn = size(self%fields(i)%val)
+    self%fields(i)%val = reshape(vec(index+1:index+1+nn), shape(self%fields(i)%val))
+    index = index + nn
+  end do
+
+end subroutine soca_fields_deserialize
+
+! ------------------------------------------------------------------------------
 
 end module soca_fields_mod
