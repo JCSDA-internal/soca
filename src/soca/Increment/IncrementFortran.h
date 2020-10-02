@@ -57,17 +57,14 @@ namespace soca {
     void soca_increment_set_atlas_f90(const F90flds &,
                                   const F90geom &,
                                   const oops::Variables &,
-                                  const util::DateTime * const *,
                                   atlas::field::FieldSetImpl *);
     void soca_increment_to_atlas_f90(const F90flds &,
                                  const F90geom &,
                                  const oops::Variables &,
-                                 const util::DateTime * const *,
                                  atlas::field::FieldSetImpl *);
     void soca_increment_from_atlas_f90(const F90flds &,
                                    const F90geom &,
                                    const oops::Variables &,
-                                   const util::DateTime * const *,
                                    atlas::field::FieldSetImpl *);
     void soca_increment_gpnorm_f90(const F90flds &, const int &, double &);
     void soca_increment_getpoint_f90(const F90flds &, const F90iter &, double &,
@@ -77,6 +74,18 @@ namespace soca {
     void soca_increment_sizes_f90(const F90flds &, int &, int &, int &,
                               int &, int &, int &);
     void soca_increment_rms_f90(const F90flds &, double &);
+    void soca_increment_serial_size_f90(const F90flds &,
+                                        const F90geom &,
+                                        size_t &);
+    void soca_increment_serialize_f90(const F90flds &,
+                                      const F90geom &,
+                                      const size_t &,
+                                      double[]);
+    void soca_increment_deserialize_f90(const F90flds &,
+                                        const F90geom &,
+                                        const size_t &,
+                                        const double[],
+                                        size_t &);
   }
 }  // namespace soca
 #endif  // SOCA_INCREMENT_INCREMENTFORTRAN_H_

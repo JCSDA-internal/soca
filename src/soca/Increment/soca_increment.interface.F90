@@ -256,85 +256,76 @@ end subroutine soca_increment_change_resol_c
 
   ! ------------------------------------------------------------------------------
 
-  subroutine soca_increment_set_atlas_c(c_key_self,c_key_geom,c_vars,c_dt,c_afieldset) &
+  subroutine soca_increment_set_atlas_c(c_key_self,c_key_geom,c_vars,c_afieldset) &
    & bind (c,name='soca_increment_set_atlas_f90')
 
   implicit none
   integer(c_int), intent(in) :: c_key_self
   integer(c_int), intent(in) :: c_key_geom
   type(c_ptr), value, intent(in) :: c_vars
-  type(c_ptr),intent(inout) :: c_dt
   type(c_ptr), intent(in), value :: c_afieldset
 
   type(soca_increment), pointer :: self
   type(soca_geom),  pointer :: geom
   type(oops_variables) :: vars
-  type(datetime) :: fdate
   type(atlas_fieldset) :: afieldset
 
   call soca_increment_registry%get(c_key_self,self)
   call soca_geom_registry%get(c_key_geom, geom)
   vars = oops_variables(c_vars)
-  call c_f_datetime(c_dt, fdate)
   afieldset = atlas_fieldset(c_afieldset)
 
-  call self%set_atlas(geom, vars, fdate, afieldset)
+  call self%set_atlas(geom, vars, afieldset)
 
   end subroutine soca_increment_set_atlas_c
 
   ! ------------------------------------------------------------------------------
 
-  subroutine soca_increment_to_atlas_c(c_key_self,c_key_geom,c_vars,c_dt,c_afieldset) &
+  subroutine soca_increment_to_atlas_c(c_key_self,c_key_geom,c_vars,c_afieldset) &
    & bind (c,name='soca_increment_to_atlas_f90')
 
   implicit none
   integer(c_int), intent(in) :: c_key_self
   integer(c_int), intent(in) :: c_key_geom
   type(c_ptr), value, intent(in) :: c_vars
-  type(c_ptr),intent(inout) :: c_dt
   type(c_ptr), intent(in), value :: c_afieldset
 
   type(soca_increment), pointer :: self
   type(soca_geom),  pointer :: geom
   type(oops_variables) :: vars
-  type(datetime) :: fdate
   type(atlas_fieldset) :: afieldset
 
   call soca_increment_registry%get(c_key_self,self)
   call soca_geom_registry%get(c_key_geom, geom)
   vars = oops_variables(c_vars)
-  call c_f_datetime(c_dt, fdate)
   afieldset = atlas_fieldset(c_afieldset)
 
-  call self%to_atlas(geom, vars, fdate, afieldset)
+  call self%to_atlas(geom, vars, afieldset)
 
   end subroutine soca_increment_to_atlas_c
 
   ! ------------------------------------------------------------------------------
 
-  subroutine soca_increment_from_atlas_c(c_key_self,c_key_geom,c_vars,c_dt,c_afieldset) &
+  subroutine soca_increment_from_atlas_c(c_key_self,c_key_geom,c_vars,c_afieldset) &
    & bind (c,name='soca_increment_from_atlas_f90')
 
   implicit none
   integer(c_int), intent(in) :: c_key_self
   integer(c_int), intent(in) :: c_key_geom
   type(c_ptr), value, intent(in) :: c_vars
-  type(c_ptr),intent(inout) :: c_dt
   type(c_ptr), intent(in), value :: c_afieldset
 
   type(soca_increment), pointer :: self
   type(soca_geom),  pointer :: geom
   type(oops_variables) :: vars
-  type(datetime) :: fdate
   type(atlas_fieldset) :: afieldset
 
   call soca_increment_registry%get(c_key_self, self)
   call soca_geom_registry%get(c_key_geom, geom)
   vars = oops_variables(c_vars)
-  call c_f_datetime(c_dt, fdate)
   afieldset = atlas_fieldset(c_afieldset)
 
-  call self%from_atlas(geom, vars, fdate, afieldset)
+  call self%from_atlas(geom, vars, afieldset)
 
   end subroutine soca_increment_from_atlas_c
 
@@ -464,5 +455,65 @@ end subroutine soca_increment_change_resol_c
     nf = size(fld%fields)
 
   end subroutine soca_incrementnum_c
+
+  ! ------------------------------------------------------------------------------
+
+  subroutine soca_increment_serial_size_c(c_key_self,c_key_geom,c_vec_size) bind (c,name='soca_increment_serial_size_f90')
+
+  implicit none
+  integer(c_int), intent(in) :: c_key_self
+  integer(c_int), intent(in) :: c_key_geom
+  integer(c_int), intent(out) :: c_vec_size
+
+  type(soca_increment), pointer :: self
+  type(soca_geom),  pointer :: geom
+
+  call soca_increment_registry%get(c_key_self,self)
+  call soca_geom_registry%get(c_key_geom,geom)
+
+  call self%serial_size(geom,c_vec_size)
+
+  end subroutine soca_increment_serial_size_c
+
+  ! ------------------------------------------------------------------------------
+
+  subroutine soca_increment_serialize_c(c_key_self,c_key_geom,c_vec_size,c_vec) bind (c,name='soca_increment_serialize_f90')
+
+  implicit none
+  integer(c_int), intent(in) :: c_key_self
+  integer(c_int), intent(in) :: c_key_geom
+  integer(c_int), intent(in) :: c_vec_size
+  real(c_double), intent(out) :: c_vec(c_vec_size)
+
+  type(soca_increment), pointer :: self
+  type(soca_geom),  pointer :: geom
+
+  call soca_increment_registry%get(c_key_self,self)
+  call soca_geom_registry%get(c_key_geom,geom)
+
+  call self%serialize(geom,c_vec_size,c_vec)
+
+  end subroutine soca_increment_serialize_c
+
+  ! ------------------------------------------------------------------------------
+
+  subroutine soca_increment_deserialize_c(c_key_self,c_key_geom,c_vec_size,c_vec,c_index) bind (c,name='soca_increment_deserialize_f90')
+
+  implicit none
+  integer(c_int), intent(in) :: c_key_self
+  integer(c_int), intent(in) :: c_key_geom
+  integer(c_int), intent(in) :: c_vec_size
+  real(c_double), intent(in) :: c_vec(c_vec_size)
+  integer(c_int), intent(inout) :: c_index
+
+  type(soca_increment), pointer :: self
+  type(soca_geom),  pointer :: geom
+
+  call soca_increment_registry%get(c_key_self,self)
+  call soca_geom_registry%get(c_key_geom,geom)
+
+  call self%deserialize(geom,c_vec_size,c_vec,c_index)
+
+  end subroutine soca_increment_deserialize_c
 
 end module

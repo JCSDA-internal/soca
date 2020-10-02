@@ -78,9 +78,9 @@ namespace soca {
       util::DateTime & validTime();
 
       /// Serialize and deserialize
-      size_t serialSize() const override {return 0;}
-      void serialize(std::vector<double> &) const override {}
-      void deserialize(const std::vector<double> &, size_t &) override {}
+      size_t serialSize() const override;
+      void serialize(std::vector<double> &) const override;
+      void deserialize(const std::vector<double> &, size_t &) override;
 
 
       int & toFortran() {return keyFlds_;}

@@ -142,7 +142,60 @@ namespace soca {
                            std::right << zstat[3*jj+2];
     }
   }
+  // -----------------------------------------------------------------------------
+  /// Serialization
+  // -----------------------------------------------------------------------------
+  size_t State::serialSize() const {
+    return 0;
+    // TODO(someone) re-enable this when needed
 
+    // Field
+    size_t nn;
+    soca_state_serial_size_f90(toFortran(), geom_->toFortran(), nn);
+
+    // Magic factor
+    nn += 1;
+
+    // Date and time
+    nn += time_.serialSize();
+    return nn;
+  }
+  // -----------------------------------------------------------------------------
+  constexpr double SerializeCheckValue = -54321.98765;
+  void State::serialize(std::vector<double> & vect) const {
+    return;
+    // TODO(someone) re-enable this when needed
+
+    // Serialize the field
+    size_t nn;
+    soca_state_serial_size_f90(toFortran(), geom_->toFortran(), nn);
+    std::vector<double> vect_field(nn, 0);
+    soca_state_serialize_f90(toFortran(), geom_->toFortran(), nn,
+                             vect_field.data());
+    vect.insert(vect.end(), vect_field.begin(), vect_field.end());
+
+    // Magic value placed in serialization; used to validate deserialization
+    vect.push_back(SerializeCheckValue);
+
+    // Serialize the date and time
+    time_.serialize(vect);
+  }
+  // -----------------------------------------------------------------------------
+  void State::deserialize(const std::vector<double> & vect, size_t & index) {
+    return;
+    // TODO(someone) re-enable this when needed
+
+    // Deserialize te field
+    soca_state_deserialize_f90(toFortran(), geom_->toFortran(), vect.size(),
+                               vect.data(), index);
+
+    // Use magic value to validate deserialization
+    ASSERT(vect.at(index) == SerializeCheckValue);
+    ++index;
+
+    // Deserialize the date and time
+    time_.deserialize(vect, index);
+  }
   // -----------------------------------------------------------------------------
   /// For accumulator
   // -----------------------------------------------------------------------------

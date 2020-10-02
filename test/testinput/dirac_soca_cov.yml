@@ -10,7 +10,7 @@ initial condition:
   date: &date 2018-04-15T00:00:00Z
   ocn_filename: MOM.res.nc
   ice_filename: ice_model.res.nc
-  state variables: &soca_vars [cicen, hicen, socn, tocn, ssh, hocn]
+  state variables: &soca_vars [cicen, hicen, socn, tocn, ssh, hocn, mld, layer_depth]
 
 background error:
   covariance model: SocaError
@@ -21,7 +21,7 @@ background error:
   mpicom: 2
   strategy: specific_univariate
   date: *date
-  analysis variables: *soca_vars
+  analysis variables: [cicen, hicen, socn, tocn, ssh, hocn]
 
   variable changes:
 
@@ -29,8 +29,8 @@ background error:
      ocean_depth_min: 100 # [m]
      rescale_bkgerr: 1.0
      efold_z: 2500.0       # [m]
-     input variables: &invars [cicen, hicen, socn, tocn, ssh, hocn , mld, layer_depth]
-     output variables: &outvars [cicen, hicen, socn, tocn, ssh, hocn, mld, layer_depth]
+     input variables: *soca_vars
+     output variables: *soca_vars
 
    - variable change: BkgErrGODAS
      t_min: 0.1
@@ -46,16 +46,16 @@ background error:
      cicen_max: 0.5
      hicen_min: 10.0
      hicen_max: 100.0
-     input variables: *invars
-     output variables: *outvars
+     input variables: *soca_vars
+     output variables: *soca_vars
 
    - variable change: VertConvSOCA
      Lz_min: 2.0
      Lz_mld: 1
      Lz_mld_max: 500.0
      scale_layer_thick: 1.5
-     input variables: *invars
-     output variables: *outvars
+     input variables: *soca_vars
+     output variables: *soca_vars
 
    - variable change: BalanceSOCA
      dsdtmax: 1
@@ -65,8 +65,8 @@ background error:
      dcdt:
        filename: ./Data/kmask.nc
        name: dcdt
-     input variables: *invars
-     output variables: *outvars
+     input variables: *soca_vars
+     output variables: *soca_vars
 
 dirac:
   ixdir: [1, 17, 41, 31, 51, 63, 81, 14, 16, 43]
