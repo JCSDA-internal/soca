@@ -16,9 +16,22 @@ state test:
     remap_filename: ./INPUT/MOM.res.nc
   norm file: 387790.8913881866
   date: *date
-  StateGenerate:
+  StateGenerate:  # this should be "state generate" - CG
     read_from_file: 0
     date: *date
-    variables: *soca_vars
-  norm-gen: 0.0
+    state variables: *soca_vars
+  norm generated state: 0.0
   tolerance: 1.0e-08
+
+  statefileout:
+    datadir: Data
+    exp: out
+    type: an
+    seaice_model: cice
+    read_from_file: 1
+    basename: ./Data/
+    ocn_filename: ocn.out.an.2018-04-15T00:00:00Z.nc
+    ice_filename: cic.out.an.2018-04-15T00:00:00Z.nc
+    sfc_filename: sfc.out.an.2018-04-15T00:00:00Z.nc
+    date: *date
+    state variables: *soca_vars
