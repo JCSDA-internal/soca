@@ -7,6 +7,7 @@
 
 #include "eckit/config/LocalConfiguration.h"
 
+#include "oops/mpi/mpi.h"
 #include "oops/util/DateTime.h"
 
 #include "soca/Geometry/Geometry.h"
@@ -75,7 +76,7 @@ void GetValues::getValuesFromFile(const ufo::Locations & locs,
     // Create the Atmospheric Geometry in Observation Space
     eckit::LocalConfiguration confatmobs(conf, "notocean.obs space");
     ioda::ObsSpace atmobs(confatmobs, geom_->getComm(), bgn, end,
-                          geom_->getComm());
+                          oops::mpi::myself());
 
     // Get GeoVaLs from file
     eckit::LocalConfiguration confatm(conf, "notocean");
