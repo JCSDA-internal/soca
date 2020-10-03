@@ -146,9 +146,6 @@ namespace soca {
   /// Serialization
   // -----------------------------------------------------------------------------
   size_t State::serialSize() const {
-    return 0;
-    // TODO(someone) re-enable this when needed
-
     // Field
     size_t nn;
     soca_state_serial_size_f90(toFortran(), geom_->toFortran(), nn);
@@ -163,13 +160,11 @@ namespace soca {
   // -----------------------------------------------------------------------------
   constexpr double SerializeCheckValue = -54321.98765;
   void State::serialize(std::vector<double> & vect) const {
-    return;
-    // TODO(someone) re-enable this when needed
-
     // Serialize the field
     size_t nn;
     soca_state_serial_size_f90(toFortran(), geom_->toFortran(), nn);
     std::vector<double> vect_field(nn, 0);
+    vect.reserve(vect.size() + nn + 1 + time_.serialSize());
     soca_state_serialize_f90(toFortran(), geom_->toFortran(), nn,
                              vect_field.data());
     vect.insert(vect.end(), vect_field.begin(), vect_field.end());
@@ -182,10 +177,7 @@ namespace soca {
   }
   // -----------------------------------------------------------------------------
   void State::deserialize(const std::vector<double> & vect, size_t & index) {
-    return;
-    // TODO(someone) re-enable this when needed
-
-    // Deserialize te field
+    // Deserialize the field
     soca_state_deserialize_f90(toFortran(), geom_->toFortran(), vect.size(),
                                vect.data(), index);
 
