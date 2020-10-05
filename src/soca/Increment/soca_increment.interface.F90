@@ -179,6 +179,25 @@ subroutine soca_increment_create_c(c_key_self, c_key_geom, c_vars) bind(c,name='
 
   ! ------------------------------------------------------------------------------
 
+  subroutine soca_increment_accumul_c(c_key_self,c_zz,c_key_rhs) bind(c,name='soca_increment_accumul_f90')
+    integer(c_int), intent(in) :: c_key_self
+    real(c_double), intent(in) :: c_zz
+    integer(c_int), intent(in) :: c_key_rhs
+
+    type(soca_increment), pointer :: self
+    real(kind=kind_real)          :: zz
+    type(soca_state),     pointer :: rhs
+
+    call soca_increment_registry%get(c_key_self,self)
+    call soca_state_registry%get(c_key_rhs,rhs)
+    zz = c_zz
+
+    call self%axpy(zz,rhs)
+
+  end subroutine soca_increment_accumul_c
+
+  ! ------------------------------------------------------------------------------
+
   subroutine soca_increment_axpy_c(c_key_self,c_zz,c_key_rhs) bind(c,name='soca_increment_axpy_f90')
     integer(c_int), intent(in) :: c_key_self
     real(c_double), intent(in) :: c_zz
