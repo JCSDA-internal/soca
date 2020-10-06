@@ -132,7 +132,7 @@ namespace soca {
   }
   // -----------------------------------------------------------------------------
   void Increment::accumul(const double & zz, const State & xx) {
-    soca_increment_axpy_f90(toFortran(), zz, xx.toFortran());
+    soca_increment_accumul_f90(toFortran(), zz, xx.toFortran());
   }
   // -----------------------------------------------------------------------------
   void Increment::schur_product_with(const Increment & dx) {
