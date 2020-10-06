@@ -37,6 +37,8 @@ namespace soca {
     void soca_increment_self_add_f90(const F90flds &, const F90flds &);
     void soca_increment_self_sub_f90(const F90flds &, const F90flds &);
     void soca_increment_self_mul_f90(const F90flds &, const double &);
+    void soca_increment_accumul_f90(const F90flds &, const double &,
+                                    const F90flds &);
     void soca_increment_axpy_f90(const F90flds &, const double &,
                                  const F90flds &);
     void soca_increment_dot_prod_f90(const F90flds &, const F90flds &,
