@@ -44,11 +44,7 @@ subroutine soca_state_create(self, geom, vars)
   type(soca_geom),  pointer, intent(inout) :: geom
   type(oops_variables),      intent(inout) :: vars
 
-  ! additional internal fields need to be created
-  call vars%push_back("mld")
-  call vars%push_back("layer_depth")
-
-  ! continue with normal fields initialization
+  ! continue with fields initialization by base class
   call self%soca_fields%create(geom, vars)
 end subroutine soca_state_create
 

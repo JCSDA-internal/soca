@@ -33,6 +33,7 @@ namespace soca {
                                const oops::Variables &);
     void soca_increment_delete_f90(F90flds &);
     void soca_increment_copy_f90(const F90flds &, const F90flds &);
+    void soca_increment_ones_f90(const F90flds &);
     void soca_increment_zero_f90(const F90flds &);
     void soca_increment_self_add_f90(const F90flds &, const F90flds &);
     void soca_increment_self_sub_f90(const F90flds &, const F90flds &);

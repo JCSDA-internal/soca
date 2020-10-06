@@ -493,10 +493,9 @@ soca_add_test( NAME geometryatm
                SRC  TestGeometry.cc
                TEST_DEPENDS test_soca_gridgen )
 
-# TODO(G or T) Fix the mld-layer_deth issue in variables
-#soca_add_test( NAME state
-#               SRC  TestState.cc
-#               TEST_DEPENDS test_soca_gridgen )
+soca_add_test( NAME state
+               SRC  TestState.cc
+               TEST_DEPENDS test_soca_gridgen )
 
 soca_add_test( NAME getvalues
                SRC  TestGetValues.cc

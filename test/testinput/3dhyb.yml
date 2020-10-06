@@ -3,7 +3,7 @@ cost function:
   cost type: 3D-Var
   window begin: 2018-04-14T00:00:00Z
   window length: P2D
-  analysis variables: &soca_vars [cicen, hicen, hsnon, socn, tocn, ssh, hocn, sw, lhf, shf, lw, us]
+  analysis variables: &soca_vars [cicen, hicen, hsnon, socn, tocn, ssh, hocn]
   geometry:
     num_ice_cat: 5
     num_ice_lev: 4
@@ -18,7 +18,7 @@ cost function:
     sfc_filename: sfc.res.nc
     date: &bkg_date 2018-04-15T00:00:00Z
     seaice_model: cice
-    state variables: *soca_vars
+    state variables: &model_vars [cicen, hicen, hsnon, socn, tocn, ssh, hocn, sw, lhf, shf, lw, us, mld, layer_depth]
 
   _file: &_file
     read_from_file: 1

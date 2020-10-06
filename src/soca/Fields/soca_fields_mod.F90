@@ -91,6 +91,7 @@ contains
   procedure :: gpnorm   => soca_fields_gpnorm
   procedure :: mul      => soca_fields_mul
   procedure :: sub      => soca_fields_sub
+  procedure :: ones     => soca_fields_ones
   procedure :: zeros    => soca_fields_zeros
 
   ! IO
@@ -445,6 +446,18 @@ subroutine soca_fields_update_halos(self)
 end subroutine soca_fields_update_halos
 
 ! ------------------------------------------------------------------------------
+!> set all fields to one
+subroutine soca_fields_ones(self)
+  class(soca_fields), intent(inout) :: self
+  integer :: i
+
+  do i = 1, size(self%fields)
+    self%fields(i)%val = 1.0_kind_real
+  end do
+
+end subroutine soca_fields_ones
+
+! ------------------------------------------------------------------------------
 !> reset all fields to zero
 subroutine soca_fields_zeros(self)
   class(soca_fields), intent(inout) :: self
@@ -511,18 +524,20 @@ subroutine soca_fields_axpy(self,zz,rhs)
   real(kind=kind_real),  intent(in) :: zz
   class(soca_fields),    intent(in) :: rhs
 
-  type(soca_field), pointer :: fld
+  type(soca_field), pointer :: f_rhs, f_lhs
   integer :: i
 
   ! make sure fields are correct shape
-  ! TODO, should they be congruent??
-  call rhs%check_subset(self)
+  call self%check_subset(rhs)
 
-  do i=1,size(rhs%fields)
-    call self%get(rhs%fields(i)%name, fld)
-    fld%val = fld%val + zz* rhs%fields(i)%val
+  do i=1,size(self%fields)
+    f_lhs => self%fields(i)
+    if (.not. rhs%has(f_lhs%name)) cycle
+    call rhs%get(f_lhs%name, f_rhs)
+    f_lhs%val = f_lhs%val + zz *f_rhs%val
   end do
 end subroutine soca_fields_axpy
+
 
 ! ------------------------------------------------------------------------------
 !> calculate the global dot product of two sets of fields
@@ -772,23 +787,27 @@ subroutine soca_fields_read(fld, f_conf, vdate)
     jsc = fld%geom%jsc ; jec = fld%geom%jec
 
     ! Initialize mid-layer depth from layer thickness
-    call fld%get("layer_depth", layer_depth)
-    call fld%geom%thickness2depth(hocn%val, layer_depth%val)
+    if (fld%has("layer_depth")) then
+      call fld%get("layer_depth", layer_depth)
+      call fld%geom%thickness2depth(hocn%val, layer_depth%val)
+    end if
 
     ! Compute mixed layer depth TODO: Move somewhere else ...
-    call fld%get("tocn", field)
-    call fld%get("socn", field2)
-    call fld%get("mld", mld)
-    do i = isc, iec
-      do j = jsc, jec
-          mld%val(i,j,1) = soca_mld(&
-              &field2%val(i,j,:),&
-              &field%val(i,j,:),&
-              &layer_depth%val(i,j,:),&
-              &fld%geom%lon(i,j),&
-              &fld%geom%lat(i,j))
+    if (fld%has("mld") .and. fld%has("layer_depth")) then
+      call fld%get("tocn", field)
+      call fld%get("socn", field2)
+      call fld%get("mld", mld)
+      do i = isc, iec
+        do j = jsc, jec
+            mld%val(i,j,1) = soca_mld(&
+                &field2%val(i,j,:),&
+                &field%val(i,j,:),&
+                &layer_depth%val(i,j,:),&
+                &fld%geom%lon(i,j),&
+                &fld%geom%lat(i,j))
+        end do
       end do
-    end do
+    end if
 
     ! Remap layers if needed
     if (vert_remap) then

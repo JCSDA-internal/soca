@@ -62,6 +62,18 @@ subroutine soca_increment_create_c(c_key_self, c_key_geom, c_vars) bind(c,name='
 
   ! ------------------------------------------------------------------------------
 
+  subroutine soca_increment_ones_c(c_key_self) bind(c,name='soca_increment_ones_f90')
+    integer(c_int), intent(in) :: c_key_self
+
+    type(soca_increment), pointer :: self
+
+    call soca_increment_registry%get(c_key_self,self)
+    call self%ones()
+
+  end subroutine soca_increment_ones_c
+
+  ! ------------------------------------------------------------------------------
+
   subroutine soca_increment_zero_c(c_key_self) bind(c,name='soca_increment_zero_f90')
     integer(c_int), intent(in) :: c_key_self
 
