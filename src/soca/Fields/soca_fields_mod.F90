@@ -524,18 +524,20 @@ subroutine soca_fields_axpy(self,zz,rhs)
   real(kind=kind_real),  intent(in) :: zz
   class(soca_fields),    intent(in) :: rhs
 
-  type(soca_field), pointer :: fld
+  type(soca_field), pointer :: f_rhs, f_lhs
   integer :: i
 
   ! make sure fields are correct shape
-  ! TODO, should they be congruent??
-  call rhs%check_subset(self)
+  call self%check_subset(rhs)
 
-  do i=1,size(rhs%fields)
-    call self%get(rhs%fields(i)%name, fld)
-    fld%val = fld%val + zz* rhs%fields(i)%val
+  do i=1,size(self%fields)
+    f_lhs => self%fields(i)
+    if (.not. rhs%has(f_lhs%name)) cycle
+    call rhs%get(f_lhs%name, f_rhs)
+    f_lhs%val = f_lhs%val + zz *f_rhs%val
   end do
 end subroutine soca_fields_axpy
+
 
 ! ------------------------------------------------------------------------------
 !> calculate the global dot product of two sets of fields

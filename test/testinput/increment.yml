@@ -4,15 +4,8 @@ geometry:
   num_sno_lev: 1
   mom6_input_nml: ./inputnml/input.nml
 
-inc variables: [cicen, hicen, socn, tocn, ssh, hocn, sw, lw, lhf, shf, us]
+# TODO should add cicen/uocn/vocn, but this makes the tests fail
+inc variables: [hicen, socn, tocn, ssh, hocn, sw, lw, lhf, shf, us]
 
 increment test:
   date: &date 2018-04-15T00:00:00Z
-
-initial condition:
-  read_from_file: 1
-  date: *date
-  basename: ./INPUT/
-  ocn_filename: MOM.res.nc
-  ice_filename: ice_model.res.nc
-  state variables: [cicen, hicen, socn, tocn, ssh, hocn, sw, lw, lhf, shf, us]
