@@ -9,7 +9,7 @@ background:
   basename: ./INPUT/
   ocn_filename: MOM.res.nc
   ice_filename: ice_model.res.nc
-  state variables: &soca_vars [cicen, hicen, socn, tocn, ssh, hocn]
+  state variables: &soca_vars [cicen, hicen, socn, tocn, ssh, hocn, mld, layer_depth]
 
 linear variable change tests:
 - variable change: VertConvSOCA

@@ -24,6 +24,8 @@ Test     :      lw   min=    0.000000   max=   88.036090   mean=   31.395535
 Test     :      us   min=    0.004396   max=    0.019666   mean=    0.008686
 Test     :    uocn   min=   -0.858170   max=    0.700095   mean=   -0.000260
 Test     :    vocn   min=   -0.766110   max=    1.437777   mean=    0.002197
+Test     :     mld   min=    2.285472   max= 4593.153342   mean=  192.410907
+Test     : layer_depth   min=    2.285472   max= 5658.305747   mean= 1200.522954
 Test     : CostJb   : Nonlinear Jb = 0.536444
 Test     : CostJo   : Nonlinear Jo(CoolSkin) = 16675.531122, nobs = 201, Jo/n = 82.962841, err = 0.364832
 Test     : CostJo   : Nonlinear Jo(SeaSurfaceTemp) = 1595.837533, nobs = 173, Jo/n = 9.224494, err = 0.363227

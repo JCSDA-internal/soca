@@ -785,23 +785,27 @@ subroutine soca_fields_read(fld, f_conf, vdate)
     jsc = fld%geom%jsc ; jec = fld%geom%jec
 
     ! Initialize mid-layer depth from layer thickness
-    call fld%get("layer_depth", layer_depth)
-    call fld%geom%thickness2depth(hocn%val, layer_depth%val)
+    if (fld%has("layer_depth")) then
+      call fld%get("layer_depth", layer_depth)
+      call fld%geom%thickness2depth(hocn%val, layer_depth%val)
+    end if
 
     ! Compute mixed layer depth TODO: Move somewhere else ...
-    call fld%get("tocn", field)
-    call fld%get("socn", field2)
-    call fld%get("mld", mld)
-    do i = isc, iec
-      do j = jsc, jec
-          mld%val(i,j,1) = soca_mld(&
-              &field2%val(i,j,:),&
-              &field%val(i,j,:),&
-              &layer_depth%val(i,j,:),&
-              &fld%geom%lon(i,j),&
-              &fld%geom%lat(i,j))
+    if (fld%has("mld") .and. fld%has("layer_depth")) then
+      call fld%get("tocn", field)
+      call fld%get("socn", field2)
+      call fld%get("mld", mld)
+      do i = isc, iec
+        do j = jsc, jec
+            mld%val(i,j,1) = soca_mld(&
+                &field2%val(i,j,:),&
+                &field%val(i,j,:),&
+                &layer_depth%val(i,j,:),&
+                &fld%geom%lon(i,j),&
+                &fld%geom%lat(i,j))
+        end do
       end do
-    end do
+    end if
 
     ! Remap layers if needed
     if (vert_remap) then

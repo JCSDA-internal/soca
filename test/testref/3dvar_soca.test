@@ -23,6 +23,8 @@ Test     :     shf   min=  -58.949308   max=  201.374188   mean=    6.075326
 Test     :      lw   min=    0.000000   max=   88.036092   mean=   31.395535
 Test     :      us   min=    0.004396   max=    0.019671   mean=    0.008691
 Test     :     chl   min=    0.000010   max=    4.671862   mean=    0.117820
+Test     :     mld   min=    2.285472   max= 4593.153342   mean=  192.410907
+Test     : layer_depth   min=    2.285472   max= 5658.305747   mean= 1200.522954
 Test     : CostJb   : Nonlinear Jb = 10.111406
 Test     : CostJo   : Nonlinear Jo(CoolSkin) = 13915.380143, nobs = 173, Jo/n = 80.435723, err = 0.363227
 Test     : CostJo   : Nonlinear Jo(SeaSurfaceTemp) = 781.083049, nobs = 145, Jo/n = 5.386780, err = 0.363828
