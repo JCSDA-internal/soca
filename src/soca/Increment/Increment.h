@@ -77,6 +77,7 @@ namespace soca {
 
       /// Basic operators
       void diff(const State &, const State &);
+      void ones();
       void zero();
       void zero(const util::DateTime &);
       Increment & operator =(const Increment &);

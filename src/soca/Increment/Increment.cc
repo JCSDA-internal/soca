@@ -111,6 +111,10 @@ namespace soca {
     return *this;
   }
   // -----------------------------------------------------------------------------
+  void Increment::ones() {
+    soca_increment_ones_f90(toFortran());
+  }
+  // -----------------------------------------------------------------------------
   void Increment::zero() {
     soca_increment_zero_f90(toFortran());
   }

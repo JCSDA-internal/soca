@@ -91,6 +91,7 @@ contains
   procedure :: gpnorm   => soca_fields_gpnorm
   procedure :: mul      => soca_fields_mul
   procedure :: sub      => soca_fields_sub
+  procedure :: ones     => soca_fields_ones
   procedure :: zeros    => soca_fields_zeros
 
   ! IO
@@ -443,6 +444,18 @@ subroutine soca_fields_update_halos(self)
     call self%fields(i)%update_halo(self%geom)
   end do
 end subroutine soca_fields_update_halos
+
+! ------------------------------------------------------------------------------
+!> set all fields to one
+subroutine soca_fields_ones(self)
+  class(soca_fields), intent(inout) :: self
+  integer :: i
+
+  do i = 1, size(self%fields)
+    self%fields(i)%val = 1.0_kind_real
+  end do
+
+end subroutine soca_fields_ones
 
 ! ------------------------------------------------------------------------------
 !> reset all fields to zero
