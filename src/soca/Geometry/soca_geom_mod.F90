@@ -719,7 +719,7 @@ subroutine geom_struct2atlas(self, dx_struct, dx_atlas)
   type(atlas_field) :: afield
 
   dx_atlas = atlas_fieldset()
-  afield = self%afunctionspace%create_field('var_00',kind=atlas_real(kind_real),levels=0)
+  afield = self%afunctionspace%create_field('var',kind=atlas_real(kind_real),levels=0)
   call dx_atlas%add(afield)
   call afield%data(real_ptr)
   real_ptr = pack(dx_struct(self%iscl:self%iecl, self%jscl:self%jecl),.true.)
@@ -739,7 +739,7 @@ subroutine geom_atlas2struct(self, dx_struct, dx_atlas)
   type(atlas_field) :: afield
 
   umask = .true.
-  afield = dx_atlas%field('var_00')
+  afield = dx_atlas%field('var')
   call afield%data(real_ptr)
   dx_struct(self%iscl:self%iecl, self%jscl:self%jecl) = unpack(real_ptr,umask,dx_struct(self%iscl:self%iecl, self%jscl:self%jecl))
   call afield%final()

@@ -21,6 +21,8 @@ Test     :     lhf   min=    0.000000   max=    0.000000   mean=    0.000000
 Test     :     shf   min=    0.000000   max=    0.000000   mean=    0.000000
 Test     :      lw   min=    0.000000   max=    0.000000   mean=    0.000000
 Test     :      us   min=    0.000000   max=    0.000000   mean=    0.000000
+Test     :     mld   min=    2.285472   max= 4593.153342   mean=  192.410907
+Test     : layer_depth   min=    2.285472   max= 5658.305747   mean= 1200.522954
 Test     : CostJb   : Nonlinear Jb = 655.392254
 Test     : CostJo   : Nonlinear Jo(CoolSkin) = 2442.494681, nobs = 48, Jo/n = 50.885306, err = 0.387632
 Test     : CostJo   : Nonlinear Jo(SeaSurfaceTemp) = 308.620198, nobs = 43, Jo/n = 7.177214, err = 0.385815

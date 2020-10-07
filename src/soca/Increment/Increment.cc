@@ -111,6 +111,10 @@ namespace soca {
     return *this;
   }
   // -----------------------------------------------------------------------------
+  void Increment::ones() {
+    soca_increment_ones_f90(toFortran());
+  }
+  // -----------------------------------------------------------------------------
   void Increment::zero() {
     soca_increment_zero_f90(toFortran());
   }
@@ -132,7 +136,7 @@ namespace soca {
   }
   // -----------------------------------------------------------------------------
   void Increment::accumul(const double & zz, const State & xx) {
-    soca_increment_axpy_f90(toFortran(), zz, xx.toFortran());
+    soca_increment_accumul_f90(toFortran(), zz, xx.toFortran());
   }
   // -----------------------------------------------------------------------------
   void Increment::schur_product_with(const Increment & dx) {
@@ -190,20 +194,17 @@ namespace soca {
   /// ATLAS
   // -----------------------------------------------------------------------------
   void Increment::setAtlas(atlas::FieldSet * afieldset) const {
-    const util::DateTime * dtp = &time_;
-    soca_increment_set_atlas_f90(toFortran(), geom_->toFortran(), vars_, &dtp,
+    soca_increment_set_atlas_f90(toFortran(), geom_->toFortran(), vars_,
                                  afieldset->get());
   }
   // -----------------------------------------------------------------------------
   void Increment::toAtlas(atlas::FieldSet * afieldset) const {
-    const util::DateTime * dtp = &time_;
-    soca_increment_to_atlas_f90(toFortran(), geom_->toFortran(), vars_, &dtp,
+    soca_increment_to_atlas_f90(toFortran(), geom_->toFortran(), vars_,
                                 afieldset->get());
   }
   // -----------------------------------------------------------------------------
   void Increment::fromAtlas(atlas::FieldSet * afieldset) {
-    const util::DateTime * dtp = &time_;
-    soca_increment_from_atlas_f90(toFortran(), geom_->toFortran(), vars_, &dtp,
+    soca_increment_from_atlas_f90(toFortran(), geom_->toFortran(), vars_,
                                   afieldset->get());
   }
   // -----------------------------------------------------------------------------
@@ -255,6 +256,54 @@ namespace soca {
 
   void Increment::updateTime(const util::Duration & dt) {time_ += dt;}
 
+  // -----------------------------------------------------------------------------
+  /// Serialization
+  // -----------------------------------------------------------------------------
+  size_t Increment::serialSize() const {
+    // Field
+    size_t nn;
+    soca_increment_serial_size_f90(toFortran(), geom_->toFortran(), nn);
+
+    // Magic factor
+    nn += 1;
+
+    // Date and time
+    nn += time_.serialSize();
+    return nn;
+  }
+  // -----------------------------------------------------------------------------
+  constexpr double SerializeCheckValue = -54321.98765;
+  void Increment::serialize(std::vector<double> & vect) const {
+    // Serialize the field
+    size_t nn;
+    soca_increment_serial_size_f90(toFortran(), geom_->toFortran(), nn);
+    std::vector<double> vect_field(nn, 0);
+    vect.reserve(vect.size() + nn + 1 + time_.serialSize());
+    soca_increment_serialize_f90(toFortran(), geom_->toFortran(), nn,
+                                 vect_field.data());
+    vect.insert(vect.end(), vect_field.begin(), vect_field.end());
+
+    // Magic value placed in serialization; used to validate deserialization
+    vect.push_back(SerializeCheckValue);
+
+    // Serialize the date and time
+    time_.serialize(vect);
+  }
+  // -----------------------------------------------------------------------------
+  void Increment::deserialize(const std::vector<double> & vect,
+                              size_t & index) {
+    // Deserialize the field
+
+    soca_increment_deserialize_f90(toFortran(), geom_->toFortran(), vect.size(),
+                                   vect.data(), index);
+
+    // Use magic value to validate deserialization
+    ASSERT(vect.at(index) == SerializeCheckValue);
+    ++index;
+
+    // Deserialize the date and time
+    time_.deserialize(vect, index);
+  }
   // -----------------------------------------------------------------------------
 
   boost::shared_ptr<const Geometry> Increment::geometry() const {

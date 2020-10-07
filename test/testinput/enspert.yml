@@ -8,7 +8,7 @@ model:
   name: SOCA
   tstep: PT6H
   advance_mom6: 1
-  model variables: &soca_vars [cicen, hicen, hsnon, socn, tocn, ssh, hocn, sw, lhf, shf, lw, us]
+  model variables: &model_vars [cicen, hicen, hsnon, socn, tocn, ssh, hocn, sw, lhf, shf, lw, us, mld, layer_depth]
 
 initial condition:
   read_from_file: 1
@@ -16,7 +16,7 @@ initial condition:
   ocn_filename: MOM.res.nc
   ice_filename: ice_model.res.nc
   date: &date 2018-04-15T00:00:00Z
-  state variables: *soca_vars
+  state variables: *model_vars
 
 background error:
   covariance model: SocaError
@@ -32,7 +32,7 @@ background error:
   pert_SSH: 1.0
   pert_AICE: 0.1
   pert_HICE: 0.05
-  analysis variables: [ssh, cicen, hicen, tocn, socn]
+  analysis variables: &soca_vars [ssh, cicen, hicen, tocn, socn]
 
   variable changes:
 

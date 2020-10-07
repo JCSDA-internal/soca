@@ -22,7 +22,7 @@ cost function:
     basename: ./INPUT/
     ocn_filename: MOM.res.nc
     date: &bkg_date 2018-04-15T00:00:00Z
-    state variables: *soca_vars
+    state variables: [socn, tocn, ssh, hocn, mld, layer_depth]
 
   background error:
     covariance model: SocaError

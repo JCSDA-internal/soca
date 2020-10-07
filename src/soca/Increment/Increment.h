@@ -77,6 +77,7 @@ namespace soca {
 
       /// Basic operators
       void diff(const State &, const State &);
+      void ones();
       void zero();
       void zero(const util::DateTime &);
       Increment & operator =(const Increment &);
@@ -107,9 +108,9 @@ namespace soca {
       void updateTime(const util::Duration & dt);
 
       /// Serialize and deserialize
-      size_t serialSize() const override {return 0;}
-      void serialize(std::vector<double> &) const override {}
-      void deserialize(const std::vector<double> &, size_t &) override {}
+      size_t serialSize() const override;
+      void serialize(std::vector<double> &) const override;
+      void deserialize(const std::vector<double> &, size_t &) override;
 
       /// Other
       void accumul(const double &, const State &);

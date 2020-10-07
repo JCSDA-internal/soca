@@ -24,7 +24,7 @@ cost function:
     #ice_filename: ice_model.res.nc
     #sfc_filename: sfc.res.nc
     date: 2018-04-15T00:00:00Z
-    state variables: [hocn, socn, tocn, ssh]
+    state variables: [hocn, socn, tocn, ssh, mld, layer_depth]
 
   background error:
     covariance model: BUMP

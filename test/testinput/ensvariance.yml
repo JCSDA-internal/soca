@@ -9,7 +9,7 @@ _file: &_file
   date: &date_bkg 2018-04-15T00:00:00Z
   basename: ./Data/
   remap_filename: ./INPUT/MOM.res.nc
-  state variables:  &soca_vars [cicen, hicen, socn, tocn, ssh, hocn]
+  state variables:  &soca_vars [cicen, hicen, socn, tocn, ssh, hocn, mld, layer_depth]
 
 background:
   <<: *_file

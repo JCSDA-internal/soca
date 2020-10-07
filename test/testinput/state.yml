@@ -12,7 +12,7 @@ state test:
     ocn_filename: MOM.res.nc
     ice_filename: ice_model.res.nc
     sfc_filename: sfc.res.nc
-    state variables: &soca_vars [cicen, hicen, socn, tocn, ssh, hocn, sw, lhf, shf, lw, us]
+    state variables: &soca_vars [cicen, hicen, socn, tocn, ssh, hocn, sw, lhf, shf, lw, us, mld, layer_depth]
     remap_filename: ./INPUT/MOM.res.nc
   norm file: 387790.8913881866
   date: *date

@@ -16,6 +16,9 @@ list( APPEND soca_test_input
   testinput/dirac_horizfilt.yml
   testinput/dirac_soca_cov.yml
   testinput/dirac_socahyb_cov.yml
+  testinput/enshofx_1.yml
+  testinput/enshofx_2.yml
+  testinput/enshofx_3.yml
   testinput/enshofx.yml
   testinput/enspert.yml
   testinput/ensrecenter.yml
@@ -490,10 +493,9 @@ soca_add_test( NAME geometryatm
                SRC  TestGeometry.cc
                TEST_DEPENDS test_soca_gridgen )
 
-# TODO(G or T) Fix the mld-layer_deth issue in variables
-#soca_add_test( NAME state
-#               SRC  TestState.cc
-#               TEST_DEPENDS test_soca_gridgen )
+soca_add_test( NAME state
+               SRC  TestState.cc
+               TEST_DEPENDS test_soca_gridgen )
 
 soca_add_test( NAME getvalues
                SRC  TestGetValues.cc

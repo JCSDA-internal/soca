@@ -16,7 +16,7 @@ model:
   name: SOCA
   tstep: PT1H
   advance_mom6: 1
-  model variables: &soca_vars [cicen, hicen, socn, tocn, ssh, hocn, sw, lhf, shf, lw, us]
+  model variables: &soca_vars [cicen, hicen, socn, tocn, ssh, hocn, sw, lhf, shf, lw, us, mld, layer_depth]
 
 initial condition:
   read_from_file: 1

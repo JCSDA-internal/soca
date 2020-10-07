@@ -10,7 +10,7 @@ initial condition:
   date: &date 2018-04-15T00:00:00Z
   ocn_filename: MOM.res.nc
   ice_filename: ice_model.res.nc
-  state variables: &soca_vars [cicen, hicen, socn, tocn, ssh, hocn]
+  state variables: &soca_vars [cicen, hicen, socn, tocn, ssh, hocn, mld, layer_depth]
 
 background error:
   covariance model: SocaError
@@ -30,8 +30,8 @@ background error:
     scale_dist: 1000e3
     scale_flow:  1.0
     filter variables: [tocn, socn, ssh, cicen, hicen]
-    input variables: [cicen, hicen, socn, tocn, ssh, hocn, mld, layer_depth]
-    output variables: [cicen, hicen, socn, tocn, ssh, hocn, mld, layer_depth]
+    input variables: *soca_vars
+    output variables: *soca_vars
 
 dirac:
   ixdir: [1, 17, 41, 31, 51, 63, 81, 14, 16, 43]
