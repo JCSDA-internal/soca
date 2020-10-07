@@ -204,6 +204,6 @@ namespace soca {
   // -----------------------------------------------------------------------------
   util::DateTime & State::validTime() {return time_;}
   // -----------------------------------------------------------------------------
-  boost::shared_ptr<const Geometry> State::geometry() const {return geom_;}
+  std::shared_ptr<const Geometry> State::geometry() const {return geom_;}
   // -----------------------------------------------------------------------------
 }  // namespace soca

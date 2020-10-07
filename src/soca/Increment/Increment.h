@@ -12,11 +12,10 @@
 #ifndef SOCA_INCREMENT_INCREMENT_H_
 #define SOCA_INCREMENT_INCREMENT_H_
 
+#include <memory>
 #include <ostream>
 #include <string>
 #include <vector>
-
-#include <boost/shared_ptr.hpp>
 
 #include "soca/Fortran.h"
 
@@ -116,7 +115,7 @@ namespace soca {
       void accumul(const double &, const State &);
       int & toFortran() {return keyFlds_;}
       const int & toFortran() const {return keyFlds_;}
-      boost::shared_ptr<const Geometry> geometry() const;
+      std::shared_ptr<const Geometry> geometry() const;
 
 
       /// Data
@@ -126,7 +125,7 @@ namespace soca {
       F90flds keyFlds_;
       oops::Variables vars_;
       util::DateTime time_;
-      boost::shared_ptr<const Geometry> geom_;
+      std::shared_ptr<const Geometry> geom_;
   };
   // -----------------------------------------------------------------------------
 
