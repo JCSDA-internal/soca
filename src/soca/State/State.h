@@ -13,8 +13,6 @@
 #include <string>
 #include <vector>
 
-#include <boost/shared_ptr.hpp>
-
 #include "soca/Fortran.h"
 
 #include "oops/base/Variables.h"
@@ -85,7 +83,7 @@ namespace soca {
 
       int & toFortran() {return keyFlds_;}
       const int & toFortran() const {return keyFlds_;}
-      boost::shared_ptr<const Geometry> geometry() const;
+      std::shared_ptr<const Geometry> geometry() const;
       const oops::Variables & variables() const {return vars_;}
 
       /// Other
@@ -97,7 +95,7 @@ namespace soca {
 
       F90flds keyFlds_;
 
-      boost::shared_ptr<const Geometry> geom_;
+      std::shared_ptr<const Geometry> geom_;
       oops::Variables vars_;
       util::DateTime time_;
   };

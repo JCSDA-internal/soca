@@ -306,7 +306,7 @@ namespace soca {
   }
   // -----------------------------------------------------------------------------
 
-  boost::shared_ptr<const Geometry> Increment::geometry() const {
+  std::shared_ptr<const Geometry> Increment::geometry() const {
     return geom_;
   }
   // -----------------------------------------------------------------------------
