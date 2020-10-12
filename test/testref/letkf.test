@@ -49,18 +49,18 @@ Test     : SeaSurfaceTemp nobs= 201 Min=-0.990178, Max=30.610011, RMS=24.136578
 Test     : background y - H(x): 
 Test     : SeaSurfaceTemp nobs= 201 Min=-5.030729, Max=4.376730, RMS=1.333374
 Test     : H(x) for member 1:
-Test     : SeaSurfaceTemp nobs= 201 Min=-0.989933, Max=30.610826, RMS=24.113629
+Test     : SeaSurfaceTemp nobs= 201 Min=-0.989933, Max=30.610826, RMS=24.105150
 Test     : H(x) for member 2:
-Test     : SeaSurfaceTemp nobs= 201 Min=-0.990172, Max=30.526473, RMS=24.122602
+Test     : SeaSurfaceTemp nobs= 201 Min=-0.990172, Max=30.526473, RMS=24.114085
 Test     : H(x) for member 3:
-Test     : SeaSurfaceTemp nobs= 201 Min=-0.990301, Max=30.634047, RMS=24.115898
+Test     : SeaSurfaceTemp nobs= 201 Min=-0.990301, Max=30.634047, RMS=24.107459
 Test     : H(x) for member 4:
-Test     : SeaSurfaceTemp nobs= 201 Min=-0.990287, Max=30.502221, RMS=24.101724
+Test     : SeaSurfaceTemp nobs= 201 Min=-0.990287, Max=30.502221, RMS=24.093296
 Test     : H(x) for member 5:
-Test     : SeaSurfaceTemp nobs= 201 Min=-0.990194, Max=30.651910, RMS=24.123628
+Test     : SeaSurfaceTemp nobs= 201 Min=-0.990194, Max=30.651910, RMS=24.115162
 Test     : H(x) ensemble analysis mean: 
-Test     : SeaSurfaceTemp nobs= 201 Min=-0.990177, Max=30.585096, RMS=24.115386
+Test     : SeaSurfaceTemp nobs= 201 Min=-0.990177, Max=30.585096, RMS=24.106920
 Test     : analysis y - H(x): 
-Test     : SeaSurfaceTemp nobs= 201 Min=-4.510328, Max=4.351461, RMS=1.253177
+Test     : SeaSurfaceTemp nobs= 201 Min=-4.357089, Max=4.364544, RMS=1.232827
 Test     : ombg RMS: 1.333374
-Test     : oman RMS: 1.253177
+Test     : oman RMS: 1.232827
