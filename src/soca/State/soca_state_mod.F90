@@ -10,7 +10,6 @@ use soca_fields_mod
 use soca_increment_mod
 use soca_convert_state_mod
 use oops_variables_mod
-use soca_geostrophy_mod
 use kinds, only: kind_real
 use fckit_log_module, only: log, fckit_log
 
@@ -120,44 +119,13 @@ subroutine soca_state_add_incr(self, rhs)
   real(kind=kind_real) :: amin = 1e-6_kind_real
   real(kind=kind_real) :: amax = 10.0_kind_real
   real(kind=kind_real), allocatable :: alpha(:,:), aice_bkg(:,:), aice_ana(:,:)
-  type(soca_geostrophy_type) :: geostrophy
   type(soca_fields) :: incr
-  type(soca_field), pointer :: t, s, u, v, h, dt, ds, du, dv
-
 
   ! make sure rhs is a subset of self
   call rhs%check_subset(self)
 
   ! Make a copy of the increment
   call incr%copy(rhs)
-
-  ! Compute geostrophic increment
-  ! TODO Move inside of the balance operator.
-  !      Will need to be removed when assimilating ocean current or when using
-  !      ensemble derived increments (ensemble cross-covariances that include currents)
-  if (self%has('hocn').and.self%has('tocn').and.self%has('socn').and.&
-      self%has('uocn').and.self%has('vocn')) then
-     ! Get necessary background fields needed to compute geostrophic perturbations
-     call self%get("tocn", t)
-     call self%get("socn", s)
-     call self%get("hocn", h)
-
-     ! Make a copy of the increment and get the needed pointers
-     call incr%get("tocn", dt)
-     call incr%get("socn", ds)
-     call incr%get("uocn", du)
-     call incr%get("vocn", dv)
-
-     ! Initialize du and dv to 0
-     du%val = 0.0_kind_real
-     dv%val = 0.0_kind_real
-
-     ! Compute the geostrophic increment
-     call geostrophy%setup(self%geom, h%val)
-     call geostrophy%tl(h%val, t%val, s%val,&
-          dt%val, ds%val, du%val, dv%val, self%geom)
-     call geostrophy%delete()
-  end if
 
   ! Colocate increment fields with h-grid
   call incr%colocate('h')
