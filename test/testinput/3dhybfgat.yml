@@ -37,6 +37,7 @@ cost function:
     static weight: 0.5
     ensemble weight: 0.5
     static:
+      verbosity: main
       covariance model: SocaError
       prefix: soca
       datadir: ./bump

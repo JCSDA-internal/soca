@@ -232,7 +232,6 @@ subroutine soca_bump_correlation(self, horiz_convol, geom, f_conf, domain)
 
   ! Grid setup
   f_grid = fckit_configuration()
-  call f_grid%set('verbosity', 'none')
   call f_grid%set('prefix', domain)
   call f_grid%set('nl', 1)
   call f_grid%set('nv', 1)

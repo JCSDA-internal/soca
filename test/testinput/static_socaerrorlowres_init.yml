@@ -16,6 +16,7 @@ background:
   state variables: [cicen, hicen, hocn, socn, tocn, ssh]
 
 background error:
+  verbosity: main
   covariance model: SocaError
   default_seed: 1
   prefix: soca

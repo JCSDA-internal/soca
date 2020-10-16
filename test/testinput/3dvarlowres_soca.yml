@@ -25,6 +25,7 @@ cost function:
     state variables: [socn, tocn, ssh, hocn, mld, layer_depth]
 
   background error:
+    verbosity: main
     covariance model: SocaError
     prefix: soca
     datadir: ./bump_lowres
