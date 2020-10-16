@@ -16,13 +16,13 @@ Test     :     mld   min=    2.285472   max= 4593.153342   mean=  192.410907
 Test     : layer_depth   min=    2.285472   max= 5658.305747   mean= 1200.522954
 Test     : Member 0 final state: 
 Test     :   Valid time: 2018-04-15T06:00:00Z
-Test     :   cicen   min=    0.000000   max=    1.000000   mean=    0.023483
-Test     :   hicen   min=   -1.719140   max=    2.671684   mean=    0.112486
+Test     :   cicen   min=    0.000000   max=    1.000000   mean=    0.023431
+Test     :   hicen   min=   -1.942120   max=    2.758858   mean=    0.098928
 Test     :   hsnon   min=    0.000000   max=    0.674660   mean=    0.017737
-Test     :    socn   min=   10.720592   max=   40.441655   mean=   34.553779
-Test     :    tocn   min=   -1.888232   max=   31.711300   mean=    6.009064
-Test     :     ssh   min=   -1.871776   max=    0.915031   mean=   -0.276741
-Test     :    hocn   min=    0.001000   max= 1345.640000   mean=  128.628072
+Test     :    socn   min=   10.720592   max=   40.441655   mean=   34.541760
+Test     :    tocn   min=   -1.947776   max=   31.710843   mean=    6.011094
+Test     :     ssh   min=   -2.080819   max=    0.912915   mean=   -0.276773
+Test     :    hocn   min=    0.001000   max= 1345.640000   mean=  128.628067
 Test     :      sw   min= -225.097763   max=   -0.000000   mean=  -71.739321
 Test     :     lhf   min=  -38.137398   max=  256.597656   mean=   42.010040
 Test     :     shf   min=  -58.949295   max=  201.374298   mean=    6.075334
@@ -32,13 +32,13 @@ Test     :     mld   min=    2.285472   max= 4593.153342   mean=  192.410907
 Test     : layer_depth   min=    2.285472   max= 5658.305747   mean= 1200.522954
 Test     : Member 1 final state: 
 Test     :   Valid time: 2018-04-15T06:00:00Z
-Test     :   cicen   min=    0.000000   max=    1.000000   mean=    0.023271
-Test     :   hicen   min=   -1.839142   max=    3.360503   mean=    0.105226
+Test     :   cicen   min=    0.000000   max=    1.000000   mean=    0.023380
+Test     :   hicen   min=   -2.301490   max=    2.854819   mean=    0.097941
 Test     :   hsnon   min=    0.000000   max=    0.674660   mean=    0.017737
-Test     :    socn   min=   10.720592   max=   40.441655   mean=   34.542907
-Test     :    tocn   min=   -1.911362   max=   31.711235   mean=    6.008198
-Test     :     ssh   min=   -1.900760   max=    0.908202   mean=   -0.276599
-Test     :    hocn   min=    0.001000   max= 1345.640000   mean=  128.628088
+Test     :    socn   min=   10.720592   max=   40.441655   mean=   34.539344
+Test     :    tocn   min=   -1.904218   max=   31.711099   mean=    6.010970
+Test     :     ssh   min=   -2.081763   max=    0.907672   mean=   -0.276633
+Test     :    hocn   min=    0.001000   max= 1345.640000   mean=  128.628090
 Test     :      sw   min= -225.097763   max=   -0.000000   mean=  -71.739321
 Test     :     lhf   min=  -38.137398   max=  256.597656   mean=   42.010040
 Test     :     shf   min=  -58.949295   max=  201.374298   mean=    6.075334
@@ -48,13 +48,13 @@ Test     :     mld   min=    2.285472   max= 4593.153342   mean=  192.410907
 Test     : layer_depth   min=    2.285472   max= 5658.305747   mean= 1200.522954
 Test     : Member 2 final state: 
 Test     :   Valid time: 2018-04-15T06:00:00Z
-Test     :   cicen   min=    0.000000   max=    1.000000   mean=    0.023368
-Test     :   hicen   min=   -1.958858   max=    2.920055   mean=    0.100950
+Test     :   cicen   min=    0.000000   max=    1.000000   mean=    0.023424
+Test     :   hicen   min=   -1.784373   max=    3.222792   mean=    0.095686
 Test     :   hsnon   min=    0.000000   max=    0.674660   mean=    0.017737
-Test     :    socn   min=   10.720592   max=   40.441655   mean=   34.533150
-Test     :    tocn   min=   -1.911347   max=   31.711504   mean=    6.009704
-Test     :     ssh   min=   -1.902320   max=    0.912202   mean=   -0.276382
-Test     :    hocn   min=    0.001000   max= 1345.640000   mean=  128.628111
+Test     :    socn   min=   10.720592   max=   40.441655   mean=   34.537446
+Test     :    tocn   min=   -1.924342   max=   31.711429   mean=    6.009770
+Test     :     ssh   min=   -2.014069   max=    0.909076   mean=   -0.276382
+Test     :    hocn   min=    0.001000   max= 1345.640000   mean=  128.628113
 Test     :      sw   min= -225.097763   max=   -0.000000   mean=  -71.739321
 Test     :     lhf   min=  -38.137398   max=  256.597656   mean=   42.010040
 Test     :     shf   min=  -58.949295   max=  201.374298   mean=    6.075334
@@ -64,13 +64,13 @@ Test     :     mld   min=    2.285472   max= 4593.153342   mean=  192.410907
 Test     : layer_depth   min=    2.285472   max= 5658.305747   mean= 1200.522954
 Test     : Member 3 final state: 
 Test     :   Valid time: 2018-04-15T06:00:00Z
-Test     :   cicen   min=    0.000000   max=    1.000000   mean=    0.023399
-Test     :   hicen   min=   -1.841900   max=    3.016463   mean=    0.091114
+Test     :   cicen   min=    0.000000   max=    1.000000   mean=    0.023390
+Test     :   hicen   min=   -2.079102   max=    2.880655   mean=    0.093230
 Test     :   hsnon   min=    0.000000   max=    0.674660   mean=    0.017737
-Test     :    socn   min=   10.720592   max=   40.441655   mean=   34.543025
-Test     :    tocn   min=   -1.888761   max=   31.711512   mean=    6.015925
-Test     :     ssh   min=   -1.891510   max=    0.910825   mean=   -0.276170
-Test     :    hocn   min=    0.001000   max= 1345.640000   mean=  128.628110
+Test     :    socn   min=   10.720592   max=   40.441655   mean=   34.544738
+Test     :    tocn   min=   -1.888373   max=   31.711838   mean=    6.011418
+Test     :     ssh   min=   -1.929267   max=    0.901604   mean=   -0.276169
+Test     :    hocn   min=    0.001000   max= 1345.640000   mean=  128.628111
 Test     :      sw   min= -225.097763   max=   -0.000000   mean=  -71.739321
 Test     :     lhf   min=  -38.137398   max=  256.597656   mean=   42.010040
 Test     :     shf   min=  -58.949295   max=  201.374298   mean=    6.075334
@@ -80,13 +80,13 @@ Test     :     mld   min=    2.285472   max= 4593.153342   mean=  192.410907
 Test     : layer_depth   min=    2.285472   max= 5658.305747   mean= 1200.522954
 Test     : Member 4 final state: 
 Test     :   Valid time: 2018-04-15T06:00:00Z
-Test     :   cicen   min=    0.000000   max=    1.000000   mean=    0.023743
-Test     :   hicen   min=   -1.791553   max=    3.179430   mean=    0.097358
+Test     :   cicen   min=    0.000000   max=    1.000000   mean=    0.023555
+Test     :   hicen   min=   -1.840380   max=    2.946154   mean=    0.094911
 Test     :   hsnon   min=    0.000000   max=    0.674660   mean=    0.017737
-Test     :    socn   min=   10.720592   max=   40.441655   mean=   34.558091
-Test     :    tocn   min=   -1.909253   max=   31.711081   mean=    6.011292
-Test     :     ssh   min=   -1.884366   max=    0.909684   mean=   -0.276150
-Test     :    hocn   min=    0.001000   max= 1345.640000   mean=  128.628073
+Test     :    socn   min=   10.720592   max=   40.441655   mean=   34.542907
+Test     :    tocn   min=   -1.927639   max=   31.711397   mean=    6.008401
+Test     :     ssh   min=   -1.960688   max=    0.903406   mean=   -0.276121
+Test     :    hocn   min=    0.001000   max= 1345.640000   mean=  128.628083
 Test     :      sw   min= -225.097763   max=   -0.000000   mean=  -71.739321
 Test     :     lhf   min=  -38.137398   max=  256.597656   mean=   42.010040
 Test     :     shf   min=  -58.949295   max=  201.374298   mean=    6.075334
