@@ -14,10 +14,10 @@ Test     :     ssh   min=   -2.412433   max=    0.915336   mean=   -0.352418
 Test     :    hocn   min=    0.002000   max= 2691.280000   mean=  257.256128
 Test     :     mld   min=    2.285472   max= 4593.153342   mean=  192.410907
 Test     : layer_depth   min=    2.285472   max= 5658.305747   mean= 1200.522954
-Test     : CostJb   : Nonlinear Jb = 74041.854732
+Test     : CostJb   : Nonlinear Jb = 74051.947212
 Test     : CostJo   : Nonlinear Jo(SeaSurfaceTemp) = 328.390183, nobs = 147, Jo/n = 2.233947, err = 0.361776
 Test     : CostJo   : Nonlinear Jo(SeaSurfaceSalinity) = 48.915117, nobs = 51, Jo/n = 0.959120, err = 1.000000
 Test     : CostJo   : Nonlinear Jo(ADT) = 75.183569, nobs = 87, Jo/n = 0.864179, err = 0.100000
 Test     : CostJo   : Nonlinear Jo(InsituTemperature) = 4520.522118, nobs = 206, Jo/n = 21.944282, err = 0.897281
 Test     : CostJo   : Nonlinear Jo(InsituSalinity) = 330.725259, nobs = 218, Jo/n = 1.517088, err = 0.608197
-Test     : CostFunction: Nonlinear J = 79345.590979
+Test     : CostFunction: Nonlinear J = 79355.683459
