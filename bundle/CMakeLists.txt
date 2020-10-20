@@ -32,11 +32,6 @@ if ( BUILD_CRTM )
   ecbuild_bundle( PROJECT crtm          GIT "https://github.com/jcsda-internal/crtm.git"            UPDATE BRANCH release/crtm_jedi )
 endif ()
 
-option(BUILD_METIS "download and build METIS (required for points remapping in BUMP)")
-if ( BUILD_METIS )
-  ecbuild_bundle( PROJECT metis         GIT "https://github.com/jcsda-internal/metis.git"           UPDATE BRANCH develop )
-endif ()
-
 option(BUILD_FMS "download and build fms" ON)
 if ( BUILD_FMS )
   ecbuild_bundle( PROJECT fms           GIT "https://github.com/jcsda-internal/FMS.git"             UPDATE BRANCH release-stable-ecbuild )
