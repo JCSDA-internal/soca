@@ -108,7 +108,7 @@ subroutine soca_increment_getpoint(self, geoiter, values)
   do ff = 1, size(self%fields)
     field => self%fields(ff)
     select case(field%name)
-    case("tocn", "socn", "ssh", "hocn", "cicen", "hicen","hsnon", "chl")
+    case("tocn", "socn", "ssh", "uocn", "vocn", "hocn", "cicen", "hicen","hsnon", "chl")
       nz = field%nz
       values(ii+1:ii+nz) = field%val(geoiter%iind, geoiter%jind,:)
       ii = ii + nz
@@ -132,7 +132,7 @@ subroutine soca_increment_setpoint(self, geoiter, values)
   do ff = 1, size(self%fields)
     field => self%fields(ff)
     select case(field%name)
-    case("tocn", "socn", "ssh", "hocn", "cicen", "hicen","hsnon", "chl")
+    case("tocn", "socn", "ssh", "uocn", "vocn", "hocn", "cicen", "hicen","hsnon", "chl")
       nz = field%nz
       field%val(geoiter%iind, geoiter%jind,:) = values(ii+1:ii+nz)
       ii = ii + nz

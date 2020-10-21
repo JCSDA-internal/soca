@@ -127,8 +127,6 @@ subroutine soca_state_add_incr(self, rhs)
   ! Make a copy of the increment
   call incr%copy(rhs)
 
-  ! Colocate increment fields with h-grid
-  call incr%colocate('h')
 
   ! for each field that exists in incr, add to self
   do i=1,size(incr%fields)

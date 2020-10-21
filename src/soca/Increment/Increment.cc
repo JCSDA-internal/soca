@@ -166,12 +166,15 @@ namespace soca {
       if (vars_[ii] == "tocn") varlens[ii]=nzo;
       else if (vars_[ii] == "socn") varlens[ii]=nzo;
       else if (vars_[ii] == "hocn") varlens[ii]=nzo;
+      else if (vars_[ii] == "uocn") varlens[ii]=nzo;
+      else if (vars_[ii] == "vocn") varlens[ii]=nzo;
+      else if (vars_[ii] == "ssh")  varlens[ii]=1;
       else if (vars_[ii] == "cicen") varlens[ii]=ncat;
       else if (vars_[ii] == "hicen") varlens[ii]=ncat;
       else if (vars_[ii] == "hsnon") varlens[ii]=ncat;
       else if (vars_[ii] == "chl") varlens[ii]=nzo;
       else
-          varlens[ii] = 1;
+          varlens[ii] = 0;
     }
 
     int lenvalues = std::accumulate(varlens.begin(), varlens.end(), 0);
