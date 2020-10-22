@@ -29,6 +29,7 @@ cost function:
   background error:
     covariance model: BUMP
     bump:
+      verbosity: main
       prefix: bump3d
       datadir: ./bump
       strategy: specific_univariate

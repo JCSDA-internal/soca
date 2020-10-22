@@ -20,6 +20,7 @@ _file: &_file
   state variables: *soca_vars
 
 background error:
+  verbosity: main
   covariance model: hybrid
   static weight: 0.5
   ensemble weight: 0.5

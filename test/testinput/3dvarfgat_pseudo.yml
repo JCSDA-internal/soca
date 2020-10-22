@@ -54,6 +54,7 @@ cost function:
     state variables: *model_vars
 
   background error:
+    verbosity: main
     covariance model: SocaError
     prefix: soca
     datadir: ./bump
