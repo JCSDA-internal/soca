@@ -61,6 +61,7 @@ list( APPEND soca_test_input
   testinput/varchange_bkgerrsoca.yml
   testinput/varchange_horizfilt.yml
   testinput/varchange_vertconv.yml
+  testinput/varchange_logexpon.yml
 )
 
 list( APPEND soca_test_ref
@@ -565,7 +566,9 @@ soca_add_test( NAME varchange_vertconv
                SRC  TestVariableChange.cc
                TEST_DEPENDS test_soca_gridgen )
 
-
+soca_add_test( NAME varchange_logexpon
+               SRC  TestNLVariableChange.cc
+               TEST_DEPENDS test_soca_gridgen )
 #-------------------------------------------------------------------------------
 # Tests using the main SOCA applications
 #  TEST output stream is compared against existing testoutput/ files

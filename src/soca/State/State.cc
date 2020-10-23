@@ -200,10 +200,26 @@ namespace soca {
     return zz;
   }
   // -----------------------------------------------------------------------------
+  /// Logarithmic and exponential transformations
+  // -----------------------------------------------------------------------------
+  void State::logtrans(const oops::Variables & trvar) const {
+    Log::trace() << "State::State apply logarithmic transformation."
+                 << std::endl;
+    soca_state_logtrans_f90(toFortran(), trvar);
+  }
+  // -----------------------------------------------------------------------------
+  void State::expontrans(const oops::Variables & trvar) const {
+    Log::trace() << "State::State apply exponential transformation."
+    << std::endl;
+    soca_state_expontrans_f90(toFortran(), trvar);
+  }
+
+  // -----------------------------------------------------------------------------
   const util::DateTime & State::validTime() const {return time_;}
   // -----------------------------------------------------------------------------
   util::DateTime & State::validTime() {return time_;}
   // -----------------------------------------------------------------------------
   std::shared_ptr<const Geometry> State::geometry() const {return geom_;}
-  // -----------------------------------------------------------------------------
+ // -----------------------------------------------------------------------------
+
 }  // namespace soca

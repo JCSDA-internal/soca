@@ -19,6 +19,7 @@
 #include "soca/Transforms/BkgErrGodas/BkgErrGodas.h"
 #include "soca/Transforms/HorizFilt/HorizFilt.h"
 #include "soca/Transforms/VertConv/VertConv.h"
+#include "soca/Transforms/LogExpon/LogExpon.h"
 
 namespace soca {
 
@@ -42,9 +43,11 @@ void instantiateBalanceOpFactory() {
               oops::LinearVariableChange<soca::Traits, soca::HorizFilt> >
               makerBalanceOpHorizFILT_("HorizFiltSOCA");
   static oops::VariableChangeMaker<soca::Traits,
-               oops::VariableChange<soca::Traits,
-               soca::Ana2Model> >
-                   makerAna2Model_("Ana2Model");
+              oops::VariableChange<soca::Traits, soca::Ana2Model> >
+              makerAna2Model_("Ana2Model");
+  static oops::VariableChangeMaker<soca::Traits,
+              oops::VariableChange<soca::Traits, soca::LogExpon> >
+              makerLogExpon_("LogExpon");
 }
 }  // namespace soca
 

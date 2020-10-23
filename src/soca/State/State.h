@@ -65,6 +65,10 @@ namespace soca {
       void rotate2north(const oops::Variables &, const oops::Variables &) const;
       void rotate2grid(const oops::Variables &, const oops::Variables &) const;
 
+      /// Logarithmic and exponential transformations
+      void logtrans(const oops::Variables &) const;
+      void expontrans(const oops::Variables &) const;
+      //            
       /// Interactions with Increment
       State & operator+=(const Increment &);
 
