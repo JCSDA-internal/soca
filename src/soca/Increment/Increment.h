@@ -35,9 +35,6 @@ namespace atlas {
 namespace eckit {
   class Configuration;
 }
-namespace oops {
-  class UnstructuredGrid;
-}
 namespace ufo {
   class GeoVaLs;
   class Locations;
