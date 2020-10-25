@@ -68,7 +68,7 @@ namespace soca {
       /// Logarithmic and exponential transformations
       void logtrans(const oops::Variables &) const;
       void expontrans(const oops::Variables &) const;
-      //            
+
       /// Interactions with Increment
       State & operator+=(const Increment &);
 
