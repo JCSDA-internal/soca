@@ -28,7 +28,7 @@ Ana2Model::Ana2Model(const Geometry & resol, const eckit::Configuration & conf)
   ASSERT(uvars_.size() == vvars_.size());
   Log::trace() << "Ana2Model::Ana2Model Rotating:"
                << " u = " << uvars_ << " v = " << vvars_ << std::endl;
-  Log::trace() << "LogExpon::LogExpon Transforming:"
+  Log::trace() << "Ana2Model::Log Transforming:"
                << " var = " << logvars_ << std::endl;
   Log::trace() << "Ana2Model::Ana2Model done" << std::endl;
 }
