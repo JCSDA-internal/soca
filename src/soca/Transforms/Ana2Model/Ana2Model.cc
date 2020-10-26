@@ -21,12 +21,15 @@ using oops::Log;
 namespace soca {
 // -----------------------------------------------------------------------------
 Ana2Model::Ana2Model(const Geometry & resol, const eckit::Configuration & conf)
-: uvars_(initRotate(conf, "u")), vvars_(initRotate(conf, "v"))
+: uvars_(initRotate(conf, "u")), vvars_(initRotate(conf, "v")),
+  logvars_(initTrans(conf, "var"))
 {
   Log::trace() << "Ana2Model::Ana2Model start" << std::endl;
   ASSERT(uvars_.size() == vvars_.size());
   Log::trace() << "Ana2Model::Ana2Model Rotating:"
                << " u = " << uvars_ << " v = " << vvars_ << std::endl;
+  Log::trace() << "LogExpon::LogExpon Transforming:"
+               << " var = " << logvars_ << std::endl;
   Log::trace() << "Ana2Model::Ana2Model done" << std::endl;
 }
 // -----------------------------------------------------------------------------
@@ -41,6 +44,7 @@ void Ana2Model::changeVar(const State & xa,
   util::DateTime * vtime = &xm.validTime();
   xm = xa;
   xm.rotate2grid(uvars_, vvars_);
+  xm.logtrans(logvars_);
   xm.validTime() = xa.validTime();
   Log::trace() << "Ana2Model::changeVar done" << xm << std::endl;
 }
@@ -52,6 +56,7 @@ void Ana2Model::changeVarInverse(const State & xm,
   util::DateTime * vtime = &xa.validTime();
   xa = xm;
   xa.rotate2north(uvars_, vvars_);
+  xa.expontrans(logvars_);
   xa.validTime() = xm.validTime();
   Log::trace() << "Ana2Model::changeVarInverse done" << xa << std::endl;
 }

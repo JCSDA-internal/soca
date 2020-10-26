@@ -254,7 +254,7 @@ subroutine soca_state_logexpon(self, transfunc, trvars)
       end do
     case("expon") ! Apply exponential transformation
       do z=1,trocn%nz
-        trocn%val(:,:,z) = exp(trn(:,:,z)) * trocn%mask(:,:)
+        trocn%val(:,:,z) = max(exp(trn(:,:,z)),0.001) * trocn%mask(:,:)
       end do
     end select
     deallocate(trn)
