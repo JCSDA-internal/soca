@@ -210,19 +210,22 @@ endforeach(FILENAME)
 if( ${CRTM_FOUND} )
 
   # the coefficient files needed
+  # TODO(someone) for now these are our own copy in git-lfs,
+  #  because why download 627MB if I only need 7MB of files??
+  #  Download these directly from aws instead when that is an option.
   list( APPEND crtm_coef
-    SpcCoeff/Little_Endian/gmi_gpm.SpcCoeff.bin
-    TauCoeff/ODPS/Little_Endian/gmi_gpm.TauCoeff.bin
-    CloudCoeff/Little_Endian/CloudCoeff.bin
-    AerosolCoeff/Little_Endian/AerosolCoeff.bin
-    EmisCoeff/MW_Water/Little_Endian/FASTEM6.MWwater.EmisCoeff.bin
+    Data/crtm/gmi_gpm.SpcCoeff.bin
+    Data/crtm/gmi_gpm.TauCoeff.bin
+    Data/crtm/CloudCoeff.bin
+    Data/crtm/AerosolCoeff.bin
+    Data/crtm/FASTEM6.MWwater.EmisCoeff.bin
   )
 
   # link the files
   foreach(FILENAME ${crtm_coef})
        get_filename_component(filename ${FILENAME} NAME )
        execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
-             ${crtm_COEFFICIENT_DIR}/${FILENAME}
+             ${CMAKE_CURRENT_SOURCE_DIR}/${FILENAME}
              ${CMAKE_CURRENT_BINARY_DIR}/Data/${filename} )
   endforeach(FILENAME)
 endif()
