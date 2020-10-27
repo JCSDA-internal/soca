@@ -29,7 +29,7 @@ env:
     - BUILD_OPT_ufo="-DLOCAL_PATH_TESTFILES_IODA=NONE"
     - BUILD_OPT_soca="-DSOCA_TESTS_FORC_DEFAULT_TOL=ON -DENABLE_OCEAN_BGC=ON"
     - MATCH_REPOS="saber oops ioda ioda-converters ufo mom6 soca"
-    - LFS_REPOS="crtm"
+    - LFS_REPOS=""
     # ENABLE_VALGRIND="ON"
 
     # secure token used to push changes to GitHub (user: travissluka)
