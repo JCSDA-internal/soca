@@ -111,25 +111,26 @@ before_install:
 script:
   - |
     # Build code
-    docker exec jcsda_container bash \
-     -c 'cd /jcsda/work && /jcsda/work/repo.src/${MAIN_REPO}/.github/travisci/build.sh'
+    docker exec -it jcsda_container bash \
+     -c 'cd /jcsda/work && /jcsda/work/repo.src/${MAIN_REPO}/.github/travisci/build.sh; exit $?' \
+     || travis_terminate 1
 
   - |
     # run tests
-    docker exec jcsda_container bash \
-     -c 'cd /jcsda/work/repo.build/${MAIN_REPO} && ctest --output-on-failure'
+    docker exec -it jcsda_container bash \
+     -c 'cd /jcsda/work/repo.build/${MAIN_REPO} && ctest --output-on-failure' \
+     || travis_terminate 1
 
+
+#======================================================================
+#======================================================================
+after_success:
   - |
     # upload code coverage
     docker exec jcsda_container bash -c \
       'cd /jcsda/work/repo.src/${MAIN_REPO} \
        && bash <(curl -s https://codecov.io/bash) -p /jcsda/work/repo.build/${MAIN_REPO} -s . -X gcovout'
 
-
-
-#======================================================================
-#======================================================================
-after_success:
   - |
     # If this is a cron run, update the release/stable branch of the bundle
     if [[ "$TRAVIS_EVENT_TYPE" == "cron" && "$TRAVIS_BRANCH" == "develop" ]]; then
