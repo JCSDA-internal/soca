@@ -34,16 +34,13 @@ export BUILD_OPT_oops="-DENABLE_QG_MODEL=OFF -DENABLE_LORENZ95_MODEL=OFF"
 export BUILD_OPT_ufo="-DLOCAL_PATH_TESTFILES_IODA=NONE"
 export BUILD_OPT_soca="-DSOCA_TESTS_FORC_DEFAULT_TOL=ON -DCRTM_FIX_DIR=../../repo.src/crtm/fix"
 export MATCH_REPOS="atlas oops saber ioda ioda-converters ufo soca"
-export LFS_REPOS="crtm"
+export LFS_REPOS=""
 export REPO_CACHE="/path/to/somewhere/repo.cache"
 mkdir -p repo.src
 cd repo.src
 git clone https://github.com/JCSDA/soca.git
 cd ..
 ./repo.src/soca/.github/travisci/prep.sh
-```
-Note that ccache needs to be installed or loaded. If testing within singularity, swap ccache with ccache-swig in `./github/travisci/build.sh`.
-```
  ./repo.src/soca/.github/travisci/build.sh
 ```
 
