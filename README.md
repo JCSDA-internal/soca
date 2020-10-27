@@ -1,4 +1,4 @@
-[![travis_develop](https://travis-ci.com/JCSDA/soca.svg?token=Vu1Csdj6JEdxNw6xXKz8&branch=develop)](http://travis-ci.com/JCSDA/soca)
+[![Build Status](https://travis-ci.com/JCSDA-internal/soca.svg?branch=develop)](https://travis-ci.com/JCSDA-internal/soca)
 [![Documentation Status](https://readthedocs.com/projects/jointcenterforsatellitedataassimilation-soca/badge/?version=develop)](https://jointcenterforsatellitedataassimilation-soca.readthedocs-hosted.com/en/develop/?badge=develop)
 [![codecov](https://codecov.io/gh/JCSDA/soca/branch/develop/graph/badge.svg?token=uFJ62a68D7)](https://codecov.io/gh/JCSDA/soca)
 
