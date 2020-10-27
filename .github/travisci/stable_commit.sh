@@ -22,10 +22,8 @@ cwd=$(pwd)
 cd repo.src/$MAIN_REPO
 ref_develop=$(git rev-parse HEAD)
 
-# get a modified source url.
-# (We have to modify it with a credential token so we can later push to github)
+# get a source url.
 url=$(git remote get-url origin)
-url=${url/github.com/"${GH_TOKEN}@github.com"}
 
 # check out release branch in a new directory
 # (otherwise, if we do it here, this script may change!)
