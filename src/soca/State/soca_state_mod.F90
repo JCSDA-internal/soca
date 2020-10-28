@@ -11,7 +11,7 @@ use soca_increment_mod
 use soca_convert_state_mod
 use oops_variables_mod
 use kinds, only: kind_real
-use fckit_log_module, only: log, fckit_log
+use fckit_log_module, only: fckit_log
 
 implicit none
 private
@@ -231,6 +231,7 @@ subroutine soca_state_logexpon(self, transfunc, trvars)
   integer :: z, i
   type(soca_field), pointer :: trocn
   real(kind=kind_real), allocatable :: trn(:,:,:)
+  real(kind=kind_real) :: min_val = 1e-6_kind_real
   character(len=64) :: tr_names
 
   do i=1, trvars%nvars()
@@ -249,9 +250,9 @@ subroutine soca_state_logexpon(self, transfunc, trvars)
 
     select case(trim(transfunc))
     case("log")   ! apply logarithmic transformation
-      trocn%val = log10(trn+epsilon(trn)) * 2.30258509299
+      trocn%val = log(trn + min_val)
     case("expon") ! Apply exponential transformation
-      trocn%val = exp(trn) - epsilon(trn)
+      trocn%val = exp(trn) - min_val
     end select
     deallocate(trn)
 
