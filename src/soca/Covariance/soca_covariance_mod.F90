@@ -101,7 +101,7 @@ subroutine soca_cov_setup(self, f_conf, geom, bkg, vars)
      select case(trim(self%vars%variable(ivar)))
      case('cicen','hicen')
         init_seaice = .true.
-     case('tocn', 'socn', 'ssh')
+     case('tocn', 'socn', 'ssh', 'chl')
         init_ocean = .true.
      end select
   end do
@@ -157,7 +157,7 @@ subroutine soca_cov_C_mult(self, dx)
     ! TODO remove the hardcoded variables
     ! ice or ocean convolution ?
     select case(field%name)
-    case ('tocn', 'socn', 'ssh', 'sw', 'lw', 'lhf', 'shf', 'us')
+    case ('tocn', 'socn', 'ssh', 'sw', 'lw', 'lhf', 'shf', 'us', 'chl')
       conv => self%ocean_conv(1)
     case ('hicen','cicen')
       conv => self%seaice_conv(1)
@@ -232,13 +232,10 @@ subroutine soca_bump_correlation(self, horiz_convol, geom, f_conf, domain)
 
   ! Grid setup
   f_grid = fckit_configuration()
-  call f_grid%set('verbosity', 'none')
   call f_grid%set('prefix', domain)
   call f_grid%set('nl', 1)
   call f_grid%set('nv', 1)
   call f_grid%set('variables', ['var'])
-  call f_grid%set('nts', 1)
-  call f_grid%set('timeslots', ['00'])
 
   ! Wrap functionspace
   afunctionspace = atlas_functionspace(geom%afunctionspace%c_ptr())
@@ -273,7 +270,7 @@ subroutine soca_bump_correlation(self, horiz_convol, geom, f_conf, domain)
   if (horiz_convol%nam%new_nicas) then
      ! rh
      rh = atlas_fieldset()
-     afield = geom%afunctionspace%create_field('var_00',kind=atlas_real(kind_real),levels=0)
+     afield = geom%afunctionspace%create_field('var',kind=atlas_real(kind_real),levels=0)
      call rh%add(afield)
      call afield%data(real_ptr_1)
      if (domain.eq.'ocn') real_ptr_1 = self%ocn_l0+pack(geom%rossby_radius(geom%isc:geom%iec,geom%jsc:geom%jec), .true.)
@@ -282,7 +279,7 @@ subroutine soca_bump_correlation(self, horiz_convol, geom, f_conf, domain)
 
      ! rv
      rv = atlas_fieldset()
-     afield = geom%afunctionspace%create_field('var_00',kind=atlas_real(kind_real),levels=0)
+     afield = geom%afunctionspace%create_field('var',kind=atlas_real(kind_real),levels=0)
      call rv%add(afield)
      call afield%data(real_ptr_1)
      real_ptr_1 = 1.0

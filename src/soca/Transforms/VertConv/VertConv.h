@@ -46,7 +46,8 @@ class VertConv: public util::Printable {
  private:
   void print(std::ostream &) const override;
   int keyFtnConfig_;
-  const State & traj_;
+  const State bkg_lr_;
+  const Geometry geom_;
 };
 // -----------------------------------------------------------------------------
 

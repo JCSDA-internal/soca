@@ -12,10 +12,10 @@
 #ifndef SOCA_INCREMENT_INCREMENT_H_
 #define SOCA_INCREMENT_INCREMENT_H_
 
+#include <memory>
 #include <ostream>
 #include <string>
-
-#include <boost/shared_ptr.hpp>
+#include <vector>
 
 #include "soca/Fortran.h"
 
@@ -26,6 +26,7 @@
 #include "oops/util/Duration.h"
 #include "oops/util/ObjectCounter.h"
 #include "oops/util/Printable.h"
+#include "oops/util/Serializable.h"
 
 // Forward declarations
 namespace atlas {
@@ -33,9 +34,6 @@ namespace atlas {
 }
 namespace eckit {
   class Configuration;
-}
-namespace oops {
-  class UnstructuredGrid;
 }
 namespace ufo {
   class GeoVaLs;
@@ -60,6 +58,7 @@ namespace soca {
 
   class Increment : public oops::GeneralizedDepartures,
     public util::Printable,
+    public util::Serializable,
     private util::ObjectCounter<Increment> {
    public:
       static const std::string classname() {return "soca::Increment";}
@@ -74,6 +73,7 @@ namespace soca {
 
       /// Basic operators
       void diff(const State &, const State &);
+      void ones();
       void zero();
       void zero(const util::DateTime &);
       Increment & operator =(const Increment &);
@@ -103,21 +103,26 @@ namespace soca {
       util::DateTime & validTime();
       void updateTime(const util::Duration & dt);
 
+      /// Serialize and deserialize
+      size_t serialSize() const override;
+      void serialize(std::vector<double> &) const override;
+      void deserialize(const std::vector<double> &, size_t &) override;
+
       /// Other
       void accumul(const double &, const State &);
       int & toFortran() {return keyFlds_;}
       const int & toFortran() const {return keyFlds_;}
-      boost::shared_ptr<const Geometry> geometry() const;
+      std::shared_ptr<const Geometry> geometry() const;
 
 
       /// Data
    private:
-      void print(std::ostream &) const;
+      void print(std::ostream &) const override;
 
       F90flds keyFlds_;
       oops::Variables vars_;
       util::DateTime time_;
-      boost::shared_ptr<const Geometry> geom_;
+      std::shared_ptr<const Geometry> geom_;
   };
   // -----------------------------------------------------------------------------
 

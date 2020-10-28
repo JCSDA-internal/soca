@@ -9,8 +9,10 @@
 #define SOCA_MODELBIAS_MODELBIASINCREMENT_H_
 
 #include <ostream>
+#include <vector>
 
 #include "oops/util/Printable.h"
+#include "oops/util/Serializable.h"
 
 // Forward declarations
 namespace eckit {
@@ -26,7 +28,8 @@ namespace soca {
 
 namespace soca {
 
-class ModelBiasIncrement : public util::Printable {
+class ModelBiasIncrement : public util::Printable,
+                           public util::Serializable {
  public:
 /// Constructor, destructor
   ModelBiasIncrement(const Geometry &, const eckit::Configuration &) {}
@@ -50,9 +53,14 @@ class ModelBiasIncrement : public util::Printable {
   void write(const eckit::Configuration &) const {}
   double norm() const {return 0.0;}
 
+/// Serialize and deserialize
+  size_t serialSize() const override {return 0;}
+  void serialize(std::vector<double> &) const override {}
+  void deserialize(const std::vector<double> &, size_t &) override {}
+
  private:
   explicit ModelBiasIncrement(const ModelBiasCovariance &);
-  void print(std::ostream & os) const {}
+  void print(std::ostream & os) const override {}
 };
 
 // -----------------------------------------------------------------------------

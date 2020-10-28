@@ -9,6 +9,7 @@ use fckit_configuration_module, only: fckit_configuration
 use fms_mod, only: read_data
 use fms_io_mod, only: fms_io_init, fms_io_exit
 use kinds, only: kind_real
+use soca_geom_mod
 use soca_fields_mod
 use soca_increment_mod
 use soca_state_mod
@@ -25,7 +26,6 @@ public :: soca_balance_config, &
 
 !> Fortran derived type to hold configuration D
 type :: soca_balance_config
-   type(soca_state),  pointer :: traj                !> Trajectory
    integer                    :: isc, iec, jsc, jec  !> Compute domain
    type(soca_kst)             :: kst                 !> T/S balance
    type(soca_ksshts)          :: ksshts              !> SSH/T/S balance
@@ -40,10 +40,11 @@ contains
 !> Initialization of the balance operator and its trajectory.
 !> balances always used: T,S,SSH
 !> optional balances depending on input fields: cicen
-subroutine soca_balance_setup(f_conf, self, traj)
+subroutine soca_balance_setup(f_conf, self, traj, geom)
   type(fckit_configuration),   intent(in)  :: f_conf
   type(soca_balance_config), intent(inout) :: self
   type(soca_state),    target, intent(in)  :: traj
+  type(soca_geom),     target, intent(in)  :: geom
 
   integer :: isc, iec, jsc, jec
   integer :: isd, ied, jsd, jed
@@ -63,14 +64,11 @@ subroutine soca_balance_setup(f_conf, self, traj)
   character(len=:), allocatable :: kct_name
   real(kind=kind_real), allocatable :: kct(:,:) !> dc/dT
 
-  ! Store trajectory
-  self%traj => traj
-
   ! Indices for compute domain
-  isc=traj%geom%isc; iec=traj%geom%iec
-  jsc=traj%geom%jsc; jec=traj%geom%jec
-  isd=traj%geom%isd; ied=traj%geom%ied
-  jsd=traj%geom%jsd; jed=traj%geom%jed
+  isc=geom%isc; iec=geom%iec
+  jsc=geom%jsc; jec=geom%jec
+  isd=geom%isd; ied=geom%ied
+  jsd=geom%jsd; jed=geom%jed
   self%isc=isc; self%iec=iec
   self%jsc=jsc; self%jec=jec
 
@@ -87,7 +85,7 @@ subroutine soca_balance_setup(f_conf, self, traj)
     call f_conf%get_or_die("jac_mask.detadt", mask_detadt)
     call f_conf%get_or_die("jac_mask.detads", mask_detads)
     call fms_io_init()
-    call read_data(filename, mask_name, jac_mask, domain=traj%geom%Domain%mpp_domain)
+    call read_data(filename, mask_name, jac_mask, domain=geom%Domain%mpp_domain)
     call fms_io_exit()
     where(jac_mask<threshold)
       jac_mask = 0.0_kind_real
@@ -111,7 +109,7 @@ subroutine soca_balance_setup(f_conf, self, traj)
 
   ! allocate space
   nl = hocn%nz
-  allocate(self%kst%jacobian(isc:iec,jsc:jec,traj%geom%nzo))
+  allocate(self%kst%jacobian(isc:iec,jsc:jec,geom%nzo))
   allocate(jac(nl))
   self%kst%jacobian=0.0
 
@@ -150,8 +148,8 @@ subroutine soca_balance_setup(f_conf, self, traj)
         socn%val(i,j,k), &
         &layer_depth%val(i,j,k),&
         &hocn%val(i,j,k),&
-        &traj%geom%lon(i,j),&
-        &traj%geom%lat(i,j))
+        &geom%lon(i,j),&
+        &geom%lat(i,j))
         self%ksshts%kssht(i,j,k) = jac(1)*jac_mask(i,j)
         self%ksshts%ksshs(i,j,k) = jac(2)*jac_mask(i,j)
       end do
@@ -176,7 +174,7 @@ subroutine soca_balance_setup(f_conf, self, traj)
       call f_conf%get_or_die("dcdt.filename", filename)
       call f_conf%get_or_die("dcdt.name", kct_name)
       call fms_io_init()
-      call read_data(filename, kct_name, kct, domain=traj%geom%Domain%mpp_domain)
+      call read_data(filename, kct_name, kct, domain=geom%Domain%mpp_domain)
       call fms_io_exit()
     end if
     allocate(self%kct(isc:iec,jsc:jec))
@@ -198,7 +196,6 @@ subroutine soca_balance_delete(self)
   type(soca_balance_config), intent(inout) :: self
 
   ! the following always exist
-  nullify(self%traj)
   deallocate(self%kst%jacobian)
   deallocate(self%ksshts%kssht)
   deallocate(self%ksshts%ksshs)

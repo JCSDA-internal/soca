@@ -21,15 +21,16 @@ env:
   global:
     - MAIN_REPO=soca
     - LIB_REPOS="fms gsw mom6 crtm
-                 fckit atlas oops saber ioda ufo ioda-converters soca-config"
+                 fckit atlas oops saber ioda ufo ioda-converters"
     - BUILD_OPT=""
     - BUILD_OPT_crtm="-DBUILD_CRTM=ON"
     - BUILD_OPT_mom6="-DENABLE_OCEAN_BGC=ON"
     - BUILD_OPT_oops="-DENABLE_QG_MODEL=OFF -DENABLE_LORENZ95_MODEL=OFF"
     - BUILD_OPT_ufo="-DLOCAL_PATH_TESTFILES_IODA=NONE"
-    - BUILD_OPT_soca="-DSOCA_TESTS_FORC_DEFAULT_TOL=ON -DCRTM_FIX_DIR=../../repo.src/crtm/fix -DENABLE_OCEAN_BGC=ON"
-    - MATCH_REPOS="saber oops ioda ioda-converters ufo mom6 soca soca-config"
-    - LFS_REPOS="crtm"
+    - BUILD_OPT_soca="-DSOCA_TESTS_FORC_DEFAULT_TOL=ON -DENABLE_OCEAN_BGC=ON"
+    - MATCH_REPOS="saber oops ioda ioda-converters ufo mom6 soca"
+    - LFS_REPOS=""
+    # ENABLE_VALGRIND="ON"
 
     # secure token used to push changes to GitHub (user: travissluka)
     - secure: phYDV8BnMVQMhKbuyfpA0cUvelL3Jn9GrMunbAQAa4Hw6OInALu0BSoPAm5xd+lPAsVkhy3BwHlRvjqGYmhDr3NFuxUbZ/l1CcSOJZmV5Rp+5CY5nk0scQ9asuRSzt6jHBIaj9ncOyTWc7B3H6Vp88z6dBDgzeXWMaLy5A7u3fkTVI3dYAmvPAEd9wRp4nI6ij2lnTELIziTYZ07nrdIzYfAc6sqvPXhLkZfxYMkfDAbHHWZt+kGoJGPFfsjX1K7cgj32Ro+lm3Vl0u732QRCw3nUefhZrz3PkkGeX1U+GjQsz8liEgBqKng4ZxocepPsv5gwZj/frMCCtcXj59Pia5pmHy6vzdq4XCp/WpYwbbMEF9y9qVL35s9On9JnU20DEOV4r5c9rmJd8gbpsfK1reT8KOD5zJe9YBHRRXajweq23TFJPRyHVHlnSF8OtybOVG6OMLba9vvPTveQuaDIyc3kur5QtbM0HVv3uplef14m1frQYqji9I99h/pI5WcueRpcxARwagL1tnl3cfK4LyI3QWXidetDduE3MJQNfsKADlKKBVw9W2JyzNFCNj0J7x8r5SwObRX7Kj9YZfIPJGVt5rDc0OZm9wCt/BEZclTLyf4qbFibX/0glPiFoqhuYP/ZXAbQdYWI+si68gxcql33+PMkmbuhehA8qNZicE=
@@ -69,7 +70,8 @@ before_install:
     export BRANCH=$( [[ "$TRAVIS_PULL_REQUEST" == "false" ]] && \
                      echo $TRAVIS_BRANCH || echo $TRAVIS_PULL_REQUEST_BRANCH )
     export_vars="-e REPO_CACHE=/repo.cache -e LIB_REPOS -e LIB_BUILD_TYPE
-                 -e MAIN_REPO -e MAIN_BUILD_TYPE -e CCACHE_DIR=/ccache -e BUILD_OPT"
+                 -e MAIN_REPO -e MAIN_BUILD_TYPE -e CCACHE_DIR=/ccache -e BUILD_OPT
+                 -e ENABLE_VALGRIND"
     for v in $(env | grep BUILD_OPT_ | cut -d'=' -f 1); do
       export_vars="$export_vars -e $v"
     done
@@ -78,6 +80,7 @@ before_install:
     # clone and prep the repos
     # note: the main repo is not handled by the prep.sh script, it is moved from
     # what TravisCI auto checks out (because TravisCI handles PR merges specially)
+    git config --global url.https://${GH_TOKEN}@github.com/.insteadOf https://github.com/
     WORK_DIR=$HOME/work
     mkdir -p $WORK_DIR/repo.src; cd $WORK_DIR
     mv ${TRAVIS_BUILD_DIR} ${WORK_DIR}/repo.src/${MAIN_REPO}
@@ -102,33 +105,32 @@ before_install:
       --name jcsda_container jcsda/dockerl2
     docker ps -a
 
-
 #======================================================================
 # Here are the run steps
 #======================================================================
 script:
   - |
     # Build code
-    docker exec jcsda_container bash \
-     -c 'cd /jcsda/work && /jcsda/work/repo.src/${MAIN_REPO}/.github/travisci/build.sh'
+    docker exec -it jcsda_container bash \
+     -c 'cd /jcsda/work && /jcsda/work/repo.src/${MAIN_REPO}/.github/travisci/build.sh; exit $?' \
+     || travis_terminate 1
 
   - |
     # run tests
-    docker exec jcsda_container bash \
-     -c 'cd /jcsda/work/repo.build/${MAIN_REPO} && ctest --output-on-failure'
-
-  - |
-    # upload code coverage
-    docker exec jcsda_container bash -c \
-      'cd /jcsda/work/repo.src/${MAIN_REPO} \
-       && lcov -c -d . -d ../../repo.build/${MAIN_REPO}/ -o coverage.info  --no-external -q \
-       && bash <(curl -s https://codecov.io/bash)'
-
+    docker exec -it jcsda_container bash \
+     -c 'cd /jcsda/work/repo.build/${MAIN_REPO} && ctest --output-on-failure' \
+     || travis_terminate 1
 
 
 #======================================================================
 #======================================================================
 after_success:
+  - |
+    # upload code coverage
+    docker exec jcsda_container bash -c \
+      'cd /jcsda/work/repo.src/${MAIN_REPO} \
+       && bash <(curl -s https://codecov.io/bash) -p /jcsda/work/repo.build/${MAIN_REPO} -s . -X gcovout'
+
   - |
     # If this is a cron run, update the release/stable branch of the bundle
     if [[ "$TRAVIS_EVENT_TYPE" == "cron" && "$TRAVIS_BRANCH" == "develop" ]]; then

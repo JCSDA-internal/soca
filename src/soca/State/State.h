@@ -11,8 +11,7 @@
 #include <memory>
 #include <ostream>
 #include <string>
-
-#include <boost/shared_ptr.hpp>
+#include <vector>
 
 #include "soca/Fortran.h"
 
@@ -20,6 +19,7 @@
 #include "oops/util/DateTime.h"
 #include "oops/util/ObjectCounter.h"
 #include "oops/util/Printable.h"
+#include "oops/util/Serializable.h"
 
 // Forward declarations
 namespace eckit {
@@ -44,6 +44,7 @@ namespace soca {
    * forward in time.
    */
   class State : public util::Printable,
+                public util::Serializable,
     private util::ObjectCounter<State> {
    public:
       static const std::string classname() {return "soca::State";}
@@ -74,9 +75,15 @@ namespace soca {
       const util::DateTime & validTime() const;
       util::DateTime & validTime();
 
+      /// Serialize and deserialize
+      size_t serialSize() const override;
+      void serialize(std::vector<double> &) const override;
+      void deserialize(const std::vector<double> &, size_t &) override;
+
+
       int & toFortran() {return keyFlds_;}
       const int & toFortran() const {return keyFlds_;}
-      boost::shared_ptr<const Geometry> geometry() const;
+      std::shared_ptr<const Geometry> geometry() const;
       const oops::Variables & variables() const {return vars_;}
 
       /// Other
@@ -84,11 +91,11 @@ namespace soca {
       void accumul(const double &, const State &);
 
    private:
-      void print(std::ostream &) const;
+      void print(std::ostream &) const override;
 
       F90flds keyFlds_;
 
-      boost::shared_ptr<const Geometry> geom_;
+      std::shared_ptr<const Geometry> geom_;
       oops::Variables vars_;
       util::DateTime time_;
   };

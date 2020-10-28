@@ -14,9 +14,11 @@ set -e
 
 cwd=$(pwd)
 
+CCACHE=ccache-swig
+
 # zero out the ccache stats
 echo -e "\nzeroing out 'ccache' statistics"
-ccache -z
+$CCACHE -z
 
 # for each dependency repo...
 for repo in $LIB_REPOS; do
@@ -47,7 +49,7 @@ for repo in $LIB_REPOS; do
     build_opt_var=BUILD_OPT_${repo_underscore}
     build_opt="$BUILD_OPT ${!build_opt_var}"
     time ecbuild $src_dir -DCMAKE_INSTALL_PREFIX=${install_dir} -DCMAKE_BUILD_TYPE=${LIB_BUILD_TYPE} \
-            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DENABLE_TESTS=OFF -DBUILD_TESTING=OFF $build_opt
+            -DCMAKE_CXX_COMPILER_LAUNCHER=$CCACHE -DENABLE_TESTS=OFF -DBUILD_TESTING=OFF $build_opt
 
     # build and install
     time make -j4
@@ -72,11 +74,19 @@ cd $build_dir
 build_opt_var=BUILD_OPT_${MAIN_REPO/-/_}
 build_opt=${!build_opt_var}
 
-time ecbuild $src_dir -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
-       -DCMAKE_BUILD_TYPE=${MAIN_BUILD_TYPE} -DENABLE_GPROF=ON $build_opt
+# valgrind and gprof are mutually exclusive
+if [[ "$ENABLE_VALGRIND" == "ON" ]]; then
+    build_opt="$build_opt -DSOCA_TESTS_VALGRIND=ON"
+else
+    build_opt="$build_opt -DENABLE_GPROF=ON"
+fi
+
+
+time ecbuild $src_dir -DCMAKE_CXX_COMPILER_LAUNCHER=$CCACHE \
+       -DCMAKE_BUILD_TYPE=${MAIN_BUILD_TYPE} $build_opt
 time make -j4
 
 
 # how useful was ccache?
 echo -e "\nccache statistics:"
-ccache -s
+$CCACHE -s

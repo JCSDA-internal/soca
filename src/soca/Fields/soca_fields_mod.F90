@@ -91,6 +91,7 @@ contains
   procedure :: gpnorm   => soca_fields_gpnorm
   procedure :: mul      => soca_fields_mul
   procedure :: sub      => soca_fields_sub
+  procedure :: ones     => soca_fields_ones
   procedure :: zeros    => soca_fields_zeros
 
   ! IO
@@ -101,6 +102,11 @@ contains
   ! misc
   procedure :: update_halos => soca_fields_update_halos
   procedure :: colocate  => soca_fields_colocate
+
+  ! serialization
+  procedure :: serial_size => soca_fields_serial_size
+  procedure :: serialize   => soca_fields_serialize
+  procedure :: deserialize => soca_fields_deserialize
 
 end type soca_fields
 
@@ -277,7 +283,8 @@ subroutine soca_fields_init_vars(self, vars)
     case ('cicen')
       self%fields(i)%cf_name = "sea_ice_category_area_fraction"
       self%fields(i)%io_file = "ice"
-    case ('hsnon')
+   case ('hsnon')
+      self%fields(i)%cf_name = "sea_ice_category_snow_thickness"
       self%fields(i)%io_file = "ice"
     case ('sw')
       self%fields(i)%cf_name = "net_downwelling_shortwave_radiation"
@@ -439,6 +446,18 @@ subroutine soca_fields_update_halos(self)
 end subroutine soca_fields_update_halos
 
 ! ------------------------------------------------------------------------------
+!> set all fields to one
+subroutine soca_fields_ones(self)
+  class(soca_fields), intent(inout) :: self
+  integer :: i
+
+  do i = 1, size(self%fields)
+    self%fields(i)%val = 1.0_kind_real
+  end do
+
+end subroutine soca_fields_ones
+
+! ------------------------------------------------------------------------------
 !> reset all fields to zero
 subroutine soca_fields_zeros(self)
   class(soca_fields), intent(inout) :: self
@@ -505,18 +524,20 @@ subroutine soca_fields_axpy(self,zz,rhs)
   real(kind=kind_real),  intent(in) :: zz
   class(soca_fields),    intent(in) :: rhs
 
-  type(soca_field), pointer :: fld
+  type(soca_field), pointer :: f_rhs, f_lhs
   integer :: i
 
   ! make sure fields are correct shape
-  ! TODO, should they be congruent??
-  call rhs%check_subset(self)
+  call self%check_subset(rhs)
 
-  do i=1,size(rhs%fields)
-    call self%get(rhs%fields(i)%name, fld)
-    fld%val = fld%val + zz* rhs%fields(i)%val
+  do i=1,size(self%fields)
+    f_lhs => self%fields(i)
+    if (.not. rhs%has(f_lhs%name)) cycle
+    call rhs%get(f_lhs%name, f_rhs)
+    f_lhs%val = f_lhs%val + zz *f_rhs%val
   end do
 end subroutine soca_fields_axpy
+
 
 ! ------------------------------------------------------------------------------
 !> calculate the global dot product of two sets of fields
@@ -766,23 +787,27 @@ subroutine soca_fields_read(fld, f_conf, vdate)
     jsc = fld%geom%jsc ; jec = fld%geom%jec
 
     ! Initialize mid-layer depth from layer thickness
-    call fld%get("layer_depth", layer_depth)
-    call fld%geom%thickness2depth(hocn%val, layer_depth%val)
+    if (fld%has("layer_depth")) then
+      call fld%get("layer_depth", layer_depth)
+      call fld%geom%thickness2depth(hocn%val, layer_depth%val)
+    end if
 
     ! Compute mixed layer depth TODO: Move somewhere else ...
-    call fld%get("tocn", field)
-    call fld%get("socn", field2)
-    call fld%get("mld", mld)
-    do i = isc, iec
-      do j = jsc, jec
-          mld%val(i,j,1) = soca_mld(&
-              &field2%val(i,j,:),&
-              &field%val(i,j,:),&
-              &layer_depth%val(i,j,:),&
-              &fld%geom%lon(i,j),&
-              &fld%geom%lat(i,j))
+    if (fld%has("mld") .and. fld%has("layer_depth")) then
+      call fld%get("tocn", field)
+      call fld%get("socn", field2)
+      call fld%get("mld", mld)
+      do i = isc, iec
+        do j = jsc, jec
+            mld%val(i,j,1) = soca_mld(&
+                &field2%val(i,j,:),&
+                &field%val(i,j,:),&
+                &layer_depth%val(i,j,:),&
+                &fld%geom%lon(i,j),&
+                &fld%geom%lat(i,j))
+        end do
       end do
-    end do
+    end if
 
     ! Remap layers if needed
     if (vert_remap) then
@@ -1153,5 +1178,64 @@ subroutine soca_fields_colocate(self, cgridlocout)
  call horiz_interp_spherical_del(interp2d)
 
 end subroutine soca_fields_colocate
+
+! ------------------------------------------------------------------------------
+
+subroutine soca_fields_serial_size(self, geom, vec_size)
+  class(soca_fields),    intent(in)  :: self
+  type(soca_geom),       intent(in)  :: geom
+  integer,               intent(out) :: vec_size
+
+  integer :: i
+
+  ! Loop over fields
+  vec_size = 0
+  do i=1,size(self%fields)
+    vec_size = vec_size + size(self%fields(i)%val)
+  end do
+
+end subroutine soca_fields_serial_size
+
+! ------------------------------------------------------------------------------
+
+subroutine soca_fields_serialize(self, geom, vec_size, vec)
+  class(soca_fields),    intent(in)  :: self
+  type(soca_geom),       intent(in)  :: geom
+  integer,               intent(in)  :: vec_size
+  real(kind=kind_real),  intent(out) :: vec(vec_size)
+
+  integer :: index, i, nn
+
+  ! Loop over fields, levels and horizontal points
+  index = 1
+  do i=1,size(self%fields)
+    nn = size(self%fields(i)%val)
+    vec(index:index+nn-1) = reshape(self%fields(i)%val, (/ nn /) )
+    index = index + nn
+  end do
+
+end subroutine soca_fields_serialize
+
+! ------------------------------------------------------------------------------
+
+subroutine soca_fields_deserialize(self, geom, vec_size, vec, index)
+  class(soca_fields), intent(inout) :: self
+  type(soca_geom),       intent(in)    :: geom
+  integer,               intent(in)    :: vec_size
+  real(kind=kind_real),  intent(in)    :: vec(vec_size)
+  integer,               intent(inout) :: index
+
+  integer :: i, nn
+
+  ! Loop over fields, levels and horizontal points
+  do i=1,size(self%fields)
+    nn = size(self%fields(i)%val)
+    self%fields(i)%val = reshape(vec(index+1:index+1+nn), shape(self%fields(i)%val))
+    index = index + nn
+  end do
+
+end subroutine soca_fields_deserialize
+
+! ------------------------------------------------------------------------------
 
 end module soca_fields_mod

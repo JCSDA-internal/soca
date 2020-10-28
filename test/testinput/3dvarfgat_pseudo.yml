@@ -19,7 +19,7 @@ cost function:
   model:
     name: PseudoModel
     tstep: PT1H
-    state variables: *soca_vars
+    state variables: &model_vars [socn, tocn, ssh, hocn, uocn, vocn, mld, layer_depth]
     states:
     - date: 2018-04-15T01:00:00Z
       basename: ./Data/
@@ -51,9 +51,10 @@ cost function:
     basename: ./INPUT/
     ocn_filename: MOM.res.nc
     date: &bkg_date 2018-04-15T00:00:00Z
-    state variables: *soca_vars
+    state variables: *model_vars
 
   background error:
+    verbosity: main
     covariance model: SocaError
     prefix: soca
     datadir: ./bump

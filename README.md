@@ -1,8 +1,7 @@
-[![travis_develop](https://travis-ci.com/JCSDA/soca.svg?token=Vu1Csdj6JEdxNw6xXKz8&branch=develop)](http://travis-ci.com/JCSDA/soca)
+[![Build Status](https://travis-ci.com/JCSDA-internal/soca.svg?branch=develop)](https://travis-ci.com/JCSDA-internal/soca)
 [![Documentation Status](https://readthedocs.com/projects/jointcenterforsatellitedataassimilation-soca/badge/?version=develop)](https://jointcenterforsatellitedataassimilation-soca.readthedocs-hosted.com/en/develop/?badge=develop)
-[![codecov](https://codecov.io/gh/JCSDA/soca/branch/develop/graph/badge.svg?token=uFJ62a68D7)](https://codecov.io/gh/JCSDA/soca)
-
-JEDI encapsulation of MOM6  
+[![codecov](https://codecov.io/gh/JCSDA-internal/soca/branch/develop/graph/badge.svg?token=uFJ62a68D7)](https://codecov.io/gh/jcsda-internal/soca)
+JEDI encapsulation of MOM6
 
 (C) Copyright 2017-2020 UCAR.
 
@@ -27,23 +26,20 @@ make -j 4
 3. If building the same way travis-ci builds the MOM6 SOCA bundle:
 ```
 export MAIN_REPO=soca
-export LIB_REPOS="fms gsw mom6 crtm fckit atlas oops saber ioda ufo ioda-converters soca-config"
+export LIB_REPOS="fms gsw mom6 crtm fckit atlas oops saber ioda ufo ioda-converters"
 export BUILD_OPT=""
 export BUILD_OPT_crtm="-DBUILD_CRTM=ON"
 export BUILD_OPT_oops="-DENABLE_QG_MODEL=OFF -DENABLE_LORENZ95_MODEL=OFF"
 export BUILD_OPT_ufo="-DLOCAL_PATH_TESTFILES_IODA=NONE"
 export BUILD_OPT_soca="-DSOCA_TESTS_FORC_DEFAULT_TOL=ON -DCRTM_FIX_DIR=../../repo.src/crtm/fix"
-export MATCH_REPOS="atlas oops saber ioda ioda-converters ufo soca soca-config"
-export LFS_REPOS="crtm"
+export MATCH_REPOS="atlas oops saber ioda ioda-converters ufo soca"
+export LFS_REPOS=""
 export REPO_CACHE="/path/to/somewhere/repo.cache"
 mkdir -p repo.src
 cd repo.src
 git clone https://github.com/JCSDA/soca.git
 cd ..
 ./repo.src/soca/.github/travisci/prep.sh
-```
-Note that ccache needs to be installed or loaded. If testing within singularity, swap ccache with ccache-swig in `./github/travisci/build.sh`.
-```
  ./repo.src/soca/.github/travisci/build.sh
 ```
 

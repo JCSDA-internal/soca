@@ -29,7 +29,6 @@ module soca_horizfilt_mod
 
   !> Fortran derived type to hold configuration data for horizfilt
   type, public :: soca_horizfilt_type
-     type(soca_state),         pointer :: bkg            !< Background field (or first guess)
      type(oops_variables)              :: vars           !< Apply filtering to vars
      real(kind=kind_real), allocatable :: wgh(:,:,:,:)   !< Filtering weight
      real(kind=kind_real) :: scale_flow  !< Used with "flow" filter, sea surface height decorrelation scale
@@ -128,7 +127,6 @@ contains
     class(soca_horizfilt_type), intent(inout) :: self       !< The horizfilt structure
 
     deallocate(self%wgh)
-    nullify(self%bkg)
 
   end subroutine soca_horizfilt_delete
 

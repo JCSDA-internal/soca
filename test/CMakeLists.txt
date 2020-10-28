@@ -1,8 +1,10 @@
 list( APPEND soca_test_input
   testinput/3dhyb.yml
   testinput/3dhybfgat.yml
+  testinput/3dvarbump.yml
   testinput/3dvar_godas.yml
   testinput/3dvar_soca.yml
+  testinput/3dvarlowres_soca.yml
   testinput/3dvarfgat.yml
   testinput/3dvarfgat_pseudo.yml
   testinput/addincrement.yml
@@ -14,6 +16,9 @@ list( APPEND soca_test_input
   testinput/dirac_horizfilt.yml
   testinput/dirac_soca_cov.yml
   testinput/dirac_socahyb_cov.yml
+  testinput/enshofx_1.yml
+  testinput/enshofx_2.yml
+  testinput/enshofx_3.yml
   testinput/enshofx.yml
   testinput/enspert.yml
   testinput/ensrecenter.yml
@@ -40,11 +45,13 @@ list( APPEND soca_test_input
   testinput/makeobs.yml
   testinput/marine2ioda.yml
   testinput/model.yml
+  testinput/parameters_bump_cor_nicas.yml
   testinput/parameters_bump_cov_lct.yml
   testinput/parameters_bump_cov_nicas.yml
   testinput/parameters_bump_loc.yml
   testinput/state.yml
   testinput/static_socaerror_init.yml
+  testinput/static_socaerrorlowres_init.yml
   testinput/static_socaerror_test.yml
   testinput/varchange_ana2model.yml
   testinput/varchange_balance.yml
@@ -59,8 +66,10 @@ list( APPEND soca_test_input
 list( APPEND soca_test_ref
   testref/3dhyb.test
   testref/3dhybfgat.test
+  testref/3dvarbump.test
   testref/3dvar_godas.test
   testref/3dvar_soca.test
+  testref/3dvarlowres_soca.test
   testref/3dvarfgat.test
   testref/3dvarfgat_pseudo.test
   testref/addincrement.test
@@ -87,6 +96,7 @@ list( APPEND soca_test_ref
   testref/hofx_4d_pseudo.test
   testref/letkf.test
   testref/makeobs.test
+  testref/parameters_bump_cor_nicas.test
   testref/parameters_bump_cov_lct.test
 )
 
@@ -127,9 +137,11 @@ list( APPEND soca_model_restarts
 list( APPEND soca_obs
   Data/Obs/adt.nc
   Data/Obs/icec.nc
+  Data/Obs/icefb.nc
   Data/Obs/prof.nc
   Data/Obs/sss.nc
   Data/Obs/sst.nc
+  Data/Obs/chl.nc
   Data/Obs/gmi_gpm_geoval.nc
   Data/Obs/gmi_gpm_obs.nc
 )
@@ -197,31 +209,23 @@ endforeach(FILENAME)
 # Link CRTM coeff
 if( ${CRTM_FOUND} )
 
-  # determine where to look for coefficients
-  set( CRTM_FIX_DIR_DOCSTRING
-      "Path to the CRTM fix directory, needs to be set if CRTM was not built as part of this bundle.")
-  set( CRTM_FIX_DIR NOTFOUND CACHE PATH ${CRTM_FIX_DIR_DOCSTRING})
-  if( NOT CRTM_FIX_DIR AND EXISTS ${crtm_SOURCE_DIR}/fix)
-    set( CRTM_FIX_DIR ${crtm_SOURCE_DIR}/fix CACHE PATH ${CRTM_FIX_DIR_DOCSTRING} FORCE)
-  elseif( NOT CRTM_FIX_DIR )
-    message(FATAL_ERROR
-      "CRTM was not built as part of the bundle, CRTM_FIX_DIR must be set")
-  endif()
-
   # the coefficient files needed
+  # TODO(someone) for now these are our own copy in git-lfs,
+  #  because why download 627MB if I only need 7MB of files??
+  #  Download these directly from aws instead when that is an option.
   list( APPEND crtm_coef
-    SpcCoeff/Little_Endian/gmi_gpm.SpcCoeff.bin
-    TauCoeff/ODPS/Little_Endian/gmi_gpm.TauCoeff.bin
-    CloudCoeff/Little_Endian/CloudCoeff.bin
-    AerosolCoeff/Little_Endian/AerosolCoeff.bin
-    EmisCoeff/MW_Water/Little_Endian/FASTEM6.MWwater.EmisCoeff.bin
+    Data/crtm/gmi_gpm.SpcCoeff.bin
+    Data/crtm/gmi_gpm.TauCoeff.bin
+    Data/crtm/CloudCoeff.bin
+    Data/crtm/AerosolCoeff.bin
+    Data/crtm/FASTEM6.MWwater.EmisCoeff.bin
   )
 
   # link the files
   foreach(FILENAME ${crtm_coef})
        get_filename_component(filename ${FILENAME} NAME )
        execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
-             ${CRTM_FIX_DIR}/${FILENAME}
+             ${CMAKE_CURRENT_SOURCE_DIR}/${FILENAME}
              ${CMAKE_CURRENT_BINARY_DIR}/Data/${filename} )
   endforeach(FILENAME)
 endif()
@@ -229,6 +233,7 @@ endif()
 
 # Create directory for BUMP output
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bump)
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bump_lowres)
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bump-kmask)
 
 # find compare.py provided by oops
@@ -252,6 +257,9 @@ set( SOCA_TESTS_FORC_DEFAULT_TOL OFF CACHE BOOL
 set( SOCA_TESTS_FORC_TRAPFPE OFF CACHE BOOL
   "If true, the specified per-test trapping on/off flag is ignored\
   and is forced to ON for all tests" )
+
+set( SOCA_TESTS_VALGRIND OFF CACHE BOOL
+  "If true, some tests are run under valgrind")
 
 
 #-------------------------------------------------------------------------------
@@ -281,7 +289,7 @@ set( SOCA_TESTS_FORC_TRAPFPE OFF CACHE BOOL
 function(soca_add_test)
   # parse the passed arguments
   set(prefix     ARG)
-  set(novals     NOCOMPARE NOTRAPFPE)
+  set(novals     NOCOMPARE NOTRAPFPE NOVALGRIND)
   set(singlevals NAME EXE SRC CFG MPI)
   set(multivals  TEST_DEPENDS TOL)
   cmake_parse_arguments(${prefix}
@@ -298,6 +306,10 @@ function(soca_add_test)
     set ( TRAPFPE_ENV "OOPS_TRAPFPE=0")
   else()
     set ( TRAPFPE_ENV "OOPS_TRAPFPE=1")
+  endif()
+
+  if ( NOT SOCA_TESTS_VALGRIND )
+    set ( ARG_NOVALGRIND TRUE)
   endif()
 
   # determine the default config file name
@@ -323,7 +335,7 @@ function(soca_add_test)
                       MPI     ${MPI}
                       ENVIRONMENT ${TRAPFPE_ENV}
                       TEST_DEPENDS ${ARG_TEST_DEPENDS})
-    set ( ARG_NOCOMPARE TRUE)
+    set( EXE ./test_soca_${ARG_NAME})
 
   else()
     LIST(GET ARG_TOL 0 TOL_F)
@@ -350,6 +362,21 @@ function(soca_add_test)
                               SKIP_COMPARE=${ARG_NOCOMPARE}
                       DEPENDS ${ARG_EXE}
                       TEST_DEPENDS ${ARG_TEST_DEPENDS})
+    set( EXE ${CMAKE_BINARY_DIR}/bin/${ARG_EXE})
+
+  endif()
+
+  # optional valgrind tests
+  if ( NOT ARG_NOVALGRIND )
+    ecbuild_add_test( TARGET test_soca_${ARG_NAME}_valgrind
+                      MPI ${MPI}
+                      COMMAND valgrind
+                      ARGS -q --error-exitcode=42
+                           --suppressions=${CMAKE_CURRENT_SOURCE_DIR}/valgrind.sup
+                           --gen-suppressions=all
+                           ${EXE} ${CONFIG_FILE}
+                      TEST_DEPENDS test_soca_${ARG_NAME}
+                    )
   endif()
 endfunction()
 
@@ -374,6 +401,13 @@ soca_add_test( NAME gridgen_small
 soca_add_test( NAME gridgen
                EXE  soca_gridgen.x
                NOCOMPARE )
+
+# Remapping MOM6 (horiz+vertical intterpolation)
+soca_add_test( NAME convertstate
+               EXE  soca_convertstate.x
+               TOL  2e-5 0
+               NOTRAPFPE
+               TEST_DEPENDS test_soca_gridgen )
 
 # Test of read/write restart for MOM6&SIS2, model advance = Id
 soca_add_test( NAME forecast_identity
@@ -408,6 +442,11 @@ soca_add_test( NAME forecast_pseudo
 
 # Initialize static error covariance model defined in soca, used for 3DVAR
 soca_add_test( NAME static_socaerror_init
+               EXE  soca_staticbinit.x
+               NOCOMPARE
+               TEST_DEPENDS test_soca_gridgen )
+
+soca_add_test( NAME static_socaerrorlowres_init
                EXE  soca_staticbinit.x
                NOCOMPARE
                TEST_DEPENDS test_soca_gridgen )
@@ -456,7 +495,6 @@ soca_add_test( NAME geometry_iterator
 soca_add_test( NAME geometryatm
                SRC  TestGeometry.cc
                TEST_DEPENDS test_soca_gridgen )
-
 
 soca_add_test( NAME state
                SRC  TestState.cc
@@ -561,6 +599,11 @@ soca_add_test( NAME ensrecenter
 # soca_add_test( NAME dirac_bump_cov
 #                EXE  soca_dirac.x )
 
+soca_add_test( NAME parameters_bump_cor_nicas
+               EXE  soca_parameters.x
+               TEST_DEPENDS test_soca_gridgen_small
+                            test_soca_convertstate)
+
 
 # Dirac tests
 
@@ -625,6 +668,12 @@ soca_add_test( NAME 3dvar_soca
                NOTRAPFPE
                TEST_DEPENDS test_soca_static_socaerror_init )
 
+soca_add_test( NAME 3dvarbump
+               EXE  soca_3dvar.x
+               TOL  4e-9 0
+               NOTRAPFPE
+               TEST_DEPENDS test_soca_parameters_bump_cor_nicas )
+
 soca_add_test( NAME 3dvar_godas
                EXE  soca_3dvar.x
                TOL  2e-6 0
@@ -635,6 +684,12 @@ soca_add_test( NAME addincrement
                EXE  soca_addincrement.x
                NOCOMPARE
                TEST_DEPENDS 3dvar_godas )
+
+soca_add_test( NAME 3dvarlowres_soca
+               EXE  soca_3dvar.x
+               TOL  0.1 0
+               NOTRAPFPE
+             TEST_DEPENDS test_soca_static_socaerrorsmall_init )
 
 soca_add_test( NAME diffstates
                EXE  soca_diffstates.x
@@ -682,10 +737,3 @@ soca_add_test( NAME checkpointmodel
                EXE  soca_checkpoint_model.x
                NOTRAPFPE
                TEST_DEPENDS test_soca_3dvar_godas)
-
-# Remapping MOM6 (horiz+vertical intterpolation)
-soca_add_test( NAME convertstate
-               EXE  soca_convertstate.x
-               TOL  2e-5 0
-               NOTRAPFPE
-               TEST_DEPENDS test_soca_gridgen )

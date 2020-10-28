@@ -7,6 +7,7 @@ module soca_increment_mod
 
 use atlas_module, only: atlas_fieldset, atlas_field, atlas_real
 use soca_fields_mod
+use soca_convert_state_mod
 use soca_geom_mod, only : soca_geom
 use soca_geom_iter_mod, only : soca_geom_iter
 use kinds, only: kind_real
@@ -22,18 +23,20 @@ type, public, extends(soca_fields) :: soca_increment
 
 contains
   ! get/set a single point
-  procedure :: getpoint   => soca_increment_getpoint
-  procedure :: setpoint   => soca_increment_setpoint
+  procedure :: getpoint    => soca_increment_getpoint
+  procedure :: setpoint    => soca_increment_setpoint
 
   ! atlas
-  procedure :: set_atlas  => soca_increment_set_atlas
-  procedure :: to_atlas   => soca_increment_to_atlas
-  procedure :: from_atlas => soca_increment_from_atlas
+  procedure :: set_atlas   => soca_increment_set_atlas
+  procedure :: to_atlas    => soca_increment_to_atlas
+  procedure :: from_atlas  => soca_increment_from_atlas
 
   ! misc
-  procedure :: dirac      => soca_increment_dirac
-  procedure :: random     => soca_increment_random
-  procedure :: schur      => soca_increment_schur
+  procedure :: dirac       => soca_increment_dirac
+  procedure :: random      => soca_increment_random
+  procedure :: schur       => soca_increment_schur
+  procedure :: convert     => soca_increment_change_resol
+
 end type
 
 
@@ -105,7 +108,7 @@ subroutine soca_increment_getpoint(self, geoiter, values)
   do ff = 1, size(self%fields)
     field => self%fields(ff)
     select case(field%name)
-    case("tocn", "socn", "ssh", "hocn", "cicen", "hicen","hsnon")
+    case("tocn", "socn", "ssh", "uocn", "vocn", "hocn", "cicen", "hicen","hsnon", "chl")
       nz = field%nz
       values(ii+1:ii+nz) = field%val(geoiter%iind, geoiter%jind,:)
       ii = ii + nz
@@ -129,7 +132,7 @@ subroutine soca_increment_setpoint(self, geoiter, values)
   do ff = 1, size(self%fields)
     field => self%fields(ff)
     select case(field%name)
-    case("tocn", "socn", "ssh", "hocn", "cicen", "hicen","hsnon")
+    case("tocn", "socn", "ssh", "uocn", "vocn", "hocn", "cicen", "hicen","hsnon", "chl")
       nz = field%nz
       field%val(geoiter%iind, geoiter%jind,:) = values(ii+1:ii+nz)
       ii = ii + nz
@@ -192,6 +195,8 @@ subroutine soca_increment_dirac(self, f_conf)
       call self%get("cicen", field)
     case (5)
       call self%get("hicen", field)
+    case (6)
+      call self%get("chl", field)
     case default
       ! TODO print error that out of range
     end select
@@ -205,22 +210,17 @@ end subroutine soca_increment_dirac
 
 
 ! ------------------------------------------------------------------------------
-subroutine soca_increment_set_atlas(self, geom, vars, vdate, afieldset)
+subroutine soca_increment_set_atlas(self, geom, vars, afieldset)
   class(soca_increment), intent(in)    :: self
   type(soca_geom),       intent(in)    :: geom
   type(oops_variables),  intent(in)    :: vars
-  type(datetime),        intent(in)    :: vdate
   type(atlas_fieldset),  intent(inout) :: afieldset
 
   integer :: jvar, i, jz
   logical :: var_found
-  character(len=20) :: sdate
   character(len=1024) :: fieldname
   type(soca_field), pointer :: field
   type(atlas_field) :: afield
-
-  ! Set date
-  call datetime_to_string(vdate,sdate)
 
   do jvar = 1,vars%nvars()
     var_found = .false.
@@ -230,10 +230,10 @@ subroutine soca_increment_set_atlas(self, geom, vars, vdate, afieldset)
         select case (trim(field%name))
         case ('hicen', 'cicen')
           do jz=1,field%nz
-            write(fieldname,'(a,a,i2.2,a,a)') trim(vars%variable(jvar)),'_',jz,'_',sdate
-            if (.not.afieldset%has_field(trim(fieldname))) then
+            write(fieldname,'(a,a,i2.2)') trim(vars%variable(jvar)),'_',jz
+            if (.not.afieldset%has_field(fieldname)) then
               ! Create field
-              afield = geom%afunctionspace%create_field(name=trim(fieldname),kind=atlas_real(kind_real),levels=0)
+              afield = geom%afunctionspace%create_field(name=fieldname,kind=atlas_real(kind_real),levels=0)
 
               ! Add field
               call afieldset%add(afield)
@@ -243,10 +243,9 @@ subroutine soca_increment_set_atlas(self, geom, vars, vdate, afieldset)
             end if
           end do
         case default
-          fieldname = trim(vars%variable(jvar))//'_'//sdate
-          if (.not.afieldset%has_field(trim(fieldname))) then
+          if (.not.afieldset%has_field(vars%variable(jvar))) then
             ! Create field
-            afield = geom%afunctionspace%create_field(name=trim(fieldname),kind=atlas_real(kind_real),levels=field%nz)
+            afield = geom%afunctionspace%create_field(name=vars%variable(jvar),kind=atlas_real(kind_real),levels=field%nz)
 
             ! Add field
             call afieldset%add(afield)
@@ -268,23 +267,18 @@ end subroutine soca_increment_set_atlas
 
 
 ! ------------------------------------------------------------------------------
-subroutine soca_increment_to_atlas(self, geom, vars, vdate, afieldset)
+subroutine soca_increment_to_atlas(self, geom, vars, afieldset)
   class(soca_increment), intent(in)    :: self
   type(soca_geom),       intent(in)    :: geom
   type(oops_variables),  intent(in)    :: vars
-  type(datetime),        intent(in)    :: vdate
   type(atlas_fieldset),  intent(inout) :: afieldset
 
   integer :: jvar, i, jz
   real(kind=kind_real), pointer :: real_ptr_1(:), real_ptr_2(:,:)
   logical :: var_found
-  character(len=20) :: sdate
   character(len=1024) :: fieldname
   type(soca_field), pointer :: field
   type(atlas_field) :: afield
-
-  ! Set date
-  call datetime_to_string(vdate,sdate)
 
   do jvar = 1,vars%nvars()
     var_found = .false.
@@ -294,13 +288,13 @@ subroutine soca_increment_to_atlas(self, geom, vars, vdate, afieldset)
         select case (trim(field%name))
         case ('hicen', 'cicen')
           do jz=1,field%nz
-            write(fieldname,'(a,a,i2.2,a,a)') trim(vars%variable(jvar)),'_',jz,'_',sdate
-            if (afieldset%has_field(trim(fieldname))) then
+            write(fieldname,'(a,a,i2.2)') trim(vars%variable(jvar)),'_',jz
+            if (afieldset%has_field(fieldname)) then
               ! Get field
-              afield = afieldset%field(trim(fieldname))
+              afield = afieldset%field(fieldname)
             else
               ! Create field
-              afield = geom%afunctionspace%create_field(name=trim(fieldname),kind=atlas_real(kind_real),levels=0)
+              afield = geom%afunctionspace%create_field(name=fieldname,kind=atlas_real(kind_real),levels=0)
 
               ! Add field
               call afieldset%add(afield)
@@ -314,13 +308,12 @@ subroutine soca_increment_to_atlas(self, geom, vars, vdate, afieldset)
             call afield%final()
           end do
         case default
-          fieldname = trim(vars%variable(jvar))//'_'//sdate
-          if (afieldset%has_field(trim(fieldname))) then
+          if (afieldset%has_field(vars%variable(jvar))) then
             ! Get field
-            afield = afieldset%field(trim(fieldname))
+            afield = afieldset%field(vars%variable(jvar))
           else
             ! Create field
-            afield = geom%afunctionspace%create_field(name=trim(fieldname),kind=atlas_real(kind_real),levels=field%nz)
+            afield = geom%afunctionspace%create_field(name=vars%variable(jvar),kind=atlas_real(kind_real),levels=field%nz)
 
             ! Add field
             call afieldset%add(afield)
@@ -348,23 +341,18 @@ end subroutine soca_increment_to_atlas
 
 
 ! ------------------------------------------------------------------------------
-subroutine soca_increment_from_atlas(self, geom, vars, vdate, afieldset)
+subroutine soca_increment_from_atlas(self, geom, vars, afieldset)
   class(soca_increment), intent(inout) :: self
   type(soca_geom),       intent(in)    :: geom
   type(oops_variables),  intent(in)    :: vars
-  type(datetime),        intent(in)    :: vdate
   type(atlas_fieldset),  intent(in)    :: afieldset
 
   integer :: jvar, i, jz
   real(kind=kind_real), pointer :: real_ptr_1(:), real_ptr_2(:,:)
   logical :: umask(geom%isc:geom%iec,geom%jsc:geom%jec),var_found
-  character(len=20) :: sdate
   character(len=1024) :: fieldname
   type(soca_field), pointer :: field
   type(atlas_field) :: afield
-
-  ! Set date
-  call datetime_to_string(vdate,sdate)
 
   ! Initialization
   call self%zeros()
@@ -379,8 +367,8 @@ subroutine soca_increment_from_atlas(self, geom, vars, vdate, afieldset)
         case ('hicen', 'cicen')
           do jz=1,field%nz
             ! Get field
-            write(fieldname,'(a,a,i2.2,a,a)') trim(vars%variable(jvar)),'_',jz,'_',sdate
-            afield = afieldset%field(trim(fieldname))
+            write(fieldname,'(a,a,i2.2)') trim(vars%variable(jvar)),'_',jz
+            afield = afieldset%field(fieldname)
 
             ! Copy data
             call afield%data(real_ptr_1)
@@ -392,8 +380,7 @@ subroutine soca_increment_from_atlas(self, geom, vars, vdate, afieldset)
           end do
         case default
           ! Get field
-          fieldname = trim(vars%variable(jvar))//'_'//sdate
-          afield = afieldset%field(trim(fieldname))
+          afield = afieldset%field(vars%variable(jvar))
 
           ! Copy data
           call afield%data(real_ptr_2)
@@ -416,5 +403,29 @@ subroutine soca_increment_from_atlas(self, geom, vars, vdate, afieldset)
 
 end subroutine soca_increment_from_atlas
 
+! ------------------------------------------------------------------------------
+!> Change resolution
+subroutine soca_increment_change_resol(self, rhs)
+  class(soca_increment), intent(inout) :: self  ! target
+  class(soca_increment),    intent(in) :: rhs   ! source
+
+  integer :: n
+  type(soca_convertstate_type) :: convert_state
+  type(soca_field), pointer :: field1, field2, hocn1, hocn2
+
+  call rhs%get("hocn", hocn1)
+  call self%get("hocn", hocn2)
+
+  call convert_state%setup(rhs%geom, self%geom, hocn1, hocn2)
+  do n = 1, size(rhs%fields)
+    if (trim(rhs%fields(n)%name)=="hocn") cycle ! skip layer thickness
+    field1 => rhs%fields(n)
+    call self%get(trim(field1%name),field2)
+    call convert_state%change_resol2d(field1, field2, rhs%geom, self%geom)
+  end do !n
+  call convert_state%clean()
+end subroutine soca_increment_change_resol
+
+! ------------------------------------------------------------------------------
 
 end module soca_increment_mod
