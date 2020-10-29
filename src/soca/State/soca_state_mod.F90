@@ -254,7 +254,6 @@ subroutine soca_state_logexpon(self, transfunc, trvars)
     case("expon") ! Apply exponential transformation
       trocn%val = exp(trn) - min_val
     end select
-    deallocate(trn)
 
     ! update halos
     call trocn%update_halo(self%geom)
