@@ -11,7 +11,7 @@ use soca_increment_mod
 use soca_convert_state_mod
 use oops_variables_mod
 use kinds, only: kind_real
-use fckit_log_module, only: log, fckit_log
+use fckit_log_module, only: fckit_log
 
 implicit none
 private
@@ -30,6 +30,7 @@ contains
   ! misc
   procedure :: rotate => soca_state_rotate
   procedure :: convert => soca_state_convert
+  procedure :: logexpon => soca_state_logexpon
 
 end type
 
@@ -221,5 +222,44 @@ subroutine soca_state_convert(self, rhs)
 end subroutine soca_state_convert
 
 ! ------------------------------------------------------------------------------
+!> Apply logarithmic and exponential transformations
+subroutine soca_state_logexpon(self, transfunc, trvars)
+  class(soca_state),  intent(inout) :: self
+  character(len=*),      intent(in) :: transfunc ! "log" or "expon"
+  type(oops_variables),  intent(in) :: trvars
+
+  integer :: z, i
+  type(soca_field), pointer :: trocn
+  real(kind=kind_real), allocatable :: trn(:,:,:)
+  real(kind=kind_real) :: min_val = 1e-6_kind_real
+  character(len=64) :: tr_names
+
+  do i=1, trvars%nvars()
+    ! get a list variables to be transformed and make a copy
+    tr_names = trim(trvars%variable(i))
+    if (self%has(tr_names)) then
+      call fckit_log%info("transforming "//trim(tr_names))
+      call self%get(tr_names, trocn)
+    else
+      ! Skip if no variable found.
+      call fckit_log%info("not transforming "//trim(tr_names))
+      cycle
+    end if
+    allocate(trn(size(trocn%val,1),size(trocn%val,2),size(trocn%val,3)))
+    trn = trocn%val
+
+    select case(trim(transfunc))
+    case("log")   ! apply logarithmic transformation
+      trocn%val = log(trn + min_val)
+    case("expon") ! Apply exponential transformation
+      trocn%val = exp(trn) - min_val
+    end select
+
+    ! update halos
+    call trocn%update_halo(self%geom)
+  end do
+end subroutine soca_state_logexpon
+! ------------------------------------------------------------------------------
+
 
 end module

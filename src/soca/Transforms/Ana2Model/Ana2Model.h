@@ -46,10 +46,17 @@ class Ana2Model: public util::Printable {
     return conf.getStringVector("rotate."+uv);
   }
 
+  std::vector<std::string> initTrans(const eckit::Configuration & conf,
+                                      const std::string & trvar) const
+  {
+    return conf.getStringVector("log."+trvar);
+  }
+
  private:
   void print(std::ostream &) const override;
   const oops::Variables uvars_;
   const oops::Variables vvars_;
+  const oops::Variables logvars_;
 };
 // -----------------------------------------------------------------------------
 }  // namespace soca
