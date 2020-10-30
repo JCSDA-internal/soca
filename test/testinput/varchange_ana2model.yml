@@ -12,9 +12,11 @@ variable change tests:
     basename: ./INPUT/
     ocn_filename: MOM.res.nc
     ice_filename: ice_model.res.nc
-    state variables: &soca_vars [cicen, tocn, socn, hocn, uocn, vocn]
+    state variables: &soca_vars [cicen, tocn, socn, hocn, uocn, vocn, chl]
   tolerance inverse: 1e-8
   rotate:
     u: [uocn, taux, tocn]
     v: [vocn, tauy, socn]
+  log:
+    var: [chl, taux]
   output variables: *soca_vars

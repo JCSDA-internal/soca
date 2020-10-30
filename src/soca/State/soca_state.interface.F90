@@ -344,4 +344,35 @@ end subroutine soca_state_change_resol_c
 
   end subroutine soca_state_deserialize_c
 
+! ------------------------------------------------------------------------------
+
+subroutine soca_state_logtrans_c(c_key_self, c_trvars) bind(c,name='soca_state_logtrans_f90')
+  integer(c_int), intent(in)     :: c_key_self
+  type(c_ptr), value, intent(in) :: c_trvars
+
+  type(soca_state), pointer :: self
+  type(oops_variables) :: trvars
+
+  trvars = oops_variables(c_trvars)
+
+  call soca_state_registry%get(c_key_self,self)
+  call self%logexpon(transfunc="log", trvars=trvars)
+
+end subroutine soca_state_logtrans_c
+
+! ------------------------------------------------------------------------------
+subroutine soca_state_expontrans_c(c_key_self, c_trvars) bind(c,name='soca_state_expontrans_f90')
+  integer(c_int), intent(in)     :: c_key_self
+  type(c_ptr), value, intent(in) :: c_trvars
+
+  type(soca_state), pointer :: self
+  type(oops_variables) :: trvars
+
+  trvars = oops_variables(c_trvars)
+
+  call soca_state_registry%get(c_key_self,self)
+  call self%logexpon(transfunc="expon", trvars=trvars)
+
+end subroutine soca_state_expontrans_c
+
 end module soca_state_mod_c
