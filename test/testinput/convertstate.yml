@@ -12,7 +12,6 @@ output geometry:
   num_sno_lev: 1
   geom_grid_file: soca_gridspec.small.nc
   mom6_input_nml: ./inputnml/input_small.nml
-output variables: *soca_vars
 
 states:
 - input:
