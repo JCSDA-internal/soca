@@ -11,6 +11,7 @@ list( APPEND soca_test_input
   testinput/balance_mask.yml
   testinput/checkpointmodel.yml
   testinput/convertstate.yml
+  testinput/convertstate_changevar.yml
   testinput/diffstates.yml
   testinput/dirac_bump_cov.yml
   testinput/dirac_horizfilt.yml
@@ -76,6 +77,7 @@ list( APPEND soca_test_ref
   testref/balance_mask.test
   testref/checkpointmodel.test
   testref/convertstate.test
+  testref/convertstate_changevar.test
   testref/diffstates.test
   testref/dirac_bump_cov.test
   testref/dirac_horizfilt.test
@@ -404,6 +406,13 @@ soca_add_test( NAME gridgen
 
 # Remapping MOM6 (horiz+vertical intterpolation)
 soca_add_test( NAME convertstate
+               EXE  soca_convertstate.x
+               TOL  2e-5 0
+               NOTRAPFPE
+               TEST_DEPENDS test_soca_gridgen )
+
+# Apply a nonlinear change of variable to an ensemble of states
+soca_add_test( NAME convertstate_changevar
                EXE  soca_convertstate.x
                TOL  2e-5 0
                NOTRAPFPE
