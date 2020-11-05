@@ -257,6 +257,9 @@ subroutine soca_state_logexpon(self, transfunc, trvars)
 
     ! update halos
     call trocn%update_halo(self%geom)
+
+    ! deallocate trn for next variable
+    deallocate(trn)
   end do
 end subroutine soca_state_logexpon
 ! ------------------------------------------------------------------------------
