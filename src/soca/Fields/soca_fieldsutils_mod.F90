@@ -109,14 +109,10 @@ function soca_genfilename (f_conf,length,vdate,domain_type)
      soca_genfilename = TRIM(prefix) // "." // TRIM(referencedate) // "." // TRIM(sstep)
   endif
 
-  if (typ=="an") then
+  if (typ=="an" .or. typ=="incr") then
      call datetime_to_string(vdate, validitydate)
      lenfn = lenfn + 1 + LEN_TRIM(validitydate)
      soca_genfilename = TRIM(prefix) // "." // TRIM(validitydate)
-  endif
-
-  if (typ=="incr") then
-     soca_genfilename = 'test-incr.nc'
   endif
 
   if (lenfn>length) &
