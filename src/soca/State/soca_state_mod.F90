@@ -111,8 +111,6 @@ subroutine soca_state_add_incr(self, rhs)
   class(soca_state),  intent(inout) :: self
   class(soca_increment), intent(in) :: rhs
 
-  integer, save :: cnt_outer = 1
-  character(len=800) :: filename, str_cnt
   type(soca_field), pointer :: fld, fld_r
   integer :: i, k
 
@@ -163,17 +161,6 @@ subroutine soca_state_add_incr(self, rhs)
       fld%val = fld%val + fld_r%val
     end select
   end do
-
-  ! Save increment for outer loop cnt_outer
-  write(str_cnt,*) cnt_outer
-  filename='incr.'//adjustl(trim(str_cnt))//'.nc'
-
-  ! Save increment and clean memory
-  call incr%write_file(filename)
-  call incr%delete()
-
-  ! Update outer loop counter
-  cnt_outer = cnt_outer + 1
 
 end subroutine soca_state_add_incr
 

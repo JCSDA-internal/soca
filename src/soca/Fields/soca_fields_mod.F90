@@ -856,22 +856,6 @@ subroutine soca_fields_read(fld, f_conf, vdate)
     return
   end if
 
-  ! Read diagnostic file
-  if (iread==2) then
-    call f_conf%get_or_die("filename", str)
-    incr_filename = str
-    call fms_io_init()
-    do ii = 1, size(fld%fields)
-      field => fld%fields(ii)
-      if (field%io_name == "" ) cycle
-      if ( field%nz == 1) then
-        call read_data(incr_filename, field%name, field%val(:,:,1), domain=fld%geom%Domain%mpp_domain)
-      else
-        call read_data(incr_filename, field%name, field%val(:,:,:), domain=fld%geom%Domain%mpp_domain)
-      end if
-    end do
-    call fms_io_exit()
-  endif
 end subroutine soca_fields_read
 
 
