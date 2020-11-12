@@ -206,7 +206,7 @@ cost function:
     - filter: Gaussian_Thinning
       horizontal_mesh:   111
       use_reduced_horizontal_grid: false
-    - filter: Domain Check
+    - filter: BlackList
       filter variables:
       - name: sea_surface_chlorophyll
       where:
