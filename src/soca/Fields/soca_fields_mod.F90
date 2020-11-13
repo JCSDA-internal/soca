@@ -365,8 +365,8 @@ subroutine soca_fields_delete(self)
 
 end subroutine
 
-! ------------------------------------------------------------------------------
 
+! ------------------------------------------------------------------------------
 !> Copy the contents of rhs to self. Self will be initialized with the variable
 !> names in rhs if not already initialized
 subroutine soca_fields_copy(self, rhs)
