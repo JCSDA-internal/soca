@@ -204,7 +204,7 @@ subroutine soca_fields_init_vars(self, vars)
   class(soca_fields),          intent(inout) :: self
   character(len=:), allocatable, intent(in) :: vars(:)
 
-  integer :: i, nz, nz_model = 0
+  integer :: i, nz, nz_model = -1
 
   allocate(self%fields(size(vars)))
   do i=1,size(vars)
@@ -795,10 +795,11 @@ subroutine soca_seaicefields_read(fld, f_conf, vdate)
   character(len=:), allocatable :: basename
   integer, parameter :: max_string_length=800
   character(len=max_string_length) :: filename
-  integer :: i, idr
+  integer :: i, idr, ncats, j_start
   type(restart_file_type), target :: ice_restart
   integer :: isd, ied, jsd, jed
   character(len=:), allocatable :: seaice_model, str
+  logical :: aggregated
   ! TODO Move to the soca_rho_ice and soca_rho_snow to f_conf
   real(kind=kind_real) :: soca_rho_ice  = 905.0 !< [kg/m3]
   real(kind=kind_real) :: soca_rho_snow = 330.0 !< [kg/m3]
@@ -813,6 +814,8 @@ subroutine soca_seaicefields_read(fld, f_conf, vdate)
     call f_conf%get_or_die("basename", basename)
     filename = trim(basename)//trim(str)
     if(.not. f_conf%get("seaice_model", seaice_model)) seaice_model = "sis2"
+    ! Check if the sea-ice state is aggregated
+    if(.not. f_conf%get("aggregated seaice", aggregated)) aggregated = .false.
   end if
 
   select case(seaice_model)
@@ -820,24 +823,33 @@ subroutine soca_seaicefields_read(fld, f_conf, vdate)
   case ('sis2')
     call fms_io_init()
     do i=1,size(fld%fields)
+      if (aggregated) then
+        ncats = 1
+      else
+        ncats = fld%fields(i)%nz_model
+      end if
       select case(fld%fields(i)%name)
       case ('cicen')
-        allocate(cicen_val(isd:ied, jsd:jed, fld%fields(i)%nz_model + 1))
+        if (aggregated) then
+          allocate(cicen_val(isd:ied, jsd:jed, 1))
+        else
+          allocate(cicen_val(isd:ied, jsd:jed, fld%fields(i)%nz_model + 1))
+        end if
         cicen_val = 0.0_kind_real
         idr = register_restart_field(ice_restart, filename, 'part_size', &
-                cicen_val, &
+                cicen_val(:,:,1:), &
                 domain=fld%geom%Domain%mpp_domain)
       case ('hicen')
-        allocate(hicen_val(isd:ied, jsd:jed, fld%fields(i)%nz_model + 1))
+        allocate(hicen_val(isd:ied, jsd:jed, ncats))
         hicen_val = 0.0_kind_real
         idr = register_restart_field(ice_restart, filename, 'h_ice', &
-                hicen_val, &
+                hicen_val(:,:,1:), &
                 domain=fld%geom%Domain%mpp_domain)
       case ('hsnon')
-        allocate(hsnon_val(isd:ied, jsd:jed, fld%fields(i)%nz_model + 1))
+        allocate(hsnon_val(isd:ied, jsd:jed, ncats))
         hsnon_val = 0.0_kind_real
         idr = register_restart_field(ice_restart, filename, 'h_snow', &
-                hsnon_val, &
+                hsnon_val(:,:,1:), &
                 domain=fld%geom%Domain%mpp_domain)
       end select
     end do
@@ -846,18 +858,25 @@ subroutine soca_seaicefields_read(fld, f_conf, vdate)
     call free_restart_type(ice_restart)
     call fms_io_exit()
     do i=1,size(fld%fields)
+      if (aggregated) then
+        ncats = 1
+        j_start = 1
+      else
+        ncats = fld%fields(i)%nz_model
+        j_start = 2
+      end if
       select case(fld%fields(i)%name)
       case ('cicen')
-        fld%fields(i)%val(:,:,1) = sum(cicen_val(:,:,2:), dim=3)
+        fld%fields(i)%val(:,:,1) = sum(cicen_val(:,:,j_start:), dim=3)
         deallocate(cicen_val)
       case ('hicen')
-        fld%fields(i)%val(:,:,1) = sum(hicen_val(:,:,2:), dim=3)
+        fld%fields(i)%val(:,:,1) = sum(hicen_val(:,:,:), dim=3)
         deallocate(hicen_val)
-        fld%fields(i)%val = fld%fields(i)%val / soca_rho_ice
+        if (.not. aggregated ) fld%fields(i)%val = fld%fields(i)%val / soca_rho_ice
       case ('hsnon')
-        fld%fields(i)%val(:,:,1) = sum(hsnon_val(:,:,2:), dim=3)
+        fld%fields(i)%val(:,:,1) = sum(hsnon_val(:,:,:), dim=3)
         deallocate(hsnon_val)
-        fld%fields(i)%val = fld%fields(i)%val / soca_rho_snow
+        if (.not. aggregated ) fld%fields(i)%val = fld%fields(i)%val / soca_rho_snow
       end select
     end do
 
@@ -867,19 +886,19 @@ subroutine soca_seaicefields_read(fld, f_conf, vdate)
     do i=1,size(fld%fields)
       select case(fld%fields(i)%name)
       case ('cicen')
-        allocate(cicen_val(isd:ied, jsd:jed, fld%fields(i)%nz_model + 1))
+        allocate(cicen_val(isd:ied, jsd:jed, fld%fields(i)%nz_model))
         cicen_val = 0.0_kind_real
         idr = register_restart_field(ice_restart, filename, 'aicen', &
                 cicen_val, &
                 domain=fld%geom%Domain%mpp_domain)
       case ('hicen')
-        allocate(hicen_val(isd:ied, jsd:jed, fld%fields(i)%nz_model + 1))
+        allocate(hicen_val(isd:ied, jsd:jed, fld%fields(i)%nz_model))
         hicen_val = 0.0_kind_real
         idr = register_restart_field(ice_restart, filename, 'vicen', &
                 hicen_val, &
                 domain=fld%geom%Domain%mpp_domain)
       case ('hsnon')
-        allocate(hsnon_val(isd:ied, jsd:jed, fld%fields(i)%nz_model + 1))
+        allocate(hsnon_val(isd:ied, jsd:jed, fld%fields(i)%nz_model))
         hsnon_val = 0.0_kind_real
         idr = register_restart_field(ice_restart, filename, 'vsnon', &
                 hsnon_val, &
