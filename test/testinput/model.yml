@@ -8,7 +8,7 @@ model aux control:
 
 model test:
   forecast length: PT6H
-  final norm:  387790.89700563397491351
+  final norm: 387790.65844728
   tolerance: 1e-12
   test reforecast: false
 
@@ -16,12 +16,14 @@ model:
   name: SOCA
   tstep: PT1H
   advance_mom6: 1
-  model variables: &soca_vars [cicen, hicen, socn, tocn, ssh, hocn, sw, lhf, shf, lw, us, mld, layer_depth]
+  # TODO issues with ustar/us changing after a forecast of len=0
+  # model variables: &soca_vars [cicen, hicen, socn, tocn, ssh, hocn, sw, lhf, shf, lw, us, mld, layer_depth]
+  model variables: &soca_vars [cicen, hicen, socn, tocn, ssh, hocn, sw, lhf, shf, lw, mld, layer_depth]
 
 initial condition:
   read_from_file: 1
   date: &date 2018-04-15T00:00:00Z
-  basename: "./INPUT/"
+  basename: ./INPUT/
   ocn_filename: MOM.res.nc
   ice_filename: ice_model.res.nc
   sfc_filename: sfc.res.nc
