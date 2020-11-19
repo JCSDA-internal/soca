@@ -282,7 +282,8 @@ subroutine geom_gridgen(self)
   type(diag_remap_ctrl) :: remap_ctrl
   type(EOS_type), pointer :: eqn_of_state
   integer :: k
-  real(kind=kind_real), allocatable :: T(:,:,:), S(:,:,:)
+  real(kind=kind_real), allocatable :: tracer(:,:,:)
+  logical :: answers_2018 = .false.
 
   ! Generate grid
   call soca_mom6_init(mom6_config, partial_init=.true.)
@@ -306,18 +307,21 @@ subroutine geom_gridgen(self)
   self%cell_area  = mom6_config%grid%areaT
   self%h = mom6_config%MOM_CSp%h
 
-  !Generate new grid based on zstar coordinate
-  allocate(T(self%isd:self%ied, self%jsd:self%jed, self%nzo))
-  allocate(S(self%isd:self%ied, self%jsd:self%jed, self%nzo))
-  T = 0.d0 !fake temp
-  S = 0.d0 !fake salinity
-  call diag_remap_init(remap_ctrl, coord_tuple='ZSTAR, ZSTAR, ZSTAR')
+  ! Setup intermediate zstar coordinate
+  allocate(tracer(self%isd:self%ied, self%jsd:self%jed, self%nzo))
+  tracer = 0.d0 ! dummy tracer
+  call diag_remap_init(remap_ctrl, coord_tuple='ZSTAR, ZSTAR, ZSTAR', answers_2018=answers_2018)
   call diag_remap_configure_axes(remap_ctrl, mom6_config%GV, mom6_config%scaling, mom6_config%param_file)
-  call diag_remap_update(remap_ctrl, mom6_config%grid, mom6_config%GV, mom6_config%scaling, self%h, T, S, eqn_of_state)
   self%nzo_zstar = remap_ctrl%nz
   if (allocated(self%h_zstar)) deallocate(self%h_zstar)
   allocate(self%h_zstar(self%isd:self%ied, self%jsd:self%jed, 1:remap_ctrl%nz))
-  self%h_zstar = remap_ctrl%h
+
+  ! Compute intermediate vertical coordinate self%h_zstar
+  call diag_remap_update(remap_ctrl, &
+                         mom6_config%grid, &
+                         mom6_config%GV, &
+                         mom6_config%scaling, &
+                         self%h, tracer, tracer, eqn_of_state, self%h_zstar)
   call diag_remap_end(remap_ctrl)
 
   ! Get Rossby Radius
