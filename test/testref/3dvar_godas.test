@@ -10,7 +10,7 @@ Test     : CostFunction: Nonlinear J = 20238.3
 Test     : RPCGMinimizer: reduction in residual norm = 0.130583
 Test     : CostFunction::addIncrement: Analysis: 
 Test     :   Valid time: 2018-04-15T00:00:00Z
-Test     :   cicen   min=    0.000000   max=    1.000000   mean=    0.119693
+Test     :   cicen   min=   -0.000127   max=    1.000068   mean=    0.119697
 Test     :   hicen   min=    0.000000   max=    2.921170   mean=    0.192217
 Test     :   hsnon   min=    0.000000   max=    0.608625   mean=    0.044972
 Test     :    socn   min=   10.721046   max=   40.441659   mean=   34.544421
@@ -33,5 +33,5 @@ Test     : CostJo   : Nonlinear Jo(SeaSurfaceSalinity) = 49.011847, nobs = 51, J
 Test     : CostJo   : Nonlinear Jo(ADT) = 212.797283, nobs = 95, Jo/n = 2.239971, err = 0.100000
 Test     : CostJo   : Nonlinear Jo(InsituTemperature) = 347.108221, nobs = 206, Jo/n = 1.684991, err = 0.897281
 Test     : CostJo   : Nonlinear Jo(InsituSalinity) = 353.879476, nobs = 218, Jo/n = 1.623300, err = 0.608197
-Test     : CostJo   : Nonlinear Jo(SeaIceFraction) = 369.798209, nobs = 89, Jo/n = 4.155036, err = 0.100000
-Test     : CostFunction: Nonlinear J = 19604.489264
+Test     : CostJo   : Nonlinear Jo(SeaIceFraction) = 369.690379, nobs = 89, Jo/n = 4.153824, err = 0.100000
+Test     : CostFunction: Nonlinear J = 19604.381434
