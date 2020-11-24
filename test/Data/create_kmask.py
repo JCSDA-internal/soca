@@ -4,7 +4,7 @@ import numpy as np
 
 # Invent the Ice/Ocean Jacobian: dc/dt
 ncf=netCDF4.Dataset("./INPUT/cice.res.nc",'r')
-aice_mask=ncf.variables['aice'][:]
+aice_mask=np.sum(ncf.variables['aicen'][:], axis=1)
 ncf.close()
 dcdt=-0.01*np.ones((35,72))*aice_mask
 

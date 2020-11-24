@@ -17,7 +17,6 @@ state1:
   ice_filename: cice.res.nc
   sfc_filename: sfc.res.nc
   date: &bkg_date 2018-04-15T00:00:00Z
-  seaice_model: cice
   state variables: [cicen, hicen, hsnon, socn, tocn, ssh, hocn, uocn, vocn]
 
 state2:
@@ -27,11 +26,9 @@ state2:
   ice_filename: cice.res.nc
   sfc_filename: sfc.res.nc
   date: &bkg_date 2018-04-15T00:00:00Z
-  seaice_model: cice
   state variables: [cicen, hicen, hsnon, socn, tocn, ssh, hocn, uocn, vocn]
 
 output: # state1 - state2
   datadir: Data
   exp: diffstates
   type: an
-  seaice_model: cice

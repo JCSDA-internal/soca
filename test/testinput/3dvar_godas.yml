@@ -21,10 +21,8 @@ cost function:
     basename: ./INPUT/
     ocn_filename: MOM.res.nc
     ice_filename: cice.res.nc
-    #ice_filename: ice_model.res.nc
     sfc_filename: sfc.res.nc
     date: &bkg_date 2018-04-15T00:00:00Z
-    seaice_model: cice
     state variables: *soca_vars
 
   background error:
@@ -203,7 +201,6 @@ output:
   datadir: Data
   exp: 3dvargodas
   type: an
-  seaice_model: cice
 
 final:
   diagnostics:

@@ -19,7 +19,7 @@ initial condition:
   basename: ./INPUT/
   ocn_sfc_filename: MOM.res.nc
   ocn_filename: MOM.res.nc
-  ice_filename: ice_model.res.nc
+  ice_filename: cice.res.nc
   date: &date 2018-04-15T00:00:00Z
   state variables: *soca_vars
 

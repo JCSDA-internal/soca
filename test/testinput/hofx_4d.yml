@@ -15,7 +15,7 @@ initial condition:
   date: 2018-04-15T00:00:00Z
   basename: ./INPUT/
   ocn_filename: MOM.res.nc
-  ice_filename: ice_model.res.nc
+  ice_filename: cice.res.nc
   state variables: [cicen, hicen, socn, tocn, ssh, hocn, sw, lhf, shf, lw, us]
 
 window begin: 2018-04-15T00:00:00Z

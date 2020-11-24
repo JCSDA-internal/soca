@@ -9,7 +9,7 @@ initial condition:
   basename: ./INPUT/
   date: &date 2018-04-15T00:00:00Z
   ocn_filename: MOM.res.nc
-  ice_filename: ice_model.res.nc
+  ice_filename: cice.res.nc
   state variables: &soca_vars [cicen, hicen, socn, tocn, ssh, hocn, mld, layer_depth]
 
 _file: &_file
@@ -85,22 +85,18 @@ background error:
    variables: *soca_vars
    members:
    - <<: *_file
-     aggregated seaice: 1
      ocn_filename: ocn.pert.ens.1.2018-04-15T00:00:00Z.PT0S.nc
      ice_filename: ice.pert.ens.1.2018-04-15T00:00:00Z.PT0S.nc
 
    - <<: *_file
-     aggregated seaice: 1
      ocn_filename: ocn.pert.ens.2.2018-04-15T00:00:00Z.PT0S.nc
      ice_filename: ice.pert.ens.2.2018-04-15T00:00:00Z.PT0S.nc
 
    - <<: *_file
-     aggregated seaice: 1
      ocn_filename: ocn.pert.ens.3.2018-04-15T00:00:00Z.PT0S.nc
      ice_filename: ice.pert.ens.3.2018-04-15T00:00:00Z.PT0S.nc
 
    - <<: *_file
-     aggregated seaice: 1
      ocn_filename: ocn.pert.ens.4.2018-04-15T00:00:00Z.PT0S.nc
      ice_filename: ice.pert.ens.4.2018-04-15T00:00:00Z.PT0S.nc
 

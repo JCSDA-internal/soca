@@ -30,7 +30,7 @@ initial:
   basename: ./INPUT/
   date: *date
   ocn_filename: MOM.res.nc
-  ice_filename: ice_model.res.nc
+  ice_filename: cice.res.nc
 logging:
   categories: Info, Test, Warning, Error, Trace
 output_B:

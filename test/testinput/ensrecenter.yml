@@ -16,27 +16,22 @@ recenter variables:  *soca_vars
 center:
   <<: *_file
   ocn_filename: ../INPUT/MOM.res.nc
-  ice_filename: ../INPUT/ice_model.res.nc
+  ice_filename: ../INPUT/cice.res.nc
 
 ensemble:
 - <<: *_file
-  aggregated seaice: 1
   ocn_filename: ocn.pert.ens.1.2018-04-15T00:00:00Z.PT6H.nc
   ice_filename: ice.pert.ens.1.2018-04-15T00:00:00Z.PT6H.nc
 - <<: *_file
-  aggregated seaice: 1
   ocn_filename: ocn.pert.ens.2.2018-04-15T00:00:00Z.PT6H.nc
   ice_filename: ice.pert.ens.2.2018-04-15T00:00:00Z.PT6H.nc
 - <<: *_file
-  aggregated seaice: 1
   ocn_filename: ocn.pert.ens.3.2018-04-15T00:00:00Z.PT6H.nc
   ice_filename: ice.pert.ens.3.2018-04-15T00:00:00Z.PT6H.nc
 - <<: *_file
-  aggregated seaice: 1
   ocn_filename: ocn.pert.ens.4.2018-04-15T00:00:00Z.PT6H.nc
   ice_filename: ice.pert.ens.4.2018-04-15T00:00:00Z.PT6H.nc
 - <<: *_file
-  aggregated seaice: 1
   ocn_filename: ocn.pert.ens.5.2018-04-15T00:00:00Z.PT6H.nc
   ice_filename: ice.pert.ens.5.2018-04-15T00:00:00Z.PT6H.nc
 

@@ -43,8 +43,6 @@ public :: soca_fields, soca_field
 type :: soca_field
   character(len=:),     allocatable :: name       !< the internally used name of the field
   integer                           :: nz         !< the number of levels
-  integer                           :: nz_model   !< the number of levels in the
-                                                  !< model (currently used to collapse sea ice categories)
   real(kind=kind_real), allocatable :: val(:,:,:) !< the actual data
   real(kind=kind_real),     pointer :: mask(:,:) => null() !< field mask
   real(kind=kind_real),     pointer :: lon(:,:) => null()  !< field lon
@@ -204,7 +202,7 @@ subroutine soca_fields_init_vars(self, vars)
   class(soca_fields),          intent(inout) :: self
   character(len=:), allocatable, intent(in) :: vars(:)
 
-  integer :: i, nz, nz_model = -1
+  integer :: i, nz
 
   allocate(self%fields(size(vars)))
   do i=1,size(vars)
@@ -230,8 +228,7 @@ subroutine soca_fields_init_vars(self, vars)
       self%fields(i)%lon => self%geom%lonv
       self%fields(i)%lat => self%geom%latv
     case ('hicen','hsnon', 'cicen')
-      nz_model = self%geom%ncat
-      nz = 1 ! collapse to 1 category
+      nz = 1
       self%fields(i)%mask => self%geom%mask2d
     case ('ssh', 'mld')
       nz = 1
@@ -244,7 +241,6 @@ subroutine soca_fields_init_vars(self, vars)
 
     ! allocate space
     self%fields(i)%nz = nz
-    self%fields(i)%nz_model = nz_model
     allocate(self%fields(i)%val(&
       self%geom%isd:self%geom%ied, &
       self%geom%jsd:self%geom%jed, &
@@ -284,12 +280,15 @@ subroutine soca_fields_init_vars(self, vars)
     case ('hicen')
       self%fields(i)%cf_name = "sea_ice_category_thickness"
       self%fields(i)%io_file = "ice"
+      self%fields(i)%io_name = "hicen"
     case ('cicen')
       self%fields(i)%cf_name = "sea_ice_category_area_fraction"
       self%fields(i)%io_file = "ice"
+      self%fields(i)%io_name = "aicen"
     case ('hsnon')
       self%fields(i)%cf_name = "sea_ice_category_snow_thickness"
       self%fields(i)%io_file = "ice"
+      self%fields(i)%io_name = "hsnon"
     case ('sw')
       self%fields(i)%cf_name = "net_downwelling_shortwave_radiation"
       self%fields(i)%io_file = "sfc"
@@ -592,14 +591,14 @@ subroutine soca_fields_read(fld, f_conf, vdate)
   type(datetime),            intent(inout) :: vdate   !< DateTime
 
   integer, parameter :: max_string_length=800
-  character(len=max_string_length) :: ocn_filename, sfc_filename, filename
+  character(len=max_string_length) :: ocn_filename, sfc_filename, ice_filename, filename
   character(len=:), allocatable :: basename, incr_filename
   integer :: iread = 0
   integer :: ii
   logical :: vert_remap=.false.
   character(len=max_string_length) :: remap_filename
   real(kind=kind_real), allocatable :: h_common(:,:,:)    !< layer thickness to remap to
-  type(restart_file_type), target :: ocean_restart, sfc_restart
+  type(restart_file_type), target :: ocean_restart, sfc_restart, ice_restart
   type(restart_file_type) :: ocean_remap_restart
   type(restart_file_type), pointer :: restart
   integer :: idr
@@ -609,7 +608,7 @@ subroutine soca_fields_read(fld, f_conf, vdate)
   type(remapping_CS)  :: remapCS
   character(len=:), allocatable :: str
   real(kind=kind_real), allocatable :: h_common_ij(:), hocn_ij(:), varocn_ij(:), varocn2_ij(:)
-  logical :: read_sfc
+  logical :: read_sfc, read_ice
   type(soca_field), pointer :: field, field2, hocn, mld, layer_depth
 
   if ( f_conf%has("read_from_file") ) &
@@ -650,8 +649,6 @@ subroutine soca_fields_read(fld, f_conf, vdate)
 
   ! iread = 1 (state) or 3 (increment): Read restart file
   if ((iread==1).or.(iread==3)) then
-    ! Read sea-ice
-    call soca_seaicefields_read(fld, f_conf, vdate)
 
     ! filename for ocean
     call f_conf%get_or_die("basename", str)
@@ -669,6 +666,16 @@ subroutine soca_fields_read(fld, f_conf, vdate)
       sfc_filename = trim(basename)//trim(str)
     end if
 
+    ! filename for ice
+    read_ice = .false.
+    ice_filename=""
+    if ( f_conf%has("ice_filename") ) then
+      call f_conf%get_or_die("basename", str)
+      basename = str
+      call f_conf%get_or_die("ice_filename", str)
+      ice_filename = trim(basename)//trim(str)
+    end if
+
     call fms_io_init()
 
     ! built-in variables
@@ -684,6 +691,10 @@ subroutine soca_fields_read(fld, f_conf, vdate)
           filename = sfc_filename
           restart => sfc_restart
           read_sfc = .true.
+        case ('ice')
+          filename = ice_filename
+          restart => ice_restart
+          read_ice = .true.
         case default
           call abor1_ftn('read_file(): illegal io_file: '//fld%fields(i)%io_file)
         end select
@@ -705,6 +716,11 @@ subroutine soca_fields_read(fld, f_conf, vdate)
       call restore_state(sfc_restart, directory='')
       call free_restart_type(sfc_restart)
     end if
+    if (read_ice) then
+      call restore_state(ice_restart, directory='')
+      call free_restart_type(ice_restart)
+    end if
+
     call fms_io_exit()
 
     ! Indices for compute domain
@@ -782,161 +798,6 @@ subroutine soca_fields_read(fld, f_conf, vdate)
   end if
 
 end subroutine soca_fields_read
-
-! ------------------------------------------------------------------------------
-
-subroutine soca_seaicefields_read(fld, f_conf, vdate)
-  class(soca_fields),         intent(inout) :: fld     !< Fields
-  type(fckit_configuration), intent(in)    :: f_conf  !< Configuration
-  type(datetime),            intent(inout) :: vdate   !< DateTime
-
-  real(kind=kind_real), allocatable :: cicen_val(:,:,:), hicen_val(:,:,:), hsnon_val(:,:,:)
-  type(soca_field), pointer :: cicen
-  character(len=:), allocatable :: basename
-  integer, parameter :: max_string_length=800
-  character(len=max_string_length) :: filename
-  integer :: i, idr, ncats, j_start
-  type(restart_file_type), target :: ice_restart
-  integer :: isd, ied, jsd, jed
-  character(len=:), allocatable :: seaice_model, str
-  logical :: aggregated
-  ! TODO Move to the soca_rho_ice and soca_rho_snow to f_conf
-  real(kind=kind_real) :: soca_rho_ice  = 905.0 !< [kg/m3]
-  real(kind=kind_real) :: soca_rho_snow = 330.0 !< [kg/m3]
-
-  ! Get Indices for data domain and allocate common layer depth array
-  isd = fld%geom%isd ; ied = fld%geom%ied
-  jsd = fld%geom%jsd ; jed = fld%geom%jed
-
-  ! Read sea-ice
-  seaice_model = ""
-  if(f_conf%get("ice_filename", str)) then
-    call f_conf%get_or_die("basename", basename)
-    filename = trim(basename)//trim(str)
-    if(.not. f_conf%get("seaice_model", seaice_model)) seaice_model = "sis2"
-    ! Check if the sea-ice state is aggregated
-    if(.not. f_conf%get("aggregated seaice", aggregated)) aggregated = .false.
-  end if
-
-  select case(seaice_model)
-  ! read sis2 model state variables and convert to soca ice variables
-  case ('sis2')
-    call fms_io_init()
-    do i=1,size(fld%fields)
-      if (aggregated) then
-        ncats = 1
-      else
-        ncats = fld%fields(i)%nz_model
-      end if
-      select case(fld%fields(i)%name)
-      case ('cicen')
-        if (aggregated) then
-          allocate(cicen_val(isd:ied, jsd:jed, 1))
-        else
-          allocate(cicen_val(isd:ied, jsd:jed, fld%fields(i)%nz_model + 1))
-        end if
-        cicen_val = 0.0_kind_real
-        idr = register_restart_field(ice_restart, filename, 'part_size', &
-                cicen_val(:,:,1:), &
-                domain=fld%geom%Domain%mpp_domain)
-      case ('hicen')
-        allocate(hicen_val(isd:ied, jsd:jed, ncats))
-        hicen_val = 0.0_kind_real
-        idr = register_restart_field(ice_restart, filename, 'h_ice', &
-                hicen_val(:,:,1:), &
-                domain=fld%geom%Domain%mpp_domain)
-      case ('hsnon')
-        allocate(hsnon_val(isd:ied, jsd:jed, ncats))
-        hsnon_val = 0.0_kind_real
-        idr = register_restart_field(ice_restart, filename, 'h_snow', &
-                hsnon_val(:,:,1:), &
-                domain=fld%geom%Domain%mpp_domain)
-      end select
-    end do
-
-    call restore_state(ice_restart, directory='')
-    call free_restart_type(ice_restart)
-    call fms_io_exit()
-    do i=1,size(fld%fields)
-      if (aggregated) then
-        ncats = 1
-        j_start = 1
-      else
-        ncats = fld%fields(i)%nz_model
-        j_start = 2
-      end if
-      select case(fld%fields(i)%name)
-      case ('cicen')
-        fld%fields(i)%val(:,:,1) = sum(cicen_val(:,:,j_start:), dim=3)
-        deallocate(cicen_val)
-      case ('hicen')
-        fld%fields(i)%val(:,:,1) = sum(hicen_val(:,:,:), dim=3)
-        deallocate(hicen_val)
-        if (.not. aggregated ) fld%fields(i)%val = fld%fields(i)%val / soca_rho_ice
-      case ('hsnon')
-        fld%fields(i)%val(:,:,1) = sum(hsnon_val(:,:,:), dim=3)
-        deallocate(hsnon_val)
-        if (.not. aggregated ) fld%fields(i)%val = fld%fields(i)%val / soca_rho_snow
-      end select
-    end do
-
-  ! read cice model state variables and convert to soca ice variables
-  case ('cice')
-    call fms_io_init()
-    do i=1,size(fld%fields)
-      select case(fld%fields(i)%name)
-      case ('cicen')
-        allocate(cicen_val(isd:ied, jsd:jed, fld%fields(i)%nz_model))
-        cicen_val = 0.0_kind_real
-        idr = register_restart_field(ice_restart, filename, 'aicen', &
-                cicen_val, &
-                domain=fld%geom%Domain%mpp_domain)
-      case ('hicen')
-        allocate(hicen_val(isd:ied, jsd:jed, fld%fields(i)%nz_model))
-        hicen_val = 0.0_kind_real
-        idr = register_restart_field(ice_restart, filename, 'vicen', &
-                hicen_val, &
-                domain=fld%geom%Domain%mpp_domain)
-      case ('hsnon')
-        allocate(hsnon_val(isd:ied, jsd:jed, fld%fields(i)%nz_model))
-        hsnon_val = 0.0_kind_real
-        idr = register_restart_field(ice_restart, filename, 'vsnon', &
-                hsnon_val, &
-                domain=fld%geom%Domain%mpp_domain)
-      end select
-    end do
-    call restore_state(ice_restart, directory='')
-    call free_restart_type(ice_restart)
-    call fms_io_exit()
-
-    do i=1,size(fld%fields)
-      select case(fld%fields(i)%name)
-      case ('cicen')
-        fld%fields(i)%val(:,:,1) = sum(cicen_val(:,:,:), dim=3)
-        deallocate(cicen_val)
-      case ('hicen')
-        fld%fields(i)%val(:,:,1) = sum(hicen_val(:,:,:), dim=3)
-        deallocate(hicen_val)
-      case ('hsnon')
-        fld%fields(i)%val(:,:,1) = sum(hsnon_val(:,:,:), dim=3)
-        deallocate(hsnon_val)
-      end select
-    end do
-
-    ! Convert to hicen and hsnon
-    call fld%get("cicen", cicen)
-    do i=1,size(fld%fields)
-      select case(fld%fields(i)%name)
-      case ('hicen','hsnon')
-        where(cicen%val(:,:,1)>0.0_kind_real)
-          fld%fields(i)%val(:,:,1)  = fld%fields(i)%val(:,:,1) / cicen%val(:,:,1)
-        end where
-      end select
-    end do
-
-  end select
-
-end subroutine soca_seaicefields_read
 
 ! ------------------------------------------------------------------------------
 !> calculate global statistics for each field (min, max, average)
@@ -1059,13 +920,11 @@ subroutine soca_fields_write_rst(fld, f_conf, vdate)
   type(datetime),            intent(inout) :: vdate    !< DateTime
 
   integer, parameter :: max_string_length=800
-  character(len=:), allocatable :: seaice_model
   character(len=max_string_length) :: ocn_filename, sfc_filename, ice_filename, filename
   type(restart_file_type), target :: ocean_restart, sfc_restart, ice_restart
   type(restart_file_type), pointer :: restart
   integer :: idr, i
-  type(soca_field), pointer :: field, cicen
-  real(kind=kind_real), allocatable :: cicen_val(:,:,:), vicen(:,:,:), vsnon(:,:,:)
+  type(soca_field), pointer :: field
   logical :: write_sfc, write_ice
 
   write_ice = .false.
@@ -1075,41 +934,12 @@ subroutine soca_fields_write_rst(fld, f_conf, vdate)
   ! filenames
   ocn_filename = soca_genfilename(f_conf,max_string_length,vdate,"ocn")
   sfc_filename = soca_genfilename(f_conf,max_string_length,vdate,"sfc")
-
-  ! Check what ice model we are writing a file to ('sis2' or 'cice')
-  if ( .not. f_conf%get("seaice_model", seaice_model)) seaice_model = 'sis2'
-  if ( seaice_model == 'sis2') then
-    ice_filename = soca_genfilename(f_conf, max_string_length,vdate,"ice")
-  else
-    ice_filename = soca_genfilename(f_conf, max_string_length,vdate,"cice")
-  end if
+  ice_filename = soca_genfilename(f_conf, max_string_length,vdate,"ice")
 
   ! built in variables
   do i=1,size(fld%fields)
     field => fld%fields(i)
-    ! TODO move the ice calculations elsewhere
-    ! these variable are handled specially (...annoying ice)
-    if (field%name == "cicen" .and. seaice_model /= 'cice') then
-      allocate(cicen_val(fld%geom%isd:fld%geom%ied, fld%geom%jsd:fld%geom%jed, 1))
-      cicen_val = field%val
-      idr = register_restart_field( ice_restart, ice_filename, "part_size", &
-        cicen_val, domain=fld%geom%Domain%mpp_domain)
-
-    else if (seaice_model == "cice" .and. field%name == "hicen") then
-      allocate(vicen, mold=field%val)
-      call fld%get("cicen", cicen)
-      vicen = cicen%val * field%val
-      idr = register_restart_field( ice_restart, ice_filename, "vicen", &
-        vicen, domain=fld%geom%Domain%mpp_domain)
-
-    else if (seaice_model == "cice" .and. field%name == "hsnon") then
-      allocate(vsnon, mold=field%val)
-      call fld%get("cicen", cicen)
-      vsnon = cicen%val * field%val
-      idr = register_restart_field( ice_restart, ice_filename, "vsnon", &
-        vsnon, domain=fld%geom%Domain%mpp_domain)
-
-    else if (len_trim(field%io_file) /= 0) then
+    if (len_trim(field%io_file) /= 0) then
       ! which file are we writing to
       select case(field%io_file)
       case ('ocn')
@@ -1123,21 +953,6 @@ subroutine soca_fields_write_rst(fld, f_conf, vdate)
         filename = ice_filename
         restart => ice_restart
         write_ice = .true.
-        ! TODO move io_name for ice variables into config file, since they
-        ! depend on which model is used
-        if ( seaice_model == 'sis2') then
-          select case(field%name)
-          case ('hicen')
-            field%io_name = 'h_ice'
-          case ('hsnon')
-            field%io_name = 'h_snow'
-          end select
-        else if ( seaice_model == 'cice') then
-          select case(field%name)
-          case ('cicen')
-            field%io_name = 'aicen'
-          end select
-        end if
       case default
         call abor1_ftn('soca_write_restart(): illegal io_file: '//field%io_file)
       end select

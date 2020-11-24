@@ -11,7 +11,7 @@ background:
   date: &date 2018-04-15T00:00:00Z
   basename: ./INPUT/
   ocn_filename: MOM.res.nc
-  ice_filename: ice_model.res.nc
+  ice_filename: cice.res.nc
   state variables: [cicen, hicen, hocn, socn, tocn, ssh]
 
 background error:
