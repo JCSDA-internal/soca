@@ -227,34 +227,16 @@ subroutine soca_increment_set_atlas(self, geom, vars, afieldset)
     do i=1,size(self%fields)
       field => self%fields(i)
       if (trim(vars%variable(jvar))==trim(field%name)) then
-        select case (trim(field%name))
-        case ('hicen', 'cicen')
-          do jz=1,field%nz
-            write(fieldname,'(a,a,i2.2)') trim(vars%variable(jvar)),'_',jz
-            if (.not.afieldset%has_field(fieldname)) then
-              ! Create field
-              afield = geom%afunctionspace%create_field(name=fieldname,kind=atlas_real(kind_real),levels=0)
+        if (.not.afieldset%has_field(vars%variable(jvar))) then
+          ! Create field
+          afield = geom%afunctionspace%create_field(name=vars%variable(jvar),kind=atlas_real(kind_real),levels=field%nz)
 
-              ! Add field
-              call afieldset%add(afield)
+          ! Add field
+          call afieldset%add(afield)
 
-              ! Release pointer
-              call afield%final()
-            end if
-          end do
-        case default
-          if (.not.afieldset%has_field(vars%variable(jvar))) then
-            ! Create field
-            afield = geom%afunctionspace%create_field(name=vars%variable(jvar),kind=atlas_real(kind_real),levels=field%nz)
-
-            ! Add field
-            call afieldset%add(afield)
-
-            ! Release pointer
-            call afield%final()
-          end if
-        end select
-
+          ! Release pointer
+          call afield%final()
+        end if
         ! Set flag
         var_found = .true.
         exit
@@ -274,7 +256,7 @@ subroutine soca_increment_to_atlas(self, geom, vars, afieldset)
   type(atlas_fieldset),  intent(inout) :: afieldset
 
   integer :: jvar, i, jz
-  real(kind=kind_real), pointer :: real_ptr_1(:), real_ptr_2(:,:)
+  real(kind=kind_real), pointer :: real_ptr_2(:,:)
   logical :: var_found
   character(len=1024) :: fieldname
   type(soca_field), pointer :: field
@@ -285,49 +267,25 @@ subroutine soca_increment_to_atlas(self, geom, vars, afieldset)
     do i=1,size(self%fields)
       field => self%fields(i)
       if (trim(vars%variable(jvar))==trim(field%name)) then
-        select case (trim(field%name))
-        case ('hicen', 'cicen')
-          do jz=1,field%nz
-            write(fieldname,'(a,a,i2.2)') trim(vars%variable(jvar)),'_',jz
-            if (afieldset%has_field(fieldname)) then
-              ! Get field
-              afield = afieldset%field(fieldname)
-            else
-              ! Create field
-              afield = geom%afunctionspace%create_field(name=fieldname,kind=atlas_real(kind_real),levels=0)
+        if (afieldset%has_field(vars%variable(jvar))) then
+          ! Get field
+          afield = afieldset%field(vars%variable(jvar))
+        else
+          ! Create field
+          afield = geom%afunctionspace%create_field(name=vars%variable(jvar),kind=atlas_real(kind_real),levels=field%nz)
 
-              ! Add field
-              call afieldset%add(afield)
-            end if
+          ! Add field
+          call afieldset%add(afield)
+        end if
 
-            ! Copy data
-            call afield%data(real_ptr_1)
-            real_ptr_1 = pack(field%val(geom%isc:geom%iec,geom%jsc:geom%jec,jz),.true.)
+        ! Copy data
+        call afield%data(real_ptr_2)
+        do jz=1,field%nz
+          real_ptr_2(jz,:) = pack(field%val(geom%isc:geom%iec,geom%jsc:geom%jec,jz),.true.)
+        end do
 
-            ! Release pointer
-            call afield%final()
-          end do
-        case default
-          if (afieldset%has_field(vars%variable(jvar))) then
-            ! Get field
-            afield = afieldset%field(vars%variable(jvar))
-          else
-            ! Create field
-            afield = geom%afunctionspace%create_field(name=vars%variable(jvar),kind=atlas_real(kind_real),levels=field%nz)
-
-            ! Add field
-            call afieldset%add(afield)
-          end if
-
-          ! Copy data
-          call afield%data(real_ptr_2)
-          do jz=1,field%nz
-            real_ptr_2(jz,:) = pack(field%val(geom%isc:geom%iec,geom%jsc:geom%jec,jz),.true.)
-          end do
-
-          ! Release pointer
-          call afield%final()
-        end select
+        ! Release pointer
+        call afield%final()
 
         ! Set flag
         var_found = .true.
@@ -348,7 +306,7 @@ subroutine soca_increment_from_atlas(self, geom, vars, afieldset)
   type(atlas_fieldset),  intent(in)    :: afieldset
 
   integer :: jvar, i, jz
-  real(kind=kind_real), pointer :: real_ptr_1(:), real_ptr_2(:,:)
+  real(kind=kind_real), pointer :: real_ptr_2(:,:)
   logical :: umask(geom%isc:geom%iec,geom%jsc:geom%jec),var_found
   character(len=1024) :: fieldname
   type(soca_field), pointer :: field
@@ -363,35 +321,18 @@ subroutine soca_increment_from_atlas(self, geom, vars, afieldset)
     do i=1,size(self%fields)
       field => self%fields(i)
       if (trim(vars%variable(jvar))==trim(field%name)) then
-        select case (trim(field%name))
-        case ('hicen', 'cicen')
-          do jz=1,field%nz
-            ! Get field
-            write(fieldname,'(a,a,i2.2)') trim(vars%variable(jvar)),'_',jz
-            afield = afieldset%field(fieldname)
+        ! Get field
+        afield = afieldset%field(vars%variable(jvar))
 
-            ! Copy data
-            call afield%data(real_ptr_1)
-            field%val(geom%isc:geom%iec,geom%jsc:geom%jec,jz) = unpack(real_ptr_1, &
+        ! Copy data
+        call afield%data(real_ptr_2)
+        do jz=1,field%nz
+          field%val(geom%isc:geom%iec,geom%jsc:geom%jec,jz) = unpack(real_ptr_2(jz,:), &
           & umask,field%val(geom%isc:geom%iec,geom%jsc:geom%jec,jz))
+        end do
 
-            ! Release pointer
-            call afield%final()
-          end do
-        case default
-          ! Get field
-          afield = afieldset%field(vars%variable(jvar))
-
-          ! Copy data
-          call afield%data(real_ptr_2)
-          do jz=1,field%nz
-            field%val(geom%isc:geom%iec,geom%jsc:geom%jec,jz) = unpack(real_ptr_2(jz,:), &
-          & umask,field%val(geom%isc:geom%iec,geom%jsc:geom%jec,jz))
-          end do
-
-          ! Release pointer
-          call afield%final()
-        end select
+        ! Release pointer
+        call afield%final()
 
         ! Set flag
         var_found = .true.

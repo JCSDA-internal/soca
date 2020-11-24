@@ -242,6 +242,13 @@ variational:
     test: on
     diagnostics:
       departures: ombg
+    online diagnostics:
+      write increment: true
+    increment:
+      datadir: Data
+      date: *bkg_date
+      exp: 3dvarsoca.iter1
+      type: incr
 
 output:
   datadir: Data
