@@ -196,7 +196,7 @@ variational:
     increment:
       datadir: Data
       date: *bkg_date
-      exp: incr.iter1
+      exp: 3dvargodas.iter1
       type: incr
 
 output:

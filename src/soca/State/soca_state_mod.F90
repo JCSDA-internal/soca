@@ -131,35 +131,7 @@ subroutine soca_state_add_incr(self, rhs)
   do i=1,size(incr%fields)
     fld_r => incr%fields(i)
     call self%get(fld_r%name, fld)
-
-    select case (fld%name)
-    case ('cicen')
-      ! NOTE: sea ice concentration is special
-
-      ! compute background rescaling
-      allocate(alpha, mold=fld_r%val(:,:,1))
-      allocate(aice_bkg, mold=alpha)
-      allocate(aice_ana, mold=alpha)
-      aice_bkg  = sum(fld%val(:,:,:), dim=3)
-      aice_ana  = aice_bkg + sum(fld_r%val(:,:,:), dim=3)
-      where (aice_ana < 0.0_kind_real) aice_ana = 0.0_kind_real
-      where (aice_ana > 1.0_kind_real) aice_ana = 1.0_kind_real
-      alpha = 1.0_kind_real
-      where ( aice_bkg > min_ice) alpha = aice_ana / aice_bkg
-
-      ! limit size of increment
-      where ( alpha > amax ) alpha = amax
-      where ( alpha < amin ) alpha = amin
-
-      ! add fraction of increment
-      do k=1,fld%nz
-        fld%val(:,:,k) = alpha * fld%val(:,:,k)
-      end do
-
-    case default
-      ! everyone else is normal
-      fld%val = fld%val + fld_r%val
-    end select
+    fld%val = fld%val + fld_r%val
   end do
 
 end subroutine soca_state_add_incr

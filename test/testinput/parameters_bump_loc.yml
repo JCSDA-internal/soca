@@ -32,4 +32,4 @@ bump:
   rh: 2500000.0
   rv: 500
   grids:
-  - variables: [socn, tocn, cicen_01, cicen_02, cicen_03, cicen_04, cicen_05, hicen_01, hicen_02, hicen_03, hicen_04, hicen_05, ssh]
+  - variables: [socn, tocn, cicen, hicen, ssh]

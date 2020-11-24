@@ -3,7 +3,10 @@ import netCDF4
 import numpy as np
 
 # Invent the Ice/Ocean Jacobian: dc/dt
-dcdt=-0.01*np.ones((35,72))
+ncf=netCDF4.Dataset("./INPUT/cice.res.nc",'r')
+aice_mask=ncf.variables['aice'][:]
+ncf.close()
+dcdt=-0.01*np.ones((35,72))*aice_mask
 
 # Convert the dirac output into a mask for the dynamic height balance
 ncf=netCDF4.Dataset("./Data/ocn.balance_mask.an.2018-04-15T00:00:00Z.nc",'r')
