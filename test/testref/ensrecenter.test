@@ -8,7 +8,7 @@ Test     :     ssh   min=   -1.984981   max=    0.919364   mean=   -0.276772
 Test     :    hocn   min=    0.001000   max= 1345.640000   mean=  128.628064
 Test     : Original member 1 :
 Test     :   Valid time: 2018-04-15T00:00:00Z
-Test     :   cicen   min=   -0.035225   max=    1.117093   mean=    0.117093
+Test     :   cicen   min=   -0.035225   max=    1.030976   mean=    0.116491
 Test     :   hicen   min=   -1.097984   max=    4.218335   mean=    0.479607
 Test     :    socn   min=   10.720395   max=   40.441655   mean=   34.546040
 Test     :    tocn   min=   -1.897253   max=   31.711944   mean=    6.001810
