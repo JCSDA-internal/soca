@@ -3,24 +3,6 @@
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
 
-! ------------------------------------------------------------------------------
-!> Typical geometry/state for ocean/sea-ice models
-!>
-!>   level 0          ---- Surface                     Tsfc
-!>   level 1          ---- Upper snow level            Qsno
-!>     .                        .                       .
-!>     .                        .                       .
-!>     .                        .                       .
-!>   level nzs        ---- Lower snow level            Qsno
-!>   level nzs+1      ---- Upper ice level             Qice
-!>     .                        .                       .
-!>     .                        .                       .
-!>     .                        .                       .
-!>   level nzs+nzi    ---- Upper ice level             Qice
-!>   level nzs+nzi+1  ---- Ice/Ocean interface level   Tfreeze (from S)
-!>   level nzs+nzi+2  ---- Upper level Ocean           SST
-!>
-!>
 module soca_mom6
 
 use fckit_mpi_module, only: fckit_mpi_comm
@@ -69,15 +51,7 @@ implicit none
 
 private
 public :: soca_geomdomain_init, &
-          soca_ice_column, &
           soca_mom6_init, soca_mom6_config, soca_mom6_end
-
-!> Simple Data structure for the generic sea-ice state
-type soca_ice_column
-   integer                        :: ncat ! Number of ice categories
-   integer                        :: nzi  ! Number of ice levels
-   integer                        :: nzs  ! Number of snow levels
-end type soca_ice_column
 
 !> Data structure neccessary to initialize/run mom6
 type soca_mom6_config

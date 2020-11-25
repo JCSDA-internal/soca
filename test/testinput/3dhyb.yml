@@ -5,9 +5,6 @@ cost function:
   window length: P2D
   analysis variables: &soca_vars [cicen, hicen, hsnon, socn, tocn, ssh, hocn]
   geometry:
-    num_ice_cat: 5
-    num_ice_lev: 4
-    num_sno_lev: 1
     mom6_input_nml: ./inputnml/input.nml
 
   background:
@@ -140,9 +137,6 @@ variational:
     algorithm: RPCG
   iterations:
   - geometry:
-      num_ice_cat: 5
-      num_ice_lev: 4
-      num_sno_lev: 1
       mom6_input_nml: ./inputnml/input.nml
     ninner: 1
     gradient norm reduction: 1e-15

@@ -1,13 +1,7 @@
 state geometry:
-  num_ice_cat: 5
-  num_ice_lev: 4
-  num_sno_lev: 1
   mom6_input_nml: ./inputnml/input.nml
 
 increment geometry:
-  num_ice_cat: 5
-  num_ice_lev: 4
-  num_sno_lev: 1
   mom6_input_nml: ./inputnml/input.nml
 
 state:

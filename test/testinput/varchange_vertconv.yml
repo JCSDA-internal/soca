@@ -1,6 +1,4 @@
 geometry:
-  num_ice_cat: 5
-  num_ice_lev: 4
   mom6_input_nml: ./inputnml/input.nml
 
 background:

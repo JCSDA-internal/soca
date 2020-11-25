@@ -155,8 +155,8 @@ namespace soca {
   // -----------------------------------------------------------------------------
   oops::LocalIncrement Increment::getLocal(
                         const GeometryIterator & iter) const {
-    int nx, ny, nzo, nzi, ncat, nf;
-    soca_increment_sizes_f90(toFortran(), nx, ny, nzo, nzi, ncat, nf);
+    int nx, ny, nzo, nf;
+    soca_increment_sizes_f90(toFortran(), nx, ny, nzo, nf);
 
     std::vector<int> varlens(vars_.size());
 
@@ -168,9 +168,9 @@ namespace soca {
       else if (vars_[ii] == "uocn") varlens[ii]=nzo;
       else if (vars_[ii] == "vocn") varlens[ii]=nzo;
       else if (vars_[ii] == "ssh")  varlens[ii]=1;
-      else if (vars_[ii] == "cicen") varlens[ii]=ncat;
-      else if (vars_[ii] == "hicen") varlens[ii]=ncat;
-      else if (vars_[ii] == "hsnon") varlens[ii]=ncat;
+      else if (vars_[ii] == "cicen") varlens[ii]=1;
+      else if (vars_[ii] == "hicen") varlens[ii]=1;
+      else if (vars_[ii] == "hsnon") varlens[ii]=1;
       else if (vars_[ii] == "chl") varlens[ii]=nzo;
       else
           varlens[ii] = 0;
@@ -225,7 +225,7 @@ namespace soca {
   void Increment::print(std::ostream & os) const {
     os << std::endl << "  Valid time: " << validTime();
     int n0, nf;
-    soca_increment_sizes_f90(keyFlds_, n0, n0, n0, n0, n0, nf);
+    soca_increment_sizes_f90(keyFlds_, n0, n0, n0, nf);
     std::vector<double> zstat(3*nf);
     soca_increment_gpnorm_f90(keyFlds_, nf, zstat[0]);
     for (int jj = 0; jj < nf; ++jj) {
