@@ -21,11 +21,9 @@ initial condition:
 background error:
   verbosity: main
   covariance model: SocaError
-  prefix: soca
   datadir: ./bump
   strategy: specific_univariate
   load_nicas: 1
-  lsqrt: 1
   mpicom: 2
   date: *date
   pert_T: 0.1

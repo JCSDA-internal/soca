@@ -16,7 +16,6 @@ background:
 
 bump:
   verbosity: main
-  default_seed: 1
   prefix: bump3d
   datadir: ./bump
   method: cor
@@ -25,14 +24,20 @@ bump:
   mask_check: 1
   ntry: 3
   nrep:  2
-  lsqrt: 1
   resol: 6.0
   network: 1
   mpicom: 2
   forced_radii: 1
-  date: *date
-  rh: 6000.0e3
-  rv: 100
+  rh:
+    hocn: [6000.0e3]
+    socn: [6000.0e3]
+    tocn: [6000.0e3]
+    ssh: [6000.0e3]
+  rv:
+    hocn: [100]
+    socn: [100]
+    tocn: [100]
+    ssh: [100]
 
 output:
 - datadir: bump
