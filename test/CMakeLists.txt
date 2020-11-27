@@ -25,7 +25,6 @@ list( APPEND soca_test_input
   testinput/ensrecenter.yml
   testinput/ensvariance.yml
   testinput/forecast_identity.yml
-  testinput/forecast_identity_cice.yml
   testinput/forecast_mom6.yml
   testinput/forecast_mom6_bgc.yml
   testinput/forecast_pseudo.yml
@@ -87,7 +86,6 @@ list( APPEND soca_test_ref
   testref/enspert.test
   testref/ensrecenter.test
   testref/ensvariance.test
-  testref/forecast_identity_cice.test
   testref/forecast_identity.test
   testref/forecast_mom6.test
   testref/forecast_mom6_bgc.test
@@ -127,7 +125,6 @@ list( APPEND soca_model_restarts
   Data/72x35x25/INPUT/forcing_daily.nc
   Data/72x35x25/INPUT/forcing_monthly.nc
   Data/72x35x25/INPUT/hycom1_25.nc
-  Data/72x35x25/INPUT/ice_model.res.nc
   Data/72x35x25/INPUT/cice.res.nc
   Data/72x35x25/INPUT/layer_coord25.nc
   Data/72x35x25/INPUT/MOM.res.nc
@@ -418,17 +415,11 @@ soca_add_test( NAME convertstate_changevar
                NOTRAPFPE
                TEST_DEPENDS test_soca_gridgen )
 
-# Test of read/write restart for MOM6&SIS2, model advance = Id
+# Test of read/write restart for MOM6&ICE, model advance = Id
 soca_add_test( NAME forecast_identity
                EXE  soca_forecast.x
                NOTRAPFPE
                TEST_DEPENDS test_soca_gridgen)
-
-# Test of read/write restart for MOM6&CICE, model advance = Id
-soca_add_test( NAME forecast_identity_cice
-               EXE  soca_forecast.x
-               NOTRAPFPE
-               TEST_DEPENDS test_soca_gridgen )
 
 # Test mom6 forecast
 soca_add_test( NAME forecast_mom6

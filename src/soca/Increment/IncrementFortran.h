@@ -74,7 +74,7 @@ namespace soca {
                            const int &);
     void soca_increment_setpoint_f90(F90flds &, const F90iter &, const double &,
                            const int &);
-    void soca_increment_sizes_f90(const F90flds &, int &, int &, int &,
+    void soca_increment_sizes_f90(const F90flds &, int &,
                               int &, int &, int &);
     void soca_increment_rms_f90(const F90flds &, double &);
     void soca_increment_serial_size_f90(const F90flds &,

@@ -1,7 +1,4 @@
 geometry:
-  num_ice_cat: 5
-  num_ice_lev: 4
-  num_sno_lev: 1
   mom6_input_nml: ./inputnml/input.nml
 
 window begin: &date 2018-04-14T00:00:00Z
@@ -55,7 +52,7 @@ observations:
     amount: 0.1
     random seed: 0
 
-driver: 
+driver:
 
 local ensemble DA:
   solver: LETKF

@@ -470,9 +470,9 @@ end subroutine soca_increment_change_resol_c
 
   ! ------------------------------------------------------------------------------
 
-  subroutine soca_incrementnum_c(c_key_fld, nx, ny, nzo, nzi, ncat, nf) bind(c,name='soca_increment_sizes_f90')
+  subroutine soca_incrementnum_c(c_key_fld, nx, ny, nzo, nf) bind(c,name='soca_increment_sizes_f90')
     integer(c_int),         intent(in) :: c_key_fld
-    integer(kind=c_int), intent(inout) :: nx, ny, nzo, nzi, ncat, nf
+    integer(kind=c_int), intent(inout) :: nx, ny, nzo, nf
 
     type(soca_increment), pointer :: fld
 
@@ -481,8 +481,6 @@ end subroutine soca_increment_change_resol_c
     nx = size(fld%geom%lon,1)
     ny = size(fld%geom%lon,2)
     nzo = fld%geom%nzo
-    nzi = fld%geom%nzi
-    ncat = fld%geom%ncat
     nf = size(fld%fields)
 
   end subroutine soca_incrementnum_c

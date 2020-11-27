@@ -11,9 +11,6 @@ cost function:
   window length: P2D
   analysis variables: &soca_vars [socn, tocn, ssh, hocn]
   geometry:
-    num_ice_cat: 5
-    num_ice_lev: 4
-    num_sno_lev: 1
     geom_grid_file: soca_gridspec.nc
     mom6_input_nml: ./inputnml/input.nml
 
@@ -171,9 +168,6 @@ variational:
     algorithm: RPCG
   iterations:
   - geometry:
-      num_ice_cat: 5
-      num_ice_lev: 4
-      num_sno_lev: 1
       geom_grid_file: soca_gridspec.small.nc
       mom6_input_nml: ./inputnml/input_small.nml
     ninner: 5

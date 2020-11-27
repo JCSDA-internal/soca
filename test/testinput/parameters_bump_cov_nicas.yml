@@ -1,7 +1,4 @@
 resolution:
-  num_ice_cat: 5
-  num_ice_lev: 4
-  num_sno_lev: 1
   mom6_input_nml: ./inputnml/input.nml
 
 variables: &soca_vars  [cicen, hicen, socn, tocn, ssh, hocn]
@@ -11,7 +8,7 @@ background:
   basename: ./INPUT/
   date: &date 2018-04-15T06:00:00Z
   ocn_filename: MOM.res.nc
-  ice_filename: ice_model.res.nc
+  ice_filename: cice.res.nc
 
 bump:
   prefix: soca_bump_cov
