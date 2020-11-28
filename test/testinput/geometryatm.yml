@@ -1,7 +1,4 @@
 geometry:
-  num_ice_cat: 5
-  num_ice_lev: 4
-  num_sno_lev: 1
   mom6_input_nml: ./inputnml/input.nml
   atm_state:
     init: true

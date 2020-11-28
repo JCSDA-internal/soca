@@ -11,16 +11,13 @@ cost function:
   window length: P2D
   analysis variables: &soca_vars [cicen, hicen, socn, tocn, ssh, hocn, sw, lhf, shf, lw, us, chl, mld, layer_depth]
   geometry:
-    num_ice_cat: 5
-    num_ice_lev: 4
-    num_sno_lev: 1
     mom6_input_nml: ./inputnml/input.nml
 
   background:
     read_from_file: 1
     basename: ./INPUT/
     ocn_filename: MOM.res.nc
-    ice_filename: ice_model.res.nc
+    ice_filename: cice.res.nc
     sfc_filename: sfc.res.nc
     date: &bkg_date 2018-04-15T00:00:00Z
     state variables: *soca_vars
@@ -233,9 +230,6 @@ variational:
     algorithm: RPCG
   iterations:
   - geometry:
-      num_ice_cat: 5
-      num_ice_lev: 4
-      num_sno_lev: 1
       mom6_input_nml: ./inputnml/input.nml
     ninner: 5
     gradient norm reduction: 1e-15
