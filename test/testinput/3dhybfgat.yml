@@ -5,9 +5,6 @@ cost function:
   window length: PT6H
   analysis variables: &soca_vars [cicen, hicen, socn, tocn, ssh, hocn]
   geometry:
-    num_ice_cat: 5
-    num_ice_lev: 4
-    num_sno_lev: 1
     mom6_input_nml: ./inputnml/input.nml
 
   model:
@@ -22,7 +19,6 @@ cost function:
     ocn_filename: MOM.res.nc
     ice_filename: cice.res.nc
     date: *date_begin
-    seaice_model: cice
     state variables: *model_vars
 
   _file: &_file
@@ -96,22 +92,18 @@ cost function:
       variables: *soca_vars
       members:
       - <<: *_file
-        aggregated seaice: 1
         ocn_filename: ocn.pert.ens.1.2018-04-15T00:00:00Z.PT0S.nc
         ice_filename: ice.pert.ens.1.2018-04-15T00:00:00Z.PT0S.nc
 
       - <<: *_file
-        aggregated seaice: 1
         ocn_filename: ocn.pert.ens.2.2018-04-15T00:00:00Z.PT0S.nc
         ice_filename: ice.pert.ens.2.2018-04-15T00:00:00Z.PT0S.nc
 
       - <<: *_file
-        aggregated seaice: 1
         ocn_filename: ocn.pert.ens.3.2018-04-15T00:00:00Z.PT0S.nc
         ice_filename: ice.pert.ens.3.2018-04-15T00:00:00Z.PT0S.nc
 
       - <<: *_file
-        aggregated seaice: 1
         ocn_filename: ocn.pert.ens.4.2018-04-15T00:00:00Z.PT0S.nc
         ice_filename: ice.pert.ens.4.2018-04-15T00:00:00Z.PT0S.nc
 
@@ -148,9 +140,6 @@ variational:
     algorithm: RPCG
   iterations:
   - geometry:
-      num_ice_cat: 5
-      num_ice_lev: 4
-      num_sno_lev: 1
       mom6_input_nml: ./inputnml/input.nml
     linear model:
       variable change: Identity
@@ -167,7 +156,6 @@ output:
   datadir: Data
   exp: 3dvarfgat
   type: an
-  seaice_model: cice
 
 final:
   diagnostics:

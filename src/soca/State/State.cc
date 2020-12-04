@@ -124,7 +124,7 @@ namespace soca {
   void State::print(std::ostream & os) const {
     os << std::endl << "  Valid time: " << validTime();
     int n0, nf;
-    soca_state_sizes_f90(toFortran(), n0, n0, n0, n0, n0, nf);
+    soca_state_sizes_f90(toFortran(), n0, n0, n0, nf);
     std::vector<double> zstat(3*nf);
     soca_state_gpnorm_f90(toFortran(), nf, zstat[0]);
     for (int jj = 0; jj < nf; ++jj) {

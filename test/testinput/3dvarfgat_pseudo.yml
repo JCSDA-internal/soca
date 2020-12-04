@@ -11,9 +11,6 @@ cost function:
   window length: PT6H
   analysis variables: &soca_vars  [socn, tocn, ssh, hocn, uocn, vocn]
   geometry:
-    num_ice_cat: 5
-    num_ice_lev: 4
-    num_sno_lev: 1
     mom6_input_nml: ./inputnml/input.nml
 
   model:
@@ -167,9 +164,6 @@ variational:
     algorithm: RPCG
   iterations:
   - geometry:
-      num_ice_cat: 5
-      num_ice_lev: 4
-      num_sno_lev: 1
       mom6_input_nml: ./inputnml/input.nml
     linear model:
       variable change: Identity

@@ -9,8 +9,7 @@ module soca_geom_mod
 use atlas_module, only: atlas_functionspace_pointcloud, atlas_fieldset, atlas_field, atlas_real, atlas_integer
 use MOM_domains, only : MOM_domain_type, MOM_infra_init
 use MOM_io,      only : io_infra_init
-use soca_mom6, only: soca_mom6_config, soca_mom6_init, soca_ice_column, &
-                     soca_geomdomain_init
+use soca_mom6, only: soca_mom6_config, soca_mom6_init, soca_geomdomain_init
 use soca_utils, only: write2pe, soca_remap_idw
 use kinds, only: kind_real
 use fckit_configuration_module, only: fckit_configuration
@@ -36,8 +35,7 @@ public :: soca_geom, &
 !> Geometry data structure
 type :: soca_geom
     type(MOM_domain_type), pointer :: Domain !< Ocean model domain
-    type(soca_ice_column) :: ice_column !< Sea-ice geometry
-    integer :: nzo, nzo_zstar, nzi, nzs, ncat
+    integer :: nzo, nzo_zstar
     integer :: isc, iec, jsc, jec  !< indices of compute domain
     integer :: isd, ied, jsd, jed  !< indices of data domain
     integer :: isg, ieg, jsg, jeg  !< indices of global domain
@@ -94,19 +92,6 @@ subroutine geom_init(self, f_conf, f_comm)
 
   ! Domain decomposition
   call soca_geomdomain_init(self%Domain, self%nzo, f_comm)
-
-  ! Initialize sea-ice grid
-  if ( f_conf%has("num_ice_cat") ) &
-      call f_conf%get_or_die("num_ice_cat", self%ice_column%ncat)
-  if ( f_conf%has("num_ice_lev") ) &
-      call f_conf%get_or_die("num_ice_lev", self%ice_column%nzi)
-  if ( f_conf%has("num_sno_lev") ) &
-      call f_conf%get_or_die("num_sno_lev", self%ice_column%nzs)
-
-  ! Shortcuts to sea-ice grid size
-  self%ncat = self%ice_column%ncat
-  self%nzi = self%ice_column%nzi
-  self%nzs = self%ice_column%nzs
 
   ! User-defined grid filename
   if ( .not. f_conf%get("geom_grid_file", self%geom_grid_file) ) &
@@ -242,12 +227,6 @@ subroutine geom_clone(self, other)
 
   !
   other%geom_grid_file = self%geom_grid_file
-
-  ! Clone sea-ice grid
-  other%ice_column = self%ice_column
-  other%ncat = self%ncat
-  other%nzi = self%nzi
-  other%nzs = self%nzs
 
   ! Allocate and clone geometry
   call geom_allocate(other)
