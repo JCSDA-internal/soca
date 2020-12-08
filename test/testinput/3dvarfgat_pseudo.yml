@@ -53,11 +53,9 @@ cost function:
   background error:
     verbosity: main
     covariance model: SocaError
-    prefix: soca
     datadir: ./bump
     strategy: specific_univariate
     load_nicas: 1
-    lsqrt: 1
     mpicom: 2
     date: 2018-04-15T00:00:00Z
     analysis variables: *soca_vars

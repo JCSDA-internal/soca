@@ -13,11 +13,7 @@ background:
 bump:
   prefix: soca_bump_cov
   datadir: ./bump
-  ne: 5
-  colocated: 0
-  default_seed: 1
   load_cmat: 1
-  lsqrt: 1
   mask_check: 1
   method: cor
   mpicom: 2
@@ -28,7 +24,6 @@ bump:
   ntry: 3
   resol: 4.0
   strategy: specific_univariate
-  write_cmat: 0
 
 _: &ensfile
   read_from_file: 1

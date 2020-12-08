@@ -19,14 +19,22 @@ bump:
   new_nicas: 1
   ntry: 3
   nrep: 2
-  lsqrt: 1
   resol: 6
-  network: 0
-  mask: 0
   mpicom: 2
-  default_seed: 1
   forced_radii: 1
-  rh: 2500000.0
-  rv: 500
+  rh:
+    common: [2500000.0]
+    socn: [2500000.0]
+    tocn: [2500000.0]
+    cicen: [2500000.0]
+    hicen: [2500000.0]
+    ssh: [2500000.0]
+  rv:
+    common: [500]
+    socn: [500]
+    tocn: [500]
+    cicen: [500]
+    hicen: [500]
+    ssh: [500]
   grids:
   - variables: [socn, tocn, cicen, hicen, ssh]

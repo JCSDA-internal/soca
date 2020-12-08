@@ -13,10 +13,8 @@ variables: *soca_vars
 
 background error:
   covariance model: SocaError
-  prefix: soca
   datadir: ./bump
   load_nicas: 1
-  lsqrt: 1
   mpicom: 2
   strategy: specific_univariate
   date: *date

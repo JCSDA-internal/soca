@@ -23,11 +23,9 @@ background error:
   ensemble weight: 0.5
   static:
    covariance model: SocaError
-   prefix: soca
    datadir: ./bump
    strategy: specific_univariate
    load_nicas: 1
-   lsqrt: 1
    mpicom: 2
    date: *date
    analysis variables: [cicen, hicen, socn, tocn, ssh, hocn]

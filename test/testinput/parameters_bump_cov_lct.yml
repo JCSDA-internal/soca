@@ -14,13 +14,10 @@ bump:
   verbosity: main
   prefix: soca_bump_cov
   datadir: ./bump
-  colocated: 0
-  default_seed: 1
   diag_rhflt: 3000000.0
   lct_nscales: 1
   lct_diag: [0]
   method: cor
-  minim_algo: hooke
   nc1: 500
   nc2: 500
   nc3: 100
@@ -29,7 +26,6 @@ bump:
   nl0r: 11
   nrep: 2
   ntry: 3
-  rvflt: 5.0
   strategy: specific_univariate
 
 _: &ensfile
