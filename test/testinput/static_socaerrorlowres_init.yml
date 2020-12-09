@@ -15,8 +15,6 @@ background:
 background error:
   verbosity: main
   covariance model: SocaError
-  default_seed: 1
-  prefix: soca
   datadir: ./bump_lowres
   method: cor
   strategy: specific_univariate
@@ -24,11 +22,9 @@ background error:
   mask_check: 1
   ntry: 3
   nrep:  2
-  lsqrt: 1
   resol: 6.0
   network: 1
   mpicom: 2
-  forced_radii: 1
   date: *date
   ocean_corr_scale: 3000.0e3
   ice_corr_scale: 2000.0e3

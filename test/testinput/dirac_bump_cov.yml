@@ -1,9 +1,7 @@
 Covariance:
   covariance: BUMP
   bump:
-    colocated: 0
     load_nicas: 1
-    lsqrt: 1
     mpicom: 2
     nonunit_diag: 1
     prefix: soca_bump_cov

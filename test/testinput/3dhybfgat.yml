@@ -35,11 +35,9 @@ cost function:
     static:
       verbosity: main
       covariance model: SocaError
-      prefix: soca
       datadir: ./bump
       strategy: specific_univariate
       load_nicas: 1
-      lsqrt: 1
       mpicom: 2
       date: *date_begin
       analysis variables: *soca_vars
