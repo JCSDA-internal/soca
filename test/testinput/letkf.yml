@@ -50,6 +50,7 @@ observations:
   - *land_mask
   - filter: Thinning
     amount: 0.1
+    defer to post: true
     random seed: 0
 
 driver:
