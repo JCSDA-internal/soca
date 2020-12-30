@@ -44,8 +44,12 @@ observations:
   obs error:
     covariance model: localized diagonal
     localization:
-      localization method: Gaspari-Cohn
-      lengthscale: 2000e3
+      localization method: rossby radius
+      lengthscale: 2000e3 # the largest expected lengthscale
+                          # (used by ioda, not our ObsLocRossby class)
+      loc mult: 4.0   # length scale = rossby radius x loc mult
+      loc min: 100e3  # alternative minimum length scale
+
   obs filters:
   - *land_mask
   - filter: Thinning
