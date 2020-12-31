@@ -41,7 +41,7 @@ endif ()
 
 ecbuild_bundle( PROJECT fckit           GIT "https://github.com/jcsda-internal/fckit.git"           UPDATE TAG 8502aae )
 ecbuild_bundle( PROJECT atlas           GIT "https://github.com/jcsda-internal/atlas.git"           UPDATE TAG e0b7709 )
-ecbuild_bundle( PROJECT oops            GIT "https://github.com/jcsda-internal/oops.git"            UPDATE TAG 177c90b )
+ecbuild_bundle( PROJECT oops            GIT "https://github.com/jcsda-internal/oops.git"            UPDATE TAG 4ad4e4d )
 ecbuild_bundle( PROJECT saber           GIT "https://github.com/jcsda-internal/saber.git"           UPDATE TAG 8f35c4c )
 ecbuild_bundle( PROJECT ioda            GIT "https://github.com/jcsda-internal/ioda.git"            UPDATE TAG f1dc174 )
 ecbuild_bundle( PROJECT ioda-converters GIT "https://github.com/jcsda-internal/ioda-converters.git" UPDATE TAG 64c213e )
