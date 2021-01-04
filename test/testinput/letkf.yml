@@ -44,18 +44,20 @@ observations:
   obs error:
     covariance model: localized diagonal
     localization:
-      localization method: rossby radius
+      localization method: obs metadata
       lengthscale: 2000e3 # the largest expected lengthscale
-                          # (used by ioda, not our ObsLocRossby class)
-      loc mult: 4.0   # length scale = rossby radius x loc mult
-      loc min: 100e3  # alternative minimum length scale
+                          # (used by ioda, not our "obs metada" class)
 
   obs filters:
-  - *land_mask
+  - *land_mask  
   - filter: Thinning
     amount: 0.1
     defer to post: true
     random seed: 0
+  - filter: Rossby Localization
+    multiplier: 3.0
+    minvalue: 100e3
+    maxvalue: 500e3
 
 driver:
 
