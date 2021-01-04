@@ -5,8 +5,8 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#ifndef SOCA_OBSLOCALIZATION_OBSLOCROSSBY_H_
-#define SOCA_OBSLOCALIZATION_OBSLOCROSSBY_H_
+#ifndef SOCA_OBSLOCALIZATION_OBSLOCFROMMETADATA_H_
+#define SOCA_OBSLOCALIZATION_OBSLOCFROMMETADATA_H_
 
 #include <string>
 #include <vector>
@@ -27,23 +27,18 @@ namespace ioda {
 namespace soca {
 
 
-  class ObsLocRossby: public util::Printable {
+  class ObsLocFromMetadata: public util::Printable {
    public:
-    static const std::string classname() {return "soca::ObsLocRossby";}
+    static const std::string classname() {return "soca::ObsLocFromMetadata";}
 
-    ObsLocRossby(const eckit::Configuration &, const ioda::ObsSpace &);
-    ~ObsLocRossby() {}
+    ObsLocFromMetadata(const eckit::Configuration &, const ioda::ObsSpace &);
     void multiply(ioda::ObsVector &) const;
 
    private:
     void print(std::ostream &) const override {}
     const ioda::ObsSpace & obsdb_;
-    const double rscale_;
-
-    const double locMult_;
-    const double locMin_;
   };
 
 }  // namespace soca
 
-#endif  // SOCA_OBSLOCALIZATION_OBSLOCROSSBY_H_
+#endif  // SOCA_OBSLOCALIZATION_OBSLOCFROMMETADATA_H_

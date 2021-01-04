@@ -1,4 +1,6 @@
 soca_target_sources(
-  ObsLocRossby.h
-  ObsLocRossby.cc
+  ObsLocFromMetadata.h
+  ObsLocFromMetadata.cc
+  RossbyLocFilter.h
+  RossbyLocFilter.cc
 )
