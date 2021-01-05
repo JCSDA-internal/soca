@@ -37,12 +37,15 @@ void RossbyLocFilter::applyFilter(const std::vector<bool> & apply,
 {
   const size_t nlocs = obsdb_.nlocs();
   std::vector<float> loc(nlocs);
+  loc.assign(nlocs, 1.0);
 
   data_.get(ufo::Variable("rossby_radius@GeoVaLs"), loc);
-  for (auto& l : loc) {
-    l *= parameters_.multiplier.value();
-    l = std::max(l, parameters_.minvalue.value());
-    l = std::min(l, parameters_.maxvalue.value());
+  for (size_t jobs = 0; jobs < nlocs; ++jobs) {
+    if (apply[jobs]) {
+      loc[jobs] *= parameters_.multiplier.value();
+      loc[jobs] = std::max(loc[jobs], parameters_.minvalue.value());
+      loc[jobs] = std::min(loc[jobs], parameters_.maxvalue.value());
+    }
   }
   obsdb_.put_db("MetaData", "obs_localization", loc);
 }
