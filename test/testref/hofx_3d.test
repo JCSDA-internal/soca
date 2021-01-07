@@ -36,6 +36,6 @@ Test     : ADT nobs= 100 Min=-1.250816, Max=1.421506, RMS=0.757217
 Test     : InsituTemperature nobs= 218 Min=7.832734, Max=30.431111, RMS=21.287619
 Test     : InsituSalinity nobs= 218 Min=34.160244, Max=35.992907, RMS=35.036438
 Test     : SeaIceFraction nobs= 100 Min=0.000000, Max=1.000000, RMS=0.694504
-Test     : SeaIceFreeboard nobs= 376 Min=0.000000, Max=0.966731, RMS=0.235217
+Test     : SeaIceFreeboard nobs= 376 Min=-0.071509, Max=0.255906, RMS=0.054232
 Test     : Chlorophyll nobs= 137 Min=0.001273, Max=2.410599, RMS=0.357860
 Test     : End H(x)
