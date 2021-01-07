@@ -11,8 +11,6 @@ use fckit_configuration_module, only: fckit_configuration
 use kinds, only: kind_real
 use datetime_mod, only: datetime, c_f_datetime
 use oops_variables_mod
-use ufo_locs_mod_c, only: ufo_locs_registry
-use ufo_locs_mod, only: ufo_locs
 use ufo_geovals_mod_c, only: ufo_geovals_registry
 use ufo_geovals_mod, only: ufo_geovals
 use soca_geom_mod, only: soca_geom
