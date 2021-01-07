@@ -27,7 +27,7 @@ LinearGetValues::LinearGetValues(const Geometry & geom,
 {
   soca_getvalues_create_f90(keyLinearGetValues_,
                             geom.toFortran(),
-                            locs.toFortran());
+                            locs);
 }
 
 LinearGetValues::~LinearGetValues()
@@ -41,13 +41,10 @@ void LinearGetValues::setTrajectory(const State & state,
                                     const util::DateTime & t1,
                                     const util::DateTime & t2,
                                     ufo::GeoVaLs & geovals) {
-  const util::DateTime * t1p = &t1;
-  const util::DateTime * t2p = &t2;
   soca_getvalues_fill_geovals_f90(keyLinearGetValues_,
                                   geom_->toFortran(),
                                   state.toFortran(),
-                                  &t1p, &t2p,
-                                  locs_.toFortran(),
+                                  t1, t2, locs_,
                                   geovals.toFortran());
 }
 // -------------------------------------------------------------------------------------------------
@@ -55,13 +52,10 @@ void LinearGetValues::fillGeoVaLsTL(const Increment & incr,
                                     const util::DateTime & t1,
                                     const util::DateTime & t2,
                                     ufo::GeoVaLs & geovals) const {
-  const util::DateTime * t1p = &t1;
-  const util::DateTime * t2p = &t2;
   soca_getvalues_fill_geovals_tl_f90(keyLinearGetValues_,
                                      geom_->toFortran(),
                                      incr.toFortran(),
-                                     &t1p, &t2p,
-                                     locs_.toFortran(),
+                                     t1, t2, locs_,
                                      geovals.toFortran());
 }
 // -------------------------------------------------------------------------------------------------
@@ -69,13 +63,10 @@ void LinearGetValues::fillGeoVaLsAD(Increment & incr,
                                     const util::DateTime & t1,
                                     const util::DateTime & t2,
                                     const ufo::GeoVaLs & geovals) const {
-  const util::DateTime * t1p = &t1;
-  const util::DateTime * t2p = &t2;
   soca_getvalues_fill_geovals_ad_f90(keyLinearGetValues_,
                                      geom_->toFortran(),
                                      incr.toFortran(),
-                                     &t1p, &t2p,
-                                     locs_.toFortran(),
+                                     t1, t2, locs_,
                                      geovals.toFortran());
 }
 

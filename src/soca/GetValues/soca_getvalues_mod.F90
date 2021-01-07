@@ -10,9 +10,10 @@ use soca_fields_mod, only: soca_fields, soca_field
 use datetime_mod, only: datetime
 use kinds, only: kind_real
 use ufo_geovals_mod, only: ufo_geovals
-use ufo_locs_mod, only: ufo_locs, ufo_locs_time_mask
+use ufo_locations_mod
 use unstructured_interpolation_mod, only: unstrc_interp
 use fckit_log_module, only : fckit_log
+use iso_c_binding
 
 implicit none
 private
@@ -40,21 +41,26 @@ contains
 subroutine soca_getvalues_create(self, geom, locs)
   class(soca_getvalues), intent(inout) :: self
   type(soca_geom),          intent(in) :: geom
-  type(ufo_locs),           intent(in) :: locs
+  type(ufo_locations),      intent(in) :: locs
 
   integer :: isc, iec, jsc, jec, ni, nj
   integer :: nn, ngrid_in, ngrid_out
   character(len=8) :: wtype = 'barycent'
   real(kind=kind_real), allocatable :: lats_in(:), lons_in(:)
+  real(8), allocatable, dimension(:) :: locs_lons, locs_lats
 
   ! Indices for compute domain (no halo)
   isc = geom%isc ; iec = geom%iec
   jsc = geom%jsc ; jec = geom%jec
 
-  ngrid_out = locs%nlocs
-  nn = 3
+  ! get location lat/lons
+  ngrid_out = locs%nlocs()
+  allocate(locs_lons(ngrid_out), locs_lats(ngrid_out))
+  call locs%get_lons(locs_lons)
+  call locs%get_lats(locs_lats)
 
   ! create interpolation weights for fields that do NOT use the land mask
+  nn = 3
   ni = iec - isc + 1
   nj = jec - jsc + 1
   ngrid_in = ni * nj
@@ -64,7 +70,7 @@ subroutine soca_getvalues_create(self, geom, locs)
   lats_in = reshape(geom%lat(isc:iec,jsc:jec), (/ngrid_in/))
   call self%horiz_interp%create(geom%f_comm, nn, wtype, &
                            ngrid_in, lats_in, lons_in, &
-                           ngrid_out, locs%lat, locs%lon)
+                           ngrid_out, locs_lats, locs_lons)
 
   ! create interpolation weights for fields that DO use the land mask
   deallocate(lats_in, lons_in)
@@ -73,7 +79,7 @@ subroutine soca_getvalues_create(self, geom, locs)
   lats_in = pack(geom%lat(isc:iec,jsc:jec), mask=geom%mask2d(isc:iec,jsc:jec) > 0)
   call self%horiz_interp_masked%create(geom%f_comm, nn, wtype, &
                            ngrid_in, lats_in, lons_in, &
-                           ngrid_out, locs%lat, locs%lon)
+                           ngrid_out, locs_lats, locs_lons)
 end subroutine soca_getvalues_create
 
 !------------------------------------------------------------------------------
@@ -92,10 +98,10 @@ subroutine soca_getvalues_fillgeovals(self, geom, fld, t1, t2, locs, geovals)
   class(soca_fields),       intent(in) :: fld
   type(datetime),           intent(in) :: t1
   type(datetime),           intent(in) :: t2
-  type(ufo_locs),           intent(in) :: locs
+  type(ufo_locations),      intent(in) :: locs
   type(ufo_geovals),     intent(inout) :: geovals
 
-  logical, allocatable :: time_mask(:)
+  logical(c_bool), allocatable :: time_mask(:)
   logical :: masked
   integer :: ivar, nlocs, n
   integer :: ival, nval, indx
@@ -110,7 +116,8 @@ subroutine soca_getvalues_fillgeovals(self, geom, fld, t1, t2, locs, geovals)
   jsc = geom%jsc ; jec = geom%jec
 
   ! Get mask for locations in this time window
-  call ufo_locs_time_mask(locs, t1, t2, time_mask)
+  allocate(time_mask(locs%nlocs()))
+  call locs%get_timemask(t1,t2,time_mask)
 
   ! Allocate temporary geoval and 3d field for the current time window
   do ivar = 1, geovals%nvar
@@ -128,7 +135,7 @@ subroutine soca_getvalues_fillgeovals(self, geom, fld, t1, t2, locs, geovals)
     ! Return if no observations
     if ( geovals%geovals(ivar)%nlocs == 0 ) return
 
-    allocate(gom_window(locs%nlocs))
+    allocate(gom_window(locs%nlocs()))
     allocate(fld3d(isc:iec,jsc:jec,1:nval))
     nullify(fldptr)
 
@@ -193,7 +200,7 @@ subroutine soca_getvalues_fillgeovals(self, geom, fld, t1, t2, locs, geovals)
       end if
 
       ! Fill proper geoval according to time window
-      do indx = 1, locs%nlocs
+      do indx = 1, locs%nlocs()
         if (time_mask(indx)) then
           geovals%geovals(ivar)%vals(ival, indx) = gom_window(indx)
         end if
@@ -217,10 +224,10 @@ subroutine soca_getvalues_fillgeovals_ad(self, geom, incr, t1, t2, locs, geovals
   class(soca_fields),    intent(inout) :: incr
   type(datetime),           intent(in) :: t1
   type(datetime),           intent(in) :: t2
-  type(ufo_locs),           intent(in) :: locs
+  type(ufo_locations),      intent(in) :: locs
   type(ufo_geovals),     intent(in) :: geovals
 
-  logical, allocatable :: time_mask(:)
+  logical(c_bool), allocatable :: time_mask(:)
   logical :: masked
   integer :: ivar, nlocs, n
   integer :: ival, nval, indx
@@ -239,15 +246,16 @@ subroutine soca_getvalues_fillgeovals_ad(self, geom, incr, t1, t2, locs, geovals
   jsc = geom%jsc ; jec = geom%jec
 
   ! Get mask for locations in this time window
-  call ufo_locs_time_mask(locs, t1, t2, time_mask)
-  allocate(gom_window_ival(locs%nlocs))
+  allocate(time_mask(locs%nlocs()))
+  call locs%get_timemask(t1,t2,time_mask)
+  allocate(gom_window_ival(locs%nlocs()))
 
   do ivar = 1, geovals%nvar
     ! Set number of levels/categories (nval)
     nval = nlev_from_ufovar(incr, geovals%variables(ivar))
 
     ! Allocate temporary geoval and 3d field for the current time window
-    allocate(gom_window(nval,locs%nlocs))
+    allocate(gom_window(nval,locs%nlocs()))
     allocate(incr3d(isc:iec,jsc:jec,1:nval))
     incr3d = 0.0_kind_real
     gom_window = 0.0_kind_real
@@ -268,12 +276,12 @@ subroutine soca_getvalues_fillgeovals_ad(self, geom, incr, t1, t2, locs, geovals
 
     do ival = 1, nval
       ! Fill proper geoval according to time window
-      do indx = 1, locs%nlocs
+      do indx = 1, locs%nlocs()
         if (time_mask(indx)) then
-          gom_window(ival, indx) = geovals%geovals(ivar)%vals(ival, locs%indx(indx))
+          gom_window(ival, indx) = geovals%geovals(ivar)%vals(ival, indx)
         end if
       end do
-      gom_window_ival = gom_window(ival,1:locs%nlocs)
+      gom_window_ival = gom_window(ival,1:locs%nlocs())
 
       if (masked) then
         incr3d_un = pack(incr3d(isc:iec,jsc:jec,ival), mask = incr%geom%mask2d(isc:iec,jsc:jec) >0)

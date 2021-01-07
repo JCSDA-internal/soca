@@ -26,7 +26,6 @@ namespace soca {
 }
 namespace ufo {
   class GeoVaLs;
-  class Locations;
 }
 
 //-----------------------------------------------------------------------------
