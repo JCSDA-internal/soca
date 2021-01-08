@@ -27,8 +27,7 @@ use soca_increment_reg
 
 use ufo_geovals_mod_c, only: ufo_geovals_registry
 use ufo_geovals_mod, only: ufo_geovals
-use ufo_locs_mod_c, only: ufo_locs_registry
-use ufo_locs_mod, only: ufo_locs
+use ufo_locations_mod
 
 
 implicit none
@@ -38,15 +37,15 @@ private
 contains
 ! ------------------------------------------------------------------------------
 
-subroutine soca_getvalues_create_c(c_key_self, c_key_geom, c_key_locs) &
+subroutine soca_getvalues_create_c(c_key_self, c_key_geom, c_locs) &
            bind (c, name='soca_getvalues_create_f90')
 integer(c_int),     intent(inout) :: c_key_self      !< Key to self
 integer(c_int),     intent(in)    :: c_key_geom      !< Key to geometry
-integer(c_int),     intent(in)    :: c_key_locs      !< Key to observation locations
+type(c_ptr), value, intent(in)    :: c_locs
 
 type(soca_getvalues), pointer :: self
 type(soca_geom),      pointer :: geom
-type(ufo_locs),       pointer :: locs
+type(ufo_locations)           :: locs
 
 ! Create object
 call soca_getvalues_registry%init()
@@ -55,7 +54,7 @@ call soca_getvalues_registry%get(c_key_self, self)
 
 ! Others
 call soca_geom_registry%get(c_key_geom, geom)
-call ufo_locs_registry%get(c_key_locs, locs)
+locs = ufo_locations(c_locs)
 
 ! Call method
 call self%create(geom, locs)
@@ -83,23 +82,23 @@ end subroutine soca_getvalues_delete_c
 ! --------------------------------------------------------------------------------------------------
 
 subroutine soca_getvalues_fill_geovals_c(c_key_self, c_key_geom, c_key_state, c_t1, c_t2, &
-                                         c_key_locs, c_key_geovals) &
+                                         c_locs, c_key_geovals) &
            bind (c, name='soca_getvalues_fill_geovals_f90')
 
-integer(c_int), intent(in) :: c_key_self
-integer(c_int), intent(in) :: c_key_geom
-integer(c_int), intent(in) :: c_key_state
-type(c_ptr),    intent(in) :: c_t1
-type(c_ptr),    intent(in) :: c_t2
-integer(c_int), intent(in) :: c_key_locs
-integer(c_int), intent(in) :: c_key_geovals
+integer(c_int),     intent(in) :: c_key_self
+integer(c_int),     intent(in) :: c_key_geom
+integer(c_int),     intent(in) :: c_key_state
+type(c_ptr), value, intent(in) :: c_t1
+type(c_ptr), value, intent(in) :: c_t2
+type(c_ptr), value, intent(in) :: c_locs
+integer(c_int),     intent(in) :: c_key_geovals
 
 type(soca_getvalues), pointer :: self
 type(soca_geom),      pointer :: geom
 type(soca_state),     pointer :: state
 type(datetime)                :: t1
 type(datetime)                :: t2
-type(ufo_locs),       pointer :: locs
+type(ufo_locations)           :: locs
 type(ufo_geovals),    pointer :: geovals
 
 ! Get objects
@@ -108,7 +107,7 @@ call soca_geom_registry%get(c_key_geom, geom)
 call soca_state_registry%get(c_key_state, state)
 call c_f_datetime(c_t1, t1)
 call c_f_datetime(c_t2, t2)
-call ufo_locs_registry%get(c_key_locs, locs)
+locs = ufo_locations(c_locs)
 call ufo_geovals_registry%get(c_key_geovals, geovals)
 
 ! Call method
@@ -119,23 +118,23 @@ end subroutine soca_getvalues_fill_geovals_c
 ! --------------------------------------------------------------------------------------------------
 
 subroutine soca_getvalues_fill_geovals_tl_c(c_key_self, c_key_geom, c_key_incr, c_t1, c_t2, &
-                                         c_key_locs, c_key_geovals) &
+                                         c_locs, c_key_geovals) &
            bind (c, name='soca_getvalues_fill_geovals_tl_f90')
 
-integer(c_int), intent(in) :: c_key_self
-integer(c_int), intent(in) :: c_key_geom
-integer(c_int), intent(in) :: c_key_incr
-type(c_ptr),    intent(in) :: c_t1
-type(c_ptr),    intent(in) :: c_t2
-integer(c_int), intent(in) :: c_key_locs
-integer(c_int), intent(in) :: c_key_geovals
+integer(c_int),     intent(in) :: c_key_self
+integer(c_int),     intent(in) :: c_key_geom
+integer(c_int),     intent(in) :: c_key_incr
+type(c_ptr), value, intent(in) :: c_t1
+type(c_ptr), value, intent(in) :: c_t2
+type(c_ptr), value, intent(in) :: c_locs
+integer(c_int),     intent(in) :: c_key_geovals
 
 type(soca_getvalues), pointer :: self
 type(soca_geom),      pointer :: geom
 type(soca_increment), pointer :: incr
 type(datetime)                :: t1
 type(datetime)                :: t2
-type(ufo_locs),       pointer :: locs
+type(ufo_locations)           :: locs
 type(ufo_geovals),    pointer :: geovals
 
 ! Get objects
@@ -144,7 +143,7 @@ call soca_geom_registry%get(c_key_geom, geom)
 call soca_increment_registry%get(c_key_incr, incr)
 call c_f_datetime(c_t1, t1)
 call c_f_datetime(c_t2, t2)
-call ufo_locs_registry%get(c_key_locs, locs)
+locs = ufo_locations(c_locs)
 call ufo_geovals_registry%get(c_key_geovals, geovals)
 
 ! Call method
@@ -155,23 +154,23 @@ end subroutine soca_getvalues_fill_geovals_tl_c
 ! --------------------------------------------------------------------------------------------------
 
 subroutine soca_getvalues_fill_geovals_ad_c(c_key_self, c_key_geom, c_key_incr, c_t1, c_t2, &
-                                            c_key_locs, c_key_geovals) &
+                                            c_locs, c_key_geovals) &
            bind (c, name='soca_getvalues_fill_geovals_ad_f90')
 
-integer(c_int), intent(in) :: c_key_self
-integer(c_int), intent(in) :: c_key_geom
-integer(c_int), intent(in) :: c_key_incr
-type(c_ptr),    intent(in) :: c_t1
-type(c_ptr),    intent(in) :: c_t2
-integer(c_int), intent(in) :: c_key_locs
-integer(c_int), intent(in) :: c_key_geovals
+integer(c_int),     intent(in) :: c_key_self
+integer(c_int),     intent(in) :: c_key_geom
+integer(c_int),     intent(in) :: c_key_incr
+type(c_ptr), value, intent(in) :: c_t1
+type(c_ptr), value, intent(in) :: c_t2
+type(c_ptr), value, intent(in) :: c_locs
+integer(c_int),     intent(in) :: c_key_geovals
 
 type(soca_getvalues), pointer :: self
 type(soca_geom),      pointer :: geom
 type(soca_increment), pointer :: incr
 type(datetime)                :: t1
 type(datetime)                :: t2
-type(ufo_locs),       pointer :: locs
+type(ufo_locations)           :: locs
 type(ufo_geovals),    pointer :: geovals
 
 ! Get objects
@@ -180,7 +179,7 @@ call soca_geom_registry%get(c_key_geom, geom)
 call soca_increment_registry%get(c_key_incr, incr)
 call c_f_datetime(c_t1, t1)
 call c_f_datetime(c_t2, t2)
-call ufo_locs_registry%get(c_key_locs, locs)
+locs = ufo_locations(c_locs)
 call ufo_geovals_registry%get(c_key_geovals, geovals)
 
 ! Call method

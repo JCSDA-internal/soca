@@ -22,8 +22,6 @@ use soca_state_mod
 use soca_state_reg
 use ufo_geovals_mod_c, only: ufo_geovals_registry
 use ufo_geovals_mod, only: ufo_geovals
-use ufo_locs_mod_c, only: ufo_locs_registry
-use ufo_locs_mod, only: ufo_locs
 
 implicit none
 private

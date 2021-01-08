@@ -6,6 +6,7 @@
  */
 
 #include <iomanip>
+#include <numeric>
 #include <vector>
 
 #include "atlas/field.h"

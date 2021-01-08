@@ -16,8 +16,6 @@ namespace soca {
   typedef int F90iter;
   // Model key type
   typedef int F90model;
-  // Locations key type
-  typedef int F90locs;
   // Goms key type
   typedef int F90goms;
   // Fields key type
