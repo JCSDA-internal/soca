@@ -20,6 +20,10 @@
 #include "ufo/Locations.h"
 
 // Forward declarations
+namespace oops {
+  class Variables;
+}
+
 namespace ufo {
   class GeoVaLs;
 }
