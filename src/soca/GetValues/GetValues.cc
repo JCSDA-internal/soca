@@ -7,6 +7,8 @@
 
 #include "eckit/config/LocalConfiguration.h"
 
+#include "ioda/ObsSpace.h"
+
 #include "oops/mpi/mpi.h"
 #include "oops/util/DateTime.h"
 
@@ -26,7 +28,7 @@ namespace soca {
 GetValues::GetValues(const Geometry & geom,
                      const ufo::Locations & locs)
   : locs_(locs), geom_(new Geometry(geom)) {
-  soca_getvalues_create_f90(keyGetValues_, geom.toFortran(), locs.toFortran());
+  soca_getvalues_create_f90(keyGetValues_, geom.toFortran(), locs);
 }
 // -----------------------------------------------------------------------------
 GetValues::~GetValues()
@@ -40,8 +42,6 @@ void GetValues::fillGeoVaLs(const State & state,
                             const util::DateTime & t1,
                             const util::DateTime & t2,
                             ufo::GeoVaLs & geovals) const {
-  const util::DateTime * t1p = &t1;
-  const util::DateTime * t2p = &t2;
   // Get atm geovals
   if (geom_->getAtmInit())
   {
@@ -55,8 +55,7 @@ void GetValues::fillGeoVaLs(const State & state,
   soca_getvalues_fill_geovals_f90(keyGetValues_,
                                   geom_->toFortran(),
                                   state.toFortran(),
-                                  &t1p, &t2p,
-                                  locs_.toFortran(),
+                                  t1, t2, locs_,
                                   geovals.toFortran());
 }
 // -----------------------------------------------------------------------------

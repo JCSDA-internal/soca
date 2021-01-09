@@ -1,2 +1,10 @@
 codecov:
   token: 7e489333-8f39-4b00-8377-402f46db4a15
+
+coverage:
+  round: up
+  status:
+    project:
+      default:
+        threshold: 0.1%
+        informational: true
