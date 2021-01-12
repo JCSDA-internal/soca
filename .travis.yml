@@ -21,14 +21,14 @@ env:
   global:
     - MAIN_REPO=soca
     - LIB_REPOS="fms gsw mom6 crtm
-                 fckit atlas oops saber ioda ufo ioda-converters"
+                 fckit atlas oops saber ioda ufo"
     - BUILD_OPT=""
     - BUILD_OPT_crtm="-DBUILD_CRTM=ON"
     - BUILD_OPT_mom6="-DENABLE_OCEAN_BGC=ON"
     - BUILD_OPT_oops="-DENABLE_QG_MODEL=OFF -DENABLE_LORENZ95_MODEL=OFF"
     - BUILD_OPT_ufo="-DLOCAL_PATH_TESTFILES_IODA=NONE"
     - BUILD_OPT_soca="-DSOCA_TESTS_FORC_DEFAULT_TOL=ON -DENABLE_OCEAN_BGC=ON"
-    - MATCH_REPOS="saber oops ioda ioda-converters ufo mom6 soca"
+    - MATCH_REPOS="saber oops ioda ufo mom6 soca"
     - LFS_REPOS=""
     # ENABLE_VALGRIND="ON"
 
