@@ -33,5 +33,5 @@ Test     : CostJo   : Nonlinear Jo(ADT) = 159.419995, nobs = 92, Jo/n = 1.732826
 Test     : CostJo   : Nonlinear Jo(InsituTemperature) = 348.697551, nobs = 206, Jo/n = 1.692707, err = 0.897281
 Test     : CostJo   : Nonlinear Jo(InsituSalinity) = 353.685750, nobs = 218, Jo/n = 1.622412, err = 0.608197
 Test     : CostJo   : Nonlinear Jo(SeaIceFraction) = 677.542329, nobs = 89, Jo/n = 7.612835, err = 0.100000
-Test     : CostJo   : Nonlinear Jo(SeaSurfaceChlorophyll) = 1273.998675, nobs = 129, Jo/n = 9.875959, err = 0.061865
-Test     : CostFunction: Nonlinear J = 17569.076500
+Test     : CostJo   : Nonlinear Jo(SeaSurfaceChlorophyll) = 1273.998671, nobs = 129, Jo/n = 9.875959, err = 0.061865
+Test     : CostFunction: Nonlinear J = 17569.076496
