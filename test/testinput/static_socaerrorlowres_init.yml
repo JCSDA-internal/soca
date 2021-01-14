@@ -26,6 +26,10 @@ background error:
   network: 1
   mpicom: 2
   date: *date
-  ocean_corr_scale: 3000.0e3
-  ice_corr_scale: 2000.0e3
+  corr_scales:
+    ocn:
+      base value: 840336.134453782
+      rossby mult: 0.280112045
+    ice:
+      base value: 560224.089635854
   analysis variables: [cicen, hicen, hocn, socn, tocn, ssh]

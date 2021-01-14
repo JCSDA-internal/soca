@@ -272,7 +272,7 @@ subroutine soca_bump_correlation(self, horiz_convol, geom, f_conf, domain)
     call f_conf%get_or_die('corr_scales.'//domain, f_conf_domain)
     if (.not. f_conf_domain%get('base value', r_base))    r_base = 0.0
     if (.not. f_conf_domain%get('rossby mult', r_mult))   r_mult = 0.0
-    if (.not. f_conf_domain%get('eq mult', r_eq_mult))    r_eq_mult = 1.0
+    if (.not. f_conf_domain%get('eq mult', r_eq_mult))    r_eq_mult = 0.0
     if (.not. f_conf_domain%get('eq mult lat', r_eq_lat)) r_eq_lat = 5.0
     if (.not. f_conf_domain%get('min grid mult', r_min_grid))  r_min_grid = 1.0
     if (.not. f_conf_domain%get('min value', r_min))      r_min  = 0.0
