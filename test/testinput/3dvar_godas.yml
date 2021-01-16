@@ -131,6 +131,13 @@ cost function:
       covariance model: diagonal
     obs filters:
     - *land_mask
+    - filter: Background Check
+      threshold: 0.1
+      action:
+        name: assign error
+        error function:
+          name: sea_surface_temperature@GeoVaLs
+          name: representation_error@GeoVaLs
 
   - obs space:
       name: InsituTemperature

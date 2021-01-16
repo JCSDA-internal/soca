@@ -181,6 +181,12 @@ subroutine soca_getvalues_fillgeovals(self, geom, fld, t1, t2, locs, geovals)
       call fld%get("chl", fldptr)
       fld3d(isc:iec,jsc:jec,1) = fldptr%val(isc:iec,jsc:jec,1)
 
+    case ("representation_error")
+      ! Representation errors: dx/R
+      fld3d(isc:iec,jsc:jec,1) = fld%geom%mask2d(isc:iec,jsc:jec) * &
+                                &sqrt(fld%geom%cell_area(isc:iec,jsc:jec))/&
+                                &fld%geom%rossby_radius(isc:iec,jsc:jec)
+
     case default
       call fckit_log%debug("soca_interpfields_mod:interp geoval does not exist")
     end select
@@ -367,7 +373,8 @@ function nlev_from_ufovar(fld, var) result(nval)
         "sea_surface_salinity", &
         "sea_floor_depth_below_sea_surface", &
         "sea_area_fraction", &
-        "sea_surface_chlorophyll")
+        "sea_surface_chlorophyll", &
+        "representation_error")
      nval = 1
 
   case ("sea_water_salinity")
