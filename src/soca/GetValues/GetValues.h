@@ -46,7 +46,8 @@ class GetValues : public util::Printable,
   static const std::string classname() {return "soca::GetValues";}
 
 /// saves all locations locs to use during filling GeoVaLs
-  GetValues(const Geometry &, const ufo::Locations & locs);
+  GetValues(const Geometry &, const ufo::Locations & locs,
+            const eckit::Configuration & config);
   virtual ~GetValues();
 
   /// fills in geovals for all observations in the timeframe (t1, t2],
