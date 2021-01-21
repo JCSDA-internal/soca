@@ -181,6 +181,10 @@ subroutine soca_getvalues_fillgeovals(self, geom, fld, t1, t2, locs, geovals)
       call fld%get("chl", fldptr)
       fld3d(isc:iec,jsc:jec,1) = fldptr%val(isc:iec,jsc:jec,1)
 
+    case ("sea_surface_biomass_in_p_units")
+      call fld%get("biop", fldptr)
+      fld3d(isc:iec,jsc:jec,1) = fldptr%val(isc:iec,jsc:jec,1)
+
     case default
       call fckit_log%debug("soca_interpfields_mod:interp geoval does not exist")
     end select
@@ -324,7 +328,11 @@ subroutine soca_getvalues_fillgeovals_ad(self, geom, incr, t1, t2, locs, geovals
 
       case ("sea_surface_chlorophyll")
         call incr%get("chl", field)
-        field%val(isc:iec,jsc:jec,1) = field%val(isc:iec,jsc:jec,1) + incr3d(isc:iec,jsc:jec,1)
+        field%val(isc:iec,jsc:jec,1:nval) = field%val(isc:iec,jsc:jec,1:nval) + incr3d
+
+      case ("sea_surface_biomass_in_p_units")
+        call incr%get("biop", field)
+        field%val(isc:iec,jsc:jec,1:nval) = field%val(isc:iec,jsc:jec,1:nval) + incr3d
 
       case default
         call abor1_ftn("soca_interpfields_mod:getvalues_ad geoval does not exist")
@@ -367,7 +375,8 @@ function nlev_from_ufovar(fld, var) result(nval)
         "sea_surface_salinity", &
         "sea_floor_depth_below_sea_surface", &
         "sea_area_fraction", &
-        "sea_surface_chlorophyll")
+        "sea_surface_chlorophyll", &
+        "sea_surface_biomass_in_p_units")
      nval = 1
 
   case ("sea_water_salinity")

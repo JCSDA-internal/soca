@@ -173,6 +173,7 @@ namespace soca {
       else if (vars_[ii] == "hicen") varlens[ii]=1;
       else if (vars_[ii] == "hsnon") varlens[ii]=1;
       else if (vars_[ii] == "chl") varlens[ii]=nzo;
+      else if (vars_[ii] == "biop") varlens[ii]=nzo;
       else
           varlens[ii] = 0;
     }
