@@ -223,7 +223,7 @@ subroutine soca_bump_correlation(self, horiz_convol, geom, f_conf, domain)
   type(atlas_fieldset) :: afieldset, rh, rv
   type(atlas_field) :: afield
   type(fckit_configuration) :: f_grid, f_conf_domain
-  real(kind=kind_real) :: r_base, r_mult, r_min, r_max, r_eq_lat, r_eq_mult, r_min_grid
+  real(kind=kind_real) :: r_base, r_mult, r_min, r_max, r_min_grid
   type(mpl_type) :: mpl
 
 
@@ -272,31 +272,20 @@ subroutine soca_bump_correlation(self, horiz_convol, geom, f_conf, domain)
     call f_conf%get_or_die('corr_scales.'//domain, f_conf_domain)
     if (.not. f_conf_domain%get('base value', r_base))    r_base = 0.0
     if (.not. f_conf_domain%get('rossby mult', r_mult))   r_mult = 0.0
-    if (.not. f_conf_domain%get('eq mult', r_eq_mult))    r_eq_mult = 0.0
-    if (.not. f_conf_domain%get('eq mult lat', r_eq_lat)) r_eq_lat = 5.0
     if (.not. f_conf_domain%get('min grid mult', r_min_grid))  r_min_grid = 1.0
     if (.not. f_conf_domain%get('min value', r_min))      r_min  = 0.0
     if (.not. f_conf_domain%get('max value', r_max))      r_max  = huge(r_max)
 
     ! rh is calculated as follows :
     ! 1) rh = "base value" + rossby_radius * "rossby mult"
-    ! 2) equatorial stretching is applied by multiplying rh by "eq mult"
-    !    tapering away from the eq with a length scale of "eq mult lat"
-    ! 3) minimum value of "min grid mult" * grid_size is imposed
-    ! 4) min/max are imposed based on "min value" and "max value"
-    ! 5) converted from a gaussian sigma to Gaspari-Cohn cutoff distance
+    ! 2) minimum value of "min grid mult" * grid_size is imposed
+    ! 3) min/max are imposed based on "min value" and "max value"
+    ! 4) converted from a gaussian sigma to Gaspari-Cohn cutoff distance
     rh = atlas_fieldset()
     afield = geom%afunctionspace%create_field('var',kind=atlas_real(kind_real),levels=0)
     call rh%add(afield)
     call afield%data(real_ptr_1)
     real_ptr_1 = r_base + r_mult*pack(geom%rossby_radius(geom%isc:geom%iec,geom%jsc:geom%jec), .true.)
-    if (r_eq_mult .gt. 1.0) then
-      ! equatorial stretching
-      do i=1,size(real_ptr_1)
-        real_ptr_1(i) = real_ptr_1(i) * ( &
-          (r_eq_mult-1.0) * fit_func(mpl,( abs(lats(i))/(r_eq_lat*gau2gc))) + 1.0)
-      end do
-    end if
     ! min based on grid size
     if (r_min_grid .gt. 0.0) then
       real_ptr_1 = max(real_ptr_1,  sqrt(area)*r_min_grid )
