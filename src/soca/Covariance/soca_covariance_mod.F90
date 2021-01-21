@@ -14,8 +14,7 @@ use fckit_configuration_module, only: fckit_configuration
 use random_mod, only: normal_distribution
 use oops_variables_mod
 use type_bump, only: bump_type
-use type_mpl, only: mpl_type
-use tools_func, only: fit_func, gau2gc
+use tools_func, only: gau2gc
 use kinds, only: kind_real
 use soca_fields_mod
 use soca_increment_mod
@@ -224,7 +223,6 @@ subroutine soca_bump_correlation(self, horiz_convol, geom, f_conf, domain)
   type(atlas_field) :: afield
   type(fckit_configuration) :: f_grid, f_conf_domain
   real(kind=kind_real) :: r_base, r_mult, r_min, r_max, r_min_grid
-  type(mpl_type) :: mpl
 
 
   ! Grid setup
