@@ -26,7 +26,8 @@ namespace soca {
 /// Constructor, destructor
 // -----------------------------------------------------------------------------
 GetValues::GetValues(const Geometry & geom,
-                     const ufo::Locations & locs)
+                     const ufo::Locations & locs,
+                     const eckit::Configuration & config)
   : locs_(locs), geom_(new Geometry(geom)) {
   soca_getvalues_create_f90(keyGetValues_, geom.toFortran(), locs);
 }
