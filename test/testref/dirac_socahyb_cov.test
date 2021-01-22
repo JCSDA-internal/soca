@@ -10,7 +10,7 @@ Test     :     mld   min=    0.000000   max=    0.000000   mean=    0.000000
 Test     : layer_depth   min=    0.000000   max=    0.000000   mean=    0.000000
 Test     : B * Increment: 
 Test     :   Valid time: 2018-04-15T00:00:00Z
-Test     :   cicen   min=   -0.003333   max=    0.000000   mean=   -0.000016
+Test     :   cicen   min=   -0.001746   max=    0.000000   mean=   -0.000009
 Test     :   hicen   min=    0.000000   max=   50.289952   mean=    0.328819
 Test     :    socn   min=   -0.054926   max=    0.063184   mean=   -0.000080
 Test     :    tocn   min=   -0.002181   max=    2.668324   mean=    0.008471

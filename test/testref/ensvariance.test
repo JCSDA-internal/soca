@@ -8,5 +8,5 @@ Test     :    uocn   min=    0.000000   max=    0.107417   mean=    0.000190
 Test     :    vocn   min=    0.000000   max=    0.120601   mean=    0.000144
 Test     :     ssh   min=    0.000000   max=    0.363629   mean=    0.004731
 Test     :    hocn   min=    0.000000   max=    0.000000   mean=    0.000000
-Test     :     mld   min=    0.000000   max=4776364.373103   mean=95074.482744
-Test     : layer_depth   min=    0.000000   max=518296.991951   mean= 1523.857465
+Test     :     mld   min=    0.000000   max=4776364.373137   mean=95074.598708
+Test     : layer_depth   min=    0.000000   max=518296.991182   mean= 1523.857987
