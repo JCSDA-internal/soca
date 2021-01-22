@@ -16,8 +16,6 @@ module soca_horizfilt_mod
   use soca_geom_mod_c
   use soca_geom_mod, only : soca_geom
   use soca_utils
-  use tools_func, only: fit_func
-  use type_mpl, only: mpl_type
   use random_mod
   use oops_variables_mod
 

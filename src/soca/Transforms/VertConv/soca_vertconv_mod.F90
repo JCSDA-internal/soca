@@ -9,6 +9,7 @@ use fckit_configuration_module, only: fckit_configuration
 use kinds, only: kind_real
 use type_mpl, only: mpl_type
 use tools_func, only: fit_func
+use type_probe, only: probe
 use soca_geom_mod
 use soca_fields_mod
 use soca_increment_mod
@@ -22,6 +23,7 @@ public :: soca_vertconv, &
 
 !> Fortran derived type to hold the setup for Vertconv
 type :: soca_vertconv
+   integer                   :: iinst              !> Instance index
    real(kind=kind_real)      :: lz_min             !> Vertical decorrelation minimum [m]
    real(kind=kind_real)      :: lz_mld             !> if /= 0, Use MLD to calculate Lz
    real(kind=kind_real)      :: lz_mld_max         !> if calculating Lz from MLD, max value to use
@@ -97,7 +99,7 @@ end subroutine soca_calc_lz
 ! ------------------------------------------------------------------------------
 !> Apply forward convolution
 subroutine soca_conv (self, convdx, dx)
-  type(soca_vertconv), intent(in) :: self
+  type(soca_vertconv), intent(inout) :: self
   type(soca_increment),   intent(in) :: dx
   type(soca_increment),intent(inout) :: convdx
 
@@ -107,6 +109,8 @@ subroutine soca_conv (self, convdx, dx)
   type(mpl_type) :: mpl
 
   type(soca_field), pointer :: field_dx, field_convdx, layer_depth
+
+  call probe%get_instance(self%iinst)
 
   call self%bkg%get("layer_depth", layer_depth)
   nl = layer_depth%nz
@@ -148,7 +152,7 @@ end subroutine soca_conv
 ! ------------------------------------------------------------------------------
 !> Apply backward convolution
 subroutine soca_conv_ad (self, convdx, dx)
-  type(soca_vertconv), intent(in) :: self
+  type(soca_vertconv), intent(inout) :: self
   type(soca_increment),intent(inout) :: dx     ! OUT
   type(soca_increment),   intent(in) :: convdx ! IN
 
@@ -157,6 +161,8 @@ subroutine soca_conv_ad (self, convdx, dx)
   integer :: nl, j, k, id, jd, n
   type(mpl_type) :: mpl
   type(soca_field), pointer :: field_dx, field_convdx, layer_depth
+
+  call probe%get_instance(self%iinst)
 
   call self%bkg%get("layer_depth", layer_depth)
   nl = layer_depth%nz
