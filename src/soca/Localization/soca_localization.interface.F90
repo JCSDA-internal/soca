@@ -28,6 +28,22 @@ contains
 #include "oops/util/linkedList_c.f"
 
 ! ------------------------------------------------------------------------------
+subroutine soca_localization_randomize(c_key_conf, c_key_xincr) &
+  bind(c,name='soca_localization_randomize_f90')
+
+  integer(c_int), intent(in) :: c_key_conf
+  integer(c_int), intent(in) :: c_key_xincr
+
+  type(soca_cov),   pointer :: conf   !< Config structure
+  type(soca_field), pointer :: xincr
+
+  call soca_cov_registry%get(c_key_conf,conf)
+  call soca_field_registry%get(c_key_xincr,xincr)
+  call abor1_ftn("localization: not implemented")
+
+end subroutine soca_localization_randomize
+
+! ------------------------------------------------------------------------------
 subroutine soca_localization_mult(c_key_conf, c_key_xincr) &
   bind(c,name='soca_localization_mult_f90')
 

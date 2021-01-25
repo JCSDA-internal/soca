@@ -22,6 +22,7 @@ namespace soca {
                                      const eckit::Configuration * const *,
                                      const F90geom &);
     void soca_localization_delete_f90(F90lclz &);
+    void soca_localization_randomize_f90(const F90lclz &, const F90flds &);
     void soca_localization_mult_f90(const F90lclz &, const F90flds &);
   }
 }  // namespace soca

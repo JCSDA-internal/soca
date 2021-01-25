@@ -25,6 +25,10 @@ Localization::~Localization() {
   soca_localization_delete_f90(keyFtnConfig_);
 }
 // -----------------------------------------------------------------------------
+void Localization::randomize(Increment & dx) const {
+  soca_localization_randomize_f90(keyFtnConfig_, dx.fields().toFortran());
+}
+// -----------------------------------------------------------------------------
 void Localization::multiply(Increment & dx) const {
   soca_localization_mult_f90(keyFtnConfig_, dx.fields().toFortran());
 }
