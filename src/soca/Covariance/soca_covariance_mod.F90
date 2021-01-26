@@ -14,6 +14,7 @@ use fckit_configuration_module, only: fckit_configuration
 use random_mod, only: normal_distribution
 use oops_variables_mod
 use type_bump, only: bump_type
+use tools_func, only: gau2gc
 use kinds, only: kind_real
 use soca_fields_mod
 use soca_increment_mod
@@ -38,8 +39,6 @@ type :: soca_cov
    type(soca_state),    pointer :: bkg            !< Background field (or first guess)
    logical                      :: initialized = .false.
    type(soca_pert)              :: pert_scale
-   real(kind=kind_real)         :: ocn_l0
-   real(kind=kind_real)         :: ice_l0
    type(oops_variables)         :: vars           !< Apply B to vars
  contains
    procedure :: setup => soca_cov_setup
@@ -78,14 +77,6 @@ subroutine soca_cov_setup(self, f_conf, geom, bkg, vars)
   if (.not. f_conf%get("pert_SSH", self%pert_scale%SSH))   self%pert_scale%SSH = 1.0
   if (.not. f_conf%get("pert_AICE", self%pert_scale%AICE)) self%pert_scale%AICE = 1.0
   if (.not. f_conf%get("pert_HICE", self%pert_scale%HICE)) self%pert_scale%HICE = 1.0
-
-  ! Setup ocean and ice decorrelation length scales
-  self%ocn_l0 = 500.0d3
-  self%ice_l0 = 500.0d3
-  if ( f_conf%has("ocean_corr_scale") ) &
-      call f_conf%get_or_die("ocean_corr_scale", self%ocn_l0)
-  if ( f_conf%has("ice_corr_scale") ) &
-      call f_conf%get_or_die("ice_corr_scale", self%ice_l0)
 
   ! Associate background
   self%bkg => bkg
@@ -223,12 +214,16 @@ subroutine soca_bump_correlation(self, horiz_convol, geom, f_conf, domain)
   type(fckit_configuration), intent(in) :: f_conf !< Handle to configuration
   character(len=3),          intent(in) :: domain
 
+  integer :: i
   integer, pointer :: int_ptr_2(:,:)
   real(kind=kind_real), pointer :: real_ptr_1(:), real_ptr_2(:,:)
+  real(kind=kind_real), allocatable :: lats(:), area(:)
   type(atlas_functionspace) :: afunctionspace
   type(atlas_fieldset) :: afieldset, rh, rv
   type(atlas_field) :: afield
-  type(fckit_configuration) :: f_grid
+  type(fckit_configuration) :: f_grid, f_conf_domain
+  real(kind=kind_real) :: r_base, r_mult, r_min, r_max, r_min_grid
+
 
   ! Grid setup
   f_grid = fckit_configuration()
@@ -243,10 +238,13 @@ subroutine soca_bump_correlation(self, horiz_convol, geom, f_conf, domain)
   ! Geometry fieldset setup
   afieldset = atlas_fieldset()
 
+  lats = pack(geom%lat(geom%isc:geom%iec,geom%jsc:geom%jec),.true.)
+
   ! Add area
   afield = geom%afunctionspace%create_field(name='area', kind=atlas_real(kind_real), levels=0)
   call afield%data(real_ptr_1)
-  real_ptr_1 = pack(geom%cell_area(geom%isc:geom%iec,geom%jsc:geom%jec),.true.)
+  area = pack(geom%cell_area(geom%isc:geom%iec,geom%jsc:geom%jec),.true.)
+  real_ptr_1 = area
   call afieldset%add(afield)
   call afield%final()
 
@@ -268,14 +266,33 @@ subroutine soca_bump_correlation(self, horiz_convol, geom, f_conf, domain)
   call horiz_convol%create(geom%f_comm,afunctionspace,afieldset,f_conf,f_grid)
 
   if (horiz_convol%nam%new_nicas) then
-     ! rh
-     rh = atlas_fieldset()
-     afield = geom%afunctionspace%create_field('var',kind=atlas_real(kind_real),levels=0)
-     call rh%add(afield)
-     call afield%data(real_ptr_1)
-     if (domain.eq.'ocn') real_ptr_1 = self%ocn_l0+pack(geom%rossby_radius(geom%isc:geom%iec,geom%jsc:geom%jec), .true.)
-     if (domain.eq.'ice') real_ptr_1 = self%ice_l0
-     call afield%final()
+    ! get parameters for correlation lengths
+    call f_conf%get_or_die('corr_scales.'//domain, f_conf_domain)
+    if (.not. f_conf_domain%get('base value', r_base))    r_base = 0.0
+    if (.not. f_conf_domain%get('rossby mult', r_mult))   r_mult = 0.0
+    if (.not. f_conf_domain%get('min grid mult', r_min_grid))  r_min_grid = 1.0
+    if (.not. f_conf_domain%get('min value', r_min))      r_min  = 0.0
+    if (.not. f_conf_domain%get('max value', r_max))      r_max  = huge(r_max)
+
+    ! rh is calculated as follows :
+    ! 1) rh = "base value" + rossby_radius * "rossby mult"
+    ! 2) minimum value of "min grid mult" * grid_size is imposed
+    ! 3) min/max are imposed based on "min value" and "max value"
+    ! 4) converted from a gaussian sigma to Gaspari-Cohn cutoff distance
+    rh = atlas_fieldset()
+    afield = geom%afunctionspace%create_field('var',kind=atlas_real(kind_real),levels=0)
+    call rh%add(afield)
+    call afield%data(real_ptr_1)
+    real_ptr_1 = r_base + r_mult*pack(geom%rossby_radius(geom%isc:geom%iec,geom%jsc:geom%jec), .true.)
+    ! min based on grid size
+    if (r_min_grid .gt. 0.0) then
+      real_ptr_1 = max(real_ptr_1,  sqrt(area)*r_min_grid )
+    end if
+    real_ptr_1 = min(r_max, real_ptr_1)
+    real_ptr_1 = max(r_min, real_ptr_1)
+    real_ptr_1 = real_ptr_1 * gau2gc ! convert from gaussian sigma to
+                                     ! Gaspari-Cohn half width
+    call afield%final()
 
      ! rv
      rv = atlas_fieldset()
