@@ -136,13 +136,12 @@ cost function:
       action:
         name: assign error
         error function:
-          name: ObsErrorRepresentation@ObsFunction
+          name: LinearCombination@ObsFunction
           options:
-            err_rep_var: representation_error
-            simulated_variable: obs_absolute_dynamic_topography
-            err_obs_scaling: 0.0
-            err_rep_scaling: 0.1
-
+            variables: [representation_error@GeoVaLs,
+                        obs_absolute_dynamic_topography@ObsError]
+            coefs: [0.0,
+                    1.0]
   - obs space:
       name: InsituTemperature
       obsdataout: {obsfile: ./Data/prof.T.out.nc}
