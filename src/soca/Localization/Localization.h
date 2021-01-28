@@ -40,6 +40,7 @@ namespace soca {
 
       Localization(const Geometry &, const eckit::Configuration &);
       ~Localization();
+      void randomize(Increment &) const;
       void multiply(Increment &) const;
 
    private:

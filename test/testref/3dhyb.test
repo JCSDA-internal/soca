@@ -19,5 +19,5 @@ Test     :      us   min=    0.004396   max=    0.019658   mean=    0.008644
 Test     :     mld   min=    2.285472   max= 4593.153342   mean=  192.410907
 Test     : layer_depth   min=    2.285472   max= 5658.305747   mean= 1200.522954
 Test     : CostJb   : Nonlinear Jb = 7.011965
-Test     : CostJo   : Nonlinear Jo(ADT) = 141.696872, nobs = 100, Jo/n = 1.416969, err = 0.100000
-Test     : CostFunction: Nonlinear J = 148.708837
+Test     : CostJo   : Nonlinear Jo(ADT) = 141.696871, nobs = 100, Jo/n = 1.416969, err = 0.100000
+Test     : CostFunction: Nonlinear J = 148.708836
