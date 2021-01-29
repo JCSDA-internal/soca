@@ -181,7 +181,7 @@ cost function:
       obsdatain:  {obsfile:  ./Data/icec.nc}
       simulated variables: [sea_ice_area_fraction]
     obs operator:
-      name: SeaIceFraction
+      name: Identity
     obs error:
       covariance model: diagonal
     obs filters:
