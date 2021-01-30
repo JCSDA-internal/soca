@@ -181,6 +181,10 @@ subroutine soca_getvalues_fillgeovals(self, geom, fld, t1, t2, locs, geovals)
       call fld%get("chl", fldptr)
       fld3d(isc:iec,jsc:jec,1) = fldptr%val(isc:iec,jsc:jec,1)
 
+    case ("sea_surface_biomass_in_p_units")
+      call fld%get("biop", fldptr)
+      fld3d(isc:iec,jsc:jec,1) = fldptr%val(isc:iec,jsc:jec,1)
+
     case ("sea_ice_area_fraction")
       call fld%get("cicen", fldptr)
       fld3d(isc:iec,jsc:jec,1) = fldptr%val(isc:iec,jsc:jec,1)
@@ -328,7 +332,11 @@ subroutine soca_getvalues_fillgeovals_ad(self, geom, incr, t1, t2, locs, geovals
 
       case ("sea_surface_chlorophyll")
         call incr%get("chl", field)
-        field%val(isc:iec,jsc:jec,1) = field%val(isc:iec,jsc:jec,1) + incr3d(isc:iec,jsc:jec,1)
+        field%val(isc:iec,jsc:jec,1:nval) = field%val(isc:iec,jsc:jec,1:nval) + incr3d
+
+      case ("sea_surface_biomass_in_p_units")
+        call incr%get("biop", field)
+        field%val(isc:iec,jsc:jec,1:nval) = field%val(isc:iec,jsc:jec,1:nval) + incr3d
 
       case ("sea_ice_area_fraction")
         call incr%get("cicen", field)
@@ -376,6 +384,7 @@ function nlev_from_ufovar(fld, var) result(nval)
         "sea_floor_depth_below_sea_surface", &
         "sea_area_fraction", &
         "sea_surface_chlorophyll", &
+        "sea_surface_biomass_in_p_units", &
         "sea_ice_area_fraction")
      nval = 1
 
