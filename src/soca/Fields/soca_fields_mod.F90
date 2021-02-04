@@ -214,7 +214,7 @@ subroutine soca_fields_init_vars(self, vars)
 
     ! determine number of levels, and if masked
     select case(self%fields(i)%name)
-    case ('tocn','socn', 'hocn', 'layer_depth', 'chl')
+    case ('tocn','socn', 'hocn', 'layer_depth', 'chl', 'biop')
       nz = self%geom%nzo
       self%fields(i)%mask => self%geom%mask2d
     case ('uocn')
@@ -313,6 +313,10 @@ subroutine soca_fields_init_vars(self, vars)
       self%fields(i)%cf_name = "mass_concentration_of_chlorophyll_in_sea_water"
       self%fields(i)%io_file = "ocn"
       self%fields(i)%io_name = "chl"
+    case ('biop')
+      self%fields(i)%cf_name = "molar_concentration_of_biomass_in_sea_water_in_p_units"
+      self%fields(i)%io_file = "ocn"
+      self%fields(i)%io_name = "biomass_p"
     end select
 
   end do

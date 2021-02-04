@@ -9,7 +9,7 @@ cost function:
   cost type: 3D-Var
   window begin: &date_begin 2018-04-14T00:00:00Z
   window length: P2D
-  analysis variables: &soca_vars [cicen, hicen, socn, tocn, ssh, hocn, sw, lhf, shf, lw, us, chl, mld, layer_depth]
+  analysis variables: &soca_vars [cicen, hicen, socn, tocn, ssh, hocn, sw, lhf, shf, lw, us, chl, biop, mld, layer_depth]
   geometry:
     mom6_input_nml: ./inputnml/input.nml
 
@@ -181,7 +181,7 @@ cost function:
       obsdatain:  {obsfile:  ./Data/icec.nc}
       simulated variables: [sea_ice_area_fraction]
     obs operator:
-      name: SeaIceFraction
+      name: Identity
     obs error:
       covariance model: diagonal
     obs filters:
@@ -222,6 +222,18 @@ cost function:
       action:
         name: inflate error
         inflation factor: 2.0
+
+  - obs space:
+      name: SeaSurfaceBiomassP
+      obsdataout: {obsfile: ./Data/biomass_p.out.nc}
+      obsdatain:  {obsfile: ./Data/biomass_p.nc}
+      simulated variables: [sea_surface_biomass_in_p_units]
+    obs operator:
+      name: Identity
+    obs error:
+      covariance model: diagonal
+    obs filters:
+    - *land_mask
 
 variational:
   minimizer:
