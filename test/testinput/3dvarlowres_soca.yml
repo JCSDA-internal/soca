@@ -29,7 +29,7 @@ cost function:
     load_nicas: 1
     mpicom: 2
     date: 2018-04-15T00:00:00Z
-    analysis variables: [tocn, socn, ssh] #*soca_vars
+    analysis variables: [tocn, socn, ssh]
 
     variable changes:
 
