@@ -8,7 +8,9 @@ Test     :    vocn   min=   -0.766110   max=    1.437777   mean=    0.002197
 Test     :    hocn   min=    0.001000   max= 1345.640000   mean=  128.628064
 Test     :   cicen   min=    0.000000   max=    1.000000   mean=    0.117513
 Test     :     chl   min=    0.000010   max=    4.671990   mean=    0.118483
-Test     : State after Ana2Model transform: 
+Test     : Variable transform: Ana2Model
+Test     : Variable change to: 8 variables: ssh, tocn, socn, uocn, vocn, hocn, cicen, chl
+Test     : State after variable transform: 
 Test     :   Valid time: 2018-04-15T00:00:00Z
 Test     :     ssh   min=   -1.924485   max=    0.927283   mean=   -0.276790
 Test     :    tocn   min=   -1.888390   max=   31.700465   mean=    6.017565
@@ -38,7 +40,9 @@ Test     :    vocn   min=   -0.766110   max=    1.437777   mean=    0.002197
 Test     :    hocn   min=    0.001000   max= 1345.640000   mean=  128.628064
 Test     :   cicen   min=    0.000000   max=    1.000000   mean=    0.117513
 Test     :     chl   min=    0.000010   max=    4.671990   mean=    0.118483
-Test     : State after Ana2Model transform: 
+Test     : Variable transform: Ana2Model
+Test     : Variable change to: 8 variables: ssh, tocn, socn, uocn, vocn, hocn, cicen, chl
+Test     : State after variable transform: 
 Test     :   Valid time: 2018-04-15T00:00:00Z
 Test     :     ssh   min=   -1.924485   max=    0.927283   mean=   -0.276790
 Test     :    tocn   min=   -1.888390   max=   31.700465   mean=    6.017565
