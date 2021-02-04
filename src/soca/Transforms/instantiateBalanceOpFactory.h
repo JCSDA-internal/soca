@@ -8,8 +8,8 @@
 #ifndef SOCA_TRANSFORMS_INSTANTIATEBALANCEOPFACTORY_H_
 #define SOCA_TRANSFORMS_INSTANTIATEBALANCEOPFACTORY_H_
 
+#include "oops/base/VariableChangeBase.h"
 #include "oops/interface/LinearVariableChange.h"
-#include "oops/interface/VariableChange.h"
 
 #include "soca/Traits.h"
 #include "soca/Transforms/Ana2Model/Ana2Model.h"
@@ -41,10 +41,8 @@ void instantiateBalanceOpFactory() {
   static oops::LinearVariableChangeMaker<soca::Traits,
               oops::LinearVariableChange<soca::Traits, soca::HorizFilt> >
               makerBalanceOpHorizFILT_("HorizFiltSOCA");
-  static oops::VariableChangeMaker<soca::Traits,
-               oops::VariableChange<soca::Traits,
-               soca::Ana2Model> >
-                   makerAna2Model_("Ana2Model");
+  static oops::VariableChangeMaker<soca::Traits, soca::Ana2Model >
+              makerAna2Model_("Ana2Model");
 }
 }  // namespace soca
 
