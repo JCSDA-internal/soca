@@ -390,12 +390,9 @@ function nlev_from_ufovar(fld, var) result(nval)
         "sea_floor_depth_below_sea_surface", &
         "sea_area_fraction", &
         "sea_surface_chlorophyll", &
-<<<<<<< HEAD
-        "representation_error")
-=======
+        "representation_error", &
         "sea_surface_biomass_in_p_units", &
         "sea_ice_area_fraction")
->>>>>>> develop
      nval = 1
 
   case ("sea_water_salinity")
