@@ -139,7 +139,7 @@ cost function:
         error function:
           name: LinearCombination@ObsFunction
           options:
-            variables: [representation_error@GeoVaLs,
+            variables: [mesoscale_representation_error@GeoVaLs,
                         obs_absolute_dynamic_topography@ObsError]
             coefs: [0.0,
                     1.0]
