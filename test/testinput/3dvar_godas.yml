@@ -131,8 +131,9 @@ cost function:
       covariance model: diagonal
     obs filters:
     - *land_mask
-    - filter: Background Check
-      threshold: 0.1
+    - filter: Bounds Check
+      minvalue: -2.0
+      maxvalue: 2.0
       action:
         name: assign error
         error function:
@@ -142,6 +143,7 @@ cost function:
                         obs_absolute_dynamic_topography@ObsError]
             coefs: [0.0,
                     1.0]
+
   - obs space:
       name: InsituTemperature
       obsdataout: {obsfile: ./Data/prof.T.out.nc}
