@@ -181,6 +181,12 @@ subroutine soca_getvalues_fillgeovals(self, geom, fld, t1, t2, locs, geovals)
       call fld%get("chl", fldptr)
       fld3d(isc:iec,jsc:jec,1) = fldptr%val(isc:iec,jsc:jec,1)
 
+    case ("mesoscale_representation_error")
+      ! Representation errors: dx/R
+      fld3d(isc:iec,jsc:jec,1) = fld%geom%mask2d(isc:iec,jsc:jec) * &
+                                &sqrt(fld%geom%cell_area(isc:iec,jsc:jec))/&
+                                &fld%geom%rossby_radius(isc:iec,jsc:jec)
+
     case ("sea_surface_biomass_in_p_units")
       call fld%get("biop", fldptr)
       fld3d(isc:iec,jsc:jec,1) = fldptr%val(isc:iec,jsc:jec,1)
@@ -384,6 +390,7 @@ function nlev_from_ufovar(fld, var) result(nval)
         "sea_floor_depth_below_sea_surface", &
         "sea_area_fraction", &
         "sea_surface_chlorophyll", &
+        "mesoscale_representation_error", &
         "sea_surface_biomass_in_p_units", &
         "sea_ice_area_fraction")
      nval = 1
