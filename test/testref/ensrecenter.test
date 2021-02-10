@@ -2,87 +2,87 @@ Test     : Original member 0 :
 Test     :   Valid time: 2018-04-15T00:00:00Z
 Test     :   cicen   min=   -0.028602   max=    1.030024   mean=    0.116999
 Test     :   hicen   min=   -1.332420   max=    4.066337   mean=    0.488050
-Test     :    socn   min=   10.720395   max=   40.441655   mean=   34.533366
-Test     :    tocn   min=   -1.920718   max=   31.711658   mean=    6.012719
-Test     :     ssh   min=   -1.986575   max=    0.919648   mean=   -0.276766
+Test     :    socn   min=   10.720395   max=   40.441655   mean=   34.533376
+Test     :    tocn   min=   -1.920718   max=   31.711658   mean=    6.012692
+Test     :     ssh   min=   -1.986574   max=    0.919648   mean=   -0.276766
 Test     :    hocn   min=    0.001000   max= 1345.640000   mean=  128.628064
 Test     : Original member 1 : 
 Test     :   Valid time: 2018-04-15T00:00:00Z
 Test     :   cicen   min=   -0.036402   max=    1.031046   mean=    0.116453
 Test     :   hicen   min=   -1.115360   max=    4.207177   mean=    0.483021
-Test     :    socn   min=   10.720395   max=   40.441655   mean=   34.546913
-Test     :    tocn   min=   -1.896449   max=   31.711999   mean=    6.000981
-Test     :     ssh   min=   -2.332730   max=    0.919688   mean=   -0.276925
+Test     :    socn   min=   10.720395   max=   40.441655   mean=   34.546899
+Test     :    tocn   min=   -1.896449   max=   31.711999   mean=    6.000991
+Test     :     ssh   min=   -2.332679   max=    0.919688   mean=   -0.276925
 Test     :    hocn   min=    0.001000   max= 1345.640000   mean=  128.628064
 Test     : Original member 2 : 
 Test     :   Valid time: 2018-04-15T00:00:00Z
 Test     :   cicen   min=   -0.031580   max=    1.013466   mean=    0.117783
 Test     :   hicen   min=   -1.677221   max=    4.664493   mean=    0.452500
-Test     :    socn   min=   10.720395   max=   40.441655   mean=   34.563480
-Test     :    tocn   min=   -1.888477   max=   31.711705   mean=    5.999692
-Test     :     ssh   min=   -2.389256   max=    0.915456   mean=   -0.277090
+Test     :    socn   min=   10.720395   max=   40.441655   mean=   34.563474
+Test     :    tocn   min=   -1.888477   max=   31.711705   mean=    5.999696
+Test     :     ssh   min=   -2.389255   max=    0.915456   mean=   -0.277091
 Test     :    hocn   min=    0.001000   max= 1345.640000   mean=  128.628064
 Test     : Original member 3 : 
 Test     :   Valid time: 2018-04-15T00:00:00Z
 Test     :   cicen   min=   -0.036144   max=    1.014508   mean=    0.117253
 Test     :   hicen   min=   -1.548768   max=    4.797434   mean=    0.472908
-Test     :    socn   min=   10.720395   max=   40.441655   mean=   34.545364
-Test     :    tocn   min=   -1.899541   max=   31.711846   mean=    5.996521
-Test     :     ssh   min=   -2.270756   max=    0.912462   mean=   -0.277110
+Test     :    socn   min=   10.720395   max=   40.441655   mean=   34.545329
+Test     :    tocn   min=   -1.899541   max=   31.711846   mean=    5.996532
+Test     :     ssh   min=   -2.270693   max=    0.912462   mean=   -0.277110
 Test     :    hocn   min=    0.001000   max= 1345.640000   mean=  128.628064
 Test     : Original member 4 : 
 Test     :   Valid time: 2018-04-15T00:00:00Z
 Test     :   cicen   min=   -0.032580   max=    1.019508   mean=    0.116813
 Test     :   hicen   min=   -1.384573   max=    4.935744   mean=    0.455737
-Test     :    socn   min=   10.720395   max=   40.441655   mean=   34.565607
-Test     :    tocn   min=   -1.897191   max=   31.711570   mean=    5.997298
-Test     :     ssh   min=   -2.118572   max=    0.911230   mean=   -0.277087
+Test     :    socn   min=   10.720395   max=   40.441655   mean=   34.565665
+Test     :    tocn   min=   -1.897193   max=   31.711570   mean=    5.997318
+Test     :     ssh   min=   -2.118616   max=    0.911230   mean=   -0.277086
 Test     :    hocn   min=    0.001000   max= 1345.640000   mean=  128.628064
 Test     : Ensemble mean: 
 Test     :   Valid time: 2018-04-15T00:00:00Z
 Test     :   cicen   min=   -0.013949   max=    1.013379   mean=    0.117060
 Test     :   hicen   min=   -0.686442   max=    4.176764   mean=    0.470444
-Test     :    socn   min=   10.720395   max=   40.441655   mean=   34.550946
-Test     :    tocn   min=   -1.888604   max=   31.711756   mean=    6.001442
-Test     :     ssh   min=   -2.154585   max=    0.915697   mean=   -0.276996
+Test     :    socn   min=   10.720395   max=   40.441655   mean=   34.550949
+Test     :    tocn   min=   -1.888603   max=   31.711756   mean=    6.001446
+Test     :     ssh   min=   -2.154456   max=    0.915697   mean=   -0.276996
 Test     :    hocn   min=    0.001000   max= 1345.640000   mean=  128.628064
 Test     : Recentered member 0 : 
 Test     :   Valid time: 2018-04-15T00:00:00Z
 Test     :   cicen   min=   -0.030488   max=    1.029879   mean=    0.117452
 Test     :   hicen   min=   -1.374706   max=    4.079647   mean=    0.488858
-Test     :    socn   min=   10.721046   max=   40.441659   mean=   34.526810
-Test     :    tocn   min=   -2.217487   max=   31.700367   mean=    6.028842
-Test     :     ssh   min=   -2.146053   max=    0.931234   mean=   -0.276561
+Test     :    socn   min=   10.721046   max=   40.441659   mean=   34.526817
+Test     :    tocn   min=   -2.217487   max=   31.700367   mean=    6.028811
+Test     :     ssh   min=   -2.146036   max=    0.931234   mean=   -0.276561
 Test     :    hocn   min=    0.001000   max= 1345.640000   mean=  128.628064
 Test     : Recentered member 1 : 
 Test     :   Valid time: 2018-04-15T00:00:00Z
 Test     :   cicen   min=   -0.027161   max=    1.022843   mean=    0.116905
 Test     :   hicen   min=   -1.088341   max=    4.035992   mean=    0.483829
-Test     :    socn   min=   10.721046   max=   40.441659   mean=   34.540357
-Test     :    tocn   min=   -2.342553   max=   31.700708   mean=    6.017104
-Test     :     ssh   min=   -1.868536   max=    0.931273   mean=   -0.276720
+Test     :    socn   min=   10.721046   max=   40.441659   mean=   34.540340
+Test     :    tocn   min=   -2.342557   max=   31.700708   mean=    6.017110
+Test     :     ssh   min=   -1.868523   max=    0.931273   mean=   -0.276720
 Test     :    hocn   min=    0.001000   max= 1345.640000   mean=  128.628064
 Test     : Recentered member 2 : 
 Test     :   Valid time: 2018-04-15T00:00:00Z
 Test     :   cicen   min=   -0.032110   max=    1.010351   mean=    0.118235
 Test     :   hicen   min=   -1.470926   max=    4.373972   mean=    0.453309
-Test     :    socn   min=   10.721046   max=   40.441659   mean=   34.556924
-Test     :    tocn   min=   -2.298739   max=   31.700414   mean=    6.015815
-Test     :     ssh   min=   -1.900198   max=    0.927042   mean=   -0.276885
+Test     :    socn   min=   10.721046   max=   40.441659   mean=   34.556915
+Test     :    tocn   min=   -2.298727   max=   31.700414   mean=    6.015816
+Test     :     ssh   min=   -1.900242   max=    0.927042   mean=   -0.276885
 Test     :    hocn   min=    0.001000   max= 1345.640000   mean=  128.628064
 Test     : Recentered member 3 : 
 Test     :   Valid time: 2018-04-15T00:00:00Z
 Test     :   cicen   min=   -0.034577   max=    1.020214   mean=    0.117705
 Test     :   hicen   min=   -1.949157   max=    4.883000   mean=    0.473716
-Test     :    socn   min=   10.721046   max=   40.441659   mean=   34.538807
-Test     :    tocn   min=   -2.120092   max=   31.700554   mean=    6.012643
-Test     :     ssh   min=   -1.871624   max=    0.924048   mean=   -0.276905
+Test     :    socn   min=   10.721046   max=   40.441659   mean=   34.538770
+Test     :    tocn   min=   -2.120113   max=   31.700554   mean=    6.012651
+Test     :     ssh   min=   -1.871612   max=    0.924048   mean=   -0.276905
 Test     :    hocn   min=    0.001000   max= 1345.640000   mean=  128.628064
 Test     : Recentered member 4 : 
 Test     :   Valid time: 2018-04-15T00:00:00Z
 Test     :   cicen   min=   -0.026956   max=    1.019476   mean=    0.117266
 Test     :   hicen   min=   -1.366637   max=    4.402313   mean=    0.456545
-Test     :    socn   min=   10.721046   max=   40.441659   mean=   34.559051
-Test     :    tocn   min=   -2.126677   max=   31.700279   mean=    6.013421
-Test     :     ssh   min=   -1.950696   max=    0.922816   mean=   -0.276882
+Test     :    socn   min=   10.721046   max=   40.441659   mean=   34.559106
+Test     :    tocn   min=   -2.126676   max=   31.700279   mean=    6.013437
+Test     :     ssh   min=   -1.950702   max=    0.922816   mean=   -0.276881
 Test     :    hocn   min=    0.001000   max= 1345.640000   mean=  128.628064
