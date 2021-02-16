@@ -83,7 +83,7 @@ ecbuild_use_package( PROJECT mom6 REQUIRED )
 include_directories( ${MOM6_INCLUDE_DIRS} )
 
 # MPI
-ecbuild_find_mpi( COMPONENTS CXX Fortran REQUIRED )
+ecbuild_find_mpi( COMPONENTS C CXX Fortran REQUIRED )
 ecbuild_include_mpi()
 link_libraries(${MPI_CXX_LIBRARIES} ${MPI_Fortran_LIBRARIES})
 
