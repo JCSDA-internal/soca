@@ -69,6 +69,7 @@ include_directories( ${SABER_INCLUDE_DIRS} )
 # ioda
 ecbuild_use_package( PROJECT ioda VERSION 0.1.0 REQUIRED )
 include_directories( ${IODA_INCLUDE_DIRS} )
+find_package(gsl-lite REQUIRED HINTS $ENV{gsl_lite_DIR})
 
 # ufo
 ecbuild_use_package( PROJECT ufo VERSION 0.1.0 REQUIRED )
