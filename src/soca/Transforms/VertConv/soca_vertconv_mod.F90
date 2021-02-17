@@ -23,7 +23,7 @@ public :: soca_vertconv, &
 
 !> Fortran derived type to hold the setup for Vertconv
 type :: soca_vertconv
-   integer                   :: iinst              !> Instance index
+   integer                   :: iinst = 0          !> Instance index
    real(kind=kind_real)      :: lz_min             !> Vertical decorrelation minimum [m]
    real(kind=kind_real)      :: lz_mld             !> if /= 0, Use MLD to calculate Lz
    real(kind=kind_real)      :: lz_mld_max         !> if calculating Lz from MLD, max value to use
