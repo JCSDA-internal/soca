@@ -42,7 +42,8 @@ class LinearGetValues : public util::Printable,
   static const std::string classname() {return "soca::LinearGetValues";}
 
   ///  Constructor, destructor
-  LinearGetValues(const Geometry &, const ufo::Locations &);
+  LinearGetValues(const Geometry &, const ufo::Locations &,
+                  const eckit::Configuration &);
   virtual ~LinearGetValues();
 
   /// Trajectory for the linearized interpolation
