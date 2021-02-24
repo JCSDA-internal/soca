@@ -152,6 +152,10 @@ subroutine soca_getvalues_fillgeovals(self, geom, fld, t1, t2, locs, geovals)
 
     ! otherwise, we are dealing with a derived type, prepare for a long "select case" statement
     select case (trim(geovals%variables(ivar)))
+    case ("distance_from_coast")
+      fld3d(isc:iec,jsc:jec,1) = real(fld%geom%distance_from_coast(isc:iec,jsc:jec),kind=kind_real)
+      masked = .false.
+
     case ("sea_water_salinity")
       call fld%get("socn", fldptr)
       fld3d = fldptr%val(isc:iec,jsc:jec,1:nval)
@@ -384,7 +388,8 @@ function nlev_from_ufovar(fld, var) result(nval)
 
   ! otherwise, the ufovar name is a derived type
   select case (var)
-  case ("sea_surface_temperature", &
+  case ("distance_from_coast",&
+        "sea_surface_temperature", &
         "surface_temperature_where_sea", &
         "sea_surface_salinity", &
         "sea_floor_depth_below_sea_surface", &
