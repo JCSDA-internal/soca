@@ -23,7 +23,6 @@ public :: soca_vertconv, &
 
 !> Fortran derived type to hold the setup for Vertconv
 type :: soca_vertconv
-   integer                   :: iinst = 0          !> Instance index
    real(kind=kind_real)      :: lz_min             !> Vertical decorrelation minimum [m]
    real(kind=kind_real)      :: lz_mld             !> if /= 0, Use MLD to calculate Lz
    real(kind=kind_real)      :: lz_mld_max         !> if calculating Lz from MLD, max value to use
@@ -110,7 +109,7 @@ subroutine soca_conv (self, convdx, dx)
 
   type(soca_field), pointer :: field_dx, field_convdx, layer_depth
 
-  call probe%get_instance(self%iinst)
+  call probe%get_instance('soca')
 
   call self%bkg%get("layer_depth", layer_depth)
   nl = layer_depth%nz
@@ -162,7 +161,7 @@ subroutine soca_conv_ad (self, convdx, dx)
   type(mpl_type) :: mpl
   type(soca_field), pointer :: field_dx, field_convdx, layer_depth
 
-  call probe%get_instance(self%iinst)
+  call probe%get_instance('soca')
 
   call self%bkg%get("layer_depth", layer_depth)
   nl = layer_depth%nz
