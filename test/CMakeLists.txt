@@ -690,7 +690,7 @@ soca_add_test( NAME 3dvarlowres_soca
                EXE  soca_3dvar.x
                TOL  0.1 0
                NOTRAPFPE
-             TEST_DEPENDS test_soca_static_socaerrorsmall_init )
+               TEST_DEPENDS test_soca_static_socaerrorsmall_init )
 
 soca_add_test( NAME diffstates
                EXE  soca_diffstates.x
