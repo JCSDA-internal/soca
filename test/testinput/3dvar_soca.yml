@@ -128,7 +128,10 @@ cost function:
     obs error:
       covariance model: diagonal
     obs filters:
-    - *land_mask
+    - filter: Domain Check
+      where:
+      - variable: {name: distance_from_coast@GeoVaLs}
+        minvalue: 1500e3
     - filter: Domain Check
       where:
       - variable: {name: sea_surface_temperature@GeoVaLs}
