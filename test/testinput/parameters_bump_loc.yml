@@ -17,6 +17,7 @@ bump:
   method: loc
   strategy: common
   new_nicas: 1
+  interp_type: mesh_based
   ntry: 3
   nrep: 2
   resol: 6
