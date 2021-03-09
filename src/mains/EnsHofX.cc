@@ -7,7 +7,7 @@
 
 #include "soca/Traits.h"
 #include "oops/runs/EnsembleApplication.h"
-#include "oops/runs/HofX.h"
+#include "oops/runs/HofX4D.h"
 #include "oops/runs/Run.h"
 #include "ufo/instantiateObsFilterFactory.h"
 #include "ufo/ObsTraits.h"
@@ -15,6 +15,6 @@
 int main(int argc,  char ** argv) {
   oops::Run run(argc, argv);
   ufo::instantiateObsFilterFactory<ufo::ObsTraits>();
-  oops::EnsembleApplication<oops::HofX <soca::Traits, ufo::ObsTraits> > hofx;
+  oops::EnsembleApplication<oops::HofX4D <soca::Traits, ufo::ObsTraits> > hofx;
   return run.execute(hofx);
 }
