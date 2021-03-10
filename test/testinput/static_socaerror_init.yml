@@ -18,6 +18,7 @@ background error:
   method: cor
   strategy: specific_univariate
   new_nicas: 1
+  interp_type: mesh_based
   mask_check: 1
   ntry: 3
   nrep:  2

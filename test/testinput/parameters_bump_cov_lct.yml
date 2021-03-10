@@ -18,6 +18,7 @@ bump:
   lct_nscales: 1
   lct_diag: [0]
   method: cor
+  interp_type: mesh_based
   nc1: 500
   nc2: 500
   nc3: 100

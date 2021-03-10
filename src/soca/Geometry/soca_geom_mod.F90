@@ -6,14 +6,15 @@
 
 module soca_geom_mod
 
-use atlas_module, only: atlas_functionspace_pointcloud, atlas_fieldset, atlas_field, atlas_real, atlas_integer
+use atlas_module, only: atlas_functionspace_pointcloud, atlas_fieldset, &
+    atlas_field, atlas_real, atlas_integer, atlas_geometry, atlas_indexkdtree
 use MOM_domains, only : MOM_domain_type, MOM_infra_init
 use MOM_io,      only : io_infra_init
 use soca_mom6, only: soca_mom6_config, soca_mom6_init, soca_geomdomain_init
 use soca_utils, only: write2pe, soca_remap_idw
 use kinds, only: kind_real
 use fckit_configuration_module, only: fckit_configuration
-use fckit_mpi_module, only: fckit_mpi_comm
+use fckit_mpi_module, only: fckit_mpi_comm, fckit_mpi_sum
 use fms_io_mod, only : fms_io_init, fms_io_exit, &
                        register_restart_field, restart_file_type, &
                        restore_state, query_initialized, &
@@ -53,6 +54,7 @@ type :: soca_geom
     real(kind=kind_real), allocatable, dimension(:,:) :: mask2dv   !< v        "   . 0 = land 1 = ocean
     real(kind=kind_real), allocatable, dimension(:,:) :: cell_area
     real(kind=kind_real), allocatable, dimension(:,:) :: rossby_radius
+    real(kind=kind_real), allocatable, dimension(:,:) :: distance_from_coast
     real(kind=kind_real), allocatable, dimension(:,:,:) :: h
     real(kind=kind_real), allocatable, dimension(:,:,:) :: h_zstar
     logical :: save_local_domain = .false. ! If true, save the local geometry for each pe.
@@ -149,6 +151,7 @@ subroutine geom_end(self)
   if (allocated(self%mask2dv))       deallocate(self%mask2dv)
   if (allocated(self%cell_area))     deallocate(self%cell_area)
   if (allocated(self%rossby_radius)) deallocate(self%rossby_radius)
+  if (allocated(self%distance_from_coast)) deallocate(self%distance_from_coast)
   if (allocated(self%h))             deallocate(self%h)
   if (allocated(self%h_zstar))       deallocate(self%h_zstar)
   nullify(self%Domain)
@@ -247,6 +250,7 @@ subroutine geom_clone(self, other)
   other%mask2dv = self%mask2dv
   other%cell_area = self%cell_area
   other%rossby_radius = self%rossby_radius
+  other%distance_from_coast = self%distance_from_coast
   other%h = self%h
 
 end subroutine geom_clone
@@ -306,6 +310,8 @@ subroutine geom_gridgen(self)
   ! Get Rossby Radius
   call geom_rossby_radius(self)
 
+  call geom_distance_from_coast(self)
+
   ! Output to file
   call geom_write(self)
 
@@ -349,9 +355,78 @@ subroutine geom_allocate(self)
 
   allocate(self%cell_area(isd:ied,jsd:jed));     self%cell_area = 0.0_kind_real
   allocate(self%rossby_radius(isd:ied,jsd:jed)); self%rossby_radius = 0.0_kind_real
+  allocate(self%distance_from_coast(isd:ied,jsd:jed)); self%distance_from_coast = 0.0_kind_real
   allocate(self%h(isd:ied,jsd:jed,1:nzo));       self%h = 0.0_kind_real
 
 end subroutine geom_allocate
+
+! ------------------------------------------------------------------------------
+!> Calcuate distance from coast for the ocean points
+subroutine geom_distance_from_coast(self)
+  class(soca_geom), intent(inout) :: self
+  type(atlas_indexkdtree) :: kd
+  type(atlas_geometry) :: ageometry
+
+  integer :: i, j, idx(1)
+  integer :: num_land_l, num_land
+  integer, allocatable :: rcvcnt(:), displs(:)
+  real(kind=kind_real), allocatable :: land_lon(:), land_lat(:)
+  real(kind=kind_real), allocatable :: land_lon_l(:), land_lat_l(:)
+  real(kind=kind_real) :: closest_lon, closest_lat
+
+
+  ! collect lat/lon of all land points on all procs
+  ! (use the tracer grid and mask for this)
+  ! --------------------------------------------------
+  allocate(rcvcnt(self%f_comm%size()))
+  allocate(displs(self%f_comm%size()))
+
+  num_land_l = count(self%mask2d(self%isc:self%iec, self%jsc:self%jec)==0.0)
+  call self%f_comm%allgather(num_land_l, rcvcnt)
+  num_land = sum(rcvcnt)
+
+  displs(1) = 0
+  do j = 2, self%f_comm%size()
+    displs(j) = displs(j-1) + rcvcnt(j-1)
+  enddo
+
+  allocate(land_lon_l(num_land_l))
+  allocate(land_lat_l(num_land_l))
+  land_lon_l = pack(self%lon(self%isc:self%iec, self%jsc:self%jec), &
+                  mask=self%mask2d(self%isc:self%iec,self%jsc:self%jec)==0.0)
+  land_lat_l = pack(self%lat(self%isc:self%iec, self%jsc:self%jec), &
+                  mask=self%mask2d(self%isc:self%iec,self%jsc:self%jec)==0.0)
+  allocate(land_lon(num_land))
+  allocate(land_lat(num_land))
+
+  call self%f_comm%allgather(land_lon_l, land_lon, num_land_l, rcvcnt, displs)
+  call self%f_comm%allgather(land_lat_l, land_lat, num_land_l, rcvcnt, displs)
+
+
+  ! pass land points to the kd tree
+  !---------------------------------------
+  ageometry = atlas_geometry("Earth") !< TODO: remove this hardcoded value so
+                                      ! we can do DA on Europa at some point.
+                                      ! (Next AOP??)
+  kd = atlas_indexkdtree(ageometry)
+  call kd%reserve(num_land)
+  call kd%build(num_land, land_lon, land_lat)
+
+
+  ! for each point in local domain, lookup distance to nearest land point
+  ! ---------------------------------------
+  do i = self%isc, self%iec
+    do j = self%jsc, self%jec
+      call kd%closestPoints( self%lon(i,j), self%lat(i,j), 1, idx )
+      self%distance_from_coast(i,j) = ageometry%distance( &
+            self%lon(i,j), self%lat(i,j), land_lon(idx(1)), land_lat(idx(1)))
+    enddo
+  enddo
+
+  ! cleanup
+  call kd%final()
+
+end subroutine
 
 ! ------------------------------------------------------------------------------
 !> Read and store Rossby Radius of deformation
@@ -506,6 +581,12 @@ subroutine geom_write(self)
                                    &'h_zstar', &
                                    &self%h_zstar(:,:,:), &
                                    domain=self%Domain%mpp_domain)
+  idr_geom = register_restart_field(geom_restart, &
+                                   &self%geom_grid_file, &
+                                   &'distance_from_coast', &
+                                   &self%distance_from_coast(:,:), &
+                                   domain=self%Domain%mpp_domain)
+
   call save_restart(geom_restart, directory='')
   call free_restart_type(geom_restart)
   call fms_io_exit()
@@ -623,6 +704,11 @@ subroutine geom_read(self)
                                    &self%geom_grid_file, &
                                    &'h', &
                                    &self%h(:,:,:), &
+                                   domain=self%Domain%mpp_domain)
+  idr_geom = register_restart_field(geom_restart, &
+                                   &self%geom_grid_file, &
+                                   &'distance_from_coast', &
+                                   &self%distance_from_coast(:,:), &
                                    domain=self%Domain%mpp_domain)
   call restore_state(geom_restart, directory='')
   call free_restart_type(geom_restart)
