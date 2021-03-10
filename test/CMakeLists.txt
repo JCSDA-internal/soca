@@ -1,4 +1,4 @@
-list( APPEND soca_test_input
+set( soca_test_input
   testinput/3dhyb.yml
   testinput/3dhybfgat.yml
   testinput/3dvarbump.yml
@@ -63,7 +63,7 @@ list( APPEND soca_test_input
   testinput/varchange_vertconv.yml
 )
 
-list( APPEND soca_test_ref
+set( soca_test_ref
   testref/3dhyb.test
   testref/3dhybfgat.test
   testref/3dvarbump.test
@@ -100,28 +100,28 @@ list( APPEND soca_test_ref
   testref/parameters_bump_cov_lct.test
 )
 
-list( APPEND soca_model_param
-  Data/72x35x25/diag_table
-  Data/72x35x25/field_table
-  Data/72x35x25/ice.bkgerror.nc
-  Data/72x35x25/ocn.bkgerror.nc
+set( soca_data_files
   Data/godas_sst_bgerr.nc
   Data/rossrad.dat
 )
 
-list( APPEND soca_model_param_copy
+set( soca_model_param
+  Data/72x35x25/diag_table
+  Data/72x35x25/field_table
+  Data/72x35x25/ice.bkgerror.nc
+  Data/72x35x25/ocn.bkgerror.nc
   Data/72x35x25/MOM_input
   Data/72x35x25/MOM_input_small
   Data/72x35x25/MOM_override_bgc
 )
 
-list( APPEND soca_model_namelist
+set( soca_model_namelist
   Data/72x35x25/input.nml
   Data/72x35x25/input_bgc.nml
   Data/72x35x25/input_small.nml
 )
 
-list( APPEND soca_model_restarts
+set( soca_model_restarts
   Data/72x35x25/INPUT/forcing_daily.nc
   Data/72x35x25/INPUT/forcing_monthly.nc
   Data/72x35x25/INPUT/hycom1_25.nc
@@ -133,7 +133,7 @@ list( APPEND soca_model_restarts
   Data/72x35x25/INPUT/ocean_topog.nc
 )
 
-list( APPEND soca_obs
+set( soca_obs
   Data/Obs/adt.nc
   Data/Obs/icec.nc
   Data/Obs/icefb.nc
@@ -164,22 +164,19 @@ foreach(FILENAME ${soca_model_restarts})
            ${CMAKE_CURRENT_SOURCE_DIR}/${FILENAME}
            ${CMAKE_CURRENT_BINARY_DIR}/INPUT/${filename} )
 endforeach(FILENAME)
+install(FILES ${soca_model_restarts}
+        DESTINATION ${INSTALL_DATA_DIR}/testdata/72x35x25/INPUT/ )
 
 # MOM's resource files
-foreach(FILENAME ${soca_model_param})
+foreach(FILENAME ${soca_model_param} ${soca_data_files})
      get_filename_component(filename ${FILENAME} NAME )
      execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
            ${CMAKE_CURRENT_SOURCE_DIR}/${FILENAME}
            ${CMAKE_CURRENT_BINARY_DIR}/${filename} )
 endforeach(FILENAME)
+install(FILES ${soca_data_files}
+        DESTINATION ${INSTALL_DATA_DIR}/testdata )
 
-# MOM's resource files that may be overwritten during the testing
-foreach(FILENAME ${soca_model_param_copy})
-     get_filename_component(filename ${FILENAME} NAME )
-     execute_process( COMMAND ${CMAKE_COMMAND} -E copy
-           ${CMAKE_CURRENT_SOURCE_DIR}/${FILENAME}
-           ${CMAKE_CURRENT_BINARY_DIR}/${filename} )
-endforeach(FILENAME)
 
 # FMS input.nml that may be overwritten during the testing
 foreach(FILENAME ${soca_model_namelist})
