@@ -9,8 +9,8 @@ ecbuild_add_executable( TARGET  soca_forecast.x
                         LIBS    soca
                       )
 
-ecbuild_add_executable( TARGET  soca_hofx_nomodel.x
-                        SOURCES HofXNoModel.cc
+ecbuild_add_executable( TARGET  soca_hofx3d.x
+                        SOURCES HofX3D.cc
                         LIBS    soca
 )
 
