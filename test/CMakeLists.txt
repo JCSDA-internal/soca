@@ -631,12 +631,12 @@ soca_add_test( NAME dirac_horizfilt
 
 # h(x) executables
 soca_add_test( NAME hofx_3d
-               EXE  soca_hofx_nomodel.x
+               EXE  soca_hofx3d.x
                TEST_DEPENDS test_soca_gridgen )
 
 if( ${CRTM_FOUND} )
  soca_add_test( NAME hofx_3dcrtm
-                EXE  soca_hofx_nomodel.x
+                EXE  soca_hofx3d.x
                 TEST_DEPENDS test_soca_gridgen )
 endif()
 
