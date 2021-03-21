@@ -98,4 +98,3 @@ Test     : analysis y - H(x):
 Test     : SeaSurfaceTemp nobs= 201 Min=-4.686960, Max=4.287496, RMS=1.188086
 Test     : ombg RMS: 1.331867
 Test     : oman RMS: 1.188086
-
