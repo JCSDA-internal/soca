@@ -8,11 +8,9 @@
 #include "soca/Traits.h"
 #include "oops/runs/Run.h"
 #include "oops/runs/StaticBInit.h"
-#include "soca/Transforms/instantiateBalanceOpFactory.h"
 
 int main(int argc,  char ** argv) {
   oops::Run run(argc, argv);
-  soca::instantiateBalanceOpFactory();
   oops::StaticBInit<soca::Traits> bmat;
   return run.execute(bmat);
 }

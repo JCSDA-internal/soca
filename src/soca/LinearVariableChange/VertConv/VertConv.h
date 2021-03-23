@@ -5,14 +5,14 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#ifndef SOCA_TRANSFORMS_HORIZFILT_HORIZFILT_H_
-#define SOCA_TRANSFORMS_HORIZFILT_HORIZFILT_H_
+#ifndef SOCA_LINEARVARIABLECHANGE_VERTCONV_VERTCONV_H_
+#define SOCA_LINEARVARIABLECHANGE_VERTCONV_VERTCONV_H_
 
 #include <ostream>
-#include <memory>
 #include <string>
 
-#include "oops/base/Variables.h"
+#include "soca/State/State.h"
+
 #include "oops/util/DateTime.h"
 #include "oops/util/Printable.h"
 
@@ -21,10 +21,8 @@ namespace eckit {
   class Configuration;
 }
 namespace soca {
-  class Fields;
-  class State;
-  class Increment;
   class Geometry;
+  class Increment;
 }
 
 // -----------------------------------------------------------------------------
@@ -32,13 +30,13 @@ namespace soca {
 namespace soca {
 
 /// SOCA linear change of variable
-class HorizFilt: public util::Printable {
+class VertConv: public util::Printable {
  public:
-  static const std::string classname() {return "soca::HorizFilt";}
+  static const std::string classname() {return "soca::VertConv";}
 
-  explicit HorizFilt(const State &, const State &, const Geometry &,
-                  const eckit::Configuration &);
-  ~HorizFilt();
+  explicit VertConv(const State &, const State &, const Geometry &,
+                    const eckit::Configuration &);
+  ~VertConv();
 
 /// Perform linear transforms
   void multiply(const Increment &, Increment &) const;
@@ -49,11 +47,10 @@ class HorizFilt: public util::Printable {
  private:
   void print(std::ostream &) const override;
   int keyFtnConfig_;
-  std::unique_ptr<const Geometry> geom_;
-  oops::Variables vars_;
-  unsigned int niter_;
+  const State bkg_lr_;
+  const Geometry geom_;
 };
 // -----------------------------------------------------------------------------
 
 }  // namespace soca
-#endif  // SOCA_TRANSFORMS_HORIZFILT_HORIZFILT_H_
+#endif  // SOCA_LINEARVARIABLECHANGE_VERTCONV_VERTCONV_H_

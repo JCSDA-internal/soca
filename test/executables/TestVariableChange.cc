@@ -6,13 +6,11 @@
  */
 
 #include "soca/Traits.h"
-#include "soca/Transforms/instantiateBalanceOpFactory.h"
 #include "oops/runs/Run.h"
 #include "test/interface/LinearVariableChange.h"
 
 int main(int argc,  char ** argv) {
   oops::Run run(argc, argv);
-  soca::instantiateBalanceOpFactory();
   test::LinearVariableChange<soca::Traits> tests;
   return run.execute(tests);
 }

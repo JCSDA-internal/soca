@@ -5,8 +5,8 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#ifndef SOCA_TRANSFORMS_ANA2MODEL_ANA2MODEL_H_
-#define SOCA_TRANSFORMS_ANA2MODEL_ANA2MODEL_H_
+#ifndef SOCA_VARIABLECHANGE_ANA2MODEL_H_
+#define SOCA_VARIABLECHANGE_ANA2MODEL_H_
 
 #include <ostream>
 #include <string>
@@ -62,4 +62,4 @@ class Ana2Model: public oops::VariableChangeBase<soca::Traits> {
 // -----------------------------------------------------------------------------
 }  // namespace soca
 
-#endif  // SOCA_TRANSFORMS_ANA2MODEL_ANA2MODEL_H_
+#endif  // SOCA_VARIABLECHANGE_ANA2MODEL_H_

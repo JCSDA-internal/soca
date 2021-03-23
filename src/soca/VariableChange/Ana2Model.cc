@@ -5,7 +5,7 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#include "soca/Transforms/Ana2Model/Ana2Model.h"
+#include "soca/VariableChange/Ana2Model.h"
 
 #include <ostream>
 #include <string>
@@ -19,6 +19,12 @@
 using oops::Log;
 
 namespace soca {
+
+// -----------------------------------------------------------------------------
+
+static oops::VariableChangeMaker<soca::Traits, soca::Ana2Model >
+               makerVariableChangeAna2Model_("Ana2Model");
+
 // -----------------------------------------------------------------------------
 Ana2Model::Ana2Model(const Geometry & resol, const eckit::Configuration & conf)
 : uvars_(initRotate(conf, "u")), vvars_(initRotate(conf, "v")),

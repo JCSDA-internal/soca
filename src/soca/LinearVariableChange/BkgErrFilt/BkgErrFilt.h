@@ -5,8 +5,8 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#ifndef SOCA_TRANSFORMS_BKGERRGODAS_BKGERRGODAS_H_
-#define SOCA_TRANSFORMS_BKGERRGODAS_BKGERRGODAS_H_
+#ifndef SOCA_LINEARVARIABLECHANGE_BKGERRFILT_BKGERRFILT_H_
+#define SOCA_LINEARVARIABLECHANGE_BKGERRFILT_BKGERRFILT_H_
 
 #include <ostream>
 #include <string>
@@ -19,7 +19,6 @@ namespace eckit {
   class Configuration;
 }
 namespace soca {
-  class Fields;
   class State;
   class Increment;
   class Geometry;
@@ -30,13 +29,13 @@ namespace soca {
 namespace soca {
 
 /// SOCA linear change of variable
-class BkgErrGodas: public util::Printable {
+class BkgErrFilt: public util::Printable {
  public:
-  static const std::string classname() {return "soca::BkgErrGodas";}
+  static const std::string classname() {return "soca::BkgErrFilt";}
 
-  explicit BkgErrGodas(const State &, const State &, const Geometry &,
+  explicit BkgErrFilt(const State &, const State &, const Geometry &,
                   const eckit::Configuration &);
-  ~BkgErrGodas();
+  ~BkgErrFilt();
 
 /// Perform linear transforms
   void multiply(const Increment &, Increment &) const;
@@ -51,4 +50,4 @@ class BkgErrGodas: public util::Printable {
 // -----------------------------------------------------------------------------
 
 }  // namespace soca
-#endif  // SOCA_TRANSFORMS_BKGERRGODAS_BKGERRGODAS_H_
+#endif  // SOCA_LINEARVARIABLECHANGE_BKGERRFILT_BKGERRFILT_H_

@@ -5,8 +5,8 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#ifndef SOCA_TRANSFORMS_BKGERRFILT_BKGERRFILT_H_
-#define SOCA_TRANSFORMS_BKGERRFILT_BKGERRFILT_H_
+#ifndef SOCA_LINEARVARIABLECHANGE_BALANCE_BALANCE_H_
+#define SOCA_LINEARVARIABLECHANGE_BALANCE_BALANCE_H_
 
 #include <ostream>
 #include <string>
@@ -29,13 +29,13 @@ namespace soca {
 namespace soca {
 
 /// SOCA linear change of variable
-class BkgErrFilt: public util::Printable {
+class Balance: public util::Printable {
  public:
-  static const std::string classname() {return "soca::BkgErrFilt";}
+  static const std::string classname() {return "soca::Balance";}
 
-  explicit BkgErrFilt(const State &, const State &, const Geometry &,
-                  const eckit::Configuration &);
-  ~BkgErrFilt();
+  explicit Balance(const State &, const State &,
+                   const Geometry &, const eckit::Configuration &);
+  ~Balance();
 
 /// Perform linear transforms
   void multiply(const Increment &, Increment &) const;
@@ -50,4 +50,4 @@ class BkgErrFilt: public util::Printable {
 // -----------------------------------------------------------------------------
 
 }  // namespace soca
-#endif  // SOCA_TRANSFORMS_BKGERRFILT_BKGERRFILT_H_
+#endif  // SOCA_LINEARVARIABLECHANGE_BALANCE_BALANCE_H_

@@ -5,8 +5,8 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#ifndef SOCA_TRANSFORMS_BKGERR_BKGERR_H_
-#define SOCA_TRANSFORMS_BKGERR_BKGERR_H_
+#ifndef SOCA_LINEARVARIABLECHANGE_BKGERR_BKGERR_H_
+#define SOCA_LINEARVARIABLECHANGE_BKGERR_BKGERR_H_
 
 #include <ostream>
 #include <string>
@@ -50,4 +50,4 @@ class BkgErr: public util::Printable {
 // -----------------------------------------------------------------------------
 
 }  // namespace soca
-#endif  // SOCA_TRANSFORMS_BKGERR_BKGERR_H_
+#endif  // SOCA_LINEARVARIABLECHANGE_BKGERR_BKGERR_H_
