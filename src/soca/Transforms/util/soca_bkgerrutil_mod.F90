@@ -38,19 +38,19 @@ subroutine soca_bkgerr_readbounds(self, f_conf)
   type(fckit_configuration),      intent(in)    :: f_conf
 
   ! Get bounds from configuration
-  if(.not. f_conf%get("t_min", self%t_min)) self%t_min = -huge(0.0)
+  if(.not. f_conf%get("t_min", self%t_min)) self%t_min = 0.0
   if(.not. f_conf%get("t_max", self%t_max)) self%t_min = huge(0.0)
-  if(.not. f_conf%get("s_min", self%s_min)) self%s_min = -huge(0.0)
+  if(.not. f_conf%get("s_min", self%s_min)) self%s_min = 0.0
   if(.not. f_conf%get("s_max", self%s_max)) self%s_max = huge(0.0)
-  if(.not. f_conf%get("ssh_min", self%ssh_min)) self%ssh_min = -huge(0.0)
+  if(.not. f_conf%get("ssh_min", self%ssh_min)) self%ssh_min = 0.0
   if(.not. f_conf%get("ssh_max", self%ssh_max)) self%ssh_max = huge(0.0)
-  if(.not. f_conf%get("cicen_min", self%cicen_min)) self%cicen_min = -huge(0.0)
+  if(.not. f_conf%get("cicen_min", self%cicen_min)) self%cicen_min = 0.0
   if(.not. f_conf%get("cicen_max", self%cicen_max)) self%cicen_max = huge(0.0)
-  if(.not. f_conf%get("hicen_min", self%hicen_min)) self%hicen_min = -huge(0.0)
+  if(.not. f_conf%get("hicen_min", self%hicen_min)) self%hicen_min = 0.0
   if(.not. f_conf%get("hicen_max", self%hicen_max)) self%hicen_max = huge(0.0)
-  if(.not. f_conf%get("chl_min", self%chl_min)) self%chl_min = -huge(0.0)
+  if(.not. f_conf%get("chl_min", self%chl_min)) self%chl_min = 0.0
   if(.not. f_conf%get("chl_max", self%chl_max)) self%chl_max =  huge(0.0)
-  if(.not. f_conf%get("biop_min", self%biop_min)) self%biop_min = -huge(0.0)
+  if(.not. f_conf%get("biop_min", self%biop_min)) self%biop_min = 0.0
   if(.not. f_conf%get("biop_max", self%biop_max)) self%biop_max = huge(0.0)
 end subroutine soca_bkgerr_readbounds
 
