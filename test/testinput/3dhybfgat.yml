@@ -61,10 +61,6 @@ cost function:
           cicen_max: 0.5
           hicen_min: 10.0
           hicen_max: 100.0
-          chl_min: 0.003
-          chl_max: 10.0
-          biop_min: 0.0
-          biop_max: 1.0e-6
           input variables: *soca_vars
           output variables: *soca_vars
         - variable change: VertConvSOCA
@@ -100,7 +96,7 @@ cost function:
           ice_filename: ice.pert.ens.3.2018-04-15T00:00:00Z.PT0S.nc
         - <<: *_file
           ocn_filename: ocn.pert.ens.4.2018-04-15T00:00:00Z.PT0S.nc
-          ice_filename: ice.pert.ens.4.2018-04-15T00:00:00Z.PT0S.nc 
+          ice_filename: ice.pert.ens.4.2018-04-15T00:00:00Z.PT0S.nc
         localization:
           localization variables: [socn, tocn, ssh]
           localization method: BUMP
