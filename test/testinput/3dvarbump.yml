@@ -54,10 +54,6 @@ cost function:
       cicen_max: 0.5
       hicen_min: 10.0
       hicen_max: 100.0
-      chl_min: 0.003
-      chl_max: 10.0
-      biop_min: 0.0
-      biop_max: 1.0e-6
       input variables: *soca_vars
       output variables: *soca_vars
 
