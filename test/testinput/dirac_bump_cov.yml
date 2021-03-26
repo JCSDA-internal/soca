@@ -38,4 +38,5 @@ output_B:
   type: an
 resolution:
   mom6_input_nml: ./inputnml/input.nml
+  fieldspec: ./soca_fieldspec.yml
 variables: *soca_vars

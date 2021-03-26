@@ -1,0 +1,149 @@
+## defaults ##
+# dims: 2D
+# grid: h
+# mask: true
+
+# ------------------------------------------------------------------------------
+# Ocean state variables
+# ------------------------------------------------------------------------------
+- name: tocn
+  dims: 3D
+  getval name: sea_water_potential_temperature
+  getval name surface: sea_surface_temperature
+  io file: ocn
+  io name: Temp
+
+- name: socn
+  dims: 3D
+  getval name: sea_water_salinity
+  getval name surface: sea_surface_salinity
+  io file: ocn
+  io name: Salt
+
+- name: uocn
+  dims: 3D
+  grid: u
+  getval name: eastward_sea_water_velocity
+  getval name surface: surface_eastward_sea_water_velocity
+  io file: ocn
+  io name: u
+
+- name: vocn
+  dims: 3D
+  getval name: northward_sea_water_velocity
+  getval name surface: surface_northward_sea_water_velocity
+  grid: v
+  io file: ocn
+  io name: v
+
+- name: hocn
+  dims: 3D
+  getval name: sea_water_cell_thickness
+  io file: ocn
+  io name: h
+
+- name: ssh
+  getval name: sea_surface_height_above_geoid
+  io file: ocn
+  io name: ave_ssh
+
+
+# ------------------------------------------------------------------------------
+# BGC
+# ------------------------------------------------------------------------------
+- name: chl
+  dims: 3D
+  getval name: mass_concentration_of_chlorophyll_in_sea_water
+  getval name surface: sea_surface_chlorophyll
+  io file: ocn
+  io name: chl
+
+- name: biop
+  dims: 3D
+  getval name: molar_concentration_of_biomass_in_sea_water_in_p_units
+  getval name surface: sea_surface_biomass_in_p_units
+  io file: ocn
+  io name: biomass_p
+
+
+# ------------------------------------------------------------------------------
+# ice state variables
+# ------------------------------------------------------------------------------
+- name: hicen
+  dims: 2D
+  getval name: sea_ice_category_thickness
+  io file: ice
+  io name: hicen
+
+- name: cicen
+  dims: 2D
+  getval name: sea_ice_category_area_fraction
+  getval name surface: sea_ice_area_fraction # note, wrong, should be sum
+  io file: ice
+  io name: aicen
+
+- name: hsnon
+  dims: 2D
+  getval name: sea_ice_category_snow_thickness
+  io file: ice
+  io name: hsnon
+
+
+# ------------------------------------------------------------------------------
+# sea surface variables
+# ------------------------------------------------------------------------------
+- name: sw
+  dims: 2D
+  getval name: net_downwelling_shortwave_radiation
+  io file: sfc
+  io name: sw_rad
+
+- name: lw
+  dims: 2D
+  getval name: net_downwelling_longwave_radiation
+  io file: sfc
+  io name: lw_rad
+
+- name: lhf
+  dims: 2D
+  getval name: upward_latent_heat_flux_in_air
+  io file: sfc
+  io name: latent_heat
+
+- name: shf
+  dims: 2D
+  getval name: upward_sensible_heat_flux_in_air
+  io file: sfc
+  io name: sens_heat
+
+- name: us
+  dims: 2D
+  getval name: friction_velocity_over_water
+  io file: sfc
+  io name: fric_vel
+
+
+# ------------------------------------------------------------------------------
+# built in derived variables that you don't need to worry about
+# ------------------------------------------------------------------------------
+- name: distance_from_coast
+  dims: 2D
+
+- name: surface_temperature_where_sea
+  dims: 2D
+
+- name: sea_floor_depth_below_sea_surface
+  dims: 2D
+
+- name: sea_area_fraction
+  dims: 2D
+  mask: false
+
+- name: mesoscale_representation_error
+  dims: 2D
+
+- name: mld
+  dims: 2D
+
+- name: layer_depth
+  dims: 2D

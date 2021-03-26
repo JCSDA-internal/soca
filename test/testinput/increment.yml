@@ -1,5 +1,6 @@
 geometry:
   mom6_input_nml: ./inputnml/input.nml
+  fieldspec: ./soca_fieldspec.yml
 
 # TODO should add cicen/uocn/vocn, but this makes the tests fail
 inc variables: [hicen, socn, tocn, ssh, hocn, chl, biop, sw, lw, lhf, shf, us]

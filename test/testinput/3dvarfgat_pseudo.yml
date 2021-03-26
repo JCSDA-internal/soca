@@ -12,6 +12,7 @@ cost function:
   analysis variables: &soca_vars  [socn, tocn, ssh, hocn, uocn, vocn]
   geometry:
     mom6_input_nml: ./inputnml/input.nml
+    fieldspec: ./soca_fieldspec.yml
 
   model:
     name: PseudoModel
@@ -165,6 +166,7 @@ variational:
   iterations:
   - geometry:
       mom6_input_nml: ./inputnml/input.nml
+      fieldspec: ./soca_fieldspec.yml
     linear model:
       variable change: Identity
       name: IdTLM

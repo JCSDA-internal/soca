@@ -1,5 +1,6 @@
 geometry:
   mom6_input_nml: ./inputnml/input.nml
+  fieldspec: ./soca_fieldspec.yml
 
 _file: &_file
   read_from_file: 1

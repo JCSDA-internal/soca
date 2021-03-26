@@ -1,5 +1,6 @@
 geometry:
   mom6_input_nml: ./inputnml/input_bgc.nml
+  fieldspec: ./soca_fieldspec.yml
 
 model:
   name: SOCA

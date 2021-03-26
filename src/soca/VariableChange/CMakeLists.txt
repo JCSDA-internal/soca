@@ -1,5 +1,2 @@
-soca_target_sources(
-  Ana2Model.cc
-  Ana2Model.h
-  IdVarChange.cc
-)
+add_subdirectory(Ana2Model)
+add_subdirectory(Model2GeoVaLs)

@@ -1,5 +1,6 @@
 geometry:
   mom6_input_nml: ./inputnml/input.nml
+  fieldspec: ./soca_fieldspec.yml
 
 analysis variables: &soca_vars [cicen, hicen, hocn, socn, tocn, ssh]
 

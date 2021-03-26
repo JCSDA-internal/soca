@@ -103,6 +103,7 @@ set( soca_test_ref
 set( soca_data_files
   Data/godas_sst_bgerr.nc
   Data/rossrad.dat
+  Data/soca_fieldspec.yml
 )
 
 set( soca_model_param

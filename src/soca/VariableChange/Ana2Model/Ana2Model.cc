@@ -5,7 +5,7 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#include "soca/VariableChange/Ana2Model.h"
+#include "soca/VariableChange/Ana2Model/Ana2Model.h"
 
 #include <ostream>
 #include <string>

@@ -22,6 +22,7 @@ use fms_io_mod, only: fms_io_init, fms_io_exit, &
                       free_restart_type, save_restart
 use mpp_domains_mod, only : mpp_update_domains
 use MOM_remapping, only : remapping_CS, initialize_remapping, remapping_core_h, end_remapping
+use soca_fieldspec_mod
 use soca_geom_mod, only : soca_geom
 use soca_fieldsutils_mod, only: soca_genfilename, fldinfo
 use soca_utils, only: soca_mld
@@ -112,7 +113,6 @@ end type soca_fields
 
 
 contains
-
 
 ! ------------------------------------------------------------------------------
 ! soca_field subroutines
@@ -214,7 +214,11 @@ subroutine soca_fields_init_vars(self, vars)
 
     ! determine number of levels, and if masked
     select case(self%fields(i)%name)
-    case ('tocn','socn', 'hocn', 'layer_depth', 'chl', 'biop')
+    case ('tocn','socn', 'hocn', 'layer_depth', 'chl', 'biop', &
+          'sea_water_cell_thickness', &
+          'sea_water_potential_temperature', &
+          'sea_water_salinity', &
+          'mass_concentration_of_chlorophyll_in_sea_water' )
       nz = self%geom%nzo
       self%fields(i)%mask => self%geom%mask2d
     case ('uocn')
@@ -227,14 +231,33 @@ subroutine soca_fields_init_vars(self, vars)
       self%fields(i)%mask => self%geom%mask2dv
       self%fields(i)%lon => self%geom%lonv
       self%fields(i)%lat => self%geom%latv
-    case ('hicen','hsnon', 'cicen')
+    case ('hicen','hsnon', 'cicen', &
+          'sea_ice_area_fraction', &
+          'sea_ice_category_area_fraction', &
+          'sea_ice_category_snow_thickness', &
+          'sea_ice_category_thickness' )
       nz = 1
       self%fields(i)%mask => self%geom%mask2d
-    case ('ssh', 'mld')
+    case ('sea_area_fraction', &
+          'mesoscale_representation_error', &
+          'distance_from_coast', &
+          'sw', 'lhf', 'shf', 'lw', 'us', &
+          'net_downwelling_shortwave_radiation', &
+          'net_downwelling_longwave_radiation', &
+          'upward_latent_heat_flux_in_air', &
+          'upward_sensible_heat_flux_in_air', &
+          'friction_velocity_over_water' )
+      nz=1
+    case ('ssh', 'mld', &
+          'sea_surface_temperature', &
+          'sea_surface_salinity', &
+          'sea_surface_height_above_geoid', &
+          'sea_surface_chlorophyll', &
+          'sea_surface_biomass_in_p_units', &
+          'sea_floor_depth_below_sea_surface')
       nz = 1
       self%fields(i)%mask => self%geom%mask2d
-    case ('sw', 'lhf', 'shf', 'lw', 'us')
-      nz = 1
+
     case default
       call abor1_ftn('soca_fields::create(): unknown field '// self%fields(i)%name)
     end select

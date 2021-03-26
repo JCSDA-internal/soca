@@ -1,5 +1,6 @@
 resolution:
   mom6_input_nml: ./inputnml/input.nml
+  fieldspec: ./soca_fieldspec.yml
 
 model:
   name: SOCA
