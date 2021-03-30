@@ -13,10 +13,12 @@
 #include "oops/runs/Dirac.h"
 #include "oops/runs/Run.h"
 #include "saber/oops/instantiateLocalizationFactory.h"
+#include "saber/oops/instantiateCovarFactory.h"
 
 int main(int argc,  char ** argv) {
   oops::Run run(argc, argv);
   saber::instantiateLocalizationFactory<soca::Traits>();
+  saber::instantiateCovarFactory<soca::Traits>();
   oops::Dirac<soca::Traits> dir;
   return run.execute(dir);
 }

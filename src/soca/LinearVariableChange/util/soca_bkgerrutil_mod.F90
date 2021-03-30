@@ -22,6 +22,8 @@ type :: soca_bkgerr_bounds_type
    real(kind=kind_real) :: ssh_min, ssh_max
    real(kind=kind_real) :: cicen_min, cicen_max
    real(kind=kind_real) :: hicen_min, hicen_max
+   real(kind=kind_real) :: chl_min, chl_max
+   real(kind=kind_real) :: biop_min, biop_max
  contains
    procedure :: read => soca_bkgerr_readbounds
    procedure :: apply => soca_bkgerr_applybounds
@@ -36,17 +38,20 @@ subroutine soca_bkgerr_readbounds(self, f_conf)
   type(fckit_configuration),      intent(in)    :: f_conf
 
   ! Get bounds from configuration
-  call f_conf%get_or_die("t_min", self%t_min)
-  call f_conf%get_or_die("t_max", self%t_max)
-  call f_conf%get_or_die("s_min", self%s_min)
-  call f_conf%get_or_die("s_max", self%s_max)
-  call f_conf%get_or_die("ssh_min", self%ssh_min)
-  call f_conf%get_or_die("ssh_max", self%ssh_max)
-  call f_conf%get_or_die("cicen_min", self%cicen_min)
-  call f_conf%get_or_die("cicen_max", self%cicen_max)
-  call f_conf%get_or_die("hicen_min", self%hicen_min)
-  call f_conf%get_or_die("hicen_max", self%hicen_max)
-
+  if(.not. f_conf%get("t_min", self%t_min)) self%t_min = 0.0
+  if(.not. f_conf%get("t_max", self%t_max)) self%t_min = huge(0.0)
+  if(.not. f_conf%get("s_min", self%s_min)) self%s_min = 0.0
+  if(.not. f_conf%get("s_max", self%s_max)) self%s_max = huge(0.0)
+  if(.not. f_conf%get("ssh_min", self%ssh_min)) self%ssh_min = 0.0
+  if(.not. f_conf%get("ssh_max", self%ssh_max)) self%ssh_max = huge(0.0)
+  if(.not. f_conf%get("cicen_min", self%cicen_min)) self%cicen_min = 0.0
+  if(.not. f_conf%get("cicen_max", self%cicen_max)) self%cicen_max = huge(0.0)
+  if(.not. f_conf%get("hicen_min", self%hicen_min)) self%hicen_min = 0.0
+  if(.not. f_conf%get("hicen_max", self%hicen_max)) self%hicen_max = huge(0.0)
+  if(.not. f_conf%get("chl_min", self%chl_min)) self%chl_min = 0.0
+  if(.not. f_conf%get("chl_max", self%chl_max)) self%chl_max =  huge(0.0)
+  if(.not. f_conf%get("biop_min", self%biop_min)) self%biop_min = 0.0
+  if(.not. f_conf%get("biop_max", self%biop_max)) self%biop_max = huge(0.0)
 end subroutine soca_bkgerr_readbounds
 
 ! ------------------------------------------------------------------------------
@@ -82,6 +87,12 @@ subroutine soca_bkgerr_applybounds(self, fld)
     case ("hicen")
       vmin = self%hicen_min
       vmax = self%hicen_max
+    case ("chl")
+      vmin = self%chl_min
+      vmax = self%chl_max
+    case ("biop")
+      vmin = self%biop_min
+      vmax = self%biop_max
     case default
       cycle
     end select

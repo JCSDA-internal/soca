@@ -30,7 +30,7 @@ public :: soca_cov, soca_cov_setup, soca_cov_delete, &
 
 !> Fortran derived type to hold configuration data for the SOCA background/model covariance
 type :: soca_pert
-  real(kind=kind_real) :: T, S, SSH, AICE, HICE
+  real(kind=kind_real) :: T, S, SSH, AICE, HICE, CHL, BIOP
 end type soca_pert
 
 type :: soca_cov
@@ -77,6 +77,8 @@ subroutine soca_cov_setup(self, f_conf, geom, bkg, vars)
   if (.not. f_conf%get("pert_SSH", self%pert_scale%SSH))   self%pert_scale%SSH = 1.0
   if (.not. f_conf%get("pert_AICE", self%pert_scale%AICE)) self%pert_scale%AICE = 1.0
   if (.not. f_conf%get("pert_HICE", self%pert_scale%HICE)) self%pert_scale%HICE = 1.0
+  if (.not. f_conf%get("pert_CHL", self%pert_scale%CHL))   self%pert_scale%CHL = 1.0
+  if (.not. f_conf%get("pert_BIOP", self%pert_scale%BIOP)) self%pert_scale%BIOP = 1.0
 
   ! Associate background
   self%bkg => bkg
@@ -194,6 +196,12 @@ subroutine soca_cov_sqrt_C_mult(self, dx)
     case ('hicen')
       scale = self%pert_scale%HICE
       conv => self%seaice_conv(1)
+    case('chl')
+      scale = self%pert_scale%CHL
+      conv => self%ocean_conv(1)
+    case ('biop')
+      scale = self%pert_scale%BIOP
+      conv => self%ocean_conv(1)
     end select
 
     if (associated(conv)) then
