@@ -1,12 +1,10 @@
 FROM  jcsda/docker-gnu-openmpi-dev:latest
 
-RUN groupadd jcsda -g 9999 \
-    && adduser jcsdauser \
-    && mkdir -p /jcsda \
-    && chown -R jcsdauser:jcsda /jcsda \
+RUN  mkdir -p /jcsda \
+    && chown -R jedi:jedi /jcsda \
     && chmod 6755 /jcsda
 
-USER jcsdauser
+USER jedi
 
 COPY default-mca-params.conf /jcsda/mca-params.conf
 
