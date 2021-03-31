@@ -174,7 +174,7 @@ subroutine soca_state_convert(self, rhs)
   do n = 1, size(rhs%fields)
     field1 => rhs%fields(n)
     call self%get(trim(field1%name),field2)
-    if (field1%io_file=="ocn" .or. field1%io_file=="sfc" .or. field1%io_file=="ice")  &
+    if (field1%fieldspec%io_file=="ocn" .or. field1%fieldspec%io_file=="sfc" .or. field1%fieldspec%io_file=="ice")  &
     call convert_state%change_resol(field1, field2, rhs%geom, self%geom)
   end do !n
   call convert_state%clean()

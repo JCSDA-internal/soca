@@ -138,12 +138,11 @@ subroutine soca_getvalues_fillgeovals(self, geom, fld, t1, t2, locs, geovals)
     allocate(gom_window(locs%nlocs()))
     allocate(fld3d(isc:iec,jsc:jec,1:nval))
 
-    ! Extract fld3d from field
-    select case (geovals%variables(ivar))
-    case ('distance_from_coast', &
-           'sea_area_fraction')
-      masked = .false.
-    case default
+    masked = fldptr%fieldspec%masked
+    ! TODO, the following is an override to keep same answers during a PR,
+    ! it should be removed in its own PR
+    select case (fldptr%fieldspec%name)
+    case ('sw', 'lw', 'lhf', 'shf', 'us')          
       masked = .true.
     end select
 
@@ -168,8 +167,6 @@ subroutine soca_getvalues_fillgeovals(self, geom, fld, t1, t2, locs, geovals)
         if (time_mask(indx)) then
           geovals%geovals(ivar)%vals(ival, indx) = gom_window(indx)
         end if
-
-
       end do
     end do
 
@@ -226,8 +223,13 @@ subroutine soca_getvalues_fillgeovals_ad(self, geom, incr, t1, t2, locs, geovals
     gom_window = 0.0_kind_real
 
     ! determine if this variable should use the masked grid
-    ! (currently all of them, perhaps have atm vars use unmasked interp at some point??)
-    masked = .true.
+    masked = field%fieldspec%masked
+    ! TODO, the following is an override to keep same answers during a PR,
+    ! it should be removed in its own PR
+    select case (field%fieldspec%name)
+    case ('sw', 'lw', 'lhf', 'shf', 'us')          
+      masked = .true.
+    end select
 
     ! Apply backward interpolation: Obs ---> Model
     if (masked) then
