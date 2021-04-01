@@ -14,7 +14,7 @@
 
 int main(int argc,  char ** argv) {
   oops::Run run(argc, argv);
-  ioda::instantiateObsLocFactory<ufo::ObsTraits>();
+  ioda::instantiateObsLocFactory<soca::Traits, ufo::ObsTraits>();
   ufo::instantiateObsFilterFactory<ufo::ObsTraits>();
   oops::LocalEnsembleDA<soca::Traits, ufo::ObsTraits> letkf;
   return run.execute(letkf);
