@@ -42,8 +42,8 @@ observations:
   obs operator:
     name: Identity
   obs error:
-    covariance model: localized diagonal
-    localization:
+    covariance model: diagonal
+  obs localization:
       localization method: Gaspari-Cohn
       lengthscale: 2000e3
   obs filters:
