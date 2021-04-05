@@ -45,6 +45,7 @@ set( soca_test_input
   testinput/makeobs.yml
   testinput/marine2ioda.yml
   testinput/model.yml
+  testinput/obslocalization.yml
   testinput/parameters_bump_cor_nicas.yml
   testinput/parameters_bump_cov_lct.yml
   testinput/parameters_bump_cov_nicas.yml
@@ -567,6 +568,11 @@ soca_add_test( NAME varchange_vertconv
                SRC  TestVariableChange.cc
                TEST_DEPENDS test_soca_gridgen )
 
+soca_add_test( NAME obslocalization
+               SRC  TestObsLocalization.cc
+               TEST_DEPENDS test_soca_gridgen
+               NOCOMPARE )
+	       
 
 #-------------------------------------------------------------------------------
 # Tests using the main SOCA applications

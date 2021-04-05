@@ -1,0 +1,16 @@
+geometry:
+  mom6_input_nml: ./inputnml/input.nml
+  fieldspec: ./soca_fieldspec.yml
+
+window begin: 2018-04-14T00:00:00Z
+window end: 2018-04-16T00:00:00Z
+
+observations:
+- obs space:
+    name: 'Simulate'
+    distribution: InefficientDistribution
+    simulated variables: ['sea_surface_temperature']
+    obsdatain:  {obsfile: ./Data/sst.nc}
+  obs localization:
+    lengthscale: 2000e3
+    localization method: Gaspari-Cohn
