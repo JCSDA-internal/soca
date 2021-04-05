@@ -38,7 +38,7 @@ subroutine soca_model2geovals_linear_changevar_f90(c_key_geom, c_key_dxin, c_key
 !
   do i=1, size(dxout%fields)
     ! identity operators
-    fieldspec =  geom%fieldspecs%get_cf(dxout%fields(i)%name)
+    fieldspec =  geom%fieldspecs%get(dxout%fields(i)%name)
     if (fieldspec%getval_name == dxout%fields(i)%name) then
       ! full field
       call dxin%get(fieldspec%name, field)
@@ -48,6 +48,8 @@ subroutine soca_model2geovals_linear_changevar_f90(c_key_geom, c_key_dxin, c_key
       ! surface only of a 3D field
       call dxin%get(fieldspec%name,field)
       dxout%fields(i)%val(:,:,1) = field%val(:,:,1)
+    else
+      stop 50
     endif
   end do
     ! end select
@@ -72,7 +74,7 @@ subroutine soca_model2geovals_linear_changevarAD_f90(c_key_geom, c_key_dxin, c_k
   call soca_increment_registry%get(c_key_dxout, dxout)
 
   do i=1, size(dxin%fields)
-    fieldspec = geom%fieldspecs%get_cf(dxin%fields(i)%name)
+    fieldspec = geom%fieldspecs%get(dxin%fields(i)%name)
     call dxout%get(fieldspec%name, field)
 
     if(fieldspec%getval_name == dxin%fields(i)%name) then
@@ -104,14 +106,16 @@ subroutine soca_model2geovals_changevar_f90(c_key_geom, c_key_xin, c_key_xout) &
   call soca_state_registry%get(c_key_xout, xout)
 !
   do i=1, size(xout%fields)
+    if (xout%fields(i)%fieldspec%dummy_atm) cycle
+
     select case (xout%fields(i)%name)
 
     case ('distance_from_coast')
       xout%fields(i)%val(:,:,1) = real(geom%distance_from_coast, kind=kind_real)
 
-    ! case ('surface_temperature_where_sea')
-    !   call xin%get('tocn', field)
-    !   xout%fields(i)%val = field%val
+    case ('surface_temperature_where_sea')
+      call xin%get('tocn', field)
+      xout%fields(i)%val(:,:,1) = field%val(:,:,1) + 273.15_kind_real
 
     case ('sea_floor_depth_below_sea_surface')
       call xin%get('hocn', field)
@@ -123,7 +127,6 @@ subroutine soca_model2geovals_changevar_f90(c_key_geom, c_key_xin, c_key_xout) &
     case ('mesoscale_representation_error')
       ! Representation errors: dx/R
       ! TODO, why is the halo left to 0 for RR ??
-      print *, "DBG RR ", minval(geom%rossby_radius), maxval(geom%rossby_radius)
       xout%fields(i)%val(geom%isc:geom%iec, geom%jsc:geom%jec, 1) = &
           geom%mask2d(geom%isc:geom%iec, geom%jsc:geom%jec) * &
           sqrt(geom%cell_area(geom%isc:geom%iec, geom%jsc:geom%jec) / &
@@ -132,7 +135,7 @@ subroutine soca_model2geovals_changevar_f90(c_key_geom, c_key_xin, c_key_xout) &
 
     case default
       ! identity operators
-      fieldspec =  geom%fieldspecs%get_cf(xout%fields(i)%name)
+      fieldspec =  geom%fieldspecs%get(xout%fields(i)%name)
       if (fieldspec%getval_name == xout%fields(i)%name) then
         ! full field
         call xin%get(fieldspec%name, field)
@@ -142,6 +145,8 @@ subroutine soca_model2geovals_changevar_f90(c_key_geom, c_key_xin, c_key_xout) &
         ! surface only of a 3D field
         call xin%get(fieldspec%name,field)
         xout%fields(i)%val(:,:,1) = field%val(:,:,1)
+      else
+        stop 52
       endif
     end select
 

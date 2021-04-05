@@ -140,3 +140,90 @@
 
 - name: layer_depth
   levels: full_ocn
+
+
+# ------------------------------------------------------------------------------
+# Dummy fields that aren't actually used.
+# Needed for the CRTM hack to work
+# these should all be removed at some point when coupled hofx is implemented correctly
+# ------------------------------------------------------------------------------
+- name: air_pressure
+  dummy_atm: true
+
+- name: air_pressure_levels
+  dummy_atm: true
+
+- name: air_temperature
+  dummy_atm: true
+
+- name: humidity_mixing_ratio
+  dummy_atm: true
+
+- name: effective_radius_of_cloud_liquid_water_particle
+  dummy_atm: true
+
+- name: effective_radius_of_cloud_ice_particle
+  dummy_atm: true
+
+- name: mass_content_of_cloud_ice_in_atmosphere_layer
+  dummy_atm: true
+
+- name: mass_content_of_cloud_liquid_water_in_atmosphere_layer
+  dummy_atm: true
+
+- name: mole_fraction_of_carbon_dioxide_in_air
+  dummy_atm: true
+
+- name: mole_fraction_of_ozone_in_air
+  dummy_atm: true
+
+- name: surface_wind_from_direction
+  dummy_atm: true
+
+- name: soil_type
+  dummy_atm: true
+
+- name: leaf_area_index
+  dummy_atm: true
+
+- name: vegetation_type_index
+  dummy_atm: true
+
+- name: surface_wind_speed
+  dummy_atm: true
+
+- name: surface_snow_thickness
+  dummy_atm: true
+
+- name: vegetation_area_fraction
+  dummy_atm: true
+
+- name: land_type_index
+  dummy_atm: true
+
+- name: volume_fraction_of_condensed_water_in_soil
+  dummy_atm: true
+
+- name: soil_temperature
+  dummy_atm: true
+
+- name: surface_temperature_where_snow
+  dummy_atm: true
+
+- name: surface_temperature_where_ice
+  dummy_atm: true
+
+- name: surface_temperature_where_land
+  dummy_atm: true
+
+- name: surface_snow_area_fraction
+  dummy_atm: true
+
+- name: ice_area_fraction
+  dummy_atm: true
+
+- name: land_area_fraction
+  dummy_atm: true
+
+- name: water_area_fraction
+  dummy_atm: true

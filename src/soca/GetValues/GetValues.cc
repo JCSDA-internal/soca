@@ -45,7 +45,8 @@ void GetValues::fillGeoVaLs(const State & state,
                             const util::DateTime & t1,
                             const util::DateTime & t2,
                             ufo::GeoVaLs & geovals) const {
-  // Get atm geovals
+  // overwrite with atm geovals
+  // NOTE this is a horrible hack. Remove soon.
   if (geom_->getAtmInit())
   {
     // Get atm geovals
