@@ -16,7 +16,7 @@
 #include "soca/GetValues/GetValues.h"
 #include "soca/GetValues/GetValuesFortran.h"
 #include "soca/State/State.h"
-#include "soca/VariableChange/Model2GeoVaLs/Model2GeoVaLs.h"
+#include "soca/Transforms/Model2GeoVaLs/Model2GeoVaLs.h"
 
 #include "ufo/GeoVaLs.h"
 #include "ufo/Locations.h"
@@ -60,7 +60,8 @@ void GetValues::fillGeoVaLs(const State & state,
   if (geovals.getVars() <= state.variables()) {
     state_ptr = &state;
   } else {
-    varChangeState.reset(new State(*geom_, geovals.getVars(), state.validTime()));
+    varChangeState.reset(new State(*geom_, geovals.getVars(),
+                                   state.validTime()));
     model2geovals_->changeVar(state, *varChangeState);
     state_ptr = varChangeState.get();
   }

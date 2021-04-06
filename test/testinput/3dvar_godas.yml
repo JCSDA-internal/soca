@@ -12,7 +12,7 @@ cost function:
   analysis variables: &soca_vars [cicen, hicen, hsnon, socn, tocn, ssh, hocn, sw, lhf, shf, lw, us, uocn, vocn, mld, layer_depth]
   geometry:
     mom6_input_nml: ./inputnml/input.nml
-    fieldspec: ./soca_fieldspec.yml
+    fields metadata: ./soca_fieldspec.yml
 
   background:
     read_from_file: 1
@@ -192,7 +192,7 @@ variational:
   iterations:
   - geometry:
       mom6_input_nml: ./inputnml/input.nml
-      fieldspec: ./soca_fieldspec.yml
+      fields metadata: ./soca_fieldspec.yml
     ninner: 5
     gradient norm reduction: 1e-15
     test: on

@@ -22,7 +22,7 @@ use fms_io_mod, only: fms_io_init, fms_io_exit, &
                       free_restart_type, save_restart
 use mpp_domains_mod, only : mpp_update_domains
 use MOM_remapping, only : remapping_CS, initialize_remapping, remapping_core_h, end_remapping
-use soca_fieldspec_mod
+use soca_fields_metadata_mod
 use soca_geom_mod, only : soca_geom
 use soca_fieldsutils_mod, only: soca_genfilename, fldinfo
 use soca_utils, only: soca_mld
@@ -48,7 +48,7 @@ type :: soca_field
   real(kind=kind_real),     pointer :: mask(:,:) => null() !< field mask
   real(kind=kind_real),     pointer :: lon(:,:) => null()  !< field lon
   real(kind=kind_real),     pointer :: lat(:,:) => null()  !< field lat
-  type(soca_fieldspec)              :: fieldspec  ! parameters for the field as determined 
+  type(soca_field_metadata)         :: metadata   ! parameters for the field as determined 
                                                   ! by the configuration yaml
 contains
   procedure :: copy            => soca_field_copy
@@ -203,44 +203,44 @@ subroutine soca_fields_init_vars(self, vars)
   do i=1,size(vars)    
     self%fields(i)%name = trim(vars(i))
     
-    ! get the "fieldspec" parameters that are read in from a config file
-    self%fields(i)%fieldspec = self%geom%fieldspecs%get(self%fields(i)%name)
+    ! get the field metadata parameters that are read in from a config file
+    self%fields(i)%metadata = self%geom%fields_metadata%get(self%fields(i)%name)
 
     ! Set grid location and masks
-    select case(self%fields(i)%fieldspec%grid)
+    select case(self%fields(i)%metadata%grid)
     case ('h')
       self%fields(i)%lon => self%geom%lon
       self%fields(i)%lat => self%geom%lat
-      if (self%fields(i)%fieldspec%masked) &
+      if (self%fields(i)%metadata%masked) &
         self%fields(i)%mask => self%geom%mask2d
     case ('u')
       self%fields(i)%lon => self%geom%lonu
       self%fields(i)%lat => self%geom%latu
-      if (self%fields(i)%fieldspec%masked) &
+      if (self%fields(i)%metadata%masked) &
         self%fields(i)%mask => self%geom%mask2du    
     case ('v')
         self%fields(i)%lon => self%geom%lonv
         self%fields(i)%lat => self%geom%latv
-        if (self%fields(i)%fieldspec%masked) &
+        if (self%fields(i)%metadata%masked) &
           self%fields(i)%mask => self%geom%mask2dv      
     case default
       call abor1_ftn('soca_fields::create(): Illegal grid '// &
-                     self%fields(i)%fieldspec%grid // &
+                     self%fields(i)%metadata%grid // &
                      ' given for ' // self%fields(i)%name)
     end select
 
     ! determine number of levels    
-    if (self%fields(i)%name == self%fields(i)%fieldspec%getval_name_surface) then
+    if (self%fields(i)%name == self%fields(i)%metadata%getval_name_surface) then
       ! if this field is a surface getval, override the number of levels with 1
       nz = 1
     else
-      select case(self%fields(i)%fieldspec%levels)
+      select case(self%fields(i)%metadata%levels)
       case ('full_ocn')
         nz = self%geom%nzo
       case ('1') ! TODO, generalize to work with any number?
         nz = 1
       case default
-        call abor1_ftn('soca_fields::create(): Illegal levels '//self%fields(i)%fieldspec%levels// &
+        call abor1_ftn('soca_fields::create(): Illegal levels '//self%fields(i)%metadata%levels// &
                        ' given for ' // self%fields(i)%name)      
       end select
     endif
@@ -617,9 +617,9 @@ subroutine soca_fields_read(fld, f_conf, vdate)
 
     ! built-in variables
     do i=1,size(fld%fields)
-      if(fld%fields(i)%fieldspec%io_name /= "") then
+      if(fld%fields(i)%metadata%io_name /= "") then
         ! which file are we reading from?
-        select case(fld%fields(i)%fieldspec%io_file)
+        select case(fld%fields(i)%metadata%io_file)
         case ('ocn')
           filename = ocn_filename
           restart => ocean_restart
@@ -633,15 +633,15 @@ subroutine soca_fields_read(fld, f_conf, vdate)
           restart => ice_restart
           read_ice = .true.
         case default
-          call abor1_ftn('read_file(): illegal io_file: '//fld%fields(i)%fieldspec%io_file)
+          call abor1_ftn('read_file(): illegal io_file: '//fld%fields(i)%metadata%io_file)
         end select
 
       ! setup to read
         if (fld%fields(i)%nz == 1) then
-          idr = register_restart_field(restart, filename, fld%fields(i)%fieldspec%io_name, &
+          idr = register_restart_field(restart, filename, fld%fields(i)%metadata%io_name, &
               fld%fields(i)%val(:,:,1), domain=fld%geom%Domain%mpp_domain)
         else
-          idr = register_restart_field(restart, filename, fld%fields(i)%fieldspec%io_name, &
+          idr = register_restart_field(restart, filename, fld%fields(i)%metadata%io_name, &
               fld%fields(i)%val(:,:,:), domain=fld%geom%Domain%mpp_domain)
         end if
       end if
@@ -876,9 +876,9 @@ subroutine soca_fields_write_rst(fld, f_conf, vdate)
   ! built in variables
   do i=1,size(fld%fields)
     field => fld%fields(i)
-    if (len_trim(field%fieldspec%io_file) /= 0) then
+    if (len_trim(field%metadata%io_file) /= 0) then
       ! which file are we writing to
-      select case(field%fieldspec%io_file)
+      select case(field%metadata%io_file)
       case ('ocn')
         filename = ocn_filename
         restart => ocean_restart
@@ -891,15 +891,15 @@ subroutine soca_fields_write_rst(fld, f_conf, vdate)
         restart => ice_restart
         write_ice = .true.
       case default
-        call abor1_ftn('soca_write_restart(): illegal io_file: '//field%fieldspec%io_file)
+        call abor1_ftn('soca_write_restart(): illegal io_file: '//field%metadata%io_file)
       end select
 
       ! write
       if (field%nz == 1) then
-        idr = register_restart_field( restart, filename, field%fieldspec%io_name, &
+        idr = register_restart_field( restart, filename, field%metadata%io_name, &
           field%val(:,:,1), domain=fld%geom%Domain%mpp_domain)
       else
-        idr = register_restart_field( restart, filename, field%fieldspec%io_name, &
+        idr = register_restart_field( restart, filename, field%metadata%io_name, &
         field%val(:,:,:), domain=fld%geom%Domain%mpp_domain)
       end if
     end if
@@ -953,7 +953,7 @@ subroutine soca_fields_colocate(self, cgridlocout)
   do i=1,size(self%fields)
 
     ! Check if already colocated
-    if (self%fields(i)%fieldspec%grid == cgridlocout) cycle
+    if (self%fields(i)%metadata%grid == cgridlocout) cycle
 
     ! Initialize fms spherical idw interpolation
      g => self%geom
@@ -974,7 +974,7 @@ subroutine soca_fields_colocate(self, cgridlocout)
     end do
 
     ! Update c-grid location
-    self%fields(i)%fieldspec%grid = cgridlocout
+    self%fields(i)%metadata%grid = cgridlocout
     select case(cgridlocout)
     ! TODO: Test colocation to u and v grid
     !case ('u')

@@ -123,7 +123,7 @@ subroutine soca_getvalues_fillgeovals(self, geom, fld, t1, t2, locs, geovals)
   do ivar = 1, geovals%nvar
 
     call fld%get(geovals%variables(ivar), fldptr)
-    if (fldptr%fieldspec%dummy_atm) cycle ! TODO remove this hack
+    if (fldptr%metadata%dummy_atm) cycle ! TODO remove this hack
     nval = fldptr%nz
 
     ! Allocate geovals
@@ -139,10 +139,10 @@ subroutine soca_getvalues_fillgeovals(self, geom, fld, t1, t2, locs, geovals)
     allocate(gom_window(locs%nlocs()))
     allocate(fld3d(isc:iec,jsc:jec,1:nval))
 
-    masked = fldptr%fieldspec%masked
+    masked = fldptr%metadata%masked
     ! TODO, the following is an override to keep same answers during a PR,
     ! it should be removed in its own PR
-    select case (fldptr%fieldspec%name)
+    select case (fldptr%metadata%name)
     case ('sw', 'lw', 'lhf', 'shf', 'us')          
       masked = .true.
     end select
@@ -224,10 +224,10 @@ subroutine soca_getvalues_fillgeovals_ad(self, geom, incr, t1, t2, locs, geovals
     gom_window = 0.0_kind_real
 
     ! determine if this variable should use the masked grid
-    masked = field%fieldspec%masked
+    masked = field%metadata%masked
     ! TODO, the following is an override to keep same answers during a PR,
     ! it should be removed in its own PR
-    select case (field%fieldspec%name)
+    select case (field%metadata%name)
     case ('sw', 'lw', 'lhf', 'shf', 'us')          
       masked = .true.
     end select

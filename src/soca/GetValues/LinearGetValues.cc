@@ -12,8 +12,8 @@
 #include "soca/GetValues/LinearGetValues.h"
 #include "soca/Increment/Increment.h"
 #include "soca/State/State.h"
-#include "soca/VariableChange/Model2GeoVaLs/Model2GeoVaLs.h"
-#include "soca/VariableChange/Model2GeoVaLs/LinearModel2GeoVaLs.h"
+#include "soca/Transforms/Model2GeoVaLs/Model2GeoVaLs.h"
+#include "soca/Transforms/Model2GeoVaLs/LinearModel2GeoVaLs.h"
 
 #include "ufo/GeoVaLs.h"
 #include "ufo/Locations.h"
@@ -47,17 +47,22 @@ void LinearGetValues::setTrajectory(const State & state,
                                     ufo::GeoVaLs & geovals) {
   std::unique_ptr<State> varChangeState;
   const State * state_ptr;
-  if( geovals.getVars() <= state.variables()) {
+
+  // Do variable change if it has not already been done.
+  // TODO(travis): remove this once Yannick is done rearranging things in oops.
+  if ( geovals.getVars() <= state.variables() ) {
     state_ptr = &state;
   } else {
-    varChangeState.reset(new State(*geom_, geovals.getVars(), state.validTime()));
+    varChangeState.reset(new State(*geom_, geovals.getVars(),
+                         state.validTime()));
     model2geovals_->changeVar(state, *varChangeState);
     state_ptr = varChangeState.get();
   }
 
-  // TOOD(travis) : change to a map to store multiple time slices?
+  // TODO(travis) : change to a map to store multiple time slices?
   eckit::LocalConfiguration conf;
-  linearmodel2geovals_.reset(new LinearModel2GeoVaLs(state, state, *geom_, conf));
+  linearmodel2geovals_.reset(new LinearModel2GeoVaLs(state, state,
+                                                     *geom_, conf));
 
   soca_getvalues_fill_geovals_f90(keyLinearGetValues_,
                                   geom_->toFortran(),

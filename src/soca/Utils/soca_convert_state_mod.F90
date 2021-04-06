@@ -177,7 +177,7 @@ subroutine soca_convertstate_change_resol(self, field_src, field_des, geom_src, 
   call initialize_remapping(remapCS2,'PPM_IH4')
 
   ! Set grid thickness based on zstar level for src & target grid
-  if (field_des%fieldspec%io_file=="ocn".or.field_des%fieldspec%io_file=='ice') then
+  if (field_des%metadata%io_file=="ocn".or.field_des%metadata%io_file=='ice') then
     mask_ = field_des%mask
     h_new1(isc1:iec1,jsc1:jec1,1:geom_src%nzo_zstar) = geom_src%h_zstar(isc1:iec1,jsc1:jec1,1:geom_src%nzo_zstar)
     h_new2(isc2:iec2,jsc2:jec2,1:geom_des%nzo_zstar) = geom_des%h_zstar(isc2:iec2,jsc2:jec2,1:geom_des%nzo_zstar)
@@ -201,11 +201,11 @@ subroutine soca_convertstate_change_resol(self, field_src, field_des, geom_src, 
 
   ! Converts src grid to zstar coordinate
   nz_ = geom_src%nzo_zstar
-  if (field_src%nz == 1 .or. field_src%fieldspec%io_file=="ice") nz_ = field_src%nz
+  if (field_src%nz == 1 .or. field_src%metadata%io_file=="ice") nz_ = field_src%nz
   allocate(tmp(isd1:ied1,jsd1:jed1,1:nz_),gdata(isg:ieg,jsg:jeg,1:nz_),tmp2(isd2:ied2,jsd2:jed2,1:nz_))
   allocate(h1(field_src%nz),h2(nz_))
   tmp = 0.d0 ; gdata = 0.d0 ; tmp2 = 0.d0;
-  if ( field_src%nz > 1 .and. field_src%fieldspec%io_file/="ice") then
+  if ( field_src%nz > 1 .and. field_src%metadata%io_file/="ice") then
     do j = jsc1, jec1
       do i = isc1, iec1
         tmp_nz = field_src%nz
@@ -232,9 +232,9 @@ subroutine soca_convertstate_change_resol(self, field_src, field_des, geom_src, 
       end do !i
     end do !j
   else
-    if (field_src%fieldspec%io_file=="ocn") tmp(:,:,1) = field_src%val(:,:,1) !*field_src%mask(:,:) !2D
-    if (field_src%fieldspec%io_file=="sfc") tmp(:,:,1) = field_src%val(:,:,1) !2D no mask
-    if (field_src%fieldspec%io_file=="ice") tmp(:,:,1:nz_) = field_src%val(:,:,1:nz_)
+    if (field_src%metadata%io_file=="ocn") tmp(:,:,1) = field_src%val(:,:,1) !*field_src%mask(:,:) !2D
+    if (field_src%metadata%io_file=="sfc") tmp(:,:,1) = field_src%val(:,:,1) !2D no mask
+    if (field_src%metadata%io_file=="ice") tmp(:,:,1:nz_) = field_src%val(:,:,1:nz_)
   end if ! field_src%nz > 1
   call mpp_update_domains(tmp, geom_src%Domain%mpp_domain)
 
@@ -248,7 +248,7 @@ subroutine soca_convertstate_change_resol(self, field_src, field_des, geom_src, 
   if(allocated(h1)) deallocate(h1)
   if(allocated(h2)) deallocate(h2)
   allocate(h1(nz_),h2(field_des%nz))
-  if ( field_des%nz > 1 .and. field_des%fieldspec%io_file/="ice") then
+  if ( field_des%nz > 1 .and. field_des%metadata%io_file/="ice") then
     do j = jsc2, jec2
       do i = isc2, iec2
         tmp_nz = nz_ !assume geom_src%nzo_zstar == geom%des%nzo_zstar
@@ -275,9 +275,9 @@ subroutine soca_convertstate_change_resol(self, field_src, field_des, geom_src, 
       end do !j
     end do !i
   else
-   if (field_des%fieldspec%io_file=="ocn") field_des%val(:,:,1) = tmp2(:,:,1)*field_des%mask(:,:) ! 2D
-   if (field_des%fieldspec%io_file=="sfc") field_des%val(:,:,1) = tmp2(:,:,1) ! 2D no mask
-   if (field_des%fieldspec%io_file=="ice") field_des%val(:,:,1:field_des%nz) = tmp2(:,:,1:field_des%nz)
+   if (field_des%metadata%io_file=="ocn") field_des%val(:,:,1) = tmp2(:,:,1)*field_des%mask(:,:) ! 2D
+   if (field_des%metadata%io_file=="sfc") field_des%val(:,:,1) = tmp2(:,:,1) ! 2D no mask
+   if (field_des%metadata%io_file=="ice") field_des%val(:,:,1:field_des%nz) = tmp2(:,:,1:field_des%nz)
   end if ! nz > 1
 
   call mpp_update_domains(field_des%val, geom_des%Domain%mpp_domain)

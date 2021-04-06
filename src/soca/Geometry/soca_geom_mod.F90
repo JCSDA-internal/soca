@@ -10,7 +10,7 @@ use atlas_module, only: atlas_functionspace_pointcloud, atlas_fieldset, &
     atlas_field, atlas_real, atlas_integer, atlas_geometry, atlas_indexkdtree
 use MOM_domains, only : MOM_domain_type, MOM_infra_init
 use MOM_io,      only : io_infra_init
-use soca_fieldspec_mod
+use soca_fields_metadata_mod
 use soca_mom6, only: soca_mom6_config, soca_mom6_init, soca_geomdomain_init
 use soca_utils, only: write2pe, soca_remap_idw
 use kinds, only: kind_real
@@ -62,7 +62,7 @@ type :: soca_geom
     character(len=:), allocatable :: geom_grid_file
     type(fckit_mpi_comm) :: f_comm
     type(atlas_functionspace_pointcloud) :: afunctionspace
-    type(soca_fieldspecs) :: fieldspecs
+    type(soca_fields_metadata) :: fields_metadata
 
     contains
     procedure :: init => geom_init
@@ -132,9 +132,9 @@ subroutine geom_init(self, f_conf, f_comm)
   if ( .not. f_conf%get("save_local_domain", self%save_local_domain) ) &
      self%save_local_domain = .false.
 
-  ! process the fieldspecs
-  call f_conf%get_or_die("fieldspec", str)
-  call self%fieldspecs%create(str)
+  ! process the fields metadata file
+  call f_conf%get_or_die("fields metadata", str)
+  call self%fields_metadata%create(str)
 
 end subroutine geom_init
 
@@ -261,7 +261,7 @@ subroutine geom_clone(self, other)
   other%rossby_radius = self%rossby_radius
   other%distance_from_coast = self%distance_from_coast
   other%h = self%h
-  call self%fieldspecs%clone(other%fieldspecs)
+  call self%fields_metadata%clone(other%fields_metadata)
 end subroutine geom_clone
 
 ! ------------------------------------------------------------------------------

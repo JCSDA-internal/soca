@@ -1,6 +1,6 @@
 geometry:
   mom6_input_nml: ./inputnml/input.nml
-  fieldspec: ./soca_fieldspec.yml
+  fields metadata: ./soca_fieldspec.yml
 
 window begin: &date 2018-04-14T00:00:00Z
 window length: P2D

@@ -43,7 +43,6 @@ namespace soca {
     // Fill ATLAS fieldset
     atlasFieldSet_.reset(new atlas::FieldSet());
     soca_geo_fill_atlas_fieldset_f90(keyGeom_, atlasFieldSet_->get());
-
   }
   // -----------------------------------------------------------------------------
   Geometry::Geometry(const Geometry & other)

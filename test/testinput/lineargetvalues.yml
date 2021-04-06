@@ -1,6 +1,6 @@
 geometry:
   mom6_input_nml: ./inputnml/input.nml
-  fieldspec: ./soca_fieldspec.yml
+  fields metadata: ./soca_fieldspec.yml
 
 state variables: &geovals [sea_water_potential_temperature,
                            sea_water_salinity,

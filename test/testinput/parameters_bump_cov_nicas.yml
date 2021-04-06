@@ -1,6 +1,6 @@
 resolution:
   mom6_input_nml: ./inputnml/input.nml
-  fieldspec: ./soca_fieldspec.yml
+  fields metadata: ./soca_fieldspec.yml
 
 variables: &soca_vars  [cicen, hicen, socn, tocn, ssh, hocn]
 
