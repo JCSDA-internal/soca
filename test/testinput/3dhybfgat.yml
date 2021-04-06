@@ -6,7 +6,7 @@ cost function:
   analysis variables: &soca_vars [cicen, hicen, socn, tocn, ssh, hocn]
   geometry:
     mom6_input_nml: ./inputnml/input.nml
-    fields metadata: ./soca_fieldspec.yml
+    fields metadata: ./fields_metadata.yml
 
   model:
     name: SOCA
@@ -132,7 +132,7 @@ variational:
   iterations:
   - geometry:
       mom6_input_nml: ./inputnml/input.nml
-      fields metadata: ./soca_fieldspec.yml
+      fields metadata: ./fields_metadata.yml
     linear model:
       variable change: Identity
       name: IdTLM

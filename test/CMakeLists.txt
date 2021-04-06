@@ -104,7 +104,7 @@ set( soca_test_ref
 set( soca_data_files
   Data/godas_sst_bgerr.nc
   Data/rossrad.dat
-  Data/soca_fieldspec.yml
+  Data/fields_metadata.yml
 )
 
 set( soca_model_param
@@ -572,7 +572,7 @@ soca_add_test( NAME obslocalization
                SRC  TestObsLocalization.cc
                TEST_DEPENDS test_soca_gridgen
                NOCOMPARE )
-	       
+
 
 #-------------------------------------------------------------------------------
 # Tests using the main SOCA applications

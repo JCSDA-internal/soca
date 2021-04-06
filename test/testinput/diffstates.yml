@@ -1,10 +1,10 @@
 state geometry:
   mom6_input_nml: ./inputnml/input.nml
-  fields metadata: ./soca_fieldspec.yml
+  fields metadata: ./fields_metadata.yml
 
 increment geometry:
   mom6_input_nml: ./inputnml/input.nml
-  fields metadata: ./soca_fieldspec.yml
+  fields metadata: ./fields_metadata.yml
 
 state1:
   read_from_file: 1

@@ -4,7 +4,7 @@ forecast length: PT2H
 
 geometry:
   mom6_input_nml: ./inputnml/input.nml
-  fields metadata: ./soca_fieldspec.yml
+  fields metadata: ./fields_metadata.yml
 
 model:
   name: SOCA

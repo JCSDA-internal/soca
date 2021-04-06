@@ -46,7 +46,7 @@ void GetValues::fillGeoVaLs(const State & state,
                             const util::DateTime & t2,
                             ufo::GeoVaLs & geovals) const {
   // overwrite with atm geovals
-  // NOTE this is a horrible hack. Remove soon.
+  // NOTE this is a horrible hack. Remove soon?
   if (geom_->getAtmInit())
   {
     // Get atm geovals
@@ -55,6 +55,8 @@ void GetValues::fillGeoVaLs(const State & state,
     getValuesFromFile(locs_, geovals.getVars(), geovals);
   }
 
+  // Do variable change if it has not already been done.
+  // TODO(travis): remove this once Yannick is done rearranging things in oops.
   std::unique_ptr<State> varChangeState;
   const State * state_ptr;
   if (geovals.getVars() <= state.variables()) {

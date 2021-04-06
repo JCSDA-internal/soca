@@ -48,7 +48,7 @@ type :: soca_field
   real(kind=kind_real),     pointer :: mask(:,:) => null() !< field mask
   real(kind=kind_real),     pointer :: lon(:,:) => null()  !< field lon
   real(kind=kind_real),     pointer :: lat(:,:) => null()  !< field lat
-  type(soca_field_metadata)         :: metadata   ! parameters for the field as determined 
+  type(soca_field_metadata)         :: metadata   ! parameters for the field as determined
                                                   ! by the configuration yaml
 contains
   procedure :: copy            => soca_field_copy
@@ -200,9 +200,9 @@ subroutine soca_fields_init_vars(self, vars)
   integer :: i, nz
 
   allocate(self%fields(size(vars)))
-  do i=1,size(vars)    
+  do i=1,size(vars)
     self%fields(i)%name = trim(vars(i))
-    
+
     ! get the field metadata parameters that are read in from a config file
     self%fields(i)%metadata = self%geom%fields_metadata%get(self%fields(i)%name)
 
@@ -217,19 +217,19 @@ subroutine soca_fields_init_vars(self, vars)
       self%fields(i)%lon => self%geom%lonu
       self%fields(i)%lat => self%geom%latu
       if (self%fields(i)%metadata%masked) &
-        self%fields(i)%mask => self%geom%mask2du    
+        self%fields(i)%mask => self%geom%mask2du
     case ('v')
         self%fields(i)%lon => self%geom%lonv
         self%fields(i)%lat => self%geom%latv
         if (self%fields(i)%metadata%masked) &
-          self%fields(i)%mask => self%geom%mask2dv      
+          self%fields(i)%mask => self%geom%mask2dv
     case default
       call abor1_ftn('soca_fields::create(): Illegal grid '// &
                      self%fields(i)%metadata%grid // &
                      ' given for ' // self%fields(i)%name)
     end select
 
-    ! determine number of levels    
+    ! determine number of levels
     if (self%fields(i)%name == self%fields(i)%metadata%getval_name_surface) then
       ! if this field is a surface getval, override the number of levels with 1
       nz = 1
@@ -241,7 +241,7 @@ subroutine soca_fields_init_vars(self, vars)
         nz = 1
       case default
         call abor1_ftn('soca_fields::create(): Illegal levels '//self%fields(i)%metadata%levels// &
-                       ' given for ' // self%fields(i)%name)      
+                       ' given for ' // self%fields(i)%name)
       end select
     endif
 
