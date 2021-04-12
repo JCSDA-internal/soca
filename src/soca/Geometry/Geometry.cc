@@ -10,6 +10,8 @@
 #include "atlas/grid.h"
 #include "atlas/util/Config.h"
 
+#include "eckit/config/YAMLConfiguration.h"
+
 #include "soca/Geometry/Geometry.h"
 
 // -----------------------------------------------------------------------------
@@ -21,9 +23,10 @@ namespace soca {
       atmconf_(conf),
       initatm_(initAtm(conf)),
       fmsinput_(comm, conf) {
-    const eckit::Configuration * configc = &conf;
+
     fmsinput_.updateNameList();
-    soca_geo_setup_f90(keyGeom_, &configc, &comm);
+
+    soca_geo_setup_f90(keyGeom_, &conf, &comm);
 
     // Set ATLAS lon/lat field
     atlasFieldSet_.reset(new atlas::FieldSet());

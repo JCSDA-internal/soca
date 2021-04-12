@@ -3,3 +3,4 @@ geometry:
   save_local_domain: true
   full_init: true
   mom6_input_nml: ./inputnml/input.nml
+  fields metadata: ./fields_metadata.yml

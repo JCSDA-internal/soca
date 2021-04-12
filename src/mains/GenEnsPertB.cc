@@ -6,13 +6,11 @@
  */
 
 #include "soca/Traits.h"
-#include "soca/Transforms/instantiateBalanceOpFactory.h"
 #include "oops/runs/GenEnsPertB.h"
 #include "oops/runs/Run.h"
 
 int main(int argc,  char ** argv) {
   oops::Run run(argc, argv);
-  soca::instantiateBalanceOpFactory();
   oops::GenEnsPertB<soca::Traits> ensgen;
   return run.execute(ensgen);
 }

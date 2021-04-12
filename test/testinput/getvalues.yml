@@ -1,9 +1,10 @@
 geometry:
   mom6_input_nml: ./inputnml/input.nml
+  fields metadata: ./fields_metadata.yml
 
 state variables: &geovals [sea_water_potential_temperature,
                            sea_water_potential_temperature,
-                           sea_water_practical_salinity,
+                           sea_water_salinity,
                            sea_water_cell_thickness,
                            sea_surface_height_above_geoid,
                            sea_surface_temperature,
