@@ -19,6 +19,12 @@
 using oops::Log;
 
 namespace soca {
+
+// -----------------------------------------------------------------------------
+
+static oops::VariableChangeMaker<soca::Traits, soca::Ana2Model >
+               makerVariableChangeAna2Model_("Ana2Model");
+
 // -----------------------------------------------------------------------------
 Ana2Model::Ana2Model(const Geometry & resol, const eckit::Configuration & conf)
 : uvars_(initRotate(conf, "u")), vvars_(initRotate(conf, "v")),

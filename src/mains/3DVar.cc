@@ -10,7 +10,6 @@
  */
 
 #include "soca/Traits.h"
-#include "soca/Transforms/instantiateBalanceOpFactory.h"
 #include "ufo/ObsTraits.h"
 #include "ufo/instantiateObsFilterFactory.h"
 #include "oops/runs/Run.h"
@@ -22,7 +21,6 @@
 int main(int argc,  char ** argv) {
   oops::Run run(argc, argv);
   oops::instantiateModelFactory<soca::Traits>();
-  soca::instantiateBalanceOpFactory();
   ufo::instantiateObsFilterFactory<ufo::ObsTraits>();
   saber::instantiateLocalizationFactory<soca::Traits>();
   saber::instantiateCovarFactory<soca::Traits>();

@@ -10,18 +10,26 @@
 
 #include "soca/Geometry/Geometry.h"
 #include "soca/Increment/Increment.h"
-#include "soca/State/State.h"
 #include "soca/Transforms/BkgErr/BkgErr.h"
 #include "soca/Transforms/BkgErr/BkgErrFortran.h"
+#include "soca/State/State.h"
+#include "soca/Traits.h"
 
 #include "eckit/config/Configuration.h"
 
+#include "oops/interface/LinearVariableChange.h"
 #include "oops/base/Variables.h"
 #include "oops/util/Logger.h"
 
 using oops::Log;
 
 namespace soca {
+
+  // -----------------------------------------------------------------------------
+  static oops::LinearVariableChangeMaker<Traits,
+            oops::LinearVariableChange<Traits, BkgErr> >
+            makerLinearVariableChangeBkgErr_("BkgErrSOCA");
+
   // -----------------------------------------------------------------------------
   BkgErr::BkgErr(const State & bkg,
                  const State & traj,

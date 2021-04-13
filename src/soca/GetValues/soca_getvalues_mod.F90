@@ -121,9 +121,10 @@ subroutine soca_getvalues_fillgeovals(self, geom, fld, t1, t2, locs, geovals)
 
   ! Allocate temporary geoval and 3d field for the current time window
   do ivar = 1, geovals%nvar
-    ! Set number of levels/categories (nval)
-    nval = nlev_from_ufovar(fld, geovals%variables(ivar))
-    if (nval==0) cycle ! should we abort?
+
+    call fld%get(geovals%variables(ivar), fldptr)
+    if (fldptr%metadata%dummy_atm) cycle ! TODO remove this hack
+    nval = fldptr%nz
 
     ! Allocate geovals
     if (.not. geovals%linit) then
@@ -137,71 +138,16 @@ subroutine soca_getvalues_fillgeovals(self, geom, fld, t1, t2, locs, geovals)
 
     allocate(gom_window(locs%nlocs()))
     allocate(fld3d(isc:iec,jsc:jec,1:nval))
-    nullify(fldptr)
 
-    ! Extract fld3d from field
-    masked = .true. ! by default fields are assumed to need a land mask applied,
-    ! (Currently only sea area fraction is unmasked)
-
-    ! if we are lucky and this variable is a non-derived type, check the fields structure
-    do n=1,size(fld%fields)
-      if (fld%fields(n)%cf_name == geovals%variables(ivar)) then
-        fld3d = fld%fields(n)%val(isc:iec,jsc:jec,1:nval)
-      end if
-    end do
-
-    ! otherwise, we are dealing with a derived type, prepare for a long "select case" statement
-    select case (trim(geovals%variables(ivar)))
-    case ("distance_from_coast")
-      fld3d(isc:iec,jsc:jec,1) = real(fld%geom%distance_from_coast(isc:iec,jsc:jec),kind=kind_real)
-      masked = .false.
-
-    case ("sea_water_salinity")
-      call fld%get("socn", fldptr)
-      fld3d = fldptr%val(isc:iec,jsc:jec,1:nval)
-
-    case ("sea_surface_temperature")
-      call fld%get("tocn", fldptr)
-      fld3d(isc:iec,jsc:jec,1) = fldptr%val(isc:iec,jsc:jec,1)
-
-      ! TODO: Move unit change elsewhere, check if is COARDS.
-    case ("surface_temperature_where_sea")
-      call fld%get("tocn", fldptr)
-      fld3d(isc:iec,jsc:jec,1) = fldptr%val(isc:iec,jsc:jec,1) + 273.15_kind_real
-
-    case ("sea_surface_salinity")
-      call fld%get("socn", fldptr)
-      fld3d(isc:iec,jsc:jec,1) = fldptr%val(isc:iec,jsc:jec,1)
-
-    case ("sea_floor_depth_below_sea_surface")
-      call fld%get("hocn", fldptr)
-      fld3d(isc:iec,jsc:jec,1) = sum(fldptr%val(isc:iec,jsc:jec,:),dim=3)
-
-    case ("sea_area_fraction")
-      fld3d(isc:iec,jsc:jec,1) = real(fld%geom%mask2d(isc:iec,jsc:jec),kind=kind_real)
-      masked = .false.
-
-    case ("sea_surface_chlorophyll")
-      call fld%get("chl", fldptr)
-      fld3d(isc:iec,jsc:jec,1) = fldptr%val(isc:iec,jsc:jec,1)
-
-    case ("mesoscale_representation_error")
-      ! Representation errors: dx/R
-      fld3d(isc:iec,jsc:jec,1) = fld%geom%mask2d(isc:iec,jsc:jec) * &
-                                &sqrt(fld%geom%cell_area(isc:iec,jsc:jec))/&
-                                &fld%geom%rossby_radius(isc:iec,jsc:jec)
-
-    case ("sea_surface_biomass_in_p_units")
-      call fld%get("biop", fldptr)
-      fld3d(isc:iec,jsc:jec,1) = fldptr%val(isc:iec,jsc:jec,1)
-
-    case ("sea_ice_area_fraction")
-      call fld%get("cicen", fldptr)
-      fld3d(isc:iec,jsc:jec,1) = fldptr%val(isc:iec,jsc:jec,1)
-
-    case default
-      call fckit_log%debug("soca_interpfields_mod:interp geoval does not exist")
+    masked = fldptr%metadata%masked
+    ! TODO, the following is an override to keep same answers during a PR,
+    ! it should be removed in its own PR
+    select case (fldptr%metadata%name)
+    case ('sw', 'lw', 'lhf', 'shf', 'us')          
+      masked = .true.
     end select
+
+    fld3d = fldptr%val(isc:iec,jsc:jec,1:nval)
 
     ! Apply forward interpolation: Model ---> Obs
     do ival = 1, nval
@@ -258,7 +204,6 @@ subroutine soca_getvalues_fillgeovals_ad(self, geom, incr, t1, t2, locs, geovals
   type(soca_field), pointer :: field
     logical :: found
 
-
   ! Indices for compute domain (no halo)
   isc = geom%isc ; iec = geom%iec
   jsc = geom%jsc ; jec = geom%jec
@@ -269,8 +214,8 @@ subroutine soca_getvalues_fillgeovals_ad(self, geom, incr, t1, t2, locs, geovals
   allocate(gom_window_ival(locs%nlocs()))
 
   do ivar = 1, geovals%nvar
-    ! Set number of levels/categories (nval)
-    nval = nlev_from_ufovar(incr, geovals%variables(ivar))
+    call incr%get(geovals%variables(ivar), field)
+    nval = field%nz
 
     ! Allocate temporary geoval and 3d field for the current time window
     allocate(gom_window(nval,locs%nlocs()))
@@ -279,8 +224,13 @@ subroutine soca_getvalues_fillgeovals_ad(self, geom, incr, t1, t2, locs, geovals
     gom_window = 0.0_kind_real
 
     ! determine if this variable should use the masked grid
-    ! (currently all of them, perhaps have atm vars use unmasked interp at some point??)
-    masked = .true.
+    masked = field%metadata%masked
+    ! TODO, the following is an override to keep same answers during a PR,
+    ! it should be removed in its own PR
+    select case (field%metadata%name)
+    case ('sw', 'lw', 'lhf', 'shf', 'us')          
+      masked = .true.
+    end select
 
     ! Apply backward interpolation: Obs ---> Model
     if (masked) then
@@ -314,49 +264,8 @@ subroutine soca_getvalues_fillgeovals_ad(self, geom, incr, t1, t2, locs, geovals
       end if
     end do
 
-    ! if we are lucky and this variable is a non-derived type, check the fields structure
-    found = .false.
-    do n=1,size(incr%fields)
-      if (incr%fields(n)%cf_name == geovals%variables(ivar)) then
-        incr%fields(n)%val(isc:iec,jsc:jec,1:nval) = &
-          incr%fields(n)%val(isc:iec,jsc:jec,1:nval) + incr3d(isc:iec,jsc:jec,1:nval)
-        found = .true.
-        exit
-      end if
-    end do
-
-    ! otherwise, we are dealing with a derived type, prepare for a long "select case" statement
-    if (.not. found) then
-      select case (trim(geovals%variables(ivar)))
-      case ("sea_water_salinity")
-        call incr%get("socn", field)
-        field%val(isc:iec,jsc:jec,1:nval) = field%val(isc:iec,jsc:jec,1:nval) + incr3d
-
-      case ("sea_surface_temperature")
-        call incr%get("tocn", field)
-        field%val(isc:iec,jsc:jec,1:nval) = field%val(isc:iec,jsc:jec,1:nval) + incr3d
-
-      case ("sea_surface_salinity")
-        call incr%get("socn", field)
-        field%val(isc:iec,jsc:jec,1) = field%val(isc:iec,jsc:jec,1) + incr3d(isc:iec,jsc:jec,1)
-
-      case ("sea_surface_chlorophyll")
-        call incr%get("chl", field)
-        field%val(isc:iec,jsc:jec,1:nval) = field%val(isc:iec,jsc:jec,1:nval) + incr3d
-
-      case ("sea_surface_biomass_in_p_units")
-        call incr%get("biop", field)
-        field%val(isc:iec,jsc:jec,1:nval) = field%val(isc:iec,jsc:jec,1:nval) + incr3d
-
-      case ("sea_ice_area_fraction")
-        call incr%get("cicen", field)
-        field%val(isc:iec,jsc:jec,1) = field%val(isc:iec,jsc:jec,1) + incr3d(isc:iec,jsc:jec,1)
-
-      case default
-        call abor1_ftn("soca_interpfields_mod:getvalues_ad geoval does not exist")
-
-      end select
-    end if
+    field%val(isc:iec, jsc:jec, 1:nval) = field%val(isc:iec, jsc:jec, 1:nval) + &
+      incr3d(isc:iec, jsc:jec, 1:nval)
 
     ! Deallocate temporary arrays
     deallocate(incr3d)
@@ -367,49 +276,5 @@ subroutine soca_getvalues_fillgeovals_ad(self, geom, incr, t1, t2, locs, geovals
   deallocate(gom_window_ival)
 
 end subroutine soca_getvalues_fillgeovals_ad
-
-! ------------------------------------------------------------------------------
-!> Get 3rd dimension of fld
-function nlev_from_ufovar(fld, var) result(nval)
-  class(soca_fields), intent(in) :: fld
-  character(len=*),  intent(in) :: var
-  integer                       :: nval
-
-  integer :: i
-
-  ! fields that are not derived (i.e. the "cf_name" is set for a given field)
-  do i=1,size(fld%fields)
-
-    if (fld%fields(i)%cf_name == var) then
-      nval = fld%fields(i)%nz
-      return
-    end if
-  end do
-
-  ! otherwise, the ufovar name is a derived type
-  select case (var)
-  case ("distance_from_coast",&
-        "sea_surface_temperature", &
-        "surface_temperature_where_sea", &
-        "sea_surface_salinity", &
-        "sea_floor_depth_below_sea_surface", &
-        "sea_area_fraction", &
-        "sea_surface_chlorophyll", &
-        "mesoscale_representation_error", &
-        "sea_surface_biomass_in_p_units", &
-        "sea_ice_area_fraction")
-     nval = 1
-
-  case ("sea_water_salinity")
-     nval = fld%geom%nzo
-
-  case default
-     nval = 0
-     call fckit_log%debug("soca_interpfields_mod:nlef_from_ufovar geoval does not exist: "//var)
-
-  end select
-
-end function nlev_from_ufovar
-
 
 end module soca_getvalues_mod

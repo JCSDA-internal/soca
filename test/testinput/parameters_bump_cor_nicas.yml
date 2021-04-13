@@ -1,6 +1,7 @@
 geometry:
   mom6_input_nml: ./inputnml/input_small.nml
   geom_grid_file: soca_gridspec.small.nc
+  fields metadata: ./fields_metadata.yml
 
 input variables: &soca_vars  [hocn, socn, tocn, ssh]
 

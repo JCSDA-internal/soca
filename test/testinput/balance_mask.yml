@@ -1,5 +1,6 @@
 geometry:
   mom6_input_nml: ./inputnml/input.nml
+  fields metadata: ./fields_metadata.yml
 
 initial condition:
   read_from_file: 1

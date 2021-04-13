@@ -10,17 +10,25 @@
 
 #include "soca/Geometry/Geometry.h"
 #include "soca/Increment/Increment.h"
-#include "soca/State/State.h"
 #include "soca/Transforms/VertConv/VertConv.h"
 #include "soca/Transforms/VertConv/VertConvFortran.h"
+#include "soca/State/State.h"
+#include "soca/Traits.h"
 
 #include "eckit/config/Configuration.h"
 
+#include "oops/interface/LinearVariableChange.h"
 #include "oops/util/Logger.h"
 
 using oops::Log;
 
 namespace soca {
+
+  // -----------------------------------------------------------------------------
+  static oops::LinearVariableChangeMaker<Traits,
+            oops::LinearVariableChange<Traits, VertConv> >
+            makerLinearVariableCHangeVertConv_("VertConvSOCA");
+
   // -----------------------------------------------------------------------------
   VertConv::VertConv(const State & bkg,
                      const State & traj,

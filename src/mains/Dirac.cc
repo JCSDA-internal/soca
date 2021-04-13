@@ -10,7 +10,6 @@
  */
 
 #include "soca/Traits.h"
-#include "soca/Transforms/instantiateBalanceOpFactory.h"
 #include "oops/runs/Dirac.h"
 #include "oops/runs/Run.h"
 #include "saber/oops/instantiateLocalizationFactory.h"
@@ -18,7 +17,6 @@
 
 int main(int argc,  char ** argv) {
   oops::Run run(argc, argv);
-  soca::instantiateBalanceOpFactory();
   saber::instantiateLocalizationFactory<soca::Traits>();
   saber::instantiateCovarFactory<soca::Traits>();
   oops::Dirac<soca::Traits> dir;

@@ -27,7 +27,7 @@ namespace soca {
 
   extern "C" {
     void soca_geo_setup_f90(F90geom &,
-                            const eckit::Configuration * const *,
+                            const eckit::Configuration * const &,
                             const eckit::mpi::Comm *);
     void soca_geo_set_atlas_lonlat_f90(const F90geom &,
                                        atlas::field::FieldSetImpl *);
