@@ -12,5 +12,10 @@ observations:
     simulated variables: ['sea_surface_temperature']
     obsdatain:  {obsfile: ./Data/sst.nc}
   obs localization:
-    lengthscale: 2000e3
+    lengthscale: 3000e3
     localization method: Gaspari-Cohn
+    reference gridpoints:
+      lons: [-172.5, -192.5, -172.5, -17.5]
+      lats: [  42.5,    2.5,    2.5,  22.5]
+    reference local nobs: [12, 17, 21, 19]
+    localization reduces values: true
