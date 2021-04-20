@@ -43,9 +43,9 @@ ecbuild_bundle( PROJECT fckit           GIT "https://github.com/jcsda-internal/f
 ecbuild_bundle( PROJECT atlas           GIT "https://github.com/jcsda-internal/atlas.git"           UPDATE TAG e0b7709 )
 ecbuild_bundle( PROJECT oops            GIT "https://github.com/jcsda-internal/oops.git"            UPDATE TAG d6a45a5 )
 ecbuild_bundle( PROJECT saber           GIT "https://github.com/jcsda-internal/saber.git"           UPDATE TAG 7a61b3e )
-ecbuild_bundle( PROJECT ioda            GIT "https://github.com/jcsda-internal/ioda.git"            UPDATE TAG 0dcfac4 )
+ecbuild_bundle( PROJECT ioda            GIT "https://github.com/jcsda-internal/ioda.git"            UPDATE TAG 8344418 )
 ecbuild_bundle( PROJECT gsw             GIT "https://github.com/jcsda-internal/GSW-Fortran.git"     UPDATE TAG 8987bf8 )
-ecbuild_bundle( PROJECT ufo             GIT "https://github.com/jcsda-internal/ufo.git"             UPDATE TAG cdc05a5 )
+ecbuild_bundle( PROJECT ufo             GIT "https://github.com/jcsda-internal/ufo.git"             UPDATE TAG e4f70e3 )
 ecbuild_bundle( PROJECT mom6            GIT "https://github.com/jcsda-internal/MOM6.git"            UPDATE TAG a04fdb5 RECURSIVE)
 ecbuild_bundle( PROJECT soca            SOURCE "../" )
 
