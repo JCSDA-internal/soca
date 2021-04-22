@@ -14,15 +14,15 @@ background:
     state variables: *soca_vars
   members:
   - <<: *state
-    ocn_filename: ocn.pert.ens.1.2018-04-15T00:00:00Z.PT6H.nc
+    ocn_filename: ocn.pert.ens.1.2018-04-15T00:00:00Z.PT0S.nc
   - <<: *state
-    ocn_filename: ocn.pert.ens.2.2018-04-15T00:00:00Z.PT6H.nc
+    ocn_filename: ocn.pert.ens.2.2018-04-15T00:00:00Z.PT0S.nc
   - <<: *state
-    ocn_filename: ocn.pert.ens.3.2018-04-15T00:00:00Z.PT6H.nc
+    ocn_filename: ocn.pert.ens.3.2018-04-15T00:00:00Z.PT0S.nc
   - <<: *state
-    ocn_filename: ocn.pert.ens.4.2018-04-15T00:00:00Z.PT6H.nc
+    ocn_filename: ocn.pert.ens.4.2018-04-15T00:00:00Z.PT0S.nc
   - <<: *state
-    ocn_filename: ocn.pert.ens.5.2018-04-15T00:00:00Z.PT6H.nc
+    ocn_filename: ocn.pert.ens.5.2018-04-15T00:00:00Z.PT0S.nc
 
 
 # common filters used later on
@@ -36,8 +36,8 @@ observations:
 
 - obs space:
     name: SeaSurfaceTemp
-    distribution: InefficientDistribution
-    obsdataout: {obsfile: ./Data/sst.letkf.nc}
+    distribution: RoundRobin
+    obsdataout: {obsfile: ./Data/sst.letkf.observer.nc}
     obsdatain:  {obsfile: ./Data/sst.nc}
     simulated variables: [sea_surface_temperature]
   obs operator:
@@ -46,22 +46,18 @@ observations:
     covariance model: diagonal
   obs localization:
       localization method: Gaspari-Cohn
-      lengthscale: 2000e3
+      lengthscale: 0
   obs filters:
   - *land_mask
   - filter: Thinning
     amount: 0.1
-    defer to post: true
     random seed: 0
 
 driver:
+  run as observer only: true
 
 local ensemble DA:
   solver: LETKF
-  inflation:
-    rtps: 0.5
-    rtpp: 0.6
-    mult: 1.1
 
 output:
   datadir: Data

@@ -24,9 +24,9 @@ background error:
   load_nicas: 1
   mpicom: 2
   date: *date
-  pert_T: 0.1
+  pert_T: 1.0
   pert_S: 1.0
-  pert_SSH: 1.0
+  pert_SSH: 0.0
   pert_AICE: 0.1
   pert_HICE: 0.05
   pert_CHL: 0.1
@@ -34,6 +34,14 @@ background error:
   analysis variables: &soca_vars [ssh, cicen, hicen, tocn, socn, chl, biop]
 
   variable changes:
+
+  - variable change: VertConvSOCA
+    Lz_min: 2.0
+    Lz_mld: 1
+    Lz_mld_max: 500.0
+    scale_layer_thick: 1.5
+    input variables: *soca_vars
+    output variables: *soca_vars
 
   - variable change: BkgErrFILT
     ocean_depth_min: 1000 # [m]
@@ -63,11 +71,9 @@ background error:
     input variables: *soca_vars
     output variables: *soca_vars
 
-  - variable change: VertConvSOCA
-    Lz_min: 2.0
-    Lz_mld: 1
-    Lz_mld_max: 500.0
-    scale_layer_thick: 1.5
+  - variable change: HorizFiltSOCA
+    niter: 1
+    filter variables: *soca_vars
     input variables: *soca_vars
     output variables: *soca_vars
 
