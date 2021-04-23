@@ -7,14 +7,14 @@
 
 #include "soca/Traits.h"
 
-#include "ioda/instantiateObsLocFactory.h"
 #include "oops/runs/Run.h"
 #include "test/interface/ObsLocalization.h"
+#include "ufo/instantiateObsLocFactory.h"
 #include "ufo/ObsTraits.h"
 
 int main(int argc,  char ** argv) {
   oops::Run run(argc, argv);
-  ioda::instantiateObsLocFactory<soca::Traits, ufo::ObsTraits>();
+  ufo::instantiateObsLocFactory<soca::Traits, ufo::ObsTraits>();
   test::ObsLocalization<soca::Traits, ufo::ObsTraits> tests;
   return run.execute(tests);
 }
