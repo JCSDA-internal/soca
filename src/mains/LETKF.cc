@@ -6,15 +6,15 @@
  */
 
 #include "soca/Traits.h"
-#include "ioda/instantiateObsLocFactory.h"
 #include "oops/runs/LocalEnsembleDA.h"
 #include "oops/runs/Run.h"
 #include "ufo/instantiateObsFilterFactory.h"
+#include "ufo/instantiateObsLocFactory.h"
 #include "ufo/ObsTraits.h"
 
 int main(int argc,  char ** argv) {
   oops::Run run(argc, argv);
-  ioda::instantiateObsLocFactory<soca::Traits, ufo::ObsTraits>();
+  ufo::instantiateObsLocFactory<soca::Traits, ufo::ObsTraits>();
   ufo::instantiateObsFilterFactory<ufo::ObsTraits>();
   oops::LocalEnsembleDA<soca::Traits, ufo::ObsTraits> letkf;
   return run.execute(letkf);
