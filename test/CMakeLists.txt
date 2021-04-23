@@ -670,19 +670,19 @@ soca_add_test( NAME enshofx
 
 # variational methods
 soca_add_test( NAME 3dvar_soca
-               EXE  soca_3dvar.x
+               EXE  soca_var.x
                TOL  4e-9 0
                NOTRAPFPE
                TEST_DEPENDS test_soca_static_socaerror_init )
 
 soca_add_test( NAME 3dvarbump
-               EXE  soca_3dvar.x
+               EXE  soca_var.x
                TOL  4e-9 0
                NOTRAPFPE
                TEST_DEPENDS test_soca_parameters_bump_cor_nicas )
 
 soca_add_test( NAME 3dvar_godas
-               EXE  soca_3dvar.x
+               EXE  soca_var.x
                TOL  2e-6 0
                TEST_DEPENDS test_soca_static_socaerror_init )
 
@@ -693,7 +693,7 @@ soca_add_test( NAME addincrement
                TEST_DEPENDS 3dvar_godas )
 
 soca_add_test( NAME 3dvarlowres_soca
-               EXE  soca_3dvar.x
+               EXE  soca_var.x
                TOL  0.1 0
                NOTRAPFPE
                TEST_DEPENDS test_soca_static_socaerrorsmall_init )
@@ -703,32 +703,32 @@ soca_add_test( NAME diffstates
                TEST_DEPENDS test_soca_gridgen )
 
 soca_add_test( NAME 3dvarfgat
-               EXE  soca_3dvar.x
+               EXE  soca_var.x
                TOL  1e-6 0
                NOTRAPFPE
                TEST_DEPENDS test_soca_static_socaerror_init )
 
 soca_add_test( NAME 3dvarfgat_pseudo
-               EXE  soca_3dvar.x
+               EXE  soca_var.x
                TOL  1e-6 0
                NOTRAPFPE
                TEST_DEPENDS test_soca_static_socaerror_init )
 
 soca_add_test( NAME 3dhyb
-               EXE  soca_3dvar.x
+               EXE  soca_var.x
                TOL  2e-7 0
                NOTRAPFPE
                TEST_DEPENDS test_soca_static_socaerror_init
                             test_soca_parameters_bump_loc )
 
 soca_add_test( NAME 3dhybfgat
-               EXE  soca_3dvar.x
+               EXE  soca_var.x
                NOTRAPFPE
                TEST_DEPENDS test_soca_static_socaerror_init
                             test_soca_parameters_bump_loc )
 
 # soca_add_test( NAME 4dhyb
-#                EXE  soca_3dvar.x
+#                EXE  soca_var.x
 #                TEST_DEPENDS test_soca_static_socaerror_init
 #                             test_soca_parameters_bump_loc )
 

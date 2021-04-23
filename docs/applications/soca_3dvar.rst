@@ -1,6 +1,6 @@
 .. _applications_soca_3dvar:
 
-soca_3dvar.x
+soca_var.x
 ================
 
 Description
@@ -14,4 +14,3 @@ Configuration
 
 .. TODO::
    Add a description of the yaml configuration specific to this application, and links to the common sections of configuration
-
