@@ -1,12 +1,12 @@
 Test     : Variance: 
 Test     :   Valid time: 2018-04-15T00:00:00Z
-Test     :   cicen   min=    0.000002   max=    0.000306   mean=    0.000047
-Test     :   hicen   min=    0.001535   max=    0.973988   mean=    0.122935
-Test     :    socn   min=    0.000000   max=    1.308587   mean=    0.047887
-Test     :    tocn   min=    0.000000   max=    7.360339   mean=    0.202748
+Test     :   cicen   min=    0.000000   max=    0.000202   mean=    0.000047
+Test     :   hicen   min=    0.001703   max=    0.607655   mean=    0.121778
+Test     :    socn   min=    0.000000   max=    1.592811   mean=    0.050090
+Test     :    tocn   min=    0.000000   max=    7.303424   mean=    0.205026
 Test     :    uocn   min=    0.000000   max=    0.000000   mean=    0.000000
 Test     :    vocn   min=    0.000000   max=    0.000000   mean=    0.000000
-Test     :     ssh   min=    0.000000   max=    0.001096   mean=    0.000019
+Test     :     ssh   min=    0.000000   max=    0.001067   mean=    0.000018
 Test     :    hocn   min=    0.000000   max=    0.000000   mean=    0.000000
-Test     :     mld   min=    0.000000   max=4254787.447907   mean=92395.587772
+Test     :     mld   min=    0.000000   max=3964073.968931   mean=80519.014545
 Test     : layer_depth   min=    0.000000   max=    0.000000   mean=    0.000000

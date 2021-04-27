@@ -14,7 +14,6 @@ background:
 
 bump:
   verbosity: main
-  prefix: bump3d
   datadir: ./bump
   method: cor
   strategy: specific_univariate
@@ -27,17 +26,23 @@ bump:
   network: 1
   mpicom: 2
   forced_radii: 1
-  rh:
-    hocn: [6000.0e3]
-    socn: [6000.0e3]
-    tocn: [6000.0e3]
-    ssh: [6000.0e3]
-  rv:
-    hocn: [100]
-    socn: [100]
-    tocn: [100]
-    ssh: [100]
-
+  grids:
+  - prefix: bump3d
+    variables: [hocn,socn,tocn]
+    rh:
+      hocn: [6000.0e3]
+      socn: [6000.0e3]
+      tocn: [6000.0e3]
+    rv:
+      hocn: [100]
+      socn: [100]
+      tocn: [100]
+  - prefix: bump3d
+    variables: [ssh]
+    rh:
+      ssh: [6000.0e3]
+    rv:
+      ssh: [100]
 output:
 - datadir: bump
   date: *date

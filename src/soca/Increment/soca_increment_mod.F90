@@ -218,7 +218,7 @@ subroutine soca_increment_set_atlas(self, geom, vars, afieldset)
   type(oops_variables),  intent(in)    :: vars
   type(atlas_fieldset),  intent(inout) :: afieldset
 
-  integer :: jvar, i, jz
+  integer :: jvar, i, nz, jz
   logical :: var_found
   character(len=1024) :: fieldname
   type(soca_field), pointer :: field
@@ -230,8 +230,12 @@ subroutine soca_increment_set_atlas(self, geom, vars, afieldset)
       field => self%fields(i)
       if (trim(vars%variable(jvar))==trim(field%name)) then
         if (.not.afieldset%has_field(vars%variable(jvar))) then
+          ! Number of ATLAS levels
+          nz = field%nz
+          if (field%nz==1) nz = 0
+
           ! Create field
-          afield = geom%afunctionspace%create_field(name=vars%variable(jvar),kind=atlas_real(kind_real),levels=field%nz)
+          afield = geom%afunctionspace%create_field(name=vars%variable(jvar),kind=atlas_real(kind_real),levels=nz)
 
           ! Add field
           call afieldset%add(afield)
@@ -257,8 +261,8 @@ subroutine soca_increment_to_atlas(self, geom, vars, afieldset)
   type(oops_variables),  intent(in)    :: vars
   type(atlas_fieldset),  intent(inout) :: afieldset
 
-  integer :: jvar, i, jz
-  real(kind=kind_real), pointer :: real_ptr_2(:,:)
+  integer :: jvar, i, nz, jz
+  real(kind=kind_real), pointer :: real_ptr_1(:), real_ptr_2(:,:)
   logical :: var_found
   character(len=1024) :: fieldname
   type(soca_field), pointer :: field
@@ -273,18 +277,27 @@ subroutine soca_increment_to_atlas(self, geom, vars, afieldset)
           ! Get field
           afield = afieldset%field(vars%variable(jvar))
         else
-          ! Create field
-          afield = geom%afunctionspace%create_field(name=vars%variable(jvar),kind=atlas_real(kind_real),levels=field%nz)
+          ! Number of ATLAS levels
+          nz = field%nz
+          if (field%nz==1) nz = 0
 
+          ! Create field
+          afield = geom%afunctionspace%create_field(name=vars%variable(jvar),kind=atlas_real(kind_real),levels=nz)
+     
           ! Add field
           call afieldset%add(afield)
         end if
 
         ! Copy data
-        call afield%data(real_ptr_2)
-        do jz=1,field%nz
-          real_ptr_2(jz,:) = pack(field%val(geom%isc:geom%iec,geom%jsc:geom%jec,jz),.true.)
-        end do
+        if (field%nz==1) then
+          call afield%data(real_ptr_1)
+          real_ptr_1 = pack(field%val(geom%isc:geom%iec,geom%jsc:geom%jec,1),.true.)
+        else
+          call afield%data(real_ptr_2)
+          do jz=1,field%nz
+            real_ptr_2(jz,:) = pack(field%val(geom%isc:geom%iec,geom%jsc:geom%jec,jz),.true.)
+          end do
+        end if
 
         ! Release pointer
         call afield%final()
@@ -308,7 +321,7 @@ subroutine soca_increment_from_atlas(self, geom, vars, afieldset)
   type(atlas_fieldset),  intent(in)    :: afieldset
 
   integer :: jvar, i, jz
-  real(kind=kind_real), pointer :: real_ptr_2(:,:)
+  real(kind=kind_real), pointer :: real_ptr_1(:), real_ptr_2(:,:)
   logical :: umask(geom%isc:geom%iec,geom%jsc:geom%jec),var_found
   character(len=1024) :: fieldname
   type(soca_field), pointer :: field
@@ -327,11 +340,17 @@ subroutine soca_increment_from_atlas(self, geom, vars, afieldset)
         afield = afieldset%field(vars%variable(jvar))
 
         ! Copy data
-        call afield%data(real_ptr_2)
-        do jz=1,field%nz
-          field%val(geom%isc:geom%iec,geom%jsc:geom%jec,jz) = unpack(real_ptr_2(jz,:), &
-          & umask,field%val(geom%isc:geom%iec,geom%jsc:geom%jec,jz))
-        end do
+        if (field%nz==1) then
+          call afield%data(real_ptr_1)
+          field%val(geom%isc:geom%iec,geom%jsc:geom%jec,1) = unpack(real_ptr_1, &
+          & umask,field%val(geom%isc:geom%iec,geom%jsc:geom%jec,1))
+        else
+          call afield%data(real_ptr_2)
+          do jz=1,field%nz
+            field%val(geom%isc:geom%iec,geom%jsc:geom%jec,jz) = unpack(real_ptr_2(jz,:), &
+            & umask,field%val(geom%isc:geom%iec,geom%jsc:geom%jec,jz))
+          end do
+        end if
 
         ! Release pointer
         call afield%final()

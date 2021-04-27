@@ -1,102 +1,102 @@
 Test     : Initial state for member 1:
 Test     :   Valid time: 2018-04-15T00:00:00Z
-Test     :    socn   min=   10.721046   max=   40.441659   mean=   34.530414
-Test     :    tocn   min=   -3.921668   max=   31.555520   mean=    6.045493
-Test     :     ssh   min=   -2.318490   max=    0.961947   mean=   -0.270186
+Test     :    socn   min=   10.721046   max=   40.441659   mean=   34.550595
+Test     :    tocn   min=   -3.853629   max=   32.050592   mean=    6.046259
+Test     :     ssh   min=   -2.326801   max=    0.947231   mean=   -0.277750
 Test     :    uocn   min=   -0.858169   max=    0.700095   mean=   -0.000259
 Test     :    vocn   min=   -0.766110   max=    1.437777   mean=    0.002197
 Test     :    hocn   min=    0.001000   max= 1345.640000   mean=  128.628064
-Test     :     chl   min=   -0.000604   max=    4.672095   mean=    0.118477
+Test     :     chl   min=   -0.000604   max=    4.671938   mean=    0.118474
 Test     :    biop   min=    0.000000   max=    0.000000   mean=    0.000000
 Test     : Initial state for member 2:
 Test     :   Valid time: 2018-04-15T00:00:00Z
-Test     :    socn   min=   10.721046   max=   40.441659   mean=   34.538916
-Test     :    tocn   min=   -3.373237   max=   31.466833   mean=    6.009999
-Test     :     ssh   min=   -1.920096   max=    0.991057   mean=   -0.280513
+Test     :    socn   min=   10.721046   max=   40.441659   mean=   34.529190
+Test     :    tocn   min=   -4.176191   max=   32.007500   mean=    6.016181
+Test     :     ssh   min=   -1.913855   max=    0.946593   mean=   -0.281204
 Test     :    uocn   min=   -0.858169   max=    0.700095   mean=   -0.000259
 Test     :    vocn   min=   -0.766110   max=    1.437777   mean=    0.002197
 Test     :    hocn   min=    0.001000   max= 1345.640000   mean=  128.628064
-Test     :     chl   min=   -0.000741   max=    4.672040   mean=    0.118481
+Test     :     chl   min=   -0.000831   max=    4.672130   mean=    0.118491
 Test     :    biop   min=    0.000000   max=    0.000000   mean=    0.000000
 Test     : Initial state for member 3:
 Test     :   Valid time: 2018-04-15T00:00:00Z
-Test     :    socn   min=   10.721046   max=   40.441659   mean=   34.571084
-Test     :    tocn   min=   -4.025426   max=   31.863681   mean=    6.030053
-Test     :     ssh   min=   -1.981225   max=    0.948331   mean=   -0.286933
+Test     :    socn   min=   10.721046   max=   40.441659   mean=   34.577569
+Test     :    tocn   min=   -3.827706   max=   31.832948   mean=    6.044860
+Test     :     ssh   min=   -1.990477   max=    0.929591   mean=   -0.288207
 Test     :    uocn   min=   -0.858169   max=    0.700095   mean=   -0.000259
 Test     :    vocn   min=   -0.766110   max=    1.437777   mean=    0.002197
 Test     :    hocn   min=    0.001000   max= 1345.640000   mean=  128.628064
-Test     :     chl   min=   -0.000678   max=    4.672024   mean=    0.118489
+Test     :     chl   min=   -0.000672   max=    4.671850   mean=    0.118493
 Test     :    biop   min=    0.000000   max=    0.000000   mean=    0.000000
 Test     : Initial state for member 4:
 Test     :   Valid time: 2018-04-15T00:00:00Z
-Test     :    socn   min=   10.721046   max=   40.441659   mean=   34.515829
-Test     :    tocn   min=   -3.777201   max=   32.054886   mean=    6.024774
-Test     :     ssh   min=   -1.878931   max=    0.946667   mean=   -0.260414
+Test     :    socn   min=   10.721046   max=   40.441659   mean=   34.532707
+Test     :    tocn   min=   -3.661746   max=   31.868855   mean=    6.027769
+Test     :     ssh   min=   -1.874012   max=    0.889545   mean=   -0.265747
 Test     :    uocn   min=   -0.858169   max=    0.700095   mean=   -0.000259
 Test     :    vocn   min=   -0.766110   max=    1.437777   mean=    0.002197
 Test     :    hocn   min=    0.001000   max= 1345.640000   mean=  128.628064
-Test     :     chl   min=   -0.000986   max=    4.671970   mean=    0.118504
+Test     :     chl   min=   -0.000990   max=    4.672100   mean=    0.118495
 Test     :    biop   min=    0.000000   max=    0.000000   mean=    0.000000
 Test     : Initial state for member 5:
 Test     :   Valid time: 2018-04-15T00:00:00Z
-Test     :    socn   min=   10.721046   max=   40.441659   mean=   34.547259
-Test     :    tocn   min=   -4.053497   max=   31.658321   mean=    6.016663
-Test     :     ssh   min=   -1.906226   max=    0.934702   mean=   -0.272621
+Test     :    socn   min=   10.721046   max=   40.441659   mean=   34.542277
+Test     :    tocn   min=   -4.049529   max=   31.604066   mean=    5.998122
+Test     :     ssh   min=   -1.907420   max=    0.924515   mean=   -0.272508
 Test     :    uocn   min=   -0.858169   max=    0.700095   mean=   -0.000259
 Test     :    vocn   min=   -0.766110   max=    1.437777   mean=    0.002197
 Test     :    hocn   min=    0.001000   max= 1345.640000   mean=  128.628064
-Test     :     chl   min=   -0.000687   max=    4.671862   mean=    0.118466
+Test     :     chl   min=   -0.000681   max=    4.672059   mean=    0.118465
 Test     :    biop   min=    0.000000   max=    0.000000   mean=    0.000000
 Test     : H(x) for member 1:
-Test     : SeaSurfaceTemp nobs= 201 Min=-0.992614, Max=31.356113, RMS=24.215221
+Test     : SeaSurfaceTemp nobs= 201 Min=-0.992614, Max=30.923138, RMS=24.238581
 Test     : H(x) for member 2:
-Test     : SeaSurfaceTemp nobs= 201 Min=-0.992614, Max=30.698692, RMS=24.160496
+Test     : SeaSurfaceTemp nobs= 201 Min=-0.992614, Max=30.778900, RMS=24.261050
 Test     : H(x) for member 3:
-Test     : SeaSurfaceTemp nobs= 201 Min=-0.992614, Max=30.789898, RMS=24.315634
+Test     : SeaSurfaceTemp nobs= 201 Min=-0.992614, Max=30.588476, RMS=24.227836
 Test     : H(x) for member 4:
-Test     : SeaSurfaceTemp nobs= 201 Min=-1.883003, Max=31.637487, RMS=24.153517
+Test     : SeaSurfaceTemp nobs= 201 Min=-1.956411, Max=31.279362, RMS=24.277671
 Test     : H(x) for member 5:
-Test     : SeaSurfaceTemp nobs= 201 Min=-0.992614, Max=30.611782, RMS=24.132900
+Test     : SeaSurfaceTemp nobs= 201 Min=-0.992614, Max=30.762848, RMS=24.054215
 Test     : H(x) ensemble background mean: 
-Test     : SeaSurfaceTemp nobs= 201 Min=-0.992614, Max=30.967726, RMS=24.191498
+Test     : SeaSurfaceTemp nobs= 201 Min=-0.992614, Max=30.639588, RMS=24.208327
 Test     : background y - H(x): 
-Test     : SeaSurfaceTemp nobs= 201 Min=-5.273398, Max=4.326472, RMS=1.343445
+Test     : SeaSurfaceTemp nobs= 201 Min=-5.237507, Max=4.340328, RMS=1.343861
 Test     : Background mean :
 Test     :   Valid time: 2018-04-15T00:00:00Z
-Test     :    socn   min=   10.721046   max=   40.441659   mean=   34.540700
-Test     :    tocn   min=   -2.719240   max=   31.710701   mean=    6.025396
-Test     :     ssh   min=   -1.898450   max=    0.956541   mean=   -0.274133
+Test     :    socn   min=   10.721046   max=   40.441659   mean=   34.546468
+Test     :    tocn   min=   -2.734884   max=   31.598304   mean=    6.026638
+Test     :     ssh   min=   -1.899183   max=    0.927308   mean=   -0.277083
 Test     :    uocn   min=   -0.858169   max=    0.700095   mean=   -0.000259
 Test     :    vocn   min=   -0.766110   max=    1.437777   mean=    0.002197
 Test     :    hocn   min=    0.001000   max= 1345.640000   mean=  128.628064
-Test     :     chl   min=   -0.000367   max=    4.671998   mean=    0.118483
+Test     :     chl   min=   -0.000357   max=    4.672015   mean=    0.118484
 Test     :    biop   min=    0.000000   max=    0.000000   mean=    0.000000
 Test     : Analysis mean :
 Test     :   Valid time: 2018-04-15T00:00:00Z
-Test     :    socn   min=   10.721046   max=   40.441659   mean=   34.537716
-Test     :    tocn   min=   -2.719240   max=   31.710701   mean=    6.028243
-Test     :     ssh   min=   -1.925407   max=    0.965278   mean=   -0.274043
+Test     :    socn   min=   10.721046   max=   40.441659   mean=   34.544896
+Test     :    tocn   min=   -2.734884   max=   31.598304   mean=    6.025583
+Test     :     ssh   min=   -1.922320   max=    0.926801   mean=   -0.277411
 Test     :    uocn   min=   -0.858169   max=    0.700095   mean=   -0.000259
 Test     :    vocn   min=   -0.766110   max=    1.437777   mean=    0.002197
 Test     :    hocn   min=    0.001000   max= 1345.640000   mean=  128.628064
-Test     :     chl   min=   -0.000958   max=    4.671998   mean=    0.118481
+Test     :     chl   min=   -0.000981   max=    4.672015   mean=    0.118481
 Test     :    biop   min=    0.000000   max=    0.000000   mean=    0.000000
 Test     : Analysis mean increment :
 Test     :   Valid time: 2018-04-15T00:00:00Z
-Test     :    socn   min=   -1.308507   max=    0.715543   mean=   -0.002984
-Test     :    tocn   min=   -4.909225   max=    3.740613   mean=    0.002846
-Test     :     ssh   min=   -0.576840   max=    0.161442   mean=    0.000091
+Test     :    socn   min=   -1.257537   max=    0.867525   mean=   -0.001572
+Test     :    tocn   min=   -5.412827   max=    2.836851   mean=   -0.001055
+Test     :     ssh   min=   -0.672387   max=    0.115752   mean=   -0.000328
 Test     :    uocn   min=    0.000000   max=    0.000000   mean=    0.000000
 Test     :    vocn   min=    0.000000   max=    0.000000   mean=    0.000000
 Test     :    hocn   min=    0.000000   max=    0.000000   mean=    0.000000
-Test     :     chl   min=   -0.001203   max=    0.000628   mean=   -0.000002
+Test     :     chl   min=   -0.001286   max=    0.000659   mean=   -0.000003
 Test     :    biop   min=    0.000000   max=    0.000000   mean=    0.000000
 Test     : Forecast variance :
 Test     :   Valid time: 2018-04-15T00:00:00Z
-Test     :    socn   min=    0.000000   max=    1.308587   mean=    0.047659
-Test     :    tocn   min=    0.000000   max=    7.360339   mean=    0.202748
-Test     :     ssh   min=    0.000000   max=    0.088647   mean=    0.003542
+Test     :    socn   min=    0.000000   max=    1.592811   mean=    0.049905
+Test     :    tocn   min=    0.000000   max=    7.303424   mean=    0.205026
+Test     :     ssh   min=    0.000000   max=    0.090195   mean=    0.003449
 Test     :    uocn   min=    0.000000   max=    0.000000   mean=    0.000000
 Test     :    vocn   min=    0.000000   max=    0.000000   mean=    0.000000
 Test     :    hocn   min=    0.000000   max=    0.000000   mean=    0.000000
@@ -104,9 +104,9 @@ Test     :     chl   min=    0.000000   max=    0.000000   mean=    0.000000
 Test     :    biop   min=    0.000000   max=    0.000000   mean=    0.000000
 Test     : Analysis variance :
 Test     :   Valid time: 2018-04-15T00:00:00Z
-Test     :    socn   min=    0.000000   max=    2.245849   mean=    0.051704
-Test     :    tocn   min=    0.000000   max=   31.889118   mean=    0.243930
-Test     :     ssh   min=    0.000000   max=    0.468484   mean=    0.004114
+Test     :    socn   min=    0.000000   max=    2.161732   mean=    0.053755
+Test     :    tocn   min=    0.000000   max=   37.202677   mean=    0.254846
+Test     :     ssh   min=    0.000000   max=    0.620013   mean=    0.004177
 Test     :    uocn   min=    0.000000   max=    0.000000   mean=    0.000000
 Test     :    vocn   min=    0.000000   max=    0.000000   mean=    0.000000
 Test     :    hocn   min=    0.000000   max=    0.000000   mean=    0.000000
