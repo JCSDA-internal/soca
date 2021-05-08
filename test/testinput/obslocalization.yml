@@ -7,15 +7,44 @@ window end: 2018-04-16T00:00:00Z
 
 observations:
 - obs space:
-    name: 'Simulate'
+    name: 'SOAR'
     distribution: InefficientDistribution
     simulated variables: ['sea_surface_temperature']
     obsdatain:  {obsfile: ./Data/sst.nc}
   obs localization:
+    lengthscale: 3000e3
+    soar horizontal decay: 0.000005
+    localization method: SOAR #Gaspari-Cohn #SOAR
+    reference gridpoints:
+      lons: [-172.5, -192.5, -172.5, -17.5]
+      lats: [  42.5,    2.5,    2.5,  22.5]
+    reference local nobs: [12, 17, 21, 19]
+    reference rms: [0.188352,0.111358,0.0157477,0.0463056]
+- obs space:
+    name: 'GC99'
+    distribution: InefficientDistribution
+    simulated variables: ['sea_surface_temperature']
+    obsdatain:  {obsfile: ./Data/sst.nc}
+  obs localization:
+    search method: kd_tree
     lengthscale: 3000e3
     localization method: Gaspari-Cohn
     reference gridpoints:
       lons: [-172.5, -192.5, -172.5, -17.5]
       lats: [  42.5,    2.5,    2.5,  22.5]
     reference local nobs: [12, 17, 21, 19]
-    localization reduces values: true
+    reference rms: [0.396372,0.276644,0.202674,0.364655]
+- obs space:
+    name: 'BoxCar'
+    distribution: InefficientDistribution
+    simulated variables: ['sea_surface_temperature']
+    obsdatain:  {obsfile: ./Data/sst.nc}
+  obs localization:
+    lengthscale: 3000e3
+    localization method: Box car
+    reference gridpoints:
+      lons: [-172.5, -192.5, -172.5, -17.5]
+      lats: [  42.5,    2.5,    2.5,  22.5]
+    reference local nobs: [12, 17, 21, 19]
+    reference rms: [1.0, 1.0, 1.0, 1.0]
+

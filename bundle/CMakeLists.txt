@@ -41,11 +41,11 @@ endif ()
 
 ecbuild_bundle( PROJECT fckit           GIT "https://github.com/jcsda-internal/fckit.git"           UPDATE TAG 8502aae )
 ecbuild_bundle( PROJECT atlas           GIT "https://github.com/jcsda-internal/atlas.git"           UPDATE TAG e0b7709 )
-ecbuild_bundle( PROJECT oops            GIT "https://github.com/jcsda-internal/oops.git"            UPDATE TAG df25cf7 )
+ecbuild_bundle( PROJECT oops            GIT "https://github.com/jcsda-internal/oops.git"            UPDATE TAG 7b85ea9 )
 ecbuild_bundle( PROJECT saber           GIT "https://github.com/jcsda-internal/saber.git"           UPDATE TAG ec58fec )
 ecbuild_bundle( PROJECT ioda            GIT "https://github.com/jcsda-internal/ioda.git"            UPDATE TAG 1b25383 )
 ecbuild_bundle( PROJECT gsw             GIT "https://github.com/jcsda-internal/GSW-Fortran.git"     UPDATE TAG 8987bf8 )
-ecbuild_bundle( PROJECT ufo             GIT "https://github.com/jcsda-internal/ufo.git"             UPDATE TAG b7d3ddf )
+ecbuild_bundle( PROJECT ufo             GIT "https://github.com/jcsda-internal/ufo.git"             UPDATE TAG b057bba )
 ecbuild_bundle( PROJECT mom6            GIT "https://github.com/jcsda-internal/MOM6.git"            UPDATE TAG a04fdb5 RECURSIVE)
 ecbuild_bundle( PROJECT soca            SOURCE "../" )
 
