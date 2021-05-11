@@ -56,6 +56,11 @@ ecbuild_add_executable( TARGET  soca_ensrecenter.x
                         LIBS    soca
                       )
 
+ecbuild_add_executable( TARGET  soca_hybridgain.x
+                        SOURCES HybridGain.cc
+                        LIBS    soca
+                      )
+
 ecbuild_add_executable( TARGET  soca_checkpoint_model.x
                         SOURCES CheckpointModel.cc
                         LIBS    soca
