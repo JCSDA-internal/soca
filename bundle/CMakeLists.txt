@@ -38,7 +38,7 @@ if ( BUILD_FMS )
 endif ()
 
 # required repositories
-
+ecbuild_bundle( PROJECT jedicmake       GIT "https://github.com/JCSDA-internal/jedi-cmake.git"      UPDATE BRANCH develop )
 ecbuild_bundle( PROJECT fckit           GIT "https://github.com/jcsda-internal/fckit.git"           UPDATE BRANCH release-stable )
 ecbuild_bundle( PROJECT atlas           GIT "https://github.com/jcsda-internal/atlas.git"           UPDATE BRANCH release-stable )
 ecbuild_bundle( PROJECT oops            GIT "https://github.com/jcsda-internal/oops.git"            UPDATE BRANCH develop )
