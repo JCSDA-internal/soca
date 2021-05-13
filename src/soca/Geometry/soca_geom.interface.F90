@@ -10,6 +10,8 @@ use iso_c_binding
 use fckit_configuration_module, only: fckit_configuration
 use fckit_mpi_module,           only: fckit_mpi_comm
 use soca_geom_mod, only: soca_geom
+use oops_variables_mod
+use soca_fields_metadata_mod
 
 implicit none
 
@@ -162,6 +164,37 @@ subroutine c_soca_geo_start_end(c_key_self, ist, iend, jst, jend) bind(c, name='
 
 end subroutine c_soca_geo_start_end
 
+! ------------------------------------------------------------------------------
+subroutine c_soca_geo_get_num_levels(c_key_self, c_vars, c_levels_size, c_levels) &
+           bind(c, name='soca_geo_get_num_levels_f90')
+  integer(c_int),     intent(in)  :: c_key_self
+  type(c_ptr), value, intent(in)  :: c_vars
+  integer(c_size_t),  intent(in)  :: c_levels_size
+  integer(c_size_t),  intent(out) :: c_levels(c_levels_size)
+
+  type(soca_geom), pointer :: self
+  type(oops_variables)     :: vars
+  integer :: i
+  character(len=:), allocatable :: field_name
+  type(soca_field_metadata) :: field
+
+  call soca_geom_registry%get(c_key_self, self)
+  vars = oops_variables(c_vars)
+
+  do i = 1,vars%nvars()
+    field_name = vars%variable(i)
+    field = self%fields_metadata%get(field_name)
+    select case(field%levels)
+    case ("1")
+      c_levels(i) = 1
+    case ("full_ocn")
+      c_levels(i) = self%nzo
+    case default
+      call abor1_ftn('ERROR in c_soca_geo_get_num_levels, unknown "levels" '//field%levels)
+    end select
+  end do
+
+end subroutine c_soca_geo_get_num_levels
 
 ! ------------------------------------------------------------------------------
 

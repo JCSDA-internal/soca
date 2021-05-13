@@ -35,6 +35,9 @@ namespace atlas {
     class PointCloud;
   }
 }
+namespace oops {
+  class Variables;
+}
 
 // -----------------------------------------------------------------------------
 
@@ -52,6 +55,7 @@ namespace soca {
 
       GeometryIterator begin() const;
       GeometryIterator end() const;
+      std::vector<size_t> variableSizes(const oops::Variables & vars) const;
       std::vector<double> verticalCoord(std::string &) const {return {};}
 
       int& toFortran() {return keyGeom_;}
