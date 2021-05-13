@@ -188,7 +188,11 @@ subroutine c_soca_geo_get_num_levels(c_key_self, c_vars, c_levels_size, c_levels
     case ("1")
       c_levels(i) = 1
     case ("full_ocn")
-      c_levels(i) = self%nzo
+      if (field_name == field%getval_name_surface) then
+        c_levels(i) = 1
+      else
+        c_levels(i) = self%nzo
+      end if
     case default
       call abor1_ftn('ERROR in c_soca_geo_get_num_levels, unknown "levels" '//field%levels)
     end select
