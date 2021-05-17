@@ -20,17 +20,19 @@ ecbuild_bundle_initialize()
 
 option(BUILD_ECKIT "download and build eckit (not needed if in a jedi container)")
 if ( BUILD_ECKIT )
-  ecbuild_bundle( PROJECT eckit         GIT "https://github.com/ecmwf/eckit.git"  UPDATE TAG 1.16.0 )
+  ecbuild_bundle( PROJECT eckit  GIT "https://github.com/ecmwf/eckit.git"  UPDATE TAG 1.16.0 )
 endif ()
 
 option(BUILD_FCKIT "download and build fckit (not needed if in a jedi container)")
 if (BUILD_FCKIT)
-  ecbuild_bundle( PROJECT fckit         GIT "https://github.com/ecmwf/fckit.git"  UPDATE TAG 0.9.2 )
+  #ecbuild_bundle( PROJECT fckit  GIT "https://github.com/ecmwf/fckit.git"  UPDATE TAG 0.9.2 )
+  ecbuild_bundle( PROJECT fckit  GIT "https://github.com/jcsda-internal/fckit.git"  UPDATE BRANCH release-stable )
 endif()
 
 option(BUILD_ATLAS "download and build atlas (not needed if in a jedi container)")
 if (BUILD_ATLAS)
-  ecbuild_bundle( PROJECT atlas         GIT "https://github.com/ecmwf/atlas.git"  UPDATE TAG 0.24.1 )
+  #ecbuild_bundle( PROJECT atlas  GIT "https://github.com/ecmwf/atlas.git"  UPDATE TAG 0.24.1 )
+  ecbuild_bundle( PROJECT atlas  GIT "https://github.com/jcsda-internal/atlas.git"  UPDATE BRANCH release-stable )
 endif()
 
 
