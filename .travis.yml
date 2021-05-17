@@ -32,9 +32,6 @@ env:
     - LFS_REPOS=""
     # ENABLE_VALGRIND="ON"
 
-    # secure token used to push changes to GitHub (user: travissluka)
-    - secure: phYDV8BnMVQMhKbuyfpA0cUvelL3Jn9GrMunbAQAa4Hw6OInALu0BSoPAm5xd+lPAsVkhy3BwHlRvjqGYmhDr3NFuxUbZ/l1CcSOJZmV5Rp+5CY5nk0scQ9asuRSzt6jHBIaj9ncOyTWc7B3H6Vp88z6dBDgzeXWMaLy5A7u3fkTVI3dYAmvPAEd9wRp4nI6ij2lnTELIziTYZ07nrdIzYfAc6sqvPXhLkZfxYMkfDAbHHWZt+kGoJGPFfsjX1K7cgj32Ro+lm3Vl0u732QRCw3nUefhZrz3PkkGeX1U+GjQsz8liEgBqKng4ZxocepPsv5gwZj/frMCCtcXj59Pia5pmHy6vzdq4XCp/WpYwbbMEF9y9qVL35s9On9JnU20DEOV4r5c9rmJd8gbpsfK1reT8KOD5zJe9YBHRRXajweq23TFJPRyHVHlnSF8OtybOVG6OMLba9vvPTveQuaDIyc3kur5QtbM0HVv3uplef14m1frQYqji9I99h/pI5WcueRpcxARwagL1tnl3cfK4LyI3QWXidetDduE3MJQNfsKADlKKBVw9W2JyzNFCNj0J7x8r5SwObRX7Kj9YZfIPJGVt5rDc0OZm9wCt/BEZclTLyf4qbFibX/0glPiFoqhuYP/ZXAbQdYWI+si68gxcql33+PMkmbuhehA8qNZicE=
-
 branches:
   only:
     - develop
