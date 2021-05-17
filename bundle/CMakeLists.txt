@@ -43,7 +43,7 @@ endif ()
 
 option(BUILD_FMS "download and build fms" ON)
 if ( BUILD_FMS )
-  ecbuild_bundle( PROJECT fms           GIT "https://github.com/jcsda-internal/FMS.git"             UPDATE BRANCH release-stable )
+  ecbuild_bundle( PROJECT fms           GIT "https://github.com/jcsda-internal/FMS.git"             UPDATE BRANCH bugfix/module_install)#release-stable )
 endif ()
 
 
