@@ -25,14 +25,14 @@ endif ()
 
 option(BUILD_FCKIT "download and build fckit (not needed if in a jedi container)")
 if (BUILD_FCKIT)
-  #ecbuild_bundle( PROJECT fckit  GIT "https://github.com/ecmwf/fckit.git"  UPDATE TAG 0.9.2 )
   ecbuild_bundle( PROJECT fckit  GIT "https://github.com/jcsda-internal/fckit.git"  UPDATE BRANCH release-stable )
+  # TODO: replace with https://github.com/ecmwf/fckit.git TAG 0.9.2
 endif()
 
 option(BUILD_ATLAS "download and build atlas (not needed if in a jedi container)")
 if (BUILD_ATLAS)
-  #ecbuild_bundle( PROJECT atlas  GIT "https://github.com/ecmwf/atlas.git"  UPDATE TAG 0.24.1 )
   ecbuild_bundle( PROJECT atlas  GIT "https://github.com/jcsda-internal/atlas.git"  UPDATE BRANCH release-stable )
+  # TODO: repalce with https://github.com/ecmwf/atlas.git TAG 0.24.1
 endif()
 
 
