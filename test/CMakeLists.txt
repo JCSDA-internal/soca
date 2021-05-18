@@ -210,7 +210,7 @@ endforeach(FILENAME)
 
 
 # Link CRTM coeff
-if( ${CRTM_FOUND} )
+if( ${crtm_FOUND} )
 
   # the coefficient files needed
   # TODO(someone) for now these are our own copy in git-lfs,
@@ -649,7 +649,7 @@ soca_add_test( NAME hofx_3d
                EXE  soca_hofx3d.x
                TEST_DEPENDS test_soca_gridgen )
 
-if( ${CRTM_FOUND} )
+if( ${crtm_FOUND} )
  soca_add_test( NAME hofx_3dcrtm
                 EXE  soca_hofx3d.x
                 TEST_DEPENDS test_soca_gridgen )
