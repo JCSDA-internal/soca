@@ -6,26 +6,37 @@
 #
 # bundle for SOCA (ocean only)
 #
+cmake_minimum_required( VERSION 3.12 )
+project( soca-bundle VERSION 0.0.0 LANGUAGES C CXX Fortran )
 
-project( soca-bundle C CXX Fortran )
-
-cmake_minimum_required( VERSION 3.8 FATAL_ERROR )
-
+find_package( ecbuild 3.3.2 REQUIRED)
 include( ecbuild_bundle )
 
-set( ECBUILD_DEFAULT_BUILD_TYPE Release )
-set( ENABLE_MPI ON CACHE BOOL "Compile with MPI" )
-
 ecbuild_bundle_initialize()
-ecbuild_requires_macro_version( 2.7 )
 
 
-# Optional repositories
+# ECMWF repos that you probably dont need to build yourself because they
+#  should be in jedi-stack and the containers
 
 option(BUILD_ECKIT "download and build eckit (not needed if in a jedi container)")
 if ( BUILD_ECKIT )
-  ecbuild_bundle( PROJECT eckit         GIT "https://github.com/jcsda-internal/eckit.git"           UPDATE BRANCH release-stable )
+  ecbuild_bundle( PROJECT eckit  GIT "https://github.com/ecmwf/eckit.git"  UPDATE TAG 1.16.0 )
 endif ()
+
+option(BUILD_FCKIT "download and build fckit (not needed if in a jedi container)")
+if (BUILD_FCKIT)
+  ecbuild_bundle( PROJECT fckit  GIT "https://github.com/jcsda-internal/fckit.git"  UPDATE BRANCH release-stable )
+  # TODO: replace with https://github.com/ecmwf/fckit.git TAG 0.9.2
+endif()
+
+option(BUILD_ATLAS "download and build atlas (not needed if in a jedi container)")
+if (BUILD_ATLAS)
+  ecbuild_bundle( PROJECT atlas  GIT "https://github.com/jcsda-internal/atlas.git"  UPDATE BRANCH release-stable )
+  # TODO: repalce with https://github.com/ecmwf/atlas.git TAG 0.24.1
+endif()
+
+
+# other optional repositories
 
 option(BUILD_CRTM  "download and build CRTM")
 if ( BUILD_CRTM )
@@ -34,19 +45,18 @@ endif ()
 
 option(BUILD_FMS "download and build fms" ON)
 if ( BUILD_FMS )
-  ecbuild_bundle( PROJECT fms           GIT "https://github.com/jcsda-internal/FMS.git"             UPDATE BRANCH release-stable-ecbuild )
+  ecbuild_bundle( PROJECT fms           GIT "https://github.com/jcsda-internal/FMS.git"             UPDATE BRANCH release-stable )
 endif ()
+
 
 # required repositories
 
-ecbuild_bundle( PROJECT fckit           GIT "https://github.com/jcsda-internal/fckit.git"           UPDATE BRANCH release-stable )
-ecbuild_bundle( PROJECT atlas           GIT "https://github.com/jcsda-internal/atlas.git"           UPDATE BRANCH release-stable )
 ecbuild_bundle( PROJECT oops            GIT "https://github.com/jcsda-internal/oops.git"            UPDATE BRANCH develop )
 ecbuild_bundle( PROJECT saber           GIT "https://github.com/jcsda-internal/saber.git"           UPDATE BRANCH develop )
 ecbuild_bundle( PROJECT ioda            GIT "https://github.com/jcsda-internal/ioda.git"            UPDATE BRANCH develop )
 ecbuild_bundle( PROJECT gsw             GIT "https://github.com/jcsda-internal/GSW-Fortran.git"     UPDATE BRANCH develop )
 ecbuild_bundle( PROJECT ufo             GIT "https://github.com/jcsda-internal/ufo.git"             UPDATE BRANCH develop )
-ecbuild_bundle( PROJECT mom6            GIT "https://github.com/jcsda-internal/MOM6.git"            UPDATE BRANCH main-ecbuild RECURSIVE)
+ecbuild_bundle( PROJECT mom6            GIT "https://github.com/jcsda-internal/MOM6.git"            UPDATE BRANCH main-ecbuild RECURSIVE )
 ecbuild_bundle( PROJECT soca            SOURCE "../" )
 
 ecbuild_bundle_finalize()
