@@ -3,8 +3,6 @@
 # This software is licensed under the terms of the Apache Licence Version 2.0
 # which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
 
-include_directories( ${CMAKE_CURRENT_SOURCE_DIR} )
-
 # only the source code in this directory, all other files
 # are handled through the subdirectory's respective CMakeLists.txt
 list( APPEND soca_src_files
@@ -23,11 +21,27 @@ endfunction()
 # The main soca library... behold its glory
 ecbuild_add_library( TARGET   soca
                      SOURCES ${soca_src_files}
-                     LIBS     ${LAPACK_LIBRARIES} ${NETCDF_LIBRARIES}
-                              eckit eckit_mpi fckit atlas atlas_f oops saber ioda ufo fms mom6
                      INSTALL_HEADERS LISTED
                      LINKER_LANGUAGE ${SOCA_LINKER_LANGUAGE}
                     )
+
+target_include_directories(soca PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..>
+  $<INSTALL_INTERFACE:include/soca>)
+
+target_compile_features( soca PUBLIC cxx_std_11 )
+
+target_link_libraries( soca PUBLIC NetCDF::NetCDF_Fortran )
+target_link_libraries( soca PUBLIC fckit )
+target_link_libraries( soca PUBLIC atlas )
+target_link_libraries( soca PUBLIC atlas_f )
+target_link_libraries( soca PUBLIC fms )
+target_link_libraries( soca PUBLIC gsw )
+target_link_libraries( soca PUBLIC mom6 )
+target_link_libraries( soca PUBLIC oops )
+target_link_libraries( soca PUBLIC saber )
+target_link_libraries( soca PUBLIC ioda )
+target_link_libraries( soca PUBLIC ufo )
 
 # Add source code in the subdirectories
 add_subdirectory(Covariance)
