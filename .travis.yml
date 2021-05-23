@@ -20,7 +20,7 @@
 env:
   global:
     - MAIN_REPO=soca
-    - LIB_REPOS="fckit atlas fms gsw mom6 crtm oops saber ioda ufo"
+    - LIB_REPOS="jedicmake fckit atlas fms gsw mom6 crtm oops saber ioda ufo"
     - BUILD_OPT=""
     - BUILD_OPT_fckit="-DBUILD_FCKIT=ON"
     - BUILD_OPT_atlas="-DBUILD_ATLAS=ON"
