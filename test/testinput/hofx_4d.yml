@@ -23,7 +23,7 @@ forecast length: PT3H
 observations:
   - obs space:
       name: CoolSkin
-      obsdataout: {obsfile: ./Data/sst.out.nc}
+      obsdataout: {obsfile: ./Data/sst.coolskin.out.nc}
       obsdatain:  {obsfile: ./Data/sst.nc}
       simulated variables: [sea_surface_temperature]
     obs operator:
