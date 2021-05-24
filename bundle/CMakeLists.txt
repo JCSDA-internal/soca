@@ -14,6 +14,8 @@ include( ecbuild_bundle )
 
 ecbuild_bundle_initialize()
 
+ecbuild_bundle( PROJECT jedicmake GIT "https://github.com/jcsda-internal/jedi-cmake.git" UPDATE BRANCH develop )
+include( jedicmake/cmake/Functions/git_functions.cmake  )
 
 # ECMWF repos that you probably dont need to build yourself because they
 #  should be in jedi-stack and the containers

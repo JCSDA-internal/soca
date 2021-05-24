@@ -14,7 +14,7 @@
 
 int main(int argc,  char ** argv) {
   oops::Run run(argc, argv);
-  ufo::instantiateObsLocFactory<soca::Traits, ufo::ObsTraits>();
+  ufo::instantiateObsLocFactory<soca::Traits>();
   test::ObsLocalization<soca::Traits, ufo::ObsTraits> tests;
   return run.execute(tests);
 }
