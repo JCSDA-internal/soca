@@ -27,6 +27,7 @@ type :: soca_field_metadata
   character(len=:),  allocatable :: getval_name_surface  ! name used by UFO for the suface (if this is a 3D field)
   character(len=:),  allocatable :: io_file  !< the restart file domain (ocn, sfc, ice)
   character(len=:),  allocatable :: io_name  !< the name use in the restart IO
+  character(len=:),  allocatable :: property  !< physical property of the field, "none" or "positive_definite"
   logical                        :: dummy_atm !< a meaningless dummy field, for the CRTM hacks
 end type
 
@@ -92,6 +93,9 @@ subroutine soca_fields_metadata_create(self, filename)
 
     if(.not. conf_list(i)%get("io file", str)) str = ""
     self%metadata(i)%io_file = str
+
+    if(.not. conf_list(i)%get("property", str)) str = "none"
+    self%metadata(i)%property = str
 
     if(.not. conf_list(i)%get("dummy_atm", bool)) bool = .false.
     self%metadata(i)%dummy_atm = bool
