@@ -22,7 +22,7 @@ include( jedicmake/cmake/Functions/git_functions.cmake  )
 
 option(BUILD_ECKIT "download and build eckit (not needed if in a jedi container)")
 if ( BUILD_ECKIT )
-  ecbuild_bundle( PROJECT eckit  GIT "https://github.com/ecmwf/eckit.git"  UPDATE TAG b3adb28 )
+  ecbuild_bundle( PROJECT eckit  GIT "https://github.com/ecmwf/eckit.git"  UPDATE TAG 1.16.0 )
 endif ()
 
 option(BUILD_FCKIT "download and build fckit (not needed if in a jedi container)")
@@ -53,11 +53,11 @@ endif ()
 
 # required repositories
 
-ecbuild_bundle( PROJECT oops            GIT "https://github.com/jcsda-internal/oops.git"            UPDATE TAG 8f517dd )
+ecbuild_bundle( PROJECT oops            GIT "https://github.com/jcsda-internal/oops.git"            UPDATE TAG 06620f1 )
 ecbuild_bundle( PROJECT saber           GIT "https://github.com/jcsda-internal/saber.git"           UPDATE TAG 0422a16 )
-ecbuild_bundle( PROJECT ioda            GIT "https://github.com/jcsda-internal/ioda.git"            UPDATE TAG 04880ef )
+ecbuild_bundle( PROJECT ioda            GIT "https://github.com/jcsda-internal/ioda.git"            UPDATE TAG 74b5b28 )
 ecbuild_bundle( PROJECT gsw             GIT "https://github.com/jcsda-internal/GSW-Fortran.git"     UPDATE TAG 5e2d2e3 )
-ecbuild_bundle( PROJECT ufo             GIT "https://github.com/jcsda-internal/ufo.git"             UPDATE TAG be4574d )
+ecbuild_bundle( PROJECT ufo             GIT "https://github.com/jcsda-internal/ufo.git"             UPDATE TAG 9aa868e )
 ecbuild_bundle( PROJECT mom6            GIT "https://github.com/jcsda-internal/MOM6.git"            UPDATE TAG 76ba205 RECURSIVE )
 ecbuild_bundle( PROJECT soca            SOURCE "../" )
 
