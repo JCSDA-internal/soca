@@ -45,5 +45,4 @@ locations:
         lat2: 90
         lon1: 0
         lon2: 360
-        random_seed: 1
       obs errors: [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]

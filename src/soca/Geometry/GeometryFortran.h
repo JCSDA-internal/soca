@@ -35,7 +35,7 @@ namespace soca {
                       atlas::functionspace::FunctionSpaceImpl *);
     void soca_geo_fill_atlas_fieldset_f90(const F90geom &,
                                           atlas::field::FieldSetImpl *);
-    void soca_geo_clone_f90(const F90geom &, F90geom &);
+    void soca_geo_clone_f90(F90geom &, const F90geom &);
     void soca_geo_gridgen_f90(const F90geom &);
     void soca_geo_delete_f90(F90geom &);
     void soca_geo_start_end_f90(const F90geom &, int &, int &, int &, int &);
