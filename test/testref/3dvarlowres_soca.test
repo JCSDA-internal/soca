@@ -6,7 +6,7 @@ Test     : CostJo   : Nonlinear Jo(InsituTemperature) = 348.787, nobs = 206, Jo/
 Test     : CostJo   : Nonlinear Jo(InsituSalinity) = 355.419, nobs = 218, Jo/n = 1.63036, err = 0.608197
 Test     : CostFunction: Nonlinear J = 1669.38
 Test     : RPCGMinimizer: reduction in residual norm = 0.360293
-Test     : CostFunction::addIncrement: Analysis: 
+Test     : CostFunction::addIncrement: Analysis:
 Test     :   Valid time: 2018-04-15T00:00:00Z
 Test     :    socn   min=   10.721167   max=   40.443818   mean=   34.575968
 Test     :    tocn   min=   -1.897519   max=   31.726191   mean=    6.032220

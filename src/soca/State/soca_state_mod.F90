@@ -166,17 +166,28 @@ subroutine soca_state_convert(self, rhs)
   class(soca_state), intent(in)   :: rhs   ! source
   integer :: n
   type(soca_convertstate_type) :: convert_state
-  type(soca_field), pointer :: field1, field2, hocn1, hocn2
+  type(soca_field), pointer :: field1, field2, hocn1, hocn2, layer_depth
 
   call rhs%get("hocn", hocn1)
   call self%get("hocn", hocn2)
   call convert_state%setup(rhs%geom, self%geom, hocn1, hocn2)
   do n = 1, size(rhs%fields)
+    if (rhs%fields(n)%name=='layer_depth') cycle ! skip layer_depth interpolation
     field1 => rhs%fields(n)
     call self%get(trim(field1%name),field2)
     if (field1%metadata%io_file=="ocn" .or. field1%metadata%io_file=="sfc" .or. field1%metadata%io_file=="ice")  &
     call convert_state%change_resol(field1, field2, rhs%geom, self%geom)
+    ! Insure that positive definite variables are still >0
+    if (rhs%fields(n)%metadata%property=='positive_definite') then
+       where (field2%val<0.0)
+          field2%val=0.0
+       end where
+    end if
   end do !n
+
+  ! Set layer depth for new grid
+  call self%get("layer_depth", layer_depth)
+  call self%geom%thickness2depth(hocn2%val, layer_depth%val)
   call convert_state%clean()
 end subroutine soca_state_convert
 
