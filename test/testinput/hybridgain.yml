@@ -13,12 +13,14 @@ hybrid weights:
   control: 0.2
   ensemble: 0.8
 
+hybrid type: average analysis
+
 control:
   <<: *_file
   ocn_filename: ../INPUT/MOM.res.nc
   ice_filename: ../INPUT/cice.res.nc
 
-ensemble mean:
+ensemble mean posterior:
   <<: *_file
   ocn_filename: ocn.pert.ens.1.2018-04-15T00:00:00Z.PT0S.nc
   ice_filename: ice.pert.ens.1.2018-04-15T00:00:00Z.PT0S.nc
