@@ -29,6 +29,7 @@
   getval name surface: sea_surface_salinity
   io file: ocn
   io name: Salt
+  property: positive_definite
 
 - name: uocn
   grid: u
@@ -65,6 +66,7 @@
   getval name: sea_ice_category_thickness
   io file: ice
   io name: hicen
+  property: positive_definite
 
 - name: cicen
   getval name: sea_ice_category_area_fraction
@@ -76,7 +78,7 @@
   getval name: sea_ice_category_snow_thickness
   io file: ice
   io name: hsnon
-
+  property: positive_definite
 
 # --------------------------------------------------------------------------------------------------
 # sea surface variables
@@ -121,6 +123,7 @@
   getval name surface: sea_surface_chlorophyll
   io file: ocn
   io name: chl
+  property: positive_definite
 
 - name: biop
   levels: full_ocn
@@ -128,7 +131,7 @@
   getval name surface: sea_surface_biomass_in_p_units
   io file: ocn
   io name: biomass_p
-
+  property: positive_definite
 
 # --------------------------------------------------------------------------------------------------
 # built-in derived variables that you don't need to worry about
