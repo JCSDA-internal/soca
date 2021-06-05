@@ -38,6 +38,7 @@ set( soca_test_input
   testinput/hofx_3dcrtm.yml
   testinput/hofx_4d.yml
   testinput/hofx_4d_pseudo.yml
+  testinput/hybridgain.yml
   testinput/increment.yml
   testinput/letkf_observer.yml
   testinput/letkf_solver.yml
@@ -96,6 +97,7 @@ set( soca_test_ref
   testref/hofx_3dcrtm.test
   testref/hofx_4d.test
   testref/hofx_4d_pseudo.test
+  testref/hybridgain.test
   testref/letkf_observer.test
   testref/letkf_solver.test
   testref/makeobs.test
@@ -591,6 +593,10 @@ soca_add_test( NAME parameters_bump_loc
 
 soca_add_test( NAME ensrecenter
                EXE  soca_ensrecenter.x
+               TEST_DEPENDS test_soca_enspert )
+
+soca_add_test( NAME hybridgain
+               EXE  soca_hybridgain.x
                TEST_DEPENDS test_soca_enspert )
 
 # TODO the next couple of tests are a little slow.
