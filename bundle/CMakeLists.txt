@@ -14,7 +14,7 @@ include( ecbuild_bundle )
 
 ecbuild_bundle_initialize()
 
-ecbuild_bundle( PROJECT jedicmake GIT "https://github.com/jcsda-internal/jedi-cmake.git" UPDATE TAG 0e1d3e0 )
+ecbuild_bundle( PROJECT jedicmake GIT "https://github.com/jcsda-internal/jedi-cmake.git" UPDATE TAG 9e68442 )
 include( jedicmake/cmake/Functions/git_functions.cmake  )
 
 # ECMWF repos that you probably dont need to build yourself because they
@@ -27,13 +27,13 @@ endif ()
 
 option(BUILD_FCKIT "download and build fckit (not needed if in a jedi container)")
 if (BUILD_FCKIT)
-  ecbuild_bundle( PROJECT fckit  GIT "https://github.com/jcsda-internal/fckit.git"  UPDATE TAG 8502aae )
+  ecbuild_bundle( PROJECT fckit  GIT "https://github.com/jcsda-internal/fckit.git"  UPDATE BRANCH release-stable )
   # TODO: replace with https://github.com/ecmwf/fckit.git TAG 0.9.2
 endif()
 
 option(BUILD_ATLAS "download and build atlas (not needed if in a jedi container)")
 if (BUILD_ATLAS)
-  ecbuild_bundle( PROJECT atlas  GIT "https://github.com/jcsda-internal/atlas.git"  UPDATE TAG e0b7709 )
+  ecbuild_bundle( PROJECT atlas  GIT "https://github.com/jcsda-internal/atlas.git"  UPDATE BRANCH release-stable )
   # TODO: repalce with https://github.com/ecmwf/atlas.git TAG 0.24.1
 endif()
 
@@ -53,11 +53,11 @@ endif ()
 
 # required repositories
 
-ecbuild_bundle( PROJECT oops            GIT "https://github.com/jcsda-internal/oops.git"            UPDATE TAG 7a99ce3 )
+ecbuild_bundle( PROJECT oops            GIT "https://github.com/jcsda-internal/oops.git"            UPDATE TAG cebad9e )
 ecbuild_bundle( PROJECT saber           GIT "https://github.com/jcsda-internal/saber.git"           UPDATE TAG 824cc0c )
-ecbuild_bundle( PROJECT ioda            GIT "https://github.com/jcsda-internal/ioda.git"            UPDATE TAG f74e1ee )
+ecbuild_bundle( PROJECT ioda            GIT "https://github.com/jcsda-internal/ioda.git"            UPDATE TAG 07fdaec )
 ecbuild_bundle( PROJECT gsw             GIT "https://github.com/jcsda-internal/GSW-Fortran.git"     UPDATE TAG 5e2d2e3 )
-ecbuild_bundle( PROJECT ufo             GIT "https://github.com/jcsda-internal/ufo.git"             UPDATE TAG f11f9ab )
+ecbuild_bundle( PROJECT ufo             GIT "https://github.com/jcsda-internal/ufo.git"             UPDATE TAG aabb3b4 )
 ecbuild_bundle( PROJECT mom6            GIT "https://github.com/jcsda-internal/MOM6.git"            UPDATE TAG 76ba205 RECURSIVE )
 ecbuild_bundle( PROJECT soca            SOURCE "../" )
 
