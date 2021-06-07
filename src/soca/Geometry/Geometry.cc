@@ -51,7 +51,7 @@ namespace soca {
       initatm_(initAtm(other.atmconf_)),
       fmsinput_(other.fmsinput_) {
     const int key_geo = other.keyGeom_;
-    soca_geo_clone_f90(key_geo, keyGeom_);
+    soca_geo_clone_f90(keyGeom_, key_geo);
     atlasFunctionSpace_.reset(new atlas::functionspace::PointCloud(
                               other.atlasFunctionSpace_->lonlat()));
     soca_geo_set_atlas_functionspace_pointer_f90(keyGeom_,

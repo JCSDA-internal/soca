@@ -227,41 +227,41 @@ end subroutine geom_fill_atlas_fieldset
 ! ------------------------------------------------------------------------------
 !> Clone, self = other
 subroutine geom_clone(self, other)
-  class(soca_geom), intent( in) :: self
-  class(soca_geom), intent(out) :: other
+  class(soca_geom), intent(inout) :: self
+  class(soca_geom), intent(in) :: other
 
   ! Clone communicator
-  other%f_comm = self%f_comm
+  self%f_comm = other%f_comm
 
   ! Clone fms domain and vertical levels
-  other%Domain => self%Domain
-  other%nzo = self%nzo
+  self%Domain => other%Domain
+  self%nzo = other%nzo
 
   !
-  other%geom_grid_file = self%geom_grid_file
+  self%geom_grid_file = other%geom_grid_file
 
   ! Allocate and clone geometry
-  call geom_allocate(other)
-  other%lonh = self%lonh
-  other%lath = self%lath
-  other%lonq = self%lonq
-  other%latq = self%latq
-  other%lon = self%lon
-  other%lat = self%lat
-  other%lonu = self%lonu
-  other%latu = self%latu
-  other%lonv = self%lonv
-  other%latv = self%latv
-  other%sin_rot = self%sin_rot
-  other%cos_rot = self%cos_rot
-  other%mask2d = self%mask2d
-  other%mask2du = self%mask2du
-  other%mask2dv = self%mask2dv
-  other%cell_area = self%cell_area
-  other%rossby_radius = self%rossby_radius
-  other%distance_from_coast = self%distance_from_coast
-  other%h = self%h
-  call self%fields_metadata%clone(other%fields_metadata)
+  call geom_allocate(self)
+  self%lonh = other%lonh
+  self%lath = other%lath
+  self%lonq = other%lonq
+  self%latq = other%latq
+  self%lon = other%lon
+  self%lat = other%lat
+  self%lonu = other%lonu
+  self%latu = other%latu
+  self%lonv = other%lonv
+  self%latv = other%latv
+  self%sin_rot = other%sin_rot
+  self%cos_rot = other%cos_rot
+  self%mask2d = other%mask2d
+  self%mask2du = other%mask2du
+  self%mask2dv = other%mask2dv
+  self%cell_area = other%cell_area
+  self%rossby_radius = other%rossby_radius
+  self%distance_from_coast = other%distance_from_coast
+  self%h = other%h
+  call other%fields_metadata%clone(self%fields_metadata)
 end subroutine geom_clone
 
 ! ------------------------------------------------------------------------------

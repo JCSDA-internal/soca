@@ -106,14 +106,14 @@ end subroutine c_soca_geo_fill_atlas_fieldset
 !> Clone geometry object
 subroutine c_soca_geo_clone(c_key_self, c_key_other) bind(c,name='soca_geo_clone_f90')
 
-  integer(c_int), intent(in   ) :: c_key_self
-  integer(c_int), intent(inout) :: c_key_other
+  integer(c_int), intent(inout) :: c_key_self
+  integer(c_int), intent(in)    :: c_key_other
 
   type(soca_geom), pointer :: self, other
 
-  call soca_geom_registry%add(c_key_other)
-  call soca_geom_registry%get(c_key_other, other)
-  call soca_geom_registry%get(c_key_self , self )
+  call soca_geom_registry%add(c_key_self)
+  call soca_geom_registry%get(c_key_self, self)
+  call soca_geom_registry%get(c_key_other, other )
 
   call self%clone(other)
 
