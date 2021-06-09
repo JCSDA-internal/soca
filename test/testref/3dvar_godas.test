@@ -22,8 +22,6 @@ Test     :     lhf   min=  -38.137473   max=  256.595744   mean=   42.009726
 Test     :     shf   min=  -58.949303   max=  201.374228   mean=    6.075328
 Test     :      lw   min=    0.000000   max=   88.036090   mean=   31.395535
 Test     :      us   min=    0.004396   max=    0.019666   mean=    0.008686
-Test     :    uocn   min=   -0.858169   max=    0.700095   mean=   -0.000259
-Test     :    vocn   min=   -0.766110   max=    1.437777   mean=    0.002197
 Test     :     mld   min=    2.285472   max= 4593.153342   mean=  192.410907
 Test     : layer_depth   min=    2.285472   max= 5658.305747   mean= 1200.522954
 Test     : CostJb   : Nonlinear Jb = 0.542497
