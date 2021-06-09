@@ -96,6 +96,8 @@ subroutine soca_cov_setup(self, f_conf, geom, bkg, vars)
         init_seaice = .true.
      case('tocn', 'socn', 'ssh', 'chl', 'biop')
         init_ocean = .true.
+     case('uocn', 'vocn')
+        call abor1_ftn("soca_covariance: No covariance model for (u, v) yet.")
      end select
   end do
 
