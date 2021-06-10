@@ -88,6 +88,9 @@ subroutine soca_bkgerr_setup(f_conf, self, bkg, geom)
     case ('sw','lw','lhf','shf','us')
       call bkg%get(field%name, field_bkg)
       field%val = abs(field_bkg%val) * 0.1_kind_real
+    case ('chl','biop')
+      call bkg%get(field%name, field_bkg)
+      field%val = abs(field_bkg%val) * 0.2_kind_real
     end select
   end do
 

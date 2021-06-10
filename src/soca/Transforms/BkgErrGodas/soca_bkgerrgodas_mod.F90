@@ -87,6 +87,9 @@ subroutine soca_bkgerrgodas_setup(f_conf, self, bkg, geom)
       call bkg%get(field%name, field_bkg)
       field%val = abs(field_bkg%val)
       field%val = 0.1_kind_real * field%val
+    case ('chl','biop')
+      call bkg%get(field%name, field_bkg)
+      field%val = abs(field_bkg%val) * 0.2_kind_real
     end select
   end do
 
