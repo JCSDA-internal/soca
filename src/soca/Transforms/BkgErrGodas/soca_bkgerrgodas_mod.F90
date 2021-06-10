@@ -78,8 +78,8 @@ subroutine soca_bkgerrgodas_setup(f_conf, self, bkg, geom)
   call soca_bkgerrgodas_socn(self)
   call soca_bkgerrgodas_ssh(self)
 
-  ! Invent background error for ocnsfc fields: set it
-  ! to 10% of the background for now ...
+  ! Invent background error for ocnsfc and ocn_bgc fields: set 
+  ! it to 10% or 20% of the background for now ...
   do i=1,size(self%std_bkgerr%fields)
     field => self%std_bkgerr%fields(i)
     select case(field%name)

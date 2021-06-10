@@ -79,9 +79,10 @@ subroutine soca_bkgerr_setup(f_conf, self, bkg, geom)
       field%val(:,:,1) = self%std_sss
   end if
 
-  ! Invent background error for ocnsfc fields: set it
-  ! to 10% of the background for now ...
-  ! TODO: Read background error for ocnsfc from file
+  ! Invent background error for ocnsfc and ocn_bgc fields: 
+  ! set it to 10% or 20% of the background for now ...
+  ! TODO: Read background error for ocnsfc and ocn_bgc from 
+  ! files
   do i=1,size(self%std_bkgerr%fields)
     field => self%std_bkgerr%fields(i)
     select case(field%name)
