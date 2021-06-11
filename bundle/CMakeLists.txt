@@ -42,7 +42,7 @@ endif()
 
 option(BUILD_CRTM  "download and build CRTM")
 if ( BUILD_CRTM )
-  ecbuild_bundle( PROJECT crtm          GIT "https://github.com/jcsda-internal/crtm.git"            UPDATE TAG c12bb0e )
+  ecbuild_bundle( PROJECT crtm          GIT "https://github.com/jcsda-internal/crtm.git"            UPDATE TAG ab93edf )
 endif ()
 
 option(BUILD_FMS "download and build fms" ON)

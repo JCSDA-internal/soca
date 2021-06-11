@@ -29,8 +29,8 @@ Test     :    uocn   min=   -0.854580   max=    0.695502   mean=   -0.000320
 Test     :    vocn   min=   -0.800340   max=    1.220078   mean=    0.001958
 Test     :     ssh   min=   -1.915334   max=    0.925063   mean=   -0.276765
 Test     :    hocn   min=    0.001000   max= 1345.640000   mean=  128.628068
-Test     :     chl   min=   -0.000604   max=    4.672095   mean=    0.118477
-Test     :    biop   min=    0.000000   max=    0.000000   mean=    0.000000
+Test     :     chl   min=   -0.051729   max=    4.700469   mean=    0.117903
+Test     :    biop   min=   -0.000000   max=    0.000000   mean=    0.000000
 Test     :      sw   min= -225.097763   max=   -0.000000   mean=  -71.739321
 Test     :     lhf   min=  -38.137398   max=  256.597656   mean=   42.010040
 Test     :     shf   min=  -58.949295   max=  201.374298   mean=    6.075334
@@ -49,8 +49,8 @@ Test     :    uocn   min=   -0.853313   max=    0.699470   mean=   -0.000116
 Test     :    vocn   min=   -0.746604   max=    1.263707   mean=    0.002166
 Test     :     ssh   min=   -2.134823   max=    0.923897   mean=   -0.276818
 Test     :    hocn   min=    0.001000   max= 1345.640000   mean=  128.628054
-Test     :     chl   min=   -0.000741   max=    4.672040   mean=    0.118481
-Test     :    biop   min=    0.000000   max=    0.000000   mean=    0.000000
+Test     :     chl   min=   -0.081377   max=    4.681366   mean=    0.118773
+Test     :    biop   min=   -0.000000   max=    0.000000   mean=    0.000000
 Test     :      sw   min= -225.097763   max=   -0.000000   mean=  -71.739321
 Test     :     lhf   min=  -38.137398   max=  256.597656   mean=   42.010040
 Test     :     shf   min=  -58.949295   max=  201.374298   mean=    6.075334
@@ -69,8 +69,8 @@ Test     :    uocn   min=   -0.853151   max=    0.633003   mean=   -0.000101
 Test     :    vocn   min=   -0.771857   max=    1.196984   mean=    0.001925
 Test     :     ssh   min=   -2.146851   max=    0.924332   mean=   -0.276873
 Test     :    hocn   min=    0.001000   max= 1345.640000   mean=  128.628062
-Test     :     chl   min=   -0.000678   max=    4.672024   mean=    0.118489
-Test     :    biop   min=    0.000000   max=    0.000000   mean=    0.000000
+Test     :     chl   min=   -0.044430   max=    4.690656   mean=    0.119621
+Test     :    biop   min=   -0.000000   max=    0.000000   mean=    0.000000
 Test     :      sw   min= -225.097763   max=   -0.000000   mean=  -71.739321
 Test     :     lhf   min=  -38.137398   max=  256.597656   mean=   42.010040
 Test     :     shf   min=  -58.949295   max=  201.374298   mean=    6.075334
@@ -89,8 +89,8 @@ Test     :    uocn   min=   -0.851368   max=    0.688408   mean=   -0.000218
 Test     :    vocn   min=   -0.658992   max=    1.185960   mean=    0.001827
 Test     :     ssh   min=   -2.129719   max=    0.929467   mean=   -0.276830
 Test     :    hocn   min=    0.001000   max= 1345.640000   mean=  128.628084
-Test     :     chl   min=   -0.000986   max=    4.671970   mean=    0.118504
-Test     :    biop   min=    0.000000   max=    0.000000   mean=    0.000000
+Test     :     chl   min=   -0.109219   max=    4.665663   mean=    0.119050
+Test     :    biop   min=   -0.000000   max=    0.000000   mean=    0.000000
 Test     :      sw   min= -225.097763   max=   -0.000000   mean=  -71.739321
 Test     :     lhf   min=  -38.137398   max=  256.597656   mean=   42.010040
 Test     :     shf   min=  -58.949295   max=  201.374298   mean=    6.075334
@@ -109,8 +109,8 @@ Test     :    uocn   min=   -0.846680   max=    0.713136   mean=    0.000045
 Test     :    vocn   min=   -0.820975   max=    1.280726   mean=    0.001942
 Test     :     ssh   min=   -2.113567   max=    0.931606   mean=   -0.276670
 Test     :    hocn   min=    0.001000   max= 1345.640000   mean=  128.628111
-Test     :     chl   min=   -0.000687   max=    4.671862   mean=    0.118466
-Test     :    biop   min=    0.000000   max=    0.000000   mean=    0.000000
+Test     :     chl   min=   -0.042475   max=    4.643249   mean=    0.117869
+Test     :    biop   min=   -0.000000   max=    0.000000   mean=    0.000000
 Test     :      sw   min= -225.097763   max=   -0.000000   mean=  -71.739321
 Test     :     lhf   min=  -38.137398   max=  256.597656   mean=   42.010040
 Test     :     shf   min=  -58.949295   max=  201.374298   mean=    6.075334
