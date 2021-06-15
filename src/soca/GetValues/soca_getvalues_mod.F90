@@ -140,13 +140,6 @@ subroutine soca_getvalues_fillgeovals(self, geom, fld, t1, t2, locs, geovals)
     allocate(fld3d(isc:iec,jsc:jec,1:nval))
 
     masked = fldptr%metadata%masked
-    ! TODO, the following is an override to keep same answers during a PR,
-    ! it should be removed in its own PR
-    select case (fldptr%metadata%name)
-    case ('sw', 'lw', 'lhf', 'shf', 'us')          
-      masked = .true.
-    end select
-
     fld3d = fldptr%val(isc:iec,jsc:jec,1:nval)
 
     ! Apply forward interpolation: Model ---> Obs
@@ -225,12 +218,6 @@ subroutine soca_getvalues_fillgeovals_ad(self, geom, incr, t1, t2, locs, geovals
 
     ! determine if this variable should use the masked grid
     masked = field%metadata%masked
-    ! TODO, the following is an override to keep same answers during a PR,
-    ! it should be removed in its own PR
-    select case (field%metadata%name)
-    case ('sw', 'lw', 'lhf', 'shf', 'us')          
-      masked = .true.
-    end select
 
     ! Apply backward interpolation: Obs ---> Model
     if (masked) then
