@@ -141,15 +141,17 @@ set( soca_model_restarts
 
 set( soca_obs
   Data/Obs/adt.nc
+  Data/Obs/biomass_p.nc
+  Data/Obs/chl.nc
+  Data/Obs/gmi_gpm_geoval.nc
+  Data/Obs/gmi_gpm_obs.nc
   Data/Obs/icec.nc
   Data/Obs/icefb.nc
   Data/Obs/prof.nc
   Data/Obs/sss.nc
   Data/Obs/sst.nc
-  Data/Obs/chl.nc
-  Data/Obs/biomass_p.nc
-  Data/Obs/gmi_gpm_geoval.nc
-  Data/Obs/gmi_gpm_obs.nc
+  Data/Obs/uocn_surface.nc
+  Data/Obs/vocn_surface.nc
 )
 
 # Create Data directory for test input/output and symlink all files
