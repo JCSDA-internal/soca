@@ -9,7 +9,7 @@ state:
     ocn_filename: MOM.res.nc
     ice_filename: cice.res.nc
     sfc_filename: sfc.res.nc
-    state variables: [cicen, hicen, hsnon, socn, tocn, ssh, hocn, sw, lhf, shf, lw, us, chl]
+    state variables: [cicen, hicen, hsnon, socn, tocn, ssh, hocn, uocn, vocn, sw, lhf, shf, lw, us, chl]
 
 window begin: 2018-04-14T00:00:00Z
 window length: P2D
@@ -111,3 +111,19 @@ observations:
       action:
         name: inflate error
         inflation factor: 2.0
+
+  - obs space:
+      name: SurfaceU
+      obsdataout: {obsfile: ./Data/uocn_surface.out.nc}
+      obsdatain:  {obsfile: ./Data/uocn_surface.nc}
+      simulated variables: [surface_eastward_sea_water_velocity]
+    obs operator:
+      name: Identity
+
+  - obs space:
+      name: SurfaceV
+      obsdataout: {obsfile: ./Data/vocn_surface.out.nc}
+      obsdatain:  {obsfile: ./Data/vocn_surface.nc}
+      simulated variables: [surface_northward_sea_water_velocity]
+    obs operator:
+      name: Identity
