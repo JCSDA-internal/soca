@@ -10,8 +10,8 @@ Test     : CostFunction::addIncrement: Analysis:
 Test     :   Valid time: 2018-04-15T00:00:00Z
 Test     :    hocn   min=    0.001000   max= 1297.170000   mean=  110.562284
 Test     :    socn   min=    0.000000   max=   37.222565   mean=   28.647745
-Test     :    tocn   min=   -2.450406   max=   38.306614   mean=    5.053292
-Test     :     ssh   min=   -2.012002   max=    0.971216   mean=   -0.142469
+Test     :    tocn   min=   -2.450407   max=   38.306614   mean=    5.053292
+Test     :     ssh   min=   -2.012003   max=    0.971216   mean=   -0.142469
 Test     :     mld   min=    0.000500   max= 3446.494302   mean=  119.933096
 Test     : layer_depth   min=    0.000500   max= 5592.096099   mean= 1053.471947
 Test     : CostJb   : Nonlinear Jb = 159.767446

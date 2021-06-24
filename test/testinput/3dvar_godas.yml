@@ -9,7 +9,7 @@ cost function:
   cost type: 3D-Var
   window begin: 2018-04-14T00:00:00Z
   window length: P2D
-  analysis variables: &soca_vars [cicen, hicen, hsnon, socn, tocn, ssh, hocn, sw, lhf, shf, lw, us, uocn, vocn, mld, layer_depth]
+  analysis variables: &soca_vars [cicen, hicen, hsnon, socn, tocn, ssh, hocn, sw, lhf, shf, lw, us, mld, layer_depth]
   geometry:
     mom6_input_nml: ./inputnml/input.nml
     fields metadata: ./fields_metadata.yml

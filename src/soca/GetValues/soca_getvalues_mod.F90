@@ -18,9 +18,18 @@ use iso_c_binding
 implicit none
 private
 
+!------------------------------------------------------------------------------
+! soca_getvalues
+!  forward and adjoint interpolation between the model and observation locations.
+!  Several interpolators need to be created depending on which grid is used
+!  (h, u, v) and if land masking is used. Since we do not know this information
+!  until fill_geovals() or fill_geovals_ad() is called, creation of the interp
+!  is postoned to then
 type, public :: soca_getvalues
-  type(unstrc_interp) :: horiz_interp
-  type(unstrc_interp) :: horiz_interp_masked
+  ! the interpolator, and a flag for whether or not it has been initialized yet.
+  type(unstrc_interp), allocatable :: horiz_interp(:)
+  logical,             allocatable :: horiz_interp_init(:)
+
 contains
 
   ! constructors / destructors
@@ -28,6 +37,7 @@ contains
   procedure :: delete => soca_getvalues_delete
 
   ! apply interpolation
+  procedure :: get_interp => soca_getvalues_getinterp
   procedure :: fill_geovals=> soca_getvalues_fillgeovals
   procedure :: fill_geovals_ad=> soca_getvalues_fillgeovals_ad
 
@@ -43,11 +53,66 @@ subroutine soca_getvalues_create(self, geom, locs)
   type(soca_geom),          intent(in) :: geom
   type(ufo_locations),      intent(in) :: locs
 
-  integer :: isc, iec, jsc, jec, ni, nj
-  integer :: nn, ngrid_in, ngrid_out
-  character(len=8) :: wtype = 'barycent'
-  real(kind=kind_real), allocatable :: lats_in(:), lons_in(:)
+  ! why do things crash if I don't make these allocatable??
+  allocate(self%horiz_interp(6))
+  allocate(self%horiz_interp_init(6))
+  self%horiz_interp_init = .false.
+
+end subroutine soca_getvalues_create
+
+!------------------------------------------------------------------------------
+! Get the index of the interpolator for the given grid/masking.
+! If the interpolator has not been initialized yet, it will initialize it.
+! The index of horiz_interp and horiz_interp_init map to the following
+!   1 = h, unmasked    2 = h, masked
+!   3 = u, unmasked    4 = u, masked
+!   5 = v, unmasked    6 = v, masked
+function soca_getvalues_getinterp(self, geom, grid, masked, locs) result(idx)
+  class(soca_getvalues), intent(inout) :: self
+  type(soca_geom),  target, intent(in) :: geom
+  character(len=1),         intent(in) :: grid   !< "h", "u", or "v"
+  logical,                  intent(in) :: masked
+  type(ufo_locations),      intent(in) :: locs
+  integer :: idx
+
+  integer :: isc, iec, jsc, jec
+  integer :: ngrid_in, ngrid_out
+
   real(8), allocatable, dimension(:) :: locs_lons, locs_lats
+  real(kind=kind_real), allocatable :: lats_in(:), lons_in(:)
+
+  real(kind=kind_real),     pointer :: mask(:,:) => null() !< field mask
+  real(kind=kind_real),     pointer :: lon(:,:) => null()  !< field lon
+  real(kind=kind_real),     pointer :: lat(:,:) => null()  !< field lat
+
+  ! interpolation parameters
+  integer :: nn = 3
+  character(len=8) :: wtype = 'barycent'
+
+  ! get the model lat/lon/interpolator depending on grid type
+  select case(grid)
+  case ('h')
+    idx = 1
+    lon => geom%lon
+    lat => geom%lat
+    mask => geom%mask2d
+  case ('u')
+    idx = 3
+    lon => geom%lonu
+    lat => geom%latu
+    mask => geom%mask2du
+  case ('v')
+    idx = 5
+    lon => geom%lonv
+    lat => geom%latv
+    mask => geom%mask2dv
+  case default
+    call abor1_ftn('error in soca_getvalues_setupinterp. grid: '//grid)
+  end select
+  if (masked) idx = idx + 1
+
+  ! has interpolation already been initialized? if so return.
+  if (self%horiz_interp_init(idx)) return
 
   ! Indices for compute domain (no halo)
   isc = geom%isc ; iec = geom%iec
@@ -59,36 +124,33 @@ subroutine soca_getvalues_create(self, geom, locs)
   call locs%get_lons(locs_lons)
   call locs%get_lats(locs_lats)
 
-  ! create interpolation weights for fields that do NOT use the land mask
-  nn = 3
-  ni = iec - isc + 1
-  nj = jec - jsc + 1
-  ngrid_in = ni * nj
-  allocate(lats_in(ngrid_in), lons_in(ngrid_in))
+  if ( .not. masked ) then
+    ! create interpolation weights for fields that do NOT use the land mask
+    ngrid_in = (iec - isc + 1) * (jec - jsc + 1)
+    allocate(lats_in(ngrid_in), lons_in(ngrid_in))
+    lons_in = reshape(lon(isc:iec,jsc:jec), (/ngrid_in/))
+    lats_in = reshape(lat(isc:iec,jsc:jec), (/ngrid_in/))
+  else
+    ! create interpolation weights for fields that DO use the land mask
+    ngrid_in = count(mask(isc:iec,jsc:jec) > 0)
+    allocate(lats_in(ngrid_in), lons_in(ngrid_in))
+    lons_in = pack(lon(isc:iec,jsc:jec), mask=mask(isc:iec,jsc:jec) > 0)
+    lats_in = pack(lat(isc:iec,jsc:jec), mask=mask(isc:iec,jsc:jec) > 0)
+  end if
 
-  lons_in = reshape(geom%lon(isc:iec,jsc:jec), (/ngrid_in/))
-  lats_in = reshape(geom%lat(isc:iec,jsc:jec), (/ngrid_in/))
-  call self%horiz_interp%create(geom%f_comm, nn, wtype, &
-                           ngrid_in, lats_in, lons_in, &
-                           ngrid_out, locs_lats, locs_lons)
+  call self%horiz_interp(idx)%create(geom%f_comm, nn, wtype, &
+                     ngrid_in, lats_in, lons_in, &
+                     ngrid_out, locs_lats, locs_lons)
+  self%horiz_interp_init(idx) = .true.
 
-  ! create interpolation weights for fields that DO use the land mask
-  deallocate(lats_in, lons_in)
-  ngrid_in = count(geom%mask2d(isc:iec,jsc:jec) > 0)
-  lons_in = pack(geom%lon(isc:iec,jsc:jec), mask=geom%mask2d(isc:iec,jsc:jec) > 0)
-  lats_in = pack(geom%lat(isc:iec,jsc:jec), mask=geom%mask2d(isc:iec,jsc:jec) > 0)
-  call self%horiz_interp_masked%create(geom%f_comm, nn, wtype, &
-                           ngrid_in, lats_in, lons_in, &
-                           ngrid_out, locs_lats, locs_lons)
-end subroutine soca_getvalues_create
+end function
 
 !------------------------------------------------------------------------------
 subroutine soca_getvalues_delete(self)
   class(soca_getvalues), intent(inout) :: self
 
-  call self%horiz_interp%delete()
-  call self%horiz_interp_masked%delete()
-
+  deallocate(self%horiz_interp)
+  deallocate(self%horiz_interp_init)
 end subroutine soca_getvalues_delete
 
 !------------------------------------------------------------------------------
@@ -110,6 +172,7 @@ subroutine soca_getvalues_fillgeovals(self, geom, fld, t1, t2, locs, geovals)
   real(kind=kind_real), allocatable :: gom_window(:)
   real(kind=kind_real), allocatable :: fld3d(:,:,:), fld3d_un(:)
   type(soca_field), pointer :: fldptr
+  integer :: interp_idx = -1
 
   ! Indices for compute domain (no halo)
   isc = geom%isc ; iec = geom%iec
@@ -133,28 +196,22 @@ subroutine soca_getvalues_fillgeovals(self, geom, fld, t1, t2, locs, geovals)
     allocate(fld3d(isc:iec,jsc:jec,1:nval))
 
     masked = fldptr%metadata%masked
-    ! TODO, the following is an override to keep same answers during a PR,
-    ! it should be removed in its own PR
-    select case (fldptr%metadata%name)
-    case ('sw', 'lw', 'lhf', 'shf', 'us')          
-      masked = .true.
-    end select
-
     fld3d = fldptr%val(isc:iec,jsc:jec,1:nval)
 
     ! Apply forward interpolation: Model ---> Obs
+    interp_idx = self%get_interp(geom, fldptr%metadata%grid, masked, locs)
     do ival = 1, nval
+
       if (masked) then
-        ns = count(fld%geom%mask2d(isc:iec,jsc:jec) > 0 )
+        ns = count(fldptr%mask(isc:iec,jsc:jec) > 0 )
         if (.not. allocated(fld3d_un)) allocate(fld3d_un(ns))
-        fld3d_un = pack(fld3d(isc:iec,jsc:jec,ival), mask=fld%geom%mask2d(isc:iec,jsc:jec) > 0)
-        call self%horiz_interp_masked%apply(fld3d_un, gom_window)
+        fld3d_un = pack(fld3d(isc:iec,jsc:jec,ival), mask=fldptr%mask(isc:iec,jsc:jec) > 0)
       else
         ns = (iec - isc + 1) * (jec - jsc + 1)
         if (.not. allocated(fld3d_un)) allocate(fld3d_un(ns))
         fld3d_un = reshape(fld3d(isc:iec,jsc:jec,ival), (/ns/))
-        call self%horiz_interp%apply(fld3d_un(1:ns), gom_window)
       end if
+      call self%horiz_interp(interp_idx)%apply(fld3d_un(1:ns), gom_window)
 
       ! Fill proper geoval according to time window
       do indx = 1, locs%nlocs()
@@ -196,6 +253,7 @@ subroutine soca_getvalues_fillgeovals_ad(self, geom, incr, t1, t2, locs, geovals
   real(kind=kind_real), allocatable :: incr3d(:,:,:), incr3d_un(:)
   type(soca_field), pointer :: field
     logical :: found
+  integer :: interp_idx = -1
 
   ! Indices for compute domain (no halo)
   isc = geom%isc ; iec = geom%iec
@@ -218,16 +276,10 @@ subroutine soca_getvalues_fillgeovals_ad(self, geom, incr, t1, t2, locs, geovals
 
     ! determine if this variable should use the masked grid
     masked = field%metadata%masked
-    ! TODO, the following is an override to keep same answers during a PR,
-    ! it should be removed in its own PR
-    select case (field%metadata%name)
-    case ('sw', 'lw', 'lhf', 'shf', 'us')          
-      masked = .true.
-    end select
 
     ! Apply backward interpolation: Obs ---> Model
     if (masked) then
-      ns = count(incr%geom%mask2d(isc:iec,jsc:jec) > 0)
+      ns = count(field%mask(isc:iec,jsc:jec) > 0)
     else
       ni = iec - isc + 1
       nj = jec - jsc + 1
@@ -235,6 +287,7 @@ subroutine soca_getvalues_fillgeovals_ad(self, geom, incr, t1, t2, locs, geovals
     end if
     if (.not.allocated(incr3d_un)) allocate(incr3d_un(ns))
 
+    interp_idx = self%get_interp(geom, field%metadata%grid, masked, locs)
     do ival = 1, nval
       ! Fill proper geoval according to time window
       do indx = 1, locs%nlocs()
@@ -245,14 +298,14 @@ subroutine soca_getvalues_fillgeovals_ad(self, geom, incr, t1, t2, locs, geovals
       gom_window_ival = gom_window(ival,1:locs%nlocs())
 
       if (masked) then
-        incr3d_un = pack(incr3d(isc:iec,jsc:jec,ival), mask = incr%geom%mask2d(isc:iec,jsc:jec) >0)
-        call self%horiz_interp_masked%apply_ad(incr3d_un, gom_window_ival)
+        incr3d_un = pack(incr3d(isc:iec,jsc:jec,ival), mask = field%mask(isc:iec,jsc:jec) >0)
+        call self%horiz_interp(interp_idx)%apply_ad(incr3d_un, gom_window_ival)
         incr3d(isc:iec,jsc:jec,ival) = unpack(incr3d_un, &
-              mask = incr%geom%mask2d(isc:iec,jsc:jec) >0, &
+              mask = field%mask(isc:iec,jsc:jec) >0, &
               field = incr3d(isc:iec,jsc:jec,ival))
       else
         incr3d_un = reshape(incr3d(isc:iec,jsc:jec,ival), (/ns/))
-        call self%horiz_interp%apply_ad(incr3d_un(1:ns), gom_window_ival)
+        call self%horiz_interp(interp_idx)%apply_ad(incr3d_un(1:ns), gom_window_ival)
         incr3d(isc:iec,jsc:jec,ival) = reshape(incr3d_un(1:ns),(/ni,nj/))
       end if
     end do
