@@ -189,13 +189,6 @@ subroutine soca_getvalues_fillgeovals(self, geom, fld, t1, t2, locs, geovals)
     if (fldptr%metadata%dummy_atm) cycle ! TODO remove this hack
     nval = fldptr%nz
 
-    ! Allocate geovals
-    if (.not. geovals%linit) then
-      geovals%geovals(ivar)%nval = nval
-      allocate(geovals%geovals(ivar)%vals(nval, geovals%geovals(ivar)%nlocs))
-      geovals%geovals(ivar)%vals = 0.0_kind_real
-    end if
-
     ! Return if no observations
     if ( geovals%geovals(ivar)%nlocs == 0 ) return
 
