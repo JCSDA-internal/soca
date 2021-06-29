@@ -1,0 +1,3 @@
+mom6_input_nml: $(stage_dir)/mom_input.nml
+fields metadata: $(stage_dir)/fields_metadata.yaml
+geom_grid_file: $(stage_dir)/soca_gridspec.nc
