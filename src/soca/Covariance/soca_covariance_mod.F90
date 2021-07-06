@@ -36,7 +36,8 @@ type :: soca_cov
    type(soca_state),    pointer :: bkg            !< Background field (or first guess)
    logical                      :: initialized = .false.
    type(oops_variables)         :: vars           !< Apply B to vars
-   real(kind=kind_real), allocatable :: pert_scales(:)
+
+   real(kind=kind_real), allocatable :: pert_scale(:)
  contains
    procedure :: setup => soca_cov_setup
    procedure :: delete => soca_cov_delete
@@ -71,13 +72,13 @@ subroutine soca_cov_setup(self, f_conf, geom, bkg, vars)
 
   ! get perturbation scales
   if (f_conf%get("perturbation scales", pert_conf)) then
-    allocate(self%pert_scales(self%vars%nvars()))
+    allocate(self%pert_scale(self%vars%nvars()))
     do ivar=1,self%vars%nvars()
-      if ( .not. pert_conf%get(self%vars%variable(ivar), self%pert_scales(ivar))) then
+      if ( .not. pert_conf%get(self%vars%variable(ivar), self%pert_scale(ivar))) then
         if (geom%f_comm%rank() == 0) call fckit_log%warning( &
           "WARNING: no pertubation scale given for '"  //trim(self%vars%variable(ivar)) &
            // "' using default of 1.0")
-        self%pert_scales(ivar) = 1.0
+        self%pert_scale(ivar) = 1.0
       end if
     end do
   end if
@@ -186,10 +187,13 @@ subroutine soca_cov_sqrt_C_mult(self, dx)
 
     ! find matching index in self%vars
     ! and get the perturbation scale, and convolution choice
+    if (.not. allocated(self%pert_scale)) then
+      call abor1_ftn("ERROR: cannot use sqrt_C_mult if no perturbation scales given")
+    endif
     do j=1,self%vars%nvars()
       if (self%vars%variable(j) == field%name) exit
     end do
-    scale = self%pert_scales(j)
+    scale = self%pert_scale(j)
 
     select case(field%name)
     case('tocn')
