@@ -43,6 +43,7 @@ type :: soca_cov
    procedure :: delete => soca_cov_delete
    procedure :: mult => soca_cov_C_mult
    procedure :: sqrt_C_mult => soca_cov_sqrt_C_mult
+   procedure :: getConv => soca_cov_get_conv
 end type soca_cov
 
 ! ------------------------------------------------------------------------------
@@ -123,11 +124,40 @@ end subroutine soca_cov_delete
 
 ! ------------------------------------------------------------------------------
 
+subroutine soca_cov_get_conv(self, field, conv)
+  class(soca_cov),        intent(inout) :: self
+  type(soca_field), pointer, intent(in) :: field
+  type(bump_type), pointer, intent(out) :: conv
+
+  integer :: j,k
+
+  ! safety check to make sure field is on h grid
+  if (field%metadata%grid /= "h" ) then
+    call abor1_ftn("ERROR: cannot use fields on u/v grids" )
+  end if
+
+  ! determine which horizontal convolution to use
+  nullify(conv)
+  outer: do j=1,size(self%conv_vars)
+    do k=1,self%conv_vars(j)%nvars()
+      if (self%conv_vars(j)%variable(k) == field%name) then
+        conv => self%conv(j)
+        exit outer
+      end if
+    end do
+  end do outer
+  if ( .not. associated(conv)) then
+    call abor1_ftn("ERROR: No valid bump operator found for field '"//field%name//"'")
+  end if
+end subroutine
+
+! ------------------------------------------------------------------------------
+
 subroutine soca_cov_C_mult(self, dx)
   class(soca_cov),      intent(inout) :: self !< The covariance structure
   type(soca_increment), intent(inout) :: dx   !< Input: Increment
                                           !< Output: C dx
-  integer :: i, z, j, k
+  integer :: i, z
   type(soca_field), pointer :: field
   type(bump_type), pointer :: conv
 
@@ -136,21 +166,7 @@ subroutine soca_cov_C_mult(self, dx)
     call dx%get(trim(self%vars%variable(i)), field)
 
     ! determine which horizontal convolution to use
-    nullify(conv)
-    outer: do j=1,size(self%conv_vars)
-      do k=1,self%conv_vars(j)%nvars()
-        if (self%conv_vars(j)%variable(k) == field%name) then
-          conv => self%conv(j)
-          exit outer
-        end if
-      end do
-    end do outer
-    if ( .not. associated(conv)) then
-      call abor1_ftn("No valid bump operator found for field '"//field%name//"'")
-    end if
-
-    ! safety check to make sure field is on the correct grid
-    ! that the convolution was built with
+    call self%getConv(field, conv)
 
     ! apply convolution on each level
     do z = 1, field%nz
@@ -165,7 +181,7 @@ subroutine soca_cov_sqrt_C_mult(self, dx)
   class(soca_cov),      intent(inout) :: self !< The covariance structure
   type(soca_increment), intent(inout) :: dx   !< Input: Increment
                                           !< Output: C^1/2 dx
-  integer :: i, z, j, k
+  integer :: i, z, j
   type(soca_field), pointer :: field
   real(kind=kind_real) :: scale
   type(bump_type), pointer :: conv
@@ -184,18 +200,7 @@ subroutine soca_cov_sqrt_C_mult(self, dx)
     scale = self%pert_scale(j)
 
     ! determine which horizontal convolution to use
-    nullify(conv)
-    outer: do j=1,size(self%conv_vars)
-      do k=1,self%conv_vars(j)%nvars()
-        if (self%conv_vars(j)%variable(k) == field%name) then
-          conv => self%conv(j)
-          exit outer
-        end if
-      end do
-    end do outer
-    if ( .not. associated(conv)) then
-      call abor1_ftn("No valid bump operator found for "//field%name)
-    end if
+    call self%getConv(field, conv)
 
     ! apply convolution
     do z = 1,field%nz
