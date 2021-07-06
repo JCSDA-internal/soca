@@ -11,14 +11,20 @@ initial condition:
   state variables: &soca_vars [cicen, hicen, socn, tocn, ssh, hocn, mld, layer_depth]
 
 background error:
-  verbosity: main
   covariance model: SocaError
-  datadir: ./bump
-  load_nicas: 1
-  mpicom: 2
-  strategy: specific_univariate
+  analysis variables: [cicen, hicen, socn, tocn, ssh]
   date: *date
-  analysis variables: [cicen, hicen, socn, tocn, ssh, hocn]
+  bump:
+    verbosity: main
+    datadir: ./bump
+    load_nicas: 1
+    mpicom: 2
+    strategy: specific_univariate
+  correlation:
+  - name: ocn
+    vars: [socn, tocn, ssh]
+  - name: ice
+    vars: [cicen, hicen]
 
   variable changes:
 

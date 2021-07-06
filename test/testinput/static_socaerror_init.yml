@@ -2,7 +2,7 @@ geometry:
   mom6_input_nml: ./inputnml/input.nml
   fields metadata: ./fields_metadata.yml
 
-analysis variables: [cicen, hicen, hocn, socn, tocn, ssh]
+analysis variables: &ana_vars [cicen, hicen, socn, tocn, ssh]
 
 background:
   read_from_file: 1
@@ -13,24 +13,28 @@ background:
   state variables: [cicen, hicen, hocn, socn, tocn, ssh]
 
 background error:
-  verbosity: main
   covariance model: SocaError
-  datadir: ./bump
-  method: cor
-  strategy: specific_univariate
-  new_nicas: 1
-  interp_type: mesh_based
-  mask_check: 1
-  ntry: 3
-  nrep:  2
-  resol: 6.0
-  network: 1
-  mpicom: 2
+  analysis variables: *ana_vars
   date: *date
-  corr_scales:
-    ocn:
-      base value: 840336.134453782
-      rossby mult: 0.280112045
-    ice:
-      base value: 560224.089635854
-  analysis variables: [cicen, hicen, hocn, socn, tocn, ssh]
+  bump:
+    verbosity: main
+    datadir: ./bump
+    method: cor
+    strategy: specific_univariate
+    new_nicas: 1
+    interp_type: mesh_based
+    mask_check: 1
+    ntry: 3
+    nrep:  2
+    resol: 6.0
+    network: 1
+    mpicom: 2
+  correlation:
+  - name: ocn
+    base value: 840336.134453782
+    rossby mult: 0.280112045
+    vars: [tocn, socn, ssh]
+  - name: ice
+    base value: 560224.089635854
+    vars: [cicen, hicen]
+

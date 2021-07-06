@@ -31,13 +31,13 @@ public :: soca_cov, soca_cov_setup, soca_cov_delete, &
 
 !> Fortran derived type to hold configuration data for the SOCA background/model covariance
 type :: soca_cov
-   type(bump_type),     pointer :: ocean_conv(:)  !< Ocean convolution op from bump
-   type(bump_type),     pointer :: seaice_conv(:) !< Seaice convolution op from bump
+   type(bump_type),     pointer :: conv(:)        !< convolution op from bump
    type(soca_state),    pointer :: bkg            !< Background field (or first guess)
-   logical                      :: initialized = .false.
    type(oops_variables)         :: vars           !< Apply B to vars
 
-   real(kind=kind_real), allocatable :: pert_scale(:)
+   real(kind=kind_real), allocatable :: pert_scale(:) !< index matches "vars"
+   type(oops_variables), allocatable :: conv_vars(:)  !< index mathces "conv"
+
  contains
    procedure :: setup => soca_cov_setup
    procedure :: delete => soca_cov_delete
@@ -62,23 +62,24 @@ subroutine soca_cov_setup(self, f_conf, geom, bkg, vars)
   type(soca_state),  target, intent(in) :: bkg    !< Background
   type(oops_variables),      intent(in) :: vars   !< List of variables
 
-  type(fckit_configuration) :: pert_conf
-  character(len=3)  :: domain
-  integer :: isc, iec, jsc, jec, ivar
-  logical :: init_seaice, init_ocean
+  type(fckit_configuration) :: f_conf2
+  type(fckit_configuration), allocatable :: f_conf_list(:)
+  character(len=:), allocatable :: domain_vars(:)
+  character(len=:), allocatable :: domain
+  integer :: i, isc, iec, jsc, jec, ivar
 
   ! Setup list of variables to apply B on
   self%vars = vars
 
-  ! get perturbation scales
-  if (f_conf%get("perturbation scales", pert_conf)) then
-    allocate(self%pert_scale(self%vars%nvars()))
+  ! get perturbation scales (or set to 1.0)
+  allocate(self%pert_scale(self%vars%nvars()))
+  self%pert_scale = 1.0
+  if (f_conf%get("perturbation scales", f_conf2)) then
     do ivar=1,self%vars%nvars()
-      if ( .not. pert_conf%get(self%vars%variable(ivar), self%pert_scale(ivar))) then
+      if ( .not. f_conf2%get(self%vars%variable(ivar), self%pert_scale(ivar))) then
         if (geom%f_comm%rank() == 0) call fckit_log%warning( &
           "WARNING: no pertubation scale given for '"  //trim(self%vars%variable(ivar)) &
            // "' using default of 1.0")
-        self%pert_scale(ivar) = 1.0
       end if
     end do
   end if
@@ -90,35 +91,19 @@ subroutine soca_cov_setup(self, f_conf, geom, bkg, vars)
   isc = bkg%geom%isc ; iec = bkg%geom%iec
   jsc = bkg%geom%jsc ; jec = bkg%geom%jec
 
-  ! Determine what convolution op to initialize
-  init_seaice = .false.
-  init_ocean = .false.
-  do ivar = 1, self%vars%nvars()
-     select case(trim(self%vars%variable(ivar)))
-     case('cicen','hicen')
-        init_seaice = .true.
-     case('tocn', 'socn', 'ssh', 'chl', 'biop')
-        init_ocean = .true.
-     case('uocn', 'vocn')
-        call abor1_ftn("soca_covariance: No covariance model for (u, v) yet.")
-     end select
+  ! Initialize bump
+  call f_conf%get_or_die("bump", f_conf2)
+  call f_conf%get_or_die("correlation", f_conf_list)
+  allocate(self%conv(size(f_conf_list)))
+  allocate(self%conv_vars(size(self%conv)))
+  do i=1,size(f_conf_list)
+    call f_conf_list(i)%get_or_die("name", domain)
+    call f_conf_list(i)%get_or_die("vars", domain_vars)
+    self%conv_vars(i) = oops_variables()
+    call self%conv_vars(i)%push_back(domain_vars)
+
+    call soca_bump_correlation(self, self%conv(i), geom, f_conf2, f_conf_list(i), domain)
   end do
-
-  ! Initialize ocean bump if tocn or socn or ssh are in self%vars
-  domain = 'ocn'
-  allocate(self%ocean_conv(1))
-  if (init_ocean) then
-     call soca_bump_correlation(self, self%ocean_conv(1), geom, f_conf, domain)
-  end if
-
-  ! Initialize seaice bump if cicen or hicen are in self%vars
-  domain = 'ice'
-  allocate(self%seaice_conv(1))
-  if (init_seaice) then
-     call soca_bump_correlation(self, self%seaice_conv(1), geom, f_conf, domain)
-  end if
-
-  self%initialized = .true.
 
 end subroutine soca_cov_setup
 
@@ -129,12 +114,10 @@ end subroutine soca_cov_setup
 subroutine soca_cov_delete(self)
   class(soca_cov), intent(inout) :: self       !< The covariance structure
 
-  call self%ocean_conv(1)%dealloc()
-  call self%seaice_conv(1)%dealloc()
-  deallocate(self%ocean_conv)
-  deallocate(self%seaice_conv)
+  deallocate(self%conv)
+  deallocate(self%conv_vars)
+  deallocate(self%pert_scale)
   nullify(self%bkg)
-  self%initialized = .false.
 
 end subroutine soca_cov_delete
 
@@ -144,7 +127,7 @@ subroutine soca_cov_C_mult(self, dx)
   class(soca_cov),      intent(inout) :: self !< The covariance structure
   type(soca_increment), intent(inout) :: dx   !< Input: Increment
                                           !< Output: C dx
-  integer :: i, z
+  integer :: i, z, j, k
   type(soca_field), pointer :: field
   type(bump_type), pointer :: conv
 
@@ -152,16 +135,22 @@ subroutine soca_cov_C_mult(self, dx)
     if (.not. dx%has(self%vars%variable(i))) cycle ! why is this sometimes getting an "empty" list with "none" in it?
     call dx%get(trim(self%vars%variable(i)), field)
 
-    ! TODO remove the hardcoded variables
-    ! ice or ocean convolution ?
-    select case(field%name)
-    case ('tocn', 'socn', 'ssh', 'sw', 'lw', 'lhf', 'shf', 'us', 'chl', 'biop')
-      conv => self%ocean_conv(1)
-    case ('hicen','cicen')
-      conv => self%seaice_conv(1)
-    case default
-      cycle
-    end select
+    ! determine which horizontal convolution to use
+    nullify(conv)
+    outer: do j=1,size(self%conv_vars)
+      do k=1,self%conv_vars(j)%nvars()
+        if (self%conv_vars(j)%variable(k) == field%name) then
+          conv => self%conv(j)
+          exit outer
+        end if
+      end do
+    end do outer
+    if ( .not. associated(conv)) then
+      call abor1_ftn("No valid bump operator found for field '"//field%name//"'")
+    end if
+
+    ! safety check to make sure field is on the correct grid
+    ! that the convolution was built with
 
     ! apply convolution on each level
     do z = 1, field%nz
@@ -176,7 +165,7 @@ subroutine soca_cov_sqrt_C_mult(self, dx)
   class(soca_cov),      intent(inout) :: self !< The covariance structure
   type(soca_increment), intent(inout) :: dx   !< Input: Increment
                                           !< Output: C^1/2 dx
-  integer :: i, z, j
+  integer :: i, z, j, k
   type(soca_field), pointer :: field
   real(kind=kind_real) :: scale
   type(bump_type), pointer :: conv
@@ -185,8 +174,7 @@ subroutine soca_cov_sqrt_C_mult(self, dx)
     conv => null()
     call dx%get(trim(self%vars%variable(i)), field)
 
-    ! find matching index in self%vars
-    ! and get the perturbation scale, and convolution choice
+    ! find matching index in self%vars and get the perturbation scale
     if (.not. allocated(self%pert_scale)) then
       call abor1_ftn("ERROR: cannot use sqrt_C_mult if no perturbation scales given")
     endif
@@ -195,39 +183,35 @@ subroutine soca_cov_sqrt_C_mult(self, dx)
     end do
     scale = self%pert_scale(j)
 
-    select case(field%name)
-    case('tocn')
-      conv => self%ocean_conv(1)
-    case ('socn')
-      conv => self%ocean_conv(1)
-    case ('ssh', 'sw', 'lw', 'lhf', 'shf', 'us')
-      conv => self%ocean_conv(1)
-    case('cicen')
-      conv => self%seaice_conv(1)
-    case ('hicen')
-      conv => self%seaice_conv(1)
-    case('chl')
-      conv => self%ocean_conv(1)
-    case ('biop')
-      conv => self%ocean_conv(1)
-    end select
-
-    if (associated(conv)) then
-      do z = 1,field%nz
-        call soca_2d_sqrt_convol(field%val(:,:,z), conv, dx%geom, scale)
+    ! determine which horizontal convolution to use
+    nullify(conv)
+    outer: do j=1,size(self%conv_vars)
+      do k=1,self%conv_vars(j)%nvars()
+        if (self%conv_vars(j)%variable(k) == field%name) then
+          conv => self%conv(j)
+          exit outer
+        end if
       end do
+    end do outer
+    if ( .not. associated(conv)) then
+      call abor1_ftn("No valid bump operator found for "//field%name)
     end if
+
+    ! apply convolution
+    do z = 1,field%nz
+      call soca_2d_sqrt_convol(field%val(:,:,z), conv, dx%geom, scale)
+    end do
 
   end do
 end subroutine soca_cov_sqrt_C_mult
 
 ! ------------------------------------------------------------------------------
 
-subroutine soca_bump_correlation(self, horiz_convol, geom, f_conf, domain)
+subroutine soca_bump_correlation(self, horiz_convol, geom, f_conf_bump, f_conf_domain, domain)
   class(soca_cov),        intent(inout) :: self   !< The covariance structure
   type(bump_type),        intent(inout) :: horiz_convol
   type(soca_geom),           intent(in) :: geom
-  type(fckit_configuration), intent(in) :: f_conf !< Handle to configuration
+  type(fckit_configuration), intent(in) :: f_conf_bump, f_conf_domain
   character(len=3),          intent(in) :: domain
 
   integer :: i
@@ -237,7 +221,7 @@ subroutine soca_bump_correlation(self, horiz_convol, geom, f_conf, domain)
   type(atlas_functionspace) :: afunctionspace
   type(atlas_fieldset) :: afieldset, rh, rv
   type(atlas_field) :: afield
-  type(fckit_configuration) :: f_grid, f_conf_domain
+  type(fckit_configuration) :: f_grid
   real(kind=kind_real) :: r_base, r_mult, r_min, r_max, r_min_grid
 
 
@@ -279,11 +263,10 @@ subroutine soca_bump_correlation(self, horiz_convol, geom, f_conf, domain)
   call afield%final()
 
   ! Create BUMP object
-  call horiz_convol%create(geom%f_comm,afunctionspace,afieldset,f_conf,f_grid)
+  call horiz_convol%create(geom%f_comm,afunctionspace,afieldset,f_conf_bump,f_grid)
 
   if (horiz_convol%nam%new_nicas) then
     ! get parameters for correlation lengths
-    call f_conf%get_or_die('corr_scales.'//domain, f_conf_domain)
     if (.not. f_conf_domain%get('base value', r_base))    r_base = 0.0
     if (.not. f_conf_domain%get('rossby mult', r_mult))   r_mult = 0.0
     if (.not. f_conf_domain%get('min grid mult', r_min_grid))  r_min_grid = 1.0

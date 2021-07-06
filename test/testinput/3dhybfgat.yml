@@ -34,13 +34,20 @@ cost function:
     components:
     - covariance:
         covariance model: SocaError
-        verbosity: main
-        datadir: ./bump
-        strategy: specific_univariate
-        load_nicas: 1
-        mpicom: 2
+        analysis variables: [cicen, hicen, socn, tocn, ssh, sw, lhf, shf, lw, us]
         date: *date_begin
-        analysis variables: *soca_vars
+        bump:
+          verbosity: main
+          datadir: ./bump
+          strategy: specific_univariate
+          load_nicas: 1
+          mpicom: 2
+        correlation:
+        - name: ocn
+          vars: [socn, tocn, ssh, sw, lhf, shf, lw, us]
+        - name: ice
+          vars: [cicen, hicen]
+
         variable changes:
         - variable change: BkgErrFILT
           ocean_depth_min: 1000 # [m]
