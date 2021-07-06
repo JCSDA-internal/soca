@@ -24,13 +24,14 @@ background error:
   load_nicas: 1
   mpicom: 2
   date: *date
-  pert_T: 1.0
-  pert_S: 1.0
-  pert_SSH: 0.0
-  pert_AICE: 0.1
-  pert_HICE: 0.05
-  pert_CHL: 0.1
-  pert_BIOP: 0.1
+  perturbation scales:
+    tocn:  1.0
+    socn:  1.0
+    ssh:   0.0
+    cicen: 0.1
+    hicen: 0.05
+    chl:   0.1
+    biop:  0.1
   analysis variables: &soca_vars [ssh, cicen, hicen, tocn, socn, chl, biop]
 
   variable changes:

@@ -11,6 +11,7 @@ module soca_covariance_mod
 use atlas_module, only: atlas_fieldset, atlas_field, atlas_real, atlas_integer, atlas_functionspace
 use, intrinsic :: iso_c_binding, only : c_char
 use fckit_configuration_module, only: fckit_configuration
+use fckit_log_module
 use random_mod, only: normal_distribution
 use oops_variables_mod
 use type_bump, only: bump_type
@@ -29,17 +30,13 @@ public :: soca_cov, soca_cov_setup, soca_cov_delete, &
           soca_cov_C_mult, soca_cov_sqrt_C_mult
 
 !> Fortran derived type to hold configuration data for the SOCA background/model covariance
-type :: soca_pert
-  real(kind=kind_real) :: T, S, SSH, AICE, HICE, CHL, BIOP
-end type soca_pert
-
 type :: soca_cov
    type(bump_type),     pointer :: ocean_conv(:)  !< Ocean convolution op from bump
    type(bump_type),     pointer :: seaice_conv(:) !< Seaice convolution op from bump
    type(soca_state),    pointer :: bkg            !< Background field (or first guess)
    logical                      :: initialized = .false.
-   type(soca_pert)              :: pert_scale
    type(oops_variables)         :: vars           !< Apply B to vars
+   real(kind=kind_real), allocatable :: pert_scales(:)
  contains
    procedure :: setup => soca_cov_setup
    procedure :: delete => soca_cov_delete
@@ -64,6 +61,7 @@ subroutine soca_cov_setup(self, f_conf, geom, bkg, vars)
   type(soca_state),  target, intent(in) :: bkg    !< Background
   type(oops_variables),      intent(in) :: vars   !< List of variables
 
+  type(fckit_configuration) :: pert_conf
   character(len=3)  :: domain
   integer :: isc, iec, jsc, jec, ivar
   logical :: init_seaice, init_ocean
@@ -71,14 +69,18 @@ subroutine soca_cov_setup(self, f_conf, geom, bkg, vars)
   ! Setup list of variables to apply B on
   self%vars = vars
 
-  ! Set default ensemble perturbation scales to 1.0, overwrite scales if they exist
-  if (.not. f_conf%get("pert_T", self%pert_scale%T))       self%pert_scale%T = 1.0
-  if (.not. f_conf%get("pert_S", self%pert_scale%S))       self%pert_scale%S = 1.0
-  if (.not. f_conf%get("pert_SSH", self%pert_scale%SSH))   self%pert_scale%SSH = 1.0
-  if (.not. f_conf%get("pert_AICE", self%pert_scale%AICE)) self%pert_scale%AICE = 1.0
-  if (.not. f_conf%get("pert_HICE", self%pert_scale%HICE)) self%pert_scale%HICE = 1.0
-  if (.not. f_conf%get("pert_CHL", self%pert_scale%CHL))   self%pert_scale%CHL = 1.0
-  if (.not. f_conf%get("pert_BIOP", self%pert_scale%BIOP)) self%pert_scale%BIOP = 1.0
+  ! get perturbation scales
+  if (f_conf%get("perturbation scales", pert_conf)) then
+    allocate(self%pert_scales(self%vars%nvars()))
+    do ivar=1,self%vars%nvars()
+      if ( .not. pert_conf%get(self%vars%variable(ivar), self%pert_scales(ivar))) then
+        if (geom%f_comm%rank() == 0) call fckit_log%warning( &
+          "WARNING: no pertubation scale given for '"  //trim(self%vars%variable(ivar)) &
+           // "' using default of 1.0")
+        self%pert_scales(ivar) = 1.0
+      end if
+    end do
+  end if
 
   ! Associate background
   self%bkg => bkg
@@ -173,7 +175,7 @@ subroutine soca_cov_sqrt_C_mult(self, dx)
   class(soca_cov),      intent(inout) :: self !< The covariance structure
   type(soca_increment), intent(inout) :: dx   !< Input: Increment
                                           !< Output: C^1/2 dx
-  integer :: i, z
+  integer :: i, z, j
   type(soca_field), pointer :: field
   real(kind=kind_real) :: scale
   type(bump_type), pointer :: conv
@@ -182,27 +184,27 @@ subroutine soca_cov_sqrt_C_mult(self, dx)
     conv => null()
     call dx%get(trim(self%vars%variable(i)), field)
 
+    ! find matching index in self%vars
+    ! and get the perturbation scale, and convolution choice
+    do j=1,self%vars%nvars()
+      if (self%vars%variable(j) == field%name) exit
+    end do
+    scale = self%pert_scales(j)
+
     select case(field%name)
     case('tocn')
-      scale = self%pert_scale%T
       conv => self%ocean_conv(1)
     case ('socn')
-      scale = self%pert_scale%S
       conv => self%ocean_conv(1)
     case ('ssh', 'sw', 'lw', 'lhf', 'shf', 'us')
-      scale = self%pert_scale%SSH
       conv => self%ocean_conv(1)
     case('cicen')
-      scale = self%pert_scale%AICE
       conv => self%seaice_conv(1)
     case ('hicen')
-      scale = self%pert_scale%HICE
       conv => self%seaice_conv(1)
     case('chl')
-      scale = self%pert_scale%CHL
       conv => self%ocean_conv(1)
     case ('biop')
-      scale = self%pert_scale%BIOP
       conv => self%ocean_conv(1)
     end select
 
