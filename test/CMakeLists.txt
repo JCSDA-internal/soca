@@ -450,11 +450,13 @@ soca_add_test( NAME forecast_pseudo
 soca_add_test( NAME static_socaerror_init
                EXE  soca_staticbinit.x
                NOCOMPARE
+               NOTRAPFPE
                TEST_DEPENDS test_soca_gridgen )
 
 soca_add_test( NAME static_socaerrorlowres_init
                EXE  soca_staticbinit.x
                NOCOMPARE
+               NOTRAPFPE
                TEST_DEPENDS test_soca_gridgen )
 
 # Use the soca_dirac.x application to create a mask for the dynamic height Jacobians
@@ -464,7 +466,7 @@ soca_add_test( NAME balance_mask
 
 # Create dc/dt file for ocean/ice balance and convert dirac file into a mask
 add_test ( test_soca_create_kmask
-           python
+           python3
            ${CMAKE_CURRENT_SOURCE_DIR}/Data/create_kmask.py
            TEST_DEPENDS test_static_socaerror_init
                         test_balance_mask )
@@ -615,6 +617,7 @@ soca_add_test( NAME hybridgain
 #                EXE  soca_dirac.x )
 
 soca_add_test( NAME parameters_bump_cor_nicas
+               NOTRAPFPE
                EXE  soca_parameters.x
                TEST_DEPENDS test_soca_gridgen_small
                             test_soca_convertstate)
