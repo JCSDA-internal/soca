@@ -23,7 +23,7 @@ background error:
     strategy: specific_univariate
   correlation:
   - name: ocn
-    vars: [ssh]
+    variables: [ssh]
 
 dirac:
   # NOTE ice (ifdir=4) was not being correctly tested, need to fix

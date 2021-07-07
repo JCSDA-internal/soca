@@ -36,9 +36,9 @@ background error:
     biop:  0.1
   correlation:
   - name: ocn
-    vars: [tocn, ssh, socn, chl, biop]
+    variables: [tocn, ssh, socn, chl, biop]
   - name: ice
-    vars: [cicen, hicen]
+    variables: [cicen, hicen]
 
 
   variable changes:

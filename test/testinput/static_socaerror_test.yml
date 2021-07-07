@@ -23,9 +23,9 @@ background error:
     mpicom: 2
   correlation:
   - name: ocn
-    vars: [socn, tocn, ssh]
+    variables: [socn, tocn, ssh]
   - name: ice
-    vars: [cicen, hicen]
+    variables: [cicen, hicen]
 
 covariance test:
   tolerance: 1e-10

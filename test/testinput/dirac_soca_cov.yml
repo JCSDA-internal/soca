@@ -22,9 +22,9 @@ background error:
     strategy: specific_univariate
   correlation:
   - name: ocn
-    vars: [socn, tocn, ssh]
+    variables: [socn, tocn, ssh]
   - name: ice
-    vars: [cicen, hicen]
+    variables: [cicen, hicen]
 
   variable changes:
 

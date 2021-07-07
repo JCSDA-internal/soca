@@ -63,7 +63,7 @@ cost function:
       mpicom: 2
     correlation:
     - name: ocn
-      vars: [socn, tocn, ssh]
+      variables: [socn, tocn, ssh]
 
     variable changes:
 

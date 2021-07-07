@@ -35,9 +35,9 @@ cost function:
       mpicom: 2
     correlation:
     - name: ocn
-      vars: [socn, tocn, ssh, sw, lhf, shf, lw, us, chl, biop]
+      variables: [socn, tocn, ssh, sw, lhf, shf, lw, us, chl, biop]
     - name: ice
-      vars: [cicen, hicen]
+      variables: [cicen, hicen]
 
     variable changes:
 

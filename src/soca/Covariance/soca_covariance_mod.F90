@@ -99,7 +99,7 @@ subroutine soca_cov_setup(self, f_conf, geom, bkg, vars)
   allocate(self%conv_vars(size(self%conv)))
   do i=1,size(f_conf_list)
     call f_conf_list(i)%get_or_die("name", domain)
-    call f_conf_list(i)%get_or_die("vars", domain_vars)
+    call f_conf_list(i)%get_or_die("variables", domain_vars)
     self%conv_vars(i) = oops_variables()
     call self%conv_vars(i)%push_back(domain_vars)
 

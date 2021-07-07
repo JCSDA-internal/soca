@@ -34,8 +34,8 @@ background error:
   - name: ocn
     base value: 840336.134453782
     rossby mult: 0.280112045
-    vars: [tocn, socn, ssh]
+    variables: [tocn, socn, ssh]
   - name: ice
     base value: 560224.089635854
-    vars: [cicen, hicen]
+    variables: [cicen, hicen]
 
