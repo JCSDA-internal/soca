@@ -165,6 +165,9 @@ subroutine soca_cov_C_mult(self, dx)
     if (.not. dx%has(self%vars%variable(i))) cycle ! why is this sometimes getting an "empty" list with "none" in it?
     call dx%get(trim(self%vars%variable(i)), field)
 
+    ! a **TEMPORARY** special exception for hocn
+    if ( field%name == "hocn" ) cycle
+
     ! determine which horizontal convolution to use
     call self%getConv(field, conv)
 
@@ -189,6 +192,9 @@ subroutine soca_cov_sqrt_C_mult(self, dx)
   do i = 1, self%vars%nvars()
     conv => null()
     call dx%get(trim(self%vars%variable(i)), field)
+
+    ! a **TEMPORARY** special exception for hocn
+    if ( field%name == "hocn" ) cycle
 
     ! find matching index in self%vars and get the perturbation scale
     if (.not. allocated(self%pert_scale)) then
