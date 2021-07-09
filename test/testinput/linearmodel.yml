@@ -36,9 +36,15 @@ linear model test:
 
 background error:
   covariance model: SocaError
-  datadir: ./bump
-  strategy: specific_univariate
-  load_nicas: 1
-  mpicom: 2
-  date: *date
   analysis variables: *soca_vars
+  date: *date
+  bump:
+    datadir: ./bump
+    strategy: specific_univariate
+    load_nicas: 1
+    mpicom: 2
+  correlation:
+  - name: ocn
+    variables: [socn, tocn, ssh, hocn, sw, lhf, shf, lw, us]
+  - name: ice
+    variables: [cicen, hicen]
