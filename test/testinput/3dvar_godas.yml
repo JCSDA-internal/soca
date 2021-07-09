@@ -24,14 +24,20 @@ cost function:
     state variables: *soca_vars
 
   background error:
-    verbosity: main
     covariance model: SocaError
-    datadir: ./bump
-    strategy: specific_univariate
-    load_nicas: 1
-    mpicom: 2
+    analysis variables: [cicen, hicen, hsnon, socn, tocn, ssh, sw, lhf, shf, lw, us]
     date: *bkg_date
-    analysis variables: *soca_vars
+    bump:
+      verbosity: main
+      datadir: ./bump
+      strategy: specific_univariate
+      load_nicas: 1
+      mpicom: 2
+    correlation:
+    - name: ocn
+      variables: [hsnon, socn, tocn, ssh, sw, lhf, shf, lw, us]
+    - name: ice
+      variables: [cicen, hicen]
 
     variable changes:
 

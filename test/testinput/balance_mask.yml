@@ -14,12 +14,16 @@ variables: *soca_vars
 
 background error:
   covariance model: SocaError
-  datadir: ./bump
-  load_nicas: 1
-  mpicom: 2
-  strategy: specific_univariate
-  date: *date
   analysis variables: [ssh]
+  date: *date
+  bump:
+    datadir: ./bump
+    load_nicas: 1
+    mpicom: 2
+    strategy: specific_univariate
+  correlation:
+  - name: ocn
+    variables: [ssh]
 
 dirac:
   # NOTE ice (ifdir=4) was not being correctly tested, need to fix
