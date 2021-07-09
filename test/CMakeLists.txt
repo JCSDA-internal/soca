@@ -116,6 +116,7 @@ set( soca_model_param
   Data/72x35x25/field_table
   Data/72x35x25/ice.bkgerror.nc
   Data/72x35x25/ocn.bkgerror.nc
+  Data/72x35x25/wav.bkgerror.nc
   Data/72x35x25/MOM_input
   Data/72x35x25/MOM_input_small
   Data/72x35x25/MOM_override_bgc
@@ -135,6 +136,7 @@ set( soca_model_restarts
   Data/72x35x25/INPUT/layer_coord25.nc
   Data/72x35x25/INPUT/MOM.res.nc
   Data/72x35x25/INPUT/sfc.res.nc
+  Data/72x35x25/INPUT/wav.res.nc
   Data/72x35x25/INPUT/ocean_hgrid.nc
   Data/72x35x25/INPUT/ocean_topog.nc
 )
@@ -150,6 +152,7 @@ set( soca_obs
   Data/Obs/prof.nc
   Data/Obs/sss.nc
   Data/Obs/sst.nc
+  Data/Obs/hs.nc
   Data/Obs/uocn_surface.nc
   Data/Obs/vocn_surface.nc
 )
