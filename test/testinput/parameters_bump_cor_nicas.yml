@@ -1,5 +1,5 @@
 geometry:
-  mom6_input_nml: ./inputnml/input_small.nml
+  mom6_input_nml: ./input_small.nml
   geom_grid_file: soca_gridspec.small.nc
   fields metadata: ./fields_metadata.yml
 

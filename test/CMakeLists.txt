@@ -115,16 +115,13 @@ set( soca_model_param
   Data/72x35x25/diag_table
   Data/72x35x25/field_table
   Data/72x35x25/ice.bkgerror.nc
-  Data/72x35x25/ocn.bkgerror.nc
+  Data/72x35x25/input_bgc.nml
+  Data/72x35x25/input_small.nml
+  Data/72x35x25/input.nml
   Data/72x35x25/MOM_input
   Data/72x35x25/MOM_input_small
   Data/72x35x25/MOM_override_bgc
-)
-
-set( soca_model_namelist
-  Data/72x35x25/input.nml
-  Data/72x35x25/input_bgc.nml
-  Data/72x35x25/input_small.nml
+  Data/72x35x25/ocn.bkgerror.nc
 )
 
 set( soca_model_restarts
@@ -184,15 +181,6 @@ foreach(FILENAME ${soca_model_param} ${soca_data_files})
 endforeach(FILENAME)
 install(FILES ${soca_data_files}
         DESTINATION ${INSTALL_DATA_DIR}/testdata )
-
-
-# FMS input.nml that may be overwritten during the testing
-foreach(FILENAME ${soca_model_namelist})
-     get_filename_component(filename ${FILENAME} NAME )
-     execute_process( COMMAND ${CMAKE_COMMAND} -E copy
-           ${CMAKE_CURRENT_SOURCE_DIR}/${FILENAME}
-           ${CMAKE_CURRENT_BINARY_DIR}/inputnml/${filename} )
-endforeach(FILENAME)
 
 # MOM's output directory
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/RESTART)

@@ -6,7 +6,7 @@
 module soca_mom6
 
 use fckit_mpi_module, only: fckit_mpi_comm
-use mpp_mod,    only : mpp_init
+use mpp_mod,    only : mpp_init, input_nml_filename
 use fms_io_mod, only : fms_io_init, fms_io_exit
 use fms_mod,    only : read_data, write_data, fms_init, fms_end
 use time_interp_external_mod, only : time_interp_external_init
@@ -77,25 +77,28 @@ contains
 
 ! ------------------------------------------------------------------------------
 !> Initialize mom6's domain
-subroutine soca_geomdomain_init(Domain, nk, f_comm)
+subroutine soca_geomdomain_init(Domain, nk, f_comm, input_nml)
   type(MOM_domain_type), pointer, intent(in) :: Domain !< Ocean model domain
   integer, intent(out)                       :: nk
   type(fckit_mpi_comm),           intent(in) :: f_comm
+  character(len=:), allocatable,  intent(in) :: input_nml
 
   type(param_file_type) :: param_file                !< Structure to parse for run-time parameters
-  type(directories)     :: dirs                      !< Structure containing several relevant directory paths
   character(len=40)  :: mod_name = "soca_mom6" ! This module's name.
-
-  call mpp_init(localcomm=f_comm%communicator())
+  character(len=1024) :: str
 
   ! Initialize fms
-  call fms_init()
+  str=input_nml
+  call fms_init(localcomm=f_comm%communicator(), nml_filename=str)
 
   ! Initialize fms io
   call fms_io_init()
 
   ! Parse grid inputs
-  call Get_MOM_Input(param_file, dirs)
+  ! need to override inputnml filename, in case fms_init was called previously
+  ! with a different filename. ( fms_init will exit early if called a second time )
+  input_nml_filename = input_nml
+  call Get_MOM_Input(param_file)
 
   ! Domain decomposition/Inintialize mpp domains
   call MOM_domains_init(Domain, param_file)
@@ -110,8 +113,9 @@ end subroutine soca_geomdomain_init
 
 ! ------------------------------------------------------------------------------
 !> Setup/initialize/prepare mom6 for time integration
-subroutine soca_mom6_init(mom6_config, partial_init)
+subroutine soca_mom6_init(mom6_config, input_nml, partial_init)
   type(soca_mom6_config), intent(out) :: mom6_config
+  character(len=:), allocatable, intent(in) :: input_nml
   logical,       optional, intent(in) :: partial_init
 
   type(time_type) :: Start_time   ! The start time of the simulation.
@@ -147,7 +151,7 @@ subroutine soca_mom6_init(mom6_config, partial_init)
   call io_infra_init()
 
   ! Provide for namelist specification of the run length and calendar data.
-  call open_file(unit, 'input.nml', form=ASCII_FILE, action=READONLY_FILE)
+  call open_file(unit, input_nml, form=ASCII_FILE, action=READONLY_FILE)
   read(unit, ocean_solo_nml, iostat=io_status)
   call close_file(unit)
   ierr = check_nml_error(io_status,'ocean_solo_nml')

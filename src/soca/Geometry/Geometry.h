@@ -19,7 +19,6 @@
 #include "eckit/mpi/Comm.h"
 
 #include "soca/Fortran.h"
-#include "soca/Geometry/FmsInput.h"
 #include "soca/Geometry/GeometryFortran.h"
 #include "soca/GeometryIterator/GeometryIterator.h"
 #include "soca/GeometryIterator/GeometryIteratorFortran.h"
@@ -79,7 +78,6 @@ namespace soca {
       const eckit::mpi::Comm & comm_;
       eckit::LocalConfiguration atmconf_;
       bool initatm_;
-      FmsInput fmsinput_;
       std::unique_ptr<atlas::functionspace::PointCloud> atlasFunctionSpace_;
       std::unique_ptr<atlas::FieldSet> atlasFieldSet_;
   };

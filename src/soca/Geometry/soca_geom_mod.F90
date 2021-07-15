@@ -60,6 +60,7 @@ type :: soca_geom
     real(kind=kind_real), allocatable, dimension(:,:,:) :: h_zstar
     logical :: save_local_domain = .false. ! If true, save the local geometry for each pe.
     character(len=:), allocatable :: geom_grid_file
+    character(len=:), allocatable :: input_nml
     type(fckit_mpi_comm) :: f_comm
     type(atlas_functionspace_pointcloud) :: afunctionspace
     type(soca_fields_metadata) :: fields_metadata
@@ -92,11 +93,15 @@ subroutine geom_init(self, f_conf, f_comm)
   character(len=:), allocatable :: str
   logical :: full_init = .false.
 
+  ! input file for MOM6
+  if ( .not. f_conf%get("mom6_input_nml", self%input_nml)) &
+    self%input_nml = "./input.nml"
+
   ! MPI communicator
   self%f_comm = f_comm
 
   ! Domain decomposition
-  call soca_geomdomain_init(self%Domain, self%nzo, f_comm)
+  call soca_geomdomain_init(self%Domain, self%nzo, f_comm, self%input_nml)
 
   ! User-defined grid filename
   if ( .not. f_conf%get("geom_grid_file", self%geom_grid_file) ) &
@@ -239,6 +244,7 @@ subroutine geom_clone(self, other)
 
   !
   self%geom_grid_file = other%geom_grid_file
+  self%input_nml = other%input_nml
 
   ! Allocate and clone geometry
   call geom_allocate(self)
@@ -278,7 +284,7 @@ subroutine geom_gridgen(self)
   logical :: answers_2018 = .false.
 
   ! Generate grid
-  call soca_mom6_init(mom6_config, partial_init=.true.)
+  call soca_mom6_init(mom6_config, self%input_nml, partial_init=.true.)
   self%lonh = mom6_config%grid%gridlont
   self%lath = mom6_config%grid%gridlatt
   self%lonq = mom6_config%grid%gridlonb

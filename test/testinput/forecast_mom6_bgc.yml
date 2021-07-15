@@ -1,5 +1,5 @@
 geometry:
-  mom6_input_nml: ./inputnml/input_bgc.nml
+  mom6_input_nml: ./input_bgc.nml
   fields metadata: ./fields_metadata.yml
 
 model:

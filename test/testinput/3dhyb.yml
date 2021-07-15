@@ -4,8 +4,8 @@ cost function:
   window begin: 2018-04-14T00:00:00Z
   window length: P2D
   analysis variables: &soca_vars [cicen, hicen, hsnon, socn, tocn, ssh, hocn]
-  geometry:
-    mom6_input_nml: ./inputnml/input.nml
+  geometry: &geometry
+    mom6_input_nml: ./input.nml
     fields metadata: ./fields_metadata.yml
 
   background:
@@ -132,9 +132,7 @@ variational:
   minimizer:
     algorithm: RPCG
   iterations:
-  - geometry:
-      mom6_input_nml: ./inputnml/input.nml
-      fields metadata: ./fields_metadata.yml
+  - geometry: *geometry
     ninner: 1
     gradient norm reduction: 1e-15
     test: on

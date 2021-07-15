@@ -3,7 +3,7 @@ window length: PT2H
 forecast length: PT2H
 
 geometry:
-  mom6_input_nml: ./inputnml/input.nml
+  mom6_input_nml: ./input.nml
   fields metadata: ./fields_metadata.yml
 
 model:

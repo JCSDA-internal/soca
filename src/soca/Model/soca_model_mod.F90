@@ -53,7 +53,7 @@ subroutine soca_setup(self, geom)
   type(soca_geom),     intent(in) :: geom
 
   self%mom6_config%f_comm = geom%f_comm
-  call soca_mom6_init(self%mom6_config)
+  call soca_mom6_init(self%mom6_config, geom%input_nml)
 
 end subroutine soca_setup
 

@@ -12,7 +12,7 @@ cost function:
   analysis variables: &soca_vars [socn, tocn, ssh, hocn]
   geometry:
     geom_grid_file: soca_gridspec.nc
-    mom6_input_nml: ./inputnml/input.nml
+    mom6_input_nml: ./input.nml
     fields metadata: ./fields_metadata.yml
 
   background:
@@ -173,7 +173,7 @@ variational:
   iterations:
   - geometry:
       geom_grid_file: soca_gridspec.small.nc
-      mom6_input_nml: ./inputnml/input_small.nml
+      mom6_input_nml: ./input_small.nml
       fields metadata: ./fields_metadata.yml
     ninner: 5
     gradient norm reduction: 1e-15

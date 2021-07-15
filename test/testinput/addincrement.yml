@@ -1,10 +1,8 @@
-state geometry:
-  mom6_input_nml: ./inputnml/input.nml
+state geometry: &geometry
+  mom6_input_nml: ./input.nml
   fields metadata: ./fields_metadata.yml
 
-increment geometry:
-  mom6_input_nml: ./inputnml/input.nml
-  fields metadata: ./fields_metadata.yml
+increment geometry: *geometry
 
 state:
   read_from_file: 1

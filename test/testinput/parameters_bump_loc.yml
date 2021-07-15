@@ -1,5 +1,5 @@
 geometry:
-  mom6_input_nml: ./inputnml/input.nml
+  mom6_input_nml: ./input.nml
   fields metadata: ./fields_metadata.yml
 
 input variables: &soca_vars [cicen, hicen, hsnon, socn, tocn, ssh, hocn]

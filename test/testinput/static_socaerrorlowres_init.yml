@@ -1,6 +1,6 @@
 geometry:
   geom_grid_file: soca_gridspec.small.nc
-  mom6_input_nml: ./inputnml/input_small.nml
+  mom6_input_nml: ./input_small.nml
   fields metadata: ./fields_metadata.yml
 
 analysis variables: &ana_vars [cicen, hicen, socn, tocn, ssh]
