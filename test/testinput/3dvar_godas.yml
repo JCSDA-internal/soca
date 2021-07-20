@@ -206,11 +206,11 @@ variational:
       departures: ombg
     online diagnostics:
       write increment: true
-    increment:
-      datadir: Data
-      date: *bkg_date
-      exp: 3dvargodas.iter1
-      type: incr
+      increment:
+        datadir: Data
+        date: *bkg_date
+        exp: 3dvargodas.iter1
+        type: incr
 
 output:
   datadir: Data
