@@ -9,7 +9,7 @@ cost function:
   cost type: 3D-Var
   window begin: &date_begin 2018-04-14T00:00:00Z
   window length: P2D
-  analysis variables: &soca_vars [cicen, hicen, socn, tocn, ssh, hocn, sw, lhf, shf, lw, us, chl, biop, mld, layer_depth]
+  analysis variables: &soca_vars [cicen, hicen, socn, tocn, ssh, hocn, sw, lhf, shf, lw, us, chl, biop, swh, mld, layer_depth]
   geometry:
     mom6_input_nml: ./inputnml/input.nml
     fields metadata: ./fields_metadata.yml
@@ -20,12 +20,13 @@ cost function:
     ocn_filename: MOM.res.nc
     ice_filename: cice.res.nc
     sfc_filename: sfc.res.nc
+    wav_filename: wav.res.nc
     date: &bkg_date 2018-04-15T00:00:00Z
     state variables: *soca_vars
 
   background error:
     covariance model: SocaError
-    analysis variables: [cicen, hicen, socn, tocn, ssh, sw, lhf, shf, lw, us, chl, biop]
+    analysis variables: [cicen, hicen, socn, tocn, ssh, sw, lhf, shf, lw, us, chl, biop, swh]
     date: 2018-04-15T00:00:00Z
     bump:
       verbosity: main
@@ -38,6 +39,8 @@ cost function:
       variables: [socn, tocn, ssh, sw, lhf, shf, lw, us, chl, biop]
     - name: ice
       variables: [cicen, hicen]
+    - name: wav
+      variables: [swh]
 
     variable changes:
 
@@ -53,6 +56,7 @@ cost function:
       basename: ./
       ocn_filename: ocn.bkgerror.nc
       ice_filename: ice.bkgerror.nc
+      wav_filename: wav.bkgerror.nc
       date: *bkg_date
       t_min: 0.0
       t_max: 2.5
@@ -68,6 +72,8 @@ cost function:
       chl_max: 10.0
       biop_min: 0.0
       biop_max: 1.0e-6
+      swh_min: 0.1
+      swh_max: 1.0
       #fixed_std_sst: 0.005 # OK to create pretty increments
       #fixed_std_sss: 0.001 # but that option should not exist!
       input variables: *soca_vars
@@ -242,6 +248,18 @@ cost function:
       obsdataout: {obsfile: ./Data/biomass_p.out.nc}
       obsdatain:  {obsfile: ./Data/biomass_p.nc}
       simulated variables: [sea_surface_biomass_in_p_units]
+    obs operator:
+      name: Identity
+    obs error:
+      covariance model: diagonal
+    obs filters:
+    - *land_mask
+
+  - obs space:
+      name: SeaSurfaceHS
+      obsdataout: {obsfile: ./Data/swh.out.nc}
+      obsdatain:  {obsfile: ./Data/swh.nc}
+      simulated variables: [sea_surface_wave_significant_height]
     obs operator:
       name: Identity
     obs error:

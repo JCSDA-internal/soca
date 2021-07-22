@@ -10,6 +10,7 @@ state variables: &geovals [sea_water_potential_temperature,
                            sea_surface_temperature,
                            sea_ice_category_area_fraction,
                            sea_ice_category_thickness,
+                           sea_surface_wave_significant_height,
                            net_downwelling_shortwave_radiation,
                            upward_latent_heat_flux_in_air,
                            upward_sensible_heat_flux_in_air,
@@ -31,7 +32,8 @@ getvalues test:
     ocn_filename: MOM.res.nc
     ice_filename: cice.res.nc
     sfc_filename: sfc.res.nc
-    state variables: [cicen, hicen, socn, tocn, ssh, hocn, uocn, vocn, sw, lhf, shf, lw, us]
+    wav_filename: wav.res.nc
+    state variables: [cicen, hicen, socn, tocn, ssh, hocn, uocn, vocn, sw, lhf, shf, lw, us, swh]
 
 geovals:
   state variables: *geovals
@@ -49,4 +51,4 @@ locations:
         lat2: 90
         lon1: 0
         lon2: 360
-      obs errors: [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+      obs errors: [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
