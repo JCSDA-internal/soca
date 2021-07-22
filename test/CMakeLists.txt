@@ -152,7 +152,7 @@ set( soca_obs
   Data/Obs/prof.nc
   Data/Obs/sss.nc
   Data/Obs/sst.nc
-  Data/Obs/hs.nc
+  Data/Obs/swh.nc
   Data/Obs/uocn_surface.nc
   Data/Obs/vocn_surface.nc
 )

@@ -257,8 +257,8 @@ cost function:
 
   - obs space:
       name: SeaSurfaceHS
-      obsdataout: {obsfile: ./Data/hs.out.nc}
-      obsdatain:  {obsfile: ./Data/hs.nc}
+      obsdataout: {obsfile: ./Data/swh.out.nc}
+      obsdatain:  {obsfile: ./Data/swh.nc}
       simulated variables: [sea_surface_wave_significant_height]
     obs operator:
       name: Identity
