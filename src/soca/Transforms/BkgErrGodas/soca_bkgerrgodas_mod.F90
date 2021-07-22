@@ -83,7 +83,7 @@ subroutine soca_bkgerrgodas_setup(f_conf, self, bkg, geom)
   do i=1,size(self%std_bkgerr%fields)
     field => self%std_bkgerr%fields(i)
     select case(field%name)
-    case ('sw','lw','lhf','shf','us','wsh')
+    case ('sw','lw','lhf','shf','us','swh')
       call bkg%get(field%name, field_bkg)
       field%val = abs(field_bkg%val)
       field%val = 0.1_kind_real * field%val
