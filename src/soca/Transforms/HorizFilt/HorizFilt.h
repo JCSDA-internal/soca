@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2017-2020  UCAR.
+ * (C) Copyright 2017-2021  UCAR.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -8,8 +8,8 @@
 #ifndef SOCA_TRANSFORMS_HORIZFILT_HORIZFILT_H_
 #define SOCA_TRANSFORMS_HORIZFILT_HORIZFILT_H_
 
-#include <ostream>
 #include <memory>
+#include <ostream>
 #include <string>
 
 #include "oops/base/Variables.h"

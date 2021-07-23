@@ -15,13 +15,13 @@
 #include <boost/noncopyable.hpp>
 #include <boost/scoped_ptr.hpp>
 
-#include "soca/Fortran.h"
-
-#include "oops/interface/ModelBase.h"
 #include "oops/base/Variables.h"
+#include "oops/interface/ModelBase.h"
 #include "oops/util/Duration.h"
 #include "oops/util/ObjectCounter.h"
 #include "oops/util/Printable.h"
+
+#include "soca/Fortran.h"
 
 // Forward declarations
 namespace eckit {

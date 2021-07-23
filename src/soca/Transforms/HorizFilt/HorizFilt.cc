@@ -8,18 +8,19 @@
 #include <ostream>
 #include <string>
 
-#include "soca/Geometry/Geometry.h"
-#include "soca/Increment/Increment.h"
-#include "soca/Transforms/HorizFilt/HorizFilt.h"
-#include "soca/Transforms/HorizFilt/HorizFiltFortran.h"
-#include "soca/State/State.h"
-#include "soca/Traits.h"
-
 #include "eckit/config/Configuration.h"
 
 #include "oops/interface/LinearVariableChange.h"
 #include "oops/util/abor1_cpp.h"
 #include "oops/util/Logger.h"
+
+#include "soca/Geometry/Geometry.h"
+#include "soca/Increment/Increment.h"
+#include "soca/State/State.h"
+#include "soca/Traits.h"
+#include "soca/Transforms/HorizFilt/HorizFilt.h"
+#include "soca/Transforms/HorizFilt/HorizFiltFortran.h"
+
 
 namespace soca {
 

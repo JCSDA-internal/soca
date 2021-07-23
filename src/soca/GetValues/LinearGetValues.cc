@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2020-2020 UCAR
+ * (C) Copyright 2020-2021 UCAR
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -12,8 +12,8 @@
 #include "soca/GetValues/LinearGetValues.h"
 #include "soca/Increment/Increment.h"
 #include "soca/State/State.h"
-#include "soca/Transforms/Model2GeoVaLs/Model2GeoVaLs.h"
 #include "soca/Transforms/Model2GeoVaLs/LinearModel2GeoVaLs.h"
+#include "soca/Transforms/Model2GeoVaLs/Model2GeoVaLs.h"
 
 #include "ufo/GeoVaLs.h"
 #include "ufo/Locations.h"
