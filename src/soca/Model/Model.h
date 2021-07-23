@@ -43,7 +43,8 @@ namespace soca {
    *  SOCA nonlinear model definition and configuration parameters.
    */
 
-  class Model:public oops::interface::ModelBase<Traits>, private util::ObjectCounter<Model>
+  class Model:public oops::interface::ModelBase<Traits>,
+              private util::ObjectCounter<Model>
   {
    public:
     static const std::string classname() {return "soca::Model";}
