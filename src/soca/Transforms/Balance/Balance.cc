@@ -8,18 +8,17 @@
 #include <ostream>
 #include <string>
 
-#include "soca/Geometry/Geometry.h"
-#include "soca/Increment/Increment.h"
-#include "soca/Transforms/Balance/Balance.h"
-#include "soca/Transforms/Balance/BalanceFortran.h"
-#include "soca/State/State.h"
-#include "soca/Traits.h"
-
 #include "eckit/config/Configuration.h"
 
 #include "oops/interface/LinearVariableChange.h"
 #include "oops/util/Logger.h"
 
+#include "soca/Geometry/Geometry.h"
+#include "soca/Increment/Increment.h"
+#include "soca/State/State.h"
+#include "soca/Traits.h"
+#include "soca/Transforms/Balance/Balance.h"
+#include "soca/Transforms/Balance/BalanceFortran.h"
 
 using oops::Log;
 

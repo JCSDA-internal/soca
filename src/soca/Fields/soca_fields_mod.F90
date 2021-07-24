@@ -528,14 +528,14 @@ subroutine soca_fields_read(fld, f_conf, vdate)
   type(datetime),            intent(inout) :: vdate   !< DateTime
 
   integer, parameter :: max_string_length=800
-  character(len=max_string_length) :: ocn_filename, sfc_filename, ice_filename, filename
+  character(len=max_string_length) :: ocn_filename, sfc_filename, ice_filename, wav_filename, filename
   character(len=:), allocatable :: basename, incr_filename
   integer :: iread = 0
   integer :: ii
   logical :: vert_remap=.false.
   character(len=max_string_length) :: remap_filename
   real(kind=kind_real), allocatable :: h_common(:,:,:)    !< layer thickness to remap to
-  type(restart_file_type), target :: ocean_restart, sfc_restart, ice_restart
+  type(restart_file_type), target :: ocean_restart, sfc_restart, ice_restart, wav_restart
   type(restart_file_type) :: ocean_remap_restart
   type(restart_file_type), pointer :: restart
   integer :: idr
@@ -545,7 +545,7 @@ subroutine soca_fields_read(fld, f_conf, vdate)
   type(remapping_CS)  :: remapCS
   character(len=:), allocatable :: str
   real(kind=kind_real), allocatable :: h_common_ij(:), hocn_ij(:), varocn_ij(:), varocn2_ij(:)
-  logical :: read_sfc, read_ice
+  logical :: read_sfc, read_ice, read_wav
   type(soca_field), pointer :: field, field2, hocn, mld, layer_depth
 
   if ( f_conf%has("read_from_file") ) &
@@ -613,6 +613,16 @@ subroutine soca_fields_read(fld, f_conf, vdate)
       ice_filename = trim(basename)//trim(str)
     end if
 
+    ! filename for wav
+    read_wav = .false.
+    wav_filename=""
+    if ( f_conf%has("wav_filename") ) then
+      call f_conf%get_or_die("basename", str)
+      basename = str
+      call f_conf%get_or_die("wav_filename", str)
+      wav_filename = trim(basename)//trim(str)
+    end if
+
     call fms_io_init()
 
     ! built-in variables
@@ -632,6 +642,10 @@ subroutine soca_fields_read(fld, f_conf, vdate)
           filename = ice_filename
           restart => ice_restart
           read_ice = .true.
+        case ('wav')
+          filename = wav_filename
+          restart => wav_restart
+          read_wav = .true.
         case default
           call abor1_ftn('read_file(): illegal io_file: '//fld%fields(i)%metadata%io_file)
         end select
@@ -656,6 +670,10 @@ subroutine soca_fields_read(fld, f_conf, vdate)
     if (read_ice) then
       call restore_state(ice_restart, directory='')
       call free_restart_type(ice_restart)
+    end if
+    if (read_wav) then
+      call restore_state(wav_restart, directory='')
+      call free_restart_type(wav_restart)
     end if
 
     call fms_io_exit()
@@ -857,21 +875,23 @@ subroutine soca_fields_write_rst(fld, f_conf, vdate)
   type(datetime),            intent(inout) :: vdate    !< DateTime
 
   integer, parameter :: max_string_length=800
-  character(len=max_string_length) :: ocn_filename, sfc_filename, ice_filename, filename
-  type(restart_file_type), target :: ocean_restart, sfc_restart, ice_restart
+  character(len=max_string_length) :: ocn_filename, sfc_filename, ice_filename, wav_filename, filename
+  type(restart_file_type), target :: ocean_restart, sfc_restart, ice_restart, wav_restart
   type(restart_file_type), pointer :: restart
   integer :: idr, i
   type(soca_field), pointer :: field
-  logical :: write_sfc, write_ice
+  logical :: write_sfc, write_ice, write_wav
 
   write_ice = .false.
   write_sfc = .false.
+  write_wav = .false.
   call fms_io_init()
 
   ! filenames
   ocn_filename = soca_genfilename(f_conf,max_string_length,vdate,"ocn")
   sfc_filename = soca_genfilename(f_conf,max_string_length,vdate,"sfc")
   ice_filename = soca_genfilename(f_conf, max_string_length,vdate,"ice")
+  wav_filename = soca_genfilename(f_conf, max_string_length,vdate,"wav")
 
   ! built in variables
   do i=1,size(fld%fields)
@@ -890,6 +910,10 @@ subroutine soca_fields_write_rst(fld, f_conf, vdate)
         filename = ice_filename
         restart => ice_restart
         write_ice = .true.
+      case ('wav')
+        filename = wav_filename
+        restart => wav_restart
+        write_wav = .true.
       case default
         call abor1_ftn('soca_write_restart(): illegal io_file: '//field%metadata%io_file)
       end select
@@ -915,6 +939,10 @@ subroutine soca_fields_write_rst(fld, f_conf, vdate)
   if (write_ice) then
     call save_restart(ice_restart, directory='')
     call free_restart_type(ice_restart)
+  end if
+  if (write_wav) then
+    call save_restart(wav_restart, directory='')
+    call free_restart_type(wav_restart)
   end if
   call fms_io_exit()
 
