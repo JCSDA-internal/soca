@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2019-2020 UCAR
+ * (C) Copyright 2019-2021 UCAR
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -8,14 +8,14 @@
 #ifndef SOCA_GETVALUES_LINEARGETVALUES_H_
 #define SOCA_GETVALUES_LINEARGETVALUES_H_
 
+#include <memory>
 #include <ostream>
 #include <string>
-#include <memory>
-
-#include "soca/Fortran.h"
 
 #include "oops/util/ObjectCounter.h"
 #include "oops/util/Printable.h"
+
+#include "soca/Fortran.h"
 
 #include "ufo/Locations.h"
 

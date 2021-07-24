@@ -8,9 +8,9 @@
 #ifndef SOCA_GETVALUES_GETVALUES_H_
 #define SOCA_GETVALUES_GETVALUES_H_
 
+#include <memory>
 #include <ostream>
 #include <string>
-#include <memory>
 
 #include "soca/Fortran.h"
 

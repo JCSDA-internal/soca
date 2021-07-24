@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2017-2020  UCAR.
+ * (C) Copyright 2017-2021  UCAR.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -8,18 +8,18 @@
 #include <ostream>
 #include <string>
 
-#include "soca/Geometry/Geometry.h"
-#include "soca/Increment/Increment.h"
-#include "soca/Transforms/BkgErr/BkgErr.h"
-#include "soca/Transforms/BkgErr/BkgErrFortran.h"
-#include "soca/State/State.h"
-#include "soca/Traits.h"
-
 #include "eckit/config/Configuration.h"
 
-#include "oops/interface/LinearVariableChange.h"
 #include "oops/base/Variables.h"
+#include "oops/interface/LinearVariableChange.h"
 #include "oops/util/Logger.h"
+
+#include "soca/Geometry/Geometry.h"
+#include "soca/Increment/Increment.h"
+#include "soca/State/State.h"
+#include "soca/Traits.h"
+#include "soca/Transforms/BkgErr/BkgErr.h"
+#include "soca/Transforms/BkgErr/BkgErrFortran.h"
 
 using oops::Log;
 

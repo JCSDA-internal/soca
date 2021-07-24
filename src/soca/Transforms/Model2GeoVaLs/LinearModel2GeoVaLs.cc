@@ -4,17 +4,19 @@
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
-#include "soca/Traits.h"
-#include "soca/Transforms/Model2GeoVaLs/LinearModel2GeoVaLs.h"
-#include "soca/Transforms/Model2GeoVaLs/Model2GeoVaLsFortran.h"
-#include "soca/State/State.h"
-#include "soca/Increment/Increment.h"
-#include "soca/Geometry/Geometry.h"
+
 
 #include "eckit/config/Configuration.h"
 
-#include "oops/util/abor1_cpp.h"
 #include "oops/interface/LinearVariableChange.h"
+#include "oops/util/abor1_cpp.h"
+
+#include "soca/Geometry/Geometry.h"
+#include "soca/Increment/Increment.h"
+#include "soca/State/State.h"
+#include "soca/Traits.h"
+#include "soca/Transforms/Model2GeoVaLs/LinearModel2GeoVaLs.h"
+#include "soca/Transforms/Model2GeoVaLs/Model2GeoVaLsFortran.h"
 
 namespace soca {
 
