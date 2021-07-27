@@ -18,7 +18,7 @@ namespace soca {
 
 void instantiateLocalizationFactory() {
 }
-// static oops::LocalizationMaker<soca::Traits,
+// static oops::interface::LocalizationMaker<soca::Traits,
 //                                Localization> maker_("SOCA");
 }  // namespace soca
 

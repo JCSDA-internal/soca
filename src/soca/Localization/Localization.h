@@ -11,12 +11,10 @@
 #include <ostream>
 #include <string>
 
-#include <boost/scoped_ptr.hpp>
-
 #include "soca/Fortran.h"
+#include "soca/Traits.h"
 
-#include "oops/util/DateTime.h"
-#include "oops/util/ObjectCounter.h"
+#include "oops/interface/LocalizationBase.h"
 
 // Forward declarations
 namespace eckit {
@@ -32,19 +30,17 @@ namespace soca {
 namespace soca {
 
   // Localization for SOCA model.
-  class Localization : public util::Printable,
-     private boost::noncopyable,
-     private util::ObjectCounter<Localization>{
+  class Localization : public oops::interface::LocalizationBase<soca::Traits> {
    public:
       static const std::string classname() {return "soca::Localization";}
 
       Localization(const Geometry &, const eckit::Configuration &);
       ~Localization();
-      void randomize(Increment &) const;
-      void multiply(Increment &) const;
+      void randomize(Increment &) const override;
+      void multiply(Increment &) const override;
 
    private:
-      void print(std::ostream &) const;
+      void print(std::ostream &) const override;
       int keyFtnConfig_;
   };
   // -----------------------------------------------------------------------------
