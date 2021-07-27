@@ -25,7 +25,7 @@ using oops::Log;
 
 namespace soca {
   // -----------------------------------------------------------------------------
-  static oops::ModelMaker<Traits, Model> makermodel_("SOCA");
+  static oops::interface::ModelMaker<Traits, Model> makermodel_("SOCA");
   // -----------------------------------------------------------------------------
   Model::Model(const Geometry & resol, const eckit::Configuration & model)
     : keyConfig_(0),

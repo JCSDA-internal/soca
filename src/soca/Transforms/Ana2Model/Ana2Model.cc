@@ -5,16 +5,16 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#include "soca/Transforms/Ana2Model/Ana2Model.h"
 
 #include <ostream>
 #include <string>
 
 #include "eckit/config/Configuration.h"
+#include "eckit/exception/Exceptions.h"
+#include "oops/util/Logger.h"
 #include "soca/Geometry/Geometry.h"
 #include "soca/State/State.h"
-#include "oops/util/Logger.h"
-#include "eckit/exception/Exceptions.h"
+#include "soca/Transforms/Ana2Model/Ana2Model.h"
 
 using oops::Log;
 

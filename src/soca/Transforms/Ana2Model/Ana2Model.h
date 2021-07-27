@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2017-2020  UCAR.
+ * (C) Copyright 2017-2021  UCAR.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -13,10 +13,10 @@
 #include <vector>
 
 #include "eckit/config/Configuration.h"
-#include "soca/Geometry/Geometry.h"
-#include "soca/Traits.h"
 #include "oops/base/VariableChangeBase.h"
 #include "oops/base/Variables.h"
+#include "soca/Geometry/Geometry.h"
+#include "soca/Traits.h"
 
 
 // Forward declarations

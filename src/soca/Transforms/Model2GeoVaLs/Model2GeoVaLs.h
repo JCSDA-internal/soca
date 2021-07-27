@@ -8,12 +8,12 @@
 #ifndef SOCA_TRANSFORMS_MODEL2GEOVALS_MODEL2GEOVALS_H_
 #define SOCA_TRANSFORMS_MODEL2GEOVALS_MODEL2GEOVALS_H_
 
-#include <string>
 #include <memory>
-
-#include "soca/Traits.h"
+#include <string>
 
 #include "oops/base/VariableChangeBase.h"
+
+#include "soca/Traits.h"
 
 namespace soca {
 

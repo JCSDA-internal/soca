@@ -8,8 +8,8 @@
 #ifndef SOCA_TRANSFORMS_MODEL2GEOVALS_LINEARMODEL2GEOVALS_H_
 #define SOCA_TRANSFORMS_MODEL2GEOVALS_LINEARMODEL2GEOVALS_H_
 
-#include <string>
 #include <memory>
+#include <string>
 
 #include "oops/util/Printable.h"
 
