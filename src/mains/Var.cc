@@ -9,18 +9,21 @@
  * does it submit to any jurisdiction.
  */
 
+
 #include "oops/generic/instantiateModelFactory.h"
 #include "oops/runs/Run.h"
 #include "oops/runs/Variational.h"
 #include "saber/oops/instantiateCovarFactory.h"
 #include "saber/oops/instantiateLocalizationFactory.h"
 #include "soca/Traits.h"
+#include "ufo/instantiateObsErrorFactory.h"
 #include "ufo/instantiateObsFilterFactory.h"
 #include "ufo/ObsTraits.h"
 
 int main(int argc,  char ** argv) {
   oops::Run run(argc, argv);
   oops::instantiateModelFactory<soca::Traits>();
+  ufo::instantiateObsErrorFactory<ufo::ObsTraits>();
   ufo::instantiateObsFilterFactory<ufo::ObsTraits>();
   saber::instantiateLocalizationFactory<soca::Traits>();
   saber::instantiateCovarFactory<soca::Traits>();
