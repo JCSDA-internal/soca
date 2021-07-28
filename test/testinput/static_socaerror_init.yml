@@ -23,13 +23,10 @@ background error:
     method: cor
     strategy: specific_univariate
     new_nicas: 1
-    interp_type: mesh_based
+    write_nicas_local: 1
     mask_check: 1
-    ntry: 3
-    nrep:  2
     resol: 6.0
-    network: 1
-    mpicom: 2
+    network: 0 # Not re-implemented yet
   correlation:
   - name: ocn
     base value: 840336.134453782

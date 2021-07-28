@@ -13,22 +13,23 @@ background:
 
 bump:
   verbosity: main
-  prefix: soca_bump_cov
   datadir: ./bump
   diag_rhflt: 3000000.0
   lct_nscales: 1
   lct_diag: [0]
   method: cor
-  interp_type: mesh_based
   nc1: 500
   nc2: 500
   nc3: 100
   ne: 10
   new_lct: 1
   nl0r: 11
-  nrep: 2
-  ntry: 3
   strategy: specific_univariate
+  grids:
+  - prefix: soca_bump_cov_3d
+    variables: [hocn, socn, tocn]
+  - prefix: soca_bump_cov_2d
+    variables: [cicen, hicen, ssh]
 
 _: &ensfile
   read_from_file: 1

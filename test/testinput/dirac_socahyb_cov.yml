@@ -27,8 +27,7 @@ background error:
       bump:
         datadir: ./bump
         strategy: specific_univariate
-        load_nicas: 1
-        mpicom: 2
+        load_nicas_local: 1
         verbosity: main
       correlation:
       - name: ocn
@@ -101,11 +100,8 @@ background error:
           prefix: soca_bump_loc
           method: loc
           strategy: common
-          load_nicas: 1
-          mpicom: 2
+          load_nicas_local: 1
           verbosity: main
-          grids:
-          - variables: [socn, tocn, ssh]
     weight:
       value: 0.5
 dirac:
