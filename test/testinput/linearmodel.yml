@@ -22,10 +22,9 @@ initial condition:
   state variables: *soca_vars
 
 linear model:
-  name: IdTLM
+  name: Identity
+  increment variables: *soca_vars
   tstep: PT1H
-  advance_mom6: 0
-  lm variables: *soca_vars
 
 linear model test:
   forecast length: PT2H
