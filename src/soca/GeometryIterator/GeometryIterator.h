@@ -19,7 +19,7 @@
 // Forward declarations
 namespace eckit {
   namespace geometry {
-    class Point2;
+    class Point3;
   }
 }
 namespace soca {
@@ -30,7 +30,7 @@ namespace soca {
 namespace soca {
 // -----------------------------------------------------------------------------
 class GeometryIterator: public std::iterator<std::forward_iterator_tag,
-                                               eckit::geometry::Point2>,
+                                               eckit::geometry::Point3>,
                           public util::Printable,
                           private util::ObjectCounter<GeometryIterator> {
  public:
@@ -43,7 +43,7 @@ class GeometryIterator: public std::iterator<std::forward_iterator_tag,
 
   bool operator==(const GeometryIterator &) const;
   bool operator!=(const GeometryIterator &) const;
-  eckit::geometry::Point2 operator*() const;
+  eckit::geometry::Point3 operator*() const;
   GeometryIterator& operator++();
 
   F90iter & toFortran() {return keyIter_;}

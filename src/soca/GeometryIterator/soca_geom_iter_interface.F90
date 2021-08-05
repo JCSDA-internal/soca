@@ -20,13 +20,14 @@ contains
 
   ! ------------------------------------------------------------------------------
   !> Setup geometry iterator
-  subroutine soca_geom_iter_setup_c(c_key_self, c_key_geom, c_iindex, c_jindex) bind(c, name='soca_geom_iter_setup_f90')
+  subroutine soca_geom_iter_setup_c(c_key_self, c_key_geom, c_iindex, c_jindex, c_kindex) bind(c, name='soca_geom_iter_setup_f90')
 
     ! Passed variables
     integer(c_int), intent(inout) :: c_key_self !< Geometry iterator
     integer(c_int), intent(   in) :: c_key_geom !< Geometry
     integer(c_int), intent(   in) :: c_iindex    !< Index
     integer(c_int), intent(   in) :: c_jindex    !< Index
+    integer(c_int), intent(   in) :: c_kindex    !< Index
 
     ! Local variables
     type(soca_geom_iter),     pointer :: self
@@ -39,7 +40,7 @@ contains
     call soca_geom_registry%get(c_key_geom, geom)
 
     ! Call Fortran
-    call soca_geom_iter_setup(self, geom, c_iindex, c_jindex)
+    call soca_geom_iter_setup(self, geom, c_iindex, c_jindex, c_kindex)
 
   end subroutine soca_geom_iter_setup_c
 
@@ -100,12 +101,13 @@ contains
 
   ! ------------------------------------------------------------------------------
   !> Get geometry iterator current lat/lon
-  subroutine soca_geom_iter_current_c(c_key_self, c_lon, c_lat) bind(c, name='soca_geom_iter_current_f90')
+  subroutine soca_geom_iter_current_c(c_key_self, c_lon, c_lat, c_dep) bind(c, name='soca_geom_iter_current_f90')
 
     ! Passed variables
     integer(c_int), intent(   in) :: c_key_self !< Geometry iterator
     real(c_double), intent(inout) :: c_lat      !< Latitude
     real(c_double), intent(inout) :: c_lon      !< Longitude
+    real(c_double), intent(inout) :: c_dep      !< Depth
 
     ! Local variables
     type(soca_geom_iter), pointer :: self
@@ -114,7 +116,7 @@ contains
     call soca_geom_iter_registry%get(c_key_self, self)
 
     ! Call Fortran
-    call soca_geom_iter_current(self, c_lon, c_lat)
+    call soca_geom_iter_current(self, c_lon, c_lat, c_dep)
 
   end subroutine soca_geom_iter_current_c
 

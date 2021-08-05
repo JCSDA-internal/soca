@@ -10,7 +10,7 @@
 #include "soca/GeometryIterator/GeometryIteratorFortran.h"
 
 #include "eckit/config/Configuration.h"
-#include "eckit/geometry/Point2.h"
+#include "eckit/geometry/Point3.h"
 #include "oops/util/Logger.h"
 
 // -----------------------------------------------------------------------------
@@ -56,10 +56,10 @@ bool GeometryIterator::operator!=(const GeometryIterator & other) const {
 
 // -----------------------------------------------------------------------------
 
-eckit::geometry::Point2 GeometryIterator::operator*() const {
-  double lat, lon;
-  soca_geom_iter_current_f90(keyIter_, lon, lat);
-  return eckit::geometry::Point2(lon, lat);
+eckit::geometry::Point3 GeometryIterator::operator*() const {
+  double lat, lon, dep;
+  soca_geom_iter_current_f90(keyIter_, lon, lat, dep);
+  return eckit::geometry::Point3(lon, lat, dep);
 }
 
 // -----------------------------------------------------------------------------
@@ -72,9 +72,10 @@ GeometryIterator& GeometryIterator::operator++() {
 // -----------------------------------------------------------------------------
 
 void GeometryIterator::print(std::ostream & os) const {
-  double lat, lon;
-  soca_geom_iter_current_f90(keyIter_, lon, lat);
-  os << "GeometryIterator, lat/lon: " << lat << " / " << lon << std::endl;
+  double lat, lon, dep;
+  soca_geom_iter_current_f90(keyIter_, lon, lat, dep);
+  os << "GeometryIterator, lat/lon: " << lat << " / " << lon
+     << " / " << dep << std::endl;
 }
 
 // -----------------------------------------------------------------------------

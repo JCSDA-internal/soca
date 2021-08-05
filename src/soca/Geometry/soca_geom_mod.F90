@@ -38,11 +38,11 @@ public :: soca_geom, &
 type :: soca_geom
     type(MOM_domain_type), pointer :: Domain !< Ocean model domain
     integer :: nzo, nzo_zstar
-    integer :: isc, iec, jsc, jec  !< indices of compute domain
-    integer :: isd, ied, jsd, jed  !< indices of data domain
-    integer :: isg, ieg, jsg, jeg  !< indices of global domain
-    integer :: iscl, iecl, jscl, jecl  !< indices of local compute domain
-    integer :: isdl, iedl, jsdl, jedl  !< indices of local data domain
+    integer :: isc, iec, jsc, jec, ksc, kec  !< indices of compute domain
+    integer :: isd, ied, jsd, jed, ksd, ked  !< indices of data domain
+    integer :: isg, ieg, jsg, jeg, ksg, keg  !< indices of global domain
+    integer :: iscl, iecl, jscl, jecl, kscl, kecl  !< indices of local compute domain
+    integer :: isdl, iedl, jsdl, jedl, ksdl, kedl  !< indices of local data domain
     real(kind=kind_real), allocatable, dimension(:)   :: lonh, lath
     real(kind=kind_real), allocatable, dimension(:)   :: lonq, latq
     real(kind=kind_real), allocatable, dimension(:,:) :: lon, lat !< Tracer point grid
@@ -332,16 +332,25 @@ subroutine geom_allocate(self)
   class(soca_geom), intent(inout) :: self
 
   integer :: nzo
-  integer :: isd, ied, jsd, jed
+  integer :: isd, ied, jsd, jed, ksd, ked
+
+  nzo = self%nzo
+  ksd = 1
+  ked = nzo
 
   ! Get domain shape (number of levels, indices of data and compute domain)
   call geom_get_domain_indices(self, "compute", self%isc, self%iec, self%jsc, self%jec)
+  self%ksc = ksd; self%kec = ked
   call geom_get_domain_indices(self, "data", isd, ied, jsd, jed)
-  self%isd = isd ;  self%ied = ied ; self%jsd = jsd; self%jed = jed
+  self%isd = isd; self%ied = ied
+  self%jsd = jsd; self%jed = jed
+  self%ksd = ksd; self%ked = ked
   call geom_get_domain_indices(self, "global", self%isg, self%ieg, self%jsg, self%jeg)
+  self%ksg = ksd; self%keg = ked
   call geom_get_domain_indices(self, "compute", self%iscl, self%iecl, self%jscl, self%jecl, local=.true.)
+  self%kscl = ksd; self%kecl = ked
   call geom_get_domain_indices(self, "data", self%isdl, self%iedl, self%jsdl, self%jedl, local=.true.)
-  nzo = self%nzo
+  self%ksdl = ksd; self%kedl = ked
 
   ! Allocate arrays on compute domain
   allocate(self%lonh(self%isg:self%ieg));        self%lonh = 0.0_kind_real

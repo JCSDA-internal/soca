@@ -20,8 +20,9 @@ module soca_geom_iter_mod
 
   type :: soca_geom_iter
     type(soca_geom), pointer :: geom => null() !< Geometry
-    integer :: iind = 1  !< index e.g. lat(iind,jind)
-    integer :: jind = 1  !< 
+    integer :: iindex = 1  !< index e.g. lat(iindex,jindex)
+    integer :: jindex = 1  !< 
+    integer :: kindex = 1  !< 
   end type soca_geom_iter
 
 #define LISTED_TYPE soca_geom_iter
@@ -43,19 +44,20 @@ contains
 
   ! ------------------------------------------------------------------------------
   !> Setup for the geometry iterator
-  subroutine soca_geom_iter_setup(self, geom, iind, jind)
+  subroutine soca_geom_iter_setup(self, geom, iindex, jindex, kindex)
 
     ! Passed variables
     type(soca_geom_iter),     intent(inout) :: self !< Geometry iterator
     type(soca_geom), pointer, intent(   in) :: geom !< Geometry
-    integer,                  intent(   in) :: iind, jind  !< Index
+    integer,                  intent(   in) :: iindex, jindex, kindex  !< Index
 
     ! Associate geometry
     self%geom => geom
 
-    ! Define iind/jind for local tile
-    self%iind = iind
-    self%jind = jind
+    ! Define iindex/jindex/kindex for local tile
+    self%iindex = iindex
+    self%jindex = jindex
+    self%kindex = kindex
 
   end subroutine soca_geom_iter_setup
 
@@ -70,9 +72,10 @@ contains
     ! Associate geometry
     self%geom => other%geom
 
-    ! Copy iind/jind
-    self%iind = other%iind
-    self%jind = other%jind
+    ! Copy iindex/jindex
+    self%iindex = other%iindex
+    self%jindex = other%jindex
+    self%kindex = other%kindex
 
   end subroutine soca_geom_iter_clone
 
@@ -89,32 +92,37 @@ contains
     equals = 0
 
     ! Check equality
-    if (associated(self%geom, other%geom) .and. (self%iind==other%iind) .and. (self%jind==other%jind)) equals = 1
+    if (associated(self%geom, other%geom) .and. &
+       (self%iindex==other%iindex) .and. &
+       (self%jindex==other%jindex) .and. &
+       (self%kindex==other%kindex)) equals = 1
 
   end subroutine soca_geom_iter_equals
 
   ! ------------------------------------------------------------------------------
   !> Get geometry iterator current lat/lon
-  subroutine soca_geom_iter_current(self, lon, lat)
+  subroutine soca_geom_iter_current(self, lon, lat, dep)
 
     ! Passed variables
     type(soca_geom_iter), intent( in) :: self !< Geometry iterator
     real(kind_real),    intent(out) :: lat  !< Latitude
     real(kind_real),    intent(out) :: lon  !< Longitude
+    real(kind_real),    intent(out) :: dep  !< Depth
 
-    ! Check iind/jind
-    if (self%iind == -1 .AND. self%jind == -1) then
+    ! Check iindex/jindex/kindex
+    if (self%iindex == -1 .AND. self%jindex == -1 .AND. self%kindex == -1) then
       ! special case of {-1,-1} means end of the grid
       lat = self%geom%lat(self%geom%iec,self%geom%jec)
       lon = self%geom%lon(self%geom%iec,self%geom%jec) 
-    elseif (self%iind < self%geom%isc .OR. self%iind > self%geom%iec .OR. &
-            self%jind < self%geom%jsc .OR. self%jind > self%geom%jec) then
+    elseif (self%iindex < self%geom%isc .OR. self%iindex > self%geom%iec .OR. &
+            self%jindex < self%geom%jsc .OR. self%jindex > self%geom%jec .OR. &
+            self%kindex < self%geom%ksc .OR. self%kindex > self%geom%kec) then
       ! outside of the grid
       call abor1_ftn('soca_geom_iter_current: iterator out of bounds')
     else
       ! inside of the grid
-      lat = self%geom%lat(self%iind,self%jind)
-      lon = self%geom%lon(self%iind,self%jind)
+      lat = self%geom%lat(self%iindex,self%jindex)
+      lon = self%geom%lon(self%iindex,self%jindex)
     endif
 
   end subroutine soca_geom_iter_current
@@ -125,23 +133,33 @@ contains
 
     ! Passed variables
     type(soca_geom_iter), intent(inout) :: self !< Geometry iterator
-    integer :: iind, jind
+    integer :: iindex, jindex, kindex
 
-    iind = self%iind
-    jind = self%jind
+    iindex = self%iindex
+    jindex = self%jindex
+    kindex = self%kindex
 
-    ! do while ((iind.lt.self%geom%iec).and.(jind.lt.self%geom%jec))
+    ! do while ((iindex.lt.self%geom%iec).and.(jindex.lt.self%geom%jec))
 
       ! increment by 1
-      if (iind.lt.self%geom%iec) then 
-        iind = iind + 1
-      elseif (iind.eq.self%geom%iec) then
-        iind = self%geom%isc
-        jind = jind + 1
+      iindex = iindex + 1
+      if (iindex > self%geom%iec) then
+        iindex = self%geom%isc
+        jindex = jindex + 1
+        if (jindex > self%geom%jec) then
+          jindex = self%geom%jsc
+          kindex =   kindex + 1
+
+          if (kindex > self%geom%kec) then
+            iindex=-1
+            jindex=-1
+            kindex=-1
+          end if
+        end if
       end if
 
      ! ! skip this point if it is on land
-     ! if (self%geom%mask2d(iind,jind).lt.1) then 
+     ! if (self%geom%mask2d(iindex,jindex).lt.1) then 
      !   cycle
      ! else
      !   exit
@@ -149,13 +167,9 @@ contains
 
     ! end do
 
-    if (jind > self%geom%jec) then
-        iind=-1
-        jind=-1
-    end if
-
-    self%iind = iind
-    self%jind = jind
+    self%iindex = iindex
+    self%jindex = jindex
+    self%kindex = kindex
 
   end subroutine soca_geom_iter_next
   ! ------------------------------------------------------------------------------

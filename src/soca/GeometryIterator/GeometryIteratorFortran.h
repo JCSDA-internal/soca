@@ -18,7 +18,7 @@ namespace soca {
     void soca_geom_iter_clone_f90(F90iter &, const F90iter &);
     void soca_geom_iter_delete_f90(F90iter &);
     void soca_geom_iter_equals_f90(const F90iter &, const F90iter&, int &);
-    void soca_geom_iter_current_f90(const F90iter &, double &, double &);
+    void soca_geom_iter_current_f90(const F90iter &, double &, double &, double &);
     void soca_geom_iter_next_f90(const F90iter &);
   }
 }  // namespace soca
