@@ -1,0 +1,78 @@
+Test     : Background: 
+Test     :   Valid time: 2018-04-15T00:00:00Z
+Test     :   cicen   min=    0.000000   max=    1.000000   mean=    0.117513
+Test     :   hicen   min=    0.000000   max=    4.032667   mean=    0.471252
+Test     :   hsnon   min=    0.000000   max=    1.271283   mean=    0.088687
+Test     :    socn   min=   10.721046   max=   40.441659   mean=   34.544390
+Test     :    tocn   min=   -1.888390   max=   31.700465   mean=    6.017565
+Test     :    uocn   min=   -0.858169   max=    0.700095   mean=   -0.000259
+Test     :    vocn   min=   -0.766110   max=    1.437777   mean=    0.002197
+Test     :     ssh   min=   -1.924485   max=    0.927283   mean=   -0.276790
+Test     :    hocn   min=    0.001000   max= 1345.640000   mean=  128.628064
+Test     :     chl   min=    0.000010   max=    4.671990   mean=    0.118483
+Test     :    biop   min=    0.000000   max=    0.000000   mean=    0.000000
+Test     :      sw   min=    0.000000   max=    0.000000   mean=    0.000000
+Test     :     lhf   min=    0.000000   max=    0.000000   mean=    0.000000
+Test     :     shf   min=    0.000000   max=    0.000000   mean=    0.000000
+Test     :      lw   min=    0.000000   max=    0.000000   mean=    0.000000
+Test     :      us   min=    0.000000   max=    0.000000   mean=    0.000000
+Test     :     mld   min=    2.285472   max= 4593.153342   mean=  192.410907
+Test     : layer_depth   min=    2.285472   max= 5658.305747   mean= 1200.522954
+Test     : averageEigenSpectrum=-nan
+Test     : -nan
+Test     : -nan
+Test     : -nan
+Test     : -nan
+Test     : -nan
+Test     : -nan
+Test     : -nan
+Test     : -nan
+Test     : -nan
+Test     : averageEigenSpectrumSum=-nan
+Test     : truncatedNeig=5
+Test     : frac=-nan
+Test     : EV 0
+Test     :   Valid time: 2018-04-15T00:00:00Z
+Test     :     ssh   min=         nan   max=         nan   mean=        -nan
+Test     :   cicen   min=         nan   max=         nan   mean=        -nan
+Test     :   hicen   min=         nan   max=         nan   mean=        -nan
+Test     :    tocn   min=         nan   max=         nan   mean=        -nan
+Test     :    socn   min=         nan   max=         nan   mean=        -nan
+Test     :     chl   min=         nan   max=         nan   mean=        -nan
+Test     :    biop   min=         nan   max=         nan   mean=        -nan
+Test     : EV 1
+Test     :   Valid time: 2018-04-15T00:00:00Z
+Test     :     ssh   min=         nan   max=         nan   mean=        -nan
+Test     :   cicen   min=         nan   max=         nan   mean=        -nan
+Test     :   hicen   min=         nan   max=         nan   mean=        -nan
+Test     :    tocn   min=         nan   max=         nan   mean=        -nan
+Test     :    socn   min=         nan   max=         nan   mean=        -nan
+Test     :     chl   min=         nan   max=         nan   mean=        -nan
+Test     :    biop   min=         nan   max=         nan   mean=        -nan
+Test     : EV 2
+Test     :   Valid time: 2018-04-15T00:00:00Z
+Test     :     ssh   min=         nan   max=         nan   mean=        -nan
+Test     :   cicen   min=         nan   max=         nan   mean=        -nan
+Test     :   hicen   min=         nan   max=         nan   mean=        -nan
+Test     :    tocn   min=         nan   max=         nan   mean=        -nan
+Test     :    socn   min=         nan   max=         nan   mean=        -nan
+Test     :     chl   min=         nan   max=         nan   mean=        -nan
+Test     :    biop   min=         nan   max=         nan   mean=        -nan
+Test     : EV 3
+Test     :   Valid time: 2018-04-15T00:00:00Z
+Test     :     ssh   min=         nan   max=         nan   mean=        -nan
+Test     :   cicen   min=         nan   max=         nan   mean=        -nan
+Test     :   hicen   min=         nan   max=         nan   mean=        -nan
+Test     :    tocn   min=         nan   max=         nan   mean=        -nan
+Test     :    socn   min=         nan   max=         nan   mean=        -nan
+Test     :     chl   min=         nan   max=         nan   mean=        -nan
+Test     :    biop   min=         nan   max=         nan   mean=        -nan
+Test     : EV 4
+Test     :   Valid time: 2018-04-15T00:00:00Z
+Test     :     ssh   min=         nan   max=         nan   mean=        -nan
+Test     :   cicen   min=         nan   max=         nan   mean=        -nan
+Test     :   hicen   min=         nan   max=         nan   mean=        -nan
+Test     :    tocn   min=         nan   max=         nan   mean=        -nan
+Test     :    socn   min=         nan   max=         nan   mean=        -nan
+Test     :     chl   min=         nan   max=         nan   mean=        -nan
+Test     :    biop   min=         nan   max=         nan   mean=        -nan
