@@ -15,7 +15,7 @@ background:
 background error:
   covariance model: SocaError
   date: *date
-  analysis variables: &soca_vars [ssh, cicen, hicen, tocn, socn, chl, biop]
+  analysis variables: &soca_vars [ssh, cicen, hicen, tocn, socn]
   bump:
     verbosity: main
     datadir: ./bump
@@ -32,7 +32,7 @@ background error:
     biop:  0.1
   correlation:
   - name: ocn
-    variables: [tocn, ssh, socn, chl, biop]
+    variables: [tocn, ssh, socn]
   - name: ice
     variables: [cicen, hicen]
 
