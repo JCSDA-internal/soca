@@ -139,10 +139,10 @@ variational:
       mom6_input_nml: ./inputnml/input.nml
       fields metadata: ./fields_metadata.yml
     linear model:
+      name: Identity
+      increment variables: *soca_vars
       variable change: Identity
-      name: IdTLM
       tstep: PT1H
-      lm variables: *soca_vars
     ninner: 1
     gradient norm reduction: 1e-15
     test: on
