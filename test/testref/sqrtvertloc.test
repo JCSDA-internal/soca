@@ -18,61 +18,115 @@ Test     :      lw   min=    0.000000   max=    0.000000   mean=    0.000000
 Test     :      us   min=    0.000000   max=    0.000000   mean=    0.000000
 Test     :     mld   min=    2.285472   max= 4593.153342   mean=  192.410907
 Test     : layer_depth   min=    2.285472   max= 5658.305747   mean= 1200.522954
-Test     : averageEigenSpectrum=-nan
-Test     : -nan
-Test     : -nan
-Test     : -nan
-Test     : -nan
-Test     : -nan
-Test     : -nan
-Test     : -nan
-Test     : -nan
-Test     : -nan
-Test     : averageEigenSpectrumSum=-nan
-Test     : truncatedNeig=5
-Test     : frac=-nan
-Test     : EV 0
+Test     : Variance Explained=0.204674
+Test     : 0.368372
+Test     : 0.439918
+Test     : 0.501335
+Test     : 0.555452
+Test     : 0.603709
+Test     : 0.646971
+Test     : 0.686053
+Test     : 0.721392
+Test     : 0.753313
+Test     : 0.782235
+Test     : 0.808402
+Test     : 0.832002
+Test     : 0.853319
+Test     : 0.872527
+Test     : 0.889749
+Test     : 0.905110
+Test     : 0.918802
+Test     : 0.930955
+Test     : 0.941680
+Test     : 0.951112
+Test     : 0.959364
+Test     : 0.966537
+Test     : 0.972706
+Test     : 0.977975
+Test     : 0.982439
+Test     : 0.986187
+Test     : 0.989297
+Test     : 0.991850
+Test     : 0.993931
+Test     : 0.995597
+Test     : 0.996913
+Test     : 0.997915
+Test     : 0.998667
+Test     : 0.999207
+Test     : 0.999576
+Test     : 0.999810
+Test     : 0.999942
+Test     : 1.000000
+Test     : 1.000000
+Test     : Number of retained columns=9
+Test     : Retained fraction of the variance=0.721392
+Test     : Variance for truncated correlation matrix
 Test     :   Valid time: 2018-04-15T00:00:00Z
-Test     :     ssh   min=         nan   max=         nan   mean=        -nan
-Test     :   cicen   min=         nan   max=         nan   mean=        -nan
-Test     :   hicen   min=         nan   max=         nan   mean=        -nan
-Test     :    tocn   min=         nan   max=         nan   mean=        -nan
-Test     :    socn   min=         nan   max=         nan   mean=        -nan
-Test     :     chl   min=         nan   max=         nan   mean=        -nan
-Test     :    biop   min=         nan   max=         nan   mean=        -nan
-Test     : EV 1
+Test     :     ssh   min=    0.000000   max=    0.998742   mean=    0.865551
+Test     :   cicen   min=    0.045304   max=    1.000000   mean=    0.584910
+Test     :   hicen   min=    0.090334   max=    1.000000   mean=    0.568427
+Test     :    tocn   min=    0.000000   max=    0.999388   mean=    0.582171
+Test     :    socn   min=    0.000000   max=    0.999623   mean=    0.586337
+Test     : Columns of sqrt(B) 0
 Test     :   Valid time: 2018-04-15T00:00:00Z
-Test     :     ssh   min=         nan   max=         nan   mean=        -nan
-Test     :   cicen   min=         nan   max=         nan   mean=        -nan
-Test     :   hicen   min=         nan   max=         nan   mean=        -nan
-Test     :    tocn   min=         nan   max=         nan   mean=        -nan
-Test     :    socn   min=         nan   max=         nan   mean=        -nan
-Test     :     chl   min=         nan   max=         nan   mean=        -nan
-Test     :    biop   min=         nan   max=         nan   mean=        -nan
-Test     : EV 2
+Test     :     ssh   min=   -0.303457   max=    0.995285   mean=    0.531625
+Test     :   cicen   min=   -0.843451   max=    0.847972   mean=    0.012277
+Test     :   hicen   min=   -0.815331   max=    0.871627   mean=    0.017530
+Test     :    tocn   min=   -0.998348   max=    0.991427   mean=    0.086715
+Test     :    socn   min=   -0.995678   max=    0.980173   mean=   -0.196227
+Test     : Columns of sqrt(B) 1
 Test     :   Valid time: 2018-04-15T00:00:00Z
-Test     :     ssh   min=         nan   max=         nan   mean=        -nan
-Test     :   cicen   min=         nan   max=         nan   mean=        -nan
-Test     :   hicen   min=         nan   max=         nan   mean=        -nan
-Test     :    tocn   min=         nan   max=         nan   mean=        -nan
-Test     :    socn   min=         nan   max=         nan   mean=        -nan
-Test     :     chl   min=         nan   max=         nan   mean=        -nan
-Test     :    biop   min=         nan   max=         nan   mean=        -nan
-Test     : EV 3
+Test     :     ssh   min=   -0.982429   max=    0.160705   mean=   -0.372277
+Test     :   cicen   min=   -0.848230   max=    0.836675   mean=   -0.018368
+Test     :   hicen   min=   -0.896278   max=    0.884696   mean=    0.018171
+Test     :    tocn   min=   -0.997792   max=    0.994810   mean=   -0.040791
+Test     :    socn   min=   -0.938756   max=    0.997437   mean=    0.122205
+Test     : Columns of sqrt(B) 2
 Test     :   Valid time: 2018-04-15T00:00:00Z
-Test     :     ssh   min=         nan   max=         nan   mean=        -nan
-Test     :   cicen   min=         nan   max=         nan   mean=        -nan
-Test     :   hicen   min=         nan   max=         nan   mean=        -nan
-Test     :    tocn   min=         nan   max=         nan   mean=        -nan
-Test     :    socn   min=         nan   max=         nan   mean=        -nan
-Test     :     chl   min=         nan   max=         nan   mean=        -nan
-Test     :    biop   min=         nan   max=         nan   mean=        -nan
-Test     : EV 4
+Test     :     ssh   min=   -0.598827   max=    0.960216   mean=    0.287781
+Test     :   cicen   min=   -0.902417   max=    0.946036   mean=    0.013680
+Test     :   hicen   min=   -0.914043   max=    0.911193   mean=   -0.009214
+Test     :    tocn   min=   -0.952461   max=    0.979681   mean=    0.046620
+Test     :    socn   min=   -0.969989   max=    0.975121   mean=   -0.023913
+Test     : Columns of sqrt(B) 3
 Test     :   Valid time: 2018-04-15T00:00:00Z
-Test     :     ssh   min=         nan   max=         nan   mean=        -nan
-Test     :   cicen   min=         nan   max=         nan   mean=        -nan
-Test     :   hicen   min=         nan   max=         nan   mean=        -nan
-Test     :    tocn   min=         nan   max=         nan   mean=        -nan
-Test     :    socn   min=         nan   max=         nan   mean=        -nan
-Test     :     chl   min=         nan   max=         nan   mean=        -nan
-Test     :    biop   min=         nan   max=         nan   mean=        -nan
+Test     :     ssh   min=   -0.907669   max=    0.767814   mean=   -0.226037
+Test     :   cicen   min=   -0.847602   max=    0.974312   mean=   -0.018198
+Test     :   hicen   min=   -0.913490   max=    0.912522   mean=    0.005945
+Test     :    tocn   min=   -0.960260   max=    0.940860   mean=   -0.036071
+Test     :    socn   min=   -0.965665   max=    0.937162   mean=    0.022193
+Test     : Columns of sqrt(B) 4
+Test     :   Valid time: 2018-04-15T00:00:00Z
+Test     :     ssh   min=   -0.600867   max=    0.811027   mean=    0.179109
+Test     :   cicen   min=   -0.931445   max=    0.883816   mean=    0.002494
+Test     :   hicen   min=   -0.858852   max=    0.877779   mean=   -0.013345
+Test     :    tocn   min=   -0.965048   max=    0.969895   mean=    0.027819
+Test     :    socn   min=   -0.975737   max=    0.971523   mean=   -0.018803
+Test     : Columns of sqrt(B) 5
+Test     :   Valid time: 2018-04-15T00:00:00Z
+Test     :     ssh   min=   -0.801084   max=    0.386808   mean=   -0.147683
+Test     :   cicen   min=   -0.862292   max=    0.900487   mean=   -0.016824
+Test     :   hicen   min=   -0.897434   max=    0.799036   mean=    0.010409
+Test     :    tocn   min=   -0.966644   max=    0.965349   mean=   -0.021892
+Test     :    socn   min=   -0.939939   max=    0.965494   mean=    0.017835
+Test     : Columns of sqrt(B) 6
+Test     :   Valid time: 2018-04-15T00:00:00Z
+Test     :     ssh   min=   -0.629446   max=    0.716562   mean=    0.124364
+Test     :   cicen   min=   -0.914991   max=    0.932051   mean=    0.009418
+Test     :   hicen   min=   -0.890779   max=    0.915286   mean=   -0.006587
+Test     :    tocn   min=   -0.999764   max=    0.999923   mean=    0.018934
+Test     :    socn   min=   -0.916927   max=    0.959753   mean=   -0.014523
+Test     : Columns of sqrt(B) 7
+Test     :   Valid time: 2018-04-15T00:00:00Z
+Test     :     ssh   min=   -0.551896   max=    0.471598   mean=   -0.107439
+Test     :   cicen   min=   -0.876463   max=    0.865884   mean=    0.003486
+Test     :   hicen   min=   -0.907835   max=    0.934617   mean=   -0.005841
+Test     :    tocn   min=   -0.999769   max=    0.999975   mean=   -0.015155
+Test     :    socn   min=   -0.911867   max=    0.908172   mean=    0.008734
+Test     : Columns of sqrt(B) 8
+Test     :   Valid time: 2018-04-15T00:00:00Z
+Test     :     ssh   min=   -0.380428   max=    0.604406   mean=    0.096897
+Test     :   cicen   min=   -0.942331   max=    0.887072   mean=   -0.000902
+Test     :   hicen   min=   -0.878282   max=    0.931294   mean=    0.005797
+Test     :    tocn   min=   -1.000000   max=    1.000000   mean=    0.013112
+Test     :    socn   min=   -0.946941   max=    0.937867   mean=   -0.009199

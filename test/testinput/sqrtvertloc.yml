@@ -92,10 +92,10 @@ background error:
     input variables: *soca_vars
     output variables: *soca_vars
 
-max neig output: 5
-number of random samples: 10
+max neig output: 10
+number of random samples: 40
 perturbed variables: *soca_vars
-truncation tolerence: .5
+truncation tolerence: .7
 
 output:
  frequency: PT6H
