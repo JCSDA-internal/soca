@@ -653,12 +653,6 @@ soca_add_test( NAME dirac_horizfilt
                EXE  soca_dirac.x
                TEST_DEPENDS test_soca_static_socaerror_init)
 
-#ecbuild_add_test( TARGET  test_soca_localization
-#                  SOURCES executables/TestLocalization.cc
-#                  ARGS    "testinput/localization_test.yml"
-#                  MPI     1
-#                  LIBS    soca )
-
 #ecbuild_add_test( TARGET test_soca_obserrorcov
 #                  SOURCES executables/TestObsErrorCovariance.cc
 #                  ARGS "testinput/obserrorcovariance_test.yml"

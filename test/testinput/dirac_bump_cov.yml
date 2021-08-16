@@ -1,11 +1,15 @@
 Covariance:
   covariance: BUMP
   bump:
-    load_nicas: 1
-    mpicom: 2
+    load_nicas_local: 1
     nonunit_diag: 1
-    prefix: soca_bump_cov
     strategy: specific_univariate
+    grids:
+    - prefix: soca_bump_cov_3d
+      variables: [hocn, socn, tocn]
+    - prefix: soca_bump_cov_2d
+      variables: [cicen, hicen, ssh]
+
   date: &date 2018-04-15T00:00:00Z
   variable_changes:
   - varchange: BalanceSOCA

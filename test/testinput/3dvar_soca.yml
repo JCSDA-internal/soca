@@ -32,8 +32,7 @@ cost function:
       verbosity: main
       datadir: ./bump
       strategy: specific_univariate
-      load_nicas: 1
-      mpicom: 2
+      load_nicas_local: 1
     correlation:
     - name: ocn
       variables: [socn, tocn, ssh, sw, lhf, shf, lw, us, chl, biop]

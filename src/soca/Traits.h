@@ -16,7 +16,6 @@
 #include "soca/GetValues/GetValues.h"
 #include "soca/GetValues/LinearGetValues.h"
 #include "soca/Increment/Increment.h"
-#include "soca/Localization/Localization.h"
 #include "soca/ModelBias/ModelBias.h"
 #include "soca/ModelBias/ModelBiasCovariance.h"
 #include "soca/ModelBias/ModelBiasIncrement.h"
@@ -39,7 +38,6 @@ struct Traits {
   typedef soca::ModelBias           ModelAuxControl;
   typedef soca::ModelBiasIncrement  ModelAuxIncrement;
   typedef soca::ModelBiasCovariance ModelAuxCovariance;
-  typedef soca::Localization        Localization;
 };
 
 }  // namespace soca
