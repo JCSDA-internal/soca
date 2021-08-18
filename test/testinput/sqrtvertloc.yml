@@ -104,7 +104,4 @@ output:
  type: ens
  date: *date
 
-#test:
-#  reference filename: testoutput/sqrtvertloc.ref
-#  test output filename: testoutput/sqrtvertloc.ref.out
 
