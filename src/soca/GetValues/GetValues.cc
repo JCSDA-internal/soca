@@ -90,7 +90,9 @@ void GetValues::getValuesFromFile(const ufo::Locations & locs,
 
     // Create the Atmospheric Geometry in Observation Space
     eckit::LocalConfiguration confatmobs(conf, "notocean.obs space");
-    ioda::ObsSpace atmobs(confatmobs, geom_->getComm(), bgn, end,
+    ioda::ObsTopLevelParameters paramsatmobs;
+    paramsatmobs.validateAndDeserialize(confatmobs);
+    ioda::ObsSpace atmobs(paramsatmobs, geom_->getComm(), bgn, end,
                           oops::mpi::myself());
 
     // Get GeoVaLs from file
