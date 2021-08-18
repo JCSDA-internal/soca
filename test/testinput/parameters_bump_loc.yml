@@ -18,11 +18,8 @@ bump:
   method: loc
   strategy: common
   new_nicas: 1
-  interp_type: mesh_based
-  ntry: 3
-  nrep: 2
+  write_nicas_local: 1
   resol: 6
-  mpicom: 2
   forced_radii: 1
   rh:
     common: [2500000.0]

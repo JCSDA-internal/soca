@@ -35,8 +35,7 @@ cost function:
           verbosity: main
           datadir: ./bump
           strategy: specific_univariate
-          load_nicas: 1
-          mpicom: 2
+          load_nicas_local: 1
         correlation:
         - name: ocn
           variables: [hsnon, socn, tocn, ssh]
@@ -108,8 +107,7 @@ cost function:
             prefix: soca_bump_loc
             method: loc
             strategy: common
-            load_nicas: 1
-            mpicom: 2
+            load_nicas_local: 1
             verbosity: main
             grids:
             - localization variables: [socn, tocn, ssh]

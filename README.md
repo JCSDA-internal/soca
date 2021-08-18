@@ -26,7 +26,7 @@ make -j 4
 3. If building the same way travis-ci builds the MOM6 SOCA bundle:
 ```
 export MAIN_REPO=soca
-export LIB_REPOS="fms gsw mom6 crtm fckit atlas oops saber ioda ufo ioda-converters"
+export LIB_REPOS="jedicmake fms gsw mom6 crtm oops saber ioda ufo"
 export BUILD_OPT=""
 export BUILD_OPT_crtm="-DBUILD_CRTM=ON"
 export BUILD_OPT_oops="-DENABLE_QG_MODEL=OFF -DENABLE_LORENZ95_MODEL=OFF"

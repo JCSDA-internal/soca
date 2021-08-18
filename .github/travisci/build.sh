@@ -49,7 +49,7 @@ for repo in $LIB_REPOS; do
     build_opt_var=BUILD_OPT_${repo_underscore}
     build_opt="$BUILD_OPT ${!build_opt_var}"
     time ecbuild $src_dir -DCMAKE_INSTALL_PREFIX=${install_dir} -DCMAKE_BUILD_TYPE=${LIB_BUILD_TYPE} \
-            -DCMAKE_CXX_COMPILER_LAUNCHER=$CCACHE -DENABLE_TESTS=OFF -DBUILD_TESTING=OFF $build_opt
+            -DCMAKE_CXX_COMPILER_LAUNCHER=$CCACHE -DBUILD_TESTING=OFF $build_opt
 
     # build and install
     time make -j4
