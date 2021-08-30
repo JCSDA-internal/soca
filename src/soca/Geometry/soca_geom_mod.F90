@@ -180,8 +180,8 @@ subroutine geom_set_atlas_lonlat(self, afieldset)
   ! Create lon/lat field
   afield = atlas_field(name="lonlat", kind=atlas_real(kind_real), shape=(/2,(self%iec-self%isc+1)*(self%jec-self%jsc+1)/))
   call afield%data(real_ptr)
-  real_ptr(1,:) = pack(self%lon(self%isc:self%iec,self%jsc:self%jec),.true.)
-  real_ptr(2,:) = pack(self%lat(self%isc:self%iec,self%jsc:self%jec),.true.)
+  real_ptr(1,:) = reshape(self%lon(self%isc:self%iec,self%jsc:self%jec),(/(self%iec-self%isc+1)*(self%jec-self%jsc+1)/))
+  real_ptr(2,:) = reshape(self%lat(self%isc:self%iec,self%jsc:self%jec),(/(self%iec-self%isc+1)*(self%jec-self%jsc+1)/))
   call afieldset%add(afield)
 
 end subroutine geom_set_atlas_lonlat
@@ -200,7 +200,7 @@ subroutine geom_fill_atlas_fieldset(self, afieldset)
   ! Add area
   afield = self%afunctionspace%create_field(name='area', kind=atlas_real(kind_real), levels=0)
   call afield%data(real_ptr_1)
-  real_ptr_1 = pack(self%cell_area(self%isc:self%iec,self%jsc:self%jec),.true.)
+  real_ptr_1 = reshape(self%cell_area(self%isc:self%iec,self%jsc:self%jec),(/(self%iec-self%isc+1)*(self%jec-self%jsc+1)/))
   call afieldset%add(afield)
   call afield%final()
 
@@ -217,7 +217,8 @@ subroutine geom_fill_atlas_fieldset(self, afieldset)
   afield = self%afunctionspace%create_field(name='gmask', kind=atlas_integer(kind(0)), levels=self%nzo)
   call afield%data(int_ptr_2)
   do jz=1,self%nzo
-    int_ptr_2(jz,:) = int(pack(self%mask2d(self%isc:self%iec,self%jsc:self%jec),.true.))
+    int_ptr_2(jz,:) = int(reshape(self%mask2d(self%isc:self%iec,self%jsc:self%jec), &
+  & (/(self%iec-self%isc+1)*(self%jec-self%jsc+1)/)))
   end do
   call afieldset%add(afield)
   call afield%final()
@@ -809,7 +810,7 @@ subroutine geom_struct2atlas(self, dx_struct, dx_atlas)
   afield = self%afunctionspace%create_field('var',kind=atlas_real(kind_real),levels=0)
   call dx_atlas%add(afield)
   call afield%data(real_ptr)
-  real_ptr = pack(dx_struct(self%iscl:self%iecl, self%jscl:self%jecl),.true.)
+  real_ptr = reshape(dx_struct(self%iscl:self%iecl, self%jscl:self%jecl),(/(self%iecl-self%iscl+1)*(self%jecl-self%jscl+1)/))
   call afield%final()
 
 end subroutine geom_struct2atlas
@@ -822,13 +823,11 @@ subroutine geom_atlas2struct(self, dx_struct, dx_atlas)
   type(atlas_fieldset), intent(inout) :: dx_atlas
 
   real(kind_real), pointer :: real_ptr(:)
-  logical :: umask(self%iscl:self%iecl,self%jscl:self%jecl)
   type(atlas_field) :: afield
 
-  umask = .true.
   afield = dx_atlas%field('var')
   call afield%data(real_ptr)
-  dx_struct(self%iscl:self%iecl, self%jscl:self%jecl) = unpack(real_ptr,umask,dx_struct(self%iscl:self%iecl, self%jscl:self%jecl))
+  dx_struct(self%iscl:self%iecl, self%jscl:self%jecl) = reshape(real_ptr,(/(self%iecl-self%iscl+1),(self%jecl-self%jscl+1)/))
   call afield%final()
 
 end subroutine geom_atlas2struct

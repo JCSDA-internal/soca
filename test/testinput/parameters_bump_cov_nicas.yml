@@ -12,20 +12,47 @@ background:
   ice_filename: cice.res.nc
 
 bump:
-  prefix: soca_bump_cov
   datadir: ./bump
-  load_cmat: 1
-  interp_type: mesh_based
   mask_check: 1
   method: cor
-  mpicom: 2
-  network: 1
+  network: 0 # Not re-implemented yet
   new_nicas: 1
+  write_nicas_local: 1
   nl0r: 11
-  nrep: 2
-  ntry: 3
   resol: 4.0
   strategy: specific_univariate
+  grids:
+  - prefix: soca_bump_cov_3d
+    variables: [hocn, socn, tocn]
+  - prefix: soca_bump_cov_2d
+    variables: [cicen, hicen, ssh]
+
+input:
+- datadir: bump
+  date: *date
+  exp: parameters_bump_cov.D11_1
+  parameter: D11_1
+  type: an
+- datadir: bump
+  date: *date
+  exp: parameters_bump_cov.D22_1
+  parameter: D22_1
+  type: an
+- datadir: bump
+  date: *date
+  exp: parameters_bump_cov.D33_1
+  parameter: D33_1
+  type: an
+- datadir: bump
+  date: *date
+  exp: parameters_bump_cov.D12_1
+  parameter: D12_1
+  type: an
+- datadir: bump
+  date: *date
+  exp: parameters_bump_cov.Dcoef_1
+  parameter: Dcoef_1
+  type: an
 
 _: &ensfile
   read_from_file: 1
