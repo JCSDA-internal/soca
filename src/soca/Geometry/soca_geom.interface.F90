@@ -149,10 +149,10 @@ end subroutine c_soca_geo_delete
 
 ! ------------------------------------------------------------------------------
 !> return begin and end of local geometry
-subroutine c_soca_geo_start_end(c_key_self, ist, iend, jst, jend) bind(c, name='soca_geo_start_end_f90')
+subroutine c_soca_geo_start_end(c_key_self, ist, iend, jst, jend, kst, kend) bind(c, name='soca_geo_start_end_f90')
 
   integer(c_int), intent( in) :: c_key_self
-  integer(c_int), intent(out) :: ist, iend, jst, jend
+  integer(c_int), intent(out) :: ist, iend, jst, jend, kst, kend
 
   type(soca_geom), pointer :: self
   call soca_geom_registry%get(c_key_self, self)
@@ -161,6 +161,8 @@ subroutine c_soca_geo_start_end(c_key_self, ist, iend, jst, jend) bind(c, name='
   iend = self%iec
   jst  = self%jsc
   jend = self%jec
+  kst  = self%ksc
+  kend = self%kec
 
 end subroutine c_soca_geo_start_end
 

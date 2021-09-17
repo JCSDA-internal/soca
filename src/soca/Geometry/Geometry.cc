@@ -73,15 +73,15 @@ namespace soca {
   // -----------------------------------------------------------------------------
   GeometryIterator Geometry::begin() const {
     // return start of the geometry on this mpi tile
-    int ist, iend, jst, jend;
-    soca_geo_start_end_f90(keyGeom_, ist, iend, jst, jend);
-    return GeometryIterator(*this, ist, jst);
+    int ist, iend, jst, jend, kst, kend;
+    soca_geo_start_end_f90(keyGeom_, ist, iend, jst, jend, kst, kend);
+    return GeometryIterator(*this, ist, jst, kst);
   }
   // -----------------------------------------------------------------------------
   GeometryIterator Geometry::end() const {
     // return end of the geometry on this mpi tile
     // decided to return index out of bounds for the iterator loops to work
-    return GeometryIterator(*this, -1, -1);
+    return GeometryIterator(*this, -1, -1, -1);
   }
   // -----------------------------------------------------------------------------
   std::vector<size_t> Geometry::variableSizes(

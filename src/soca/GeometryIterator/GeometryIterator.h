@@ -38,7 +38,8 @@ class GeometryIterator: public std::iterator<std::forward_iterator_tag,
 
   GeometryIterator(const GeometryIterator &);
   explicit GeometryIterator(const Geometry & geom,
-                            const int & iindex = 1, const int & jindex = 1);
+                            const int & iindex = 1, const int & jindex = 1,
+                            const int & kindex = 1);
   ~GeometryIterator();
 
   bool operator==(const GeometryIterator &) const;

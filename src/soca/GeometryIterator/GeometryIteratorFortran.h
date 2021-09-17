@@ -14,7 +14,7 @@ namespace soca {
 
   extern "C" {
     void soca_geom_iter_setup_f90(F90iter &, const F90geom &,
-                                  const int &, const int &);
+                                  const int &, const int &, const int &);
     void soca_geom_iter_clone_f90(F90iter &, const F90iter &);
     void soca_geom_iter_delete_f90(F90iter &);
     void soca_geom_iter_equals_f90(const F90iter &, const F90iter&, int &);

@@ -114,15 +114,21 @@ contains
       ! special case of {-1,-1} means end of the grid
       lat = self%geom%lat(self%geom%iec,self%geom%jec)
       lon = self%geom%lon(self%geom%iec,self%geom%jec) 
+      dep = 0.0
     elseif (self%iindex < self%geom%isc .OR. self%iindex > self%geom%iec .OR. &
             self%jindex < self%geom%jsc .OR. self%jindex > self%geom%jec .OR. &
             self%kindex < self%geom%ksc .OR. self%kindex > self%geom%kec) then
       ! outside of the grid
+
+      print *, 'self%iindex, self%jindex, self%kindex = ', self%iindex, self%jindex, self%kindex
+      print *, 'self%geom%isc, self%geom%jsc, self%geom%ksc = ', self%geom%isc, self%geom%jsc, self%geom%ksc
+      print *, 'self%geom%iec, self%geom%jec, self%geom%kec = ', self%geom%iec, self%geom%jec, self%geom%kec
       call abor1_ftn('soca_geom_iter_current: iterator out of bounds')
     else
       ! inside of the grid
       lat = self%geom%lat(self%iindex,self%jindex)
       lon = self%geom%lon(self%iindex,self%jindex)
+      dep = 0.0
     endif
 
   end subroutine soca_geom_iter_current
@@ -138,6 +144,8 @@ contains
     iindex = self%iindex
     jindex = self%jindex
     kindex = self%kindex
+
+   !print *, 'At beginning, iindex, jindex, kindex = ', iindex, jindex, kindex
 
     ! do while ((iindex.lt.self%geom%iec).and.(jindex.lt.self%geom%jec))
 
@@ -170,6 +178,8 @@ contains
     self%iindex = iindex
     self%jindex = jindex
     self%kindex = kindex
+
+   !print *, 'At end: iindex, jindex, kindex = ', iindex, jindex, kindex
 
   end subroutine soca_geom_iter_next
   ! ------------------------------------------------------------------------------

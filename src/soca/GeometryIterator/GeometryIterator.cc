@@ -27,8 +27,9 @@ GeometryIterator::GeometryIterator(const GeometryIterator& iter) {
 // -----------------------------------------------------------------------------
 
 GeometryIterator::GeometryIterator(const Geometry& geom,
-                                       const int & iindex, const int & jindex) {
-  soca_geom_iter_setup_f90(keyIter_, geom.toFortran(), iindex, jindex);
+                                   const int & iindex, const int & jindex,
+                                   const int & kindex) {
+  soca_geom_iter_setup_f90(keyIter_, geom.toFortran(), iindex, jindex, kindex);
 }
 
 
