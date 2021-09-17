@@ -47,7 +47,7 @@ observations:
   obs localization:
       localization method: Rossby
       search method: kd_tree
-      base value: 100.0
+      base value: 100.0e3
       rossby mult: 1.0
       min grid mult: 2.0
       min value: 200.0e3
