@@ -71,8 +71,7 @@ void ObsLocRossby<MODEL>::computeLocalization(
   lengthscale *= 2.0/sqrt(0.3);
 
   // do GC99 localization
-  ufo::ObsLocGC99<MODEL>::setLengthscale(lengthscale);
-  ufo::ObsLocGC99<MODEL>::computeLocalization(i, locvector);
+  ufo::ObsLocGC99<MODEL>::computeLocalization(i, locvector, lengthscale);
 }
 
 // -----------------------------------------------------------------------------
