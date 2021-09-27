@@ -30,9 +30,14 @@ namespace soca {
 template<class MODEL>
 class ObsLocRossby: public ufo::ObsLocGC99<MODEL> {
   typedef typename MODEL::GeometryIterator   GeometryIterator_;
+  typedef typename ufo::ObsLocalization<MODEL>::LocalObs LocalObs_;
 
  public:
   ObsLocRossby(const eckit::Configuration &, const ioda::ObsSpace &);
+
+  /// Compute Rossby radius based localization and save localization values
+  /// in \p locvector. Missing values indicate that observation is outside of
+  /// localization.
   void computeLocalization(
     const GeometryIterator_ &,
     ioda::ObsVector & locfactor) const override;
@@ -70,8 +75,9 @@ void ObsLocRossby<MODEL>::computeLocalization(
   // convert from gaussian to gaspari-cohn width
   lengthscale *= 2.0/sqrt(0.3);
 
-  // do GC99 localization
-  ufo::ObsLocGC99<MODEL>::computeLocalization(i, locvector, lengthscale);
+  // Apply GC99 localization
+  const LocalObs_ & localobs = ufo::ObsLocGC99<MODEL>::getLocalObs(i, lengthscale);
+  ufo::ObsLocGC99<MODEL>::localizeLocalObs(i, locvector, localobs);
 }
 
 // -----------------------------------------------------------------------------
