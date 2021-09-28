@@ -76,7 +76,8 @@ void ObsLocRossby<MODEL>::computeLocalization(
   lengthscale *= 2.0/sqrt(0.3);
 
   // Apply GC99 localization
-  const LocalObs_ & localobs = ufo::ObsLocGC99<MODEL>::getLocalObs(i, lengthscale);
+  const LocalObs_ & localobs =
+    ufo::ObsLocGC99<MODEL>::getLocalObs(i, lengthscale);
   ufo::ObsLocGC99<MODEL>::localizeLocalObs(i, locvector, localobs);
 }
 
