@@ -14,7 +14,7 @@ include( ecbuild_bundle )
 
 ecbuild_bundle_initialize()
 
-ecbuild_bundle( PROJECT jedicmake GIT "https://github.com/jcsda-internal/jedi-cmake.git" UPDATE BRANCH develop )
+ecbuild_bundle( PROJECT jedicmake GIT "https://github.com/JCSDA/jedi-cmake.git" TAG 1.2.0 )
 include( jedicmake/cmake/Functions/git_functions.cmake  )
 
 # ECMWF repos that you probably dont need to build yourself because they
@@ -27,14 +27,12 @@ endif ()
 
 option(BUILD_FCKIT "download and build fckit (not needed if in a jedi container)")
 if (BUILD_FCKIT)
-  ecbuild_bundle( PROJECT fckit  GIT "https://github.com/jcsda-internal/fckit.git"  UPDATE BRANCH release-stable )
-  # TODO: replace with https://github.com/ecmwf/fckit.git TAG 0.9.2
+  ecbuild_bundle( PROJECT fckit     GIT "https://github.com/ecmwf/fckit.git" TAG 0.9.2 )
 endif()
 
 option(BUILD_ATLAS "download and build atlas (not needed if in a jedi container)")
 if (BUILD_ATLAS)
-  ecbuild_bundle( PROJECT atlas  GIT "https://github.com/jcsda-internal/atlas.git"  UPDATE BRANCH release-stable )
-  # TODO: repalce with https://github.com/ecmwf/atlas.git TAG 0.24.1
+  ecbuild_bundle( PROJECT atlas     GIT "https://github.com/ecmwf/atlas.git" TAG 0.24.1 )
 endif()
 
 
@@ -42,23 +40,23 @@ endif()
 
 option(BUILD_CRTM  "download and build CRTM")
 if ( BUILD_CRTM )
-  ecbuild_bundle( PROJECT crtm          GIT "https://github.com/jcsda-internal/crtm.git"            UPDATE BRANCH release/crtm_jedi )
+  ecbuild_bundle( PROJECT crtm      GIT "https://github.com/JCSDA/crtm.git"   TAG v2.3-jedi.3 )
 endif ()
 
 option(BUILD_FMS "download and build fms" ON)
 if ( BUILD_FMS )
-  ecbuild_bundle( PROJECT fms           GIT "https://github.com/jcsda/FMS.git"                     UPDATE BRANCH release-stable )
+  ecbuild_bundle( PROJECT fms GIT "https://github.com/jcsda/FMS.git"          TAG 1.1.0.jcsda )
 endif ()
 
 
 # required repositories
 
-ecbuild_bundle( PROJECT oops            GIT "https://github.com/jcsda-internal/oops.git"            UPDATE BRANCH develop )
-ecbuild_bundle( PROJECT saber           GIT "https://github.com/jcsda-internal/saber.git"           UPDATE BRANCH develop )
-ecbuild_bundle( PROJECT ioda            GIT "https://github.com/jcsda-internal/ioda.git"            UPDATE BRANCH develop )
-ecbuild_bundle( PROJECT gsw             GIT "https://github.com/jcsda-internal/GSW-Fortran.git"     UPDATE BRANCH develop )
-ecbuild_bundle( PROJECT ufo             GIT "https://github.com/jcsda-internal/ufo.git"             UPDATE BRANCH develop )
-ecbuild_bundle( PROJECT mom6            GIT "https://github.com/jcsda-internal/MOM6.git"            UPDATE BRANCH main-ecbuild RECURSIVE )
+ecbuild_bundle( PROJECT oops  GIT "https://github.com/jcsda/oops.git"         UPDATE TAG 1.2.0 )
+ecbuild_bundle( PROJECT saber GIT "https://github.com/jcsda/saber.git"        UPDATE TAG 1.2.0 )
+ecbuild_bundle( PROJECT ioda  GIT "https://github.com/jcsda/ioda.git"         UPDATE TAG 2.1.0 )
+ecbuild_bundle( PROJECT gsw   GIT "https://github.com/jcsda-internal/GSW-Fortran.git"  UPDATE BRANCH release/soca-1.0.0 )
+ecbuild_bundle( PROJECT ufo   GIT "https://github.com/jcsda/ufo.git"          UPDATE TAG 1.2.0 )
+ecbuild_bundle( PROJECT mom6  GIT "https://github.com/jcsda/MOM6.git"         UPDATE BRANCH main-ecbuild RECURSIVE )
 ecbuild_bundle( PROJECT soca            SOURCE "../" )
 
 ecbuild_bundle_finalize()
