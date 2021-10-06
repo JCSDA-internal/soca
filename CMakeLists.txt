@@ -45,7 +45,7 @@ add_subdirectory( src )
 add_subdirectory( test )
 
 # Build Doxygen documentation
-add_subdirectory( Documents )
+add_subdirectory( docs )
 
 if(ECBUILD_INSTALL_FORTRAN_MODULES)
   install(DIRECTORY ${CMAKE_Fortran_MODULE_DIRECTORY}/${CMAKE_CFG_INTDIR} DESTINATION ${INSTALL_INCLUDE_DIR} )
