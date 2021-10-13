@@ -14,7 +14,7 @@ include( ecbuild_bundle )
 
 ecbuild_bundle_initialize()
 
-ecbuild_bundle( PROJECT jedicmake GIT "https://github.com/JCSDA/jedi-cmake.git" TAG 1.2.0 )
+ecbuild_bundle( PROJECT jedicmake GIT "https://github.com/JCSDA/jedi-cmake.git" UPDATE TAG 1.2.0 )
 include( jedicmake/cmake/Functions/git_functions.cmake  )
 
 # ECMWF repos that you probably dont need to build yourself because they
@@ -27,12 +27,12 @@ endif ()
 
 option(BUILD_FCKIT "download and build fckit (not needed if in a jedi container)")
 if (BUILD_FCKIT)
-  ecbuild_bundle( PROJECT fckit     GIT "https://github.com/ecmwf/fckit.git" TAG 0.9.2 )
+  ecbuild_bundle( PROJECT fckit     GIT "https://github.com/ecmwf/fckit.git" UPDATE TAG 0.9.2 )
 endif()
 
 option(BUILD_ATLAS "download and build atlas (not needed if in a jedi container)")
 if (BUILD_ATLAS)
-  ecbuild_bundle( PROJECT atlas     GIT "https://github.com/ecmwf/atlas.git" TAG 0.24.1 )
+  ecbuild_bundle( PROJECT atlas     GIT "https://github.com/ecmwf/atlas.git" UPDATE TAG 0.24.1 )
 endif()
 
 
@@ -40,12 +40,12 @@ endif()
 
 option(BUILD_CRTM  "download and build CRTM")
 if ( BUILD_CRTM )
-  ecbuild_bundle( PROJECT crtm      GIT "https://github.com/JCSDA/crtm.git"   TAG v2.3-jedi.3 )
+  ecbuild_bundle( PROJECT crtm      GIT "https://github.com/JCSDA/crtm.git"   UPDATE TAG v2.3-jedi.3 )
 endif ()
 
 option(BUILD_FMS "download and build fms" ON)
 if ( BUILD_FMS )
-  ecbuild_bundle( PROJECT fms GIT "https://github.com/jcsda/FMS.git"          TAG 1.1.0.jcsda )
+  ecbuild_bundle( PROJECT fms GIT "https://github.com/jcsda/FMS.git"          UPDATE TAG 1.1.0.jcsda )
 endif ()
 
 
