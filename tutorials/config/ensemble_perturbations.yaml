@@ -26,13 +26,9 @@ background error:
     strategy: specific_univariate
     load_nicas_local: 1
   perturbation scales:
-    tocn:  1.0
-    socn:  1.0
+    tocn:  10.0
+    socn:  10.0
     ssh:   0.0
-    cicen: 0.1
-    hicen: 0.05
-    chl:   0.1
-    biop:  0.1
   correlation:
   - name: ocn
     variables: [tocn, ssh, socn]

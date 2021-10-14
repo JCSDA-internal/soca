@@ -89,7 +89,6 @@ class Ioda():
 
         ncfile.close()
 
-
 time_start = datetime.datetime(2018, 4, 15)
 time_end = datetime.datetime(2018, 4, 20)
 
@@ -115,7 +114,7 @@ Ioda(varname='obs_absolute_dynamic_topography',
      datetime_start=time_start,
      datetime_end=time_end,
      sigo=0.1,
-     nobs=5000)
+     nobs=8000)
 
 # Insitu temperature
 Ioda(varname='sea_water_temperature',
@@ -131,4 +130,4 @@ Ioda(varname='sea_water_salinity',
      datetime_start=time_start,
      datetime_end=time_end,
      sigo=0.2,
-     nobs=1000, dodepth=True)
+     nobs=500, dodepth=True)
