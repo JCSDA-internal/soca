@@ -3,7 +3,8 @@
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
 
-! ------------------------------------------------------------------------------
+!> registry for soca_state_mod::soca_state instances for use in
+!! Fortran/C++ interfaces of soca_state_mod_c
 module soca_state_reg
 
 use soca_state_mod

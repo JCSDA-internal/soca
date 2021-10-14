@@ -4,6 +4,8 @@
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
 
 ! ------------------------------------------------------------------------------
+!> registry for soca_getvalues_mod::soca_getvalues instances for use in
+!! Fortran/C++ interface of soca_getvalues_mod_c
 module soca_getvalues_reg
 
 use soca_getvalues_mod
