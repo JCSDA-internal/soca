@@ -7,23 +7,28 @@
 !> Geometry module
 module soca_geom_mod
 
+! jedi modules
 use atlas_module, only: atlas_functionspace_pointcloud, atlas_fieldset, &
     atlas_field, atlas_real, atlas_integer, atlas_geometry, atlas_indexkdtree
-use MOM_domains, only : MOM_domain_type
-use soca_fields_metadata_mod, only : soca_fields_metadata
-use soca_mom6, only: soca_mom6_config, soca_mom6_init, soca_geomdomain_init
-use soca_utils, only: write2pe, soca_remap_idw
-use kinds, only: kind_real
 use fckit_configuration_module, only: fckit_configuration
 use fckit_mpi_module, only: fckit_mpi_comm
+use kinds, only: kind_real
+
+! mom6 / fms modules
 use fms_io_mod, only : fms_io_init, fms_io_exit, &
                        register_restart_field, restart_file_type, &
                        restore_state, free_restart_type, save_restart
-use mpp_domains_mod, only : mpp_get_compute_domain, mpp_get_data_domain, &
-                            mpp_get_global_domain, mpp_update_domains
 use MOM_diag_remap,  only : diag_remap_ctrl, diag_remap_init, diag_remap_configure_axes, &
                             diag_remap_end, diag_remap_update
+use MOM_domains, only : MOM_domain_type
 use MOM_EOS,         only : EOS_type
+use mpp_domains_mod, only : mpp_get_compute_domain, mpp_get_data_domain, &
+                            mpp_get_global_domain, mpp_update_domains
+! soca modules
+use soca_fields_metadata_mod, only : soca_fields_metadata
+use soca_mom6, only: soca_mom6_config, soca_mom6_init, soca_geomdomain_init
+use soca_utils, only: write2pe, soca_remap_idw
+
 
 implicit none
 private
@@ -64,27 +69,51 @@ type, public :: soca_geom
     integer :: isdl, iedl, jsdl, jedl
     !> \}
 
+    !> \name grid latitude/longitude
+    !! \{
+    real(kind=kind_real), allocatable, dimension(:)   :: lonh !< cell center nominal longitude
+    real(kind=kind_real), allocatable, dimension(:)   :: lath !< cell center nominal latitude
+    real(kind=kind_real), allocatable, dimension(:)   :: lonq !< cell corner nominal longitude
+    real(kind=kind_real), allocatable, dimension(:)   :: latq !< cell corner nominal latitude
+    real(kind=kind_real), allocatable, dimension(:,:) :: lon  !< Tracer grid longitude
+    real(kind=kind_real), allocatable, dimension(:,:) :: lat  !< Tracer grid latitude
+    real(kind=kind_real), allocatable, dimension(:,:) :: lonu !< U grid longitude
+    real(kind=kind_real), allocatable, dimension(:,:) :: latu !< U grid latitude
+    real(kind=kind_real), allocatable, dimension(:,:) :: lonv !< V grid longitude
+    real(kind=kind_real), allocatable, dimension(:,:) :: latv !< V grid latitude
+    !> \}
 
-    real(kind=kind_real), allocatable, dimension(:)   :: lonh, lath
-    real(kind=kind_real), allocatable, dimension(:)   :: lonq, latq
-    real(kind=kind_real), allocatable, dimension(:,:) :: lon, lat !< Tracer point grid
-    real(kind=kind_real), allocatable, dimension(:,:) :: lonu, latu !< Zonal velocity grid
-    real(kind=kind_real), allocatable, dimension(:,:) :: lonv, latv !< Meridional velocity grid
-    real(kind=kind_real), allocatable, dimension(:,:) :: sin_rot, cos_rot !< Rotation between logical grid
-                                                                          !< and North
-    real(kind=kind_real), allocatable, dimension(:,:) :: mask2d    !< Tracer points. 0 = land 1 = ocean
-    real(kind=kind_real), allocatable, dimension(:,:) :: mask2du   !< u        "   . 0 = land 1 = ocean
-    real(kind=kind_real), allocatable, dimension(:,:) :: mask2dv   !< v        "   . 0 = land 1 = ocean
-    real(kind=kind_real), allocatable, dimension(:,:) :: cell_area
-    real(kind=kind_real), allocatable, dimension(:,:) :: rossby_radius
-    real(kind=kind_real), allocatable, dimension(:,:) :: distance_from_coast
-    real(kind=kind_real), allocatable, dimension(:,:,:) :: h
+    !> \name ocean/land masks
+    !! \{
+
+    !> mask for tracer grid. 0 = land 1 = ocean
+    real(kind=kind_real), allocatable, dimension(:,:) :: mask2d
+    !> mask for U grid. 0 = land 1 = ocean
+    real(kind=kind_real), allocatable, dimension(:,:) :: mask2du
+    !> mask for V grid. 0 = land 1 = ocean
+    real(kind=kind_real), allocatable, dimension(:,:) :: mask2dv
+    !> \}
+
+    !> \name other grid properties
+    !! \{
+    real(kind=kind_real), allocatable, dimension(:,:) :: sin_rot !< sine of rotation between logical grid north
+    real(kind=kind_real), allocatable, dimension(:,:) :: cos_rot !< cosine of rotation between logical grid north
+    real(kind=kind_real), allocatable, dimension(:,:) :: cell_area !< cell area (m^2)
+    real(kind=kind_real), allocatable, dimension(:,:) :: rossby_radius !< rossby radius (m) at the gridpoint
+    real(kind=kind_real), allocatable, dimension(:,:) :: distance_from_coast !< distance to closest land grid point (m)
+    real(kind=kind_real), allocatable, dimension(:,:,:) :: h !< layer thickness (m)
     real(kind=kind_real), allocatable, dimension(:,:,:) :: h_zstar
-    logical :: save_local_domain = .false. ! If true, save the local geometry for each pe.
-    character(len=:), allocatable :: geom_grid_file
-    type(fckit_mpi_comm) :: f_comm
-    type(atlas_functionspace_pointcloud) :: afunctionspace
+    !> \}
+
+    !> instance of the metadata that is read in from a config file upon initialization
     type(soca_fields_metadata) :: fields_metadata
+
+    ! private stuff
+    logical, private :: save_local_domain = .false. !< If true, save the local geometry for each pe.
+    character(len=:), allocatable, private :: geom_grid_file !< filename of geometry
+    type(fckit_mpi_comm), private :: f_comm !< MPI communicator
+    type(atlas_functionspace_pointcloud), private :: afunctionspace !< atlas stuff
+
 
   contains
 
@@ -132,7 +161,7 @@ contains
 subroutine soca_geom_init(self, f_conf, f_comm)
   class(soca_geom),         intent(out) :: self
   type(fckit_configuration), intent(in) :: f_conf
-  type(fckit_mpi_comm),   intent(in)    :: f_comm
+  type(fckit_mpi_comm),   intent(in)    :: f_comm !< MPI communicator for this geometry
 
   character(len=:), allocatable :: str
   logical :: full_init = .false.
@@ -324,7 +353,7 @@ end subroutine soca_geom_clone
 
 
 ! ------------------------------------------------------------------------------
-!>
+!> Generate the grid with the help of mom6, and save it to a file for use later.
 !!
 !! \related soca_geom_mod::soca_geom
 subroutine soca_geom_gridgen(self)
@@ -440,9 +469,9 @@ end subroutine soca_geom_allocate
 !! \related soca_geom_mod::soca_geom
 subroutine soca_geom_distance_from_coast(self)
   class(soca_geom), intent(inout) :: self
+
   type(atlas_indexkdtree) :: kd
   type(atlas_geometry) :: ageometry
-
   integer :: i, j, idx(1)
   integer :: num_land_l, num_land
   integer, allocatable :: rcvcnt(:), displs(:)
@@ -507,6 +536,8 @@ end subroutine
 
 ! ------------------------------------------------------------------------------
 !> Read and store Rossby Radius of deformation
+!!
+!! Input data is interpolated to the current grid.
 !!
 !! \related soca_geom_mod::soca_geom
 subroutine soca_geom_rossby_radius(self)
@@ -807,7 +838,7 @@ end subroutine soca_geom_read
 !! \related soca_geom_mod::soca_geom
 subroutine soca_geom_get_domain_indices(self, domain_type, is, ie, js, je, local)
   class(soca_geom), intent(in) :: self
-  character(len=*),       intent(in) :: domain_type
+  character(len=*),       intent(in) :: domain_type !< "compute", "data", or "global"
   integer,               intent(out) :: is, ie, js, je
   logical,      optional, intent(in) :: local
 
@@ -841,8 +872,8 @@ end subroutine soca_geom_get_domain_indices
 !! \related soca_geom_mod::soca_geom
 subroutine soca_geom_thickness2depth(self, h, z)
   class(soca_geom),     intent(in   ) :: self
-  real(kind=kind_real), intent(in   ) :: h(:,:,:) ! Layer thickness
-  real(kind=kind_real), intent(inout) :: z(:,:,:) ! Mid-layer depth
+  real(kind=kind_real), intent(in   ) :: h(:,:,:) !< Layer thickness
+  real(kind=kind_real), intent(inout) :: z(:,:,:) !< Mid-layer depth
 
   integer :: is, ie, js, je, i, j, k
 
