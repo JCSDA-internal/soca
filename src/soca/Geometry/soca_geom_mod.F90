@@ -609,9 +609,9 @@ subroutine geom_write(self)
      geom_output_pe='geom_output_'//trim(strpe)//'.nc'
 
      ns = (self%iec - self%isc + 1) * (self%jec - self%jsc + 1 )
-     call write2pe(reshape(self%mask2d,(/ns/)),'mask',geom_output_pe,.false.)
-     call write2pe(reshape(self%lon,(/ns/)),'lon',geom_output_pe,.true.)
-     call write2pe(reshape(self%lat,(/ns/)),'lat',geom_output_pe,.true.)
+     call write2pe(reshape(self%mask2d(self%isc:self%iec,self%jsc:self%jec),(/ns/)),'mask',geom_output_pe,.false.)
+     call write2pe(reshape(self%lon(self%isc:self%iec,self%jsc:self%jec),(/ns/)),'lon',geom_output_pe,.true.)
+     call write2pe(reshape(self%lat(self%isc:self%iec,self%jsc:self%jec),(/ns/)),'lat',geom_output_pe,.true.)
   end if
 
 end subroutine geom_write
