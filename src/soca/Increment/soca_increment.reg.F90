@@ -17,7 +17,7 @@ private
 !> Linked list interface - defines registry_t type
 #include "oops/util/linkedList_i.f"
 
-!> Global registry
+!> Global registry for soca_increment instances
 type(registry_t), public :: soca_increment_registry
 
 ! ------------------------------------------------------------------------------

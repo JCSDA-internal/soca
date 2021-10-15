@@ -25,7 +25,7 @@ private
 !-------------------------------------------------------------------------------
 !> Increment fields.
 !!
-!! Any preocedures that are shared with soca_state are implemented
+!! Any procedures that are shared with soca_state are implemented
 !! in the soca_fields base class
 type, public, extends(soca_fields) :: soca_increment
 
