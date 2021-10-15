@@ -4,45 +4,67 @@
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
 !
 
+!> Geometry module
 module soca_geom_mod
 
 use atlas_module, only: atlas_functionspace_pointcloud, atlas_fieldset, &
     atlas_field, atlas_real, atlas_integer, atlas_geometry, atlas_indexkdtree
-use MOM_domains, only : MOM_domain_type, MOM_infra_init
-use MOM_io,      only : io_infra_init
-use soca_fields_metadata_mod
+use MOM_domains, only : MOM_domain_type
+use soca_fields_metadata_mod, only : soca_fields_metadata
 use soca_mom6, only: soca_mom6_config, soca_mom6_init, soca_geomdomain_init
 use soca_utils, only: write2pe, soca_remap_idw
 use kinds, only: kind_real
 use fckit_configuration_module, only: fckit_configuration
-use fckit_mpi_module, only: fckit_mpi_comm, fckit_mpi_sum
+use fckit_mpi_module, only: fckit_mpi_comm
 use fms_io_mod, only : fms_io_init, fms_io_exit, &
                        register_restart_field, restart_file_type, &
-                       restore_state, query_initialized, &
-                       free_restart_type, save_restart
+                       restore_state, free_restart_type, save_restart
 use mpp_domains_mod, only : mpp_get_compute_domain, mpp_get_data_domain, &
                             mpp_get_global_domain, mpp_update_domains
-use fms_mod,         only : write_data
-use fms_io_mod,      only : fms_io_init, fms_io_exit
 use MOM_diag_remap,  only : diag_remap_ctrl, diag_remap_init, diag_remap_configure_axes, &
                             diag_remap_end, diag_remap_update
 use MOM_EOS,         only : EOS_type
 
 implicit none
-
 private
-public :: soca_geom, &
-          geom_write, geom_get_domain_indices
 
+
+! ------------------------------------------------------------------------------
+! ------------------------------------------------------------------------------
+
+
+! ------------------------------------------------------------------------------
 !> Geometry data structure
-type :: soca_geom
+type, public :: soca_geom
     type(MOM_domain_type), pointer :: Domain !< Ocean model domain
     integer :: nzo, nzo_zstar
-    integer :: isc, iec, jsc, jec  !< indices of compute domain
-    integer :: isd, ied, jsd, jed  !< indices of data domain
-    integer :: isg, ieg, jsg, jeg  !< indices of global domain
-    integer :: iscl, iecl, jscl, jecl  !< indices of local compute domain
-    integer :: isdl, iedl, jsdl, jedl  !< indices of local data domain
+
+    !> \name local domain indices
+    !! \{
+    integer :: isc, iec, jsc, jec
+    !> \}
+
+    !> \name data domain indices
+    !! \{
+    integer :: isd, ied, jsd, jed
+    !> \}
+
+    !> \name global domain indices
+    !! \{
+    integer :: isg, ieg, jsg, jeg
+    !> \}
+
+    !> \name local compute domain indices
+    !! \{
+    integer :: iscl, iecl, jscl, jecl
+    !> \}
+
+    !> \name local data domain indices
+    !! \{
+    integer :: isdl, iedl, jsdl, jedl
+    !> \}
+
+
     real(kind=kind_real), allocatable, dimension(:)   :: lonh, lath
     real(kind=kind_real), allocatable, dimension(:)   :: lonq, latq
     real(kind=kind_real), allocatable, dimension(:,:) :: lon, lat !< Tracer point grid
@@ -64,18 +86,39 @@ type :: soca_geom
     type(atlas_functionspace_pointcloud) :: afunctionspace
     type(soca_fields_metadata) :: fields_metadata
 
-    contains
-    procedure :: init => geom_init
-    procedure :: end => geom_end
-    procedure :: set_atlas_lonlat => geom_set_atlas_lonlat
-    procedure :: fill_atlas_fieldset => geom_fill_atlas_fieldset
-    procedure :: clone => geom_clone
-    procedure :: get_rossby_radius => geom_rossby_radius
-    procedure :: gridgen => geom_gridgen
-    procedure :: thickness2depth => geom_thickness2depth
-    procedure :: struct2atlas => geom_struct2atlas
-    procedure :: atlas2struct => geom_atlas2struct
-    procedure :: write => geom_write
+  contains
+
+
+    !> \copybrief soca_geom_init \see soca_geom_init
+    procedure :: init => soca_geom_init
+
+    !> \copybrief soca_geom_end \see soca_geom_end
+    procedure :: end => soca_geom_end
+
+    !> \copybrief soca_geom_set_atlas_lonlat \see soca_geom_set_atlas_lonlat
+    procedure :: set_atlas_lonlat => soca_geom_set_atlas_lonlat
+
+    !> \copybrief soca_geom_fill_atlas_fieldset \see soca_geom_fill_atlas_fieldset
+    procedure :: fill_atlas_fieldset => soca_geom_fill_atlas_fieldset
+
+    !> \copybrief soca_geom_clone \see soca_geom_clone
+    procedure :: clone => soca_geom_clone
+
+    !> \copybrief soca_geom_gridgen \see soca_geom_gridgen
+    procedure :: gridgen => soca_geom_gridgen
+
+    !> \copybrief soca_geom_thickness2depth \see soca_geom_thickness2depth
+    procedure :: thickness2depth => soca_geom_thickness2depth
+
+    !> \copybrief soca_geom_struct2atlas \see soca_geom_struct2atlas
+    procedure :: struct2atlas => soca_geom_struct2atlas
+
+    !> \copybrief soca_geom_atlas2struct \ see soca_geom_atlas2struct
+    procedure :: atlas2struct => soca_geom_atlas2struct
+
+    !> \copybrief soca_geom_write \see soca_geom_write
+    procedure :: write => soca_geom_write
+
 end type soca_geom
 
 ! ------------------------------------------------------------------------------
@@ -84,7 +127,9 @@ contains
 
 ! ------------------------------------------------------------------------------
 !> Setup geometry object
-subroutine geom_init(self, f_conf, f_comm)
+!!
+!! \related soca_geom_mod::soca_geom
+subroutine soca_geom_init(self, f_conf, f_comm)
   class(soca_geom),         intent(out) :: self
   type(fckit_configuration), intent(in) :: f_conf
   type(fckit_mpi_comm),   intent(in)    :: f_comm
@@ -103,14 +148,14 @@ subroutine geom_init(self, f_conf, f_comm)
      self%geom_grid_file = "soca_gridspec.nc" ! default if not found
 
   ! Allocate geometry arrays
-  call geom_allocate(self)
+  call soca_geom_allocate(self)
 
   ! Check if a full initialization is required, default to false
   if ( .not. f_conf%get("full_init", full_init) ) full_init = .false.
 
   ! Read the geometry from file by default,
   ! skip this step if a full init is required
-  if ( .not. full_init) call geom_read(self)
+  if ( .not. full_init) call soca_geom_read(self)
 
   ! Fill halo
   call mpp_update_domains(self%lon, self%Domain%mpp_domain)
@@ -136,11 +181,14 @@ subroutine geom_init(self, f_conf, f_comm)
   call f_conf%get_or_die("fields metadata", str)
   call self%fields_metadata%create(str)
 
-end subroutine geom_init
+end subroutine soca_geom_init
+
 
 ! ------------------------------------------------------------------------------
 !> Geometry destructor
-subroutine geom_end(self)
+!!
+!! \related soca_geom_mod::soca_geom
+subroutine soca_geom_end(self)
   class(soca_geom), intent(out)  :: self
 
   if (allocated(self%lonh))          deallocate(self%lonh)
@@ -166,11 +214,14 @@ subroutine geom_end(self)
   nullify(self%Domain)
   call self%afunctionspace%final()
 
-end subroutine geom_end
+end subroutine soca_geom_end
+
 
 ! --------------------------------------------------------------------------------------------------
 !> Set ATLAS lonlat fieldset
-subroutine geom_set_atlas_lonlat(self, afieldset)
+!!
+!! \related soca_geom_mod::soca_geom
+subroutine soca_geom_set_atlas_lonlat(self, afieldset)
   class(soca_geom),  intent(inout) :: self
   type(atlas_fieldset), intent(inout) :: afieldset
 
@@ -184,11 +235,14 @@ subroutine geom_set_atlas_lonlat(self, afieldset)
   real_ptr(2,:) = reshape(self%lat(self%isc:self%iec,self%jsc:self%jec),(/(self%iec-self%isc+1)*(self%jec-self%jsc+1)/))
   call afieldset%add(afield)
 
-end subroutine geom_set_atlas_lonlat
+end subroutine soca_geom_set_atlas_lonlat
+
 
 ! --------------------------------------------------------------------------------------------------
 !> Fill ATLAS fieldset
-subroutine geom_fill_atlas_fieldset(self, afieldset)
+!!
+!! \related soca_geom_mod::soca_geom
+subroutine soca_geom_fill_atlas_fieldset(self, afieldset)
   class(soca_geom),  intent(inout) :: self
   type(atlas_fieldset), intent(inout) :: afieldset
 
@@ -223,11 +277,14 @@ subroutine geom_fill_atlas_fieldset(self, afieldset)
   call afieldset%add(afield)
   call afield%final()
 
-end subroutine geom_fill_atlas_fieldset
+end subroutine soca_geom_fill_atlas_fieldset
+
 
 ! ------------------------------------------------------------------------------
 !> Clone, self = other
-subroutine geom_clone(self, other)
+!!
+!! \related soca_geom_mod::soca_geom
+subroutine soca_geom_clone(self, other)
   class(soca_geom), intent(inout) :: self
   class(soca_geom), intent(in) :: other
 
@@ -242,7 +299,7 @@ subroutine geom_clone(self, other)
   self%geom_grid_file = other%geom_grid_file
 
   ! Allocate and clone geometry
-  call geom_allocate(self)
+  call soca_geom_allocate(self)
   self%lonh = other%lonh
   self%lath = other%lath
   self%lonq = other%lonq
@@ -262,12 +319,15 @@ subroutine geom_clone(self, other)
   self%rossby_radius = other%rossby_radius
   self%distance_from_coast = other%distance_from_coast
   self%h = other%h
-  call other%fields_metadata%clone(self%fields_metadata)
-end subroutine geom_clone
+  call self%fields_metadata%clone(other%fields_metadata)
+end subroutine soca_geom_clone
+
 
 ! ------------------------------------------------------------------------------
 !>
-subroutine geom_gridgen(self)
+!!
+!! \related soca_geom_mod::soca_geom
+subroutine soca_geom_gridgen(self)
   class(soca_geom), intent(inout) :: self
 
   ! allocate variables for regridding to zstar coord
@@ -318,30 +378,33 @@ subroutine geom_gridgen(self)
   call diag_remap_end(remap_ctrl)
 
   ! Get Rossby Radius
-  call geom_rossby_radius(self)
+  call soca_geom_rossby_radius(self)
 
-  call geom_distance_from_coast(self)
+  call soca_geom_distance_from_coast(self)
 
   ! Output to file
-  call geom_write(self)
+  call soca_geom_write(self)
 
-end subroutine geom_gridgen
+end subroutine soca_geom_gridgen
+
 
 ! ------------------------------------------------------------------------------
 !> Allocate memory and point to mom6 data structure
-subroutine geom_allocate(self)
+!!
+!! \related soca_geom_mod::soca_geom
+subroutine soca_geom_allocate(self)
   class(soca_geom), intent(inout) :: self
 
   integer :: nzo
   integer :: isd, ied, jsd, jed
 
   ! Get domain shape (number of levels, indices of data and compute domain)
-  call geom_get_domain_indices(self, "compute", self%isc, self%iec, self%jsc, self%jec)
-  call geom_get_domain_indices(self, "data", isd, ied, jsd, jed)
+  call soca_geom_get_domain_indices(self, "compute", self%isc, self%iec, self%jsc, self%jec)
+  call soca_geom_get_domain_indices(self, "data", isd, ied, jsd, jed)
   self%isd = isd ;  self%ied = ied ; self%jsd = jsd; self%jed = jed
-  call geom_get_domain_indices(self, "global", self%isg, self%ieg, self%jsg, self%jeg)
-  call geom_get_domain_indices(self, "compute", self%iscl, self%iecl, self%jscl, self%jecl, local=.true.)
-  call geom_get_domain_indices(self, "data", self%isdl, self%iedl, self%jsdl, self%jedl, local=.true.)
+  call soca_geom_get_domain_indices(self, "global", self%isg, self%ieg, self%jsg, self%jeg)
+  call soca_geom_get_domain_indices(self, "compute", self%iscl, self%iecl, self%jscl, self%jecl, local=.true.)
+  call soca_geom_get_domain_indices(self, "data", self%isdl, self%iedl, self%jsdl, self%jedl, local=.true.)
   nzo = self%nzo
 
   ! Allocate arrays on compute domain
@@ -368,11 +431,14 @@ subroutine geom_allocate(self)
   allocate(self%distance_from_coast(isd:ied,jsd:jed)); self%distance_from_coast = 0.0_kind_real
   allocate(self%h(isd:ied,jsd:jed,1:nzo));       self%h = 0.0_kind_real
 
-end subroutine geom_allocate
+end subroutine soca_geom_allocate
+
 
 ! ------------------------------------------------------------------------------
 !> Calcuate distance from coast for the ocean points
-subroutine geom_distance_from_coast(self)
+!!
+!! \related soca_geom_mod::soca_geom
+subroutine soca_geom_distance_from_coast(self)
   class(soca_geom), intent(inout) :: self
   type(atlas_indexkdtree) :: kd
   type(atlas_geometry) :: ageometry
@@ -438,9 +504,12 @@ subroutine geom_distance_from_coast(self)
 
 end subroutine
 
+
 ! ------------------------------------------------------------------------------
 !> Read and store Rossby Radius of deformation
-subroutine geom_rossby_radius(self)
+!!
+!! \related soca_geom_mod::soca_geom
+subroutine soca_geom_rossby_radius(self)
   class(soca_geom), intent(inout) :: self
 
   integer :: unit, i, n
@@ -473,12 +542,14 @@ subroutine geom_rossby_radius(self)
   call soca_remap_idw(lon, lat, rr, self%lon(isc:iec,jsc:jec), &
                       self%lat(isc:iec,jsc:jec), self%rossby_radius(isc:iec,jsc:jec) )
 
-end subroutine geom_rossby_radius
+end subroutine soca_geom_rossby_radius
 
 
 ! ------------------------------------------------------------------------------
 !> Write geometry to file
-subroutine geom_write(self)
+!!
+!! \related soca_geom_mod::soca_geom
+subroutine soca_geom_write(self)
   class(soca_geom), intent(in) :: self
 
   character(len=256) :: geom_output_pe
@@ -614,11 +685,14 @@ subroutine geom_write(self)
      call write2pe(reshape(self%lat(self%isc:self%iec,self%jsc:self%jec),(/ns/)),'lat',geom_output_pe,.true.)
   end if
 
-end subroutine geom_write
+end subroutine soca_geom_write
+
 
 ! ------------------------------------------------------------------------------
 !> Read geometry from file
-subroutine geom_read(self)
+!!
+!! \related soca_geom_mod::soca_geom
+subroutine soca_geom_read(self)
   class(soca_geom), intent(inout) :: self
 
   integer :: idr_geom
@@ -724,11 +798,14 @@ subroutine geom_read(self)
   call free_restart_type(geom_restart)
   call fms_io_exit()
 
-end subroutine geom_read
+end subroutine soca_geom_read
+
 
 ! ------------------------------------------------------------------------------
 !> Get indices for compute or data domain
-subroutine geom_get_domain_indices(self, domain_type, is, ie, js, je, local)
+!!
+!! \related soca_geom_mod::soca_geom
+subroutine soca_geom_get_domain_indices(self, domain_type, is, ie, js, je, local)
   class(soca_geom), intent(in) :: self
   character(len=*),       intent(in) :: domain_type
   integer,               intent(out) :: is, ie, js, je
@@ -755,11 +832,14 @@ subroutine geom_get_domain_indices(self, domain_type, is, ie, js, je, local)
      is = isg; ie = ieg; js = jsg; je = jeg;
   end select
 
-end subroutine geom_get_domain_indices
+end subroutine soca_geom_get_domain_indices
+
 
 ! ------------------------------------------------------------------------------
 !> Get layer depth from layer thicknesses
-subroutine geom_thickness2depth(self, h, z)
+!!
+!! \related soca_geom_mod::soca_geom
+subroutine soca_geom_thickness2depth(self, h, z)
   class(soca_geom),     intent(in   ) :: self
   real(kind=kind_real), intent(in   ) :: h(:,:,:) ! Layer thickness
   real(kind=kind_real), intent(inout) :: z(:,:,:) ! Mid-layer depth
@@ -785,11 +865,14 @@ subroutine geom_thickness2depth(self, h, z)
         end do
      end do
   end do
-end subroutine geom_thickness2depth
+end subroutine soca_geom_thickness2depth
+
 
 ! ------------------------------------------------------------------------------
 !> Copy a structured field into an ATLAS fieldset
-subroutine geom_struct2atlas(self, dx_struct, dx_atlas)
+!!
+!! \related soca_geom_mod::soca_geom
+subroutine soca_geom_struct2atlas(self, dx_struct, dx_atlas)
   class(soca_geom),     intent(in ) :: self
   real(kind=kind_real), intent(in ) :: dx_struct(:,:)
   type(atlas_fieldset), intent(out) :: dx_atlas
@@ -804,11 +887,14 @@ subroutine geom_struct2atlas(self, dx_struct, dx_atlas)
   real_ptr = reshape(dx_struct(self%iscl:self%iecl, self%jscl:self%jecl),(/(self%iecl-self%iscl+1)*(self%jecl-self%jscl+1)/))
   call afield%final()
 
-end subroutine geom_struct2atlas
+end subroutine soca_geom_struct2atlas
+
 
 ! ------------------------------------------------------------------------------
 !> Copy a structured field from an ATLAS fieldset
-subroutine geom_atlas2struct(self, dx_struct, dx_atlas)
+!!
+!! \related soca_geom_mod::soca_geom
+subroutine soca_geom_atlas2struct(self, dx_struct, dx_atlas)
   class(soca_geom),     intent(in   ) :: self
   real(kind=kind_real), intent(inout) :: dx_struct(:,:)
   type(atlas_fieldset), intent(inout) :: dx_atlas
@@ -821,7 +907,7 @@ subroutine geom_atlas2struct(self, dx_struct, dx_atlas)
   dx_struct(self%iscl:self%iecl, self%jscl:self%jecl) = reshape(real_ptr,(/(self%iecl-self%iscl+1),(self%jecl-self%jscl+1)/))
   call afield%final()
 
-end subroutine geom_atlas2struct
+end subroutine soca_geom_atlas2struct
 
 ! ------------------------------------------------------------------------------
 
