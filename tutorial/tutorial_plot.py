@@ -67,6 +67,7 @@ class ObsSpace():
         self.varname = varname
         self.units = units
 
+# Define the observation space dictionary
 obs_spaces={
     "sst": ObsSpace("sst", "sea_surface_temperature","[K]"),
     "sss": ObsSpace("sss", "sea_surface_salinity", "[psu]"),
@@ -84,17 +85,17 @@ for k in obs_spaces:
     ax = fig.add_subplot(111)
     for iter in [1, 2]:
         for c in cycles:
-            cdate=datetime.strptime(c[-10:],'%Y%m%d%H')
-            fnames=glob.glob(c+'/obs_out/outeriter_'+str(iter)+'/'+obs_spaces[k].ioname+'.out_00*.nc4')
-            obs=Obs(fnames=fnames, varname=obs_spaces[k].varname)
-            cycle_date='Initialized  \n'+cdate.strftime('%Y-%m-%d %H')
+            cdate = datetime.strptime(c[-10:],'%Y%m%d%H')
+            fnames = glob.glob(c+'/obs_out/outeriter_'+str(iter)+'/'+obs_spaces[k].ioname+'.out_00*.nc4')
+            obs = Obs(fnames=fnames, varname=obs_spaces[k].varname)
+            cycle_date = 'Initialized  \n'+cdate.strftime('%Y-%m-%d %H')
             obs.mae(ax, cdate, colors[iter-1])
+    ax.legend([ax.lines[0], ax.lines[len(cycles)]],['Background', 'Analysis'])
+
     plt.title(obs_spaces[k].ioname, fontweight='bold')
     plt.xlabel('DA cycles', fontweight='bold')
     plt.ylabel('<|O-B|> '+obs_spaces[k].units, fontweight='bold')
-
     every_day = mdates.DayLocator(interval=1)
     ax.xaxis.set_major_locator(every_day)
-
     plt.grid(True)
-    fig.savefig(k+'_iter_'+str(iter)+'.png')
+    fig.savefig(k+'_global_mae_'+str(iter)+'.png')

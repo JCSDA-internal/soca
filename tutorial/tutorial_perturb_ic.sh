@@ -10,13 +10,16 @@
 
 set -e
 
-# Create a scratch place
-[ -d scratch ] && rm -rf scratch
-mkdir scratch
-cd scratch
+ulimit -s unlimited
+ulimit -v unlimited
+
+source ./tutorial_tools.sh
+
+# Create a scratch place and cd into it
+create_scratch 'scratch_pertic'
 
 # Prepare soca and MOM6 static files
-../prep.mom6-soca.static.sh $PWD/..
+mom6_soca_static $PWD/..
 
 # Link to previously generated grid
 ln -sf ../static/soca_gridspec.nc .
@@ -26,7 +29,7 @@ ln -sf ../static/bump .
 
 # Generate a perturbation by randomizing a staic B-matrix
 mkdir -p out
-mpirun -np 2 ../bin/soca_enspert.x ../config/ensemble_perturbations.yaml
+OMP_NUM_THREADS=1 mpirun ../bin/soca_enspert.x ../config/pert_ic.yaml
 
 # Move the perturbed restarts
 mkdir -p ../bkg_pert

@@ -10,23 +10,23 @@
 
 set -e
 
-soca_src=/home/gvernier/sandboxes/SOCA-1.0.0/soca-release
-soca_build=/home/gvernier/sandboxes/SOCA-1.0.0/build.soca/
+ulimit -s unlimited
+ulimit -v unlimited
 
-# Create a scratch place
-[ -d scratch ] && rm -rf scratch
-mkdir scratch
-cd scratch
+source ./tutorial_tools.sh
+
+# Create a scratch place and cd into it
+create_scratch 'scratch_bump'
 
 # Prepare soca and MOM6 static files
-../prep.mom6-soca.static.sh $PWD/..
+mom6_soca_static $PWD/..
 
 # Link to previously generated grid
 ln -sf ../static/soca_gridspec.nc .
 
 # Create a NICAS horizontal correlation operator
 mkdir -p bump
-mpirun -np 2 ../bin/soca_staticbinit.x ../config/staticb.yaml
+OMP_NUM_THREADS=1 mpirun ../bin/soca_staticbinit.x ../config/staticb.yaml
 
 # Move bump initialization files
 mv ./bump ../static/

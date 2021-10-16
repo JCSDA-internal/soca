@@ -7,19 +7,17 @@ execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
 
 # Link tutorial scripts
 set( tutorial_scripts
-  input.nml.sh
-  3dvarfgat.yaml.sh
-  checkpoint.yaml.sh
-  forecast.yaml.sh
-  prep.mom6-soca.static.sh
-  soca_3dvarfgat.sh
-  soca_ensemble_perturbations.sh
-  soca_gridgen.sh
-  soca_plot.py
-  soca_static_correlation_op.sh
-  soca_synthetic_observations.py
-  soca_synthetic_observations.sh
-)
+  tutorial_gridgen.sh
+  tutorial_bump_op.sh
+  tutorial_perturb_ic.sh
+  tutorial_make_observations.sh
+  tutorial_3dvar.sh
+  tutorial_3dvarfgat.sh
+  tutorial_synthetic_observations.py
+  tutorial_plot.py
+  tutorial_tools.sh
+  )
+
 foreach(FILENAME ${tutorial_scripts})
     execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
            ${CMAKE_CURRENT_SOURCE_DIR}/${FILENAME}

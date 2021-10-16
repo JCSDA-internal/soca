@@ -10,16 +10,19 @@
 
 set -e
 
-# Create a scratch place
-[ -d scratch ] && rm -rf scratch
-mkdir scratch
-cd scratch
+ulimit -s unlimited
+ulimit -v unlimited
+
+source ./tutorial_tools.sh
+
+# Create a scratch place and cd into it
+create_scratch 'scratch_gridgen'
 
 # Prepare soca and MOM6 static files
-../prep.mom6-soca.static.sh $PWD/..
+mom6_soca_static $PWD/..
 
 # Generate grid
-mpirun -np 2 ../bin/soca_gridgen.x ../config/gridgen.yaml
+OMP_NUM_THREADS=1 mpirun ../bin/soca_gridgen.x ../config/gridgen.yaml
 
 # Save grid for later use
 mkdir -p ../static

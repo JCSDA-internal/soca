@@ -10,17 +10,20 @@
 
 set -e
 
-# Create a scratch place
-[ -d scratch ] && rm -rf scratch
-mkdir scratch
-cd scratch
+ulimit -s unlimited
+ulimit -v unlimited
+
+source ./tutorial_tools.sh
+
+# Create a scratch place and cd into it
+create_scratch 'scratch_synobs'
+
+# Prepare soca and MOM6 static files
+mom6_soca_static $PWD/..
 
 # Create synthetic obs location
 mkdir -p obs_scratch
-python ../soca_synthetic_observations.py
-
-# Prepare soca and MOM6 static files
-../prep.mom6-soca.static.sh $PWD/..
+python ../tutorial_synthetic_observations.py
 
 # Link to previously generated grid
 ln -sf ../static/soca_gridspec.nc .
@@ -30,7 +33,7 @@ cp ../bkg_pert/MOM.res.nc ./INPUT/
 
 # Create synth obs by sampling the model initialized with the
 # perturbed background. This application runs MOM6 in-core.
-mpirun -np 2 ../bin/soca_hofx.x ../config/synthetic_obs.yaml
+OMP_NUM_THREADS=1 mpirun ../bin/soca_hofx.x ../config/synthetic_obs.yaml
 
 # Concatenate ioda files that contain the synthetic observations
 mkdir -p ../obs

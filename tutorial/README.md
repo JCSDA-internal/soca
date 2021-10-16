@@ -1,7 +1,7 @@
 # A tutorial for `soca`
 After successfully starting an instance of a singularity container and
-compiling `soca`, a `tutorials` directory is installed under
-`<path to build>/soca/tutorials`. It contain all the necessary resources
+compiling `soca`, a `tutorial` directory is installed under
+`<path to build>/soca/tutorial`. It contain all the necessary resources
 required to run a low resolution MOM6 forecast model and the `soca`
 tutorial applications.
 
@@ -12,7 +12,7 @@ generate synthetic observations from a perturbed MOM6 forecast and subsequently
 assimilate the synthetic observations using the unperturbed background as
 initial conditions.
 
-## Content of `tutorials`
+## Content of `tutorial`
 
 ``` console
 ├── CMakeLists.txt                    # configure the tutorial
@@ -33,15 +33,15 @@ initial conditions.
 ```
 
 ## Running the tutorial applications
-`cd` into the tutorials directory where `soca` was built,
+`cd` into the tutorial directory where `soca` was built,
 ``` console
-cd <path to build>/soca/tutorials
+cd <path to build>/soca/tutorial
 ```
 #### Generate the `soca` grid
 ``` console
 ./soca_gridgen.sh
 ```
-this will create a file `soca_gridspec.nc` under `<path to build>/soca/tutorials/static/`
+this will create a file `soca_gridspec.nc` under `<path to build>/soca/tutorial/static/`
 that will be needed by all the other applications
 
 #### Initialize the horizontal correlation operator
