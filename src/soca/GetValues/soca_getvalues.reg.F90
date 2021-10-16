@@ -17,7 +17,7 @@ private
 #define LISTED_TYPE soca_getvalues
 #include "oops/util/linkedList_i.f"
 
-!> Global registry
+!> Global registry for soca_getvalues
 type(registry_t), public:: soca_getvalues_registry
 
 ! ------------------------------------------------------------------------------

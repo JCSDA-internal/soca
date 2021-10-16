@@ -3,55 +3,80 @@
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
 
+!> Getvalues module
 module soca_getvalues_mod
 
-use soca_geom_mod, only: soca_geom
-use soca_fields_mod, only: soca_fields, soca_field
 use datetime_mod, only: datetime
+use iso_c_binding
 use kinds, only: kind_real
 use ufo_geovals_mod, only: ufo_geovals
-use ufo_locations_mod
-use unstructured_interpolation_mod, only: unstrc_interp
-use fckit_log_module, only : fckit_log
-use iso_c_binding
+use ufo_locations_mod, only: ufo_locations
+
+! soca modules
+use soca_fields_mod, only: soca_fields, soca_field
+use soca_geom_mod, only: soca_geom
 
 implicit none
 private
 
 !------------------------------------------------------------------------------
-! soca_getvalues
-!  forward and adjoint interpolation between the model and observation locations.
-!  Several interpolators need to be created depending on which grid is used
-!  (h, u, v) and if land masking is used. Since we do not know this information
-!  until fill_geovals() or fill_geovals_ad() is called, creation of the interp
-!  is postoned to then
+!> Interpolation between model and observation locations.
+!!
+!! Several interpolators need to be created depending on which grid is used
+!! (h, u, v) and if land masking is used. Since we do not know this information
+!! until fill_geovals() or fill_geovals_ad() is called, creation of the interp
+!! is postoned to then
 type, public :: soca_getvalues
-  ! the interpolator, and a flag for whether or not it has been initialized yet.
+
+  !> the interpolators
   type(unstrc_interp), allocatable :: horiz_interp(:)
+
+  !> a flag for whether each horiz_interp interpolator has been initialized yet.
   logical,             allocatable :: horiz_interp_init(:)
 
 contains
 
-  ! constructors / destructors
+  !> \name constructors / destructors
+  !! \{
+
+  !> \copybrief soca_getvalues_create \see soca_getvalues_create
   procedure :: create => soca_getvalues_create
+
+  !> \copybrief soca_getvalues_delete \see soca_getvalues_delete
   procedure :: delete => soca_getvalues_delete
 
-  ! apply interpolation
+  !> \}
+
+  !> \name apply interpolation
+  !! \{
+
+  !> \copybrief soca_getvalues_getinterp \see soca_getvalues_getinterp
   procedure :: get_interp => soca_getvalues_getinterp
+
+  !> \copybrief soca_getvalues_fillgeovals \see soca_getvalues_fillgeovals
   procedure :: fill_geovals=> soca_getvalues_fillgeovals
+
+  !> \copybrief soca_getvalues_fillgeovals_ad \see soca_getvalues_fillgeovals_ad
   procedure :: fill_geovals_ad=> soca_getvalues_fillgeovals_ad
 
+  !> \}
+
 end type
+
 
 !------------------------------------------------------------------------------
 contains
 !------------------------------------------------------------------------------
 
+
 !------------------------------------------------------------------------------
+!> Initialize getvalues
+!!
+!! \relates soca_getvalues_mod::soca_getvalues
 subroutine soca_getvalues_create(self, geom, locs)
   class(soca_getvalues), intent(inout) :: self
-  type(soca_geom),          intent(in) :: geom
-  type(ufo_locations),      intent(in) :: locs
+  type(soca_geom),          intent(in) :: geom  !< remove this, not used?
+  type(ufo_locations),      intent(in) :: locs  !< remove this, not used?
 
   ! why do things crash if I don't make these allocatable??
   allocate(self%horiz_interp(6))
@@ -60,21 +85,26 @@ subroutine soca_getvalues_create(self, geom, locs)
 
 end subroutine soca_getvalues_create
 
+
 !------------------------------------------------------------------------------
-! Get the index of the interpolator for the given grid/masking.
-! If the interpolator has not been initialized yet, it will initialize it.
-! The index of horiz_interp and horiz_interp_init map to the following
-!   1 = h, unmasked    2 = h, masked
-!   3 = u, unmasked    4 = u, masked
-!   5 = v, unmasked    6 = v, masked
+!> Get the index of the interpolator for the given grid/masking.
+!!
+!! If the interpolator has not been initialized yet, it will initialize it.
+!! The index of horiz_interp and horiz_interp_init map to the following
+!!   1 = h, unmasked    2 = h, masked
+!!   3 = u, unmasked    4 = u, masked
+!!   5 = v, unmasked    6 = v, masked
+!!
+!! \throws abor1_ftn aborts if illegal choice of \p grid is given
+!! \relates soca_getvalues_mod::soca_getvalues
 function soca_getvalues_getinterp(self, geom, grid, masked, locs) result(idx)
   class(soca_getvalues), intent(inout) :: self
-  type(soca_geom),  target, intent(in) :: geom
+  type(soca_geom),  target, intent(in) :: geom !< source geometry
   character(len=1),         intent(in) :: grid   !< "h", "u", or "v"
-  logical,                  intent(in) :: masked
-  type(ufo_locations),      intent(in) :: locs
-  integer :: idx
+  logical,                  intent(in) :: masked !< if true, use the masked interpolators
+  type(ufo_locations),      intent(in) :: locs !< locations to interpolate to
 
+  integer :: idx
   integer :: isc, iec, jsc, jec
   integer :: ngrid_in, ngrid_out
 
@@ -145,7 +175,11 @@ function soca_getvalues_getinterp(self, geom, grid, masked, locs) result(idx)
 
 end function
 
+
 !------------------------------------------------------------------------------
+!> Destructor
+!!
+!! \relates soca_getvalues_mod::soca_getvalues
 subroutine soca_getvalues_delete(self)
   class(soca_getvalues), intent(inout) :: self
 
@@ -153,15 +187,21 @@ subroutine soca_getvalues_delete(self)
   deallocate(self%horiz_interp_init)
 end subroutine soca_getvalues_delete
 
+
 !------------------------------------------------------------------------------
+!> Forward interpolation from \p geom to \p locs
+!!
+!! only locations in \p locs that are valid in the time window between
+!! \p t1 and \p t2 are populated.
+!! \relates soca_getvalues_mod::soca_getvalues
 subroutine soca_getvalues_fillgeovals(self, geom, fld, t1, t2, locs, geovals)
   class(soca_getvalues), intent(inout) :: self
-  type(soca_geom),          intent(in) :: geom
-  class(soca_fields),       intent(in) :: fld
-  type(datetime),           intent(in) :: t1
-  type(datetime),           intent(in) :: t2
-  type(ufo_locations),      intent(in) :: locs
-  type(ufo_geovals),     intent(inout) :: geovals
+  type(soca_geom),          intent(in) :: geom !< source grid to interp from
+  class(soca_fields),       intent(in) :: fld !< the field to interpolate
+  type(datetime),           intent(in) :: t1 !< beginning of time window
+  type(datetime),           intent(in) :: t2 !< ending of time window
+  type(ufo_locations),      intent(in) :: locs !< locations to interpolate to
+  type(ufo_geovals),     intent(inout) :: geovals !< output interpolated values
 
   logical(c_bool), allocatable :: time_mask(:)
   logical :: masked
@@ -231,15 +271,21 @@ subroutine soca_getvalues_fillgeovals(self, geom, fld, t1, t2, locs, geovals)
   geovals%linit = .true.
 end subroutine soca_getvalues_fillgeovals
 
+
 !------------------------------------------------------------------------------
+!> Backward interpolation from \p locs to \p geom
+!!
+!! only locations in \p locs that are valid in the time window between
+!! \p t1 and \p t2 are interpolated to \p incr.
+!! \relates soca_getvalues_mod::soca_getvalues
 subroutine soca_getvalues_fillgeovals_ad(self, geom, incr, t1, t2, locs, geovals)
   class(soca_getvalues), intent(inout) :: self
-  type(soca_geom),          intent(in) :: geom
-  class(soca_fields),    intent(inout) :: incr
-  type(datetime),           intent(in) :: t1
-  type(datetime),           intent(in) :: t2
-  type(ufo_locations),      intent(in) :: locs
-  type(ufo_geovals),     intent(in) :: geovals
+  type(soca_geom),          intent(in) :: geom !< target geometry
+  class(soca_fields),    intent(inout) :: incr !< outout interpolated values
+  type(datetime),           intent(in) :: t1 !< beginning of time window
+  type(datetime),           intent(in) :: t2 !< ending of time window
+  type(ufo_locations),      intent(in) :: locs !< source locations that are interpolated from
+  type(ufo_geovals),     intent(in) :: geovals !< input values
 
   logical(c_bool), allocatable :: time_mask(:)
   logical :: masked
