@@ -3,33 +3,31 @@
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
 
-!> Setup the model
-
+!> C++ interfaces for soca_model_mod::soca_model
 module soca_model_mod_c
 
-use iso_c_binding
-use fckit_configuration_module, only: fckit_configuration
 use datetime_mod, only: datetime, c_f_datetime
 use duration_mod, only: duration, duration_seconds, assignment(=)
-use soca_geom_mod, only: soca_geom
+use fckit_configuration_module, only: fckit_configuration
+use iso_c_binding
+
+! soca modules
 use soca_geom_mod_c, only: soca_geom_registry
-use soca_state_mod
-use soca_state_reg
-use soca_model_mod, only: soca_model, soca_setup, soca_delete, soca_propagate, &
-                          soca_initialize_integration, soca_finalize_integration
+use soca_geom_mod, only: soca_geom
+use soca_model_mod, only: soca_model
+use soca_state_mod, only: soca_state
+use soca_state_reg, only: soca_state_registry
 
 implicit none
-
 private
-public :: soca_model_registry
 
 #define LISTED_TYPE soca_model
 
 !> Linked list interface - defines registry_t type
 #include "oops/util/linkedList_i.f"
 
-!> Global registry
-type(registry_t) :: soca_model_registry
+!> Global registry for soca_model instances
+type(registry_t), public :: soca_model_registry
 
 ! ------------------------------------------------------------------------------
 contains
@@ -38,8 +36,9 @@ contains
 !> Linked list implementation
 #include "oops/util/linkedList_c.f"
 
-subroutine c_soca_setup(c_conf, c_key_geom, c_key_model) bind (c,name='soca_setup_f90')
-
+! ------------------------------------------------------------------------------
+!> C++ interface for soca_model_mod::soca_model::setup()
+subroutine soca_model_setup_c(c_conf, c_key_geom, c_key_model) bind (c,name='soca_model_setup_f90')
   type(c_ptr),       intent(in) :: c_conf       !< pointer to object of class Config
   integer(c_int),    intent(in) :: c_key_geom   !< Geometry
   integer(c_int), intent(inout) :: c_key_model  !< Key to configuration data
@@ -82,33 +81,29 @@ subroutine c_soca_setup(c_conf, c_key_geom, c_key_model) bind (c,name='soca_setu
   endif
 
   ! Initialize mom6
-  call soca_setup(model, geom)
+  call model%setup(geom)
 
   if (allocated(str)) deallocate(str)
+end subroutine soca_model_setup_c
 
-  return
-end subroutine c_soca_setup
 
 ! ------------------------------------------------------------------------------
-
-!> Delete the model
-subroutine c_soca_delete(c_key_conf) bind (c,name='soca_delete_f90')
-
+!> C++ interface for soca_model_mod::soca_model::delete()
+subroutine soca_model_delete_c(c_key_conf) bind (c,name='soca_model_delete_f90')
   integer(c_int), intent(inout) :: c_key_conf  !< Key to configuration structure
+
   type(soca_model), pointer :: model
 
   call soca_model_registry%get(c_key_conf, model)
-  call soca_delete(model)
+  call model%delete()
   call soca_model_registry%remove(c_key_conf)
+end subroutine soca_model_delete_c
 
-  return
-end subroutine c_soca_delete
 
 ! ------------------------------------------------------------------------------
-!> Prepare the model or integration
-subroutine c_soca_initialize_integration(c_key_model, c_key_state) &
-     & bind(c,name='soca_initialize_integration_f90')
-
+!> C++ interface for soca_model_mod::soca_model::init()
+subroutine soca_model_init_c(c_key_model, c_key_state) &
+     & bind(c,name='soca_model_init_f90')
   integer(c_int), intent(in) :: c_key_model  !< Configuration structure
   integer(c_int), intent(in) :: c_key_state  !< Model fields
 
@@ -118,17 +113,15 @@ subroutine c_soca_initialize_integration(c_key_model, c_key_state) &
   call soca_state_registry%get(c_key_state, flds)
   call soca_model_registry%get(c_key_model, model)
 
-  call soca_initialize_integration(model, flds)
+  call model%init(flds)
 
-  return
-end subroutine c_soca_initialize_integration
+end subroutine soca_model_init_c
+
 
 ! ------------------------------------------------------------------------------
-
-!> Checkpoint model
-subroutine c_soca_finalize_integration(c_key_model, c_key_state) &
-           bind(c,name='soca_finalize_integration_f90')
-
+!> C++ interface for soca_model_mod::soca_model::finalize()
+subroutine soca_model_finalize_c(c_key_model, c_key_state) &
+           bind(c,name='soca_model_finalize_f90')
   integer(c_int), intent(in) :: c_key_model  !< Configuration structure
   integer(c_int), intent(in) :: c_key_state  !< Model fields
 
@@ -138,16 +131,13 @@ subroutine c_soca_finalize_integration(c_key_model, c_key_state) &
   call soca_state_registry%get(c_key_state, flds)
   call soca_model_registry%get(c_key_model, model)
 
-  call soca_finalize_integration(model, flds)
+  call model%finalize(flds)
+end subroutine soca_model_finalize_c
 
-  return
-end subroutine c_soca_finalize_integration
 
 ! ------------------------------------------------------------------------------
-
-!> Perform a timestep of the model
-subroutine c_soca_propagate(c_key_model, c_key_state, c_key_date) bind(c,name='soca_propagate_f90')
-
+!> C++ interface for soca_model_mod::soca_model::propagate()
+subroutine soca_model_propagate_c(c_key_model, c_key_state, c_key_date) bind(c,name='soca_model_propagate_f90')
   integer(c_int), intent(in) :: c_key_model  !< Config structure
   integer(c_int), intent(in) :: c_key_state  !< Model fields
   type(c_ptr), intent(inout) :: c_key_date   !< DateTime
@@ -160,9 +150,7 @@ subroutine c_soca_propagate(c_key_model, c_key_state, c_key_date) bind(c,name='s
   call soca_state_registry%get(c_key_state, flds)
   call c_f_datetime(c_key_date, fldsdate)
 
-  call soca_propagate(model, flds, fldsdate)
-
-  return
-end subroutine c_soca_propagate
+  call model%propagate(flds, fldsdate)
+end subroutine soca_model_propagate_c
 
 end module soca_model_mod_c

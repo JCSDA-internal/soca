@@ -41,7 +41,7 @@ namespace soca {
     const eckit::Configuration * configc = &model;
     if (setup_mom6_)
       {
-        soca_setup_f90(&configc, geom_->toFortran(), keyConfig_);
+        soca_model_setup_f90(&configc, geom_->toFortran(), keyConfig_);
       }
         Log::trace() << "Model created" << std::endl;
   }
@@ -49,25 +49,25 @@ namespace soca {
   Model::~Model() {
     if (setup_mom6_)
       {
-        soca_delete_f90(keyConfig_);
+        soca_model_delete_f90(keyConfig_);
       }
     Log::trace() << "Model destructed" << std::endl;
   }
   // -----------------------------------------------------------------------------
   void Model::initialize(State & xx) const {
-    soca_initialize_integration_f90(keyConfig_, xx.toFortran());
+    soca_model_init_f90(keyConfig_, xx.toFortran());
     Log::debug() << "Model::initialize" << std::endl;
   }
   // -----------------------------------------------------------------------------
   void Model::step(State & xx, const ModelBias &) const {
     Log::trace() << "Model::Time: " << xx.validTime() << std::endl;
     util::DateTime * modeldate = &xx.validTime();
-    soca_propagate_f90(keyConfig_, xx.toFortran(), &modeldate);
+    soca_model_propagate_f90(keyConfig_, xx.toFortran(), &modeldate);
     xx.validTime() += tstep_;
   }
   // -----------------------------------------------------------------------------
   void Model::finalize(State & xx) const {
-    soca_finalize_integration_f90(keyConfig_, xx.toFortran());
+    soca_model_finalize_f90(keyConfig_, xx.toFortran());
     Log::debug() << "Model::finalize" << std::endl;
   }
   // -----------------------------------------------------------------------------

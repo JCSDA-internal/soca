@@ -11,6 +11,7 @@ use iso_c_binding
 use kinds, only: kind_real
 use ufo_geovals_mod, only: ufo_geovals
 use ufo_locations_mod, only: ufo_locations
+use unstructured_interpolation_mod, only: unstrc_interp
 
 ! soca modules
 use soca_fields_mod, only: soca_fields, soca_field

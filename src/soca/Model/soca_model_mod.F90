@@ -7,63 +7,95 @@
 
 module soca_model_mod
 
-use fckit_mpi_module, only: fckit_mpi_comm
-use fms_io_mod, only : fms_io_init, fms_io_exit
-use kinds, only: kind_real
-use soca_geom_mod, only: soca_geom
-use soca_mom6, only: soca_mom6_config, soca_mom6_init, soca_mom6_end
-use soca_utils, only: soca_str2int
-use soca_state_mod
-use soca_fields_mod
 use datetime_mod, only: datetime, datetime_to_string
-use mpp_domains_mod, only : mpp_update_domains
-use time_manager_mod, only : time_type, print_time, print_date, set_date
-use MOM, only : step_MOM
+use kinds, only: kind_real
+
+! mom6/fms modules
+use fms_io_mod, only : fms_io_init, fms_io_exit
 use MOM_restart, only : save_restart
 use MOM_surface_forcing, only : set_forcing
-use MOM_time_manager, only : real_to_time, time_type_to_real
 use MOM_time_manager, only : operator(+)
+use MOM_time_manager, only : real_to_time, time_type_to_real
+use MOM, only : step_MOM
+use mpp_domains_mod, only : mpp_update_domains
+use time_manager_mod, only : time_type, set_date
+
+! soca modules
+use soca_fields_mod, only: soca_field
+use soca_geom_mod, only: soca_geom
+use soca_mom6, only: soca_mom6_config, soca_mom6_init, soca_mom6_end
+use soca_state_mod, only: soca_state
+use soca_utils, only: soca_str2int
 
 implicit none
-
 private
-public :: soca_model
-public :: soca_setup
-public :: soca_initialize_integration
-public :: soca_finalize_integration
-public :: soca_propagate
-public :: soca_delete
+
 
 !> Fortran derived type to hold configuration data for the model
-type :: soca_model
+type, public :: soca_model
    integer :: advance_mom6      !< call mom6 step if true
    real(kind=kind_real) :: dt0  !< dimensional time (seconds)
    type(soca_mom6_config) :: mom6_config  !< MOM6 data structure
    real(kind_real), dimension(2) :: tocn_minmax, socn_minmax  !< min, max values
+
+contains
+
+  !> \name constructor/destructor
+  !! \{
+
+  !> \copybrief soca_model_setup \see soca_model_setup
+  procedure :: setup => soca_model_setup
+
+  !> \copybrief soca_model_delete \see soca_model_delete
+  procedure :: delete => soca_model_delete
+
+  !> \}
+
+  !> \name model run steps
+  !! \{
+
+  !> \copybrief soca_model_init \see soca_model_init
+  procedure :: init => soca_model_init
+
+  !> \copybrief soca_model_propagate \see soca_model_propagate
+  procedure :: propagate => soca_model_propagate
+
+  !> \copybrief soca_model_finalize \see soca_model_finalize
+  procedure :: finalize => soca_model_finalize
+
+  !> \}
+
 end type soca_model
+
 
 ! ------------------------------------------------------------------------------
 contains
 ! ------------------------------------------------------------------------------
 
+
 ! ------------------------------------------------------------------------------
 !> Initialize model's data structure
-subroutine soca_setup(self, geom)
-  type(soca_model), intent(inout) :: self
-  type(soca_geom),     intent(in) :: geom
+!!
+!! \relates soca_model_mod::soca_model
+subroutine soca_model_setup(self, geom)
+  class(soca_model), intent(inout) :: self
+  type(soca_geom),     intent(in) :: geom !< model geometry
 
   self%mom6_config%f_comm = geom%f_comm
   call soca_mom6_init(self%mom6_config)
 
-end subroutine soca_setup
+end subroutine soca_model_setup
+
 
 ! ------------------------------------------------------------------------------
 !> Prepare MOM6 integration
-subroutine soca_initialize_integration(self, flds)
-  type(soca_model), intent(inout) :: self
-  type(soca_state), intent(inout) :: flds
-  type(soca_field), pointer :: field
+!!
+!! \relates soca_model_mod::soca_model
+subroutine soca_model_init(self, flds)
+  class(soca_model), intent(inout) :: self
+  type(soca_state), intent(inout) :: flds !< initial condition
 
+  type(soca_field), pointer :: field
   integer :: i
 
   ! for each field
@@ -107,17 +139,19 @@ subroutine soca_initialize_integration(self, flds)
       field%val(:,:,1) =   real(self%mom6_config%fluxes%ustar, kind=kind_real)
     end select
   end do
-end subroutine soca_initialize_integration
+end subroutine soca_model_init
+
 
 ! ------------------------------------------------------------------------------
 !> Advance MOM6 one baroclinic time step
-subroutine soca_propagate(self, flds, fldsdate)
-  type(soca_model), intent(inout) :: self
+!!
+!! \relates soca_model_mod::soca_model
+subroutine soca_model_propagate(self, flds, fldsdate)
+  class(soca_model), intent(inout) :: self
   type(soca_state), intent(inout) :: flds
   type(datetime),      intent(in) :: fldsdate
 
   type(soca_field), pointer :: field
-
   type(time_type) :: ocean_time  ! The ocean model's clock.
   integer :: year, month, day, hour, minute, second, i
   character(len=20) :: strdate
@@ -189,12 +223,15 @@ subroutine soca_propagate(self, flds, fldsdate)
       field%val(:,:,1) = real(self%mom6_config%fluxes%ustar, kind=kind_real)
     end select
   end do
-end subroutine soca_propagate
+end subroutine soca_model_propagate
+
 
 ! ------------------------------------------------------------------------------
 !> Finalize MOM6 integration: Update mom6's state and checkpoint
-subroutine soca_finalize_integration(self, flds)
-  type(soca_model), intent(inout) :: self
+!!
+!! \relates soca_model_mod::soca_model
+subroutine soca_model_finalize(self, flds)
+  class(soca_model), intent(inout) :: self
   type(soca_state), intent(inout) :: flds
 
   type(soca_field), pointer :: field
@@ -235,15 +272,18 @@ subroutine soca_finalize_integration(self, flds)
                    self%mom6_config%restart_CSp, &
                    GV=self%mom6_config%GV)
 
-end subroutine soca_finalize_integration
+end subroutine soca_model_finalize
+
 
 ! ------------------------------------------------------------------------------
 !> Release memory
-subroutine soca_delete(self)
-  type(soca_model), intent(inout) :: self
+!!
+!! \relates soca_model_mod::soca_model
+subroutine soca_model_delete(self)
+  class(soca_model), intent(inout) :: self
 
   call soca_mom6_end(self%mom6_config)
 
-end subroutine soca_delete
+end subroutine soca_model_delete
 
 end module soca_model_mod

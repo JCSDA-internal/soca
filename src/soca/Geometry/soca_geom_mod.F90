@@ -108,11 +108,10 @@ type, public :: soca_geom
     !> instance of the metadata that is read in from a config file upon initialization
     type(soca_fields_metadata) :: fields_metadata
 
-    ! private stuff
     logical, private :: save_local_domain = .false. !< If true, save the local geometry for each pe.
-    character(len=:), allocatable, private :: geom_grid_file !< filename of geometry
-    type(fckit_mpi_comm), private :: f_comm !< MPI communicator
-    type(atlas_functionspace_pointcloud), private :: afunctionspace !< atlas stuff
+    character(len=:), allocatable :: geom_grid_file !< filename of geometry
+    type(fckit_mpi_comm) :: f_comm !< MPI communicator
+    type(atlas_functionspace_pointcloud) :: afunctionspace !< atlas stuff
 
 
   contains
