@@ -4,43 +4,65 @@
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
 ! ------------------------------------------------------------------------------
 
+!> state conversion
 module soca_convert_state_mod
 
-  use soca_geom_mod
-  use soca_fields_mod
-  use soca_utils, only: soca_remap_idw
-  use kinds, only: kind_real
-  use fms_io_mod, only: read_data, write_data, fms_io_init, fms_io_exit
-  use MOM_remapping, only : remapping_CS, initialize_remapping, remapping_core_h
-  use MOM_domains, only : pass_var, root_PE, sum_across_pes
-  use mpp_mod, only     : mpp_broadcast, mpp_sync, mpp_sync_self
-  use MOM_error_handler, only : MOM_mesg, MOM_error, FATAL, WARNING, is_root_pe
-  use mpp_domains_mod, only  : mpp_global_field, mpp_update_domains
-  use horiz_interp_mod, only : horiz_interp_new, horiz_interp, horiz_interp_type
-  use MOM_horizontal_regridding, only : meshgrid, fill_miss_2d
-  use MOM_grid, only : ocean_grid_type
-  use fckit_exception_module, only: fckit_exception
+use fckit_exception_module, only: fckit_exception
+use kinds, only: kind_real
 
-  implicit none
-  private
+! mom6 / fms modules
+use fms_io_mod, only: read_data, fms_io_init, fms_io_exit
+use horiz_interp_mod, only : horiz_interp_new, horiz_interp, horiz_interp_type
+use MOM_domains, only : pass_var, root_PE, sum_across_pes
+use MOM_error_handler, only : is_root_pe
+use MOM_grid, only : ocean_grid_type
+use MOM_horizontal_regridding, only : meshgrid, fill_miss_2d
+use MOM_remapping, only : remapping_CS, initialize_remapping, remapping_core_h
+use mpp_domains_mod, only  : mpp_global_field, mpp_update_domains
+use mpp_mod, only     : mpp_broadcast, mpp_sync, mpp_sync_self
 
-  type, public :: soca_convertstate_type
-     real(kind=kind_real), allocatable, dimension(:,:,:) :: hocn_src, hocn_des
+! soca modules
+use soca_fields_mod, only: soca_field
+use soca_geom_mod, only: soca_geom
 
-   contains
-     procedure :: setup => soca_convertstate_setup
-     procedure :: change_resol => soca_convertstate_change_resol
-     procedure :: change_resol2d => soca_convertstate_change_resol2d
-     procedure :: clean => soca_convertstate_delete
-  end type soca_convertstate_type
+implicit none
+private
+
+
+!> resolution change for fields
+type, public :: soca_convertstate_type
+  real(kind=kind_real), allocatable, dimension(:,:,:), private :: hocn_src, hocn_des
+
+contains
+  !> \copybrief soca_convertstate_setup \see soca_convertstate_setup
+  procedure :: setup => soca_convertstate_setup
+
+  !> \copybrief soca_convertstate_change_resol \see soca_convertstate_change_resol
+  procedure :: change_resol => soca_convertstate_change_resol
+
+  !> \copybrief soca_convertstate_change_resol2d \see soca_convertstate_change_resol2d
+  procedure :: change_resol2d => soca_convertstate_change_resol2d
+
+  !> \copybrief soca_convertstate_delete \see soca_convertstate_delete
+  procedure :: clean => soca_convertstate_delete
+end type soca_convertstate_type
+
 
 ! ------------------------------------------------------------------------------
 contains
+! ------------------------------------------------------------------------------
 
+
+! ------------------------------------------------------------------------------
+!> initialize convertstate
+!!
+!! \relates soca_convert_state_mod::soca_convertstate_type
 subroutine soca_convertstate_setup(self, src, des, hocn, hocn2)
   class(soca_convertstate_type), intent(inout) :: self
-  type(soca_geom),              intent(inout) :: src, des
-  type(soca_field),             intent(inout) :: hocn, hocn2
+  type(soca_geom),              intent(inout) :: src !< source geometry
+  type(soca_geom),              intent(inout) :: des !< destination geometry
+  type(soca_field),             intent(inout) :: hocn !< cell thickenss of source
+  type(soca_field),             intent(inout) :: hocn2 !< cell thickness of destination
 
   !local
   integer :: tmp(1)
@@ -77,21 +99,30 @@ subroutine soca_convertstate_setup(self, src, des, hocn, hocn2)
 
 end subroutine soca_convertstate_setup
 
-! ------------------------------------------------------------------------------
-!> Cleanup
-  subroutine soca_convertstate_delete(self)
-    class(soca_convertstate_type), intent(inout) :: self
-
-    deallocate(self%hocn_src)
-    deallocate(self%hocn_des)
-
-  end subroutine soca_convertstate_delete
 
 ! ------------------------------------------------------------------------------
+!> destructor
+!!
+!! \relates soca_convert_state_mod::soca_convertstate_type
+subroutine soca_convertstate_delete(self)
+  class(soca_convertstate_type), intent(inout) :: self
+
+  deallocate(self%hocn_src)
+  deallocate(self%hocn_des)
+
+end subroutine soca_convertstate_delete
+
+
+! ------------------------------------------------------------------------------
+!> I don't know, someone needs to document this
+!!
+!! \relates soca_convert_state_mod::soca_convertstate_type
 subroutine soca_convertstate_change_resol2d(self, field_src, field_des, geom_src, geom_des)
   class(soca_convertstate_type),  intent(inout) :: self
-  type(soca_field), pointer,      intent(inout) :: field_src, field_des
-  type(soca_geom),                intent(inout) :: geom_src, geom_des
+  type(soca_field), pointer,      intent(inout) :: field_src !< source field
+  type(soca_field), pointer,      intent(inout) :: field_des !< destination field
+  type(soca_geom),                intent(inout) :: geom_src !< source geometry
+  type(soca_geom),                intent(inout) :: geom_des !< destination geometry
 
   !local
   integer :: i, j, k, tmp_nz, nz_
@@ -139,11 +170,17 @@ subroutine soca_convertstate_change_resol2d(self, field_src, field_des, geom_src
 
 end subroutine soca_convertstate_change_resol2d
 
+
 ! ------------------------------------------------------------------------------
+!> Someone needs to document this
+!!
+!! \relates soca_convert_state_mod::soca_convertstate_type
 subroutine soca_convertstate_change_resol(self, field_src, field_des, geom_src, geom_des)
   class(soca_convertstate_type),  intent(inout) :: self
-  type(soca_field), pointer,      intent(inout) :: field_src, field_des
-  type(soca_geom),                intent(inout) :: geom_src, geom_des
+  type(soca_field), pointer,      intent(inout) :: field_src !< source field
+  type(soca_field), pointer,      intent(inout) :: field_des !< destination field
+  type(soca_geom),                intent(inout) :: geom_src !< source geometry
+  type(soca_geom),                intent(inout) :: geom_des !< destination geometry
 
   !local
   integer :: i, j, k, tmp_nz, nz_
@@ -286,6 +323,9 @@ end subroutine soca_convertstate_change_resol
 
 
 ! ------------------------------------------------------------------------------
+!> someone needs to document this, there's a lot going on
+!!
+!! \relates soca_convertstate_mod::soca_convertstate
 subroutine soca_hinterp(self,field2,gdata,mask2,nz,missing,lon_in,lat_in,lon_out,lat_out)
   class(soca_geom),  intent(inout) :: self
   real(kind=kind_real), dimension(self%isd:self%ied,self%jsd:self%jed,1:nz), intent(inout) :: field2

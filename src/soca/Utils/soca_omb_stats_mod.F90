@@ -3,24 +3,29 @@
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
 
+!> surface background error used by soca_bkgerrgodas_mod
 module soca_omb_stats_mod
 
-use netcdf
 use fckit_mpi_module, only: fckit_mpi_comm
 use kinds, only: kind_real
+use netcdf
 use soca_utils, only: nc_check, soca_remap_idw
 
 implicit none
-
 private
-public :: soca_domain_indices, soca_omb_stats
 
-type :: soca_domain_indices ! TODO: Move elsewhere!
+
+!> domain indices used by soca_omb_stats
+type, public :: soca_domain_indices ! TODO: Move elsewhere!
    integer :: is, ie, js, je     ! Compute domain indices
    integer :: isl, iel, jsl, jel ! Local compute domain indices
 end type soca_domain_indices
 
-type :: soca_omb_stats
+
+!> interpolate surface background error file to grid
+!!
+!! Used by soca_bkgerrgodas_mod::soca_bkgerrgodas_config
+type, public :: soca_omb_stats
    integer                            :: nlocs
    real(kind=kind_real),  allocatable :: lon(:)
    real(kind=kind_real),  allocatable :: lat(:)
@@ -28,14 +33,24 @@ type :: soca_omb_stats
    real(kind=kind_real),  allocatable :: bgerr_model(:,:)
    type(soca_domain_indices)          :: domain
  contains
+
+   !> \copybrief soca_omb_stats_init \see soca_omb_stats_init
    procedure :: init => soca_omb_stats_init
+
+   !> \copybrief soca_omb_stats_bin \see soca_omb_stats_bin
    procedure :: bin => soca_omb_stats_bin
+
+   !> \copybrief soca_omb_stats_exit \see soca_omb_stats_exit
    procedure :: exit => soca_omb_stats_exit
 end type soca_omb_stats
+
 
 contains
 
 ! ------------------------------------------------------------------------------
+!> constructor
+!!
+!! \relates soca_omb_stats_mod::soca_omb_stats
 subroutine soca_omb_stats_init(self, domain)
   class(soca_omb_stats),           intent(inout) :: self
   type(soca_domain_indices),       intent(in) :: domain
@@ -96,7 +111,11 @@ subroutine soca_omb_stats_init(self, domain)
 
 end subroutine soca_omb_stats_init
 
+
 ! ------------------------------------------------------------------------------
+!> remap background error to grid
+!!
+!! \relates soca_omb_stats_mod::soca_omb_stats
 subroutine soca_omb_stats_bin(self, lon, lat)
   class(soca_omb_stats), intent(inout) :: self
   real(kind=kind_real),     intent(in) :: lon(:,:)
@@ -125,7 +144,11 @@ subroutine soca_omb_stats_bin(self, lon, lat)
 
 end subroutine soca_omb_stats_bin
 
+
 ! ------------------------------------------------------------------------------
+!> Destructor
+!!
+!! \relates soca_omb_stats_mod::soca_omb_stats
 subroutine soca_omb_stats_exit(self)
   class(soca_omb_stats), intent(inout) :: self
 
