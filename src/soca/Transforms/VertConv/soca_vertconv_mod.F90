@@ -3,48 +3,64 @@
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
 
+!> variable transform: vertical convolution
 module soca_vertconv_mod
 
 use fckit_configuration_module, only: fckit_configuration
 use kinds, only: kind_real
-use type_mpl, only: mpl_type
 use tools_func, only: fit_func
+use type_mpl, only: mpl_type
 use type_probe, only: probe
-use soca_geom_mod
-use soca_fields_mod
-use soca_increment_mod
-use soca_state_mod
+
+! soca modules
+use soca_fields_mod, only: soca_field
+use soca_geom_mod, only: soca_geom
+use soca_increment_mod, only:soca_increment
+use soca_state_mod, only: soca_state
 
 implicit none
-
 private
-public :: soca_vertconv, &
-          soca_conv_setup, soca_conv, soca_conv_ad, soca_calc_lz
 
-!> Fortran derived type to hold the setup for Vertconv
-type :: soca_vertconv
-   real(kind=kind_real)      :: lz_min             !> Vertical decorrelation minimum [m]
-   real(kind=kind_real)      :: lz_mld             !> if /= 0, Use MLD to calculate Lz
-   real(kind=kind_real)      :: lz_mld_max         !> if calculating Lz from MLD, max value to use
-   real(kind=kind_real)      :: scale_layer_thick  !> Set the minimum decorrelation scale
-                                                   !> as a multiple of the layer thickness
-   type(soca_state), pointer :: bkg                !> Background
-   type(soca_geom),  pointer :: geom               !> Geometry
-   integer                   :: isc, iec, jsc, jec !> Compute domain
+!> Variable transform for vertical convolution
+!!
+!! \note this only operates on tocn and socn
+type, public :: soca_vertconv
+  real(kind=kind_real)      :: lz_min             !> Vertical decorrelation minimum [m]
+  real(kind=kind_real)      :: lz_mld             !> if /= 0, Use MLD to calculate Lz
+  real(kind=kind_real)      :: lz_mld_max         !> if calculating Lz from MLD, max value to use
+  real(kind=kind_real)      :: scale_layer_thick  !> Set the minimum decorrelation scale
+                                                  !> as a multiple of the layer thickness
+  type(soca_state), pointer :: bkg                !> Background
+  type(soca_geom),  pointer :: geom               !> Geometry
+  integer                   :: isc, iec, jsc, jec !> Compute domain
+
+contains
+  !> \copybrief soca_conv_setup \see soca_conv_setup
+  procedure :: setup => soca_conv_setup
+
+  !> \copybrief soca_conv_mult \see soca_conv_mult
+  procedure :: mult => soca_conv_mult
+
+  !> \copybrief soca_conv_mult_ad \see soca_conv_mult_ad
+  procedure :: mult_ad => soca_conv_mult_ad
+
 end type soca_vertconv
+
 
 ! ------------------------------------------------------------------------------
 contains
 ! ------------------------------------------------------------------------------
 
 ! ------------------------------------------------------------------------------
-! Setup for the vertical convolution
-! TODO: Investigate computing and storing weights in vertconc data structure
+!> Setup for the vertical convolution
+!!
+!! \todo: Investigate computing and storing weights in vertconc data structure
+!! \relates soca_vertconv_mod::soca_vertconv
 subroutine soca_conv_setup (self, bkg, geom, f_conf)
-  type(fckit_configuration), intent(in) :: f_conf
-  type(soca_vertconv),    intent(inout) :: self
-  type(soca_state),  target, intent(in) :: bkg
-  type(soca_geom),   target, intent(in) :: geom
+  class(soca_vertconv),    intent(inout) :: self
+  type(soca_state),  target, intent(in) :: bkg !< T/S background
+  type(fckit_configuration), intent(in) :: f_conf !< yaml configuration
+  type(soca_geom),   target, intent(in) :: geom !< input geometry
 
   ! Get configuration for vertical convolution
   call f_conf%get_or_die("Lz_min", self%lz_min )
@@ -63,12 +79,17 @@ subroutine soca_conv_setup (self, bkg, geom, f_conf)
 
 end subroutine soca_conv_setup
 
+
 ! ------------------------------------------------------------------------------
 !> Calculate vertical correlation lengths for a given column
+!!
+!! \relates soca_vertconv_mod::soca_vertconv
 subroutine soca_calc_lz(self, i, j, lz)
-  type(soca_vertconv), intent(in) :: self
-  integer, intent(in) :: i, j
-  real(kind=kind_real), intent(inout) :: lz(:)
+  class(soca_vertconv), intent(in) :: self
+  integer, intent(in) :: i !< i index of grid point
+  integer, intent(in) :: j !< j index of grid point
+  real(kind=kind_real), intent(inout) :: lz(:) !< output correlation legnths
+
   real(kind=kind_real) :: mld, z
   integer :: k
   type(soca_field), pointer :: hocn, mld_fld, layer_depth
@@ -95,12 +116,15 @@ subroutine soca_calc_lz(self, i, j, lz)
 
 end subroutine soca_calc_lz
 
+
 ! ------------------------------------------------------------------------------
 !> Apply forward convolution
-subroutine soca_conv (self, convdx, dx)
-  type(soca_vertconv), intent(inout) :: self
-  type(soca_increment),   intent(in) :: dx
-  type(soca_increment),intent(inout) :: convdx
+!!
+!! \relates soca_vertconv_mod::soca_vertconv
+subroutine soca_conv_mult (self, convdx, dx)
+  class(soca_vertconv), intent(inout) :: self
+  type(soca_increment),   intent(in) :: dx !< input increment to convolve
+  type(soca_increment),intent(inout) :: convdx !< output increment
 
   real(kind=kind_real), allocatable :: z(:), lz(:)
   real(kind=kind_real) :: dist2, coef
@@ -146,14 +170,17 @@ subroutine soca_conv (self, convdx, dx)
     end select
   end do
   deallocate(z, lz)
-end subroutine soca_conv
+end subroutine soca_conv_mult
+
 
 ! ------------------------------------------------------------------------------
 !> Apply backward convolution
-subroutine soca_conv_ad (self, convdx, dx)
-  type(soca_vertconv), intent(inout) :: self
-  type(soca_increment),intent(inout) :: dx     ! OUT
-  type(soca_increment),   intent(in) :: convdx ! IN
+!!
+!! \relates soca_vertconv_mod::soca_vertconv
+subroutine soca_conv_mult_ad (self, convdx, dx)
+  class(soca_vertconv), intent(inout) :: self
+  type(soca_increment),intent(inout) :: dx     !< output increment
+  type(soca_increment),   intent(in) :: convdx !< input increment
 
   real(kind=kind_real), allocatable :: z(:), lz(:)
   real(kind=kind_real) :: dist2, coef
@@ -197,6 +224,6 @@ subroutine soca_conv_ad (self, convdx, dx)
   end do
   deallocate(z, lz)
 
-end subroutine soca_conv_ad
+end subroutine soca_conv_mult_ad
 
 end module soca_vertconv_mod

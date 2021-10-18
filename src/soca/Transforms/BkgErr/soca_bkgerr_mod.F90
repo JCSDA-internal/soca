@@ -3,49 +3,66 @@
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
 
+!> variable transform: background error
 module soca_bkgerr_mod
 
-use fckit_configuration_module, only: fckit_configuration
 use datetime_mod, only: datetime
+use fckit_configuration_module, only: fckit_configuration
 use kinds, only: kind_real
-use soca_geom_mod
-use soca_fields_mod
-use soca_state_mod
-use soca_increment_mod
+
+! soca modules
 use soca_bkgerrutil_mod, only: soca_bkgerr_bounds_type
+use soca_fields_mod, only: soca_fields, soca_field
+use soca_geom_mod, only: soca_geom
+use soca_increment_mod, only: soca_increment
+use soca_state_mod, only: soca_state
 
 implicit none
-
 private
-public :: soca_bkgerr_config, &
-          soca_bkgerr_setup, soca_bkgerr_mult
 
-!> Fortran derived type to hold configuration D
-type :: soca_bkgerr_config
-   type(soca_fields)                 :: std_bkgerr
-   type(soca_bkgerr_bounds_type)     :: bounds         ! Bounds for bkgerr
-   real(kind=kind_real)              :: std_sst
-   real(kind=kind_real)              :: std_sss
-   integer                           :: isc, iec, jsc, jec
-end type soca_bkgerr_config
+
+!> Variable transform for background error
+type, public :: soca_bkgerr
+  type(soca_fields) :: std_bkgerr
+
+  ! private members
+  type(soca_bkgerr_bounds_type) , private  :: bounds !< Bounds for bkgerr
+  type(soca_geom),  pointer, private       :: geom !< geometry
+
+contains
+
+  !> \copybrief soca_bkgerr_setup \see soca_bkgerr_setup
+  procedure :: setup => soca_bkgerr_setup
+
+  !> \copybrief soca_bkgerr_mult \see soca_bkgerr_mult
+  procedure :: mult => soca_bkgerr_mult
+end type soca_bkgerr
+
 
 ! ------------------------------------------------------------------------------
 contains
 ! ------------------------------------------------------------------------------
 
+
 ! ------------------------------------------------------------------------------
 !> Setup the static background error
-subroutine soca_bkgerr_setup(f_conf, self, bkg, geom)
-  type(fckit_configuration),   intent(in) :: f_conf
-  type(soca_bkgerr_config), intent(inout) :: self
-  type(soca_state),    target, intent(in) :: bkg
-  type(soca_geom),     target, intent(in)  :: geom
+!!
+!! \note the precomputed standard devations in std_bkgerr are only used
+!! for tocn, socn, and ssh.
+!! \relates soca_bkgerr_mod::soca_bkgerr
+subroutine soca_bkgerr_setup(self, f_conf, bkg, geom)
+  class(soca_bkgerr),       intent(inout) :: self
+  type(fckit_configuration),   intent(in) :: f_conf !< configuration
+  type(soca_state),    target, intent(in) :: bkg !< background
+  type(soca_geom),     target, intent(in) :: geom !< geometry
 
   type(soca_field), pointer :: field, field_bkg
-
+  real(kind=kind_real) :: std
   integer :: i
   type(datetime) :: vdate
   character(len=800) :: fname = 'soca_bkgerrsoca.nc'
+
+  self%geom => geom
 
   ! Allocate memory for bkgerror
   call self%std_bkgerr%copy(bkg)
@@ -69,19 +86,19 @@ subroutine soca_bkgerr_setup(f_conf, self, bkg, geom)
 
   ! Get constand background error for sst and sss
   if ( f_conf%has("fixed_std_sst") ) then
-    call f_conf%get_or_die("fixed_std_sst", self%std_sst)
+    call f_conf%get_or_die("fixed_std_sst", std)
     call self%std_bkgerr%get("tocn", field)
-    field%val(:,:,1) = self%std_sst
+    field%val(:,:,1) = std
   end if
   if ( f_conf%has("fixed_std_sss") ) then
-      call f_conf%get_or_die("fixed_std_sss", self%std_sss)
+      call f_conf%get_or_die("fixed_std_sss", std)
       call self%std_bkgerr%get("socn", field)
-      field%val(:,:,1) = self%std_sss
+      field%val(:,:,1) = std
   end if
 
-  ! Invent background error for ocnsfc and ocn_bgc fields: 
+  ! Invent background error for ocnsfc and ocn_bgc fields:
   ! set it to 10% or 20% of the background for now ...
-  ! TODO: Read background error for ocnsfc and ocn_bgc from 
+  ! TODO: Read background error for ocnsfc and ocn_bgc from
   ! files
   do i=1,size(self%std_bkgerr%fields)
     field => self%std_bkgerr%fields(i)
@@ -95,10 +112,6 @@ subroutine soca_bkgerr_setup(f_conf, self, bkg, geom)
     end select
   end do
 
-  ! Indices for compute domain (no halo)
-  self%isc=geom%isc; self%iec=geom%iec
-  self%jsc=geom%jsc; self%jec=geom%jec
-
   ! Apply config bounds to background error
   call self%bounds%apply(self%std_bkgerr)
 
@@ -107,12 +120,15 @@ subroutine soca_bkgerr_setup(f_conf, self, bkg, geom)
 
 end subroutine soca_bkgerr_setup
 
+
 ! ------------------------------------------------------------------------------
 !> Apply background error: dxm = D dxa
+!!
+!! \relates soca_bkgerr_mod::soca_bkgerr
 subroutine soca_bkgerr_mult(self, dxa, dxm)
-  type(soca_bkgerr_config),    intent(in) :: self
-  type(soca_increment),        intent(in) :: dxa
-  type(soca_increment),     intent(inout) :: dxm
+  class(soca_bkgerr),      intent(in) :: self
+  type(soca_increment),    intent(in) :: dxa !< input increment
+  type(soca_increment), intent(inout) :: dxm !< output increment
 
   type(soca_field), pointer :: field_m, field_a, field_e
 
@@ -123,8 +139,8 @@ subroutine soca_bkgerr_mult(self, dxa, dxm)
   call dxa%check_subset(self%std_bkgerr)
 
   ! Indices for compute domain (no halo)
-  isc=self%isc; iec=self%iec
-  jsc=self%jsc; jec=self%jec
+  isc=self%geom%isc; iec=self%geom%iec
+  jsc=self%geom%jsc; jec=self%geom%jec
 
   ! multiply
   do n=1,size(dxa%fields)

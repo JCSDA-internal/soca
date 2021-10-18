@@ -6,71 +6,87 @@
 module soca_balance_mod
 
 use fckit_configuration_module, only: fckit_configuration
-use fms_mod, only: read_data
 use fms_io_mod, only: fms_io_init, fms_io_exit
+use fms_mod, only: read_data
 use kinds, only: kind_real
-use soca_geom_mod
-use soca_fields_mod
-use soca_increment_mod
-use soca_state_mod
-use soca_kst_mod, only: soca_kst, soca_soft_jacobian
+
+! soca modules
+use soca_fields_mod, only: soca_field
+use soca_geom_mod, only: soca_geom
+use soca_increment_mod, only: soca_increment
 use soca_ksshts_mod, only: soca_ksshts, soca_steric_jacobian
+use soca_kst_mod, only: soca_kst, soca_soft_jacobian
+use soca_state_mod, only: soca_state
 
 implicit none
-
 private
-public :: soca_balance_config, &
-          soca_balance_setup, soca_balance_delete, &
-          soca_balance_mult, soca_balance_multad, &
-          soca_balance_multinv, soca_balance_multinvad
 
-!> Fortran derived type to hold configuration D
-type :: soca_balance_config
-   integer                    :: isc, iec, jsc, jec  !> Compute domain
-   type(soca_kst)             :: kst                 !> T/S balance
-   type(soca_ksshts)          :: ksshts              !> SSH/T/S balance
-   real(kind=kind_real), allocatable :: kct(:,:)     !> C/T Jacobian
-end type soca_balance_config
+
+!> Variable transform for the balance operators (K)
+!!
+!! The core of the balance transformations are provided by
+!! soca_ksshts_mod::soca_ksshts and soca_kst_mod::soca_kst
+type, public :: soca_balance
+  ! private members
+  type(soca_kst), private             :: kst                 !< T/S balance
+  type(soca_ksshts), private          :: ksshts              !< SSH/T/S balance
+  real(kind=kind_real), private, allocatable :: kct(:,:)     !< C/T Jacobian
+  type(soca_geom),  pointer, private       :: geom !< geometry
+
+contains
+  !> \copybrief soca_balance_setup \see soca_balance_setup
+  procedure :: setup => soca_balance_setup
+
+  !> \copybrief soca_balance_delete \see soca_balance_delete
+  procedure :: delete => soca_balance_delete
+
+  !> \copybrief soca_balance_mult \see soca_balance_mult
+  procedure :: mult => soca_balance_mult
+
+  !> \copybrief soca_balance_multad \see soca_balance_multad
+  procedure :: multad => soca_balance_multad
+
+  !> \copybrief soca_balance_multinv \see soca_balance_multinv
+  procedure :: multinv => soca_balance_multinv
+
+  !> \copybrief soca_balance_multinvad \see soca_balance_multinvad
+  procedure :: multinvad => soca_balance_multinvad
+
+end type soca_balance
+
 
 ! ------------------------------------------------------------------------------
 contains
 ! ------------------------------------------------------------------------------
 
+
 ! ------------------------------------------------------------------------------
 !> Initialization of the balance operator and its trajectory.
-!> balances always used: T,S,SSH
-!> optional balances depending on input fields: cicen
-subroutine soca_balance_setup(f_conf, self, traj, geom)
-  type(fckit_configuration),   intent(in)  :: f_conf
-  type(soca_balance_config), intent(inout) :: self
-  type(soca_state),    target, intent(in)  :: traj
-  type(soca_geom),     target, intent(in)  :: geom
+!!
+!! - balances always used: T,S,SSH
+!! - optional balances depending on input fields: cicen
+!! \relates soca_balance_mod::soca_balance
+subroutine soca_balance_setup(self, f_conf, traj, geom)
+  class(soca_balance),       intent(inout) :: self
+  type(fckit_configuration),   intent(in)  :: f_conf !< configuration
+  type(soca_state),    target, intent(in)  :: traj !< trajectory
+  type(soca_geom),     target, intent(in)  :: geom !< geometry
 
   integer :: isc, iec, jsc, jec
   integer :: isd, ied, jsd, jed
   integer :: i, j, k, nl
-  real(kind=kind_real), allocatable :: jac(:)
-  type(soca_field), pointer :: tocn, socn, hocn, cicen, mld, layer_depth
-
-  ! declarations related to the dynamic height Jacobians
-  character(len=:), allocatable :: filename, mask_name
-  real(kind=kind_real), allocatable :: jac_mask(:,:) !> mask for Jacobian
-  real(kind=kind_real) :: threshold
-  integer :: nlayers               !> dynamic height Jac=0 in nlayers upper layers
-  logical :: mask_detadt = .false. !> if true, set deta/dt to 0
-  logical :: mask_detads = .false. !> if true, set deta/ds to 0
-
+  real(kind=soca_steric_jacobian
   ! declarations related to the sea-ice Jacobian
   character(len=:), allocatable :: kct_name
   real(kind=kind_real), allocatable :: kct(:,:) !> dc/dT
+
+  self%geom => geom
 
   ! Indices for compute domain
   isc=geom%isc; iec=geom%iec
   jsc=geom%jsc; jec=geom%jec
   isd=geom%isd; ied=geom%ied
   jsd=geom%jsd; jed=geom%jed
-  self%isc=isc; self%iec=iec
-  self%jsc=jsc; self%jec=jec
 
   ! Setup mask for Jacobians related to the dynamic height balance
   allocate(jac_mask(isd:ied,jsd:jed))
@@ -190,10 +206,13 @@ subroutine soca_balance_setup(f_conf, self, traj, geom)
 
 end subroutine soca_balance_setup
 
+
 ! ------------------------------------------------------------------------------
 !> Destructor for the balance oprator
+!!
+!! \relates soca_balance_mod::soca_balance
 subroutine soca_balance_delete(self)
-  type(soca_balance_config), intent(inout) :: self
+  class(soca_balance), intent(inout) :: self
 
   ! the following always exist
   deallocate(self%kst%jacobian)
@@ -202,15 +221,17 @@ subroutine soca_balance_delete(self)
 
   ! only exists if cicen was given
   if (allocated(self%kct)) deallocate(self%kct)
-
 end subroutine soca_balance_delete
 
+
 ! ------------------------------------------------------------------------------
-! Apply forward balance operator
+!> Apply forward balance operator
+!!
+!! \relates soca_balance_mod::soca_balance
 subroutine soca_balance_mult(self, dxa, dxm)
-  type(soca_balance_config), intent(in) :: self
-  type(soca_increment),      intent(in) :: dxa
-  type(soca_increment),   intent(inout) :: dxm
+  class(soca_balance),       intent(in) :: self
+  type(soca_increment),      intent(in) :: dxa !< input increment
+  type(soca_increment),   intent(inout) :: dxm !< output increment
 
   type(soca_field), pointer :: fld_m, fld_a
   type(soca_field), pointer :: tocn_a, socn_a
@@ -229,8 +250,8 @@ subroutine soca_balance_mult(self, dxa, dxm)
     fld_m => dxm%fields(n)
     fld_a => dxa%fields(n)
 
-    do i = self%isc, self%iec
-      do j = self%jsc, self%jec
+    do i = self%geom%isc, self%geom%iec
+      do j = self%geom%jsc, self%geom%jec
         select case(fld_m%name)
         case default
           fld_m%val(i,j,:) = fld_a%val(i,j,:)
@@ -259,12 +280,15 @@ subroutine soca_balance_mult(self, dxa, dxm)
   end do
 end subroutine soca_balance_mult
 
+
 ! ------------------------------------------------------------------------------
-! Apply backward balance operator
+!> Apply backward balance operator
+!!
+!! \relates soca_balance_mod::soca_balance
 subroutine soca_balance_multad(self, dxa, dxm)
-  type(soca_balance_config), intent(in) :: self
-  type(soca_increment),      intent(in) :: dxm
-  type(soca_increment),   intent(inout) :: dxa
+  class(soca_balance)      , intent(in) :: self
+  type(soca_increment),      intent(in) :: dxm !< input increment
+  type(soca_increment),   intent(inout) :: dxa !< output increment
 
   type(soca_field), pointer :: fld_a, fld_m
   type(soca_field), pointer :: socn_m, ssh_m, cicen_m
@@ -280,8 +304,8 @@ subroutine soca_balance_multad(self, dxa, dxm)
     fld_a => dxa%fields(n)
     fld_m => dxm%fields(n)
 
-    do i = self%isc, self%iec
-      do j = self%jsc, self%jec
+    do i = self%geom%isc, self%geom%iec
+      do j = self%geom%jsc, self%geom%jec
         select case(fld_a%name)
         case default
           fld_a%val(i,j,:) = fld_m%val(i,j,:)
@@ -306,12 +330,15 @@ subroutine soca_balance_multad(self, dxa, dxm)
   end do
 end subroutine soca_balance_multad
 
+
 ! ------------------------------------------------------------------------------
-! Apply inverse of the forward balance operator
+!> Apply inverse of the forward balance operator
+!!
+!! \relates soca_balance_mod::soca_balance
 subroutine soca_balance_multinv(self, dxa, dxm)
-  type(soca_balance_config), intent(in) :: self
-  type(soca_increment),      intent(in) :: dxm
-  type(soca_increment),   intent(inout) :: dxa
+  class(soca_balance),       intent(in) :: self
+  type(soca_increment),      intent(in) :: dxm !< input increment
+  type(soca_increment),   intent(inout) :: dxa !< output increment
 
   integer :: i, j, k, n
   type(soca_field), pointer :: fld_m, fld_a
@@ -324,8 +351,8 @@ subroutine soca_balance_multinv(self, dxa, dxm)
     fld_a => dxa%fields(n)
     fld_m => dxm%fields(n)
 
-    do i = self%isc, self%iec
-      do j = self%jsc, self%jec
+    do i = self%geom%isc, self%geom%iec
+      do j = self%geom%jsc, self%geom%jec
         select case(fld_a%name)
         case default
           fld_a%val(i,j,:) = fld_m%val(i,j,:)
@@ -356,12 +383,15 @@ subroutine soca_balance_multinv(self, dxa, dxm)
   end do
 end subroutine soca_balance_multinv
 
+
 ! ------------------------------------------------------------------------------
-! Apply inverse of the backward balance operator
+!> Apply inverse of the backward balance operator
+!!
+!! \relates soca_balance_mod::soca_balance
 subroutine soca_balance_multinvad(self, dxa, dxm)
-  type(soca_balance_config), intent(in) :: self
-  type(soca_increment),   intent(inout) :: dxm
-  type(soca_increment),      intent(in) :: dxa
+  class(soca_balance),       intent(in) :: self
+  type(soca_increment),   intent(inout) :: dxm !< output increment
+  type(soca_increment),      intent(in) :: dxa !< input increment
 
   integer :: i, j, n
   type(soca_field), pointer :: fld_a, fld_m
@@ -377,8 +407,8 @@ subroutine soca_balance_multinvad(self, dxa, dxm)
     fld_m => dxm%fields(n)
     fld_a => dxa%fields(n)
 
-    do i = self%isc, self%iec
-      do j = self%jsc, self%jec
+    do i = self%geom%isc, self%geom%iec
+      do j = self%geom%jsc, self%geom%jec
         select case (fld_m%name)
         case default
           fld_m%val(i,j,:) = fld_a%val(i,j,:)
