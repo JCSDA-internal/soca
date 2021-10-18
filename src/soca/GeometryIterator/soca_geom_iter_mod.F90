@@ -1,163 +1,184 @@
-!
-! (C) Copyright 2019-2020 UCAR
+! (C) Copyright 2019-2021 UCAR
 !
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
 
+!> Geometry iterator
 module soca_geom_iter_mod
 
-  use iso_c_binding
-  use kinds
-  use soca_geom_mod, only: soca_geom
+use kinds, only : kind_real
+use soca_geom_mod, only: soca_geom
 
-  implicit none
+implicit none
+private
 
-  private
-  public :: soca_geom_iter
-  public :: soca_geom_iter_registry
-  public :: soca_geom_iter_setup, soca_geom_iter_clone, soca_geom_iter_equals
-  public :: soca_geom_iter_current, soca_geom_iter_next
 
-  type :: soca_geom_iter
-    type(soca_geom), pointer :: geom => null() !< Geometry
-    integer :: iind = 1  !< index e.g. lat(iind,jind)
-    integer :: jind = 1  !< 
-  end type soca_geom_iter
+! ------------------------------------------------------------------------------
+! ------------------------------------------------------------------------------
 
-#define LISTED_TYPE soca_geom_iter
+! ------------------------------------------------------------------------------
+!> Geometry iterator
+!!
+!! When initialized, the iterator points to the first valid local grid cell.
+!! Calls to soca_geom_iter::next() moves the iterator forward, and calls to
+!! soca_geom_iter::current() retrieves the lat/lon of the current grid cell.
+!! The iterator is mainly used by soca_increment_mod::soca_increment::getpoint()
+!! and soca_increment_mod::soca_increment::setpoint()
+type, public :: soca_geom_iter
+  type(soca_geom), pointer, private :: geom => null() !< Geometry
 
-  !> Linked list interface - defines registry_t type
-#include "oops/util/linkedList_i.f"
-
-  !> Global registry
-  type(registry_t) :: soca_geom_iter_registry
+  integer :: iind = 1  !< i index of current grid point
+  integer :: jind = 1  !< j index of current grid point
 
 contains
 
-  ! ------------------------------------------------------------------------------
-  ! Public
-  ! ------------------------------------------------------------------------------
+  !> \copybrief soca_geom_iter_setup \see soca_geom_iter_setup
+  procedure :: setup => soca_geom_iter_setup
 
-  !> Linked list implementation
-#include "oops/util/linkedList_c.f"
+  !> \copybrief soca_geom_iter_clone \see soca_geom_iter_clone
+  procedure :: clone => soca_geom_iter_clone
 
-  ! ------------------------------------------------------------------------------
-  !> Setup for the geometry iterator
-  subroutine soca_geom_iter_setup(self, geom, iind, jind)
+  !> \copybrief soca_geom_iter_equals \see soca_geom_iter_equals
+  procedure :: equals => soca_geom_iter_equals
 
-    ! Passed variables
-    type(soca_geom_iter),     intent(inout) :: self !< Geometry iterator
-    type(soca_geom), pointer, intent(   in) :: geom !< Geometry
-    integer,                  intent(   in) :: iind, jind  !< Index
+  !> \copybrief soca_geom_iter_current \see soca_geom_iter_current
+  procedure :: current => soca_geom_iter_current
 
-    ! Associate geometry
-    self%geom => geom
+  !> \copybrief soca_geom_iter_next \see soca_geom_iter_next
+  procedure :: next => soca_geom_iter_next
 
-    ! Define iind/jind for local tile
-    self%iind = iind
-    self%jind = jind
+end type soca_geom_iter
 
-  end subroutine soca_geom_iter_setup
 
-  ! ------------------------------------------------------------------------------
-  !> Clone for the geometry iterator
-  subroutine soca_geom_iter_clone(self, other)
+! ------------------------------------------------------------------------------
+contains
+! ------------------------------------------------------------------------------
 
-    ! Passed variables
-    type(soca_geom_iter), intent(inout) :: self  !< Geometry iterator
-    type(soca_geom_iter), intent(   in) :: other !< Other geometry iterator
 
-    ! Associate geometry
-    self%geom => other%geom
+! ------------------------------------------------------------------------------
+!> Setup for the geometry iterator
+!!
+!! \relates soca_geom_iter_mod::soca_geom_iter
+subroutine soca_geom_iter_setup(self, geom, iind, jind)
+  class(soca_geom_iter),    intent(inout) :: self
+  type(soca_geom), pointer, intent(   in) :: geom !< Pointer to geometry
+  integer,                  intent(   in) :: iind, jind  !< starting index
 
-    ! Copy iind/jind
-    self%iind = other%iind
-    self%jind = other%jind
+  ! Associate geometry
+  self%geom => geom
 
-  end subroutine soca_geom_iter_clone
+  ! Define iind/jind for local tile
+  self%iind = iind
+  self%jind = jind
 
-  ! ------------------------------------------------------------------------------
-  !> Check for the geometry iterator equality
-  subroutine soca_geom_iter_equals(self, other, equals)
+end subroutine soca_geom_iter_setup
 
-    ! Passed variables
-    type(soca_geom_iter), intent( in) :: self   !< Geometry iterator
-    type(soca_geom_iter), intent( in) :: other  !< Other geometry iterator
-    integer,            intent(out) :: equals !< Equality flag
 
-    ! Initialization
-    equals = 0
+! ------------------------------------------------------------------------------
+!> Clone for the geometry iterator from \p other to \p self
+!!
+!! \relates soca_geom_iter_mod::soca_geom_iter
+subroutine soca_geom_iter_clone(self, other)
+  class(soca_geom_iter), intent(inout) :: self
+  type(soca_geom_iter),  intent(   in) :: other !< Other geometry iterator to clone from
 
-    ! Check equality
-    if (associated(self%geom, other%geom) .and. (self%iind==other%iind) .and. (self%jind==other%jind)) equals = 1
+  ! Associate geometry
+  self%geom => other%geom
 
-  end subroutine soca_geom_iter_equals
+  ! Copy iind/jind
+  self%iind = other%iind
+  self%jind = other%jind
 
-  ! ------------------------------------------------------------------------------
-  !> Get geometry iterator current lat/lon
-  subroutine soca_geom_iter_current(self, lon, lat)
+end subroutine soca_geom_iter_clone
 
-    ! Passed variables
-    type(soca_geom_iter), intent( in) :: self !< Geometry iterator
-    real(kind_real),    intent(out) :: lat  !< Latitude
-    real(kind_real),    intent(out) :: lon  !< Longitude
 
-    ! Check iind/jind
-    if (self%iind == -1 .AND. self%jind == -1) then
-      ! special case of {-1,-1} means end of the grid
-      lat = self%geom%lat(self%geom%iec,self%geom%jec)
-      lon = self%geom%lon(self%geom%iec,self%geom%jec) 
-    elseif (self%iind < self%geom%isc .OR. self%iind > self%geom%iec .OR. &
-            self%jind < self%geom%jsc .OR. self%jind > self%geom%jec) then
-      ! outside of the grid
-      call abor1_ftn('soca_geom_iter_current: iterator out of bounds')
-    else
-      ! inside of the grid
-      lat = self%geom%lat(self%iind,self%jind)
-      lon = self%geom%lon(self%iind,self%jind)
-    endif
+! ------------------------------------------------------------------------------
+!> Check for the geometry iterator equality (pointing to same i/j location)
+!!
+!! \relates soca_geom_iter_mod::soca_geom_iter
+subroutine soca_geom_iter_equals(self, other, equals)
+  class(soca_geom_iter), intent( in) :: self
+  type(soca_geom_iter),  intent( in) :: other  !< Other geometry iterator
+  integer,               intent(out) :: equals !< Equality flag
 
-  end subroutine soca_geom_iter_current
+  ! Initialization
+  equals = 0
 
-  ! ------------------------------------------------------------------------------
-  !> Update geometry iterator to next point
-  subroutine soca_geom_iter_next(self)
+  ! Check equality
+  if (associated(self%geom, other%geom) .and. (self%iind==other%iind) &
+      .and. (self%jind==other%jind)) equals = 1
 
-    ! Passed variables
-    type(soca_geom_iter), intent(inout) :: self !< Geometry iterator
-    integer :: iind, jind
+end subroutine soca_geom_iter_equals
 
-    iind = self%iind
-    jind = self%jind
 
-    ! do while ((iind.lt.self%geom%iec).and.(jind.lt.self%geom%jec))
+! ------------------------------------------------------------------------------
+!> Get geometry iterator current lat/lon
+!!
+!! \throws abor1_ftn aborts if iterator is out of bounds
+!! \relates soca_geom_iter_mod::soca_geom_iter
+subroutine soca_geom_iter_current(self, lon, lat)
+  class(soca_geom_iter), intent( in) :: self
+  real(kind_real),    intent(out) :: lat  !< Latitude
+  real(kind_real),    intent(out) :: lon  !< Longitude
 
-      ! increment by 1
-      if (iind.lt.self%geom%iec) then 
-        iind = iind + 1
-      elseif (iind.eq.self%geom%iec) then
-        iind = self%geom%isc
-        jind = jind + 1
-      end if
+  ! Check iind/jind
+  if (self%iind == -1 .AND. self%jind == -1) then
+    ! special case of {-1,-1} means end of the grid
+    lat = self%geom%lat(self%geom%iec,self%geom%jec)
+    lon = self%geom%lon(self%geom%iec,self%geom%jec)
+  elseif (self%iind < self%geom%isc .OR. self%iind > self%geom%iec .OR. &
+          self%jind < self%geom%jsc .OR. self%jind > self%geom%jec) then
+    ! outside of the grid
+    call abor1_ftn('soca_geom_iter_current: iterator out of bounds')
+  else
+    ! inside of the grid
+    lat = self%geom%lat(self%iind,self%jind)
+    lon = self%geom%lon(self%iind,self%jind)
+  endif
 
-     ! ! skip this point if it is on land
-     ! if (self%geom%mask2d(iind,jind).lt.1) then 
-     !   cycle
-     ! else
-     !   exit
-     ! endif
+end subroutine soca_geom_iter_current
 
-    ! end do
 
-    if (jind > self%geom%jec) then
-        iind=-1
-        jind=-1
+! ------------------------------------------------------------------------------
+!> Update geometry iterator to next point
+!!
+!! \todo skip over masked points
+!! \relates soca_geom_iter_mod::soca_geom_iter
+subroutine soca_geom_iter_next(self)
+  class(soca_geom_iter), intent(inout) :: self
+  integer :: iind, jind
+
+  iind = self%iind
+  jind = self%jind
+
+  ! do while ((iind.lt.self%geom%iec).and.(jind.lt.self%geom%jec))
+
+    ! increment by 1
+    if (iind.lt.self%geom%iec) then
+      iind = iind + 1
+    elseif (iind.eq.self%geom%iec) then
+      iind = self%geom%isc
+      jind = jind + 1
     end if
 
-    self%iind = iind
-    self%jind = jind
+    ! ! skip this point if it is on land
+    ! if (self%geom%mask2d(iind,jind).lt.1) then
+    !   cycle
+    ! else
+    !   exit
+    ! endif
 
-  end subroutine soca_geom_iter_next
-  ! ------------------------------------------------------------------------------
+  ! end do
+
+  if (jind > self%geom%jec) then
+      iind=-1
+      jind=-1
+  end if
+
+  self%iind = iind
+  self%jind = jind
+
+end subroutine soca_geom_iter_next
+! ------------------------------------------------------------------------------
 
 end module soca_geom_iter_mod

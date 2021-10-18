@@ -1,4 +1,4 @@
-# (C) Copyright 2017-2020 UCAR.
+# (C) Copyright 2017-2021 UCAR.
 #
 # This software is licensed under the terms of the Apache Licence Version 2.0
 # which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -46,7 +46,7 @@ add_subdirectory( test )
 add_subdirectory( tutorial )
 
 # Build Doxygen documentation
-add_subdirectory( Documents )
+add_subdirectory( docs )
 
 if(ECBUILD_INSTALL_FORTRAN_MODULES)
   install(DIRECTORY ${CMAKE_Fortran_MODULE_DIRECTORY}/${CMAKE_CFG_INTDIR} DESTINATION ${INSTALL_INCLUDE_DIR} )
