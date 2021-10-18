@@ -25,7 +25,7 @@ use soca_state_mod, only: soca_state
 implicit none
 private
 
-!> Fortran derived type to hold configuration data for the SOCA background/model covariance
+!> SOCA background/model covariance
 type, public :: soca_cov
    type(bump_type),     pointer :: conv(:)        !< convolution op from bump
    type(soca_state),    pointer :: bkg            !< Background field (or first guess)
@@ -177,7 +177,9 @@ subroutine soca_cov_C_mult(self, dx)
   type(bump_type), pointer :: conv
 
   do i = 1, self%vars%nvars()
-    if (.not. dx%has(self%vars%variable(i))) cycle ! why is this sometimes getting an "empty" list with "none" in it?
+    ! why is this sometimes getting an "empty" list with "none" in it?
+    if (.not. dx%has(self%vars%variable(i))) cycle
+
     call dx%get(trim(self%vars%variable(i)), field)
 
     ! a **TEMPORARY** special exception for hocn

@@ -40,7 +40,7 @@ contains
 
 ! ------------------------------------------------------------------------------
 !> C++ interface for soca_geom_mod::soca_geom::init()
-subroutine c_soca_geo_setup(c_key_self, c_conf, c_comm) bind(c,name='soca_geo_setup_f90')
+subroutine soca_geo_setup_c(c_key_self, c_conf, c_comm) bind(c,name='soca_geo_setup_f90')
   integer(c_int),  intent(inout) :: c_key_self
   type(c_ptr),        intent(in) :: c_conf
   type(c_ptr), value, intent(in) :: c_comm
@@ -52,13 +52,12 @@ subroutine c_soca_geo_setup(c_key_self, c_conf, c_comm) bind(c,name='soca_geo_se
   call soca_geom_registry%get(c_key_self,self)
 
   call self%init(fckit_configuration(c_conf), fckit_mpi_comm(c_comm) )
-
-end subroutine c_soca_geo_setup
+end subroutine soca_geo_setup_c
 
 
 ! --------------------------------------------------------------------------------------------------
 !> C++ interface for soca_geom_mod::soca_geom::set_atlas_lonlat()
-subroutine c_soca_geo_set_atlas_lonlat(c_key_self, c_afieldset)  bind(c,name='soca_geo_set_atlas_lonlat_f90')
+subroutine soca_geo_set_atlas_lonlat_c(c_key_self, c_afieldset)  bind(c,name='soca_geo_set_atlas_lonlat_f90')
   integer(c_int), intent(in) :: c_key_self
   type(c_ptr), intent(in), value :: c_afieldset
 
@@ -69,15 +68,13 @@ subroutine c_soca_geo_set_atlas_lonlat(c_key_self, c_afieldset)  bind(c,name='so
   afieldset = atlas_fieldset(c_afieldset)
 
   call self%set_atlas_lonlat(afieldset)
-
-end subroutine c_soca_geo_set_atlas_lonlat
+end subroutine soca_geo_set_atlas_lonlat_c
 
 
 ! --------------------------------------------------------------------------------------------------
 !> C++ interface to get atlas functionspace pointr from  soca_geom_mod::soca_geom
-subroutine c_soca_geo_set_atlas_functionspace_pointer(c_key_self,c_afunctionspace) &
- & bind(c,name='soca_geo_set_atlas_functionspace_pointer_f90')
-
+subroutine soca_geo_set_atlas_functionspace_pointer_c(c_key_self,c_afunctionspace) &
+  bind(c,name='soca_geo_set_atlas_functionspace_pointer_f90')
   integer(c_int), intent(in)     :: c_key_self
   type(c_ptr), intent(in), value :: c_afunctionspace
 
@@ -86,13 +83,12 @@ subroutine c_soca_geo_set_atlas_functionspace_pointer(c_key_self,c_afunctionspac
   call soca_geom_registry%get(c_key_self,self)
 
   self%afunctionspace = atlas_functionspace_pointcloud(c_afunctionspace)
-
-end subroutine c_soca_geo_set_atlas_functionspace_pointer
+end subroutine soca_geo_set_atlas_functionspace_pointer_c
 
 
 ! --------------------------------------------------------------------------------------------------
 !> C++ interface for soca_geom_mod::soca_geom::fill_atlas_fieldset()
-subroutine c_soca_geo_fill_atlas_fieldset(c_key_self, c_afieldset) &
+subroutine soca_geo_fill_atlas_fieldset_c(c_key_self, c_afieldset) &
  & bind(c,name='soca_geo_fill_atlas_fieldset_f90')
 
   integer(c_int),     intent(in) :: c_key_self
@@ -105,14 +101,12 @@ subroutine c_soca_geo_fill_atlas_fieldset(c_key_self, c_afieldset) &
   afieldset = atlas_fieldset(c_afieldset)
 
   call self%fill_atlas_fieldset(afieldset)
-
-end subroutine c_soca_geo_fill_atlas_fieldset
+end subroutine soca_geo_fill_atlas_fieldset_c
 
 
 ! ------------------------------------------------------------------------------
 !> C++ interface for soca_geom_mod::soca_geom::clone()
-subroutine c_soca_geo_clone(c_key_self, c_key_other) bind(c,name='soca_geo_clone_f90')
-
+subroutine soca_geo_clone_c(c_key_self, c_key_other) bind(c,name='soca_geo_clone_f90')
   integer(c_int), intent(inout) :: c_key_self
   integer(c_int), intent(in)    :: c_key_other
 
@@ -123,14 +117,12 @@ subroutine c_soca_geo_clone(c_key_self, c_key_other) bind(c,name='soca_geo_clone
   call soca_geom_registry%get(c_key_other, other )
 
   call self%clone(other)
-
-end subroutine c_soca_geo_clone
+end subroutine soca_geo_clone_c
 
 
 ! ------------------------------------------------------------------------------
 !> C++ interface for soca_geom_mod::soca_geom::gridgen()
-subroutine c_soca_geo_gridgen(c_key_self) bind(c,name='soca_geo_gridgen_f90')
-
+subroutine soca_geo_gridgen_c(c_key_self) bind(c,name='soca_geo_gridgen_f90')
   integer(c_int), intent(inout) :: c_key_self
 
   type(soca_geom), pointer :: self
@@ -138,14 +130,12 @@ subroutine c_soca_geo_gridgen(c_key_self) bind(c,name='soca_geo_gridgen_f90')
   call soca_geom_registry%get(c_key_self, self)
 
   call self%gridgen()
-
-end subroutine c_soca_geo_gridgen
+end subroutine soca_geo_gridgen_c
 
 
 ! ------------------------------------------------------------------------------
 !> C++ interface for soca_geom_mod::soca_geom::end()
-subroutine c_soca_geo_delete(c_key_self) bind(c,name='soca_geo_delete_f90')
-
+subroutine soca_geo_delete_c(c_key_self) bind(c,name='soca_geo_delete_f90')
   integer(c_int), intent(inout) :: c_key_self
 
   type(soca_geom), pointer :: self
@@ -153,14 +143,12 @@ subroutine c_soca_geo_delete(c_key_self) bind(c,name='soca_geo_delete_f90')
   call soca_geom_registry%get(c_key_self, self)
   call self%end()
   call soca_geom_registry%remove(c_key_self)
-
-end subroutine c_soca_geo_delete
+end subroutine soca_geo_delete_c
 
 
 ! ------------------------------------------------------------------------------
 !> C++ interface to return begin and end of local geometry in soca_geom
-subroutine c_soca_geo_start_end(c_key_self, ist, iend, jst, jend) bind(c, name='soca_geo_start_end_f90')
-
+subroutine soca_geo_start_end_c(c_key_self, ist, iend, jst, jend) bind(c, name='soca_geo_start_end_f90')
   integer(c_int), intent( in) :: c_key_self
   integer(c_int), intent(out) :: ist, iend, jst, jend
 
@@ -171,13 +159,12 @@ subroutine c_soca_geo_start_end(c_key_self, ist, iend, jst, jend) bind(c, name='
   iend = self%iec
   jst  = self%jsc
   jend = self%jec
-
-end subroutine c_soca_geo_start_end
+end subroutine soca_geo_start_end_c
 
 
 ! ------------------------------------------------------------------------------
 !> C++ interface to get number of levels for soca_geom
-subroutine c_soca_geo_get_num_levels(c_key_self, c_vars, c_levels_size, c_levels) &
+subroutine soca_geo_get_num_levels_c(c_key_self, c_vars, c_levels_size, c_levels) &
            bind(c, name='soca_geo_get_num_levels_f90')
   integer(c_int),     intent(in)  :: c_key_self
   type(c_ptr), value, intent(in)  :: c_vars
@@ -209,8 +196,7 @@ subroutine c_soca_geo_get_num_levels(c_key_self, c_vars, c_levels_size, c_levels
       call abor1_ftn('ERROR in c_soca_geo_get_num_levels, unknown "levels" '//field%levels)
     end select
   end do
-
-end subroutine c_soca_geo_get_num_levels
+end subroutine soca_geo_get_num_levels_c
 
 ! ------------------------------------------------------------------------------
 

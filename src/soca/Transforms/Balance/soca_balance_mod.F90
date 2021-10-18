@@ -75,7 +75,17 @@ subroutine soca_balance_setup(self, f_conf, traj, geom)
   integer :: isc, iec, jsc, jec
   integer :: isd, ied, jsd, jed
   integer :: i, j, k, nl
-  real(kind=soca_steric_jacobian
+  real(kind=kind_real), allocatable :: jac(:)
+  type(soca_field), pointer :: tocn, socn, hocn, cicen, mld, layer_depth
+
+  ! declarations related to the dynamic height Jacobians
+  character(len=:), allocatable :: filename, mask_name
+  real(kind=kind_real), allocatable :: jac_mask(:,:) !> mask for Jacobian
+  real(kind=kind_real) :: threshold
+  integer :: nlayers               !> dynamic height Jac=0 in nlayers upper layers
+  logical :: mask_detadt = .false. !> if true, set deta/dt to 0
+  logical :: mask_detads = .false. !> if true, set deta/ds to 0
+
   ! declarations related to the sea-ice Jacobian
   character(len=:), allocatable :: kct_name
   real(kind=kind_real), allocatable :: kct(:,:) !> dc/dT

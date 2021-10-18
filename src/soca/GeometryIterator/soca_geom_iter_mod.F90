@@ -105,7 +105,8 @@ subroutine soca_geom_iter_equals(self, other, equals)
   equals = 0
 
   ! Check equality
-  if (associated(self%geom, other%geom) .and. (self%iind==other%iind) .and. (self%jind==other%jind)) equals = 1
+  if (associated(self%geom, other%geom) .and. (self%iind==other%iind) &
+      .and. (self%jind==other%jind)) equals = 1
 
 end subroutine soca_geom_iter_equals
 
