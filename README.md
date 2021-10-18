@@ -3,11 +3,10 @@
 [![codecov](https://codecov.io/gh/JCSDA-internal/soca/branch/develop/graph/badge.svg?token=uFJ62a68D7)](https://codecov.io/gh/jcsda-internal/soca)
 JEDI encapsulation of MOM6
 
-(C) Copyright 2017-2020 UCAR.
+(C) Copyright 2017-2021 UCAR.
 
 This software is licensed under the terms of the Apache Licence Version 2.0 which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
 
-See the [soca ReadTheDocs](https://jointcenterforsatellitedataassimilation-soca.readthedocs-hosted.com/en/latest/?badge=latest) page for more documentation.
 
 ## Building
 
@@ -42,5 +41,8 @@ cd ..
 ./repo.src/soca/.github/travisci/prep.sh
  ./repo.src/soca/.github/travisci/build.sh
 ```
+
+To generate doxygen documentation for the Fortran parts of the code, use the `-DENABLE_SOCA_DOC=ON` flag when running `ecbuild`. Documentation will be generated
+in the `soca/docs/html` path of the build directory.
 
 See the [JEDI Documentation](https://jointcenterforsatellitedataassimilation-jedi-docs.readthedocs-hosted.com/en/latest/) for additional details on how to setup, build, and test JEDI projects.

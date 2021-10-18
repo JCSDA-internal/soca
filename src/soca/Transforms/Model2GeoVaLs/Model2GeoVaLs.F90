@@ -1,28 +1,38 @@
-! (C) Copyright 2020-2020 UCAR
+! (C) Copyright 2020-2021 UCAR
 !
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
 
-module soca_model2geovals_mod
+!> C++ interface for converting model variables to geovals (mostly identity function)
+module soca_model2geovals_mod_c
 
 use iso_c_binding
 use kinds, only: kind_real
-use soca_fields_metadata_mod
-use soca_fields_mod
-use soca_geom_mod
+
+! soca modules
+use soca_fields_mod, only: soca_field
 use soca_geom_mod_c, only: soca_geom_registry
-use soca_increment_mod
-use soca_increment_reg
-use soca_state_mod
-use soca_state_reg
+use soca_geom_mod, only: soca_geom
+use soca_increment_mod, only: soca_increment
+use soca_increment_reg, only: soca_increment_registry
+use soca_state_mod, only: soca_state
+use soca_state_reg, only: soca_state_registry
 
 implicit none
 private
 
-contains
 
 !-------------------------------------------------------------------------------
+contains
+!-------------------------------------------------------------------------------
 
+
+!-------------------------------------------------------------------------------
+!> C++ interface for linear change of variables from model to geovals
+!!
+!! Only the identity operator is needed for the linear variables
+!! \throws abor1_ftn aborts if the field name cannot be in the "getval_name*"
+!! section of the variable metadata
 subroutine soca_model2geovals_linear_changevar_f90(c_key_geom, c_key_dxin, c_key_dxout) &
   bind(c,name='soca_model2geovals_linear_changevar_f90')
   integer(c_int), intent(in) :: c_key_geom, c_key_dxin, c_key_dxout
@@ -52,8 +62,13 @@ subroutine soca_model2geovals_linear_changevar_f90(c_key_geom, c_key_dxin, c_key
   end do
 end subroutine
 
-!-------------------------------------------------------------------------------
 
+!-------------------------------------------------------------------------------
+!> C++ interface for linear change of variables from geovals to model
+!!
+!! Only the identity operator is need for the linear variables.
+!! \throws abor1_ftn aborts if the field name cannot be in the "getval_name*"
+!! section of the variable metadata
 subroutine soca_model2geovals_linear_changevarAD_f90(c_key_geom, c_key_dxin, c_key_dxout) &
   bind(c,name='soca_model2geovals_linear_changevarAD_f90')
   integer(c_int), intent(in) :: c_key_geom, c_key_dxin, c_key_dxout
@@ -83,8 +98,13 @@ subroutine soca_model2geovals_linear_changevarAD_f90(c_key_geom, c_key_dxin, c_k
   end do
 end subroutine
 
-!-------------------------------------------------------------------------------
 
+!-------------------------------------------------------------------------------
+!> C++ interface for the non-linear change of variables from model to geovals
+!!
+!! This is *mostly* an identity operator, except for a small number of derived variables
+!! that are to be calculated here ("distance_from_coast", "sea_area_fraction", etc.)
+!! \throws abor1_ftn aborts if field name is not handled.
 subroutine soca_model2geovals_changevar_f90(c_key_geom, c_key_xin, c_key_xout) &
   bind(c,name='soca_model2geovals_changevar_f90')
   integer(c_int), intent(in) :: c_key_geom, c_key_xin, c_key_xout
