@@ -15,8 +15,8 @@
 
 int main(int argc,  char ** argv) {
   oops::Run run(argc, argv);
-  ufo::instantiateObsErrorFactory();
-  ufo::instantiateObsFilterFactory();
+  ufo::instantiateObsErrorFactory<ufo::ObsTraits>();
+  ufo::instantiateObsFilterFactory<ufo::ObsTraits>();
   oops::HofX3D<soca::Traits, ufo::ObsTraits> hofx;
   return run.execute(hofx);
 }

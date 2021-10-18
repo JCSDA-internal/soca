@@ -23,8 +23,8 @@
 int main(int argc,  char ** argv) {
   oops::Run run(argc, argv);
   oops::instantiateModelFactory<soca::Traits>();
-  ufo::instantiateObsErrorFactory();
-  ufo::instantiateObsFilterFactory();
+  ufo::instantiateObsErrorFactory<ufo::ObsTraits>();
+  ufo::instantiateObsFilterFactory<ufo::ObsTraits>();
   saber::instantiateLocalizationFactory<soca::Traits>();
   saber::instantiateCovarFactory<soca::Traits>();
   oops::Variational<soca::Traits, ufo::ObsTraits> var;
