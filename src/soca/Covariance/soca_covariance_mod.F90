@@ -5,32 +5,28 @@
 
 !> Structure holding configuration variables for the 3d error
 !! covariance matrices of the SOCA analysis.
-
 module soca_covariance_mod
 
 use atlas_module, only: atlas_fieldset, atlas_field, atlas_real, atlas_integer, atlas_functionspace
-use, intrinsic :: iso_c_binding, only : c_char
 use fckit_configuration_module, only: fckit_configuration
-use fckit_log_module
-use random_mod, only: normal_distribution
-use oops_variables_mod
-use type_bump, only: bump_type
-use tools_func, only: gau2gc
+use fckit_log_module, only: fckit_log
 use kinds, only: kind_real
-use soca_fields_mod
-use soca_increment_mod
-use soca_state_mod
+use oops_variables_mod, only: oops_variables
+use random_mod, only: normal_distribution
+use tools_func, only: gau2gc
+use type_bump, only: bump_type
 
+! soca modules
+use soca_fields_mod, only: soca_field
 use soca_geom_mod, only : soca_geom
+use soca_increment_mod, only: soca_increment
+use soca_state_mod, only: soca_state
 
 implicit none
-
 private
-public :: soca_cov, soca_cov_setup, soca_cov_delete, &
-          soca_cov_C_mult, soca_cov_sqrt_C_mult
 
 !> Fortran derived type to hold configuration data for the SOCA background/model covariance
-type :: soca_cov
+type, public :: soca_cov
    type(bump_type),     pointer :: conv(:)        !< convolution op from bump
    type(soca_state),    pointer :: bkg            !< Background field (or first guess)
    type(oops_variables)         :: vars           !< Apply B to vars
@@ -38,24 +34,36 @@ type :: soca_cov
    real(kind=kind_real), allocatable :: pert_scale(:) !< index matches "vars"
    type(oops_variables), allocatable :: conv_vars(:)  !< index mathces "conv"
 
- contains
-   procedure :: setup => soca_cov_setup
-   procedure :: delete => soca_cov_delete
-   procedure :: mult => soca_cov_C_mult
-   procedure :: sqrt_C_mult => soca_cov_sqrt_C_mult
-   procedure :: getConv => soca_cov_get_conv
+contains
+  !> \copybrief soca_cov_setup \see soca_cov_setup
+  procedure :: setup => soca_cov_setup
+
+  !> \copybrief soca_cov_delete \see soca_cov_delete
+  procedure :: delete => soca_cov_delete
+
+  !> \copybrief soca_cov_c_mult \see soca_cov_c_mult
+  procedure :: mult => soca_cov_C_mult
+
+  !> \copybrief soca_cov_sqrt_c_mult \see soca_cov_sqrt_c_mult
+  procedure :: sqrt_C_mult => soca_cov_sqrt_C_mult
+
+  !> \copybrief soca_cov_get_conv \see soca_cov_get_conv
+  procedure :: getConv => soca_cov_get_conv
 end type soca_cov
+
 
 ! ------------------------------------------------------------------------------
 contains
 ! ------------------------------------------------------------------------------
 
-!> Setup for the SOCA model's 3d error covariance matrices (B and Q_i)
 
-!> This routine queries the configuration for the parameters that define the
+! ------------------------------------------------------------------------------
+!> Setup for the SOCA model's 3d error covariance matrices (B and Q_i)
+!!
+!! This routine queries the configuration for the parameters that define the
 !! covariance matrix, and stores the relevant values in the
 !! error covariance structure.
-
+!! \relates soca_covariance_mod::soca_cov
 subroutine soca_cov_setup(self, f_conf, geom, bkg, vars)
   class(soca_cov),        intent(inout) :: self   !< The covariance structure
   type(fckit_configuration), intent(in) :: f_conf !< The configuration
@@ -108,10 +116,11 @@ subroutine soca_cov_setup(self, f_conf, geom, bkg, vars)
 
 end subroutine soca_cov_setup
 
+
 ! ------------------------------------------------------------------------------
-
 !> Delete for the SOCA model's 3d error covariance matrices
-
+!!
+!! \relates soca_covariance_mod::soca_cov
 subroutine soca_cov_delete(self)
   class(soca_cov), intent(inout) :: self       !< The covariance structure
 
@@ -122,12 +131,16 @@ subroutine soca_cov_delete(self)
 
 end subroutine soca_cov_delete
 
-! ------------------------------------------------------------------------------
 
+! ------------------------------------------------------------------------------
+!> Get the convolution operator needed for a specific field
+!!
+!! \throws abor1_ftn aborts if trying to use a field not on the tracer grid
+!! \relates soca_covariance_mod::soca_cov
 subroutine soca_cov_get_conv(self, field, conv)
   class(soca_cov),        intent(inout) :: self
-  type(soca_field), pointer, intent(in) :: field
-  type(bump_type), pointer, intent(out) :: conv
+  type(soca_field), pointer, intent(in) :: field !< The field that will be convolved
+  type(bump_type), pointer, intent(out) :: conv !< pointer to resulting convolution
 
   integer :: j,k
 
@@ -151,12 +164,14 @@ subroutine soca_cov_get_conv(self, field, conv)
   end if
 end subroutine
 
-! ------------------------------------------------------------------------------
 
+! ------------------------------------------------------------------------------
+!> Apply convolution to an increment
+!!
+!! \relates soca_covariance_mod::soca_cov
 subroutine soca_cov_C_mult(self, dx)
   class(soca_cov),      intent(inout) :: self !< The covariance structure
-  type(soca_increment), intent(inout) :: dx   !< Input: Increment
-                                          !< Output: C dx
+  type(soca_increment), intent(inout) :: dx   !< Input: Increment, Output: C dx
   integer :: i, z
   type(soca_field), pointer :: field
   type(bump_type), pointer :: conv
@@ -178,12 +193,15 @@ subroutine soca_cov_C_mult(self, dx)
   end do
 end subroutine soca_cov_C_mult
 
-! ------------------------------------------------------------------------------
 
+! ------------------------------------------------------------------------------
+!> Apply the square root of C to an increment
+!!
+!! \throws abor1_ftn aborts if no pertubation scales are given
+!! \relates soca_covariance_mod::soca_cov
 subroutine soca_cov_sqrt_C_mult(self, dx)
   class(soca_cov),      intent(inout) :: self !< The covariance structure
-  type(soca_increment), intent(inout) :: dx   !< Input: Increment
-                                          !< Output: C^1/2 dx
+  type(soca_increment), intent(inout) :: dx   !< Input: Increment, Output: C^1/2 dx
   integer :: i, z, j
   type(soca_field), pointer :: field
   real(kind=kind_real) :: scale
@@ -216,8 +234,18 @@ subroutine soca_cov_sqrt_C_mult(self, dx)
   end do
 end subroutine soca_cov_sqrt_C_mult
 
-! ------------------------------------------------------------------------------
 
+! ------------------------------------------------------------------------------
+!> Setup bump for horizontal convolution, Using rossby radiusbased correlation lengths
+!!
+!! Used by soca_cov::setup()
+!!
+!! Correlation lengths are calculated as follows :
+!! 1) rh = "base value" + rossby_radius * "rossby mult"
+!! 2) minimum value of "min grid mult" * grid_size is imposed
+!! 3) min/max are imposed based on "min value" and "max value"
+!! 4) converted from a gaussian sigma to Gaspari-Cohn cutoff distance
+!! \relates soca_covariance_mod::soca_cov
 subroutine soca_bump_correlation(self, horiz_convol, geom, f_conf_bump, f_conf_domain, domain)
   class(soca_cov),        intent(inout) :: self   !< The covariance structure
   type(bump_type),        intent(inout) :: horiz_convol
@@ -326,8 +354,12 @@ subroutine soca_bump_correlation(self, horiz_convol, geom, f_conf_bump, f_conf_d
 
 end subroutine soca_bump_correlation
 
-! ------------------------------------------------------------------------------
 
+! ------------------------------------------------------------------------------
+!> Apply bump 2D convolution
+!!
+!! Used by soca_cov::mult()
+!! \relates soca_covariance_mod::soca_cov
 subroutine soca_2d_convol(dx, horiz_convol, geom)
   real(kind=kind_real), intent(inout) :: dx(:,:)
   type(bump_type),      intent(inout) :: horiz_convol
@@ -349,8 +381,12 @@ subroutine soca_2d_convol(dx, horiz_convol, geom)
 
 end subroutine soca_2d_convol
 
-! ------------------------------------------------------------------------------
 
+! ------------------------------------------------------------------------------
+!> Apply bump square root of C
+!!
+!! used by soca_cov::sqrt_C_mult()
+!! \relates soca_covariance_mod::soca_cov
 subroutine soca_2d_sqrt_convol(dx, horiz_convol, geom, pert_scale)
   real(kind=kind_real), intent(inout) :: dx(:,:)
   type(bump_type),      intent(inout) :: horiz_convol

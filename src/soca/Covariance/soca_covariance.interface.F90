@@ -3,32 +3,32 @@
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
 
+!> C++ interfaces for soca_covariance_mod::soca_cov
 module soca_covariance_mod_c
 
-use iso_c_binding
 use fckit_configuration_module, only: fckit_configuration
-use oops_variables_mod
-use soca_geom_mod, only : soca_geom
+use iso_c_binding
+use oops_variables_mod, only: oops_variables
+
+! soca modules
+use soca_covariance_mod, only: soca_cov
 use soca_geom_mod_c, only : soca_geom_registry
-use soca_increment_mod
-use soca_increment_reg
-use soca_state_mod
-use soca_state_reg
-use soca_covariance_mod, only: soca_cov, soca_cov_setup, soca_cov_delete, &
-                               soca_cov_C_mult, soca_cov_sqrt_C_mult
+use soca_geom_mod, only : soca_geom
+use soca_increment_mod, only : soca_increment
+use soca_increment_reg, only : soca_increment_registry
+use soca_state_mod, only : soca_state
+use soca_state_reg, only : soca_state_registry
 
 implicit none
-
 private
-public :: soca_cov_registry
 
 #define LISTED_TYPE soca_cov
 
 !> Linked list interface - defines registry_t type
 #include "oops/util/linkedList_i.f"
 
-!> Global registry
-type(registry_t) :: soca_cov_registry
+!> Global registry for soca_cov
+type(registry_t), public :: soca_cov_registry
 
 ! ------------------------------------------------------------------------------
 contains
@@ -37,9 +37,11 @@ contains
 #include "oops/util/linkedList_c.f"
 ! ------------------------------------------------------------------------------
 
-! ------------------------------------------------------------------------------
-!> Setup for the SOCA model's background error covariance matrix
 
+! ------------------------------------------------------------------------------
+!> C++ interface for soca_covariance_mod::soca_cov::setup()
+!!
+!! Setup for the SOCA model's background error covariance matrix
 subroutine c_soca_b_setup(c_key_self, c_conf, c_key_geom, c_key_bkg, c_vars) &
      & bind (c,name='soca_b_setup_f90')
   integer(c_int), intent(inout) :: c_key_self   !< The background covariance structure
@@ -59,28 +61,31 @@ subroutine c_soca_b_setup(c_key_self, c_conf, c_key_geom, c_key_bkg, c_vars) &
   call soca_cov_registry%get(c_key_self, self)
   call soca_state_registry%get(c_key_bkg,bkg)
   vars = oops_variables(c_vars)
-  call soca_cov_setup(self, fckit_configuration(c_conf), geom, bkg, vars)
+  call self%setup(fckit_configuration(c_conf), geom, bkg, vars)
 
 end subroutine c_soca_b_setup
 
-! ------------------------------------------------------------------------------
-!> Delete for the SOCA model's background error covariance matrix
 
+! ------------------------------------------------------------------------------
+!> C++ interface for soca_covariance_mod::soca_cov::delete()
+!!
+!! Delete for the SOCA model's background error covariance matrix
 subroutine c_soca_b_delete(c_key_self) bind (c,name='soca_b_delete_f90')
   integer(c_int), intent(inout) :: c_key_self  !< The background covariance structure
 
   type(soca_cov),       pointer :: self
 
   call soca_cov_registry%get(c_key_self,self)
-  call soca_cov_delete(self)
+  call self%delete()
   call soca_cov_registry%remove(c_key_self)
 
 end subroutine c_soca_b_delete
 
+
 ! ------------------------------------------------------------------------------
-
-!> Multiply by covariance
-
+!> C++ interface for soca_covariance_mod::soca_cov::mult()
+!!
+!!
 subroutine c_soca_b_mult(c_key_self, c_key_in, c_key_out) bind(c,name='soca_b_mult_f90')
   integer(c_int), intent(inout) :: c_key_self  !< The background covariance structure
   integer(c_int), intent(in)    :: c_key_in    !<    "   to Increment in
@@ -95,15 +100,15 @@ subroutine c_soca_b_mult(c_key_self, c_key_in, c_key_out) bind(c,name='soca_b_mu
   call soca_increment_registry%get(c_key_out, xout)
 
   call xout%copy(xin)              !< xout = xin
-  call soca_cov_C_mult(self, xout) !< xout = C.xout
+  call self%mult(xout) !< xout = C.xout
 
 end subroutine c_soca_b_mult
 
 
 ! ------------------------------------------------------------------------------
-
-!> Generate randomized C^1/2 x increment
-
+!> C++ interface for soca_covariance_mod::soca_cov::sqrt_c_mult()
+!!
+!! Generate randomized C^1/2 x increment
 subroutine c_soca_b_randomize(c_key_self, c_key_out) bind(c,name='soca_b_randomize_f90')
   integer(c_int), intent(in) :: c_key_self  !< covar config structure
   integer(c_int), intent(in) :: c_key_out   !< Randomized increment
@@ -115,7 +120,7 @@ subroutine c_soca_b_randomize(c_key_self, c_key_out) bind(c,name='soca_b_randomi
   call soca_increment_registry%get(c_key_out, xout)
 
   ! Randomize increment
-  call soca_cov_sqrt_C_mult(self, xout) !< xout = C^1/2.xout
+  call self%sqrt_C_mult(xout) !< xout = C^1/2.xout
 
 end subroutine c_soca_b_randomize
 
