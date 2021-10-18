@@ -93,9 +93,9 @@ do
 done # cycle
 
 echo "*****************************************************"
-echo "Diagnosis of the 3DVAR FGAT"
+echo "Diagnosis for 3DVAR FGAT"
 echo "*****************************************************"
 # Global Mean absolute error statistics of obs-background
 # the below script will output png figures inside of the `scratch` directory.
-python -W ignore ../tutorial_plot.py
-printf "Figures of global mean absolute O-B : \n `ls *.png`\n"
+python -W ignore ../tutorial_plot.py '3dvarfgat'
+printf "Figures : \n `ls *.png`\n"

@@ -31,6 +31,6 @@ background error:
   - name: ocn
     base value: 300.0e3
     rossby mult: 1.0
-    min grid mult: 1.0
+    min grid mult: 2.0
     min value: 200.0e3
     variables: [tocn, socn, ssh]

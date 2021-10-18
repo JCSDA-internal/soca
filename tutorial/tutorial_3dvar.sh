@@ -31,3 +31,7 @@ mkdir -p obs_out
 
 # 3DVAR
 OMP_NUM_THREADS=1 mpirun ../bin/soca_var.x ../config/3dvar.yaml
+
+# Plot some diagnostics
+python -W ignore ../tutorial_plot.py '3dvar'
+printf "Figures : \n `ls *.png`\n"

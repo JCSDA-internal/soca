@@ -29,4 +29,4 @@ mkdir -p bump
 OMP_NUM_THREADS=1 mpirun ../bin/soca_staticbinit.x ../config/staticb.yaml
 
 # Move bump initialization files
-mv ./bump ../static/
+cp -r ./bump ../static/

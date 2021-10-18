@@ -3,7 +3,7 @@ _: &land_mask
   filter: Domain Check
   where:
   - variable: {name: sea_area_fraction@GeoVaLs}
-    minvalue: 0.5
+    minvalue: 0.99
 
 cost function:
   cost type: 3D-Var
@@ -24,7 +24,7 @@ cost function:
   background error:
     covariance model: SocaError
     analysis variables: [socn, tocn, ssh]
-    date: 2018-04-19T00:00:00Z
+    date: *bkg_date
     bump:
       verbosity: main
       datadir: ./bump
@@ -148,7 +148,7 @@ variational:
   - geometry:
       mom6_input_nml: ./inputnml/input.nml
       fields metadata: ./fields_metadata.yml
-    ninner: 50
+    ninner: 150
     gradient norm reduction: 1e-15
     test: on
     diagnostics:
