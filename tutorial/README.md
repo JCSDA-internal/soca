@@ -62,7 +62,7 @@ need to be run in sequence as follows:
 `soca` applications.
 
 `tutorial_bump_op` initializes a correlation operator using the NICAS method
-in the BUMP package of the SABER repository.
+in the BUMP package of the SABER repository. One file for each number of processors on the machine will be generated at `./static/bump/`
 
 `tutorial_perturb_ic` randomizes the B-matric defined in the `yaml` configuration
 files `./config/staticb.yaml` and `pert_ic.yaml`. It generates a single
