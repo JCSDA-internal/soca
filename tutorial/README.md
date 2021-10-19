@@ -90,7 +90,7 @@ To run the 3DVAR example, execute the `tutorial_3dvar.sh` script:
 ```
 this script perform a 3D variational minimization using the `soca_var.x`
 executable for a 24 hour window using the observations generated above.
-The executable takes `config/3dvar.yaml` yaml configuration file as
+The executable takes `config/3dvar.yaml` yaml configuration file as an
 argument.
 A few figures of surface increments are plotted at the end of the script after
 the 3DVAR step is done. The figures are `./scratch_3dvar/incr.ssh.png`,
