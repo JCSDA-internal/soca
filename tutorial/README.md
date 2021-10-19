@@ -110,8 +110,8 @@ absolute dynamic topography.
 ```
 
 Similarly to the `3DVAR` example, figures of surface increments for outer iterations 1 and 2
-can be found in `./scratch_3dvar/incr.[1-2].ssh.png`,
-`./scratch_3dvar/incr.[1-2].sss.png` and `./scratch_3dvar/incr.[1-2].sst.png`.
+can be found in `./scratch_3dvarfgat/incr.[1-2].ssh.png`,
+`./scratch_3dvarfgat/incr.[1-2].sss.png` and `./scratch_3dvarfgat/incr.[1-2].sst.png`.
 
 Statistics of global mean absolute error of each observation space assimilated can be found
-in `./scratch_3dvar/*global_mae.png`.
+in `./scratch_3dvarfgat/*global_mae.png`.
