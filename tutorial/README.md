@@ -58,7 +58,7 @@ need to be run in sequence as follows:
 ```
 
 `tutorial_gridgen.sh` will create a file `soca_gridspec.nc` under
-`<path to build>/soca/tutorial/static/` that will be needed by all the other
+`./static/` that will be needed by all the other
 `soca` applications.
 
 `tutorial_bump_op` initializes a correlation operator using the NICAS method
