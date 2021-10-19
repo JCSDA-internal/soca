@@ -52,7 +52,7 @@ for repo in $LIB_REPOS; do
             -DCMAKE_CXX_COMPILER_LAUNCHER=$CCACHE -DBUILD_TESTING=OFF $build_opt
 
     # build and install
-    time make -j4
+    time make -j2
     time make install
 
     # save version info for next time
