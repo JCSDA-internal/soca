@@ -84,7 +84,7 @@ fi
 
 time ecbuild $src_dir -DCMAKE_CXX_COMPILER_LAUNCHER=$CCACHE \
        -DCMAKE_BUILD_TYPE=${MAIN_BUILD_TYPE} $build_opt
-time make -j4
+time make -j2
 
 
 # how useful was ccache?
