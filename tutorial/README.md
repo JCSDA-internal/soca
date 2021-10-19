@@ -66,7 +66,7 @@ in the BUMP package of the SABER repository. One file for each number of process
 
 `tutorial_perturb_ic` randomizes the B-matric defined in the `yaml` configuration
 files `./config/staticb.yaml` and `pert_ic.yaml`. It generates a single
-perturbed state and saves it as a `MOM6` restart file.  
+perturbed state and saves it as a `MOM6` restart file at `./bkg_pert/MOM.res.nc`.  
 
 `tutorial_make_observations.sh` generates synthetic observations by driving the
 `MOM6-solo` model using the `soca_hofx.x` executable. `ioda` observation files are
