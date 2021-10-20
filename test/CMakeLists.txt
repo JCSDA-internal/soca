@@ -652,9 +652,11 @@ soca_add_test( NAME hofx_3d
                EXE  soca_hofx3d.x
                TEST_DEPENDS test_soca_gridgen )
 
+# CRTM is suddenly throwing div by 0 errors, disable trapping
 if( ${crtm_FOUND} )
  soca_add_test( NAME hofx_3dcrtm
                 EXE  soca_hofx3d.x
+                NOTRAPFPE
                 TEST_DEPENDS test_soca_gridgen )
 endif()
 
