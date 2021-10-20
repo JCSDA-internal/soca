@@ -52,7 +52,7 @@ for repo in $LIB_REPOS; do
             -DCMAKE_CXX_COMPILER_LAUNCHER=$CCACHE -DBUILD_TESTING=OFF $build_opt
 
     # build and install
-    time make -j4
+    time make -j2
     time make install
 
     # save version info for next time
@@ -84,7 +84,7 @@ fi
 
 time ecbuild $src_dir -DCMAKE_CXX_COMPILER_LAUNCHER=$CCACHE \
        -DCMAKE_BUILD_TYPE=${MAIN_BUILD_TYPE} $build_opt
-time make -j4
+time make -j2
 
 
 # how useful was ccache?
