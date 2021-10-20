@@ -64,6 +64,21 @@ eckit::geometry::Point2 GeometryIterator::operator*() const {
 
 // -----------------------------------------------------------------------------
 
+double GeometryIterator::getArea() const {
+  double val;
+  soca_geom_iter_get_area_f90(keyIter_, val);
+  return val;
+}
+
+// -----------------------------------------------------------------------------
+
+double GeometryIterator::getRossbyRadius() const {
+  double val;
+  soca_geom_iter_get_rossby_f90(keyIter_, val);
+  return val;
+}
+// -----------------------------------------------------------------------------
+
 GeometryIterator& GeometryIterator::operator++() {
   soca_geom_iter_next_f90(keyIter_);
   return *this;

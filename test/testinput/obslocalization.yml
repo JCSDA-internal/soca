@@ -7,19 +7,19 @@ window end: 2018-04-16T00:00:00Z
 
 observations:
 - obs space:
-    name: 'SOAR'
+    name: 'BoxCar'
     distribution: InefficientDistribution
     simulated variables: ['sea_surface_temperature']
     obsdatain:  {obsfile: ./Data/sst.nc}
   obs localization:
     lengthscale: 3000e3
-    soar horizontal decay: 0.000005
-    localization method: SOAR #Gaspari-Cohn #SOAR
+    localization method: Box car
     reference gridpoints:
       lons: [-172.5, -192.5, -172.5, -17.5]
       lats: [  42.5,    2.5,    2.5,  22.5]
     reference local nobs: [12, 17, 21, 19]
-    reference rms: [0.188352,0.111358,0.0157477,0.0463056]
+    reference rms: [1.0, 1.0, 1.0, 1.0]
+
 - obs space:
     name: 'GC99'
     distribution: InefficientDistribution
@@ -34,17 +34,37 @@ observations:
       lats: [  42.5,    2.5,    2.5,  22.5]
     reference local nobs: [12, 17, 21, 19]
     reference rms: [0.396372,0.276644,0.202674,0.364655]
+
 - obs space:
-    name: 'BoxCar'
+    name: 'SOAR'
     distribution: InefficientDistribution
     simulated variables: ['sea_surface_temperature']
     obsdatain:  {obsfile: ./Data/sst.nc}
   obs localization:
     lengthscale: 3000e3
-    localization method: Box car
+    soar horizontal decay: 0.000005
+    localization method: SOAR #Gaspari-Cohn #SOAR
     reference gridpoints:
       lons: [-172.5, -192.5, -172.5, -17.5]
       lats: [  42.5,    2.5,    2.5,  22.5]
     reference local nobs: [12, 17, 21, 19]
-    reference rms: [1.0, 1.0, 1.0, 1.0]
+    reference rms: [0.188352,0.111358,0.0157477,0.0463056]
 
+- obs space:
+    name: 'Rossby'
+    distribution: InefficientDistribution
+    simulated variables: ['sea_surface_temperature']
+    obsdatain:  {obsfile: ./Data/sst.nc}
+  obs localization:
+    localization method: Rossby
+    search method: kd_tree
+    base value: 500.0e3
+    rossby mult: 2.0
+    min grid mult: 1.0
+    min value: 200.0e3
+    max value: 3000.0e3
+    reference gridpoints:
+      lons: [-172.5, -192.5, -172.5, -17.5]
+      lats: [  42.5,    2.5 ,   2.5,  22.5]
+    reference local nobs: [4, 30, 35, 12]
+    reference rms: [0.580752, 0.238661, 0.216293, 0.246831]
