@@ -154,7 +154,7 @@ if __name__ == '__main__':
                     cycle_date = 'Initialized  \n'+cdate.strftime('%Y-%m-%d %H')
                     obs.mae(ax, cdate, colors[iter-1])
 
-            ax.legend([ax.lines[0], ax.lines[len(cycles)]],['Background', 'Analysis'])
+            ax.legend([ax.lines[0], ax.lines[len(cycles)]],['outer iteration 1', 'outer iteration 2'])
             plt.title(obs_spaces[k].ioname, fontweight='bold')
             plt.xlabel('DA cycles', fontweight='bold')
             plt.ylabel('<|O-B|> '+obs_spaces[k].units, fontweight='bold')

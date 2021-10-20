@@ -135,7 +135,7 @@ EOF
 #     "day Month year hh:mm:ss"
 #     example: "17 April 2018 00:00:00"
 # OUTPUTS:
-#   - checkpoint.yaml valid for day Month year hh:mm:ss
+#   - forecast.yaml valid for day Month year hh:mm:ss
 #######################################
 function forecast_yaml() {
     date_begin=$1
@@ -178,7 +178,7 @@ EOF
 #     example: "17 April 2018 00:00:00"
 #   - out of core outer iteration number
 # OUTPUTS:
-#   - checkpoint.yaml valid for day Month year hh:mm:ss
+#   - 3dvarfgat.yaml valid for day Month year hh:mm:ss
 #######################################
 function 3dvarfgat_yaml() {
     date_begin=$1 # example: 2018-04-15T00:00:00Z
