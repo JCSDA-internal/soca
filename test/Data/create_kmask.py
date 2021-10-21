@@ -9,7 +9,7 @@ ncf.close()
 dcdt=-0.01*np.ones((35,72))*aice_mask
 
 # Convert the dirac output into a mask for the dynamic height balance
-ncf=netCDF4.Dataset("./Data/ocn.balance_mask.an.2018-04-15T00:00:00Z.nc",'r')
+ncf=netCDF4.Dataset("./Data/ocn.balance_mask_SocaError.an.2018-04-15T00:00:00Z.nc",'r')
 kmask=ncf.variables['ave_ssh'][:]
 ncf.close()
 kmask[kmask<0.0]=0.0
