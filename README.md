@@ -1,7 +1,4 @@
-[![Build Status](https://travis-ci.com/JCSDA-internal/soca.svg?branch=develop)](https://travis-ci.com/JCSDA-internal/soca)
-[![Documentation Status](https://readthedocs.com/projects/jointcenterforsatellitedataassimilation-soca/badge/?version=develop)](https://jointcenterforsatellitedataassimilation-soca.readthedocs-hosted.com/en/develop/?badge=develop)
-[![codecov](https://codecov.io/gh/JCSDA-internal/soca/branch/develop/graph/badge.svg?token=uFJ62a68D7)](https://codecov.io/gh/jcsda-internal/soca)
-JEDI encapsulation of MOM6
+# JEDI encapsulation of MOM6
 
 (C) Copyright 2017-2021 UCAR.
 
@@ -9,10 +6,9 @@ This software is licensed under the terms of the Apache Licence Version 2.0 whic
 
 
 ## Building
-
-1. If building as part of the larger SOCA coupled system, see the [soca-bundle](https://github.com/JCSDA/soca-bundle)
-
-2. If building the MOM6 SOCA component: unlike other JEDI projects, this project contains its own bundle, it can be built as follows
+For more details about JEDI, including installation see: https://jointcenterforsatellitedataassimilation-jedi-docs.readthedocs-hosted.com/
+ 
+1. If building the MOM6 SOCA component: unlike other JEDI projects, this project contains its own bundle, it can be built as follows
 ```
 git clone https://github.com/JCSDA/soca.git
 mkdir -p soca_build
@@ -22,7 +18,7 @@ cd soca
 make -j 4
 ```
 
-3. If building the same way travis-ci builds the MOM6 SOCA bundle:
+2. If building the same way travis-ci builds the MOM6 SOCA bundle:
 ```
 export MAIN_REPO=soca
 export LIB_REPOS="jedicmake fms gsw mom6 crtm oops saber ioda ufo"
