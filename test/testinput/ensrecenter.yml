@@ -2,17 +2,15 @@ geometry:
   mom6_input_nml: ./inputnml/input.nml
   fields metadata: ./fields_metadata.yml
 
-_file: &_file
+recenter variables:  &soca_vars [cicen, hicen, socn, tocn, ssh, hocn]
+
+center:
+  <<: &_file
   read_from_file: 1
   date: &date_bkg 2018-04-15T00:00:00Z
   basename: ./Data/
   remap_filename: ./INPUT/MOM.res.nc
-  state variables:  &soca_vars [cicen, hicen, socn, tocn, ssh, hocn]
-
-recenter variables:  *soca_vars
-
-center:
-  <<: *_file
+  state variables:  *soca_vars
   ocn_filename: ../INPUT/MOM.res.nc
   ice_filename: ../INPUT/cice.res.nc
 

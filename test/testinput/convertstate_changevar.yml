@@ -1,5 +1,3 @@
-inputVariables:
-  variables: &soca_vars [ssh, tocn, socn, uocn, vocn, hocn, cicen, chl, layer_depth]
 input geometry:
   geom_grid_file: soca_gridspec.nc
   mom6_input_nml: ./inputnml/input.nml
@@ -17,7 +15,7 @@ variable changes:
       v: [vocn]
     log:
       var: [socn, chl]
-    output variables: *soca_vars
+    output variables: &soca_vars [ssh, tocn, socn, uocn, vocn, hocn, cicen, chl, layer_depth]
 
 states:
 - input:
