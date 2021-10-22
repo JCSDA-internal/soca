@@ -26,7 +26,7 @@ ln -sf ../static/soca_gridspec.nc .
 
 # Create a NICAS horizontal correlation operator
 mkdir -p bump
-OMP_NUM_THREADS=1 mpirun ../bin/soca_staticbinit.x ../config/staticb.yaml
+OMP_NUM_THREADS=1 mpirun -np 2 ../bin/soca_staticbinit.x ../config/staticb.yaml
 
 # Move bump initialization files
 cp -r ./bump ../static/

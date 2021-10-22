@@ -22,7 +22,7 @@ create_scratch 'scratch_gridgen'
 mom6_soca_static $PWD/..
 
 # Generate grid
-OMP_NUM_THREADS=1 mpirun ../bin/soca_gridgen.x ../config/gridgen.yaml
+OMP_NUM_THREADS=1 mpirun -np 2 ../bin/soca_gridgen.x ../config/gridgen.yaml
 
 # Save grid for later use
 mkdir -p ../static
