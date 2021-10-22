@@ -106,7 +106,7 @@ sea surface temperature, sea surface salinity, insitu temperature and salinity a
 absolute dynamic topography.
 
 ```console
-./soca_3dvarfgat.sh
+./tutorial_3dvarfgat.sh
 ```
 
 Similarly to the `3DVAR` example, figures of surface increments for outer iterations 1 and 2

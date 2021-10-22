@@ -29,7 +29,7 @@ ln -sf ../static/bump .
 
 # Generate a perturbation by randomizing a staic B-matrix
 mkdir -p out
-OMP_NUM_THREADS=1 mpirun ../bin/soca_enspert.x ../config/pert_ic.yaml
+OMP_NUM_THREADS=1 mpirun -np 2 ../bin/soca_enspert.x ../config/pert_ic.yaml
 
 # Move the perturbed restarts
 mkdir -p ../bkg_pert
