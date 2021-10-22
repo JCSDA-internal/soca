@@ -45,7 +45,7 @@ do
     ymdh=$(date '+%Y %m %d %H' -d "$date_begin")   # change date in MOM6 namelist
     create_input_nml $ymdh                         # create input.nml valid for $date_begin
     forecast_yaml "$date_begin"                    # prepare the yaml configuration for a 24 hour forecast
-    OMP_NUM_THREADS=1 mpirun ../bin/soca_forecast.x ./forecast.yaml >> forecast.log 2>&1 # run a 24 hour forecast
+    OMP_NUM_THREADS=1 mpirun -np 2 ../bin/soca_forecast.x ./forecast.yaml >> forecast.log 2>&1 # run a 24 hour forecast
 
     # 3Dvar FGAT with a pseudo model
     # ------------------------------
@@ -59,18 +59,18 @@ do
         echo "            o 3DVAR FGAT with pseudo model"
         mkdir -p ./obs_out/outeriter_$outer_iter
         3dvarfgat_yaml "$date_begin" $outer_iter # prepare the yaml configuration
-        OMP_NUM_THREADS=1 mpirun ../bin/soca_var.x ./3dvarfgat.yaml  >> var.log 2>&1 # run 3dvar fgat for a 24 hour cycle
+        OMP_NUM_THREADS=1 mpirun -np 2 ../bin/soca_var.x ./3dvarfgat.yaml  >> var.log 2>&1 # run 3dvar fgat for a 24 hour cycle
 
         # Checkpoint analysis (write a MOM6 restart containing the analysis state variable)
         echo "            o Checkpoint analysis"
         checkpoint_yaml "$date_begin"                # prepare the yaml configuration
-        OMP_NUM_THREADS=1 mpirun ../bin/soca_checkpoint_model.x ./checkpoint.yaml  > checkpoint.log 2>&1
+        OMP_NUM_THREADS=1 mpirun -np 2 ../bin/soca_checkpoint_model.x ./checkpoint.yaml  > checkpoint.log 2>&1
 
         # Re-forecast starting from the analysis as initial conditions
         echo "            o Re-forecast from analysis"
         mv ./RESTART/MOM.res.nc ./INPUT/MOM.res.nc  # swap initial conditions with 3DVAR analysis
         forecast_yaml "$date_begin"                 # prepare the yaml configuration for a 24 hour forecast
-        OMP_NUM_THREADS=1 mpirun ../bin/soca_forecast.x ./forecast.yaml >> reforecast.log 2>&1 # run a 24 hour re-forecast
+        OMP_NUM_THREADS=1 mpirun -np 2 ../bin/soca_forecast.x ./forecast.yaml >> reforecast.log 2>&1 # run a 24 hour re-forecast
     done # outer_iter
 
     # Save some of the output

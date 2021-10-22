@@ -33,7 +33,7 @@ cp ../bkg_pert/MOM.res.nc ./INPUT/
 
 # Create synth obs by sampling the model initialized with the
 # perturbed background. This application runs MOM6 in-core.
-OMP_NUM_THREADS=1 mpirun ../bin/soca_hofx.x ../config/synthetic_obs.yaml
+OMP_NUM_THREADS=1 mpirun -np 2 ../bin/soca_hofx.x ../config/synthetic_obs.yaml
 
 # Concatenate ioda files that contain the synthetic observations
 mkdir -p ../obs
