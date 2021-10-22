@@ -47,6 +47,9 @@ class GeometryIterator: public std::iterator<std::forward_iterator_tag,
   eckit::geometry::Point3 operator*() const;
   GeometryIterator& operator++();
 
+  double getArea() const;
+  double getRossbyRadius() const;
+
   F90iter & toFortran() {return keyIter_;}
   const F90iter & toFortran() const {return keyIter_;}
 

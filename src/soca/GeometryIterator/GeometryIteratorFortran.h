@@ -21,6 +21,8 @@ namespace soca {
     void soca_geom_iter_current_f90(const F90iter &,
                                     double &, double &, double &);
     void soca_geom_iter_next_f90(const F90iter &);
+    void soca_geom_iter_get_rossby_f90(const F90iter &, double &);
+    void soca_geom_iter_get_area_f90(const F90iter &, double &);
   }
 }  // namespace soca
 #endif  // SOCA_GEOMETRYITERATOR_GEOMETRYITERATORFORTRAN_H_
