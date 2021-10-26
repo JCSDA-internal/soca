@@ -136,4 +136,27 @@ contains
 
   end subroutine soca_geom_iter_next_c
 
+! ------------------------------------------------------------------------------
+  subroutine soca_geom_iter_get_area_c(c_key_self, c_val) bind(c, name='soca_geom_iter_get_area_f90')
+    integer(c_int), intent(   in) :: c_key_self !< Geometry iterator
+    real(c_double), intent(inout) :: c_val
+
+    type(soca_geom_iter), pointer :: self
+    call soca_geom_iter_registry%get(c_key_self, self)
+
+    c_val = self%geom%cell_area(self%iind,self%jind)
+  end subroutine
+
+! ------------------------------------------------------------------------------
+  subroutine soca_geom_iter_get_rossby_c(c_key_self, c_val) bind(c, name='soca_geom_iter_get_rossby_f90')
+    integer(c_int), intent(   in) :: c_key_self !< Geometry iterator
+    real(c_double), intent(inout) :: c_val
+
+    type(soca_geom_iter), pointer :: self
+    call soca_geom_iter_registry%get(c_key_self, self)
+
+    c_val = self%geom%rossby_radius(self%iind,self%jind)
+  end subroutine
+! ------------------------------------------------------------------------------
+
 end module soca_geom_iter_interface
