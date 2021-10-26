@@ -24,9 +24,11 @@ using oops::Log;
 
 namespace soca {
   // -----------------------------------------------------------------------------
-  static oops::interface::ModelMaker<soca::Traits, soca::ModelUFSm6c6> makermodel_("UFSm6c6");
+  static oops::interface::ModelMaker<soca::Traits, soca::ModelUFSm6c6>
+               makermodel_("UFSm6c6");
   // -----------------------------------------------------------------------------
-  ModelUFSm6c6::ModelUFSm6c6(const Geometry & resol, const eckit::Configuration & model)
+  ModelUFSm6c6::ModelUFSm6c6(const Geometry & resol,
+                             const eckit::Configuration & model)
     : keyConfig_(0),
       tstep_(0),
       geom_(new Geometry(resol)),
