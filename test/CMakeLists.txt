@@ -47,6 +47,7 @@ set( soca_test_input
   testinput/makeobs.yml
   testinput/marine2ioda.yml
   testinput/model.yml
+  testinput/model_ufsm6c6.yml
   testinput/obslocalization.yml
   testinput/parameters_bump_cor_nicas.yml
   testinput/parameters_bump_cov_lct.yml
@@ -516,6 +517,7 @@ soca_add_test( NAME state
 #                SRC  TestGetValues.cc
 #                TEST_DEPENDS test_soca_gridgen )
 
+# Test MOM6-solo
 soca_add_test( NAME model
                SRC  TestModel.cc
                NOTRAPFPE
@@ -525,6 +527,19 @@ soca_add_test( NAME modelaux
                SRC  TestModelAuxControl.cc
                CFG  model.yml
                TEST_DEPENDS test_soca_gridgen )
+
+# Test the UFS-mom6-cice6
+if (BUILD_UFSM6C6)
+  soca_add_test( NAME model_ufsm6c6
+                 SRC  TestModel.cc
+                 NOTRAPFPE
+                 TEST_DEPENDS test_soca_gridgen )
+
+  soca_add_test( NAME modelaux_ufsm6c6
+                 SRC  TestModelAuxControl.cc
+                 CFG  model_ufsm6c6.yml
+                 TEST_DEPENDS test_soca_gridgen )
+endif ()
 
 soca_add_test( NAME increment
                SRC  TestIncrement.cc

@@ -13,7 +13,6 @@
 #include "soca/Traits.h"
 
 #include "soca/Geometry/Geometry.h"
-#include "soca/Model/Model.h"
 
 #include "eckit/config/LocalConfiguration.h"
 #include "eckit/mpi/Comm.h"

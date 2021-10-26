@@ -10,8 +10,8 @@
 #include "soca/Traits.h"
 
 #include "soca/Geometry/Geometry.h"
-#include "soca/Model/Model.h"
-#include "soca/Model/ModelFortran.h"
+#include "soca/Model/mom6solo/Model.h"
+#include "soca/Model/mom6solo/ModelFortran.h"
 #include "soca/ModelBias/ModelBias.h"
 #include "soca/State/State.h"
 
@@ -25,7 +25,7 @@ using oops::Log;
 
 namespace soca {
   // -----------------------------------------------------------------------------
-  static oops::interface::ModelMaker<Traits, Model> makermodel_("SOCA");
+  static oops::interface::ModelMaker<Traits, Model> makermodel_("MOM6solo");
   // -----------------------------------------------------------------------------
   Model::Model(const Geometry & resol, const eckit::Configuration & model)
     : keyConfig_(0),
