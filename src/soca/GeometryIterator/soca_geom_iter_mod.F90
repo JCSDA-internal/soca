@@ -20,9 +20,9 @@ module soca_geom_iter_mod
 
   type :: soca_geom_iter
     type(soca_geom), pointer :: geom => null() !< Geometry
-    integer :: iindex = 1  !< index e.g. lat(iindex,jindex)
+    integer :: iindex = 1  !< index e.g. lat(iind,jind)
     integer :: jindex = 1  !< 
-    integer :: kindex = 1  !< 
+    integer :: kindex = 1  !<
   end type soca_geom_iter
 
 #define LISTED_TYPE soca_geom_iter
@@ -54,7 +54,7 @@ contains
     ! Associate geometry
     self%geom => geom
 
-    ! Define iindex/jindex/kindex for local tile
+    ! Define iind/jind for local tile
     self%iindex = iindex
     self%jindex = jindex
     self%kindex = kindex
@@ -72,7 +72,7 @@ contains
     ! Associate geometry
     self%geom => other%geom
 
-    ! Copy iindex/jindex
+    ! Copy iindex/jindex/kindex
     self%iindex = other%iindex
     self%jindex = other%jindex
     self%kindex = other%kindex
@@ -92,43 +92,59 @@ contains
     equals = 0
 
     ! Check equality
-    if (associated(self%geom, other%geom) .and. &
-       (self%iindex==other%iindex) .and. &
-       (self%jindex==other%jindex) .and. &
-       (self%kindex==other%kindex)) equals = 1
+    if (associated(self%geom, other%geom)) then
+      if (self%geom%iterator_dimension .eq. 2) then
+        if ((self%iindex==other%iindex) .and. (self%jindex==other%jindex)) equals = 1
+      elseif (self%geom%iterator_dimension .eq. 3) then
+        if ((self%iindex==other%iindex) .and. (self%jindex==other%jindex) .and. &
+            (self%kindex==other%kindex) ) equals = 1
+      else
+        call abor1_ftn('soca_geom_iter_equals: unknown geom%iterator_dimension')
+      endif
+    endif
 
   end subroutine soca_geom_iter_equals
 
   ! ------------------------------------------------------------------------------
-  !> Get geometry iterator current lat/lon
-  subroutine soca_geom_iter_current(self, lon, lat, dep)
+  !> Get geometry iterator current lat/lon/depth
+  subroutine soca_geom_iter_current(self, lon, lat, depth)
 
     ! Passed variables
     type(soca_geom_iter), intent( in) :: self !< Geometry iterator
     real(kind_real),    intent(out) :: lat  !< Latitude
     real(kind_real),    intent(out) :: lon  !< Longitude
-    real(kind_real),    intent(out) :: dep  !< Depth
+    real(kind_real),    intent(out) :: depth!< Depth
 
-    ! Check iindex/jindex/kindex
-    if (self%iindex == -1 .AND. self%jindex == -1 .AND. self%kindex == -1) then
+    ! Check iindex/jindex
+    if (self%iindex == -1 .AND. self%jindex == -1) then
       ! special case of {-1,-1} means end of the grid
       lat = self%geom%lat(self%geom%iec,self%geom%jec)
       lon = self%geom%lon(self%geom%iec,self%geom%jec) 
-      dep = 0.0
     elseif (self%iindex < self%geom%isc .OR. self%iindex > self%geom%iec .OR. &
-            self%jindex < self%geom%jsc .OR. self%jindex > self%geom%jec .OR. &
-            self%kindex < self%geom%ksc .OR. self%kindex > self%geom%kec) then
+            self%jindex < self%geom%jsc .OR. self%jindex > self%geom%jec) then
       ! outside of the grid
-
-      print *, 'self%iindex, self%jindex, self%kindex = ', self%iindex, self%jindex, self%kindex
-      print *, 'self%geom%isc, self%geom%jsc, self%geom%ksc = ', self%geom%isc, self%geom%jsc, self%geom%ksc
-      print *, 'self%geom%iec, self%geom%jec, self%geom%kec = ', self%geom%iec, self%geom%jec, self%geom%kec
-      call abor1_ftn('soca_geom_iter_current: iterator out of bounds')
+      call abor1_ftn('soca_geom_iter_current: lat/lon iterator out of bounds')
     else
       ! inside of the grid
       lat = self%geom%lat(self%iindex,self%jindex)
       lon = self%geom%lon(self%iindex,self%jindex)
-      dep = 0.0
+    endif
+
+    ! check kindex
+    if (self%geom%iterator_dimension .eq. 2) then
+      depth = -9999
+    elseif (self%geom%iterator_dimension .eq. 3) then
+      if (self%kindex == -1) then 
+        ! special case of {-1} means end of the grid
+        ! depth = self%geom%depth(self%geom%iec, self%geom%jec, self%geom%kec)
+      elseif (self%kindex < 1 .OR. self%kindex > self%geom%kec) then
+        call abor1_ftn('soca_geom_iter_current: depth iterator out of bounds')
+      else
+        ! inside of the grid
+        ! depth = self%geom%depth(self%iindex, self%jindex, self%kindex)
+      endif
+    else
+      call abor1_ftn('soca_geom_iter_current: unknown geom%iterator_dimension')
     endif
 
   end subroutine soca_geom_iter_current
@@ -145,41 +161,45 @@ contains
     jindex = self%jindex
     kindex = self%kindex
 
-   !print *, 'At beginning, iindex, jindex, kindex = ', iindex, jindex, kindex
-
-    ! do while ((iindex.lt.self%geom%iec).and.(jindex.lt.self%geom%jec))
-
-      ! increment by 1
-      iindex = iindex + 1
-      if (iindex > self%geom%iec) then
+    ! increment by 1
+    if (self%geom%iterator_dimension .eq. 2) then
+      if (iindex.lt.self%geom%iec) then 
+        iindex = iindex + 1
+      elseif (iindex.eq.self%geom%iec) then
         iindex = self%geom%isc
         jindex = jindex + 1
-        if (jindex > self%geom%jec) then
-          jindex = self%geom%jsc
-          kindex =   kindex + 1
-
-          if (kindex > self%geom%kec) then
-            iindex=-1
-            jindex=-1
-            kindex=-1
-          end if
-        end if
       end if
 
-     ! ! skip this point if it is on land
-     ! if (self%geom%mask2d(iindex,jindex).lt.1) then 
-     !   cycle
-     ! else
-     !   exit
-     ! endif
+      if (jindex > self%geom%jec) then
+        iindex=-1
+        jindex=-1
+      end if
 
-    ! end do
+    elseif (self%geom%iterator_dimension .eq. 3) then
+      if (iindex.lt.self%geom%iec) then
+        iindex = iindex + 1
+      elseif (iindex.eq.self%geom%iec) then
+        iindex = self%geom%isc
+        if (jindex.lt.self%geom%jec) then
+          jindex = jindex + 1
+        elseif (jindex.eq.self%geom%jec) then
+          jindex = self%geom%jsc
+          kindex = kindex + 1
+        end if !j loop
+      end if !iloop
+
+      if (kindex > self%geom%kec) then
+        iindex=-1
+        jindex=-1
+        kindex=-1
+      end if !kloop
+    else
+      call abor1_ftn('soca_geom_iter_next: unknown geom%iterator_dimension')
+    endif
 
     self%iindex = iindex
     self%jindex = jindex
     self%kindex = kindex
-
-   !print *, 'At end: iindex, jindex, kindex = ', iindex, jindex, kindex
 
   end subroutine soca_geom_iter_next
   ! ------------------------------------------------------------------------------
