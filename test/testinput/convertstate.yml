@@ -2,6 +2,7 @@ input geometry:
   geom_grid_file: soca_gridspec.nc
   mom6_input_nml: ./inputnml/input.nml
   fields metadata: ./fields_metadata.yml
+
 output geometry:
   geom_grid_file: soca_gridspec.small.nc
   mom6_input_nml: ./inputnml/input_small.nml
