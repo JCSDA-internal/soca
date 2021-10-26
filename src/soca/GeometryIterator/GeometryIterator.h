@@ -50,6 +50,8 @@ class GeometryIterator: public std::iterator<std::forward_iterator_tag,
   double getArea() const;
   double getRossbyRadius() const;
 
+  int iteratorDimension() const;
+
   F90iter & toFortran() {return keyIter_;}
   const F90iter & toFortran() const {return keyIter_;}
 

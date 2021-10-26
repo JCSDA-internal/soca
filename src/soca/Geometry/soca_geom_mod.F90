@@ -43,6 +43,7 @@ type :: soca_geom
     integer :: isg, ieg, jsg, jeg, ksg, keg  !< indices of global domain
     integer :: iscl, iecl, jscl, jecl, kscl, kecl  !< indices of local compute domain
     integer :: isdl, iedl, jsdl, jedl, ksdl, kedl  !< indices of local data domain
+    integer :: iterator_dimension            !< {2,3} diemsnional iterator
     real(kind=kind_real), allocatable, dimension(:)   :: lonh, lath
     real(kind=kind_real), allocatable, dimension(:)   :: lonq, latq
     real(kind=kind_real), allocatable, dimension(:,:) :: lon, lat !< Tracer point grid
@@ -135,6 +136,10 @@ subroutine geom_init(self, f_conf, f_comm)
   ! process the fields metadata file
   call f_conf%get_or_die("fields metadata", str)
   call self%fields_metadata%create(str)
+
+  ! retrieve iterator dimension from config
+  ! FIX for now hardcoded for debuggin
+  self%iterator_dimension = 2
 
 end subroutine geom_init
 
@@ -240,6 +245,8 @@ subroutine geom_clone(self, other)
 
   !
   self%geom_grid_file = other%geom_grid_file
+
+  self%iterator_dimension = other%iterator_dimension
 
   ! Allocate and clone geometry
   call geom_allocate(self)

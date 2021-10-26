@@ -84,6 +84,13 @@ GeometryIterator& GeometryIterator::operator++() {
   soca_geom_iter_next_f90(keyIter_);
   return *this;
 }
+// -----------------------------------------------------------------------------
+
+int GeometryIterator::iteratorDimension() const {
+  int dimension;
+  soca_geom_iter_dimension_f90(keyIter_, dimension);
+  return dimension;
+}
 
 // -----------------------------------------------------------------------------
 

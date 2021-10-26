@@ -146,7 +146,7 @@ contains
     type(soca_geom_iter), pointer :: self
     call soca_geom_iter_registry%get(c_key_self, self)
 
-    c_val = self%geom%cell_area(self%iind,self%jind)
+    c_val = self%geom%cell_area(self%iindex,self%jindex)
   end subroutine
 
 ! ------------------------------------------------------------------------------
@@ -157,8 +157,19 @@ contains
     type(soca_geom_iter), pointer :: self
     call soca_geom_iter_registry%get(c_key_self, self)
 
-    c_val = self%geom%rossby_radius(self%iind,self%jind)
+    c_val = self%geom%rossby_radius(self%iindex,self%jindex)
   end subroutine
+! ------------------------------------------------------------------------------
+  subroutine soca_geom_iter_dimension_c(c_key_self, c_val) bind(c, name='soca_geom_iter_dimension_f90')
+    integer(c_int), intent( in) :: c_key_self !< Geometry iterator
+    integer(c_int), intent(out) :: c_val
+
+    type(soca_geom_iter), pointer :: self
+    call soca_geom_iter_registry%get(c_key_self, self)
+
+    c_val = self%geom%iterator_dimension
+  end subroutine
+
 ! ------------------------------------------------------------------------------
 
 end module soca_geom_iter_interface
