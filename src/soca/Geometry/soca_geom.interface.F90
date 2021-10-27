@@ -167,6 +167,18 @@ subroutine c_soca_geo_start_end(c_key_self, ist, iend, jst, jend, kst, kend) bin
 end subroutine c_soca_geo_start_end
 
 ! ------------------------------------------------------------------------------
+!> return dimension of the GeometryIterator
+subroutine c_soca_geo_iterator_dimension(c_key_self, itd) bind(c, name='soca_geo_iterator_dimension_f90')
+  integer(c_int), intent( in) :: c_key_self
+  integer(c_int), intent(out) :: itd ! iterator dimension
+
+  type(soca_geom), pointer :: self
+  call soca_geom_registry%get(c_key_self, self)
+
+  itd = self%iterator_dimension
+end subroutine
+
+! ------------------------------------------------------------------------------
 subroutine c_soca_geo_get_num_levels(c_key_self, c_vars, c_levels_size, c_levels) &
            bind(c, name='soca_geo_get_num_levels_f90')
   integer(c_int),     intent(in)  :: c_key_self

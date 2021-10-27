@@ -158,6 +158,9 @@ namespace soca {
                         const GeometryIterator & iter) const {
     int nx, ny, nzo, nf;
     soca_increment_sizes_f90(toFortran(), nx, ny, nzo, nf);
+    int iteratorDimension = geom_->IteratorDimension();
+    // for 3d iterator, only a single vertical level is used
+    if (iteratorDimension == 3) nzo = 1;
 
     std::vector<int> varlens(vars_.size());
 

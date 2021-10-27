@@ -84,6 +84,15 @@ namespace soca {
     return GeometryIterator(*this, -1, -1, -1);
   }
   // -----------------------------------------------------------------------------
+  int Geometry::IteratorDimension() const {
+    // return dimesnion of the iterator
+    // if 2, iterator is over vertical columns
+    // if 3, iterator is over 3D points
+    int rv;
+    soca_geo_iterator_dimension_f90(keyGeom_, rv);
+    return rv;
+  }
+  // -----------------------------------------------------------------------------
   std::vector<size_t> Geometry::variableSizes(
       const oops::Variables & vars) const {
     std::vector<size_t> lvls(vars.size());

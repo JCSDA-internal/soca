@@ -55,6 +55,7 @@ namespace soca {
 
       GeometryIterator begin() const;
       GeometryIterator end() const;
+      int IteratorDimension() const;
       std::vector<size_t> variableSizes(const oops::Variables & vars) const;
       std::vector<double> verticalCoord(std::string &) const {return {};}
 
