@@ -35,6 +35,7 @@ branches:
   only:
     - develop
     - master
+    - release/soca-1.0.0
     - /.*/travisci_.*$/
 
 language: cpp

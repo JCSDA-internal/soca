@@ -1,51 +1,97 @@
-! (C) Copyright 2020-2020 UCAR
+! (C) Copyright 2020-2021 UCAR
 !
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
 
+!> Increment fields
 module soca_increment_mod
 
 use atlas_module, only: atlas_fieldset, atlas_field, atlas_real
-use soca_fields_mod
-use soca_convert_state_mod
-use soca_geom_mod, only : soca_geom
-use soca_geom_iter_mod, only : soca_geom_iter
-use kinds, only: kind_real
 use fckit_configuration_module, only: fckit_configuration
-use random_mod, only: normal_distribution
-use datetime_mod
+use kinds, only: kind_real
 use oops_variables_mod, only: oops_variables
+use random_mod, only: normal_distribution
+
+! soca modules
+use soca_convert_state_mod, only : soca_convertstate_type
+use soca_fields_mod, only : soca_field, soca_fields
+use soca_geom_iter_mod, only : soca_geom_iter
+use soca_geom_mod, only : soca_geom
+
 
 implicit none
 private
 
+!-------------------------------------------------------------------------------
+!> Increment fields.
+!!
+!! Any procedures that are shared with soca_state are implemented
+!! in the soca_fields base class
 type, public, extends(soca_fields) :: soca_increment
 
 contains
-  ! get/set a single point
+  !> \name get/set for a single point
+  !! \{
+
+  !> \copybrief soca_increment_getpoint \see soca_increment_getpoint
   procedure :: getpoint    => soca_increment_getpoint
+
+  !> \copybrief soca_increment_setpoint \see soca_increment_setpoint
   procedure :: setpoint    => soca_increment_setpoint
 
-  ! atlas
+  !> \}
+
+
+  !> \name atlas I/O
+  !! \{
+
+  !> \copybrief soca_increment_set_atlas \see soca_increment_set_atlas
   procedure :: set_atlas   => soca_increment_set_atlas
+
+  !> \copybrief soca_increment_to_atlas \see soca_increment_to_atlas
   procedure :: to_atlas    => soca_increment_to_atlas
+
+  !> \copybrief soca_increment_from_atlas \see soca_increment_from_atlas
   procedure :: from_atlas  => soca_increment_from_atlas
 
-  ! misc
+  !> \}
+
+
+  !> \name math operators
+  !! \{
+
+  !> \copybrief soca_increment_dirac \see soca_increment_dirac
   procedure :: dirac       => soca_increment_dirac
+
+  !> \copybrief soca_increment_random \see soca_increment_random
   procedure :: random      => soca_increment_random
+
+  !> \copybrief soca_increment_schur \see soca_increment_schur
   procedure :: schur       => soca_increment_schur
+
+  !> \}
+
+
+  !> \copybrief soca_increment_change_resol \see soca_increment_change_resol
   procedure :: convert     => soca_increment_change_resol
 
 end type
 
 
+! ------------------------------------------------------------------------------
 contains
+! ------------------------------------------------------------------------------
+
 
 ! ------------------------------------------------------------------------------
 !> initialize fields with random normal distribution
+!!
+!! \note "hocn" field, if present, is NOT randomized, because doing so
+!!   causes problems
+!! \relates soca_increment_mod::soca_increment
 subroutine soca_increment_random(self)
   class(soca_increment), intent(inout) :: self
+
   integer, parameter :: rseed = 1 ! constant for reproducability of tests
     ! NOTE: random seeds are not quite working the way expected,
     !  it is only set the first time normal_distribution() is called with a seed
@@ -78,9 +124,11 @@ end subroutine soca_increment_random
 
 ! ------------------------------------------------------------------------------
 !> perform a shur product between two sets of fields
+!!
+!! \relates soca_increment_mod::soca_increment
 subroutine soca_increment_schur(self,rhs)
   class(soca_increment), intent(inout) :: self
-  class(soca_increment),    intent(in) :: rhs
+  class(soca_increment),    intent(in) :: rhs  !< other incrment in schur product
   integer :: i
 
   ! make sure fields are same shape
@@ -92,11 +140,16 @@ subroutine soca_increment_schur(self,rhs)
   end do
 end subroutine soca_increment_schur
 
-! ------------------------------------------------------------------------------
 
+! ------------------------------------------------------------------------------
+!> Get the values at a specific grid point
+!!
+!! \todo clean this up so that the variable names are not hardcoded
+!! \relates soca_increment_mod::soca_increment
 subroutine soca_increment_getpoint(self, geoiter, values)
   class(soca_increment), intent(   in) :: self
-  type(soca_geom_iter),  intent(   in) :: geoiter
+  type(soca_geom_iter),  intent(   in) :: geoiter !< iterator pointing to desired gridpoint
+  !> return values for every field in a vertical column
   real(kind=kind_real),  intent(inout) :: values(:)
 
   integer :: ff, ii, nz
@@ -116,11 +169,16 @@ subroutine soca_increment_getpoint(self, geoiter, values)
   end do
 end subroutine soca_increment_getpoint
 
-! ------------------------------------------------------------------------------
 
+! ------------------------------------------------------------------------------
+!> Set the values at a specific grid point
+!!
+!! \todo need to remove the hardcoded variable names
+!! \relates soca_increment_mod::soca_increment
 subroutine soca_increment_setpoint(self, geoiter, values)
   class(soca_increment), intent(inout) :: self
-  type(soca_geom_iter),  intent(   in) :: geoiter
+  type(soca_geom_iter),  intent(   in) :: geoiter !< iterator pointing to desired gridpoint
+  !> values to set. Values are for for every field in a vertical column
   real(kind=kind_real),  intent(   in) :: values(:)
 
   integer :: ff, ii, nz
@@ -141,8 +199,12 @@ subroutine soca_increment_setpoint(self, geoiter, values)
 end subroutine soca_increment_setpoint
 
 
-  ! ------------------------------------------------------------------------------
-! TODO, generalize by removing the hardcoded int=>field_name
+! ------------------------------------------------------------------------------
+!> Apply a dirac increment
+!!
+!! \raises abor1_ftn aborts if there is an error in the input configuration
+!! \todo generalize by removing the hardcoded int=>field_name
+!! \relates soca_increment_mod::soca_increment
 subroutine soca_increment_dirac(self, f_conf)
   class(soca_increment),        intent(inout) :: self
   type(fckit_configuration), value, intent(in):: f_conf   !< Configuration
@@ -212,6 +274,11 @@ end subroutine soca_increment_dirac
 
 
 ! ------------------------------------------------------------------------------
+!> Setup atlas fields
+!!
+!! \see soca_increment_to_atlas
+!! \see soca_increment_from_atlas
+!! \relates soca_increment_mod::soca_increment
 subroutine soca_increment_set_atlas(self, geom, vars, afieldset)
   class(soca_increment), intent(in)    :: self
   type(soca_geom),       intent(in)    :: geom
@@ -255,6 +322,9 @@ end subroutine soca_increment_set_atlas
 
 
 ! ------------------------------------------------------------------------------
+!> Convert the increment to an atlas fieldset
+!!
+!! \relates soca_increment_mod::soca_increment
 subroutine soca_increment_to_atlas(self, geom, vars, afieldset)
   class(soca_increment), intent(in)    :: self
   type(soca_geom),       intent(in)    :: geom
@@ -316,6 +386,9 @@ end subroutine soca_increment_to_atlas
 
 
 ! ------------------------------------------------------------------------------
+!> Set the our increment values from an atlas fieldset
+!!
+!! \relates soca_increment_mod::soca_increment
 subroutine soca_increment_from_atlas(self, geom, vars, afieldset)
   class(soca_increment), intent(inout) :: self
   type(soca_geom),       intent(in)    :: geom
@@ -370,8 +443,11 @@ subroutine soca_increment_from_atlas(self, geom, vars, afieldset)
 
 end subroutine soca_increment_from_atlas
 
+
 ! ------------------------------------------------------------------------------
 !> Change resolution
+!!
+!! \relates soca_increment_mod::soca_increment
 subroutine soca_increment_change_resol(self, rhs)
   class(soca_increment), intent(inout) :: self  ! target
   class(soca_increment),    intent(in) :: rhs   ! source

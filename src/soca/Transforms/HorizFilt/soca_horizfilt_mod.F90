@@ -1,274 +1,310 @@
-! (C) Copyright 2017-2020 UCAR.
+! (C) Copyright 2017-2021 UCAR.
 !
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
 
-
+!> horizontal filtering
 module soca_horizfilt_mod
-  use atlas_module, only: atlas_geometry
-  use fckit_configuration_module, only: fckit_configuration
-  use iso_c_binding
-  use kinds
-  use mpp_domains_mod, only : mpp_update_domains, mpp_update_domains_ad
-  use soca_fields_mod
-  use soca_increment_mod
-  use soca_state_mod
-  use soca_geom_mod_c
-  use soca_geom_mod, only : soca_geom
-  use soca_utils
-  use random_mod
-  use oops_variables_mod
 
-  implicit none
+use atlas_module, only: atlas_geometry
+use fckit_configuration_module, only: fckit_configuration
+use iso_c_binding
+use kinds
+use mpp_domains_mod, only : mpp_update_domains, mpp_update_domains_ad
+use oops_variables_mod, only: oops_variables
 
-  private
-  public :: soca_horizfilt_setup, soca_horizfilt_delete
-  public :: soca_horizfilt_mult, soca_horizfilt_multad
+! soca modules
+use soca_fields_mod, only: soca_field
+use soca_geom_mod, only : soca_geom
+use soca_increment_mod, only: soca_increment
+use soca_state_mod, only: soca_state
 
-  !> Fortran derived type to hold configuration data for horizfilt
-  type, public :: soca_horizfilt_type
-     type(oops_variables)              :: vars           !< Apply filtering to vars
-     real(kind=kind_real), allocatable :: wgh(:,:,:,:)   !< Filtering weight
-     real(kind=kind_real) :: scale_flow  !< Used with "flow" filter, sea surface height decorrelation scale
-     real(kind=kind_real) :: scale_dist
-     real(kind=kind_real) :: niter
-     integer :: isc, iec, jsc, jec  !< indices of compute domain
-     integer :: isd, ied, jsd, jed  !< indices of data domain
-   contains
-     procedure :: setup => soca_horizfilt_setup
-     procedure :: delete => soca_horizfilt_delete
-     procedure :: mult => soca_horizfilt_mult
-     procedure :: multad => soca_horizfilt_multad
-  end type soca_horizfilt_type
+implicit none
+private
 
-  ! ------------------------------------------------------------------------------
+!> Variable transform: horizontal filtering
+type, public :: soca_horizfilt
+  type(oops_variables)              :: vars           !< Apply filtering to vars
+  real(kind=kind_real), allocatable :: wgh(:,:,:,:)   !< Filtering weight
+  real(kind=kind_real) :: scale_flow  !< Used with "flow" filter, sea surface height decorrelation scale
+  real(kind=kind_real) :: scale_dist
+  real(kind=kind_real) :: niter !< number of iterations of filter to perform
+  !> \name indices of compute domain
+  !! \{
+  integer :: isc, iec, jsc, jec
+  !> \}
+
+  !> \name indices of data domain
+  !! \{
+  integer :: isd, ied, jsd, jed
+  !> \}
+
 contains
-  ! ------------------------------------------------------------------------------
-  !> Setup for the horizfilt operator
-  subroutine soca_horizfilt_setup(self, f_conf, geom, traj, vars)
-    class(soca_horizfilt_type), intent(inout) :: self   !< The horizfilt structure
-    type(fckit_configuration),     intent(in) :: f_conf !< The configuration
-    type(soca_geom),               intent(in) :: geom   !< Geometry
-    type(soca_state),              intent(in) :: traj   !< Trajectory
-    type(oops_variables),          intent(in) :: vars   !< List of variables
 
-    type(soca_field), pointer :: ssh
+  !> \copybrief soca_horizfilt_setup \see soca_horizfilt_setup
+  procedure :: setup => soca_horizfilt_setup
 
-    integer :: i, j, ii, jj
-    real(kind=kind_real) :: dist(-1:1,-1:1), sum_w, r_dist, r_flow
-    type(atlas_geometry) :: ageometry
+  !> \copybrief soca_horizfilt_delete \see soca_horizfilt_delete
+  procedure :: delete => soca_horizfilt_delete
 
-    ! Setup list of variables to apply filtering on
-    self%vars = vars
+  !> \copybrief soca_horizfilt_mult \see soca_horizfilt_mult
+  procedure :: mult => soca_horizfilt_mult
 
-    ! Get filter length scales from configuration
-    if (.not. f_conf%get("scale_dist", self%scale_dist)) self%scale_dist = -1
-    if (.not. f_conf%get("scale_flow", self%scale_flow)) self%scale_flow = -1
-    call f_conf%get_or_die("niter", self%niter)
+  !> \copybrief soca_horizfilt_multad \see soca_horizfilt_multad
+  procedure :: multad => soca_horizfilt_multad
+end type soca_horizfilt
 
-    ! scale the gaussian length scales depending on the number of iterations
-    ! NOTE: numerical instability creeps in once niter is large and scale_dist
-    !  is much smaller than the size of a grid box
-    self%scale_dist = self%scale_dist / sqrt(self%niter)
-    self%scale_flow = self%scale_flow / sqrt(self%niter)
 
-    ! Indices for compute/data domain
-    self%isd = geom%isd ;  self%ied = geom%ied ; self%jsd = geom%jsd; self%jed = geom%jed
-    self%isc = geom%isc ;  self%iec = geom%iec ; self%jsc = geom%jsc; self%jec = geom%jec
+! ------------------------------------------------------------------------------
+contains
+! ------------------------------------------------------------------------------
 
-    ! Allocate and compute filtering weights
-    allocate(self%wgh(self%isd:self%ied,self%jsd:self%jed,-1:1,-1:1))
 
-    ! Create UnitSphere geometry
-    ageometry = atlas_geometry("Earth")
+! ------------------------------------------------------------------------------
+!> Setup for the horizfilt operator
+!!
+!! \relates soca_horizfilt_mod::soca_horizfilt
+subroutine soca_horizfilt_setup(self, f_conf, geom, traj, vars)
+  class(soca_horizfilt), intent(inout) :: self   !< The horizfilt structure
+  type(fckit_configuration),     intent(in) :: f_conf !< The configuration
+  type(soca_geom),               intent(in) :: geom   !< Geometry
+  type(soca_state),              intent(in) :: traj   !< Trajectory
+  type(oops_variables),          intent(in) :: vars   !< List of variables
 
-    ! Compute distance based weights
-    self%wgh = 0.0_kind_real
-    r_dist = 1.0
-    r_flow = 1.0
-    do j = self%jsc, self%jec
-       do i = self%isc, self%iec
-          do ii = -1,1
-             do jj = -1,1
-                ! Great circle distance
-                if(self%scale_dist > 0) then
-                  r_dist = ageometry%distance(geom%lon(i,j), geom%lat(i,j), geom%lon(i+ii,j+jj), geom%lat(i+ii,j+jj) )
-                  r_dist = exp(-0.5 * (r_dist/self%scale_dist) ** 2)
-                end if
+  type(soca_field), pointer :: ssh
 
-                ! flow based distance (ssh difference)
-                if(self%scale_flow > 0) then
-                  call traj%get("ssh", ssh)
-                  r_flow = abs(ssh%val(i,j,1) - ssh%val(i+ii,j+jj,1))
-                  r_flow = exp(-0.5 * ((r_flow / self%scale_flow) ** 2))
-                end if
+  integer :: i, j, ii, jj
+  real(kind=kind_real) :: dist(-1:1,-1:1), sum_w, r_dist, r_flow
+  type(atlas_geometry) :: ageometry
 
-                ! multiply together and apply the land mask
-                dist(ii,jj) = geom%mask2d(i+ii,j+jj) * r_dist * r_flow
-             end do
-          end do
+  ! Setup list of variables to apply filtering on
+  self%vars = vars
 
-          ! Normalize
-          sum_w = sum(dist)
-          if (sum_w>0.0_kind_real) then
-            self%wgh(i,j,:,:) = dist / sum_w
-          endif
+  ! Get filter length scales from configuration
+  if (.not. f_conf%get("scale_dist", self%scale_dist)) self%scale_dist = -1
+  if (.not. f_conf%get("scale_flow", self%scale_flow)) self%scale_flow = -1
+  call f_conf%get_or_die("niter", self%niter)
 
-       end do
+  ! scale the gaussian length scales depending on the number of iterations
+  ! NOTE: numerical instability creeps in once niter is large and scale_dist
+  !  is much smaller than the size of a grid box
+  self%scale_dist = self%scale_dist / sqrt(self%niter)
+  self%scale_flow = self%scale_flow / sqrt(self%niter)
+
+  ! Indices for compute/data domain
+  self%isd = geom%isd ;  self%ied = geom%ied ; self%jsd = geom%jsd; self%jed = geom%jed
+  self%isc = geom%isc ;  self%iec = geom%iec ; self%jsc = geom%jsc; self%jec = geom%jec
+
+  ! Allocate and compute filtering weights
+  allocate(self%wgh(self%isd:self%ied,self%jsd:self%jed,-1:1,-1:1))
+
+  ! Create UnitSphere geometry
+  ageometry = atlas_geometry("Earth")
+
+  ! Compute distance based weights
+  self%wgh = 0.0_kind_real
+  r_dist = 1.0
+  r_flow = 1.0
+  do j = self%jsc, self%jec
+      do i = self%isc, self%iec
+        do ii = -1,1
+            do jj = -1,1
+              ! Great circle distance
+              if(self%scale_dist > 0) then
+                r_dist = ageometry%distance(geom%lon(i,j), geom%lat(i,j), geom%lon(i+ii,j+jj), geom%lat(i+ii,j+jj) )
+                r_dist = exp(-0.5 * (r_dist/self%scale_dist) ** 2)
+              end if
+
+              ! flow based distance (ssh difference)
+              if(self%scale_flow > 0) then
+                call traj%get("ssh", ssh)
+                r_flow = abs(ssh%val(i,j,1) - ssh%val(i+ii,j+jj,1))
+                r_flow = exp(-0.5 * ((r_flow / self%scale_flow) ** 2))
+              end if
+
+              ! multiply together and apply the land mask
+              dist(ii,jj) = geom%mask2d(i+ii,j+jj) * r_dist * r_flow
+            end do
+        end do
+
+        ! Normalize
+        sum_w = sum(dist)
+        if (sum_w>0.0_kind_real) then
+          self%wgh(i,j,:,:) = dist / sum_w
+        endif
+
+      end do
+  end do
+
+end subroutine soca_horizfilt_setup
+
+
+! ------------------------------------------------------------------------------
+!> Delete horizfilt
+!!
+!! \relates soca_horizfilt_mod::soca_horizfilt
+subroutine soca_horizfilt_delete(self)
+  class(soca_horizfilt), intent(inout) :: self       !< The horizfilt structure
+
+  deallocate(self%wgh)
+
+end subroutine soca_horizfilt_delete
+
+
+! ------------------------------------------------------------------------------
+!> Forward filtering
+!!
+!! \relates soca_horizfilt_mod::soca_horizfilt
+subroutine soca_horizfilt_mult(self, dxin, dxout, geom)
+  class(soca_horizfilt), intent(inout) :: self  !< The horizfilt structure
+  type(soca_increment),          intent(in) :: dxin  !< Input: Increment
+  type(soca_increment),       intent(inout) :: dxout !< Output: filtered Increment
+  type(soca_geom),               intent(in) :: geom
+
+  type(soca_field), pointer :: field_i, field_o
+
+  integer :: k, ivar
+  real(kind=kind_real), allocatable, dimension(:,:) :: dxi, dxo
+
+  allocate(dxi(self%isd:self%ied,self%jsd:self%jed))
+  allocate(dxo(self%isd:self%ied,self%jsd:self%jed))
+
+  do ivar = 1, self%vars%nvars()
+    call dxin%get(trim(self%vars%variable(ivar)),  field_i)
+    call dxout%get(trim(self%vars%variable(ivar)), field_o)
+    do k = 1, field_i%nz
+      dxi = field_i%val(:,:,k)
+      call soca_filt2d(self, dxi, dxo, geom)
+      field_o%val(:,:,k) = dxo
     end do
+  end do
+  deallocate(dxi, dxo)
 
-  end subroutine soca_horizfilt_setup
+end subroutine soca_horizfilt_mult
 
-  ! ------------------------------------------------------------------------------
-  !> Delete horizfilt
-  subroutine soca_horizfilt_delete(self)
-    class(soca_horizfilt_type), intent(inout) :: self       !< The horizfilt structure
 
-    deallocate(self%wgh)
+! ------------------------------------------------------------------------------
+!> Backward filtering
+!!
+!! \relates soca_horizfilt_mod::soca_horizfilt
+subroutine soca_horizfilt_multad(self, dxin, dxout, geom)
+  class(soca_horizfilt), intent(inout) :: self  !< The horizfilt structure
+  type(soca_increment),          intent(in) :: dxin  !< Input:
+  type(soca_increment),       intent(inout) :: dxout !< Output:
+  type(soca_geom),               intent(in) :: geom
 
-  end subroutine soca_horizfilt_delete
+  type(soca_field), pointer :: field_i, field_o
+  integer :: k, ivar
+  real(kind=kind_real), allocatable, dimension(:,:) :: dxi, dxo
 
-  ! ------------------------------------------------------------------------------
-  !> Forward filtering
-  subroutine soca_horizfilt_mult(self, dxin, dxout, geom)
-    class(soca_horizfilt_type), intent(inout) :: self  !< The horizfilt structure
-    type(soca_increment),          intent(in) :: dxin  !< Input: Increment
-    type(soca_increment),       intent(inout) :: dxout !< Output: filtered Increment
-    type(soca_geom),               intent(in) :: geom
+  allocate(dxi(self%isd:self%ied,self%jsd:self%jed))
+  allocate(dxo(self%isd:self%ied,self%jsd:self%jed))
 
-    type(soca_field), pointer :: field_i, field_o
-
-    integer :: k, ivar
-    real(kind=kind_real), allocatable, dimension(:,:) :: dxi, dxo
-
-    allocate(dxi(self%isd:self%ied,self%jsd:self%jed))
-    allocate(dxo(self%isd:self%ied,self%jsd:self%jed))
-
-    do ivar = 1, self%vars%nvars()
-      call dxin%get(trim(self%vars%variable(ivar)),  field_i)
-      call dxout%get(trim(self%vars%variable(ivar)), field_o)
+  do ivar = 1, self%vars%nvars()
+    call dxin%get(trim(self%vars%variable(ivar)),  field_i)
+    call dxout%get(trim(self%vars%variable(ivar)), field_o)
       do k = 1, field_i%nz
         dxi = field_i%val(:,:,k)
-        call soca_filt2d(self, dxi, dxo, geom)
+        call soca_filt2d_ad(self, dxi, dxo, geom)
         field_o%val(:,:,k) = dxo
       end do
-    end do
-    deallocate(dxi, dxo)
+  end do
+  deallocate(dxi, dxo)
 
-  end subroutine soca_horizfilt_mult
+end subroutine soca_horizfilt_multad
 
-  ! ------------------------------------------------------------------------------
-  !> Backward filtering
-  subroutine soca_horizfilt_multad(self, dxin, dxout, geom)
-    class(soca_horizfilt_type), intent(inout) :: self  !< The horizfilt structure
-    type(soca_increment),          intent(in) :: dxin  !< Input:
-    type(soca_increment),       intent(inout) :: dxout !< Output:
-    type(soca_geom),               intent(in) :: geom
 
-    type(soca_field), pointer :: field_i, field_o
-    integer :: k, ivar
-    real(kind=kind_real), allocatable, dimension(:,:) :: dxi, dxo
+! ------------------------------------------------------------------------------
+!> Forward filtering for 2D array
+!!
+!! used by soca_horizfilt_mod::soca_horizfilt::mult()
+!! \relates soca_horizfilt_mod::soca_horizfilt
+subroutine soca_filt2d(self, dxin, dxout, geom)
+  class(soca_horizfilt),           intent(in) :: self
+  real(kind=kind_real),    allocatable, intent(in) :: dxin(:,:)
+  real(kind=kind_real), allocatable, intent(inout) :: dxout(:,:)
+  type(soca_geom),                      intent(in) :: geom
 
-    allocate(dxi(self%isd:self%ied,self%jsd:self%jed))
-    allocate(dxo(self%isd:self%ied,self%jsd:self%jed))
+  integer :: i, j
+  real(kind=kind_real), allocatable :: dxtmp(:,:)
 
-    do ivar = 1, self%vars%nvars()
-      call dxin%get(trim(self%vars%variable(ivar)),  field_i)
-      call dxout%get(trim(self%vars%variable(ivar)), field_o)
-       do k = 1, field_i%nz
-          dxi = field_i%val(:,:,k)
-          call soca_filt2d_ad(self, dxi, dxo, geom)
-          field_o%val(:,:,k) = dxo
-       end do
-    end do
-    deallocate(dxi, dxo)
+  ! Make a temporary copy of dxin
+  allocate(dxtmp(self%isd:self%ied,self%jsd:self%jed))
+  dxtmp = 0.0_kind_real
+  dxtmp(self%isc:self%iec,self%jsc:self%jec) = dxin(self%isc:self%iec,self%jsc:self%jec)
 
-  end subroutine soca_horizfilt_multad
+  ! Update halo points of input array
+  call mpp_update_domains(dxtmp, geom%Domain%mpp_domain, complete=.true.)
 
-  ! ------------------------------------------------------------------------------
-  !> Forward filtering for 2D array
-  subroutine soca_filt2d(self, dxin, dxout, geom)
-    class(soca_horizfilt_type),           intent(in) :: self
-    real(kind=kind_real),    allocatable, intent(in) :: dxin(:,:)
-    real(kind=kind_real), allocatable, intent(inout) :: dxout(:,:)
-    type(soca_geom),                      intent(in) :: geom
+  ! 9-point distance weighted average
+  dxout = 0.0_kind_real
+  do j = self%jsc, self%jec
+      do i = self%isc, self%iec
+        if (geom%mask2d(i,j)==1) then
+            dxout(i,j) = &
+              self%wgh(i,j,-1,1)*dxtmp(i-1,j+1) + &
+              self%wgh(i,j,0,1)*dxtmp(i,j+1) + &
+              self%wgh(i,j,1,1)*dxtmp(i+1,j+1) + &
+              self%wgh(i,j,-1,0)*dxtmp(i-1,j) + &
+              self%wgh(i,j,0,0)*dxtmp(i,j) + &
+              self%wgh(i,j,1,0)*dxtmp(i+1,j) + &
+              self%wgh(i,j,-1,-1)*dxtmp(i-1,j-1) + &
+              self%wgh(i,j,0,-1)*dxtmp(i,j-1) + &
+              self%wgh(i,j,1,-1)*dxtmp(i+1,j-1)
+        end if
+      end do
+  end do
 
-    integer :: i, j
-    real(kind=kind_real), allocatable :: dxtmp(:,:)
+  ! Update halo
+  call mpp_update_domains(dxout, geom%Domain%mpp_domain, complete=.true.)
 
-    ! Make a temporary copy of dxin
-    allocate(dxtmp(self%isd:self%ied,self%jsd:self%jed))
-    dxtmp = 0.0_kind_real
-    dxtmp(self%isc:self%iec,self%jsc:self%jec) = dxin(self%isc:self%iec,self%jsc:self%jec)
+  deallocate(dxtmp)
 
-    ! Update halo points of input array
-    call mpp_update_domains(dxtmp, geom%Domain%mpp_domain, complete=.true.)
+end subroutine soca_filt2d
 
-    ! 9-point distance weighted average
-    dxout = 0.0_kind_real
-    do j = self%jsc, self%jec
-       do i = self%isc, self%iec
-          if (geom%mask2d(i,j)==1) then
-             dxout(i,j) = &
-               self%wgh(i,j,-1,1)*dxtmp(i-1,j+1) + &
-               self%wgh(i,j,0,1)*dxtmp(i,j+1) + &
-               self%wgh(i,j,1,1)*dxtmp(i+1,j+1) + &
-               self%wgh(i,j,-1,0)*dxtmp(i-1,j) + &
-               self%wgh(i,j,0,0)*dxtmp(i,j) + &
-               self%wgh(i,j,1,0)*dxtmp(i+1,j) + &
-               self%wgh(i,j,-1,-1)*dxtmp(i-1,j-1) + &
-               self%wgh(i,j,0,-1)*dxtmp(i,j-1) + &
-               self%wgh(i,j,1,-1)*dxtmp(i+1,j-1)
-          end if
-       end do
-    end do
 
-    ! Update halo
-    call mpp_update_domains(dxout, geom%Domain%mpp_domain, complete=.true.)
+! ------------------------------------------------------------------------------
+!> Backward filtering for 2D array
+!!
+!! used by soca_horizfilt_mod::soca_horizfilt::multad()
+!! \relates soca_horizfilt_mod::soca_horizfilt
+subroutine soca_filt2d_ad(self, dxin, dxout, geom)
+  class(soca_horizfilt),           intent(in) :: self
+  real(kind=kind_real),    allocatable, intent(in) :: dxin(:,:)
+  real(kind=kind_real), allocatable, intent(inout) :: dxout(:,:)
+  type(soca_geom),                      intent(in) :: geom
 
-    deallocate(dxtmp)
+  integer :: i, j
+  real(kind=kind_real), allocatable :: dxtmp(:,:)
 
-  end subroutine soca_filt2d
+  ! Make a temporary copy of dxin
+  allocate(dxtmp(self%isd:self%ied,self%jsd:self%jed))
+  dxtmp = 0.0_kind_real
+  dxtmp(self%isc:self%iec,self%jsc:self%jec) = dxin(self%isc:self%iec,self%jsc:self%jec)
 
-  ! ------------------------------------------------------------------------------
-  !> Backward filtering for 2D array
-  subroutine soca_filt2d_ad(self, dxin, dxout, geom)
-    class(soca_horizfilt_type),           intent(in) :: self
-    real(kind=kind_real),    allocatable, intent(in) :: dxin(:,:)
-    real(kind=kind_real), allocatable, intent(inout) :: dxout(:,:)
-    type(soca_geom),                      intent(in) :: geom
+  dxout = 0.0_kind_real
+  ! Adjoint of 9-point weighted average
+  do j = self%jec, self%jsc, -1
+      do i =  self%iec, self%isc, -1
+        if (geom%mask2d(i,j)==1) then
+            dxout(i-1,j+1) = dxout(i-1,j+1) + self%wgh(i,j,-1, 1)*dxtmp(i,j)
+            dxout(i,j+1)   = dxout(i,j+1)   + self%wgh(i,j, 0, 1)*dxtmp(i,j)
+            dxout(i+1,j+1) = dxout(i+1,j+1) + self%wgh(i,j, 1, 1)*dxtmp(i,j)
+            dxout(i-1,j)   = dxout(i-1,j)   + self%wgh(i,j,-1, 0)*dxtmp(i,j)
+            dxout(i,j)     = dxout(i,j)     + self%wgh(i,j, 0, 0)*dxtmp(i,j)
+            dxout(i+1,j)   = dxout(i+1,j)   + self%wgh(i,j, 1, 0)*dxtmp(i,j)
+            dxout(i-1,j-1) = dxout(i-1,j-1) + self%wgh(i,j,-1,-1)*dxtmp(i,j)
+            dxout(i,j-1)   = dxout(i,j-1)   + self%wgh(i,j, 0,-1)*dxtmp(i,j)
+            dxout(i+1,j-1) = dxout(i+1,j-1) + self%wgh(i,j, 1,-1)*dxtmp(i,j)
+        end if
+      end do
+  end do
 
-    integer :: i, j
-    real(kind=kind_real), allocatable :: dxtmp(:,:)
+  ! Adjoint of halo update
+  call mpp_update_domains_ad(dxout, geom%Domain%mpp_domain, complete=.true.)
 
-    ! Make a temporary copy of dxin
-    allocate(dxtmp(self%isd:self%ied,self%jsd:self%jed))
-    dxtmp = 0.0_kind_real
-    dxtmp(self%isc:self%iec,self%jsc:self%jec) = dxin(self%isc:self%iec,self%jsc:self%jec)
+  deallocate(dxtmp)
 
-    dxout = 0.0_kind_real
-    ! Adjoint of 9-point weighted average
-    do j = self%jec, self%jsc, -1
-       do i =  self%iec, self%isc, -1
-          if (geom%mask2d(i,j)==1) then
-             dxout(i-1,j+1) = dxout(i-1,j+1) + self%wgh(i,j,-1, 1)*dxtmp(i,j)
-             dxout(i,j+1)   = dxout(i,j+1)   + self%wgh(i,j, 0, 1)*dxtmp(i,j)
-             dxout(i+1,j+1) = dxout(i+1,j+1) + self%wgh(i,j, 1, 1)*dxtmp(i,j)
-             dxout(i-1,j)   = dxout(i-1,j)   + self%wgh(i,j,-1, 0)*dxtmp(i,j)
-             dxout(i,j)     = dxout(i,j)     + self%wgh(i,j, 0, 0)*dxtmp(i,j)
-             dxout(i+1,j)   = dxout(i+1,j)   + self%wgh(i,j, 1, 0)*dxtmp(i,j)
-             dxout(i-1,j-1) = dxout(i-1,j-1) + self%wgh(i,j,-1,-1)*dxtmp(i,j)
-             dxout(i,j-1)   = dxout(i,j-1)   + self%wgh(i,j, 0,-1)*dxtmp(i,j)
-             dxout(i+1,j-1) = dxout(i+1,j-1) + self%wgh(i,j, 1,-1)*dxtmp(i,j)
-          end if
-       end do
-    end do
-
-    ! Adjoint of halo update
-    call mpp_update_domains_ad(dxout, geom%Domain%mpp_domain, complete=.true.)
-
-    deallocate(dxtmp)
-
-  end subroutine soca_filt2d_ad
+end subroutine soca_filt2d_ad
 
 end module soca_horizfilt_mod
