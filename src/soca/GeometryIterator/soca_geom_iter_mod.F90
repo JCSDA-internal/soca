@@ -115,6 +115,8 @@ contains
     real(kind_real),    intent(out) :: lon  !< Longitude
     real(kind_real),    intent(out) :: depth!< Depth
 
+    real(kind_real) :: depth1d(1,1,self%geom%nzo), h1d(1,1,self%geom%nzo)
+
     ! Check iindex/jindex
     if (self%iindex == -1 .AND. self%jindex == -1) then
       ! special case of {-1,-1} means end of the grid
@@ -132,16 +134,18 @@ contains
 
     ! check kindex
     if (self%geom%iterator_dimension .eq. 2) then
-      depth = -9999
+      depth = -99999
     elseif (self%geom%iterator_dimension .eq. 3) then
+      h1d(1,1,:) = self%geom%h(self%iindex,self%jindex,:)
+      call self%geom%thickness2depth(self%geom, h1d, depth1d)
       if (self%kindex == -1) then 
         ! special case of {-1} means end of the grid
-        ! depth = self%geom%depth(self%geom%iec, self%geom%jec, self%geom%kec)
+        depth = depth1d(1,1,self%geom%kec)
       elseif (self%kindex < 1 .OR. self%kindex > self%geom%kec) then
         call abor1_ftn('soca_geom_iter_current: depth iterator out of bounds')
       else
         ! inside of the grid
-        ! depth = self%geom%depth(self%iindex, self%jindex, self%kindex)
+        depth = depth1d(1,1,self%kindex)
       endif
     else
       call abor1_ftn('soca_geom_iter_current: unknown geom%iterator_dimension')

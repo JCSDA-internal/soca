@@ -139,7 +139,7 @@ subroutine geom_init(self, f_conf, f_comm)
 
   ! retrieve iterator dimension from config
   ! FIX for now hardcoded for debuggin
-  self%iterator_dimension = 2
+  self%iterator_dimension = 3
 
 end subroutine geom_init
 
