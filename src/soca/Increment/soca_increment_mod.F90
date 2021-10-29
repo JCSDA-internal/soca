@@ -109,12 +109,16 @@ subroutine soca_increment_getpoint(self, geoiter, values)
     field => self%fields(ff)
     select case(field%name)
     case("tocn", "socn", "ssh", "uocn", "vocn", "hocn", "cicen", "hicen", "hsnon", "chl", "biop")
+      nz = field%nz
       if (self%geom%iterator_dimension .eq. 2) then
-        nz = field%nz
         values(ii+1:ii+nz) = field%val(geoiter%iindex, geoiter%jindex,:)
         ii = ii + nz
       elseif (self%geom%iterator_dimension .eq. 3) then
-        values(ii+1) = field%val(geoiter%iindex, geoiter%jindex, geoiter%kindex)
+        if (nz == 1) then
+          values(ii+1) = field%val(geoiter%iindex, geoiter%jindex, 1)
+        else
+          values(ii+1) = field%val(geoiter%iindex, geoiter%jindex, geoiter%kindex)
+        endif
         ii = ii + 1
       else
         call abor1_ftn('soca_increment_getpoint: unknown geom%iterator_dimension')
@@ -140,12 +144,16 @@ subroutine soca_increment_setpoint(self, geoiter, values)
     field => self%fields(ff)
     select case(field%name)
     case("tocn", "socn", "ssh", "uocn", "vocn", "hocn", "cicen", "hicen", "hsnon", "chl", "biop")
+      nz = field%nz
       if (self%geom%iterator_dimension .eq. 2) then
-        nz = field%nz
         field%val(geoiter%iindex, geoiter%jindex,:) = values(ii+1:ii+nz)
         ii = ii + nz
       elseif (self%geom%iterator_dimension .eq. 3) then
-        field%val(geoiter%iindex, geoiter%jindex, geoiter%kindex) = values(ii+1)
+        if (nz == 1) then
+          field%val(geoiter%iindex, geoiter%jindex, 1) = values(ii+1)
+        else
+          field%val(geoiter%iindex, geoiter%jindex, geoiter%kindex) = values(ii+1)
+        endif
         ii = ii + 1
       else
         call abor1_ftn('soca_increment_getpoint: unknown geom%iterator_dimension')

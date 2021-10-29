@@ -137,7 +137,7 @@ contains
       depth = -99999
     elseif (self%geom%iterator_dimension .eq. 3) then
       h1d(1,1,:) = self%geom%h(self%iindex,self%jindex,:)
-      call self%geom%thickness2depth(self%geom, h1d, depth1d)
+      call self%geom%thickness2depth(h1d, depth1d)
       if (self%kindex == -1) then 
         ! special case of {-1} means end of the grid
         depth = depth1d(1,1,self%geom%kec)
