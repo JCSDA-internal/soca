@@ -1,9 +1,11 @@
-! (C) Copyright 2020-2020 UCAR
+! (C) Copyright 2020-2021 UCAR
 !
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
 
 ! ------------------------------------------------------------------------------
+!> registry for soca_getvalues_mod::soca_getvalues instances for use in
+!! Fortran/C++ interface of soca_getvalues_mod_c
 module soca_getvalues_reg
 
 use soca_getvalues_mod
@@ -15,7 +17,7 @@ private
 #define LISTED_TYPE soca_getvalues
 #include "oops/util/linkedList_i.f"
 
-!> Global registry
+!> Global registry for soca_getvalues
 type(registry_t), public:: soca_getvalues_registry
 
 ! ------------------------------------------------------------------------------

@@ -1,42 +1,39 @@
-! (C) Copyright 2020-2020 UCAR
+! (C) Copyright 2020-2021 UCAR
 !
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
 
-!> Interfaces to be called from C++ for Fortran handling of model fields
-
 ! ------------------------------------------------------------------------------
-module soca_getvalue_mod_c
-
-use iso_c_binding
-
-use duration_mod
-use oops_variables_mod
+!> C++ interfaces for soca_getvalues_mod::soca_getvalues
+module soca_getvalues_mod_c
 
 use datetime_mod, only: datetime, c_f_datetime
-use fckit_configuration_module, only: fckit_configuration
-
-use soca_geom_mod, only: soca_geom
-use soca_geom_mod_c, only: soca_geom_registry
-use soca_getvalues_mod
-use soca_getvalues_reg
-use soca_state_mod
-use soca_state_reg
-use soca_increment_mod
-use soca_increment_reg
-
+use iso_c_binding
 use ufo_geovals_mod_c, only: ufo_geovals_registry
 use ufo_geovals_mod, only: ufo_geovals
-use ufo_locations_mod
+use ufo_locations_mod, only: ufo_locations
 
+! soca modules
+use soca_geom_mod, only: soca_geom
+use soca_geom_mod_c, only: soca_geom_registry
+use soca_getvalues_mod, only: soca_getvalues
+use soca_getvalues_reg, only: soca_getvalues_registry
+use soca_state_mod, only: soca_state
+use soca_state_reg, only: soca_state_registry
+use soca_increment_mod, only: soca_increment
+use soca_increment_reg, only: soca_increment_registry
 
 implicit none
 private
+
 
 ! ------------------------------------------------------------------------------
 contains
 ! ------------------------------------------------------------------------------
 
+
+! ------------------------------------------------------------------------------
+!> C++ interface for soca_getvalues_mod::soca_getvalues::create()
 subroutine soca_getvalues_create_c(c_key_self, c_key_geom, c_locs) &
            bind (c, name='soca_getvalues_create_f90')
 integer(c_int),     intent(inout) :: c_key_self      !< Key to self
@@ -61,8 +58,9 @@ call self%create(geom, locs)
 
 end subroutine soca_getvalues_create_c
 
-! --------------------------------------------------------------------------------------------------
 
+! --------------------------------------------------------------------------------------------------
+!> C++ interface for soca_getvalues_mod::soca_getvalues::delete()
 subroutine soca_getvalues_delete_c(c_key_self) bind (c, name='soca_getvalues_delete_f90')
 integer(c_int), intent(inout) :: c_key_self !< Key to self
 
@@ -79,8 +77,9 @@ call soca_getvalues_registry%remove(c_key_self)
 
 end subroutine soca_getvalues_delete_c
 
-! --------------------------------------------------------------------------------------------------
 
+! --------------------------------------------------------------------------------------------------
+!> C++ interface for soca_getvalues_mod::soca_getvalues::fill_geovals()
 subroutine soca_getvalues_fill_geovals_c(c_key_self, c_key_geom, c_key_state, c_t1, c_t2, &
                                          c_locs, c_key_geovals) &
            bind (c, name='soca_getvalues_fill_geovals_f90')
@@ -115,8 +114,9 @@ call self%fill_geovals(geom, state, t1, t2, locs, geovals)
 
 end subroutine soca_getvalues_fill_geovals_c
 
-! --------------------------------------------------------------------------------------------------
 
+! --------------------------------------------------------------------------------------------------
+!> C++ interface for soca_getvalues_mod::soca_getvalues::fill_geovals()
 subroutine soca_getvalues_fill_geovals_tl_c(c_key_self, c_key_geom, c_key_incr, c_t1, c_t2, &
                                          c_locs, c_key_geovals) &
            bind (c, name='soca_getvalues_fill_geovals_tl_f90')
@@ -151,8 +151,9 @@ call self%fill_geovals(geom, incr, t1, t2, locs, geovals)
 
 end subroutine soca_getvalues_fill_geovals_tl_c
 
-! --------------------------------------------------------------------------------------------------
 
+! --------------------------------------------------------------------------------------------------
+!> C++ interface for soca_getvalues_mod::soca_getvalues::fill_geovals_ad()
 subroutine soca_getvalues_fill_geovals_ad_c(c_key_self, c_key_geom, c_key_incr, c_t1, c_t2, &
                                             c_locs, c_key_geovals) &
            bind (c, name='soca_getvalues_fill_geovals_ad_f90')
@@ -187,4 +188,4 @@ call self%fill_geovals_ad(geom, incr, t1, t2, locs, geovals)
 
 end subroutine soca_getvalues_fill_geovals_ad_c
 
-end module soca_getvalue_mod_c
+end module soca_getvalues_mod_c

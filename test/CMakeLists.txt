@@ -45,7 +45,6 @@ set( soca_test_input
   testinput/lineargetvalues.yml
   testinput/linearmodel.yml
   testinput/makeobs.yml
-  testinput/marine2ioda.yml
   testinput/model.yml
   testinput/obslocalization.yml
   testinput/parameters_bump_cor_nicas.yml
