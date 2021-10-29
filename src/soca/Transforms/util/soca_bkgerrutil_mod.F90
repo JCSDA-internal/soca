@@ -1,8 +1,9 @@
-! (C) Copyright 2017-2019 UCAR
+! (C) Copyright 2017-2021 UCAR
 !
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
 
+!> bakground error bounds
 module soca_bkgerrutil_mod
 
 use fckit_configuration_module, only: fckit_configuration
@@ -11,49 +12,69 @@ use soca_fields_mod, only: soca_fields, soca_field
 use soca_utils, only: soca_adjust
 
 implicit none
-
 private
-public :: soca_bkgerr_bounds_type, &
-          soca_bkgerr_readbounds, soca_bkgerr_applybounds
 
-type :: soca_bkgerr_bounds_type
-   real(kind=kind_real) :: t_min, t_max
-   real(kind=kind_real) :: s_min, s_max
-   real(kind=kind_real) :: ssh_min, ssh_max
-   real(kind=kind_real) :: cicen_min, cicen_max
-   real(kind=kind_real) :: hicen_min, hicen_max
- contains
-   procedure :: read => soca_bkgerr_readbounds
-   procedure :: apply => soca_bkgerr_applybounds
+!> bounds for background error
+!!
+!! Used by soca_bkgerrgodas_mod::soca_bkgerrgodas_config and soca_bkgerr_mod::soca_bkgerr_config
+!! \todo cleanup and remove hardcoded variable names
+type, public :: soca_bkgerr_bounds_type
+  real(kind=kind_real) :: t_min, t_max
+  real(kind=kind_real) :: s_min, s_max
+  real(kind=kind_real) :: ssh_min, ssh_max
+  real(kind=kind_real) :: cicen_min, cicen_max
+  real(kind=kind_real) :: hicen_min, hicen_max
+  real(kind=kind_real) :: swh_min, swh_max
+  real(kind=kind_real) :: chl_min, chl_max
+  real(kind=kind_real) :: biop_min, biop_max
+contains
+
+  !> \copybrief soca_bkgerr_readbounds \see soca_bkgerr_readbounds
+  procedure :: read => soca_bkgerr_readbounds
+
+  !> \copybrief soca_bkgerr_applybounds \see soca_bkgerr_applybounds
+  procedure :: apply => soca_bkgerr_applybounds
+
 end type soca_bkgerr_bounds_type
 
 contains
 
+
 ! ------------------------------------------------------------------------------
 !> Read bounds from config
+!!
+!! \relates soca_bkgerrutil_mod::soca_bkgerr_bounds_type
 subroutine soca_bkgerr_readbounds(self, f_conf)
   class(soca_bkgerr_bounds_type), intent(inout) :: self
   type(fckit_configuration),      intent(in)    :: f_conf
 
   ! Get bounds from configuration
-  call f_conf%get_or_die("t_min", self%t_min)
-  call f_conf%get_or_die("t_max", self%t_max)
-  call f_conf%get_or_die("s_min", self%s_min)
-  call f_conf%get_or_die("s_max", self%s_max)
-  call f_conf%get_or_die("ssh_min", self%ssh_min)
-  call f_conf%get_or_die("ssh_max", self%ssh_max)
-  call f_conf%get_or_die("cicen_min", self%cicen_min)
-  call f_conf%get_or_die("cicen_max", self%cicen_max)
-  call f_conf%get_or_die("hicen_min", self%hicen_min)
-  call f_conf%get_or_die("hicen_max", self%hicen_max)
-
+  if(.not. f_conf%get("t_min", self%t_min)) self%t_min = 0.0
+  if(.not. f_conf%get("t_max", self%t_max)) self%t_min = huge(0.0)
+  if(.not. f_conf%get("s_min", self%s_min)) self%s_min = 0.0
+  if(.not. f_conf%get("s_max", self%s_max)) self%s_max = huge(0.0)
+  if(.not. f_conf%get("ssh_min", self%ssh_min)) self%ssh_min = 0.0
+  if(.not. f_conf%get("ssh_max", self%ssh_max)) self%ssh_max = huge(0.0)
+  if(.not. f_conf%get("cicen_min", self%cicen_min)) self%cicen_min = 0.0
+  if(.not. f_conf%get("cicen_max", self%cicen_max)) self%cicen_max = huge(0.0)
+  if(.not. f_conf%get("hicen_min", self%hicen_min)) self%hicen_min = 0.0
+  if(.not. f_conf%get("hicen_max", self%hicen_max)) self%hicen_max = huge(0.0)
+  if(.not. f_conf%get("chl_min", self%chl_min)) self%chl_min = 0.0
+  if(.not. f_conf%get("chl_max", self%chl_max)) self%chl_max =  huge(0.0)
+  if(.not. f_conf%get("biop_min", self%biop_min)) self%biop_min = 0.0
+  if(.not. f_conf%get("biop_max", self%biop_max)) self%biop_max = huge(0.0)
+  if(.not. f_conf%get("swh_min", self%swh_min)) self%swh_min = 0.0
+  if(.not. f_conf%get("swh_max", self%swh_max)) self%swh_max = huge(0.0)
 end subroutine soca_bkgerr_readbounds
+
 
 ! ------------------------------------------------------------------------------
 !> Setup the static background error
+!!
+!! \relates soca_bkgerrutil_mod::soca_bkgerr_bounds_type
 subroutine soca_bkgerr_applybounds(self, fld)
   class(soca_bkgerr_bounds_type), intent(inout) :: self
-  type(soca_fields),              intent(inout) :: fld
+  type(soca_fields),              intent(inout) :: fld !< fields to apply bound to
 
   type(soca_field), pointer :: field
 
@@ -68,7 +89,7 @@ subroutine soca_bkgerr_applybounds(self, fld)
     field => fld%fields(n)
     select case(field%name)
     case ("tocn")
-      vmin = self%t_min
+      vmin = self%t_min!! \relates soca_bkgerrutil_mod::soca_bkgerr_bounds_type
       vmax = self%t_max
     case ("socn")
       vmin = self%s_min
@@ -82,6 +103,15 @@ subroutine soca_bkgerr_applybounds(self, fld)
     case ("hicen")
       vmin = self%hicen_min
       vmax = self%hicen_max
+    case ("chl")
+      vmin = self%chl_min
+      vmax = self%chl_max
+    case ("biop")
+      vmin = self%biop_min
+      vmax = self%biop_max
+    case ("swh")
+      vmin = self%swh_min
+      vmax = self%swh_max
     case default
       cycle
     end select

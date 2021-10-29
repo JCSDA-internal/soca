@@ -1,0 +1,6 @@
+geometry:
+  geom_grid_file: soca_gridspec.small.nc
+  save_local_domain: true
+  full_init: true
+  mom6_input_nml: ./inputnml/input_small.nml
+  fields metadata: ./fields_metadata.yml

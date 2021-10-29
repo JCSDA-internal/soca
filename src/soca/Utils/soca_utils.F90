@@ -1,22 +1,21 @@
-! (C) Copyright 2017-2019 UCAR
+! (C) Copyright 2017-2021 UCAR
 !
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
 
+!> various utility functions
 module soca_utils
 
-use netcdf
-use kinds, only: kind_real
-use gsw_mod_toolbox, only : gsw_rho, gsw_sa_from_sp, gsw_ct_from_pt, gsw_mlp
-use fckit_kdtree_module, only: kdtree, kdtree_create, kdtree_destroy, &
-                               kdtree_k_nearest_neighbors
-use fckit_geometry_module, only: sphere_distance
+use atlas_module, only: atlas_geometry, atlas_indexkdtree
 use fckit_exception_module, only: fckit_exception
+use gsw_mod_toolbox, only : gsw_rho, gsw_sa_from_sp, gsw_ct_from_pt, gsw_mlp
+use kinds, only: kind_real
+use netcdf
 
 implicit none
 
 private
-public :: write2pe, htoz, soca_str2int, soca_adjust, &
+public :: write2pe, soca_str2int, soca_adjust, &
           soca_rho, soca_diff, soca_mld, nc_check, soca_remap_idw
 
 ! ------------------------------------------------------------------------------
@@ -24,7 +23,13 @@ contains
 ! ------------------------------------------------------------------------------
 
 ! ------------------------------------------------------------------------------
-
+!> calculate density from temp/salinity profile
+!!
+!! \param sp: practical salinity profile
+!! \param pt: potential temperature profile
+!! \param p: pressure (depth) profile
+!! \param lon: longitude
+!! \param lat: latitude
 elemental function soca_rho(sp, pt, p, lon, lat)
   real(kind=kind_real), intent(in)  :: pt, sp, p, lon, lat
   real(kind=kind_real) :: sa, ct, lon_rot, soca_rho
@@ -46,8 +51,15 @@ elemental function soca_rho(sp, pt, p, lon, lat)
   return
 end function soca_rho
 
-! ------------------------------------------------------------------------------
 
+! ------------------------------------------------------------------------------
+!> calculate mixed layer depth from temp/salinity profile
+!!
+!! \param pt: potential temperature profile
+!! \param sp: practical salinity profile
+!! \param p: pressure (depth) profile
+!! \param lon: longitude
+!! \param lat: latitude
 function soca_mld(sp, pt, p, lon, lat)
   real(kind=kind_real), intent(in)  :: pt(:), sp(:), p(:), lon, lat
 
@@ -78,8 +90,8 @@ function soca_mld(sp, pt, p, lon, lat)
   return
 end function soca_mld
 
-! ------------------------------------------------------------------------------
 
+! ------------------------------------------------------------------------------
 subroutine soca_diff(dvdz,v,h)
 
   real(kind=kind_real), intent(in)  :: v(:), h(:)
@@ -97,23 +109,9 @@ subroutine soca_diff(dvdz,v,h)
 
 end subroutine soca_diff
 
-! ------------------------------------------------------------------------------
-
-subroutine htoz(h, z)
-  real(kind=kind_real),  intent(in) :: h(:) ! Layer thickness
-  real(kind=kind_real), intent(out) :: z(:) ! Mid-layer depth
-
-  integer :: nlev, ilev
-
-  nlev = size(h,1)
-  z(1)=0.5_kind_real*h(1)
-  do ilev = 2, nlev
-     z(ilev)=sum(h(1:ilev-1))+0.5_kind_real*h(ilev)
-  end do
-end subroutine htoz
 
 ! ------------------------------------------------------------------------------
-
+!> per-PE file output, used by soca_geom to write per-PE grid
 subroutine write2pe(vec,varname,filename,append)
 
   real(kind=kind_real), intent(in) :: vec(:)
@@ -152,8 +150,9 @@ subroutine write2pe(vec,varname,filename,append)
 
 end subroutine write2pe
 
-! ------------------------------------------------------------------------------
 
+! ------------------------------------------------------------------------------
+!> wrapper for netcdf calls
 subroutine nc_check(status)
 
   integer(4), intent ( in) :: status
@@ -162,6 +161,7 @@ subroutine nc_check(status)
      stop "Stopped"
   end if
 end subroutine nc_check
+
 
 ! ------------------------------------------------------------------------------
 !> Apply bounds
@@ -173,6 +173,7 @@ elemental function soca_adjust(std, minstd, maxstd)
 
 end function soca_adjust
 
+
 ! ------------------------------------------------------------------------------
 subroutine soca_str2int(str, int)
   character(len=*),intent(in) :: str
@@ -181,8 +182,9 @@ subroutine soca_str2int(str, int)
   read(str,*)  int
 end subroutine soca_str2int
 
+
 ! ------------------------------------------------------------------------------
-! inverse distance weighted remaping (modified Shepard's method)
+!> inverse distance weighted remaping (modified Shepard's method)
 subroutine soca_remap_idw(lon_src, lat_src, data_src, lon_dst, lat_dst, data_dst)
   real(kind_real), intent(in) :: lon_src(:)
   real(kind_real), intent(in) :: lat_src(:)
@@ -197,23 +199,27 @@ subroutine soca_remap_idw(lon_src, lat_src, data_src, lon_dst, lat_dst, data_dst
   integer :: idx(nn_max)
   integer :: n_src, i, j, n, nn
   real(kind_real) :: dmax, r, w(nn_max),  dist(nn_max)
-  type(kdtree) :: kd
+  type(atlas_geometry) :: ageometry
+  type(atlas_indexkdtree) :: kd
 
   ! create kd tree
   n_src = size(lon_src)
-  kd = kdtree_create(n_src, lon_src, lat_src)
+  ageometry = atlas_geometry("UnitSphere")
+  kd = atlas_indexkdtree(ageometry)
+  call kd%reserve(n_src)
+  call kd%build(n_src, lon_src, lat_src)
 
   ! remap
   do i = 1, size(data_dst, dim=1)
     do j = 1, size(data_dst, dim=2)
 
       ! get nn_max nearest neighbors
-      call kdtree_k_nearest_neighbors(kd, lon_dst(i,j), lat_dst(i,j), nn_max, idx)
+      call kd%closestPoints(lon_dst(i,j), lat_dst(i,j), nn_max, idx)
 
       ! get distances. Add a small offset so there is never any 0 values
       do n=1,nn_max
-        dist(n) = sphere_distance(lon_dst(i,j), lat_dst(i,j), &
-                                  lon_src(idx(n)), lat_src(idx(n)))
+        dist(n) = ageometry%distance(lon_dst(i,j), lat_dst(i,j), &
+                                     lon_src(idx(n)), lat_src(idx(n)))
       end do
       dist = dist + 1e-6
 
@@ -248,7 +254,7 @@ subroutine soca_remap_idw(lon_src, lat_src, data_src, lon_dst, lat_dst, data_dst
   end do
 
   ! done, cleanup
-  call kdtree_destroy(kd)
+  call kd%final()
 end subroutine soca_remap_idw
 
 ! ------------------------------------------------------------------------------

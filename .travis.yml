@@ -2,7 +2,6 @@
 # TravisCI configuration script
 #
 # The following environment variables need to be defined:
-#   BUNDLE_URL  - location of the main bundle repository for this project
 #   MAIN_REPO   - The name of this repo being tested, as spelled in the bundle
 #   LIB_REPOS   - A list of the dependency repos, in the order that they are to be
 #                 built. If the script detects a repo needs to be rebuit, all repos
@@ -13,28 +12,30 @@
 #                 unless listed in $MATCH_REPOS
 #   LFS_REPOS   - All repos in $LIB_REPO will not use git-lfs when checked out
 #                 unless listed in $LFS_REPOS
+#
+# NOTE: these scripts have been changed to assume the bundle CMakeLists.txt
+#  is in this repository directly
 #================================================================================
 
 env:
   global:
-    - BUNDLE_URL="https://github.com/JCSDA/soca-bundle.git"
     - MAIN_REPO=soca
-    - LIB_REPOS="fms cvmix geokdtree mom6_da_hooks gsw mom6 crtm
-                 fckit atlas saber oops ioda ufo ioda-converters soca-config"
+    - LIB_REPOS="jedicmake fms gsw mom6 crtm oops saber ioda ufo"
     - BUILD_OPT=""
-    - BUILD_OPT_CRTM="-DBUILD_CRTM=ON"
-    - BUILD_OPT_OOPS="-DENABLE_OOPS_TOYMODELS=OFF"
-    - BUILD_OPT_SOCA="-DSOCA_TESTS_FORC_DEFAULT_TOL=ON -DCRTM_FIX_DIR=../../repo.src/crtm/fix"
-    - MATCH_REPOS="atlas saber oops ioda ioda-converters ufo soca soca-config"
-    - LFS_REPOS="crtm"
-
-    # secure token used to push changes to GitHub (user: travissluka)
-    - secure: phYDV8BnMVQMhKbuyfpA0cUvelL3Jn9GrMunbAQAa4Hw6OInALu0BSoPAm5xd+lPAsVkhy3BwHlRvjqGYmhDr3NFuxUbZ/l1CcSOJZmV5Rp+5CY5nk0scQ9asuRSzt6jHBIaj9ncOyTWc7B3H6Vp88z6dBDgzeXWMaLy5A7u3fkTVI3dYAmvPAEd9wRp4nI6ij2lnTELIziTYZ07nrdIzYfAc6sqvPXhLkZfxYMkfDAbHHWZt+kGoJGPFfsjX1K7cgj32Ro+lm3Vl0u732QRCw3nUefhZrz3PkkGeX1U+GjQsz8liEgBqKng4ZxocepPsv5gwZj/frMCCtcXj59Pia5pmHy6vzdq4XCp/WpYwbbMEF9y9qVL35s9On9JnU20DEOV4r5c9rmJd8gbpsfK1reT8KOD5zJe9YBHRRXajweq23TFJPRyHVHlnSF8OtybOVG6OMLba9vvPTveQuaDIyc3kur5QtbM0HVv3uplef14m1frQYqji9I99h/pI5WcueRpcxARwagL1tnl3cfK4LyI3QWXidetDduE3MJQNfsKADlKKBVw9W2JyzNFCNj0J7x8r5SwObRX7Kj9YZfIPJGVt5rDc0OZm9wCt/BEZclTLyf4qbFibX/0glPiFoqhuYP/ZXAbQdYWI+si68gxcql33+PMkmbuhehA8qNZicE=
+    - BUILD_OPT_crtm="-DBUILD_CRTM=ON"
+    - BUILD_OPT_mom6="-DENABLE_OCEAN_BGC=ON"
+    - BUILD_OPT_oops="-DENABLE_QG_MODEL=OFF -DENABLE_LORENZ95_MODEL=OFF"
+    - BUILD_OPT_ufo="-DLOCAL_PATH_TESTFILES_IODA=NONE"
+    - BUILD_OPT_soca="-DSOCA_TESTS_FORC_DEFAULT_TOL=ON -DENABLE_OCEAN_BGC=ON"
+    - MATCH_REPOS="saber oops ioda ufo mom6 soca"
+    - LFS_REPOS=""
+    # ENABLE_VALGRIND="ON"
 
 branches:
   only:
     - develop
     - master
+    - release/soca-1.0.0
     - /.*/travisci_.*$/
 
 language: cpp
@@ -52,7 +53,6 @@ cache:
 # Download and prepare the repositories and setup the docker image
 # The working directory will then contain the following directories, with {repo}
 # being each repository listed in $LIB_REPOS and $MAIN_REPO
-#   ./bundle/             - The original main ecbuild bundle repository
 #   ./repo.bundle/{repo}/ - Modified versions of the bundle to individually build repos
 #   ./repo.src/{repo}/    - The source from github
 #   ./repo.build/{repo}/  - The build directory
@@ -67,7 +67,8 @@ before_install:
     export BRANCH=$( [[ "$TRAVIS_PULL_REQUEST" == "false" ]] && \
                      echo $TRAVIS_BRANCH || echo $TRAVIS_PULL_REQUEST_BRANCH )
     export_vars="-e REPO_CACHE=/repo.cache -e LIB_REPOS -e LIB_BUILD_TYPE
-                 -e MAIN_REPO -e MAIN_BUILD_TYPE -e CCACHE_DIR=/ccache -e BUILD_OPT"
+                 -e MAIN_REPO -e MAIN_BUILD_TYPE -e CCACHE_DIR=/ccache -e BUILD_OPT
+                 -e ENABLE_VALGRIND"
     for v in $(env | grep BUILD_OPT_ | cut -d'=' -f 1); do
       export_vars="$export_vars -e $v"
     done
@@ -76,10 +77,11 @@ before_install:
     # clone and prep the repos
     # note: the main repo is not handled by the prep.sh script, it is moved from
     # what TravisCI auto checks out (because TravisCI handles PR merges specially)
+    git config --global url.https://${GH_TOKEN}@github.com/.insteadOf https://github.com/
     WORK_DIR=$HOME/work
     mkdir -p $WORK_DIR/repo.src; cd $WORK_DIR
-    REPO_CACHE=$HOME/repo.cache ${TRAVIS_BUILD_DIR}/.github/travisci/prep.sh
     mv ${TRAVIS_BUILD_DIR} ${WORK_DIR}/repo.src/${MAIN_REPO}
+    REPO_CACHE=$HOME/repo.cache ${WORK_DIR}/repo.src/${MAIN_REPO}/.github/travisci/prep.sh
 
   - |
     # alter file permissions
@@ -100,33 +102,32 @@ before_install:
       --name jcsda_container jcsda/dockerl2
     docker ps -a
 
-
 #======================================================================
 # Here are the run steps
 #======================================================================
 script:
   - |
     # Build code
-    docker exec jcsda_container bash \
-     -c 'cd /jcsda/work && /jcsda/work/repo.src/${MAIN_REPO}/.github/travisci/build.sh'
+    docker exec -it jcsda_container bash \
+     -c 'cd /jcsda/work && /jcsda/work/repo.src/${MAIN_REPO}/.github/travisci/build.sh; exit $?' \
+     || travis_terminate 1
 
   - |
     # run tests
-    docker exec jcsda_container bash \
-     -c 'cd /jcsda/work/repo.build/${MAIN_REPO} && ctest --output-on-failure'
-
-  - |
-    # upload code coverage
-    docker exec jcsda_container bash -c \
-      'cd /jcsda/work/repo.src/${MAIN_REPO} \
-       && lcov -c -d . -d ../../repo.build/${MAIN_REPO}/ -o coverage.info  --no-external -q \
-       && bash <(curl -s https://codecov.io/bash)'
-
+    docker exec -it jcsda_container bash \
+     -c 'cd /jcsda/work/repo.build/${MAIN_REPO} && ctest --output-on-failure' \
+     || travis_terminate 1
 
 
 #======================================================================
 #======================================================================
 after_success:
+  - |
+    # upload code coverage
+    docker exec jcsda_container bash -c \
+      'cd /jcsda/work/repo.src/${MAIN_REPO} \
+       && bash <(curl -s https://codecov.io/bash) -p /jcsda/work/repo.build/${MAIN_REPO} -s . -X gcovout'
+
   - |
     # If this is a cron run, update the release/stable branch of the bundle
     if [[ "$TRAVIS_EVENT_TYPE" == "cron" && "$TRAVIS_BRANCH" == "develop" ]]; then

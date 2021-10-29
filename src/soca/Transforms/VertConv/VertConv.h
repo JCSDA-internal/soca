@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2017-2019  UCAR.
+ * (C) Copyright 2017-2021  UCAR.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -10,26 +10,26 @@
 
 #include <ostream>
 #include <string>
-#include <boost/scoped_ptr.hpp>
-#include <boost/shared_ptr.hpp>
+
+#include "soca/State/State.h"
 
 #include "oops/util/DateTime.h"
 #include "oops/util/Printable.h"
-#include "eckit/config/Configuration.h"
 
 // Forward declarations
 namespace eckit {
   class Configuration;
 }
-
 namespace soca {
-  class State;
   class Geometry;
   class Increment;
+}
 
 // -----------------------------------------------------------------------------
-/// SOCA linear change of variable
 
+namespace soca {
+
+/// SOCA linear change of variable
 class VertConv: public util::Printable {
  public:
   static const std::string classname() {return "soca::VertConv";}
@@ -47,7 +47,8 @@ class VertConv: public util::Printable {
  private:
   void print(std::ostream &) const override;
   int keyFtnConfig_;
-  const State & traj_;
+  const State bkg_lr_;
+  const Geometry geom_;
 };
 // -----------------------------------------------------------------------------
 

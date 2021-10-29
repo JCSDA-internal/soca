@@ -1,14 +1,16 @@
 /*
- * (C) Copyright 2019 UCAR
+ * (C) Copyright 2019-2021 UCAR
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#include "eckit/config/Configuration.h"
+#include "soca/Geometry/Geometry.h"
 #include "soca/GeometryIterator/GeometryIterator.h"
 #include "soca/GeometryIterator/GeometryIteratorFortran.h"
-#include "Fortran.h"
+
+#include "eckit/config/Configuration.h"
+#include "eckit/geometry/Point2.h"
 #include "oops/util/Logger.h"
 
 // -----------------------------------------------------------------------------
@@ -56,7 +58,7 @@ bool GeometryIterator::operator!=(const GeometryIterator & other) const {
 
 eckit::geometry::Point2 GeometryIterator::operator*() const {
   double lat, lon;
-  soca_geom_iter_current_f90(keyIter_, lat, lon);
+  soca_geom_iter_current_f90(keyIter_, lon, lat);
   return eckit::geometry::Point2(lon, lat);
 }
 
@@ -71,7 +73,7 @@ GeometryIterator& GeometryIterator::operator++() {
 
 void GeometryIterator::print(std::ostream & os) const {
   double lat, lon;
-  soca_geom_iter_current_f90(keyIter_, lat, lon);
+  soca_geom_iter_current_f90(keyIter_, lon, lat);
   os << "GeometryIterator, lat/lon: " << lat << " / " << lon << std::endl;
 }
 

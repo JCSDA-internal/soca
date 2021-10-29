@@ -1,0 +1,20 @@
+Test     : Input state: 
+Test     :   Valid time: 2018-04-15T00:00:00Z
+Test     :     ssh   min=   -1.924485   max=    0.927283   mean=   -0.276790
+Test     :    tocn   min=   -1.888390   max=   31.700465   mean=    6.017565
+Test     :    socn   min=   10.721046   max=   40.441659   mean=   34.544390
+Test     :    uocn   min=   -0.858169   max=    0.700095   mean=   -0.000259
+Test     :    vocn   min=   -0.766110   max=    1.437777   mean=    0.002197
+Test     :    hocn   min=    0.001000   max= 1345.640000   mean=  128.628064
+Test     :   cicen   min=    0.000000   max=    1.000000   mean=    0.117513
+Test     : layer_depth   min=    2.285472   max= 5658.305747   mean= 1200.522954
+Test     : Output state: 
+Test     :   Valid time: 2018-04-15T00:00:00Z
+Test     :     ssh   min=   -1.894600   max=    0.895962   mean=   -0.246379
+Test     :    tocn   min=   -1.888008   max=   31.703353   mean=    5.978343
+Test     :    socn   min=   10.721046   max=   39.877328   mean=   34.493012
+Test     :    uocn   min=   -0.858169   max=    0.700094   mean=   -0.000095
+Test     :    vocn   min=   -0.543714   max=    0.684963   mean=    0.001991
+Test     :    hocn   min=    0.001000   max= 1345.640000   mean=  128.431210
+Test     :   cicen   min=    0.000000   max=    1.000000   mean=    0.118906
+Test     : layer_depth   min=    2.412862   max= 5592.096099   mean= 1198.385893

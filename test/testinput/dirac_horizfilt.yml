@@ -1,50 +1,47 @@
-resolution:
-  num_ice_cat: 5
-  num_ice_lev: 4
-  num_sno_lev: 1
-  read_soca_grid: grid
+geometry:
+  mom6_input_nml: ./inputnml/input.nml
+  fields metadata: ./fields_metadata.yml
 
-initial:
+initial condition:
   read_from_file: 1
   basename: ./INPUT/
   date: &date 2018-04-15T00:00:00Z
   ocn_filename: MOM.res.nc
-  ice_filename: ice_model.res.nc
+  ice_filename: cice.res.nc
+  state variables: &soca_vars [cicen, hicen, socn, tocn, ssh, hocn, mld, layer_depth]
 
-variables: &soca_vars [cicen, hicen, socn, tocn, ssh, hocn]
-
-Covariance:
-  covariance: SocaError
-  prefix: soca
-  datadir: ./bump
-  load_nicas: 1
-  lsqrt: 1
-  mpicom: 2
-  strategy: specific_univariate
+background error:
+  covariance model: SocaError
+  analysis variables: [none]
   date: *date
-  variables: [none]
+  bump:
+    verbosity: main
+    datadir: ./bump
+    load_nicas_local: 1
+    strategy: specific_univariate
+  correlation:
+  - name: ocn
+    variables: []
+  - name: ice
+    variables: []
 
-  variable_changes:
+  variable changes:
 
-  - varchange: HorizFiltSOCA
-    variables: [tocn, socn, ssh, cicen, hicen]
+  - variable change: HorizFiltSOCA
     niter: 2
     scale_dist: 1000e3
     scale_flow:  1.0
-    inputVariables:
-      variables: *soca_vars
-    outputVariables:
-      variables: *soca_vars
-
-
+    filter variables: [tocn, socn, ssh, cicen, hicen]
+    input variables: *soca_vars
+    output variables: *soca_vars
 
 dirac:
   ixdir: [1, 17, 41, 31, 51, 63, 81, 14, 16, 43]
   iydir: [8, 21, 19, 33, 29, 26, 16, 41,  5, 43]
-  izdir: [1,  1,  1,  1,  1,  1,  1,  1,  3,  3]
+  izdir: [1,  1,  1,  1,  1,  1,  1,  1,  1,  1]
   ifdir: [1,  2,  3,  3,  3,  3,  3,  3,  4,  5]
 
-output_B:
+output B:
   datadir: Data
   date: *date
   exp: dirac_horizfilt

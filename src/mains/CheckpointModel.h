@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2017-2019 UCAR
+ * (C) Copyright 2017-2021 UCAR
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -10,22 +10,25 @@
 
 #include <string>
 
-#include "eckit/config/LocalConfiguration.h"
-#include "oops/base/PostProcessor.h"
+#include "soca/Traits.h"
+
 #include "soca/Geometry/Geometry.h"
 #include "soca/Model/Model.h"
 #include "soca/State/State.h"
+
+#include "eckit/config/LocalConfiguration.h"
+#include "oops/base/PostProcessor.h"
+#include "oops/mpi/mpi.h"
 #include "oops/runs/Application.h"
 #include "oops/util/DateTime.h"
 #include "oops/util/Duration.h"
 #include "oops/util/Logger.h"
-#include "oops/parallel/mpi/mpi.h"
 
 namespace soca {
 
   class CheckpointModel : public oops::Application {
    public:
-    explicit CheckpointModel(const eckit::mpi::Comm & comm = oops::mpi::comm())
+    explicit CheckpointModel(const eckit::mpi::Comm & comm = oops::mpi::world())
       : Application(comm) {}
     static const std::string classname() {return "soca::CheckpointModel";}
 
@@ -41,12 +44,12 @@ namespace soca {
       //  Setup state to write in the restart
       const eckit::LocalConfiguration backgroundConfig(fullConfig,
                                                        "background");
-      State xb(resol, model.variables(), backgroundConfig);
+      State xb(resol, backgroundConfig);
       oops::Log::test() << "input background: " << std::endl << xb << std::endl;
 
       //  Setup state to write in the restart
       const eckit::LocalConfiguration analysisConfig(fullConfig, "analysis");
-      State xa(resol, model.variables(), analysisConfig);
+      State xa(resol, analysisConfig);
       oops::Log::test() << "analysis: " << std::endl << xa << std::endl;
 
       //  Initialize model

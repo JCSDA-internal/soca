@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2017-2019 UCAR
+ * (C) Copyright 2017-2021 UCAR
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -8,42 +8,43 @@
 #ifndef SOCA_STATE_STATE_H_
 #define SOCA_STATE_STATE_H_
 
+#include <memory>
 #include <ostream>
 #include <string>
+#include <vector>
 
-#include <boost/scoped_ptr.hpp>
+#include "soca/Fortran.h"
 
-#include "soca/Fields/Fields.h"
-#include "soca/GetValuesTraj/GetValuesTraj.h"
+#include "oops/base/Variables.h"
 #include "oops/util/DateTime.h"
 #include "oops/util/ObjectCounter.h"
 #include "oops/util/Printable.h"
+#include "oops/util/Serializable.h"
 
+// Forward declarations
 namespace eckit {
   class Configuration;
 }
-
-namespace oops {
-  class Variables;
-}
-
 namespace ufo {
   class GeoVaLs;
   class Locations;
 }
-
 namespace soca {
   class Geometry;
   class Increment;
+}
+
+//-----------------------------------------------------------------------------
+
+namespace soca {
 
   /// SOCA model state
   /*!
    * A State contains everything that is needed to propagate the state
    * forward in time.
    */
-
-// -----------------------------------------------------------------------------
   class State : public util::Printable,
+                public util::Serializable,
     private util::ObjectCounter<State> {
    public:
       static const std::string classname() {return "soca::State";}
@@ -51,29 +52,22 @@ namespace soca {
       /// Constructor, destructor
       State(const Geometry &, const oops::Variables &,
             const util::DateTime &);
-      State(const Geometry &, const oops::Variables &,
-            const eckit::Configuration &);
+      State(const Geometry &, const eckit::Configuration &);
       State(const Geometry &, const State &);
       State(const State &);
       virtual ~State();
       State & operator=(const State &);
 
-      /// Interpolate to observation location
-      void getValues(const ufo::Locations &,
-                     const oops::Variables &,
-                     ufo::GeoVaLs &) const;
-      void getValues(const ufo::Locations &,
-                     const oops::Variables &,
-                     ufo::GeoVaLs &,
-                     GetValuesTraj &) const;
+      /// Needed by PseudoModel
+      void updateTime(const util::Duration & dt) {time_ += dt;}
 
-      /// Read interpolated GeoVaLs at observation location
-      void getValuesFromFile(const ufo::Locations &,
-                             const oops::Variables &,
-                             ufo::GeoVaLs &) const;
+      /// Rotations
+      void rotate2north(const oops::Variables &, const oops::Variables &) const;
+      void rotate2grid(const oops::Variables &, const oops::Variables &) const;
 
-      /// Interpolate full fields
-      ///  void changeResolution(const State & xx);
+      /// Logarithmic and exponential transformations
+      void logtrans(const oops::Variables &) const;
+      void expontrans(const oops::Variables &) const;
 
       /// Interactions with Increment
       State & operator+=(const Increment &);
@@ -81,27 +75,31 @@ namespace soca {
       /// I/O and diagnostics
       void read(const eckit::Configuration &);
       void write(const eckit::Configuration &) const;
-      double norm() const {return fields_->norm();}
-      const util::DateTime & validTime() const {return fields_->time();}
-      util::DateTime & validTime() {return fields_->time();}
+      double norm() const;
+      const util::DateTime & validTime() const;
+      util::DateTime & validTime();
 
-      /// Access to fields
-      Fields & fields() {return *fields_;}
-      const Fields & fields() const {return *fields_;}
+      /// Serialize and deserialize
+      size_t serialSize() const override;
+      void serialize(std::vector<double> &) const override;
+      void deserialize(const std::vector<double> &, size_t &) override;
 
-      boost::shared_ptr<const Geometry> geometry() const {
-        return fields_->geometry();
-      }
+
+      int & toFortran() {return keyFlds_;}
+      const int & toFortran() const {return keyFlds_;}
+      std::shared_ptr<const Geometry> geometry() const;
+      const oops::Variables & variables() const {return vars_;}
 
       /// Other
       void zero();
       void accumul(const double &, const State &);
 
    private:
-      void print(std::ostream &) const;
-      boost::scoped_ptr<Fields> fields_;
-      boost::scoped_ptr<Fields> stash_;
-      boost::shared_ptr<const Geometry> geom_;
+      void print(std::ostream &) const override;
+
+      F90flds keyFlds_;
+
+      std::shared_ptr<const Geometry> geom_;
       oops::Variables vars_;
       util::DateTime time_;
   };

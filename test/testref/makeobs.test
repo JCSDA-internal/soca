@@ -1,0 +1,29 @@
+Test     : Initial state: 
+Test     :   Valid time: 2018-04-15T00:00:00Z
+Test     :   cicen   min=    0.000000   max=    1.000000   mean=    0.117513
+Test     :   hicen   min=    0.000000   max=    4.032667   mean=    0.471252
+Test     :    socn   min=   10.721046   max=   40.441659   mean=   34.544390
+Test     :    tocn   min=   -1.888390   max=   31.700465   mean=    6.017565
+Test     :     ssh   min=   -1.924485   max=    0.927283   mean=   -0.276790
+Test     :    hocn   min=    0.001000   max= 1345.640000   mean=  128.628064
+Test     :      sw   min=    0.000000   max=    0.000000   mean=    0.000000
+Test     :     lhf   min=    0.000000   max=    0.000000   mean=    0.000000
+Test     :     shf   min=    0.000000   max=    0.000000   mean=    0.000000
+Test     :      lw   min=    0.000000   max=    0.000000   mean=    0.000000
+Test     :      us   min=    0.000000   max=    0.000000   mean=    0.000000
+Test     : Final state: 
+Test     :   Valid time: 2018-04-15T03:00:00Z
+Test     :   cicen   min=    0.000000   max=    1.000000   mean=    0.117513
+Test     :   hicen   min=    0.000000   max=    4.032667   mean=    0.471252
+Test     :    socn   min=   10.719095   max=   40.441647   mean=   34.544480
+Test     :    tocn   min=   -1.888585   max=   31.734800   mean=    6.015852
+Test     :     ssh   min=   -1.908095   max=    0.909066   mean=   -0.276583
+Test     :    hocn   min=    0.001000   max= 1345.640000   mean=  128.628088
+Test     :      sw   min= -225.097763   max=   -0.000000   mean=  -71.739321
+Test     :     lhf   min=  -38.137398   max=  256.597656   mean=   42.010040
+Test     :     shf   min=  -58.949295   max=  201.374298   mean=    6.075334
+Test     :      lw   min=    0.000000   max=   88.036087   mean=   31.395529
+Test     :      us   min=    0.000000   max=    0.019160   mean=    0.007202
+Test     : H(x): 
+Test     : InsituTemperature nobs= 10 Min=8.008760, Max=30.381888, RMS=23.736167
+Test     : End H(x)

@@ -1,0 +1,33 @@
+Test     : Input state 1: 
+Test     :   Valid time: 2018-04-15T00:00:00Z
+Test     :   cicen   min=    0.000000   max=    1.000000   mean=    0.117513
+Test     :   hicen   min=    0.000000   max=    4.032667   mean=    0.471252
+Test     :   hsnon   min=    0.000000   max=    1.271283   mean=    0.088687
+Test     :    socn   min=   10.721046   max=   40.441659   mean=   34.544390
+Test     :    tocn   min=   -1.888390   max=   31.700465   mean=    6.017565
+Test     :     ssh   min=   -1.924485   max=    0.927283   mean=   -0.276790
+Test     :    hocn   min=    0.001000   max= 1345.640000   mean=  128.628064
+Test     :    uocn   min=   -0.858169   max=    0.700095   mean=   -0.000259
+Test     :    vocn   min=   -0.766110   max=    1.437777   mean=    0.002197
+Test     : Input state 2: 
+Test     :   Valid time: 2018-04-15T00:00:00Z
+Test     :   cicen   min=    0.000000   max=    1.000000   mean=    0.117513
+Test     :   hicen   min=    0.000000   max=    4.032667   mean=    0.471252
+Test     :   hsnon   min=    0.000000   max=    1.271283   mean=    0.088687
+Test     :    socn   min=   10.721046   max=   40.441659   mean=   34.544390
+Test     :    tocn   min=   -1.888390   max=   31.700465   mean=    6.017565
+Test     :     ssh   min=   -1.924485   max=    0.927283   mean=   -0.276790
+Test     :    hocn   min=    0.001000   max= 1345.640000   mean=  128.628064
+Test     :    uocn   min=   -0.858169   max=    0.700095   mean=   -0.000259
+Test     :    vocn   min=   -0.766110   max=    1.437777   mean=    0.002197
+Test     : Output increment: 
+Test     :   Valid time: 2018-04-15T00:00:00Z
+Test     :   cicen   min=    0.000000   max=    0.000000   mean=    0.000000
+Test     :   hicen   min=    0.000000   max=    0.000000   mean=    0.000000
+Test     :   hsnon   min=    0.000000   max=    0.000000   mean=    0.000000
+Test     :    socn   min=    0.000000   max=    0.000000   mean=    0.000000
+Test     :    tocn   min=    0.000000   max=    0.000000   mean=    0.000000
+Test     :     ssh   min=    0.000000   max=    0.000000   mean=    0.000000
+Test     :    hocn   min=    0.000000   max=    0.000000   mean=    0.000000
+Test     :    uocn   min=    0.000000   max=    0.000000   mean=    0.000000
+Test     :    vocn   min=    0.000000   max=    0.000000   mean=    0.000000

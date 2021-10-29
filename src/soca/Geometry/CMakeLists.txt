@@ -1,0 +1,9 @@
+soca_target_sources(
+  Geometry.cc
+  Geometry.h
+  GeometryFortran.h
+  soca_geom_mod.F90
+  soca_geom.interface.F90
+  FmsInput.cc
+  FmsInput.h
+)

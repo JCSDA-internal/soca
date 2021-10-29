@@ -1,0 +1,16 @@
+Test     : Input Dirac increment: 
+Test     :   Valid time: 2018-04-15T00:00:00Z
+Test     :   cicen   min=    0.000000   max=    0.000000   mean=    0.000000
+Test     :   hicen   min=    0.000000   max=    0.000000   mean=    0.000000
+Test     :    socn   min=    0.000000   max=    0.000000   mean=    0.000000
+Test     :    tocn   min=    0.000000   max=    0.000000   mean=    0.000000
+Test     :     ssh   min=    0.000000   max=    1.000000   mean=    0.003652
+Test     :    hocn   min=    0.000000   max=    0.000000   mean=    0.000000
+Test     : B * Increment: 
+Test     :   Valid time: 2018-04-15T00:00:00Z
+Test     :   cicen   min=    0.000000   max=    0.000000   mean=    0.000000
+Test     :   hicen   min=    0.000000   max=    0.000000   mean=    0.000000
+Test     :    socn   min=    0.000000   max=    0.000000   mean=    0.000000
+Test     :    tocn   min=    0.000000   max=    0.000000   mean=    0.000000
+Test     :     ssh   min=    0.000000   max=    1.000000   mean=    0.021958
+Test     :    hocn   min=    0.000000   max=    0.000000   mean=    0.000000

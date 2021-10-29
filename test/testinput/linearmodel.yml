@@ -1,49 +1,48 @@
-Geometry:
-  num_ice_cat: 5
-  num_ice_lev: 4
-  num_sno_lev: 1
-  read_soca_grid: grid
+geometry:
+  mom6_input_nml: ./inputnml/input.nml
+  fields metadata: ./fields_metadata.yml
 
-Variables:
-  variables: &soca_vars [cicen, hicen, socn, tocn, ssh, hocn, sw, lhf, shf, lw, us]
+analysis variables: &soca_vars [cicen, hicen, socn, tocn, ssh, hocn, sw, lhf, shf, lw, us]
 
-Model:
+model:
   name: SOCA
   tstep: PT1H
   advance_mom6: 0
-  variables: *soca_vars
+  model variables: *soca_vars
 
-ModelBias:
-  covariance: SocaError
+model aux control:
 
-State:
+initial condition:
   read_from_file: 1
-  basename: "./INPUT/"
+  basename: ./INPUT/
   ocn_sfc_filename: MOM.res.nc
   ocn_filename: MOM.res.nc
-  ice_filename: ice_model.res.nc
+  ice_filename: cice.res.nc
   date: &date 2018-04-15T00:00:00Z
+  state variables: *soca_vars
 
-LinearModel:
-  name:
-  version: IdTLM
+linear model:
+  name: Identity
+  increment variables: *soca_vars
   tstep: PT1H
-  advance_mom6: 0
-  variables: *soca_vars
 
-LinearModelTest:
-  fclength: PT2H
-  testiterTL: 1
-  toleranceTL: 999.9e1 # Not testing tlm
-  toleranceAD: 1.0e-12
+linear model test:
+  forecast length: PT2H
+  first multiplier TL: 0.01
+  iterations TL: 1
+  tolerance TL: 999.9e1 # Not testing tlm
+  tolerance AD: 1.0e-12
 
-Covariance:
-  covariance: SocaError
-  prefix: soca
-  datadir: ./bump
-  strategy: specific_univariate
-  load_nicas: 1
-  lsqrt: 1
-  mpicom: 2
+background error:
+  covariance model: SocaError
+  analysis variables: *soca_vars
   date: *date
-  variables: *soca_vars
+  bump:
+    datadir: ./bump
+    strategy: specific_univariate
+    load_nicas_local: 1
+  correlation:
+  - name: ocn
+    variables: [socn, tocn, ssh, hocn, sw, lhf, shf, lw, us]
+  - name: ice
+    variables: [cicen, hicen]

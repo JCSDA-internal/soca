@@ -1,6 +1,6 @@
 #!/bin/bash
 #================================================================================
-# (C) Copyright 2019 UCAR
+# (C) Copyright 2019-2020 UCAR
 # This software is licensed under the terms of the Apache Licence Version 2.0
 # which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
 #
@@ -11,14 +11,12 @@
 #================================================================================
 set -e
 
-RELEASE_BRANCH=${RELEASE_BRANCH:-release/stable-nightly}
-
 cwd=$(pwd)
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
 # figure out what git hash is associated with each repo in the bundle.
 # Note that there are several places where this repo could exist.
-bundle_dir=$cwd/bundle
+bundle_dir=$cwd/repo.src/${MAIN_REPO}/bundle
 bundle_repos=$(grep "ecbuild_bundle(" $bundle_dir/CMakeLists.txt | awk '{print $3}')
 for r in $bundle_repos; do
 
@@ -66,6 +64,6 @@ for r in $bundle_repos; do
     if [[ $hash != "none" ]]; then
         hash=${hash:0:7}
         echo "changing $r to $hash"
-        sed -i "s/\(.* PROJECT $r .*\) \(BRANCH\|TAG\) .*/\1 TAG $hash \)/" $bundle_dir/CMakeLists.txt
+        sed -i "s/\(.*PROJECT \+$r .*\)\(BRANCH\|TAG\) *\([a-zA-Z0-9\/\_\.\-]*\)\(.*\)/\1TAG $hash\4/g" $bundle_dir/CMakeLists.txt
     fi
 done

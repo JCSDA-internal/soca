@@ -1,21 +1,19 @@
-Geometry:
-  num_ice_cat: 5
-  num_ice_lev: 4
-  num_sno_lev: 1
-  read_soca_grid: grid
+geometry:
+  mom6_input_nml: ./inputnml/input.nml
+  fields metadata: ./fields_metadata.yml
 
-State:
+background:
   read_from_file: 1
   date: &date 2018-04-15T00:00:00Z
   basename: ./INPUT/
   ocn_filename: MOM.res.nc
-  ice_filename: ice_model.res.nc
-  variables: &soca_vars [cicen, hicen, socn, tocn, ssh, hocn]
+  ice_filename: cice.res.nc
+  state variables: &soca_vars [cicen, hicen, socn, tocn, ssh, hocn]
 
-LinearVariableChangeTests:
-- varchange: BkgErrSOCA
-  toleranceInverse: 1e-12
-  testinverse: 1
+linear variable change tests:
+- variable change: BkgErrSOCA
+  tolerance inverse: 1e-12
+  test inverse: 1
   read_from_file: 3
   basename: ./
   ocn_filename: ocn.bkgerror.nc
@@ -33,7 +31,5 @@ LinearVariableChangeTests:
   hicen_max: 100.0
   #fixed_std_sst: 0.005 # OK to create pretty increments
   #fixed_std_sss: 0.001 # but that option should not exist!
-  inputVariables:
-    variables: *soca_vars
-  outputVariables:
-    variables: *soca_vars
+  input variables: *soca_vars
+  output variables: *soca_vars

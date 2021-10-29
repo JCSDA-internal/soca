@@ -1,32 +1,50 @@
 /*
- * (C) Copyright 2017-2019  UCAR.
+ * (C) Copyright 2017-2021  UCAR.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#include "soca/Transforms/BkgErr/BkgErr.h"
-
 #include <ostream>
 #include <string>
 
-#include "oops/util/Logger.h"
 #include "eckit/config/Configuration.h"
-#include "BkgErrFortran.h"
+
+#include "oops/base/Variables.h"
+#include "oops/interface/LinearVariableChange.h"
+#include "oops/util/Logger.h"
+
+#include "soca/Geometry/Geometry.h"
 #include "soca/Increment/Increment.h"
 #include "soca/State/State.h"
-#include "soca/Geometry/Geometry.h"
+#include "soca/Traits.h"
+#include "soca/Transforms/BkgErr/BkgErr.h"
+#include "soca/Transforms/BkgErr/BkgErrFortran.h"
 
 using oops::Log;
 
 namespace soca {
+
+  // -----------------------------------------------------------------------------
+  static oops::LinearVariableChangeMaker<Traits,
+            oops::LinearVariableChange<Traits, BkgErr> >
+            makerLinearVariableChangeBkgErr_("BkgErrSOCA");
+
   // -----------------------------------------------------------------------------
   BkgErr::BkgErr(const State & bkg,
                  const State & traj,
                  const Geometry & geom,
-                 const eckit::Configuration & conf): traj_(traj) {
+                 const eckit::Configuration & conf) {
     const eckit::Configuration * configc = &conf;
-    soca_bkgerr_setup_f90(keyFtnConfig_, &configc, traj_.fields().toFortran());
+
+    // Interpolate trajectory to the geom resolution
+    State traj_at_geomres(geom, traj);
+
+    // Read/setup the diagonal of B
+    soca_bkgerr_setup_f90(keyFtnConfig_,
+                          &configc,
+                          traj_at_geomres.toFortran(),
+                          geom.toFortran());
   }
   // -----------------------------------------------------------------------------
   BkgErr::~BkgErr() {
@@ -35,9 +53,7 @@ namespace soca {
   // -----------------------------------------------------------------------------
   void BkgErr::multiply(const Increment & dxa, Increment & dxm) const {
     // dxm = K dxa
-    soca_bkgerr_mult_f90(keyFtnConfig_,
-                         dxa.fields().toFortran(),
-                         dxm.fields().toFortran());
+    soca_bkgerr_mult_f90(keyFtnConfig_, dxa.toFortran(), dxm.toFortran());
   }
   // -----------------------------------------------------------------------------
   void BkgErr::multiplyInverse(const Increment & dxm, Increment & dxa) const {
@@ -46,9 +62,7 @@ namespace soca {
   // -----------------------------------------------------------------------------
   void BkgErr::multiplyAD(const Increment & dxm, Increment & dxa) const {
     // dxa = K^T dxm
-    soca_bkgerr_mult_f90(keyFtnConfig_,
-                         dxm.fields().toFortran(),
-                         dxa.fields().toFortran());
+    soca_bkgerr_mult_f90(keyFtnConfig_, dxm.toFortran(), dxa.toFortran());
   }
   // -----------------------------------------------------------------------------
   void BkgErr::multiplyInverseAD(const Increment & dxa, Increment & dxm) const {

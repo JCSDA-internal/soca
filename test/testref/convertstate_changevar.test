@@ -1,0 +1,70 @@
+Test     : Input state: 
+Test     :   Valid time: 2018-04-15T00:00:00Z
+Test     :     ssh   min=   -1.924485   max=    0.927283   mean=   -0.276790
+Test     :    tocn   min=   -1.888390   max=   31.700465   mean=    6.017565
+Test     :    socn   min=   10.721046   max=   40.441659   mean=   34.544390
+Test     :    uocn   min=   -0.858169   max=    0.700095   mean=   -0.000259
+Test     :    vocn   min=   -0.766110   max=    1.437777   mean=    0.002197
+Test     :    hocn   min=    0.001000   max= 1345.640000   mean=  128.628064
+Test     :   cicen   min=    0.000000   max=    1.000000   mean=    0.117513
+Test     :     chl   min=    0.000010   max=    4.671990   mean=    0.118483
+Test     : layer_depth   min=    2.285472   max= 5658.305747   mean= 1200.522954
+Test     : Variable transform: Ana2Model
+Test     : Variable change to: 9 variables: ssh, tocn, socn, uocn, vocn, hocn, cicen, chl, layer_depth
+Test     : State after variable transform: 
+Test     :   Valid time: 2018-04-15T00:00:00Z
+Test     :     ssh   min=   -1.924485   max=    0.927283   mean=   -0.276790
+Test     :    tocn   min=   -1.888390   max=   31.700465   mean=    6.017565
+Test     :    socn   min=    2.372209   max=    3.699860   mean=    3.541539
+Test     :    uocn   min=   -0.858169   max=    0.700095   mean=   -0.000218
+Test     :    vocn   min=   -0.766110   max=    1.437578   mean=    0.002099
+Test     :    hocn   min=    0.001000   max= 1345.640000   mean=  128.628064
+Test     :   cicen   min=    0.000000   max=    1.000000   mean=    0.117513
+Test     :     chl   min=  -11.417615   max=    1.541585   mean=   -4.163698
+Test     : layer_depth   min=    2.285472   max= 5658.305747   mean= 1200.522954
+Test     : Output state: 
+Test     :   Valid time: 2018-04-15T00:00:00Z
+Test     :     ssh   min=   -1.924485   max=    0.927283   mean=   -0.276790
+Test     :    tocn   min=   -1.888390   max=   31.700465   mean=    6.017565
+Test     :    socn   min=    2.372209   max=    3.699860   mean=    3.541539
+Test     :    uocn   min=   -0.858169   max=    0.700095   mean=   -0.000218
+Test     :    vocn   min=   -0.766110   max=    1.437578   mean=    0.002099
+Test     :    hocn   min=    0.001000   max= 1345.640000   mean=  128.628064
+Test     :   cicen   min=    0.000000   max=    1.000000   mean=    0.117513
+Test     :     chl   min=  -11.417615   max=    1.541585   mean=   -4.163698
+Test     : layer_depth   min=    2.285472   max= 5658.305747   mean= 1200.522954
+Test     : Input state: 
+Test     :   Valid time: 2018-04-15T00:00:00Z
+Test     :     ssh   min=   -1.924485   max=    0.927283   mean=   -0.276790
+Test     :    tocn   min=   -1.888390   max=   31.700465   mean=    6.017565
+Test     :    socn   min=   10.721046   max=   40.441659   mean=   34.544390
+Test     :    uocn   min=   -0.858169   max=    0.700095   mean=   -0.000259
+Test     :    vocn   min=   -0.766110   max=    1.437777   mean=    0.002197
+Test     :    hocn   min=    0.001000   max= 1345.640000   mean=  128.628064
+Test     :   cicen   min=    0.000000   max=    1.000000   mean=    0.117513
+Test     :     chl   min=    0.000010   max=    4.671990   mean=    0.118483
+Test     : layer_depth   min=    2.285472   max= 5658.305747   mean= 1200.522954
+Test     : Variable transform: Ana2Model
+Test     : Variable change to: 9 variables: ssh, tocn, socn, uocn, vocn, hocn, cicen, chl, layer_depth
+Test     : State after variable transform: 
+Test     :   Valid time: 2018-04-15T00:00:00Z
+Test     :     ssh   min=   -1.924485   max=    0.927283   mean=   -0.276790
+Test     :    tocn   min=   -1.888390   max=   31.700465   mean=    6.017565
+Test     :    socn   min=    2.372209   max=    3.699860   mean=    3.541539
+Test     :    uocn   min=   -0.858169   max=    0.700095   mean=   -0.000218
+Test     :    vocn   min=   -0.766110   max=    1.437578   mean=    0.002099
+Test     :    hocn   min=    0.001000   max= 1345.640000   mean=  128.628064
+Test     :   cicen   min=    0.000000   max=    1.000000   mean=    0.117513
+Test     :     chl   min=  -11.417615   max=    1.541585   mean=   -4.163698
+Test     : layer_depth   min=    2.285472   max= 5658.305747   mean= 1200.522954
+Test     : Output state: 
+Test     :   Valid time: 2018-04-15T00:00:00Z
+Test     :     ssh   min=   -1.924485   max=    0.927283   mean=   -0.276790
+Test     :    tocn   min=   -1.888390   max=   31.700465   mean=    6.017565
+Test     :    socn   min=    2.372209   max=    3.699860   mean=    3.541539
+Test     :    uocn   min=   -0.858169   max=    0.700095   mean=   -0.000218
+Test     :    vocn   min=   -0.766110   max=    1.437578   mean=    0.002099
+Test     :    hocn   min=    0.001000   max= 1345.640000   mean=  128.628064
+Test     :   cicen   min=    0.000000   max=    1.000000   mean=    0.117513
+Test     :     chl   min=  -11.417615   max=    1.541585   mean=   -4.163698
+Test     : layer_depth   min=    2.285472   max= 5658.305747   mean= 1200.522954

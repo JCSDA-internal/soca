@@ -1,0 +1,25 @@
+copy_files:
+  directories:
+  - [ $(bundle)/soca/test/Data/fields_metadata.yml,   fields_metadata.yaml]
+  - [ $(bundle)/soca/test/Data/rossrad.dat,           rossrad.dat]
+
+template_files:
+  destination: stage_dir
+  template:
+    pattern: AT_SQUARE_BRACES
+    dictionaries:
+      - $(suite_dir)/$(experiment).yaml
+  directories:
+    - [ $(bundle)/soca/ewok/mom_input.nml, mom_input.nml]
+
+
+# model specific static files
+r2d2_files:
+  - fetch:
+      resolution: $(horizontal_resolution)
+      type: static
+      model: $(model)
+      file_type:
+        - soca_gridspec.nc
+        - MOM_input
+      target_file: $(stage_dir)/$(file_type)

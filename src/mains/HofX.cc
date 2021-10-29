@@ -1,6 +1,6 @@
 /*
  * (C) Copyright 2009-2016 ECMWF.
- * (C) Copyright 2017-2019 UCAR.
+ * (C) Copyright 2017-2021 UCAR.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -10,14 +10,19 @@
  */
 
 #include "soca/Traits.h"
-#include "oops/runs/HofX.h"
+
+#include "oops/generic/instantiateModelFactory.h"
+#include "oops/runs/HofX4D.h"
 #include "oops/runs/Run.h"
+#include "ufo/instantiateObsErrorFactory.h"
 #include "ufo/instantiateObsFilterFactory.h"
+#include "ufo/ObsTraits.h"
 
 int main(int argc,  char ** argv) {
   oops::Run run(argc, argv);
-  ufo::instantiateObsFilterFactory<soca::Traits>();
-  oops::HofX<soca::Traits> hofx;
-  run.execute(hofx);
-  return 0;
+  oops::instantiateModelFactory<soca::Traits>();
+  ufo::instantiateObsErrorFactory<ufo::ObsTraits>();
+  ufo::instantiateObsFilterFactory<ufo::ObsTraits>();
+  oops::HofX4D<soca::Traits, ufo::ObsTraits> hofx;
+  return run.execute(hofx);
 }

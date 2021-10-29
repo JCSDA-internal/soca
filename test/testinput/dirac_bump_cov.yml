@@ -1,13 +1,15 @@
 Covariance:
   covariance: BUMP
   bump:
-    colocated: 0
-    load_nicas: 1
-    lsqrt: 1
-    mpicom: 2
+    load_nicas_local: 1
     nonunit_diag: 1
-    prefix: soca_bump_cov
     strategy: specific_univariate
+    grids:
+    - prefix: soca_bump_cov_3d
+      variables: [hocn, socn, tocn]
+    - prefix: soca_bump_cov_2d
+      variables: [cicen, hicen, ssh]
+
   date: &date 2018-04-15T00:00:00Z
   variable_changes:
   - varchange: BalanceSOCA
@@ -30,7 +32,7 @@ initial:
   basename: ./INPUT/
   date: *date
   ocn_filename: MOM.res.nc
-  ice_filename: ice_model.res.nc
+  ice_filename: cice.res.nc
 logging:
   categories: Info, Test, Warning, Error, Trace
 output_B:
@@ -39,8 +41,6 @@ output_B:
   exp: dirac_bump_cov
   type: an
 resolution:
-  num_ice_cat: 5
-  num_ice_lev: 4
-  num_sno_lev: 1
-  read_soca_grid: grid
+  mom6_input_nml: ./inputnml/input.nml
+  fields metadata: ./fields_metadata.yml
 variables: *soca_vars

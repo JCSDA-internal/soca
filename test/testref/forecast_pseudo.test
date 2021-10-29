@@ -1,0 +1,16 @@
+Test     : Initial state: 
+Test     :   Valid time: 2018-04-15T00:00:00Z
+Test     :    socn   min=   10.721046   max=   40.441659   mean=   34.544390
+Test     :    tocn   min=   -1.888390   max=   31.700465   mean=    6.017565
+Test     :     ssh   min=   -1.924485   max=    0.927283   mean=   -0.276790
+Test     :    hocn   min=    0.001000   max= 1345.640000   mean=  128.628064
+Test     :    uocn   min=   -0.858169   max=    0.700095   mean=   -0.000259
+Test     :    vocn   min=   -0.766110   max=    1.437777   mean=    0.002197
+Test     : Final state: 
+Test     :   Valid time: 2018-04-15T06:00:00Z
+Test     :    socn   min=   10.717151   max=   40.441636   mean=   34.545265
+Test     :    tocn   min=   -1.888347   max=   31.768646   mean=    6.016725
+Test     :     ssh   min=   -1.905732   max=    0.907499   mean=   -0.276544
+Test     :    hocn   min=    0.001000   max= 1345.640000   mean=  128.628049
+Test     :    uocn   min=   -0.839280   max=    0.691555   mean=    0.000273
+Test     :    vocn   min=   -0.897519   max=    0.946051   mean=    0.000564

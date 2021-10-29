@@ -1,0 +1,74 @@
+geometry:
+  mom6_input_nml: ./inputnml/input.nml
+  fields metadata: ./fields_metadata.yml
+
+model:
+  name: PseudoModel
+  tstep: PT1H
+  state variables: &soca_vars [socn, tocn, ssh, hocn, uocn, vocn]
+  states:
+  - date: 2018-04-15T01:00:00Z
+    basename: ./Data/
+    ocn_filename: ocn.mom6.fc.2018-04-15T00:00:00Z.PT1H.nc
+    read_from_file: 1
+  - date: 2018-04-15T02:00:00Z
+    basename: ./Data/
+    ocn_filename: ocn.mom6.fc.2018-04-15T00:00:00Z.PT2H.nc
+    read_from_file: 1
+  - date: 2018-04-15T03:00:00Z
+    basename: ./Data/
+    ocn_filename: ocn.mom6.fc.2018-04-15T00:00:00Z.PT3H.nc
+    read_from_file: 1
+
+initial condition:
+  read_from_file: 1
+  date: 2018-04-15T00:00:00Z
+  basename: ./INPUT/
+  ocn_filename: MOM.res.nc
+  state variables: *soca_vars
+
+window begin: 2018-04-15T00:00:00Z
+window length: PT3H
+forecast length: PT3H
+
+observations:
+
+  - obs space:
+      name: SeaSurfaceTemp
+      obsdataout: {obsfile: ./Data/sst.out.nc}
+      obsdatain:  {obsfile: ./Data/sst.nc}
+      simulated variables: [sea_surface_temperature]
+    obs operator:
+      name: Identity
+
+  - obs space:
+      name: SeaSurfaceSalinity
+      obsdataout: {obsfile: ./Data/sss.out.nc}
+      obsdatain:  {obsfile: ./Data/sss.nc}
+      simulated variables: [sea_surface_salinity]
+    obs operator:
+      name: Identity
+
+  - obs space:
+      name: ADT
+      obsdataout: {obsfile: ./Data/adt.out.nc}
+      obsdatain:  {obsfile: ./Data/adt.nc}
+      simulated variables: [obs_absolute_dynamic_topography]
+    obs operator:
+      name: ADT
+
+  - obs space:
+      name: InsituTemperature
+      obsdataout: {obsfile: ./Data/prof.T.out.nc}
+      obsdatain:  {obsfile: ./Data/prof.nc}
+      simulated variables: [sea_water_temperature]
+    obs operator:
+      name: InsituTemperature
+
+  - obs space:
+      name: InsituSalinity
+      obsdataout: {obsfile: ./Data/prof.S.out.nc}
+      obsdatain:  {obsfile: ./Data/prof.nc}
+      simulated variables: [sea_water_salinity]
+    obs operator:
+      name: MarineVertInterp

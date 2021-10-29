@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2017-2019 UCAR
+ * (C) Copyright 2017-2021 UCAR
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -10,19 +10,22 @@
 
 #include <string>
 
-#include "eckit/mpi/Comm.h"
-#include "eckit/config/LocalConfiguration.h"
-#include "oops/base/PostProcessor.h"
+#include "soca/Traits.h"
+
 #include "soca/Geometry/Geometry.h"
 #include "soca/Model/Model.h"
+
+#include "eckit/config/LocalConfiguration.h"
+#include "eckit/mpi/Comm.h"
+#include "oops/base/PostProcessor.h"
+#include "oops/mpi/mpi.h"
 #include "oops/runs/Application.h"
-#include "oops/parallel/mpi/mpi.h"
 
 namespace soca {
 
   class GridGen : public oops::Application {
    public:
-    explicit GridGen(const eckit::mpi::Comm & comm = oops::mpi::comm())
+    explicit GridGen(const eckit::mpi::Comm & comm = oops::mpi::world())
       : Application(comm) {}
     static const std::string classname() {return "soca::GridGen";}
 
@@ -32,8 +35,7 @@ namespace soca {
       const Geometry geom(geomconfig, this->getComm());
 
       //  Generate model grid
-      const eckit::LocalConfiguration gridgenconfig(fullConfig, "gridgen");
-      geom.gridgen(gridgenconfig);
+      geom.gridgen();
 
       return 0;
     }

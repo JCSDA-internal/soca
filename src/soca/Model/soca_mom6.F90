@@ -1,26 +1,8 @@
-! (C) Copyright 2017-2019 UCAR
+! (C) Copyright 2017-2021 UCAR
 !
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
 
-! ------------------------------------------------------------------------------
-!> Typical geometry/state for ocean/sea-ice models
-!>
-!>   level 0          ---- Surface                     Tsfc
-!>   level 1          ---- Upper snow level            Qsno
-!>     .                        .                       .
-!>     .                        .                       .
-!>     .                        .                       .
-!>   level nzs        ---- Lower snow level            Qsno
-!>   level nzs+1      ---- Upper ice level             Qice
-!>     .                        .                       .
-!>     .                        .                       .
-!>     .                        .                       .
-!>   level nzs+nzi    ---- Upper ice level             Qice
-!>   level nzs+nzi+1  ---- Ice/Ocean interface level   Tfreeze (from S)
-!>   level nzs+nzi+2  ---- Upper level Ocean           SST
-!>
-!>
 module soca_mom6
 
 use fckit_mpi_module, only: fckit_mpi_comm
@@ -69,15 +51,7 @@ implicit none
 
 private
 public :: soca_geomdomain_init, &
-          soca_ice_column, &
           soca_mom6_init, soca_mom6_config, soca_mom6_end
-
-!> Simple Data structure for the generic sea-ice state
-type soca_ice_column
-   integer                        :: ncat ! Number of ice categories
-   integer                        :: nzi  ! Number of ice levels
-   integer                        :: nzs  ! Number of snow levels
-end type soca_ice_column
 
 !> Data structure neccessary to initialize/run mom6
 type soca_mom6_config
@@ -95,22 +69,23 @@ type soca_mom6_config
   type(MOM_control_struct), pointer :: MOM_CSp  !< Tracer flow control structure.
   type(MOM_restart_CS),     pointer :: restart_CSp !< A pointer to the restart control structure
   type(surface_forcing_CS), pointer :: surface_forcing_CSp => NULL()
+  type(fckit_mpi_comm) :: f_comm
+  type(param_file_type) :: param_file
 end type soca_mom6_config
 
 contains
 
 ! ------------------------------------------------------------------------------
 !> Initialize mom6's domain
-subroutine soca_geomdomain_init(Domain, nk)
+subroutine soca_geomdomain_init(Domain, nk, f_comm)
   type(MOM_domain_type), pointer, intent(in) :: Domain !< Ocean model domain
-  integer, intent(out) :: nk
+  integer, intent(out)                       :: nk
+  type(fckit_mpi_comm),           intent(in) :: f_comm
 
   type(param_file_type) :: param_file                !< Structure to parse for run-time parameters
   type(directories)     :: dirs                      !< Structure containing several relevant directory paths
-  type(fckit_mpi_comm) :: f_comm
   character(len=40)  :: mod_name = "soca_mom6" ! This module's name.
 
-  f_comm = fckit_mpi_comm()
   call mpp_init(localcomm=f_comm%communicator())
 
   ! Initialize fms
@@ -164,13 +139,11 @@ subroutine soca_mom6_init(mom6_config, partial_init)
        ocean_nthreads, ncores_per_node, use_hyper_thread
   integer :: param_int
   logical :: a_partial_init = .false.
-  type(fckit_mpi_comm) :: f_comm
 
   ! Check if partial mom6 init is requiered
   if (present(partial_init)) a_partial_init = partial_init
 
-  f_comm = fckit_mpi_comm()
-  call MOM_infra_init(localcomm=f_comm%communicator())
+  call MOM_infra_init(localcomm=mom6_config%f_comm%communicator())
   call io_infra_init()
 
   ! Provide for namelist specification of the run length and calendar data.
@@ -228,6 +201,7 @@ subroutine soca_mom6_init(mom6_config, partial_init)
                               US=mom6_config%scaling,&
                               C_p=mom6_config%fluxes%C_p)
 
+  mom6_config%param_file = param_file
   ! Exit here for partial initialization
   if (a_partial_init) return
 

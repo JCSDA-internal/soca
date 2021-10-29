@@ -1,6 +1,6 @@
 /*
  * (C) Copyright 2009-2016 ECMWF.
- * (C) Copyright 2017-2019 UCAR.
+ * (C) Copyright 2017-2021 UCAR.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -9,15 +9,13 @@
  * does it submit to any jurisdiction.
  */
 
-#include "soca/Traits.h"
-#include "soca/Transforms/instantiateBalanceOpFactory.h"
-#include "oops/runs/EstimateParams.h"
 #include "oops/runs/Run.h"
+#include "saber/oops/EstimateParams.h"
+#include "soca/Traits.h"
+
 
 int main(int argc,  char ** argv) {
-  soca::instantiateBalanceOpFactory();
   oops::Run run(argc, argv);
-  oops::EstimateParams<soca::Traits> dir;
-  run.execute(dir);
-  return 0;
+  saber::EstimateParams<soca::Traits> dir;
+  return run.execute(dir);
 }

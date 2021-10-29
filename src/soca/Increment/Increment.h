@@ -1,6 +1,6 @@
 /*
  * (C) Copyright 2009-2016 ECMWF.
- * (C) Copyright 2017-2019 UCAR.
+ * (C) Copyright 2017-2021 UCAR.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -12,42 +12,41 @@
 #ifndef SOCA_INCREMENT_INCREMENT_H_
 #define SOCA_INCREMENT_INCREMENT_H_
 
+#include <memory>
 #include <ostream>
 #include <string>
+#include <vector>
 
-#include <boost/scoped_ptr.hpp>
-#include <boost/shared_ptr.hpp>
+#include "soca/Fortran.h"
 
-#include "soca/Fields/Fields.h"
-#include "soca/GetValuesTraj/GetValuesTraj.h"
-#include "soca/Geometry/Geometry.h"
-#include "soca/GeometryIterator/GeometryIterator.h"
-#include "oops/base/GeneralizedDepartures.h"
-#include "oops/base/GridPoint.h"
+#include "oops/base/LocalIncrement.h"
+#include "oops/base/Variables.h"
 #include "oops/util/DateTime.h"
 #include "oops/util/Duration.h"
 #include "oops/util/ObjectCounter.h"
 #include "oops/util/Printable.h"
-#include "oops/util/dot_product.h"
+#include "oops/util/Serializable.h"
 
+// Forward declarations
+namespace atlas {
+  class FieldSet;
+}
 namespace eckit {
   class Configuration;
 }
-
-namespace oops {
-  class UnstructuredGrid;
-  class Variables;
-}
-
 namespace ufo {
   class GeoVaLs;
   class Locations;
 }
+namespace soca {
+  class Geometry;
+  class GeometryIterator;
+  class State;
+}
+
+// -----------------------------------------------------------------------------
 
 namespace soca {
-  class ModelBiasIncrement;
-  class ErrorCovariance;
-  class State;
 
   /// Increment Class: Difference between two states
   /*!
@@ -55,10 +54,10 @@ namespace soca {
    *  an Increment. The Increment contains everything that is needed by
    *  the tangent-linear and adjoint models.
    */
-  // -----------------------------------------------------------------------------
 
-  class Increment : public oops::GeneralizedDepartures,
+  class Increment :
     public util::Printable,
+    public util::Serializable,
     private util::ObjectCounter<Increment> {
    public:
       static const std::string classname() {return "soca::Increment";}
@@ -73,6 +72,7 @@ namespace soca {
 
       /// Basic operators
       void diff(const State &, const State &);
+      void ones();
       void zero();
       void zero(const util::DateTime &);
       Increment & operator =(const Increment &);
@@ -86,49 +86,42 @@ namespace soca {
       void dirac(const eckit::Configuration &);
 
       /// Getpoint/Setpoint
-      oops::GridPoint getPoint(const GeometryIterator &) const;
-      void setPoint(const oops::GridPoint &, const GeometryIterator &);
+      oops::LocalIncrement getLocal(const GeometryIterator &) const;
+      void setLocal(const oops::LocalIncrement &, const GeometryIterator &);
 
-      /// Interpolate to observation location
-      void getValuesTL(const ufo::Locations &,
-                       const oops::Variables &,
-                       ufo::GeoVaLs &,
-                       const GetValuesTraj &) const;
-      void getValuesAD(const ufo::Locations &,
-                       const oops::Variables &,
-                       const ufo::GeoVaLs &,
-                       const GetValuesTraj &);
+      /// ATLAS
+      void setAtlas(atlas::FieldSet *) const;
+      void toAtlas(atlas::FieldSet *) const;
+      void fromAtlas(atlas::FieldSet *);
 
       /// I/O and diagnostics
       void read(const eckit::Configuration &);
       void write(const eckit::Configuration &) const;
-      double norm() const {return fields_->norm();}
-      const util::DateTime & validTime() const {return fields_->time();}
-      util::DateTime & validTime() {return fields_->time();}
-      void updateTime(const util::Duration & dt) {fields_->time() += dt;}
+      double norm() const;
+      const util::DateTime & validTime() const;
+      util::DateTime & validTime();
+      void updateTime(const util::Duration & dt);
 
-
-      /// Unstructured grid
-      void ug_coord(oops::UnstructuredGrid &) const;
-      void field_to_ug(oops::UnstructuredGrid &, const int &) const;
-      void field_from_ug(const oops::UnstructuredGrid &, const int &);
-
-      /// Access to fields
-      Fields & fields() {return *fields_;}
-      const Fields & fields() const {return *fields_;}
-
-      boost::shared_ptr<const Geometry> geometry() const {
-       return fields_->geometry();
-      }
+      /// Serialize and deserialize
+      size_t serialSize() const override;
+      void serialize(std::vector<double> &) const override;
+      void deserialize(const std::vector<double> &, size_t &) override;
 
       /// Other
       void accumul(const double &, const State &);
+      int & toFortran() {return keyFlds_;}
+      const int & toFortran() const {return keyFlds_;}
+      std::shared_ptr<const Geometry> geometry() const;
+
 
       /// Data
    private:
-      void print(std::ostream &) const;
-      boost::scoped_ptr<Fields> fields_;
-      boost::scoped_ptr<Fields> stash_;
+      void print(std::ostream &) const override;
+
+      F90flds keyFlds_;
+      oops::Variables vars_;
+      util::DateTime time_;
+      std::shared_ptr<const Geometry> geom_;
   };
   // -----------------------------------------------------------------------------
 

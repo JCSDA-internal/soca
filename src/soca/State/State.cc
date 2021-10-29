@@ -1,34 +1,27 @@
 /*
- * (C) Copyright 2017-2019 UCAR
+ * (C) Copyright 2017-2021 UCAR
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#include "soca/State/State.h"
-
-#include <algorithm>
-#include <string>
-#include <utility>
+#include <iomanip>
 #include <vector>
+
+#include "soca/Geometry/Geometry.h"
+#include "soca/Increment/Increment.h"
+#include "soca/State/State.h"
+#include "soca/State/StateFortran.h"
 
 #include "eckit/config/LocalConfiguration.h"
 #include "eckit/exception/Exceptions.h"
 
 #include "oops/base/Variables.h"
 #include "oops/util/DateTime.h"
-#include "oops/util/Duration.h"
 #include "oops/util/Logger.h"
 
 #include "ufo/GeoVaLs.h"
 #include "ufo/Locations.h"
-
-#include "soca/ModelBias.h"
-#include "soca/Fields/Fields.h"
-#include "soca/Geometry/Geometry.h"
-#include "soca/Increment/Increment.h"
-#include "soca/Model/Model.h"
-#include "soca/GetValuesTraj/GetValuesTraj.h"
 
 using oops::Log;
 
@@ -37,100 +30,80 @@ namespace soca {
   // -----------------------------------------------------------------------------
   /// Constructor, destructor
   // -----------------------------------------------------------------------------
-  State::State(const Geometry & resol, const oops::Variables & vars,
+  State::State(const Geometry & geom, const oops::Variables & vars,
                const util::DateTime & vt)
-    : fields_(new Fields(resol, vars, vt)), stash_()
+    : time_(vt), vars_(vars), geom_(new Geometry(geom))
   {
+    soca_state_create_f90(keyFlds_, geom_->toFortran(), vars_);
     Log::trace() << "State::State created." << std::endl;
   }
   // -----------------------------------------------------------------------------
-  State::State(const Geometry & resol, const oops::Variables & vars,
-               const eckit::Configuration & file)
+  State::State(const Geometry & geom, const eckit::Configuration & file)
+    : time_(),
+      vars_(file, "state variables"),
+      geom_(new Geometry(geom))
   {
-    fields_.reset(new Fields(resol, vars, util::DateTime()));
-    fields_->read(file);
-    ASSERT(fields_);
+    util::DateTime * dtp = &time_;
+    oops::Variables vars(vars_);
+    soca_state_create_f90(keyFlds_, geom_->toFortran(), vars);
+    soca_state_read_file_f90(toFortran(), &file, &dtp);
     Log::trace() << "State::State created and read in." << std::endl;
   }
   // -----------------------------------------------------------------------------
-  State::State(const Geometry & resol, const State & other)
-    : fields_(new Fields(*other.fields_, resol)), stash_()
+  State::State(const Geometry & geom, const State & other)
+    : vars_(other.vars_), time_(other.time_), geom_(new Geometry(geom))
   {
-    ASSERT(fields_);
+    soca_state_create_f90(keyFlds_, geom_->toFortran(), vars_);
+    soca_state_change_resol_f90(toFortran(), other.keyFlds_);
     Log::trace() << "State::State created by interpolation." << std::endl;
   }
   // -----------------------------------------------------------------------------
   State::State(const State & other)
-    : fields_(new Fields(*other.fields_)), stash_()
+    : vars_(other.vars_), time_(other.time_), geom_(new Geometry(*other.geom_))
   {
-    ASSERT(fields_);
+    soca_state_create_f90(keyFlds_, geom_->toFortran(), vars_);
+    soca_state_copy_f90(toFortran(), other.toFortran());
     Log::trace() << "State::State copied." << std::endl;
   }
   // -----------------------------------------------------------------------------
   State::~State() {
+    soca_state_delete_f90(toFortran());
     Log::trace() << "State::State destructed." << std::endl;
   }
   // -----------------------------------------------------------------------------
   /// Basic operators
   // -----------------------------------------------------------------------------
   State & State::operator=(const State & rhs) {
-    ASSERT(fields_);
-    *fields_ = *rhs.fields_;
+    time_ = rhs.time_;
+    soca_state_copy_f90(toFortran(), rhs.toFortran());
     return *this;
   }
   // -----------------------------------------------------------------------------
-  /// Interpolate to observation location
+  /// Rotations
   // -----------------------------------------------------------------------------
-  void State::getValues(const ufo::Locations & locs,
-                        const oops::Variables & vars,
-                        ufo::GeoVaLs & cols) const {
-    if (fields_->geometry()->getAtmInit())
-      {
-        // Get atm geovals
-        // The variables in vars that are also defined in soca will be
-        // over-written in the interpolation call bellow
-        getValuesFromFile(locs, vars, cols);
-        }
-    // Get ocean geovals
-    fields_->getValues(locs, vars, cols);
+  void State::rotate2north(const oops::Variables & u,
+                           const oops::Variables & v) const {
+    Log::trace() << "State::State rotate from logical to geographical North."
+                 << std::endl;
+    soca_state_rotate2north_f90(toFortran(), u, v);
   }
   // -----------------------------------------------------------------------------
-  void State::getValues(const ufo::Locations & locs,
-                        const oops::Variables & vars,
-                        ufo::GeoVaLs & cols,
-                        GetValuesTraj & traj) const {
-    fields_->getValues(locs, vars, cols, traj);
+  void State::rotate2grid(const oops::Variables & u,
+                          const oops::Variables & v) const {
+    Log::trace() << "State::State rotate from geographical to logical North."
+    << std::endl;
+    soca_state_rotate2grid_f90(toFortran(), u, v);
   }
-  // -----------------------------------------------------------------------------
-  /// Read Interpolated GeoVaLs from file
-  // -----------------------------------------------------------------------------
-  void State::getValuesFromFile(const ufo::Locations & locs,
-                                const oops::Variables & vars,
-                                ufo::GeoVaLs & atmgom) const {
-    // Get Atm configuration
-    eckit::LocalConfiguration conf(fields_->geometry()->getAtmConf());
-
-    // Get Time Bounds
-    util::DateTime bgn = util::DateTime(conf.getString("notocean.date_begin"));
-    util::DateTime end = util::DateTime(conf.getString("notocean.date_end"));
-
-    // Create the Atmospheric Geometry in Observation Space
-    eckit::LocalConfiguration confatmobs(conf, "notocean.ObsSpace");
-    ioda::ObsSpace atmobs(confatmobs, fields_->geometry()->getComm(),
-                                bgn, end);
-
-    // Get GeoVaLs from file
-    eckit::LocalConfiguration confatm(conf, "notocean");
-    atmgom.read(confatm, atmobs);
-  }
-
   // -----------------------------------------------------------------------------
   /// Interactions with Increments
   // -----------------------------------------------------------------------------
   State & State::operator+=(const Increment & dx) {
-    ASSERT(this->validTime() == dx.validTime());
-    ASSERT(fields_);
-    fields_->add(dx.fields());
+    ASSERT(validTime() == dx.validTime());
+    // Interpolate increment to analysis grid
+    Increment dx_hr(*geom_, dx);
+
+    // Add increment to background state
+    soca_state_add_incr_f90(toFortran(), dx_hr.toFortran());
     return *this;
   }
   // -----------------------------------------------------------------------------
@@ -138,28 +111,115 @@ namespace soca {
   // -----------------------------------------------------------------------------
   void State::read(const eckit::Configuration & files) {
     Log::trace() << "State::State read started." << std::endl;
-    fields_->read(files);
+    util::DateTime * dtp = &time_;
+    soca_state_read_file_f90(toFortran(), &files, &dtp);
     Log::trace() << "State::State read done." << std::endl;
   }
   // -----------------------------------------------------------------------------
   void State::write(const eckit::Configuration & files) const {
-    fields_->write(files);
+    const util::DateTime * dtp = &time_;
+    soca_state_write_file_f90(toFortran(), &files, &dtp);
   }
   // -----------------------------------------------------------------------------
   void State::print(std::ostream & os) const {
     os << std::endl << "  Valid time: " << validTime();
-    os << *fields_;
+    int n0, nf;
+    soca_state_sizes_f90(toFortran(), n0, n0, n0, nf);
+    std::vector<double> zstat(3*nf);
+    soca_state_gpnorm_f90(toFortran(), nf, zstat[0]);
+    for (int jj = 0; jj < nf; ++jj) {
+      os << std::endl << std::right << std::setw(7) << vars_[jj]
+         << "   min="  <<  std::fixed << std::setw(12) <<
+                           std::right << zstat[3*jj]
+         << "   max="  <<  std::fixed << std::setw(12) <<
+                           std::right << zstat[3*jj+1]
+         << "   mean=" <<  std::fixed << std::setw(12) <<
+                           std::right << zstat[3*jj+2];
+    }
+  }
+  // -----------------------------------------------------------------------------
+  /// Serialization
+  // -----------------------------------------------------------------------------
+  size_t State::serialSize() const {
+    // Field
+    size_t nn;
+    soca_state_serial_size_f90(toFortran(), geom_->toFortran(), nn);
+
+    // Magic factor
+    nn += 1;
+
+    // Date and time
+    nn += time_.serialSize();
+    return nn;
+  }
+  // -----------------------------------------------------------------------------
+  constexpr double SerializeCheckValue = -54321.98765;
+  void State::serialize(std::vector<double> & vect) const {
+    // Serialize the field
+    size_t nn;
+    soca_state_serial_size_f90(toFortran(), geom_->toFortran(), nn);
+    std::vector<double> vect_field(nn, 0);
+    vect.reserve(vect.size() + nn + 1 + time_.serialSize());
+    soca_state_serialize_f90(toFortran(), geom_->toFortran(), nn,
+                             vect_field.data());
+    vect.insert(vect.end(), vect_field.begin(), vect_field.end());
+
+    // Magic value placed in serialization; used to validate deserialization
+    vect.push_back(SerializeCheckValue);
+
+    // Serialize the date and time
+    time_.serialize(vect);
+  }
+  // -----------------------------------------------------------------------------
+  void State::deserialize(const std::vector<double> & vect, size_t & index) {
+    // Deserialize the field
+    soca_state_deserialize_f90(toFortran(), geom_->toFortran(), vect.size(),
+                               vect.data(), index);
+
+    // Use magic value to validate deserialization
+    ASSERT(vect.at(index) == SerializeCheckValue);
+    ++index;
+
+    // Deserialize the date and time
+    time_.deserialize(vect, index);
   }
   // -----------------------------------------------------------------------------
   /// For accumulator
   // -----------------------------------------------------------------------------
   void State::zero() {
-    fields_->zero();
+    soca_state_zero_f90(toFortran());
   }
   // -----------------------------------------------------------------------------
   void State::accumul(const double & zz, const State & xx) {
-    fields_->axpy(zz, *xx.fields_);
+    soca_state_axpy_f90(toFortran(), zz, xx.toFortran());
   }
+  // -----------------------------------------------------------------------------
+  double State::norm() const {
+    double zz = 0.0;
+    soca_state_rms_f90(toFortran(), zz);
+    return zz;
+  }
+  // -----------------------------------------------------------------------------
+  /// Logarithmic and exponential transformations
+  // -----------------------------------------------------------------------------
+  void State::logtrans(const oops::Variables & trvar) const {
+    Log::trace() << "State::State apply logarithmic transformation."
+                 << std::endl;
+    soca_state_logtrans_f90(toFortran(), trvar);
+  }
+  // -----------------------------------------------------------------------------
+  void State::expontrans(const oops::Variables & trvar) const {
+    Log::trace() << "State::State apply exponential transformation."
+    << std::endl;
+    soca_state_expontrans_f90(toFortran(), trvar);
+  }
+
+  // -----------------------------------------------------------------------------
+  const util::DateTime & State::validTime() const {return time_;}
+  // -----------------------------------------------------------------------------
+  util::DateTime & State::validTime() {return time_;}
+  // -----------------------------------------------------------------------------
+  std::shared_ptr<const Geometry> State::geometry() const {return geom_;}
   // -----------------------------------------------------------------------------
 
 }  // namespace soca
