@@ -60,7 +60,7 @@ contains
 !> Setup for the geometry iterator
 !!
 !! \relates soca_geom_iter_mod::soca_geom_iter
-subroutine soca_geom_iter_setup(self, geom, iindex, jindex)
+subroutine soca_geom_iter_setup(self, geom, iindex, jindex, kindex)
   class(soca_geom_iter),    intent(inout) :: self
   type(soca_geom), pointer, intent(   in) :: geom !< Pointer to geometry
   integer,         intent(   in) :: iindex, jindex, kindex  !< starting index
@@ -130,7 +130,7 @@ end subroutine soca_geom_iter_equals
 subroutine soca_geom_iter_current(self, lon, lat, depth)
 
   ! Passed variables
-  type(soca_geom_iter), intent( in) :: self !< Geometry iterator
+  class(soca_geom_iter), intent( in) :: self !< Geometry iterator
   real(kind_real),    intent(out) :: lat  !< Latitude
   real(kind_real),    intent(out) :: lon  !< Longitude
   real(kind_real),    intent(out) :: depth!< Depth

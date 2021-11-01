@@ -32,11 +32,12 @@ contains
 
 ! ------------------------------------------------------------------------------
 !> C++ interface for soca_geom_iter_mod::soca_geom_iter::setup()
-subroutine soca_geom_iter_setup_c(c_key_self, c_key_geom, c_iindex, c_jindex) bind(c, name='soca_geom_iter_setup_f90')
+subroutine soca_geom_iter_setup_c(c_key_self, c_key_geom, c_iindex, c_jindex, c_kindex) bind(c, name='soca_geom_iter_setup_f90')
   integer(c_int), intent(inout) :: c_key_self !< Geometry iterator
   integer(c_int), intent(   in) :: c_key_geom !< Geometry
   integer(c_int), intent(   in) :: c_iindex    !< Index
   integer(c_int), intent(   in) :: c_jindex    !< Index
+  integer(c_int), intent(   in) :: c_kindex    !< Index
 
   ! Local variables
   type(soca_geom_iter),     pointer :: self
@@ -49,7 +50,7 @@ subroutine soca_geom_iter_setup_c(c_key_self, c_key_geom, c_iindex, c_jindex) bi
   call soca_geom_registry%get(c_key_geom, geom)
 
   ! Call Fortran
-  call self%setup(geom, c_iindex, c_jindex)
+  call self%setup(geom, c_iindex, c_jindex, c_kindex)
 
 end subroutine soca_geom_iter_setup_c
 
@@ -151,7 +152,7 @@ subroutine soca_geom_iter_get_area_c(c_key_self, c_val) bind(c, name='soca_geom_
   type(soca_geom_iter), pointer :: self
   call soca_geom_iter_registry%get(c_key_self, self)
 
-  c_val = self%geom%cell_area(self%iind,self%jind)
+  c_val = self%geom%cell_area(self%iindex,self%jindex)
 end subroutine
 
 
@@ -164,7 +165,7 @@ subroutine soca_geom_iter_get_rossby_c(c_key_self, c_val) bind(c, name='soca_geo
   type(soca_geom_iter), pointer :: self
   call soca_geom_iter_registry%get(c_key_self, self)
 
-  c_val = self%geom%rossby_radius(self%iind,self%jind)
+  c_val = self%geom%rossby_radius(self%iindex,self%jindex)
 end subroutine
 
 ! ------------------------------------------------------------------------------

@@ -216,7 +216,7 @@ subroutine soca_geom_init(self, f_conf, f_comm)
 
   ! retrieve iterator dimension from config
   ! FIX for now hardcoded for debuggin
-  self%iterator_dimension = 2
+  self%iterator_dimension = 3
 
 end subroutine soca_geom_init
 
@@ -442,12 +442,17 @@ subroutine soca_geom_allocate(self)
 
   ! Get domain shape (number of levels, indices of data and compute domain)
   call soca_geom_get_domain_indices(self, "compute", self%isc, self%iec, self%jsc, self%jec)
+  self%ksc = ksd; self%kec = ked
   call soca_geom_get_domain_indices(self, "data", isd, ied, jsd, jed)
-  self%isd = isd ;  self%ied = ied ; self%jsd = jsd; self%jed = jed
+  self%isd = isd ;  self%ied = ied
+  self%jsd = jsd; self%jed = jed
+  self%ksd = ksd; self%ked = ked
   call soca_geom_get_domain_indices(self, "global", self%isg, self%ieg, self%jsg, self%jeg)
+  self%ksg = ksd; self%keg = ked
   call soca_geom_get_domain_indices(self, "compute", self%iscl, self%iecl, self%jscl, self%jecl, local=.true.)
+  self%kscl = ksd; self%kecl = ked
   call soca_geom_get_domain_indices(self, "data", self%isdl, self%iedl, self%jsdl, self%jedl, local=.true.)
-  nzo = self%nzo
+  self%ksdl = ksd; self%kedl = ked
 
   ! Allocate arrays on compute domain
   allocate(self%lonh(self%isg:self%ieg));        self%lonh = 0.0_kind_real
