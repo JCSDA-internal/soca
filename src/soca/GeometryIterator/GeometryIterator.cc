@@ -97,7 +97,7 @@ int GeometryIterator::iteratorDimension() const {
 void GeometryIterator::print(std::ostream & os) const {
   double lat, lon, dep;
   soca_geom_iter_current_f90(keyIter_, lon, lat, dep);
-  os << "GeometryIterator, lat/lon: " << lat << " / " << lon
+  os << "GeometryIterator, lat/lon/depth: " << lat << " / " << lon
      << " / " << dep << std::endl;
 }
 

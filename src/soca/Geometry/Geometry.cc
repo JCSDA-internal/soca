@@ -73,8 +73,10 @@ namespace soca {
   // -----------------------------------------------------------------------------
   GeometryIterator Geometry::begin() const {
     // return start of the geometry on this mpi tile
-    int ist, iend, jst, jend, kst, kend;
+    int ist, iend, jst, jend, kst, kend, itd;
     soca_geo_start_end_f90(keyGeom_, ist, iend, jst, jend, kst, kend);
+    // 3D iterator starts from 0 for surface variables
+    if (IteratorDimension() == 3) kst = 0;
     return GeometryIterator(*this, ist, jst, kst);
   }
   // -----------------------------------------------------------------------------

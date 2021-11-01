@@ -141,10 +141,14 @@ contains
       if (self%kindex == -1) then 
         ! special case of {-1} means end of the grid
         depth = depth1d(1,1,self%geom%kec)
-      elseif (self%kindex < 1 .OR. self%kindex > self%geom%kec) then
+      elseif (self%kindex == 0) then
+        ! special case of the surface fields
+        depth = 0;
+      elseif (self%kindex < 0 .OR. self%kindex > self%geom%kec) then
+        ! out of range
         call abor1_ftn('soca_geom_iter_current: depth iterator out of bounds')
       else
-        ! inside of the grid
+        ! inside of the 3D grid
         depth = depth1d(1,1,self%kindex)
       endif
     else
