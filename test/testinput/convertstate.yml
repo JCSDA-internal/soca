@@ -1,9 +1,8 @@
-inputVariables:
-  variables: &soca_vars [ssh, tocn, socn, uocn, vocn, hocn, cicen, layer_depth]
 input geometry:
   geom_grid_file: soca_gridspec.nc
   mom6_input_nml: ./inputnml/input.nml
   fields metadata: ./fields_metadata.yml
+
 output geometry:
   geom_grid_file: soca_gridspec.small.nc
   mom6_input_nml: ./inputnml/input_small.nml
@@ -17,7 +16,7 @@ states:
      ice_filename: cice.res.nc
      sfc_filename: sfc.res.nc
      date: &bkg_date 2018-04-15T00:00:00Z
-     state variables: *soca_vars
+     state variables: [ssh, tocn, socn, uocn, vocn, hocn, cicen, layer_depth]
   output:
      datadir: Data
      exp: remapped

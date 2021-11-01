@@ -1,9 +1,10 @@
-! (C) Copyright 2020-2020 UCAR
+! (C) Copyright 2020-2021 UCAR
 !
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
 
-! ------------------------------------------------------------------------------
+!> registry for soca_state_mod::soca_state instances for use in
+!! Fortran/C++ interfaces of soca_state_mod_c
 module soca_state_reg
 
 use soca_state_mod
@@ -15,7 +16,7 @@ private
 #define LISTED_TYPE soca_state
 #include "oops/util/linkedList_i.f"
 
-!> Global registry
+!> Global registry for soca_state instances
 type(registry_t), public:: soca_state_registry
 
 ! ------------------------------------------------------------------------------
