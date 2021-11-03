@@ -13,7 +13,6 @@ set( soca_test_input
   testinput/convertstate.yml
   testinput/convertstate_changevar.yml
   testinput/diffstates.yml
-  testinput/dirac_bump_cov.yml
   testinput/dirac_horizfilt.yml
   testinput/dirac_soca_cov.yml
   testinput/dirac_socahyb_cov.yml
@@ -45,7 +44,6 @@ set( soca_test_input
   testinput/lineargetvalues.yml
   testinput/linearmodel.yml
   testinput/makeobs.yml
-  testinput/marine2ioda.yml
   testinput/model.yml
   testinput/obslocalization.yml
   testinput/parameters_bump_cor_nicas.yml
@@ -82,7 +80,6 @@ set( soca_test_ref
   testref/convertstate.test
   testref/convertstate_changevar.test
   testref/diffstates.test
-  testref/dirac_bump_cov.test
   testref/dirac_horizfilt.test
   testref/dirac_soca_cov.test
   testref/dirac_socahyb_cov.test

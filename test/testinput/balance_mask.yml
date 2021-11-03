@@ -10,8 +10,6 @@ initial condition:
   ice_filename: cice.res.nc
   state variables: &soca_vars [cicen, hicen, socn, tocn, ssh, hocn]
 
-variables: *soca_vars
-
 background error:
   covariance model: SocaError
   analysis variables: [ssh]
@@ -31,8 +29,8 @@ dirac:
   izdir: [1,  1,  1,  1,  1,  1,  1,  1,  1]
   ifdir: [3,  3,  3,  3,  3,  3,  3,  3,  3]
 
-output B:
+output dirac:
   datadir: Data
   date: *date
-  exp: balance_mask
+  exp: balance_mask_%id%
   type: an
