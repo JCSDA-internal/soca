@@ -44,6 +44,7 @@ target_link_libraries( soca PUBLIC ioda )
 target_link_libraries( soca PUBLIC ufo )
 
 # Add source code in the subdirectories
+add_subdirectory(AnalyticInit)
 add_subdirectory(Covariance)
 add_subdirectory(Fields)
 add_subdirectory(Geometry)

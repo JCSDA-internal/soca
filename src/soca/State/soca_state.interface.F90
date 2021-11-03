@@ -19,6 +19,7 @@ use soca_increment_mod, only: soca_increment
 use soca_increment_reg, only: soca_increment_registry
 use soca_state_mod, only: soca_state
 use soca_state_reg, only: soca_state_registry
+use soca_analytic_mod, only: soca_analytic_state
 
 implicit none
 private
@@ -401,5 +402,25 @@ subroutine soca_state_expontrans_c(c_key_self, c_trvars) bind(c,name='soca_state
   call self%logexpon(transfunc="expon", trvars=trvars)
 
 end subroutine soca_state_expontrans_c
+
+
+! ------------------------------------------------------------------------------
+subroutine scoa_state_analytic_c(c_key_self, c_conf, c_dt) &
+    bind(c,name='soca_state_analytic_f90')
+  integer (c_int),     intent(in   ) :: c_key_self
+  TYPE (c_ptr), value, intent(in   ) :: c_conf
+  TYPE (c_ptr),        intent(inout) :: c_dt
+
+  type(soca_state), pointer :: self
+  type(datetime) :: fdate
+
+  call soca_state_registry%get(c_key_self,self)
+  call c_f_datetime (c_dt, fdate)
+  call soca_analytic_state(self)
+end subroutine scoa_state_analytic_c
+
+
+
+
 
 end module soca_state_mod_c
