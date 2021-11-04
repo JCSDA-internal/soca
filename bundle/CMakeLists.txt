@@ -56,7 +56,7 @@ ecbuild_bundle( PROJECT saber GIT "https://github.com/jcsda/saber.git"        UP
 ecbuild_bundle( PROJECT ioda  GIT "https://github.com/jcsda/ioda.git"         UPDATE TAG 2.1.0 )
 ecbuild_bundle( PROJECT gsw   GIT "https://github.com/jcsda/GSW-Fortran.git"  UPDATE TAG 1.0.0.soca )
 ecbuild_bundle( PROJECT ufo   GIT "https://github.com/jcsda/ufo.git"          UPDATE TAG 1.2.0 )
-ecbuild_bundle( PROJECT mom6  GIT "https://github.com/jcsda/MOM6.git"         UPDATE TAG 1.0.0.soca )
+ecbuild_bundle( PROJECT mom6  GIT "https://github.com/jcsda/MOM6.git"         UPDATE TAG 1.0.0.soca RECURSIVE )
 ecbuild_bundle( PROJECT soca            SOURCE "../" )
 
 ecbuild_bundle_finalize()
