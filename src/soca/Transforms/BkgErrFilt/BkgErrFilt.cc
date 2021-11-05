@@ -36,13 +36,13 @@ namespace soca {
                  const eckit::Configuration & conf) {
     const eckit::Configuration * configc = &conf;
 
-    // Interpolate trajectory to the geom resolution
-    State traj_at_geomres(geom, traj);
+    // Interpolate background to the geom resolution
+    State bkg_at_geomres(geom, bkg);
 
     // Setup background error filter
     soca_bkgerrfilt_setup_f90(keyFtnConfig_,
                               &configc,
-                              traj_at_geomres.toFortran(),
+                              bkg_at_geomres.toFortran(),
                               geom.toFortran());
   }
   // -----------------------------------------------------------------------------
