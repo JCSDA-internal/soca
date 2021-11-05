@@ -26,7 +26,6 @@ observations:
     simulated variables: ['sea_surface_temperature']
     obsdatain:  {obsfile: ./Data/sst.nc}
   obs localization:
-    search method: kd_tree
     lengthscale: 3000e3
     localization method: Gaspari-Cohn
     reference gridpoints:
@@ -48,7 +47,7 @@ observations:
       lons: [-172.5, -192.5, -172.5, -17.5]
       lats: [  42.5,    2.5,    2.5,  22.5]
     reference local nobs: [12, 17, 21, 19]
-    reference rms: [0.188352,0.111358,0.0157477,0.0463056]
+    reference rms: [0.188375, 0.111379, 0.0158103, 0.0464027]
 
 - obs space:
     name: 'Rossby'
@@ -57,7 +56,6 @@ observations:
     obsdatain:  {obsfile: ./Data/sst.nc}
   obs localization:
     localization method: Rossby
-    search method: kd_tree
     base value: 500.0e3
     rossby mult: 2.0
     min grid mult: 1.0

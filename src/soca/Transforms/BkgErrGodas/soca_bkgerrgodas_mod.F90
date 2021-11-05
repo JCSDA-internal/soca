@@ -1,41 +1,50 @@
-! (C) Copyright 2017-2020 UCAR
+! (C) Copyright 2017-2021 UCAR
 !
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
 
+!> variable transform: background error
 module soca_bkgerrgodas_mod
 
 use fckit_configuration_module, only: fckit_configuration
 use tools_const, only : pi
-use datetime_mod, only: datetime
 use kinds, only: kind_real
-use soca_geom_mod
-use soca_fields_mod
-use soca_state_mod
-use soca_increment_mod
-use soca_utils, only: soca_diff
+
+! soca modules
 use soca_bkgerrutil_mod, only: soca_bkgerr_bounds_type
+use soca_fields_mod, only: soca_field, soca_fields
+use soca_geom_mod, only: soca_geom
+use soca_increment_mod, only: soca_increment
 use soca_omb_stats_mod, only: soca_omb_stats, soca_domain_indices
+use soca_state_mod, only: soca_state
+use soca_utils, only: soca_diff
 
 implicit none
-
 private
-public :: soca_bkgerrgodas_config, &
-          soca_bkgerrgodas_setup, soca_bkgerrgodas_mult, &
-          soca_bkgerrgodas_tocn, soca_bkgerrgodas_socn, &
-          soca_bkgerrgodas_ssh
 
-!> Fortran derived type to hold configuration D
-type :: soca_bkgerrgodas_config
-   type(soca_state),         pointer :: bkg
-   type(soca_geom),          pointer :: geom
-   type(soca_fields)                 :: std_bkgerr
-   type(soca_bkgerr_bounds_type)     :: bounds         ! Bounds for bkgerrgodas
-   real(kind=kind_real)              :: t_dz           ! For rescaling of the vertical gradient
-   real(kind=kind_real)              :: t_efold        ! E-folding scale for surf based T min
-   real(kind=kind_real)              :: ssh_phi_ex
-   integer                           :: isc, iec, jsc, jec
-end type soca_bkgerrgodas_config
+
+!> Variable transform for background error (D), GODAS version
+type, public :: soca_bkgerrgodas
+  type(soca_state),         pointer :: bkg
+  type(soca_fields)                 :: std_bkgerr
+
+  ! private members
+  type(soca_geom), pointer, private :: geom
+  type(soca_bkgerr_bounds_type)     :: bounds         !< Bounds for bkgerrgodas
+  real(kind=kind_real), private     :: t_dz           !< For rescaling of the vertical gradient
+  real(kind=kind_real), private     :: t_efold        !< E-folding scale for surf based T min
+  real(kind=kind_real), private     :: ssh_phi_ex     !< latitude scale of ssh error
+
+contains
+
+  !> \copybrief soca_bkgerrgodas_setup \see soca_bkgerrgodas_setup
+  procedure :: setup => soca_bkgerrgodas_setup
+
+  !> \copybrief soca_bkgerrgodas_mult \see soca_bkgerrgodas_mult
+  procedure :: mult => soca_bkgerrgodas_mult
+
+end type soca_bkgerrgodas
+
 
 ! ------------------------------------------------------------------------------
 contains
@@ -43,11 +52,13 @@ contains
 
 ! ------------------------------------------------------------------------------
 !> Setup the static background error
-subroutine soca_bkgerrgodas_setup(f_conf, self, bkg, geom)
-  type(fckit_configuration),        intent(in) :: f_conf
-  type(soca_bkgerrgodas_config), intent(inout) :: self
-  type(soca_state),         target, intent(in) :: bkg
-  type(soca_geom),          target, intent(in) :: geom
+!!
+!! \relates soca_bkgerrgodas_mod::soca_bkgerrgodas
+subroutine soca_bkgerrgodas_setup(self, f_conf, bkg, geom)
+  class(soca_bkgerrgodas), intent(inout) :: self
+  type(fckit_configuration),        intent(in) :: f_conf !< configuration
+  type(soca_state),         target, intent(in) :: bkg !< background state
+  type(soca_geom),          target, intent(in) :: geom !< model geometry
 
   type(soca_field), pointer :: field, field_bkg
   integer :: i
@@ -78,7 +89,7 @@ subroutine soca_bkgerrgodas_setup(f_conf, self, bkg, geom)
   call soca_bkgerrgodas_socn(self)
   call soca_bkgerrgodas_ssh(self)
 
-  ! Invent background error for ocnsfc, wav and ocn_bgc fields: set 
+  ! Invent background error for ocnsfc, wav and ocn_bgc fields: set
   ! it to 10% or 20% of the background for now ...
   do i=1,size(self%std_bkgerr%fields)
     field => self%std_bkgerr%fields(i)
@@ -101,12 +112,15 @@ subroutine soca_bkgerrgodas_setup(f_conf, self, bkg, geom)
 
 end subroutine soca_bkgerrgodas_setup
 
+
 ! ------------------------------------------------------------------------------
 !> Apply background error: dxm = D dxa
+!!
+!! \relates soca_bkgerrgodas_mod::soca_bkgerrgodas
 subroutine soca_bkgerrgodas_mult(self, dxa, dxm)
-  type(soca_bkgerrgodas_config),  intent(in) :: self
-  type(soca_increment),           intent(in) :: dxa
-  type(soca_increment),        intent(inout) :: dxm
+  class(soca_bkgerrgodas),  intent(in) :: self
+  type(soca_increment),           intent(in) :: dxa !< input increment
+  type(soca_increment),        intent(inout) :: dxm !< output increment
 
   type(soca_field), pointer :: field_m, field_e, field_a
   integer :: isc, iec, jsc, jec, i, j, n
@@ -133,10 +147,13 @@ subroutine soca_bkgerrgodas_mult(self, dxa, dxm)
   end do
 end subroutine soca_bkgerrgodas_mult
 
+
 ! ------------------------------------------------------------------------------
 !> Derive T background error from vertial gradient of temperature
+!!
+!! \relates soca_bkgerrgodas_mod::soca_bkgerrgodas
 subroutine soca_bkgerrgodas_tocn(self)
-  type(soca_bkgerrgodas_config),     intent(inout) :: self
+  class(soca_bkgerrgodas),     intent(inout) :: self
 
   real(kind=kind_real), allocatable :: sig1(:), sig2(:)
   type(soca_domain_indices) :: domain
@@ -207,10 +224,13 @@ subroutine soca_bkgerrgodas_tocn(self)
 
 end subroutine soca_bkgerrgodas_tocn
 
+
 ! ------------------------------------------------------------------------------
 !> Derive unbalanced SSH background error, based on latitude
+!!
+!! \relates soca_bkgerrgodas_mod::soca_bkgerrgodas
 subroutine soca_bkgerrgodas_ssh(self)
-  type(soca_bkgerrgodas_config),     intent(inout) :: self
+  class(soca_bkgerrgodas),     intent(inout) :: self
   type(soca_domain_indices), target :: domain
   integer :: i, j
   type(soca_field), pointer :: ssh
@@ -242,8 +262,10 @@ end subroutine soca_bkgerrgodas_ssh
 
 ! ------------------------------------------------------------------------------
 !> Derive unbalanced S background error, based on MLD
+!!
+!! \relates soca_bkgerrgodas_mod::soca_bkgerrgodas
 subroutine soca_bkgerrgodas_socn(self)
-  type(soca_bkgerrgodas_config),     intent(inout) :: self
+  class(soca_bkgerrgodas),     intent(inout) :: self
   !
   type(soca_domain_indices), target :: domain
   type(soca_field), pointer :: field, mld, layer_depth

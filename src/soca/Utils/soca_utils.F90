@@ -1,15 +1,16 @@
-! (C) Copyright 2017-2020 UCAR
+! (C) Copyright 2017-2021 UCAR
 !
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
 
+!> various utility functions
 module soca_utils
 
 use atlas_module, only: atlas_geometry, atlas_indexkdtree
-use netcdf
-use kinds, only: kind_real
-use gsw_mod_toolbox, only : gsw_rho, gsw_sa_from_sp, gsw_ct_from_pt, gsw_mlp
 use fckit_exception_module, only: fckit_exception
+use gsw_mod_toolbox, only : gsw_rho, gsw_sa_from_sp, gsw_ct_from_pt, gsw_mlp
+use kinds, only: kind_real
+use netcdf
 
 implicit none
 
@@ -22,7 +23,13 @@ contains
 ! ------------------------------------------------------------------------------
 
 ! ------------------------------------------------------------------------------
-
+!> calculate density from temp/salinity profile
+!!
+!! \param sp: practical salinity profile
+!! \param pt: potential temperature profile
+!! \param p: pressure (depth) profile
+!! \param lon: longitude
+!! \param lat: latitude
 elemental function soca_rho(sp, pt, p, lon, lat)
   real(kind=kind_real), intent(in)  :: pt, sp, p, lon, lat
   real(kind=kind_real) :: sa, ct, lon_rot, soca_rho
@@ -44,8 +51,15 @@ elemental function soca_rho(sp, pt, p, lon, lat)
   return
 end function soca_rho
 
-! ------------------------------------------------------------------------------
 
+! ------------------------------------------------------------------------------
+!> calculate mixed layer depth from temp/salinity profile
+!!
+!! \param pt: potential temperature profile
+!! \param sp: practical salinity profile
+!! \param p: pressure (depth) profile
+!! \param lon: longitude
+!! \param lat: latitude
 function soca_mld(sp, pt, p, lon, lat)
   real(kind=kind_real), intent(in)  :: pt(:), sp(:), p(:), lon, lat
 
@@ -76,8 +90,8 @@ function soca_mld(sp, pt, p, lon, lat)
   return
 end function soca_mld
 
-! ------------------------------------------------------------------------------
 
+! ------------------------------------------------------------------------------
 subroutine soca_diff(dvdz,v,h)
 
   real(kind=kind_real), intent(in)  :: v(:), h(:)
@@ -95,8 +109,9 @@ subroutine soca_diff(dvdz,v,h)
 
 end subroutine soca_diff
 
-! ------------------------------------------------------------------------------
 
+! ------------------------------------------------------------------------------
+!> per-PE file output, used by soca_geom to write per-PE grid
 subroutine write2pe(vec,varname,filename,append)
 
   real(kind=kind_real), intent(in) :: vec(:)
@@ -135,8 +150,9 @@ subroutine write2pe(vec,varname,filename,append)
 
 end subroutine write2pe
 
-! ------------------------------------------------------------------------------
 
+! ------------------------------------------------------------------------------
+!> wrapper for netcdf calls
 subroutine nc_check(status)
 
   integer(4), intent ( in) :: status
@@ -145,6 +161,7 @@ subroutine nc_check(status)
      stop "Stopped"
   end if
 end subroutine nc_check
+
 
 ! ------------------------------------------------------------------------------
 !> Apply bounds
@@ -156,6 +173,7 @@ elemental function soca_adjust(std, minstd, maxstd)
 
 end function soca_adjust
 
+
 ! ------------------------------------------------------------------------------
 subroutine soca_str2int(str, int)
   character(len=*),intent(in) :: str
@@ -164,8 +182,9 @@ subroutine soca_str2int(str, int)
   read(str,*)  int
 end subroutine soca_str2int
 
+
 ! ------------------------------------------------------------------------------
-! inverse distance weighted remaping (modified Shepard's method)
+!> inverse distance weighted remaping (modified Shepard's method)
 subroutine soca_remap_idw(lon_src, lat_src, data_src, lon_dst, lat_dst, data_dst)
   real(kind_real), intent(in) :: lon_src(:)
   real(kind_real), intent(in) :: lat_src(:)

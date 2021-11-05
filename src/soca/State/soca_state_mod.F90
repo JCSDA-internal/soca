@@ -1,61 +1,80 @@
-! (C) Copyright 2020-2020 UCAR
+! (C) Copyright 2020-2021 UCAR
 !
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
 
+!> State fields
 module soca_state_mod
 
+use fckit_log_module, only: fckit_log
+use kinds, only: kind_real
+use oops_variables_mod
+
+! soca modules
 use soca_geom_mod
 use soca_fields_mod
 use soca_increment_mod
 use soca_convert_state_mod
-use oops_variables_mod
-use kinds, only: kind_real
-use fckit_log_module, only: fckit_log
 
 implicit none
 private
 
+
+!-------------------------------------------------------------------------------
+!> State fields.
+!!
+!! Any procedures that are shared with soca_increment are implemented
+!! in the soca_fields base class
 type, public, extends(soca_fields) :: soca_state
 
 contains
 
-  ! constructors / destructors
-  procedure :: create => soca_state_create
+  !> \name interactions with increment
+  !! \{
 
-  ! interactions with increment
+  !> \copybrief soca_state_diff_incr \see soca_state_diff_incr
   procedure :: diff_incr=> soca_state_diff_incr
+
+  !> \copybrief soca_state_add_incr \see soca_state_add_incr
   procedure :: add_incr => soca_state_add_incr
 
-  ! misc
+  !> \}
+
+
+  !> \name misc
+  !! \{
+
+  !> \copybrief soca_state_rotate \see soca_state_rotate
   procedure :: rotate => soca_state_rotate
+
+  !> \copybrief soca_state_convert \see soca_state_convert
   procedure :: convert => soca_state_convert
+
+  !> \copybrief soca_state_logexpon \see soca_state_logexpon
   procedure :: logexpon => soca_state_logexpon
 
+  !> \}
+
 end type
+
 
 !------------------------------------------------------------------------------
 contains
 !------------------------------------------------------------------------------
 
-!------------------------------------------------------------------------------
-subroutine soca_state_create(self, geom, vars)
-  class(soca_state),         intent(inout) :: self
-  type(soca_geom),  pointer, intent(inout) :: geom
-  type(oops_variables),      intent(inout) :: vars
-
-  ! continue with fields initialization by base class
-  call self%soca_fields%create(geom, vars)
-end subroutine soca_state_create
-
 
 ! ------------------------------------------------------------------------------
 !> Rotate horizontal vector
+!!
+!! One or more sets of vectors, represented by corresponding u and v variables
+!! in the \p uvars and \p vvars lists are rotated to north (if \p coordinate == "north")
+!! or rotated back to the grid (if \p coordinate == "grid")
+!! \relates soca_state_mod::soca_state
 subroutine soca_state_rotate(self, coordinate, uvars, vvars)
   class(soca_state),  intent(inout) :: self
-  character(len=*),      intent(in) :: coordinate ! "north" or "grid"
-  type(oops_variables),  intent(in) :: uvars
-  type(oops_variables),  intent(in) :: vvars
+  character(len=*),      intent(in) :: coordinate !< "north" or "grid"
+  type(oops_variables),  intent(in) :: uvars !< list of one or more U variables
+  type(oops_variables),  intent(in) :: vvars !< list of one or more V variables
 
   integer :: z, i
   type(soca_field), pointer :: uocn, vocn
@@ -107,9 +126,12 @@ end subroutine soca_state_rotate
 
 ! ------------------------------------------------------------------------------
 !> add a set of increments to the set of fields
+!!
+!! \throws abor1_ftn aborts if \p rhs is not a subset of \p self
+!! \relates soca_state_mod::soca_state
 subroutine soca_state_add_incr(self, rhs)
   class(soca_state),  intent(inout) :: self
-  class(soca_increment), intent(in) :: rhs
+  class(soca_increment), intent(in) :: rhs !< increment to add to \p self
 
   type(soca_field), pointer :: fld, fld_r
   integer :: i, k
@@ -138,7 +160,11 @@ end subroutine soca_state_add_incr
 
 
 ! ------------------------------------------------------------------------------
-!> subtract two sets of fields, saving the results separately
+!> subtract two sets of fields, saving the results in \p inc
+!!
+!! \f$ inc = x1 - x2 \f$
+!! \throws abor1_ftn aborts if \p inc and \p x2 are not subsets of \p x1
+!! \relates soca_state_mod::soca_state
 subroutine soca_state_diff_incr(x1, x2, inc)
   class(soca_state),      intent(in)    :: x1
   class(soca_state),      intent(in)    :: x2
@@ -159,11 +185,20 @@ subroutine soca_state_diff_incr(x1, x2, inc)
   end do
 end subroutine soca_state_diff_incr
 
+
 ! ------------------------------------------------------------------------------
-!> ConvertState app
+!> Change resolution of \p rhs to \p self
+!!
+!! \p self must have valid "layer_depth" and "hocn" fields. The other fields
+!! are interpolated from \p rhs to \p self. Any variables that are marked as
+!! "positive definite" in the metadata configuration file are forced to be >= 0.0
+!! after interpolation.
+!!
+!! \relates soca_state_mod::soca_state
 subroutine soca_state_convert(self, rhs)
-  class(soca_state), intent(inout) :: self ! target
-  class(soca_state), intent(in)   :: rhs   ! source
+  class(soca_state), intent(inout) :: self
+  class(soca_state), intent(in)    :: rhs   !< source
+
   integer :: n
   type(soca_convertstate_type) :: convert_state
   type(soca_field), pointer :: field1, field2, hocn1, hocn2, layer_depth
@@ -191,12 +226,15 @@ subroutine soca_state_convert(self, rhs)
   call convert_state%clean()
 end subroutine soca_state_convert
 
+
 ! ------------------------------------------------------------------------------
 !> Apply logarithmic and exponential transformations
+!!
+!! \relates soca_state_mod::soca_state
 subroutine soca_state_logexpon(self, transfunc, trvars)
   class(soca_state),  intent(inout) :: self
-  character(len=*),      intent(in) :: transfunc ! "log" or "expon"
-  type(oops_variables),  intent(in) :: trvars
+  character(len=*),      intent(in) :: transfunc !< "log" or "expon"
+  type(oops_variables),  intent(in) :: trvars !< list of variables to transform
 
   integer :: z, i
   type(soca_field), pointer :: trocn

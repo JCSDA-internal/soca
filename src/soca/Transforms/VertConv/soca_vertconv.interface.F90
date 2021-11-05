@@ -1,34 +1,34 @@
-! (C) Copyright 2017-2020 UCAR
+! (C) Copyright 2017-2021 UCAR
 !
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
 
+!> C++ interfaces for soca_vertconv_mod::soca_vertconv
 module soca_vertconv_mod_c
 
-use iso_c_binding
 use fckit_configuration_module, only: fckit_configuration
+use iso_c_binding
 use kinds, only: kind_real
-use soca_geom_mod
-use soca_geom_mod_c
-use soca_increment_mod
-use soca_increment_reg
-use soca_state_mod
-use soca_state_reg
-use soca_vertconv_mod, only: soca_vertconv, soca_conv_setup, &
-                             soca_conv, soca_conv_ad
+
+! soca modules
+use soca_geom_mod_c, only: soca_geom_registry
+use soca_geom_mod, only: soca_geom
+use soca_increment_mod, only: soca_increment
+use soca_increment_reg, only: soca_increment_registry
+use soca_state_mod, only: soca_state
+use soca_state_reg, only: soca_state_registry
+use soca_vertconv_mod, only: soca_vertconv
 
 implicit none
-
 private
-public :: soca_vertconv_registry
 
 #define LISTED_TYPE soca_vertconv
 
 !> Linked list interface - defines registry_t type
 #include "oops/util/linkedList_i.f"
 
-!> Global registry
-type(registry_t) :: soca_vertconv_registry
+!> Global registry for soca_vertconv
+type(registry_t), public :: soca_vertconv_registry
 
 ! ------------------------------------------------------------------------------
 contains
@@ -37,9 +37,12 @@ contains
 !> Linked list implementation
 #include "oops/util/linkedList_c.f"
 
+
 ! ------------------------------------------------------------------------------
-!> Constructor for Vertconv
-subroutine c_soca_vertconv_setup(c_key_self, c_conf, c_key_bkg, c_key_geom) &
+!> C++ interface for soca_vertconv_mod::soca_vertconv::setup()
+!!
+!! Constructor for Vertconv
+subroutine soca_vertconv_setup_c(c_key_self, c_conf, c_key_bkg, c_key_geom) &
   bind(c,name='soca_vertconv_setup_f90')
 
   integer(c_int), intent(inout) :: c_key_self   !< The Vertconv structure
@@ -57,13 +60,16 @@ subroutine c_soca_vertconv_setup(c_key_self, c_conf, c_key_bkg, c_key_geom) &
   call soca_state_registry%get(c_key_bkg, bkg)
   call soca_geom_registry%get(c_key_geom, geom)
 
-  call soca_conv_setup (self, bkg, geom, fckit_configuration(c_conf))
+  call self%setup(bkg, geom, fckit_configuration(c_conf))
 
-end subroutine c_soca_vertconv_setup
+end subroutine soca_vertconv_setup_c
+
 
 ! ------------------------------------------------------------------------------
-!> Destructor for Vertconv
-subroutine c_soca_vertconv_delete(c_key_self) bind(c,name='soca_vertconv_delete_f90')
+!> C++ interface for soca_vertconv_mod::soca_vertconv destructor
+!!
+!! Destructor for Vertconv
+subroutine soca_vertconv_delete_c(c_key_self) bind(c,name='soca_vertconv_delete_f90')
 
   integer(c_int), intent(inout) :: c_key_self  !< The background covariance structure
 
@@ -80,11 +86,14 @@ subroutine c_soca_vertconv_delete(c_key_self) bind(c,name='soca_vertconv_delete_
 
   call soca_vertconv_registry%remove(c_key_self)
 
-end subroutine c_soca_vertconv_delete
+end subroutine soca_vertconv_delete_c
+
 
 ! ------------------------------------------------------------------------------
-!> Multiplication
-subroutine c_soca_vertconv_mult_f90(c_key_a, c_key_m, c_key_self)&
+!> C++ interface for soca_vertconv_mod::soca_vertconv::mult()
+!!
+!! Multiplication
+subroutine soca_vertconv_mult_c(c_key_a, c_key_m, c_key_self)&
   bind(c,name='soca_vertconv_mult_f90')
 
   integer(c_int), intent(in) :: c_key_a     !< Increment in
@@ -105,13 +114,16 @@ subroutine c_soca_vertconv_mult_f90(c_key_a, c_key_m, c_key_self)&
   call dxm%copy( dxa)
 
   ! Apply forward convolution operator to T & S
-  call soca_conv(self, dxm, dxa)
+  call self%mult(dxm, dxa)
 
-end subroutine c_soca_vertconv_mult_f90
+end subroutine soca_vertconv_mult_c
+
 
 ! ------------------------------------------------------------------------------
-!> Multiplication adjoint
-subroutine c_soca_vertconv_multad_f90(c_key_m, c_key_a, c_key_self)&
+!> C++ interface for soca_vertconv_mod::soca_vertconv::mult_ad()
+!!
+!! Multiplication adjoint
+subroutine soca_vertconv_multad_c(c_key_m, c_key_a, c_key_self)&
   bind(c,name='soca_vertconv_multad_f90')
 
   integer(c_int), intent(in) :: c_key_a     !< Increment out
@@ -130,8 +142,8 @@ subroutine c_soca_vertconv_multad_f90(c_key_m, c_key_a, c_key_self)&
   call dxa%copy(dxm)
 
   ! Apply adjoint of convolution operator
-  call soca_conv_ad(self, dxm, dxa)
+  call self%mult_ad(dxm, dxa)
 
-end subroutine c_soca_vertconv_multad_f90
+end subroutine soca_vertconv_multad_c
 
 end module soca_vertconv_mod_c

@@ -76,8 +76,8 @@ dirac:
   izdir: [1,  5,  1,  1,  1,  1,  1,  1,  1,  1]
   ifdir: [1,  1,  3,  2,  1,  1,  1,  4,  5,  5]
 
-output B:
+output dirac:
   datadir: Data
   date: *date
-  exp: dirac_soca_cov
+  exp: dirac_soca_cov_%id%
   type: an

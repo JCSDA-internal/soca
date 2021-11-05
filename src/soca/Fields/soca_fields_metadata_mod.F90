@@ -3,6 +3,7 @@
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
 
+!> Metadata for soca_fields
 module soca_fields_metadata_mod
 
 use fckit_configuration_module, only: fckit_configuration, fckit_yamlconfiguration
@@ -11,15 +12,12 @@ use fckit_pathname_module, only : fckit_pathname
 implicit none
 private
 
-public :: soca_field_metadata, soca_fields_metadata
-
-
 ! ------------------------------------------------------------------------------
-! soca_field_metadata
-! Holds all of the user configurable meta data associated with a single field
-! ------------------------------------------------------------------------------
-type :: soca_field_metadata
-  character(len=:),  allocatable :: name !< internal name used only by soca code
+!> Holds all of the user configurable meta data associated with a single field
+!!
+!! Instances of these types are to be held by soca_fields_metadata
+type, public :: soca_field_metadata
+  character(len=:),  allocatable :: name     !< internal name used only by soca code
   character(len=1)               :: grid     !< "h", "u" or "v"
   logical                        :: masked   !< should use land mask when interpolating
   character(len=:),  allocatable :: levels   !< "1", or "full_ocn"
@@ -33,17 +31,21 @@ end type
 
 
 ! ------------------------------------------------------------------------------
-! soca_fields_metadata
-! Holds meta data for ALL possible fields (state, increment, other derived) in soca
-! ------------------------------------------------------------------------------
-type :: soca_fields_metadata
+!> A collection of soca_field_metadata types representing ALL possible fields
+!! (state, increment, other derived) in soca. These are read in from a configuration file.
+type, public :: soca_fields_metadata
 
-private
-  type(soca_field_metadata), allocatable :: metadata(:)
+  type(soca_field_metadata), private, allocatable :: metadata(:)
 
 contains
+
+  !> \copybrief soca_fields_metadata_create \see soca_fields_metadata_create
   procedure :: create => soca_fields_metadata_create
+
+  !> \copybrief soca_fields_metadata_clone \see soca_fields_metadata_clone
   procedure :: clone  => soca_fields_metadata_clone
+
+  !> \copybrief soca_fields_metadata_get \see soca_fields_metadata_get
   procedure :: get    => soca_fields_metadata_get
 end type
 
@@ -54,9 +56,16 @@ contains
 
 ! ------------------------------------------------------------------------------
 
+!> Create the main soca_fields_metadata instance by reading in parameters from a
+!! yaml file.
+!!
+!! See the members of soca_field_metadata for a list of valid options
+!!
+!! \throws abor1_ftn aborts if there are duplicate fields
+!! \relates soca_fields_metadata_mod::soca_fields_metadata
 subroutine soca_fields_metadata_create(self, filename)
   class(soca_fields_metadata), intent(inout) :: self
-  character(len=:), allocatable :: filename
+  character(len=:), allocatable, intent(in) :: filename !< filename of the yaml configuration
 
   type(fckit_configuration)  :: conf
   type(fckit_Configuration), allocatable :: conf_list(:)
@@ -123,21 +132,27 @@ subroutine soca_fields_metadata_create(self, filename)
 
 end subroutine
 
+
 ! ------------------------------------------------------------------------------
+!> Make a copy from \rhs to \p self
+!!
+!! \relates soca_fields_metadata_mod::soca_fields_metadata
+subroutine soca_fields_metadata_clone(self, rhs)
+  class(soca_fields_metadata), intent(inout) :: self
+  class(soca_fields_metadata), intent(in) :: rhs !< metadata to clone \b from
 
-subroutine soca_fields_metadata_clone(self, other)
-  class(soca_fields_metadata), intent(in) :: self
-  class(soca_fields_metadata), intent(out) :: other
-
-  other%metadata = self%metadata
+  self%metadata = rhs%metadata
 
 end subroutine
 
-! ------------------------------------------------------------------------------
 
+! ------------------------------------------------------------------------------
+!> Get the metadata for the field with the given name
+!!
+!! The \p name can match any of \c name, \c getval_name, or \c getval_name_surface
 function soca_fields_metadata_get(self, name) result(field)
   class(soca_fields_metadata), intent(in) :: self
-  character(len=:), allocatable :: name
+  character(len=:), allocatable, intent(in) :: name !< the name to search for
   type(soca_field_metadata) :: field
 
   integer :: i
@@ -156,6 +171,5 @@ function soca_fields_metadata_get(self, name) result(field)
 
 end function
 
-! ------------------------------------------------------------------------------
 
 end module
