@@ -1,0 +1,51 @@
+geometry:
+  mom6_input_nml: ./inputnml/input.nml
+  fields metadata: ./fields_metadata.yml
+
+initial condition:
+  read_from_file: 1
+  basename: ./INPUT/
+  date: &date 2018-04-15T00:00:00Z
+  ocn_filename: MOM.res.nc
+  ice_filename: cice.res.nc
+  state variables: &soca_vars [cicen, hicen, socn, tocn, ssh, hocn, mld, layer_depth]
+
+background error:
+  covariance model: SocaError
+  analysis variables: [cicen, hicen, socn, tocn, ssh]
+  date: *date
+  bump:
+    verbosity: main
+    datadir: ./bump
+    method: cor
+    strategy: specific_univariate
+    new_nicas: 1
+    write_nicas_local: 1
+    mask_check: 0
+    resol: 6.0
+    network: 0 # Not re-implemented yet
+  correlation:
+  - name: ocn
+    base value: 2500.0e3
+    rossby mult: 0.3
+    variables: [tocn, socn, ssh] # I don't think variable names actually matter
+                                 # here, it just needs something
+  - name: ice
+    base value: 560224.089635854
+    variables: [cicen, hicen]
+
+  - name: wav
+    base value: 600.0e3
+    variables: [swh]
+
+dirac:
+  ixdir: [37]
+  iydir: [20]
+  izdir: [1]
+  ifdir: [1]
+
+output dirac:
+  datadir: Data
+  date: *date
+  exp: dirac_soca_nomask_%id%
+  type: an
