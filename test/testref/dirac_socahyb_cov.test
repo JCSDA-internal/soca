@@ -10,31 +10,31 @@ Test     :     mld   min=    0.000000   max=    0.000000   mean=    0.000000
 Test     : layer_depth   min=    0.000000   max=    0.000000   mean=    0.000000
 Test     : Covariance(hybrid) * Increment: 
 Test     :   Valid time: 2018-04-15T00:00:00Z
-Test     :   cicen   min=   -0.000414   max=    0.000000   mean=   -0.000000
-Test     :   hicen   min=    0.000000   max=   50.021187   mean=    0.030445
-Test     :    socn   min=   -0.043347   max=    0.046872   mean=   -0.000043
-Test     :    tocn   min=   -0.048798   max=    2.856185   mean=    0.001077
-Test     :     ssh   min=   -0.005701   max=    0.025578   mean=    0.000071
+Test     :   cicen   min=   -0.001779   max=    0.000000   mean=   -0.000010
+Test     :   hicen   min=    0.000000   max=   50.103093   mean=    0.405557
+Test     :    socn   min=   -0.219024   max=    0.030206   mean=   -0.000869
+Test     :    tocn   min=   -0.056974   max=    2.860168   mean=    0.011124
+Test     :     ssh   min=   -0.005017   max=    0.052044   mean=    0.000651
 Test     :    hocn   min=    0.000000   max=    0.000000   mean=    0.000000
 Test     :     mld   min=    0.000000   max=    0.000000   mean=    0.000000
 Test     : layer_depth   min=    0.000000   max=    0.000000   mean=    0.000000
 Test     : Covariance(hybrid_SocaError) * Increment: 
 Test     :   Valid time: 2018-04-15T00:00:00Z
-Test     :   cicen   min=   -0.000828   max=    0.000000   mean=   -0.000001
-Test     :   hicen   min=    0.000000   max=  100.000000   mean=    0.060864
-Test     :    socn   min=   -0.016775   max=    0.002309   mean=   -0.000001
-Test     :    tocn   min=    0.000000   max=    5.268716   mean=    0.001506
-Test     :     ssh   min=    0.000000   max=    0.056011   mean=    0.000062
+Test     :   cicen   min=   -0.003559   max=    0.000000   mean=   -0.000020
+Test     :   hicen   min=    0.000000   max=  100.000000   mean=    0.810989
+Test     :    socn   min=   -0.021496   max=    0.012278   mean=   -0.000001
+Test     :    tocn   min=    0.000000   max=    5.268716   mean=    0.019497
+Test     :     ssh   min=    0.000000   max=    0.056011   mean=    0.000728
 Test     :    hocn   min=    0.000000   max=    0.000000   mean=    0.000000
 Test     :     mld   min=    0.000000   max=    0.000000   mean=    0.000000
 Test     : layer_depth   min=    0.000000   max=    0.000000   mean=    0.000000
 Test     : Covariance(hybrid_ensemble) * Increment: 
 Test     :   Valid time: 2018-04-15T00:00:00Z
 Test     :   cicen   min=    0.000000   max=    0.000000   mean=    0.000000
-Test     :   hicen   min=    0.000000   max=    0.042373   mean=    0.000026
-Test     :    socn   min=   -0.086693   max=    0.093744   mean=   -0.000086
-Test     :    tocn   min=   -0.097595   max=    0.532650   mean=    0.000648
-Test     :     ssh   min=   -0.011403   max=    0.030068   mean=    0.000081
+Test     :   hicen   min=    0.000000   max=    0.206185   mean=    0.000125
+Test     :    socn   min=   -0.438048   max=    0.060411   mean=   -0.001736
+Test     :    tocn   min=   -0.230169   max=    0.824298   mean=    0.002751
+Test     :     ssh   min=   -0.010035   max=    0.078494   mean=    0.000575
 Test     :    hocn   min=    0.000000   max=    0.000000   mean=    0.000000
 Test     :     mld   min=    0.000000   max=    0.000000   mean=    0.000000
 Test     : layer_depth   min=    0.000000   max=    0.000000   mean=    0.000000
