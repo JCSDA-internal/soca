@@ -26,7 +26,7 @@ background error:
     network: 0 # Not re-implemented yet
   correlation:
   - name: ocn
-    base value: 2500.0e3
+    base value: 1500.0e3
     rossby mult: 0.3
     variables: [tocn, socn, ssh] # I don't think variable names actually matter
                                  # here, it just needs something
@@ -39,10 +39,10 @@ background error:
     variables: [swh]
 
 dirac:
-  ixdir: [37]
-  iydir: [20]
-  izdir: [1]
-  ifdir: [1]
+  ixdir: [37, 12, 64, 23, 61, 59]
+  iydir: [20, 15, 22, 29, 30, 11]
+  izdir: [1, 1, 1, 1, 1, 1]
+  ifdir: [1, 1, 1, 1, 1, 1]
 
 output dirac:
   datadir: Data
