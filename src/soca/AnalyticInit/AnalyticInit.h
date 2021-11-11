@@ -14,7 +14,7 @@
 namespace soca {
 
   class AnalyticInitParameters : public oops::AnalyticInitParametersBase {
-   OOPS_CONCRETE_PARAMETERS(AnalyticInitParameters, AnalyticInitParametersBase)
+    OOPS_CONCRETE_PARAMETERS(AnalyticInitParameters, AnalyticInitParametersBase)
    public:
     // No parameters, for now
   };
@@ -22,8 +22,8 @@ namespace soca {
 // -----------------------------------------------------------------------------
 
 
-  class AnalyticInit : public oops::interface::AnalyticInitBase<ufo::ObsTraits> {
-
+  class AnalyticInit :
+    public oops::interface::AnalyticInitBase<ufo::ObsTraits> {
    public:
     typedef AnalyticInitParameters Parameters_;
 

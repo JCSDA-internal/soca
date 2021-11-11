@@ -16,5 +16,5 @@ namespace soca {
   void AnalyticInit::fillGeoVaLs(const ufo::Locations & locs,
                                  ufo::GeoVaLs & geovals) const {
     soca_analytic_geovals_f90(geovals.toFortran(), locs);
-  };
+  }
 }  // namespace soca

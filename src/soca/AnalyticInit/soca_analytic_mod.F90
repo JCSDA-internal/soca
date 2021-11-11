@@ -3,6 +3,7 @@
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
 
+!> Analytic state/geoval initialization module used for testing only
 module soca_analytic_mod
 
 use kinds, only : kind_real
@@ -19,9 +20,13 @@ public :: soca_analytic_state
 
 contains
 
+! ------------------------------------------------------------------------------
+!> fill geovals using the analytic solution
+!!
+!! \see soca_analytic_val
 subroutine soca_analytic_geovals(geovals, locs)
-    type(ufo_geovals), intent(inout) :: geovals
-    type(ufo_locations),  intent(in) :: locs
+    type(ufo_geovals), intent(inout) :: geovals  !< output geovals
+    type(ufo_locations),  intent(in) :: locs !< input locations
 
     real(kind=kind_real), allocatable :: lons(:), lats(:)
     integer :: ivar, iloc, ival
@@ -46,6 +51,11 @@ subroutine soca_analytic_geovals(geovals, locs)
 
 end subroutine
 
+
+! ------------------------------------------------------------------------------
+!> Create a state from the analytic solution
+!!
+!! \see soca_analytic_val
 subroutine soca_analytic_state(state)
     class(soca_state), intent(inout) :: state
 
@@ -66,6 +76,12 @@ subroutine soca_analytic_state(state)
     end do
 end subroutine
 
+
+! ------------------------------------------------------------------------------
+!> Create an analytic value for a given location/variable
+!!
+!! A completely non-physical result. But used for testing the accuracy of the
+!! interpolation used in soca.
 function soca_analytic_val(var, lat, lon, depth) result(val)
     character(len=:), allocatable, intent(inout) :: var
     real(kind=kind_real), intent(in) :: lat, lon, depth
@@ -84,8 +100,6 @@ function soca_analytic_val(var, lat, lon, depth) result(val)
     rvar = mod(abs(ieor(ivar, z'5D7A9F43')), 1000) / 1000.0
 
     val = (sin(lon*3.14158/180.0) + cos(lat*3.14158/180.0)) * (0.5/depth) + rvar
-
-
 end function
 
 

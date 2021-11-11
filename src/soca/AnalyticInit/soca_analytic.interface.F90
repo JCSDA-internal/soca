@@ -3,6 +3,8 @@
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
 
+
+!> C++ interfaces for soca_analytic_mod
 module soca_analytic_mod_c
 
 use iso_c_binding
@@ -18,6 +20,7 @@ private
 
 contains
 
+!> C++ interface for soca_analytic_mod::soca_analytic_geovals()
 subroutine soca_analytic_geovals_c(c_key_geovals, c_locs) &
         bind (c,name='soca_analytic_geovals_f90')
 
