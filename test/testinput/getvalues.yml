@@ -37,6 +37,7 @@ locations:
     simulated variables: *geovals
     generate:
       random:
+        random seed: 0
         nobs: 1000
         lat1: -32
         lat2: 37.5
