@@ -48,6 +48,9 @@ namespace soca {
     soca_state_create_f90(keyFlds_, geom_->toFortran(), vars);
 
     if (conf.has("analytic init")) {
+      std::string dt;
+      conf.get("date", dt);
+      time_ = util::DateTime(dt);
       soca_state_analytic_f90(toFortran(), &conf, &dtp);
     } else {
       soca_state_read_file_f90(toFortran(), &conf, &dtp);

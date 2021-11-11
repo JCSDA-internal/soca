@@ -417,10 +417,8 @@ subroutine scoa_state_analytic_c(c_key_self, c_conf, c_dt) &
   call soca_state_registry%get(c_key_self,self)
   call c_f_datetime (c_dt, fdate)
   call soca_analytic_state(self)
+
 end subroutine scoa_state_analytic_c
-
-
-
 
 
 end module soca_state_mod_c

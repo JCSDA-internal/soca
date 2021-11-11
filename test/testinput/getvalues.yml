@@ -3,7 +3,6 @@ geometry:
   fields metadata: ./fields_metadata.yml
 
 state variables: &geovals [sea_water_potential_temperature,
-                           sea_water_potential_temperature,
                            sea_water_salinity,
                            sea_water_cell_thickness,
                            sea_surface_height_above_geoid,
@@ -22,21 +21,13 @@ state variables: &geovals [sea_water_potential_temperature,
                            northward_sea_water_velocity]
 
 getvalues test:
-  interpolation tolerance: 1.0e-2
-  state variables: *geovals
+  interpolation tolerance: 1.5e-2
 
   state generate:
-    read_from_file: 1
+    analytic init:
+      method: soca_ana_init
     date: &date 2018-04-15T00:00:00Z
-    basename: ./INPUT/
-    ocn_filename: MOM.res.nc
-    ice_filename: cice.res.nc
-    sfc_filename: sfc.res.nc
-    wav_filename: wav.res.nc
-    state variables: [cicen, hicen, socn, tocn, ssh, hocn, uocn, vocn, sw, lhf, shf, lw, us, swh]
-
-geovals:
-  state variables: *geovals
+    state variables: *geovals
 
 locations:
   window begin: 2018-04-15T00:00:00Z
@@ -47,8 +38,9 @@ locations:
     generate:
       random:
         nobs: 1000
-        lat1: -75
-        lat2: 90
-        lon1: 0
-        lon2: 360
-      obs errors: [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+        lat1: -32
+        lat2: 37.5
+        lon1: -192.5
+        lon2: -57
+      obs errors: [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+

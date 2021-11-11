@@ -53,10 +53,9 @@ subroutine soca_analytic_state(state)
     real(kind=kind_real) :: val
 
     do f = 1, size(state%fields)
-        do i = state%geom%isc, state%geom%iec
-            do j = state%geom%jsc, state%geom%jec
+        do i = state%geom%isd, state%geom%ied
+            do j = state%geom%jsd, state%geom%jed
                 do k = 1, state%fields(f)%nz
-                ! TODO use the depth instead of the depth level
                     val = soca_analytic_val(&
                         state%fields(f)%name, state%fields(f)%lat(i,j), &
                         state%fields(f)%lon(i,j), k*1.0_kind_real)
@@ -76,14 +75,16 @@ function soca_analytic_val(var, lat, lon, depth) result(val)
     real(kind=kind_real) :: rvar
     integer :: ivar
 
+
     ! create hash from string
     ivar = 0
-    do i=1,len(var)
+    do i=1,len(trim(var))
         ivar = ieor(ivar, ishft(ichar(var(i:i)), mod(i-1,4)*8))
     end do
     rvar = mod(abs(ieor(ivar, z'5D7A9F43')), 1000) / 1000.0
 
-    val = (sind(lon) + lat/90.0) * (0.5/depth) + rvar
+    val = (sin(lon*3.14158/180.0) + cos(lat*3.14158/180.0)) * (0.5/depth) + rvar
+
 
 end function
 
