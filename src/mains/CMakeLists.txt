@@ -30,8 +30,8 @@ ecbuild_add_executable( TARGET  soca_var.x
                                 saber
                       )
 
-ecbuild_add_executable( TARGET  soca_parameters.x
-                        SOURCES EstimateParams.cc
+ecbuild_add_executable( TARGET  soca_error_covariance_training.x
+                        SOURCES ErrorCovarianceTraining.cc
                         LIBS    soca
                                 saber
                       )
