@@ -13,9 +13,10 @@ set( soca_test_input
   testinput/convertstate.yml
   testinput/convertstate_changevar.yml
   testinput/diffstates.yml
-  testinput/dirac_bump_cov.yml
   testinput/dirac_horizfilt.yml
   testinput/dirac_soca_cov.yml
+  testinput/dirac_soca_mask.yml
+  testinput/dirac_soca_nomask.yml
   testinput/dirac_socahyb_cov.yml
   testinput/enshofx_1.yml
   testinput/enshofx_2.yml
@@ -81,9 +82,10 @@ set( soca_test_ref
   testref/convertstate.test
   testref/convertstate_changevar.test
   testref/diffstates.test
-  testref/dirac_bump_cov.test
   testref/dirac_horizfilt.test
   testref/dirac_soca_cov.test
+  testref/dirac_soca_mask.test
+  testref/dirac_soca_nomask.test
   testref/dirac_socahyb_cov.test
   testref/enshofx.test
   testref/enspert.test
@@ -515,10 +517,9 @@ soca_add_test( NAME state
                SRC  TestState.cc
                TEST_DEPENDS test_soca_gridgen )
 
-# Temporarily disable until it can be fixed.
-# soca_add_test( NAME getvalues
-#                SRC  TestGetValues.cc
-#                TEST_DEPENDS test_soca_gridgen )
+soca_add_test( NAME getvalues
+               SRC  TestGetValues.cc
+               TEST_DEPENDS test_soca_gridgen )
 
 soca_add_test( NAME model
                SRC  TestModel.cc
@@ -644,6 +645,12 @@ soca_add_test( NAME dirac_socahyb_cov
 soca_add_test( NAME dirac_horizfilt
                EXE  soca_dirac.x
                TEST_DEPENDS test_soca_static_socaerror_init)
+
+soca_add_test( NAME dirac_soca_mask
+               EXE  soca_dirac.x)
+
+soca_add_test( NAME dirac_soca_nomask
+               EXE  soca_dirac.x)
 
 #ecbuild_add_test( TARGET test_soca_obserrorcov
 #                  SOURCES executables/TestObsErrorCovariance.cc
