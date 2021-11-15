@@ -12,6 +12,16 @@ state test:
     sfc_filename: sfc.res.nc
     state variables: &soca_vars [cicen, hicen, socn, tocn, ssh, hocn, sw, lhf, shf, lw, us, mld, layer_depth]
     remap_filename: ./INPUT/MOM.res.nc
+
+  state generate:
+    analytic init:
+      method: 'soca_ana_init'
+
+    date: *date
+    state variables: *soca_vars
+
   norm file: 387790.8913881866
+  norm generated state: 397.84702625989928
+
   date: *date
   tolerance: 1.0e-08

@@ -24,6 +24,10 @@ static oops::LinearVariableChangeMaker<Traits,
        oops::LinearVariableChange<Traits, LinearModel2GeoVaLs> >
        makerLinearVariableChangeModel2GeoVaLs_("Model2GeoVaLs");
 
+static oops::LinearVariableChangeMaker<Traits,
+       oops::LinearVariableChange<Traits, LinearModel2GeoVaLs> >
+       makerLinearVariableChangeModel2GeoVaLsDefault_("default");
+
 // -----------------------------------------------------------------------------
 
 LinearModel2GeoVaLs::LinearModel2GeoVaLs(const State & bg, const State &fg,
