@@ -62,6 +62,9 @@ namespace soca {
                                     const size_t &,
                                     const double[],
                                     size_t &);
+    void soca_state_analytic_f90(const F90flds &,
+                                 const eckit::Configuration * const &,
+                                 util::DateTime * const *);
   }
 }  // namespace soca
 #endif  // SOCA_STATE_STATEFORTRAN_H_
