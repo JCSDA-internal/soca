@@ -15,7 +15,7 @@ background:
 background error:
   covariance model: SocaError
   date: *date
-  analysis variables: &soca_vars [ssh, cicen, hicen, tocn, socn]
+  analysis variables: &soca_vars [ssh, tocn, socn, cicen, hicen]
   bump:
     verbosity: main
     datadir: ./bump
@@ -96,11 +96,14 @@ number of random samples: 40
 perturbed variables: *soca_vars
 truncation tolerence: .7
 
+# disable tests for each member as the results are not reproducable
+# accross compilers and hardware
+print test for each member: false
+
 output:
  frequency: PT6H
  datadir: Data
  exp: sqrtvert 
  type: ens
  date: *date
-
 

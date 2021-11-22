@@ -489,6 +489,7 @@ soca_add_test( NAME enspert
 # Generate sqrt of vertical localization
 soca_add_test( NAME sqrtvertloc
                EXE  soca_sqrtvertloc.x
+               TOL  1e-5 0
                NOTRAPFPE
                TEST_DEPENDS test_soca_gridgen
                             test_soca_static_socaerror_init
