@@ -235,7 +235,9 @@ subroutine soca_model_finalize(self, flds)
   type(soca_state), intent(inout) :: flds
 
   type(soca_field), pointer :: field
-  integer :: i
+  real(kind=8), allocatable :: incr(:,:,:)
+  real(kind=8), allocatable :: w(:,:,:), nz(:,:)
+  integer :: i, k
 
   ! for each field
   do i=1,size(flds%fields)
@@ -262,6 +264,20 @@ subroutine soca_model_finalize(self, flds)
       self%mom6_config%MOM_CSp%u = real(field%val, kind=8)
     case ("vocn")
       self%mom6_config%MOM_CSp%v = real(field%val, kind=8)
+    case ("ssh")
+      allocate(incr, mold=field%val)
+      allocate(w, mold=field%val)
+      incr = 0.0
+      w = 0.0
+      where ( self%mom6_config%MOM_CSp%h > 1.0e-3 )
+         w = 1.0
+      end where
+      nz = sum(w, dim=3)
+      incr(:,:,1) = real(field%val(:,:,1), kind=8) - self%mom6_config%MOM_CSp%ave_ssh_ibc
+      do k = 1, field%nz
+         self%mom6_config%MOM_CSp%h(:,:,k) = self%mom6_config%MOM_CSp%h(:,:,k) + w(:,:,k)*incr(:,:,1)/nz(:,:)
+      end do
+
     end select
   end do
 
