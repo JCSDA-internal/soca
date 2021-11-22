@@ -266,16 +266,20 @@ subroutine soca_model_finalize(self, flds)
       self%mom6_config%MOM_CSp%v = real(field%val, kind=8)
     case ("ssh")
       allocate(incr, mold=field%val)
-      allocate(w, mold=field%val)
+      allocate(w, mold=self%mom6_config%MOM_CSp%h)
       incr = 0.0
       w = 0.0
       where ( self%mom6_config%MOM_CSp%h > 1.0e-3 )
          w = 1.0
       end where
       nz = sum(w, dim=3)
+      where ( nz < 1.0 )
+         nz = 1e9
+      end where
       incr(:,:,1) = real(field%val(:,:,1), kind=8) - self%mom6_config%MOM_CSp%ave_ssh_ibc
-      do k = 1, field%nz
-         self%mom6_config%MOM_CSp%h(:,:,k) = self%mom6_config%MOM_CSp%h(:,:,k) + w(:,:,k)*incr(:,:,1)/nz(:,:)
+      do k = 1, size(w, dim=3)
+         self%mom6_config%MOM_CSp%h(:,:,k) = self%mom6_config%MOM_CSp%h(:,:,k) + &
+              & field%mask(:,:)*w(:,:,k)*incr(:,:,1)/nz(:,:)
       end do
 
     end select
