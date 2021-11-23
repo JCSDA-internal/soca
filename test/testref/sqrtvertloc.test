@@ -18,52 +18,50 @@ Test     :      lw   min=    0.000000   max=    0.000000   mean=    0.000000
 Test     :      us   min=    0.000000   max=    0.000000   mean=    0.000000
 Test     :     mld   min=    2.285472   max= 4593.153342   mean=  192.410907
 Test     : layer_depth   min=    2.285472   max= 5658.305747   mean= 1200.522954
-Test     : Variance Explained=0.211797
-Test     : 0.370838
-Test     : 0.442053
-Test     : 0.502934
-Test     : 0.556721
-Test     : 0.604670
-Test     : 0.647874
-Test     : 0.686991
-Test     : 0.722356
-Test     : 0.754302
-Test     : 0.783217
-Test     : 0.809332
-Test     : 0.832924
-Test     : 0.854222
-Test     : 0.873366
-Test     : 0.890522
-Test     : 0.905810
-Test     : 0.919435
-Test     : 0.931508
-Test     : 0.942159
-Test     : 0.951511
-Test     : 0.959680
-Test     : 0.966760
-Test     : 0.972878
-Test     : 0.978109
-Test     : 0.982539
-Test     : 0.986279
-Test     : 0.989387
-Test     : 0.991938
-Test     : 0.994015
-Test     : 0.995671
-Test     : 0.996967
-Test     : 0.997956
-Test     : 0.998693
-Test     : 0.999223
-Test     : 0.999585
-Test     : 0.999813
-Test     : 0.999943
+Test     : Variance Explained=0.196624
+Test     : 0.350512
+Test     : 0.427541
+Test     : 0.492794
+Test     : 0.549690
+Test     : 0.600277
+Test     : 0.645490
+Test     : 0.686331
+Test     : 0.723211
+Test     : 0.756319
+Test     : 0.786153
+Test     : 0.813055
+Test     : 0.837187
+Test     : 0.858811
+Test     : 0.878121
+Test     : 0.895294
+Test     : 0.910540
+Test     : 0.924012
+Test     : 0.935871
+Test     : 0.946288
+Test     : 0.955356
+Test     : 0.963196
+Test     : 0.969946
+Test     : 0.975717
+Test     : 0.980610
+Test     : 0.984724
+Test     : 0.988145
+Test     : 0.990958
+Test     : 0.993233
+Test     : 0.995067
+Test     : 0.996506
+Test     : 0.997610
+Test     : 0.998436
+Test     : 0.999033
+Test     : 0.999446
+Test     : 0.999719
+Test     : 0.999883
+Test     : 0.999967
 Test     : 1.000000
 Test     : 1.000000
 Test     : Number of retained columns=9
-Test     : Retained fraction of the variance=0.722356
+Test     : Retained fraction of the variance=0.723211
 Test     : Variance for truncated correlation matrix
 Test     :   Valid time: 2018-04-15T00:00:00Z
-Test     :     ssh   min=    0.000000   max=    0.998522   mean=    0.861936
-Test     :    tocn   min=    0.000000   max=    0.999396   mean=    0.583212
-Test     :    socn   min=    0.000000   max=    0.999433   mean=    0.586704
-Test     :   cicen   min=    0.130094   max=    1.000000   mean=    0.585552
-Test     :   hicen   min=    0.040167   max=    1.000000   mean=    0.582465
+Test     :     ssh   min=    0.000000   max=    0.999144   mean=    0.870603
+Test     :    tocn   min=    0.000000   max=    0.999883   mean=    0.590473
+Test     :    socn   min=    0.000000   max=    0.999595   mean=    0.593252
