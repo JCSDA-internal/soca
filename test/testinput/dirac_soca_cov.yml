@@ -17,7 +17,7 @@ background error:
   bump:
     verbosity: main
     datadir: ./bump
-    load_nicas_local: 1
+    load_nicas_local: true
     strategy: specific_univariate
   correlation:
   - name: ocn

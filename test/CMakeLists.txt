@@ -609,7 +609,7 @@ soca_add_test( NAME ensvariance
                TEST_DEPENDS test_soca_enspert )
 
 soca_add_test( NAME parameters_bump_loc
-               EXE  soca_parameters.x
+               EXE  soca_error_covariance_training.x
                NOCOMPARE
                TEST_DEPENDS test_soca_enspert )
 
@@ -624,11 +624,11 @@ soca_add_test( NAME hybridgain
 # TODO the next couple of tests are a little slow.
 # Revive them once we have tiered testing?
 # soca_add_test( NAME parameters_bump_cov_lct
-#                EXE  soca_parameters.x
+#                EXE  soca_error_covariance_training.x
 #                TEST_DEPENDS test_soca_enspert )
 #
 # soca_add_test( NAME parameters_bump_cov_nicas
-#                EXE  soca_parameters.x
+#                EXE  soca_error_covariance_training.x
 #                TEST_DEPENDS test_soca_parameters_bump_cov_lct )
 
 # soca_add_test( NAME dirac_bump_cov
@@ -636,7 +636,7 @@ soca_add_test( NAME hybridgain
 
 soca_add_test( NAME parameters_bump_cor_nicas
                NOTRAPFPE
-               EXE  soca_parameters.x
+               EXE  soca_error_covariance_training.x
                TEST_DEPENDS test_soca_gridgen_small
                             test_soca_convertstate)
 

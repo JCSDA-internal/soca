@@ -30,7 +30,7 @@ cost function:
       verbosity: main
       datadir: ./bump_lowres
       strategy: specific_univariate
-      load_nicas_local: 1
+      load_nicas_local: true
     correlation:
     - name: ocn
       variables: [socn, tocn, ssh]
