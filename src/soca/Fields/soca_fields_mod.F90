@@ -215,6 +215,9 @@ contains
 
   !> \}
 
+  !> \copybrief soca_fields_update_fields \see soca_fields_update_fields
+  procedure :: update_fields => soca_fields_update_fields
+
 end type soca_fields
 
 
@@ -1317,6 +1320,22 @@ subroutine soca_fields_deserialize(self, geom, vec_size, vec, index)
 
 end subroutine soca_fields_deserialize
 
+! ------------------------------------------------------------------------------
+!> update fields, using list of variables the method removes fields not in the
+!                 list and allocates fields in the list but not allocated
+!!
+!! \see soca_fields_serialize
+!! \relates soca_fields_mod::soca_fields
+
+subroutine soca_fields_update_fields(self, vars)
+
+! Arguments
+class(soca_fields),   intent(inout) :: self
+type(oops_variables), intent(in)    :: vars
+
+
+
+end subroutine soca_fields_update_fields
 
 ! ------------------------------------------------------------------------------
 ! Internal module functions/subroutines

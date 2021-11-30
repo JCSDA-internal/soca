@@ -44,6 +44,27 @@ void LinearVariableChange::setTrajectory(const State & xbg, const State & xfg) {
 void LinearVariableChange::multiply(Increment & dx, const oops::Variables & vars) const {
   Log::trace() << "LinearVariableChange::multiply starting" << std::endl;
 
+  // Convert vars to long names and field names
+  //const oops::Variables varsLongName = fieldsMetadata_.LongNameFromIONameLongNameOrFieldName(vars);
+
+  // If all variables already in incoming state just remove the no longer needed fields
+  //if (varsLongName <= dx.variablesLongName()) {
+  dx.updateFields(vars);
+  oops::Log::trace() << "LinearVariableChange::multiply done (identity)" << std::endl;
+  return;
+  //}
+
+  // Create output state
+  Increment dxout(*dx.geometry(), vars, dx.time());
+
+  // Call variable change
+  linearVariableChange_->multiply(dx, dxout);
+
+  // Allocate any extra fields and remove fields no longer needed
+  dx.updateFields(vars);
+
+  // Copy data from temporary state
+  dx = dxout;
 
   Log::trace() << "LinearVariableChange::multiply done" << dx << std::endl;
 }

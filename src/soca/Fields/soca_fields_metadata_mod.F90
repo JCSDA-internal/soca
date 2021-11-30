@@ -22,7 +22,7 @@ type, public :: soca_field_metadata
   logical                        :: masked   !< should use land mask when interpolating
   character(len=:),  allocatable :: levels   !< "1", or "full_ocn"
   character(len=:),  allocatable :: getval_name !< variable name used by UFO
-  character(len=:),  allocatable :: getval_name_surface  ! name used by UFO for the suface (if this is a 3D field)
+  character(len=:),  allocatable :: getval_name_surface  ! name used by UFO for the surface (if this is a 3D field)
   character(len=:),  allocatable :: io_file  !< the restart file domain (ocn, sfc, ice)
   character(len=:),  allocatable :: io_name  !< the name use in the restart IO
   character(len=:),  allocatable :: property  !< physical property of the field, "none" or "positive_definite"

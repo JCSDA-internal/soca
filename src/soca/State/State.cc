@@ -208,6 +208,13 @@ namespace soca {
     return zz;
   }
   // -----------------------------------------------------------------------------
+  void State::updateFields(const oops::Variables & vars) {
+    // Update local variables
+    vars_ = vars;
+    // Update field data
+    soca_state_update_fields_f90(toFortran(), vars_);
+  }
+  // -----------------------------------------------------------------------------
   /// Logarithmic and exponential transformations
   // -----------------------------------------------------------------------------
   void State::logtrans(const oops::Variables & trvar) const {
