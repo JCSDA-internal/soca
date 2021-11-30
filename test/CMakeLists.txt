@@ -52,6 +52,7 @@ set( soca_test_input
   testinput/parameters_bump_cov_lct.yml
   testinput/parameters_bump_cov_nicas.yml
   testinput/parameters_bump_loc.yml
+  testinput/sqrtvertloc.yml
   testinput/state.yml
   testinput/static_socaerror_init.yml
   testinput/static_socaerrorlowres_init.yml
@@ -104,6 +105,7 @@ set( soca_test_ref
   testref/makeobs.test
   testref/parameters_bump_cor_nicas.test
   testref/parameters_bump_cov_lct.test
+  testref/sqrtvertloc.test
 )
 
 set( soca_data_files
@@ -480,7 +482,19 @@ soca_add_test( NAME enspert
                EXE  soca_enspert.x
                NOTRAPFPE
                TEST_DEPENDS test_soca_gridgen
-                            test_soca_static_socaerror_init)
+                            test_soca_static_socaerror_init
+                            test_soca_balance_mask
+                            test_soca_create_kmask)
+
+# Generate sqrt of vertical localization
+soca_add_test( NAME sqrtvertloc
+               EXE  soca_sqrtvertloc.x
+               TOL  1e-5 0
+               NOTRAPFPE
+               TEST_DEPENDS test_soca_gridgen
+                            test_soca_static_socaerror_init
+                            test_soca_balance_mask
+                            test_soca_create_kmask)
 
 # TODO Test below can take a few hours to complete.
 # Revive once we have tiered testing?
