@@ -33,7 +33,7 @@ namespace soca {
 namespace soca {
 
 /// SOCA linear change of variable
-class HorizFilt: public LinearVariableChangeBase, util::Printable {
+class HorizFilt: public LinearVariableChangeBase {
  public:
   static const std::string classname() {return "soca::HorizFilt";}
 

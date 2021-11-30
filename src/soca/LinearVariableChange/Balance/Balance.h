@@ -30,7 +30,7 @@ namespace soca {
 namespace soca {
 
 /// SOCA linear change of variable
-class Balance: public LinearVariableChangeBase, util::Printable {
+class Balance: public LinearVariableChangeBase {
  public:
   static const std::string classname() {return "soca::Balance";}
 

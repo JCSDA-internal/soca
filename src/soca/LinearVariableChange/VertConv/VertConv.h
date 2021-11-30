@@ -31,7 +31,7 @@ namespace soca {
 namespace soca {
 
 /// SOCA linear change of variable
-class VertConv: public LinearVariableChangeBase, util::Printable {
+class VertConv: public LinearVariableChangeBase {
  public:
   static const std::string classname() {return "soca::VertConv";}
 

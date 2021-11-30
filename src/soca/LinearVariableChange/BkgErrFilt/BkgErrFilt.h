@@ -30,7 +30,7 @@ namespace soca {
 namespace soca {
 
 /// SOCA linear change of variable
-class BkgErrFilt: public LinearVariableChangeBase, util::Printable {
+class BkgErrFilt: public LinearVariableChangeBase {
  public:
   static const std::string classname() {return "soca::BkgErrFilt";}
 
