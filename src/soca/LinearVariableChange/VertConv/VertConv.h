@@ -5,11 +5,12 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#ifndef SOCA_TRANSFORMS_BKGERR_BKGERR_H_
-#define SOCA_TRANSFORMS_BKGERR_BKGERR_H_
+#pragma once
 
 #include <ostream>
 #include <string>
+
+#include "soca/State/State.h"
 
 #include "oops/util/DateTime.h"
 #include "oops/util/Printable.h"
@@ -19,9 +20,8 @@ namespace eckit {
   class Configuration;
 }
 namespace soca {
-  class State;
-  class Increment;
   class Geometry;
+  class Increment;
 }
 
 // -----------------------------------------------------------------------------
@@ -29,13 +29,13 @@ namespace soca {
 namespace soca {
 
 /// SOCA linear change of variable
-class BkgErr: public util::Printable {
+class VertConv: public util::Printable {
  public:
-  static const std::string classname() {return "soca::BkgErr";}
+  static const std::string classname() {return "soca::VertConv";}
 
-  explicit BkgErr(const State &, const State &, const Geometry &,
-                  const eckit::Configuration &);
-  ~BkgErr();
+  explicit VertConv(const State &, const State &, const Geometry &,
+                    const eckit::Configuration &);
+  ~VertConv();
 
 /// Perform linear transforms
   void multiply(const Increment &, Increment &) const;
@@ -46,8 +46,9 @@ class BkgErr: public util::Printable {
  private:
   void print(std::ostream &) const override;
   int keyFtnConfig_;
+  const State bkg_lr_;
+  const Geometry geom_;
 };
 // -----------------------------------------------------------------------------
 
 }  // namespace soca
-#endif  // SOCA_TRANSFORMS_BKGERR_BKGERR_H_

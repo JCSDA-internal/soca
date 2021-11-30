@@ -5,12 +5,13 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#ifndef SOCA_TRANSFORMS_BKGERRGODAS_BKGERRGODAS_H_
-#define SOCA_TRANSFORMS_BKGERRGODAS_BKGERRGODAS_H_
+#pragma once
 
+#include <memory>
 #include <ostream>
 #include <string>
 
+#include "oops/base/Variables.h"
 #include "oops/util/DateTime.h"
 #include "oops/util/Printable.h"
 
@@ -30,13 +31,13 @@ namespace soca {
 namespace soca {
 
 /// SOCA linear change of variable
-class BkgErrGodas: public util::Printable {
+class HorizFilt: public util::Printable {
  public:
-  static const std::string classname() {return "soca::BkgErrGodas";}
+  static const std::string classname() {return "soca::HorizFilt";}
 
-  explicit BkgErrGodas(const State &, const State &, const Geometry &,
+  explicit HorizFilt(const State &, const State &, const Geometry &,
                   const eckit::Configuration &);
-  ~BkgErrGodas();
+  ~HorizFilt();
 
 /// Perform linear transforms
   void multiply(const Increment &, Increment &) const;
@@ -47,8 +48,10 @@ class BkgErrGodas: public util::Printable {
  private:
   void print(std::ostream &) const override;
   int keyFtnConfig_;
+  std::unique_ptr<const Geometry> geom_;
+  oops::Variables vars_;
+  unsigned int niter_;
 };
 // -----------------------------------------------------------------------------
 
 }  // namespace soca
-#endif  // SOCA_TRANSFORMS_BKGERRGODAS_BKGERRGODAS_H_

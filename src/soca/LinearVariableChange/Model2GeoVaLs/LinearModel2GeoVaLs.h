@@ -5,8 +5,7 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#ifndef SOCA_TRANSFORMS_MODEL2GEOVALS_LINEARMODEL2GEOVALS_H_
-#define SOCA_TRANSFORMS_MODEL2GEOVALS_LINEARMODEL2GEOVALS_H_
+#pragma once
 
 #include <memory>
 #include <string>
@@ -43,5 +42,3 @@ class LinearModel2GeoVaLs: public util::Printable,
 };
 
 }  // namespace soca
-
-#endif  // SOCA_TRANSFORMS_MODEL2GEOVALS_LINEARMODEL2GEOVALS_H_

@@ -1,4 +1,3 @@
-add_subdirectory(Ana2Model)
 add_subdirectory(Balance)
 add_subdirectory(BkgErr)
 add_subdirectory(BkgErrFilt)

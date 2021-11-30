@@ -4,8 +4,7 @@
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
-#ifndef SOCA_TRANSFORMS_MODEL2GEOVALS_MODEL2GEOVALSFORTRAN_H_
-#define SOCA_TRANSFORMS_MODEL2GEOVALS_MODEL2GEOVALSFORTRAN_H_
+#pragma once
 
 #include "soca/Fortran.h"
 
@@ -22,5 +21,3 @@ namespace soca {
                                                   F90flds &);
   }
 }  // namespace soca
-
-#endif  // SOCA_TRANSFORMS_MODEL2GEOVALS_MODEL2GEOVALSFORTRAN_H_
