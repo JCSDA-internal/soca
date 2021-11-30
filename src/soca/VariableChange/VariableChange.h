@@ -52,7 +52,6 @@ class VariableChange : public util::Printable {
  private:
   void print(std::ostream &) const override;
   std::unique_ptr<VariableChangeBase> variableChange_;
-  FieldsMetadata fieldsMetadata_;
 };
 
 // -------------------------------------------------------------------------------------------------

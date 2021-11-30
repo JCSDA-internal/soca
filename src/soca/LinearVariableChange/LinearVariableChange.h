@@ -56,7 +56,6 @@ class LinearVariableChange : public util::Printable {
   Parameters_ params_;
   std::shared_ptr<const Geometry> geom_;
   std::unique_ptr<LinearVariableChangeBase> linearVariableChange_;
-  FieldsMetadata fieldsMetadata_;
 };
 
 // -------------------------------------------------------------------------------------------------

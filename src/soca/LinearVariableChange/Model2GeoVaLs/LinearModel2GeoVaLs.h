@@ -24,7 +24,7 @@ namespace soca {
   class Increment;
 
 
-class LinearModel2GeoVaLs: LinearVariableChangeBase, public util::Printable,
+class LinearModel2GeoVaLs: public LinearVariableChangeBase, util::Printable,
                            private util::ObjectCounter<LinearModel2GeoVaLs> {
  public:
   static const std::string classname() {return "soca::LinearModel2GeoVaLs";}
