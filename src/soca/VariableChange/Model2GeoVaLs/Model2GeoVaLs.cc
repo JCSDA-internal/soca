@@ -5,8 +5,8 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#include "soca/Transforms/Model2GeoVaLs/Model2GeoVaLs.h"
-#include "soca/Transforms/Model2GeoVaLs/Model2GeoVaLsFortran.h"
+#include "soca/VariableChange/Model2GeoVaLs/Model2GeoVaLs.h"
+#include "soca/VariableChange/Model2GeoVaLs/Model2GeoVaLsFortran.h"
 
 #include "oops/util/abor1_cpp.h"
 
@@ -14,11 +14,9 @@ namespace soca {
 
 // -----------------------------------------------------------------------------
 
-static oops::VariableChangeMaker<Traits, Model2GeoVaLs>
-  makerVariableChangeModel2GeoVaLs_("Model2GeoVaLs");
+static VariableChangeMaker<Model2GeoVaLs> makerVariableChangeModel2GeoVaLs_("Model2GeoVaLs");
 
-static oops::VariableChangeMaker< Traits, Model2GeoVaLs>
-  makerVariableChangeDefault_("default");
+static VariableChangeMaker<Model2GeoVaLs> makerVariableChangeDefault_("default");
 
 // -----------------------------------------------------------------------------
 

@@ -10,13 +10,13 @@
 #include <memory>
 #include <string>
 
-#include "oops/base/VariableChangeBase.h"
-
 #include "soca/Traits.h"
+
+#include "soca/VariableChange/Base/VariableChangeBase.h"
 
 namespace soca {
 
-class Model2GeoVaLs: public oops::VariableChangeBase<Traits> {
+class Model2GeoVaLs: public VariableChangeBase {
  public:
   static const std::string classname() {return "soca::Model2GeoVaLs";}
 

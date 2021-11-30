@@ -12,6 +12,8 @@
 
 #include "oops/util/Printable.h"
 
+#include "soca/LinearVariableChange/Base/LinearVariableChangeBase.h"
+
 // Forward declarations
 namespace eckit {
   class Configuration;
@@ -22,7 +24,7 @@ namespace soca {
   class Increment;
 
 
-class LinearModel2GeoVaLs: public util::Printable,
+class LinearModel2GeoVaLs: LinearVariableChangeBase, public util::Printable,
                            private util::ObjectCounter<LinearModel2GeoVaLs> {
  public:
   static const std::string classname() {return "soca::LinearModel2GeoVaLs";}

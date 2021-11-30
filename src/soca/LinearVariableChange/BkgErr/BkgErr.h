@@ -13,6 +13,8 @@
 #include "oops/util/DateTime.h"
 #include "oops/util/Printable.h"
 
+#include "soca/LinearVariableChange/Base/LinearVariableChangeBase.h"
+
 // Forward declarations
 namespace eckit {
   class Configuration;
@@ -28,7 +30,7 @@ namespace soca {
 namespace soca {
 
 /// SOCA linear change of variable
-class BkgErr: public util::Printable {
+class BkgErr: public LinearVariableChangeBase, util::Printable {
  public:
   static const std::string classname() {return "soca::BkgErr";}
 
