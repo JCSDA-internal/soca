@@ -44,9 +44,9 @@ observations:
     name: Identity
   obs error:
     covariance model: diagonal
-  obs localization:
-      localization method: Gaspari-Cohn
-      lengthscale: 0
+  obs localizations:
+  - localization method: Gaspari-Cohn
+    lengthscale: 0
   obs filters:
   - *land_mask
   - filter: Thinning
