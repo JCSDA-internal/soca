@@ -12,11 +12,11 @@
 #include <vector>
 
 #include "eckit/config/Configuration.h"
-#include "oops/base/VariableChangeBase.h"
 #include "oops/base/Variables.h"
 #include "soca/Geometry/Geometry.h"
 #include "soca/Traits.h"
 
+#include "soca/VariableChange/Base/VariableChangeBase.h"
 
 // Forward declarations
 namespace eckit {
@@ -30,7 +30,7 @@ namespace soca {
 // -----------------------------------------------------------------------------
 /// SOCA nonlinear change of variable
 
-class Ana2Model: public oops::VariableChangeBase<soca::Traits> {
+class Ana2Model: public VariableChangeBase {
  public:
   static const std::string classname() {return "soca::Ana2Model";}
 

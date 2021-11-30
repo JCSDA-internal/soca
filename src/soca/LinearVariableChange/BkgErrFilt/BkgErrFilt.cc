@@ -10,24 +10,23 @@
 
 #include "eckit/config/Configuration.h"
 
-#include "oops/interface/LinearVariableChange.h"
 #include "oops/util/Logger.h"
 
 #include "soca/Geometry/Geometry.h"
 #include "soca/Increment/Increment.h"
 #include "soca/State/State.h"
 #include "soca/Traits.h"
-#include "soca/Transforms/BkgErrFilt/BkgErrFilt.h"
-#include "soca/Transforms/BkgErrFilt/BkgErrFiltFortran.h"
+#include "soca/LinearVariableChange/BkgErrFilt/BkgErrFilt.h"
+#include "soca/LinearVariableChange/BkgErrFilt/BkgErrFiltFortran.h"
 
 using oops::Log;
 
 namespace soca {
 
   // -----------------------------------------------------------------------------
-  static oops::LinearVariableChangeMaker<Traits,
-            oops::LinearVariableChange<Traits, BkgErrFilt> >
-            makerLinearVariableChangeBkgErrFilt_("BkgErrFILT");
+
+  static LinearVariableChangeMaker<BkgErrFilt>
+                         makerLinearVariableChangeBkgErrFilt_("BkgErrFILT");
 
   // -----------------------------------------------------------------------------
   BkgErrFilt::BkgErrFilt(const State & bkg,

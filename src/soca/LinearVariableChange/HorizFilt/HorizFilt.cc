@@ -10,7 +10,6 @@
 
 #include "eckit/config/Configuration.h"
 
-#include "oops/interface/LinearVariableChange.h"
 #include "oops/util/abor1_cpp.h"
 #include "oops/util/Logger.h"
 
@@ -18,16 +17,16 @@
 #include "soca/Increment/Increment.h"
 #include "soca/State/State.h"
 #include "soca/Traits.h"
-#include "soca/Transforms/HorizFilt/HorizFilt.h"
-#include "soca/Transforms/HorizFilt/HorizFiltFortran.h"
+#include "soca/LinearVariableChange/HorizFilt/HorizFilt.h"
+#include "soca/LinearVariableChange/HorizFilt/HorizFiltFortran.h"
 
 
 namespace soca {
 
   // -----------------------------------------------------------------------------
-  static oops::LinearVariableChangeMaker<Traits,
-              oops::LinearVariableChange<Traits, HorizFilt> >
-              makerLinearVariableChangeHorizFilt_("HorizFiltSOCA");
+
+  static LinearVariableChangeMaker<HorizFilt>
+               makerLinearVariableChangeHorizFilt_("HorizFiltSOCA");
 
   // -----------------------------------------------------------------------------
   HorizFilt::HorizFilt(const State & bkg,

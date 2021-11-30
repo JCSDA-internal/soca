@@ -14,7 +14,7 @@
 #include "oops/util/Logger.h"
 #include "soca/Geometry/Geometry.h"
 #include "soca/State/State.h"
-#include "soca/Transforms/Ana2Model/Ana2Model.h"
+#include "soca/VariableChange/Ana2Model/Ana2Model.h"
 
 using oops::Log;
 
@@ -22,8 +22,7 @@ namespace soca {
 
 // -----------------------------------------------------------------------------
 
-static oops::VariableChangeMaker<soca::Traits, soca::Ana2Model >
-               makerVariableChangeAna2Model_("Ana2Model");
+static VariableChangeMaker<Ana2Model> makerVarChaA2M_("Ana2Model");
 
 // -----------------------------------------------------------------------------
 Ana2Model::Ana2Model(const Geometry & resol, const eckit::Configuration & conf)

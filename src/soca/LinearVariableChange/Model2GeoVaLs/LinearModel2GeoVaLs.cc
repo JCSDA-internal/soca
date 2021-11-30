@@ -8,24 +8,20 @@
 
 #include "eckit/config/Configuration.h"
 
-#include "oops/interface/LinearVariableChange.h"
 #include "oops/util/abor1_cpp.h"
 
 #include "soca/Geometry/Geometry.h"
 #include "soca/Increment/Increment.h"
 #include "soca/State/State.h"
 #include "soca/Traits.h"
-#include "soca/Transforms/Model2GeoVaLs/LinearModel2GeoVaLs.h"
-#include "soca/Transforms/Model2GeoVaLs/Model2GeoVaLsFortran.h"
+#include "soca/LinearVariableChange/Model2GeoVaLs/LinearModel2GeoVaLs.h"
+#include "soca/LinearVariableChange/Model2GeoVaLs/Model2GeoVaLsFortran.h"
 
 namespace soca {
 
-static oops::LinearVariableChangeMaker<Traits,
-       oops::LinearVariableChange<Traits, LinearModel2GeoVaLs> >
+static LinearVariableChangeMaker<LinearModel2GeoVaLs>
        makerLinearVariableChangeModel2GeoVaLs_("Model2GeoVaLs");
-
-static oops::LinearVariableChangeMaker<Traits,
-       oops::LinearVariableChange<Traits, LinearModel2GeoVaLs> >
+static LinearVariableChangeMaker<LinearModel2GeoVaLs>
        makerLinearVariableChangeModel2GeoVaLsDefault_("default");
 
 // -----------------------------------------------------------------------------
