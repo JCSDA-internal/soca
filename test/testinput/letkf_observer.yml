@@ -45,7 +45,7 @@ observations:
   obs error:
     covariance model: diagonal
   obs localizations:
-  - localization method: Gaspari-Cohn
+  - localization method: Horizontal Gaspari-Cohn
     lengthscale: 0
   obs filters:
   - *land_mask

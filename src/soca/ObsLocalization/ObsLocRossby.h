@@ -18,8 +18,8 @@
 
 #include "oops/generic/gc99.h"
 
-#include "ufo/obslocalization/ObsLocGC99.h"
-#include "ufo/obslocalization/ObsLocParameters.h"
+#include "ufo/obslocalization/ObsHorLocGC99.h"
+#include "ufo/obslocalization/ObsHorLocParameters.h"
 
 #include "soca/ObsLocalization/ObsLocRossbyParameters.h"
 
@@ -28,9 +28,9 @@
 namespace soca {
 
 template<class MODEL>
-class ObsLocRossby: public ufo::ObsLocGC99<MODEL> {
+class ObsLocRossby: public ufo::ObsHorLocGC99<MODEL> {
   typedef typename MODEL::GeometryIterator   GeometryIterator_;
-  typedef typename ufo::ObsLocalization<MODEL>::LocalObs LocalObs_;
+  typedef typename ufo::ObsHorLocalization<MODEL>::LocalObs LocalObs_;
 
  public:
   ObsLocRossby(const eckit::Configuration &, const ioda::ObsSpace &);
@@ -52,7 +52,7 @@ template<typename MODEL>
 ObsLocRossby<MODEL>::ObsLocRossby(
       const eckit::Configuration& config,
       const ioda::ObsSpace & obsspace):
-    ufo::ObsLocGC99<MODEL>::ObsLocGC99(config, obsspace) {
+    ufo::ObsHorLocGC99<MODEL>::ObsHorLocGC99(config, obsspace) {
   options_.deserialize(config);
 }
 
@@ -77,8 +77,8 @@ void ObsLocRossby<MODEL>::computeLocalization(
 
   // Apply GC99 localization
   const LocalObs_ & localobs =
-    ufo::ObsLocGC99<MODEL>::getLocalObs(i, lengthscale);
-  ufo::ObsLocGC99<MODEL>::localizeLocalObs(i, locvector, localobs);
+  ufo::ObsHorLocGC99<MODEL>::getLocalObs(i, lengthscale);
+  ufo::ObsHorLocGC99<MODEL>::localizeLocalObs(i, locvector, localobs);
 }
 
 // -----------------------------------------------------------------------------
