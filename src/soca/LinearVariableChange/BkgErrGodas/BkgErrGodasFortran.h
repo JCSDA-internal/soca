@@ -5,8 +5,7 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#ifndef SOCA_TRANSFORMS_BKGERRGODAS_BKGERRGODASFORTRAN_H_
-#define SOCA_TRANSFORMS_BKGERRGODAS_BKGERRGODASFORTRAN_H_
+#pragma once
 
 #include "soca/Fortran.h"
 
@@ -31,4 +30,3 @@ namespace soca {
                                      const F90flds &);
   }
 }  // namespace soca
-#endif  // SOCA_TRANSFORMS_BKGERRGODAS_BKGERRGODASFORTRAN_H_

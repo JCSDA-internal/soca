@@ -5,8 +5,7 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#ifndef SOCA_TRANSFORMS_BALANCE_BALANCE_H_
-#define SOCA_TRANSFORMS_BALANCE_BALANCE_H_
+#pragma once
 
 #include <ostream>
 #include <string>
@@ -29,13 +28,13 @@ namespace soca {
 namespace soca {
 
 /// SOCA linear change of variable
-class Balance: public util::Printable {
+class BkgErrFilt: public util::Printable {
  public:
-  static const std::string classname() {return "soca::Balance";}
+  static const std::string classname() {return "soca::BkgErrFilt";}
 
-  explicit Balance(const State &, const State &,
-                   const Geometry &, const eckit::Configuration &);
-  ~Balance();
+  explicit BkgErrFilt(const State &, const State &, const Geometry &,
+                  const eckit::Configuration &);
+  ~BkgErrFilt();
 
 /// Perform linear transforms
   void multiply(const Increment &, Increment &) const;
@@ -50,4 +49,3 @@ class Balance: public util::Printable {
 // -----------------------------------------------------------------------------
 
 }  // namespace soca
-#endif  // SOCA_TRANSFORMS_BALANCE_BALANCE_H_
