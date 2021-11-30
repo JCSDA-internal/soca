@@ -15,7 +15,7 @@
 #include "soca/State/State.h"
 #include "soca/Traits.h"
 #include "soca/LinearVariableChange/Model2GeoVaLs/LinearModel2GeoVaLs.h"
-#include "soca/LinearVariableChange/Model2GeoVaLs/Model2GeoVaLsFortran.h"
+#include "soca/VariableChange/Model2GeoVaLs/Model2GeoVaLsFortran.h"
 
 namespace soca {
 

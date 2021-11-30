@@ -8,21 +8,19 @@
 #include <ostream>
 #include <string>
 
-#include "boost/none_t.hpp"
-
-#include "oops/mpi/mpi.h"
-#include "oops/util/Logger.h"
-
 #include "soca/Geometry/Geometry.h"
 #include "soca/State/State.h"
 #include "soca/VariableChange/VariableChange.h"
+
+#include "oops/util/Logger.h"
+
+using oops::Log;
 
 namespace soca {
 
 // -------------------------------------------------------------------------------------------------
 
-VariableChange::VariableChange(const Parameters_ & params, const Geometry & geometry)
-  : fieldsMetadata_(geometry.fieldsMetaData()) {
+VariableChange::VariableChange(const Parameters_ & params, const Geometry & geometry) {
   // Create the variable change
   variableChange_.reset(VariableChangeFactory::create(geometry,
                         params.variableChangeParametersWrapper.variableChangeParameters.value()));
@@ -36,22 +34,22 @@ VariableChange::~VariableChange() {}
 
 void VariableChange::changeVar(State & x, const oops::Variables & vars) const {
   // Trace
-  oops::Log::trace() << "VariableChange::changeVar starting" << std::endl;
+  Log::trace() << "VariableChange::changeVar starting" << std::endl;
 
 
   // Trace
-  oops::Log::trace() << "VariableChange::changeVar done" << std::endl;
+  Log::trace() << "VariableChange::changeVar done" << std::endl;
 }
 
 // -------------------------------------------------------------------------------------------------
 
 void VariableChange::changeVarInverse(State & x, const oops::Variables & vars) const {
   // Trace
-  oops::Log::trace() << "VariableChange::changeVarInverse starting" << std::endl;
+  Log::trace() << "VariableChange::changeVarInverse starting" << std::endl;
 
 
   // Trace
-  oops::Log::trace() << "VariableChange::changeVarInverse done" << std::endl;
+  Log::trace() << "VariableChange::changeVarInverse done" << std::endl;
 }
 
 // -------------------------------------------------------------------------------------------------

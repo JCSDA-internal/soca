@@ -113,6 +113,8 @@ namespace soca {
       const int & toFortran() const {return keyFlds_;}
       std::shared_ptr<const Geometry> geometry() const;
 
+      /// Private variable accessor functions
+      const oops::Variables & variables() const {return vars_;}
 
       /// Data
    private:
