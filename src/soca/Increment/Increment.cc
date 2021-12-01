@@ -166,7 +166,8 @@ namespace soca {
     std::vector<int> varlens(vars_.size());
 
     int iteratorDimension = geom_->IteratorDimension();
-    if (iteratorDimension == 3) {
+    switch (iteratorDimension) {
+    case (3) :
       if (p3[2] == 0.0) {
       // should probably check if kindex == 0 (bit this requires more code)
       // surface variables
@@ -192,7 +193,7 @@ namespace soca {
               varlens[ii] = 0;
         }
       }
-    } else {
+    default :
       for (int ii = 0; ii < vars_.size(); ii++) {
         if (vars_[ii] == "tocn") varlens[ii]=nzo;
         else if (vars_[ii] == "socn") varlens[ii]=nzo;
