@@ -10,12 +10,14 @@
  */
 
 #include "oops/runs/Run.h"
-#include "saber/oops/EstimateParams.h"
+#include "saber/oops/ErrorCovarianceTraining.h"
+#include "saber/oops/instantiateCovarFactory.h"
 #include "soca/Traits.h"
 
 
 int main(int argc,  char ** argv) {
   oops::Run run(argc, argv);
-  saber::EstimateParams<soca::Traits> dir;
+  saber::instantiateCovarFactory<soca::Traits>();
+  saber::ErrorCovarianceTraining<soca::Traits> dir;
   return run.execute(dir);
 }

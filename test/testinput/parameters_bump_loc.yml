@@ -17,10 +17,10 @@ bump:
   prefix: soca_bump_loc
   method: loc
   strategy: common
-  new_nicas: 1
-  write_nicas_local: 1
-  resol: 6
-  forced_radii: 1
+  new_nicas: true
+  write_nicas_local: true
+  resol: 6.0
+  forced_radii: true
   rh:
     common: [2500000.0]
     socn: [2500000.0]

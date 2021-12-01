@@ -23,18 +23,24 @@ cost function:
     state variables: [hocn, socn, tocn, ssh, mld, layer_depth]
 
   background error:
-    covariance model: BUMP
-    bump:
-      verbosity: main
-      datadir: ./bump
-      strategy: specific_univariate
-      load_nicas_local: 1
-      grids:
-      - prefix: bump3d
-        variables: [hocn, socn, tocn]
-      - prefix: bump2d
-        variables: [ssh]
-    date: 2018-04-15T00:00:00Z
+    covariance model: SABER
+    saber blocks:
+    - saber block name: BUMP_NICAS
+      saber central block: true
+      iterative inverse: true
+      input variables: *soca_vars
+      output variables: *soca_vars
+      bump:
+        verbosity: main
+        datadir: ./bump
+        strategy: specific_univariate
+        load_nicas_local: true
+        grids:
+        - prefix: bump3d
+          variables: [hocn, socn, tocn]
+        - prefix: bump2d
+          variables: [ssh]
+
     variable changes:
 
     - variable change: BkgErrFILT

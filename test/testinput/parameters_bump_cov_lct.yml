@@ -22,7 +22,7 @@ bump:
   nc2: 500
   nc3: 100
   ne: 10
-  new_lct: 1
+  new_lct: true
   nl0r: 11
   strategy: specific_univariate
   grids:
