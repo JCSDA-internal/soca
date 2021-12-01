@@ -109,14 +109,15 @@ subroutine soca_geom_iter_equals(self, other, equals)
 
   ! Check equality
   if (associated(self%geom, other%geom)) then
-    if (self%geom%iterator_dimension .eq. 2) then
+    select case(self%geom%iterator_dimension)
+    case (2) ! 2-d iterator
       if ((self%iindex==other%iindex) .and. (self%jindex==other%jindex)) equals = 1
-    elseif (self%geom%iterator_dimension .eq. 3) then
+    case (3) ! 3-d iterator
       if ((self%iindex==other%iindex) .and. (self%jindex==other%jindex) .and. &
           (self%kindex==other%kindex) ) equals = 1
-    else
+    case default
       call abor1_ftn('soca_geom_iter_equals: unknown geom%iterator_dimension')
-    endif
+    end select
   endif
 
 end subroutine soca_geom_iter_equals
@@ -153,9 +154,10 @@ subroutine soca_geom_iter_current(self, lon, lat, depth)
   endif
 
   ! check kindex
-  if (self%geom%iterator_dimension .eq. 2) then
+  select case(self%geom%iterator_dimension)
+  case (2) ! 2-d iterator
     depth = -99999
-  elseif (self%geom%iterator_dimension .eq. 3) then
+  case (3) ! 3-d iterator
     h1d(1,1,:) = self%geom%h(self%iindex,self%jindex,:)
     call self%geom%thickness2depth(h1d, depth1d)
     if (self%kindex == -1) then
@@ -171,9 +173,9 @@ subroutine soca_geom_iter_current(self, lon, lat, depth)
       ! inside of the 3D grid
       depth = depth1d(1,1,self%kindex)
     endif
-  else
+  case default
     call abor1_ftn('soca_geom_iter_current: unknown geom%iterator_dimension')
-  endif
+  end select
 
 end subroutine soca_geom_iter_current
 
@@ -192,7 +194,8 @@ subroutine soca_geom_iter_next(self)
   kindex = self%kindex
 
   ! increment by 1
-  if (self%geom%iterator_dimension .eq. 2) then
+  select case(self%geom%iterator_dimension)
+  case (2) ! 2-d iterator
     if (iindex.lt.self%geom%iec) then
       iindex = iindex + 1
     elseif (iindex.eq.self%geom%iec) then
@@ -204,8 +207,7 @@ subroutine soca_geom_iter_next(self)
       iindex=-1
       jindex=-1
     end if
-
-  elseif (self%geom%iterator_dimension .eq. 3) then
+  case (3) ! 3-d iterator
     if (iindex.lt.self%geom%iec) then
       iindex = iindex + 1
     elseif (iindex.eq.self%geom%iec) then
@@ -223,9 +225,9 @@ subroutine soca_geom_iter_next(self)
       jindex=-1
       kindex=-1
     end if !kloop
-  else
+  case default
     call abor1_ftn('soca_geom_iter_next: unknown geom%iterator_dimension')
-  endif
+  end select
 
   self%iindex = iindex
   self%jindex = jindex
