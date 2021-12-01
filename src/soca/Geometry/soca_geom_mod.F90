@@ -46,27 +46,27 @@ type, public :: soca_geom
 
     !> \name local domain indices
     !! \{
-    integer :: isc, iec, jsc, jec, ksc, kec
+    integer :: isc, iec, jsc, jec
     !> \}
 
     !> \name data domain indices
     !! \{
-    integer :: isd, ied, jsd, jed, ksd, ked
+    integer :: isd, ied, jsd, jed
     !> \}
 
     !> \name global domain indices
     !! \{
-    integer :: isg, ieg, jsg, jeg, ksg, keg
+    integer :: isg, ieg, jsg, jeg
     !> \}
 
     !> \name local compute domain indices
     !! \{
-    integer :: iscl, iecl, jscl, jecl, kscl, kecl
+    integer :: iscl, iecl, jscl, jecl
     !> \}
 
     !> \name local data domain indices
     !! \{
-    integer :: isdl, iedl, jsdl, jedl, ksdl, kedl
+    integer :: isdl, iedl, jsdl, jedl
     !> \}
 
     !> \name iterator dimension
@@ -434,25 +434,18 @@ subroutine soca_geom_allocate(self)
   class(soca_geom), intent(inout) :: self
 
   integer :: nzo
-  integer :: isd, ied, jsd, jed, ksd, ked
+  integer :: isd, ied, jsd, jed
 
   nzo = self%nzo
-  ksd = 1
-  ked = nzo
 
   ! Get domain shape (number of levels, indices of data and compute domain)
   call soca_geom_get_domain_indices(self, "compute", self%isc, self%iec, self%jsc, self%jec)
-  self%ksc = ksd; self%kec = ked
   call soca_geom_get_domain_indices(self, "data", isd, ied, jsd, jed)
   self%isd = isd ;  self%ied = ied
   self%jsd = jsd; self%jed = jed
-  self%ksd = ksd; self%ked = ked
   call soca_geom_get_domain_indices(self, "global", self%isg, self%ieg, self%jsg, self%jeg)
-  self%ksg = ksd; self%keg = ked
   call soca_geom_get_domain_indices(self, "compute", self%iscl, self%iecl, self%jscl, self%jecl, local=.true.)
-  self%kscl = ksd; self%kecl = ked
   call soca_geom_get_domain_indices(self, "data", self%isdl, self%iedl, self%jsdl, self%jedl, local=.true.)
-  self%ksdl = ksd; self%kedl = ked
 
   ! Allocate arrays on compute domain
   allocate(self%lonh(self%isg:self%ieg));        self%lonh = 0.0_kind_real

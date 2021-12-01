@@ -1,7 +1,7 @@
 geometry:
   mom6_input_nml: ./inputnml/input.nml
   fields metadata: ./fields_metadata.yml
-  interator dimension: 2
+  iterator dimension: 2
 
 window begin: 2018-04-14T00:00:00Z
 window end: 2018-04-16T00:00:00Z

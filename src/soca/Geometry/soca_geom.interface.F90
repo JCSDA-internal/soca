@@ -159,8 +159,8 @@ subroutine soca_geo_start_end(c_key_self, ist, iend, jst, jend, kst, kend) bind(
   iend = self%iec
   jst  = self%jsc
   jend = self%jec
-  kst  = self%ksc
-  kend = self%kec
+  kst  = 1
+  kend = self%nzo
 end subroutine soca_geo_start_end
 
 

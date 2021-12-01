@@ -160,11 +160,11 @@ subroutine soca_geom_iter_current(self, lon, lat, depth)
     call self%geom%thickness2depth(h1d, depth1d)
     if (self%kindex == -1) then
       ! special case of {-1} means end of the grid
-      depth = depth1d(1,1,self%geom%kec)
+      depth = depth1d(1,1,self%geom%nzo)
     elseif (self%kindex == 0) then
       ! special case of the surface fields
       depth = 0;
-    elseif (self%kindex < 0 .OR. self%kindex > self%geom%kec) then
+    elseif (self%kindex < 0 .OR. self%kindex > self%geom%nzo) then
       ! out of range
       call abor1_ftn('soca_geom_iter_current: depth iterator out of bounds')
     else
@@ -218,7 +218,7 @@ subroutine soca_geom_iter_next(self)
       end if !j loop
     end if !iloop
 
-    if (kindex > self%geom%kec) then
+    if (kindex > self%geom%nzo) then
       iindex=-1
       jindex=-1
       kindex=-1
