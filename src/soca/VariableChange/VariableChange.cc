@@ -36,15 +36,15 @@ void VariableChange::changeVar(State & x, const oops::Variables & vars) const {
   // Trace
   Log::trace() << "VariableChange::changeVar starting" << std::endl;
 
-  // Convert vars to long names and field names
-  //const oops::Variables varsLongName = fieldsMetadata_.LongNameFromIONameLongNameOrFieldName(vars);
+  // Check if the incoming state has all the variables
+  const bool hasAllFields = x.hasFields(vars);
 
   // If all variables already in incoming state just remove the no longer needed fields
-  //if (varsLongName <= dx.variablesLongName()) {
-  x.updateFields(vars);
-  oops::Log::trace() << "VariableChange::changeVar done (identity)" << std::endl;
-  return;
-  //}
+  if (hasAllFields) {
+    x.updateFields(vars);
+    oops::Log::trace() << "VariableChange::changeVar done (identity)" << std::endl;
+    return;
+  }
 
   // Create output state
   State xout(*x.geometry(), vars, x.time());
@@ -68,6 +68,27 @@ void VariableChange::changeVarInverse(State & x, const oops::Variables & vars) c
   // Trace
   Log::trace() << "VariableChange::changeVarInverse starting" << std::endl;
 
+  // Check if the incoming state has all the variables
+  const bool hasAllFields = x.hasFields(vars);
+
+  // If all variables already in incoming state just remove the no longer needed fields
+  if (hasAllFields) {
+    x.updateFields(vars);
+    oops::Log::trace() << "VariableChange::changeVar done (identity)" << std::endl;
+    return;
+  }
+
+  // Create output state
+  State xout(*x.geometry(), vars, x.time());
+
+  // Call variable change
+  variableChange_->changeVarInverse(x, xout);
+
+  // Allocate any extra fields and remove fields no longer needed
+  x.updateFields(vars);
+
+  // Copy data from temporary state
+  x = xout;
 
   // Trace
   Log::trace() << "VariableChange::changeVarInverse done" << std::endl;

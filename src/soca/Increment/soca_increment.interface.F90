@@ -605,6 +605,38 @@ end subroutine soca_increment_deserialize_c
 
 ! ------------------------------------------------------------------------------
 !> C++ interface for soca_increment_mod::soca_increment version of
+!! soca_fields_mod::soca_fields::has_fields()
+subroutine soca_increment_has_fields_c(c_key_self, c_vars, c_has_vars) &
+           bind (c,name='soca_increment_has_fields_f90')
+
+integer(c_int),     intent(in)    :: c_key_self
+type(c_ptr), value, intent(in)    :: c_vars
+logical(c_bool),    intent(inout) :: c_has_vars
+
+type(soca_increment), pointer :: f_self
+type(oops_variables)          :: f_vars
+logical                       :: f_has_vars
+
+! LinkedList
+! ----------
+call soca_increment_registry%get(c_key_self, f_self)
+
+! Fortrain APIs
+! -------------
+f_vars = oops_variables(c_vars)
+
+! Call implementation
+! -------------------
+call f_self%has_fields(f_vars, f_has_vars)
+
+! Convert fortran logical to c boolean
+! ------------------------------------
+c_has_vars = f_has_vars
+
+end subroutine soca_increment_has_fields_c
+
+! ------------------------------------------------------------------------------
+!> C++ interface for soca_increment_mod::soca_increment version of
 !! soca_fields_mod::soca_fields::update_fields()
 subroutine soca_increment_update_fields_c(c_key_self, c_vars) &
            bind (c,name='soca_increment_update_fields_f90')

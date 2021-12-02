@@ -12,6 +12,8 @@ use fckit_pathname_module, only : fckit_pathname
 implicit none
 private
 
+public soca_fields_metadata_congruent
+
 ! ------------------------------------------------------------------------------
 !> Holds all of the user configurable meta data associated with a single field
 !!
@@ -168,5 +170,27 @@ function soca_fields_metadata_get(self, name) result(field)
 
 end function
 
+! ------------------------------------------------------------------------------
+!> Check if two metadata objects are the same
+!!
+!! \returns true if two metadata are congruent, false otherwise.
+function soca_fields_metadata_congruent(lhs, rhs) result(congruent)
+  type(soca_field_metadata), intent(in) :: lhs
+  type(soca_field_metadata), intent(in) :: rhs
+  logical :: congruent
+
+  congruent = .true.
+  congruent = congruent .and. lhs%name==rhs%name
+  congruent = congruent .and. lhs%grid==rhs%grid
+  congruent = congruent .and. lhs%masked.eqv.rhs%masked
+  congruent = congruent .and. lhs%levels==rhs%levels
+  congruent = congruent .and. lhs%getval_name==rhs%getval_name
+  congruent = congruent .and. lhs%getval_name_surface==rhs%getval_name_surface
+  congruent = congruent .and. lhs%io_file==rhs%io_file
+  congruent = congruent .and. lhs%io_name==rhs%io_name
+  congruent = congruent .and. lhs%property==rhs%property
+  congruent = congruent .and. lhs%dummy_atm.eqv.rhs%dummy_atm
+
+end function
 
 end module

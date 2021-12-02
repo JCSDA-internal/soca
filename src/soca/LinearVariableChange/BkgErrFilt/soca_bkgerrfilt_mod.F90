@@ -130,9 +130,9 @@ end subroutine soca_bkgerrfilt_setup
 !!
 !! \relates soca_bkgerrfilt_mod::soca_bkgerrfilt
 subroutine soca_bkgerrfilt_mult(self, dxa, dxm)
-  class(soca_bkgerrfilt),       intent(in) :: self
-  type(soca_increment),         intent(in) :: dxa !< input increment
-  type(soca_increment),      intent(inout) :: dxm !< output increment
+  class(soca_bkgerrfilt),       intent(in)    :: self
+  type(soca_increment), target, intent(in)    :: dxa !< input increment
+  type(soca_increment),         intent(inout) :: dxm !< output increment
 
   integer :: i, j, n
   type(soca_field), pointer :: field_f, field_a, field_m

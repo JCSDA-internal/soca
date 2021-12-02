@@ -89,6 +89,7 @@ namespace soca {
                                         const size_t &,
                                         const double[],
                                         size_t &);
+    void soca_increment_has_fields_f90(const F90flds &, const oops::Variables &, bool &);
     void soca_increment_update_fields_f90(F90flds &, const oops::Variables &);
   }
 }  // namespace soca

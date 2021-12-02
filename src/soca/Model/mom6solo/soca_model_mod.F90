@@ -147,9 +147,9 @@ end subroutine soca_model_init
 !!
 !! \relates soca_model_mod::soca_model
 subroutine soca_model_propagate(self, flds, fldsdate)
-  class(soca_model), intent(inout) :: self
-  type(soca_state), intent(inout) :: flds
-  type(datetime),      intent(in) :: fldsdate
+  class(soca_model),        intent(inout) :: self
+  type(soca_state), target, intent(inout) :: flds
+  type(datetime),           intent(in)    :: fldsdate
 
   type(soca_field), pointer :: field
   type(time_type) :: ocean_time  ! The ocean model's clock.
@@ -231,8 +231,8 @@ end subroutine soca_model_propagate
 !!
 !! \relates soca_model_mod::soca_model
 subroutine soca_model_finalize(self, flds)
-  class(soca_model), intent(inout) :: self
-  type(soca_state), intent(inout) :: flds
+  class(soca_model),        intent(inout) :: self
+  type(soca_state), target, intent(inout) :: flds
 
   type(soca_field), pointer :: field
   integer :: i

@@ -239,9 +239,9 @@ end subroutine soca_balance_delete
 !!
 !! \relates soca_balance_mod::soca_balance
 subroutine soca_balance_mult(self, dxa, dxm)
-  class(soca_balance),       intent(in) :: self
-  type(soca_increment),      intent(in) :: dxa !< input increment
-  type(soca_increment),   intent(inout) :: dxm !< output increment
+  class(soca_balance),          intent(in)    :: self
+  type(soca_increment), target, intent(in)    :: dxa !< input increment
+  type(soca_increment), target, intent(inout) :: dxm !< output increment
 
   type(soca_field), pointer :: fld_m, fld_a
   type(soca_field), pointer :: tocn_a, socn_a
@@ -296,9 +296,9 @@ end subroutine soca_balance_mult
 !!
 !! \relates soca_balance_mod::soca_balance
 subroutine soca_balance_multad(self, dxa, dxm)
-  class(soca_balance)      , intent(in) :: self
-  type(soca_increment),      intent(in) :: dxm !< input increment
-  type(soca_increment),   intent(inout) :: dxa !< output increment
+  class(soca_balance),          intent(in)    :: self
+  type(soca_increment), target, intent(in)    :: dxm !< input increment
+  type(soca_increment), target, intent(inout) :: dxa !< output increment
 
   type(soca_field), pointer :: fld_a, fld_m
   type(soca_field), pointer :: socn_m, ssh_m, cicen_m
@@ -346,9 +346,9 @@ end subroutine soca_balance_multad
 !!
 !! \relates soca_balance_mod::soca_balance
 subroutine soca_balance_multinv(self, dxa, dxm)
-  class(soca_balance),       intent(in) :: self
-  type(soca_increment),      intent(in) :: dxm !< input increment
-  type(soca_increment),   intent(inout) :: dxa !< output increment
+  class(soca_balance),          intent(in)    :: self
+  type(soca_increment), target, intent(in)    :: dxm !< input increment
+  type(soca_increment), target, intent(inout) :: dxa !< output increment
 
   integer :: i, j, k, n
   type(soca_field), pointer :: fld_m, fld_a
@@ -399,9 +399,9 @@ end subroutine soca_balance_multinv
 !!
 !! \relates soca_balance_mod::soca_balance
 subroutine soca_balance_multinvad(self, dxa, dxm)
-  class(soca_balance),       intent(in) :: self
-  type(soca_increment),   intent(inout) :: dxm !< output increment
-  type(soca_increment),      intent(in) :: dxa !< input increment
+  class(soca_balance),          intent(in)    :: self
+  type(soca_increment), target, intent(inout) :: dxm !< output increment
+  type(soca_increment), target, intent(in)    :: dxa !< input increment
 
   integer :: i, j, n
   type(soca_field), pointer :: fld_a, fld_m

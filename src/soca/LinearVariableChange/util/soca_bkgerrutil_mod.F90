@@ -74,7 +74,7 @@ end subroutine soca_bkgerr_readbounds
 !! \relates soca_bkgerrutil_mod::soca_bkgerr_bounds_type
 subroutine soca_bkgerr_applybounds(self, fld)
   class(soca_bkgerr_bounds_type), intent(inout) :: self
-  type(soca_fields),              intent(inout) :: fld !< fields to apply bound to
+  type(soca_fields), target,      intent(inout) :: fld !< fields to apply bound to
 
   type(soca_field), pointer :: field
 
