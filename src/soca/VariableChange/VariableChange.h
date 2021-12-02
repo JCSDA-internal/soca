@@ -26,16 +26,17 @@ namespace soca {
   class Geometry;
   class State;
 
-// -------------------------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
 class VariableChangeParameters : public oops::VariableChangeParametersBase {
-  OOPS_CONCRETE_PARAMETERS(VariableChangeParameters, oops::VariableChangeParametersBase)
+  OOPS_CONCRETE_PARAMETERS(VariableChangeParameters,
+                           oops::VariableChangeParametersBase)
  public:
   // Wrapper to VariableChange parameters
   VariableChangeParametersWrapper variableChangeParametersWrapper{this};
 };
 
-// -------------------------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
 class VariableChange : public util::Printable {
  public:
@@ -54,6 +55,6 @@ class VariableChange : public util::Printable {
   std::unique_ptr<VariableChangeBase> variableChange_;
 };
 
-// -------------------------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
 }  // namespace soca

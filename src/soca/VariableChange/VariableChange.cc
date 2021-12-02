@@ -18,19 +18,20 @@ using oops::Log;
 
 namespace soca {
 
-// -------------------------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
-VariableChange::VariableChange(const Parameters_ & params, const Geometry & geometry) {
+VariableChange::VariableChange(const Parameters_ & params,
+                               const Geometry & geometry) {
   // Create the variable change
   variableChange_.reset(VariableChangeFactory::create(geometry,
-                        params.variableChangeParametersWrapper.variableChangeParameters.value()));
+      params.variableChangeParametersWrapper.variableChangeParameters.value()));
 }
 
-// -------------------------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
 VariableChange::~VariableChange() {}
 
-// -------------------------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
 void VariableChange::changeVar(State & x, const oops::Variables & vars) const {
   // Trace
@@ -39,10 +40,12 @@ void VariableChange::changeVar(State & x, const oops::Variables & vars) const {
   // Check if the incoming state has all the variables
   const bool hasAllFields = x.hasFields(vars);
 
-  // If all variables already in incoming state just remove the no longer needed fields
+  // If all variables already in incoming state just remove the no longer
+  // needed fields
   if (hasAllFields) {
     x.updateFields(vars);
-    oops::Log::trace() << "VariableChange::changeVar done (identity)" << std::endl;
+    oops::Log::trace() << "VariableChange::changeVar done (identity)"
+                       << std::endl;
     return;
   }
 
@@ -62,19 +65,22 @@ void VariableChange::changeVar(State & x, const oops::Variables & vars) const {
   Log::trace() << "VariableChange::changeVar done" << std::endl;
 }
 
-// -------------------------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
-void VariableChange::changeVarInverse(State & x, const oops::Variables & vars) const {
+void VariableChange::changeVarInverse(State & x, const oops::Variables & vars)
+  const {
   // Trace
   Log::trace() << "VariableChange::changeVarInverse starting" << std::endl;
 
   // Check if the incoming state has all the variables
   const bool hasAllFields = x.hasFields(vars);
 
-  // If all variables already in incoming state just remove the no longer needed fields
+  // If all variables already in incoming state just remove the no longer
+  // needed fields
   if (hasAllFields) {
     x.updateFields(vars);
-    oops::Log::trace() << "VariableChange::changeVar done (identity)" << std::endl;
+    oops::Log::trace() << "VariableChange::changeVar done (identity)"
+                       << std::endl;
     return;
   }
 
@@ -94,12 +100,12 @@ void VariableChange::changeVarInverse(State & x, const oops::Variables & vars) c
   Log::trace() << "VariableChange::changeVarInverse done" << std::endl;
 }
 
-// -------------------------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
 void VariableChange::print(std::ostream & os) const {
   os << *variableChange_;
 }
 
-// -------------------------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
 }  // namespace soca

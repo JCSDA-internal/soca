@@ -14,9 +14,11 @@ namespace soca {
 
 // -----------------------------------------------------------------------------
 
-static VariableChangeMaker<Model2GeoVaLs> makerVariableChangeModel2GeoVaLs_("Model2GeoVaLs");
+static VariableChangeMaker<Model2GeoVaLs>
+                             makerVariableChangeModel2GeoVaLs_("Model2GeoVaLs");
 
-static VariableChangeMaker<Model2GeoVaLs> makerVariableChangeDefault_("default");
+static VariableChangeMaker<Model2GeoVaLs>
+                                         makerVariableChangeDefault_("default");
 
 // -----------------------------------------------------------------------------
 

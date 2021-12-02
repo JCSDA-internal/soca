@@ -24,16 +24,19 @@
 
 namespace soca {
 
-// -------------------------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
-class LinearVariableChangeParameters : public oops::LinearVariableChangeParametersBase {
-  OOPS_CONCRETE_PARAMETERS(LinearVariableChangeParameters, oops::LinearVariableChangeParametersBase)
+class LinearVariableChangeParameters :
+  public oops::LinearVariableChangeParametersBase {
+  OOPS_CONCRETE_PARAMETERS(LinearVariableChangeParameters,
+                           oops::LinearVariableChangeParametersBase)
  public:
   // Wrapper to LinearVariableChange parameters
-  LinearVariableChangeParametersWrapper linearVariableChangeParametersWrapper{this};
+  LinearVariableChangeParametersWrapper
+     linearVariableChangeParametersWrapper{this};
 };
 
-// -------------------------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
 class LinearVariableChange : public util::Printable {
  public:
@@ -58,6 +61,6 @@ class LinearVariableChange : public util::Printable {
   std::unique_ptr<LinearVariableChangeBase> linearVariableChange_;
 };
 
-// -------------------------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
 }  // namespace soca

@@ -30,27 +30,31 @@ namespace soca {
   class Increment;
   class State;
 
-// -------------------------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
-class LinearVariableChangeParametersBase : public oops::LinearVariableChangeParametersBase {
+class LinearVariableChangeParametersBase :
+                               public oops::LinearVariableChangeParametersBase {
   OOPS_ABSTRACT_PARAMETERS(LinearVariableChangeParametersBase,
-                                                           oops::LinearVariableChangeParametersBase)
+                                       oops::LinearVariableChangeParametersBase)
  public:
-  oops::OptionalParameter<std::string> name{"linear variable change name", this};
+  oops::OptionalParameter<std::string>
+                                      name{"linear variable change name", this};
 };
 
-// -------------------------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
-class GenericLinearVariableChangeParameters : public LinearVariableChangeParametersBase {
+class GenericLinearVariableChangeParameters :
+                                     public LinearVariableChangeParametersBase {
   OOPS_CONCRETE_PARAMETERS(GenericLinearVariableChangeParameters,
                            LinearVariableChangeParametersBase)
  public:
   oops::ConfigurationParameter config{this};
 };
 
-// -------------------------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
-class LinearVariableChangeBase : public util::Printable, private boost::noncopyable {
+class LinearVariableChangeBase : public util::Printable,
+                                 private boost::noncopyable {
  public:
   LinearVariableChangeBase() {}
   virtual ~LinearVariableChangeBase() {}
@@ -63,29 +67,31 @@ class LinearVariableChangeBase : public util::Printable, private boost::noncopya
   virtual void print(std::ostream &) const = 0;
 };
 
-// -------------------------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
 class LinearVariableChangeFactory;
 
-// -------------------------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
 class LinearVariableChangeParametersWrapper : public oops::Parameters {
   OOPS_CONCRETE_PARAMETERS(LinearVariableChangeParametersWrapper, Parameters)
  public:
-  oops::PolymorphicParameter<LinearVariableChangeParametersBase, LinearVariableChangeFactory>
-                     linearVariableChangeParameters{"linear variable change name", "default", this};
+  oops::PolymorphicParameter<LinearVariableChangeParametersBase,
+         LinearVariableChangeFactory>
+  linearVariableChangeParameters{"linear variable change name",
+                                 "default", this};
 };
 
-// -------------------------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
 class LinearVariableChangeFactory {
  public:
   static LinearVariableChangeBase * create(const State & xbg, const State & xfg,
                                            const Geometry & geom,
-                                           const LinearVariableChangeParametersBase & params);
+                             const LinearVariableChangeParametersBase & params);
 
-  static std::unique_ptr<LinearVariableChangeParametersBase> createParameters(const
-                                                                               std::string &name);
+  static std::unique_ptr<LinearVariableChangeParametersBase>
+         createParameters(const std::string &name);
 
   static std::vector<std::string> getMakerNames() {
     return oops::keys(getMakers());
@@ -97,10 +103,12 @@ class LinearVariableChangeFactory {
   explicit LinearVariableChangeFactory(const std::string &name);
 
  private:
-  virtual LinearVariableChangeBase * make(const State &, const State &, const Geometry &,
-                                           const LinearVariableChangeParametersBase &) = 0;
+  virtual LinearVariableChangeBase * make(const State &, const State &,
+                                          const Geometry &,
+                                const LinearVariableChangeParametersBase &) = 0;
 
-  virtual std::unique_ptr<LinearVariableChangeParametersBase> makeParameters() const = 0;
+  virtual std::unique_ptr<LinearVariableChangeParametersBase>
+          makeParameters() const = 0;
 
   static std::map < std::string, LinearVariableChangeFactory * > & getMakers() {
     static std::map < std::string, LinearVariableChangeFactory * > makers_;
@@ -108,21 +116,25 @@ class LinearVariableChangeFactory {
   }
 };
 
-// -------------------------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
 template<class T>
 class LinearVariableChangeMaker : public LinearVariableChangeFactory {
-  typedef oops::TParameters_IfAvailableElseFallbackType_t<T, GenericLinearVariableChangeParameters>
+  typedef oops::TParameters_IfAvailableElseFallbackType_t<T,
+                     GenericLinearVariableChangeParameters>
     Parameters_;
 
-  LinearVariableChangeBase * make(const State & xbg, const State & xfg, const Geometry & geom,
-                             const LinearVariableChangeParametersBase & params) override {
+  LinearVariableChangeBase * make(const State & xbg, const State & xfg,
+                                  const Geometry & geom,
+                  const LinearVariableChangeParametersBase & params) override {
     const auto &stronglyTypedParams = dynamic_cast<const Parameters_&>(params);
-    return new T(xbg, xfg, geom, oops::parametersOrConfiguration<oops::HasParameters_<T>::value>(
+    return new T(xbg, xfg, geom,
+                oops::parametersOrConfiguration<oops::HasParameters_<T>::value>(
                    stronglyTypedParams));
   }
 
-  std::unique_ptr<LinearVariableChangeParametersBase> makeParameters() const override {
+  std::unique_ptr<LinearVariableChangeParametersBase>
+                  makeParameters() const override {
     return std::make_unique<Parameters_>();
   }
 
@@ -131,6 +143,6 @@ class LinearVariableChangeMaker : public LinearVariableChangeFactory {
   : LinearVariableChangeFactory(name) {}
 };
 
-// -------------------------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
 }  // namespace soca

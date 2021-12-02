@@ -24,11 +24,12 @@ using oops::Log;
 
 namespace soca {
 
-  // -----------------------------------------------------------------------------
+  // ---------------------------------------------------------------------------
 
-  static LinearVariableChangeMaker<VertConv> makerLinearVariableCHangeVertConv_("VertConvSOCA");
+  static LinearVariableChangeMaker<VertConv>
+                             makerLinearVariableCHangeVertConv_("VertConvSOCA");
 
-  // -----------------------------------------------------------------------------
+  // ---------------------------------------------------------------------------
   VertConv::VertConv(const State & bkg,
                      const State & traj,
                      const Geometry & geom,
@@ -43,37 +44,37 @@ namespace soca {
                             bkg_lr_.toFortran(),
                             geom.toFortran());
   }
-  // -----------------------------------------------------------------------------
+  // ---------------------------------------------------------------------------
   VertConv::~VertConv() {
     oops::Log::trace() << "soca::VertConv::delete " << std::endl;
     soca_vertconv_delete_f90(keyFtnConfig_);
   }
-  // -----------------------------------------------------------------------------
+  // ---------------------------------------------------------------------------
   void VertConv::multiply(const Increment & dxa, Increment & dxm) const {
     // dxm = K dxa
     oops::Log::trace() << "soca::VertConv::multiply " << std::endl;
     soca_vertconv_mult_f90(dxa.toFortran(), dxm.toFortran(), keyFtnConfig_);
   }
-  // -----------------------------------------------------------------------------
+  // ---------------------------------------------------------------------------
   void VertConv::multiplyInverse(const Increment & dxm, Increment & dxa) const {
     oops::Log::trace() << "soca::VertConv::multiplyInverse " << std::endl;
     dxa = dxm;
   }
-  // -----------------------------------------------------------------------------
+  // ---------------------------------------------------------------------------
   void VertConv::multiplyAD(const Increment & dxm, Increment & dxa) const {
     // dxa = K^T dxm
     oops::Log::trace() << "soca::VertConv::multiplyAD " << std::endl;
     soca_vertconv_multad_f90(dxm.toFortran(), dxa.toFortran(), keyFtnConfig_);
   }
-  // -----------------------------------------------------------------------------
+  // ---------------------------------------------------------------------------
   void VertConv::multiplyInverseAD(const Increment & dxa,
                                    Increment & dxm) const {
     oops::Log::trace() << "soca::VertConv::multiplyInverseAD " << std::endl;
     dxm = dxa;
   }
-  // -----------------------------------------------------------------------------
+  // ---------------------------------------------------------------------------
   void VertConv::print(std::ostream & os) const {
     os << "SOCA change variable: VertConv";
   }
-  // -----------------------------------------------------------------------------
+  // ---------------------------------------------------------------------------
 }  // namespace soca
