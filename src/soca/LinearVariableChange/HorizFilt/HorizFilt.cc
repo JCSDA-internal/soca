@@ -90,7 +90,7 @@ namespace soca {
   }
   // -----------------------------------------------------------------------------
   void HorizFilt::print(std::ostream & os) const {
-    os << "SOCA HorizFilt";
+    os << "SOCA linear change variable: HorizFilt";
   }
   // -----------------------------------------------------------------------------
 }  // namespace soca

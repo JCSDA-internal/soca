@@ -42,12 +42,12 @@ void VariableChange::changeVar(State & x, const oops::Variables & vars) const {
 
   // If all variables already in incoming state just remove the no longer
   // needed fields
-  if (hasAllFields) {
-    x.updateFields(vars);
-    oops::Log::trace() << "VariableChange::changeVar done (identity)"
-                       << std::endl;
-    return;
-  }
+  // if (hasAllFields) {
+  //   x.updateFields(vars);
+  //   oops::Log::trace() << "VariableChange::changeVar done (identity)"
+  //                      << std::endl;
+  //   return;
+  // }
 
   // Create output state
   State xout(*x.geometry(), vars, x.time());
@@ -56,7 +56,7 @@ void VariableChange::changeVar(State & x, const oops::Variables & vars) const {
   variableChange_->changeVar(x, xout);
 
   // Allocate any extra fields and remove fields no longer needed
-  x.updateFields(vars);
+  // x.updateFields(vars);
 
   // Copy data from temporary state
   x = xout;
@@ -77,12 +77,12 @@ void VariableChange::changeVarInverse(State & x, const oops::Variables & vars)
 
   // If all variables already in incoming state just remove the no longer
   // needed fields
-  if (hasAllFields) {
-    x.updateFields(vars);
-    oops::Log::trace() << "VariableChange::changeVar done (identity)"
-                       << std::endl;
-    return;
-  }
+  // if (hasAllFields) {
+  //   x.updateFields(vars);
+  //   oops::Log::trace() << "VariableChange::changeVar done (identity)"
+  //                      << std::endl;
+  //   return;
+  // }
 
   // Create output state
   State xout(*x.geometry(), vars, x.time());
@@ -91,7 +91,7 @@ void VariableChange::changeVarInverse(State & x, const oops::Variables & vars)
   variableChange_->changeVarInverse(x, xout);
 
   // Allocate any extra fields and remove fields no longer needed
-  x.updateFields(vars);
+  // x.updateFields(vars);
 
   // Copy data from temporary state
   x = xout;

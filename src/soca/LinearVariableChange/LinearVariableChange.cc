@@ -24,7 +24,7 @@ namespace soca {
 
 LinearVariableChange::LinearVariableChange(const Geometry & geom,
                                            const Parameters_ & params)
-  : geom_(new Geometry(geom)), params_(params), linearVariableChange_() {}
+  : geom_(new Geometry(geom)), params_(params), linVarChas_() {}
 
 // -----------------------------------------------------------------------------
 
@@ -34,11 +34,16 @@ LinearVariableChange::~LinearVariableChange() {}
 
 void LinearVariableChange::setTrajectory(const State & xbg, const State & xfg) {
   Log::trace() << "LinearVariableChange::setTrajectory starting" << std::endl;
-  // Create the variable change
-  linearVariableChange_.reset(LinearVariableChangeFactory::create(xbg, xfg,
-                              *geom_,
-                              params_.linearVariableChangeParametersWrapper.
-                              linearVariableChangeParameters.value()));
+  // Create the linear variable change(s)
+  for (const LinearVariableChangeParametersWrapper & linVarChaParWra :
+       params_.linearVariableChangesWrapper.value()) {
+    // Get parameters for this linear variable change
+    const LinearVariableChangeParametersBase & linVarChaPar =
+           linVarChaParWra.linearVariableChangeParameters;
+    // Add linear variable change to vector
+    linVarChas_.push_back(LinearVariableChangeFactory::create(xbg, xfg, *geom_,
+                          linVarChaPar));
+  }
   Log::trace() << "LinearVariableChange::setTrajectory done" << std::endl;
 }
 
@@ -53,24 +58,28 @@ void LinearVariableChange::multiply(Increment & dx,
 
   // If all variables already in incoming state just remove the no longer
   // needed fields
-  if (hasAllFields) {
-    dx.updateFields(vars);
-    oops::Log::trace() << "VariableChange::changeVar done (identity)"
-                       << std::endl;
-    return;
-  }
+  // if (hasAllFields) {
+  //   dx.updateFields(vars);
+  //   oops::Log::trace() << "VariableChange::changeVar done (identity)"
+  //                      << std::endl;
+  //   return;
+  // }
 
   // Create output state
   Increment dxout(*dx.geometry(), vars, dx.time());
 
-  // Call variable change
-  linearVariableChange_->multiply(dx, dxout);
+  // Call variable change(s)
+  for (icst_ it = linVarChas_.begin(); it != linVarChas_.end(); ++it) {
+    dxout.zero();
+    it->multiply(dx, dxout);
+    dx = dxout;
+  }
 
   // Allocate any extra fields and remove fields no longer needed
-  dx.updateFields(vars);
+  // dx.updateFields(vars);
 
   // Copy data from temporary state
-  dx = dxout;
+  // dx = dxout;
 
   Log::trace() << "LinearVariableChange::multiply done" << dx << std::endl;
 }
@@ -86,21 +95,25 @@ void LinearVariableChange::multiplyInverse(Increment & dx,
 
   // If all variables already in incoming state just remove the no longer
   // needed fields
-  if (hasAllFields) {
-    dx.updateFields(vars);
-    oops::Log::trace() << "VariableChange::changeVar done (identity)"
-                       << std::endl;
-    return;
-  }
+  // if (hasAllFields) {
+  //   dx.updateFields(vars);
+  //   oops::Log::trace() << "VariableChange::changeVar done (identity)"
+  //                      << std::endl;
+  //   return;
+  // }
 
   // Create output state
   Increment dxout(*dx.geometry(), vars, dx.time());
 
-  // Call variable change
-  linearVariableChange_->multiplyInverse(dx, dxout);
+  // Call variable change(s)
+  for (ircst_ it = linVarChas_.rbegin(); it != linVarChas_.rend(); ++it) {
+    dxout.zero();
+    it->multiply(dx, dxout);
+    dx = dxout;
+  }
 
   // Allocate any extra fields and remove fields no longer needed
-  dx.updateFields(vars);
+  // dx.updateFields(vars);
 
   // Copy data from temporary state
   dx = dxout;
@@ -119,21 +132,25 @@ void LinearVariableChange::multiplyAD(Increment & dx,
 
   // If all variables already in incoming state just remove the no longer
   // needed fields
-  if (hasAllFields) {
-    dx.updateFields(vars);
-    oops::Log::trace() << "VariableChange::changeVar done (identity)"
-                       << std::endl;
-    return;
-  }
+  // if (hasAllFields) {
+  //   dx.updateFields(vars);
+  //   oops::Log::trace() << "VariableChange::changeVar done (identity)"
+  //                      << std::endl;
+  //   return;
+  // }
 
   // Create output state
   Increment dxout(*dx.geometry(), vars, dx.time());
 
-  // Call variable change
-  linearVariableChange_->multiplyAD(dx, dxout);
+  // Call variable change(s)
+  for (ircst_ it = linVarChas_.rbegin(); it != linVarChas_.rend(); ++it) {
+    dxout.zero();
+    it->multiply(dx, dxout);
+    dx = dxout;
+  }
 
   // Allocate any extra fields and remove fields no longer needed
-  dx.updateFields(vars);
+  // dx.updateFields(vars);
 
   // Copy data from temporary state
   dx = dxout;
@@ -153,21 +170,25 @@ void LinearVariableChange::multiplyInverseAD(Increment & dx,
 
   // If all variables already in incoming state just remove the no longer
   // needed fields
-  if (hasAllFields) {
-    dx.updateFields(vars);
-    oops::Log::trace() << "VariableChange::changeVar done (identity)"
-                       << std::endl;
-    return;
-  }
+  // if (hasAllFields) {
+  //   dx.updateFields(vars);
+  //   oops::Log::trace() << "VariableChange::changeVar done (identity)"
+  //                      << std::endl;
+  //   return;
+  // }
 
   // Create output state
   Increment dxout(*dx.geometry(), vars, dx.time());
 
-  // Call variable change
-  linearVariableChange_->multiplyInverseAD(dx, dxout);
+  // Call variable change(s)
+  for (icst_ it = linVarChas_.begin(); it != linVarChas_.end(); ++it) {
+    dxout.zero();
+    it->multiply(dx, dxout);
+    dx = dxout;
+  }
 
   // Allocate any extra fields and remove fields no longer needed
-  dx.updateFields(vars);
+  // dx.updateFields(vars);
 
   // Copy data from temporary state
   dx = dxout;
@@ -178,7 +199,9 @@ void LinearVariableChange::multiplyInverseAD(Increment & dx,
 // -----------------------------------------------------------------------------
 
 void LinearVariableChange::print(std::ostream & os) const {
-  os << *linearVariableChange_;
+  for (icst_ it = linVarChas_.begin(); it != linVarChas_.end(); ++it) {
+    os << *it;
+  }
 }
 
 // -----------------------------------------------------------------------------

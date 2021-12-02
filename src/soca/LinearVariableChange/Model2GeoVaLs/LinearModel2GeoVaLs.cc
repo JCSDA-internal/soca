@@ -70,4 +70,10 @@ void LinearModel2GeoVaLs::multiplyInverseAD(const Increment &,
 
 // -----------------------------------------------------------------------------
 
+void LinearModel2GeoVaLs::print(std::ostream & os) const {
+  os << "SOCA linear change variable: LinearModel2GeoVaLs";
+}
+
+// -----------------------------------------------------------------------------
+
 }  // namespace soca
