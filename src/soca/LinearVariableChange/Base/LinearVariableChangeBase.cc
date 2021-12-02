@@ -14,27 +14,32 @@
 
 namespace soca {
 
-// -------------------------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
-LinearVariableChangeFactory::LinearVariableChangeFactory(const std::string & name) {
+LinearVariableChangeFactory::LinearVariableChangeFactory(
+                                                     const std::string & name) {
   if (getMakers().find(name) != getMakers().end()) {
-    oops::Log::error() << name << " already registered in soca::LinearVariableChangeFactory."
-                       << std::endl;
+    oops::Log::error() << name
+                  << " already registered in soca::LinearVariableChangeFactory."
+                  << std::endl;
     ABORT("Element already registered in soca::LinearVariableChangeFactory.");
   }
   getMakers()[name] = this;
 }
 
-// -------------------------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
-LinearVariableChangeBase * LinearVariableChangeFactory::create(const State & xbg,
-     const State & xfg, const Geometry & geom, const LinearVariableChangeParametersBase & params) {
-  oops::Log::trace() << "LinearVariableChangeBase::create starting" << std::endl;
+LinearVariableChangeBase * LinearVariableChangeFactory::create(
+    const State & xbg, const State & xfg, const Geometry & geom,
+    const LinearVariableChangeParametersBase & params) {
+  oops::Log::trace() << "LinearVariableChangeBase::create starting"
+                     << std::endl;
   const std::string &id = params.name.value().value();
   typename std::map<std::string, LinearVariableChangeFactory*>::iterator
-                                                                        jloc = getMakers().find(id);
+                                                    jloc = getMakers().find(id);
   if (jloc == getMakers().end()) {
-    oops::Log::error() << id << " does not exist in soca::LinearVariableChangeFactory."
+    oops::Log::error() << id
+                      << " does not exist in soca::LinearVariableChangeFactory."
                        << std::endl;
     ABORT("Element does not exist in soca::LinearVariableChangeFactory.");
   }
@@ -43,18 +48,19 @@ LinearVariableChangeBase * LinearVariableChangeFactory::create(const State & xbg
   return ptr;
 }
 
-// -------------------------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
 std::unique_ptr<LinearVariableChangeParametersBase>
 LinearVariableChangeFactory::createParameters(const std::string &name) {
   typename std::map<std::string, LinearVariableChangeFactory*>::iterator it =
       getMakers().find(name);
   if (it == getMakers().end()) {
-    throw std::runtime_error(name + " does not exist in soca::LinearVariableChangeFactory");
+    throw std::runtime_error(name
+                      + " does not exist in soca::LinearVariableChangeFactory");
   }
   return it->second->makeParameters();
 }
 
-// -------------------------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
 }  // namespace soca

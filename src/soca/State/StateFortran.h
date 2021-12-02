@@ -65,7 +65,8 @@ namespace soca {
     void soca_state_analytic_f90(const F90flds &,
                                  const eckit::Configuration * const &,
                                  util::DateTime * const *);
-    void soca_state_has_fields_f90(const F90flds &, const oops::Variables &, bool &);
+    void soca_state_has_fields_f90(const F90flds &, const oops::Variables &,
+                                   bool &);
     void soca_state_update_fields_f90(const F90flds &, const oops::Variables &);
   }
 }  // namespace soca

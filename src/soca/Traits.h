@@ -49,7 +49,6 @@ struct Traits {
 
   typedef soca::LinearVariableChange LinearVariableChange;
   typedef soca::VariableChange       VariableChange;
-
 };
 
 }  // namespace soca
