@@ -74,7 +74,7 @@ namespace soca {
   }
   // -----------------------------------------------------------------------------
   void BkgErrGodas::print(std::ostream & os) const {
-    os << "SOCA change variable";
+    os << "SOCA linear change variable: BkgErrGodas";
   }
   // -----------------------------------------------------------------------------
 }  // namespace soca

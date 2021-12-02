@@ -74,7 +74,7 @@ namespace soca {
   }
   // ---------------------------------------------------------------------------
   void VertConv::print(std::ostream & os) const {
-    os << "SOCA change variable: VertConv";
+    os << "SOCA linear change variable: VertConv";
   }
   // ---------------------------------------------------------------------------
 }  // namespace soca

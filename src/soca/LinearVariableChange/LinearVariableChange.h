@@ -10,6 +10,7 @@
 #include <memory>
 #include <ostream>
 #include <string>
+#include <vector>
 
 #include <boost/ptr_container/ptr_vector.hpp>
 
@@ -31,9 +32,8 @@ class LinearVariableChangeParameters :
   OOPS_CONCRETE_PARAMETERS(LinearVariableChangeParameters,
                            oops::LinearVariableChangeParametersBase)
  public:
-  // Wrapper to LinearVariableChange parameters
-  LinearVariableChangeParametersWrapper
-     linearVariableChangeParametersWrapper{this};
+  oops::RequiredParameter<std::vector<LinearVariableChangeParametersWrapper>>
+         linearVariableChangesWrapper{"linear variable changes", this};
 };
 
 // -----------------------------------------------------------------------------
@@ -43,6 +43,11 @@ class LinearVariableChange : public util::Printable {
   static const std::string classname() {return "soca::LinearVariableChange";}
 
   typedef LinearVariableChangeParameters Parameters_;
+
+  // Vector of variable changes typedefs
+  typedef typename boost::ptr_vector<LinearVariableChangeBase> LinVarChaVec_;
+  typedef typename LinVarChaVec_::const_iterator icst_;
+  typedef typename LinVarChaVec_::const_reverse_iterator ircst_;
 
   explicit LinearVariableChange(const Geometry &, const Parameters_ &);
   ~LinearVariableChange();
@@ -58,7 +63,7 @@ class LinearVariableChange : public util::Printable {
   void print(std::ostream &) const override;
   Parameters_ params_;
   std::shared_ptr<const Geometry> geom_;
-  std::unique_ptr<LinearVariableChangeBase> linearVariableChange_;
+  LinVarChaVec_ linVarChas_;
 };
 
 // -----------------------------------------------------------------------------

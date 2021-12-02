@@ -39,7 +39,7 @@ class LinearModel2GeoVaLs: public LinearVariableChangeBase {
 
  private:
   std::unique_ptr<const Geometry> geom_;
-  void print(std::ostream &) const override {}
+  void print(std::ostream &) const;
 };
 
 }  // namespace soca

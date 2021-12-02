@@ -77,7 +77,7 @@ namespace soca {
   }
   // -----------------------------------------------------------------------------
   void Balance::print(std::ostream & os) const {
-    os << "SOCA change variable: Balance";
+    os << "SOCA linear change variable: Balance";
   }
   // -----------------------------------------------------------------------------
 }  // namespace soca
