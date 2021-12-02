@@ -90,7 +90,7 @@ contains
 !!   causes problems
 !! \relates soca_increment_mod::soca_increment
 subroutine soca_increment_random(self)
-  class(soca_increment), intent(inout) :: self
+  class(soca_increment), target, intent(inout) :: self
 
   integer, parameter :: rseed = 1 ! constant for reproducability of tests
     ! NOTE: random seeds are not quite working the way expected,
@@ -147,10 +147,10 @@ end subroutine soca_increment_schur
 !! \todo clean this up so that the variable names are not hardcoded
 !! \relates soca_increment_mod::soca_increment
 subroutine soca_increment_getpoint(self, geoiter, values)
-  class(soca_increment), intent(   in) :: self
-  type(soca_geom_iter),  intent(   in) :: geoiter !< iterator pointing to desired gridpoint
+  class(soca_increment), target, intent(   in) :: self
+  type(soca_geom_iter),          intent(   in) :: geoiter !< iterator pointing to desired gridpoint
   !> return values for every field in a vertical column
-  real(kind=kind_real),  intent(inout) :: values(:)
+  real(kind=kind_real),          intent(inout) :: values(:)
 
   integer :: ff, ii, nz
   type(soca_field), pointer :: field
@@ -176,10 +176,10 @@ end subroutine soca_increment_getpoint
 !! \todo need to remove the hardcoded variable names
 !! \relates soca_increment_mod::soca_increment
 subroutine soca_increment_setpoint(self, geoiter, values)
-  class(soca_increment), intent(inout) :: self
-  type(soca_geom_iter),  intent(   in) :: geoiter !< iterator pointing to desired gridpoint
+  class(soca_increment), target, intent(inout) :: self
+  type(soca_geom_iter),          intent(   in) :: geoiter !< iterator pointing to desired gridpoint
   !> values to set. Values are for for every field in a vertical column
-  real(kind=kind_real),  intent(   in) :: values(:)
+  real(kind=kind_real),          intent(   in) :: values(:)
 
   integer :: ff, ii, nz
   type(soca_field), pointer :: field
@@ -280,10 +280,10 @@ end subroutine soca_increment_dirac
 !! \see soca_increment_from_atlas
 !! \relates soca_increment_mod::soca_increment
 subroutine soca_increment_set_atlas(self, geom, vars, afieldset)
-  class(soca_increment), intent(in)    :: self
-  type(soca_geom),       intent(in)    :: geom
-  type(oops_variables),  intent(in)    :: vars
-  type(atlas_fieldset),  intent(inout) :: afieldset
+  class(soca_increment), target, intent(in)    :: self
+  type(soca_geom),               intent(in)    :: geom
+  type(oops_variables),          intent(in)    :: vars
+  type(atlas_fieldset),          intent(inout) :: afieldset
 
   integer :: jvar, i, jz, nz
   logical :: var_found
@@ -326,10 +326,10 @@ end subroutine soca_increment_set_atlas
 !!
 !! \relates soca_increment_mod::soca_increment
 subroutine soca_increment_to_atlas(self, geom, vars, afieldset)
-  class(soca_increment), intent(in)    :: self
-  type(soca_geom),       intent(in)    :: geom
-  type(oops_variables),  intent(in)    :: vars
-  type(atlas_fieldset),  intent(inout) :: afieldset
+  class(soca_increment), target, intent(in)    :: self
+  type(soca_geom),               intent(in)    :: geom
+  type(oops_variables),          intent(in)    :: vars
+  type(atlas_fieldset),          intent(inout) :: afieldset
 
   integer :: jvar, i, jz, nz
   real(kind=kind_real), pointer :: real_ptr_1(:), real_ptr_2(:,:)
@@ -390,10 +390,10 @@ end subroutine soca_increment_to_atlas
 !!
 !! \relates soca_increment_mod::soca_increment
 subroutine soca_increment_from_atlas(self, geom, vars, afieldset)
-  class(soca_increment), intent(inout) :: self
-  type(soca_geom),       intent(in)    :: geom
-  type(oops_variables),  intent(in)    :: vars
-  type(atlas_fieldset),  intent(in)    :: afieldset
+  class(soca_increment), target, intent(inout) :: self
+  type(soca_geom),               intent(in)    :: geom
+  type(oops_variables),          intent(in)    :: vars
+  type(atlas_fieldset),          intent(in)    :: afieldset
 
   integer :: jvar, i, jz, nz
   real(kind=kind_real), pointer :: real_ptr_1(:), real_ptr_2(:,:)
@@ -449,8 +449,8 @@ end subroutine soca_increment_from_atlas
 !!
 !! \relates soca_increment_mod::soca_increment
 subroutine soca_increment_change_resol(self, rhs)
-  class(soca_increment), intent(inout) :: self  ! target
-  class(soca_increment),    intent(in) :: rhs   ! source
+  class(soca_increment),         intent(inout) :: self  ! target
+  class(soca_increment), target, intent(in)    :: rhs   ! source
 
   integer :: n
   type(soca_convertstate_type) :: convert_state

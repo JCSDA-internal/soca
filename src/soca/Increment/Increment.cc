@@ -262,6 +262,16 @@ namespace soca {
 
   // -----------------------------------------------------------------------------
 
+  const bool Increment::hasFields(const oops::Variables & vars) {
+    // Update local variables
+    bool hasAllFields;
+    // Check if the fields are all present
+    soca_increment_has_fields_f90(toFortran(), vars_, hasAllFields);
+    return hasAllFields;
+  }
+
+  // -----------------------------------------------------------------------------
+
   void Increment::updateFields(const oops::Variables & vars) {
     // Update local variables
     vars_ = vars;

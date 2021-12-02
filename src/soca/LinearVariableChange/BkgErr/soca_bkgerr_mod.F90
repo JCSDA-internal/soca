@@ -51,10 +51,10 @@ contains
 !! for tocn, socn, and ssh.
 !! \relates soca_bkgerr_mod::soca_bkgerr
 subroutine soca_bkgerr_setup(self, f_conf, bkg, geom)
-  class(soca_bkgerr),       intent(inout) :: self
-  type(fckit_configuration),   intent(in) :: f_conf !< configuration
-  type(soca_state),    target, intent(in) :: bkg !< background
-  type(soca_geom),     target, intent(in) :: geom !< geometry
+  class(soca_bkgerr), target,  intent(inout) :: self
+  type(fckit_configuration),   intent(in)    :: f_conf !< configuration
+  type(soca_state),    target, intent(in)    :: bkg !< background
+  type(soca_geom),     target, intent(in)    :: geom !< geometry
 
   type(soca_field), pointer :: field, field_bkg
   real(kind=kind_real) :: std
@@ -126,9 +126,9 @@ end subroutine soca_bkgerr_setup
 !!
 !! \relates soca_bkgerr_mod::soca_bkgerr
 subroutine soca_bkgerr_mult(self, dxa, dxm)
-  class(soca_bkgerr),      intent(in) :: self
-  type(soca_increment),    intent(in) :: dxa !< input increment
-  type(soca_increment), intent(inout) :: dxm !< output increment
+  class(soca_bkgerr),           intent(in)    :: self
+  type(soca_increment), target, intent(in)    :: dxa !< input increment
+  type(soca_increment),         intent(inout) :: dxm !< output increment
 
   type(soca_field), pointer :: field_m, field_a, field_e
 

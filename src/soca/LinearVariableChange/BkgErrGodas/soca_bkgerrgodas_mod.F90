@@ -55,10 +55,10 @@ contains
 !!
 !! \relates soca_bkgerrgodas_mod::soca_bkgerrgodas
 subroutine soca_bkgerrgodas_setup(self, f_conf, bkg, geom)
-  class(soca_bkgerrgodas), intent(inout) :: self
-  type(fckit_configuration),        intent(in) :: f_conf !< configuration
-  type(soca_state),         target, intent(in) :: bkg !< background state
-  type(soca_geom),          target, intent(in) :: geom !< model geometry
+  class(soca_bkgerrgodas), target,  intent(inout) :: self
+  type(fckit_configuration),        intent(in)    :: f_conf !< configuration
+  type(soca_state),         target, intent(in)    :: bkg !< background state
+  type(soca_geom),          target, intent(in)    :: geom !< model geometry
 
   type(soca_field), pointer :: field, field_bkg
   integer :: i
@@ -118,9 +118,9 @@ end subroutine soca_bkgerrgodas_setup
 !!
 !! \relates soca_bkgerrgodas_mod::soca_bkgerrgodas
 subroutine soca_bkgerrgodas_mult(self, dxa, dxm)
-  class(soca_bkgerrgodas),  intent(in) :: self
-  type(soca_increment),           intent(in) :: dxa !< input increment
-  type(soca_increment),        intent(inout) :: dxm !< output increment
+  class(soca_bkgerrgodas),      intent(in)    :: self
+  type(soca_increment), target, intent(in)    :: dxa !< input increment
+  type(soca_increment), target, intent(inout) :: dxm !< output increment
 
   type(soca_field), pointer :: field_m, field_e, field_a
   integer :: isc, iec, jsc, jec, i, j, n

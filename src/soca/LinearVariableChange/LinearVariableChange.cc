@@ -44,15 +44,15 @@ void LinearVariableChange::setTrajectory(const State & xbg, const State & xfg) {
 void LinearVariableChange::multiply(Increment & dx, const oops::Variables & vars) const {
   Log::trace() << "LinearVariableChange::multiply starting" << std::endl;
 
-  // Convert vars to long names and field names
-  //const oops::Variables varsLongName = fieldsMetadata_.LongNameFromIONameLongNameOrFieldName(vars);
+  // Check if the incoming state has all the variables
+  const bool hasAllFields = dx.hasFields(vars);
 
   // If all variables already in incoming state just remove the no longer needed fields
-  //if (varsLongName <= dx.variablesLongName()) {
-  dx.updateFields(vars);
-  oops::Log::trace() << "LinearVariableChange::multiply done (identity)" << std::endl;
-  return;
-  //}
+  if (hasAllFields) {
+    dx.updateFields(vars);
+    oops::Log::trace() << "VariableChange::changeVar done (identity)" << std::endl;
+    return;
+  }
 
   // Create output state
   Increment dxout(*dx.geometry(), vars, dx.time());
@@ -74,6 +74,27 @@ void LinearVariableChange::multiply(Increment & dx, const oops::Variables & vars
 void LinearVariableChange::multiplyInverse(Increment & dx, const oops::Variables & vars) const {
   Log::trace() << "LinearVariableChange::multiplyInverse starting" << std::endl;
 
+  // Check if the incoming state has all the variables
+  const bool hasAllFields = dx.hasFields(vars);
+
+  // If all variables already in incoming state just remove the no longer needed fields
+  if (hasAllFields) {
+    dx.updateFields(vars);
+    oops::Log::trace() << "VariableChange::changeVar done (identity)" << std::endl;
+    return;
+  }
+
+  // Create output state
+  Increment dxout(*dx.geometry(), vars, dx.time());
+
+  // Call variable change
+  linearVariableChange_->multiplyInverse(dx, dxout);
+
+  // Allocate any extra fields and remove fields no longer needed
+  dx.updateFields(vars);
+
+  // Copy data from temporary state
+  dx = dxout;
 
   Log::trace() << "LinearVariableChange::multiplyInverse done" << std::endl;
 }
@@ -83,6 +104,27 @@ void LinearVariableChange::multiplyInverse(Increment & dx, const oops::Variables
 void LinearVariableChange::multiplyAD(Increment & dx, const oops::Variables & vars) const {
   Log::trace() << "LinearVariableChange::multiplyAD starting" << std::endl;
 
+  // Check if the incoming state has all the variables
+  const bool hasAllFields = dx.hasFields(vars);
+
+  // If all variables already in incoming state just remove the no longer needed fields
+  if (hasAllFields) {
+    dx.updateFields(vars);
+    oops::Log::trace() << "VariableChange::changeVar done (identity)" << std::endl;
+    return;
+  }
+
+  // Create output state
+  Increment dxout(*dx.geometry(), vars, dx.time());
+
+  // Call variable change
+  linearVariableChange_->multiplyAD(dx, dxout);
+
+  // Allocate any extra fields and remove fields no longer needed
+  dx.updateFields(vars);
+
+  // Copy data from temporary state
+  dx = dxout;
 
   Log::trace() << "LinearVariableChange::multiplyAD done" << std::endl;
 }
@@ -92,6 +134,27 @@ void LinearVariableChange::multiplyAD(Increment & dx, const oops::Variables & va
 void LinearVariableChange::multiplyInverseAD(Increment & dx, const oops::Variables & vars) const {
   Log::trace() << "LinearVariableChange::multiplyInverseAD starting" << std::endl;
 
+  // Check if the incoming state has all the variables
+  const bool hasAllFields = dx.hasFields(vars);
+
+  // If all variables already in incoming state just remove the no longer needed fields
+  if (hasAllFields) {
+    dx.updateFields(vars);
+    oops::Log::trace() << "VariableChange::changeVar done (identity)" << std::endl;
+    return;
+  }
+
+  // Create output state
+  Increment dxout(*dx.geometry(), vars, dx.time());
+
+  // Call variable change
+  linearVariableChange_->multiplyInverseAD(dx, dxout);
+
+  // Allocate any extra fields and remove fields no longer needed
+  dx.updateFields(vars);
+
+  // Copy data from temporary state
+  dx = dxout;
 
   Log::trace() << "LinearVariableChange::multiplyInverseAD done" << std::endl;
 }
@@ -99,7 +162,7 @@ void LinearVariableChange::multiplyInverseAD(Increment & dx, const oops::Variabl
 // -------------------------------------------------------------------------------------------------
 
 void LinearVariableChange::print(std::ostream & os) const {
-  os << "SOCA variable change";
+  os << *linearVariableChange_;
 }
 
 // -------------------------------------------------------------------------------------------------
