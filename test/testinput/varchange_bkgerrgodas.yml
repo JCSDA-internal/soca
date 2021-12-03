@@ -11,21 +11,23 @@ background:
   state variables: &soca_vars [cicen, hicen, socn, tocn, ssh, hocn, mld, layer_depth]
 
 linear variable change tests:
-- variable change:  BkgErrGODAS
-  tolerance inverse: 1e-12
+- tolerance inverse: 1e-12
   test inverse: 1
-  t_min: 0.0
-  t_max: 2.0
-  t_dz:  20.0
-  t_efold: 500.0
-  s_min: 0.0
-  s_max: 0.25
-  ssh_min: 0.0
-  ssh_max: 0.1
-  ssh_phi_ex: 20
-  cicen_min: 0.1
-  cicen_max: 0.5
-  hicen_min: 10.0
-  hicen_max: 100.0
-  input variables: *soca_vars
-  output variables: *soca_vars
+  linear variable change:
+    input variables: *soca_vars
+    output variables: *soca_vars
+    linear variable changes:
+    - linear variable change name: BkgErrGODAS
+      t_min: 0.0
+      t_max: 2.0
+      t_dz:  20.0
+      t_efold: 500.0
+      s_min: 0.0
+      s_max: 0.25
+      ssh_min: 0.0
+      ssh_max: 0.1
+      ssh_phi_ex: 20
+      cicen_min: 0.1
+      cicen_max: 0.5
+      hicen_min: 10.0
+      hicen_max: 100.0

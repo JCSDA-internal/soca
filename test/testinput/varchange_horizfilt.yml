@@ -11,12 +11,14 @@ background:
   state variables: &soca_vars [cicen, hicen, socn, tocn, ssh, hocn]
 
 linear variable change tests:
-- variable change: HorizFiltSOCA
-  tolerance inverse: 1e-12
+- tolerance inverse: 1e-12
   test inverse: 0
-  niter: 3
-  scale_flow: 0.5
-  scale_dist: 1e6
-  filter variables: *soca_vars
-  input variables: *soca_vars
-  output variables: *soca_vars
+  linear variable change:
+    input variables: *soca_vars
+    output variables: *soca_vars
+    linear variable changes:
+    - linear variable change name: HorizFiltSOCA
+      niter: 3
+      scale_flow: 0.5
+      scale_dist: 1e6
+      filter variables: *soca_vars

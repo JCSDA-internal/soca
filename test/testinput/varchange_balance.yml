@@ -11,15 +11,17 @@ background:
   state variables: &soca_vars [cicen, hicen, socn, tocn, ssh, hocn, mld, layer_depth]
 
 linear variable change tests:
-- variable change: BalanceSOCA
-  tolerance inverse: 1e-12
+- tolerance inverse: 1e-12
   test inverse: 1
-  dsdtmax: 1.0
-  dsdzmin: 3.0e-3
-  dtdzmin: 1.0e-3
-  dcdt:
-    filename: ./Data/kmask.nc
-    name: dcdt
-  nlayers: 10
-  input variables: *soca_vars
-  output variables: *soca_vars
+  linear variable change:
+    input variables: *soca_vars
+    output variables: *soca_vars
+    linear variable changes:
+    - linear variable change name: BalanceSOCA
+      dsdtmax: 1.0
+      dsdzmin: 3.0e-3
+      dtdzmin: 1.0e-3
+      dcdt:
+        filename: ./Data/kmask.nc
+        name: dcdt
+      nlayers: 10
