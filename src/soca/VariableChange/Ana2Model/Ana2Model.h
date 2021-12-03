@@ -32,7 +32,7 @@ namespace soca {
 
 class Ana2Model: public VariableChangeBase {
  public:
-  static const std::string classname() {return "soca::Ana2Model";}
+  const std::string classname() {return "soca::Ana2Model";}
 
   Ana2Model(const Geometry &, const eckit::Configuration &);
   ~Ana2Model();

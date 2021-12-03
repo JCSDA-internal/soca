@@ -25,15 +25,19 @@ background error:
   - name: ice
     variables: []
 
-  variable changes:
+  linear variable change:
 
-  - variable change: HorizFiltSOCA
-    niter: 2
-    scale_dist: 1000e3
-    scale_flow:  1.0
-    filter variables: [tocn, socn, ssh, cicen, hicen]
     input variables: *soca_vars
     output variables: *soca_vars
+
+    linear variable changes:
+    - linear variable change name: HorizFiltSOCA
+      niter: 2
+      scale_dist: 1000e3
+      scale_flow:  1.0
+      filter variables: [tocn, socn, ssh, cicen, hicen]
+      input variables: *soca_vars
+      output variables: *soca_vars
 
 dirac:
   ixdir: [1, 17, 41, 31, 51, 63, 81, 14, 16, 43]

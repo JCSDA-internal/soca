@@ -88,19 +88,7 @@ void LinearVariableChange::multiply(Increment & dx,
 
 void LinearVariableChange::multiplyInverse(Increment & dx,
                                            const oops::Variables & vars) const {
-  Log::trace() << "LinearVariableChange::multiplyInverse starting" << std::endl;
-
-  // Check if the incoming state has all the variables
-  const bool hasAllFields = dx.hasFields(vars);
-
-  // If all variables already in incoming state just remove the no longer
-  // needed fields
-  // if (hasAllFields) {
-  //   dx.updateFields(vars);
-  //   oops::Log::trace() << "VariableChange::changeVar done (identity)"
-  //                      << std::endl;
-  //   return;
-  // }
+  Log::trace() << "LinearVariableChange::multiplyInverse starting" << vars << std::endl;
 
   // Create output state
   Increment dxout(*dx.geometry(), vars, dx.time());
@@ -108,15 +96,9 @@ void LinearVariableChange::multiplyInverse(Increment & dx,
   // Call variable change(s)
   for (ircst_ it = linVarChas_.rbegin(); it != linVarChas_.rend(); ++it) {
     dxout.zero();
-    it->multiply(dx, dxout);
+    it->multiplyInverse(dx, dxout);
     dx = dxout;
   }
-
-  // Allocate any extra fields and remove fields no longer needed
-  // dx.updateFields(vars);
-
-  // Copy data from temporary state
-  dx = dxout;
 
   Log::trace() << "LinearVariableChange::multiplyInverse done" << std::endl;
 }
@@ -127,33 +109,15 @@ void LinearVariableChange::multiplyAD(Increment & dx,
                                            const oops::Variables & vars) const {
   Log::trace() << "LinearVariableChange::multiplyAD starting" << std::endl;
 
-  // Check if the incoming state has all the variables
-  const bool hasAllFields = dx.hasFields(vars);
-
-  // If all variables already in incoming state just remove the no longer
-  // needed fields
-  // if (hasAllFields) {
-  //   dx.updateFields(vars);
-  //   oops::Log::trace() << "VariableChange::changeVar done (identity)"
-  //                      << std::endl;
-  //   return;
-  // }
-
   // Create output state
   Increment dxout(*dx.geometry(), vars, dx.time());
 
   // Call variable change(s)
   for (ircst_ it = linVarChas_.rbegin(); it != linVarChas_.rend(); ++it) {
     dxout.zero();
-    it->multiply(dx, dxout);
+    it->multiplyAD(dx, dxout);
     dx = dxout;
   }
-
-  // Allocate any extra fields and remove fields no longer needed
-  // dx.updateFields(vars);
-
-  // Copy data from temporary state
-  dx = dxout;
 
   Log::trace() << "LinearVariableChange::multiplyAD done" << std::endl;
 }
@@ -165,33 +129,15 @@ void LinearVariableChange::multiplyInverseAD(Increment & dx,
   Log::trace() << "LinearVariableChange::multiplyInverseAD starting"
                << std::endl;
 
-  // Check if the incoming state has all the variables
-  const bool hasAllFields = dx.hasFields(vars);
-
-  // If all variables already in incoming state just remove the no longer
-  // needed fields
-  // if (hasAllFields) {
-  //   dx.updateFields(vars);
-  //   oops::Log::trace() << "VariableChange::changeVar done (identity)"
-  //                      << std::endl;
-  //   return;
-  // }
-
   // Create output state
   Increment dxout(*dx.geometry(), vars, dx.time());
 
   // Call variable change(s)
   for (icst_ it = linVarChas_.begin(); it != linVarChas_.end(); ++it) {
     dxout.zero();
-    it->multiply(dx, dxout);
+    it->multiplyInverseAD(dx, dxout);
     dx = dxout;
   }
-
-  // Allocate any extra fields and remove fields no longer needed
-  // dx.updateFields(vars);
-
-  // Copy data from temporary state
-  dx = dxout;
 
   Log::trace() << "LinearVariableChange::multiplyInverseAD done" << std::endl;
 }

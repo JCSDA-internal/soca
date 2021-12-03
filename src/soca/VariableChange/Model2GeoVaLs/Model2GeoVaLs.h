@@ -18,7 +18,7 @@ namespace soca {
 
 class Model2GeoVaLs: public VariableChangeBase {
  public:
-  static const std::string classname() {return "soca::Model2GeoVaLs";}
+  const std::string classname() {return "soca::Model2GeoVaLs";}
 
   Model2GeoVaLs(const Geometry &, const eckit::Configuration &);
   ~Model2GeoVaLs();
