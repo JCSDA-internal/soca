@@ -15,9 +15,9 @@ bump:
   datadir: ./bump
   mask_check: 1
   method: cor
-  network: 0 # Not re-implemented yet
-  new_nicas: 1
-  write_nicas_local: 1
+  network: false
+  new_nicas: true
+  write_nicas_local: true
   nl0r: 11
   resol: 4.0
   strategy: specific_univariate

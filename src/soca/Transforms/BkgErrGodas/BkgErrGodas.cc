@@ -37,13 +37,13 @@ namespace soca {
     oops::Log::trace() << "soca::BkgErrGodas::setup " << std::endl;
     const eckit::Configuration * configc = &conf;
 
-    // Interpolate trajectory to the geom resolution
-    State traj_at_geomres(geom, traj);
+    // Interpolate background to the geom resolution
+    State bkg_at_geomres(geom, bkg);
 
     // Initialize the parametric background error variance
     soca_bkgerrgodas_setup_f90(keyFtnConfig_,
                                &configc,
-                               traj_at_geomres.toFortran(),
+                               bkg_at_geomres.toFortran(),
                                geom.toFortran());
   }
   // -----------------------------------------------------------------------------

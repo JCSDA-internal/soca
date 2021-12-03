@@ -17,7 +17,7 @@ background error:
   bump:
     verbosity: main
     datadir: ./bump
-    load_nicas_local: 1
+    load_nicas_local: true
     strategy: specific_univariate
   correlation:
   - name: ocn
@@ -41,8 +41,8 @@ dirac:
   izdir: [1,  1,  1,  1,  1,  1,  1,  1,  1,  1]
   ifdir: [1,  2,  3,  3,  3,  3,  3,  3,  4,  5]
 
-output B:
+output dirac:
   datadir: Data
   date: *date
-  exp: dirac_horizfilt
+  exp: dirac_horizfilt_%id%
   type: an

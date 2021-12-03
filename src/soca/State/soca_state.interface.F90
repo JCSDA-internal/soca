@@ -1,36 +1,38 @@
-! (C) Copyright 2020-2020 UCAR
+! (C) Copyright 2020-2021 UCAR
 !
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
 
-!> Interfaces to be called from C++ for Fortran handling of model fields
-
-! ------------------------------------------------------------------------------
+!> C++ interfaces for soca_state_mod::soca_state
 module soca_state_mod_c
-
-use iso_c_binding
 
 use datetime_mod, only: datetime, c_f_datetime
 use fckit_configuration_module, only: fckit_configuration
+use iso_c_binding
 use kinds, only: kind_real
-use oops_variables_mod
+use oops_variables_mod, only: oops_variables
+
+! soca modules
 use soca_geom_mod_c, only: soca_geom_registry
 use soca_geom_mod, only: soca_geom
-use soca_increment_mod
-use soca_increment_reg
-use soca_state_mod
-use soca_state_reg
-use ufo_geovals_mod_c, only: ufo_geovals_registry
-use ufo_geovals_mod, only: ufo_geovals
+use soca_increment_mod, only: soca_increment
+use soca_increment_reg, only: soca_increment_registry
+use soca_state_mod, only: soca_state
+use soca_state_reg, only: soca_state_registry
+use soca_analytic_mod, only: soca_analytic_state
 
 implicit none
 private
+
 
 ! ------------------------------------------------------------------------------
 contains
 ! ------------------------------------------------------------------------------
 
 
+! ------------------------------------------------------------------------------
+!> C++ interface for soca_state_mod::soca_state version of
+!! soca_fields_mod::soca_fields::create()
 subroutine soca_state_create_c(c_key_self, c_key_geom, c_vars) bind(c,name='soca_state_create_f90')
     integer(c_int), intent(inout) :: c_key_self !< Handle to field
     integer(c_int),    intent(in) :: c_key_geom !< Geometry
@@ -50,8 +52,10 @@ subroutine soca_state_create_c(c_key_self, c_key_geom, c_vars) bind(c,name='soca
 
 end subroutine soca_state_create_c
 
-! ------------------------------------------------------------------------------
 
+! ------------------------------------------------------------------------------
+!> C++ interface for soca_state_mod::soca_state version of
+!! soca_fields_mod::soca_fields::delete()
 subroutine soca_state_delete_c(c_key_self) bind(c,name='soca_state_delete_f90')
     integer(c_int), intent(inout) :: c_key_self
 
@@ -63,8 +67,10 @@ subroutine soca_state_delete_c(c_key_self) bind(c,name='soca_state_delete_f90')
 
 end subroutine soca_state_delete_c
 
-! ------------------------------------------------------------------------------
 
+! ------------------------------------------------------------------------------
+!> C++ interface for soca_state_mod::soca_state version of
+!! soca_fields_mod::soca_fields::zeros()
 subroutine soca_state_zero_c(c_key_self) bind(c,name='soca_state_zero_f90')
     integer(c_int), intent(in) :: c_key_self
 
@@ -77,7 +83,8 @@ end subroutine soca_state_zero_c
 
 
 ! ------------------------------------------------------------------------------
-
+!> C++ interface for soca_state_mod::soca_state version of
+!! soca_fields_mod::soca_fields::copy()
 subroutine soca_state_copy_c(c_key_self,c_key_rhs) bind(c,name='soca_state_copy_f90')
     integer(c_int), intent(in) :: c_key_self
     integer(c_int), intent(in) :: c_key_rhs
@@ -92,8 +99,10 @@ subroutine soca_state_copy_c(c_key_self,c_key_rhs) bind(c,name='soca_state_copy_
 
 end subroutine soca_state_copy_c
 
-! ------------------------------------------------------------------------------
 
+! ------------------------------------------------------------------------------
+!> C++ interface for soca_state_mod::soca_state version of
+!! soca_fields_mod::soca_fields::axpy()
 subroutine soca_state_axpy_c(c_key_self,c_zz,c_key_rhs) bind(c,name='soca_state_axpy_f90')
     integer(c_int), intent(in) :: c_key_self
     real(c_double), intent(in) :: c_zz
@@ -111,8 +120,9 @@ subroutine soca_state_axpy_c(c_key_self,c_zz,c_key_rhs) bind(c,name='soca_state_
 
 end subroutine soca_state_axpy_c
 
-! ------------------------------------------------------------------------------
 
+! ------------------------------------------------------------------------------
+!> C++ interface for soca_state_mod::soca_state::add_incr()
 subroutine soca_state_add_incr_c(c_key_self,c_key_rhs) bind(c,name='soca_state_add_incr_f90')
     integer(c_int), intent(in) :: c_key_self
     integer(c_int), intent(in) :: c_key_rhs
@@ -127,8 +137,10 @@ subroutine soca_state_add_incr_c(c_key_self,c_key_rhs) bind(c,name='soca_state_a
 
 end subroutine soca_state_add_incr_c
 
-! ------------------------------------------------------------------------------
 
+! ------------------------------------------------------------------------------
+!> C++ interface for soca_state_mod::soca_state version of
+!! soca_fields_mod::soca_fields::read()
 subroutine soca_state_read_file_c(c_key_fld, c_conf, c_dt) bind(c,name='soca_state_read_file_f90')
     integer(c_int), intent(in) :: c_key_fld  !< Fields
     type(c_ptr),    intent(in) :: c_conf     !< Configuration
@@ -143,8 +155,10 @@ subroutine soca_state_read_file_c(c_key_fld, c_conf, c_dt) bind(c,name='soca_sta
 
 end subroutine soca_state_read_file_c
 
-! ------------------------------------------------------------------------------
 
+! ------------------------------------------------------------------------------
+!> C++ interface for soca_state_mod::soca_state version of
+!! soca_fields_mod::soca_fields::write_rst()
 subroutine soca_state_write_file_c(c_key_fld, c_conf, c_dt) bind(c,name='soca_state_write_file_f90')
     integer(c_int), intent(in) :: c_key_fld  !< Fields
     type(c_ptr),    intent(in) :: c_conf     !< Configuration
@@ -159,8 +173,10 @@ subroutine soca_state_write_file_c(c_key_fld, c_conf, c_dt) bind(c,name='soca_st
 
 end subroutine soca_state_write_file_c
 
-! ------------------------------------------------------------------------------
 
+! ------------------------------------------------------------------------------
+!> C++ interface for soca_state_mod::soca_state version of
+!! soca_fields_mod::soca_fields::gpnorm()
 subroutine soca_state_gpnorm_c(c_key_fld, kf, pstat) bind(c,name='soca_state_gpnorm_f90')
     integer(c_int),    intent(in) :: c_key_fld
     integer(c_int),    intent(in) :: kf
@@ -183,8 +199,9 @@ subroutine soca_state_gpnorm_c(c_key_fld, kf, pstat) bind(c,name='soca_state_gpn
 
 end subroutine soca_state_gpnorm_c
 
-! ------------------------------------------------------------------------------
 
+! ------------------------------------------------------------------------------
+!> C++ interface for soca_state_mod::soca_state RMS
 subroutine soca_state_rms_c(c_key_fld, prms) bind(c,name='soca_state_rms_f90')
     integer(c_int),    intent(in) :: c_key_fld
     real(c_double), intent(inout) :: prms
@@ -199,8 +216,9 @@ subroutine soca_state_rms_c(c_key_fld, prms) bind(c,name='soca_state_rms_f90')
 
 end subroutine soca_state_rms_c
 
-! ------------------------------------------------------------------------------
 
+! ------------------------------------------------------------------------------
+!> C++ interface for soca_state_mod::soca_state::rotate()
 subroutine soca_state_rotate2grid_c(c_key_self, c_uvars, c_vvars) bind(c,name='soca_state_rotate2grid_f90')
   integer(c_int), intent(in)     :: c_key_self
   type(c_ptr), value, intent(in) :: c_uvars
@@ -217,8 +235,9 @@ subroutine soca_state_rotate2grid_c(c_key_self, c_uvars, c_vvars) bind(c,name='s
 
 end subroutine soca_state_rotate2grid_c
 
-! ------------------------------------------------------------------------------
 
+! ------------------------------------------------------------------------------
+!> C++ interface for soca_state_mod::soca_state::rotate()
 subroutine soca_state_rotate2north_c(c_key_self, c_uvars, c_vvars) bind(c,name='soca_state_rotate2north_f90')
   integer(c_int),     intent(in) :: c_key_self
   type(c_ptr), value, intent(in) :: c_uvars
@@ -235,8 +254,9 @@ subroutine soca_state_rotate2north_c(c_key_self, c_uvars, c_vvars) bind(c,name='
 
 end subroutine soca_state_rotate2north_c
 
-! ------------------------------------------------------------------------------
 
+! ------------------------------------------------------------------------------
+!> C++ interface to get soca_state_mod::soca_state dimensions sizes
 subroutine soca_state_sizes_c(c_key_fld, nx, ny, nzo, nf) bind(c,name='soca_state_sizes_f90')
     integer(c_int),         intent(in) :: c_key_fld
     integer(kind=c_int), intent(inout) :: nx, ny, nzo, nf
@@ -251,8 +271,10 @@ subroutine soca_state_sizes_c(c_key_fld, nx, ny, nzo, nf) bind(c,name='soca_stat
     nf = size(fld%fields)
 
 end subroutine soca_state_sizes_c
-  ! ------------------------------------------------------------------------------
 
+
+! ------------------------------------------------------------------------------
+!> C++ interface for soca_state_mod::soca_state::convert()
 subroutine soca_state_change_resol_c(c_key_fld,c_key_rhs) bind(c,name='soca_state_change_resol_f90')
     integer(c_int), intent(in) :: c_key_fld
     integer(c_int), intent(in) :: c_key_rhs
@@ -271,9 +293,12 @@ subroutine soca_state_change_resol_c(c_key_fld,c_key_rhs) bind(c,name='soca_stat
     endif
 
 end subroutine soca_state_change_resol_c
-  ! ------------------------------------------------------------------------------
 
-  subroutine soca_state_serial_size_c(c_key_self,c_key_geom,c_vec_size) bind (c,name='soca_state_serial_size_f90')
+
+! ------------------------------------------------------------------------------
+!> C++ interface for soca_state_mod::soca_state version of
+!! soca_fields_mod::soca_fields::serial_size()
+subroutine soca_state_serial_size_c(c_key_self,c_key_geom,c_vec_size) bind (c,name='soca_state_serial_size_f90')
 
   implicit none
   integer(c_int), intent(in) :: c_key_self
@@ -290,11 +315,13 @@ end subroutine soca_state_change_resol_c
   call self%serial_size(geom, vec_size)
   c_vec_size = vec_size
 
-  end subroutine soca_state_serial_size_c
+end subroutine soca_state_serial_size_c
 
-  ! ------------------------------------------------------------------------------
 
-  subroutine soca_state_serialize_c(c_key_self,c_key_geom,c_vec_size,c_vec) bind (c,name='soca_state_serialize_f90')
+! ------------------------------------------------------------------------------
+!> C++ interface for soca_state_mod::soca_state version of
+!! soca_fields_mod::soca_fields::serialize()
+subroutine soca_state_serialize_c(c_key_self,c_key_geom,c_vec_size,c_vec) bind (c,name='soca_state_serialize_f90')
 
   implicit none
   integer(c_int), intent(in) :: c_key_self
@@ -313,11 +340,13 @@ end subroutine soca_state_change_resol_c
 
   call self%serialize(geom, vec_size, c_vec)
 
-  end subroutine soca_state_serialize_c
+end subroutine soca_state_serialize_c
 
-  ! ------------------------------------------------------------------------------
 
-  subroutine soca_state_deserialize_c(c_key_self,c_key_geom,c_vec_size,c_vec,c_index) bind (c,name='soca_state_deserialize_f90')
+! ------------------------------------------------------------------------------
+!> C++ interface for soca_state_mod::soca_state version of
+!! soca_fields_mod::soca_fields::deserialize()
+subroutine soca_state_deserialize_c(c_key_self,c_key_geom,c_vec_size,c_vec,c_index) bind (c,name='soca_state_deserialize_f90')
 
   implicit none
   integer(c_int), intent(in) :: c_key_self
@@ -338,10 +367,11 @@ end subroutine soca_state_change_resol_c
   call self%deserialize(geom,vec_size,c_vec, idx)
   c_index=idx
 
-  end subroutine soca_state_deserialize_c
+end subroutine soca_state_deserialize_c
+
 
 ! ------------------------------------------------------------------------------
-
+!> C++ interface for soca_state_mod::soca_state::logexpon()
 subroutine soca_state_logtrans_c(c_key_self, c_trvars) bind(c,name='soca_state_logtrans_f90')
   integer(c_int), intent(in)     :: c_key_self
   type(c_ptr), value, intent(in) :: c_trvars
@@ -356,7 +386,9 @@ subroutine soca_state_logtrans_c(c_key_self, c_trvars) bind(c,name='soca_state_l
 
 end subroutine soca_state_logtrans_c
 
+
 ! ------------------------------------------------------------------------------
+!> C++ interface for soca_state_mod::soca_state::logexpon()
 subroutine soca_state_expontrans_c(c_key_self, c_trvars) bind(c,name='soca_state_expontrans_f90')
   integer(c_int), intent(in)     :: c_key_self
   type(c_ptr), value, intent(in) :: c_trvars
@@ -370,5 +402,23 @@ subroutine soca_state_expontrans_c(c_key_self, c_trvars) bind(c,name='soca_state
   call self%logexpon(transfunc="expon", trvars=trvars)
 
 end subroutine soca_state_expontrans_c
+
+
+! ------------------------------------------------------------------------------
+subroutine scoa_state_analytic_c(c_key_self, c_conf, c_dt) &
+    bind(c,name='soca_state_analytic_f90')
+  integer (c_int),     intent(in   ) :: c_key_self
+  TYPE (c_ptr), value, intent(in   ) :: c_conf
+  TYPE (c_ptr),        intent(inout) :: c_dt
+
+  type(soca_state), pointer :: self
+  type(datetime) :: fdate
+
+  call soca_state_registry%get(c_key_self,self)
+  call c_f_datetime (c_dt, fdate)
+  call soca_analytic_state(self)
+
+end subroutine scoa_state_analytic_c
+
 
 end module soca_state_mod_c

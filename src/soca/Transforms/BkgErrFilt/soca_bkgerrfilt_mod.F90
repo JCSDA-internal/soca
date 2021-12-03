@@ -1,45 +1,63 @@
-! (C) Copyright 2017-2020 UCAR
+! (C) Copyright 2017-2021 UCAR
 !
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
 
+!> variable transform: background error filtering
 module soca_bkgerrfilt_mod
 
 use fckit_configuration_module, only: fckit_configuration
-use datetime_mod, only: datetime
 use kinds, only: kind_real
-use soca_fields_mod
-use soca_geom_mod
-use soca_increment_mod
-use soca_state_mod
+
+! soca modules
+use soca_fields_mod, only: soca_fields, soca_field
+use soca_geom_mod, only: soca_geom
+use soca_increment_mod, only: soca_increment
+use soca_state_mod, only: soca_state
 
 implicit none
-
 private
-public :: soca_bkgerrfilt_config, &
-          soca_bkgerrfilt_setup, soca_bkgerrfilt_mult
 
-!> Fortran derived type to hold configuration
-type :: soca_bkgerrfilt_config
-   type(soca_geom),     pointer :: geom
-   type(soca_fields)            :: filt
-   real(kind=kind_real)         :: efold_z           ! E-folding scale
-   real(kind=kind_real)         :: scale             ! Rescaling factor
-   real(kind=kind_real)         :: ocn_depth_min     ! Minimum depth
-   integer                      :: isc, iec, jsc, jec
-end type soca_bkgerrfilt_config
+
+!> Variable transform for background error filtering
+!!
+!! Filter increments to only where the ocean is thick enough
+!!
+!! \note operates only on tocn, socn, and ssh
+type, public :: soca_bkgerrfilt
+  type(soca_geom), pointer :: geom
+  type(soca_fields)        :: filt
+
+  ! private variables
+  real(kind=kind_real), private         :: efold_z           !< E-folding scale
+  real(kind=kind_real), private         :: scale             !< Rescaling factor
+  real(kind=kind_real), private         :: ocn_depth_min     !< Minimum depth
+
+contains
+
+  !> \copybrief soca_bkgerrfilt_setup \see soca_bkgerrfilt_setup
+  procedure :: setup => soca_bkgerrfilt_setup
+
+  !> \copybrief soca_bkgerrfilt_mult \see soca_bkgerrfilt_mult
+  procedure :: mult => soca_bkgerrfilt_mult
+
+end type soca_bkgerrfilt
+
 
 ! ------------------------------------------------------------------------------
 contains
 ! ------------------------------------------------------------------------------
 
+
 ! ------------------------------------------------------------------------------
 !> Setup the static background error
-subroutine soca_bkgerrfilt_setup(f_conf, self, bkg, geom)
-  type(fckit_configuration),    intent(in)    :: f_conf
-  type(soca_bkgerrfilt_config), intent(inout) :: self
-  type(soca_state),                intent(in) :: bkg
-  type(soca_geom),        target, intent(in ) :: geom
+!!
+!! \relates soca_bkgerrfilt_mod::soca_bkgerrfilt
+subroutine soca_bkgerrfilt_setup(self, f_conf, bkg, geom)
+  class(soca_bkgerrfilt)      , intent(inout) :: self
+  type(fckit_configuration),    intent(in)    :: f_conf !< configuration
+  type(soca_state),                intent(in) :: bkg !< background state
+  type(soca_geom),        target, intent(in ) :: geom !< geometry
 
   integer :: isc, iec, jsc, jec, i, j, k
   real(kind=kind_real) :: efold
@@ -65,8 +83,8 @@ subroutine soca_bkgerrfilt_setup(f_conf, self, bkg, geom)
   call bkg%get("layer_depth", layer_depth)
 
   ! Setup rescaling and masks
-  isc=geom%isc ; self%isc=isc ; iec=geom%iec ; self%iec=iec
-  jsc=geom%jsc ; self%jsc=jsc ; jec=geom%jec ; self%jec=jec
+  isc=geom%isc ; iec=geom%iec
+  jsc=geom%jsc ; jec=geom%jec
   do i = isc, iec
      do j = jsc, jec
         if (sum(hocn%val(i,j,:)).gt.self%ocn_depth_min) then
@@ -106,12 +124,15 @@ subroutine soca_bkgerrfilt_setup(f_conf, self, bkg, geom)
 
 end subroutine soca_bkgerrfilt_setup
 
+
 ! ------------------------------------------------------------------------------
 !> Apply background error: dxm = D dxa
+!!
+!! \relates soca_bkgerrfilt_mod::soca_bkgerrfilt
 subroutine soca_bkgerrfilt_mult(self, dxa, dxm)
-  type(soca_bkgerrfilt_config), intent(in) :: self
-  type(soca_increment),         intent(in) :: dxa
-  type(soca_increment),      intent(inout) :: dxm
+  class(soca_bkgerrfilt),       intent(in) :: self
+  type(soca_increment),         intent(in) :: dxa !< input increment
+  type(soca_increment),      intent(inout) :: dxm !< output increment
 
   integer :: i, j, n
   type(soca_field), pointer :: field_f, field_a, field_m
@@ -125,8 +146,8 @@ subroutine soca_bkgerrfilt_mult(self, dxa, dxm)
     field_a => dxa%fields(n)
     call self%filt%get(field_a%name, field_f)
     call dxm%get(field_a%name, field_m)
-    do i = self%isc, self%iec
-      do j = self%jsc, self%jec
+    do i = self%geom%isc, self%geom%iec
+      do j = self%geom%jsc, self%geom%jec
         if (self%geom%mask2d(i,j).eq.1) then
           field_m%val(i,j,:) = field_f%val(i,j,:) * field_a%val(i,j,:)
         else

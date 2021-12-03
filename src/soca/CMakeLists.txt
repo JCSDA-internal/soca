@@ -1,4 +1,4 @@
-# (C) Copyright 2017-2020 UCAR.
+# (C) Copyright 2017-2021 UCAR.
 #
 # This software is licensed under the terms of the Apache Licence Version 2.0
 # which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -44,6 +44,7 @@ target_link_libraries( soca PUBLIC ioda )
 target_link_libraries( soca PUBLIC ufo )
 
 # Add source code in the subdirectories
+add_subdirectory(AnalyticInit)
 add_subdirectory(Covariance)
 add_subdirectory(Fields)
 add_subdirectory(Geometry)

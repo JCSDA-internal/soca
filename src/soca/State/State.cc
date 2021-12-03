@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2017-2020 UCAR
+ * (C) Copyright 2017-2021 UCAR
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -38,15 +38,23 @@ namespace soca {
     Log::trace() << "State::State created." << std::endl;
   }
   // -----------------------------------------------------------------------------
-  State::State(const Geometry & geom, const eckit::Configuration & file)
+  State::State(const Geometry & geom, const eckit::Configuration & conf)
     : time_(),
-      vars_(file, "state variables"),
+      vars_(conf, "state variables"),
       geom_(new Geometry(geom))
   {
     util::DateTime * dtp = &time_;
     oops::Variables vars(vars_);
     soca_state_create_f90(keyFlds_, geom_->toFortran(), vars);
-    soca_state_read_file_f90(toFortran(), &file, &dtp);
+
+    if (conf.has("analytic init")) {
+      std::string dt;
+      conf.get("date", dt);
+      time_ = util::DateTime(dt);
+      soca_state_analytic_f90(toFortran(), &conf, &dtp);
+    } else {
+      soca_state_read_file_f90(toFortran(), &conf, &dtp);
+    }
     Log::trace() << "State::State created and read in." << std::endl;
   }
   // -----------------------------------------------------------------------------

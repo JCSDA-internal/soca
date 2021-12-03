@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2019-2020 UCAR
+ * (C) Copyright 2019-2021 UCAR
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -16,7 +16,6 @@
 #include "soca/GetValues/GetValues.h"
 #include "soca/GetValues/GetValuesFortran.h"
 #include "soca/State/State.h"
-#include "soca/Transforms/Model2GeoVaLs/Model2GeoVaLs.h"
 
 #include "ufo/GeoVaLs.h"
 #include "ufo/Locations.h"
@@ -29,8 +28,7 @@ namespace soca {
 GetValues::GetValues(const Geometry & geom,
                      const ufo::Locations & locs,
                      const eckit::Configuration & config)
-  : locs_(locs), geom_(new Geometry(geom)),
-    model2geovals_(new Model2GeoVaLs(geom, config)) {
+  : locs_(locs), geom_(new Geometry(geom)) {
   soca_getvalues_create_f90(keyGetValues_, geom.toFortran(), locs);
 }
 // -----------------------------------------------------------------------------
@@ -55,22 +53,10 @@ void GetValues::fillGeoVaLs(const State & state,
     getValuesFromFile(locs_, geovals.getVars(), geovals);
   }
 
-  // Do variable change if it has not already been done.
-  // TODO(travis): remove this once Yannick is done rearranging things in oops.
-  std::unique_ptr<State> varChangeState;
-  const State * state_ptr;
-  if (geovals.getVars() <= state.variables()) {
-    state_ptr = &state;
-  } else {
-    varChangeState.reset(new State(*geom_, geovals.getVars(),
-                                   state.validTime()));
-    model2geovals_->changeVar(state, *varChangeState);
-    state_ptr = varChangeState.get();
-  }
   // Get ocean geovals
   soca_getvalues_fill_geovals_f90(keyGetValues_,
                                   geom_->toFortran(),
-                                  state_ptr->toFortran(),
+                                  state.toFortran(),
                                   t1, t2, locs_,
                                   geovals.toFortran());
 }

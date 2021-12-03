@@ -40,7 +40,7 @@ cost function:
           verbosity: main
           datadir: ./bump
           strategy: specific_univariate
-          load_nicas_local: 1
+          load_nicas_local: true
         correlation:
         - name: ocn
           variables: [socn, tocn, ssh, sw, lhf, shf, lw, us]
@@ -105,17 +105,18 @@ cost function:
           ocn_filename: ocn.pert.ens.4.2018-04-15T00:00:00Z.PT0S.nc
           ice_filename: ice.pert.ens.4.2018-04-15T00:00:00Z.PT0S.nc
         localization:
-          localization variables: [socn, tocn, ssh]
-          localization method: BUMP
-          bump:
-            datadir: ./bump
-            prefix: soca_bump_loc
-            method: loc
-            strategy: common
-            load_nicas_local: 1
-            verbosity: main
-            grids:
-            - localization variables: [socn, tocn, ssh]
+          localization method: SABER
+          saber block:
+            saber block name: BUMP_NICAS
+            input variables: [socn, tocn, ssh]
+            output variables: [socn, tocn, ssh]
+            bump:
+              datadir: ./bump
+              prefix: soca_bump_loc
+              method: loc
+              strategy: common
+              load_nicas_local: true
+              verbosity: main
       weight:
         value: 0.5
 

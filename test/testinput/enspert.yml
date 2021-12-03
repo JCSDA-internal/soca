@@ -24,7 +24,7 @@ background error:
     verbosity: main
     datadir: ./bump
     strategy: specific_univariate
-    load_nicas_local: 1
+    load_nicas_local: true
   perturbation scales:
     tocn:  1.0
     socn:  1.0

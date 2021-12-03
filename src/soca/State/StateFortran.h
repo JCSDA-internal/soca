@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2020-2020 UCAR
+ * (C) Copyright 2020-2021 UCAR
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -62,6 +62,9 @@ namespace soca {
                                     const size_t &,
                                     const double[],
                                     size_t &);
+    void soca_state_analytic_f90(const F90flds &,
+                                 const eckit::Configuration * const &,
+                                 util::DateTime * const *);
   }
 }  // namespace soca
 #endif  // SOCA_STATE_STATEFORTRAN_H_

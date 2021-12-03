@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2019-2020 UCAR
+ * (C) Copyright 2019-2021 UCAR
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -30,7 +30,6 @@ namespace ufo {
 namespace soca {
   class Geometry;
   class State;
-  class Model2GeoVaLs;
 }
 
 //-----------------------------------------------------------------------------
@@ -68,7 +67,6 @@ class GetValues : public util::Printable,
   F90getval keyGetValues_;
   ufo::Locations locs_;
   std::shared_ptr<const Geometry> geom_;
-  std::unique_ptr<Model2GeoVaLs> model2geovals_;
 };
 // -----------------------------------------------------------------------------
 
