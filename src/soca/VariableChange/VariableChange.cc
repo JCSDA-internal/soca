@@ -46,6 +46,28 @@ void VariableChange::changeVar(State & x, const oops::Variables & vars) const {
   // Copy data from temporary state
   x = xout;
 
+// HOW CODE SHOULD LOOK  // Check whether vars already satisfied
+// HOW CODE SHOULD LOOK  bool hasAllFields = x.hasAllFields();
+// HOW CODE SHOULD LOOK
+// HOW CODE SHOULD LOOK  if (hasAllFields) {
+// HOW CODE SHOULD LOOK    x.updateFields(vars); // Remove any fields no longer needed
+// HOW CODE SHOULD LOOK    Log::trace() << "VariableChange::changeVar done (identity)" << std::endl;
+// HOW CODE SHOULD LOOK    return
+// HOW CODE SHOULD LOOK  }
+// HOW CODE SHOULD LOOK
+// HOW CODE SHOULD LOOK  // Create output state
+// HOW CODE SHOULD LOOK  State xout(*x.geometry(), vars, x.time());
+// HOW CODE SHOULD LOOK
+// HOW CODE SHOULD LOOK  // Call variable change
+// HOW CODE SHOULD LOOK  variableChange_->changeVar(x, xout);
+// HOW CODE SHOULD LOOK
+// HOW CODE SHOULD LOOK  // Remove unused fields and allocate any new ones
+// HOW CODE SHOULD LOOK  x.updateFields(vars);
+// HOW CODE SHOULD LOOK
+// HOW CODE SHOULD LOOK  // Copy data from temporary state
+// HOW CODE SHOULD LOOK  x = xout;
+
+
   // Trace
   Log::trace() << "VariableChange::changeVar done" << std::endl;
 }
