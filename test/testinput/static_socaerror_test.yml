@@ -19,8 +19,7 @@ background error:
   bump:
     datadir: ./bump
     strategy: specific_univariate
-    load_nicas_local: 1
-    mpicom: 2
+    load_nicas_local: true
   correlation:
   - name: ocn
     variables: [socn, tocn, ssh]

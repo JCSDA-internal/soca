@@ -17,12 +17,12 @@ bump:
   datadir: ./bump
   method: cor
   strategy: specific_univariate
-  new_nicas: 1
-  write_nicas_local: 1
-  mask_check: 1
+  new_nicas: true
+  write_nicas_local: true
+  mask_check: true
   resol: 6.0
-  network: 0 # Not re-implemented yet
-  forced_radii: 1
+  network: false # Not re-implemented yet
+  forced_radii: true
   rh:
     hocn: [6000.0e3]
     socn: [6000.0e3]
@@ -38,15 +38,14 @@ bump:
     variables: [hocn, socn, tocn]
   - prefix: bump2d
     variables: [ssh]
-
-output:
-- datadir: bump
-  date: *date
-  exp: parameters_bump_cor_nicas.cor_rh
-  parameter: cor_rh
-  type: an
-- datadir: bump
-  date: *date
-  exp: parameters_bump_cor_nicas.cor_rv
-  parameter: cor_rv
-  type: an
+  output:
+  - datadir: bump
+    date: *date
+    exp: parameters_bump_cor_nicas.cor_rh
+    parameter: cor_rh
+    type: an
+  - datadir: bump
+    date: *date
+    exp: parameters_bump_cor_nicas.cor_rv
+    parameter: cor_rv
+    type: an
