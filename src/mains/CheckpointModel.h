@@ -13,7 +13,7 @@
 #include "soca/Traits.h"
 
 #include "soca/Geometry/Geometry.h"
-#include "soca/Model/Model.h"
+#include "soca/Model/mom6solo/Model.h"
 #include "soca/State/State.h"
 
 #include "eckit/config/LocalConfiguration.h"

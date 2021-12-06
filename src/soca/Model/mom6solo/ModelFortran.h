@@ -5,8 +5,8 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#ifndef SOCA_MODEL_MODELFORTRAN_H_
-#define SOCA_MODEL_MODELFORTRAN_H_
+#ifndef SOCA_MODEL_MOM6SOLO_MODELFORTRAN_H_
+#define SOCA_MODEL_MOM6SOLO_MODELFORTRAN_H_
 
 #include "soca/Fortran.h"
 
@@ -28,4 +28,4 @@ namespace soca {
   }
 }  // namespace soca
 
-#endif  // SOCA_MODEL_MODELFORTRAN_H_
+#endif  // SOCA_MODEL_MOM6SOLO_MODELFORTRAN_H_

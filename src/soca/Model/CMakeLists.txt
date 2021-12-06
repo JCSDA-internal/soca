@@ -1,8 +1,4 @@
-soca_target_sources(
-  Model.cc
-  Model.h
-  ModelFortran.h
-  soca_model_mod.F90
-  soca_model.interface.F90
-  soca_mom6.F90
-)
+add_subdirectory(mom6solo)
+if (BUILD_UFSM6C6)
+  add_subdirectory(ufsm6c6)
+endif ()
