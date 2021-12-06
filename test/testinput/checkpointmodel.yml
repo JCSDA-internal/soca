@@ -3,7 +3,7 @@ resolution:
   fields metadata: ./fields_metadata.yml
 
 model:
-  name: SOCA
+  name: MOM6solo # TODO application currently hard coded with MOM6solo
   tstep: PT6H
   advance_mom6: 0
   model variables: [socn, tocn, hocn]
