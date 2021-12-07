@@ -35,7 +35,7 @@ class ObsLocRossby: public ufo::ObsHorLocGC99<MODEL> {
  public:
   ObsLocRossby(const eckit::Configuration &, const ioda::ObsSpace &);
 
-  /// Compute Rossby radius based localization and save localization values
+  /// Compute Rossby radius based localization and update localization values
   /// in \p locvector. Missing values indicate that observation is outside of
   /// localization.
   void computeLocalization(
