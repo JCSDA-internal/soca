@@ -481,7 +481,9 @@ subroutine soca_fields_copy(self, rhs)
 
   ! copy values from rhs to self, only if the variable exists
   !  in self
+print *,'copying stuff'
   do i=1,size(self%fields)
+print *,'copying ',self%fields(i)%name
     call rhs%get(self%fields(i)%name, rhs_fld)
     call self%fields(i)%copy(rhs_fld)
   end do

@@ -122,7 +122,7 @@ subroutine soca_model2geovals_changevar_f90(c_key_geom, c_key_xin, c_key_xout) &
     ! Skip dummy fields related to the CRTM hacks.
     ! REMOVE this once a proper coupled h(x) is implemented
     if (xout%fields(i)%metadata%dummy_atm) cycle
-
+print *,'-------------------- field: ',xout%fields(i)%name
     ! special cases
     select case (xout%fields(i)%name)
 
@@ -151,7 +151,11 @@ subroutine soca_model2geovals_changevar_f90(c_key_geom, c_key_xin, c_key_xout) &
       xout%fields(i)%val(:,:,1) = sum(field%val, dim=3)
 
     ! identity operators
-    case default
+   case default
+      print *,"~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ identity operators ",xout%fields(i)%metadata%name
+      print *,"~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ",field%metadata%name
+      print *,"~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ",field%metadata%getval_name
+      print *,"~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ",field%metadata%getval_name_surface
       call xin%get(xout%fields(i)%metadata%name, field)
       if (field%metadata%getval_name == xout%fields(i)%name) then
         xout%fields(i)%val(:,:,:) =  field%val(:,:,:) !< full field
