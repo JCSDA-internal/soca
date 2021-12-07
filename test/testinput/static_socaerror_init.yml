@@ -22,11 +22,11 @@ background error:
     datadir: ./bump
     method: cor
     strategy: specific_univariate
-    new_nicas: 1
-    write_nicas_local: 1
-    mask_check: 1
+    new_nicas: true
+    write_nicas_local: true
+    mask_check: true
     resol: 6.0
-    network: 0 # Not re-implemented yet
+    network: false # Not re-implemented yet
   correlation:
   - name: ocn
     base value: 840336.134453782

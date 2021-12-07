@@ -2,13 +2,9 @@ geometry:
   mom6_input_nml: ./inputnml/input.nml
   fields metadata: ./fields_metadata.yml
 
-model:
-  name: MOM6solo
-  tstep: PT6H
-  advance_mom6: 1
-  model variables: &model_vars [cicen, hicen, hsnon, socn, tocn, uocn, vocn, ssh, hocn, chl, biop, sw, lhf, shf, lw, us, mld, layer_depth]
+model variables: &model_vars [cicen, hicen, hsnon, socn, tocn, uocn, vocn, ssh, hocn, chl, biop, sw, lhf, shf, lw, us, mld, layer_depth]
 
-initial condition:
+background:
   read_from_file: 1
   basename: ./INPUT/
   ocn_filename: MOM.res.nc
@@ -19,12 +15,12 @@ initial condition:
 background error:
   covariance model: SocaError
   date: *date
-  analysis variables: &soca_vars [ssh, cicen, hicen, tocn, socn, chl, biop]
+  analysis variables: &soca_vars [ssh, tocn, socn]
   bump:
     verbosity: main
     datadir: ./bump
     strategy: specific_univariate
-    load_nicas_local: true
+    load_nicas_local: 1
   perturbation scales:
     tocn:  1.0
     socn:  1.0
@@ -35,9 +31,7 @@ background error:
     biop:  0.1
   correlation:
   - name: ocn
-    variables: [tocn, ssh, socn, chl, biop]
-  - name: ice
-    variables: [cicen, hicen]
+    variables: [tocn, ssh, socn]
 
 
   variable changes:
@@ -95,13 +89,19 @@ background error:
     input variables: *soca_vars
     output variables: *soca_vars
 
-members: 5
+max neig output: 10
+number of random samples: 40
 perturbed variables: *soca_vars
-forecast length: PT6H
+truncation tolerence: .7
+
+# disable tests for each member as the results are not reproducable
+# accross compilers and hardware
+print test for each member: false
 
 output:
  frequency: PT6H
  datadir: Data
- exp: pert
+ exp: sqrtvert 
  type: ens
  date: *date
+

@@ -14,7 +14,6 @@
 #include "oops/runs/Run.h"
 #include "oops/runs/Variational.h"
 #include "saber/oops/instantiateCovarFactory.h"
-#include "saber/oops/instantiateLocalizationFactory.h"
 #include "soca/Traits.h"
 #include "ufo/instantiateObsErrorFactory.h"
 #include "ufo/instantiateObsFilterFactory.h"
@@ -25,7 +24,6 @@ int main(int argc,  char ** argv) {
   oops::instantiateModelFactory<soca::Traits>();
   ufo::instantiateObsErrorFactory();
   ufo::instantiateObsFilterFactory();
-  saber::instantiateLocalizationFactory<soca::Traits>();
   saber::instantiateCovarFactory<soca::Traits>();
   oops::Variational<soca::Traits, ufo::ObsTraits> var;
   return run.execute(var);
