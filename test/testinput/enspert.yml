@@ -3,7 +3,7 @@ geometry:
   fields metadata: ./fields_metadata.yml
 
 model:
-  name: SOCA
+  name: MOM6solo
   tstep: PT6H
   advance_mom6: 1
   model variables: &model_vars [cicen, hicen, hsnon, socn, tocn, uocn, vocn, ssh, hocn, chl, biop, sw, lhf, shf, lw, us, mld, layer_depth]
