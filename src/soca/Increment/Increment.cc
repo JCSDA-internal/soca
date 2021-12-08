@@ -11,6 +11,8 @@
 
 #include "atlas/field.h"
 
+#include "eckit/geometry/Point3.h"
+
 #include "soca/Geometry/Geometry.h"
 #include "soca/GeometryIterator/GeometryIterator.h"
 #include "soca/Increment/Increment.h"
@@ -156,26 +158,57 @@ namespace soca {
   // -----------------------------------------------------------------------------
   oops::LocalIncrement Increment::getLocal(
                         const GeometryIterator & iter) const {
+    // TODO(Travis) remove the hardcoded variable names
+
     int nx, ny, nzo, nf;
     soca_increment_sizes_f90(toFortran(), nx, ny, nzo, nf);
-
+    eckit::geometry::Point3 p3 = *iter;
     std::vector<int> varlens(vars_.size());
 
-    // TODO(Travis) remove the hardcoded variable names
-    for (int ii = 0; ii < vars_.size(); ii++) {
-      if (vars_[ii] == "tocn") varlens[ii]=nzo;
-      else if (vars_[ii] == "socn") varlens[ii]=nzo;
-      else if (vars_[ii] == "hocn") varlens[ii]=nzo;
-      else if (vars_[ii] == "uocn") varlens[ii]=nzo;
-      else if (vars_[ii] == "vocn") varlens[ii]=nzo;
-      else if (vars_[ii] == "ssh")  varlens[ii]=1;
-      else if (vars_[ii] == "cicen") varlens[ii]=1;
-      else if (vars_[ii] == "hicen") varlens[ii]=1;
-      else if (vars_[ii] == "hsnon") varlens[ii]=1;
-      else if (vars_[ii] == "chl") varlens[ii]=nzo;
-      else if (vars_[ii] == "biop") varlens[ii]=nzo;
-      else
-          varlens[ii] = 0;
+    int iteratorDimension = geom_->IteratorDimension();
+    switch (iteratorDimension) {
+    case (3) :
+      if (p3[2] == 0.0) {
+      // should probably check if kindex == 0 (bit this requires more code)
+      // surface variables
+        for (int ii = 0; ii < vars_.size(); ii++) {
+          if (vars_[ii] == "ssh")  varlens[ii]=1;
+          else if (vars_[ii] == "cicen") varlens[ii]=1;
+          else if (vars_[ii] == "hicen") varlens[ii]=1;
+          else if (vars_[ii] == "hsnon") varlens[ii]=1;
+          else
+              varlens[ii] = 0;
+        }
+      } else {
+      // 3d variables
+        for (int ii = 0; ii < vars_.size(); ii++) {
+          if (vars_[ii] == "tocn") varlens[ii]=nzo;
+          else if (vars_[ii] == "socn") varlens[ii]=nzo;
+          else if (vars_[ii] == "hocn") varlens[ii]=nzo;
+          else if (vars_[ii] == "uocn") varlens[ii]=nzo;
+          else if (vars_[ii] == "vocn") varlens[ii]=nzo;
+          else if (vars_[ii] == "chl") varlens[ii]=nzo;
+          else if (vars_[ii] == "biop") varlens[ii]=nzo;
+          else
+              varlens[ii] = 0;
+        }
+      }
+    default :
+      for (int ii = 0; ii < vars_.size(); ii++) {
+        if (vars_[ii] == "tocn") varlens[ii]=nzo;
+        else if (vars_[ii] == "socn") varlens[ii]=nzo;
+        else if (vars_[ii] == "hocn") varlens[ii]=nzo;
+        else if (vars_[ii] == "uocn") varlens[ii]=nzo;
+        else if (vars_[ii] == "vocn") varlens[ii]=nzo;
+        else if (vars_[ii] == "ssh")  varlens[ii]=1;
+        else if (vars_[ii] == "cicen") varlens[ii]=1;
+        else if (vars_[ii] == "hicen") varlens[ii]=1;
+        else if (vars_[ii] == "hsnon") varlens[ii]=1;
+        else if (vars_[ii] == "chl") varlens[ii]=nzo;
+        else if (vars_[ii] == "biop") varlens[ii]=nzo;
+        else
+            varlens[ii] = 0;
+      }
     }
 
     int lenvalues = std::accumulate(varlens.begin(), varlens.end(), 0);

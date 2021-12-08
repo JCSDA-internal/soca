@@ -69,6 +69,11 @@ type, public :: soca_geom
     integer :: isdl, iedl, jsdl, jedl
     !> \}
 
+    !> \name iterator dimension
+    !! \{
+    integer :: iterator_dimension
+    !> \}
+
     !> \name grid latitude/longitude
     !! \{
     real(kind=kind_real), allocatable, dimension(:)   :: lonh !< cell center nominal longitude
@@ -209,8 +214,11 @@ subroutine soca_geom_init(self, f_conf, f_comm)
   call f_conf%get_or_die("fields metadata", str)
   call self%fields_metadata%create(str)
 
-end subroutine soca_geom_init
+  ! retrieve iterator dimension from config
+  if ( .not. f_conf%get("iterator dimension", self%iterator_dimension) ) &
+      self%iterator_dimension = 2
 
+end subroutine soca_geom_init
 
 ! ------------------------------------------------------------------------------
 !> Geometry destructor
@@ -326,6 +334,8 @@ subroutine soca_geom_clone(self, other)
   !
   self%geom_grid_file = other%geom_grid_file
 
+  self%iterator_dimension = other%iterator_dimension
+
   ! Allocate and clone geometry
   call soca_geom_allocate(self)
   self%lonh = other%lonh
@@ -426,14 +436,16 @@ subroutine soca_geom_allocate(self)
   integer :: nzo
   integer :: isd, ied, jsd, jed
 
+  nzo = self%nzo
+
   ! Get domain shape (number of levels, indices of data and compute domain)
   call soca_geom_get_domain_indices(self, "compute", self%isc, self%iec, self%jsc, self%jec)
   call soca_geom_get_domain_indices(self, "data", isd, ied, jsd, jed)
-  self%isd = isd ;  self%ied = ied ; self%jsd = jsd; self%jed = jed
+  self%isd = isd ;  self%ied = ied
+  self%jsd = jsd; self%jed = jed
   call soca_geom_get_domain_indices(self, "global", self%isg, self%ieg, self%jsg, self%jeg)
   call soca_geom_get_domain_indices(self, "compute", self%iscl, self%iecl, self%jscl, self%jecl, local=.true.)
   call soca_geom_get_domain_indices(self, "data", self%isdl, self%iedl, self%jsdl, self%jedl, local=.true.)
-  nzo = self%nzo
 
   ! Allocate arrays on compute domain
   allocate(self%lonh(self%isg:self%ieg));        self%lonh = 0.0_kind_real
