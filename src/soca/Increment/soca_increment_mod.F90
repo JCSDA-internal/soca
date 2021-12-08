@@ -160,12 +160,34 @@ subroutine soca_increment_getpoint(self, geoiter, values)
   ii = 0
   do ff = 1, size(self%fields)
     field => self%fields(ff)
-    select case(field%name)
-    case("tocn", "socn", "ssh", "uocn", "vocn", "hocn", "cicen", "hicen", "hsnon", "chl", "biop")
-      nz = field%nz
-      values(ii+1:ii+nz) = field%val(geoiter%iind, geoiter%jind,:)
-      ii = ii + nz
-    end select
+    if (self%geom%iterator_dimension .eq. 2) then
+      ! 2D iterator
+      select case(field%name)
+      case("tocn", "socn", "ssh", "uocn", "vocn", "hocn", "cicen", "hicen", "hsnon", "chl", "biop")
+        nz = field%nz
+        values(ii+1:ii+nz) = field%val(geoiter%iindex, geoiter%jindex,:)
+        ii = ii + nz
+      end select
+    elseif (self%geom%iterator_dimension .eq. 3) then
+      ! 3D iterator
+      if (geoiter%kindex == 0) then
+        ! surface variables
+        select case(field%name)
+        case("ssh", "cicen", "hicen", "hsnon")
+          values(ii+1) = field%val(geoiter%iindex, geoiter%jindex, 1)
+          ii = ii + 1
+        end select
+      else
+        ! 3d variables
+        select case(field%name)
+        case("tocn", "socn", "uocn", "vocn", "hocn", "chl", "biop")
+          values(ii+1) = field%val(geoiter%iindex, geoiter%jindex, geoiter%kindex)
+          ii = ii + 1
+        end select
+      endif
+    else
+      call abor1_ftn('soca_increment_getpoint: unknown geom%iterator_dimension')
+    endif
   end do
 end subroutine soca_increment_getpoint
 
@@ -189,12 +211,34 @@ subroutine soca_increment_setpoint(self, geoiter, values)
   ii = 0
   do ff = 1, size(self%fields)
     field => self%fields(ff)
-    select case(field%name)
-    case("tocn", "socn", "ssh", "uocn", "vocn", "hocn", "cicen", "hicen", "hsnon", "chl", "biop")
-      nz = field%nz
-      field%val(geoiter%iind, geoiter%jind,:) = values(ii+1:ii+nz)
-      ii = ii + nz
-    end select
+    if (self%geom%iterator_dimension .eq. 2) then
+      ! 2D iterator
+      select case(field%name)
+      case("tocn", "socn", "ssh", "uocn", "vocn", "hocn", "cicen", "hicen", "hsnon", "chl", "biop")
+        nz = field%nz
+        field%val(geoiter%iindex, geoiter%jindex,:) = values(ii+1:ii+nz)
+        ii = ii + nz
+      end select
+    elseif (self%geom%iterator_dimension .eq. 3) then
+      ! 3D iterator
+      if (geoiter%kindex == 0) then
+        ! surface variables
+        select case(field%name)
+        case("ssh", "cicen", "hicen", "hsnon")
+          field%val(geoiter%iindex, geoiter%jindex, 1) = values(ii+1)
+          ii = ii + 1
+        end select
+      else
+        ! 3d variables
+        select case(field%name)
+        case("tocn", "socn", "uocn", "vocn", "hocn", "chl", "biop")
+          field%val(geoiter%iindex, geoiter%jindex, geoiter%kindex) = values(ii+1)
+          ii = ii + 1
+        end select
+      endif
+    else
+      call abor1_ftn('soca_increment_getpoint: unknown geom%iterator_dimension')
+    endif
   end do
 end subroutine soca_increment_setpoint
 

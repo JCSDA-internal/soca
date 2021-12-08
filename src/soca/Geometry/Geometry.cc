@@ -73,15 +73,26 @@ namespace soca {
   // -----------------------------------------------------------------------------
   GeometryIterator Geometry::begin() const {
     // return start of the geometry on this mpi tile
-    int ist, iend, jst, jend;
-    soca_geo_start_end_f90(keyGeom_, ist, iend, jst, jend);
-    return GeometryIterator(*this, ist, jst);
+    int ist, iend, jst, jend, kst, kend, itd;
+    soca_geo_start_end_f90(keyGeom_, ist, iend, jst, jend, kst, kend);
+    // 3D iterator starts from 0 for surface variables
+    if (IteratorDimension() == 3) kst = 0;
+    return GeometryIterator(*this, ist, jst, kst);
   }
   // -----------------------------------------------------------------------------
   GeometryIterator Geometry::end() const {
     // return end of the geometry on this mpi tile
     // decided to return index out of bounds for the iterator loops to work
-    return GeometryIterator(*this, -1, -1);
+    return GeometryIterator(*this, -1, -1, -1);
+  }
+  // -----------------------------------------------------------------------------
+  int Geometry::IteratorDimension() const {
+    // return dimesnion of the iterator
+    // if 2, iterator is over vertical columns
+    // if 3, iterator is over 3D points
+    int rv;
+    soca_geo_iterator_dimension_f90(keyGeom_, rv);
+    return rv;
   }
   // -----------------------------------------------------------------------------
   std::vector<size_t> Geometry::variableSizes(

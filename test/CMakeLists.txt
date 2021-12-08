@@ -30,7 +30,8 @@ set( soca_test_input
   testinput/forecast_mom6_bgc.yml
   testinput/forecast_pseudo.yml
   testinput/geometry.yml
-  testinput/geometry_iterator.yml
+  testinput/geometry_iterator_2d.yml
+  testinput/geometry_iterator_3d.yml
   testinput/geometryatm.yml
   testinput/getvalues.yml
   testinput/gridgen.yml
@@ -515,7 +516,11 @@ soca_add_test( NAME geometry
                SRC  TestGeometry.cc
                TEST_DEPENDS test_soca_gridgen )
 
-soca_add_test( NAME geometry_iterator
+soca_add_test( NAME geometry_iterator_2d
+               SRC  TestGeometryIterator.cc
+               TEST_DEPENDS test_soca_gridgen )
+
+soca_add_test( NAME geometry_iterator_3d
                SRC  TestGeometryIterator.cc
                TEST_DEPENDS test_soca_gridgen )
 
