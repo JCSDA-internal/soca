@@ -91,7 +91,7 @@ namespace soca {
                                         size_t &);
     void soca_increment_has_fields_f90(const F90flds &, const oops::Variables &,
                                        bool &);
-    void soca_increment_update_fields_f90(F90flds &, const oops::Variables &);
+    void soca_increment_update_fields_f90(F90flds &, const F90flds &);
   }
 }  // namespace soca
 #endif  // SOCA_INCREMENT_INCREMENTFORTRAN_H_

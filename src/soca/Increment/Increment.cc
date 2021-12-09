@@ -305,11 +305,11 @@ namespace soca {
 
   // -----------------------------------------------------------------------------
 
-  void Increment::updateFields(const oops::Variables & vars) {
+  void Increment::updateFields(const Increment & other) {
     // Update local variables
-    vars_ = vars;
+    vars_ = other.vars_;
     // Update field data
-    soca_increment_update_fields_f90(toFortran(), vars_);
+    soca_increment_update_fields_f90(toFortran(), other.toFortran());
   }
 
   // -----------------------------------------------------------------------------

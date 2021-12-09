@@ -122,7 +122,7 @@ subroutine soca_model2geovals_changevar_f90(c_key_geom, c_key_xin, c_key_xout) &
     ! Skip dummy fields related to the CRTM hacks.
     ! REMOVE this once a proper coupled h(x) is implemented
     if (xout%fields(i)%metadata%dummy_atm) cycle
-print *,'-------------------- field: ',xout%fields(i)%name
+
     ! special cases
     select case (xout%fields(i)%name)
 
@@ -146,29 +146,33 @@ print *,'-------------------- field: ',xout%fields(i)%name
       call xin%get('tocn', field)
       xout%fields(i)%val(:,:,1) = field%val(:,:,1) + 273.15_kind_real
 
+   !case ('sea_surface_temperature')
+   !   print *,"-------------- sst"
+   !   call xin%get('tocn', field)
+   !   xout%fields(i)%val(:,:,1) = field%val(:,:,1)
+
     case ('sea_floor_depth_below_sea_surface')
       call xin%get('hocn', field)
       xout%fields(i)%val(:,:,1) = sum(field%val, dim=3)
 
     ! identity operators
    case default
-      print *,"~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ identity operators ",xout%fields(i)%metadata%name
-      print *,"~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ",field%metadata%name
-      print *,"~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ",field%metadata%getval_name
-      print *,"~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ",field%metadata%getval_name_surface
       call xin%get(xout%fields(i)%metadata%name, field)
       if (field%metadata%getval_name == xout%fields(i)%name) then
         xout%fields(i)%val(:,:,:) =  field%val(:,:,:) !< full field
       elseif (field%metadata%getval_name_surface == xout%fields(i)%name) then
         xout%fields(i)%val(:,:,1) = field%val(:,:,1) !< surface only of a 3D field
       else
-        call abor1_ftn( 'error in soca_model2geovals_changevar_f90 processing ' &
-                        // xout%fields(i)%name )
+        cycle
+        !call abor1_ftn( 'error in soca_model2geovals_changevar_f90 processing ' &
+        !                // xout%fields(i)%name )
       endif
 
     end select
 
-  end do
+ end do
+ !call abor1_ftn( '---- stop in soca_model2geovals_changevar_f90 ' )
+
 end subroutine
 
 !-------------------------------------------------------------------------------

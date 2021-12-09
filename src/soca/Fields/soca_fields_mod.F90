@@ -306,6 +306,7 @@ subroutine soca_field_check_congruent(self, rhs)
   type(soca_field),  intent(in) :: rhs !< other field to check for congruency
   integer :: i
 
+  print *,"self%nz, rhs%nz : ",self%nz, rhs%nz, self%name
   if ( self%nz /= rhs%nz ) call abor1_ftn("soca_field:  self%nz /= rhs%nz")
   if ( self%name /= rhs%name ) call abor1_ftn("soca_field:  self%name /= rhs%name")
   if ( size(shape(self%val)) /= size(shape(rhs%val)) ) &
@@ -481,9 +482,8 @@ subroutine soca_fields_copy(self, rhs)
 
   ! copy values from rhs to self, only if the variable exists
   !  in self
-print *,'copying stuff'
+
   do i=1,size(self%fields)
-print *,'copying ',self%fields(i)%name
     call rhs%get(self%fields(i)%name, rhs_fld)
     call self%fields(i)%copy(rhs_fld)
   end do
@@ -506,6 +506,7 @@ subroutine soca_fields_get(self, name, field)
 
   ! find the field with the given name
   do i=1,size(self%fields)
+
     if (trim(name) == self%fields(i)%name) then
       field => self%fields(i)
       return
@@ -1384,129 +1385,38 @@ end subroutine soca_fields_has_fields
 !! \see soca_fields_serialize
 !! \relates soca_fields_mod::soca_fields
 
-subroutine soca_fields_update_fields(self, vars)
+subroutine soca_fields_update_fields(self, rhs)
 
 ! Arguments
 class(soca_fields),   intent(inout) :: self
-type(oops_variables), intent(in)    :: vars  ! New variable the field should have
+class(soca_fields),   intent(in)    :: rhs
 
 integer :: f, v
 character(len=:), allocatable :: varname_new
 logical :: metadata_congruent
 type(soca_field_metadata) :: metadata_new
 type(soca_field), allocatable :: fields_new(:)
-
-! Allocate the new fields
-allocate(fields_new(vars%nvars()))
-
-! Loop over the new
-do v = 1, vars%nvars()
-
-  ! Get the meta data used to create a field with this name
-  varname_new = trim(vars%variable(v))
-  metadata_new = self%geom%fields_metadata%get(varname_new)
-
-  ! Set found flag to false
-  metadata_congruent = .false.
-
-  ! Loop over the exisitng fields
-  do f = 1, size(self%fields)
-
-    ! Compare the meta data for each field with the field of the variable
-    metadata_congruent = soca_fields_metadata_congruent(metadata_new, self%fields(f)%metadata)
-
-    ! If the field is found move it to the new fields
-    if (metadata_congruent) then
-
-      ! Copy name, nz and metadata
-      fields_new(v)%name     = self%fields(f)%name
-      fields_new(v)%nz       = self%fields(f)%nz
-      fields_new(v)%metadata = self%fields(f)%metadata
-
-      ! Set pointers to grid
-      select case(fields_new(v)%metadata%grid)
-      case ('h')
-        fields_new(v)%lon => self%geom%lon
-        fields_new(v)%lat => self%geom%lat
-        if (fields_new(v)%metadata%masked) fields_new(v)%mask => self%geom%mask2d
-      case ('u')
-        fields_new(v)%lon => self%geom%lonu
-        fields_new(v)%lat => self%geom%latu
-        if (fields_new(v)%metadata%masked) fields_new(v)%mask => self%geom%mask2du
-      case ('v')
-        fields_new(v)%lon => self%geom%lonv
-        fields_new(v)%lat => self%geom%latv
-        if (fields_new(v)%metadata%masked) fields_new(v)%mask => self%geom%mask2dv
-      case default
-        call abor1_ftn('soca_fields::create(): Illegal grid '// fields_new(v)%metadata%grid // &
-                       ' given for ' // fields_new(v)%name)
-      end select
-
-      ! Move the array data
-      call move_alloc(self%fields(f)%val, fields_new(f)%val)
-
-      exit
-    end if
-
-  end do
-
-  ! If no match for the metadata was found allocate a new field
-  if (.not. metadata_congruent) then
-
-    ! Set field name
-    fields_new(v)%name = trim(vars%variable(v))
-
-    ! Set pointers to grid
-    select case(metadata_new%grid)
-    case ('h')
-      fields_new(v)%lon => self%geom%lon
-      fields_new(v)%lat => self%geom%lat
-      if (fields_new(v)%metadata%masked) fields_new(v)%mask => self%geom%mask2d
-    case ('u')
-      fields_new(v)%lon => self%geom%lonu
-      fields_new(v)%lat => self%geom%latu
-      if (fields_new(v)%metadata%masked) fields_new(v)%mask => self%geom%mask2du
-    case ('v')
-      fields_new(v)%lon => self%geom%lonv
-      fields_new(v)%lat => self%geom%latv
-      if (fields_new(v)%metadata%masked) fields_new(v)%mask => self%geom%mask2dv
-    case default
-      call abor1_ftn('soca_fields::create(): Illegal grid '// fields_new(v)%metadata%grid // &
-                     ' given for ' // fields_new(v)%name)
-    end select
-
-    ! Determine number of levels
-    if (fields_new(v)%name == metadata_new%getval_name_surface) then
-      fields_new(v)%nz = 1
-    else
-      select case(metadata_new%levels)
-      case ('full_ocn')
-        fields_new(v)%nz = self%geom%nzo
-      case ('1')
-        fields_new(v)%nz = 1
-      case default
-        call abor1_ftn('soca_fields::create(): Illegal levels '//metadata_new%levels// &
-                       ' given for ' // fields_new(v)%name)
-      end select
-    endif
-
-    ! Allocate space
-    allocate(fields_new(v)%val(self%geom%isd:self%geom%ied, &
-                               self%geom%jsd:self%geom%jed, &
-                               fields_new(v)%nz))
-
-  endif
-
-end do
+  character(len=:), allocatable :: vars_str(:)
+  type(soca_field), pointer :: rhs_fld
 
 ! Deallotate old fields
 do f = 1, size(self%fields)
-  call self%fields(f)%delete()
+   call self%fields(f)%delete()
 end do
 deallocate(self%fields)
 
-! Move new fields to self fields
-call move_alloc(fields_new, self%fields)
+
+allocate(character(len=1024) :: vars_str(size(rhs%fields)))
+do v=1, size(vars_str)
+   vars_str(v) = rhs%fields(v)%name
+end do
+call soca_fields_init_vars(self, vars_str)
+
+do f = 1, size(rhs%fields)
+    call rhs%get(self%fields(f)%name, rhs_fld)
+    call self%fields(f)%copy(rhs_fld)
+   print *,"---------- in update fields: ",rhs%fields(f)%name
+enddo
 
 end subroutine soca_fields_update_fields
 

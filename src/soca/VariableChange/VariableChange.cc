@@ -38,19 +38,15 @@ void VariableChange::changeVar(State & x, const oops::Variables & vars) const {
   Log::trace() << "VariableChange::changeVar starting" << vars << std::endl;
 
   // Create output state
-  //State xout(*x.geometry(), vars, x.time());
-  State xout(x);
+  State xout(*x.geometry(), vars, x.time());
 
-  std::cout << "ooooooooooooooo x: " << x << std::endl;
-  std::cout << "ooooooooooooooo xout: " << xout << std::endl;
   // Call variable change
   variableChange_->changeVar(x, xout);
 
-  // Copy data from temporary state
-  std::cout << "================================" << std::endl;
-  x = xout;
-  std::cout << x << std::endl;
-  std::cout << "================================" << std::endl;
+  // Swap x with xout
+  // TODO call updateFields swapFields?
+  x.updateFields(xout);
+  std::cout << "x updated: " << x << std::endl;
 
 // HOW CODE SHOULD LOOK  // Check whether vars already satisfied
 // HOW CODE SHOULD LOOK  bool hasAllFields = x.hasAllFields();

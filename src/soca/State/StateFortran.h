@@ -67,7 +67,7 @@ namespace soca {
                                  util::DateTime * const *);
     void soca_state_has_fields_f90(const F90flds &, const oops::Variables &,
                                    bool &);
-    void soca_state_update_fields_f90(const F90flds &, const oops::Variables &);
+    void soca_state_update_fields_f90(const F90flds &, const F90flds &);
   }
 }  // namespace soca
 #endif  // SOCA_STATE_STATEFORTRAN_H_

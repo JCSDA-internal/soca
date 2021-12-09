@@ -225,7 +225,7 @@ subroutine soca_getvalues_fillgeovals(self, geom, fld, t1, t2, locs, geovals)
 
   ! Allocate temporary geoval and 3d field for the current time window
   do ivar = 1, geovals%nvar
-
+    print *,"oooooooooooooooooooooo getvalues varname:",geovals%variables(ivar)
     call fld%get(geovals%variables(ivar), fldptr)
     if (fldptr%metadata%dummy_atm) cycle ! TODO remove this hack
     nval = fldptr%nz
@@ -312,6 +312,7 @@ subroutine soca_getvalues_fillgeovals_ad(self, geom, incr, t1, t2, locs, geovals
   allocate(gom_window_ival(locs%nlocs()))
 
   do ivar = 1, geovals%nvar
+
     call incr%get(geovals%variables(ivar), field)
     nval = field%nz
 

@@ -93,7 +93,7 @@ namespace soca {
 
       /// Update the fields in variable changes
       const bool hasFields(const oops::Variables &);
-      void updateFields(const oops::Variables &);
+      void updateFields(const State &);
 
       /// Other
       void zero();
