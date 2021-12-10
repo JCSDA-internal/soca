@@ -50,6 +50,7 @@ if ( BUILD_FMS )
   ecbuild_bundle( PROJECT fms           GIT "https://github.com/jcsda/FMS.git"                     UPDATE BRANCH release-stable )
 endif ()
 
+option(BUILD_UFSM6C6 "download and install the UFS" OFF)
 
 # required repositories
 

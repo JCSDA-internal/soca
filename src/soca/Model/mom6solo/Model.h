@@ -5,8 +5,8 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#ifndef SOCA_MODEL_MODEL_H_
-#define SOCA_MODEL_MODEL_H_
+#ifndef SOCA_MODEL_MOM6SOLO_MODEL_H_
+#define SOCA_MODEL_MOM6SOLO_MODEL_H_
 
 #include <memory>
 #include <ostream>
@@ -77,4 +77,4 @@ namespace soca {
   // -----------------------------------------------------------------------------
 
 }  // namespace soca
-#endif  // SOCA_MODEL_MODEL_H_
+#endif  // SOCA_MODEL_MOM6SOLO_MODEL_H_
