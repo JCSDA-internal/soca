@@ -39,13 +39,13 @@ bump:
   - prefix: bump2d
     variables: [ssh]
   output:
-  - datadir: bump
-    date: *date
-    exp: parameters_bump_cor_nicas.cor_rh
-    parameter: cor_rh
-    type: an
-  - datadir: bump
-    date: *date
-    exp: parameters_bump_cor_nicas.cor_rv
-    parameter: cor_rv
-    type: an
+    cor_rh:
+      datadir: bump
+      date: *date
+      exp: parameters_bump_cor_nicas.cor_rh
+      type: an
+    cor_rv:
+      datadir: bump
+      date: *date
+      exp: parameters_bump_cor_nicas.cor_rv
+      type: an
