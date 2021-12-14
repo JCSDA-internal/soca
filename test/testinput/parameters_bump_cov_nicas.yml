@@ -26,33 +26,32 @@ bump:
     variables: [hocn, socn, tocn]
   - prefix: soca_bump_cov_2d
     variables: [cicen, hicen, ssh]
-
-input:
-- datadir: bump
-  date: *date
-  exp: parameters_bump_cov.D11_1
-  parameter: D11_1
-  type: an
-- datadir: bump
-  date: *date
-  exp: parameters_bump_cov.D22_1
-  parameter: D22_1
-  type: an
-- datadir: bump
-  date: *date
-  exp: parameters_bump_cov.D33_1
-  parameter: D33_1
-  type: an
-- datadir: bump
-  date: *date
-  exp: parameters_bump_cov.D12_1
-  parameter: D12_1
-  type: an
-- datadir: bump
-  date: *date
-  exp: parameters_bump_cov.Dcoef_1
-  parameter: Dcoef_1
-  type: an
+  input:
+    D11_1:
+    - datadir: bump
+      date: *date
+      exp: parameters_bump_cov.D11_1
+      type: an
+    D22_1:
+    - datadir: bump
+      date: *date
+      exp: parameters_bump_cov.D22_1
+      type: an
+    D33_1:
+    - datadir: bump
+      date: *date
+      exp: parameters_bump_cov.D33_1
+      type: an
+    D12_1:
+    - datadir: bump
+      date: *date
+      exp: parameters_bump_cov.D12_1
+      type: an
+    Dcoef_1:
+    - datadir: bump
+      date: *date
+      exp: parameters_bump_cov.Dcoef_1
+      type: an
 
 _: &ensfile
   read_from_file: 1

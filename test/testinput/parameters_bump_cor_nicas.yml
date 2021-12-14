@@ -40,12 +40,12 @@ bump:
     variables: [ssh]
   output:
     cor_rh:
-      datadir: bump
+    - datadir: bump
       date: *date
       exp: parameters_bump_cor_nicas.cor_rh
       type: an
     cor_rv:
-      datadir: bump
+    - datadir: bump
       date: *date
       exp: parameters_bump_cor_nicas.cor_rv
       type: an
