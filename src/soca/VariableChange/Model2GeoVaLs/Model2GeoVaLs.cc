@@ -36,8 +36,6 @@ Model2GeoVaLs::~Model2GeoVaLs() {}
 void Model2GeoVaLs::changeVar(const State & xin, State & xout) const {
   soca_model2geovals_changevar_f90(geom_->toFortran(),
                                    xin.toFortran(), xout.toFortran());
-  std::cout << "xin: " << xin << std::endl;
-  std::cout << "xout: " << xout << std::endl;
 }
 
 // -----------------------------------------------------------------------------

@@ -53,18 +53,6 @@ void LinearVariableChange::multiply(Increment & dx,
                                     const oops::Variables & vars) const {
   Log::trace() << "LinearVariableChange::multiply starting" << std::endl;
 
-  // Check if the incoming state has all the variables
-  const bool hasAllFields = dx.hasFields(vars);
-
-  // If all variables already in incoming state just remove the no longer
-  // needed fields
-  // if (hasAllFields) {
-  //   dx.updateFields(vars);
-  //   oops::Log::trace() << "VariableChange::changeVar done (identity)"
-  //                      << std::endl;
-  //   return;
-  // }
-
   // Create output state
   Increment dxout(*dx.geometry(), vars, dx.time());
 
@@ -72,14 +60,8 @@ void LinearVariableChange::multiply(Increment & dx,
   for (icst_ it = linVarChas_.begin(); it != linVarChas_.end(); ++it) {
     dxout.zero();
     it->multiply(dx, dxout);
-    dx.updateFields(dxout);;
+    dx.updateFields(dxout);
   }
-
-  // Allocate any extra fields and remove fields no longer needed
-  // dx.updateFields(vars);
-
-  // Copy data from temporary state
-  // dx = dxout;
 
   Log::trace() << "LinearVariableChange::multiply done" << dx << std::endl;
 }
@@ -88,18 +70,19 @@ void LinearVariableChange::multiply(Increment & dx,
 
 void LinearVariableChange::multiplyInverse(Increment & dx,
                                            const oops::Variables & vars) const {
-  Log::trace() << "LinearVariableChange::multiplyInverse starting" << vars << std::endl;
+  Log::trace() << "LinearVariableChange::multiplyInverse starting" << std::endl;
 
-  std::cout << "HEREHEREHERE" << dx << std::endl;
-
+  // BUG vars points to nowhere ...
+  return;
   // Create output state
   Increment dxout(*dx.geometry(), vars, dx.time());
 
   // Call variable change(s)
   for (icst_ it = linVarChas_.begin(); it != linVarChas_.end(); ++it) {
+    std::cout << " --------------- dx:" << dx << std::endl;
     dxout.zero();
     it->multiplyInverse(dx, dxout);
-    dx.updateFields(dxout);;
+    dx.updateFields(dxout);
   }
 
   Log::trace() << "LinearVariableChange::multiplyInverse done" << std::endl;
@@ -110,6 +93,7 @@ void LinearVariableChange::multiplyInverse(Increment & dx,
 void LinearVariableChange::multiplyAD(Increment & dx,
                                            const oops::Variables & vars) const {
   Log::trace() << "LinearVariableChange::multiplyAD starting" << std::endl;
+  std::cout << "------ vars in linvarchange multiplyad: " << vars << std::endl;
 
   // Create output state
   Increment dxout(*dx.geometry(), vars, dx.time());
@@ -118,7 +102,7 @@ void LinearVariableChange::multiplyAD(Increment & dx,
   for (icst_ it = linVarChas_.begin(); it != linVarChas_.end(); ++it) {
     dxout.zero();
     it->multiplyAD(dx, dxout);
-    dx.updateFields(dxout);;
+    dx.updateFields(dxout);
   }
 
   Log::trace() << "LinearVariableChange::multiplyAD done" << std::endl;
@@ -130,7 +114,7 @@ void LinearVariableChange::multiplyInverseAD(Increment & dx,
                                           const oops::Variables & vars) const {
   Log::trace() << "LinearVariableChange::multiplyInverseAD starting"
                << std::endl;
-
+  return;
   // Create output state
   Increment dxout(*dx.geometry(), vars, dx.time());
 
@@ -138,7 +122,7 @@ void LinearVariableChange::multiplyInverseAD(Increment & dx,
   for (icst_ it = linVarChas_.begin(); it != linVarChas_.end(); ++it) {
     dxout.zero();
     it->multiplyInverseAD(dx, dxout);
-    dx.updateFields(dxout);;
+    dx.updateFields(dxout);
   }
 
   Log::trace() << "LinearVariableChange::multiplyInverseAD done" << std::endl;

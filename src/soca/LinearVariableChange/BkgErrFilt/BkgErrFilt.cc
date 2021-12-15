@@ -50,8 +50,9 @@ namespace soca {
   }
   // -----------------------------------------------------------------------------
   void BkgErrFilt::multiply(const Increment & dxa, Increment & dxm) const {
-    // dxm = K dxa
+    Log::trace() << "BkgErrFilt::multiply starting" << dxa << std::endl;
     soca_bkgerrfilt_mult_f90(keyFtnConfig_, dxa.toFortran(), dxm.toFortran());
+    Log::trace() << "BkgErrFilt::multiply done" << dxm << std::endl;
   }
   // -----------------------------------------------------------------------------
   void BkgErrFilt::multiplyInverse(const Increment & dxm,
@@ -60,8 +61,9 @@ namespace soca {
   }
   // -----------------------------------------------------------------------------
   void BkgErrFilt::multiplyAD(const Increment & dxm, Increment & dxa) const {
-    // dxa = K^T dxm
+    Log::trace() << "BkgErrFilt::multiplyAD starting" << dxm << std::endl;
     soca_bkgerrfilt_mult_f90(keyFtnConfig_, dxm.toFortran(), dxa.toFortran());
+    Log::trace() << "BkgErrFilt::multiplyAD done" << dxa << std::endl;
   }
   // -----------------------------------------------------------------------------
   void BkgErrFilt::multiplyInverseAD(const Increment & dxa,

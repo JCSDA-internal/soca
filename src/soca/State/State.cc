@@ -217,9 +217,8 @@ namespace soca {
   }
   // -----------------------------------------------------------------------------
   void State::updateFields(const State & other) {
-    // Update local variables
     vars_ = other.vars_;
-    // Update field data
+    time_ = other.time_;
     soca_state_update_fields_f90(toFortran(), other.toFortran());
   }
   // -----------------------------------------------------------------------------

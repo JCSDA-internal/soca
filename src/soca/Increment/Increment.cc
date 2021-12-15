@@ -306,9 +306,8 @@ namespace soca {
   // -----------------------------------------------------------------------------
 
   void Increment::updateFields(const Increment & other) {
-    // Update local variables
     vars_ = other.vars_;
-    // Update field data
+    time_ = other.time_;
     soca_increment_update_fields_f90(toFortran(), other.toFortran());
   }
 

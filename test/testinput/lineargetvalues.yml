@@ -2,7 +2,16 @@ geometry:
   mom6_input_nml: ./inputnml/input.nml
   fields metadata: ./fields_metadata.yml
 
-state variables: &geovals [cicen, hicen, socn, tocn, ssh, hocn]
+_geovals: &geovals [sea_water_potential_temperature,
+                    sea_water_salinity,
+                    sea_surface_height_above_geoid,
+                    sea_surface_temperature,
+                    sea_ice_category_area_fraction,
+                    sea_ice_category_thickness]
+
+_vars: &vars [cicen, hicen, socn, tocn, ssh, hocn]
+
+state variables: *geovals
 
 linear getvalues test:
   tolerance linearity: 1.0e-11
@@ -10,7 +19,6 @@ linear getvalues test:
   first multiplier TL: 1.0
   tolerance TL: 1.0e-11
   tolerance AD: 1.0e-11
-  state variables: *geovals
 
 background:
   read_from_file: 1
@@ -18,8 +26,7 @@ background:
   basename: ./INPUT/
   ocn_filename: MOM.res.nc
   ice_filename: cice.res.nc
-  sfc_filename: sfc.res.nc
-  state variables: *geovals
+  state variables: *vars
 
 locations:
   window begin: 2018-04-15T00:00:00Z

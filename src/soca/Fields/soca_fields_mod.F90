@@ -306,7 +306,6 @@ subroutine soca_field_check_congruent(self, rhs)
   type(soca_field),  intent(in) :: rhs !< other field to check for congruency
   integer :: i
 
-  print *,"self%nz, rhs%nz : ",self%nz, rhs%nz, self%name
   if ( self%nz /= rhs%nz ) call abor1_ftn("soca_field:  self%nz /= rhs%nz")
   if ( self%name /= rhs%name ) call abor1_ftn("soca_field:  self%name /= rhs%name")
   if ( size(shape(self%val)) /= size(shape(rhs%val)) ) &
@@ -482,7 +481,6 @@ subroutine soca_fields_copy(self, rhs)
 
   ! copy values from rhs to self, only if the variable exists
   !  in self
-
   do i=1,size(self%fields)
     call rhs%get(self%fields(i)%name, rhs_fld)
     call self%fields(i)%copy(rhs_fld)
@@ -506,7 +504,6 @@ subroutine soca_fields_get(self, name, field)
 
   ! find the field with the given name
   do i=1,size(self%fields)
-
     if (trim(name) == self%fields(i)%name) then
       field => self%fields(i)
       return
@@ -1332,91 +1329,84 @@ end subroutine soca_fields_deserialize
 !! \relates soca_fields_mod::soca_fields
 
 subroutine soca_fields_has_fields(self, vars, has_fields)
+  class(soca_fields),   intent(inout) :: self
+  type(oops_variables), intent(in)    :: vars
+  logical,              intent(inout) :: has_fields
 
-! Arguments
-class(soca_fields),   intent(inout) :: self
-type(oops_variables), intent(in)    :: vars
-logical,              intent(inout) :: has_fields
+  integer :: f, v
+  character(len=:), allocatable :: varname
+  type(soca_field_metadata) :: metadata
+  logical :: metadata_congruent
 
-! Locals
-integer :: f, v
-character(len=:), allocatable :: varname
-type(soca_field_metadata) :: metadata
-logical :: metadata_congruent
+  ! Proof by contradiction
+  has_fields = .true.
 
-! Proof by contradiction
-has_fields = .true.
+  ! Loop over list of variables
+  do v = 1, vars%nvars()
 
-! Loop over list of variables
-do v = 1, vars%nvars()
+     ! Get the meta data that would have been used to create a field with this name
+     varname = trim(vars%variable(v))
+     metadata = self%geom%fields_metadata%get(varname)
 
-  ! Get the meta data that would have been used to create a field with this name
-  varname = trim(vars%variable(v))
-  metadata = self%geom%fields_metadata%get(varname)
+     ! Set found flag to false
+     metadata_congruent = .false.
 
-  ! Set found flag to false
-  metadata_congruent = .false.
+     ! Loop over all the fields
+     do f = 1, size(self%fields)
 
-  ! Loop over all the fields
-  do f = 1, size(self%fields)
+        ! Compare the meta data for each field with the field of the variable
+        metadata_congruent = soca_fields_metadata_congruent(metadata, self%fields(f)%metadata)
 
-    ! Compare the meta data for each field with the field of the variable
-    metadata_congruent = soca_fields_metadata_congruent(metadata, self%fields(f)%metadata)
+        ! Exit loop if found
+        if (metadata_congruent) exit
 
-    ! Exit loop if found
-    if (metadata_congruent) exit
+     end do
+
+     ! If no match for the metadata was found return false
+     if (.not. metadata_congruent) then
+        has_fields = .false.
+        exit
+     endif
 
   end do
-
-  ! If no match for the metadata was found return false
-  if (.not. metadata_congruent) then
-    has_fields = .false.
-    exit
-  endif
-
-end do
 
 end subroutine soca_fields_has_fields
 
 ! ------------------------------------------------------------------------------
-!> update fields, using list of variables the method removes fields not in the
-!                 list and allocates fields in the list but not allocated
+!> swap fields with rhs
 !!
-!! \see soca_fields_serialize
+!! \see soca_fields_update_fields
 !! \relates soca_fields_mod::soca_fields
 
 subroutine soca_fields_update_fields(self, rhs)
+  class(soca_fields),   intent(inout) :: self
+  class(soca_fields),   intent(in)    :: rhs
 
-! Arguments
-class(soca_fields),   intent(inout) :: self
-class(soca_fields),   intent(in)    :: rhs
-
-integer :: f, v
-character(len=:), allocatable :: varname_new
-logical :: metadata_congruent
-type(soca_field_metadata) :: metadata_new
-type(soca_field), allocatable :: fields_new(:)
+  integer :: f, v
+  character(len=:), allocatable :: varname_new
+  logical :: metadata_congruent
+  type(soca_field_metadata) :: metadata_new
+  type(soca_field), allocatable :: fields_new(:)
   character(len=:), allocatable :: vars_str(:)
   type(soca_field), pointer :: rhs_fld
 
-! Deallotate old fields
-do f = 1, size(self%fields)
-   call self%fields(f)%delete()
-end do
-deallocate(self%fields)
+  ! Deallotate old fields
+  do f = 1, size(self%fields)
+     call self%fields(f)%delete()
+  end do
+  deallocate(self%fields)
 
+  ! swap with rhs
+  allocate(character(len=1024) :: vars_str(size(rhs%fields)))
+  do v=1, size(vars_str)
+     vars_str(v) = rhs%fields(v)%name
+  end do
+  call soca_fields_init_vars(self, vars_str)
 
-allocate(character(len=1024) :: vars_str(size(rhs%fields)))
-do v=1, size(vars_str)
-   vars_str(v) = rhs%fields(v)%name
-end do
-call soca_fields_init_vars(self, vars_str)
-
-do f = 1, size(rhs%fields)
-    call rhs%get(self%fields(f)%name, rhs_fld)
-    call self%fields(f)%copy(rhs_fld)
-   print *,"---------- in update fields: ",rhs%fields(f)%name
-enddo
+  do f = 1, size(rhs%fields)
+     call rhs%get(self%fields(f)%name, rhs_fld)
+     call self%fields(f)%copy(rhs_fld)
+  enddo
 
 end subroutine soca_fields_update_fields
 

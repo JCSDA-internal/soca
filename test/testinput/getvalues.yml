@@ -21,13 +21,16 @@ state variables: &geovals [sea_water_potential_temperature,
                            northward_sea_water_velocity]
 
 getvalues test:
-  interpolation tolerance: 1.5e-2
+  interpolation tolerance: 0.07
 
   state generate:
     analytic init:
       method: soca_ana_init
     date: &date 2018-04-15T00:00:00Z
-    state variables: *geovals
+    state variables: [cicen, hicen,
+                      swh,
+                      sw, lhf, shf, lw, us,
+                      socn, tocn, uocn, vocn, ssh, hocn]
 
 locations:
   window begin: 2018-04-15T00:00:00Z
@@ -44,4 +47,3 @@ locations:
         lon1: -192.5
         lon2: -57
       obs errors: [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
-

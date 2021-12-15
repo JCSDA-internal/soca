@@ -87,19 +87,7 @@ function soca_analytic_val(var, lat, lon, depth) result(val)
     real(kind=kind_real), intent(in) :: lat, lon, depth
     real(kind=kind_real) :: val
 
-    integer :: i, j
-    real(kind=kind_real) :: rvar
-    integer :: ivar
-
-
-    ! create hash from string
-    ivar = 0
-    do i=1,len(trim(var))
-        ivar = ieor(ivar, ishft(ichar(var(i:i)), mod(i-1,4)*8))
-    end do
-    rvar = mod(abs(ieor(ivar, z'5D7A9F43')), 1000) / 1000.0
-
-    val = (sin(lon*3.14158/180.0) + cos(lat*3.14158/180.0)) * (0.5/depth) + rvar
+    val = (sin(lon*3.14158/180.0) + cos(lat*3.14158/180.0)) * (0.5/depth)
 end function
 
 
