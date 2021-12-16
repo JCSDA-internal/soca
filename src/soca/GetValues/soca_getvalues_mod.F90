@@ -227,7 +227,6 @@ subroutine soca_getvalues_fillgeovals(self, geom, fld, t1, t2, locs, geovals)
   do ivar = 1, geovals%nvar
 
     call fld%get(geovals%variables(ivar), fldptr)
-    if (fldptr%metadata%dummy_atm) cycle ! TODO remove this hack
     nval = fldptr%nz
 
     ! Return if no observations

@@ -40,11 +40,6 @@ endif()
 
 # other optional repositories
 
-option(BUILD_CRTM  "download and build CRTM")
-if ( BUILD_CRTM )
-  ecbuild_bundle( PROJECT crtm          GIT "https://github.com/jcsda-internal/crtm.git"            UPDATE BRANCH release/crtm_jedi )
-endif ()
-
 option(BUILD_FMS "download and build fms" ON)
 if ( BUILD_FMS )
   ecbuild_bundle( PROJECT fms           GIT "https://github.com/jcsda/FMS.git"                     UPDATE BRANCH release-stable )
