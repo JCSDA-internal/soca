@@ -57,11 +57,6 @@ class GetValues : public util::Printable,
                    const util::DateTime & t2,
                    ufo::GeoVaLs &) const;
 
-  /// Read interpolated GeoVaLs at observation location
-  void getValuesFromFile(const ufo::Locations &,
-                         const oops::Variables &,
-                         ufo::GeoVaLs &) const;
-
  private:
   void print(std::ostream &) const;
   F90getval keyGetValues_;

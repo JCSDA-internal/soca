@@ -119,9 +119,6 @@ subroutine soca_model2geovals_changevar_f90(c_key_geom, c_key_xin, c_key_xout) &
   call soca_state_registry%get(c_key_xout, xout)
 !
   do i=1, size(xout%fields)
-    ! Skip dummy fields related to the CRTM hacks.
-    ! REMOVE this once a proper coupled h(x) is implemented
-    if (xout%fields(i)%metadata%dummy_atm) cycle
 
     ! special cases
     select case (xout%fields(i)%name)
