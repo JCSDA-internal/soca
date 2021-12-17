@@ -63,12 +63,6 @@ namespace soca {
       const int& toFortran() const {return keyGeom_;}
       void gridgen() const;
       const eckit::mpi::Comm & getComm() const {return comm_;}
-      eckit::LocalConfiguration  getAtmConf() const {return atmconf_;}
-      bool  getAtmInit() const {return initatm_;}
-      bool initAtm(const eckit::Configuration & conf) const
-      {
-        return conf.getBool("notocean.init", false);
-      }
 
       atlas::FunctionSpace * atlasFunctionSpace() const;
       atlas::FieldSet * atlasFieldSet() const;
@@ -78,8 +72,6 @@ namespace soca {
       void print(std::ostream &) const;
       int keyGeom_;
       const eckit::mpi::Comm & comm_;
-      eckit::LocalConfiguration atmconf_;
-      bool initatm_;
       FmsInput fmsinput_;
       std::unique_ptr<atlas::functionspace::PointCloud> atlasFunctionSpace_;
       std::unique_ptr<atlas::FieldSet> atlasFieldSet_;

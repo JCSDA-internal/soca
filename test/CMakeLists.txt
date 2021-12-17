@@ -32,12 +32,10 @@ set( soca_test_input
   testinput/geometry.yml
   testinput/geometry_iterator_2d.yml
   testinput/geometry_iterator_3d.yml
-  testinput/geometryatm.yml
   testinput/getvalues.yml
   testinput/gridgen.yml
   testinput/gridgen_small.yml
   testinput/hofx_3d.yml
-  testinput/hofx_3dcrtm.yml
   testinput/hofx_4d.yml
   testinput/hofx_4d_pseudo.yml
   testinput/hybridgain.yml
@@ -98,7 +96,6 @@ set( soca_test_ref
   testref/forecast_mom6_bgc.test
   testref/forecast_pseudo.test
   testref/hofx_3d.test
-  testref/hofx_3dcrtm.test
   testref/hofx_4d.test
   testref/hofx_4d_pseudo.test
   testref/hybridgain.test
@@ -217,32 +214,6 @@ foreach(FILENAME ${soca_obs})
            ${CMAKE_CURRENT_SOURCE_DIR}/${FILENAME}
            ${CMAKE_CURRENT_BINARY_DIR}/Data/${filename} )
 endforeach(FILENAME)
-
-
-# Link CRTM coeff
-if( ${crtm_FOUND} )
-
-  # the coefficient files needed
-  # TODO(someone) for now these are our own copy in git-lfs,
-  #  because why download 627MB if I only need 7MB of files??
-  #  Download these directly from aws instead when that is an option.
-  list( APPEND crtm_coef
-    Data/crtm/gmi_gpm.SpcCoeff.bin
-    Data/crtm/gmi_gpm.TauCoeff.bin
-    Data/crtm/CloudCoeff.bin
-    Data/crtm/AerosolCoeff.bin
-    Data/crtm/FASTEM6.MWwater.EmisCoeff.bin
-  )
-
-  # link the files
-  foreach(FILENAME ${crtm_coef})
-       get_filename_component(filename ${FILENAME} NAME )
-       execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
-             ${CMAKE_CURRENT_SOURCE_DIR}/${FILENAME}
-             ${CMAKE_CURRENT_BINARY_DIR}/Data/${filename} )
-  endforeach(FILENAME)
-endif()
-
 
 # Create directory for BUMP output
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bump)
@@ -524,10 +495,6 @@ soca_add_test( NAME geometry_iterator_3d
                SRC  TestGeometryIterator.cc
                TEST_DEPENDS test_soca_gridgen )
 
-soca_add_test( NAME geometryatm
-               SRC  TestGeometry.cc
-               TEST_DEPENDS test_soca_gridgen )
-
 soca_add_test( NAME state
                SRC  TestState.cc
                TEST_DEPENDS test_soca_gridgen )
@@ -691,14 +658,6 @@ soca_add_test( NAME dirac_soca_nomask
 soca_add_test( NAME hofx_3d
                EXE  soca_hofx3d.x
                TEST_DEPENDS test_soca_gridgen )
-
-# CRTM is suddenly throwing div by 0 errors, disable trapping
-if( ${crtm_FOUND} )
- soca_add_test( NAME hofx_3dcrtm
-                EXE  soca_hofx3d.x
-                NOTRAPFPE
-                TEST_DEPENDS test_soca_gridgen )
-endif()
 
 soca_add_test( NAME hofx_4d
                EXE  soca_hofx.x

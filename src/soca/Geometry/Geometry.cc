@@ -20,8 +20,6 @@ namespace soca {
   Geometry::Geometry(const eckit::Configuration & conf,
                      const eckit::mpi::Comm & comm)
     : comm_(comm),
-      atmconf_(conf),
-      initatm_(initAtm(conf)),
       fmsinput_(comm, conf) {
 
     fmsinput_.updateNameList();
@@ -47,8 +45,6 @@ namespace soca {
   // -----------------------------------------------------------------------------
   Geometry::Geometry(const Geometry & other)
     : comm_(other.comm_),
-      atmconf_(other.atmconf_),
-      initatm_(initAtm(other.atmconf_)),
       fmsinput_(other.fmsinput_) {
     const int key_geo = other.keyGeom_;
     soca_geo_clone_f90(keyGeom_, key_geo);
