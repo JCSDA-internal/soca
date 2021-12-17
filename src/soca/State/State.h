@@ -92,7 +92,6 @@ namespace soca {
       const util::DateTime & time() const {return time_;}
 
       /// Update the fields in variable changes
-      const bool hasFields(const oops::Variables &);
       void updateFields(const oops::Variables &);
 
       /// Other

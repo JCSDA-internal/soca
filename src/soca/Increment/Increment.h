@@ -108,7 +108,6 @@ namespace soca {
       void deserialize(const std::vector<double> &, size_t &) override;
 
       /// Update the fields in variable changes
-      const bool hasFields(const oops::Variables &);
       void updateFields(const oops::Variables &);
 
       /// Other

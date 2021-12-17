@@ -208,14 +208,6 @@ namespace soca {
     return zz;
   }
   // -----------------------------------------------------------------------------
-  const bool State::hasFields(const oops::Variables & vars) {
-    // Update local variables
-    bool hasAllFields;
-    // Check if the fields are all present
-    soca_state_has_fields_f90(toFortran(), vars_, hasAllFields);
-    return hasAllFields;
-  }
-  // -----------------------------------------------------------------------------
   void State::updateFields(const oops::Variables & vars) {
     // Update local variables
     vars_ = vars;

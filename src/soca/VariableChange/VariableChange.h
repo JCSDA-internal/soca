@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2021 UCAR.
+ * (C) Copyright 2021-2021 UCAR.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -14,10 +14,8 @@
 #include <boost/ptr_container/ptr_vector.hpp>
 
 #include "oops/base/VariableChangeParametersBase.h"
-#include "oops/util/parameters/OptionalParameter.h"
 #include "oops/util/parameters/Parameter.h"
 #include "oops/util/parameters/Parameters.h"
-#include "oops/util/parameters/RequiredParameter.h"
 #include "oops/util/Printable.h"
 
 #include "soca/VariableChange/Base/VariableChangeBase.h"

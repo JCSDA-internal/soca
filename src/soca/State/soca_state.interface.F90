@@ -420,37 +420,6 @@ subroutine scoa_state_analytic_c(c_key_self, c_conf, c_dt) &
 
 end subroutine scoa_state_analytic_c
 
-! ------------------------------------------------------------------------------
-!> C++ interface for soca_state_mod::soca_state version of
-!! soca_fields_mod::soca_fields::has_fields()
-subroutine soca_state_has_fields_c(c_key_self, c_vars, c_has_vars) &
-           bind (c,name='soca_state_has_fields_f90')
-
-integer(c_int),     intent(in)    :: c_key_self
-type(c_ptr), value, intent(in)    :: c_vars
-logical(c_bool),    intent(inout) :: c_has_vars
-
-type(soca_state), pointer :: f_self
-type(oops_variables)      :: f_vars
-logical                   :: f_has_vars
-
-! LinkedList
-! ----------
-call soca_state_registry%get(c_key_self, f_self)
-
-! Fortrain APIs
-! -------------
-f_vars = oops_variables(c_vars)
-
-! Call implementation
-! -------------------
-call f_self%has_fields(f_vars, f_has_vars)
-
-! Convert fortran logical to c boolean
-! ------------------------------------
-c_has_vars = f_has_vars
-
-end subroutine soca_state_has_fields_c
 
 ! ------------------------------------------------------------------------------
 !> C++ interface for soca_state_mod::soca_state version of

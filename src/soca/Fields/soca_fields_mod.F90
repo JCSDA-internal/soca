@@ -33,7 +33,7 @@ use MOM_remapping, only : remapping_CS, initialize_remapping, remapping_core_h, 
 use mpp_domains_mod, only : mpp_update_domains
 
 ! SOCA modules
-use soca_fields_metadata_mod, only : soca_field_metadata, soca_fields_metadata_congruent
+use soca_fields_metadata_mod, only : soca_field_metadata
 use soca_geom_mod, only : soca_geom
 use soca_utils, only: soca_mld
 
@@ -214,9 +214,6 @@ contains
   procedure :: deserialize => soca_fields_deserialize
 
   !> \}
-
-  !> \copybrief soca_fields_has_fields \see soca_fields_has_fields
-  procedure :: has_fields => soca_fields_has_fields
 
   !> \copybrief soca_fields_update_fields \see soca_fields_update_fields
   procedure :: update_fields => soca_fields_update_fields
@@ -1323,61 +1320,8 @@ subroutine soca_fields_deserialize(self, geom, vec_size, vec, index)
 end subroutine soca_fields_deserialize
 
 ! ------------------------------------------------------------------------------
-!> has fields, check if the fields listed are part of the object
-!!
-!! \see soca_fields_has_fields
-!! \relates soca_fields_mod::soca_fields
-
-subroutine soca_fields_has_fields(self, vars, has_fields)
-
-! Arguments
-class(soca_fields),   intent(inout) :: self
-type(oops_variables), intent(in)    :: vars
-logical,              intent(inout) :: has_fields
-
-! Locals
-integer :: f, v
-character(len=:), allocatable :: varname
-type(soca_field_metadata) :: metadata
-logical :: metadata_congruent
-
-! Proof by contradiction
-has_fields = .true.
-
-! Loop over list of variables
-do v = 1, vars%nvars()
-
-  ! Get the meta data that would have been used to create a field with this name
-  varname = trim(vars%variable(v))
-  metadata = self%geom%fields_metadata%get(varname)
-
-  ! Set found flag to false
-  metadata_congruent = .false.
-
-  ! Loop over all the fields
-  do f = 1, size(self%fields)
-
-    ! Compare the meta data for each field with the field of the variable
-    metadata_congruent = soca_fields_metadata_congruent(metadata, self%fields(f)%metadata)
-
-    ! Exit loop if found
-    if (metadata_congruent) exit
-
-  end do
-
-  ! If no match for the metadata was found return false
-  if (.not. metadata_congruent) then
-    has_fields = .false.
-    exit
-  endif
-
-end do
-
-end subroutine soca_fields_has_fields
-
-! ------------------------------------------------------------------------------
 !> update fields, using list of variables the method removes fields not in the
-!                 list and allocates fields in the list but not allocated
+!! list and allocates fields in the list but not allocated
 !!
 !! \see soca_fields_serialize
 !! \relates soca_fields_mod::soca_fields

@@ -21,7 +21,7 @@ state variables: &geovals [sea_water_potential_temperature,
                            northward_sea_water_velocity]
 
 getvalues test:
-  interpolation tolerance: 2.0
+  interpolation tolerance: 2.0  # This seems horribly large!
 
   state generate:
     analytic init:
