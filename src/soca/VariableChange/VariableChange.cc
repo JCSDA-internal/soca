@@ -51,8 +51,11 @@ void VariableChange::changeVar(State & x, const oops::Variables & vars) const {
 // HOW CODE SHOULD LOOK  bool hasAllFields = x.hasAllFields();
 // HOW CODE SHOULD LOOK
 // HOW CODE SHOULD LOOK  if (hasAllFields) {
-// HOW CODE SHOULD LOOK    x.updateFields(vars); // Remove any fields no longer needed
-// HOW CODE SHOULD LOOK    Log::trace() << "VariableChange::changeVar done (identity)" << std::endl;
+// HOW CODE SHOULD LOOK    // Remove any fields no longer needed
+// HOW CODE SHOULD LOOK    x.updateFields(vars);
+// HOW CODE SHOULD LOOK    Log::trace()
+// HOW CODE SHOULD LOOK      << "VariableChange::changeVar done (identity)"
+// HOW CODE SHOULD LOOK      << std::endl;
 // HOW CODE SHOULD LOOK    return
 // HOW CODE SHOULD LOOK  }
 // HOW CODE SHOULD LOOK

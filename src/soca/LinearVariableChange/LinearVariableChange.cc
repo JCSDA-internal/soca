@@ -46,16 +46,16 @@ void LinearVariableChange::setTrajectory(const State & xbg, const State & xfg) {
       const LinearVariableChangeParametersBase & linVarChaPar =
             linVarChaParWra.linearVariableChangeParameters;
       // Add linear variable change to vector
-      linVarChas_.push_back(LinearVariableChangeFactory::create(xbg, xfg, *geom_,
-                            linVarChaPar));
-      Log::debug() << "LinearVariableChange " << linVarChas_.back() << std::endl;
+      linVarChas_.push_back(
+        LinearVariableChangeFactory::create(xbg, xfg, *geom_, linVarChaPar));
     }
   } else {
+    // No variable changes were specified, use the default (Model2GeoVaLs)
     eckit::LocalConfiguration conf;
     conf.set("linear variable change name", "default");
     linVarChas_.push_back(LinearVariableChangeFactory::create(xbg, xfg, *geom_,
-      oops::validateAndDeserialize<GenericLinearVariableChangeParameters>(conf)));
-    Log::debug() << "LinearVariableChange " << linVarChas_.back() << std::endl;
+      oops::validateAndDeserialize<GenericLinearVariableChangeParameters>(
+        conf)));
   }
   Log::trace() << "LinearVariableChange::setTrajectory done" << std::endl;
 }
@@ -66,8 +66,10 @@ void LinearVariableChange::multiply(Increment & dx,
                                     const oops::Variables & vars) const {
   Log::trace() << "LinearVariableChange::multiply starting" << std::endl;
 
-  Log::debug() << "LinearVariableChange::multiply input vars: " << dx.variables() << std::endl;
-  Log::debug() << "LinearVariableChange::multiply output vars: " << vars << std::endl;
+  Log::debug() << "LinearVariableChange::multiply input vars: "
+               << dx.variables() << std::endl;
+  Log::debug() << "LinearVariableChange::multiply output vars: "
+               << vars << std::endl;
 
   // If all variables already in incoming state just remove the no longer
   // needed fields
@@ -88,7 +90,7 @@ void LinearVariableChange::multiply(Increment & dx,
      it->multiply(dx, dxout);
      dx.updateFields(vars);
      dx = dxout;
-   }
+  }
 
   // Allocate any extra fields and remove fields no longer needed
   // dx.updateFields(vars);
@@ -103,7 +105,8 @@ void LinearVariableChange::multiply(Increment & dx,
 
 void LinearVariableChange::multiplyInverse(Increment & dx,
                                            const oops::Variables & vars) const {
-  Log::trace() << "LinearVariableChange::multiplyInverse starting" << vars << std::endl;
+  Log::trace() << "LinearVariableChange::multiplyInverse starting"
+               << vars << std::endl;
 
   // Create output state
   Increment dxout(*dx.geometry(), vars, dx.time());
@@ -126,8 +129,10 @@ void LinearVariableChange::multiplyAD(Increment & dx,
   Log::trace() << "LinearVariableChange::multiplyAD starting" << std::endl;
 
   // Create output state
-  Log::debug() << "LinearVariableChange::multiplyAD vars in: "<<dx.variables()<<std::endl;
-  Log::debug() << "LinearVariableChange::multiplyAD vars out: "<<vars<<std::endl;
+  Log::debug() << "LinearVariableChange::multiplyAD input vars: "
+               << dx.variables() << std::endl;
+  Log::debug() << "LinearVariableChange::multiplyAD output vars: "
+               << vars << std::endl;
   Increment dxout(*dx.geometry(), vars, dx.time());
 
   // Call variable change(s)

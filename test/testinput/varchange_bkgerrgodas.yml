@@ -12,7 +12,7 @@ background:
 
 linear variable change tests:
 - tolerance inverse: 1e-12
-  test inverse: 1
+  test inverse: 0
   linear variable change:
     input variables: *soca_vars
     output variables: *soca_vars
