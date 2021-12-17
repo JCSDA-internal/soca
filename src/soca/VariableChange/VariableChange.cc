@@ -34,8 +34,17 @@ VariableChange::~VariableChange() {}
 // -----------------------------------------------------------------------------
 
 void VariableChange::changeVar(State & x, const oops::Variables & vars) const {
-  // Trace
-  Log::trace() << "VariableChange::changeVar starting" << vars << std::endl;
+  Log::trace() << "VariableChange::changeVar starting" << std::endl;
+
+  Log::debug() << "VariableChange::changeVar vars in: "
+               << x.variables() << std::endl;
+  Log::debug() << "VariableChange::changeVar vars out: "
+               << vars << std::endl;
+
+  // TODO(travis) rename in/out variables so that skipping this
+  // works for Ana2Model (i.e. we need rotated/unrotate u/v renamed different)
+  // // If the variables are the same, don't bother doing anything!
+  // if (!(x.variables() == vars)) {
 
   // Create output state
   State xout(*x.geometry(), vars, x.time());
@@ -43,56 +52,39 @@ void VariableChange::changeVar(State & x, const oops::Variables & vars) const {
   // Call variable change
   variableChange_->changeVar(x, xout);
 
-  x.updateFields(vars);
   // Copy data from temporary state
+  x.updateFields(vars);
   x = xout;
 
-// HOW CODE SHOULD LOOK  // Check whether vars already satisfied
-// HOW CODE SHOULD LOOK  bool hasAllFields = x.hasAllFields();
-// HOW CODE SHOULD LOOK
-// HOW CODE SHOULD LOOK  if (hasAllFields) {
-// HOW CODE SHOULD LOOK    // Remove any fields no longer needed
-// HOW CODE SHOULD LOOK    x.updateFields(vars);
-// HOW CODE SHOULD LOOK    Log::trace()
-// HOW CODE SHOULD LOOK      << "VariableChange::changeVar done (identity)"
-// HOW CODE SHOULD LOOK      << std::endl;
-// HOW CODE SHOULD LOOK    return
-// HOW CODE SHOULD LOOK  }
-// HOW CODE SHOULD LOOK
-// HOW CODE SHOULD LOOK  // Create output state
-// HOW CODE SHOULD LOOK  State xout(*x.geometry(), vars, x.time());
-// HOW CODE SHOULD LOOK
-// HOW CODE SHOULD LOOK  // Call variable change
-// HOW CODE SHOULD LOOK  variableChange_->changeVar(x, xout);
-// HOW CODE SHOULD LOOK
-// HOW CODE SHOULD LOOK  // Remove unused fields and allocate any new ones
-// HOW CODE SHOULD LOOK  x.updateFields(vars);
-// HOW CODE SHOULD LOOK
-// HOW CODE SHOULD LOOK  // Copy data from temporary state
-// HOW CODE SHOULD LOOK  x = xout;
+  // }
 
-
-  // Trace
   Log::trace() << "VariableChange::changeVar done" << std::endl;
 }
 
 // -----------------------------------------------------------------------------
 
-void VariableChange::changeVarInverse(State & x, const oops::Variables & vars)
-  const {
-  // Trace
+void VariableChange::changeVarInverse(State & x,
+                                      const oops::Variables & vars) const {
   Log::trace() << "VariableChange::changeVarInverse starting" << std::endl;
 
-  // Create output state
-  State xout(*x.geometry(), vars, x.time());
+  Log::debug() << "VariableChange::changeVarInverse vars in: "
+               << x.variables() << std::endl;
+  Log::debug() << "VariableChange::changeVarInverse vars out: "
+               << vars << std::endl;
 
-  // Call variable change
-  variableChange_->changeVarInverse(x, xout);
+  // If the variables are the same, don't bother doing anything!
+  if (!(x.variables() == vars)) {
+    // Create output state
+    State xout(*x.geometry(), vars, x.time());
 
-  // Copy data from temporary state
-  x = xout;
+    // Call variable change
+    variableChange_->changeVarInverse(x, xout);
 
-  // Trace
+    // Copy data from temporary state
+    x.updateFields(vars);
+    x = xout;
+  }
+
   Log::trace() << "VariableChange::changeVarInverse done" << std::endl;
 }
 

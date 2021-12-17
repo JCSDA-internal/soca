@@ -2,7 +2,25 @@ geometry:
   mom6_input_nml: ./inputnml/input.nml
   fields metadata: ./fields_metadata.yml
 
-state variables: &geovals [cicen, hicen, socn, tocn, ssh, hocn]
+state variables: &statevals [tocn, socn, uocn, vocn, hocn]
+_geovals: &geovals [sea_water_potential_temperature,
+                    sea_water_salinity,
+                    sea_water_cell_thickness,
+                    sea_surface_height_above_geoid,
+                    sea_surface_temperature,
+                    sea_ice_category_area_fraction,
+                    sea_ice_category_thickness,
+                    sea_surface_wave_significant_height,
+                    net_downwelling_shortwave_radiation,
+                    upward_latent_heat_flux_in_air,
+                    upward_sensible_heat_flux_in_air,
+                    net_downwelling_longwave_radiation,
+                    friction_velocity_over_water,
+                    surface_eastward_sea_water_velocity,
+                    eastward_sea_water_velocity,
+                    surface_northward_sea_water_velocity,
+                    northward_sea_water_velocity]
+
 
 linear getvalues test:
   tolerance linearity: 1.0e-11
@@ -19,7 +37,7 @@ background:
   ocn_filename: MOM.res.nc
   ice_filename: cice.res.nc
   sfc_filename: sfc.res.nc
-  state variables: *geovals
+  state variables: *statevals
 
 locations:
   window begin: 2018-04-15T00:00:00Z
@@ -34,4 +52,4 @@ locations:
         lat2: 90
         lon1: 0
         lon2: 360
-      obs errors: [1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+      obs errors: [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]

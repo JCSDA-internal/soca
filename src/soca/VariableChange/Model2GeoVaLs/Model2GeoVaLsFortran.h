@@ -13,11 +13,5 @@ namespace soca {
     void soca_model2geovals_changevar_f90(const F90geom &,
                                           const F90flds &,
                                           F90flds &);
-    void soca_model2geovals_linear_changevar_f90(const F90geom &,
-                                                 const F90flds &,
-                                                 F90flds &);
-    void soca_model2geovals_linear_changevarAD_f90(const F90geom &,
-                                                   const F90flds &,
-                                                  F90flds &);
   }
 }  // namespace soca

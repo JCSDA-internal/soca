@@ -14,13 +14,13 @@
 #include "soca/Increment/Increment.h"
 #include "soca/State/State.h"
 #include "soca/Traits.h"
-#include "soca/LinearVariableChange/Model2GeoVaLs/LinearModel2GeoVaLs.h"
-#include "soca/VariableChange/Model2GeoVaLs/Model2GeoVaLsFortran.h"
+#include "soca/LinearVariableChange/LinearModel2GeoVaLs/LinearModel2GeoVaLs.h"
+#include "soca/LinearVariableChange/LinearModel2GeoVaLs/LinearModel2GeoVaLsFortran.h"
 
 namespace soca {
 
 static LinearVariableChangeMaker<LinearModel2GeoVaLs>
-       makerLinearVariableChangeModel2GeoVaLs_("Model2GeoVaLs");
+       makerLinearVariableChangeModel2GeoVaLs_("LinearModel2GeoVaLs");
 static LinearVariableChangeMaker<LinearModel2GeoVaLs>
        makerLinearVariableChangeModel2GeoVaLsDefault_("default");
 
@@ -47,9 +47,9 @@ void LinearModel2GeoVaLs::multiply(const Increment &dxin,
 
 // -----------------------------------------------------------------------------
 
-void LinearModel2GeoVaLs::multiplyInverse(const Increment &,
-                                                Increment &) const {
-  util::abor1_cpp("LinearModel2GeoVaLs::multiplyInverse not implemented");
+void LinearModel2GeoVaLs::multiplyInverse(const Increment &dxin,
+                                                Increment &dxout) const {
+  multiply(dxin, dxout);
 }
 
 // -----------------------------------------------------------------------------
@@ -63,9 +63,9 @@ void LinearModel2GeoVaLs::multiplyAD(const Increment &dxin,
 
 // -----------------------------------------------------------------------------
 
-void LinearModel2GeoVaLs::multiplyInverseAD(const Increment &,
-                                                  Increment &) const {
-  util::abor1_cpp("LinearModel2GeoVaLs::multiplyInverseAD not implemented");
+void LinearModel2GeoVaLs::multiplyInverseAD(const Increment &dxin,
+                                                  Increment &dxout) const {
+  multiplyAD(dxin, dxout);
 }
 
 // -----------------------------------------------------------------------------

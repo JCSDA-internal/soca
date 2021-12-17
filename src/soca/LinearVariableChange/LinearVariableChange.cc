@@ -39,6 +39,8 @@ void LinearVariableChange::setTrajectory(const State & xbg, const State & xfg) {
     linVarChgs = params_.linearVariableChangesWrapper;
 
   if (linVarChgs != boost::none) {
+    // If one or more linear variable changes were specified:
+
     // Create the linear variable change(s)
     for (const LinearVariableChangeParametersWrapper & linVarChaParWra :
         *linVarChgs) {
@@ -50,7 +52,7 @@ void LinearVariableChange::setTrajectory(const State & xbg, const State & xfg) {
         LinearVariableChangeFactory::create(xbg, xfg, *geom_, linVarChaPar));
     }
   } else {
-    // No variable changes were specified, use the default (Model2GeoVaLs)
+    // No variable changes were specified, use the default (LinearModel2GeoVaLs)
     eckit::LocalConfiguration conf;
     conf.set("linear variable change name", "default");
     linVarChas_.push_back(LinearVariableChangeFactory::create(xbg, xfg, *geom_,
@@ -106,6 +108,11 @@ void LinearVariableChange::multiply(Increment & dx,
 void LinearVariableChange::multiplyInverse(Increment & dx,
                                            const oops::Variables & vars) const {
   Log::trace() << "LinearVariableChange::multiplyInverse starting"
+               << vars << std::endl;
+
+  Log::debug() << "LinearVariableChange::multiplyInverse input vars: "
+               << dx.variables() << std::endl;
+  Log::debug() << "LinearVariableChange::multiplyInverse output vars: "
                << vars << std::endl;
 
   // Create output state
