@@ -189,7 +189,6 @@ function soca_fields_metadata_congruent(lhs, rhs) result(congruent)
   congruent = congruent .and. lhs%io_file==rhs%io_file
   congruent = congruent .and. lhs%io_name==rhs%io_name
   congruent = congruent .and. lhs%property==rhs%property
-  congruent = congruent .and. lhs%dummy_atm.eqv.rhs%dummy_atm
 
 end function
 

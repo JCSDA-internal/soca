@@ -32,7 +32,7 @@ class LinearVariableChangeParameters :
   OOPS_CONCRETE_PARAMETERS(LinearVariableChangeParameters,
                            oops::LinearVariableChangeParametersBase)
  public:
-  oops::RequiredParameter<std::vector<LinearVariableChangeParametersWrapper>>
+  oops::OptionalParameter<std::vector<LinearVariableChangeParametersWrapper>>
          linearVariableChangesWrapper{"linear variable changes", this};
 };
 

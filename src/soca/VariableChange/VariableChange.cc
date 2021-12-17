@@ -43,6 +43,7 @@ void VariableChange::changeVar(State & x, const oops::Variables & vars) const {
   // Call variable change
   variableChange_->changeVar(x, xout);
 
+  x.updateFields(vars);
   // Copy data from temporary state
   x = xout;
 

@@ -34,15 +34,28 @@ LinearVariableChange::~LinearVariableChange() {}
 
 void LinearVariableChange::setTrajectory(const State & xbg, const State & xfg) {
   Log::trace() << "LinearVariableChange::setTrajectory starting" << std::endl;
-  // Create the linear variable change(s)
-  for (const LinearVariableChangeParametersWrapper & linVarChaParWra :
-       params_.linearVariableChangesWrapper.value()) {
-    // Get parameters for this linear variable change
-    const LinearVariableChangeParametersBase & linVarChaPar =
-           linVarChaParWra.linearVariableChangeParameters;
-    // Add linear variable change to vector
+
+  const boost::optional<std::vector<LinearVariableChangeParametersWrapper>> &
+    linVarChgs = params_.linearVariableChangesWrapper;
+
+  if (linVarChgs != boost::none) {
+    // Create the linear variable change(s)
+    for (const LinearVariableChangeParametersWrapper & linVarChaParWra :
+        *linVarChgs) {
+      // Get parameters for this linear variable change
+      const LinearVariableChangeParametersBase & linVarChaPar =
+            linVarChaParWra.linearVariableChangeParameters;
+      // Add linear variable change to vector
+      linVarChas_.push_back(LinearVariableChangeFactory::create(xbg, xfg, *geom_,
+                            linVarChaPar));
+      Log::debug() << "LinearVariableChange " << linVarChas_.back() << std::endl;
+    }
+  } else {
+    eckit::LocalConfiguration conf;
+    conf.set("linear variable change name", "default");
     linVarChas_.push_back(LinearVariableChangeFactory::create(xbg, xfg, *geom_,
-                          linVarChaPar));
+      oops::validateAndDeserialize<GenericLinearVariableChangeParameters>(conf)));
+    Log::debug() << "LinearVariableChange " << linVarChas_.back() << std::endl;
   }
   Log::trace() << "LinearVariableChange::setTrajectory done" << std::endl;
 }
@@ -53,8 +66,8 @@ void LinearVariableChange::multiply(Increment & dx,
                                     const oops::Variables & vars) const {
   Log::trace() << "LinearVariableChange::multiply starting" << std::endl;
 
-  // Check if the incoming state has all the variables
-  const bool hasAllFields = dx.hasFields(vars);
+  Log::debug() << "LinearVariableChange::multiply input vars: " << dx.variables() << std::endl;
+  Log::debug() << "LinearVariableChange::multiply output vars: " << vars << std::endl;
 
   // If all variables already in incoming state just remove the no longer
   // needed fields
@@ -70,10 +83,12 @@ void LinearVariableChange::multiply(Increment & dx,
 
   // Call variable change(s)
   for (icst_ it = linVarChas_.begin(); it != linVarChas_.end(); ++it) {
-    dxout.zero();
-    it->multiply(dx, dxout);
-    dx = dxout;
-  }
+    Log::debug() << "LinearVariableChange::multiply with "<< *it << std::endl;
+     dxout.zero();
+     it->multiply(dx, dxout);
+     dx.updateFields(vars);
+     dx = dxout;
+   }
 
   // Allocate any extra fields and remove fields no longer needed
   // dx.updateFields(vars);
@@ -97,6 +112,7 @@ void LinearVariableChange::multiplyInverse(Increment & dx,
   for (ircst_ it = linVarChas_.rbegin(); it != linVarChas_.rend(); ++it) {
     dxout.zero();
     it->multiplyInverse(dx, dxout);
+    dx.updateFields(vars);
     dx = dxout;
   }
 
@@ -110,12 +126,15 @@ void LinearVariableChange::multiplyAD(Increment & dx,
   Log::trace() << "LinearVariableChange::multiplyAD starting" << std::endl;
 
   // Create output state
+  Log::debug() << "LinearVariableChange::multiplyAD vars in: "<<dx.variables()<<std::endl;
+  Log::debug() << "LinearVariableChange::multiplyAD vars out: "<<vars<<std::endl;
   Increment dxout(*dx.geometry(), vars, dx.time());
 
   // Call variable change(s)
   for (ircst_ it = linVarChas_.rbegin(); it != linVarChas_.rend(); ++it) {
     dxout.zero();
     it->multiplyAD(dx, dxout);
+    dx.updateFields(vars);
     dx = dxout;
   }
 
@@ -136,6 +155,7 @@ void LinearVariableChange::multiplyInverseAD(Increment & dx,
   for (icst_ it = linVarChas_.begin(); it != linVarChas_.end(); ++it) {
     dxout.zero();
     it->multiplyInverseAD(dx, dxout);
+    dx.updateFields(vars);
     dx = dxout;
   }
 
