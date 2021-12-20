@@ -293,6 +293,17 @@ namespace soca {
 
   void Increment::updateTime(const util::Duration & dt) {time_ += dt;}
 
+
+
+  // -----------------------------------------------------------------------------
+
+  void Increment::updateFields(const oops::Variables & vars) {
+    // Update local variables
+    vars_ = vars;
+    // Update field data
+    soca_increment_update_fields_f90(toFortran(), vars_);
+  }
+
   // -----------------------------------------------------------------------------
   /// Serialization
   // -----------------------------------------------------------------------------
