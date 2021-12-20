@@ -8,12 +8,12 @@
 #ifndef SOCA_OBSLOCALIZATION_OBSLOCROSSBYPARAMETERS_H_
 #define SOCA_OBSLOCALIZATION_OBSLOCROSSBYPARAMETERS_H_
 
-#include "ufo/obslocalization/ObsLocParameters.h"
+#include "ufo/obslocalization/ObsHorLocParameters.h"
 
 namespace soca {
 
-class ObsLocRossbyParameters : public ufo::ObsLocParameters {
-  OOPS_CONCRETE_PARAMETERS(ObsLocRossbyParameters, ufo::ObsLocParameters)
+class ObsLocRossbyParameters : public ufo::ObsHorLocParameters {
+  OOPS_CONCRETE_PARAMETERS(ObsLocRossbyParameters, ufo::ObsHorLocParameters)
 
  public:
   oops::Parameter<double> base{"base value", 0.0, this};
