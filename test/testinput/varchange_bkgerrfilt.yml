@@ -11,11 +11,12 @@ background:
   state variables: &soca_vars [cicen, hicen, socn, tocn, ssh, hocn]
 
 linear variable changeTests:
-- variable change: BkgErrFILT
-  tolerance inverse: 1e-12
-  test inverse: 0
-  ocean_depth_min: 1000 # [m]
-  rescale_bkgerr: 1.0
-  efold_z: 1500.0       # [m]
-  input variables: *soca_vars
-  output variables: *soca_vars
+- linear variable change:
+    linear variable change name: BkgErrFILT
+    tolerance inverse: 1e-12
+    test inverse: 0
+    ocean_depth_min: 1000 # [m]
+    rescale_bkgerr: 1.0
+    efold_z: 1500.0       # [m]
+    input variables: *soca_vars
+    output variables: *soca_vars

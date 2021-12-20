@@ -421,4 +421,30 @@ subroutine scoa_state_analytic_c(c_key_self, c_conf, c_dt) &
 end subroutine scoa_state_analytic_c
 
 
+! ------------------------------------------------------------------------------
+!> C++ interface for soca_state_mod::soca_state version of
+!! soca_fields_mod::soca_fields::update_fields()
+subroutine soca_state_update_fields_c(c_key_self, c_vars) &
+           bind (c,name='soca_state_update_fields_f90')
+
+integer(c_int),     intent(in) :: c_key_self
+type(c_ptr), value, intent(in) :: c_vars
+
+type(soca_state), pointer :: f_self
+type(oops_variables)      :: f_vars
+
+! LinkedList
+! ----------
+call soca_state_registry%get(c_key_self, f_self)
+
+! Fortrain APIs
+! -------------
+f_vars = oops_variables(c_vars)
+
+! Call implementation
+! -------------------
+call f_self%update_fields(f_vars)
+
+end subroutine soca_state_update_fields_c
+
 end module soca_state_mod_c

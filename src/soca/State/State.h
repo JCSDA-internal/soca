@@ -89,6 +89,10 @@ namespace soca {
       const int & toFortran() const {return keyFlds_;}
       std::shared_ptr<const Geometry> geometry() const;
       const oops::Variables & variables() const {return vars_;}
+      const util::DateTime & time() const {return time_;}
+
+      /// Update the fields in variable changes
+      void updateFields(const oops::Variables &);
 
       /// Other
       void zero();

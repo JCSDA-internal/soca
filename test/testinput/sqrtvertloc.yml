@@ -34,60 +34,64 @@ background error:
     variables: [tocn, ssh, socn]
 
 
-  variable changes:
+  linear variable change:
 
-  - variable change: VertConvSOCA
-    Lz_min: 2.0
-    Lz_mld: 1
-    Lz_mld_max: 500.0
-    scale_layer_thick: 1.5
     input variables: *soca_vars
     output variables: *soca_vars
+    
+    linear variable changes:
+    - linear variable change name: VertConvSOCA
+      Lz_min: 2.0
+      Lz_mld: 1
+      Lz_mld_max: 500.0
+      scale_layer_thick: 1.5
+      input variables: *soca_vars
+      output variables: *soca_vars
 
-  - variable change: BkgErrFILT
-    ocean_depth_min: 1000 # [m]
-    rescale_bkgerr: 1.0
-    efold_z: 2500.0       # [m]
-    input variables: *soca_vars
-    output variables: *soca_vars
+    - linear variable change name: BkgErrFILT
+      ocean_depth_min: 1000 # [m]
+      rescale_bkgerr: 1.0
+      efold_z: 2500.0       # [m]
+      input variables: *soca_vars
+      output variables: *soca_vars
 
-  - variable change: BkgErrGODAS
-    t_min: 0.25
-    t_max: 1.0
-    t_dz:  20.0
-    t_efold: 500.0
-    s_min: 0.0
-    s_max: 0.25
-    ssh_min: 0.0   # value at EQ
-    ssh_max: 0.1   # value in Extratropics
-    ssh_phi_ex: 20 # lat of transition from extratropics
-    cicen_min: 0.1
-    cicen_max: 0.5
-    hicen_min: 10.0
-    hicen_max: 100.0
-    chl_min: 0.001
-    chl_max: 30.0
-    biop_min: 0.0
-    biop_max: 1.0e-6
-    input variables: *soca_vars
-    output variables: *soca_vars
+    - linear variable change name: BkgErrGODAS
+      t_min: 0.25
+      t_max: 1.0
+      t_dz:  20.0
+      t_efold: 500.0
+      s_min: 0.0
+      s_max: 0.25
+      ssh_min: 0.0   # value at EQ
+      ssh_max: 0.1   # value in Extratropics
+      ssh_phi_ex: 20 # lat of transition from extratropics
+      cicen_min: 0.1
+      cicen_max: 0.5
+      hicen_min: 10.0
+      hicen_max: 100.0
+      chl_min: 0.001
+      chl_max: 30.0
+      biop_min: 0.0
+      biop_max: 1.0e-6
+      input variables: *soca_vars
+      output variables: *soca_vars
 
-  - variable change: HorizFiltSOCA
-    niter: 1
-    filter variables: *soca_vars
-    input variables: *soca_vars
-    output variables: *soca_vars
+    - linear variable change name: HorizFiltSOCA
+      niter: 1
+      filter variables: *soca_vars
+      input variables: *soca_vars
+      output variables: *soca_vars
 
-  - variable change: BalanceSOCA
-    dsdtmax: 0.1
-    dsdzmin: 3.0e-6
-    dtdzmin: 1.0e-6
-    nlayers: 10
-    dcdt:
-      filename: ./Data/kmask.nc
-      name: dcdt
-    input variables: *soca_vars
-    output variables: *soca_vars
+    - linear variable change name: BalanceSOCA
+      dsdtmax: 0.1
+      dsdzmin: 3.0e-6
+      dtdzmin: 1.0e-6
+      nlayers: 10
+      dcdt:
+        filename: ./Data/kmask.nc
+        name: dcdt
+      input variables: *soca_vars
+      output variables: *soca_vars
 
 max neig output: 10
 number of random samples: 40
@@ -101,7 +105,6 @@ print test for each member: false
 output:
  frequency: PT6H
  datadir: Data
- exp: sqrtvert 
+ exp: sqrtvert
  type: ens
  date: *date
-

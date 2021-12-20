@@ -603,4 +603,32 @@ subroutine soca_increment_deserialize_c(c_key_self,c_key_geom,c_vec_size,c_vec,c
 
 end subroutine soca_increment_deserialize_c
 
+
+
+! ------------------------------------------------------------------------------
+!> C++ interface for soca_increment_mod::soca_increment version of
+!! soca_fields_mod::soca_fields::update_fields()
+subroutine soca_increment_update_fields_c(c_key_self, c_vars) &
+           bind (c,name='soca_increment_update_fields_f90')
+
+integer(c_int),     intent(in) :: c_key_self
+type(c_ptr), value, intent(in) :: c_vars
+
+type(soca_increment), pointer :: f_self
+type(oops_variables)          :: f_vars
+
+! LinkedList
+! ----------
+call soca_increment_registry%get(c_key_self, f_self)
+
+! Fortrain APIs
+! -------------
+f_vars = oops_variables(c_vars)
+
+! Call implementation
+! -------------------
+call f_self%update_fields(f_vars)
+
+end subroutine soca_increment_update_fields_c
+
 end module

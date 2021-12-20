@@ -114,7 +114,7 @@ type, public :: soca_fields
   type(soca_geom),  pointer :: geom => null()
 
   !> The soca_field instances that make up the fields
-  type(soca_field), pointer :: fields(:) => null()
+  type(soca_field), allocatable :: fields(:)
 
 contains
   !> \name constructors / destructors
@@ -214,6 +214,9 @@ contains
   procedure :: deserialize => soca_fields_deserialize
 
   !> \}
+
+  !> \copybrief soca_fields_update_fields \see soca_fields_update_fields
+  procedure :: update_fields => soca_fields_update_fields
 
 end type soca_fields
 
@@ -318,7 +321,7 @@ end subroutine soca_field_check_congruent
 subroutine soca_field_delete(self)
   class(soca_field), intent(inout) :: self
 
-  deallocate(self%val)
+  if (allocated(self%val)) deallocate(self%val)
 end subroutine
 
 
@@ -405,13 +408,13 @@ end subroutine
 subroutine soca_fields_create(self, geom, vars)
   class(soca_fields),        intent(inout) :: self
   type(soca_geom),  pointer, intent(inout) :: geom !< geometry to associate with the fields
-  type(oops_variables),      intent(inout) :: vars !< list of field names to create
+  type(oops_variables),      intent(in) :: vars !< list of field names to create
 
   character(len=:), allocatable :: vars_str(:)
   integer :: i
 
   ! make sure current object has not already been allocated
-  if (associated(self%fields)) &
+  if (allocated(self%fields)) &
     call abor1_ftn("soca_fields::create(): object already allocated")
 
   ! associate geometry
@@ -443,7 +446,6 @@ subroutine soca_fields_delete(self)
     call self%fields(i)%delete()
   end do
   deallocate(self%fields)
-  nullify(self%fields)
 
 end subroutine
 
@@ -465,7 +467,7 @@ subroutine soca_fields_copy(self, rhs)
   type(soca_field), pointer :: rhs_fld
 
   ! initialize the variables based on the names in rhs
-  if (.not. associated(self%fields)) then
+  if (.not. allocated(self%fields)) then
     self%geom => rhs%geom
     allocate(character(len=1024) :: vars_str(size(rhs%fields)))
     do i=1, size(vars_str)
@@ -491,9 +493,9 @@ end subroutine
 !! \throws abor1_ftn If no field exists with that name, the prorgam aborts
 !! \relates soca_fields_mod::soca_fields
 subroutine soca_fields_get(self, name, field)
-  class(soca_fields),         intent(in) :: self
-  character(len=*),           intent(in) :: name !< name of field to find
-  type(soca_field), pointer, intent(out) :: field  !< a pointer to the resulting field
+  class(soca_fields), target, intent(in)  :: self
+  character(len=*),           intent(in)  :: name !< name of field to find
+  type(soca_field), pointer,  intent(out) :: field  !< a pointer to the resulting field
 
   integer :: i
 
@@ -643,9 +645,9 @@ end subroutine soca_fields_mul
 !! \throws abor1_ftn aborts if \p is not a subset of \rhs
 !! \relates soca_fields_mod::soca_fields
 subroutine soca_fields_axpy(self, zz, rhs)
-  class(soca_fields), intent(inout) :: self
-  real(kind=kind_real),  intent(in) :: zz !< constant by which to multiply other rhs
-  class(soca_fields),    intent(in) :: rhs !< other field to add
+  class(soca_fields), target, intent(inout) :: self
+  real(kind=kind_real),       intent(in)    :: zz !< constant by which to multiply other rhs
+  class(soca_fields),         intent(in)    :: rhs !< other field to add
 
   type(soca_field), pointer :: f_rhs, f_lhs
   integer :: i
@@ -668,9 +670,9 @@ end subroutine soca_fields_axpy
 !! \throws abor1_ftn aborts if two fields are not congruent
 !! \relates soca_fields_mod::soca_fields
 subroutine soca_fields_dotprod(self, rhs, zprod)
-  class(soca_fields),     intent(in) :: self
-  class(soca_fields),      intent(in) :: rhs !< field 2 of dot product
-  real(kind=kind_real),  intent(out) :: zprod !< The resulting dot product
+  class(soca_fields), target, intent(in)  :: self
+  class(soca_fields), target, intent(in)  :: rhs !< field 2 of dot product
+  real(kind=kind_real),       intent(out) :: zprod !< The resulting dot product
 
   real(kind=kind_real) :: local_zprod
   integer :: ii, jj, kk, n
@@ -730,9 +732,9 @@ end subroutine soca_fields_dotprod
 !!    date from the files
 !! \relates soca_fields_mod::soca_fields
 subroutine soca_fields_read(self, f_conf, vdate)
-  class(soca_fields),        intent(inout) :: self
-  type(fckit_configuration), intent(in)    :: f_conf
-  type(datetime),            intent(inout) :: vdate
+  class(soca_fields), target, intent(inout) :: self
+  type(fckit_configuration),  intent(in)    :: f_conf
+  type(datetime),             intent(inout) :: vdate
 
   integer, parameter :: max_string_length=800
   character(len=max_string_length) :: ocn_filename, sfc_filename, ice_filename, wav_filename, filename
@@ -1095,9 +1097,9 @@ end subroutine soca_fields_write_file
 !! TODO this can be generalized even more
 !! \relates soca_fields_mod::soca_fields
 subroutine soca_fields_write_rst(self, f_conf, vdate)
-  class(soca_fields),        intent(inout) :: self      !< Fields
-  type(fckit_configuration), intent(in)    :: f_conf   !< Configuration
-  type(datetime),            intent(inout) :: vdate    !< DateTime
+  class(soca_fields), target, intent(inout) :: self      !< Fields
+  type(fckit_configuration),  intent(in)    :: f_conf   !< Configuration
+  type(datetime),             intent(inout) :: vdate    !< DateTime
 
   integer, parameter :: max_string_length=800
   character(len=max_string_length) :: ocn_filename, sfc_filename, ice_filename, wav_filename, filename
@@ -1317,6 +1319,37 @@ subroutine soca_fields_deserialize(self, geom, vec_size, vec, index)
 
 end subroutine soca_fields_deserialize
 
+! ------------------------------------------------------------------------------
+!> update fields, using list of variables the method removes fields not in the
+!! list and allocates fields in the list but not allocated
+!!
+!! \see soca_fields_serialize
+!! \relates soca_fields_mod::soca_fields
+
+subroutine soca_fields_update_fields(self, vars)
+
+  class(soca_fields),   intent(inout) :: self
+  type(oops_variables), intent(in)    :: vars  ! New variable the field should have
+
+  type(soca_fields) :: tmp_fields
+  type(soca_field), pointer :: field
+  integer :: f
+
+  ! create new fields
+  call tmp_fields%create(self%geom, vars)
+
+  ! copy over where already existing
+  do f = 1, size(tmp_fields%fields)
+    if (self%has(tmp_fields%fields(f)%name)) then
+      call self%get(tmp_fields%fields(f)%name, field)
+      call tmp_fields%fields(f)%copy(field)
+    end if
+  end do
+
+  ! move ownership of fields from tmp to self
+  call move_alloc(tmp_fields%fields, self%fields)
+
+end subroutine soca_fields_update_fields
 
 ! ------------------------------------------------------------------------------
 ! Internal module functions/subroutines

@@ -11,15 +11,15 @@ output geometry:
   mom6_input_nml: ./inputnml/input.nml
   fields metadata: ./fields_metadata.yml
 
-variable changes:
-  - variable change: Ana2Model
-    do inverse: false
-    rotate:
-      u: [uocn]
-      v: [vocn]
-    log:
-      var: [socn, chl]
-    output variables: *soca_vars
+variable change:
+  variable change name: Ana2Model
+  do inverse: false
+  rotate:
+    u: [uocn]
+    v: [vocn]
+  log:
+    var: [socn, chl]
+  output variables: *soca_vars
 
 states:
 - input:
