@@ -107,12 +107,18 @@ namespace soca {
       void serialize(std::vector<double> &) const override;
       void deserialize(const std::vector<double> &, size_t &) override;
 
+      /// Update the fields in variable changes
+      void updateFields(const oops::Variables &);
+
       /// Other
       void accumul(const double &, const State &);
       int & toFortran() {return keyFlds_;}
       const int & toFortran() const {return keyFlds_;}
       std::shared_ptr<const Geometry> geometry() const;
 
+      /// Private variable accessor functions
+      const oops::Variables & variables() const {return vars_;}
+      const util::DateTime & time() const {return time_;}
 
       /// Data
    private:
