@@ -82,7 +82,6 @@ subroutine soca_model2geovals_changevar_f90(c_key_geom, c_key_xin, c_key_xout) &
       elseif (field%metadata%getval_name_surface == xout%fields(i)%name) then
         xout%fields(i)%val(:,:,1) = field%val(:,:,1) !< surface only of a 3D field
       else
-        call backtrace
         call abor1_ftn( 'error in soca_model2geovals_changevar_f90 processing ' &
                         // xout%fields(i)%name )
       endif
