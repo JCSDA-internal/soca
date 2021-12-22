@@ -8,6 +8,8 @@
 #ifndef SOCA_OBSLOCALIZATION_OBSLOCROSSBY_H_
 #define SOCA_OBSLOCALIZATION_OBSLOCROSSBY_H_
 
+#include <algorithm>
+
 #include "ioda/ObsSpace.h"
 #include "ioda/ObsVector.h"
 
