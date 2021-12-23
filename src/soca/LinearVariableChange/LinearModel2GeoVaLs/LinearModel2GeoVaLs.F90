@@ -54,7 +54,6 @@ subroutine soca_model2geovals_linear_changevar_f90(c_key_geom, c_key_dxin, c_key
       dxout%fields(i)%val(:,:,1) = field%val(:,:,1) !< surface only of a 3D field
 
     else
-      call backtrace
       call abor1_ftn( 'error in soca_model2geovals_linear_changevar_f90 processing ' &
                        // dxout%fields(i)%name )
     endif
@@ -92,7 +91,6 @@ subroutine soca_model2geovals_linear_changevarAD_f90(c_key_geom, c_key_dxin, c_k
     elseif(field%metadata%getval_name_surface == dxin%fields(i)%name) then
       field%val(:,:,1) = field%val(:,:,1) + dxin%fields(i)%val(:,:,1) !< surface only
     else
-      call backtrace
       call abor1_ftn( 'error in soca_model2geovals_linear_changevarAD_f90 processing ' &
                        // dxin%fields(i)%name )
     end if
