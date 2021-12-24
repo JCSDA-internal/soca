@@ -9,18 +9,11 @@
 #define SOCA_OBSLOCALIZATION_OBSLOCROSSBY_H_
 
 #include <algorithm>
-#include <vector>
-
-#include "eckit/config/Configuration.h"
 
 #include "ioda/ObsSpace.h"
 #include "ioda/ObsVector.h"
 
-#include "oops/generic/gc99.h"
-
 #include "ufo/obslocalization/ObsHorLocGC99.h"
-#include "ufo/obslocalization/ObsHorLocParameters.h"
-
 #include "soca/ObsLocalization/ObsLocRossbyParameters.h"
 
 // -----------------------------------------------------------------------------
@@ -33,7 +26,9 @@ class ObsLocRossby: public ufo::ObsHorLocGC99<MODEL> {
   typedef typename ufo::ObsHorLocalization<MODEL>::LocalObs LocalObs_;
 
  public:
-  ObsLocRossby(const eckit::Configuration &, const ioda::ObsSpace &);
+  typedef ObsLocRossbyParameters Parameters_;
+
+  ObsLocRossby(const Parameters_ &, const ioda::ObsSpace &);
 
   /// Compute Rossby radius based localization and update localization values
   /// in \p locvector. Missing values indicate that observation is outside of
@@ -50,10 +45,10 @@ class ObsLocRossby: public ufo::ObsHorLocGC99<MODEL> {
 
 template<typename MODEL>
 ObsLocRossby<MODEL>::ObsLocRossby(
-      const eckit::Configuration& config,
+      const Parameters_ & options,
       const ioda::ObsSpace & obsspace):
-    ufo::ObsHorLocGC99<MODEL>::ObsHorLocGC99(config, obsspace) {
-  options_.deserialize(config);
+    ufo::ObsHorLocGC99<MODEL>::ObsHorLocGC99(options, obsspace),
+    options_(options) {
 }
 
 // -----------------------------------------------------------------------------
