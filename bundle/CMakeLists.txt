@@ -54,7 +54,7 @@ ecbuild_bundle( PROJECT saber           GIT "https://github.com/jcsda-internal/s
 ecbuild_bundle( PROJECT ioda            GIT "https://github.com/jcsda-internal/ioda.git"            UPDATE BRANCH develop )
 ecbuild_bundle( PROJECT gsw             GIT "https://github.com/jcsda-internal/GSW-Fortran.git"     UPDATE BRANCH develop )
 ecbuild_bundle( PROJECT ufo             GIT "https://github.com/jcsda-internal/ufo.git"             UPDATE BRANCH develop )
-ecbuild_bundle( PROJECT mom6            GIT "https://github.com/jcsda-internal/MOM6.git"            UPDATE BRANCH feature/main-ecbuild-candidate-20220111 RECURSIVE )
+ecbuild_bundle( PROJECT mom6            GIT "https://github.com/jcsda-internal/MOM6.git"            UPDATE BRANCH main-ecbuild RECURSIVE )
 ecbuild_bundle( PROJECT soca            SOURCE "../" )
 
 ecbuild_bundle_finalize()
