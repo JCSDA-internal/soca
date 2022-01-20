@@ -5,11 +5,11 @@ Test     :    tocn   min=   -1.888390   max=   31.700465   mean=    6.017565
 Test     :    hocn   min=    0.001000   max= 1345.640000   mean=  128.628064
 Test     : analysis: 
 Test     :   Valid time: 2018-04-15T00:00:00Z
-Test     :    socn   min=   10.721046   max=   40.441659   mean=   34.544456
-Test     :    tocn   min=   -1.888390   max=   31.700465   mean=    6.019597
+Test     :    socn   min=   10.721046   max=   40.441659   mean=   34.544457
+Test     :    tocn   min=   -1.888390   max=   31.700465   mean=    6.019649
 Test     :    hocn   min=    0.001000   max= 1345.640000   mean=  128.628064
 Test     : output background: 
 Test     :   Valid time: 2018-04-15T00:00:00Z
-Test     :    socn   min=   10.721046   max=   38.000000   mean=   34.539837
-Test     :    tocn   min=   -1.800000   max=   31.700465   mean=    6.019733
+Test     :    socn   min=   10.721046   max=   38.000000   mean=   34.539838
+Test     :    tocn   min=   -1.800000   max=   31.700465   mean=    6.019785
 Test     :    hocn   min=    0.001000   max= 1345.640000   mean=  128.628064

@@ -13,7 +13,6 @@ use fckit_log_module, only: fckit_log
 use kinds, only: kind_real
 use oops_variables_mod, only: oops_variables
 use random_mod, only: normal_distribution
-use tools_func, only: gau2gc
 use type_bump, only: bump_type
 
 ! soca modules
@@ -269,7 +268,7 @@ subroutine soca_bump_correlation(self, horiz_convol, geom, f_conf_bump, f_conf_d
   ! Grid setup
   f_grid = fckit_configuration()
   call f_grid%set('prefix', domain)
-  call f_grid%set('nl', 1)
+  call f_grid%set('nl0', 1)
   call f_grid%set('nv', 1)
   call f_grid%set('variables', ['var'])
 
@@ -330,8 +329,8 @@ subroutine soca_bump_correlation(self, horiz_convol, geom, f_conf_bump, f_conf_d
     end if
     real_ptr_1 = min(r_max, real_ptr_1)
     real_ptr_1 = max(r_min, real_ptr_1)
-    real_ptr_1 = real_ptr_1 * gau2gc ! convert from gaussian sigma to
-                                     ! Gaspari-Cohn half width
+    real_ptr_1 = real_ptr_1 * 3.57_kind_real ! convert from gaussian sigma to
+                                             ! Gaspari-Cohn half width
     call afield%final()
 
      ! rv
