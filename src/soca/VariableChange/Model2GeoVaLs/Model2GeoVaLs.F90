@@ -61,8 +61,8 @@ subroutine soca_model2geovals_changevar_f90(c_key_geom, c_key_xin, c_key_xout) &
       ! TODO, why is the halo left to 0 for RR ??
       xout%fields(i)%val(geom%isc:geom%iec, geom%jsc:geom%jec, 1) = &
           geom%mask2d(geom%isc:geom%iec, geom%jsc:geom%jec) * &
-          sqrt(geom%cell_area(geom%isc:geom%iec, geom%jsc:geom%jec) / &
-               geom%rossby_radius(geom%isc:geom%iec, geom%jsc:geom%jec))
+          sqrt(geom%cell_area(geom%isc:geom%iec, geom%jsc:geom%jec)) / &
+               geom%rossby_radius(geom%isc:geom%iec, geom%jsc:geom%jec)
 
     ! special derived state variables
     case ('surface_temperature_where_sea')
