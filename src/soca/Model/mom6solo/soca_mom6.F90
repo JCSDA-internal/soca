@@ -198,8 +198,8 @@ subroutine soca_mom6_init(mom6_config, partial_init)
       Time_in=Time_in)
 
   ! adiabatic
-  mom6_config%MOM_CSp%adiabatic = .true.
-
+! mom6_config%MOM_CSp%adiabatic = .true.
+! MPchange--commented above line out for linking
   !US => mom6_config%scaling
   ! Continue initialization
   call get_MOM_state_elements(mom6_config%MOM_CSp,&

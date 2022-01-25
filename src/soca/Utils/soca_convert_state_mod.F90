@@ -16,7 +16,7 @@ use horiz_interp_mod, only : horiz_interp_new, horiz_interp, horiz_interp_type
 use MOM_domains, only : pass_var, root_PE, sum_across_pes
 use MOM_error_handler, only : is_root_pe
 use MOM_grid, only : ocean_grid_type
-use MOM_horizontal_regridding, only : meshgrid, fill_miss_2d
+!MPchange use MOM_horizontal_regridding, only : meshgrid, fill_miss_2d
 use MOM_remapping, only : remapping_CS, initialize_remapping, remapping_core_h
 use mpp_domains_mod, only  : mpp_global_field, mpp_update_domains
 use mpp_mod, only     : mpp_broadcast, mpp_sync, mpp_sync_self
@@ -394,7 +394,7 @@ subroutine soca_hinterp(self,field2,gdata,mask2,nz,missing,lon_in,lat_in,lon_out
 
   allocate(lon_inp(isg:ieg,jsg:jeg1))
   allocate(lat_inp(isg:ieg,jsg:jeg1))
-  call meshgrid(lonh,lath,lon_inp,lat_inp)
+!MPchange call meshgrid(lonh,lath,lon_inp,lat_inp)
 
   allocate(mask_in_(isg:ieg,jsg:jeg1))
   allocate(tr_inp(isg:ieg,jsg:jeg1)) ; allocate(last_row(isg:ieg))
@@ -475,7 +475,8 @@ subroutine soca_hinterp(self,field2,gdata,mask2,nz,missing,lon_in,lat_in,lon_out
     end if
 
     if (k==1) prev(:,:) = tr_out(:,:)
-    call fill_miss_2d(tr_out, good, fill, prev=prev, G=grid, smooth=.true.)
+!MPchange    call fill_miss_2d(tr_out, good, fill, prev=prev, G=grid, smooth=.true.)
+!MPchange    call fill_miss_2d(tr_out, good, fill, G=grid, smooth=.true.)
 
     !TODO: In case fill_miss_2d failed at surface (k=1), use IDW to fill data pt that is located in ocean mask
     !Problem: IDW is compiler-dependent

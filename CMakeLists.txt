@@ -30,10 +30,11 @@ find_package( oops   1.0.0    REQUIRED)
 find_package( saber  1.0.0    REQUIRED)
 find_package( ioda   1.0.0    REQUIRED)
 find_package( ufo    1.0.0    REQUIRED)
-find_package( fms    2020.4.0 REQUIRED)
-find_package( mom6   2020.4.0 REQUIRED)
+#find_package( fms    2020.4.0 REQUIRED)
+#find_package( mom6   2020.4.0 REQUIRED)
 find_package( crtm   2.2.3)
-include_directories( ${NETCDF_INCLUDE_DIRS} )
+include_directories( ${NETCDF_INCLUDE_DIRS} ${DEPEND_LIB_ROOT}/include_r8 ${DEPEND_LIB_ROOT}/MOM6/mod  )
+include_directories( ${DEPEND_LIB_ROOT}/../ufs-weather-model/src/ufs-weather-model-build/MOM6-interface/mod_solo)
 
 
 ################################################################################
