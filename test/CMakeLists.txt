@@ -141,6 +141,8 @@ set( soca_model_restarts
   Data/72x35x25/INPUT/wav.res.nc
   Data/72x35x25/INPUT/ocean_hgrid.nc
   Data/72x35x25/INPUT/ocean_topog.nc
+  Data/72x35x25/INPUT/ocean_mosaic.nc
+  Data/72x35x25/INPUT/grid_spec.nc
 )
 
 set( soca_obs

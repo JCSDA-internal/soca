@@ -10,7 +10,7 @@ use mpp_mod,    only : mpp_init
 use fms_io_mod, only : fms_io_init, fms_io_exit
 use fms_mod,    only : read_data, write_data, fms_init, fms_end
 use time_interp_external_mod, only : time_interp_external_init
-use time_manager_mod,         only: time_type
+use time_manager_mod,         only: time_type, print_time
 
 use kinds, only: kind_real
 
@@ -184,14 +184,21 @@ subroutine soca_mom6_init(mom6_config, partial_init)
   ! Initialize mom6
   Time_in = mom6_config%Time
 
+  allocate(mom6_config%MOM_CSp)
+
   call initialize_MOM(mom6_config%Time, &
       Start_time, &
       param_file, &
       mom6_config%dirs, &
       mom6_config%MOM_CSp, &
       mom6_config%restart_CSp, &
-      offline_tracer_mode=offline_tracer_mode, diag_ptr=diag, &
-      tracer_flow_CSp=tracer_flow_CSp, Time_in=Time_in)
+      offline_tracer_mode=offline_tracer_mode, &
+      diag_ptr=diag, &
+      tracer_flow_CSp=tracer_flow_CSp, &
+      Time_in=Time_in)
+
+  ! adiabatic
+  mom6_config%MOM_CSp%adiabatic = .true.
 
   !US => mom6_config%scaling
   ! Continue initialization
@@ -255,6 +262,7 @@ subroutine soca_mom6_end(mom6_config)
 
   ! Finalize mom6
   call MOM_end(mom6_config%MOM_CSp)
+  deallocate(mom6_config%MOM_CSp)
 
 end subroutine soca_mom6_end
 
