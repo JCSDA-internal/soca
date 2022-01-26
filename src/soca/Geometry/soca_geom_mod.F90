@@ -396,8 +396,7 @@ subroutine soca_geom_gridgen(self)
   self%mask2du = mom6_config%grid%mask2dCu
   self%mask2dv = mom6_config%grid%mask2dCv
   self%cell_area  = mom6_config%grid%areaT
-! self%h = mom6_config%MOM_CSp%h
-!MPchange commented out above line
+  self%h = mom6_config%MOM_CSp%h
 
   ! Setup intermediate zstar coordinate
   allocate(tracer(self%isd:self%ied, self%jsd:self%jed, self%nzo))
