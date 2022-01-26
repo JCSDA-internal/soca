@@ -317,7 +317,7 @@ function(soca_add_test)
     ecbuild_add_test( TARGET  test_soca_${ARG_NAME}
                       SOURCES executables/${ARG_SRC}
                       ARGS    ${CONFIG_FILE}
-                      LIBS    soca
+                      LIBS    soca stochastic_physics esmf
                       MPI     ${MPI}
                       ENVIRONMENT ${TRAPFPE_ENV}
                       TEST_DEPENDS ${ARG_TEST_DEPENDS})
@@ -659,16 +659,19 @@ soca_add_test( NAME dirac_soca_nomask
 # h(x) executables
 soca_add_test( NAME hofx_3d
                EXE  soca_hofx3d.x
-               TEST_DEPENDS test_soca_gridgen )
+               TEST_DEPENDS test_soca_gridgen 
+               LIBS stochastic_physics esmf)
 
 soca_add_test( NAME hofx_4d
                EXE  soca_hofx.x
                NOTRAPFPE
-               TEST_DEPENDS test_soca_gridgen )
+               TEST_DEPENDS test_soca_gridgen 
+               LIBS stochastic_physics esmf)
 
 soca_add_test( NAME hofx_4d_pseudo
                EXE  soca_hofx.x
-               TEST_DEPENDS test_soca_forecast_mom6 )
+               TEST_DEPENDS test_soca_forecast_mom6 
+               LIBS stochastic_physics esmf)
 
 # TODO enshofx currently breaks compare.py
 # Re-enable the comparison once that's fixed
@@ -677,7 +680,8 @@ soca_add_test( NAME enshofx
                MPI 3
                NOCOMPARE
                NOTRAPFPE
-               TEST_DEPENDS test_soca_enspert )
+               TEST_DEPENDS test_soca_enspert 
+               LIBS stochastic_physics esmf)
 
 
 # variational methods
@@ -685,59 +689,69 @@ soca_add_test( NAME 3dvar_soca
                EXE  soca_var.x
                TOL  4e-9 0
                NOTRAPFPE
-               TEST_DEPENDS test_soca_static_socaerror_init )
+               TEST_DEPENDS test_soca_static_socaerror_init 
+               LIBS stochastic_physics esmf)
 
 soca_add_test( NAME 3dvarbump
                EXE  soca_var.x
                TOL  4e-9 0
                NOTRAPFPE
-               TEST_DEPENDS test_soca_parameters_bump_cor_nicas )
+               TEST_DEPENDS test_soca_parameters_bump_cor_nicas 
+               LIBS stochastic_physics esmf)
 
 soca_add_test( NAME 3dvar_godas
                EXE  soca_var.x
                TOL  2e-6 0
-               TEST_DEPENDS test_soca_static_socaerror_init )
+               TEST_DEPENDS test_soca_static_socaerror_init 
+               LIBS stochastic_physics esmf)
 
 # TODO: Remove NOCOMPARE when oops PR#585 is merged
 soca_add_test( NAME addincrement
                EXE  soca_addincrement.x
                NOCOMPARE
-               TEST_DEPENDS 3dvar_godas )
+               TEST_DEPENDS 3dvar_godas 
+               LIBS stochastic_physics esmf)
 
 soca_add_test( NAME 3dvarlowres_soca
                EXE  soca_var.x
                TOL  0.1 0
                NOTRAPFPE
-               TEST_DEPENDS test_soca_static_socaerrorsmall_init )
+               TEST_DEPENDS test_soca_static_socaerrorsmall_init 
+               LIBS stochastic_physics esmf)
 
 soca_add_test( NAME diffstates
                EXE  soca_diffstates.x
-               TEST_DEPENDS test_soca_gridgen )
+               TEST_DEPENDS test_soca_gridgen 
+               LIBS stochastic_physics esmf)
 
 soca_add_test( NAME 3dvarfgat
                EXE  soca_var.x
                TOL  1e-6 0
                NOTRAPFPE
-               TEST_DEPENDS test_soca_static_socaerror_init )
+               TEST_DEPENDS test_soca_static_socaerror_init 
+               LIBS stochastic_physics esmf)
 
 soca_add_test( NAME 3dvarfgat_pseudo
                EXE  soca_var.x
                TOL  1e-6 0
                NOTRAPFPE
-               TEST_DEPENDS test_soca_static_socaerror_init )
+               TEST_DEPENDS test_soca_static_socaerror_init 
+               LIBS stochastic_physics esmf)
 
 soca_add_test( NAME 3dhyb
                EXE  soca_var.x
                TOL  2e-7 0
                NOTRAPFPE
                TEST_DEPENDS test_soca_static_socaerror_init
-                            test_soca_parameters_bump_loc )
+                            test_soca_parameters_bump_loc 
+               LIBS stochastic_physics esmf)
 
 soca_add_test( NAME 3dhybfgat
                EXE  soca_var.x
                NOTRAPFPE
                TEST_DEPENDS test_soca_static_socaerror_init
-                            test_soca_parameters_bump_loc )
+                            test_soca_parameters_bump_loc 
+               LIBS stochastic_physics esmf)
 
 # soca_add_test( NAME 4dhyb
 #                EXE  soca_var.x
@@ -747,20 +761,24 @@ soca_add_test( NAME 3dhybfgat
 soca_add_test( NAME letkf_observer
                EXE  soca_letkf.x
                NOTRAPFPE
-               TEST_DEPENDS test_soca_enspert )
+               TEST_DEPENDS test_soca_enspert 
+               LIBS stochastic_physics esmf)
 
 ecbuild_add_test( TARGET letkf_observer_post
                   TYPE SCRIPT
                   COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/letkf_obscat.sh
-                  TEST_DEPENDS letkf_observer)
+                  TEST_DEPENDS letkf_observer
+               LIBS stochastic_physics esmf)
 
 soca_add_test( NAME letkf_solver
                EXE  soca_letkf.x
                NOTRAPFPE
-               TEST_DEPENDS letkf_observer_post )
+               TEST_DEPENDS letkf_observer_post 
+               LIBS stochastic_physics esmf)
 
 # restart checkpointing
 soca_add_test( NAME checkpointmodel
                EXE  soca_checkpoint_model.x
                NOTRAPFPE
-               TEST_DEPENDS test_soca_3dvar_godas)
+               TEST_DEPENDS test_soca_3dvar_godas
+               LIBS stochastic_physics esmf)
