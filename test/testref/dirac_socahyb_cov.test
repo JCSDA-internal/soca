@@ -10,21 +10,21 @@ Test     :     mld   min=    0.000000   max=    0.000000   mean=    0.000000
 Test     : layer_depth   min=    0.000000   max=    0.000000   mean=    0.000000
 Test     : Covariance(hybrid) * Increment:
 Test     :   Valid time: 2018-04-15T00:00:00Z
-Test     :   cicen   min=   -0.001893   max=    0.000000   mean=   -0.000030
+Test     :   cicen   min=   -0.001779   max=    0.000000   mean=   -0.000010
 Test     :   hicen   min=    0.000000   max=   50.103093   mean=    0.405557
-Test     :    socn   min=   -0.219024   max=    0.030206   mean=   -0.000866
-Test     :    tocn   min=   -0.056974   max=    3.054580   mean=    0.028377
-Test     :     ssh   min=   -0.004870   max=    0.052044   mean=    0.001315
+Test     :    socn   min=   -0.219024   max=    0.030206   mean=   -0.000869
+Test     :    tocn   min=   -0.056974   max=    2.860168   mean=    0.011124
+Test     :     ssh   min=   -0.005017   max=    0.052044   mean=    0.000651
 Test     :    hocn   min=    0.000000   max=    0.000000   mean=    0.000000
 Test     :     mld   min=    0.000000   max=    0.000000   mean=    0.000000
 Test     : layer_depth   min=    0.000000   max=    0.000000   mean=    0.000000
 Test     : Covariance(hybrid1_SocaError) * Increment:
 Test     :   Valid time: 2018-04-15T00:00:00Z
-Test     :   cicen   min=   -0.003786   max=    0.000000   mean=   -0.000060
+Test     :   cicen   min=   -0.003559   max=    0.000000   mean=   -0.000020
 Test     :   hicen   min=    0.000000   max=  100.000000   mean=    0.810989
-Test     :    socn   min=   -0.029517   max=    0.037575   mean=    0.000004
-Test     :    tocn   min=    0.000000   max=    5.684910   mean=    0.054002
-Test     :     ssh   min=    0.000000   max=    0.057670   mean=    0.002056
+Test     :    socn   min=   -0.021496   max=    0.012278   mean=   -0.000001
+Test     :    tocn   min=    0.000000   max=    5.268716   mean=    0.019497
+Test     :     ssh   min=    0.000000   max=    0.056011   mean=    0.000728
 Test     :    hocn   min=    0.000000   max=    0.000000   mean=    0.000000
 Test     :     mld   min=    0.000000   max=    0.000000   mean=    0.000000
 Test     : layer_depth   min=    0.000000   max=    0.000000   mean=    0.000000
