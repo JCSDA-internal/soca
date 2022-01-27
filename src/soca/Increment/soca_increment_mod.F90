@@ -71,6 +71,16 @@ contains
 
   !> \}
 
+  !> \name background error decorrelation length scales
+  !! \{
+
+  !> \copybrief soca_horiz_scales \see soca_horiz_scales
+  procedure :: horiz_scales       => soca_horiz_scales
+
+  !> \copybrief soca_vert_scales \see soca_vert_scales
+  procedure :: vert_scales       => soca_vert_scales
+
+  !> \}
 
   !> \copybrief soca_increment_change_resol \see soca_increment_change_resol
   procedure :: convert     => soca_increment_change_resol
@@ -513,6 +523,43 @@ subroutine soca_increment_change_resol(self, rhs)
   call convert_state%clean()
 end subroutine soca_increment_change_resol
 
+
+! ------------------------------------------------------------------------------
+!> compute the horizontal decorelation length scales
+!!
+!! \relates soca_increment_mod::soca_increment
+subroutine soca_horiz_scales(self, r_mult, r_min_grid)
+  class(soca_increment), intent(inout) :: self
+  real(kind=kind_real),  intent(in)    :: r_mult, r_min_grid
+
+  integer :: i, jz
+
+  ! compute scales
+  do i=1,size(self%fields)
+    do jz=1,self%fields(i)%nz
+      self%fields(i)%val(:,:,jz) = self%geom%mask2d(:,:)* &
+           max(r_mult*self%geom%rossby_radius(:,:), &
+               r_min_grid*sqrt(self%geom%cell_area(:,:)))
+    end do
+  end do
+end subroutine soca_horiz_scales
+
+
+! ------------------------------------------------------------------------------
+!> compute the vertical decorelation length scales
+!!
+!! \relates soca_increment_mod::soca_increment
+subroutine soca_vert_scales(self, vert)
+  class(soca_increment), intent(inout) :: self
+  real(kind=kind_real),  intent(in)    :: vert
+
+  integer :: i
+
+  ! compute scales
+  do i=1,size(self%fields)
+    self%fields(i)%val = vert
+  end do
+end subroutine soca_vert_scales
 ! ------------------------------------------------------------------------------
 
 end module soca_increment_mod

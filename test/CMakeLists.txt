@@ -49,10 +49,12 @@ set( soca_test_input
   testinput/model_ufsm6c6.yml
   testinput/obslocalization.yml
   testinput/parameters_bump_cor_nicas.yml
+  testinput/parameters_bump_cor_nicas_scales.yml
   testinput/parameters_bump_cov_lct.yml
   testinput/parameters_bump_cov_nicas.yml
   testinput/parameters_bump_loc.yml
   testinput/sqrtvertloc.yml
+  testinput/setcorscales.yml
   testinput/state.yml
   testinput/static_socaerror_init.yml
   testinput/static_socaerrorlowres_init.yml
@@ -103,7 +105,9 @@ set( soca_test_ref
   testref/letkf_solver.test
   testref/makeobs.test
   testref/parameters_bump_cor_nicas.test
+  testref/parameters_bump_cor_nicas_scales.test
   testref/parameters_bump_cov_lct.test
+  testref/setcorscales.test
   testref/sqrtvertloc.test
 )
 
@@ -623,11 +627,21 @@ soca_add_test( NAME hybridgain
 # soca_add_test( NAME dirac_bump_cov
 #                EXE  soca_dirac.x )
 
+soca_add_test( NAME setcorscales
+               EXE  soca_setcorscales.x
+               NOTRAPFPE
+               TEST_DEPENDS test_soca_gridgen)
+
 soca_add_test( NAME parameters_bump_cor_nicas
                NOTRAPFPE
                EXE  soca_error_covariance_training.x
                TEST_DEPENDS test_soca_gridgen_small
                             test_soca_convertstate)
+
+soca_add_test( NAME parameters_bump_cor_nicas_scales
+               NOTRAPFPE
+               EXE  soca_error_covariance_training.x
+               TEST_DEPENDS test_soca_setcorscales)
 
 
 # Dirac tests

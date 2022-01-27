@@ -293,7 +293,19 @@ namespace soca {
 
   void Increment::updateTime(const util::Duration & dt) {time_ += dt;}
 
+  // -----------------------------------------------------------------------------
 
+  void Increment::horiz_scales(const double & r_mult, const double & r_min_grid) {
+    soca_increment_horiz_scales_f90(toFortran(), r_mult, r_min_grid);
+    Log::trace() << "Horizontal decorrelation length scales computed." << std::endl;
+  }
+
+  // -----------------------------------------------------------------------------
+
+  void Increment::vert_scales(const double & vert) {
+    soca_increment_vert_scales_f90(toFortran(), vert);
+    Log::trace() << "Vertical decorrelation length scales computed." << std::endl;
+  }
 
   // -----------------------------------------------------------------------------
 
@@ -357,6 +369,5 @@ namespace soca {
   std::shared_ptr<const Geometry> Increment::geometry() const {
     return geom_;
   }
-  // -----------------------------------------------------------------------------
 
 }  // namespace soca
