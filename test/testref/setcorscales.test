@@ -1,12 +1,12 @@
 Test     : Output horizontal scales: 
 Test     :   Valid time: 2018-04-15T00:00:00Z
-Test     :    socn   min= 4061.716715   max=259469.000000   mean=50560.114845
-Test     :    tocn   min= 4061.716715   max=259469.000000   mean=50560.114845
-Test     :     ssh   min= 4061.716715   max=259469.000000   mean=50560.114845
-Test     :    hocn   min= 4061.716715   max=259469.000000   mean=50560.114845
+Test     :    socn   min=2067165.810379   max=37066999.999942   mean=8428765.915765
+Test     :    tocn   min=2067165.810379   max=37066999.999942   mean=8428765.915765
+Test     :     ssh   min=2067165.810379   max=37066999.999942   mean=8428765.915765
+Test     :    hocn   min=2067165.810379   max=37066999.999942   mean=8428765.915765
 Test     : Output vertical scales: 
 Test     :   Valid time: 2018-04-15T00:00:00Z
-Test     :    socn   min=   10.000000   max=   10.000000   mean=   10.000000
-Test     :    tocn   min=   10.000000   max=   10.000000   mean=   10.000000
-Test     :     ssh   min=   10.000000   max=   10.000000   mean=   10.000000
-Test     :    hocn   min=   10.000000   max=   10.000000   mean=   10.000000
+Test     :    socn   min=  357.142857   max=  357.142857   mean=  357.142857
+Test     :    tocn   min=  357.142857   max=  357.142857   mean=  357.142857
+Test     :     ssh   min=  357.142857   max=  357.142857   mean=  357.142857
+Test     :    hocn   min=  357.142857   max=  357.142857   mean=  357.142857

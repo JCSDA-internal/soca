@@ -11,6 +11,7 @@ use fckit_configuration_module, only: fckit_configuration
 use kinds, only: kind_real
 use oops_variables_mod, only: oops_variables
 use random_mod, only: normal_distribution
+use tools_func, only: gau2gc
 
 ! soca modules
 use soca_convert_state_mod, only : soca_convertstate_type
@@ -537,7 +538,7 @@ subroutine soca_horiz_scales(self, r_mult, r_min_grid)
   ! compute scales
   do i=1,size(self%fields)
     do jz=1,self%fields(i)%nz
-      self%fields(i)%val(:,:,jz) = self%geom%mask2d(:,:)* &
+      self%fields(i)%val(:,:,jz) = gau2gc*self%geom%mask2d(:,:)* &
            max(r_mult*self%geom%rossby_radius(:,:), &
                r_min_grid*sqrt(self%geom%cell_area(:,:)))
     end do
@@ -557,7 +558,7 @@ subroutine soca_vert_scales(self, vert)
 
   ! compute scales
   do i=1,size(self%fields)
-    self%fields(i)%val = vert
+    self%fields(i)%val = gau2gc*vert
   end do
 end subroutine soca_vert_scales
 ! ------------------------------------------------------------------------------

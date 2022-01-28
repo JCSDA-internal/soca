@@ -18,6 +18,7 @@ set( soca_test_input
   testinput/dirac_soca_mask.yml
   testinput/dirac_soca_nomask.yml
   testinput/dirac_socahyb_cov.yml
+  testinput/dirac_soca_cor_nicas_scales.yml
   testinput/enshofx_1.yml
   testinput/enshofx_2.yml
   testinput/enshofx_3.yml
@@ -89,6 +90,7 @@ set( soca_test_ref
   testref/dirac_soca_mask.test
   testref/dirac_soca_nomask.test
   testref/dirac_socahyb_cov.test
+  testref/dirac_soca_cor_nicas_scales.test
   testref/enshofx.test
   testref/enspert.test
   testref/ensrecenter.test
@@ -225,6 +227,7 @@ endforeach(FILENAME)
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bump)
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bump_lowres)
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bump-kmask)
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bump_scales)
 
 # find compare.py provided by oops
 find_file(COMPARE_BIN oops_compare.py HINTS ${oops_BINDIR})
@@ -645,6 +648,10 @@ soca_add_test( NAME parameters_bump_cor_nicas_scales
 
 
 # Dirac tests
+
+soca_add_test( NAME dirac_soca_cor_nicas_scales
+               EXE  soca_dirac.x
+               TEST_DEPENDS parameters_bump_cor_nicas_scales)
 
 soca_add_test( NAME dirac_soca_cov
                EXE  soca_dirac.x
