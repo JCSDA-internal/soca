@@ -18,38 +18,38 @@ Test     :      lw   min=    0.000000   max=    0.000000   mean=    0.000000
 Test     :      us   min=    0.000000   max=    0.000000   mean=    0.000000
 Test     :     mld   min=    2.285472   max= 4593.153342   mean=  192.410907
 Test     : layer_depth   min=    2.285472   max= 5658.305747   mean= 1200.522954
-Test     : Variance Explained=0.198093
-Test     : 0.351097
-Test     : 0.427958
-Test     : 0.493121
-Test     : 0.550151
-Test     : 0.600930
-Test     : 0.646417
-Test     : 0.687399
-Test     : 0.724230
-Test     : 0.757391
-Test     : 0.787179
-Test     : 0.814017
-Test     : 0.838088
-Test     : 0.859638
-Test     : 0.878844
-Test     : 0.895902
-Test     : 0.911039
+Test     : Variance Explained=0.198081
+Test     : 0.351083
+Test     : 0.427937
+Test     : 0.493102
+Test     : 0.550133
+Test     : 0.600910
+Test     : 0.646393
+Test     : 0.687376
+Test     : 0.724210
+Test     : 0.757376
+Test     : 0.787169
+Test     : 0.814010
+Test     : 0.838082
+Test     : 0.859633
+Test     : 0.878841
+Test     : 0.895901
+Test     : 0.911038
 Test     : 0.924436
 Test     : 0.936224
-Test     : 0.946569
-Test     : 0.955567
-Test     : 0.963370
-Test     : 0.970053
-Test     : 0.975784
+Test     : 0.946571
+Test     : 0.955569
+Test     : 0.963371
+Test     : 0.970055
+Test     : 0.975785
 Test     : 0.980641
-Test     : 0.984734
-Test     : 0.988134
-Test     : 0.990953
-Test     : 0.993233
-Test     : 0.995068
-Test     : 0.996506
-Test     : 0.997604
+Test     : 0.984733
+Test     : 0.988133
+Test     : 0.990954
+Test     : 0.993234
+Test     : 0.995069
+Test     : 0.996507
+Test     : 0.997603
 Test     : 0.998431
 Test     : 0.999034
 Test     : 0.999450
@@ -59,9 +59,9 @@ Test     : 0.999968
 Test     : 1.000000
 Test     : 1.000000
 Test     : Number of retained columns=9
-Test     : Retained fraction of the variance=0.724230
+Test     : Retained fraction of the variance=0.724210
 Test     : Variance for truncated correlation matrix
 Test     :   Valid time: 2018-04-15T00:00:00Z
-Test     :     ssh   min=    0.000000   max=    0.999655   mean=    0.871365
-Test     :    tocn   min=    0.000000   max=    0.999849   mean=    0.591271
-Test     :    socn   min=    0.000000   max=    0.999654   mean=    0.594060
+Test     :     ssh   min=    0.000000   max=    0.999655   mean=    0.871259
+Test     :    tocn   min=    0.000000   max=    0.999844   mean=    0.591245
+Test     :    socn   min=    0.000000   max=    0.999653   mean=    0.594059
