@@ -64,8 +64,9 @@ namespace soca {
       void gridgen() const;
       const eckit::mpi::Comm & getComm() const {return comm_;}
 
-      atlas::FunctionSpace * atlasFunctionSpace() const;
-      atlas::FieldSet * atlasFieldSet() const;
+      atlas::FunctionSpace * atlasFunctionSpace(const std::string & functionSpaceName,
+        const bool halo = false) const;
+      atlas::FieldSet * atlasFieldSet(const std::string & functionSpaceName) const;
 
    private:
       Geometry & operator=(const Geometry &);
@@ -74,6 +75,7 @@ namespace soca {
       const eckit::mpi::Comm & comm_;
       FmsInput fmsinput_;
       std::unique_ptr<atlas::functionspace::PointCloud> atlasFunctionSpace_;
+      std::unique_ptr<atlas::functionspace::PointCloud> atlasFunctionSpaceHalo_;
       std::unique_ptr<atlas::FieldSet> atlasFieldSet_;
   };
   // -----------------------------------------------------------------------------

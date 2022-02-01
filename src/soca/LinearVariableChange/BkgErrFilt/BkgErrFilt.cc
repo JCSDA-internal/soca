@@ -14,10 +14,10 @@
 
 #include "soca/Geometry/Geometry.h"
 #include "soca/Increment/Increment.h"
-#include "soca/State/State.h"
-#include "soca/Traits.h"
 #include "soca/LinearVariableChange/BkgErrFilt/BkgErrFilt.h"
 #include "soca/LinearVariableChange/BkgErrFilt/BkgErrFiltFortran.h"
+#include "soca/State/State.h"
+#include "soca/Traits.h"
 
 using oops::Log;
 

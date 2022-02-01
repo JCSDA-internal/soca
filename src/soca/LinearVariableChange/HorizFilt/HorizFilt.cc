@@ -15,11 +15,10 @@
 
 #include "soca/Geometry/Geometry.h"
 #include "soca/Increment/Increment.h"
-#include "soca/State/State.h"
-#include "soca/Traits.h"
 #include "soca/LinearVariableChange/HorizFilt/HorizFilt.h"
 #include "soca/LinearVariableChange/HorizFilt/HorizFiltFortran.h"
-
+#include "soca/State/State.h"
+#include "soca/Traits.h"
 
 namespace soca {
 

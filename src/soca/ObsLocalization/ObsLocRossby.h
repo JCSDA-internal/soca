@@ -13,8 +13,8 @@
 #include "ioda/ObsSpace.h"
 #include "ioda/ObsVector.h"
 
-#include "ufo/obslocalization/ObsHorLocGC99.h"
 #include "soca/ObsLocalization/ObsLocRossbyParameters.h"
+#include "ufo/obslocalization/ObsHorLocGC99.h"
 
 // -----------------------------------------------------------------------------
 

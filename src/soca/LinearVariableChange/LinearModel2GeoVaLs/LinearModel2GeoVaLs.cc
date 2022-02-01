@@ -12,10 +12,10 @@
 
 #include "soca/Geometry/Geometry.h"
 #include "soca/Increment/Increment.h"
-#include "soca/State/State.h"
-#include "soca/Traits.h"
 #include "soca/LinearVariableChange/LinearModel2GeoVaLs/LinearModel2GeoVaLs.h"
 #include "soca/LinearVariableChange/LinearModel2GeoVaLs/LinearModel2GeoVaLsFortran.h"
+#include "soca/State/State.h"
+#include "soca/Traits.h"
 
 namespace soca {
 

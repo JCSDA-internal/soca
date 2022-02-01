@@ -27,12 +27,15 @@ namespace soca {
     soca_geo_setup_f90(keyGeom_, &conf, &comm);
 
     // Set ATLAS lon/lat field
-    atlasFieldSet_.reset(new atlas::FieldSet());
-    soca_geo_set_atlas_lonlat_f90(keyGeom_, atlasFieldSet_->get());
-    atlas::Field atlasField = atlasFieldSet_->field("lonlat");
+    atlas::FieldSet atlasFieldSet;
+    soca_geo_set_atlas_lonlat_f90(keyGeom_, atlasFieldSet.get());
+    atlas::Field atlasField = atlasFieldSet.field("lonlat");
 
     // Create ATLAS function space
     atlasFunctionSpace_.reset(new atlas::functionspace::PointCloud(atlasField));
+//    atlasFunctionSpaceHalo_.reset(new atlas::functionspace::PointCloud(atlasField,
+//      atlas::option::halo(1))); TBD: no halo available for the PointCloud function space
+    atlasFunctionSpaceHalo_.reset(new atlas::functionspace::PointCloud(atlasField));
 
     // Set ATLAS function space pointer in Fortran
     soca_geo_set_atlas_functionspace_pointer_f90(keyGeom_,
@@ -50,6 +53,10 @@ namespace soca {
     soca_geo_clone_f90(keyGeom_, key_geo);
     atlasFunctionSpace_.reset(new atlas::functionspace::PointCloud(
                               other.atlasFunctionSpace_->lonlat()));
+//    atlasFunctionSpaceHalo_.reset(new atlas::functionspace::PointCloud(
+//                              other.atlasFunctionSpaceHalo_->lonlat(),atlas::option::halo(1)));
+    atlasFunctionSpaceHalo_.reset(new atlas::functionspace::PointCloud(
+                            other.atlasFunctionSpaceHalo_->lonlat()));
     soca_geo_set_atlas_functionspace_pointer_f90(keyGeom_,
       atlasFunctionSpace_->get());
     atlasFieldSet_.reset(new atlas::FieldSet());
@@ -102,11 +109,18 @@ namespace soca {
     // TODO(Travis): Implement this correctly.
   }
   // -----------------------------------------------------------------------------
-  atlas::FunctionSpace * Geometry::atlasFunctionSpace() const {
-    return atlasFunctionSpace_.get();
+  atlas::FunctionSpace * Geometry::atlasFunctionSpace(const std::string & functionSpaceName,
+    bool halo) const {
+    if (halo) {
+      // Return function space with halo
+      return atlasFunctionSpaceHalo_.get();
+    } else {
+      // Return function space without halo
+      return atlasFunctionSpace_.get();
+    }
   }
   // -----------------------------------------------------------------------------
-  atlas::FieldSet * Geometry::atlasFieldSet() const {
+  atlas::FieldSet * Geometry::atlasFieldSet(const std::string & functionSpaceName) const {
     return atlasFieldSet_.get();
   }
   // -----------------------------------------------------------------------------

@@ -14,11 +14,10 @@
 
 #include "soca/Geometry/Geometry.h"
 #include "soca/Increment/Increment.h"
-#include "soca/State/State.h"
-#include "soca/Traits.h"
 #include "soca/LinearVariableChange/VertConv/VertConv.h"
 #include "soca/LinearVariableChange/VertConv/VertConvFortran.h"
-
+#include "soca/State/State.h"
+#include "soca/Traits.h"
 
 using oops::Log;
 
