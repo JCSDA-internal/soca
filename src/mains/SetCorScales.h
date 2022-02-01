@@ -34,32 +34,26 @@ namespace soca {
     static const std::string classname() {return "soca::SetCorScales";}
 
     int execute(const eckit::Configuration & fullConfig) const {
-      //  Setup geometry
+      //  setup geometry
       const eckit::LocalConfiguration resolConfig(fullConfig, "resolution");
       const Geometry resol(resolConfig, this->getComm());
 
-      //  Get date
+      //  rh from date and variables
       const util::DateTime thedate(fullConfig.getString("date"));
-
-      //  Variables
       const oops::Variables vars(fullConfig, "corr variables");
-
-      //  Get correlation scaling parameters
-      const eckit::LocalConfiguration scalesConfig(fullConfig, "scales");
-      const double r_mult = scalesConfig.getDouble("rossby mult");
-      const double r_min_grid = scalesConfig.getDouble("min grid mult");
-      const double vert = scalesConfig.getDouble("vert layers");
-
-      //  Compute horizontal decorrelation length scales
-      const eckit::LocalConfiguration rhoutputConfig(fullConfig, "rh output");
       Increment rh(resol, vars, thedate);
-      rh.horiz_scales(r_mult, r_min_grid);
+
+      //  compute horizontal decorrelation length scales
+      const eckit::LocalConfiguration scalesConfig(fullConfig, "scales");
+      rh.horiz_scales(scalesConfig);
+      const eckit::LocalConfiguration rhoutputConfig(fullConfig, "rh output");
       rh.write(rhoutputConfig);
       oops::Log::test() << "Output horizontal scales: " << rh << std::endl;
 
-      //  Compute vertical decorrelation length scales
+      //  compute vertical decorrelation length scales
       const eckit::LocalConfiguration rvoutputConfig(fullConfig, "rv output");
       Increment rv(rh);
+      const double vert = scalesConfig.getDouble("vert layers");
       rv.vert_scales(vert);
       rv.write(rvoutputConfig);
       oops::Log::test() << "Output vertical scales: " << rv << std::endl;

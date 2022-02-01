@@ -7,9 +7,27 @@ date: 2018-04-15T00:00:00Z
 corr variables: [socn, tocn, ssh, hocn, cicen, hicen]
 
 scales:
-  rossby mult: 40.0
-  min grid mult: 3.0
-  vert layers: 100 # in units of layers
+  vert layers: 100 # in units of layer
+  socn:
+    rossby mult: 40.0
+    min grid mult: 5.0
+  tocn:
+    rossby mult: 30.0
+    min grid mult: 6.0
+  hocn:
+    rossby mult: 40.0
+    min grid mult: 10.0
+  ssh:
+    rossby mult: 20.0
+    min grid mult: 7.0
+  cicen:
+    rossby mult: 0.0
+    min grid mult: 8.0
+    min: 1000000
+  hicen:
+    rossby mult: 0.0
+    min grid mult: 9.0
+    min: 5000000
 
 rh output:
   datadir: Data

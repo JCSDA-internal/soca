@@ -101,7 +101,7 @@ namespace soca {
       const util::DateTime & validTime() const;
       util::DateTime & validTime();
       void updateTime(const util::Duration & dt);
-      void horiz_scales(const double &, const double &);
+      void horiz_scales(const eckit::Configuration &);
       void vert_scales(const double &);
 
       /// Serialize and deserialize

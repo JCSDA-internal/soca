@@ -295,9 +295,8 @@ namespace soca {
 
   // -----------------------------------------------------------------------------
 
-  void Increment::horiz_scales(
-                            const double & r_mult, const double & r_min_grid) {
-    soca_increment_horiz_scales_f90(toFortran(), r_mult, r_min_grid);
+  void Increment::horiz_scales(const eckit::Configuration & config) {
+    soca_increment_horiz_scales_f90(toFortran(), &config);
     Log::trace() << "Horiz decorrelation length scales computed." << std::endl;
   }
 

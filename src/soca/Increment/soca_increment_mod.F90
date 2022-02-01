@@ -529,18 +529,25 @@ end subroutine soca_increment_change_resol
 !> compute the horizontal decorelation length scales
 !!
 !! \relates soca_increment_mod::soca_increment
-subroutine soca_horiz_scales(self, r_mult, r_min_grid)
-  class(soca_increment), intent(inout) :: self
-  real(kind=kind_real),  intent(in)    :: r_mult, r_min_grid
+subroutine soca_horiz_scales(self, f_conf)
+  class(soca_increment),        intent(inout) :: self
+  type(fckit_configuration), value, intent(in):: f_conf   !< Configuration
 
   integer :: i, jz
+  real(kind=kind_real) :: r_mult, r_min_grid, r_min
 
-  ! compute scales
+  ! compute scales cor_rh = max( r_mult * rossby radius, max( r_min_grid * dx, r_min ) )
   do i=1,size(self%fields)
     do jz=1,self%fields(i)%nz
+      call f_conf%get_or_die(trim(self%fields(i)%name//".rossby mult"), r_mult)
+      call f_conf%get_or_die(trim(self%fields(i)%name//".min grid mult"), r_min_grid)
+      if ( .not. f_conf%get(trim(self%fields(i)%name//".min"), r_min) ) then
+        r_min = 0.0_kind_real
+      end if
       self%fields(i)%val(:,:,jz) = gau2gc*self%geom%mask2d(:,:)* &
-           max(r_mult*self%geom%rossby_radius(:,:), &
-               r_min_grid*sqrt(self%geom%cell_area(:,:)))
+            max(r_mult*self%geom%rossby_radius(:,:), &
+                max(r_min_grid*sqrt(self%geom%cell_area(:,:)), &
+                    r_min))
     end do
   end do
 end subroutine soca_horiz_scales
