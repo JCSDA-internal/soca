@@ -4,9 +4,13 @@ Test     :    socn   min=2067165.810379   max=37066999.999942   mean=8428765.915
 Test     :    tocn   min=2067165.810379   max=37066999.999942   mean=8428765.915765
 Test     :     ssh   min=2067165.810379   max=37066999.999942   mean=8428765.915765
 Test     :    hocn   min=2067165.810379   max=37066999.999942   mean=8428765.915765
+Test     :   cicen   min=2067165.810379   max=37066999.999942   mean=8428765.915765
+Test     :   hicen   min=2067165.810379   max=37066999.999942   mean=8428765.915765
 Test     : Output vertical scales: 
 Test     :   Valid time: 2018-04-15T00:00:00Z
-Test     :    socn   min=  357.142857   max=  357.142857   mean=  357.142857
-Test     :    tocn   min=  357.142857   max=  357.142857   mean=  357.142857
-Test     :     ssh   min=  357.142857   max=  357.142857   mean=  357.142857
-Test     :    hocn   min=  357.142857   max=  357.142857   mean=  357.142857
+Test     :    socn   min= 1275.510204   max= 1275.510204   mean= 1275.510204
+Test     :    tocn   min= 1275.510204   max= 1275.510204   mean= 1275.510204
+Test     :     ssh   min= 1275.510204   max= 1275.510204   mean= 1275.510204
+Test     :    hocn   min= 1275.510204   max= 1275.510204   mean= 1275.510204
+Test     :   cicen   min= 1275.510204   max= 1275.510204   mean= 1275.510204
+Test     :   hicen   min= 1275.510204   max= 1275.510204   mean= 1275.510204

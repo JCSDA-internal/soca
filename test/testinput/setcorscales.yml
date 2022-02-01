@@ -4,7 +4,7 @@ resolution:
 
 date: 2018-04-15T00:00:00Z
 
-corr variables: [socn, tocn, ssh, hocn]
+corr variables: [socn, tocn, ssh, hocn, cicen, hicen]
 
 scales:
   rossby mult: 40.0
@@ -14,9 +14,9 @@ scales:
 rh output:
   datadir: Data
   exp: cor_rh
-  type: an
+  type: incr
 
 rv output:
   datadir: Data
   exp: cor_rv
-  type: an
+  type: incr

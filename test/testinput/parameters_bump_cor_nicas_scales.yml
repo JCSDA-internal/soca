@@ -3,14 +3,15 @@ geometry:
   geom_grid_file: soca_gridspec.nc
   fields metadata: ./fields_metadata.yml
 
-input variables: [socn, tocn, ssh, hocn]
+input variables: [socn, tocn, ssh, hocn, cicen, hicen]
 
 background:
   read_from_file: 1
   date: &date 2018-04-15T00:00:00Z
   basename: ./INPUT/
   ocn_filename: MOM.res.nc
-  state variables: [socn, tocn, ssh, hocn]
+  ice_filename: cice.res.nc
+  state variables: [socn, tocn, ssh, hocn, cicen, hicen]
 
 bump:
   verbosity: main
@@ -24,23 +25,25 @@ bump:
   network: false # Not re-implemented yet
   grids:
   - prefix: bump3d
-    variables: [socn, tocn]
+    variables: [socn, tocn, hocn]
   - prefix: bump2d
-    variables: [ssh]
+    variables: [ssh, cicen, hicen]
 
   input:
   - parameter: cor_rh
     read_from_file: 1
     date: &date 2018-04-15T00:00:00Z
     basename: ./Data/
-    ocn_filename: ocn.cor_rh.an.2018-04-15T00:00:00Z.nc
-    state variables: [socn, tocn, ssh]
+    ocn_filename: ocn.cor_rh.incr.2018-04-15T00:00:00Z.nc
+    ice_filename: ice.cor_rh.incr.2018-04-15T00:00:00Z.nc
+    state variables: [socn, tocn, ssh, hocn, cicen, hicen]
   - parameter: cor_rv
     read_from_file: 1
     date: &date 2018-04-15T00:00:00Z
     basename: ./Data/
-    ocn_filename: ocn.cor_rv.an.2018-04-15T00:00:00Z.nc
-    state variables: [socn, tocn, ssh]
+    ocn_filename: ocn.cor_rv.incr.2018-04-15T00:00:00Z.nc
+    ice_filename: ice.cor_rv.incr.2018-04-15T00:00:00Z.nc
+    state variables: [socn, tocn, ssh, hocn, cicen, hicen]
 
   output:
   - datadir: Data

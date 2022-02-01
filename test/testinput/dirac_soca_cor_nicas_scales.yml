@@ -7,7 +7,8 @@ initial condition:
   basename: ./INPUT/
   date: &date 2018-04-15T00:00:00Z
   ocn_filename: MOM.res.nc
-  state variables: &soca_vars [socn, tocn, ssh, hocn]
+  ice_filename: cice.res.nc
+  state variables: &soca_vars [socn, tocn, ssh, hocn, cicen, hicen]
 
 background error:
   covariance model: SABER
@@ -24,15 +25,15 @@ background error:
       load_nicas_local: true
       grids:
       - prefix: bump3d
-        variables: [socn, tocn]
+        variables: [socn, tocn, hocn]
       - prefix: bump2d
-        variables: [ssh]
+        variables: [ssh, cicen, hicen]
 
 dirac:
   ixdir: [1, 17, 41, 31, 51, 63, 81, 14, 16, 43]
   iydir: [8, 21, 19, 33, 29, 26, 16, 41,  5, 43]
-  izdir: [1,  1,  1,  1,  1,  1,  1,  1,  1,  1]
-  ifdir: [1,  1,  1,  1,  1,  1,  1,  1,  1,  1]
+  izdir: [1,  5,  1,  1,  1,  1,  1,  1,  1,  1]
+  ifdir: [1,  1,  3,  2,  1,  1,  1,  4,  5,  5]
 
 output dirac:
   datadir: Data

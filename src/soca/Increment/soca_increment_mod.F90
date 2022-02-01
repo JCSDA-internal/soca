@@ -554,11 +554,13 @@ subroutine soca_vert_scales(self, vert)
   class(soca_increment), intent(inout) :: self
   real(kind=kind_real),  intent(in)    :: vert
 
-  integer :: i
+  integer :: i, jz
 
   ! compute scales
   do i=1,size(self%fields)
-    self%fields(i)%val = gau2gc*vert
+    do jz=1,self%fields(i)%nz
+      self%fields(i)%val(:,:,jz) = gau2gc*gau2gc*self%geom%mask2d(:,:)*vert
+    end do
   end do
 end subroutine soca_vert_scales
 ! ------------------------------------------------------------------------------
