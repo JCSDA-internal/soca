@@ -347,8 +347,8 @@ subroutine soca_bump_correlation(self, horiz_convol, geom, f_conf_bump, f_conf_d
      call horiz_convol%set_parameter('rv', rv)
 
      ! Clean up
-!     call rh%final()
-!     call rv%final()
+     call rh%final()
+     call rv%final()
   end if
 
   ! Run BUMP drivers
