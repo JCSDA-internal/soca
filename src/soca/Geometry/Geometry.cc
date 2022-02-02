@@ -12,6 +12,8 @@
 
 #include "eckit/config/YAMLConfiguration.h"
 
+#include "oops/util/abor1_cpp.h"
+
 #include "soca/Geometry/Geometry.h"
 
 // -----------------------------------------------------------------------------
@@ -33,9 +35,10 @@ namespace soca {
 
     // Create ATLAS function space
     atlasFunctionSpace_.reset(new atlas::functionspace::PointCloud(atlasField));
-//    atlasFunctionSpaceHalo_.reset(new atlas::functionspace::PointCloud(atlasField,
-//      atlas::option::halo(1))); TBD: no halo available for the PointCloud function space
-    atlasFunctionSpaceHalo_.reset(new atlas::functionspace::PointCloud(atlasField));
+/* No halo available for the PointCloud function space
+    atlasFunctionSpaceHalo_.reset(new atlas::functionspace::PointCloud(atlasField,
+      atlas::option::halo(1)));
+*/
 
     // Set ATLAS function space pointer in Fortran
     soca_geo_set_atlas_functionspace_pointer_f90(keyGeom_,
@@ -53,10 +56,10 @@ namespace soca {
     soca_geo_clone_f90(keyGeom_, key_geo);
     atlasFunctionSpace_.reset(new atlas::functionspace::PointCloud(
                               other.atlasFunctionSpace_->lonlat()));
-//    atlasFunctionSpaceHalo_.reset(new atlas::functionspace::PointCloud(
-//                              other.atlasFunctionSpaceHalo_->lonlat(),atlas::option::halo(1)));
+/* No halo available for the PointCloud function space
     atlasFunctionSpaceHalo_.reset(new atlas::functionspace::PointCloud(
-                            other.atlasFunctionSpaceHalo_->lonlat()));
+                              other.atlasFunctionSpaceHalo_->lonlat(),atlas::option::halo(1)));
+*/
     soca_geo_set_atlas_functionspace_pointer_f90(keyGeom_,
       atlasFunctionSpace_->get());
     atlasFieldSet_.reset(new atlas::FieldSet());
@@ -113,7 +116,10 @@ namespace soca {
     bool halo) const {
     if (halo) {
       // Return function space with halo
+/* No halo available for the PointCloud function space
       return atlasFunctionSpaceHalo_.get();
+*/
+      ABORT("ATLAS function space with halo not implemented");
     } else {
       // Return function space without halo
       return atlasFunctionSpace_.get();
