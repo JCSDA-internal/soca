@@ -113,7 +113,7 @@ namespace soca {
   }
   // -----------------------------------------------------------------------------
   atlas::FunctionSpace * Geometry::atlasFunctionSpace(const std::string & functionSpaceName,
-    bool halo) const {
+    const bool halo) const {
     if (halo) {
       // Return function space with halo
 /* No halo available for the PointCloud function space
