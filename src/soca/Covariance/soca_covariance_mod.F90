@@ -14,6 +14,7 @@ use kinds, only: kind_real
 use oops_variables_mod, only: oops_variables
 use random_mod, only: normal_distribution
 use type_bump, only: bump_type
+use type_fieldset, only: fieldset_type
 
 ! soca modules
 use soca_fields_mod, only: soca_field
@@ -259,7 +260,7 @@ subroutine soca_bump_correlation(self, horiz_convol, geom, f_conf_bump, f_conf_d
   real(kind=kind_real), pointer :: real_ptr_1(:), real_ptr_2(:,:)
   real(kind=kind_real), allocatable :: lats(:), area(:)
   type(atlas_functionspace) :: afunctionspace
-  type(atlas_fieldset) :: afieldset, rh, rv
+  type(fieldset_type) :: afieldset, rh, rv
   type(atlas_field) :: afield
   type(fckit_configuration) :: f_grid
   real(kind=kind_real) :: r_base, r_mult, r_min, r_max, r_min_grid
@@ -342,12 +343,12 @@ subroutine soca_bump_correlation(self, horiz_convol, geom, f_conf_bump, f_conf_d
      call afield%final()
 
      ! Copy length-scales into BUMP
-     call horiz_convol%set_parameter('cor_rh', rh)
-     call horiz_convol%set_parameter('cor_rv', rv)
+     call horiz_convol%set_parameter('rh', rh)
+     call horiz_convol%set_parameter('rv', rv)
 
      ! Clean up
-     call rh%final()
-     call rv%final()
+!     call rh%final()
+!     call rv%final()
   end if
 
   ! Run BUMP drivers
@@ -366,7 +367,7 @@ subroutine soca_2d_convol(dx, horiz_convol, geom)
   type(bump_type),      intent(inout) :: horiz_convol
   type(soca_geom),         intent(in) :: geom
 
-  type(atlas_fieldset) :: tmp_incr
+  type(fieldset_type) ::  tmp_incr
 
   ! Allocate ATLAS tmp_increment and make copy of dx
   call geom%struct2atlas(dx(:,:), tmp_incr)
@@ -394,7 +395,7 @@ subroutine soca_2d_sqrt_convol(dx, horiz_convol, geom, pert_scale)
   type(soca_geom),         intent(in) :: geom
   real(kind=kind_real),    intent(in) :: pert_scale
 
-  type(atlas_fieldset) :: tmp_incr
+  type(fieldset_type) ::  tmp_incr
   real(kind=kind_real), allocatable :: pcv(:)
   integer, parameter :: rseed = 1 ! constant for reproducability of tests
                                   ! TODO: pass seed through config

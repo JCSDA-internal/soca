@@ -13,7 +13,7 @@ use atlas_module, only: atlas_functionspace_pointcloud, atlas_fieldset, &
 use fckit_configuration_module, only: fckit_configuration
 use fckit_mpi_module, only: fckit_mpi_comm
 use kinds, only: kind_real
-
+use type_fieldset, only: fieldset_type
 ! mom6 / fms modules
 use fms_io_mod, only : fms_io_init, fms_io_exit, &
                        register_restart_field, restart_file_type, &
@@ -917,7 +917,7 @@ end subroutine soca_geom_thickness2depth
 subroutine soca_geom_struct2atlas(self, dx_struct, dx_atlas)
   class(soca_geom),     intent(in ) :: self
   real(kind=kind_real), intent(in ) :: dx_struct(:,:)
-  type(atlas_fieldset), intent(out) :: dx_atlas
+  type(fieldset_type),  intent(out) :: dx_atlas
 
   real(kind_real), pointer :: real_ptr(:)
   type(atlas_field) :: afield
@@ -939,7 +939,7 @@ end subroutine soca_geom_struct2atlas
 subroutine soca_geom_atlas2struct(self, dx_struct, dx_atlas)
   class(soca_geom),     intent(in   ) :: self
   real(kind=kind_real), intent(inout) :: dx_struct(:,:)
-  type(atlas_fieldset), intent(inout) :: dx_atlas
+  type(fieldset_type),  intent(inout) :: dx_atlas
 
   real(kind_real), pointer :: real_ptr(:)
   type(atlas_field) :: afield
