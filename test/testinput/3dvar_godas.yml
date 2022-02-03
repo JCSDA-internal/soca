@@ -137,6 +137,7 @@ cost function:
     - filter: Bounds Check
       minvalue: -2.0
       maxvalue: 2.0
+    - filter: Perform Action
       action:
         name: assign error
         error function:
