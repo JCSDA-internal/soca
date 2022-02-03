@@ -14,6 +14,7 @@ use fckit_configuration_module, only: fckit_configuration
 use fckit_mpi_module, only: fckit_mpi_comm
 use kinds, only: kind_real
 use type_fieldset, only: fieldset_type
+
 ! mom6 / fms modules
 use fms_io_mod, only : fms_io_init, fms_io_exit, &
                        register_restart_field, restart_file_type, &

@@ -367,7 +367,7 @@ subroutine soca_2d_convol(dx, horiz_convol, geom)
   type(bump_type),      intent(inout) :: horiz_convol
   type(soca_geom),         intent(in) :: geom
 
-  type(fieldset_type) ::  tmp_incr
+  type(fieldset_type) :: tmp_incr
 
   ! Allocate ATLAS tmp_increment and make copy of dx
   call geom%struct2atlas(dx(:,:), tmp_incr)
@@ -395,7 +395,7 @@ subroutine soca_2d_sqrt_convol(dx, horiz_convol, geom, pert_scale)
   type(soca_geom),         intent(in) :: geom
   real(kind=kind_real),    intent(in) :: pert_scale
 
-  type(fieldset_type) ::  tmp_incr
+  type(fieldset_type) :: tmp_incr
   real(kind=kind_real), allocatable :: pcv(:)
   integer, parameter :: rseed = 1 ! constant for reproducability of tests
                                   ! TODO: pass seed through config
