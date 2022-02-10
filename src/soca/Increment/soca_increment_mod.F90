@@ -11,7 +11,6 @@ use fckit_configuration_module, only: fckit_configuration
 use kinds, only: kind_real
 use oops_variables_mod, only: oops_variables
 use random_mod, only: normal_distribution
-use tools_func, only: gau2gc
 
 ! soca modules
 use soca_convert_state_mod, only : soca_convertstate_type
@@ -544,7 +543,7 @@ subroutine soca_horiz_scales(self, f_conf)
       if ( .not. f_conf%get(trim(self%fields(i)%name//".min"), r_min) ) then
         r_min = 0.0_kind_real
       end if
-      self%fields(i)%val(:,:,jz) = gau2gc*self%geom%mask2d(:,:)* &
+      self%fields(i)%val(:,:,jz) = 3.57_kind_real*self%geom%mask2d(:,:)* &
             max(r_mult*self%geom%rossby_radius(:,:), &
                 max(r_min_grid*sqrt(self%geom%cell_area(:,:)), &
                     r_min))
@@ -566,7 +565,7 @@ subroutine soca_vert_scales(self, vert)
   ! compute scales
   do i=1,size(self%fields)
     do jz=1,self%fields(i)%nz
-      self%fields(i)%val(:,:,jz) = gau2gc*gau2gc*self%geom%mask2d(:,:)*vert
+      self%fields(i)%val(:,:,jz) = 3.57_kind_real*self%geom%mask2d(:,:)*vert
     end do
   end do
 end subroutine soca_vert_scales
