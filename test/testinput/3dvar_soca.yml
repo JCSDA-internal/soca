@@ -152,7 +152,7 @@ cost function:
       name: ADT
       obsdataout: {obsfile: ./Data/adt.out.nc}
       obsdatain:  {obsfile: ./Data/adt.nc}
-      simulated variables: [obs_absolute_dynamic_topography]
+      simulated variables: [absolute_dynamic_topography]
     obs operator:
       name: ADT
     obs error:

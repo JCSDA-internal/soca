@@ -33,11 +33,11 @@ Test     : CostJb   : Nonlinear Jb = 9.321293
 Test     : CostJo   : Nonlinear Jo(CoolSkin) = 13863.581898, nobs = 173, Jo/n = 80.136312, err = 0.363227
 Test     : CostJo   : Nonlinear Jo(SeaSurfaceTemp) = 782.499799, nobs = 145, Jo/n = 5.396550, err = 0.363828
 Test     : CostJo   : Nonlinear Jo(SeaSurfaceSalinity) = 5.519455, nobs = 28, Jo/n = 0.197123, err = 1.000000
-Test     : CostJo   : Nonlinear Jo(ADT) = 159.434018, nobs = 92, Jo/n = 1.732978, err = 0.100000
+Test     : CostJo   : Nonlinear Jo(ADT) = 159.433980, nobs = 92, Jo/n = 1.732978, err = 0.100000
 Test     : CostJo   : Nonlinear Jo(InsituTemperature) = 348.706466, nobs = 206, Jo/n = 1.692750, err = 0.897281
 Test     : CostJo   : Nonlinear Jo(InsituSalinity) = 354.333531, nobs = 218, Jo/n = 1.625383, err = 0.608197
 Test     : CostJo   : Nonlinear Jo(SeaIceFraction) = 678.184813, nobs = 89, Jo/n = 7.620054, err = 0.100000
 Test     : CostJo   : Nonlinear Jo(SeaSurfaceChlorophyll) = 1520.644539, nobs = 129, Jo/n = 11.787942, err = 0.061865
 Test     : CostJo   : Nonlinear Jo(SeaSurfaceBiomassP) = 392.091452, nobs = 112, Jo/n = 3.500817, err = 0.000000
 Test     : CostJo   : Nonlinear Jo(SeaSurfaceHS) = 981.544844, nobs = 6, Jo/n = 163.590807, err = 0.100000
-Test     : CostFunction: Nonlinear J = 19095.862108
+Test     : CostFunction: Nonlinear J = 19095.862070
