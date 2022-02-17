@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2020-2021 UCAR
+ * (C) Copyright 2020-2022 UCAR
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -90,6 +90,9 @@ namespace soca {
                                         const double[],
                                         size_t &);
     void soca_increment_update_fields_f90(F90flds &, const oops::Variables &);
+    void soca_increment_horiz_scales_f90(F90flds &,
+                                         const eckit::Configuration * const &);
+    void soca_increment_vert_scales_f90(F90flds &, const double);
   }
 }  // namespace soca
 #endif  // SOCA_INCREMENT_INCREMENTFORTRAN_H_
