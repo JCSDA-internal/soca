@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2017-2021 UCAR
+ * (C) Copyright 2017-2022 UCAR
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -293,7 +293,19 @@ namespace soca {
 
   void Increment::updateTime(const util::Duration & dt) {time_ += dt;}
 
+  // -----------------------------------------------------------------------------
 
+  void Increment::horiz_scales(const eckit::Configuration & config) {
+    soca_increment_horiz_scales_f90(toFortran(), &config);
+    Log::trace() << "Horiz decorrelation length scales computed." << std::endl;
+  }
+
+  // -----------------------------------------------------------------------------
+
+  void Increment::vert_scales(const double & vert) {
+    soca_increment_vert_scales_f90(toFortran(), vert);
+    Log::trace() << "Vert decorrelation length scales computed." << std::endl;
+  }
 
   // -----------------------------------------------------------------------------
 
@@ -357,6 +369,5 @@ namespace soca {
   std::shared_ptr<const Geometry> Increment::geometry() const {
     return geom_;
   }
-  // -----------------------------------------------------------------------------
 
 }  // namespace soca
