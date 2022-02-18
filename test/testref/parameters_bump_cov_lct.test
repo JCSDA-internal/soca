@@ -1,9 +1,0 @@
-Test     : Norm of var at 2018-04-15T06:00:00Z: 4092.15
-Test     : Norm of cor_rh at 2018-04-15T06:00:00Z: 1.76681e+09
-Test     : Norm of cor_rv at 2018-04-15T06:00:00Z: 3.11663e+06
-Test     : Norm of D11_1 at 2018-04-15T06:00:00Z: 8.51614e+14
-Test     : Norm of D22_1 at 2018-04-15T06:00:00Z: 7.21946e+14
-Test     : Norm of D33_1 at 2018-04-15T06:00:00Z: 5.44347e+10
-Test     : Norm of D12_1 at 2018-04-15T06:00:00Z: 5.26114e+14
-Test     : Norm of Dcoef_1 at 2018-04-15T06:00:00Z: 394.658
-Test     : Norm of DLh_1 at 2018-04-15T06:00:00Z: 3.71057e+08
