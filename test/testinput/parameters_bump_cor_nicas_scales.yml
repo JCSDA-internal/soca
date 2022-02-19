@@ -44,16 +44,3 @@ bump:
     ocn_filename: ocn.cor_rv.incr.2018-04-15T00:00:00Z.nc
     ice_filename: ice.cor_rv.incr.2018-04-15T00:00:00Z.nc
     state variables: [socn, tocn, ssh, hocn, cicen, hicen]
-
-# bump output is broken ...
-#  output:
-#  - datadir: Data
-#    date: *date
-#    exp: parameters_bump_cor_nicas_scales.cor_rh
-#    parameter: cor_rh
-#    type: an
-#  - datadir: Data
-#    date: *date
-#    exp: parameters_bump_cor_nicas_scales.cor_rv
-#    parameter: cor_rv
-#    type: an
