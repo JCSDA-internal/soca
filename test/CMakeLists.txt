@@ -18,6 +18,7 @@ set( soca_test_input
   testinput/dirac_soca_mask.yml
   testinput/dirac_soca_nomask.yml
   testinput/dirac_socahyb_cov.yml
+  testinput/dirac_soca_cor_nicas_scales.yml
   testinput/enshofx_1.yml
   testinput/enshofx_2.yml
   testinput/enshofx_3.yml
@@ -49,10 +50,12 @@ set( soca_test_input
   testinput/model_ufsm6c6.yml
   testinput/obslocalization.yml
   testinput/parameters_bump_cor_nicas.yml
+  testinput/parameters_bump_cor_nicas_scales.yml
   testinput/parameters_bump_cov_lct.yml
   testinput/parameters_bump_cov_nicas.yml
   testinput/parameters_bump_loc.yml
   testinput/sqrtvertloc.yml
+  testinput/setcorscales.yml
   testinput/state.yml
   testinput/static_socaerror_init.yml
   testinput/static_socaerrorlowres_init.yml
@@ -87,6 +90,7 @@ set( soca_test_ref
   testref/dirac_soca_mask.test
   testref/dirac_soca_nomask.test
   testref/dirac_socahyb_cov.test
+  testref/dirac_soca_cor_nicas_scales.test
   testref/enshofx.test
   testref/enspert.test
   testref/ensrecenter.test
@@ -103,7 +107,9 @@ set( soca_test_ref
   testref/letkf_solver.test
   testref/makeobs.test
   testref/parameters_bump_cor_nicas.test
+  testref/parameters_bump_cor_nicas_scales.test
   testref/parameters_bump_cov_lct.test
+  testref/setcorscales.test
   testref/sqrtvertloc.test
 )
 
@@ -221,6 +227,7 @@ endforeach(FILENAME)
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bump)
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bump_lowres)
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bump-kmask)
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bump_scales)
 
 # find compare.py provided by oops
 find_file(COMPARE_BIN oops_compare.py HINTS ${oops_BINDIR})
@@ -623,14 +630,28 @@ soca_add_test( NAME hybridgain
 # soca_add_test( NAME dirac_bump_cov
 #                EXE  soca_dirac.x )
 
+soca_add_test( NAME setcorscales
+               EXE  soca_setcorscales.x
+               NOTRAPFPE
+               TEST_DEPENDS test_soca_gridgen)
+
 soca_add_test( NAME parameters_bump_cor_nicas
                NOTRAPFPE
                EXE  soca_error_covariance_training.x
                TEST_DEPENDS test_soca_gridgen_small
                             test_soca_convertstate)
 
+# soca_add_test( NAME parameters_bump_cor_nicas_scales
+#                NOTRAPFPE
+#                EXE  soca_error_covariance_training.x
+#                TEST_DEPENDS test_soca_setcorscales)
+
 
 # Dirac tests
+
+# soca_add_test( NAME dirac_soca_cor_nicas_scales
+#                EXE  soca_dirac.x
+#                TEST_DEPENDS parameters_bump_cor_nicas_scales)
 
 soca_add_test( NAME dirac_soca_cov
                EXE  soca_dirac.x
