@@ -641,17 +641,17 @@ soca_add_test( NAME parameters_bump_cor_nicas
                TEST_DEPENDS test_soca_gridgen_small
                             test_soca_convertstate)
 
-# soca_add_test( NAME parameters_bump_cor_nicas_scales
-#                NOTRAPFPE
-#                EXE  soca_error_covariance_training.x
-#                TEST_DEPENDS test_soca_setcorscales)
+soca_add_test( NAME parameters_bump_cor_nicas_scales
+               NOTRAPFPE
+               EXE  soca_error_covariance_training.x
+               TEST_DEPENDS test_soca_setcorscales)
 
 
 # Dirac tests
 
-# soca_add_test( NAME dirac_soca_cor_nicas_scales
-#                EXE  soca_dirac.x
-#                TEST_DEPENDS parameters_bump_cor_nicas_scales)
+soca_add_test( NAME dirac_soca_cor_nicas_scales
+               EXE  soca_dirac.x
+               TEST_DEPENDS parameters_bump_cor_nicas_scales)
 
 soca_add_test( NAME dirac_soca_cov
                EXE  soca_dirac.x
