@@ -48,6 +48,7 @@ set( soca_test_input
   testinput/model.yml
   testinput/model_ufsm6c6.yml
   testinput/obslocalization.yml
+  testinput/obslocalization_vertical.yml
   testinput/parameters_bump_cor_nicas.yml
   testinput/parameters_bump_cov_lct.yml
   testinput/parameters_bump_cov_nicas.yml
@@ -588,6 +589,10 @@ soca_add_test( NAME obslocalization
                TEST_DEPENDS test_soca_gridgen
                NOCOMPARE )
 
+soca_add_test( NAME obslocalization_vertical
+               SRC  TestObsLocalization.cc
+               TEST_DEPENDS test_soca_gridgen
+               NOCOMPARE )
 
 #-------------------------------------------------------------------------------
 # Tests using the main SOCA applications
