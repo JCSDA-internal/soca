@@ -45,4 +45,23 @@ observations:
     reference rms: [0.6257, 0.606492, 0.498945, 0]
     print iterator: false
 
+- obs space:
+    name: 'Vertical BoxCar log transform'
+    distribution: InefficientDistribution
+    simulated variables: ['sea_water_temperature']
+    obsdatain:  {obsfile: ./Data/prof.nc}
+  obs localizations:
+  - localization method: Vertical localization
+    vertical lengthscale: 100
+    ioda vertical coordinate: depth
+    ioda vertical coordinate group: MetaData
+    localization function: Box Car
+    apply log transformation: true 
+    reference gridpoints:
+      lons: [-172.5, -172.5, -172.5, -172.5]
+      lats: [ -42.5,  -42.5,   -42.5, -42.5]
+      depths: [0.0, 34.2862955, 182.737966, 1921.40255]
+    reference local nobs: [218, 218, 218, 218]
+    reference rms: [1.0, 1.0, 1.0, 1.0]
+    print iterator: false
  
