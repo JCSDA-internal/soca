@@ -64,4 +64,23 @@ observations:
     reference local nobs: [218, 218, 218, 218]
     reference rms: [1.0, 1.0, 1.0, 1.0]
     print iterator: false
+
+- obs space:
+    name: 'Vertical BoxCar sst'
+    distribution: InefficientDistribution
+    simulated variables: ['sea_surface_temperature']
+    obsdatain:  {obsfile: ./Data/sst.nc}
+  obs localizations:
+  - localization method: Vertical localization
+    vertical lengthscale: 50
+    assign constant vertical coordinate to obs: true
+    constant vertical coordinate value: 0.0
+    localization function: Box Car
+    reference gridpoints:
+      lons: [-172.5, -172.5, -172.5]
+      lats: [ -42.5,  -42.5,   -42.5]
+      depths: [0.0, 34.2862955, 182.737966]
+    reference local nobs: [201, 201, 0]
+    reference rms: [1.0, 1.0, 1.0]
+
  
