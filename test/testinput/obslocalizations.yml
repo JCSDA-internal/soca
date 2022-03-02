@@ -1,0 +1,31 @@
+geometry:
+  mom6_input_nml: ./inputnml/input.nml
+  fields metadata: ./fields_metadata.yml
+  iterator dimension: 3
+
+window begin: 2018-04-14T00:00:00Z
+window end: 2018-04-16T00:00:00Z
+
+observations:
+- obs space:
+    name: 'BoxCar'
+    distribution: InefficientDistribution
+    simulated variables: ['sea_water_temperature']
+    obsdatain:  {obsfile: ./Data/prof.nc}
+  obs localizations:
+  - localization method: Horizontal Box car
+    lengthscale: 3000e3
+  - localization method: Vertical localization
+    vertical lengthscale: 100
+    ioda vertical coordinate: depth
+    ioda vertical coordinate group: MetaData
+    localization function: Box Car
+
+observation localizations reference:
+    gridpoints:
+      lons: [-192.5, -192.5, -192.5, -192.5, -172.5]
+      lats: [2.5, 2.5, 2.5, 2.5, 42.5]
+      depths: [0.0, 43.4330647, 171.822792, 1748.51757, 0]
+    local nobs: [22, 32, 32, 0, 0]
+    rms: [1.0, 1.0, 1.0, 1.0, 1.0]
+ 
