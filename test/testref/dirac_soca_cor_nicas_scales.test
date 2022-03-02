@@ -9,8 +9,8 @@ Test     :   hicen   min=    0.000000   max=    1.000000   mean=    0.000609
 Test     : Covariance(SABER) * Increment:
 Test     :   Valid time: 2018-04-15T00:00:00Z
 Test     :    socn   min=    0.000000   max=    1.000000   mean=    0.029364
-Test     :    tocn   min=    0.000000   max=    1.050333   mean=    0.372813
+Test     :    tocn   min=    0.000000   max=    1.053052   mean=    0.376903
 Test     :     ssh   min=    0.000000   max=    0.000000   mean=    0.000000
 Test     :    hocn   min=    0.000000   max=    0.000000   mean=    0.000000
 Test     :   cicen   min=    0.000000   max=    0.000000   mean=    0.000000
-Test     :   hicen   min=    0.000000   max=    1.000000   mean=    0.262238
+Test     :   hicen   min=    0.000000   max=    1.000000   mean=    0.264029
