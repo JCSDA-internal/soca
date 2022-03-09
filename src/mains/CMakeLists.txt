@@ -1,20 +1,10 @@
-#set( mylibs 
-#      soca
-#      cmeps
-#      piof 
-#      pioc
-#      fv3atm
-#      fv3
-#      fv3ccpp
-#      ccpp_framework
-#      ccpp_physics
-#      stochastic_physics
-#      FMS::fms_r8
-#      cice
-#      esmf
-#)
 ecbuild_add_executable( TARGET  soca_dirac.x
                         SOURCES Dirac.cc
+                        LIBS    ${mylibs}
+                      )
+
+ecbuild_add_executable( TARGET  test_soca_model.x
+                        SOURCES TestModel.cc
                         LIBS    ${mylibs}
                       )
 

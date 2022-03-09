@@ -16,10 +16,10 @@ use duration_mod
 use fckit_configuration_module,  only: fckit_configuration
 
 ! soca
-!use soca_geom_mod,            only: soca_geom
-!use soca_geom_interface_mod,  only: soca_geom_registry
+use soca_geom_mod,            only: soca_geom
+use soca_geom_mod_c,          only: soca_geom_registry
 use soca_state_mod,           only: soca_state
-!use soca_state_interface_mod, only: soca_state_registry
+use soca_state_reg,           only: soca_state_registry
 use soca_ufs_mod,             only: model_ufs
 
 implicit none
@@ -49,18 +49,18 @@ integer(c_int), intent(inout)  :: c_key_self  !< Key to model data
 integer(c_int), intent(in)     :: c_key_geom  !< Geometry
 type(c_ptr), value, intent(in) :: c_conf      !< pointer to object of class Config
 
-!type(model_ufs),     pointer :: self
-!type(soca_geom),  pointer :: geom
-!type(fckit_configuration)    :: f_conf
+type(model_ufs),     pointer :: self
+type(soca_geom),  pointer :: geom
+type(fckit_configuration)    :: f_conf
 
-!call soca_geom_registry%get(c_key_geom, geom)
-!call soca_ufs_registry%init()
-!call soca_ufs_registry%add(c_key_self)
-!call soca_ufs_registry%get(c_key_self, self)
+call soca_geom_registry%get(c_key_geom, geom)
+call soca_ufs_registry%init()
+call soca_ufs_registry%add(c_key_self)
+call soca_ufs_registry%get(c_key_self, self)
 
-!f_conf = fckit_configuration(c_conf)
+f_conf = fckit_configuration(c_conf)
 
-!call self%create(f_conf, geom)
+call self%create(f_conf, geom)
 
 end subroutine c_soca_ufs_create
 
@@ -71,11 +71,11 @@ subroutine c_soca_ufs_delete(c_key_self) bind (c,name='soca_ufs_delete_f90')
 integer(c_int), intent(inout) :: c_key_self
 type(model_ufs), pointer :: self
 
-!call soca_ufs_registry%get(c_key_self, self)
+call soca_ufs_registry%get(c_key_self, self)
 
-!call self%delete()
+call self%delete()
 
-!call soca_ufs_registry%remove(c_key_self)
+call soca_ufs_registry%remove(c_key_self)
 
 end subroutine c_soca_ufs_delete
 
@@ -92,12 +92,12 @@ type(model_ufs),     pointer :: self
 type(soca_state), pointer :: state
 type(datetime) :: fdate
 
-!call soca_state_registry%get(c_key_state,state)
-!call soca_ufs_registry%get(c_key_self, self)
+call soca_state_registry%get(c_key_state,state)
+call soca_ufs_registry%get(c_key_self, self)
 
-!call c_f_datetime(c_dt, fdate)
+call c_f_datetime(c_dt, fdate)
 
-!call self%initialize(state, fdate)
+call self%initialize(state, fdate)
 
 end subroutine c_soca_ufs_initialize
 
@@ -118,14 +118,14 @@ type(datetime) :: fdate1
 type(datetime) :: fdate2
 character(len=20) :: vdatestrz
 
-!call soca_ufs_registry%get(c_key_self, self)
-!call soca_state_registry%get(c_key_state,state)
+call soca_ufs_registry%get(c_key_self, self)
+call soca_state_registry%get(c_key_state,state)
 
-!call c_f_datetime(c_dt1, fdate1)
-!call datetime_to_string(fdate1, vdatestrz)
-!call c_f_datetime(c_dt2, fdate2)
-!call datetime_to_string(fdate2, vdatestrz)
-!call self%step(state, fdate1, fdate2)
+call c_f_datetime(c_dt1, fdate1)
+call datetime_to_string(fdate1, vdatestrz)
+call c_f_datetime(c_dt2, fdate2)
+call datetime_to_string(fdate2, vdatestrz)
+call self%step(state, fdate1, fdate2)
 
 end subroutine c_soca_ufs_step
 
@@ -143,12 +143,12 @@ type(soca_state), pointer :: state
 
 type(datetime) :: fdate
 
-!call soca_state_registry%get(c_key_state,state)
-!call soca_ufs_registry%get(c_key_self, self)
+call soca_state_registry%get(c_key_state,state)
+call soca_ufs_registry%get(c_key_self, self)
 
-!call c_f_datetime(c_dt, fdate)
+call c_f_datetime(c_dt, fdate)
 
-!call self%finalize(state, fdate)
+call self%finalize(state, fdate)
 
 end subroutine c_soca_ufs_finalize
 
