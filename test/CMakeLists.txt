@@ -310,21 +310,21 @@ function(soca_add_test)
   if ( ARG_MPI )
     set( MPI ${ARG_MPI})
   endif()
-set( mylibs 
-      soca
-      cmeps
-      piof 
-      pioc
-      fv3atm
-      fv3
-      fv3ccpp
-      ccpp_framework
-      ccpp_physics
-      stochastic_physics
-      FMS::fms_r8
-      cice
-      esmf
-)
+#set( mylibs 
+#      soca
+#      cmeps
+#      piof 
+#      pioc
+#      fv3atm
+#      fv3
+#      fv3ccpp
+#      ccpp_framework
+#      ccpp_physics
+#      stochastic_physics
+#      FMS::fms_r8
+#      cice
+#      esmf
+#)
 
   # Are we building a unit test / or running a soca executable?
   if ( ARG_SRC )

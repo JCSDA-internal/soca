@@ -17,7 +17,6 @@ ecbuild_declare_project()
 
 list( APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 include( soca_compiler_flags )
-
 ################################################################################
 # Dependencies
 ################################################################################
@@ -49,27 +48,34 @@ include_directories( ${DEPEND_LIB_ROOT}/../ufs-weather-model/src/ufs-weather-mod
 ################################################################################
 set( SOCA_LINKER_LANGUAGE CXX)
 
-#add_library(ufs_libraries INTERFACE)
-#target_link_libraries(ufs_libraries
-#    INTERFACE
-#      soca
-#      cmeps
-#      piof 
-#      pioc
-#      cice
-#      fv3atm
-#      fv3
-#      ccpp_physics
-#      stochastic_physics
-#      ccpp_framework
-#      fv3ccpp
-#      w3emc::w3emc_d
-#      w3nco::w3nco_d
-#      sp::sp_d
-#      bacio::bacio_4
-#      FMS::fms_r8
-#      esmf
-#)
+if(${UFS_APP} MATCHES "NG-GODAS")
+  set( mylibs 
+      soca
+      cdeps
+      cmeps
+      piof 
+      pioc
+      stochastic_physics
+      cice
+      esmf
+  )
+else()
+  set( mylibs 
+      soca
+      cmeps
+      piof 
+      pioc
+      fv3atm
+      fv3
+      fv3ccpp
+      ccpp_framework
+      ccpp_physics
+      stochastic_physics
+      FMS::fms_r8
+      cice
+      esmf
+  )
+endif()
 
 add_subdirectory( src )
 add_subdirectory( test )
