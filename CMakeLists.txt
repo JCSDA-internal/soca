@@ -32,7 +32,14 @@ find_package( ioda   1.0.0    REQUIRED)
 find_package( ufo    1.0.0    REQUIRED)
 #find_package( fms    2020.4.0 REQUIRED)
 #find_package( mom6   2020.4.0 REQUIRED)
+find_package(ESMF MODULE REQUIRED STATIC)
 find_package( crtm   2.2.3)
+  find_package(bacio REQUIRED )
+  find_package(sigio REQUIRED )
+  find_package(sp REQUIRED )
+  find_package(w3emc REQUIRED )
+  find_package(w3nco REQUIRED )
+  find_package(nemsio REQUIRED )
 include_directories( ${NETCDF_INCLUDE_DIRS} ${DEPEND_LIB_ROOT}/include_r8 ${DEPEND_LIB_ROOT}/MOM6/mod  )
 include_directories( ${DEPEND_LIB_ROOT}/../ufs-weather-model/src/ufs-weather-model-build/MOM6-interface/mod_solo)
 
@@ -41,6 +48,28 @@ include_directories( ${DEPEND_LIB_ROOT}/../ufs-weather-model/src/ufs-weather-mod
 # Sources
 ################################################################################
 set( SOCA_LINKER_LANGUAGE CXX)
+
+#add_library(ufs_libraries INTERFACE)
+#target_link_libraries(ufs_libraries
+#    INTERFACE
+#      soca
+#      cmeps
+#      piof 
+#      pioc
+#      cice
+#      fv3atm
+#      fv3
+#      ccpp_physics
+#      stochastic_physics
+#      ccpp_framework
+#      fv3ccpp
+#      w3emc::w3emc_d
+#      w3nco::w3nco_d
+#      sp::sp_d
+#      bacio::bacio_4
+#      FMS::fms_r8
+#      esmf
+#)
 
 add_subdirectory( src )
 add_subdirectory( test )
