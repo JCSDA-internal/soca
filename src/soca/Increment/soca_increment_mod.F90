@@ -1,4 +1,4 @@
-! (C) Copyright 2020-2021 UCAR
+! (C) Copyright 2020-2022 UCAR
 !
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -71,6 +71,16 @@ contains
 
   !> \}
 
+  !> \name background error decorrelation length scales
+  !! \{
+
+  !> \copybrief soca_horiz_scales \see soca_horiz_scales
+  procedure :: horiz_scales       => soca_horiz_scales
+
+  !> \copybrief soca_vert_scales \see soca_vert_scales
+  procedure :: vert_scales       => soca_vert_scales
+
+  !> \}
 
   !> \copybrief soca_increment_change_resol \see soca_increment_change_resol
   procedure :: convert     => soca_increment_change_resol
@@ -513,6 +523,52 @@ subroutine soca_increment_change_resol(self, rhs)
   call convert_state%clean()
 end subroutine soca_increment_change_resol
 
+
+! ------------------------------------------------------------------------------
+!> compute the horizontal decorelation length scales
+!!
+!! \relates soca_increment_mod::soca_increment
+subroutine soca_horiz_scales(self, f_conf)
+  class(soca_increment),        intent(inout) :: self
+  type(fckit_configuration), value, intent(in):: f_conf   !< Configuration
+
+  integer :: i, jz
+  real(kind=kind_real) :: r_mult, r_min_grid, r_min
+
+  ! compute scales cor_rh = max( r_mult * rossby radius, max( r_min_grid * dx, r_min ) )
+  do i=1,size(self%fields)
+    do jz=1,self%fields(i)%nz
+      call f_conf%get_or_die(trim(self%fields(i)%name//".rossby mult"), r_mult)
+      call f_conf%get_or_die(trim(self%fields(i)%name//".min grid mult"), r_min_grid)
+      if ( .not. f_conf%get(trim(self%fields(i)%name//".min"), r_min) ) then
+        r_min = 0.0_kind_real
+      end if
+      self%fields(i)%val(:,:,jz) = 3.57_kind_real*self%geom%mask2d(:,:)* &
+            max(r_mult*self%geom%rossby_radius(:,:), &
+                max(r_min_grid*sqrt(self%geom%cell_area(:,:)), &
+                    r_min))
+    end do
+  end do
+end subroutine soca_horiz_scales
+
+
+! ------------------------------------------------------------------------------
+!> compute the vertical decorelation length scales
+!!
+!! \relates soca_increment_mod::soca_increment
+subroutine soca_vert_scales(self, vert)
+  class(soca_increment), intent(inout) :: self
+  real(kind=kind_real),  intent(in)    :: vert
+
+  integer :: i, jz
+
+  ! compute scales
+  do i=1,size(self%fields)
+    do jz=1,self%fields(i)%nz
+      self%fields(i)%val(:,:,jz) = 3.57_kind_real*self%geom%mask2d(:,:)*vert
+    end do
+  end do
+end subroutine soca_vert_scales
 ! ------------------------------------------------------------------------------
 
 end module soca_increment_mod

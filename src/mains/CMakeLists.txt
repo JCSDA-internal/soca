@@ -98,3 +98,8 @@ ecbuild_add_executable( TARGET  soca_diffstates.x
                         SOURCES DiffStates.cc
                         LIBS   ${mylibs}
                       )
+
+ecbuild_add_executable( TARGET  soca_setcorscales.x
+                        SOURCES SetCorScales.cc
+                        LIBS    soca
+                      )

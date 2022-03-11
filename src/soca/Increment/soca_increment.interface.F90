@@ -1,4 +1,4 @@
-! (C) Copyright 2020-2021 UCAR
+! (C) Copyright 2020-2022 UCAR
 !
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -631,4 +631,41 @@ call f_self%update_fields(f_vars)
 
 end subroutine soca_increment_update_fields_c
 
+
+
+! ------------------------------------------------------------------------------
+!> C++ interface for computing horizontal decorrelation length scales
+!> soca_increment_mod::soca_increment
+!! using  soca_increment_mod::soca_increment::horiz_scales()
+subroutine soca_increment_horiz_scales_c(c_key_self, c_conf) &
+     bind(c,name='soca_increment_horiz_scales_f90')
+  integer(c_int), intent(in) :: c_key_self
+  type(c_ptr),    intent(in) :: c_conf !< Configuration
+
+  type(soca_increment), pointer :: f_self
+
+
+  call soca_increment_registry%get(c_key_self, f_self)
+  call f_self%horiz_scales(fckit_configuration(c_conf))
+
+end subroutine soca_increment_horiz_scales_c
+
+
+
+! ------------------------------------------------------------------------------
+!> C++ interface for computing vertical decorrelation length scales
+!> soca_increment_mod::soca_increment
+!! using  soca_increment_mod::soca_increment::vert_scales()
+subroutine soca_increment_vert_scales_c(c_key_self, c_vert) bind(c,name='soca_increment_vert_scales_f90')
+  integer(c_int), intent(in) :: c_key_self
+  real(c_double), intent(in) :: c_vert
+
+  type(soca_increment), pointer :: f_self
+  real(kind=kind_real) :: vert
+
+  call soca_increment_registry%get(c_key_self, f_self)
+  vert = c_vert
+  call f_self%vert_scales(c_vert)
+
+end subroutine soca_increment_vert_scales_c
 end module
