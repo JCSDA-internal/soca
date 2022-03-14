@@ -163,7 +163,6 @@ set( soca_obs
   Data/Obs/gmi_gpm_obs.nc
   Data/Obs/icec.nc
   Data/Obs/icefb.nc
-  Data/Obs/zero_ob.nc
   Data/Obs/prof.nc
   Data/Obs/single_ob.nc
   Data/Obs/sss.nc
@@ -171,6 +170,7 @@ set( soca_obs
   Data/Obs/swh.nc
   Data/Obs/uocn_surface.nc
   Data/Obs/vocn_surface.nc
+  Data/Obs/zero_ob.nc
 )
 
 # Create Data directory for test input/output and symlink all files
