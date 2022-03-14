@@ -3,7 +3,7 @@ geometry:
   fields metadata: ./fields_metadata.yml
 
 model:
-  name: UFS
+  name: mom6solo
   tstep: PT1H
   advance_mom6: 1
   model variables: [cicen, hicen, socn, tocn, ssh, hocn, uocn, vocn, sw, lhf, shf, lw, us]

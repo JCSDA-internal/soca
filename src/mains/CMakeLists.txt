@@ -101,5 +101,5 @@ ecbuild_add_executable( TARGET  soca_diffstates.x
 
 ecbuild_add_executable( TARGET  soca_setcorscales.x
                         SOURCES SetCorScales.cc
-                        LIBS    soca
+                        LIBS    ${mylibs}
                       )
