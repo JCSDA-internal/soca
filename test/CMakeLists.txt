@@ -3,7 +3,9 @@ set( soca_test_input
   testinput/3dhybfgat.yml
   testinput/3dvarbump.yml
   testinput/3dvar_godas.yml
+  testinput/3dvar_single_ob.yml
   testinput/3dvar_soca.yml
+  testinput/3dvar_zero_ob.yml
   testinput/3dvarlowres_soca.yml
   testinput/3dvarfgat.yml
   testinput/3dvarfgat_pseudo.yml
@@ -75,7 +77,9 @@ set( soca_test_ref
   testref/3dhybfgat.test
   testref/3dvarbump.test
   testref/3dvar_godas.test
+  testref/3dvar_single_ob.test
   testref/3dvar_soca.test
+  testref/3dvar_zero_ob.test
   testref/3dvarlowres_soca.test
   testref/3dvarfgat.test
   testref/3dvarfgat_pseudo.test
@@ -159,7 +163,9 @@ set( soca_obs
   Data/Obs/gmi_gpm_obs.nc
   Data/Obs/icec.nc
   Data/Obs/icefb.nc
+  Data/Obs/zero_ob.nc
   Data/Obs/prof.nc
+  Data/Obs/single_ob.nc
   Data/Obs/sss.nc
   Data/Obs/sst.nc
   Data/Obs/swh.nc
@@ -707,6 +713,19 @@ soca_add_test( NAME 3dvar_soca
                TOL  4e-9 0
                NOTRAPFPE
                TEST_DEPENDS test_soca_static_socaerror_init )
+
+soca_add_test( NAME 3dvar_single_ob
+               EXE  soca_var.x
+               TOL  4e-9 0
+               NOTRAPFPE
+               TEST_DEPENDS test_soca_static_socaerror_init )
+
+# # Following test does not work yet. IODA crashes
+# soca_add_test( NAME 3dvar_zero_ob
+#                EXE  soca_var.x
+#                TOL  4e-9 0
+#                NOTRAPFPE
+#                TEST_DEPENDS test_soca_static_socaerror_init )
 
 soca_add_test( NAME 3dvarbump
                EXE  soca_var.x
