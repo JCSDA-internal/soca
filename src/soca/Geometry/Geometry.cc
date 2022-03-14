@@ -14,6 +14,7 @@
 
 #include "soca/Geometry/Geometry.h"
 
+#include "oops/util/abor1_cpp.h"
 // -----------------------------------------------------------------------------
 namespace soca {
   // -----------------------------------------------------------------------------
@@ -110,4 +111,35 @@ namespace soca {
     return atlasFieldSet_.get();
   }
   // -----------------------------------------------------------------------------
+  void Geometry::latlon(std::vector<double> & lats, std::vector<double> & lons,
+      const bool halo) const {
+    // Assume that we can get by with just using the unmasked H grid here (i.e.
+    // ignore the different staggered grids)
+    // (This should only be called by code in OOPS used for determining the PE that
+    // owns a specific point.... so it doesn't have to be exact)
+    latlon(lats, lons, halo, 'h', false);
+  }
+  // -----------------------------------------------------------------------------
+  void Geometry::latlon(
+      std::vector<double> & lats, std::vector<double> & lons, const bool halo,
+      const char grid, const bool masked ) const {
+
+    // get the number of gridpoints
+    int gridSize;
+    soca_geo_gridsize_f90(keyGeom_, grid, masked, halo, gridSize);
+
+    // get the lat/lon of those gridpoints
+    lats.resize(gridSize);
+    lons.resize(gridSize);
+    soca_geo_gridlatlon_f90(keyGeom_, grid, masked, halo, gridSize,
+      lats.data(), lons.data());
+  }
+
+  void Geometry::getVarGrid(const std::string &var, char & grid, bool & masked) const {
+      oops::Variables vars;
+      vars.push_back(var);
+
+      soca_geo_getvargrid_f90(keyGeom_, vars, grid, masked);
+  }
+
 }  // namespace soca

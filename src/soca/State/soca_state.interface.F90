@@ -6,6 +6,7 @@
 !> C++ interfaces for soca_state_mod::soca_state
 module soca_state_mod_c
 
+use atlas_module, only: atlas_fieldset, atlas_field, atlas_real, atlas_metadata
 use datetime_mod, only: datetime, c_f_datetime
 use fckit_configuration_module, only: fckit_configuration
 use iso_c_binding
@@ -13,6 +14,7 @@ use kinds, only: kind_real
 use oops_variables_mod, only: oops_variables
 
 ! soca modules
+use soca_fields_mod, only: soca_field
 use soca_geom_mod_c, only: soca_geom_registry
 use soca_geom_mod, only: soca_geom
 use soca_increment_mod, only: soca_increment
@@ -447,4 +449,95 @@ call f_self%update_fields(f_vars)
 
 end subroutine soca_state_update_fields_c
 
+
+! ------------------------------------------------------------------------------
+
+subroutine soca_state_getfieldset_c(c_key_self, c_vars, c_fieldset) &
+    bind (c, name='soca_state_getfieldset_f90')
+  integer(c_int),       intent(in) :: c_key_self
+  type(c_ptr), value,   intent(in) :: c_vars
+  type(c_ptr), value,   intent(in) :: c_fieldset
+
+  type(atlas_fieldset) :: afieldset
+
+  type(soca_state), pointer :: self
+  type(oops_variables)      :: vars
+  real(kind_real),  pointer :: real_ptr(:,:)
+  type(atlas_field) :: afield
+  integer :: v, ngrid, z
+  integer :: is, ie, js, je
+  type(soca_field), pointer :: field
+  real(kind=kind_real),     pointer :: mask(:,:) => null() !< field mask
+  type(atlas_metadata) :: meta
+  real(kind=kind_real), pointer :: real_ptr_1(:), real_ptr_2(:,:)
+
+  call soca_state_registry%get(c_key_self, self)
+  vars = oops_variables(c_vars)
+  afieldset = atlas_fieldset(c_fieldset)
+
+  ! TODO move to field module
+  do v=1,vars%nvars()
+    call self%get(vars%variable(v), field)
+
+    ! make sure halos are updated
+    ! TODO move this elsewhere? Its probably redundant
+    call field%update_halo(self%geom)
+
+    ! TODO reduntant with code in geom, consolidate
+
+    ! which mask to use
+    select case(field%metadata%grid)
+    case ('h')
+      mask => self%geom%mask2d
+    case ('u')
+      mask => self%geom%mask2du
+    case ('v')
+      mask => self%geom%mask2dv
+    case default
+      call abor1_ftn('incorrect grid type:soca_state_getfieldset_c')
+    end select
+
+    ! start/stop idx, assuming halo
+    is = self%geom%isd; ie = self%geom%ied
+    js = self%geom%jsd; je = self%geom%jed
+
+    ! count number of valid tasks
+    if  (field%metadata%masked) then
+      ngrid = count(mask(is:ie, js:je) /= 0)
+    else
+      ngrid = (ie - is + 1) * (je - js + 1)
+    end if
+
+    ! create and fill field
+    if (field%nz > 1) then
+      afield = atlas_field(name=vars%variable(v), kind=atlas_real(kind_real), shape=(/field%nz, ngrid/))
+      call afield%set_levels(field%nz)
+      call afield%data(real_ptr_2)
+      do z=1,field%nz
+        if (field%metadata%masked) then
+          real_ptr_2(z,:) = pack(field%val(is:ie, js:je, z), mask=mask/=0)
+        else
+          real_ptr_2(z,:) = pack(field%val(is:ie, js:je, z), mask=.true.)
+        end if
+      end do
+    else
+      afield = atlas_field(name=vars%variable(v), kind=atlas_real(kind_real), shape=(/ngrid/))
+      call afield%data(real_ptr_1)
+      if (field%metadata%masked) then
+        real_ptr_1(:) = pack(field%val(is:ie, js:je, 1), mask=mask/=0)
+      else
+        real_ptr_1(:) = pack(field%val(is:ie, js:je, 1), mask=.true.)
+      end if
+    end if
+    meta = afield%metadata()
+    call meta%set('interp_type', 'default')
+    call afieldset%add(afield)
+
+
+  end do
+
+end subroutine
+
+
 end module soca_state_mod_c
+

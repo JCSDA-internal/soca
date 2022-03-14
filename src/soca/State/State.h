@@ -98,6 +98,8 @@ namespace soca {
       void zero();
       void accumul(const double &, const State &);
 
+      void getFieldSet(const oops::Variables &, atlas::FieldSet &) const;
+
    private:
       void print(std::ostream &) const override;
 

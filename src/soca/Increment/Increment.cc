@@ -30,6 +30,8 @@
 #include "ufo/GeoVaLs.h"
 #include "ufo/Locations.h"
 
+#include "oops/util/abor1_cpp.h"
+
 using oops::Log;
 
 namespace soca {
@@ -368,6 +370,14 @@ namespace soca {
 
   std::shared_ptr<const Geometry> Increment::geometry() const {
     return geom_;
+  }
+
+  void Increment::getFieldSet(const oops::Variables &, atlas::FieldSet &) const {
+    util::abor1_cpp("Not yet implemented: Increment::getFieldSet");
+  }
+
+  void Increment::getFieldSetAD(const oops::Variables &, const atlas::FieldSet &) {
+    util::abor1_cpp("Not yet implemented: Increment::getFieldSetAD");
   }
 
 }  // namespace soca

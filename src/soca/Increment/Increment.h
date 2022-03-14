@@ -122,6 +122,9 @@ namespace soca {
       const oops::Variables & variables() const {return vars_;}
       const util::DateTime & time() const {return time_;}
 
+      void getFieldSet(const oops::Variables &, atlas::FieldSet &) const;
+      void getFieldSetAD(const oops::Variables &, const atlas::FieldSet &);
+
       /// Data
    private:
       void print(std::ostream &) const override;

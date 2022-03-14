@@ -8,6 +8,8 @@
 #include <iomanip>
 #include <vector>
 
+#include "atlas/field.h"
+
 #include "soca/Geometry/Geometry.h"
 #include "soca/Increment/Increment.h"
 #include "soca/State/State.h"
@@ -22,6 +24,8 @@
 
 #include "ufo/GeoVaLs.h"
 #include "ufo/Locations.h"
+
+#include "oops/util/abor1_cpp.h"
 
 using oops::Log;
 
@@ -230,11 +234,22 @@ namespace soca {
   }
 
   // -----------------------------------------------------------------------------
+
   const util::DateTime & State::validTime() const {return time_;}
-  // -----------------------------------------------------------------------------
-  util::DateTime & State::validTime() {return time_;}
-  // -----------------------------------------------------------------------------
-  std::shared_ptr<const Geometry> State::geometry() const {return geom_;}
+
   // -----------------------------------------------------------------------------
 
+  util::DateTime & State::validTime() {return time_;}
+
+  // -----------------------------------------------------------------------------
+
+  std::shared_ptr<const Geometry> State::geometry() const {return geom_;}
+
+  // -----------------------------------------------------------------------------
+
+
+  void State::getFieldSet(const oops::Variables &vars, atlas::FieldSet &fset) const {
+    // get field, with halo, and no masked values
+    soca_state_getfieldset_f90(toFortran(), vars, fset.get());
+  }
 }  // namespace soca
