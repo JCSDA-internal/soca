@@ -225,12 +225,11 @@ subroutine soca_getvalues_fillgeovals(self, geom, fld, t1, t2, locs, geovals)
 
   ! Allocate temporary geoval and 3d field for the current time window
   do ivar = 1, geovals%nvar
+    ! NOTE: cannot simply exit if nlocs == 0 because
+    ! of the MPI communications inside the interp calls
 
     call fld%get(geovals%variables(ivar), fldptr)
     nval = fldptr%nz
-
-    ! Return if no observations
-    if ( geovals%geovals(ivar)%nlocs == 0 ) return
 
     allocate(gom_window(locs%nlocs()))
     allocate(fld3d(isc:iec,jsc:jec,1:nval))
