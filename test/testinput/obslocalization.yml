@@ -9,7 +9,8 @@ window end: 2018-04-16T00:00:00Z
 observations:
 - obs space:
     name: 'BoxCar'
-    distribution: InefficientDistribution
+    distribution:
+      name: InefficientDistribution
     simulated variables: ['sea_surface_temperature']
     obsdatain:  {obsfile: ./Data/sst.nc}
   obs localizations:
@@ -24,7 +25,8 @@ observations:
 
 - obs space:
     name: 'GC99'
-    distribution: InefficientDistribution
+    distribution:
+      name: InefficientDistribution
     simulated variables: ['sea_surface_temperature']
     obsdatain:  {obsfile: ./Data/sst.nc}
   obs localizations:
@@ -39,7 +41,8 @@ observations:
 
 - obs space:
     name: 'SOAR'
-    distribution: InefficientDistribution
+    distribution:
+      name: InefficientDistribution
     simulated variables: ['sea_surface_temperature']
     obsdatain:  {obsfile: ./Data/sst.nc}
   obs localizations:
@@ -55,7 +58,8 @@ observations:
 
 - obs space:
     name: 'Rossby'
-    distribution: InefficientDistribution
+    distribution:
+      name: InefficientDistribution
     simulated variables: ['sea_surface_temperature']
     obsdatain:  {obsfile: ./Data/sst.nc}
   obs localizations:
