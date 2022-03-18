@@ -79,7 +79,7 @@ void LocalUnstructuredInterpolator::apply(
 
     // interpolate
     std::vector<double> var_locvals;
-    interp_[interp_idx]->apply(fset, var_locvals);
+    interp_[interp_idx]->apply(var, fset, var_locvals);
     locvals.insert(locvals.end(), var_locvals.begin(), var_locvals.end());
   }
 

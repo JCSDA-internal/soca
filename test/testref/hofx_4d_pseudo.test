@@ -15,9 +15,9 @@ Test     :    hocn   min=    0.000918   max= 1346.580347   mean=  128.628088
 Test     :    uocn   min=   -0.849612   max=    0.689067   mean=    0.000032
 Test     :    vocn   min=   -0.932158   max=    0.946733   mean=    0.001614
 Test     : H(x): 
-Test     : SeaSurfaceTemp nobs= 21 Min=5.777693, Max=29.776166, RMS=26.104333
-Test     : SeaSurfaceSalinity nobs= 9 Min=33.357193, Max=35.661479, RMS=34.493102
-Test     : ADT nobs= 14 Min=-0.712906, Max=1.495735, RMS=1.001830
-Test     : InsituTemperature nobs= 10 Min=8.008778, Max=30.371020, RMS=23.734841
-Test     : InsituSalinity nobs= 10 Min=34.160120, Max=35.701601, RMS=35.027002
+Test     : SeaSurfaceTemp nobs= 21 Min=5.830970, Max=29.737819, RMS=26.157746
+Test     : SeaSurfaceSalinity nobs= 9 Min=33.274382, Max=35.741067, RMS=34.465099
+Test     : ADT nobs= 14 Min=-0.662538, Max=1.520400, RMS=1.005026
+Test     : InsituTemperature nobs= 10 Min=8.043401, Max=30.252909, RMS=23.727162
+Test     : InsituSalinity nobs= 10 Min=34.171054, Max=35.707902, RMS=35.056862
 Test     : End H(x)
