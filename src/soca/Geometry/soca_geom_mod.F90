@@ -171,10 +171,13 @@ subroutine soca_geom_init(self, f_conf, f_comm)
   character(len=:), allocatable :: str
   logical :: full_init = .false.
 
+  write(6,*) "HEY!!! in soca_geom_init"
   ! MPI communicator
   self%f_comm = f_comm
 
   ! Domain decomposition
+  
+  write(6,*) "HEY!!! in soca_geom_init 1"
   call soca_geomdomain_init(self%Domain, self%nzo, f_comm)
 
   ! User-defined grid filename
@@ -182,6 +185,7 @@ subroutine soca_geom_init(self, f_conf, f_comm)
      self%geom_grid_file = "soca_gridspec.nc" ! default if not found
 
   ! Allocate geometry arrays
+  write(6,*) "HEY!!! in soca_geom_init 2"
   call soca_geom_allocate(self)
 
   ! Check if a full initialization is required, default to false
@@ -189,9 +193,11 @@ subroutine soca_geom_init(self, f_conf, f_comm)
 
   ! Read the geometry from file by default,
   ! skip this step if a full init is required
+  write(6,*) "HEY!!! in soca_geom_init 3"
   if ( .not. full_init) call soca_geom_read(self)
 
   ! Fill halo
+  write(6,*) "HEY!!! in soca_geom_init 4"
   call mpp_update_domains(self%lon, self%Domain%mpp_domain)
   call mpp_update_domains(self%lat, self%Domain%mpp_domain)
   call mpp_update_domains(self%lonu, self%Domain%mpp_domain)
@@ -218,7 +224,6 @@ subroutine soca_geom_init(self, f_conf, f_comm)
   ! retrieve iterator dimension from config
   if ( .not. f_conf%get("iterator dimension", self%iterator_dimension) ) &
       self%iterator_dimension = 2
-
 end subroutine soca_geom_init
 
 ! ------------------------------------------------------------------------------

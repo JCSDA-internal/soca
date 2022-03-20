@@ -141,29 +141,9 @@ contains
     ! Note--only certain fields are available. Check in GFS_surface_generic to see if they are filled
     call NUOPC_Advertise(self%toJedi, &
          StandardNames=(/ &
-                        "u                                    ", &   ! Example fields
-                        "v                                    ", &   ! Example fields
-                        "ua                                   ", &   ! Example fields
-                        "va                                   ", &   ! Example fields
-                        "t                                    ", &   ! Example fields
-                        "delp                                 ", &   ! Example fields
-                        "sphum                                ", &   ! Example fields
-                        "ice_wat                              ", &   ! Example fields
-                        "liq_wat                              ", &   ! Example fields
-                        "o3mr                                 ", &   ! Example fields
-                        "phis                                 ", &   ! Example fields
-                        "slmsk                                ", &   ! Example fields
-                        "weasd                                ", &   ! Example fields
-                        "tsea                                 ", &   ! Example fields
-                        "vtype                                ", &   ! Example fields
-                        "stype                                ", &   ! Example fields
-                        "vfrac                                ", &   ! Example fields
-                        "stc                                  ", &   ! Example fields
-                        "smc                                  ", &   ! Example fields
-                        "snwdph                               ", &   ! Example fields
-                        "u_srf                                ", &   ! Example fields
-                        "v_srf                                ", &   ! Example fields
-                        "f10m                                 "/), &   ! Example fields
+                        "So_h                                 ", &   ! Example fields
+                        "Si_ifrac                             ", &   ! Example fields
+                        "Si_tref                              "/), &   ! Example fields
          SharePolicyField="share", &
          TransferOfferGeomObject="cannot provide", rc=rc)
     esmf_err_abort(rc)
@@ -218,6 +198,8 @@ contains
          phaseLabel=label_ExternalAdvertise, phaseIndex=phase, rc=rc)
     esmf_err_abort(rc)
 
+    call ESMF_LogWrite("done with CompSearchPhaseMap ", &
+         ESMF_LOGMSG_INFO)
 
     call ESMF_GridCompInitialize(self%esmComp, phase=phase, &
          importState=self%fromJedi, exportState=self%toJedi, &
@@ -225,6 +207,8 @@ contains
     esmf_err_abort(rc)
     esmf_err_abort(urc)
 
+    call ESMF_LogWrite("done with GridCompInitialize ", &
+         ESMF_LOGMSG_INFO)
 
     call ESMF_StateGet(self%toJedi, itemCount=cnt, rc=rc)
     esmf_err_abort(rc)

@@ -10,7 +10,15 @@ ecbuild_add_executable( TARGET  test_soca_model.x
 
 ecbuild_add_executable( TARGET  soca_forecast.x
                         SOURCES Forecast.cc
-                        LIBS    ${mylibs}
+                        LIBS    
+                         soca
+                         cdeps
+                         cmeps
+                         piof
+                         pioc
+                         stochastic_physics
+                         cice
+                         esmf
                       )
 
 ecbuild_add_executable( TARGET  soca_hofx3d.x
