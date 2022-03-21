@@ -93,6 +93,11 @@ namespace soca {
     void soca_increment_horiz_scales_f90(F90flds &,
                                          const eckit::Configuration * const &);
     void soca_increment_vert_scales_f90(F90flds &, const double);
+    void soca_increment_getfieldset_f90(const F90flds &, const oops::Variables &,
+         atlas::field::FieldSetImpl *);
+    void soca_increment_getfieldset_ad_f90(const F90flds &, const oops::Variables &,
+         const atlas::field::FieldSetImpl *);
+
   }
 }  // namespace soca
 #endif  // SOCA_INCREMENT_INCREMENTFORTRAN_H_

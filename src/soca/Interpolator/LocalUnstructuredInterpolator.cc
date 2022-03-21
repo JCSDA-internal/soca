@@ -4,6 +4,7 @@
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
+#include <numeric>
 
 #include "eckit/config/Configuration.h"
 #include "oops/base/Variables.h"
@@ -85,21 +86,80 @@ void LocalUnstructuredInterpolator::apply(
 
   oops::Log::trace() << "LocalUnstructuredInterpolator::apply STATE done" << std::endl;
 
-  }
+}
 
 // ------------------------------------------------------------------------------
 
 void LocalUnstructuredInterpolator::
-  apply(const oops::Variables & vars, const Increment & dx, std::vector<double> & locvals) const {
-    util::abor1_cpp("not implemented: LocalUnstructuredInterpolator::apply(2)");
+apply(const oops::Variables & vars, const Increment & dx, std::vector<double> & locvals) const {
+
+  oops::Log::trace() << "LocalUnstructuredInterpolator::apply Increment start" << std::endl;
+  locvals.clear();
+
+  for (int i =0; i < vars.size(); i++) {
+    // determine which interpolator to use
+    char grid;
+    bool masked;
+    geom_->getVarGrid(vars[i], grid, masked);
+    int interp_idx = -1;
+    for (int j=0; j < grids.size(); j++) {
+      if (grids[j] == grid) interp_idx = j*2;
+    }
+    if (masked) interp_idx += 1;
+
+    // get a single variable
+    oops::Variables var;
+    var.push_back(vars[i]);
+    atlas::FieldSet fset;
+    dx.getFieldSet(var, fset);
+
+    // interpolate
+    std::vector<double> var_locvals;
+    interp_[interp_idx]->apply(var, fset, var_locvals);
+    locvals.insert(locvals.end(), var_locvals.begin(), var_locvals.end());
   }
+
+  oops::Log::trace() << "LocalUnstructuredInterpolator::apply Increment done" << std::endl;
+}
 
 // ------------------------------------------------------------------------------
 
 void LocalUnstructuredInterpolator::
-  applyAD(const oops::Variables & vars, Increment & dx, const std::vector<double> & locvals) const {
-    util::abor1_cpp("not implemented: LocalUnstructuredInterpolator::applyAD()");
+    applyAD(const oops::Variables & vars, Increment & dx, const std::vector<double> & locvals) const {
+  oops::Log::trace() << "LocalUnstructuredInterpolator::applyAD start" << std::endl;
+
+  int stride = locvals.size() / vars.size();
+
+  Increment dz(dx);
+
+  for (int i =0; i < vars.size(); i++) {
+    // determine which interpolator to use
+    char grid;
+    bool masked;
+    geom_->getVarGrid(vars[i], grid, masked);
+    int interp_idx = -1;
+    for (int j=0; j < grids.size(); j++) {
+      if (grids[j] == grid) interp_idx = j*2;
+    }
+    if (masked) interp_idx += 1;
+
+    // get a single variable
+    oops::Variables var;
+    var.push_back(vars[i]);
+
+    // TODO innefficient
+    dz.zero();
+    atlas::FieldSet fset;
+    dz.getFieldSet(var, fset);
+
+    // interpolate
+    const std::vector<double> var_locvals{locvals.begin() + stride*i,
+                                          locvals.begin() + stride*(i+1)};
+    interp_[interp_idx]->applyAD(var, fset, var_locvals);
+    dx.getFieldSetAD(var, fset, false);
+
   }
+}
 
 // ------------------------------------------------------------------------------
 

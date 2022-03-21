@@ -372,12 +372,19 @@ namespace soca {
     return geom_;
   }
 
-  void Increment::getFieldSet(const oops::Variables &, atlas::FieldSet &) const {
-    util::abor1_cpp("Not yet implemented: Increment::getFieldSet");
+  // -----------------------------------------------------------------------------
+
+  void Increment::getFieldSet(const oops::Variables &vars, atlas::FieldSet &fset) const {
+    // get field, with halo, and no masked values
+    soca_increment_getfieldset_f90(toFortran(), vars, fset.get());
   }
 
-  void Increment::getFieldSetAD(const oops::Variables &, const atlas::FieldSet &) {
-    util::abor1_cpp("Not yet implemented: Increment::getFieldSetAD");
+  // -----------------------------------------------------------------------------
+
+  void Increment::getFieldSetAD(const oops::Variables &vars, const atlas::FieldSet &fset, bool skip) {
+    if (skip) return;
+
+    soca_increment_getfieldset_ad_f90(toFortran(), vars, fset.get());
   }
 
 }  // namespace soca

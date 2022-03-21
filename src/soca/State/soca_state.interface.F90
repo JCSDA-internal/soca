@@ -463,79 +463,12 @@ subroutine soca_state_getfieldset_c(c_key_self, c_vars, c_fieldset) &
   type(soca_state), pointer :: self
   type(oops_variables)      :: vars
   real(kind_real),  pointer :: real_ptr(:,:)
-  type(atlas_field) :: afield
-  integer :: v, ngrid, z
-  integer :: is, ie, js, je
-  type(soca_field), pointer :: field
-  real(kind=kind_real),     pointer :: mask(:,:) => null() !< field mask
-  type(atlas_metadata) :: meta
-  real(kind=kind_real), pointer :: real_ptr_1(:), real_ptr_2(:,:)
 
   call soca_state_registry%get(c_key_self, self)
   vars = oops_variables(c_vars)
   afieldset = atlas_fieldset(c_fieldset)
 
-  ! TODO move to field module
-  do v=1,vars%nvars()
-    call self%get(vars%variable(v), field)
-
-    ! make sure halos are updated
-    ! TODO move this elsewhere? Its probably redundant
-    call field%update_halo(self%geom)
-
-    ! TODO reduntant with code in geom, consolidate
-
-    ! which mask to use
-    select case(field%metadata%grid)
-    case ('h')
-      mask => self%geom%mask2d
-    case ('u')
-      mask => self%geom%mask2du
-    case ('v')
-      mask => self%geom%mask2dv
-    case default
-      call abor1_ftn('incorrect grid type:soca_state_getfieldset_c')
-    end select
-
-    ! start/stop idx, assuming halo
-    is = self%geom%isd; ie = self%geom%ied
-    js = self%geom%jsd; je = self%geom%jed
-
-    ! count number of valid tasks
-    if  (field%metadata%masked) then
-      ngrid = count(mask(is:ie, js:je) /= 0)
-    else
-      ngrid = (ie - is + 1) * (je - js + 1)
-    end if
-
-    ! create and fill field
-    if (field%nz > 1) then
-      afield = atlas_field(name=vars%variable(v), kind=atlas_real(kind_real), shape=(/field%nz, ngrid/))
-      call afield%set_levels(field%nz)
-      call afield%data(real_ptr_2)
-      do z=1,field%nz
-        if (field%metadata%masked) then
-          real_ptr_2(z,:) = pack(field%val(is:ie, js:je, z), mask=mask/=0)
-        else
-          real_ptr_2(z,:) = pack(field%val(is:ie, js:je, z), mask=.true.)
-        end if
-      end do
-    else
-      afield = atlas_field(name=vars%variable(v), kind=atlas_real(kind_real), shape=(/ngrid/))
-      call afield%data(real_ptr_1)
-      if (field%metadata%masked) then
-        real_ptr_1(:) = pack(field%val(is:ie, js:je, 1), mask=mask/=0)
-      else
-        real_ptr_1(:) = pack(field%val(is:ie, js:je, 1), mask=.true.)
-      end if
-    end if
-    meta = afield%metadata()
-    call meta%set('interp_type', 'default')
-    call afieldset%add(afield)
-
-
-  end do
-
+  call self%get_fieldset(vars, afieldset)
 end subroutine
 
 
