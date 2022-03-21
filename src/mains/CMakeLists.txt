@@ -78,10 +78,10 @@ ecbuild_add_executable( TARGET  soca_hybridgain.x
                         LIBS   ${mylibs}
                       )
 
-ecbuild_add_executable( TARGET  soca_checkpoint_model.x
-                        SOURCES CheckpointModel.cc
-                        LIBS   ${mylibs}
-                      )
+#ecbuild_add_executable( TARGET  soca_checkpoint_model.x
+#                        SOURCES CheckpointModel.cc
+#                        LIBS   ${mylibs}
+#                      )
 
 ecbuild_add_executable( TARGET  soca_gridgen.x
                         SOURCES GridGen.cc

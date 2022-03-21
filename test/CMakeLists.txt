@@ -813,8 +813,8 @@ soca_add_test( NAME letkf_solver
                LIBS soca stochastic_physics ccpp fv3atm esmf)
 
 # restart checkpointing
-soca_add_test( NAME checkpointmodel
-               EXE  soca_checkpoint_model.x
-               NOTRAPFPE
-               TEST_DEPENDS test_soca_3dvar_godas
-               LIBS soca stochastic_physics ccpp fv3atm esmf)
+#soca_add_test( NAME checkpointmodel
+#               EXE  soca_checkpoint_model.x
+#               NOTRAPFPE
+#               TEST_DEPENDS test_soca_3dvar_godas
+#               LIBS soca stochastic_physics ccpp fv3atm esmf)
