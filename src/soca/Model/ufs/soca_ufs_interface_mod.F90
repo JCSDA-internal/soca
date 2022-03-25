@@ -61,7 +61,7 @@ call soca_ufs_registry%get(c_key_self, self)
 f_conf = fckit_configuration(c_conf)
 
 call self%create(f_conf, geom)
-
+write(6,*) 'done with create in interface'
 end subroutine c_soca_ufs_create
 
 ! --------------------------------------------------------------------------------------------------
@@ -91,7 +91,7 @@ type(c_ptr),    intent(in) :: c_dt        !< DateTime
 type(model_ufs),     pointer :: self
 type(soca_state), pointer :: state
 type(datetime) :: fdate
-
+write(6,*) 'starting interface initialize'
 call soca_state_registry%get(c_key_state,state)
 call soca_ufs_registry%get(c_key_self, self)
 

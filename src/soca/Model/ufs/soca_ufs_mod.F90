@@ -139,16 +139,18 @@ contains
     call ESMF_LogWrite("Advertising export from ESM", ESMF_LOGMSG_INFO)
     ! Advertise fields on the exportState, for data coming out of ESM component
     ! Note--only certain fields are available. Check in GFS_surface_generic to see if they are filled
+#if 1
     call NUOPC_Advertise(self%toJedi, &
          StandardNames=(/ &
-                        "So_h                                 ", &   ! Example fields
-                        "Si_ifrac                             ", &   ! Example fields
-                        "Si_tref                              "/), &   ! Example fields
+                        "So_h                                 "/), &   ! Example fields
+         !              "So_h                                 ", &   ! Example fields
+         !              "Si_ifrac                             ", &   ! Example fields
+         !              "Si_tref                              "/), &   ! Example fields
          SharePolicyField="share", &
          TransferOfferGeomObject="cannot provide", rc=rc)
     esmf_err_abort(rc)
 
-
+#endif
     call ESMF_LogWrite("Advertising imports to ESM", ESMF_LOGMSG_INFO)
     ! Advertise fields on the importState, for data going into ESM componenta
 
@@ -357,7 +359,7 @@ contains
     call ESMF_LogWrite("after step toJedi state with "//trim(msg)//" items", &
          ESMF_LOGMSG_INFO)
     write(fileName, '("fields_in_esm_import_step",I2.2,".nc")') tstep
-    call fv3_to_state(self, state)
+!   call fv3_to_state(self, state)
     call ESMF_LogWrite("after state write "//trim(msg)//" rc", &
          ESMF_LOGMSG_INFO)
 

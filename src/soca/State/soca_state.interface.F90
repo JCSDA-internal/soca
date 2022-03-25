@@ -149,8 +149,11 @@ subroutine soca_state_read_file_c(c_key_fld, c_conf, c_dt) bind(c,name='soca_sta
     type(soca_state), pointer :: fld
     type(datetime)            :: fdate
 
+    write(6,*) 'calling state registry'
     call soca_state_registry%get(c_key_fld,fld)
+    write(6,*) 'calling datetime'
     call c_f_datetime(c_dt, fdate)
+    write(6,*) 'calling fld read'
     call fld%read(fckit_configuration(c_conf), fdate)
 
 end subroutine soca_state_read_file_c

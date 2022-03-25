@@ -500,7 +500,9 @@ subroutine soca_fields_get(self, name, field)
   integer :: i
 
   ! find the field with the given name
+  write(6,*) 'size of fields is ',size(self%fields)
   do i=1,size(self%fields)
+    write(6,*) 'name of field ',i,' is ',trim(self%fields(i)%name)
     if (trim(name) == self%fields(i)%name) then
       field => self%fields(i)
       return
