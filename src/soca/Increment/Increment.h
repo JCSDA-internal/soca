@@ -123,7 +123,7 @@ namespace soca {
       const util::DateTime & time() const {return time_;}
 
       /// methods used by the interpolation
-      /// these differe from the above ATLAS ones in that they include halo
+      /// these differ from the above ATLAS ones in that they include halo
       /// and do not include masked gridcells
       void getFieldSet(const oops::Variables &, atlas::FieldSet &) const;
       void getFieldSetAD(const oops::Variables &, const atlas::FieldSet &, bool skip=true);

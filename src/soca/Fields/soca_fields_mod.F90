@@ -32,7 +32,7 @@ use horiz_interp_spherical_mod, only : horiz_interp_spherical, horiz_interp_sphe
                                        horiz_interp_spherical_new
 use MOM_remapping, only : remapping_CS, initialize_remapping, remapping_core_h, &
                           end_remapping
-use mpp_domains_mod, only : mpp_update_domains,  mpp_update_domains_ad
+use mpp_domains_mod, only : mpp_update_domains, mpp_update_domains_ad
 
 ! SOCA modules
 use soca_fields_metadata_mod, only : soca_field_metadata
@@ -220,8 +220,16 @@ contains
   !> \copybrief soca_fields_update_fields \see soca_fields_update_fields
   procedure :: update_fields => soca_fields_update_fields
 
+  !> \name getter/setter needed for interpolation
+  !! \{
+
+  !> copybrief soca_fields_get_fieldset \see soca_fields_get_fieldset
   procedure :: get_fieldset  => soca_fields_get_fieldset
+
+  !> copybrief soca_fields_get_fieldset_ad \see soca_fields_get_fieldset_ad
   procedure :: get_fieldset_ad  => soca_fields_get_fieldset_ad
+
+  !> \}
 
 end type soca_fields
 
@@ -1457,7 +1465,10 @@ function soca_genfilename (f_conf,length,vdate,domain_type)
 end function soca_genfilename
 
 ! ------------------------------------------------------------------------------
-
+!> Get the fields listed in vars, used by the interpolation.
+!!
+!! The fields that are returned 1) have halos and 2) have had the masked points
+!! removed.
 subroutine soca_fields_get_fieldset(self, vars, afieldset)
   class(soca_fields),   intent(in)    :: self
   type(oops_variables), intent(in)    :: vars
@@ -1474,11 +1485,8 @@ subroutine soca_fields_get_fieldset(self, vars, afieldset)
   do v=1,vars%nvars()
     call self%get(vars%variable(v), field)
 
-    ! make sure halos are updated
-    ! TODO move this elsewhere? Its probably redundant
+    ! make sure halos are updated (remove? is redundant?)
     call field%update_halo(self%geom)
-
-    ! TODO reduntant with code in geom, consolidate
 
     ! which mask to use
     select case(field%metadata%grid)
@@ -1531,7 +1539,10 @@ subroutine soca_fields_get_fieldset(self, vars, afieldset)
 end subroutine
 
 ! ------------------------------------------------------------------------------
-
+!> Adjoint of get fields used by the interpolation.
+!!
+!! The fields that are input 1) have halos and 2) have had the masked points
+!! removed.
 subroutine soca_fields_get_fieldset_ad(self, vars, afieldset)
   class(soca_fields),   intent(in)    :: self
   type(oops_variables), intent(in)    :: vars

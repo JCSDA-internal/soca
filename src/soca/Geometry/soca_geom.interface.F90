@@ -213,15 +213,15 @@ subroutine soca_geo_get_num_levels_c(c_key_self, c_vars, c_levels_size, c_levels
   end do
 end subroutine soca_geo_get_num_levels_c
 
-
 ! ------------------------------------------------------------------------------
-!> Get the number of points valid in the local grid.
+!> Get the number of points valid in the local grid (skipping masked points)
 subroutine soca_geo_gridsize_c(c_key_self, c_grid, c_masked, c_halo, c_size) &
            bind(c, name='soca_geo_gridsize_f90')
   integer(c_int),    intent(in) :: c_key_self
-  character(c_char), intent(in) :: c_grid
-  logical(c_bool),   intent(in) :: c_masked, c_halo
-  integer(c_int),    intent(out) :: c_size
+  character(c_char), intent(in) :: c_grid    !< u/v/h  for the corresponding grid
+  logical(c_bool),   intent(in) :: c_masked  !< true if using a masked grid
+  logical(c_bool),   intent(in) :: c_halo    !< true if halo should be included in number of points
+  integer(c_int),    intent(out):: c_size    !< the resulting number of gridpoints
 
   type(soca_geom), pointer :: self
   real(kind=kind_real),     pointer :: mask(:,:) => null() !< field mask
@@ -268,6 +268,7 @@ end subroutine soca_geo_gridsize_c
 
 
 ! ------------------------------------------------------------------------------
+!> Get the lat/lons for a specific grid (u/v/h)
 subroutine soca_geo_gridlatlon_c(c_key_self, c_grid, c_masked, c_halo, c_size, &
     c_lat, c_lon) bind(c, name='soca_geo_gridlatlon_f90')
 
@@ -322,6 +323,7 @@ subroutine soca_geo_gridlatlon_c(c_key_self, c_grid, c_masked, c_halo, c_size, &
 end subroutine
 
 ! ------------------------------------------------------------------------------
+!> Get the grid (u/v/h) that a given variable belongs on
 subroutine soca_geo_getvargrid_c(c_key_self, c_vars, c_grid, c_masked) &
   bind(c, name="soca_geo_getvargrid_f90")
 integer(c_int),     intent(in)  :: c_key_self
@@ -341,7 +343,6 @@ vars = oops_variables(c_vars)
 if (vars%nvars() /= 1) then
   call abor1_ftn('error in soca_geo_getvargrid_c. Wrong number of vars')
 end if
-
 var_name = trim(vars%variable(1))
 metadata = self%fields_metadata%get(var_name)
 c_grid = metadata%grid

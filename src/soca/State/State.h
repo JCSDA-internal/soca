@@ -98,6 +98,7 @@ namespace soca {
       void zero();
       void accumul(const double &, const State &);
 
+      /// Interfaces required for OOPS interpolation
       void getFieldSet(const oops::Variables &, atlas::FieldSet &) const;
 
    private:

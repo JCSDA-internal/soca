@@ -451,7 +451,7 @@ end subroutine soca_state_update_fields_c
 
 
 ! ------------------------------------------------------------------------------
-
+!> C++ interface for State version of soca_field_mod::soca_field::get_fieldset_ad()
 subroutine soca_state_getfieldset_c(c_key_self, c_vars, c_fieldset) &
     bind (c, name='soca_state_getfieldset_f90')
   integer(c_int),       intent(in) :: c_key_self
@@ -471,6 +471,4 @@ subroutine soca_state_getfieldset_c(c_key_self, c_vars, c_fieldset) &
   call self%get_fieldset(vars, afieldset)
 end subroutine
 
-
 end module soca_state_mod_c
-

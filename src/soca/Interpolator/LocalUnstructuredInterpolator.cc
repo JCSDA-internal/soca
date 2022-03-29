@@ -28,8 +28,6 @@ LocalUnstructuredInterpolator::
                                 const std::vector<double> & latlon_out)
   : geom_(new Geometry(geom)) {
 
-  // fspace_(grid.atlasFunctionSpaceIncludingHalo())
-
   oops::Log::trace() << "LocalUnstructuredInterpolator::LocalUnstructuredInterpolator start" << std::endl;
 
   // create interpolator for each mask/staggering combination
@@ -85,7 +83,6 @@ void LocalUnstructuredInterpolator::apply(
   }
 
   oops::Log::trace() << "LocalUnstructuredInterpolator::apply STATE done" << std::endl;
-
 }
 
 // ------------------------------------------------------------------------------

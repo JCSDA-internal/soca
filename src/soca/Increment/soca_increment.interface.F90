@@ -669,9 +669,8 @@ subroutine soca_increment_vert_scales_c(c_key_self, c_vert) bind(c,name='soca_in
 
 end subroutine soca_increment_vert_scales_c
 
-
-
 ! ------------------------------------------------------------------------------
+!> C++ interface for Increment version of soca_field_mod::soca_field::get_fieldset()
 subroutine soca_increment_getfieldset_c(c_key_self, c_vars, c_fieldset) &
     bind (c, name='soca_increment_getfieldset_f90')
   integer(c_int),       intent(in) :: c_key_self
@@ -690,7 +689,7 @@ subroutine soca_increment_getfieldset_c(c_key_self, c_vars, c_fieldset) &
 end subroutine
 
 ! ------------------------------------------------------------------------------
-
+!> C++ interface for Increment version of soca_field_mod::soca_field::get_fieldset_ad()
 subroutine soca_increment_getfieldset_ad_c(c_key_self, c_vars, c_fieldset) &
     bind (c, name='soca_increment_getfieldset_ad_f90')
   integer(c_int),       intent(in) :: c_key_self

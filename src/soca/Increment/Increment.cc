@@ -30,8 +30,6 @@
 #include "ufo/GeoVaLs.h"
 #include "ufo/Locations.h"
 
-#include "oops/util/abor1_cpp.h"
-
 using oops::Log;
 
 namespace soca {
@@ -382,6 +380,9 @@ namespace soca {
   // -----------------------------------------------------------------------------
 
   void Increment::getFieldSetAD(const oops::Variables &vars, const atlas::FieldSet &fset, bool skip) {
+    // Note: skip is set to true by default, this is because we need to skip this methods
+    // completely when it is called directly by OOPS. We do NOT skip it when it is called
+    // from our SOCA LocalUnstructuredInterpolator
     if (skip) return;
 
     soca_increment_getfieldset_ad_f90(toFortran(), vars, fset.get());

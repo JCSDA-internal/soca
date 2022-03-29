@@ -14,7 +14,6 @@
 
 #include "soca/Geometry/Geometry.h"
 
-#include "oops/util/abor1_cpp.h"
 // -----------------------------------------------------------------------------
 namespace soca {
   // -----------------------------------------------------------------------------
@@ -115,8 +114,8 @@ namespace soca {
       const bool halo) const {
     // Assume that we can get by with just using the unmasked H grid here (i.e.
     // ignore the different staggered grids)
-    // (This should only be called by code in OOPS used for determining the PE that
-    // owns a specific point.... so it doesn't have to be exact)
+    // (This method should only be called by code in OOPS used for determining the
+    //  PE that owns a specific point.... so it doesn't have to be exact)
     latlon(lats, lons, halo, 'h', false);
   }
   // -----------------------------------------------------------------------------
@@ -134,7 +133,8 @@ namespace soca {
     soca_geo_gridlatlon_f90(keyGeom_, grid, masked, halo, gridSize,
       lats.data(), lons.data());
   }
-
+  // -----------------------------------------------------------------------------
+  // Get the properties of the grid for a given variable (masked and u/v/h grid)
   void Geometry::getVarGrid(const std::string &var, char & grid, bool & masked) const {
       oops::Variables vars;
       vars.push_back(var);

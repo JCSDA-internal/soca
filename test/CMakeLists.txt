@@ -35,7 +35,6 @@ set( soca_test_input
   testinput/geometry.yml
   testinput/geometry_iterator_2d.yml
   testinput/geometry_iterator_3d.yml
-  # testinput/getvalues.yml
   testinput/gridgen.yml
   testinput/gridgen_small.yml
   testinput/hofx_3d.yml
@@ -45,7 +44,6 @@ set( soca_test_input
   testinput/increment.yml
   testinput/letkf_observer.yml
   testinput/letkf_solver.yml
-  # testinput/lineargetvalues.yml
   testinput/linearmodel.yml
   testinput/makeobs.yml
   testinput/model.yml
@@ -515,9 +513,6 @@ soca_add_test( NAME state
                SRC  TestState.cc
                TEST_DEPENDS test_soca_gridgen )
 
-# soca_add_test( NAME getvalues
-#                SRC  TestGetValues.cc
-#                TEST_DEPENDS test_soca_gridgen )
 
 # Test MOM6-solo
 soca_add_test( NAME model
@@ -547,9 +542,6 @@ soca_add_test( NAME increment
                SRC  TestIncrement.cc
                TEST_DEPENDS test_soca_gridgen )
 
-# soca_add_test( NAME lineargetvalues
-#                SRC  TestLinearGetValues.cc
-#                TEST_DEPENDS test_soca_gridgen )
 
 soca_add_test( NAME errorcovariance
                SRC  TestErrorCovariance.cc
