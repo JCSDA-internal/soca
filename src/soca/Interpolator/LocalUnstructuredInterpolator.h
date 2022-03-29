@@ -18,6 +18,7 @@
 
 namespace eckit {
   class Configuration;
+  class LocalConfiguration;
 }
 
 namespace oops {
@@ -46,10 +47,14 @@ class LocalUnstructuredInterpolator : public util::Printable {
   void applyAD(const oops::Variables &, Increment &, const std::vector<double> &) const;
 
  private:
+  const std::shared_ptr<oops::InterpolatorUnstructured> getInterpolator(const std::string &) const;
   void print(std::ostream &) const;
 
-  std::shared_ptr<const Geometry> geom_;
-  std::unique_ptr<oops::InterpolatorUnstructured> interp_[6];
+  mutable std::shared_ptr<oops::InterpolatorUnstructured> interp_[6];
+
+  const std::shared_ptr<const Geometry> geom_;
+  const eckit::LocalConfiguration config_;
+  const std::vector<double> latlon_out_;
 };
 
-}  // namespace oops
+}  // namespace soca

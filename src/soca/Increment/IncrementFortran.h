@@ -97,7 +97,6 @@ namespace soca {
          atlas::field::FieldSetImpl *);
     void soca_increment_getfieldset_ad_f90(const F90flds &, const oops::Variables &,
          const atlas::field::FieldSetImpl *);
-
   }
 }  // namespace soca
 #endif  // SOCA_INCREMENT_INCREMENTFORTRAN_H_

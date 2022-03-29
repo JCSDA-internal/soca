@@ -26,49 +26,26 @@ const std::vector<char> grids{ 'h', 'u', 'v'};
 LocalUnstructuredInterpolator::
   LocalUnstructuredInterpolator(const eckit::Configuration & config, const Geometry & geom,
                                 const std::vector<double> & latlon_out)
-  : geom_(new Geometry(geom)) {
+  : config_(config), latlon_out_(latlon_out), geom_(new Geometry(geom)) {
+  oops::Log::trace() << "LocalUnstructuredInterpolator::LocalUnstructuredInterpolator start"
+                     << std::endl;
 
-  oops::Log::trace() << "LocalUnstructuredInterpolator::LocalUnstructuredInterpolator start" << std::endl;
+  // note: creation of interpolators is posponed to apply / applyad calls
+  // (because we don't know yet here which u/v/h masked/unmaked interpolators are required)
 
-  // create interpolator for each mask/staggering combination
-  // TODO delay until needed to prevent u/v from being created if not used
-  int idx = 0;
-  for (char g: grids ) {
-    // unmasked
-    std::vector<double> lats_in;
-    std::vector<double> lons_in;
-    geom.latlon(lats_in, lons_in, true, g, false);
-    interp_[idx++] = std::make_unique<oops::InterpolatorUnstructured>(config, lats_in, lons_in, latlon_out);
-
-    // masked
-    lats_in.clear();
-    lons_in.clear();
-    geom.latlon(lats_in, lons_in, true, g, true);
-    interp_[idx++] = std::make_unique<oops::InterpolatorUnstructured>(config, lats_in, lons_in, latlon_out);
-  }
-
-  oops::Log::trace() << "LocalUnstructuredInterpolator::LocalUnstructuredInterpolator done" << std::endl;
+  oops::Log::trace() << "LocalUnstructuredInterpolator::LocalUnstructuredInterpolator done"
+                     << std::endl;
   }
 
 // ------------------------------------------------------------------------------
 
-void LocalUnstructuredInterpolator::apply(
-    const oops::Variables & vars, const State & xx, std::vector<double> & locvals )
-    const {
-
+void LocalUnstructuredInterpolator::
+apply(const oops::Variables & vars, const State & xx, std::vector<double> & locvals) const {
   oops::Log::trace() << "LocalUnstructuredInterpolator::apply STATE start" << std::endl;
   locvals.clear();
 
   for (int i =0; i < vars.size(); i++) {
-    // determine which interpolator to use
-    char grid;
-    bool masked;
-    geom_->getVarGrid(vars[i], grid, masked);
-    int interp_idx = -1;
-    for (int j=0; j < grids.size(); j++) {
-      if (grids[j] == grid) interp_idx = j*2;
-    }
-    if (masked) interp_idx += 1;
+    auto interpolator = getInterpolator(vars[i]);
 
     // get a single variable
     oops::Variables var;
@@ -78,7 +55,7 @@ void LocalUnstructuredInterpolator::apply(
 
     // interpolate
     std::vector<double> var_locvals;
-    interp_[interp_idx]->apply(var, fset, var_locvals);
+    interpolator->apply(var, fset, var_locvals);
     locvals.insert(locvals.end(), var_locvals.begin(), var_locvals.end());
   }
 
@@ -89,20 +66,11 @@ void LocalUnstructuredInterpolator::apply(
 
 void LocalUnstructuredInterpolator::
 apply(const oops::Variables & vars, const Increment & dx, std::vector<double> & locvals) const {
-
   oops::Log::trace() << "LocalUnstructuredInterpolator::apply Increment start" << std::endl;
   locvals.clear();
 
   for (int i =0; i < vars.size(); i++) {
-    // determine which interpolator to use
-    char grid;
-    bool masked;
-    geom_->getVarGrid(vars[i], grid, masked);
-    int interp_idx = -1;
-    for (int j=0; j < grids.size(); j++) {
-      if (grids[j] == grid) interp_idx = j*2;
-    }
-    if (masked) interp_idx += 1;
+    auto interpolator = getInterpolator(vars[i]);
 
     // get a single variable
     oops::Variables var;
@@ -112,7 +80,7 @@ apply(const oops::Variables & vars, const Increment & dx, std::vector<double> & 
 
     // interpolate
     std::vector<double> var_locvals;
-    interp_[interp_idx]->apply(var, fset, var_locvals);
+    interpolator->apply(var, fset, var_locvals);
     locvals.insert(locvals.end(), var_locvals.begin(), var_locvals.end());
   }
 
@@ -122,7 +90,7 @@ apply(const oops::Variables & vars, const Increment & dx, std::vector<double> & 
 // ------------------------------------------------------------------------------
 
 void LocalUnstructuredInterpolator::
-    applyAD(const oops::Variables & vars, Increment & dx, const std::vector<double> & locvals) const {
+applyAD(const oops::Variables & vars, Increment & dx, const std::vector<double> & locvals) const {
   oops::Log::trace() << "LocalUnstructuredInterpolator::applyAD start" << std::endl;
 
   int stride = locvals.size() / vars.size();
@@ -130,21 +98,12 @@ void LocalUnstructuredInterpolator::
   Increment dz(dx);
 
   for (int i =0; i < vars.size(); i++) {
-    // determine which interpolator to use
-    char grid;
-    bool masked;
-    geom_->getVarGrid(vars[i], grid, masked);
-    int interp_idx = -1;
-    for (int j=0; j < grids.size(); j++) {
-      if (grids[j] == grid) interp_idx = j*2;
-    }
-    if (masked) interp_idx += 1;
+    auto interpolator = getInterpolator(vars[i]);
 
     // get a single variable
     oops::Variables var;
     var.push_back(vars[i]);
 
-    // TODO innefficient
     dz.zero();
     atlas::FieldSet fset;
     dz.getFieldSet(var, fset);
@@ -152,16 +111,38 @@ void LocalUnstructuredInterpolator::
     // interpolate
     const std::vector<double> var_locvals{locvals.begin() + stride*i,
                                           locvals.begin() + stride*(i+1)};
-    interp_[interp_idx]->applyAD(var, fset, var_locvals);
+    interpolator->applyAD(var, fset, var_locvals);
     dx.getFieldSetAD(var, fset, false);
-
   }
 }
 
 // ------------------------------------------------------------------------------
+const std::shared_ptr<oops::InterpolatorUnstructured>
+LocalUnstructuredInterpolator::getInterpolator(const std::string &var) const {
+  // determine which interpolator to use
+  char grid;
+  bool masked;
+  geom_->getVarGrid(var, grid, masked);
+  int interp_idx = -1;
+  for (int j=0; j < grids.size(); j++) {
+    if (grids[j] == grid) interp_idx = j*2;
+  }
+  if (masked) interp_idx += 1;
+
+  // does the interpolator need to be created? (if it hasn't already yet)
+  if (interp_[interp_idx].get() == nullptr) {
+    std::vector<double> lats_in;
+    std::vector<double> lons_in;
+    geom_->latlon(lats_in, lons_in, true, grid, masked);
+    interp_[interp_idx] = std::make_shared<oops::InterpolatorUnstructured>(
+                                          config_, lats_in, lons_in, latlon_out_);
+  }
+
+  // done, return the interpolator
+  return interp_[interp_idx];
+}
 
 void LocalUnstructuredInterpolator::print(std::ostream & os) const {
-
 }
 
-}
+}  // namespace soca

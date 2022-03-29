@@ -120,9 +120,8 @@ namespace soca {
   }
   // -----------------------------------------------------------------------------
   void Geometry::latlon(
-      std::vector<double> & lats, std::vector<double> & lons, const bool halo,
-      const char grid, const bool masked ) const {
-
+        std::vector<double> & lats, std::vector<double> & lons, const bool halo,
+        const char grid, const bool masked) const {
     // get the number of gridpoints
     int gridSize;
     soca_geo_gridsize_f90(keyGeom_, grid, masked, halo, gridSize);
