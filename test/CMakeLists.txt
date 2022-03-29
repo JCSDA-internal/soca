@@ -348,8 +348,9 @@ function(soca_add_test)
     # run the comapre.py script afterwards
     ecbuild_add_test( TARGET  test_soca_${ARG_NAME}
                       TYPE    SCRIPT
-                      COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/test_wrapper.sh"
-                      ARGS    "${CMAKE_BINARY_DIR}/bin/${ARG_EXE}"
+                      COMMAND bash
+                      ARGS    "${CMAKE_CURRENT_SOURCE_DIR}/test_wrapper.sh"
+                              "${CMAKE_BINARY_DIR}/bin/${ARG_EXE}"
                               ${CONFIG_FILE}
                       ENVIRONMENT
                               ${TRAPFPE_ENV}
