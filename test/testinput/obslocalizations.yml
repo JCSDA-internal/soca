@@ -9,7 +9,8 @@ window end: 2018-04-16T00:00:00Z
 observations:
 - obs space:
     name: 'BoxCar'
-    distribution: InefficientDistribution
+    distribution:
+      name: InefficientDistribution
     simulated variables: ['sea_water_temperature']
     obsdatain:  {obsfile: ./Data/prof.nc}
   obs localizations:

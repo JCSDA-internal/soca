@@ -9,7 +9,8 @@ window end: 2018-04-16T00:00:00Z
 observations:
 - obs space:
     name: 'Vertical BoxCar'
-    distribution: InefficientDistribution
+    distribution:
+      name: InefficientDistribution
     simulated variables: ['sea_water_temperature']
     obsdatain:  {obsfile: ./Data/prof.nc}
   obs localizations:
@@ -28,7 +29,8 @@ observations:
 
 - obs space:
     name: 'Vertical Gaspari Cohn'
-    distribution: InefficientDistribution
+    distribution:
+      name: InefficientDistribution
     simulated variables: ['sea_water_temperature']
     obsdatain:  {obsfile: ./Data/prof.nc}
   obs localizations:
@@ -47,7 +49,8 @@ observations:
 
 - obs space:
     name: 'Vertical BoxCar log transform'
-    distribution: InefficientDistribution
+    distribution:
+      name: InefficientDistribution
     simulated variables: ['sea_water_temperature']
     obsdatain:  {obsfile: ./Data/prof.nc}
   obs localizations:
@@ -67,7 +70,8 @@ observations:
 
 - obs space:
     name: 'Vertical BoxCar sst'
-    distribution: InefficientDistribution
+    distribution:
+      name: InefficientDistribution
     simulated variables: ['sea_surface_temperature']
     obsdatain:  {obsfile: ./Data/sst.nc}
   obs localizations:
