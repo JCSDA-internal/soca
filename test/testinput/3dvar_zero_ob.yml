@@ -1,0 +1,82 @@
+# common filters used later on
+_: &land_mask
+  filter: Domain Check
+  where:
+  - variable: {name: sea_area_fraction@GeoVaLs}
+    minvalue: 0.5
+
+cost function:
+  cost type: 3D-Var
+  window begin: 2018-04-14T00:00:00Z
+  window length: P2D
+  analysis variables: &soca_vars [cicen, hicen, hsnon, socn, tocn, ssh, hocn, sw, lhf, shf, lw, us, mld, layer_depth]
+  geometry:
+    mom6_input_nml: ./inputnml/input.nml
+    fields metadata: ./fields_metadata.yml
+
+  background:
+    read_from_file: 1
+    basename: ./INPUT/
+    ocn_filename: MOM.res.nc
+    ice_filename: cice.res.nc
+    sfc_filename: sfc.res.nc
+    date: &bkg_date 2018-04-15T00:00:00Z
+    state variables: *soca_vars
+
+  background error:
+    covariance model: SocaError
+    analysis variables: [cicen, hicen, hsnon, socn, tocn, ssh, sw, lhf, shf, lw, us]
+    date: *bkg_date
+    bump:
+      verbosity: main
+      datadir: ./bump
+      strategy: specific_univariate
+      load_nicas_local: true
+    correlation:
+    - name: ocn
+      variables: [hsnon, socn, tocn, ssh, sw, lhf, shf, lw, us]
+    - name: ice
+      variables: [cicen, hicen]
+
+  observations:
+  - obs space:
+      name: SeaSurfaceTemp
+      obsdataout: {obsfile: ./Data/zero_ob.out.nc}
+      obsdatain:  {obsfile: ./Data/zero_ob.nc}
+      simulated variables: [sea_surface_temperature]
+    obs operator:
+      name: Identity
+    obs error:
+      covariance model: diagonal
+    obs filters:
+    - *land_mask
+
+
+variational:
+  minimizer:
+    algorithm: RPCG
+  iterations:
+  - geometry:
+      mom6_input_nml: ./inputnml/input.nml
+      fields metadata: ./fields_metadata.yml
+    ninner: 5
+    gradient norm reduction: 1e-15
+    test: on
+    diagnostics:
+      departures: ombg
+    online diagnostics:
+      write increment: true
+      increment:
+        datadir: Data
+        date: *bkg_date
+        exp: 3dvargodas.iter1
+        type: incr
+
+output:
+  datadir: Data
+  exp: 3dvargodas
+  type: an
+
+final:
+  diagnostics:
+    departures: oman

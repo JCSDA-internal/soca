@@ -36,7 +36,8 @@ observations:
 
 - obs space:
     name: SeaSurfaceTemp
-    distribution: RoundRobin
+    distribution:
+      name: RoundRobin
     obsdataout: {obsfile: ./Data/sst.letkf.observer.nc}
     obsdatain:  {obsfile: ./Data/sst.nc}
     simulated variables: [sea_surface_temperature]
