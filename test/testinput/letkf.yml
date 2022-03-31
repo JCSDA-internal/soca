@@ -1,0 +1,101 @@
+geometry:
+  mom6_input_nml: ./inputnml/input.nml
+  fields metadata: ./fields_metadata.yml
+
+window begin: &date 2018-04-14T00:00:00Z
+window length: P2D
+
+background:
+  variables: &soca_vars [socn, tocn, ssh, uocn, vocn, hocn, chl, biop]
+  _: &state
+    date: 2018-04-15T00:00:00Z
+    read_from_file: 1
+    basename: ./Data/
+    state variables: *soca_vars
+  members:
+  - <<: *state
+    ocn_filename: ocn.pert.ens.1.2018-04-15T00:00:00Z.PT0S.nc
+  - <<: *state
+    ocn_filename: ocn.pert.ens.2.2018-04-15T00:00:00Z.PT0S.nc
+  - <<: *state
+    ocn_filename: ocn.pert.ens.3.2018-04-15T00:00:00Z.PT0S.nc
+  - <<: *state
+    ocn_filename: ocn.pert.ens.4.2018-04-15T00:00:00Z.PT0S.nc
+  - <<: *state
+    ocn_filename: ocn.pert.ens.5.2018-04-15T00:00:00Z.PT0S.nc
+
+
+# common filters used later on
+_: &land_mask
+  filter: Domain Check
+  where:
+  - variable: {name: sea_area_fraction@GeoVaLs}
+    minvalue: 0.5
+
+observations:
+
+- obs space:
+    name: SeaSurfaceTemp
+    distribution:
+      name: Halo
+      halo size: 5000.0e3
+    obsdataout: {obsfile: ./Data/sst.letkf_halo.nc}
+    obsdatain:  {obsfile: ./Data/sst.nc}
+    simulated variables: [sea_surface_temperature]
+  obs operator:
+    name: Identity
+  obs error:
+    covariance model: diagonal
+  obs localizations:
+  - localization method: Rossby
+    base value: 100.0e3
+    rossby mult: 1.0
+    min grid mult: 2.0
+    min value: 200.0e3
+    max value: 900.0e3
+
+driver:
+  do posterior observer: true
+  save posterior mean increment: true
+  save posterior mean: true
+  save posterior variance: true
+  save prior mean: true
+  save prior variance: true
+  update obs config with geometry info: true
+
+local ensemble DA:
+  solver: LETKF
+  inflation:
+    rtps: 0.5
+    rtpp: 0.6
+    mult: 1.1
+
+output:
+  datadir: Data
+  date: *date
+  exp: letkf_halo
+  type: ens
+
+output mean prior:
+  datadir: Data
+  date: *date
+  exp: letkf_halo
+  type: fc
+
+output variance prior:
+  datadir: Data
+  date: *date
+  exp: letkf_halo.var
+  type: fc
+
+output variance posterior:
+  datadir: Data
+  date: *date
+  exp: letkf_halo.var
+  type: an
+
+output increment:
+  datadir: Data
+  date: *date
+  exp: letkf_halo.inc
+  type: an
