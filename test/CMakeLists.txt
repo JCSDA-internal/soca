@@ -606,12 +606,12 @@ soca_add_test( NAME obslocalization
 
 soca_add_test( NAME obslocalization_vertical
                SRC  TestObsLocalization.cc
-               TEST_DEPENDS test_soca_gridgen
+               TEST_DEPENDS test_soca_gridgen_small
                NOCOMPARE )
 
 soca_add_test( NAME obslocalizations
                SRC  TestObsLocalizations.cc
-               TEST_DEPENDS test_soca_gridgen
+               TEST_DEPENDS test_soca_gridgen_small
                NOCOMPARE )
 
 
