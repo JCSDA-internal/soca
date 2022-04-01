@@ -1,5 +1,6 @@
 geometry:
-  mom6_input_nml: ./inputnml/input.nml
+  geom_grid_file: soca_gridspec.small.nc
+  mom6_input_nml: ./inputnml/input_small.nml
   fields metadata: ./fields_metadata.yml
   iterator dimension: 3
 
@@ -20,10 +21,10 @@ observations:
     ioda vertical coordinate group: MetaData
     localization function: Box Car
     reference gridpoints:
-      lons: [-172.5, -172.5, -172.5, -172.5]
+      lons: [-175.0, -175.0, -175.0, -175.0]
       lats: [ -42.5,  -42.5,   -42.5, -42.5]
-      depths: [0.0, 34.2862955, 182.737966, 1921.40255]
-    reference local nobs: [96, 134, 84, 0]
+      depths: [0.0, 34.2859952, 171.050201, 1905.01085]
+    reference local nobs: [96, 134, 103, 0]
     reference rms: [1.0, 1.0, 1.0, 1.0]
     print iterator: false
 
@@ -40,11 +41,11 @@ observations:
     ioda vertical coordinate group: MetaData
     localization function: Gaspari Cohn
     reference gridpoints:
-      lons: [-172.5, -172.5, -172.5, -172.5]
+      lons: [-175.0, -175.0, -175.0, -175.0]
       lats: [ -42.5,  -42.5,   -42.5, -42.5]
-      depths: [0.0, 34.2862955, 182.737966, 1921.40255]
-    reference local nobs: [96, 134, 84, 0]
-    reference rms: [0.6257, 0.606492, 0.498945, 0]
+      depths: [0.0, 34.2859952, 171.050201, 1905.01085]
+    reference local nobs: [96, 134, 103, 0]
+    reference rms: [0.6257, 0.606492, 0.470246, 0]
     print iterator: false
 
 - obs space:
@@ -61,9 +62,9 @@ observations:
     localization function: Box Car
     apply log transformation: true 
     reference gridpoints:
-      lons: [-172.5, -172.5, -172.5, -172.5]
+      lons: [-175.0, -175.0, -175.0, -175.0]
       lats: [ -42.5,  -42.5,   -42.5, -42.5]
-      depths: [0.0, 34.2862955, 182.737966, 1921.40255]
+      depths: [0.0, 34.2859952, 171.050201, 1905.01085]
     reference local nobs: [218, 218, 218, 218]
     reference rms: [1.0, 1.0, 1.0, 1.0]
     print iterator: false
@@ -81,9 +82,9 @@ observations:
     constant vertical coordinate value: 0.0
     localization function: Box Car
     reference gridpoints:
-      lons: [-172.5, -172.5, -172.5]
+      lons: [-175.0, -175.0, -175.0]
       lats: [ -42.5,  -42.5,   -42.5]
-      depths: [0.0, 34.2862955, 182.737966]
+      depths: [0.0, 34.2859952, 171.050201]
     reference local nobs: [201, 201, 0]
     reference rms: [1.0, 1.0, 1.0]
 

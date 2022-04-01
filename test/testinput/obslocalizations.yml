@@ -1,5 +1,6 @@
 geometry:
-  mom6_input_nml: ./inputnml/input.nml
+  geom_grid_file: soca_gridspec.small.nc
+  mom6_input_nml: ./inputnml/input_small.nml
   fields metadata: ./fields_metadata.yml
   iterator dimension: 3
 
@@ -24,9 +25,10 @@ observations:
 
 observation localizations reference:
     gridpoints:
-      lons: [-192.5, -192.5, -192.5, -192.5, -172.5]
+      lons: [-195.0, -195.0, -195.0, -195.0, -175.0]
       lats: [2.5, 2.5, 2.5, 2.5, 42.5]
-      depths: [0.0, 43.4330647, 171.822792, 1748.51757, 0]
+      depths: [0.0, 41.6250423, 170.7758, 1745.6489, 0]
     local nobs: [22, 32, 32, 0, 0]
     rms: [1.0, 1.0, 1.0, 1.0, 1.0]
+    print iterator: false
  
