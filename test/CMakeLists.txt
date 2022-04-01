@@ -43,8 +43,9 @@ set( soca_test_input
   testinput/hofx_4d_pseudo.yml
   testinput/hybridgain.yml
   testinput/increment.yml
-  testinput/letkf_observer.yml
-  testinput/letkf_solver.yml
+  testinput/letkf_split_observer.yml
+  testinput/letkf_split_solver.yml
+  testinput/letkf.yml
   testinput/lineargetvalues.yml
   testinput/linearmodel.yml
   testinput/makeobs.yml
@@ -109,8 +110,9 @@ set( soca_test_ref
   testref/hofx_4d.test
   testref/hofx_4d_pseudo.test
   testref/hybridgain.test
-  testref/letkf_observer.test
-  testref/letkf_solver.test
+  testref/letkf_split_observer.test
+  testref/letkf_split_solver.test
+  testref/letkf.test
   testref/makeobs.test
   testref/parameters_bump_cor_nicas.test
   testref/parameters_bump_cor_nicas_scales.test
@@ -797,20 +799,27 @@ soca_add_test( NAME 3dhybfgat
 #                TEST_DEPENDS test_soca_static_socaerror_init
 #                             test_soca_parameters_bump_loc )
 
-soca_add_test( NAME letkf_observer
+soca_add_test( NAME letkf
                EXE  soca_letkf.x
                NOTRAPFPE
                TEST_DEPENDS test_soca_enspert )
 
-ecbuild_add_test( TARGET letkf_observer_post
-                  TYPE SCRIPT
-                  COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/letkf_obscat.sh
-                  TEST_DEPENDS letkf_observer)
-
-soca_add_test( NAME letkf_solver
+soca_add_test( NAME letkf_split_observer
                EXE  soca_letkf.x
                NOTRAPFPE
-               TEST_DEPENDS letkf_observer_post )
+               TEST_DEPENDS test_soca_enspert )
+
+ecbuild_add_test( TARGET letkf_split_observer_post
+                  TYPE SCRIPT
+                  COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/letkf_obscat.sh
+                  TEST_DEPENDS letkf_split_observer)
+
+soca_add_test( NAME letkf_split_solver
+               EXE  soca_letkf.x
+               NOTRAPFPE
+               TEST_DEPENDS letkf_split_observer_post )
+
+
 
 # restart checkpointing
 soca_add_test( NAME checkpointmodel
