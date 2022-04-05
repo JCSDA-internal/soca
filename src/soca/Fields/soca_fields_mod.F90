@@ -11,6 +11,8 @@
 !! with a given field is stored in soca_fields_metadata_mod::soca_fields_metadata
 module soca_fields_mod
 
+use atlas_module, only: atlas_fieldset, atlas_field, atlas_real, atlas_metadata
+
 ! JEDI modules
 use datetime_mod, only: datetime, datetime_set, datetime_to_string, &
                         datetime_create, datetime_diff
@@ -30,7 +32,7 @@ use horiz_interp_spherical_mod, only : horiz_interp_spherical, horiz_interp_sphe
                                        horiz_interp_spherical_new
 use MOM_remapping, only : remapping_CS, initialize_remapping, remapping_core_h, &
                           end_remapping
-use mpp_domains_mod, only : mpp_update_domains
+use mpp_domains_mod, only : mpp_update_domains, mpp_update_domains_ad
 
 ! SOCA modules
 use soca_fields_metadata_mod, only : soca_field_metadata
@@ -217,6 +219,17 @@ contains
 
   !> \copybrief soca_fields_update_fields \see soca_fields_update_fields
   procedure :: update_fields => soca_fields_update_fields
+
+  !> \name getter/setter needed for interpolation
+  !! \{
+
+  !> copybrief soca_fields_get_fieldset \see soca_fields_get_fieldset
+  procedure :: get_fieldset  => soca_fields_get_fieldset
+
+  !> copybrief soca_fields_get_fieldset_ad \see soca_fields_get_fieldset_ad
+  procedure :: get_fieldset_ad  => soca_fields_get_fieldset_ad
+
+  !> \}
 
 end type soca_fields
 
@@ -1451,5 +1464,147 @@ function soca_genfilename (f_conf,length,vdate,domain_type)
 
 end function soca_genfilename
 
+! ------------------------------------------------------------------------------
+!> Get the fields listed in vars, used by the interpolation.
+!!
+!! The fields that are returned 1) have halos and 2) have had the masked points
+!! removed.
+subroutine soca_fields_get_fieldset(self, vars, afieldset)
+  class(soca_fields),   intent(in)    :: self
+  type(oops_variables), intent(in)    :: vars
+  type(atlas_fieldset), intent(inout) :: afieldset
+
+  type(atlas_field) :: afield
+  integer :: v, ngrid, z
+  integer :: is, ie, js, je
+  type(soca_field), pointer :: field
+  real(kind=kind_real), pointer :: mask(:,:) => null() !< field mask
+  type(atlas_metadata) :: meta
+  real(kind=kind_real), pointer :: real_ptr_1(:), real_ptr_2(:,:)
+
+  do v=1,vars%nvars()
+    call self%get(vars%variable(v), field)
+
+    ! make sure halos are updated (remove? is redundant?)
+    call field%update_halo(self%geom)
+
+    ! which mask to use
+    select case(field%metadata%grid)
+    case ('h')
+      mask => self%geom%mask2d
+    case ('u')
+      mask => self%geom%mask2du
+    case ('v')
+      mask => self%geom%mask2dv
+    case default
+      call abor1_ftn('incorrect grid type:soca_fields_get_fieldset_c')
+    end select
+
+    ! start/stop idx, assuming halo
+    is = self%geom%isd; ie = self%geom%ied
+    js = self%geom%jsd; je = self%geom%jed
+
+    ! count number of valid tasks
+    if  (field%metadata%masked) then
+      ngrid = count(mask(is:ie, js:je) /= 0)
+    else
+      ngrid = (ie - is + 1) * (je - js + 1)
+    end if
+
+    ! create and fill field
+    if (field%nz > 1) then
+      afield = atlas_field(name=vars%variable(v), kind=atlas_real(kind_real), shape=(/field%nz, ngrid/))
+      call afield%set_levels(field%nz)
+      call afield%data(real_ptr_2)
+      do z=1,field%nz
+        if (field%metadata%masked) then
+          real_ptr_2(z,:) = pack(field%val(is:ie, js:je, z), mask=mask/=0)
+        else
+          real_ptr_2(z,:) = pack(field%val(is:ie, js:je, z), mask=.true.)
+        end if
+      end do
+    else
+      afield = atlas_field(name=vars%variable(v), kind=atlas_real(kind_real), shape=(/ngrid/))
+      call afield%data(real_ptr_1)
+      if (field%metadata%masked) then
+        real_ptr_1(:) = pack(field%val(is:ie, js:je, 1), mask=mask/=0)
+      else
+        real_ptr_1(:) = pack(field%val(is:ie, js:je, 1), mask=.true.)
+      end if
+    end if
+    meta = afield%metadata()
+    call meta%set('interp_type', 'default')
+    call afieldset%add(afield)
+  end do
+end subroutine
+
+! ------------------------------------------------------------------------------
+!> Adjoint of get fields used by the interpolation.
+!!
+!! The fields that are input 1) have halos and 2) have had the masked points
+!! removed.
+subroutine soca_fields_get_fieldset_ad(self, vars, afieldset)
+  class(soca_fields),   intent(in)    :: self
+  type(oops_variables), intent(in)    :: vars
+  type(atlas_fieldset), intent(in) :: afieldset
+
+  integer :: v, z
+  integer :: is, ie, js, je
+  type(soca_field), pointer :: field
+  type(atlas_field) :: afield
+  real(kind=kind_real), pointer :: mask(:,:) => null() !< field mask
+  real(kind=kind_real), pointer :: real_ptr_1(:), real_ptr_2(:,:)
+  real(kind=kind_real), pointer :: tmp_2d(:,:)
+
+  ! start/stop idx, assuming halo
+  is = self%geom%isd; ie = self%geom%ied
+  js = self%geom%jsd; je = self%geom%jed
+
+  allocate(tmp_2d(is:ie, js:je))
+
+  do v=1,vars%nvars()
+    call self%get(vars%variable(v), field)
+    afield = afieldset%field(vars%variable(v))
+
+    ! TODO reduntant with code in geom, consolidate
+
+    ! which mask to use
+    select case(field%metadata%grid)
+    case ('h')
+      mask => self%geom%mask2d
+    case ('u')
+      mask => self%geom%mask2du
+    case ('v')
+      mask => self%geom%mask2dv
+    case default
+      call abor1_ftn('incorrect grid type:soca_fields_get_fieldset_c')
+    end select
+
+    tmp_2d = 0.0
+    if (field%nz > 1) then
+      call afield%data(real_ptr_2)
+      do z=1,field%nz
+        if (field%metadata%masked) then
+          tmp_2d = unpack(real_ptr_2(z,:), mask/=0, tmp_2d)
+        else
+          tmp_2d = reshape(real_ptr_2(z,:), shape(tmp_2d))
+        end if
+        call mpp_update_domains_ad(tmp_2d, self%geom%Domain%mpp_domain, complete=.true.)
+        field%val(is:ie,js:je,z) = field%val(is:ie,js:je,z) + tmp_2d(is:ie, js:je)
+      end do
+    else
+      call afield%data(real_ptr_1)
+      if (field%metadata%masked) then
+        tmp_2d = unpack(real_ptr_1, mask/=0, tmp_2d)
+      else
+        tmp_2d = reshape(real_ptr_1, shape(tmp_2d))
+      end if
+      call mpp_update_domains_ad(tmp_2d, self%geom%Domain%mpp_domain, complete=.true.)
+      field%val(is:ie,js:je,1) = field%val(is:ie,js:je,1) + tmp_2d(is:ie, js:je)
+    end if
+
+    call afield%final()
+  end do
+end subroutine
 
 end module soca_fields_mod
