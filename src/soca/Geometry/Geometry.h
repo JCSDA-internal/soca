@@ -67,6 +67,12 @@ namespace soca {
       atlas::FunctionSpace * atlasFunctionSpace() const;
       atlas::FieldSet * atlasFieldSet() const;
 
+      void latlon(std::vector<double> &, std::vector<double> &, const bool) const;
+      void latlon(std::vector<double> &, std::vector<double> &, const bool,
+                  const char, const bool) const;
+
+      void getVarGrid(const std::string &, char &, bool &) const;
+
    private:
       Geometry & operator=(const Geometry &);
       void print(std::ostream &) const;

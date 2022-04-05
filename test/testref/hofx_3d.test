@@ -16,15 +16,15 @@ Test     :      lw   min=    0.000000   max=   88.036087   mean=   31.395529
 Test     :      us   min=    0.004396   max=    0.019658   mean=    0.008644
 Test     :     chl   min=    0.000010   max=    4.671990   mean=    0.118483
 Test     : H(x): 
-Test     : CoolSkin nobs= 201 Min=-4.375751, Max=25.239587, RMS=20.071725
-Test     : SeaSurfaceTemp nobs= 201 Min=-0.992614, Max=30.649473, RMS=24.170310
-Test     : SeaSurfaceSalinity nobs= 100 Min=31.245713, Max=37.087544, RMS=34.753009
-Test     : ADT nobs= 100 Min=-1.250816, Max=1.421506, RMS=0.757217
-Test     : InsituTemperature nobs= 218 Min=7.832734, Max=30.431111, RMS=21.287619
-Test     : InsituSalinity nobs= 218 Min=34.160244, Max=35.992907, RMS=35.036438
-Test     : SeaIceFraction nobs= 100 Min=0.000000, Max=1.000000, RMS=0.694504
-Test     : SeaIceFreeboard nobs= 376 Min=-0.071509, Max=0.255906, RMS=0.054232
-Test     : Chlorophyll nobs= 137 Min=0.001273, Max=2.410599, RMS=0.357860
-Test     : SurfaceU nobs= 201 Min=-0.668706, Max=0.342825, RMS=0.176726
-Test     : SurfaceV nobs= 201 Min=-0.345640, Max=0.399404, RMS=0.114036
+Test     : CoolSkin nobs= 201 Min=-69.356342, Max=25.085506, RMS=21.135367
+Test     : SeaSurfaceTemp nobs= 201 Min=-0.732231, Max=30.647096, RMS=24.202404
+Test     : SeaSurfaceSalinity nobs= 100 Min=32.069571, Max=37.072496, RMS=34.760739
+Test     : ADT nobs= 100 Min=-1.237160, Max=1.422803, RMS=0.754407
+Test     : InsituTemperature nobs= 218 Min=7.756424, Max=30.431539, RMS=21.282911
+Test     : InsituSalinity nobs= 218 Min=34.171480, Max=36.032498, RMS=35.041764
+Test     : SeaIceFraction nobs= 100 Min=0.000000, Max=1.000000, RMS=0.694684
+Test     : SeaIceFreeboard nobs= 376 Min=-0.071325, Max=0.257166, RMS=0.056245
+Test     : Chlorophyll nobs= 137 Min=0.002826, Max=2.037624, RMS=0.326758
+Test     : SurfaceU nobs= 201 Min=-0.586745, Max=0.355774, RMS=0.165775
+Test     : SurfaceV nobs= 201 Min=-0.346609, Max=0.361511, RMS=0.107459
 Test     : End H(x)
