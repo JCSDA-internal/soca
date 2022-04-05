@@ -6,6 +6,7 @@
 !> C++ interfaces for soca_state_mod::soca_state
 module soca_state_mod_c
 
+use atlas_module, only: atlas_fieldset, atlas_field, atlas_real, atlas_metadata
 use datetime_mod, only: datetime, c_f_datetime
 use fckit_configuration_module, only: fckit_configuration
 use iso_c_binding
@@ -13,6 +14,7 @@ use kinds, only: kind_real
 use oops_variables_mod, only: oops_variables
 
 ! soca modules
+use soca_fields_mod, only: soca_field
 use soca_geom_mod_c, only: soca_geom_registry
 use soca_geom_mod, only: soca_geom
 use soca_increment_mod, only: soca_increment
@@ -446,5 +448,27 @@ f_vars = oops_variables(c_vars)
 call f_self%update_fields(f_vars)
 
 end subroutine soca_state_update_fields_c
+
+
+! ------------------------------------------------------------------------------
+!> C++ interface for State version of soca_field_mod::soca_field::get_fieldset_ad()
+subroutine soca_state_getfieldset_c(c_key_self, c_vars, c_fieldset) &
+    bind (c, name='soca_state_getfieldset_f90')
+  integer(c_int),       intent(in) :: c_key_self
+  type(c_ptr), value,   intent(in) :: c_vars
+  type(c_ptr), value,   intent(in) :: c_fieldset
+
+  type(atlas_fieldset) :: afieldset
+
+  type(soca_state), pointer :: self
+  type(oops_variables)      :: vars
+  real(kind_real),  pointer :: real_ptr(:,:)
+
+  call soca_state_registry%get(c_key_self, self)
+  vars = oops_variables(c_vars)
+  afieldset = atlas_fieldset(c_fieldset)
+
+  call self%get_fieldset(vars, afieldset)
+end subroutine
 
 end module soca_state_mod_c

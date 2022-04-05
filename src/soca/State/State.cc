@@ -13,6 +13,8 @@
 #include "soca/State/State.h"
 #include "soca/State/StateFortran.h"
 
+#include "atlas/field.h"
+
 #include "eckit/config/LocalConfiguration.h"
 #include "eckit/exception/Exceptions.h"
 
@@ -237,4 +239,8 @@ namespace soca {
   std::shared_ptr<const Geometry> State::geometry() const {return geom_;}
   // -----------------------------------------------------------------------------
 
+  void State::getFieldSet(const oops::Variables &vars, atlas::FieldSet &fset) const {
+    // get field, with halo, and no masked values
+    soca_state_getfieldset_f90(toFortran(), vars, fset.get());
+  }
 }  // namespace soca
