@@ -11,6 +11,7 @@
 #include "oops/util/Logger.h"
 
 #include "soca/Geometry/Geometry.h"
+#include "soca/Interpolator/UnstructuredInterpolator.h"
 #include "soca/Interpolator/LocalUnstructuredInterpolator.h"
 #include "soca/Increment/Increment.h"
 #include "soca/State/State.h"
@@ -117,7 +118,7 @@ applyAD(const oops::Variables & vars, Increment & dx, const std::vector<double> 
 }
 
 // ------------------------------------------------------------------------------
-const std::shared_ptr<oops::InterpolatorUnstructured>
+const std::shared_ptr<UnstructuredInterpolator>
 LocalUnstructuredInterpolator::getInterpolator(const std::string &var) const {
   // determine which interpolator to use
   char grid;
@@ -134,7 +135,7 @@ LocalUnstructuredInterpolator::getInterpolator(const std::string &var) const {
     std::vector<double> lats_in;
     std::vector<double> lons_in;
     geom_->latlon(lats_in, lons_in, true, grid, masked);
-    interp_[interp_idx] = std::make_shared<oops::InterpolatorUnstructured>(
+    interp_[interp_idx] = std::make_shared<UnstructuredInterpolator>(
                                           config_, lats_in, lons_in, latlon_out_);
   }
 

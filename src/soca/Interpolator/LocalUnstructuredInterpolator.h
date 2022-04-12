@@ -12,7 +12,6 @@
 #include <string>
 #include <vector>
 
-#include "oops/generic/InterpolatorUnstructured.h"
 #include "oops/util/Printable.h"
 
 
@@ -29,6 +28,7 @@ namespace soca {
   class Geometry;
   class Increment;
   class State;
+  class UnstructuredInterpolator;
 }
 
 
@@ -47,10 +47,10 @@ class LocalUnstructuredInterpolator : public util::Printable {
   void applyAD(const oops::Variables &, Increment &, const std::vector<double> &) const;
 
  private:
-  const std::shared_ptr<oops::InterpolatorUnstructured> getInterpolator(const std::string &) const;
+  const std::shared_ptr<UnstructuredInterpolator> getInterpolator(const std::string &) const;
   void print(std::ostream &) const;
 
-  mutable std::shared_ptr<oops::InterpolatorUnstructured> interp_[6];
+  mutable std::shared_ptr<UnstructuredInterpolator> interp_[6];
 
   const std::shared_ptr<const Geometry> geom_;
   const eckit::LocalConfiguration config_;
