@@ -44,7 +44,14 @@ namespace soca {
                                 int &, int &);
     void soca_geo_get_num_levels_f90(const F90geom &, const oops::Variables &,
                                     const size_t &, size_t[]);
-    int soca_geo_iterator_dimension_f90(const F90geom &, int &);
+    void soca_geo_iterator_dimension_f90(const F90geom &, int &);
+
+    void soca_geo_gridsize_f90(const F90geom &, const char &, const bool &,
+      const bool &, int &);
+    void soca_geo_gridlatlon_f90(const F90geom &, const char &, const bool &,
+      const bool &, const int &, double[], double[]);
+    void soca_geo_getvargrid_f90(
+      const F90geom &, const oops::Variables &, char &, bool &);
   }
 }  // namespace soca
 #endif  // SOCA_GEOMETRY_GEOMETRYFORTRAN_H_

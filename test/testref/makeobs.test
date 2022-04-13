@@ -25,5 +25,5 @@ Test     :     shf   min=  -58.949295   max=  201.374298   mean=    6.075334
 Test     :      lw   min=    0.000000   max=   88.036087   mean=   31.395529
 Test     :      us   min=    0.000000   max=    0.019160   mean=    0.007202
 Test     : H(x): 
-Test     : InsituTemperature nobs= 10 Min=8.008778, Max=30.371020, RMS=23.734841
+Test     : InsituTemperature nobs= 10 Min=8.043401, Max=30.252909, RMS=23.727162
 Test     : End H(x)
