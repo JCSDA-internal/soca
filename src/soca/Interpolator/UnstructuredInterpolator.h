@@ -40,19 +40,26 @@ class UnstructuredInterpolator : public util::Printable,
   UnstructuredInterpolator(const eckit::Configuration &,
                            const std::vector<double> &,
                            const std::vector<double> &,
+                           const std::vector<double> &,
                            const std::vector<double> &);
 
-  void apply(const oops::Variables &, const atlas::FieldSet &, std::vector<double> &) const;
-  void applyAD(const oops::Variables &, atlas::FieldSet &, const std::vector<double> &) const;
+  void apply(const oops::Variables &, const atlas::FieldSet &, const std::vector<bool> &,
+             std::vector<double>::iterator &) const;
+  void applyAD(const oops::Variables &, atlas::FieldSet &, const std::vector<bool> &,
+               std::vector<double>::const_iterator &) const;
 
  private:
-  void apply1lev(const std::string &, const atlas::array::ArrayView<double, 1> &,
+  void apply1lev(const std::string &, const std::vector<bool> &,
+                 const atlas::array::ArrayView<double, 1> &,
                  std::vector<double>::iterator &) const;
-  void applyLevs(const std::string &, const atlas::array::ArrayView<double, 2> &,
+  void applyLevs(const std::string &, const std::vector<bool> &,
+                 const atlas::array::ArrayView<double, 2> &,
                  std::vector<double>::iterator &, const size_t &) const;
-  void apply1levAD(const std::string &, atlas::array::ArrayView<double, 1> &,
+  void apply1levAD(const std::string &, const std::vector<bool> &,
+                   atlas::array::ArrayView<double, 1> &,
                    std::vector<double>::const_iterator &) const;
-  void applyLevsAD(const std::string &, atlas::array::ArrayView<double, 2> &,
+  void applyLevsAD(const std::string &, const std::vector<bool> &,
+                   atlas::array::ArrayView<double, 2> &,
                    std::vector<double>::const_iterator &, const size_t &) const;
   void print(std::ostream &) const override;
 
@@ -68,7 +75,8 @@ class UnstructuredInterpolator : public util::Printable,
 UnstructuredInterpolator::UnstructuredInterpolator(const eckit::Configuration & config,
                                                    const std::vector<double> & lats_in,
                                                    const std::vector<double> & lons_in,
-                                                   const std::vector<double> & latlon_out)
+                                                   const std::vector<double> & lats_out,
+                                                   const std::vector<double> & lons_out)
   : interp_method_(), nninterp_(0), nout_(0), interp_i_(), interp_w_()
 {
   oops::Log::trace() << "UnstructuredInterpolator::UnstructuredInterpolator start" << std::endl;
@@ -87,9 +95,9 @@ UnstructuredInterpolator::UnstructuredInterpolator(const eckit::Configuration & 
   localTree.build(lons_in, lats_in, indx);
 
   // Compute weights
+  ASSERT(lats_out.size() == lons_out.size());
+  nout_ = lats_out.size();
   nninterp_ = config.getInt("nnearest", 4);
-  nout_ = latlon_out.size() / 2;
-  ASSERT(latlon_out.size() == 2 * nout_);
   interp_i_.resize(nout_, std::vector<size_t>(nninterp_));
   interp_w_.resize(nout_, std::vector<double>(nninterp_, 0.0));
 
@@ -98,9 +106,7 @@ UnstructuredInterpolator::UnstructuredInterpolator(const eckit::Configuration & 
   ASSERT(interp_method_ == "barycentric" || interp_method_ == "inverse distance");
 
   for (size_t jloc = 0; jloc < nout_; ++jloc) {
-    const double lat = latlon_out[2 * jloc];
-    const double lon = latlon_out[2 * jloc + 1];
-    atlas::PointLonLat obsloc(lon, lat);
+    atlas::PointLonLat obsloc(lons_out[jloc], lats_out[jloc]);
     obsloc.normalise();
 
     const atlas::util::KDTree<size_t>::ValueList neighbours =
@@ -158,7 +164,8 @@ UnstructuredInterpolator::UnstructuredInterpolator(const eckit::Configuration & 
 // -----------------------------------------------------------------------------
 
 void UnstructuredInterpolator::apply(const oops::Variables & vars, const atlas::FieldSet & fset,
-                                     std::vector<double> & vals) const {
+                                     const std::vector<bool> & mask,
+                                     std::vector<double>::iterator & current) const {
   oops::Log::trace() << "UnstructuredInterpolator::apply starting" << std::endl;
   util::Timer timer("soca::UnstructuredInterpolator", "apply");
 
@@ -174,9 +181,7 @@ void UnstructuredInterpolator::apply(const oops::Variables & vars, const atlas::
       nflds += fld.levels();
     }
   }
-  vals.resize(nout_ * nflds);
 
-  auto current = vals.begin();
   for (size_t jf = 0; jf < vars.size(); ++jf) {
     const std::string fname = vars[jf];
     atlas::Field fld = fset.field(fname);
@@ -187,11 +192,11 @@ void UnstructuredInterpolator::apply(const oops::Variables & vars, const atlas::
 
     if (rank == 1) {
       const atlas::array::ArrayView<double, 1> fldin = atlas::array::make_view<double, 1>(fld);
-      this->apply1lev(interp_type, fldin, current);
+      this->apply1lev(interp_type, mask, fldin, current);
     } else {
       const atlas::array::ArrayView<double, 2> fldin = atlas::array::make_view<double, 2>(fld);
       for (size_t jlev = 0; jlev < fldin.shape(1); ++jlev) {
-        this->applyLevs(interp_type, fldin, current, jlev);
+        this->applyLevs(interp_type, mask, fldin, current, jlev);
       }
     }
   }
@@ -201,11 +206,11 @@ void UnstructuredInterpolator::apply(const oops::Variables & vars, const atlas::
 // -----------------------------------------------------------------------------
 
 void UnstructuredInterpolator::applyAD(const oops::Variables & vars, atlas::FieldSet &fset,
-                                       const std::vector<double> & vals) const {
+                                       const std::vector<bool> & mask,
+                                       std::vector<double>::const_iterator & current) const {
   oops::Log::trace() << "UnstructuredInterpolator::applyAD starting" << std::endl;
   util::Timer timer("soca::UnstructuredInterpolator", "applyAD");
 
-  std::vector<double>::const_iterator current = vals.begin();
   for (size_t jf = 0; jf < vars.size(); ++jf) {
     const std::string fname = vars[jf];
     atlas::Field fld = fset.field(fname);
@@ -218,11 +223,11 @@ void UnstructuredInterpolator::applyAD(const oops::Variables & vars, atlas::Fiel
 
     if (rank== 1) {
       atlas::array::ArrayView<double, 1> fldin = atlas::array::make_view<double, 1>(fld);
-      this->apply1levAD(interp_type, fldin, current);
+      this->apply1levAD(interp_type, mask, fldin, current);
     } else {
       atlas::array::ArrayView<double, 2> fldin = atlas::array::make_view<double, 2>(fld);
       for (size_t jlev = 0; jlev < fldin.shape(1); ++jlev) {
-        this->applyLevsAD(interp_type, fldin, current, jlev);
+        this->applyLevsAD(interp_type, mask, fldin, current, jlev);
       }
     }
   }
@@ -233,37 +238,40 @@ void UnstructuredInterpolator::applyAD(const oops::Variables & vars, atlas::Fiel
 // -----------------------------------------------------------------------------
 
 void UnstructuredInterpolator::apply1lev(const std::string & interp_type,
+                                         const std::vector<bool> & mask,
                                          const atlas::array::ArrayView<double, 1> & gridin,
                                          std::vector<double>::iterator & gridout) const {
   for (size_t jloc = 0; jloc < nout_; ++jloc) {
-    *gridout = 0.0;
-    if (interp_type == "default") {
-      for (size_t jj = 0; jj < nninterp_; ++jj) {
-        *gridout += interp_w_[jloc][jj] * gridin(interp_i_[jloc][jj]);
-      }
-    } else if (interp_type == "integer") {
-      // Find which integer value has largest weight in the stencil. We do this by taking two
-      // passes through the (usually short) data: first to identify range of values, then to
-      // determine weights for each integer.
-      // Note that a std::map would be shorter to code, because it would avoid needing to find
-      // the range of possible integer values, but vectors are almost always much more efficient.
-      int minval = std::numeric_limits<int>().max();
-      int maxval = std::numeric_limits<int>().min();
-      for (size_t jj = 0; jj < nninterp_; ++jj) {
-        minval = std::min(minval, static_cast<int>(std::round(gridin(interp_i_[jloc][jj]))));
-        maxval = std::max(maxval, static_cast<int>(std::round(gridin(interp_i_[jloc][jj]))));
-      }
-      std::vector<double> int_weights(maxval - minval + 1, 0.0);
-      for (size_t jj = 0; jj < nninterp_; ++jj) {
-        const int this_int = std::round(gridin(interp_i_[jloc][jj]));
-        int_weights[this_int - minval] += interp_w_[jloc][jj];
-      }
-      *gridout = minval + std::distance(int_weights.begin(),
-          std::max_element(int_weights.begin(), int_weights.end()));
-    } else if (interp_type == "nearest") {
-      *gridout = gridin(interp_i_[jloc][0]);
-    } else {
-      throw eckit::BadValue("Unknown interpolation type");
+    if (mask[jloc]) {
+      *gridout = 0.0;
+      if (interp_type == "default") {
+        for (size_t jj = 0; jj < nninterp_; ++jj) {
+          *gridout += interp_w_[jloc][jj] * gridin(interp_i_[jloc][jj]);
+        }
+      } else if (interp_type == "integer") {
+        // Find which integer value has largest weight in the stencil. We do this by taking two
+        // passes through the (usually short) data: first to identify range of values, then to
+        // determine weights for each integer.
+        // Note that a std::map would be shorter to code, because it would avoid needing to find
+        // the range of possible integer values, but vectors are almost always much more efficient.
+        int minval = std::numeric_limits<int>().max();
+        int maxval = std::numeric_limits<int>().min();
+        for (size_t jj = 0; jj < nninterp_; ++jj) {
+          minval = std::min(minval, static_cast<int>(std::round(gridin(interp_i_[jloc][jj]))));
+          maxval = std::max(maxval, static_cast<int>(std::round(gridin(interp_i_[jloc][jj]))));
+        }
+        std::vector<double> int_weights(maxval - minval + 1, 0.0);
+        for (size_t jj = 0; jj < nninterp_; ++jj) {
+          const int this_int = std::round(gridin(interp_i_[jloc][jj]));
+          int_weights[this_int - minval] += interp_w_[jloc][jj];
+        }
+        *gridout = minval + std::distance(int_weights.begin(),
+            std::max_element(int_weights.begin(), int_weights.end()));
+      } else if (interp_type == "nearest") {
+        *gridout = gridin(interp_i_[jloc][0]);
+      } else {
+        throw eckit::BadValue("Unknown interpolation type");
+     }
     }
     ++gridout;
   }
@@ -272,33 +280,36 @@ void UnstructuredInterpolator::apply1lev(const std::string & interp_type,
 // -----------------------------------------------------------------------------
 
 void UnstructuredInterpolator::applyLevs(const std::string & interp_type,
+                                         const std::vector<bool> & mask,
                                          const atlas::array::ArrayView<double, 2> & gridin,
                                          std::vector<double>::iterator & gridout,
                                          const size_t & ilev) const {
   for (size_t jloc = 0; jloc < nout_; ++jloc) {
-    *gridout = 0.0;
-    if (interp_type == "default") {
-      for (size_t jj = 0; jj < nninterp_; ++jj) {
-        *gridout += interp_w_[jloc][jj] * gridin(interp_i_[jloc][jj], ilev);
-      }
-    } else if (interp_type == "integer") {
-      int minval = std::numeric_limits<int>().max();
-      int maxval = std::numeric_limits<int>().min();
-      for (size_t jj = 0; jj < nninterp_; ++jj) {
-        minval = std::min(minval, static_cast<int>(std::round(gridin(interp_i_[jloc][jj], ilev))));
-        maxval = std::max(maxval, static_cast<int>(std::round(gridin(interp_i_[jloc][jj], ilev))));
-      }
-      std::vector<double> int_weights(maxval - minval + 1, 0.0);
-      for (size_t jj = 0; jj < nninterp_; ++jj) {
-        const int this_int = std::round(gridin(interp_i_[jloc][jj], ilev));
-        int_weights[this_int - minval] += interp_w_[jloc][jj];
-      }
-      *gridout = minval + std::distance(int_weights.begin(),
-          std::max_element(int_weights.begin(), int_weights.end()));
-    } else if (interp_type == "nearest") {
-      *gridout = gridin(interp_i_[jloc][0], ilev);
-    } else {
-      throw eckit::BadValue("Unknown interpolation type");
+    if (mask[jloc]) {
+      *gridout = 0.0;
+      if (interp_type == "default") {
+        for (size_t jj = 0; jj < nninterp_; ++jj) {
+          *gridout += interp_w_[jloc][jj] * gridin(interp_i_[jloc][jj], ilev);
+        }
+      } else if (interp_type == "integer") {
+        int minval = std::numeric_limits<int>().max();
+        int maxval = std::numeric_limits<int>().min();
+        for (size_t jj = 0; jj < nninterp_; ++jj) {
+         minval = std::min(minval, static_cast<int>(std::round(gridin(interp_i_[jloc][jj], ilev))));
+         maxval = std::max(maxval, static_cast<int>(std::round(gridin(interp_i_[jloc][jj], ilev))));
+        }
+        std::vector<double> int_weights(maxval - minval + 1, 0.0);
+        for (size_t jj = 0; jj < nninterp_; ++jj) {
+          const int this_int = std::round(gridin(interp_i_[jloc][jj], ilev));
+          int_weights[this_int - minval] += interp_w_[jloc][jj];
+        }
+        *gridout = minval + std::distance(int_weights.begin(),
+            std::max_element(int_weights.begin(), int_weights.end()));
+      } else if (interp_type == "nearest") {
+        *gridout = gridin(interp_i_[jloc][0], ilev);
+      } else {
+        throw eckit::BadValue("Unknown interpolation type");
+     }
     }
     ++gridout;
   }
@@ -307,19 +318,22 @@ void UnstructuredInterpolator::applyLevs(const std::string & interp_type,
 // -----------------------------------------------------------------------------
 
 void UnstructuredInterpolator::apply1levAD(const std::string & interp_type,
+                                           const std::vector<bool> & mask,
                                            atlas::array::ArrayView<double, 1> & gridin,
                                            std::vector<double>::const_iterator & gridout) const {
   for (size_t jloc = 0; jloc < nout_; ++jloc) {
-    if (interp_type == "default") {
-      for (size_t jj = 0; jj < nninterp_; ++jj) {
-        gridin(interp_i_[jloc][jj]) += interp_w_[jloc][jj] * *gridout;
-      }
-    } else if (interp_type == "integer") {
-      throw eckit::BadValue("No adjoint for integer interpolation");
-    } else if (interp_type == "nearest") {
-      gridin(interp_i_[jloc][0]) += *gridout;
-    } else {
-      throw eckit::BadValue("Unknown interpolation type");
+    if (mask[jloc]) {
+      if (interp_type == "default") {
+        for (size_t jj = 0; jj < nninterp_; ++jj) {
+          gridin(interp_i_[jloc][jj]) += interp_w_[jloc][jj] * *gridout;
+        }
+      } else if (interp_type == "integer") {
+        throw eckit::BadValue("No adjoint for integer interpolation");
+      } else if (interp_type == "nearest") {
+        gridin(interp_i_[jloc][0]) += *gridout;
+      } else {
+        throw eckit::BadValue("Unknown interpolation type");
+     }
     }
     ++gridout;
   }
@@ -328,20 +342,23 @@ void UnstructuredInterpolator::apply1levAD(const std::string & interp_type,
 // -----------------------------------------------------------------------------
 
 void UnstructuredInterpolator::applyLevsAD(const std::string & interp_type,
+                                           const std::vector<bool> & mask,
                                            atlas::array::ArrayView<double, 2> & gridin,
                                            std::vector<double>::const_iterator & gridout,
                                            const size_t & ilev) const {
   for (size_t jloc = 0; jloc < nout_; ++jloc) {
-    if (interp_type == "default") {
-      for (size_t jj = 0; jj < nninterp_; ++jj) {
-        gridin(interp_i_[jloc][jj], ilev) += interp_w_[jloc][jj] * *gridout;
-      }
-    } else if (interp_type == "integer") {
-      throw eckit::BadValue("No adjoint for integer interpolation");
-    } else if (interp_type == "nearest") {
-      gridin(interp_i_[jloc][0], ilev) += *gridout;
-    } else {
-      throw eckit::BadValue("Unknown interpolation type");
+    if (mask[jloc]) {
+      if (interp_type == "default") {
+        for (size_t jj = 0; jj < nninterp_; ++jj) {
+          gridin(interp_i_[jloc][jj], ilev) += interp_w_[jloc][jj] * *gridout;
+        }
+      } else if (interp_type == "integer") {
+        throw eckit::BadValue("No adjoint for integer interpolation");
+      } else if (interp_type == "nearest") {
+        gridin(interp_i_[jloc][0], ilev) += *gridout;
+      } else {
+        throw eckit::BadValue("Unknown interpolation type");
+     }
     }
     ++gridout;
   }
