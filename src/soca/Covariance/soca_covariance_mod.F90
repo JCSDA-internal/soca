@@ -343,8 +343,8 @@ subroutine soca_bump_correlation(self, horiz_convol, geom, f_conf_bump, f_conf_d
      call afield%final()
 
      ! Copy length-scales into BUMP
-     call horiz_convol%set_parameter('rh', rh)
-     call horiz_convol%set_parameter('rv', rv)
+     call horiz_convol%set_parameter('rh', 1, rh)
+     call horiz_convol%set_parameter('rv', 1, rv)
 
      ! Clean up
      call rh%final()
