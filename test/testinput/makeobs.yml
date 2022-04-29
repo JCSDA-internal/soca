@@ -21,6 +21,7 @@ initial condition:
   state variables: *soca_vars
 
 observations:
+  observers:
   - obs space:
       name: InsituTemperature
       obsdataout: {obsfile: ./Data/syn.prof.T.out.nc}

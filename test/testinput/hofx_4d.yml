@@ -21,6 +21,7 @@ window length: PT3H
 forecast length: PT3H
 
 observations:
+  observers:
   - obs space:
       name: CoolSkin
       obsdataout: {obsfile: ./Data/sst.coolskin.out.nc}
