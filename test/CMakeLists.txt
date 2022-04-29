@@ -3,7 +3,9 @@ set( soca_test_input
   testinput/3dhybfgat.yml
   testinput/3dvarbump.yml
   testinput/3dvar_godas.yml
+  testinput/3dvar_single_ob.yml
   testinput/3dvar_soca.yml
+  testinput/3dvar_zero_ob.yml
   testinput/3dvarlowres_soca.yml
   testinput/3dvarfgat.yml
   testinput/3dvarfgat_pseudo.yml
@@ -33,7 +35,6 @@ set( soca_test_input
   testinput/geometry.yml
   testinput/geometry_iterator_2d.yml
   testinput/geometry_iterator_3d.yml
-  testinput/getvalues.yml
   testinput/gridgen.yml
   testinput/gridgen_small.yml
   testinput/hofx_3d.yml
@@ -41,9 +42,9 @@ set( soca_test_input
   testinput/hofx_4d_pseudo.yml
   testinput/hybridgain.yml
   testinput/increment.yml
-  testinput/letkf_observer.yml
-  testinput/letkf_solver.yml
-  testinput/lineargetvalues.yml
+  testinput/letkf_split_observer.yml
+  testinput/letkf_split_solver.yml
+  testinput/letkf.yml
   testinput/linearmodel.yml
   testinput/makeobs.yml
   testinput/model.yml
@@ -75,7 +76,9 @@ set( soca_test_ref
   testref/3dhybfgat.test
   testref/3dvarbump.test
   testref/3dvar_godas.test
+  testref/3dvar_single_ob.test
   testref/3dvar_soca.test
+  testref/3dvar_zero_ob.test
   testref/3dvarlowres_soca.test
   testref/3dvarfgat.test
   testref/3dvarfgat_pseudo.test
@@ -103,8 +106,9 @@ set( soca_test_ref
   testref/hofx_4d.test
   testref/hofx_4d_pseudo.test
   testref/hybridgain.test
-  testref/letkf_observer.test
-  testref/letkf_solver.test
+  testref/letkf_split_observer.test
+  testref/letkf_split_solver.test
+  testref/letkf.test
   testref/makeobs.test
   testref/parameters_bump_cor_nicas.test
   testref/parameters_bump_cor_nicas_scales.test
@@ -160,11 +164,13 @@ set( soca_obs
   Data/Obs/icec.nc
   Data/Obs/icefb.nc
   Data/Obs/prof.nc
+  Data/Obs/single_ob.nc
   Data/Obs/sss.nc
   Data/Obs/sst.nc
   Data/Obs/swh.nc
   Data/Obs/uocn_surface.nc
   Data/Obs/vocn_surface.nc
+  Data/Obs/zero_ob.nc
 )
 
 # Create Data directory for test input/output and symlink all files
@@ -357,8 +363,9 @@ function(soca_add_test)
     # run the comapre.py script afterwards
     ecbuild_add_test( TARGET  test_soca_${ARG_NAME}
                       TYPE    SCRIPT
-                      COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/test_wrapper.sh"
-                      ARGS    "${CMAKE_BINARY_DIR}/bin/${ARG_EXE}"
+                      COMMAND bash
+                      ARGS    "${CMAKE_CURRENT_SOURCE_DIR}/test_wrapper.sh"
+                              "${CMAKE_BINARY_DIR}/bin/${ARG_EXE}"
                               ${CONFIG_FILE}
                       ENVIRONMENT
                               ${TRAPFPE_ENV}
@@ -523,9 +530,6 @@ soca_add_test( NAME state
                SRC  TestState.cc
                TEST_DEPENDS test_soca_gridgen )
 
-soca_add_test( NAME getvalues
-               SRC  TestGetValues.cc
-               TEST_DEPENDS test_soca_gridgen )
 
 # Test MOM6-solo
 soca_add_test( NAME model
@@ -555,9 +559,6 @@ soca_add_test( NAME increment
                SRC  TestIncrement.cc
                TEST_DEPENDS test_soca_gridgen )
 
-soca_add_test( NAME lineargetvalues
-               SRC  TestLinearGetValues.cc
-               TEST_DEPENDS test_soca_gridgen )
 
 soca_add_test( NAME errorcovariance
                SRC  TestErrorCovariance.cc
@@ -728,6 +729,19 @@ soca_add_test( NAME 3dvar_soca
                TEST_DEPENDS test_soca_static_socaerror_init 
                LIBS soca stochastic_physics ccpp fv3atm esmf)
 
+soca_add_test( NAME 3dvar_single_ob
+               EXE  soca_var.x
+               TOL  4e-9 0
+               NOTRAPFPE
+               TEST_DEPENDS test_soca_static_socaerror_init )
+
+# # Following test does not work yet. IODA crashes
+# soca_add_test( NAME 3dvar_zero_ob
+#                EXE  soca_var.x
+#                TOL  4e-9 0
+#                NOTRAPFPE
+#                TEST_DEPENDS test_soca_static_socaerror_init )
+
 soca_add_test( NAME 3dvarbump
                EXE  soca_var.x
                TOL  4e-9 0
@@ -794,23 +808,28 @@ soca_add_test( NAME 3dhybfgat
 #                TEST_DEPENDS test_soca_static_socaerror_init
 #                             test_soca_parameters_bump_loc )
 
-soca_add_test( NAME letkf_observer
+soca_add_test( NAME letkf
                EXE  soca_letkf.x
                NOTRAPFPE
                TEST_DEPENDS test_soca_enspert 
                LIBS soca stochastic_physics ccpp fv3atm esmf)
 
-ecbuild_add_test( TARGET letkf_observer_post
-                  TYPE SCRIPT
-                  COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/letkf_obscat.sh
-                  TEST_DEPENDS letkf_observer
-               LIBS soca stochastic_physics ccpp fv3atm esmf)
-
-soca_add_test( NAME letkf_solver
+soca_add_test( NAME letkf_split_observer
                EXE  soca_letkf.x
                NOTRAPFPE
-               TEST_DEPENDS letkf_observer_post 
-               LIBS soca stochastic_physics ccpp fv3atm esmf)
+               TEST_DEPENDS test_soca_enspert )
+
+ecbuild_add_test( TARGET letkf_split_observer_post
+                  TYPE SCRIPT
+                  COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/letkf_obscat.sh
+                  TEST_DEPENDS letkf_split_observer)
+
+soca_add_test( NAME letkf_split_solver
+               EXE  soca_letkf.x
+               NOTRAPFPE
+               TEST_DEPENDS letkf_split_observer_post )
+
+
 
 # restart checkpointing
 #soca_add_test( NAME checkpointmodel

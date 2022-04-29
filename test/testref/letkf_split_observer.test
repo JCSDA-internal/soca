@@ -49,16 +49,16 @@ Test     :    hocn   min=    0.001000   max= 1345.640000   mean=  128.628064
 Test     :     chl   min=   -0.034033   max=    4.639340   mean=    0.118486
 Test     :    biop   min=   -0.000000   max=    0.000000   mean=    0.000000
 Test     : H(x) for member 1:
-Test     : SeaSurfaceTemp nobs= 201 Min=-0.992614, Max=30.252467, RMS=24.104094
+Test     : SeaSurfaceTemp nobs= 201 Min=-0.732231, Max=30.326031, RMS=24.135308
 Test     : H(x) for member 2:
-Test     : SeaSurfaceTemp nobs= 201 Min=-0.992614, Max=31.026820, RMS=24.261534
+Test     : SeaSurfaceTemp nobs= 201 Min=-0.732231, Max=31.083536, RMS=24.296866
 Test     : H(x) for member 3:
-Test     : SeaSurfaceTemp nobs= 201 Min=-1.567835, Max=30.825039, RMS=24.214492
+Test     : SeaSurfaceTemp nobs= 201 Min=-1.584482, Max=30.741922, RMS=24.246337
 Test     : H(x) for member 4:
-Test     : SeaSurfaceTemp nobs= 201 Min=-0.992614, Max=31.007938, RMS=24.210287
+Test     : SeaSurfaceTemp nobs= 201 Min=-0.732231, Max=31.033940, RMS=24.245572
 Test     : H(x) for member 5:
-Test     : SeaSurfaceTemp nobs= 201 Min=-1.401359, Max=30.941620, RMS=24.104455
+Test     : SeaSurfaceTemp nobs= 201 Min=-1.419727, Max=30.948359, RMS=24.134988
 Test     : H(x) ensemble background mean: 
-Test     : SeaSurfaceTemp nobs= 201 Min=-0.992614, Max=30.702045, RMS=24.174353
+Test     : SeaSurfaceTemp nobs= 201 Min=-0.732231, Max=30.733645, RMS=24.207234
 Test     : background y - H(x): 
-Test     : SeaSurfaceTemp nobs= 201 Min=-5.126393, Max=4.320149, RMS=1.383044
+Test     : SeaSurfaceTemp nobs= 201 Min=-5.341541, Max=3.384634, RMS=1.398422

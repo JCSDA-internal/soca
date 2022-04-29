@@ -3,14 +3,14 @@ geometry:
   fields metadata: ./fields_metadata.yml
 
 model:
-  name: mom6solo
+  name: UFS
   tstep: PT1H
   advance_mom6: 1
   model variables: [cicen, hicen, socn, tocn, ssh, hocn, uocn, vocn, sw, lhf, shf, lw, us]
 
 initial condition:
   read_from_file: 1
-  date: &date 2018-04-15T00:00:00Z
+  date: &date 2011-10-01T12:00:00Z
   basename: ./INPUT/
   ocn_filename: MOM.res.nc
   ice_filename: cice.res.nc

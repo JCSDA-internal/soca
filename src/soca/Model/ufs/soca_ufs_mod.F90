@@ -21,6 +21,7 @@ module soca_ufs_mod
 
   ! ufs
   use ESMF
+!use ESMF,  only: ESMF_FieldRedistStore, ESMF_FieldRedist, ESMF_RouteHandle
   use NUOPC
   use NUOPC_Driver
   use module_EARTH_GRID_COMP, only: esmSS => EARTH_REGISTER
@@ -86,8 +87,8 @@ contains
     self%iec = geom%iec
     self%jsc = geom%jsc
     self%jec = geom%jec
-!   self%npz = geom%npz
-
+    self%npz = geom%nzo
+    write(6,*) 'HEY, vals are ',self%isc,self%iec, self%jsc, self%jec, self%npz
     self%cf_main=esmf_configcreate(rc=rc)
     call ESMF_ConfigLoadFile(config=self%cf_main, &
          filename='model_configure', &
@@ -142,8 +143,9 @@ contains
 #if 1
     call NUOPC_Advertise(self%toJedi, &
          StandardNames=(/ &
-                        "So_h                                 "/), &   ! Example fields
+                        "tocn                                 "/), &   ! Example fields
          !              "So_h                                 ", &   ! Example fields
+         !              "tocn                                 ", &   ! Example fields
          !              "Si_ifrac                             ", &   ! Example fields
          !              "Si_tref                              "/), &   ! Example fields
          SharePolicyField="share", &
@@ -359,7 +361,7 @@ contains
     call ESMF_LogWrite("after step toJedi state with "//trim(msg)//" items", &
          ESMF_LOGMSG_INFO)
     write(fileName, '("fields_in_esm_import_step",I2.2,".nc")') tstep
-!   call fv3_to_state(self, state)
+    call mom6_to_state(self, state)
     call ESMF_LogWrite("after state write "//trim(msg)//" rc", &
          ESMF_LOGMSG_INFO)
 
@@ -420,117 +422,151 @@ contains
 
   end subroutine finalize
 
-  subroutine fv3_to_state( self, state )
+  subroutine mom6_to_state( self, state )
 
   implicit none
   type(model_ufs),    intent(in)    :: self
   type(soca_state), intent(inout) :: state
 
-  integer :: num_items, i, rc, rank, lb(3), ub(3), fnpz
-  type(ESMF_Field) :: field
+  integer :: num_items, i, rc, rank, lb(3), ub(3), fnpz, ib, nb
+  type(ESMF_Field) :: field, destField
   character(len=ESMF_MAXSTR), allocatable :: item_names(:)
   real(kind=ESMF_KIND_R8), pointer :: farrayPtr2(:,:)
   real(kind=ESMF_KIND_R8), pointer :: farrayPtr3(:,:,:)
   character(len=80) :: soca_name
   type(soca_field), pointer :: field_ptr
+  type(ESMF_Distgrid)                        :: distgrid
+  type(ESMF_Grid)                            :: grid
+  type(ESMF_RouteHandle)                      :: routehandle
 
-  real(kind=ESMF_KIND_R8),allocatable,dimension(:,:,:)      :: field_fv3
+  real(kind=ESMF_KIND_R8),allocatable,dimension(:,:,:)      :: field_mom6
 
+  distgrid = ESMF_DistGridCreate(minIndex=(/1,1/), maxIndex=(/360,320/), &
+            regDecomp=(/2,4/), &
+            rc=rc)
+  grid = ESMF_GridCreate(distgrid=distgrid, &
+        name="grid", rc=rc)
+     if (rc /= ESMF_SUCCESS) call ESMF_Finalize(endflag=ESMF_END_ABORT)
 
   ! Array to hold output from UFS in JEDI precision
   ! ------------------------------------------------
-  allocate(field_fv3(self%isc:self%iec, self%jsc:self%jec, self%npz+1))
+  ib = (self%isc-1)*(self%jsc-1)+1
+  nb = (self%iec - self%isc + 1) * (self%jec - self%jsc + 1)
+  allocate(field_mom6(self%isc:self%iec,self%jsc:self%jec, self%npz))
 
 
   ! Get number of items
   ! -------------------
   call ESMF_StateGet(self%toJedi, itemcount = num_items, rc = rc)
-  if (rc.ne.0) call abor1_ftn("fv3_to_state: ESMF_StateGet itemcount failed")
+  if (rc.ne.0) call abor1_ftn("mom6_to_state: ESMF_StateGet itemcount failed")
 
 
   ! Get names of the items
   ! ----------------------
   allocate(item_names(num_items))
   call ESMF_StateGet(self%toJedi, itemnamelist = item_names, rc = rc)
-  if (rc.ne.0) call abor1_ftn("fv3_to_state: ESMF_StateGet itemnamelist failed")
+  if (rc.ne.0) call abor1_ftn("mom6_to_state: ESMF_StateGet itemnamelist failed")
 
 
   ! Loop over states coming from UFS and convert to JEDI state
   ! -----------------------------------------------------------
   do i = 1, num_items
-    ! Create map between UFS name and fv3-jedi name
+    ! Create map between UFS name and mom6-jedi name
     ! ----------------------------------------------
     soca_name = trim(item_names(i))
     call ESMF_LogWrite("item name is "//soca_name, ESMF_LOGMSG_INFO)
-    if(trim(item_names(i)) == 'u') soca_name = 'ud'
-    if(trim(item_names(i)) == 'v') soca_name = 'vd'
-    if(trim(item_names(i)) == 'weasd') soca_name = 'sheleg'
 
-    ! Only need to extract field from UFS if fv3-jedi needs it
+    ! Only need to extract field from UFS if mom6-jedi needs it
     ! ---------------------------------------------------------
-#if 0
-    if (state%has_field(trim(soca_name))) then
+#if 1
+!   if (state%has_field(trim(soca_name))) then
 
       !Get field from the state
       call ESMF_StateGet(self%toJedi, item_names(i), field, rc = rc)
-      if (rc.ne.0) call abor1_ftn("fv3_to_state: ESMF_StateGet field failed")
+      if (rc.ne.0) call abor1_ftn("mom6_to_state: ESMF_StateGet field failed")
 
       !Validate the field
       call ESMF_FieldValidate(field, rc = rc)
-      if (rc.ne.0) call abor1_ftn("fv3_to_state: ESMF_FieldValidate failed")
+      if (rc.ne.0) call abor1_ftn("mom6_to_state: ESMF_FieldValidate failed")
 
       !Get the field rank
       call ESMF_FieldGet(field, rank = rank, rc = rc)
-
-      if (rc.ne.0) call abor1_ftn("fv3_to_state: ESMF_FieldGet rank failed")
+      write(6,*) 'HEY, rank for ',trim(soca_name),' is ',rank, rc
+      if (rc.ne.0) call abor1_ftn("mom6_to_state: ESMF_FieldGet rank failed")
 
       !Convert field to pointer and pointer bounds
-      field_fv3 = 0.0_ESMF_KIND_R8
+      field_mom6 = 0.0_ESMF_KIND_R8
       if (rank == 2) then
 
+        ! this field is going to be on a 1D mesh with an ungridded dimension
         call ESMF_FieldGet( field, 0, farrayPtr = farrayPtr2, totalLBound = lb(1:2), totalUBound = ub(1:2), rc = rc )
-        if (rc.ne.0) call abor1_ftn("fv3_to_state: ESMF_FieldGet 2D failed")
 
-        fnpz = 1
-        field_fv3(self%isc:self%iec,self%jsc:self%jec,1) = farrayPtr2(lb(1):ub(1),lb(2):ub(2))
-        nullify(farrayPtr2)
+        ! create a gridded field to redistribute the data to
+        destField = ESMF_FieldCreate(grid=grid, typekind=ESMF_TYPEKIND_R8, &
+                 ungriddedLBound=(/1/), ungriddedUBound=(/75/),name='tocn', rc=rc)
+        if (rc /= ESMF_SUCCESS) call ESMF_Finalize(endflag=ESMF_END_ABORT)
 
-      elseif (rank == 3) then
-        call ESMF_FieldGet( field, 0, farrayPtr = farrayPtr3, totalLBound = lb, totalUBound = ub, rc = rc )
-        if (rc.ne.0) call abor1_ftn("fv3_to_state: ESMF_FieldGet 3D failed",rc)
+        ! 1. setup routehandle from source Field to destination Field
+        call ESMF_FieldRedistStore(field, destField, routehandle, rc=rc)
+        if (rc /= ESMF_SUCCESS) call ESMF_Finalize(endflag=ESMF_END_ABORT)
+
+        ! 2. use precomputed routehandle to redistribute data
+        call ESMF_FieldRedist(field, destField, routehandle, rc=rc)
+        if (rc /= ESMF_SUCCESS) call ESMF_Finalize(endflag=ESMF_END_ABORT)
+
+        ! verify redist
+        call ESMF_FieldGet(destField, localDe=0, farrayPtr=farrayPtr3, totalLBound = lb(1:3), totalUBound = ub(1:3), rc=rc)
+!       call ESMF_FieldGet(destField, localDe=0, farrayPtr=farrayPtr3, rc=rc)
+        if (rc /= ESMF_SUCCESS) call ESMF_Finalize(endflag=ESMF_END_ABORT)
+             
+    
+        write(6,*) 'HOOO, lb is ',lb(:)
+        write(6,*) 'HAAA, ub is ',ub(:)
+        write(6,*) 'HEEE, isc,iec,jsc,jec are ',self%isc,self%iec,self%jsc,self%jec
+        if (rc.ne.0) call abor1_ftn("mom6_to_state: ESMF_FieldGet 2D failed")
 
         fnpz = ub(3)-lb(3)+1
-        field_fv3(self%isc:self%iec,self%jsc:self%jec,1:fnpz) = farrayPtr3(lb(1):ub(1),lb(2):ub(2),lb(3):ub(3))
+        field_mom6(self%isc:self%iec,self%jsc:self%jec,1:fnpz) = farrayPtr3(lb(1):ub(1),lb(2):ub(2),:)
         nullify(farrayPtr3)
+        write(6,*) field_mom6(self%isc:self%iec,self%jsc+40,1)
+
+!     elseif (rank == 3) then
+!       call ESMF_FieldGet( field, 0, farrayPtr = farrayPtr3, totalLBound = lb, totalUBound = ub, rc = rc )
+!       if (rc.ne.0) call abor1_ftn("mom6_to_state: ESMF_FieldGet 3D failed",rc)
+
+!       fnpz = ub(3)-lb(3)+1
+!       field_mom6(self%isc:self%iec,self%jsc:self%jec,1:fnpz) = farrayPtr3(lb(1):ub(1),lb(2):ub(2),lb(3):ub(3))
+!       nullify(farrayPtr3)
 
       else
-
-        call abor1_ftn("fv3_mod: can only handle rank 2 or rank 3 fields from UFS")
+        deallocate(item_names)
+        return 
+        call abor1_ftn("mom6_mod: can only handle rank 2 or rank 3 fields from UFS")
 
       endif
-
+  if(ub(1)<0) then
       ! Check that dimensions match
       if ((ub(1)-lb(1)+1 .ne. self%iec-self%isc+1) .or. (ub(2)-lb(2)+1 .ne. self%jec-self%jsc+1) ) then
-        call abor1_ftn("fv3_to_state: dimension mismatch between JEDI and UFS horizontal grid")
+        call abor1_ftn("mom6_to_state: dimension mismatch between JEDI and UFS horizontal grid")
       endif
 
-      ! Get pointer to fv3-jedi side field
-      call state%get_field(trim(soca_name), field_ptr)
+      ! Get pointer to mom6-jedi side field
+      call state%get(trim(soca_name), field_ptr)
 
-      if (field_ptr%npz .ne. fnpz) &
-        call abor1_ftn("fv3_to_state: dimension mismatch between JEDI and UFS vertical grid")
-
-      ! Copy from UFS to fv3-jedi
-      field_ptr%array(self%isc:self%iec,self%jsc:self%jec,1:fnpz) = field_fv3(self%isc:self%iec,self%jsc:self%jec,1:fnpz)
-    else
-      call ESMF_LogWrite("Not needed by JEDI is "//soca_name, ESMF_LOGMSG_INFO)
-    endif
+      if (field_ptr%nz .ne. fnpz) &
+        call abor1_ftn("mom6_to_state: dimension mismatch between JEDI and UFS vertical grid")
+  endif
+      ! Copy from UFS to mom6-jedi
+!     field_ptr%val(self%isc:self%iec,self%jsc:self%jec,1:fnpz) = field_mom6(self%isc:self%iec,self%jsc:self%jec,1:fnpz)
+!   else
+!     call ESMF_LogWrite("Not needed by JEDI is "//soca_name, ESMF_LOGMSG_INFO)
+!   endif
 #endif
   end do
 
   deallocate(item_names)
 
-  end subroutine fv3_to_state
+  end subroutine mom6_to_state
 
 
   subroutine setUFSClock(self,date_start,date_final)
