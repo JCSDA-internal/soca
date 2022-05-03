@@ -158,3 +158,6 @@ output:
 final:
   diagnostics:
     departures: oman
+
+test:
+  reference filename: testref/3dhybfgat.test

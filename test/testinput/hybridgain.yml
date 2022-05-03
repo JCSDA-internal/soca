@@ -47,3 +47,6 @@ recentered output:
   exp: hybridgain
   type: ens
   date: *date_bkg
+
+test:
+  reference filename: testref/hybridgain.test

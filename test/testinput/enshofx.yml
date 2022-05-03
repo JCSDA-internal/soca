@@ -2,3 +2,6 @@ files:
   - "testinput/enshofx_1.yml"
   - "testinput/enshofx_2.yml"
   - "testinput/enshofx_3.yml"
+
+test:
+  reference filename: testref/enshofx.test

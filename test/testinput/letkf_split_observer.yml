@@ -65,3 +65,6 @@ output:
   date: *date
   exp: letkf
   type: ens
+
+test:
+  reference filename: testref/letkf_split_observer.test

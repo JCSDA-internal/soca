@@ -72,3 +72,6 @@ observations:
       simulated variables: [sea_water_salinity]
     obs operator:
       name: MarineVertInterp
+
+test:
+  reference filename: testref/hofx_4d_pseudo.test

@@ -28,3 +28,6 @@ output: # state1 - state2
   datadir: Data
   exp: diffstates
   type: an
+
+test:
+  reference filename: testref/diffstates.test

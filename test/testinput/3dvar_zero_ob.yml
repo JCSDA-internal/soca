@@ -80,3 +80,6 @@ output:
 final:
   diagnostics:
     departures: oman
+
+test:
+  reference filename: testref/3dvar_zero_ob.test

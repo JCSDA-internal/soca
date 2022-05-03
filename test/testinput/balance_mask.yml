@@ -34,3 +34,6 @@ output dirac:
   date: *date
   exp: balance_mask_%id%
   type: an
+
+test:
+  reference filename: testref/balance_mask.test

@@ -49,3 +49,6 @@ output dirac:
   date: *date
   exp: dirac_soca_nomask_%id%
   type: an
+
+test:
+  reference filename: testref/dirac_soca_nomask.test

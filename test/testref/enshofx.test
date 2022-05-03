@@ -1,35 +1,35 @@
 Test     : Initial state: 
 Test     :   Valid time: 2018-04-15T06:00:00Z
-Test     :   cicen   min=    0.000000   max=    1.000000   mean=    0.117513
-Test     :   hicen   min=    0.000000   max=    4.032667   mean=    0.471252
-Test     :    socn   min=   10.721046   max=   40.441659   mean=   34.546578
-Test     :    tocn   min=   -3.034925   max=   31.693338   mean=    6.089273
-Test     :     ssh   min=   -1.899558   max=    0.906722   mean=   -0.283877
-Test     :    hocn   min=    0.001000   max= 1345.640000   mean=  128.628064
-Test     :      sw   min=    0.000000   max=    0.000000   mean=    0.000000
-Test     :     lhf   min=    0.000000   max=    0.000000   mean=    0.000000
-Test     :     shf   min=    0.000000   max=    0.000000   mean=    0.000000
-Test     :      lw   min=    0.000000   max=    0.000000   mean=    0.000000
-Test     :      us   min=    0.000000   max=    0.000000   mean=    0.000000
+Test     :   cicen   min=0.0000000000000000   max=1.0000000000000000   mean=0.1175125761012929
+Test     :   hicen   min=0.0000000000000000   max=4.0326673084246947   mean=0.4712515705773919
+Test     :    socn   min=10.7210460395083924   max=40.4416591897031168   mean=34.5465781554558120
+Test     :    tocn   min=-3.0349249096390301   max=31.6933380143948185   mean=6.0892725584520511
+Test     :     ssh   min=-1.8995576445088340   max=0.9067222046846501   mean=-0.2838774533760893
+Test     :    hocn   min=0.0009999999999977   max=1345.6400000000003274   mean=128.6280642065018753
+Test     :      sw   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
+Test     :     lhf   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
+Test     :     shf   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
+Test     :      lw   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
+Test     :      us   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
 Test     : Final state: 
 Test     :   Valid time: 2018-04-15T08:00:00Z
-Test     :   cicen   min=    0.000000   max=    1.000000   mean=    0.117513
-Test     :   hicen   min=    0.000000   max=    4.032667   mean=    0.471252
-Test     :    socn   min=   10.721046   max=   40.441659   mean=   34.547986
-Test     :    tocn   min=   -3.034390   max=   31.693338   mean=    6.088507
-Test     :     ssh   min=   -1.878370   max=    0.911358   mean=   -0.276782
-Test     :    hocn   min=    0.000944   max= 1346.247306   mean=  128.628066
-Test     :      sw   min= -225.097763   max=   -0.000000   mean=  -71.739321
-Test     :     lhf   min=  -38.137398   max=  256.597656   mean=   42.010040
-Test     :     shf   min=  -58.949295   max=  201.374298   mean=    6.075334
-Test     :      lw   min=    0.000000   max=   88.036087   mean=   31.395529
-Test     :      us   min=    0.000000   max=    0.019160   mean=    0.007202
+Test     :   cicen   min=0.0000000000000000   max=1.0000000000000000   mean=0.1175125761012929
+Test     :   hicen   min=0.0000000000000000   max=4.0326673084246947   mean=0.4712515705773919
+Test     :    socn   min=10.7210460395083924   max=40.4416591782717703   mean=34.5479857897601477
+Test     :    tocn   min=-3.0343898457463614   max=31.6933380143948256   mean=6.0885071438850034
+Test     :     ssh   min=-1.8783696199414452   max=0.9113583793967041   mean=-0.2767824830987974
+Test     :    hocn   min=0.0009443754479102   max=1346.2473057989727749   mean=128.6280662871449181
+Test     :      sw   min=-225.0977630615234375   max=-0.0000000000000000   mean=-71.7393205198725354
+Test     :     lhf   min=-38.1373977661132812   max=256.5976562500000000   mean=42.0100402226406899
+Test     :     shf   min=-58.9492950439453125   max=201.3742980957031250   mean=6.0753344854805622
+Test     :      lw   min=0.0000000000000000   max=88.0360870361328125   mean=31.3955290035652546
+Test     :      us   min=0.0000000000000000   max=0.0191600705253526   mean=0.0072022693699426
 Test     : H(x): 
-Test     : CoolSkin nobs= 17 Min=5.921118, Max=23.448719, RMS=18.880138
-Test     : SeaSurfaceTemp nobs= 17 Min=9.720612, Max=29.536382, RMS=24.051161
-Test     : SeaSurfaceSalinity nobs= 14 Min=32.819068, Max=35.216022, RMS=34.601279
-Test     : ADT nobs= 11 Min=-0.928523, Max=0.993326, RMS=0.710965
-Test     : InsituTemperature nobs= 10 Min=8.385277, Max=27.969086, RMS=19.240358
-Test     : InsituSalinity nobs= 10 Min=34.660138, Max=35.007580, RMS=34.908471
-Test     : SeaIceFraction nobs= 8 Min=0.007051, Max=0.999049, RMS=0.697088
+Test     : CoolSkin nobs= 17 Min=6.0627772513802256, Max=23.1967691583962505, RMS=18.9885826924409606
+Test     : SeaSurfaceTemp nobs= 17 Min=9.8921248027313045, Max=29.4997913294705185, RMS=24.0968618514646948
+Test     : SeaSurfaceSalinity nobs= 14 Min=32.7541650976392660, Max=35.2274929136403827, RMS=34.5825503686920825
+Test     : ADT nobs= 11 Min=-0.9225752171031243, Max=1.0155897449527642, RMS=0.6997990398341888
+Test     : InsituTemperature nobs= 10 Min=8.4054989407551233, Max=27.9827799587962680, RMS=19.4267548749793697
+Test     : InsituSalinity nobs= 10 Min=34.6621949807471736, Max=35.0705406013828735, RMS=34.9688522761246716
+Test     : SeaIceFraction nobs= 8 Min=0.0140515611908866, Max=0.9990190564788424, RMS=0.7155727989021693
 Test     : End H(x)

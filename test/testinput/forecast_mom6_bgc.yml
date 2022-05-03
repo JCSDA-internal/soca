@@ -24,3 +24,6 @@ output:
   exp: mom6
   date: *date
   type: fc
+
+test:
+  reference filename: testref/forecast_mom6_bgc.test

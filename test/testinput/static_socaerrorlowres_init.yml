@@ -36,3 +36,5 @@ background error:
     base value: 560224.089635854
     variables: [cicen, hicen]
 
+test:
+  reference filename: testref/static_socaerrorlowres_init.test

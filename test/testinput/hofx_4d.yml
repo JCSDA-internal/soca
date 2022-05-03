@@ -92,3 +92,6 @@ observations:
       simulated variables: [surface_northward_sea_water_velocity]
     obs operator:
       name: Identity
+
+test:
+  reference filename: testref/hofx_4d.test

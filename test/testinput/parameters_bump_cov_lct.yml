@@ -108,3 +108,6 @@ output:
   exp: parameters_bump_cov.DLh_1
   parameter: DLh_1
   type: an
+
+test:
+  reference filename: testref/parameters_bump_cov_lct.test

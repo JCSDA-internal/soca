@@ -23,3 +23,6 @@ analysis:
   basename: ./Data/
   ocn_filename: ocn.3dvargodas.an.2018-04-15T00:00:00Z.nc
   state variables: [socn, tocn, hocn]
+
+test:
+  reference filename: testref/checkpointmodel.test

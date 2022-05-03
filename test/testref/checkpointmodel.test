@@ -1,15 +1,15 @@
 Test     : input background: 
 Test     :   Valid time: 2018-04-15T00:00:00Z
-Test     :    socn   min=   10.721046   max=   40.441659   mean=   34.544390
-Test     :    tocn   min=   -1.888390   max=   31.700465   mean=    6.017565
-Test     :    hocn   min=    0.001000   max= 1345.640000   mean=  128.628064
+Test     :    socn   min=10.7210460395083924   max=40.4416591897031168   mean=34.5443897261524953
+Test     :    tocn   min=-1.8883899372702533   max=31.7004645720658580   mean=6.0175649583533595
+Test     :    hocn   min=0.0009999999999977   max=1345.6400000000003274   mean=128.6280642065023017
 Test     : analysis: 
 Test     :   Valid time: 2018-04-15T00:00:00Z
-Test     :    socn   min=   10.721046   max=   40.441659   mean=   34.544397
-Test     :    tocn   min=   -1.888390   max=   31.700465   mean=    6.019759
-Test     :    hocn   min=    0.001000   max= 1345.640000   mean=  128.628064
+Test     :    socn   min=10.7210460395083924   max=40.4416591897031168   mean=34.5443974458897074
+Test     :    tocn   min=-1.8883899372702533   max=31.7004645720658580   mean=6.0197585704204624
+Test     :    hocn   min=0.0009999999999977   max=1345.6400000000003274   mean=128.6280642065023017
 Test     : output background: 
 Test     :   Valid time: 2018-04-15T00:00:00Z
-Test     :    socn   min=   10.721046   max=   38.000000   mean=   34.539778
-Test     :    tocn   min=   -1.800000   max=   31.700465   mean=    6.019894
-Test     :    hocn   min=    0.001000   max= 1345.640000   mean=  128.628064
+Test     :    socn   min=10.7210460395083924   max=38.0000000000000000   mean=34.5397778570098026
+Test     :    tocn   min=-1.8000000000000000   max=31.7004645720658580   mean=6.0198942679126910
+Test     :    hocn   min=0.0009999999999977   max=1345.6400000000003274   mean=128.6280642065023017
