@@ -12,6 +12,7 @@ set( soca_test_input
   testinput/addincrement.yml
   testinput/balance_mask.yml
   testinput/checkpointmodel.yml
+  testinput/convertincrement.yml
   testinput/convertstate.yml
   testinput/convertstate_changevar.yml
   testinput/diffstates.yml
@@ -87,6 +88,7 @@ set( soca_test_ref
   testref/addincrement.test
   testref/balance_mask.test
   testref/checkpointmodel.test
+  testref/convertincrement.test
   testref/convertstate.test
   testref/convertstate_changevar.test
   testref/diffstates.test
@@ -700,6 +702,13 @@ soca_add_test( NAME 3dvar_godas
 
 soca_add_test( NAME addincrement
                EXE  soca_addincrement.x
+               TEST_DEPENDS 3dvar_godas )
+
+# Remapping MOM6 (horiz+vertical intterpolation)
+soca_add_test( NAME convertincrement
+               EXE  soca_convertincrement.x
+               TOL  2e-5 0
+               NOTRAPFPE
                TEST_DEPENDS 3dvar_godas )
 
 soca_add_test( NAME 3dvarlowres_soca

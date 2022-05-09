@@ -101,7 +101,7 @@ subroutine soca_balance_setup(self, f_conf, traj, geom)
   ! Setup mask for Jacobians related to the dynamic height balance
   allocate(jac_mask(isd:ied,jsd:jed))
   jac_mask = 1.0_kind_real
-  nlayers = 0.0_kind_real
+  nlayers = 0
   if ( f_conf%has("jac_mask") ) then
     jac_mask = 0.0_kind_real
     call f_conf%get_or_die("jac_mask.filename", filename)
