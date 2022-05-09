@@ -103,9 +103,9 @@ UnstructuredInterpolator::UnstructuredInterpolator(const eckit::Configuration & 
   interp_method_ = config.getString("interpolation method", "barycentric");
   ASSERT(interp_method_ == "barycentric" || interp_method_ == "inverse distance");
 
-  // work around for some SOCA bugs... if there are no valid geometry points,
+  // work around for some SOCA bugs... if there are insufficient valid geometry points,
   // skip kdtree generation and make sure apply() returns missing values
-  if (npoints == 0) {
+  if (npoints < nninterp_) {
     nninterp_ = 0;
     return;
   }
