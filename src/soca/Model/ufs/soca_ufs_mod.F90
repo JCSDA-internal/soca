@@ -143,11 +143,11 @@ contains
 #if 1
     call NUOPC_Advertise(self%toJedi, &
          StandardNames=(/ &
-                        "tocn                                 "/), &   ! Example fields
-         !              "So_h                                 ", &   ! Example fields
-         !              "tocn                                 ", &   ! Example fields
-         !              "Si_ifrac                             ", &   ! Example fields
-         !              "Si_tref                              "/), &   ! Example fields
+         !              "tocn                                 "/), &   ! Example fields
+                        "socn                                 ", &   ! Example fields
+                        "tocn                                 ", &   ! Example fields
+                        "uocn                                 ", &   ! Example fields
+                        "vocn                                 "/), &   ! Example fields
          SharePolicyField="share", &
          TransferOfferGeomObject="cannot provide", rc=rc)
     esmf_err_abort(rc)
@@ -516,19 +516,15 @@ contains
 
         ! verify redist
         call ESMF_FieldGet(destField, localDe=0, farrayPtr=farrayPtr3, totalLBound = lb(1:3), totalUBound = ub(1:3), rc=rc)
-!       call ESMF_FieldGet(destField, localDe=0, farrayPtr=farrayPtr3, rc=rc)
         if (rc /= ESMF_SUCCESS) call ESMF_Finalize(endflag=ESMF_END_ABORT)
              
     
-        write(6,*) 'HOOO, lb is ',lb(:)
-        write(6,*) 'HAAA, ub is ',ub(:)
-        write(6,*) 'HEEE, isc,iec,jsc,jec are ',self%isc,self%iec,self%jsc,self%jec
         if (rc.ne.0) call abor1_ftn("mom6_to_state: ESMF_FieldGet 2D failed")
 
         fnpz = ub(3)-lb(3)+1
         field_mom6(self%isc:self%iec,self%jsc:self%jec,1:fnpz) = farrayPtr3(lb(1):ub(1),lb(2):ub(2),:)
         nullify(farrayPtr3)
-        write(6,*) field_mom6(self%isc:self%iec,self%jsc+40,1)
+        write(6,*) soca_name,field_mom6(self%isc:self%iec,self%jsc+40,1)
 
 !     elseif (rank == 3) then
 !       call ESMF_FieldGet( field, 0, farrayPtr = farrayPtr3, totalLBound = lb, totalUBound = ub, rc = rc )
@@ -550,12 +546,12 @@ contains
         call abor1_ftn("mom6_to_state: dimension mismatch between JEDI and UFS horizontal grid")
       endif
 
+  endif
       ! Get pointer to mom6-jedi side field
       call state%get(trim(soca_name), field_ptr)
 
       if (field_ptr%nz .ne. fnpz) &
         call abor1_ftn("mom6_to_state: dimension mismatch between JEDI and UFS vertical grid")
-  endif
       ! Copy from UFS to mom6-jedi
 !     field_ptr%val(self%isc:self%iec,self%jsc:self%jec,1:fnpz) = field_mom6(self%isc:self%iec,self%jsc:self%jec,1:fnpz)
 !   else

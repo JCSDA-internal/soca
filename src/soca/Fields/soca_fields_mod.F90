@@ -1161,6 +1161,7 @@ subroutine soca_fields_write_rst(self, f_conf, vdate)
       end select
 
       ! write
+      write(6,*) 'working on ',trim(filename)
       if (field%nz == 1) then
         idr = register_restart_field( restart, filename, field%metadata%io_name, &
           field%val(:,:,1), domain=self%geom%Domain%mpp_domain)
@@ -1172,18 +1173,18 @@ subroutine soca_fields_write_rst(self, f_conf, vdate)
   end do
 
   ! write out and cleanup
-  call save_restart(ocean_restart, directory='')
+  call save_restart(ocean_restart, directory='./')
   call free_restart_type(ocean_restart)
   if (write_sfc) then
-    call save_restart(sfc_restart, directory='')
+    call save_restart(sfc_restart, directory='./')
     call free_restart_type(sfc_restart)
   end if
   if (write_ice) then
-    call save_restart(ice_restart, directory='')
+    call save_restart(ice_restart, directory='./')
     call free_restart_type(ice_restart)
   end if
   if (write_wav) then
-    call save_restart(wav_restart, directory='')
+    call save_restart(wav_restart, directory='./')
     call free_restart_type(wav_restart)
   end if
   call fms_io_exit()
