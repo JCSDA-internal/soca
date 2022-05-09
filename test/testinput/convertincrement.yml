@@ -1,0 +1,40 @@
+input geometry:
+  geom_grid_file: soca_gridspec.nc
+  mom6_input_nml: ./inputnml/input.nml
+  fields metadata: ./fields_metadata.yml
+
+output geometry:
+  geom_grid_file: soca_gridspec.nc
+  mom6_input_nml: ./inputnml/input.nml
+  fields metadata: ./fields_metadata.yml
+
+linear variable change:
+  input variables: [tocn, socn, ssh, hocn]
+  output variables: [tocn, socn, ssh, hocn]
+  linear variable changes:
+  - linear variable change name: BalanceSOCA
+    dsdtmax: 0.0
+    dsdzmin: 0.0
+    dtdzmin: 0.0
+    nlayers: 2
+
+increments:
+- date: 2018-04-15T00:00:00Z
+  input variables: [tocn, socn, ssh, hocn]
+  input:
+     read_from_file: 1
+     basename: ./Data/
+     ocn_filename: ocn.3dvargodas.iter1.incr.2018-04-15T00:00:00Z.nc
+     date: 2018-04-15T00:00:00Z
+     state variables: [ssh, tocn, socn, hocn]
+  trajectory:
+     read_from_file: 1
+     basename: ./INPUT/
+     ocn_filename: MOM.res.nc
+     date: 2018-04-15T00:00:00Z
+     state variables: [ssh, tocn, socn, hocn, layer_depth, mld]
+  output:
+     datadir: Data
+     exp: convert_incr
+     type: incr
+     date: 2018-04-15T00:00:00Z

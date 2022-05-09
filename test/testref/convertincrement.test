@@ -1,0 +1,20 @@
+Test     : Input increment: 
+Test     :   Valid time: 2018-04-15T00:00:00Z
+Test     :    tocn   min=   -0.051001   max=    0.332471   mean=    0.002194
+Test     :    socn   min=   -0.001313   max=    0.002829   mean=    0.000008
+Test     :     ssh   min=   -0.000272   max=    0.001732   mean=    0.000070
+Test     :    hocn   min=    0.000000   max=    0.000000   mean=    0.000000
+Test     : Trajectory state: 
+Test     :   Valid time: 2018-04-15T00:00:00Z
+Test     :     ssh   min=   -1.924485   max=    0.927283   mean=   -0.276790
+Test     :    tocn   min=   -1.888390   max=   31.700465   mean=    6.017565
+Test     :    socn   min=   10.721046   max=   40.441659   mean=   34.544390
+Test     :    hocn   min=    0.001000   max= 1345.640000   mean=  128.628064
+Test     : layer_depth   min=    2.285472   max= 5658.305747   mean= 1200.522954
+Test     :     mld   min=    2.285472   max= 4593.153342   mean=  192.410907
+Test     : Output increment: 
+Test     :   Valid time: 2018-04-15T00:00:00Z
+Test     :    tocn   min=   -0.051001   max=    0.332471   mean=    0.002194
+Test     :    socn   min=   -0.001313   max=    0.002829   mean=        -nan
+Test     :     ssh   min=   -0.000559   max=    0.003465   mean=    0.000140
+Test     :    hocn   min=    0.000000   max=    0.000000   mean=    0.000000
