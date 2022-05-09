@@ -111,3 +111,4 @@ output:
 
 test:
   reference filename: testref/parameters_bump_cov_lct.test
+  test output filename: testoutput/parameters_bump_cov_lct.test

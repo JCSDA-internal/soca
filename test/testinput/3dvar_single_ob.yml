@@ -83,3 +83,4 @@ final:
 
 test:
   reference filename: testref/3dvar_single_ob.test
+  test output filename: testoutput/3dvar_single_ob.test

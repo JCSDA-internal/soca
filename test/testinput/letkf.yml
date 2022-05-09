@@ -90,3 +90,4 @@ output increment:
 
 test:
   reference filename: testref/letkf.test
+  test output filename: testoutput/letkf.test

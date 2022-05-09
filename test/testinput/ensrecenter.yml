@@ -39,3 +39,4 @@ recentered output:
 
 test:
   reference filename: testref/ensrecenter.test
+  test output filename: testoutput/ensrecenter.test

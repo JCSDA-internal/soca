@@ -5,3 +5,4 @@ files:
 
 test:
   reference filename: testref/enshofx.test
+  test output filename: testoutput/enshofx.test

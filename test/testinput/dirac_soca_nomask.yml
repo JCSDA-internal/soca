@@ -52,3 +52,4 @@ output dirac:
 
 test:
   reference filename: testref/dirac_soca_nomask.test
+  test output filename: testoutput/dirac_soca_nomask.test

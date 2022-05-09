@@ -50,3 +50,4 @@ recentered output:
 
 test:
   reference filename: testref/hybridgain.test
+  test output filename: testoutput/hybridgain.test

@@ -68,3 +68,4 @@ output:
 
 test:
   reference filename: testref/letkf_split_observer.test
+  test output filename: testoutput/letkf_split_observer.test

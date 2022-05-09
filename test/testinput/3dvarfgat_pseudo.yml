@@ -193,3 +193,4 @@ final:
 
 test:
   reference filename: testref/3dvarfgat_pseudo.test
+  test output filename: testoutput/3dvarfgat_pseudo.test

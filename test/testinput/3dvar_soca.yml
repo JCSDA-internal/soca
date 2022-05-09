@@ -292,3 +292,4 @@ final:
 
 test:
   reference filename: testref/3dvar_soca.test
+  test output filename: testoutput/3dvar_soca.test

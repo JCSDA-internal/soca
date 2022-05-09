@@ -7,3 +7,4 @@ geometry:
 
 test:
   reference filename: testref/gridgen.test
+  test output filename: testoutput/gridgen.test

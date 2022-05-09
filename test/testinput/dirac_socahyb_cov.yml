@@ -123,3 +123,4 @@ output dirac:
 
 test:
   reference filename: testref/dirac_socahyb_cov.test
+  test output filename: testoutput/dirac_socahyb_cov.test

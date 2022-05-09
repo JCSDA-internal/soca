@@ -130,3 +130,4 @@ observations:
 
 test:
   reference filename: testref/hofx_3d.test
+  test output filename: testoutput/hofx_3d.test

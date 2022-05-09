@@ -26,3 +26,4 @@ analysis:
 
 test:
   reference filename: testref/checkpointmodel.test
+  test output filename: testoutput/checkpointmodel.test

@@ -41,3 +41,4 @@ rv output:
 
 test:
   reference filename: testref/setcorscales.test
+  test output filename: testoutput/setcorscales.test

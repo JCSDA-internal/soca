@@ -161,3 +161,4 @@ final:
 
 test:
   reference filename: testref/3dhybfgat.test
+  test output filename: testoutput/3dhybfgat.test

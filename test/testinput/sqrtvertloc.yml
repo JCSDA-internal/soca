@@ -111,3 +111,4 @@ output:
 
 test:
   reference filename: testref/sqrtvertloc.test
+  test output filename: testoutput/sqrtvertloc.test

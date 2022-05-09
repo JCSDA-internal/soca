@@ -28,3 +28,4 @@ output:
 
 test:
   reference filename: testref/forecast_identity.test
+  test output filename: testoutput/forecast_identity.test

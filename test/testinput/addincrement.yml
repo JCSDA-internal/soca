@@ -30,3 +30,4 @@ output:
 
 test:
   reference filename: testref/addincrement.test
+  test output filename: testoutput/addincrement.test

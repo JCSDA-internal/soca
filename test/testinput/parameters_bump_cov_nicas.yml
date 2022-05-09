@@ -81,3 +81,4 @@ ensemble:
 
 test:
   reference filename: testref/parameters_bump_cov_nicas.test
+  test output filename: testoutput/parameters_bump_cov_nicas.test

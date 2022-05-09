@@ -35,3 +35,4 @@ make obs: true
 
 test:
   reference filename: testref/makeobs.test
+  test output filename: testoutput/makeobs.test

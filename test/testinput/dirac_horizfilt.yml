@@ -53,3 +53,4 @@ output dirac:
 
 test:
   reference filename: testref/dirac_horizfilt.test
+  test output filename: testoutput/dirac_horizfilt.test

@@ -43,3 +43,4 @@ background error:
 
 test:
   reference filename: testref/static_socaerror_init.test
+  test output filename: testoutput/static_socaerror_init.test

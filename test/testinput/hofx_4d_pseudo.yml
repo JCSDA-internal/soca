@@ -75,3 +75,4 @@ observations:
 
 test:
   reference filename: testref/hofx_4d_pseudo.test
+  test output filename: testoutput/hofx_4d_pseudo.test

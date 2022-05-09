@@ -179,3 +179,4 @@ final:
 
 test:
   reference filename: testref/3dvarbump.test
+  test output filename: testoutput/3dvarbump.test

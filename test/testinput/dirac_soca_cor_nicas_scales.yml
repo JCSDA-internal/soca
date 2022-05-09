@@ -43,3 +43,4 @@ output dirac:
 
 test:
   reference filename: testref/dirac_soca_cor_nicas_scales.test
+  test output filename: testoutput/dirac_soca_cor_nicas_scales.test

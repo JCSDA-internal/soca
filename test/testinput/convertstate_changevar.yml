@@ -51,3 +51,4 @@ states:
 
 test:
   reference filename: testref/convertstate_changevar.test
+  test output filename: testoutput/convertstate_changevar.test

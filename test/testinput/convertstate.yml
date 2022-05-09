@@ -25,3 +25,4 @@ states:
 
 test:
   reference filename: testref/convertstate.test
+  test output filename: testoutput/convertstate.test
