@@ -106,6 +106,8 @@ set( soca_test_ref
   testref/forecast_mom6.test
   testref/forecast_mom6_bgc.test
   testref/forecast_pseudo.test
+  testref/gridgen.test
+  testref/gridgen_small.test
   testref/hofx_3d.test
   testref/hofx_4d.test
   testref/hofx_4d_pseudo.test
@@ -119,6 +121,8 @@ set( soca_test_ref
   testref/parameters_bump_cov_lct.test
   testref/setcorscales.test
   testref/sqrtvertloc.test
+  testref/static_socaerror_init.test
+  testref/static_socaerrorlowres_init.test
 )
 
 set( soca_data_files
@@ -239,9 +243,6 @@ file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bump_lowres)
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bump-kmask)
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bump_scales)
 
-# find compare.py provided by oops
-find_file(COMPARE_BIN oops_compare.py HINTS ${oops_BINDIR})
-
 #####################################################################
 
 # Configurable parameters for the subsequent tests
@@ -249,13 +250,6 @@ find_file(COMPARE_BIN oops_compare.py HINTS ${oops_BINDIR})
 set( SOCA_TESTS_MAX_MPI 2 CACHE STRING
   "Maximum number of PEs to use for SOCA's MPI based tests.\
   NOTE: should leave this at 2 to ensure all tests pass.")
-
-set( SOCA_TESTS_DEFAULT_TOL "1.0e-12;0" CACHE STRING
-  "Default test tolerances for compare.py based tests. (float_tol;int_tol) ")
-
-set( SOCA_TESTS_FORC_DEFAULT_TOL OFF CACHE BOOL
-  "If true, the specified test tolerances are ignored and\
-  SOCA_TESTS_DEFAULT_TOL is used" )
 
 set( SOCA_TESTS_FORC_TRAPFPE OFF CACHE BOOL
   "If true, the specified per-test trapping on/off flag is ignored\
@@ -275,16 +269,12 @@ set( SOCA_TESTS_VALGRIND OFF CACHE BOOL
 # do not do this.
 #
 # Arguments:
-#  NOCOMPARE - if flag is present, no compare test is performed
 #  NAME      - the name of the test (after test_soca is prepended), as well
 #              as the base name of the input confg file
 #  EXE       - name of executable to be used.
 #  SRC       - The name of the unit test source file to compile
 #  CFG       - The name of the yaml file, if the default testinput/${NAME}.yaml
 #              is not to be used
-#  TOL       - The tolerances to use for the test "float_tolerance int_tolerance"
-#              If none are given, ${SOCA_TESTS_DEFAULT_TOL} is used. Only used
-#              if an EXE with no NOCOMPARE flag set.
 #  MPI       - The number of MPI PEs to use. If not specified, ${SOCA_TESTS_MAX_MPI}
 #              will be used
 # TEST_DEPENDS - list of tests this test depends on
@@ -292,17 +282,12 @@ set( SOCA_TESTS_VALGRIND OFF CACHE BOOL
 function(soca_add_test)
   # parse the passed arguments
   set(prefix     ARG)
-  set(novals     NOCOMPARE NOTRAPFPE NOVALGRIND)
+  set(novals     NOTRAPFPE NOVALGRIND)
   set(singlevals NAME EXE SRC CFG MPI)
-  set(multivals  TEST_DEPENDS TOL)
+  set(multivals  TEST_DEPENDS)
   cmake_parse_arguments(${prefix}
                         "${novals}" "${singlevals}" "${multivals}"
                         ${ARGN})
-
-  # set the tolerances to defaults if none given, or if we want to override
-  IF(NOT ARG_TOL OR SOCA_TESTS_FORC_DEFAULT_TOL)
-    SET(ARG_TOL ${SOCA_TESTS_DEFAULT_TOL})
-  ENDIF()
 
   # determine if floating point error trapping should be set
   if ( ARG_NOTRAPFPE AND NOT SOCA_TESTS_FORC_TRAPFPE)
@@ -330,7 +315,7 @@ function(soca_add_test)
 
   # Are we building a unit test / or running a soca executable?
   if ( ARG_SRC )
-    # building a unit test, therfore also assume no compare step
+    # building a unit test
     ecbuild_add_test( TARGET  test_soca_${ARG_NAME}
                       SOURCES executables/${ARG_SRC}
                       ARGS    ${CONFIG_FILE}
@@ -341,32 +326,17 @@ function(soca_add_test)
     set( EXE ./test_soca_${ARG_NAME})
 
   else()
-    LIST(GET ARG_TOL 0 TOL_F)
-    LIST(GET ARG_TOL 1 TOL_I)
-
-    # find the MPI command
-    set(MPI_CMD "${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} ${MPI}")
-
     # running a soca executable.
-    # This is run with the run wrapper, which will also optionally
-    # run the comapre.py script afterwards
+    set( EXE ${CMAKE_BINARY_DIR}/bin/${ARG_EXE})
     ecbuild_add_test( TARGET  test_soca_${ARG_NAME}
-                      TYPE    SCRIPT
-                      COMMAND bash
-                      ARGS    "${CMAKE_CURRENT_SOURCE_DIR}/test_wrapper.sh"
-                              "${CMAKE_BINARY_DIR}/bin/${ARG_EXE}"
-                              ${CONFIG_FILE}
+                      MPI ${MPI}
+                      COMMAND ${EXE}
+                      ARGS ${CONFIG_FILE}
                       ENVIRONMENT
                               ${TRAPFPE_ENV}
-                              COMPARE_SCRIPT=${COMPARE_BIN}
-                              COMPARE_TESTNAME=${ARG_NAME}
-                              COMPARE_TOL_F=${TOL_F}
-                              COMPARE_TOL_I=${TOL_I}
-                              MPI_CMD=${MPI_CMD}
-                              SKIP_COMPARE=${ARG_NOCOMPARE}
                       DEPENDS ${ARG_EXE}
                       TEST_DEPENDS ${ARG_TEST_DEPENDS})
-    set( EXE ${CMAKE_BINARY_DIR}/bin/${ARG_EXE})
+
 
   endif()
 
@@ -398,25 +368,21 @@ add_test ( test_soca_subsample_netcdf
 # Test of grid generation and create subsampled grid
 soca_add_test( NAME gridgen_small
                EXE  soca_gridgen.x
-               NOCOMPARE
                TEST_DEPENDS test_soca_subsample_netcdf )
 
 # Test of grid generation and create regular grid
 soca_add_test( NAME gridgen
-               EXE  soca_gridgen.x
-               NOCOMPARE )
+               EXE  soca_gridgen.x )
 
 # Remapping MOM6 (horiz+vertical intterpolation)
 soca_add_test( NAME convertstate
                EXE  soca_convertstate.x
-               TOL  2e-5 0
                NOTRAPFPE
                TEST_DEPENDS test_soca_gridgen )
 
 # Apply a nonlinear change of variable to an ensemble of states
 soca_add_test( NAME convertstate_changevar
                EXE  soca_convertstate.x
-               TOL  2e-5 0
                NOTRAPFPE
                TEST_DEPENDS test_soca_gridgen )
 
@@ -448,13 +414,11 @@ soca_add_test( NAME forecast_pseudo
 # Initialize static error covariance model defined in soca, used for 3DVAR
 soca_add_test( NAME static_socaerror_init
                EXE  soca_staticbinit.x
-               NOCOMPARE
                NOTRAPFPE
                TEST_DEPENDS test_soca_gridgen )
 
 soca_add_test( NAME static_socaerrorlowres_init
                EXE  soca_staticbinit.x
-               NOCOMPARE
                NOTRAPFPE
                TEST_DEPENDS test_soca_gridgen )
 
@@ -482,7 +446,6 @@ soca_add_test( NAME enspert
 # Generate sqrt of vertical localization
 soca_add_test( NAME sqrtvertloc
                EXE  soca_sqrtvertloc.x
-               TOL  1e-5 0
                NOTRAPFPE
                TEST_DEPENDS test_soca_gridgen
                             test_soca_static_socaerror_init
@@ -597,18 +560,15 @@ soca_add_test( NAME varchange_vertconv
 
 soca_add_test( NAME obslocalization
                SRC  TestObsLocalization.cc
-               TEST_DEPENDS test_soca_gridgen
-               NOCOMPARE )
+               TEST_DEPENDS test_soca_gridgen )
 
 soca_add_test( NAME obslocalization_vertical
                SRC  TestObsLocalization.cc
-               TEST_DEPENDS test_soca_gridgen_small
-               NOCOMPARE )
+               TEST_DEPENDS test_soca_gridgen_small )
 
 soca_add_test( NAME obslocalizations
                SRC  TestObsLocalizations.cc
-               TEST_DEPENDS test_soca_gridgen_small
-               NOCOMPARE )
+               TEST_DEPENDS test_soca_gridgen_small )
 
 
 #-------------------------------------------------------------------------------
@@ -621,7 +581,6 @@ soca_add_test( NAME ensvariance
 
 soca_add_test( NAME parameters_bump_loc
                EXE  soca_error_covariance_training.x
-               NOCOMPARE
                TEST_DEPENDS test_soca_enspert )
 
 soca_add_test( NAME ensrecenter
@@ -706,12 +665,10 @@ soca_add_test( NAME hofx_4d_pseudo
                EXE  soca_hofx.x
                TEST_DEPENDS test_soca_forecast_mom6 )
 
-# TODO enshofx currently breaks compare.py
 # Re-enable the comparison once that's fixed
 soca_add_test( NAME enshofx
                EXE  soca_enshofx.x
                MPI 3
-               NOCOMPARE
                NOTRAPFPE
                TEST_DEPENDS test_soca_enspert )
 
@@ -719,13 +676,11 @@ soca_add_test( NAME enshofx
 # variational methods
 soca_add_test( NAME 3dvar_soca
                EXE  soca_var.x
-               TOL  4e-9 0
                NOTRAPFPE
                TEST_DEPENDS test_soca_static_socaerror_init )
 
 soca_add_test( NAME 3dvar_single_ob
                EXE  soca_var.x
-               TOL  4e-9 0
                NOTRAPFPE
                TEST_DEPENDS test_soca_static_socaerror_init )
 
@@ -738,19 +693,15 @@ soca_add_test( NAME 3dvar_single_ob
 
 soca_add_test( NAME 3dvarbump
                EXE  soca_var.x
-               TOL  4e-9 0
                NOTRAPFPE
                TEST_DEPENDS test_soca_parameters_bump_cor_nicas )
 
 soca_add_test( NAME 3dvar_godas
                EXE  soca_var.x
-               TOL  2e-6 0
                TEST_DEPENDS test_soca_static_socaerror_init )
 
-# TODO: Remove NOCOMPARE when oops PR#585 is merged
 soca_add_test( NAME addincrement
                EXE  soca_addincrement.x
-               NOCOMPARE
                TEST_DEPENDS 3dvar_godas )
 
 # Remapping MOM6 (horiz+vertical intterpolation)
@@ -762,7 +713,6 @@ soca_add_test( NAME convertincrement
 
 soca_add_test( NAME 3dvarlowres_soca
                EXE  soca_var.x
-               TOL  0.1 0
                NOTRAPFPE
                TEST_DEPENDS test_soca_static_socaerrorsmall_init )
 
@@ -772,19 +722,16 @@ soca_add_test( NAME diffstates
 
 soca_add_test( NAME 3dvarfgat
                EXE  soca_var.x
-               TOL  1e-6 0
                NOTRAPFPE
                TEST_DEPENDS test_soca_static_socaerror_init )
 
 soca_add_test( NAME 3dvarfgat_pseudo
                EXE  soca_var.x
-               TOL  1e-6 0
                NOTRAPFPE
                TEST_DEPENDS test_soca_static_socaerror_init )
 
 soca_add_test( NAME 3dhyb
                EXE  soca_var.x
-               TOL  2e-7 0
                NOTRAPFPE
                TEST_DEPENDS test_soca_static_socaerror_init
                             test_soca_parameters_bump_loc )

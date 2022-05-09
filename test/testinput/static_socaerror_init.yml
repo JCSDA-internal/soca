@@ -40,3 +40,7 @@ background error:
   - name: wav
     base value: 600.0e3
     variables: [swh]
+
+test:
+  reference filename: testref/static_socaerror_init.test
+  test output filename: testoutput/static_socaerror_init.test

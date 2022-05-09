@@ -1,22 +1,25 @@
-Test     : CostJb   : Nonlinear Jb = 0
-Test     : CostJo   : Nonlinear Jo(ADT) = 85.8084, nobs = 31, Jo/n = 2.76801, err = 0.1
-Test     : CostFunction: Nonlinear J = 85.8084
-Test     : RPCGMinimizer: reduction in residual norm = 0.441728
-Test     : CostFunction::addIncrement: Analysis: 
-Test     :   Valid time: 2018-04-15T00:00:00Z
-Test     :   cicen   min=   -0.000048   max=    1.000000   mean=    0.117516
-Test     :   hicen   min=    0.000000   max=    4.032667   mean=    0.471252
-Test     :    socn   min=   10.721046   max=   40.441659   mean=   34.568363
-Test     :    tocn   min=   -2.203526   max=   31.700465   mean=    6.007306
-Test     :     ssh   min=   -1.901552   max=    0.922798   mean=   -0.293601
-Test     :    hocn   min=    0.001000   max= 1345.640000   mean=  128.628064
-Test     :      sw   min=    0.000000   max=    0.000000   mean=    0.000000
-Test     :     lhf   min=    0.000000   max=    0.000000   mean=    0.000000
-Test     :     shf   min=    0.000000   max=    0.000000   mean=    0.000000
-Test     :      lw   min=    0.000000   max=    0.000000   mean=    0.000000
-Test     :      us   min=    0.000000   max=    0.000000   mean=    0.000000
-Test     :     mld   min=    2.285472   max= 4593.153342   mean=  192.410907
-Test     : layer_depth   min=    2.285472   max= 5658.305747   mean= 1200.522954
-Test     : CostJb   : Nonlinear Jb = 2.011820
-Test     : CostJo   : Nonlinear Jo(ADT) = 76.050191, nobs = 31, Jo/n = 2.453232, err = 0.100000
-Test     : CostFunction: Nonlinear J = 78.062011
+CostJb   : Nonlinear Jb = 0.0000000000000000e+00
+CostJo   : Nonlinear Jo(ADT) = 8.5808373522696215e+01, nobs = 31, Jo/n = 2.7680120491192328e+00, err = 1.0000000149011612e-01
+CostFunction: Nonlinear J = 8.5808373522696215e+01
+RPCGMinimizer: reduction in residual norm = 4.4172812146955676e-01
+CostFunction::addIncrement: Analysis: 
+  Valid time: 2018-04-15T00:00:00Z
+  cicen   min=-0.0000476143708117   max=1.0000000000007623   mean=0.1175156917739851
+  hicen   min=0.0000000000000000   max=4.0326673084246947   mean=0.4712515705773916
+   socn   min=10.7210460395083924   max=40.4416591897031168   mean=34.5683626539616142
+   tocn   min=-2.2035264603654161   max=31.7004645720658580   mean=6.0073059887728668
+    ssh   min=-1.9015515980921662   max=0.9227979844347517   mean=-0.2936013245388625
+   hocn   min=0.0009999999999977   max=1345.6400000000003274   mean=128.6280642065023017
+     sw   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
+    lhf   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
+    shf   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
+     lw   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
+     us   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
+    mld   min=2.2854716757984130   max=4593.1533423819937525   mean=192.4109073940401515
+layer_depth   min=2.2854716757984130   max=5658.3057467114012979   mean=1200.5229536158392420
+
+
+
+CostJb   : Nonlinear Jb = 2.0118198774243883
+CostJo   : Nonlinear Jo(ADT) = 76.0501913196007848, nobs = 31, Jo/n = 2.4532319780516381, err = 0.1000000014901161
+CostFunction: Nonlinear J = 78.0620111970251713

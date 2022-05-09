@@ -27,3 +27,7 @@ output:
   datadir: Data
   exp: addincrement
   type: an
+
+test:
+  reference filename: testref/addincrement.test
+  test output filename: testoutput/addincrement.test

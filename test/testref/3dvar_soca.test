@@ -1,43 +1,55 @@
-Test     : CostJb   : Nonlinear Jb = 0
-Test     : CostJo   : Nonlinear Jo(CoolSkin) = 14021.7, nobs = 172, Jo/n = 81.5217, err = 0.362438
-Test     : CostJo   : Nonlinear Jo(SeaSurfaceTemp) = 873.634, nobs = 144, Jo/n = 6.0669, err = 0.362422
-Test     : CostJo   : Nonlinear Jo(SeaSurfaceSalinity) = 5.72096, nobs = 28, Jo/n = 0.20432, err = 1
-Test     : CostJo   : Nonlinear Jo(ADT) = 150.93, nobs = 91, Jo/n = 1.65857, err = 0.1
-Test     : CostJo   : Nonlinear Jo(InsituTemperature) = 302.074, nobs = 201, Jo/n = 1.50286, err = 0.891278
-Test     : CostJo   : Nonlinear Jo(InsituSalinity) = 325.374, nobs = 218, Jo/n = 1.49254, err = 0.608197
-Test     : CostJo   : Nonlinear Jo(SeaIceFraction) = 613.57, nobs = 89, Jo/n = 6.89404, err = 0.1
-Test     : CostJo   : Nonlinear Jo(SeaSurfaceChlorophyll) = 1383.6, nobs = 129, Jo/n = 10.7256, err = 0.061865
-Test     : CostJo   : Nonlinear Jo(SeaSurfaceBiomassP) = 422.648, nobs = 112, Jo/n = 3.77364, err = 1.16926e-08
-Test     : CostJo   : Nonlinear Jo(SeaSurfaceHS) = 1003.7, nobs = 6, Jo/n = 167.283, err = 0.1
-Test     : CostFunction: Nonlinear J = 19103
-Test     : RPCGMinimizer: reduction in residual norm = 0.09282
-Test     : CostFunction::addIncrement: Analysis: 
-Test     :   Valid time: 2018-04-15T00:00:00Z
-Test     :   cicen   min=   -0.000227   max=    1.000307   mean=    0.117544
-Test     :   hicen   min=    0.000000   max=    4.032667   mean=    0.471252
-Test     :    socn   min=   10.721046   max=   40.441659   mean=   34.544436
-Test     :    tocn   min=   -1.888390   max=   31.700465   mean=    6.020533
-Test     :     ssh   min=   -1.924560   max=    0.927289   mean=   -0.276681
-Test     :    hocn   min=    0.001000   max= 1345.640000   mean=  128.628064
-Test     :      sw   min= -225.093268   max=    0.000000   mean=  -71.737422
-Test     :     lhf   min=  -38.137985   max=  256.593914   mean=   42.009395
-Test     :     shf   min=  -58.949325   max=  201.374190   mean=    6.075322
-Test     :      lw   min=    0.000000   max=   88.036101   mean=   31.395541
-Test     :      us   min=    0.004407   max=    0.019691   mean=    0.008727
-Test     :     chl   min=   -0.000014   max=    4.671990   mean=    0.118477
-Test     :    biop   min=    0.000000   max=    0.000000   mean=    0.000000
-Test     :     swh   min=    0.000100   max=    6.749196   mean=    1.062147
-Test     :     mld   min=    2.285472   max= 4593.153342   mean=  192.410907
-Test     : layer_depth   min=    2.285472   max= 5658.305747   mean= 1200.522954
-Test     : CostJb   : Nonlinear Jb = 6.903587
-Test     : CostJo   : Nonlinear Jo(CoolSkin) = 13469.947256, nobs = 172, Jo/n = 78.313647, err = 0.362438
-Test     : CostJo   : Nonlinear Jo(SeaSurfaceTemp) = 867.873174, nobs = 144, Jo/n = 6.026897, err = 0.362422
-Test     : CostJo   : Nonlinear Jo(SeaSurfaceSalinity) = 5.720967, nobs = 28, Jo/n = 0.204320, err = 1.000000
-Test     : CostJo   : Nonlinear Jo(ADT) = 150.919216, nobs = 91, Jo/n = 1.658453, err = 0.100000
-Test     : CostJo   : Nonlinear Jo(InsituTemperature) = 301.995078, nobs = 201, Jo/n = 1.502463, err = 0.891278
-Test     : CostJo   : Nonlinear Jo(InsituSalinity) = 324.475121, nobs = 218, Jo/n = 1.488418, err = 0.608197
-Test     : CostJo   : Nonlinear Jo(SeaIceFraction) = 612.686335, nobs = 89, Jo/n = 6.884116, err = 0.100000
-Test     : CostJo   : Nonlinear Jo(SeaSurfaceChlorophyll) = 1371.697504, nobs = 129, Jo/n = 10.633314, err = 0.061865
-Test     : CostJo   : Nonlinear Jo(SeaSurfaceBiomassP) = 419.680819, nobs = 112, Jo/n = 3.747150, err = 0.000000
-Test     : CostJo   : Nonlinear Jo(SeaSurfaceHS) = 1001.788011, nobs = 6, Jo/n = 166.964669, err = 0.100000
-Test     : CostFunction: Nonlinear J = 18533.687068
+CostJb   : Nonlinear Jb = 0.0000000000000000e+00
+CostJo   : Nonlinear Jo(CoolSkin) = 1.4021724050726119e+04, nobs = 172, Jo/n = 8.1521651457709993e+01, err = 3.6243845867927243e-01
+CostJo   : Nonlinear Jo(SeaSurfaceTemp) = 8.7363428891594594e+02, nobs = 144, Jo/n = 6.0669047841385133e+00, err = 3.6242241540133863e-01
+CostJo   : Nonlinear Jo(SeaSurfaceSalinity) = 5.7209593553370315e+00, nobs = 28, Jo/n = 2.0431997697632256e-01, err = 1.0000000000000000e+00
+CostJo   : Nonlinear Jo(ADT) = 1.5092959327252782e+02, nobs = 91, Jo/n = 1.6585669590387673e+00, err = 1.0000000149011612e-01
+CostJo   : Nonlinear Jo(InsituTemperature) = 3.0207389049976348e+02, nobs = 201, Jo/n = 1.5028551766157388e+00, err = 8.9127767893751042e-01
+CostJo   : Nonlinear Jo(InsituSalinity) = 3.2537388217310308e+02, nobs = 218, Jo/n = 1.4925407439133169e+00, err = 6.0819699619437717e-01
+CostJo   : Nonlinear Jo(SeaIceFraction) = 6.1356996932340257e+02, nobs = 89, Jo/n = 6.8940445991393551e+00, err = 1.0000000149011612e-01
+CostJo   : Nonlinear Jo(SeaSurfaceChlorophyll) = 1.3835970302558553e+03, nobs = 129, Jo/n = 1.0725558374076398e+01, err = 6.1865029773452762e-02
+CostJo   : Nonlinear Jo(SeaSurfaceBiomassP) = 4.2264815814469887e+02, nobs = 112, Jo/n = 3.7736442691490972e+00, err = 1.1692603016453901e-08
+CostJo   : Nonlinear Jo(SeaSurfaceHS) = 1.0036986509959469e+03, nobs = 6, Jo/n = 1.6728310849932447e+02, err = 1.0000000149011612e-01
+CostFunction: Nonlinear J = 1.9102970473662699e+04
+RPCGMinimizer: reduction in residual norm = 9.2820018030662005e-02
+CostFunction::addIncrement: Analysis: 
+  Valid time: 2018-04-15T00:00:00Z
+  cicen   min=-0.0002273489346061   max=1.0003068285537475   mean=0.1175435325271067
+  hicen   min=0.0000000000000000   max=4.0326673084246947   mean=0.4712515705773916
+   socn   min=10.7210460395083924   max=40.4416591897031168   mean=34.5444359528772367
+   tocn   min=-1.8883899372702533   max=31.7004645720658580   mean=6.0205333170640509
+    ssh   min=-1.9245597715794081   max=0.9272885237786753   mean=-0.2766810227646444
+   hocn   min=0.0009999999999977   max=1345.6400000000003274   mean=128.6280642065023017
+     sw   min=-225.0932682408024448   max=0.0000000000000000   mean=-71.7374221462638531
+    lhf   min=-38.1379848971830455   max=256.5939136503528744   mean=42.0093952990717838
+    shf   min=-58.9493252123186409   max=201.3741901801734855   mean=6.0753218465466663
+     lw   min=0.0000000000000000   max=88.0361010156209858   mean=31.3955406187433361
+     us   min=0.0044072290018029   max=0.0196907810882233   mean=0.0087265407877780
+    chl   min=-0.0000137067881132   max=4.6719899196170607   mean=0.1184770720110030
+   biop   min=0.0000000000000000   max=0.0000001868533390   mean=0.0000000065395365
+    swh   min=0.0000996535891318   max=6.7491955757141104   mean=1.0621468237707108
+    mld   min=2.2854716757984130   max=4593.1533423819937525   mean=192.4109073940401515
+layer_depth   min=2.2854716757984130   max=5658.3057467114012979   mean=1200.5229536158392420
+
+
+
+
+
+
+
+
+
+
+
+
+CostJb   : Nonlinear Jb = 6.9035869403872976
+CostJo   : Nonlinear Jo(CoolSkin) = 13469.9472563991075731, nobs = 172, Jo/n = 78.3136468395296959, err = 0.3624384586792724
+CostJo   : Nonlinear Jo(SeaSurfaceTemp) = 867.8731735011587034, nobs = 144, Jo/n = 6.0268970382024909, err = 0.3624224154013386
+CostJo   : Nonlinear Jo(SeaSurfaceSalinity) = 5.7209668055023144, nobs = 28, Jo/n = 0.2043202430536541, err = 1.0000000000000000
+CostJo   : Nonlinear Jo(ADT) = 150.9192163370133812, nobs = 91, Jo/n = 1.6584529267803669, err = 0.1000000014901161
+CostJo   : Nonlinear Jo(InsituTemperature) = 301.9950776836951718, nobs = 201, Jo/n = 1.5024630730532098, err = 0.8912776789375104
+CostJo   : Nonlinear Jo(InsituSalinity) = 324.4751213155141158, nobs = 218, Jo/n = 1.4884179876858445, err = 0.6081969961943772
+CostJo   : Nonlinear Jo(SeaIceFraction) = 612.6863348337009256, nobs = 89, Jo/n = 6.8841161217269766, err = 0.1000000014901161
+CostJo   : Nonlinear Jo(SeaSurfaceChlorophyll) = 1371.6975037972570135, nobs = 129, Jo/n = 10.6333139829244736, err = 0.0618650297734528
+CostJo   : Nonlinear Jo(SeaSurfaceBiomassP) = 419.6808193448894144, nobs = 112, Jo/n = 3.7471501727222267, err = 0.0000000116926030
+CostJo   : Nonlinear Jo(SeaSurfaceHS) = 1001.7880113912883644, nobs = 6, Jo/n = 166.9646685652147369, err = 0.1000000014901161
+CostFunction: Nonlinear J = 18533.6870683495144476

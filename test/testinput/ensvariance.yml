@@ -49,3 +49,7 @@ ensemble:
         name: dcdt
     input variables: *soca_vars
     output variables: *soca_vars
+
+test:
+  reference filename: testref/ensvariance.test
+  test output filename: testoutput/ensvariance.test
