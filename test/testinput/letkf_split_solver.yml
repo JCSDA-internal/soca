@@ -99,3 +99,8 @@ output increment:
   date: *date
   exp: letkf.inc
   type: an
+
+
+test:
+  reference filename: testref/letkf_split_solver.test
+  test output filename: testoutput/letkf_split_solver.test

@@ -85,3 +85,7 @@ output dirac:
   date: *date
   exp: dirac_soca_cov_%id%
   type: an
+
+test:
+  reference filename: testref/dirac_soca_cov.test
+  test output filename: testoutput/dirac_soca_cov.test

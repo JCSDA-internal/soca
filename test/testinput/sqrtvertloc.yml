@@ -38,7 +38,7 @@ background error:
 
     input variables: *soca_vars
     output variables: *soca_vars
-    
+
     linear variable changes:
     - linear variable change name: VertConvSOCA
       Lz_min: 2.0
@@ -108,3 +108,7 @@ output:
  exp: sqrtvert
  type: ens
  date: *date
+
+test:
+  reference filename: testref/sqrtvertloc.test
+  test output filename: testoutput/sqrtvertloc.test

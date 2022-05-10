@@ -180,3 +180,7 @@ output:
 final:
   diagnostics:
     departures: oman
+
+test:
+  reference filename: testref/3dvarlowres_soca.test
+  test output filename: testoutput/3dvarlowres_soca.test

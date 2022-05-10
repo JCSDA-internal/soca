@@ -78,3 +78,7 @@ ensemble:
   - <<: *ensfile
     ocn_filename: ocn.pert.ens.5.2018-04-15T00:00:00Z.PT0S.nc
     ice_filename: ice.pert.ens.5.2018-04-15T00:00:00Z.PT0S.nc
+
+test:
+  reference filename: testref/parameters_bump_cov_nicas.test
+  test output filename: testoutput/parameters_bump_cov_nicas.test

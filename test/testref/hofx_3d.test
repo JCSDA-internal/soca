@@ -1,30 +1,41 @@
-Test     : State: 
-Test     :   Valid time: 2018-04-15T00:00:00Z
-Test     :   cicen   min=    0.000000   max=    1.000000   mean=    0.117513
-Test     :   hicen   min=    0.000000   max=    4.032667   mean=    0.471252
-Test     :   hsnon   min=    0.000000   max=    1.271283   mean=    0.088687
-Test     :    socn   min=   10.721046   max=   40.441659   mean=   34.544390
-Test     :    tocn   min=   -1.888390   max=   31.700465   mean=    6.017565
-Test     :     ssh   min=   -1.924485   max=    0.927283   mean=   -0.276790
-Test     :    hocn   min=    0.001000   max= 1345.640000   mean=  128.628064
-Test     :    uocn   min=   -0.858169   max=    0.700095   mean=   -0.000259
-Test     :    vocn   min=   -0.766110   max=    1.437777   mean=    0.002197
-Test     :      sw   min= -225.097763   max=   -0.000000   mean=  -71.739321
-Test     :     lhf   min=  -38.137398   max=  256.597656   mean=   42.010040
-Test     :     shf   min=  -58.949295   max=  201.374298   mean=    6.075334
-Test     :      lw   min=    0.000000   max=   88.036087   mean=   31.395529
-Test     :      us   min=    0.004396   max=    0.019658   mean=    0.008644
-Test     :     chl   min=    0.000010   max=    4.671990   mean=    0.118483
-Test     : H(x): 
-Test     : CoolSkin nobs= 201 Min=-69.356342, Max=25.085506, RMS=21.135367
-Test     : SeaSurfaceTemp nobs= 201 Min=-0.732231, Max=30.647096, RMS=24.202404
-Test     : SeaSurfaceSalinity nobs= 100 Min=32.069571, Max=37.072496, RMS=34.760739
-Test     : ADT nobs= 100 Min=-1.237160, Max=1.422803, RMS=0.754407
-Test     : InsituTemperature nobs= 218 Min=7.756424, Max=30.431539, RMS=21.282911
-Test     : InsituSalinity nobs= 218 Min=34.171480, Max=36.032498, RMS=35.041764
-Test     : SeaIceFraction nobs= 100 Min=0.000000, Max=1.000000, RMS=0.694684
-Test     : SeaIceFreeboard nobs= 376 Min=-0.071325, Max=0.257166, RMS=0.056245
-Test     : Chlorophyll nobs= 137 Min=0.002826, Max=2.037624, RMS=0.326758
-Test     : SurfaceU nobs= 201 Min=-0.586745, Max=0.355774, RMS=0.165775
-Test     : SurfaceV nobs= 201 Min=-0.346609, Max=0.361511, RMS=0.107459
-Test     : End H(x)
+State: 
+  Valid time: 2018-04-15T00:00:00Z
+  cicen   min=0.0000000000000000   max=1.0000000000000000   mean=0.1175125761012928
+  hicen   min=0.0000000000000000   max=4.0326673084246947   mean=0.4712515705773916
+  hsnon   min=0.0000000000000000   max=1.2712833951042413   mean=0.0886865877527975
+   socn   min=10.7210460395083924   max=40.4416591897031168   mean=34.5443897261524953
+   tocn   min=-1.8883899372702533   max=31.7004645720658580   mean=6.0175649583533595
+    ssh   min=-1.9244847628277935   max=0.9272826517867588   mean=-0.2767903423591662
+   hocn   min=0.0009999999999977   max=1345.6400000000003274   mean=128.6280642065023017
+   uocn   min=-0.8581693992488438   max=0.7000954286848975   mean=-0.0002591771954069
+   vocn   min=-0.7661101215480253   max=1.4377766409421606   mean=0.0021972630399530
+     sw   min=-225.0977630615234375   max=-0.0000000000000000   mean=-71.7393205198725354
+    lhf   min=-38.1373977661132812   max=256.5976562500000000   mean=42.0100402226406899
+    shf   min=-58.9492950439453125   max=201.3742980957031250   mean=6.0753344854805622
+     lw   min=0.0000000000000000   max=88.0360870361328125   mean=31.3955290035652546
+     us   min=0.0043958698226386   max=0.0196578730801191   mean=0.0086443089692577
+    chl   min=0.0000100000000000   max=4.6719899196170607   mean=0.1184829680403295
+H(x): 
+CoolSkin nobs= 201 Min=-69.3563424501019199, Max=25.0855058578247281, RMS=21.1353667059005836
+
+SeaSurfaceTemp nobs= 201 Min=-0.7322313691851292, Max=30.6470963745313973, RMS=24.2024040632344999
+
+SeaSurfaceSalinity nobs= 100 Min=32.0695712201999683, Max=37.0724958471873620, RMS=34.7607391541313504
+
+ADT nobs= 100 Min=-1.2371595459773621, Max=1.4228027169739978, RMS=0.7544068851496681
+
+InsituTemperature nobs= 218 Min=7.7564237967821423, Max=30.4315387295554807, RMS=21.2829112889100820
+
+InsituSalinity nobs= 218 Min=34.1714802930882513, Max=36.0324977569576888, RMS=35.0417643320930736
+
+SeaIceFraction nobs= 100 Min=0.0000000000000000, Max=1.0000000000000002, RMS=0.6946843513351695
+
+SeaIceFreeboard nobs= 376 Min=-0.0713249319702559, Max=0.2571655810649418, RMS=0.0562449615932845
+
+Chlorophyll nobs= 137 Min=0.0028259846194569, Max=2.0376239051939695, RMS=0.3267578915293713
+
+SurfaceU nobs= 201 Min=-0.5867454298994841, Max=0.3557742003717158, RMS=0.1657753109748515
+
+SurfaceV nobs= 201 Min=-0.3466093113365661, Max=0.3615105183946977, RMS=0.1074586526896086
+
+End H(x)

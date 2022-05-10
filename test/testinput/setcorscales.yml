@@ -38,3 +38,7 @@ rv output:
   datadir: Data
   exp: cor_rv
   type: incr
+
+test:
+  reference filename: testref/setcorscales.test
+  test output filename: testoutput/setcorscales.test
