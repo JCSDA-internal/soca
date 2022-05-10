@@ -23,6 +23,7 @@
 
 #include "oops/base/Variables.h"
 #include "oops/util/Logger.h"
+#include "oops/util/missingValues.h"
 #include "oops/util/ObjectCounter.h"
 #include "oops/util/Printable.h"
 #include "oops/util/Timer.h"
@@ -91,9 +92,6 @@ UnstructuredInterpolator::UnstructuredInterpolator(const eckit::Configuration & 
   std::vector<size_t> indx(npoints);
   for (size_t jj = 0; jj < npoints; ++jj) indx[jj] = jj;
 
-  atlas::util::IndexKDTree localTree(earth);
-  localTree.build(lons_in, lats_in, indx);
-
   // Compute weights
   ASSERT(lats_out.size() == lons_out.size());
   nout_ = lats_out.size();
@@ -104,6 +102,17 @@ UnstructuredInterpolator::UnstructuredInterpolator(const eckit::Configuration & 
   // This is a new option for this class, so isn't in any YAMLs yet!
   interp_method_ = config.getString("interpolation method", "barycentric");
   ASSERT(interp_method_ == "barycentric" || interp_method_ == "inverse distance");
+
+  // work around for some SOCA bugs... if there are insufficient valid geometry points,
+  // skip kdtree generation and make sure apply() returns missing values
+  if (npoints < nninterp_) {
+    nninterp_ = 0;
+    return;
+  }
+
+  // build kd tree
+  atlas::util::IndexKDTree localTree(earth);
+  localTree.build(lons_in, lats_in, indx);
 
   for (size_t jloc = 0; jloc < nout_; ++jloc) {
     atlas::PointLonLat obsloc(lons_out[jloc], lats_out[jloc]);
@@ -244,7 +253,10 @@ void UnstructuredInterpolator::apply1lev(const std::string & interp_type,
   for (size_t jloc = 0; jloc < nout_; ++jloc) {
     if (mask[jloc]) {
       *gridout = 0.0;
-      if (interp_type == "default") {
+      if (nninterp_ == 0) {
+        // hack to deal with some PEs not having any valid ocean points
+        *gridout = util::missingValue(*gridout);
+      } else if (interp_type == "default") {
         for (size_t jj = 0; jj < nninterp_; ++jj) {
           *gridout += interp_w_[jloc][jj] * gridin(interp_i_[jloc][jj]);
         }
@@ -287,7 +299,10 @@ void UnstructuredInterpolator::applyLevs(const std::string & interp_type,
   for (size_t jloc = 0; jloc < nout_; ++jloc) {
     if (mask[jloc]) {
       *gridout = 0.0;
-      if (interp_type == "default") {
+      if (nninterp_ == 0) {
+        // hack to deal with some PEs not having any valid ocean points
+        *gridout = util::missingValue(*gridout);
+      } else if (interp_type == "default") {
         for (size_t jj = 0; jj < nninterp_; ++jj) {
           *gridout += interp_w_[jloc][jj] * gridin(interp_i_[jloc][jj], ilev);
         }
@@ -323,7 +338,9 @@ void UnstructuredInterpolator::apply1levAD(const std::string & interp_type,
                                            std::vector<double>::const_iterator & gridout) const {
   for (size_t jloc = 0; jloc < nout_; ++jloc) {
     if (mask[jloc]) {
-      if (interp_type == "default") {
+      if (nninterp_ == 0) {
+        // hack to deal with some PEs not having any valid ocean points
+      } else if (interp_type == "default") {
         for (size_t jj = 0; jj < nninterp_; ++jj) {
           gridin(interp_i_[jloc][jj]) += interp_w_[jloc][jj] * *gridout;
         }
@@ -348,7 +365,9 @@ void UnstructuredInterpolator::applyLevsAD(const std::string & interp_type,
                                            const size_t & ilev) const {
   for (size_t jloc = 0; jloc < nout_; ++jloc) {
     if (mask[jloc]) {
-      if (interp_type == "default") {
+      if (nninterp_ == 0) {
+        // hack to deal with some PEs not having any valid ocean points
+      } else if (interp_type == "default") {
         for (size_t jj = 0; jj < nninterp_; ++jj) {
           gridin(interp_i_[jloc][jj], ilev) += interp_w_[jloc][jj] * *gridout;
         }
