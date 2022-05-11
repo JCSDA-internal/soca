@@ -88,3 +88,7 @@ output increment:
   date: *date
   exp: letkf_halo.inc
   type: an
+
+test:
+  reference filename: testref/letkf.test
+  test output filename: testoutput/letkf.test

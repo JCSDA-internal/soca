@@ -107,3 +107,7 @@ output:
  exp: pert
  type: ens
  date: *date
+
+test:
+  reference filename: testref/enspert.test
+  test output filename: testoutput/enspert.test

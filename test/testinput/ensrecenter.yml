@@ -36,3 +36,7 @@ recentered output:
   exp: recenter
   type: ens
   date: *date_bkg
+
+test:
+  reference filename: testref/ensrecenter.test
+  test output filename: testoutput/ensrecenter.test

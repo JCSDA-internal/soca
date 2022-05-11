@@ -49,3 +49,7 @@ bump:
     exp: parameters_bump_cor_nicas.cor_rv
     parameter: cor_rv
     type: an
+
+# need to increase tolerances, a lot
+# test:
+#   reference filename: testref/parameters_bump_cor_nicas.test

@@ -50,3 +50,7 @@ output dirac:
   date: *date
   exp: dirac_horizfilt_%id%
   type: an
+
+test:
+  reference filename: testref/dirac_horizfilt.test
+  test output filename: testoutput/dirac_horizfilt.test

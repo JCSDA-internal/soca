@@ -214,3 +214,7 @@ output:
 final:
   diagnostics:
     departures: oman
+
+test:
+  reference filename: testref/3dvar_godas.test
+  test output filename: testoutput/3dvar_godas.test
