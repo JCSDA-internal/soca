@@ -32,7 +32,7 @@ window length: PT3H
 forecast length: PT3H
 
 observations:
-
+  observers:
   - obs space:
       name: SeaSurfaceTemp
       obsdataout: {obsfile: ./Data/sst.out.nc}

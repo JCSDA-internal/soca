@@ -33,26 +33,26 @@ _: &land_mask
     minvalue: 0.5
 
 observations:
-
-- obs space:
-    name: SeaSurfaceTemp
-    distribution:
-      name: RoundRobin
-    obsdataout: {obsfile: ./Data/sst.letkf.observer.nc}
-    obsdatain:  {obsfile: ./Data/sst.nc}
-    simulated variables: [sea_surface_temperature]
-  obs operator:
-    name: Identity
-  obs error:
-    covariance model: diagonal
-  obs localizations:
-  - localization method: Horizontal Gaspari-Cohn
-    lengthscale: 0
-  obs filters:
-  - *land_mask
-  - filter: Thinning
-    amount: 0.1
-    random seed: 0
+  observers:
+  - obs space:
+      name: SeaSurfaceTemp
+      distribution:
+        name: RoundRobin
+      obsdataout: {obsfile: ./Data/sst.letkf.observer.nc}
+      obsdatain:  {obsfile: ./Data/sst.nc}
+      simulated variables: [sea_surface_temperature]
+    obs operator:
+      name: Identity
+    obs error:
+      covariance model: diagonal
+    obs localizations:
+    - localization method: Horizontal Gaspari-Cohn
+      lengthscale: 0
+    obs filters:
+    - *land_mask
+    - filter: Thinning
+      amount: 0.1
+      random seed: 0
 
 driver:
   run as observer only: true
