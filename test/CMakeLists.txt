@@ -36,6 +36,7 @@ set( soca_test_input
   testinput/geometry.yml
   testinput/geometry_iterator_2d.yml
   testinput/geometry_iterator_3d.yml
+  testinput/getvalues.yml
   testinput/gridgen.yml
   testinput/gridgen_small.yml
   testinput/hofx_3d.yml
@@ -511,6 +512,9 @@ soca_add_test( NAME increment
                SRC  TestIncrement.cc
                TEST_DEPENDS test_soca_gridgen )
 
+soca_add_test( NAME getvalues
+               SRC  TestGetValues.cc
+               TEST_DEPENDS test_soca_gridgen )
 
 soca_add_test( NAME errorcovariance
                SRC  TestErrorCovariance.cc
