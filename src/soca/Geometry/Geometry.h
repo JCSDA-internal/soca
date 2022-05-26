@@ -14,6 +14,8 @@
 #include <string>
 #include <vector>
 
+#include "atlas/util/KDTree.h"
+
 #include "eckit/config/Configuration.h"
 #include "eckit/config/LocalConfiguration.h"
 #include "eckit/mpi/Comm.h"
@@ -70,6 +72,9 @@ namespace soca {
       void latlon(std::vector<double> &, std::vector<double> &, const bool) const;
       void latlon(std::vector<double> &, std::vector<double> &, const bool,
                   const char, const bool) const;
+      atlas::util::KDTree<size_t>::ValueList closestPoints(
+        const double, const double, const int,
+        const char, const bool) const;
 
       void getVarGrid(const std::string &, char &, bool &) const;
 
@@ -81,6 +86,8 @@ namespace soca {
       FmsInput fmsinput_;
       std::unique_ptr<atlas::functionspace::PointCloud> atlasFunctionSpace_;
       std::unique_ptr<atlas::FieldSet> atlasFieldSet_;
+      atlas::util::IndexKDTree localTree_[6];
+
   };
   // -----------------------------------------------------------------------------
 

@@ -132,11 +132,11 @@ LocalUnstructuredInterpolator::getInterpolator(const std::string &var) const {
 
   // does the interpolator need to be created? (if it hasn't already yet)
   if (interp_[interp_idx].get() == nullptr) {
-    std::vector<double> lats_in;
-    std::vector<double> lons_in;
-    geom_.latlon(lats_in, lons_in, true, grid, masked);
+    // std::vector<double> lats_in;
+    // std::vector<double> lons_in;
+    // geom_.latlon(lats_in, lons_in, true, grid, masked);
     interp_[interp_idx] = std::make_shared<UnstructuredInterpolator>(
-                                          config_, lats_in, lons_in, lats_out_, lons_out_);
+      config_, geom_, grid, masked, lats_out_, lons_out_);
   }
 
   // done, return the interpolator
