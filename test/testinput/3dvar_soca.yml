@@ -268,7 +268,7 @@ variational:
   - geometry:
       mom6_input_nml: ./inputnml/input.nml
       fields metadata: ./fields_metadata.yml
-    ninner: 100
+    ninner: 5
     gradient norm reduction: 1e-15
     test: on
     diagnostics:
