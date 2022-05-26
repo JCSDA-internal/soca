@@ -38,7 +38,7 @@ class LinearModel2GeoVaLs: public LinearVariableChangeBase {
   void multiplyInverseAD(const Increment &, Increment &) const;
 
  private:
-  std::unique_ptr<const Geometry> geom_;
+  const Geometry & geom_;
   void print(std::ostream &) const;
 };
 

@@ -24,7 +24,7 @@ namespace soca {
 
 LinearVariableChange::LinearVariableChange(const Geometry & geom,
                                            const Parameters_ & params)
-  : geom_(new Geometry(geom)), params_(params), linVarChas_() {}
+  : geom_(geom), params_(params), linVarChas_() {}
 
 // -----------------------------------------------------------------------------
 
@@ -49,13 +49,13 @@ void LinearVariableChange::setTrajectory(const State & xbg, const State & xfg) {
             linVarChaParWra.linearVariableChangeParameters;
       // Add linear variable change to vector
       linVarChas_.push_back(
-        LinearVariableChangeFactory::create(xbg, xfg, *geom_, linVarChaPar));
+        LinearVariableChangeFactory::create(xbg, xfg, geom_, linVarChaPar));
     }
   } else {
     // No variable changes were specified, use the default (LinearModel2GeoVaLs)
     eckit::LocalConfiguration conf;
     conf.set("linear variable change name", "default");
-    linVarChas_.push_back(LinearVariableChangeFactory::create(xbg, xfg, *geom_,
+    linVarChas_.push_back(LinearVariableChangeFactory::create(xbg, xfg, geom_,
       oops::validateAndDeserialize<GenericLinearVariableChangeParameters>(
         conf)));
   }
