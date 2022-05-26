@@ -83,7 +83,7 @@ void LinearVariableChange::multiply(Increment & dx,
   // }
 
   // Create output state
-  Increment dxout(*dx.geometry(), vars, dx.time());
+  Increment dxout(dx.geometry(), vars, dx.time());
 
   // Call variable change(s)
   for (icst_ it = linVarChas_.begin(); it != linVarChas_.end(); ++it) {
@@ -116,7 +116,7 @@ void LinearVariableChange::multiplyInverse(Increment & dx,
                << vars << std::endl;
 
   // Create output state
-  Increment dxout(*dx.geometry(), vars, dx.time());
+  Increment dxout(dx.geometry(), vars, dx.time());
 
   // Call variable change(s)
   for (ircst_ it = linVarChas_.rbegin(); it != linVarChas_.rend(); ++it) {
@@ -140,7 +140,7 @@ void LinearVariableChange::multiplyAD(Increment & dx,
                << dx.variables() << std::endl;
   Log::debug() << "LinearVariableChange::multiplyAD output vars: "
                << vars << std::endl;
-  Increment dxout(*dx.geometry(), vars, dx.time());
+  Increment dxout(dx.geometry(), vars, dx.time());
 
   // Call variable change(s)
   for (ircst_ it = linVarChas_.rbegin(); it != linVarChas_.rend(); ++it) {
@@ -161,7 +161,7 @@ void LinearVariableChange::multiplyInverseAD(Increment & dx,
                << std::endl;
 
   // Create output state
-  Increment dxout(*dx.geometry(), vars, dx.time());
+  Increment dxout(dx.geometry(), vars, dx.time());
 
   // Call variable change(s)
   for (icst_ it = linVarChas_.begin(); it != linVarChas_.end(); ++it) {

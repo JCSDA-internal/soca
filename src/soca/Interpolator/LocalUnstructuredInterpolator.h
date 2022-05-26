@@ -55,7 +55,7 @@ class LocalUnstructuredInterpolator : public util::Printable {
 
   mutable std::shared_ptr<UnstructuredInterpolator> interp_[6];
 
-  const std::shared_ptr<const Geometry> geom_;
+  const Geometry & geom_;
   const eckit::LocalConfiguration config_;
   const std::vector<double> lats_out_;
   const std::vector<double> lons_out_;
