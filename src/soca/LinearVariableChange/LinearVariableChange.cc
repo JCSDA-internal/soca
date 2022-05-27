@@ -68,10 +68,7 @@ void LinearVariableChange::multiply(Increment & dx,
                                     const oops::Variables & vars) const {
   Log::trace() << "LinearVariableChange::multiply starting" << std::endl;
 
-  Log::debug() << "LinearVariableChange::multiply input vars: "
-               << dx.variables() << std::endl;
-  Log::debug() << "LinearVariableChange::multiply output vars: "
-               << vars << std::endl;
+  util::Timer timer("soca::LinearVariableChange", "multiply");
 
   // If all variables already in incoming state just remove the no longer
   // needed fields
@@ -87,7 +84,6 @@ void LinearVariableChange::multiply(Increment & dx,
 
   // Call variable change(s)
   for (icst_ it = linVarChas_.begin(); it != linVarChas_.end(); ++it) {
-    Log::debug() << "LinearVariableChange::multiply with "<< *it << std::endl;
      dxout.zero();
      it->multiply(dx, dxout);
      dx.updateFields(vars);
@@ -100,7 +96,7 @@ void LinearVariableChange::multiply(Increment & dx,
   // Copy data from temporary state
   // dx = dxout;
 
-  Log::trace() << "LinearVariableChange::multiply done" << dx << std::endl;
+  Log::trace() << "LinearVariableChange::multiply done" << std::endl;
 }
 
 // -----------------------------------------------------------------------------
@@ -110,11 +106,7 @@ void LinearVariableChange::multiplyInverse(Increment & dx,
   Log::trace() << "LinearVariableChange::multiplyInverse starting"
                << vars << std::endl;
 
-  Log::debug() << "LinearVariableChange::multiplyInverse input vars: "
-               << dx.variables() << std::endl;
-  Log::debug() << "LinearVariableChange::multiplyInverse output vars: "
-               << vars << std::endl;
-
+  util::Timer timer("soca::LinearVariableChange", "multiplyInverse");
   // Create output state
   Increment dxout(dx.geometry(), vars, dx.time());
 
@@ -134,12 +126,8 @@ void LinearVariableChange::multiplyInverse(Increment & dx,
 void LinearVariableChange::multiplyAD(Increment & dx,
                                            const oops::Variables & vars) const {
   Log::trace() << "LinearVariableChange::multiplyAD starting" << std::endl;
+  util::Timer timer("soca::LinearVariableChange", "multiplyAD");
 
-  // Create output state
-  Log::debug() << "LinearVariableChange::multiplyAD input vars: "
-               << dx.variables() << std::endl;
-  Log::debug() << "LinearVariableChange::multiplyAD output vars: "
-               << vars << std::endl;
   Increment dxout(dx.geometry(), vars, dx.time());
 
   // Call variable change(s)
