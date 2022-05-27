@@ -87,7 +87,6 @@ namespace soca {
       std::unique_ptr<atlas::functionspace::PointCloud> atlasFunctionSpace_;
       std::unique_ptr<atlas::FieldSet> atlasFieldSet_;
       atlas::util::IndexKDTree localTree_[6];
-
   };
   // -----------------------------------------------------------------------------
 

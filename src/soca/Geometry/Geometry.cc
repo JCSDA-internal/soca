@@ -45,7 +45,7 @@ namespace soca {
     atlasFieldSet_.reset(new atlas::FieldSet());
     soca_geo_fill_atlas_fieldset_f90(keyGeom_, atlasFieldSet_->get());
 
-    //create kdtrees
+    // create kdtrees
     int kdidx = 0;
     for (auto grid : grids) {
       std::vector<double> lats;
@@ -162,7 +162,7 @@ namespace soca {
     const char grid, const bool masked) const {
 
     // determine which kdtree to use
-    // TODO make sure not -1
+    // TODO(travis) make sure not -1
     int kdidx = -1;
     for (int j=0; j < grids.size(); j++) {
       if (grids[j] == grid) kdidx = j*2;
