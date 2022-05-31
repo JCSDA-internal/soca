@@ -28,12 +28,28 @@ LocalUnstructuredInterpolator::
   LocalUnstructuredInterpolator(const eckit::Configuration & config, const Geometry & geom,
                                 const std::vector<double> & lats_out,
                                 const std::vector<double> & lons_out)
-  : config_(config), lats_out_(lats_out), lons_out_(lons_out), geom_(geom) {
+  : geom_(geom) {
   oops::Log::trace() << "LocalUnstructuredInterpolator::LocalUnstructuredInterpolator start"
                      << std::endl;
 
   // note: creation of interpolators is posponed to apply / applyad calls
   // (because we don't know yet here which u/v/h masked/unmaked interpolators are required)
+  for (auto grid : grids) {
+    util::Timer timer("soca::LocalUnstructuredInterpolator", "getInterpolator.build");
+    int interp_idx = -1;
+    for (int j=0; j < grids.size(); j++) {
+      if (grids[j] == grid) interp_idx = j*2;
+    }
+
+    bool masked = false;
+    interp_[interp_idx] = std::make_shared<UnstructuredInterpolator>(
+        config, geom_, grid, masked, lats_out, lons_out);
+
+    masked = true;
+    interp_idx += 1;
+    interp_[interp_idx] = std::make_shared<UnstructuredInterpolator>(
+        config, geom_, grid, masked, lats_out, lons_out);
+  }
 
   oops::Log::trace() << "LocalUnstructuredInterpolator::LocalUnstructuredInterpolator done"
                      << std::endl;
@@ -130,16 +146,6 @@ LocalUnstructuredInterpolator::getInterpolator(const std::string &var) const {
   }
   if (masked) interp_idx += 1;
 
-  // does the interpolator need to be created? (if it hasn't already yet)
-  if (interp_[interp_idx].get() == nullptr) {
-    // std::vector<double> lats_in;
-    // std::vector<double> lons_in;
-    // geom_.latlon(lats_in, lons_in, true, grid, masked);
-    interp_[interp_idx] = std::make_shared<UnstructuredInterpolator>(
-      config_, geom_, grid, masked, lats_out_, lons_out_);
-  }
-
-  // done, return the interpolator
   return interp_[interp_idx];
 }
 

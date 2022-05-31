@@ -53,12 +53,8 @@ class LocalUnstructuredInterpolator : public util::Printable {
   const std::shared_ptr<UnstructuredInterpolator> getInterpolator(const std::string &) const;
   void print(std::ostream &) const;
 
-  mutable std::shared_ptr<UnstructuredInterpolator> interp_[6];
-
+  std::shared_ptr<UnstructuredInterpolator> interp_[6];
   const Geometry & geom_;
-  const eckit::LocalConfiguration config_;
-  const std::vector<double> lats_out_;
-  const std::vector<double> lons_out_;
 };
 
 }  // namespace soca
