@@ -58,32 +58,7 @@ LocalUnstructuredInterpolator::
 // ------------------------------------------------------------------------------
 
 void LocalUnstructuredInterpolator::
-apply(const oops::Variables & vars, const State & xx, const std::vector<bool> & mask,
-      std::vector<double> & locvals) const {
-  oops::Log::trace() << "LocalUnstructuredInterpolator::apply STATE start" << std::endl;
-
-  auto vals = locvals.begin();
-  for (int i =0; i < vars.size(); i++) {
-    auto interpolator = getInterpolator(vars[i]);
-
-    // get a single variable
-    oops::Variables var;
-    var.push_back(vars[i]);
-    atlas::FieldSet fset;
-    xx.getFieldSet(var, fset);
-
-    // interpolate
-    interpolator->apply(var, fset, mask, vals);
-  }
-
-  ASSERT(std::distance(locvals.begin(), vals) == locvals.size());
-  oops::Log::trace() << "LocalUnstructuredInterpolator::apply STATE done" << std::endl;
-}
-
-// ------------------------------------------------------------------------------
-
-void LocalUnstructuredInterpolator::
-apply(const oops::Variables & vars, const Increment & dx, const std::vector<bool> & mask,
+apply(const oops::Variables & vars, const atlas::FieldSet & fset, const std::vector<bool> & mask,
        std::vector<double> & locvals) const {
   oops::Log::trace() << "LocalUnstructuredInterpolator::apply Increment start" << std::endl;
 
@@ -94,8 +69,6 @@ apply(const oops::Variables & vars, const Increment & dx, const std::vector<bool
     // get a single variable
     oops::Variables var;
     var.push_back(vars[i]);
-    atlas::FieldSet fset;
-    dx.getFieldSet(var, fset);
 
     // interpolate
     interpolator->apply(var, fset, mask, vals);
@@ -107,13 +80,11 @@ apply(const oops::Variables & vars, const Increment & dx, const std::vector<bool
 // ------------------------------------------------------------------------------
 
 void LocalUnstructuredInterpolator::
-applyAD(const oops::Variables & vars, Increment & dx, const std::vector<bool> & mask,
+applyAD(const oops::Variables & vars, atlas::FieldSet & fset, const std::vector<bool> & mask,
         const std::vector<double> & locvals) const {
   oops::Log::trace() << "LocalUnstructuredInterpolator::applyAD start" << std::endl;
 
   int stride = locvals.size() / vars.size();
-
-  Increment dz(dx);
 
   auto vals = locvals.begin();
   for (int i =0; i < vars.size(); i++) {
@@ -123,13 +94,8 @@ applyAD(const oops::Variables & vars, Increment & dx, const std::vector<bool> & 
     oops::Variables var;
     var.push_back(vars[i]);
 
-    dz.zero();
-    atlas::FieldSet fset;
-    dz.getFieldSet(var, fset);
-
     // interpolate
     interpolator->applyAD(var, fset, mask, vals);
-    dx.getFieldSetAD(var, fset, false);
   }
 }
 

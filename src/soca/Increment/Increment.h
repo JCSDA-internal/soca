@@ -126,7 +126,7 @@ namespace soca {
       /// these differ from the above ATLAS ones in that they include halo
       /// and do not include masked gridcells
       void getFieldSet(const oops::Variables &, atlas::FieldSet &) const;
-      void getFieldSetAD(const oops::Variables &, const atlas::FieldSet &, bool skip = true);
+      void getFieldSetAD(const oops::Variables &, const atlas::FieldSet &);
 
       /// Data
    private:

@@ -42,11 +42,9 @@ class LocalUnstructuredInterpolator : public util::Printable {
                                 const std::vector<double> &, const std::vector<double> &);
   ~LocalUnstructuredInterpolator() {}
 
-  void apply(const oops::Variables &, const State &, const std::vector<bool> &,
+  void apply(const oops::Variables &, const atlas::FieldSet &, const std::vector<bool> &,
              std::vector<double> &) const;
-  void apply(const oops::Variables &, const Increment &, const std::vector<bool> &,
-             std::vector<double> &) const;
-  void applyAD(const oops::Variables &, Increment &, const std::vector<bool> &,
+  void applyAD(const oops::Variables &, atlas::FieldSet &, const std::vector<bool> &,
                const std::vector<double> &) const;
 
  private:
