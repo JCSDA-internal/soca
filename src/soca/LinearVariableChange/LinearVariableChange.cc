@@ -68,8 +68,6 @@ void LinearVariableChange::multiply(Increment & dx,
                                     const oops::Variables & vars) const {
   Log::trace() << "LinearVariableChange::multiply starting" << std::endl;
 
-  util::Timer timer("soca::LinearVariableChange", "multiply");
-
   // If all variables already in incoming state just remove the no longer
   // needed fields
   // if (hasAllFields) {
@@ -106,7 +104,6 @@ void LinearVariableChange::multiplyInverse(Increment & dx,
   Log::trace() << "LinearVariableChange::multiplyInverse starting"
                << vars << std::endl;
 
-  util::Timer timer("soca::LinearVariableChange", "multiplyInverse");
   // Create output state
   Increment dxout(dx.geometry(), vars, dx.time());
 
@@ -126,8 +123,6 @@ void LinearVariableChange::multiplyInverse(Increment & dx,
 void LinearVariableChange::multiplyAD(Increment & dx,
                                            const oops::Variables & vars) const {
   Log::trace() << "LinearVariableChange::multiplyAD starting" << std::endl;
-  util::Timer timer("soca::LinearVariableChange", "multiplyAD");
-
   Increment dxout(dx.geometry(), vars, dx.time());
 
   // Call variable change(s)
