@@ -30,7 +30,7 @@ namespace soca {
   Model::Model(const Geometry & resol, const eckit::Configuration & model)
     : keyConfig_(0),
       tstep_(0),
-      geom_(new Geometry(resol)),
+      geom_(resol),
       vars_(model, "model variables"),
       setup_mom6_(true)
   {
@@ -41,7 +41,7 @@ namespace soca {
     const eckit::Configuration * configc = &model;
     if (setup_mom6_)
       {
-        soca_model_setup_f90(&configc, geom_->toFortran(), keyConfig_);
+        soca_model_setup_f90(&configc, geom_.toFortran(), keyConfig_);
       }
         Log::trace() << "Model created" << std::endl;
   }

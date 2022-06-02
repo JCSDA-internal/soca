@@ -24,7 +24,7 @@ namespace soca {
 
 LinearVariableChange::LinearVariableChange(const Geometry & geom,
                                            const Parameters_ & params)
-  : geom_(new Geometry(geom)), params_(params), linVarChas_() {}
+  : geom_(geom), params_(params), linVarChas_() {}
 
 // -----------------------------------------------------------------------------
 
@@ -49,13 +49,13 @@ void LinearVariableChange::setTrajectory(const State & xbg, const State & xfg) {
             linVarChaParWra.linearVariableChangeParameters;
       // Add linear variable change to vector
       linVarChas_.push_back(
-        LinearVariableChangeFactory::create(xbg, xfg, *geom_, linVarChaPar));
+        LinearVariableChangeFactory::create(xbg, xfg, geom_, linVarChaPar));
     }
   } else {
     // No variable changes were specified, use the default (LinearModel2GeoVaLs)
     eckit::LocalConfiguration conf;
     conf.set("linear variable change name", "default");
-    linVarChas_.push_back(LinearVariableChangeFactory::create(xbg, xfg, *geom_,
+    linVarChas_.push_back(LinearVariableChangeFactory::create(xbg, xfg, geom_,
       oops::validateAndDeserialize<GenericLinearVariableChangeParameters>(
         conf)));
   }
@@ -68,11 +68,6 @@ void LinearVariableChange::multiply(Increment & dx,
                                     const oops::Variables & vars) const {
   Log::trace() << "LinearVariableChange::multiply starting" << std::endl;
 
-  Log::debug() << "LinearVariableChange::multiply input vars: "
-               << dx.variables() << std::endl;
-  Log::debug() << "LinearVariableChange::multiply output vars: "
-               << vars << std::endl;
-
   // If all variables already in incoming state just remove the no longer
   // needed fields
   // if (hasAllFields) {
@@ -83,11 +78,10 @@ void LinearVariableChange::multiply(Increment & dx,
   // }
 
   // Create output state
-  Increment dxout(*dx.geometry(), vars, dx.time());
+  Increment dxout(dx.geometry(), vars, dx.time());
 
   // Call variable change(s)
   for (icst_ it = linVarChas_.begin(); it != linVarChas_.end(); ++it) {
-    Log::debug() << "LinearVariableChange::multiply with "<< *it << std::endl;
      dxout.zero();
      it->multiply(dx, dxout);
      dx.updateFields(vars);
@@ -100,7 +94,7 @@ void LinearVariableChange::multiply(Increment & dx,
   // Copy data from temporary state
   // dx = dxout;
 
-  Log::trace() << "LinearVariableChange::multiply done" << dx << std::endl;
+  Log::trace() << "LinearVariableChange::multiply done" << std::endl;
 }
 
 // -----------------------------------------------------------------------------
@@ -110,13 +104,8 @@ void LinearVariableChange::multiplyInverse(Increment & dx,
   Log::trace() << "LinearVariableChange::multiplyInverse starting"
                << vars << std::endl;
 
-  Log::debug() << "LinearVariableChange::multiplyInverse input vars: "
-               << dx.variables() << std::endl;
-  Log::debug() << "LinearVariableChange::multiplyInverse output vars: "
-               << vars << std::endl;
-
   // Create output state
-  Increment dxout(*dx.geometry(), vars, dx.time());
+  Increment dxout(dx.geometry(), vars, dx.time());
 
   // Call variable change(s)
   for (ircst_ it = linVarChas_.rbegin(); it != linVarChas_.rend(); ++it) {
@@ -134,13 +123,7 @@ void LinearVariableChange::multiplyInverse(Increment & dx,
 void LinearVariableChange::multiplyAD(Increment & dx,
                                            const oops::Variables & vars) const {
   Log::trace() << "LinearVariableChange::multiplyAD starting" << std::endl;
-
-  // Create output state
-  Log::debug() << "LinearVariableChange::multiplyAD input vars: "
-               << dx.variables() << std::endl;
-  Log::debug() << "LinearVariableChange::multiplyAD output vars: "
-               << vars << std::endl;
-  Increment dxout(*dx.geometry(), vars, dx.time());
+  Increment dxout(dx.geometry(), vars, dx.time());
 
   // Call variable change(s)
   for (ircst_ it = linVarChas_.rbegin(); it != linVarChas_.rend(); ++it) {
@@ -161,7 +144,7 @@ void LinearVariableChange::multiplyInverseAD(Increment & dx,
                << std::endl;
 
   // Create output state
-  Increment dxout(*dx.geometry(), vars, dx.time());
+  Increment dxout(dx.geometry(), vars, dx.time());
 
   // Call variable change(s)
   for (icst_ it = linVarChas_.begin(); it != linVarChas_.end(); ++it) {

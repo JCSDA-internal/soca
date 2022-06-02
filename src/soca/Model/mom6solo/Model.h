@@ -71,7 +71,7 @@ namespace soca {
     int keyConfig_;
     util::Duration tstep_;
     bool setup_mom6_;
-    std::unique_ptr<const Geometry> geom_;
+    const Geometry & geom_;
     const oops::Variables vars_;
   };
   // -----------------------------------------------------------------------------

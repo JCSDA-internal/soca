@@ -33,7 +33,7 @@ namespace soca {
                  const State & traj,
                  const Geometry & geom,
                  const eckit::Configuration & conf):
-    geom_(new Geometry(geom)),
+    geom_(geom),
     vars_(conf, "filter variables") {
     const eckit::Configuration * configc = &conf;
 
@@ -43,7 +43,7 @@ namespace soca {
     // Compute averaging weights
     soca_horizfilt_setup_f90(keyFtnConfig_,
                              &configc,
-                             geom_->toFortran(),
+                             geom_.toFortran(),
                              traj_at_geomres.toFortran(),
                              vars_);
 
@@ -63,7 +63,7 @@ namespace soca {
       soca_horizfilt_mult_f90(keyFtnConfig_,
                               dx_tmp.toFortran(),
                               dxout.toFortran(),
-                              geom_->toFortran());
+                              geom_.toFortran());
     }
   }
   // -----------------------------------------------------------------------------
@@ -80,7 +80,7 @@ namespace soca {
       soca_horizfilt_multad_f90(keyFtnConfig_,
                                 dx_tmp.toFortran(),
                                 dxout.toFortran(),
-                                geom_->toFortran());
+                                geom_.toFortran());
     }
   }
   // -----------------------------------------------------------------------------

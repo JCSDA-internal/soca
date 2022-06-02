@@ -12,6 +12,7 @@
 #include <string>
 #include <vector>
 
+#include "soca/Geometry/Geometry.h"
 #include "soca/State/State.h"
 #include "soca/Increment/Increment.h"
 
@@ -39,8 +40,8 @@ class UnstructuredInterpolator : public util::Printable,
   static const std::string classname() {return "soca::UnstructuredInterpolator";}
 
   UnstructuredInterpolator(const eckit::Configuration &,
-                           const std::vector<double> &,
-                           const std::vector<double> &,
+                           const Geometry &,
+                           const char, const bool,
                            const std::vector<double> &,
                            const std::vector<double> &);
 
@@ -74,8 +75,8 @@ class UnstructuredInterpolator : public util::Printable,
 // -----------------------------------------------------------------------------
 
 UnstructuredInterpolator::UnstructuredInterpolator(const eckit::Configuration & config,
-                                                   const std::vector<double> & lats_in,
-                                                   const std::vector<double> & lons_in,
+                                                   const Geometry & geom,
+                                                   const char grid, const bool masked,
                                                    const std::vector<double> & lats_out,
                                                    const std::vector<double> & lons_out)
   : interp_method_(), nninterp_(0), nout_(0), interp_i_(), interp_w_()
@@ -86,11 +87,9 @@ UnstructuredInterpolator::UnstructuredInterpolator(const eckit::Configuration & 
   const atlas::Geometry earth(atlas::util::Earth::radius());
   const double close = 1.0e-10;
 
-  // Create local input grid kd-tree
-  // TODO(Travis) construct our multiple kdtrees once at a higher level... If I care
-  const size_t npoints = lats_in.size();
-  std::vector<size_t> indx(npoints);
-  for (size_t jj = 0; jj < npoints; ++jj) indx[jj] = jj;
+  // This is a new option for this class, so isn't in any YAMLs yet!
+  interp_method_ = config.getString("interpolation method", "barycentric");
+  ASSERT(interp_method_ == "barycentric" || interp_method_ == "inverse distance");
 
   // Compute weights
   ASSERT(lats_out.size() == lons_out.size());
@@ -99,27 +98,19 @@ UnstructuredInterpolator::UnstructuredInterpolator(const eckit::Configuration & 
   interp_i_.resize(nout_, std::vector<size_t>(nninterp_));
   interp_w_.resize(nout_, std::vector<double>(nninterp_, 0.0));
 
-  // This is a new option for this class, so isn't in any YAMLs yet!
-  interp_method_ = config.getString("interpolation method", "barycentric");
-  ASSERT(interp_method_ == "barycentric" || interp_method_ == "inverse distance");
-
   // work around for some SOCA bugs... if there are insufficient valid geometry points,
   // skip kdtree generation and make sure apply() returns missing values
+  std::vector<double> lats_in, lons_in;
+  geom.latlon(lats_in, lons_in, true, grid, masked);
+  const size_t npoints = lats_in.size();
   if (npoints < nninterp_) {
     nninterp_ = 0;
     return;
   }
 
-  // build kd tree
-  atlas::util::IndexKDTree localTree(earth);
-  localTree.build(lons_in, lats_in, indx);
-
   for (size_t jloc = 0; jloc < nout_; ++jloc) {
-    atlas::PointLonLat obsloc(lons_out[jloc], lats_out[jloc]);
-    obsloc.normalise();
-
     const atlas::util::KDTree<size_t>::ValueList neighbours =
-                                  localTree.closestPoints(obsloc, nninterp_);
+      geom.closestPoints(lats_out[jloc], lons_out[jloc], nninterp_, grid, masked);
 
     // Barycentric and inverse-distance interpolation both rely on indices, 1/distances
     size_t jj = 0;
