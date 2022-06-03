@@ -61,7 +61,6 @@ subroutine soca_bkgerrfilt_setup(self, f_conf, bkg, geom)
 
   integer :: isc, iec, jsc, jec, i, j, k
   real(kind=kind_real) :: efold
-  character(len=800) :: fname = 'soca_bkgerrfilt.nc'
   type(soca_field), pointer :: tocn, socn, ssh, hocn, layer_depth
 
   ! Allocate memory for bkgerrfiltor and set to zero
@@ -118,9 +117,6 @@ subroutine soca_bkgerrfilt_setup(self, f_conf, bkg, geom)
       self%filt%fields(i)%val = 1.0_kind_real
     end select
   end do
-
-  ! Save filtered background error
-  call self%filt%write_file(fname)
 
 end subroutine soca_bkgerrfilt_setup
 

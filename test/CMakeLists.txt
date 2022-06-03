@@ -59,6 +59,7 @@ set( soca_test_input
   testinput/parameters_bump_cov_lct.yml
   testinput/parameters_bump_cov_nicas.yml
   testinput/parameters_bump_loc.yml
+  testinput/parametric_stddev.yml
   testinput/sqrtvertloc.yml
   testinput/setcorscales.yml
   testinput/state.yml
@@ -120,6 +121,7 @@ set( soca_test_ref
   testref/parameters_bump_cor_nicas.test
   testref/parameters_bump_cor_nicas_scales.test
   testref/parameters_bump_cov_lct.test
+  testref/parametric_stddev.test
   testref/setcorscales.test
   testref/sqrtvertloc.test
   testref/static_socaerror_init.test
@@ -582,6 +584,12 @@ soca_add_test( NAME obslocalizations
 soca_add_test( NAME ensvariance
                EXE  soca_ensvariance.x
                TEST_DEPENDS test_soca_enspert )
+
+soca_add_test( NAME parametric_stddev
+               EXE  soca_convertincrement.x
+               TOL  2e-5 0
+               NOTRAPFPE
+               TEST_DEPENDS test_soca_gridgen )
 
 soca_add_test( NAME parameters_bump_loc
                EXE  soca_error_covariance_training.x

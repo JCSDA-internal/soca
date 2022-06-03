@@ -752,7 +752,7 @@ subroutine soca_fields_read(self, f_conf, vdate)
   integer, parameter :: max_string_length=800
   character(len=max_string_length) :: ocn_filename, sfc_filename, ice_filename, wav_filename, filename
   character(len=:), allocatable :: basename, incr_filename
-  integer :: iread = 0
+  integer :: iread = 0, id
   integer :: ii
   logical :: vert_remap=.false.
   character(len=max_string_length) :: remap_filename
@@ -799,7 +799,13 @@ subroutine soca_fields_read(self, f_conf, vdate)
 
   ! iread = 0: Invent state
   if (iread==0) then
-     call self%zeros()
+     id = 0
+     if ( f_conf%has("Identity") ) call f_conf%get_or_die("Identity", id)
+     if ( id ==0 ) then
+        call self%zeros()
+     else
+        call self%ones()
+     end if
      call f_conf%get_or_die("date", str)
      call datetime_set(str, vdate)
   end if
