@@ -87,7 +87,7 @@ namespace soca {
 
       int & toFortran() {return keyFlds_;}
       const int & toFortran() const {return keyFlds_;}
-      std::shared_ptr<const Geometry> geometry() const;
+      const Geometry & geometry() const;
       const oops::Variables & variables() const {return vars_;}
       const util::DateTime & time() const {return time_;}
 
@@ -106,7 +106,7 @@ namespace soca {
 
       F90flds keyFlds_;
 
-      std::shared_ptr<const Geometry> geom_;
+      const Geometry & geom_;
       oops::Variables vars_;
       util::DateTime time_;
   };

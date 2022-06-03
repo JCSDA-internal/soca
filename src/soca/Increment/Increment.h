@@ -116,7 +116,7 @@ namespace soca {
       void accumul(const double &, const State &);
       int & toFortran() {return keyFlds_;}
       const int & toFortran() const {return keyFlds_;}
-      std::shared_ptr<const Geometry> geometry() const;
+      const Geometry & geometry() const {return geom_;}
 
       /// Private variable accessor functions
       const oops::Variables & variables() const {return vars_;}
@@ -135,7 +135,7 @@ namespace soca {
       F90flds keyFlds_;
       oops::Variables vars_;
       util::DateTime time_;
-      std::shared_ptr<const Geometry> geom_;
+      const Geometry & geom_;
   };
   // -----------------------------------------------------------------------------
 

@@ -29,7 +29,7 @@ static LinearVariableChangeMaker<LinearModel2GeoVaLs>
 LinearModel2GeoVaLs::LinearModel2GeoVaLs(const State & bg, const State &fg,
                                         const Geometry &geom,
                                         const eckit::Configuration &conf)
-  : geom_(new Geometry(geom)) {
+  : geom_(geom) {
 }
 
 // -----------------------------------------------------------------------------
@@ -41,7 +41,7 @@ LinearModel2GeoVaLs::~LinearModel2GeoVaLs() {
 
 void LinearModel2GeoVaLs::multiply(const Increment &dxin,
                                          Increment &dxout) const {
-  soca_model2geovals_linear_changevar_f90(geom_->toFortran(),
+  soca_model2geovals_linear_changevar_f90(geom_.toFortran(),
                                           dxin.toFortran(), dxout.toFortran());
 }
 
@@ -56,7 +56,7 @@ void LinearModel2GeoVaLs::multiplyInverse(const Increment &dxin,
 
 void LinearModel2GeoVaLs::multiplyAD(const Increment &dxin,
                                            Increment &dxout) const {
-  soca_model2geovals_linear_changevarAD_f90(geom_->toFortran(),
+  soca_model2geovals_linear_changevarAD_f90(geom_.toFortran(),
                                             dxin.toFortran(),
                                             dxout.toFortran());
 }
