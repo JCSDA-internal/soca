@@ -70,7 +70,7 @@ namespace soca {
     void print(std::ostream &) const;
     int keyConfig_;
     util::Duration tstep_;
-    std::unique_ptr<const Geometry> geom_;
+    const Geometry & geom_;
     const oops::Variables vars_;
   };
   // -----------------------------------------------------------------------------

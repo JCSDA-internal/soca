@@ -27,7 +27,7 @@ class Model2GeoVaLs: public VariableChangeBase {
   void changeVarInverse(const State &, State &) const override;
 
  private:
-  std::unique_ptr<Geometry> geom_;
+  const Geometry & geom_;
   void print(std::ostream &) const override {}
 };
 

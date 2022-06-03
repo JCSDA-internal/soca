@@ -47,7 +47,7 @@ void VariableChange::changeVar(State & x, const oops::Variables & vars) const {
   // if (!(x.variables() == vars)) {
 
   // Create output state
-  State xout(*x.geometry(), vars, x.time());
+  State xout(x.geometry(), vars, x.time());
 
   // Call variable change
   variableChange_->changeVar(x, xout);
@@ -75,7 +75,7 @@ void VariableChange::changeVarInverse(State & x,
   // If the variables are the same, don't bother doing anything!
   if (!(x.variables() == vars)) {
     // Create output state
-    State xout(*x.geometry(), vars, x.time());
+    State xout(x.geometry(), vars, x.time());
 
     // Call variable change
     variableChange_->changeVarInverse(x, xout);

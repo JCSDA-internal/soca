@@ -50,7 +50,7 @@ class HorizFilt: public LinearVariableChangeBase {
  private:
   void print(std::ostream &) const override;
   int keyFtnConfig_;
-  std::unique_ptr<const Geometry> geom_;
+  const Geometry & geom_;
   oops::Variables vars_;
   unsigned int niter_;
 };

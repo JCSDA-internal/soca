@@ -28,7 +28,7 @@ LocalUnstructuredInterpolator::
   LocalUnstructuredInterpolator(const eckit::Configuration & config, const Geometry & geom,
                                 const std::vector<double> & lats_out,
                                 const std::vector<double> & lons_out)
-  : config_(config), lats_out_(lats_out), lons_out_(lons_out), geom_(new Geometry(geom)) {
+  : config_(config), lats_out_(lats_out), lons_out_(lons_out), geom_(geom) {
   oops::Log::trace() << "LocalUnstructuredInterpolator::LocalUnstructuredInterpolator start"
                      << std::endl;
 
@@ -123,7 +123,7 @@ LocalUnstructuredInterpolator::getInterpolator(const std::string &var) const {
   // determine which interpolator to use
   char grid;
   bool masked;
-  geom_->getVarGrid(var, grid, masked);
+  geom_.getVarGrid(var, grid, masked);
   int interp_idx = -1;
   for (int j=0; j < grids.size(); j++) {
     if (grids[j] == grid) interp_idx = j*2;
@@ -132,11 +132,11 @@ LocalUnstructuredInterpolator::getInterpolator(const std::string &var) const {
 
   // does the interpolator need to be created? (if it hasn't already yet)
   if (interp_[interp_idx].get() == nullptr) {
-    std::vector<double> lats_in;
-    std::vector<double> lons_in;
-    geom_->latlon(lats_in, lons_in, true, grid, masked);
+    // std::vector<double> lats_in;
+    // std::vector<double> lons_in;
+    // geom_.latlon(lats_in, lons_in, true, grid, masked);
     interp_[interp_idx] = std::make_shared<UnstructuredInterpolator>(
-                                          config_, lats_in, lons_in, lats_out_, lons_out_);
+      config_, geom_, grid, masked, lats_out_, lons_out_);
   }
 
   // done, return the interpolator
