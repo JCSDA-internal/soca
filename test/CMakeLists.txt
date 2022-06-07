@@ -587,7 +587,6 @@ soca_add_test( NAME ensvariance
 
 soca_add_test( NAME parametric_stddev
                EXE  soca_convertincrement.x
-               TOL  2e-5 0
                NOTRAPFPE
                TEST_DEPENDS test_soca_gridgen )
 
@@ -719,7 +718,6 @@ soca_add_test( NAME addincrement
 # Remapping MOM6 (horiz+vertical intterpolation)
 soca_add_test( NAME convertincrement
                EXE  soca_convertincrement.x
-               TOL  2e-5 0
                NOTRAPFPE
                TEST_DEPENDS 3dvar_godas )
 

@@ -797,15 +797,10 @@ subroutine soca_fields_read(self, f_conf, vdate)
      call fms_io_exit()
   end if
 
-  ! iread = 0: Invent state
-  if (iread==0) then
-     id = 0
-     if ( f_conf%has("Identity") ) call f_conf%get_or_die("Identity", id)
-     if ( id ==0 ) then
-        call self%zeros()
-     else
-        call self%ones()
-     end if
+  ! Create unit increment
+  if ( f_conf%has("Identity") ) then
+     call f_conf%get_or_die("Identity", id)
+     if ( id==1 ) call self%ones()
      call f_conf%get_or_die("date", str)
      call datetime_set(str, vdate)
   end if
