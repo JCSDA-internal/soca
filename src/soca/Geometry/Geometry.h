@@ -68,8 +68,8 @@ namespace soca {
       void gridgen() const;
       const eckit::mpi::Comm & getComm() const {return comm_;}
 
-      const atlas::FunctionSpace & functionSpace() const {return functionSpace_;}
-      atlas::FunctionSpace & functionSpace() {return functionSpace_;}
+      const atlas::FunctionSpace & functionSpace() const {return functionSpaceIncHalo_;}
+      atlas::FunctionSpace & functionSpace() {return functionSpaceIncHalo_;}
       const atlas::FieldSet & extraFields() const {return extraFields_;}
       atlas::FieldSet & extraFields() {return extraFields_;}
 

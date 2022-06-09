@@ -75,6 +75,8 @@ type, public :: soca_geom
     integer :: iterator_dimension
     !> \}
 
+    integer :: ngrid, ngrid_halo
+
     !> \name grid latitude/longitude
     !! \{
     real(kind=kind_real), allocatable, dimension(:)   :: lonh !< cell center nominal longitude
@@ -278,12 +280,14 @@ subroutine soca_geom_lonlat(self, afieldset)
   real_ptr(1,:) = reshape(self%lon(self%isc:self%iec,self%jsc:self%jec),(/ngrid/))
   real_ptr(2,:) = reshape(self%lat(self%isc:self%iec,self%jsc:self%jec),(/ngrid/))
   call afieldset%add(afield)
+  call afield%final()
 
   afield = atlas_field(name="lonlat_inc_halos", kind=atlas_real(kind_real), shape=(/2,ngrid_halo/))
   call afield%data(real_ptr)
   real_ptr(1,:) = reshape(self%lon,(/ngrid_halo/))
   real_ptr(2,:) = reshape(self%lat,(/ngrid_halo/))
   call afieldset%add(afield)
+  call afield%final()
 
 end subroutine soca_geom_lonlat
 
@@ -307,7 +311,7 @@ subroutine soca_geom_to_fieldset(self, afieldset)
   ! Add area
   afield = self%functionspaceInchalo%create_field(name='area', kind=atlas_real(kind_real), levels=0)
   call afield%data(real_ptr_1)
-  real_ptr_1 = reshape(self%cell_area, (/ngrid/))
+  real_ptr_1 = pack(self%cell_area, .true.)
   call afieldset%add(afield)
   call afield%final()
 
@@ -324,7 +328,7 @@ subroutine soca_geom_to_fieldset(self, afieldset)
   afield = self%functionspaceInchalo%create_field(name='gmask', kind=atlas_integer(kind(0)), levels=self%nzo)
   call afield%data(int_ptr_2)
   do jz=1,self%nzo
-    int_ptr_2(jz,:) = int(reshape(self%mask2d, (/ngrid/)))
+    int_ptr_2(jz,:) = int(pack(self%mask2d, .true.))
   end do
   call afieldset%add(afield)
   call afield%final()
@@ -335,7 +339,7 @@ subroutine soca_geom_to_fieldset(self, afieldset)
   hmask = 0
   hmask(self%isc:self%iec, self%jsc:self%jec) = 1
   call afield%data(int_ptr_1)
-  int_ptr_1 = reshape(hmask, (/ngrid/))
+  int_ptr_1 = pack(hmask, .true.)
   call afieldset%add(afield)
   call afield%final()
 
@@ -472,6 +476,8 @@ subroutine soca_geom_allocate(self)
   call soca_geom_get_domain_indices(self, "global", self%isg, self%ieg, self%jsg, self%jeg)
   call soca_geom_get_domain_indices(self, "compute", self%iscl, self%iecl, self%jscl, self%jecl, local=.true.)
   call soca_geom_get_domain_indices(self, "data", self%isdl, self%iedl, self%jsdl, self%jedl, local=.true.)
+  self%ngrid = (self%iec-self%isc+1) * (self%jec-self%jsc+1)
+  self%ngrid_halo = (self%ied-self%isd+1) * (self%jed-self%jsd+1)
 
   ! Allocate arrays on compute domain
   allocate(self%lonh(self%isg:self%ieg));        self%lonh = 0.0_kind_real
@@ -949,10 +955,10 @@ subroutine soca_geom_struct2atlas(self, dx_struct, dx_atlas)
   type(atlas_field) :: afield
 
   dx_atlas = atlas_fieldset()
-  afield = self%functionspace%create_field('var',kind=atlas_real(kind_real),levels=0)
+  afield = self%functionspaceInchalo%create_field('var',kind=atlas_real(kind_real),levels=0)
   call dx_atlas%add(afield)
   call afield%data(real_ptr)
-  real_ptr = reshape(dx_struct(self%iscl:self%iecl, self%jscl:self%jecl),(/(self%iecl-self%iscl+1)*(self%jecl-self%jscl+1)/))
+  real_ptr = pack(dx_struct, .true.)
   call afield%final()
 
 end subroutine soca_geom_struct2atlas
@@ -972,7 +978,8 @@ subroutine soca_geom_atlas2struct(self, dx_struct, dx_atlas)
 
   afield = dx_atlas%field('var')
   call afield%data(real_ptr)
-  dx_struct(self%iscl:self%iecl, self%jscl:self%jecl) = reshape(real_ptr,(/(self%iecl-self%iscl+1),(self%jecl-self%jscl+1)/))
+  dx_struct = reshape(real_ptr, (/(self%ied-self%isd+1),(self%jed-self%jsd+1)/))
+
   call afield%final()
 
 end subroutine soca_geom_atlas2struct
