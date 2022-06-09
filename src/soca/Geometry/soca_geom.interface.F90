@@ -74,16 +74,17 @@ end subroutine soca_geo_lonlat_c
 
 ! --------------------------------------------------------------------------------------------------
 !> C++ interface to get atlas functionspace pointr from  soca_geom_mod::soca_geom
-subroutine soca_geo_set_atlas_functionspace_pointer_c(c_key_self,c_afunctionspace) &
+subroutine soca_geo_set_atlas_functionspace_pointer_c(c_key_self, c_functionspace, c_functionspaceIncHalo) &
   bind(c,name='soca_geo_set_atlas_functionspace_pointer_f90')
   integer(c_int), intent(in)     :: c_key_self
-  type(c_ptr), intent(in), value :: c_afunctionspace
+  type(c_ptr), intent(in), value :: c_functionspace, c_functionspaceIncHalo
 
   type(soca_geom),pointer :: self
 
   call soca_geom_registry%get(c_key_self,self)
 
-  self%functionspace = atlas_functionspace_pointcloud(c_afunctionspace)
+  self%functionspace = atlas_functionspace_pointcloud(c_functionspace)
+  self%functionspaceIncHalo = atlas_functionspace_pointcloud(c_functionspaceIncHalo)
 end subroutine soca_geo_set_atlas_functionspace_pointer_c
 
 

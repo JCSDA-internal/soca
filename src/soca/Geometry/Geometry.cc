@@ -27,19 +27,17 @@ namespace soca {
 
     soca_geo_setup_f90(keyGeom_, &conf, &comm);
 
-    // Set ATLAS lon/lat field
-    extraFields_ = atlas::FieldSet();
-    soca_geo_lonlat_f90(keyGeom_, extraFields_.get());
-    atlas::Field atlasField = extraFields_->field("lonlat");
-
-    // Create ATLAS function space
-    functionSpace_ = atlas::functionspace::PointCloud(atlasField);
+    // Set ATLAS lonlat and function space (with and without halos)
+    atlas::FieldSet lonlat;
+    soca_geo_lonlat_f90(keyGeom_, lonlat.get());
+    functionSpace_ = atlas::functionspace::PointCloud(lonlat->field("lonlat"));
+    functionSpaceIncHalo_ = atlas::functionspace::PointCloud(lonlat->field("lonlat_inc_halos"));
 
     // Set ATLAS function space pointer in Fortran
-    soca_geo_set_atlas_functionspace_pointer_f90(keyGeom_, functionSpace_.get());
+    soca_geo_set_atlas_functionspace_pointer_f90(
+      keyGeom_, functionSpace_.get(), functionSpaceIncHalo_.get());
 
     // Fill ATLAS fieldset
-    extraFields_ = atlas::FieldSet();
     soca_geo_to_fieldset_f90(keyGeom_, extraFields_.get());
 
     // create kdtrees
@@ -70,9 +68,12 @@ namespace soca {
        {
     const int key_geo = other.keyGeom_;
     soca_geo_clone_f90(keyGeom_, key_geo);
-    functionSpace_ = atlas::functionspace::PointCloud(
-      other.functionSpace_->lonlat());
-    soca_geo_set_atlas_functionspace_pointer_f90(keyGeom_, functionSpace_.get());
+
+    functionSpace_ = atlas::functionspace::PointCloud(other.functionSpace_->lonlat());
+    functionSpaceIncHalo_ = atlas::functionspace::PointCloud(other.functionSpaceIncHalo_->lonlat());
+    soca_geo_set_atlas_functionspace_pointer_f90(keyGeom_, functionSpace_.get(),
+                                                 functionSpaceIncHalo_.get());
+
     extraFields_ = atlas::FieldSet();
     for (int jfield = 0; jfield < other.extraFields_->size(); ++jfield) {
       atlas::Field atlasField = other.extraFields_->field(jfield);

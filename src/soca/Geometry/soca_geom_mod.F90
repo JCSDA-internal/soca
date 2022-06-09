@@ -117,7 +117,8 @@ type, public :: soca_geom
     logical, private :: save_local_domain = .false. !< If true, save the local geometry for each pe.
     character(len=:), allocatable :: geom_grid_file !< filename of geometry
     type(fckit_mpi_comm) :: f_comm !< MPI communicator
-    type(atlas_functionspace_pointcloud) :: functionspace !< atlas stuff
+    type(atlas_functionspace_pointcloud) :: functionspace
+    type(atlas_functionspace_pointcloud) :: functionspaceInchalo
 
 
   contains
@@ -250,6 +251,7 @@ subroutine soca_geom_end(self)
   if (allocated(self%h_zstar))       deallocate(self%h_zstar)
   nullify(self%Domain)
   call self%functionspace%final()
+  call self%functionspaceIncHalo%final()
 
 end subroutine soca_geom_end
 
@@ -265,11 +267,22 @@ subroutine soca_geom_lonlat(self, afieldset)
   real(kind_real), pointer :: real_ptr(:,:)
   type(atlas_field) :: afield
 
+  integer:: ngrid, ngrid_halo
+
+  ngrid = (self%iec-self%isc+1)*(self%jec-self%jsc+1)
+  ngrid_halo = (self%ied-self%isd+1)*(self%jed-self%jsd+1)
+
   ! Create lon/lat field
-  afield = atlas_field(name="lonlat", kind=atlas_real(kind_real), shape=(/2,(self%iec-self%isc+1)*(self%jec-self%jsc+1)/))
+  afield = atlas_field(name="lonlat", kind=atlas_real(kind_real), shape=(/2,ngrid/))
   call afield%data(real_ptr)
-  real_ptr(1,:) = reshape(self%lon(self%isc:self%iec,self%jsc:self%jec),(/(self%iec-self%isc+1)*(self%jec-self%jsc+1)/))
-  real_ptr(2,:) = reshape(self%lat(self%isc:self%iec,self%jsc:self%jec),(/(self%iec-self%isc+1)*(self%jec-self%jsc+1)/))
+  real_ptr(1,:) = reshape(self%lon(self%isc:self%iec,self%jsc:self%jec),(/ngrid/))
+  real_ptr(2,:) = reshape(self%lat(self%isc:self%iec,self%jsc:self%jec),(/ngrid/))
+  call afieldset%add(afield)
+
+  afield = atlas_field(name="lonlat_inc_halos", kind=atlas_real(kind_real), shape=(/2,ngrid_halo/))
+  call afield%data(real_ptr)
+  real_ptr(1,:) = reshape(self%lon,(/ngrid_halo/))
+  real_ptr(2,:) = reshape(self%lat,(/ngrid_halo/))
   call afieldset%add(afield)
 
 end subroutine soca_geom_lonlat
@@ -283,20 +296,23 @@ subroutine soca_geom_to_fieldset(self, afieldset)
   class(soca_geom),  intent(inout) :: self
   type(atlas_fieldset), intent(inout) :: afieldset
 
-  integer :: i, jz, n
-  integer, pointer :: int_ptr_2(:,:)
+  integer :: i, jz, ngrid
+  integer, pointer :: int_ptr_2(:,:), int_ptr_1(:)
   real(kind=kind_real), pointer :: real_ptr_1(:), real_ptr_2(:,:)
+  integer, allocatable :: hmask(:,:)
   type(atlas_field) :: afield
 
+  ngrid = (self%ied-self%isd+1)*(self%jed-self%jsd+1)
+
   ! Add area
-  afield = self%functionspace%create_field(name='area', kind=atlas_real(kind_real), levels=0)
+  afield = self%functionspaceInchalo%create_field(name='area', kind=atlas_real(kind_real), levels=0)
   call afield%data(real_ptr_1)
-  real_ptr_1 = reshape(self%cell_area(self%isc:self%iec,self%jsc:self%jec),(/(self%iec-self%isc+1)*(self%jec-self%jsc+1)/))
+  real_ptr_1 = reshape(self%cell_area, (/ngrid/))
   call afieldset%add(afield)
   call afield%final()
 
   ! Add vertical unit
-  afield = self%functionspace%create_field(name='vunit', kind=atlas_real(kind_real), levels=self%nzo)
+  afield = self%functionspaceInchalo%create_field(name='vunit', kind=atlas_real(kind_real), levels=self%nzo)
   call afield%data(real_ptr_2)
   do jz=1,self%nzo
     real_ptr_2(jz,:) = real(jz, kind_real)
@@ -305,12 +321,21 @@ subroutine soca_geom_to_fieldset(self, afieldset)
   call afield%final()
 
   ! Add geographical mask
-  afield = self%functionspace%create_field(name='gmask', kind=atlas_integer(kind(0)), levels=self%nzo)
+  afield = self%functionspaceInchalo%create_field(name='gmask', kind=atlas_integer(kind(0)), levels=self%nzo)
   call afield%data(int_ptr_2)
   do jz=1,self%nzo
-    int_ptr_2(jz,:) = int(reshape(self%mask2d(self%isc:self%iec,self%jsc:self%jec), &
-  & (/(self%iec-self%isc+1)*(self%jec-self%jsc+1)/)))
+    int_ptr_2(jz,:) = int(reshape(self%mask2d, (/ngrid/)))
   end do
+  call afieldset%add(afield)
+  call afield%final()
+
+  ! add halo mask
+  afield = self%functionspaceInchalo%create_field(name='hmask', kind=atlas_integer(kind(0)), levels=0)
+  allocate(hmask(self%isd:self%ied, self%jsd:self%jed))
+  hmask = 0
+  hmask(self%isc:self%iec, self%jsc:self%jec) = 1
+  call afield%data(int_ptr_1)
+  int_ptr_1 = reshape(hmask, (/ngrid/))
   call afieldset%add(afield)
   call afield%final()
 

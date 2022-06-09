@@ -90,6 +90,7 @@ namespace soca {
       const eckit::mpi::Comm & comm_;
       FmsInput fmsinput_;
       atlas::FunctionSpace functionSpace_;
+      atlas::FunctionSpace functionSpaceIncHalo_;
       atlas::FieldSet extraFields_;
 
       atlas::util::IndexKDTree localTree_[6];

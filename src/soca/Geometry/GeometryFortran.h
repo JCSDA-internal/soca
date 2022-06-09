@@ -35,6 +35,7 @@ namespace soca {
     void soca_geo_lonlat_f90(const F90geom &,
                              atlas::field::FieldSetImpl *);
     void soca_geo_set_atlas_functionspace_pointer_f90(const F90geom &,
+                      atlas::functionspace::FunctionSpaceImpl *,
                       atlas::functionspace::FunctionSpaceImpl *);
     void soca_geo_to_fieldset_f90(const F90geom &,
                                   atlas::field::FieldSetImpl *);

@@ -334,12 +334,14 @@ subroutine soca_increment_to_atlas(self, geom, vars, afieldset)
   type(oops_variables),          intent(in)    :: vars
   type(atlas_fieldset),          intent(inout) :: afieldset
 
-  integer :: jvar, i, jz, nz
+  integer :: jvar, i, jz, nz, ngrid
   real(kind=kind_real), pointer :: real_ptr_1(:), real_ptr_2(:,:)
   logical :: var_found
   character(len=1024) :: fieldname
   type(soca_field), pointer :: field
   type(atlas_field) :: afield
+
+  ngrid = (geom%ied-geom%isd+1)*(geom%jed-geom%jsd+1)
 
   do jvar = 1,vars%nvars()
     var_found = .false.
@@ -355,7 +357,7 @@ subroutine soca_increment_to_atlas(self, geom, vars, afieldset)
           afield = afieldset%field(vars%variable(jvar))
         else
           ! Create field
-          afield = geom%functionspace%create_field(name=vars%variable(jvar),kind=atlas_real(kind_real),levels=nz)
+          afield = geom%functionspaceInchalo%create_field(name=vars%variable(jvar),kind=atlas_real(kind_real),levels=nz)
 
           ! Add field
           call afieldset%add(afield)
@@ -364,13 +366,11 @@ subroutine soca_increment_to_atlas(self, geom, vars, afieldset)
         ! Copy data
         if (nz==0) then
           call afield%data(real_ptr_1)
-          real_ptr_1 = reshape(field%val(geom%isc:geom%iec,geom%jsc:geom%jec,1), &
-        & (/(geom%iec-geom%isc+1)*(geom%jec-geom%jsc+1)/))
+          real_ptr_1 = reshape(field%val(:,:,1), (/ngrid/))
         else
           call afield%data(real_ptr_2)
           do jz=1,nz
-            real_ptr_2(jz,:) = reshape(field%val(geom%isc:geom%iec,geom%jsc:geom%jec,jz), &
-          & (/(geom%iec-geom%isc+1)*(geom%jec-geom%jsc+1)/))
+            real_ptr_2(jz,:) = reshape(field%val(:,:,jz), (/ngrid/))
           end do
         end if
 
@@ -398,12 +398,15 @@ subroutine soca_increment_from_atlas(self, geom, vars, afieldset)
   type(oops_variables),          intent(in)    :: vars
   type(atlas_fieldset),          intent(in)    :: afieldset
 
-  integer :: jvar, i, jz, nz
+  integer :: jvar, i, jz, nz, ngrid(2)
   real(kind=kind_real), pointer :: real_ptr_1(:), real_ptr_2(:,:)
   logical :: var_found
   character(len=1024) :: fieldname
   type(soca_field), pointer :: field
   type(atlas_field) :: afield
+
+
+  ngrid = (/geom%ied-geom%isd+1,geom%jed-geom%jsd+1/)
 
   ! Initialization
   call self%zeros()
@@ -423,13 +426,11 @@ subroutine soca_increment_from_atlas(self, geom, vars, afieldset)
         ! Copy data
         if (nz==0) then
           call afield%data(real_ptr_1)
-          field%val(geom%isc:geom%iec,geom%jsc:geom%jec,1) = reshape(real_ptr_1, &
-        & (/geom%iec-geom%isc+1,geom%jec-geom%jsc+1/))
+          field%val(:,:,1) = reshape(real_ptr_1, ngrid)
         else
           call afield%data(real_ptr_2)
           do jz=1,nz
-            field%val(geom%isc:geom%iec,geom%jsc:geom%jec,jz) = reshape(real_ptr_2(jz,:), &
-          & (/geom%iec-geom%isc+1,geom%jec-geom%jsc+1/))
+            field%val(:,:,jz) = reshape(real_ptr_2(jz,:), ngrid)
           end do
         end if
 
