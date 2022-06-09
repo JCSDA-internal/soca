@@ -228,23 +228,6 @@ namespace soca {
                             vals.size());
   }
   // -----------------------------------------------------------------------------
-  /// ATLAS
-  // -----------------------------------------------------------------------------
-  void Increment::setAtlas(atlas::FieldSet * afieldset) const {
-    soca_increment_set_atlas_f90(toFortran(), geom_.toFortran(), vars_,
-                                 afieldset->get());
-  }
-  // -----------------------------------------------------------------------------
-  void Increment::toAtlas(atlas::FieldSet * afieldset) const {
-    soca_increment_to_atlas_f90(toFortran(), geom_.toFortran(), vars_,
-                                afieldset->get());
-  }
-  // -----------------------------------------------------------------------------
-  void Increment::fromAtlas(atlas::FieldSet * afieldset) {
-    soca_increment_from_atlas_f90(toFortran(), geom_.toFortran(), vars_,
-                                  afieldset->get());
-  }
-  // -----------------------------------------------------------------------------
   /// I/O and diagnostics
   // -----------------------------------------------------------------------------
   void Increment::read(const eckit::Configuration & files) {
@@ -382,6 +365,20 @@ namespace soca {
     if (skip) return;
 
     soca_increment_getfieldset_ad_f90(toFortran(), vars, fset.get());
+  }
+
+
+  void Increment::toFieldSet(atlas::FieldSet &fs) const {
+    soca_increment_to_atlas_f90(toFortran(), geom_.toFortran(), vars_, fs.get());
+  }
+
+
+  void Increment::toFieldSetAD(const atlas::FieldSet &) {
+
+  }
+
+  void Increment::fromFieldSet(const atlas::FieldSet &fs) {
+    soca_increment_from_atlas_f90(toFortran(), geom_.toFortran(), vars_, fs.get());
   }
 
 }  // namespace soca

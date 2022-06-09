@@ -58,7 +58,7 @@ end subroutine soca_geo_setup_c
 
 ! --------------------------------------------------------------------------------------------------
 !> C++ interface for soca_geom_mod::soca_geom::set_atlas_lonlat()
-subroutine soca_geo_set_atlas_lonlat_c(c_key_self, c_afieldset)  bind(c,name='soca_geo_set_atlas_lonlat_f90')
+subroutine soca_geo_lonlat_c(c_key_self, c_afieldset)  bind(c,name='soca_geo_lonlat_f90')
   integer(c_int), intent(in) :: c_key_self
   type(c_ptr), intent(in), value :: c_afieldset
 
@@ -68,8 +68,8 @@ subroutine soca_geo_set_atlas_lonlat_c(c_key_self, c_afieldset)  bind(c,name='so
   call soca_geom_registry%get(c_key_self,self)
   afieldset = atlas_fieldset(c_afieldset)
 
-  call self%set_atlas_lonlat(afieldset)
-end subroutine soca_geo_set_atlas_lonlat_c
+  call self%lonlat(afieldset)
+end subroutine soca_geo_lonlat_c
 
 
 ! --------------------------------------------------------------------------------------------------
@@ -83,14 +83,14 @@ subroutine soca_geo_set_atlas_functionspace_pointer_c(c_key_self,c_afunctionspac
 
   call soca_geom_registry%get(c_key_self,self)
 
-  self%afunctionspace = atlas_functionspace_pointcloud(c_afunctionspace)
+  self%functionspace = atlas_functionspace_pointcloud(c_afunctionspace)
 end subroutine soca_geo_set_atlas_functionspace_pointer_c
 
 
 ! --------------------------------------------------------------------------------------------------
 !> C++ interface for soca_geom_mod::soca_geom::fill_atlas_fieldset()
-subroutine soca_geo_fill_atlas_fieldset_c(c_key_self, c_afieldset) &
- & bind(c,name='soca_geo_fill_atlas_fieldset_f90')
+subroutine soca_geo_to_fieldset_c(c_key_self, c_afieldset) &
+ & bind(c,name='soca_geo_to_fieldset_f90')
 
   integer(c_int),     intent(in) :: c_key_self
   type(c_ptr), value, intent(in) :: c_afieldset
@@ -101,8 +101,8 @@ subroutine soca_geo_fill_atlas_fieldset_c(c_key_self, c_afieldset) &
   call soca_geom_registry%get(c_key_self,self)
   afieldset = atlas_fieldset(c_afieldset)
 
-  call self%fill_atlas_fieldset(afieldset)
-end subroutine soca_geo_fill_atlas_fieldset_c
+  call self%to_fieldset(afieldset)
+end subroutine soca_geo_to_fieldset_c
 
 
 ! ------------------------------------------------------------------------------

@@ -117,7 +117,7 @@ type, public :: soca_geom
     logical, private :: save_local_domain = .false. !< If true, save the local geometry for each pe.
     character(len=:), allocatable :: geom_grid_file !< filename of geometry
     type(fckit_mpi_comm) :: f_comm !< MPI communicator
-    type(atlas_functionspace_pointcloud) :: afunctionspace !< atlas stuff
+    type(atlas_functionspace_pointcloud) :: functionspace !< atlas stuff
 
 
   contains
@@ -130,10 +130,10 @@ type, public :: soca_geom
     procedure :: end => soca_geom_end
 
     !> \copybrief soca_geom_set_atlas_lonlat \see soca_geom_set_atlas_lonlat
-    procedure :: set_atlas_lonlat => soca_geom_set_atlas_lonlat
+    procedure :: lonlat => soca_geom_lonlat
 
     !> \copybrief soca_geom_fill_atlas_fieldset \see soca_geom_fill_atlas_fieldset
-    procedure :: fill_atlas_fieldset => soca_geom_fill_atlas_fieldset
+    procedure :: to_fieldset => soca_geom_to_fieldset
 
     !> \copybrief soca_geom_clone \see soca_geom_clone
     procedure :: clone => soca_geom_clone
@@ -249,7 +249,7 @@ subroutine soca_geom_end(self)
   if (allocated(self%h))             deallocate(self%h)
   if (allocated(self%h_zstar))       deallocate(self%h_zstar)
   nullify(self%Domain)
-  call self%afunctionspace%final()
+  call self%functionspace%final()
 
 end subroutine soca_geom_end
 
@@ -258,7 +258,7 @@ end subroutine soca_geom_end
 !> Set ATLAS lonlat fieldset
 !!
 !! \related soca_geom_mod::soca_geom
-subroutine soca_geom_set_atlas_lonlat(self, afieldset)
+subroutine soca_geom_lonlat(self, afieldset)
   class(soca_geom),  intent(inout) :: self
   type(atlas_fieldset), intent(inout) :: afieldset
 
@@ -272,14 +272,14 @@ subroutine soca_geom_set_atlas_lonlat(self, afieldset)
   real_ptr(2,:) = reshape(self%lat(self%isc:self%iec,self%jsc:self%jec),(/(self%iec-self%isc+1)*(self%jec-self%jsc+1)/))
   call afieldset%add(afield)
 
-end subroutine soca_geom_set_atlas_lonlat
+end subroutine soca_geom_lonlat
 
 
 ! --------------------------------------------------------------------------------------------------
 !> Fill ATLAS fieldset
 !!
 !! \related soca_geom_mod::soca_geom
-subroutine soca_geom_fill_atlas_fieldset(self, afieldset)
+subroutine soca_geom_to_fieldset(self, afieldset)
   class(soca_geom),  intent(inout) :: self
   type(atlas_fieldset), intent(inout) :: afieldset
 
@@ -289,14 +289,14 @@ subroutine soca_geom_fill_atlas_fieldset(self, afieldset)
   type(atlas_field) :: afield
 
   ! Add area
-  afield = self%afunctionspace%create_field(name='area', kind=atlas_real(kind_real), levels=0)
+  afield = self%functionspace%create_field(name='area', kind=atlas_real(kind_real), levels=0)
   call afield%data(real_ptr_1)
   real_ptr_1 = reshape(self%cell_area(self%isc:self%iec,self%jsc:self%jec),(/(self%iec-self%isc+1)*(self%jec-self%jsc+1)/))
   call afieldset%add(afield)
   call afield%final()
 
   ! Add vertical unit
-  afield = self%afunctionspace%create_field(name='vunit', kind=atlas_real(kind_real), levels=self%nzo)
+  afield = self%functionspace%create_field(name='vunit', kind=atlas_real(kind_real), levels=self%nzo)
   call afield%data(real_ptr_2)
   do jz=1,self%nzo
     real_ptr_2(jz,:) = real(jz, kind_real)
@@ -305,7 +305,7 @@ subroutine soca_geom_fill_atlas_fieldset(self, afieldset)
   call afield%final()
 
   ! Add geographical mask
-  afield = self%afunctionspace%create_field(name='gmask', kind=atlas_integer(kind(0)), levels=self%nzo)
+  afield = self%functionspace%create_field(name='gmask', kind=atlas_integer(kind(0)), levels=self%nzo)
   call afield%data(int_ptr_2)
   do jz=1,self%nzo
     int_ptr_2(jz,:) = int(reshape(self%mask2d(self%isc:self%iec,self%jsc:self%jec), &
@@ -314,7 +314,7 @@ subroutine soca_geom_fill_atlas_fieldset(self, afieldset)
   call afieldset%add(afield)
   call afield%final()
 
-end subroutine soca_geom_fill_atlas_fieldset
+end subroutine soca_geom_to_fieldset
 
 
 ! ------------------------------------------------------------------------------
@@ -924,7 +924,7 @@ subroutine soca_geom_struct2atlas(self, dx_struct, dx_atlas)
   type(atlas_field) :: afield
 
   dx_atlas = atlas_fieldset()
-  afield = self%afunctionspace%create_field('var',kind=atlas_real(kind_real),levels=0)
+  afield = self%functionspace%create_field('var',kind=atlas_real(kind_real),levels=0)
   call dx_atlas%add(afield)
   call afield%data(real_ptr)
   real_ptr = reshape(dx_struct(self%iscl:self%iecl, self%jscl:self%jecl),(/(self%iecl-self%iscl+1)*(self%jecl-self%jscl+1)/))

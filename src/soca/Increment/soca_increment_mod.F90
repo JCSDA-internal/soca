@@ -45,9 +45,6 @@ contains
   !> \name atlas I/O
   !! \{
 
-  !> \copybrief soca_increment_set_atlas \see soca_increment_set_atlas
-  procedure :: set_atlas   => soca_increment_set_atlas
-
   !> \copybrief soca_increment_to_atlas \see soca_increment_to_atlas
   procedure :: to_atlas    => soca_increment_to_atlas
 
@@ -328,54 +325,6 @@ end subroutine soca_increment_dirac
 
 
 ! ------------------------------------------------------------------------------
-!> Setup atlas fields
-!!
-!! \see soca_increment_to_atlas
-!! \see soca_increment_from_atlas
-!! \relates soca_increment_mod::soca_increment
-subroutine soca_increment_set_atlas(self, geom, vars, afieldset)
-  class(soca_increment), target, intent(in)    :: self
-  type(soca_geom),               intent(in)    :: geom
-  type(oops_variables),          intent(in)    :: vars
-  type(atlas_fieldset),          intent(inout) :: afieldset
-
-  integer :: jvar, i, jz, nz
-  logical :: var_found
-  character(len=1024) :: fieldname
-  type(soca_field), pointer :: field
-  type(atlas_field) :: afield
-
-  do jvar = 1,vars%nvars()
-    var_found = .false.
-    do i=1,size(self%fields)
-      field => self%fields(i)
-      if (trim(vars%variable(jvar))==trim(field%name)) then
-        if (.not.afieldset%has_field(vars%variable(jvar))) then
-          ! Variable dimension
-          nz = field%nz
-          if (nz==1) nz = 0
-
-          ! Create field
-          afield = geom%afunctionspace%create_field(name=vars%variable(jvar),kind=atlas_real(kind_real),levels=nz)
-
-          ! Add field
-          call afieldset%add(afield)
-
-          ! Release pointer
-          call afield%final()
-        end if
-        ! Set flag
-        var_found = .true.
-        exit
-      end if
-    end do
-    if (.not.var_found) call abor1_ftn('variable '//trim(vars%variable(jvar))//' not found in increment')
-  end do
-
-end subroutine soca_increment_set_atlas
-
-
-! ------------------------------------------------------------------------------
 !> Convert the increment to an atlas fieldset
 !!
 !! \relates soca_increment_mod::soca_increment
@@ -406,7 +355,7 @@ subroutine soca_increment_to_atlas(self, geom, vars, afieldset)
           afield = afieldset%field(vars%variable(jvar))
         else
           ! Create field
-          afield = geom%afunctionspace%create_field(name=vars%variable(jvar),kind=atlas_real(kind_real),levels=nz)
+          afield = geom%functionspace%create_field(name=vars%variable(jvar),kind=atlas_real(kind_real),levels=nz)
 
           ! Add field
           call afieldset%add(afield)

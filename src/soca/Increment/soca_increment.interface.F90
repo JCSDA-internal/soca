@@ -317,32 +317,6 @@ end subroutine soca_increment_change_resol_c
 
 
 ! ------------------------------------------------------------------------------
-!> C++ interface for soca_increment_mod::soca_increment::set_atlas()
-subroutine soca_increment_set_atlas_c(c_key_self,c_key_geom,c_vars,c_afieldset) &
-  & bind (c,name='soca_increment_set_atlas_f90')
-
-  implicit none
-  integer(c_int), intent(in) :: c_key_self
-  integer(c_int), intent(in) :: c_key_geom
-  type(c_ptr), value, intent(in) :: c_vars
-  type(c_ptr), intent(in), value :: c_afieldset
-
-  type(soca_increment), pointer :: self
-  type(soca_geom),  pointer :: geom
-  type(oops_variables) :: vars
-  type(atlas_fieldset) :: afieldset
-
-  call soca_increment_registry%get(c_key_self,self)
-  call soca_geom_registry%get(c_key_geom, geom)
-  vars = oops_variables(c_vars)
-  afieldset = atlas_fieldset(c_afieldset)
-
-  call self%set_atlas(geom, vars, afieldset)
-
-end subroutine soca_increment_set_atlas_c
-
-
-! ------------------------------------------------------------------------------
 !> C++ interface for soca_increment_mod::soca_increment::to_atlas()
 subroutine soca_increment_to_atlas_c(c_key_self,c_key_geom,c_vars,c_afieldset) &
   & bind (c,name='soca_increment_to_atlas_f90')

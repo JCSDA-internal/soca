@@ -90,9 +90,9 @@ namespace soca {
       void setLocal(const oops::LocalIncrement &, const GeometryIterator &);
 
       /// ATLAS
-      void setAtlas(atlas::FieldSet *) const;
-      void toAtlas(atlas::FieldSet *) const;
-      void fromAtlas(atlas::FieldSet *);
+      void toFieldSet(atlas::FieldSet &) const;
+      void toFieldSetAD(const atlas::FieldSet &);
+      void fromFieldSet(const atlas::FieldSet &);
 
       /// I/O and diagnostics
       void read(const eckit::Configuration &);
