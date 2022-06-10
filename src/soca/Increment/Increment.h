@@ -92,7 +92,7 @@ namespace soca {
       /// ATLAS
       void toFieldSet(atlas::FieldSet &, bool masked = false) const;
       void toFieldSetAD(const atlas::FieldSet &);
-      void fromFieldSet(const atlas::FieldSet &);
+      void fromFieldSet(const atlas::FieldSet &, bool masked = false);
 
       /// I/O and diagnostics
       void read(const eckit::Configuration &);

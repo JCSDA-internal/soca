@@ -229,6 +229,8 @@ contains
   !> copybrief soca_fields_to_fieldset_ad \see soca_fields_to_fieldset_ad
   procedure :: to_fieldset_ad  => soca_fields_to_fieldset_ad
 
+  procedure :: from_fieldset => soca_fields_from_fieldset
+
   !> \}
 
 end type soca_fields
@@ -1608,6 +1610,67 @@ subroutine soca_fields_to_fieldset_ad(self, vars, afieldset, masked)
 
     call afield%final()
   end do
+end subroutine
+
+
+! ------------------------------------------------------------------------------
+!> Set the our values from an atlas fieldset
+subroutine soca_fields_from_fieldset(self, vars, afieldset, masked)
+  class(soca_fields), target, intent(inout) :: self
+  type(oops_variables),       intent(in)    :: vars
+  type(atlas_fieldset),       intent(in)    :: afieldset
+  logical,                    intent(in)    :: masked
+
+  integer :: jvar, i, jz, nz, ngrid(2)
+  real(kind=kind_real), pointer :: real_ptr_1(:), real_ptr_2(:,:)
+  logical :: var_found
+  character(len=1024) :: fieldname
+  type(soca_field), pointer :: field
+  type(atlas_field) :: afield
+
+  if (masked) then
+    call abor1_ftn('soca_fields_from_fieldset() does not support masked=true')
+  end if
+
+  ngrid = (/self%geom%ied-self%geom%isd+1, self%geom%jed-self%geom%jsd+1/)
+
+  ! Initialization
+  call self%zeros()
+
+  do jvar = 1,vars%nvars()
+    var_found = .false.
+    do i=1,size(self%fields)
+      field => self%fields(i)
+      if (trim(vars%variable(jvar))==trim(field%name)) then
+        ! Variable dimension
+        nz = field%nz
+        if (nz==1) nz = 0
+
+        ! Get field
+        afield = afieldset%field(vars%variable(jvar))
+
+        ! Copy data
+        if (nz==0) then
+          call afield%data(real_ptr_1)
+          field%val(:,:,1) = reshape(real_ptr_1, ngrid)
+        else
+          call afield%data(real_ptr_2)
+          do jz=1,nz
+            field%val(:,:,jz) = reshape(real_ptr_2(jz,:), ngrid)
+          end do
+        end if
+
+        ! Release pointer
+        call afield%final()
+
+        ! Set flag
+        var_found = .true.
+        exit
+      end if
+    end do
+    if (.not.var_found) call abor1_ftn('variable '//trim(vars%variable(jvar))//' not found in increment')
+  end do
+
 end subroutine
 
 end module soca_fields_mod

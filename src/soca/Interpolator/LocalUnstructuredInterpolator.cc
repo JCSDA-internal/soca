@@ -47,7 +47,7 @@ apply(const oops::Variables & vars, const State & xx, const std::vector<bool> & 
   oops::Log::trace() << "LocalUnstructuredInterpolator::apply STATE start" << std::endl;
 
   atlas::FieldSet fset;
-  xx.getFieldSet(xx.variables(), fset);
+  xx.toFieldSet(fset, true);
 
   auto vals = locvals.begin();
   for (int i =0; i < vars.size(); i++) {

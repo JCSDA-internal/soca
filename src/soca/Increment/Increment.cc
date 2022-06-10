@@ -370,8 +370,8 @@ namespace soca {
     /// TODO (travis) implement
   }
 
-  void Increment::fromFieldSet(const atlas::FieldSet &fs) {
-    soca_increment_from_atlas_f90(toFortran(), geom_.toFortran(), vars_, fs.get(), false);
+  void Increment::fromFieldSet(const atlas::FieldSet &fs, bool masked) {
+    soca_increment_from_fieldset_f90(toFortran(), vars_, fs.get(), masked);
   }
 
 }  // namespace soca
