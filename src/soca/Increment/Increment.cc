@@ -46,7 +46,7 @@ namespace soca {
     Log::trace() << "Increment constructed." << std::endl;
   }
   // -----------------------------------------------------------------------------
-  Increment::Increment(const Geometry & geom, const Increment & other)
+  Increment::Increment(const Geometry & geom, const Increment & other, const bool adj)
     : time_(other.time_), vars_(other.vars_), geom_(geom)
   {
     soca_increment_create_f90(keyFlds_, geom_.toFortran(), vars_);
