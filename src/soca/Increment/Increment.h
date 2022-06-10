@@ -91,7 +91,7 @@ namespace soca {
 
       /// ATLAS
       void toFieldSet(atlas::FieldSet &, bool masked = false) const;
-      void toFieldSetAD(const atlas::FieldSet &);
+      void toFieldSetAD(const atlas::FieldSet &, bool masked = false);
       void fromFieldSet(const atlas::FieldSet &, bool masked = false);
 
       /// I/O and diagnostics
@@ -121,12 +121,6 @@ namespace soca {
       /// Private variable accessor functions
       const oops::Variables & variables() const {return vars_;}
       const util::DateTime & time() const {return time_;}
-
-      /// methods used by the interpolation
-      /// these differ from the above ATLAS ones in that they include halo
-      /// and do not include masked gridcells
-
-      void getFieldSetAD(const oops::Variables &, const atlas::FieldSet &, bool skip = true);
 
       /// Data
    private:
