@@ -468,7 +468,7 @@ subroutine soca_state_getfieldset_c(c_key_self, c_vars, c_fieldset) &
   vars = oops_variables(c_vars)
   afieldset = atlas_fieldset(c_fieldset)
 
-  call self%get_fieldset(vars, afieldset)
+  call self%to_fieldset(vars, afieldset, .true.)
 end subroutine
 
 end module soca_state_mod_c

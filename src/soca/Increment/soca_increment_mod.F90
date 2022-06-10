@@ -45,11 +45,8 @@ contains
   !> \name atlas I/O
   !! \{
 
-  !> \copybrief soca_increment_to_atlas \see soca_increment_to_atlas
-  procedure :: to_atlas    => soca_increment_to_atlas
-
   !> \copybrief soca_increment_from_atlas \see soca_increment_from_atlas
-  procedure :: from_atlas  => soca_increment_from_atlas
+  procedure :: from_atlas_old  => soca_increment_from_atlas
 
   !> \}
 
@@ -322,71 +319,6 @@ subroutine soca_increment_dirac(self, f_conf)
     end if
   end do
 end subroutine soca_increment_dirac
-
-
-! ------------------------------------------------------------------------------
-!> Convert the increment to an atlas fieldset
-!!
-!! \relates soca_increment_mod::soca_increment
-subroutine soca_increment_to_atlas(self, geom, vars, afieldset)
-  class(soca_increment), target, intent(in)    :: self
-  type(soca_geom),               intent(in)    :: geom
-  type(oops_variables),          intent(in)    :: vars
-  type(atlas_fieldset),          intent(inout) :: afieldset
-
-  integer :: jvar, i, jz, nz, ngrid
-  real(kind=kind_real), pointer :: real_ptr_1(:), real_ptr_2(:,:)
-  logical :: var_found
-  character(len=1024) :: fieldname
-  type(soca_field), pointer :: field
-  type(atlas_field) :: afield
-
-  ngrid = (geom%ied-geom%isd+1)*(geom%jed-geom%jsd+1)
-
-  do jvar = 1,vars%nvars()
-    var_found = .false.
-    do i=1,size(self%fields)
-      field => self%fields(i)
-      if (trim(vars%variable(jvar))==trim(field%name)) then
-        ! Variable dimension
-        nz = field%nz
-        if (nz==1) nz = 0
-
-        if (afieldset%has_field(vars%variable(jvar))) then
-          ! Get field
-          afield = afieldset%field(vars%variable(jvar))
-        else
-          ! Create field
-          afield = geom%functionspaceInchalo%create_field(name=vars%variable(jvar),kind=atlas_real(kind_real),levels=nz)
-
-          ! Add field
-          call afieldset%add(afield)
-        end if
-
-        ! Copy data
-        if (nz==0) then
-          call afield%data(real_ptr_1)
-          real_ptr_1 = reshape(field%val(:,:,1), (/ngrid/))
-        else
-          call afield%data(real_ptr_2)
-          do jz=1,nz
-            real_ptr_2(jz,:) = reshape(field%val(:,:,jz), (/ngrid/))
-          end do
-        end if
-
-        ! Release pointer
-        call afield%final()
-
-        ! Set flag
-        var_found = .true.
-        exit
-      end if
-    end do
-  if (.not.var_found) call abor1_ftn('variable '//trim(vars%variable(jvar))//' not found in increment')
-end do
-
-end subroutine soca_increment_to_atlas
-
 
 ! ------------------------------------------------------------------------------
 !> Set the our increment values from an atlas fieldset

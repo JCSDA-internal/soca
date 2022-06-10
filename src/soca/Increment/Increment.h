@@ -90,7 +90,7 @@ namespace soca {
       void setLocal(const oops::LocalIncrement &, const GeometryIterator &);
 
       /// ATLAS
-      void toFieldSet(atlas::FieldSet &) const;
+      void toFieldSet(atlas::FieldSet &, bool masked = false) const;
       void toFieldSetAD(const atlas::FieldSet &);
       void fromFieldSet(const atlas::FieldSet &);
 
@@ -125,7 +125,7 @@ namespace soca {
       /// methods used by the interpolation
       /// these differ from the above ATLAS ones in that they include halo
       /// and do not include masked gridcells
-      void getFieldSet(const oops::Variables &, atlas::FieldSet &) const;
+
       void getFieldSetAD(const oops::Variables &, const atlas::FieldSet &, bool skip = true);
 
       /// Data
