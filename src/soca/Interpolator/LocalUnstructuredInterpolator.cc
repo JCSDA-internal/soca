@@ -46,6 +46,9 @@ apply(const oops::Variables & vars, const State & xx, const std::vector<bool> & 
       std::vector<double> & locvals) const {
   oops::Log::trace() << "LocalUnstructuredInterpolator::apply STATE start" << std::endl;
 
+  atlas::FieldSet fset;
+  xx.toFieldSet(fset, true);
+
   auto vals = locvals.begin();
   for (int i =0; i < vars.size(); i++) {
     auto interpolator = getInterpolator(vars[i]);
@@ -53,8 +56,6 @@ apply(const oops::Variables & vars, const State & xx, const std::vector<bool> & 
     // get a single variable
     oops::Variables var;
     var.push_back(vars[i]);
-    atlas::FieldSet fset;
-    xx.getFieldSet(var, fset);
 
     // interpolate
     interpolator->apply(var, fset, mask, vals);
@@ -71,6 +72,9 @@ apply(const oops::Variables & vars, const Increment & dx, const std::vector<bool
        std::vector<double> & locvals) const {
   oops::Log::trace() << "LocalUnstructuredInterpolator::apply Increment start" << std::endl;
 
+  atlas::FieldSet fset;
+  dx.toFieldSet(fset, true);
+
   auto vals = locvals.begin();
   for (int i =0; i < vars.size(); i++) {
     auto interpolator = getInterpolator(vars[i]);
@@ -78,8 +82,6 @@ apply(const oops::Variables & vars, const Increment & dx, const std::vector<bool
     // get a single variable
     oops::Variables var;
     var.push_back(vars[i]);
-    atlas::FieldSet fset;
-    dx.getFieldSet(var, fset);
 
     // interpolate
     interpolator->apply(var, fset, mask, vals);
@@ -95,9 +97,10 @@ applyAD(const oops::Variables & vars, Increment & dx, const std::vector<bool> & 
         const std::vector<double> & locvals) const {
   oops::Log::trace() << "LocalUnstructuredInterpolator::applyAD start" << std::endl;
 
-  int stride = locvals.size() / vars.size();
-
   Increment dz(dx);
+  dz.zero();
+  atlas::FieldSet fset;
+  dz.toFieldSet(fset, true);
 
   auto vals = locvals.begin();
   for (int i =0; i < vars.size(); i++) {
@@ -107,14 +110,11 @@ applyAD(const oops::Variables & vars, Increment & dx, const std::vector<bool> & 
     oops::Variables var;
     var.push_back(vars[i]);
 
-    dz.zero();
-    atlas::FieldSet fset;
-    dz.getFieldSet(var, fset);
-
     // interpolate
     interpolator->applyAD(var, fset, mask, vals);
-    dx.getFieldSetAD(var, fset, false);
   }
+
+  dx.toFieldSetAD(fset, true);
 }
 
 // ------------------------------------------------------------------------------
@@ -132,9 +132,6 @@ LocalUnstructuredInterpolator::getInterpolator(const std::string &var) const {
 
   // does the interpolator need to be created? (if it hasn't already yet)
   if (interp_[interp_idx].get() == nullptr) {
-    // std::vector<double> lats_in;
-    // std::vector<double> lons_in;
-    // geom_.latlon(lats_in, lons_in, true, grid, masked);
     interp_[interp_idx] = std::make_shared<UnstructuredInterpolator>(
       config_, geom_, grid, masked, lats_out_, lons_out_);
   }
