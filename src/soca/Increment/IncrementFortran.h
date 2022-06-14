@@ -57,14 +57,18 @@ namespace soca {
     void soca_increment_write_file_f90(const F90flds &,
                                    const eckit::Configuration * const &,
                                    const util::DateTime * const *);
-    void soca_increment_to_atlas_f90(const F90flds &,
-                                 const F90geom &,
-                                 const oops::Variables &,
-                                 atlas::field::FieldSetImpl *);
-    void soca_increment_from_atlas_f90(const F90flds &,
-                                   const F90geom &,
+    void soca_increment_to_fieldset_f90(const F90flds &,
+                                        const oops::Variables &,
+                                        atlas::field::FieldSetImpl *,
+                                        const bool &);
+    void soca_increment_to_fieldset_ad_f90(const F90flds &,
+                                           const oops::Variables &,
+                                           const atlas::field::FieldSetImpl *,
+                                           const bool &);
+    void soca_increment_from_fieldset_f90(const F90flds &,
                                    const oops::Variables &,
-                                   const atlas::field::FieldSetImpl *);
+                                   const atlas::field::FieldSetImpl *,
+                                   const bool &);
     void soca_increment_gpnorm_f90(const F90flds &, const int &, double &);
     void soca_increment_getpoint_f90(const F90flds &, const F90iter &, double &,
                            const int &);
@@ -89,10 +93,6 @@ namespace soca {
     void soca_increment_horiz_scales_f90(F90flds &,
                                          const eckit::Configuration * const &);
     void soca_increment_vert_scales_f90(F90flds &, const double);
-    void soca_increment_getfieldset_f90(const F90flds &, const oops::Variables &,
-         atlas::field::FieldSetImpl *);
-    void soca_increment_getfieldset_ad_f90(const F90flds &, const oops::Variables &,
-         const atlas::field::FieldSetImpl *);
   }
 }  // namespace soca
 #endif  // SOCA_INCREMENT_INCREMENTFORTRAN_H_

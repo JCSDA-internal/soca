@@ -318,54 +318,46 @@ end subroutine soca_increment_change_resol_c
 
 ! ------------------------------------------------------------------------------
 !> C++ interface for soca_increment_mod::soca_increment::to_atlas()
-subroutine soca_increment_to_atlas_c(c_key_self,c_key_geom,c_vars,c_afieldset) &
-  & bind (c,name='soca_increment_to_atlas_f90')
-
-  implicit none
-  integer(c_int), intent(in) :: c_key_self
-  integer(c_int), intent(in) :: c_key_geom
-  type(c_ptr), value, intent(in) :: c_vars
-  type(c_ptr), intent(in), value :: c_afieldset
+subroutine soca_increment_to_fieldset_c(c_key_self, c_vars, c_afieldset, c_masked) &
+     bind (c,name='soca_increment_to_fieldset_f90')
+  integer(c_int),         intent(in) :: c_key_self
+  type(c_ptr),     value, intent(in) :: c_vars
+  type(c_ptr),     value, intent(in) :: c_afieldset
+  logical(c_bool),        intent(in) :: c_masked
 
   type(soca_increment), pointer :: self
-  type(soca_geom),  pointer :: geom
   type(oops_variables) :: vars
   type(atlas_fieldset) :: afieldset
 
   call soca_increment_registry%get(c_key_self,self)
-  call soca_geom_registry%get(c_key_geom, geom)
   vars = oops_variables(c_vars)
   afieldset = atlas_fieldset(c_afieldset)
 
-  call self%to_atlas(geom, vars, afieldset)
+  call self%to_fieldset(vars, afieldset, logical(c_masked))
 
-end subroutine soca_increment_to_atlas_c
+end subroutine
 
 
 ! ------------------------------------------------------------------------------
-!> C++ interface for soca_increment_mod::soca_increment::getpoint()
-subroutine soca_increment_from_atlas_c(c_key_self,c_key_geom,c_vars,c_afieldset) &
-  & bind (c,name='soca_increment_from_atlas_f90')
-
-  implicit none
-  integer(c_int), intent(in) :: c_key_self
-  integer(c_int), intent(in) :: c_key_geom
-  type(c_ptr), value, intent(in) :: c_vars
-  type(c_ptr), intent(in), value :: c_afieldset
+!> C++ interface for soca_increment_mod::soca_increment::from_fieldset()
+subroutine soca_increment_from_fieldset_c(c_key_self, c_vars, c_afieldset, c_masked) &
+    bind (c,name='soca_increment_from_fieldset_f90')
+  integer(c_int),         intent(in) :: c_key_self
+  type(c_ptr),     value, intent(in) :: c_vars
+  type(c_ptr),     value, intent(in) :: c_afieldset
+  logical(c_bool),        intent(in) :: c_masked
 
   type(soca_increment), pointer :: self
-  type(soca_geom),  pointer :: geom
-  type(oops_variables) :: vars
-  type(atlas_fieldset) :: afieldset
+  type(oops_variables)          :: vars
+  type(atlas_fieldset)          :: afieldset
 
   call soca_increment_registry%get(c_key_self, self)
-  call soca_geom_registry%get(c_key_geom, geom)
   vars = oops_variables(c_vars)
   afieldset = atlas_fieldset(c_afieldset)
 
-  call self%from_atlas(geom, vars, afieldset)
+  call self%from_fieldset(vars, afieldset, logical(c_masked))
 
-end subroutine soca_increment_from_atlas_c
+end subroutine
 
 
 ! ------------------------------------------------------------------------------
@@ -644,31 +636,13 @@ subroutine soca_increment_vert_scales_c(c_key_self, c_vert) bind(c,name='soca_in
 end subroutine soca_increment_vert_scales_c
 
 ! ------------------------------------------------------------------------------
-!> C++ interface for Increment version of soca_field_mod::soca_field::get_fieldset()
-subroutine soca_increment_getfieldset_c(c_key_self, c_vars, c_fieldset) &
-    bind (c, name='soca_increment_getfieldset_f90')
-  integer(c_int),       intent(in) :: c_key_self
-  type(c_ptr), value,   intent(in) :: c_vars
-  type(c_ptr), value,   intent(in) :: c_fieldset
-
-  type(soca_increment), pointer :: self
-  type(oops_variables)      :: vars
-  type(atlas_fieldset) :: afieldset
-
-  call soca_increment_registry%get(c_key_self, self)
-  vars = oops_variables(c_vars)
-  afieldset = atlas_fieldset(c_fieldset)
-
-  call self%get_fieldset(vars, afieldset)
-end subroutine
-
-! ------------------------------------------------------------------------------
 !> C++ interface for Increment version of soca_field_mod::soca_field::get_fieldset_ad()
-subroutine soca_increment_getfieldset_ad_c(c_key_self, c_vars, c_fieldset) &
-    bind (c, name='soca_increment_getfieldset_ad_f90')
+subroutine soca_increment_to_fieldset_ad_c(c_key_self, c_vars, c_fieldset, c_masked) &
+    bind (c, name='soca_increment_to_fieldset_ad_f90')
   integer(c_int),       intent(in) :: c_key_self
   type(c_ptr), value,   intent(in) :: c_vars
   type(c_ptr), value,   intent(in) :: c_fieldset
+  logical(c_bool),      intent(in) :: c_masked
 
   type(soca_increment), pointer :: self
   type(oops_variables) :: vars
@@ -678,7 +652,7 @@ subroutine soca_increment_getfieldset_ad_c(c_key_self, c_vars, c_fieldset) &
   vars = oops_variables(c_vars)
   afieldset = atlas_fieldset(c_fieldset)
 
-  call self%get_fieldset_ad(vars, afieldset)
+  call self%to_fieldset_ad(vars, afieldset, logical(c_masked))
 end subroutine
 
 ! ------------------------------------------------------------------------------

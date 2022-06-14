@@ -348,37 +348,25 @@ namespace soca {
     time_.deserialize(vect, index);
   }
 
-  // -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
-  void Increment::getFieldSet(const oops::Variables &vars, atlas::FieldSet &fset) const {
-    // get field, with halo, and no masked values
-    soca_increment_getfieldset_f90(toFortran(), vars, fset.get());
+  void Increment::toFieldSet(atlas::FieldSet &fs, const bool masked) const {
+    soca_increment_to_fieldset_f90(toFortran(), vars_, fs.get(), masked);
   }
 
-  // -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
-  void Increment::getFieldSetAD(const oops::Variables &vars, const atlas::FieldSet &fset,
-      bool skip) {
-    // Note: skip is set to true by default, this is because we need to skip this methods
-    // completely when it is called directly by OOPS. We do NOT skip it when it is called
-    // from our SOCA LocalUnstructuredInterpolator
-    if (skip) return;
-
-    soca_increment_getfieldset_ad_f90(toFortran(), vars, fset.get());
+  void Increment::toFieldSetAD(const atlas::FieldSet &fs, bool masked) {
+    if (fs.empty()) return;
+    soca_increment_to_fieldset_ad_f90(toFortran(), vars_, fs.get(), masked);
   }
 
+// -----------------------------------------------------------------------------
 
-  void Increment::toFieldSet(atlas::FieldSet &fs) const {
-    soca_increment_to_atlas_f90(toFortran(), geom_.toFortran(), vars_, fs.get());
+  void Increment::fromFieldSet(const atlas::FieldSet &fs, bool masked) {
+    soca_increment_from_fieldset_f90(toFortran(), vars_, fs.get(), masked);
   }
 
-
-  void Increment::toFieldSetAD(const atlas::FieldSet &) {
-    /// TODO (travis) implement
-  }
-
-  void Increment::fromFieldSet(const atlas::FieldSet &fs) {
-    soca_increment_from_atlas_f90(toFortran(), geom_.toFortran(), vars_, fs.get());
-  }
+// -----------------------------------------------------------------------------
 
 }  // namespace soca
