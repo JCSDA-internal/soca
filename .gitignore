@@ -3,3 +3,5 @@
 html
 *.png
 latex
+
+*.pyc
