@@ -2,7 +2,7 @@ geometry:
   mom6_input_nml: ./inputnml/input.nml
   fields metadata: ./fields_metadata.yml
 
-model variables: &model_vars [cicen, hicen, hsnon, socn, tocn, uocn, vocn, ssh, hocn, chl, biop, sw, lhf, shf, lw, us, mld, layer_depth]
+_model variables: &model_vars [cicen, hicen, hsnon, socn, tocn, uocn, vocn, ssh, hocn, chl, biop, sw, lhf, shf, lw, us, mld, layer_depth]
 
 background:
   read_from_file: 1
@@ -96,7 +96,7 @@ background error:
 max neig output: 10
 number of random samples: 40
 perturbed variables: *soca_vars
-truncation tolerence: .7
+truncation tolerance: .7
 
 # disable tests for each member as the results are not reproducable
 # accross compilers and hardware
