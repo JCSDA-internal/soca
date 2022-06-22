@@ -30,7 +30,6 @@ LocalUnstructuredInterpolator::
                                 const std::vector<double> & lats_out,
                                 const std::vector<double> & lons_out)
   : geom_(geom) {
-
   // create interpolators (TODO, postpone to usage, or configure which interpolators
   // are created, since we likely don't need them all?)
   for (auto grid : grids) {
