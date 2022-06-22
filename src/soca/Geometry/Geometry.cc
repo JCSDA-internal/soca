@@ -19,7 +19,7 @@ namespace soca {
 
   // -----------------------------------------------------------------------------
   Geometry::Geometry(const eckit::Configuration & conf,
-                     const eckit::mpi::Comm & comm)
+                     const eckit::mpi::Comm & comm, const bool gen)
     : comm_(comm),
       fmsinput_(comm, conf) {
 
@@ -40,6 +40,14 @@ namespace soca {
     // Fill ATLAS fieldset
     soca_geo_to_fieldset_f90(keyGeom_, extraFields_.get());
 
+    // messy, fix this
+    // generate the grid ONLY if being run under the gridgen application.
+    // also, if true, then don't bother with the kdtree generation in the next step.
+    if (gen) {
+      soca_geo_gridgen_f90(keyGeom_);
+      return;
+    }
+
     // create kdtrees
     int kdidx = 0;
     for (auto grid : grids) {
@@ -48,17 +56,31 @@ namespace soca {
       size_t npoints;
       std::vector<size_t> indx;
 
+      // kd tree with all grid points
       this->latlon(lats, lons, true, grid, false);
       npoints = lats.size();
       indx.resize(npoints);
       for (size_t jj = 0; jj < npoints; ++jj) indx[jj] = jj;
       localTree_[kdidx++].build(lons, lats, indx);
 
-      this->latlon(lats, lons, true, grid, true);
-      npoints = lats.size();
-      indx.resize(npoints);
-      for (size_t jj = 0; jj < npoints; ++jj) indx[jj] = jj;
-      localTree_[kdidx++].build(lons, lats, indx);
+      // kd tree with only masked points
+      // NOTE: the index from the tree still refers to grid index
+      // for fields with ALL gridpoints.
+      std::vector<double> lats_masked;
+      std::vector<double> lons_masked;
+      size_t npoints_masked;
+      this->latlon(lats_masked, lons_masked, true, grid, true);
+      npoints_masked = lats_masked.size();
+      indx.resize(npoints_masked);
+      size_t idx = 0;
+      for (size_t jj = 0; jj < npoints; ++jj) {
+        if (lats[jj] != lats_masked[idx]) continue;
+        if (lons[jj] != lons_masked[idx]) continue;
+        ASSERT(idx < npoints_masked);
+        indx[idx++] = jj;
+      }
+      ASSERT(idx == npoints_masked);
+      localTree_[kdidx++].build(lons_masked, lats_masked, indx);
     }
   }
   // -----------------------------------------------------------------------------
@@ -84,10 +106,7 @@ namespace soca {
   Geometry::~Geometry() {
     soca_geo_delete_f90(keyGeom_);
   }
-  // -----------------------------------------------------------------------------
-  void Geometry::gridgen() const {
-    soca_geo_gridgen_f90(keyGeom_);
-  }
+
   // -----------------------------------------------------------------------------
   GeometryIterator Geometry::begin() const {
     // return start of the geometry on this mpi tile
