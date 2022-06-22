@@ -14,6 +14,9 @@
 
 #include "oops/util/Printable.h"
 
+namespace atlas {
+  class FieldSet;
+}
 
 namespace eckit {
   class Configuration;

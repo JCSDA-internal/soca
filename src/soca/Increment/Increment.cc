@@ -228,23 +228,6 @@ namespace soca {
                             vals.size());
   }
   // -----------------------------------------------------------------------------
-  /// ATLAS
-  // -----------------------------------------------------------------------------
-  void Increment::setAtlas(atlas::FieldSet * afieldset) const {
-    soca_increment_set_atlas_f90(toFortran(), geom_.toFortran(), vars_,
-                                 afieldset->get());
-  }
-  // -----------------------------------------------------------------------------
-  void Increment::toAtlas(atlas::FieldSet * afieldset) const {
-    soca_increment_to_atlas_f90(toFortran(), geom_.toFortran(), vars_,
-                                afieldset->get());
-  }
-  // -----------------------------------------------------------------------------
-  void Increment::fromAtlas(atlas::FieldSet * afieldset) {
-    soca_increment_from_atlas_f90(toFortran(), geom_.toFortran(), vars_,
-                                  afieldset->get());
-  }
-  // -----------------------------------------------------------------------------
   /// I/O and diagnostics
   // -----------------------------------------------------------------------------
   void Increment::read(const eckit::Configuration & files) {
@@ -365,17 +348,25 @@ namespace soca {
     time_.deserialize(vect, index);
   }
 
-  // -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
-  void Increment::getFieldSet(const oops::Variables &vars, atlas::FieldSet &fset) const {
-    // get field, with halo, and no masked values
-    soca_increment_getfieldset_f90(toFortran(), vars, fset.get());
+  void Increment::toFieldSet(atlas::FieldSet &fs, const bool masked) const {
+    soca_increment_to_fieldset_f90(toFortran(), vars_, fs.get(), masked);
   }
 
-  // -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
-  void Increment::getFieldSetAD(const oops::Variables &vars, const atlas::FieldSet &fset) {
-    soca_increment_getfieldset_ad_f90(toFortran(), vars, fset.get());
+  void Increment::toFieldSetAD(const atlas::FieldSet &fs, bool masked) {
+    if (fs.empty()) return;
+    soca_increment_to_fieldset_ad_f90(toFortran(), vars_, fs.get(), masked);
   }
+
+// -----------------------------------------------------------------------------
+
+  void Increment::fromFieldSet(const atlas::FieldSet &fs, bool masked) {
+    soca_increment_from_fieldset_f90(toFortran(), vars_, fs.get(), masked);
+  }
+
+// -----------------------------------------------------------------------------
 
 }  // namespace soca

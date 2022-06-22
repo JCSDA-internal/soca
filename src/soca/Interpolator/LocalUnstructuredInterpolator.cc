@@ -6,17 +6,18 @@
  */
 #include <numeric>
 
+#include "atlas/field.h"
 #include "eckit/config/Configuration.h"
 #include "oops/base/Variables.h"
 #include "oops/util/Logger.h"
-
+#include "oops/util/abor1_cpp.h"
 #include "soca/Geometry/Geometry.h"
 #include "soca/Interpolator/UnstructuredInterpolator.h"
 #include "soca/Interpolator/LocalUnstructuredInterpolator.h"
 #include "soca/Increment/Increment.h"
 #include "soca/State/State.h"
 
-#include "oops/util/abor1_cpp.h"
+
 
 namespace soca {
 
@@ -29,11 +30,9 @@ LocalUnstructuredInterpolator::
                                 const std::vector<double> & lats_out,
                                 const std::vector<double> & lons_out)
   : geom_(geom) {
-  oops::Log::trace() << "LocalUnstructuredInterpolator::LocalUnstructuredInterpolator start"
-                     << std::endl;
 
-  // note: creation of interpolators is posponed to apply / applyad calls
-  // (because we don't know yet here which u/v/h masked/unmaked interpolators are required)
+  // create interpolators (TODO, postpone to usage, or configure which interpolators
+  // are created, since we likely don't need them all?)
   for (auto grid : grids) {
     util::Timer timer("soca::LocalUnstructuredInterpolator", "getInterpolator.build");
     int interp_idx = -1;
@@ -50,18 +49,13 @@ LocalUnstructuredInterpolator::
     interp_[interp_idx] = std::make_shared<UnstructuredInterpolator>(
         config, geom_, grid, masked, lats_out, lons_out);
   }
-
-  oops::Log::trace() << "LocalUnstructuredInterpolator::LocalUnstructuredInterpolator done"
-                     << std::endl;
-  }
+}
 
 // ------------------------------------------------------------------------------
 
 void LocalUnstructuredInterpolator::
 apply(const oops::Variables & vars, const atlas::FieldSet & fset, const std::vector<bool> & mask,
        std::vector<double> & locvals) const {
-  oops::Log::trace() << "LocalUnstructuredInterpolator::apply Increment start" << std::endl;
-
   auto vals = locvals.begin();
   for (int i =0; i < vars.size(); i++) {
     auto interpolator = getInterpolator(vars[i]);
@@ -73,8 +67,6 @@ apply(const oops::Variables & vars, const atlas::FieldSet & fset, const std::vec
     // interpolate
     interpolator->apply(var, fset, mask, vals);
   }
-
-  oops::Log::trace() << "LocalUnstructuredInterpolator::apply Increment done" << std::endl;
 }
 
 // ------------------------------------------------------------------------------
@@ -82,10 +74,6 @@ apply(const oops::Variables & vars, const atlas::FieldSet & fset, const std::vec
 void LocalUnstructuredInterpolator::
 applyAD(const oops::Variables & vars, atlas::FieldSet & fset, const std::vector<bool> & mask,
         const std::vector<double> & locvals) const {
-  oops::Log::trace() << "LocalUnstructuredInterpolator::applyAD start" << std::endl;
-
-  int stride = locvals.size() / vars.size();
-
   auto vals = locvals.begin();
   for (int i =0; i < vars.size(); i++) {
     auto interpolator = getInterpolator(vars[i]);
@@ -111,6 +99,7 @@ LocalUnstructuredInterpolator::getInterpolator(const std::string &var) const {
     if (grids[j] == grid) interp_idx = j*2;
   }
   if (masked) interp_idx += 1;
+  ASSERT(interp_idx < 6);
 
   return interp_[interp_idx];
 }
