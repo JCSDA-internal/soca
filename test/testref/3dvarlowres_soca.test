@@ -1,23 +1,30 @@
-Test     : CostJb   : Nonlinear Jb = 0
-Test     : CostJo   : Nonlinear Jo(SeaSurfaceTemp) = 856.238, nobs = 148, Jo/n = 5.78539, err = 0.361346
-Test     : CostJo   : Nonlinear Jo(SeaSurfaceSalinity) = 48.8058, nobs = 49, Jo/n = 0.996036, err = 1
-Test     : CostJo   : Nonlinear Jo(ADT) = 142.898, nobs = 88, Jo/n = 1.62384, err = 0.1
-Test     : CostJo   : Nonlinear Jo(InsituTemperature) = 302.074, nobs = 201, Jo/n = 1.50286, err = 0.891278
-Test     : CostJo   : Nonlinear Jo(InsituSalinity) = 325.374, nobs = 218, Jo/n = 1.49254, err = 0.608197
-Test     : CostFunction: Nonlinear J = 1675.39
-Test     : RPCGMinimizer: reduction in residual norm = 0.106755
-Test     : CostFunction::addIncrement: Analysis: 
-Test     :   Valid time: 2018-04-15T00:00:00Z
-Test     :    socn   min=   10.721046   max=   40.441678   mean=   34.544660
-Test     :    tocn   min=   -1.887652   max=   31.760000   mean=    6.027715
-Test     :     ssh   min=   -2.001412   max=    0.887407   mean=   -0.278631
-Test     :    hocn   min=    0.002000   max= 2691.280000   mean=  257.256128
-Test     :     mld   min=    2.285472   max= 4593.153342   mean=  192.410907
-Test     : layer_depth   min=    2.285472   max= 5658.305747   mean= 1200.522954
-Test     : CostJb   : Nonlinear Jb = 75643.228626
-Test     : CostJo   : Nonlinear Jo(SeaSurfaceTemp) = 262.648353, nobs = 148, Jo/n = 1.774651, err = 0.361346
-Test     : CostJo   : Nonlinear Jo(SeaSurfaceSalinity) = 48.861790, nobs = 49, Jo/n = 0.997179, err = 1.000000
-Test     : CostJo   : Nonlinear Jo(ADT) = 100.995260, nobs = 88, Jo/n = 1.147673, err = 0.100000
-Test     : CostJo   : Nonlinear Jo(InsituTemperature) = 4981.178795, nobs = 201, Jo/n = 24.781984, err = 0.891278
-Test     : CostJo   : Nonlinear Jo(InsituSalinity) = 503.274194, nobs = 218, Jo/n = 2.308597, err = 0.608197
-Test     : CostFunction: Nonlinear J = 81540.187017
+CostJb   : Nonlinear Jb = 0.0000000000000000e+00
+CostJo   : Nonlinear Jo(SeaSurfaceTemp) = 8.5623789494364155e+02, nobs = 148, Jo/n = 5.7853911820516322e+00, err = 3.6134602983026659e-01
+CostJo   : Nonlinear Jo(SeaSurfaceSalinity) = 4.8805775287685364e+01, nobs = 49, Jo/n = 9.9603623036092581e-01, err = 1.0000000000000000e+00
+CostJo   : Nonlinear Jo(ADT) = 1.4289835039600911e+02, nobs = 88, Jo/n = 1.6238448908637400e+00, err = 1.0000000149011612e-01
+CostJo   : Nonlinear Jo(InsituTemperature) = 3.0207389049976348e+02, nobs = 201, Jo/n = 1.5028551766157388e+00, err = 8.9127767893751042e-01
+CostJo   : Nonlinear Jo(InsituSalinity) = 3.2537388217310308e+02, nobs = 218, Jo/n = 1.4925407439133169e+00, err = 6.0819699619437717e-01
+CostFunction: Nonlinear J = 1.6753897933002027e+03
+RPCGMinimizer: reduction in residual norm = 1.0675524134831732e-01
+CostFunction::addIncrement: Analysis: 
+  Valid time: 2018-04-15T00:00:00Z
+   socn   min=10.7210460395083924   max=40.4416780525298165   mean=34.5446596383094544
+   tocn   min=-1.8876516192386321   max=31.7600004921259682   mean=6.0277154510741289
+    ssh   min=-2.0014121018156366   max=0.8874066087488560   mean=-0.2786311832871902
+   hocn   min=0.0019999999999953   max=2691.2800000000006548   mean=257.2561284130046033
+    mld   min=2.2854716757984130   max=4593.1533423819937525   mean=192.4109073940401515
+layer_depth   min=2.2854716757984130   max=5658.3057467114012979   mean=1200.5229536158392420
+
+
+
+
+
+
+
+CostJb   : Nonlinear Jb = 75643.2265406633960083
+CostJo   : Nonlinear Jo(SeaSurfaceTemp) = 262.6483525295385562, nobs = 148, Jo/n = 1.7746510306049903, err = 0.3613460298302666
+CostJo   : Nonlinear Jo(SeaSurfaceSalinity) = 48.8617896606417830, nobs = 49, Jo/n = 0.9971793808294241, err = 1.0000000000000000
+CostJo   : Nonlinear Jo(ADT) = 100.9952598196968694, nobs = 88, Jo/n = 1.1476734070420098, err = 0.1000000014901161
+CostJo   : Nonlinear Jo(InsituTemperature) = 4981.1787945131754896, nobs = 201, Jo/n = 24.7819840523043560, err = 0.8912776789375104
+CostJo   : Nonlinear Jo(InsituSalinity) = 503.2741942820846361, nobs = 218, Jo/n = 2.3085972214774526, err = 0.6081969961943772
+CostFunction: Nonlinear J = 81540.1849314685387071

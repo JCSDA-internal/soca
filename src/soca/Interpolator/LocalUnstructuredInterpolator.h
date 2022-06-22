@@ -39,12 +39,15 @@ namespace soca {
 class LocalUnstructuredInterpolator : public util::Printable {
  public:
   LocalUnstructuredInterpolator(const eckit::Configuration &, const Geometry &,
-                                const std::vector<double> &);
+                                const std::vector<double> &, const std::vector<double> &);
   ~LocalUnstructuredInterpolator() {}
 
-  void apply(const oops::Variables &, const State &, std::vector<double> &) const;
-  void apply(const oops::Variables &, const Increment &, std::vector<double> &) const;
-  void applyAD(const oops::Variables &, Increment &, const std::vector<double> &) const;
+  void apply(const oops::Variables &, const State &, const std::vector<bool> &,
+             std::vector<double> &) const;
+  void apply(const oops::Variables &, const Increment &, const std::vector<bool> &,
+             std::vector<double> &) const;
+  void applyAD(const oops::Variables &, Increment &, const std::vector<bool> &,
+               const std::vector<double> &) const;
 
  private:
   const std::shared_ptr<UnstructuredInterpolator> getInterpolator(const std::string &) const;
@@ -52,9 +55,10 @@ class LocalUnstructuredInterpolator : public util::Printable {
 
   mutable std::shared_ptr<UnstructuredInterpolator> interp_[6];
 
-  const std::shared_ptr<const Geometry> geom_;
+  const Geometry & geom_;
   const eckit::LocalConfiguration config_;
-  const std::vector<double> latlon_out_;
+  const std::vector<double> lats_out_;
+  const std::vector<double> lons_out_;
 };
 
 }  // namespace soca

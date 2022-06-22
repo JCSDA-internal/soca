@@ -4,3 +4,7 @@ geometry:
   full_init: true
   mom6_input_nml: ./inputnml/input_small.nml
   fields metadata: ./fields_metadata.yml
+
+test:
+  reference filename: testref/gridgen_small.test
+  test output filename: testoutput/gridgen_small.test

@@ -32,7 +32,7 @@ window length: PT3H
 forecast length: PT3H
 
 observations:
-
+  observers:
   - obs space:
       name: SeaSurfaceTemp
       obsdataout: {obsfile: ./Data/sst.out.nc}
@@ -72,3 +72,7 @@ observations:
       simulated variables: [sea_water_salinity]
     obs operator:
       name: MarineVertInterp
+
+test:
+  reference filename: testref/hofx_4d_pseudo.test
+  test output filename: testoutput/hofx_4d_pseudo.test

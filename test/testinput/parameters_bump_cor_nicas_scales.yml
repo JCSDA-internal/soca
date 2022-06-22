@@ -44,3 +44,7 @@ bump:
     ocn_filename: ocn.cor_rv.incr.2018-04-15T00:00:00Z.nc
     ice_filename: ice.cor_rv.incr.2018-04-15T00:00:00Z.nc
     state variables: [socn, tocn, ssh, hocn, cicen, hicen]
+
+# need to increase tolerances, a lot
+# test:
+#   reference filename: testref/parameters_bump_cor_nicas_scales.test

@@ -62,7 +62,6 @@ subroutine soca_bkgerrgodas_setup(self, f_conf, bkg, geom)
 
   type(soca_field), pointer :: field, field_bkg
   integer :: i
-  character(len=800) :: fname = 'soca_bkgerrgodas.nc'
 
   ! Allocate memory for bkgerrgodasor
   call self%std_bkgerr%copy(bkg)
@@ -106,9 +105,6 @@ subroutine soca_bkgerrgodas_setup(self, f_conf, bkg, geom)
 
   ! Apply config bounds to background error
   call self%bounds%apply(self%std_bkgerr)
-
-  ! Save
-  call self%std_bkgerr%write_file(fname)
 
 end subroutine soca_bkgerrgodas_setup
 

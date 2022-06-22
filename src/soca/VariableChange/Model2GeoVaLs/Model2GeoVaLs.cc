@@ -24,7 +24,7 @@ static VariableChangeMaker<Model2GeoVaLs>
 
 Model2GeoVaLs::Model2GeoVaLs(const Geometry & geom,
                              const eckit::Configuration & conf)
-  : geom_(new Geometry(geom)) {
+  : geom_(geom) {
 }
 
 // -----------------------------------------------------------------------------
@@ -34,7 +34,7 @@ Model2GeoVaLs::~Model2GeoVaLs() {}
 // -----------------------------------------------------------------------------
 
 void Model2GeoVaLs::changeVar(const State & xin, State & xout) const {
-  soca_model2geovals_changevar_f90(geom_->toFortran(),
+  soca_model2geovals_changevar_f90(geom_.toFortran(),
                                    xin.toFortran(), xout.toFortran());
 }
 

@@ -47,3 +47,7 @@ output:
   exp: pseudomodel
   date: *date
   type: fc
+
+test:
+  reference filename: testref/forecast_pseudo.test
+  test output filename: testoutput/forecast_pseudo.test

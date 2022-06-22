@@ -37,3 +37,6 @@ bump:
     ssh: [500]
   grids:
   - variables: [socn, tocn, cicen, hicen, ssh]
+
+# test:
+#   reference filename: testref/parameters_bump_loc.test

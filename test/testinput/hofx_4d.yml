@@ -21,6 +21,7 @@ window length: PT3H
 forecast length: PT3H
 
 observations:
+  observers:
   - obs space:
       name: CoolSkin
       obsdataout: {obsfile: ./Data/sst.coolskin.out.nc}
@@ -92,3 +93,7 @@ observations:
       simulated variables: [surface_northward_sea_water_velocity]
     obs operator:
       name: Identity
+
+test:
+  reference filename: testref/hofx_4d.test
+  test output filename: testoutput/hofx_4d.test

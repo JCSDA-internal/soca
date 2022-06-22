@@ -39,17 +39,18 @@ cost function:
       variables: [cicen, hicen]
 
   observations:
-  - obs space:
-      name: SeaSurfaceTemp
-      obsdataout: {obsfile: ./Data/single_ob.out.nc}
-      obsdatain:  {obsfile: ./Data/single_ob.nc}
-      simulated variables: [sea_surface_temperature]
-    obs operator:
-      name: Identity
-    obs error:
-      covariance model: diagonal
-    obs filters:
-    - *land_mask
+    observers:
+    - obs space:
+        name: SeaSurfaceTemp
+        obsdataout: {obsfile: ./Data/single_ob.out.nc}
+        obsdatain:  {obsfile: ./Data/single_ob.nc}
+        simulated variables: [sea_surface_temperature]
+      obs operator:
+        name: Identity
+      obs error:
+        covariance model: diagonal
+      obs filters:
+      - *land_mask
 
 
 variational:
@@ -80,3 +81,7 @@ output:
 final:
   diagnostics:
     departures: oman
+
+test:
+  reference filename: testref/3dvar_single_ob.test
+  test output filename: testoutput/3dvar_single_ob.test

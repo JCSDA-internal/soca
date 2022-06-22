@@ -39,25 +39,25 @@ namespace soca {
   // -----------------------------------------------------------------------------
   Increment::Increment(const Geometry & geom, const oops::Variables & vars,
                        const util::DateTime & vt)
-    : time_(vt), vars_(vars), geom_(new Geometry(geom))
+    : time_(vt), vars_(vars), geom_(geom)
   {
-    soca_increment_create_f90(keyFlds_, geom_->toFortran(), vars_);
+    soca_increment_create_f90(keyFlds_, geom_.toFortran(), vars_);
     soca_increment_zero_f90(toFortran());
     Log::trace() << "Increment constructed." << std::endl;
   }
   // -----------------------------------------------------------------------------
   Increment::Increment(const Geometry & geom, const Increment & other)
-    : time_(other.time_), vars_(other.vars_), geom_(new Geometry(geom))
+    : time_(other.time_), vars_(other.vars_), geom_(geom)
   {
-    soca_increment_create_f90(keyFlds_, geom_->toFortran(), vars_);
+    soca_increment_create_f90(keyFlds_, geom_.toFortran(), vars_);
     soca_increment_change_resol_f90(toFortran(), other.keyFlds_);
     Log::trace() << "Increment constructed from other." << std::endl;
   }
   // -----------------------------------------------------------------------------
   Increment::Increment(const Increment & other, const bool copy)
-    : time_(other.time_), vars_(other.vars_), geom_(new Geometry(*other.geom_))
+    : time_(other.time_), vars_(other.vars_), geom_(other.geom_)
   {
-    soca_increment_create_f90(keyFlds_, geom_->toFortran(), vars_);
+    soca_increment_create_f90(keyFlds_, geom_.toFortran(), vars_);
     if (copy) {
       soca_increment_copy_f90(toFortran(), other.toFortran());
     } else {
@@ -67,9 +67,9 @@ namespace soca {
   }
   // -----------------------------------------------------------------------------
   Increment::Increment(const Increment & other)
-    : time_(other.time_), vars_(other.vars_), geom_(new Geometry(*other.geom_))
+    : time_(other.time_), vars_(other.vars_), geom_(other.geom_)
   {
-    soca_increment_create_f90(keyFlds_, geom_->toFortran(), vars_);
+    soca_increment_create_f90(keyFlds_, geom_.toFortran(), vars_);
     soca_increment_copy_f90(toFortran(), other.toFortran());
     Log::trace() << "Increment copy-created." << std::endl;
   }
@@ -84,8 +84,8 @@ namespace soca {
   void Increment::diff(const State & x1, const State & x2) {
     ASSERT(this->validTime() == x1.validTime());
     ASSERT(this->validTime() == x2.validTime());
-    State x1_at_geomres(*geom_, x1);
-    State x2_at_geomres(*geom_, x2);
+    State x1_at_geomres(geom_, x1);
+    State x2_at_geomres(geom_, x2);
     soca_increment_diff_incr_f90(toFortran(), x1_at_geomres.toFortran(),
                                               x2_at_geomres.toFortran());
   }
@@ -165,7 +165,7 @@ namespace soca {
     eckit::geometry::Point3 p3 = *iter;
     std::vector<int> varlens(vars_.size());
 
-    int iteratorDimension = geom_->IteratorDimension();
+    int iteratorDimension = geom_.IteratorDimension();
     switch (iteratorDimension) {
     case (3) :
       if (p3[2] == 0.0) {
@@ -226,23 +226,6 @@ namespace soca {
     const std::vector<double> vals = values.getVals();
     soca_increment_setpoint_f90(toFortran(), iter.toFortran(), vals[0],
                             vals.size());
-  }
-  // -----------------------------------------------------------------------------
-  /// ATLAS
-  // -----------------------------------------------------------------------------
-  void Increment::setAtlas(atlas::FieldSet * afieldset) const {
-    soca_increment_set_atlas_f90(toFortran(), geom_->toFortran(), vars_,
-                                 afieldset->get());
-  }
-  // -----------------------------------------------------------------------------
-  void Increment::toAtlas(atlas::FieldSet * afieldset) const {
-    soca_increment_to_atlas_f90(toFortran(), geom_->toFortran(), vars_,
-                                afieldset->get());
-  }
-  // -----------------------------------------------------------------------------
-  void Increment::fromAtlas(atlas::FieldSet * afieldset) {
-    soca_increment_from_atlas_f90(toFortran(), geom_->toFortran(), vars_,
-                                  afieldset->get());
   }
   // -----------------------------------------------------------------------------
   /// I/O and diagnostics
@@ -322,7 +305,7 @@ namespace soca {
   size_t Increment::serialSize() const {
     // Field
     size_t nn;
-    soca_increment_serial_size_f90(toFortran(), geom_->toFortran(), nn);
+    soca_increment_serial_size_f90(toFortran(), geom_.toFortran(), nn);
 
     // Magic factor
     nn += 1;
@@ -336,10 +319,10 @@ namespace soca {
   void Increment::serialize(std::vector<double> & vect) const {
     // Serialize the field
     size_t nn;
-    soca_increment_serial_size_f90(toFortran(), geom_->toFortran(), nn);
+    soca_increment_serial_size_f90(toFortran(), geom_.toFortran(), nn);
     std::vector<double> vect_field(nn, 0);
     vect.reserve(vect.size() + nn + 1 + time_.serialSize());
-    soca_increment_serialize_f90(toFortran(), geom_->toFortran(), nn,
+    soca_increment_serialize_f90(toFortran(), geom_.toFortran(), nn,
                                  vect_field.data());
     vect.insert(vect.end(), vect_field.begin(), vect_field.end());
 
@@ -354,7 +337,7 @@ namespace soca {
                               size_t & index) {
     // Deserialize the field
 
-    soca_increment_deserialize_f90(toFortran(), geom_->toFortran(), vect.size(),
+    soca_increment_deserialize_f90(toFortran(), geom_.toFortran(), vect.size(),
                                    vect.data(), index);
 
     // Use magic value to validate deserialization
@@ -364,29 +347,26 @@ namespace soca {
     // Deserialize the date and time
     time_.deserialize(vect, index);
   }
-  // -----------------------------------------------------------------------------
 
-  std::shared_ptr<const Geometry> Increment::geometry() const {
-    return geom_;
+// -----------------------------------------------------------------------------
+
+  void Increment::toFieldSet(atlas::FieldSet &fs, const bool masked) const {
+    soca_increment_to_fieldset_f90(toFortran(), vars_, fs.get(), masked);
   }
 
-  // -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
-  void Increment::getFieldSet(const oops::Variables &vars, atlas::FieldSet &fset) const {
-    // get field, with halo, and no masked values
-    soca_increment_getfieldset_f90(toFortran(), vars, fset.get());
+  void Increment::toFieldSetAD(const atlas::FieldSet &fs, bool masked) {
+    if (fs.empty()) return;
+    soca_increment_to_fieldset_ad_f90(toFortran(), vars_, fs.get(), masked);
   }
 
-  // -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
-  void Increment::getFieldSetAD(const oops::Variables &vars, const atlas::FieldSet &fset,
-      bool skip) {
-    // Note: skip is set to true by default, this is because we need to skip this methods
-    // completely when it is called directly by OOPS. We do NOT skip it when it is called
-    // from our SOCA LocalUnstructuredInterpolator
-    if (skip) return;
-
-    soca_increment_getfieldset_ad_f90(toFortran(), vars, fset.get());
+  void Increment::fromFieldSet(const atlas::FieldSet &fs, bool masked) {
+    soca_increment_from_fieldset_f90(toFortran(), vars_, fs.get(), masked);
   }
+
+// -----------------------------------------------------------------------------
 
 }  // namespace soca

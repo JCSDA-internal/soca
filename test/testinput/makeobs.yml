@@ -21,6 +21,7 @@ initial condition:
   state variables: *soca_vars
 
 observations:
+  observers:
   - obs space:
       name: InsituTemperature
       obsdataout: {obsfile: ./Data/syn.prof.T.out.nc}
@@ -32,3 +33,7 @@ observations:
       covariance model: diagonal
 
 make obs: true
+
+test:
+  reference filename: testref/makeobs.test
+  test output filename: testoutput/makeobs.test

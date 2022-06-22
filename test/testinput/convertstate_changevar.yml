@@ -48,3 +48,7 @@ states:
      exp: rotate-log-dummy-member
      type: fc
      date: &bkg_date 2018-04-15T00:00:00Z
+
+test:
+  reference filename: testref/convertstate_changevar.test
+  test output filename: testoutput/convertstate_changevar.test

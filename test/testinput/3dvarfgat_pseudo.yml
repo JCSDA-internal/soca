@@ -90,75 +90,75 @@ cost function:
           name: dcdt
 
   observations:
+    observers:
+    - obs space:
+        name: SeaSurfaceTemp
+        obsdataout: {obsfile: ./Data/sst.out.nc}
+        obsdatain:  {obsfile: ./Data/sst.nc}
+        simulated variables: [sea_surface_temperature]
+      obs operator:
+        name: Identity
+      obs error:
+        covariance model: diagonal
+      obs filters:
+      - *land_mask
+      - filter: Thinning
+        amount: 0.1
+        random seed: 0
 
-  - obs space:
-      name: SeaSurfaceTemp
-      obsdataout: {obsfile: ./Data/sst.out.nc}
-      obsdatain:  {obsfile: ./Data/sst.nc}
-      simulated variables: [sea_surface_temperature]
-    obs operator:
-      name: Identity
-    obs error:
-      covariance model: diagonal
-    obs filters:
-    - *land_mask
-    - filter: Thinning
-      amount: 0.1
-      random seed: 0
+    - obs space:
+        name: SeaSurfaceSalinity
+        obsdataout: {obsfile: ./Data/sss.out.nc}
+        obsdatain:  {obsfile: ./Data/sss.nc}
+        simulated variables: [sea_surface_salinity]
+      obs operator:
+        name: Identity
+      obs error:
+        covariance model: diagonal
+      obs filters:
+      - *land_mask
+      - filter: Domain Check
+        where:
+        - variable: {name: sea_surface_temperature@GeoVaLs}
+          minvalue: 15
 
-  - obs space:
-      name: SeaSurfaceSalinity
-      obsdataout: {obsfile: ./Data/sss.out.nc}
-      obsdatain:  {obsfile: ./Data/sss.nc}
-      simulated variables: [sea_surface_salinity]
-    obs operator:
-      name: Identity
-    obs error:
-      covariance model: diagonal
-    obs filters:
-    - *land_mask
-    - filter: Domain Check
-      where:
-      - variable: {name: sea_surface_temperature@GeoVaLs}
-        minvalue: 15
+    - obs space:
+        name: ADT
+        obsdataout: {obsfile: ./Data/adt.out.nc}
+        obsdatain:  {obsfile: ./Data/adt.nc}
+        simulated variables: [absolute_dynamic_topography]
+      obs operator:
+        name: ADT
+      obs error:
+        covariance model: diagonal
+      obs filters:
+      - *land_mask
 
-  - obs space:
-      name: ADT
-      obsdataout: {obsfile: ./Data/adt.out.nc}
-      obsdatain:  {obsfile: ./Data/adt.nc}
-      simulated variables: [absolute_dynamic_topography]
-    obs operator:
-      name: ADT
-    obs error:
-      covariance model: diagonal
-    obs filters:
-    - *land_mask
+    - obs space:
+        name: InsituTemperature
+        obsdataout: {obsfile: ./Data/prof.T.out.nc}
+        obsdatain:  {obsfile: ./Data/prof.nc}
+        simulated variables: [sea_water_temperature]
+      obs operator:
+        name: InsituTemperature
+      obs error:
+        covariance model: diagonal
+      obs filters:
+      - *land_mask
+      - filter: Background Check
+        threshold: 5
 
-  - obs space:
-      name: InsituTemperature
-      obsdataout: {obsfile: ./Data/prof.T.out.nc}
-      obsdatain:  {obsfile: ./Data/prof.nc}
-      simulated variables: [sea_water_temperature]
-    obs operator:
-      name: InsituTemperature
-    obs error:
-      covariance model: diagonal
-    obs filters:
-    - *land_mask
-    - filter: Background Check
-      threshold: 5
-
-  - obs space:
-      name: InsituSalinity
-      obsdataout: {obsfile: ./Data/prof.S.out.nc}
-      obsdatain:  {obsfile: ./Data/prof.nc}
-      simulated variables: [sea_water_salinity]
-    obs operator:
-      name: MarineVertInterp
-    obs error:
-      covariance model: diagonal
-    obs filters:
-    - *land_mask
+    - obs space:
+        name: InsituSalinity
+        obsdataout: {obsfile: ./Data/prof.S.out.nc}
+        obsdatain:  {obsfile: ./Data/prof.nc}
+        simulated variables: [sea_water_salinity]
+      obs operator:
+        name: MarineVertInterp
+      obs error:
+        covariance model: diagonal
+      obs filters:
+      - *land_mask
 
 
 variational:
@@ -190,3 +190,7 @@ output:
 final:
   diagnostics:
     departures: oman
+
+test:
+  reference filename: testref/3dvarfgat_pseudo.test
+  test output filename: testoutput/3dvarfgat_pseudo.test

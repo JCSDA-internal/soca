@@ -120,3 +120,7 @@ output dirac:
   date: *date
   exp: dirac_socahyb_cov_%id%
   type: an
+
+test:
+  reference filename: testref/dirac_socahyb_cov.test
+  test output filename: testoutput/dirac_socahyb_cov.test

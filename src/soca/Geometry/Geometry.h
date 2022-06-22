@@ -14,6 +14,10 @@
 #include <string>
 #include <vector>
 
+#include "atlas/field.h"
+#include "atlas/functionspace.h"
+#include "atlas/util/KDTree.h"
+
 #include "eckit/config/Configuration.h"
 #include "eckit/config/LocalConfiguration.h"
 #include "eckit/mpi/Comm.h"
@@ -64,23 +68,32 @@ namespace soca {
       void gridgen() const;
       const eckit::mpi::Comm & getComm() const {return comm_;}
 
-      atlas::FunctionSpace * atlasFunctionSpace() const;
-      atlas::FieldSet * atlasFieldSet() const;
+      const atlas::FunctionSpace & functionSpace() const {return functionSpaceIncHalo_;}
+      atlas::FunctionSpace & functionSpace() {return functionSpaceIncHalo_;}
+      const atlas::FieldSet & extraFields() const {return extraFields_;}
+      atlas::FieldSet & extraFields() {return extraFields_;}
 
       void latlon(std::vector<double> &, std::vector<double> &, const bool) const;
       void latlon(std::vector<double> &, std::vector<double> &, const bool,
                   const char, const bool) const;
+      atlas::util::KDTree<size_t>::ValueList closestPoints(
+        const double, const double, const int,
+        const char, const bool) const;
 
       void getVarGrid(const std::string &, char &, bool &) const;
 
    private:
       Geometry & operator=(const Geometry &);
       void print(std::ostream &) const;
+
       int keyGeom_;
       const eckit::mpi::Comm & comm_;
       FmsInput fmsinput_;
-      std::unique_ptr<atlas::functionspace::PointCloud> atlasFunctionSpace_;
-      std::unique_ptr<atlas::FieldSet> atlasFieldSet_;
+      atlas::FunctionSpace functionSpace_;
+      atlas::FunctionSpace functionSpaceIncHalo_;
+      atlas::FieldSet extraFields_;
+
+      atlas::util::IndexKDTree localTree_[6];
   };
   // -----------------------------------------------------------------------------
 

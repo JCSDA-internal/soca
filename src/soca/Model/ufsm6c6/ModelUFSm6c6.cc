@@ -31,7 +31,7 @@ namespace soca {
                              const eckit::Configuration & model)
     : keyConfig_(0),
       tstep_(0),
-      geom_(new Geometry(resol)),
+      geom_(resol),
       vars_(model, "model variables")
   {
     Log::trace() << "ModelUFSm6c6::ModelUFSm6c6" << std::endl;

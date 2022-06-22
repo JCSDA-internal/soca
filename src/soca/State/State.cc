@@ -34,20 +34,20 @@ namespace soca {
   // -----------------------------------------------------------------------------
   State::State(const Geometry & geom, const oops::Variables & vars,
                const util::DateTime & vt)
-    : time_(vt), vars_(vars), geom_(new Geometry(geom))
+    : time_(vt), vars_(vars), geom_(geom)
   {
-    soca_state_create_f90(keyFlds_, geom_->toFortran(), vars_);
+    soca_state_create_f90(keyFlds_, geom_.toFortran(), vars_);
     Log::trace() << "State::State created." << std::endl;
   }
   // -----------------------------------------------------------------------------
   State::State(const Geometry & geom, const eckit::Configuration & conf)
     : time_(),
       vars_(conf, "state variables"),
-      geom_(new Geometry(geom))
+      geom_(geom)
   {
     util::DateTime * dtp = &time_;
     oops::Variables vars(vars_);
-    soca_state_create_f90(keyFlds_, geom_->toFortran(), vars);
+    soca_state_create_f90(keyFlds_, geom_.toFortran(), vars);
 
     if (conf.has("analytic init")) {
       std::string dt;
@@ -61,17 +61,17 @@ namespace soca {
   }
   // -----------------------------------------------------------------------------
   State::State(const Geometry & geom, const State & other)
-    : vars_(other.vars_), time_(other.time_), geom_(new Geometry(geom))
+    : vars_(other.vars_), time_(other.time_), geom_(geom)
   {
-    soca_state_create_f90(keyFlds_, geom_->toFortran(), vars_);
+    soca_state_create_f90(keyFlds_, geom_.toFortran(), vars_);
     soca_state_change_resol_f90(toFortran(), other.keyFlds_);
     Log::trace() << "State::State created by interpolation." << std::endl;
   }
   // -----------------------------------------------------------------------------
   State::State(const State & other)
-    : vars_(other.vars_), time_(other.time_), geom_(new Geometry(*other.geom_))
+    : vars_(other.vars_), time_(other.time_), geom_(other.geom_)
   {
-    soca_state_create_f90(keyFlds_, geom_->toFortran(), vars_);
+    soca_state_create_f90(keyFlds_, geom_.toFortran(), vars_);
     soca_state_copy_f90(toFortran(), other.toFortran());
     Log::trace() << "State::State copied." << std::endl;
   }
@@ -110,7 +110,7 @@ namespace soca {
   State & State::operator+=(const Increment & dx) {
     ASSERT(validTime() == dx.validTime());
     // Interpolate increment to analysis grid
-    Increment dx_hr(*geom_, dx);
+    Increment dx_hr(geom_, dx);
 
     // Add increment to background state
     soca_state_add_incr_f90(toFortran(), dx_hr.toFortran());
@@ -153,7 +153,7 @@ namespace soca {
   size_t State::serialSize() const {
     // Field
     size_t nn;
-    soca_state_serial_size_f90(toFortran(), geom_->toFortran(), nn);
+    soca_state_serial_size_f90(toFortran(), geom_.toFortran(), nn);
 
     // Magic factor
     nn += 1;
@@ -167,10 +167,10 @@ namespace soca {
   void State::serialize(std::vector<double> & vect) const {
     // Serialize the field
     size_t nn;
-    soca_state_serial_size_f90(toFortran(), geom_->toFortran(), nn);
+    soca_state_serial_size_f90(toFortran(), geom_.toFortran(), nn);
     std::vector<double> vect_field(nn, 0);
     vect.reserve(vect.size() + nn + 1 + time_.serialSize());
-    soca_state_serialize_f90(toFortran(), geom_->toFortran(), nn,
+    soca_state_serialize_f90(toFortran(), geom_.toFortran(), nn,
                              vect_field.data());
     vect.insert(vect.end(), vect_field.begin(), vect_field.end());
 
@@ -183,7 +183,7 @@ namespace soca {
   // -----------------------------------------------------------------------------
   void State::deserialize(const std::vector<double> & vect, size_t & index) {
     // Deserialize the field
-    soca_state_deserialize_f90(toFortran(), geom_->toFortran(), vect.size(),
+    soca_state_deserialize_f90(toFortran(), geom_.toFortran(), vect.size(),
                                vect.data(), index);
 
     // Use magic value to validate deserialization
@@ -236,11 +236,11 @@ namespace soca {
   // -----------------------------------------------------------------------------
   util::DateTime & State::validTime() {return time_;}
   // -----------------------------------------------------------------------------
-  std::shared_ptr<const Geometry> State::geometry() const {return geom_;}
+  const Geometry & State::geometry() const {return geom_;}
   // -----------------------------------------------------------------------------
 
-  void State::getFieldSet(const oops::Variables &vars, atlas::FieldSet &fset) const {
+  void State::toFieldSet(atlas::FieldSet &fset, bool masked) const {
     // get field, with halo, and no masked values
-    soca_state_getfieldset_f90(toFortran(), vars, fset.get());
+    soca_state_to_fieldset_f90(toFortran(), vars_, fset.get(), masked);
   }
 }  // namespace soca

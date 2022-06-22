@@ -33,26 +33,26 @@ _: &land_mask
     minvalue: 0.5
 
 observations:
-
-- obs space:
-    name: SeaSurfaceTemp
-    distribution:
-      name: InefficientDistribution
-    obsdataout: {obsfile: ./Data/sst.letkf.solver.nc}
-    obsdatain:  {obsfile: ./Data/sst.letkf.observer.nc}
-    simulated variables: [sea_surface_temperature]
-  obs operator:
-    name: Identity
-  obs error:
-    covariance model: diagonal
-  obs localizations:
-  - localization method: Rossby
-    search method: kd_tree
-    base value: 100.0e3
-    rossby mult: 1.0
-    min grid mult: 2.0
-    min value: 200.0e3
-    max value: 900.0e3
+  observers:
+  - obs space:
+      name: SeaSurfaceTemp
+      distribution:
+        name: InefficientDistribution
+      obsdataout: {obsfile: ./Data/sst.letkf.solver.nc}
+      obsdatain:  {obsfile: ./Data/sst.letkf.observer.nc}
+      simulated variables: [sea_surface_temperature]
+    obs operator:
+      name: Identity
+    obs error:
+      covariance model: diagonal
+    obs localizations:
+    - localization method: Rossby
+      search method: kd_tree
+      base value: 100.0e3
+      rossby mult: 1.0
+      min grid mult: 2.0
+      min value: 200.0e3
+      max value: 900.0e3
 
 driver:
   read HX from disk: true
@@ -99,3 +99,8 @@ output increment:
   date: *date
   exp: letkf.inc
   type: an
+
+
+test:
+  reference filename: testref/letkf_split_solver.test
+  test output filename: testoutput/letkf_split_solver.test

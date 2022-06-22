@@ -92,6 +92,12 @@ ecbuild_add_executable( TARGET  soca_letkf.x
                         SOURCES LETKF.cc
                         LIBS   ${mylibs}
                       )
+
+ecbuild_add_executable( TARGET  soca_convertincrement.x
+                        SOURCES ConvertIncrement.cc
+                        LIBS    ${mylibs}
+                        )
+
 ecbuild_add_executable( TARGET  soca_convertstate.x
                         SOURCES ConvertState.cc
                         LIBS   ${mylibs}
