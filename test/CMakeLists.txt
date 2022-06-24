@@ -315,7 +315,7 @@ function(soca_add_test)
   if ( ARG_MPI )
     set( MPI ${ARG_MPI})
   endif()
-#set( mylibs 
+#set( UFS_LIBS 
 #      soca
 #      cmeps
 #      piof 
@@ -337,7 +337,7 @@ function(soca_add_test)
     ecbuild_add_test( TARGET  test_soca_${ARG_NAME}
                       SOURCES executables/${ARG_SRC}
                       ARGS    ${CONFIG_FILE}
-                      LIBS    ${mylibs}
+                      LIBS    ${UFS_LIBS}
                       MPI     ${MPI}
                       ENVIRONMENT ${TRAPFPE_ENV}
                       TEST_DEPENDS ${ARG_TEST_DEPENDS})

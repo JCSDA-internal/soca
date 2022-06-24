@@ -49,7 +49,7 @@ include_directories( ${DEPEND_LIB_ROOT}/../ufs-weather-model/src/ufs-weather-mod
 set( SOCA_LINKER_LANGUAGE CXX)
 
 if(${UFS_APP} MATCHES "NG-GODAS")
-  set( mylibs 
+  set( UFS_LIBS 
       soca
       cdeps
       cmeps
@@ -60,7 +60,7 @@ if(${UFS_APP} MATCHES "NG-GODAS")
       esmf
   )
 else()
-  set( mylibs 
+  set( UFS_LIBS 
       soca
       cmeps
       piof 
