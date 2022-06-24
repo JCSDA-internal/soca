@@ -38,7 +38,7 @@ filename = base + sdate + '.$(file_type).nc'
 file_type = ['MOM.res', 'cice.res']
 if conf['resolution'] in {'025deg',}:
     file_type += ['MOM.res_1', 'MOM.res_2', 'MOM.res_3']
-elif conf['resolution'] in {'1deg',}:
+elif conf['resolution'] in {'1deg','5deg'}:
     pass
 else:
     raise RuntimeError(f'Unsupported resolution {conf["resolution"]}')
