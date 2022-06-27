@@ -82,6 +82,8 @@ namespace soca {
         }
         ASSERT(idx == npoints_masked);
         localTree_[kdidx++].build(lons_masked, lats_masked, indx);
+      } else {
+        kdidx++;
       }
     }
   }
