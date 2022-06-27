@@ -71,16 +71,18 @@ namespace soca {
       size_t npoints_masked;
       this->latlon(lats_masked, lons_masked, true, grid, true);
       npoints_masked = lats_masked.size();
-      indx.resize(npoints_masked);
-      size_t idx = 0;
-      for (size_t jj = 0; jj < npoints; ++jj) {
-        if (lats[jj] != lats_masked[idx]) continue;
-        if (lons[jj] != lons_masked[idx]) continue;
-        ASSERT(idx < npoints_masked);
-        indx[idx++] = jj;
+      if (npoints_masked > 0) {
+        indx.resize(npoints_masked);
+        size_t idx = 0;
+        for (size_t jj = 0; jj < npoints; ++jj) {
+          if (lats[jj] != lats_masked[idx]) continue;
+          if (lons[jj] != lons_masked[idx]) continue;
+          ASSERT(idx < npoints_masked);
+          indx[idx++] = jj;
+        }
+        ASSERT(idx == npoints_masked);
+        localTree_[kdidx++].build(lons_masked, lats_masked, indx);
       }
-      ASSERT(idx == npoints_masked);
-      localTree_[kdidx++].build(lons_masked, lats_masked, indx);
     }
   }
   // -----------------------------------------------------------------------------
