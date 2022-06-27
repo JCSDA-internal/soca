@@ -7,6 +7,5 @@
 
 set -eux
 
-
-cp ${SOCAREPO}/ewok/mom_input/MOM_input.${RESOLUTION}* ${WORKDIR}/MOM_input
+# cp ${SOCAREPO}/ewok/mom_input/MOM_input.${RESOLUTION}* ${WORKDIR}/MOM_input
 cp ${SOCA_STATIC_DIR}/* ${WORKDIR}/
