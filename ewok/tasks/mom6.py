@@ -4,6 +4,7 @@
 # This software is licensed under the terms of the Apache Licence Version 2.0
 # which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
 
+import ewok
 from ewok.tasks import GenericModel
 
 from hofxMOM6 import hofxMOM6
@@ -21,3 +22,5 @@ class ModelTasks(GenericModel.ModelTasks):
         self.getInitialConditions = getInitialConditionsMOM6
         self.hofx = hofxMOM6
         self.getStaticModel = getStaticModelMOM6
+        self.createPlots = ewok.createPlots
+        self.savePlots = ewok.savePlots
