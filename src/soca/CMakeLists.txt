@@ -14,11 +14,9 @@ list( APPEND soca_src_files
 # (to keep from having to use the full path every time)
 function(soca_target_sources)
   foreach( src IN LISTS ARGN)
-    message("this is a src file ${src}")
     target_sources(soca PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/${src})
   endforeach()
 endfunction()
-message("HEY!!! here are the soca_src files ${soca_src_files}")
 # The main soca library... behold its glory
 ecbuild_add_library( TARGET   soca
                      SOURCES ${soca_src_files}

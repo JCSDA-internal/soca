@@ -31,6 +31,7 @@ set( soca_test_input
   testinput/ensvariance.yml
   testinput/forecast_identity.yml
   testinput/forecast_mom6.yml
+  testinput/forecast_ufs.yml
   testinput/forecast_mom6_bgc.yml
   testinput/forecast_pseudo.yml
   testinput/geometry.yml
@@ -130,6 +131,7 @@ set( soca_test_ref
 
 set( soca_data_files
   Data/godas_sst_bgerr.nc
+  Data/soca_gridspec.nc
   Data/rossrad.dat
   Data/fields_metadata.yml
 )
@@ -188,6 +190,13 @@ set( soca_obs
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/testinput)
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/testoutput)
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/testref)
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/Data/ModelRunDirs)
+execute_process(COMMAND cmake -E create_symlink
+   ${CMAKE_BINARY_DIR}/_deps/testdata-src ${CMAKE_CURRENT_BINARY_DIR}/Data/ModelRunDirs/UFS
+)
+#add_custom_target(symlink
+#    ${CMAKE_COMMAND} -E create_symlink ${CMAKE_BINARY_DIR}/_deps/testdata-src ${CMAKE_CURRENT_BINARY_DIR}/Data/ModelRunDirs/UFS
+#    COMMAND ${CMAKE_COMMAND} -E create_symlink ${CMAKE_SOURCE_DIR}/Include ${CMAKE_INSTALL_PREFIX}/include)
 foreach(FILENAME ${soca_test_input} ${soca_test_ref})
     execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
            ${CMAKE_CURRENT_SOURCE_DIR}/${FILENAME}
@@ -250,7 +259,7 @@ file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bump_scales)
 
 # Configurable parameters for the subsequent tests
 
-set( SOCA_TESTS_MAX_MPI 2 CACHE STRING
+set( SOCA_TESTS_MAX_MPI 8 CACHE STRING
   "Maximum number of PEs to use for SOCA's MPI based tests.\
   NOTE: should leave this at 2 to ensure all tests pass.")
 
@@ -413,6 +422,14 @@ soca_add_test( NAME forecast_identity
 # Test mom6 forecast
 soca_add_test( NAME forecast_mom6
                EXE  soca_forecast.x
+               NOTRAPFPE
+               TEST_DEPENDS test_soca_gridgen )
+
+# Test ufs/ng-godas forecast
+soca_add_test( NAME forecast_ufs
+               EXE  soca_forecast.x
+               MPI 8
+               CFG  forecast_ufs.yml
                NOTRAPFPE
                TEST_DEPENDS test_soca_gridgen )
 
