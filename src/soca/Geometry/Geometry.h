@@ -82,6 +82,7 @@ namespace soca {
       void getVarGrid(const std::string &, char &, bool &) const;
 
    private:
+      void mask(std::vector<double> &, const bool, const char) const;
       Geometry & operator=(const Geometry &);
       void print(std::ostream &) const;
 

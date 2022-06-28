@@ -68,15 +68,16 @@ namespace soca {
       // for fields with ALL gridpoints.
       std::vector<double> lats_masked;
       std::vector<double> lons_masked;
-      size_t npoints_masked;
       this->latlon(lats_masked, lons_masked, true, grid, true);
-      npoints_masked = lats_masked.size();
+      std::vector<double> mask;
+      this->mask(mask, true, grid);
+      size_t npoints_masked = lats_masked.size();
       if (npoints_masked > 0) {
+        // only create the tree if there are valid ocean points
         indx.resize(npoints_masked);
         size_t idx = 0;
         for (size_t jj = 0; jj < npoints; ++jj) {
-          if (lats[jj] != lats_masked[idx]) continue;
-          if (lons[jj] != lons_masked[idx]) continue;
+          if (mask[jj] == 0.0) continue;  // land, skip
           ASSERT(idx < npoints_masked);
           indx[idx++] = jj;
         }
@@ -170,6 +171,18 @@ namespace soca {
       lats.data(), lons.data());
   }
   // -----------------------------------------------------------------------------
+  void Geometry::mask(
+      std::vector<double> & mask, const bool halo, const char grid) const {
+    // get the number of gridpoints
+    int gridSize;
+    soca_geo_gridsize_f90(keyGeom_, grid, false, halo, gridSize);
+    mask.resize(gridSize);
+
+    // get the mask value of those gridpoints
+    soca_geo_gridmask_f90(keyGeom_, grid, halo, gridSize, mask.data());
+  }
+
+  // -----------------------------------------------------------------------------
   atlas::util::KDTree<size_t>::ValueList Geometry::closestPoints(
     const double lat, const double lon, const int npoints,
     const char grid, const bool masked) const {
@@ -180,7 +193,9 @@ namespace soca {
     for (int j=0; j < grids.size(); j++) {
       if (grids[j] == grid) kdidx = j*2;
     }
+    ASSERT(kdidx >= 0);
     if (masked) kdidx += 1;
+    ASSERT(kdidx < 6);
 
     atlas::PointLonLat obsloc(lon, lat);
     obsloc.normalise();

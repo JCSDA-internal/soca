@@ -267,6 +267,46 @@ subroutine soca_geo_gridsize_c(c_key_self, c_grid, c_masked, c_halo, c_size) &
   end if
 end subroutine soca_geo_gridsize_c
 
+! ------------------------------------------------------------------------------
+!> return the mask for the given grid. 0.0 represents masked out points
+subroutine soca_geo_gridmask_c(c_key_self, c_grid, c_halo, c_size, c_mask) &
+  bind(c, name='soca_geo_gridmask_f90')
+
+  integer(c_int),    intent(in) :: c_key_self
+  character(c_char), intent(in) :: c_grid
+  logical(c_bool),   intent(in) :: c_halo
+  integer(c_int),    intent(in) :: c_size
+  real(c_double),    intent(inout) :: c_mask(c_size)
+
+  type(soca_geom), pointer :: self
+  real(kind=kind_real),     pointer :: mask(:,:) => null() !< field mask
+  integer :: is, ie, js, je, idx, i, j
+
+  call soca_geom_registry%get(c_key_self, self)
+
+  ! get the correct grid and mask
+  select case(c_grid)
+  case ('h')
+    mask => self%mask2d
+  case ('u')
+    mask => self%mask2du
+  case ('v')
+    mask => self%mask2dv
+  case default
+    call abor1_ftn('error in soca_geo_gridlatlon_c. grid: '//c_grid)
+  end select
+
+  ! get the starting/ending index based on whether we need the halo
+  if (c_halo) then
+    is = self%isd; ie = self%ied
+    js = self%jsd; je = self%jed
+  else
+    is = self%isc; ie = self%iec
+    js = self%jsc; je = self%jec
+  end if
+
+  c_mask(:) = pack(mask(is:ie,js:je), mask=.true.)
+end subroutine
 
 ! ------------------------------------------------------------------------------
 !> Get the lat/lons for a specific grid (u/v/h)
