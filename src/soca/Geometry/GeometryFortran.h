@@ -53,6 +53,8 @@ namespace soca {
       const bool &, int &);
     void soca_geo_gridlatlon_f90(const F90geom &, const char &, const bool &,
       const bool &, const int &, double[], double[]);
+    void soca_geo_gridmask_f90(const F90geom&, const char &, const bool &,
+      const int &, double[]);
     void soca_geo_getvargrid_f90(
       const F90geom &, const oops::Variables &, char &, bool &);
   }
