@@ -515,9 +515,7 @@ subroutine soca_fields_get(self, name, field)
   integer :: i
 
   ! find the field with the given name
-  write(6,*) 'size of fields is ',size(self%fields)
   do i=1,size(self%fields)
-    write(6,*) 'name of field ',i,' is ',trim(self%fields(i)%name)
     if (trim(name) == self%fields(i)%name) then
       field => self%fields(i)
       return
@@ -1164,7 +1162,6 @@ subroutine soca_fields_write_rst(self, f_conf, vdate)
       end select
 
       ! write
-      write(6,*) 'working on ',trim(filename)
       if (field%nz == 1) then
         idr = register_restart_field( restart, filename, field%metadata%io_name, &
           field%val(:,:,1), domain=self%geom%Domain%mpp_domain)

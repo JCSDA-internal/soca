@@ -346,12 +346,12 @@ subroutine soca_hinterp(self,field2,gdata,mask2,nz,missing,lon_in,lat_in,lon_out
   real(kind_real), dimension(:), allocatable :: lath_inp
   real(kind_real), dimension(:,:), allocatable :: lon_inp, lat_inp, tr_inp, mask_in_
   real(kind_real), dimension(self%isd:self%ied,self%jsd:self%jed) :: tr_out, fill, good, prev, mask_out_
-  real(kind=kind_real) :: max_lat,min_lat, pole, npole, varavg
+  real(kind=kind_real) :: max_lat,min_lat, pole, npole, varavg, acrit
   real(kind=kind_real), dimension(:), allocatable :: last_row, lonh, lath
   logical :: add_np, add_sp
 
   PI_180=atan(1.0d0)/45.0d0
-
+  acrit = 1.0e-7
   isg = 1; jsg = 1;
   ieg = size(gdata,1); jeg = size(gdata,2)
 
@@ -475,7 +475,7 @@ subroutine soca_hinterp(self,field2,gdata,mask2,nz,missing,lon_in,lat_in,lon_out
     end if
 
     if (k==1) prev(:,:) = tr_out(:,:)
-    call fill_miss_2d(tr_out, good, fill, prev=prev, G=grid, smooth=.true.)
+    call fill_miss_2d(tr_out, good, fill, prev, grid, acrit, answers_2018=.true.)
 !   call fill_miss_2d(tr_out, good, fill, G=grid, smooth=.true.)
 
     !TODO: In case fill_miss_2d failed at surface (k=1), use IDW to fill data pt that is located in ocean mask
