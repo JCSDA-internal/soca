@@ -88,7 +88,6 @@ contains
     self%jsc = geom%jsc
     self%jec = geom%jec
     self%npz = geom%nzo
-    write(6,*) 'HEY, vals are ',self%isc,self%iec, self%jsc, self%jec, self%npz
     self%cf_main=esmf_configcreate(rc=rc)
     call ESMF_ConfigLoadFile(config=self%cf_main, &
          filename='model_configure', &
@@ -491,7 +490,6 @@ contains
 
       !Get the field rank
       call ESMF_FieldGet(field, rank = rank, rc = rc)
-      write(6,*) 'HEY, rank for ',trim(soca_name),' is ',rank, rc
       if (rc.ne.0) call abor1_ftn("mom6_to_state: ESMF_FieldGet rank failed")
 
       !Convert field to pointer and pointer bounds
@@ -524,7 +522,6 @@ contains
         fnpz = ub(3)-lb(3)+1
         field_mom6(self%isc:self%iec,self%jsc:self%jec,1:fnpz) = farrayPtr3(lb(1):ub(1),lb(2):ub(2),:)
         nullify(farrayPtr3)
-        write(6,*) soca_name,field_mom6(self%isc:self%iec,self%jsc+40,1)
 
 !     elseif (rank == 3) then
 !       call ESMF_FieldGet( field, 0, farrayPtr = farrayPtr3, totalLBound = lb, totalUBound = ub, rc = rc )
