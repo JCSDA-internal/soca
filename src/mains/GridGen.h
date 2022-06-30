@@ -31,11 +31,7 @@ namespace soca {
     int execute(const eckit::Configuration & fullConfig, bool /*validate*/) const {
       //  Setup resolution
       const eckit::LocalConfiguration geomconfig(fullConfig, "geometry");
-      const Geometry geom(geomconfig, this->getComm());
-
-      //  Generate model grid
-      geom.gridgen();
-
+      const Geometry geom(geomconfig, this->getComm(), true);
       return 0;
     }
     // -----------------------------------------------------------------------------

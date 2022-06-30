@@ -239,8 +239,8 @@ namespace soca {
   const Geometry & State::geometry() const {return geom_;}
   // -----------------------------------------------------------------------------
 
-  void State::toFieldSet(atlas::FieldSet &fset, bool masked) const {
+  void State::toFieldSet(atlas::FieldSet &fset) const {
     // get field, with halo, and no masked values
-    soca_state_to_fieldset_f90(toFortran(), vars_, fset.get(), masked);
+    soca_state_to_fieldset_f90(toFortran(), vars_, fset.get(), false);
   }
 }  // namespace soca
