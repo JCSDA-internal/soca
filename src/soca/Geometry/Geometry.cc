@@ -19,7 +19,7 @@ namespace soca {
 
   // -----------------------------------------------------------------------------
   Geometry::Geometry(const eckit::Configuration & conf,
-                     const eckit::mpi::Comm & comm)
+                     const eckit::mpi::Comm & comm, const bool gen)
     : comm_(comm),
       fmsinput_(comm, conf) {
 
@@ -40,6 +40,14 @@ namespace soca {
     // Fill ATLAS fieldset
     soca_geo_to_fieldset_f90(keyGeom_, extraFields_.get());
 
+    // messy, fix this
+    // generate the grid ONLY if being run under the gridgen application.
+    // also, if true, then don't bother with the kdtree generation in the next step.
+    if (gen) {
+      soca_geo_gridgen_f90(keyGeom_);
+      return;
+    }
+
     // create kdtrees
     int kdidx = 0;
     for (auto grid : grids) {
@@ -48,17 +56,36 @@ namespace soca {
       size_t npoints;
       std::vector<size_t> indx;
 
+      // kd tree with all grid points
       this->latlon(lats, lons, true, grid, false);
       npoints = lats.size();
       indx.resize(npoints);
       for (size_t jj = 0; jj < npoints; ++jj) indx[jj] = jj;
       localTree_[kdidx++].build(lons, lats, indx);
 
-      this->latlon(lats, lons, true, grid, true);
-      npoints = lats.size();
-      indx.resize(npoints);
-      for (size_t jj = 0; jj < npoints; ++jj) indx[jj] = jj;
-      localTree_[kdidx++].build(lons, lats, indx);
+      // kd tree with only masked points
+      // NOTE: the index from the tree still refers to grid index
+      // for fields with ALL gridpoints.
+      std::vector<double> lats_masked;
+      std::vector<double> lons_masked;
+      this->latlon(lats_masked, lons_masked, true, grid, true);
+      std::vector<double> mask;
+      this->mask(mask, true, grid);
+      size_t npoints_masked = lats_masked.size();
+      if (npoints_masked > 0) {
+        // only create the tree if there are valid ocean points
+        indx.resize(npoints_masked);
+        size_t idx = 0;
+        for (size_t jj = 0; jj < npoints; ++jj) {
+          if (mask[jj] == 0.0) continue;  // land, skip
+          ASSERT(idx < npoints_masked);
+          indx[idx++] = jj;
+        }
+        ASSERT(idx == npoints_masked);
+        localTree_[kdidx++].build(lons_masked, lats_masked, indx);
+      } else {
+        kdidx++;
+      }
     }
   }
   // -----------------------------------------------------------------------------
@@ -84,10 +111,7 @@ namespace soca {
   Geometry::~Geometry() {
     soca_geo_delete_f90(keyGeom_);
   }
-  // -----------------------------------------------------------------------------
-  void Geometry::gridgen() const {
-    soca_geo_gridgen_f90(keyGeom_);
-  }
+
   // -----------------------------------------------------------------------------
   GeometryIterator Geometry::begin() const {
     // return start of the geometry on this mpi tile
@@ -147,6 +171,18 @@ namespace soca {
       lats.data(), lons.data());
   }
   // -----------------------------------------------------------------------------
+  void Geometry::mask(
+      std::vector<double> & mask, const bool halo, const char grid) const {
+    // get the number of gridpoints
+    int gridSize;
+    soca_geo_gridsize_f90(keyGeom_, grid, false, halo, gridSize);
+    mask.resize(gridSize);
+
+    // get the mask value of those gridpoints
+    soca_geo_gridmask_f90(keyGeom_, grid, halo, gridSize, mask.data());
+  }
+
+  // -----------------------------------------------------------------------------
   atlas::util::KDTree<size_t>::ValueList Geometry::closestPoints(
     const double lat, const double lon, const int npoints,
     const char grid, const bool masked) const {
@@ -157,7 +193,9 @@ namespace soca {
     for (int j=0; j < grids.size(); j++) {
       if (grids[j] == grid) kdidx = j*2;
     }
+    ASSERT(kdidx >= 0);
     if (masked) kdidx += 1;
+    ASSERT(kdidx < 6);
 
     atlas::PointLonLat obsloc(lon, lat);
     obsloc.normalise();

@@ -14,6 +14,9 @@
 
 #include "oops/util/Printable.h"
 
+namespace atlas {
+  class FieldSet;
+}
 
 namespace eckit {
   class Configuration;
@@ -42,23 +45,17 @@ class LocalUnstructuredInterpolator : public util::Printable {
                                 const std::vector<double> &, const std::vector<double> &);
   ~LocalUnstructuredInterpolator() {}
 
-  void apply(const oops::Variables &, const State &, const std::vector<bool> &,
+  void apply(const oops::Variables &, const atlas::FieldSet &, const std::vector<bool> &,
              std::vector<double> &) const;
-  void apply(const oops::Variables &, const Increment &, const std::vector<bool> &,
-             std::vector<double> &) const;
-  void applyAD(const oops::Variables &, Increment &, const std::vector<bool> &,
+  void applyAD(const oops::Variables &, atlas::FieldSet &, const std::vector<bool> &,
                const std::vector<double> &) const;
 
  private:
   const std::shared_ptr<UnstructuredInterpolator> getInterpolator(const std::string &) const;
   void print(std::ostream &) const;
 
-  mutable std::shared_ptr<UnstructuredInterpolator> interp_[6];
-
+  std::shared_ptr<UnstructuredInterpolator> interp_[6];
   const Geometry & geom_;
-  const eckit::LocalConfiguration config_;
-  const std::vector<double> lats_out_;
-  const std::vector<double> lons_out_;
 };
 
 }  // namespace soca
