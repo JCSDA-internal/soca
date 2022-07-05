@@ -11,7 +11,8 @@ class hofxMOM6(hofx):
 
     def setup(self, config, execs, fix, hcoeffs, bg, obs):
         # overwrite the executable names
-        bindir = os.environ.get("JEDI_BIN")
+        build = os.environ.get("JEDI_BUILD")
+        bindir = os.path.join(build, 'bin')
         execs['hx3dex'] = os.path.join(bindir, 'soca_hofx3d.x')
         execs['hxexec'] = os.path.join(bindir, 'soca_hofx.x')
         super().setup(config, execs, fix, hcoeffs, bg, obs)
