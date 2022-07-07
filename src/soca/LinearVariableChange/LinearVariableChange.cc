@@ -32,8 +32,11 @@ LinearVariableChange::~LinearVariableChange() {}
 
 // -----------------------------------------------------------------------------
 
-void LinearVariableChange::setTrajectory(const State & xbg, const State & xfg) {
+void LinearVariableChange::changeVarTraj(const State & xfg,
+                                         const oops::Variables & vars) {
   Log::trace() << "LinearVariableChange::setTrajectory starting" << std::endl;
+
+  // TODO(travis): do something with vars.
 
   const boost::optional<std::vector<LinearVariableChangeParametersWrapper>> &
     linVarChgs = params_.linearVariableChangesWrapper;
@@ -49,13 +52,13 @@ void LinearVariableChange::setTrajectory(const State & xbg, const State & xfg) {
             linVarChaParWra.linearVariableChangeParameters;
       // Add linear variable change to vector
       linVarChas_.push_back(
-        LinearVariableChangeFactory::create(xbg, xfg, geom_, linVarChaPar));
+        LinearVariableChangeFactory::create(xfg, xfg, geom_, linVarChaPar));
     }
   } else {
     // No variable changes were specified, use the default (LinearModel2GeoVaLs)
     eckit::LocalConfiguration conf;
     conf.set("linear variable change name", "default");
-    linVarChas_.push_back(LinearVariableChangeFactory::create(xbg, xfg, geom_,
+    linVarChas_.push_back(LinearVariableChangeFactory::create(xfg, xfg, geom_,
       oops::validateAndDeserialize<GenericLinearVariableChangeParameters>(
         conf)));
   }
@@ -64,8 +67,8 @@ void LinearVariableChange::setTrajectory(const State & xbg, const State & xfg) {
 
 // -----------------------------------------------------------------------------
 
-void LinearVariableChange::multiply(Increment & dx,
-                                    const oops::Variables & vars) const {
+void LinearVariableChange::changeVarTL(Increment & dx,
+                                       const oops::Variables & vars) const {
   Log::trace() << "LinearVariableChange::multiply starting" << std::endl;
 
   // If all variables already in incoming state just remove the no longer
@@ -99,8 +102,8 @@ void LinearVariableChange::multiply(Increment & dx,
 
 // -----------------------------------------------------------------------------
 
-void LinearVariableChange::multiplyInverse(Increment & dx,
-                                           const oops::Variables & vars) const {
+void LinearVariableChange::changeVarInverseTL(Increment & dx,
+                                              const oops::Variables & vars) const {
   Log::trace() << "LinearVariableChange::multiplyInverse starting"
                << vars << std::endl;
 
@@ -120,8 +123,8 @@ void LinearVariableChange::multiplyInverse(Increment & dx,
 
 // -----------------------------------------------------------------------------
 
-void LinearVariableChange::multiplyAD(Increment & dx,
-                                           const oops::Variables & vars) const {
+void LinearVariableChange::changeVarAD(Increment & dx,
+                                       const oops::Variables & vars) const {
   Log::trace() << "LinearVariableChange::multiplyAD starting" << std::endl;
   Increment dxout(dx.geometry(), vars, dx.time());
 
@@ -138,8 +141,8 @@ void LinearVariableChange::multiplyAD(Increment & dx,
 
 // -----------------------------------------------------------------------------
 
-void LinearVariableChange::multiplyInverseAD(Increment & dx,
-                                          const oops::Variables & vars) const {
+void LinearVariableChange::changeVarInverseAD(Increment & dx,
+                                              const oops::Variables & vars) const {
   Log::trace() << "LinearVariableChange::multiplyInverseAD starting"
                << std::endl;
 
