@@ -25,6 +25,9 @@
 
 namespace soca {
 
+// Forward declarations
+class State;
+
 // -----------------------------------------------------------------------------
 
 class LinearVariableChangeParameters :
@@ -63,6 +66,7 @@ class LinearVariableChange : public util::Printable {
   void print(std::ostream &) const override;
   Parameters_ params_;
   const Geometry & geom_;
+  std::unique_ptr<State> bkg_;
   LinVarChaVec_ linVarChas_;
 };
 
