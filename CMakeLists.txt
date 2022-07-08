@@ -31,7 +31,7 @@ find_package( saber  1.0.0    REQUIRED)
 find_package( ioda   1.0.0    REQUIRED)
 find_package( ufo    1.3.0    REQUIRED)
 find_package( fms    2020.4.0 REQUIRED)
-find_package( mom6   2020.4.0 REQUIRED)
+find_package( mom6   2022.1.0 REQUIRED)
 include_directories( ${NETCDF_INCLUDE_DIRS} )
 
 
