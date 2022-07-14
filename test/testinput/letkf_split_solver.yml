@@ -37,7 +37,7 @@ observations:
   - obs space:
       name: SeaSurfaceTemp
       distribution:
-        name: InefficientDistribution
+        name: Halo
       obsdataout: {obsfile: ./Data/sst.letkf.solver.nc}
       obsdatain:  {obsfile: ./Data/sst.letkf.observer.nc}
       simulated variables: [sea_surface_temperature]
