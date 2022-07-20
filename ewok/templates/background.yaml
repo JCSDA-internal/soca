@@ -1,4 +1,4 @@
-basename: '{{workdir}}/'
+basename: '$(bgworkdir)/'
 date: '{{background_time}}'
 
 ice_filename: $(expid).fc.$(fcdatetime).$(fcstep).cice.res.nc
