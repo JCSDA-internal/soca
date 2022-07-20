@@ -1479,11 +1479,11 @@ subroutine soca_fields_to_fieldset(self, vars, afieldset, masked)
   logical,              intent(in)    :: masked
 
   type(atlas_field) :: afield
-  integer :: v, z, nz
+  integer :: v, z
   type(soca_field), pointer :: field
   real(kind=kind_real), pointer :: mask(:,:) => null() !< field mask
   type(atlas_metadata) :: meta
-  real(kind=kind_real), pointer :: real_ptr_1(:), real_ptr_2(:,:)
+  real(kind=kind_real), pointer :: real_ptr(:,:)
 
   do v=1,vars%nvars()
     call self%get(vars%variable(v), field)
@@ -1507,36 +1507,25 @@ subroutine soca_fields_to_fieldset(self, vars, afieldset, masked)
     end if
 
     ! get/create field
-    nz = field%nz
-    if (nz==1) nz =0
     if (afieldset%has_field(vars%variable(v))) then
       afield = afieldset%field(vars%variable(v))
     else
       afield = self%geom%functionspaceInchalo%create_field( &
-        name=vars%variable(v), kind=atlas_real(kind_real), levels=nz)
+        name=vars%variable(v), kind=atlas_real(kind_real), levels=field%nz)
       meta = afield%metadata()
       call meta%set('interp_type', 'default')
       call afieldset%add(afield)
     end if
 
     ! create and fill field
-    if (field%nz > 1) then
-      call afield%data(real_ptr_2)
-      do z=1,field%nz
-        if (associated(mask)) then
-          real_ptr_2(z,:) = pack(field%val(:,:, z), mask=mask/=0)
-        else
-          real_ptr_2(z,:) = pack(field%val(:,:, z), mask=.true.)
-        end if
-      end do
-    else
-      call afield%data(real_ptr_1)
+    call afield%data(real_ptr)
+    do z=1,field%nz
       if (associated(mask)) then
-        real_ptr_1(:) = pack(field%val(:,:, 1), mask=mask/=0)
+        real_ptr(z,:) = pack(field%val(:,:, z), mask=mask/=0)
       else
-        real_ptr_1(:) = pack(field%val(:,:, 1), mask=.true.)
+        real_ptr(z,:) = pack(field%val(:,:, z), mask=.true.)
       end if
-    end if
+    end do
     call afield%final()
 
   end do
@@ -1558,14 +1547,14 @@ subroutine soca_fields_to_fieldset_ad(self, vars, afieldset, masked)
   type(soca_field), pointer :: field
   type(atlas_field) :: afield
   real(kind=kind_real), pointer :: mask(:,:) => null() !< field mask
-  real(kind=kind_real), pointer :: real_ptr_1(:), real_ptr_2(:,:)
-  real(kind=kind_real), pointer :: tmp_2d(:,:)
+  real(kind=kind_real), pointer :: real_ptr(:,:)
+  real(kind=kind_real), pointer :: tmp(:,:)
 
   ! start/stop idx, assuming halo
   is = self%geom%isd; ie = self%geom%ied
   js = self%geom%jsd; je = self%geom%jed
 
-  allocate(tmp_2d(is:ie, js:je))
+  allocate(tmp(is:ie, js:je))
 
   do v=1,vars%nvars()
     call self%get(vars%variable(v), field)
@@ -1586,28 +1575,17 @@ subroutine soca_fields_to_fieldset_ad(self, vars, afieldset, masked)
       end select
     end if
 
-    tmp_2d = 0.0
-    if (field%nz > 1) then
-      call afield%data(real_ptr_2)
-      do z=1,field%nz
-        if (associated(mask)) then
-          tmp_2d = unpack(real_ptr_2(z,:), mask/=0, tmp_2d)
-        else
-          tmp_2d = reshape(real_ptr_2(z,:), shape(tmp_2d))
-        end if
-        call mpp_update_domains_ad(tmp_2d, self%geom%Domain%mpp_domain, complete=.true.)
-        field%val(:,:,z) = field%val(:,:,z) + tmp_2d
-      end do
-    else
-      call afield%data(real_ptr_1)
+    tmp = 0.0
+    call afield%data(real_ptr)
+    do z=1,field%nz
       if (associated(mask)) then
-        tmp_2d = unpack(real_ptr_1, mask/=0, tmp_2d)
+        tmp = unpack(real_ptr(z,:), mask/=0, tmp)
       else
-        tmp_2d = reshape(real_ptr_1, shape(tmp_2d))
+        tmp = reshape(real_ptr(z,:), shape(tmp))
       end if
-      call mpp_update_domains_ad(tmp_2d, self%geom%Domain%mpp_domain, complete=.true.)
-      field%val(:,:,1) = field%val(:,:,1) + tmp_2d
-    end if
+      call mpp_update_domains_ad(tmp, self%geom%Domain%mpp_domain, complete=.true.)
+      field%val(:,:,z) = field%val(:,:,z) + tmp
+    end do
     call afield%final()
 
   end do
@@ -1622,8 +1600,8 @@ subroutine soca_fields_from_fieldset(self, vars, afieldset, masked)
   type(atlas_fieldset),       intent(in)    :: afieldset
   logical,                    intent(in)    :: masked
 
-  integer :: jvar, i, jz, nz, ngrid(2)
-  real(kind=kind_real), pointer :: real_ptr_1(:), real_ptr_2(:,:)
+  integer :: jvar, i, jz, ngrid(2)
+  real(kind=kind_real), pointer :: real_ptr(:,:)
   logical :: var_found
   character(len=1024) :: fieldname
   type(soca_field), pointer :: field
@@ -1643,24 +1621,15 @@ subroutine soca_fields_from_fieldset(self, vars, afieldset, masked)
     do i=1,size(self%fields)
       field => self%fields(i)
       if (trim(vars%variable(jvar))==trim(field%name)) then
-        ! Variable dimension
-        nz = field%nz
-        if (nz==1) nz = 0
-
         ! Get field
         afield = afieldset%field(vars%variable(jvar))
 
         ! Copy data
-        if (nz==0) then
-          call afield%data(real_ptr_1)
-          field%val(:,:,1) = reshape(real_ptr_1, ngrid)
-        else
-          call afield%data(real_ptr_2)
-          do jz=1,nz
-            field%val(:,:,jz) = reshape(real_ptr_2(jz,:), ngrid)
-          end do
-        end if
-
+        call afield%data(real_ptr)
+        do jz=1,field%nz
+          field%val(:,:,jz) = reshape(real_ptr(jz,:), ngrid)
+        end do
+ 
         ! Release pointer
         call afield%final()
 
