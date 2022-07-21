@@ -6,7 +6,6 @@
 !> Increment fields
 module soca_increment_mod
 
-use atlas_module, only: atlas_fieldset, atlas_field, atlas_real
 use fckit_configuration_module, only: fckit_configuration
 use kinds, only: kind_real
 use oops_variables_mod, only: oops_variables
