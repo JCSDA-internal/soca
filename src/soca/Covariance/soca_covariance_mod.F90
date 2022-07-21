@@ -257,8 +257,8 @@ subroutine soca_bump_correlation(self, horiz_convol, geom, f_conf_bump, f_conf_d
 
   integer :: i
   integer, allocatable :: hmask(:,:)
-  integer, pointer :: int_ptr_2(:,:), int_ptr_1(:)
-  real(kind=kind_real), pointer :: real_ptr_1(:), real_ptr_2(:,:)
+  integer, pointer :: int_ptr(:,:)
+  real(kind=kind_real), pointer :: real_ptr(:,:)
   real(kind=kind_real), allocatable :: area(:)
   type(atlas_functionspace) :: afunctionspace
   type(fieldset_type) :: afieldset, rh, rv
@@ -281,33 +281,33 @@ subroutine soca_bump_correlation(self, horiz_convol, geom, f_conf_bump, f_conf_d
   afieldset = atlas_fieldset()
 
   ! Add area
-  afield = geom%functionspaceInchalo%create_field(name='area', kind=atlas_real(kind_real), levels=0)
-  call afield%data(real_ptr_1)
+  afield = geom%functionspaceInchalo%create_field(name='area', kind=atlas_real(kind_real), levels=1)
+  call afield%data(real_ptr)
   area = pack(geom%cell_area,.true.)
-  real_ptr_1 = area
+  real_ptr(1,:) = area
   call afieldset%add(afield)
   call afield%final()
 
   ! Add vertical unit
   afield = geom%functionspaceInchalo%create_field(name='vunit', kind=atlas_real(kind_real), levels=1)
-  call afield%data(real_ptr_2)
-  real_ptr_2(1,:) = 1.0
+  call afield%data(real_ptr)
+  real_ptr(1,:) = 1.0
   call afieldset%add(afield)
   call afield%final()
 
   ! Add geographical mask
   afield = geom%functionspaceInchalo%create_field(name='gmask', kind=atlas_integer(kind(0)), levels=1)
-  call afield%data(int_ptr_2)
-  int_ptr_2(1,:) = int(pack(geom%mask2d,.true.))
+  call afield%data(int_ptr)
+  int_ptr(1,:) = int(pack(geom%mask2d,.true.))
   call afieldset%add(afield)
   call afield%final()
 
-  afield = geom%functionspaceInchalo%create_field(name='hmask', kind=atlas_integer(kind(0)), levels=0)
+  afield = geom%functionspaceInchalo%create_field(name='hmask', kind=atlas_integer(kind(0)), levels=1)
   allocate(hmask(geom%isd:geom%ied, geom%jsd:geom%jed))
   hmask = 0
   hmask(geom%isc:geom%iec, geom%jsc:geom%jec) = 1
-  call afield%data(int_ptr_1)
-  int_ptr_1 = pack(hmask, .true.)
+  call afield%data(int_ptr)
+  int_ptr(1,:) = pack(hmask, .true.)
   call afieldset%add(afield)
   call afield%final()
 
@@ -328,26 +328,26 @@ subroutine soca_bump_correlation(self, horiz_convol, geom, f_conf_bump, f_conf_d
     ! 3) min/max are imposed based on "min value" and "max value"
     ! 4) converted from a gaussian sigma to Gaspari-Cohn cutoff distance
     rh = atlas_fieldset()
-    afield = geom%functionspaceInchalo%create_field('var',kind=atlas_real(kind_real),levels=0)
+    afield = geom%functionspaceInchalo%create_field('var',kind=atlas_real(kind_real),levels=1)
     call rh%add(afield)
-    call afield%data(real_ptr_1)
-    real_ptr_1 = r_base + r_mult*pack(geom%rossby_radius, .true.)
+    call afield%data(real_ptr)
+    real_ptr(1,:) = r_base + r_mult*pack(geom%rossby_radius, .true.)
     ! min based on grid size
     if (r_min_grid .gt. 0.0) then
-      real_ptr_1 = max(real_ptr_1,  sqrt(area)*r_min_grid )
+      real_ptr(1,:) = max(real_ptr(1,:),  sqrt(area)*r_min_grid )
     end if
-    real_ptr_1 = min(r_max, real_ptr_1)
-    real_ptr_1 = max(r_min, real_ptr_1)
-    real_ptr_1 = real_ptr_1 * 3.57_kind_real ! convert from gaussian sigma to
-                                             ! Gaspari-Cohn half width
+    real_ptr(1,:) = min(r_max, real_ptr(1,:))
+    real_ptr(1,:) = max(r_min, real_ptr(1,:))
+    real_ptr(1,:) = real_ptr(1,:) * 3.57_kind_real ! convert from gaussian sigma to
+                                                   ! Gaspari-Cohn half width
     call afield%final()
 
      ! rv
      rv = atlas_fieldset()
-     afield = geom%functionspaceInchalo%create_field('var',kind=atlas_real(kind_real),levels=0)
+     afield = geom%functionspaceInchalo%create_field('var',kind=atlas_real(kind_real),levels=1)
      call rv%add(afield)
-     call afield%data(real_ptr_1)
-     real_ptr_1 = 1.0
+     call afield%data(real_ptr)
+     real_ptr = 1.0
      call afield%final()
 
      ! Copy length-scales into BUMP

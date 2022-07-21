@@ -301,45 +301,45 @@ subroutine soca_geom_to_fieldset(self, afieldset)
   type(atlas_fieldset), intent(inout) :: afieldset
 
   integer :: i, jz, ngrid
-  integer, pointer :: int_ptr_2(:,:), int_ptr_1(:)
-  real(kind=kind_real), pointer :: real_ptr_1(:), real_ptr_2(:,:)
+  integer, pointer :: int_ptr(:,:)
+  real(kind=kind_real), pointer :: real_ptr(:,:)
   integer, allocatable :: hmask(:,:)
   type(atlas_field) :: afield
 
   ngrid = (self%ied-self%isd+1)*(self%jed-self%jsd+1)
 
   ! Add area
-  afield = self%functionspaceInchalo%create_field(name='area', kind=atlas_real(kind_real), levels=0)
-  call afield%data(real_ptr_1)
-  real_ptr_1 = pack(self%cell_area, .true.)
+  afield = self%functionspaceInchalo%create_field(name='area', kind=atlas_real(kind_real), levels=1)
+  call afield%data(real_ptr)
+  real_ptr(1,:) = pack(self%cell_area, .true.)
   call afieldset%add(afield)
   call afield%final()
 
   ! Add vertical unit
   afield = self%functionspaceInchalo%create_field(name='vunit', kind=atlas_real(kind_real), levels=self%nzo)
-  call afield%data(real_ptr_2)
+  call afield%data(real_ptr)
   do jz=1,self%nzo
-    real_ptr_2(jz,:) = real(jz, kind_real)
+    real_ptr(jz,:) = real(jz, kind_real)
   end do
   call afieldset%add(afield)
   call afield%final()
 
   ! Add geographical mask
   afield = self%functionspaceInchalo%create_field(name='gmask', kind=atlas_integer(kind(0)), levels=self%nzo)
-  call afield%data(int_ptr_2)
+  call afield%data(int_ptr)
   do jz=1,self%nzo
-    int_ptr_2(jz,:) = int(pack(self%mask2d, .true.))
+    int_ptr(jz,:) = int(pack(self%mask2d, .true.))
   end do
   call afieldset%add(afield)
   call afield%final()
 
-  ! add halo mask
-  afield = self%functionspaceInchalo%create_field(name='hmask', kind=atlas_integer(kind(0)), levels=0)
+  ! Add halo mask
+  afield = self%functionspaceInchalo%create_field(name='hmask', kind=atlas_integer(kind(0)), levels=1)
   allocate(hmask(self%isd:self%ied, self%jsd:self%jed))
   hmask = 0
   hmask(self%isc:self%iec, self%jsc:self%jec) = 1
-  call afield%data(int_ptr_1)
-  int_ptr_1 = pack(hmask, .true.)
+  call afield%data(int_ptr)
+  int_ptr(1,:) = pack(hmask, .true.)
   call afieldset%add(afield)
   call afield%final()
 
@@ -951,14 +951,14 @@ subroutine soca_geom_struct2atlas(self, dx_struct, dx_atlas)
   real(kind=kind_real), intent(in ) :: dx_struct(:,:)
   type(fieldset_type),  intent(out) :: dx_atlas
 
-  real(kind_real), pointer :: real_ptr(:)
+  real(kind_real), pointer :: real_ptr(:,:)
   type(atlas_field) :: afield
 
   dx_atlas = atlas_fieldset()
-  afield = self%functionspaceInchalo%create_field('var',kind=atlas_real(kind_real),levels=0)
+  afield = self%functionspaceInchalo%create_field('var',kind=atlas_real(kind_real),levels=1)
   call dx_atlas%add(afield)
   call afield%data(real_ptr)
-  real_ptr = pack(dx_struct, .true.)
+  real_ptr(1,:) = pack(dx_struct, .true.)
   call afield%final()
 
 end subroutine soca_geom_struct2atlas
@@ -973,12 +973,12 @@ subroutine soca_geom_atlas2struct(self, dx_struct, dx_atlas)
   real(kind=kind_real), intent(inout) :: dx_struct(:,:)
   type(fieldset_type),  intent(inout) :: dx_atlas
 
-  real(kind_real), pointer :: real_ptr(:)
+  real(kind_real), pointer :: real_ptr(:,:)
   type(atlas_field) :: afield
 
   afield = dx_atlas%field('var')
   call afield%data(real_ptr)
-  dx_struct = reshape(real_ptr, (/(self%ied-self%isd+1),(self%jed-self%jsd+1)/))
+  dx_struct = reshape(real_ptr(1,:), (/(self%ied-self%isd+1),(self%jed-self%jsd+1)/))
 
   call afield%final()
 
