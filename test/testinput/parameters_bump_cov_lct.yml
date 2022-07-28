@@ -1,114 +1,65 @@
-resolution:
+geometry:
   mom6_input_nml: ./inputnml/input.nml
+  geom_grid_file: soca_gridspec.nc
   fields metadata: ./fields_metadata.yml
 
-variables: &soca_vars [cicen, hicen, socn, tocn, ssh, hocn]
+input variables: [tocn]
 
 background:
   read_from_file: 1
-  basename: ./INPUT/
-  date: &date 2018-04-15T06:00:00Z
-  ocn_filename: MOM.res.nc
-  ice_filename: cice.res.nc
+  date: &date 2018-04-15T00:00:00Z
+  basename: ./
+  ocn_filename: INPUT/MOM.res.nc
+  state variables:  [socn, tocn, hocn]
 
 bump:
   verbosity: main
   datadir: ./bump
-  diag_rhflt: 3000000.0
-  lct_nscales: 1
-  lct_diag: [0]
+  dc: 500.0e3
   method: cor
   nc1: 500
   nc2: 500
-  nc3: 100
+  nc3: 20
   ne: 10
-  new_lct: true
+  new_hdiag: true
+  new_nicas: true
+  new_var: true
   nl0r: 11
+  resol: 4.0
   strategy: specific_univariate
-  grids:
-  - prefix: soca_bump_cov_3d
-    variables: [hocn, socn, tocn]
-  - prefix: soca_bump_cov_2d
-    variables: [cicen, hicen, ssh]
-
-_: &ensfile
-  read_from_file: 1
-  date: *date
-  basename: ./Data/
-  remap_filename: ./INPUT/MOM.res.nc
+  var_filter: true
+  var_niter: 5
+  var_rhflt:
+    tocn: [1000.0e3]
+  write_hdiag: true
+  write_nicas_local: true
+  output:
+  - datadir: bump
+    date: *date
+    exp: parameters_bump_cov.cor_rh
+    parameter: cor_rh
+    type: an
+  - datadir: bump
+    date: *date
+    exp: parameters_bump_cov.cor_rv
+    parameter: cor_rv
+    type: an
+  - datadir: bump
+    date: *date
+    exp: parameters_bump_cov.stddev
+    parameter: stddev
+    type: an
 
 ensemble:
-  variables: *soca_vars
-  members:
-  - <<: *ensfile
-    ocn_filename: ocn.pert.ens.1.2018-04-15T00:00:00Z.PT0S.nc
-    ice_filename: ice.pert.ens.1.2018-04-15T00:00:00Z.PT0S.nc
-  - <<: *ensfile
-    ocn_filename: ocn.pert.ens.2.2018-04-15T00:00:00Z.PT0S.nc
-    ice_filename: ice.pert.ens.2.2018-04-15T00:00:00Z.PT0S.nc
-  - <<: *ensfile
-    ocn_filename: ocn.pert.ens.3.2018-04-15T00:00:00Z.PT0S.nc
-    ice_filename: ice.pert.ens.3.2018-04-15T00:00:00Z.PT0S.nc
-  - <<: *ensfile
-    ocn_filename: ocn.pert.ens.4.2018-04-15T00:00:00Z.PT0S.nc
-    ice_filename: ice.pert.ens.4.2018-04-15T00:00:00Z.PT0S.nc
-  - <<: *ensfile
-    ocn_filename: ocn.pert.ens.5.2018-04-15T00:00:00Z.PT0S.nc
-    ice_filename: ice.pert.ens.5.2018-04-15T00:00:00Z.PT0S.nc
+  members from template:
+    template:
+      date: *date
+      basename: ./Data/
+      ocn_filename: ocn.pert.ens.%mem%.2018-04-15T00:00:00Z.PT0S.nc
+      state variables:  [socn, tocn, hocn]
+    pattern: '%mem%'
+    nmembers: 5
 
-  variable_changes:
-  - varchange: BalanceSOCA
-    dsdtmax: 0.1
-    dsdzmin: 3.0e-6
-    dtdzmin: 1.0e-6
-    nlayers: 10
-    inputVariables:
-      variables: *soca_vars
-    outputVariables:
-      variables: *soca_vars
-
-output:
-- datadir: bump
-  date: *date
-  exp: parameters_bump_cov.cor_rh
-  parameter: cor_rh
-  type: an
-- datadir: bump
-  date: *date
-  exp: parameters_bump_cov.cor_rv
-  parameter: cor_rv
-  type: an
-- datadir: bump
-  date: *date
-  exp: parameters_bump_cov.D11_1
-  parameter: D11_1
-  type: an
-- datadir: bump
-  date: *date
-  exp: parameters_bump_cov.D22_1
-  parameter: D22_1
-  type: an
-- datadir: bump
-  date: *date
-  exp: parameters_bump_cov.D33_1
-  parameter: D33_1
-  type: an
-- datadir: bump
-  date: *date
-  exp: parameters_bump_cov.D12_1
-  parameter: D12_1
-  type: an
-- datadir: bump
-  date: *date
-  exp: parameters_bump_cov.Dcoef_1
-  parameter: Dcoef_1
-  type: an
-- datadir: bump
-  date: *date
-  exp: parameters_bump_cov.DLh_1
-  parameter: DLh_1
-  type: an
-
-test:
-  reference filename: testref/parameters_bump_cov_lct.test
-  test output filename: testoutput/parameters_bump_cov_lct.test
+#test:
+#  reference filename: testref/parameters_bump_cov_lct.test
+#  test output filename: testoutput/parameters_bump_cov_lct.test
