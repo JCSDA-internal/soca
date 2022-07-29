@@ -371,6 +371,7 @@ add_test ( test_soca_subsample_netcdf
 # Test of grid generation and create subsampled grid
 soca_add_test( NAME gridgen_small
                EXE  soca_gridgen.x
+               NOTRAPFPE
                TEST_DEPENDS test_soca_subsample_netcdf )
 
 # Test of grid generation and create regular grid
