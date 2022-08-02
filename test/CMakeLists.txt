@@ -165,6 +165,11 @@ set( soca_model_restarts
   Data/72x35x25/INPUT/grid_spec.nc
 )
 
+set( soca_model_restarts_small
+  Data/72x35x25/INPUT_small/cice.res.nc
+  Data/72x35x25/INPUT_small/MOM.res.nc
+)
+
 set( soca_obs
   Data/Obs/adt.nc
   Data/Obs/biomass_p.nc
@@ -203,6 +208,16 @@ foreach(FILENAME ${soca_model_restarts})
 endforeach(FILENAME)
 install(FILES ${soca_model_restarts}
         DESTINATION ${INSTALL_DATA_DIR}/testdata/72x35x25/INPUT/ )
+
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/INPUT_small)
+foreach(FILENAME ${soca_model_restarts_small})
+     get_filename_component(filename ${FILENAME} NAME )
+     execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
+           ${CMAKE_CURRENT_SOURCE_DIR}/${FILENAME}
+           ${CMAKE_CURRENT_BINARY_DIR}/INPUT_small/${filename} )
+endforeach(FILENAME)
+install(FILES ${soca_model_restarts_small}
+        DESTINATION ${INSTALL_DATA_DIR}/testdata/72x35x25/INPUT_small/ )
 
 # MOM's resource files
 foreach(FILENAME ${soca_model_param} ${soca_data_files})
