@@ -31,10 +31,9 @@ if (BUILD_FCKIT)
   # TODO: replace with https://github.com/ecmwf/fckit.git TAG 0.9.2
 endif()
 
-option(BUILD_ATLAS "download and build atlas (not needed if in a jedi container)")
+option(BUILD_ATLAS "download and build atlas")
 if (BUILD_ATLAS)
-  ecbuild_bundle( PROJECT atlas  GIT "https://github.com/jcsda-internal/atlas.git"  UPDATE BRANCH release-stable )
-  # TODO: repalce with https://github.com/ecmwf/atlas.git TAG 0.24.1
+  ecbuild_bundle( PROJECT atlas  GIT "https://github.com/ecmwf/atlas.git" TAG 0.29.0 )
 endif()
 
 
@@ -50,7 +49,7 @@ option(BUILD_UFSM6C6 "download and install the UFS" OFF)
 # required repositories
 
 ecbuild_bundle( PROJECT oops            GIT "https://github.com/jcsda-internal/oops.git"            UPDATE TAG 36a4af1 )
-ecbuild_bundle( PROJECT saber           GIT "https://github.com/jcsda-internal/saber.git"           UPDATE TAG 4050e19 )
+ecbuild_bundle( PROJECT saber           GIT "https://github.com/jcsda-internal/saber.git"           UPDATE TAG ca6c3ff )
 ecbuild_bundle( PROJECT ioda            GIT "https://github.com/jcsda-internal/ioda.git"            UPDATE TAG a3f0f73 )
 ecbuild_bundle( PROJECT gsw             GIT "https://github.com/jcsda-internal/GSW-Fortran.git"     UPDATE TAG a9a0989 )
 ecbuild_bundle( PROJECT ufo             GIT "https://github.com/jcsda-internal/ufo.git"             UPDATE TAG 0b7686a )

@@ -25,10 +25,10 @@ observations:
 
 observation localizations reference:
     gridpoints:
-      lons: [-195.0, -195.0, -195.0, -195.0, -175.0]
-      lats: [2.5, 2.5, 2.5, 2.5, 42.5]
-      depths: [0.0, 41.6250423, 170.7758, 1745.6489, 0]
-    local nobs: [22, 32, 32, 0, 0]
-    rms: [1.0, 1.0, 1.0, 1.0, 1.0]
+      lons: [-165.0, -175.0, -175.0]
+      lats: [ 0.0, -40.0, 0.0]
+      depths: [0.0, 34.2859952, 0.0]
+    local nobs: [28, 0, 17]
+    rms: [1.0, 1.0, 1.0]
     print iterator: false
  
