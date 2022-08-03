@@ -22,7 +22,7 @@ observations:
     localization function: Box Car
     reference gridpoints:
       lons: [-175.0, -175.0, -175.0, -175.0]
-      lats: [ -42.5,  -42.5,   -42.5, -42.5]
+      lats: [ -40.0, -40.0, -40.0, -40.0]
       depths: [0.0, 34.2859952, 171.050201, 1905.01085]
     reference local nobs: [96, 134, 103, 0]
     reference rms: [1.0, 1.0, 1.0, 1.0]
@@ -42,7 +42,7 @@ observations:
     localization function: Gaspari Cohn
     reference gridpoints:
       lons: [-175.0, -175.0, -175.0, -175.0]
-      lats: [ -42.5,  -42.5,   -42.5, -42.5]
+      lats: [ -40.0, -40.0, -40.0, -40.0]
       depths: [0.0, 34.2859952, 171.050201, 1905.01085]
     reference local nobs: [96, 134, 103, 0]
     reference rms: [0.6257, 0.606492, 0.470246, 0]
@@ -63,7 +63,7 @@ observations:
     apply log transformation: true 
     reference gridpoints:
       lons: [-175.0, -175.0, -175.0, -175.0]
-      lats: [ -42.5,  -42.5,   -42.5, -42.5]
+      lats: [ -40.0, -40.0, -40.0, -40.0]
       depths: [0.0, 34.2859952, 171.050201, 1905.01085]
     reference local nobs: [218, 218, 218, 218]
     reference rms: [1.0, 1.0, 1.0, 1.0]
@@ -83,7 +83,7 @@ observations:
     localization function: Box Car
     reference gridpoints:
       lons: [-175.0, -175.0, -175.0]
-      lats: [ -42.5,  -42.5,   -42.5]
+      lats: [ -40.0, -40.0, -40.0]
       depths: [0.0, 34.2859952, 171.050201]
     reference local nobs: [201, 201, 0]
     reference rms: [1.0, 1.0, 1.0]
