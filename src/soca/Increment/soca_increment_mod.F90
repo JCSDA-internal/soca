@@ -323,10 +323,7 @@ subroutine soca_increment_change_resol(self, rhs)
   type(soca_convertstate_type) :: convert_state
   type(soca_field), pointer :: field1, field2, hocn1, hocn2
 
-  call rhs%get("hocn", hocn1)
-  call self%get("hocn", hocn2)
-
-  call convert_state%setup(rhs%geom, self%geom, hocn1, hocn2)
+  call convert_state%setup(rhs%geom, self%geom)
   do n = 1, size(rhs%fields)
     if (trim(rhs%fields(n)%name)=="hocn") cycle ! skip layer thickness
     field1 => rhs%fields(n)

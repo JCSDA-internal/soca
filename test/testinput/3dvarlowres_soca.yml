@@ -9,7 +9,7 @@ cost function:
   cost type: 3D-Var
   window begin: &date_begin 2018-04-14T00:00:00Z
   window length: P2D
-  analysis variables: &soca_vars [socn, tocn, ssh, hocn]
+  analysis variables: &a_vars [socn, tocn, ssh]
   geometry:
     geom_grid_file: soca_gridspec.nc
     mom6_input_nml: ./inputnml/input.nml
@@ -24,7 +24,7 @@ cost function:
 
   background error:
     covariance model: SocaError
-    analysis variables: [tocn, socn, ssh]
+    analysis variables: *a_vars
     date: 2018-04-15T00:00:00Z
     bump:
       verbosity: main
@@ -33,11 +33,11 @@ cost function:
       load_nicas_local: true
     correlation:
     - name: ocn
-      variables: [socn, tocn, ssh]
+      variables: *a_vars
 
     linear variable change:
-      input variables: *soca_vars
-      output variables: *soca_vars
+      input variables: *a_vars
+      output variables: *a_vars
       linear variable changes:
 
       - linear variable change name: VertConvSOCA
@@ -70,7 +70,7 @@ cost function:
         niter: 1
         scale_flow: 0.5
         scale_dist: 1e6
-        filter variables: [tocn, socn, ssh]
+        filter variables: *a_vars
 
       - linear variable change name: BalanceSOCA
         dsdtmax: 0.1
@@ -171,10 +171,17 @@ variational:
     test: on
     diagnostics:
       departures: ombg
+    online diagnostics:
+      write increment: true
+      increment:
+        datadir: Data
+        date: *bkg_date
+        exp: 3dvarlowressoca.iter1
+        type: incr
 
 output:
   datadir: Data
-  exp: 3dvarsoca
+  exp: 3dvarlowressoca
   type: an
 
 final:
