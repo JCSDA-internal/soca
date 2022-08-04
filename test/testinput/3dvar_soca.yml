@@ -9,7 +9,7 @@ cost function:
   cost type: 3D-Var
   window begin: &date_begin 2018-04-14T00:00:00Z
   window length: P2D
-  analysis variables: &soca_vars [cicen, hicen, socn, tocn, ssh, hocn, sw, lhf, shf, lw, us, chl, biop, swh, mld, layer_depth]
+  analysis variables: &a_vars [cicen, hicen, socn, tocn, ssh, sw, lhf, shf, lw, us, chl, biop, swh]
   geometry:
     mom6_input_nml: ./inputnml/input.nml
     fields metadata: ./fields_metadata.yml
@@ -22,11 +22,11 @@ cost function:
     sfc_filename: sfc.res.nc
     wav_filename: wav.res.nc
     date: &bkg_date 2018-04-15T00:00:00Z
-    state variables: *soca_vars
+    state variables: &b_vars [cicen, hicen, socn, tocn, ssh, hocn, sw, lhf, shf, lw, us, chl, biop, swh, mld, layer_depth]
 
   background error:
     covariance model: SocaError
-    analysis variables: [cicen, hicen, socn, tocn, ssh, sw, lhf, shf, lw, us, chl, biop, swh]
+    analysis variables: *a_vars
     date: 2018-04-15T00:00:00Z
     bump:
       verbosity: main
@@ -42,8 +42,8 @@ cost function:
       variables: [swh]
 
     linear variable change:
-      input variables: *soca_vars
-      output variables: *soca_vars
+      input variables: *a_vars
+      output variables: *a_vars
       linear variable changes:
 
       - linear variable change name: BkgErrFILT

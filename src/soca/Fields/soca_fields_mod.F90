@@ -775,14 +775,12 @@ subroutine soca_fields_read(self, f_conf, vdate)
   if ( f_conf%has("read_from_file") ) &
       call f_conf%get_or_die("read_from_file", iread)
 
-  call self%get("hocn", hocn)
-
   ! Get Indices for data domain and allocate common layer depth array
   isd = self%geom%isd ; ied = self%geom%ied
   jsd = self%geom%jsd ; jed = self%geom%jed
 
   ! Check if vertical remapping needs to be applied
-  nz = hocn%nz
+  nz = self%geom%nzo
   if ( f_conf%has("remap_filename") ) then
      vert_remap = .true.
      call f_conf%get_or_die("remap_filename", str)
@@ -811,7 +809,7 @@ subroutine soca_fields_read(self, f_conf, vdate)
 
   ! iread = 1 (state) or 3 (increment): Read restart file
   if ((iread==1).or.(iread==3)) then
-
+    if (iread==1) call self%get("hocn", hocn)
     ! filename for ocean
     call f_conf%get_or_die("basename", str)
     basename = str
@@ -902,6 +900,15 @@ subroutine soca_fields_read(self, f_conf, vdate)
     end if
 
     call fms_io_exit()
+
+    ! Update halo and return if reading increment
+    if (iread==3) then !
+       do n=1,size(self%fields)
+         field => self%fields(n)
+         call mpp_update_domains(field%val, self%geom%Domain%mpp_domain)
+      end do
+      return
+   end if
 
     ! Indices for compute domain
     isc = self%geom%isc ; iec = self%geom%iec
@@ -1629,7 +1636,7 @@ subroutine soca_fields_from_fieldset(self, vars, afieldset, masked)
         do jz=1,field%nz
           field%val(:,:,jz) = reshape(real_ptr(jz,:), ngrid)
         end do
- 
+
         ! Release pointer
         call afield%final()
 
