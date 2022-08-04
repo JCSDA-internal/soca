@@ -38,7 +38,6 @@ set( soca_test_input
   testinput/geometry_iterator_3d.yml
   testinput/getvalues.yml
   testinput/gridgen.yml
-  testinput/gridgen_small.yml
   testinput/hofx_3d.yml
   testinput/hofx_4d.yml
   testinput/hofx_4d_pseudo.yml
@@ -109,7 +108,6 @@ set( soca_test_ref
   testref/forecast_mom6_bgc.test
   testref/forecast_pseudo.test
   testref/gridgen.test
-  testref/gridgen_small.test
   testref/hofx_3d.test
   testref/hofx_4d.test
   testref/hofx_4d_pseudo.test
@@ -132,6 +130,7 @@ set( soca_data_files
   Data/godas_sst_bgerr.nc
   Data/rossrad.dat
   Data/fields_metadata.yml
+  Data/soca_gridspec.small.nc
 )
 
 set( soca_model_param
@@ -164,6 +163,11 @@ set( soca_model_restarts
   Data/72x35x25/INPUT/ocean_topog.nc
   Data/72x35x25/INPUT/ocean_mosaic.nc
   Data/72x35x25/INPUT/grid_spec.nc
+)
+
+set( soca_model_restarts_small
+  Data/72x35x25/INPUT_small/cice.res.nc
+  Data/72x35x25/INPUT_small/MOM.res.nc
 )
 
 set( soca_obs
@@ -204,6 +208,16 @@ foreach(FILENAME ${soca_model_restarts})
 endforeach(FILENAME)
 install(FILES ${soca_model_restarts}
         DESTINATION ${INSTALL_DATA_DIR}/testdata/72x35x25/INPUT/ )
+
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/INPUT_small)
+foreach(FILENAME ${soca_model_restarts_small})
+     get_filename_component(filename ${FILENAME} NAME )
+     execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
+           ${CMAKE_CURRENT_SOURCE_DIR}/${FILENAME}
+           ${CMAKE_CURRENT_BINARY_DIR}/INPUT_small/${filename} )
+endforeach(FILENAME)
+install(FILES ${soca_model_restarts_small}
+        DESTINATION ${INSTALL_DATA_DIR}/testdata/72x35x25/INPUT_small/ )
 
 # MOM's resource files
 foreach(FILENAME ${soca_model_param} ${soca_data_files})
@@ -362,16 +376,6 @@ endfunction()
 #-------------------------------------------------------------------------------
 # Tests that create data other tests will use
 #-------------------------------------------------------------------------------
-
-# Create subsampled netcdf files
-add_test ( test_soca_subsample_netcdf
-           bash
-           ${CMAKE_CURRENT_SOURCE_DIR}/Data/subsample_mom6files.sh )
-
-# Test of grid generation and create subsampled grid
-soca_add_test( NAME gridgen_small
-               EXE  soca_gridgen.x
-               TEST_DEPENDS test_soca_subsample_netcdf )
 
 # Test of grid generation and create regular grid
 soca_add_test( NAME gridgen
@@ -569,12 +573,10 @@ soca_add_test( NAME obslocalization
                TEST_DEPENDS test_soca_gridgen )
 
 soca_add_test( NAME obslocalization_vertical
-               SRC  TestObsLocalization.cc
-               TEST_DEPENDS test_soca_gridgen_small )
+               SRC  TestObsLocalization.cc )
 
 soca_add_test( NAME obslocalizations
-               SRC  TestObsLocalizations.cc
-               TEST_DEPENDS test_soca_gridgen_small )
+               SRC  TestObsLocalizations.cc )
 
 
 #-------------------------------------------------------------------------------
@@ -623,8 +625,7 @@ soca_add_test( NAME setcorscales
 soca_add_test( NAME parameters_bump_cor_nicas
                NOTRAPFPE
                EXE  soca_error_covariance_training.x
-               TEST_DEPENDS test_soca_gridgen_small
-                            test_soca_convertstate)
+               TEST_DEPENDS test_soca_convertstate)
 
 soca_add_test( NAME parameters_bump_cor_nicas_scales
                NOTRAPFPE
