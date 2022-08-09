@@ -13,7 +13,7 @@ initial condition:
 background error:
   covariance model: SABER
   saber blocks:
-  - saber block name: BUMP_NICAS
+  - saber block name: bump::NICAS
     saber central block: true
     iterative inverse: true
     input variables: *soca_vars

@@ -96,7 +96,7 @@ background error:
       localization:
         localization method: SABER
         saber block:
-          saber block name: BUMP_NICAS
+          saber block name: bump::NICAS
           input variables: [socn, tocn, ssh]
           output variables: [socn, tocn, ssh]
           bump:
