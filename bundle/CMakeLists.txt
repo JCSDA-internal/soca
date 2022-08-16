@@ -14,7 +14,7 @@ include( ecbuild_bundle )
 
 ecbuild_bundle_initialize()
 
-ecbuild_bundle( PROJECT jedicmake GIT "https://github.com/jcsda-internal/jedi-cmake.git" UPDATE BRANCH develop )
+ecbuild_bundle( PROJECT jedicmake GIT "https://github.com/jcsda-internal/jedi-cmake.git" UPDATE BRANCH develop RECURSIVE )
 include( jedicmake/cmake/Functions/git_functions.cmake  )
 
 # ECMWF repos that you probably dont need to build yourself because they
@@ -31,10 +31,9 @@ if (BUILD_FCKIT)
   # TODO: replace with https://github.com/ecmwf/fckit.git TAG 0.9.2
 endif()
 
-option(BUILD_ATLAS "download and build atlas (not needed if in a jedi container)")
+option(BUILD_ATLAS "download and build atlas")
 if (BUILD_ATLAS)
-  ecbuild_bundle( PROJECT atlas  GIT "https://github.com/jcsda-internal/atlas.git"  UPDATE BRANCH release-stable )
-  # TODO: repalce with https://github.com/ecmwf/atlas.git TAG 0.24.1
+  ecbuild_bundle( PROJECT atlas  GIT "https://github.com/ecmwf/atlas.git" TAG 0.29.0 )
 endif()
 
 
