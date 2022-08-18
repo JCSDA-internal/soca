@@ -1,6 +1,6 @@
 geometry:
-  mom6_input_nml: ./inputnml/input.nml
-  geom_grid_file: soca_gridspec.nc
+  mom6_input_nml: ./inputnml/input_small.nml
+  geom_grid_file: soca_gridspec.small.nc
   fields metadata: ./fields_metadata.yml
 
 input variables: [tocn]
@@ -8,43 +8,42 @@ input variables: [tocn]
 background:
   read_from_file: 1
   date: &date 2018-04-15T00:00:00Z
-  basename: ./
-  ocn_filename: INPUT/MOM.res.nc
+  basename: ./INPUT_small/
+  ocn_filename: MOM.res.nc
   state variables:  [socn, tocn, hocn]
 
 bump:
   verbosity: main
-  datadir: ./bump
-  dc: 500.0e3
+  datadir: ./bump_lowres
+  dc: 100.0e3
   method: cor
+  strategy: specific_univariate
   nc1: 500
   nc2: 500
-  nc3: 20
-  ne: 10
+  nc3: 15
+  ne: 4
+  local_diag: true
+  local_rad: 1000.0e3
   new_hdiag: true
-  new_nicas: true
   new_var: true
-  nl0r: 11
-  resol: 4.0
-  strategy: specific_univariate
+  nl0r: 25
+  resol: 8.0
   var_filter: true
-  var_niter: 5
+  var_niter: 0
   var_rhflt:
-    tocn: [1000.0e3]
-  write_hdiag: true
-  write_nicas_local: true
+    tocn: [2000.0e3]
   output:
-  - datadir: bump
+  - datadir: ./bump_lowres
     date: *date
     exp: parameters_bump_cov.cor_rh
     parameter: cor_rh
     type: an
-  - datadir: bump
+  - datadir: bump_lowres
     date: *date
     exp: parameters_bump_cov.cor_rv
     parameter: cor_rv
     type: an
-  - datadir: bump
+  - datadir: bump_lowres
     date: *date
     exp: parameters_bump_cov.stddev
     parameter: stddev
@@ -55,11 +54,11 @@ ensemble:
     template:
       date: *date
       basename: ./Data/
-      ocn_filename: ocn.pert.ens.%mem%.2018-04-15T00:00:00Z.PT0S.nc
-      state variables:  [socn, tocn, hocn]
+      ocn_filename: ocn.pert.lowres.ens.%mem%.2018-04-15T00:00:00Z.PT6H.nc
+      state variables:  [tocn, hocn]
     pattern: '%mem%'
-    nmembers: 5
+    nmembers: 4
 
-#test:
-#  reference filename: testref/parameters_bump_cov_lct.test
-#  test output filename: testoutput/parameters_bump_cov_lct.test
+test:
+  reference filename: testref/parameters_bump_cov.test
+  test output filename: testoutput/parameters_bump_cov.test
