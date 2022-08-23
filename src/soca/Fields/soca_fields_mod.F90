@@ -809,7 +809,7 @@ subroutine soca_fields_read(self, f_conf, vdate)
 
   ! iread = 1 (state) or 3 (increment): Read restart file
   if ((iread==1).or.(iread==3)) then
-    if (iread==1) call self%get("hocn", hocn)
+    if (self%has("hocn")) call self%get("hocn", hocn)
     ! filename for ocean
     call f_conf%get_or_die("basename", str)
     basename = str
