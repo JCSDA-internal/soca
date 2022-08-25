@@ -57,6 +57,8 @@ namespace soca {
       Geometry(const Geometry &);
       ~Geometry();
 
+      bool levelsAreTopDown() const {return true;}
+
       GeometryIterator begin() const;
       GeometryIterator end() const;
       int IteratorDimension() const;
