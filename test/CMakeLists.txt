@@ -55,8 +55,7 @@ set( soca_test_input
   testinput/obslocalizations.yml
   testinput/parameters_bump_cor_nicas.yml
   testinput/parameters_bump_cor_nicas_scales.yml
-  testinput/parameters_bump_cov_lct.yml
-  testinput/parameters_bump_cov_nicas.yml
+  testinput/parameters_bump_cov.yml
   testinput/parameters_bump_loc.yml
   testinput/parametric_stddev.yml
   testinput/sqrtvertloc.yml
@@ -118,7 +117,7 @@ set( soca_test_ref
   testref/makeobs.test
   testref/parameters_bump_cor_nicas.test
   testref/parameters_bump_cor_nicas_scales.test
-  testref/parameters_bump_cov_lct.test
+  testref/parameters_bump_cov.test
   testref/parametric_stddev.test
   testref/setcorscales.test
   testref/sqrtvertloc.test
@@ -188,6 +187,13 @@ set( soca_obs
   Data/Obs/zero_ob.nc
 )
 
+set( soca_enspert_small
+  Data/enspert_small/ocn.pert.lowres.ens.1.2018-04-15T00:00:00Z.PT6H.nc
+  Data/enspert_small/ocn.pert.lowres.ens.2.2018-04-15T00:00:00Z.PT6H.nc
+  Data/enspert_small/ocn.pert.lowres.ens.3.2018-04-15T00:00:00Z.PT6H.nc
+  Data/enspert_small/ocn.pert.lowres.ens.4.2018-04-15T00:00:00Z.PT6H.nc
+)
+
 # Create Data directory for test input/output and symlink all files
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/testinput)
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/testoutput)
@@ -248,6 +254,15 @@ ecbuild_add_resources( TARGET   soca_test_scripts
 # Link to SOCA obs
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/Data)
 foreach(FILENAME ${soca_obs})
+     get_filename_component(filename ${FILENAME} NAME )
+     execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
+           ${CMAKE_CURRENT_SOURCE_DIR}/${FILENAME}
+           ${CMAKE_CURRENT_BINARY_DIR}/Data/${filename} )
+endforeach(FILENAME)
+
+# Link to pre-created enspert_small files
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/Data)
+foreach(FILENAME ${soca_enspert_small})
      get_filename_component(filename ${FILENAME} NAME )
      execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
            ${CMAKE_CURRENT_SOURCE_DIR}/${FILENAME}
@@ -604,18 +619,10 @@ soca_add_test( NAME hybridgain
                EXE  soca_hybridgain.x
                TEST_DEPENDS test_soca_enspert )
 
-# TODO the next couple of tests are a little slow.
-# Revive them once we have tiered testing?
-# soca_add_test( NAME parameters_bump_cov_lct
-#                EXE  soca_error_covariance_training.x
-#                TEST_DEPENDS test_soca_enspert )
-#
-# soca_add_test( NAME parameters_bump_cov_nicas
-#                EXE  soca_error_covariance_training.x
-#                TEST_DEPENDS test_soca_parameters_bump_cov_lct )
-
-# soca_add_test( NAME dirac_bump_cov
-#                EXE  soca_dirac.x )
+soca_add_test( NAME parameters_bump_cov
+               EXE  soca_error_covariance_training.x
+               NOTRAPFPE
+               TEST_DEPENDS test_soca_static_socaerrorlowres_init )
 
 soca_add_test( NAME setcorscales
                EXE  soca_setcorscales.x
@@ -725,7 +732,7 @@ soca_add_test( NAME convertincrement
 soca_add_test( NAME 3dvarlowres_soca
                EXE  soca_var.x
                NOTRAPFPE
-               TEST_DEPENDS test_soca_static_socaerrorsmall_init )
+               TEST_DEPENDS test_soca_static_socaerrorlowres_init )
 
 soca_add_test( NAME diffstates
                EXE  soca_diffstates.x
