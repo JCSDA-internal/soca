@@ -6,6 +6,7 @@
 !> surface background error used by soca_bkgerrgodas_mod
 module soca_omb_stats_mod
 
+use fckit_log_module, only: fckit_log
 use fckit_mpi_module, only: fckit_mpi_comm
 use kinds, only: kind_real
 use netcdf
@@ -51,15 +52,16 @@ contains
 !> constructor
 !!
 !! \relates soca_omb_stats_mod::soca_omb_stats
-subroutine soca_omb_stats_init(self, domain)
+subroutine soca_omb_stats_init(self, domain, filename)
   class(soca_omb_stats),           intent(inout) :: self
   type(soca_domain_indices),       intent(in) :: domain
+  character(len=:), allocatable,   intent(in) :: filename
 
   integer(kind=4) :: ncid
   integer(kind=4) :: dimid
   integer(kind=4) :: varid
   type(fckit_mpi_comm) :: f_comm
-  integer :: myrank, root=0
+  integer :: myrank, root=0, ret
 
   ! Setup Communicator
   f_comm = fckit_mpi_comm()
@@ -67,7 +69,9 @@ subroutine soca_omb_stats_init(self, domain)
 
   if (myrank.eq.root) then
 
-     call nc_check(nf90_open('godas_sst_bgerr.nc', nf90_nowrite,ncid))
+     call fckit_log%info("Reading file "  // trim(filename))
+
+     call nc_check(nf90_open(filename, nf90_nowrite, ncid))
 
      ! Get the size of the horizontal grid
      call nc_check(nf90_inq_dimid(ncid, 'nlocs', dimid))
