@@ -1,0 +1,32 @@
+geometry:
+  mom6_input_nml: ./inputnml/input.nml
+  fields metadata: ./fields_metadata.yml
+
+model aux control:
+
+model test:
+  forecast length: PT6H
+  final norm: 46525.68798221067845589
+  tolerance: 1e-12
+  test reforecast: false
+
+model:
+  name: UFSm6c6
+  tstep: PT1H
+  model variables: &soca_vars [cicen, hicen, socn, tocn, ssh, hocn]
+
+initial condition:
+  read_from_file: 1
+  date: &date 2018-04-15T00:00:00Z
+  basename: ./INPUT/
+  ocn_filename: MOM.res.nc
+  ice_filename: cice.res.nc
+  sfc_filename: sfc.res.nc
+  state variables: *soca_vars
+
+output:
+  frequency: PT3H
+  datadir: Data
+  exp: example
+  date: *date
+  type: fc

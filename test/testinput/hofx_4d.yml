@@ -1,6 +1,7 @@
 geometry:
-  mom6_input_nml: ./inputnml/input.nml
-  fields metadata: ./fields_metadata.yml
+  geom_grid_file: data_generated/gridgen/soca_gridspec.72x35x25.nc
+  mom6_input_nml: data_static/72x35x25/input.nml
+  fields metadata: data_static/fields_metadata.yml
 
 model:
   name: MOM6solo
@@ -11,7 +12,7 @@ model:
 initial condition:
   read_from_file: 1
   date: 2018-04-15T00:00:00Z
-  basename: ./INPUT/
+  basename: data_static/72x35x25/restarts/
   ocn_filename: MOM.res.nc
   ice_filename: cice.res.nc
   state variables: [cicen, hicen, socn, tocn, ssh, hocn, uocn, vocn, sw, lhf, shf, lw, us]
@@ -24,72 +25,72 @@ observations:
   observers:
   - obs space:
       name: CoolSkin
-      obsdataout: {obsfile: ./Data/sst.coolskin.out.nc}
-      obsdatain:  {obsfile: ./Data/sst.nc}
+      obsdataout: {obsfile: data_generated/hofx_4d/sst_coolskin.hofx_4d.nc}
+      obsdatain:  {obsfile: data_static/obs/sst.nc}
       simulated variables: [sea_surface_temperature]
     obs operator:
       name: CoolSkin
 
   - obs space:
       name: SeaSurfaceTemp
-      obsdataout: {obsfile: ./Data/sst.out.nc}
-      obsdatain:  {obsfile: ./Data/sst.nc}
+      obsdataout: {obsfile: data_generated/hofx_4d/sst.hofx_4d.nc}
+      obsdatain:  {obsfile: data_static/obs/sst.nc}
       simulated variables: [sea_surface_temperature]
     obs operator:
       name: Identity
 
   - obs space:
       name: SeaSurfaceSalinity
-      obsdataout: {obsfile: ./Data/sss.out.nc}
-      obsdatain:  {obsfile: ./Data/sss.nc}
+      obsdataout: {obsfile: data_generated/hofx_4d/sss.hofx_4d.nc}
+      obsdatain:  {obsfile: data_static/obs/sss.nc}
       simulated variables: [sea_surface_salinity]
     obs operator:
       name: Identity
 
   - obs space:
       name: ADT
-      obsdataout: {obsfile: ./Data/adt.out.nc}
-      obsdatain:  {obsfile: ./Data/adt.nc}
+      obsdataout: {obsfile: data_generated/hofx_4d/adt.hofx_4d.nc}
+      obsdatain:  {obsfile: data_static/obs/adt.nc}
       simulated variables: [absolute_dynamic_topography]
     obs operator:
       name: ADT
 
   - obs space:
       name: InsituTemperature
-      obsdataout: {obsfile: ./Data/prof.T.out.nc}
-      obsdatain:  {obsfile: ./Data/prof.nc}
+      obsdataout: {obsfile: data_generated/hofx_4d/prof_T.hofx_4d.nc}
+      obsdatain:  {obsfile: data_static/obs/prof.nc}
       simulated variables: [sea_water_temperature]
     obs operator:
       name: InsituTemperature
 
   - obs space:
       name: InsituSalinity
-      obsdataout: {obsfile: ./Data/prof.S.out.nc}
-      obsdatain:  {obsfile: ./Data/prof.nc}
+      obsdataout: {obsfile: data_generated/hofx_4d/prof_S.hofx_4d.nc}
+      obsdatain:  {obsfile: data_static/obs/prof.nc}
       simulated variables: [sea_water_salinity]
     obs operator:
       name: MarineVertInterp
 
   - obs space:
       name: SeaIceFraction
-      obsdataout: {obsfile: ./Data/icec.out.nc}
-      obsdatain:  {obsfile:  ./Data/icec.nc}
+      obsdataout: {obsfile: data_generated/hofx_4d/icec.hofx_4d.nc}
+      obsdatain:  {obsfile:  data_static/obs/icec.nc}
       simulated variables: [sea_ice_area_fraction]
     obs operator:
       name: SeaIceFraction
 
   - obs space:
       name: SurfaceU
-      obsdataout: {obsfile: ./Data/uocn_surface.out.nc}
-      obsdatain:  {obsfile: ./Data/uocn_surface.nc}
+      obsdataout: {obsfile: data_generated/hofx_4d/uocn_surface.hofx_4d.nc}
+      obsdatain:  {obsfile: data_static/obs/uocn_surface.nc}
       simulated variables: [surface_eastward_sea_water_velocity]
     obs operator:
       name: Identity
 
   - obs space:
       name: SurfaceV
-      obsdataout: {obsfile: ./Data/vocn_surface.out.nc}
-      obsdatain:  {obsfile: ./Data/vocn_surface.nc}
+      obsdataout: {obsfile: data_generated/hofx_4d/vocn_surface.hofx_4d.nc}
+      obsdatain:  {obsfile: data_static/obs/vocn_surface.nc}
       simulated variables: [surface_northward_sea_water_velocity]
     obs operator:
       name: Identity

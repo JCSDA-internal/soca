@@ -1,6 +1,7 @@
 geometry:
-  mom6_input_nml: ./inputnml/input.nml
-  fields metadata: ./fields_metadata.yml
+  geom_grid_file: data_generated/gridgen/soca_gridspec.72x35x25.nc
+  mom6_input_nml: data_static/72x35x25/input.nml
+  fields metadata: data_static/fields_metadata.yml
 
 variable change tests:
 - variable change:
@@ -8,7 +9,7 @@ variable change tests:
     state:
       read_from_file: 1
       date: 2018-04-15T00:00:00Z
-      basename: ./INPUT/
+      basename: data_static/72x35x25/restarts/
       ocn_filename: MOM.res.nc
       ice_filename: cice.res.nc
       state variables: &soca_vars [cicen, tocn, socn, hocn, uocn, vocn, chl]
