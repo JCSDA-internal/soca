@@ -38,6 +38,7 @@ observations:
       name: SeaSurfaceTemp
       distribution:
         name: Halo
+        halo size: 500.0e3
       obsdataout: {obsfile: ./Data/sst.letkf.solver.nc}
       obsdatain:  {obsfile: ./Data/sst.letkf.observer.nc}
       simulated variables: [sea_surface_temperature]
