@@ -15,7 +15,7 @@ background:
       basename: data_static/72x35x25/restarts_ens/
       state variables: [socn, tocn, ssh, uocn, vocn, hocn, chl, biop]
     pattern: %mem%
-    nmembers: 5
+    nmembers: 4
 
 observations:
   observers:
