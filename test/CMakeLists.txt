@@ -540,14 +540,14 @@ soca_add_test( NAME forecast_identity
 # Test mom6 forecast
 soca_add_test( NAME forecast_mom6
                EXE  soca_forecast.x
-              #  NOTRAPFPE
+               NOTRAPFPE
                TEST_DEPENDS test_soca_gridgen )
 
 # Test mom6_bgc forecast (optional)
 if ( ENABLE_OCEAN_BGC )
 soca_add_test( NAME forecast_mom6_bgc
                EXE  soca_forecast.x
-              #  NOTRAPFPE
+               NOTRAPFPE
                TEST_DEPENDS test_soca_gridgen )
 endif()
 
@@ -602,7 +602,7 @@ soca_add_test( NAME parameters_bump_cov
 # ensemble generation
 soca_add_test( NAME enspert
                EXE  soca_enspert.x
-               #  NOTRAPFPE
+               NOTRAPFPE
                TEST_DEPENDS test_soca_gridgen
                             test_soca_static_socaerror_init )
 
@@ -687,6 +687,7 @@ soca_add_test( NAME dirac_soca_nomask
 
 soca_add_test( NAME makeobs
                EXE  soca_hofx.x
+               NOTRAPFPE
                TEST_DEPENDS test_soca_gridgen )
 
 soca_add_test( NAME hofx_3d
@@ -695,7 +696,7 @@ soca_add_test( NAME hofx_3d
 
 soca_add_test( NAME hofx_4d
                EXE  soca_hofx.x
-              #  NOTRAPFPE
+               NOTRAPFPE
                TEST_DEPENDS test_soca_gridgen )
 
 soca_add_test( NAME hofx_4d_pseudo
@@ -707,7 +708,7 @@ soca_add_test( NAME hofx_4d_pseudo
 soca_add_test( NAME enshofx
                EXE  soca_enshofx.x
                MPI 3
-              #  NOTRAPFPE
+               NOTRAPFPE
                TEST_DEPENDS test_soca_gridgen )
 
 
@@ -717,7 +718,6 @@ soca_add_test( NAME enshofx
 # # Following test does not work yet. IODA crashes
 # soca_add_test( NAME 3dvar_zero_ob
 #                EXE  soca_var.x
-#                TOL  4e-9 0
 #                NOTRAPFPE
 #                TEST_DEPENDS test_soca_static_socaerror_init )
 
@@ -752,27 +752,25 @@ soca_add_test( NAME 3dvarlowres_soca
 
 soca_add_test( NAME 3dvarfgat
                EXE  soca_var.x
-              #  NOTRAPFPE
+               NOTRAPFPE
                TEST_DEPENDS test_soca_gridgen
                             test_soca_static_socaerror_init )
 
 soca_add_test( NAME 3dvarfgat_pseudo
                EXE  soca_var.x
-              #  NOTRAPFPE
                TEST_DEPENDS test_soca_gridgen
                             test_soca_forecast_mom6
                             test_soca_static_socaerror_init )
 
 soca_add_test( NAME 3dhyb
                EXE  soca_var.x
-              #  NOTRAPFPE
                TEST_DEPENDS test_soca_gridgen
                             test_soca_static_socaerror_init
                             test_soca_parameters_bump_loc )
 
 soca_add_test( NAME 3dhybfgat
                EXE  soca_var.x
-              #  NOTRAPFPE
+               NOTRAPFPE
                TEST_DEPENDS test_soca_gridgen
                             test_soca_static_socaerror_init
                             test_soca_parameters_bump_loc )
