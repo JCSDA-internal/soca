@@ -169,7 +169,7 @@ variational:
       increment variables: *soca_vars
       variable change: Identity
       tstep: PT1H
-    ninner: 1
+    ninner: 5
     gradient norm reduction: 1e-15
     test: on
     diagnostics:
@@ -190,3 +190,4 @@ final:
 test:
   reference filename: testref/3dvarfgat_pseudo.test
   test output filename: testoutput/3dvarfgat_pseudo.test
+  float relative tolerance: 1e-5

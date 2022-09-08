@@ -21,10 +21,10 @@ layer_depth   min=2.4370615877370523   max=5587.8978052886013757   mean=1243.822
 
 
 
-CostJb   : Nonlinear Jb = 70.3915837801015414
-CostJo   : Nonlinear Jo(SeaSurfaceTemp) = 444.3110965070862903, nobs = 121, Jo/n = 3.6719925331164158, err = 0.3721203575621266
+CostJb   : Nonlinear Jb = 70.3915837801015272
+CostJo   : Nonlinear Jo(SeaSurfaceTemp) = 444.3110965070864609, nobs = 121, Jo/n = 3.6719925331164172, err = 0.3721203575621266
 CostJo   : Nonlinear Jo(SeaSurfaceSalinity) = 56.8314517063816282, nobs = 49, Jo/n = 1.1598255450281965, err = 1.0000000000000000
 CostJo   : Nonlinear Jo(ADT) = 143.9237430064926286, nobs = 90, Jo/n = 1.5991527000721404, err = 0.1000000014901161
-CostJo   : Nonlinear Jo(InsituTemperature) = 320.0267509575060103, nobs = 204, Jo/n = 1.5687585831250295, err = 0.8997488720711557
+CostJo   : Nonlinear Jo(InsituTemperature) = 320.0267509575060672, nobs = 204, Jo/n = 1.5687585831250297, err = 0.8997488720711557
 CostJo   : Nonlinear Jo(InsituSalinity) = 146.6295070162410070, nobs = 218, Jo/n = 0.6726124175056927, err = 0.6081969961943772
-CostFunction: Nonlinear J = 1182.1141329738093191
+CostFunction: Nonlinear J = 1182.1141329738090917

@@ -133,7 +133,7 @@ variational:
     algorithm: RPCG
   iterations:
   - geometry: *geom
-    ninner: 1
+    ninner: 5
     gradient norm reduction: 1e-15
     test: on
     diagnostics:
@@ -151,3 +151,4 @@ final:
 test:
   reference filename: testref/3dhyb.test
   test output filename: testoutput/3dhyb.test
+  float relative tolerance: 1e-5
