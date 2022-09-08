@@ -127,75 +127,6 @@ set( soca_test_ref
   testref/static_socaerrorlowres_init.test
 )
 
-# set( soca_data_files
-#   Data/godas_sst_bgerr.nc
-#   Data/rossrad.dat
-#   Data/fields_metadata.yml
-#   Data/soca_gridspec.small.nc
-# )
-
-# set( soca_model_param
-#   Data/72x35x25/diag_table
-#   Data/72x35x25/field_table
-#   Data/72x35x25/ice.bkgerror.nc
-#   Data/72x35x25/ocn.bkgerror.nc
-#   Data/72x35x25/wav.bkgerror.nc
-#   Data/72x35x25/MOM_input
-#   Data/72x35x25/MOM_input_small
-#   Data/72x35x25/MOM_override_bgc
-# )
-
-# set( soca_model_namelist
-#   Data/72x35x25/input.nml
-#   Data/72x35x25/input_bgc.nml
-#   Data/72x35x25/input_small.nml
-# )
-
-# set( soca_model_restarts
-#   Data/72x35x25/INPUT/forcing_daily.nc
-#   Data/72x35x25/INPUT/forcing_monthly.nc
-#   Data/72x35x25/INPUT/hycom1_25.nc
-#   Data/72x35x25/INPUT/cice.res.nc
-#   Data/72x35x25/INPUT/layer_coord25.nc
-#   Data/72x35x25/INPUT/MOM.res.nc
-#   Data/72x35x25/INPUT/sfc.res.nc
-#   Data/72x35x25/INPUT/wav.res.nc
-#   Data/72x35x25/INPUT/ocean_hgrid.nc
-#   Data/72x35x25/INPUT/ocean_topog.nc
-#   Data/72x35x25/INPUT/ocean_mosaic.nc
-#   Data/72x35x25/INPUT/grid_spec.nc
-# )
-
-# set( soca_model_restarts_small
-#   Data/72x35x25/INPUT_small/cice.res.nc
-#   Data/72x35x25/INPUT_small/MOM.res.nc
-# )
-
-# set( soca_obs
-#   Data/Obs/adt.nc
-#   Data/Obs/biomass_p.nc
-#   Data/Obs/chl.nc
-#   Data/Obs/gmi_gpm_geoval.nc
-#   Data/Obs/gmi_gpm_obs.nc
-#   Data/Obs/icec.nc
-#   Data/Obs/icefb.nc
-#   Data/Obs/prof.nc
-#   Data/Obs/single_ob.nc
-#   Data/Obs/sss.nc
-#   Data/Obs/sst.nc
-#   Data/Obs/swh.nc
-#   Data/Obs/uocn_surface.nc
-#   Data/Obs/vocn_surface.nc
-#   Data/Obs/zero_ob.nc
-# )
-
-# set( soca_enspert_small
-#   Data/enspert_small/ocn.pert.lowres.ens.1.2018-04-15T00:00:00Z.PT6H.nc
-#   Data/enspert_small/ocn.pert.lowres.ens.2.2018-04-15T00:00:00Z.PT6H.nc
-#   Data/enspert_small/ocn.pert.lowres.ens.3.2018-04-15T00:00:00Z.PT6H.nc
-#   Data/enspert_small/ocn.pert.lowres.ens.4.2018-04-15T00:00:00Z.PT6H.nc
-# )
-
 # Create directory for test input/output/reference and symlink all files
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/testinput)
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/testoutput)
@@ -207,78 +138,32 @@ foreach(FILENAME ${soca_test_input} ${soca_test_ref})
 endforeach(FILENAME)
 
 # create static data directory, and symlink all files.
-# some of these files need to be installed for downstream repos (e.g. soca-science)
 execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
           ${CMAKE_CURRENT_SOURCE_DIR}/Data
           ${CMAKE_CURRENT_BINARY_DIR}/data_static )
-
-
-# # Create Data directory for model input and symlink all files
-# file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/INPUT)
-# foreach(FILENAME ${soca_model_restarts})
-#      get_filename_component(filename ${FILENAME} NAME )
-#      execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
-#            ${CMAKE_CURRENT_SOURCE_DIR}/${FILENAME}
-#            ${CMAKE_CURRENT_BINARY_DIR}/INPUT/${filename} )
-# endforeach(FILENAME)
-# install(FILES ${soca_model_restarts}
-#         DESTINATION ${INSTALL_DATA_DIR}/testdata/72x35x25/INPUT/ )
-
-# file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/INPUT_small)
-# foreach(FILENAME ${soca_model_restarts_small})
-#      get_filename_component(filename ${FILENAME} NAME )
-#      execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
-#            ${CMAKE_CURRENT_SOURCE_DIR}/${FILENAME}
-#            ${CMAKE_CURRENT_BINARY_DIR}/INPUT_small/${filename} )
-# endforeach(FILENAME)
-# install(FILES ${soca_model_restarts_small}
-#         DESTINATION ${INSTALL_DATA_DIR}/testdata/72x35x25/INPUT_small/ )
-
-# # MOM's resource files
-# foreach(FILENAME ${soca_model_param} ${soca_data_files})
-#      get_filename_component(filename ${FILENAME} NAME )
-#      execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
-#            ${CMAKE_CURRENT_SOURCE_DIR}/${FILENAME}
-#            ${CMAKE_CURRENT_BINARY_DIR}/${filename} )
-# endforeach(FILENAME)
-# install(FILES ${soca_data_files}
-#         DESTINATION ${INSTALL_DATA_DIR}/testdata )
-
-
-# # FMS input.nml that may be overwritten during the testing
-# foreach(FILENAME ${soca_model_namelist})
-#      get_filename_component(filename ${FILENAME} NAME )
-#      execute_process( COMMAND ${CMAKE_COMMAND} -E copy
-#            ${CMAKE_CURRENT_SOURCE_DIR}/${FILENAME}
-#            ${CMAKE_CURRENT_BINARY_DIR}/inputnml/${filename} )
-# endforeach(FILENAME)
-
-# # MOM's output directory
-# file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/RESTART)
-
-# ecbuild_add_resources( TARGET   soca_test_scripts
-#                        SOURCES_PACK
-#                        ${soca_test_input}
-#                        )
-# # Link to SOCA obs
-# file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/Data)
-# foreach(FILENAME ${soca_obs})
-#      get_filename_component(filename ${FILENAME} NAME )
-#      execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
-#            ${CMAKE_CURRENT_SOURCE_DIR}/${FILENAME}
-#            ${CMAKE_CURRENT_BINARY_DIR}/Data/${filename} )
-# endforeach(FILENAME)
-
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/data_generated)
 
-# # Link to pre-created enspert_small files
-# file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/Data)
-# foreach(FILENAME ${soca_enspert_small})
-#      get_filename_component(filename ${FILENAME} NAME )
-#      execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
-#            ${CMAKE_CURRENT_SOURCE_DIR}/${FILENAME}
-#            ${CMAKE_CURRENT_BINARY_DIR}/Data/${filename} )
-# endforeach(FILENAME)
+
+# The files that need to be "installed" for outside repos, such as soca-science
+#-------------------------------------------------------------------------------
+set( soca_install_restarts
+  Data/72x35x25/restarts/cice.res.nc
+  Data/72x35x25/restarts/MOM.res.nc
+)
+install(FILES ${soca_install_restarts}
+        DESTINATION ${INSTALL_DATA_DIR}/testdata/72x35x25/restarts/ )
+
+set( soca_install_model_input
+  Data/72x35x25/INPUT/forcing_daily.nc
+  Data/72x35x25/INPUT/forcing_monthly.nc
+  Data/72x35x25/INPUT/hycom1_25.nc
+  Data/72x35x25/INPUT/layer_coord25.nc
+  Data/72x35x25/INPUT/ocean_hgrid.nc
+  Data/72x35x25/INPUT/ocean_topog.nc
+)
+install(FILES ${soca_install_model_input}
+        DESTINATION ${INSTALL_DATA_DIR}/testdata/72x35x25/INPUT/ )
+
 
 #####################################################################
 
