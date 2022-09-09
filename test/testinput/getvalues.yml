@@ -32,14 +32,15 @@ locations:
   obs space:
     name: Random Locations
     simulated variables: *vars
-    generate:
-      random:
+    obsdatain:
+      engine:
+        type: GenRandom
         random seed: 0
         nobs: 1000
         lat1: -32
         lat2: 37.5
         lon1: -192.5
         lon2: -57
-      obs errors: [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+        obs errors: [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
 
 tolerance interpolation: 1.5  # still really huge... should probably figure out why sometime.

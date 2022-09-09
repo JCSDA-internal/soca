@@ -96,8 +96,14 @@ cost function:
     observers:
     - obs space:
         name: CoolSkin
-        obsdataout: {obsfile: ./Data/sst.coolskin.out.nc}
-        obsdatain:  {obsfile: ./Data/sst.nc}
+        obsdataout:
+          engine:
+            type: H5File
+            obsfile: ./Data/sst.coolskin.out.nc
+        obsdatain:
+          engine:
+            type: H5File
+            obsfile: ./Data/sst.nc
         simulated variables: [sea_surface_temperature]
       obs operator:
         name: CoolSkin
@@ -111,8 +117,14 @@ cost function:
 
     - obs space:
         name: SeaSurfaceTemp
-        obsdataout: {obsfile: ./Data/sst.out.nc}
-        obsdatain:  {obsfile: ./Data/sst.nc}
+        obsdataout:
+          engine:
+            type: H5File
+            obsfile: ./Data/sst.out.nc
+        obsdatain:
+          engine:
+            type: H5File
+            obsfile: ./Data/sst.nc
         simulated variables: [sea_surface_temperature]
       obs operator:
         name: Identity
@@ -131,8 +143,14 @@ cost function:
 
     - obs space:
         name: SeaSurfaceSalinity
-        obsdataout: {obsfile: ./Data/sss.out.nc}
-        obsdatain:  {obsfile: ./Data/sss.nc}
+        obsdataout:
+          engine:
+            type: H5File
+            obsfile: ./Data/sss.out.nc
+        obsdatain:
+          engine:
+            type: H5File
+            obsfile: ./Data/sss.nc
         simulated variables: [sea_surface_salinity]
       obs operator:
         name: Identity
@@ -150,8 +168,14 @@ cost function:
 
     - obs space:
         name: ADT
-        obsdataout: {obsfile: ./Data/adt.out.nc}
-        obsdatain:  {obsfile: ./Data/adt.nc}
+        obsdataout:
+          engine:
+            type: H5File
+            obsfile: ./Data/adt.out.nc
+        obsdatain:
+          engine:
+            type: H5File
+            obsfile: ./Data/adt.nc
         simulated variables: [absolute_dynamic_topography]
       obs operator:
         name: ADT
@@ -165,8 +189,14 @@ cost function:
 
     - obs space:
         name: InsituTemperature
-        obsdataout: {obsfile: ./Data/prof.T.out.nc}
-        obsdatain:  {obsfile: ./Data/prof.nc}
+        obsdataout:
+          engine:
+            type: H5File
+            obsfile: ./Data/prof.T.out.nc
+        obsdatain:
+          engine:
+            type: H5File
+            obsfile: ./Data/prof.nc
         simulated variables: [sea_water_temperature]
       obs operator:
         name: InsituTemperature
@@ -179,8 +209,14 @@ cost function:
 
     - obs space:
         name: InsituSalinity
-        obsdataout: {obsfile: ./Data/prof.S.out.nc}
-        obsdatain:  {obsfile: ./Data/prof.nc}
+        obsdataout:
+          engine:
+            type: H5File
+            obsfile: ./Data/prof.S.out.nc
+        obsdatain:
+          engine:
+            type: H5File
+            obsfile: ./Data/prof.nc
         simulated variables: [sea_water_salinity]
       obs operator:
         name: MarineVertInterp
@@ -191,8 +227,14 @@ cost function:
 
     - obs space:
         name: SeaIceFraction
-        obsdataout: {obsfile: ./Data/icec.out.nc}
-        obsdatain:  {obsfile:  ./Data/icec.nc}
+        obsdataout:
+          engine:
+            type: H5File
+            obsfile: ./Data/icec.out.nc
+        obsdatain:
+          engine:
+            type: H5File
+            obsfile: ./Data/icec.nc
         simulated variables: [sea_ice_area_fraction]
       obs operator:
         name: Identity
@@ -203,8 +245,14 @@ cost function:
 
     - obs space:
         name: SeaSurfaceChlorophyll
-        obsdataout: {obsfile: ./Data/chl.out.nc}
-        obsdatain:  {obsfile: ./Data/chl.nc}
+        obsdataout:
+          engine:
+            type: H5File
+            obsfile: ./Data/chl.out.nc
+        obsdatain:
+          engine:
+            type: H5File
+            obsfile: ./Data/chl.nc
         simulated variables: [sea_surface_chlorophyll]
       obs operator:
         name: Identity
@@ -239,8 +287,14 @@ cost function:
 
     - obs space:
         name: SeaSurfaceBiomassP
-        obsdataout: {obsfile: ./Data/biomass_p.out.nc}
-        obsdatain:  {obsfile: ./Data/biomass_p.nc}
+        obsdataout:
+          engine:
+            type: H5File
+            obsfile: ./Data/biomass_p.out.nc
+        obsdatain:
+          engine:
+            type: H5File
+            obsfile: ./Data/biomass_p.nc
         simulated variables: [sea_surface_biomass_in_p_units]
       obs operator:
         name: Identity
@@ -251,8 +305,14 @@ cost function:
 
     - obs space:
         name: SeaSurfaceHS
-        obsdataout: {obsfile: ./Data/swh.out.nc}
-        obsdatain:  {obsfile: ./Data/swh.nc}
+        obsdataout:
+          engine:
+            type: H5File
+            obsfile: ./Data/swh.out.nc
+        obsdatain:
+          engine:
+            type: H5File
+            obsfile: ./Data/swh.nc
         simulated variables: [sea_surface_wave_significant_height]
       obs operator:
         name: Identity

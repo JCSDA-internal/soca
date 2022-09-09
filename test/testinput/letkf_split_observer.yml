@@ -38,8 +38,14 @@ observations:
       name: SeaSurfaceTemp
       distribution:
         name: RoundRobin
-      obsdataout: {obsfile: ./Data/sst.letkf.observer.nc}
-      obsdatain:  {obsfile: ./Data/sst.nc}
+      obsdataout:
+        engine:
+          type: H5File
+          obsfile: ./Data/sst.letkf.observer.nc
+      obsdatain:
+        engine:
+          type: H5File
+          obsfile: ./Data/sst.nc
       simulated variables: [sea_surface_temperature]
     obs operator:
       name: Identity

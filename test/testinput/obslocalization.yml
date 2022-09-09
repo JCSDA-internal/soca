@@ -12,7 +12,10 @@ observations:
     distribution:
       name: InefficientDistribution
     simulated variables: ['sea_surface_temperature']
-    obsdatain:  {obsfile: ./Data/sst.nc}
+    obsdatain:
+      engine:
+        type: H5File
+        obsfile: ./Data/sst.nc
   obs localizations:
   - localization method: Horizontal Box car
     lengthscale: 3000e3
@@ -28,7 +31,10 @@ observations:
     distribution:
       name: InefficientDistribution
     simulated variables: ['sea_surface_temperature']
-    obsdatain:  {obsfile: ./Data/sst.nc}
+    obsdatain:
+      engine:
+        type: H5File
+        obsfile: ./Data/sst.nc
   obs localizations:
   - localization method: Horizontal Gaspari-Cohn
     lengthscale: 3000e3
@@ -44,7 +50,10 @@ observations:
     distribution:
       name: InefficientDistribution
     simulated variables: ['sea_surface_temperature']
-    obsdatain:  {obsfile: ./Data/sst.nc}
+    obsdatain:
+      engine:
+        type: H5File
+        obsfile: ./Data/sst.nc
   obs localizations:
   - localization method: Horizontal SOAR
     lengthscale: 3000e3
@@ -61,7 +70,10 @@ observations:
     distribution:
       name: InefficientDistribution
     simulated variables: ['sea_surface_temperature']
-    obsdatain:  {obsfile: ./Data/sst.nc}
+    obsdatain:
+      engine:
+        type: H5File
+        obsfile: ./Data/sst.nc
   obs localizations:
   - localization method: Rossby
     base value: 500.0e3

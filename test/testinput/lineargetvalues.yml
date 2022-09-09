@@ -45,11 +45,3 @@ locations:
   obs space:
     name: Random Locations
     simulated variables: *geovals
-    generate:
-      random:
-        nobs: 1000
-        lat1: -75
-        lat2: 90
-        lon1: 0
-        lon2: 360
-      obs errors: [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
