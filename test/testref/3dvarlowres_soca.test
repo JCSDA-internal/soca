@@ -5,7 +5,7 @@ CostJo   : Nonlinear Jo(ADT) = 1.4289835039600911e+02, nobs = 88, Jo/n = 1.62384
 CostJo   : Nonlinear Jo(InsituTemperature) = 3.0207389049976348e+02, nobs = 201, Jo/n = 1.5028551766157388e+00, err = 8.9127767893751042e-01
 CostJo   : Nonlinear Jo(InsituSalinity) = 3.2537388217310308e+02, nobs = 218, Jo/n = 1.4925407439133169e+00, err = 6.0819699619437717e-01
 CostFunction: Nonlinear J = 1.6753897933002027e+03
-RPCGMinimizer: reduction in residual norm = 9.0648948687448327e-02
+RPCGMinimizer: reduction in residual norm = 9.0648948687448286e-02
 CostFunction::addIncrement: Analysis: 
   Valid time: 2018-04-15T00:00:00Z
    socn   min=10.7210460395083924   max=40.4416882908846063   mean=34.5447026142994673
@@ -22,9 +22,9 @@ layer_depth   min=2.2854716757984130   max=5658.3057467114012979   mean=1200.522
 
 
 CostJb   : Nonlinear Jb = 217.0860058306639360
-CostJo   : Nonlinear Jo(SeaSurfaceTemp) = 296.6119587415451520, nobs = 148, Jo/n = 2.0041348563617918, err = 0.3613460298302666
+CostJo   : Nonlinear Jo(SeaSurfaceTemp) = 296.6119587415450951, nobs = 148, Jo/n = 2.0041348563617913, err = 0.3613460298302666
 CostJo   : Nonlinear Jo(SeaSurfaceSalinity) = 48.8498831268672120, nobs = 49, Jo/n = 0.9969363903442288, err = 1.0000000000000000
 CostJo   : Nonlinear Jo(ADT) = 106.1145940617765007, nobs = 88, Jo/n = 1.2058476597929149, err = 0.1000000014901161
-CostJo   : Nonlinear Jo(InsituTemperature) = 122.8271767069728355, nobs = 201, Jo/n = 0.6110804811292181, err = 0.8912776789375104
+CostJo   : Nonlinear Jo(InsituTemperature) = 122.8271767069728639, nobs = 201, Jo/n = 0.6110804811292182, err = 0.8912776789375104
 CostJo   : Nonlinear Jo(InsituSalinity) = 302.3781108200875565, nobs = 218, Jo/n = 1.3870555542205851, err = 0.6081969961943772
 CostFunction: Nonlinear J = 1093.8677292879131073

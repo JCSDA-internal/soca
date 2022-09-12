@@ -1,6 +1,7 @@
 resolution:
-  mom6_input_nml: ./inputnml/input.nml
-  fields metadata: ./fields_metadata.yml
+  geom_grid_file: data_generated/gridgen/soca_gridspec.72x35x25.nc
+  mom6_input_nml: data_static/72x35x25/input.nml
+  fields metadata: data_static/fields_metadata.yml
 
 date: 2018-04-15T00:00:00Z
 
@@ -30,12 +31,12 @@ scales:
     min: 5000000
 
 rh output:
-  datadir: Data
+  datadir: data_generated/setcorscales
   exp: cor_rh
   type: incr
 
 rv output:
-  datadir: Data
+  datadir: data_generated/setcorscales
   exp: cor_rv
   type: incr
 

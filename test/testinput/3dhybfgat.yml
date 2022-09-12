@@ -4,9 +4,10 @@ cost function:
   window begin: *date_begin
   window length: PT6H
   analysis variables: &soca_vars [cicen, hicen, socn, tocn, ssh, hocn]
-  geometry:
-    mom6_input_nml: ./inputnml/input.nml
-    fields metadata: ./fields_metadata.yml
+  geometry: &geom
+    geom_grid_file: data_generated/gridgen/soca_gridspec.72x35x25.nc
+    mom6_input_nml: data_static/72x35x25/input.nml
+    fields metadata: data_static/fields_metadata.yml
 
   model:
     name: MOM6solo
@@ -16,18 +17,11 @@ cost function:
 
   background:
     read_from_file: 1
-    basename: ./INPUT/
+    basename: data_static/72x35x25/restarts/
     ocn_filename: MOM.res.nc
     ice_filename: cice.res.nc
     date: *date_begin
     state variables: *model_vars
-
-  _file: &_file
-    read_from_file: 1
-    date: *date_begin
-    basename: ./Data/
-    remap_filename: ./INPUT/MOM.res.nc
-    state variables: *soca_vars
 
   background error:
     covariance model: hybrid
@@ -38,7 +32,7 @@ cost function:
         date: *date_begin
         bump:
           verbosity: main
-          datadir: ./bump
+          datadir: data_generated/static_socaerror_init
           strategy: specific_univariate
           load_nicas_local: true
         correlation:
@@ -58,6 +52,7 @@ cost function:
             efold_z: 2500.0       # [m]
 
           - linear variable change name: BkgErrGODAS
+            sst_bgerr_file: data_static/godas_sst_bgerr.nc
             t_min: 0.1
             t_max: 2.0
             t_dz:  20.0
@@ -84,26 +79,32 @@ cost function:
             dtdzmin: 1.0e-6
             nlayers: 2
             dcdt:
-              filename: ./Data/kmask.nc
+              filename: data_static/72x35x25/dcdt.nc
               name: dcdt
 
       weight:
         value: 0.5
     - covariance:
         covariance model: ensemble
+        _file: &_file
+          read_from_file: 1
+          date: *date_begin
+          basename: data_static/72x35x25/restarts_ens/
+          remap_filename: data_static/72x35x25/restarts/MOM.res.nc
+          state variables: *soca_vars
         members:
         - <<: *_file
-          ocn_filename: ocn.pert.ens.1.2018-04-15T00:00:00Z.PT0S.nc
-          ice_filename: ice.pert.ens.1.2018-04-15T00:00:00Z.PT0S.nc
+          ocn_filename: ocn.enspert.ens.1.2018-04-15T00:00:00Z.PT0S.nc
+          ice_filename: ice.enspert.ens.1.2018-04-15T00:00:00Z.PT0S.nc
         - <<: *_file
-          ocn_filename: ocn.pert.ens.2.2018-04-15T00:00:00Z.PT0S.nc
-          ice_filename: ice.pert.ens.2.2018-04-15T00:00:00Z.PT0S.nc
+          ocn_filename: ocn.enspert.ens.2.2018-04-15T00:00:00Z.PT0S.nc
+          ice_filename: ice.enspert.ens.2.2018-04-15T00:00:00Z.PT0S.nc
         - <<: *_file
-          ocn_filename: ocn.pert.ens.3.2018-04-15T00:00:00Z.PT0S.nc
-          ice_filename: ice.pert.ens.3.2018-04-15T00:00:00Z.PT0S.nc
+          ocn_filename: ocn.enspert.ens.3.2018-04-15T00:00:00Z.PT0S.nc
+          ice_filename: ice.enspert.ens.3.2018-04-15T00:00:00Z.PT0S.nc
         - <<: *_file
-          ocn_filename: ocn.pert.ens.4.2018-04-15T00:00:00Z.PT0S.nc
-          ice_filename: ice.pert.ens.4.2018-04-15T00:00:00Z.PT0S.nc
+          ocn_filename: ocn.enspert.ens.4.2018-04-15T00:00:00Z.PT0S.nc
+          ice_filename: ice.enspert.ens.4.2018-04-15T00:00:00Z.PT0S.nc
         localization:
           localization method: SABER
           saber block:
@@ -111,7 +112,7 @@ cost function:
             input variables: [socn, tocn, ssh]
             output variables: [socn, tocn, ssh]
             bump:
-              datadir: ./bump
+              datadir: data_generated/parameters_bump_loc
               prefix: soca_bump_loc
               method: loc
               strategy: common
@@ -124,8 +125,8 @@ cost function:
     observers:
     - obs space:
         name: ADT
-        obsdataout: {obsfile: ./Data/adt.out.nc}
-        obsdatain:  {obsfile: ./Data/adt.nc}
+        obsdataout: {obsfile: data_generated/3dhybfgat/adt.3dhybfgat.nc}
+        obsdatain:  {obsfile: data_static/obs/adt.nc}
         simulated variables: [absolute_dynamic_topography]
       obs operator:
         name: ADT
@@ -136,23 +137,21 @@ variational:
   minimizer:
     algorithm: RPCG
   iterations:
-  - geometry:
-      mom6_input_nml: ./inputnml/input.nml
-      fields metadata: ./fields_metadata.yml
+  - geometry: *geom
     linear model:
       name: Identity
       increment variables: *soca_vars
       variable change: Identity
       tstep: PT1H
-    ninner: 1
+    ninner: 5
     gradient norm reduction: 1e-15
     test: on
     diagnostics:
       departures: ombg
 
 output:
-  datadir: Data
-  exp: 3dvarfgat
+  datadir: data_generated/3dhybfgat
+  exp: 3dhybfgat
   type: an
 
 final:
@@ -162,3 +161,4 @@ final:
 test:
   reference filename: testref/3dhybfgat.test
   test output filename: testoutput/3dhybfgat.test
+  float relative tolerance: 1e-4
