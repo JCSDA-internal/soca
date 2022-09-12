@@ -14,10 +14,8 @@ state test:
     state variables: &soca_vars [cicen, hicen, socn, tocn, ssh, hocn, sw, lhf, shf, lw, us, mld, layer_depth]
     remap_filename: data_static/72x35x25/restarts/MOM.res.nc
 
-  obsdatain:
-    engine:
-      type: GenList
-      analytic init:
+  state generate:
+    analytic init:
       method: 'soca_ana_init'
 
     date: *date
