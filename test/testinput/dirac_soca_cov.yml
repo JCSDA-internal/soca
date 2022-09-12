@@ -91,3 +91,4 @@ output dirac:
 test:
   reference filename: testref/dirac_soca_cov.test
   test output filename: testoutput/dirac_soca_cov.test
+  float relative tolerance: 1e-5

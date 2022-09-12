@@ -52,3 +52,4 @@ ensemble:
 test:
   reference filename: testref/ensvariance.test
   test output filename: testoutput/ensvariance.test
+  float relative tolerance: 1e-5

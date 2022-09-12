@@ -39,4 +39,4 @@ increments:
 test:
   reference filename: testref/convertincrement.test
   test output filename: testoutput/convertincrement.test
-  float relative tolerance: 1e-5
+  float relative tolerance: 1e-4

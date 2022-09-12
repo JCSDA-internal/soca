@@ -179,4 +179,4 @@ final:
 test:
   reference filename: testref/3dvarbump.test
   test output filename: testoutput/3dvarbump.test
-  float relative tolerance: 1e-5
+  float relative tolerance: 1e-4
