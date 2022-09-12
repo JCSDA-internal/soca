@@ -34,6 +34,7 @@ type, public :: soca_bkgerrgodas
   real(kind=kind_real), private     :: t_dz           !< For rescaling of the vertical gradient
   real(kind=kind_real), private     :: t_efold        !< E-folding scale for surf based T min
   real(kind=kind_real), private     :: ssh_phi_ex     !< latitude scale of ssh error
+  character(len=:), allocatable     :: sst_bgerr_file
 
 contains
 
@@ -74,6 +75,7 @@ subroutine soca_bkgerrgodas_setup(self, f_conf, bkg, geom)
   call f_conf%get_or_die("t_dz", self%t_dz)
   call f_conf%get_or_die("t_efold", self%t_efold)
   call f_conf%get_or_die("ssh_phi_ex", self%ssh_phi_ex)
+  if(.not. f_conf%get("sst_bgerr_file", self%sst_bgerr_file)) self%sst_bgerr_file = 'godas_sst_bgerr.nc'
 
   ! Associate background and geometry
   self%bkg => bkg
@@ -170,8 +172,7 @@ subroutine soca_bkgerrgodas_tocn(self)
   allocate(sig1(self%geom%nzo), sig2(self%geom%nzo))
 
   ! Initialize sst background error to previously computed std of omb's
-  ! Currently hard-coded to read GODAS file
-  call sst%init(domain)
+  call sst%init(domain, self%sst_bgerr_file)
   call sst%bin(self%geom%lon, self%geom%lat)
 
   call self%bkg%get("tocn", tocn_b)

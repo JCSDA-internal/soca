@@ -10,13 +10,14 @@ cost function:
   window begin: 2018-04-14T00:00:00Z
   window length: P2D
   analysis variables: &soca_vars [cicen, hicen, hsnon, socn, tocn, ssh, hocn, sw, lhf, shf, lw, us, mld, layer_depth]
-  geometry:
-    mom6_input_nml: ./inputnml/input.nml
-    fields metadata: ./fields_metadata.yml
+  geometry: &geom
+    geom_grid_file: data_generated/gridgen/soca_gridspec.72x35x25.nc
+    mom6_input_nml: data_static/72x35x25/input.nml
+    fields metadata: data_static/fields_metadata.yml
 
   background:
     read_from_file: 1
-    basename: ./INPUT/
+    basename: data_static/72x35x25/restarts/
     ocn_filename: MOM.res.nc
     ice_filename: cice.res.nc
     sfc_filename: sfc.res.nc
@@ -29,7 +30,7 @@ cost function:
     date: *bkg_date
     bump:
       verbosity: main
-      datadir: ./bump
+      datadir: data_generated/static_socaerror_init
       strategy: specific_univariate
       load_nicas_local: true
     correlation:
@@ -48,6 +49,7 @@ cost function:
         efold_z: 2500.0       # [m]
 
       - linear variable change name: BkgErrGODAS
+        sst_bgerr_file: data_static/godas_sst_bgerr.nc
         t_min: 0.1
         t_max: 2.0
         t_dz:  20.0
@@ -74,7 +76,7 @@ cost function:
         dtdzmin: 1.0e-6
         nlayers: 2
         dcdt:
-          filename: ./Data/kmask.nc
+          filename: data_static/72x35x25/dcdt.nc
           name: dcdt
 
   observations:
@@ -84,11 +86,11 @@ cost function:
         obsdataout:
           engine:
             type: H5File
-            obsfile: ./Data/sst.coolskin.out.nc
+            obsfile: data_generated/3dvar_godas/sst_coolskin.3dvar_godas.nc
         obsdatain:
           engine:
             type: H5File
-            obsfile: ./Data/sst.nc
+            obsfile: data_static/obs/sst.nc
         simulated variables: [sea_surface_temperature]
       obs operator:
         name: CoolSkin
@@ -100,11 +102,11 @@ cost function:
         obsdataout:
           engine:
             type: H5File
-            obsfile: ./Data/sst.out.nc
+            obsfile: data_generated/3dvar_godas/sst.3dvar_godas.nc
         obsdatain:
           engine:
             type: H5File
-            obsfile: ./Data/sst.nc
+            obsfile: data_static/obs/sst.nc
         simulated variables: [sea_surface_temperature]
       obs operator:
         name: Identity
@@ -121,11 +123,11 @@ cost function:
         obsdataout:
           engine:
             type: H5File
-            obsfile: ./Data/sss.out.nc
+            obsfile: data_generated/3dvar_godas/sss.3dvar_godas.nc
         obsdatain:
           engine:
             type: H5File
-            obsfile: ./Data/sss.nc
+            obsfile: data_static/obs/sss.nc
         simulated variables: [sea_surface_salinity]
       obs operator:
         name: Identity
@@ -146,11 +148,11 @@ cost function:
         obsdataout:
           engine:
             type: H5File
-            obsfile: ./Data/adt.out.nc
+            obsfile: data_generated/3dvar_godas/adt.3dvar_godas.nc
         obsdatain:
           engine:
             type: H5File
-            obsfile: ./Data/adt.nc
+            obsfile: data_static/obs/adt.nc
         simulated variables: [absolute_dynamic_topography]
       obs operator:
         name: ADT
@@ -177,11 +179,11 @@ cost function:
         obsdataout:
           engine:
             type: H5File
-            obsfile: ./Data/prof.T.out.nc
+            obsfile: data_generated/3dvar_godas/prof_T.3dvar_godas.nc
         obsdatain:
           engine:
             type: H5File
-            obsfile: ./Data/prof.nc
+            obsfile: data_static/obs/prof.nc
         simulated variables: [sea_water_temperature]
       obs operator:
         name: InsituTemperature
@@ -197,11 +199,11 @@ cost function:
         obsdataout:
           engine:
             type: H5File
-            obsfile: ./Data/prof.S.out.nc
+            obsfile: data_generated/3dvar_godas/prof_S.3dvar_godas.nc
         obsdatain:
           engine:
             type: H5File
-            obsfile: ./Data/prof.nc
+            obsfile: data_static/obs/prof.nc
         simulated variables: [sea_water_salinity]
       obs operator:
         name: MarineVertInterp
@@ -215,11 +217,11 @@ cost function:
         obsdataout:
           engine:
             type: H5File
-            obsfile: ./Data/icec.out.nc
+            obsfile: data_generated/3dvar_godas/icec.3dvar_godas.nc
         obsdatain:
           engine:
             type: H5File
-            obsfile: ./Data/icec.nc
+            obsfile: data_static/obs/icec.nc
         simulated variables: [sea_ice_area_fraction]
       obs operator:
         name: Identity
@@ -232,9 +234,7 @@ variational:
   minimizer:
     algorithm: RPCG
   iterations:
-  - geometry:
-      mom6_input_nml: ./inputnml/input.nml
-      fields metadata: ./fields_metadata.yml
+  - geometry: *geom
     ninner: 5
     gradient norm reduction: 1e-15
     test: on
@@ -243,14 +243,14 @@ variational:
     online diagnostics:
       write increment: true
       increment:
-        datadir: Data
+        datadir: data_generated/3dvar_godas
         date: *bkg_date
-        exp: 3dvargodas.iter1
+        exp: 3dvar_godas.iter1
         type: incr
 
 output:
-  datadir: Data
-  exp: 3dvargodas
+  datadir: data_generated/3dvar_godas
+  exp: 3dvar_godas
   type: an
 
 final:

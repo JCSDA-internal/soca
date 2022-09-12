@@ -10,13 +10,14 @@ cost function:
   window begin: &date_begin 2018-04-14T00:00:00Z
   window length: P2D
   analysis variables: &a_vars [cicen, hicen, socn, tocn, ssh, sw, lhf, shf, lw, us, chl, biop, swh]
-  geometry:
-    mom6_input_nml: ./inputnml/input.nml
-    fields metadata: ./fields_metadata.yml
+  geometry: &geom
+    geom_grid_file: data_generated/gridgen/soca_gridspec.72x35x25.nc
+    mom6_input_nml: data_static/72x35x25/input.nml
+    fields metadata: data_static/fields_metadata.yml
 
   background:
     read_from_file: 1
-    basename: ./INPUT/
+    basename: data_static/72x35x25/restarts/
     ocn_filename: MOM.res.nc
     ice_filename: cice.res.nc
     sfc_filename: sfc.res.nc
@@ -30,7 +31,7 @@ cost function:
     date: 2018-04-15T00:00:00Z
     bump:
       verbosity: main
-      datadir: ./bump
+      datadir: data_generated/static_socaerror_init
       strategy: specific_univariate
       load_nicas_local: true
     correlation:
@@ -53,7 +54,7 @@ cost function:
 
       - linear variable change name: BkgErrSOCA
         read_from_file: 3
-        basename: ./
+        basename: data_static/72x35x25/
         ocn_filename: ocn.bkgerror.nc
         ice_filename: ice.bkgerror.nc
         wav_filename: wav.bkgerror.nc
@@ -89,7 +90,7 @@ cost function:
         dtdzmin: 1.0e-6
         nlayers: 10
         dcdt:
-          filename: ./Data/kmask.nc
+          filename: data_static/72x35x25/dcdt.nc
           name: dcdt
 
   observations:
@@ -99,11 +100,11 @@ cost function:
         obsdataout:
           engine:
             type: H5File
-            obsfile: ./Data/sst.coolskin.out.nc
+            obsfile: data_generated/3dvar_soca/sst_coolskin.3dvar_soca.nc
         obsdatain:
           engine:
             type: H5File
-            obsfile: ./Data/sst.nc
+            obsfile: data_static/obs/sst.nc
         simulated variables: [sea_surface_temperature]
       obs operator:
         name: CoolSkin
@@ -120,11 +121,11 @@ cost function:
         obsdataout:
           engine:
             type: H5File
-            obsfile: ./Data/sst.out.nc
+            obsfile: data_generated/3dvar_soca/sst.3dvar_soca.nc
         obsdatain:
           engine:
             type: H5File
-            obsfile: ./Data/sst.nc
+            obsfile: data_static/obs/sst.nc
         simulated variables: [sea_surface_temperature]
       obs operator:
         name: Identity
@@ -146,11 +147,11 @@ cost function:
         obsdataout:
           engine:
             type: H5File
-            obsfile: ./Data/sss.out.nc
+            obsfile: data_generated/3dvar_soca/sss.3dvar_soca.nc
         obsdatain:
           engine:
             type: H5File
-            obsfile: ./Data/sss.nc
+            obsfile: data_static/obs/sss.nc
         simulated variables: [sea_surface_salinity]
       obs operator:
         name: Identity
@@ -171,11 +172,11 @@ cost function:
         obsdataout:
           engine:
             type: H5File
-            obsfile: ./Data/adt.out.nc
+            obsfile: data_generated/3dvar_soca/adt.3dvar_soca.nc
         obsdatain:
           engine:
             type: H5File
-            obsfile: ./Data/adt.nc
+            obsfile: data_static/obs/adt.nc
         simulated variables: [absolute_dynamic_topography]
       obs operator:
         name: ADT
@@ -192,11 +193,11 @@ cost function:
         obsdataout:
           engine:
             type: H5File
-            obsfile: ./Data/prof.T.out.nc
+            obsfile: data_generated/3dvar_soca/prof_T.3dvar_soca.nc
         obsdatain:
           engine:
             type: H5File
-            obsfile: ./Data/prof.nc
+            obsfile: data_static/obs/prof.nc
         simulated variables: [sea_water_temperature]
       obs operator:
         name: InsituTemperature
@@ -212,11 +213,11 @@ cost function:
         obsdataout:
           engine:
             type: H5File
-            obsfile: ./Data/prof.S.out.nc
+            obsfile: data_generated/3dvar_soca/prof_S.3dvar_soca.nc
         obsdatain:
           engine:
             type: H5File
-            obsfile: ./Data/prof.nc
+            obsfile: data_static/obs/prof.nc
         simulated variables: [sea_water_salinity]
       obs operator:
         name: MarineVertInterp
@@ -230,11 +231,11 @@ cost function:
         obsdataout:
           engine:
             type: H5File
-            obsfile: ./Data/icec.out.nc
+            obsfile: data_generated/3dvar_soca/icec.3dvar_soca.nc
         obsdatain:
           engine:
             type: H5File
-            obsfile: ./Data/icec.nc
+            obsfile: data_static/obs/icec.nc
         simulated variables: [sea_ice_area_fraction]
       obs operator:
         name: Identity
@@ -248,11 +249,11 @@ cost function:
         obsdataout:
           engine:
             type: H5File
-            obsfile: ./Data/chl.out.nc
+            obsfile: data_generated/3dvar_soca/chl.3dvar_soca.nc
         obsdatain:
           engine:
             type: H5File
-            obsfile: ./Data/chl.nc
+            obsfile: data_static/obs/chl.nc
         simulated variables: [sea_surface_chlorophyll]
       obs operator:
         name: Identity
@@ -290,11 +291,11 @@ cost function:
         obsdataout:
           engine:
             type: H5File
-            obsfile: ./Data/biomass_p.out.nc
+            obsfile: data_generated/3dvar_soca/biomass_p.3dvar_soca.nc
         obsdatain:
           engine:
             type: H5File
-            obsfile: ./Data/biomass_p.nc
+            obsfile: data_static/obs/biomass_p.nc
         simulated variables: [sea_surface_biomass_in_p_units]
       obs operator:
         name: Identity
@@ -308,11 +309,11 @@ cost function:
         obsdataout:
           engine:
             type: H5File
-            obsfile: ./Data/swh.out.nc
+            obsfile: data_generated/3dvar_soca/swh.3dvar_soca.nc
         obsdatain:
           engine:
             type: H5File
-            obsfile: ./Data/swh.nc
+            obsfile: data_static/obs/swh.nc
         simulated variables: [sea_surface_wave_significant_height]
       obs operator:
         name: Identity
@@ -325,9 +326,7 @@ variational:
   minimizer:
     algorithm: RPCG
   iterations:
-  - geometry:
-      mom6_input_nml: ./inputnml/input.nml
-      fields metadata: ./fields_metadata.yml
+  - geometry: *geom
     ninner: 5
     gradient norm reduction: 1e-15
     test: on
@@ -336,14 +335,14 @@ variational:
     online diagnostics:
       write increment: true
       increment:
-        datadir: Data
+        datadir: data_generated/3dvar_soca
         date: *bkg_date
-        exp: 3dvarsoca.iter1
+        exp: 3dvar_soca.iter1
         type: incr
 
 output:
-  datadir: Data
-  exp: 3dvarsoca
+  datadir: data_generated/3dvar_soca
+  exp: 3dvar_soca
   type: an
 
 final:
@@ -353,3 +352,4 @@ final:
 test:
   reference filename: testref/3dvar_soca.test
   test output filename: testoutput/3dvar_soca.test
+  float relative tolerance: 1e-4

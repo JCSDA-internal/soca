@@ -1,6 +1,7 @@
 geometry:
-  mom6_input_nml: ./inputnml/input.nml
-  fields metadata: ./fields_metadata.yml
+  geom_grid_file: data_generated/gridgen/soca_gridspec.72x35x25.nc
+  mom6_input_nml: data_static/72x35x25/input.nml
+  fields metadata: data_static/fields_metadata.yml
 
 model:
   name: PseudoModel
@@ -8,22 +9,22 @@ model:
   state variables: &soca_vars [socn, tocn, ssh, hocn, uocn, vocn]
   states:
   - date: 2018-04-15T01:00:00Z
-    basename: ./Data/
-    ocn_filename: ocn.mom6.fc.2018-04-15T00:00:00Z.PT1H.nc
+    basename: data_generated/forecast_mom6/
+    ocn_filename: ocn.forecast_mom6.fc.2018-04-15T00:00:00Z.PT1H.nc
     read_from_file: 1
   - date: 2018-04-15T02:00:00Z
-    basename: ./Data/
-    ocn_filename: ocn.mom6.fc.2018-04-15T00:00:00Z.PT2H.nc
+    basename: data_generated/forecast_mom6/
+    ocn_filename: ocn.forecast_mom6.fc.2018-04-15T00:00:00Z.PT2H.nc
     read_from_file: 1
   - date: 2018-04-15T03:00:00Z
-    basename: ./Data/
-    ocn_filename: ocn.mom6.fc.2018-04-15T00:00:00Z.PT3H.nc
+    basename: data_generated/forecast_mom6/
+    ocn_filename: ocn.forecast_mom6.fc.2018-04-15T00:00:00Z.PT3H.nc
     read_from_file: 1
 
 initial condition:
   read_from_file: 1
   date: 2018-04-15T00:00:00Z
-  basename: ./INPUT/
+  basename: data_static/72x35x25/restarts/
   ocn_filename: MOM.res.nc
   state variables: *soca_vars
 
@@ -38,11 +39,11 @@ observations:
       obsdataout:
         engine:
           type: H5File
-          obsfile: ./Data/sst.out.nc
+          obsfile: data_generated/hofx_4d_pseudo/sst.hofx_4d_pseudo.nc
       obsdatain:
         engine:
           type: H5File
-          obsfile: ./Data/sst.nc
+          obsfile: data_static/obs/sst.nc
       simulated variables: [sea_surface_temperature]
     obs operator:
       name: Identity
@@ -52,11 +53,11 @@ observations:
       obsdataout:
         engine:
           type: H5File
-          obsfile: ./Data/sss.out.nc
+          obsfile: data_generated/hofx_4d_pseudo/sss.hofx_4d_pseudo.nc
       obsdatain:
         engine:
           type: H5File
-          obsfile: ./Data/sss.nc
+          obsfile: data_static/obs/sss.nc
       simulated variables: [sea_surface_salinity]
     obs operator:
       name: Identity
@@ -66,11 +67,11 @@ observations:
       obsdataout:
         engine:
           type: H5File
-          obsfile: ./Data/adt.out.nc
+          obsfile: data_generated/hofx_4d_pseudo/adt.hofx_4d_pseudo.nc
       obsdatain:
         engine:
           type: H5File
-          obsfile: ./Data/adt.nc
+          obsfile: data_static/obs/adt.nc
       simulated variables: [absolute_dynamic_topography]
     obs operator:
       name: ADT
@@ -80,11 +81,11 @@ observations:
       obsdataout:
         engine:
           type: H5File
-          obsfile: ./Data/prof.T.out.nc
+          obsfile: data_generated/hofx_4d_pseudo/prof_T.hofx_4d_pseudo.nc
       obsdatain:
         engine:
           type: H5File
-          obsfile: ./Data/prof.nc
+          obsfile: data_static/obs/prof.nc
       simulated variables: [sea_water_temperature]
     obs operator:
       name: InsituTemperature
@@ -94,11 +95,11 @@ observations:
       obsdataout:
         engine:
           type: H5File
-          obsfile: ./Data/prof.S.out.nc
+          obsfile: data_generated/hofx_4d_pseudo/prof_S.hofx_4d_pseudo.nc
       obsdatain:
         engine:
           type: H5File
-          obsfile: ./Data/prof.nc
+          obsfile: data_static/obs/prof.nc
       simulated variables: [sea_water_salinity]
     obs operator:
       name: MarineVertInterp

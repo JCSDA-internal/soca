@@ -1,7 +1,7 @@
 geometry:
-  geom_grid_file: soca_gridspec.small.nc
-  mom6_input_nml: ./inputnml/input_small.nml
-  fields metadata: ./fields_metadata.yml
+  geom_grid_file: data_static/36x17x25/soca_gridspec.nc
+  mom6_input_nml: data_static/36x17x25/input.nml
+  fields metadata: data_static/fields_metadata.yml
   iterator dimension: 3
 
 window begin: 2018-04-14T00:00:00Z
@@ -16,7 +16,7 @@ observations:
     obsdatain:
       engine:
         type: H5File
-        obsfile: ./Data/prof.nc
+        obsfile: data_static/obs/prof.nc
   obs localizations:
   - localization method: Vertical localization
     vertical lengthscale: 100
@@ -39,7 +39,7 @@ observations:
     obsdatain:
       engine:
         type: H5File
-        obsfile: ./Data/prof.nc
+        obsfile: data_static/obs/prof.nc
   obs localizations:
   - localization method: Vertical localization
     vertical lengthscale: 100
@@ -62,14 +62,14 @@ observations:
     obsdatain:
       engine:
         type: H5File
-        obsfile: ./Data/prof.nc
+        obsfile: data_static/obs/prof.nc
   obs localizations:
   - localization method: Vertical localization
     vertical lengthscale: 100
     ioda vertical coordinate: depth
     ioda vertical coordinate group: MetaData
     localization function: Box Car
-    apply log transformation: true 
+    apply log transformation: true
     reference gridpoints:
       lons: [-175.0, -175.0, -175.0, -175.0]
       lats: [ -40.0, -40.0, -40.0, -40.0]
@@ -86,7 +86,7 @@ observations:
     obsdatain:
       engine:
         type: H5File
-        obsfile: ./Data/sst.nc
+        obsfile: data_static/obs/sst.nc
   obs localizations:
   - localization method: Vertical localization
     vertical lengthscale: 50
@@ -100,4 +100,4 @@ observations:
     reference local nobs: [201, 201, 0]
     reference rms: [1.0, 1.0, 1.0]
 
- 
+

@@ -46,10 +46,14 @@ cost function:
           engine:
             type: H5File
             obsfile: ./Data/zero_ob.out.nc
+            engine:
+            type: H5File
         obsdatain:
           engine:
             type: H5File
             obsfile: ./Data/zero_ob.nc
+            engine:
+            type: H5File
         simulated variables: [sea_surface_temperature]
       obs operator:
         name: Identity

@@ -3,8 +3,9 @@ window length: PT2H
 forecast length: PT2H
 
 geometry:
-  mom6_input_nml: ./inputnml/input.nml
-  fields metadata: ./fields_metadata.yml
+  geom_grid_file: data_generated/gridgen/soca_gridspec.72x35x25.nc
+  mom6_input_nml: data_static/72x35x25/input.nml
+  fields metadata: data_static/fields_metadata.yml
 
 model:
   name: MOM6solo
@@ -16,11 +17,11 @@ initial condition:
   _: &state
     date: 2018-04-15T06:00:00Z
     read_from_file: 1
-    basename: ./Data/
-    ice_filename: ../INPUT/cice.res.nc
+    basename: data_static/72x35x25/
+    ice_filename: restarts/cice.res.nc
     state variables: [cicen, hicen, socn, tocn, ssh, hocn, sw, lhf, shf, lw, us]
   <<: *state
-  ocn_filename: ../Data/ocn.pert.ens.1.2018-04-15T00:00:00Z.PT0S.nc
+  ocn_filename: restarts_ens/ocn.enspert.ens.1.2018-04-15T00:00:00Z.PT0S.nc
 
 observations:
   observers:
@@ -33,7 +34,7 @@ observations:
       obsdatain:
         engine:
           type: H5File
-          obsfile: ./Data/sst.nc
+          obsfile: data_static/obs/sst.nc
       simulated variables: [sea_surface_temperature]
     obs operator:
       name: CoolSkin
@@ -47,7 +48,7 @@ observations:
       obsdatain:
         engine:
           type: H5File
-          obsfile: ./Data/sst.nc
+          obsfile: data_static/obs/sst.nc
       simulated variables: [sea_surface_temperature]
     obs operator:
       name: Identity
@@ -61,7 +62,7 @@ observations:
       obsdatain:
         engine:
           type: H5File
-          obsfile: ./Data/sss.nc
+          obsfile: data_static/obs/sss.nc
       simulated variables: [sea_surface_salinity]
     obs operator:
       name: Identity
@@ -75,7 +76,7 @@ observations:
       obsdatain:
         engine:
           type: H5File
-          obsfile: ./Data/adt.nc
+          obsfile: data_static/obs/adt.nc
       simulated variables: [absolute_dynamic_topography]
     obs operator:
       name: ADT
@@ -89,7 +90,7 @@ observations:
       obsdatain:
         engine:
           type: H5File
-          obsfile: ./Data/prof.nc
+          obsfile: data_static/obs/prof.nc
       simulated variables: [sea_water_temperature]
     obs operator:
       name: InsituTemperature
@@ -103,7 +104,7 @@ observations:
       obsdatain:
         engine:
           type: H5File
-          obsfile: ./Data/prof.nc
+          obsfile: data_static/obs/prof.nc
       simulated variables: [sea_water_salinity]
     obs operator:
       name: MarineVertInterp
@@ -117,7 +118,7 @@ observations:
       obsdatain:
         engine:
           type: H5File
-          obsfile: ./Data/icec.nc
+          obsfile: data_static/obs/icec.nc
       simulated variables: [sea_ice_area_fraction]
     obs operator:
       name: SeaIceFraction

@@ -1,16 +1,16 @@
 CostJb   : Nonlinear Jb = 0.0000000000000000e+00
-CostJo   : Nonlinear Jo(SeaSurfaceTemp) = 3.3393856011143504e+02, nobs = 43, Jo/n = 7.7660130258473261e+00, err = 3.8581536591328441e-01
-CostJo   : Nonlinear Jo(SeaSurfaceSalinity) = 1.7511224050620218e+00, nobs = 15, Jo/n = 1.1674149367080146e-01, err = 1.0000000000000000e+00
-CostJo   : Nonlinear Jo(ADT) = 7.9943052275352528e+01, nobs = 29, Jo/n = 2.7566569750121563e+00, err = 1.0000000149011612e-01
-CostJo   : Nonlinear Jo(InsituTemperature) = 3.3681880352825779e+01, nobs = 30, Jo/n = 1.1227293450941926e+00, err = 9.1590378547213480e-01
-CostJo   : Nonlinear Jo(InsituSalinity) = 1.5802471266581922e+01, nobs = 33, Jo/n = 4.7886276565399760e-01, err = 6.1042996877640276e-01
-CostFunction: Nonlinear J = 4.6511708641125722e+02
-RPCGMinimizer: reduction in residual norm = 7.9711721723331319e-01
+CostJo   : Nonlinear Jo(SeaSurfaceTemp) = 3.3393856011143509e+02, nobs = 43, Jo/n = 7.7660130258473279e+00, err = 3.8581536591328441e-01
+CostJo   : Nonlinear Jo(SeaSurfaceSalinity) = 1.7511224050620187e+00, nobs = 15, Jo/n = 1.1674149367080125e-01, err = 1.0000000000000000e+00
+CostJo   : Nonlinear Jo(ADT) = 7.9943052275353736e+01, nobs = 29, Jo/n = 2.7566569750121976e+00, err = 1.0000000149011612e-01
+CostJo   : Nonlinear Jo(InsituTemperature) = 3.3681880352825800e+01, nobs = 30, Jo/n = 1.1227293450941933e+00, err = 9.1590378547213480e-01
+CostJo   : Nonlinear Jo(InsituSalinity) = 1.5802471266581930e+01, nobs = 33, Jo/n = 4.7886276565399788e-01, err = 6.1042996877640276e-01
+CostFunction: Nonlinear J = 4.6511708641125853e+02
+RPCGMinimizer: reduction in residual norm = 2.2486237347831350e-01
 CostFunction::addIncrement: Analysis: 
   Valid time: 2018-04-15T00:00:00Z
-   socn   min=10.7210460395083924   max=40.4416591897031168   mean=34.5661140629096124
-   tocn   min=-1.8883899372702533   max=31.7004645720658580   mean=6.0181475162495763
-    ssh   min=-2.2941019247589938   max=0.8863617925909757   mean=-0.3325653192952741
+   socn   min=10.7210460395083924   max=40.4416591897031168   mean=34.5570586407169031
+   tocn   min=-1.8883899372702533   max=31.7004645720658580   mean=6.0316382198181726
+    ssh   min=-2.0802612779741567   max=1.1445547302729657   mean=-0.3641342573345958
    hocn   min=0.0009999999999977   max=1345.6400000000003274   mean=128.6280642065023017
    uocn   min=-0.8581693992488438   max=0.7000954286848975   mean=-0.0002591771954069
    vocn   min=-0.7661101215480253   max=1.4377766409421606   mean=0.0021972630399530
@@ -23,10 +23,10 @@ layer_depth   min=2.2854716757984130   max=5658.3057467114012979   mean=1200.522
 
 
 
-CostJb   : Nonlinear Jb = 873.1153865050522427
-CostJo   : Nonlinear Jo(SeaSurfaceTemp) = 328.3086666226721491, nobs = 43, Jo/n = 7.6350852702947014, err = 0.3858153659132844
-CostJo   : Nonlinear Jo(SeaSurfaceSalinity) = 1.7511224050620218, nobs = 15, Jo/n = 0.1167414936708015, err = 1.0000000000000000
-CostJo   : Nonlinear Jo(ADT) = 51.4946269791232254, nobs = 29, Jo/n = 1.7756767923835595, err = 0.1000000014901161
-CostJo   : Nonlinear Jo(InsituTemperature) = 33.6818803528257789, nobs = 30, Jo/n = 1.1227293450941926, err = 0.9159037854721348
-CostJo   : Nonlinear Jo(InsituSalinity) = 15.8024712665819216, nobs = 33, Jo/n = 0.4788627656539976, err = 0.6104299687764028
-CostFunction: Nonlinear J = 1304.1541541313172274
+CostJb   : Nonlinear Jb = 1844.0360511188696364
+CostJo   : Nonlinear Jo(SeaSurfaceTemp) = 327.5987017842437581, nobs = 43, Jo/n = 7.6185744600986922, err = 0.3858153659132844
+CostJo   : Nonlinear Jo(SeaSurfaceSalinity) = 1.7511224050620187, nobs = 15, Jo/n = 0.1167414936708012, err = 1.0000000000000000
+CostJo   : Nonlinear Jo(ADT) = 43.2408459382302439, nobs = 29, Jo/n = 1.4910636530424222, err = 0.1000000014901161
+CostJo   : Nonlinear Jo(InsituTemperature) = 33.6818803528258002, nobs = 30, Jo/n = 1.1227293450941933, err = 0.9159037854721348
+CostJo   : Nonlinear Jo(InsituSalinity) = 15.8024712665819305, nobs = 33, Jo/n = 0.4788627656539979, err = 0.6104299687764028
+CostFunction: Nonlinear J = 2266.1110728658131848
