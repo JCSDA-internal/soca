@@ -1,7 +1,7 @@
 geometry:
-  geom_grid_file: soca_gridspec.small.nc
-  mom6_input_nml: ./inputnml/input_small.nml
-  fields metadata: ./fields_metadata.yml
+  geom_grid_file: data_static/36x17x25/soca_gridspec.nc
+  mom6_input_nml: data_static/36x17x25/input.nml
+  fields metadata: data_static/fields_metadata.yml
   iterator dimension: 3
 
 window begin: 2018-04-14T00:00:00Z
@@ -13,7 +13,7 @@ observations:
     distribution:
       name: InefficientDistribution
     simulated variables: ['sea_water_temperature']
-    obsdatain:  {obsfile: ./Data/prof.nc}
+    obsdatain:  {obsfile: data_static/obs/prof.nc}
   obs localizations:
   - localization method: Horizontal Box car
     lengthscale: 3000e3
@@ -31,4 +31,4 @@ observation localizations reference:
     local nobs: [28, 0, 17]
     rms: [1.0, 1.0, 1.0]
     print iterator: false
- 
+

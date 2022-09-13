@@ -63,7 +63,7 @@ NK = 25                         !   [nondim]
                                 ! The number of model layers.
 
 ! === module MOM_fixed_initialization ===
-INPUTDIR = "INPUT"              ! default = "."
+INPUTDIR = "data_static/72x35x25/INPUT"              ! default = "."
                                 ! The directory in which input files are found.
 
 ! === module MOM_grid_init ===
@@ -588,3 +588,5 @@ FLUXCONST = 0.5                 !   [m day-1]
 ! === module MOM_restart ===
 
 ! === module MOM_file_parser ===
+REPORT_UNUSED_PARAMS = False     !   [Boolean] default = True
+                                 ! If true, report any parameter lines that are not used in the run.

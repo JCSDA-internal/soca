@@ -1,20 +1,20 @@
 geometry:
-  mom6_input_nml: ./inputnml/input_small.nml
-  geom_grid_file: soca_gridspec.small.nc
-  fields metadata: ./fields_metadata.yml
+  geom_grid_file: data_static/36x17x25/soca_gridspec.nc
+  mom6_input_nml: data_static/36x17x25/input.nml
+  fields metadata: data_static/fields_metadata.yml
 
 input variables: [tocn]
 
 background:
   read_from_file: 1
   date: &date 2018-04-15T00:00:00Z
-  basename: ./INPUT_small/
+  basename: data_static/36x17x25/restarts/
   ocn_filename: MOM.res.nc
   state variables:  [socn, tocn, hocn]
 
 bump:
   verbosity: main
-  datadir: ./bump_lowres
+  datadir: data_generated/parameters_bump_cov
   dc: 100.0e3
   method: cor
   strategy: specific_univariate
@@ -33,17 +33,17 @@ bump:
   var_rhflt:
     tocn: [2000.0e3]
   output:
-  - datadir: ./bump_lowres
+  - datadir: data_generated/parameters_bump_cov
     date: *date
     exp: parameters_bump_cov.cor_rh
     parameter: cor_rh
     type: an
-  - datadir: bump_lowres
+  - datadir: data_generated/parameters_bump_cov
     date: *date
     exp: parameters_bump_cov.cor_rv
     parameter: cor_rv
     type: an
-  - datadir: bump_lowres
+  - datadir: data_generated/parameters_bump_cov
     date: *date
     exp: parameters_bump_cov.stddev
     parameter: stddev
@@ -54,8 +54,8 @@ ensemble:
     template:
       read_from_file: 1
       date: *date
-      basename: ./Data/
-      ocn_filename: ocn.pert.lowres.ens.%mem%.2018-04-15T00:00:00Z.PT6H.nc
+      basename: data_static/36x17x25/restarts_ens/
+      ocn_filename: ocn.enspert.lowres.ens.%mem%.2018-04-15T00:00:00Z.PT6H.nc
       state variables:  [tocn, hocn]
     pattern: '%mem%'
     nmembers: 4

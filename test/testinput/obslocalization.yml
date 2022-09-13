@@ -1,6 +1,7 @@
 geometry:
-  mom6_input_nml: ./inputnml/input.nml
-  fields metadata: ./fields_metadata.yml
+  geom_grid_file: data_generated/gridgen/soca_gridspec.72x35x25.nc
+  mom6_input_nml: data_static/72x35x25/input.nml
+  fields metadata: data_static/fields_metadata.yml
   iterator dimension: 2
 
 window begin: 2018-04-14T00:00:00Z
@@ -12,7 +13,7 @@ observations:
     distribution:
       name: InefficientDistribution
     simulated variables: ['sea_surface_temperature']
-    obsdatain:  {obsfile: ./Data/sst.nc}
+    obsdatain:  {obsfile: data_static/obs/sst.nc}
   obs localizations:
   - localization method: Horizontal Box car
     lengthscale: 3000e3
@@ -28,7 +29,7 @@ observations:
     distribution:
       name: InefficientDistribution
     simulated variables: ['sea_surface_temperature']
-    obsdatain:  {obsfile: ./Data/sst.nc}
+    obsdatain:  {obsfile: data_static/obs/sst.nc}
   obs localizations:
   - localization method: Horizontal Gaspari-Cohn
     lengthscale: 3000e3
@@ -44,7 +45,7 @@ observations:
     distribution:
       name: InefficientDistribution
     simulated variables: ['sea_surface_temperature']
-    obsdatain:  {obsfile: ./Data/sst.nc}
+    obsdatain:  {obsfile: data_static/obs/sst.nc}
   obs localizations:
   - localization method: Horizontal SOAR
     lengthscale: 3000e3
@@ -61,7 +62,7 @@ observations:
     distribution:
       name: InefficientDistribution
     simulated variables: ['sea_surface_temperature']
-    obsdatain:  {obsfile: ./Data/sst.nc}
+    obsdatain:  {obsfile: data_static/obs/sst.nc}
   obs localizations:
   - localization method: Rossby
     base value: 500.0e3

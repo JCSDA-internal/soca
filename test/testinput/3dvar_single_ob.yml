@@ -9,27 +9,28 @@ cost function:
   cost type: 3D-Var
   window begin: 2018-04-14T00:00:00Z
   window length: P2D
-  analysis variables: &soca_vars [cicen, hicen, hsnon, socn, tocn, ssh, hocn, sw, lhf, shf, lw, us, mld, layer_depth]
-  geometry:
-    mom6_input_nml: ./inputnml/input.nml
-    fields metadata: ./fields_metadata.yml
+  analysis variables: &a_vars [cicen, hicen, hsnon, socn, tocn, ssh, sw, lhf, shf, lw, us]
+  geometry: &geom
+    geom_grid_file: data_generated/gridgen/soca_gridspec.72x35x25.nc
+    mom6_input_nml: data_static/72x35x25/input.nml
+    fields metadata: data_static/fields_metadata.yml
 
   background:
     read_from_file: 1
-    basename: ./INPUT/
+    basename: data_static/72x35x25/restarts/
     ocn_filename: MOM.res.nc
     ice_filename: cice.res.nc
     sfc_filename: sfc.res.nc
     date: &bkg_date 2018-04-15T00:00:00Z
-    state variables: *soca_vars
+    state variables: &b_vars [cicen, hicen, hsnon, socn, tocn, ssh, hocn, sw, lhf, shf, lw, us, mld, layer_depth]
 
   background error:
     covariance model: SocaError
-    analysis variables: [cicen, hicen, hsnon, socn, tocn, ssh, sw, lhf, shf, lw, us]
+    analysis variables: *a_vars
     date: *bkg_date
     bump:
       verbosity: main
-      datadir: ./bump
+      datadir: data_generated/static_socaerror_init
       strategy: specific_univariate
       load_nicas_local: true
     correlation:
@@ -42,8 +43,8 @@ cost function:
     observers:
     - obs space:
         name: SeaSurfaceTemp
-        obsdataout: {obsfile: ./Data/single_ob.out.nc}
-        obsdatain:  {obsfile: ./Data/single_ob.nc}
+        obsdataout: {obsfile: data_generated/3dvar_single_ob/single_ob.nc}
+        obsdatain:  {obsfile: data_static/obs/single_ob.nc}
         simulated variables: [sea_surface_temperature]
       obs operator:
         name: Identity
@@ -57,25 +58,23 @@ variational:
   minimizer:
     algorithm: RPCG
   iterations:
-  - geometry:
-      mom6_input_nml: ./inputnml/input.nml
-      fields metadata: ./fields_metadata.yml
+  - geometry: *geom
     ninner: 5
-    gradient norm reduction: 1e-15
+    gradient norm reduction: 1e-3
     test: on
     diagnostics:
       departures: ombg
     online diagnostics:
       write increment: true
       increment:
-        datadir: Data
+        datadir: data_generated/3dvar_single_ob
         date: *bkg_date
-        exp: 3dvarsingle.iter1
+        exp: 3dvar_single_ob.iter1
         type: incr
 
 output:
-  datadir: Data
-  exp: 3dvarsingle
+  datadir: data_generated/3dvar_single_ob
+  exp: 3dvar_single_ob
   type: an
 
 final:
