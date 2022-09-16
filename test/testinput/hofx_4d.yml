@@ -25,72 +25,126 @@ observations:
   observers:
   - obs space:
       name: CoolSkin
-      obsdataout: {obsfile: data_generated/hofx_4d/sst_coolskin.hofx_4d.nc}
-      obsdatain:  {obsfile: data_static/obs/sst.nc}
+      obsdataout:
+        engine:
+          type: H5File
+          obsfile: data_generated/hofx_4d/sst_coolskin.hofx_4d.nc
+      obsdatain:
+        engine:
+          type: H5File
+          obsfile: data_static/obs/sst.nc
       simulated variables: [sea_surface_temperature]
     obs operator:
       name: CoolSkin
 
   - obs space:
       name: SeaSurfaceTemp
-      obsdataout: {obsfile: data_generated/hofx_4d/sst.hofx_4d.nc}
-      obsdatain:  {obsfile: data_static/obs/sst.nc}
+      obsdataout:
+        engine:
+          type: H5File
+          obsfile: data_generated/hofx_4d/sst.hofx_4d.nc
+      obsdatain:
+        engine:
+          type: H5File
+          obsfile: data_static/obs/sst.nc
       simulated variables: [sea_surface_temperature]
     obs operator:
       name: Identity
 
   - obs space:
       name: SeaSurfaceSalinity
-      obsdataout: {obsfile: data_generated/hofx_4d/sss.hofx_4d.nc}
-      obsdatain:  {obsfile: data_static/obs/sss.nc}
+      obsdataout:
+        engine:
+          type: H5File
+          obsfile: data_generated/hofx_4d/sss.hofx_4d.nc
+      obsdatain:
+        engine:
+          type: H5File
+          obsfile: data_static/obs/sss.nc
       simulated variables: [sea_surface_salinity]
     obs operator:
       name: Identity
 
   - obs space:
       name: ADT
-      obsdataout: {obsfile: data_generated/hofx_4d/adt.hofx_4d.nc}
-      obsdatain:  {obsfile: data_static/obs/adt.nc}
+      obsdataout:
+        engine:
+          type: H5File
+          obsfile: data_generated/hofx_4d/adt.hofx_4d.nc
+      obsdatain:
+        engine:
+          type: H5File
+          obsfile: data_static/obs/adt.nc
       simulated variables: [absolute_dynamic_topography]
     obs operator:
       name: ADT
 
   - obs space:
       name: InsituTemperature
-      obsdataout: {obsfile: data_generated/hofx_4d/prof_T.hofx_4d.nc}
-      obsdatain:  {obsfile: data_static/obs/prof.nc}
+      obsdataout:
+        engine:
+          type: H5File
+          obsfile: data_generated/hofx_4d/prof_T.hofx_4d.nc
+      obsdatain:
+        engine:
+          type: H5File
+          obsfile: data_static/obs/prof.nc
       simulated variables: [sea_water_temperature]
     obs operator:
       name: InsituTemperature
 
   - obs space:
       name: InsituSalinity
-      obsdataout: {obsfile: data_generated/hofx_4d/prof_S.hofx_4d.nc}
-      obsdatain:  {obsfile: data_static/obs/prof.nc}
+      obsdataout:
+        engine:
+          type: H5File
+          obsfile: data_generated/hofx_4d/prof_S.hofx_4d.nc
+      obsdatain:
+        engine:
+          type: H5File
+          obsfile: data_static/obs/prof.nc
       simulated variables: [sea_water_salinity]
     obs operator:
       name: MarineVertInterp
 
   - obs space:
       name: SeaIceFraction
-      obsdataout: {obsfile: data_generated/hofx_4d/icec.hofx_4d.nc}
-      obsdatain:  {obsfile:  data_static/obs/icec.nc}
+      obsdataout:
+        engine:
+          type: H5File
+          obsfile: data_generated/hofx_4d/icec.hofx_4d.nc
+      obsdatain:
+        engine:
+          type: H5File
+          obsfile: data_static/obs/icec.nc
       simulated variables: [sea_ice_area_fraction]
     obs operator:
       name: SeaIceFraction
 
   - obs space:
       name: SurfaceU
-      obsdataout: {obsfile: data_generated/hofx_4d/uocn_surface.hofx_4d.nc}
-      obsdatain:  {obsfile: data_static/obs/uocn_surface.nc}
+      obsdataout:
+        engine:
+          type: H5File
+          obsfile: data_generated/hofx_4d/uocn_surface.hofx_4d.nc
+      obsdatain:
+        engine:
+          type: H5File
+          obsfile: data_static/obs/uocn_surface.nc
       simulated variables: [surface_eastward_sea_water_velocity]
     obs operator:
       name: Identity
 
   - obs space:
       name: SurfaceV
-      obsdataout: {obsfile: data_generated/hofx_4d/vocn_surface.hofx_4d.nc}
-      obsdatain:  {obsfile: data_static/obs/vocn_surface.nc}
+      obsdataout:
+        engine:
+          type: H5File
+          obsfile: data_generated/hofx_4d/vocn_surface.hofx_4d.nc
+      obsdatain:
+        engine:
+          type: H5File
+          obsfile: data_static/obs/vocn_surface.nc
       simulated variables: [surface_northward_sea_water_velocity]
     obs operator:
       name: Identity

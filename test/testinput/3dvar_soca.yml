@@ -97,8 +97,14 @@ cost function:
     observers:
     - obs space:
         name: CoolSkin
-        obsdataout: {obsfile: data_generated/3dvar_soca/sst_coolskin.3dvar_soca.nc}
-        obsdatain:  {obsfile: data_static/obs/sst.nc}
+        obsdataout:
+          engine:
+            type: H5File
+            obsfile: data_generated/3dvar_soca/sst_coolskin.3dvar_soca.nc
+        obsdatain:
+          engine:
+            type: H5File
+            obsfile: data_static/obs/sst.nc
         simulated variables: [sea_surface_temperature]
       obs operator:
         name: CoolSkin
@@ -112,8 +118,14 @@ cost function:
 
     - obs space:
         name: SeaSurfaceTemp
-        obsdataout: {obsfile: data_generated/3dvar_soca/sst.3dvar_soca.nc}
-        obsdatain:  {obsfile: data_static/obs/sst.nc}
+        obsdataout:
+          engine:
+            type: H5File
+            obsfile: data_generated/3dvar_soca/sst.3dvar_soca.nc
+        obsdatain:
+          engine:
+            type: H5File
+            obsfile: data_static/obs/sst.nc
         simulated variables: [sea_surface_temperature]
       obs operator:
         name: Identity
@@ -132,8 +144,14 @@ cost function:
 
     - obs space:
         name: SeaSurfaceSalinity
-        obsdataout: {obsfile: data_generated/3dvar_soca/sss.3dvar_soca.nc}
-        obsdatain:  {obsfile: data_static/obs/sss.nc}
+        obsdataout:
+          engine:
+            type: H5File
+            obsfile: data_generated/3dvar_soca/sss.3dvar_soca.nc
+        obsdatain:
+          engine:
+            type: H5File
+            obsfile: data_static/obs/sss.nc
         simulated variables: [sea_surface_salinity]
       obs operator:
         name: Identity
@@ -151,8 +169,14 @@ cost function:
 
     - obs space:
         name: ADT
-        obsdataout: {obsfile: data_generated/3dvar_soca/adt.3dvar_soca.nc}
-        obsdatain:  {obsfile: data_static/obs/adt.nc}
+        obsdataout:
+          engine:
+            type: H5File
+            obsfile: data_generated/3dvar_soca/adt.3dvar_soca.nc
+        obsdatain:
+          engine:
+            type: H5File
+            obsfile: data_static/obs/adt.nc
         simulated variables: [absolute_dynamic_topography]
       obs operator:
         name: ADT
@@ -166,8 +190,14 @@ cost function:
 
     - obs space:
         name: InsituTemperature
-        obsdataout: {obsfile: data_generated/3dvar_soca/prof_T.3dvar_soca.nc}
-        obsdatain:  {obsfile: data_static/obs/prof.nc}
+        obsdataout:
+          engine:
+            type: H5File
+            obsfile: data_generated/3dvar_soca/prof_T.3dvar_soca.nc
+        obsdatain:
+          engine:
+            type: H5File
+            obsfile: data_static/obs/prof.nc
         simulated variables: [sea_water_temperature]
       obs operator:
         name: InsituTemperature
@@ -180,8 +210,14 @@ cost function:
 
     - obs space:
         name: InsituSalinity
-        obsdataout: {obsfile: data_generated/3dvar_soca/prof_S.3dvar_soca.nc}
-        obsdatain:  {obsfile: data_static/obs/prof.nc}
+        obsdataout:
+          engine:
+            type: H5File
+            obsfile: data_generated/3dvar_soca/prof_S.3dvar_soca.nc
+        obsdatain:
+          engine:
+            type: H5File
+            obsfile: data_static/obs/prof.nc
         simulated variables: [sea_water_salinity]
       obs operator:
         name: MarineVertInterp
@@ -192,8 +228,14 @@ cost function:
 
     - obs space:
         name: SeaIceFraction
-        obsdataout: {obsfile: data_generated/3dvar_soca/icec.3dvar_soca.nc}
-        obsdatain:  {obsfile: data_static/obs/icec.nc}
+        obsdataout:
+          engine:
+            type: H5File
+            obsfile: data_generated/3dvar_soca/icec.3dvar_soca.nc
+        obsdatain:
+          engine:
+            type: H5File
+            obsfile: data_static/obs/icec.nc
         simulated variables: [sea_ice_area_fraction]
       obs operator:
         name: Identity
@@ -204,8 +246,14 @@ cost function:
 
     - obs space:
         name: SeaSurfaceChlorophyll
-        obsdataout: {obsfile: data_generated/3dvar_soca/chl.3dvar_soca.nc}
-        obsdatain:  {obsfile: data_static/obs/chl.nc}
+        obsdataout:
+          engine:
+            type: H5File
+            obsfile: data_generated/3dvar_soca/chl.3dvar_soca.nc
+        obsdatain:
+          engine:
+            type: H5File
+            obsfile: data_static/obs/chl.nc
         simulated variables: [sea_surface_chlorophyll]
       obs operator:
         name: Identity
@@ -240,8 +288,14 @@ cost function:
 
     - obs space:
         name: SeaSurfaceBiomassP
-        obsdataout: {obsfile: data_generated/3dvar_soca/biomass_p.3dvar_soca.nc}
-        obsdatain:  {obsfile: data_static/obs/biomass_p.nc}
+        obsdataout:
+          engine:
+            type: H5File
+            obsfile: data_generated/3dvar_soca/biomass_p.3dvar_soca.nc
+        obsdatain:
+          engine:
+            type: H5File
+            obsfile: data_static/obs/biomass_p.nc
         simulated variables: [sea_surface_biomass_in_p_units]
       obs operator:
         name: Identity
@@ -252,8 +306,14 @@ cost function:
 
     - obs space:
         name: SeaSurfaceHS
-        obsdataout: {obsfile: data_generated/3dvar_soca/swh.3dvar_soca.nc}
-        obsdatain:  {obsfile: data_static/obs/swh.nc}
+        obsdataout:
+          engine:
+            type: H5File
+            obsfile: data_generated/3dvar_soca/swh.3dvar_soca.nc
+        obsdatain:
+          engine:
+            type: H5File
+            obsfile: data_static/obs/swh.nc
         simulated variables: [sea_surface_wave_significant_height]
       obs operator:
         name: Identity

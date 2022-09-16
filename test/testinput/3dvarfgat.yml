@@ -92,8 +92,14 @@ cost function:
     observers:
     - obs space:
         name: CoolSkin
-        obsdataout: {obsfile: data_generated/3dvarfgat/sst_coolskin.3dvarfgat.nc}
-        obsdatain:  {obsfile: data_static/obs/sst.nc}
+        obsdataout:
+          engine:
+            type: H5File
+            obsfile: data_generated/3dvarfgat/sst_coolskin.3dvarfgat.nc
+        obsdatain:
+          engine:
+            type: H5File
+            obsfile: data_static/obs/sst.nc
         simulated variables: [sea_surface_temperature]
       obs operator:
         name: CoolSkin
@@ -102,8 +108,14 @@ cost function:
 
     - obs space:
         name: SeaSurfaceTemp
-        obsdataout: {obsfile: data_generated/3dvarfgat/sst.3dvarfgat.nc}
-        obsdatain:  {obsfile: data_static/obs/sst.nc}
+        obsdataout:
+          engine:
+            type: H5File
+            obsfile: data_generated/3dvarfgat/sst.3dvarfgat.nc
+        obsdatain:
+          engine:
+            type: H5File
+            obsfile: data_static/obs/sst.nc
         simulated variables: [sea_surface_temperature]
       obs operator:
         name: Identity
@@ -117,8 +129,14 @@ cost function:
 
     - obs space:
         name: SeaSurfaceSalinity
-        obsdataout: {obsfile: data_generated/3dvarfgat/sss.3dvarfgat.nc}
-        obsdatain:  {obsfile: data_static/obs/sss.nc}
+        obsdataout:
+          engine:
+            type: H5File
+            obsfile: data_generated/3dvarfgat/sss.3dvarfgat.nc
+        obsdatain:
+          engine:
+            type: H5File
+            obsfile: data_static/obs/sss.nc
         simulated variables: [sea_surface_salinity]
       obs operator:
         name: Identity
@@ -133,8 +151,14 @@ cost function:
 
     - obs space:
         name: ADT
-        obsdataout: {obsfile: data_generated/3dvarfgat/adt.3dvarfgat.nc}
-        obsdatain:  {obsfile: data_static/obs/adt.nc}
+        obsdataout:
+          engine:
+            type: H5File
+            obsfile: data_generated/3dvarfgat/adt.3dvarfgat.nc
+        obsdatain:
+          engine:
+            type: H5File
+            obsfile: data_static/obs/adt.nc
         simulated variables: [absolute_dynamic_topography]
       obs operator:
         name: ADT
@@ -145,8 +169,14 @@ cost function:
 
     - obs space:
         name: InsituTemperature
-        obsdataout: {obsfile: data_generated/3dvarfgat/prof_T.3dvarfgat.nc}
-        obsdatain:  {obsfile: data_static/obs/prof.nc}
+        obsdataout:
+          engine:
+            type: H5File
+            obsfile: data_generated/3dvarfgat/prof_T.3dvarfgat.nc
+        obsdatain:
+          engine:
+            type: H5File
+            obsfile: data_static/obs/prof.nc
         simulated variables: [sea_water_temperature]
       obs operator:
         name: InsituTemperature
@@ -159,8 +189,14 @@ cost function:
 
     - obs space:
         name: InsituSalinity
-        obsdataout: {obsfile: data_generated/3dvarfgat/prof_S.3dvarfgat.nc}
-        obsdatain:  {obsfile: data_static/obs/prof.nc}
+        obsdataout:
+          engine:
+            type: H5File
+            obsfile: data_generated/3dvarfgat/prof_S.3dvarfgat.nc
+        obsdatain:
+          engine:
+            type: H5File
+            obsfile: data_static/obs/prof.nc
         simulated variables: [sea_water_salinity]
       obs operator:
         name: MarineVertInterp
@@ -171,8 +207,14 @@ cost function:
 
     - obs space:
         name: SeaIceFraction
-        obsdataout: {obsfile: data_generated/3dvarfgat/icec.3dvarfgat.nc}
-        obsdatain:  {obsfile:  data_static/obs/icec.nc}
+        obsdataout:
+          engine:
+            type: H5File
+            obsfile: data_generated/3dvarfgat/icec.3dvarfgat.nc
+        obsdatain:
+          engine:
+            type: H5File
+            obsfile: data_static/obs/icec.nc
         simulated variables: [sea_ice_area_fraction]
       obs operator:
         name: Identity

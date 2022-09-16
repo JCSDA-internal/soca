@@ -31,8 +31,14 @@ observations:
       name: SeaSurfaceTemp
       distribution:
         name: RoundRobin
-      obsdataout: {obsfile: data_generated/letkf_split_observer/sst.letkf_split_observer.nc}
-      obsdatain:  {obsfile: data_static/obs/sst.nc}
+      obsdataout:
+        engine:
+          type: H5File
+          obsfile: data_generated/letkf_split_observer/sst.letkf_split_observer.nc
+      obsdatain:
+        engine:
+          type: H5File
+          obsfile: data_static/obs/sst.nc
       simulated variables: [sea_surface_temperature]
       io pool:
         max pool size: 1

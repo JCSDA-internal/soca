@@ -83,8 +83,14 @@ cost function:
     observers:
     - obs space:
         name: SeaSurfaceTemp
-        obsdataout: {obsfile: data_generated/3dvarlowres_soca/sst.3dvarlowres_soca.nc}
-        obsdatain:  {obsfile: data_static/obs/sst.nc}
+        obsdataout:
+          engine:
+            type: H5File
+            obsfile: data_generated/3dvarlowres_soca/sst.3dvarlowres_soca.nc
+        obsdatain:
+          engine:
+            type: H5File
+            obsfile: data_static/obs/sst.nc
         simulated variables: [sea_surface_temperature]
       obs operator:
         name: Identity
@@ -103,8 +109,14 @@ cost function:
 
     - obs space:
         name: SeaSurfaceSalinity
-        obsdataout: {obsfile: data_generated/3dvarlowres_soca/sss.3dvarlowres_soca.nc}
-        obsdatain:  {obsfile: data_static/obs/sss.nc}
+        obsdataout:
+          engine:
+            type: H5File
+            obsfile: data_generated/3dvarlowres_soca/sss.3dvarlowres_soca.nc
+        obsdatain:
+          engine:
+            type: H5File
+            obsfile: data_static/obs/sss.nc
         simulated variables: [sea_surface_salinity]
       obs operator:
         name: Identity
@@ -119,8 +131,14 @@ cost function:
 
     - obs space:
         name: ADT
-        obsdataout: {obsfile: data_generated/3dvarlowres_soca/adt.3dvarlowres_soca.nc}
-        obsdatain:  {obsfile: data_static/obs/adt.nc}
+        obsdataout:
+          engine:
+            type: H5File
+            obsfile: data_generated/3dvarlowres_soca/adt.3dvarlowres_soca.nc
+        obsdatain:
+          engine:
+            type: H5File
+            obsfile: data_static/obs/adt.nc
         simulated variables: [absolute_dynamic_topography]
       obs operator:
         name: ADT
@@ -135,8 +153,14 @@ cost function:
 
     - obs space:
         name: InsituTemperature
-        obsdataout: {obsfile: data_generated/3dvarlowres_soca/prof_T.3dvarlowres_soca.nc}
-        obsdatain:  {obsfile: data_static/obs/prof.nc}
+        obsdataout:
+          engine:
+            type: H5File
+            obsfile: data_generated/3dvarlowres_soca/prof_T.3dvarlowres_soca.nc
+        obsdatain:
+          engine:
+            type: H5File
+            obsfile: data_static/obs/prof.nc
         simulated variables: [sea_water_temperature]
       obs operator:
         name: InsituTemperature
@@ -149,8 +173,14 @@ cost function:
 
     - obs space:
         name: InsituSalinity
-        obsdataout: {obsfile: data_generated/3dvarlowres_soca/prof_S.3dvarlowres_soca.nc}
-        obsdatain:  {obsfile: data_static/obs/prof.nc}
+        obsdataout:
+          engine:
+            type: H5File
+            obsfile: data_generated/3dvarlowres_soca/prof_S.3dvarlowres_soca.nc
+        obsdatain:
+          engine:
+            type: H5File
+            obsfile: data_static/obs/prof.nc
         simulated variables: [sea_water_salinity]
       obs operator:
         name: MarineVertInterp

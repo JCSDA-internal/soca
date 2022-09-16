@@ -43,8 +43,14 @@ cost function:
     observers:
     - obs space:
         name: SeaSurfaceTemp
-        obsdataout: {obsfile: data_generated/3dvar_single_ob/single_ob.nc}
-        obsdatain:  {obsfile: data_static/obs/single_ob.nc}
+        obsdataout:
+          engine:
+            type: H5File
+            obsfile: data_generated/3dvar_single_ob/single_ob.nc
+        obsdatain:
+          engine:
+            type: H5File
+            obsfile: data_static/obs/single_ob.nc
         simulated variables: [sea_surface_temperature]
       obs operator:
         name: Identity

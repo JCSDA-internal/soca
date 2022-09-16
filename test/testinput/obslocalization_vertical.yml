@@ -13,7 +13,10 @@ observations:
     distribution:
       name: InefficientDistribution
     simulated variables: ['sea_water_temperature']
-    obsdatain:  {obsfile: data_static/obs/prof.nc}
+    obsdatain:
+      engine:
+        type: H5File
+        obsfile: data_static/obs/prof.nc
   obs localizations:
   - localization method: Vertical localization
     vertical lengthscale: 100
@@ -33,7 +36,10 @@ observations:
     distribution:
       name: InefficientDistribution
     simulated variables: ['sea_water_temperature']
-    obsdatain:  {obsfile: data_static/obs/prof.nc}
+    obsdatain:
+      engine:
+        type: H5File
+        obsfile: data_static/obs/prof.nc
   obs localizations:
   - localization method: Vertical localization
     vertical lengthscale: 100
@@ -53,7 +59,10 @@ observations:
     distribution:
       name: InefficientDistribution
     simulated variables: ['sea_water_temperature']
-    obsdatain:  {obsfile: data_static/obs/prof.nc}
+    obsdatain:
+      engine:
+        type: H5File
+        obsfile: data_static/obs/prof.nc
   obs localizations:
   - localization method: Vertical localization
     vertical lengthscale: 100
@@ -74,7 +83,10 @@ observations:
     distribution:
       name: InefficientDistribution
     simulated variables: ['sea_surface_temperature']
-    obsdatain:  {obsfile: data_static/obs/sst.nc}
+    obsdatain:
+      engine:
+        type: H5File
+        obsfile: data_static/obs/sst.nc
   obs localizations:
   - localization method: Vertical localization
     vertical lengthscale: 50
