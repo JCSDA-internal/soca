@@ -27,56 +27,98 @@ observations:
   observers:
   - obs space:
       name: CoolSkin
-      #obsdataout: {obsfile: ./Data/sst.out.nc}
-      obsdatain:  {obsfile: data_static/obs/sst.nc}
+#      obsdataout:
+#        engine:
+#          type: H5File
+#          obsfile: ./Data/sst.out.nc
+      obsdatain:
+        engine:
+          type: H5File
+          obsfile: data_static/obs/sst.nc
       simulated variables: [sea_surface_temperature]
     obs operator:
       name: CoolSkin
 
   - obs space:
       name: SeaSurfaceTemp
-      #obsdataout: {obsfile: ./Data/sst.out.nc}
-      obsdatain:  {obsfile: data_static/obs/sst.nc}
+#      obsdataout:
+#        engine:
+#          type: H5File
+#          obsfile: ./Data/sst.out.nc
+      obsdatain:
+        engine:
+          type: H5File
+          obsfile: data_static/obs/sst.nc
       simulated variables: [sea_surface_temperature]
     obs operator:
       name: Identity
 
   - obs space:
       name: SeaSurfaceSalinity
-      #obsdataout: {obsfile: ./Data/sss.out.nc}
-      obsdatain:  {obsfile: data_static/obs/sss.nc}
+#      obsdataout:
+#        engine:
+#          type: H5File
+#          obsfile: ./Data/sss.out.nc
+      obsdatain:
+        engine:
+          type: H5File
+          obsfile: data_static/obs/sss.nc
       simulated variables: [sea_surface_salinity]
     obs operator:
       name: Identity
 
   - obs space:
       name: ADT
-      #obsdataout: {obsfile: ./Data/adt.out.nc}
-      obsdatain:  {obsfile: data_static/obs/adt.nc}
+#      obsdataout:
+#        engine:
+#          type: H5File
+#          obsfile: ./Data/adt.out.nc
+      obsdatain:
+        engine:
+          type: H5File
+          obsfile: data_static/obs/adt.nc
       simulated variables: [absolute_dynamic_topography]
     obs operator:
       name: ADT
 
   - obs space:
       name: InsituTemperature
-      #obsdataout: {obsfile: ./Data/prof.T.out.nc}
-      obsdatain:  {obsfile: data_static/obs/prof.nc}
+#      obsdataout:
+#        engine:
+#          type: H5File
+#          obsfile: ./Data/prof.T.out.nc
+      obsdatain:
+        engine:
+          type: H5File
+          obsfile: data_static/obs/prof.nc
       simulated variables: [sea_water_temperature]
     obs operator:
       name: InsituTemperature
 
   - obs space:
       name: InsituSalinity
-      #obsdataout: {obsfile: ./Data/prof.S.out.nc}
-      obsdatain:  {obsfile: data_static/obs/prof.nc}
+#      obsdataout:
+#        engine:
+#          type: H5File
+#          obsfile: ./Data/prof.S.out.nc
+      obsdatain:
+        engine:
+          type: H5File
+          obsfile: data_static/obs/prof.nc
       simulated variables: [sea_water_salinity]
     obs operator:
       name: MarineVertInterp
 
   - obs space:
       name: SeaIceFraction
-      #obsdataout: {obsfile: ./Data/icec.out.nc}
-      obsdatain:  {obsfile:  data_static/obs/icec.nc}
+#      obsdataout:
+#        engine:
+#          type: H5File
+#          obsfile: ./Data/icec.out.nc
+      obsdatain:
+        engine:
+          type: H5File
+          obsfile: data_static/obs/icec.nc
       simulated variables: [sea_ice_area_fraction]
     obs operator:
       name: SeaIceFraction

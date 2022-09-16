@@ -25,8 +25,14 @@ observations:
   observers:
   - obs space:
       name: InsituTemperature
-      obsdataout: {obsfile: data_generated/makeobs/prof.nc}
-      obsdatain:  {obsfile: data_static/obs/prof.nc}
+      obsdataout:
+        engine:
+          type: H5File
+          obsfile: data_generated/makeobs/prof.nc
+      obsdatain:
+        engine:
+          type: H5File
+          obsfile: data_static/obs/prof.nc
       simulated variables: [sea_water_temperature]
     obs operator:
       name: InsituTemperature

@@ -24,8 +24,14 @@ observations:
       distribution:
         name: Halo
         halo size: 5000.0e3
-      obsdataout: {obsfile: data_generated/letkf/sst.letkf.nc}
-      obsdatain:  {obsfile: data_static/obs/sst.nc}
+      obsdataout:
+        engine:
+          type: H5File
+          obsfile: data_generated/letkf/sst.letkf.nc
+      obsdatain:
+        engine:
+          type: H5File
+          obsfile: data_static/obs/sst.nc
       simulated variables: [sea_surface_temperature]
     obs operator:
       name: Identity
