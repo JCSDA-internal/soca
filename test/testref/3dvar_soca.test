@@ -10,7 +10,7 @@ CostJo   : Nonlinear Jo(SeaSurfaceChlorophyll) = 1.3835970302558553e+03, nobs = 
 CostJo   : Nonlinear Jo(SeaSurfaceBiomassP) = 4.2264815814469887e+02, nobs = 112, Jo/n = 3.7736442691490972e+00, err = 1.1692603016453901e-08
 CostJo   : Nonlinear Jo(SeaSurfaceHS) = 1.0036986509959469e+03, nobs = 6, Jo/n = 1.6728310849932447e+02, err = 1.0000000149011612e-01
 CostFunction: Nonlinear J = 1.9102970473662699e+04
-RPCGMinimizer: reduction in residual norm = 9.2820018030662005e-02
+RPCGMinimizer: reduction in residual norm = 9.2820018030662019e-02
 CostFunction::addIncrement: Analysis: 
   Valid time: 2018-04-15T00:00:00Z
   cicen   min=-0.0002273489346061   max=1.0003068285537475   mean=0.1175435325271067
@@ -41,7 +41,7 @@ layer_depth   min=2.2854716757984130   max=5658.3057467114012979   mean=1200.522
 
 
 
-CostJb   : Nonlinear Jb = 6.9035869403872976
+CostJb   : Nonlinear Jb = 6.9035869403873003
 CostJo   : Nonlinear Jo(CoolSkin) = 13469.9472563991075731, nobs = 172, Jo/n = 78.3136468395296959, err = 0.3624384586792724
 CostJo   : Nonlinear Jo(SeaSurfaceTemp) = 867.8731735011587034, nobs = 144, Jo/n = 6.0268970382024909, err = 0.3624224154013386
 CostJo   : Nonlinear Jo(SeaSurfaceSalinity) = 5.7209668055023144, nobs = 28, Jo/n = 0.2043202430536541, err = 1.0000000000000000

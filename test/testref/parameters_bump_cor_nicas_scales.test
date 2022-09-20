@@ -1,3 +1,2 @@
-Test     : Norm of rh - 1 at 2018-04-15T00:00:00Z: 5.196e+09
-Test     : Norm of rv - 1 at 2018-04-15T00:00:00Z: 1.278e+05
-Test     : No output configuration
+Norm of input BUMP parameter rh - 1: 5.1956983450811749e+09
+Norm of input BUMP parameter rv - 1: 1.2780101386921780e+05

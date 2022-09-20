@@ -1,7 +1,0 @@
-"TRACER", "atmos_mod", "sphum"
-          "longname",  "specific humidity"
-	  "units",     "kg/kg" /
-
-"TRACER", "land_mod", "sphum"
-          "longname",  "specific humidity"
-	  "units",     "kg/kg" /

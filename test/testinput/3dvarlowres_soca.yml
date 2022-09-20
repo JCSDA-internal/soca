@@ -11,13 +11,13 @@ cost function:
   window length: P2D
   analysis variables: &a_vars [socn, tocn, ssh]
   geometry:
-    geom_grid_file: soca_gridspec.nc
-    mom6_input_nml: ./inputnml/input.nml
-    fields metadata: ./fields_metadata.yml
+    geom_grid_file: data_generated/gridgen/soca_gridspec.72x35x25.nc
+    mom6_input_nml: data_static/72x35x25/input.nml
+    fields metadata: data_static/fields_metadata.yml
 
   background:
     read_from_file: 1
-    basename: ./INPUT/
+    basename: data_static/72x35x25/restarts/
     ocn_filename: MOM.res.nc
     date: &bkg_date 2018-04-15T00:00:00Z
     state variables: [socn, tocn, ssh, hocn, mld, layer_depth]
@@ -28,7 +28,7 @@ cost function:
     date: 2018-04-15T00:00:00Z
     bump:
       verbosity: main
-      datadir: ./bump_lowres
+      datadir: data_generated/static_socaerrorlowres_init
       strategy: specific_univariate
       load_nicas_local: true
     correlation:
@@ -52,6 +52,7 @@ cost function:
         efold_z: 2500.0       # [m]
 
       - linear variable change name: BkgErrGODAS
+        sst_bgerr_file: data_static/godas_sst_bgerr.nc
         t_min: 0.1
         t_max: 2.0
         t_dz:  20.0
@@ -82,8 +83,14 @@ cost function:
     observers:
     - obs space:
         name: SeaSurfaceTemp
-        obsdataout: {obsfile: ./Data/sst.out.nc}
-        obsdatain:  {obsfile: ./Data/sst.nc}
+        obsdataout:
+          engine:
+            type: H5File
+            obsfile: data_generated/3dvarlowres_soca/sst.3dvarlowres_soca.nc
+        obsdatain:
+          engine:
+            type: H5File
+            obsfile: data_static/obs/sst.nc
         simulated variables: [sea_surface_temperature]
       obs operator:
         name: Identity
@@ -102,8 +109,14 @@ cost function:
 
     - obs space:
         name: SeaSurfaceSalinity
-        obsdataout: {obsfile: ./Data/sss.out.nc}
-        obsdatain:  {obsfile: ./Data/sss.nc}
+        obsdataout:
+          engine:
+            type: H5File
+            obsfile: data_generated/3dvarlowres_soca/sss.3dvarlowres_soca.nc
+        obsdatain:
+          engine:
+            type: H5File
+            obsfile: data_static/obs/sss.nc
         simulated variables: [sea_surface_salinity]
       obs operator:
         name: Identity
@@ -118,8 +131,14 @@ cost function:
 
     - obs space:
         name: ADT
-        obsdataout: {obsfile: ./Data/adt.out.nc}
-        obsdatain:  {obsfile: ./Data/adt.nc}
+        obsdataout:
+          engine:
+            type: H5File
+            obsfile: data_generated/3dvarlowres_soca/adt.3dvarlowres_soca.nc
+        obsdatain:
+          engine:
+            type: H5File
+            obsfile: data_static/obs/adt.nc
         simulated variables: [absolute_dynamic_topography]
       obs operator:
         name: ADT
@@ -134,8 +153,14 @@ cost function:
 
     - obs space:
         name: InsituTemperature
-        obsdataout: {obsfile: ./Data/prof.T.out.nc}
-        obsdatain:  {obsfile: ./Data/prof.nc}
+        obsdataout:
+          engine:
+            type: H5File
+            obsfile: data_generated/3dvarlowres_soca/prof_T.3dvarlowres_soca.nc
+        obsdatain:
+          engine:
+            type: H5File
+            obsfile: data_static/obs/prof.nc
         simulated variables: [sea_water_temperature]
       obs operator:
         name: InsituTemperature
@@ -148,8 +173,14 @@ cost function:
 
     - obs space:
         name: InsituSalinity
-        obsdataout: {obsfile: ./Data/prof.S.out.nc}
-        obsdatain:  {obsfile: ./Data/prof.nc}
+        obsdataout:
+          engine:
+            type: H5File
+            obsfile: data_generated/3dvarlowres_soca/prof_S.3dvarlowres_soca.nc
+        obsdatain:
+          engine:
+            type: H5File
+            obsfile: data_static/obs/prof.nc
         simulated variables: [sea_water_salinity]
       obs operator:
         name: MarineVertInterp
@@ -163,9 +194,9 @@ variational:
     algorithm: RPCG
   iterations:
   - geometry:
-      geom_grid_file: soca_gridspec.small.nc
-      mom6_input_nml: ./inputnml/input_small.nml
-      fields metadata: ./fields_metadata.yml
+      geom_grid_file: data_static/36x17x25/soca_gridspec.nc
+      mom6_input_nml: data_static/36x17x25/input.nml
+      fields metadata: data_static/fields_metadata.yml
     ninner: 5
     gradient norm reduction: 1e-15
     test: on
@@ -174,14 +205,14 @@ variational:
     online diagnostics:
       write increment: true
       increment:
-        datadir: Data
+        datadir: data_generated/3dvarlowres_soca
         date: *bkg_date
-        exp: 3dvarlowressoca.iter1
+        exp: 3dvarlowres_soca.iter1
         type: incr
 
 output:
-  datadir: Data
-  exp: 3dvarlowressoca
+  datadir: data_generated/3dvarlowres_soca
+  exp: 3dvarlowres_soca
   type: an
 
 final:
@@ -191,3 +222,4 @@ final:
 test:
   reference filename: testref/3dvarlowres_soca.test
   test output filename: testoutput/3dvarlowres_soca.test
+  float relative tolerance: 1e-3

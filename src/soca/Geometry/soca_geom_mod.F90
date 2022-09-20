@@ -118,6 +118,8 @@ type, public :: soca_geom
 
     logical, private :: save_local_domain = .false. !< If true, save the local geometry for each pe.
     character(len=:), allocatable :: geom_grid_file !< filename of geometry
+    character(len=:), allocatable :: rossby_file !< filename of rossby radius input file (if used)
+
     type(fckit_mpi_comm) :: f_comm !< MPI communicator
     type(atlas_functionspace_pointcloud) :: functionspace
     type(atlas_functionspace_pointcloud) :: functionspaceInchalo
@@ -183,6 +185,8 @@ subroutine soca_geom_init(self, f_conf, f_comm)
   ! User-defined grid filename
   if ( .not. f_conf%get("geom_grid_file", self%geom_grid_file) ) &
      self%geom_grid_file = "soca_gridspec.nc" ! default if not found
+  if ( .not. f_conf%get("rossby file", self%rossby_file)) &
+    self%rossby_file = "rossrad.dat" ! default if not found
 
   ! Allocate geometry arrays
   call soca_geom_allocate(self)
@@ -363,6 +367,7 @@ subroutine soca_geom_clone(self, other)
 
   !
   self%geom_grid_file = other%geom_grid_file
+  self%rossby_file = other%rossby_file
 
   self%iterator_dimension = other%iterator_dimension
 
@@ -446,7 +451,7 @@ subroutine soca_geom_gridgen(self)
   call diag_remap_end(remap_ctrl)
 
   ! Get Rossby Radius
-  call soca_geom_rossby_radius(self)
+  call soca_geom_rossby_radius(self, self%rossby_file)
 
   call soca_geom_distance_from_coast(self)
 
@@ -583,8 +588,9 @@ end subroutine
 !! Input data is interpolated to the current grid.
 !!
 !! \related soca_geom_mod::soca_geom
-subroutine soca_geom_rossby_radius(self)
-  class(soca_geom), intent(inout) :: self
+subroutine soca_geom_rossby_radius(self, filename)
+  class(soca_geom),           intent(inout) :: self
+  character(len=:), allocatable, intent(in) :: filename
 
   integer :: unit, i, n
   real(kind=kind_real) :: dum
@@ -594,7 +600,7 @@ subroutine soca_geom_rossby_radius(self)
 
   ! read in the file
   unit = 20
-  open(unit=unit,file="rossrad.dat",status="old",action="read")
+  open(unit=unit,file=filename,status="old",action="read")
   n = 0
   do
      read(unit,*,iostat=io)
