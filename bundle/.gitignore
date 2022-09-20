@@ -4,6 +4,7 @@ eckit/
 fckit/
 fms/
 gsw/
+icepack/
 ioda/
 jedicmake/
 mom6/

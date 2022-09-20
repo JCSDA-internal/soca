@@ -42,6 +42,7 @@ target_link_libraries( soca PUBLIC oops )
 target_link_libraries( soca PUBLIC saber )
 target_link_libraries( soca PUBLIC ioda )
 target_link_libraries( soca PUBLIC ufo )
+target_link_libraries( soca PUBLIC icepack )
 
 # Add source code in the subdirectories
 add_subdirectory(AnalyticInit)

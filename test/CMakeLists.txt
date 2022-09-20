@@ -15,6 +15,7 @@ set( soca_test_input
   testinput/convertincrement.yml
   testinput/convertstate.yml
   testinput/convertstate_changevar.yml
+  testinput/convertstate_soca2cice.yml
   testinput/diffstates.yml
   testinput/dirac_horizfilt.yml
   testinput/dirac_soca_cov.yml
@@ -91,6 +92,7 @@ set( soca_test_ref
   testref/convertincrement.test
   testref/convertstate.test
   testref/convertstate_changevar.test
+  testref/convertstate_soca2cice.test
   testref/diffstates.test
   testref/dirac_horizfilt.test
   testref/dirac_soca_cov.test
@@ -792,3 +794,11 @@ soca_add_test( NAME checkpointmodel
                EXE  soca_checkpoint_model.x
                NOTRAPFPE
                TEST_DEPENDS test_soca_3dvar_godas)
+
+# Apply the Soca2Cice nonlinear change of variable
+# TODO (G): check test dependency
+soca_add_test( NAME convertstate_soca2cice
+               EXE  soca_convertstate.x
+               MPI 1
+               NOTRAPFPE
+               TEST_DEPENDS test_soca_gridgen )
