@@ -43,7 +43,6 @@ void Soca2Cice::changeVar(const State & xin, State & xout) const
 // -----------------------------------------------------------------------------
 
 void Soca2Cice::changeVarInverse(const State &, State &) const {
-
 }
 
 // -----------------------------------------------------------------------------
