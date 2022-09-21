@@ -292,6 +292,13 @@ namespace soca {
 
   // -----------------------------------------------------------------------------
 
+  std::vector<double> Increment::rmsByLevel(const std::string & varname) const {
+    throw eckit::NotImplemented("soca::Increment::rmsByLevel not implemented yet",
+                                Here());
+  }
+
+  // -----------------------------------------------------------------------------
+
   void Increment::updateFields(const oops::Variables & vars) {
     // Update local variables
     vars_ = vars;
