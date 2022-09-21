@@ -193,7 +193,7 @@ cost function:
         obsdataout:
           engine:
             type: H5File
-            obsfile: data_generated/hofx_3d/prof.3dvar_soca.nc
+            obsfile: data_generated/3dvar_soca/prof.3dvar_soca.nc
         obsdatain:
           engine:
             type: H5File
