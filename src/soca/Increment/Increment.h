@@ -103,6 +103,7 @@ namespace soca {
       void updateTime(const util::Duration & dt);
       void horiz_scales(const eckit::Configuration &);
       void vert_scales(const double &);
+      std::vector<double> rmsByLevel(const std::string &) const;
 
       /// Serialize and deserialize
       size_t serialSize() const override;
