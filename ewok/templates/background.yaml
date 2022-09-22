@@ -5,4 +5,4 @@ ice_filename: $(expid).fc.$(fcdatetime).$(fcstep).cice.res.nc
 ocn_filename: $(expid).fc.$(fcdatetime).$(fcstep).MOM.res.nc
 filename: $(expid).fc.$(fcdatetime).$(fcstep).MOM.res.nc
 read_from_file: 1
-state variables: [tocn, socn, hocn, ssh]
+state variables: [tocn, socn, hocn, ssh, cicen]
