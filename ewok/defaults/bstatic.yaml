@@ -3,7 +3,7 @@ analysis variables: $(an_variables)
 date: '{{current_cycle}}'
 bump:
   verbosity: main
-  datadir: ${JEDI_SRC}/soca/ewok/static/5deg_bump
+  datadir: $(soca_static_dir)/bump
   strategy: specific_univariate
   load_nicas_local: 1
 correlation:
