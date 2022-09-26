@@ -10,18 +10,13 @@ use fckit_configuration_module, only: fckit_configuration
 use fckit_exception_module, only: fckit_exception
 use fckit_mpi_module, only: fckit_mpi_comm
 use kinds, only: kind_real
-use netcdf
+
 use icepack_itd
 use icepack_mushy_physics, only: liquidus_temperature_mush
-!use icepack_therm_vertical
 use icepack_therm_shared, only: l_brine, icepack_ice_temperature
-use icepack_parameters, only: icepack_init_parameters
-use icepack_parameters, only: icepack_recompute_constants, ktherm, heat_capacity
+use icepack_parameters, only: icepack_init_parameters, icepack_recompute_constants
+use icepack_parameters, only: ktherm, heat_capacity
 use icepack_parameters, only: rhos, Lfresh, cp_ice
-!use icepack_warnings
-
-use fckit_exception_module, only: fckit_exception
-use atlas_module, only: atlas_geometry, atlas_indexkdtree
 
 use soca_geom_mod, only: soca_geom
 use soca_state_mod, only: soca_state
@@ -35,8 +30,11 @@ integer :: root=0
 
 !> analysis to cice
 !!
-!! stuff
-!!
+!! - forward: deaggregates a 2D analysis of sea-ice and inserts
+!!            analysis in CICE restarts
+!! - inverse: TODO(G), aggregates seaice variables alon CICE sea-ice
+!!            categories, save the aggregated variables in a file
+!!            readable by soca
 
 type, public :: soca_soca2cice
    type(fckit_mpi_comm) :: f_comm
@@ -47,10 +45,11 @@ type, public :: soca_soca2cice
    character(len=:), allocatable :: domain
    type(cice_state) :: cice
    type(atlas_indexkdtree) :: kdtree
-   real(kind=kind_real) :: dt
    real(kind=kind_real) :: seaice_edge
    logical :: shuffle
    logical :: rescale_prior
+   real(kind=kind_real) :: rescale_min_hice
+   real(kind=kind_real) :: rescale_min_hsno
 contains
   procedure :: setup => soca_soca2cice_setup
   procedure :: changevar => soca_soca2cice_changevar
@@ -131,13 +130,6 @@ subroutine soca_soca2cice_changevar(self, geom, xa, xm)
   type(soca_state),         intent(in) :: xa
   type(soca_state),      intent(inout) :: xm
 
-  type(soca_field), pointer :: t_ana, s_ana, aice_ana
-
-  ! pointers to soca fields (most likely an analysis)
-  call xm%get("tocn",t_ana)
-  call xm%get("socn",s_ana)
-  call xm%get("cicen",aice_ana)
-
   ! fix bounds
   call self%check_ice_bounds(geom, xm)
 
@@ -169,6 +161,7 @@ end subroutine soca_soca2cice_changevarinv
 
 ! ------------------------------------------------------------------------------
 !> fix out of bounds values
+!!
 subroutine check_ice_bounds(self, geom, xm)
   class(soca_soca2cice), intent(inout) :: self
   type(soca_geom), target, intent(in)  :: geom
@@ -206,13 +199,14 @@ end subroutine check_ice_bounds
 
 ! ------------------------------------------------------------------------------
 !> add seaice to the background
+!!
 subroutine shuffle_ice(self, geom, xm)
   class(soca_soca2cice), intent(inout) :: self
   type(soca_geom), target, intent(in)  :: geom
   type(soca_state),      intent(inout) :: xm
 
   real(kind=kind_real) :: aice
-  integer :: i, j, k, n, n_src, ii, jj
+  integer :: i, j, k, n, ii, jj
   type(soca_field), pointer :: t_ana, s_ana, aice_ana
   integer, parameter :: nn_max = 9 ! TODO (G): should be an optional parameter in the config
   integer :: idx(nn_max), minidx(1)
@@ -265,27 +259,25 @@ subroutine shuffle_ice(self, geom, xm)
 end subroutine shuffle_ice
 
 ! ------------------------------------------------------------------------------
-!> add seaice to the background
+!> clean-up the CICE state
+!!
 subroutine cleanup_ice(self, geom, xm)
   class(soca_soca2cice), intent(inout) :: self
   type(soca_geom), target, intent(in)  :: geom
   type(soca_state),      intent(inout) :: xm
 
   integer :: i, j, k, n, n_src
-  type(soca_field), pointer :: t_ana, s_ana, aice_ana
+  type(soca_field), pointer :: t_ana, s_ana, aice_ana, hice_ana, hsno_ana
 
   real(kind=kind_real), allocatable :: h_bounds(:)
-  real(kind=kind_real) :: hilyr, hslyr, einit, hin, hsn, eint, Tmlts
   real(kind=kind_real), allocatable :: zTin(:), zTsn(:), temp_sno_test
-
-  real(kind=kind_real) :: trcrn(0,0), trcr_base(0,0), salt(1)
-  integer :: ntrcr = 0, trcr_depend(1), n_trcr_strata(1), nt_strata(1,1)
-character(len=256), allocatable :: warningsOut(:)
 
   ! pointers to soca fields (most likely an analysis)
   call xm%get("tocn",t_ana)
   call xm%get("socn",s_ana)
   call xm%get("cicen",aice_ana)
+  call xm%get("hicen", hice_ana)
+  call xm%get("hsnon", hsno_ana)
 
   ! get thickness category bounds
   allocate(h_bounds(0:self%ncat))
@@ -344,6 +336,18 @@ character(len=256), allocatable :: warningsOut(:)
         end do
      end do
   end do
+
+  ! re-compute aggregates = analysis that is effectively inserted in the restart
+  do i = geom%isc, geom%iec
+     do j = geom%jsc, geom%jec
+        if (.not.(self%in_domain(geom, i, j))) cycle    ! skip if out of domain
+
+        aice_ana%val(i,j,1) = sum(self%cice%aicen(i,j,:))
+        hice_ana%val(i,j,1) = sum(self%cice%vicen(i,j,:))
+        hsno_ana%val(i,j,1) = sum(self%cice%vsnon(i,j,:))
+     end do
+  end do
+
 end subroutine cleanup_ice
 
 ! ------------------------------------------------------------------------------
@@ -378,17 +382,15 @@ subroutine prior_dist_rescale(self, geom, xm)
         end do
 
         ! adjust ice volume to match mean cell thickness
-        ! TODO (G): pass min ice thickness (0.5m) to config
         hice = sum(self%cice%vicen(i,j,:))
-        if (hice.gt.0.5_kind_real) then
+        if (hice.gt.self%rescale_min_hice) then
            alpha = hice_ana%val(i,j,1)/hice
            self%cice%vicen(i,j,:) = alpha*self%cice%vicen(i,j,:)
         end if
 
         ! adjust snow volume to match mean cell thickness
-        ! TODO (G): pass min snow thickness (0.1m) to config
         hsno = sum(self%cice%vsnon(i,j,:))
-        if (hsno.gt.0.1_kind_real) then
+        if (hsno.gt.self%rescale_min_hsno) then
            alpha = hsno_ana%val(i,j,1)/hsno
            self%cice%vsnon(i,j,:) = alpha*self%cice%vsnon(i,j,:)
         end if
@@ -398,6 +400,7 @@ subroutine prior_dist_rescale(self, geom, xm)
 
 end subroutine prior_dist_rescale
 
+! ------------------------------------------------------------------------------
 function in_domain(self, geom, i, j) result(testin)
   class(soca_soca2cice), intent(in) :: self
   type(soca_geom), target, intent(in)  :: geom

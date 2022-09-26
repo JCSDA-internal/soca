@@ -51,7 +51,6 @@ subroutine soca_soca2cice_setup_f90(c_key_self, c_conf, c_key_geom) &
 
   type(fckit_configuration) :: f_conf
   character(len=:), allocatable :: str
-  type(duration) :: dtstep
 
   f_conf = fckit_configuration(c_conf)
 
@@ -59,11 +58,6 @@ subroutine soca_soca2cice_setup_f90(c_key_self, c_conf, c_key_geom) &
   call soca_soca2cice_registry%add(c_key_self)
   call soca_soca2cice_registry%get(c_key_self, self)
   call soca_geom_registry%get(c_key_geom, geom)
-
-  ! Setup time step
-  if (f_conf%has("cice background state.tstep")) call f_conf%get_or_die("cice background state.tstep", str)
-  dtstep = trim(str)
-  self%dt = duration_seconds(dtstep)
 
   ! cice geometry
   call f_conf%get_or_die("cice background state.ncat", self%ncat)
@@ -79,8 +73,18 @@ subroutine soca_soca2cice_setup_f90(c_key_self, c_conf, c_key_geom) &
   if (f_conf%has("shuffle")) call f_conf%get_or_die("shuffle", self%shuffle)
 
   ! rescale to prior switch
-  self%rescale_prior = .true.
-  if (f_conf%has("shuffle")) call f_conf%get_or_die("rescale prior", self%rescale_prior)
+  self%rescale_prior = .false.
+  if (f_conf%has("rescale prior")) then
+     self%rescale_prior = .true.
+     self%rescale_min_hice = 0.5_kind_real   ! set default min ice thickness above which to rescale
+     if (f_conf%has("rescale prior.min hice")) then
+        call f_conf%get_or_die("rescale prior.min hice", self%rescale_min_hice)
+     end if
+     self%rescale_min_hsno = 0.1_kind_real   ! set default min snow thickness above which to rescale
+     if (f_conf%has("rescale prior.min hsno")) then
+        call f_conf%get_or_die("rescale prior.min hsno", self%rescale_min_hsno)
+     end if
+  end if
 
   ! domain
   self%domain = "global"

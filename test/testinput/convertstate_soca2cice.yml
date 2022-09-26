@@ -10,7 +10,9 @@ variable change:
   do inverse: false
   seaice edge: 0.15
   shuffle: true
-  rescale prior: true
+  rescale prior:
+    min hice: 0.5
+    min hsno: 0.1
   domain: global
   cice background state:
     restart: data_static/72x35x25/restarts/iced.2018-04-15-00000.nc
