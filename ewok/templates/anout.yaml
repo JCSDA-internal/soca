@@ -1,0 +1,5 @@
+type : an
+# NOTE, for some reason SOCA isn't using arbitrary exp correctly
+exp: an
+date: '{{current_cycle}}'
+datadir: $(anworkdir)/
