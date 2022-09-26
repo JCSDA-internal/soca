@@ -189,42 +189,33 @@ cost function:
           minvalue: 2000
 
     - obs space:
-        name: InsituTemperature
+        name: InsituTS
         obsdataout:
           engine:
             type: H5File
-            obsfile: data_generated/3dvar_soca/prof_T.3dvar_soca.nc
+            obsfile: data_generated/3dvar_soca/prof.3dvar_soca.nc
         obsdatain:
           engine:
             type: H5File
             obsfile: data_static/obs/prof.nc
-        simulated variables: [sea_water_temperature]
+        simulated variables: [sea_water_temperature, sea_water_salinity]
       obs operator:
-        name: InsituTemperature
+        name: Composite
+        components:
+        - name: InsituTemperature
+          variables:
+          - name: sea_water_temperature
+        - name: MarineVertInterp
+          variables:
+          - name: sea_water_salinity
       obs error:
         covariance model: diagonal
       obs filters:
       - *land_mask
       - filter: Background Check
         threshold: 5
-
-    - obs space:
-        name: InsituSalinity
-        obsdataout:
-          engine:
-            type: H5File
-            obsfile: data_generated/3dvar_soca/prof_S.3dvar_soca.nc
-        obsdatain:
-          engine:
-            type: H5File
-            obsfile: data_static/obs/prof.nc
-        simulated variables: [sea_water_salinity]
-      obs operator:
-        name: MarineVertInterp
-      obs error:
-        covariance model: diagonal
-      obs filters:
-      - *land_mask
+        filter variables:
+          - name: sea_water_temperature
 
     - obs space:
         name: SeaIceFraction

@@ -73,6 +73,29 @@ observations:
     obs operator:
       name: ADT
 
+  # handle a T/S profile as a composite
+  - obs space:
+      name: InsituTS
+      obsdataout:
+        engine:
+          type: H5File
+          obsfile: data_generated/hofx_3d/prof.hofx_3d.nc
+      obsdatain:
+        engine:
+          type: H5File
+          obsfile: data_static/obs/prof.nc
+      simulated variables: [sea_water_temperature, sea_water_salinity]
+    obs operator:
+      name: Composite
+      components:
+      - name: InsituTemperature
+        variables:
+        - name: sea_water_temperature
+      - name: MarineVertInterp
+        variables:
+        - name: sea_water_salinity
+
+  # handle T/S profiles separately... delete this someday
   - obs space:
       name: InsituTemperature
       obsdataout:
@@ -86,7 +109,6 @@ observations:
       simulated variables: [sea_water_temperature]
     obs operator:
       name: InsituTemperature
-
   - obs space:
       name: InsituSalinity
       obsdataout:
