@@ -326,7 +326,7 @@ character(len=256), allocatable :: warningsOut(:)
               ! T ice level 1            (from qice)
               ! ...
               ! T ice level ice_lev
-              ! SST                      (from MOM)
+              ! Ocean T level 1          (from MOM)
               do n = 1, self%ice_lev
                  zTin(n) = icepack_ice_temperature(self%cice%qice(i,j,k,n), self%cice%sice(i,j,k,n))
               end do
@@ -368,7 +368,7 @@ subroutine prior_dist_rescale(self, geom, xm)
         if (.not.(self%in_domain(geom, i, j))) cycle       ! skip if out of domain
         if (self%cice%aice(i,j).lt.self%seaice_edge) cycle ! Only rescale within the icepack
 
-        ! rescale background
+        ! rescale background to match aggregate ice concentration analysis
         alpha = aice_ana%val(i,j,1)/self%cice%aice(i,j)
         self%cice%aice(i,j) = alpha * self%cice%aice(i,j)
         do c = 1, self%ncat
@@ -377,16 +377,18 @@ subroutine prior_dist_rescale(self, geom, xm)
            self%cice%vsnon(i,j,c) = alpha*self%cice%vsnon(i,j,c)
         end do
 
-        ! adjust ice volume to match thickness
+        ! adjust ice volume to match mean cell thickness
+        ! TODO (G): pass min ice thickness (0.5m) to config
         hice = sum(self%cice%vicen(i,j,:))
-        if (hice.gt.0.0_kind_real) then
+        if (hice.gt.0.5_kind_real) then
            alpha = hice_ana%val(i,j,1)/hice
            self%cice%vicen(i,j,:) = alpha*self%cice%vicen(i,j,:)
         end if
 
-        ! adjust ice volume to match thickness
+        ! adjust snow volume to match mean cell thickness
+        ! TODO (G): pass min snow thickness (0.1m) to config
         hsno = sum(self%cice%vsnon(i,j,:))
-        if (hsno.gt.0.0_kind_real) then
+        if (hsno.gt.0.1_kind_real) then
            alpha = hsno_ana%val(i,j,1)/hsno
            self%cice%vsnon(i,j,:) = alpha*self%cice%vsnon(i,j,:)
         end if
