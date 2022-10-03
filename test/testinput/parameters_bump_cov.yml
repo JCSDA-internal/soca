@@ -32,21 +32,24 @@ bump:
   var_niter: 0
   var_rhflt:
     tocn: [2000.0e3]
-  output:
-  - datadir: data_generated/parameters_bump_cov
+output:
+- parameter: cor_rh
+  file:
+    datadir: data_generated/parameters_bump_cov
     date: *date
     exp: parameters_bump_cov.cor_rh
-    parameter: cor_rh
     type: an
-  - datadir: data_generated/parameters_bump_cov
+- parameter: cor_rv
+  file:
+    datadir: data_generated/parameters_bump_cov
     date: *date
     exp: parameters_bump_cov.cor_rv
-    parameter: cor_rv
     type: an
-  - datadir: data_generated/parameters_bump_cov
+- parameter: stddev
+  file:
+    datadir: data_generated/parameters_bump_cov
     date: *date
     exp: parameters_bump_cov.stddev
-    parameter: stddev
     type: an
 
 ensemble:
