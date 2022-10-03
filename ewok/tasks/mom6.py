@@ -7,20 +7,28 @@
 import ewok
 from ewok.tasks import GenericModel
 
-from hofxMOM6 import hofxMOM6
+from forecastMOM6 import forecastMOM6
 from getBackgroundMOM6 import getBackgroundMOM6
 from getFCInitMOM6 import getFcInitMOM6
 from getInitialConditionsMOM6 import getInitialConditionsMOM6
 from getStaticModelMOM6 import getStaticModelMOM6
+from hofxMOM6 import hofxMOM6
+from saveAnalysisMOM6 import saveAnalysisMOM6
+from saveForecastMOM6 import saveForecastMOM6
+from variationalMOM6 import variationalMOM6
 
 class ModelTasks(GenericModel.ModelTasks):
     def __init__(self):
         super().__init__()
 
-        # self.getBackground = getBackgroundMOM6
         # self.getFcInit = getFcInitMOM6
-        self.getInitialConditions = getInitialConditionsMOM6
-        self.hofx = hofxMOM6
-        self.getStaticModel = getStaticModelMOM6
         self.createPlots = ewok.createPlots
+        self.forecast = forecastMOM6
+        self.getBackground = getBackgroundMOM6
+        self.getInitialConditions = getInitialConditionsMOM6
+        self.getStaticModel = getStaticModelMOM6
+        self.hofx = hofxMOM6
+        self.saveAnalysis = saveAnalysisMOM6
+        self.saveForecast = saveForecastMOM6
         self.savePlots = ewok.savePlots
+        self.variational = variationalMOM6

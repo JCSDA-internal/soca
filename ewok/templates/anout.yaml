@@ -1,0 +1,4 @@
+type : an
+date: '{{current_cycle}}'
+exp: $(expid)
+datadir: ./
