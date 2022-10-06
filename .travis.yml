@@ -60,6 +60,10 @@ cache:
 #================================================================================
 before_install:
   - |
+    # setup environment
+    source /etc/profile.d/z10_spack_environment.sh
+
+  - |
     # setup other configurables that the subsequent scripts use
     export MAIN_BUILD_TYPE=Debug
     export LIB_BUILD_TYPE=RelWIthDebInfo
