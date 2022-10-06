@@ -60,10 +60,6 @@ cache:
 #================================================================================
 before_install:
   - |
-    # setup environment
-    source /etc/profile.d/z10_spack_environment.sh
-
-  - |
     # setup other configurables that the subsequent scripts use
     export MAIN_BUILD_TYPE=Debug
     export LIB_BUILD_TYPE=RelWIthDebInfo
@@ -112,13 +108,13 @@ script:
   - |
     # Build code
     docker exec -it jcsda_container bash \
-     -c 'cd /jcsda/work && /jcsda/work/repo.src/${MAIN_REPO}/.github/travisci/build.sh; exit $?' \
+     -c '. /etc/profile.d/z10_spack_environment.sh && cd /jcsda/work && /jcsda/work/repo.src/${MAIN_REPO}/.github/travisci/build.sh; exit $?' \
      || travis_terminate 1
 
   - |
     # run tests
     docker exec -it jcsda_container bash \
-     -c 'cd /jcsda/work/repo.build/${MAIN_REPO} && ctest --output-on-failure' \
+     -c '. /etc/profile.d/z10_spack_environment.sh && cd /jcsda/work/repo.build/${MAIN_REPO} && ctest --output-on-failure' \
      || travis_terminate 1
 
 
