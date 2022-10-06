@@ -43,7 +43,7 @@ services:
   - docker
 
 cache:
-  ccache: true
+  ccache: false
   directories:
   - $HOME/repo.cache
 
