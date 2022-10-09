@@ -14,11 +14,12 @@ set -e
 
 cwd=$(pwd)
 
-CCACHE=ccache-swig
+# disabled, not available in recent containers
+# CCACHE=ccache-swig
 
-# zero out the ccache stats
-echo -e "\nzeroing out 'ccache' statistics"
-$CCACHE -z
+# # zero out the ccache stats
+# echo -e "\nzeroing out 'ccache' statistics"
+# $CCACHE -z
 
 # for each dependency repo...
 for repo in $LIB_REPOS; do
@@ -49,7 +50,8 @@ for repo in $LIB_REPOS; do
     build_opt_var=BUILD_OPT_${repo_underscore}
     build_opt="$BUILD_OPT ${!build_opt_var}"
     time ecbuild $src_dir -DCMAKE_INSTALL_PREFIX=${install_dir} -DCMAKE_BUILD_TYPE=${LIB_BUILD_TYPE} \
-            -DCMAKE_CXX_COMPILER_LAUNCHER=$CCACHE -DBUILD_TESTING=OFF $build_opt
+            -DBUILD_TESTING=OFF $build_opt
+            # -DCMAKE_CXX_COMPILER_LAUNCHER=$CCACHE
 
     # build and install
     time make -j2
@@ -82,11 +84,11 @@ else
 fi
 
 
-time ecbuild $src_dir -DCMAKE_CXX_COMPILER_LAUNCHER=$CCACHE \
-       -DCMAKE_BUILD_TYPE=${MAIN_BUILD_TYPE} $build_opt
+time ecbuild $src_dir -DCMAKE_BUILD_TYPE=${MAIN_BUILD_TYPE} $build_opt
+    # -DCMAKE_CXX_COMPILER_LAUNCHER=$CCACHE
 time make -j2
 
 
-# how useful was ccache?
-echo -e "\nccache statistics:"
-$CCACHE -s
+# # how useful was ccache?
+# echo -e "\nccache statistics:"
+# $CCACHE -s
