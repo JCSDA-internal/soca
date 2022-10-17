@@ -728,5 +728,6 @@ if ( BUILD_ICEPACK )
                     EXE  soca_convertstate.x
                     MPI 1
                     NOTRAPFPE
-                    TEST_DEPENDS test_soca_3dvar_godas)
+                    TEST_DEPENDS test_soca_gridgen
+                                 test_soca_3dvar_godas)
 endif()
