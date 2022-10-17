@@ -14,6 +14,7 @@ set( soca_test_input
   testinput/checkpointmodel.yml
   testinput/convertincrement.yml
   testinput/convertstate_changevar.yml
+  testinput/convertstate_soca2cice.yml
   testinput/convertstate.yml
   testinput/diffstates.yml
   testinput/dirac_horizfilt.yml
@@ -91,6 +92,7 @@ set( soca_test_ref
   testref/checkpointmodel.test
   testref/convertincrement.test
   testref/convertstate_changevar.test
+  testref/convertstate_soca2cice.test
   testref/convertstate.test
   testref/diffstates.test
   testref/dirac_horizfilt.test
@@ -148,6 +150,7 @@ file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/data_generated)
 #-------------------------------------------------------------------------------
 set( soca_install_restarts
   Data/72x35x25/restarts/cice.res.nc
+  Data/72x35x25/restarts/iced.2018-04-15-00000.nc
   Data/72x35x25/restarts/MOM.res.nc
 )
 install(FILES ${soca_install_restarts}
@@ -569,7 +572,7 @@ soca_add_test( NAME dirac_soca_mask
 
 soca_add_test( NAME dirac_soca_nomask
                EXE  soca_dirac.x
-	       NOTRAPFPE
+               NOTRAPFPE
                TEST_DEPENDS test_soca_gridgen
                             test_soca_static_socaerror_init)
 
@@ -712,6 +715,19 @@ soca_add_test( NAME convertincrement
 # restart checkpointing
 soca_add_test( NAME checkpointmodel
                EXE  soca_checkpoint_model.x
-              #  NOTRAPFPE
+               NOTRAPFPE
                TEST_DEPENDS test_soca_gridgen
                             test_soca_3dvar_godas)
+
+if ( BUILD_ICEPACK )
+  # Apply the Soca2Cice nonlinear change of variable
+  # TODO (G): check test dependency
+  file(COPY ${CMAKE_CURRENT_BINARY_DIR}/data_static/72x35x25/restarts/iced.2018-04-15-00000.nc
+       DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/data_generated/convertstate_soca2cice/ )
+     soca_add_test( NAME convertstate_soca2cice
+                    EXE  soca_convertstate.x
+                    MPI 1
+                    NOTRAPFPE
+                    TEST_DEPENDS test_soca_gridgen
+                                 test_soca_3dvar_godas)
+endif()

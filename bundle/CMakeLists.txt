@@ -44,6 +44,11 @@ if ( BUILD_FMS )
   ecbuild_bundle( PROJECT fms           GIT "https://github.com/jcsda/FMS.git"                     UPDATE BRANCH release-stable )
 endif ()
 
+option(BUILD_ICEPACK "download and build icepack" OFF)
+if ( BUILD_ICEPACK )
+  ecbuild_bundle( PROJECT icepack         GIT "https://github.com/JCSDA-internal/Icepack.git"         UPDATE BRANCH feature/ecbuild-new )
+endif()
+
 option(BUILD_UFSM6C6 "download and install the UFS" OFF)
 
 # required repositories
