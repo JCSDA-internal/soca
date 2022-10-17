@@ -40,16 +40,18 @@ bump:
     variables: [hocn, socn, tocn]
   - prefix: bump2d
     variables: [ssh]
-  output:
-  - datadir: data_generated/parameters_bump_cor_nicas
+output:
+- parameter: cor_rh
+  file:
+    datadir: data_generated/parameters_bump_cor_nicas
     date: *date
     exp: parameters_bump_cor_nicas.cor_rh
-    parameter: cor_rh
     type: an
-  - datadir: data_generated/parameters_bump_cor_nicas
+- parameter: cor_rv
+  file:
+    datadir: data_generated/parameters_bump_cor_nicas
     date: *date
     exp: parameters_bump_cor_nicas.cor_rv
-    parameter: cor_rv
     type: an
 
 test:

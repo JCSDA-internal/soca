@@ -25,12 +25,8 @@ cost function:
 
   background error:
     covariance model: SABER
-    saber blocks:
-    - saber block name: BUMP_NICAS
-      saber central block: true
-      iterative inverse: true
-      input variables: *soca_vars
-      output variables: *soca_vars
+    saber central block:
+      saber block name: BUMP_NICAS
       bump:
         verbosity: main
         datadir: data_generated/parameters_bump_cor_nicas

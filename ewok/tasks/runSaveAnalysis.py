@@ -27,8 +27,14 @@ filename = base + '.$(file_type).nc'
 # TODO put analysis back in restart file correctly?
 file_type = ['MOM.res', 'cice.res']
 expid=conf['experiment']['expid']
-shutil.move(f'ice.an.nc', f'{expid}.an.cice.res.nc')
-shutil.move(f'ocn.an.nc', f'{expid}.an.MOM.res.nc')
+for in_pfx, out_pfx in (
+        ('ice', 'cice.res'),
+        ('ocn', 'MOM.res')):
+    infile=f'{in_pfx}.{expid}.an.{andate}.nc'
+    outfile=f'{expid}.an.{out_pfx}.nc'
+    print (f"moving {infile} to {outfile}")
+    shutil.move(infile, outfile)
+
 
 r2d2.store(
     model=conf['experiment']['model'],

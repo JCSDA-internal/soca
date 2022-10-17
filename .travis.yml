@@ -24,6 +24,7 @@ env:
     - BUILD_OPT="-DBUILD_ICEPACK=ON"
     - BUILD_OPT_mom6="-DENABLE_OCEAN_BGC=ON"
     - BUILD_OPT_oops="-DENABLE_QG_MODEL=OFF -DENABLE_LORENZ95_MODEL=OFF"
+    - BUILD_OPT_ioda="-DBUILD_PYTHON_BINDINGS=OFF"
     - BUILD_OPT_ufo="-DLOCAL_PATH_TESTFILES_IODA=NONE"
     - BUILD_OPT_soca="-DENABLE_OCEAN_BGC=ON"
     - MATCH_REPOS="saber oops ioda ufo mom6 soca"
@@ -43,7 +44,7 @@ services:
   - docker
 
 cache:
-  ccache: true
+  ccache: false
   directories:
   - $HOME/repo.cache
 
@@ -108,24 +109,24 @@ script:
   - |
     # Build code
     docker exec -it jcsda_container bash \
-     -c 'cd /jcsda/work && /jcsda/work/repo.src/${MAIN_REPO}/.github/travisci/build.sh; exit $?' \
+     -c '. /etc/profile.d/z10_spack_environment.sh && cd /jcsda/work && /jcsda/work/repo.src/${MAIN_REPO}/.github/travisci/build.sh; exit $?' \
      || travis_terminate 1
 
   - |
     # run tests
     docker exec -it jcsda_container bash \
-     -c 'cd /jcsda/work/repo.build/${MAIN_REPO} && ctest --output-on-failure' \
+     -c '. /etc/profile.d/z10_spack_environment.sh && cd /jcsda/work/repo.build/${MAIN_REPO} && ctest --output-on-failure' \
      || travis_terminate 1
 
 
 #======================================================================
 #======================================================================
 after_success:
-  - |
-    # upload code coverage
-    docker exec jcsda_container bash -c \
-      'cd /jcsda/work/repo.src/${MAIN_REPO} \
-       && bash <(curl -s https://codecov.io/bash) -p /jcsda/work/repo.build/${MAIN_REPO} -s . -X gcovout'
+  # - |
+  #   # upload code coverage
+  #   docker exec jcsda_container bash -c \
+  #     'cd /jcsda/work/repo.src/${MAIN_REPO} \
+  #      && bash <(curl -s https://codecov.io/bash) -p /jcsda/work/repo.build/${MAIN_REPO} -s . -X gcovout'
 
   - |
     # If this is a cron run, update the release/stable branch of the bundle
