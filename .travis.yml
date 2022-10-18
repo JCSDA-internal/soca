@@ -20,8 +20,8 @@
 env:
   global:
     - MAIN_REPO=soca
-    - LIB_REPOS="jedicmake fms gsw mom6 oops saber ioda ufo"
-    - BUILD_OPT=""
+    - LIB_REPOS="jedicmake fms gsw mom6 icepack oops saber ioda ufo"
+    - BUILD_OPT="-DBUILD_ICEPACK=ON"
     - BUILD_OPT_mom6="-DENABLE_OCEAN_BGC=ON"
     - BUILD_OPT_oops="-DENABLE_QG_MODEL=OFF -DENABLE_LORENZ95_MODEL=OFF"
     - BUILD_OPT_ioda="-DBUILD_PYTHON_BINDINGS=OFF"
