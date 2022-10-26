@@ -59,7 +59,7 @@ if(${UFS_APP} MATCHES "NG-GODAS")
       cice
       esmf
   )
-else()
+elseif(${UFS_APP} MATCHES "S2S")
   set( UFS_LIBS 
       soca
       cmeps
@@ -75,6 +75,8 @@ else()
       cice
       esmf
   )
+else()
+    message(FATAL_ERROR "soca UFS_LIBS not configured for UFS_APP ${UFS_APP}")
 endif()
 
 add_subdirectory( src )
