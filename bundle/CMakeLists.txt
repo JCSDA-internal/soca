@@ -14,32 +14,35 @@ include( ecbuild_bundle )
 
 ecbuild_bundle_initialize()
 
-ecbuild_bundle( PROJECT jedicmake GIT "https://github.com/jcsda-internal/jedi-cmake.git" UPDATE BRANCH develop RECURSIVE )
-include( jedicmake/cmake/Functions/git_functions.cmake  )
+# Use external jedi-cmake or build in bundle
+if(DEFINED ENV{jedi_cmake_ROOT})
+  include( $ENV{jedi_cmake_ROOT}/share/jedicmake/Functions/git_functions.cmake )
+else()
+  ecbuild_bundle( PROJECT jedicmake GIT "https://github.com/jcsda-internal/jedi-cmake.git" BRANCH develop UPDATE RECURSIVE )
+  include( jedicmake/cmake/Functions/git_functions.cmake )
+endif()
 
 # ECMWF repos that you probably dont need to build yourself because they
 #  should be in jedi-stack and the containers
-
 option(BUILD_ECKIT "download and build eckit (not needed if in a jedi container)")
 if ( BUILD_ECKIT )
-  ecbuild_bundle( PROJECT eckit  GIT "https://github.com/ecmwf/eckit.git"  UPDATE TAG 1.16.0 )
+  ecbuild_bundle( PROJECT eckit  GIT "https://github.com/ecmwf/eckit.git"  UPDATE TAG 1.19.0 )
 endif ()
 
 option(BUILD_FCKIT "download and build fckit (not needed if in a jedi container)")
 if (BUILD_FCKIT)
-  ecbuild_bundle( PROJECT fckit  GIT "https://github.com/jcsda-internal/fckit.git"  UPDATE BRANCH release-stable )
-  # TODO: replace with https://github.com/ecmwf/fckit.git TAG 0.9.2
+  ecbuild_bundle( PROJECT fckit  GIT "https://github.com/ecmwf/fckit.git"  UPDATE TAG 0.9.5 )
 endif()
 
-option(BUILD_ATLAS "download and build atlas")
+option(BUILD_ATLAS "download and build atlas (not needed if in a jedi container)")
 if (BUILD_ATLAS)
-  ecbuild_bundle( PROJECT atlas  GIT "https://github.com/ecmwf/atlas.git" TAG 0.29.0 )
+  ecbuild_bundle( PROJECT atlas  GIT "https://github.com/ecmwf/atlas.git"  UPDATE TAG 0.30.0 )
 endif()
 
 
 # other optional repositories
 
-option(BUILD_FMS "download and build fms" ON)
+option(BUILD_FMS "download and build fms" OFF)
 if ( BUILD_FMS )
   ecbuild_bundle( PROJECT fms           GIT "https://github.com/jcsda/FMS.git"                     UPDATE BRANCH release-stable )
 endif ()
