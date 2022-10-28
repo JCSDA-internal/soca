@@ -16,7 +16,6 @@ background error:
   analysis variables: [cicen, hicen, socn, tocn, ssh]
   date: *date
   bump:
-    verbosity: main
     datadir: data_generated/static_socaerror_init
     method: cor
     strategy: specific_univariate
@@ -24,7 +23,6 @@ background error:
     write_nicas_local: 1
     mask_check: 1
     resol: 6.0
-    network: 0 # Not re-implemented yet
   correlation:
   - name: ocn
     base value: 1500.0e3

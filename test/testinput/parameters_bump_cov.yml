@@ -13,7 +13,6 @@ background:
   state variables:  [socn, tocn, hocn]
 
 bump:
-  verbosity: main
   datadir: data_generated/parameters_bump_cov
   dc: 100.0e3
   method: cor

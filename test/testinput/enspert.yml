@@ -22,7 +22,6 @@ background error:
   date: *date
   analysis variables: &soca_vars [ssh, cicen, hicen, tocn, socn, chl, biop]
   bump:
-    verbosity: main
     datadir: data_generated/static_socaerror_init
     strategy: specific_univariate
     load_nicas_local: true
