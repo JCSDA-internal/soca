@@ -22,7 +22,6 @@ background error:
         datadir: data_generated/static_socaerror_init
         strategy: specific_univariate
         load_nicas_local: true
-        verbosity: main
       correlation:
       - name: ocn
         variables: [socn, tocn, ssh]
@@ -105,7 +104,6 @@ background error:
             method: loc
             strategy: common
             load_nicas_local: true
-            verbosity: main
     weight:
       value: 0.5
 dirac:

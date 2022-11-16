@@ -54,7 +54,6 @@ cost function:
     analysis variables: [socn, tocn, ssh]
     date: 2018-04-15T00:00:00Z
     bump:
-      verbosity: main
       datadir: data_generated/static_socaerror_init
       strategy: specific_univariate
       load_nicas_local: true
