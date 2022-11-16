@@ -14,7 +14,6 @@ background:
   state variables: [socn, tocn, ssh, hocn, cicen, hicen]
 
 bump:
-  verbosity: main
   datadir: data_generated/parameters_bump_cor_nicas_scales
   method: cor
   strategy: specific_univariate
@@ -22,7 +21,6 @@ bump:
   write_nicas_local: true
   mask_check: true
   resol: 6.0
-  network: false # Not re-implemented yet
   grids:
   - prefix: bump3d
     variables: [socn, tocn, hocn]

@@ -16,7 +16,6 @@ background error:
   saber central block:
     saber block name: BUMP_NICAS
     bump:
-      verbosity: main
       datadir: data_generated/parameters_bump_cor_nicas_scales
       strategy: specific_univariate
       load_nicas_local: true

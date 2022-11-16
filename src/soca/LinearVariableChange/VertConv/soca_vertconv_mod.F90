@@ -10,7 +10,6 @@ use fckit_configuration_module, only: fckit_configuration
 use kinds, only: kind_real
 use gc99_mod, only: gc99
 use type_mpl, only: mpl_type
-use type_probe, only: probe
 
 ! soca modules
 use soca_fields_mod, only: soca_field
@@ -133,8 +132,6 @@ subroutine soca_conv_mult (self, convdx, dx)
 
   type(soca_field), pointer :: field_dx, field_convdx, layer_depth
 
-  call probe%get_instance('soca')
-
   call self%bkg%get("layer_depth", layer_depth)
   nl = layer_depth%nz
 
@@ -187,8 +184,6 @@ subroutine soca_conv_mult_ad (self, convdx, dx)
   integer :: nl, j, k, id, jd, n
   type(mpl_type) :: mpl
   type(soca_field), pointer :: field_dx, field_convdx, layer_depth
-
-  call probe%get_instance('soca')
 
   call self%bkg%get("layer_depth", layer_depth)
   nl = layer_depth%nz
