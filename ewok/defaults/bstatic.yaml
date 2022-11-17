@@ -2,7 +2,6 @@ covariance model: SocaError
 analysis variables: $(an_variables)
 date: '{{current_cycle}}'
 bump:
-  verbosity: main
   datadir: $(soca_static_dir)/bump
   strategy: specific_univariate
   load_nicas_local: 1
