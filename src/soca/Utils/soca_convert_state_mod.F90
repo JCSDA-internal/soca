@@ -475,7 +475,7 @@ subroutine soca_hinterp(self,field2,gdata,mask2,nz,missing,lon_in,lat_in,lon_out
     end if
 
     if (k==1) prev(:,:) = tr_out(:,:)
-    call fill_miss_2d(tr_out, good, fill, prev, grid, acrit, answers_2018=.true.)
+    call fill_miss_2d(tr_out, good, fill, prev, grid, acrit, answer_date=20181231) ! answers_2018=.true.)
 !   call fill_miss_2d(tr_out, good, fill, G=grid, smooth=.true.)
 
     !TODO: In case fill_miss_2d failed at surface (k=1), use IDW to fill data pt that is located in ocean mask

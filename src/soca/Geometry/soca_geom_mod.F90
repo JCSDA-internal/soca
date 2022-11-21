@@ -404,7 +404,8 @@ subroutine soca_geom_gridgen(self)
   type(EOS_type), pointer :: eqn_of_state
   integer :: k
   real(kind=kind_real), allocatable :: tracer(:,:,:)
-  logical :: answers_2018 = .false.
+  !logical :: answers_2018 = .false.
+  integer :: answer_date = 20190101
 
   ! Generate grid
   call soca_mom6_init(mom6_config, partial_init=.true.)
@@ -431,7 +432,7 @@ subroutine soca_geom_gridgen(self)
   ! Setup intermediate zstar coordinate
   allocate(tracer(self%isd:self%ied, self%jsd:self%jed, self%nzo))
   tracer = 0.d0 ! dummy tracer
-  call diag_remap_init(remap_ctrl, coord_tuple='ZSTAR, ZSTAR, ZSTAR', answers_2018=answers_2018)
+  call diag_remap_init(remap_ctrl, coord_tuple='ZSTAR, ZSTAR, ZSTAR', answer_date=answer_date) ! answers_2018=answers_2018)
   call diag_remap_configure_axes(remap_ctrl, mom6_config%GV, mom6_config%scaling, mom6_config%param_file)
   self%nzo_zstar = remap_ctrl%nz
   if (allocated(self%h_zstar)) deallocate(self%h_zstar)
