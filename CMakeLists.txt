@@ -93,11 +93,11 @@ FetchContent_Declare(
   URL      https://ftp.emc.ncep.noaa.gov/jcsda/WDQMS/NCEP/UFS-JEDI-DATA/ufs.tar.gz
   URL_HASH MD5=762e54986481c01e3a939edbe57b0ec4
 )
-FetchContent_Populate(
-  testdata
-  #SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../cache/soca_test_data_762e54986481c01e3a939edbe57b0ec4
-  SOURCE_DIR /Users/heinzell/work/ufs-bundle/20221114/ufs-bundle/cache/soca_test_data_762e54986481c01e3a939edbe57b0ec4
-)
+#FetchContent_Populate(
+#  testdata
+#  #SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../cache/soca_test_data_762e54986481c01e3a939edbe57b0ec4
+#  SOURCE_DIR /Users/heinzell/work/ufs-bundle/20221114/ufs-bundle/cache/soca_test_data_762e54986481c01e3a939edbe57b0ec4
+#)
 FetchContent_MakeAvailable(testdata)
 # *DH 20221120
 
