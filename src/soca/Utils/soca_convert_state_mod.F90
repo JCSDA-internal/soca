@@ -61,8 +61,8 @@ subroutine soca_convertstate_setup(self, src, des, hocn, hocn2)
   class(soca_convertstate_type), intent(inout) :: self
   type(soca_geom),              intent(inout) :: src !< source geometry
   type(soca_geom),              intent(inout) :: des !< destination geometry
-  type(soca_field),             intent(inout) :: hocn !< cell thickenss of source
-  type(soca_field),             intent(inout) :: hocn2 !< cell thickness of destination
+  type(soca_field),   optional, intent(inout) :: hocn  !< cell thickenss of source
+  type(soca_field),   optional, intent(inout) :: hocn2 !< cell thickness of destination
 
   !local
   integer :: tmp(1)
@@ -93,9 +93,13 @@ subroutine soca_convertstate_setup(self, src, des, hocn, hocn2)
   allocate(self%hocn_des(des%isd:des%ied,des%jsd:des%jed,1:des%nzo))
 
   ! set hocn for target grid
-  hocn2%val = des%h
-  self%hocn_src = hocn%val
-  self%hocn_des = hocn2%val
+  if (present(hocn2)) hocn2%val = des%h
+  if (present(hocn)) then
+    self%hocn_src = hocn%val
+  else
+    self%hocn_src = src%h
+  end if
+  self%hocn_des = des%h
 
 end subroutine soca_convertstate_setup
 

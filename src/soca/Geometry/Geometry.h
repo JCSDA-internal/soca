@@ -53,9 +53,11 @@ namespace soca {
    public:
       static const std::string classname() {return "soca::Geometry";}
 
-      explicit Geometry(const eckit::Configuration &, const eckit::mpi::Comm &);
+      explicit Geometry(const eckit::Configuration &, const eckit::mpi::Comm &, const bool = false);
       Geometry(const Geometry &);
       ~Geometry();
+
+      bool levelsAreTopDown() const {return true;}
 
       GeometryIterator begin() const;
       GeometryIterator end() const;
@@ -65,7 +67,6 @@ namespace soca {
 
       int& toFortran() {return keyGeom_;}
       const int& toFortran() const {return keyGeom_;}
-      void gridgen() const;
       const eckit::mpi::Comm & getComm() const {return comm_;}
 
       const atlas::FunctionSpace & functionSpace() const {return functionSpaceIncHalo_;}
@@ -83,6 +84,7 @@ namespace soca {
       void getVarGrid(const std::string &, char &, bool &) const;
 
    private:
+      void mask(std::vector<double> &, const bool, const char) const;
       Geometry & operator=(const Geometry &);
       void print(std::ostream &) const;
 

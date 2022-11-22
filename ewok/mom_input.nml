@@ -1,5 +1,5 @@
 $MOM_input_nml
-      parameter_filename = '@[stage_dir]/MOM_input'
+      parameter_filename = '../MOM_input'
 /
 
 &fms_io_nml

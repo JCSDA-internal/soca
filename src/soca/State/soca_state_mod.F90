@@ -136,10 +136,6 @@ subroutine soca_state_add_incr(self, rhs)
   type(soca_field), pointer :: fld, fld_r
   integer :: i, k
 
-  real(kind=kind_real) :: min_ice = 1e-6_kind_real
-  real(kind=kind_real) :: amin = 1e-6_kind_real
-  real(kind=kind_real) :: amax = 10.0_kind_real
-  real(kind=kind_real), allocatable :: alpha(:,:), aice_bkg(:,:), aice_ana(:,:)
   type(soca_fields), target :: incr
 
   ! make sure rhs is a subset of self

@@ -1,7 +1,7 @@
 geometry:
-  geom_grid_file: soca_gridspec.small.nc
-  mom6_input_nml: ./inputnml/input_small.nml
-  fields metadata: ./fields_metadata.yml
+  geom_grid_file: data_static/36x17x25/soca_gridspec.nc
+  mom6_input_nml: data_static/36x17x25/input.nml
+  fields metadata: data_static/fields_metadata.yml
   iterator dimension: 3
 
 window begin: 2018-04-14T00:00:00Z
@@ -13,7 +13,10 @@ observations:
     distribution:
       name: InefficientDistribution
     simulated variables: ['sea_water_temperature']
-    obsdatain:  {obsfile: ./Data/prof.nc}
+    obsdatain:
+      engine:
+        type: H5File
+        obsfile: data_static/obs/prof.nc
   obs localizations:
   - localization method: Vertical localization
     vertical lengthscale: 100
@@ -22,7 +25,7 @@ observations:
     localization function: Box Car
     reference gridpoints:
       lons: [-175.0, -175.0, -175.0, -175.0]
-      lats: [ -42.5,  -42.5,   -42.5, -42.5]
+      lats: [ -40.0, -40.0, -40.0, -40.0]
       depths: [0.0, 34.2859952, 171.050201, 1905.01085]
     reference local nobs: [96, 134, 103, 0]
     reference rms: [1.0, 1.0, 1.0, 1.0]
@@ -33,7 +36,10 @@ observations:
     distribution:
       name: InefficientDistribution
     simulated variables: ['sea_water_temperature']
-    obsdatain:  {obsfile: ./Data/prof.nc}
+    obsdatain:
+      engine:
+        type: H5File
+        obsfile: data_static/obs/prof.nc
   obs localizations:
   - localization method: Vertical localization
     vertical lengthscale: 100
@@ -42,7 +48,7 @@ observations:
     localization function: Gaspari Cohn
     reference gridpoints:
       lons: [-175.0, -175.0, -175.0, -175.0]
-      lats: [ -42.5,  -42.5,   -42.5, -42.5]
+      lats: [ -40.0, -40.0, -40.0, -40.0]
       depths: [0.0, 34.2859952, 171.050201, 1905.01085]
     reference local nobs: [96, 134, 103, 0]
     reference rms: [0.6257, 0.606492, 0.470246, 0]
@@ -53,17 +59,20 @@ observations:
     distribution:
       name: InefficientDistribution
     simulated variables: ['sea_water_temperature']
-    obsdatain:  {obsfile: ./Data/prof.nc}
+    obsdatain:
+      engine:
+        type: H5File
+        obsfile: data_static/obs/prof.nc
   obs localizations:
   - localization method: Vertical localization
     vertical lengthscale: 100
     ioda vertical coordinate: depth
     ioda vertical coordinate group: MetaData
     localization function: Box Car
-    apply log transformation: true 
+    apply log transformation: true
     reference gridpoints:
       lons: [-175.0, -175.0, -175.0, -175.0]
-      lats: [ -42.5,  -42.5,   -42.5, -42.5]
+      lats: [ -40.0, -40.0, -40.0, -40.0]
       depths: [0.0, 34.2859952, 171.050201, 1905.01085]
     reference local nobs: [218, 218, 218, 218]
     reference rms: [1.0, 1.0, 1.0, 1.0]
@@ -74,7 +83,10 @@ observations:
     distribution:
       name: InefficientDistribution
     simulated variables: ['sea_surface_temperature']
-    obsdatain:  {obsfile: ./Data/sst.nc}
+    obsdatain:
+      engine:
+        type: H5File
+        obsfile: data_static/obs/sst.nc
   obs localizations:
   - localization method: Vertical localization
     vertical lengthscale: 50
@@ -83,9 +95,9 @@ observations:
     localization function: Box Car
     reference gridpoints:
       lons: [-175.0, -175.0, -175.0]
-      lats: [ -42.5,  -42.5,   -42.5]
+      lats: [ -40.0, -40.0, -40.0]
       depths: [0.0, 34.2859952, 171.050201]
     reference local nobs: [201, 201, 0]
     reference rms: [1.0, 1.0, 1.0]
 
- 
+

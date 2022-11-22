@@ -1,9 +1,0 @@
-basename: $(current_dir)/
-date: '{{current_cycle}}'
-ice_filename: $(model_ice_file).$(experiment).bg.{{local_current_cycle}}.nc
-ocn_filename: $(model_ocn_file).$(experiment).bg.{{local_current_cycle}}.nc
-read_from_file: 1
-state variables: $(model_variables)
-
-# needed for GetBackground only
-filename: $(current_dir)/$(file_type).$(experiment).bg.{{local_current_cycle}}.nc

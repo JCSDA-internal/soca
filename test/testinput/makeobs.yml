@@ -3,8 +3,9 @@ window begin: 2018-04-15T00:00:00Z
 window length: PT3H
 
 geometry:
-  mom6_input_nml: ./inputnml/input.nml
-  fields metadata: ./fields_metadata.yml
+  geom_grid_file: data_generated/gridgen/soca_gridspec.72x35x25.nc
+  mom6_input_nml: data_static/72x35x25/input.nml
+  fields metadata: data_static/fields_metadata.yml
 
 model:
   name: MOM6solo
@@ -15,7 +16,7 @@ model:
 initial condition:
   read_from_file: 1
   date: 2018-04-15T00:00:00Z
-  basename: ./INPUT/
+  basename: data_static/72x35x25/restarts/
   ocn_filename: MOM.res.nc
   ice_filename: cice.res.nc
   state variables: *soca_vars
@@ -24,8 +25,14 @@ observations:
   observers:
   - obs space:
       name: InsituTemperature
-      obsdataout: {obsfile: ./Data/syn.prof.T.out.nc}
-      obsdatain:  {obsfile: ./Data/prof.nc}
+      obsdataout:
+        engine:
+          type: H5File
+          obsfile: data_generated/makeobs/prof.nc
+      obsdatain:
+        engine:
+          type: H5File
+          obsfile: data_static/obs/prof.nc
       simulated variables: [sea_water_temperature]
     obs operator:
       name: InsituTemperature

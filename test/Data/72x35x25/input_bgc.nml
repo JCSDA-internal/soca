@@ -1,10 +1,10 @@
  &MOM_input_nml
         output_directory = './',
         input_filename = 'r'
-        restart_input_dir = 'INPUT/',
+        restart_input_dir = 'data_static/72x35x25/restarts/',
         restart_output_dir = 'RESTART/',
-        parameter_filename = 'MOM_input'
-                             'MOM_override_bgc' /
+        parameter_filename = 'data_static/72x35x25/MOM_input',
+                             'data_static/72x35x25/MOM_override_bgc' /
 
  &diag_manager_nml
  /

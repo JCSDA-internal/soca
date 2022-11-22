@@ -3,3 +3,6 @@
 html
 *.png
 latex
+
+*.pyc
+build

@@ -6,7 +6,6 @@
 !> Increment fields
 module soca_increment_mod
 
-use atlas_module, only: atlas_fieldset, atlas_field, atlas_real
 use fckit_configuration_module, only: fckit_configuration
 use kinds, only: kind_real
 use oops_variables_mod, only: oops_variables
@@ -324,10 +323,7 @@ subroutine soca_increment_change_resol(self, rhs)
   type(soca_convertstate_type) :: convert_state
   type(soca_field), pointer :: field1, field2, hocn1, hocn2
 
-  call rhs%get("hocn", hocn1)
-  call self%get("hocn", hocn2)
-
-  call convert_state%setup(rhs%geom, self%geom, hocn1, hocn2)
+  call convert_state%setup(rhs%geom, self%geom)
   do n = 1, size(rhs%fields)
     if (trim(rhs%fields(n)%name)=="hocn") cycle ! skip layer thickness
     field1 => rhs%fields(n)

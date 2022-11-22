@@ -115,7 +115,7 @@ NJGLOBAL = 320            !
 ! Sets the horizontal array index types.
 
 ! === module MOM_fixed_initialization ===
-INPUTDIR = "INPUT"              ! default = "."
+INPUTDIR = "data_static/72x35x25/INPUT"              ! default = "."
                                 ! The directory in which input files are found.
 
 ! === module MOM_grid_init ===
@@ -863,3 +863,5 @@ PERT_EPBL = False        ! [Boolean] default = False
 ! === module MOM_restart ===
 
 ! === module MOM_file_parser ===
+REPORT_UNUSED_PARAMS = False     !   [Boolean] default = True
+                                 ! If true, report any parameter lines that are not used in the run.

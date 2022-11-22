@@ -1,4 +1,4 @@
-# (C) Copyright 2017-2021 UCAR.
+# (C) Copyright 2017-2022 UCAR.
 #
 # This software is licensed under the terms of the Apache Licence Version 2.0
 # which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -9,7 +9,7 @@
 ################################################################################
 
 cmake_minimum_required( VERSION 3.12 )
-project( soca VERSION 1.0.0 LANGUAGES C CXX Fortran)
+project( soca VERSION 1.2.0 LANGUAGES C CXX Fortran)
 
 find_package(ecbuild 3.3.2 REQUIRED)
 include( ecbuild_system NO_POLICY_SCOPE )
@@ -25,20 +25,25 @@ find_package( gsl-lite REQUIRED HINTS $ENV{gsl_list_DIR})
 find_package( eckit  1.11.6   REQUIRED)
 find_package( fckit  0.7.0    REQUIRED)
 find_package( atlas  0.20.2   REQUIRED)
-find_package( oops   1.0.0    REQUIRED)
+find_package( oops   1.3.0    REQUIRED)
 find_package( saber  1.0.0    REQUIRED)
 find_package( ioda   1.0.0    REQUIRED)
-find_package( ufo    1.0.0    REQUIRED)
+find_package( ufo    1.3.0    REQUIRED)
 #find_package( fms    2020.4.0 REQUIRED)
 #find_package( mom6   2020.4.0 REQUIRED)
 find_package(ESMF MODULE REQUIRED STATIC)
 find_package( crtm   2.2.3)
-  find_package(bacio REQUIRED )
-  find_package(sigio REQUIRED )
-  find_package(sp REQUIRED )
-  find_package(w3emc REQUIRED )
-  find_package(w3nco REQUIRED )
-  find_package(nemsio REQUIRED )
+find_package(bacio REQUIRED )
+find_package(sigio REQUIRED )
+find_package(sp REQUIRED )
+find_package(w3emc REQUIRED )
+find_package(w3nco REQUIRED )
+find_package(nemsio REQUIRED )
+
+if ( BUILD_ICEPACK )
+  find_package( icepack   1.2.0 REQUIRED)
+endif()
+
 include_directories( ${NETCDF_INCLUDE_DIRS} ${DEPEND_LIB_ROOT}/include_r8 ${DEPEND_LIB_ROOT}/MOM6/mod  )
 include_directories( ${DEPEND_LIB_ROOT}/../ufs-weather-model/src/ufs-weather-model-build/MOM6-interface/mod_solo)
 

@@ -292,6 +292,13 @@ namespace soca {
 
   // -----------------------------------------------------------------------------
 
+  std::vector<double> Increment::rmsByLevel(const std::string & varname) const {
+    throw eckit::NotImplemented("soca::Increment::rmsByLevel not implemented yet",
+                                Here());
+  }
+
+  // -----------------------------------------------------------------------------
+
   void Increment::updateFields(const oops::Variables & vars) {
     // Update local variables
     vars_ = vars;
@@ -350,21 +357,21 @@ namespace soca {
 
 // -----------------------------------------------------------------------------
 
-  void Increment::toFieldSet(atlas::FieldSet &fs, const bool masked) const {
-    soca_increment_to_fieldset_f90(toFortran(), vars_, fs.get(), masked);
+  void Increment::toFieldSet(atlas::FieldSet &fs) const {
+    soca_increment_to_fieldset_f90(toFortran(), vars_, fs.get(), false);
   }
 
 // -----------------------------------------------------------------------------
 
-  void Increment::toFieldSetAD(const atlas::FieldSet &fs, bool masked) {
+  void Increment::toFieldSetAD(const atlas::FieldSet &fs) {
     if (fs.empty()) return;
-    soca_increment_to_fieldset_ad_f90(toFortran(), vars_, fs.get(), masked);
+    soca_increment_to_fieldset_ad_f90(toFortran(), vars_, fs.get(), false);
   }
 
 // -----------------------------------------------------------------------------
 
-  void Increment::fromFieldSet(const atlas::FieldSet &fs, bool masked) {
-    soca_increment_from_fieldset_f90(toFortran(), vars_, fs.get(), masked);
+  void Increment::fromFieldSet(const atlas::FieldSet &fs) {
+    soca_increment_from_fieldset_f90(toFortran(), vars_, fs.get(), false);
   }
 
 // -----------------------------------------------------------------------------

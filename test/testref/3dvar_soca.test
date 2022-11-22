@@ -3,14 +3,13 @@ CostJo   : Nonlinear Jo(CoolSkin) = 1.4021724050726119e+04, nobs = 172, Jo/n = 8
 CostJo   : Nonlinear Jo(SeaSurfaceTemp) = 8.7363428891594594e+02, nobs = 144, Jo/n = 6.0669047841385133e+00, err = 3.6242241540133863e-01
 CostJo   : Nonlinear Jo(SeaSurfaceSalinity) = 5.7209593553370315e+00, nobs = 28, Jo/n = 2.0431997697632256e-01, err = 1.0000000000000000e+00
 CostJo   : Nonlinear Jo(ADT) = 1.5092959327252782e+02, nobs = 91, Jo/n = 1.6585669590387673e+00, err = 1.0000000149011612e-01
-CostJo   : Nonlinear Jo(InsituTemperature) = 3.0207389049976348e+02, nobs = 201, Jo/n = 1.5028551766157388e+00, err = 8.9127767893751042e-01
-CostJo   : Nonlinear Jo(InsituSalinity) = 3.2537388217310308e+02, nobs = 218, Jo/n = 1.4925407439133169e+00, err = 6.0819699619437717e-01
+CostJo   : Nonlinear Jo(InsituTS) = 6.2744777267286668e+02, nobs = 419, Jo/n = 1.4974887175963405e+00, err = 7.5731679634756710e-01
 CostJo   : Nonlinear Jo(SeaIceFraction) = 6.1356996932340257e+02, nobs = 89, Jo/n = 6.8940445991393551e+00, err = 1.0000000149011612e-01
 CostJo   : Nonlinear Jo(SeaSurfaceChlorophyll) = 1.3835970302558553e+03, nobs = 129, Jo/n = 1.0725558374076398e+01, err = 6.1865029773452762e-02
 CostJo   : Nonlinear Jo(SeaSurfaceBiomassP) = 4.2264815814469887e+02, nobs = 112, Jo/n = 3.7736442691490972e+00, err = 1.1692603016453901e-08
 CostJo   : Nonlinear Jo(SeaSurfaceHS) = 1.0036986509959469e+03, nobs = 6, Jo/n = 1.6728310849932447e+02, err = 1.0000000149011612e-01
 CostFunction: Nonlinear J = 1.9102970473662699e+04
-RPCGMinimizer: reduction in residual norm = 9.2820018030662005e-02
+RPCGMinimizer: reduction in residual norm = 9.2820018030661977e-02
 CostFunction::addIncrement: Analysis: 
   Valid time: 2018-04-15T00:00:00Z
   cicen   min=-0.0002273489346061   max=1.0003068285537475   mean=0.1175435325271067
@@ -40,14 +39,12 @@ layer_depth   min=2.2854716757984130   max=5658.3057467114012979   mean=1200.522
 
 
 
-
-CostJb   : Nonlinear Jb = 6.9035869403872976
+CostJb   : Nonlinear Jb = 6.9035869403872967
 CostJo   : Nonlinear Jo(CoolSkin) = 13469.9472563991075731, nobs = 172, Jo/n = 78.3136468395296959, err = 0.3624384586792724
 CostJo   : Nonlinear Jo(SeaSurfaceTemp) = 867.8731735011587034, nobs = 144, Jo/n = 6.0268970382024909, err = 0.3624224154013386
 CostJo   : Nonlinear Jo(SeaSurfaceSalinity) = 5.7209668055023144, nobs = 28, Jo/n = 0.2043202430536541, err = 1.0000000000000000
 CostJo   : Nonlinear Jo(ADT) = 150.9192163370133812, nobs = 91, Jo/n = 1.6584529267803669, err = 0.1000000014901161
-CostJo   : Nonlinear Jo(InsituTemperature) = 301.9950776836951718, nobs = 201, Jo/n = 1.5024630730532098, err = 0.8912776789375104
-CostJo   : Nonlinear Jo(InsituSalinity) = 324.4751213155141158, nobs = 218, Jo/n = 1.4884179876858445, err = 0.6081969961943772
+CostJo   : Nonlinear Jo(InsituTS) = 626.4701989992095150, nobs = 419, Jo/n = 1.4951556062033640, err = 0.7573167963475671
 CostJo   : Nonlinear Jo(SeaIceFraction) = 612.6863348337009256, nobs = 89, Jo/n = 6.8841161217269766, err = 0.1000000014901161
 CostJo   : Nonlinear Jo(SeaSurfaceChlorophyll) = 1371.6975037972570135, nobs = 129, Jo/n = 10.6333139829244736, err = 0.0618650297734528
 CostJo   : Nonlinear Jo(SeaSurfaceBiomassP) = 419.6808193448894144, nobs = 112, Jo/n = 3.7471501727222267, err = 0.0000000116926030

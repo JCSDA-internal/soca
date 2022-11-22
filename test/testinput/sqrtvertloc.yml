@@ -1,12 +1,13 @@
 geometry:
-  mom6_input_nml: ./inputnml/input.nml
-  fields metadata: ./fields_metadata.yml
+  geom_grid_file: data_generated/gridgen/soca_gridspec.72x35x25.nc
+  mom6_input_nml: data_static/72x35x25/input.nml
+  fields metadata: data_static/fields_metadata.yml
 
 _model variables: &model_vars [cicen, hicen, hsnon, socn, tocn, uocn, vocn, ssh, hocn, chl, biop, sw, lhf, shf, lw, us, mld, layer_depth]
 
 background:
   read_from_file: 1
-  basename: ./INPUT/
+  basename:  data_static/72x35x25/restarts/
   ocn_filename: MOM.res.nc
   ice_filename: cice.res.nc
   date: &date 2018-04-15T00:00:00Z
@@ -18,7 +19,7 @@ background error:
   analysis variables: &soca_vars [ssh, tocn, socn]
   bump:
     verbosity: main
-    datadir: ./bump
+    datadir: data_generated/static_socaerror_init
     strategy: specific_univariate
     load_nicas_local: 1
   perturbation scales:
@@ -56,6 +57,7 @@ background error:
       output variables: *soca_vars
 
     - linear variable change name: BkgErrGODAS
+      sst_bgerr_file: data_static/godas_sst_bgerr.nc
       t_min: 0.25
       t_max: 1.0
       t_dz:  20.0
@@ -88,7 +90,7 @@ background error:
       dtdzmin: 1.0e-6
       nlayers: 10
       dcdt:
-        filename: ./Data/kmask.nc
+        filename: data_static/72x35x25/dcdt.nc
         name: dcdt
       input variables: *soca_vars
       output variables: *soca_vars
@@ -104,8 +106,8 @@ print test for each member: false
 
 output:
  frequency: PT6H
- datadir: Data
- exp: sqrtvert
+ datadir: data_generated/sqrtvertloc
+ exp: sqrtvertloc
  type: ens
  date: *date
 

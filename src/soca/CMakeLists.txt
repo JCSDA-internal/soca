@@ -42,6 +42,10 @@ target_link_libraries( soca PUBLIC saber )
 target_link_libraries( soca PUBLIC ioda )
 target_link_libraries( soca PUBLIC ufo )
 include_directories( ${CMAKE_CURRENT_SOURCE_DIR} ${DEPEND_LIB_ROOT}/mod )
+if ( BUILD_ICEPACK )
+  target_link_libraries( soca PUBLIC icepack )
+endif()
+
 # Add source code in the subdirectories
 add_subdirectory(AnalyticInit)
 add_subdirectory(Covariance)

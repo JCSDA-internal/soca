@@ -1,6 +1,7 @@
 geometry:
-  mom6_input_nml: ./inputnml/input.nml
-  fields metadata: ./fields_metadata.yml
+  geom_grid_file: data_generated/gridgen/soca_gridspec.72x35x25.nc
+  mom6_input_nml: data_static/72x35x25/input.nml
+  fields metadata: data_static/fields_metadata.yml
 
 window begin: &date 2018-04-14T00:00:00Z
 window length: P2D
@@ -9,12 +10,12 @@ background:
   members from template:
     template:
       date: 2018-04-15T00:00:00Z
-      ocn_filename: ocn.pert.ens.%mem%.2018-04-15T00:00:00Z.PT0S.nc
+      ocn_filename: ocn.enspert.ens.%mem%.2018-04-15T00:00:00Z.PT0S.nc
       read_from_file: 1
-      basename: ./Data/
+      basename: data_static/72x35x25/restarts_ens/
       state variables: [socn, tocn, ssh, uocn, vocn, hocn, chl, biop]
     pattern: %mem%
-    nmembers: 5
+    nmembers: 4
 
 observations:
   observers:
@@ -23,8 +24,14 @@ observations:
       distribution:
         name: Halo
         halo size: 5000.0e3
-      obsdataout: {obsfile: ./Data/sst.letkf_halo.nc}
-      obsdatain:  {obsfile: ./Data/sst.nc}
+      obsdataout:
+        engine:
+          type: H5File
+          obsfile: data_generated/letkf/sst.letkf.nc
+      obsdatain:
+        engine:
+          type: H5File
+          obsfile: data_static/obs/sst.nc
       simulated variables: [sea_surface_temperature]
     obs operator:
       name: Identity
@@ -50,7 +57,6 @@ driver:
   save posterior variance: true
   save prior mean: true
   save prior variance: true
-  update obs config with geometry info: true
 
 local ensemble DA:
   solver: LETKF
@@ -60,33 +66,33 @@ local ensemble DA:
     mult: 1.1
 
 output:
-  datadir: Data
+  datadir: data_generated/letkf
   date: *date
-  exp: letkf_halo
+  exp: letkf
   type: ens
 
 output mean prior:
-  datadir: Data
+  datadir: data_generated/letkf
   date: *date
-  exp: letkf_halo
+  exp: letkf
   type: fc
 
 output variance prior:
-  datadir: Data
+  datadir: data_generated/letkf
   date: *date
-  exp: letkf_halo.var
+  exp: letkf
   type: fc
 
 output variance posterior:
-  datadir: Data
+  datadir: data_generated/letkf
   date: *date
-  exp: letkf_halo.var
+  exp: letkf
   type: an
 
 output increment:
-  datadir: Data
+  datadir: data_generated/letkf
   date: *date
-  exp: letkf_halo.inc
+  exp: letkf.inc
   type: an
 
 test:

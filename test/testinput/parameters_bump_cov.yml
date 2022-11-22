@@ -1,0 +1,68 @@
+geometry:
+  geom_grid_file: data_static/36x17x25/soca_gridspec.nc
+  mom6_input_nml: data_static/36x17x25/input.nml
+  fields metadata: data_static/fields_metadata.yml
+
+input variables: [tocn]
+
+background:
+  read_from_file: 1
+  date: &date 2018-04-15T00:00:00Z
+  basename: data_static/36x17x25/restarts/
+  ocn_filename: MOM.res.nc
+  state variables:  [socn, tocn, hocn]
+
+bump:
+  verbosity: main
+  datadir: data_generated/parameters_bump_cov
+  dc: 100.0e3
+  method: cor
+  strategy: specific_univariate
+  nc1: 500
+  nc2: 500
+  nc3: 15
+  ne: 4
+  local_diag: true
+  local_rad: 1000.0e3
+  new_hdiag: true
+  new_var: true
+  nl0r: 25
+  resol: 8.0
+  var_filter: true
+  var_niter: 0
+  var_rhflt:
+    tocn: [2000.0e3]
+output:
+- parameter: cor_rh
+  file:
+    datadir: data_generated/parameters_bump_cov
+    date: *date
+    exp: parameters_bump_cov.cor_rh
+    type: an
+- parameter: cor_rv
+  file:
+    datadir: data_generated/parameters_bump_cov
+    date: *date
+    exp: parameters_bump_cov.cor_rv
+    type: an
+- parameter: stddev
+  file:
+    datadir: data_generated/parameters_bump_cov
+    date: *date
+    exp: parameters_bump_cov.stddev
+    type: an
+
+ensemble:
+  members from template:
+    template:
+      read_from_file: 1
+      date: *date
+      basename: data_static/36x17x25/restarts_ens/
+      ocn_filename: ocn.enspert.lowres.ens.%mem%.2018-04-15T00:00:00Z.PT6H.nc
+      state variables:  [tocn, hocn]
+    pattern: '%mem%'
+    nmembers: 4
+
+test:
+  reference filename: testref/parameters_bump_cov.test
+  test output filename: testoutput/parameters_bump_cov.test
