@@ -803,12 +803,12 @@ soca_add_test( NAME convertincrement
                TEST_DEPENDS test_soca_gridgen
                             3dvar_godas )
 
-# restart checkpointing
-soca_add_test( NAME checkpointmodel
-               EXE  soca_checkpoint_model.x
-               NOTRAPFPE
-               TEST_DEPENDS test_soca_gridgen
-                            test_soca_3dvar_godas)
+## restart checkpointing
+#soca_add_test( NAME checkpointmodel
+#               EXE  soca_checkpoint_model.x
+#               NOTRAPFPE
+#               TEST_DEPENDS test_soca_gridgen
+#                            test_soca_3dvar_godas)
 
 if ( BUILD_ICEPACK )
   # Apply the Soca2Cice nonlinear change of variable
