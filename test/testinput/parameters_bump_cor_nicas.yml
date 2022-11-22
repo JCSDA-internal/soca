@@ -15,7 +15,6 @@ background:
   state variables: [hocn, socn, tocn, ssh]
 
 bump:
-  verbosity: main
   datadir: data_generated/parameters_bump_cor_nicas
   method: cor
   strategy: specific_univariate
@@ -23,7 +22,6 @@ bump:
   write_nicas_local: true
   mask_check: true
   resol: 6.0
-  network: false # Not re-implemented yet
   forced_radii: true
   rh:
     hocn: [6000.0e3]

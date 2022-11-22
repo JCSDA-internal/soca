@@ -26,7 +26,6 @@ cost function:
         analysis variables: [cicen, hicen, hsnon, socn, tocn, ssh]
         date: *bkg_date
         bump:
-          verbosity: main
           datadir: data_generated/static_socaerror_init
           strategy: specific_univariate
           load_nicas_local: true
@@ -111,7 +110,6 @@ cost function:
               method: loc
               strategy: common
               load_nicas_local: true
-              verbosity: main
       weight:
         value: 0.5
 
