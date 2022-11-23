@@ -11,9 +11,6 @@ model:
 
 initial condition:
   read_from_file: 1
-  # From Mark Potts
-  #date: &date 2011-10-01T12:00:00Z
-  #basename: ./INPUT/
   date: &date 2018-04-15T00:00:00Z
   basename: data_static/72x35x25/restarts/
   ocn_filename: MOM.res.nc

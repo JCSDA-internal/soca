@@ -1,15 +1,12 @@
 geometry:
   mom6_input_nml: ./inputnml/input.nml
   fields metadata: ./fields_metadata.yml
-# geom_grid_file: ./MOM6_OUTPUT/ocean_geometry.nc
   geom_grid_file: ./soca_gridspec.nc
 
 model:
   name: UFS
   tstep: PT1H
   ufs_run_directory: Data/ModelRunDirs/UFS
-# model variables: [h, sfc, Salt, Temp]
-# model variables: [cicen, hicen, socn, tocn, ssh, hocn, uocn, vocn, sw, lhf, shf, lw, us]
   model variables: [socn, tocn, uocn, vocn, ssh, hocn, sw, lhf, shf, lw, us]
 
 initial condition:
@@ -18,8 +15,6 @@ initial condition:
   basename: ./Data/ModelRunDirs/UFS/INPUT/
   ocn_filename: MOM.res.nc
   ice_filename: ../INPUT/iced.2011-10-02-00000.nc
-# state variables: [hocn, ssh, socn, tocn]
-# state variables: [cicen, hicen, socn, tocn, ssh, hocn, uocn, vocn, sw, lhf, shf, lw, us]
   state variables: [socn, tocn, uocn, vocn, ssh, hocn, sw, lhf, shf, lw, us]
 
 forecast length: PT6H

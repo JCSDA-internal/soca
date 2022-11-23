@@ -195,9 +195,6 @@ file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/Data/ModelRunDirs)
 execute_process(COMMAND cmake -E create_symlink
    ${CMAKE_BINARY_DIR}/_deps/testdata-src ${CMAKE_CURRENT_BINARY_DIR}/Data/ModelRunDirs/UFS
 )
-#add_custom_target(symlink
-#    ${CMAKE_COMMAND} -E create_symlink ${CMAKE_BINARY_DIR}/_deps/testdata-src ${CMAKE_CURRENT_BINARY_DIR}/Data/ModelRunDirs/UFS
-#    COMMAND ${CMAKE_COMMAND} -E create_symlink ${CMAKE_SOURCE_DIR}/Include ${CMAKE_INSTALL_PREFIX}/include)
 foreach(FILENAME ${soca_test_input} ${soca_test_ref})
     execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
            ${CMAKE_CURRENT_SOURCE_DIR}/${FILENAME}
@@ -307,21 +304,6 @@ function(soca_add_test)
   if ( ARG_MPI )
     set( MPI ${ARG_MPI})
   endif()
-#set( UFS_LIBS 
-#      soca
-#      cmeps
-#      piof 
-#      pioc
-#      fv3atm
-#      fv3
-#      fv3ccpp
-#      ccpp_framework
-#      ccpp_physics
-#      stochastic_physics
-#      FMS::fms_r8
-#      cice
-#      esmf
-#)
 
   # setup working directory
   set( WORKDIR ${CMAKE_CURRENT_BINARY_DIR}/test_workdir/${ARG_NAME})

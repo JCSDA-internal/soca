@@ -17,6 +17,7 @@ function(soca_target_sources)
     target_sources(soca PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/${src})
   endforeach()
 endfunction()
+
 # The main soca library... behold its glory
 ecbuild_add_library( TARGET   soca
                      SOURCES ${soca_src_files}
@@ -114,7 +115,6 @@ target_include_directories (soca PUBLIC ${ESMF_F90COMPILEPATHS})
 target_link_directories( soca PUBLIC ${ESMF_F90LINKPATHS} )
 target_compile_definitions( soca PUBLIC "-DFRONT_MOM6=mom_cap_mod")
 target_compile_definitions(soca PUBLIC UFS_BUILD)
-#add_dependencies(soca FMS )
 add_dependencies(soca ufs-weather-model )
 
 ## Fortran modules
