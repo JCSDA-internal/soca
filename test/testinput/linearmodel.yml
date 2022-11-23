@@ -39,9 +39,11 @@ background error:
   analysis variables: *soca_vars
   date: *date
   bump:
-    datadir: data_generated/static_socaerror_init
-    strategy: specific_univariate
-    load_nicas_local: true
+    general:
+      datadir: data_generated/static_socaerror_init
+    drivers:
+      strategy: specific_univariate
+      load_nicas_local: true
   correlation:
   - name: ocn
     variables: [socn, tocn, ssh, hocn, sw, lhf, shf, lw, us]

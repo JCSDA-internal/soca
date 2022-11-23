@@ -21,7 +21,7 @@ states:
      datadir: data_generated/convertstate
      exp: convertstate
      type: fc
-     date: &bkg_date 2018-04-15T00:00:00Z
+     date: *bkg_date
 
 test:
   reference filename: testref/convertstate.test
