@@ -18,11 +18,9 @@ background error:
   date: *date
   analysis variables: &soca_vars [ssh, tocn, socn]
   bump:
-    general:
-      datadir: data_generated/static_socaerror_init
-    drivers:
-      strategy: specific_univariate
-      load_nicas_local: 1
+    datadir: data_generated/static_socaerror_init
+    strategy: specific_univariate
+    load_nicas_local: 1
   perturbation scales:
     tocn:  1.0
     socn:  1.0

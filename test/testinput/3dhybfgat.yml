@@ -31,11 +31,9 @@ cost function:
         analysis variables: [cicen, hicen, socn, tocn, ssh, sw, lhf, shf, lw, us]
         date: *date_begin
         bump:
-          general:
-            datadir: data_generated/static_socaerror_init
-          drivers:
-            strategy: specific_univariate
-            load_nicas_local: true
+          datadir: data_generated/static_socaerror_init
+          strategy: specific_univariate
+          load_nicas_local: true
         correlation:
         - name: ocn
           variables: [socn, tocn, ssh, sw, lhf, shf, lw, us]
@@ -112,13 +110,11 @@ cost function:
             saber block name: BUMP_NICAS
             active variables: *soca_vars
             bump:
-              general:
-                datadir: data_generated/parameters_bump_loc
-                prefix: soca_bump_loc
-              drivers:
-                method: loc
-                strategy: common
-                load_nicas_local: true
+              datadir: data_generated/parameters_bump_loc
+              prefix: soca_bump_loc
+              method: loc
+              strategy: common
+              load_nicas_local: true
       weight:
         value: 0.5
 

@@ -28,11 +28,9 @@ cost function:
     analysis variables: [cicen, hicen, hsnon, socn, tocn, ssh, sw, lhf, shf, lw, us]
     date: *bkg_date
     bump:
-      general:
-        datadir: ./bump
-      drivers:
-        strategy: specific_univariate
-        load_nicas_local: true
+      datadir: ./bump
+      strategy: specific_univariate
+      load_nicas_local: true
     correlation:
     - name: ocn
       variables: [hsnon, socn, tocn, ssh, sw, lhf, shf, lw, us]

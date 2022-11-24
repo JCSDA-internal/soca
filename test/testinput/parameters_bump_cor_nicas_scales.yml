@@ -14,32 +14,18 @@ background:
   state variables: [socn, tocn, ssh, hocn, cicen, hicen]
 
 bump:
-  general:
-    datadir: data_generated/parameters_bump_cor_nicas_scales
-  drivers:
-    method: cor
-    strategy: specific_univariate
-    new_nicas: true
-    write_nicas_local: true
-  mask:
-    mask_check: true
-  nicas:
-    resol: 6.0
+  datadir: data_generated/parameters_bump_cor_nicas_scales
+  method: cor
+  strategy: specific_univariate
+  new_nicas: true
+  write_nicas_local: true
+  mask_check: true
+  resol: 6.0
   grids:
-  - general:
-      prefix: bump3d
-    model:
-      variables:
-      - socn
-      - tocn
-      - hocn
-  - general:
-      prefix: bump2d
-    model:
-      variables:
-      - ssh
-      - cicen
-      - hicen
+  - prefix: bump3d
+    variables: [socn, tocn, hocn]
+  - prefix: bump2d
+    variables: [ssh, cicen, hicen]
 
 input fields:
 - parameter: rh

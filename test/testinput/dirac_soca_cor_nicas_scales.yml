@@ -16,26 +16,14 @@ background error:
   saber central block:
     saber block name: BUMP_NICAS
     bump:
-      general:
-        datadir: data_generated/parameters_bump_cor_nicas_scales
-      drivers:
-        strategy: specific_univariate
-        load_nicas_local: true
+      datadir: data_generated/parameters_bump_cor_nicas_scales
+      strategy: specific_univariate
+      load_nicas_local: true
       grids:
-      - general:
-          prefix: bump3d
-        model:
-          variables:
-          - socn
-          - tocn
-          - hocn
-      - general:
-          prefix: bump2d
-        model:
-          variables:
-          - ssh
-          - cicen
-          - hicen
+      - prefix: bump3d
+        variables: [socn, tocn, hocn]
+      - prefix: bump2d
+        variables: [ssh, cicen, hicen]
 
 dirac:
   ixdir: [1, 17, 41, 31, 51, 63, 81, 14, 16, 43]
