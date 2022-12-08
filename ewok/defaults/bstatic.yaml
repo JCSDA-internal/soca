@@ -2,9 +2,11 @@ covariance model: SocaError
 analysis variables: $(an_variables)
 date: '{{current_cycle}}'
 bump:
-  datadir: $(soca_static_dir)/bump
-  strategy: specific_univariate
-  load_nicas_local: true
+  io:
+    data directory: $(soca_static_dir)/bump
+  drivers:
+    multivariate strategy: specific_univariate
+    read local nicas: true
 correlation:
   - name: ocn
     variables: [tocn, socn, ssh]

@@ -26,9 +26,11 @@ background error:
       analysis variables: [cicen, hicen, socn, tocn, ssh]
       date: *date
       bump:
-        datadir: data_generated/static_socaerror_init
-        strategy: specific_univariate
-        load_nicas_local: true
+        io:
+          data directory: data_generated/static_socaerror_init
+        drivers:
+          multivariate strategy: specific_univariate
+          read local nicas: true
       correlation:
       - name: ocn
         variables: [socn, tocn, ssh]
@@ -101,11 +103,12 @@ background error:
         saber central block:
           saber block name: BUMP_NICAS
           bump:
-            datadir: data_generated/parameters_bump_loc
-            prefix: soca_bump_loc
-            method: loc
-            strategy: common
-            load_nicas_local: true
+            io:
+              data directory: data_generated/parameters_bump_loc
+              files prefix: soca_bump_loc
+            drivers:
+              multivariate strategy: common
+              read local nicas: true
     weight:
       value: 0.5
 dirac:

@@ -28,14 +28,24 @@ cost function:
     saber central block:
       saber block name: BUMP_NICAS
       bump:
-        datadir: data_generated/parameters_bump_cor_nicas
-        strategy: specific_univariate
-        load_nicas_local: true
+        io:
+          data directory: data_generated/parameters_bump_cor_nicas
+        drivers:
+          multivariate strategy: specific_univariate
+          read local nicas: true
         grids:
-        - prefix: bump3d
-          variables: [hocn, socn, tocn]
-        - prefix: bump2d
-          variables: [ssh]
+        - model:
+            variables:
+            - hocn
+            - socn
+            - tocn
+          io:
+            files prefix: bump3d
+        - model:
+            variables:
+            - ssh
+          io:
+            files prefix: bump2d
 
     linear variable change:
       input variables: *soca_vars

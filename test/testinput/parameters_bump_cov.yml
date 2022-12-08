@@ -13,24 +13,33 @@ background:
   state variables:  [socn, tocn, hocn]
 
 bump:
-  datadir: data_generated/parameters_bump_cov
-  dc: 100.0e3
-  method: cor
-  strategy: specific_univariate
-  nc1: 500
-  nc2: 500
-  nc3: 15
-  ne: 4
-  local_diag: true
-  local_rad: 1000.0e3
-  new_hdiag: true
-  new_var: true
-  nl0r: 25
-  resol: 8.0
-  var_filter: true
-  var_niter: 0
-  var_rhflt:
-    tocn: [2000.0e3]
+  io:
+    data directory: data_generated/parameters_bump_cov
+  drivers:
+    compute covariance: true
+    compute correlation: true
+    multivariate strategy: specific_univariate
+    compute variance: true
+    compute moments: true
+  sampling:
+    computation grid size: 500
+    diagnostic grid size: 500
+    distance classes: 15
+    distance class width: 100.0e3
+    reduced levels: 25
+    local diagnostic: true
+    averaging length-scale: 1000.0e3
+  localization:
+    target ensemble size: 4
+  variance:
+    objective filtering: true
+    filtering iterations: 0
+    initial length-scale:
+    - variables:
+      - tocn
+      value: 2000.0e3
+  nicas:
+    resolution: 8.0
 output:
 - parameter: cor_rh
   file:

@@ -26,10 +26,11 @@ cost function:
     analysis variables: [socn, tocn, ssh]
     date: *bkg_date
     bump:
-      verbosity: main
-      datadir: ./bump
-      strategy: specific_univariate
-      load_nicas_local: 1
+      io:
+        data directory: ./bump
+      drivers:
+        multivariate strategy: specific_univariate
+        read local nicas: 1
     correlation:
     - name: ocn
       variables: [socn, tocn, ssh]

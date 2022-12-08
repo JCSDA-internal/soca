@@ -18,15 +18,16 @@ background error:
   analysis variables: *ana_vars
   date: *date
   bump:
-    verbosity: main
-    datadir: ./bump
-    method: cor
-    strategy: specific_univariate
-    new_nicas: 1
-    write_nicas_local: 1
-    mask_check: 1
-    resol: 20.0
-    network: 0 # Not re-implemented yet
+    io:
+      data directory: ./bump
+    drivers:
+      multivariate strategy: specific_univariate
+      compute nicas: 1
+      write local nicas: 1
+    model:
+      do not cross mask boundaries: 1
+    nicas:
+      resolution: 20.0
   correlation:
   - name: ocn
     base value: 300.0e3
