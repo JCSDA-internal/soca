@@ -29,7 +29,7 @@ bump:
     reduced levels: 25
     local diagnostic: true
     averaging length-scale: 1000.0e3
-  localization:
+  diagnostics:
     target ensemble size: 4
   variance:
     objective filtering: true
