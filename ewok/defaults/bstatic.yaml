@@ -4,7 +4,7 @@ date: '{{current_cycle}}'
 bump:
   datadir: $(soca_static_dir)/bump
   strategy: specific_univariate
-  load_nicas_local: 1
+  load_nicas_local: true
 correlation:
   - name: ocn
     variables: [tocn, socn, ssh]

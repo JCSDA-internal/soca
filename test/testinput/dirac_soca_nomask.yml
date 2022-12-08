@@ -19,8 +19,8 @@ background error:
     datadir: data_generated/static_socaerror_init
     method: cor
     strategy: specific_univariate
-    new_nicas: 1
-    write_nicas_local: 1
+    new_nicas: true
+    write_nicas_local: true
     mask_check: 0
     resol: 6.0
   correlation:

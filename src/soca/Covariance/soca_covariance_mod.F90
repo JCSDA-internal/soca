@@ -102,6 +102,8 @@ subroutine soca_cov_setup(self, f_conf, geom, bkg, vars)
 
   ! Initialize bump
   call f_conf%get_or_die("bump", f_conf2)
+  call f_conf2%set('model.nl0', 1)
+  call f_conf2%set('model.variables', ['var'])
   call f_conf%get_or_die("correlation", f_conf_list)
   allocate(self%conv(size(f_conf_list)))
   allocate(self%conv_vars(size(self%conv)))
@@ -110,6 +112,7 @@ subroutine soca_cov_setup(self, f_conf, geom, bkg, vars)
     call f_conf_list(i)%get_or_die("variables", domain_vars)
     self%conv_vars(i) = oops_variables()
     call self%conv_vars(i)%push_back(domain_vars)
+    call f_conf2%set('io.files prefix', domain)
 
     call soca_bump_correlation(self, self%conv(i), geom, f_conf2, f_conf_list(i), domain)
   end do
@@ -263,15 +266,7 @@ subroutine soca_bump_correlation(self, horiz_convol, geom, f_conf_bump, f_conf_d
   type(atlas_functionspace) :: afunctionspace
   type(fieldset_type) :: afieldset, rh, rv, universe_rad
   type(atlas_field) :: afield
-  type(fckit_configuration) :: f_grid
   real(kind=kind_real) :: r_base, r_mult, r_min, r_max, r_min_grid
-
-
-  ! Grid setup
-  f_grid = fckit_configuration()
-  call f_grid%set('general.prefix', domain)
-  call f_grid%set('model.nl0', 1)
-  call f_grid%set('model.variables', ['var'])
 
   ! Wrap functionspace
   afunctionspace = atlas_functionspace(geom%functionspaceInchalo%c_ptr())
@@ -312,7 +307,7 @@ subroutine soca_bump_correlation(self, horiz_convol, geom, f_conf_bump, f_conf_d
   universe_rad = atlas_fieldset()
 
   ! Create BUMP object
-  call horiz_convol%create(geom%f_comm,afunctionspace,afieldset,f_conf_bump,f_grid,universe_rad)
+  call horiz_convol%create(geom%f_comm,afunctionspace,afieldset,f_conf_bump,universe_rad)
 
   if (horiz_convol%nam%new_nicas) then
     ! get parameters for correlation lengths
