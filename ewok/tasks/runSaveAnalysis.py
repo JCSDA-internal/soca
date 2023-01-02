@@ -20,7 +20,7 @@ if not os.path.exists(workdir):
 os.chdir(workdir)
 
 # Date
-andate = conf['date']
+andate = conf['an']['date']
 base = conf['experiment']['expid'] + '.an' # + andate
 filename = base + '.$(file_type).nc'
 
