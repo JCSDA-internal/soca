@@ -16,9 +16,11 @@ background error:
   analysis variables: [none]
   date: *date
   bump:
-    datadir: data_generated/static_socaerror_init
-    load_nicas_local: true
-    strategy: specific_univariate
+    io:
+      data directory: data_generated/static_socaerror_init
+    drivers:
+      multivariate strategy: specific_univariate
+      read local nicas: true
   correlation:
   - name: ocn
     variables: []

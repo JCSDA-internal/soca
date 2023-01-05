@@ -14,30 +14,42 @@ background:
   state variables: *soca_vars
 
 bump:
-  datadir: data_generated/parameters_bump_loc
-  prefix: soca_bump_loc
-  method: loc
-  strategy: common
-  new_nicas: true
-  write_nicas_local: true
-  resol: 6.0
-  forced_radii: true
-  rh:
-    common: [2500000.0]
-    socn: [2500000.0]
-    tocn: [2500000.0]
-    cicen: [2500000.0]
-    hicen: [2500000.0]
-    ssh: [2500000.0]
-  rv:
-    common: [500]
-    socn: [500]
-    tocn: [500]
-    cicen: [500]
-    hicen: [500]
-    ssh: [500]
+  io:
+    data directory: data_generated/parameters_bump_loc
+    files prefix: soca_bump_loc
+  drivers:
+    multivariate strategy: common
+    compute nicas: true
+    write local nicas: true
+  nicas:
+    resolution: 6.0
+    explicit length-scales: true
+    horizontal length-scale:
+    - variables:
+      - common
+      - socn
+      - tocn
+      - cicen
+      - hicen
+      - ssh
+      value: 2500000.0
+    vertical length-scale:
+    - variables:
+      - common
+      - socn
+      - tocn
+      - cicen
+      - hicen
+      - ssh
+      value: 500
   grids:
-  - variables: [socn, tocn, cicen, hicen, ssh]
+  - model:
+      variables:
+      - socn
+      - tocn
+      - cicen
+      - hicen
+      - ssh
 
 test:
   reference filename: testref/parameters_bump_loc.test
