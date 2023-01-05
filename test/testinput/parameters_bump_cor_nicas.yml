@@ -15,29 +15,44 @@ background:
   state variables: [hocn, socn, tocn, ssh]
 
 bump:
-  datadir: data_generated/parameters_bump_cor_nicas
-  method: cor
-  strategy: specific_univariate
-  new_nicas: true
-  write_nicas_local: true
-  mask_check: true
-  resol: 6.0
-  forced_radii: true
-  rh:
-    hocn: [6000.0e3]
-    socn: [6000.0e3]
-    tocn: [6000.0e3]
-    ssh: [6000.0e3]
-  rv:
-    hocn: [100]
-    socn: [100]
-    tocn: [100]
-    ssh: [100]
+  io:
+    data directory: data_generated/parameters_bump_cor_nicas
+  drivers:
+    multivariate strategy: specific_univariate
+    compute nicas: true
+    write local nicas: true
+  model:
+    do not cross mask boundaries: true
+  nicas:
+    resolution: 6.0
+    explicit length-scales: true
+    horizontal length-scale:
+    - variables:
+      - hocn
+      - socn
+      - tocn
+      - ssh
+      value: 6000.0e3
+    vertical length-scale:
+    - variables:
+      - hocn
+      - socn
+      - tocn
+      - ssh
+      value: 100
   grids:
-  - prefix: bump3d
-    variables: [hocn, socn, tocn]
-  - prefix: bump2d
-    variables: [ssh]
+  - model:
+      variables:
+      - hocn
+      - socn
+      - tocn
+    io:
+      files prefix: bump3d
+  - model:
+      variables:
+      - ssh
+    io:
+      files prefix: bump2d
 output:
 - parameter: cor_rh
   file:
