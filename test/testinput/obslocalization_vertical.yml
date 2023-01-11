@@ -12,7 +12,7 @@ observations:
     name: 'Vertical BoxCar'
     distribution:
       name: InefficientDistribution
-    simulated variables: ['sea_water_temperature']
+    simulated variables: ['waterTemperature']
     obsdatain:
       engine:
         type: H5File
@@ -35,7 +35,7 @@ observations:
     name: 'Vertical Gaspari Cohn'
     distribution:
       name: InefficientDistribution
-    simulated variables: ['sea_water_temperature']
+    simulated variables: ['waterTemperature']
     obsdatain:
       engine:
         type: H5File
@@ -58,7 +58,7 @@ observations:
     name: 'Vertical BoxCar log transform'
     distribution:
       name: InefficientDistribution
-    simulated variables: ['sea_water_temperature']
+    simulated variables: ['waterTemperature']
     obsdatain:
       engine:
         type: H5File
@@ -82,7 +82,7 @@ observations:
     name: 'Vertical BoxCar sst'
     distribution:
       name: InefficientDistribution
-    simulated variables: ['sea_surface_temperature']
+    simulated variables: ['seaSurfaceTemperature']
     obsdatain:
       engine:
         type: H5File
