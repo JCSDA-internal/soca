@@ -146,7 +146,6 @@ variational:
   - geometry: *geom
     linear model:
       name: Identity
-      observation alias file: testinput/obsop_name_map.yml
       increment variables: *soca_vars
       variable change: Identity
       tstep: PT1H
