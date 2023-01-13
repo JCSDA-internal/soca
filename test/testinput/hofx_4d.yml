@@ -134,7 +134,7 @@ observations:
         engine:
           type: H5File
           obsfile: data_static/obs/uocn_surface.nc
-      simulated variables: [surface_eastward_sea_water_velocity]
+      simulated variables: [waterSurfaceZonalVelocity]
     obs operator:
       name: Identity
       observation alias file: testinput/obsop_name_map.yml
@@ -149,7 +149,7 @@ observations:
         engine:
           type: H5File
           obsfile: data_static/obs/vocn_surface.nc
-      simulated variables: [surface_northward_sea_water_velocity]
+      simulated variables: [waterSurfaceMeridionalVelocity]
     obs operator:
       name: Identity
       observation alias file: testinput/obsop_name_map.yml

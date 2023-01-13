@@ -250,7 +250,7 @@ cost function:
           engine:
             type: H5File
             obsfile: data_static/obs/chl.nc
-        simulated variables: [sea_surface_chlorophyll]
+        simulated variables: [seaSurfaceChlorophyllMassConcentration]
       obs operator:
         name: Identity
         observation alias file: testinput/obsop_name_map.yml
@@ -263,10 +263,10 @@ cost function:
         use_reduced_horizontal_grid: false
       - filter: BlackList
         filter variables:
-        - name: sea_surface_chlorophyll
+        - name: seaSurfaceChlorophyllMassConcentration
         where:
         - variable:
-            name: ObsValue/sea_surface_chlorophyll
+            name: ObsValue/seaSurfaceChlorophyllMassConcentration
           minvalue: 0.001
           maxvalue: 10.0
         - variable:
@@ -277,7 +277,7 @@ cost function:
           name: reject
         where:
         - variable:
-            name: PreQC/sea_surface_chlorophyll
+            name: PreQC/seaSurfaceChlorophyllMassConcentration
           any_bit_set_of: 0,1,3,4,5,8,9,10,12,14,15,16,19,21,22,25
         action:
           name: inflate error
@@ -293,7 +293,7 @@ cost function:
           engine:
             type: H5File
             obsfile: data_static/obs/biomass_p.nc
-        simulated variables: [sea_surface_biomass_in_p_units]
+        simulated variables: [oceanSurfaceBiomassContent]
       obs operator:
         name: Identity
         observation alias file: testinput/obsop_name_map.yml
@@ -312,7 +312,7 @@ cost function:
           engine:
             type: H5File
             obsfile: data_static/obs/swh.nc
-        simulated variables: [sea_surface_wave_significant_height]
+        simulated variables: [waveHeightSignificant]
       obs operator:
         name: Identity
         observation alias file: testinput/obsop_name_map.yml
