@@ -29,7 +29,7 @@ cost function:
           io:
             data directory: data_generated/static_socaerror_init
           drivers:
-            multivariate strategy: specific_univariate
+            multivariate strategy: univariate
             read local nicas: true
         correlation:
         - name: ocn
@@ -111,7 +111,7 @@ cost function:
                 data directory: data_generated/parameters_bump_loc
                 files prefix: soca_bump_loc
               drivers:
-                multivariate strategy: common
+                multivariate strategy: duplicated
                 read local nicas: true
       weight:
         value: 0.5

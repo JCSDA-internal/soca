@@ -31,7 +31,7 @@ cost function:
         io:
           data directory: data_generated/parameters_bump_cor_nicas
         drivers:
-          multivariate strategy: specific_univariate
+          multivariate strategy: univariate
           read local nicas: true
         grids:
         - model:

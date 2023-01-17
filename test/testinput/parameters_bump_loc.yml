@@ -18,7 +18,7 @@ bump:
     data directory: data_generated/parameters_bump_loc
     files prefix: soca_bump_loc
   drivers:
-    multivariate strategy: common
+    multivariate strategy: duplicated
     compute nicas: true
     write local nicas: true
   nicas:
