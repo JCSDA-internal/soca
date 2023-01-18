@@ -2,7 +2,7 @@
 _: &land_mask
   filter: Domain Check
   where:
-  - variable: {name: sea_area_fraction@GeoVaLs}
+  - variable: {name: GeoVaLs/sea_area_fraction}
     minvalue: 0.5
 
 cost function:
@@ -52,9 +52,10 @@ cost function:
           engine:
             type: H5File
             obsfile: data_static/obs/single_ob.nc
-        simulated variables: [sea_surface_temperature]
+        simulated variables: [seaSurfaceTemperature]
       obs operator:
         name: Identity
+        observation alias file: testinput/obsop_name_map.yml
       obs error:
         covariance model: diagonal
       obs filters:
