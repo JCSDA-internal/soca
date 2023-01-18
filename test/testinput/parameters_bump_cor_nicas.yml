@@ -27,14 +27,14 @@ bump:
     resolution: 6.0
     explicit length-scales: true
     horizontal length-scale:
-    - variables:
+    - groups:
       - hocn
       - socn
       - tocn
       - ssh
       value: 6000.0e3
     vertical length-scale:
-    - variables:
+    - groups:
       - hocn
       - socn
       - tocn

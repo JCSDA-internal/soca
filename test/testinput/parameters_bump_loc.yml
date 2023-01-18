@@ -25,22 +25,12 @@ bump:
     resolution: 6.0
     explicit length-scales: true
     horizontal length-scale:
-    - variables:
+    - groups:
       - common
-      - socn
-      - tocn
-      - cicen
-      - hicen
-      - ssh
       value: 2500000.0
     vertical length-scale:
-    - variables:
+    - groups:
       - common
-      - socn
-      - tocn
-      - cicen
-      - hicen
-      - ssh
       value: 500
   grids:
   - model:
