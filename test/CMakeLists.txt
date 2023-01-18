@@ -55,6 +55,7 @@ set( soca_test_input
   testinput/obslocalization_vertical.yml
   testinput/obslocalization.yml
   testinput/obslocalizations.yml
+  testinput/obsop_name_map.yml
   testinput/parameters_bump_cor_nicas_scales.yml
   testinput/parameters_bump_cor_nicas.yml
   testinput/parameters_bump_cov.yml

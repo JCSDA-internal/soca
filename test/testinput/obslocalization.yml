@@ -12,7 +12,7 @@ observations:
     name: 'BoxCar'
     distribution:
       name: InefficientDistribution
-    simulated variables: ['sea_surface_temperature']
+    simulated variables: ['seaSurfaceTemperature']
     obsdatain:
       engine:
         type: H5File
@@ -31,7 +31,7 @@ observations:
     name: 'GC99'
     distribution:
       name: InefficientDistribution
-    simulated variables: ['sea_surface_temperature']
+    simulated variables: ['seaSurfaceTemperature']
     obsdatain:
       engine:
         type: H5File
@@ -50,7 +50,7 @@ observations:
     name: 'SOAR'
     distribution:
       name: InefficientDistribution
-    simulated variables: ['sea_surface_temperature']
+    simulated variables: ['seaSurfaceTemperature']
     obsdatain:
       engine:
         type: H5File
@@ -70,7 +70,7 @@ observations:
     name: 'Rossby'
     distribution:
       name: InefficientDistribution
-    simulated variables: ['sea_surface_temperature']
+    simulated variables: ['seaSurfaceTemperature']
     obsdatain:
       engine:
         type: H5File
