@@ -33,7 +33,7 @@ observations:
         engine:
           type: H5File
           obsfile: data_static/obs/prof.nc
-      simulated variables: [sea_water_temperature]
+      simulated variables: [waterTemperature]
     obs operator:
       name: InsituTemperature
     obs error:

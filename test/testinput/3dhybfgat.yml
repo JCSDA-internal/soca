@@ -133,7 +133,7 @@ cost function:
           engine:
             type: H5File
             obsfile: data_static/obs/adt.nc
-        simulated variables: [absolute_dynamic_topography]
+        simulated variables: [absoluteDynamicTopography]
       obs operator:
         name: ADT
       obs error:
