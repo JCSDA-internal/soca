@@ -39,6 +39,8 @@ if(FV3_FORECAST_MODEL MATCHES UFS)
   find_package( w3emc  REQUIRED)
   find_package( w3nco  REQUIRED)
   find_package( nemsio REQUIRED)
+  find_package( nemsio REQUIRED)
+  find_package( PIO 2.5.3 REQUIRED COMPONENTS C Fortran)
 else()
   find_package( fms    2020.4.0 REQUIRED)
   find_package( mom6   2020.4.0 REQUIRED)
@@ -63,8 +65,7 @@ if(FV3_FORECAST_MODEL MATCHES UFS)
         soca
         cdeps
         cmeps
-        piof 
-        pioc
+        PIO::PIO_C PIO::PIO_Fortran
         stochastic_physics
         cice
         esmf
@@ -73,8 +74,7 @@ if(FV3_FORECAST_MODEL MATCHES UFS)
     set( UFS_LIBS 
         soca
         cmeps
-        piof 
-        pioc
+        PIO::PIO_C PIO::PIO_Fortran
         fv3atm
         fv3
         fv3ccpp
