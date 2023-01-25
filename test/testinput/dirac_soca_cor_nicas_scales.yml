@@ -19,7 +19,7 @@ background error:
       io:
         data directory: data_generated/parameters_bump_cor_nicas_scales
       drivers:
-        multivariate strategy: specific_univariate
+        multivariate strategy: univariate
         read local nicas: true
       grids:
       - model:

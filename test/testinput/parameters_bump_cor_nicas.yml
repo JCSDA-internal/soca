@@ -18,7 +18,7 @@ bump:
   io:
     data directory: data_generated/parameters_bump_cor_nicas
   drivers:
-    multivariate strategy: specific_univariate
+    multivariate strategy: univariate
     compute nicas: true
     write local nicas: true
   model:
@@ -27,14 +27,14 @@ bump:
     resolution: 6.0
     explicit length-scales: true
     horizontal length-scale:
-    - variables:
+    - groups:
       - hocn
       - socn
       - tocn
       - ssh
       value: 6000.0e3
     vertical length-scale:
-    - variables:
+    - groups:
       - hocn
       - socn
       - tocn
