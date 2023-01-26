@@ -21,7 +21,7 @@ background error:
     io:
       data directory: data_generated/static_socaerror_init
     drivers:
-      multivariate strategy: specific_univariate
+      multivariate strategy: univariate
       read local nicas: true
   correlation:
   - name: ocn

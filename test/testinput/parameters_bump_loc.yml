@@ -18,29 +18,19 @@ bump:
     data directory: data_generated/parameters_bump_loc
     files prefix: soca_bump_loc
   drivers:
-    multivariate strategy: common
+    multivariate strategy: duplicated
     compute nicas: true
     write local nicas: true
   nicas:
     resolution: 6.0
     explicit length-scales: true
     horizontal length-scale:
-    - variables:
+    - groups:
       - common
-      - socn
-      - tocn
-      - cicen
-      - hicen
-      - ssh
       value: 2500000.0
     vertical length-scale:
-    - variables:
+    - groups:
       - common
-      - socn
-      - tocn
-      - cicen
-      - hicen
-      - ssh
       value: 500
   grids:
   - model:
