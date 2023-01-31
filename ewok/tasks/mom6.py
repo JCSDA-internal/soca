@@ -22,13 +22,13 @@ class ModelTasks(GenericModel.ModelTasks):
         super().__init__()
 
         # self.getFcInit = getFcInitMOM6
-        self.createPlots = ewok.createPlots
         self.forecast = forecastMOM6
         self.getBackground = getBackgroundMOM6
         self.getInitialConditions = getInitialConditionsMOM6
         self.getStaticModel = getStaticModelMOM6
         self.hofx = hofxMOM6
+        self.plotObsStats = ewok.plotObsStats
+        self.publishObsPlots = ewok.publishObsPlots
         self.saveAnalysis = saveAnalysisMOM6
         self.saveForecast = saveForecastMOM6
-        self.savePlots = ewok.savePlots
         self.variational = variationalMOM6

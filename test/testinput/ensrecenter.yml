@@ -5,13 +5,15 @@ geometry:
 
 recenter variables:  &soca_vars [cicen, hicen, socn, tocn, ssh, hocn]
 
-center:
-  <<: &_file
+_file: &_file
   read_from_file: 1
   date: &date_bkg 2018-04-15T00:00:00Z
   basename: data_static/72x35x25/
   remap_filename: data_static/72x35x25/restarts/MOM.res.nc
   state variables:  *soca_vars
+
+center:
+  <<: *_file
   ocn_filename: restarts/MOM.res.nc
   ice_filename: restarts/cice.res.nc
 

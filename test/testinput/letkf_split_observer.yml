@@ -14,7 +14,7 @@ background:
       state variables: [socn, tocn, ssh, uocn, vocn, hocn, chl, biop]
       basename: data_static/72x35x25/restarts_ens/
       ocn_filename: ocn.enspert.ens.%mem%.2018-04-15T00:00:00Z.PT0S.nc
-    pattern: %mem%
+    pattern: '%mem%'
     nmembers: 4
 
 
@@ -22,7 +22,7 @@ background:
 _: &land_mask
   filter: Domain Check
   where:
-  - variable: {name: sea_area_fraction@GeoVaLs}
+  - variable: {name: GeoVaLs/sea_area_fraction}
     minvalue: 0.5
 
 observations:
@@ -39,11 +39,12 @@ observations:
         engine:
           type: H5File
           obsfile: data_static/obs/sst.nc
-      simulated variables: [sea_surface_temperature]
+      simulated variables: [seaSurfaceTemperature]
       io pool:
         max pool size: 1
     obs operator:
       name: Identity
+      observation alias file: testinput/obsop_name_map.yml
     obs error:
       covariance model: diagonal
     obs localizations:

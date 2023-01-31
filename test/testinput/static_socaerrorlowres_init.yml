@@ -18,13 +18,16 @@ background error:
   analysis variables: *ana_vars
   date: *date
   bump:
-    datadir: data_generated/static_socaerrorlowres_init
-    method: cor
-    strategy: specific_univariate
-    new_nicas: true
-    write_nicas_local: true
-    mask_check: true
-    resol: 6.0
+    io:
+      data directory: data_generated/static_socaerrorlowres_init
+    drivers:
+      multivariate strategy: univariate
+      compute nicas: true
+      write local nicas: true
+    model:
+      do not cross mask boundaries: true
+    nicas:
+      resolution: 6.0
   correlation:
   - name: ocn
     base value: 840336.134453782

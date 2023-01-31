@@ -2,7 +2,7 @@
 _: &land_mask
   filter: Domain Check
   where:
-  - variable: {name: sea_area_fraction@GeoVaLs}
+  - variable: {name: GeoVaLs/sea_area_fraction}
     minvalue: 0.5
 
 cost function:
@@ -30,9 +30,11 @@ cost function:
     analysis variables: *a_vars
     date: 2018-04-15T00:00:00Z
     bump:
-      datadir: data_generated/static_socaerror_init
-      strategy: specific_univariate
-      load_nicas_local: true
+      io:
+        data directory: data_generated/static_socaerror_init
+      drivers:
+        multivariate strategy: univariate
+        read local nicas: true
     correlation:
     - name: ocn
       variables: [socn, tocn, ssh, sw, lhf, shf, lw, us, chl, biop]
@@ -104,7 +106,7 @@ cost function:
           engine:
             type: H5File
             obsfile: data_static/obs/sst.nc
-        simulated variables: [sea_surface_temperature]
+        simulated variables: [seaSurfaceTemperature]
       obs operator:
         name: CoolSkin
       obs error:
@@ -125,9 +127,10 @@ cost function:
           engine:
             type: H5File
             obsfile: data_static/obs/sst.nc
-        simulated variables: [sea_surface_temperature]
+        simulated variables: [seaSurfaceTemperature]
       obs operator:
         name: Identity
+        observation alias file: testinput/obsop_name_map.yml
       obs error:
         covariance model: diagonal
       obs filters:
@@ -151,19 +154,20 @@ cost function:
           engine:
             type: H5File
             obsfile: data_static/obs/sss.nc
-        simulated variables: [sea_surface_salinity]
+        simulated variables: [seaSurfaceSalinity]
       obs operator:
         name: Identity
+        observation alias file: testinput/obsop_name_map.yml
       obs error:
         covariance model: diagonal
       obs filters:
       - filter: Domain Check
         where:
-        - variable: {name: distance_from_coast@GeoVaLs}
+        - variable: {name: GeoVaLs/distance_from_coast}
           minvalue: 1500e3
       - filter: Domain Check
         where:
-        - variable: {name: sea_surface_temperature@GeoVaLs}
+        - variable: {name: GeoVaLs/sea_surface_temperature}
           minvalue: 15
 
     - obs space:
@@ -176,7 +180,7 @@ cost function:
           engine:
             type: H5File
             obsfile: data_static/obs/adt.nc
-        simulated variables: [absolute_dynamic_topography]
+        simulated variables: [absoluteDynamicTopography]
       obs operator:
         name: ADT
       obs error:
@@ -184,7 +188,7 @@ cost function:
       obs filters:
       - filter: Domain Check
         where:
-        - variable: {name: sea_floor_depth_below_sea_surface@GeoVaLs}
+        - variable: {name: GeoVaLs/sea_floor_depth_below_sea_surface}
           minvalue: 2000
 
     - obs space:
@@ -197,16 +201,17 @@ cost function:
           engine:
             type: H5File
             obsfile: data_static/obs/prof.nc
-        simulated variables: [sea_water_temperature, sea_water_salinity]
+        simulated variables: [waterTemperature, salinity]
       obs operator:
         name: Composite
         components:
         - name: InsituTemperature
           variables:
-          - name: sea_water_temperature
+          - name: waterTemperature
         - name: MarineVertInterp
+          observation alias file: testinput/obsop_name_map.yml
           variables:
-          - name: sea_water_salinity
+          - name: salinity
       obs error:
         covariance model: diagonal
       obs filters:
@@ -214,7 +219,7 @@ cost function:
       - filter: Background Check
         threshold: 5
         filter variables:
-          - name: sea_water_temperature
+          - name: waterTemperature
 
     - obs space:
         name: SeaIceFraction
@@ -226,9 +231,10 @@ cost function:
           engine:
             type: H5File
             obsfile: data_static/obs/icec.nc
-        simulated variables: [sea_ice_area_fraction]
+        simulated variables: [seaIceFraction]
       obs operator:
         name: Identity
+        observation alias file: testinput/obsop_name_map.yml
       obs error:
         covariance model: diagonal
       obs filters:
@@ -244,9 +250,10 @@ cost function:
           engine:
             type: H5File
             obsfile: data_static/obs/chl.nc
-        simulated variables: [sea_surface_chlorophyll]
+        simulated variables: [seaSurfaceChlorophyllMassConcentration]
       obs operator:
         name: Identity
+        observation alias file: testinput/obsop_name_map.yml
       obs error:
         covariance model: diagonal
       obs filters:
@@ -256,21 +263,21 @@ cost function:
         use_reduced_horizontal_grid: false
       - filter: BlackList
         filter variables:
-        - name: sea_surface_chlorophyll
+        - name: seaSurfaceChlorophyllMassConcentration
         where:
         - variable:
-            name: sea_surface_chlorophyll@ObsValue
+            name: ObsValue/seaSurfaceChlorophyllMassConcentration
           minvalue: 0.001
           maxvalue: 10.0
         - variable:
-            name: latitude@MetaData
+            name: MetaData/latitude
           minvalue: -60.0
           maxvalue:  60.0
         action:
           name: reject
         where:
         - variable:
-            name: sea_surface_chlorophyll@PreQC
+            name: PreQC/seaSurfaceChlorophyllMassConcentration
           any_bit_set_of: 0,1,3,4,5,8,9,10,12,14,15,16,19,21,22,25
         action:
           name: inflate error
@@ -286,9 +293,10 @@ cost function:
           engine:
             type: H5File
             obsfile: data_static/obs/biomass_p.nc
-        simulated variables: [sea_surface_biomass_in_p_units]
+        simulated variables: [oceanSurfaceBiomassContent]
       obs operator:
         name: Identity
+        observation alias file: testinput/obsop_name_map.yml
       obs error:
         covariance model: diagonal
       obs filters:
@@ -304,9 +312,10 @@ cost function:
           engine:
             type: H5File
             obsfile: data_static/obs/swh.nc
-        simulated variables: [sea_surface_wave_significant_height]
+        simulated variables: [waveHeightSignificant]
       obs operator:
         name: Identity
+        observation alias file: testinput/obsop_name_map.yml
       obs error:
         covariance model: diagonal
       obs filters:

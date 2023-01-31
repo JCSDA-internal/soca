@@ -14,24 +14,37 @@ background:
   state variables: [socn, tocn, ssh, hocn, cicen, hicen]
 
 bump:
-  datadir: data_generated/parameters_bump_cor_nicas_scales
-  method: cor
-  strategy: specific_univariate
-  new_nicas: true
-  write_nicas_local: true
-  mask_check: true
-  resol: 6.0
+  io:
+    data directory: data_generated/parameters_bump_cor_nicas_scales
+  drivers:
+    multivariate strategy: univariate
+    compute nicas: true
+    write local nicas: true
+  model:
+    do not cross mask boundaries: true
+  nicas:
+    resolution: 6.0
   grids:
-  - prefix: bump3d
-    variables: [socn, tocn, hocn]
-  - prefix: bump2d
-    variables: [ssh, cicen, hicen]
+  - model:
+      variables:
+      - socn
+      - tocn
+      - hocn
+    io:
+      files prefix: bump3d
+  - model:
+      variables:
+      - ssh
+      - cicen
+      - hicen
+    io:
+      files prefix: bump2d
 
 input fields:
 - parameter: rh
   file:
     read_from_file: 1
-    date: &date 2018-04-15T00:00:00Z
+    date: *date
     basename: data_generated/setcorscales/
     ocn_filename: ocn.cor_rh.incr.2018-04-15T00:00:00Z.nc
     ice_filename: ice.cor_rh.incr.2018-04-15T00:00:00Z.nc
@@ -39,7 +52,7 @@ input fields:
 - parameter: rv
   file:
     read_from_file: 1
-    date: &date 2018-04-15T00:00:00Z
+    date: *date
     basename: data_generated/setcorscales/
     ocn_filename: ocn.cor_rv.incr.2018-04-15T00:00:00Z.nc
     ice_filename: ice.cor_rv.incr.2018-04-15T00:00:00Z.nc
