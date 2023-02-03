@@ -1,4 +1,4 @@
-_resol_name: $(resolution_degree)
+_resol_name: 5deg
 mom6_input_nml: $(model_path)/mom_input.nml
 fields metadata: $(model_path)/fields_metadata.yaml
 geom_grid_file: ../soca_gridspec.nc

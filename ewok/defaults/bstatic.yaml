@@ -3,7 +3,7 @@ analysis variables: $(AN_VARIABLES)
 date: '{{current_cycle}}'
 bump:
   io:
-    data directory: $(soca_static_dir)/$(min_resolution_degree)/bump
+    data directory: $(soca_static_dir)/bump
   drivers:
     multivariate strategy: specific_univariate
     read local nicas: true
