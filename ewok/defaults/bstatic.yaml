@@ -1,5 +1,5 @@
 covariance model: SocaError
-analysis variables: $(an_variables)
+analysis variables: $(AN_VARIABLES)
 date: '{{current_cycle}}'
 bump:
   io:
@@ -13,8 +13,8 @@ correlation:
   - name: ice
     variables: [cicen, hicen]
 linear variable change:
-  input variables: $(an_variables)
-  output variables: $(an_variables)
+  input variables: $(AN_VARIABLES)
+  output variables: $(AN_VARIABLES)
   linear variable changes:
 
   - linear variable change name: VertConvSOCA
@@ -46,7 +46,7 @@ linear variable change:
 
   - linear variable change name: HorizFiltSOCA
     niter: 2
-    filter variables: $(an_variables)
+    filter variables: $(AN_VARIABLES)
 
   - linear variable change name: BalanceSOCA
     dsdtmax: 0.1
