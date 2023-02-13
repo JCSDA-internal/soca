@@ -148,8 +148,11 @@ subroutine soca_cov_get_conv(self, field, conv)
   integer :: j,k
 
   ! safety check to make sure field is on h grid
-  if (field%metadata%grid /= "h" ) then
-    call abor1_ftn("ERROR: cannot use fields on u/v grids" )
+  ! TODO we really should have separate variable names for staggered/destaggered variables.
+  !  The "abort" has been turned into a "warning" until we get u/v names straightened out.
+  if (field%metadata%grid /= "h") then
+      call fckit_log%warning("WARNING: Attempting to use a field (" // &
+        trim(field%name) // ") which is on the u/v grid. PROCEED WITH CAUTION")
   end if
 
   ! determine which horizontal convolution to use

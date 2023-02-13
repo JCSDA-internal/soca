@@ -283,6 +283,8 @@ subroutine soca_increment_dirac(self, f_conf)
       if (ixdir(n) > iec .or. ixdir(n) < isc) cycle
       if (iydir(n) > jec .or. iydir(n) < jsc) cycle
 
+    ! TODO this list is getting long, change it so that the field name
+    ! is directly used in the yaml?
     field => null()
     select case(ifdir(n))
     case (1)
@@ -299,6 +301,10 @@ subroutine soca_increment_dirac(self, f_conf)
       call self%get("chl", field)
     case (7)
       call self%get("biop", field)
+    case (8)
+      call self%get("ucon", field)
+    case (9)
+      call self%get("vocn", field)
     case default
       ! TODO print error that out of range
     end select
