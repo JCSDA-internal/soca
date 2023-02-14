@@ -3,7 +3,8 @@ cost function:
   cost type: 4D-Var
   window begin: *date_begin
   window length: PT6H
-  analysis variables: &soca_vars [cicen, hicen, socn, tocn, ssh, hocn]
+  analysis variables: &soca_vars [cicen, hicen, socn, tocn, uocn, vocn, ssh, hocn]
+
   geometry: &geom
     geom_grid_file: data_generated/gridgen/soca_gridspec.72x35x25.nc
     mom6_input_nml: data_static/72x35x25/input.nml
@@ -13,7 +14,15 @@ cost function:
     name: MOM6solo
     tstep: PT1H
     advance_mom6: 1
-    model variables: &model_vars [cicen, hicen, socn, tocn, ssh, hocn, sw, lhf, shf, lw, us, mld, layer_depth]
+    model variables: &model_vars [cicen, hicen, socn, uocn, vocn, tocn, ssh, hocn, sw, lhf, shf, lw, us, mld, layer_depth]
+
+  variable change:
+    variable change name: Ana2Model
+    rotate:
+      u: [uocn]
+      v: [vocn]
+    log:
+      var: []
 
   background:
     read_from_file: 1
@@ -28,7 +37,7 @@ cost function:
     components:
     - covariance:
         covariance model: SocaError
-        analysis variables: [cicen, hicen, socn, tocn, ssh, sw, lhf, shf, lw, us]
+        analysis variables: [cicen, hicen, socn, tocn, uocn, vocn, ssh, sw, lhf, shf, lw, us]
         date: *date_begin
         bump:
           io:
@@ -38,7 +47,7 @@ cost function:
             read local nicas: true
         correlation:
         - name: ocn
-          variables: [socn, tocn, ssh, sw, lhf, shf, lw, us]
+          variables: [socn, tocn, uocn, vocn, ssh, sw, lhf, shf, lw, us]
         - name: ice
           variables: [cicen, hicen]
 
@@ -154,6 +163,13 @@ variational:
     test: on
     diagnostics:
       departures: ombg
+    online diagnostics:
+      write increment: true
+      increment:
+        datadir: data_generated/3dhybfgat
+        date: *date_begin
+        exp: 3dhybfgat.iter1
+        type: incr
 
 output:
   datadir: data_generated/3dhybfgat
