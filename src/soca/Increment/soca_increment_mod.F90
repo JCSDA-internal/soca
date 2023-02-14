@@ -302,7 +302,7 @@ subroutine soca_increment_dirac(self, f_conf)
     case (7)
       call self%get("biop", field)
     case (8)
-      call self%get("ucon", field)
+      call self%get("uocn", field)
     case (9)
       call self%get("vocn", field)
     case default

@@ -20,7 +20,7 @@ initial condition:
 background error:
   covariance model: SocaError
   date: *date
-  analysis variables: &soca_vars [ssh, cicen, hicen, tocn, socn, chl, biop, uocn, vocn]
+  analysis variables: &soca_vars [ssh, cicen, hicen, tocn, socn, chl, biop]
   bump:
     io:
       data directory: data_generated/static_socaerror_init
@@ -35,8 +35,8 @@ background error:
     hicen: 0.05
     chl:   0.1
     biop:  0.1
-    uocn: 0.5
-    vocn: 0.5
+    uocn: 0.1
+    vocn: 0.1
   correlation:
   - name: ocn
     variables: [tocn, ssh, socn, chl, biop, uocn, vocn]
@@ -116,3 +116,4 @@ output:
 test:
   reference filename: testref/enspert.test
   test output filename: testoutput/enspert.test
+  float relative tolerance: 1e-7
