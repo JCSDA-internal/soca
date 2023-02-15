@@ -9,7 +9,7 @@ cost function:
   cost type: 3D-Var
   window begin: 2018-04-14T00:00:00Z
   window length: P2D
-  analysis variables: &soca_vars [hocn, socn, tocn, uocn, vocn, ssh]
+  analysis variables: &soca_vars [socn, tocn, uocn, vocn, ssh]
   geometry: &geom_small
     geom_grid_file: data_static/36x17x25/soca_gridspec.nc
     mom6_input_nml: data_static/36x17x25/input.nml
@@ -36,7 +36,6 @@ cost function:
         grids:
         - model:
             variables:
-            - hocn
             - socn
             - tocn
             - uocn

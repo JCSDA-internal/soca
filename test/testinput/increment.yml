@@ -4,7 +4,7 @@ geometry:
   fields metadata: data_static/fields_metadata.yml
 
 # TODO should add cicen/uocn/vocn, but this makes the tests fail
-inc variables: [hicen, socn, tocn, ssh, hocn, chl, biop, sw, lw, lhf, shf, us]
+inc variables: [hicen, socn, tocn, uocn, vocn, ssh, chl, biop, sw, lw, lhf, shf, us]
 
 increment test:
   date: &date 2018-04-15T00:00:00Z

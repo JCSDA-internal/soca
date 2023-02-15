@@ -20,7 +20,7 @@ initial condition:
 background error:
   covariance model: SocaError
   date: *date
-  analysis variables: &soca_vars [ssh, cicen, hicen, tocn, socn, chl, biop]
+  analysis variables: &soca_vars [ssh, cicen, hicen, tocn, socn, uocn, vocn, chl, biop]
   bump:
     io:
       data directory: data_generated/static_socaerror_init

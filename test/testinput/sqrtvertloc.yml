@@ -16,7 +16,7 @@ background:
 background error:
   covariance model: SocaError
   date: *date
-  analysis variables: &soca_vars [ssh, tocn, socn]
+  analysis variables: &soca_vars [ssh, tocn, socn, uocn, vocn]
   bump:
     io:
       data directory: data_generated/static_socaerror_init
@@ -31,9 +31,11 @@ background error:
     hicen: 0.05
     chl:   0.1
     biop:  0.1
+    uocn:  0.1
+    vocn:  0.1
   correlation:
   - name: ocn
-    variables: [tocn, ssh, socn]
+    variables: [tocn, ssh, socn, uocn, vocn]
 
 
   linear variable change:

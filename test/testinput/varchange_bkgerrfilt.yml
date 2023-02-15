@@ -9,7 +9,7 @@ background:
   basename: data_static/72x35x25/restarts/
   ocn_filename: MOM.res.nc
   ice_filename: cice.res.nc
-  state variables: &soca_vars [cicen, hicen, socn, tocn, ssh, hocn]
+  state variables: &soca_vars [cicen, hicen, socn, tocn, uocn, vocn, ssh, hocn]
 
 linear variable changeTests:
 - linear variable change:
