@@ -39,7 +39,7 @@ observations:
       obsdatain:
         engine:
           type: H5File
-          obsfile: data_generated/letkf_split_observer/sst.letkf_split_observer_0000.nc
+          obsfile: data_generated/letkf_split_observer/sst.letkf_split_observer.nc
       simulated variables: [seaSurfaceTemperature]
     obs operator:
       name: Identity
