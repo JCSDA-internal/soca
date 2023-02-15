@@ -12,7 +12,7 @@ observations:
     name: 'BoxCar'
     distribution:
       name: InefficientDistribution
-    simulated variables: ['sea_water_temperature']
+    simulated variables: ['waterTemperature']
     obsdatain:
       engine:
         type: H5File

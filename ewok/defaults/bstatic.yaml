@@ -1,19 +1,20 @@
 covariance model: SocaError
-analysis variables: $(an_variables)
+analysis variables: $(AN_VARIABLES)
 date: '{{current_cycle}}'
 bump:
-  verbosity: main
-  datadir: $(soca_static_dir)/bump
-  strategy: specific_univariate
-  load_nicas_local: 1
+  io:
+    data directory: $(soca_static_dir)/bump
+  drivers:
+    multivariate strategy: specific_univariate
+    read local nicas: true
 correlation:
   - name: ocn
     variables: [tocn, socn, ssh]
   - name: ice
     variables: [cicen, hicen]
 linear variable change:
-  input variables: $(an_variables)
-  output variables: $(an_variables)
+  input variables: $(AN_VARIABLES)
+  output variables: $(AN_VARIABLES)
   linear variable changes:
 
   - linear variable change name: VertConvSOCA
@@ -45,7 +46,7 @@ linear variable change:
 
   - linear variable change name: HorizFiltSOCA
     niter: 2
-    filter variables: $(an_variables)
+    filter variables: $(AN_VARIABLES)
 
   - linear variable change name: BalanceSOCA
     dsdtmax: 0.1

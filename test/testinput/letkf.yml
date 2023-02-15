@@ -14,7 +14,7 @@ background:
       read_from_file: 1
       basename: data_static/72x35x25/restarts_ens/
       state variables: [socn, tocn, ssh, uocn, vocn, hocn, chl, biop]
-    pattern: %mem%
+    pattern: '%mem%'
     nmembers: 4
 
 observations:
@@ -32,9 +32,10 @@ observations:
         engine:
           type: H5File
           obsfile: data_static/obs/sst.nc
-      simulated variables: [sea_surface_temperature]
+      simulated variables: [seaSurfaceTemperature]
     obs operator:
       name: Identity
+      observation alias file: testinput/obsop_name_map.yml
     obs error:
       covariance model: diagonal
     obs localizations:
@@ -47,7 +48,7 @@ observations:
     obs filters:
     - filter: Domain Check
       where:
-      - variable: {name: sea_area_fraction@GeoVaLs}
+      - variable: {name: GeoVaLs/sea_area_fraction}
         minvalue: 0.5
 
 driver:

@@ -16,10 +16,11 @@ background error:
   analysis variables: [cicen, hicen, socn, tocn, ssh]
   date: *date
   bump:
-    verbosity: main
-    datadir: data_generated/static_socaerror_init
-    load_nicas_local: true
-    strategy: specific_univariate
+    io:
+      data directory: data_generated/static_socaerror_init
+    drivers:
+      multivariate strategy: univariate
+      read local nicas: true
   correlation:
   - name: ocn
     variables: [socn, tocn, ssh]

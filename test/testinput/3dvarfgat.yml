@@ -2,7 +2,7 @@
 _: &land_mask
   filter: Domain Check
   where:
-  - variable: {name: sea_area_fraction@GeoVaLs}
+  - variable: {name: GeoVaLs/sea_area_fraction}
     minvalue: 0.5
 
 cost function:
@@ -34,10 +34,11 @@ cost function:
     analysis variables: [cicen, hicen, socn, tocn, ssh, sw, lhf, shf, lw, us]
     date: 2018-04-15T00:00:00Z
     bump:
-      verbosity: main
-      datadir: data_generated/static_socaerror_init
-      strategy: specific_univariate
-      load_nicas_local: true
+      io:
+        data directory: data_generated/static_socaerror_init
+      drivers:
+        multivariate strategy: univariate
+        read local nicas: true
     correlation:
     - name: ocn
       variables: [socn, tocn, ssh, sw, lhf, shf, lw, us]
@@ -100,7 +101,7 @@ cost function:
           engine:
             type: H5File
             obsfile: data_static/obs/sst.nc
-        simulated variables: [sea_surface_temperature]
+        simulated variables: [seaSurfaceTemperature]
       obs operator:
         name: CoolSkin
       obs error:
@@ -116,9 +117,10 @@ cost function:
           engine:
             type: H5File
             obsfile: data_static/obs/sst.nc
-        simulated variables: [sea_surface_temperature]
+        simulated variables: [seaSurfaceTemperature]
       obs operator:
         name: Identity
+        observation alias file: testinput/obsop_name_map.yml
       obs error:
         covariance model: diagonal
       obs filters:
@@ -137,16 +139,17 @@ cost function:
           engine:
             type: H5File
             obsfile: data_static/obs/sss.nc
-        simulated variables: [sea_surface_salinity]
+        simulated variables: [seaSurfaceSalinity]
       obs operator:
         name: Identity
+        observation alias file: testinput/obsop_name_map.yml
       obs error:
         covariance model: diagonal
       obs filters:
       - *land_mask
       - filter: Domain Check
         where:
-        - variable: {name: sea_surface_temperature@GeoVaLs}
+        - variable: {name: GeoVaLs/sea_surface_temperature}
           minvalue: 15
 
     - obs space:
@@ -159,7 +162,7 @@ cost function:
           engine:
             type: H5File
             obsfile: data_static/obs/adt.nc
-        simulated variables: [absolute_dynamic_topography]
+        simulated variables: [absoluteDynamicTopography]
       obs operator:
         name: ADT
       obs error:
@@ -177,7 +180,7 @@ cost function:
           engine:
             type: H5File
             obsfile: data_static/obs/prof.nc
-        simulated variables: [sea_water_temperature]
+        simulated variables: [waterTemperature]
       obs operator:
         name: InsituTemperature
       obs error:
@@ -197,9 +200,10 @@ cost function:
           engine:
             type: H5File
             obsfile: data_static/obs/prof.nc
-        simulated variables: [sea_water_salinity]
+        simulated variables: [salinity]
       obs operator:
         name: MarineVertInterp
+        observation alias file: testinput/obsop_name_map.yml
       obs error:
         covariance model: diagonal
       obs filters:
@@ -215,9 +219,10 @@ cost function:
           engine:
             type: H5File
             obsfile: data_static/obs/icec.nc
-        simulated variables: [sea_ice_area_fraction]
+        simulated variables: [seaIceFraction]
       obs operator:
         name: Identity
+        observation alias file: testinput/obsop_name_map.yml
       obs error:
         covariance model: diagonal
       obs filters:

@@ -2,7 +2,7 @@
 _: &land_mask
   filter: Domain Check
   where:
-  - variable: {name: sea_area_fraction@GeoVaLs}
+  - variable: {name: GeoVaLs/sea_area_fraction}
     minvalue: 0.5
 
 cost function:
@@ -29,10 +29,11 @@ cost function:
     analysis variables: *a_vars
     date: *bkg_date
     bump:
-      verbosity: main
-      datadir: data_generated/static_socaerror_init
-      strategy: specific_univariate
-      load_nicas_local: true
+      io:
+        data directory: data_generated/static_socaerror_init
+      drivers:
+        multivariate strategy: univariate
+        read local nicas: true
     correlation:
     - name: ocn
       variables: [hsnon, socn, tocn, ssh, sw, lhf, shf, lw, us]
@@ -51,9 +52,10 @@ cost function:
           engine:
             type: H5File
             obsfile: data_static/obs/single_ob.nc
-        simulated variables: [sea_surface_temperature]
+        simulated variables: [seaSurfaceTemperature]
       obs operator:
         name: Identity
+        observation alias file: testinput/obsop_name_map.yml
       obs error:
         covariance model: diagonal
       obs filters:

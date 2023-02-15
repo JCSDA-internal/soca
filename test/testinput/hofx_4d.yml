@@ -33,7 +33,7 @@ observations:
         engine:
           type: H5File
           obsfile: data_static/obs/sst.nc
-      simulated variables: [sea_surface_temperature]
+      simulated variables: [seaSurfaceTemperature]
     obs operator:
       name: CoolSkin
 
@@ -47,9 +47,10 @@ observations:
         engine:
           type: H5File
           obsfile: data_static/obs/sst.nc
-      simulated variables: [sea_surface_temperature]
+      simulated variables: [seaSurfaceTemperature]
     obs operator:
       name: Identity
+      observation alias file: testinput/obsop_name_map.yml
 
   - obs space:
       name: SeaSurfaceSalinity
@@ -61,9 +62,10 @@ observations:
         engine:
           type: H5File
           obsfile: data_static/obs/sss.nc
-      simulated variables: [sea_surface_salinity]
+      simulated variables: [seaSurfaceSalinity]
     obs operator:
       name: Identity
+      observation alias file: testinput/obsop_name_map.yml
 
   - obs space:
       name: ADT
@@ -75,7 +77,7 @@ observations:
         engine:
           type: H5File
           obsfile: data_static/obs/adt.nc
-      simulated variables: [absolute_dynamic_topography]
+      simulated variables: [absoluteDynamicTopography]
     obs operator:
       name: ADT
 
@@ -89,7 +91,7 @@ observations:
         engine:
           type: H5File
           obsfile: data_static/obs/prof.nc
-      simulated variables: [sea_water_temperature]
+      simulated variables: [waterTemperature]
     obs operator:
       name: InsituTemperature
 
@@ -103,9 +105,10 @@ observations:
         engine:
           type: H5File
           obsfile: data_static/obs/prof.nc
-      simulated variables: [sea_water_salinity]
+      simulated variables: [salinity]
     obs operator:
       name: MarineVertInterp
+      observation alias file: testinput/obsop_name_map.yml
 
   - obs space:
       name: SeaIceFraction
@@ -117,7 +120,7 @@ observations:
         engine:
           type: H5File
           obsfile: data_static/obs/icec.nc
-      simulated variables: [sea_ice_area_fraction]
+      simulated variables: [seaIceFraction]
     obs operator:
       name: SeaIceFraction
 
@@ -131,9 +134,10 @@ observations:
         engine:
           type: H5File
           obsfile: data_static/obs/uocn_surface.nc
-      simulated variables: [surface_eastward_sea_water_velocity]
+      simulated variables: [waterSurfaceZonalVelocity]
     obs operator:
       name: Identity
+      observation alias file: testinput/obsop_name_map.yml
 
   - obs space:
       name: SurfaceV
@@ -145,9 +149,10 @@ observations:
         engine:
           type: H5File
           obsfile: data_static/obs/vocn_surface.nc
-      simulated variables: [surface_northward_sea_water_velocity]
+      simulated variables: [waterSurfaceMeridionalVelocity]
     obs operator:
       name: Identity
+      observation alias file: testinput/obsop_name_map.yml
 
 test:
   reference filename: testref/hofx_4d.test
