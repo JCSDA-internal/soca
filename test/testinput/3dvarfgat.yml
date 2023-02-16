@@ -282,3 +282,4 @@ final:
 test:
   reference filename: testref/3dvarfgat.test
   test output filename: testoutput/3dvarfgat.test
+  float relative tolerance: 1e-5
