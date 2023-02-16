@@ -16,12 +16,9 @@ background error:
   analysis variables: [cicen, hicen, socn, tocn, ssh]
   date: *date
   bump:
-    io:
-      data directory: data_generated/static_socaerror_init
     drivers:
       multivariate strategy: univariate
       compute nicas: true
-      write local nicas: true
     model:
       do not cross mask boundaries: true
     nicas:
