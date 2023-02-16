@@ -309,6 +309,9 @@ subroutine soca_bump_correlation(self, horiz_convol, geom, f_conf_bump, f_conf_d
   call afield%final()
   universe_rad = atlas_fieldset()
 
+  ! Set verbosity
+  horiz_convol%mpl%verbose = (geom%f_comm%rank()==0)
+
   ! Create BUMP object
   call horiz_convol%create(geom%f_comm,afunctionspace,afieldset,f_conf_bump,universe_rad)
 
