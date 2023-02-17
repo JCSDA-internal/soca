@@ -26,7 +26,6 @@ background error:
           variables:
           - socn
           - tocn
-          - hocn
         io:
           files prefix: bump3d
       - model:

@@ -15,8 +15,8 @@ variable change tests:
       state variables: &soca_vars [cicen, tocn, socn, hocn, uocn, vocn, chl]
     tolerance inverse: 1e-8
     rotate:
-      u: [uocn, taux, tocn]
-      v: [vocn, tauy, socn]
+      u: [uocn]
+      v: [vocn]
     log:
-      var: [chl, taux]
+      var: [socn, chl]
     output variables: *soca_vars
