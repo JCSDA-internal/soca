@@ -3,7 +3,7 @@ geometry:
   mom6_input_nml: data_static/36x17x25/input.nml
   fields metadata: data_static/fields_metadata.yml
 
-input variables: &soca_vars  [hocn, socn, tocn, ssh]
+input variables: [socn, tocn, uocn, vocn, ssh]
 
 background:
   read_from_file: 1
@@ -12,7 +12,7 @@ background:
   ocn_filename: MOM.res.nc
   # basename: data_generated/convertstate/
   # ocn_filename: ocn.convertstate.fc.2018-04-15T00:00:00Z.PT0S.nc
-  state variables: [hocn, socn, tocn, ssh]
+  state variables: [hocn, socn, tocn, uocn, vocn, ssh]
 
 bump:
   io:
@@ -28,24 +28,27 @@ bump:
     explicit length-scales: true
     horizontal length-scale:
     - groups:
-      - hocn
       - socn
       - tocn
+      - uocn
+      - vocn
       - ssh
       value: 6000.0e3
     vertical length-scale:
     - groups:
-      - hocn
       - socn
       - tocn
+      - uocn
+      - vocn
       - ssh
       value: 100
   grids:
   - model:
       variables:
-      - hocn
       - socn
       - tocn
+      - uocn
+      - vocn
     io:
       files prefix: bump3d
   - model:

@@ -9,7 +9,7 @@ cost function:
   cost type: 3D-Var
   window begin: 2018-04-14T00:00:00Z
   window length: P2D
-  analysis variables: &soca_vars [hocn, socn, tocn, ssh]
+  analysis variables: &soca_vars [socn, tocn, uocn, vocn, ssh]
   geometry: &geom_small
     geom_grid_file: data_static/36x17x25/soca_gridspec.nc
     mom6_input_nml: data_static/36x17x25/input.nml
@@ -21,7 +21,7 @@ cost function:
     basename: data_static/36x17x25/restarts/
     ocn_filename: MOM.res.nc
     date: 2018-04-15T00:00:00Z
-    state variables: [hocn, socn, tocn, ssh, mld, layer_depth]
+    state variables: [hocn, socn, tocn, uocn, vocn, ssh, mld, layer_depth]
 
   background error:
     covariance model: SABER
@@ -36,9 +36,10 @@ cost function:
         grids:
         - model:
             variables:
-            - hocn
             - socn
             - tocn
+            - uocn
+            - vocn
           io:
             files prefix: bump3d
         - model:

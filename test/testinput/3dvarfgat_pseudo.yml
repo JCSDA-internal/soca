@@ -9,11 +9,19 @@ cost function:
   cost type: 4D-Var
   window begin: &date_begin 2018-04-15T00:00:00Z
   window length: PT6H
-  analysis variables: &soca_vars  [socn, tocn, ssh, hocn]
+  analysis variables: &soca_vars  [socn, tocn, uocn, vocn, ssh]
   geometry: &geom
     geom_grid_file: data_generated/gridgen/soca_gridspec.72x35x25.nc
     mom6_input_nml: data_static/72x35x25/input.nml
     fields metadata: data_static/fields_metadata.yml
+
+  variable change:
+    variable change name: Ana2Model
+    rotate:
+      u: [uocn]
+      v: [vocn]
+    log:
+      var: []
 
   model:
     name: PseudoModel
@@ -51,7 +59,7 @@ cost function:
 
   background error:
     covariance model: SocaError
-    analysis variables: [socn, tocn, ssh]
+    analysis variables: *soca_vars
     date: 2018-04-15T00:00:00Z
     bump:
       io:
@@ -61,7 +69,7 @@ cost function:
         read local nicas: true
     correlation:
     - name: ocn
-      variables: [socn, tocn, ssh]
+      variables: [socn, tocn, uocn, vocn, ssh]
 
     linear variable change:
       input variables: *soca_vars
