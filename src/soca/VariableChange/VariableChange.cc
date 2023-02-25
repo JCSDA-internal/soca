@@ -42,7 +42,7 @@ void VariableChange::changeVar(State & x, const oops::Variables & vars) const {
                << vars << std::endl;
 
   // TODO(travis) rename in/out variables so that skipping this
-  // works for Ana2Model (i.e. we need rotated/unrotate u/v renamed different)
+  // works for Model2Ana (i.e. we need rotated/unrotate u/v renamed different)
   // // If the variables are the same, don't bother doing anything!
   // if (!(x.variables() == vars)) {
 

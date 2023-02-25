@@ -256,6 +256,17 @@ subroutine soca_state_rotate2north_c(c_key_self, c_uvars, c_vvars) bind(c,name='
 
 end subroutine soca_state_rotate2north_c
 
+! ------------------------------------------------------------------------------
+!> C++ interface for soca_state_mod::soca_state::tohgrid()
+subroutine soca_state_tohgrid_c(c_key_self) bind(c,name='soca_state_tohgrid_f90')
+  integer(c_int),     intent(in) :: c_key_self
+
+  type(soca_state), pointer :: self
+
+  call soca_state_registry%get(c_key_self,self)
+  call self%colocate(cgridlocout="h")
+
+end subroutine soca_state_tohgrid_c
 
 ! ------------------------------------------------------------------------------
 !> C++ interface to get soca_state_mod::soca_state dimensions sizes

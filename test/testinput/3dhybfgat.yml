@@ -17,7 +17,7 @@ cost function:
     model variables: &model_vars [cicen, hicen, socn, uocn, vocn, tocn, ssh, hocn, sw, lhf, shf, lw, us, mld, layer_depth]
 
   variable change:
-    variable change name: Ana2Model
+    variable change name: Model2Ana
     rotate:
       u: [uocn]
       v: [vocn]

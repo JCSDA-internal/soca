@@ -16,7 +16,8 @@ implicit none
 
 private
 public :: write2pe, soca_str2int, soca_adjust, &
-          soca_rho, soca_diff, soca_mld, nc_check, soca_remap_idw
+          soca_rho, soca_diff, soca_mld, nc_check, soca_remap_idw, &
+          soca_stencil_interp, soca_stencil_neighbors
 
 ! ------------------------------------------------------------------------------
 contains
@@ -232,6 +233,7 @@ subroutine soca_remap_idw(lon_src, lat_src, data_src, lon_dst, lat_dst, data_dst
         if (dist(n) /= dist(nn_max)) exit
         nn = n-1
       end do
+
       if (nn <= 0 ) call fckit_exception%abort( &
         "No valid points found in IDW remapping, uh oh.")
 
@@ -256,6 +258,71 @@ subroutine soca_remap_idw(lon_src, lat_src, data_src, lon_dst, lat_dst, data_dst
   ! done, cleanup
   call kd%final()
 end subroutine soca_remap_idw
+
+! ------------------------------------------------------------------------------
+!> find the 6 stencil neighbors
+subroutine soca_stencil_neighbors(fromto, i, j, ij)
+  character(len=4), intent(in) :: fromto !< "u2h", "v2h"
+  integer,          intent(in) :: i, j
+  integer,          intent(out):: ij(2,6)
+
+  integer :: sti
+
+  select case(fromto)
+  case("vtoh")
+     ! return the 6 v-grid neighbors of h-grid(i,j)
+     ij(1,1) = i;   ij(2,1) = j
+     ij(1,2) = i;   ij(2,2) = j-1
+     ij(1,3) = i+1; ij(2,3) = j
+     ij(1,4) = i-1; ij(2,4) = j
+     ij(1,5) = i-1; ij(2,5) = j-1
+     ij(1,6) = i+1; ij(2,6) = j-1
+  case("htov")
+     ! return the 6 h-grid neighbors of v-grid(i,j)
+     ij(1,1) = i;   ij(2,1) = j
+     ij(1,2) = i;   ij(2,2) = j+1
+     ij(1,3) = i+1; ij(2,3) = j+1
+     ij(1,4) = i+1; ij(2,4) = j
+     ij(1,5) = i-1; ij(2,5) = j
+     ij(1,6) = i-1; ij(2,6) = j+1
+  end select
+
+end subroutine soca_stencil_neighbors
+
+! ------------------------------------------------------------------------------
+!> idw interpolation given known neighbors
+subroutine soca_stencil_interp(lon_src, lat_src, lon_dst, lat_dst, data, data_out)
+  real(kind_real),  intent(in) :: lon_src(:)
+  real(kind_real),  intent(in) :: lat_src(:)
+  real(kind_real),  intent(in) :: lon_dst
+  real(kind_real),  intent(in) :: lat_dst
+  real(kind_real), intent(in) :: data(:,:)
+  real(kind_real), intent(inout) :: data_out(:)
+
+  type(atlas_geometry) :: ageometry
+  integer :: i, n, nz, k
+  real(kind_real) :: val, w(6)
+
+  ! Initialize atlas geometry on the sphere
+  ageometry = atlas_geometry("UnitSphere")
+
+  do i = 1, size(lon_src, dim=1)
+     w(i) = 1_kind_real/ageometry%distance(lon_src(i), lat_src(i), lon_dst, lat_dst)
+  end do
+
+  n = size(data, dim=1)
+  nz = size(data, dim=2)
+  data_out = 0_kind_real
+
+  do k = 1, nz
+     val = 0_kind_real
+     do i = 1, n
+        val = val + w(i)*data(i,k)
+     end do
+     data_out(k) = val/sum(w)
+  end do
+
+end subroutine soca_stencil_interp
 
 ! ------------------------------------------------------------------------------
 end module soca_utils
