@@ -264,7 +264,7 @@ subroutine soca_state_tohgrid_c(c_key_self) bind(c,name='soca_state_tohgrid_f90'
   type(soca_state), pointer :: self
 
   call soca_state_registry%get(c_key_self,self)
-  call self%colocate(cgridlocout="h")
+  call self%tohpoints()
 
 end subroutine soca_state_tohgrid_c
 

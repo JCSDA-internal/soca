@@ -22,8 +22,6 @@ use fckit_mpi_module, only: fckit_mpi_min, fckit_mpi_max, fckit_mpi_sum
 use kinds, only: kind_real
 use oops_variables_mod, only: oops_variables
 use tools_const, only: deg2rad
-use atlas_module, only: atlas_geometry
-use vert_interp_mod
 
 ! MOM6 / FMS modules
 use fms_io_mod, only: fms_io_init, fms_io_exit, register_restart_field, &
@@ -199,8 +197,8 @@ contains
   !> \copybrief soca_fields_update_halos \see soca_fields_update_halos
   procedure :: update_halos => soca_fields_update_halos
 
-  !> \copybrief soca_fields_colocate \see soca_fields_colocate
-  procedure :: colocate  => soca_fields_colocate
+  !> \copybrief soca_fields_tohpoints \see soca_fields_tohpoints
+  procedure :: tohpoints  => soca_fields_tohpoints
   !> \}
 
   !> \name serialization
@@ -303,36 +301,30 @@ end subroutine soca_field_check_congruent
 !!
 !! Interpolation used is inverse distance weidghted, taking into
 !! consideration the mask.
-subroutine soca_field_stencil_interp(self, geom, zh, fromto)
+subroutine soca_field_stencil_interp(self, geom, fromto)
   class(soca_field),      intent(inout) :: self
   class(soca_geom), pointer, intent(in) :: geom   !< geometry
-  class(soca_field),         intent(in) :: zh     !< layer depth at h-cells
   character(len=4),          intent(in) :: fromto !< "u2h", "v2h"
 
-  integer :: i, j, k
-  real(kind=kind_real), allocatable :: val_tmp(:,:,:), zv_tmp(:), f(:)
+  integer :: i, j
+  real(kind=kind_real), allocatable :: val_tmp(:,:,:)
   real(kind=kind_real) :: w(6), wf
-  integer :: wi, ij(2,6), sti
-  type(atlas_geometry) :: ageometry
-  real(kind_real) :: lon_src(6), lat_src(6), lon_dst, lat_dst
-  real(kind=kind_real), allocatable :: lonin(:,:), latin(:,:)
+  integer :: ij(2,6), sti
+  real(kind_real) :: lon_src(6), lat_src(6)
   real(kind=kind_real), allocatable :: val(:,:)
 
   ! Initialize temporary arrays
   allocate(val_tmp, mold=self%val)
   val_tmp = self%val
-  allocate(zv_tmp(self%nz), f(self%nz), val(6,self%nz)), zval(6,self%nz))
-  zv_tmp = 0_kind_real
-
-  ! Initialize atlas geometry on the sphere
-  ageometry = atlas_geometry("UnitSphere")
+  allocate(val(6,self%nz))
 
   ! Interpolate
   select case(fromto)
   case("vtoh")
+     ! Horizontal interpolation: v-points to h-points
      do j = geom%jsc, geom%jec
         do i = geom%isc, geom%iec
-           ! Horizontal interpolation: v-points to h-points
+
            ! get the 6 v-point neighbors surrounding the (i,j) h-point
            call soca_stencil_neighbors("vtoh", i, j, ij)
            do sti = 1, 6
@@ -341,57 +333,27 @@ subroutine soca_field_stencil_interp(self, geom, zh, fromto)
               val(sti,:) = self%val(ij(1,sti), ij(2,sti),:)
            end do
 
-           ! val_tmp: interpolated val at (i,j) h-point,
+           ! val_tmp: interpolated val at (i,j) h-point along layers
            call soca_stencil_interp(lon_src, lat_src, geom%lon(i,j), geom%lat(i,j), &
                                     val, val_tmp(i,j,:))
-
-           ! Vertical interpolation: interpolate layer depth from h to v
-           ! get the 6 h-point neighbors surrounding the (i,j) v-point
-           call soca_stencil_neighbors("htov", i, j, ij)
-           do sti = 1, 6
-              lon_src(sti) = geom%lon(ij(1,sti), ij(2,sti))
-              lat_src(sti) = geom%lat(ij(1,sti), ij(2,sti))
-              zval(sti,:) = zh%val(ij(1,sti), ij(2,sti),:)   ! layer depth at h-points
-           end do
-           call soca_stencil_interp(lon_src, lat_src, geom%lonv(i,j), geom%latv(i,j), &
-                                    val, zv_tmp(:))
-
-           ! Vertical interpolation: interpolate val_tmp to zh
-           do k = 1, self%nz
-              call vert_interp_weights(self%nz, zh%val(i,j,k), zv_tmp(:), wi, wf)
-              call vert_interp_apply(self%nz, val_tmp(i,j,:), f(k), wi, wf)
-           end do
-           val_tmp(i,j,:) = f(:)
         end do
      end do
 
   case("utoh")
+     ! Horizontal interpolation: u-points to h-points
      do j = geom%jsc, geom%jec
         do i = geom%isc, geom%iec
-           ! Horizontal interpolation: u to h
-           w(1) = 1_kind_real/ageometry%distance(geom%lonu(i,j), geom%latu(i,j), &
-                                                 geom%lon(i,j), geom%lat(i,j))
-           w(2) = 1_kind_real/ageometry%distance(geom%lonu(i-1,j), geom%latu(i-1,j), &
-                                                 geom%lon(i,j), geom%lat(i,j))
-           do k = 1, self%nz
-              val_tmp(i,j,k) = (w(1)*self%val(i,j,k) + w(2)*self%val(i-1,j,k))/sum(w)
+           ! get the 6 u-point neighbors surrounding the (i,j) h-point
+           call soca_stencil_neighbors("utoh", i, j, ij)
+           do sti = 1, 6
+              lon_src(sti) = geom%lonu(ij(1,sti), ij(2,sti))
+              lat_src(sti) = geom%latu(ij(1,sti), ij(2,sti))
+              val(sti,:) = self%val(ij(1,sti), ij(2,sti),:)
            end do
 
-           ! Vertical interpolation: interpolate layer depth from h to u
-           w(1) = 1_kind_real/ageometry%distance(geom%lon(i,j), geom%lat(i,j), &
-                                                 geom%lonu(i,j), geom%latu(i,j))
-           w(2) = 1_kind_real/ageometry%distance(geom%lon(i+1,j), geom%lat(i+1,j), &
-                                                 geom%lonu(i,j), geom%latu(i,j))
-           do k = 1, self%nz
-              zv_tmp(k) = (w(1)*zh%val(i,j,k) + w(2)*zh%val(i+1,j,k))/sum(w)
-           end do
-
-           ! Vertical interpolation: interpolate val_tmp to zh
-           do k = 1, self%nz
-              call vert_interp_weights(self%nz, zh%val(i,j,k), zv_tmp(:), wi, wf)
-              call vert_interp_apply(self%nz, val_tmp(i,j,:), f(k), wi, wf)
-           end do
-           val_tmp(i,j,:) = f(:)
+           ! val_tmp: interpolated val at (i,j) h-point along layers
+           call soca_stencil_interp(lon_src, lat_src, geom%lon(i,j), geom%lat(i,j), &
+                                    val, val_tmp(i,j,:))
         end do
      end do
   end select
@@ -1270,74 +1232,42 @@ subroutine soca_fields_write_rst(self, f_conf, vdate)
 end subroutine soca_fields_write_rst
 
 ! ------------------------------------------------------------------------------
-!> Colocate by interpolating from one c-grid location to another.
+!> Interpolates from uv-points location to h-points.
 !!
-!! \warning only works on the "h" grid currently (not the "u" or "v" grid)
 !! \relates soca_fields_mod::soca_fields
-subroutine soca_fields_colocate(self, cgridlocout)
-  class(soca_fields),    intent(inout) :: self !< self
-  character(len=1),         intent(in) :: cgridlocout !< colocate to cgridloc (u, v or h)
+subroutine soca_fields_tohpoints(self)
+  class(soca_fields), intent(inout) :: self !< self
 
-  integer :: i, k, ninj_src(1), ninj(2)
+  integer :: i
   real(kind=kind_real), allocatable :: val(:,:,:)
   real(kind=kind_real), pointer :: lon_out(:,:) => null()
   real(kind=kind_real), pointer :: lat_out(:,:) => null()
   type(soca_geom),  pointer :: g => null()
-  real(kind=kind_real), allocatable :: lon_src(:,:), lon_dst(:,:)
   character(len=4) :: fromto
-  type(soca_field), pointer :: layer_depth => null()
 
-  ! Associate lon_out and lat_out according to cgridlocout
-  select case(cgridlocout)
-  ! TODO: Test colocation to u and v grid
-  !case ('u')
-  !  lon_out => self%geom%lonu
-  !  lat_out => self%geom%latu
-  !case ('v')
-  !  lon_out => self%geom%lonv
-  !  lat_out => self%geom%latv
-  case ('h')
-    lon_out => self%geom%lon
-    lat_out => self%geom%lat
-  case default
-    call abor1_ftn('soca_fields::colocate(): unknown c-grid location '// cgridlocout)
-  end select
+  ! Associate lon_out and lat_out with the h-grid
+  lon_out => self%geom%lon
+  lat_out => self%geom%lat
 
   ! Geometry pointer of convenience
   g => self%geom
 
   ! Apply interpolation to all fields, when necessary
   do i=1,size(self%fields)
-
-    ! Check if already colocated
-    if (self%fields(i)%metadata%grid == cgridlocout) cycle
-
-    ! Prepare layer depth
-    call self%get('layer_depth', layer_depth)
+    ! Check if already on h-points
+    if (self%fields(i)%metadata%grid == 'h') cycle
 
     ! Interpolate to different location of the stencil
-    fromto = self%fields(i)%metadata%grid//'to'//cgridlocout
-    call self%fields(i)%stencil_interp(g, layer_depth, fromto)
+    fromto = self%fields(i)%metadata%grid//'toh'
+    call self%fields(i)%stencil_interp(g, fromto)
 
-    ! Update c-grid location
-    self%fields(i)%metadata%grid = cgridlocout
-    select case(cgridlocout)
-    ! TODO: Test colocation to u and v grid
-    !case ('u')
-    !  self%fields(i)%lon => self%geom%lonu
-    !  self%fields(i)%lat => self%geom%latu
-    !case ('v')
-    !  self%fields(i)%lon => self%geom%lonv
-    !  self%fields(i)%lat => self%geom%latv
-    case ('h')
-      self%fields(i)%lon => self%geom%lon
-      self%fields(i)%lat => self%geom%lat
-    end select
-
+    ! Update grid location to h-points
+    self%fields(i)%metadata%grid = 'h'
+    self%fields(i)%lon => self%geom%lon
+    self%fields(i)%lat => self%geom%lat
  end do
 
-
-end subroutine soca_fields_colocate
+end subroutine soca_fields_tohpoints
 
 ! ------------------------------------------------------------------------------
 !> Number of elements to return in the serialized array

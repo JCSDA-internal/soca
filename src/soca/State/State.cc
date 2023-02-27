@@ -116,7 +116,7 @@ namespace soca {
   // -----------------------------------------------------------------------------
   void State::tocgrid(const oops::Variables & u,
                       const oops::Variables & v) const {
-    Log::trace() << "State::State interpolate vector to c-grid."
+    Log::trace() << "State::State interpolate vector to c-grid. NOT IMPLEMENTED"
                  << std::endl;
   }
   // -----------------------------------------------------------------------------

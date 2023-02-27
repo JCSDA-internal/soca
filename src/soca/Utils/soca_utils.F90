@@ -277,14 +277,16 @@ subroutine soca_stencil_neighbors(fromto, i, j, ij)
      ij(1,4) = i-1; ij(2,4) = j
      ij(1,5) = i-1; ij(2,5) = j-1
      ij(1,6) = i+1; ij(2,6) = j-1
-  case("htov")
-     ! return the 6 h-grid neighbors of v-grid(i,j)
+  case("utoh")
+     ! return the 6 u-grid neighbors of h-grid(i,j)
      ij(1,1) = i;   ij(2,1) = j
-     ij(1,2) = i;   ij(2,2) = j+1
-     ij(1,3) = i+1; ij(2,3) = j+1
-     ij(1,4) = i+1; ij(2,4) = j
+     ij(1,2) = i;   ij(2,2) = j-1
+     ij(1,3) = i;   ij(2,3) = j+1
+     ij(1,4) = i-1; ij(2,4) = j+1
      ij(1,5) = i-1; ij(2,5) = j
-     ij(1,6) = i-1; ij(2,6) = j+1
+     ij(1,6) = i-1; ij(2,6) = j-1
+  case default
+     call fckit_exception%abort(fromto, "option is not implemented")
   end select
 
 end subroutine soca_stencil_neighbors

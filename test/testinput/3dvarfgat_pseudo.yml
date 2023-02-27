@@ -20,7 +20,6 @@ cost function:
     rotate:
       u: [uocn]
       v: [vocn]
-    interp: true
     log:
       var: []
 
@@ -212,7 +211,7 @@ variational:
       increment variables: *soca_vars
       variable change: Identity
       tstep: PT1H
-    ninner: 1
+    ninner: 5
     gradient norm reduction: 1e-15
     test: on
     diagnostics:

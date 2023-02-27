@@ -17,7 +17,7 @@ variable change:
     v: [vocn]
   interp: true
   log:
-    var: [socn, chl, cicen]
+    var: [socn, chl]
   output variables: *soca_vars
 
 states:
@@ -34,19 +34,19 @@ states:
      exp: convertstate_changevar
      type: fc
      date: *bkg_date
-#- input:
-#     read_from_file: 1
-#     basename: data_static/72x35x25/restarts/
-#     ocn_filename: MOM.res.nc
-#     ice_filename: cice.res.nc
-#     sfc_filename: sfc.res.nc
-#     date: *bkg_date
-#     state variables: *soca_vars
-#  output:
-#     datadir: data_generated/convertstate_changevar
-#     exp: convertstate_changevar.dummy_member
-#     type: fc
-#     date: *bkg_date
+- input:
+     read_from_file: 1
+     basename: data_static/72x35x25/restarts/
+     ocn_filename: MOM.res.nc
+     ice_filename: cice.res.nc
+     sfc_filename: sfc.res.nc
+     date: *bkg_date
+     state variables: *soca_vars
+  output:
+     datadir: data_generated/convertstate_changevar
+     exp: convertstate_changevar.dummy_member
+     type: fc
+     date: *bkg_date
 
 test:
   reference filename: testref/convertstate_changevar.test
