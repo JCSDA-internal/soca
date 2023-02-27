@@ -302,14 +302,14 @@ end subroutine soca_field_check_congruent
 !! Interpolation used is inverse distance weidghted, taking into
 !! consideration the mask.
 subroutine soca_field_stencil_interp(self, geom, fromto)
-  class(soca_field),      intent(inout) :: self
-  class(soca_geom), pointer, intent(in) :: geom   !< geometry
-  character(len=4),          intent(in) :: fromto !< "u2h", "v2h"
+  class(soca_field), intent(inout) :: self
+  class(soca_geom),    intent(in) :: geom   !< geometry
+  character(len=4),     intent(in) :: fromto !< "u2h", "v2h"
 
   integer :: i, j
   real(kind=kind_real), allocatable :: val_tmp(:,:,:)
   real(kind=kind_real) :: w(6), wf
-  integer :: ij(2,6), sti
+  integer :: ij(2,6), sti, nn
   real(kind_real) :: lon_src(6), lat_src(6)
   real(kind=kind_real), allocatable :: val(:,:)
 
@@ -345,20 +345,24 @@ subroutine soca_field_stencil_interp(self, geom, fromto)
         do i = geom%isc, geom%iec
            ! get the 6 u-point neighbors surrounding the (i,j) h-point
            call soca_stencil_neighbors("utoh", i, j, ij)
+           nn = 0
            do sti = 1, 6
-              lon_src(sti) = geom%lonu(ij(1,sti), ij(2,sti))
-              lat_src(sti) = geom%latu(ij(1,sti), ij(2,sti))
-              val(sti,:) = self%val(ij(1,sti), ij(2,sti),:)
+              if (self%mask(i,j) == 0) cycle
+              nn = nn + 1
+              lon_src(nn) = geom%lonu(ij(1,nn), ij(2,nn))
+              lat_src(nn) = geom%latu(ij(1,nn), ij(2,nn))
+              val(nn,:) = self%val(ij(1,nn), ij(2,nn),:)
            end do
 
            ! val_tmp: interpolated val at (i,j) h-point along layers
-           call soca_stencil_interp(lon_src, lat_src, geom%lon(i,j), geom%lat(i,j), &
-                                    val, val_tmp(i,j,:))
+           if ( nn >=1 ) then
+              call soca_stencil_interp(lon_src, lat_src, geom%lon(i,j), geom%lat(i,j), &
+                                       val, val_tmp(i,j,:), nn)
+           end if
         end do
      end do
   end select
   self%val = val_tmp
-  call self%update_halo(geom)
 
 end subroutine soca_field_stencil_interp
 
@@ -1242,15 +1246,11 @@ subroutine soca_fields_tohpoints(self)
   real(kind=kind_real), allocatable :: val(:,:,:)
   real(kind=kind_real), pointer :: lon_out(:,:) => null()
   real(kind=kind_real), pointer :: lat_out(:,:) => null()
-  type(soca_geom),  pointer :: g => null()
   character(len=4) :: fromto
 
   ! Associate lon_out and lat_out with the h-grid
   lon_out => self%geom%lon
   lat_out => self%geom%lat
-
-  ! Geometry pointer of convenience
-  g => self%geom
 
   ! Apply interpolation to all fields, when necessary
   do i=1,size(self%fields)
@@ -1259,7 +1259,8 @@ subroutine soca_fields_tohpoints(self)
 
     ! Interpolate to different location of the stencil
     fromto = self%fields(i)%metadata%grid//'toh'
-    call self%fields(i)%stencil_interp(g, fromto)
+    call self%fields(i)%stencil_interp(self%geom, fromto)
+    call self%fields(i)%update_halo(self%geom)
 
     ! Update grid location to h-points
     self%fields(i)%metadata%grid = 'h'
