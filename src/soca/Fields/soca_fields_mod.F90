@@ -314,6 +314,7 @@ subroutine soca_field_stencil_interp(self, geom, fromto)
   real(kind=kind_real), allocatable :: val(:,:)
   real(kind=kind_real), allocatable :: lonsrc_local(:,:), latsrc_local(:,:)
   real(kind=kind_real), allocatable :: londst_local(:,:), latdst_local(:,:)
+  real(kind=kind_real), allocatable :: maskdst_local(:,:)
 
   ! Initialize temporary arrays
   allocate(val_tmp, mold=self%val)
@@ -328,6 +329,7 @@ subroutine soca_field_stencil_interp(self, geom, fromto)
      allocate(latsrc_local, mold=geom%latv); latsrc_local = geom%latv
      allocate(londst_local, mold=geom%lon);  londst_local = geom%lon
      allocate(latdst_local, mold=geom%lat);  latdst_local = geom%lat
+     allocate(maskdst_local, mold=geom%mask2d);  maskdst_local = geom%mask2d
 
   case("utoh")
      ! Horizontal interpolation: u-points to h-points
@@ -335,6 +337,7 @@ subroutine soca_field_stencil_interp(self, geom, fromto)
      allocate(latsrc_local, mold=geom%latu); latsrc_local = geom%latu
      allocate(londst_local, mold=geom%lon);  londst_local = geom%lon
      allocate(latdst_local, mold=geom%lat);  latdst_local = geom%lat
+     allocate(maskdst_local, mold=geom%mask2d);  maskdst_local = geom%mask2d
 
   case default
      call abor1_ftn('soca_field::stencil_interp, option '//fromto//&
@@ -344,6 +347,9 @@ subroutine soca_field_stencil_interp(self, geom, fromto)
 
   do j = geom%jsc, geom%jec
      do i = geom%isc, geom%iec
+        ! destination on land, skip
+        if (maskdst_local(i,j) == 0) cycle
+
         ! get the 6 or less src-point neighbors surrounding the (i,j) dst-point
         call soca_stencil_neighbors(fromto, i, j, ij)
         nn = 0
