@@ -314,7 +314,7 @@ subroutine soca_field_stencil_interp(self, geom, fromto)
   real(kind=kind_real), allocatable :: val(:,:)
   real(kind=kind_real), allocatable :: lonsrc_local(:,:), latsrc_local(:,:)
   real(kind=kind_real), allocatable :: londst_local(:,:), latdst_local(:,:)
-  real(kind=kind_real), allocatable :: maskdst_local(:,:)
+  real(kind=kind_real), allocatable :: masksrc_local(:,:), maskdst_local(:,:)
 
   ! Initialize temporary arrays
   allocate(val_tmp, mold=self%val)
@@ -327,6 +327,7 @@ subroutine soca_field_stencil_interp(self, geom, fromto)
      ! Horizontal interpolation: v-points to h-points
      allocate(lonsrc_local, mold=geom%lonv); lonsrc_local = geom%lonv
      allocate(latsrc_local, mold=geom%latv); latsrc_local = geom%latv
+     allocate(masksrc_local, mold=geom%mask2dv);  masksrc_local = geom%mask2dv
      allocate(londst_local, mold=geom%lon);  londst_local = geom%lon
      allocate(latdst_local, mold=geom%lat);  latdst_local = geom%lat
      allocate(maskdst_local, mold=geom%mask2d);  maskdst_local = geom%mask2d
@@ -335,6 +336,7 @@ subroutine soca_field_stencil_interp(self, geom, fromto)
      ! Horizontal interpolation: u-points to h-points
      allocate(lonsrc_local, mold=geom%lonu); lonsrc_local = geom%lonu
      allocate(latsrc_local, mold=geom%latu); latsrc_local = geom%latu
+     allocate(masksrc_local, mold=geom%mask2du);  masksrc_local = geom%mask2du
      allocate(londst_local, mold=geom%lon);  londst_local = geom%lon
      allocate(latdst_local, mold=geom%lat);  latdst_local = geom%lat
      allocate(maskdst_local, mold=geom%mask2d);  maskdst_local = geom%mask2d
@@ -354,7 +356,7 @@ subroutine soca_field_stencil_interp(self, geom, fromto)
         call soca_stencil_neighbors(fromto, i, j, ij)
         nn = 0
         do sti = 1, 6
-           if (self%mask(i,j) == 0) cycle
+           if (maskdst_local(i,j) == 0) cycle
            nn = nn + 1
            lon_src(nn) = lonsrc_local(ij(1,nn), ij(2,nn))
            lat_src(nn) = latsrc_local(ij(1,nn), ij(2,nn))
