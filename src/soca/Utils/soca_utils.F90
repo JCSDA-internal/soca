@@ -293,13 +293,14 @@ end subroutine soca_stencil_neighbors
 
 ! ------------------------------------------------------------------------------
 !> idw interpolation given known neighbors
-subroutine soca_stencil_interp(lon_src, lat_src, lon_dst, lat_dst, data, data_out)
+subroutine soca_stencil_interp(lon_src, lat_src, lon_dst, lat_dst, data, data_out, nn)
   real(kind_real),  intent(in) :: lon_src(:)
   real(kind_real),  intent(in) :: lat_src(:)
   real(kind_real),  intent(in) :: lon_dst
   real(kind_real),  intent(in) :: lat_dst
   real(kind_real), intent(in) :: data(:,:)
   real(kind_real), intent(inout) :: data_out(:)
+  integer, intent(in) :: nn
 
   type(atlas_geometry) :: ageometry
   integer :: i, n, nz, k
@@ -308,7 +309,10 @@ subroutine soca_stencil_interp(lon_src, lat_src, lon_dst, lat_dst, data, data_ou
   ! Initialize atlas geometry on the sphere
   ageometry = atlas_geometry("UnitSphere")
 
-  do i = 1, size(lon_src, dim=1)
+  ! nn cannot be larger than 6
+  if (nn > 6 ) call fckit_exception%abort( "Using more that 6 neighbors is not allowed")
+
+  do i = 1, nn
      w(i) = 1_kind_real/ageometry%distance(lon_src(i), lat_src(i), lon_dst, lat_dst)
   end do
 

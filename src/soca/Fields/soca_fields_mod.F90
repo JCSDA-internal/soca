@@ -312,6 +312,8 @@ subroutine soca_field_stencil_interp(self, geom, fromto)
   integer :: ij(2,6), sti, nn
   real(kind_real) :: lon_src(6), lat_src(6)
   real(kind=kind_real), allocatable :: val(:,:)
+  real(kind=kind_real), allocatable :: lonsrc_local(:,:), latsrc_local(:,:)
+  real(kind=kind_real), allocatable :: londst_local(:,:), latdst_local(:,:)
 
   ! Initialize temporary arrays
   allocate(val_tmp, mold=self%val)
@@ -322,46 +324,46 @@ subroutine soca_field_stencil_interp(self, geom, fromto)
   select case(fromto)
   case("vtoh")
      ! Horizontal interpolation: v-points to h-points
-     do j = geom%jsc, geom%jec
-        do i = geom%isc, geom%iec
-
-           ! get the 6 v-point neighbors surrounding the (i,j) h-point
-           call soca_stencil_neighbors("vtoh", i, j, ij)
-           do sti = 1, 6
-              lon_src(sti) = geom%lonv(ij(1,sti), ij(2,sti))
-              lat_src(sti) = geom%latv(ij(1,sti), ij(2,sti))
-              val(sti,:) = self%val(ij(1,sti), ij(2,sti),:)
-           end do
-
-           ! val_tmp: interpolated val at (i,j) h-point along layers
-           call soca_stencil_interp(lon_src, lat_src, geom%lon(i,j), geom%lat(i,j), &
-                                    val, val_tmp(i,j,:))
-        end do
-     end do
+     allocate(lonsrc_local, mold=geom%lonv); lonsrc_local = geom%lonv
+     allocate(latsrc_local, mold=geom%latv); latsrc_local = geom%latv
+     allocate(londst_local, mold=geom%lon);  londst_local = geom%lon
+     allocate(latdst_local, mold=geom%lat);  latdst_local = geom%lat
 
   case("utoh")
      ! Horizontal interpolation: u-points to h-points
-     do j = geom%jsc, geom%jec
-        do i = geom%isc, geom%iec
-           ! get the 6 u-point neighbors surrounding the (i,j) h-point
-           call soca_stencil_neighbors("utoh", i, j, ij)
-           nn = 0
-           do sti = 1, 6
-              if (self%mask(i,j) == 0) cycle
-              nn = nn + 1
-              lon_src(nn) = geom%lonu(ij(1,nn), ij(2,nn))
-              lat_src(nn) = geom%latu(ij(1,nn), ij(2,nn))
-              val(nn,:) = self%val(ij(1,nn), ij(2,nn),:)
-           end do
+     allocate(lonsrc_local, mold=geom%lonu); lonsrc_local = geom%lonu
+     allocate(latsrc_local, mold=geom%latu); latsrc_local = geom%latu
+     allocate(londst_local, mold=geom%lon);  londst_local = geom%lon
+     allocate(latdst_local, mold=geom%lat);  latdst_local = geom%lat
 
-           ! val_tmp: interpolated val at (i,j) h-point along layers
-           if ( nn >=1 ) then
-              call soca_stencil_interp(lon_src, lat_src, geom%lon(i,j), geom%lat(i,j), &
-                                       val, val_tmp(i,j,:), nn)
-           end if
-        end do
-     end do
+  case default
+     call abor1_ftn('soca_field::stencil_interp, option '//fromto//&
+                    ' not implemented yet')
+
   end select
+
+  do j = geom%jsc, geom%jec
+     do i = geom%isc, geom%iec
+        ! get the 6 or less src-point neighbors surrounding the (i,j) dst-point
+        call soca_stencil_neighbors(fromto, i, j, ij)
+        nn = 0
+        do sti = 1, 6
+           if (self%mask(i,j) == 0) cycle
+           nn = nn + 1
+           lon_src(nn) = lonsrc_local(ij(1,nn), ij(2,nn))
+           lat_src(nn) = latsrc_local(ij(1,nn), ij(2,nn))
+           val(nn,:) = self%val(ij(1,nn), ij(2,nn),:)
+        end do
+
+        ! val_tmp: interpolated val at (i,j) dst-point along layers
+        if ( nn >=1 ) then
+           call soca_stencil_interp(lon_src, lat_src, &
+                                    londst_local(i,j), latdst_local(i,j), &
+                                    val, val_tmp(i,j,:), nn)
+        end if
+     end do
+  end do
+
   self%val = val_tmp
 
 end subroutine soca_field_stencil_interp
