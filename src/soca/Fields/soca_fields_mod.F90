@@ -307,6 +307,8 @@ subroutine soca_field_stencil_interp(self, geom, fromto)
   character(len=4),     intent(in) :: fromto !< "u2h", "v2h"
 
   integer :: i, j
+  real(kind=kind_real), allocatable :: val_tmp(:,:,:)
+  real(kind=kind_real) :: val_max = 9e8_kind_real
   integer :: ij(2,6), sti, nn
   real(kind_real) :: lon_src(6), lat_src(6)
   real(kind=kind_real), allocatable :: val(:,:)
@@ -314,6 +316,9 @@ subroutine soca_field_stencil_interp(self, geom, fromto)
   real(kind=kind_real), allocatable :: londst_local(:,:), latdst_local(:,:)
   real(kind=kind_real), allocatable :: masksrc_local(:,:), maskdst_local(:,:)
 
+  ! Initialize temporary arrays
+  allocate(val_tmp, mold=self%val)
+  val_tmp = 0_kind_real
 
   ! Identify source and destination grids
   select case(fromto)
@@ -356,6 +361,9 @@ subroutine soca_field_stencil_interp(self, geom, fromto)
            ! source point on land, skip
            if (masksrc_local(ij(1,sti), ij(2,sti)) == 0_kind_real) cycle
 
+           ! outcroping of layers, skip 
+           if (abs(self%val(ij(1,sti), ij(2,sti),1)) > val_max) cycle
+
            ! store the valid neighbors
            lon_src(nn) = lonsrc_local(ij(1,sti), ij(2,sti))
            lat_src(nn) = latsrc_local(ij(1,sti), ij(2,sti))
@@ -368,10 +376,11 @@ subroutine soca_field_stencil_interp(self, geom, fromto)
         if ( nn >=1 ) then
            call soca_stencil_interp(lon_src, lat_src, &
                                     londst_local(i,j), latdst_local(i,j), &
-                                    val, self%val(i,j,:), nn)
+                                    val, val_tmp(i,j,:), nn)
         end if
      end do
   end do
+  self%val = val_tmp
 
 end subroutine soca_field_stencil_interp
 
