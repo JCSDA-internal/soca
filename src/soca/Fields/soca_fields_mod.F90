@@ -309,6 +309,7 @@ subroutine soca_field_stencil_interp(self, geom, fromto)
   integer :: i, j
   real(kind=kind_real), allocatable :: val_tmp(:,:,:)
   real(kind=kind_real) :: w(6), wf
+  real(kind=kind_real) :: val_max = 9e8_kind_real
   integer :: ij(2,6), sti, nn
   real(kind_real) :: lon_src(6), lat_src(6)
   real(kind=kind_real), allocatable :: val(:,:)
@@ -318,7 +319,7 @@ subroutine soca_field_stencil_interp(self, geom, fromto)
 
   ! Initialize temporary arrays
   allocate(val_tmp, mold=self%val)
-  val_tmp = self%val
+  val_tmp = 0_kind_real
   allocate(val(6,self%nz))
 
   ! Interpolate
@@ -350,18 +351,25 @@ subroutine soca_field_stencil_interp(self, geom, fromto)
   do j = geom%jsc, geom%jec
      do i = geom%isc, geom%iec
         ! destination on land, skip
-        if (maskdst_local(i,j) == 0) cycle
+        if (maskdst_local(i,j) == 0_kind_real) cycle
 
         ! get the 6 or less src-point neighbors surrounding the (i,j) dst-point
         call soca_stencil_neighbors(fromto, i, j, ij)
-        nn = 0
+        nn = 1
         do sti = 1, 6
-           if (maskdst_local(i,j) == 0) cycle
+           ! source point on land, skip
+           if (masksrc_local(ij(1,sti), ij(2,sti)) == 0_kind_real) cycle
+
+           ! outcroping of layers, skip 
+           if (abs(self%val(ij(1,sti), ij(2,sti),1)) > val_max) cycle
+
+           ! store the valid neighbors
+           lon_src(nn) = lonsrc_local(ij(1,sti), ij(2,sti))
+           lat_src(nn) = latsrc_local(ij(1,sti), ij(2,sti))
+           val(nn,:) = self%val(ij(1,sti), ij(2,sti),:)
            nn = nn + 1
-           lon_src(nn) = lonsrc_local(ij(1,nn), ij(2,nn))
-           lat_src(nn) = latsrc_local(ij(1,nn), ij(2,nn))
-           val(nn,:) = self%val(ij(1,nn), ij(2,nn),:)
         end do
+        nn = nn - 1
 
         ! val_tmp: interpolated val at (i,j) dst-point along layers
         if ( nn >=1 ) then
