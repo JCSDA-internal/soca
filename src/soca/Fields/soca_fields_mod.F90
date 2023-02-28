@@ -300,16 +300,13 @@ end subroutine soca_field_check_congruent
 !> Perform spatial interpolation between adjacent grid point in the same stencil
 !!
 !! Interpolation used is inverse distance weidghted, taking into
-!! consideration the mask.
+!! consideration the mask and using at most 6 neighbors.
 subroutine soca_field_stencil_interp(self, geom, fromto)
   class(soca_field), intent(inout) :: self
   class(soca_geom),    intent(in) :: geom   !< geometry
   character(len=4),     intent(in) :: fromto !< "u2h", "v2h"
 
   integer :: i, j
-  real(kind=kind_real), allocatable :: val_tmp(:,:,:)
-  real(kind=kind_real) :: w(6), wf
-  real(kind=kind_real) :: val_max = 9e8_kind_real
   integer :: ij(2,6), sti, nn
   real(kind_real) :: lon_src(6), lat_src(6)
   real(kind=kind_real), allocatable :: val(:,:)
@@ -317,12 +314,8 @@ subroutine soca_field_stencil_interp(self, geom, fromto)
   real(kind=kind_real), allocatable :: londst_local(:,:), latdst_local(:,:)
   real(kind=kind_real), allocatable :: masksrc_local(:,:), maskdst_local(:,:)
 
-  ! Initialize temporary arrays
-  allocate(val_tmp, mold=self%val)
-  val_tmp = 0_kind_real
-  allocate(val(6,self%nz))
 
-  ! Interpolate
+  ! Identify source and destination grids
   select case(fromto)
   case("vtoh")
      ! Horizontal interpolation: v-points to h-points
@@ -348,6 +341,8 @@ subroutine soca_field_stencil_interp(self, geom, fromto)
 
   end select
 
+  ! Interpolate
+  allocate(val(6,self%nz))
   do j = geom%jsc, geom%jec
      do i = geom%isc, geom%iec
         ! destination on land, skip
@@ -356,12 +351,10 @@ subroutine soca_field_stencil_interp(self, geom, fromto)
         ! get the 6 or less src-point neighbors surrounding the (i,j) dst-point
         call soca_stencil_neighbors(fromto, i, j, ij)
         nn = 1
+        val = 0_kind_real
         do sti = 1, 6
            ! source point on land, skip
            if (masksrc_local(ij(1,sti), ij(2,sti)) == 0_kind_real) cycle
-
-           ! outcroping of layers, skip 
-           if (abs(self%val(ij(1,sti), ij(2,sti),1)) > val_max) cycle
 
            ! store the valid neighbors
            lon_src(nn) = lonsrc_local(ij(1,sti), ij(2,sti))
@@ -375,12 +368,10 @@ subroutine soca_field_stencil_interp(self, geom, fromto)
         if ( nn >=1 ) then
            call soca_stencil_interp(lon_src, lat_src, &
                                     londst_local(i,j), latdst_local(i,j), &
-                                    val, val_tmp(i,j,:), nn)
+                                    val, self%val(i,j,:), nn)
         end if
      end do
   end do
-
-  self%val = val_tmp
 
 end subroutine soca_field_stencil_interp
 

@@ -304,28 +304,30 @@ subroutine soca_stencil_interp(lon_src, lat_src, lon_dst, lat_dst, data, data_ou
 
   type(atlas_geometry) :: ageometry
   integer :: i, n, nz, k
-  real(kind_real) :: val, w(6)
+  real(kind_real) :: val
+  real(kind_real), allocatable :: w(:)
 
   ! Initialize atlas geometry on the sphere
   ageometry = atlas_geometry("UnitSphere")
 
   ! nn cannot be larger than 6
-  if (nn > 6 ) call fckit_exception%abort( "Using more that 6 neighbors is not allowed")
+  if (nn > 6 ) call fckit_exception%abort( "Using more than 6 neighbors is not allowed")
 
+  ! compute idw weights
+  allocate(w(nn))
   do i = 1, nn
      w(i) = 1_kind_real/ageometry%distance(lon_src(i), lat_src(i), lon_dst, lat_dst)
   end do
 
-  n = size(data, dim=1)
   nz = size(data, dim=2)
   data_out = 0_kind_real
 
   do k = 1, nz
      val = 0_kind_real
-     do i = 1, n
+     do i = 1, nn
         val = val + w(i)*data(i,k)
      end do
-     data_out(k) = val/sum(w)
+     data_out(k) = val/sum(w(1:nn))
   end do
 
 end subroutine soca_stencil_interp
