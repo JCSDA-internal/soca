@@ -48,7 +48,32 @@ observations:
       covariance model: diagonal
     obs localizations:
     - localization method: Rossby
-      search method: kd_tree
+      base value: 100.0e3
+      rossby mult: 1.0
+      min grid mult: 2.0
+      min value: 200.0e3
+      max value: 900.0e3
+
+  - obs space:
+      name: ADT
+      distribution:
+        name: Halo
+        halo size: 500.0e3
+      obsdataout:
+        engine:
+          type: H5File
+          obsfile: data_generated/letkf_split_solver/adt.letkf_split_solver.nc
+      obsdatain:
+        engine:
+          type: H5File
+          obsfile: data_generated/letkf_split_observer/adt.letkf_split_observer.nc
+      simulated variables: [absoluteDynamicTopography]
+    obs operator:
+      name: ADT
+    obs error:
+      covariance model: diagonal
+    obs localizations:
+    - localization method: Rossby
       base value: 100.0e3
       rossby mult: 1.0
       min grid mult: 2.0
