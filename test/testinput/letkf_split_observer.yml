@@ -56,6 +56,27 @@ observations:
       amount: 0.1
       random seed: 0
 
+  - obs space:
+      name: ADT
+      distribution:
+        name: RoundRobin
+      obsdataout:
+        engine:
+          type: H5File
+          obsfile: data_generated/letkf_split_observer/adt.letkf_split_observer.nc
+      obsdatain:
+        engine:
+          type: H5File
+          obsfile: data_static/obs/adt.nc
+      simulated variables: [absoluteDynamicTopography]
+    obs operator:
+      name: ADT
+    obs error:
+      covariance model: diagonal
+    obs localizations:
+    - localization method: Horizontal Gaspari-Cohn
+      lengthscale: 0
+
 driver:
   run as observer only: true
   update obs config with geometry info: false
