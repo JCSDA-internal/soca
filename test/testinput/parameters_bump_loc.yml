@@ -3,45 +3,47 @@ geometry:
   mom6_input_nml: data_static/72x35x25/input.nml
   fields metadata: data_static/fields_metadata.yml
 
-input variables: &soca_vars [cicen, hicen, hsnon, socn, tocn, uocn, vocn, ssh, hocn]
-
 background:
   read_from_file: 1
   basename: data_static/72x35x25/restarts/
   date: &date 2018-04-15T06:00:00Z
   ocn_filename: MOM.res.nc
   ice_filename: cice.res.nc
-  state variables: *soca_vars
+  state variables: &stateVariables [cicen, hicen, hsnon, socn, tocn, uocn, vocn, ssh, hocn]
 
-bump:
-  io:
-    data directory: data_generated/parameters_bump_loc
-    files prefix: soca_bump_loc
-  drivers:
-    multivariate strategy: duplicated
-    compute nicas: true
-    write local nicas: true
-  nicas:
-    resolution: 6.0
-    explicit length-scales: true
-    horizontal length-scale:
-    - groups:
-      - common
-      value: 2500000.0
-    vertical length-scale:
-    - groups:
-      - common
-      value: 500
-  grids:
-  - model:
-      variables:
-      - socn
-      - tocn
-      - uocn
-      - vocn
-      - cicen
-      - hicen
-      - ssh
+background error:
+  covariance model: SABER
+  saber central block:
+    saber block name: BUMP_NICAS
+    bump:
+      io:
+        data directory: data_generated/parameters_bump_loc
+        files prefix: soca_bump_loc
+      drivers:
+        multivariate strategy: duplicated
+        compute nicas: true
+        write local nicas: true
+      nicas:
+        resolution: 6.0
+        explicit length-scales: true
+        horizontal length-scale:
+        - groups:
+          - common
+          value: 2500000.0
+        vertical length-scale:
+        - groups:
+          - common
+          value: 500
+      grids:
+      - model:
+          variables:
+          - socn
+          - tocn
+          - uocn
+          - vocn
+          - cicen
+          - hicen
+          - ssh
 
 test:
   reference filename: testref/parameters_bump_loc.test
