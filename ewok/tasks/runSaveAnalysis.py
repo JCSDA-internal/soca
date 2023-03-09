@@ -8,41 +8,40 @@
 import sys
 import os
 import yamltools
-import r2d2
 import shutil
+from r2d2 import R2D2Data
 
 conf = yamltools.configure_runtime(sys.argv[1])
 
 # Check for working directory
-workdir=conf['workdir']
+workdir = conf['workdir']
 if not os.path.exists(workdir):
     raise RuntimeError('Working directory does not exist')
 os.chdir(workdir)
 
 # Date
 andate = conf['an']['date']
-base = conf['experiment']['expid'] + '.an' # + andate
-filename = base + '.$(file_type).nc'
+base = conf['experiment']['expid'] + '.an'  # + andate
 
 # TODO put analysis back in restart file correctly?
-file_type = ['MOM.res', 'cice.res']
-expid=conf['experiment']['expid']
+file_types = ['MOM.res', 'cice.res']
+expid = conf['experiment']['expid']
 for in_pfx, out_pfx in (
         ('ice', 'cice.res'),
         ('ocn', 'MOM.res')):
-    infile=f'{in_pfx}.{expid}.an.{andate}.nc'
-    outfile=f'{expid}.an.{out_pfx}.nc'
-    print (f"moving {infile} to {outfile}")
+    infile = f'{in_pfx}.{expid}.an.{andate}.nc'
+    outfile = f'{expid}.an.{out_pfx}.nc'
+    print(f"moving {infile} to {outfile}")
     shutil.move(infile, outfile)
 
-
-r2d2.store(
-    model=conf['experiment']['model'],
-    type='an',
-    experiment=conf['experiment']['expid'],
-    resolution=conf['resolution'],
-    date=andate,
-    source_file=filename,
-    file_format='netcdf',
-    file_type=file_type,
-)
+for file_type in file_types:
+    R2D2Data.store(
+        model=conf['experiment']['model'],
+        item='analysis',
+        experiment=conf['experiment']['expid'],
+        resolution=conf['resolution'],
+        date=andate,
+        source_file=f'{base}.{file_type}.nc',
+        file_extension='nc',
+        file_type=file_type,
+    )
