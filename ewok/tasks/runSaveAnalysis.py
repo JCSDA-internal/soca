@@ -41,6 +41,7 @@ for file_type in file_types:
         experiment=conf['experiment']['expid'],
         resolution=conf['resolution'],
         date=andate,
+        domain='global',
         source_file=f'{base}.{file_type}.nc',
         file_extension='nc',
         file_type=file_type,

@@ -44,6 +44,7 @@ for file_type in file_types:
         step=conf['fcstep'],
         resolution=conf['resolution'],
         date=conf['fcdate'],
+        domain='global',
         target_file=f'{base}{sdate}.{file_type}.nc',
         file_extension='nc',
         file_type=file_type,
