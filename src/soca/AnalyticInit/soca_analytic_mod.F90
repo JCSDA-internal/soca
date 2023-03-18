@@ -8,7 +8,7 @@ module soca_analytic_mod
 
 use kinds, only : kind_real
 use ufo_geovals_mod, only : ufo_geovals
-use ufo_locations_mod, only : ufo_locations
+use ufo_sampled_locations_mod, only : ufo_sampled_locations
 use soca_state_mod, only : soca_state
 
 
@@ -26,7 +26,7 @@ contains
 !! \see soca_analytic_val
 subroutine soca_analytic_geovals(geovals, locs)
     type(ufo_geovals), intent(inout) :: geovals  !< output geovals
-    type(ufo_locations),  intent(in) :: locs !< input locations
+    type(ufo_sampled_locations),  intent(in) :: locs !< input locations
 
     real(kind=kind_real), allocatable :: lons(:), lats(:)
     integer :: ivar, iloc, ival

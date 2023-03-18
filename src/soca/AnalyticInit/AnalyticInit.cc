@@ -13,7 +13,7 @@ namespace soca {
   static oops::AnalyticInitMaker<ufo::ObsTraits, AnalyticInit>
     makerAnalyticInit_("soca_ana_init");
 
-  void AnalyticInit::fillGeoVaLs(const ufo::Locations & locs,
+  void AnalyticInit::fillGeoVaLs(const ufo::SampledLocations & locs,
                                  ufo::GeoVaLs & geovals) const {
     soca_analytic_geovals_f90(geovals.toFortran(), locs);
   }
