@@ -40,7 +40,7 @@ subroutine soca_analytic_geovals(geovals, locs)
 
     do ivar = 1, geovals%nvar
         name = geovals%variables(ivar)
-        do iloc = 1, geovals%geovals(ivar)%nlocs
+        do iloc = 1, geovals%geovals(ivar)%nprofiles
             do ival = 1, geovals%geovals(ivar)%nval
                 val = soca_analytic_val(&
                     name, lats(iloc), lons(iloc), ival*1.0_kind_real)
