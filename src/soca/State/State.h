@@ -27,7 +27,6 @@ namespace eckit {
 }
 namespace ufo {
   class GeoVaLs;
-  class Locations;
 }
 namespace soca {
   class Geometry;
