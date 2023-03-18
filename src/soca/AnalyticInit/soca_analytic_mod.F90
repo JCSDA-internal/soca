@@ -33,8 +33,8 @@ subroutine soca_analytic_geovals(geovals, locs)
     real(kind=kind_real) :: val
     character(len=:), allocatable :: name
 
-    allocate(lons(locs%nlocs()))
-    allocate(lats(locs%nlocs()))
+    allocate(lons(locs%npaths()))
+    allocate(lats(locs%npaths()))
     call locs%get_lons(lons)
     call locs%get_lats(lats)
 
