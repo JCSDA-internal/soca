@@ -5,7 +5,7 @@ bump:
   io:
     data directory: $(soca_static_dir)/bump
   drivers:
-    multivariate strategy: specific_univariate
+    multivariate strategy: univariate
     read local nicas: true
 correlation:
   - name: ocn
