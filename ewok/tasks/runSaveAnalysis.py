@@ -20,7 +20,7 @@ if not os.path.exists(workdir):
 os.chdir(workdir)
 
 # Date
-andate = conf['an']['date']
+andate = yamltools.jedifnformat(conf['an']['date'])
 base = conf['experiment']['expid'] + '.an'  # + andate
 
 # TODO put analysis back in restart file correctly?
@@ -40,7 +40,7 @@ for file_type in file_types:
         item='analysis',
         experiment=conf['experiment']['expid'],
         resolution=conf['resolution'],
-        date=andate,
+        date=conf['an']['date'],
         domain='global',
         source_file=f'{base}.{file_type}.nc',
         file_extension='nc',
