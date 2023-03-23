@@ -11,8 +11,8 @@ import ewok.tasks.getBackground as generic
 
 class getBackgroundMOM6(generic.getBackground):
 
-    def setup(self, config, fc):
-        super().setup(config, fc)
+    def setup(self, config, fc, fix):
+        super().setup(config, fc, fix)
 
         # Use MOM6 specific script
         self.command = os.path.join(config['model_path'], "tasks/runGetForecast.py")
