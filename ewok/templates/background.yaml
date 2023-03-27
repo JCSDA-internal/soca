@@ -1,8 +1,8 @@
 basename: ./
 date: '{{background_time}}'
 
-ice_filename: $(expid).fc.$(fcdatetime).$(fcstep).cice.res.nc
-ocn_filename: $(expid).fc.$(fcdatetime).$(fcstep).MOM.res.nc
-filename: $(expid).fc.$(fcdatetime).$(fcstep).MOM.res.nc
+ice_filename: $(expid).fc.$(fndatetime).$(fcstep).cice.res.nc
+ocn_filename: $(expid).fc.$(fndatetime).$(fcstep).MOM.res.nc
+filename: $(expid).fc.$(fndatetime).$(fcstep).MOM.res.nc
 read_from_file: 1
 state variables: $(BG_VARIABLES)
