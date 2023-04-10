@@ -13,6 +13,7 @@
 #include "oops/generic/instantiateModelFactory.h"
 #include "oops/runs/Run.h"
 #include "oops/runs/Variational.h"
+#include "oops/runs/EnsembleApplication.h"
 #include "saber/oops/instantiateCovarFactory.h"
 #include "saber/oops/instantiateLocalizationFactory.h"
 #include "soca/Traits.h"
