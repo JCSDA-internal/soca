@@ -31,18 +31,32 @@ namespace soca {
     void soca_geo_setup_f90(F90geom &,
                             const eckit::Configuration * const &,
                             const eckit::mpi::Comm *);
-    void soca_geo_set_atlas_lonlat_f90(const F90geom &,
-                                       atlas::field::FieldSetImpl *);
+
+    void soca_geo_lonlat_f90(const F90geom &,
+                             atlas::field::FieldSetImpl *);
     void soca_geo_set_atlas_functionspace_pointer_f90(const F90geom &,
+                      atlas::functionspace::FunctionSpaceImpl *,
                       atlas::functionspace::FunctionSpaceImpl *);
-    void soca_geo_fill_atlas_fieldset_f90(const F90geom &,
-                                          atlas::field::FieldSetImpl *);
+    void soca_geo_to_fieldset_f90(const F90geom &,
+                                  atlas::field::FieldSetImpl *);
+
     void soca_geo_clone_f90(F90geom &, const F90geom &);
     void soca_geo_gridgen_f90(const F90geom &);
     void soca_geo_delete_f90(F90geom &);
-    void soca_geo_start_end_f90(const F90geom &, int &, int &, int &, int &);
+    void soca_geo_start_end_f90(const F90geom &, int &, int &, int &, int &,
+                                int &, int &);
     void soca_geo_get_num_levels_f90(const F90geom &, const oops::Variables &,
                                     const size_t &, size_t[]);
+    void soca_geo_iterator_dimension_f90(const F90geom &, int &);
+
+    void soca_geo_gridsize_f90(const F90geom &, const char &, const bool &,
+      const bool &, int &);
+    void soca_geo_gridlatlon_f90(const F90geom &, const char &, const bool &,
+      const bool &, const int &, double[], double[]);
+    void soca_geo_gridmask_f90(const F90geom&, const char &, const bool &,
+      const int &, double[]);
+    void soca_geo_getvargrid_f90(
+      const F90geom &, const oops::Variables &, char &, bool &);
   }
 }  // namespace soca
 #endif  // SOCA_GEOMETRY_GEOMETRYFORTRAN_H_

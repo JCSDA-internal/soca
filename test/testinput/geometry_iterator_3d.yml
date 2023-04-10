@@ -1,0 +1,10 @@
+geometry:
+  geom_grid_file: data_generated/gridgen/soca_gridspec.72x35x25.nc
+  mom6_input_nml: data_static/72x35x25/input.nml
+  fields metadata: data_static/fields_metadata.yml
+  iterator dimension: 3
+
+inc variables: [cicen, hicen, socn, tocn, uocn, vocn, ssh, hocn]
+
+increment test:
+  date: &date 2018-04-15T00:00:00Z

@@ -3,11 +3,12 @@ window length: PT2H
 forecast length: PT2H
 
 geometry:
-  mom6_input_nml: ./inputnml/input.nml
-  fields metadata: ./fields_metadata.yml
+  geom_grid_file: data_generated/gridgen/soca_gridspec.72x35x25.nc
+  mom6_input_nml: data_static/72x35x25/input.nml
+  fields metadata: data_static/fields_metadata.yml
 
 model:
-  name: SOCA
+  name: MOM6solo
   tstep: PT1H
   advance_mom6: 1
   model variables: [cicen, hicen, socn, tocn, ssh, hocn, sw, lhf, shf, lw, us]
@@ -16,65 +17,111 @@ initial condition:
   _: &state
     date: 2018-04-15T06:00:00Z
     read_from_file: 1
-    basename: ./Data/
-    ice_filename: ../INPUT/cice.res.nc
+    basename: data_static/72x35x25/
+    ice_filename: restarts/cice.res.nc
     state variables: [cicen, hicen, socn, tocn, ssh, hocn, sw, lhf, shf, lw, us]
   <<: *state
-  ocn_filename: ../Data/ocn.pert.ens.1.2018-04-15T00:00:00Z.PT0S.nc
+  ocn_filename: restarts_ens/ocn.enspert.ens.1.2018-04-15T00:00:00Z.PT0S.nc
 
 observations:
+  observers:
   - obs space:
       name: CoolSkin
-      #obsdataout: {obsfile: ./Data/sst.out.nc}
-      obsdatain:  {obsfile: ./Data/sst.nc}
-      simulated variables: [sea_surface_temperature]
+#      obsdataout:
+#        engine:
+#          type: H5File
+#          obsfile: ./Data/sst.out.nc
+      obsdatain:
+        engine:
+          type: H5File
+          obsfile: data_static/obs/sst.nc
+      simulated variables: [seaSurfaceTemperature]
     obs operator:
       name: CoolSkin
 
   - obs space:
       name: SeaSurfaceTemp
-      #obsdataout: {obsfile: ./Data/sst.out.nc}
-      obsdatain:  {obsfile: ./Data/sst.nc}
-      simulated variables: [sea_surface_temperature]
+#      obsdataout:
+#        engine:
+#          type: H5File
+#          obsfile: ./Data/sst.out.nc
+      obsdatain:
+        engine:
+          type: H5File
+          obsfile: data_static/obs/sst.nc
+      simulated variables: [seaSurfaceTemperature]
     obs operator:
       name: Identity
+      observation alias file: testinput/obsop_name_map.yml
 
   - obs space:
       name: SeaSurfaceSalinity
-      #obsdataout: {obsfile: ./Data/sss.out.nc}
-      obsdatain:  {obsfile: ./Data/sss.nc}
-      simulated variables: [sea_surface_salinity]
+#      obsdataout:
+#        engine:
+#          type: H5File
+#          obsfile: ./Data/sss.out.nc
+      obsdatain:
+        engine:
+          type: H5File
+          obsfile: data_static/obs/sss.nc
+      simulated variables: [seaSurfaceSalinity]
     obs operator:
       name: Identity
+      observation alias file: testinput/obsop_name_map.yml
 
   - obs space:
       name: ADT
-      #obsdataout: {obsfile: ./Data/adt.out.nc}
-      obsdatain:  {obsfile: ./Data/adt.nc}
-      simulated variables: [obs_absolute_dynamic_topography]
+#      obsdataout:
+#        engine:
+#          type: H5File
+#          obsfile: ./Data/adt.out.nc
+      obsdatain:
+        engine:
+          type: H5File
+          obsfile: data_static/obs/adt.nc
+      simulated variables: [absoluteDynamicTopography]
     obs operator:
       name: ADT
 
   - obs space:
       name: InsituTemperature
-      #obsdataout: {obsfile: ./Data/prof.T.out.nc}
-      obsdatain:  {obsfile: ./Data/prof.nc}
-      simulated variables: [sea_water_temperature]
+#      obsdataout:
+#        engine:
+#          type: H5File
+#          obsfile: ./Data/prof.T.out.nc
+      obsdatain:
+        engine:
+          type: H5File
+          obsfile: data_static/obs/prof.nc
+      simulated variables: [waterTemperature]
     obs operator:
       name: InsituTemperature
 
   - obs space:
       name: InsituSalinity
-      #obsdataout: {obsfile: ./Data/prof.S.out.nc}
-      obsdatain:  {obsfile: ./Data/prof.nc}
-      simulated variables: [sea_water_salinity]
+#      obsdataout:
+#        engine:
+#          type: H5File
+#          obsfile: ./Data/prof.S.out.nc
+      obsdatain:
+        engine:
+          type: H5File
+          obsfile: data_static/obs/prof.nc
+      simulated variables: [salinity]
     obs operator:
       name: MarineVertInterp
+      observation alias file: testinput/obsop_name_map.yml
 
   - obs space:
       name: SeaIceFraction
-      #obsdataout: {obsfile: ./Data/icec.out.nc}
-      obsdatain:  {obsfile:  ./Data/icec.nc}
-      simulated variables: [sea_ice_area_fraction]
+#      obsdataout:
+#        engine:
+#          type: H5File
+#          obsfile: ./Data/icec.out.nc
+      obsdatain:
+        engine:
+          type: H5File
+          obsfile: data_static/obs/icec.nc
+      simulated variables: [seaIceFraction]
     obs operator:
       name: SeaIceFraction

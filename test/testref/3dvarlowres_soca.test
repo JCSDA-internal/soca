@@ -1,23 +1,30 @@
-Test     : CostJb   : Nonlinear Jb = 0
-Test     : CostJo   : Nonlinear Jo(SeaSurfaceTemp) = 768.422, nobs = 147, Jo/n = 5.22736, err = 0.361776
-Test     : CostJo   : Nonlinear Jo(SeaSurfaceSalinity) = 49.0095, nobs = 51, Jo/n = 0.96097, err = 1
-Test     : CostJo   : Nonlinear Jo(ADT) = 147.738, nobs = 87, Jo/n = 1.69814, err = 0.1
-Test     : CostJo   : Nonlinear Jo(InsituTemperature) = 348.787, nobs = 206, Jo/n = 1.69314, err = 0.897281
-Test     : CostJo   : Nonlinear Jo(InsituSalinity) = 355.419, nobs = 218, Jo/n = 1.63036, err = 0.608197
-Test     : CostFunction: Nonlinear J = 1669.38
-Test     : RPCGMinimizer: reduction in residual norm = 0.122973
-Test     : CostFunction::addIncrement: Analysis: 
-Test     :   Valid time: 2018-04-15T00:00:00Z
-Test     :    socn   min=   10.721046   max=   40.441679   mean=   34.544836
-Test     :    tocn   min=   -1.888701   max=   31.788334   mean=    6.030155
-Test     :     ssh   min=   -1.992878   max=    0.885148   mean=   -0.278444
-Test     :    hocn   min=    0.002000   max= 2691.280000   mean=  257.256128
-Test     :     mld   min=    2.285472   max= 4593.153342   mean=  192.410907
-Test     : layer_depth   min=    2.285472   max= 5658.305747   mean= 1200.522954
-Test     : CostJb   : Nonlinear Jb = 75864.647752
-Test     : CostJo   : Nonlinear Jo(SeaSurfaceTemp) = 246.970336, nobs = 147, Jo/n = 1.680070, err = 0.361776
-Test     : CostJo   : Nonlinear Jo(SeaSurfaceSalinity) = 49.068261, nobs = 51, Jo/n = 0.962123, err = 1.000000
-Test     : CostJo   : Nonlinear Jo(ADT) = 99.081569, nobs = 87, Jo/n = 1.138869, err = 0.100000
-Test     : CostJo   : Nonlinear Jo(InsituTemperature) = 5351.013376, nobs = 206, Jo/n = 25.975793, err = 0.897281
-Test     : CostJo   : Nonlinear Jo(InsituSalinity) = 540.860894, nobs = 218, Jo/n = 2.481013, err = 0.608197
-Test     : CostFunction: Nonlinear J = 82151.642188
+CostJb   : Nonlinear Jb = 0.0000000000000000e+00
+CostJo   : Nonlinear Jo(SeaSurfaceTemp) = 8.5623789494364155e+02, nobs = 148, Jo/n = 5.7853911820516322e+00, err = 3.6134602983026659e-01
+CostJo   : Nonlinear Jo(SeaSurfaceSalinity) = 4.8805775287685364e+01, nobs = 49, Jo/n = 9.9603623036092581e-01, err = 1.0000000000000000e+00
+CostJo   : Nonlinear Jo(ADT) = 1.4289835039600911e+02, nobs = 88, Jo/n = 1.6238448908637400e+00, err = 1.0000000149011612e-01
+CostJo   : Nonlinear Jo(InsituTemperature) = 3.0207389049976348e+02, nobs = 201, Jo/n = 1.5028551766157388e+00, err = 8.9127767893751042e-01
+CostJo   : Nonlinear Jo(InsituSalinity) = 3.2537388217310308e+02, nobs = 218, Jo/n = 1.4925407439133169e+00, err = 6.0819699619437717e-01
+CostFunction: Nonlinear J = 1.6753897933002027e+03
+RPCGMinimizer: reduction in residual norm = 9.0648948687448286e-02
+CostFunction::addIncrement: Analysis: 
+  Valid time: 2018-04-15T00:00:00Z
+   socn   min=10.7210460395083924   max=40.4416882908846063   mean=34.5447026142994673
+   tocn   min=-2.1015727398675361   max=31.9958423118982225   mean=6.0305112847705846
+    ssh   min=-1.9644783864682129   max=0.9037423853672051   mean=-0.2789166661495768
+   hocn   min=0.0009999999999977   max=1345.6400000000003274   mean=128.6280642065023017
+    mld   min=2.2854716757984130   max=4593.1533423819937525   mean=192.4109073940401515
+layer_depth   min=2.2854716757984130   max=5658.3057467114012979   mean=1200.5229536158392420
+
+
+
+
+
+
+
+CostJb   : Nonlinear Jb = 217.0860058306639360
+CostJo   : Nonlinear Jo(SeaSurfaceTemp) = 296.6119587415450951, nobs = 148, Jo/n = 2.0041348563617913, err = 0.3613460298302666
+CostJo   : Nonlinear Jo(SeaSurfaceSalinity) = 48.8498831268672120, nobs = 49, Jo/n = 0.9969363903442288, err = 1.0000000000000000
+CostJo   : Nonlinear Jo(ADT) = 106.1145940617765007, nobs = 88, Jo/n = 1.2058476597929149, err = 0.1000000014901161
+CostJo   : Nonlinear Jo(InsituTemperature) = 122.8271767069728639, nobs = 201, Jo/n = 0.6110804811292182, err = 0.8912776789375104
+CostJo   : Nonlinear Jo(InsituSalinity) = 302.3781108200875565, nobs = 218, Jo/n = 1.3870555542205851, err = 0.6081969961943772
+CostFunction: Nonlinear J = 1093.8677292879131073

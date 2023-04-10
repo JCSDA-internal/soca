@@ -13,7 +13,6 @@
 #include "soca/Traits.h"
 
 #include "soca/Geometry/Geometry.h"
-#include "soca/Model/Model.h"
 
 #include "eckit/config/LocalConfiguration.h"
 #include "eckit/mpi/Comm.h"
@@ -29,14 +28,10 @@ namespace soca {
       : Application(comm) {}
     static const std::string classname() {return "soca::GridGen";}
 
-    int execute(const eckit::Configuration & fullConfig) const {
+    int execute(const eckit::Configuration & fullConfig, bool /*validate*/) const {
       //  Setup resolution
       const eckit::LocalConfiguration geomconfig(fullConfig, "geometry");
-      const Geometry geom(geomconfig, this->getComm());
-
-      //  Generate model grid
-      geom.gridgen();
-
+      const Geometry geom(geomconfig, this->getComm(), true);
       return 0;
     }
     // -----------------------------------------------------------------------------

@@ -26,10 +26,11 @@ cost function:
     analysis variables: [socn, tocn, ssh]
     date: *bkg_date
     bump:
-      verbosity: main
-      datadir: ./bump
-      strategy: specific_univariate
-      load_nicas_local: 1
+      io:
+        data directory: ./bump
+      drivers:
+        multivariate strategy: specific_univariate
+        read local nicas: 1
     correlation:
     - name: ocn
       variables: [socn, tocn, ssh]
@@ -83,8 +84,14 @@ cost function:
   observations:
   - obs space:
       name: SeaSurfaceTemp
-      obsdatain:  {obsfile: ../obs/sst.nc4}
-      obsdataout: {obsfile: ./obs_out/sst.out.nc4}
+      obsdatain:
+        engine:
+          type: H5File
+          obsfile: ../obs/sst.nc4
+      obsdataout:
+        engine:
+          type: H5File
+          obsfile: ./obs_out/sst.out.nc4
       simulated variables: [sea_surface_temperature]
     obs operator:
       name: Identity
@@ -95,8 +102,14 @@ cost function:
 
   - obs space:
       name: SeaSurfaceSalt
-      obsdatain:  {obsfile: ../obs/sss.nc4}
-      obsdataout: {obsfile: ./obs_out/sss.out.nc4}
+      obsdatain:
+        engine:
+          type: H5File
+          obsfile: ../obs/sss.nc4
+      obsdataout:
+        engine:
+          type: H5File
+          obsfile: ./obs_out/sss.out.nc4
       simulated variables: [sea_surface_salinity]
     obs operator:
       name: Identity
@@ -107,8 +120,14 @@ cost function:
 
   - obs space:
       name: ADT
-      obsdatain:  {obsfile: ../obs/adt.nc4}
-      obsdataout: {obsfile: ./obs_out/adt.out.nc4}
+      obsdatain:
+        engine:
+          type: H5File
+          obsfile: ../obs/adt.nc4
+      obsdataout:
+        engine:
+          type: H5File
+          obsfile: ./obs_out/adt.out.nc4
       simulated variables: [obs_absolute_dynamic_topography]
     obs operator:
       name: ADT
@@ -119,8 +138,14 @@ cost function:
 
   - obs space:
       name: InsituTemperature
-      obsdatain:  {obsfile: ../obs/insitu.T.nc4}
-      obsdataout: {obsfile: ./obs_out/insitu.T.out.nc4}
+      obsdatain:
+        engine:
+          type: H5File
+          obsfile: ../obs/insitu.T.nc4
+      obsdataout:
+        engine:
+          type: H5File
+          obsfile: ./obs_out/insitu.T.out.nc4
       simulated variables: [sea_water_temperature]
     obs operator:
       name: InsituTemperature
@@ -131,8 +156,14 @@ cost function:
 
   - obs space:
       name: InsituSalinity
-      obsdatain:  {obsfile: ../obs/insitu.S.nc4}
-      obsdataout: {obsfile: ./obs_out/insitu.S.out.nc4}
+      obsdatain:
+        engine:
+          type: H5File
+          obsfile: ../obs/insitu.S.nc4
+      obsdataout:
+        engine:
+          type: H5File
+          obsfile: ./obs_out/insitu.S.out.nc4
       simulated variables: [sea_water_salinity]
     obs operator:
       name: MarineVertInterp

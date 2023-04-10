@@ -65,6 +65,11 @@ namespace soca {
     void soca_state_analytic_f90(const F90flds &,
                                  const eckit::Configuration * const &,
                                  util::DateTime * const *);
+    void soca_state_update_fields_f90(const F90flds &, const oops::Variables &);
+    void soca_state_to_fieldset_f90(const F90flds &,
+                                    const oops::Variables &,
+                                    atlas::field::FieldSetImpl *,
+                                    const bool &);
   }
 }  // namespace soca
 #endif  // SOCA_STATE_STATEFORTRAN_H_

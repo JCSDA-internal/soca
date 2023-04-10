@@ -13,8 +13,8 @@ use fckit_log_module, only: fckit_log
 use kinds, only: kind_real
 use oops_variables_mod, only: oops_variables
 use random_mod, only: normal_distribution
-use tools_func, only: gau2gc
 use type_bump, only: bump_type
+use type_fieldset, only: fieldset_type
 
 ! soca modules
 use soca_fields_mod, only: soca_field
@@ -102,6 +102,8 @@ subroutine soca_cov_setup(self, f_conf, geom, bkg, vars)
 
   ! Initialize bump
   call f_conf%get_or_die("bump", f_conf2)
+  call f_conf2%set('model.nl0', 1)
+  call f_conf2%set('model.variables', ['var'])
   call f_conf%get_or_die("correlation", f_conf_list)
   allocate(self%conv(size(f_conf_list)))
   allocate(self%conv_vars(size(self%conv)))
@@ -110,6 +112,7 @@ subroutine soca_cov_setup(self, f_conf, geom, bkg, vars)
     call f_conf_list(i)%get_or_die("variables", domain_vars)
     self%conv_vars(i) = oops_variables()
     call self%conv_vars(i)%push_back(domain_vars)
+    call f_conf2%set('io.files prefix', domain)
 
     call soca_bump_correlation(self, self%conv(i), geom, f_conf2, f_conf_list(i), domain)
   end do
@@ -145,8 +148,11 @@ subroutine soca_cov_get_conv(self, field, conv)
   integer :: j,k
 
   ! safety check to make sure field is on h grid
-  if (field%metadata%grid /= "h" ) then
-    call abor1_ftn("ERROR: cannot use fields on u/v grids" )
+  ! TODO we really should have separate variable names for staggered/destaggered variables.
+  !  The "abort" has been turned into a "warning" until we get u/v names straightened out.
+  if (field%metadata%grid /= "h") then
+      call fckit_log%warning("WARNING: Attempting to use a field (" // &
+        trim(field%name) // ") which is on the u/v grid. PROCEED WITH CAUTION")
   end if
 
   ! determine which horizontal convolution to use
@@ -256,55 +262,58 @@ subroutine soca_bump_correlation(self, horiz_convol, geom, f_conf_bump, f_conf_d
   character(len=3),          intent(in) :: domain
 
   integer :: i
-  integer, pointer :: int_ptr_2(:,:)
-  real(kind=kind_real), pointer :: real_ptr_1(:), real_ptr_2(:,:)
-  real(kind=kind_real), allocatable :: lats(:), area(:)
+  integer, allocatable :: hmask(:,:)
+  integer, pointer :: int_ptr(:,:)
+  real(kind=kind_real), pointer :: real_ptr(:,:)
+  real(kind=kind_real), allocatable :: area(:)
   type(atlas_functionspace) :: afunctionspace
-  type(atlas_fieldset) :: afieldset, rh, rv
+  type(fieldset_type) :: afieldset, rh, rv, universe_rad
   type(atlas_field) :: afield
-  type(fckit_configuration) :: f_grid
   real(kind=kind_real) :: r_base, r_mult, r_min, r_max, r_min_grid
 
-
-  ! Grid setup
-  f_grid = fckit_configuration()
-  call f_grid%set('prefix', domain)
-  call f_grid%set('nl', 1)
-  call f_grid%set('nv', 1)
-  call f_grid%set('variables', ['var'])
-
   ! Wrap functionspace
-  afunctionspace = atlas_functionspace(geom%afunctionspace%c_ptr())
+  afunctionspace = atlas_functionspace(geom%functionspaceInchalo%c_ptr())
 
   ! Geometry fieldset setup
   afieldset = atlas_fieldset()
 
-  lats = pack(geom%lat(geom%isc:geom%iec,geom%jsc:geom%jec),.true.)
-
   ! Add area
-  afield = geom%afunctionspace%create_field(name='area', kind=atlas_real(kind_real), levels=0)
-  call afield%data(real_ptr_1)
-  area = pack(geom%cell_area(geom%isc:geom%iec,geom%jsc:geom%jec),.true.)
-  real_ptr_1 = area
+  afield = geom%functionspaceInchalo%create_field(name='area', kind=atlas_real(kind_real), levels=1)
+  call afield%data(real_ptr)
+  area = pack(geom%cell_area,.true.)
+  real_ptr(1,:) = area
   call afieldset%add(afield)
   call afield%final()
 
   ! Add vertical unit
-  afield = geom%afunctionspace%create_field(name='vunit', kind=atlas_real(kind_real), levels=1)
-  call afield%data(real_ptr_2)
-  real_ptr_2(1,:) = 1.0
+  afield = geom%functionspaceInchalo%create_field(name='vunit', kind=atlas_real(kind_real), levels=1)
+  call afield%data(real_ptr)
+  real_ptr(1,:) = 1.0
   call afieldset%add(afield)
   call afield%final()
 
   ! Add geographical mask
-  afield = geom%afunctionspace%create_field(name='gmask', kind=atlas_integer(kind(0)), levels=1)
-  call afield%data(int_ptr_2)
-  int_ptr_2(1,:) = int(pack(geom%mask2d(geom%isc:geom%iec,geom%jsc:geom%jec),.true.))
+  afield = geom%functionspaceInchalo%create_field(name='gmask', kind=atlas_integer(kind(0)), levels=1)
+  call afield%data(int_ptr)
+  int_ptr(1,:) = int(pack(geom%mask2d,.true.))
   call afieldset%add(afield)
   call afield%final()
 
+  afield = geom%functionspaceInchalo%create_field(name='hmask', kind=atlas_integer(kind(0)), levels=1)
+  allocate(hmask(geom%isd:geom%ied, geom%jsd:geom%jed))
+  hmask = 0
+  hmask(geom%isc:geom%iec, geom%jsc:geom%jec) = 1
+  call afield%data(int_ptr)
+  int_ptr(1,:) = pack(hmask, .true.)
+  call afieldset%add(afield)
+  call afield%final()
+  universe_rad = atlas_fieldset()
+
+  ! Set verbosity
+  horiz_convol%mpl%verbose = (geom%f_comm%rank()==0)
+
   ! Create BUMP object
-  call horiz_convol%create(geom%f_comm,afunctionspace,afieldset,f_conf_bump,f_grid)
+  call horiz_convol%create(geom%f_comm,afunctionspace,afieldset,f_conf_bump,universe_rad)
 
   if (horiz_convol%nam%new_nicas) then
     ! get parameters for correlation lengths
@@ -320,31 +329,31 @@ subroutine soca_bump_correlation(self, horiz_convol, geom, f_conf_bump, f_conf_d
     ! 3) min/max are imposed based on "min value" and "max value"
     ! 4) converted from a gaussian sigma to Gaspari-Cohn cutoff distance
     rh = atlas_fieldset()
-    afield = geom%afunctionspace%create_field('var',kind=atlas_real(kind_real),levels=0)
+    afield = geom%functionspaceInchalo%create_field('var',kind=atlas_real(kind_real),levels=1)
     call rh%add(afield)
-    call afield%data(real_ptr_1)
-    real_ptr_1 = r_base + r_mult*pack(geom%rossby_radius(geom%isc:geom%iec,geom%jsc:geom%jec), .true.)
+    call afield%data(real_ptr)
+    real_ptr(1,:) = r_base + r_mult*pack(geom%rossby_radius, .true.)
     ! min based on grid size
     if (r_min_grid .gt. 0.0) then
-      real_ptr_1 = max(real_ptr_1,  sqrt(area)*r_min_grid )
+      real_ptr(1,:) = max(real_ptr(1,:),  sqrt(area)*r_min_grid )
     end if
-    real_ptr_1 = min(r_max, real_ptr_1)
-    real_ptr_1 = max(r_min, real_ptr_1)
-    real_ptr_1 = real_ptr_1 * gau2gc ! convert from gaussian sigma to
-                                     ! Gaspari-Cohn half width
+    real_ptr(1,:) = min(r_max, real_ptr(1,:))
+    real_ptr(1,:) = max(r_min, real_ptr(1,:))
+    real_ptr(1,:) = real_ptr(1,:) * 3.57_kind_real ! convert from gaussian sigma to
+                                                   ! Gaspari-Cohn half width
     call afield%final()
 
      ! rv
      rv = atlas_fieldset()
-     afield = geom%afunctionspace%create_field('var',kind=atlas_real(kind_real),levels=0)
+     afield = geom%functionspaceInchalo%create_field('var',kind=atlas_real(kind_real),levels=1)
      call rv%add(afield)
-     call afield%data(real_ptr_1)
-     real_ptr_1 = 1.0
+     call afield%data(real_ptr)
+     real_ptr = 1.0
      call afield%final()
 
      ! Copy length-scales into BUMP
-     call horiz_convol%set_parameter('cor_rh', rh)
-     call horiz_convol%set_parameter('cor_rv', rv)
+     call horiz_convol%set_parameter('rh', 1, rh)
+     call horiz_convol%set_parameter('rv', 1, rv)
 
      ! Clean up
      call rh%final()
@@ -367,7 +376,7 @@ subroutine soca_2d_convol(dx, horiz_convol, geom)
   type(bump_type),      intent(inout) :: horiz_convol
   type(soca_geom),         intent(in) :: geom
 
-  type(atlas_fieldset) :: tmp_incr
+  type(fieldset_type) :: tmp_incr
 
   ! Allocate ATLAS tmp_increment and make copy of dx
   call geom%struct2atlas(dx(:,:), tmp_incr)
@@ -395,7 +404,7 @@ subroutine soca_2d_sqrt_convol(dx, horiz_convol, geom, pert_scale)
   type(soca_geom),         intent(in) :: geom
   real(kind=kind_real),    intent(in) :: pert_scale
 
-  type(atlas_fieldset) :: tmp_incr
+  type(fieldset_type) :: tmp_incr
   real(kind=kind_real), allocatable :: pcv(:)
   integer, parameter :: rseed = 1 ! constant for reproducability of tests
                                   ! TODO: pass seed through config

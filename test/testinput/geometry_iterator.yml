@@ -1,8 +1,0 @@
-geometry:
-  mom6_input_nml: ./inputnml/input.nml
-  fields metadata: ./fields_metadata.yml
-
-inc variables: [cicen, hicen, socn, tocn, ssh, hocn]
-
-increment test:
-  date: &date 2018-04-15T00:00:00Z

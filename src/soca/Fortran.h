@@ -37,5 +37,6 @@ namespace soca {
    * be separate key types
    */
   typedef int F90balopmat;
+  typedef int F90varchange;
 }  // namespace soca
 #endif  // SOCA_FORTRAN_H_

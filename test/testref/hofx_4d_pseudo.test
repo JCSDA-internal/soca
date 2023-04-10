@@ -1,23 +1,28 @@
-Test     : Initial state: 
-Test     :   Valid time: 2018-04-15T00:00:00Z
-Test     :    socn   min=   10.721046   max=   40.441659   mean=   34.544390
-Test     :    tocn   min=   -1.888390   max=   31.700465   mean=    6.017565
-Test     :     ssh   min=   -1.924485   max=    0.927283   mean=   -0.276790
-Test     :    hocn   min=    0.001000   max= 1345.640000   mean=  128.628064
-Test     :    uocn   min=   -0.858169   max=    0.700095   mean=   -0.000259
-Test     :    vocn   min=   -0.766110   max=    1.437777   mean=    0.002197
-Test     : Final state: 
-Test     :   Valid time: 2018-04-15T03:00:00Z
-Test     :    socn   min=   10.719095   max=   40.441647   mean=   34.544484
-Test     :    tocn   min=   -1.888585   max=   31.734800   mean=    6.015855
-Test     :     ssh   min=   -1.908095   max=    0.909066   mean=   -0.276583
-Test     :    hocn   min=    0.001000   max= 1345.640000   mean=  128.628088
-Test     :    uocn   min=   -0.848361   max=    0.700808   mean=    0.000089
-Test     :    vocn   min=   -0.834645   max=    0.944534   mean=    0.001772
-Test     : H(x): 
-Test     : SeaSurfaceTemp nobs= 21 Min=5.775514, Max=29.800003, RMS=26.110537
-Test     : SeaSurfaceSalinity nobs= 9 Min=33.357075, Max=35.661567, RMS=34.492963
-Test     : ADT nobs= 14 Min=-0.712935, Max=1.495782, RMS=1.001838
-Test     : InsituTemperature nobs= 10 Min=8.008760, Max=30.381888, RMS=23.736167
-Test     : InsituSalinity nobs= 10 Min=34.155913, Max=35.701557, RMS=35.026605
-Test     : End H(x)
+Initial state: 
+  Valid time: 2018-04-15T00:00:00Z
+   socn   min=10.7210460395083924   max=40.4416591897031168   mean=34.5443897261524953
+   tocn   min=-1.8883899372702533   max=31.7004645720658580   mean=6.0175649583533595
+    ssh   min=-1.9244847628277935   max=0.9272826517867588   mean=-0.2767903423591662
+   hocn   min=0.0009999999999977   max=1345.6400000000003274   mean=128.6280642065023017
+   uocn   min=-0.8581693992488438   max=0.7000954286848975   mean=-0.0002591771954069
+   vocn   min=-0.7661101215480253   max=1.4377766409421606   mean=0.0021972630399530
+Final state: 
+  Valid time: 2018-04-15T03:00:00Z
+   socn   min=10.7210460395083924   max=40.4416591681037119   mean=34.5459713920834233
+   tocn   min=-1.8879950757380115   max=31.6932489128285653   mean=6.0156727587827090
+    ssh   min=-1.9092725357352314   max=0.9091665415750726   mean=-0.2765781634769230
+   hocn   min=0.0009178261947465   max=1346.5803472041777695   mean=128.6280879778919370
+   uocn   min=-0.8496117748396494   max=0.6890666856088563   mean=0.0000321916028576
+   vocn   min=-0.9321576238931384   max=0.9467331169326910   mean=0.0016143192702768
+H(x): 
+SeaSurfaceTemp nobs= 21 Min=5.8309704566891210, Max=29.7378185241803799, RMS=26.1577462571012092
+
+SeaSurfaceSalinity nobs= 9 Min=33.2743815533169496, Max=35.7410672128776667, RMS=34.4650987043532666
+
+ADT nobs= 14 Min=-0.6625380750677172, Max=1.5203999028920607, RMS=1.0050261461602676
+
+InsituTemperature nobs= 10 Min=8.0434007526212419, Max=30.2529092811966542, RMS=23.7271617739774108
+
+InsituSalinity nobs= 10 Min=34.1710542427590696, Max=35.7079017812918096, RMS=35.0568620316856112
+
+End H(x)

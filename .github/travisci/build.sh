@@ -14,11 +14,12 @@ set -e
 
 cwd=$(pwd)
 
-CCACHE=ccache-swig
+# disabled, not available in recent containers
+# CCACHE=ccache-swig
 
-# zero out the ccache stats
-echo -e "\nzeroing out 'ccache' statistics"
-$CCACHE -z
+# # zero out the ccache stats
+# echo -e "\nzeroing out 'ccache' statistics"
+# $CCACHE -z
 
 # for each dependency repo...
 for repo in $LIB_REPOS; do
@@ -48,8 +49,14 @@ for repo in $LIB_REPOS; do
     # run ecbuild
     build_opt_var=BUILD_OPT_${repo_underscore}
     build_opt="$BUILD_OPT ${!build_opt_var}"
-    time ecbuild $src_dir -DCMAKE_INSTALL_PREFIX=${install_dir} -DCMAKE_BUILD_TYPE=${LIB_BUILD_TYPE} \
-            -DCMAKE_CXX_COMPILER_LAUNCHER=$CCACHE -DBUILD_TESTING=OFF $build_opt
+    time ecbuild $src_dir \
+        -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+        -DECBUILD_C_FLAGS_RELWITHDEBINFO=-O1 \
+        -DECBUILD_CXX_FLAGS_RELWITHDEBINFO=-O1 \
+        -DECBUILD_Fortran_FLAGS_RELWITHDEBINFO=-O1 \
+        -DCMAKE_INSTALL_PREFIX=${install_dir} \
+        $build_opt
+        # -DCMAKE_CXX_COMPILER_LAUNCHER=$CCACHE
 
     # build and install
     time make -j2
@@ -77,16 +84,21 @@ build_opt=${!build_opt_var}
 # valgrind and gprof are mutually exclusive
 if [[ "$ENABLE_VALGRIND" == "ON" ]]; then
     build_opt="$build_opt -DSOCA_TESTS_VALGRIND=ON"
-else
-    build_opt="$build_opt -DENABLE_GPROF=ON"
+#else
+    # build_opt="$build_opt -DENABLE_GPROF=ON"
 fi
 
 
-time ecbuild $src_dir -DCMAKE_CXX_COMPILER_LAUNCHER=$CCACHE \
-       -DCMAKE_BUILD_TYPE=${MAIN_BUILD_TYPE} $build_opt
+time ecbuild $src_dir \
+    -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+    -DECBUILD_C_FLAGS_RELWITHDEBINFO=-O1 \
+    -DECBUILD_CXX_FLAGS_RELWITHDEBINFO=-O1 \
+    -DECBUILD_Fortran_FLAGS_RELWITHDEBINFO=-O1 \
+    $build_opt
+    # -DCMAKE_CXX_COMPILER_LAUNCHER=$CCACHE
 time make -j2
 
 
-# how useful was ccache?
-echo -e "\nccache statistics:"
-$CCACHE -s
+# # how useful was ccache?
+# echo -e "\nccache statistics:"
+# $CCACHE -s

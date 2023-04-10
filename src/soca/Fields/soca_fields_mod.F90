@@ -11,6 +11,8 @@
 !! with a given field is stored in soca_fields_metadata_mod::soca_fields_metadata
 module soca_fields_mod
 
+use atlas_module, only: atlas_fieldset, atlas_field, atlas_real, atlas_metadata
+
 ! JEDI modules
 use datetime_mod, only: datetime, datetime_set, datetime_to_string, &
                         datetime_create, datetime_diff
@@ -30,7 +32,7 @@ use horiz_interp_spherical_mod, only : horiz_interp_spherical, horiz_interp_sphe
                                        horiz_interp_spherical_new
 use MOM_remapping, only : remapping_CS, initialize_remapping, remapping_core_h, &
                           end_remapping
-use mpp_domains_mod, only : mpp_update_domains
+use mpp_domains_mod, only : mpp_update_domains, mpp_update_domains_ad
 
 ! SOCA modules
 use soca_fields_metadata_mod, only : soca_field_metadata
@@ -114,7 +116,7 @@ type, public :: soca_fields
   type(soca_geom),  pointer :: geom => null()
 
   !> The soca_field instances that make up the fields
-  type(soca_field), pointer :: fields(:) => null()
+  type(soca_field), allocatable :: fields(:)
 
 contains
   !> \name constructors / destructors
@@ -212,6 +214,22 @@ contains
 
   !> \copybrief soca_fields_deserialize \see soca_fields_deserialize
   procedure :: deserialize => soca_fields_deserialize
+
+  !> \}
+
+  !> \copybrief soca_fields_update_fields \see soca_fields_update_fields
+  procedure :: update_fields => soca_fields_update_fields
+
+  !> \name getter/setter needed for interpolation
+  !! \{
+
+  !> copybrief soca_fields_to_fieldset \see soca_fields_to_fieldset
+  procedure :: to_fieldset  => soca_fields_to_fieldset
+
+  !> copybrief soca_fields_to_fieldset_ad \see soca_fields_to_fieldset_ad
+  procedure :: to_fieldset_ad  => soca_fields_to_fieldset_ad
+
+  procedure :: from_fieldset => soca_fields_from_fieldset
 
   !> \}
 
@@ -318,7 +336,7 @@ end subroutine soca_field_check_congruent
 subroutine soca_field_delete(self)
   class(soca_field), intent(inout) :: self
 
-  deallocate(self%val)
+  if (allocated(self%val)) deallocate(self%val)
 end subroutine
 
 
@@ -405,13 +423,13 @@ end subroutine
 subroutine soca_fields_create(self, geom, vars)
   class(soca_fields),        intent(inout) :: self
   type(soca_geom),  pointer, intent(inout) :: geom !< geometry to associate with the fields
-  type(oops_variables),      intent(inout) :: vars !< list of field names to create
+  type(oops_variables),      intent(in) :: vars !< list of field names to create
 
   character(len=:), allocatable :: vars_str(:)
   integer :: i
 
   ! make sure current object has not already been allocated
-  if (associated(self%fields)) &
+  if (allocated(self%fields)) &
     call abor1_ftn("soca_fields::create(): object already allocated")
 
   ! associate geometry
@@ -443,7 +461,6 @@ subroutine soca_fields_delete(self)
     call self%fields(i)%delete()
   end do
   deallocate(self%fields)
-  nullify(self%fields)
 
 end subroutine
 
@@ -465,7 +482,7 @@ subroutine soca_fields_copy(self, rhs)
   type(soca_field), pointer :: rhs_fld
 
   ! initialize the variables based on the names in rhs
-  if (.not. associated(self%fields)) then
+  if (.not. allocated(self%fields)) then
     self%geom => rhs%geom
     allocate(character(len=1024) :: vars_str(size(rhs%fields)))
     do i=1, size(vars_str)
@@ -491,9 +508,9 @@ end subroutine
 !! \throws abor1_ftn If no field exists with that name, the prorgam aborts
 !! \relates soca_fields_mod::soca_fields
 subroutine soca_fields_get(self, name, field)
-  class(soca_fields),         intent(in) :: self
-  character(len=*),           intent(in) :: name !< name of field to find
-  type(soca_field), pointer, intent(out) :: field  !< a pointer to the resulting field
+  class(soca_fields), target, intent(in)  :: self
+  character(len=*),           intent(in)  :: name !< name of field to find
+  type(soca_field), pointer,  intent(out) :: field  !< a pointer to the resulting field
 
   integer :: i
 
@@ -643,9 +660,9 @@ end subroutine soca_fields_mul
 !! \throws abor1_ftn aborts if \p is not a subset of \rhs
 !! \relates soca_fields_mod::soca_fields
 subroutine soca_fields_axpy(self, zz, rhs)
-  class(soca_fields), intent(inout) :: self
-  real(kind=kind_real),  intent(in) :: zz !< constant by which to multiply other rhs
-  class(soca_fields),    intent(in) :: rhs !< other field to add
+  class(soca_fields), target, intent(inout) :: self
+  real(kind=kind_real),       intent(in)    :: zz !< constant by which to multiply other rhs
+  class(soca_fields),         intent(in)    :: rhs !< other field to add
 
   type(soca_field), pointer :: f_rhs, f_lhs
   integer :: i
@@ -668,9 +685,9 @@ end subroutine soca_fields_axpy
 !! \throws abor1_ftn aborts if two fields are not congruent
 !! \relates soca_fields_mod::soca_fields
 subroutine soca_fields_dotprod(self, rhs, zprod)
-  class(soca_fields),     intent(in) :: self
-  class(soca_fields),      intent(in) :: rhs !< field 2 of dot product
-  real(kind=kind_real),  intent(out) :: zprod !< The resulting dot product
+  class(soca_fields), target, intent(in)  :: self
+  class(soca_fields), target, intent(in)  :: rhs !< field 2 of dot product
+  real(kind=kind_real),       intent(out) :: zprod !< The resulting dot product
 
   real(kind=kind_real) :: local_zprod
   integer :: ii, jj, kk, n
@@ -730,14 +747,14 @@ end subroutine soca_fields_dotprod
 !!    date from the files
 !! \relates soca_fields_mod::soca_fields
 subroutine soca_fields_read(self, f_conf, vdate)
-  class(soca_fields),        intent(inout) :: self
-  type(fckit_configuration), intent(in)    :: f_conf
-  type(datetime),            intent(inout) :: vdate
+  class(soca_fields), target, intent(inout) :: self
+  type(fckit_configuration),  intent(in)    :: f_conf
+  type(datetime),             intent(inout) :: vdate
 
   integer, parameter :: max_string_length=800
   character(len=max_string_length) :: ocn_filename, sfc_filename, ice_filename, wav_filename, filename
   character(len=:), allocatable :: basename, incr_filename
-  integer :: iread = 0
+  integer :: iread = 0, id
   integer :: ii
   logical :: vert_remap=.false.
   character(len=max_string_length) :: remap_filename
@@ -758,14 +775,12 @@ subroutine soca_fields_read(self, f_conf, vdate)
   if ( f_conf%has("read_from_file") ) &
       call f_conf%get_or_die("read_from_file", iread)
 
-  call self%get("hocn", hocn)
-
   ! Get Indices for data domain and allocate common layer depth array
   isd = self%geom%isd ; ied = self%geom%ied
   jsd = self%geom%jsd ; jed = self%geom%jed
 
   ! Check if vertical remapping needs to be applied
-  nz = hocn%nz
+  nz = self%geom%nzo
   if ( f_conf%has("remap_filename") ) then
      vert_remap = .true.
      call f_conf%get_or_die("remap_filename", str)
@@ -782,9 +797,10 @@ subroutine soca_fields_read(self, f_conf, vdate)
      call fms_io_exit()
   end if
 
-  ! iread = 0: Invent state
-  if (iread==0) then
-     call self%zeros()
+  ! Create unit increment
+  if ( f_conf%has("Identity") ) then
+     call f_conf%get_or_die("Identity", id)
+     if ( id==1 ) call self%ones()
      call f_conf%get_or_die("date", str)
      call datetime_set(str, vdate)
   end if
@@ -793,7 +809,7 @@ subroutine soca_fields_read(self, f_conf, vdate)
 
   ! iread = 1 (state) or 3 (increment): Read restart file
   if ((iread==1).or.(iread==3)) then
-
+    if (self%has("hocn")) call self%get("hocn", hocn)
     ! filename for ocean
     call f_conf%get_or_die("basename", str)
     basename = str
@@ -884,6 +900,15 @@ subroutine soca_fields_read(self, f_conf, vdate)
     end if
 
     call fms_io_exit()
+
+    ! Update halo and return if reading increment
+    if (iread==3) then !
+       do n=1,size(self%fields)
+         field => self%fields(n)
+         call mpp_update_domains(field%val, self%geom%Domain%mpp_domain)
+      end do
+      return
+   end if
 
     ! Indices for compute domain
     isc = self%geom%isc ; iec = self%geom%iec
@@ -1095,9 +1120,9 @@ end subroutine soca_fields_write_file
 !! TODO this can be generalized even more
 !! \relates soca_fields_mod::soca_fields
 subroutine soca_fields_write_rst(self, f_conf, vdate)
-  class(soca_fields),        intent(inout) :: self      !< Fields
-  type(fckit_configuration), intent(in)    :: f_conf   !< Configuration
-  type(datetime),            intent(inout) :: vdate    !< DateTime
+  class(soca_fields), target, intent(inout) :: self      !< Fields
+  type(fckit_configuration),  intent(in)    :: f_conf   !< Configuration
+  type(datetime),             intent(inout) :: vdate    !< DateTime
 
   integer, parameter :: max_string_length=800
   character(len=max_string_length) :: ocn_filename, sfc_filename, ice_filename, wav_filename, filename
@@ -1317,6 +1342,37 @@ subroutine soca_fields_deserialize(self, geom, vec_size, vec, index)
 
 end subroutine soca_fields_deserialize
 
+! ------------------------------------------------------------------------------
+!> update fields, using list of variables the method removes fields not in the
+!! list and allocates fields in the list but not allocated
+!!
+!! \see soca_fields_serialize
+!! \relates soca_fields_mod::soca_fields
+
+subroutine soca_fields_update_fields(self, vars)
+
+  class(soca_fields),   intent(inout) :: self
+  type(oops_variables), intent(in)    :: vars  ! New variable the field should have
+
+  type(soca_fields) :: tmp_fields
+  type(soca_field), pointer :: field
+  integer :: f
+
+  ! create new fields
+  call tmp_fields%create(self%geom, vars)
+
+  ! copy over where already existing
+  do f = 1, size(tmp_fields%fields)
+    if (self%has(tmp_fields%fields(f)%name)) then
+      call self%get(tmp_fields%fields(f)%name, field)
+      call tmp_fields%fields(f)%copy(field)
+    end if
+  end do
+
+  ! move ownership of fields from tmp to self
+  call move_alloc(tmp_fields%fields, self%fields)
+
+end subroutine soca_fields_update_fields
 
 ! ------------------------------------------------------------------------------
 ! Internal module functions/subroutines
@@ -1418,5 +1474,180 @@ function soca_genfilename (f_conf,length,vdate,domain_type)
 
 end function soca_genfilename
 
+! ------------------------------------------------------------------------------
+!> Get the fields listed in vars, used by the interpolation.
+!!
+!! The fields that are returned 1) have halos and 2) have had the masked points
+!! removed if masked==true.
+subroutine soca_fields_to_fieldset(self, vars, afieldset, masked)
+  class(soca_fields),   intent(in)    :: self
+  type(oops_variables), intent(in)    :: vars
+  type(atlas_fieldset), intent(inout) :: afieldset
+  logical,              intent(in)    :: masked
+
+  type(atlas_field) :: afield
+  integer :: v, z
+  type(soca_field), pointer :: field
+  real(kind=kind_real), pointer :: mask(:,:) => null() !< field mask
+  type(atlas_metadata) :: meta
+  real(kind=kind_real), pointer :: real_ptr(:,:)
+
+  do v=1,vars%nvars()
+    call self%get(vars%variable(v), field)
+
+    ! make sure halos are updated (remove? is redundant?)
+    call field%update_halo(self%geom)
+
+    ! which mask to use
+    nullify(mask)
+    if (masked .and. field%metadata%masked) then
+      select case(field%metadata%grid)
+      case ('h')
+        mask => self%geom%mask2d
+      case ('u')
+        mask => self%geom%mask2du
+      case ('v')
+        mask => self%geom%mask2dv
+      case default
+        call abor1_ftn('incorrect grid type in soca_fields_to_fieldset()')
+      end select
+    end if
+
+    ! get/create field
+    if (afieldset%has_field(vars%variable(v))) then
+      afield = afieldset%field(vars%variable(v))
+    else
+      afield = self%geom%functionspaceInchalo%create_field( &
+        name=vars%variable(v), kind=atlas_real(kind_real), levels=field%nz)
+      meta = afield%metadata()
+      call meta%set('interp_type', 'default')
+      call afieldset%add(afield)
+    end if
+
+    ! create and fill field
+    call afield%data(real_ptr)
+    do z=1,field%nz
+      if (associated(mask)) then
+        real_ptr(z,:) = pack(field%val(:,:, z), mask=mask/=0)
+      else
+        real_ptr(z,:) = pack(field%val(:,:, z), mask=.true.)
+      end if
+    end do
+    call afield%final()
+
+  end do
+end subroutine
+
+! ------------------------------------------------------------------------------
+!> Adjoint of get fields used by the interpolation.
+!!
+!! The fields that are input 1) have halos and 2) have had the masked points
+!! removed.
+subroutine soca_fields_to_fieldset_ad(self, vars, afieldset, masked)
+  class(soca_fields),   intent(in) :: self
+  type(oops_variables), intent(in) :: vars
+  type(atlas_fieldset), intent(in) :: afieldset
+  logical,              intent(in) :: masked
+
+  integer :: v, z
+  integer :: is, ie, js, je
+  type(soca_field), pointer :: field
+  type(atlas_field) :: afield
+  real(kind=kind_real), pointer :: mask(:,:) => null() !< field mask
+  real(kind=kind_real), pointer :: real_ptr(:,:)
+  real(kind=kind_real), pointer :: tmp(:,:)
+
+  ! start/stop idx, assuming halo
+  is = self%geom%isd; ie = self%geom%ied
+  js = self%geom%jsd; je = self%geom%jed
+
+  allocate(tmp(is:ie, js:je))
+
+  do v=1,vars%nvars()
+    call self%get(vars%variable(v), field)
+    afield = afieldset%field(vars%variable(v))
+
+    ! which mask to use
+    nullify(mask)
+    if (masked .and. field%metadata%masked) then
+      select case(field%metadata%grid)
+      case ('h')
+        mask => self%geom%mask2d
+      case ('u')
+        mask => self%geom%mask2du
+      case ('v')
+        mask => self%geom%mask2dv
+      case default
+        call abor1_ftn('incorrect grid type in soca_fields_to_fieldset_ad()')
+      end select
+    end if
+
+    tmp = 0.0
+    call afield%data(real_ptr)
+    do z=1,field%nz
+      if (associated(mask)) then
+        tmp = unpack(real_ptr(z,:), mask/=0, tmp)
+      else
+        tmp = reshape(real_ptr(z,:), shape(tmp))
+      end if
+      call mpp_update_domains_ad(tmp, self%geom%Domain%mpp_domain, complete=.true.)
+      field%val(:,:,z) = field%val(:,:,z) + tmp
+    end do
+    call afield%final()
+
+  end do
+end subroutine
+
+
+! ------------------------------------------------------------------------------
+!> Set the our values from an atlas fieldset
+subroutine soca_fields_from_fieldset(self, vars, afieldset, masked)
+  class(soca_fields), target, intent(inout) :: self
+  type(oops_variables),       intent(in)    :: vars
+  type(atlas_fieldset),       intent(in)    :: afieldset
+  logical,                    intent(in)    :: masked
+
+  integer :: jvar, i, jz, ngrid(2)
+  real(kind=kind_real), pointer :: real_ptr(:,:)
+  logical :: var_found
+  character(len=1024) :: fieldname
+  type(soca_field), pointer :: field
+  type(atlas_field) :: afield
+
+  if (masked) then
+    call abor1_ftn('soca_fields_from_fieldset() does not support masked=true')
+  end if
+
+  ngrid = (/self%geom%ied-self%geom%isd+1, self%geom%jed-self%geom%jsd+1/)
+
+  ! Initialization
+  call self%zeros()
+
+  do jvar = 1,vars%nvars()
+    var_found = .false.
+    do i=1,size(self%fields)
+      field => self%fields(i)
+      if (trim(vars%variable(jvar))==trim(field%name)) then
+        ! Get field
+        afield = afieldset%field(vars%variable(jvar))
+
+        ! Copy data
+        call afield%data(real_ptr)
+        do jz=1,field%nz
+          field%val(:,:,jz) = reshape(real_ptr(jz,:), ngrid)
+        end do
+
+        ! Release pointer
+        call afield%final()
+
+        ! Set flag
+        var_found = .true.
+        exit
+      end if
+    end do
+    if (.not.var_found) call abor1_ftn('variable '//trim(vars%variable(jvar))//' not found in increment')
+  end do
+
+end subroutine
 
 end module soca_fields_mod

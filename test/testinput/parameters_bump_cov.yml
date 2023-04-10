@@ -1,0 +1,76 @@
+geometry:
+  geom_grid_file: data_static/36x17x25/soca_gridspec.nc
+  mom6_input_nml: data_static/36x17x25/input.nml
+  fields metadata: data_static/fields_metadata.yml
+
+input variables: [tocn]
+
+background:
+  read_from_file: 1
+  date: &date 2018-04-15T00:00:00Z
+  basename: data_static/36x17x25/restarts/
+  ocn_filename: MOM.res.nc
+  state variables:  [socn, tocn, hocn]
+
+bump:
+  io:
+    data directory: data_generated/parameters_bump_cov
+  drivers:
+    compute covariance: true
+    compute correlation: true
+    multivariate strategy: univariate
+    compute variance: true
+    compute moments: true
+  sampling:
+    computation grid size: 500
+    diagnostic grid size: 500
+    distance classes: 15
+    distance class width: 100.0e3
+    reduced levels: 25
+    local diagnostic: true
+    averaging length-scale: 1000.0e3
+  diagnostics:
+    target ensemble size: 4
+  variance:
+    objective filtering: true
+    filtering iterations: 0
+    initial length-scale:
+    - variables:
+      - tocn
+      value: 2000.0e3
+  nicas:
+    resolution: 8.0
+output:
+- parameter: cor_rh
+  file:
+    datadir: data_generated/parameters_bump_cov
+    date: *date
+    exp: parameters_bump_cov.cor_rh
+    type: an
+- parameter: cor_rv
+  file:
+    datadir: data_generated/parameters_bump_cov
+    date: *date
+    exp: parameters_bump_cov.cor_rv
+    type: an
+- parameter: stddev
+  file:
+    datadir: data_generated/parameters_bump_cov
+    date: *date
+    exp: parameters_bump_cov.stddev
+    type: an
+
+ensemble:
+  members from template:
+    template:
+      read_from_file: 1
+      date: *date
+      basename: data_static/36x17x25/restarts_ens/
+      ocn_filename: ocn.enspert.lowres.ens.%mem%.2018-04-15T00:00:00Z.PT6H.nc
+      state variables:  [tocn, hocn]
+    pattern: '%mem%'
+    nmembers: 4
+
+test:
+  reference filename: testref/parameters_bump_cov.test
+  test output filename: testoutput/parameters_bump_cov.test

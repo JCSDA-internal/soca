@@ -21,10 +21,11 @@ background error:
   date: *date
   analysis variables: &soca_vars [socn, tocn, ssh, hocn]
   bump:
-    verbosity: main
-    datadir: ./bump
-    strategy: specific_univariate
-    load_nicas_local: 1
+    io:
+      data directory: ./bump
+    drivers:
+      multivariate strategy: specific_univariate
+      read local nicas: 1
   perturbation scales:
     tocn:  10.0
     socn:  10.0

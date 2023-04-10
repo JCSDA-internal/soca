@@ -13,7 +13,7 @@
 #include "soca/Traits.h"
 
 #include "soca/Geometry/Geometry.h"
-#include "soca/Model/Model.h"
+#include "soca/Model/mom6solo/Model.h"
 #include "soca/State/State.h"
 
 #include "eckit/config/LocalConfiguration.h"
@@ -32,7 +32,7 @@ namespace soca {
       : Application(comm) {}
     static const std::string classname() {return "soca::CheckpointModel";}
 
-    int execute(const eckit::Configuration & fullConfig) const {
+    int execute(const eckit::Configuration & fullConfig, bool /*validate*/) const {
       //  Setup resolution
       const eckit::LocalConfiguration resolConfig(fullConfig, "resolution");
       const Geometry resol(resolConfig, this->getComm());

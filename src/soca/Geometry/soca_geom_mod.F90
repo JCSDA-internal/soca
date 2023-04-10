@@ -13,6 +13,7 @@ use atlas_module, only: atlas_functionspace_pointcloud, atlas_fieldset, &
 use fckit_configuration_module, only: fckit_configuration
 use fckit_mpi_module, only: fckit_mpi_comm
 use kinds, only: kind_real
+use type_fieldset, only: fieldset_type
 
 ! mom6 / fms modules
 use fms_io_mod, only : fms_io_init, fms_io_exit, &
@@ -69,6 +70,13 @@ type, public :: soca_geom
     integer :: isdl, iedl, jsdl, jedl
     !> \}
 
+    !> \name iterator dimension
+    !! \{
+    integer :: iterator_dimension
+    !> \}
+
+    integer :: ngrid, ngrid_halo
+
     !> \name grid latitude/longitude
     !! \{
     real(kind=kind_real), allocatable, dimension(:)   :: lonh !< cell center nominal longitude
@@ -110,8 +118,11 @@ type, public :: soca_geom
 
     logical, private :: save_local_domain = .false. !< If true, save the local geometry for each pe.
     character(len=:), allocatable :: geom_grid_file !< filename of geometry
+    character(len=:), allocatable :: rossby_file !< filename of rossby radius input file (if used)
+
     type(fckit_mpi_comm) :: f_comm !< MPI communicator
-    type(atlas_functionspace_pointcloud) :: afunctionspace !< atlas stuff
+    type(atlas_functionspace_pointcloud) :: functionspace
+    type(atlas_functionspace_pointcloud) :: functionspaceInchalo
 
 
   contains
@@ -124,10 +135,10 @@ type, public :: soca_geom
     procedure :: end => soca_geom_end
 
     !> \copybrief soca_geom_set_atlas_lonlat \see soca_geom_set_atlas_lonlat
-    procedure :: set_atlas_lonlat => soca_geom_set_atlas_lonlat
+    procedure :: lonlat => soca_geom_lonlat
 
     !> \copybrief soca_geom_fill_atlas_fieldset \see soca_geom_fill_atlas_fieldset
-    procedure :: fill_atlas_fieldset => soca_geom_fill_atlas_fieldset
+    procedure :: to_fieldset => soca_geom_to_fieldset
 
     !> \copybrief soca_geom_clone \see soca_geom_clone
     procedure :: clone => soca_geom_clone
@@ -174,6 +185,8 @@ subroutine soca_geom_init(self, f_conf, f_comm)
   ! User-defined grid filename
   if ( .not. f_conf%get("geom_grid_file", self%geom_grid_file) ) &
      self%geom_grid_file = "soca_gridspec.nc" ! default if not found
+  if ( .not. f_conf%get("rossby file", self%rossby_file)) &
+    self%rossby_file = "rossrad.dat" ! default if not found
 
   ! Allocate geometry arrays
   call soca_geom_allocate(self)
@@ -209,8 +222,11 @@ subroutine soca_geom_init(self, f_conf, f_comm)
   call f_conf%get_or_die("fields metadata", str)
   call self%fields_metadata%create(str)
 
-end subroutine soca_geom_init
+  ! retrieve iterator dimension from config
+  if ( .not. f_conf%get("iterator dimension", self%iterator_dimension) ) &
+      self%iterator_dimension = 2
 
+end subroutine soca_geom_init
 
 ! ------------------------------------------------------------------------------
 !> Geometry destructor
@@ -240,7 +256,8 @@ subroutine soca_geom_end(self)
   if (allocated(self%h))             deallocate(self%h)
   if (allocated(self%h_zstar))       deallocate(self%h_zstar)
   nullify(self%Domain)
-  call self%afunctionspace%final()
+  call self%functionspace%final()
+  call self%functionspaceIncHalo%final()
 
 end subroutine soca_geom_end
 
@@ -249,63 +266,88 @@ end subroutine soca_geom_end
 !> Set ATLAS lonlat fieldset
 !!
 !! \related soca_geom_mod::soca_geom
-subroutine soca_geom_set_atlas_lonlat(self, afieldset)
+subroutine soca_geom_lonlat(self, afieldset)
   class(soca_geom),  intent(inout) :: self
   type(atlas_fieldset), intent(inout) :: afieldset
 
   real(kind_real), pointer :: real_ptr(:,:)
   type(atlas_field) :: afield
 
-  ! Create lon/lat field
-  afield = atlas_field(name="lonlat", kind=atlas_real(kind_real), shape=(/2,(self%iec-self%isc+1)*(self%jec-self%jsc+1)/))
-  call afield%data(real_ptr)
-  real_ptr(1,:) = reshape(self%lon(self%isc:self%iec,self%jsc:self%jec),(/(self%iec-self%isc+1)*(self%jec-self%jsc+1)/))
-  real_ptr(2,:) = reshape(self%lat(self%isc:self%iec,self%jsc:self%jec),(/(self%iec-self%isc+1)*(self%jec-self%jsc+1)/))
-  call afieldset%add(afield)
+  integer:: ngrid, ngrid_halo
 
-end subroutine soca_geom_set_atlas_lonlat
+  ngrid = (self%iec-self%isc+1)*(self%jec-self%jsc+1)
+  ngrid_halo = (self%ied-self%isd+1)*(self%jed-self%jsd+1)
+
+  ! Create lon/lat field
+  afield = atlas_field(name="lonlat", kind=atlas_real(kind_real), shape=(/2,ngrid/))
+  call afield%data(real_ptr)
+  real_ptr(1,:) = reshape(self%lon(self%isc:self%iec,self%jsc:self%jec),(/ngrid/))
+  real_ptr(2,:) = reshape(self%lat(self%isc:self%iec,self%jsc:self%jec),(/ngrid/))
+  call afieldset%add(afield)
+  call afield%final()
+
+  afield = atlas_field(name="lonlat_inc_halos", kind=atlas_real(kind_real), shape=(/2,ngrid_halo/))
+  call afield%data(real_ptr)
+  real_ptr(1,:) = reshape(self%lon,(/ngrid_halo/))
+  real_ptr(2,:) = reshape(self%lat,(/ngrid_halo/))
+  call afieldset%add(afield)
+  call afield%final()
+
+end subroutine soca_geom_lonlat
 
 
 ! --------------------------------------------------------------------------------------------------
 !> Fill ATLAS fieldset
 !!
 !! \related soca_geom_mod::soca_geom
-subroutine soca_geom_fill_atlas_fieldset(self, afieldset)
+subroutine soca_geom_to_fieldset(self, afieldset)
   class(soca_geom),  intent(inout) :: self
   type(atlas_fieldset), intent(inout) :: afieldset
 
-  integer :: i, jz, n
-  integer, pointer :: int_ptr_2(:,:)
-  real(kind=kind_real), pointer :: real_ptr_1(:), real_ptr_2(:,:)
+  integer :: i, jz, ngrid
+  integer, pointer :: int_ptr(:,:)
+  real(kind=kind_real), pointer :: real_ptr(:,:)
+  integer, allocatable :: hmask(:,:)
   type(atlas_field) :: afield
 
+  ngrid = (self%ied-self%isd+1)*(self%jed-self%jsd+1)
+
   ! Add area
-  afield = self%afunctionspace%create_field(name='area', kind=atlas_real(kind_real), levels=0)
-  call afield%data(real_ptr_1)
-  real_ptr_1 = reshape(self%cell_area(self%isc:self%iec,self%jsc:self%jec),(/(self%iec-self%isc+1)*(self%jec-self%jsc+1)/))
+  afield = self%functionspaceInchalo%create_field(name='area', kind=atlas_real(kind_real), levels=1)
+  call afield%data(real_ptr)
+  real_ptr(1,:) = pack(self%cell_area, .true.)
   call afieldset%add(afield)
   call afield%final()
 
   ! Add vertical unit
-  afield = self%afunctionspace%create_field(name='vunit', kind=atlas_real(kind_real), levels=self%nzo)
-  call afield%data(real_ptr_2)
+  afield = self%functionspaceInchalo%create_field(name='vunit', kind=atlas_real(kind_real), levels=self%nzo)
+  call afield%data(real_ptr)
   do jz=1,self%nzo
-    real_ptr_2(jz,:) = real(jz, kind_real)
+    real_ptr(jz,:) = real(jz, kind_real)
   end do
   call afieldset%add(afield)
   call afield%final()
 
   ! Add geographical mask
-  afield = self%afunctionspace%create_field(name='gmask', kind=atlas_integer(kind(0)), levels=self%nzo)
-  call afield%data(int_ptr_2)
+  afield = self%functionspaceInchalo%create_field(name='gmask', kind=atlas_integer(kind(0)), levels=self%nzo)
+  call afield%data(int_ptr)
   do jz=1,self%nzo
-    int_ptr_2(jz,:) = int(reshape(self%mask2d(self%isc:self%iec,self%jsc:self%jec), &
-  & (/(self%iec-self%isc+1)*(self%jec-self%jsc+1)/)))
+    int_ptr(jz,:) = int(pack(self%mask2d, .true.))
   end do
   call afieldset%add(afield)
   call afield%final()
 
-end subroutine soca_geom_fill_atlas_fieldset
+  ! Add halo mask
+  afield = self%functionspaceInchalo%create_field(name='hmask', kind=atlas_integer(kind(0)), levels=1)
+  allocate(hmask(self%isd:self%ied, self%jsd:self%jed))
+  hmask = 0
+  hmask(self%isc:self%iec, self%jsc:self%jec) = 1
+  call afield%data(int_ptr)
+  int_ptr(1,:) = pack(hmask, .true.)
+  call afieldset%add(afield)
+  call afield%final()
+
+end subroutine soca_geom_to_fieldset
 
 
 ! ------------------------------------------------------------------------------
@@ -325,6 +367,9 @@ subroutine soca_geom_clone(self, other)
 
   !
   self%geom_grid_file = other%geom_grid_file
+  self%rossby_file = other%rossby_file
+
+  self%iterator_dimension = other%iterator_dimension
 
   ! Allocate and clone geometry
   call soca_geom_allocate(self)
@@ -406,7 +451,7 @@ subroutine soca_geom_gridgen(self)
   call diag_remap_end(remap_ctrl)
 
   ! Get Rossby Radius
-  call soca_geom_rossby_radius(self)
+  call soca_geom_rossby_radius(self, self%rossby_file)
 
   call soca_geom_distance_from_coast(self)
 
@@ -426,14 +471,18 @@ subroutine soca_geom_allocate(self)
   integer :: nzo
   integer :: isd, ied, jsd, jed
 
+  nzo = self%nzo
+
   ! Get domain shape (number of levels, indices of data and compute domain)
   call soca_geom_get_domain_indices(self, "compute", self%isc, self%iec, self%jsc, self%jec)
   call soca_geom_get_domain_indices(self, "data", isd, ied, jsd, jed)
-  self%isd = isd ;  self%ied = ied ; self%jsd = jsd; self%jed = jed
+  self%isd = isd ;  self%ied = ied
+  self%jsd = jsd; self%jed = jed
   call soca_geom_get_domain_indices(self, "global", self%isg, self%ieg, self%jsg, self%jeg)
   call soca_geom_get_domain_indices(self, "compute", self%iscl, self%iecl, self%jscl, self%jecl, local=.true.)
   call soca_geom_get_domain_indices(self, "data", self%isdl, self%iedl, self%jsdl, self%jedl, local=.true.)
-  nzo = self%nzo
+  self%ngrid = (self%iec-self%isc+1) * (self%jec-self%jsc+1)
+  self%ngrid_halo = (self%ied-self%isd+1) * (self%jed-self%jsd+1)
 
   ! Allocate arrays on compute domain
   allocate(self%lonh(self%isg:self%ieg));        self%lonh = 0.0_kind_real
@@ -539,8 +588,9 @@ end subroutine
 !! Input data is interpolated to the current grid.
 !!
 !! \related soca_geom_mod::soca_geom
-subroutine soca_geom_rossby_radius(self)
-  class(soca_geom), intent(inout) :: self
+subroutine soca_geom_rossby_radius(self, filename)
+  class(soca_geom),           intent(inout) :: self
+  character(len=:), allocatable, intent(in) :: filename
 
   integer :: unit, i, n
   real(kind=kind_real) :: dum
@@ -550,7 +600,7 @@ subroutine soca_geom_rossby_radius(self)
 
   ! read in the file
   unit = 20
-  open(unit=unit,file="rossrad.dat",status="old",action="read")
+  open(unit=unit,file=filename,status="old",action="read")
   n = 0
   do
      read(unit,*,iostat=io)
@@ -905,16 +955,16 @@ end subroutine soca_geom_thickness2depth
 subroutine soca_geom_struct2atlas(self, dx_struct, dx_atlas)
   class(soca_geom),     intent(in ) :: self
   real(kind=kind_real), intent(in ) :: dx_struct(:,:)
-  type(atlas_fieldset), intent(out) :: dx_atlas
+  type(fieldset_type),  intent(out) :: dx_atlas
 
-  real(kind_real), pointer :: real_ptr(:)
+  real(kind_real), pointer :: real_ptr(:,:)
   type(atlas_field) :: afield
 
   dx_atlas = atlas_fieldset()
-  afield = self%afunctionspace%create_field('var',kind=atlas_real(kind_real),levels=0)
+  afield = self%functionspaceInchalo%create_field('var',kind=atlas_real(kind_real),levels=1)
   call dx_atlas%add(afield)
   call afield%data(real_ptr)
-  real_ptr = reshape(dx_struct(self%iscl:self%iecl, self%jscl:self%jecl),(/(self%iecl-self%iscl+1)*(self%jecl-self%jscl+1)/))
+  real_ptr(1,:) = pack(dx_struct, .true.)
   call afield%final()
 
 end subroutine soca_geom_struct2atlas
@@ -927,14 +977,15 @@ end subroutine soca_geom_struct2atlas
 subroutine soca_geom_atlas2struct(self, dx_struct, dx_atlas)
   class(soca_geom),     intent(in   ) :: self
   real(kind=kind_real), intent(inout) :: dx_struct(:,:)
-  type(atlas_fieldset), intent(inout) :: dx_atlas
+  type(fieldset_type),  intent(inout) :: dx_atlas
 
-  real(kind_real), pointer :: real_ptr(:)
+  real(kind_real), pointer :: real_ptr(:,:)
   type(atlas_field) :: afield
 
   afield = dx_atlas%field('var')
   call afield%data(real_ptr)
-  dx_struct(self%iscl:self%iecl, self%jscl:self%jecl) = reshape(real_ptr,(/(self%iecl-self%iscl+1),(self%jecl-self%jscl+1)/))
+  dx_struct = reshape(real_ptr(1,:), (/(self%ied-self%isd+1),(self%jed-self%jsd+1)/))
+
   call afield%final()
 
 end subroutine soca_geom_atlas2struct

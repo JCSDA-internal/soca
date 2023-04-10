@@ -1,6 +1,6 @@
 /*
  * (C) Copyright 2009-2016 ECMWF.
- * (C) Copyright 2017-2021 UCAR.
+ * (C) Copyright 2017-2022 UCAR.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -90,9 +90,9 @@ namespace soca {
       void setLocal(const oops::LocalIncrement &, const GeometryIterator &);
 
       /// ATLAS
-      void setAtlas(atlas::FieldSet *) const;
-      void toAtlas(atlas::FieldSet *) const;
-      void fromAtlas(atlas::FieldSet *);
+      void toFieldSet(atlas::FieldSet &) const;
+      void toFieldSetAD(const atlas::FieldSet &);
+      void fromFieldSet(const atlas::FieldSet &);
 
       /// I/O and diagnostics
       void read(const eckit::Configuration &);
@@ -101,18 +101,27 @@ namespace soca {
       const util::DateTime & validTime() const;
       util::DateTime & validTime();
       void updateTime(const util::Duration & dt);
+      void horiz_scales(const eckit::Configuration &);
+      void vert_scales(const double &);
+      std::vector<double> rmsByLevel(const std::string &) const;
 
       /// Serialize and deserialize
       size_t serialSize() const override;
       void serialize(std::vector<double> &) const override;
       void deserialize(const std::vector<double> &, size_t &) override;
 
+      /// Update the fields in variable changes
+      void updateFields(const oops::Variables &);
+
       /// Other
       void accumul(const double &, const State &);
       int & toFortran() {return keyFlds_;}
       const int & toFortran() const {return keyFlds_;}
-      std::shared_ptr<const Geometry> geometry() const;
+      const Geometry & geometry() const {return geom_;}
 
+      /// Private variable accessor functions
+      const oops::Variables & variables() const {return vars_;}
+      const util::DateTime & time() const {return time_;}
 
       /// Data
    private:
@@ -121,7 +130,7 @@ namespace soca {
       F90flds keyFlds_;
       oops::Variables vars_;
       util::DateTime time_;
-      std::shared_ptr<const Geometry> geom_;
+      const Geometry & geom_;
   };
   // -----------------------------------------------------------------------------
 

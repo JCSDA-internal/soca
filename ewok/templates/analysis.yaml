@@ -1,0 +1,8 @@
+basename: $(anworkdir)/
+date: $(andatetime)
+
+ice_filename: $(expid).an.$(andatetime).cice.res.nc
+ocn_filename: $(expid).an.$(andatetime).MOM.res.nc
+filename: $(expid).an.$(andatetime).MOM.res.nc
+read_from_file: 1
+state variables: $(BG_VARIABLES)

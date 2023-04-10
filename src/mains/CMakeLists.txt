@@ -35,8 +35,8 @@ ecbuild_add_executable( TARGET  soca_var.x
                                 saber
                       )
 
-ecbuild_add_executable( TARGET  soca_parameters.x
-                        SOURCES EstimateParams.cc
+ecbuild_add_executable( TARGET  soca_error_covariance_training.x
+                        SOURCES ErrorCovarianceTraining.cc
                         LIBS    soca
                                 saber
                       )
@@ -48,6 +48,11 @@ ecbuild_add_executable( TARGET  soca_staticbinit.x
 
 ecbuild_add_executable( TARGET  soca_enspert.x
                         SOURCES GenEnsPertB.cc
+                        LIBS    soca
+                      )
+
+ecbuild_add_executable( TARGET  soca_sqrtvertloc.x
+                        SOURCES SqrtOfVertLoc.cc
                         LIBS    soca
                       )
 
@@ -80,6 +85,12 @@ ecbuild_add_executable( TARGET  soca_letkf.x
                         SOURCES LETKF.cc
                         LIBS    soca
                       )
+
+ecbuild_add_executable( TARGET  soca_convertincrement.x
+                        SOURCES ConvertIncrement.cc
+                        LIBS    soca
+                        )
+
 ecbuild_add_executable( TARGET  soca_convertstate.x
                         SOURCES ConvertState.cc
                         LIBS    soca
@@ -92,5 +103,10 @@ ecbuild_add_executable( TARGET  soca_addincrement.x
 
 ecbuild_add_executable( TARGET  soca_diffstates.x
                         SOURCES DiffStates.cc
+                        LIBS    soca
+                      )
+
+ecbuild_add_executable( TARGET  soca_setcorscales.x
+                        SOURCES SetCorScales.cc
                         LIBS    soca
                       )

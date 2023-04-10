@@ -1,10 +1,11 @@
 geometry:
-  mom6_input_nml: ./inputnml/input.nml
-  fields metadata: ./fields_metadata.yml
+  geom_grid_file: data_generated/gridgen/soca_gridspec.72x35x25.nc
+  mom6_input_nml: data_static/72x35x25/input.nml
+  fields metadata: data_static/fields_metadata.yml
 
 initial condition:
   read_from_file: 1
-  basename: ./INPUT/
+  basename: data_static/72x35x25/restarts/
   date: &date 2018-04-15T00:00:00Z
   ocn_filename: MOM.res.nc
   ice_filename: cice.res.nc
@@ -15,25 +16,30 @@ background error:
   analysis variables: [none]
   date: *date
   bump:
-    verbosity: main
-    datadir: ./bump
-    load_nicas_local: 1
-    strategy: specific_univariate
+    io:
+      data directory: data_generated/static_socaerror_init
+    drivers:
+      multivariate strategy: univariate
+      read local nicas: true
   correlation:
   - name: ocn
     variables: []
   - name: ice
     variables: []
 
-  variable changes:
+  linear variable change:
 
-  - variable change: HorizFiltSOCA
-    niter: 2
-    scale_dist: 1000e3
-    scale_flow:  1.0
-    filter variables: [tocn, socn, ssh, cicen, hicen]
     input variables: *soca_vars
     output variables: *soca_vars
+
+    linear variable changes:
+    - linear variable change name: HorizFiltSOCA
+      niter: 2
+      scale_dist: 1000e3
+      scale_flow:  1.0
+      filter variables: [tocn, socn, ssh, cicen, hicen]
+      input variables: *soca_vars
+      output variables: *soca_vars
 
 dirac:
   ixdir: [1, 17, 41, 31, 51, 63, 81, 14, 16, 43]
@@ -42,7 +48,11 @@ dirac:
   ifdir: [1,  2,  3,  3,  3,  3,  3,  3,  4,  5]
 
 output dirac:
-  datadir: Data
+  datadir: data_generated/dirac_horizfilt
   date: *date
   exp: dirac_horizfilt_%id%
   type: an
+
+test:
+  reference filename: testref/dirac_horizfilt.test
+  test output filename: testoutput/dirac_horizfilt.test
