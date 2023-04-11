@@ -24,7 +24,7 @@ if 'exp_source' in conf:
 
 # Fetch state
 base = conf['experiment']['expid'] + '.fc.'
-sdate = conf['fcdate'] + '.' + conf['fcstep']
+sdate = yamltools.jedifnformat(conf['fcdate']) + '.' + conf['fcstep']
 # filename = base + sdate + '.$(file_type).nc'
 
 # determine the files needed depending on resolution, and if ice is on or off
