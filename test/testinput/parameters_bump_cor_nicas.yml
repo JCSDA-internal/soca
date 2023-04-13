@@ -10,14 +10,13 @@ background:
   ocn_filename: MOM.res.nc
   # basename: data_generated/convertstate/
   # ocn_filename: ocn.convertstate.fc.2018-04-15T00:00:00Z.PT0S.nc
-  state variables: [hocn, socn, tocn, uocn, vocn, ssh]
+  state variables: [socn, tocn, uocn, vocn, ssh]
 
 background error:
   covariance model: SABER
   saber central block:
     saber block name: BUMP_NICAS
-    active variables: [socn, tocn, uocn, vocn, ssh]
-    bump:
+    calibration:
       io:
         data directory: data_generated/parameters_bump_cor_nicas
       drivers:
@@ -59,19 +58,19 @@ background error:
           - ssh
         io:
           files prefix: bump2d
-    output fields:
-    - parameter: cor_rh
-      file:
-        datadir: data_generated/parameters_bump_cor_nicas
-        date: *date
-        exp: parameters_bump_cor_nicas.cor_rh
-        type: an
-    - parameter: cor_rv
-      file:
-        datadir: data_generated/parameters_bump_cor_nicas
-        date: *date
-        exp: parameters_bump_cor_nicas.cor_rv
-        type: an
+      output model files:
+      - parameter: cor_rh
+        file:
+          datadir: data_generated/parameters_bump_cor_nicas
+          date: *date
+          exp: parameters_bump_cor_nicas.cor_rh
+          type: an
+      - parameter: cor_rv
+        file:
+          datadir: data_generated/parameters_bump_cor_nicas
+          date: *date
+          exp: parameters_bump_cor_nicas.cor_rv
+          type: an
 
 test:
   reference filename: testref/parameters_bump_cor_nicas.test

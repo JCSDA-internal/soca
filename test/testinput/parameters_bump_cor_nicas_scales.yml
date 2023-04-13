@@ -9,14 +9,13 @@ background:
   basename: data_static/72x35x25/restarts/
   ocn_filename: MOM.res.nc
   ice_filename: cice.res.nc
-  state variables: [socn, tocn, uocn, vocn, ssh, hocn, cicen, hicen]
+  state variables: [socn, tocn, uocn, vocn, ssh, cicen, hicen]
 
 background error:
   covariance model: SABER
   saber central block:
     saber block name: BUMP_NICAS
-    active variables: [socn, tocn, uocn, vocn, ssh, cicen, hicen]
-    bump:
+    calibration:
       io:
         data directory: data_generated/parameters_bump_cor_nicas_scales
       drivers:
@@ -43,23 +42,23 @@ background error:
           - hicen
         io:
           files prefix: bump2d
-    input fields:
-    - parameter: rh
-      file:
-        read_from_file: 1
-        date: *date
-        basename: data_generated/setcorscales/
-        ocn_filename: ocn.cor_rh.incr.2018-04-15T00:00:00Z.nc
-        ice_filename: ice.cor_rh.incr.2018-04-15T00:00:00Z.nc
-        state variables: [socn, tocn, uocn, vocn, ssh, cicen, hicen]
-    - parameter: rv
-      file:
-        read_from_file: 1
-        date: *date
-        basename: data_generated/setcorscales/
-        ocn_filename: ocn.cor_rv.incr.2018-04-15T00:00:00Z.nc
-        ice_filename: ice.cor_rv.incr.2018-04-15T00:00:00Z.nc
-        state variables: [socn, tocn, uocn, vocn, ssh, cicen, hicen]
+      input model files:
+      - parameter: rh
+        file:
+          read_from_file: 1
+          date: *date
+          basename: data_generated/setcorscales/
+          ocn_filename: ocn.cor_rh.incr.2018-04-15T00:00:00Z.nc
+          ice_filename: ice.cor_rh.incr.2018-04-15T00:00:00Z.nc
+          state variables: [socn, tocn, uocn, vocn, ssh, cicen, hicen]
+      - parameter: rv
+        file:
+          read_from_file: 1
+          date: *date
+          basename: data_generated/setcorscales/
+          ocn_filename: ocn.cor_rv.incr.2018-04-15T00:00:00Z.nc
+          ice_filename: ice.cor_rv.incr.2018-04-15T00:00:00Z.nc
+          state variables: [socn, tocn, uocn, vocn, ssh, cicen, hicen]
 
 test:
   reference filename: testref/parameters_bump_cor_nicas_scales.test

@@ -9,13 +9,13 @@ background:
   date: &date 2018-04-15T06:00:00Z
   ocn_filename: MOM.res.nc
   ice_filename: cice.res.nc
-  state variables: &stateVariables [cicen, hicen, hsnon, socn, tocn, uocn, vocn, ssh, hocn]
+  state variables: &stateVariables [cicen, hicen, hsnon, socn, tocn, uocn, vocn, ssh]
 
 background error:
   covariance model: SABER
   saber central block:
     saber block name: BUMP_NICAS
-    bump:
+    calibration:
       io:
         data directory: data_generated/parameters_bump_loc
         files prefix: soca_bump_loc
