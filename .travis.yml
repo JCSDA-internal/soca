@@ -20,12 +20,13 @@
 env:
   global:
     - MAIN_REPO=soca
-    - LIB_REPOS="jedicmake fms gsw mom6 icepack oops saber ioda ufo"
+    - LIB_REPOS="gsw mom6 icepack oops ioda ufo saber"
     - BUILD_OPT="-DBUILD_ICEPACK=ON"
     - BUILD_OPT_mom6="-DENABLE_OCEAN_BGC=ON"
     - BUILD_OPT_oops="-DENABLE_QG_MODEL=OFF -DENABLE_LORENZ95_MODEL=OFF"
-    - BUILD_OPT_ioda="-DBUILD_PYTHON_BINDINGS=OFF"
+    - BUILD_OPT_ioda="-DBUILD_PYTHON_BINDINGS=OFF -DBUILD_TESTING=OFF"
     - BUILD_OPT_ufo="-DLOCAL_PATH_TESTFILES_IODA=NONE"
+    - BUILD_OPT_saber="-DENABLE_TESTS=OFF"
     - BUILD_OPT_soca="-DENABLE_OCEAN_BGC=ON"
     - MATCH_REPOS="saber oops ioda ufo mom6 soca"
     - LFS_REPOS=""
@@ -62,12 +63,10 @@ cache:
 before_install:
   - |
     # setup other configurables that the subsequent scripts use
-    export MAIN_BUILD_TYPE=Debug
-    export LIB_BUILD_TYPE=RelWIthDebInfo
     export BRANCH=$( [[ "$TRAVIS_PULL_REQUEST" == "false" ]] && \
                      echo $TRAVIS_BRANCH || echo $TRAVIS_PULL_REQUEST_BRANCH )
-    export_vars="-e REPO_CACHE=/repo.cache -e LIB_REPOS -e LIB_BUILD_TYPE
-                 -e MAIN_REPO -e MAIN_BUILD_TYPE -e CCACHE_DIR=/ccache -e BUILD_OPT
+    export_vars="-e REPO_CACHE=/repo.cache -e LIB_REPOS
+                 -e MAIN_REPO -e CCACHE_DIR=/ccache -e BUILD_OPT
                  -e ENABLE_VALGRIND"
     for v in $(env | grep BUILD_OPT_ | cut -d'=' -f 1); do
       export_vars="$export_vars -e $v"

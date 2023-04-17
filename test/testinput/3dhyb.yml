@@ -3,7 +3,7 @@ cost function:
   cost type: 3D-Var
   window begin: 2018-04-14T00:00:00Z
   window length: P2D
-  analysis variables: &soca_vars [cicen, hicen, hsnon, socn, tocn, ssh, hocn]
+  analysis variables: &soca_vars [cicen, hicen, hsnon, socn, tocn, uocn, vocn, ssh, hocn]
   geometry: &geom
     geom_grid_file: data_generated/gridgen/soca_gridspec.72x35x25.nc
     mom6_input_nml: data_static/72x35x25/input.nml
@@ -16,14 +16,14 @@ cost function:
     ice_filename: cice.res.nc
     sfc_filename: sfc.res.nc
     date: &bkg_date 2018-04-15T00:00:00Z
-    state variables: &model_vars [cicen, hicen, hsnon, socn, tocn, ssh, hocn, sw, lhf, shf, lw, us, mld, layer_depth]
+    state variables: &model_vars [cicen, hicen, hsnon, socn, tocn, uocn, vocn, ssh, hocn, sw, lhf, shf, lw, us, mld, layer_depth]
 
   background error:
     covariance model: hybrid
     components:
     - covariance:
         covariance model: SocaError
-        analysis variables: [cicen, hicen, hsnon, socn, tocn, ssh]
+        analysis variables: [cicen, hicen, hsnon, socn, tocn, uocn, vocn, ssh]
         date: *bkg_date
         bump:
           io:
@@ -33,7 +33,7 @@ cost function:
             read local nicas: true
         correlation:
         - name: ocn
-          variables: [hsnon, socn, tocn, ssh]
+          variables: [hsnon, socn, tocn, uocn, vocn, ssh]
         - name: ice
           variables: [cicen, hicen]
 
@@ -144,6 +144,13 @@ variational:
     test: on
     diagnostics:
       departures: ombg
+    online diagnostics:
+      write increment: true
+      increment:
+        datadir: data_generated/3dhyb
+        date: *bkg_date
+        exp: 3dhyb.iter1
+        type: incr
 
 output:
   datadir: data_generated/3dhyb
