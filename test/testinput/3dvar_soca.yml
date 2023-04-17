@@ -208,10 +208,12 @@ cost function:
         - name: InsituTemperature
           variables:
           - name: waterTemperature
-        - name: MarineVertInterp
+        - name: VertInterp
           observation alias file: testinput/obsop_name_map.yml
           variables:
           - name: salinity
+          vertical coordinate: sea_water_depth
+          observation vertical coordinate: depth
       obs error:
         covariance model: diagonal
       obs filters:
