@@ -99,6 +99,7 @@ observations:
         - name: salinity
         vertical coordinate: sea_water_depth
         observation vertical coordinate: depth
+        interpolation method: linear
 
   # handle T/S profiles separately... delete this someday
   - obs space:
