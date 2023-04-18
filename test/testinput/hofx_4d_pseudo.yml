@@ -108,6 +108,7 @@ observations:
       observation alias file: testinput/obsop_name_map.yml
       vertical coordinate: sea_water_depth
       observation vertical coordinate: depth
+      interpolation method: linear
 
 test:
   reference filename: testref/hofx_4d_pseudo.test

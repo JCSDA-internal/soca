@@ -214,6 +214,7 @@ cost function:
           - name: salinity
           vertical coordinate: sea_water_depth
           observation vertical coordinate: depth
+          interpolation method: linear
       obs error:
         covariance model: diagonal
       obs filters:

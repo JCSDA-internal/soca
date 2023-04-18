@@ -213,6 +213,7 @@ cost function:
         observation alias file: testinput/obsop_name_map.yml
         vertical coordinate: sea_water_depth
         observation vertical coordinate: depth
+        interpolation method: linear
       obs error:
         covariance model: diagonal
       obs filters:
