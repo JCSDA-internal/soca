@@ -51,15 +51,7 @@ subroutine soca_model2geovals_changevar_f90(c_key_geom, c_key_xin, c_key_xout) &
 
     ! fields that are obtained from geometry
     case ('sea_water_depth')
-      ! calculate from cell thicknesses
-      xout%fields(i)%val(:,:,1) = 0.5 * geom%h(:,:,1)
-      do kk = 2, geom%nzo
-        do jj = geom%jsd, geom%jed
-          do ii = geom%isd, geom%ied
-            xout%fields(i)%val(ii,jj,kk) = sum(geom%h(ii,jj,1:kk-1)) + 0.5*geom%h(ii,jj,kk)
-          end do
-        end do
-      end do
+      call geom%thickness2depth(geom%h, xout%fields(i)%val)
 
     case ('distance_from_coast')
       xout%fields(i)%val(:,:,1) = real(geom%distance_from_coast, kind=kind_real)
