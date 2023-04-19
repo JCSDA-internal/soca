@@ -932,16 +932,14 @@ subroutine soca_geom_thickness2depth(self, h, z)
   js = lbound(h,dim=2)
   je = ubound(h,dim=2)
 
-  !allocate(z(is:ie, js:je, self%nzo))
+  ! top layer
+  z(:,:,1) = 0.5_kind_real*h(:,:,1)
 
+  ! the rest of the layers
   do i = is, ie
      do j = js, je
-        do k = 1, self%nzo
-           if (k.eq.1) then
-              z(i,j,k) = 0.5_kind_real*h(i,j,k)
-           else
-              z(i,j,k) = sum(h(i,j,1:k-1))+0.5_kind_real*h(i,j,k)
-           end if
+        do k = 2, self%nzo
+          z(i,j,k) = sum(h(i,j,1:k-1))+0.5_kind_real*h(i,j,k)
         end do
      end do
   end do
