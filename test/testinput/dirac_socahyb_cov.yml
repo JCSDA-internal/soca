@@ -102,7 +102,7 @@ background error:
         localization method: SABER
         saber central block:
           saber block name: BUMP_NICAS
-          bump:
+          read:
             io:
               data directory: data_generated/parameters_bump_loc
               files prefix: soca_bump_loc

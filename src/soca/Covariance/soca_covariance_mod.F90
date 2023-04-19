@@ -267,7 +267,7 @@ subroutine soca_bump_correlation(self, horiz_convol, geom, f_conf_bump, f_conf_d
   real(kind=kind_real), pointer :: real_ptr(:,:)
   real(kind=kind_real), allocatable :: area(:)
   type(atlas_functionspace) :: afunctionspace
-  type(fieldset_type) :: afieldset, rh, rv, universe_rad
+  type(fieldset_type) :: afieldset, rh, rv
   type(atlas_field) :: afield
   real(kind=kind_real) :: r_base, r_mult, r_min, r_max, r_min_grid
 
@@ -307,13 +307,12 @@ subroutine soca_bump_correlation(self, horiz_convol, geom, f_conf_bump, f_conf_d
   int_ptr(1,:) = pack(hmask, .true.)
   call afieldset%add(afield)
   call afield%final()
-  universe_rad = atlas_fieldset()
 
   ! Set verbosity
   horiz_convol%mpl%verbose = (geom%f_comm%rank()==0)
 
   ! Create BUMP object
-  call horiz_convol%create(geom%f_comm,afunctionspace,afieldset,f_conf_bump,universe_rad)
+  call horiz_convol%create(geom%f_comm,afunctionspace,afieldset,f_conf_bump)
 
   if (horiz_convol%nam%new_nicas) then
     ! get parameters for correlation lengths
