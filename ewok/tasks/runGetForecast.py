@@ -8,7 +8,7 @@
 import sys
 import os
 import yamltools
-from r2d2 import fetch
+from r2d2 import R2D2Data
 
 conf = yamltools.configure_runtime(sys.argv[1])
 
@@ -24,27 +24,28 @@ if 'exp_source' in conf:
 
 # Fetch state
 base = conf['experiment']['expid'] + '.fc.'
-sdate = conf['fcdate'] + '.' + conf['fcstep']
-filename = base + sdate + '.$(file_type).nc'
+sdate = yamltools.jedifnformat(conf['fcdate']) + '.' + conf['fcstep']
+# filename = base + sdate + '.$(file_type).nc'
 
 # determine the files needed depending on resolution, and if ice is on or off
-file_type = ['MOM.res', 'cice.res']
+file_types = ['MOM.res', 'cice.res']
 if conf['resolution'] in {'025deg',}:
-    file_type += ['MOM.res_1', 'MOM.res_2', 'MOM.res_3']
+    file_types += ['MOM.res_1', 'MOM.res_2', 'MOM.res_3']
 elif conf['resolution'] in {'1deg','5deg'}:
     pass
 else:
     raise RuntimeError(f'Unsupported resolution {conf["resolution"]}')
 
-fetch(
-    model=conf['experiment']['model'],
-    type='fc',
-    experiment=exp_read,
-    resolution=conf['resolution'],
-    date=conf['fcdate'],
-    step=conf['fcstep'],
-    target_file=filename,
-    file_format='netcdf',
-    file_type=file_type,
-    fc_date_rendering='analysis',
-)
+for file_type in file_types:
+    R2D2Data.fetch(
+        model=conf['experiment']['model'],
+        item='forecast',
+        experiment=exp_read,
+        step=conf['fcstep'],
+        resolution=conf['resolution'],
+        date=conf['fcdate'],
+        domain='global',
+        target_file=f'{base}{sdate}.{file_type}.nc',
+        file_extension='nc',
+        file_type=file_type,
+    )
