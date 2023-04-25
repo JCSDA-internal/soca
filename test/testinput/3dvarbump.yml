@@ -27,7 +27,7 @@ cost function:
     covariance model: SABER
     saber central block:
       saber block name: BUMP_NICAS
-      bump:
+      read:
         io:
           data directory: data_generated/parameters_bump_cor_nicas
         drivers:
