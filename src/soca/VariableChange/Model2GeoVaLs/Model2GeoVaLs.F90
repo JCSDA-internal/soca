@@ -38,7 +38,7 @@ subroutine soca_model2geovals_changevar_f90(c_key_geom, c_key_xin, c_key_xout) &
   type(soca_geom),  pointer :: geom
   type(soca_state), pointer :: xin, xout
   type(soca_field), pointer :: field
-  integer :: i, ii, jj, kk
+  integer :: i
 
   call soca_geom_registry%get(c_key_geom, geom)
   call soca_state_registry%get(c_key_xin, xin)
@@ -50,9 +50,6 @@ subroutine soca_model2geovals_changevar_f90(c_key_geom, c_key_xin, c_key_xout) &
     select case (xout%fields(i)%name)
 
     ! fields that are obtained from geometry
-    case ('sea_water_depth')
-      call geom%thickness2depth(geom%h, xout%fields(i)%val)
-
     case ('distance_from_coast')
       xout%fields(i)%val(:,:,1) = real(geom%distance_from_coast, kind=kind_real)
 

@@ -206,11 +206,8 @@ cost function:
             obsfile: data_static/obs/prof.nc
         simulated variables: [salinity]
       obs operator:
-        name: VertInterp
+        name: MarineVertInterp
         observation alias file: testinput/obsop_name_map.yml
-        vertical coordinate: sea_water_depth
-        observation vertical coordinate: depth
-        interpolation method: linear
       obs error:
         covariance model: diagonal
       obs filters:
