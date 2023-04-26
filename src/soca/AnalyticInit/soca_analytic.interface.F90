@@ -11,7 +11,7 @@ use iso_c_binding
 
 USE ufo_geovals_mod,            ONLY : ufo_geovals
 USE ufo_geovals_mod_c,          ONLY : ufo_geovals_registry
-USE ufo_locations_mod,          ONLY : ufo_locations
+USE ufo_sampled_locations_mod,  ONLY : ufo_sampled_locations
 
 use soca_analytic_mod
 
@@ -28,10 +28,10 @@ subroutine soca_analytic_geovals_c(c_key_geovals, c_locs) &
     type(c_ptr), value, intent(in) :: c_locs
 
     type(ufo_geovals), pointer :: geovals
-    type(ufo_locations) :: locs
+    type(ufo_sampled_locations) :: locs
 
     call ufo_geovals_registry%get(c_key_geovals, geovals)
-    locs = ufo_locations(c_locs)
+    locs = ufo_sampled_locations(c_locs)
 
     call soca_analytic_geovals(geovals, locs)
 
