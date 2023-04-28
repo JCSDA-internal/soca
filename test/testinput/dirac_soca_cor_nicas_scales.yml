@@ -18,6 +18,7 @@ background error:
     read:
       io:
         data directory: data_generated/parameters_bump_cor_nicas_scales
+        files prefix: bump
       drivers:
         multivariate strategy: univariate
         read local nicas: true
@@ -26,15 +27,11 @@ background error:
           variables:
           - socn
           - tocn
-        io:
-          files prefix: bump3d
       - model:
           variables:
           - ssh
           - cicen
           - hicen
-        io:
-          files prefix: bump2d
 
 dirac:
   ixdir: [1, 17, 41, 31, 51, 63, 81, 14, 16, 43]
