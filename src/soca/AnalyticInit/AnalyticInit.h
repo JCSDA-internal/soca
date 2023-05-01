@@ -28,7 +28,7 @@ namespace soca {
     typedef AnalyticInitParameters Parameters_;
 
     explicit AnalyticInit(const Parameters_ &) {}
-    void fillGeoVaLs(const ufo::Locations &, ufo::GeoVaLs &) const override;
+    void fillGeoVaLs(const ufo::SampledLocations &, ufo::GeoVaLs &) const override;
   };
 
 }  // namespace soca
