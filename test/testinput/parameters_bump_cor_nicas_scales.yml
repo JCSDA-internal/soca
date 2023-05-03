@@ -18,6 +18,7 @@ background error:
     calibration:
       io:
         data directory: data_generated/parameters_bump_cor_nicas_scales
+        files prefix: bump
       drivers:
         multivariate strategy: univariate
         compute nicas: true
@@ -33,15 +34,11 @@ background error:
           - tocn
           - uocn
           - vocn
-        io:
-          files prefix: bump3d
       - model:
           variables:
           - ssh
           - cicen
           - hicen
-        io:
-          files prefix: bump2d
       input model files:
       - parameter: rh
         file:
