@@ -76,7 +76,7 @@ subroutine soca_balance_setup(self, f_conf, traj, geom)
   integer :: isd, ied, jsd, jed
   integer :: i, j, k, nl
   real(kind=kind_real), allocatable :: jac(:)
-  type(soca_field), pointer :: tocn, socn, hocn, cicen, mld, layer_depth
+  type(soca_field), pointer :: tocn, socn, hocn, cicen, layer_depth
 
   ! declarations related to the dynamic height Jacobians
   character(len=:), allocatable :: filename, mask_name
@@ -129,7 +129,6 @@ subroutine soca_balance_setup(self, f_conf, traj, geom)
   call traj%get("tocn", tocn)
   call traj%get("socn", socn)
   call traj%get("hocn", hocn)
-  call traj%get("mld", mld)
   call traj%get("layer_depth", layer_depth)
   if (traj%has("cicen"))  call traj%get("cicen", cicen)
 
@@ -148,13 +147,9 @@ subroutine soca_balance_setup(self, f_conf, traj, geom)
              &socn%val(i,j,:),&
              &hocn%val(i,j,:),&
              &self%kst%dsdtmax, self%kst%dsdzmin, self%kst%dtdzmin)
-        ! Set Jacobian to 0 above mixed layer
-        do k=1,nl
-           if (layer_depth%val(i,j,k) < mld%val(i,j,1)) then
-              jac(k) = 0.0_kind_Real
-           end if
-        end do
         self%kst%jacobian(i,j,:) = jac(:)
+
+        ! Set upper Jacobian to 0 as specified in the configuration
         self%kst%jacobian(i,j,1:self%kst%nlayers) =  0.0_kind_real
      end do
   end do
@@ -186,10 +181,6 @@ subroutine soca_balance_setup(self, f_conf, traj, geom)
     end do
   end do
   deallocate(jac)
-
-  ! Zero-out Jacobians if required by configuration
-  if (mask_detadt) self%ksshts%kssht = 0.0_kind_real
-  if (mask_detads) self%ksshts%ksshs = 0.0_kind_real
 
   ! Compute Kct
   if (traj%has("cicen")) then

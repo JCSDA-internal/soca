@@ -27,6 +27,7 @@ type, public :: soca_vertconv
   real(kind=kind_real)      :: lz_min             !> Vertical decorrelation minimum [m]
   real(kind=kind_real)      :: lz_mld             !> if /= 0, Use MLD to calculate Lz
   real(kind=kind_real)      :: lz_mld_max         !> if calculating Lz from MLD, max value to use
+  logical                   :: vanilla            !> if true, only use the layer scaling
   real(kind=kind_real)      :: scale_layer_thick  !> Set the minimum decorrelation scale
                                                   !> as a multiple of the layer thickness
   type(soca_state), pointer :: bkg                !> Background
@@ -67,6 +68,10 @@ subroutine soca_conv_setup (self, bkg, geom, f_conf)
   if ( self%lz_mld /= 0) &
       call f_conf%get_or_die("Lz_mld_max", self%lz_mld_max )
   call f_conf%get_or_die("scale_layer_thick", self%scale_layer_thick )
+  self%vanilla = .false.
+  if ( f_conf%has("vanilla") ) then
+     call f_conf%get_or_die("vanilla", self%vanilla )
+  end if
 
   ! Associate background and geometry
   self%bkg => bkg
@@ -99,6 +104,9 @@ subroutine soca_calc_lz(self, i, j, lz)
   call self%bkg%get("layer_depth", layer_depth)
   lz = self%lz_min
   lz = max(lz, self%scale_layer_thick*abs(hocn%val(i,j,:)))
+
+  ! if doing vanilla vertconv, we're done!
+  if (self%vanilla) return
 
   ! if the upper Lz should be calculated from the MLD
   ! interpolate values from top to bottom of ML
