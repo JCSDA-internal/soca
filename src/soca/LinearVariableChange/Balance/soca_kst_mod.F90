@@ -63,11 +63,11 @@ subroutine soca_soft_jacobian (jac, t, s, h, dsdtmax, dsdzmin, dtdzmin)
 
     ! Limit application of soft according to configuration
     if ( abs(dtdz(z)) < dtdzmin ) then
-       dtdz(z) = sign(1.0, dtdz(z))*dtdzmin
+       dtdz(z) = sign(dtdzmin, dtdz(z))
     end if
 
     if ( abs(dsdz(z)) < dsdzmin ) then
-       dsdz(z) = sign(1.0, dsdz(z))*dsdzmin
+       dsdz(z) = sign(dsdzmin, dsdz(z))
     end if
 
     ! Jacobian of soft
@@ -75,10 +75,9 @@ subroutine soca_soft_jacobian (jac, t, s, h, dsdtmax, dsdzmin, dtdzmin)
 
     ! Limit application of soft according to configuration
     if ( abs(j) > dsdtmax ) then
-       j = sign(1.0, j)*dsdtmax
+       j = sign(dsdtmax, j)
     end if
 
-    ! if we reach this point in the code, the jacobian is usable
     jac(z) = j;
   end do
 
