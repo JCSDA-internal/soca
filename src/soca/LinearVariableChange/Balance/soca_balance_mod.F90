@@ -80,7 +80,6 @@ subroutine soca_balance_setup(self, f_conf, traj, geom)
 
   ! declarations related to the dynamic height Jacobians
   character(len=:), allocatable :: filename, mask_name
-  real(kind=kind_real), allocatable :: jac_mask(:,:) !> mask for Jacobian
   real(kind=kind_real) :: threshold
   integer :: nlayers               !> dynamic height Jac=0 in nlayers upper layers
   logical :: mask_detadt = .false. !> if true, set deta/dt to 0
@@ -99,24 +98,7 @@ subroutine soca_balance_setup(self, f_conf, traj, geom)
   jsd=geom%jsd; jed=geom%jed
 
   ! Setup mask for Jacobians related to the dynamic height balance
-  allocate(jac_mask(isd:ied,jsd:jed))
-  jac_mask = 1.0_kind_real
   nlayers = 0
-  if ( f_conf%has("jac_mask") ) then
-    jac_mask = 0.0_kind_real
-    call f_conf%get_or_die("jac_mask.filename", filename)
-    call f_conf%get_or_die("jac_mask.name", mask_name)
-    call f_conf%get_or_die("jac_mask.threshold", threshold)
-    call f_conf%get_or_die("jac_mask.nlayers", nlayers)
-    call f_conf%get_or_die("jac_mask.detadt", mask_detadt)
-    call f_conf%get_or_die("jac_mask.detads", mask_detads)
-    call fms_io_init()
-    call read_data(filename, mask_name, jac_mask, domain=geom%Domain%mpp_domain)
-    call fms_io_exit()
-    where(jac_mask<threshold)
-      jac_mask = 0.0_kind_real
-    end where
-  end if
 
   ! Get configuration for Kst
   call f_conf%get_or_die("dsdtmax", self%kst%dsdtmax)
@@ -171,8 +153,8 @@ subroutine soca_balance_setup(self, f_conf, traj, geom)
         &hocn%val(i,j,k),&
         &geom%lon(i,j),&
         &geom%lat(i,j))
-        self%ksshts%kssht(i,j,k) = jac(1)*jac_mask(i,j)
-        self%ksshts%ksshs(i,j,k) = jac(2)*jac_mask(i,j)
+        self%ksshts%kssht(i,j,k) = jac(1)
+        self%ksshts%ksshs(i,j,k) = jac(2)
       end do
       if (nlayers>0) then
         self%ksshts%kssht(i,j,1:nlayers) =  0.0_kind_real
