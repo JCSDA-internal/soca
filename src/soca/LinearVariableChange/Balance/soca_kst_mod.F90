@@ -47,7 +47,6 @@ subroutine soca_soft_jacobian (jac, t, s, h, dsdtmax, dsdzmin, dtdzmin)
 
   real(kind=kind_real), allocatable :: dtdz(:), dsdz(:)
   integer :: nl, z
-  real(kind=kind_real) :: j
 
   ! Allocate
   nl = size(t,1)
@@ -59,26 +58,17 @@ subroutine soca_soft_jacobian (jac, t, s, h, dsdtmax, dsdzmin, dtdzmin)
 
   jac = 0.0
   do z=1,nl
-    jac(z) = 0.0
 
     ! Limit application of soft according to configuration
-    if ( abs(dtdz(z)) < dtdzmin ) then
-       dtdz(z) = sign(dtdzmin, dtdz(z))
-    end if
+    if ( abs(dtdz(z)) < dtdzmin ) dtdz(z) = sign(dtdzmin, dtdz(z))
 
-    if ( abs(dsdz(z)) < dsdzmin ) then
-       dsdz(z) = sign(dsdzmin, dsdz(z))
-    end if
+    if ( abs(dsdz(z)) < dsdzmin ) dsdz(z) = sign(dsdzmin, dsdz(z))
 
     ! Jacobian of soft
-    j=dsdz(z)/dtdz(z)
+    jac(z)=dsdz(z)/dtdz(z)
 
     ! Limit application of soft according to configuration
-    if ( abs(j) > dsdtmax ) then
-       j = sign(dsdtmax, j)
-    end if
-
-    jac(z) = j;
+    if ( abs(jac(z)) > dsdtmax ) jac(z) = sign(dsdtmax, jac(z))
   end do
 
 end subroutine soca_soft_jacobian

@@ -60,6 +60,16 @@ contains
 ! ------------------------------------------------------------------------------
 
 
+function soca_tanh_filt(l, l0) result (coef)
+  real(kind=kind_real), intent(in) :: l
+  real(kind=kind_real), intent(in) :: l0
+
+  real(kind=kind_real) :: coef
+
+  coef = 0.5_kind_real*(tanh(l-l0)+1.0_kind_real)
+
+end function soca_tanh_filt
+
 ! ------------------------------------------------------------------------------
 !> Initialization of the balance operator and its trajectory.
 !!
@@ -75,15 +85,12 @@ subroutine soca_balance_setup(self, f_conf, traj, geom)
   integer :: isc, iec, jsc, jec
   integer :: isd, ied, jsd, jed
   integer :: i, j, k, nl
-  real(kind=kind_real), allocatable :: jac(:)
-  type(soca_field), pointer :: tocn, socn, hocn, cicen, layer_depth
+  real(kind=kind_real), allocatable :: jac(:), coef_mld, coef_layers
+  type(soca_field), pointer :: tocn, socn, hocn, cicen, mld, layer_depth
 
   ! declarations related to the dynamic height Jacobians
-  character(len=:), allocatable :: filename, mask_name
+  character(len=:), allocatable :: filename
   real(kind=kind_real) :: threshold
-  integer :: nlayers               !> dynamic height Jac=0 in nlayers upper layers
-  logical :: mask_detadt = .false. !> if true, set deta/dt to 0
-  logical :: mask_detads = .false. !> if true, set deta/ds to 0
 
   ! declarations related to the sea-ice Jacobian
   character(len=:), allocatable :: kct_name
@@ -97,20 +104,11 @@ subroutine soca_balance_setup(self, f_conf, traj, geom)
   isd=geom%isd; ied=geom%ied
   jsd=geom%jsd; jed=geom%jed
 
-  ! Setup mask for Jacobians related to the dynamic height balance
-  nlayers = 0
-
-  ! Get configuration for Kst
-  call f_conf%get_or_die("dsdtmax", self%kst%dsdtmax)
-  call f_conf%get_or_die("dsdzmin", self%kst%dsdzmin)
-  call f_conf%get_or_die("dtdzmin", self%kst%dtdzmin)
-  call f_conf%get_or_die("nlayers", self%kst%nlayers) ! Set jac to 0 in the
-                                                      ! nlayers top layers
-
   ! Get required fields
   call traj%get("tocn", tocn)
   call traj%get("socn", socn)
   call traj%get("hocn", hocn)
+  call traj%get("mld", mld)
   call traj%get("layer_depth", layer_depth)
   if (traj%has("cicen"))  call traj%get("cicen", cicen)
 
@@ -120,22 +118,44 @@ subroutine soca_balance_setup(self, f_conf, traj, geom)
   allocate(jac(nl))
   self%kst%jacobian=0.0
 
+  ! Get configuration for Kst
+  self%kst%dsdtmax = 0.1_kind_real
+  self%kst%dsdzmin = 3.0e-6_kind_real
+  self%kst%dtdzmin = 1.0e-6_kind_real
+  self%kst%nlayers = -999     ! input to the tanh filter
+  if ( f_conf%has("kst") ) then
+     call f_conf%get_or_die("kst.dsdtmax", self%kst%dsdtmax)
+     call f_conf%get_or_die("kst.dsdzmin", self%kst%dsdzmin)
+     call f_conf%get_or_die("kst.dtdzmin", self%kst%dtdzmin)
+     call f_conf%get_or_die("kst.nlayers", self%kst%nlayers)
+  end if
+
   ! Compute and store Jacobian of Kst
   do i = isc, iec
      do j = jsc, jec
-        jac=0.0
+        ! do nothing if on land
+        if ( geom%mask2d(i, j) == 0 ) cycle
+
+        ! compute dS(T)/dT
         call soca_soft_jacobian(jac,&
              &tocn%val(i,j,:),&
              &socn%val(i,j,:),&
              &hocn%val(i,j,:),&
              &self%kst%dsdtmax, self%kst%dsdzmin, self%kst%dtdzmin)
-        self%kst%jacobian(i,j,:) = jac(:)
 
-        ! Set upper Jacobian to 0 as specified in the configuration
-        self%kst%jacobian(i,j,1:self%kst%nlayers) =  0.0_kind_real
+        ! filter out the Jacobian as specified in the configuration
+        do k=1,nl
+           coef_mld = soca_tanh_filt(layer_depth%val(i,j,k),mld%val(i,j,1))
+           coef_layers = soca_tanh_filt(real(k, kind=kind_real), real(self%kst%nlayers, kind=kind_real))
+           self%kst%jacobian(i,j,k) = jac(k)*coef_mld*coef_layers
+        end do
      end do
   end do
   deallocate(jac)
+
+  ! Get configuration for Ksshts
+  self%ksshts%nlayers = -999   ! input to the tanh filter
+  if ( f_conf%has("ksshts") ) call f_conf%get_or_die("ksshts.nlayers", self%ksshts%nlayers)
 
   ! Compute Jacobian of Ksshts
   allocate(self%ksshts%kssht, mold=self%kst%jacobian)
@@ -153,13 +173,10 @@ subroutine soca_balance_setup(self, f_conf, traj, geom)
         &hocn%val(i,j,k),&
         &geom%lon(i,j),&
         &geom%lat(i,j))
-        self%ksshts%kssht(i,j,k) = jac(1)
-        self%ksshts%ksshs(i,j,k) = jac(2)
-      end do
-      if (nlayers>0) then
-        self%ksshts%kssht(i,j,1:nlayers) =  0.0_kind_real
-        self%ksshts%ksshs(i,j,1:nlayers) =  0.0_kind_real
-      end if
+        coef_layers = soca_tanh_filt(real(k, kind=kind_real), real(self%ksshts%nlayers, kind=kind_real))
+        self%ksshts%kssht(i,j,k) = jac(1)*coef_layers
+        self%ksshts%ksshs(i,j,k) = jac(2)*coef_layers
+     end do
     end do
   end do
   deallocate(jac)
