@@ -75,10 +75,13 @@ cost function:
         filter variables: *a_vars
 
       - linear variable change name: BalanceSOCA
-        dsdtmax: 0.1
-        dsdzmin: 3.0e-6
-        dtdzmin: 1.0e-6
-        nlayers: 2
+        kst:
+          dsdtmax: 0.1
+          dsdzmin: 3.0e-6
+          dtdzmin: 1.0e-6
+          nlayers: 2
+        ksshts:
+          nlayers: 2
 
   observations:
     observers:
