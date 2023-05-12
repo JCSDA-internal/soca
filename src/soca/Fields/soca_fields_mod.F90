@@ -14,7 +14,7 @@ module soca_fields_mod
 use atlas_module, only: atlas_fieldset, atlas_field, atlas_real, atlas_metadata
 
 ! JEDI modules
-use datetime_mod, only: datetime, datetime_set, datetime_to_string, &
+use datetime_mod, only: datetime, datetime_set, datetime_to_string, datetime_to_string_io, &
                         datetime_create, datetime_diff
 use duration_mod, only: duration, duration_to_string
 use fckit_configuration_module, only: fckit_configuration
@@ -1185,18 +1185,24 @@ subroutine soca_fields_write_rst(self, f_conf, vdate)
   type(restart_file_type), pointer :: restart
   integer :: idr, i
   type(soca_field), pointer :: field
-  logical :: write_sfc, write_ice, write_wav
+  logical :: write_sfc, write_ice, write_wav, date_cols
 
   write_ice = .false.
   write_sfc = .false.
   write_wav = .false.
   call fms_io_init()
 
+  ! Get date IO format (colons or not?)
+  date_cols = .true.
+  if (f_conf%has("date colons")) then
+    call f_conf%get_or_die("date colons", date_cols)
+  end if
+
   ! filenames
-  ocn_filename = soca_genfilename(f_conf,max_string_length,vdate,"ocn")
-  sfc_filename = soca_genfilename(f_conf,max_string_length,vdate,"sfc")
-  ice_filename = soca_genfilename(f_conf, max_string_length,vdate,"ice")
-  wav_filename = soca_genfilename(f_conf, max_string_length,vdate,"wav")
+  ocn_filename = soca_genfilename(f_conf,max_string_length,vdate,date_cols,"ocn")
+  sfc_filename = soca_genfilename(f_conf,max_string_length,vdate,date_cols,"sfc")
+  ice_filename = soca_genfilename(f_conf, max_string_length,vdate,date_cols,"ice")
+  wav_filename = soca_genfilename(f_conf, max_string_length,vdate,date_cols,"wav")
 
   ! built in variables
   do i=1,size(self%fields)
@@ -1427,10 +1433,11 @@ end subroutine fldinfo
 !! - "exp" : experiment name
 !! - "type" : one of "fc", "an", "incr", "ens"
 !! - "member" : required only if "type == ens"
-function soca_genfilename (f_conf,length,vdate,domain_type)
+function soca_genfilename(f_conf,length,vdate,date_cols,domain_type)
   type(fckit_configuration),  intent(in) :: f_conf
   integer,                    intent(in) :: length
   type(datetime),             intent(in) :: vdate
+  logical,                    intent(in) :: date_cols  !< Date written with colons or not
   character(len=3), optional, intent(in) :: domain_type
 
   character(len=length)                  :: soca_genfilename
@@ -1466,16 +1473,26 @@ function soca_genfilename (f_conf,length,vdate,domain_type)
   if (typ=="fc" .or. typ=="ens") then
      call f_conf%get_or_die("date", str)
      referencedate = str
-     call datetime_to_string(vdate, validitydate)
-     call datetime_create(TRIM(referencedate), rdate)
-     call datetime_diff(vdate, rdate, step)
-     call duration_to_string(step, sstep)
+     if (date_cols) then
+       call datetime_create(trim(referencedate),rdate)
+       call datetime_diff(vdate,rdate,step)
+       call duration_to_string(step,sstep)
+     else
+       call datetime_create(trim(referencedate),rdate)
+       call datetime_to_string_io(rdate,referencedate)
+       call datetime_diff(vdate,rdate,step)
+       call duration_to_string(step,sstep)
+     endif
      lenfn = lenfn + 1 + LEN_TRIM(referencedate) + 1 + LEN_TRIM(sstep)
      soca_genfilename = TRIM(prefix) // "." // TRIM(referencedate) // "." // TRIM(sstep)
   endif
 
   if (typ=="an" .or. typ=="incr") then
-     call datetime_to_string(vdate, validitydate)
+     if (date_cols) then
+       call datetime_to_string(vdate,validitydate)
+     else
+       call datetime_to_string_io(vdate,validitydate)
+     endif
      lenfn = lenfn + 1 + LEN_TRIM(validitydate)
      soca_genfilename = TRIM(prefix) // "." // TRIM(validitydate)
   endif

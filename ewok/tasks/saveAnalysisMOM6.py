@@ -12,3 +12,7 @@ class saveAnalysisMOM6(generic.saveAnalysis):
     def setup(self, config, an):
         super().setup(config, an)
         self.command = os.path.join(config['model_path'], "tasks/runSaveAnalysis.py")
+
+        self.exec_cmd = ''   # Run on login node for S3 and R2D2 Database access
+        self.include_header = ''
+        self.login_node_limit = 'True'

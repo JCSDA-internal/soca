@@ -11,8 +11,12 @@ import ewok.tasks.getBackground as generic
 
 class getBackgroundMOM6(generic.getBackground):
 
-    def setup(self, config, fc):
-        super().setup(config, fc)
+    def setup(self, config, fc, fix):
+        super().setup(config, fc, fix)
 
         # Use MOM6 specific script
         self.command = os.path.join(config['model_path'], "tasks/runGetForecast.py")
+
+        self.exec_cmd = ''   # Run on login node for S3 and R2D2 Database access
+        self.include_header = ''
+        self.login_node_limit = 'True'

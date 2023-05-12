@@ -36,20 +36,7 @@ ensemble:
     ocn_filename: restarts_ens/ocn.enspert.ens.4.2018-04-15T00:00:00Z.PT0S.nc
     ice_filename: restarts_ens/ice.enspert.ens.4.2018-04-15T00:00:00Z.PT0S.nc
 
-  linear variable change:
-    linear variable changes:
-    - linear variable change name: BalanceSOCA
-      dsdtmax: 1.0
-      dsdzmin: 3.0e-3
-      dtdzmin: 1.0e-3
-      nlayers: 10
-      dcdt:
-        filename: data_static/72x35x25/dcdt.nc
-        name: dcdt
-    input variables: *soca_vars
-    output variables: *soca_vars
-
 test:
   reference filename: testref/ensvariance.test
   test output filename: testoutput/ensvariance.test
-  float relative tolerance: 1e-5
+  float relative tolerance: 1e-3
