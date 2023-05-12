@@ -44,7 +44,7 @@ contains
   !> \name misc
   !! \{
 
-    !> \copybrief soca_state_rotate \see soca_state_rotate
+  !> \copybrief soca_state_rotate \see soca_state_rotate
   procedure :: rotate => soca_state_rotate
 
   !> \copybrief soca_state_convert \see soca_state_convert

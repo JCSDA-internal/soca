@@ -104,6 +104,21 @@ namespace soca {
     soca_state_rotate2grid_f90(toFortran(), u, v);
   }
   // -----------------------------------------------------------------------------
+  /// Staggered grid interpolation
+  // -----------------------------------------------------------------------------
+  void State::tohgrid(const oops::Variables & u,
+                      const oops::Variables & v) const {
+    Log::trace() << "State::State interpolate vector to h-grid."
+                 << std::endl;
+    soca_state_tohgrid_f90(toFortran());
+  }
+  // -----------------------------------------------------------------------------
+  void State::tocgrid(const oops::Variables & u,
+                      const oops::Variables & v) const {
+    Log::trace() << "State::State interpolate vector to c-grid. NOT IMPLEMENTED"
+                 << std::endl;
+  }
+  // -----------------------------------------------------------------------------
   /// Interactions with Increments
   // -----------------------------------------------------------------------------
   State & State::operator+=(const Increment & dx) {

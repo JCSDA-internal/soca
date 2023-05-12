@@ -30,12 +30,12 @@ namespace soca {
 // -----------------------------------------------------------------------------
 /// SOCA nonlinear change of variable
 
-class Ana2Model: public VariableChangeBase {
+class Model2Ana: public VariableChangeBase {
  public:
-  const std::string classname() {return "soca::Ana2Model";}
+  const std::string classname() {return "soca::Model2Ana";}
 
-  Ana2Model(const Geometry &, const eckit::Configuration &);
-  ~Ana2Model();
+  Model2Ana(const Geometry &, const eckit::Configuration &);
+  ~Model2Ana();
 
   void changeVar(const State &, State &) const override;
   void changeVarInverse(const State &, State &) const override;
@@ -45,7 +45,10 @@ class Ana2Model: public VariableChangeBase {
   {
     return conf.getStringVector("rotate."+uv);
   }
-
+  bool initInterp(const eckit::Configuration & conf) const
+  {
+    return conf.getBool("interp", false);
+  }
   std::vector<std::string> initTrans(const eckit::Configuration & conf,
                                       const std::string & trvar) const
   {
@@ -56,6 +59,7 @@ class Ana2Model: public VariableChangeBase {
   void print(std::ostream &) const override;
   const oops::Variables uvars_;
   const oops::Variables vvars_;
+  const bool interp_;
   const oops::Variables logvars_;
 };
 // -----------------------------------------------------------------------------
