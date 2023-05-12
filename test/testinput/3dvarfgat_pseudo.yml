@@ -16,7 +16,7 @@ cost function:
     fields metadata: data_static/fields_metadata.yml
 
   variable change:
-    variable change name: Ana2Model
+    variable change name: Model2Ana
     rotate:
       u: [uocn]
       v: [vocn]
