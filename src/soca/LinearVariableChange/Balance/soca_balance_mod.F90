@@ -115,46 +115,42 @@ subroutine soca_balance_setup(self, f_conf, traj, geom)
   ! allocate space
   nl = hocn%nz
   allocate(self%kst%jacobian(isc:iec,jsc:jec,geom%nzo))
-  allocate(jac(nl))
   self%kst%jacobian=0.0
 
-  ! Get configuration for Kst
-  self%kst%dsdtmax = 0.1_kind_real
-  self%kst%dsdzmin = 3.0e-6_kind_real
-  self%kst%dtdzmin = 1.0e-6_kind_real
-  self%kst%nlayers = -999     ! input to the tanh filter
+  ! Setup Kst if in the configuration
   if ( f_conf%has("kst") ) then
+     allocate(jac(nl))
      call f_conf%get_or_die("kst.dsdtmax", self%kst%dsdtmax)
      call f_conf%get_or_die("kst.dsdzmin", self%kst%dsdzmin)
      call f_conf%get_or_die("kst.dtdzmin", self%kst%dtdzmin)
      call f_conf%get_or_die("kst.nlayers", self%kst%nlayers)
-  end if
 
-  ! Compute and store Jacobian of Kst
-  do i = isc, iec
-     do j = jsc, jec
-        ! do nothing if on land
-        if ( geom%mask2d(i, j) == 0 ) cycle
+     ! Compute and store Jacobian of Kst
+     do i = isc, iec
+        do j = jsc, jec
+           ! do nothing if on land
+           if ( geom%mask2d(i, j) == 0 ) cycle
 
-        ! compute dS(T)/dT
-        call soca_soft_jacobian(jac,&
-             &tocn%val(i,j,:),&
-             &socn%val(i,j,:),&
-             &hocn%val(i,j,:),&
-             &self%kst%dsdtmax, self%kst%dsdzmin, self%kst%dtdzmin)
+           ! compute dS(T)/dT
+           call soca_soft_jacobian(jac,&
+                &tocn%val(i,j,:),&
+                &socn%val(i,j,:),&
+                &hocn%val(i,j,:),&
+                &self%kst%dsdtmax, self%kst%dsdzmin, self%kst%dtdzmin)
 
-        ! filter out the Jacobian as specified in the configuration
-        do k=1,nl
-           coef_mld = soca_tanh_filt(layer_depth%val(i,j,k),mld%val(i,j,1))
-           coef_layers = soca_tanh_filt(real(k, kind=kind_real), real(self%kst%nlayers, kind=kind_real))
-           self%kst%jacobian(i,j,k) = jac(k)*coef_mld*coef_layers
+           ! filter out the Jacobian as specified in the configuration
+           do k=1,nl
+              coef_mld = soca_tanh_filt(layer_depth%val(i,j,k),mld%val(i,j,1))
+              coef_layers = soca_tanh_filt(real(k, kind=kind_real), real(self%kst%nlayers, kind=kind_real))
+              self%kst%jacobian(i,j,k) = jac(k)*coef_mld*coef_layers
+           end do
         end do
      end do
-  end do
-  deallocate(jac)
+     deallocate(jac)
+  end if
 
   ! Get configuration for Ksshts
-  self%ksshts%nlayers = -999   ! input to the tanh filter
+  self%ksshts%nlayers = -999   ! No filtering by default
   if ( f_conf%has("ksshts") ) call f_conf%get_or_die("ksshts.nlayers", self%ksshts%nlayers)
 
   ! Compute Jacobian of Ksshts
