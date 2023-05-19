@@ -88,10 +88,13 @@ background error:
       output variables: *soca_vars
 
     - linear variable change name: BalanceSOCA
-      dsdtmax: 0.1
-      dsdzmin: 3.0e-6
-      dtdzmin: 1.0e-6
-      nlayers: 10
+      kst:
+        dsdtmax: 0.1
+        dsdzmin: 3.0e-6
+        dtdzmin: 1.0e-6
+        nlayers: 10
+      ksshts:
+        nlayers: 2
       dcdt:
         filename: data_static/72x35x25/dcdt.nc
         name: dcdt
