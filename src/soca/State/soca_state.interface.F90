@@ -481,4 +481,25 @@ subroutine soca_state_to_fieldset_c(c_key_self, c_vars, c_fieldset, c_masked) &
   call self%to_fieldset(vars, afieldset, logical(c_masked))
 end subroutine
 
+! ------------------------------------------------------------------------------
+!> C++ interface for soca_increment_mod::soca_increment::from_fieldset()
+subroutine soca_state_from_fieldset_c(c_key_self, c_vars, c_afieldset, c_masked) &
+  bind (c,name='soca_state_from_fieldset_f90')
+integer(c_int),         intent(in) :: c_key_self
+type(c_ptr),     value, intent(in) :: c_vars
+type(c_ptr),     value, intent(in) :: c_afieldset
+logical(c_bool),        intent(in) :: c_masked
+
+type(soca_state), pointer :: self
+type(oops_variables)          :: vars
+type(atlas_fieldset)          :: afieldset
+
+call soca_state_registry%get(c_key_self, self)
+vars = oops_variables(c_vars)
+afieldset = atlas_fieldset(c_afieldset)
+
+call self%from_fieldset(vars, afieldset, logical(c_masked))
+
+end subroutine
+
 end module soca_state_mod_c
