@@ -60,6 +60,16 @@ contains
 ! ------------------------------------------------------------------------------
 
 
+function soca_tanh_filt(l, l0) result (coef)
+  real(kind=kind_real), intent(in) :: l
+  real(kind=kind_real), intent(in) :: l0
+
+  real(kind=kind_real) :: coef
+
+  coef = 0.5_kind_real*(tanh(l-l0)+1.0_kind_real)
+
+end function soca_tanh_filt
+
 ! ------------------------------------------------------------------------------
 !> Initialization of the balance operator and its trajectory.
 !!
@@ -75,16 +85,12 @@ subroutine soca_balance_setup(self, f_conf, traj, geom)
   integer :: isc, iec, jsc, jec
   integer :: isd, ied, jsd, jed
   integer :: i, j, k, nl
-  real(kind=kind_real), allocatable :: jac(:)
+  real(kind=kind_real), allocatable :: jac(:), coef_mld, coef_layers
   type(soca_field), pointer :: tocn, socn, hocn, cicen, mld, layer_depth
 
   ! declarations related to the dynamic height Jacobians
-  character(len=:), allocatable :: filename, mask_name
-  real(kind=kind_real), allocatable :: jac_mask(:,:) !> mask for Jacobian
+  character(len=:), allocatable :: filename
   real(kind=kind_real) :: threshold
-  integer :: nlayers               !> dynamic height Jac=0 in nlayers upper layers
-  logical :: mask_detadt = .false. !> if true, set deta/dt to 0
-  logical :: mask_detads = .false. !> if true, set deta/ds to 0
 
   ! declarations related to the sea-ice Jacobian
   character(len=:), allocatable :: kct_name
@@ -98,33 +104,6 @@ subroutine soca_balance_setup(self, f_conf, traj, geom)
   isd=geom%isd; ied=geom%ied
   jsd=geom%jsd; jed=geom%jed
 
-  ! Setup mask for Jacobians related to the dynamic height balance
-  allocate(jac_mask(isd:ied,jsd:jed))
-  jac_mask = 1.0_kind_real
-  nlayers = 0
-  if ( f_conf%has("jac_mask") ) then
-    jac_mask = 0.0_kind_real
-    call f_conf%get_or_die("jac_mask.filename", filename)
-    call f_conf%get_or_die("jac_mask.name", mask_name)
-    call f_conf%get_or_die("jac_mask.threshold", threshold)
-    call f_conf%get_or_die("jac_mask.nlayers", nlayers)
-    call f_conf%get_or_die("jac_mask.detadt", mask_detadt)
-    call f_conf%get_or_die("jac_mask.detads", mask_detads)
-    call fms_io_init()
-    call read_data(filename, mask_name, jac_mask, domain=geom%Domain%mpp_domain)
-    call fms_io_exit()
-    where(jac_mask<threshold)
-      jac_mask = 0.0_kind_real
-    end where
-  end if
-
-  ! Get configuration for Kst
-  call f_conf%get_or_die("dsdtmax", self%kst%dsdtmax)
-  call f_conf%get_or_die("dsdzmin", self%kst%dsdzmin)
-  call f_conf%get_or_die("dtdzmin", self%kst%dtdzmin)
-  call f_conf%get_or_die("nlayers", self%kst%nlayers) ! Set jac to 0 in the
-                                                      ! nlayers top layers
-
   ! Get required fields
   call traj%get("tocn", tocn)
   call traj%get("socn", socn)
@@ -136,29 +115,43 @@ subroutine soca_balance_setup(self, f_conf, traj, geom)
   ! allocate space
   nl = hocn%nz
   allocate(self%kst%jacobian(isc:iec,jsc:jec,geom%nzo))
-  allocate(jac(nl))
   self%kst%jacobian=0.0
 
-  ! Compute and store Jacobian of Kst
-  do i = isc, iec
-     do j = jsc, jec
-        jac=0.0
-        call soca_soft_jacobian(jac,&
-             &tocn%val(i,j,:),&
-             &socn%val(i,j,:),&
-             &hocn%val(i,j,:),&
-             &self%kst%dsdtmax, self%kst%dsdzmin, self%kst%dtdzmin)
-        ! Set Jacobian to 0 above mixed layer
-        do k=1,nl
-           if (layer_depth%val(i,j,k) < mld%val(i,j,1)) then
-              jac(k) = 0.0_kind_Real
-           end if
+  ! Setup Kst if in the configuration
+  if ( f_conf%has("kst") ) then
+     allocate(jac(nl))
+     call f_conf%get_or_die("kst.dsdtmax", self%kst%dsdtmax)
+     call f_conf%get_or_die("kst.dsdzmin", self%kst%dsdzmin)
+     call f_conf%get_or_die("kst.dtdzmin", self%kst%dtdzmin)
+     call f_conf%get_or_die("kst.nlayers", self%kst%nlayers)
+
+     ! Compute and store Jacobian of Kst
+     do i = isc, iec
+        do j = jsc, jec
+           ! do nothing if on land
+           if ( geom%mask2d(i, j) == 0 ) cycle
+
+           ! compute dS(T)/dT
+           call soca_soft_jacobian(jac,&
+                &tocn%val(i,j,:),&
+                &socn%val(i,j,:),&
+                &hocn%val(i,j,:),&
+                &self%kst%dsdtmax, self%kst%dsdzmin, self%kst%dtdzmin)
+
+           ! filter out the Jacobian as specified in the configuration
+           do k=1,nl
+              coef_mld = soca_tanh_filt(layer_depth%val(i,j,k),mld%val(i,j,1))
+              coef_layers = soca_tanh_filt(real(k, kind=kind_real), real(self%kst%nlayers, kind=kind_real))
+              self%kst%jacobian(i,j,k) = jac(k)*coef_mld*coef_layers
+           end do
         end do
-        self%kst%jacobian(i,j,:) = jac(:)
-        self%kst%jacobian(i,j,1:self%kst%nlayers) =  0.0_kind_real
      end do
-  end do
-  deallocate(jac)
+     deallocate(jac)
+  end if
+
+  ! Get configuration for Ksshts
+  self%ksshts%nlayers = -999   ! No filtering by default
+  if ( f_conf%has("ksshts") ) call f_conf%get_or_die("ksshts.nlayers", self%ksshts%nlayers)
 
   ! Compute Jacobian of Ksshts
   allocate(self%ksshts%kssht, mold=self%kst%jacobian)
@@ -176,20 +169,13 @@ subroutine soca_balance_setup(self, f_conf, traj, geom)
         &hocn%val(i,j,k),&
         &geom%lon(i,j),&
         &geom%lat(i,j))
-        self%ksshts%kssht(i,j,k) = jac(1)*jac_mask(i,j)
-        self%ksshts%ksshs(i,j,k) = jac(2)*jac_mask(i,j)
-      end do
-      if (nlayers>0) then
-        self%ksshts%kssht(i,j,1:nlayers) =  0.0_kind_real
-        self%ksshts%ksshs(i,j,1:nlayers) =  0.0_kind_real
-      end if
+        coef_layers = soca_tanh_filt(real(k, kind=kind_real), real(self%ksshts%nlayers, kind=kind_real))
+        self%ksshts%kssht(i,j,k) = jac(1)*coef_layers
+        self%ksshts%ksshs(i,j,k) = jac(2)*coef_layers
+     end do
     end do
   end do
   deallocate(jac)
-
-  ! Zero-out Jacobians if required by configuration
-  if (mask_detadt) self%ksshts%kssht = 0.0_kind_real
-  if (mask_detads) self%ksshts%ksshs = 0.0_kind_real
 
   ! Compute Kct
   if (traj%has("cicen")) then
