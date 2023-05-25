@@ -1,0 +1,14 @@
+# (C) Copyright 2023- UCAR
+#
+# This software is licensed under the terms of the Apache Licence Version 2.0
+# which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+
+# Plots of variational diagnostics
+plotVarDiagnostics:
+- CostFunction # line plot of minimization-related diagnostics
+- JoJb         # time-series of Jo & Jb
+- trHKbyp      # time-series of the trace of HK scaled by the number of observations
+- ObCnt        # barplot of the mean observation count per cycle
+- TotImp       # barplot of the mean total impact per cycle (Jo reduction)
+- ImpPerOb     # barplot of the mean impact per observation per cycle (Jo reduction)
+- FracImp      # barplot of the mean fractional impact per cycle (Jo reduction)
