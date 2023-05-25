@@ -71,13 +71,13 @@ cost function:
         hicen_max: 100.0
 
       - linear variable change name: BalanceSOCA
-        dsdtmax: 0.1
-        dsdzmin: 3.0e-6
-        dtdzmin: 1.0e-6
-        nlayers: 10
-        # dcdt:
-        #   filename: data_static/72x35x25/dcdt.nc
-        #   name: dcdt
+        kst:
+          dsdtmax: 0.1
+          dsdzmin: 3.0e-6
+          dtdzmin: 1.0e-6
+          nlayers: 2
+        ksshts:
+          nlayers: 2
 
   observations:
     observers:
