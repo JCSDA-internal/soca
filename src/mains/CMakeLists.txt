@@ -1,9 +1,3 @@
-ecbuild_add_executable( TARGET  soca_dirac.x
-                        SOURCES Dirac.cc
-                        LIBS    soca
-                                saber
-                      )
-
 ecbuild_add_executable( TARGET  soca_forecast.x
                         SOURCES Forecast.cc
                         LIBS    soca
@@ -30,15 +24,10 @@ ecbuild_add_executable( TARGET  soca_var.x
                                 saber
                       )
 
-ecbuild_add_executable( TARGET  soca_error_covariance_training.x
-                        SOURCES ErrorCovarianceTraining.cc
+ecbuild_add_executable( TARGET  soca_error_covariance_toolbox.x
+                        SOURCES ErrorCovarianceToolbox.cc
                         LIBS    soca
                                 saber
-                      )
-
-ecbuild_add_executable( TARGET  soca_staticbinit.x
-                        SOURCES StaticBInit.cc
-                        LIBS    soca
                       )
 
 ecbuild_add_executable( TARGET  soca_enspert.x

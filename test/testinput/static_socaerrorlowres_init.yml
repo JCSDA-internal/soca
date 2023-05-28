@@ -3,8 +3,6 @@ geometry:
   mom6_input_nml: data_static/36x17x25/input.nml
   fields metadata: data_static/fields_metadata.yml
 
-analysis variables: &ana_vars [cicen, hicen, socn, tocn, ssh]
-
 background:
   read_from_file: 1
   date: &date 2018-04-15T00:00:00Z
@@ -15,7 +13,7 @@ background:
 
 background error:
   covariance model: SocaError
-  analysis variables: *ana_vars
+  analysis variables: [cicen, hicen, socn, tocn, ssh]
   date: *date
   bump:
     io:
