@@ -257,4 +257,11 @@ namespace soca {
     // get field, with halo, and no masked values
     soca_state_to_fieldset_f90(toFortran(), vars_, fset.get(), false);
   }
+
+  // -----------------------------------------------------------------------------
+
+  void State::fromFieldSet(const atlas::FieldSet &fs) {
+    // set field, with halo, and no masked values
+    soca_state_from_fieldset_f90(toFortran(), vars_, fs.get(), false);
+  }
 }  // namespace soca
