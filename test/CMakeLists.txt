@@ -105,6 +105,7 @@ set( soca_test_ref
   testref/dirac_socahyb_cov.test
   testref/enshofx.test
   testref/enspert.test
+  testref/ensmeanandvariance.test
   testref/ensrecenter.test
   testref/ensvariance.test
   testref/forecast_identity.test
