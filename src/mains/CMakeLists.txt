@@ -49,6 +49,11 @@ ecbuild_add_executable( TARGET  soca_enspert.x
 ecbuild_add_executable( TARGET  soca_sqrtvertloc.x
                         SOURCES SqrtOfVertLoc.cc
                         LIBS    soca
+                        )
+
+ecbuild_add_executable( TARGET  soca_ensmeanandvariance.x
+                        SOURCES EnsMeanAndVariance.cc
+                        LIBS    soca
                       )
 
 ecbuild_add_executable( TARGET  soca_ensvariance.x
