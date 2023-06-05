@@ -18,8 +18,11 @@
 #include "oops/util/parameters/Parameters.h"
 #include "oops/util/Printable.h"
 
+#include "vader/vader.h"
+
 #include "soca/VariableChange/Base/VariableChangeBase.h"
 
+// Forward declarations
 namespace soca {
   class Geometry;
   class State;
@@ -32,6 +35,7 @@ class VariableChangeParameters : public oops::VariableChangeParametersBase {
  public:
   // Wrapper to VariableChange parameters
   VariableChangeParametersWrapper variableChangeParametersWrapper{this};
+  oops::Parameter<vader::VaderParameters> vader{"vader", {}, this};
 };
 
 // -----------------------------------------------------------------------------
@@ -51,6 +55,7 @@ class VariableChange : public util::Printable {
  private:
   void print(std::ostream &) const override;
   std::unique_ptr<VariableChangeBase> variableChange_;
+  std::unique_ptr<vader::Vader> vader_;
 };
 
 // -----------------------------------------------------------------------------
