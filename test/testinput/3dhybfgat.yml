@@ -1,6 +1,6 @@
 _date_begin: &date_begin 2018-04-15T00:00:00Z
 cost function:
-  cost type: 4D-Var
+  cost type: 3D-FGAT
   window begin: *date_begin
   window length: PT6H
   analysis variables: &soca_vars [cicen, hicen, socn, tocn, uocn, vocn, ssh, hocn]
@@ -153,11 +153,6 @@ variational:
     algorithm: RPCG
   iterations:
   - geometry: *geom
-    linear model:
-      name: Identity
-      increment variables: *soca_vars
-      variable change: Identity
-      tstep: PT1H
     ninner: 5
     gradient norm reduction: 1e-15
     test: on
