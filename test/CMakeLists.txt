@@ -73,6 +73,7 @@ set( soca_test_input
   testinput/varchange_bkgerrfilt.yml
   testinput/varchange_bkgerrgodas.yml
   testinput/varchange_bkgerrsoca.yml
+  testinput/varchange_bkgerrsoca_stddev.yml
   testinput/varchange_horizfilt.yml
   testinput/varchange_vertconv.yml
 )
@@ -391,6 +392,10 @@ soca_add_test( NAME varchange_horizfilt
                TEST_DEPENDS test_soca_gridgen )
 
 soca_add_test( NAME varchange_bkgerrsoca
+               SRC  TestVariableChange.cc
+               TEST_DEPENDS test_soca_gridgen )
+
+soca_add_test( NAME varchange_bkgerrsoca_stddev
                SRC  TestVariableChange.cc
                TEST_DEPENDS test_soca_gridgen )
 
