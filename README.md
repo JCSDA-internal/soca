@@ -6,10 +6,10 @@ JEDI encapsulation of MOM6
 
 This software is licensed under the terms of the Apache Licence Version 2.0 which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
 
-
+!!!!!!!!!!!!! DON'T MERGE THAT BRANCH !!!!!!!!!!!!!!!
 ## Building
 For more details about JEDI, including installation see: https://jointcenterforsatellitedataassimilation-jedi-docs.readthedocs-hosted.com/
- 
+
 1. If building the MOM6 SOCA component: unlike other JEDI projects, this project contains its own bundle, it can be built as follows
 ```
 git clone https://github.com/JCSDA/soca.git
