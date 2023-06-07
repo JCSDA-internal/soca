@@ -62,8 +62,7 @@ namespace soca {
                                         atlas::field::FieldSetImpl *);
     void soca_increment_to_fieldset_ad_f90(const F90flds &,
                                            const oops::Variables &,
-                                           const atlas::field::FieldSetImpl *,
-                                           const bool &);
+                                           const atlas::field::FieldSetImpl *);
     void soca_increment_from_fieldset_f90(const F90flds &,
                                    const oops::Variables &,
                                    const atlas::field::FieldSetImpl *);

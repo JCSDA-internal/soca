@@ -1553,23 +1553,19 @@ end subroutine
 ! ------------------------------------------------------------------------------
 !> Adjoint of get fields used by the interpolation.
 !!
-!! The fields that are input 1) have halos and 2) have had the masked points
-!! removed.
-subroutine soca_fields_to_fieldset_ad(self, vars, afieldset, masked)
+!! The fields that are input ahave  have halos (minus the invalid and duplicate halo points)
+subroutine soca_fields_to_fieldset_ad(self, vars, afieldset)
   class(soca_fields),   intent(in) :: self
   type(oops_variables), intent(in) :: vars
   type(atlas_fieldset), intent(in) :: afieldset
-  logical,              intent(in) :: masked
 
   integer :: v, z
   integer :: is, ie, js, je
   type(soca_field), pointer :: field
   type(atlas_field) :: afield
-  real(kind=kind_real), pointer :: mask(:,:) => null() !< field mask
   real(kind=kind_real), pointer :: real_ptr(:,:)
   real(kind=kind_real), pointer :: tmp(:,:)
 
-  stop 42
   ! start/stop idx, assuming halo
   is = self%geom%isd; ie = self%geom%ied
   js = self%geom%jsd; je = self%geom%jed
@@ -1580,29 +1576,10 @@ subroutine soca_fields_to_fieldset_ad(self, vars, afieldset, masked)
     call self%get(vars%variable(v), field)
     afield = afieldset%field(vars%variable(v))
 
-    ! which mask to use
-    nullify(mask)
-    if (masked .and. field%metadata%masked) then
-      select case(field%metadata%grid)
-      case ('h')
-        mask => self%geom%mask2d
-      case ('u')
-        mask => self%geom%mask2du
-      case ('v')
-        mask => self%geom%mask2dv
-      case default
-        call abor1_ftn('incorrect grid type in soca_fields_to_fieldset_ad()')
-      end select
-    end if
-
     tmp = 0.0
     call afield%data(real_ptr)
     do z=1,field%nz
-      if (associated(mask)) then
-        tmp = unpack(real_ptr(z,:), mask/=0, tmp)
-      else
-        tmp = reshape(real_ptr(z,:), shape(tmp))
-      end if
+      tmp = unpack(real_ptr(z,:), self%geom%valid_halo_mask, 0.0_kind_real)
       call mpp_update_domains_ad(tmp, self%geom%Domain%mpp_domain, complete=.true.)
       field%val(:,:,z) = field%val(:,:,z) + tmp
     end do
@@ -1619,14 +1596,12 @@ subroutine soca_fields_from_fieldset(self, vars, afieldset)
   type(oops_variables),       intent(in)    :: vars
   type(atlas_fieldset),       intent(in)    :: afieldset
 
-  integer :: jvar, i, jz, ngrid(2)
+  integer :: jvar, i, jz
   real(kind=kind_real), pointer :: real_ptr(:,:)
   logical :: var_found
   character(len=1024) :: fieldname
   type(soca_field), pointer :: field
   type(atlas_field) :: afield
-
-  ngrid = (/self%geom%ied-self%geom%isd+1, self%geom%jed-self%geom%jsd+1/)
 
   ! Initialization
   call self%zeros()

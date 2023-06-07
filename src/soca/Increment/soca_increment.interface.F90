@@ -635,12 +635,11 @@ end subroutine soca_increment_vert_scales_c
 
 ! ------------------------------------------------------------------------------
 !> C++ interface for Increment version of soca_field_mod::soca_field::get_fieldset_ad()
-subroutine soca_increment_to_fieldset_ad_c(c_key_self, c_vars, c_fieldset, c_masked) &
+subroutine soca_increment_to_fieldset_ad_c(c_key_self, c_vars, c_fieldset) &
     bind (c, name='soca_increment_to_fieldset_ad_f90')
   integer(c_int),       intent(in) :: c_key_self
   type(c_ptr), value,   intent(in) :: c_vars
   type(c_ptr), value,   intent(in) :: c_fieldset
-  logical(c_bool),      intent(in) :: c_masked
 
   type(soca_increment), pointer :: self
   type(oops_variables) :: vars
@@ -650,7 +649,7 @@ subroutine soca_increment_to_fieldset_ad_c(c_key_self, c_vars, c_fieldset, c_mas
   vars = oops_variables(c_vars)
   afieldset = atlas_fieldset(c_fieldset)
 
-  call self%to_fieldset_ad(vars, afieldset, logical(c_masked))
+  call self%to_fieldset_ad(vars, afieldset)
 end subroutine
 
 ! ------------------------------------------------------------------------------
