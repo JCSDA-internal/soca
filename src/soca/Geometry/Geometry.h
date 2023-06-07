@@ -75,13 +75,6 @@ namespace soca {
       atlas::FieldSet & extraFields() {return extraFields_;}
 
       void latlon(std::vector<double> &, std::vector<double> &, const bool) const;
-      void latlon(std::vector<double> &, std::vector<double> &, const bool,
-                  const char, const bool) const;
-      atlas::util::KDTree<size_t>::ValueList closestPoints(
-        const double, const double, const int,
-        const char, const bool) const;
-
-      void getVarGrid(const std::string &, char &, bool &) const;
 
    private:
       void mask(std::vector<double> &, const bool, const char) const;
@@ -94,8 +87,6 @@ namespace soca {
       atlas::FunctionSpace functionSpace_;
       atlas::FunctionSpace functionSpaceIncHalo_;
       atlas::FieldSet extraFields_;
-
-      atlas::util::IndexKDTree localTree_[6];
   };
   // -----------------------------------------------------------------------------
 

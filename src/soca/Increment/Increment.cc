@@ -357,7 +357,7 @@ namespace soca {
 // -----------------------------------------------------------------------------
 
   void Increment::toFieldSet(atlas::FieldSet &fs) const {
-    soca_increment_to_fieldset_f90(toFortran(), vars_, fs.get(), false);
+    soca_increment_to_fieldset_f90(toFortran(), vars_, fs.get());
   }
 
 // -----------------------------------------------------------------------------
@@ -370,7 +370,7 @@ namespace soca {
 // -----------------------------------------------------------------------------
 
   void Increment::fromFieldSet(const atlas::FieldSet &fs) {
-    soca_increment_from_fieldset_f90(toFortran(), vars_, fs.get(), false);
+    soca_increment_from_fieldset_f90(toFortran(), vars_, fs.get());
   }
 
 // -----------------------------------------------------------------------------

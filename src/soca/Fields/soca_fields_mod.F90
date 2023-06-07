@@ -1507,13 +1507,11 @@ end function soca_genfilename
 ! ------------------------------------------------------------------------------
 !> Get the fields listed in vars, used by the interpolation.
 !!
-!! The fields that are returned 1) have halos and 2) have had the masked points
-!! removed if masked==true.
-subroutine soca_fields_to_fieldset(self, vars, afieldset, masked)
+!! The fields that are returned have halos (minus the invalid and duplicate halo points)
+subroutine soca_fields_to_fieldset(self, vars, afieldset)
   class(soca_fields),   intent(in)    :: self
   type(oops_variables), intent(in)    :: vars
   type(atlas_fieldset), intent(inout) :: afieldset
-  logical,              intent(in)    :: masked
 
   type(atlas_field) :: afield
   integer :: v, z
@@ -1528,21 +1526,6 @@ subroutine soca_fields_to_fieldset(self, vars, afieldset, masked)
     ! make sure halos are updated (remove? is redundant?)
     call field%update_halo(self%geom)
 
-    ! which mask to use
-    nullify(mask)
-    if (masked .and. field%metadata%masked) then
-      select case(field%metadata%grid)
-      case ('h')
-        mask => self%geom%mask2d
-      case ('u')
-        mask => self%geom%mask2du
-      case ('v')
-        mask => self%geom%mask2dv
-      case default
-        call abor1_ftn('incorrect grid type in soca_fields_to_fieldset()')
-      end select
-    end if
-
     ! get/create field
     if (afieldset%has_field(vars%variable(v))) then
       afield = afieldset%field(vars%variable(v))
@@ -1551,17 +1534,16 @@ subroutine soca_fields_to_fieldset(self, vars, afieldset, masked)
         name=vars%variable(v), kind=atlas_real(kind_real), levels=field%nz)
       meta = afield%metadata()
       call meta%set('interp_type', 'default')
+      if (field%metadata%masked) then
+        call meta%set('interp_source_point_mask', 'interp_mask')
+      end if
       call afieldset%add(afield)
     end if
 
     ! create and fill field
     call afield%data(real_ptr)
     do z=1,field%nz
-      if (associated(mask)) then
-        real_ptr(z,:) = pack(field%val(:,:, z), mask=mask/=0)
-      else
-        real_ptr(z,:) = pack(field%val(:,:, z), mask=.true.)
-      end if
+        real_ptr(z,:) = pack(field%val(:,:, z), mask=self%geom%valid_halo_mask)
     end do
     call afield%final()
 
@@ -1587,6 +1569,7 @@ subroutine soca_fields_to_fieldset_ad(self, vars, afieldset, masked)
   real(kind=kind_real), pointer :: real_ptr(:,:)
   real(kind=kind_real), pointer :: tmp(:,:)
 
+  stop 42
   ! start/stop idx, assuming halo
   is = self%geom%isd; ie = self%geom%ied
   js = self%geom%jsd; je = self%geom%jed
@@ -1631,11 +1614,10 @@ end subroutine
 
 ! ------------------------------------------------------------------------------
 !> Set the our values from an atlas fieldset
-subroutine soca_fields_from_fieldset(self, vars, afieldset, masked)
+subroutine soca_fields_from_fieldset(self, vars, afieldset)
   class(soca_fields), target, intent(inout) :: self
   type(oops_variables),       intent(in)    :: vars
   type(atlas_fieldset),       intent(in)    :: afieldset
-  logical,                    intent(in)    :: masked
 
   integer :: jvar, i, jz, ngrid(2)
   real(kind=kind_real), pointer :: real_ptr(:,:)
@@ -1643,10 +1625,6 @@ subroutine soca_fields_from_fieldset(self, vars, afieldset, masked)
   character(len=1024) :: fieldname
   type(soca_field), pointer :: field
   type(atlas_field) :: afield
-
-  if (masked) then
-    call abor1_ftn('soca_fields_from_fieldset() does not support masked=true')
-  end if
 
   ngrid = (/self%geom%ied-self%geom%isd+1, self%geom%jed-self%geom%jsd+1/)
 
@@ -1664,7 +1642,8 @@ subroutine soca_fields_from_fieldset(self, vars, afieldset, masked)
         ! Copy data
         call afield%data(real_ptr)
         do jz=1,field%nz
-          field%val(:,:,jz) = reshape(real_ptr(jz,:), ngrid)
+          ! NOTE, any missing values from unpacking are filled with 0.0
+          field%val(:,:,jz) = unpack(real_ptr(jz,:), self%geom%valid_halo_mask, 0.0_kind_real)
         end do
 
         ! Release pointer
