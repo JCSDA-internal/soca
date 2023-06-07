@@ -101,8 +101,9 @@ namespace soca {
       void zero();
       void accumul(const double &, const State &);
 
-      /// Interfaces required for OOPS interpolation
+      /// ATLAS Interfaces
       void toFieldSet(atlas::FieldSet &) const;
+      void fromFieldSet(const atlas::FieldSet &);
 
    private:
       void print(std::ostream &) const override;

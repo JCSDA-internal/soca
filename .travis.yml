@@ -20,7 +20,7 @@
 env:
   global:
     - MAIN_REPO=soca
-    - LIB_REPOS="gsw mom6 icepack oops ioda ufo saber"
+    - LIB_REPOS="gsw mom6 icepack oops vader ioda ufo saber"
     - BUILD_OPT="-DBUILD_ICEPACK=ON"
     - BUILD_OPT_mom6="-DENABLE_OCEAN_BGC=ON"
     - BUILD_OPT_oops="-DENABLE_QG_MODEL=OFF -DENABLE_LORENZ95_MODEL=OFF"
