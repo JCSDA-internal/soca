@@ -982,7 +982,7 @@ subroutine soca_geom_struct2atlas(self, dx_struct, dx_atlas)
   afield = self%functionspaceInchalo%create_field('var',kind=atlas_real(kind_real),levels=1)
   call dx_atlas%add(afield)
   call afield%data(real_ptr)
-  real_ptr(1,:) = pack(dx_struct, .true.)
+  real_ptr(1,:) = pack(dx_struct, self%valid_halo_mask)
   call afield%final()
 
 end subroutine soca_geom_struct2atlas
@@ -1002,7 +1002,7 @@ subroutine soca_geom_atlas2struct(self, dx_struct, dx_atlas)
 
   afield = dx_atlas%field('var')
   call afield%data(real_ptr)
-  dx_struct = reshape(real_ptr(1,:), (/(self%ied-self%isd+1),(self%jed-self%jsd+1)/))
+  dx_struct = unpack(real_ptr(1,:), self%valid_halo_mask, 0.0_kind_real)
 
   call afield%final()
 
