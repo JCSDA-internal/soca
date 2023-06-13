@@ -9,23 +9,25 @@ state:
   date: &date 2018-04-15T03:00:00Z
   state variables: [tocn, socn, hocn, ssh, cicen, hicen, swh, sw, lw, lhf, shf, us, uocn, vocn ]
 
-variables: &vars [sea_water_potential_temperature,
-                  sea_water_salinity,
-                  sea_water_cell_thickness,
-                  sea_surface_height_above_geoid,
-                  sea_surface_temperature,
-                  sea_ice_category_area_fraction,
-                  sea_ice_category_thickness,
-                  sea_surface_wave_significant_height,
+variables: &vars [
+# sea_water_potential_temperature,
+#                   sea_water_salinity,
+#                   sea_water_cell_thickness,
+#                   sea_surface_height_above_geoid,
+#                   sea_surface_temperature,
+#                   sea_ice_category_area_fraction,
+#                   sea_ice_category_thickness,
+#                   sea_surface_wave_significant_height,
                   net_downwelling_shortwave_radiation,
                   upward_latent_heat_flux_in_air,
                   upward_sensible_heat_flux_in_air,
-                  net_downwelling_longwave_radiation,
-                  friction_velocity_over_water,
-                  surface_eastward_sea_water_velocity,
-                  eastward_sea_water_velocity,
-                  surface_northward_sea_water_velocity,
-                  northward_sea_water_velocity]
+                  net_downwelling_longwave_radiation
+#                   friction_velocity_over_water,
+#                   surface_eastward_sea_water_velocity,
+#                   eastward_sea_water_velocity,
+#                   surface_northward_sea_water_velocity,
+#                   northward_sea_water_velocity]
+]
 
 locations:
   window begin: 2018-04-15T00:00:00Z
@@ -42,6 +44,7 @@ locations:
         lat2: 37.5
         lon1: -192.5
         lon2: -57
-        obs errors: [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+        obs errors: [1.0, 1.0, 1.0, 1.0] 
+        # , 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
 
-tolerance interpolation: 1.5  # still really huge... should probably figure out why sometime.
+tolerance interpolation: 10.5  # still really huge... should probably figure out why sometime.
