@@ -26,7 +26,7 @@ linear variable change tests:
       ocn_filename: ocn.bkgerror.nc
       ice_filename: ice.bkgerror.nc
       date: *date
-      standard deviation: false
+      standard deviation: true
       save bkgerr: true
       t_min: 0.0
       t_max: 2.5
