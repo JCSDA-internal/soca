@@ -28,6 +28,7 @@ set( soca_test_input
   testinput/enshofx_3.yml
   testinput/enshofx.yml
   testinput/enspert.yml
+  testinput/ensmeanandvariance.yml
   testinput/ensrecenter.yml
   testinput/ensvariance.yml
   testinput/errorcovariance.yml
@@ -105,6 +106,7 @@ set( soca_test_ref
   testref/dirac_socahyb_cov.test
   testref/enshofx.test
   testref/enspert.test
+  testref/ensmeanandvariance.test
   testref/ensrecenter.test
   testref/ensvariance.test
   testref/forecast_identity.test
@@ -519,6 +521,10 @@ soca_add_test( NAME convertstate_changevar
 
 soca_add_test( NAME ensvariance
                EXE  soca_ensvariance.x
+               TEST_DEPENDS test_soca_gridgen )
+
+soca_add_test( NAME ensmeanandvariance
+               EXE  soca_ensmeanandvariance.x
                TEST_DEPENDS test_soca_gridgen )
 
 soca_add_test( NAME parametric_stddev
