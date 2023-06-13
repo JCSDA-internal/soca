@@ -3,33 +3,28 @@ geometry:
   mom6_input_nml: data_static/72x35x25/input.nml
   fields metadata: data_static/fields_metadata.yml
 
-recenter variables:  &soca_vars [cicen, hicen, socn, tocn, uocn, vocn, ssh, hocn]
+recenter variables: [cicen, hicen, socn, tocn, uocn, vocn, ssh, hocn]
 
-_file: &_file
+center:
   read_from_file: 1
   date: &date_bkg 2018-04-15T00:00:00Z
   basename: data_static/72x35x25/
-  remap_filename: data_static/72x35x25/restarts/MOM.res.nc
-  state variables:  *soca_vars
-
-center:
-  <<: *_file
   ocn_filename: restarts/MOM.res.nc
   ice_filename: restarts/cice.res.nc
+  state variables: [cicen, hicen, socn, tocn, uocn, vocn, ssh, hocn]
 
 ensemble:
-- <<: *_file
-  ocn_filename: restarts_ens/ocn.enspert.ens.1.2018-04-15T00:00:00Z.PT0S.nc
-  ice_filename: restarts_ens/ice.enspert.ens.1.2018-04-15T00:00:00Z.PT0S.nc
-- <<: *_file
-  ocn_filename: restarts_ens/ocn.enspert.ens.2.2018-04-15T00:00:00Z.PT0S.nc
-  ice_filename: restarts_ens/ice.enspert.ens.2.2018-04-15T00:00:00Z.PT0S.nc
-- <<: *_file
-  ocn_filename: restarts_ens/ocn.enspert.ens.3.2018-04-15T00:00:00Z.PT0S.nc
-  ice_filename: restarts_ens/ice.enspert.ens.3.2018-04-15T00:00:00Z.PT0S.nc
-- <<: *_file
-  ocn_filename: restarts_ens/ocn.enspert.ens.4.2018-04-15T00:00:00Z.PT0S.nc
-  ice_filename: restarts_ens/ice.enspert.ens.4.2018-04-15T00:00:00Z.PT0S.nc
+  members from template:
+    template:
+      read_from_file: 1
+      date: 2018-04-15T00:00:00Z
+      basename: data_static/72x35x25/
+      remap_filename: data_static/72x35x25/restarts/MOM.res.nc
+      ocn_filename: restarts_ens/ocn.enspert.ens.%mem%.2018-04-15T00:00:00Z.PT0S.nc
+      ice_filename: restarts_ens/ice.enspert.ens.%mem%.2018-04-15T00:00:00Z.PT0S.nc
+      state variables: [cicen, hicen, socn, tocn, uocn, vocn, ssh, hocn]
+    pattern: %mem%
+    nmembers: 4
 
 recentered output:
   datadir: data_generated/ensrecenter
