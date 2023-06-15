@@ -76,6 +76,11 @@ observations:
       min grid mult: 2.0
       min value: 200.0e3
       max value: 900.0e3
+    obs filters:
+    - filter: Domain Check
+      where:
+      - variable: {name: GeoVaLs/sea_area_fraction}
+        minvalue: 0.5      
 
 driver:
   do posterior observer: true

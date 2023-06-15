@@ -14,7 +14,6 @@
 #include "soca/Geometry/Geometry.h"
 #include "soca/GeometryIterator/GeometryIterator.h"
 #include "soca/Increment/Increment.h"
-#include "soca/Interpolator/LocalUnstructuredInterpolator.h"
 #include "soca/LinearVariableChange/LinearVariableChange.h"
 #include "soca/ModelBias/ModelBias.h"
 #include "soca/ModelBias/ModelBiasCovariance.h"
@@ -39,7 +38,6 @@ struct Traits {
   typedef soca::State                State;
   typedef soca::Increment            Increment;
   typedef soca::ErrorCovariance      Covariance;
-  typedef soca::LocalUnstructuredInterpolator LocalInterpolator;
 
   typedef soca::ModelBias            ModelAuxControl;
   typedef soca::ModelBiasIncrement   ModelAuxIncrement;
