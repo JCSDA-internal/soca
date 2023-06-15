@@ -216,180 +216,55 @@ end subroutine soca_geo_get_num_levels_c
 
 ! ------------------------------------------------------------------------------
 !> Get the number of points valid in the local grid (skipping masked points)
-subroutine soca_geo_gridsize_c(c_key_self, c_grid, c_masked, c_halo, c_size) &
+subroutine soca_geo_gridsize_c(c_key_self, c_halo, c_size) &
            bind(c, name='soca_geo_gridsize_f90')
   integer(c_int),    intent(in) :: c_key_self
-  character(c_char), intent(in) :: c_grid    !< u/v/h  for the corresponding grid
-  logical(c_bool),   intent(in) :: c_masked  !< true if using a masked grid
   logical(c_bool),   intent(in) :: c_halo    !< true if halo should be included in number of points
   integer(c_int),    intent(out):: c_size    !< the resulting number of gridpoints
 
   type(soca_geom), pointer :: self
-  real(kind=kind_real),     pointer :: mask(:,:) => null() !< field mask
-  real(kind=kind_real),     pointer :: lon(:,:) => null()  !< field lon
-  real(kind=kind_real),     pointer :: lat(:,:) => null()  !< field lat
-  integer :: is, ie, js, je
 
   call soca_geom_registry%get(c_key_self, self)
-
-  ! get the correct grid and mask
-  select case(c_grid)
-  case ('h')
-    lon => self%lon
-    lat => self%lat
-    mask => self%mask2d
-  case ('u')
-    lon => self%lonu
-    lat => self%latu
-    mask => self%mask2du
-  case ('v')
-    lon => self%lonv
-    lat => self%latv
-    mask => self%mask2dv
-  case default
-    call abor1_ftn('error in soca_geo_gridsize_c. grid: '//c_grid)
-  end select
-
-  ! get the starting/ending index based on whether we need the halo
   if (c_halo) then
-    is = self%isd; ie = self%ied
-    js = self%jsd; je = self%jed
+    c_size = self%ngrid_halo_valid
   else
-    is = self%isc; ie = self%iec
-    js = self%jsc; je = self%jec
-  end if
-
-  ! count number of point depending on whether masked
-  if (c_masked) then
-    c_size = count(mask(is:ie, js:je) /= 0)
-  else
-    c_size = (ie - is + 1) * (je - js + 1)
+    c_size = self%ngrid
   end if
 end subroutine soca_geo_gridsize_c
 
 ! ------------------------------------------------------------------------------
-!> return the mask for the given grid. 0.0 represents masked out points
-subroutine soca_geo_gridmask_c(c_key_self, c_grid, c_halo, c_size, c_mask) &
-  bind(c, name='soca_geo_gridmask_f90')
-
-  integer(c_int),    intent(in) :: c_key_self
-  character(c_char), intent(in) :: c_grid
-  logical(c_bool),   intent(in) :: c_halo
-  integer(c_int),    intent(in) :: c_size
-  real(c_double),    intent(inout) :: c_mask(c_size)
-
-  type(soca_geom), pointer :: self
-  real(kind=kind_real),     pointer :: mask(:,:) => null() !< field mask
-  integer :: is, ie, js, je, idx, i, j
-
-  call soca_geom_registry%get(c_key_self, self)
-
-  ! get the correct grid and mask
-  select case(c_grid)
-  case ('h')
-    mask => self%mask2d
-  case ('u')
-    mask => self%mask2du
-  case ('v')
-    mask => self%mask2dv
-  case default
-    call abor1_ftn('error in soca_geo_gridlatlon_c. grid: '//c_grid)
-  end select
-
-  ! get the starting/ending index based on whether we need the halo
-  if (c_halo) then
-    is = self%isd; ie = self%ied
-    js = self%jsd; je = self%jed
-  else
-    is = self%isc; ie = self%iec
-    js = self%jsc; je = self%jec
-  end if
-
-  c_mask(:) = pack(mask(is:ie,js:je), mask=.true.)
-end subroutine
-
-! ------------------------------------------------------------------------------
-!> Get the lat/lons for a specific grid (u/v/h)
-subroutine soca_geo_gridlatlon_c(c_key_self, c_grid, c_masked, c_halo, c_size, &
+!> Get the lat/lons for the h grid
+!> If c_halo is true, then only the "valid" halo points are used
+!> (i.e. duplicate halo points and invalid halo points are skipped)
+subroutine soca_geo_gridlatlon_c(c_key_self, c_halo, c_size, &
     c_lat, c_lon) bind(c, name='soca_geo_gridlatlon_f90')
 
   integer(c_int),    intent(in) :: c_key_self
-  character(c_char), intent(in) :: c_grid
-  logical(c_bool),   intent(in) :: c_masked, c_halo
+  logical(c_bool),   intent(in) :: c_halo
   integer(c_int),    intent(in) :: c_size
   real(c_double),    intent(inout)  :: c_lat(c_size), c_lon(c_size)
 
   type(soca_geom), pointer :: self
-  real(kind=kind_real),     pointer :: mask(:,:) => null() !< field mask
   real(kind=kind_real),     pointer :: lon(:,:) => null()  !< field lon
   real(kind=kind_real),     pointer :: lat(:,:) => null()  !< field lat
-  integer :: is, ie, js, je, idx, i, j
 
   call soca_geom_registry%get(c_key_self, self)
-
-  ! get the correct grid and mask
-  select case(c_grid)
-  case ('h')
-    lon => self%lon
-    lat => self%lat
-    mask => self%mask2d
-  case ('u')
-    lon => self%lonu
-    lat => self%latu
-    mask => self%mask2du
-  case ('v')
-    lon => self%lonv
-    lat => self%latv
-    mask => self%mask2dv
-  case default
-    call abor1_ftn('error in soca_geo_gridlatlon_c. grid: '//c_grid)
-  end select
-
-  ! get the starting/ending index based on whether we need the halo
+  
+  ! TODO: re-enable the ability to get lat/lon for different grids?
+  ! For now just use h grid
+  lon => self%lon
+  lat => self%lat
+  
   if (c_halo) then
-    is = self%isd; ie = self%ied
-    js = self%jsd; je = self%jed
+    ! get all lat/lon points, except for duplicate or invalid halo points
+    c_lat(:) = pack(self%lat, mask=self%valid_halo_mask)
+    c_lon(:) = pack(self%lon, mask=self%valid_halo_mask)
   else
-    is = self%isc; ie = self%iec
-    js = self%jsc; je = self%jec
-  end if
-
-  if (c_masked)   then
-    c_lat(:) = pack(lat(is:ie,js:je), mask=mask(is:ie,js:je)/=0)
-    c_lon(:) = pack(lon(is:ie,js:je), mask=mask(is:ie,js:je)/=0)
-  else
-    c_lat(:) = pack(lat(is:ie,js:je), mask=.true.)
-    c_lon(:) = pack(lon(is:ie,js:je), mask=.true.)
+    ! get all non-halo lat/lon points
+    c_lat(:) = pack(self%lat(self%isc:self%iec, self%jsc:self%jec), .true.)
+    c_lon(:) = pack(self%lon(self%isc:self%iec, self%jsc:self%jec), .true.)
   end if
 end subroutine
-
-! ------------------------------------------------------------------------------
-!> Get the grid (u/v/h) that a given variable belongs on
-subroutine soca_geo_getvargrid_c(c_key_self, c_vars, c_grid, c_masked) &
-  bind(c, name="soca_geo_getvargrid_f90")
-integer(c_int),     intent(in)  :: c_key_self
-type(c_ptr), value, intent(in)  :: c_vars
-character(c_char),  intent(inout) :: c_grid
-logical(c_bool),    intent(inout) :: c_masked
-
-type(soca_geom), pointer :: self
-type(oops_variables)     :: vars
-type(soca_field_metadata) :: metadata
-character(len=:), allocatable :: var_name
-
-call soca_geom_registry%get(c_key_self, self)
-vars = oops_variables(c_vars)
-
-! TODO cleanup
-if (vars%nvars() /= 1) then
-  call abor1_ftn('error in soca_geo_getvargrid_c. Wrong number of vars')
-end if
-var_name = trim(vars%variable(1))
-metadata = self%fields_metadata%get(var_name)
-c_grid = metadata%grid
-c_masked = metadata%masked
-
-end subroutine soca_geo_getvargrid_c
 
 ! ------------------------------------------------------------------------------
 end module soca_geom_mod_c
