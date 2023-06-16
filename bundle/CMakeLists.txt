@@ -53,12 +53,12 @@ option(BUILD_UFSM6C6 "download and install the UFS" OFF)
 
 # required repositories
 
-ecbuild_bundle( PROJECT oops            GIT "https://github.com/jcsda-internal/oops.git"            UPDATE TAG 668a821 )
-ecbuild_bundle( PROJECT vader           GIT "https://github.com/jcsda-internal/vader.git"           UPDATE TAG 166090d )
-ecbuild_bundle( PROJECT saber           GIT "https://github.com/jcsda-internal/saber.git"           UPDATE TAG 1c35ddd )
-ecbuild_bundle( PROJECT ioda            GIT "https://github.com/jcsda-internal/ioda.git"            UPDATE TAG 0d1f772 )
+ecbuild_bundle( PROJECT oops            GIT "https://github.com/jcsda-internal/oops.git"            UPDATE TAG 2426c20 )
+ecbuild_bundle( PROJECT vader           GIT "https://github.com/jcsda-internal/vader.git"           UPDATE TAG 4264b56 )
+ecbuild_bundle( PROJECT saber           GIT "https://github.com/jcsda-internal/saber.git"           UPDATE TAG d90ce52 )
+ecbuild_bundle( PROJECT ioda            GIT "https://github.com/jcsda-internal/ioda.git"            UPDATE TAG 4e5320b )
 ecbuild_bundle( PROJECT gsw             GIT "https://github.com/jcsda-internal/GSW-Fortran.git"     UPDATE TAG 1a02eba )
-ecbuild_bundle( PROJECT ufo             GIT "https://github.com/jcsda-internal/ufo.git"             UPDATE TAG 75d7cac )
+ecbuild_bundle( PROJECT ufo             GIT "https://github.com/jcsda-internal/ufo.git"             UPDATE TAG 6f64433 )
 ecbuild_bundle( PROJECT mom6            GIT "https://github.com/jcsda-internal/MOM6.git"            UPDATE TAG 51ec489 RECURSIVE )
 ecbuild_bundle( PROJECT soca            SOURCE "../" )
 
