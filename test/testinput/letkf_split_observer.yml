@@ -76,6 +76,9 @@ observations:
     obs localizations:
     - localization method: Horizontal Gaspari-Cohn
       lengthscale: 0
+    obs filters:
+    - *land_mask
+
 
 driver:
   run as observer only: true

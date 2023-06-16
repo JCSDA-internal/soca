@@ -61,6 +61,7 @@ subroutine soca_bkgerr_setup(self, f_conf, bkg, geom)
   integer :: i
   type(datetime) :: vdate
   character(len=800) :: fname = 'soca_bkgerrsoca.nc'
+  logical :: stddev, save_bkgerr
 
   self%geom => geom
 
@@ -68,18 +69,24 @@ subroutine soca_bkgerr_setup(self, f_conf, bkg, geom)
   call self%std_bkgerr%copy(bkg)
   !call create_copy(self%std_bkgerr, bkg)
 
-  ! Read variance
+  ! Read variance (default) or standard deviation
   ! Precomputed from an ensemble of (K^-1 dx)
+  stddev = .false.
+  if (f_conf%has("standard deviation")) then
+     call f_conf%get_or_die("standard deviation", stddev)
+  end if
   call self%std_bkgerr%read(f_conf, vdate)
 
   ! Convert to standard deviation
-  do i=1,size(self%std_bkgerr%fields)
-    field => self%std_bkgerr%fields(i)
-    select case(field%name)
-    case ("tocn", "socn", "ssh")
-      field%val = sqrt(field%val)
-    end select
-  end do
+  if (.not.stddev) then
+    do i=1,size(self%std_bkgerr%fields)
+      field => self%std_bkgerr%fields(i)
+      select case(field%name)
+      case ("tocn", "socn", "ssh")
+        field%val = sqrt(field%val)
+      end select
+    end do
+  end if
 
   ! Get bounds from configuration
   call self%bounds%read(f_conf)
@@ -116,7 +123,10 @@ subroutine soca_bkgerr_setup(self, f_conf, bkg, geom)
   call self%bounds%apply(self%std_bkgerr)
 
   ! Save filtered background error
-  call self%std_bkgerr%write_file(fname)
+  if (f_conf%has("save bkgerr")) then
+     call f_conf%get_or_die("save bkgerr", save_bkgerr)
+     if (save_bkgerr) call self%std_bkgerr%write_file(fname)
+  end if
 
 end subroutine soca_bkgerr_setup
 

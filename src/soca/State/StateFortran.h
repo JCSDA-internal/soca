@@ -69,12 +69,10 @@ namespace soca {
     void soca_state_update_fields_f90(const F90flds &, const oops::Variables &);
     void soca_state_to_fieldset_f90(const F90flds &,
                                     const oops::Variables &,
-                                    atlas::field::FieldSetImpl *,
-                                    const bool &);
+                                    atlas::field::FieldSetImpl *);
     void soca_state_from_fieldset_f90(const F90flds &,
                                    const oops::Variables &,
-                                   const atlas::field::FieldSetImpl *,
-                                   const bool &);
+                                   const atlas::field::FieldSetImpl *);
   }
 }  // namespace soca
 #endif  // SOCA_STATE_STATEFORTRAN_H_
