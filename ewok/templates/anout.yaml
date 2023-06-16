@@ -1,5 +1,0 @@
-type : an
-date: '{{current_cycle}}'
-date colons: false
-exp: $(expid)
-datadir: ./
