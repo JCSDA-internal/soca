@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include <string>
 #include "eckit/config/LocalConfiguration.h"
 #include "oops/util/Printable.h"
 
@@ -22,11 +23,11 @@ class ModelData : public util::Printable {
  public:
   static const std::string classname() {return "soca::ModelData";}
 
-  explicit ModelData(const Geometry &){}
-  ~ModelData(){}
+  explicit ModelData(const Geometry &) {}
+  ~ModelData() {}
 
   const eckit::LocalConfiguration modelData() const {return eckit::LocalConfiguration();}
-  
+
  private:
   void print(std::ostream & os) const {}
 };
