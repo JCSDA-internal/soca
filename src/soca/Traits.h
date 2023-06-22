@@ -18,6 +18,7 @@
 #include "soca/ModelBias/ModelBias.h"
 #include "soca/ModelBias/ModelBiasCovariance.h"
 #include "soca/ModelBias/ModelBiasIncrement.h"
+#include "soca/ModelData/ModelData.h"
 #include "soca/State/State.h"
 #include "soca/VariableChange/VariableChange.h"
 
@@ -45,6 +46,7 @@ struct Traits {
 
   typedef soca::LinearVariableChange LinearVariableChange;
   typedef soca::VariableChange       VariableChange;
+  typedef soca::ModelData            ModelData;
 };
 
 }  // namespace soca

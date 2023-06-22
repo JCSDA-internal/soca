@@ -463,12 +463,12 @@ soca_add_test( NAME forecast_pseudo
 #---------------------------------------------------------------------------------------------------
 
 soca_add_test( NAME static_socaerror_init
-               EXE  soca_staticbinit.x
+               EXE  soca_error_covariance_toolbox.x
                #  NOTRAPFPE
                TEST_DEPENDS test_soca_gridgen )
 
 soca_add_test( NAME static_socaerrorlowres_init
-               EXE  soca_staticbinit.x
+               EXE  soca_error_covariance_toolbox.x
                #  NOTRAPFPE
                TEST_DEPENDS test_soca_gridgen )
 
@@ -479,21 +479,21 @@ soca_add_test( NAME setcorscales
 
 soca_add_test( NAME parameters_bump_cor_nicas
                NOTRAPFPE
-               EXE  soca_error_covariance_training.x
+               EXE  soca_error_covariance_toolbox.x
                TEST_DEPENDS test_soca_gridgen)
 
 soca_add_test( NAME parameters_bump_cor_nicas_scales
                NOTRAPFPE
-               EXE  soca_error_covariance_training.x
+               EXE  soca_error_covariance_toolbox.x
                TEST_DEPENDS test_soca_gridgen
                             test_soca_setcorscales)
 
 soca_add_test( NAME parameters_bump_loc
-               EXE  soca_error_covariance_training.x
+               EXE  soca_error_covariance_toolbox.x
                TEST_DEPENDS test_soca_gridgen )
 
 soca_add_test( NAME parameters_bump_cov
-               EXE  soca_error_covariance_training.x
+               EXE  soca_error_covariance_toolbox.x
                NOTRAPFPE )
 
 
@@ -556,34 +556,34 @@ soca_add_test( NAME diffstates
 #---------------------------------------------------------------------------------------------------
 
 soca_add_test( NAME dirac_soca_cor_nicas_scales
-               EXE  soca_dirac.x
+               EXE  soca_error_covariance_toolbox.x
                TEST_DEPENDS test_soca_gridgen
                             parameters_bump_cor_nicas_scales)
 
 soca_add_test( NAME dirac_soca_cov
-               EXE  soca_dirac.x
+               EXE  soca_error_covariance_toolbox.x
                TEST_DEPENDS test_soca_gridgen
                             test_soca_static_socaerror_init)
 
 soca_add_test( NAME dirac_socahyb_cov
-               EXE  soca_dirac.x
+               EXE  soca_error_covariance_toolbox.x
                TEST_DEPENDS test_soca_gridgen
                             test_soca_static_socaerror_init
                             test_soca_parameters_bump_loc)
 
 soca_add_test( NAME dirac_horizfilt
-               EXE  soca_dirac.x
+               EXE  soca_error_covariance_toolbox.x
                TEST_DEPENDS test_soca_gridgen
                             test_soca_static_socaerror_init)
 
 soca_add_test( NAME dirac_soca_mask
-               EXE  soca_dirac.x
+               EXE  soca_error_covariance_toolbox.x
                NOTRAPFPE
                TEST_DEPENDS test_soca_gridgen
                             test_soca_static_socaerror_init)
 
 soca_add_test( NAME dirac_soca_nomask
-               EXE  soca_dirac.x
+               EXE  soca_error_covariance_toolbox.x
                NOTRAPFPE
                TEST_DEPENDS test_soca_gridgen
                             test_soca_static_socaerror_init)
