@@ -1006,7 +1006,7 @@ subroutine soca_fields_read(self, f_conf, vdate)
             select case(field%name)
             ! TODO remove hardcoded variable names here
             ! TODO Remapping u and v is only valid if they are on the tracer grid point.
-            case ('tocn','socn','uocn','vocn')
+            case ('tocn','socn','uocn','vocn','chl','biop','po4')
               if (associated(field%mask) .and. field%mask(i,j).eq.1) then
                 varocn_ij = field%val(i,j,:)
                 call remapping_core_h(remapCS, nz, h_common_ij, varocn_ij,&
