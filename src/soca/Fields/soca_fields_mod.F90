@@ -361,7 +361,7 @@ subroutine soca_field_stencil_interp(self, geom, fromto)
            ! source point on land, skip
            if (masksrc_local(ij(1,sti), ij(2,sti)) == 0_kind_real) cycle
 
-           ! outcroping of layers, skip 
+           ! outcroping of layers, skip
            if (abs(self%val(ij(1,sti), ij(2,sti),1)) > val_max) cycle
 
            ! store the valid neighbors
@@ -1005,8 +1005,8 @@ subroutine soca_fields_read(self, f_conf, vdate)
             field => self%fields(n)
             select case(field%name)
             ! TODO remove hardcoded variable names here
-            ! TODO Add u and v. Remapping u and v will require interpolating h
-            case ('tocn','socn')
+            ! TODO Remapping u and v is only valid if they are on the tracer grid point.
+            case ('tocn','socn','uocn','vocn')
               if (associated(field%mask) .and. field%mask(i,j).eq.1) then
                 varocn_ij = field%val(i,j,:)
                 call remapping_core_h(remapCS, nz, h_common_ij, varocn_ij,&
