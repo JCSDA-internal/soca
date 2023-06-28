@@ -27,7 +27,6 @@ namespace eckit {
 }
 namespace ufo {
   class GeoVaLs;
-  class Locations;
 }
 namespace soca {
   class Geometry;
@@ -65,6 +64,10 @@ namespace soca {
       void rotate2north(const oops::Variables &, const oops::Variables &) const;
       void rotate2grid(const oops::Variables &, const oops::Variables &) const;
 
+      /// Staggered grid interpolation
+      void tohgrid(const oops::Variables &, const oops::Variables &) const;
+      void tocgrid(const oops::Variables &, const oops::Variables &) const;
+
       /// Logarithmic and exponential transformations
       void logtrans(const oops::Variables &) const;
       void expontrans(const oops::Variables &) const;
@@ -98,8 +101,9 @@ namespace soca {
       void zero();
       void accumul(const double &, const State &);
 
-      /// Interfaces required for OOPS interpolation
+      /// ATLAS Interfaces
       void toFieldSet(atlas::FieldSet &) const;
+      void fromFieldSet(const atlas::FieldSet &);
 
    private:
       void print(std::ostream &) const override;

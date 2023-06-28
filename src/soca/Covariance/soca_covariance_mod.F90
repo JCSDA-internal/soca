@@ -267,7 +267,7 @@ subroutine soca_bump_correlation(self, horiz_convol, geom, f_conf_bump, f_conf_d
   real(kind=kind_real), pointer :: real_ptr(:,:)
   real(kind=kind_real), allocatable :: area(:)
   type(atlas_functionspace) :: afunctionspace
-  type(fieldset_type) :: afieldset, rh, rv, universe_rad
+  type(fieldset_type) :: afieldset, rh, rv
   type(atlas_field) :: afield
   real(kind=kind_real) :: r_base, r_mult, r_min, r_max, r_min_grid
 
@@ -280,7 +280,7 @@ subroutine soca_bump_correlation(self, horiz_convol, geom, f_conf_bump, f_conf_d
   ! Add area
   afield = geom%functionspaceInchalo%create_field(name='area', kind=atlas_real(kind_real), levels=1)
   call afield%data(real_ptr)
-  area = pack(geom%cell_area,.true.)
+  area = pack(geom%cell_area,geom%valid_halo_mask)
   real_ptr(1,:) = area
   call afieldset%add(afield)
   call afield%final()
@@ -295,7 +295,7 @@ subroutine soca_bump_correlation(self, horiz_convol, geom, f_conf_bump, f_conf_d
   ! Add geographical mask
   afield = geom%functionspaceInchalo%create_field(name='gmask', kind=atlas_integer(kind(0)), levels=1)
   call afield%data(int_ptr)
-  int_ptr(1,:) = int(pack(geom%mask2d,.true.))
+  int_ptr(1,:) = int(pack(geom%mask2d,geom%valid_halo_mask))
   call afieldset%add(afield)
   call afield%final()
 
@@ -304,16 +304,15 @@ subroutine soca_bump_correlation(self, horiz_convol, geom, f_conf_bump, f_conf_d
   hmask = 0
   hmask(geom%isc:geom%iec, geom%jsc:geom%jec) = 1
   call afield%data(int_ptr)
-  int_ptr(1,:) = pack(hmask, .true.)
+  int_ptr(1,:) = pack(hmask, geom%valid_halo_mask)
   call afieldset%add(afield)
   call afield%final()
-  universe_rad = atlas_fieldset()
 
   ! Set verbosity
   horiz_convol%mpl%verbose = (geom%f_comm%rank()==0)
 
   ! Create BUMP object
-  call horiz_convol%create(geom%f_comm,afunctionspace,afieldset,f_conf_bump,universe_rad)
+  call horiz_convol%create(geom%f_comm,afunctionspace,afieldset,f_conf_bump)
 
   if (horiz_convol%nam%new_nicas) then
     ! get parameters for correlation lengths
@@ -332,7 +331,7 @@ subroutine soca_bump_correlation(self, horiz_convol, geom, f_conf_bump, f_conf_d
     afield = geom%functionspaceInchalo%create_field('var',kind=atlas_real(kind_real),levels=1)
     call rh%add(afield)
     call afield%data(real_ptr)
-    real_ptr(1,:) = r_base + r_mult*pack(geom%rossby_radius, .true.)
+    real_ptr(1,:) = r_base + r_mult*pack(geom%rossby_radius, geom%valid_halo_mask)
     ! min based on grid size
     if (r_min_grid .gt. 0.0) then
       real_ptr(1,:) = max(real_ptr(1,:),  sqrt(area)*r_min_grid )

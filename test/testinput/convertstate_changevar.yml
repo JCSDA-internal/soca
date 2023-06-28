@@ -10,11 +10,12 @@ input geometry: &geom
 output geometry: *geom
 
 variable change:
-  variable change name: Ana2Model
+  variable change name: Model2Ana
   do inverse: false
   rotate:
     u: [uocn]
     v: [vocn]
+  interp: true
   log:
     var: [socn, chl]
   output variables: *soca_vars

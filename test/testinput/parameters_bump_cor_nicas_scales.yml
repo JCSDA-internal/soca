@@ -3,61 +3,59 @@ geometry:
   mom6_input_nml: data_static/72x35x25/input.nml
   fields metadata: data_static/fields_metadata.yml
 
-input variables: [socn, tocn, uocn, vocn, ssh, cicen, hicen]
-
 background:
   read_from_file: 1
   date: &date 2018-04-15T00:00:00Z
   basename: data_static/72x35x25/restarts/
   ocn_filename: MOM.res.nc
   ice_filename: cice.res.nc
-  state variables: [socn, tocn, uocn, vocn, ssh, hocn, cicen, hicen]
+  state variables: [socn, tocn, uocn, vocn, ssh, cicen, hicen]
 
-bump:
-  io:
-    data directory: data_generated/parameters_bump_cor_nicas_scales
-  drivers:
-    multivariate strategy: univariate
-    compute nicas: true
-    write local nicas: true
-  model:
-    do not cross mask boundaries: true
-  nicas:
-    resolution: 6.0
-  grids:
-  - model:
-      variables:
-      - socn
-      - tocn
-      - uocn
-      - vocn
-    io:
-      files prefix: bump3d
-  - model:
-      variables:
-      - ssh
-      - cicen
-      - hicen
-    io:
-      files prefix: bump2d
-
-input fields:
-- parameter: rh
-  file:
-    read_from_file: 1
-    date: *date
-    basename: data_generated/setcorscales/
-    ocn_filename: ocn.cor_rh.incr.2018-04-15T00:00:00Z.nc
-    ice_filename: ice.cor_rh.incr.2018-04-15T00:00:00Z.nc
-    state variables: [socn, tocn, uocn, vocn, ssh, cicen, hicen]
-- parameter: rv
-  file:
-    read_from_file: 1
-    date: *date
-    basename: data_generated/setcorscales/
-    ocn_filename: ocn.cor_rv.incr.2018-04-15T00:00:00Z.nc
-    ice_filename: ice.cor_rv.incr.2018-04-15T00:00:00Z.nc
-    state variables: [socn, tocn, uocn, vocn, ssh, cicen, hicen]
+background error:
+  covariance model: SABER
+  saber central block:
+    saber block name: BUMP_NICAS
+    calibration:
+      io:
+        data directory: data_generated/parameters_bump_cor_nicas_scales
+        files prefix: bump
+      drivers:
+        multivariate strategy: univariate
+        compute nicas: true
+        write local nicas: true
+      model:
+        do not cross mask boundaries: true
+      nicas:
+        resolution: 6.0
+      grids:
+      - model:
+          variables:
+          - socn
+          - tocn
+          - uocn
+          - vocn
+      - model:
+          variables:
+          - ssh
+          - cicen
+          - hicen
+      input model files:
+      - parameter: rh
+        file:
+          read_from_file: 1
+          date: *date
+          basename: data_generated/setcorscales/
+          ocn_filename: ocn.cor_rh.incr.2018-04-15T00:00:00Z.nc
+          ice_filename: ice.cor_rh.incr.2018-04-15T00:00:00Z.nc
+          state variables: [socn, tocn, uocn, vocn, ssh, cicen, hicen]
+      - parameter: rv
+        file:
+          read_from_file: 1
+          date: *date
+          basename: data_generated/setcorscales/
+          ocn_filename: ocn.cor_rv.incr.2018-04-15T00:00:00Z.nc
+          ice_filename: ice.cor_rv.incr.2018-04-15T00:00:00Z.nc
+          state variables: [socn, tocn, uocn, vocn, ssh, cicen, hicen]
 
 test:
   reference filename: testref/parameters_bump_cor_nicas_scales.test

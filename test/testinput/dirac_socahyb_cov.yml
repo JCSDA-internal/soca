@@ -3,7 +3,7 @@ geometry:
   mom6_input_nml: data_static/72x35x25/input.nml
   fields metadata: data_static/fields_metadata.yml
 
-initial condition:
+background:
   read_from_file: 1
   basename: data_static/72x35x25/restarts/
   date: &date 2018-04-15T00:00:00Z
@@ -72,10 +72,13 @@ background error:
           input variables: *soca_vars
           output variables: *soca_vars
         - linear variable change name: BalanceSOCA
-          dsdtmax: 0.1
-          dsdzmin: 3.0e-6
-          dtdzmin: 1.0e-6
-          nlayers: 2
+          kst:
+            dsdtmax: 0.1
+            dsdzmin: 3.0e-6
+            dtdzmin: 1.0e-6
+            nlayers: 2
+          ksshts:
+            nlayers: 2
           dcdt:
             filename: data_static/72x35x25/dcdt.nc
             name: dcdt
@@ -102,7 +105,7 @@ background error:
         localization method: SABER
         saber central block:
           saber block name: BUMP_NICAS
-          bump:
+          read:
             io:
               data directory: data_generated/parameters_bump_loc
               files prefix: soca_bump_loc

@@ -23,7 +23,6 @@
 #include "oops/util/Logger.h"
 
 #include "ufo/GeoVaLs.h"
-#include "ufo/Locations.h"
 
 using oops::Log;
 
@@ -103,6 +102,21 @@ namespace soca {
     Log::trace() << "State::State rotate from geographical to logical North."
     << std::endl;
     soca_state_rotate2grid_f90(toFortran(), u, v);
+  }
+  // -----------------------------------------------------------------------------
+  /// Staggered grid interpolation
+  // -----------------------------------------------------------------------------
+  void State::tohgrid(const oops::Variables & u,
+                      const oops::Variables & v) const {
+    Log::trace() << "State::State interpolate vector to h-grid."
+                 << std::endl;
+    soca_state_tohgrid_f90(toFortran());
+  }
+  // -----------------------------------------------------------------------------
+  void State::tocgrid(const oops::Variables & u,
+                      const oops::Variables & v) const {
+    Log::trace() << "State::State interpolate vector to c-grid. NOT IMPLEMENTED"
+                 << std::endl;
   }
   // -----------------------------------------------------------------------------
   /// Interactions with Increments
@@ -240,7 +254,12 @@ namespace soca {
   // -----------------------------------------------------------------------------
 
   void State::toFieldSet(atlas::FieldSet &fset) const {
-    // get field, with halo, and no masked values
-    soca_state_to_fieldset_f90(toFortran(), vars_, fset.get(), false);
+    soca_state_to_fieldset_f90(toFortran(), vars_, fset.get());
+  }
+
+  // -----------------------------------------------------------------------------
+
+  void State::fromFieldSet(const atlas::FieldSet &fs) {
+    soca_state_from_fieldset_f90(toFortran(), vars_, fs.get());
   }
 }  // namespace soca

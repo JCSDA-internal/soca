@@ -27,9 +27,6 @@ use tools_const, only: deg2rad
 use fms_io_mod, only: fms_io_init, fms_io_exit, register_restart_field, &
                       restart_file_type, restore_state, free_restart_type, save_restart
 use fms_mod,    only: write_data, set_domain
-use horiz_interp_mod, only : horiz_interp_type
-use horiz_interp_spherical_mod, only : horiz_interp_spherical, horiz_interp_spherical_del, &
-                                       horiz_interp_spherical_new
 use MOM_remapping, only : remapping_CS, initialize_remapping, remapping_core_h, &
                           end_remapping
 use mpp_domains_mod, only : mpp_update_domains, mpp_update_domains_ad
@@ -38,6 +35,7 @@ use mpp_domains_mod, only : mpp_update_domains, mpp_update_domains_ad
 use soca_fields_metadata_mod, only : soca_field_metadata
 use soca_geom_mod, only : soca_geom
 use soca_utils, only: soca_mld
+use soca_utils, only: soca_stencil_interp, soca_stencil_neighbors
 
 implicit none
 private
@@ -199,8 +197,8 @@ contains
   !> \copybrief soca_fields_update_halos \see soca_fields_update_halos
   procedure :: update_halos => soca_fields_update_halos
 
-  !> \copybrief soca_fields_colocate \see soca_fields_colocate
-  procedure :: colocate  => soca_fields_colocate
+  !> \copybrief soca_fields_tohpoints \see soca_fields_tohpoints
+  procedure :: tohpoints  => soca_fields_tohpoints
   !> \}
 
   !> \name serialization
@@ -278,36 +276,6 @@ subroutine soca_field_update_halo(self, geom)
   call mpp_update_domains(self%val, geom%Domain%mpp_domain)
 end subroutine soca_field_update_halo
 
-
-! ------------------------------------------------------------------------------
-!> Perform spatial interpolation between two grids.
-!!
-!! Interpolation used is inverse distance weidghted, taking into
-!! consideration the mask.
-!! \param[in] geom: The geometry to interpolate to
-!! \param[in] interp2d: interpolation object created by calling
-!!     \c horiz_interp_spherical_new() in FMS
-!!
-!! \relates soca_fields_mod::soca_field
-subroutine soca_field_stencil_interp(self, geom, interp2d)
-  class(soca_field),     intent(inout) :: self
-  type(soca_geom), pointer, intent(in) :: geom
-  type(horiz_interp_type),  intent(in) :: interp2d
-
-  integer :: k
-  real(kind=kind_real), allocatable :: val(:,:,:)
-
-  allocate(val, mold=self%val)
-  val = self%val
-  do k = 1, self%nz
-     call horiz_interp_spherical(interp2d, &
-          & val(geom%isd:geom%ied, geom%jsd:geom%jed,k), &
-          & self%val(geom%isc:geom%iec, geom%jsc:geom%jec,k))
-  end do
-  call self%update_halo(geom)
-end subroutine soca_field_stencil_interp
-
-
 ! ------------------------------------------------------------------------------
 !> Make sure the two fields are the same in terms of name, size, shape.
 !!
@@ -328,6 +296,93 @@ subroutine soca_field_check_congruent(self, rhs)
   end do
 end subroutine soca_field_check_congruent
 
+! ------------------------------------------------------------------------------
+!> Perform spatial interpolation between adjacent grid point in the same stencil
+!!
+!! Interpolation used is inverse distance weidghted, taking into
+!! consideration the mask and using at most 6 neighbors.
+subroutine soca_field_stencil_interp(self, geom, fromto)
+  class(soca_field), intent(inout) :: self
+  class(soca_geom),    intent(in) :: geom   !< geometry
+  character(len=4),     intent(in) :: fromto !< "u2h", "v2h"
+
+  integer :: i, j
+  real(kind=kind_real), allocatable :: val_tmp(:,:,:)
+  real(kind=kind_real) :: val_max = 9e8_kind_real
+  integer :: ij(2,6), sti, nn
+  real(kind_real) :: lon_src(6), lat_src(6)
+  real(kind=kind_real), allocatable :: val(:,:)
+  real(kind=kind_real), allocatable :: lonsrc_local(:,:), latsrc_local(:,:)
+  real(kind=kind_real), allocatable :: londst_local(:,:), latdst_local(:,:)
+  real(kind=kind_real), allocatable :: masksrc_local(:,:), maskdst_local(:,:)
+
+  ! Initialize temporary arrays
+  allocate(val_tmp, mold=self%val)
+  val_tmp = 0_kind_real
+
+  ! Identify source and destination grids
+  select case(fromto)
+  case("vtoh")
+     ! Horizontal interpolation: v-points to h-points
+     allocate(lonsrc_local, mold=geom%lonv); lonsrc_local = geom%lonv
+     allocate(latsrc_local, mold=geom%latv); latsrc_local = geom%latv
+     allocate(masksrc_local, mold=geom%mask2dv);  masksrc_local = geom%mask2dv
+     allocate(londst_local, mold=geom%lon);  londst_local = geom%lon
+     allocate(latdst_local, mold=geom%lat);  latdst_local = geom%lat
+     allocate(maskdst_local, mold=geom%mask2d);  maskdst_local = geom%mask2d
+
+  case("utoh")
+     ! Horizontal interpolation: u-points to h-points
+     allocate(lonsrc_local, mold=geom%lonu); lonsrc_local = geom%lonu
+     allocate(latsrc_local, mold=geom%latu); latsrc_local = geom%latu
+     allocate(masksrc_local, mold=geom%mask2du);  masksrc_local = geom%mask2du
+     allocate(londst_local, mold=geom%lon);  londst_local = geom%lon
+     allocate(latdst_local, mold=geom%lat);  latdst_local = geom%lat
+     allocate(maskdst_local, mold=geom%mask2d);  maskdst_local = geom%mask2d
+
+  case default
+     call abor1_ftn('soca_field::stencil_interp, option '//fromto//&
+                    ' not implemented yet')
+
+  end select
+
+  ! Interpolate
+  allocate(val(6,self%nz))
+  do j = geom%jsc, geom%jec
+     do i = geom%isc, geom%iec
+        ! destination on land, skip
+        if (maskdst_local(i,j) == 0_kind_real) cycle
+
+        ! get the 6 or less src-point neighbors surrounding the (i,j) dst-point
+        call soca_stencil_neighbors(fromto, i, j, ij)
+        nn = 1
+        val = 0_kind_real
+        do sti = 1, 6
+           ! source point on land, skip
+           if (masksrc_local(ij(1,sti), ij(2,sti)) == 0_kind_real) cycle
+
+           ! outcroping of layers, skip 
+           if (abs(self%val(ij(1,sti), ij(2,sti),1)) > val_max) cycle
+
+           ! store the valid neighbors
+           lon_src(nn) = lonsrc_local(ij(1,sti), ij(2,sti))
+           lat_src(nn) = latsrc_local(ij(1,sti), ij(2,sti))
+           val(nn,:) = self%val(ij(1,sti), ij(2,sti),:)
+           nn = nn + 1
+        end do
+        nn = nn - 1
+
+        ! val_tmp: interpolated val at (i,j) dst-point along layers
+        if ( nn >=1 ) then
+           call soca_stencil_interp(lon_src, lat_src, &
+                                    londst_local(i,j), latdst_local(i,j), &
+                                    val, val_tmp(i,j,:), nn)
+        end if
+     end do
+  end do
+  self%val = val_tmp
+
+end subroutine soca_field_stencil_interp
 
 ! ------------------------------------------------------------------------------
 !> Delete the soca_field object.
@@ -1205,81 +1260,39 @@ subroutine soca_fields_write_rst(self, f_conf, vdate)
 end subroutine soca_fields_write_rst
 
 ! ------------------------------------------------------------------------------
-!> Colocate by interpolating from one c-grid location to another.
+!> Interpolates from uv-points location to h-points.
 !!
-!! \warning only works on the "h" grid currently (not the "u" or "v" grid)
 !! \relates soca_fields_mod::soca_fields
-subroutine soca_fields_colocate(self, cgridlocout)
-  class(soca_fields),    intent(inout) :: self !< self
-  character(len=1),         intent(in) :: cgridlocout !< colocate to cgridloc (u, v or h)
+subroutine soca_fields_tohpoints(self)
+  class(soca_fields), intent(inout) :: self !< self
 
-  integer :: i, k
+  integer :: i
   real(kind=kind_real), allocatable :: val(:,:,:)
   real(kind=kind_real), pointer :: lon_out(:,:) => null()
   real(kind=kind_real), pointer :: lat_out(:,:) => null()
-  type(soca_geom),  pointer :: g => null()
-  type(horiz_interp_type) :: interp2d
+  character(len=4) :: fromto
 
-  ! Associate lon_out and lat_out according to cgridlocout
-  select case(cgridlocout)
-  ! TODO: Test colocation to u and v grid
-  !case ('u')
-  !  lon_out => self%geom%lonu
-  !  lat_out => self%geom%latu
-  !case ('v')
-  !  lon_out => self%geom%lonv
-  !  lat_out => self%geom%latv
-  case ('h')
-    lon_out => self%geom%lon
-    lat_out => self%geom%lat
-  case default
-    call abor1_ftn('soca_fields::colocate(): unknown c-grid location '// cgridlocout)
-  end select
+  ! Associate lon_out and lat_out with the h-grid
+  lon_out => self%geom%lon
+  lat_out => self%geom%lat
 
   ! Apply interpolation to all fields, when necessary
   do i=1,size(self%fields)
+    ! Check if already on h-points
+    if (self%fields(i)%metadata%grid == 'h') cycle
 
-    ! Check if already colocated
-    if (self%fields(i)%metadata%grid == cgridlocout) cycle
+    ! Interpolate to different location of the stencil
+    fromto = self%fields(i)%metadata%grid//'toh'
+    call self%fields(i)%stencil_interp(self%geom, fromto)
+    call self%fields(i)%update_halo(self%geom)
 
-    ! Initialize fms spherical idw interpolation
-     g => self%geom
-     call horiz_interp_spherical_new(interp2d, &
-       & real(deg2rad*self%fields(i)%lon(g%isd:g%ied,g%jsd:g%jed), 8), &
-       & real(deg2rad*self%fields(i)%lat(g%isd:g%ied,g%jsd:g%jed), 8), &
-       & real(deg2rad*lon_out(g%isc:g%iec,g%jsc:g%jec), 8), &
-       & real(deg2rad*lat_out(g%isc:g%iec,g%jsc:g%jec), 8))
-
-    ! Make a temporary copy of field
-    if (allocated(val)) deallocate(val)
-    allocate(val, mold=self%fields(i)%val)
-    val = self%fields(i)%val
-
-    ! Interpolate all levels
-    do k = 1, self%fields(i)%nz
-      call self%fields(i)%stencil_interp(self%geom, interp2d)
-    end do
-
-    ! Update c-grid location
-    self%fields(i)%metadata%grid = cgridlocout
-    select case(cgridlocout)
-    ! TODO: Test colocation to u and v grid
-    !case ('u')
-    !  self%fields(i)%lon => self%geom%lonu
-    !  self%fields(i)%lat => self%geom%latu
-    !case ('v')
-    !  self%fields(i)%lon => self%geom%lonv
-    !  self%fields(i)%lat => self%geom%latv
-    case ('h')
-      self%fields(i)%lon => self%geom%lon
-      self%fields(i)%lat => self%geom%lat
-    end select
-
+    ! Update grid location to h-points
+    self%fields(i)%metadata%grid = 'h'
+    self%fields(i)%lon => self%geom%lon
+    self%fields(i)%lat => self%geom%lat
  end do
- call horiz_interp_spherical_del(interp2d)
 
-end subroutine soca_fields_colocate
-
+end subroutine soca_fields_tohpoints
 
 ! ------------------------------------------------------------------------------
 !> Number of elements to return in the serialized array
@@ -1494,13 +1507,11 @@ end function soca_genfilename
 ! ------------------------------------------------------------------------------
 !> Get the fields listed in vars, used by the interpolation.
 !!
-!! The fields that are returned 1) have halos and 2) have had the masked points
-!! removed if masked==true.
-subroutine soca_fields_to_fieldset(self, vars, afieldset, masked)
+!! The fields that are returned have halos (minus the invalid and duplicate halo points)
+subroutine soca_fields_to_fieldset(self, vars, afieldset)
   class(soca_fields),   intent(in)    :: self
   type(oops_variables), intent(in)    :: vars
   type(atlas_fieldset), intent(inout) :: afieldset
-  logical,              intent(in)    :: masked
 
   type(atlas_field) :: afield
   integer :: v, z
@@ -1515,21 +1526,6 @@ subroutine soca_fields_to_fieldset(self, vars, afieldset, masked)
     ! make sure halos are updated (remove? is redundant?)
     call field%update_halo(self%geom)
 
-    ! which mask to use
-    nullify(mask)
-    if (masked .and. field%metadata%masked) then
-      select case(field%metadata%grid)
-      case ('h')
-        mask => self%geom%mask2d
-      case ('u')
-        mask => self%geom%mask2du
-      case ('v')
-        mask => self%geom%mask2dv
-      case default
-        call abor1_ftn('incorrect grid type in soca_fields_to_fieldset()')
-      end select
-    end if
-
     ! get/create field
     if (afieldset%has_field(vars%variable(v))) then
       afield = afieldset%field(vars%variable(v))
@@ -1538,17 +1534,16 @@ subroutine soca_fields_to_fieldset(self, vars, afieldset, masked)
         name=vars%variable(v), kind=atlas_real(kind_real), levels=field%nz)
       meta = afield%metadata()
       call meta%set('interp_type', 'default')
+      if (field%metadata%masked) then
+        call meta%set('interp_source_point_mask', 'interp_mask')
+      end if
       call afieldset%add(afield)
     end if
 
     ! create and fill field
     call afield%data(real_ptr)
     do z=1,field%nz
-      if (associated(mask)) then
-        real_ptr(z,:) = pack(field%val(:,:, z), mask=mask/=0)
-      else
-        real_ptr(z,:) = pack(field%val(:,:, z), mask=.true.)
-      end if
+        real_ptr(z,:) = pack(field%val(:,:, z), mask=self%geom%valid_halo_mask)
     end do
     call afield%final()
 
@@ -1558,19 +1553,16 @@ end subroutine
 ! ------------------------------------------------------------------------------
 !> Adjoint of get fields used by the interpolation.
 !!
-!! The fields that are input 1) have halos and 2) have had the masked points
-!! removed.
-subroutine soca_fields_to_fieldset_ad(self, vars, afieldset, masked)
+!! The fields that are input ahave  have halos (minus the invalid and duplicate halo points)
+subroutine soca_fields_to_fieldset_ad(self, vars, afieldset)
   class(soca_fields),   intent(in) :: self
   type(oops_variables), intent(in) :: vars
   type(atlas_fieldset), intent(in) :: afieldset
-  logical,              intent(in) :: masked
 
   integer :: v, z
   integer :: is, ie, js, je
   type(soca_field), pointer :: field
   type(atlas_field) :: afield
-  real(kind=kind_real), pointer :: mask(:,:) => null() !< field mask
   real(kind=kind_real), pointer :: real_ptr(:,:)
   real(kind=kind_real), pointer :: tmp(:,:)
 
@@ -1584,29 +1576,10 @@ subroutine soca_fields_to_fieldset_ad(self, vars, afieldset, masked)
     call self%get(vars%variable(v), field)
     afield = afieldset%field(vars%variable(v))
 
-    ! which mask to use
-    nullify(mask)
-    if (masked .and. field%metadata%masked) then
-      select case(field%metadata%grid)
-      case ('h')
-        mask => self%geom%mask2d
-      case ('u')
-        mask => self%geom%mask2du
-      case ('v')
-        mask => self%geom%mask2dv
-      case default
-        call abor1_ftn('incorrect grid type in soca_fields_to_fieldset_ad()')
-      end select
-    end if
-
     tmp = 0.0
     call afield%data(real_ptr)
     do z=1,field%nz
-      if (associated(mask)) then
-        tmp = unpack(real_ptr(z,:), mask/=0, tmp)
-      else
-        tmp = reshape(real_ptr(z,:), shape(tmp))
-      end if
+      tmp = unpack(real_ptr(z,:), self%geom%valid_halo_mask, 0.0_kind_real)
       call mpp_update_domains_ad(tmp, self%geom%Domain%mpp_domain, complete=.true.)
       field%val(:,:,z) = field%val(:,:,z) + tmp
     end do
@@ -1618,24 +1591,17 @@ end subroutine
 
 ! ------------------------------------------------------------------------------
 !> Set the our values from an atlas fieldset
-subroutine soca_fields_from_fieldset(self, vars, afieldset, masked)
+subroutine soca_fields_from_fieldset(self, vars, afieldset)
   class(soca_fields), target, intent(inout) :: self
   type(oops_variables),       intent(in)    :: vars
   type(atlas_fieldset),       intent(in)    :: afieldset
-  logical,                    intent(in)    :: masked
 
-  integer :: jvar, i, jz, ngrid(2)
+  integer :: jvar, i, jz
   real(kind=kind_real), pointer :: real_ptr(:,:)
   logical :: var_found
   character(len=1024) :: fieldname
   type(soca_field), pointer :: field
   type(atlas_field) :: afield
-
-  if (masked) then
-    call abor1_ftn('soca_fields_from_fieldset() does not support masked=true')
-  end if
-
-  ngrid = (/self%geom%ied-self%geom%isd+1, self%geom%jed-self%geom%jsd+1/)
 
   ! Initialization
   call self%zeros()
@@ -1651,7 +1617,8 @@ subroutine soca_fields_from_fieldset(self, vars, afieldset, masked)
         ! Copy data
         call afield%data(real_ptr)
         do jz=1,field%nz
-          field%val(:,:,jz) = reshape(real_ptr(jz,:), ngrid)
+          ! NOTE, any missing values from unpacking are filled with 0.0
+          field%val(:,:,jz) = unpack(real_ptr(jz,:), self%geom%valid_halo_mask, 0.0_kind_real)
         end do
 
         ! Release pointer

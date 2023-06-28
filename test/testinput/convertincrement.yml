@@ -10,10 +10,13 @@ linear variable change:
   output variables: [tocn, socn, ssh, hocn]
   linear variable changes:
   - linear variable change name: BalanceSOCA
-    dsdtmax: 0.0
-    dsdzmin: 0.0
-    dtdzmin: 0.0
-    nlayers: 2
+    kst:
+      dsdtmax: 0.0
+      dsdzmin: 0.0
+      dtdzmin: 0.0
+      nlayers: 2
+    ksshts:
+      nlayers: 2
 
 increments:
 - date: 2018-04-15T00:00:00Z

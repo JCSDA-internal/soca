@@ -256,6 +256,17 @@ subroutine soca_state_rotate2north_c(c_key_self, c_uvars, c_vvars) bind(c,name='
 
 end subroutine soca_state_rotate2north_c
 
+! ------------------------------------------------------------------------------
+!> C++ interface for soca_state_mod::soca_state::tohgrid()
+subroutine soca_state_tohgrid_c(c_key_self) bind(c,name='soca_state_tohgrid_f90')
+  integer(c_int),     intent(in) :: c_key_self
+
+  type(soca_state), pointer :: self
+
+  call soca_state_registry%get(c_key_self,self)
+  call self%tohpoints()
+
+end subroutine soca_state_tohgrid_c
 
 ! ------------------------------------------------------------------------------
 !> C++ interface to get soca_state_mod::soca_state dimensions sizes
@@ -452,12 +463,11 @@ end subroutine soca_state_update_fields_c
 
 ! ------------------------------------------------------------------------------
 !> C++ interface for State version of soca_field_mod::soca_field::to_fieldset()
-subroutine soca_state_to_fieldset_c(c_key_self, c_vars, c_fieldset, c_masked) &
+subroutine soca_state_to_fieldset_c(c_key_self, c_vars, c_fieldset) &
     bind (c, name='soca_state_to_fieldset_f90')
   integer(c_int),       intent(in) :: c_key_self
   type(c_ptr), value,   intent(in) :: c_vars
   type(c_ptr), value,   intent(in) :: c_fieldset
-  logical(c_bool),      intent(in) :: c_masked
 
   type(soca_state), pointer :: self
   type(oops_variables)      :: vars
@@ -467,7 +477,27 @@ subroutine soca_state_to_fieldset_c(c_key_self, c_vars, c_fieldset, c_masked) &
   vars = oops_variables(c_vars)
   afieldset = atlas_fieldset(c_fieldset)
 
-  call self%to_fieldset(vars, afieldset, logical(c_masked))
+  call self%to_fieldset(vars, afieldset)
+end subroutine
+
+! ------------------------------------------------------------------------------
+!> C++ interface for soca_increment_mod::soca_increment::from_fieldset()
+subroutine soca_state_from_fieldset_c(c_key_self, c_vars, c_afieldset) &
+  bind (c,name='soca_state_from_fieldset_f90')
+integer(c_int),         intent(in) :: c_key_self
+type(c_ptr),     value, intent(in) :: c_vars
+type(c_ptr),     value, intent(in) :: c_afieldset
+
+type(soca_state), pointer :: self
+type(oops_variables)          :: vars
+type(atlas_fieldset)          :: afieldset
+
+call soca_state_registry%get(c_key_self, self)
+vars = oops_variables(c_vars)
+afieldset = atlas_fieldset(c_afieldset)
+
+call self%from_fieldset(vars, afieldset)
+
 end subroutine
 
 end module soca_state_mod_c

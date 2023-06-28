@@ -1,4 +1,4 @@
-add_subdirectory(Ana2Model)
+add_subdirectory(Model2Ana)
 add_subdirectory(Base)
 add_subdirectory(Model2GeoVaLs)
 
