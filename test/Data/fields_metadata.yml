@@ -51,6 +51,7 @@
   getval name: sea_water_cell_thickness
   io file: ocn
   io name: h
+  vert interp: false
 
 - name: ssh
   getval name: sea_surface_height_above_geoid
@@ -149,6 +150,7 @@
 
 - name: layer_depth
   levels: full_ocn
+  vert interp: false
 
 - name: mesoscale_representation_error
 

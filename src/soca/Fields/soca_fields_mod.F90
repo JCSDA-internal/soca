@@ -969,6 +969,35 @@ subroutine soca_fields_read(self, f_conf, vdate)
     isc = self%geom%isc ; iec = self%geom%iec
     jsc = self%geom%jsc ; jec = self%geom%jec
 
+    ! Remap layers if needed
+    if (vert_remap) then
+      allocate(h_common_ij(nz), hocn_ij(nz), varocn_ij(nz), varocn2_ij(nz))
+      call initialize_remapping(remapCS,'PCM')
+      do i = isc, iec
+        do j = jsc, jec
+          h_common_ij = h_common(i,j,:)
+          hocn_ij = hocn%val(i,j,:)
+
+          do n=1,size(self%fields)
+            field => self%fields(n)
+            ! TODO Vertical remapping is only valid if the field is on the tracer grid point.
+            if (.not. field%metadata%vert_interp) cycle
+            if (associated(field%mask) .and. field%mask(i,j).eq.1) then
+               varocn_ij = field%val(i,j,:)
+               call remapping_core_h(remapCS, nz, h_common_ij, varocn_ij,&
+                      &nz, hocn_ij, varocn2_ij)
+               field%val(i,j,:) = varocn2_ij
+            else
+               field%val(i,j,:) = 0.0_kind_real
+            end if
+          end do
+        end do
+      end do
+      hocn%val = h_common
+      deallocate(h_common_ij, hocn_ij, varocn_ij, varocn2_ij)
+      call end_remapping(remapCS)
+    end if
+
     ! Initialize mid-layer depth from layer thickness
     if (self%has("layer_depth")) then
       call self%get("layer_depth", layer_depth)
@@ -990,38 +1019,6 @@ subroutine soca_fields_read(self, f_conf, vdate)
                 &self%geom%lat(i,j))
         end do
       end do
-    end if
-
-    ! Remap layers if needed
-    if (vert_remap) then
-      allocate(h_common_ij(nz), hocn_ij(nz), varocn_ij(nz), varocn2_ij(nz))
-      call initialize_remapping(remapCS,'PCM')
-      do i = isc, iec
-        do j = jsc, jec
-          h_common_ij = h_common(i,j,:)
-          hocn_ij = hocn%val(i,j,:)
-
-          do n=1,size(self%fields)
-            field => self%fields(n)
-            select case(field%name)
-            ! TODO remove hardcoded variable names here
-            ! TODO Remapping u and v is only valid if they are on the tracer grid point.
-            case ('tocn','socn','uocn','vocn','chl','biop','po4')
-              if (associated(field%mask) .and. field%mask(i,j).eq.1) then
-                varocn_ij = field%val(i,j,:)
-                call remapping_core_h(remapCS, nz, h_common_ij, varocn_ij,&
-                      &nz, hocn_ij, varocn2_ij)
-                field%val(i,j,:) = varocn2_ij
-              else
-                field%val(i,j,:) = 0.0_kind_real
-              end if
-            end select
-          end do
-        end do
-      end do
-      hocn%val = h_common
-      deallocate(h_common_ij, hocn_ij, varocn_ij, varocn2_ij)
-      call end_remapping(remapCS)
     end if
 
     ! Update halo
