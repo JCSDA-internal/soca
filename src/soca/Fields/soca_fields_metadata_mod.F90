@@ -27,6 +27,7 @@ type, public :: soca_field_metadata
   character(len=:),  allocatable :: io_file  !< the restart file domain (ocn, sfc, ice)
   character(len=:),  allocatable :: io_name  !< the name use in the restart IO
   character(len=:),  allocatable :: property  !< physical property of the field, "none" or "positive_definite"
+  logical                        :: vert_interp   !< true if the field can be vertically interpolated
 end type
 
 
@@ -105,6 +106,15 @@ subroutine soca_fields_metadata_create(self, filename)
 
     if(.not. conf_list(i)%get("property", str)) str = "none"
     self%metadata(i)%property = str
+
+    if(.not. conf_list(i)%get("vert interp", bool)) then
+       if (self%metadata(i)%levels == "1" ) then
+          bool = .false.
+       else
+          bool = .true.
+       end if
+    end if
+    self%metadata(i)%vert_interp = bool
 
   end do
 
