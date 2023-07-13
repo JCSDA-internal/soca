@@ -18,6 +18,7 @@ use datetime_mod, only: datetime, datetime_set, datetime_to_string, datetime_to_
                         datetime_create, datetime_diff
 use duration_mod, only: duration, duration_to_string
 use fckit_configuration_module, only: fckit_configuration
+use fckit_log_module, only: fckit_log
 use fckit_mpi_module, only: fckit_mpi_min, fckit_mpi_max, fckit_mpi_sum
 use kinds, only: kind_real
 use oops_variables_mod, only: oops_variables
@@ -361,7 +362,7 @@ subroutine soca_field_stencil_interp(self, geom, fromto)
            ! source point on land, skip
            if (masksrc_local(ij(1,sti), ij(2,sti)) == 0_kind_real) cycle
 
-           ! outcroping of layers, skip 
+           ! outcroping of layers, skip
            if (abs(self%val(ij(1,sti), ij(2,sti),1)) > val_max) cycle
 
            ! store the valid neighbors
@@ -969,6 +970,42 @@ subroutine soca_fields_read(self, f_conf, vdate)
     isc = self%geom%isc ; iec = self%geom%iec
     jsc = self%geom%jsc ; jec = self%geom%jec
 
+    ! Remap layers if needed
+    if (vert_remap) then
+
+      ! output log of  what fields are going to be interpolated vertically
+      do n=1,size(self%fields)
+        if (.not. self%fields(n)%metadata%vert_interp) cycle
+        call fckit_log%info("vertically remapping "//trim(self%fields(n)%name))
+      end do
+
+      allocate(h_common_ij(nz), hocn_ij(nz), varocn_ij(nz), varocn2_ij(nz))
+      call initialize_remapping(remapCS,'PCM')
+      do i = isc, iec
+        do j = jsc, jec
+          h_common_ij = h_common(i,j,:)
+          hocn_ij = hocn%val(i,j,:)
+
+          do n=1,size(self%fields)
+            field => self%fields(n)
+            ! TODO Vertical remapping is only valid if the field is on the tracer grid point.
+            if (.not. field%metadata%vert_interp) cycle
+            if (associated(field%mask) .and. field%mask(i,j).eq.1) then
+               varocn_ij = field%val(i,j,:)
+               call remapping_core_h(remapCS, nz, h_common_ij, varocn_ij,&
+                      &nz, hocn_ij, varocn2_ij)
+               field%val(i,j,:) = varocn2_ij
+            else
+               field%val(i,j,:) = 0.0_kind_real
+            end if
+          end do
+        end do
+      end do
+      hocn%val = h_common
+      deallocate(h_common_ij, hocn_ij, varocn_ij, varocn2_ij)
+      call end_remapping(remapCS)
+    end if
+
     ! Initialize mid-layer depth from layer thickness
     if (self%has("layer_depth")) then
       call self%get("layer_depth", layer_depth)
@@ -990,38 +1027,6 @@ subroutine soca_fields_read(self, f_conf, vdate)
                 &self%geom%lat(i,j))
         end do
       end do
-    end if
-
-    ! Remap layers if needed
-    if (vert_remap) then
-      allocate(h_common_ij(nz), hocn_ij(nz), varocn_ij(nz), varocn2_ij(nz))
-      call initialize_remapping(remapCS,'PCM')
-      do i = isc, iec
-        do j = jsc, jec
-          h_common_ij = h_common(i,j,:)
-          hocn_ij = hocn%val(i,j,:)
-
-          do n=1,size(self%fields)
-            field => self%fields(n)
-            select case(field%name)
-            ! TODO remove hardcoded variable names here
-            ! TODO Add u and v. Remapping u and v will require interpolating h
-            case ('tocn','socn')
-              if (associated(field%mask) .and. field%mask(i,j).eq.1) then
-                varocn_ij = field%val(i,j,:)
-                call remapping_core_h(remapCS, nz, h_common_ij, varocn_ij,&
-                      &nz, hocn_ij, varocn2_ij)
-                field%val(i,j,:) = varocn2_ij
-              else
-                field%val(i,j,:) = 0.0_kind_real
-              end if
-            end select
-          end do
-        end do
-      end do
-      hocn%val = h_common
-      deallocate(h_common_ij, hocn_ij, varocn_ij, varocn2_ij)
-      call end_remapping(remapCS)
     end if
 
     ! Update halo
