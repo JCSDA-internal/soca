@@ -66,12 +66,20 @@ add_subdirectory(State)
 add_subdirectory(Utils)
 add_subdirectory(VariableChange)
 
+  # ESMF
 separate_arguments(ESMF_F90LINKPATHS NATIVE_COMMAND ${ESMF_F90LINKPATHS})
 set(tmp "")
 foreach (ITEM ${ESMF_F90LINKPATHS})
    string(REGEX REPLACE "-L" "" ITEM "${ITEM}")
    list(APPEND tmp ${ITEM})
 endforeach()
+# Bug fix for ESMF link paths missing MPI library path
+foreach(ITEM ${MPI_Fortran_LIBRARIES})
+    get_filename_component(itemdir ${ITEM} DIRECTORY)
+   list(APPEND tmp ${itemdir})
+endforeach()
+list(REMOVE_DUPLICATES tmp)
+message(STATUS "Additonal link paths added for ESMF: ${tmp}")
 set(ESMF_F90LINKPATHS ${tmp})
 
 if(${UFS_APP} MATCHES "NG-GODAS")
