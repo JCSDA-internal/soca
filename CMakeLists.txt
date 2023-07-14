@@ -115,7 +115,7 @@ endif()
 ################################################################################
 
 # prepares a tar.gz of the sources and/or binaries
-ecbuild_install_project( NAME soca )
+# ecbuild_install_project( NAME soca )
 
 # print the summary of the configuration
 ecbuild_print_summary()

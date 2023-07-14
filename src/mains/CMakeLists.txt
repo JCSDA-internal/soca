@@ -1,7 +1,7 @@
-ecbuild_add_executable( TARGET  soca_dirac.x
-                        SOURCES Dirac.cc
-                        LIBS    ${UFS_LIBS}
-                      )
+#ecbuild_add_executable( TARGET  soca_dirac.x
+#                        SOURCES Dirac.cc
+#                        LIBS    ${UFS_LIBS}
+#                      )
 
 ecbuild_add_executable( TARGET  test_soca_model.x
                         SOURCES TestModel.cc
