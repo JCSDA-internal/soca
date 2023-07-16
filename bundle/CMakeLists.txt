@@ -55,7 +55,7 @@ option(BUILD_UFSM6C6 "download and install the UFS" OFF)
 
 ecbuild_bundle( PROJECT oops            GIT "https://github.com/jcsda-internal/oops.git"            UPDATE TAG baafbd6 )
 ecbuild_bundle( PROJECT vader           GIT "https://github.com/jcsda-internal/vader.git"           UPDATE TAG 68ebc46 )
-ecbuild_bundle( PROJECT saber           GIT "https://github.com/jcsda-internal/saber.git"           UPDATE TAG 87c48dd )
+ecbuild_bundle( PROJECT saber           GIT "https://github.com/jcsda-internal/saber.git"           UPDATE TAG 78c8fc4 )
 ecbuild_bundle( PROJECT ioda            GIT "https://github.com/jcsda-internal/ioda.git"            UPDATE TAG eb6933c )
 ecbuild_bundle( PROJECT gsw             GIT "https://github.com/jcsda-internal/GSW-Fortran.git"     UPDATE TAG 1a02eba )
 ecbuild_bundle( PROJECT ufo             GIT "https://github.com/jcsda-internal/ufo.git"             UPDATE TAG 53eebd3 )
