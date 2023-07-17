@@ -38,6 +38,11 @@ private
 ! ------------------------------------------------------------------------------
 ! ------------------------------------------------------------------------------
 
+! A default value to indicate that the halo region has not been updated
+! during a halo exchange.
+! Note, it seems we had been using invalud halo points with lat/lon of 0,0
+! oops!
+real(kind=kind_real), parameter :: INVALID_HALO = -999_kind_real
 
 ! ------------------------------------------------------------------------------
 !> Geometry data structure
@@ -75,7 +80,10 @@ type, public :: soca_geom
     integer :: iterator_dimension
     !> \}
 
-    integer :: ngrid, ngrid_halo
+    integer :: ngrid !< number of non-halo gridpoints
+    integer :: ngrid_halo !< number of gridpoints, including halo
+    integer :: ngrid_halo_valid !< number of gridpoints, including halo, but
+                                !! excluding duplicate or invalid halo points
 
     !> \name grid latitude/longitude
     !! \{
@@ -111,6 +119,7 @@ type, public :: soca_geom
     real(kind=kind_real), allocatable, dimension(:,:) :: distance_from_coast !< distance to closest land grid point (m)
     real(kind=kind_real), allocatable, dimension(:,:,:) :: h !< layer thickness (m)
     real(kind=kind_real), allocatable, dimension(:,:,:) :: h_zstar
+    logical,              allocatable, dimension(:,:) :: valid_halo_mask !< true unless gridpoint is a duplicate or invalid halo
     !> \}
 
     !> instance of the metadata that is read in from a config file upon initialization
@@ -196,7 +205,7 @@ subroutine soca_geom_init(self, f_conf, f_comm)
 
   ! Read the geometry from file by default,
   ! skip this step if a full init is required
-  if ( .not. full_init) call soca_geom_read(self)
+  if ( .not. full_init) call soca_geom_read(self) 
 
   ! Fill halo
   call mpp_update_domains(self%lon, self%Domain%mpp_domain)
@@ -213,6 +222,9 @@ subroutine soca_geom_init(self, f_conf, f_comm)
   call mpp_update_domains(self%cell_area, self%Domain%mpp_domain)
   call mpp_update_domains(self%rossby_radius, self%Domain%mpp_domain)
   call mpp_update_domains(self%distance_from_coast, self%Domain%mpp_domain)
+
+  ! calculate which halo points are duplicates / invalid
+  call soca_geom_find_invalid_halo(self)
 
   ! Set output option for local geometry
   if ( .not. f_conf%get("save_local_domain", self%save_local_domain) ) &
@@ -255,6 +267,7 @@ subroutine soca_geom_end(self)
   if (allocated(self%distance_from_coast)) deallocate(self%distance_from_coast)
   if (allocated(self%h))             deallocate(self%h)
   if (allocated(self%h_zstar))       deallocate(self%h_zstar)
+  if (allocated(self%valid_halo_mask)) deallocate(self%valid_halo_mask)
   nullify(self%Domain)
   call self%functionspace%final()
   call self%functionspaceIncHalo%final()
@@ -273,23 +286,18 @@ subroutine soca_geom_lonlat(self, afieldset)
   real(kind_real), pointer :: real_ptr(:,:)
   type(atlas_field) :: afield
 
-  integer:: ngrid, ngrid_halo
-
-  ngrid = (self%iec-self%isc+1)*(self%jec-self%jsc+1)
-  ngrid_halo = (self%ied-self%isd+1)*(self%jed-self%jsd+1)
-
   ! Create lon/lat field
-  afield = atlas_field(name="lonlat", kind=atlas_real(kind_real), shape=(/2,ngrid/))
+  afield = atlas_field(name="lonlat", kind=atlas_real(kind_real), shape=(/2,self%ngrid/))
   call afield%data(real_ptr)
-  real_ptr(1,:) = reshape(self%lon(self%isc:self%iec,self%jsc:self%jec),(/ngrid/))
-  real_ptr(2,:) = reshape(self%lat(self%isc:self%iec,self%jsc:self%jec),(/ngrid/))
+  real_ptr(1,:) = pack(self%lon(self%isc:self%iec,self%jsc:self%jec),.true.)
+  real_ptr(2,:) = pack(self%lat(self%isc:self%iec,self%jsc:self%jec),.true.)
   call afieldset%add(afield)
   call afield%final()
 
-  afield = atlas_field(name="lonlat_inc_halos", kind=atlas_real(kind_real), shape=(/2,ngrid_halo/))
+  afield = atlas_field(name="lonlat_inc_halos", kind=atlas_real(kind_real), shape=(/2,self%ngrid_halo_valid/))
   call afield%data(real_ptr)
-  real_ptr(1,:) = reshape(self%lon,(/ngrid_halo/))
-  real_ptr(2,:) = reshape(self%lat,(/ngrid_halo/))
+  real_ptr(1,:) = pack(self%lon, self%valid_halo_mask)
+  real_ptr(2,:) = pack(self%lat, self%valid_halo_mask)
   call afieldset%add(afield)
   call afield%final()
 
@@ -315,7 +323,7 @@ subroutine soca_geom_to_fieldset(self, afieldset)
   ! Add area
   afield = self%functionspaceInchalo%create_field(name='area', kind=atlas_real(kind_real), levels=1)
   call afield%data(real_ptr)
-  real_ptr(1,:) = pack(self%cell_area, .true.)
+  real_ptr(1,:) = pack(self%cell_area, self%valid_halo_mask)
   call afieldset%add(afield)
   call afield%final()
 
@@ -332,7 +340,7 @@ subroutine soca_geom_to_fieldset(self, afieldset)
   afield = self%functionspaceInchalo%create_field(name='gmask', kind=atlas_integer(kind(0)), levels=self%nzo)
   call afield%data(int_ptr)
   do jz=1,self%nzo
-    int_ptr(jz,:) = int(pack(self%mask2d, .true.))
+    int_ptr(jz,:) = int(pack(self%mask2d, self%valid_halo_mask))
   end do
   call afieldset%add(afield)
   call afield%final()
@@ -343,9 +351,16 @@ subroutine soca_geom_to_fieldset(self, afieldset)
   hmask = 0
   hmask(self%isc:self%iec, self%jsc:self%jec) = 1
   call afield%data(int_ptr)
-  int_ptr(1,:) = pack(hmask, .true.)
+  int_ptr(1,:) = pack(hmask, self%valid_halo_mask)
   call afieldset%add(afield)
   call afield%final()
+
+  ! Add interpolation mask
+  afield = self%functionspaceInchalo%create_field(name='interp_mask', kind=atlas_real(kind_real), levels=1)
+  call afield%data(real_ptr)
+  real_ptr(1,:) = pack(self%mask2d, self%valid_halo_mask)
+  call afieldset%add(afield)
+  call afield%final()  
 
 end subroutine soca_geom_to_fieldset
 
@@ -392,6 +407,7 @@ subroutine soca_geom_clone(self, other)
   self%rossby_radius = other%rossby_radius
   self%distance_from_coast = other%distance_from_coast
   self%h = other%h
+  self%valid_halo_mask = other%valid_halo_mask
   call self%fields_metadata%clone(other%fields_metadata)
 end subroutine soca_geom_clone
 
@@ -485,12 +501,15 @@ subroutine soca_geom_allocate(self)
   self%ngrid_halo = (self%ied-self%isd+1) * (self%jed-self%jsd+1)
 
   ! Allocate arrays on compute domain
+  ! NOTE, sometimes MOM6 doesn't use all the halo points, we set 
+  !  lat/lon to INVALID_HALO so that we can detect this later when deciding
+  !  which halo points are invalid/duplicates
   allocate(self%lonh(self%isg:self%ieg));        self%lonh = 0.0_kind_real
   allocate(self%lath(self%jsg:self%jeg));        self%lath = 0.0_kind_real
   allocate(self%lonq(self%isg:self%ieg));        self%lonq = 0.0_kind_real
   allocate(self%latq(self%jsg:self%jeg));        self%latq = 0.0_kind_real
-  allocate(self%lon(isd:ied,jsd:jed));           self%lon = 0.0_kind_real
-  allocate(self%lat(isd:ied,jsd:jed));           self%lat = 0.0_kind_real
+  allocate(self%lon(isd:ied,jsd:jed));           self%lon = INVALID_HALO
+  allocate(self%lat(isd:ied,jsd:jed));           self%lat = INVALID_HALO
   allocate(self%lonu(isd:ied,jsd:jed));          self%lonu = 0.0_kind_real
   allocate(self%latu(isd:ied,jsd:jed));          self%latu = 0.0_kind_real
   allocate(self%lonv(isd:ied,jsd:jed));          self%lonv = 0.0_kind_real
@@ -507,6 +526,8 @@ subroutine soca_geom_allocate(self)
   allocate(self%rossby_radius(isd:ied,jsd:jed)); self%rossby_radius = 0.0_kind_real
   allocate(self%distance_from_coast(isd:ied,jsd:jed)); self%distance_from_coast = 0.0_kind_real
   allocate(self%h(isd:ied,jsd:jed,1:nzo));       self%h = 0.0_kind_real
+
+  allocate(self%valid_halo_mask(isd:ied,jsd:jed));self%valid_halo_mask = .true.
 
 end subroutine soca_geom_allocate
 
@@ -526,7 +547,6 @@ subroutine soca_geom_distance_from_coast(self)
   real(kind=kind_real), allocatable :: land_lon(:), land_lat(:)
   real(kind=kind_real), allocatable :: land_lon_l(:), land_lat_l(:)
   real(kind=kind_real) :: closest_lon, closest_lat
-
 
   ! collect lat/lon of all land points on all procs
   ! (use the tracer grid and mask for this)
@@ -932,16 +952,14 @@ subroutine soca_geom_thickness2depth(self, h, z)
   js = lbound(h,dim=2)
   je = ubound(h,dim=2)
 
-  !allocate(z(is:ie, js:je, self%nzo))
+  ! top layer
+  z(:,:,1) = 0.5_kind_real*h(:,:,1)
 
+  ! the rest of the layers
   do i = is, ie
      do j = js, je
-        do k = 1, self%nzo
-           if (k.eq.1) then
-              z(i,j,k) = 0.5_kind_real*h(i,j,k)
-           else
-              z(i,j,k) = sum(h(i,j,1:k-1))+0.5_kind_real*h(i,j,k)
-           end if
+        do k = 2, self%nzo
+          z(i,j,k) = sum(h(i,j,1:k-1))+0.5_kind_real*h(i,j,k)
         end do
      end do
   end do
@@ -964,7 +982,7 @@ subroutine soca_geom_struct2atlas(self, dx_struct, dx_atlas)
   afield = self%functionspaceInchalo%create_field('var',kind=atlas_real(kind_real),levels=1)
   call dx_atlas%add(afield)
   call afield%data(real_ptr)
-  real_ptr(1,:) = pack(dx_struct, .true.)
+  real_ptr(1,:) = pack(dx_struct, self%valid_halo_mask)
   call afield%final()
 
 end subroutine soca_geom_struct2atlas
@@ -984,11 +1002,64 @@ subroutine soca_geom_atlas2struct(self, dx_struct, dx_atlas)
 
   afield = dx_atlas%field('var')
   call afield%data(real_ptr)
-  dx_struct = reshape(real_ptr(1,:), (/(self%ied-self%isd+1),(self%jed-self%jsd+1)/))
+  dx_struct = unpack(real_ptr(1,:), self%valid_halo_mask, 0.0_kind_real)
 
   call afield%final()
 
 end subroutine soca_geom_atlas2struct
+
+! ------------------------------------------------------------------------------
+!> Examine the halo gridpoints to determine which ones are non-duplicate and valid
+!!
+!! The OOPS interpolation does not like duplicate points, but MOM6 does have duplicate
+!! and/or unused halo points. We create a mask (self%valid_halo_mask) that is true if 1) 
+!! not a halo point, or 2) a halo point that is not a duplicate lat/lon already present 
+!! in the PE's halo or non-halo regions. Invalid halo points are also masked out 
+!! (i.e. the lat/lon are not updated from the initialed INVALID_HALO value when a halo 
+!! exchanged is performed
+subroutine soca_geom_find_invalid_halo(self)
+  class(soca_geom), intent(inout) :: self
+
+  integer ::  i1, i2, j1, j2
+
+  ! iterate over all halo gridpoints
+  outer: do j1 = self%jsd, self%jed
+    do i1 = self%isd, self%ied
+
+      ! if not halo region, skip
+      if (j1 >= self%jsc .and. j1 <= self%jec .and. &
+          i1 >= self%isc .and. i1 <= self%iec)  cycle
+
+      ! if gridpoint is still set to -999 after a halo exchange, it is an invalid point
+          if (self%lat(i1,j1) == INVALID_HALO) then
+            self%valid_halo_mask(i1,j1) = .false.
+            cycle
+          end if    
+          
+      ! make sure this halo point doesn't exist anywhere else, if it does mask it out
+      inner: do j2 = self%jsd, self%jed
+        do i2 = self%isd, self%ied
+          ! skip if point 1 is same as point 2
+          if (j1 == j2 .and. i1 == i2) cycle
+          ! skip if point 2 has already been masked out
+          if (.not. self%valid_halo_mask(i2,j2)) cycle
+          
+          ! if lat/lon are the same, mark point 1 as a duplicate, mask out
+          if (self%lat(i1,j1) == self%lat(i2,j2) .and. &
+              self%lon(i1,j1) == self%lon(i2,j2)) then
+            self%valid_halo_mask(i1,j1) = .false.
+            exit inner
+          end if
+        end do
+      end do inner
+    
+    end do
+  end do outer
+
+  ! count the number of points
+  self%ngrid_halo_valid = count(self%valid_halo_mask)  
+  
+end subroutine soca_geom_find_invalid_halo
 
 ! ------------------------------------------------------------------------------
 

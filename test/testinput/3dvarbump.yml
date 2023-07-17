@@ -27,9 +27,10 @@ cost function:
     covariance model: SABER
     saber central block:
       saber block name: BUMP_NICAS
-      bump:
+      read:
         io:
           data directory: data_generated/parameters_bump_cor_nicas
+          files prefix: bump
         drivers:
           multivariate strategy: univariate
           read local nicas: true
@@ -40,13 +41,9 @@ cost function:
             - tocn
             - uocn
             - vocn
-          io:
-            files prefix: bump3d
         - model:
             variables:
             - ssh
-          io:
-            files prefix: bump2d
 
     linear variable change:
       input variables: *soca_vars
@@ -74,13 +71,13 @@ cost function:
         hicen_max: 100.0
 
       - linear variable change name: BalanceSOCA
-        dsdtmax: 0.1
-        dsdzmin: 3.0e-6
-        dtdzmin: 1.0e-6
-        nlayers: 10
-        # dcdt:
-        #   filename: data_static/72x35x25/dcdt.nc
-        #   name: dcdt
+        kst:
+          dsdtmax: 0.1
+          dsdzmin: 3.0e-6
+          dtdzmin: 1.0e-6
+          nlayers: 2
+        ksshts:
+          nlayers: 2
 
   observations:
     observers:
@@ -187,8 +184,11 @@ cost function:
             obsfile: data_static/obs/prof.nc
         simulated variables: [salinity]
       obs operator:
-        name: MarineVertInterp
+        name: VertInterp
         observation alias file: testinput/obsop_name_map.yml
+        vertical coordinate: sea_water_depth
+        observation vertical coordinate: depth
+        interpolation method: linear
       obs error:
         covariance model: diagonal
       obs filters:

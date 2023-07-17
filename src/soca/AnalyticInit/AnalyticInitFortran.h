@@ -12,13 +12,13 @@
 
 // Forward declarations
 namespace ufo {
-  class Locations;
+  class SampledLocations;
 }
 
 namespace soca {
 
   extern "C" {
-    void soca_analytic_geovals_f90(F90goms &, const ufo::Locations &);
+    void soca_analytic_geovals_f90(F90goms &, const ufo::SampledLocations &);
   }
 }  // namespace soca
 #endif  // SOCA_ANALYTICINIT_ANALYTICINITFORTRAN_H_

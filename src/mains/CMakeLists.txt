@@ -1,7 +1,7 @@
-ecbuild_add_executable( TARGET  soca_dirac.x
-                        SOURCES Dirac.cc
-                        LIBS    ${UFS_LIBS}
-                      )
+#ecbuild_add_executable( TARGET  soca_dirac.x
+#                        SOURCES Dirac.cc
+#                        LIBS    ${UFS_LIBS}
+#                      )
 
 ecbuild_add_executable( TARGET  test_soca_model.x
                         SOURCES TestModel.cc
@@ -15,7 +15,7 @@ ecbuild_add_executable( TARGET  soca_forecast.x
 
 ecbuild_add_executable( TARGET  soca_hofx3d.x
                         SOURCES HofX3D.cc
-                        LIBS  ${UFS_LIBS}
+                        LIBS   ${UFS_LIBS}
 )
 
 ecbuild_add_executable( TARGET  soca_hofx.x
@@ -34,15 +34,10 @@ ecbuild_add_executable( TARGET  soca_var.x
                                 saber
                       )
 
-ecbuild_add_executable( TARGET  soca_error_covariance_training.x
-                        SOURCES ErrorCovarianceTraining.cc
+ecbuild_add_executable( TARGET  soca_error_covariance_toolbox.x
+                        SOURCES ErrorCovarianceToolbox.cc
                         LIBS   ${UFS_LIBS}
                                 saber
-                      )
-
-ecbuild_add_executable( TARGET  soca_staticbinit.x
-                        SOURCES StaticBInit.cc
-                        LIBS   ${UFS_LIBS}
                       )
 
 ecbuild_add_executable( TARGET  soca_enspert.x
@@ -52,7 +47,12 @@ ecbuild_add_executable( TARGET  soca_enspert.x
 
 ecbuild_add_executable( TARGET  soca_sqrtvertloc.x
                         SOURCES SqrtOfVertLoc.cc
-                        LIBS   ${UFS_LIBS}
+                        LIBS    ${UFS_LIBS}
+                      )
+
+ecbuild_add_executable( TARGET  soca_ensmeanandvariance.x
+                        SOURCES EnsMeanAndVariance.cc
+                        LIBS    ${UFS_LIBS}
                       )
 
 ecbuild_add_executable( TARGET  soca_ensvariance.x

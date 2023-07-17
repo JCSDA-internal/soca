@@ -21,6 +21,7 @@ public :: soca_steric_jacobian
 type, public :: soca_ksshts
    real(kind=kind_real), allocatable :: kssht(:,:,:) !< deta(i,j)/dT(i,j,k)
    real(kind=kind_real), allocatable :: ksshs(:,:,:) !< deta(i,j)/dS(i,j,k)
+   integer                           :: nlayers
 end type soca_ksshts
 
 

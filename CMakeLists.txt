@@ -9,7 +9,7 @@
 ################################################################################
 
 cmake_minimum_required( VERSION 3.12 )
-project( soca VERSION 1.4.0 LANGUAGES C CXX Fortran)
+project( soca VERSION 1.5.0 LANGUAGES C CXX Fortran)
 
 find_package(ecbuild 3.3.2 REQUIRED)
 include( ecbuild_system NO_POLICY_SCOPE )
@@ -23,13 +23,14 @@ include( soca_compiler_flags )
 ################################################################################
 find_package( NetCDF REQUIRED COMPONENTS Fortran)
 find_package( gsl-lite REQUIRED HINTS $ENV{gsl_list_DIR})
-find_package( eckit  1.11.6   REQUIRED)
-find_package( fckit  0.7.0    REQUIRED)
-find_package( atlas  0.20.2   REQUIRED)
-find_package( oops   1.3.0    REQUIRED)
-find_package( saber  1.0.0    REQUIRED)
-find_package( ioda   1.0.0    REQUIRED)
-find_package( ufo    1.3.0    REQUIRED)
+find_package( eckit  1.23.0   REQUIRED)
+find_package( fckit  0.10.1   REQUIRED)
+find_package( atlas  0.33.0   REQUIRED)
+find_package( oops   1.7.0    REQUIRED)
+find_package( vader  1.4.0    REQUIRED)
+find_package( saber  1.7.0    REQUIRED)
+find_package( ioda   2.6.0    REQUIRED)
+find_package( ufo    1.7.0    REQUIRED)
 if(FV3_FORECAST_MODEL MATCHES UFS)
   find_package( ESMF MODULE REQUIRED STATIC)
   find_package( crtm   2.2.3)
@@ -61,7 +62,7 @@ set( SOCA_LINKER_LANGUAGE CXX)
 
 if(FV3_FORECAST_MODEL MATCHES UFS)
   if(${UFS_APP} MATCHES "NG-GODAS")
-    set( UFS_LIBS 
+    set( UFS_LIBS
         soca
         cdeps
         cmeps
@@ -71,7 +72,7 @@ if(FV3_FORECAST_MODEL MATCHES UFS)
         esmf
     )
   elseif(${UFS_APP} MATCHES "S2S")
-    set( UFS_LIBS 
+    set( UFS_LIBS
         soca
         cmeps
         PIO::PIO_C PIO::PIO_Fortran
@@ -114,7 +115,7 @@ endif()
 ################################################################################
 
 # prepares a tar.gz of the sources and/or binaries
-ecbuild_install_project( NAME soca )
+# ecbuild_install_project( NAME soca )
 
 # print the summary of the configuration
 ecbuild_print_summary()

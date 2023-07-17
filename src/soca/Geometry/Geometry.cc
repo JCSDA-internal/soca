@@ -47,46 +47,6 @@ namespace soca {
       soca_geo_gridgen_f90(keyGeom_);
       return;
     }
-
-    // create kdtrees
-    int kdidx = 0;
-    for (auto grid : grids) {
-      std::vector<double> lats;
-      std::vector<double> lons;
-      size_t npoints;
-      std::vector<size_t> indx;
-
-      // kd tree with all grid points
-      this->latlon(lats, lons, true, grid, false);
-      npoints = lats.size();
-      indx.resize(npoints);
-      for (size_t jj = 0; jj < npoints; ++jj) indx[jj] = jj;
-      localTree_[kdidx++].build(lons, lats, indx);
-
-      // kd tree with only masked points
-      // NOTE: the index from the tree still refers to grid index
-      // for fields with ALL gridpoints.
-      std::vector<double> lats_masked;
-      std::vector<double> lons_masked;
-      this->latlon(lats_masked, lons_masked, true, grid, true);
-      std::vector<double> mask;
-      this->mask(mask, true, grid);
-      size_t npoints_masked = lats_masked.size();
-      if (npoints_masked > 0) {
-        // only create the tree if there are valid ocean points
-        indx.resize(npoints_masked);
-        size_t idx = 0;
-        for (size_t jj = 0; jj < npoints; ++jj) {
-          if (mask[jj] == 0.0) continue;  // land, skip
-          ASSERT(idx < npoints_masked);
-          indx[idx++] = jj;
-        }
-        ASSERT(idx == npoints_masked);
-        localTree_[kdidx++].build(lons_masked, lats_masked, indx);
-      } else {
-        kdidx++;
-      }
-    }
   }
   // -----------------------------------------------------------------------------
   Geometry::Geometry(const Geometry & other)
@@ -150,67 +110,14 @@ namespace soca {
   // -----------------------------------------------------------------------------
   void Geometry::latlon(std::vector<double> & lats, std::vector<double> & lons,
       const bool halo) const {
-    // Assume that we can get by with just using the unmasked H grid here (i.e.
-    // ignore the different staggered grids)
-    // (This method should only be called by code in OOPS used for determining the
-    //  PE that owns a specific point.... so it doesn't have to be exact)
-    latlon(lats, lons, halo, 'h', false);
-  }
-  // -----------------------------------------------------------------------------
-  void Geometry::latlon(
-        std::vector<double> & lats, std::vector<double> & lons, const bool halo,
-        const char grid, const bool masked) const {
     // get the number of gridpoints
     int gridSize;
-    soca_geo_gridsize_f90(keyGeom_, grid, masked, halo, gridSize);
+    soca_geo_gridsize_f90(keyGeom_, halo, gridSize);
 
     // get the lat/lon of those gridpoints
     lats.resize(gridSize);
     lons.resize(gridSize);
-    soca_geo_gridlatlon_f90(keyGeom_, grid, masked, halo, gridSize,
-      lats.data(), lons.data());
-  }
-  // -----------------------------------------------------------------------------
-  void Geometry::mask(
-      std::vector<double> & mask, const bool halo, const char grid) const {
-    // get the number of gridpoints
-    int gridSize;
-    soca_geo_gridsize_f90(keyGeom_, grid, false, halo, gridSize);
-    mask.resize(gridSize);
-
-    // get the mask value of those gridpoints
-    soca_geo_gridmask_f90(keyGeom_, grid, halo, gridSize, mask.data());
-  }
-
-  // -----------------------------------------------------------------------------
-  atlas::util::KDTree<size_t>::ValueList Geometry::closestPoints(
-    const double lat, const double lon, const int npoints,
-    const char grid, const bool masked) const {
-
-    // determine which kdtree to use
-    // TODO(travis) make sure not -1
-    int kdidx = -1;
-    for (int j=0; j < grids.size(); j++) {
-      if (grids[j] == grid) kdidx = j*2;
-    }
-    ASSERT(kdidx >= 0);
-    if (masked) kdidx += 1;
-    ASSERT(kdidx < 6);
-
-    atlas::PointLonLat obsloc(lon, lat);
-    obsloc.normalise();
-    atlas::util::KDTree<size_t>::ValueList neighbours =
-      localTree_[kdidx].closestPoints(obsloc, npoints);
-
-    return neighbours;
-    }
-  // -----------------------------------------------------------------------------
-  // Get the properties of the grid for a given variable (masked and u/v/h grid)
-  void Geometry::getVarGrid(const std::string &var, char & grid, bool & masked) const {
-      oops::Variables vars;
-      vars.push_back(var);
-
-      soca_geo_getvargrid_f90(keyGeom_, vars, grid, masked);
+    soca_geo_gridlatlon_f90(keyGeom_, halo, gridSize, lats.data(), lons.data());
   }
 
 }  // namespace soca

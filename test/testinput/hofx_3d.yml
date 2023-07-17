@@ -93,10 +93,13 @@ observations:
       - name: InsituTemperature
         variables:
         - name: waterTemperature
-      - name: MarineVertInterp
+      - name: VertInterp
         observation alias file: testinput/obsop_name_map.yml
         variables:
         - name: salinity
+        vertical coordinate: sea_water_depth
+        observation vertical coordinate: depth
+        interpolation method: linear
 
   # handle T/S profiles separately... delete this someday
   - obs space:
@@ -124,8 +127,10 @@ observations:
           obsfile: data_static/obs/prof.nc
       simulated variables: [salinity]
     obs operator:
-      name: MarineVertInterp
+      name: VertInterp
       observation alias file: testinput/obsop_name_map.yml
+      vertical coordinate: sea_water_depth
+      observation vertical coordinate: depth
 
   - obs space:
       name: SeaIceFraction

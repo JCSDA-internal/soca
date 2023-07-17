@@ -28,7 +28,6 @@
 #include "oops/util/Logger.h"
 
 #include "ufo/GeoVaLs.h"
-#include "ufo/Locations.h"
 
 using oops::Log;
 
@@ -358,20 +357,20 @@ namespace soca {
 // -----------------------------------------------------------------------------
 
   void Increment::toFieldSet(atlas::FieldSet &fs) const {
-    soca_increment_to_fieldset_f90(toFortran(), vars_, fs.get(), false);
+    soca_increment_to_fieldset_f90(toFortran(), vars_, fs.get());
   }
 
 // -----------------------------------------------------------------------------
 
   void Increment::toFieldSetAD(const atlas::FieldSet &fs) {
     if (fs.empty()) return;
-    soca_increment_to_fieldset_ad_f90(toFortran(), vars_, fs.get(), false);
+    soca_increment_to_fieldset_ad_f90(toFortran(), vars_, fs.get());
   }
 
 // -----------------------------------------------------------------------------
 
   void Increment::fromFieldSet(const atlas::FieldSet &fs) {
-    soca_increment_from_fieldset_f90(toFortran(), vars_, fs.get(), false);
+    soca_increment_from_fieldset_f90(toFortran(), vars_, fs.get());
   }
 
 // -----------------------------------------------------------------------------
