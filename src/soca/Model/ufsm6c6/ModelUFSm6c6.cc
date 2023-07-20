@@ -32,10 +32,8 @@ namespace soca {
     : keyConfig_(0),
       tstep_(0),
       geom_(resol),
-      vars_(model, "model variables")
   {
     Log::trace() << "ModelUFSm6c6::ModelUFSm6c6" << std::endl;
-    Log::trace() << "ModelUFSm6c6 vars: " << vars_ << std::endl;
     tstep_ = util::Duration(model.getString("tstep"));
   }
   // -----------------------------------------------------------------------------

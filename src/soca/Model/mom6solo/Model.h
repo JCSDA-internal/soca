@@ -64,7 +64,6 @@ namespace soca {
 
     /// Utilities
     const util::Duration & timeResolution() const {return tstep_;}
-    const oops::Variables & variables() const {return vars_;}
 
    private:
     void print(std::ostream &) const;
@@ -72,7 +71,6 @@ namespace soca {
     util::Duration tstep_;
     bool setup_mom6_;
     const Geometry & geom_;
-    const oops::Variables vars_;
   };
   // -----------------------------------------------------------------------------
 

@@ -64,14 +64,12 @@ namespace soca {
 
     /// Utilities
     const util::Duration & timeResolution() const {return tstep_;}
-    const oops::Variables & variables() const {return vars_;}
 
    private:
     void print(std::ostream &) const;
     int keyConfig_;
     util::Duration tstep_;
     const Geometry & geom_;
-    const oops::Variables vars_;
   };
   // -----------------------------------------------------------------------------
 
