@@ -46,6 +46,12 @@ Covariance(hybrid2_ensemble) * Increment:
    hocn   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
     mld   min=-137.8914106581648014   max=1062.4531068923140538   mean=2.7171388121619757
 layer_depth   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
+Localization(hybrid2_ensemble_localization) diagnostics:
+- Localization at zero separation:
+  + Value for variable hicen, subwindow 0, at (longitude, latitude, vertical index) point (-202.50000, -62.50000, 1): 1.0000000000000002e+00
+  + Value for variable socn, subwindow 0, at (longitude, latitude, vertical index) point (-122.46168, 71.13133, 1): 9.9999999999999967e-01
+  + Value for variable tocn, subwindow 0, at (longitude, latitude, vertical index) point (-277.50000, -47.50000, 1): 1.0000000000000007e+00
+  + Value for variable tocn, subwindow 0, at (longitude, latitude, vertical index) point (-197.50000, 17.50000, 5): 9.9999999999999944e-01
 Localization(hybrid2_ensemble) * Increment:
   Valid time: 2018-04-15T00:00:00Z
   cicen   min=0.0000000000000000   max=1.0000000000000007   mean=0.0686773581172594
