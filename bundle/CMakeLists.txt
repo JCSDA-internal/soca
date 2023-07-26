@@ -51,6 +51,7 @@ ecbuild_bundle( PROJECT soca            SOURCE "../" )
 #===================================================================================================
 # optional test data for the upstream repos
 #===================================================================================================
+option(TEST_IODA "download and ioda-data repo needed for ioda ctests" OFF)
 if ( TEST_IODA )
   find_branch_name(REPO_DIR_NAME ioda)
   if( NOT DEFINED ENV{LOCAL_PATH_JEDI_TESTFILES} AND NOT DEFINED ${GIT_TAG_FUNC} )
@@ -58,6 +59,7 @@ if ( TEST_IODA )
   endif()
 endif ()
 
+option(TEST_UFO "download and ufo-data repo needed for ufo ctests" OFF)
 if ( TEST_UFO )
   find_branch_name(REPO_DIR_NAME ufo)
   if( NOT DEFINED ENV{LOCAL_PATH_JEDI_TESTFILES} AND NOT DEFINED ${GIT_TAG_FUNC} )
@@ -65,6 +67,7 @@ if ( TEST_UFO )
   endif()
 endif ()
 
+option(TEST_SABER "download and saber-data repo needed for ioda ctests" OFF)
 if ( TEST_SABER )
   find_branch_name(REPO_DIR_NAME saber)
   if( NOT DEFINED ENV{LOCAL_PATH_JEDI_TESTFILES} AND NOT DEFINED ${GIT_TAG_FUNC} )
