@@ -1,14 +1,15 @@
 atlas/
 crtm/
-eckit/
-fckit/
 fms/
 gsw/
 icepack/
+ioda-data/
 ioda/
 jedicmake/
 mom6/
 oops/
+saber-data/
 saber/
 soca
+ufo-data/
 ufo/
