@@ -720,11 +720,6 @@ soca_add_test( NAME 4dhybenvar
                             test_soca_forecast_mom6_ens1
                             test_soca_forecast_mom6_ens2
                             test_soca_forecast_mom6_ens3 )
-# soca_add_test( NAME 4dhyb
-#                EXE  soca_var.x
-#                TEST_DEPENDS test_soca_static_socaerror_init
-#                             test_soca_parameters_bump_loc )
-
 
 # LETKF
 #---------------------------------------------------------------------------------------------------
