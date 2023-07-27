@@ -10,6 +10,7 @@ set( soca_test_input
   testinput/3dvarfgat.yml
   testinput/3dvarlowres_soca.yml
   testinput/4denvar.yml
+  testinput/4dhybenvar.yml
   testinput/addincrement.yml
   testinput/balance_mask.yml
   testinput/checkpointmodel.yml
@@ -95,6 +96,7 @@ set( soca_test_ref
   testref/3dvarfgat.test
   testref/3dvarlowres_soca.test
   testref/4denvar.test
+  testref/4dhybenvar.test
   testref/addincrement.test
   testref/balance_mask.test
   testref/checkpointmodel.test
@@ -704,12 +706,20 @@ soca_add_test( NAME 3dhybfgat
 
 soca_add_test( NAME 4denvar
                EXE soca_var.x
+               MPI 4
+               TEST_DEPENDS test_soca_gridgen
+                            test_soca_forecast_mom6_ens1
+                            test_soca_forecast_mom6_ens2
+                            test_soca_forecast_mom6_ens3 )
+
+soca_add_test( NAME 4dhybenvar
+               EXE soca_var.x
+               MPI 4
                TEST_DEPENDS test_soca_gridgen
                             test_soca_static_socaerror_init
                             test_soca_forecast_mom6_ens1
                             test_soca_forecast_mom6_ens2
                             test_soca_forecast_mom6_ens3 )
-
 # soca_add_test( NAME 4dhyb
 #                EXE  soca_var.x
 #                TEST_DEPENDS test_soca_static_socaerror_init
