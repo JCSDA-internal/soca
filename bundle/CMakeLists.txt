@@ -36,6 +36,11 @@ if ( BUILD_ICEPACK )
   ecbuild_bundle( PROJECT icepack         GIT "https://github.com/JCSDA-internal/Icepack.git"         UPDATE BRANCH feature/ecbuild-new )
 endif()
 
+option(BUILD_OASIM "download and build OASIM ocean color forward operator" OFF)
+if ( BUILD_OASIM )
+  ecbuild_bundle( PROJECT oasim         GIT "https://github.com/JCSDA-internal/oasim.git"           UPDATE BRANCH develop )
+endif ()
+
 #===================================================================================================
 # required repositories
 #===================================================================================================
