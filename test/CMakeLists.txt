@@ -706,7 +706,6 @@ soca_add_test( NAME 3dhybfgat
 
 soca_add_test( NAME 4denvar
                EXE soca_var.x
-               MPI 4
                TEST_DEPENDS test_soca_gridgen
                             test_soca_forecast_mom6_ens1
                             test_soca_forecast_mom6_ens2
@@ -714,7 +713,6 @@ soca_add_test( NAME 4denvar
 
 soca_add_test( NAME 4dhybenvar
                EXE soca_var.x
-               MPI 4
                TEST_DEPENDS test_soca_gridgen
                             test_soca_static_socaerror_init
                             test_soca_forecast_mom6_ens1
