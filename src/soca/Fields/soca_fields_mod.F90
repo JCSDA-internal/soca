@@ -930,7 +930,11 @@ subroutine soca_fields_read(self, f_conf, vdate)
 
     ! built-in variables
     do i=1,size(self%fields)
-      if(self%fields(i)%metadata%io_name /= "") then
+
+      if(self%fields(i)%metadata%io_file == "CONSTANT") then
+        self%fields(i)%val(:,:,:) = self%fields(i)%metadata%constant_value
+
+      else if(self%fields(i)%metadata%io_file /= "") then
         ! which file are we reading from?
         select case(self%fields(i)%metadata%io_file)
         case ('ocn')
@@ -1004,10 +1008,12 @@ subroutine soca_fields_read(self, f_conf, vdate)
     if (vert_remap) then
 
       ! output log of  what fields are going to be interpolated vertically
-      do n=1,size(self%fields)
-        if (.not. self%fields(n)%metadata%vert_interp) cycle
-        call fckit_log%info("vertically remapping "//trim(self%fields(n)%name))
-      end do
+      if ( self%geom%f_comm%rank() == 0 ) then
+        do n=1,size(self%fields)
+          if (.not. self%fields(n)%metadata%vert_interp) cycle
+          call fckit_log%info("vertically remapping "//trim(self%fields(n)%name))
+        end do
+      end if
 
       allocate(h_common_ij(nz), hocn_ij(nz), varocn_ij(nz), varocn2_ij(nz))
       call initialize_remapping(remapCS,'PCM')

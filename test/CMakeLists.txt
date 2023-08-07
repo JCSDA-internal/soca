@@ -9,6 +9,8 @@ set( soca_test_input
   testinput/3dvarfgat_pseudo.yml
   testinput/3dvarfgat.yml
   testinput/3dvarlowres_soca.yml
+  testinput/4denvar.yml
+  testinput/4dhybenvar.yml
   testinput/addincrement.yml
   testinput/balance_mask.yml
   testinput/checkpointmodel.yml
@@ -35,6 +37,9 @@ set( soca_test_input
   testinput/forecast_identity.yml
   testinput/forecast_mom6_bgc.yml
   testinput/forecast_mom6.yml
+  testinput/forecast_mom6_ens1.yml
+  testinput/forecast_mom6_ens2.yml
+  testinput/forecast_mom6_ens3.yml
   testinput/forecast_pseudo.yml
   testinput/geometry_iterator_2d.yml
   testinput/geometry_iterator_3d.yml
@@ -90,6 +95,8 @@ set( soca_test_ref
   testref/3dvarfgat_pseudo.test
   testref/3dvarfgat.test
   testref/3dvarlowres_soca.test
+  testref/4denvar.test
+  testref/4dhybenvar.test
   testref/addincrement.test
   testref/balance_mask.test
   testref/checkpointmodel.test
@@ -458,6 +465,20 @@ soca_add_test( NAME forecast_pseudo
                TEST_DEPENDS test_soca_gridgen
                             test_soca_forecast_mom6 )
 
+soca_add_test( NAME forecast_mom6_ens1
+               EXE  soca_forecast.x
+               NOTRAPFPE
+               TEST_DEPENDS test_soca_gridgen )
+soca_add_test( NAME forecast_mom6_ens2
+               EXE  soca_forecast.x
+               NOTRAPFPE
+               TEST_DEPENDS test_soca_gridgen )
+soca_add_test( NAME forecast_mom6_ens3
+               EXE  soca_forecast.x
+               NOTRAPFPE
+               TEST_DEPENDS test_soca_gridgen )
+
+
 
 # background error
 #---------------------------------------------------------------------------------------------------
@@ -683,11 +704,20 @@ soca_add_test( NAME 3dhybfgat
                             test_soca_static_socaerror_init
                             test_soca_parameters_bump_loc )
 
-# soca_add_test( NAME 4dhyb
-#                EXE  soca_var.x
-#                TEST_DEPENDS test_soca_static_socaerror_init
-#                             test_soca_parameters_bump_loc )
+soca_add_test( NAME 4denvar
+               EXE soca_var.x
+               TEST_DEPENDS test_soca_gridgen
+                            test_soca_forecast_mom6_ens1
+                            test_soca_forecast_mom6_ens2
+                            test_soca_forecast_mom6_ens3 )
 
+soca_add_test( NAME 4dhybenvar
+               EXE soca_var.x
+               TEST_DEPENDS test_soca_gridgen
+                            test_soca_static_socaerror_init
+                            test_soca_forecast_mom6_ens1
+                            test_soca_forecast_mom6_ens2
+                            test_soca_forecast_mom6_ens3 )
 
 # LETKF
 #---------------------------------------------------------------------------------------------------

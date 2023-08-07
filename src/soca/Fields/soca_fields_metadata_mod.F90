@@ -25,11 +25,12 @@ type, public :: soca_field_metadata
   character(len=:),  allocatable :: levels   !< "1", or "full_ocn"
   character(len=:),  allocatable :: getval_name !< variable name used by UFO
   character(len=:),  allocatable :: getval_name_surface  ! name used by UFO for the surface (if this is a 3D field)
-  character(len=:),  allocatable :: io_file  !< the restart file domain (ocn, sfc, ice)
+  character(len=:),  allocatable :: io_file  !< the restart file domain (ocn, sfc, ice). Or if "CONSTANT" use the value in "constant_value"
   character(len=:),  allocatable :: io_name  !< the name use in the restart IO
   character(len=:),  allocatable :: property  !< physical property of the field, "none" or "positive_definite"
   real(kind=kind_real)           :: fillvalue
   logical                        :: vert_interp   !< true if the field can be vertically interpolated
+  real(kind=kind_real)           :: constant_value !< An optional value to use globally for the field
 end type
 
 
@@ -75,6 +76,7 @@ subroutine soca_fields_metadata_create(self, filename)
 
   integer :: i, j
   logical :: bool
+  real(kind=kind_real) :: r
   character(len=:), allocatable :: str
   real(kind=kind_real) :: val
 
@@ -122,6 +124,16 @@ subroutine soca_fields_metadata_create(self, filename)
     end if
     self%metadata(i)%vert_interp = bool
 
+    if(conf_list(i)%get("constant value", r)) then
+      if (.not. self%metadata(i)%io_file == "") then
+        str=repeat(" ", 1024)
+        write(str, *) "error in field metadata file for '", self%metadata(i)%name, &
+          "' :  'io file' cannot be set if 'constant value' is given"
+        call abor1_ftn(str)
+      end if
+      self%metadata(i)%constant_value = r
+      self%metadata(i)%io_file = "CONSTANT"
+    end if
   end do
 
   ! check for duplicates
