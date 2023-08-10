@@ -204,6 +204,10 @@
   getval name: effective_radius_of_cloud_liquid_water_particle
   constant value: 12.4
 
+- name: cov
+  getval name: cloud_area_fraction_in_atmosphere_layer
+  constant value: 80
+
 - name: aer_tau
   getval name: aerosol_optical_thickness
   constant value: 0.16
@@ -233,6 +237,10 @@
   getval name: diatom_concentration
   constant value: 0.01
 
+- name: chloro
+  getval name: chlorophyte_concentration
+  constant value: 0.14
+
 - name: cyano
   getval name: cyano-bacteria_concentration
   constant value: 0.003
@@ -243,9 +251,9 @@
 
 - name: dino
   getval name: dinoflagellate_concentration
-  constant value: 1.54e-17
+  constant value: 1.54 #e-17
 
 - name: phaeo
   getval name: phaeocystis_concentration
-  constant value: 5.3e-24
+  constant value: 5.3  #e-24
 

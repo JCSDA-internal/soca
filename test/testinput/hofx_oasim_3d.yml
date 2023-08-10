@@ -10,9 +10,9 @@ state:
     ocn_filename: MOM.res.nc
     ice_filename: cice.res.nc
     sfc_filename: sfc.res.nc
-    state variables: [hocn, chl, oz_th, wvapor, ws, pres, rh, cld_tau,
-    cld_lwp, clwefr, aer_tau, scat_alb, asym_par, c_det, inorg_c, dis_c,
-    diatom, cyano, cocco, dino, phaeo]
+    state variables: [hocn, oz_th, wvapor, ws, pres, rh, cld_tau,
+    cld_lwp, clwefr, cov, aer_tau, scat_alb, asym_par, c_det, inorg_c, dis_c,
+    diatom, chloro, cyano, cocco, dino, phaeo]
 
 window begin: 2018-04-14T00:00:00Z
 window length: P2D
@@ -33,7 +33,8 @@ observations:
       channels: 50-70
     obs operator:
       name: OASIM
-      CoefficientPath: '../../oasim/test/data'
+      CoefficientPath: /gpfsm/dnb55/projects/p01/s2127/hebrahi1/PACE/OASIM/2023/082023/build_gnu/oasim/test/data
+  #../../oasim/test/data
 
 test:
   reference filename: testref/hofx_oasim_3d.test
