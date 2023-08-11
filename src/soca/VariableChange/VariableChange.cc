@@ -55,18 +55,20 @@ void VariableChange::changeVar(State & x, const oops::Variables & vars) const {
   // We need to do some variable renaming BEFORE we run VADER.
   // Eventually, we will internally rename these variables when they are
   // first loaded in so that we won't have to worry about it here.
-  Log::debug() << "VariableChange::changeVar Pre-VADER variable changes. " << std::endl;
-  oops::Variables preVaderVars(std::vector<std::string>{
-    "sea_water_potential_temperature",
-    "sea_water_salinity",
-    "sea_water_depth"});
-  preVaderVars += x.variables();
-  State preVader(x.geometry(), preVaderVars, x.time());
-  variableChange_->changeVar(x, preVader);
-  x.updateFields(preVaderVars);
-  x = preVader;
-  Log::debug() << "VariableChange::changeVar variables after var change: "
-               << x.variables() << std::endl;
+  if (vars.has("sea_water_temperature")) {
+    Log::debug() << "VariableChange::changeVar Pre-VADER variable changes. " << std::endl;
+    oops::Variables preVaderVars(std::vector<std::string>{
+      "sea_water_potential_temperature",
+      "sea_water_salinity",
+      "sea_water_depth"});
+    preVaderVars += x.variables();
+    State preVader(x.geometry(), preVaderVars, x.time());
+    variableChange_->changeVar(x, preVader);
+    x.updateFields(preVaderVars);
+    x = preVader;
+    Log::debug() << "VariableChange::changeVar variables after var change: "
+                << x.variables() << std::endl;
+  }
 
   // call Vader
   // ----------------------------------------------------------------------------
@@ -107,50 +109,7 @@ void VariableChange::changeVar(State & x, const oops::Variables & vars) const {
 
 void VariableChange::changeVarInverse(State & x,
                                       const oops::Variables & vars) const {
-  Log::trace() << "VariableChange::changeVarInverse starting" << std::endl;
-
-  Log::debug() << "VariableChange::changeVarInverse vars in: "
-               << x.variables() << std::endl;
-  Log::debug() << "VariableChange::changeVarInverse vars out: "
-               << vars << std::endl;
-
-  // If the variables are the same, don't bother doing anything!
-  if (vars <= x.variables()) {
-    x.updateFields(vars);
-    oops::Log::info() << "VariableChange::changeVarInverse done (identity)" << std::endl;
-    return;
-  }
-
-  // call Vader
-  // ----------------------------------------------------------------------------
-  // Record start variables
-  oops::Variables varsFilled = x.variables();
-  oops::Variables varsVader = vars;
-  varsVader -= varsFilled;  // Pass only the needed variables
-
-  // Call Vader. On entry, varsVader holds the vars requested from Vader; on exit,
-  // it holds the vars NOT fulfilled by Vader, i.e., the vars still to be requested elsewhere.
-  // vader_->changeVar also returns the variables fulfilled by Vader. These variables are allocated
-  // and populated and added to the FieldSet (xfs).
-  atlas::FieldSet xfs;
-  x.toFieldSet(xfs);
-  varsFilled += vader_->changeVar(xfs, varsVader);
-  x.updateFields(varsFilled);
-  x.fromFieldSet(xfs);
-
-  // soca specific transforms
-  // -----------------------------------------------------------------------------
-  // Create output state
-  State xout(x.geometry(), vars, x.time());
-
-  // Call variable change
-  variableChange_->changeVarInverse(x, xout);
-
-  // Copy data from temporary state
-  x.updateFields(vars);
-  x = xout;
-
-  Log::trace() << "VariableChange::changeVarInverse done" << std::endl;
+  changeVar(x, vars);
 }
 
 // -----------------------------------------------------------------------------
