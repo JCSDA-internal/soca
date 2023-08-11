@@ -59,6 +59,7 @@ void VariableChange::changeVar(State & x, const oops::Variables & vars) const {
     Log::debug() << "VariableChange::changeVar Pre-VADER variable changes. " << std::endl;
     oops::Variables preVaderVars(std::vector<std::string>{
       "latitude",
+      "longitude",
       "sea_water_potential_temperature",
       "sea_water_salinity",
       "sea_water_depth"});

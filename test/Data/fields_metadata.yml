@@ -169,6 +169,7 @@
   levels: full_ocn
 
 - name: latitude
+- name: longitude
 
 # --------------------------------------------------------------------------------------------------
 # variables that VADER should be responsible for
