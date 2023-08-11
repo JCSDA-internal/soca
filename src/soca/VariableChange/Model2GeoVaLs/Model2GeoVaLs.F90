@@ -50,6 +50,9 @@ subroutine soca_model2geovals_changevar_f90(c_key_geom, c_key_xin, c_key_xout) &
     select case (xout%fields(i)%name)
 
     ! fields that are obtained from geometry
+    case ('latitude')
+      xout%fields(i)%val(:,:,1) = real(geom%lat, kind=kind_real)
+
     case ('sea_water_depth')
       call geom%thickness2depth(geom%h, xout%fields(i)%val)
 
