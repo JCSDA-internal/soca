@@ -7,6 +7,7 @@
 
 #include <ostream>
 #include <string>
+#include <vector>
 
 #include "soca/Geometry/Geometry.h"
 #include "soca/State/State.h"
@@ -49,8 +50,27 @@ void VariableChange::changeVar(State & x, const oops::Variables & vars) const {
   // // If the variables are the same, don't bother doing anything!
   // if (!(x.variables() == vars))
 
+  // The following is TEMPORARY.
+  // ----------------------------------------------------------------------------
+  // We need to do some variable renaming BEFORE we run VADER.
+  // Eventually, we will internally rename these variables when they are
+  // first loaded in so that we won't have to worry about it here.
+  Log::debug() << "VariableChange::changeVar Pre-VADER variable changes. " << std::endl;
+  oops::Variables preVaderVars(std::vector<std::string>{
+    "sea_water_potential_temperature",
+    "sea_water_salinity",
+    "sea_water_depth"});
+  preVaderVars += x.variables();
+  State preVader(x.geometry(), preVaderVars, x.time());
+  variableChange_->changeVar(x, preVader);
+  x.updateFields(preVaderVars);
+  x = preVader;
+  Log::debug() << "VariableChange::changeVar variables after var change: "
+               << x.variables() << std::endl;
+
   // call Vader
   // ----------------------------------------------------------------------------
+  Log::debug() << "VariableChange::changeVar VADER variable changes. " << std::endl;
   // Record start variables
   oops::Variables varsFilled = x.variables();
   oops::Variables varsVader = vars;
@@ -65,18 +85,19 @@ void VariableChange::changeVar(State & x, const oops::Variables & vars) const {
   varsFilled += vader_->changeVar(xfs, varsVader);
   x.updateFields(varsFilled);
   x.fromFieldSet(xfs);
+  Log::debug() << "VariableChange::changeVar variables after var change: "
+               << x.variables() << std::endl;
 
   // soca specific transforms
   // ----------------------------------------------------------------------------
-  // Create output state
+  Log::debug() << "VariableChange::changeVar SOCA specific post-VADER variable changes. "
+               << std::endl;
   State xout(x.geometry(), vars, x.time());
-
-  // Call variable change
   variableChange_->changeVar(x, xout);
-
-  // Copy data from temporary state
   x.updateFields(vars);
   x = xout;
+  Log::debug() << "VariableChange::changeVar variables after var change: "
+               << x.variables() << std::endl;
 
 
   Log::trace() << "VariableChange::changeVar done" << std::endl;
