@@ -110,7 +110,10 @@ observations:
           obsfile: data_static/obs/prof.nc
       simulated variables: [waterTemperature]
     obs operator:
-      name: InsituTemperature
+      name: VertInterp
+      observation alias file: testinput/obsop_name_map.yml
+      vertical coordinate: sea_water_depth
+      observation vertical coordinate: depth      
   - obs space:
       name: InsituSalinity
       obsdataout:
