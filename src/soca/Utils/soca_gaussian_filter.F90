@@ -101,22 +101,57 @@ subroutine soca_gaussian_filter_init(self, geom, hz_scales)
   write (str, *) "  minimum iterations: ", n_min  
   call oops_log%debug(str)
   self%n_iter = n_min + 2 ! add 1, just for the heck of it
+
   
   ! calculate the weights for the kernel
+  ! (For now, assume hz isotropic)
   ! w = sigma^2 / (2 * n * dx^2)
   allocate(self%weights_x(-1:1,geom%isd:geom%ied,geom%jsc:geom%jed))
-  allocate(self%weights_y(-1:1,geom%isd:geom%ied,geom%jsc:geom%jed))
   self%weights_x = 0.0
   do i = self%geom%isd, self%geom%ied
     do j = self%geom%jsd, self%geom%jed
+      if (geom%mask2d(i,j) == 0.0) cycle
+
       if (dx(i,j) == 0.0) cycle ! why am i geting dx of 0.0 in some places??
-      self%weights_x(-1,i,j) = hz_scales(i,j)**2 / (2.0 * self%n_iter * dx(i,j)**2)
+      self%weights_x(-1,i,j) = hz_scales(i,j)**2 / (2.0 * self%n_iter * dx(i,j)**2)          
+      self%weights_x(1,i,j) = self%weights_x(-1,i,j)
+      self%weights_x(0,i,j) = 1.0 - 2.0 * self%weights_x(-1,i,j)
+      
+      ! redistribute weights at boundaries
+      if(geom%mask2d(i-1, j) == 0.0) then
+        self%weights_x(0,i,j) = self%weights_x(0,i,j) + self%weights_x(-1,i,j)
+        self%weights_x(-1,i,j) = 0.0
+      end if
+      if(geom%mask2d(i+1, j) == 0.0) then
+        self%weights_x(0,i,j) = self%weights_x(0,i,j) + self%weights_x(1,i,j)
+        self%weights_x(1,i,j) = 0.0
+      end if      
     end do
   end do  
-  self%weights_x(1,:,:) = self%weights_x(-1,:,:)
-  self%weights_x(0,:,:) = 1.0 - 2.0 * self%weights_x(-1,:,:)
-  ! For now, assume isotropic
-  self%weights_y = self%weights_x
+  
+  allocate(self%weights_y(-1:1,geom%isd:geom%ied,geom%jsc:geom%jed))
+  self%weights_y = 0.0
+  do i = self%geom%isd, self%geom%ied
+    do j = self%geom%jsd, self%geom%jed
+      if (geom%mask2d(i,j) == 0.0) cycle
+
+      if (dx(i,j) == 0.0) cycle ! why am i geting dx of 0.0 in some places??
+      self%weights_y(-1,i,j) = hz_scales(i,j)**2 / (2.0 * self%n_iter * dx(i,j)**2)    
+      self%weights_y(1,i,j) = self%weights_y(-1,i,j)
+      self%weights_y(0,i,j) = 1.0 - 2.0 * self%weights_y(-1,i,j)
+
+      ! redistribute weights at boundaries
+      if(geom%mask2d(i, j-1) == 0.0) then
+        self%weights_y(0,i,j) = self%weights_y(0,i,j) + self%weights_y(-1,i,j)
+        self%weights_y(-1,i,j) = 0.0
+      end if
+      if(geom%mask2d(i, j+1) == 0.0) then
+        self%weights_y(0,i,j) = self%weights_y(0,i,j) + self%weights_y(1,i,j)
+        self%weights_y(1,i,j) = 0.0
+      end if   
+
+    end do
+  end do  
 
 
 end subroutine
@@ -137,19 +172,21 @@ subroutine soca_gaussian_filter_mult(self, xin, xout )
   allocate(xtmp(self%geom%isd:self%geom%ied, self%geom%jsd:self%geom%jed, size(xin,3)))
 
   xout = xin
+
   do iter=0, self%n_iter    
     
     ! x direction
     xtmp = xout
     do i = self%geom%isc, self%geom%iec
       do j = self%geom%jsc, self%geom%jec
-        if (self%geom%mask2d(i,j) == 0.0) cycle              
+        if (self%geom%mask2d(i,j) == 0.0) cycle
         xout(i,j,:) = &
-            self%weights_x( 0, i,   j) * xtmp(i,   j, :) &
-          + self%weights_x(-1, i-1, j) * xtmp(i-1, j, :) &
-          + self%weights_x(+1, i+1, j) * xtmp(i+1, j, :)        
+            self%weights_x( 0, i, j) * xtmp(i,   j, :) &
+          + self%weights_x(-1, i, j) * xtmp(i-1, j, :) &
+          + self%weights_x(+1, i, j) * xtmp(i+1, j, :)        
       end do
     end do
+    call mpp_update_domains(xout, self%geom%Domain%mpp_domain, complete=.true.)
 
     ! y direction
     xtmp = xout
@@ -157,12 +194,11 @@ subroutine soca_gaussian_filter_mult(self, xin, xout )
       do j = self%geom%jsc, self%geom%jec
         if (self%geom%mask2d(i,j) == 0.0) cycle              
         xout(i,j,:) = &
-            self%weights_y( 0, i,   j) * xtmp(i,   j, :) &
-          + self%weights_y(-1, i, j-1) * xtmp(i, j-1, :) &
-          + self%weights_y(+1, i, j+1) * xtmp(i, j+1, :)
+            self%weights_y( 0, i, j) * xtmp(i,   j, :) &
+          + self%weights_y(-1, i, j) * xtmp(i, j-1, :) &
+          + self%weights_y(+1, i, j) * xtmp(i, j+1, :)
       end do
     end do
-
     call mpp_update_domains(xout, self%geom%Domain%mpp_domain, complete=.true.)
   end do
 end subroutine
