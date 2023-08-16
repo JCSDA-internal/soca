@@ -11,6 +11,8 @@
 # io_name:              The variable name used in the restart IO (Default: <unused>)
 # constant value:       Used for "dummy" fields. Sets the entire field to the given constant globally
 #                       This parameter cannot be used with io_file/io_name
+# fill value:           If the field is masked, this value will be used for the masked areas.
+#                       (Default: 0.0)
 # --------------------------------------------------------------------------------------------------
 
 
@@ -59,7 +61,6 @@
   getval name: sea_surface_height_above_geoid
   io file: ocn
   io name: ave_ssh
-
 
 # --------------------------------------------------------------------------------------------------
 # ice state variables

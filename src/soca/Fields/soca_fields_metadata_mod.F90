@@ -28,6 +28,7 @@ type, public :: soca_field_metadata
   character(len=:),  allocatable :: io_file  !< the restart file domain (ocn, sfc, ice). Or if "CONSTANT" use the value in "constant_value"
   character(len=:),  allocatable :: io_name  !< the name use in the restart IO
   character(len=:),  allocatable :: property  !< physical property of the field, "none" or "positive_definite"
+  real(kind=kind_real)           :: fillvalue
   logical                        :: vert_interp   !< true if the field can be vertically interpolated
   real(kind=kind_real)           :: constant_value !< An optional value to use globally for the field
 end type
@@ -77,6 +78,7 @@ subroutine soca_fields_metadata_create(self, filename)
   logical :: bool
   real(kind=kind_real) :: r
   character(len=:), allocatable :: str
+  real(kind=kind_real) :: val
 
   ! parse all the metadata from a yaml configuration file
   conf = fckit_yamlconfiguration( fckit_pathname(filename))
@@ -109,6 +111,9 @@ subroutine soca_fields_metadata_create(self, filename)
 
     if(.not. conf_list(i)%get("property", str)) str = "none"
     self%metadata(i)%property = str
+
+    if(.not. conf_list(i)%get("fill value", val)) val = 0.0
+    self%metadata(i)%fillvalue = val
 
     if(.not. conf_list(i)%get("vert interp", bool)) then
        if (self%metadata(i)%levels == "1" ) then

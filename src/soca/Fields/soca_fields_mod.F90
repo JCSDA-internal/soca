@@ -100,6 +100,9 @@ contains
   !>\copybrief soca_field_stencil_interp \see soca_field_stencil_interp
   procedure :: stencil_interp  => soca_field_stencil_interp
 
+  !>\copybrief soca_field_fill_masked \see soca_field_fill_masked
+  procedure :: fill_masked     => soca_field_fill_masked
+
 end type soca_field
 
 
@@ -384,6 +387,25 @@ subroutine soca_field_stencil_interp(self, geom, fromto)
   self%val = val_tmp
 
 end subroutine soca_field_stencil_interp
+
+! ------------------------------------------------------------------------------
+!> Fill masked values
+!!
+!! Needed when reading fms history which can contain NaN's over land
+subroutine soca_field_fill_masked(self, geom)
+  class(soca_field), intent(inout) :: self
+  type(soca_geom),      intent(in) :: geom
+
+  integer :: i, j
+
+  if (.not. associated(self%mask)) return  
+  do j = geom%jsc, geom%jec
+    do i = geom%isc, geom%iec
+      if (self%mask(i,j)==0) self%val(i,j,:) = self%metadata%fillvalue
+    end do
+  end do
+
+end subroutine soca_field_fill_masked
 
 ! ------------------------------------------------------------------------------
 !> Delete the soca_field object.
@@ -961,6 +983,12 @@ subroutine soca_fields_read(self, f_conf, vdate)
 
     call fms_io_exit()
 
+    ! Change masked values
+    do n=1,size(self%fields)
+       field => self%fields(n)
+       call field%fill_masked(self%geom)
+    end do
+
     ! Update halo and return if reading increment
     if (iread==3) then !
        do n=1,size(self%fields)
@@ -1023,14 +1051,17 @@ subroutine soca_fields_read(self, f_conf, vdate)
       call self%get("tocn", field)
       call self%get("socn", field2)
       call self%get("mld", mld)
+      mld%val = 0.0
       do i = isc, iec
         do j = jsc, jec
+            if (self%geom%mask2d(i,j)==0) cycle
+
             mld%val(i,j,1) = soca_mld(&
                 &field2%val(i,j,:),&
                 &field%val(i,j,:),&
                 &layer_depth%val(i,j,:),&
                 &self%geom%lon(i,j),&
-                &self%geom%lat(i,j))
+                &self%geom%lat(i,j))      
         end do
       end do
     end if
@@ -1218,6 +1249,7 @@ subroutine soca_fields_write_rst(self, f_conf, vdate)
   ! built in variables
   do i=1,size(self%fields)
     field => self%fields(i)
+    call field%fill_masked(self%geom)
     if (len_trim(field%metadata%io_file) /= 0) then
       ! which file are we writing to
       select case(field%metadata%io_file)
