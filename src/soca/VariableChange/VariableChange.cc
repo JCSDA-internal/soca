@@ -5,6 +5,7 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
+#include <map>
 #include <ostream>
 #include <string>
 #include <vector>
@@ -21,10 +22,20 @@ namespace soca {
 
 // -----------------------------------------------------------------------------
 
+std::map<std::string, std::vector<std::string>> SocaVaderCookbook {
+  {"sea_water_temperature", {"SeaWaterTemperature_A"}},
+  {"sea_water_potential_temperature", {"SeaWaterPotentialTemperature_A"}},
+};
+
+// -----------------------------------------------------------------------------
+
 VariableChange::VariableChange(const Parameters_ & params,
                                const Geometry & geometry) {
   // setup vader
-  vader_.reset(new vader::Vader(params.vader));
+  eckit::LocalConfiguration vaderConfig, vaderCookbookConfig;
+  for (auto kv : SocaVaderCookbook) vaderCookbookConfig.set(kv.first, kv.second);
+  vaderConfig.set(vader::configCookbookKey, vaderCookbookConfig);
+  vader_.reset(new vader::Vader(params.vader, vaderConfig));
 
   // Create the variable change
   variableChange_.reset(VariableChangeFactory::create(geometry,
