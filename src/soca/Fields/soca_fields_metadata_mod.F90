@@ -112,7 +112,7 @@ subroutine soca_fields_metadata_create(self, filename)
     if(.not. conf_list(i)%get("property", str)) str = "none"
     self%metadata(i)%property = str
 
-    if(.not. conf_list(i)%get("fill value", val)) val = 1_kind_real
+    if(.not. conf_list(i)%get("fill value", val)) val = 0.0
     self%metadata(i)%fillvalue = val
 
     if(.not. conf_list(i)%get("vert interp", bool)) then

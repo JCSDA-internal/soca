@@ -11,6 +11,8 @@
 # io_name:              The variable name used in the restart IO (Default: <unused>)
 # constant value:       Used for "dummy" fields. Sets the entire field to the given constant globally
 #                       This parameter cannot be used with io_file/io_name
+# fill value:           If the field is masked, this value will be used for the masked areas.
+#                       (Default: 0.0)
 # --------------------------------------------------------------------------------------------------
 
 
@@ -23,7 +25,6 @@
   getval name surface: sea_surface_temperature
   io file: ocn
   io name: Temp
-  fill value: 0.0
 
 - name: socn
   levels: full_ocn
@@ -32,7 +33,6 @@
   io file: ocn
   io name: Salt
   property: positive_definite
-  fill value: 0.0
 
 - name: uocn
   grid: u
@@ -41,7 +41,6 @@
   getval name surface: surface_eastward_sea_water_velocity
   io file: ocn
   io name: u
-  fill value: 0.0
 
 - name: vocn
   grid: v
@@ -50,21 +49,18 @@
   getval name surface: surface_northward_sea_water_velocity
   io file: ocn
   io name: v
-  fill value: 0.0
 
 - name: hocn
   levels: full_ocn
   getval name: sea_water_cell_thickness
   io file: ocn
   io name: h
-  fill value: 0.001
   vert interp: false
 
 - name: ssh
   getval name: sea_surface_height_above_geoid
   io file: ocn
   io name: ave_ssh
-  fill value: 0.0
 
 # --------------------------------------------------------------------------------------------------
 # ice state variables
@@ -74,21 +70,18 @@
   io file: ice
   io name: hicen
   property: positive_definite
-  fill value: 0.0
 
 - name: cicen
   getval name: sea_ice_category_area_fraction
   getval name surface: sea_ice_area_fraction     # note: not accurate, should be "sum" not "surface"
   io file: ice
   io name: aicen
-  fill value: 0.0
 
 - name: hsnon
   getval name: sea_ice_category_snow_thickness
   io file: ice
   io name: hsnon
   property: positive_definite
-  fill value: 0.0
 
 # --------------------------------------------------------------------------------------------------
 # wave state variables
