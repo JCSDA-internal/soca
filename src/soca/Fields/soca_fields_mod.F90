@@ -396,14 +396,12 @@ subroutine soca_field_fill_masked(self, geom)
   class(soca_field), intent(inout) :: self
   type(soca_geom),      intent(in) :: geom
 
-  integer :: i, j, k
+  integer :: i, j
 
-  if (.not. associated(self%mask)) return
-  do k = 1, self%nz
-    do j = geom%jsc, geom%jec
-       do i = geom%isc, geom%iec
-         if (self%mask(i,j)==0) self%val(i,j,k) = self%metadata%fillvalue
-      end do
+  if (.not. associated(self%mask)) return  
+  do j = geom%jsc, geom%jec
+    do i = geom%isc, geom%iec
+      if (self%mask(i,j)==0) self%val(i,j,:) = self%metadata%fillvalue
     end do
   end do
 
@@ -1053,15 +1051,17 @@ subroutine soca_fields_read(self, f_conf, vdate)
       call self%get("tocn", field)
       call self%get("socn", field2)
       call self%get("mld", mld)
+      mld%val = 0.0
       do i = isc, iec
         do j = jsc, jec
-            if (self%geom%mask2d(i,j)==1) cycle
+            if (self%geom%mask2d(i,j)==0) cycle
+
             mld%val(i,j,1) = soca_mld(&
                 &field2%val(i,j,:),&
                 &field%val(i,j,:),&
                 &layer_depth%val(i,j,:),&
                 &self%geom%lon(i,j),&
-                &self%geom%lat(i,j))
+                &self%geom%lat(i,j))      
         end do
       end do
     end if
