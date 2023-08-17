@@ -28,7 +28,7 @@ env:
     - BUILD_OPT_ufo="-DLOCAL_PATH_TESTFILES_IODA=NONE"
     - BUILD_OPT_saber="-DENABLE_TESTS=OFF"
     - BUILD_OPT_soca="-DENABLE_OCEAN_BGC=ON"
-    - MATCH_REPOS="saber oops ioda ufo mom6 soca oasim"
+    - MATCH_REPOS="saber oops ioda ufo mom6 soca oasim vader"
     - LFS_REPOS=""
     # ENABLE_VALGRIND="ON"
 
