@@ -19,7 +19,7 @@ use soca_geom_mod, only : soca_geom
 use soca_increment_mod, only: soca_increment
 use soca_state_mod, only: soca_state
 
-use soca_gaussian_filter_mod, only : soca_gaussian_filter
+use soca_diffusion_filter_mod, only : soca_diffusion_filter
 
 implicit none
 private
@@ -41,7 +41,7 @@ type, public :: soca_horizfilt
   ! integer :: isd, ied, jsd, jed
   ! !> \}
   
-  type(soca_gaussian_filter) ::  gaussian_filter
+  type(soca_diffusion_filter) ::  diffusion_filter
 
 contains
 
@@ -78,10 +78,11 @@ subroutine soca_horizfilt_setup(self, f_conf, geom, traj, vars)
   real(kind=kind_real), allocatable :: scales_x(:,:)
 
   allocate(scales_x(geom%isd:geom%ied,geom%jsd:geom%jed))
-  !scales_x = geom%rossby_radius * 10.0
-  scales_x = 1000e3
+  !scales_x = 1000e3 + geom%rossby_radius * 1
+  scales_x = geom%rossby_radius * 2.0 + 500e3
+  !scales_x = 500e3
  
-  call self%gaussian_filter%init(geom, scales_x)
+  call self%diffusion_filter%init(geom, scales_x)
   
 
   ! type(soca_field), pointer :: ssh
@@ -191,7 +192,7 @@ subroutine soca_horizfilt_mult(self, dxin, dxout, geom)
   do ivar = 1, self%vars%nvars()
     call dxin%get(trim(self%vars%variable(ivar)),  field_i)
     call dxout%get(trim(self%vars%variable(ivar)), field_o)
-    call self%gaussian_filter%mult(field_i%val, field_o%val)
+    call self%diffusion_filter%mult(field_i%val, field_o%val)
   
     !   do k = 1, field_i%nz
   !     dxi = field_i%val(:,:,k)

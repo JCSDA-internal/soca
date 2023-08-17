@@ -58,13 +58,13 @@ namespace soca {
   void HorizFilt::multiply(const Increment & dxin, Increment & dxout) const {
     dxout = dxin;
     Increment dx_tmp(dxin);
-    for (unsigned int iter = 0; iter < niter_; ++iter) {
+    // for (unsigned int iter = 0; iter < niter_; ++iter) {
       dx_tmp = dxout;
       soca_horizfilt_mult_f90(keyFtnConfig_,
                               dx_tmp.toFortran(),
                               dxout.toFortran(),
                               geom_.toFortran());
-    }
+    // }
   }
   // -----------------------------------------------------------------------------
   void HorizFilt::multiplyInverse(const Increment & dxin, Increment & dxout)
@@ -75,13 +75,13 @@ namespace soca {
   void HorizFilt::multiplyAD(const Increment & dxin, Increment & dxout) const {
     dxout = dxin;
     Increment dx_tmp(dxin);
-    for (unsigned int iter = 0; iter < niter_; ++iter) {
+    // for (unsigned int iter = 0; iter < niter_; ++iter) {
       dx_tmp = dxout;
       soca_horizfilt_multad_f90(keyFtnConfig_,
                                 dx_tmp.toFortran(),
                                 dxout.toFortran(),
                                 geom_.toFortran());
-    }
+    // }
   }
   // -----------------------------------------------------------------------------
   void HorizFilt::multiplyInverseAD(const Increment & dxin, Increment & dxout)
