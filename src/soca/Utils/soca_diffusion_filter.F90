@@ -228,6 +228,12 @@ subroutine soca_diffusion_filter_mult(self, xin, xout )
 
   xout = xin
 
+  if (self%normalize) then
+    do k=1, size(xout, dim=3) 
+      xout(:,:,k) = xout(:,:,k) * self%normalization          
+    end do
+  end if
+
   do iter=1, self%n_iter
 
     ! x direction
@@ -289,7 +295,7 @@ subroutine soca_diffusion_filter_calcnorm_bruteforce(self)
       call self%mult(r_tmp, r_tmp2)
       if (local) then
         if(self%geom%mask2d(i,j) == 0.0) cycle
-        self%normalization(i,j) = 1.0 / r_tmp2(i,j,1)
+        self%normalization(i,j) = 1.0 / sqrt(r_tmp2(i,j,1))
       end if
     end do
   end do
