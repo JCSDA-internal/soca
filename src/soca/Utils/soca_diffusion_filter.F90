@@ -44,21 +44,20 @@ contains
 ! ------------------------------------------------------------------------------
 ! calculate the masked global min/max/mean values for a given field
 ! TODO: is there any chance we need to also operate on unmasked fields?!?
-subroutine calc_stats(field, geom, mask, stats)
-  real(kind=kind_real),  intent(in) :: field(:,:)
-  type(soca_geom),       intent(in) :: geom
-  logical,               intent(in) :: mask(:,:)
-  real(kind=kind_real), intent(out) :: stats(3)
+subroutine calc_stats(field, geom, stats)
+  real(kind=kind_real), allocatable, intent(in) :: field(:,:)
+  type(soca_geom),                   intent(in) :: geom
+  real(kind=kind_real),             intent(out) :: stats(3)
 
   real(kind=kind_real) :: l_min, l_max, l_sum, l_count, g_count
 
-  l_min =  minval(    field(geom%isc:geom%iec, geom%jsc:geom%jec), &
-                  mask=mask(geom%isc:geom%iec, geom%jsc:geom%jec))
-  l_max =  maxval(    field(geom%isc:geom%iec, geom%jsc:geom%jec), &
-                  mask=mask(geom%isc:geom%iec, geom%jsc:geom%jec))
-  l_sum =     sum(    field(geom%isc:geom%iec, geom%jsc:geom%jec), &
-                  mask=mask(geom%isc:geom%iec, geom%jsc:geom%jec))
-  l_count = count(     mask(geom%isc:geom%iec, geom%jsc:geom%jec))
+  l_min =  minval(field(geom%isc:geom%iec, geom%jsc:geom%jec), &
+                  mask=geom%mask2d(geom%isc:geom%iec, geom%jsc:geom%jec)==1.0)
+  l_max =  maxval(field(geom%isc:geom%iec, geom%jsc:geom%jec), &
+                  mask=geom%mask2d(geom%isc:geom%iec, geom%jsc:geom%jec)==1.0)
+  l_sum =     sum(field(geom%isc:geom%iec, geom%jsc:geom%jec), &
+                  mask=geom%mask2d(geom%isc:geom%iec, geom%jsc:geom%jec)==1.0)
+  l_count = count(geom%mask2d(geom%isc:geom%iec, geom%jsc:geom%jec)==1.0)
 
   call geom%f_comm%allreduce(l_min, stats(1), fckit_mpi_min())
   call geom%f_comm%allreduce(l_max, stats(2), fckit_mpi_max())
@@ -76,7 +75,10 @@ subroutine calc_dx_dy(geom, dx, dy)
 
   integer :: i,j
   type(atlas_geometry) :: atlas_geom
+  real(kind=kind_real) :: lat_m1, lat_p1, lon_m1, lon_p1
 
+  dx = 1e10
+  dy = 1e10
   atlas_geom = atlas_geometry("Earth")
   do j = geom%jsc, geom%jec
     do i = geom%isc, geom%iec
@@ -86,8 +88,26 @@ subroutine calc_dx_dy(geom, dx, dy)
         dy(i,j) = 1e10
         cycle
       end if
+      
+      lat_m1 = geom%lat(i,j-1)
+      lat_p1 = geom%lat(i,j+1)
+      lon_m1 = geom%lon(i,j-1)
+      lon_p1 = geom%lon(i,j+1)    
+      if (lon_m1 < -900) lon_m1 = geom%lon(i,j)
+      if (lon_p1 < -900) lon_m1 = geom%lon(i,j)
+      if (lat_m1 < -900) then
+        lat_m1 = 2.0*geom%lat(i,j)-geom%lat(i+1,j)
+      end if
+      if (lat_p1 < -900) then
+         lat_p1 = 2.0*geom%lat(i,j)-geom%lat(i-1,j)
+         if (lat_p1 > 90) then
+          lat_p1 = 2.0* 90 - lat_p1
+          lon_p1 = lon_p1 + 180.0
+         end if
+      end if
+      
       dx(i,j) = 0.5 * atlas_geom%distance(geom%lon(i-1, j), geom%lat(i-1,j), geom%lon(i+1,j), geom%lat(i+1,j))
-      dy(i,j) = 0.5 * atlas_geom%distance(geom%lon(i, j-1), geom%lat(i,j-1), geom%lon(i,j+1), geom%lat(i,j+1))
+      dy(i,j) = 0.5 * atlas_geom%distance(lon_m1, lat_m1, lon_p1, lat_p1)
     end do
   end do
 
@@ -103,13 +123,13 @@ end subroutine
 subroutine soca_diffusion_filter_init(self, geom, hz_scales)
   class(soca_diffusion_filter),       intent(inout) :: self
   class(soca_geom),          target, intent(in)    :: geom
-  real(kind=kind_real), allocatable, intent(in)    :: hz_scales(:,:)
+  real(kind=kind_real), allocatable, intent(inout)    :: hz_scales(:,:)
 
-  logical :: mask(geom%isd:geom%ied,geom%jsd:geom%jed)
+  logical, allocatable :: mask(:,:)
   real(kind=kind_real), allocatable :: dx(:,:)
   real(kind=kind_real), allocatable :: dy(:,:)
   real(kind=kind_real) :: stats(3) ! min,max,mean
-  real(kind=kind_real) :: r_tmp(geom%isd:geom%ied,geom%jsd:geom%jed)
+  real(kind=kind_real), allocatable :: r_tmp(:,:)
   integer :: n_min, i, j
   character(len=1024) :: str
 
@@ -124,10 +144,10 @@ subroutine soca_diffusion_filter_init(self, geom, hz_scales)
   allocate(dx(geom%isd:geom%ied,geom%jsd:geom%jed))
   allocate(dy(geom%isd:geom%ied,geom%jsd:geom%jed))
   call calc_dx_dy(geom, dx, dy)
-  call calc_stats(dx, geom, mask, stats )
+  call calc_stats(dx, geom, stats )
   write (str, *) "  dx lengths: min=", stats(1), "max=", stats(2), "mean=", stats(3)
   call oops_log%debug(str)
-  call calc_stats(dy, geom, mask, stats )
+  call calc_stats(dy, geom, stats )
   write (str, *) "  dy lengths: min=", stats(1), "max=", stats(2), "mean=", stats(3)
   call oops_log%debug(str)
 
@@ -137,7 +157,8 @@ subroutine soca_diffusion_filter_init(self, geom, hz_scales)
   call oops_log%debug(str)
 
   ! calculate the minimum number of iterations needed
-  ! M >= (L/grid_size)2
+  ! M >= (L/grid_size)^2
+  allocate(r_tmp(geom%isd:geom%ied,geom%jsd:geom%jed))
   r_tmp = 0.0
   do j=geom%jsd,geom%jed
     do i=geom%isd,geom%ied
@@ -145,9 +166,10 @@ subroutine soca_diffusion_filter_init(self, geom, hz_scales)
       r_tmp(i,j) = (hz_scales(i,j) / min(dx(i,j),dy(i,j)))**2
     end do
   end do
-  call calc_stats(r_tmp, geom, mask, stats )
+  call calc_stats(r_tmp, geom, stats )
   n_min = ceiling(stats(2)) ! use global max
-  write (str, *) "  minimum iterations: ", n_min
+  self%n_iter = n_min + 2  ! add 1 or 2, just to be safe
+  write (str, *) "  minimum iterations: ", self%n_iter
   call oops_log%debug(str)
   self%n_iter = n_min +5  ! add 1 or 2, just to be safe
   
@@ -157,8 +179,8 @@ subroutine soca_diffusion_filter_init(self, geom, hz_scales)
   allocate(self%weights_y(-1:1,geom%isd:geom%ied,geom%jsc:geom%jed))
   self%weights_x = 0.0
   self%weights_y = 0.0
-  do i = self%geom%isd, self%geom%ied
-    do j = self%geom%jsd, self%geom%jed
+  do j = self%geom%jsc, self%geom%jec
+  do i = self%geom%isc, self%geom%iec
       if (geom%mask2d(i,j) == 0.0) cycle
 
       ! BC = zero derivative
@@ -182,7 +204,7 @@ subroutine soca_diffusion_filter_init(self, geom, hz_scales)
   if (self%normalize) then
     allocate(self%normalization(geom%isd:geom%ied, geom%jsd:geom%jed))    
     call self%calc_norm
-    call calc_stats(self%normalization, geom, mask, stats )
+    call calc_stats(self%normalization, geom, stats )
     write (str, *) "  normalization: min=", stats(1), "max=", stats(2), "mean=", stats(3)
     call oops_log%debug(str)
   end if
