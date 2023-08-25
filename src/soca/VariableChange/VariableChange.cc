@@ -29,8 +29,11 @@ std::map<std::string, std::vector<std::string>> SocaVaderCookbook {
 
 // -----------------------------------------------------------------------------
 
-VariableChange::VariableChange(const Parameters_ & params,
+VariableChange::VariableChange(const eckit::Configuration & config,
                                const Geometry & geometry) {
+  VariableChangeParameters params;
+  params.deserialize(config);
+
   // setup vader
   eckit::LocalConfiguration vaderConfig, vaderCookbookConfig;
   for (auto kv : SocaVaderCookbook) vaderCookbookConfig.set(kv.first, kv.second);
