@@ -46,7 +46,7 @@ class VariableChange : public util::Printable {
 
   typedef VariableChangeParameters Parameters_;
 
-  explicit VariableChange(const Parameters_ &, const Geometry &);
+  explicit VariableChange(const eckit::Configuration &, const Geometry &);
   ~VariableChange();
 
   void changeVar(State &, const oops::Variables &) const;
