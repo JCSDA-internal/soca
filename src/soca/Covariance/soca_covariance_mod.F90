@@ -286,7 +286,7 @@ subroutine soca_bump_correlation(self, horiz_convol, geom, f_conf_bump, f_conf_d
   call afield%final()
 
   ! Add vertical unit
-  afield = geom%functionspaceInchalo%create_field(name='vunit', kind=atlas_real(kind_real), levels=1)
+  afield = geom%functionspaceInchalo%create_field(name='vert_coord', kind=atlas_real(kind_real), levels=1)
   call afield%data(real_ptr)
   real_ptr(1,:) = 1.0
   call afieldset%add(afield)
@@ -299,7 +299,7 @@ subroutine soca_bump_correlation(self, horiz_convol, geom, f_conf_bump, f_conf_d
   call afieldset%add(afield)
   call afield%final()
 
-  afield = geom%functionspaceInchalo%create_field(name='hmask', kind=atlas_integer(kind(0)), levels=1)
+  afield = geom%functionspaceInchalo%create_field(name='owned', kind=atlas_integer(kind(0)), levels=1)
   allocate(hmask(geom%isd:geom%ied, geom%jsd:geom%jed))
   hmask = 0
   hmask(geom%isc:geom%iec, geom%jsc:geom%jec) = 1
