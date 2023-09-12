@@ -9,7 +9,7 @@ module soca_covariance_mod
 
 use atlas_module, only: atlas_fieldset, atlas_field, atlas_real, atlas_integer, atlas_functionspace
 use fckit_configuration_module, only: fckit_configuration
-use fckit_log_module, only: fckit_log
+use logger_mod
 use kinds, only: kind_real
 use oops_variables_mod, only: oops_variables
 use random_mod, only: normal_distribution
@@ -86,7 +86,7 @@ subroutine soca_cov_setup(self, f_conf, geom, bkg, vars)
   if (f_conf%get("perturbation scales", f_conf2)) then
     do ivar=1,self%vars%nvars()
       if ( .not. f_conf2%get(self%vars%variable(ivar), self%pert_scale(ivar))) then
-        if (geom%f_comm%rank() == 0) call fckit_log%warning( &
+        if (geom%f_comm%rank() == 0) call oops_log%info( &
           "WARNING: no pertubation scale given for '"  //trim(self%vars%variable(ivar)) &
            // "' using default of 1.0")
       end if
@@ -151,7 +151,7 @@ subroutine soca_cov_get_conv(self, field, conv)
   ! TODO we really should have separate variable names for staggered/destaggered variables.
   !  The "abort" has been turned into a "warning" until we get u/v names straightened out.
   if (field%metadata%grid /= "h") then
-      call fckit_log%warning("WARNING: Attempting to use a field (" // &
+      call oops_log%info("WARNING: Attempting to use a field (" // &
         trim(field%name) // ") which is on the u/v grid. PROCEED WITH CAUTION")
   end if
 
