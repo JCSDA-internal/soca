@@ -86,7 +86,7 @@ subroutine soca_cov_setup(self, f_conf, geom, bkg, vars)
   if (f_conf%get("perturbation scales", f_conf2)) then
     do ivar=1,self%vars%nvars()
       if ( .not. f_conf2%get(self%vars%variable(ivar), self%pert_scale(ivar))) then
-        if (geom%f_comm%rank() == 0) call oops_log%info( &
+        call oops_log%info( &
           "WARNING: no pertubation scale given for '"  //trim(self%vars%variable(ivar)) &
            // "' using default of 1.0")
       end if
