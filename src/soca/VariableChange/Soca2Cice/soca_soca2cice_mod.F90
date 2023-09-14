@@ -112,6 +112,7 @@ subroutine soca_soca2cice_setup(self, geom)
 
   ! Broadcast cice
   call self%cice%broadcast(self%f_comm, root)
+  print *,'Test test'
 
   ! Initialize kd-tree
   ageometry = atlas_geometry("UnitSphere")
@@ -271,6 +272,8 @@ subroutine cleanup_ice(self, geom, xm)
 
   real(kind=kind_real), allocatable :: h_bounds(:)
   real(kind=kind_real), allocatable :: zTin(:), zTsn(:), temp_sno_test
+! DD
+  real(kind=kind_real) :: Tmin, Tmax, puny, rnslyr, hsn, hs_min
 
   ! pointers to soca fields (most likely an analysis)
   call xm%get("tocn",t_ana)
@@ -287,6 +290,12 @@ subroutine cleanup_ice(self, geom, xm)
 
   ! reset sea-ice where ice fraction of the category is 0
   ! and check/fix snow temperature
+  ! DD
+  Tmin   = -100.               ! min bound for zTsn
+  puny   = 1.e-11              ! small value in CICE 
+  rnslyr = float(self%sno_lev) ! snow levels 
+  hs_min = 1.e-4               ! min snow thickness from CICE code
+ 
   allocate(zTin(self%ice_lev), zTsn(self%sno_lev))
   do i = geom%isc, geom%iec
      do j = geom%jsc, geom%jec
@@ -322,7 +331,23 @@ subroutine cleanup_ice(self, geom, xm)
               do n = 1, self%ice_lev
                  zTin(n) = icepack_ice_temperature(self%cice%qice(i,j,k,n), self%cice%sice(i,j,k,n))
               end do
+              hsn = self%cice%vsnon(i,j,k) / self%cice%aicen(i,j,k)
+              ! Test snow T is within bounds
+              if (hsn > hs_min) then
+                Tmax = -self%cice%qsno(i,j,k,1)*puny*rnslyr / rhos*cp_ice*self%cice%vsnon(i,j,k)
+              else
+                self%cice%qsno(i,j,k,1) = -rhos*Lfresh
+                Tmax = puny
+              endif
               zTsn(1) = (Lfresh + self%cice%qsno(i,j,k,1)/rhos)/cp_ice
+
+              ! Check T bounds and adjust snow enthalpy if snow T is outside 
+              if (zTsn(1) < Tmin) then
+                self%cice%qsno(i,j,k,1) = ((Tmin+puny)*cp_ice - Lfresh)*rhos
+              elseif (zTsn(1) > Tmax) then
+                self%cice%qsno(i,j,k,1) = -Lfresh*rhos
+              endif            
+
               temp_sno_test = 0.5_kind_real*(self%cice%tsfcn(i,j,k) + zTin(1))
 
               ! TODO (G): the 2 deg departure check is pulled out of thin ice ... or somethin' move
