@@ -6,7 +6,7 @@
 !> State fields
 module soca_state_mod
 
-use fckit_log_module, only: fckit_log
+use logger_mod
 use kinds, only: kind_real
 use oops_variables_mod
 
@@ -86,12 +86,12 @@ subroutine soca_state_rotate(self, coordinate, uvars, vvars)
     u_names = trim(uvars%variable(i))
     v_names = trim(vvars%variable(i))
     if (self%has(u_names).and.self%has(v_names)) then
-      call fckit_log%info("rotating "//trim(u_names)//" "//trim(v_names))
+      call oops_log%info("rotating "//trim(u_names)//" "//trim(v_names))
       call self%get(u_names, uocn)
       call self%get(v_names, vocn)
     else
       ! Skip if no pair found.
-      call fckit_log%info("not rotating "//trim(u_names)//" "//trim(v_names))
+      call oops_log%info("not rotating "//trim(u_names)//" "//trim(v_names))
       cycle
     end if
     allocate(un(size(uocn%val,1),size(uocn%val,2),size(uocn%val,3)))
@@ -242,11 +242,11 @@ subroutine soca_state_logexpon(self, transfunc, trvars)
     ! get a list variables to be transformed and make a copy
     tr_names = trim(trvars%variable(i))
     if (self%has(tr_names)) then
-      call fckit_log%info("transforming "//trim(tr_names))
+      call oops_log%info("transforming "//trim(tr_names))
       call self%get(tr_names, trocn)
     else
       ! Skip if no variable found.
-      call fckit_log%info("not transforming "//trim(tr_names))
+      call oops_log%info("not transforming "//trim(tr_names))
       cycle
     end if
     allocate(trn(size(trocn%val,1),size(trocn%val,2),size(trocn%val,3)))
