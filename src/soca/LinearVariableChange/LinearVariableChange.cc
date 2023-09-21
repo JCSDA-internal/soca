@@ -23,8 +23,10 @@ namespace soca {
 // -----------------------------------------------------------------------------
 
 LinearVariableChange::LinearVariableChange(const Geometry & geom,
-                                           const Parameters_ & params)
-  : geom_(geom), params_(params), linVarChas_() {}
+                                           const eckit::Configuration & config)
+  : geom_(geom), params_(), linVarChas_() {
+    params_.deserialize(config);
+}
 
 // -----------------------------------------------------------------------------
 

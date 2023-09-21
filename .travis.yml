@@ -20,15 +20,15 @@
 env:
   global:
     - MAIN_REPO=soca
-    - LIB_REPOS="gsw mom6 icepack oops vader ioda ufo saber"
-    - BUILD_OPT="-DBUILD_ICEPACK=ON"
+    - LIB_REPOS="gsw mom6 icepack oasim oops vader ioda ufo saber"
+    - BUILD_OPT="-DBUILD_ICEPACK=ON -DBUILD_OASIM=ON"
     - BUILD_OPT_mom6="-DENABLE_OCEAN_BGC=ON"
     - BUILD_OPT_oops="-DENABLE_QG_MODEL=OFF -DENABLE_LORENZ95_MODEL=OFF"
     - BUILD_OPT_ioda="-DBUILD_PYTHON_BINDINGS=OFF -DBUILD_TESTING=OFF"
     - BUILD_OPT_ufo="-DLOCAL_PATH_TESTFILES_IODA=NONE"
     - BUILD_OPT_saber="-DENABLE_TESTS=OFF"
     - BUILD_OPT_soca="-DENABLE_OCEAN_BGC=ON"
-    - MATCH_REPOS="saber oops ioda ufo mom6 soca"
+    - MATCH_REPOS="saber oops ioda ufo mom6 soca oasim vader"
     - LFS_REPOS=""
     # ENABLE_VALGRIND="ON"
 

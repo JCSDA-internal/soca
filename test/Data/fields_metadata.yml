@@ -9,6 +9,10 @@
 # getval_name_surface:  GetValues variable name for 2D surface of a 3D field (Default: <unused>)
 # io_file:              The restart file domain "ocn", "sfc", or "ice" (Default: <unused>)
 # io_name:              The variable name used in the restart IO (Default: <unused>)
+# constant value:       Used for "dummy" fields. Sets the entire field to the given constant globally
+#                       This parameter cannot be used with io_file/io_name
+# fill value:           If the field is masked, this value will be used for the masked areas.
+#                       (Default: 0.0)
 # --------------------------------------------------------------------------------------------------
 
 
@@ -51,12 +55,12 @@
   getval name: sea_water_cell_thickness
   io file: ocn
   io name: h
+  vert interp: false
 
 - name: ssh
   getval name: sea_surface_height_above_geoid
   io file: ocn
   io name: ave_ssh
-
 
 # --------------------------------------------------------------------------------------------------
 # ice state variables
@@ -149,6 +153,7 @@
 
 - name: layer_depth
   levels: full_ocn
+  vert interp: false
 
 - name: mesoscale_representation_error
 
@@ -163,3 +168,16 @@
 
 - name: sea_water_depth
   levels: full_ocn
+
+- name: latitude
+- name: longitude
+
+# --------------------------------------------------------------------------------------------------
+# variables that VADER should be responsible for
+# --------------------------------------------------------------------------------------------------
+- name: sea_water_temperature
+  levels: full_ocn
+  
+# --------------------------------------------------------------------------------------------------
+- name: dummy_atm1
+  constant value: 5.0

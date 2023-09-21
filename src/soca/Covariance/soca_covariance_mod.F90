@@ -9,7 +9,7 @@ module soca_covariance_mod
 
 use atlas_module, only: atlas_fieldset, atlas_field, atlas_real, atlas_integer, atlas_functionspace
 use fckit_configuration_module, only: fckit_configuration
-use fckit_log_module, only: fckit_log
+use logger_mod
 use kinds, only: kind_real
 use oops_variables_mod, only: oops_variables
 use random_mod, only: normal_distribution
@@ -86,7 +86,7 @@ subroutine soca_cov_setup(self, f_conf, geom, bkg, vars)
   if (f_conf%get("perturbation scales", f_conf2)) then
     do ivar=1,self%vars%nvars()
       if ( .not. f_conf2%get(self%vars%variable(ivar), self%pert_scale(ivar))) then
-        if (geom%f_comm%rank() == 0) call fckit_log%warning( &
+        call oops_log%info( &
           "WARNING: no pertubation scale given for '"  //trim(self%vars%variable(ivar)) &
            // "' using default of 1.0")
       end if
@@ -151,7 +151,7 @@ subroutine soca_cov_get_conv(self, field, conv)
   ! TODO we really should have separate variable names for staggered/destaggered variables.
   !  The "abort" has been turned into a "warning" until we get u/v names straightened out.
   if (field%metadata%grid /= "h") then
-      call fckit_log%warning("WARNING: Attempting to use a field (" // &
+      call oops_log%info("WARNING: Attempting to use a field (" // &
         trim(field%name) // ") which is on the u/v grid. PROCEED WITH CAUTION")
   end if
 
@@ -286,7 +286,7 @@ subroutine soca_bump_correlation(self, horiz_convol, geom, f_conf_bump, f_conf_d
   call afield%final()
 
   ! Add vertical unit
-  afield = geom%functionspaceInchalo%create_field(name='vunit', kind=atlas_real(kind_real), levels=1)
+  afield = geom%functionspaceInchalo%create_field(name='vert_coord', kind=atlas_real(kind_real), levels=1)
   call afield%data(real_ptr)
   real_ptr(1,:) = 1.0
   call afieldset%add(afield)
@@ -299,7 +299,7 @@ subroutine soca_bump_correlation(self, horiz_convol, geom, f_conf_bump, f_conf_d
   call afieldset%add(afield)
   call afield%final()
 
-  afield = geom%functionspaceInchalo%create_field(name='hmask', kind=atlas_integer(kind(0)), levels=1)
+  afield = geom%functionspaceInchalo%create_field(name='owned', kind=atlas_integer(kind(0)), levels=1)
   allocate(hmask(geom%isd:geom%ied, geom%jsd:geom%jed))
   hmask = 0
   hmask(geom%isc:geom%iec, geom%jsc:geom%jec) = 1
