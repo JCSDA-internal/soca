@@ -108,13 +108,13 @@ script:
   - |
     # Build code
     docker exec -it jcsda_container bash \
-     -c '. /etc/profile.d/z10_spack_environment.sh && cd /jcsda/work && /jcsda/work/repo.src/${MAIN_REPO}/.github/travisci/build.sh; exit $?' \
+     -c '. /opt/spack-environment/activate.sh && cd /jcsda/work && /jcsda/work/repo.src/${MAIN_REPO}/.github/travisci/build.sh; exit $?' \
      || travis_terminate 1
 
   - |
     # run tests
     docker exec -it jcsda_container bash \
-     -c '. /etc/profile.d/z10_spack_environment.sh && cd /jcsda/work/repo.build/${MAIN_REPO} && ctest --output-on-failure' \
+     -c '. /opt/spack-environment/activate.sh && cd /jcsda/work/repo.build/${MAIN_REPO} && ctest --output-on-failure' \
      || travis_terminate 1
 
 
