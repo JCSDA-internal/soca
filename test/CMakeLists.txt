@@ -647,7 +647,7 @@ soca_add_test( NAME enshofx
 
 
 # variational methods
-#--------------------------------------------------------------------------------------------------
+#---------------------------------------------------------------------------------------------------
 
 # # Following test does not work yet. IODA crashes
 # soca_add_test( NAME 3dvar_zero_ob
