@@ -33,7 +33,7 @@ observations:
       channels: 50-70
     obs operator:
       name: OASIM
-      CoefficientPath: /gpfsm/dnb55/projects/p01/s2127/hebrahi1/PACE/OASIM/2023/082023/build_gnu/oasim/test/data
+      CoefficientPath: '../../oasim/test/data' #/gpfsm/dnb55/projects/p01/s2127/hebrahi1/PACE/OASIM/2023/082023/build_gnu/oasim/test/data
   #../../oasim/test/data
 
 test:

@@ -261,9 +261,9 @@
 
 - name: dino
   getval name: dinoflagellate_concentration
-  constant value: 1.54 #e-17
+  constant value: 0 #1.54e-17
 
 - name: phaeo
   getval name: phaeocystis_concentration
-  constant value: 5.3  #e-24
+  constant value: 0 #5.3e-24
 
