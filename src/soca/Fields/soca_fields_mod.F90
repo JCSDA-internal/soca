@@ -18,7 +18,7 @@ use datetime_mod, only: datetime, datetime_set, datetime_to_string, datetime_to_
                         datetime_create, datetime_diff
 use duration_mod, only: duration, duration_to_string
 use fckit_configuration_module, only: fckit_configuration
-use fckit_log_module, only: fckit_log
+use logger_mod
 use fckit_mpi_module, only: fckit_mpi_min, fckit_mpi_max, fckit_mpi_sum
 use kinds, only: kind_real
 use oops_variables_mod, only: oops_variables
@@ -1009,7 +1009,7 @@ subroutine soca_fields_read(self, f_conf, vdate)
       if ( self%geom%f_comm%rank() == 0 ) then
         do n=1,size(self%fields)
           if (.not. self%fields(n)%metadata%vert_interp) cycle
-          call fckit_log%info("vertically remapping "//trim(self%fields(n)%name))
+          call oops_log%info("vertically remapping "//trim(self%fields(n)%name))
         end do
       end if
 
