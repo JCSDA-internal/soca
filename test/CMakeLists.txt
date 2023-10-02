@@ -624,9 +624,11 @@ soca_add_test( NAME hofx_3d
                EXE  soca_hofx3d.x
                TEST_DEPENDS test_soca_gridgen )
 
-soca_add_test( NAME hofx_oasim_3d                        
-               EXE  soca_hofx3d.x
-               TEST_DEPENDS test_soca_gridgen ) 
+if( ${oasim_FOUND} )
+  soca_add_test( NAME hofx_oasim_3d                        
+                 EXE  soca_hofx3d.x
+                 TEST_DEPENDS test_soca_gridgen ) 
+endif( ${oasim_FOUND} )
 
 soca_add_test( NAME hofx_4d
                EXE  soca_hofx.x
