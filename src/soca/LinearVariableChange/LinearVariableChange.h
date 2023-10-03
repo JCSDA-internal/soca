@@ -71,7 +71,9 @@ class LinearVariableChange : public util::Printable {
   const Geometry & geom_;
   std::unique_ptr<State> bkg_;
   LinVarChaVec_ linVarChas_;
+  
   std::unique_ptr<vader::Vader> vader_;
+  oops::Variables varsVaderPopulates_;
   bool default_;
 };
 

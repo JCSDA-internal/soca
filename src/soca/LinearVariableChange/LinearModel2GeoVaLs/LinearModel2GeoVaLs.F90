@@ -47,14 +47,17 @@ subroutine soca_model2geovals_linear_changevar_f90(c_key_geom, c_key_dxin, c_key
   ! identity operators
   do i=1, size(dxout%fields)
     select case (dxout%fields(i)%name)
+
+    ! TODO: These should NOT be needed in an increment. Need to make some changes to vader...
+    case ( 'sea_area_fraction' )
+      dxout%fields(i)%val(:,:,1) = 0.0    
     case ( 'latitude' )
-      dxout%fields(i)%val(:,:,1) = real(geom%lat, kind=kind_real)
-
+      dxout%fields(i)%val(:,:,1) = 0.0
     case ( 'longitude' )
-      dxout%fields(i)%val(:,:,1) = real(geom%lon, kind=kind_real)
-
+      dxout%fields(i)%val(:,:,1) = 0.0
     case ( 'sea_water_depth')
-      call geom%thickness2depth(geom%h, dxout%fields(i)%val)
+      dxout%fields(i)%val(:,:,1) = 0.0
+      ! call geom%thickness2depth(geom%h, dxout%fields(i)%val)
 
     case default      
       call dxin%get(dxout%fields(i)%metadata%name, field)

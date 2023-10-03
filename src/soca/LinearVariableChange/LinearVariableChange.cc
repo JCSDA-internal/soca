@@ -74,7 +74,9 @@ void LinearVariableChange::changeVarTraj(const State & xfg,
       "longitude",
       "sea_water_potential_temperature",
       "sea_water_salinity",
-      "sea_water_depth"});
+      "sea_water_depth",
+      "sea_area_fraction",
+      });
     preVaderVars += xfg.variables();
     xfg2.updateFields(preVaderVars);
     Model2GeoVaLs m2gv(xfg.geometry(), params_.toConfiguration());
@@ -91,7 +93,8 @@ void LinearVariableChange::changeVarTraj(const State & xfg,
   varsVader -= varsFilled; // pass only the needed variables
   atlas::FieldSet xfs;
   xfg2.toFieldSet(xfs);
-  varsFilled += vader_->changeVarTraj(xfs, varsVader);
+  varsVaderPopulates_ = vader_->changeVarTraj(xfs, varsVader);
+  varsFilled += varsVaderPopulates_;
   xfg2.updateFields(varsFilled);
   xfg2.fromFieldSet(xfs);
   Log::debug() << "LinearVariableChange::changeVarTraj variables after var change: "
@@ -153,7 +156,8 @@ void LinearVariableChange::changeVarTL(Increment & dx,
       "longitude",
       "sea_water_potential_temperature",
       "sea_water_salinity",
-      "sea_water_depth"});
+      "sea_water_depth",
+      "sea_area_fraction"});
     preVaderVars += dx.variables();    
     Increment preVader(dx.geometry(), preVaderVars, dx.time());
 
@@ -176,20 +180,10 @@ void LinearVariableChange::changeVarTL(Increment & dx,
   oops::Variables varsVader = vars;
   varsVader -= varsFilled;
   varsFilled += vader_->changeVarTL(xfs, varsVader);
-  Log::debug() << "DBG "  << varsFilled <<std::endl;
   dx.updateFields(varsFilled);
   dx.fromFieldSet(xfs);
   Log::debug() << "LinearVariableChange::changeVarTL variables after var change: "
                << dx.variables() << std::endl;
-
-  // If all variables already in incoming state just remove the no longer
-  // needed fields
-  // if (hasAllFields) {
-  //   dx.updateFields(vars);
-  //   oops::Log::trace() << "VariableChange::changeVar done (identity)"
-  //                      << std::endl;
-  //   return;
-  // }
 
   // Create output state
   Increment dxout(dx.geometry(), vars, dx.time());
@@ -201,12 +195,6 @@ void LinearVariableChange::changeVarTL(Increment & dx,
      dx.updateFields(vars);
      dx = dxout;
   }
-
-  // Allocate any extra fields and remove fields no longer needed
-  // dx.updateFields(vars);
-
-  // Copy data from temporary state
-  // dx = dxout;
 
   Log::trace() << "LinearVariableChange::multiply done" << std::endl;
 }
@@ -236,7 +224,42 @@ void LinearVariableChange::changeVarInverseTL(Increment & dx,
 
 void LinearVariableChange::changeVarAD(Increment & dx,
                                        const oops::Variables & vars) const {
-  Log::trace() << "LinearVariableChange::multiplyAD starting" << std::endl;
+  Log::trace() << "LinearVariableChange::changeVarAD starting" << std::endl;
+
+  Log::debug() << "LinearVariableChange::changeVarAD vars in: "
+               << dx.variables() << std::endl;
+  Log::debug() << "LinearVariableChange::changeVarAD vars out: "
+               << vars << std::endl;
+
+  // NOTE: the IF is temporary, we need to do some variable renaming afterward
+  if (default_ && dx.variables().has("sea_water_temperature")) {    
+    // call vader    
+    Log::debug() << "LinearVariableChange::changeVarAD VADER variable changes. " << std::endl;    
+    oops::Variables varsToAdj(std::vector<std::string>{
+      "sea_water_potential_temperature"});
+    oops::Variables varsToDrop(std::vector<std::string>{
+      "sea_water_temperature"});
+    
+    // run Vader    
+    oops::Variables vaderVars = dx.variables();
+    vaderVars += varsToAdj;
+    dx.updateFields(vaderVars);
+  
+    atlas::FieldSet xfs;
+    dx.toFieldSet(xfs);
+
+    oops::Variables varsVaderWillAdjoint = varsVaderPopulates_;
+    vader_->changeVarAD(xfs, varsVaderWillAdjoint);
+    ASSERT(varsVaderWillAdjoint.size() == 0);
+
+    vaderVars -= varsToDrop;
+    dx.updateFields(vaderVars);
+    dx.fromFieldSet(xfs);
+    Log::debug() << "LinearVariableChange::changeVarTL variables after var change: "
+                 << dx.variables() << std::endl;  
+  }
+
+
   Increment dxout(dx.geometry(), vars, dx.time());
 
   // Call variable change(s)
