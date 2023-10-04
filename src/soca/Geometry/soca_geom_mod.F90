@@ -114,6 +114,8 @@ type, public :: soca_geom
     !! \{
     real(kind=kind_real), allocatable, dimension(:,:) :: sin_rot !< sine of rotation between logical grid north
     real(kind=kind_real), allocatable, dimension(:,:) :: cos_rot !< cosine of rotation between logical grid north
+    real(kind=kind_real), allocatable, dimension(:,:) :: dx !< cell x width (m)
+    real(kind=kind_real), allocatable, dimension(:,:) :: dy !< cell y width (m)
     real(kind=kind_real), allocatable, dimension(:,:) :: cell_area !< cell area (m^2)
     real(kind=kind_real), allocatable, dimension(:,:) :: rossby_radius !< rossby radius (m) at the gridpoint
     real(kind=kind_real), allocatable, dimension(:,:) :: distance_from_coast !< distance to closest land grid point (m)
@@ -219,6 +221,8 @@ subroutine soca_geom_init(self, f_conf, f_comm)
   call mpp_update_domains(self%mask2d, self%Domain%mpp_domain)
   call mpp_update_domains(self%mask2du, self%Domain%mpp_domain)
   call mpp_update_domains(self%mask2dv, self%Domain%mpp_domain)
+  call mpp_update_domains(self%dx, self%Domain%mpp_domain)
+  call mpp_update_domains(self%dy, self%Domain%mpp_domain)
   call mpp_update_domains(self%cell_area, self%Domain%mpp_domain)
   call mpp_update_domains(self%rossby_radius, self%Domain%mpp_domain)
   call mpp_update_domains(self%distance_from_coast, self%Domain%mpp_domain)
@@ -262,6 +266,8 @@ subroutine soca_geom_end(self)
   if (allocated(self%mask2d))        deallocate(self%mask2d)
   if (allocated(self%mask2du))       deallocate(self%mask2du)
   if (allocated(self%mask2dv))       deallocate(self%mask2dv)
+  if (allocated(self%dx))            deallocate(self%dx)
+  if (allocated(self%dy))            deallocate(self%dy)
   if (allocated(self%cell_area))     deallocate(self%cell_area)
   if (allocated(self%rossby_radius)) deallocate(self%rossby_radius)
   if (allocated(self%distance_from_coast)) deallocate(self%distance_from_coast)
@@ -403,6 +409,8 @@ subroutine soca_geom_clone(self, other)
   self%mask2d = other%mask2d
   self%mask2du = other%mask2du
   self%mask2dv = other%mask2dv
+  self%dx = other%dx
+  self%dy = other%dy
   self%cell_area = other%cell_area
   self%rossby_radius = other%rossby_radius
   self%distance_from_coast = other%distance_from_coast
@@ -446,6 +454,8 @@ subroutine soca_geom_gridgen(self)
   self%mask2d = mom6_config%grid%mask2dT
   self%mask2du = mom6_config%grid%mask2dCu
   self%mask2dv = mom6_config%grid%mask2dCv
+  self%dx = mom6_config%grid%dxT
+  self%dy = mom6_config%grid%dyT
   self%cell_area  = mom6_config%grid%areaT
   self%h = mom6_config%MOM_CSp%h
 
@@ -522,6 +532,8 @@ subroutine soca_geom_allocate(self)
   allocate(self%mask2du(isd:ied,jsd:jed));       self%mask2du = 0.0_kind_real
   allocate(self%mask2dv(isd:ied,jsd:jed));       self%mask2dv = 0.0_kind_real
 
+  allocate(self%dx(isd:ied,jsd:jed));            self%dx = 0.0_kind_real  
+  allocate(self%dy(isd:ied,jsd:jed));            self%dy = 0.0_kind_real  
   allocate(self%cell_area(isd:ied,jsd:jed));     self%cell_area = 0.0_kind_real
   allocate(self%rossby_radius(isd:ied,jsd:jed)); self%rossby_radius = 0.0_kind_real
   allocate(self%distance_from_coast(isd:ied,jsd:jed)); self%distance_from_coast = 0.0_kind_real
@@ -724,6 +736,16 @@ subroutine soca_geom_write(self)
                                    domain=self%Domain%mpp_domain)
   idr_geom = register_restart_field(geom_restart, &
                                    &self%geom_grid_file, &
+                                   &'dx', &
+                                   &self%dx(:,:), &
+                                   domain=self%Domain%mpp_domain)
+  idr_geom = register_restart_field(geom_restart, &
+                                   &self%geom_grid_file, &
+                                   &'dy', &
+                                   &self%dy(:,:), &
+                                   domain=self%Domain%mpp_domain)
+  idr_geom = register_restart_field(geom_restart, &
+                                   &self%geom_grid_file, &
                                    &'area', &
                                    &self%cell_area(:,:), &
                                    domain=self%Domain%mpp_domain)
@@ -859,6 +881,16 @@ subroutine soca_geom_read(self)
                                    &'cos_rot', &
                                    &self%cos_rot(:,:), &
                                    domain=self%Domain%mpp_domain)
+  idr_geom = register_restart_field(geom_restart, &
+                                   &self%geom_grid_file, &
+                                   &'dx', &
+                                   &self%dx(:,:), &
+                                   domain=self%Domain%mpp_domain)
+  idr_geom = register_restart_field(geom_restart, &
+                                   &self%geom_grid_file, &
+                                   &'dy', &
+                                   &self%dy(:,:), &
+                                   domain=self%Domain%mpp_domain)                                   
   idr_geom = register_restart_field(geom_restart, &
                                    &self%geom_grid_file, &
                                    &'area', &
