@@ -70,6 +70,7 @@ class ExplicitDiffusion : public saber::SaberCentralBlockBase {
   void print(std::ostream &) const override;
   std::shared_ptr<Geometry> geom_;
   int keyFortran_;
+  oops::Variables vars_;
 };
 
 // --------------------------------------------------------------------------------------

@@ -7,8 +7,12 @@ module soca_explicitdiffusion_c
 
 use iso_c_binding
 
+use atlas_module, only : atlas_fieldset
+
 use soca_geom_mod
 use soca_geom_mod_c
+use soca_increment_mod
+use soca_increment_reg, only : soca_increment_registry
 use soca_diffusion_mod, only : soca_diffusion
 
 implicit none
@@ -54,5 +58,19 @@ subroutine soca_explicitdiffusion_calibrate_c(c_key_self) bind(c, name='soca_exp
   call self%calibrate() 
 end subroutine
 
+! ------------------------------------------------------------------------------
+
+subroutine soca_explicitdiffusion_multiply_c(c_key_self, c_key_dx) bind(c, name='soca_explicitdiffusion_multiply_f90')
+  integer(c_int), intent(inout)  :: c_key_self
+  integer(c_int),    intent(in)  :: c_key_dx
+  
+  type(soca_diffusion), pointer :: self
+  type(soca_increment), pointer :: dx
+
+  call soca_diffusion_registry%get(c_key_self, self)
+  call soca_increment_registry%get(c_key_dx, dx)
+
+  call self%multiply(dx)
+end subroutine
 ! ------------------------------------------------------------------------------
 end module

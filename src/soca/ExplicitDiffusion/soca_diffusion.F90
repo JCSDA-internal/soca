@@ -5,12 +5,13 @@
 
 module soca_diffusion_mod
 
-! use atlas_module, only: atlas_geometry
+use atlas_module, only: atlas_fieldset, atlas_field
 use kinds, only: kind_real
 use fckit_mpi_module, only: fckit_mpi_min, fckit_mpi_max, fckit_mpi_sum
 use logger_mod
 use mpp_domains_mod, only : mpp_update_domains, mpp_update_domains_ad
 
+use soca_increment_mod
 use soca_geom_mod, only : soca_geom
 
 implicit none
@@ -33,28 +34,28 @@ type, public :: soca_diffusion
   real(kind_real), allocatable :: inv_sqrt_area(:,:) !< 1/sqrt(area)
   real(kind_real), allocatable :: dx(:,:)
   real(kind_real), allocatable :: dy(:,:)
-
-  !real(kind_real), allocatable :: w (:,:,:)
+  logical,         allocatable :: mask(:,:)  
   
-!   real(kind_real), allocatable :: weights_x (:,:,:)
-!   real(kind_real), allocatable :: weights_y (:,:,:)  
-!   real(kind_real), allocatable :: normalization (:,:)
-  logical, allocatable :: mask(:,:)  
-  class(soca_geom), pointer :: geom
-  
+  ! parameter calculated during calibration() / read()
+  real(kind_real), allocatable :: Kh(:,:)
+  real(kind_real), allocatable :: normalization(:,:)
   integer :: n_iter
-!   logical :: normalize
+
+
+  class(soca_geom), pointer :: geom  
+  
 
 contains
   procedure :: init => soca_diffusion_init
   procedure :: calibrate => soca_diffusion_calibrate
-
-  procedure, private :: calc_stats => soca_diffusion_calc_stats
-!   procedure :: mult => soca_diffusion_filter_mult
+  procedure :: multiply => soca_diffusion_multiply
   
-!   procedure, private :: calc_norm => soca_diffusion_filter_calcnorm_bruteforce
-!   !procedure, private :: calc_norm => soca_diffusion_filter_calcnorm_randomization
+  procedure :: multiply_2D => soca_diffusion_multiply_2D
 
+  procedure, private :: multiply_2D_tl => soca_diffusion_multiply_2D_tl
+  procedure, private :: multiply_2D_ad => soca_diffusion_multiply_2D_ad
+  procedure, private :: diffusion_step => soca_diffusion_diffusion_step
+  procedure, private :: calc_stats => soca_diffusion_calc_stats
 end type soca_diffusion
 
 ! ------------------------------------------------------------------------------
@@ -87,6 +88,7 @@ subroutine soca_diffusion_calc_stats(self, field, stats)
 end subroutine
 
 ! ------------------------------------------------------------------------------
+
 subroutine soca_diffusion_init(self, geom)
   class(soca_diffusion), intent(inout) :: self
   class(soca_geom), target, intent(in) :: geom
@@ -115,7 +117,7 @@ subroutine soca_diffusion_init(self, geom)
     write (str, *) "  area: min=", stats(1), "max=", stats(2), "mean=", stats(3)
     call oops_log%info(str)
 
-  ! calculate derive parameters
+  ! calculate derived parameters
   allocate(self%mask(DOMAIN_WITH_HALO))
   self%mask = self%geom%mask2d == 1.0
 
@@ -133,6 +135,8 @@ subroutine soca_diffusion_init(self, geom)
   ! write (str, *) "  debug: min=", stats(1), "max=", stats(2), "mean=", stats(3)
   ! call oops_log%info(str)
 
+  ! TODO remove this when read() is implemented
+  call self%calibrate()
     
   call oops_log%trace("soca_diffusion::init() done", flush=.true.)
 end subroutine
@@ -152,7 +156,7 @@ subroutine soca_diffusion_calibrate(self)
  
   ! TODO get input lengthscales
   allocate(hz_scales(DOMAIN_WITH_HALO))
-  hz_scales = 500.0e3
+  hz_scales = 400.0e3
   call self%calc_stats(hz_scales, stats)
   write (str, *) "  L_hz: min=", stats(1), "max=", stats(2), "mean=", stats(3)
   call oops_log%info(str)
@@ -169,18 +173,127 @@ subroutine soca_diffusion_calibrate(self)
     end do
   end do
   call self%calc_stats(r_tmp, stats)
-  self%n_iter = ceiling(stats(2))
+  self%n_iter = ceiling(stats(2)) + 4
   if (mod(self%n_iter,2) == 1) self%n_iter = self%n_iter + 1
   write (str, *) "  minimum iterations: ", self%n_iter
   call oops_log%info(str)
 
   ! TODO calculate Kh
+  allocate(self%Kh(DOMAIN_WITH_HALO))
+  self%Kh = hz_scales**2 / (2.0 * self%n_iter)
 
   ! TODO calculate normalization
+  allocate(self%normalization(DOMAIN_WITH_HALO))
+  self%normalization = 1.0
 
   call oops_log%trace("soca_diffusion::calibrate() done", flush=.true.)
 end subroutine
 
 ! ------------------------------------------------------------------------------
 
+subroutine soca_diffusion_multiply(self, dx)
+  class(soca_diffusion), intent(inout) :: self
+  type(soca_increment),  intent(inout) :: dx
+
+  real(kind=kind_real), allocatable :: tmp2d(:,:)
+  character(len=1024) :: str  
+  integer :: f, z
+
+  call oops_log%trace("soca_diffusion::multiply() starting", flush=.true.)
+
+  allocate(tmp2d(DOMAIN_WITH_HALO))
+
+  do f=1, size(dx%fields)
+    write (str, *) " multiplying field: ", dx%fields(f)%name
+    do z = 1, dx%fields(f)%nz
+      tmp2d = dx%fields(f)%val(:,:,z)
+      call self%multiply_2D(tmp2d)
+      dx%fields(f)%val(:,:,z) = tmp2d
+    end do    
+    call oops_log%debug(str)
+  end do
+
+  call oops_log%trace("soca_diffusion::multiply() done", flush=.true.)
+end subroutine
+
+! ------------------------------------------------------------------------------
+
+subroutine soca_diffusion_multiply_2D(self, field)
+  class(soca_diffusion), intent(inout) :: self
+  real(kind=kind_real), allocatable :: field(:,:)
+  
+  call self%multiply_2D_ad(field)
+  call self%multiply_2D_tl(field)
+
+end subroutine
+
+! ------------------------------------------------------------------------------
+
+subroutine soca_diffusion_multiply_2D_tl(self, field)
+  class(soca_diffusion), intent(inout) :: self
+  real(kind=kind_real), allocatable :: field(:,:)
+
+  integer :: niter, iter
+
+  ! apply grid metric
+  !field = field * self%inv_sqrt_area
+
+  ! apply M/2 iterations of diffusion
+  niter = self%n_iter / 2
+  do iter = 1, niter
+    call self%diffusion_step(field)
+  end do
+
+  ! apply normalization
+  field = field * self%normalization
+end subroutine
+
+! ------------------------------------------------------------------------------
+
+subroutine soca_diffusion_multiply_2D_ad(self, field)
+  class(soca_diffusion), intent(inout) :: self
+  real(kind=kind_real), allocatable :: field(:,:)  
+
+  integer :: niter, iter
+
+  ! apply normalization
+  field = field * self%normalization
+
+  ! apply M/2 iterations of diffusion
+  niter = self%n_iter / 2
+  do iter = 1, niter
+    call self%diffusion_step(field)
+  end do
+
+  ! apply grid metric
+  !field = field * self%inv_sqrt_area
+
+end subroutine
+
+! ------------------------------------------------------------------------------
+
+subroutine soca_diffusion_diffusion_step(self, field)
+  class(soca_diffusion), intent(inout) :: self
+  real(kind=kind_real), allocatable :: field(:,:)  
+
+  real(kind=kind_real), allocatable :: field_old(:,:)  
+  integer :: i,j 
+
+  allocate(field_old(DOMAIN_WITH_HALO))
+  field_old = field
+
+  do j=LOOP_DOMAIN_J
+    do i=LOOP_DOMAIN_I
+      ! TODO do this correctly with proper kh smoothing and edge metrics
+      field(i,j) = field(i,j) + &
+        self%Kh(i,j)*(field_old(i-1,j) - 2.0*field_old(i,j) + field_old(i+1,j)) / self%dx(i,j)**2 + &
+        self%Kh(i,j)*(field_old(i,j-1) - 2.0*field_old(i,j) + field_old(i,j+1)) / self%dx(i,j)**2
+    end do
+  end do
+
+  call mpp_update_domains(field, self%geom%Domain%mpp_domain, complete=.true.)
+
+end subroutine
+
+! ------------------------------------------------------------------------------
 end module soca_diffusion_mod

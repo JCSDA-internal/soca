@@ -8,7 +8,7 @@
 #include "soca/ExplicitDiffusion/ExplicitDiffusion.h"
 #include "soca/ExplicitDiffusion/ExplicitDiffusionFortran.h"
 #include "soca/Geometry/Geometry.h"
-
+#include "soca/Increment/Increment.h"
 
 namespace soca {
 
@@ -25,13 +25,16 @@ ExplicitDiffusion::ExplicitDiffusion(
     const Parameters_ & params,
     const oops::FieldSet3D & xb,
     const oops::FieldSet3D & fg)
-  : saber::SaberCentralBlockBase(params)    
+  : saber::SaberCentralBlockBase(params)
 {
   // setup geometry
   geom_.reset(new Geometry(params.geometry.value(), geometryData.comm()));
 
   // setup the fortran code
   soca_explicitdiffusion_setup_f90(keyFortran_, geom_->toFortran());
+
+  // TODO: if optional "activeVars" is none, set to all given vars
+  vars_ = *params.activeVars.value();
 
 }
 
@@ -43,9 +46,16 @@ void ExplicitDiffusion::randomize(atlas::FieldSet &) const {
 
 // --------------------------------------------------------------------------------------
   
-void ExplicitDiffusion::multiply(atlas::FieldSet &) const {
+void ExplicitDiffusion::multiply(atlas::FieldSet & fset) const {
+  Increment dx(*geom_, vars_, util::DateTime());
+  dx.fromFieldSet(fset);
 
+  soca_explicitdiffusion_multiply_f90(keyFortran_, dx.toFortran());
+
+  dx.toFieldSet(fset);
 }
+
+// --------------------------------------------------------------------------------------
 
 void ExplicitDiffusion::directCalibration(const std::vector<atlas::FieldSet> &) {
   // NOTE: ensemble is not used... for now?

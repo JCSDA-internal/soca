@@ -15,6 +15,7 @@ background error:
   covariance model: SABER
   saber central block:
     saber block name: EXPLICIT_DIFFUSION
+    active variables: [tocn, socn]
     geometry: *geom    
     read: {}
 
