@@ -1,4 +1,4 @@
-geometry:
+geometry: &geom
   geom_grid_file: data_generated/gridgen/soca_gridspec.72x35x25.nc
   mom6_input_nml: data_static/72x35x25/input.nml
   fields metadata: data_static/fields_metadata.yml
@@ -15,5 +15,5 @@ background error:
   covariance model: SABER
   saber central block:
     saber block name: EXPLICIT_DIFFUSION
+    geometry: *geom
     calibration: {}
-    

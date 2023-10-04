@@ -11,6 +11,14 @@
 #include "saber/blocks/SaberCentralBlockBase.h"
 
 
+// --------------------------------------------------------------------------------------
+// Forward declarations
+namespace soca {
+  class Geometry;
+}
+
+// --------------------------------------------------------------------------------------
+
 namespace soca {
 
 // --------------------------------------------------------------------------------------
@@ -32,7 +40,8 @@ class ExplicitDiffusionParameters : public saber::SaberBlockParametersBase {
  public:
   oops::OptionalParameter<ExplicitDiffusionReadParameters> readParams{"read", this};
   oops::OptionalParameter<ExplicitDiffusionCalibrationParameters> 
-    calibrationParams{"calibration", this};
+    calibrationParams{"calibration", this};  
+  oops::RequiredParameter<eckit::LocalConfiguration> geometry{"geometry", this};
 
   oops::Variables mandatoryActiveVars() const override {return oops::Variables();}
 };
@@ -59,6 +68,8 @@ class ExplicitDiffusion : public saber::SaberCentralBlockBase {
 
  private:
   void print(std::ostream &) const override;
+  std::shared_ptr<Geometry> geom_;
+  int keyFortran_;
 };
 
 // --------------------------------------------------------------------------------------

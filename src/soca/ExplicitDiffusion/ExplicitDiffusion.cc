@@ -6,6 +6,9 @@
  */
 
 #include "soca/ExplicitDiffusion/ExplicitDiffusion.h"
+#include "soca/ExplicitDiffusion/ExplicitDiffusionFortran.h"
+#include "soca/Geometry/Geometry.h"
+
 
 namespace soca {
 
@@ -22,8 +25,14 @@ ExplicitDiffusion::ExplicitDiffusion(
     const Parameters_ & params,
     const oops::FieldSet3D & xb,
     const oops::FieldSet3D & fg)
-  : saber::SaberCentralBlockBase(params)
+  : saber::SaberCentralBlockBase(params)    
 {
+  // setup geometry
+  geom_.reset(new Geometry(params.geometry.value(), geometryData.comm()));
+
+  // setup the fortran code
+  soca_explicitdiffusion_setup_f90(keyFortran_, geom_->toFortran());
+
 }
 
 // --------------------------------------------------------------------------------------
@@ -39,6 +48,8 @@ void ExplicitDiffusion::multiply(atlas::FieldSet &) const {
 }
 
 void ExplicitDiffusion::directCalibration(const std::vector<atlas::FieldSet> &) {
+  // NOTE: ensemble is not used... for now?
+  soca_explicitdiffusion_calibrate_f90(keyFortran_);
 }
 
 // --------------------------------------------------------------------------------------
