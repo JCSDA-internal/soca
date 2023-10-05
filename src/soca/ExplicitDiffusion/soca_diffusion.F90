@@ -38,26 +38,24 @@ type, public :: soca_diffusion
   real(kind_real), allocatable :: pnom_v(:,:) ! pn/pm at v points
   real(kind_real), allocatable :: mask(:,:)   ! 1.0 where water, 0.0 where land
   
-  ! parameter calculated during calibration() / read()
+  ! parameters calculated during calibration() / read()
   real(kind_real), allocatable :: Kh(:,:)
   real(kind_real), allocatable :: normalization(:,:)
   integer :: n_iter
 
-
-  class(soca_geom), pointer :: geom  
-  
+  class(soca_geom), pointer :: geom    
 
 contains
   procedure :: init => soca_diffusion_init
   procedure :: calibrate => soca_diffusion_calibrate
   procedure :: multiply => soca_diffusion_multiply
   
-  procedure :: multiply_2D => soca_diffusion_multiply_2D
-
+  procedure, private :: multiply_2D => soca_diffusion_multiply_2D
   procedure, private :: multiply_2D_tl => soca_diffusion_multiply_2D_tl
   procedure, private :: multiply_2D_ad => soca_diffusion_multiply_2D_ad
   procedure, private :: diffusion_step => soca_diffusion_diffusion_step
   procedure, private :: calc_stats => soca_diffusion_calc_stats
+  procedure, private :: calc_norm_bruteforce => soca_diffusion_calc_norm_bruteforce
 end type soca_diffusion
 
 ! ------------------------------------------------------------------------------
@@ -193,13 +191,14 @@ subroutine soca_diffusion_calibrate(self)
   write (str, *) "  minimum iterations: ", self%n_iter
   call oops_log%info(str)
 
-  ! TODO calculate Kh
+  ! calculate Kh
   allocate(self%Kh(DOMAIN_WITH_HALO))
   self%Kh = hz_scales**2 / (2.0 * self%n_iter)
 
-  ! TODO calculate normalization
+  ! calculate normalization
   allocate(self%normalization(DOMAIN_WITH_HALO))
   self%normalization = 1.0
+  call self%calc_norm_bruteforce()
 
   call oops_log%trace("soca_diffusion::calibrate() done", flush=.true.)
 end subroutine
@@ -250,8 +249,11 @@ subroutine soca_diffusion_multiply_2D_tl(self, field)
 
   integer :: niter, iter
 
+  ! more halo updates than we really need? but here just to be safe
+  call mpp_update_domains(field, self%geom%Domain%mpp_domain, complete=.true.)
+
   ! apply grid metric
-  !field = field * self%inv_sqrt_area
+  field = field * self%inv_sqrt_area
 
   ! apply M/2 iterations of diffusion
   niter = self%n_iter / 2
@@ -261,6 +263,8 @@ subroutine soca_diffusion_multiply_2D_tl(self, field)
 
   ! apply normalization
   field = field * self%normalization
+  
+  call mpp_update_domains(field, self%geom%Domain%mpp_domain, complete=.true.)
 end subroutine
 
 ! ------------------------------------------------------------------------------
@@ -271,9 +275,13 @@ subroutine soca_diffusion_multiply_2D_ad(self, field)
 
   integer :: niter, iter
 
+  ! more halo updates than we really need? but here just to be safe
+  call mpp_update_domains(field, self%geom%Domain%mpp_domain, complete=.true.)
+
   ! apply normalization
   field = field * self%normalization
 
+  ! TODO code the actual adjoint operator
   ! apply M/2 iterations of diffusion
   niter = self%n_iter / 2
   do iter = 1, niter
@@ -281,8 +289,10 @@ subroutine soca_diffusion_multiply_2D_ad(self, field)
   end do
 
   ! apply grid metric
-  !field = field * self%inv_sqrt_area
+  field = field * self%inv_sqrt_area
 
+  call mpp_update_domains(field, self%geom%Domain%mpp_domain, complete=.true.)
+  
 end subroutine
 
 ! ------------------------------------------------------------------------------
@@ -329,6 +339,38 @@ subroutine soca_diffusion_diffusion_step(self, field)
 
   call mpp_update_domains(field, self%geom%Domain%mpp_domain, complete=.true.)
 
+end subroutine
+
+! ------------------------------------------------------------------------------
+
+subroutine soca_diffusion_calc_norm_bruteforce(self)
+  class(soca_diffusion), intent(inout) :: self
+
+  integer :: i, j
+  logical :: local
+  real(kind=kind_real), allocatable :: r_tmp(:,:), norm(:,:)
+
+  call oops_log%info("Calculating normalization with BRUTEFORCE (eeeek!)")
+
+  allocate(r_tmp(DOMAIN_WITH_HALO))
+  allocate(norm(DOMAIN_WITH_HALO))
+
+  self%normalization = 1.0
+  do j=self%geom%jsg, self%geom%jeg
+    do i=self%geom%isg, self%geom%ieg
+      r_tmp = 0.0
+      local = i >= self%geom%isc .and. i <= self%geom%iec .and. &
+              j >= self%geom%jsc .and. j <= self%geom%jec
+      if (local) r_tmp(i,j) = 1.0
+      call self%multiply_2D(r_tmp)
+      if (local) then
+        if(self%mask(i,j) == 0.0) cycle
+        norm(i,j) = 1.0 / sqrt(r_tmp(i,j))
+      end if
+    end do
+  end do
+  call mpp_update_domains(norm, self%geom%Domain%mpp_domain, complete=.true.)
+  self%normalization = norm
 end subroutine
 
 ! ------------------------------------------------------------------------------
