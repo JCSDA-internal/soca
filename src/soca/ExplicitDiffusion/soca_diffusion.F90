@@ -5,6 +5,7 @@
 
 module soca_diffusion_mod
 
+use random_mod
 use atlas_module, only: atlas_fieldset, atlas_field
 use kinds, only: kind_real
 use fckit_mpi_module, only: fckit_mpi_min, fckit_mpi_max, fckit_mpi_sum
@@ -55,7 +56,9 @@ contains
   procedure, private :: multiply_2D_ad => soca_diffusion_multiply_2D_ad
   procedure, private :: diffusion_step => soca_diffusion_diffusion_step
   procedure, private :: calc_stats => soca_diffusion_calc_stats
+  
   procedure, private :: calc_norm_bruteforce => soca_diffusion_calc_norm_bruteforce
+  procedure, private :: calc_norm_randomization => soca_diffusion_calc_norm_randomization
 end type soca_diffusion
 
 ! ------------------------------------------------------------------------------
@@ -186,7 +189,7 @@ subroutine soca_diffusion_calibrate(self)
     end do
   end do
   call self%calc_stats(r_tmp, stats)
-  self%n_iter = ceiling(stats(2)) + 4
+  self%n_iter = ceiling(stats(2))
   if (mod(self%n_iter,2) == 1) self%n_iter = self%n_iter + 1
   write (str, *) "  minimum iterations: ", self%n_iter
   call oops_log%info(str)
@@ -198,7 +201,9 @@ subroutine soca_diffusion_calibrate(self)
   ! calculate normalization
   allocate(self%normalization(DOMAIN_WITH_HALO))
   self%normalization = 1.0
-  call self%calc_norm_bruteforce()
+  ! TODO get from configuration
+  !call self%calc_norm_bruteforce()
+  call self%calc_norm_randomization(10000)
 
   call oops_log%trace("soca_diffusion::calibrate() done", flush=.true.)
 end subroutine
@@ -374,4 +379,38 @@ subroutine soca_diffusion_calc_norm_bruteforce(self)
 end subroutine
 
 ! ------------------------------------------------------------------------------
+
+subroutine soca_diffusion_calc_norm_randomization(self, iter)
+  class(soca_diffusion), intent(inout) :: self
+  integer, intent(in) :: iter
+
+  real(kind=kind_real), allocatable :: field(:,:)
+  real(kind=kind_real), allocatable :: sum(:,:)
+  real(kind=kind_real), allocatable :: sumsq(:,:)
+
+  integer :: n
+
+  allocate(field(DOMAIN_WITH_HALO))
+  allocate(sum(DOMAIN_WITH_HALO))
+  allocate(sumsq(DOMAIN_WITH_HALO))
+
+  sum = 0.0
+  sumsq = 0.0
+
+  do n=1,iter
+    call normal_distribution(field, 0.0_kind_real, 1.0_kind_real, n, .true.) 
+    call self%multiply_2D_tl(field)
+    sum = sum + field
+    sumsq = sumsq + field*field
+  end do
+  
+  field = (sumsq/(iter-1)) - (sum/iter)**2
+  where (self%mask == 1.0)  self%normalization = 1.0 / sqrt(field)
+  
+  call mpp_update_domains(self%normalization, self%geom%Domain%mpp_domain, complete=.true.)
+
+end subroutine
+
+! ------------------------------------------------------------------------------
+
 end module soca_diffusion_mod
