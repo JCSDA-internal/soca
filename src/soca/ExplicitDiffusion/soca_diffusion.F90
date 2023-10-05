@@ -156,7 +156,7 @@ subroutine soca_diffusion_calibrate(self)
  
   ! TODO get input lengthscales
   allocate(hz_scales(DOMAIN_WITH_HALO))
-  hz_scales = 400.0e3
+  hz_scales = 600.0e3
   call self%calc_stats(hz_scales, stats)
   write (str, *) "  L_hz: min=", stats(1), "max=", stats(2), "mean=", stats(3)
   call oops_log%info(str)
@@ -276,18 +276,39 @@ subroutine soca_diffusion_diffusion_step(self, field)
   class(soca_diffusion), intent(inout) :: self
   real(kind=kind_real), allocatable :: field(:,:)  
 
-  real(kind=kind_real), allocatable :: field_old(:,:)  
+  real(kind=kind_real), allocatable :: field_old(:,:), flux_x(:,:), flux_y(:,:)
   integer :: i,j 
 
-  allocate(field_old(DOMAIN_WITH_HALO))
-  field_old = field
+  ! TODO move the iteration loop here, so we don't have to reallocate space so often
+  
+  ! NOTE: flux_x(i,j) is the flux through the western edge of the grid cell.
+  !  this is opposite of MOM6 conventions where u(i,j) points are east of t(i,j) points.
+  !  (dosen't really matter, just something to note)
+
+  allocate(flux_x(DOMAIN_WITH_HALO))
+  allocate(flux_y(DOMAIN_WITH_HALO))
+  flux_x = 0.0
+  flux_y = 0.0
+
+  do j=LOOP_DOMAIN_J+1
+    do i=LOOP_DOMAIN_I+1
+      
+      ! TODO use correct grid metrics
+      ! TODO change self%mask to be a float and use that 
+      flux_x(i,j) = 0.5 * (self%Kh(i,j) + self%Kh(i-1,j)) * (field(i,j) - field(i-1,j)) / self%dx(i,j)**2
+      flux_x(i,j) = flux_x(i,j) * self%geom%mask2d(i,j) * self%geom%mask2d(i-1,j)
+      
+      flux_y(i,j) = 0.5 * (self%Kh(i,j) + self%Kh(i,j-1)) * (field(i,j) - field(i,j-1)) / self%dy(i,j)**2
+      flux_y(i,j) = flux_y(i,j) * self%geom%mask2d(i,j) * self%geom%mask2d(i,j-1)
+
+    end do
+  end do
 
   do j=LOOP_DOMAIN_J
     do i=LOOP_DOMAIN_I
-      ! TODO do this correctly with proper kh smoothing and edge metrics
-      field(i,j) = field(i,j) + &
-        self%Kh(i,j)*(field_old(i-1,j) - 2.0*field_old(i,j) + field_old(i+1,j)) / self%dx(i,j)**2 + &
-        self%Kh(i,j)*(field_old(i,j-1) - 2.0*field_old(i,j) + field_old(i,j+1)) / self%dx(i,j)**2
+      field(i,j) = field(i,j) &
+        + flux_x(i+1, j) - flux_x(i,j) &
+        + flux_y(i, j+1) - flux_y(i,j)
     end do
   end do
 
