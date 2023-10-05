@@ -135,6 +135,9 @@ subroutine soca_diffusion_init(self, geom)
   allocate(self%pmon_u(DOMAIN_WITH_HALO))
   allocate(self%pnom_v(DOMAIN_WITH_HALO))
   allocate(self%inv_sqrt_area(DOMAIN_WITH_HALO))
+  self%pmon_u = 0.0
+  self%pnom_v = 0.0
+  self%inv_sqrt_area = 0.0
   
   do j = LOOP_DOMAIN_J
     do i = LOOP_DOMAIN_I
@@ -177,6 +180,7 @@ subroutine soca_diffusion_calibrate(self)
   write (str, *) "  L_hz: min=", stats(1), "max=", stats(2), "mean=", stats(3)
   call oops_log%info(str)
 
+  ! TODO this is unstable, check stability conditions
   ! calculate the minimum number of iterations needed, rounding up to the
   ! nearest even number.
   !  M >= (L/grid_size)^2    
@@ -399,7 +403,8 @@ subroutine soca_diffusion_calc_norm_randomization(self, iter)
   real(kind=kind_real), allocatable :: s(:,:)
   real(kind=kind_real), allocatable :: m(:,:), new_m(:,:)
 
-  integer :: n
+  integer :: n, n10pct
+  character(len=1024) :: str  
 
   allocate(field(DOMAIN_WITH_HALO))
   allocate(s(DOMAIN_WITH_HALO))
@@ -409,7 +414,15 @@ subroutine soca_diffusion_calc_norm_randomization(self, iter)
   s = 0.0
   m = 0.0
 
+  n10pct = iter/10
+
   do n=1,iter
+    if (mod(n, n10pct) == 0) then
+      write (str, *) "normalization: ", 10*n/n10pct, "% "
+      call oops_log%info(str, flush=.true.)
+    end if
+
+  
     ! create a random vector
     call normal_distribution(field, 0.0_kind_real, 1.0_kind_real, n, .true.) 
 
