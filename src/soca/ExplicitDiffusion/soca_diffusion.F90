@@ -199,10 +199,12 @@ subroutine soca_diffusion_calibrate(self)
   self%Kh = hz_scales**2 / (2.0 * self%n_iter)
 
   ! calculate normalization
+  call oops_log%info("Calculating normalization...")
   allocate(self%normalization(DOMAIN_WITH_HALO))
   self%normalization = 1.0
   ! TODO get from configuration
   !call self%calc_norm_bruteforce()
+
   call self%calc_norm_randomization(10000)
 
   call oops_log%trace("soca_diffusion::calibrate() done", flush=.true.)
@@ -347,7 +349,10 @@ subroutine soca_diffusion_diffusion_step(self, field)
 end subroutine
 
 ! ------------------------------------------------------------------------------
-
+! Calculate the exact normalization weights using the brute force method
+! (creating a dirac at every SINGLE point).
+! You probably don't want to use this, except for testing. Use randomization.
+! ------------------------------------------------------------------------------
 subroutine soca_diffusion_calc_norm_bruteforce(self)
   class(soca_diffusion), intent(inout) :: self
 
@@ -378,33 +383,50 @@ subroutine soca_diffusion_calc_norm_bruteforce(self)
   self%normalization = norm
 end subroutine
 
-! ------------------------------------------------------------------------------
 
+! ------------------------------------------------------------------------------
+! Estimate the normalization weights by creating random vectors (normally distributed)
+! applying the diffusion TL, and keeping a running statistic of the variance of
+! those results.
+!
+! Typically a good number of iterations is around 1000
+! ------------------------------------------------------------------------------
 subroutine soca_diffusion_calc_norm_randomization(self, iter)
   class(soca_diffusion), intent(inout) :: self
   integer, intent(in) :: iter
 
   real(kind=kind_real), allocatable :: field(:,:)
-  real(kind=kind_real), allocatable :: sum(:,:)
-  real(kind=kind_real), allocatable :: sumsq(:,:)
+  real(kind=kind_real), allocatable :: s(:,:)
+  real(kind=kind_real), allocatable :: m(:,:), new_m(:,:)
 
   integer :: n
 
   allocate(field(DOMAIN_WITH_HALO))
-  allocate(sum(DOMAIN_WITH_HALO))
-  allocate(sumsq(DOMAIN_WITH_HALO))
+  allocate(s(DOMAIN_WITH_HALO))
+  allocate(m(DOMAIN_WITH_HALO))
+  allocate(new_m(DOMAIN_WITH_HALO))
 
-  sum = 0.0
-  sumsq = 0.0
+  s = 0.0
+  m = 0.0
 
   do n=1,iter
+    ! create a random vector
     call normal_distribution(field, 0.0_kind_real, 1.0_kind_real, n, .true.) 
+
+    ! apply the diffusion TL
     call self%multiply_2D_tl(field)
-    sum = sum + field
-    sumsq = sumsq + field*field
+
+    ! keep track of the stats needed for a running variance calculation
+    ! (Welford 1962 algorithm)
+    new_m = m + (field-m)/n
+    s = s + (field - m)*(field - new_m)
+    m = new_m
   end do
   
-  field = (sumsq/(iter-1)) - (sum/iter)**2
+  ! calculate final variance
+  field = (s/(iter-1)) 
+
+  ! normalization (where ocean) is 1/sqrt(variance)
   where (self%mask == 1.0)  self%normalization = 1.0 / sqrt(field)
   
   call mpp_update_domains(self%normalization, self%geom%Domain%mpp_domain, complete=.true.)
