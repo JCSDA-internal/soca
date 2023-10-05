@@ -34,7 +34,9 @@ type, public :: soca_diffusion
   real(kind_real), allocatable :: inv_sqrt_area(:,:) !< 1/sqrt(area)
   real(kind_real), allocatable :: dx(:,:)
   real(kind_real), allocatable :: dy(:,:)
-  logical,         allocatable :: mask(:,:)  
+  real(kind_real), allocatable :: pmon_u(:,:) ! pm/pn at u points (pm = 1/dx, pn = 1/dy)
+  real(kind_real), allocatable :: pnom_v(:,:) ! pn/pm at v points
+  real(kind_real), allocatable :: mask(:,:)   ! 1.0 where water, 0.0 where land
   
   ! parameter calculated during calibration() / read()
   real(kind_real), allocatable :: Kh(:,:)
@@ -73,12 +75,12 @@ subroutine soca_diffusion_calc_stats(self, field, stats)
   real(kind=kind_real) :: l_min, l_max, l_sum, l_count, g_count
 
   l_min =  minval(field(DOMAIN), &
-                  mask=self%geom%mask2d(DOMAIN)==1.0)
+                  mask=self%mask(DOMAIN)==1.0)
   l_max =  maxval(field(DOMAIN), &
-                  mask=self%geom%mask2d(DOMAIN)==1.0)
+                  mask=self%mask(DOMAIN)==1.0)
   l_sum =     sum(field(DOMAIN), &
-                  mask=self%geom%mask2d(DOMAIN)==1.0)
-  l_count = count(self%geom%mask2d(DOMAIN)==1.0)
+                  mask=self%mask(DOMAIN)==1.0)
+  l_count = count(self%mask(DOMAIN)==1.0)
 
   call self%geom%f_comm%allreduce(l_min, stats(1), fckit_mpi_min())
   call self%geom%f_comm%allreduce(l_max, stats(2), fckit_mpi_max())
@@ -103,37 +105,50 @@ subroutine soca_diffusion_init(self, geom)
   ! grid and derived grid parameters
   !---------------------------------------------------------------------------
   call oops_log%info("ExplicitDiffusion: Initializing grid...")
+  
+  allocate(self%mask(DOMAIN_WITH_HALO))
   allocate(self%dx(DOMAIN_WITH_HALO))
   allocate(self%dy(DOMAIN_WITH_HALO))
-  self%dx = geom%dx
-  self%dy = geom%dy
-  call self%calc_stats(geom%dx,stats)
+  ! NOTE MOM6 likes to leave unused halo regions undefined, so we explicitly set default values here
+  self%mask = 0.0
+  self%mask(DOMAIN) = self%geom%mask2d(DOMAIN)
+  self%dx = 1.0e-5   
+  self%dx(DOMAIN) = geom%dx(DOMAIN)
+  self%dy = 1.0e-5
+  self%dy(DOMAIN) = geom%dy(DOMAIN)
+  call mpp_update_domains(self%mask, self%geom%Domain%mpp_domain, complete=.true.)
+  call mpp_update_domains(self%dx, self%geom%Domain%mpp_domain, complete=.true.)
+  call mpp_update_domains(self%dy, self%geom%Domain%mpp_domain, complete=.true.)
+
+  call self%calc_stats(self%dx,stats)
     write (str, *) "  dx:   min=", stats(1), "max=", stats(2), "mean=", stats(3)
     call oops_log%info(str)
-  call self%calc_stats(geom%dy, stats)
+  call self%calc_stats(self%dy, stats)
     write (str, *) "  dy:   min=", stats(1), "max=", stats(2), "mean=", stats(3)
     call oops_log%info(str)
-  call self%calc_stats(geom%cell_area, stats)
+  call self%calc_stats(self%geom%cell_area, stats)
     write (str, *) "  area: min=", stats(1), "max=", stats(2), "mean=", stats(3)
     call oops_log%info(str)
 
   ! calculate derived parameters
-  allocate(self%mask(DOMAIN_WITH_HALO))
-  self%mask = self%geom%mask2d == 1.0
-
+  allocate(self%pmon_u(DOMAIN_WITH_HALO))
+  allocate(self%pnom_v(DOMAIN_WITH_HALO))
   allocate(self%inv_sqrt_area(DOMAIN_WITH_HALO))
+  
   do j = LOOP_DOMAIN_J
     do i = LOOP_DOMAIN_I
-      self%inv_sqrt_area(i,j) = 1.0 / sqrt(self%geom%dx(i,j)*self%geom%dy(i,j))
+      self%inv_sqrt_area(i,j) = 1.0 / sqrt(self%dx(i,j)*self%dy(i,j))
+      self%pmon_u(i,j) = (1.0/self%dx(i-1,j) + 1.0/self%dx(i,j)) / (1.0/self%dy(i-1,j) + 1.0/self%dy(i,j))
+      self%pnom_v(i,j) = (1.0/self%dy(i,j-1) + 1.0/self%dy(i,j)) / (1.0/self%dx(i,j-1) + 1.0/self%dx(i,j))
     end do
   end do
+  call self%calc_stats(self%pmon_u, stats)
+    write (str, *) "  debug:   min=", stats(1), "max=", stats(2), "mean=", stats(3)
+    call oops_log%info(str)
 
-  ! update halos
   call mpp_update_domains(self%inv_sqrt_area, self%geom%Domain%mpp_domain, complete=.true.)
-
-  ! call calc_stats(self%inv_sqrt_area, self%geom, stats)
-  ! write (str, *) "  debug: min=", stats(1), "max=", stats(2), "mean=", stats(3)
-  ! call oops_log%info(str)
+  call mpp_update_domains(self%pmon_u, self%geom%Domain%mpp_domain, complete=.true.)
+  call mpp_update_domains(self%pnom_v, self%geom%Domain%mpp_domain, complete=.true.)
 
   ! TODO remove this when read() is implemented
   call self%calibrate()
@@ -168,7 +183,7 @@ subroutine soca_diffusion_calibrate(self)
   r_tmp = 0.0
   do j = LOOP_DOMAIN_J
     do i = LOOP_DOMAIN_I
-      if (.not. self%mask(i,j) ) cycle
+      if (self%mask(i,j) == 0.0 ) cycle
       r_tmp(i,j) = (hz_scales(i,j) / min(self%dx(i,j), self%dy(i,j))) ** 2
     end do
   end do
@@ -276,7 +291,8 @@ subroutine soca_diffusion_diffusion_step(self, field)
   class(soca_diffusion), intent(inout) :: self
   real(kind=kind_real), allocatable :: field(:,:)  
 
-  real(kind=kind_real), allocatable :: field_old(:,:), flux_x(:,:), flux_y(:,:)
+  real(kind=kind_real), allocatable :: flux_x(:,:), flux_y(:,:)
+  real(kind=kind_real) :: pmon_u, pmon_v
   integer :: i,j 
 
   ! TODO move the iteration loop here, so we don't have to reallocate space so often
@@ -290,25 +306,24 @@ subroutine soca_diffusion_diffusion_step(self, field)
   flux_x = 0.0
   flux_y = 0.0
 
-  do j=LOOP_DOMAIN_J+1
+  ! calculate diffusive flux on each edge of a grid box.
+  ! masking out where there is land
+  do j=LOOP_DOMAIN_J+1 ! assume halo size is >= 1, and skip doing a halo update
     do i=LOOP_DOMAIN_I+1
-      
-      ! TODO use correct grid metrics
-      ! TODO change self%mask to be a float and use that 
-      flux_x(i,j) = 0.5 * (self%Kh(i,j) + self%Kh(i-1,j)) * (field(i,j) - field(i-1,j)) / self%dx(i,j)**2
-      flux_x(i,j) = flux_x(i,j) * self%geom%mask2d(i,j) * self%geom%mask2d(i-1,j)
-      
-      flux_y(i,j) = 0.5 * (self%Kh(i,j) + self%Kh(i,j-1)) * (field(i,j) - field(i,j-1)) / self%dy(i,j)**2
-      flux_y(i,j) = flux_y(i,j) * self%geom%mask2d(i,j) * self%geom%mask2d(i,j-1)
 
+      flux_x(i,j) = self%pmon_u(i,j) * 0.5 * (self%Kh(i,j) + self%Kh(i-1,j)) * (field(i,j) - field(i-1,j))
+      flux_x(i,j) = flux_x(i,j) * self%mask(i,j) * self%mask(i-1,j)
+      
+      flux_y(i,j) = self%pnom_v(i,j) * 0.5 * (self%Kh(i,j) + self%Kh(i,j-1)) * (field(i,j) - field(i,j-1))
+      flux_y(i,j) = flux_y(i,j) * self%mask(i,j) * self%mask(i,j-1)
     end do
   end do
 
+  ! update field
   do j=LOOP_DOMAIN_J
     do i=LOOP_DOMAIN_I
-      field(i,j) = field(i,j) &
-        + flux_x(i+1, j) - flux_x(i,j) &
-        + flux_y(i, j+1) - flux_y(i,j)
+      field(i,j) = field(i,j) + (1.0/self%dy(i,j)/self%dx(i,j)) * &
+         (flux_x(i+1, j) - flux_x(i,j) + flux_y(i, j+1) - flux_y(i,j))
     end do
   end do
 
