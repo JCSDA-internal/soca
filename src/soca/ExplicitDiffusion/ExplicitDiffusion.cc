@@ -33,9 +33,7 @@ ExplicitDiffusion::ExplicitDiffusion(
   // setup the fortran code
   soca_explicitdiffusion_setup_f90(keyFortran_, geom_->toFortran());
 
-  // TODO: if optional "activeVars" is none, set to all given vars
-  vars_ = *params.activeVars.value();
-
+  vars_ = params.activeVars.value().get_value_or(centralVars);  
 }
 
 // --------------------------------------------------------------------------------------
@@ -46,7 +44,7 @@ void ExplicitDiffusion::randomize(atlas::FieldSet &) const {
 
 // --------------------------------------------------------------------------------------
   
-void ExplicitDiffusion::multiply(atlas::FieldSet & fset) const {
+void ExplicitDiffusion::multiply(atlas::FieldSet & fset) const { 
   Increment dx(*geom_, vars_, util::DateTime());
   dx.fromFieldSet(fset);
 

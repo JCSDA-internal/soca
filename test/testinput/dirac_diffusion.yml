@@ -13,6 +13,7 @@ background:
 
 background error:
   covariance model: SABER
+  adjoint test: true  # < EXPLICIT_DIFFUSION is actually self-adjoint, oooh yeah!!
   saber central block:
     saber block name: EXPLICIT_DIFFUSION
     active variables: [tocn, socn]
