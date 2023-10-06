@@ -54,7 +54,8 @@ contains
   procedure, private :: multiply_2D => soca_diffusion_multiply_2D
   procedure, private :: multiply_2D_tl => soca_diffusion_multiply_2D_tl
   procedure, private :: multiply_2D_ad => soca_diffusion_multiply_2D_ad
-  procedure, private :: diffusion_step => soca_diffusion_diffusion_step
+  procedure, private :: diffusion_steps => soca_diffusion_diffusion_steps
+  procedure, private :: diffusion_steps_ad => soca_diffusion_diffusion_steps_ad
   procedure, private :: calc_stats => soca_diffusion_calc_stats
   
   procedure, private :: calc_norm_bruteforce => soca_diffusion_calc_norm_bruteforce
@@ -267,10 +268,7 @@ subroutine soca_diffusion_multiply_2D_tl(self, field)
   field = field * self%inv_sqrt_area
 
   ! apply M/2 iterations of diffusion
-  niter = self%n_iter / 2
-  do iter = 1, niter
-    call self%diffusion_step(field)
-  end do
+  call self%diffusion_steps(field, self%n_iter / 2)
 
   ! apply normalization
   field = field * self%normalization
@@ -294,10 +292,7 @@ subroutine soca_diffusion_multiply_2D_ad(self, field)
 
   ! TODO code the actual adjoint operator
   ! apply M/2 iterations of diffusion
-  niter = self%n_iter / 2
-  do iter = 1, niter
-    call self%diffusion_step(field)
-  end do
+  call self%diffusion_steps_ad(field, self%n_iter / 2)
 
   ! apply grid metric
   field = field * self%inv_sqrt_area
@@ -308,47 +303,150 @@ end subroutine
 
 ! ------------------------------------------------------------------------------
 
-subroutine soca_diffusion_diffusion_step(self, field)
+subroutine soca_diffusion_diffusion_steps(self, field, niter)
   class(soca_diffusion), intent(inout) :: self
-  real(kind=kind_real), allocatable :: field(:,:)  
+  real(kind=kind_real), allocatable, intent(inout) :: field(:,:)
+  integer, intent(in) :: niter
 
-  real(kind=kind_real), allocatable :: flux_x(:,:), flux_y(:,:)
-  real(kind=kind_real) :: pmon_u, pmon_v
-  integer :: i,j 
-
-  ! TODO move the iteration loop here, so we don't have to reallocate space so often
+  real(kind=kind_real), allocatable :: flux_x(:,:), flux_y(:,:), hfac(:,:)
+  integer :: i, j, iter
   
   ! NOTE: flux_x(i,j) is the flux through the western edge of the grid cell.
   !  this is opposite of MOM6 conventions where u(i,j) points are east of t(i,j) points.
   !  (dosen't really matter, just something to note)
-
   allocate(flux_x(DOMAIN_WITH_HALO))
   allocate(flux_y(DOMAIN_WITH_HALO))
   flux_x = 0.0
   flux_y = 0.0
 
-  ! calculate diffusive flux on each edge of a grid box.
-  ! masking out where there is land
-  do j=LOOP_DOMAIN_J+1 ! assume halo size is >= 1, and skip doing a halo update
-    do i=LOOP_DOMAIN_I+1
+  ! calculate some needed constants
+  allocate(hfac(DOMAIN_WITH_HALO))
+  hfac = 0.0
+  do j=LOOP_DOMAIN_J
+    do i=LOOP_DOMAIN_I
+      hfac(i,j) = (1.0/self%dy(i,j)/self%dx(i,j))
+    end do
+  end do
 
+  call mpp_update_domains(field, self%geom%Domain%mpp_domain, complete=.true.)
+
+  do iter=1,niter
+      ! calculate diffusive flux on each edge of a grid box. masking out where there is land
+    do j=LOOP_DOMAIN_J 
+      do i=LOOP_DOMAIN_I+1 ! assume halo size is >= 1, and skip doing a halo update
       flux_x(i,j) = self%pmon_u(i,j) * 0.5 * (self%Kh(i,j) + self%Kh(i-1,j)) * (field(i,j) - field(i-1,j))
       flux_x(i,j) = flux_x(i,j) * self%mask(i,j) * self%mask(i-1,j)
-      
+      end do
+    end do
+    do j=LOOP_DOMAIN_J+1 ! assume halo size is >= 1, and skip doing a halo update
+      do i=LOOP_DOMAIN_I
       flux_y(i,j) = self%pnom_v(i,j) * 0.5 * (self%Kh(i,j) + self%Kh(i,j-1)) * (field(i,j) - field(i,j-1))
       flux_y(i,j) = flux_y(i,j) * self%mask(i,j) * self%mask(i,j-1)
     end do
   end do
 
-  ! update field
+    ! time-step hz diffusion terms
+    do j=LOOP_DOMAIN_J
+      do i=LOOP_DOMAIN_I
+        field(i,j) = field(i,j) + hfac(i,j) * &
+          (flux_x(i+1, j) - flux_x(i,j) + flux_y(i, j+1) - flux_y(i,j))
+      end do
+    end do
+
+    call mpp_update_domains(field, self%geom%Domain%mpp_domain, complete=.true.)
+  end do
+end subroutine
+
+
+! ------------------------------------------------------------------------------
+subroutine soca_diffusion_diffusion_steps_ad(self, field, niter)
+  class(soca_diffusion), intent(inout) :: self
+  real(kind=kind_real), allocatable, intent(inout) :: field(:,:) 
+  integer, intent(in) :: niter
+
+  real(kind=kind_real), allocatable :: wrk_old(:,:), wrk_new(:,:), tmp(:,:)
+  real(kind=kind_real), allocatable :: flux_x(:,:), flux_y(:,:), hfac(:,:)
+  real(kind=kind_real) :: adfac
+  integer :: i, j, iter
+  
+  ! NOTE: flux_x(i,j) is the flux through the western edge of the grid cell.
+  !  this is opposite of MOM6 conventions where u(i,j) points are east of t(i,j) points.
+  !  (dosen't really matter, just something to note)
+  allocate(wrk_new(DOMAIN_WITH_HALO))
+  allocate(wrk_old(DOMAIN_WITH_HALO))
+  allocate(tmp(DOMAIN_WITH_HALO))
+  allocate(flux_x(DOMAIN_WITH_HALO))
+  allocate(flux_y(DOMAIN_WITH_HALO))
+  wrk_old = 0.0
+  wrk_new = 0.0
+  flux_x = 0.0
+  flux_y = 0.0
+
+  ! calculate some needed constants
+  allocate(hfac(DOMAIN_WITH_HALO))
+  hfac = 0.0
   do j=LOOP_DOMAIN_J
     do i=LOOP_DOMAIN_I
-      field(i,j) = field(i,j) + (1.0/self%dy(i,j)/self%dx(i,j)) * &
-         (flux_x(i+1, j) - flux_x(i,j) + flux_y(i, j+1) - flux_y(i,j))
+      hfac(i,j) = (1.0/self%dy(i,j)/self%dx(i,j))
+    end do
+  end do  
+
+  ! adjoint of convoled solution  
+  ! TODO this should be called, why is it breaking?
+  !call mpp_update_domains_ad(field, self%geom%Domain%mpp_domain, complete=.true.)
+  do j=LOOP_DOMAIN_J
+    do i=LOOP_DOMAIN_I
+      wrk_old(i,j) = wrk_old(i,j) + field(i,j)
+      field(i,j) = 0.0
     end do
   end do
 
-  call mpp_update_domains(field, self%geom%Domain%mpp_domain, complete=.true.)
+
+  ! integrate adjoing hz diffusion terms
+  do iter=1,niter
+    tmp = wrk_new
+    wrk_new = wrk_old
+    wrk_old = tmp    
+    call mpp_update_domains_ad(wrk_new, self%geom%Domain%mpp_domain, complete=.true.)
+
+    ! time-step adjoint hz diffusion terms
+    do j=LOOP_DOMAIN_J
+      do i=LOOP_DOMAIN_I
+        adfac=hfac(i,j)*wrk_new(i,j)
+        flux_y(i,j  ) = flux_y(i,j  ) - adfac
+        flux_y(i,j+1) = flux_y(i,j+1) + adfac
+        flux_x(i  ,j) = flux_x(i  ,j) - adfac
+        flux_x(i+1,j) = flux_x(i+1,j) + adfac
+        wrk_old(i,j) = wrk_old(i,j) + wrk_new(i,j)
+        wrk_new(i,j) = 0.0
+      end do
+    end do    
+
+    ! compute adjoint diffusive flux
+    do j=LOOP_DOMAIN_J+1
+      do i=LOOP_DOMAIN_I
+        flux_y(i,j) = flux_y(i,j) * self%mask(i,j) * self%mask(i,j-1)
+        adfac = self%pnom_v(i,j) * 0.5*(self%Kh(i,j-1)+self%Kh(i,j)) * flux_y(i,j)
+        wrk_old(i,j-1) = wrk_old(i,j-1) - adfac
+        wrk_old(i,j  ) = wrk_old(i,j  ) + adfac
+        flux_y(i,j) = 0.0
+      end do
+    end do
+    do j=LOOP_DOMAIN_J
+      do i=LOOP_DOMAIN_I+1
+        flux_x(i,j) = flux_x(i,j) * self%mask(i,j) * self%mask(i-1,j)
+        adfac = self%pmon_u(i,j) * 0.5*(self%Kh(i-1,j)+self%Kh(i,j)) * flux_x(i,j)
+        wrk_old(i-1,j) = wrk_old(i-1,j) - adfac
+        wrk_old(i,  j) = wrk_old(i,  j) + adfac
+        flux_x(i,j) = 0.0
+      end do
+    end do
+  end do
+
+  ! set adjoing initial conditions
+  field = field + wrk_old
+  wrk_old = 0.0
+  call mpp_update_domains_ad(field, self%geom%Domain%mpp_domain, complete=.true.)
 
 end subroutine
 
