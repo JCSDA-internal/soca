@@ -40,7 +40,7 @@ type, public :: soca_diffusion
   real(kind_real), allocatable :: mask(:,:)   ! 1.0 where water, 0.0 where land
   
   ! parameters calculated during calibration() / read()
-  real(kind_real), allocatable :: Kh(:,:)
+  real(kind_real), allocatable :: KhDt(:,:)
   real(kind_real), allocatable :: normalization(:,:)
   integer :: n_iter
 
@@ -166,6 +166,7 @@ end subroutine
 subroutine soca_diffusion_calibrate(self)
   class(soca_diffusion), intent(inout) :: self
 
+  real(kind=kind_real) :: stability_factor = 1.5
   real(kind=kind_real) :: stats(3) ! min, max, mean
   character(len=1024) :: str  
   integer :: i, j
@@ -194,18 +195,20 @@ subroutine soca_diffusion_calibrate(self)
   do j = LOOP_DOMAIN_J
     do i = LOOP_DOMAIN_I
       if (self%mask(i,j) == 0.0 ) cycle
-      r_tmp(i,j) = (hz_scales(i,j) / min(self%dx(i,j), self%dy(i,j))) ** 2
+      ! am I off by a factor of two here? eh, seems to be working
+      r_tmp(i,j) = stability_factor * hz_scales(i,j)**2 * (1.0/(self%dx(i,j)**2) + 1.0/(self%dy(i,j)**2))
+
     end do
   end do
   call self%calc_stats(r_tmp, stats)
-  self%n_iter = ceiling(stats(2)) + 30
+  self%n_iter = ceiling(stats(2))
   if (mod(self%n_iter,2) == 1) self%n_iter = self%n_iter + 1
   write (str, *) "  minimum iterations: ", self%n_iter
   call oops_log%info(str)
 
-  ! calculate Kh
-  allocate(self%Kh(DOMAIN_WITH_HALO))
-  self%Kh = hz_scales**2 / (2.0 * self%n_iter)
+  ! calculate KhDt
+  allocate(self%KhDt(DOMAIN_WITH_HALO))
+  self%KhDt = hz_scales**2 / (2.0 * self%n_iter)
 
   ! calculate normalization
   call oops_log%info("Calculating normalization...")
@@ -331,13 +334,13 @@ subroutine soca_diffusion_diffusion_steps(self, field, niter)
       ! calculate diffusive flux on each edge of a grid box. masking out where there is land
     do j=LOOP_DOMAIN_J 
       do i=LOOP_DOMAIN_I+1 ! assume halo size is >= 1, and skip doing a halo update
-        flux_x(i,j) = self%pmon_u(i,j) * 0.5 * (self%Kh(i,j) + self%Kh(i-1,j)) * (field(i,j) - field(i-1,j))
+        flux_x(i,j) = self%pmon_u(i,j) * 0.5 * (self%KhDt(i,j) + self%KhDt(i-1,j)) * (field(i,j) - field(i-1,j))
         flux_x(i,j) = flux_x(i,j) * self%mask(i,j) * self%mask(i-1,j)
       end do
     end do
     do j=LOOP_DOMAIN_J+1 ! assume halo size is >= 1, and skip doing a halo update
       do i=LOOP_DOMAIN_I
-        flux_y(i,j) = self%pnom_v(i,j) * 0.5 * (self%Kh(i,j) + self%Kh(i,j-1)) * (field(i,j) - field(i,j-1))
+        flux_y(i,j) = self%pnom_v(i,j) * 0.5 * (self%KhDt(i,j) + self%KhDt(i,j-1)) * (field(i,j) - field(i,j-1))
         flux_y(i,j) = flux_y(i,j) * self%mask(i,j) * self%mask(i,j-1)
       end do
     end do
@@ -426,7 +429,7 @@ subroutine soca_diffusion_diffusion_steps_ad(self, field, niter)
     do j=LOOP_DOMAIN_J+1
       do i=LOOP_DOMAIN_I
         flux_y(i,j) = flux_y(i,j) * self%mask(i,j) * self%mask(i,j-1)
-        adfac = self%pnom_v(i,j) * 0.5*(self%Kh(i,j-1)+self%Kh(i,j)) * flux_y(i,j)
+        adfac = self%pnom_v(i,j) * 0.5*(self%KhDt(i,j-1)+self%KhDt(i,j)) * flux_y(i,j)
         wrk_old(i,j-1) = wrk_old(i,j-1) - adfac
         wrk_old(i,j  ) = wrk_old(i,j  ) + adfac
         flux_y(i,j) = 0.0
@@ -435,7 +438,7 @@ subroutine soca_diffusion_diffusion_steps_ad(self, field, niter)
     do j=LOOP_DOMAIN_J
       do i=LOOP_DOMAIN_I+1
         flux_x(i,j) = flux_x(i,j) * self%mask(i,j) * self%mask(i-1,j)
-        adfac = self%pmon_u(i,j) * 0.5*(self%Kh(i-1,j)+self%Kh(i,j)) * flux_x(i,j)
+        adfac = self%pmon_u(i,j) * 0.5*(self%KhDt(i-1,j)+self%KhDt(i,j)) * flux_x(i,j)
         wrk_old(i-1,j) = wrk_old(i-1,j) - adfac
         wrk_old(i,  j) = wrk_old(i,  j) + adfac
         flux_x(i,j) = 0.0
