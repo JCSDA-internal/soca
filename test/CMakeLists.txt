@@ -47,6 +47,7 @@ set( soca_test_input
   testinput/getvalues.yml
   testinput/gridgen.yml
   testinput/hofx_3d.yml
+  testinput/hofx_oasim_3d.yml
   testinput/hofx_4d_pseudo.yml
   testinput/hofx_4d.yml
   testinput/hybridgain.yml
@@ -122,6 +123,7 @@ set( soca_test_ref
   testref/forecast_pseudo.test
   testref/gridgen.test
   testref/hofx_3d.test
+  testref/hofx_oasim_3d.test
   testref/hofx_4d_pseudo.test
   testref/hofx_4d.test
   testref/hybridgain.test
@@ -621,6 +623,12 @@ soca_add_test( NAME makeobs
 soca_add_test( NAME hofx_3d
                EXE  soca_hofx3d.x
                TEST_DEPENDS test_soca_gridgen )
+
+if( ${oasim_FOUND} )
+  soca_add_test( NAME hofx_oasim_3d                        
+                 EXE  soca_hofx3d.x
+                 TEST_DEPENDS test_soca_gridgen ) 
+endif( ${oasim_FOUND} )
 
 soca_add_test( NAME hofx_4d
                EXE  soca_hofx.x
