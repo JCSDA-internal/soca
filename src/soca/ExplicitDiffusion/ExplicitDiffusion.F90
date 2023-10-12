@@ -77,26 +77,36 @@ end subroutine
 
 ! ------------------------------------------------------------------------------
 
-subroutine soca_explicitdiffusion_writeparams_c(c_key_self) &
+subroutine soca_explicitdiffusion_writeparams_c(c_key_self, c_conf) &
     bind (c, name='soca_explicitdiffusion_writeparams_f90')
   integer(c_int),  intent(inout) :: c_key_self
+  type(c_ptr),        intent(in) :: c_conf
     
+  character(len=:), allocatable :: filename
   type(soca_diffusion), pointer :: self
+  type(fckit_configuration) :: f_conf
 
+  f_conf = fckit_configuration(c_conf)
+  call f_conf%get_or_die("filename", filename)
   call soca_diffusion_registry%get(c_key_self, self)  
-  call self%write_params()  
+  call self%write_params(filename)  
 end subroutine
 
 ! ------------------------------------------------------------------------------
 
-subroutine soca_explicitdiffusion_readparams_c(c_key_self) &
+subroutine soca_explicitdiffusion_readparams_c(c_key_self, c_conf) &
     bind (c, name='soca_explicitdiffusion_readparams_f90')
     integer(c_int),  intent(inout) :: c_key_self
+    type(c_ptr),        intent(in) :: c_conf
     
+    character(len=:), allocatable :: filename
     type(soca_diffusion), pointer :: self
-  
+    type(fckit_configuration) :: f_conf
+    
+    f_conf = fckit_configuration(c_conf)
+    call f_conf%get_or_die("filename", filename)
     call soca_diffusion_registry%get(c_key_self, self)
-    call self%read_params()
+    call self%read_params(filename)
 end subroutine
 
 ! ------------------------------------------------------------------------------

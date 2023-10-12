@@ -18,7 +18,8 @@ background error:
     saber block name: EXPLICIT_DIFFUSION
     active variables: [tocn, socn]
     geometry: *geom    
-    read: {} # read filename
+    read: 
+      filename: data_generated/parameters_diffusion/diffusion_params.nc
 
 dirac:
   ixdir: [1, 17, 41, 31, 51, 63, 81, 14, 16, 43]

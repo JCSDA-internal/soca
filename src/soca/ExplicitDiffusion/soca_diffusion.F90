@@ -540,7 +540,6 @@ subroutine soca_diffusion_calc_norm_randomization(self, iter)
       write (str, *) "normalization: ", 10*n/n10pct, "% "
       call oops_log%info(str, flush=.true.)
     end if
-
   
     ! create a random vector
     call normal_distribution(field, 0.0_kind_real, 1.0_kind_real, n, .true.) 
@@ -567,25 +566,21 @@ end subroutine
 
 ! ------------------------------------------------------------------------------
 
-subroutine soca_diffusion_write_params(self)
+subroutine soca_diffusion_write_params(self, filename)
   class(soca_diffusion), intent(inout) :: self
+  character(len=*),      intent(in)    :: filename
 
-  character(len=1024) :: filename
   type(restart_file_type) :: restart_file
   integer :: idr
 
-  ! TODO read from conf
-  filename = "data_generated/parameters_diffusion/diffusion_params.nc"
-
-  call fms_io_init()
-  
+  ! read from file
+  call fms_io_init()  
   idr = register_restart_field(restart_file, filename, "iterations", &
     self%n_iter, domain=self%geom%Domain%mpp_domain)
   idr = register_restart_field(restart_file, filename, "khdt", &
     self%KhDt, domain=self%geom%Domain%mpp_domain)
   idr = register_restart_field(restart_file, filename, "normalization", &
-    self%normalization, domain=self%geom%Domain%mpp_domain)
-  
+    self%normalization, domain=self%geom%Domain%mpp_domain)  
   call save_restart(restart_file, directory='')
   call free_restart_type(restart_file)
   call fms_io_exit()  
@@ -593,21 +588,18 @@ end subroutine
 
 ! ------------------------------------------------------------------------------
 
-subroutine soca_diffusion_read_params(self)
+subroutine soca_diffusion_read_params(self, filename)
   class(soca_diffusion), intent(inout) :: self
-
-  character(len=1024) :: filename
+  character(len=*),      intent(in)    :: filename
+  
   type(restart_file_type) :: restart_file
   integer :: idr
 
   allocate(self%KhDt(DOMAIN_WITH_HALO))
   allocate(self%normalization(DOMAIN_WITH_HALO))
-
-  ! TODO read from conf
-  filename = "data_generated/parameters_diffusion/diffusion_params.nc"
-
+ 
   ! initialize with safe values, because not all halo points 
-  ! are updated in a halo update
+  ! are updated in a MOM6 halo update
   self%KhDt = 0.0
   self%normalization = 1.0
 
@@ -618,12 +610,12 @@ subroutine soca_diffusion_read_params(self)
   idr = register_restart_field(restart_file, filename, "khdt", &
     self%KhDt, domain=self%geom%Domain%mpp_domain)
   idr = register_restart_field(restart_file, filename, "normalization", &
-    self%normalization, domain=self%geom%Domain%mpp_domain)
-  
+    self%normalization, domain=self%geom%Domain%mpp_domain)  
   call restore_state(restart_file, directory='')
   call free_restart_type(restart_file)
   call fms_io_exit()
 
+  ! update halos
   call mpp_update_domains(self%normalization, self%geom%Domain%mpp_domain, complete=.true.)
   call mpp_update_domains(self%KhDt, self%geom%Domain%mpp_domain, complete=.true.)
 end subroutine

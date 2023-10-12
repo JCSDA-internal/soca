@@ -25,10 +25,10 @@ ExplicitDiffusion::ExplicitDiffusion(
     const Parameters_ & params,
     const oops::FieldSet3D & xb,
     const oops::FieldSet3D & fg)
-  : saber::SaberCentralBlockBase(params), conf_(params.toConfiguration())
+  : saber::SaberCentralBlockBase(params), params_(params)
 {
   // setup geometry
-  geom_.reset(new Geometry(params.geometry.value(), geometryData.comm()));
+  geom_.reset(new Geometry(params_.geometry.value(), geometryData.comm()));
 
   // setup the fortran code
   soca_explicitdiffusion_setup_f90(keyFortran_, geom_->toFortran());
@@ -57,20 +57,22 @@ void ExplicitDiffusion::multiply(atlas::FieldSet & fset) const {
 
 void ExplicitDiffusion::directCalibration(const std::vector<atlas::FieldSet> &) {
   // NOTE: ensemble is not used
-  eckit::LocalConfiguration calConf = conf_.getSubConfiguration("calibration");
-  soca_explicitdiffusion_calibrate_f90(keyFortran_, &calConf);
+  eckit::LocalConfiguration conf = (*params_.calibration.value()).toConfiguration();
+  soca_explicitdiffusion_calibrate_f90(keyFortran_, &conf);
 }
 
 // --------------------------------------------------------------------------------------
 
 void ExplicitDiffusion::read() {
-  soca_explicitdiffusion_readparams_f90(keyFortran_);
+  eckit::LocalConfiguration conf = (*params_.read.value()).toConfiguration();
+  soca_explicitdiffusion_readparams_f90(keyFortran_, &conf);
 }
 
 // --------------------------------------------------------------------------------------
 
 void ExplicitDiffusion::write() const {
-  soca_explicitdiffusion_writeparams_f90(keyFortran_);
+  eckit::LocalConfiguration conf = (*(*params_.calibration.value()).write.value()).toConfiguration();
+  soca_explicitdiffusion_writeparams_f90(keyFortran_, &conf);
 }
 
 // --------------------------------------------------------------------------------------

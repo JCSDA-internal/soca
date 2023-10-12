@@ -23,7 +23,9 @@ background error:
         iterations: 1000
       scales:
         fixed value: 600.0e3
-      # output filename: data_generated/parameters_diffusion/diffusion_params.nc
+      write:
+        filename: data_generated/parameters_diffusion/diffusion_params.nc
+        
       # solver:
       #   max iterations: 300
       #   stability factor: 1.5
