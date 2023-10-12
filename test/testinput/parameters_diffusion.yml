@@ -13,7 +13,17 @@ background:
 
 background error:
   covariance model: SABER
+  adjoint test: true    
   saber central block:
     saber block name: EXPLICIT_DIFFUSION
     geometry: *geom
-    calibration: {}
+    calibration:
+      normalization:
+        method: randomization
+        iterations: 1000
+      scales:
+        fixed value: 600.0e3
+      # output filename: data_generated/parameters_diffusion/diffusion_params.nc
+      # solver:
+      #   max iterations: 300
+      #   stability factor: 1.5

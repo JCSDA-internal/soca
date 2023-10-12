@@ -5,12 +5,14 @@
 
 module soca_diffusion_mod
 
-use random_mod
-use atlas_module, only: atlas_fieldset, atlas_field
-use kinds, only: kind_real
+use atlas_module, only: atlas_fieldset, atlas_field, atlas_real
+use fckit_configuration_module, only: fckit_configuration
 use fckit_mpi_module, only: fckit_mpi_min, fckit_mpi_max, fckit_mpi_sum
+use kinds, only: kind_real
 use logger_mod
 use mpp_domains_mod, only : mpp_update_domains, mpp_update_domains_ad
+use random_mod
+use fms_io_mod
 
 use soca_increment_mod
 use soca_geom_mod, only : soca_geom
@@ -42,7 +44,7 @@ type, public :: soca_diffusion
   ! parameters calculated during calibration() / read()
   real(kind_real), allocatable :: KhDt(:,:)
   real(kind_real), allocatable :: normalization(:,:)
-  integer :: n_iter
+  integer :: n_iter = -1 !< set to -1 to indicate has not been initialized
 
   class(soca_geom), pointer :: geom    
 
@@ -50,6 +52,8 @@ contains
   procedure :: init => soca_diffusion_init
   procedure :: calibrate => soca_diffusion_calibrate
   procedure :: multiply => soca_diffusion_multiply
+  procedure :: write_params => soca_diffusion_write_params
+  procedure :: read_params => soca_diffusion_read_params
   
   procedure, private :: multiply_2D => soca_diffusion_multiply_2D
   procedure, private :: multiply_2D_tl => soca_diffusion_multiply_2D_tl
@@ -154,33 +158,35 @@ subroutine soca_diffusion_init(self, geom)
   call mpp_update_domains(self%inv_sqrt_area, self%geom%Domain%mpp_domain, complete=.true.)
   call mpp_update_domains(self%pmon_u, self%geom%Domain%mpp_domain, complete=.true.)
   call mpp_update_domains(self%pnom_v, self%geom%Domain%mpp_domain, complete=.true.)
-
-  ! TODO remove this when read() is implemented
-  call self%calibrate()
-    
+   
   call oops_log%trace("soca_diffusion::init() done", flush=.true.)
 end subroutine
 
 ! ------------------------------------------------------------------------------
 
-subroutine soca_diffusion_calibrate(self)
-  class(soca_diffusion), intent(inout) :: self
+subroutine soca_diffusion_calibrate(self, f_conf)
+  class(soca_diffusion),  intent(inout) :: self
+  type(fckit_configuration), intent(in) :: f_conf
 
   real(kind=kind_real) :: stability_factor = 1.5
-  real(kind=kind_real) :: stats(3) ! min, max, mean
+  real(kind=kind_real) :: stats(3) ! min, max, mean  
   character(len=1024) :: str  
+  character(len=:), allocatable :: str2  
   integer :: i, j
 
+  real(kind=kind_real) :: fixed_scale
   real(kind=kind_real), allocatable :: hz_scales(:,:), r_tmp(:,:)
 
   call oops_log%trace("soca_diffusion::calibrate() starting", flush=.true.)
  
-  ! TODO get input lengthscales
+  !get input lengthscales
   allocate(hz_scales(DOMAIN_WITH_HALO))
-  hz_scales = 600.0e3
-  ! TODO do smarter clipping
-  where(hz_scales > 10 * self%dx) hz_scales = self%dx * 10
-  where(hz_scales > 10 * self%dy) hz_scales = self%dy * 10
+  call f_conf%get_or_die("scales.fixed value", fixed_scale)
+  hz_scales = fixed_scale
+
+  ! ! TODO do smarter clipping
+  ! where(hz_scales > 10 * self%dx) hz_scales = self%dx * 10
+  ! where(hz_scales > 10 * self%dy) hz_scales = self%dy * 10
 
   call self%calc_stats(hz_scales, stats)
   write (str, *) "  L_hz: min=", stats(1), "max=", stats(2), "mean=", stats(3)
@@ -214,9 +220,15 @@ subroutine soca_diffusion_calibrate(self)
   call oops_log%info("Calculating normalization...")
   allocate(self%normalization(DOMAIN_WITH_HALO))
   self%normalization = 1.0
-  ! TODO get from configuration
-  !call self%calc_norm_bruteforce()
-  call self%calc_norm_randomization(10000)
+  call f_conf%get_or_die("normalization.method", str2)
+  if (str2 == "brute force") then
+    call self%calc_norm_bruteforce()
+  else if (str2 == "randomization") then
+    call f_conf%get_or_die("normalization.iterations", i)
+    call self%calc_norm_randomization(i)
+  else
+    call abor1_ftn("ERROR: normalization.method must be 'brute force' or 'randomization'")
+  end if
 
   call oops_log%trace("soca_diffusion::calibrate() done", flush=.true.)
 end subroutine
@@ -232,6 +244,11 @@ subroutine soca_diffusion_multiply(self, dx)
   integer :: f, z
 
   call oops_log%trace("soca_diffusion::multiply() starting", flush=.true.)
+
+  if (self%n_iter <= 0) then
+    ! uninitialized, calibrate or read should have been called before now
+    call abor1_ftn("ERROR: soca_diffusion has not be initialized.")
+  end if
 
   allocate(tmp2d(DOMAIN_WITH_HALO))
 
@@ -447,7 +464,7 @@ subroutine soca_diffusion_diffusion_steps_ad(self, field, niter)
     call mpp_update_domains_ad(wrk_old, self%geom%Domain%mpp_domain, complete=.true.)
   end do
 
-  ! set adjoing initial conditions
+  ! set adjoint initial conditions
   field = field + wrk_old
   wrk_old = 0.0
   !call mpp_update_domains_ad(field, self%geom%Domain%mpp_domain, complete=.true.)
@@ -546,6 +563,64 @@ subroutine soca_diffusion_calc_norm_randomization(self, iter)
   
   call mpp_update_domains(self%normalization, self%geom%Domain%mpp_domain, complete=.true.)
 
+end subroutine
+
+! ------------------------------------------------------------------------------
+
+subroutine soca_diffusion_write_params(self)
+  class(soca_diffusion), intent(inout) :: self
+
+  character(len=1024) :: filename
+  type(restart_file_type) :: restart_file
+  integer :: idr
+
+  ! TODO read from conf
+  filename = "data_generated/parameters_diffusion/diffusion_params.nc"
+
+  call fms_io_init()
+  
+  idr = register_restart_field(restart_file, filename, "iterations", &
+    self%n_iter, domain=self%geom%Domain%mpp_domain)
+  idr = register_restart_field(restart_file, filename, "khdt", &
+    self%KhDt, domain=self%geom%Domain%mpp_domain)
+  idr = register_restart_field(restart_file, filename, "normalization", &
+    self%normalization, domain=self%geom%Domain%mpp_domain)
+  
+  call save_restart(restart_file, directory='')
+  call free_restart_type(restart_file)
+  call fms_io_exit()  
+end subroutine
+
+! ------------------------------------------------------------------------------
+
+subroutine soca_diffusion_read_params(self)
+  class(soca_diffusion), intent(inout) :: self
+
+  character(len=1024) :: filename
+  type(restart_file_type) :: restart_file
+  integer :: idr
+
+  allocate(self%KhDt(DOMAIN_WITH_HALO))
+  allocate(self%normalization(DOMAIN_WITH_HALO))
+
+  ! TODO read from conf
+  filename = "data_generated/parameters_diffusion/diffusion_params.nc"
+
+  call fms_io_init()
+  
+  idr = register_restart_field(restart_file, filename, "iterations", &
+    self%n_iter, domain=self%geom%Domain%mpp_domain)
+  idr = register_restart_field(restart_file, filename, "khdt", &
+    self%KhDt, domain=self%geom%Domain%mpp_domain)
+  idr = register_restart_field(restart_file, filename, "normalization", &
+    self%normalization, domain=self%geom%Domain%mpp_domain)
+  
+  call restore_state(restart_file, directory='')
+  call free_restart_type(restart_file)
+  call fms_io_exit()
+
+  call mpp_update_domains(self%normalization, self%geom%Domain%mpp_domain, complete=.true.)
+  call mpp_update_domains(self%KhDt, self%geom%Domain%mpp_domain, complete=.true.)
 end subroutine
 
 ! ------------------------------------------------------------------------------

@@ -8,6 +8,7 @@ module soca_explicitdiffusion_c
 use iso_c_binding
 
 use atlas_module, only : atlas_fieldset
+use fckit_configuration_module, only: fckit_configuration
 
 use soca_geom_mod
 use soca_geom_mod_c
@@ -48,14 +49,15 @@ end subroutine
 
 ! ------------------------------------------------------------------------------
 
-subroutine soca_explicitdiffusion_calibrate_c(c_key_self) bind(c, name='soca_explicitdiffusion_calibrate_f90')
+subroutine soca_explicitdiffusion_calibrate_c(c_key_self, c_conf) bind(c, name='soca_explicitdiffusion_calibrate_f90')
   integer(c_int), intent(inout) :: c_key_self
+  type(c_ptr),       intent(in) :: c_conf
 
   type(soca_diffusion), pointer :: self
 
-  call soca_diffusion_registry%get(c_key_self, self)
+  call soca_diffusion_registry%get(c_key_self, self)  
 
-  call self%calibrate() 
+  call self%calibrate(fckit_configuration(c_conf)) 
 end subroutine
 
 ! ------------------------------------------------------------------------------
@@ -72,5 +74,31 @@ subroutine soca_explicitdiffusion_multiply_c(c_key_self, c_key_dx) bind(c, name=
 
   call self%multiply(dx)
 end subroutine
+
 ! ------------------------------------------------------------------------------
+
+subroutine soca_explicitdiffusion_writeparams_c(c_key_self) &
+    bind (c, name='soca_explicitdiffusion_writeparams_f90')
+  integer(c_int),  intent(inout) :: c_key_self
+    
+  type(soca_diffusion), pointer :: self
+
+  call soca_diffusion_registry%get(c_key_self, self)  
+  call self%write_params()  
+end subroutine
+
+! ------------------------------------------------------------------------------
+
+subroutine soca_explicitdiffusion_readparams_c(c_key_self) &
+    bind (c, name='soca_explicitdiffusion_readparams_f90')
+    integer(c_int),  intent(inout) :: c_key_self
+    
+    type(soca_diffusion), pointer :: self
+  
+    call soca_diffusion_registry%get(c_key_self, self)
+    call self%read_params()
+end subroutine
+
+! ------------------------------------------------------------------------------
+
 end module

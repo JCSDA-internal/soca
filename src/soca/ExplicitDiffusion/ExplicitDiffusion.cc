@@ -25,7 +25,7 @@ ExplicitDiffusion::ExplicitDiffusion(
     const Parameters_ & params,
     const oops::FieldSet3D & xb,
     const oops::FieldSet3D & fg)
-  : saber::SaberCentralBlockBase(params)
+  : saber::SaberCentralBlockBase(params), conf_(params.toConfiguration())
 {
   // setup geometry
   geom_.reset(new Geometry(params.geometry.value(), geometryData.comm()));
@@ -56,19 +56,26 @@ void ExplicitDiffusion::multiply(atlas::FieldSet & fset) const {
 // --------------------------------------------------------------------------------------
 
 void ExplicitDiffusion::directCalibration(const std::vector<atlas::FieldSet> &) {
-  // NOTE: ensemble is not used... for now?
-  soca_explicitdiffusion_calibrate_f90(keyFortran_);
+  // NOTE: ensemble is not used
+  eckit::LocalConfiguration calConf = conf_.getSubConfiguration("calibration");
+  soca_explicitdiffusion_calibrate_f90(keyFortran_, &calConf);
 }
 
 // --------------------------------------------------------------------------------------
 
 void ExplicitDiffusion::read() {
+  soca_explicitdiffusion_readparams_f90(keyFortran_);
+}
+
+// --------------------------------------------------------------------------------------
+
+void ExplicitDiffusion::write() const {
+  soca_explicitdiffusion_writeparams_f90(keyFortran_);
 }
 
 // --------------------------------------------------------------------------------------
 
 void ExplicitDiffusion::print(std::ostream &) const {
-
 }
 
 // --------------------------------------------------------------------------------------

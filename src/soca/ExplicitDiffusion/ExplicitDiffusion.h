@@ -31,6 +31,10 @@ class ExplicitDiffusionReadParameters : public oops::Parameters {
 
 class ExplicitDiffusionCalibrationParameters : public oops::Parameters {
   OOPS_CONCRETE_PARAMETERS(ExplicitDiffusionCalibrationParameters, oops::Parameters)
+ public:
+  // TODO, formalize
+  oops::RequiredParameter<eckit::LocalConfiguration> normalization{"normalization", this};
+  oops::RequiredParameter<eckit::LocalConfiguration> scales{"scales", this};
 };
 
 // --------------------------------------------------------------------------------------
@@ -65,12 +69,14 @@ class ExplicitDiffusion : public saber::SaberCentralBlockBase {
 
   void directCalibration(const std::vector<atlas::FieldSet> &) override;
   void read() override;  
+  void write() const override;
 
  private:
   void print(std::ostream &) const override;
   std::shared_ptr<Geometry> geom_;
   int keyFortran_;
   oops::Variables vars_;
+  eckit::LocalConfiguration conf_;
 };
 
 // --------------------------------------------------------------------------------------
