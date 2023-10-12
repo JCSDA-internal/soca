@@ -606,8 +606,13 @@ subroutine soca_diffusion_read_params(self)
   ! TODO read from conf
   filename = "data_generated/parameters_diffusion/diffusion_params.nc"
 
+  ! initialize with safe values, because not all halo points 
+  ! are updated in a halo update
+  self%KhDt = 0.0
+  self%normalization = 1.0
+
+  ! read from file
   call fms_io_init()
-  
   idr = register_restart_field(restart_file, filename, "iterations", &
     self%n_iter, domain=self%geom%Domain%mpp_domain)
   idr = register_restart_field(restart_file, filename, "khdt", &
