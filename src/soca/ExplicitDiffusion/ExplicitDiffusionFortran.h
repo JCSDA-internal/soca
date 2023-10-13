@@ -18,15 +18,15 @@ namespace soca {
 typedef int F90explicitdiffusion;
 
 extern "C" {
-  void soca_explicitdiffusion_setup_f90( F90explicitdiffusion &, const F90geom &);
-  void soca_explicitdiffusion_calibrate_f90( const F90explicitdiffusion &,
-                                             const eckit::Configuration * const &);
-  void soca_explicitdiffusion_multiply_f90( const F90explicitdiffusion &, 
-                                            const F90flds &);
-  void soca_explicitdiffusion_writeparams_f90( const F90explicitdiffusion &,
-                                               const eckit::Configuration * const &);
-  void soca_explicitdiffusion_readparams_f90( const F90explicitdiffusion &,
+  void soca_explicitdiffusion_setup_f90(F90explicitdiffusion &, const F90geom &);
+  void soca_explicitdiffusion_calibrate_f90(const F90explicitdiffusion &,
+                                            const eckit::Configuration * const &);
+  void soca_explicitdiffusion_multiply_f90(const F90explicitdiffusion &,
+                                           const F90flds &);
+  void soca_explicitdiffusion_writeparams_f90(const F90explicitdiffusion &,
                                               const eckit::Configuration * const &);
+  void soca_explicitdiffusion_readparams_f90(const F90explicitdiffusion &,
+                                             const eckit::Configuration * const &);
 }
 
 }  // namespace soca

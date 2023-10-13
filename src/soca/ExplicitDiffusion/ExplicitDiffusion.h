@@ -7,6 +7,10 @@
 
 #pragma once
 
+#include <memory>
+#include <string>
+#include <vector>
+
 #include "soca/ExplicitDiffusion/ExplicitDiffusionParameters.h"
 #include "saber/blocks/SaberCentralBlockBase.h"
 
@@ -39,7 +43,7 @@ class ExplicitDiffusion : public saber::SaberCentralBlockBase {
   void multiply(atlas::FieldSet &) const override;
 
   void directCalibration(const std::vector<atlas::FieldSet> &) override;
-  void read() override;  
+  void read() override;
   void write() const override;
 
  private:

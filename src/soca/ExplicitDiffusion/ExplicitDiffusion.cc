@@ -14,7 +14,8 @@ namespace soca {
 
 // --------------------------------------------------------------------------------------
 
-static saber::SaberCentralBlockMaker<ExplicitDiffusion> makerExplicitDiffusion_("EXPLICIT_DIFFUSION");
+static saber::SaberCentralBlockMaker<ExplicitDiffusion>
+  makerExplicitDiffusion_("EXPLICIT_DIFFUSION");
 
 // --------------------------------------------------------------------------------------
 
@@ -33,18 +34,18 @@ ExplicitDiffusion::ExplicitDiffusion(
   // setup the fortran code
   soca_explicitdiffusion_setup_f90(keyFortran_, geom_->toFortran());
 
-  vars_ = params.activeVars.value().get_value_or(centralVars);  
+  vars_ = params.activeVars.value().get_value_or(centralVars);
 }
 
 // --------------------------------------------------------------------------------------
 
 void ExplicitDiffusion::randomize(atlas::FieldSet &) const {
-
+  throw eckit::NotImplemented("read not implemented yet for ExplictDiffusion");
 }
 
 // --------------------------------------------------------------------------------------
-  
-void ExplicitDiffusion::multiply(atlas::FieldSet & fset) const { 
+
+void ExplicitDiffusion::multiply(atlas::FieldSet & fset) const {
   Increment dx(*geom_, vars_, util::DateTime());
   dx.fromFieldSet(fset);
 
@@ -56,7 +57,6 @@ void ExplicitDiffusion::multiply(atlas::FieldSet & fset) const {
 // --------------------------------------------------------------------------------------
 
 void ExplicitDiffusion::directCalibration(const std::vector<atlas::FieldSet> &) {
-  // NOTE: ensemble is not used
   eckit::LocalConfiguration conf = (*params_.calibration.value()).toConfiguration();
   soca_explicitdiffusion_calibrate_f90(keyFortran_, &conf);
 }
@@ -71,7 +71,8 @@ void ExplicitDiffusion::read() {
 // --------------------------------------------------------------------------------------
 
 void ExplicitDiffusion::write() const {
-  eckit::LocalConfiguration conf = (*(*params_.calibration.value()).write.value()).toConfiguration();
+  eckit::LocalConfiguration conf =
+    (*(*params_.calibration.value()).write.value()).toConfiguration();
   soca_explicitdiffusion_writeparams_f90(keyFortran_, &conf);
 }
 

@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include <string>
+
 #include "saber/blocks/SaberBlockParametersBase.h"
 
 namespace soca {
@@ -18,7 +20,6 @@ class ExplicitDiffusionIOParameters : public oops::Parameters {
  public:
   oops::RequiredParameter<std::string> filename{"filename", this};
   oops::OptionalParameter<std::string> varName{"variable name", this};
-
 };
 
 // --------------------------------------------------------------------------------------
@@ -36,7 +37,6 @@ class ExplicitDiffusionScalesParameters : public oops::Parameters {
 class ExplicitDiffusionCalibrationParameters : public oops::Parameters {
   OOPS_CONCRETE_PARAMETERS(ExplicitDiffusionCalibrationParameters, oops::Parameters)
  public:
-  // TODO, formalize
   oops::RequiredParameter<eckit::LocalConfiguration> normalization{"normalization", this};
   oops::RequiredParameter<ExplicitDiffusionScalesParameters> scales{"scales", this};
   oops::OptionalParameter<ExplicitDiffusionIOParameters> write {"write", this};
@@ -48,8 +48,8 @@ class ExplicitDiffusionParameters : public saber::SaberBlockParametersBase {
   OOPS_CONCRETE_PARAMETERS(ExplicitDiffusionParameters, saber::SaberBlockParametersBase)
  public:
   oops::OptionalParameter<ExplicitDiffusionIOParameters> read{"read", this};
-  oops::OptionalParameter<ExplicitDiffusionCalibrationParameters> 
-    calibration{"calibration", this};  
+  oops::OptionalParameter<ExplicitDiffusionCalibrationParameters>
+    calibration{"calibration", this};
   oops::RequiredParameter<eckit::LocalConfiguration> geometry{"geometry", this};
 
   oops::Variables mandatoryActiveVars() const override {return oops::Variables();}
