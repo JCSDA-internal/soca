@@ -165,7 +165,7 @@ subroutine soca_diffusion_calibrate(self, f_conf)
   class(soca_diffusion),  intent(inout) :: self
   type(fckit_configuration), intent(in) :: f_conf
 
-  real(kind=kind_real) :: stability_factor = 1.5
+  real(kind=kind_real) :: stability_factor = 2.0
   real(kind=kind_real) :: stats(3) ! min, max, mean  
   character(len=1024) :: str  
   character(len=:), allocatable :: str2, str3
@@ -184,6 +184,7 @@ subroutine soca_diffusion_calibrate(self, f_conf)
   !  2) read in from a file
   ! the result is hz_scales containing the length scales (defined as 1 sigma of a guassian)
   allocate(hz_scales(DOMAIN_WITH_HALO))
+  hz_scales = 1e10  
   if (.not. f_conf%has("scales.fixed value") .neqv. f_conf%has("scales.from file")) then
     ! that was an XOR opperation above, if you were curious
     call abor1_ftn("calibration.scales must define 1 of 'fixed value' or 'from file'")
