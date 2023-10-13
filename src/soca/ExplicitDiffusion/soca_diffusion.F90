@@ -151,9 +151,6 @@ subroutine soca_diffusion_init(self, geom)
       self%pnom_v(i,j) = (1.0/self%dy(i,j-1) + 1.0/self%dy(i,j)) / (1.0/self%dx(i,j-1) + 1.0/self%dx(i,j))
     end do
   end do
-  call self%calc_stats(self%pmon_u, stats)
-    write (str, *) "  debug:   min=", stats(1), "max=", stats(2), "mean=", stats(3)
-    call oops_log%info(str)
 
   call mpp_update_domains(self%inv_sqrt_area, self%geom%Domain%mpp_domain, complete=.true.)
   call mpp_update_domains(self%pmon_u, self%geom%Domain%mpp_domain, complete=.true.)
@@ -171,28 +168,55 @@ subroutine soca_diffusion_calibrate(self, f_conf)
   real(kind=kind_real) :: stability_factor = 1.5
   real(kind=kind_real) :: stats(3) ! min, max, mean  
   character(len=1024) :: str  
-  character(len=:), allocatable :: str2  
-  integer :: i, j
+  character(len=:), allocatable :: str2, str3
+  integer :: i, j, idr
+  type(restart_file_type) :: restart_file
+  logical :: b
 
   real(kind=kind_real) :: fixed_scale
   real(kind=kind_real), allocatable :: hz_scales(:,:), r_tmp(:,:)
 
   call oops_log%trace("soca_diffusion::calibrate() starting", flush=.true.)
- 
-  !get input lengthscales
-  allocate(hz_scales(DOMAIN_WITH_HALO))
-  call f_conf%get_or_die("scales.fixed value", fixed_scale)
-  hz_scales = fixed_scale
+  call oops_log%info("ExplicitDiffusion: running calibration")
 
-  ! ! TODO do smarter clipping
-  ! where(hz_scales > 10 * self%dx) hz_scales = self%dx * 10
-  ! where(hz_scales > 10 * self%dy) hz_scales = self%dy * 10
+  ! Get input lengthscales. Either from:
+  !  1) a fixed length scale used globally
+  !  2) read in from a file
+  ! the result is hz_scales containing the length scales (defined as 1 sigma of a guassian)
+  allocate(hz_scales(DOMAIN_WITH_HALO))
+  if (.not. f_conf%has("scales.fixed value") .neqv. f_conf%has("scales.from file")) then
+    ! that was an XOR opperation above, if you were curious
+    call abor1_ftn("calibration.scales must define 1 of 'fixed value' or 'from file'")
+  end if
+  if ( f_conf%has("scales.fixed value")) then
+    call oops_log%info("  Using fixed length scales")
+    call f_conf%get_or_die("scales.fixed value", fixed_scale)
+    hz_scales = fixed_scale
+  else
+    ! yeah, this is messy. Do it better when things are atlas-ified
+    call oops_log%info("  Reading length scales from file")
+    call f_conf%get_or_die("scales.from file.filename", str2)
+    call f_conf%get_or_die("scales.from file.variable name", str3)
+    call fms_io_init()
+    idr = register_restart_field(restart_file, str2, str3, &
+      hz_scales, domain=self%geom%Domain%mpp_domain)
+    call restore_state(restart_file, directory='')
+    call free_restart_type(restart_file)
+    call fms_io_exit()
+  end if
+  call f_conf%get_or_die("scales.as gaussian", b)
+  if (.not. b) then
+    ! by default, a gaspari cohn half width is expected in the config.
+    ! (but the rest of this code asssumes gaussian 1 sigma)
+    ! Do the conversion if needed
+    hz_scales = hz_scales / 3.57_kind_real
+  end if
+  call mpp_update_domains(hz_scales, self%geom%Domain%mpp_domain, complete=.true.)
 
   call self%calc_stats(hz_scales, stats)
   write (str, *) "  L_hz: min=", stats(1), "max=", stats(2), "mean=", stats(3)
   call oops_log%info(str)
 
-  ! TODO this is unstable, check stability conditions
   ! calculate the minimum number of iterations needed, rounding up to the
   ! nearest even number.
   !  M >= (L/grid_size)^2    
@@ -203,7 +227,6 @@ subroutine soca_diffusion_calibrate(self, f_conf)
       if (self%mask(i,j) == 0.0 ) cycle
       ! am I off by a factor of two here? eh, seems to be working
       r_tmp(i,j) = stability_factor * hz_scales(i,j)**2 * (1.0/(self%dx(i,j)**2) + 1.0/(self%dy(i,j)**2))
-
     end do
   end do
   call self%calc_stats(r_tmp, stats)

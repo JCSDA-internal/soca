@@ -22,7 +22,10 @@ background error:
         method: randomization
         iterations: 1000
       scales:
-        fixed value: 600.0e3
+        from file:
+          filename: data_generated/setcorscales/ocn.cor_rh.incr.2018-04-15T00:00:00Z.nc
+          variable name: ave_ssh
+        # fixed value: 600.0e3  #< other method of defining scales, instead of using "from file"          
       write:
         filename: data_generated/parameters_diffusion/diffusion_params.nc
         
