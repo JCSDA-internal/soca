@@ -13,7 +13,6 @@ background:
 
 background error:
   covariance model: SABER
-  adjoint test: true  # < EXPLICIT_DIFFUSION is actually self-adjoint, oooh yeah!!
   saber central block:
     saber block name: EXPLICIT_DIFFUSION
     active variables: [tocn, socn]
@@ -32,3 +31,7 @@ output dirac:
   date: *date
   exp: dirac_diffusion_%id%
   type: an
+
+test:
+  reference filename: testref/dirac_diffusion.test
+  test output filename: testoutput/dirac_diffusion.test

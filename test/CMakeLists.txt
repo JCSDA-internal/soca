@@ -108,12 +108,13 @@ set( soca_test_ref
   testref/convertstate_soca2cice.test
   testref/convertstate.test
   testref/diffstates.test
+  testref/dirac_diffusion.test
   testref/dirac_horizfilt.test
   testref/dirac_soca_cor_nicas_scales.test
   testref/dirac_soca_cov.test
   testref/dirac_soca_mask.test
   testref/dirac_soca_nomask.test
-  testref/dirac_socahyb_cov.test
+  testref/dirac_socahyb_cov.test  
   testref/enshofx.test
   testref/enspert.test
   testref/ensmeanandvariance.test
