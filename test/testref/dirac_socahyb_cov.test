@@ -52,6 +52,10 @@ Localization(hybrid2_ensemble_localization) diagnostics:
   + Value for variable socn, subwindow 0, at (longitude, latitude, vertical index) point (-122.46168, 71.13133, 1): 1.0000000000000000e+00
   + Value for variable tocn, subwindow 0, at (longitude, latitude, vertical index) point (-277.50000, -47.50000, 1): 1.0000000000000007e+00
   + Value for variable tocn, subwindow 0, at (longitude, latitude, vertical index) point (-197.50000, 17.50000, 5): 9.9999999999999944e-01
+  + Value for variable tocn, subwindow 0, at (longitude, latitude, vertical index) point (32.50000, 42.50000, 1): 9.9999999999999989e-01
+  + Value for variable tocn, subwindow 0, at (longitude, latitude, vertical index) point (-27.50000, 57.50000, 1): 1.0000000000000002e+00
+  + Value for variable uocn, subwindow 0, at (longitude, latitude, vertical index) point (-7.50000, -7.50000, 1): 9.9999999999999944e-01
+  + Value for variable ssh, subwindow 0, at (longitude, latitude, vertical index) point (-77.50000, 7.50000, 1): 0.0000000000000000e+00
 Localization(hybrid2_ensemble) * Increment:
   Valid time: 2018-04-15T00:00:00Z
   cicen   min=0.0000000000000000   max=1.0000000000000007   mean=0.0686773581172594
