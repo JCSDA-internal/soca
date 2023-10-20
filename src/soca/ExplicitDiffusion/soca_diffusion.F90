@@ -546,7 +546,7 @@ subroutine soca_diffusion_calc_norm_randomization(self, iter)
   real(kind=kind_real), allocatable :: s(:,:)
   real(kind=kind_real), allocatable :: m(:,:), new_m(:,:)
 
-  integer :: n, n10pct
+  integer :: n, n10pct, rnd
   character(len=1024) :: str  
   
   allocate(field(DOMAIN_WITH_HALO))
@@ -567,7 +567,12 @@ subroutine soca_diffusion_calc_norm_randomization(self, iter)
     end if
   
     ! create a random vector
-    call normal_distribution(field, 0.0_kind_real, 1.0_kind_real, n, .true.) 
+    ! Ensure random number are different on each PE.
+    ! TODO: when this is all refactored into saber, it would 
+    !   be nice to generate the random numbers on 1 PE then scatter,
+    !   this will ensure answers don't change when PE counts change
+    rnd=n*self%geom%f_comm%size() + self%geom%f_comm%rank()
+    call normal_distribution(field, 0.0_kind_real, 1.0_kind_real, rnd, .true.) 
 
     ! apply the diffusion TL
     call self%multiply_2D_tl(field)
