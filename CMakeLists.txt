@@ -34,9 +34,8 @@ find_package( ufo    1.7.0    REQUIRED)
 find_package( fms    2020.4.0 REQUIRED)
 find_package( mom6   2020.4.0 REQUIRED)
 
-if ( BUILD_ICEPACK )
-  find_package( icepack   1.2.0 REQUIRED)
-endif()
+# Optionally look for icepack
+find_package( icepack 1.2.0 QUIET)
 
 include_directories( ${NETCDF_INCLUDE_DIRS} )
 

@@ -625,9 +625,9 @@ soca_add_test( NAME hofx_3d
                TEST_DEPENDS test_soca_gridgen )
 
 if( ${oasim_FOUND} )
-  soca_add_test( NAME hofx_oasim_3d                        
+  soca_add_test( NAME hofx_oasim_3d
                  EXE  soca_hofx3d.x
-                 TEST_DEPENDS test_soca_gridgen ) 
+                 TEST_DEPENDS test_soca_gridgen )
 endif( ${oasim_FOUND} )
 
 soca_add_test( NAME hofx_4d
@@ -769,7 +769,7 @@ soca_add_test( NAME checkpointmodel
                TEST_DEPENDS test_soca_gridgen
                             test_soca_3dvar_godas)
 
-if ( BUILD_ICEPACK )
+if( ${icepack_FOUND} )
   # Apply the Soca2Cice nonlinear change of variable
   # TODO (G): check test dependency
   file(COPY ${CMAKE_CURRENT_BINARY_DIR}/data_static/72x35x25/restarts/iced.2018-04-15-00000.nc
