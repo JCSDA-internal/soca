@@ -32,7 +32,6 @@ set( soca_test_input
   testinput/enspert.yml
   testinput/ensmeanandvariance.yml
   testinput/ensrecenter.yml
-  testinput/ensvariance.yml
   testinput/errorcovariance.yml
   testinput/forecast_identity.yml
   testinput/forecast_mom6_bgc.yml
@@ -116,7 +115,6 @@ set( soca_test_ref
   testref/enspert.test
   testref/ensmeanandvariance.test
   testref/ensrecenter.test
-  testref/ensvariance.test
   testref/forecast_identity.test
   testref/forecast_mom6_bgc.test
   testref/forecast_mom6.test
@@ -540,10 +538,6 @@ soca_add_test( NAME convertstate
 soca_add_test( NAME convertstate_changevar
                EXE  soca_convertstate.x
               #  NOTRAPFPE
-               TEST_DEPENDS test_soca_gridgen )
-
-soca_add_test( NAME ensvariance
-               EXE  soca_ensvariance.x
                TEST_DEPENDS test_soca_gridgen )
 
 soca_add_test( NAME ensmeanandvariance

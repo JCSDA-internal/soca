@@ -45,11 +45,6 @@ ecbuild_add_executable( TARGET  soca_ensmeanandvariance.x
                         LIBS    soca
                       )
 
-ecbuild_add_executable( TARGET  soca_ensvariance.x
-                        SOURCES EnsVariance.cc
-                        LIBS    soca
-                      )
-
 ecbuild_add_executable( TARGET  soca_ensrecenter.x
                         SOURCES EnsRecenter.cc
                         LIBS    soca
