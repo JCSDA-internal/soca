@@ -404,29 +404,31 @@ subroutine soca_2d_sqrt_convol(dx, horiz_convol, geom, pert_scale)
   real(kind=kind_real),    intent(in) :: pert_scale
 
   type(fieldset_type) :: tmp_incr
-  real(kind=kind_real), allocatable :: pcv(:)
+  type(atlas_field) :: acv
   integer, parameter :: rseed = 1 ! constant for reproducability of tests
                                   ! TODO: pass seed through config
   integer :: nn
+  real(kind=kind_real), pointer :: ptr(:)
 
   ! Allocate ATLAS tmp_increment and make copy of dx
   call geom%struct2atlas(dx(:,:), tmp_incr)
 
   ! Get control variable size
   call horiz_convol%get_cv_size(nn)
-  allocate(pcv(nn))
-  pcv = 0.0_kind_real
-  call normal_distribution(pcv, 0.0_kind_real, 1.0_kind_real, rseed)
-  pcv = pert_scale * pcv
+  acv = atlas_field("ctlVec", atlas_real(kind_real), (/nn/))
+  call acv%data(ptr)
+  ptr = 0.0_kind_real
+  call normal_distribution(ptr, 0.0_kind_real, 1.0_kind_real, rseed)
+  ptr = pert_scale * ptr
 
   ! Apply C^1/2
-  call horiz_convol%apply_nicas_sqrt(pcv, tmp_incr)
+  call horiz_convol%apply_nicas_sqrt(acv, tmp_incr, 0)
 
   ! Back to structured grid
   call geom%atlas2struct(dx(:,:), tmp_incr)
 
   ! Clean up
-  deallocate(pcv)
+  call acv%final()
   call tmp_incr%final()
 
 end subroutine soca_2d_sqrt_convol
