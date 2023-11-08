@@ -32,7 +32,6 @@ set( soca_test_input
   testinput/enspert.yml
   testinput/ensmeanandvariance.yml
   testinput/ensrecenter.yml
-  testinput/ensvariance.yml
   testinput/errorcovariance.yml
   testinput/forecast_identity.yml
   testinput/forecast_mom6_bgc.yml
@@ -116,7 +115,6 @@ set( soca_test_ref
   testref/enspert.test
   testref/ensmeanandvariance.test
   testref/ensrecenter.test
-  testref/ensvariance.test
   testref/forecast_identity.test
   testref/forecast_mom6_bgc.test
   testref/forecast_mom6.test
@@ -542,10 +540,6 @@ soca_add_test( NAME convertstate_changevar
               #  NOTRAPFPE
                TEST_DEPENDS test_soca_gridgen )
 
-soca_add_test( NAME ensvariance
-               EXE  soca_ensvariance.x
-               TEST_DEPENDS test_soca_gridgen )
-
 soca_add_test( NAME ensmeanandvariance
                EXE  soca_ensmeanandvariance.x
                TEST_DEPENDS test_soca_gridgen )
@@ -625,9 +619,9 @@ soca_add_test( NAME hofx_3d
                TEST_DEPENDS test_soca_gridgen )
 
 if( ${oasim_FOUND} )
-  soca_add_test( NAME hofx_oasim_3d                        
+  soca_add_test( NAME hofx_oasim_3d
                  EXE  soca_hofx3d.x
-                 TEST_DEPENDS test_soca_gridgen ) 
+                 TEST_DEPENDS test_soca_gridgen )
 endif( ${oasim_FOUND} )
 
 soca_add_test( NAME hofx_4d
@@ -769,7 +763,7 @@ soca_add_test( NAME checkpointmodel
                TEST_DEPENDS test_soca_gridgen
                             test_soca_3dvar_godas)
 
-if ( BUILD_ICEPACK )
+if( ${icepack_FOUND} )
   # Apply the Soca2Cice nonlinear change of variable
   # TODO (G): check test dependency
   file(COPY ${CMAKE_CURRENT_BINARY_DIR}/data_static/72x35x25/restarts/iced.2018-04-15-00000.nc
