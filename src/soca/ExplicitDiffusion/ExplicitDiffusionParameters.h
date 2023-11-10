@@ -27,6 +27,7 @@ class ExplicitDiffusionIOParameters : public oops::Parameters {
 class ExplicitDiffusionScalesParameters : public oops::Parameters {
   OOPS_CONCRETE_PARAMETERS(ExplicitDiffusionScalesParameters, oops::Parameters)
  public:
+  oops::RequiredParameter<std::string> name{"name", this};
   oops::OptionalParameter<double> fixedValue{"fixed value", this};
   oops::OptionalParameter<ExplicitDiffusionIOParameters> fromFile{"from file", this};
   oops::Parameter<bool> asGaussian{"as gaussian", false, this};
@@ -38,7 +39,7 @@ class ExplicitDiffusionCalibrationParameters : public oops::Parameters {
   OOPS_CONCRETE_PARAMETERS(ExplicitDiffusionCalibrationParameters, oops::Parameters)
  public:
   oops::RequiredParameter<eckit::LocalConfiguration> normalization{"normalization", this};
-  oops::RequiredParameter<ExplicitDiffusionScalesParameters> scales{"scales", this};
+  oops::RequiredParameter<std::vector<ExplicitDiffusionScalesParameters> > scales{"scales", this};
   oops::OptionalParameter<ExplicitDiffusionIOParameters> write {"write", this};
 };
 
@@ -51,6 +52,7 @@ class ExplicitDiffusionParameters : public saber::SaberBlockParametersBase {
   oops::OptionalParameter<ExplicitDiffusionCalibrationParameters>
     calibration{"calibration", this};
   oops::RequiredParameter<eckit::LocalConfiguration> geometry{"geometry", this};
+  oops::OptionalParameter<eckit::LocalConfiguration> groups{"groups",this};
 
   oops::Variables mandatoryActiveVars() const override {return oops::Variables();}
 };
