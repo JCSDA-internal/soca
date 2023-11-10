@@ -19,6 +19,7 @@ set( soca_test_input
   testinput/convertstate_soca2cice.yml
   testinput/convertstate.yml
   testinput/diffstates.yml
+  testinput/dirac_diffusion.yml
   testinput/dirac_horizfilt.yml
   testinput/dirac_soca_cor_nicas_scales.yml
   testinput/dirac_soca_cov.yml
@@ -66,6 +67,7 @@ set( soca_test_input
   testinput/parameters_bump_cor_nicas.yml
   testinput/parameters_bump_cov.yml
   testinput/parameters_bump_loc.yml
+  testinput/parameters_diffusion.yml
   testinput/parametric_stddev.yml
   testinput/setcorscales.yml
   testinput/sqrtvertloc.yml
@@ -105,12 +107,13 @@ set( soca_test_ref
   testref/convertstate_soca2cice.test
   testref/convertstate.test
   testref/diffstates.test
+  testref/dirac_diffusion.test
   testref/dirac_horizfilt.test
   testref/dirac_soca_cor_nicas_scales.test
   testref/dirac_soca_cov.test
   testref/dirac_soca_mask.test
   testref/dirac_soca_nomask.test
-  testref/dirac_socahyb_cov.test
+  testref/dirac_socahyb_cov.test  
   testref/enshofx.test
   testref/enspert.test
   testref/ensmeanandvariance.test
@@ -517,6 +520,11 @@ soca_add_test( NAME parameters_bump_cov
                EXE  soca_error_covariance_toolbox.x
                NOTRAPFPE )
 
+soca_add_test( NAME parameters_diffusion
+               EXE  soca_error_covariance_toolbox.x
+               TEST_DEPENDS test_soca_gridgen
+                            test_soca_setcorscales)
+
 
 # Misc applications
 #---------------------------------------------------------------------------------------------------
@@ -605,6 +613,9 @@ soca_add_test( NAME dirac_soca_nomask
                TEST_DEPENDS test_soca_gridgen
                             test_soca_static_socaerror_init)
 
+soca_add_test( NAME dirac_diffusion
+               EXE soca_error_covariance_toolbox.x
+               TEST_DEPENDS test_soca_parameters_diffusion)
 
 # h(x) executables
 #---------------------------------------------------------------------------------------------------
