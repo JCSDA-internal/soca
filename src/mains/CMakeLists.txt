@@ -51,19 +51,6 @@ ecbuild_add_executable( TARGET  soca_ensmeanandvariance.x
                         LIBS    ${UFS_LIBS}
                       )
 
-ecbuild_add_executable( TARGET  soca_ensvariance.x
-                        SOURCES EnsVariance.cc
-                        LIBS   ${UFS_LIBS}
-=======
-                        LIBS    soca
-                        )
-
-ecbuild_add_executable( TARGET  soca_ensmeanandvariance.x
-                        SOURCES EnsMeanAndVariance.cc
-                        LIBS    soca
->>>>>>> e5fe619a476db1f3f8f6667709fd004c0f8dda81
-                      )
-
 ecbuild_add_executable( TARGET  soca_ensrecenter.x
                         SOURCES EnsRecenter.cc
                         LIBS   ${UFS_LIBS}

@@ -614,10 +614,6 @@ soca_add_test( NAME ensmeanandvariance
                EXE  soca_ensmeanandvariance.x
                TEST_DEPENDS test_soca_gridgen )
 
-soca_add_test( NAME ensmeanandvariance
-               EXE  soca_ensmeanandvariance.x
-               TEST_DEPENDS test_soca_gridgen )
-
 soca_add_test( NAME parametric_stddev
                EXE  soca_convertincrement.x
               #  NOTRAPFPE
