@@ -9,6 +9,8 @@ set( soca_test_input
   testinput/3dvarfgat_pseudo.yml
   testinput/3dvarfgat.yml
   testinput/3dvarlowres_soca.yml
+  testinput/4denvar.yml
+  testinput/4dhybenvar.yml
   testinput/addincrement.yml
   testinput/balance_mask.yml
   testinput/checkpointmodel.yml
@@ -30,11 +32,13 @@ set( soca_test_input
   testinput/enspert.yml
   testinput/ensmeanandvariance.yml
   testinput/ensrecenter.yml
-  testinput/ensvariance.yml
   testinput/errorcovariance.yml
   testinput/forecast_identity.yml
   testinput/forecast_mom6_bgc.yml
   testinput/forecast_mom6.yml
+  testinput/forecast_mom6_ens1.yml
+  testinput/forecast_mom6_ens2.yml
+  testinput/forecast_mom6_ens3.yml
   testinput/forecast_ufs.yml
   testinput/forecast_pseudo.yml
   testinput/geometry_iterator_2d.yml
@@ -43,6 +47,7 @@ set( soca_test_input
   testinput/getvalues.yml
   testinput/gridgen.yml
   testinput/hofx_3d.yml
+  testinput/hofx_oasim_3d.yml
   testinput/hofx_4d_pseudo.yml
   testinput/hofx_4d.yml
   testinput/hybridgain.yml
@@ -91,6 +96,8 @@ set( soca_test_ref
   testref/3dvarfgat_pseudo.test
   testref/3dvarfgat.test
   testref/3dvarlowres_soca.test
+  testref/4denvar.test
+  testref/4dhybenvar.test
   testref/addincrement.test
   testref/balance_mask.test
   testref/checkpointmodel.test
@@ -109,13 +116,13 @@ set( soca_test_ref
   testref/enspert.test
   testref/ensmeanandvariance.test
   testref/ensrecenter.test
-  testref/ensvariance.test
   testref/forecast_identity.test
   testref/forecast_mom6_bgc.test
   testref/forecast_mom6.test
   testref/forecast_pseudo.test
   testref/gridgen.test
   testref/hofx_3d.test
+  testref/hofx_oasim_3d.test
   testref/hofx_4d_pseudo.test
   testref/hofx_4d.test
   testref/hybridgain.test
@@ -528,6 +535,20 @@ soca_add_test( NAME forecast_pseudo
                TEST_DEPENDS test_soca_gridgen
                             test_soca_forecast_mom6 )
 
+soca_add_test( NAME forecast_mom6_ens1
+               EXE  soca_forecast.x
+               NOTRAPFPE
+               TEST_DEPENDS test_soca_gridgen )
+soca_add_test( NAME forecast_mom6_ens2
+               EXE  soca_forecast.x
+               NOTRAPFPE
+               TEST_DEPENDS test_soca_gridgen )
+soca_add_test( NAME forecast_mom6_ens3
+               EXE  soca_forecast.x
+               NOTRAPFPE
+               TEST_DEPENDS test_soca_gridgen )
+
+
 
 # background error
 #---------------------------------------------------------------------------------------------------
@@ -589,8 +610,8 @@ soca_add_test( NAME convertstate_changevar
               #  NOTRAPFPE
                TEST_DEPENDS test_soca_gridgen )
 
-soca_add_test( NAME ensvariance
-               EXE  soca_ensvariance.x
+soca_add_test( NAME ensmeanandvariance
+               EXE  soca_ensmeanandvariance.x
                TEST_DEPENDS test_soca_gridgen )
 
 soca_add_test( NAME ensmeanandvariance
@@ -671,6 +692,12 @@ soca_add_test( NAME hofx_3d
                EXE  soca_hofx3d.x
                TEST_DEPENDS test_soca_gridgen 
                LIBS soca stochastic_physics ccpp fv3atm esmf)
+
+if( ${oasim_FOUND} )
+  soca_add_test( NAME hofx_oasim_3d
+                 EXE  soca_hofx3d.x
+                 TEST_DEPENDS test_soca_gridgen )
+endif( ${oasim_FOUND} )
 
 soca_add_test( NAME hofx_4d
                EXE  soca_hofx.x
@@ -756,11 +783,20 @@ soca_add_test( NAME 3dhybfgat
                             test_soca_static_socaerror_init
                             test_soca_parameters_bump_loc )
 
-# soca_add_test( NAME 4dhyb
-#                EXE  soca_var.x
-#                TEST_DEPENDS test_soca_static_socaerror_init
-#                             test_soca_parameters_bump_loc )
+soca_add_test( NAME 4denvar
+               EXE soca_var.x
+               TEST_DEPENDS test_soca_gridgen
+                            test_soca_forecast_mom6_ens1
+                            test_soca_forecast_mom6_ens2
+                            test_soca_forecast_mom6_ens3 )
 
+soca_add_test( NAME 4dhybenvar
+               EXE soca_var.x
+               TEST_DEPENDS test_soca_gridgen
+                            test_soca_static_socaerror_init
+                            test_soca_forecast_mom6_ens1
+                            test_soca_forecast_mom6_ens2
+                            test_soca_forecast_mom6_ens3 )
 
 # LETKF
 #---------------------------------------------------------------------------------------------------
@@ -804,7 +840,7 @@ soca_add_test( NAME convertincrement
 #               TEST_DEPENDS test_soca_gridgen
 #                            test_soca_3dvar_godas)
 
-if ( BUILD_ICEPACK )
+if( ${icepack_FOUND} )
   # Apply the Soca2Cice nonlinear change of variable
   # TODO (G): check test dependency
   file(COPY ${CMAKE_CURRENT_BINARY_DIR}/data_static/72x35x25/restarts/iced.2018-04-15-00000.nc

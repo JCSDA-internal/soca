@@ -161,6 +161,7 @@ subroutine soca_balance_setup(self, f_conf, traj, geom)
   self%ksshts%ksshs=0.0_kind_real
   do i = isc, iec
     do j = jsc, jec
+      if (geom%mask2d(i,j) == 0.0) cycle
       do k = 1, nl
         call soca_steric_jacobian (jac, &
         tocn%val(i,j,k), &

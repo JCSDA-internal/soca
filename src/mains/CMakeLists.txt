@@ -1,8 +1,3 @@
-#ecbuild_add_executable( TARGET  soca_dirac.x
-#                        SOURCES Dirac.cc
-#                        LIBS    ${UFS_LIBS}
-#                      )
-
 ecbuild_add_executable( TARGET  test_soca_model.x
                         SOURCES TestModel.cc
                         LIBS    ${UFS_LIBS}
@@ -37,7 +32,8 @@ ecbuild_add_executable( TARGET  soca_var.x
 ecbuild_add_executable( TARGET  soca_error_covariance_toolbox.x
                         SOURCES ErrorCovarianceToolbox.cc
                         LIBS   ${UFS_LIBS}
-                                saber
+#                        LIBS    soca
+#                                saber
                       )
 
 ecbuild_add_executable( TARGET  soca_enspert.x
@@ -58,6 +54,14 @@ ecbuild_add_executable( TARGET  soca_ensmeanandvariance.x
 ecbuild_add_executable( TARGET  soca_ensvariance.x
                         SOURCES EnsVariance.cc
                         LIBS   ${UFS_LIBS}
+=======
+                        LIBS    soca
+                        )
+
+ecbuild_add_executable( TARGET  soca_ensmeanandvariance.x
+                        SOURCES EnsMeanAndVariance.cc
+                        LIBS    soca
+>>>>>>> e5fe619a476db1f3f8f6667709fd004c0f8dda81
                       )
 
 ecbuild_add_executable( TARGET  soca_ensrecenter.x

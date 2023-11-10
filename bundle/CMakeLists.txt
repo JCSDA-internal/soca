@@ -1,4 +1,4 @@
-# (C) COPYRIGHT 2018-2020 UCAR
+# (C) COPYRIGHT 2018-2023 UCAR
 #
 # THIS SOFTWARE IS LICENSED UNDER THE TERMS OF THE APACHE LICENCE VERSION 2.0
 # WHICH CAN BE OBTAINED AT HTTP://WWW.APACHE.ORG/LICENSES/LICENSE-2.0.
@@ -14,32 +14,19 @@ include( ecbuild_bundle )
 
 ecbuild_bundle_initialize()
 
-ecbuild_bundle( PROJECT jedicmake GIT "https://github.com/jcsda-internal/jedi-cmake.git" UPDATE BRANCH develop RECURSIVE )
-include( jedicmake/cmake/Functions/git_functions.cmake  )
-
-# ECMWF repos that you probably dont need to build yourself because they
-#  should be in jedi-stack and the containers
-
-option(BUILD_ECKIT "download and build eckit (not needed if in a jedi container)")
-if ( BUILD_ECKIT )
-  ecbuild_bundle( PROJECT eckit  GIT "https://github.com/ecmwf/eckit.git"  UPDATE TAG 1.16.0 )
-endif ()
-
-option(BUILD_FCKIT "download and build fckit (not needed if in a jedi container)")
-if (BUILD_FCKIT)
-  ecbuild_bundle( PROJECT fckit  GIT "https://github.com/jcsda-internal/fckit.git"  UPDATE BRANCH release-stable )
-  # TODO: replace with https://github.com/ecmwf/fckit.git TAG 0.9.2
-endif()
-
-option(BUILD_ATLAS "download and build atlas")
-if (BUILD_ATLAS)
-  ecbuild_bundle( PROJECT atlas  GIT "https://github.com/ecmwf/atlas.git" TAG 0.29.0 )
+# Use external jedi-cmake or build in bundle
+if(DEFINED ENV{jedi_cmake_ROOT})
+  include( $ENV{jedi_cmake_ROOT}/share/jedicmake/Functions/git_functions.cmake )
+else ()
+  ecbuild_bundle( PROJECT jedicmake GIT "https://github.com/jcsda-internal/jedi-cmake.git" UPDATE BRANCH develop RECURSIVE )
+  include( jedicmake/cmake/Functions/git_functions.cmake  )
 endif()
 
 
+#===================================================================================================
 # other optional repositories
-
-option(BUILD_FMS "download and build fms" ON)
+#===================================================================================================
+option(BUILD_FMS "download and build fms" OFF) # NOTE, changed to default=OFF, but this will be removed in the future
 if ( BUILD_FMS )
   ecbuild_bundle( PROJECT fms           GIT "https://github.com/jcsda/FMS.git"                     UPDATE BRANCH release-stable )
 endif ()
@@ -49,17 +36,50 @@ if ( BUILD_ICEPACK )
   ecbuild_bundle( PROJECT icepack         GIT "https://github.com/JCSDA-internal/Icepack.git"         UPDATE BRANCH feature/ecbuild-new )
 endif()
 
-option(BUILD_UFSM6C6 "download and install the UFS" OFF)
+option(BUILD_OASIM "download and build OASIM ocean color forward operator" OFF)
+if ( BUILD_OASIM )
+  ecbuild_bundle( PROJECT oasim         GIT "https://github.com/JCSDA-internal/oasim.git"           UPDATE BRANCH develop )
+endif ()
 
+#===================================================================================================
 # required repositories
-
+#===================================================================================================
+ecbuild_bundle( PROJECT gsw             GIT "https://github.com/jcsda-internal/GSW-Fortran.git"     UPDATE BRANCH develop )
 ecbuild_bundle( PROJECT oops            GIT "https://github.com/jcsda-internal/oops.git"            UPDATE BRANCH develop )
 ecbuild_bundle( PROJECT vader           GIT "https://github.com/jcsda-internal/vader.git"           UPDATE BRANCH develop )
 ecbuild_bundle( PROJECT saber           GIT "https://github.com/jcsda-internal/saber.git"           UPDATE BRANCH develop )
 ecbuild_bundle( PROJECT ioda            GIT "https://github.com/jcsda-internal/ioda.git"            UPDATE BRANCH develop )
-ecbuild_bundle( PROJECT gsw             GIT "https://github.com/jcsda-internal/GSW-Fortran.git"     UPDATE BRANCH develop )
 ecbuild_bundle( PROJECT ufo             GIT "https://github.com/jcsda-internal/ufo.git"             UPDATE BRANCH develop )
 ecbuild_bundle( PROJECT mom6            GIT "https://github.com/jcsda-internal/MOM6.git"            UPDATE BRANCH main-ecbuild RECURSIVE )
 ecbuild_bundle( PROJECT soca            SOURCE "../" )
+
+#===================================================================================================
+# optional test data for the upstream repos
+#===================================================================================================
+option(TEST_IODA "download and ioda-data repo needed for ioda ctests" OFF)
+if ( TEST_IODA )
+  find_branch_name(REPO_DIR_NAME ioda)
+  if( NOT DEFINED ENV{LOCAL_PATH_JEDI_TESTFILES} AND NOT DEFINED ${GIT_TAG_FUNC} )
+    ecbuild_bundle( PROJECT ioda-data GIT "https://github.com/JCSDA-internal/ioda-data.git" BRANCH develop UPDATE )
+  endif()
+endif ()
+
+option(TEST_UFO "download and ufo-data repo needed for ufo ctests" OFF)
+if ( TEST_UFO )
+  find_branch_name(REPO_DIR_NAME ufo)
+  if( NOT DEFINED ENV{LOCAL_PATH_JEDI_TESTFILES} AND NOT DEFINED ${GIT_TAG_FUNC} )
+    ecbuild_bundle( PROJECT ufo-data GIT "https://github.com/JCSDA-internal/ufo-data.git" BRANCH develop UPDATE )
+  endif()
+endif ()
+
+option(TEST_SABER "download and saber-data repo needed for ioda ctests" OFF)
+if ( TEST_SABER )
+  find_branch_name(REPO_DIR_NAME saber)
+  if( NOT DEFINED ENV{LOCAL_PATH_JEDI_TESTFILES} AND NOT DEFINED ${GIT_TAG_FUNC} )
+    ecbuild_bundle( PROJECT saber-data GIT "https://github.com/JCSDA-internal/saber-data.git" BRANCH develop UPDATE )
+  endif()
+endif ()
+
+#===================================================================================================
 
 ecbuild_bundle_finalize()

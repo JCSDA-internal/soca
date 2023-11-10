@@ -328,7 +328,7 @@ subroutine soca_geom_to_fieldset(self, afieldset)
   call afield%final()
 
   ! Add vertical unit
-  afield = self%functionspaceInchalo%create_field(name='vunit', kind=atlas_real(kind_real), levels=self%nzo)
+  afield = self%functionspaceInchalo%create_field(name='vert_coord', kind=atlas_real(kind_real), levels=self%nzo)
   call afield%data(real_ptr)
   do jz=1,self%nzo
     real_ptr(jz,:) = real(jz, kind_real)
@@ -346,7 +346,7 @@ subroutine soca_geom_to_fieldset(self, afieldset)
   call afield%final()
 
   ! Add halo mask
-  afield = self%functionspaceInchalo%create_field(name='hmask', kind=atlas_integer(kind(0)), levels=1)
+  afield = self%functionspaceInchalo%create_field(name='owned', kind=atlas_integer(kind(0)), levels=1)
   allocate(hmask(self%isd:self%ied, self%jsd:self%jed))
   hmask = 0
   hmask(self%isc:self%iec, self%jsc:self%jec) = 1

@@ -52,7 +52,7 @@ class LinearVariableChange : public util::Printable {
   typedef typename LinVarChaVec_::const_iterator icst_;
   typedef typename LinVarChaVec_::const_reverse_iterator ircst_;
 
-  explicit LinearVariableChange(const Geometry &, const Parameters_ &);
+  explicit LinearVariableChange(const Geometry &, const eckit::Configuration &);
   ~LinearVariableChange();
 
   void changeVarTraj(const State &, const oops::Variables &);

@@ -1,0 +1,118 @@
+cost function:
+  cost type: 4D-Ens-Var
+  analysis variables: [socn, tocn, uocn, vocn, ssh]
+  window begin: 2018-04-15T00:00:00Z
+  window length: PT6H
+  subwindow: PT3H
+  parallel subwindows: false
+
+  geometry: &geom
+    geom_grid_file: data_generated/gridgen/soca_gridspec.72x35x25.nc
+    mom6_input_nml: data_static/72x35x25/input.nml
+    fields metadata: data_static/fields_metadata.yml
+
+  background:
+    states:
+    - _bkg_state: &_bkg_state
+        read_from_file: 1
+        basename: data_generated/forecast_mom6/
+        state variables: [socn, tocn, uocn, vocn, ssh, hocn, layer_depth]
+      <<: *_bkg_state
+      ocn_filename: ocn.forecast_mom6.fc.2018-04-15T00:00:00Z.PT0S.nc
+      date: 2018-04-15T00:00:00Z
+    - <<: *_bkg_state
+      ocn_filename: ocn.forecast_mom6.fc.2018-04-15T00:00:00Z.PT3H.nc
+      date: 2018-04-15T03:00:00Z
+    - <<: *_bkg_state
+      ocn_filename: ocn.forecast_mom6.fc.2018-04-15T00:00:00Z.PT6H.nc
+      date: 2018-04-15T06:00:00Z
+
+  background error:
+    covariance model: hybrid
+    components:
+    - weight:
+        value: 0.5
+      covariance:
+        covariance model: SocaError
+        analysis variables: [socn, tocn, uocn, vocn, ssh]
+        date: 2018-04-15T00:00:00Z
+        bump:
+          io:
+            data directory: data_generated/static_socaerror_init
+          drivers:
+            multivariate strategy: univariate
+            read local nicas: true
+        correlation:
+        - name: ocn
+          variables: [socn, tocn, uocn, vocn, ssh]
+
+    - weight:
+        value: 0.5
+      covariance:
+        covariance model: ensemble
+        localization:
+          localization method: SABER
+          saber central block:
+            saber block name: ID
+
+        members from template:
+          pattern: '%mem%'
+          nmembers: 3
+          template:
+            states:
+            - _bkg_err_state: &_bkg_err_state
+                read_from_file: 1
+                state variables: [socn, tocn, uocn, vocn, ssh, hocn, layer_depth]
+                basename: data_generated/forecast_mom6_ens%mem%/
+              << : *_bkg_err_state
+              ocn_filename: ocn.fcst_ens%mem%.fc.2018-04-15T00:00:00Z.PT0S.nc
+              date: 2018-04-15T00:00:00Z
+            - << : *_bkg_err_state
+              ocn_filename: ocn.fcst_ens%mem%.fc.2018-04-15T00:00:00Z.PT3H.nc
+              date: 2018-04-15T03:00:00Z
+            - << : *_bkg_err_state
+              ocn_filename: ocn.fcst_ens%mem%.fc.2018-04-15T00:00:00Z.PT6H.nc
+              date: 2018-04-15T06:00:00Z
+
+  observations:
+    observers:
+    - obs space:
+        name: SeaSufaceTemp
+        obsdataout:
+          engine:
+            type: H5File
+            obsfile: data_generated/4dhybenvar/sst.4dhybenvar.nc
+        obsdatain:
+          engine:
+            type: H5File
+            obsfile: data_static/obs/sst.nc
+        simulated variables: [seaSurfaceTemperature]
+      obs operator:
+        name: Identity
+        observation alias file: testinput/obsop_name_map.yml
+      obs error:
+        covariance model: diagonal
+
+variational:
+  minimizer:
+    algorithm: DRIPCG
+  iterations:
+  - geometry: *geom
+    ninner: 5
+    gradient norm reduction: 1e-10
+    test: on
+    diagnostics:
+      departures: ombg
+
+output:
+  datadir: data_generated/4dhybenvar
+  exp: 4dhybenvar
+  type: an
+
+final:
+  diagnostics:
+    departures: oman
+
+test:
+  reference filename: testref/4dhybenvar.test
+  test output filename: testoutput/4dhybenvar.test

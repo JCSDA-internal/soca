@@ -6,7 +6,7 @@
 !> surface background error used by soca_bkgerrgodas_mod
 module soca_omb_stats_mod
 
-use fckit_log_module, only: fckit_log
+use logger_mod
 use fckit_mpi_module, only: fckit_mpi_comm
 use kinds, only: kind_real
 use netcdf
@@ -69,7 +69,7 @@ subroutine soca_omb_stats_init(self, domain, filename)
 
   if (myrank.eq.root) then
 
-     call fckit_log%info("Reading file "  // trim(filename))
+     call oops_log%info("Reading file "  // trim(filename))
 
      call nc_check(nf90_open(filename, nf90_nowrite, ncid))
 

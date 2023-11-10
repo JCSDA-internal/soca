@@ -20,15 +20,15 @@
 env:
   global:
     - MAIN_REPO=soca
-    - LIB_REPOS="gsw mom6 icepack oops vader ioda ufo saber"
-    - BUILD_OPT="-DBUILD_ICEPACK=ON"
+    - LIB_REPOS="gsw mom6 icepack oasim oops vader ioda ufo saber"
+    - BUILD_OPT="-DBUILD_ICEPACK=ON -DBUILD_OASIM=ON"
     - BUILD_OPT_mom6="-DENABLE_OCEAN_BGC=ON"
     - BUILD_OPT_oops="-DENABLE_QG_MODEL=OFF -DENABLE_LORENZ95_MODEL=OFF"
     - BUILD_OPT_ioda="-DBUILD_PYTHON_BINDINGS=OFF -DBUILD_TESTING=OFF"
     - BUILD_OPT_ufo="-DLOCAL_PATH_TESTFILES_IODA=NONE"
     - BUILD_OPT_saber="-DENABLE_TESTS=OFF"
     - BUILD_OPT_soca="-DENABLE_OCEAN_BGC=ON"
-    - MATCH_REPOS="saber oops ioda ufo mom6 soca"
+    - MATCH_REPOS="saber oops ioda ufo mom6 soca oasim vader"
     - LFS_REPOS=""
     # ENABLE_VALGRIND="ON"
 
@@ -108,13 +108,13 @@ script:
   - |
     # Build code
     docker exec -it jcsda_container bash \
-     -c '. /etc/profile.d/z10_spack_environment.sh && cd /jcsda/work && /jcsda/work/repo.src/${MAIN_REPO}/.github/travisci/build.sh; exit $?' \
+     -c '. /opt/spack-environment/activate.sh && cd /jcsda/work && /jcsda/work/repo.src/${MAIN_REPO}/.github/travisci/build.sh; exit $?' \
      || travis_terminate 1
 
   - |
     # run tests
     docker exec -it jcsda_container bash \
-     -c '. /etc/profile.d/z10_spack_environment.sh && cd /jcsda/work/repo.build/${MAIN_REPO} && ctest --output-on-failure' \
+     -c '. /opt/spack-environment/activate.sh && cd /jcsda/work/repo.build/${MAIN_REPO} && ctest --output-on-failure' \
      || travis_terminate 1
 
 

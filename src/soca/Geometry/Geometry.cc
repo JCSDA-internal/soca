@@ -38,7 +38,7 @@ namespace soca {
       keyGeom_, functionSpace_.get(), functionSpaceIncHalo_.get());
 
     // Fill ATLAS fieldset
-    soca_geo_to_fieldset_f90(keyGeom_, extraFields_.get());
+    soca_geo_to_fieldset_f90(keyGeom_, fields_.get());
 
     // messy, fix this
     // generate the grid ONLY if being run under the gridgen application.
@@ -61,10 +61,10 @@ namespace soca {
     soca_geo_set_atlas_functionspace_pointer_f90(keyGeom_, functionSpace_.get(),
                                                  functionSpaceIncHalo_.get());
 
-    extraFields_ = atlas::FieldSet();
-    for (int jfield = 0; jfield < other.extraFields_->size(); ++jfield) {
-      atlas::Field atlasField = other.extraFields_->field(jfield);
-      extraFields_->add(atlasField);
+    fields_ = atlas::FieldSet();
+    for (int jfield = 0; jfield < other.fields_->size(); ++jfield) {
+      atlas::Field atlasField = other.fields_->field(jfield);
+      fields_->add(atlasField);
     }
   }
   // -----------------------------------------------------------------------------

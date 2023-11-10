@@ -6,3 +6,4 @@ latex
 
 *.pyc
 build
+._*

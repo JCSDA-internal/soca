@@ -31,11 +31,9 @@ namespace soca {
     : keyConfig_(0),
       tstep_(0),
       geom_(resol),
-      vars_(model, "model variables"),
       setup_mom6_(true)
   {
     Log::trace() << "Model::Model" << std::endl;
-    Log::trace() << "Model vars: " << vars_ << std::endl;
     tstep_ = util::Duration(model.getString("tstep"));
     setup_mom6_ = model.getBool("setup_mom6", true);
     const eckit::Configuration * configc = &model;

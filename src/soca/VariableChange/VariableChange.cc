@@ -5,8 +5,10 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
+#include <map>
 #include <ostream>
 #include <string>
+#include <vector>
 
 #include "soca/Geometry/Geometry.h"
 #include "soca/State/State.h"
@@ -20,10 +22,23 @@ namespace soca {
 
 // -----------------------------------------------------------------------------
 
-VariableChange::VariableChange(const Parameters_ & params,
+std::map<std::string, std::vector<std::string>> SocaVaderCookbook {
+  {"sea_water_temperature", {"SeaWaterTemperature_A"}},
+  {"sea_water_potential_temperature", {"SeaWaterPotentialTemperature_A"}},
+};
+
+// -----------------------------------------------------------------------------
+
+VariableChange::VariableChange(const eckit::Configuration & config,
                                const Geometry & geometry) {
+  VariableChangeParameters params;
+  params.deserialize(config);
+
   // setup vader
-  vader_.reset(new vader::Vader(params.vader));
+  eckit::LocalConfiguration vaderConfig, vaderCookbookConfig;
+  for (auto kv : SocaVaderCookbook) vaderCookbookConfig.set(kv.first, kv.second);
+  vaderConfig.set(vader::configCookbookKey, vaderCookbookConfig);
+  vader_.reset(new vader::Vader(params.vader, vaderConfig));
 
   // Create the variable change
   variableChange_.reset(VariableChangeFactory::create(geometry,
@@ -49,8 +64,36 @@ void VariableChange::changeVar(State & x, const oops::Variables & vars) const {
   // // If the variables are the same, don't bother doing anything!
   // if (!(x.variables() == vars))
 
+<<<<<<< HEAD
   // call Vader
   // ----------------------------------------------------------------------------
+=======
+  // The following is TEMPORARY.
+  // ----------------------------------------------------------------------------
+  // We need to do some variable renaming BEFORE we run VADER.
+  // Eventually, we will internally rename these variables when they are
+  // first loaded in so that we won't have to worry about it here.
+  if (vars.has("sea_water_temperature")) {
+    Log::debug() << "VariableChange::changeVar Pre-VADER variable changes. " << std::endl;
+    oops::Variables preVaderVars(std::vector<std::string>{
+      "latitude",
+      "longitude",
+      "sea_water_potential_temperature",
+      "sea_water_salinity",
+      "sea_water_depth"});
+    preVaderVars += x.variables();
+    State preVader(x.geometry(), preVaderVars, x.time());
+    variableChange_->changeVar(x, preVader);
+    x.updateFields(preVaderVars);
+    x = preVader;
+    Log::debug() << "VariableChange::changeVar variables after var change: "
+                << x.variables() << std::endl;
+  }
+
+  // call Vader
+  // ----------------------------------------------------------------------------
+  Log::debug() << "VariableChange::changeVar VADER variable changes. " << std::endl;
+>>>>>>> e5fe619a476db1f3f8f6667709fd004c0f8dda81
   // Record start variables
   oops::Variables varsFilled = x.variables();
   oops::Variables varsVader = vars;
@@ -65,18 +108,27 @@ void VariableChange::changeVar(State & x, const oops::Variables & vars) const {
   varsFilled += vader_->changeVar(xfs, varsVader);
   x.updateFields(varsFilled);
   x.fromFieldSet(xfs);
+<<<<<<< HEAD
 
   // soca specific transforms
   // ----------------------------------------------------------------------------
   // Create output state
   State xout(x.geometry(), vars, x.time());
+=======
+  Log::debug() << "VariableChange::changeVar variables after var change: "
+               << x.variables() << std::endl;
+>>>>>>> e5fe619a476db1f3f8f6667709fd004c0f8dda81
 
-  // Call variable change
+  // soca specific transforms
+  // ----------------------------------------------------------------------------
+  Log::debug() << "VariableChange::changeVar SOCA specific post-VADER variable changes. "
+               << std::endl;
+  State xout(x.geometry(), vars, x.time());
   variableChange_->changeVar(x, xout);
-
-  // Copy data from temporary state
   x.updateFields(vars);
   x = xout;
+  Log::debug() << "VariableChange::changeVar variables after var change: "
+               << x.variables() << std::endl;
 
 
   Log::trace() << "VariableChange::changeVar done" << std::endl;
@@ -86,6 +138,7 @@ void VariableChange::changeVar(State & x, const oops::Variables & vars) const {
 
 void VariableChange::changeVarInverse(State & x,
                                       const oops::Variables & vars) const {
+<<<<<<< HEAD
   Log::trace() << "VariableChange::changeVarInverse starting" << std::endl;
 
   Log::debug() << "VariableChange::changeVarInverse vars in: "
@@ -130,6 +183,9 @@ void VariableChange::changeVarInverse(State & x,
   x = xout;
 
   Log::trace() << "VariableChange::changeVarInverse done" << std::endl;
+=======
+  changeVar(x, vars);
+>>>>>>> e5fe619a476db1f3f8f6667709fd004c0f8dda81
 }
 
 // -----------------------------------------------------------------------------

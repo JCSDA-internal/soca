@@ -9,6 +9,10 @@
 # getval_name_surface:  GetValues variable name for 2D surface of a 3D field (Default: <unused>)
 # io_file:              The restart file domain "ocn", "sfc", or "ice" (Default: <unused>)
 # io_name:              The variable name used in the restart IO (Default: <unused>)
+# constant value:       Used for "dummy" fields. Sets the entire field to the given constant globally
+#                       This parameter cannot be used with io_file/io_name
+# fill value:           If the field is masked, this value will be used for the masked areas.
+#                       (Default: 0.0)
 # --------------------------------------------------------------------------------------------------
 
 
@@ -51,12 +55,12 @@
   getval name: sea_water_cell_thickness
   io file: ocn
   io name: h
+  vert interp: false
 
 - name: ssh
   getval name: sea_surface_height_above_geoid
   io file: ocn
   io name: ave_ssh
-
 
 # --------------------------------------------------------------------------------------------------
 # ice state variables
@@ -149,6 +153,7 @@
 
 - name: layer_depth
   levels: full_ocn
+  vert interp: false
 
 - name: mesoscale_representation_error
 
@@ -163,3 +168,101 @@
 
 - name: sea_water_depth
   levels: full_ocn
+
+- name: latitude
+- name: longitude
+
+# --------------------------------------------------------------------------------------------------
+# variables that VADER should be responsible for
+# --------------------------------------------------------------------------------------------------
+- name: sea_water_temperature
+  levels: full_ocn
+  
+# --------------------------------------------------------------------------------------------------
+- name: dummy_atm1
+  constant value: 5.0
+
+- name: oz_th
+  getval name: ozone_thickness
+  constant value: 275  #The average amount of ozone in the atm. is 300 Dobson Units
+
+- name: wvapor
+  getval name: water_vapor   #g/cm^2  
+  constant value: 1.2
+
+- name: ws
+  getval name: surface_wind_speed
+  constant value: 6
+
+- name: pres
+  getval name: surface_pressure_at_mean_sea_level
+  constant value: 999
+
+- name: rh
+  getval name: relative_humidity
+  constant value: 89
+
+- name: cld_tau
+  getval name: cloud_optical_thickness
+  constant value: 19.8
+
+- name: cld_lwp
+  getval name: cloud_liquid_water_path
+  constant value: 163
+
+- name: clwefr
+  getval name: effective_radius_of_cloud_liquid_water_particle
+  constant value: 12.4
+
+- name: cov
+  getval name: cloud_area_fraction_in_atmosphere_layer
+  constant value: 80
+
+- name: aer_tau
+  getval name: aerosol_optical_thickness
+  constant value: 0.16
+
+- name: scat_alb
+  getval name: single_scattering_albedo
+  constant value: 0.71
+
+- name: asym_par
+  getval name: asymmetry_parameter
+  constant value: 0.97
+
+#---------------------ocean bio
+- name: c_det
+  getval name: Carbon_nitrogen_detritus_concentration
+  constant value: 4.7
+
+- name: inorg_c
+  getval name: Particulate_inorganic_carbon
+  constant value: 2.1
+
+- name: dis_c
+  getval name: colored_dissolved_organic_carbon
+  constant value: 3.1
+
+- name: diatom
+  getval name: diatom_concentration
+  constant value: 0.01
+
+- name: chloro
+  getval name: chlorophyte_concentration
+  constant value: 0.14
+
+- name: cyano
+  getval name: cyano-bacteria_concentration
+  constant value: 0.003
+
+- name: cocco
+  getval name: coccolithophore_concentration
+  constant value: 0.092
+
+- name: dino
+  getval name: dinoflagellate_concentration
+  constant value: 0 #1.54e-17
+
+- name: phaeo
+  getval name: phaeocystis_concentration
+  constant value: 0 #5.3e-24

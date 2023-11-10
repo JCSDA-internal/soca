@@ -10,7 +10,7 @@ state:
     ocn_filename: MOM.res.nc
     ice_filename: cice.res.nc
     sfc_filename: sfc.res.nc
-    state variables: [cicen, hicen, hsnon, socn, tocn, ssh, hocn, uocn, vocn, sw, lhf, shf, lw, us, chl]
+    state variables: [cicen, hicen, hsnon, socn, tocn, ssh, hocn, uocn, vocn, sw, lhf, shf, lw, us, chl, dummy_atm1]
 
 window begin: 2018-04-14T00:00:00Z
 window length: P2D
@@ -88,18 +88,26 @@ observations:
           obsfile: data_static/obs/prof.nc
       simulated variables: [waterTemperature, salinity]
     obs operator:
-      name: Composite
-      components:
-      - name: InsituTemperature
-        variables:
-        - name: waterTemperature
-      - name: VertInterp
-        observation alias file: testinput/obsop_name_map.yml
-        variables:
-        - name: salinity
-        vertical coordinate: sea_water_depth
-        observation vertical coordinate: depth
-        interpolation method: linear
+# was in feature/ufs_dom      name: Composite
+# was in feature/ufs_dom      components:
+# was in feature/ufs_dom      - name: InsituTemperature
+# was in feature/ufs_dom        variables:
+# was in feature/ufs_dom        - name: waterTemperature
+# was in feature/ufs_dom      - name: VertInterp
+# was in feature/ufs_dom        observation alias file: testinput/obsop_name_map.yml
+# was in feature/ufs_dom        variables:
+# was in feature/ufs_dom        - name: salinity
+# was in feature/ufs_dom        vertical coordinate: sea_water_depth
+# was in feature/ufs_dom        observation vertical coordinate: depth
+# was in feature/ufs_dom        interpolation method: linear
+      name: VertInterp
+      observation alias file: testinput/obsop_name_map.yml
+      variables:
+      - name: salinity
+      - name: waterTemperature
+      vertical coordinate: sea_water_depth
+      observation vertical coordinate: depth
+      interpolation method: linear
 
   # handle T/S profiles separately... delete this someday
   - obs space:
@@ -114,7 +122,10 @@ observations:
           obsfile: data_static/obs/prof.nc
       simulated variables: [waterTemperature]
     obs operator:
-      name: InsituTemperature
+      name: VertInterp
+      observation alias file: testinput/obsop_name_map.yml
+      vertical coordinate: sea_water_depth
+      observation vertical coordinate: depth      
   - obs space:
       name: InsituSalinity
       obsdataout:

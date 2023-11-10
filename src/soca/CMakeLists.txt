@@ -29,8 +29,6 @@ target_include_directories(soca PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..>
   $<INSTALL_INTERFACE:include/soca>)
 
-target_compile_features( soca PUBLIC cxx_std_11 )
-
 target_link_libraries( soca PUBLIC NetCDF::NetCDF_Fortran )
 target_link_libraries( soca PUBLIC fckit )
 target_link_libraries( soca PUBLIC atlas )
@@ -43,10 +41,11 @@ target_link_libraries( soca PUBLIC vader )
 target_link_libraries( soca PUBLIC saber )
 target_link_libraries( soca PUBLIC ioda )
 target_link_libraries( soca PUBLIC ufo )
+target_link_libraries( soca PUBLIC vader )
 
 include_directories( ${CMAKE_CURRENT_SOURCE_DIR} ${DEPEND_LIB_ROOT}/mod )
 
-if ( BUILD_ICEPACK )
+if( ${icepack_FOUND} )
   target_link_libraries( soca PUBLIC icepack )
 endif()
 
