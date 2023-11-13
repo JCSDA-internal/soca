@@ -8,6 +8,7 @@
 #pragma once
 
 #include <string>
+#include <vector>
 
 #include "saber/blocks/SaberBlockParametersBase.h"
 
@@ -52,7 +53,7 @@ class ExplicitDiffusionParameters : public saber::SaberBlockParametersBase {
   oops::OptionalParameter<ExplicitDiffusionCalibrationParameters>
     calibration{"calibration", this};
   oops::RequiredParameter<eckit::LocalConfiguration> geometry{"geometry", this};
-  oops::OptionalParameter<eckit::LocalConfiguration> groups{"groups",this};
+  oops::OptionalParameter<eckit::LocalConfiguration> groups{"groups", this};
 
   oops::Variables mandatoryActiveVars() const override {return oops::Variables();}
 };
