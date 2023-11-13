@@ -31,7 +31,13 @@ find_package( vader  1.4.0    REQUIRED)
 find_package( saber  1.7.0    REQUIRED)
 find_package( ioda   2.6.0    REQUIRED)
 find_package( ufo    1.7.0    REQUIRED)
-find_package( fms    2020.4.0 REQUIRED)
+# fms
+find_package(FMS 2022.04 REQUIRED COMPONENTS R4 R8)
+if (FV3_PRECISION MATCHES DOUBLE OR NOT FV3_PRECISION)
+  add_library(fms ALIAS FMS::fms_r8)
+else()
+  add_library(fms ALIAS FMS::fms_r4)
+endif()
 find_package( mom6   2020.4.0 REQUIRED)
 
 # Optionally look for icepack
