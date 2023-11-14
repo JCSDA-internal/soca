@@ -77,27 +77,33 @@ contains
   procedure :: write_params => soca_diffusion_write_params
   procedure :: read_params => soca_diffusion_read_params
   
-  procedure, private :: multiply_vt_tl => soca_diffusion_multiply_vt_tl
-  procedure, private :: multiply_vt_ad => soca_diffusion_multiply_vt_ad
-
+  ! application of horizontal diffusion
   procedure, private :: multiply_2D => soca_diffusion_multiply_2D
   procedure, private :: multiply_2D_tl => soca_diffusion_multiply_2D_tl
   procedure, private :: multiply_2D_ad => soca_diffusion_multiply_2D_ad
   procedure, private :: diffusion_steps_tl => soca_diffusion_diffusion_steps_tl
   procedure, private :: diffusion_steps_ad => soca_diffusion_diffusion_steps_ad
+
+  ! application of vertical diffusion
+  procedure, private :: multiply_vt_tl => soca_diffusion_multiply_vt_tl
+  procedure, private :: multiply_vt_ad => soca_diffusion_multiply_vt_ad
   
+  ! helper function to calculate stats (min/max/mean) of a field
   generic, private :: calc_stats => &
     soca_diffusion_calc_stats_2D, &
     soca_diffusion_calc_stats_3D
   procedure, private :: soca_diffusion_calc_stats_2D
   procedure, private :: soca_diffusion_calc_stats_3D
-  
-  
-  procedure, private :: calibrate_2D => soca_diffusion_calibrate_2D
-  procedure, private :: calibrate_1D => soca_diffusion_calibrate_1D
 
+  ! calibration of horizontal parameters
+  procedure, private :: calibrate_2D => soca_diffusion_calibrate_2D
   procedure, private :: calc_norm_bruteforce => soca_diffusion_calc_norm_bruteforce
   procedure, private :: calc_norm_randomization => soca_diffusion_calc_norm_randomization
+
+  ! calibration of vertical parameters
+  procedure, private :: calibrate_1D => soca_diffusion_calibrate_1D
+  procedure, private :: calc_norm_1D_bruteforce => soca_diffusion_calc_norm_1D_bruteforce
+  
 end type soca_diffusion
 
 ! ------------------------------------------------------------------------------
@@ -339,7 +345,9 @@ subroutine soca_diffusion_calibrate_1D(self, f_conf)
     self%group(grp)%KvDt = vt_scales**2 / (2.0 * self%group(grp)%niter_vt)
 
     ! calculate normalization
-    ! TODO implement
+    call oops_log%info("  Calculating vertical normalization...")
+    self%group(grp)%normalization_vt = 1.0
+    call self%calc_norm_1D_bruteforce(self%group(grp))
   end do 
   
 end subroutine
@@ -441,7 +449,7 @@ subroutine soca_diffusion_calibrate_2D(self, f_conf)
     self%group(grp)%KhDt = hz_scales**2 / (2.0 * self%group(grp)%niter_hz)
 
     ! calculate normalization
-    call oops_log%info("  Calculating normalization...")
+    call oops_log%info("  Calculating horizontal normalization...")
     call f_conf%get_or_die("normalization.method", str2)
     self%group(grp)%normalization_hz = 1.0
     if (str2 == "brute force") then
@@ -493,9 +501,11 @@ subroutine soca_diffusion_multiply(self, dx)
 
     ! C = Cv^1/2 * Ch^1/2 * Ch^T/2 * Cv^T/2
     ! vertical T/2
+    dx%fields(f)%val(DOMAIN,:)  = dx%fields(f)%val(DOMAIN,:) * self%group(grp)%normalization_vt(DOMAIN,:)
     call self%multiply_vt_ad(dx%fields(f)%val, self%group(grp))
 
     ! horizontal
+    ! TODO does HZ normalization need to be moved to the outside??
     do z = 1, dx%fields(f)%nz
       tmp2d = dx%fields(f)%val(:,:,z)
       call self%multiply_2D(tmp2d, self%group(grp))
@@ -506,8 +516,7 @@ subroutine soca_diffusion_multiply(self, dx)
   
     ! vertical 1/2
     call self%multiply_vt_tl(dx%fields(f)%val, self%group(grp))
-
-
+    dx%fields(f)%val(DOMAIN,:)  = dx%fields(f)%val(DOMAIN,:) * self%group(grp)%normalization_vt(DOMAIN,:)    
   
   end do
 
@@ -855,6 +864,29 @@ subroutine soca_diffusion_calc_norm_bruteforce(self, params)
   params%normalization_hz = norm
 end subroutine
 
+! ------------------------------------------------------------------------------
+subroutine soca_diffusion_calc_norm_1D_bruteforce(self, params)
+  class(soca_diffusion), intent(inout) :: self
+  type(soca_diffusion_group_params), intent(inout) :: params
+
+  integer :: k, nz
+  real(kind=kind_real), allocatable :: r_tmp(:,:,:), norm(:,:,:)
+
+  nz = self%geom%nzo
+  allocate(r_tmp(DOMAIN_WITH_HALO, nz))
+  allocate(norm(DOMAIN_WITH_HALO, nz))
+
+  norm = 1.0
+  do k=1, nz
+    r_tmp = 0.0
+    r_tmp(:,:,k) = 1.0
+    call self%multiply_vt_ad(r_tmp, params)
+    call self%multiply_vt_tl(r_tmp, params)
+    norm(:,:,k) = 1.0 / sqrt(r_tmp(:,:, k))
+  end do
+  
+  params%normalization_vt = norm
+end subroutine
 
 ! ------------------------------------------------------------------------------
 ! Estimate the normalization weights by creating random vectors (normally distributed)
@@ -1019,7 +1051,7 @@ subroutine soca_diffusion_read_params(self, filename)
   ! update halos
   do grp=1,size(self%group)
     call mpp_update_domains(self%group(grp)%normalization_hz, self%geom%Domain%mpp_domain, complete=.true.)
-    call mpp_update_domains(self%group(grp)%KhDt, self%geom%Domain%mpp_domain, complete=.true.)
+    call mpp_update_domains(self%group(grp)%KhDt, self%geom%Domain%mpp_domain, complete=.true.)    
   end do
 end subroutine
 
