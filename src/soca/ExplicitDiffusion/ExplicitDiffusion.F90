@@ -31,9 +31,10 @@ contains
 
 ! ------------------------------------------------------------------------------
 
-subroutine soca_explicitdiffusion_setup_c(c_key_self, c_geom) bind(c, name='soca_explicitdiffusion_setup_f90')
+subroutine soca_explicitdiffusion_setup_c(c_key_self, c_geom, c_conf) bind(c, name='soca_explicitdiffusion_setup_f90')
   integer(c_int), intent(inout) :: c_key_self
   integer(c_int), intent(in) :: c_geom
+  type(c_ptr),    intent(in) :: c_conf  
 
   type(soca_diffusion), pointer :: self
   type(soca_geom), pointer :: geom
@@ -44,7 +45,7 @@ subroutine soca_explicitdiffusion_setup_c(c_key_self, c_geom) bind(c, name='soca
 
   call soca_geom_registry%get(c_geom, geom)
 
-  call self%init(geom)
+  call self%init(geom, fckit_configuration(c_conf))
 end subroutine
 
 ! ------------------------------------------------------------------------------
