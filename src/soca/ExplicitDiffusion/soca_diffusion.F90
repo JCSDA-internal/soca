@@ -284,6 +284,8 @@ subroutine soca_diffusion_calibrate(self, f_conf)
   end do
 
   ! TODO allow skipping if hz is already calibrated
+  ! TODO refactor to have 1D/2D only do a single group
+
   ! Do 2D horizontal calibration (if needed)
   call self%calibrate_2D(f_conf)
 
@@ -296,23 +298,57 @@ end subroutine
 ! ------------------------------------------------------------------------------
 subroutine soca_diffusion_calibrate_1D(self, f_conf)
   class(soca_diffusion),  intent(inout) :: self
-  type(fckit_configuration), intent(in) :: f_conf
+  type(fckit_configuration), intent(in) :: f_conf  
 
+  type(fckit_configuration), allocatable :: group_conf(:)
+  type(fckit_configuration) :: vt_conf
   real(kind=kind_real) :: stats(3) ! min, max, mean  
   real(kind=kind_real), allocatable :: vt_scales(:,:,:), r_tmp(:,:,:)
+  real(kind=kind_real) :: fixed_scale
   integer :: i, j, grp  
-  character(len=1024) :: str
+  character(len=1024) :: str  
+  logical :: b
 
   allocate(vt_scales(DOMAIN_WITH_HALO, self%geom%nzo))
   allocate(r_tmp(DOMAIN_WITH_HALO, self%geom%nzo))
 
+  call f_conf%get_or_die('scales', group_conf)
+
   ! set the vertical scales, in units of number of levels
   do grp=1,size(self%group)
+    if(.not. group_conf(grp)%get("vertical", vt_conf)) cycle
+
     write (str, *) "Group ", grp, " of ", size(self%group)
     call oops_log%info(str)
+    write (str, *) " name: ", self%group(grp)%name
+    call oops_log%info(str)  
 
-    ! TODO actually read this in from a file / config  
-    vt_scales = 2.0
+    ! Get input lengthscales. Either from:
+    !  1) a fixed length scale used globally
+    !  2) read in from a file
+    ! the result is hz_scales containing the length scales (defined as 1 sigma of a guassian)
+    vt_scales = 1e10  
+    if (.not. vt_conf%has("fixed value") .neqv. vt_conf%has("from file")) then
+      ! that was an XOR opperation above, if you were curious
+      call abor1_ftn("ERROR: calibration.scales[] must define 1 of 'fixed value' or 'from file'")
+    end if
+    if ( vt_conf%has("fixed value")) then
+      ! used a single fixed value globally
+      call oops_log%info("  Using fixed length scales")
+      call vt_conf%get_or_die("fixed value", fixed_scale)
+      vt_scales = fixed_scale
+    else
+      call abor1_ftn("ERROR: reading vt scales from file not yet supported")
+    end if
+    call vt_conf%get_or_die("as gaussian", b)
+    write (str,*) " input values as gaussian (vs GC half width): ", b
+    call oops_log%info(str)
+    if (.not. b) then
+      ! by default, a gaspari cohn half width is expected in the config.
+      ! (but the rest of this code asssumes gaussian 1 sigma)
+      ! Do the conversion if needed
+      vt_scales = vt_scales / 3.57_kind_real
+    end if    
 
     ! TODO make sure we are handling bottom mask
     
@@ -358,6 +394,7 @@ subroutine soca_diffusion_calibrate_2D(self, f_conf)
   type(fckit_configuration), intent(in) :: f_conf
 
   type(fckit_configuration), allocatable :: group_conf(:)
+  type(fckit_configuration) :: hz_conf
   real(kind=kind_real) :: stats(3) ! min, max, mean  
   character(len=1024) :: str  
   character(len=:), allocatable :: str2, str3
@@ -379,6 +416,8 @@ subroutine soca_diffusion_calibrate_2D(self, f_conf)
 
   ! perform calibration once for each variable group
   do grp=1,size(self%group)
+    if(.not. group_conf(grp)%get("horizontal", hz_conf)) cycle
+
     write (str, *) "Group ", grp, " of ", size(self%group)
     call oops_log%info(str)
     write (str, *) " name: ", self%group(grp)%name
@@ -389,20 +428,20 @@ subroutine soca_diffusion_calibrate_2D(self, f_conf)
     !  2) read in from a file
     ! the result is hz_scales containing the length scales (defined as 1 sigma of a guassian)
     hz_scales = 1e10  
-    if (.not. group_conf(grp)%has("fixed value") .neqv. group_conf(grp)%has("from file")) then
+    if (.not. hz_conf%has("fixed value") .neqv. hz_conf%has("from file")) then
       ! that was an XOR opperation above, if you were curious
       call abor1_ftn("ERROR: calibration.scales[] must define 1 of 'fixed value' or 'from file'")
     end if
-    if ( group_conf(grp)%has("fixed value")) then
+    if ( hz_conf%has("fixed value")) then
       ! used a single fixed value globally
       call oops_log%info("  Using fixed length scales")
-      call group_conf(grp)%get_or_die("fixed value", fixed_scale)
+      call hz_conf%get_or_die("fixed value", fixed_scale)
       hz_scales = fixed_scale
     else
       ! read lengths from a file. a 2d field is expected
       call oops_log%info("  Reading length scales from file")
-      call group_conf(grp)%get_or_die("from file.filename", str2)
-      call group_conf(grp)%get_or_die("from file.variable name", str3)
+      call hz_conf%get_or_die("from file.filename", str2)
+      call hz_conf%get_or_die("from file.variable name", str3)
       call fms_io_init()
       idr = register_restart_field(restart_file, str2, str3, &
       hz_scales, domain=self%geom%Domain%mpp_domain)
@@ -410,7 +449,7 @@ subroutine soca_diffusion_calibrate_2D(self, f_conf)
       call free_restart_type(restart_file)
       call fms_io_exit()
     end if
-    call group_conf(grp)%get_or_die("as gaussian", b)
+    call hz_conf%get_or_die("as gaussian", b)
     write (str,*) " input values as gaussian (vs GC half width): ", b
     call oops_log%info(str)
     if (.not. b) then
@@ -501,8 +540,10 @@ subroutine soca_diffusion_multiply(self, dx)
 
     ! C = Cv^1/2 * Ch^1/2 * Ch^T/2 * Cv^T/2
     ! vertical T/2
-    dx%fields(f)%val(DOMAIN,:)  = dx%fields(f)%val(DOMAIN,:) * self%group(grp)%normalization_vt(DOMAIN,:)
-    call self%multiply_vt_ad(dx%fields(f)%val, self%group(grp))
+    if (self%group(grp)%niter_vt > 0) then
+      dx%fields(f)%val(DOMAIN,:)  = dx%fields(f)%val(DOMAIN,:) * self%group(grp)%normalization_vt(DOMAIN,:)
+      call self%multiply_vt_ad(dx%fields(f)%val, self%group(grp))
+    end if
 
     ! horizontal
     ! TODO does HZ normalization need to be moved to the outside??
@@ -515,8 +556,10 @@ subroutine soca_diffusion_multiply(self, dx)
     end do    
   
     ! vertical 1/2
-    call self%multiply_vt_tl(dx%fields(f)%val, self%group(grp))
-    dx%fields(f)%val(DOMAIN,:)  = dx%fields(f)%val(DOMAIN,:) * self%group(grp)%normalization_vt(DOMAIN,:)    
+    if (self%group(grp)%niter_vt > 0) then
+      call self%multiply_vt_tl(dx%fields(f)%val, self%group(grp))
+      dx%fields(f)%val(DOMAIN,:)  = dx%fields(f)%val(DOMAIN,:) * self%group(grp)%normalization_vt(DOMAIN,:)    
+    end if
   
   end do
 

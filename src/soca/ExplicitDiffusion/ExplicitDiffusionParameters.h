@@ -25,13 +25,21 @@ class ExplicitDiffusionIOParameters : public oops::Parameters {
 
 // --------------------------------------------------------------------------------------
 
+class ExplicitDiffusionHzVtParameters : public oops::Parameters {
+  OOPS_CONCRETE_PARAMETERS(ExplicitDiffusionHzVtParameters, oops::Parameters)
+ public:
+  oops::OptionalParameter<double> fixedValue{"fixed value", this};
+  oops::OptionalParameter<ExplicitDiffusionIOParameters> fromFile{"from file", this};
+  oops::Parameter<bool> asGaussian{"as gaussian", false, this};
+};
+
+// --------------------------------------------------------------------------------------
 class ExplicitDiffusionScalesParameters : public oops::Parameters {
   OOPS_CONCRETE_PARAMETERS(ExplicitDiffusionScalesParameters, oops::Parameters)
  public:
   oops::RequiredParameter<std::string> name{"name", this};
-  oops::OptionalParameter<double> fixedValue{"fixed value", this};
-  oops::OptionalParameter<ExplicitDiffusionIOParameters> fromFile{"from file", this};
-  oops::Parameter<bool> asGaussian{"as gaussian", false, this};
+  oops::RequiredParameter<ExplicitDiffusionHzVtParameters> horizontal{"horizontal", this};
+  oops::OptionalParameter<ExplicitDiffusionHzVtParameters> vertical{"vertical", this};
 };
 
 // --------------------------------------------------------------------------------------
