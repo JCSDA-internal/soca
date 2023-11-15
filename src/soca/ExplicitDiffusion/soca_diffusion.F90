@@ -76,17 +76,21 @@ contains
   procedure :: multiply => soca_diffusion_multiply
   procedure :: write_params => soca_diffusion_write_params
   procedure :: read_params => soca_diffusion_read_params
-  
-  ! application of horizontal diffusion
-  procedure, private :: multiply_2D => soca_diffusion_multiply_2D
-  procedure, private :: multiply_2D_tl => soca_diffusion_multiply_2D_tl
-  procedure, private :: multiply_2D_ad => soca_diffusion_multiply_2D_ad
-  procedure, private :: diffusion_steps_tl => soca_diffusion_diffusion_steps_tl
-  procedure, private :: diffusion_steps_ad => soca_diffusion_diffusion_steps_ad
 
-  ! application of vertical diffusion
-  procedure, private :: multiply_vt_tl => soca_diffusion_multiply_vt_tl
-  procedure, private :: multiply_vt_ad => soca_diffusion_multiply_vt_ad
+  ! calibration of horizontal parameters
+  procedure, private :: calibrate_hz => soca_diffusion_calibrate_hz
+  procedure, private :: calibrate_norm_hz_bruteforce => soca_diffusion_calibrate_norm_hz_bruteforce
+  procedure, private :: calibrate_norm_hz_randomization => soca_diffusion_calibrate_norm_hz_randomization
+  
+  ! calibration of vertical parameters
+  procedure, private :: calibrate_vt => soca_diffusion_calibrate_vt
+  procedure, private :: calibrate_norm_vt => soca_diffusion_calibrate_norm_vt
+
+  ! diffusion operators (hz and vt) (tl and ad)
+  procedure, private :: diffusion_hz_tl => soca_diffusion_hz_tl
+  procedure, private :: diffusion_hz_ad => soca_diffusion_hz_ad
+  procedure, private :: diffusion_vt_tl => soca_diffusion_vt_tl
+  procedure, private :: diffusion_vt_ad => soca_diffusion_vt_ad
   
   ! helper function to calculate stats (min/max/mean) of a field
   generic, private :: calc_stats => &
@@ -94,15 +98,6 @@ contains
     soca_diffusion_calc_stats_3D
   procedure, private :: soca_diffusion_calc_stats_2D
   procedure, private :: soca_diffusion_calc_stats_3D
-
-  ! calibration of horizontal parameters
-  procedure, private :: calibrate_2D => soca_diffusion_calibrate_2D
-  procedure, private :: calc_norm_bruteforce => soca_diffusion_calc_norm_bruteforce
-  procedure, private :: calc_norm_randomization => soca_diffusion_calc_norm_randomization
-
-  ! calibration of vertical parameters
-  procedure, private :: calibrate_1D => soca_diffusion_calibrate_1D
-  procedure, private :: calc_norm_1D_bruteforce => soca_diffusion_calc_norm_1D_bruteforce
   
 end type soca_diffusion
 
@@ -284,19 +279,18 @@ subroutine soca_diffusion_calibrate(self, f_conf)
   end do
 
   ! TODO allow skipping if hz is already calibrated
-  ! TODO refactor to have 1D/2D only do a single group
 
   ! Do 2D horizontal calibration (if needed)
-  call self%calibrate_2D(f_conf)
+  call self%calibrate_hz(f_conf)
 
   ! Do 1D vertical calibration (if needed)
-  call self%calibrate_1D(f_conf)
+  call self%calibrate_vt(f_conf)
 
   call oops_log%trace("soca_diffusion::calibrate() done", flush=.true.)
 end subroutine
 
 ! ------------------------------------------------------------------------------
-subroutine soca_diffusion_calibrate_1D(self, f_conf)
+subroutine soca_diffusion_calibrate_vt(self, f_conf)
   class(soca_diffusion),  intent(inout) :: self
   type(fckit_configuration), intent(in) :: f_conf  
 
@@ -383,13 +377,13 @@ subroutine soca_diffusion_calibrate_1D(self, f_conf)
     ! calculate normalization
     call oops_log%info("  Calculating vertical normalization...")
     self%group(grp)%normalization_vt = 1.0
-    call self%calc_norm_1D_bruteforce(self%group(grp))
+    call self%calibrate_norm_vt(self%group(grp))
   end do 
   
 end subroutine
 
 ! ------------------------------------------------------------------------------
-subroutine soca_diffusion_calibrate_2D(self, f_conf)
+subroutine soca_diffusion_calibrate_hz(self, f_conf)
   class(soca_diffusion),  intent(inout) :: self
   type(fckit_configuration), intent(in) :: f_conf
 
@@ -492,10 +486,10 @@ subroutine soca_diffusion_calibrate_2D(self, f_conf)
     call f_conf%get_or_die("normalization.method", str2)
     self%group(grp)%normalization_hz = 1.0
     if (str2 == "brute force") then
-      call self%calc_norm_bruteforce(self%group(grp))
+      call self%calibrate_norm_hz_bruteforce(self%group(grp))
     else if (str2 == "randomization") then
       call f_conf%get_or_die("normalization.iterations", i)
-      call self%calc_norm_randomization(i, self%group(grp))
+      call self%calibrate_norm_hz_randomization(i, self%group(grp))
     else
       call abor1_ftn("ERROR: normalization.method must be 'brute force' or 'randomization'")
     end if
@@ -538,85 +532,55 @@ subroutine soca_diffusion_multiply(self, dx)
       call abor1_ftn("ERROR: could not find a valid group for the variable "//dx%fields(f)%name)
     end if
 
-    ! C = Cv^1/2 * Ch^1/2 * Ch^T/2 * Cv^T/2
-    ! vertical T/2
+    ! normalization (horizontal + vertical)
+    do z = 1, dx%fields(f)%nz
+      dx%fields(f)%val(DOMAIN,z)  = dx%fields(f)%val(DOMAIN,z) * self%group(grp)%normalization_hz(DOMAIN)
+    end do
     if (self%group(grp)%niter_vt > 0) then
       dx%fields(f)%val(DOMAIN,:)  = dx%fields(f)%val(DOMAIN,:) * self%group(grp)%normalization_vt(DOMAIN,:)
-      call self%multiply_vt_ad(dx%fields(f)%val, self%group(grp))
-    end if
+    end if  
+     
+    ! vertical diffusion AD
+    if (self%group(grp)%niter_vt > 0) then
+      call self%diffusion_vt_ad(dx%fields(f)%val, self%group(grp))
+    end if   
 
-    ! horizontal
-    ! TODO does HZ normalization need to be moved to the outside??
     do z = 1, dx%fields(f)%nz
       tmp2d = dx%fields(f)%val(:,:,z)
-      call self%multiply_2D(tmp2d, self%group(grp))
-      ! NOTE: this is here because the SABERadjoint test doesn't take into account the halo correctly
-      ! so we have to leave the halo alone
+      
+      ! horizontal diffusion AD      
+      call self%diffusion_hz_ad(tmp2d, self%group(grp))
+
+      ! TODO grid metric
+      ! tmp2d = tmp2d * self%inv_sqrt_area
+
+      ! horizontal diffusion TL
+      call self%diffusion_hz_tl(tmp2d, self%group(grp))
+
       dx%fields(f)%val(DOMAIN,z) = tmp2d(DOMAIN)
-    end do    
+    end do
   
-    ! vertical 1/2
+    ! vertical diffusion TL    
     if (self%group(grp)%niter_vt > 0) then
-      call self%multiply_vt_tl(dx%fields(f)%val, self%group(grp))
+      call self%diffusion_vt_tl(dx%fields(f)%val, self%group(grp))
+    end if
+    
+    ! normalization (horizontal + vertical)
+    if (self%group(grp)%niter_vt > 0) then    
       dx%fields(f)%val(DOMAIN,:)  = dx%fields(f)%val(DOMAIN,:) * self%group(grp)%normalization_vt(DOMAIN,:)    
     end if
-  
+    do z = 1, dx%fields(f)%nz
+      dx%fields(f)%val(DOMAIN,z)  = dx%fields(f)%val(DOMAIN,z) * self%group(grp)%normalization_hz(DOMAIN)
+    end do
+
   end do
 
   call oops_log%trace("soca_diffusion::multiply() done", flush=.true.)
 end subroutine
 
 ! ------------------------------------------------------------------------------
-! perform horizontal diffusion on a single level
-subroutine soca_diffusion_multiply_2D(self, field, params)
-  class(soca_diffusion), intent(inout) :: self
-  real(kind=kind_real), allocatable :: field(:,:)
-  type(soca_diffusion_group_params), intent(in) :: params
-
-  call self%multiply_2D_ad(field, params)
-  call self%multiply_2D_tl(field, params)
-
-end subroutine
-
-! ------------------------------------------------------------------------------
-
-subroutine soca_diffusion_multiply_2D_tl(self, field, params)
-  class(soca_diffusion), intent(inout) :: self
-  real(kind=kind_real), allocatable :: field(:,:)
-  type(soca_diffusion_group_params), intent(in) :: params
-
-  ! apply grid metric
-  field = field * self%inv_sqrt_area
-
-  ! apply M/2 iterations of diffusion
-  call self%diffusion_steps_tl(field, params)
-
-  ! apply normalization
-  field = field * params%normalization_hz
-  
-end subroutine
-
-! ------------------------------------------------------------------------------
-
-subroutine soca_diffusion_multiply_2D_ad(self, field, params)
-  class(soca_diffusion), intent(inout) :: self
-  real(kind=kind_real), allocatable :: field(:,:)
-  type(soca_diffusion_group_params), intent(in) :: params
-
-  ! apply normalization
-  field = field * params%normalization_hz
-
-  ! apply M/2 iterations of diffusion
-  call self%diffusion_steps_ad(field, params)
-
-  ! apply grid metric
-  field = field * self%inv_sqrt_area
-  
-end subroutine
-
-! ------------------------------------------------------------------------------
 ! Apply half the required iterations of diffusion
-subroutine soca_diffusion_diffusion_steps_tl(self, field, params)
+subroutine soca_diffusion_hz_tl(self, field, params)
   class(soca_diffusion), intent(inout) :: self
   real(kind=kind_real), allocatable, intent(inout) :: field(:,:)
   type(soca_diffusion_group_params), intent(in) :: params
@@ -674,7 +638,7 @@ end subroutine
 
 
 ! ------------------------------------------------------------------------------
-subroutine soca_diffusion_diffusion_steps_ad(self, field, params)
+subroutine soca_diffusion_hz_ad(self, field, params)
   class(soca_diffusion), intent(inout) :: self
   real(kind=kind_real), allocatable, intent(inout) :: field(:,:) 
   type(soca_diffusion_group_params), intent(in) :: params
@@ -768,7 +732,7 @@ subroutine soca_diffusion_diffusion_steps_ad(self, field, params)
 end subroutine
 
 ! ------------------------------------------------------------------------------
-subroutine soca_diffusion_multiply_vt_tl(self, field, params)
+subroutine soca_diffusion_vt_tl(self, field, params)
   class(soca_diffusion), intent(inout) :: self
   real(kind=kind_real), allocatable, intent(inout) :: field(:,:,:) 
   type(soca_diffusion_group_params), intent(in) :: params
@@ -805,13 +769,10 @@ subroutine soca_diffusion_multiply_vt_tl(self, field, params)
       end do
     end do
   end do
-
-  ! TODO normalization
-
 end subroutine
 
 ! ------------------------------------------------------------------------------
-subroutine soca_diffusion_multiply_vt_ad(self, field, params)
+subroutine soca_diffusion_vt_ad(self, field, params)
   class(soca_diffusion), intent(inout) :: self
   real(kind=kind_real), allocatable, intent(inout) :: field(:,:,:) 
   type(soca_diffusion_group_params), intent(in) :: params
@@ -866,8 +827,6 @@ subroutine soca_diffusion_multiply_vt_ad(self, field, params)
       field(i,j,:) = field(i,j,:) + wrk_old(:)
     end do
   end do
-
-
 end subroutine
 
 ! ------------------------------------------------------------------------------
@@ -876,7 +835,7 @@ end subroutine
 ! You probably don't want to use this, except for testing. 
 ! Use randomization instead.
 ! ------------------------------------------------------------------------------
-subroutine soca_diffusion_calc_norm_bruteforce(self, params)
+subroutine soca_diffusion_calibrate_norm_hz_bruteforce(self, params)
   class(soca_diffusion), intent(inout) :: self
   type(soca_diffusion_group_params), intent(inout) :: params
 
@@ -896,7 +855,11 @@ subroutine soca_diffusion_calc_norm_bruteforce(self, params)
       local = i >= self%geom%isc .and. i <= self%geom%iec .and. &
               j >= self%geom%jsc .and. j <= self%geom%jec
       if (local) r_tmp(i,j) = 1.0
-      call self%multiply_2D(r_tmp, params)
+      
+      call self%diffusion_hz_ad(r_tmp, params)
+      ! TODO grid metric
+      call self%diffusion_hz_tl(r_tmp, params)
+      
       if (local) then
         if(self%mask(i,j) == 0.0) cycle
         norm(i,j) = 1.0 / sqrt(r_tmp(i,j))
@@ -908,7 +871,7 @@ subroutine soca_diffusion_calc_norm_bruteforce(self, params)
 end subroutine
 
 ! ------------------------------------------------------------------------------
-subroutine soca_diffusion_calc_norm_1D_bruteforce(self, params)
+subroutine soca_diffusion_calibrate_norm_vt(self, params)
   class(soca_diffusion), intent(inout) :: self
   type(soca_diffusion_group_params), intent(inout) :: params
 
@@ -923,8 +886,8 @@ subroutine soca_diffusion_calc_norm_1D_bruteforce(self, params)
   do k=1, nz
     r_tmp = 0.0
     r_tmp(:,:,k) = 1.0
-    call self%multiply_vt_ad(r_tmp, params)
-    call self%multiply_vt_tl(r_tmp, params)
+    call self%diffusion_vt_ad(r_tmp, params)
+    call self%diffusion_vt_tl(r_tmp, params)
     norm(:,:,k) = 1.0 / sqrt(r_tmp(:,:, k))
   end do
   
@@ -938,7 +901,7 @@ end subroutine
 !
 ! Typically a good number of iterations is around 10,000
 ! ------------------------------------------------------------------------------
-subroutine soca_diffusion_calc_norm_randomization(self, iter, params)
+subroutine soca_diffusion_calibrate_norm_hz_randomization(self, iter, params)
   class(soca_diffusion), intent(inout) :: self
   integer, intent(in) :: iter
   type(soca_diffusion_group_params), intent(inout) :: params
@@ -974,8 +937,11 @@ subroutine soca_diffusion_calc_norm_randomization(self, iter, params)
     rnd=n*self%geom%f_comm%size() + self%geom%f_comm%rank()
     call normal_distribution(field, 0.0_kind_real, 1.0_kind_real, rnd, .true.) 
 
+    ! grid metric
+    ! TODO
+
     ! apply the diffusion TL
-    call self%multiply_2D_tl(field, params)
+    call self%diffusion_hz_tl(field, params)
 
     ! keep track of the stats needed for a running variance calculation
     ! (Welford 1962 algorithm)
