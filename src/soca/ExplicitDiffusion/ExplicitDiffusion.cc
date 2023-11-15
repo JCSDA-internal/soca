@@ -32,7 +32,8 @@ ExplicitDiffusion::ExplicitDiffusion(
   geom_.reset(new Geometry(params_.geometry.value(), geometryData.comm()));
 
   // setup the fortran code
-  soca_explicitdiffusion_setup_f90(keyFortran_, geom_->toFortran());
+  eckit::LocalConfiguration conf = params_.toConfiguration();
+  soca_explicitdiffusion_setup_f90(keyFortran_, geom_->toFortran(), &conf);
 
   vars_ = params.activeVars.value().get_value_or(centralVars);
 }

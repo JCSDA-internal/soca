@@ -12,6 +12,7 @@ use logger_mod
 use mpp_domains_mod, only : mpp_update_domains, mpp_update_domains_ad
 use random_mod
 use fms_io_mod
+use oops_variables_mod
 
 use soca_increment_mod
 use soca_geom_mod, only : soca_geom
@@ -29,7 +30,26 @@ private
 #define LOOP_DOMAIN_WITH_HALO_J self%geom%jsd, self%geom%jed
 
 ! ------------------------------------------------------------------------------
+! The diffusion parameters needed by a group of variables.
+! More than one model variable can be part of a group, they will all share the
+! same correlation lengths.
+type :: soca_diffusion_group_params
+ character(len=:),allocatable :: name 
+ real(kind_real), allocatable :: KhDt(:,:)          !< horizontal diffusion coefficient
+ real(kind_real), allocatable :: normalization(:,:) !< horizontal normalization constant
+ integer                      :: n_iter = -1        !< number of iterations for diffusion,
+                                                    ! (set to -1 to indicate has not been initialized) 
+end type soca_diffusion_group_params
 
+! ------------------------------------------------------------------------------
+! do the mapping between a group name and one or more variables names
+type :: soca_diffusion_group_mapping
+character(len=:), allocatable :: group_name
+type(oops_variables)          :: variables
+end type
+
+! ------------------------------------------------------------------------------
+! The main EXPLICIT_DIFFUSION class.
 type, public :: soca_diffusion
  private
   ! grid metrics
@@ -41,10 +61,9 @@ type, public :: soca_diffusion
   real(kind_real), allocatable :: mask(:,:)   !< 1.0 where water, 0.0 where land
   
   ! parameters calculated during calibration() / read()
-  real(kind_real), allocatable :: KhDt(:,:)   !< diffusion coefficient
-  real(kind_real), allocatable :: normalization(:,:) !< normalization constant
-  integer :: n_iter = -1 !< number of iterations for diffusion,
-                         ! (set to -1 to indicate has not been initialized)
+  ! "group" contains the weights / normalizations for one or more variables
+  type(soca_diffusion_group_params), allocatable :: group(:)
+  type(soca_diffusion_group_mapping), allocatable :: group_mapping(:)
 
   class(soca_geom), pointer :: geom    
 
@@ -58,7 +77,7 @@ contains
   procedure, private :: multiply_2D => soca_diffusion_multiply_2D
   procedure, private :: multiply_2D_tl => soca_diffusion_multiply_2D_tl
   procedure, private :: multiply_2D_ad => soca_diffusion_multiply_2D_ad
-  procedure, private :: diffusion_steps => soca_diffusion_diffusion_steps
+  procedure, private :: diffusion_steps_tl => soca_diffusion_diffusion_steps_tl
   procedure, private :: diffusion_steps_ad => soca_diffusion_diffusion_steps_ad
   procedure, private :: calc_stats => soca_diffusion_calc_stats
   
@@ -99,20 +118,43 @@ end subroutine
 ! Initialize the grid, allocate memory, for the diffusion operator.
 ! A call to either calibrate() or read() should be done before
 ! this class is ready to use.
-subroutine soca_diffusion_init(self, geom)
+subroutine soca_diffusion_init(self, geom, f_conf)
   class(soca_diffusion), intent(inout) :: self
   class(soca_geom), target, intent(in) :: geom
+  type(fckit_configuration), intent(in) :: f_conf
+
+  type(fckit_configuration), allocatable :: f_conf_list(:)
 
   real(kind=kind_real) :: stats(3) ! min, max, mean
-  character(len=1024) :: str  
+  character(len=1024) :: str
+  character(len=:), allocatable :: str_list(:)
   integer :: i, j
 
   call oops_log%trace("soca_diffusion::init() starting", flush=.true.)
+  call oops_log%info("")
   self%geom => geom
+
+  ! read variable -> group_name mapping
+  if (f_conf%has("groups")) then
+    call oops_log%info("ExplicitDiffusion: variable groups")    
+    call f_conf%get_or_die("groups", f_conf_list)
+    allocate(self%group_mapping(size(f_conf_list)))
+    do i=1,size(f_conf_list)
+      call f_conf_list(i)%get_or_die("name", self%group_mapping(i)%group_name)
+      call oops_log%info(" group name: "//self%group_mapping(i)%group_name)
+      call oops_log%info("   variables:")
+      call f_conf_list(i)%get_or_die("variables", str_list)
+      self%group_mapping(i)%variables = oops_variables()
+      call self%group_mapping(i)%variables%push_back(str_list)
+      do j=1,self%group_mapping(i)%variables%nvars()
+        call oops_log%info("     "//self%group_mapping(i)%variables%variable(j))
+      end do
+    end do
+  end if
 
   ! grid and derived grid parameters
   !---------------------------------------------------------------------------
-  call oops_log%info("ExplicitDiffusion: Initializing grid...")
+  call oops_log%info("ExplicitDiffusion: Initializing grid")
   
   allocate(self%mask(DOMAIN_WITH_HALO))
   allocate(self%dx(DOMAIN_WITH_HALO))
@@ -157,14 +199,7 @@ subroutine soca_diffusion_init(self, geom)
 
   call mpp_update_domains(self%inv_sqrt_area, self%geom%Domain%mpp_domain, complete=.true.)
   call mpp_update_domains(self%pmon_u, self%geom%Domain%mpp_domain, complete=.true.)
-  call mpp_update_domains(self%pnom_v, self%geom%Domain%mpp_domain, complete=.true.)
-   
-  ! Allocate space for the parameters that will be initialized later.
-  ! Initialize with safe values
-  allocate(self%KhDt(DOMAIN_WITH_HALO))
-  allocate(self%normalization(DOMAIN_WITH_HALO))
-  self%KhDt = 0.0
-  self%normalization = 1.0
+  call mpp_update_domains(self%pnom_v, self%geom%Domain%mpp_domain, complete=.true.)   
 
   call oops_log%trace("soca_diffusion::init() done", flush=.true.)
 end subroutine
@@ -179,10 +214,11 @@ subroutine soca_diffusion_calibrate(self, f_conf)
   class(soca_diffusion),  intent(inout) :: self
   type(fckit_configuration), intent(in) :: f_conf
 
+  type(fckit_configuration), allocatable :: group_conf(:)
   real(kind=kind_real) :: stats(3) ! min, max, mean  
   character(len=1024) :: str  
   character(len=:), allocatable :: str2, str3
-  integer :: i, j, idr
+  integer :: i, j, idr, grp, ngroup
   type(restart_file_type) :: restart_file
   logical :: b
 
@@ -191,80 +227,109 @@ subroutine soca_diffusion_calibrate(self, f_conf)
 
   call oops_log%trace("soca_diffusion::calibrate() starting", flush=.true.)
   call oops_log%info("ExplicitDiffusion: running calibration")
-
-  ! Get input lengthscales. Either from:
-  !  1) a fixed length scale used globally
-  !  2) read in from a file
-  ! the result is hz_scales containing the length scales (defined as 1 sigma of a guassian)
+  
+  ! allocate things for use later in the loops
   allocate(hz_scales(DOMAIN_WITH_HALO))
-  hz_scales = 1e10  
-  if (.not. f_conf%has("scales.fixed value") .neqv. f_conf%has("scales.from file")) then
-    ! that was an XOR opperation above, if you were curious
-    call abor1_ftn("calibration.scales must define 1 of 'fixed value' or 'from file'")
-  end if
-  if ( f_conf%has("scales.fixed value")) then
-    ! used a single fixed value globally
-    call oops_log%info("  Using fixed length scales")
-    call f_conf%get_or_die("scales.fixed value", fixed_scale)
-    hz_scales = fixed_scale
-  else
-    ! read lengths from a file. a 2d field is expected
-    call oops_log%info("  Reading length scales from file")
-    call f_conf%get_or_die("scales.from file.filename", str2)
-    call f_conf%get_or_die("scales.from file.variable name", str3)
-    call fms_io_init()
-    idr = register_restart_field(restart_file, str2, str3, &
-      hz_scales, domain=self%geom%Domain%mpp_domain)
-    call restore_state(restart_file, directory='')
-    call free_restart_type(restart_file)
-    call fms_io_exit()
-  end if
-  call f_conf%get_or_die("scales.as gaussian", b)
-  if (.not. b) then
-    ! by default, a gaspari cohn half width is expected in the config.
-    ! (but the rest of this code asssumes gaussian 1 sigma)
-    ! Do the conversion if needed
-    hz_scales = hz_scales / 3.57_kind_real
-  end if
-  call mpp_update_domains(hz_scales, self%geom%Domain%mpp_domain, complete=.true.)
-
-  call self%calc_stats(hz_scales, stats)
-  write (str, *) "   L_hz: min=", stats(1), "max=", stats(2), "mean=", stats(3)
-  call oops_log%info(str)
-
-  ! calculate the minimum number of iterations needed, rounding up to the
-  ! nearest even number.
-  !  M >= 2.0 *(L^2 / (1/dx^2 + 1/dy^2))
   allocate(r_tmp(DOMAIN_WITH_HALO))
-  r_tmp = 0.0
-  do j = LOOP_DOMAIN_J
-    do i = LOOP_DOMAIN_I
-      if (self%mask(i,j) == 0.0 ) cycle
-      r_tmp(i,j) = 2.0 * hz_scales(i,j)**2 * (1.0/(self%dx(i,j)**2) + 1.0/(self%dy(i,j)**2))
+
+  ! how many groups do we have?
+  call f_conf%get_or_die('scales', group_conf)
+  ngroup = size(group_conf)
+  allocate(self%group(ngroup))  
+
+  ! perform calibration once for each variable group
+  do grp=1,size(group_conf)
+    write (str, *) "Group ", grp, " of ", size(group_conf)
+    call oops_log%info(str)
+
+    ! get group name
+    call group_conf(grp)%get_or_die("name", self%group(grp)%name)
+    write (str, *) " name: ", self%group(grp)%name
+    call oops_log%info(str)  
+
+    ! allocate space and initialize with safe values    
+    allocate(self%group(grp)%KhDt(DOMAIN_WITH_HALO))
+    allocate(self%group(grp)%normalization(DOMAIN_WITH_HALO))
+    self%group(grp)%KhDt = 0.0
+    self%group(grp)%normalization = 1.0
+    
+    ! Get input lengthscales. Either from:
+    !  1) a fixed length scale used globally
+    !  2) read in from a file
+    ! the result is hz_scales containing the length scales (defined as 1 sigma of a guassian)
+    hz_scales = 1e10  
+    if (.not. group_conf(grp)%has("fixed value") .neqv. group_conf(grp)%has("from file")) then
+      ! that was an XOR opperation above, if you were curious
+      call abor1_ftn("ERROR: calibration.scales[] must define 1 of 'fixed value' or 'from file'")
+    end if
+    if ( group_conf(grp)%has("fixed value")) then
+      ! used a single fixed value globally
+      call oops_log%info("  Using fixed length scales")
+      call group_conf(grp)%get_or_die("fixed value", fixed_scale)
+      hz_scales = fixed_scale
+    else
+      ! read lengths from a file. a 2d field is expected
+      call oops_log%info("  Reading length scales from file")
+      call group_conf(grp)%get_or_die("from file.filename", str2)
+      call group_conf(grp)%get_or_die("from file.variable name", str3)
+      call fms_io_init()
+      idr = register_restart_field(restart_file, str2, str3, &
+      hz_scales, domain=self%geom%Domain%mpp_domain)
+      call restore_state(restart_file, directory='')
+      call free_restart_type(restart_file)
+      call fms_io_exit()
+    end if
+    call group_conf(grp)%get_or_die("as gaussian", b)
+    write (str,*) " input values as gaussian (vs GC half width): ", b
+    call oops_log%info(str)
+    if (.not. b) then
+      ! by default, a gaspari cohn half width is expected in the config.
+      ! (but the rest of this code asssumes gaussian 1 sigma)
+      ! Do the conversion if needed
+      hz_scales = hz_scales / 3.57_kind_real
+    end if
+
+    ! make sure halos are up to date
+    call mpp_update_domains(hz_scales, self%geom%Domain%mpp_domain, complete=.true.)
+
+    ! print some stats
+    call self%calc_stats(hz_scales, stats)
+    write (str, *) " L_hz: min=", stats(1), "max=", stats(2), "mean=", stats(3)
+    call oops_log%info(str)
+
+    ! calculate the minimum number of iterations needed, rounding up to the
+    ! nearest even number.
+    !  M >= 2.0 *(L^2 / (1/dx^2 + 1/dy^2))
+    r_tmp = 0.0
+    do j = LOOP_DOMAIN_J
+      do i = LOOP_DOMAIN_I
+        if (self%mask(i,j) == 0.0 ) cycle
+          r_tmp(i,j) = 2.0 * hz_scales(i,j)**2 * (1.0/(self%dx(i,j)**2) + 1.0/(self%dy(i,j)**2))
+      end do
     end do
+    call self%calc_stats(r_tmp, stats)
+    i = ceiling(stats(2))
+    if (mod(i,2) == 1) i = i + 1
+    self%group(grp)%n_iter = i
+    write (str, *) " minimum iterations: ", i
+    call oops_log%info(str)
+
+    ! calculate KhDt based on scales and number of iterations    
+    self%group(grp)%KhDt = hz_scales**2 / (2.0 * self%group(grp)%n_iter)
+
+    ! calculate normalization
+    call oops_log%info("  Calculating normalization...")
+    call f_conf%get_or_die("normalization.method", str2)
+    self%group(grp)%normalization = 1.0
+    if (str2 == "brute force") then
+      call self%calc_norm_bruteforce(self%group(grp))
+    else if (str2 == "randomization") then
+      call f_conf%get_or_die("normalization.iterations", i)
+      call self%calc_norm_randomization(i, self%group(grp))
+    else
+      call abor1_ftn("ERROR: normalization.method must be 'brute force' or 'randomization'")
+    end if
   end do
-  call self%calc_stats(r_tmp, stats)
-  self%n_iter = ceiling(stats(2))
-  if (mod(self%n_iter,2) == 1) self%n_iter = self%n_iter + 1
-  write (str, *) "   minimum iterations: ", self%n_iter
-  call oops_log%info(str)
-
-  ! calculate KhDt based on scales and number of iterations
-  self%KhDt = hz_scales**2 / (2.0 * self%n_iter)
-
-  ! calculate normalization
-  call oops_log%info("  Calculating normalization...")  
-  self%normalization = 1.0
-  call f_conf%get_or_die("normalization.method", str2)
-  if (str2 == "brute force") then
-    call self%calc_norm_bruteforce()
-  else if (str2 == "randomization") then
-    call f_conf%get_or_die("normalization.iterations", i)
-    call self%calc_norm_randomization(i)
-  else
-    call abor1_ftn("ERROR: normalization.method must be 'brute force' or 'randomization'")
-  end if
-
   call oops_log%trace("soca_diffusion::calibrate() done", flush=.true.)
 end subroutine
 
@@ -275,22 +340,39 @@ subroutine soca_diffusion_multiply(self, dx)
   type(soca_increment),  intent(inout) :: dx
 
   real(kind=kind_real), allocatable :: tmp2d(:,:)
-  character(len=1024) :: str  
-  integer :: f, z
+  character(len=1024) :: str
+  integer :: f, z, grp, g, g2
 
   call oops_log%trace("soca_diffusion::multiply() starting", flush=.true.)
 
-  if (self%n_iter <= 0) then
+  if (.not. allocated(self%group) .or. .not. allocated(self%group_mapping)) then
     ! uninitialized, calibrate or read should have been called before now
-    call abor1_ftn("ERROR: soca_diffusion has not be initialized.")
+    call abor1_ftn("ERROR: soca_diffusion has not been initialized.")
   end if
-
+  
   allocate(tmp2d(DOMAIN_WITH_HALO))
 
   do f=1, size(dx%fields)
+    ! find the group associated with this variable
+    ! TODO, simplify this
+    call oops_log%debug("running multiply on "//dx%fields(f)%name)
+    grp = -1
+    do g=1, size(self%group_mapping)
+      if (self%group_mapping(g)%variables%has(dx%fields(f)%name)) then
+        do g2=1, size(self%group)
+          if (self%group(g2)%name == self%group_mapping(g)%group_name) then
+            grp = g2
+          end if
+        end do
+      end if
+    end do
+    if (grp == -1) then
+      call abor1_ftn("ERROR: could not find a valid group for the variable "//dx%fields(f)%name)
+    end if
+
     do z = 1, dx%fields(f)%nz
       tmp2d = dx%fields(f)%val(:,:,z)
-      call self%multiply_2D(tmp2d)
+      call self%multiply_2D(tmp2d, self%group(grp))
       ! NOTE: this is here because the SABERadjoint test doesn't take into account the halo correctly
       ! so we have to leave the halo alone
       dx%fields(f)%val(DOMAIN,z) = tmp2d(DOMAIN)
@@ -303,43 +385,46 @@ end subroutine
 
 ! ------------------------------------------------------------------------------
 ! perform horizontal diffusion on a single level
-subroutine soca_diffusion_multiply_2D(self, field)
+subroutine soca_diffusion_multiply_2D(self, field, params)
   class(soca_diffusion), intent(inout) :: self
   real(kind=kind_real), allocatable :: field(:,:)
+  type(soca_diffusion_group_params), intent(in) :: params
 
-  call self%multiply_2D_ad(field)
-  call self%multiply_2D_tl(field)
+  call self%multiply_2D_ad(field, params)
+  call self%multiply_2D_tl(field, params)
 
 end subroutine
 
 ! ------------------------------------------------------------------------------
 
-subroutine soca_diffusion_multiply_2D_tl(self, field)
+subroutine soca_diffusion_multiply_2D_tl(self, field, params)
   class(soca_diffusion), intent(inout) :: self
-  real(kind=kind_real), allocatable :: field(:,:) 
+  real(kind=kind_real), allocatable :: field(:,:)
+  type(soca_diffusion_group_params), intent(in) :: params
 
   ! apply grid metric
   field = field * self%inv_sqrt_area
 
   ! apply M/2 iterations of diffusion
-  call self%diffusion_steps(field, self%n_iter / 2)
+  call self%diffusion_steps_tl(field, params)
 
   ! apply normalization
-  field = field * self%normalization
+  field = field * params%normalization
   
 end subroutine
 
 ! ------------------------------------------------------------------------------
 
-subroutine soca_diffusion_multiply_2D_ad(self, field)
+subroutine soca_diffusion_multiply_2D_ad(self, field, params)
   class(soca_diffusion), intent(inout) :: self
-  real(kind=kind_real), allocatable :: field(:,:)  
+  real(kind=kind_real), allocatable :: field(:,:)
+  type(soca_diffusion_group_params), intent(in) :: params
 
   ! apply normalization
-  field = field * self%normalization
+  field = field * params%normalization
 
   ! apply M/2 iterations of diffusion
-  call self%diffusion_steps_ad(field, self%n_iter / 2)
+  call self%diffusion_steps_ad(field, params)
 
   ! apply grid metric
   field = field * self%inv_sqrt_area
@@ -347,15 +432,19 @@ subroutine soca_diffusion_multiply_2D_ad(self, field)
 end subroutine
 
 ! ------------------------------------------------------------------------------
-
-subroutine soca_diffusion_diffusion_steps(self, field, niter)
+! Apply half the required iterations of diffusion
+subroutine soca_diffusion_diffusion_steps_tl(self, field, params)
   class(soca_diffusion), intent(inout) :: self
   real(kind=kind_real), allocatable, intent(inout) :: field(:,:)
-  integer, intent(in) :: niter
+  type(soca_diffusion_group_params), intent(in) :: params
 
   real(kind=kind_real), allocatable :: flux_x(:,:), flux_y(:,:), hfac(:,:)
-  integer :: i, j, iter
+  integer :: i, j, iter, niter
  
+  ! note, number of iterations is half of what is required
+  ! (the other half come from application of adjoint)
+  niter = params%n_iter / 2
+
   ! NOTE: flux_x(i,j) is the flux through the western edge of the grid cell.
   !  this is opposite of MOM6 conventions where u(i,j) points are east of t(i,j) points.
   !  (dosen't really matter, just something to note)
@@ -364,7 +453,7 @@ subroutine soca_diffusion_diffusion_steps(self, field, niter)
   flux_x = 0.0
   flux_y = 0.0
 
-  ! calculate some needed constants
+  ! calculate some needed constants  (TODO, move to initialization?)
   allocate(hfac(DOMAIN_WITH_HALO))
   hfac = 0.0
   do j=LOOP_DOMAIN_J
@@ -378,13 +467,13 @@ subroutine soca_diffusion_diffusion_steps(self, field, niter)
       ! calculate diffusive flux on each edge of a grid box. masking out where there is land
     do j=LOOP_DOMAIN_J 
       do i=LOOP_DOMAIN_I+1 ! assume halo size is >= 1, and skip doing a halo update
-        flux_x(i,j) = self%pmon_u(i,j) * 0.5 * (self%KhDt(i,j) + self%KhDt(i-1,j)) * (field(i,j) - field(i-1,j))
+        flux_x(i,j) = self%pmon_u(i,j) * 0.5 * (params%KhDt(i,j) + params%KhDt(i-1,j)) * (field(i,j) - field(i-1,j))
         flux_x(i,j) = flux_x(i,j) * self%mask(i,j) * self%mask(i-1,j)
       end do
     end do
     do j=LOOP_DOMAIN_J+1 ! assume halo size is >= 1, and skip doing a halo update
       do i=LOOP_DOMAIN_I
-        flux_y(i,j) = self%pnom_v(i,j) * 0.5 * (self%KhDt(i,j) + self%KhDt(i,j-1)) * (field(i,j) - field(i,j-1))
+        flux_y(i,j) = self%pnom_v(i,j) * 0.5 * (params%KhDt(i,j) + params%KhDt(i,j-1)) * (field(i,j) - field(i,j-1))
         flux_y(i,j) = flux_y(i,j) * self%mask(i,j) * self%mask(i,j-1)
       end do
     end do
@@ -402,16 +491,20 @@ end subroutine
 
 
 ! ------------------------------------------------------------------------------
-subroutine soca_diffusion_diffusion_steps_ad(self, field, niter)
+subroutine soca_diffusion_diffusion_steps_ad(self, field, params)
   class(soca_diffusion), intent(inout) :: self
   real(kind=kind_real), allocatable, intent(inout) :: field(:,:) 
-  integer, intent(in) :: niter
+  type(soca_diffusion_group_params), intent(in) :: params
 
   real(kind=kind_real), allocatable :: wrk_old(:,:), wrk_new(:,:), tmp(:,:)
   real(kind=kind_real), allocatable :: flux_x(:,:), flux_y(:,:), hfac(:,:)
   real(kind=kind_real) :: adfac
-  integer :: i, j, iter
+  integer :: i, j, iter, niter
   
+  ! note, number of iterations is half of what is required
+  ! (the other half come from application of tl)
+  niter = params%n_iter / 2
+
   ! NOTE: flux_x(i,j) is the flux through the western edge of the grid cell.
   !  this is opposite of MOM6 conventions where u(i,j) points are east of t(i,j) points.
   !  (dosen't really matter, just something to note)
@@ -425,7 +518,7 @@ subroutine soca_diffusion_diffusion_steps_ad(self, field, niter)
   flux_x = 0.0
   flux_y = 0.0
 
-  ! calculate some needed constants
+  ! calculate some needed constants (TODO, move to initialization?)
   allocate(hfac(DOMAIN_WITH_HALO))
   hfac = 0.0
   do j=LOOP_DOMAIN_J
@@ -435,15 +528,12 @@ subroutine soca_diffusion_diffusion_steps_ad(self, field, niter)
   end do  
 
   ! adjoint of convoled solution  
-  ! TODO this should be called, why is it breaking?
-  !call mpp_update_domains_ad(field, self%geom%Domain%mpp_domain, complete=.true.)
   do j=LOOP_DOMAIN_J
     do i=LOOP_DOMAIN_I
       wrk_old(i,j) = wrk_old(i,j) + field(i,j)
       field(i,j) = 0.0
     end do
   end do
-
 
   ! integrate adjoint hz diffusion terms
   do iter=1,niter
@@ -470,7 +560,7 @@ subroutine soca_diffusion_diffusion_steps_ad(self, field, niter)
     do j=LOOP_DOMAIN_J+1
       do i=LOOP_DOMAIN_I
         flux_y(i,j) = flux_y(i,j) * self%mask(i,j) * self%mask(i,j-1)
-        adfac = self%pnom_v(i,j) * 0.5*(self%KhDt(i,j-1)+self%KhDt(i,j)) * flux_y(i,j)
+        adfac = self%pnom_v(i,j) * 0.5*(params%KhDt(i,j-1)+params%KhDt(i,j)) * flux_y(i,j)
         wrk_old(i,j-1) = wrk_old(i,j-1) - adfac
         wrk_old(i,j  ) = wrk_old(i,j  ) + adfac
         flux_y(i,j) = 0.0
@@ -479,7 +569,7 @@ subroutine soca_diffusion_diffusion_steps_ad(self, field, niter)
     do j=LOOP_DOMAIN_J
       do i=LOOP_DOMAIN_I+1
         flux_x(i,j) = flux_x(i,j) * self%mask(i,j) * self%mask(i-1,j)
-        adfac = self%pmon_u(i,j) * 0.5*(self%KhDt(i-1,j)+self%KhDt(i,j)) * flux_x(i,j)
+        adfac = self%pmon_u(i,j) * 0.5*(params%KhDt(i-1,j)+params%KhDt(i,j)) * flux_x(i,j)
         wrk_old(i-1,j) = wrk_old(i-1,j) - adfac
         wrk_old(i,  j) = wrk_old(i,  j) + adfac
         flux_x(i,j) = 0.0
@@ -500,8 +590,9 @@ end subroutine
 ! You probably don't want to use this, except for testing. 
 ! Use randomization instead.
 ! ------------------------------------------------------------------------------
-subroutine soca_diffusion_calc_norm_bruteforce(self)
+subroutine soca_diffusion_calc_norm_bruteforce(self, params)
   class(soca_diffusion), intent(inout) :: self
+  type(soca_diffusion_group_params), intent(inout) :: params
 
   integer :: i, j
   logical :: local
@@ -512,14 +603,14 @@ subroutine soca_diffusion_calc_norm_bruteforce(self)
   allocate(r_tmp(DOMAIN_WITH_HALO))
   allocate(norm(DOMAIN_WITH_HALO))
 
-  self%normalization = 1.0
+  params%normalization = 1.0
   do j=self%geom%jsg, self%geom%jeg
     do i=self%geom%isg, self%geom%ieg
       r_tmp = 0.0
       local = i >= self%geom%isc .and. i <= self%geom%iec .and. &
               j >= self%geom%jsc .and. j <= self%geom%jec
       if (local) r_tmp(i,j) = 1.0
-      call self%multiply_2D(r_tmp)
+      call self%multiply_2D(r_tmp, params)
       if (local) then
         if(self%mask(i,j) == 0.0) cycle
         norm(i,j) = 1.0 / sqrt(r_tmp(i,j))
@@ -527,7 +618,7 @@ subroutine soca_diffusion_calc_norm_bruteforce(self)
     end do
   end do
   call mpp_update_domains(norm, self%geom%Domain%mpp_domain, complete=.true.)
-  self%normalization = norm
+  params%normalization = norm
 end subroutine
 
 
@@ -538,9 +629,10 @@ end subroutine
 !
 ! Typically a good number of iterations is around 10,000
 ! ------------------------------------------------------------------------------
-subroutine soca_diffusion_calc_norm_randomization(self, iter)
+subroutine soca_diffusion_calc_norm_randomization(self, iter, params)
   class(soca_diffusion), intent(inout) :: self
   integer, intent(in) :: iter
+  type(soca_diffusion_group_params), intent(inout) :: params
 
   real(kind=kind_real), allocatable :: field(:,:)
   real(kind=kind_real), allocatable :: s(:,:)
@@ -556,13 +648,12 @@ subroutine soca_diffusion_calc_norm_randomization(self, iter)
 
   s = 0.0
   m = 0.0
-
-  n10pct = iter/10
+  n10pct = iter/10 !< ouput info to screen every 10% 
 
   call oops_log%info("  Calculating normalization via randomization")
   do n=1,iter
     if (mod(n, n10pct) == 0) then
-      write (str, *) "    normalization: ", 10*n/n10pct, "% "
+      write (str, *) "    normalization: ", 10*n/n10pct, "% complete"
       call oops_log%info(str, flush=.true.)
     end if
   
@@ -575,7 +666,7 @@ subroutine soca_diffusion_calc_norm_randomization(self, iter)
     call normal_distribution(field, 0.0_kind_real, 1.0_kind_real, rnd, .true.) 
 
     ! apply the diffusion TL
-    call self%multiply_2D_tl(field)
+    call self%multiply_2D_tl(field, params)
 
     ! keep track of the stats needed for a running variance calculation
     ! (Welford 1962 algorithm)
@@ -588,10 +679,9 @@ subroutine soca_diffusion_calc_norm_randomization(self, iter)
   field = (s/(iter-1)) 
 
   ! normalization (where ocean) is 1/sqrt(variance)
-  where (self%mask == 1.0)  self%normalization = 1.0 / sqrt(field)
+  where (self%mask == 1.0)  params%normalization = 1.0 / sqrt(field)
   
-  call mpp_update_domains(self%normalization, self%geom%Domain%mpp_domain, complete=.true.)
-
+  call mpp_update_domains(params%normalization, self%geom%Domain%mpp_domain, complete=.true.)
 end subroutine
 
 ! ------------------------------------------------------------------------------
@@ -601,16 +691,25 @@ subroutine soca_diffusion_write_params(self, filename)
   character(len=*),      intent(in)    :: filename
 
   type(restart_file_type) :: restart_file
-  integer :: idr
+  character(len=1024) :: str
+  integer :: idr, grp
 
-  ! read from file
-  call fms_io_init()  
-  idr = register_restart_field(restart_file, filename, "iterations", &
-    self%n_iter, domain=self%geom%Domain%mpp_domain)
-  idr = register_restart_field(restart_file, filename, "khdt", &
-    self%KhDt, domain=self%geom%Domain%mpp_domain)
-  idr = register_restart_field(restart_file, filename, "normalization", &
-    self%normalization, domain=self%geom%Domain%mpp_domain)  
+  ! write to file
+  call fms_io_init()
+  do grp=1,size(self%group)    
+    str = self%group(grp)%name // "@iterations"    
+    idr = register_restart_field(restart_file, filename, str, &
+      self%group(grp)%n_iter, domain=self%geom%Domain%mpp_domain)
+
+    str = self%group(grp)%name // "@khdt"
+    idr = register_restart_field(restart_file, filename, str, &
+      self%group(grp)%KhDt, domain=self%geom%Domain%mpp_domain)
+  
+    str = self%group(grp)%name // "@normalization"
+    idr = register_restart_field(restart_file, filename, str, &
+      self%group(grp)%normalization, domain=self%geom%Domain%mpp_domain)  
+  end do 
+  
   call save_restart(restart_file, directory='')
   call free_restart_type(restart_file)
   call fms_io_exit()  
@@ -623,23 +722,45 @@ subroutine soca_diffusion_read_params(self, filename)
   character(len=*),      intent(in)    :: filename
   
   type(restart_file_type) :: restart_file
-  integer :: idr
+  integer :: idr, grp
+  character(len=1024) :: str  
+
+  ! make sure we havent read in parameters already
+  if ( allocated(self%group)) then
+    call abor1_ftn("ERROR: soca_diffusion has already been initialized.")
+  end if
+
+  allocate(self%group(size(self%group_mapping)))
 
   ! read from file
   call fms_io_init()
-  idr = register_restart_field(restart_file, filename, "iterations", &
-    self%n_iter, domain=self%geom%Domain%mpp_domain)
-  idr = register_restart_field(restart_file, filename, "khdt", &
-    self%KhDt, domain=self%geom%Domain%mpp_domain)
-  idr = register_restart_field(restart_file, filename, "normalization", &
-    self%normalization, domain=self%geom%Domain%mpp_domain)  
+  do grp=1,size(self%group)
+    self%group(grp)%name = trim(self%group_mapping(grp)%group_name)
+    allocate(self%group(grp)%KhDt(DOMAIN_WITH_HALO))
+    allocate(self%group(grp)%normalization(DOMAIN_WITH_HALO))
+
+    str = self%group(grp)%name // "@iterations"    
+    idr = register_restart_field(restart_file, filename, str, &
+      self%group(grp)%n_iter, domain=self%geom%Domain%mpp_domain)
+
+    str = self%group(grp)%name // "@khdt"
+    idr = register_restart_field(restart_file, filename, str, &
+      self%group(grp)%KhDt, domain=self%geom%Domain%mpp_domain)
+  
+    str = self%group(grp)%name // "@normalization"
+    idr = register_restart_field(restart_file, filename, str, &
+      self%group(grp)%normalization, domain=self%geom%Domain%mpp_domain)
+  end do
+  
   call restore_state(restart_file, directory='')
   call free_restart_type(restart_file)
   call fms_io_exit()
 
   ! update halos
-  call mpp_update_domains(self%normalization, self%geom%Domain%mpp_domain, complete=.true.)
-  call mpp_update_domains(self%KhDt, self%geom%Domain%mpp_domain, complete=.true.)
+  do grp=1,size(self%group)
+    call mpp_update_domains(self%group(grp)%normalization, self%geom%Domain%mpp_domain, complete=.true.)
+    call mpp_update_domains(self%group(grp)%KhDt, self%geom%Domain%mpp_domain, complete=.true.)
+  end do
 end subroutine
 
 ! ------------------------------------------------------------------------------
