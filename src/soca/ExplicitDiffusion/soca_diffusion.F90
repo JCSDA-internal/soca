@@ -251,8 +251,10 @@ end subroutine
 subroutine soca_diffusion_calibrate(self, f_conf)
   class(soca_diffusion),  intent(inout) :: self
   type(fckit_configuration), intent(in) :: f_conf
-
+  
+  type(fckit_configuration) :: params_conf, norm_conf
   type(fckit_configuration), allocatable :: group_conf(:)
+  character(len=1024) :: str
   integer :: ngroup, grp
 
   call oops_log%trace("soca_diffusion::calibrate() starting", flush=.true.)
@@ -260,12 +262,17 @@ subroutine soca_diffusion_calibrate(self, f_conf)
   
   ! initialize the groups
   ! TODO move this to init() so we don't have to do the same thing when reading?    
+  call f_conf%get_or_die('normalization', norm_conf)
   call f_conf%get_or_die('scales', group_conf)
   ngroup = size(group_conf)
   allocate(self%group(ngroup))
   do grp=1,ngroup
     ! get group name
     call group_conf(grp)%get_or_die("name", self%group(grp)%name)
+    write (str, '(A,I2,A,I2)') " group ", grp, " of ", size(self%group)
+    call oops_log%info(str)
+    write (str, *) " name: ", self%group(grp)%name
+    call oops_log%info(str)  
 
     ! allocate space and initialize with safe values    
     allocate(self%group(grp)%KhDt(DOMAIN_WITH_HALO))
@@ -276,224 +283,208 @@ subroutine soca_diffusion_calibrate(self, f_conf)
     self%group(grp)%KvDt = 0.0
     self%group(grp)%normalization_hz = 1.0
     self%group(grp)%normalization_vt = 1.0
+
+    ! TODO allow skipping if hz is already calibrated
+    ! Do 2D horizontal calibration (if needed)    
+    if(group_conf(grp)%get("horizontal", params_conf)) then
+      call self%calibrate_hz(self%group(grp), params_conf, norm_conf)
+    else
+      call abor1_ftn("ERROR: reading in of existing horizontal parameters not yet supported.")
+    end if
+
+    ! Do 1D vertical calibration (if needed)
+    if(group_conf(grp)%get("vertical", params_conf)) then
+      ! note, for now we force vertical to use brute force normalization, that 
+      ! might change in the future though
+      call self%calibrate_vt(self%group(grp), params_conf)
+    end if
   end do
-
-  ! TODO allow skipping if hz is already calibrated
-
-  ! Do 2D horizontal calibration (if needed)
-  call self%calibrate_hz(f_conf)
-
-  ! Do 1D vertical calibration (if needed)
-  call self%calibrate_vt(f_conf)
 
   call oops_log%trace("soca_diffusion::calibrate() done", flush=.true.)
 end subroutine
 
 ! ------------------------------------------------------------------------------
-subroutine soca_diffusion_calibrate_vt(self, f_conf)
-  class(soca_diffusion),  intent(inout) :: self
-  type(fckit_configuration), intent(in) :: f_conf  
+subroutine soca_diffusion_calibrate_vt(self, params, vt_conf)
+  class(soca_diffusion),              intent(inout) :: self
+  class(soca_diffusion_group_params), intent(inout) :: params
+  type(fckit_configuration),          intent(in)    :: vt_conf
 
-  type(fckit_configuration), allocatable :: group_conf(:)
-  type(fckit_configuration) :: vt_conf
   real(kind=kind_real) :: stats(3) ! min, max, mean  
   real(kind=kind_real), allocatable :: vt_scales(:,:,:), r_tmp(:,:,:)
   real(kind=kind_real) :: fixed_scale
-  integer :: i, j, grp  
+  integer :: i, j
   character(len=1024) :: str  
   logical :: b
+
+  call oops_log%info("  vertical calibration:")
 
   allocate(vt_scales(DOMAIN_WITH_HALO, self%geom%nzo))
   allocate(r_tmp(DOMAIN_WITH_HALO, self%geom%nzo))
 
-  call f_conf%get_or_die('scales', group_conf)
+  ! Get input lengthscales. Either from:
+  !  1) a fixed length scale used globally
+  !  2) read in from a file
+  ! the result is hz_scales containing the length scales (defined as 1 sigma of a guassian)
+  vt_scales = 1e10  
+  if (.not. vt_conf%has("fixed value") .neqv. vt_conf%has("from file")) then
+    ! that was an XOR opperation above, if you were curious
+    call abor1_ftn("ERROR: calibration.scales[] must define 1 of 'fixed value' or 'from file'")
+  end if
+  if ( vt_conf%has("fixed value")) then
+    ! used a single fixed value globally
+    call oops_log%info("    Using fixed length scales")
+    call vt_conf%get_or_die("fixed value", fixed_scale)
+    vt_scales = fixed_scale
+  else
+    call abor1_ftn("ERROR: reading vt scales from file not yet supported")
+  end if
+  call vt_conf%get_or_die("as gaussian", b)
+  write (str,*) "   input values as gaussian (vs GC half width): ", b
+  call oops_log%info(str)
+  if (.not. b) then
+    ! by default, a gaspari cohn half width is expected in the config.
+    ! (but the rest of this code asssumes gaussian 1 sigma)
+    ! Do the conversion if needed
+    vt_scales = vt_scales / 3.57_kind_real
+  end if    
 
-  ! set the vertical scales, in units of number of levels
-  do grp=1,size(self%group)
-    if(.not. group_conf(grp)%get("vertical", vt_conf)) cycle
-
-    write (str, *) "Group ", grp, " of ", size(self%group)
-    call oops_log%info(str)
-    write (str, *) " name: ", self%group(grp)%name
-    call oops_log%info(str)  
-
-    ! Get input lengthscales. Either from:
-    !  1) a fixed length scale used globally
-    !  2) read in from a file
-    ! the result is hz_scales containing the length scales (defined as 1 sigma of a guassian)
-    vt_scales = 1e10  
-    if (.not. vt_conf%has("fixed value") .neqv. vt_conf%has("from file")) then
-      ! that was an XOR opperation above, if you were curious
-      call abor1_ftn("ERROR: calibration.scales[] must define 1 of 'fixed value' or 'from file'")
-    end if
-    if ( vt_conf%has("fixed value")) then
-      ! used a single fixed value globally
-      call oops_log%info("  Using fixed length scales")
-      call vt_conf%get_or_die("fixed value", fixed_scale)
-      vt_scales = fixed_scale
-    else
-      call abor1_ftn("ERROR: reading vt scales from file not yet supported")
-    end if
-    call vt_conf%get_or_die("as gaussian", b)
-    write (str,*) " input values as gaussian (vs GC half width): ", b
-    call oops_log%info(str)
-    if (.not. b) then
-      ! by default, a gaspari cohn half width is expected in the config.
-      ! (but the rest of this code asssumes gaussian 1 sigma)
-      ! Do the conversion if needed
-      vt_scales = vt_scales / 3.57_kind_real
-    end if    
-
-    ! TODO make sure we are handling bottom mask
-    
-    ! print some stats
-    call self%calc_stats(vt_scales, stats)
-    write (str, *) " L_vt: min=", stats(1), "max=", stats(2), "mean=", stats(3)
-    call oops_log%info(str)
-
-    ! calculate the minimum number of iterations needed, rounding up to the
-    ! nearest even number.
-    !  M >= 2.0 *(L^2)
-    r_tmp = 0.0
-    do j = LOOP_DOMAIN_J
-      do i = LOOP_DOMAIN_I
-        if (self%mask(i,j) == 0.0) then
-          vt_scales(i,j,:) = 0.0 ! TODO remove this
-          cycle
-        end if
-        r_tmp(i,j,:) = 2.0 * vt_scales(i,j,:)**2
-      end do
-    end do
-    call self%calc_stats(r_tmp, stats)
-    i = ceiling(stats(2))
-    if (mod(i,2) == 1) i = i + 1
-    self%group(grp)%niter_vt = i
-    write (str, *) " minimum iterations: ", i
-    call oops_log%info(str)    
-
-    ! calculate KvDt based on scales and number of iterations
-    self%group(grp)%KvDt = vt_scales**2 / (2.0 * self%group(grp)%niter_vt)
-
-    ! calculate normalization
-    call oops_log%info("  Calculating vertical normalization...")
-    self%group(grp)%normalization_vt = 1.0
-    call self%calibrate_norm_vt(self%group(grp))
-  end do 
+  ! TODO make sure we are handling bottom mask
   
+  ! print some stats
+  call self%calc_stats(vt_scales, stats)
+  write (str, '(4X,A,EN10.1,A,EN10.1,A,EN10.1)') &
+      "L_vt: min=", stats(1), "  max=", stats(2), "  mean=", stats(3)
+  call oops_log%info(str)
+
+  ! calculate the minimum number of iterations needed, rounding up to the
+  ! nearest even number.
+  !  M >= 2.0 *(L^2)
+  r_tmp = 0.0
+  do j = LOOP_DOMAIN_J
+    do i = LOOP_DOMAIN_I
+      if (self%mask(i,j) == 0.0) then
+        vt_scales(i,j,:) = 0.0
+        cycle
+      end if
+      r_tmp(i,j,:) = 2.0 * vt_scales(i,j,:)**2
+    end do
+  end do
+  call self%calc_stats(r_tmp, stats)
+  i = ceiling(stats(2))
+  if (mod(i,2) == 1) i = i + 1
+  params%niter_vt = i
+  write (str, '(4X,A,I5)') "minimum iterations: ", i
+  call oops_log%info(str)    
+
+  ! calculate KvDt based on scales and number of iterations
+  params%KvDt = vt_scales**2 / (2.0 * params%niter_vt)
+
+  ! calculate normalization
+  call oops_log%info("    Calculating vertical normalization...")
+  params%normalization_vt = 1.0
+  call self%calibrate_norm_vt(params)
 end subroutine
 
 ! ------------------------------------------------------------------------------
-subroutine soca_diffusion_calibrate_hz(self, f_conf)
-  class(soca_diffusion),  intent(inout) :: self
-  type(fckit_configuration), intent(in) :: f_conf
+subroutine soca_diffusion_calibrate_hz(self, params, hz_conf, norm_conf)
+  class(soca_diffusion),              intent(inout) :: self
+  class(soca_diffusion_group_params), intent(inout) :: params
+  type(fckit_configuration),          intent(in)    :: hz_conf, norm_conf
 
-  type(fckit_configuration), allocatable :: group_conf(:)
-  type(fckit_configuration) :: hz_conf
   real(kind=kind_real) :: stats(3) ! min, max, mean  
   character(len=1024) :: str  
   character(len=:), allocatable :: str2, str3
-  integer :: i, j, idr, grp
+  integer :: i, j, idr
   type(restart_file_type) :: restart_file
   logical :: b
 
   real(kind=kind_real) :: fixed_scale
   real(kind=kind_real), allocatable :: hz_scales(:,:), r_tmp(:,:)
 
-  ! call oops_log%trace("soca_diffusion::calibrate() starting", flush=.true.)
-  ! call oops_log%info("ExplicitDiffusion: running calibration")
+  call oops_log%info("  horizontal calibration:")
   
   ! allocate things for use later in the loops
   allocate(hz_scales(DOMAIN_WITH_HALO))
   allocate(r_tmp(DOMAIN_WITH_HALO))
-
-  call f_conf%get_or_die('scales', group_conf)
-
-  ! perform calibration once for each variable group
-  do grp=1,size(self%group)
-    if(.not. group_conf(grp)%get("horizontal", hz_conf)) cycle
-
-    write (str, *) "Group ", grp, " of ", size(self%group)
-    call oops_log%info(str)
-    write (str, *) " name: ", self%group(grp)%name
-    call oops_log%info(str)  
     
-    ! Get input lengthscales. Either from:
-    !  1) a fixed length scale used globally
-    !  2) read in from a file
-    ! the result is hz_scales containing the length scales (defined as 1 sigma of a guassian)
-    hz_scales = 1e10  
-    if (.not. hz_conf%has("fixed value") .neqv. hz_conf%has("from file")) then
-      ! that was an XOR opperation above, if you were curious
-      call abor1_ftn("ERROR: calibration.scales[] must define 1 of 'fixed value' or 'from file'")
-    end if
-    if ( hz_conf%has("fixed value")) then
-      ! used a single fixed value globally
-      call oops_log%info("  Using fixed length scales")
-      call hz_conf%get_or_die("fixed value", fixed_scale)
-      hz_scales = fixed_scale
-    else
-      ! read lengths from a file. a 2d field is expected
-      call oops_log%info("  Reading length scales from file")
-      call hz_conf%get_or_die("from file.filename", str2)
-      call hz_conf%get_or_die("from file.variable name", str3)
-      call fms_io_init()
-      idr = register_restart_field(restart_file, str2, str3, &
-      hz_scales, domain=self%geom%Domain%mpp_domain)
-      call restore_state(restart_file, directory='')
-      call free_restart_type(restart_file)
-      call fms_io_exit()
-    end if
-    call hz_conf%get_or_die("as gaussian", b)
-    write (str,*) " input values as gaussian (vs GC half width): ", b
-    call oops_log%info(str)
-    if (.not. b) then
-      ! by default, a gaspari cohn half width is expected in the config.
-      ! (but the rest of this code asssumes gaussian 1 sigma)
-      ! Do the conversion if needed
-      hz_scales = hz_scales / 3.57_kind_real
-    end if
+  ! Get input lengthscales. Either from:
+  !  1) a fixed length scale used globally
+  !  2) read in from a file
+  ! the result is hz_scales containing the length scales (defined as 1 sigma of a guassian)
+  hz_scales = 1e10  
+  if (.not. hz_conf%has("fixed value") .neqv. hz_conf%has("from file")) then
+    ! that was an XOR opperation above, if you were curious
+    call abor1_ftn("ERROR: calibration.scales[] must define 1 of 'fixed value' or 'from file'")
+  end if
+  if ( hz_conf%has("fixed value")) then
+    ! used a single fixed value globally
+    call oops_log%info("    Using fixed length scales")
+    call hz_conf%get_or_die("fixed value", fixed_scale)
+    hz_scales = fixed_scale
+  else
+    ! read lengths from a file. a 2d field is expected
+    call oops_log%info("    Reading length scales from file")
+    call hz_conf%get_or_die("from file.filename", str2)
+    call hz_conf%get_or_die("from file.variable name", str3)
+    call fms_io_init()
+    idr = register_restart_field(restart_file, str2, str3, &
+    hz_scales, domain=self%geom%Domain%mpp_domain)
+    call restore_state(restart_file, directory='')
+    call free_restart_type(restart_file)
+    call fms_io_exit()
+  end if
+  call hz_conf%get_or_die("as gaussian", b)
+  write (str,*) "   input values as gaussian (vs GC half width): ", b
+  call oops_log%info(str)
+  if (.not. b) then
+    ! by default, a gaspari cohn half width is expected in the config.
+    ! (but the rest of this code asssumes gaussian 1 sigma)
+    ! Do the conversion if needed
+    hz_scales = hz_scales / 3.57_kind_real
+  end if
 
-    ! make sure halos are up to date
-    call mpp_update_domains(hz_scales, self%geom%Domain%mpp_domain, complete=.true.)
+  ! make sure halos are up to date
+  call mpp_update_domains(hz_scales, self%geom%Domain%mpp_domain, complete=.true.)
 
-    ! print some stats
-    call self%calc_stats(hz_scales, stats)
-    write (str, *) " L_hz: min=", stats(1), "max=", stats(2), "mean=", stats(3)
-    call oops_log%info(str)
+  ! print some stats
+  call self%calc_stats(hz_scales, stats)
+  write (str, '(4X,A,EN10.1,A,EN10.1,A,EN10.1)') &
+      "L_hz: min=", stats(1), "  max=", stats(2), "  mean=", stats(3)
+  call oops_log%info(str)
 
-    ! calculate the minimum number of iterations needed, rounding up to the
-    ! nearest even number.
-    !  M >= 2.0 *(L^2 / (1/dx^2 + 1/dy^2))
-    r_tmp = 0.0
-    do j = LOOP_DOMAIN_J
-      do i = LOOP_DOMAIN_I
-        if (self%mask(i,j) == 0.0 ) cycle
-        r_tmp(i,j) = 2.0 * hz_scales(i,j)**2 * (1.0/(self%dx(i,j)**2) + 1.0/(self%dy(i,j)**2))
-      end do
+  ! calculate the minimum number of iterations needed, rounding up to the
+  ! nearest even number.
+  !  M >= 2.0 *(L^2 / (1/dx^2 + 1/dy^2))
+  r_tmp = 0.0
+  do j = LOOP_DOMAIN_J
+    do i = LOOP_DOMAIN_I
+      if (self%mask(i,j) == 0.0 ) cycle
+      r_tmp(i,j) = 2.0 * hz_scales(i,j)**2 * (1.0/(self%dx(i,j)**2) + 1.0/(self%dy(i,j)**2))
     end do
-    call self%calc_stats(r_tmp, stats)
-    i = ceiling(stats(2))
-    if (mod(i,2) == 1) i = i + 1
-    self%group(grp)%niter_hz = i
-    write (str, *) " minimum iterations: ", i
-    call oops_log%info(str)
-
-    ! calculate KhDt based on scales and number of iterations    
-    self%group(grp)%KhDt = hz_scales**2 / (2.0 * self%group(grp)%niter_hz)
-
-    ! calculate normalization
-    call oops_log%info("  Calculating horizontal normalization...")
-    call f_conf%get_or_die("normalization.method", str2)
-    self%group(grp)%normalization_hz = 1.0
-    if (str2 == "brute force") then
-      call self%calibrate_norm_hz_bruteforce(self%group(grp))
-    else if (str2 == "randomization") then
-      call f_conf%get_or_die("normalization.iterations", i)
-      call self%calibrate_norm_hz_randomization(i, self%group(grp))
-    else
-      call abor1_ftn("ERROR: normalization.method must be 'brute force' or 'randomization'")
-    end if
   end do
+  call self%calc_stats(r_tmp, stats)
+  i = ceiling(stats(2))
+  if (mod(i,2) == 1) i = i + 1
+  params%niter_hz = i
+  write (str, '(4X,A,I5)') "minimum iterations: ", i
+  call oops_log%info(str)
+
+  ! calculate KhDt based on scales and number of iterations    
+  params%KhDt = hz_scales**2 / (2.0 * params%niter_hz)
+
+  ! calculate normalization
+  call oops_log%info("    Calculating horizontal normalization:")
+  call norm_conf%get_or_die("method", str2)
+  call oops_log%info("      method: "//str2)
+  params%normalization_hz = 1.0
+  if (str2 == "brute force") then
+    call self%calibrate_norm_hz_bruteforce(params)
+  else if (str2 == "randomization") then
+    call norm_conf%get_or_die("iterations", i)
+    call self%calibrate_norm_hz_randomization(i, params)
+  else
+    call abor1_ftn("ERROR: normalization.method must be 'brute force' or 'randomization'")
+  end if
 end subroutine
 
 ! ------------------------------------------------------------------------------
@@ -839,18 +830,30 @@ subroutine soca_diffusion_calibrate_norm_hz_bruteforce(self, params)
   class(soca_diffusion), intent(inout) :: self
   type(soca_diffusion_group_params), intent(inout) :: params
 
-  integer :: i, j
+  integer :: i, j, n, n10pct
+  character(len=1024) :: str  
   logical :: local
   real(kind=kind_real), allocatable :: r_tmp(:,:), norm(:,:)
 
-  call oops_log%info("  Calculating normalization with BRUTEFORCE (eeeek!)")
+  call oops_log%info("WARNING: make sure you really want to be using bruteforce!")
 
   allocate(r_tmp(DOMAIN_WITH_HALO))
   allocate(norm(DOMAIN_WITH_HALO))
 
+  n=1
+  n10pct = (self%geom%jeg-self%geom%jsg+1) * (self%geom%ieg-self%geom%isg+1) / 10
   params%normalization_hz = 1.0
+  call oops_log%info("      normalization progress: ")
   do j=self%geom%jsg, self%geom%jeg
     do i=self%geom%isg, self%geom%ieg
+
+      if (mod(n, n10pct) == 0) then
+        write (str, '(8X,I3,A)') 10*n/n10pct, "%"
+        ! hmm, odd, it doesn't flush if I set newl=.false.
+        call oops_log%info(str)
+      end if
+      n = n + 1
+
       r_tmp = 0.0
       local = i >= self%geom%isc .and. i <= self%geom%iec .and. &
               j >= self%geom%jsc .and. j <= self%geom%jec
@@ -922,11 +925,12 @@ subroutine soca_diffusion_calibrate_norm_hz_randomization(self, iter, params)
   m = 0.0
   n10pct = iter/10 !< ouput info to screen every 10% 
 
-  call oops_log%info("  Calculating normalization via randomization")
+  call oops_log%info("      normalization progress: ")
   do n=1,iter
     if (mod(n, n10pct) == 0) then
-      write (str, *) "    normalization: ", 10*n/n10pct, "% complete"
-      call oops_log%info(str, flush=.true.)
+      write (str, '(8X,I3,A)') 10*n/n10pct, "%"
+      ! hmm, odd, it doesn't flush if I set newl=.false.
+      call oops_log%info(str)
     end if
   
     ! create a random vector
