@@ -27,8 +27,9 @@ initial condition:
   ocn_filename: MOM.res.nc
   state variables: [socn, tocn, ssh, hocn, uocn, vocn]
 
-window begin: 2018-04-15T00:00:00Z
-window length: PT3H
+time window:
+  begin: 2018-04-15T00:00:00Z
+  length: PT3H
 forecast length: PT3H
 
 observations:
