@@ -30,12 +30,10 @@ namespace soca {
     // Set ATLAS lonlat and function space (with and without halos)
     atlas::FieldSet lonlat;
     soca_geo_lonlat_f90(keyGeom_, lonlat.get());
-    functionSpace_ = atlas::functionspace::PointCloud(lonlat->field("lonlat"));
-    functionSpaceIncHalo_ = atlas::functionspace::PointCloud(lonlat->field("lonlat_inc_halos"));
+    functionSpace_ = atlas::functionspace::PointCloud(lonlat->field("lonlat_inc_halos"));
 
     // Set ATLAS function space pointer in Fortran
-    soca_geo_set_atlas_functionspace_pointer_f90(
-      keyGeom_, functionSpace_.get(), functionSpaceIncHalo_.get());
+    soca_geo_set_atlas_functionspace_pointer_f90(keyGeom_, functionSpace_.get());
 
     // Fill ATLAS fieldset
     soca_geo_to_fieldset_f90(keyGeom_, fields_.get());
@@ -57,9 +55,7 @@ namespace soca {
     soca_geo_clone_f90(keyGeom_, key_geo);
 
     functionSpace_ = atlas::functionspace::PointCloud(other.functionSpace_->lonlat());
-    functionSpaceIncHalo_ = atlas::functionspace::PointCloud(other.functionSpaceIncHalo_->lonlat());
-    soca_geo_set_atlas_functionspace_pointer_f90(keyGeom_, functionSpace_.get(),
-                                                 functionSpaceIncHalo_.get());
+    soca_geo_set_atlas_functionspace_pointer_f90(keyGeom_, functionSpace_.get());
 
     fields_ = atlas::FieldSet();
     for (int jfield = 0; jfield < other.fields_->size(); ++jfield) {

@@ -132,7 +132,7 @@ type, public :: soca_geom
     character(len=:), allocatable :: rossby_file !< filename of rossby radius input file (if used)
 
     type(fckit_mpi_comm) :: f_comm !< MPI communicator
-    type(atlas_functionspace_pointcloud) :: functionspace
+    ! type(atlas_functionspace_pointcloud) :: functionspace
     type(atlas_functionspace_pointcloud) :: functionspaceInchalo
 
 
@@ -275,7 +275,7 @@ subroutine soca_geom_end(self)
   if (allocated(self%h_zstar))       deallocate(self%h_zstar)
   if (allocated(self%valid_halo_mask)) deallocate(self%valid_halo_mask)
   nullify(self%Domain)
-  call self%functionspace%final()
+  ! call self%functionspace%final()
   call self%functionspaceIncHalo%final()
 
 end subroutine soca_geom_end

@@ -69,8 +69,8 @@ namespace soca {
       const int& toFortran() const {return keyGeom_;}
       const eckit::mpi::Comm & getComm() const {return comm_;}
 
-      const atlas::FunctionSpace & functionSpace() const {return functionSpaceIncHalo_;}
-      atlas::FunctionSpace & functionSpace() {return functionSpaceIncHalo_;}
+      const atlas::FunctionSpace & functionSpace() const {return functionSpace_;}
+      atlas::FunctionSpace & functionSpace() {return functionSpace_;}
       const atlas::FieldSet & fields() const {return fields_;}
       atlas::FieldSet & fields() {return fields_;}
 
@@ -85,7 +85,6 @@ namespace soca {
       const eckit::mpi::Comm & comm_;
       FmsInput fmsinput_;
       atlas::FunctionSpace functionSpace_;
-      atlas::FunctionSpace functionSpaceIncHalo_;
       atlas::FieldSet fields_;
   };
   // -----------------------------------------------------------------------------
