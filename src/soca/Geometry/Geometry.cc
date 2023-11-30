@@ -94,7 +94,7 @@ namespace soca {
       functionSpace_ = atlas::functionspace::NodeColumns(mesh, config);
       std::cout << "DBG END" << std::endl;
 
-      // ASSERT(1==2);
+      ASSERT(1==2);
     }
 
     // // Set ATLAS lonlat and function space (with and without halos)

@@ -24,7 +24,8 @@ use MOM_diag_remap,  only : diag_remap_ctrl, diag_remap_init, diag_remap_configu
 use MOM_domains, only : MOM_domain_type
 use MOM_EOS,         only : EOS_type
 use mpp_domains_mod, only : mpp_get_compute_domain, mpp_get_data_domain, &
-                            mpp_get_global_domain, mpp_update_domains
+                            mpp_get_global_domain, mpp_update_domains, &
+                            CYCLIC_GLOBAL_DOMAIN, FOLD_NORTH_EDGE                            
 ! soca modules
 use soca_fields_metadata_mod, only : soca_fields_metadata
 use soca_mom6, only: soca_mom6_config, soca_mom6_init, soca_geomdomain_init
@@ -169,6 +170,8 @@ type, public :: soca_geom
     !> \copybrief soca_geom_write \see soca_geom_write
     procedure :: write => soca_geom_write
 
+    ! TODO make private
+    procedure :: mesh_valid_nodes_cells => soca_geom_mesh_valid_nodes_cells
 end type soca_geom
 
 ! ------------------------------------------------------------------------------
@@ -1094,5 +1097,41 @@ subroutine soca_geom_find_invalid_halo(self)
 end subroutine soca_geom_find_invalid_halo
 
 ! ------------------------------------------------------------------------------
+! Get a 2d array of the valid nodes / cells that are to be used on this PE
+! for ATLAS mesh generation.
+! We assume that owned cells (quads) are generated north and east of the PE's owned nodes (vertices)
+subroutine soca_geom_mesh_valid_nodes_cells(self, nodes, cells)
+  class(soca_geom),   intent(inout) :: self
+  logical, allocatable, intent(out) :: nodes(:,:), cells(:,:)
+
+  integer :: i
+
+  allocate(nodes(self%isc:self%iec+1, self%jsc:self%jec+1))
+  allocate(cells(self%isc:self%iec, self%jsc:self%jec))
+
+  nodes = .true.
+  cells = .true.
+
+  if (iand(self%domain%Y_FLAGS, FOLD_NORTH_EDGE) /= 0 .and. self%jec == self%domain%NJGLOBAL) then
+    ! we are at the tripolar fold
+    do i=self%isc, self%iec+1
+      if (i >= self%domain%NIGLOBAL/2) then
+        nodes(i, self%jec+1) = .false.
+      end if
+    end do
+    do i=self%isc, self%iec
+      if (i >= self%domain%NIGLOBAL/2) then
+        cells(i, self%jec) = .false.
+      end if
+    end do
+
+  end if 
+
+  ! TODO do a similar test for the east boundary if not cyclic?
+  ! if (iand(self%domain%X_FLAGS, CYCLIC_GLOBAL_DOMAIN) ==0 .and. self%iec == self%domain%NIGLOBAL) then
+  !   ! TODO do something if domain is not cyclic and we are at the western boundary?
+  ! end if
+
+end subroutine
 
 end module soca_geom_mod

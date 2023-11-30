@@ -15,7 +15,6 @@ use oops_variables_mod, only: oops_variables
 use kinds, only: kind_real
 
 use mpp_domains_mod, only : mpp_update_domains
-use mpp_domains_mod, only : CYCLIC_GLOBAL_DOMAIN, FOLD_NORTH_EDGE
 
 ! soca modules
 use soca_geom_mod, only: soca_geom
@@ -275,33 +274,14 @@ subroutine soca_geo_get_mesh_size_c(c_key_self, c_nodes, c_quads) bind(c, name='
   integer(c_int), intent(out) :: c_nodes, c_quads
 
   type(soca_geom), pointer :: self
+  logical, allocatable :: valid_nodes(:,:), valid_cells(:,:)
 
   call soca_geom_registry%get(c_key_self, self)
   
-  ! assume we are building a mesh with owned cells that extend to the east and north of the owned vertices
-  c_nodes = (self%iec-self%isc + 2) * (self%jec-self%jsc + 2)
-  c_quads = (self%iec-self%isc + 1) * (self%jec-self%jsc + 1)
+  call self%mesh_valid_nodes_cells(valid_nodes, valid_cells)
+  c_nodes = count(valid_nodes)
+  c_quads = count(valid_cells)
 
-  ! adjust that number depending on specific grid configurations:
-  ! ----------------------------------------------------------------
-
-  ! if this PE has a tripolar fold at the top.  
-  if (iand(self%domain%Y_FLAGS, FOLD_NORTH_EDGE) /= 0 .and. self%jec == self%domain%NJGLOBAL) then
-    ! By default, the PEs on the western half will extend a quad to the north, unless:
-    if (self%iec == self%domain%NIGLOBAL/2) then
-      ! This is the last PE on the west, touching the center, drop the top right 
-      c_nodes = c_nodes - 2
-      c_quads = c_quads - 1
-    else if(self%isc > self%domain%NIGLOBAL/2) then
-      ! This PE is on the east side, remove all points at the top
-      c_nodes = c_nodes - (self%iec-self%isc + 2)
-      c_quads = c_quads - (self%iec-self%isc + 1)
-    end if
-  end if
-
-  if (iand(self%domain%X_FLAGS, CYCLIC_GLOBAL_DOMAIN) ==0 .and. self%iec == self%domain%NIGLOBAL) then
-    ! TODO do something if domain is not cyclic and we are at the western boundary?
-  end if
 end subroutine
 
 ! ------------------------------------------------------------------------------
@@ -317,7 +297,7 @@ subroutine soca_geo_get_mesh_c(c_key_self, c_nodes, c_lon, c_lat, c_ghosts, c_gl
   integer :: idx, i, j
   integer :: nx, ny
   integer, allocatable :: global_idx(:,:), local_idx(:,:), partition(:,:)
-  logical, allocatable :: valid_vertex(:,:)
+  logical, allocatable :: valid_nodes(:,:), valid_cells(:,:)
   
   type(soca_geom), pointer :: self
 
@@ -349,23 +329,14 @@ subroutine soca_geo_get_mesh_c(c_key_self, c_nodes, c_lon, c_lat, c_ghosts, c_gl
   call mpp_update_domains(partition, self%Domain%mpp_domain)
 
   ! find which quads / vertices are we going to skip (in case of non cyclic or tripolar_fold special cases)
-  allocate(valid_vertex(self%isc:self%iec+1, self%jsc:self%jec+1))
-  valid_vertex = .true.
-  if (iand(self%domain%Y_FLAGS, FOLD_NORTH_EDGE) /= 0 .and. self%jec == self%domain%NJGLOBAL) then
-    ! we are at the tripolar fold
-    do i=self%isc, self%iec+1
-      if (i >= self%domain%NIGLOBAL/2) valid_vertex(i, self%jec+1) = .false.
-    end do
-  end if 
-  ! TODO do a similar test for the east boundary if not cyclic?
-
+  call self%mesh_valid_nodes_cells(valid_nodes, valid_cells)
 
   ! fill in the arrays
   c_ghosts = 1
   idx=1
   do j=self%jsc,self%jec+1
     do i=self%isc, self%iec+1
-      if (.not. valid_vertex(i,j)) cycle
+      if (.not. valid_nodes(i,j)) cycle
 
       c_lon(idx) = self%lon(i,j)
       c_lat(idx) = self%lat(i,j)
@@ -385,6 +356,7 @@ subroutine soca_geo_get_mesh_c(c_key_self, c_nodes, c_lon, c_lat, c_ghosts, c_gl
     ! TODO do a proper assert / error
     stop 42
   end if
+  
 end subroutine
 ! ------------------------------------------------------------------------------
 end module soca_geom_mod_c
