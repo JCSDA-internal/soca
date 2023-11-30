@@ -5,9 +5,15 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
+#include "atlas/field.h"
+#include "atlas/functionspace.h"
 #include "atlas/grid.h"
-#include "atlas/util/Config.h"
+#include "atlas/mesh/actions/BuildHalo.h"
+#include "atlas/mesh/Mesh.h"
+#include "atlas/mesh/MeshBuilder.h"
 
+
+#include "eckit/config/Configuration.h"
 #include "eckit/config/YAMLConfiguration.h"
 
 #include "soca/Geometry/Geometry.h"
@@ -26,25 +32,85 @@ namespace soca {
     fmsinput_.updateNameList();
 
     soca_geo_setup_f90(keyGeom_, &conf, &comm);
-
-    // Set ATLAS lonlat and function space (with and without halos)
-    atlas::FieldSet lonlat;
-    soca_geo_lonlat_f90(keyGeom_, lonlat.get());
-    functionSpace_ = atlas::functionspace::PointCloud(lonlat->field("lonlat_inc_halos"));
-
-    // Set ATLAS function space pointer in Fortran
-    soca_geo_set_atlas_functionspace_pointer_f90(keyGeom_, functionSpace_.get());
-
-    // Fill ATLAS fieldset
-    soca_geo_to_fieldset_f90(keyGeom_, fields_.get());
-
+    
     // messy, fix this
     // generate the grid ONLY if being run under the gridgen application.
     // also, if true, then don't bother with the kdtree generation in the next step.
     if (gen) {
       soca_geo_gridgen_f90(keyGeom_);
       return;
+    }    
+
+    // setup the atlas functionspace
+    {
+      using atlas::gidx_t;
+      using atlas::idx_t;
+      
+      int num_nodes=0;
+      int num_quad_elements=0;
+      soca_geo_get_mesh_size_f90(keyGeom_, num_nodes, num_quad_elements);
+      num_quad_elements=0;
+     
+      std::vector<double> lons(num_nodes);
+      std::vector<double> lats(num_nodes);
+      std::vector<int> ghosts(num_nodes);
+      std::vector<int> global_indices(num_nodes);
+      std::vector<int> remote_indices(num_nodes);
+      std::vector<int> partitions(num_nodes);
+
+      std::vector<std::array<gidx_t, 3>> tri_boundary_nodes{};  // MOM does not have triangles
+      std::vector<gidx_t> tri_global_indices{};
+      std::vector<std::array<gidx_t, 4>> quad_boundary_nodes(num_quad_elements);
+      std::vector<gidx_t> quad_global_indices(num_quad_elements);
+
+      soca_geo_get_mesh_f90(keyGeom_, 
+        num_nodes, lons.data(), lats.data(), ghosts.data(), global_indices.data(), 
+        remote_indices.data(), partitions.data(),
+        num_quad_elements);
+
+      std::vector<gidx_t> atlas_global_indices(num_nodes);
+      std::transform(global_indices.begin(), global_indices.end(), atlas_global_indices.begin(), 
+        [](const int index) {return atlas::gidx_t{index};});
+      std::vector<idx_t> atlas_remote_indices(num_nodes);        
+      std::transform(remote_indices.begin(), remote_indices.end(), atlas_remote_indices.begin(),
+        [](const int index) {return atlas::idx_t{index};});        
+      
+      const atlas::idx_t remote_index_base=1;  // 1-based indexing from Fortran
+
+      eckit::LocalConfiguration config{};
+      config.set("mpi_comm", comm_.name());
+
+      std::cout << "DBG mesh_builder{}" << std::endl;
+      const atlas::mesh::MeshBuilder mesh_builder{};
+      std::cout << "DBG mesh_builder()" << std::endl;
+      atlas::Mesh mesh = mesh_builder(
+        lons, lats, ghosts, 
+        atlas_global_indices, atlas_remote_indices, remote_index_base, partitions,
+        tri_boundary_nodes, tri_global_indices,
+        quad_boundary_nodes, quad_global_indices, config);
+      std::cout << "DBG build_halo()" << std::endl;
+      atlas::mesh::actions::build_halo(mesh, 1);
+      std::cout << "DBG NodeColumns()" << std::endl;
+      functionSpace_ = atlas::functionspace::NodeColumns(mesh, config);
+      std::cout << "DBG END" << std::endl;
+
+      // ASSERT(1==2);
     }
+
+    // // Set ATLAS lonlat and function space (with and without halos)
+    // atlas::FieldSet lonlat;
+    // soca_geo_lonlat_f90(keyGeom_, lonlat.get());
+    // functionSpace_ = atlas::functionspace::PointCloud(lonlat->field("lonlat_inc_halos"));
+
+    // Set ATLAS function space pointer in Fortran
+    std::cout << "DBG A" << std::endl;
+    soca_geo_set_atlas_functionspace_pointer_f90(keyGeom_, functionSpace_.get());
+
+    // Fill ATLAS fieldset
+    std::cout << "DBG B" << std::endl;
+    // soca_geo_to_fieldset_f90(keyGeom_, fields_.get());
+
+    std::cout << "DBG subroutine end" << std::endl;
   }
   // -----------------------------------------------------------------------------
   Geometry::Geometry(const Geometry & other)
@@ -54,7 +120,7 @@ namespace soca {
     const int key_geo = other.keyGeom_;
     soca_geo_clone_f90(keyGeom_, key_geo);
 
-    functionSpace_ = atlas::functionspace::PointCloud(other.functionSpace_->lonlat());
+    functionSpace_ = atlas::functionspace::NodeColumns(other.functionSpace_);
     soca_geo_set_atlas_functionspace_pointer_f90(keyGeom_, functionSpace_.get());
 
     fields_ = atlas::FieldSet();

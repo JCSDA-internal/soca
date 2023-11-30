@@ -50,6 +50,13 @@ namespace soca {
 
     void soca_geo_gridsize_f90(const F90geom &, const bool &, int &);
     void soca_geo_gridlatlon_f90(const F90geom &, const bool &, const int &, double[], double[]);
+
+
+    void soca_geo_get_mesh_size_f90(const F90geom &, int &, int&);
+    void soca_geo_get_mesh_f90(
+      const F90geom &,
+      const int &, double[], double[], int[], int[], int[], int[],
+      const int &);
   }
 }  // namespace soca
 #endif  // SOCA_GEOMETRY_GEOMETRYFORTRAN_H_
