@@ -18,6 +18,8 @@
 
 #include "soca/Geometry/Geometry.h"
 
+#include "atlas/output/Gmsh.h"
+
 // -----------------------------------------------------------------------------
 namespace soca {
 
@@ -46,55 +48,70 @@ namespace soca {
       using atlas::gidx_t;
       using atlas::idx_t;
       
-      int num_nodes=0;
-      int num_quad_elements=0;
+      // get the number of nodes and cells owned by this PE
+      int num_nodes;
+      int num_quad_elements;
       soca_geo_get_mesh_size_f90(keyGeom_, num_nodes, num_quad_elements);
-      num_quad_elements=0;
      
+      // get the mesh connectivity from the soca fortran
       std::vector<double> lons(num_nodes);
       std::vector<double> lats(num_nodes);
       std::vector<int> ghosts(num_nodes);
       std::vector<int> global_indices(num_nodes);
       std::vector<int> remote_indices(num_nodes);
       std::vector<int> partitions(num_nodes);
-
-      std::vector<std::array<gidx_t, 3>> tri_boundary_nodes{};  // MOM does not have triangles
-      std::vector<gidx_t> tri_global_indices{};
-      std::vector<std::array<gidx_t, 4>> quad_boundary_nodes(num_quad_elements);
-      std::vector<gidx_t> quad_global_indices(num_quad_elements);
-
+      const int num_quad_nodes = num_quad_elements * 4;
+      std::vector<int> raw_quad_nodes(num_quad_nodes);
       soca_geo_get_mesh_f90(keyGeom_, 
         num_nodes, lons.data(), lats.data(), ghosts.data(), global_indices.data(), 
         remote_indices.data(), partitions.data(),
-        num_quad_elements);
+        num_quad_nodes, raw_quad_nodes.data());
 
+      // calculate per-PE global quad numbering offset
+      std::vector<int> num_elements_per_rank(comm_.size());
+      comm_.allGather(num_quad_elements, num_elements_per_rank.begin(), num_elements_per_rank.end());
+      int global_element_index = 0;
+      for (size_t i = 0; i < comm_.rank(); ++i) {
+        global_element_index += num_elements_per_rank[i];
+      }
+
+      // convert some of the temporary arrays into a form atlas expects
       std::vector<gidx_t> atlas_global_indices(num_nodes);
       std::transform(global_indices.begin(), global_indices.end(), atlas_global_indices.begin(), 
         [](const int index) {return atlas::gidx_t{index};});
       std::vector<idx_t> atlas_remote_indices(num_nodes);        
       std::transform(remote_indices.begin(), remote_indices.end(), atlas_remote_indices.begin(),
         [](const int index) {return atlas::idx_t{index};});        
+      std::vector<std::array<gidx_t, 3>> tri_boundary_nodes{};  // MOM does not have triangles
+      std::vector<gidx_t> tri_global_indices{};  // MOM does not have triangles
+      std::vector<std::array<gidx_t, 4>> quad_boundary_nodes(num_quad_elements);
+      std::vector<gidx_t> quad_global_indices(num_quad_elements);      
+      for (size_t quad = 0; quad < num_quad_elements; ++quad) {
+        for (size_t i = 0; i < 4; ++i) {
+          quad_boundary_nodes[quad][i] = raw_quad_nodes[4*quad + i];
+        }
+        quad_global_indices[quad] = global_element_index++;
+      }
       
+      // build the mesh!
       const atlas::idx_t remote_index_base=1;  // 1-based indexing from Fortran
-
       eckit::LocalConfiguration config{};
       config.set("mpi_comm", comm_.name());
-
-      std::cout << "DBG mesh_builder{}" << std::endl;
       const atlas::mesh::MeshBuilder mesh_builder{};
-      std::cout << "DBG mesh_builder()" << std::endl;
       atlas::Mesh mesh = mesh_builder(
         lons, lats, ghosts, 
         atlas_global_indices, atlas_remote_indices, remote_index_base, partitions,
         tri_boundary_nodes, tri_global_indices,
         quad_boundary_nodes, quad_global_indices, config);
-      std::cout << "DBG build_halo()" << std::endl;
       atlas::mesh::actions::build_halo(mesh, 1);
-      std::cout << "DBG NodeColumns()" << std::endl;
       functionSpace_ = atlas::functionspace::NodeColumns(mesh, config);
-      std::cout << "DBG END" << std::endl;
 
-      ASSERT(1==2);
+      // save output for viewing (TODO make optional)
+      atlas::output::Gmsh gmsh("out.msh",
+          atlas::util::Config("coordinates", "xyz")
+          | atlas::util::Config("ghost", true));  // enables viewing halos per task
+      gmsh.write(mesh);
+
     }
 
     // // Set ATLAS lonlat and function space (with and without halos)
@@ -103,12 +120,10 @@ namespace soca {
     // functionSpace_ = atlas::functionspace::PointCloud(lonlat->field("lonlat_inc_halos"));
 
     // Set ATLAS function space pointer in Fortran
-    std::cout << "DBG A" << std::endl;
     soca_geo_set_atlas_functionspace_pointer_f90(keyGeom_, functionSpace_.get());
 
     // Fill ATLAS fieldset
-    std::cout << "DBG B" << std::endl;
-    // soca_geo_to_fieldset_f90(keyGeom_, fields_.get());
+    soca_geo_to_fieldset_f90(keyGeom_, fields_.get());
 
     std::cout << "DBG subroutine end" << std::endl;
   }

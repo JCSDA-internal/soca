@@ -287,10 +287,11 @@ end subroutine
 ! ------------------------------------------------------------------------------
 ! TODO move this into the soca_geom_mod file?
 subroutine soca_geo_get_mesh_c(c_key_self, c_nodes, c_lon, c_lat, c_ghosts, c_global_idx, c_remote_idx, c_partition, &
-    c_quads) bind(c, name='soca_geo_get_mesh_f90')
+    c_quad_nodes, c_quad_node_list) bind(c, name='soca_geo_get_mesh_f90')
   integer(c_int), intent(in)    :: c_key_self
-  integer(c_int), intent(in)    :: c_nodes, c_quads
+  integer(c_int), intent(in)    :: c_nodes, c_quad_nodes
   integer(c_int), intent(inout) :: c_ghosts(c_nodes), c_global_idx(c_nodes), c_remote_idx(c_nodes), c_partition(c_nodes)
+  integer(c_int), intent(inout) :: c_quad_node_list(c_quad_nodes)
   real(c_double), intent(inout) :: c_lon(c_nodes), c_lat(c_nodes)
 
   !logical :: N_tripolar, EW_cyclic
@@ -331,7 +332,7 @@ subroutine soca_geo_get_mesh_c(c_key_self, c_nodes, c_lon, c_lat, c_ghosts, c_gl
   ! find which quads / vertices are we going to skip (in case of non cyclic or tripolar_fold special cases)
   call self%mesh_valid_nodes_cells(valid_nodes, valid_cells)
 
-  ! fill in the arrays
+  ! fill in the node arrays
   c_ghosts = 1
   idx=1
   do j=self%jsc,self%jec+1
@@ -351,12 +352,30 @@ subroutine soca_geo_get_mesh_c(c_key_self, c_nodes, c_lon, c_lat, c_ghosts, c_gl
       idx = idx + 1
     end do
   end do
-
   if (c_nodes /= idx-1) then
     ! TODO do a proper assert / error
     stop 42
   end if
-  
+
+  ! fill in the quad node list arrays
+  idx=1
+  do j=self%jsc,self%jec
+    do i=self%isc, self%iec
+      if(.not. valid_cells(i,j)) cycle
+
+      c_quad_node_list(idx  ) = global_idx(i  ,j  )
+      c_quad_node_list(idx+1) = global_idx(i  ,j+1)
+      c_quad_node_list(idx+2) = global_idx(i+1,j+1)
+      c_quad_node_list(idx+3) = global_idx(i+1,j  )
+      
+      idx = idx + 4
+    end do
+  end do
+  if (c_quad_nodes /= idx-1) then
+    stop 43
+    ! TODO do a proper assert / error
+  end if
+
 end subroutine
 ! ------------------------------------------------------------------------------
 end module soca_geom_mod_c

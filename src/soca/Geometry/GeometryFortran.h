@@ -56,7 +56,7 @@ namespace soca {
     void soca_geo_get_mesh_f90(
       const F90geom &,
       const int &, double[], double[], int[], int[], int[], int[],
-      const int &);
+      const int &, int[]);
   }
 }  // namespace soca
 #endif  // SOCA_GEOMETRY_GEOMETRYFORTRAN_H_
