@@ -30,7 +30,7 @@ use fms_io_mod, only: fms_io_init, fms_io_exit, register_restart_field, &
 use fms_mod,    only: write_data, set_domain
 use MOM_remapping, only : remapping_CS, initialize_remapping, remapping_core_h, &
                           end_remapping
-use mpp_domains_mod, only : mpp_update_domains, mpp_update_domains_ad
+use mpp_domains_mod, only : mpp_update_domains
 
 ! SOCA modules
 use soca_fields_metadata_mod, only : soca_field_metadata
@@ -227,9 +227,6 @@ contains
 
   !> copybrief soca_fields_to_fieldset \see soca_fields_to_fieldset
   procedure :: to_fieldset  => soca_fields_to_fieldset
-
-  !> copybrief soca_fields_to_fieldset_ad \see soca_fields_to_fieldset_ad
-  procedure :: to_fieldset_ad  => soca_fields_to_fieldset_ad
 
   procedure :: from_fieldset => soca_fields_from_fieldset
 
@@ -1595,45 +1592,6 @@ subroutine soca_fields_to_fieldset(self, vars, afieldset)
 
   end do
 end subroutine
-
-! ------------------------------------------------------------------------------
-!> Adjoint of get fields used by the interpolation.
-!!
-!! The fields that are input ahave  have halos (minus the invalid and duplicate halo points)
-subroutine soca_fields_to_fieldset_ad(self, vars, afieldset)
-  class(soca_fields),   intent(in) :: self
-  type(oops_variables), intent(in) :: vars
-  type(atlas_fieldset), intent(in) :: afieldset
-
-  integer :: v, z
-  integer :: is, ie, js, je
-  type(soca_field), pointer :: field
-  type(atlas_field) :: afield
-  real(kind=kind_real), pointer :: real_ptr(:,:)
-  real(kind=kind_real), pointer :: tmp(:,:)
-
-  ! start/stop idx, assuming halo
-  is = self%geom%isd; ie = self%geom%ied
-  js = self%geom%jsd; je = self%geom%jed
-
-  allocate(tmp(is:ie, js:je))
-
-  do v=1,vars%nvars()
-    call self%get(vars%variable(v), field)
-    afield = afieldset%field(vars%variable(v))
-
-    tmp = 0.0
-    call afield%data(real_ptr)
-    do z=1,field%nz
-      tmp = unpack(real_ptr(z,:), self%geom%valid_halo_mask, 0.0_kind_real)
-      call mpp_update_domains_ad(tmp, self%geom%Domain%mpp_domain, complete=.true.)
-      field%val(:,:,z) = field%val(:,:,z) + tmp
-    end do
-    call afield%final()
-
-  end do
-end subroutine
-
 
 ! ------------------------------------------------------------------------------
 !> Set the our values from an atlas fieldset
