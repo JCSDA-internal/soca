@@ -1104,7 +1104,7 @@ subroutine soca_geom_mesh_valid_nodes_cells(self, nodes, cells)
   class(soca_geom),   intent(inout) :: self
   logical, allocatable, intent(out) :: nodes(:,:), cells(:,:)
 
-  integer :: i, j
+  integer :: i, j, start_i
   logical :: tripolar, cyclic
 
   ! TODO, do I need to worry about an extra row of cells on the bottom
@@ -1118,38 +1118,35 @@ subroutine soca_geom_mesh_valid_nodes_cells(self, nodes, cells)
   tripolar = iand(self%domain%Y_FLAGS, FOLD_NORTH_EDGE) /= 0
   cyclic = iand(self%domain%X_FLAGS, CYCLIC_GLOBAL_DOMAIN) /= 0
 
-  ! remove some (or all) halo points that otherwise included in the PEs node list.
+
   ! -------------------------------------------------------------------------------------
+  ! remove halo points that are otherwise goint to be duplicated in the node list for the the PEs.
+  
+  if(tripolar .and. self%jec == self%domain%NJGLOBAL) then
+    ! we are at the tripolar fold, remove some (all?) extra nodes at the northern most row.
 
-  ! If there is only 1 PE, so don't include ANY extra nodes in the halo region
-  if (self%f_comm%size() == 1) then        
+    ! (start_i is the x index where we start removing nodes)
+    ! Remove all nodes in the eastern half.
+    start_i = max(self%domain%NIGLOBAL/2, self%isc)
 
-    ! If at the triploar fold, remove all nodes at the top row
-    if (tripolar) then
-      do i=self%isc, self%iec+1
-        nodes(i, self%jec+1) = .false.
-      end do      
+    ! additionally, this PE crosses the E/W midpoint, remove all extra nodes at the north for this PE
+    if (self%isc <= self%domain%NIGLOBAL/2 .and. self%iec > self%domain%NIGLOBAL/2) then      
+      start_i = self%isc
     end if
     
-    ! If at the eastern boundry, and it is cyclic remove all nodes on eastern column
-    if (cyclic) then
-      do j=self%jsc, self%jec+1
-        nodes(self%iec+1, j) = .false.
-      end do      
-    end if  
-  
-  else    
-    ! otherwise, we have more than 1 PE, so some (or all) halo points are kept, depending on PE
+    ! remove the nodes
+    do i=start_i, self%iec+1
+        nodes(i, self%jec+1) = .false.
+    end do
+  end if
 
-    ! if we are at the tripolar fold, only include nodes on the western half
-    if (tripolar .and. self%jec == self%domain%NJGLOBAL) then
-      do i=self%isc, self%iec+1
-        if (i >= self%domain%NIGLOBAL/2) then
-          nodes(i, self%jec+1) = .false.
-        end if
-      end do
-    end if
-  end if 
+  if (cyclic .and. self%isc == 1 .and. self%iec == self%domain%NIGLOBAL) then  
+    ! cyclic boundaries, and this PE spans entire width.
+    ! Remove all nodes on the easternmost column.
+    do j=self%jsc, self%jec+1
+      nodes(self%iec+1, j) = .false.
+    end do
+  end if
 
   ! -------------------------------------------------------------------------------------
   ! remove cells on the eastern half, at the top, if this has a tripolar fold
