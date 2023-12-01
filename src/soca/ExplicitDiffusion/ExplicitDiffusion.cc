@@ -26,7 +26,7 @@ ExplicitDiffusion::ExplicitDiffusion(
     const Parameters_ & params,
     const oops::FieldSet3D & xb,
     const oops::FieldSet3D & fg)
-  : saber::SaberCentralBlockBase(params), params_(params)
+  : saber::SaberCentralBlockBase(params, xb.validTime()), params_(params)
 {
   // setup geometry
   geom_.reset(new Geometry(params_.geometry.value(), geometryData.comm()));
@@ -40,24 +40,24 @@ ExplicitDiffusion::ExplicitDiffusion(
 
 // --------------------------------------------------------------------------------------
 
-void ExplicitDiffusion::randomize(atlas::FieldSet &) const {
+void ExplicitDiffusion::randomize(oops::FieldSet3D &) const {
   throw eckit::NotImplemented("read not implemented yet for ExplictDiffusion");
 }
 
 // --------------------------------------------------------------------------------------
 
-void ExplicitDiffusion::multiply(atlas::FieldSet & fset) const {
+void ExplicitDiffusion::multiply(oops::FieldSet3D & fset) const {
   Increment dx(*geom_, vars_, util::DateTime());
-  dx.fromFieldSet(fset);
+  dx.fromFieldSet(fset.fieldSet());
 
   soca_explicitdiffusion_multiply_f90(keyFortran_, dx.toFortran());
 
-  dx.toFieldSet(fset);
+  dx.toFieldSet(fset.fieldSet());
 }
 
 // --------------------------------------------------------------------------------------
 
-void ExplicitDiffusion::directCalibration(const std::vector<atlas::FieldSet> &) {
+void ExplicitDiffusion::directCalibration(const std::vector<oops::FieldSet3D> &) {
   eckit::LocalConfiguration conf = (*params_.calibration.value()).toConfiguration();
   soca_explicitdiffusion_calibrate_f90(keyFortran_, &conf);
 }
