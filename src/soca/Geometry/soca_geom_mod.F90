@@ -1104,33 +1104,63 @@ subroutine soca_geom_mesh_valid_nodes_cells(self, nodes, cells)
   class(soca_geom),   intent(inout) :: self
   logical, allocatable, intent(out) :: nodes(:,:), cells(:,:)
 
-  integer :: i
+  integer :: i, j
+  logical :: tripolar, cyclic
 
+  ! TODO, do I need to worry about an extra row of cells on the bottom
+  ! when on a bottom PE??
   allocate(nodes(self%isc:self%iec+1, self%jsc:self%jec+1))
   allocate(cells(self%isc:self%iec, self%jsc:self%jec))
 
   nodes = .true.
   cells = .true.
 
-  if (iand(self%domain%Y_FLAGS, FOLD_NORTH_EDGE) /= 0 .and. self%jec == self%domain%NJGLOBAL) then
-    ! we are at the tripolar fold
-    do i=self%isc, self%iec+1
-      if (i >= self%domain%NIGLOBAL/2) then
+  tripolar = iand(self%domain%Y_FLAGS, FOLD_NORTH_EDGE) /= 0
+  cyclic = iand(self%domain%X_FLAGS, CYCLIC_GLOBAL_DOMAIN) /= 0
+
+  ! remove some (or all) halo points that otherwise included in the PEs node list.
+  ! -------------------------------------------------------------------------------------
+
+  ! If there is only 1 PE, so don't include ANY extra nodes in the halo region
+  if (self%f_comm%size() == 1) then        
+
+    ! If at the triploar fold, remove all nodes at the top row
+    if (tripolar) then
+      do i=self%isc, self%iec+1
         nodes(i, self%jec+1) = .false.
-      end if
-    end do
+      end do      
+    end if
+    
+    ! If at the eastern boundry, and it is cyclic remove all nodes on eastern column
+    if (cyclic) then
+      do j=self%jsc, self%jec+1
+        nodes(self%iec+1, j) = .false.
+      end do      
+    end if  
+  
+  else    
+    ! otherwise, we have more than 1 PE, so some (or all) halo points are kept, depending on PE
+
+    ! if we are at the tripolar fold, only include nodes on the western half
+    if (tripolar .and. self%jec == self%domain%NJGLOBAL) then
+      do i=self%isc, self%iec+1
+        if (i >= self%domain%NIGLOBAL/2) then
+          nodes(i, self%jec+1) = .false.
+        end if
+      end do
+    end if
+  end if 
+
+  ! -------------------------------------------------------------------------------------
+  ! remove cells on the eastern half, at the top, if this has a tripolar fold
+  if (tripolar .and. self%jec == self%domain%NJGLOBAL) then
+    ! adjust the cells to be included
     do i=self%isc, self%iec
       if (i >= self%domain%NIGLOBAL/2) then
         cells(i, self%jec) = .false.
       end if
     end do
-
-  end if 
-
-  ! TODO do a similar test for the east boundary if not cyclic?
-  ! if (iand(self%domain%X_FLAGS, CYCLIC_GLOBAL_DOMAIN) ==0 .and. self%iec == self%domain%NIGLOBAL) then
-  !   ! TODO do something if domain is not cyclic and we are at the western boundary?
-  ! end if
+  end if
 
 end subroutine
 
