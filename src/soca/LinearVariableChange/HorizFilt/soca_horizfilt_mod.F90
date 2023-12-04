@@ -109,11 +109,6 @@ subroutine soca_horizfilt_setup(self, f_conf, geom, traj, vars)
       do i = self%isc, self%iec
         do ii = -1,1
             do jj = -1,1
-              ! if the adjacent cell is an invalid halo, skip it
-              if (.not. geom%valid_halo_mask(i+ii, j+jj)) then
-                dist(ii, jj) = 0.0
-                cycle
-              end if
 
               ! Great circle distance
               if(self%scale_dist > 0) then

@@ -84,7 +84,7 @@ namespace soca {
       int keyGeom_;
       const eckit::mpi::Comm & comm_;
       FmsInput fmsinput_;
-      atlas::FunctionSpace functionSpace_;
+      atlas::functionspace::NodeColumns functionSpace_;
       atlas::FieldSet fields_;
   };
   // -----------------------------------------------------------------------------

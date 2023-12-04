@@ -11,6 +11,7 @@
 !! with a given field is stored in soca_fields_metadata_mod::soca_fields_metadata
 module soca_fields_mod
 
+use iso_c_binding
 use atlas_module, only: atlas_fieldset, atlas_field, atlas_real, atlas_metadata
 
 ! JEDI modules
@@ -1553,12 +1554,23 @@ subroutine soca_fields_to_fieldset(self, vars, afieldset)
   type(oops_variables), intent(in)    :: vars
   type(atlas_fieldset), intent(inout) :: afieldset
 
+
+  integer(kind=c_long),  pointer :: global_index(:)
+  integer(kind=c_int), pointer :: ghost(:)
+
   type(atlas_field) :: afield
-  integer :: v, z
+  integer :: v, z, nx, n, i, j, idx
   type(soca_field), pointer :: field
   real(kind=kind_real), pointer :: mask(:,:) => null() !< field mask
   type(atlas_metadata) :: meta
   real(kind=kind_real), pointer :: real_ptr(:,:)
+
+  ! TODO combine this with logic in geom class
+
+  nx = self%geom%domain%NIGLOBAL
+  call self%geom%mesh_global_index%data(global_index)
+  call self%geom%mesh_ghost%data(ghost)
+
 
   do v=1,vars%nvars()
     call self%get(vars%variable(v), field)
@@ -1585,8 +1597,16 @@ subroutine soca_fields_to_fieldset(self, vars, afieldset)
 
     ! create and fill field
     call afield%data(real_ptr)
-    do z=1,field%nz
-        real_ptr(z,:) = pack(field%val(:,:, z), mask=self%geom%valid_halo_mask)
+    ! do z=1,field%nz
+    do n=1,self%geom%mesh_global_index%size()
+      if(ghost(n) > 0) cycle
+
+      idx = global_index(n)
+      j = ((idx-1) / nx) + 1
+      i = idx - (j-1)*nx
+
+      real_ptr(:, n) = field%val(i,j,:)
+
     end do
     call afield%final()
 
@@ -1600,29 +1620,42 @@ subroutine soca_fields_from_fieldset(self, vars, afieldset)
   type(oops_variables),       intent(in)    :: vars
   type(atlas_fieldset),       intent(in)    :: afieldset
 
-  integer :: jvar, i, jz
+  integer :: jvar, jz, i ,j , n, nx, f, idx
   real(kind=kind_real), pointer :: real_ptr(:,:)
   logical :: var_found
   character(len=1024) :: fieldname
   type(soca_field), pointer :: field
   type(atlas_field) :: afield
 
+  integer(kind=c_long),  pointer :: global_index(:)
+  integer(kind=c_int), pointer :: ghost(:)
+
+  nx = self%geom%domain%NIGLOBAL
+  call self%geom%mesh_global_index%data(global_index)
+  call self%geom%mesh_ghost%data(ghost)
+
   ! Initialization
   call self%zeros()
 
   do jvar = 1,vars%nvars()
     var_found = .false.
-    do i=1,size(self%fields)
-      field => self%fields(i)
+    do f=1,size(self%fields)
+      field => self%fields(f)
       if (trim(vars%variable(jvar))==trim(field%name)) then
         ! Get field
         afield = afieldset%field(vars%variable(jvar))
 
         ! Copy data
         call afield%data(real_ptr)
-        do jz=1,field%nz
-          ! NOTE, any missing values from unpacking are filled with 0.0
-          field%val(:,:,jz) = unpack(real_ptr(jz,:), self%geom%valid_halo_mask, 0.0_kind_real)
+        do n=1,self%geom%mesh_global_index%size()
+          if(ghost(n) > 0) cycle
+
+          idx = global_index(n)
+          j = ((idx-1) / nx) + 1
+          i = idx - (j-1)*nx
+
+          field%val(i,j,:) = real_ptr(:, n)
+
         end do
 
         ! Release pointer

@@ -358,6 +358,8 @@ namespace soca {
 
   void Increment::toFieldSet(atlas::FieldSet &fs) const {
     soca_increment_to_fieldset_f90(toFortran(), vars_, fs.get());
+    // TODO(Travis) do I want this here??
+    geom_.functionSpace().haloExchange(fs);
   }
 
 // -----------------------------------------------------------------------------

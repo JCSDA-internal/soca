@@ -7,7 +7,7 @@
 !> C++ interfaces for soca_geom_mod::soca_geom
 module soca_geom_mod_c
 
-use atlas_module, only: atlas_fieldset, atlas_functionspace_pointcloud
+use atlas_module, only: atlas_fieldset, atlas_functionspace_NodeColumns, atlas_field
 use fckit_configuration_module, only: fckit_configuration
 use fckit_mpi_module,           only: fckit_mpi_comm
 use iso_c_binding
@@ -60,52 +60,24 @@ end subroutine soca_geo_setup_c
 
 
 ! --------------------------------------------------------------------------------------------------
-!> C++ interface for soca_geom_mod::soca_geom::set_atlas_lonlat()
-subroutine soca_geo_lonlat_c(c_key_self, c_afieldset)  bind(c,name='soca_geo_lonlat_f90')
-  integer(c_int), intent(in) :: c_key_self
-  type(c_ptr), intent(in), value :: c_afieldset
-
-  type(soca_geom), pointer :: self
-  type(atlas_fieldset) :: afieldset
-
-  call soca_geom_registry%get(c_key_self,self)
-  afieldset = atlas_fieldset(c_afieldset)
-
-  call self%lonlat(afieldset)
-end subroutine soca_geo_lonlat_c
-
-
-! --------------------------------------------------------------------------------------------------
 !> C++ interface to get atlas functionspace pointr from  soca_geom_mod::soca_geom
-subroutine soca_geo_set_atlas_functionspace_pointer_c(c_key_self, c_functionspaceIncHalo) &
-  bind(c,name='soca_geo_set_atlas_functionspace_pointer_f90')
+subroutine soca_geo_set_atlas_functionspace_c(c_key_self, c_functionspaceIncHalo, c_global_index, &
+    c_ghost, c_fieldset) bind(c,name='soca_geo_set_atlas_functionspace_f90')
   integer(c_int), intent(in)     :: c_key_self
-  type(c_ptr), intent(in), value :: c_functionspaceIncHalo
+  type(c_ptr), intent(in), value :: c_functionspaceIncHalo, c_ghost, c_global_index, c_fieldset
 
   type(soca_geom),pointer :: self
 
   call soca_geom_registry%get(c_key_self,self)
 
-  self%functionspaceIncHalo = atlas_functionspace_pointcloud(c_functionspaceIncHalo)
-end subroutine soca_geo_set_atlas_functionspace_pointer_c
-
-
-! --------------------------------------------------------------------------------------------------
-!> C++ interface for soca_geom_mod::soca_geom::fill_atlas_fieldset()
-subroutine soca_geo_to_fieldset_c(c_key_self, c_afieldset) &
- & bind(c,name='soca_geo_to_fieldset_f90')
-
-  integer(c_int),     intent(in) :: c_key_self
-  type(c_ptr), value, intent(in) :: c_afieldset
-
-  type(soca_geom), pointer :: self
-  type(atlas_fieldset) :: afieldset
-
-  call soca_geom_registry%get(c_key_self,self)
-  afieldset = atlas_fieldset(c_afieldset)
-
-  call self%to_fieldset(afieldset)
-end subroutine soca_geo_to_fieldset_c
+  self%functionspaceIncHalo = atlas_functionspace_NodeColumns(c_functionspaceIncHalo)
+  self%mesh_ghost = atlas_field(c_ghost)
+  self%mesh_global_index = atlas_field(c_global_index)
+  
+  self%fieldset = atlas_fieldset(c_fieldset)
+  call self%init_fieldset()
+  
+end subroutine soca_geo_set_atlas_functionspace_c
 
 
 ! ------------------------------------------------------------------------------
@@ -215,58 +187,6 @@ subroutine soca_geo_get_num_levels_c(c_key_self, c_vars, c_levels_size, c_levels
     end select
   end do
 end subroutine soca_geo_get_num_levels_c
-
-! ------------------------------------------------------------------------------
-!> Get the number of points valid in the local grid (skipping masked points)
-subroutine soca_geo_gridsize_c(c_key_self, c_halo, c_size) &
-           bind(c, name='soca_geo_gridsize_f90')
-  integer(c_int),    intent(in) :: c_key_self
-  logical(c_bool),   intent(in) :: c_halo    !< true if halo should be included in number of points
-  integer(c_int),    intent(out):: c_size    !< the resulting number of gridpoints
-
-  type(soca_geom), pointer :: self
-
-  call soca_geom_registry%get(c_key_self, self)
-  if (c_halo) then
-    c_size = self%ngrid_halo_valid
-  else
-    c_size = self%ngrid
-  end if
-end subroutine soca_geo_gridsize_c
-
-! ------------------------------------------------------------------------------
-!> Get the lat/lons for the h grid
-!> If c_halo is true, then only the "valid" halo points are used
-!> (i.e. duplicate halo points and invalid halo points are skipped)
-subroutine soca_geo_gridlatlon_c(c_key_self, c_halo, c_size, &
-    c_lat, c_lon) bind(c, name='soca_geo_gridlatlon_f90')
-
-  integer(c_int),    intent(in) :: c_key_self
-  logical(c_bool),   intent(in) :: c_halo
-  integer(c_int),    intent(in) :: c_size
-  real(c_double),    intent(inout)  :: c_lat(c_size), c_lon(c_size)
-
-  type(soca_geom), pointer :: self
-  real(kind=kind_real),     pointer :: lon(:,:) => null()  !< field lon
-  real(kind=kind_real),     pointer :: lat(:,:) => null()  !< field lat
-
-  call soca_geom_registry%get(c_key_self, self)
-  
-  ! TODO: re-enable the ability to get lat/lon for different grids?
-  ! For now just use h grid
-  lon => self%lon
-  lat => self%lat
-  
-  if (c_halo) then
-    ! get all lat/lon points, except for duplicate or invalid halo points
-    c_lat(:) = pack(self%lat, mask=self%valid_halo_mask)
-    c_lon(:) = pack(self%lon, mask=self%valid_halo_mask)
-  else
-    ! get all non-halo lat/lon points
-    c_lat(:) = pack(self%lat(self%isc:self%iec, self%jsc:self%jec), .true.)
-    c_lon(:) = pack(self%lon(self%isc:self%iec, self%jsc:self%jec), .true.)
-  end if
-end subroutine
 
 ! ------------------------------------------------------------------------------
 subroutine soca_geo_get_mesh_size_c(c_key_self, c_nodes, c_quads) bind(c, name='soca_geo_get_mesh_size_f90')
