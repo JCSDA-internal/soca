@@ -37,7 +37,6 @@ namespace soca {
 
     soca_geo_setup_f90(keyGeom_, &conf, &comm);
 
-    // messy, fix this
     // generate the grid ONLY if being run under the gridgen application.
     if (gen) {
       soca_geo_gridgen_f90(keyGeom_);
@@ -107,11 +106,14 @@ namespace soca {
       atlas::mesh::actions::build_halo(mesh, 1);
       functionSpace_ = atlas::functionspace::NodeColumns(mesh, config);
 
-      // save output for viewing (TODO make optional)
-      atlas::output::Gmsh gmsh("out.msh",
-          atlas::util::Config("coordinates", "xyz")
-          | atlas::util::Config("ghost", true));  // enables viewing halos per task
-      gmsh.write(mesh);
+      // optionally save output for viewing with gmsh
+      if (conf.getBool("gmsh save", false)) {
+        std::string filename = conf.getString("gmsh filename", "out.msh");
+        atlas::output::Gmsh gmsh(filename,
+            atlas::util::Config("coordinates", "xyz")
+            | atlas::util::Config("ghost", true));  // enables viewing halos per task
+        gmsh.write(mesh);
+      }
     }
 
     // Set ATLAS function space information in Fortran
