@@ -21,7 +21,6 @@ use soca_geom_mod, only: soca_geom
 use soca_fields_metadata_mod, only : soca_field_metadata
 
 
-
 implicit none
 private
 
@@ -235,7 +234,6 @@ subroutine soca_geo_get_mesh_c(c_key_self, c_nodes, c_lon, c_lat, c_ghosts, c_gl
   integer(c_int), intent(inout) :: c_quad_node_list(c_quad_nodes)
   real(c_double), intent(inout) :: c_lon(c_nodes), c_lat(c_nodes)
 
-  !logical :: N_tripolar, EW_cyclic
   integer :: idx, i, j
   integer :: nx, ny
   integer, allocatable :: global_idx(:,:), local_idx(:,:), partition(:,:)
@@ -255,9 +253,6 @@ subroutine soca_geo_get_mesh_c(c_key_self, c_nodes, c_lon, c_lat, c_ghosts, c_gl
   allocate(local_idx(self%isd:self%ied, self%jsd:self%jed))
   allocate(partition(self%isd:self%ied, self%jsd:self%jed))
   idx=0 ! local index
-  global_idx = -999
-  local_idx = -999
-  partition = -999
   do j=self%jsc,self%jec
     do i=self%isc, self%iec
       idx = idx + 1

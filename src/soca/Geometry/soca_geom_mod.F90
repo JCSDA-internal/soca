@@ -6,8 +6,8 @@
 
 !> Geometry module
 module soca_geom_mod
-use iso_c_binding
-! jedi modules
+
+  ! jedi modules
 use atlas_module, only: atlas_functionspace_NodeColumns, atlas_fieldset, &
     atlas_field, atlas_real, atlas_integer, atlas_geometry, atlas_indexkdtree
 use fckit_configuration_module, only: fckit_configuration
@@ -481,8 +481,8 @@ subroutine soca_geom_allocate(self)
   allocate(self%lath(self%jsg:self%jeg));        self%lath = 0.0_kind_real
   allocate(self%lonq(self%isg:self%ieg));        self%lonq = 0.0_kind_real
   allocate(self%latq(self%jsg:self%jeg));        self%latq = 0.0_kind_real
-  allocate(self%lon(isd:ied,jsd:jed));           self%lon = INVALID_HALO !TODO, get rid of this?
-  allocate(self%lat(isd:ied,jsd:jed));           self%lat = INVALID_HALO !TODO, get rid of this?
+  allocate(self%lon(isd:ied,jsd:jed));           self%lon = INVALID_HALO
+  allocate(self%lat(isd:ied,jsd:jed));           self%lat = INVALID_HALO
   allocate(self%lonu(isd:ied,jsd:jed));          self%lonu = 0.0_kind_real
   allocate(self%latu(isd:ied,jsd:jed));          self%latu = 0.0_kind_real
   allocate(self%lonv(isd:ied,jsd:jed));          self%lonv = 0.0_kind_real

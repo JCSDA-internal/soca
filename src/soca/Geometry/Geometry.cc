@@ -7,20 +7,16 @@
 
 #include <algorithm>
 
-#include "atlas/field.h"
 #include "atlas/functionspace.h"
-#include "atlas/grid.h"
 #include "atlas/mesh/actions/BuildHalo.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/MeshBuilder.h"
-
+#include "atlas/output/Gmsh.h"
 
 #include "eckit/config/Configuration.h"
-#include "eckit/config/YAMLConfiguration.h"
 
 #include "soca/Geometry/Geometry.h"
 
-#include "atlas/output/Gmsh.h"
 
 // -----------------------------------------------------------------------------
 namespace soca {

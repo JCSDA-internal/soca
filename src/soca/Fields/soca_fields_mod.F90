@@ -11,7 +11,6 @@
 !! with a given field is stored in soca_fields_metadata_mod::soca_fields_metadata
 module soca_fields_mod
 
-use iso_c_binding
 use atlas_module, only: atlas_fieldset, atlas_field, atlas_real, atlas_metadata
 
 ! JEDI modules
@@ -1554,14 +1553,9 @@ subroutine soca_fields_to_fieldset(self, vars, afieldset)
   type(oops_variables), intent(in)    :: vars
   type(atlas_fieldset), intent(inout) :: afieldset
 
-
-  integer(kind=c_long),  pointer :: global_index(:)
-  integer(kind=c_int), pointer :: ghost(:)
-
   type(atlas_field) :: afield
-  integer :: v, z, n, i, j
+  integer :: v, n, i, j
   type(soca_field), pointer :: field
-  real(kind=kind_real), pointer :: mask(:,:) => null() !< field mask
   type(atlas_metadata) :: meta
   real(kind=kind_real), pointer :: real_ptr(:,:)
 
@@ -1595,7 +1589,6 @@ subroutine soca_fields_to_fieldset(self, vars, afieldset)
       real_ptr(:, n) = field%val(i,j,:)
     end do
     call afield%final()
-
   end do
 end subroutine
 
@@ -1606,15 +1599,12 @@ subroutine soca_fields_from_fieldset(self, vars, afieldset)
   type(oops_variables),       intent(in)    :: vars
   type(atlas_fieldset),       intent(in)    :: afieldset
 
-  integer :: jvar, jz, i, j, n, f
+  integer :: jvar, i, j, n, f
   real(kind=kind_real), pointer :: real_ptr(:,:)
   logical :: var_found
   character(len=1024) :: fieldname
   type(soca_field), pointer :: field
   type(atlas_field) :: afield
-
-  integer(kind=c_long),  pointer :: global_index(:)
-  integer(kind=c_int), pointer :: ghost(:)
 
   ! Initialization
   call self%zeros()
@@ -1642,7 +1632,6 @@ subroutine soca_fields_from_fieldset(self, vars, afieldset)
     end do
     if (.not.var_found) call abor1_ftn('variable '//trim(vars%variable(jvar))//' not found in increment')
   end do
-
 end subroutine
 
 end module soca_fields_mod
