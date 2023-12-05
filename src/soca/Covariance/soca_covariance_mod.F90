@@ -78,6 +78,7 @@ subroutine soca_cov_setup(self, f_conf, geom, bkg, vars)
   character(len=:), allocatable :: domain
   integer :: i, isc, iec, jsc, jec, ivar
 
+  ! save a copy of geometry for use later
   self%geom => geom
 
   ! Setup list of variables to apply B on
@@ -374,22 +375,31 @@ subroutine soca_2d_convol(dx, horiz_convol, geom)
 
   type(fieldset_type) :: fieldset
   type(atlas_field)   :: field
+  real(kind_real), pointer :: real_ptr(:,:)
+  integer :: i, j, n
 
+  ! array to atlas
   fieldset = atlas_fieldset()
   field = geom%functionspaceIncHalo%create_field('var', kind=atlas_real(kind_real), levels=1)
   call fieldset%add(field)
-  
-  call geom%array2atlas(dx, field)
+  call field%data(real_ptr)
+  do n=1,size(geom%atlas_idx2i)
+    if(.not. geom%atlas_idx2ij(n, i, j)) cycle
+    real_ptr(1,n) = dx(i,j)
+  end do
 
   ! Apply 2D convolution
   call horiz_convol%apply_nicas(fieldset)
 
-  call geom%atlas2array(field, dx)
-
+  ! atlas to array
+  do n=1,size(geom%atlas_idx2i)
+    if(.not. geom%atlas_idx2ij(n, i, j)) cycle
+    dx(i,j) = real_ptr(1,n)
+  end do
+  
   ! Clean up
   call field%final()
   call fieldset%final()
-
 end subroutine soca_2d_convol
 
 
@@ -406,6 +416,8 @@ subroutine soca_2d_sqrt_convol(dx, horiz_convol, geom, pert_scale)
 
   type(fieldset_type) :: fieldset
   type(atlas_field)   :: field
+  real(kind_real), pointer :: real_ptr(:,:)
+  integer :: i, j, n
 
   type(atlas_field) :: acv
   integer, parameter :: rseed = 1 ! constant for reproducability of tests
@@ -413,12 +425,15 @@ subroutine soca_2d_sqrt_convol(dx, horiz_convol, geom, pert_scale)
   integer :: nn
   real(kind=kind_real), pointer :: ptr(:)
 
-  ! Allocate ATLAS tmp_increment and make copy of dx
+  ! array to atlas fieldset
   fieldset = atlas_fieldset()
   field = geom%functionspaceIncHalo%create_field('var', kind=atlas_real(kind_real), levels=1)
   call fieldset%add(field)
-
-  call geom%array2atlas(dx, field)
+  call field%data(real_ptr)
+  do n=1,size(geom%atlas_idx2i)
+    if(.not. geom%atlas_idx2ij(n, i, j)) cycle
+    real_ptr(1,n) = dx(i,j)
+  end do
 
   ! Get control variable size
   call horiz_convol%get_cv_size(nn)
@@ -431,8 +446,11 @@ subroutine soca_2d_sqrt_convol(dx, horiz_convol, geom, pert_scale)
   ! Apply C^1/2
   call horiz_convol%apply_nicas_sqrt(acv, fieldset, 0)
 
-  ! Back to structured grid
-  call geom%atlas2array(field, dx)
+  ! atlas to array
+  do n=1,size(geom%atlas_idx2i)
+    if(.not. geom%atlas_idx2ij(n, i, j)) cycle
+    dx(i,j) = real_ptr(1,n)
+  end do
 
   ! Clean up
   call acv%final()

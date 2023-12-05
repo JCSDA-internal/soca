@@ -1559,18 +1559,11 @@ subroutine soca_fields_to_fieldset(self, vars, afieldset)
   integer(kind=c_int), pointer :: ghost(:)
 
   type(atlas_field) :: afield
-  integer :: v, z, nx, n, i, j, idx
+  integer :: v, z, n, i, j
   type(soca_field), pointer :: field
   real(kind=kind_real), pointer :: mask(:,:) => null() !< field mask
   type(atlas_metadata) :: meta
   real(kind=kind_real), pointer :: real_ptr(:,:)
-
-  ! TODO combine this with logic in geom class
-
-  nx = self%geom%domain%NIGLOBAL
-  call self%geom%mesh_global_index%data(global_index)
-  call self%geom%mesh_ghost%data(ghost)
-
 
   do v=1,vars%nvars()
     call self%get(vars%variable(v), field)
@@ -1597,16 +1590,9 @@ subroutine soca_fields_to_fieldset(self, vars, afieldset)
 
     ! create and fill field
     call afield%data(real_ptr)
-    ! do z=1,field%nz
-    do n=1,self%geom%mesh_global_index%size()
-      if(ghost(n) > 0) cycle
-
-      idx = global_index(n)
-      j = ((idx-1) / nx) + 1
-      i = idx - (j-1)*nx
-
+    do n=1, size(self%geom%atlas_idx2i)
+      if(.not. self%geom%atlas_idx2ij(n, i, j)) cycle
       real_ptr(:, n) = field%val(i,j,:)
-
     end do
     call afield%final()
 
@@ -1620,7 +1606,7 @@ subroutine soca_fields_from_fieldset(self, vars, afieldset)
   type(oops_variables),       intent(in)    :: vars
   type(atlas_fieldset),       intent(in)    :: afieldset
 
-  integer :: jvar, jz, i ,j , n, nx, f, idx
+  integer :: jvar, jz, i, j, n, f
   real(kind=kind_real), pointer :: real_ptr(:,:)
   logical :: var_found
   character(len=1024) :: fieldname
@@ -1629,10 +1615,6 @@ subroutine soca_fields_from_fieldset(self, vars, afieldset)
 
   integer(kind=c_long),  pointer :: global_index(:)
   integer(kind=c_int), pointer :: ghost(:)
-
-  nx = self%geom%domain%NIGLOBAL
-  call self%geom%mesh_global_index%data(global_index)
-  call self%geom%mesh_ghost%data(ghost)
 
   ! Initialization
   call self%zeros()
@@ -1647,18 +1629,10 @@ subroutine soca_fields_from_fieldset(self, vars, afieldset)
 
         ! Copy data
         call afield%data(real_ptr)
-        do n=1,self%geom%mesh_global_index%size()
-          if(ghost(n) > 0) cycle
-
-          idx = global_index(n)
-          j = ((idx-1) / nx) + 1
-          i = idx - (j-1)*nx
-
+        do n=1, size(self%geom%atlas_idx2i)
+          if(.not. self%geom%atlas_idx2ij(n, i,j)) cycle
           field%val(i,j,:) = real_ptr(:, n)
-
         end do
-
-        ! Release pointer
         call afield%final()
 
         ! Set flag

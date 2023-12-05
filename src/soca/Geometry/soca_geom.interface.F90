@@ -66,14 +66,35 @@ subroutine soca_geo_set_atlas_functionspace_c(c_key_self, c_functionspaceIncHalo
   integer(c_int), intent(in)     :: c_key_self
   type(c_ptr), intent(in), value :: c_functionspaceIncHalo, c_ghost, c_global_index, c_fieldset
 
+  integer :: i, j, n, idx, nx
   type(soca_geom),pointer :: self
+  type(atlas_field) :: fGhost, fGlobalIndex
+  integer(kind=c_long),  pointer :: dGlobalIndex(:)
+  integer(kind=c_int), pointer :: dGhost(:)
 
   call soca_geom_registry%get(c_key_self,self)
-
   self%functionspaceIncHalo = atlas_functionspace_NodeColumns(c_functionspaceIncHalo)
-  self%mesh_ghost = atlas_field(c_ghost)
-  self%mesh_global_index = atlas_field(c_global_index)
-  
+
+  ! Build a mappnig from global index (atlas) to i/j values (soca fortran).
+  ! Ignore halos, they get confusing near the triploar fold, and the atlas halo
+  ! isn't quite the same as the mom6 halo
+  fGhost = atlas_field(c_ghost)
+  call fGhost%data(dGhost)  
+  fGlobalIndex  = atlas_field(c_global_index)
+  call fGlobalIndex%data(dGlobalIndex)
+  nx = self%domain%NIGLOBAL  
+  allocate(self%atlas_idx2i(fGlobalIndex%size())); self%atlas_idx2i = -1
+  allocate(self%atlas_idx2j(fGlobalIndex%size())); self%atlas_idx2j = -1  
+  do n=1,fGlobalIndex%size()
+    if(dGhost(n) > 0) cycle
+    idx = dGlobalIndex(n)
+    j = ((idx-1) / nx) + 1
+    i = idx - (j-1)*nx
+    self%atlas_idx2i(n) = i
+    self%atlas_idx2j(n) = j
+  end do
+
+  ! fill in the geometry fieldset  
   self%fieldset = atlas_fieldset(c_fieldset)
   call self%init_fieldset()
   

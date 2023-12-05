@@ -130,7 +130,7 @@ type, public :: soca_geom
 
     !> mesh parameters
     type(atlas_functionspace_NodeColumns) :: functionspaceInchalo
-    type(atlas_field) :: mesh_ghost, mesh_global_index
+    integer, allocatable :: atlas_idx2i(:), atlas_idx2j(:)
     type(atlas_fieldset) :: fieldset !< the geom fields (area, mask, etc)
 
   contains
@@ -154,15 +154,13 @@ type, public :: soca_geom
     !> \copybrief soca_geom_thickness2depth \see soca_geom_thickness2depth
     procedure :: thickness2depth => soca_geom_thickness2depth
 
-
-    procedure :: array2atlas => soca_geom_array2atlas_2D
-    procedure :: atlas2array => soca_geom_atlas2array_2D
-
     !> \copybrief soca_geom_write \see soca_geom_write
     procedure :: write => soca_geom_write
 
     ! TODO make private
     procedure :: mesh_valid_nodes_cells => soca_geom_mesh_valid_nodes_cells
+
+    procedure :: atlas_idx2ij => soca_geom_atlas_idx2ij
 end type soca_geom
 
 ! ------------------------------------------------------------------------------
@@ -278,18 +276,9 @@ subroutine soca_geom_init_fieldset(self)
   class(soca_geom),  intent(inout) :: self
 
   integer :: i, j, n, jz
-  integer :: nx, idx
   type(atlas_field) :: fArea, fInterpMask, fVertCoord, fGmask, fOwned, fRossby
   real(kind=kind_real), pointer :: vArea(:,:), vInterpMask(:,:), vVertCoord(:,:), vRossby(:,:)
   integer, pointer :: vGmask(:,:), vOwned(:,:)
-
-  integer(kind=c_long),  pointer :: global_index(:)
-  integer(kind=c_int), pointer :: ghost(:)
-
-  ! get grid info
-  nx = self%domain%NIGLOBAL
-  call self%mesh_global_index%data(global_index)
-  call self%mesh_ghost%data(ghost)
 
   ! create fields, get pointers to their data
   fArea = self%functionspaceInchalo%create_field(name='area', kind=atlas_real(kind_real), levels=1)
@@ -318,13 +307,8 @@ subroutine soca_geom_init_fieldset(self)
 
   ! set the data
   vOwned = 0 ! need to set to 0, it's the only one that doesn't get halo update
-  do n=1,self%mesh_global_index%size()
-    if(ghost(n) > 0) cycle
-
-    idx = global_index(n)
-    j = ((idx-1) / nx) + 1
-    i = idx - (j-1)*nx
-
+  do n=1,size(self%atlas_idx2i)
+    if(.not. self%atlas_idx2ij(n, i, j)) cycle
     vArea(1,n) = self%cell_area(i,j)
     vInterpMask(1,n) = self%mask2d(i,j)
     vGmask(:, n) = int(self%mask2d(i,j))
@@ -975,66 +959,6 @@ subroutine soca_geom_thickness2depth(self, h, z)
 end subroutine soca_geom_thickness2depth
 
 ! ------------------------------------------------------------------------------
-
-subroutine soca_geom_array2atlas_2D(self, array, atlas)
-  class(soca_geom), intent(in) :: self
-  real(kind=kind_real), allocatable, intent(in) :: array(:,:)
-  type(atlas_field), intent(inout) :: atlas
-
-  integer :: nx, n, idx, i, j
-  integer(kind=c_long),  pointer :: global_index(:)
-  integer(kind=c_int), pointer :: ghost(:)
-  
-  real(kind_real), pointer :: real_ptr(:,:)
-
-  ! get grid info
-  nx = self%domain%NIGLOBAL
-  call self%mesh_global_index%data(global_index)
-  call self%mesh_ghost%data(ghost)
-
-  call atlas%data(real_ptr)
-  do n=1,self%mesh_global_index%size()
-    if(ghost(n) > 0) cycle
-
-    idx = global_index(n)
-    j = ((idx-1) / nx) + 1
-    i = idx - (j-1)*nx
-
-    real_ptr(1,n) = array(i,j)
-  end do
-end subroutine
-
-! ------------------------------------------------------------------------------
-
-subroutine soca_geom_atlas2array_2D(self, atlas, array)
-  class(soca_geom), intent(in) :: self
-  real(kind=kind_real), allocatable, intent(inout) :: array(:,:)
-  type(atlas_field), intent(in) :: atlas
-
-  integer :: nx, n, idx, i, j
-  integer(kind=c_long),  pointer :: global_index(:)
-  integer(kind=c_int), pointer :: ghost(:)
-  
-  real(kind_real), pointer :: real_ptr(:,:)
-
-  ! get grid info
-  nx = self%domain%NIGLOBAL
-  call self%mesh_global_index%data(global_index)
-  call self%mesh_ghost%data(ghost)
-
-  call atlas%data(real_ptr)
-  do n=1,self%mesh_global_index%size()
-    if (ghost(n) > 0) cycle
-
-    idx = global_index(n)
-    j = ((idx-1) / nx) + 1
-    i = idx - (j-1)*nx
-
-    array(i,j) = real_ptr(1,n)
-  end do
-end subroutine
-
-! ------------------------------------------------------------------------------
 ! Get a 2d array of the valid nodes / cells that are to be used on this PE
 ! for ATLAS mesh generation.
 ! We assume that owned cells (quads) are generated north and east of the PE's owned nodes (vertices)
@@ -1098,5 +1022,20 @@ subroutine soca_geom_mesh_valid_nodes_cells(self, nodes, cells)
   end if
 
 end subroutine
+
+! ------------------------------------------------------------------------------
+
+function soca_geom_atlas_idx2ij(self, idx, i, j) result(res)
+  class(soca_geom), intent(in) :: self
+  integer, intent(in) :: idx
+  integer, intent(out) :: i ,j 
+  logical :: res
+
+  i = self%atlas_idx2i(idx)
+  j = self%atlas_idx2j(idx)
+  res = i > 0
+end function
+
+! ------------------------------------------------------------------------------
 
 end module soca_geom_mod
