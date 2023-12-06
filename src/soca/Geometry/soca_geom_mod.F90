@@ -157,9 +157,10 @@ type, public :: soca_geom
     !> \copybrief soca_geom_write \see soca_geom_write
     procedure :: write => soca_geom_write
 
-    ! TODO make private
+    !> \copybrief soca_geom_mesh_valid_nodes_cells \see soca_geom_mesh_valid_nodes_cells
     procedure :: mesh_valid_nodes_cells => soca_geom_mesh_valid_nodes_cells
 
+    !> \copybrief soca_geom_atlas_idx2ij \see soca_geom_atlas_idx2ij
     procedure :: atlas_idx2ij => soca_geom_atlas_idx2ij
 end type soca_geom
 

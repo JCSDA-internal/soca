@@ -33,10 +33,8 @@ namespace soca {
                             const eckit::Configuration * const &,
                             const eckit::mpi::Comm *);
 
-    void soca_geo_set_atlas_functionspace_f90(const F90geom &,
+    void soca_geo_init_atlas_f90(const F90geom &,
                       atlas::functionspace::FunctionSpaceImpl *,
-                      atlas::field::FieldImpl *,
-                      atlas::field::FieldImpl *,
                       atlas::field::FieldSetImpl *);
 
     void soca_geo_clone_f90(F90geom &, const F90geom &);
@@ -49,7 +47,7 @@ namespace soca {
     void soca_geo_iterator_dimension_f90(const F90geom &, int &);
 
     void soca_geo_get_mesh_size_f90(const F90geom &, int &, int&);
-    void soca_geo_get_mesh_f90(
+    void soca_geo_gen_mesh_f90(
       const F90geom &,
       const int &, double[], double[], int[], int[], int[], int[],
       const int &, int[]);

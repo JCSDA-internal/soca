@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2017-2021 UCAR
+ * (C) Copyright 2017-2023 UCAR
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -57,7 +57,7 @@ namespace soca {
       std::vector<int> partitions(num_nodes);
       const int num_quad_nodes = num_quad_elements * 4;
       std::vector<int> raw_quad_nodes(num_quad_nodes);
-      soca_geo_get_mesh_f90(keyGeom_,
+      soca_geo_gen_mesh_f90(keyGeom_,
         num_nodes, lons.data(), lats.data(), ghosts.data(), global_indices.data(),
         remote_indices.data(), partitions.data(),
         num_quad_nodes, raw_quad_nodes.data());
@@ -112,11 +112,9 @@ namespace soca {
       }
     }
 
-    // Set ATLAS function space information in Fortran
-    auto global_index = functionSpace_.global_index();
-    auto ghost = functionSpace_.ghost();
-    soca_geo_set_atlas_functionspace_f90(keyGeom_,
-      functionSpace_.get(), global_index.get(), ghost.get(), fields_.get());
+    // Set ATLAS function space in Fortran, and fill in the 
+    // geometry fieldset from the fortran side.
+    soca_geo_init_atlas_f90(keyGeom_, functionSpace_.get(), fields_.get());
   }
 
   // -----------------------------------------------------------------------------
@@ -128,8 +126,7 @@ namespace soca {
     soca_geo_clone_f90(keyGeom_, key_geo);
 
     functionSpace_ = atlas::functionspace::NodeColumns(other.functionSpace_);
-    soca_geo_set_atlas_functionspace_f90(keyGeom_, functionSpace_.get(),
-      functionSpace_.global_index().get(), functionSpace_.ghost().get(), fields_.get());
+    soca_geo_init_atlas_f90(keyGeom_, functionSpace_.get(), fields_.get());
   }
   // -----------------------------------------------------------------------------
   Geometry::~Geometry() {

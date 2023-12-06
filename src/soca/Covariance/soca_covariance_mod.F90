@@ -291,7 +291,7 @@ subroutine soca_bump_correlation(self, horiz_convol, geom, f_conf_bump, f_conf_d
   ! Geometry fieldset setup
   afieldset = atlas_fieldset()
 
-  ! add existing fields
+  ! add existing fields that were created by geometry
   call afieldset%add(geom%fieldset%field('area'))
   call afieldset%add(geom%fieldset%field('vert_coord'))
   call afieldset%add(geom%fieldset%field('gmask'))
@@ -379,6 +379,8 @@ subroutine soca_2d_convol(dx, horiz_convol, geom)
   integer :: i, j, n
 
   ! array to atlas
+  ! (Yeah, this code is duplicated in a few places, but this whole
+  ! class is going away "soon" so I don't care)
   fieldset = atlas_fieldset()
   field = geom%functionspaceIncHalo%create_field('var', kind=atlas_real(kind_real), levels=1)
   call fieldset%add(field)
