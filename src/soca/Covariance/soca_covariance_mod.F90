@@ -385,19 +385,21 @@ subroutine soca_2d_convol(dx, horiz_convol, geom)
   field = geom%functionspaceIncHalo%create_field('var', kind=atlas_real(kind_real), levels=1)
   call fieldset%add(field)
   call field%data(real_ptr)
-  do n=1,size(geom%atlas_idx2i)
-    if(.not. geom%atlas_idx2ij(n, i, j)) cycle
-    real_ptr(1,n) = dx(i,j)
+  do j=geom%jsc,geom%jec
+    do i=geom%isc,geom%iec
+      real_ptr(1,geom%atlas_ij2idx(i,j)) = dx(i,j)
+    end do
   end do
 
   ! Apply 2D convolution
   call horiz_convol%apply_nicas(fieldset)
 
   ! atlas to array
-  do n=1,size(geom%atlas_idx2i)
-    if(.not. geom%atlas_idx2ij(n, i, j)) cycle
-    dx(i,j) = real_ptr(1,n)
-  end do
+  do j=geom%jsc,geom%jec
+    do i=geom%isc,geom%iec
+      dx(i,j) = real_ptr(1,geom%atlas_ij2idx(i,j))
+    end do
+  end do  
   
   ! Clean up
   call field%final()
@@ -432,10 +434,11 @@ subroutine soca_2d_sqrt_convol(dx, horiz_convol, geom, pert_scale)
   field = geom%functionspaceIncHalo%create_field('var', kind=atlas_real(kind_real), levels=1)
   call fieldset%add(field)
   call field%data(real_ptr)
-  do n=1,size(geom%atlas_idx2i)
-    if(.not. geom%atlas_idx2ij(n, i, j)) cycle
-    real_ptr(1,n) = dx(i,j)
-  end do
+  do j=geom%jsc,geom%jec
+    do i=geom%isc,geom%iec
+      real_ptr(1,geom%atlas_ij2idx(i,j)) = dx(i,j)
+    end do
+  end do  
 
   ! Get control variable size
   call horiz_convol%get_cv_size(nn)
@@ -449,10 +452,11 @@ subroutine soca_2d_sqrt_convol(dx, horiz_convol, geom, pert_scale)
   call horiz_convol%apply_nicas_sqrt(acv, fieldset, 0)
 
   ! atlas to array
-  do n=1,size(geom%atlas_idx2i)
-    if(.not. geom%atlas_idx2ij(n, i, j)) cycle
-    dx(i,j) = real_ptr(1,n)
-  end do
+  do j=geom%jsc,geom%jec
+    do i=geom%isc,geom%iec
+      dx(i,j) = real_ptr(1,geom%atlas_ij2idx(i,j))
+    end do
+  end do  
 
   ! Clean up
   call acv%final()

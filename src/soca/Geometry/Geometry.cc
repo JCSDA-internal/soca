@@ -112,7 +112,7 @@ namespace soca {
       }
     }
 
-    // Set ATLAS function space in Fortran, and fill in the 
+    // Set ATLAS function space in Fortran, and fill in the
     // geometry fieldset from the fortran side.
     soca_geo_init_atlas_f90(keyGeom_, functionSpace_.get(), fields_.get());
   }

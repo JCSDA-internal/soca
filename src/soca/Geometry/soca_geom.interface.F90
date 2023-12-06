@@ -255,8 +255,6 @@ subroutine soca_geo_gen_mesh_c(c_key_self, c_nodes, c_lon, c_lat, c_ghosts, c_gl
   ! AND while were at it, save the atlas array to 
   ! soca fortran array mapping for use later by to_fieldset
   ! and from_fieldset
-  allocate(self%atlas_idx2i(c_nodes)); self%atlas_idx2i = -1
-  allocate(self%atlas_idx2j(c_nodes)); self%atlas_idx2j = -1
   c_ghosts = 1
   idx=1
   do j=self%jsc,self%jec+1
@@ -268,23 +266,17 @@ subroutine soca_geo_gen_mesh_c(c_key_self, c_nodes, c_lon, c_lat, c_ghosts, c_gl
       c_lat(idx) = self%lat(i,j)
       if(j .le. self%jec .and. i .le. self%iec) then
         c_ghosts(idx) = 0
+        self%atlas_ij2idx(i,j) = idx
       end if
       c_global_idx(idx) = global_idx(i,j)
       c_remote_idx(idx) = local_idx(i,j)
       c_partition(idx) = partition(i,j)
 
-      ! save ij mapping for later, if it is not a halo point
-      if (c_ghosts(idx) == 0 ) then
-        self%atlas_idx2i(idx) = i
-        self%atlas_idx2j(idx) = j
-      end if
-
       idx = idx + 1
     end do
   end do
   if (c_nodes /= idx-1) then
-    ! TODO do a proper assert / error
-    stop 42
+    call abor1_ftn("ERROR: c_nodes != idx-1")
   end if
 
   ! fill in the quad node list arrays
@@ -302,8 +294,7 @@ subroutine soca_geo_gen_mesh_c(c_key_self, c_nodes, c_lon, c_lat, c_ghosts, c_gl
     end do
   end do
   if (c_quad_nodes /= idx-1) then
-    stop 43
-    ! TODO do a proper assert / error
+    call abor1_ftn("ERROR: c_quad_nodes != idx-1")
   end if
 end subroutine
 ! ------------------------------------------------------------------------------

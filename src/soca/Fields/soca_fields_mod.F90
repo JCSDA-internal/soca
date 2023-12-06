@@ -1584,10 +1584,12 @@ subroutine soca_fields_to_fieldset(self, vars, afieldset)
 
     ! create and fill field
     call afield%data(real_ptr)
-    do n=1, size(self%geom%atlas_idx2i)
-      if(.not. self%geom%atlas_idx2ij(n, i, j)) cycle
-      real_ptr(:, n) = field%val(i,j,:)
+    do j=self%geom%jsc,self%geom%jec
+      do i=self%geom%isc,self%geom%iec
+        real_ptr(:, self%geom%atlas_ij2idx(i,j)) = field%val(i,j,:)
+      end do
     end do
+
     call afield%final()
   end do
 end subroutine
@@ -1619,10 +1621,12 @@ subroutine soca_fields_from_fieldset(self, vars, afieldset)
 
         ! Copy data
         call afield%data(real_ptr)
-        do n=1, size(self%geom%atlas_idx2i)
-          if(.not. self%geom%atlas_idx2ij(n, i,j)) cycle
-          field%val(i,j,:) = real_ptr(:, n)
+        do j=self%geom%jsc,self%geom%jec
+          do i=self%geom%isc,self%geom%iec
+            field%val(i,j,:) = real_ptr(:, self%geom%atlas_ij2idx(i,j))
+          end do
         end do
+        
         call afield%final()
 
         ! Set flag

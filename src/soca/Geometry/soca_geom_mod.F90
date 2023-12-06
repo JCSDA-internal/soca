@@ -130,7 +130,7 @@ type, public :: soca_geom
 
     !> mesh parameters
     type(atlas_functionspace_NodeColumns) :: functionspaceInchalo
-    integer, allocatable :: atlas_idx2i(:), atlas_idx2j(:)
+    integer, allocatable :: atlas_ij2idx(:,:)
     type(atlas_fieldset) :: fieldset !< the geom fields (area, mask, etc)
 
   contains
@@ -159,9 +159,6 @@ type, public :: soca_geom
 
     !> \copybrief soca_geom_mesh_valid_nodes_cells \see soca_geom_mesh_valid_nodes_cells
     procedure :: mesh_valid_nodes_cells => soca_geom_mesh_valid_nodes_cells
-
-    !> \copybrief soca_geom_atlas_idx2ij \see soca_geom_atlas_idx2ij
-    procedure :: atlas_idx2ij => soca_geom_atlas_idx2ij
 end type soca_geom
 
 ! ------------------------------------------------------------------------------
@@ -308,13 +305,15 @@ subroutine soca_geom_init_fieldset(self)
 
   ! set the data
   vOwned = 0 ! need to set to 0, it's the only one that doesn't get halo update
-  do n=1,size(self%atlas_idx2i)
-    if(.not. self%atlas_idx2ij(n, i, j)) cycle
-    vArea(1,n) = self%cell_area(i,j)
-    vInterpMask(1,n) = self%mask2d(i,j)
-    vGmask(:, n) = int(self%mask2d(i,j))
-    vOwned(1, n) = 1
-    vRossby(1, n) = self%rossby_radius(i,j)
+  do j=self%jsc,self%jec
+    do i=self%isc,self%iec
+      n = self%atlas_ij2idx(i,j)
+      vArea(1,n) = self%cell_area(i,j)
+      vInterpMask(1,n) = self%mask2d(i,j)
+      vGmask(:, n) = int(self%mask2d(i,j))
+      vOwned(1, n) = 1
+      vRossby(1, n) = self%rossby_radius(i,j)
+    end do
   end do
   do jz=1,self%nzo
     vVertCoord(jz,:) = real(jz, kind_real)
@@ -382,6 +381,7 @@ subroutine soca_geom_clone(self, other)
   self%rossby_radius = other%rossby_radius
   self%distance_from_coast = other%distance_from_coast
   self%h = other%h
+  self%atlas_ij2idx = other%atlas_ij2idx
   call self%fields_metadata%clone(other%fields_metadata)
 end subroutine soca_geom_clone
 
@@ -502,6 +502,8 @@ subroutine soca_geom_allocate(self)
   allocate(self%rossby_radius(isd:ied,jsd:jed)); self%rossby_radius = 0.0_kind_real
   allocate(self%distance_from_coast(isd:ied,jsd:jed)); self%distance_from_coast = 0.0_kind_real
   allocate(self%h(isd:ied,jsd:jed,1:nzo));       self%h = 0.0_kind_real
+  
+  allocate(self%atlas_ij2idx(isd:ied,jsd:jed));  self%atlas_ij2idx = -1
 
 end subroutine soca_geom_allocate
 
@@ -1023,19 +1025,6 @@ subroutine soca_geom_mesh_valid_nodes_cells(self, nodes, cells)
   end if
 
 end subroutine
-
-! ------------------------------------------------------------------------------
-
-function soca_geom_atlas_idx2ij(self, idx, i, j) result(res)
-  class(soca_geom), intent(in) :: self
-  integer, intent(in) :: idx
-  integer, intent(out) :: i ,j 
-  logical :: res
-
-  i = self%atlas_idx2i(idx)
-  j = self%atlas_idx2j(idx)
-  res = i > 0
-end function
 
 ! ------------------------------------------------------------------------------
 
