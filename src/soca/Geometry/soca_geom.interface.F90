@@ -1,4 +1,4 @@
-! (C) Copyright 2017-2021 UCAR
+! (C) Copyright 2017-2023UCAR
 !
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -61,15 +61,15 @@ end subroutine soca_geo_setup_c
 ! --------------------------------------------------------------------------------------------------
 !> C++ interface to get atlas functionspace pointr from  soca_geom_mod::soca_geom,
 ! and then fill in the atlas fieldset with the required geometry fields
-subroutine soca_geo_init_atlas_c(c_key_self, c_functionspaceIncHalo, c_fieldset) &
+subroutine soca_geo_init_atlas_c(c_key_self, c_functionspace, c_fieldset) &
     bind(c,name='soca_geo_init_atlas_f90')
   integer(c_int), intent(in)     :: c_key_self
-  type(c_ptr), intent(in), value :: c_functionspaceIncHalo, c_fieldset
+  type(c_ptr), intent(in), value :: c_functionspace, c_fieldset
 
   type(soca_geom),pointer :: self
 
   call soca_geom_registry%get(c_key_self,self)
-  self%functionspaceIncHalo = atlas_functionspace_NodeColumns(c_functionspaceIncHalo)
+  self%functionspace = atlas_functionspace_NodeColumns(c_functionspace)
 
   ! fill in the geometry fieldset  
   self%fieldset = atlas_fieldset(c_fieldset)

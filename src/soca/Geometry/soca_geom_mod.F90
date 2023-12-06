@@ -1,4 +1,4 @@
-! (C) Copyright 2017-2021 UCAR
+! (C) Copyright 2017-2023 UCAR
 !
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -129,7 +129,7 @@ type, public :: soca_geom
     type(fckit_mpi_comm) :: f_comm !< MPI communicator
 
     !> mesh parameters
-    type(atlas_functionspace_NodeColumns) :: functionspaceInchalo
+    type(atlas_functionspace_NodeColumns) :: functionspace
     integer, allocatable :: atlas_ij2idx(:,:)
     type(atlas_fieldset) :: fieldset !< the geom fields (area, mask, etc)
 
@@ -261,7 +261,7 @@ subroutine soca_geom_end(self)
   if (allocated(self%h))             deallocate(self%h)
   if (allocated(self%h_zstar))       deallocate(self%h_zstar)
   nullify(self%Domain)
-  call self%functionspaceIncHalo%final()
+  call self%functionspace%final()
 
 end subroutine soca_geom_end
 
@@ -279,27 +279,27 @@ subroutine soca_geom_init_fieldset(self)
   integer, pointer :: vGmask(:,:), vOwned(:,:)
 
   ! create fields, get pointers to their data
-  fArea = self%functionspaceInchalo%create_field(name='area', kind=atlas_real(kind_real), levels=1)
+  fArea = self%functionspace%create_field(name='area', kind=atlas_real(kind_real), levels=1)
   call self%fieldset%add(fArea)
   call fArea%data(vArea)
   
-  fInterpMask = self%functionspaceInchalo%create_field(name='interp_mask', kind=atlas_real(kind_real), levels=1)
+  fInterpMask = self%functionspace%create_field(name='interp_mask', kind=atlas_real(kind_real), levels=1)
   call self%fieldset%add(fInterpMask)    
   call fInterpMask%data(vInterpMask)
 
-  fVertCoord = self%functionspaceInchalo%create_field(name='vert_coord', kind=atlas_real(kind_real), levels=self%nzo)
+  fVertCoord = self%functionspace%create_field(name='vert_coord', kind=atlas_real(kind_real), levels=self%nzo)
   call self%fieldset%add(fVertCoord)
   call fVertCoord%data(vVertCoord) 
 
-  fGmask = self%functionspaceInchalo%create_field(name='gmask', kind=atlas_integer(kind(0)), levels=self%nzo)
+  fGmask = self%functionspace%create_field(name='gmask', kind=atlas_integer(kind(0)), levels=self%nzo)
   call self%fieldset%add(fGmask)
   call fGmask%data(vGmask) 
 
-  fOwned = self%functionspaceInchalo%create_field(name='owned', kind=atlas_integer(kind(0)), levels=1)
+  fOwned = self%functionspace%create_field(name='owned', kind=atlas_integer(kind(0)), levels=1)
   call self%fieldset%add(fOwned)
   call fOwned%data(vOwned)
 
-  fRossby = self%functionspaceInchalo%create_field(name='rossby_radius', kind=atlas_real(kind_real), levels=1)
+  fRossby = self%functionspace%create_field(name='rossby_radius', kind=atlas_real(kind_real), levels=1)
   call self%fieldset%add(fRossby)
   call fRossby%data(vRossby)
 
@@ -974,6 +974,7 @@ subroutine soca_geom_mesh_valid_nodes_cells(self, nodes, cells)
 
   ! TODO, do I need to worry about an extra row of cells on the bottom
   ! when on a bottom PE??
+  ! TODO, do I need to worry about halos on the top and right for regional domains??
   allocate(nodes(self%isc:self%iec+1, self%jsc:self%jec+1))
   allocate(cells(self%isc:self%iec, self%jsc:self%jec))
 

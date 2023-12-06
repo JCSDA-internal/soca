@@ -1572,7 +1572,7 @@ subroutine soca_fields_to_fieldset(self, vars, afieldset)
     if (afieldset%has_field(vars%variable(v))) then
       afield = afieldset%field(vars%variable(v))
     else
-      afield = self%geom%functionspaceInchalo%create_field( &
+      afield = self%geom%functionspace%create_field( &
         name=vars%variable(v), kind=atlas_real(kind_real), levels=field%nz)
       meta = afield%metadata()
       call meta%set('interp_type', 'default')

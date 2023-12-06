@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2017-2022 UCAR
+ * (C) Copyright 2017-2023 UCAR
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -358,7 +358,6 @@ namespace soca {
 
   void Increment::toFieldSet(atlas::FieldSet &fs) const {
     soca_increment_to_fieldset_f90(toFortran(), vars_, fs.get());
-    // TODO(Travis) do I want this here??
     geom_.functionSpace().haloExchange(fs);
   }
 

@@ -1,4 +1,4 @@
-! (C) Copyright 2017-2021 UCAR.
+! (C) Copyright 2017-2023 UCAR.
 !
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -286,7 +286,7 @@ subroutine soca_bump_correlation(self, horiz_convol, geom, f_conf_bump, f_conf_d
   real(kind=kind_real) :: r_base, r_mult, r_min, r_max, r_min_grid
 
   ! wrap the functionspace
-  afunctionspace = atlas_functionspace(geom%functionspaceInchalo%c_ptr())
+  afunctionspace = atlas_functionspace(geom%functionspace%c_ptr())
 
   ! Geometry fieldset setup
   afieldset = atlas_fieldset()
@@ -324,7 +324,7 @@ subroutine soca_bump_correlation(self, horiz_convol, geom, f_conf_bump, f_conf_d
     ! 3) min/max are imposed based on "min value" and "max value"
     ! 4) converted from a gaussian sigma to Gaspari-Cohn cutoff distance
     rh = atlas_fieldset()
-    afield = geom%functionspaceInchalo%create_field('var',kind=atlas_real(kind_real),levels=1)
+    afield = geom%functionspace%create_field('var',kind=atlas_real(kind_real),levels=1)
     call rh%add(afield)
     call afield%data(real_ptr)
     real_ptr(1,:) = r_base + r_mult*vRossby(1,:)
@@ -340,7 +340,7 @@ subroutine soca_bump_correlation(self, horiz_convol, geom, f_conf_bump, f_conf_d
 
      ! rv
      rv = atlas_fieldset()
-     afield = geom%functionspaceInchalo%create_field('var',kind=atlas_real(kind_real),levels=1)
+     afield = geom%functionspace%create_field('var',kind=atlas_real(kind_real),levels=1)
      call rv%add(afield)
      call afield%data(real_ptr)
      real_ptr = 1.0
@@ -382,7 +382,7 @@ subroutine soca_2d_convol(dx, horiz_convol, geom)
   ! (Yeah, this code is duplicated in a few places, but this whole
   ! class is going away "soon" so I don't care)
   fieldset = atlas_fieldset()
-  field = geom%functionspaceIncHalo%create_field('var', kind=atlas_real(kind_real), levels=1)
+  field = geom%functionspace%create_field('var', kind=atlas_real(kind_real), levels=1)
   call fieldset%add(field)
   call field%data(real_ptr)
   do j=geom%jsc,geom%jec
@@ -431,7 +431,7 @@ subroutine soca_2d_sqrt_convol(dx, horiz_convol, geom, pert_scale)
 
   ! array to atlas fieldset
   fieldset = atlas_fieldset()
-  field = geom%functionspaceIncHalo%create_field('var', kind=atlas_real(kind_real), levels=1)
+  field = geom%functionspace%create_field('var', kind=atlas_real(kind_real), levels=1)
   call fieldset%add(field)
   call field%data(real_ptr)
   do j=geom%jsc,geom%jec

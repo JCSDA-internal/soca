@@ -175,41 +175,28 @@ namespace soca {
     int gridSizeWithHalo = functionSpace_.size();
     auto vLonlat = atlas::array::make_view<double, 2>(functionSpace_.lonlat());
 
-    if (halo) {
-      // get the latlon of all points, including halo
-      lons.resize(gridSizeWithHalo);
-      lats.resize(gridSizeWithHalo);
-      int idx = 0;
-      for (size_t i=0; i < gridSizeWithHalo; i++) {
-        double lon = vLonlat(i, 0);
-        double lat = vLonlat(i, 1);
-        lats[idx] = lat;
-        lons[idx++] = lon;
-      }
-    } else {
-      // get the latlon of only the owned points, excluding the halo
-
-      // count the number of owned non-ghost points (isn't there an atlas function for this??)
-      auto vGhost = atlas::array::make_view<int, 1>(functionSpace_.ghost());
-      int gridSize = 0;
-      for (size_t i = 0; i < gridSizeWithHalo; i++) {
-        if (vGhost(i) == 0) gridSize++;
-      }
-
-      // fill in the latlon
-      lons.resize(gridSize);
-      lats.resize(gridSize);
-      int idx = 0;
-      for (size_t i=0; i < gridSizeWithHalo; i++) {
-        if (vGhost(i)) continue;
-
-        double lon = vLonlat(i, 0);
-        double lat = vLonlat(i, 1);
-        lats[idx] = lat;
-        lons[idx++] = lon;
-      }
-      ASSERT(idx == gridSize);
+    // count the number of owned non-ghost points (isn't there an atlas function for this??)
+    auto vGhost = atlas::array::make_view<int, 1>(functionSpace_.ghost());
+    int gridSizeNoHalo = 0;
+    for (size_t i = 0; i < gridSizeWithHalo; i++) {
+      if (vGhost(i) == 0) gridSizeNoHalo++;
     }
+
+    // allocate arrays
+    int gridSize = (halo) ? gridSizeWithHalo : gridSizeNoHalo;
+    lons.resize(gridSize);
+    lats.resize(gridSize);
+
+    // fill
+    int idx = 0;
+    for (size_t i=0; i < gridSizeWithHalo; i++) {
+      if (!halo && vGhost(i)) continue;
+      double lon = vLonlat(i, 0);
+      double lat = vLonlat(i, 1);
+      lats[idx] = lat;
+      lons[idx++] = lon;
+    }
+    ASSERT(idx == gridSize);
   }
 
 }  // namespace soca
