@@ -4,8 +4,9 @@ geometry:
   fields metadata: data_static/fields_metadata.yml
   iterator dimension: 2
 
-window begin: 2018-04-14T00:00:00Z
-window end: 2018-04-16T00:00:00Z
+time window:
+  begin: 2018-04-14T00:00:00Z
+  end: 2018-04-16T00:00:00Z
 
 observations:
 - obs space:
