@@ -965,16 +965,17 @@ end subroutine soca_geom_thickness2depth
 ! Get a 2d array of the valid nodes / cells that are to be used on this PE
 ! for ATLAS mesh generation.
 ! We assume that owned cells (quads) are generated north and east of the PE's owned nodes (vertices)
+! NOTE: this code assumes that a regional domain does NOT make use of halos on the boundary.
+!  We currently have our regional domain surrounded by "virtual land", so this is currently a correct
+!  assumption. When we get around to removing that "virtual land", and intend to populate the
+!  halo with a boundary conditions, the grid will need to be constructed slightly differently.
 subroutine soca_geom_mesh_valid_nodes_cells(self, nodes, cells)
   class(soca_geom),   intent(inout) :: self
   logical, allocatable, intent(out) :: nodes(:,:), cells(:,:)
 
   integer :: i, j, start_i
-  logical :: tripolar, cyclic
+  logical :: tripolar, cyclic, regional
 
-  ! TODO, do I need to worry about an extra row of cells on the bottom
-  ! when on a bottom PE??
-  ! TODO, do I need to worry about halos on the top and right for regional domains??
   allocate(nodes(self%isc:self%iec+1, self%jsc:self%jec+1))
   allocate(cells(self%isc:self%iec, self%jsc:self%jec))
 
@@ -983,15 +984,19 @@ subroutine soca_geom_mesh_valid_nodes_cells(self, nodes, cells)
 
   tripolar = iand(self%domain%Y_FLAGS, FOLD_NORTH_EDGE) /= 0
   cyclic = iand(self%domain%X_FLAGS, CYCLIC_GLOBAL_DOMAIN) /= 0
-
+  regional = iand(self%domain%X_FLAGS, CYCLIC_GLOBAL_DOMAIN) == 0 .and. &
+             iand(self%domain%Y_FLAGS, CYCLIC_GLOBAL_DOMAIN) == 0
 
   ! -------------------------------------------------------------------------------------
-  ! remove halo points that are otherwise goint to be duplicated in the node list for the the PEs.
-  
-  if(tripolar .and. self%jec == self%domain%NJGLOBAL) then
-    ! we are at the tripolar fold, remove some (all?) extra nodes at the northern most row.
+  ! we need to mask out cells and/or nodes for 3 special cases.
+  ! Remove halo points that are otherwise going to be duplicated in the node list for the the PEs,
+  ! or, for regional (for now) remove unowned halo points at the domain boundary.
+  ! -------------------------------------------------------------------------------------
 
-    ! (start_i is the x index where we start removing nodes)
+  ! The grid is tripolar, and we are a PE at the northern edge
+  ! -------------------------------------------------------------------------------------
+  if(tripolar .and. self%jec == self%domain%NJGLOBAL) then
+      ! (start_i is the x index where we start removing nodes)
     ! Remove all nodes in the eastern half.
     start_i = max(self%domain%NIGLOBAL/2, self%isc)
 
@@ -1000,12 +1005,21 @@ subroutine soca_geom_mesh_valid_nodes_cells(self, nodes, cells)
       start_i = self%isc
     end if
     
-    ! remove the nodes
+    ! remove some nodes
     do i=start_i, self%iec+1
         nodes(i, self%jec+1) = .false.
     end do
-  end if
 
+    ! remove some cells
+    do i=self%isc, self%iec
+      if (i >= self%domain%NIGLOBAL/2) then
+        cells(i, self%jec) = .false.
+      end if
+    end do
+  end if     
+  
+  ! the grid is cyclic in the E/W direction and we are a PE at the eastern edge
+  ! -------------------------------------------------------------------------------------  
   if (cyclic .and. self%isc == 1 .and. self%iec == self%domain%NIGLOBAL) then  
     ! cyclic boundaries, and this PE spans entire width.
     ! Remove all nodes on the easternmost column.
@@ -1014,15 +1028,35 @@ subroutine soca_geom_mesh_valid_nodes_cells(self, nodes, cells)
     end do
   end if
 
+  ! We are a regional grid
+  ! NOTE: this logic should change at some point so that there ARE halos around the 
+  ! outer boundary
   ! -------------------------------------------------------------------------------------
-  ! remove cells on the eastern half, at the top, if this has a tripolar fold
-  if (tripolar .and. self%jec == self%domain%NJGLOBAL) then
-    ! adjust the cells to be included
-    do i=self%isc, self%iec
-      if (i >= self%domain%NIGLOBAL/2) then
+  if (regional) then
+    ! are we are a PE at the top edge?
+    if(self%jec == self%domain%NJGLOBAL) then
+      ! remove nodes on top
+      do i=self%isc,self%iec+1
+        nodes(i, self%jec+1) = .false.
+      end do
+      ! remove cells on top
+      do i=self%isc, self%iec
         cells(i, self%jec) = .false.
-      end if
-    end do
+      end do      
+    end if
+
+    ! are we a PE at the right edge?
+    if(self%iec == self%domain%NIGLOBAL) then
+      ! remove nodes on right
+      do j=self%jsc,self%jec+1
+        nodes(self%iec+1, j) = .false.
+      end do
+      ! remove cells on right
+      do j=self%jsc, self%jec
+        cells(self%iec, j) = .false.
+      end do          
+    end if
+
   end if
 
 end subroutine
