@@ -14,8 +14,9 @@ state:
     cld_lwp, clwefr, cov, aer_tau, scat_alb, asym_par, c_det, inorg_c, dis_c,
     diatom, chloro, cyano, cocco, dino, phaeo]
 
-window begin: 2018-04-14T00:00:00Z
-window length: P2D
+time window:
+  begin: 2018-04-14T00:00:00Z
+  length: P2D
 
 observations:
   observers:
