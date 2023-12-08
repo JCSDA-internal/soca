@@ -3,8 +3,9 @@ geometry:
   mom6_input_nml: data_static/72x35x25/input.nml
   fields metadata: data_static/fields_metadata.yml
 
-window begin: &date 2018-04-14T00:00:00Z
-window length: P2D
+time window:
+  begin: &date 2018-04-14T00:00:00Z
+  length: P2D
 
 background:
   members from template:
