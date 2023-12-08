@@ -57,7 +57,7 @@ void ExplicitDiffusion::multiply(oops::FieldSet3D & fset) const {
 
 // --------------------------------------------------------------------------------------
 
-void ExplicitDiffusion::directCalibration(const oops::FieldSet4DEnsemble &) {
+void ExplicitDiffusion::directCalibration(const oops::FieldSets &) {
   eckit::LocalConfiguration conf = (*params_.calibration.value()).toConfiguration();
   soca_explicitdiffusion_calibrate_f90(keyFortran_, &conf);
 }

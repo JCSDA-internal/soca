@@ -42,7 +42,7 @@ class ExplicitDiffusion : public saber::SaberCentralBlockBase {
   void randomize(oops::FieldSet3D &) const override;
   void multiply(oops::FieldSet3D &) const override;
 
-  void directCalibration(const oops::FieldSet4DEnsemble &) override;
+  void directCalibration(const oops::FieldSets &) override;
   void read() override;
   void write() const override;
 
