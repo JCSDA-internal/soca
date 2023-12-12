@@ -1,16 +1,22 @@
 /*
- * (C) Copyright 2017-2021 UCAR
+ * (C) Copyright 2017-2023 UCAR
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#include "atlas/grid.h"
-#include "atlas/util/Config.h"
+#include <algorithm>
 
-#include "eckit/config/YAMLConfiguration.h"
+#include "atlas/functionspace.h"
+#include "atlas/mesh/actions/BuildHalo.h"
+#include "atlas/mesh/Mesh.h"
+#include "atlas/mesh/MeshBuilder.h"
+#include "atlas/output/Gmsh.h"
+
+#include "eckit/config/Configuration.h"
 
 #include "soca/Geometry/Geometry.h"
+
 
 // -----------------------------------------------------------------------------
 namespace soca {
@@ -27,27 +33,90 @@ namespace soca {
 
     soca_geo_setup_f90(keyGeom_, &conf, &comm);
 
-    // Set ATLAS lonlat and function space (with and without halos)
-    atlas::FieldSet lonlat;
-    soca_geo_lonlat_f90(keyGeom_, lonlat.get());
-    functionSpace_ = atlas::functionspace::PointCloud(lonlat->field("lonlat"));
-    functionSpaceIncHalo_ = atlas::functionspace::PointCloud(lonlat->field("lonlat_inc_halos"));
-
-    // Set ATLAS function space pointer in Fortran
-    soca_geo_set_atlas_functionspace_pointer_f90(
-      keyGeom_, functionSpace_.get(), functionSpaceIncHalo_.get());
-
-    // Fill ATLAS fieldset
-    soca_geo_to_fieldset_f90(keyGeom_, fields_.get());
-
-    // messy, fix this
     // generate the grid ONLY if being run under the gridgen application.
-    // also, if true, then don't bother with the kdtree generation in the next step.
     if (gen) {
       soca_geo_gridgen_f90(keyGeom_);
-      return;
     }
+
+    // setup the atlas functionspace
+    {
+      using atlas::gidx_t;
+      using atlas::idx_t;
+
+      // get the number of nodes and cells owned by this PE
+      int num_nodes;
+      int num_quad_elements;
+      soca_geo_get_mesh_size_f90(keyGeom_, num_nodes, num_quad_elements);
+
+      // get the mesh connectivity from the soca fortran
+      std::vector<double> lons(num_nodes);
+      std::vector<double> lats(num_nodes);
+      std::vector<int> ghosts(num_nodes);
+      std::vector<int> global_indices(num_nodes);
+      std::vector<int> remote_indices(num_nodes);
+      std::vector<int> partitions(num_nodes);
+      const int num_quad_nodes = num_quad_elements * 4;
+      std::vector<int> raw_quad_nodes(num_quad_nodes);
+      soca_geo_gen_mesh_f90(keyGeom_,
+        num_nodes, lons.data(), lats.data(), ghosts.data(), global_indices.data(),
+        remote_indices.data(), partitions.data(),
+        num_quad_nodes, raw_quad_nodes.data());
+
+      // calculate per-PE global quad numbering offset
+      std::vector<int> num_elements_per_rank(comm_.size());
+      comm_.allGather(num_quad_elements, num_elements_per_rank.begin(),
+                      num_elements_per_rank.end());
+      int global_element_index = 0;
+      for (size_t i = 0; i < comm_.rank(); ++i) {
+        global_element_index += num_elements_per_rank[i];
+      }
+
+      // convert some of the temporary arrays into a form atlas expects
+      std::vector<gidx_t> atlas_global_indices(num_nodes);
+      std::transform(global_indices.begin(), global_indices.end(), atlas_global_indices.begin(),
+        [](const int index) {return atlas::gidx_t{index};});
+      std::vector<idx_t> atlas_remote_indices(num_nodes);
+      std::transform(remote_indices.begin(), remote_indices.end(), atlas_remote_indices.begin(),
+        [](const int index) {return atlas::idx_t{index};});
+      std::vector<std::array<gidx_t, 3>> tri_boundary_nodes{};  // MOM does not have triangles
+      std::vector<gidx_t> tri_global_indices{};  // MOM does not have triangles
+      std::vector<std::array<gidx_t, 4>> quad_boundary_nodes(num_quad_elements);
+      std::vector<gidx_t> quad_global_indices(num_quad_elements);
+      for (size_t quad = 0; quad < num_quad_elements; ++quad) {
+        for (size_t i = 0; i < 4; ++i) {
+          quad_boundary_nodes[quad][i] = raw_quad_nodes[4*quad + i];
+        }
+        quad_global_indices[quad] = global_element_index++;
+      }
+
+      // build the mesh!
+      const atlas::idx_t remote_index_base = 1;  // 1-based indexing from Fortran
+      eckit::LocalConfiguration config{};
+      config.set("mpi_comm", comm_.name());
+      const atlas::mesh::MeshBuilder mesh_builder{};
+      atlas::Mesh mesh = mesh_builder(
+        lons, lats, ghosts,
+        atlas_global_indices, atlas_remote_indices, remote_index_base, partitions,
+        tri_boundary_nodes, tri_global_indices,
+        quad_boundary_nodes, quad_global_indices, config);
+      atlas::mesh::actions::build_halo(mesh, 1);
+      functionSpace_ = atlas::functionspace::NodeColumns(mesh, config);
+
+      // optionally save output for viewing with gmsh
+      if (conf.getBool("gmsh save", false)) {
+        std::string filename = conf.getString("gmsh filename", "out.msh");
+        atlas::output::Gmsh gmsh(filename,
+            atlas::util::Config("coordinates", "xyz")
+            | atlas::util::Config("ghost", true));  // enables viewing halos per task
+        gmsh.write(mesh);
+      }
+    }
+
+    // Set ATLAS function space in Fortran, and fill in the
+    // geometry fieldset from the fortran side.
+    soca_geo_init_atlas_f90(keyGeom_, functionSpace_.get(), fields_.get());
   }
+
   // -----------------------------------------------------------------------------
   Geometry::Geometry(const Geometry & other)
     : comm_(other.comm_),
@@ -56,16 +125,8 @@ namespace soca {
     const int key_geo = other.keyGeom_;
     soca_geo_clone_f90(keyGeom_, key_geo);
 
-    functionSpace_ = atlas::functionspace::PointCloud(other.functionSpace_->lonlat());
-    functionSpaceIncHalo_ = atlas::functionspace::PointCloud(other.functionSpaceIncHalo_->lonlat());
-    soca_geo_set_atlas_functionspace_pointer_f90(keyGeom_, functionSpace_.get(),
-                                                 functionSpaceIncHalo_.get());
-
-    fields_ = atlas::FieldSet();
-    for (int jfield = 0; jfield < other.fields_->size(); ++jfield) {
-      atlas::Field atlasField = other.fields_->field(jfield);
-      fields_->add(atlasField);
-    }
+    functionSpace_ = atlas::functionspace::NodeColumns(other.functionSpace_);
+    soca_geo_init_atlas_f90(keyGeom_, functionSpace_.get(), fields_.get());
   }
   // -----------------------------------------------------------------------------
   Geometry::~Geometry() {
@@ -110,14 +171,32 @@ namespace soca {
   // -----------------------------------------------------------------------------
   void Geometry::latlon(std::vector<double> & lats, std::vector<double> & lons,
       const bool halo) const {
-    // get the number of gridpoints
-    int gridSize;
-    soca_geo_gridsize_f90(keyGeom_, halo, gridSize);
+    // get the number of total grid points (including halo)
+    int gridSizeWithHalo = functionSpace_.size();
+    auto vLonlat = atlas::array::make_view<double, 2>(functionSpace_.lonlat());
 
-    // get the lat/lon of those gridpoints
-    lats.resize(gridSize);
+    // count the number of owned non-ghost points (isn't there an atlas function for this??)
+    auto vGhost = atlas::array::make_view<int, 1>(functionSpace_.ghost());
+    int gridSizeNoHalo = 0;
+    for (size_t i = 0; i < gridSizeWithHalo; i++) {
+      if (vGhost(i) == 0) gridSizeNoHalo++;
+    }
+
+    // allocate arrays
+    int gridSize = (halo) ? gridSizeWithHalo : gridSizeNoHalo;
     lons.resize(gridSize);
-    soca_geo_gridlatlon_f90(keyGeom_, halo, gridSize, lats.data(), lons.data());
+    lats.resize(gridSize);
+
+    // fill
+    int idx = 0;
+    for (size_t i=0; i < gridSizeWithHalo; i++) {
+      if (!halo && vGhost(i)) continue;
+      double lon = vLonlat(i, 0);
+      double lat = vLonlat(i, 1);
+      lats[idx] = lat;
+      lons[idx++] = lon;
+    }
+    ASSERT(idx == gridSize);
   }
 
 }  // namespace soca
