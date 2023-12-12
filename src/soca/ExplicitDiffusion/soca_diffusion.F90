@@ -349,7 +349,7 @@ subroutine soca_diffusion_calibrate_vt(self, params, vt_conf)
   end if    
 
   ! TODO make sure we are handling bottom mask
-  
+
   ! print some stats
   call self%calc_stats(vt_scales, stats)
   write (str, '(4X,A,EN10.1,A,EN10.1,A,EN10.1)') &
@@ -524,9 +524,11 @@ subroutine soca_diffusion_multiply(self, dx)
     end if
 
     ! normalization (horizontal + vertical)
-    do z = 1, dx%fields(f)%nz
-      dx%fields(f)%val(DOMAIN,z)  = dx%fields(f)%val(DOMAIN,z) * self%group(grp)%normalization_hz(DOMAIN)
-    end do
+    if (self%group(grp)%niter_hz > 0) then
+      do z = 1, dx%fields(f)%nz
+        dx%fields(f)%val(DOMAIN,z)  = dx%fields(f)%val(DOMAIN,z) * self%group(grp)%normalization_hz(DOMAIN)
+      end do
+    end if
     if (self%group(grp)%niter_vt > 0) then
       dx%fields(f)%val(DOMAIN,:)  = dx%fields(f)%val(DOMAIN,:) * self%group(grp)%normalization_vt(DOMAIN,:)
     end if  
@@ -539,14 +541,18 @@ subroutine soca_diffusion_multiply(self, dx)
     do z = 1, dx%fields(f)%nz
       tmp2d = dx%fields(f)%val(:,:,z)
       
-      ! horizontal diffusion AD      
-      call self%diffusion_hz_ad(tmp2d, self%group(grp))
+      ! horizontal diffusion AD
+      if (self%group(grp)%niter_hz > 0) then
+        call self%diffusion_hz_ad(tmp2d, self%group(grp))
+      end if
 
       ! TODO grid metric
       ! tmp2d = tmp2d * self%inv_sqrt_area
 
       ! horizontal diffusion TL
-      call self%diffusion_hz_tl(tmp2d, self%group(grp))
+      if (self%group(grp)%niter_hz > 0) then
+        call self%diffusion_hz_tl(tmp2d, self%group(grp))
+      end if
 
       dx%fields(f)%val(DOMAIN,z) = tmp2d(DOMAIN)
     end do
@@ -560,9 +566,11 @@ subroutine soca_diffusion_multiply(self, dx)
     if (self%group(grp)%niter_vt > 0) then    
       dx%fields(f)%val(DOMAIN,:)  = dx%fields(f)%val(DOMAIN,:) * self%group(grp)%normalization_vt(DOMAIN,:)    
     end if
-    do z = 1, dx%fields(f)%nz
-      dx%fields(f)%val(DOMAIN,z)  = dx%fields(f)%val(DOMAIN,z) * self%group(grp)%normalization_hz(DOMAIN)
-    end do
+    if (self%group(grp)%niter_hz > 0) then
+      do z = 1, dx%fields(f)%nz
+        dx%fields(f)%val(DOMAIN,z)  = dx%fields(f)%val(DOMAIN,z) * self%group(grp)%normalization_hz(DOMAIN)
+      end do
+    end if
 
   end do
 
