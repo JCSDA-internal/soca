@@ -980,30 +980,30 @@ subroutine soca_diffusion_write_params(self, f_conf)
    
     ! write horizontal parameters
     if (self%group(grp)%niter_hz > 0) then
-      str = self%group(grp)%name // "@iterations_hz"
+      str = "iterations_hz"
       idr = register_restart_field(restart_file, filename, str, &
         self%group(grp)%niter_hz, domain=self%geom%Domain%mpp_domain)
 
-      str = self%group(grp)%name // "@khdt"
+      str = "khdt"
       idr = register_restart_field(restart_file, filename, str, &
         self%group(grp)%KhDt, domain=self%geom%Domain%mpp_domain)
 
-      str = self%group(grp)%name // "@normalization_hz"
+      str = "normalization_hz"
       idr = register_restart_field(restart_file, filename, str, &
         self%group(grp)%normalization_hz, domain=self%geom%Domain%mpp_domain)  
     end if
     
     ! write vertical parameters
     if (self%group(grp)%niter_vt > 0) then
-      str = self%group(grp)%name // "@iterations_vt"
+      str = "iterations_vt"
       idr = register_restart_field(restart_file, filename, str, &
         self%group(grp)%niter_vt, domain=self%geom%Domain%mpp_domain)
 
-      str = self%group(grp)%name // "@kvdt"
+      str = "kvdt"
       idr = register_restart_field(restart_file, filename, str, &
         self%group(grp)%KvDt, domain=self%geom%Domain%mpp_domain)  
 
-      str = self%group(grp)%name // "@normalization_vt"
+      str = "normalization_vt"
       idr = register_restart_field(restart_file, filename, str, &
         self%group(grp)%normalization_vt, domain=self%geom%Domain%mpp_domain)        
     end if  
@@ -1053,15 +1053,15 @@ subroutine soca_diffusion_read_params(self, f_conf)
       allocate(self%group(grp)%KhDt(DOMAIN_WITH_HALO))
       allocate(self%group(grp)%normalization_hz(DOMAIN_WITH_HALO))
 
-      str = self%group(grp)%name // "@iterations_hz"
+      str = "iterations_hz"
       idr = register_restart_field(restart_file, filename, str, &
         self%group(grp)%niter_hz, domain=self%geom%Domain%mpp_domain)
 
-      str = self%group(grp)%name // "@khdt"
+      str = "khdt"
       idr = register_restart_field(restart_file, filename, str, &
         self%group(grp)%KhDt, domain=self%geom%Domain%mpp_domain)
 
-      str = self%group(grp)%name // "@normalization_hz"
+      str = "normalization_hz"
       idr = register_restart_field(restart_file, filename, str, &
         self%group(grp)%normalization_hz, domain=self%geom%Domain%mpp_domain)
     
@@ -1084,15 +1084,15 @@ subroutine soca_diffusion_read_params(self, f_conf)
       allocate(self%group(grp)%KvDt(DOMAIN_WITH_HALO, self%geom%nzo))          
       allocate(self%group(grp)%normalization_vt(DOMAIN_WITH_HALO, self%geom%nzo))
 
-      str = self%group(grp)%name // "@iterations_vt"
+      str = "iterations_vt"
       idr = register_restart_field(restart_file, filename, str, &
         self%group(grp)%niter_vt, domain=self%geom%Domain%mpp_domain)
 
-      str = self%group(grp)%name // "@kvdt"
+      str = "kvdt"
       idr = register_restart_field(restart_file, filename, str, &
         self%group(grp)%KvDt, domain=self%geom%Domain%mpp_domain)    
 
-      str = self%group(grp)%name // "@normalization_vt"
+      str = "normalization_vt"
       idr = register_restart_field(restart_file, filename, str, &
         self%group(grp)%normalization_vt, domain=self%geom%Domain%mpp_domain)          
 
