@@ -120,7 +120,7 @@ subroutine soca_diffusion_calc_stats_3D(self, field, stats)
   stats(1) =huge(stats(1))
   stats(2) = -huge(stats(2))
   stats(3) = 0.0
-  allocate(field_2d(size(field, dim=1), size(field,dim=2)))
+  allocate(field_2d(DOMAIN_WITH_HALO))
   do z =1, size(field, dim=3)
     field_2d = field(:,:,z)
     call self%calc_stats(field_2d, stats_tmp)
@@ -137,13 +137,20 @@ subroutine soca_diffusion_calc_stats_2D(self, field, stats)
 
   real(kind=kind_real) :: l_min, l_max, l_sum, l_count, g_count
 
+  l_count = count(self%mask(DOMAIN)==1.0)
+
+  if(l_count > 0) then
   l_min =  minval(field(DOMAIN), &
                   mask=self%mask(DOMAIN)==1.0)
   l_max =  maxval(field(DOMAIN), &
                   mask=self%mask(DOMAIN)==1.0)
   l_sum =     sum(field(DOMAIN), &
                   mask=self%mask(DOMAIN)==1.0)
-  l_count = count(self%mask(DOMAIN)==1.0)
+  else
+    l_sum = 0
+    l_max=0
+    l_min=0
+  end if
 
   call self%geom%f_comm%allreduce(l_min, stats(1), fckit_mpi_min())
   call self%geom%f_comm%allreduce(l_max, stats(2), fckit_mpi_max())
@@ -324,8 +331,9 @@ subroutine soca_diffusion_calibrate_vt(self, params, vt_conf)
   end if
   if ( vt_conf%has("fixed value")) then
     ! used a single fixed value globally
-    call oops_log%info("    Using fixed length scales")
     call vt_conf%get_or_die("fixed value", fixed_scale)
+    write (str,*) "   Using fixed length scales", fixed_scale
+    call oops_log%info(str)    
     vt_scales = fixed_scale
   else
     call abor1_ftn("ERROR: reading vt scales from file not yet supported")
