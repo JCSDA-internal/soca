@@ -7,8 +7,9 @@ _: &land_mask
 
 cost function:
   cost type: 4D-Var
-  window begin: &date_begin 2018-04-15T00:00:00Z
-  window length: PT6H
+  time window:
+    begin: &date_begin 2018-04-15T00:00:00Z
+    length: PT6H
   analysis variables: &soca_vars [cicen, hicen, socn, tocn, uocn, vocn, ssh, sw, lhf, shf, lw, us]
   geometry: &geom
     geom_grid_file: data_generated/gridgen/soca_gridspec.72x35x25.nc

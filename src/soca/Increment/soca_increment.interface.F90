@@ -1,4 +1,4 @@
-! (C) Copyright 2020-2022 UCAR
+! (C) Copyright 2020-2023 UCAR
 !
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -632,25 +632,6 @@ subroutine soca_increment_vert_scales_c(c_key_self, c_vert) bind(c,name='soca_in
   call f_self%vert_scales(c_vert)
 
 end subroutine soca_increment_vert_scales_c
-
-! ------------------------------------------------------------------------------
-!> C++ interface for Increment version of soca_field_mod::soca_field::get_fieldset_ad()
-subroutine soca_increment_to_fieldset_ad_c(c_key_self, c_vars, c_fieldset) &
-    bind (c, name='soca_increment_to_fieldset_ad_f90')
-  integer(c_int),       intent(in) :: c_key_self
-  type(c_ptr), value,   intent(in) :: c_vars
-  type(c_ptr), value,   intent(in) :: c_fieldset
-
-  type(soca_increment), pointer :: self
-  type(oops_variables) :: vars
-  type(atlas_fieldset) :: afieldset
-
-  call soca_increment_registry%get(c_key_self, self)
-  vars = oops_variables(c_vars)
-  afieldset = atlas_fieldset(c_fieldset)
-
-  call self%to_fieldset_ad(vars, afieldset)
-end subroutine
 
 ! ------------------------------------------------------------------------------
 end module

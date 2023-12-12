@@ -6,6 +6,10 @@ geometry:
   fields metadata: data_static/fields_metadata.yml
   rossby file: data_static/rossrad.dat
 
+  # save the atlas mesh for viewing in gmsh
+  gmsh save: true
+  gmsh filename: data_generated/gridgen/gmsh.msh
+
 test:
   reference filename: testref/gridgen.test
   test output filename: testoutput/gridgen.test

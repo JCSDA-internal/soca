@@ -2,7 +2,7 @@ add_subdirectory(Model2Ana)
 add_subdirectory(Base)
 add_subdirectory(Model2GeoVaLs)
 
-if ( BUILD_ICEPACK )
+if( ${icepack_FOUND} )
   add_subdirectory(Soca2Cice)
 endif()
 

@@ -7,8 +7,9 @@ _: &land_mask
 
 cost function:
   cost type: 3D-Var
-  window begin: &date_begin 2018-04-14T00:00:00Z
-  window length: P2D
+  time window:
+    begin: &date_begin 2018-04-14T00:00:00Z
+    length: P2D
   analysis variables: &a_vars [cicen, hicen, socn, tocn, ssh, sw, lhf, shf, lw, us, chl, biop, swh]
   geometry: &geom
     geom_grid_file: data_generated/gridgen/soca_gridspec.72x35x25.nc

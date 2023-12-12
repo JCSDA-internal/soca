@@ -9,7 +9,7 @@
 ################################################################################
 
 cmake_minimum_required( VERSION 3.12 )
-project( soca VERSION 1.5.0 LANGUAGES C CXX Fortran)
+project( soca VERSION 1.6.0 LANGUAGES C CXX Fortran)
 
 find_package(ecbuild 3.3.2 REQUIRED)
 include( ecbuild_system NO_POLICY_SCOPE )
@@ -31,6 +31,13 @@ find_package( vader  1.4.0    REQUIRED)
 find_package( saber  1.7.0    REQUIRED)
 find_package( ioda   2.6.0    REQUIRED)
 find_package( ufo    1.7.0    REQUIRED)
+# fms
+find_package(FMS 2022.04 REQUIRED COMPONENTS R4 R8)
+if (FV3_PRECISION MATCHES DOUBLE OR NOT FV3_PRECISION)
+  add_library(fms ALIAS FMS::fms_r8)
+else()
+  add_library(fms ALIAS FMS::fms_r4)
+endif()
 if(FV3_FORECAST_MODEL MATCHES UFS)
   find_package( ESMF MODULE REQUIRED STATIC)
   find_package( crtm   2.2.3)
@@ -43,13 +50,11 @@ if(FV3_FORECAST_MODEL MATCHES UFS)
   find_package( nemsio REQUIRED)
   find_package( PIO 2.5.3 REQUIRED COMPONENTS C Fortran)
 else()
-  find_package( fms    2020.4.0 REQUIRED)
   find_package( mom6   2020.4.0 REQUIRED)
 endif()
 
-if ( BUILD_ICEPACK )
-  find_package( icepack   1.2.0 REQUIRED)
-endif()
+# Optionally look for icepack
+find_package( icepack 1.2.0 QUIET)
 
 include_directories( ${NETCDF_INCLUDE_DIRS} ${DEPEND_LIB_ROOT}/include_r8 ${DEPEND_LIB_ROOT}/MOM6/mod  )
 include_directories( ${DEPEND_LIB_ROOT}/../ufs-weather-model/src/ufs-weather-model-build/MOM6-interface/mod_solo)
