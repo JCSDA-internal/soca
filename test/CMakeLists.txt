@@ -19,6 +19,7 @@ set( soca_test_input
   testinput/convertstate_soca2cice.yml
   testinput/convertstate.yml
   testinput/diffstates.yml
+  testinput/dirac_diffusion.yml
   testinput/dirac_horizfilt.yml
   testinput/dirac_soca_cor_nicas_scales.yml
   testinput/dirac_soca_cov.yml
@@ -66,6 +67,7 @@ set( soca_test_input
   testinput/parameters_bump_cor_nicas.yml
   testinput/parameters_bump_cov.yml
   testinput/parameters_bump_loc.yml
+  testinput/parameters_diffusion.yml
   testinput/parametric_stddev.yml
   testinput/setcorscales.yml
   testinput/sqrtvertloc.yml
@@ -105,12 +107,13 @@ set( soca_test_ref
   testref/convertstate_soca2cice.test
   testref/convertstate.test
   testref/diffstates.test
+  testref/dirac_diffusion.test
   testref/dirac_horizfilt.test
   testref/dirac_soca_cor_nicas_scales.test
   testref/dirac_soca_cov.test
   testref/dirac_soca_mask.test
   testref/dirac_soca_nomask.test
-  testref/dirac_socahyb_cov.test
+  testref/dirac_socahyb_cov.test  
   testref/enshofx.test
   testref/enspert.test
   testref/ensmeanandvariance.test
@@ -517,6 +520,11 @@ soca_add_test( NAME parameters_bump_cov
                EXE  soca_error_covariance_toolbox.x
                NOTRAPFPE )
 
+soca_add_test( NAME parameters_diffusion
+               EXE  soca_error_covariance_toolbox.x
+               TEST_DEPENDS test_soca_gridgen
+                            test_soca_setcorscales)
+
 
 # Misc applications
 #---------------------------------------------------------------------------------------------------
@@ -605,6 +613,11 @@ soca_add_test( NAME dirac_soca_nomask
                TEST_DEPENDS test_soca_gridgen
                             test_soca_static_socaerror_init)
 
+# NOTE the following test throws a FPE only on clang
+soca_add_test( NAME dirac_diffusion
+               EXE soca_error_covariance_toolbox.x
+               NOTRAPFPE
+               TEST_DEPENDS test_soca_parameters_diffusion)
 
 # h(x) executables
 #---------------------------------------------------------------------------------------------------
@@ -634,12 +647,18 @@ soca_add_test( NAME hofx_4d_pseudo
                TEST_DEPENDS test_soca_gridgen
                             test_soca_forecast_mom6 )
 
-  # TODO Re-enable the comparison once that's fixed
-soca_add_test( NAME enshofx
-               EXE  soca_enshofx.x
-               MPI 3
-               NOTRAPFPE
-               TEST_DEPENDS test_soca_gridgen )
+# NOTE, enshofx is disabled because MOM6 always writes out some diagnostic
+# netcdf files (which can't be disabled). This is normally not a problem, except
+# with enshofx, because multiple instances of MOM6 are started under separate
+# MPI_COMMs, causing problems when they all try to write to the same file at the
+# same time. We'll need to take a closer look at MOM6 output when we start
+# dealing with in-core MOM6
+
+# soca_add_test( NAME enshofx
+#                EXE  soca_enshofx.x
+#                MPI 3
+#                NOTRAPFPE
+#                TEST_DEPENDS test_soca_gridgen )
 
 
 # variational methods

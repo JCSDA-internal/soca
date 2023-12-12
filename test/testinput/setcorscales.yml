@@ -27,11 +27,11 @@ scales:
   cicen:
     rossby mult: 0.0
     min grid mult: 8.0
-    min: 1000000
+    min value: 1000000
   hicen:
     rossby mult: 0.0
     min grid mult: 9.0
-    min: 5000000
+    min value: 5000000
 
 rh output:
   datadir: data_generated/setcorscales
