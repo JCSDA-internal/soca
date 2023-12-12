@@ -1,4 +1,4 @@
-! (C) Copyright 2017-2021 UCAR.
+! (C) Copyright 2017-2023 UCAR.
 !
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -34,6 +34,7 @@ type, public :: soca_cov
    real(kind=kind_real), allocatable :: pert_scale(:) !< index matches "vars"
    type(oops_variables), allocatable :: conv_vars(:)  !< index mathces "conv"
 
+   type(soca_geom), pointer :: geom
 contains
   !> \copybrief soca_cov_setup \see soca_cov_setup
   procedure :: setup => soca_cov_setup
@@ -67,7 +68,7 @@ contains
 subroutine soca_cov_setup(self, f_conf, geom, bkg, vars)
   class(soca_cov),        intent(inout) :: self   !< The covariance structure
   type(fckit_configuration), intent(in) :: f_conf !< The configuration
-  type(soca_geom),           intent(in) :: geom   !< Geometry
+  type(soca_geom), pointer,  intent(in) :: geom   !< Geometry
   type(soca_state),  target, intent(in) :: bkg    !< Background
   type(oops_variables),      intent(in) :: vars   !< List of variables
 
@@ -76,6 +77,9 @@ subroutine soca_cov_setup(self, f_conf, geom, bkg, vars)
   character(len=:), allocatable :: domain_vars(:)
   character(len=:), allocatable :: domain
   integer :: i, isc, iec, jsc, jec, ivar
+
+  ! save a copy of geometry for use later
+  self%geom => geom
 
   ! Setup list of variables to apply B on
   self%vars = vars
@@ -181,6 +185,9 @@ subroutine soca_cov_C_mult(self, dx)
   integer :: i, z
   type(soca_field), pointer :: field
   type(bump_type), pointer :: conv
+  real(kind=kind_real), allocatable :: fld_2d(:,:)
+
+  allocate(fld_2d(self%geom%isd:self%geom%ied, self%geom%jsd:self%geom%jed))
 
   do i = 1, self%vars%nvars()
     ! why is this sometimes getting an "empty" list with "none" in it?
@@ -196,7 +203,9 @@ subroutine soca_cov_C_mult(self, dx)
 
     ! apply convolution on each level
     do z = 1, field%nz
-      call soca_2d_convol(field%val(:,:,z), conv, dx%geom)
+      fld_2d = field%val(:,:,z)
+      call soca_2d_convol(fld_2d, conv, dx%geom)
+      field%val(:,:,z) = fld_2d      
     end do
   end do
 end subroutine soca_cov_C_mult
@@ -214,6 +223,9 @@ subroutine soca_cov_sqrt_C_mult(self, dx)
   type(soca_field), pointer :: field
   real(kind=kind_real) :: scale
   type(bump_type), pointer :: conv
+  real(kind=kind_real), allocatable :: fld_2d(:,:)
+
+  allocate(fld_2d(self%geom%isd:self%geom%ied, self%geom%jsd:self%geom%jed))
 
   do i = 1, self%vars%nvars()
     conv => null()
@@ -236,7 +248,9 @@ subroutine soca_cov_sqrt_C_mult(self, dx)
 
     ! apply convolution
     do z = 1,field%nz
-      call soca_2d_sqrt_convol(field%val(:,:,z), conv, dx%geom, scale)
+      fld_2d = field%val(:,:,z)
+      call soca_2d_sqrt_convol(fld_2d, conv, dx%geom, scale)
+      field%val(:,:,z) = fld_2d
     end do
 
   end do
@@ -264,49 +278,25 @@ subroutine soca_bump_correlation(self, horiz_convol, geom, f_conf_bump, f_conf_d
   integer :: i
   integer, allocatable :: hmask(:,:)
   integer, pointer :: int_ptr(:,:)
-  real(kind=kind_real), pointer :: real_ptr(:,:)
-  real(kind=kind_real), allocatable :: area(:)
+  real(kind=kind_real), pointer :: real_ptr(:,:), vArea(:,:), vRossby(:,:)
   type(atlas_functionspace) :: afunctionspace
   type(fieldset_type) :: afieldset, rh, rv
-  type(atlas_field) :: afield
+
+  type(atlas_field) :: afield, fArea, fRossby
   real(kind=kind_real) :: r_base, r_mult, r_min, r_max, r_min_grid
 
-  ! Wrap functionspace
-  afunctionspace = atlas_functionspace(geom%functionspaceInchalo%c_ptr())
+  ! wrap the functionspace
+  afunctionspace = atlas_functionspace(geom%functionspace%c_ptr())
 
   ! Geometry fieldset setup
   afieldset = atlas_fieldset()
 
-  ! Add area
-  afield = geom%functionspaceInchalo%create_field(name='area', kind=atlas_real(kind_real), levels=1)
-  call afield%data(real_ptr)
-  area = pack(geom%cell_area,geom%valid_halo_mask)
-  real_ptr(1,:) = area
-  call afieldset%add(afield)
-  call afield%final()
+  ! add existing fields that were created by geometry
+  call afieldset%add(geom%fieldset%field('area'))
+  call afieldset%add(geom%fieldset%field('vert_coord'))
+  call afieldset%add(geom%fieldset%field('gmask'))
+  call afieldset%add(geom%fieldset%field('owned'))
 
-  ! Add vertical unit
-  afield = geom%functionspaceInchalo%create_field(name='vert_coord', kind=atlas_real(kind_real), levels=1)
-  call afield%data(real_ptr)
-  real_ptr(1,:) = 1.0
-  call afieldset%add(afield)
-  call afield%final()
-
-  ! Add geographical mask
-  afield = geom%functionspaceInchalo%create_field(name='gmask', kind=atlas_integer(kind(0)), levels=1)
-  call afield%data(int_ptr)
-  int_ptr(1,:) = int(pack(geom%mask2d,geom%valid_halo_mask))
-  call afieldset%add(afield)
-  call afield%final()
-
-  afield = geom%functionspaceInchalo%create_field(name='owned', kind=atlas_integer(kind(0)), levels=1)
-  allocate(hmask(geom%isd:geom%ied, geom%jsd:geom%jed))
-  hmask = 0
-  hmask(geom%isc:geom%iec, geom%jsc:geom%jec) = 1
-  call afield%data(int_ptr)
-  int_ptr(1,:) = pack(hmask, geom%valid_halo_mask)
-  call afieldset%add(afield)
-  call afield%final()
 
   ! Set verbosity
   horiz_convol%mpl%verbose = (geom%f_comm%rank()==0)
@@ -315,6 +305,12 @@ subroutine soca_bump_correlation(self, horiz_convol, geom, f_conf_bump, f_conf_d
   call horiz_convol%create(geom%f_comm,afunctionspace,afieldset,f_conf_bump)
 
   if (horiz_convol%nam%new_nicas) then
+    ! get some fields from the geom fieldset
+    fArea = geom%fieldset%field('area')
+    call fArea%data(vArea)
+    fRossby = geom%fieldset%field('rossby_radius')
+    call fRossby%data(vRossby)
+
     ! get parameters for correlation lengths
     if (.not. f_conf_domain%get('base value', r_base))    r_base = 0.0
     if (.not. f_conf_domain%get('rossby mult', r_mult))   r_mult = 0.0
@@ -328,13 +324,13 @@ subroutine soca_bump_correlation(self, horiz_convol, geom, f_conf_bump, f_conf_d
     ! 3) min/max are imposed based on "min value" and "max value"
     ! 4) converted from a gaussian sigma to Gaspari-Cohn cutoff distance
     rh = atlas_fieldset()
-    afield = geom%functionspaceInchalo%create_field('var',kind=atlas_real(kind_real),levels=1)
+    afield = geom%functionspace%create_field('var',kind=atlas_real(kind_real),levels=1)
     call rh%add(afield)
     call afield%data(real_ptr)
-    real_ptr(1,:) = r_base + r_mult*pack(geom%rossby_radius, geom%valid_halo_mask)
+    real_ptr(1,:) = r_base + r_mult*vRossby(1,:)
     ! min based on grid size
     if (r_min_grid .gt. 0.0) then
-      real_ptr(1,:) = max(real_ptr(1,:),  sqrt(area)*r_min_grid )
+      real_ptr(1,:) = max(real_ptr(1,:),  sqrt(vArea(1,:))*r_min_grid )
     end if
     real_ptr(1,:) = min(r_max, real_ptr(1,:))
     real_ptr(1,:) = max(r_min, real_ptr(1,:))
@@ -344,7 +340,7 @@ subroutine soca_bump_correlation(self, horiz_convol, geom, f_conf_bump, f_conf_d
 
      ! rv
      rv = atlas_fieldset()
-     afield = geom%functionspaceInchalo%create_field('var',kind=atlas_real(kind_real),levels=1)
+     afield = geom%functionspace%create_field('var',kind=atlas_real(kind_real),levels=1)
      call rv%add(afield)
      call afield%data(real_ptr)
      real_ptr = 1.0
@@ -357,6 +353,8 @@ subroutine soca_bump_correlation(self, horiz_convol, geom, f_conf_bump, f_conf_d
      ! Clean up
      call rh%final()
      call rv%final()
+     call fRossby%final()
+     call fArea%final()
   end if
 
   ! Run BUMP drivers
@@ -371,24 +369,41 @@ end subroutine soca_bump_correlation
 !! Used by soca_cov::mult()
 !! \relates soca_covariance_mod::soca_cov
 subroutine soca_2d_convol(dx, horiz_convol, geom)
-  real(kind=kind_real), intent(inout) :: dx(:,:)
+  real(kind=kind_real), allocatable, intent(inout) :: dx(:,:)
   type(bump_type),      intent(inout) :: horiz_convol
   type(soca_geom),         intent(in) :: geom
 
-  type(fieldset_type) :: tmp_incr
+  type(fieldset_type) :: fieldset
+  type(atlas_field)   :: field
+  real(kind_real), pointer :: real_ptr(:,:)
+  integer :: i, j, n
 
-  ! Allocate ATLAS tmp_increment and make copy of dx
-  call geom%struct2atlas(dx(:,:), tmp_incr)
+  ! array to atlas
+  ! (Yeah, this code is duplicated in a few places, but this whole
+  ! class is going away "soon" so I don't care)
+  fieldset = atlas_fieldset()
+  field = geom%functionspace%create_field('var', kind=atlas_real(kind_real), levels=1)
+  call fieldset%add(field)
+  call field%data(real_ptr)
+  do j=geom%jsc,geom%jec
+    do i=geom%isc,geom%iec
+      real_ptr(1,geom%atlas_ij2idx(i,j)) = dx(i,j)
+    end do
+  end do
 
   ! Apply 2D convolution
-  call horiz_convol%apply_nicas(tmp_incr)
+  call horiz_convol%apply_nicas(fieldset)
 
-  ! Copy ATLAS tmp_incr to structured dx
-  call geom%atlas2struct(dx(:,:), tmp_incr)
-
+  ! atlas to array
+  do j=geom%jsc,geom%jec
+    do i=geom%isc,geom%iec
+      dx(i,j) = real_ptr(1,geom%atlas_ij2idx(i,j))
+    end do
+  end do  
+  
   ! Clean up
-  call tmp_incr%final()
-
+  call field%final()
+  call fieldset%final()
 end subroutine soca_2d_convol
 
 
@@ -398,20 +413,32 @@ end subroutine soca_2d_convol
 !! used by soca_cov::sqrt_C_mult()
 !! \relates soca_covariance_mod::soca_cov
 subroutine soca_2d_sqrt_convol(dx, horiz_convol, geom, pert_scale)
-  real(kind=kind_real), intent(inout) :: dx(:,:)
+  real(kind=kind_real), allocatable, intent(inout) :: dx(:,:)
   type(bump_type),      intent(inout) :: horiz_convol
   type(soca_geom),         intent(in) :: geom
   real(kind=kind_real),    intent(in) :: pert_scale
 
-  type(fieldset_type) :: tmp_incr
+  type(fieldset_type) :: fieldset
+  type(atlas_field)   :: field
+  real(kind_real), pointer :: real_ptr(:,:)
+  integer :: i, j, n
+
   type(atlas_field) :: acv
   integer, parameter :: rseed = 1 ! constant for reproducability of tests
                                   ! TODO: pass seed through config
   integer :: nn
   real(kind=kind_real), pointer :: ptr(:)
 
-  ! Allocate ATLAS tmp_increment and make copy of dx
-  call geom%struct2atlas(dx(:,:), tmp_incr)
+  ! array to atlas fieldset
+  fieldset = atlas_fieldset()
+  field = geom%functionspace%create_field('var', kind=atlas_real(kind_real), levels=1)
+  call fieldset%add(field)
+  call field%data(real_ptr)
+  do j=geom%jsc,geom%jec
+    do i=geom%isc,geom%iec
+      real_ptr(1,geom%atlas_ij2idx(i,j)) = dx(i,j)
+    end do
+  end do  
 
   ! Get control variable size
   call horiz_convol%get_cv_size(nn)
@@ -422,14 +449,19 @@ subroutine soca_2d_sqrt_convol(dx, horiz_convol, geom, pert_scale)
   ptr = pert_scale * ptr
 
   ! Apply C^1/2
-  call horiz_convol%apply_nicas_sqrt(acv, tmp_incr, 0)
+  call horiz_convol%apply_nicas_sqrt(acv, fieldset, 0)
 
-  ! Back to structured grid
-  call geom%atlas2struct(dx(:,:), tmp_incr)
+  ! atlas to array
+  do j=geom%jsc,geom%jec
+    do i=geom%isc,geom%iec
+      dx(i,j) = real_ptr(1,geom%atlas_ij2idx(i,j))
+    end do
+  end do  
 
   ! Clean up
   call acv%final()
-  call tmp_incr%final()
+  call field%final()
+  call fieldset%final()
 
 end subroutine soca_2d_sqrt_convol
 
