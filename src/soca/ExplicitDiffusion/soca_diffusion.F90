@@ -311,8 +311,10 @@ subroutine soca_diffusion_calibrate_vt(self, params, vt_conf)
   real(kind=kind_real) :: stats(3) ! min, max, mean  
   real(kind=kind_real), allocatable :: vt_scales(:,:,:), r_tmp(:,:,:)
   real(kind=kind_real) :: fixed_scale
-  integer :: i, j
-  character(len=1024) :: str  
+  integer :: i, j, idr
+  character(len=1024) :: str
+  character(len=:), allocatable :: str2, str3
+  type(restart_file_type) :: restart_file
   logical :: b
 
   call oops_log%info("  vertical calibration:")
@@ -336,7 +338,16 @@ subroutine soca_diffusion_calibrate_vt(self, params, vt_conf)
     call oops_log%info(str)    
     vt_scales = fixed_scale
   else
-    call abor1_ftn("ERROR: reading vt scales from file not yet supported")
+    ! read lengths from a file. a 2d field is expected
+    call oops_log%info("    Reading length scales from file")
+    call vt_conf%get_or_die("from file.filename", str2)
+    call vt_conf%get_or_die("from file.variable name", str3)
+    call fms_io_init()
+    idr = register_restart_field(restart_file, str2, str3, &
+      vt_scales, domain=self%geom%Domain%mpp_domain)
+    call restore_state(restart_file, directory='')
+    call free_restart_type(restart_file)
+    call fms_io_exit()    
   end if
   if (.not. vt_conf%get("as gaussian", b)) b = .false.
   write (str,*) "   input values as gaussian (vs GC half width): ", b
@@ -428,7 +439,7 @@ subroutine soca_diffusion_calibrate_hz(self, params, hz_conf, norm_conf)
     call hz_conf%get_or_die("from file.variable name", str3)
     call fms_io_init()
     idr = register_restart_field(restart_file, str2, str3, &
-    hz_scales, domain=self%geom%Domain%mpp_domain)
+      hz_scales, domain=self%geom%Domain%mpp_domain)
     call restore_state(restart_file, directory='')
     call free_restart_type(restart_file)
     call fms_io_exit()
