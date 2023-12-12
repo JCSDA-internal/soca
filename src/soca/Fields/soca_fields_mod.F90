@@ -1562,12 +1562,6 @@ subroutine soca_fields_to_fieldset(self, vars, afieldset)
   do v=1,vars%nvars()
     call self%get(vars%variable(v), field)
 
-    ! make sure halos are updated (remove? is redundant?)
-    ! NOTE: this breaks the saber adjoint test for the diffusion operator.
-    !  Fixing it is more work than I want to do right now. So if you want to run the
-    !  adjoint test, comment out this line first!
-    call field%update_halo(self%geom)
-
     ! get/create field
     if (afieldset%has_field(vars%variable(v))) then
       afield = afieldset%field(vars%variable(v))

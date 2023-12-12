@@ -67,7 +67,8 @@ set( soca_test_input
   testinput/parameters_bump_cor_nicas.yml
   testinput/parameters_bump_cov.yml
   testinput/parameters_bump_loc.yml
-  testinput/parameters_diffusion.yml
+  testinput/parameters_diffusion_hz.yml
+  testinput/parameters_diffusion_vt.yml
   testinput/parametric_stddev.yml
   testinput/setcorscales.yml
   testinput/sqrtvertloc.yml
@@ -520,11 +521,15 @@ soca_add_test( NAME parameters_bump_cov
                EXE  soca_error_covariance_toolbox.x
                NOTRAPFPE )
 
-soca_add_test( NAME parameters_diffusion
+soca_add_test( NAME parameters_diffusion_hz
                EXE  soca_error_covariance_toolbox.x
                TEST_DEPENDS test_soca_gridgen
                             test_soca_setcorscales)
 
+soca_add_test( NAME parameters_diffusion_vt
+               EXE  soca_error_covariance_toolbox.x
+               TEST_DEPENDS test_soca_gridgen
+                            test_soca_setcorscales)
 
 # Misc applications
 #---------------------------------------------------------------------------------------------------
@@ -613,11 +618,11 @@ soca_add_test( NAME dirac_soca_nomask
                TEST_DEPENDS test_soca_gridgen
                             test_soca_static_socaerror_init)
 
-# NOTE the following test throws a FPE only on clang
+# NOTE the following tests throws a FPE only on clang
 soca_add_test( NAME dirac_diffusion
                EXE soca_error_covariance_toolbox.x
-               NOTRAPFPE
-               TEST_DEPENDS test_soca_parameters_diffusion)
+               TEST_DEPENDS test_soca_parameters_diffusion_hz
+                            test_soca_parameters_diffusion_vt)
 
 # h(x) executables
 #---------------------------------------------------------------------------------------------------

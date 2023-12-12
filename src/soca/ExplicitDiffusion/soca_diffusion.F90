@@ -98,7 +98,7 @@ contains
     soca_diffusion_calc_stats_3D
   procedure, private :: soca_diffusion_calc_stats_2D
   procedure, private :: soca_diffusion_calc_stats_3D
-  
+
 end type soca_diffusion
 
 ! ------------------------------------------------------------------------------
@@ -173,9 +173,8 @@ subroutine soca_diffusion_init(self, geom, f_conf)
   self%geom => geom
 
   ! read variable -> group_name mapping
-  if (f_conf%has("groups")) then
+  if (f_conf%get("group mapping", f_conf_list)) then
     call oops_log%info("ExplicitDiffusion: variable groups")    
-    call f_conf%get_or_die("groups", f_conf_list)
     allocate(self%group_mapping(size(f_conf_list)))
     do i=1,size(f_conf_list)
       call f_conf_list(i)%get_or_die("name", self%group_mapping(i)%group_name)
@@ -263,7 +262,7 @@ subroutine soca_diffusion_calibrate(self, f_conf)
   ! initialize the groups
   ! TODO move this to init() so we don't have to do the same thing when reading?    
   call f_conf%get_or_die('normalization', norm_conf)
-  call f_conf%get_or_die('scales', group_conf)
+  call f_conf%get_or_die('groups', group_conf)
   ngroup = size(group_conf)
   allocate(self%group(ngroup))
   do grp=1,ngroup
@@ -273,33 +272,26 @@ subroutine soca_diffusion_calibrate(self, f_conf)
     call oops_log%info(str)
     write (str, *) " name: ", self%group(grp)%name
     call oops_log%info(str)  
-
-    ! allocate space and initialize with safe values    
-    allocate(self%group(grp)%KhDt(DOMAIN_WITH_HALO))
-    allocate(self%group(grp)%KvDt(DOMAIN_WITH_HALO, self%geom%nzo)) ! TODO not necessary if a 2d field
-    allocate(self%group(grp)%normalization_hz(DOMAIN_WITH_HALO))
-    allocate(self%group(grp)%normalization_vt(DOMAIN_WITH_HALO, self%geom%nzo))
-    self%group(grp)%KhDt = 0.0
-    self%group(grp)%KvDt = 0.0
-    self%group(grp)%normalization_hz = 1.0
-    self%group(grp)%normalization_vt = 1.0
-
-    ! TODO allow skipping if hz is already calibrated
-    ! Do 2D horizontal calibration (if needed)    
+  
+    ! horizontal calibration
     if(group_conf(grp)%get("horizontal", params_conf)) then
+      ! allocate space and initialize with safe values    
+      allocate(self%group(grp)%KhDt(DOMAIN_WITH_HALO))
+      allocate(self%group(grp)%normalization_hz(DOMAIN_WITH_HALO))
+      self%group(grp)%KhDt = 0.0
+      self%group(grp)%normalization_hz = 1.0
       call self%calibrate_hz(self%group(grp), params_conf, norm_conf)
-    else
-      call abor1_ftn("ERROR: reading in of existing horizontal parameters not yet supported.")
     end if
 
-    ! Do 1D vertical calibration (if needed)
+    ! vertical calibration
     if(group_conf(grp)%get("vertical", params_conf)) then
-      ! note, for now we force vertical to use brute force normalization, that 
-      ! might change in the future though
+      allocate(self%group(grp)%KvDt(DOMAIN_WITH_HALO, self%geom%nzo))    
+      allocate(self%group(grp)%normalization_vt(DOMAIN_WITH_HALO, self%geom%nzo))
+      self%group(grp)%KvDt = 0.0
+      self%group(grp)%normalization_vt = 1.0
       call self%calibrate_vt(self%group(grp), params_conf)
     end if
   end do
-
   call oops_log%trace("soca_diffusion::calibrate() done", flush=.true.)
 end subroutine
 
@@ -338,7 +330,7 @@ subroutine soca_diffusion_calibrate_vt(self, params, vt_conf)
   else
     call abor1_ftn("ERROR: reading vt scales from file not yet supported")
   end if
-  call vt_conf%get_or_die("as gaussian", b)
+  if (.not. vt_conf%get("as gaussian", b)) b = .false.
   write (str,*) "   input values as gaussian (vs GC half width): ", b
   call oops_log%info(str)
   if (.not. b) then
@@ -433,7 +425,7 @@ subroutine soca_diffusion_calibrate_hz(self, params, hz_conf, norm_conf)
     call free_restart_type(restart_file)
     call fms_io_exit()
   end if
-  call hz_conf%get_or_die("as gaussian", b)
+  if(.not. hz_conf%get("as gaussian", b)) b = .false.  
   write (str,*) "   input values as gaussian (vs GC half width): ", b
   call oops_log%info(str)
   if (.not. b) then
@@ -965,107 +957,153 @@ end subroutine
 
 ! ------------------------------------------------------------------------------
 ! write out the parameters to a restart file
-subroutine soca_diffusion_write_params(self, filename)
+subroutine soca_diffusion_write_params(self, f_conf)
   class(soca_diffusion), intent(inout) :: self
-  character(len=*),      intent(in)    :: filename
-
+  type(fckit_configuration), intent(in) :: f_conf  
+  
+  type(fckit_configuration), allocatable :: f_conf_list(:)
+  character(len=:), allocatable   :: filename, group_name
   type(restart_file_type) :: restart_file
   character(len=1024) :: str
   integer :: idr, grp
 
+  call f_conf%get_or_die("groups", f_conf_list)
+
   ! write to file
   call fms_io_init()
-  do grp=1,size(self%group)    
-    str = self%group(grp)%name // "@iterations_hz"
-    idr = register_restart_field(restart_file, filename, str, &
-      self%group(grp)%niter_hz, domain=self%geom%Domain%mpp_domain)
+  do grp=1,size(f_conf_list)
+    call f_conf_list(grp)%get_or_die('name', group_name)
+    call f_conf_list(grp)%get_or_die('write.filename', filename)
 
+    write (str, *) "Writing group: " // group_name // " to '" // filename // "'"
+    call oops_log%info(str)
+   
+    ! write horizontal parameters
+    if (self%group(grp)%niter_hz > 0) then
+      str = self%group(grp)%name // "@iterations_hz"
+      idr = register_restart_field(restart_file, filename, str, &
+        self%group(grp)%niter_hz, domain=self%geom%Domain%mpp_domain)
+
+      str = self%group(grp)%name // "@khdt"
+      idr = register_restart_field(restart_file, filename, str, &
+        self%group(grp)%KhDt, domain=self%geom%Domain%mpp_domain)
+
+      str = self%group(grp)%name // "@normalization_hz"
+      idr = register_restart_field(restart_file, filename, str, &
+        self%group(grp)%normalization_hz, domain=self%geom%Domain%mpp_domain)  
+    end if
+    
+    ! write vertical parameters
+    if (self%group(grp)%niter_vt > 0) then
       str = self%group(grp)%name // "@iterations_vt"
       idr = register_restart_field(restart_file, filename, str, &
         self%group(grp)%niter_vt, domain=self%geom%Domain%mpp_domain)
 
-    str = self%group(grp)%name // "@khdt"
-    idr = register_restart_field(restart_file, filename, str, &
-      self%group(grp)%KhDt, domain=self%geom%Domain%mpp_domain)
+      str = self%group(grp)%name // "@kvdt"
+      idr = register_restart_field(restart_file, filename, str, &
+        self%group(grp)%KvDt, domain=self%geom%Domain%mpp_domain)  
 
-    str = self%group(grp)%name // "@kvdt"
-    idr = register_restart_field(restart_file, filename, str, &
-      self%group(grp)%KvDt, domain=self%geom%Domain%mpp_domain)
-  
-    str = self%group(grp)%name // "@normalization_hz"
-    idr = register_restart_field(restart_file, filename, str, &
-      self%group(grp)%normalization_hz, domain=self%geom%Domain%mpp_domain)  
+      str = self%group(grp)%name // "@normalization_vt"
+      idr = register_restart_field(restart_file, filename, str, &
+        self%group(grp)%normalization_vt, domain=self%geom%Domain%mpp_domain)        
+    end if  
 
-    str = self%group(grp)%name // "@normalization_vt"
-    idr = register_restart_field(restart_file, filename, str, &
-      self%group(grp)%normalization_vt, domain=self%geom%Domain%mpp_domain)    
+    call save_restart(restart_file, directory='')
+    call free_restart_type(restart_file)
   end do 
-  
-  call save_restart(restart_file, directory='')
-  call free_restart_type(restart_file)
   call fms_io_exit()  
 end subroutine
 
 ! ------------------------------------------------------------------------------
 ! read in the parameters from a restart file
-subroutine soca_diffusion_read_params(self, filename)
+subroutine soca_diffusion_read_params(self, f_conf)
   class(soca_diffusion), intent(inout) :: self
-  character(len=*),      intent(in)    :: filename
-  
+  type(fckit_configuration), intent(in) :: f_conf
+
+  type(fckit_configuration), allocatable :: f_conf_list(:)
+  type(fckit_configuration) :: params_conf
+  character(len=:), allocatable   :: filename, group_name
   type(restart_file_type) :: restart_file
   integer :: idr, grp
   character(len=1024) :: str
+
+  call f_conf%get_or_die("groups", f_conf_list)
 
   ! make sure we havent read in parameters already
   if ( allocated(self%group)) then
     call abor1_ftn("ERROR: soca_diffusion has already been initialized.")
   end if
-
-  allocate(self%group(size(self%group_mapping)))
-
+  allocate(self%group(size(f_conf_list)))
+  
   ! read from file
   call fms_io_init()
   do grp=1,size(self%group)
-    self%group(grp)%name = trim(self%group_mapping(grp)%group_name)
-    allocate(self%group(grp)%KhDt(DOMAIN_WITH_HALO))
-    allocate(self%group(grp)%KvDt(DOMAIN_WITH_HALO, self%geom%nzo))    
-    allocate(self%group(grp)%normalization_hz(DOMAIN_WITH_HALO))
-    allocate(self%group(grp)%normalization_vt(DOMAIN_WITH_HALO, self%geom%nzo))
+    call f_conf_list(grp)%get_or_die('name', group_name)
+    self%group(grp)%name = trim(group_name)    
+    write (str, *) "Reading group: " // group_name
+    call oops_log%info("")
+    call oops_log%info(str)
 
-    str = self%group(grp)%name // "@iterations_hz"
-    idr = register_restart_field(restart_file, filename, str, &
-      self%group(grp)%niter_hz, domain=self%geom%Domain%mpp_domain)
+    ! read horizontal
+    if (f_conf_list(grp)%get('horizontal', params_conf)) then
+      call params_conf%get_or_die('filename', filename)
+      call oops_log%info("  horizontal parameters:")
+      call oops_log%info("    filename: "//filename)
+    
+      allocate(self%group(grp)%KhDt(DOMAIN_WITH_HALO))
+      allocate(self%group(grp)%normalization_hz(DOMAIN_WITH_HALO))
 
-    str = self%group(grp)%name // "@iterations_vt"
-    idr = register_restart_field(restart_file, filename, str, &
-      self%group(grp)%niter_vt, domain=self%geom%Domain%mpp_domain)
+      str = self%group(grp)%name // "@iterations_hz"
+      idr = register_restart_field(restart_file, filename, str, &
+        self%group(grp)%niter_hz, domain=self%geom%Domain%mpp_domain)
 
-    str = self%group(grp)%name // "@khdt"
-    idr = register_restart_field(restart_file, filename, str, &
-      self%group(grp)%KhDt, domain=self%geom%Domain%mpp_domain)
+      str = self%group(grp)%name // "@khdt"
+      idr = register_restart_field(restart_file, filename, str, &
+        self%group(grp)%KhDt, domain=self%geom%Domain%mpp_domain)
 
-    str = self%group(grp)%name // "@kvdt"
-    idr = register_restart_field(restart_file, filename, str, &
-      self%group(grp)%KvDt, domain=self%geom%Domain%mpp_domain)
-  
-    str = self%group(grp)%name // "@normalization_hz"
-    idr = register_restart_field(restart_file, filename, str, &
-      self%group(grp)%normalization_hz, domain=self%geom%Domain%mpp_domain)
+      str = self%group(grp)%name // "@normalization_hz"
+      idr = register_restart_field(restart_file, filename, str, &
+        self%group(grp)%normalization_hz, domain=self%geom%Domain%mpp_domain)
+    
+      call restore_state(restart_file, directory='')
+      call free_restart_type(restart_file)
 
-    str = self%group(grp)%name // "@normalization_vt"
-    idr = register_restart_field(restart_file, filename, str, &
-      self%group(grp)%normalization_vt, domain=self%geom%Domain%mpp_domain)    
+      write (str, '(4X,A,I5)') "minimum iterations: ", self%group(grp)%niter_hz
+      call oops_log%info(str)
+
+      call mpp_update_domains(self%group(grp)%normalization_hz, self%geom%Domain%mpp_domain, complete=.true.)
+      call mpp_update_domains(self%group(grp)%KhDt, self%geom%Domain%mpp_domain, complete=.true.)      
+    end if
+
+    ! read vertical
+    if (f_conf_list(grp)%get('vertical', params_conf)) then
+      call params_conf%get_or_die('filename', filename)
+      call oops_log%info("  vertical parameters:")
+      call oops_log%info("    filename: "//filename)
+
+      allocate(self%group(grp)%KvDt(DOMAIN_WITH_HALO, self%geom%nzo))          
+      allocate(self%group(grp)%normalization_vt(DOMAIN_WITH_HALO, self%geom%nzo))
+
+      str = self%group(grp)%name // "@iterations_vt"
+      idr = register_restart_field(restart_file, filename, str, &
+        self%group(grp)%niter_vt, domain=self%geom%Domain%mpp_domain)
+
+      str = self%group(grp)%name // "@kvdt"
+      idr = register_restart_field(restart_file, filename, str, &
+        self%group(grp)%KvDt, domain=self%geom%Domain%mpp_domain)    
+
+      str = self%group(grp)%name // "@normalization_vt"
+      idr = register_restart_field(restart_file, filename, str, &
+        self%group(grp)%normalization_vt, domain=self%geom%Domain%mpp_domain)          
+
+      call restore_state(restart_file, directory='')
+      call free_restart_type(restart_file)  
+
+      write (str, '(4X,A,I5)') "minimum iterations: ", self%group(grp)%niter_vt
+      call oops_log%info(str)
+    end if
   end do
-  
-  call restore_state(restart_file, directory='')
-  call free_restart_type(restart_file)
   call fms_io_exit()
-
-  ! update halos
-  do grp=1,size(self%group)
-    call mpp_update_domains(self%group(grp)%normalization_hz, self%geom%Domain%mpp_domain, complete=.true.)
-    call mpp_update_domains(self%group(grp)%KhDt, self%geom%Domain%mpp_domain, complete=.true.)    
-  end do
 end subroutine
 
 ! ------------------------------------------------------------------------------

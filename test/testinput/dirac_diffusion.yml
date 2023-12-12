@@ -13,18 +13,29 @@ background:
 
 background error:
   covariance model: SABER
+  # adjoint test: true
+  #  NOTE: to run the self adjoint test, you have to first comment out the 
+  #  indicated halo exchange in Increment::toFieldSet()
   saber central block:
     saber block name: EXPLICIT_DIFFUSION
     active variables: [tocn, socn, ssh]
     geometry: *geom
-    groups:
+    group mapping:
     - name: group1
       variables: [tocn, socn]
     - name: group2
       variables: [ssh]
     read:
-      filename: data_generated/parameters_diffusion/diffusion_params.nc
-
+      groups:
+      - name: group1
+        horizontal:
+          filename: data_generated/parameters_diffusion_hz/group1.nc
+        vertical:
+          filename: data_generated/parameters_diffusion_vt/group1.nc
+      - name: group2
+        horizontal:       
+          filename: data_generated/parameters_diffusion_hz/group2.nc
+     
 dirac:
   ixdir: [1, 17, 51, 31, 51, 63, 81, 14, 16, 43]
   iydir: [8, 21, 16, 33, 29, 26, 16, 41,  5, 43]
