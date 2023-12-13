@@ -25,7 +25,7 @@ use MOM_domains, only : MOM_domain_type
 use MOM_EOS,         only : EOS_type
 use mpp_domains_mod, only : mpp_get_compute_domain, mpp_get_data_domain, &
                             mpp_get_global_domain, mpp_update_domains, &
-                            CYCLIC_GLOBAL_DOMAIN, FOLD_NORTH_EDGE                            
+                            CYCLIC_GLOBAL_DOMAIN, FOLD_NORTH_EDGE
 ! soca modules
 use soca_fields_metadata_mod, only : soca_fields_metadata
 use soca_mom6, only: soca_mom6_config, soca_mom6_init, soca_geomdomain_init
@@ -1116,9 +1116,6 @@ subroutine soca_geom_find_invalid_halo(self)
     end do
   end do outer
 
-  ! count the number of points
-  self%ngrid_halo_valid = count(self%valid_halo_mask)  
-  
 end subroutine soca_geom_find_invalid_halo
 
 ! ------------------------------------------------------------------------------
