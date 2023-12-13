@@ -271,10 +271,11 @@ variational:
     online diagnostics:
       write increment: true
       increment:
-        datadir: data_generated/3dvarfgat
-        date: *bkg_date
-        exp: 3dvarfgat.iter1
-        type: incr
+        state component:      
+          datadir: data_generated/3dvarfgat
+          date: *bkg_date
+          exp: 3dvarfgat.iter1
+          type: incr
 
 output:
   datadir: data_generated/3dvarfgat

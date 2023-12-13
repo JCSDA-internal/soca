@@ -216,10 +216,11 @@ variational:
     online diagnostics:
       write increment: true
       increment:
-        datadir: data_generated/3dvarlowres_soca
-        date: *bkg_date
-        exp: 3dvarlowres_soca.iter1
-        type: incr
+        state component:      
+          datadir: data_generated/3dvarlowres_soca
+          date: *bkg_date
+          exp: 3dvarlowres_soca.iter1
+          type: incr
 
 output:
   datadir: data_generated/3dvarlowres_soca
