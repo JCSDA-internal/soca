@@ -151,10 +151,11 @@ variational:
     online diagnostics:
       write increment: true
       increment:
-        datadir: data_generated/3dhyb
-        date: *bkg_date
-        exp: 3dhyb.iter1
-        type: incr
+        state component:      
+          datadir: data_generated/3dhyb
+          date: *bkg_date
+          exp: 3dhyb.iter1
+          type: incr
 
 output:
   datadir: data_generated/3dhyb
