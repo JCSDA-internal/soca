@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2020-2022 UCAR
+ * (C) Copyright 2020-2023 UCAR
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -60,9 +60,6 @@ namespace soca {
     void soca_increment_to_fieldset_f90(const F90flds &,
                                         const oops::Variables &,
                                         atlas::field::FieldSetImpl *);
-    void soca_increment_to_fieldset_ad_f90(const F90flds &,
-                                           const oops::Variables &,
-                                           const atlas::field::FieldSetImpl *);
     void soca_increment_from_fieldset_f90(const F90flds &,
                                    const oops::Variables &,
                                    const atlas::field::FieldSetImpl *);

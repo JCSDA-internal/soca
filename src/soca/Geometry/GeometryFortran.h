@@ -16,6 +16,7 @@
 namespace atlas {
   namespace field {
     class FieldSetImpl;
+    class FieldImpl;
   }
   namespace functionspace {
     class FunctionSpaceImpl;
@@ -32,14 +33,14 @@ namespace soca {
                             const eckit::Configuration * const &,
                             const eckit::mpi::Comm *);
 
-    void soca_geo_lonlat_f90(const F90geom &,
-                             atlas::field::FieldSetImpl *);
-    void soca_geo_set_atlas_functionspace_pointer_f90(const F90geom &,
+    void soca_geo_init_atlas_f90(const F90geom &,
                       atlas::functionspace::FunctionSpaceImpl *,
-                      atlas::functionspace::FunctionSpaceImpl *);
-    void soca_geo_to_fieldset_f90(const F90geom &,
-                                  atlas::field::FieldSetImpl *);
-
+                      atlas::field::FieldSetImpl *);
+    void soca_geo_get_mesh_size_f90(const F90geom &, int &, int&);
+    void soca_geo_gen_mesh_f90(
+      const F90geom &,
+      const int &, double[], double[], int[], int[], int[], int[],
+      const int &, int[]);
     void soca_geo_clone_f90(F90geom &, const F90geom &);
     void soca_geo_gridgen_f90(const F90geom &);
     void soca_geo_delete_f90(F90geom &);
@@ -48,9 +49,6 @@ namespace soca {
     void soca_geo_get_num_levels_f90(const F90geom &, const oops::Variables &,
                                     const size_t &, size_t[]);
     void soca_geo_iterator_dimension_f90(const F90geom &, int &);
-
-    void soca_geo_gridsize_f90(const F90geom &, const bool &, int &);
-    void soca_geo_gridlatlon_f90(const F90geom &, const bool &, const int &, double[], double[]);
   }
 }  // namespace soca
 #endif  // SOCA_GEOMETRY_GEOMETRYFORTRAN_H_

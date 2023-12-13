@@ -1,4 +1,4 @@
-! (C) Copyright 2017-2021 UCAR
+! (C) Copyright 2017-2023 UCAR
 !
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -30,7 +30,7 @@ use fms_io_mod, only: fms_io_init, fms_io_exit, register_restart_field, &
 use fms_mod,    only: write_data, set_domain
 use MOM_remapping, only : remapping_CS, initialize_remapping, remapping_core_h, &
                           end_remapping
-use mpp_domains_mod, only : mpp_update_domains, mpp_update_domains_ad
+use mpp_domains_mod, only : mpp_update_domains
 
 ! SOCA modules
 use soca_fields_metadata_mod, only : soca_field_metadata
@@ -227,9 +227,6 @@ contains
 
   !> copybrief soca_fields_to_fieldset \see soca_fields_to_fieldset
   procedure :: to_fieldset  => soca_fields_to_fieldset
-
-  !> copybrief soca_fields_to_fieldset_ad \see soca_fields_to_fieldset_ad
-  procedure :: to_fieldset_ad  => soca_fields_to_fieldset_ad
 
   procedure :: from_fieldset => soca_fields_from_fieldset
 
@@ -1557,9 +1554,8 @@ subroutine soca_fields_to_fieldset(self, vars, afieldset)
   type(atlas_fieldset), intent(inout) :: afieldset
 
   type(atlas_field) :: afield
-  integer :: v, z
+  integer :: v, n, i, j
   type(soca_field), pointer :: field
-  real(kind=kind_real), pointer :: mask(:,:) => null() !< field mask
   type(atlas_metadata) :: meta
   real(kind=kind_real), pointer :: real_ptr(:,:)
 
@@ -1576,7 +1572,7 @@ subroutine soca_fields_to_fieldset(self, vars, afieldset)
     if (afieldset%has_field(vars%variable(v))) then
       afield = afieldset%field(vars%variable(v))
     else
-      afield = self%geom%functionspaceInchalo%create_field( &
+      afield = self%geom%functionspace%create_field( &
         name=vars%variable(v), kind=atlas_real(kind_real), levels=field%nz)
       meta = afield%metadata()
       call meta%set('interp_type', 'default')
@@ -1588,52 +1584,15 @@ subroutine soca_fields_to_fieldset(self, vars, afieldset)
 
     ! create and fill field
     call afield%data(real_ptr)
-    do z=1,field%nz
-        real_ptr(z,:) = pack(field%val(:,:, z), mask=self%geom%valid_halo_mask)
+    do j=self%geom%jsc,self%geom%jec
+      do i=self%geom%isc,self%geom%iec
+        real_ptr(:, self%geom%atlas_ij2idx(i,j)) = field%val(i,j,:)
+      end do
     end do
-    call afield%final()
 
+    call afield%final()
   end do
 end subroutine
-
-! ------------------------------------------------------------------------------
-!> Adjoint of get fields used by the interpolation.
-!!
-!! The fields that are input ahave  have halos (minus the invalid and duplicate halo points)
-subroutine soca_fields_to_fieldset_ad(self, vars, afieldset)
-  class(soca_fields),   intent(in) :: self
-  type(oops_variables), intent(in) :: vars
-  type(atlas_fieldset), intent(in) :: afieldset
-
-  integer :: v, z
-  integer :: is, ie, js, je
-  type(soca_field), pointer :: field
-  type(atlas_field) :: afield
-  real(kind=kind_real), pointer :: real_ptr(:,:)
-  real(kind=kind_real), pointer :: tmp(:,:)
-
-  ! start/stop idx, assuming halo
-  is = self%geom%isd; ie = self%geom%ied
-  js = self%geom%jsd; je = self%geom%jed
-
-  allocate(tmp(is:ie, js:je))
-
-  do v=1,vars%nvars()
-    call self%get(vars%variable(v), field)
-    afield = afieldset%field(vars%variable(v))
-
-    tmp = 0.0
-    call afield%data(real_ptr)
-    do z=1,field%nz
-      tmp = unpack(real_ptr(z,:), self%geom%valid_halo_mask, 0.0_kind_real)
-      call mpp_update_domains_ad(tmp, self%geom%Domain%mpp_domain, complete=.true.)
-      field%val(:,:,z) = field%val(:,:,z) + tmp
-    end do
-    call afield%final()
-
-  end do
-end subroutine
-
 
 ! ------------------------------------------------------------------------------
 !> Set the our values from an atlas fieldset
@@ -1642,7 +1601,7 @@ subroutine soca_fields_from_fieldset(self, vars, afieldset)
   type(oops_variables),       intent(in)    :: vars
   type(atlas_fieldset),       intent(in)    :: afieldset
 
-  integer :: jvar, i, jz
+  integer :: jvar, i, j, n, f
   real(kind=kind_real), pointer :: real_ptr(:,:)
   logical :: var_found
   character(len=1024) :: fieldname
@@ -1654,20 +1613,20 @@ subroutine soca_fields_from_fieldset(self, vars, afieldset)
 
   do jvar = 1,vars%nvars()
     var_found = .false.
-    do i=1,size(self%fields)
-      field => self%fields(i)
+    do f=1,size(self%fields)
+      field => self%fields(f)
       if (trim(vars%variable(jvar))==trim(field%name)) then
         ! Get field
         afield = afieldset%field(vars%variable(jvar))
 
         ! Copy data
         call afield%data(real_ptr)
-        do jz=1,field%nz
-          ! NOTE, any missing values from unpacking are filled with 0.0
-          field%val(:,:,jz) = unpack(real_ptr(jz,:), self%geom%valid_halo_mask, 0.0_kind_real)
+        do j=self%geom%jsc,self%geom%jec
+          do i=self%geom%isc,self%geom%iec
+            field%val(i,j,:) = real_ptr(:, self%geom%atlas_ij2idx(i,j))
+          end do
         end do
-
-        ! Release pointer
+        
         call afield%final()
 
         ! Set flag
@@ -1677,7 +1636,6 @@ subroutine soca_fields_from_fieldset(self, vars, afieldset)
     end do
     if (.not.var_found) call abor1_ftn('variable '//trim(vars%variable(jvar))//' not found in increment')
   end do
-
 end subroutine
 
 end module soca_fields_mod

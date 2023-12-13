@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2017-2021 UCAR
+ * (C) Copyright 2017-2023 UCAR
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -255,6 +255,7 @@ namespace soca {
 
   void State::toFieldSet(atlas::FieldSet &fset) const {
     soca_state_to_fieldset_f90(toFortran(), vars_, fset.get());
+    fset.haloExchange();
   }
 
   // -----------------------------------------------------------------------------

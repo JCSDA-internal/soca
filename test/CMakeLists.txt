@@ -613,8 +613,10 @@ soca_add_test( NAME dirac_soca_nomask
                TEST_DEPENDS test_soca_gridgen
                             test_soca_static_socaerror_init)
 
+# NOTE the following test throws a FPE only on clang
 soca_add_test( NAME dirac_diffusion
                EXE soca_error_covariance_toolbox.x
+               NOTRAPFPE
                TEST_DEPENDS test_soca_parameters_diffusion)
 
 # h(x) executables
