@@ -167,10 +167,11 @@ variational:
     online diagnostics:
       write increment: true
       increment:
-        datadir: data_generated/3dhybfgat
-        date: *date_begin
-        exp: 3dhybfgat.iter1
-        type: incr
+        state component:      
+          datadir: data_generated/3dhybfgat
+          date: *date_begin
+          exp: 3dhybfgat.iter1
+          type: incr
 
 output:
   datadir: data_generated/3dhybfgat
