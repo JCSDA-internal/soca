@@ -1079,6 +1079,8 @@ subroutine soca_diffusion_read_params(self, f_conf)
     
       allocate(self%group(grp)%KhDt(DOMAIN_WITH_HALO))
       allocate(self%group(grp)%normalization_hz(DOMAIN_WITH_HALO))
+      self%group(grp)%KhDt = 0.0
+      self%group(grp)%normalization_hz = 1.0
 
       str = "iterations_hz"
       idr = register_restart_field(restart_file, filename, str, &
@@ -1110,6 +1112,8 @@ subroutine soca_diffusion_read_params(self, f_conf)
 
       allocate(self%group(grp)%KvDt(DOMAIN_WITH_HALO, self%geom%nzo))          
       allocate(self%group(grp)%normalization_vt(DOMAIN_WITH_HALO, self%geom%nzo))
+      self%group(grp)%KvDt = 0.0
+      self%group(grp)%normalization_vt = 1.0
 
       str = "iterations_vt"
       idr = register_restart_field(restart_file, filename, str, &
@@ -1128,6 +1132,11 @@ subroutine soca_diffusion_read_params(self, f_conf)
 
       write (str, '(4X,A,I5)') "minimum iterations: ", self%group(grp)%niter_vt
       call oops_log%info(str)
+
+      ! I don't *think* i ever need the halos for these parameters... but better safe than sorry
+      call mpp_update_domains(self%group(grp)%normalization_vt, self%geom%Domain%mpp_domain, complete=.true.)
+      call mpp_update_domains(self%group(grp)%KvDt, self%geom%Domain%mpp_domain, complete=.true.)      
+
     end if
   end do
   call fms_io_exit()
