@@ -59,7 +59,7 @@ class ModelUFS: public oops::interface::ModelBase<Traits>,
   F90model keyConfig_;
   util::Duration tstep_;
   const Geometry geom_;
-  const oops::Variables vars_;
+  oops::Variables vars_;
   char jedidir_[10000];
   char ufsdir_[10000];
 };

@@ -24,8 +24,8 @@
 namespace soca {
 // -------------------------------------------------------------------------------------------------
 // Options taken by ModelUFS
-class ModelUFSParameters : public oops::ModelParametersBase {
-  OOPS_CONCRETE_PARAMETERS(ModelUFSParameters, ModelParametersBase)
+class ModelUFSParameters : public oops::Parameters {
+  OOPS_CONCRETE_PARAMETERS(ModelUFSParameters, Parameters)
 
  public:
   oops::RequiredParameter<oops::Variables> modelVariables{ "model variables", this};
