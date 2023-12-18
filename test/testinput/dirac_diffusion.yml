@@ -29,12 +29,13 @@ background error:
       groups:
       - name: group1
         horizontal:
-          filename: data_generated/parameters_diffusion_hz/group1.nc
+          filename: data_generated/parameters_diffusion_hz/hz_large.nc
         vertical:
-          filename: data_generated/parameters_diffusion_vt/group1.nc
+          filename: data_generated/parameters_diffusion_vt/vt_5lvls.nc
+
       - name: group2
         horizontal:       
-          filename: data_generated/parameters_diffusion_hz/group2.nc
+          filename: data_generated/parameters_diffusion_hz/hz_smaller.nc
      
 dirac:
   ixdir: [1, 17, 51, 31, 51, 63, 81, 14, 16, 43]

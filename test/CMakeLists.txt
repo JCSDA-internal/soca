@@ -1,6 +1,7 @@
 set( soca_test_input
   testinput/3dhyb.yml
   testinput/3dhybfgat.yml
+  testinput/3dvar_diffusion.yml
   testinput/3dvar_godas.yml
   testinput/3dvar_single_ob.yml
   testinput/3dvar_soca.yml
@@ -90,6 +91,7 @@ set( soca_test_input
 set( soca_test_ref
   testref/3dhyb.test
   testref/3dhybfgat.test
+  testref/3dvar_diffusion.test
   testref/3dvar_godas.test
   testref/3dvar_single_ob.test
   testref/3dvar_soca.test
@@ -693,6 +695,12 @@ soca_add_test( NAME 3dvarbump
               #  NOTRAPFPE
                TEST_DEPENDS test_soca_gridgen
                             test_soca_parameters_bump_cor_nicas )
+
+soca_add_test( NAME 3dvar_diffusion
+               EXE  soca_var.x
+               TEST_DEPENDS test_soca_gridgen
+                            test_soca_parameters_diffusion_hz
+                            test_soca_parameters_diffusion_vt)               
 
 soca_add_test( NAME 3dvar_godas
                EXE  soca_var.x

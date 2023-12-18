@@ -22,18 +22,19 @@ background error:
         iterations: 1000       #< in the real world you'll want to use 1e4 or so
 
       groups:
-      - name: group1
+      - name: hz_large
         horizontal:
           from file:
             filename: data_generated/setcorscales/ocn.cor_rh.incr.2018-04-15T00:00:00Z.nc
-            variable name: ave_ssh
+            variable name: ave_ssh        
         write:
-          filename: data_generated/parameters_diffusion_hz/group1.nc
+          filename: data_generated/parameters_diffusion_hz/hz_large.nc
 
-      - name: group2
+      - name: hz_smaller
         horizontal:
+          # make this similar to what is used with BUMP in other tests, for now
           as gaussian: true
-          fixed value: 2000.0e3  #< other method of defining scales, instead of using "from file"          
+          fixed value: 840336.134453782
         write:
-          filename: data_generated/parameters_diffusion_hz/group2.nc
+          filename: data_generated/parameters_diffusion_hz/hz_smaller.nc
 

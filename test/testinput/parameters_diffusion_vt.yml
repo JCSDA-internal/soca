@@ -23,9 +23,9 @@ background error:
         iterations: 1000       #< in the real world you'll want to use 1e4 or so
       
       groups:
-      - name: group1
+      - name: vt_5lvls
         vertical:
           as gaussian: true
           fixed value: 5.0
         write:
-          filename: data_generated/parameters_diffusion_vt/group1.nc
+          filename: data_generated/parameters_diffusion_vt/vt_5lvls.nc
