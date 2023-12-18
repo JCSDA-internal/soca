@@ -29,11 +29,15 @@ use MOM_get_input,       only : directories, Get_MOM_Input, directories
 use MOM_grid,            only : ocean_grid_type, MOM_grid_init
 use MOM_io,              only : open_file, close_file, &
                                 check_nml_error, io_infra_init, io_infra_end, &
-                                ASCII_FILE, READONLY_FILE
+                                ASCII_FILE, READONLY_FILE, open_ASCII_file
 use MOM_restart,         only : MOM_restart_CS
 use MOM_string_functions,only : uppercase
-use MOM_surface_forcing, only : set_forcing, forcing_save_restart, &
+!use MOM_surface_forcing, only : set_forcing, forcing_save_restart, &
+!                                surface_forcing_init, surface_forcing_CS
+use MOM_surface_forcing_nuopc, only : forcing_save_restart, &
                                 surface_forcing_init, surface_forcing_CS
+!use MOM_surface_forcing_nuopc, only : forcing_save_restart, &
+!                                surface_forcing_init !, surface_forcing_CS
 use MOM_time_manager,    only : time_type, set_date, get_date, &
                                 real_to_time, time_type_to_real, &
                                 operator(+), operator(-), operator(*), operator(/), &
@@ -148,7 +152,8 @@ subroutine soca_mom6_init(mom6_config, partial_init)
   call io_infra_init()
 
   ! Provide for namelist specification of the run length and calendar data.
-  call open_file(unit, 'input.nml', form=ASCII_FILE, action=READONLY_FILE)
+! call open_file(unit, 'input.nml', form=ASCII_FILE, action=READONLY_FILE)
+  call open_ASCII_file(unit, 'input.nml', action=READONLY_FILE)
   read(unit, ocean_solo_nml, iostat=io_status)
   call close_file(unit)
   ierr = check_nml_error(io_status,'ocean_solo_nml')
@@ -220,8 +225,8 @@ subroutine soca_mom6_init(mom6_config, partial_init)
                             mom6_config%scaling,&
                             param_file,&
                             diag,&
-                            mom6_config%surface_forcing_CSp,&
-                            tracer_flow_CSp)
+                            mom6_config%surface_forcing_CSp)!,&
+                           ! tracer_flow_CSp)
 
   ! Get time step from MOM config. TODO: Get DT from DA config
   call get_param(param_file, mod_name, "DT", param_int, fail_if_missing=.true.)
@@ -233,14 +238,14 @@ subroutine soca_mom6_init(mom6_config, partial_init)
   call close_param_file(param_file)
 
   ! Set the forcing for the first steps.
-  call set_forcing(mom6_config%sfc_state,&
-                   mom6_config%forces,&
-                   mom6_config%fluxes,&
-                   mom6_config%Time,&
-                   mom6_config%Time_step_ocean,&
-                   mom6_config%grid, &
-                   mom6_config%scaling, &
-                   mom6_config%surface_forcing_CSp)
+! call set_forcing(mom6_config%sfc_state,&
+!                  mom6_config%forces,&
+!                  mom6_config%fluxes,&
+!                  mom6_config%Time,&
+!                  mom6_config%Time_step_ocean,&
+!                  mom6_config%grid, &
+!                  mom6_config%scaling , &
+!                  mom6_config%surface_forcing_CSp)
 
   ! Do more stuff for mom init ...
   call finish_MOM_initialization(mom6_config%Time,&
