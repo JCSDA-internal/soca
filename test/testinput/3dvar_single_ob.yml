@@ -7,8 +7,9 @@ _: &land_mask
 
 cost function:
   cost type: 3D-Var
-  window begin: 2018-04-14T00:00:00Z
-  window length: P2D
+  time window:
+    begin: 2018-04-14T00:00:00Z
+    length: P2D
   analysis variables: &a_vars [cicen, hicen, hsnon, socn, tocn, ssh, sw, lhf, shf, lw, us]
   geometry: &geom
     geom_grid_file: data_generated/gridgen/soca_gridspec.72x35x25.nc
@@ -75,10 +76,11 @@ variational:
     online diagnostics:
       write increment: true
       increment:
-        datadir: data_generated/3dvar_single_ob
-        date: *bkg_date
-        exp: 3dvar_single_ob.iter1
-        type: incr
+        state component:      
+          datadir: data_generated/3dvar_single_ob
+          date: *bkg_date
+          exp: 3dvar_single_ob.iter1
+          type: incr
 
 output:
   datadir: data_generated/3dvar_single_ob

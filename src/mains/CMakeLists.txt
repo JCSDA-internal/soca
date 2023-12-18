@@ -1,13 +1,3 @@
-#ecbuild_add_executable( TARGET  soca_dirac.x
-#                        SOURCES Dirac.cc
-#                        LIBS    ${UFS_LIBS}
-#                      )
-
-ecbuild_add_executable( TARGET  test_soca_model.x
-                        SOURCES TestModel.cc
-                        LIBS    ${UFS_LIBS}
-                      )
-
 ecbuild_add_executable( TARGET  soca_forecast.x
                         SOURCES Forecast.cc
                         LIBS    ${UFS_LIBS}
@@ -53,11 +43,6 @@ ecbuild_add_executable( TARGET  soca_sqrtvertloc.x
 ecbuild_add_executable( TARGET  soca_ensmeanandvariance.x
                         SOURCES EnsMeanAndVariance.cc
                         LIBS    ${UFS_LIBS}
-                      )
-
-ecbuild_add_executable( TARGET  soca_ensvariance.x
-                        SOURCES EnsVariance.cc
-                        LIBS   ${UFS_LIBS}
                       )
 
 ecbuild_add_executable( TARGET  soca_ensrecenter.x

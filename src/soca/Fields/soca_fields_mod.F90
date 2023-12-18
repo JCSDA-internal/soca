@@ -1,4 +1,4 @@
-! (C) Copyright 2017-2021 UCAR
+! (C) Copyright 2017-2023 UCAR
 !
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -18,6 +18,7 @@ use datetime_mod, only: datetime, datetime_set, datetime_to_string, datetime_to_
                         datetime_create, datetime_diff
 use duration_mod, only: duration, duration_to_string
 use fckit_configuration_module, only: fckit_configuration
+use logger_mod
 use fckit_mpi_module, only: fckit_mpi_min, fckit_mpi_max, fckit_mpi_sum
 use kinds, only: kind_real
 use oops_variables_mod, only: oops_variables
@@ -29,7 +30,7 @@ use fms_io_mod, only: fms_io_init, fms_io_exit, register_restart_field, &
 use fms_mod,    only: write_data, set_domain
 use MOM_remapping, only : remapping_CS, initialize_remapping, remapping_core_h, &
                           end_remapping
-use mpp_domains_mod, only : mpp_update_domains, mpp_update_domains_ad
+use mpp_domains_mod, only : mpp_update_domains
 
 ! SOCA modules
 use soca_fields_metadata_mod, only : soca_field_metadata
@@ -98,6 +99,9 @@ contains
 
   !>\copybrief soca_field_stencil_interp \see soca_field_stencil_interp
   procedure :: stencil_interp  => soca_field_stencil_interp
+
+  !>\copybrief soca_field_fill_masked \see soca_field_fill_masked
+  procedure :: fill_masked     => soca_field_fill_masked
 
 end type soca_field
 
@@ -223,9 +227,6 @@ contains
 
   !> copybrief soca_fields_to_fieldset \see soca_fields_to_fieldset
   procedure :: to_fieldset  => soca_fields_to_fieldset
-
-  !> copybrief soca_fields_to_fieldset_ad \see soca_fields_to_fieldset_ad
-  procedure :: to_fieldset_ad  => soca_fields_to_fieldset_ad
 
   procedure :: from_fieldset => soca_fields_from_fieldset
 
@@ -361,7 +362,7 @@ subroutine soca_field_stencil_interp(self, geom, fromto)
            ! source point on land, skip
            if (masksrc_local(ij(1,sti), ij(2,sti)) == 0_kind_real) cycle
 
-           ! outcroping of layers, skip 
+           ! outcroping of layers, skip
            if (abs(self%val(ij(1,sti), ij(2,sti),1)) > val_max) cycle
 
            ! store the valid neighbors
@@ -383,6 +384,25 @@ subroutine soca_field_stencil_interp(self, geom, fromto)
   self%val = val_tmp
 
 end subroutine soca_field_stencil_interp
+
+! ------------------------------------------------------------------------------
+!> Fill masked values
+!!
+!! Needed when reading fms history which can contain NaN's over land
+subroutine soca_field_fill_masked(self, geom)
+  class(soca_field), intent(inout) :: self
+  type(soca_geom),      intent(in) :: geom
+
+  integer :: i, j
+
+  if (.not. associated(self%mask)) return  
+  do j = geom%jsc, geom%jec
+    do i = geom%isc, geom%iec
+      if (self%mask(i,j)==0) self%val(i,j,:) = self%metadata%fillvalue
+    end do
+  end do
+
+end subroutine soca_field_fill_masked
 
 ! ------------------------------------------------------------------------------
 !> Delete the soca_field object.
@@ -905,7 +925,11 @@ subroutine soca_fields_read(self, f_conf, vdate)
 
     ! built-in variables
     do i=1,size(self%fields)
-      if(self%fields(i)%metadata%io_name /= "") then
+
+      if(self%fields(i)%metadata%io_file == "CONSTANT") then
+        self%fields(i)%val(:,:,:) = self%fields(i)%metadata%constant_value
+
+      else if(self%fields(i)%metadata%io_file /= "") then
         ! which file are we reading from?
         select case(self%fields(i)%metadata%io_file)
         case ('ocn')
@@ -956,6 +980,12 @@ subroutine soca_fields_read(self, f_conf, vdate)
 
     call fms_io_exit()
 
+    ! Change masked values
+    do n=1,size(self%fields)
+       field => self%fields(n)
+       call field%fill_masked(self%geom)
+    end do
+
     ! Update halo and return if reading increment
     if (iread==3) then !
        do n=1,size(self%fields)
@@ -969,6 +999,44 @@ subroutine soca_fields_read(self, f_conf, vdate)
     isc = self%geom%isc ; iec = self%geom%iec
     jsc = self%geom%jsc ; jec = self%geom%jec
 
+    ! Remap layers if needed
+    if (vert_remap) then
+
+      ! output log of  what fields are going to be interpolated vertically
+      if ( self%geom%f_comm%rank() == 0 ) then
+        do n=1,size(self%fields)
+          if (.not. self%fields(n)%metadata%vert_interp) cycle
+          call oops_log%info("vertically remapping "//trim(self%fields(n)%name))
+        end do
+      end if
+
+      allocate(h_common_ij(nz), hocn_ij(nz), varocn_ij(nz), varocn2_ij(nz))
+      call initialize_remapping(remapCS,'PCM')
+      do i = isc, iec
+        do j = jsc, jec
+          h_common_ij = h_common(i,j,:)
+          hocn_ij = hocn%val(i,j,:)
+
+          do n=1,size(self%fields)
+            field => self%fields(n)
+            ! TODO Vertical remapping is only valid if the field is on the tracer grid point.
+            if (.not. field%metadata%vert_interp) cycle
+            if (associated(field%mask) .and. field%mask(i,j).eq.1) then
+               varocn_ij = field%val(i,j,:)
+               call remapping_core_h(remapCS, nz, h_common_ij, varocn_ij,&
+                      &nz, hocn_ij, varocn2_ij)
+               field%val(i,j,:) = varocn2_ij
+            else
+               field%val(i,j,:) = 0.0_kind_real
+            end if
+          end do
+        end do
+      end do
+      hocn%val = h_common
+      deallocate(h_common_ij, hocn_ij, varocn_ij, varocn2_ij)
+      call end_remapping(remapCS)
+    end if
+
     ! Initialize mid-layer depth from layer thickness
     if (self%has("layer_depth")) then
       call self%get("layer_depth", layer_depth)
@@ -980,48 +1048,19 @@ subroutine soca_fields_read(self, f_conf, vdate)
       call self%get("tocn", field)
       call self%get("socn", field2)
       call self%get("mld", mld)
+      mld%val = 0.0
       do i = isc, iec
         do j = jsc, jec
+            if (self%geom%mask2d(i,j)==0) cycle
+
             mld%val(i,j,1) = soca_mld(&
                 &field2%val(i,j,:),&
                 &field%val(i,j,:),&
                 &layer_depth%val(i,j,:),&
                 &self%geom%lon(i,j),&
-                &self%geom%lat(i,j))
+                &self%geom%lat(i,j))      
         end do
       end do
-    end if
-
-    ! Remap layers if needed
-    if (vert_remap) then
-      allocate(h_common_ij(nz), hocn_ij(nz), varocn_ij(nz), varocn2_ij(nz))
-      call initialize_remapping(remapCS,'PCM')
-      do i = isc, iec
-        do j = jsc, jec
-          h_common_ij = h_common(i,j,:)
-          hocn_ij = hocn%val(i,j,:)
-
-          do n=1,size(self%fields)
-            field => self%fields(n)
-            select case(field%name)
-            ! TODO remove hardcoded variable names here
-            ! TODO Add u and v. Remapping u and v will require interpolating h
-            case ('tocn','socn')
-              if (associated(field%mask) .and. field%mask(i,j).eq.1) then
-                varocn_ij = field%val(i,j,:)
-                call remapping_core_h(remapCS, nz, h_common_ij, varocn_ij,&
-                      &nz, hocn_ij, varocn2_ij)
-                field%val(i,j,:) = varocn2_ij
-              else
-                field%val(i,j,:) = 0.0_kind_real
-              end if
-            end select
-          end do
-        end do
-      end do
-      hocn%val = h_common
-      deallocate(h_common_ij, hocn_ij, varocn_ij, varocn2_ij)
-      call end_remapping(remapCS)
     end if
 
     ! Update halo
@@ -1207,6 +1246,7 @@ subroutine soca_fields_write_rst(self, f_conf, vdate)
   ! built in variables
   do i=1,size(self%fields)
     field => self%fields(i)
+    call field%fill_masked(self%geom)
     if (len_trim(field%metadata%io_file) /= 0) then
       ! which file are we writing to
       select case(field%metadata%io_file)
@@ -1514,9 +1554,8 @@ subroutine soca_fields_to_fieldset(self, vars, afieldset)
   type(atlas_fieldset), intent(inout) :: afieldset
 
   type(atlas_field) :: afield
-  integer :: v, z
+  integer :: v, n, i, j
   type(soca_field), pointer :: field
-  real(kind=kind_real), pointer :: mask(:,:) => null() !< field mask
   type(atlas_metadata) :: meta
   real(kind=kind_real), pointer :: real_ptr(:,:)
 
@@ -1524,13 +1563,16 @@ subroutine soca_fields_to_fieldset(self, vars, afieldset)
     call self%get(vars%variable(v), field)
 
     ! make sure halos are updated (remove? is redundant?)
+    ! NOTE: this breaks the saber adjoint test for the diffusion operator.
+    !  Fixing it is more work than I want to do right now. So if you want to run the
+    !  adjoint test, comment out this line first!
     call field%update_halo(self%geom)
 
     ! get/create field
     if (afieldset%has_field(vars%variable(v))) then
       afield = afieldset%field(vars%variable(v))
     else
-      afield = self%geom%functionspaceInchalo%create_field( &
+      afield = self%geom%functionspace%create_field( &
         name=vars%variable(v), kind=atlas_real(kind_real), levels=field%nz)
       meta = afield%metadata()
       call meta%set('interp_type', 'default')
@@ -1542,52 +1584,15 @@ subroutine soca_fields_to_fieldset(self, vars, afieldset)
 
     ! create and fill field
     call afield%data(real_ptr)
-    do z=1,field%nz
-        real_ptr(z,:) = pack(field%val(:,:, z), mask=self%geom%valid_halo_mask)
+    do j=self%geom%jsc,self%geom%jec
+      do i=self%geom%isc,self%geom%iec
+        real_ptr(:, self%geom%atlas_ij2idx(i,j)) = field%val(i,j,:)
+      end do
     end do
-    call afield%final()
 
+    call afield%final()
   end do
 end subroutine
-
-! ------------------------------------------------------------------------------
-!> Adjoint of get fields used by the interpolation.
-!!
-!! The fields that are input ahave  have halos (minus the invalid and duplicate halo points)
-subroutine soca_fields_to_fieldset_ad(self, vars, afieldset)
-  class(soca_fields),   intent(in) :: self
-  type(oops_variables), intent(in) :: vars
-  type(atlas_fieldset), intent(in) :: afieldset
-
-  integer :: v, z
-  integer :: is, ie, js, je
-  type(soca_field), pointer :: field
-  type(atlas_field) :: afield
-  real(kind=kind_real), pointer :: real_ptr(:,:)
-  real(kind=kind_real), pointer :: tmp(:,:)
-
-  ! start/stop idx, assuming halo
-  is = self%geom%isd; ie = self%geom%ied
-  js = self%geom%jsd; je = self%geom%jed
-
-  allocate(tmp(is:ie, js:je))
-
-  do v=1,vars%nvars()
-    call self%get(vars%variable(v), field)
-    afield = afieldset%field(vars%variable(v))
-
-    tmp = 0.0
-    call afield%data(real_ptr)
-    do z=1,field%nz
-      tmp = unpack(real_ptr(z,:), self%geom%valid_halo_mask, 0.0_kind_real)
-      call mpp_update_domains_ad(tmp, self%geom%Domain%mpp_domain, complete=.true.)
-      field%val(:,:,z) = field%val(:,:,z) + tmp
-    end do
-    call afield%final()
-
-  end do
-end subroutine
-
 
 ! ------------------------------------------------------------------------------
 !> Set the our values from an atlas fieldset
@@ -1596,7 +1601,7 @@ subroutine soca_fields_from_fieldset(self, vars, afieldset)
   type(oops_variables),       intent(in)    :: vars
   type(atlas_fieldset),       intent(in)    :: afieldset
 
-  integer :: jvar, i, jz
+  integer :: jvar, i, j, n, f
   real(kind=kind_real), pointer :: real_ptr(:,:)
   logical :: var_found
   character(len=1024) :: fieldname
@@ -1608,20 +1613,20 @@ subroutine soca_fields_from_fieldset(self, vars, afieldset)
 
   do jvar = 1,vars%nvars()
     var_found = .false.
-    do i=1,size(self%fields)
-      field => self%fields(i)
+    do f=1,size(self%fields)
+      field => self%fields(f)
       if (trim(vars%variable(jvar))==trim(field%name)) then
         ! Get field
         afield = afieldset%field(vars%variable(jvar))
 
         ! Copy data
         call afield%data(real_ptr)
-        do jz=1,field%nz
-          ! NOTE, any missing values from unpacking are filled with 0.0
-          field%val(:,:,jz) = unpack(real_ptr(jz,:), self%geom%valid_halo_mask, 0.0_kind_real)
+        do j=self%geom%jsc,self%geom%jec
+          do i=self%geom%isc,self%geom%iec
+            field%val(i,j,:) = real_ptr(:, self%geom%atlas_ij2idx(i,j))
+          end do
         end do
-
-        ! Release pointer
+        
         call afield%final()
 
         ! Set flag
@@ -1631,7 +1636,6 @@ subroutine soca_fields_from_fieldset(self, vars, afieldset)
     end do
     if (.not.var_found) call abor1_ftn('variable '//trim(vars%variable(jvar))//' not found in increment')
   end do
-
 end subroutine
 
 end module soca_fields_mod

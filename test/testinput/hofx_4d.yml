@@ -17,8 +17,10 @@ initial condition:
   ice_filename: cice.res.nc
   state variables: [cicen, hicen, socn, tocn, ssh, hocn, uocn, vocn, sw, lhf, shf, lw, us]
 
-window begin: 2018-04-15T00:00:00Z
-window length: PT3H
+time window:
+  begin: 2018-04-15T00:00:00Z
+  length: PT3H
+  
 forecast length: PT3H
 
 observations:

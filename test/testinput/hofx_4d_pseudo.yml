@@ -6,7 +6,6 @@ geometry:
 model:
   name: PseudoModel
   tstep: PT1H
-  state variables: &soca_vars [socn, tocn, ssh, hocn, uocn, vocn]
   states:
   - date: 2018-04-15T01:00:00Z
     basename: data_generated/forecast_mom6/
@@ -26,10 +25,11 @@ initial condition:
   date: 2018-04-15T00:00:00Z
   basename: data_static/72x35x25/restarts/
   ocn_filename: MOM.res.nc
-  state variables: *soca_vars
+  state variables: [socn, tocn, ssh, hocn, uocn, vocn]
 
-window begin: 2018-04-15T00:00:00Z
-window length: PT3H
+time window:
+  begin: 2018-04-15T00:00:00Z
+  length: PT3H
 forecast length: PT3H
 
 observations:

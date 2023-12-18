@@ -1,4 +1,4 @@
-! (C) Copyright 2017-2021 UCAR
+! (C) Copyright 2017-2023 UCAR
 !
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -7,8 +7,8 @@
 !> Geometry module
 module soca_geom_mod
 
-! jedi modules
-use atlas_module, only: atlas_functionspace_pointcloud, atlas_fieldset, &
+  ! jedi modules
+use atlas_module, only: atlas_functionspace_NodeColumns, atlas_fieldset, &
     atlas_field, atlas_real, atlas_integer, atlas_geometry, atlas_indexkdtree
 use fckit_configuration_module, only: fckit_configuration
 use fckit_mpi_module, only: fckit_mpi_comm
@@ -24,7 +24,8 @@ use MOM_diag_remap,  only : diag_remap_ctrl, diag_remap_init, diag_remap_configu
 use MOM_domains, only : MOM_domain_type
 use MOM_EOS,         only : EOS_type
 use mpp_domains_mod, only : mpp_get_compute_domain, mpp_get_data_domain, &
-                            mpp_get_global_domain, mpp_update_domains
+                            mpp_get_global_domain, mpp_update_domains, &
+                            CYCLIC_GLOBAL_DOMAIN, FOLD_NORTH_EDGE
 ! soca modules
 use soca_fields_metadata_mod, only : soca_fields_metadata
 use soca_mom6, only: soca_mom6_config, soca_mom6_init, soca_geomdomain_init
@@ -80,11 +81,6 @@ type, public :: soca_geom
     integer :: iterator_dimension
     !> \}
 
-    integer :: ngrid !< number of non-halo gridpoints
-    integer :: ngrid_halo !< number of gridpoints, including halo
-    integer :: ngrid_halo_valid !< number of gridpoints, including halo, but
-                                !! excluding duplicate or invalid halo points
-
     !> \name grid latitude/longitude
     !! \{
     real(kind=kind_real), allocatable, dimension(:)   :: lonh !< cell center nominal longitude
@@ -114,6 +110,8 @@ type, public :: soca_geom
     !! \{
     real(kind=kind_real), allocatable, dimension(:,:) :: sin_rot !< sine of rotation between logical grid north
     real(kind=kind_real), allocatable, dimension(:,:) :: cos_rot !< cosine of rotation between logical grid north
+    real(kind=kind_real), allocatable, dimension(:,:) :: dx !< cell x width (m)
+    real(kind=kind_real), allocatable, dimension(:,:) :: dy !< cell y width (m)
     real(kind=kind_real), allocatable, dimension(:,:) :: cell_area !< cell area (m^2)
     real(kind=kind_real), allocatable, dimension(:,:) :: rossby_radius !< rossby radius (m) at the gridpoint
     real(kind=kind_real), allocatable, dimension(:,:) :: distance_from_coast !< distance to closest land grid point (m)
@@ -130,9 +128,11 @@ type, public :: soca_geom
     character(len=:), allocatable :: rossby_file !< filename of rossby radius input file (if used)
 
     type(fckit_mpi_comm) :: f_comm !< MPI communicator
-    type(atlas_functionspace_pointcloud) :: functionspace
-    type(atlas_functionspace_pointcloud) :: functionspaceInchalo
 
+    !> mesh parameters
+    type(atlas_functionspace_NodeColumns) :: functionspace
+    integer, allocatable :: atlas_ij2idx(:,:)
+    type(atlas_fieldset) :: fieldset !< the geom fields (area, mask, etc)
 
   contains
 
@@ -143,11 +143,8 @@ type, public :: soca_geom
     !> \copybrief soca_geom_end \see soca_geom_end
     procedure :: end => soca_geom_end
 
-    !> \copybrief soca_geom_set_atlas_lonlat \see soca_geom_set_atlas_lonlat
-    procedure :: lonlat => soca_geom_lonlat
-
     !> \copybrief soca_geom_fill_atlas_fieldset \see soca_geom_fill_atlas_fieldset
-    procedure :: to_fieldset => soca_geom_to_fieldset
+    procedure :: init_fieldset => soca_geom_init_fieldset
 
     !> \copybrief soca_geom_clone \see soca_geom_clone
     procedure :: clone => soca_geom_clone
@@ -158,15 +155,11 @@ type, public :: soca_geom
     !> \copybrief soca_geom_thickness2depth \see soca_geom_thickness2depth
     procedure :: thickness2depth => soca_geom_thickness2depth
 
-    !> \copybrief soca_geom_struct2atlas \see soca_geom_struct2atlas
-    procedure :: struct2atlas => soca_geom_struct2atlas
-
-    !> \copybrief soca_geom_atlas2struct \ see soca_geom_atlas2struct
-    procedure :: atlas2struct => soca_geom_atlas2struct
-
     !> \copybrief soca_geom_write \see soca_geom_write
     procedure :: write => soca_geom_write
 
+    !> \copybrief soca_geom_mesh_valid_nodes_cells \see soca_geom_mesh_valid_nodes_cells
+    procedure :: mesh_valid_nodes_cells => soca_geom_mesh_valid_nodes_cells
 end type soca_geom
 
 ! ------------------------------------------------------------------------------
@@ -219,6 +212,8 @@ subroutine soca_geom_init(self, f_conf, f_comm)
   call mpp_update_domains(self%mask2d, self%Domain%mpp_domain)
   call mpp_update_domains(self%mask2du, self%Domain%mpp_domain)
   call mpp_update_domains(self%mask2dv, self%Domain%mpp_domain)
+  call mpp_update_domains(self%dx, self%Domain%mpp_domain)
+  call mpp_update_domains(self%dy, self%Domain%mpp_domain)
   call mpp_update_domains(self%cell_area, self%Domain%mpp_domain)
   call mpp_update_domains(self%rossby_radius, self%Domain%mpp_domain)
   call mpp_update_domains(self%distance_from_coast, self%Domain%mpp_domain)
@@ -262,6 +257,8 @@ subroutine soca_geom_end(self)
   if (allocated(self%mask2d))        deallocate(self%mask2d)
   if (allocated(self%mask2du))       deallocate(self%mask2du)
   if (allocated(self%mask2dv))       deallocate(self%mask2dv)
+  if (allocated(self%dx))            deallocate(self%dx)
+  if (allocated(self%dy))            deallocate(self%dy)
   if (allocated(self%cell_area))     deallocate(self%cell_area)
   if (allocated(self%rossby_radius)) deallocate(self%rossby_radius)
   if (allocated(self%distance_from_coast)) deallocate(self%distance_from_coast)
@@ -270,99 +267,79 @@ subroutine soca_geom_end(self)
   if (allocated(self%valid_halo_mask)) deallocate(self%valid_halo_mask)
   nullify(self%Domain)
   call self%functionspace%final()
-  call self%functionspaceIncHalo%final()
 
 end subroutine soca_geom_end
-
-
-! --------------------------------------------------------------------------------------------------
-!> Set ATLAS lonlat fieldset
-!!
-!! \related soca_geom_mod::soca_geom
-subroutine soca_geom_lonlat(self, afieldset)
-  class(soca_geom),  intent(inout) :: self
-  type(atlas_fieldset), intent(inout) :: afieldset
-
-  real(kind_real), pointer :: real_ptr(:,:)
-  type(atlas_field) :: afield
-
-  ! Create lon/lat field
-  afield = atlas_field(name="lonlat", kind=atlas_real(kind_real), shape=(/2,self%ngrid/))
-  call afield%data(real_ptr)
-  real_ptr(1,:) = pack(self%lon(self%isc:self%iec,self%jsc:self%jec),.true.)
-  real_ptr(2,:) = pack(self%lat(self%isc:self%iec,self%jsc:self%jec),.true.)
-  call afieldset%add(afield)
-  call afield%final()
-
-  afield = atlas_field(name="lonlat_inc_halos", kind=atlas_real(kind_real), shape=(/2,self%ngrid_halo_valid/))
-  call afield%data(real_ptr)
-  real_ptr(1,:) = pack(self%lon, self%valid_halo_mask)
-  real_ptr(2,:) = pack(self%lat, self%valid_halo_mask)
-  call afieldset%add(afield)
-  call afield%final()
-
-end subroutine soca_geom_lonlat
 
 
 ! --------------------------------------------------------------------------------------------------
 !> Fill ATLAS fieldset
 !!
 !! \related soca_geom_mod::soca_geom
-subroutine soca_geom_to_fieldset(self, afieldset)
+subroutine soca_geom_init_fieldset(self)
   class(soca_geom),  intent(inout) :: self
-  type(atlas_fieldset), intent(inout) :: afieldset
 
-  integer :: i, jz, ngrid
-  integer, pointer :: int_ptr(:,:)
-  real(kind=kind_real), pointer :: real_ptr(:,:)
-  integer, allocatable :: hmask(:,:)
-  type(atlas_field) :: afield
+  integer :: i, j, n, jz
+  type(atlas_field) :: fArea, fInterpMask, fVertCoord, fGmask, fOwned, fRossby
+  real(kind=kind_real), pointer :: vArea(:,:), vInterpMask(:,:), vVertCoord(:,:), vRossby(:,:)
+  integer, pointer :: vGmask(:,:), vOwned(:,:)
 
-  ngrid = (self%ied-self%isd+1)*(self%jed-self%jsd+1)
+  ! create fields, get pointers to their data
+  fArea = self%functionspace%create_field(name='area', kind=atlas_real(kind_real), levels=1)
+  call self%fieldset%add(fArea)
+  call fArea%data(vArea)
+  
+  fInterpMask = self%functionspace%create_field(name='interp_mask', kind=atlas_real(kind_real), levels=1)
+  call self%fieldset%add(fInterpMask)    
+  call fInterpMask%data(vInterpMask)
 
-  ! Add area
-  afield = self%functionspaceInchalo%create_field(name='area', kind=atlas_real(kind_real), levels=1)
-  call afield%data(real_ptr)
-  real_ptr(1,:) = pack(self%cell_area, self%valid_halo_mask)
-  call afieldset%add(afield)
-  call afield%final()
+  fVertCoord = self%functionspace%create_field(name='vert_coord', kind=atlas_real(kind_real), levels=self%nzo)
+  call self%fieldset%add(fVertCoord)
+  call fVertCoord%data(vVertCoord) 
 
-  ! Add vertical unit
-  afield = self%functionspaceInchalo%create_field(name='vunit', kind=atlas_real(kind_real), levels=self%nzo)
-  call afield%data(real_ptr)
-  do jz=1,self%nzo
-    real_ptr(jz,:) = real(jz, kind_real)
+  fGmask = self%functionspace%create_field(name='gmask', kind=atlas_integer(kind(0)), levels=self%nzo)
+  call self%fieldset%add(fGmask)
+  call fGmask%data(vGmask) 
+
+  fOwned = self%functionspace%create_field(name='owned', kind=atlas_integer(kind(0)), levels=1)
+  call self%fieldset%add(fOwned)
+  call fOwned%data(vOwned)
+
+  fRossby = self%functionspace%create_field(name='rossby_radius', kind=atlas_real(kind_real), levels=1)
+  call self%fieldset%add(fRossby)
+  call fRossby%data(vRossby)
+
+  ! set the data
+  vOwned = 0 ! need to set to 0, it's the only one that doesn't get halo update
+  do j=self%jsc,self%jec
+    do i=self%isc,self%iec
+      n = self%atlas_ij2idx(i,j)
+      vArea(1,n) = self%cell_area(i,j)
+      vInterpMask(1,n) = self%mask2d(i,j)
+      vGmask(:, n) = int(self%mask2d(i,j))
+      vOwned(1, n) = 1
+      vRossby(1, n) = self%rossby_radius(i,j)
+    end do
   end do
-  call afieldset%add(afield)
-  call afield%final()
-
-  ! Add geographical mask
-  afield = self%functionspaceInchalo%create_field(name='gmask', kind=atlas_integer(kind(0)), levels=self%nzo)
-  call afield%data(int_ptr)
   do jz=1,self%nzo
-    int_ptr(jz,:) = int(pack(self%mask2d, self%valid_halo_mask))
+    vVertCoord(jz,:) = real(jz, kind_real)
   end do
-  call afieldset%add(afield)
-  call afield%final()
 
-  ! Add halo mask
-  afield = self%functionspaceInchalo%create_field(name='hmask', kind=atlas_integer(kind(0)), levels=1)
-  allocate(hmask(self%isd:self%ied, self%jsd:self%jed))
-  hmask = 0
-  hmask(self%isc:self%iec, self%jsc:self%jec) = 1
-  call afield%data(int_ptr)
-  int_ptr(1,:) = pack(hmask, self%valid_halo_mask)
-  call afieldset%add(afield)
-  call afield%final()
+  ! halo exchanges for some of the fields 
+  call fGmask%halo_exchange()
+  call fInterpMask%halo_exchange()
+  call fArea%halo_exchange()
+  call fVertCoord%halo_exchange()
+  call fRossby%halo_exchange()
 
-  ! Add interpolation mask
-  afield = self%functionspaceInchalo%create_field(name='interp_mask', kind=atlas_real(kind_real), levels=1)
-  call afield%data(real_ptr)
-  real_ptr(1,:) = pack(self%mask2d, self%valid_halo_mask)
-  call afieldset%add(afield)
-  call afield%final()  
+  ! done, cleanup
+  call fArea%final()
+  call fInterpMask%final()
+  call fVertCoord%final()
+  call fGmask%final()
+  call fOwned%final()
+  call fRossby%final()
 
-end subroutine soca_geom_to_fieldset
+end subroutine soca_geom_init_fieldset
 
 
 ! ------------------------------------------------------------------------------
@@ -403,11 +380,13 @@ subroutine soca_geom_clone(self, other)
   self%mask2d = other%mask2d
   self%mask2du = other%mask2du
   self%mask2dv = other%mask2dv
+  self%dx = other%dx
+  self%dy = other%dy
   self%cell_area = other%cell_area
   self%rossby_radius = other%rossby_radius
   self%distance_from_coast = other%distance_from_coast
   self%h = other%h
-  self%valid_halo_mask = other%valid_halo_mask
+  self%atlas_ij2idx = other%atlas_ij2idx
   call self%fields_metadata%clone(other%fields_metadata)
 end subroutine soca_geom_clone
 
@@ -446,6 +425,8 @@ subroutine soca_geom_gridgen(self)
   self%mask2d = mom6_config%grid%mask2dT
   self%mask2du = mom6_config%grid%mask2dCu
   self%mask2dv = mom6_config%grid%mask2dCv
+  self%dx = mom6_config%grid%dxT
+  self%dy = mom6_config%grid%dyT
   self%cell_area  = mom6_config%grid%areaT
   self%h = mom6_config%MOM_CSp%h
 
@@ -497,8 +478,6 @@ subroutine soca_geom_allocate(self)
   call soca_geom_get_domain_indices(self, "global", self%isg, self%ieg, self%jsg, self%jeg)
   call soca_geom_get_domain_indices(self, "compute", self%iscl, self%iecl, self%jscl, self%jecl, local=.true.)
   call soca_geom_get_domain_indices(self, "data", self%isdl, self%iedl, self%jsdl, self%jedl, local=.true.)
-  self%ngrid = (self%iec-self%isc+1) * (self%jec-self%jsc+1)
-  self%ngrid_halo = (self%ied-self%isd+1) * (self%jed-self%jsd+1)
 
   ! Allocate arrays on compute domain
   ! NOTE, sometimes MOM6 doesn't use all the halo points, we set 
@@ -522,10 +501,14 @@ subroutine soca_geom_allocate(self)
   allocate(self%mask2du(isd:ied,jsd:jed));       self%mask2du = 0.0_kind_real
   allocate(self%mask2dv(isd:ied,jsd:jed));       self%mask2dv = 0.0_kind_real
 
+  allocate(self%dx(isd:ied,jsd:jed));            self%dx = 0.0_kind_real  
+  allocate(self%dy(isd:ied,jsd:jed));            self%dy = 0.0_kind_real  
   allocate(self%cell_area(isd:ied,jsd:jed));     self%cell_area = 0.0_kind_real
   allocate(self%rossby_radius(isd:ied,jsd:jed)); self%rossby_radius = 0.0_kind_real
   allocate(self%distance_from_coast(isd:ied,jsd:jed)); self%distance_from_coast = 0.0_kind_real
   allocate(self%h(isd:ied,jsd:jed,1:nzo));       self%h = 0.0_kind_real
+  
+  allocate(self%atlas_ij2idx(isd:ied,jsd:jed));  self%atlas_ij2idx = -1
 
   allocate(self%valid_halo_mask(isd:ied,jsd:jed));self%valid_halo_mask = .true.
 
@@ -724,6 +707,16 @@ subroutine soca_geom_write(self)
                                    domain=self%Domain%mpp_domain)
   idr_geom = register_restart_field(geom_restart, &
                                    &self%geom_grid_file, &
+                                   &'dx', &
+                                   &self%dx(:,:), &
+                                   domain=self%Domain%mpp_domain)
+  idr_geom = register_restart_field(geom_restart, &
+                                   &self%geom_grid_file, &
+                                   &'dy', &
+                                   &self%dy(:,:), &
+                                   domain=self%Domain%mpp_domain)
+  idr_geom = register_restart_field(geom_restart, &
+                                   &self%geom_grid_file, &
                                    &'area', &
                                    &self%cell_area(:,:), &
                                    domain=self%Domain%mpp_domain)
@@ -861,6 +854,16 @@ subroutine soca_geom_read(self)
                                    domain=self%Domain%mpp_domain)
   idr_geom = register_restart_field(geom_restart, &
                                    &self%geom_grid_file, &
+                                   &'dx', &
+                                   &self%dx(:,:), &
+                                   domain=self%Domain%mpp_domain)
+  idr_geom = register_restart_field(geom_restart, &
+                                   &self%geom_grid_file, &
+                                   &'dy', &
+                                   &self%dy(:,:), &
+                                   domain=self%Domain%mpp_domain)                                   
+  idr_geom = register_restart_field(geom_restart, &
+                                   &self%geom_grid_file, &
                                    &'area', &
                                    &self%cell_area(:,:), &
                                    domain=self%Domain%mpp_domain)
@@ -965,48 +968,105 @@ subroutine soca_geom_thickness2depth(self, h, z)
   end do
 end subroutine soca_geom_thickness2depth
 
-
 ! ------------------------------------------------------------------------------
-!> Copy a structured field into an ATLAS fieldset
-!!
-!! \related soca_geom_mod::soca_geom
-subroutine soca_geom_struct2atlas(self, dx_struct, dx_atlas)
-  class(soca_geom),     intent(in ) :: self
-  real(kind=kind_real), intent(in ) :: dx_struct(:,:)
-  type(fieldset_type),  intent(out) :: dx_atlas
+! Get a 2d array of the valid nodes / cells that are to be used on this PE
+! for ATLAS mesh generation.
+! We assume that owned cells (quads) are generated north and east of the PE's owned nodes (vertices)
+! NOTE: this code assumes that a regional domain does NOT make use of halos on the boundary.
+!  We currently have our regional domain surrounded by "virtual land", so this is currently a correct
+!  assumption. When we get around to removing that "virtual land", and intend to populate the
+!  halo with a boundary conditions, the grid will need to be constructed slightly differently.
+subroutine soca_geom_mesh_valid_nodes_cells(self, nodes, cells)
+  class(soca_geom),   intent(inout) :: self
+  logical, allocatable, intent(out) :: nodes(:,:), cells(:,:)
 
-  real(kind_real), pointer :: real_ptr(:,:)
-  type(atlas_field) :: afield
+  integer :: i, j, start_i
+  logical :: tripolar, cyclic, regional
 
-  dx_atlas = atlas_fieldset()
-  afield = self%functionspaceInchalo%create_field('var',kind=atlas_real(kind_real),levels=1)
-  call dx_atlas%add(afield)
-  call afield%data(real_ptr)
-  real_ptr(1,:) = pack(dx_struct, self%valid_halo_mask)
-  call afield%final()
+  allocate(nodes(self%isc:self%iec+1, self%jsc:self%jec+1))
+  allocate(cells(self%isc:self%iec, self%jsc:self%jec))
 
-end subroutine soca_geom_struct2atlas
+  nodes = .true.
+  cells = .true.
 
+  tripolar = iand(self%domain%Y_FLAGS, FOLD_NORTH_EDGE) /= 0
+  cyclic = iand(self%domain%X_FLAGS, CYCLIC_GLOBAL_DOMAIN) /= 0
+  regional = iand(self%domain%X_FLAGS, CYCLIC_GLOBAL_DOMAIN) == 0 .and. &
+             iand(self%domain%Y_FLAGS, CYCLIC_GLOBAL_DOMAIN) == 0
 
-! ------------------------------------------------------------------------------
-!> Copy a structured field from an ATLAS fieldset
-!!
-!! \related soca_geom_mod::soca_geom
-subroutine soca_geom_atlas2struct(self, dx_struct, dx_atlas)
-  class(soca_geom),     intent(in   ) :: self
-  real(kind=kind_real), intent(inout) :: dx_struct(:,:)
-  type(fieldset_type),  intent(inout) :: dx_atlas
+  ! -------------------------------------------------------------------------------------
+  ! we need to mask out cells and/or nodes for 3 special cases.
+  ! Remove halo points that are otherwise going to be duplicated in the node list for the the PEs,
+  ! or, for regional (for now) remove unowned halo points at the domain boundary.
+  ! -------------------------------------------------------------------------------------
 
-  real(kind_real), pointer :: real_ptr(:,:)
-  type(atlas_field) :: afield
+  ! The grid is tripolar, and we are a PE at the northern edge
+  ! -------------------------------------------------------------------------------------
+  if(tripolar .and. self%jec == self%domain%NJGLOBAL) then
+      ! (start_i is the x index where we start removing nodes)
+    ! Remove all nodes in the eastern half.
+    start_i = max(self%domain%NIGLOBAL/2, self%isc)
 
-  afield = dx_atlas%field('var')
-  call afield%data(real_ptr)
-  dx_struct = unpack(real_ptr(1,:), self%valid_halo_mask, 0.0_kind_real)
+    ! additionally, this PE crosses the E/W midpoint, remove all extra nodes at the north for this PE
+    if (self%isc <= self%domain%NIGLOBAL/2 .and. self%iec > self%domain%NIGLOBAL/2) then      
+      start_i = self%isc
+    end if
+    
+    ! remove some nodes
+    do i=start_i, self%iec+1
+        nodes(i, self%jec+1) = .false.
+    end do
 
-  call afield%final()
+    ! remove some cells
+    do i=self%isc, self%iec
+      if (i >= self%domain%NIGLOBAL/2) then
+        cells(i, self%jec) = .false.
+      end if
+    end do
+  end if     
+  
+  ! the grid is cyclic in the E/W direction and we are a PE at the eastern edge
+  ! -------------------------------------------------------------------------------------  
+  if (cyclic .and. self%isc == 1 .and. self%iec == self%domain%NIGLOBAL) then  
+    ! cyclic boundaries, and this PE spans entire width.
+    ! Remove all nodes on the easternmost column.
+    do j=self%jsc, self%jec+1
+      nodes(self%iec+1, j) = .false.
+    end do
+  end if
 
-end subroutine soca_geom_atlas2struct
+  ! We are a regional grid
+  ! NOTE: this logic should change at some point so that there ARE halos around the 
+  ! outer boundary
+  ! -------------------------------------------------------------------------------------
+  if (regional) then
+    ! are we are a PE at the top edge?
+    if(self%jec == self%domain%NJGLOBAL) then
+      ! remove nodes on top
+      do i=self%isc,self%iec+1
+        nodes(i, self%jec+1) = .false.
+      end do
+      ! remove cells on top
+      do i=self%isc, self%iec
+        cells(i, self%jec) = .false.
+      end do      
+    end if
+
+    ! are we a PE at the right edge?
+    if(self%iec == self%domain%NIGLOBAL) then
+      ! remove nodes on right
+      do j=self%jsc,self%jec+1
+        nodes(self%iec+1, j) = .false.
+      end do
+      ! remove cells on right
+      do j=self%jsc, self%jec
+        cells(self%iec, j) = .false.
+      end do          
+    end if
+
+  end if
+
+end subroutine
 
 ! ------------------------------------------------------------------------------
 !> Examine the halo gridpoints to determine which ones are non-duplicate and valid
@@ -1056,9 +1116,6 @@ subroutine soca_geom_find_invalid_halo(self)
     end do
   end do outer
 
-  ! count the number of points
-  self%ngrid_halo_valid = count(self%valid_halo_mask)  
-  
 end subroutine soca_geom_find_invalid_halo
 
 ! ------------------------------------------------------------------------------
