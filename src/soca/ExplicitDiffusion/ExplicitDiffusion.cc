@@ -58,22 +58,21 @@ void ExplicitDiffusion::multiply(oops::FieldSet3D & fset) const {
 // --------------------------------------------------------------------------------------
 
 void ExplicitDiffusion::directCalibration(const oops::FieldSets &) {
-  eckit::LocalConfiguration conf = (*params_.calibration.value()).toConfiguration();
+  eckit::LocalConfiguration conf = *params_.calibration.value();
   soca_explicitdiffusion_calibrate_f90(keyFortran_, &conf);
 }
 
 // --------------------------------------------------------------------------------------
 
 void ExplicitDiffusion::read() {
-  eckit::LocalConfiguration conf = (*params_.read.value()).toConfiguration();
+  eckit::LocalConfiguration conf = *params_.read.value();
   soca_explicitdiffusion_readparams_f90(keyFortran_, &conf);
 }
 
 // --------------------------------------------------------------------------------------
 
 void ExplicitDiffusion::write() const {
-  eckit::LocalConfiguration conf =
-    (*(*params_.calibration.value()).write.value()).toConfiguration();
+  eckit::LocalConfiguration conf = *params_.calibration.value();
   soca_explicitdiffusion_writeparams_f90(keyFortran_, &conf);
 }
 

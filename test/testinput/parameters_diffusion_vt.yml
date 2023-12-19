@@ -13,23 +13,19 @@ background:
 
 background error:
   covariance model: SABER
-  # adjoint test: true
-  #  NOTE: to run the self adjoint test, you have to first comment out the 
-  #  indicated halo exchange in soca_fields_to_fieldset()
   saber central block:
     saber block name: EXPLICIT_DIFFUSION
     geometry: *geom
     calibration:
       normalization:
+        # NOTE, not actually used here, since the normalization spec is only used for hz
         method: randomization  #< other option is "brute force"
         iterations: 1000       #< in the real world you'll want to use 1e4 or so
-      scales:
-      - name: group1
-        from file:
-          filename: data_generated/setcorscales/ocn.cor_rh.incr.2018-04-15T00:00:00Z.nc
-          variable name: ave_ssh
-      - name: group2
-        as gaussian: true
-        fixed value: 2000.0e3  #< other method of defining scales, instead of using "from file"          
-      write:
-        filename: data_generated/parameters_diffusion/diffusion_params.nc
+      
+      groups:
+      - name: vt_5lvls
+        vertical:
+          as gaussian: true
+          fixed value: 5.0
+        write:
+          filename: data_generated/parameters_diffusion_vt/vt_5lvls.nc
