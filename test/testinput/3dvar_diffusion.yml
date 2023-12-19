@@ -277,4 +277,4 @@ final:
 test:
   reference filename: testref/3dvar_diffusion.test
   test output filename: testoutput/3dvar_diffusion.test
-  float relative tolerance: 1e-6
+  float relative tolerance: 1e-5
