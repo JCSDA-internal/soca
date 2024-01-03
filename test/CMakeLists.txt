@@ -116,7 +116,7 @@ set( soca_test_ref
   testref/dirac_soca_cov.test
   testref/dirac_soca_mask.test
   testref/dirac_soca_nomask.test
-  testref/dirac_socahyb_cov.test  
+  testref/dirac_socahyb_cov.test
   testref/enshofx.test
   testref/enspert.test
   testref/ensmeanandvariance.test
@@ -700,7 +700,7 @@ soca_add_test( NAME 3dvar_diffusion
                EXE  soca_var.x
                TEST_DEPENDS test_soca_gridgen
                             test_soca_parameters_diffusion_hz
-                            test_soca_parameters_diffusion_vt)               
+                            test_soca_parameters_diffusion_vt)
 
 soca_add_test( NAME 3dvar_godas
                EXE  soca_var.x
@@ -802,7 +802,7 @@ if( ${icepack_FOUND} )
        DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/data_generated/convertstate_soca2cice/ )
      soca_add_test( NAME convertstate_soca2cice
                     EXE  soca_convertstate.x
-                    MPI 1
+                    MPI 4
                     NOTRAPFPE
                     TEST_DEPENDS test_soca_gridgen
                                  test_soca_3dvar_godas)

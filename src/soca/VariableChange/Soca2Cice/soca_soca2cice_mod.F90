@@ -32,7 +32,7 @@ integer :: root=0
 !!
 !! - forward: deaggregates a 2D analysis of sea-ice and inserts
 !!            analysis in CICE restarts
-!! - inverse: TODO(G), aggregates seaice variables alon CICE sea-ice
+!! - inverse: TODO(G), aggregates seaice variables along CICE sea-ice
 !!            categories, save the aggregated variables in a file
 !!            readable by soca
 
@@ -96,19 +96,11 @@ subroutine soca_soca2cice_setup(self, geom)
   ktherm = 2
   heat_capacity = .true.
 
-  ! Not parallel yet
-  if ( self%myrank.gt.root) then
-     call fckit_exception%abort("Only serial for now")
-  end if
+  ! initialize cice
+  call self%cice%init(geom, self%rst_filename, self%rst_out_filename)
 
-  ! Setup cice
-  if ( self%myrank.eq.root) then
-     ! initialize cice
-     call self%cice%init(self%rst_filename, self%rst_out_filename)
-
-     ! read cice fields from restart
-     call self%cice%read(geom)
-  end if
+  ! read cice fields from restart
+  call self%cice%read(geom)
 
   ! Broadcast cice
   call self%cice%broadcast(self%f_comm, root)

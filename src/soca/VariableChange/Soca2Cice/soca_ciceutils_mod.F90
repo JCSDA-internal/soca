@@ -25,6 +25,7 @@ end type agg_cice_state
 
 type, public :: cice_state
    integer :: ncat, ni, nj, ice_lev=7, sno_lev=1
+   integer :: isc, iec, jsc, jec
    character(len=:), allocatable :: rst_filename
    character(len=:), allocatable :: rst_out_filename
    real(kind=kind_real),  allocatable :: aicen(:,:,:)
@@ -55,15 +56,25 @@ contains
 
 
 ! ------------------------------------------------------------------------------
-subroutine soca_ciceutils_init(self, rst_filename, rst_out_filename)
+subroutine soca_ciceutils_init(self, geom, rst_filename, rst_out_filename)
   class(cice_state), intent(inout) :: self
+  type(soca_geom), target, intent(in)  :: geom
   character(len=*),     intent(in) :: rst_filename
   character(len=*),     intent(in) :: rst_out_filename
 
   integer(kind=4) :: ncid, dimid, varid
+
+  ! Save io info
   self%rst_filename = rst_filename
   self%rst_out_filename = rst_out_filename
 
+  ! Get indices bounds for local arrays
+  self%isc = geom%isc
+  self%iec = geom%iec
+  self%jsc = geom%jsc
+  self%jec = geom%jec
+
+  ! Get global seaice grid info
   call nc_check(nf90_open(self%rst_filename, nf90_nowrite, ncid))
   call nc_check(nf90_inq_dimid(ncid, 'ncat', dimid))
   call nc_check(nf90_inquire_dimension(ncid, dimid, len = self%ncat))
@@ -73,6 +84,7 @@ subroutine soca_ciceutils_init(self, rst_filename, rst_out_filename)
   call nc_check(nf90_inquire_dimension(ncid, dimid, len = self%nj))
   call nc_check(nf90_close(ncid))
 
+  ! Allocate seaice fields
   call self%alloc()
 
 end subroutine soca_ciceutils_init
@@ -90,11 +102,14 @@ subroutine soca_ciceutils_broadcast(self, f_comm, root)
   call f_comm%barrier()
 
   ! allocate cice fields
-  if (f_comm%rank().ne.root) call self%alloc()
+  !if (f_comm%rank().ne.root) call self%alloc()
 
   ! broadcast cice variables
-  call f_comm%broadcast(self%aice, root)
-  call f_comm%barrier()
+  !call f_comm%broadcast(self%aice, root)
+  !call f_comm%broadcast(self%aicen, root)
+  !call f_comm%broadcast(self%vicen, root)
+  !call f_comm%broadcast(self%vsnon, root)
+  !call f_comm%barrier()
 
 end subroutine soca_ciceutils_broadcast
 
@@ -103,29 +118,34 @@ subroutine soca_ciceutils_alloc(self)
   class(cice_state), intent(inout) :: self
 
   integer :: ni, nj, ncat, ice_lev, sno_lev
+  integer :: isc, iec, jsc, jec
 
   ni = self%ni
   nj = self%nj
   ncat = self%ncat
   ice_lev = self%ice_lev
   sno_lev = self%sno_lev
+  isc = self%isc
+  iec = self%iec
+  jsc = self%jsc
+  jec = self%jec
 
-  allocate(self%iceumask(ni, nj));      self%iceumask = 0.0_kind_real
+  allocate(self%iceumask(isc:iec, jsc:jec));      self%iceumask = 0.0_kind_real
 
-  allocate(self%aice(ni, nj));          self%aice = 0.0_kind_real
+  allocate(self%aice(isc:iec, jsc:jec));          self%aice = 0.0_kind_real
 
-  allocate(self%aicen(ni, nj, ncat));   self%aicen = 0.0_kind_real
-  allocate(self%vicen(ni, nj, ncat));   self%vicen = 0.0_kind_real
-  allocate(self%vsnon(ni, nj, ncat));   self%vsnon = 0.0_kind_real
+  allocate(self%aicen(isc:iec, jsc:jec, ncat));   self%aicen = 0.0_kind_real
+  allocate(self%vicen(isc:iec, jsc:jec, ncat));   self%vicen = 0.0_kind_real
+  allocate(self%vsnon(isc:iec, jsc:jec, ncat));   self%vsnon = 0.0_kind_real
 
-  allocate(self%apnd(ni, nj, ncat));    self%apnd = 0.0_kind_real
-  allocate(self%hpnd(ni, nj, ncat));    self%hpnd = 0.0_kind_real
-  allocate(self%ipnd(ni, nj, ncat));    self%ipnd = 0.0_kind_real
+  allocate(self%apnd(isc:iec, jsc:jec, ncat));    self%apnd = 0.0_kind_real
+  allocate(self%hpnd(isc:iec, jsc:jec, ncat));    self%hpnd = 0.0_kind_real
+  allocate(self%ipnd(isc:iec, jsc:jec, ncat));    self%ipnd = 0.0_kind_real
 
-  allocate(self%tsfcn(ni, nj, ncat));           self%tsfcn = 0.0_kind_real
-  allocate(self%qsno(ni, nj, ncat, sno_lev));   self%qsno = 0.0_kind_real
-  allocate(self%qice(ni, nj, ncat, ice_lev));   self%qice = 0.0_kind_real
-  allocate(self%sice(ni, nj, ncat, ice_lev));   self%sice = 0.0_kind_real
+  allocate(self%tsfcn(isc:iec, jsc:jec, ncat));           self%tsfcn = 0.0_kind_real
+  allocate(self%qsno(isc:iec, jsc:jec, ncat, sno_lev));   self%qsno = 0.0_kind_real
+  allocate(self%qice(isc:iec, jsc:jec, ncat, ice_lev));   self%qice = 0.0_kind_real
+  allocate(self%sice(isc:iec, jsc:jec, ncat, ice_lev));   self%sice = 0.0_kind_real
 
 end subroutine soca_ciceutils_alloc
 
@@ -140,23 +160,23 @@ subroutine soca_ciceutils_read(self, geom)
   call nc_check(nf90_open(self%rst_filename, nf90_nowrite, ncid))
 
   ! ice mask
-  call getvar2d('iceumask', self%iceumask, self%ni, self%nj, ncid)
+  call getvar2d('iceumask', self%iceumask, self%ni, self%nj, geom, ncid)
 
   ! dynamic variables
-  call getvar3d('aicen', self%aicen, self%ni, self%nj, self%ncat, ncid)
-  call getvar3d('vicen', self%vicen, self%ni, self%nj, self%ncat, ncid)
-  call getvar3d('vsnon', self%vsnon, self%ni, self%nj, self%ncat, ncid)
+  call getvar3d('aicen', self%aicen, self%ni, self%nj, self%ncat, geom, ncid)
+  call getvar3d('vicen', self%vicen, self%ni, self%nj, self%ncat, geom, ncid)
+  call getvar3d('vsnon', self%vsnon, self%ni, self%nj, self%ncat, geom, ncid)
 
   ! pond stuff
-  call getvar3d('apnd', self%apnd, self%ni, self%nj, self%ncat, ncid)
-  call getvar3d('hpnd', self%hpnd, self%ni, self%nj, self%ncat, ncid)
-  call getvar3d('ipnd', self%ipnd, self%ni, self%nj, self%ncat, ncid)
+  call getvar3d('apnd', self%apnd, self%ni, self%nj, self%ncat, geom, ncid)
+  call getvar3d('hpnd', self%hpnd, self%ni, self%nj, self%ncat, geom, ncid)
+  call getvar3d('ipnd', self%ipnd, self%ni, self%nj, self%ncat, geom, ncid)
 
   ! thermo variables
-  call getvar3d('Tsfcn', self%tsfcn, self%ni, self%nj, self%ncat, ncid)
-  call getvar4d('qsno', self%qsno, self%ni, self%nj, self%ncat, self%sno_lev, ncid)
-  call getvar4d('qice', self%qice, self%ni, self%nj, self%ncat, self%ice_lev, ncid)
-  call getvar4d('sice', self%sice, self%ni, self%nj, self%ncat, self%ice_lev, ncid)
+  call getvar3d('Tsfcn', self%tsfcn, self%ni, self%nj, self%ncat, geom, ncid)
+  call getvar4d('qsno', self%qsno, self%ni, self%nj, self%ncat, self%sno_lev, geom, ncid)
+  call getvar4d('qice', self%qice, self%ni, self%nj, self%ncat, self%ice_lev, geom, ncid)
+  call getvar4d('sice', self%sice, self%ni, self%nj, self%ncat, self%ice_lev, geom, ncid)
 
   call nc_check(nf90_close(ncid))
 
@@ -166,8 +186,9 @@ subroutine soca_ciceutils_read(self, geom)
   self%agg%n_src = n_src
   allocate(self%agg%lon(n_src), self%agg%lat(n_src), self%agg%aice(n_src))
   allocate(self%agg%ij(2,n_src))
-  do j = 1, self%nj
-     do i = 1, self%ni
+
+  do j = geom%jsc, geom%jec
+     do i = geom%isc, geom%iec
         if (self%iceumask(i,j).eq.1) then
            call aggregate_area (self%ncat, &
                                 self%aicen(i,j,:), &
@@ -269,35 +290,46 @@ end subroutine soca_ciceutils_finalize
 
 ! ------------------------------------------------------------------------------
 
-subroutine getvar2d(varname, var, ni, nj, ncid)
+subroutine getvar2d(varname, var, ni, nj, geom, ncid)
   character(len=*),                     intent(in) :: varname
   integer,                              intent(in) :: ni, nj, ncid
+  type(soca_geom),             target, intent(in)  :: geom
   real(kind=kind_real), allocatable, intent(inout) :: var(:,:)
 
   integer(kind=4) :: varid
+  real(kind=kind_real), allocatable :: tmpvar(:,:)
 
-  if (.not. allocated(var)) allocate(var(ni, nj))
+  if (.not. allocated(var)) allocate(var(geom%isc:geom%iec, geom%jsc:geom%jec))
+
+  allocate(tmpvar(ni, nj))
   call nc_check(nf90_inq_varid(ncid,trim(varname),varid))
-  call nc_check(nf90_get_var(ncid,varid,var))
+  call nc_check(nf90_get_var(ncid,varid,tmpvar))
+  var(geom%isc:geom%iec, geom%jsc:geom%jec) = tmpvar(geom%isc:geom%iec, geom%jsc:geom%jec)
 
 end subroutine getvar2d
 
-subroutine getvar3d(varname, var, ni, nj, ncat, ncid)
+subroutine getvar3d(varname, var, ni, nj, ncat, geom, ncid)
   character(len=*),                     intent(in) :: varname
   integer,                              intent(in) :: ni, nj, ncat, ncid
+  type(soca_geom),             target, intent(in)  :: geom
   real(kind=kind_real), allocatable, intent(inout) :: var(:,:,:)
 
   integer(kind=4) :: varid
+  real(kind=kind_real), allocatable :: tmpvar(:,:,:)
 
-  if (.not. allocated(var)) allocate(var(ni, nj, ncat))
+  if (.not. allocated(var)) allocate(var(geom%isc:geom%iec, geom%jsc:geom%jec, ncat))
+
+  allocate(tmpvar(ni, nj, ncat))
   call nc_check(nf90_inq_varid(ncid,trim(varname),varid))
-  call nc_check(nf90_get_var(ncid,varid,var))
+  call nc_check(nf90_get_var(ncid,varid,tmpvar))
+  var(geom%isc:geom%iec, geom%jsc:geom%jec, :) = tmpvar(geom%isc:geom%iec, geom%jsc:geom%jec, :)
 
 end subroutine getvar3d
 
-subroutine getvar4d(varname, var, ni, nj, ncat, nl, ncid)
+subroutine getvar4d(varname, var, ni, nj, ncat, nl, geom, ncid)
   character(len=*),         intent(in) :: varname
   integer,                              intent(in) :: ni, nj, ncat, nl, ncid
+  type(soca_geom),             target, intent(in)  :: geom
   real(kind=kind_real), allocatable, intent(inout) :: var(:,:,:,:)
 
   integer(kind=4) :: varid, l
@@ -309,7 +341,7 @@ subroutine getvar4d(varname, var, ni, nj, ncat, nl, ncid)
   do l = 1, nl
      write(strnum,'(i1)') l
      cicevarname = trim(varname)//"00"//strnum
-     call getvar3d(cicevarname, var3d, ni, nj, ncat, ncid)
+     call getvar3d(cicevarname, var3d, ni, nj, ncat, geom, ncid)
      var(:,:,:,l) = var3d(:,:,:)
   end do
 
