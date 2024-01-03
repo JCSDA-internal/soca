@@ -9,7 +9,7 @@
 ################################################################################
 
 cmake_minimum_required( VERSION 3.12 )
-project( soca VERSION 1.6.0 LANGUAGES C CXX Fortran)
+project( soca VERSION 1.7.0 LANGUAGES C CXX Fortran)
 
 find_package(ecbuild 3.3.2 REQUIRED)
 include( ecbuild_system NO_POLICY_SCOPE )
@@ -25,12 +25,12 @@ find_package( NetCDF REQUIRED COMPONENTS Fortran)
 find_package( gsl-lite REQUIRED HINTS $ENV{gsl_list_DIR})
 find_package( eckit  1.23.0   REQUIRED)
 find_package( fckit  0.10.1   REQUIRED)
-find_package( atlas  0.33.0   REQUIRED)
-find_package( oops   1.7.0    REQUIRED)
-find_package( vader  1.4.0    REQUIRED)
-find_package( saber  1.7.0    REQUIRED)
-find_package( ioda   2.6.0    REQUIRED)
-find_package( ufo    1.7.0    REQUIRED)
+find_package( atlas  0.35.0   REQUIRED)
+find_package( oops   1.9.0    REQUIRED)
+find_package( vader  1.6.0    REQUIRED)
+find_package( saber  1.9.0    REQUIRED)
+find_package( ioda   2.8.0    REQUIRED)
+find_package( ufo    1.9.0    REQUIRED)
 find_package( fms    2020.4.0 REQUIRED)
 find_package( mom6   2020.4.0 REQUIRED)
 
