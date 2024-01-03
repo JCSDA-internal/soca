@@ -46,18 +46,32 @@ subroutine soca_model2geovals_linear_changevar_f90(c_key_geom, c_key_dxin, c_key
 
   ! identity operators
   do i=1, size(dxout%fields)
-    call dxin%get(dxout%fields(i)%metadata%name, field)
-    if (dxout%fields(i)%name == field%metadata%name .or. &
-        dxout%fields(i)%name == field%metadata%getval_name) then
-      dxout%fields(i)%val(:,:,:) =  field%val(:,:,:)  !< full field
-    elseif (field%metadata%getval_name_surface == dxout%fields(i)%name) then
-      dxout%fields(i)%val(:,:,1) = field%val(:,:,1) !< surface only of a 3D field
+    select case (dxout%fields(i)%name)
 
-    else
-      call abor1_ftn( 'error in soca_model2geovals_linear_changevar_f90 processing ' &
-                       // dxout%fields(i)%name )
-    endif
+    ! TODO: These should NOT be needed in an increment. Need to make some changes to vader...
+    case ( 'sea_area_fraction' )
+      dxout%fields(i)%val(:,:,1) = 0.0    
+    case ( 'latitude' )
+      dxout%fields(i)%val(:,:,1) = 0.0
+    case ( 'longitude' )
+      dxout%fields(i)%val(:,:,1) = 0.0
+    case ( 'sea_water_depth')
+      dxout%fields(i)%val(:,:,1) = 0.0
+      ! call geom%thickness2depth(geom%h, dxout%fields(i)%val)
 
+    case default      
+      call dxin%get(dxout%fields(i)%metadata%name, field)
+      if (dxout%fields(i)%name == field%metadata%name .or. &
+          dxout%fields(i)%name == field%metadata%getval_name) then
+        dxout%fields(i)%val(:,:,:) =  field%val(:,:,:)  !< full field
+      elseif (field%metadata%getval_name_surface == dxout%fields(i)%name) then
+        dxout%fields(i)%val(:,:,1) = field%val(:,:,1) !< surface only of a 3D field
+
+      else
+        call abor1_ftn( 'error in soca_model2geovals_linear_changevar_f90 processing ' &
+                        // dxout%fields(i)%name )
+      endif
+    end select
   end do
 end subroutine
 

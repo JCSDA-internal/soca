@@ -76,7 +76,8 @@ void VariableChange::changeVar(State & x, const oops::Variables & vars) const {
       "longitude",
       "sea_water_potential_temperature",
       "sea_water_salinity",
-      "sea_water_depth"});
+      "sea_water_depth",
+      "sea_area_fraction"});
     preVaderVars += x.variables();
     State preVader(x.geometry(), preVaderVars, x.time());
     variableChange_->changeVar(x, preVader);
