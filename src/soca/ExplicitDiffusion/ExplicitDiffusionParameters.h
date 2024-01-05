@@ -16,44 +16,14 @@ namespace soca {
 
 // --------------------------------------------------------------------------------------
 
-class ExplicitDiffusionIOParameters : public oops::Parameters {
-  OOPS_CONCRETE_PARAMETERS(ExplicitDiffusionIOParameters, oops::Parameters)
- public:
-  oops::RequiredParameter<std::string> filename{"filename", this};
-  oops::OptionalParameter<std::string> varName{"variable name", this};
-};
-
-// --------------------------------------------------------------------------------------
-
-class ExplicitDiffusionScalesParameters : public oops::Parameters {
-  OOPS_CONCRETE_PARAMETERS(ExplicitDiffusionScalesParameters, oops::Parameters)
- public:
-  oops::RequiredParameter<std::string> name{"name", this};
-  oops::OptionalParameter<double> fixedValue{"fixed value", this};
-  oops::OptionalParameter<ExplicitDiffusionIOParameters> fromFile{"from file", this};
-  oops::Parameter<bool> asGaussian{"as gaussian", false, this};
-};
-
-// --------------------------------------------------------------------------------------
-
-class ExplicitDiffusionCalibrationParameters : public oops::Parameters {
-  OOPS_CONCRETE_PARAMETERS(ExplicitDiffusionCalibrationParameters, oops::Parameters)
- public:
-  oops::RequiredParameter<eckit::LocalConfiguration> normalization{"normalization", this};
-  oops::RequiredParameter<std::vector<ExplicitDiffusionScalesParameters> > scales{"scales", this};
-  oops::OptionalParameter<ExplicitDiffusionIOParameters> write {"write", this};
-};
-
-// --------------------------------------------------------------------------------------
-
 class ExplicitDiffusionParameters : public saber::SaberBlockParametersBase {
   OOPS_CONCRETE_PARAMETERS(ExplicitDiffusionParameters, saber::SaberBlockParametersBase)
  public:
-  oops::OptionalParameter<ExplicitDiffusionIOParameters> read{"read", this};
-  oops::OptionalParameter<ExplicitDiffusionCalibrationParameters>
-    calibration{"calibration", this};
+  oops::OptionalParameter<eckit::LocalConfiguration> read{"read", this};
+  oops::OptionalParameter<eckit::LocalConfiguration> calibration{"calibration", this};
+
   oops::RequiredParameter<eckit::LocalConfiguration> geometry{"geometry", this};
-  oops::OptionalParameter<eckit::LocalConfiguration> groups{"groups", this};
+  oops::OptionalParameter<eckit::LocalConfiguration> groups{"group mapping", this};
 
   oops::Variables mandatoryActiveVars() const override {return oops::Variables();}
 };
