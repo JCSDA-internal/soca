@@ -42,6 +42,7 @@ type :: soca_diffusion_group_params
  integer                      :: niter_hz = -1           !< number of iterations for horizontal diffusion,
  integer                      :: niter_vt = -1           !< number of iterations for vertical diffusion,
                                                          ! (set to -1 to indicate has not been initialized) 
+ logical                      :: var_duplicated= .false. ! duplicate multiply across variables in the group
 end type soca_diffusion_group_params
 
 ! ------------------------------------------------------------------------------
@@ -76,6 +77,10 @@ contains
   procedure :: multiply => soca_diffusion_multiply
   procedure :: write_params => soca_diffusion_write_params
   procedure :: read_params => soca_diffusion_read_params
+
+  !! The private subroutines
+
+  procedure, private :: multiply_field => soca_diffusion_multiply_field
 
   ! calibration of horizontal parameters
   procedure, private :: calibrate_hz => soca_diffusion_calibrate_hz
@@ -504,9 +509,9 @@ subroutine soca_diffusion_multiply(self, dx)
   class(soca_diffusion), intent(inout) :: self
   type(soca_increment),  intent(inout) :: dx
 
-  real(kind=kind_real), allocatable :: tmp2d(:,:)
+  real(kind=kind_real), allocatable :: tmp3d(:,:,:)
   character(len=1024) :: str
-  integer :: f, z, grp, g, g2
+  integer :: f, f2, z, grp, g, g2, nz_max
 
   call oops_log%trace("soca_diffusion::multiply() starting", flush=.true.)
 
@@ -515,11 +520,9 @@ subroutine soca_diffusion_multiply(self, dx)
     call abor1_ftn("ERROR: soca_diffusion has not been initialized.")
   end if
   
-  allocate(tmp2d(DOMAIN_WITH_HALO))
+  ! sanity check to make sure all input fields are dealt with in 1 group
+  ! TODO simplify this
   do f=1, size(dx%fields)
-    ! find the group associated with this variable
-    ! TODO, simplify this
-    call oops_log%debug("running multiply on "//dx%fields(f)%name)
     grp = -1
     do g=1, size(self%group_mapping)
       if (self%group_mapping(g)%variables%has(dx%fields(f)%name)) then
@@ -533,59 +536,114 @@ subroutine soca_diffusion_multiply(self, dx)
     if (grp == -1) then
       call abor1_ftn("ERROR: could not find a valid group for the variable "//dx%fields(f)%name)
     end if
+  end do
 
-    ! normalization (horizontal + vertical)
-    if (self%group(grp)%niter_hz > 0) then
-      do z = 1, dx%fields(f)%nz
-        dx%fields(f)%val(DOMAIN,z)  = dx%fields(f)%val(DOMAIN,z) * self%group(grp)%normalization_hz(DOMAIN)
+  ! for each group
+  do g=1, size(self%group)
+    call oops_log%debug("Processing diffusion group: " // self%group(g)%name)
+
+    ! If we are using duplicated cross variable strategy (i.e. for localization)
+    if (self%group(g)%var_duplicated) then
+      ! find the max number of levels
+      nz_max=1
+      do f=1, self%group_mapping(g)%variables%nvars()
+        do f2=1, size(dx%fields)
+          if (dx%fields(f2)%name == self%group_mapping(g)%variables%variable(f)) then
+            nz_max = max(nz_max, dx%fields(f2)%nz)
+          end if
+        end do
+      end do
+      
+      ! create a new 3D field that is a summation of the variables
+      allocate(tmp3d(DOMAIN_WITH_HALO, nz_max))
+      tmp3d = 0.0
+      do f=1, size(dx%fields)
+        if ( .not. self%group_mapping(g)%variables%has(dx%fields(f)%name)) cycle
+        tmp3d(:,:,1:dx%fields(f)%nz)= tmp3d(:,:,1:dx%fields(f)%nz) + dx%fields(f)%val
+      end do
+
+      ! multipy
+      call self%multiply_field(tmp3d, self%group(g))
+
+      ! copy back into source vars
+      do f=1, size(dx%fields)
+        if ( .not. self%group_mapping(g)%variables%has(dx%fields(f)%name)) cycle
+        dx%fields(f)%val = tmp3d(:,:,1:dx%fields(f)%nz)
+      end do
+      deallocate(tmp3d)
+     
+    ! otherwise if we are using univariate (i.e. for correlation)
+    else
+      ! apply multiply separately to each variable in the group
+      do f=1, size(dx%fields)
+        if ( .not. self%group_mapping(g)%variables%has(dx%fields(f)%name)) cycle
+        call self%multiply_field(dx%fields(f)%val, self%group(g))
       end do
     end if
-    if (self%group(grp)%niter_vt > 0) then
-      dx%fields(f)%val(DOMAIN,:)  = dx%fields(f)%val(DOMAIN,:) * self%group(grp)%normalization_vt(DOMAIN,:)
+  end do
+
+  call oops_log%trace("soca_diffusion::multiply() done", flush=.true.)
+end subroutine
+
+! ------------------------------------------------------------------------------
+subroutine soca_diffusion_multiply_field(self, field, params)
+  class(soca_diffusion), intent(inout) :: self
+  real(kind=kind_real), allocatable, intent(inout) :: field(:,:,:)
+  type(soca_diffusion_group_params), intent(in) :: params
+  
+  integer :: z
+  real(kind=kind_real), allocatable :: tmp2d(:,:)
+
+  allocate(tmp2d(DOMAIN_WITH_HALO))
+
+    ! normalization (horizontal + vertical)
+  if (params%niter_hz > 0) then
+    do z = 1, size(field, dim=3)
+      field(DOMAIN,z)  = field(DOMAIN,z) * params%normalization_hz(DOMAIN)
+      end do
+    end if
+  if (params%niter_vt > 0) then
+    field(DOMAIN,:)  = field(DOMAIN,:) * params%normalization_vt(DOMAIN,:)
     end if  
      
     ! vertical diffusion AD
-    if (self%group(grp)%niter_vt > 0) then
-      call self%diffusion_vt_ad(dx%fields(f)%val, self%group(grp))
+  if (params%niter_vt > 0) then
+    call self%diffusion_vt_ad(field, params)
     end if   
 
-    do z = 1, dx%fields(f)%nz
-      tmp2d = dx%fields(f)%val(:,:,z)
+  do z = 1, size(field, dim=3)
+    tmp2d = field(:,:,z)
       
       ! horizontal diffusion AD
-      if (self%group(grp)%niter_hz > 0) then
-        call self%diffusion_hz_ad(tmp2d, self%group(grp))
+    if (params%niter_hz > 0) then
+      call self%diffusion_hz_ad(tmp2d, params)
       end if
 
       ! TODO grid metric
       ! tmp2d = tmp2d * self%inv_sqrt_area
 
       ! horizontal diffusion TL
-      if (self%group(grp)%niter_hz > 0) then
-        call self%diffusion_hz_tl(tmp2d, self%group(grp))
+    if (params%niter_hz > 0) then
+      call self%diffusion_hz_tl(tmp2d, params)
       end if
 
-      dx%fields(f)%val(DOMAIN,z) = tmp2d(DOMAIN)
+    field(DOMAIN,z) = tmp2d(DOMAIN)
     end do
   
     ! vertical diffusion TL    
-    if (self%group(grp)%niter_vt > 0) then
-      call self%diffusion_vt_tl(dx%fields(f)%val, self%group(grp))
+  if (params%niter_vt > 0) then
+    call self%diffusion_vt_tl(field, params)
     end if
     
     ! normalization (horizontal + vertical)
-    if (self%group(grp)%niter_vt > 0) then    
-      dx%fields(f)%val(DOMAIN,:)  = dx%fields(f)%val(DOMAIN,:) * self%group(grp)%normalization_vt(DOMAIN,:)    
+  if (params%niter_vt > 0) then    
+    field(DOMAIN,:)  =field(DOMAIN,:) * params%normalization_vt(DOMAIN,:)    
     end if
-    if (self%group(grp)%niter_hz > 0) then
-      do z = 1, dx%fields(f)%nz
-        dx%fields(f)%val(DOMAIN,z)  = dx%fields(f)%val(DOMAIN,z) * self%group(grp)%normalization_hz(DOMAIN)
+  if (params%niter_hz > 0) then
+    do z = 1, size(field, dim=3)
+      field(DOMAIN,z)  = field(DOMAIN,z) * params%normalization_hz(DOMAIN)
       end do
     end if
-
-  end do
-
-  call oops_log%trace("soca_diffusion::multiply() done", flush=.true.)
 end subroutine
 
 ! ------------------------------------------------------------------------------
@@ -1049,7 +1107,7 @@ subroutine soca_diffusion_read_params(self, f_conf)
 
   type(fckit_configuration), allocatable :: f_conf_list(:)
   type(fckit_configuration) :: params_conf
-  character(len=:), allocatable   :: filename, group_name
+  character(len=:), allocatable   :: filename, group_name, str2
   type(restart_file_type) :: restart_file
   integer :: idr, grp
   character(len=1024) :: str
@@ -1138,6 +1196,17 @@ subroutine soca_diffusion_read_params(self, f_conf)
       call mpp_update_domains(self%group(grp)%KvDt, self%geom%Domain%mpp_domain, complete=.true.)      
 
     end if
+
+    ! other parameters
+    if (.not. f_conf_list(grp)%get('multivariate strategy', str2)) str2 = 'univariate'
+    call oops_log%info("  multivariate strategy: "//trim(str2))
+    if (str2 == "duplicated") then
+      self%group(grp)%var_duplicated = .true.
+    else if (str2 == "univariate") then
+      self%group(grp)%var_duplicated = .false.
+    else
+      call abor1_ftn("invalide multivariate strategy. 'univariate' or 'duplicated' expected")
+    endif
   end do
   call fms_io_exit()
 end subroutine
