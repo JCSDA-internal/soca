@@ -43,6 +43,7 @@ type :: soca_diffusion_group_params
  integer                      :: niter_vt = -1           !< number of iterations for vertical diffusion,
                                                          ! (set to -1 to indicate has not been initialized) 
  logical                      :: var_duplicated= .false. ! duplicate multiply across variables in the group
+ logical                      :: vt_duplicated = .false. ! duplicate multiply across vertical levels
 end type soca_diffusion_group_params
 
 ! ------------------------------------------------------------------------------
@@ -611,6 +612,9 @@ subroutine soca_diffusion_multiply_field(self, field, params)
     call self%diffusion_vt_ad(field, params)
     end if   
 
+  ! horizontal diffusion
+  if (.not. params%vt_duplicated) then
+    ! apply diffusion separately on each level
   do z = 1, size(field, dim=3)
     tmp2d = field(:,:,z)
       
@@ -629,6 +633,23 @@ subroutine soca_diffusion_multiply_field(self, field, params)
 
     field(DOMAIN,z) = tmp2d(DOMAIN)
     end do
+
+  ! or, if running with duplicated vertical strategy
+  else
+    ! create a 2d field that is the summation over the levels
+    tmp2d = sum(field, dim=3)
+
+    ! apply diffusion
+    call self%diffusion_hz_ad(tmp2d, params)
+    ! TODO grid metric
+    ! tmp2d = tmp2d * self%inv_sqrt_area
+    call self%diffusion_hz_tl(tmp2d, params)  
+    
+    ! then copy back to the 3d field
+    do z= 1, size(field, dim=3)
+      field(:,:,z) = tmp2d
+    end do
+  end if
   
     ! vertical diffusion TL    
   if (params%niter_vt > 0) then
@@ -1107,7 +1128,7 @@ subroutine soca_diffusion_read_params(self, f_conf)
 
   type(fckit_configuration), allocatable :: f_conf_list(:)
   type(fckit_configuration) :: params_conf
-  character(len=:), allocatable   :: filename, group_name, str2
+  character(len=:), allocatable   :: filename, group_name, strategy
   type(restart_file_type) :: restart_file
   integer :: idr, grp
   character(len=1024) :: str
@@ -1163,9 +1184,14 @@ subroutine soca_diffusion_read_params(self, f_conf)
     end if
 
     ! read vertical
+    call oops_log%info("  vertical parameters:")    
     if (f_conf_list(grp)%get('vertical', params_conf)) then
+      if(.not. params_conf%get("strategy", strategy)) strategy = "from file"
+      call oops_log%info("    strategy: "//trim(strategy))
+      
+      ! Vertical diffusion parameters are read from a file
+      if ( strategy == "from file") then
       call params_conf%get_or_die('filename', filename)
-      call oops_log%info("  vertical parameters:")
       call oops_log%info("    filename: "//filename)
 
       allocate(self%group(grp)%KvDt(DOMAIN_WITH_HALO, self%geom%nzo))          
@@ -1195,17 +1221,26 @@ subroutine soca_diffusion_read_params(self, f_conf)
       call mpp_update_domains(self%group(grp)%normalization_vt, self%geom%Domain%mpp_domain, complete=.true.)
       call mpp_update_domains(self%group(grp)%KvDt, self%geom%Domain%mpp_domain, complete=.true.)      
 
+      ! or, vertical diffusion is duplicated across levels (i.e. for localization)
+      else if( strategy == "duplicated") then      
+        self%group(grp)%vt_duplicated = .true.
+      
+      else if( strategy == "none") then
+        ! do nothing
+      else
+        call abor1_ftn("invalid vertical diffusion strategy. 'from file', 'duplicated', or 'none' expected.")
+      end if
     end if
 
-    ! other parameters
-    if (.not. f_conf_list(grp)%get('multivariate strategy', str2)) str2 = 'univariate'
-    call oops_log%info("  multivariate strategy: "//trim(str2))
-    if (str2 == "duplicated") then
+    ! multivariate strategy (for localization)
+    if (.not. f_conf_list(grp)%get('multivariate strategy', strategy)) strategy = 'univariate'
+    call oops_log%info("  multivariate strategy: "//trim(strategy))
+    if (strategy == "duplicated") then
       self%group(grp)%var_duplicated = .true.
-    else if (str2 == "univariate") then
+    else if (strategy == "univariate") then
       self%group(grp)%var_duplicated = .false.
     else
-      call abor1_ftn("invalide multivariate strategy. 'univariate' or 'duplicated' expected")
+      call abor1_ftn("invalid multivariate strategy. 'univariate' or 'duplicated' expected")
     endif
   end do
   call fms_io_exit()
