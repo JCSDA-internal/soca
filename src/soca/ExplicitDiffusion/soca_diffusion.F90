@@ -593,16 +593,16 @@ subroutine soca_diffusion_multiply_field(self, field, params)
   if (params%niter_hz > 0) then
     do z = 1, size(field, dim=3)
       field(DOMAIN,z)  = field(DOMAIN,z) * params%normalization_hz(DOMAIN)
-      end do
-    end if
+    end do
+  end if
   if (params%niter_vt > 0) then
     field(DOMAIN,:)  = field(DOMAIN,:) * params%normalization_vt(DOMAIN,:)
-    end if  
+  end if  
      
   ! vertical diffusion AD
   if (params%niter_vt > 0) then
     call self%diffusion_vt_ad(field, params)
-    end if   
+  end if   
 
   ! horizontal diffusion
   if (.not. params%vt_duplicated) then
@@ -610,18 +610,18 @@ subroutine soca_diffusion_multiply_field(self, field, params)
     do z = 1, size(field, dim=3)
       tmp2d = field(:,:,z)
         
-        ! horizontal diffusion AD
+      ! horizontal diffusion AD
       if (params%niter_hz > 0) then
         call self%diffusion_hz_ad(tmp2d, params)
-        end if
+      end if
 
-        ! TODO grid metric
-        ! tmp2d = tmp2d * self%inv_sqrt_area
+      ! TODO grid metric
+      ! tmp2d = tmp2d * self%inv_sqrt_area
 
-        ! horizontal diffusion TL
+      ! horizontal diffusion TL
       if (params%niter_hz > 0) then
         call self%diffusion_hz_tl(tmp2d, params)
-        end if
+      end if
 
       field(DOMAIN,z) = tmp2d(DOMAIN)
     end do
@@ -643,20 +643,20 @@ subroutine soca_diffusion_multiply_field(self, field, params)
     end do
   end if
 
-    ! vertical diffusion TL    
+  ! vertical diffusion TL    
   if (params%niter_vt > 0) then
     call self%diffusion_vt_tl(field, params)
-    end if
+  end if
     
-    ! normalization (horizontal + vertical)
+  ! normalization (horizontal + vertical)
   if (params%niter_vt > 0) then    
     field(DOMAIN,:)  =field(DOMAIN,:) * params%normalization_vt(DOMAIN,:)    
-    end if
+  end if
   if (params%niter_hz > 0) then
     do z = 1, size(field, dim=3)
       field(DOMAIN,z)  = field(DOMAIN,z) * params%normalization_hz(DOMAIN)
-      end do
-    end if
+    end do
+  end if
 end subroutine
 
 ! ------------------------------------------------------------------------------
