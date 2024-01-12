@@ -181,14 +181,18 @@ subroutine soca_diffusion_init(self, geom, f_conf)
   character(len=1024) :: str
   character(len=:), allocatable :: str_list(:)
   integer :: i, j
-
+  
   call oops_log%trace("soca_diffusion::init() starting", flush=.true.)
+  
   call oops_log%info("")
+  call oops_log%info("===================================================================================================")
+  call oops_log%info(" EXPLICIT_DIFFUSION:  initialization")
+  call oops_log%info("---------------------------------------------------------------------------------------------------")
   self%geom => geom
 
   ! read variable -> group_name mapping
+  call oops_log%info("variable group mapping:")
   if (f_conf%get("group mapping", f_conf_list)) then
-    call oops_log%info("ExplicitDiffusion: variable groups")    
     allocate(self%group_mapping(size(f_conf_list)))
     do i=1,size(f_conf_list)
       call f_conf_list(i)%get_or_die("name", self%group_mapping(i)%group_name)
@@ -201,11 +205,14 @@ subroutine soca_diffusion_init(self, geom, f_conf)
         call oops_log%info("     "//self%group_mapping(i)%variables%variable(j))
       end do
     end do
+  else
+    call oops_log%info("  NONE")
   end if
 
   ! grid and derived grid parameters
   !---------------------------------------------------------------------------
-  call oops_log%info("ExplicitDiffusion: Initializing grid")
+  call oops_log%info("---------------------------------------------------------------------------------------------------")
+  call oops_log%info("Initializing grid")
   
   allocate(self%mask(DOMAIN_WITH_HALO))
   allocate(self%dx(DOMAIN_WITH_HALO))
@@ -251,7 +258,11 @@ subroutine soca_diffusion_init(self, geom, f_conf)
   call mpp_update_domains(self%inv_sqrt_area, self%geom%Domain%mpp_domain, complete=.true.)
   call mpp_update_domains(self%pmon_u, self%geom%Domain%mpp_domain, complete=.true.)
   call mpp_update_domains(self%pnom_v, self%geom%Domain%mpp_domain, complete=.true.)   
-
+  
+  call oops_log%info("---------------------------------------------------------------------------------------------------")
+  call oops_log%info(" EXPLICIT_DIFFUSION:  initialization DONE")
+  call oops_log%info("===================================================================================================")
+  call oops_log%info("")
   call oops_log%trace("soca_diffusion::init() done", flush=.true.)
 end subroutine
 
@@ -271,7 +282,9 @@ subroutine soca_diffusion_calibrate(self, f_conf)
   integer :: ngroup, grp
 
   call oops_log%trace("soca_diffusion::calibrate() starting", flush=.true.)
-  call oops_log%info("ExplicitDiffusion: running calibration")
+  call oops_log%info("")
+  call oops_log%info("===================================================================================================")
+  call oops_log%info(" EXPLICIT_DIFFUSION:  calibration")
   
   ! initialize the groups
   ! TODO move this to init() so we don't have to do the same thing when reading?    
@@ -282,6 +295,7 @@ subroutine soca_diffusion_calibrate(self, f_conf)
   do grp=1,ngroup
     ! get group name
     call group_conf(grp)%get_or_die("name", self%group(grp)%name)
+    call oops_log%info("---------------------------------------------------------------------------------------------------")
     write (str, '(A,I2,A,I2)') " group ", grp, " of ", size(self%group)
     call oops_log%info(str)
     write (str, *) " name: ", self%group(grp)%name
@@ -306,6 +320,11 @@ subroutine soca_diffusion_calibrate(self, f_conf)
       call self%calibrate_vt(self%group(grp), params_conf)
     end if
   end do
+
+  call oops_log%info("---------------------------------------------------------------------------------------------------")
+  call oops_log%info(" EXPLICIT_DIFFUSION:  calibration DONE")
+  call oops_log%info("===================================================================================================")
+  call oops_log%info("")
   call oops_log%trace("soca_diffusion::calibrate() done", flush=.true.)
 end subroutine
 
@@ -1065,6 +1084,11 @@ subroutine soca_diffusion_write_params(self, f_conf)
   character(len=1024) :: str
   integer :: idr, grp
 
+  call oops_log%info("")
+  call oops_log%info("===================================================================================================")
+  call oops_log%info(" EXPLICIT_DIFFUSION:  write params")
+  call oops_log%info("---------------------------------------------------------------------------------------------------")
+
   call f_conf%get_or_die("groups", f_conf_list)
 
   ! write to file
@@ -1109,7 +1133,12 @@ subroutine soca_diffusion_write_params(self, f_conf)
     call save_restart(restart_file, directory='')
     call free_restart_type(restart_file)
   end do 
-  call fms_io_exit()  
+  call fms_io_exit()
+  
+  call oops_log%info("---------------------------------------------------------------------------------------------------")
+  call oops_log%info(" EXPLICIT_DIFFUSION:  write params DONE")
+  call oops_log%info("===================================================================================================")
+  call oops_log%info("")
 end subroutine
 
 ! ------------------------------------------------------------------------------
@@ -1125,6 +1154,10 @@ subroutine soca_diffusion_read_params(self, f_conf)
   integer :: idr, grp
   character(len=1024) :: str
 
+  call oops_log%info("")
+  call oops_log%info("===================================================================================================")
+  call oops_log%info(" EXPLICIT_DIFFUSION:  read params")
+
   call f_conf%get_or_die("groups", f_conf_list)
 
   ! make sure we havent read in parameters already
@@ -1139,7 +1172,7 @@ subroutine soca_diffusion_read_params(self, f_conf)
     call f_conf_list(grp)%get_or_die('name', group_name)
     self%group(grp)%name = trim(group_name)    
     write (str, *) "Reading group: " // group_name
-    call oops_log%info("")
+    call oops_log%info("---------------------------------------------------------------------------------------------------")
     call oops_log%info(str)
 
     ! read horizontal
@@ -1236,6 +1269,12 @@ subroutine soca_diffusion_read_params(self, f_conf)
     endif
   end do
   call fms_io_exit()
+
+  call oops_log%info("---------------------------------------------------------------------------------------------------")
+  call oops_log%info(" EXPLICIT_DIFFUSION:  read params DONE")
+  call oops_log%info("===================================================================================================")
+  call oops_log%info("")
+
 end subroutine
 
 ! ------------------------------------------------------------------------------
