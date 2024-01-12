@@ -79,9 +79,10 @@ contains
   procedure :: write_params => soca_diffusion_write_params
   procedure :: read_params => soca_diffusion_read_params
 
-  !! The private subroutines
-
+  ! The private subroutines
+  ! -----------------------------------------------------------------------------------------------
   procedure, private :: multiply_field => soca_diffusion_multiply_field
+  procedure, private :: get_group => soca_diffusion_get_group
 
   ! calibration of horizontal parameters
   procedure, private :: calibrate_hz => soca_diffusion_calibrate_hz
@@ -524,16 +525,7 @@ subroutine soca_diffusion_multiply(self, dx)
   ! sanity check to make sure all input fields are dealt with in 1 group
   ! TODO simplify this
   do f=1, size(dx%fields)
-    grp = -1
-    do g=1, size(self%group_mapping)
-      if (self%group_mapping(g)%variables%has(dx%fields(f)%name)) then
-        do g2=1, size(self%group)
-          if (self%group(g2)%name == self%group_mapping(g)%group_name) then
-            grp = g2
-          end if
-        end do
-      end if
-    end do
+    g = self%get_group(dx%fields(f)%name)
     if (grp == -1) then
       call abor1_ftn("ERROR: could not find a valid group for the variable "//dx%fields(f)%name)
     end if
@@ -546,20 +538,20 @@ subroutine soca_diffusion_multiply(self, dx)
     ! If we are using duplicated cross variable strategy (i.e. for localization)
     if (self%group(g)%var_duplicated) then
       ! find the max number of levels
-      nz_max=1
-      do f=1, self%group_mapping(g)%variables%nvars()
-        do f2=1, size(dx%fields)
-          if (dx%fields(f2)%name == self%group_mapping(g)%variables%variable(f)) then
-            nz_max = max(nz_max, dx%fields(f2)%nz)
-          end if
-        end do
+      nz_max=-1
+      do f=1, size(dx%fields)
+        if(self%get_group(dx%fields(f)%name) /= g) cycle
+        nz_max = max(nz_max, dx%fields(f)%nz)
       end do
+      if (nz_max <= 0) then
+        call abor1_ftn("ERROR: group '"//self%group(g)%name//"' is defined but not used")
+      end if
       
       ! create a new 3D field that is a summation of the variables
       allocate(tmp3d(DOMAIN_WITH_HALO, nz_max))
       tmp3d = 0.0
       do f=1, size(dx%fields)
-        if ( .not. self%group_mapping(g)%variables%has(dx%fields(f)%name)) cycle
+        if(self%get_group(dx%fields(f)%name) /= g) cycle
         tmp3d(:,:,1:dx%fields(f)%nz)= tmp3d(:,:,1:dx%fields(f)%nz) + dx%fields(f)%val
       end do
 
@@ -568,7 +560,7 @@ subroutine soca_diffusion_multiply(self, dx)
 
       ! copy back into source vars
       do f=1, size(dx%fields)
-        if ( .not. self%group_mapping(g)%variables%has(dx%fields(f)%name)) cycle
+        if ( self%get_group(dx%fields(f)%name) /= g) cycle
         dx%fields(f)%val = tmp3d(:,:,1:dx%fields(f)%nz)
       end do
       deallocate(tmp3d)
@@ -577,7 +569,7 @@ subroutine soca_diffusion_multiply(self, dx)
     else
       ! apply multiply separately to each variable in the group
       do f=1, size(dx%fields)
-        if ( .not. self%group_mapping(g)%variables%has(dx%fields(f)%name)) cycle
+        if ( self%get_group(dx%fields(f)%name) /= g) cycle
         call self%multiply_field(dx%fields(f)%val, self%group(g))
       end do
     end if
@@ -597,7 +589,7 @@ subroutine soca_diffusion_multiply_field(self, field, params)
 
   allocate(tmp2d(DOMAIN_WITH_HALO))
 
-    ! normalization (horizontal + vertical)
+  ! normalization (horizontal + vertical)
   if (params%niter_hz > 0) then
     do z = 1, size(field, dim=3)
       field(DOMAIN,z)  = field(DOMAIN,z) * params%normalization_hz(DOMAIN)
@@ -607,7 +599,7 @@ subroutine soca_diffusion_multiply_field(self, field, params)
     field(DOMAIN,:)  = field(DOMAIN,:) * params%normalization_vt(DOMAIN,:)
     end if  
      
-    ! vertical diffusion AD
+  ! vertical diffusion AD
   if (params%niter_vt > 0) then
     call self%diffusion_vt_ad(field, params)
     end if   
@@ -615,23 +607,23 @@ subroutine soca_diffusion_multiply_field(self, field, params)
   ! horizontal diffusion
   if (.not. params%vt_duplicated) then
     ! apply diffusion separately on each level
-  do z = 1, size(field, dim=3)
-    tmp2d = field(:,:,z)
-      
-      ! horizontal diffusion AD
-    if (params%niter_hz > 0) then
-      call self%diffusion_hz_ad(tmp2d, params)
-      end if
+    do z = 1, size(field, dim=3)
+      tmp2d = field(:,:,z)
+        
+        ! horizontal diffusion AD
+      if (params%niter_hz > 0) then
+        call self%diffusion_hz_ad(tmp2d, params)
+        end if
 
-      ! TODO grid metric
-      ! tmp2d = tmp2d * self%inv_sqrt_area
+        ! TODO grid metric
+        ! tmp2d = tmp2d * self%inv_sqrt_area
 
-      ! horizontal diffusion TL
-    if (params%niter_hz > 0) then
-      call self%diffusion_hz_tl(tmp2d, params)
-      end if
+        ! horizontal diffusion TL
+      if (params%niter_hz > 0) then
+        call self%diffusion_hz_tl(tmp2d, params)
+        end if
 
-    field(DOMAIN,z) = tmp2d(DOMAIN)
+      field(DOMAIN,z) = tmp2d(DOMAIN)
     end do
 
   ! or, if running with duplicated vertical strategy
@@ -650,7 +642,7 @@ subroutine soca_diffusion_multiply_field(self, field, params)
       field(:,:,z) = tmp2d
     end do
   end if
-  
+
     ! vertical diffusion TL    
   if (params%niter_vt > 0) then
     call self%diffusion_vt_tl(field, params)
@@ -1191,36 +1183,36 @@ subroutine soca_diffusion_read_params(self, f_conf)
       
       ! Vertical diffusion parameters are read from a file
       if ( strategy == "from file") then
-      call params_conf%get_or_die('filename', filename)
-      call oops_log%info("    filename: "//filename)
+        call params_conf%get_or_die('filename', filename)
+        call oops_log%info("    filename: "//filename)
 
-      allocate(self%group(grp)%KvDt(DOMAIN_WITH_HALO, self%geom%nzo))          
-      allocate(self%group(grp)%normalization_vt(DOMAIN_WITH_HALO, self%geom%nzo))
-      self%group(grp)%KvDt = 0.0
-      self%group(grp)%normalization_vt = 1.0
+        allocate(self%group(grp)%KvDt(DOMAIN_WITH_HALO, self%geom%nzo))          
+        allocate(self%group(grp)%normalization_vt(DOMAIN_WITH_HALO, self%geom%nzo))
+        self%group(grp)%KvDt = 0.0
+        self%group(grp)%normalization_vt = 1.0
 
-      str = "iterations_vt"
-      idr = register_restart_field(restart_file, filename, str, &
-        self%group(grp)%niter_vt, domain=self%geom%Domain%mpp_domain)
+        str = "iterations_vt"
+        idr = register_restart_field(restart_file, filename, str, &
+          self%group(grp)%niter_vt, domain=self%geom%Domain%mpp_domain)
 
-      str = "kvdt"
-      idr = register_restart_field(restart_file, filename, str, &
-        self%group(grp)%KvDt, domain=self%geom%Domain%mpp_domain)    
+        str = "kvdt"
+        idr = register_restart_field(restart_file, filename, str, &
+          self%group(grp)%KvDt, domain=self%geom%Domain%mpp_domain)    
 
-      str = "normalization_vt"
-      idr = register_restart_field(restart_file, filename, str, &
-        self%group(grp)%normalization_vt, domain=self%geom%Domain%mpp_domain)          
+        str = "normalization_vt"
+        idr = register_restart_field(restart_file, filename, str, &
+          self%group(grp)%normalization_vt, domain=self%geom%Domain%mpp_domain)          
 
-      call restore_state(restart_file, directory='')
-      call free_restart_type(restart_file)  
+        call restore_state(restart_file, directory='')
+        call free_restart_type(restart_file)  
 
-      write (str, '(4X,A,I5)') "minimum iterations: ", self%group(grp)%niter_vt
-      call oops_log%info(str)
+        write (str, '(4X,A,I5)') "minimum iterations: ", self%group(grp)%niter_vt
+        call oops_log%info(str)
 
-      ! I don't *think* i ever need the halos for these parameters... but better safe than sorry
-      call mpp_update_domains(self%group(grp)%normalization_vt, self%geom%Domain%mpp_domain, complete=.true.)
-      call mpp_update_domains(self%group(grp)%KvDt, self%geom%Domain%mpp_domain, complete=.true.)      
-
+        ! I don't *think* i ever need the halos for these parameters... but better safe than sorry
+        call mpp_update_domains(self%group(grp)%normalization_vt, self%geom%Domain%mpp_domain, complete=.true.)
+        call mpp_update_domains(self%group(grp)%KvDt, self%geom%Domain%mpp_domain, complete=.true.)
+      
       ! or, vertical diffusion is duplicated across levels (i.e. for localization)
       else if( strategy == "duplicated") then      
         self%group(grp)%vt_duplicated = .true.
@@ -1247,5 +1239,29 @@ subroutine soca_diffusion_read_params(self, f_conf)
 end subroutine
 
 ! ------------------------------------------------------------------------------
+
+function soca_diffusion_get_group(self, variable) result(grp)
+  class(soca_diffusion),         intent(in) :: self
+  character(len=:), allocatable, intent(in) :: variable
+  integer :: grp, g, gm
+
+  grp = -1
+  outer: do gm=1, size(self%group_mapping)
+    if (.not. self%group_mapping(gm)%variables%has(variable)) cycle
+    do g=1, size(self%group)
+      if(self%group(g)%name == self%group_mapping(gm)%group_name) then
+        grp = g
+        exit outer
+      end if
+    end do
+  end do outer
+ 
+  if (grp==-1) then
+    call abor1_ftn("ERROR: variable '"//variable//"' is not assigned to a group.")
+  end if
+end function
+
+! ------------------------------------------------------------------------------
+
 
 end module soca_diffusion_mod
