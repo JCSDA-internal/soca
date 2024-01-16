@@ -148,28 +148,24 @@ subroutine soca_ciceutils_gather(self, glb, geom)
           self%aicen(self%isc:self%iec,self%jsc:self%jec,n), &
           var2d, is_root_pe)
      if ( pe == mpp_root_pe()) glb%aicen(1:self%ni,1:self%nj,n) = var2d*glb%iceumask
-     call geom%f_comm%barrier()
 
      ! vicen
      call mpp_gather(self%isc, self%iec, self%jsc, self%jec, pelist, &
           self%vicen(self%isc:self%iec,self%jsc:self%jec,n), &
           var2d, is_root_pe)
      if ( pe == mpp_root_pe()) glb%vicen(1:self%ni,1:self%nj,n) = var2d*glb%iceumask
-     call geom%f_comm%barrier()
 
      ! vsnon
      call mpp_gather(self%isc, self%iec, self%jsc, self%jec, pelist, &
           self%vsnon(self%isc:self%iec,self%jsc:self%jec,n), &
           var2d, is_root_pe)
      if ( pe == mpp_root_pe()) glb%vsnon(1:self%ni,1:self%nj,n) = var2d*glb%iceumask
-     call geom%f_comm%barrier()
 
      ! Tsfcn
      call mpp_gather(self%isc, self%iec, self%jsc, self%jec, pelist, &
           self%tsfcn(self%isc:self%iec,self%jsc:self%jec,n), &
           var2d, is_root_pe)
      if ( pe == mpp_root_pe()) glb%tsfcn(1:self%ni,1:self%nj,n) = var2d*glb%iceumask
-     call geom%f_comm%barrier()
 
      do l = 1, self%ice_lev
         ! Qice
@@ -177,14 +173,12 @@ subroutine soca_ciceutils_gather(self, glb, geom)
              self%qice(self%isc:self%iec,self%jsc:self%jec,n,l), &
              var2d, is_root_pe)
         if ( pe == mpp_root_pe()) glb%qice(1:self%ni,1:self%nj,n,l) = var2d*glb%iceumask
-        call geom%f_comm%barrier()
 
         ! Sice
         call mpp_gather(self%isc, self%iec, self%jsc, self%jec, pelist, &
              self%sice(self%isc:self%iec,self%jsc:self%jec,n,l), &
              var2d, is_root_pe)
         if ( pe == mpp_root_pe()) glb%sice(1:self%ni,1:self%nj,n,l) = var2d*glb%iceumask
-        call geom%f_comm%barrier()
      end do
 
      do l = 1, self%sno_lev
@@ -193,7 +187,6 @@ subroutine soca_ciceutils_gather(self, glb, geom)
              self%qsno(self%isc:self%iec,self%jsc:self%jec,n,l), &
              var2d, is_root_pe)
         if ( pe == mpp_root_pe()) glb%qsno(1:self%ni,1:self%nj,n,l) = var2d*glb%iceumask
-        call geom%f_comm%barrier()
      end do
   end do
 
