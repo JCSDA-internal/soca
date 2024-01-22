@@ -11,7 +11,7 @@ state:
     ice_filename: cice.res.nc
     sfc_filename: sfc.res.nc
     state variables: [hocn, oz_th, wvapor, ws, pres, rh, cld_lwp,
-    clwefr, cov, aer_tau, scat_alb, asym_par, c_det, inorg_c, dis_c,
+    cov, aer_tau, scat_alb, asym_par, c_det, inorg_c, dis_c,
     diatom, chloro, cyano, cocco, dino, phaeo]
 
 time window:
