@@ -202,17 +202,9 @@
   getval name: relative_humidity
   constant value: 89
 
-- name: cld_tau
-  getval name: cloud_optical_thickness
-  constant value: 19.8
-
 - name: cld_lwp
   getval name: cloud_liquid_water_path
   constant value: 163
-
-- name: clwefr
-  getval name: effective_radius_of_cloud_liquid_water_particle
-  constant value: 12.4
 
 - name: cov
   getval name: cloud_area_fraction_in_atmosphere_layer
