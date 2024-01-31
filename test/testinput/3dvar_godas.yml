@@ -51,6 +51,9 @@ cost function:
         efold_z: 2500.0       # [m]
 
       - linear variable change name: BkgErrGODAS
+        # optionally save the calculated parameters to a file
+        output:
+          filename: data_generated/3dvar_godas/bkgerrgodas.nc
         sst_bgerr_file: data_static/godas_sst_bgerr.nc
         t_min: 0.1
         t_max: 2.0
