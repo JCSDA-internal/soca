@@ -63,6 +63,7 @@ subroutine soca_bkgerrgodas_setup(self, f_conf, bkg, geom)
 
   type(soca_field), pointer :: field, field_bkg
   integer :: i
+  character(len=:), allocatable :: str
 
   ! Allocate memory for bkgerrgodasor
   call self%std_bkgerr%copy(bkg)
@@ -107,6 +108,12 @@ subroutine soca_bkgerrgodas_setup(self, f_conf, bkg, geom)
 
   ! Apply config bounds to background error
   call self%bounds%apply(self%std_bkgerr)
+
+  ! optionally write out the values
+  if( f_conf%has("output")) then
+    call f_conf%get_or_die("output.filename", str)
+    call self%std_bkgerr%write_file(str)
+  end if
 
 end subroutine soca_bkgerrgodas_setup
 
