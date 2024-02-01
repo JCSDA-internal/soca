@@ -26,28 +26,72 @@ SOCABkgErrFilt::SOCABkgErrFilt(
     innerGeometryData_(outerGeometryData),
     innerVars_(outerVars)
 {
-  ASSERT(1==0);
+  const double MIN_THICKNESS = 1.0e-3;
+
+  const int levels = xb["hocn"].levels();
+
+  mask_ = innerGeometryData_.getField("interp_mask");
+  mult3D_ = innerGeometryData_.functionSpace().createField<double>(
+    atlas::option::levels(levels) );
+  mult2D_ = innerGeometryData_.functionSpace().createField<double>(
+    atlas::option::levels(1) );
+  auto v_mult3D = atlas::array::make_view<double, 2>(mult3D_);
+  auto v_mult2D = atlas::array::make_view<double, 2>(mult2D_);
+  auto v_hocn = atlas::array::make_view<double, 2>(xb["hocn"]);
+  auto v_depth = atlas::array::make_view<double, 2>(xb["layer_depth"]);
+
+  v_mult3D.assign(0.0);
+  v_mult2D.assign(0.0);
+  for (size_t i = 0; i < innerGeometryData_.functionSpace().size(); i++) {
+    double depth = 0.0;
+    for (size_t z = 0; z < levels; z++) depth += v_hocn(i,z);
+    std::cout << depth << " " << params.oceanDepthMin << std::endl;
+    if (depth <= params.oceanDepthMin) continue;
+
+    v_mult2D(i,0) = params.rescaleBkgerr;
+    for (size_t z = 0; z < levels; z++) {
+      if (v_hocn(i,z) > MIN_THICKNESS) {
+        v_mult3D(i,z) = params.rescaleBkgerr * exp(-v_depth(i,z)/params.efoldZ);
+      }
+    }
+  }
 }
 
 // ------------------------------------------------------------------------------------------------
 
-void SOCABkgErrFilt::multiply(oops::FieldSet3D &) const
-{
-  ASSERT(1==2);
+void SOCABkgErrFilt::multiply(oops::FieldSet3D & fset) const {
+  const std::set<std::string> FIELDS3D{"tocn", "socn"};
+  const std::set<std::string> FIELDS2D{"ssh"};
+
+  auto v_mult3D = atlas::array::make_view<double, 2>(mult3D_);
+  auto v_mult2D = atlas::array::make_view<double, 2>(mult2D_);
+  auto v_mask   = atlas::array::make_view<double, 2>(mask_);
+
+  for(atlas::Field field : fset) {
+    auto v_field = atlas::array::make_view<double, 2>(field);
+    for (size_t i = 0; i < field.shape(0); i++) {          
+      for (size_t z = 0; z < field.levels(); z++) {
+        v_field(i,z) *= v_mask(i,0);
+        if ( FIELDS3D.find(field.name()) != FIELDS3D.end() ) {        
+          v_field(i,z) *= v_mult3D(i,z);
+        } else if ( FIELDS2D.find(field.name()) != FIELDS2D.end() ) {
+          v_field(i,z) *= v_mult2D(i,0);
+        }
+      }
+    }
+  }
 }
 
 // ------------------------------------------------------------------------------------------------
 
-void SOCABkgErrFilt::multiplyAD(oops::FieldSet3D &) const
-{
-  ASSERT(1==2);
+void SOCABkgErrFilt::multiplyAD(oops::FieldSet3D & fset) const {
+  multiply(fset);
 }
 
 // ------------------------------------------------------------------------------------------------
 
-void SOCABkgErrFilt::leftInverseMultiply(oops::FieldSet3D &) const
-{
-  ASSERT(1==2);
+void SOCABkgErrFilt::leftInverseMultiply(oops::FieldSet3D &) const {
+  ASSERT(1==3);
 }
 
 // ------------------------------------------------------------------------------------------------

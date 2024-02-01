@@ -6,6 +6,9 @@
  */
 
 #pragma once
+
+#include "atlas/field.h"
+
 #include "oops/base/GeometryData.h"
 #include "oops/base/Variables.h"
 #include "saber/blocks/SaberBlockParametersBase.h"
@@ -29,6 +32,9 @@ class SOCABkgErrFiltParameters : public saber::SaberBlockParametersBase {
   OOPS_CONCRETE_PARAMETERS(SOCABkgErrFiltParameters, saber::SaberBlockParametersBase)
  public:
   oops::Variables mandatoryActiveVars() const override {return oops::Variables();}
+  oops::RequiredParameter<float> oceanDepthMin{"ocean_depth_min", this};
+  oops::RequiredParameter<double> rescaleBkgerr{"rescale_bkgerr", this};
+  oops::RequiredParameter<double> efoldZ{"efold_z", this};
 };
 
 // -----------------------------------------------------------------------------------------
@@ -60,6 +66,10 @@ class SOCABkgErrFilt : public saber::SaberOuterBlockBase {
 
    const oops::GeometryData & innerGeometryData_;
    oops::Variables innerVars_;
+
+   atlas::Field mult3D_;
+   atlas::Field mult2D_;
+   atlas::Field mask_;
 };
 
     
