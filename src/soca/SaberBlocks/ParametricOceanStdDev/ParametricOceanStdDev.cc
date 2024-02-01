@@ -5,7 +5,7 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#include "soca/ParametricOceanStdDev/ParametricOceanStdDev.h"
+#include "soca/SaberBlocks/ParametricOceanStdDev/ParametricOceanStdDev.h"
 
 #include "saber/blocks/SaberOuterBlockBase.h"
 

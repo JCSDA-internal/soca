@@ -7,8 +7,8 @@
 
 #include "oops/util/FieldSetHelpers.h"
 
-#include "soca/ExplicitDiffusion/ExplicitDiffusion.h"
-#include "soca/ExplicitDiffusion/ExplicitDiffusionFortran.h"
+#include "soca/SaberBlocks/ExplicitDiffusion/ExplicitDiffusion.h"
+#include "soca/SaberBlocks/ExplicitDiffusion/ExplicitDiffusionFortran.h"
 #include "soca/Geometry/Geometry.h"
 #include "soca/Increment/Increment.h"
 
