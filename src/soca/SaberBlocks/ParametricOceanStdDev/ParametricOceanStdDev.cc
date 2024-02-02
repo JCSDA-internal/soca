@@ -11,7 +11,8 @@
 
 namespace soca {
 
-static saber::SaberOuterBlockMaker<ParametricOceanStdDev> makerParametricOceanStdDev_("ParametricOceanStdDev");
+static saber::SaberOuterBlockMaker<ParametricOceanStdDev> makerParametricOceanStdDev_(
+  "ParametricOceanStdDev");
 
 // ------------------------------------------------------------------------------------------------
 
@@ -26,28 +27,28 @@ ParametricOceanStdDev::ParametricOceanStdDev(
     innerGeometryData_(outerGeometryData),
     innerVars_(outerVars)
 {
-  ASSERT(1==0);
+  ASSERT(1 == 0);
 }
 
 // ------------------------------------------------------------------------------------------------
 
 void ParametricOceanStdDev::multiply(oops::FieldSet3D &) const
 {
-  ASSERT(1==2);
+  ASSERT(1 == 1);
 }
 
 // ------------------------------------------------------------------------------------------------
 
 void ParametricOceanStdDev::multiplyAD(oops::FieldSet3D &) const
 {
-  ASSERT(1==2);
+  ASSERT(1 == 2);
 }
 
 // ------------------------------------------------------------------------------------------------
 
 void ParametricOceanStdDev::leftInverseMultiply(oops::FieldSet3D &) const
 {
-  ASSERT(1==2);
+  ASSERT(1 == 3);
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -57,4 +58,4 @@ void ParametricOceanStdDev::print(std::ostream & os) const {
 }
 
 // ------------------------------------------------------------------------------------------------
-}
+}  // namespace soca

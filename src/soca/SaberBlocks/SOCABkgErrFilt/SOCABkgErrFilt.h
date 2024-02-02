@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include <string>
+
 #include "atlas/field.h"
 
 #include "oops/base/GeometryData.h"
@@ -62,15 +64,13 @@ class SOCABkgErrFilt : public saber::SaberOuterBlockBase {
   void leftInverseMultiply(oops::FieldSet3D &) const override;
 
  private:
-   void print(std::ostream &) const override;
+  void print(std::ostream &) const override;
 
-   const oops::GeometryData & innerGeometryData_;
-   oops::Variables innerVars_;
+  const oops::GeometryData & innerGeometryData_;
+  oops::Variables innerVars_;
 
-   atlas::Field mult3D_;
-   atlas::Field mult2D_;
-   atlas::Field mask_;
+  atlas::Field mult3D_;
+  atlas::Field mult2D_;
+  atlas::Field mask_;
 };
-
-    
-} // namespace soca
+}  // namespace soca
