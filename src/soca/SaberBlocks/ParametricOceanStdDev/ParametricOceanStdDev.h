@@ -9,8 +9,12 @@
 
 #include <string>
 
+#include "atlas/field.h"
+
 #include "oops/base/GeometryData.h"
 #include "oops/base/Variables.h"
+#include "oops/util/parameters/NumericConstraints.h"
+
 #include "saber/blocks/SaberBlockParametersBase.h"
 #include "saber/blocks/SaberOuterBlockBase.h"
 
@@ -27,10 +31,45 @@ namespace eckit {
 namespace soca
 {
 
+// -----------------------------------------------------------------------------------------
+// Parameters
+class ParametricOceanStdDevBound : public oops::Parameters {
+  OOPS_CONCRETE_PARAMETERS(ParametricOceanStdDevBound, oops::Parameters)
+ public:
+  oops::Parameter<double> min{"min", 0.0, this, {oops::minConstraint(0.0)} };
+  oops::Parameter<double> max{"max", std::numeric_limits<double>::max(), this, {oops::minConstraint(0.0)} };
+};
+
+class ParametricOceanStdDevTocn : public ParametricOceanStdDevBound {
+  OOPS_CONCRETE_PARAMETERS(ParametricOceanStdDevTocn, ParametricOceanStdDevBound)
+ public:
+  oops::RequiredParameter<std::string> sstFile{"sst file", this};
+  oops::RequiredParameter<double> dz{"dz", this, {oops::minConstraint(0.0)}};
+  oops::RequiredParameter<double> efold{"efold", this, {oops::minConstraint(0.0)}};
+};
+
+class ParametricOceanStdDevSsh : public ParametricOceanStdDevBound {
+  OOPS_CONCRETE_PARAMETERS(ParametricOceanStdDevSsh, ParametricOceanStdDevBound)
+ public:
+  oops::RequiredParameter<double> phi_ex{"phi_ex", this, 
+    {oops::minConstraint(0.0), oops::maxConstraint(90.0)}};
+};
+
+class ParametricOceanStdDevOther : public ParametricOceanStdDevBound {
+  OOPS_CONCRETE_PARAMETERS(ParametricOceanStdDevOther, ParametricOceanStdDevBound)
+ public:
+  oops::RequiredParameter<double> fractionOfBkg{"fraction of bkg", this, 
+    {oops::minConstraint(0.0)}};
+};
+
 class ParametricOceanStdDevParameters : public saber::SaberBlockParametersBase {
   OOPS_CONCRETE_PARAMETERS(ParametricOceanStdDevParameters, saber::SaberBlockParametersBase)
  public:
   oops::Variables mandatoryActiveVars() const override {return oops::Variables();}
+  oops::RequiredParameter<ParametricOceanStdDevTocn> tocn{"tocn", this};
+  oops::RequiredParameter<ParametricOceanStdDevBound> socn{"socn", this};
+  oops::RequiredParameter<ParametricOceanStdDevSsh> ssh{"ssh", this};
+  oops::OptionalParameter<std::map<std::string, ParametricOceanStdDevOther> > others{"others", this};
 };
 
 // -----------------------------------------------------------------------------------------
@@ -62,6 +101,8 @@ class ParametricOceanStdDev : public saber::SaberOuterBlockBase {
 
   const oops::GeometryData & innerGeometryData_;
   oops::Variables innerVars_;
+
+  atlas::FieldSet bkgErr_;
 };
 
 }  // namespace soca

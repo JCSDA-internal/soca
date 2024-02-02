@@ -18,7 +18,6 @@
 
 // -----------------------------------------------------------------------------------------
 namespace oops {
-
   class FieldSet3D;
 }
 namespace eckit {
@@ -61,7 +60,7 @@ class SOCABkgErrFilt : public saber::SaberOuterBlockBase {
 
   void multiply(oops::FieldSet3D &) const override;
   void multiplyAD(oops::FieldSet3D &) const override;
-  void leftInverseMultiply(oops::FieldSet3D &) const override;
+  void leftInverseMultiply(oops::FieldSet3D &) const override {}  // NOTE: empty
 
  private:
   void print(std::ostream &) const override;

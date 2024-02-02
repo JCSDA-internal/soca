@@ -27,7 +27,26 @@ ParametricOceanStdDev::ParametricOceanStdDev(
     innerGeometryData_(outerGeometryData),
     innerVars_(outerVars)
 {
-  ASSERT(1 == 0);
+  const int levels = xb["hocn"].levels();
+
+  // calculate T background error
+  bkgErr_.add(
+    innerGeometryData_.functionSpace().createField<double>(
+    atlas::option::levels(levels) |
+    atlas::option::name("tocn")));
+
+  // calculate unbalanced S background error
+  bkgErr_.add(
+    innerGeometryData_.functionSpace().createField<double>(
+    atlas::option::levels(levels) |
+    atlas::option::name("socn")));
+
+  // calculate unbalanced SSH background error
+  bkgErr_.add(
+    innerGeometryData_.functionSpace().createField<double>(
+    atlas::option::levels(1) |
+    atlas::option::name("ssh")));
+
 }
 
 // ------------------------------------------------------------------------------------------------

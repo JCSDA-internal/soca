@@ -92,12 +92,6 @@ void SOCABkgErrFilt::multiplyAD(oops::FieldSet3D & fset) const {
 
 // ------------------------------------------------------------------------------------------------
 
-void SOCABkgErrFilt::leftInverseMultiply(oops::FieldSet3D &) const {
-  ASSERT(1 == 3);
-}
-
-// ------------------------------------------------------------------------------------------------
-
 void SOCABkgErrFilt::print(std::ostream & os) const {
   os << classname();
 }
