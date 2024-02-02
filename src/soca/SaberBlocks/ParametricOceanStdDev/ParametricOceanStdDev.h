@@ -70,6 +70,7 @@ class ParametricOceanStdDevParameters : public saber::SaberBlockParametersBase {
   oops::RequiredParameter<ParametricOceanStdDevBound> socn{"socn", this};
   oops::RequiredParameter<ParametricOceanStdDevSsh> ssh{"ssh", this};
   oops::OptionalParameter<std::map<std::string, ParametricOceanStdDevOther> > others{"others", this};
+  oops::OptionalParameter<eckit::LocalConfiguration> output{"output", this};
 };
 
 // -----------------------------------------------------------------------------------------
