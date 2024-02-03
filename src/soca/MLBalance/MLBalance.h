@@ -49,7 +49,6 @@ class MLBalance : public saber::SaberOuterBlockBase {
   const oops::GeometryData & innerGeometryData_;
   Parameters_ params_;
   atlas::FieldSet jac_;
-  double dummyjac_;  // replace this with the torch ML balance model
 };
 
 // --------------------------------------------------------------------------------------

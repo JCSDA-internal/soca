@@ -28,8 +28,7 @@ MLBalance::MLBalance(
     activeVars_(params.mandatoryActiveVars()),
     innerVars_(outerVars),
     innerGeometryData_(outerGeometryData),
-    jac_(nullptr),
-    dummyjac_(0.1)
+    jac_(nullptr)
 {
   // Initialize the Jacobian variables
   std::vector<std::string>
@@ -42,18 +41,16 @@ MLBalance::MLBalance(
                              1, 1, 1, 1};
   oops::Variables jacVars(jacStr);
   for (size_t i = 0; i < jacStr.size(); ++i) {
-    std::cout << "String: " << jacStr[i] << ", Level: " << jacLevels[i] << std::endl;
     jacVars.addMetaData(jacStr[i], "levels", jacLevels[i]);
   }
 
-  // Initialize the Jacobian to 0.0
-  oops::Log::info() << "--------------------------" << std::endl;
+  // Initialize the Jacobian
+  // TODO (G): Currently set to 1.0 for testing, reset to 0 before implementing a
+  //           realistic jacobian
   jac_ = util::createFieldSet(xb["tocn"].functionspace(), jacVars, 1.0);
 
-  oops::Log::info() << jac_["ds/dt"] << std::endl;
-
   // Do something with the ML Balances
-  oops::Log::info() << params_.mlbalances.value() << std::endl;
+  oops::Log::info() << "Jacobian not implemented yet" << std::endl;
 }
 
 // --------------------------------------------------------------------------------------
@@ -63,12 +60,13 @@ MLBalance::~MLBalance() {}
 // --------------------------------------------------------------------------------------
 
 void MLBalance::multiply(oops::FieldSet3D & fset) const {
-  //    [ I        0        0  0      0      0 ]   Pot. Temp
-  //    [ ds/dt    I        0  0      0      0 ]   Salt
-  // K= [ dssh/dt  dssh/ds  I  0      0      0 ]   ssh
-  //    [ 0        0        0  I      0      0 ]   h ice
-  //    [ 0        0        0  0      I      0 ]   h snow
-  //    [ dc/dsst  dc/dsss  0  dc/dhi dc/dhs I ]   ice concentration
+  //    Pot. Temp      Salt      ssh     h ice  h snow  ice concentration
+  // K= [ I             0         0        0      0      0 ]   Pot. Temp
+  //    [ ds/dt         I         0        0      0      0 ]   Salt
+  //    [ dssh/dt       dssh/ds   I        0      0      0 ]   ssh
+  //    [ 0             0         0        I      0      0 ]   h ice
+  //    [ 0             0         0        0      I      0 ]   h snow
+  //    [ dc/dsst       dc/dsss   0      dc/dhi dc/dhs   I ]   ice concentration
 
   // Increment fields
   auto dc = atlas::array::make_view<double, 2>(fset["cicen"]);
@@ -89,8 +87,8 @@ void MLBalance::multiply(oops::FieldSet3D & fset) const {
 
   for (atlas::idx_t jnode = 0; jnode < fset["tocn"].shape(0); ++jnode) {
     // Deep copy of some of the input increments
+    auto dsshi = dssh(jnode, 0);
     std::vector<double> dsi(ds.shape(1));
-    double dsshi(dssh(jnode, 0));
     for(size_t j = 0; j < ds.shape(1); ++j) {
       dsi[j] = ds(jnode, j);
     }
@@ -140,7 +138,6 @@ void MLBalance::multiplyAD(oops::FieldSet3D & fset) const {
     auto dsshi = dssh(jnode, 0);
     // Deep copy of some of the input increments
     std::vector<double> dsi(ds.shape(1));
-    //double dsshi(dssh(jnode, 0));
     for(size_t j = 0; j < ds.shape(1); ++j) {
       dsi[j] = ds(jnode, j);
     }
