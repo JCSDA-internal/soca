@@ -28,11 +28,11 @@ class MLBalance : public saber::SaberOuterBlockBase {
   typedef MLBalanceParameters Parameters_;
 
   MLBalance(const oops::GeometryData &,
-                    const oops::Variables &,
-                    const eckit::Configuration &,
-                    const Parameters_ &,
-                    const oops::FieldSet3D &,
-                    const oops::FieldSet3D &);
+            const oops::Variables &,
+            const eckit::Configuration &,
+            const Parameters_ &,
+            const oops::FieldSet3D &,
+            const oops::FieldSet3D &);
   virtual ~MLBalance();
 
   const oops::Variables & innerVars() const override {return innerVars_;}
@@ -44,11 +44,12 @@ class MLBalance : public saber::SaberOuterBlockBase {
  private:
   void print(std::ostream &) const override;
   int keyFortran_;
-  oops::Variables vars_;
+  oops::Variables activeVars_;
   oops::Variables innerVars_;
   const oops::GeometryData & innerGeometryData_;
   Parameters_ params_;
-  double kct_;  // replace this with the torch ML balance model
+  atlas::FieldSet jac_;
+  double dummyjac_;  // replace this with the torch ML balance model
 };
 
 // --------------------------------------------------------------------------------------

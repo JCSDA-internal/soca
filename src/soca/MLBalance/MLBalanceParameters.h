@@ -15,7 +15,8 @@ class MLBalanceParameters : public saber::SaberBlockParametersBase {
 
   oops::RequiredParameter<eckit::LocalConfiguration> mlbalances{"ML Balances", this};
 
-  oops::Variables mandatoryActiveVars() const override {return oops::Variables();}
+  oops::Variables mandatoryActiveVars() const override {
+    return oops::Variables({"tocn", "socn", "ssh", "cicen", "hicen", "hsnon"});}
 };
 
 // --------------------------------------------------------------------------------------
