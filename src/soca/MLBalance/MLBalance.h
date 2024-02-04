@@ -43,7 +43,6 @@ class MLBalance : public saber::SaberOuterBlockBase {
 
  private:
   void print(std::ostream &) const override;
-  int keyFortran_;
   oops::Variables activeVars_;
   oops::Variables innerVars_;
   const oops::GeometryData & innerGeometryData_;
