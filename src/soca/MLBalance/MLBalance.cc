@@ -4,9 +4,10 @@
 
 #include "oops/util/FieldSetHelpers.h"
 
-#include "soca/MLBalance/MLBalance.h"
 #include "soca/Geometry/Geometry.h"
 #include "soca/Increment/Increment.h"
+#include "soca/MLBalance/MLBalance.h"
+#include "soca/MLBalance/MLBalance.h"
 
 namespace soca {
 
@@ -51,11 +52,19 @@ MLBalance::MLBalance(
 
   // Do something with the ML Balances
   oops::Log::info() << "Jacobian not implemented yet" << std::endl;
+  setupJac(xb, outerGeometryData.comm());
 }
 
 // --------------------------------------------------------------------------------------
 
 MLBalance::~MLBalance() {}
+
+// --------------------------------------------------------------------------------------
+//void MLBalance::setupJac( const oops::FieldSet3D & xb, atlas::FieldSet & jac) {
+void MLBalance::setupJac(const oops::FieldSet3D & xb, const eckit::mpi::Comm & comm) {
+  auto dsdt = atlas::array::make_view<double, 2>(jac_["ds/dt"]);
+  MLJac mlJac(config, comm);
+}
 
 // --------------------------------------------------------------------------------------
 
