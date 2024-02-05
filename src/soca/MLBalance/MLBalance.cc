@@ -1,3 +1,10 @@
+/*
+* (C) Copyright 2024 NOAA/NWS/NCEP/EMC
+*
+* This software is licensed under the terms of the Apache Licence Version 2.0
+* which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+*/
+
 #include <typeinfo>
 
 #include "atlas/array.h"
@@ -45,7 +52,7 @@ MLBalance::MLBalance(
   }
 
   // Initialize the Jacobian
-  // TODO (G): Currently set to 1.0 for testing, reset to 0 before implementing a
+  // TODO(G): Currently set to 1.0 for testing, reset to 0 before implementing a
   //           realistic jacobian
   jac_ = util::createFieldSet(xb["tocn"].functionspace(), jacVars, 1.0);
 
@@ -89,11 +96,11 @@ void MLBalance::multiply(oops::FieldSet3D & fset) const {
     // Deep copy of some of the input increments
     auto dsshi = dssh(jnode, 0);
     std::vector<double> dsi(ds.shape(1));
-    for(size_t j = 0; j < ds.shape(1); ++j) {
+    for (size_t j = 0; j < ds.shape(1); ++j) {
       dsi[j] = ds(jnode, j);
     }
 
-    for (atlas::idx_t jlevel = 0; jlevel < fset["tocn"].shape(1); ++jlevel) {
+    for ( atlas::idx_t jlevel = 0; jlevel < fset["tocn"].shape(1); ++jlevel ) {
         ds(jnode, jlevel) += dsdt(jnode, jlevel) * dt(jnode, jlevel);
         dssh(jnode, 0) += dsshdt(jnode, jlevel) * dt(jnode, jlevel) +
                           dsshds(jnode, jlevel) * dsi[jlevel];
@@ -138,7 +145,7 @@ void MLBalance::multiplyAD(oops::FieldSet3D & fset) const {
     auto dsshi = dssh(jnode, 0);
     // Deep copy of some of the input increments
     std::vector<double> dsi(ds.shape(1));
-    for(size_t j = 0; j < ds.shape(1); ++j) {
+    for (size_t j = 0; j < ds.shape(1); ++j) {
       dsi[j] = ds(jnode, j);
     }
 
