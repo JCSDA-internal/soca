@@ -32,7 +32,7 @@ integer :: root=0
 !!
 !! - forward: deaggregates a 2D analysis of sea-ice and inserts
 !!            analysis in CICE restarts
-!! - inverse: TODO(G), aggregates seaice variables alon CICE sea-ice
+!! - inverse: TODO(G), aggregates seaice variables along CICE sea-ice
 !!            categories, save the aggregated variables in a file
 !!            readable by soca
 
@@ -96,22 +96,11 @@ subroutine soca_soca2cice_setup(self, geom)
   ktherm = 2
   heat_capacity = .true.
 
-  ! Not parallel yet
-  if ( self%myrank.gt.root) then
-     call fckit_exception%abort("Only serial for now")
-  end if
+  ! initialize cice
+  call self%cice%init(geom, self%rst_filename, self%rst_out_filename)
 
-  ! Setup cice
-  if ( self%myrank.eq.root) then
-     ! initialize cice
-     call self%cice%init(self%rst_filename, self%rst_out_filename)
-
-     ! read cice fields from restart
-     call self%cice%read(geom)
-  end if
-
-  ! Broadcast cice
-  call self%cice%broadcast(self%f_comm, root)
+  ! read cice fields from restart
+  call self%cice%read(geom)
 
   ! Initialize kd-tree
   ageometry = atlas_geometry("UnitSphere")
@@ -143,7 +132,7 @@ subroutine soca_soca2cice_changevar(self, geom, xa, xm)
   call self%cleanup_ice(geom, xm)
 
   ! write cice restart
-  call self%cice%write()
+  call self%cice%write(geom)
 
 end subroutine soca_soca2cice_changevar
 
@@ -208,9 +197,13 @@ subroutine shuffle_ice(self, geom, xm)
   real(kind=kind_real) :: aice
   integer :: i, j, k, n, ii, jj
   type(soca_field), pointer :: t_ana, s_ana, aice_ana
-  integer, parameter :: nn_max = 9 ! TODO (G): should be an optional parameter in the config
-  integer :: idx(nn_max), minidx(1)
-  real(kind=kind_real) :: testmin(nn_max)
+  integer :: minidx(1), nn_max
+  integer, allocatable :: idx(:)
+  real(kind=kind_real), allocatable :: testmin(:)
+
+  ! Make sure the search tree is smaller than the data size
+  nn_max = min(self%cice%agg%n_src, 9)
+  allocate(idx(nn_max), testmin(nn_max))
 
   ! pointers to soca fields (most likely an analysis)
   call xm%get("tocn",t_ana)
@@ -233,7 +226,6 @@ subroutine shuffle_ice(self, geom, xm)
            testmin(k) = abs(self%cice%aice(self%cice%agg%ij(1, idx(k)), self%cice%agg%ij(2, idx(k))) - aice)
         end do
         minidx = minloc(testmin) ! I know, I rock.
-
         ii = self%cice%agg%ij(1, idx(minidx(1)))
         jj = self%cice%agg%ij(2, idx(minidx(1)))
 
@@ -246,6 +238,7 @@ subroutine shuffle_ice(self, geom, xm)
         self%cice%hpnd(i, j,:) = self%cice%hpnd(ii, jj, :)
         self%cice%ipnd(i, j,:) = self%cice%ipnd(ii, jj, :)
         self%cice%tsfcn(i, j,:) = self%cice%tsfcn(ii, jj, :)
+
         do k = 1, self%ice_lev
            self%cice%qice(i, j,: , k) = self%cice%qice(ii, jj, :, k)
            self%cice%sice(i, j,: , k) = self%cice%sice(ii, jj, :, k)

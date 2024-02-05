@@ -28,6 +28,8 @@ background error:
     read:
       groups:
       - name: group1
+        multivariate strategy: univariate # or duplicated, if dealing with localization instead
+                                          # the default is "univariate"
         horizontal:
           filename: data_generated/parameters_diffusion_hz/hz_large.nc
         vertical:

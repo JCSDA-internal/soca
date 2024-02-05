@@ -1,5 +1,6 @@
 set( soca_test_input
-  testinput/3dhyb.yml
+  testinput/3dhyb_nicas.yml
+  testinput/3dhyb_diffusion.yml
   testinput/3dhybfgat.yml
   testinput/3dvar_diffusion.yml
   testinput/3dvar_godas.yml
@@ -90,7 +91,8 @@ set( soca_test_input
 )
 
 set( soca_test_ref
-  testref/3dhyb.test
+  testref/3dhyb_nicas.test
+  testref/3dhyb_diffusion.test
   testref/3dhybfgat.test
   testref/3dvar_diffusion.test
   testref/3dvar_godas.test
@@ -117,7 +119,7 @@ set( soca_test_ref
   testref/dirac_soca_cov.test
   testref/dirac_soca_mask.test
   testref/dirac_soca_nomask.test
-  testref/dirac_socahyb_cov.test  
+  testref/dirac_socahyb_cov.test
   testref/enshofx.test
   testref/enspert.test
   testref/ensmeanandvariance.test
@@ -773,7 +775,7 @@ soca_add_test( NAME 3dvar_diffusion
                EXE  soca_var.x
                TEST_DEPENDS test_soca_gridgen
                             test_soca_parameters_diffusion_hz
-                            test_soca_parameters_diffusion_vt)               
+                            test_soca_parameters_diffusion_vt)
 
 soca_add_test( NAME 3dvar_godas
                EXE  soca_var.x
@@ -798,11 +800,16 @@ soca_add_test( NAME 3dvarfgat_pseudo
                             test_soca_forecast_mom6
                             test_soca_static_socaerror_init )
 
-soca_add_test( NAME 3dhyb
+soca_add_test( NAME 3dhyb_nicas
                EXE  soca_var.x
                TEST_DEPENDS test_soca_gridgen
                             test_soca_static_socaerror_init
                             test_soca_parameters_bump_loc )
+
+soca_add_test( NAME 3dhyb_diffusion
+               EXE  soca_var.x
+               TEST_DEPENDS test_soca_gridgen
+                            test_soca_parameters_diffusion_hz)
 
 soca_add_test( NAME 3dhybfgat
                EXE  soca_var.x
@@ -875,7 +882,7 @@ if( ${icepack_FOUND} )
        DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/data_generated/convertstate_soca2cice/ )
      soca_add_test( NAME convertstate_soca2cice
                     EXE  soca_convertstate.x
-                    MPI 1
+                    MPI 2
                     NOTRAPFPE
                     TEST_DEPENDS test_soca_gridgen
                                  test_soca_3dvar_godas)
