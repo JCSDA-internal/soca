@@ -70,10 +70,15 @@ namespace soca {
   // -----------------------------------------------------------------------------
   State::State(const oops::Variables & vars, const State & other) : State(other)
   {
-    eckit::LocalConfiguration varChangeConfig;
-    varChangeConfig.set("variable change name", "Model2Ana");
-    VariableChange model2ana(varChangeConfig, geom_);
-    model2ana.changeVar(*this, vars);
+    // TODO(Travis, maybe) The variable change needs to go here
+    //  (U/V rotate, etc), but since we don't really use it right now, this 
+    //  can wait until after the variable changes get cleaned up, (and 
+    //  after we finally implement the model naming convention??)
+
+    // eckit::LocalConfiguration varChangeConfig;
+    // varChangeConfig.set("variable change name", "Model2Ana");
+    // VariableChange model2ana(varChangeConfig, geom_);
+    // model2ana.changeVar(*this, vars);
     Log::trace() << "State::State created with variable change." << std::endl;
   }
   // -----------------------------------------------------------------------------
