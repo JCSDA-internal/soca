@@ -923,7 +923,7 @@ subroutine soca_fields_read(self, f_conf, vdate)
     end if
 
     ! filename for bio
-    read_ice = .false.
+    read_bio = .false.
     bio_filename=""
     if ( f_conf%has("bio_filename") ) then
       call f_conf%get_or_die("basename", str)
