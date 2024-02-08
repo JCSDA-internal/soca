@@ -71,8 +71,8 @@ namespace soca {
   State::State(const oops::Variables & vars, const State & other) : State(other)
   {
     // TODO(Travis, maybe) The variable change needs to go here
-    //  (U/V rotate, etc), but since we don't really use it right now, this 
-    //  can wait until after the variable changes get cleaned up, (and 
+    //  (U/V rotate, etc), but since we don't really use it right now, this
+    //  can wait until after the variable changes get cleaned up, (and
     //  after we finally implement the model naming convention??)
 
     // eckit::LocalConfiguration varChangeConfig;
