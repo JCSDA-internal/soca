@@ -1,0 +1,42 @@
+geometry:
+  geom_grid_file: data_generated/gridgen/soca_gridspec.72x35x25.nc
+  mom6_input_nml: data_static/72x35x25/input.nml
+  fields metadata: data_static/fields_metadata.yml
+
+state:
+    date: 2018-04-15T00:00:00Z
+    read_from_file: 1
+    basename: data_static/72x35x25/restarts/
+    ocn_filename: MOM.res.nc
+    ice_filename: cice.res.nc
+    sfc_filename: sfc.res.nc
+    bio_filename: NOBM.res.nc
+    state variables: [hocn, oz_th, wvapor, ws, pres, rh, cld_lwp,
+    cov, aer_tau, scat_alb, asym_par, c_det, inorg_c, dis_c,
+    diatom, chloro, cyano, cocco, dino, phaeo]
+
+time window:
+  begin: 2018-04-14T00:00:00Z
+  length: P2D
+
+observations:
+  observers:
+  - obs space:
+      name: Radiance
+      obsdataout:
+        engine:
+          type: H5File
+          obsfile: data_generated/hofx_oasim_3d/pace_oasim.hofx_oasim_3d.nc
+      obsdatain:
+        engine:
+          type: H5File
+          obsfile: data_static/obs/pace_radiance.nc
+      simulated variables: [radiance]
+      channels: 50-70
+    obs operator:
+      name: OASIM
+      CoefficientPath: data_static/oasim
+
+test:
+  reference filename: testref/hofx_oasim_3d.test
+  test output filename: testoutput/hofx_oasim_3d.test
