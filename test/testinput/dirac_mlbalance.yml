@@ -18,9 +18,20 @@ background error:
     saber block name: ID
   saber outer blocks:
   - saber block name: MLBalance
+    geometry: *geom
     ML Balances:
-    - thing 1: 1
-    - thing 2: 2
+      arctic:
+        ffnn:
+          inputSize: 7
+          outputSize: 1
+          hiddenSize: 2
+          load model: "arctic.pt"
+      antarctic:
+        ffnn:
+          inputSize: 7
+          outputSize: 1
+          hiddenSize: 2
+          load model: "antarctic.pt"
 
 dirac:
   ixdir: [1, 17, 51, 31, 51, 63, 81, 14, 16, 43]

@@ -34,6 +34,9 @@ find_package( ufo    1.9.0    REQUIRED)
 find_package( fms    2020.4.0 REQUIRED)
 find_package( mom6   2020.4.0 REQUIRED)
 
+find_package(Torch REQUIRED)
+find_package(daml REQUIRED)
+
 # Optionally look for icepack
 find_package( icepack 1.2.0 QUIET)
 
