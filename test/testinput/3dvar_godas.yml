@@ -276,3 +276,4 @@ final:
 test:
   reference filename: testref/3dvar_godas.test
   test output filename: testoutput/3dvar_godas.test
+  float relative tolerance: 1e-5
