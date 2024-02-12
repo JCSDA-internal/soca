@@ -3,6 +3,7 @@ set( soca_test_input
   testinput/3dhyb_diffusion.yml
   testinput/3dhybfgat.yml
   testinput/3dvar_diffusion.yml
+  testinput/3dvar_diffmlb.yml
   testinput/3dvar_godas.yml
   testinput/3dvar_single_ob.yml
   testinput/3dvar_soca.yml
@@ -34,6 +35,7 @@ set( soca_test_input
   testinput/enshofx_3.yml
   testinput/enshofx.yml
   testinput/enspert.yml
+  testinput/enspert_mlb.yml
   testinput/ensmeanandvariance.yml
   testinput/ensrecenter.yml
   testinput/errorcovariance.yml
@@ -95,6 +97,7 @@ set( soca_test_ref
   testref/3dhyb_diffusion.test
   testref/3dhybfgat.test
   testref/3dvar_diffusion.test
+  testinput/3dvar_diffmlb.test
   testref/3dvar_godas.test
   testref/3dvar_single_ob.test
   testref/3dvar_soca.test
@@ -122,6 +125,7 @@ set( soca_test_ref
   testref/dirac_socahyb_cov.test
   testref/enshofx.test
   testref/enspert.test
+  testref/enspert_mlb.test
   testref/ensmeanandvariance.test
   testref/ensrecenter.test
   testref/forecast_identity.test
@@ -546,6 +550,11 @@ soca_add_test( NAME enspert
                TEST_DEPENDS test_soca_gridgen
                             test_soca_static_socaerror_init )
 
+soca_add_test( NAME enspert_mlb
+               EXE  soca_enspert.x
+               NOTRAPFPE
+               TEST_DEPENDS test_soca_gridgen )
+
 # Remapping MOM6 (horiz+vertical intterpolation)
 soca_add_test( NAME convertstate
                EXE  soca_convertstate.x
@@ -703,6 +712,12 @@ soca_add_test( NAME 3dvarbump
                             test_soca_parameters_bump_cor_nicas )
 
 soca_add_test( NAME 3dvar_diffusion
+               EXE  soca_var.x
+               TEST_DEPENDS test_soca_gridgen
+                            test_soca_parameters_diffusion_hz
+                            test_soca_parameters_diffusion_vt)
+
+soca_add_test( NAME 3dvar_diffmlb
                EXE  soca_var.x
                TEST_DEPENDS test_soca_gridgen
                             test_soca_parameters_diffusion_hz
