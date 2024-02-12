@@ -59,8 +59,7 @@ MLBalance::MLBalance(
   // Initialize the Jacobian
   jac_ = util::createFieldSet(xb["tocn"].functionspace(), jacVars, 0.0);
 
-  // Do something with the ML Balances
-  oops::Log::info() << "Jacobian not implemented yet" << std::endl;
+  // Initialize Jacobian
   setupJac(xb, outerGeometryData.comm(), mlbConf);
 }
 
@@ -110,10 +109,11 @@ void MLBalance::multiply(oops::FieldSet3D & fset) const {
     // Deep copy of some of the input increments
     auto dsshi = dssh(jnode, 0);
     std::vector<double> dsi(ds.shape(1));
-    for(size_t j = 0; j < ds.shape(1); ++j) {
+    for (size_t j = 0; j < ds.shape(1); ++j) {
       dsi[j] = ds(jnode, j);
     }
-    for (atlas::idx_t jlevel = 0; jlevel < fset["tocn"].shape(1); ++jlevel) {
+
+    for ( atlas::idx_t jlevel = 0; jlevel < fset["tocn"].shape(1); ++jlevel ) {
         ds(jnode, jlevel) += dsdt(jnode, jlevel) * dt(jnode, jlevel);
         dssh(jnode, 0) += dsshdt(jnode, jlevel) * dt(jnode, jlevel) +
                           dsshds(jnode, jlevel) * dsi[jlevel];
@@ -158,7 +158,7 @@ void MLBalance::multiplyAD(oops::FieldSet3D & fset) const {
     auto dsshi = dssh(jnode, 0);
     // Deep copy of some of the input increments
     std::vector<double> dsi(ds.shape(1));
-    for(size_t j = 0; j < ds.shape(1); ++j) {
+    for (size_t j = 0; j < ds.shape(1); ++j) {
       dsi[j] = ds(jnode, j);
     }
 
