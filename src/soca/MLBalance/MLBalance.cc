@@ -1,3 +1,10 @@
+/*
+* (C) Copyright 2024 NOAA/NWS/NCEP/EMC
+*
+* This software is licensed under the terms of the Apache Licence Version 2.0
+* which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+*/
+
 #include <typeinfo>
 
 #include "atlas/array.h"
@@ -106,7 +113,6 @@ void MLBalance::multiply(oops::FieldSet3D & fset) const {
     for(size_t j = 0; j < ds.shape(1); ++j) {
       dsi[j] = ds(jnode, j);
     }
-
     for (atlas::idx_t jlevel = 0; jlevel < fset["tocn"].shape(1); ++jlevel) {
         ds(jnode, jlevel) += dsdt(jnode, jlevel) * dt(jnode, jlevel);
         dssh(jnode, 0) += dsshdt(jnode, jlevel) * dt(jnode, jlevel) +
