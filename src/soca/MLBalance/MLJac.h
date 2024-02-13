@@ -7,7 +7,12 @@
 
 #pragma once
 
-#include <torch/torch.h>
+#include <memory>
+#include <string>
+#include <vector>
+
+#include "torch/torch.h"
+
 #include "daml/IceEmul/IceEmul.h"
 
 #include "soca/Geometry/Geometry.h"

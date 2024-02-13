@@ -56,13 +56,13 @@ cost function:
             inputSize: 7
             outputSize: 1
             hiddenSize: 2
-            load model: "arctic.pt"
+            load model: data_static/mlbalance/arctic.pt
         antarctic:
           ffnn:
             inputSize: 7
             outputSize: 1
             hiddenSize: 2
-            load model: "antarctic.pt"
+            load model: data_static/mlbalance/antarctic.pt
 
     date: *bkg_date
 
@@ -93,7 +93,7 @@ variational:
     algorithm: RPCG
   iterations:
   - geometry: *geom
-    ninner: 150
+    ninner: 5
     gradient norm reduction: 1e-15
     test: on
     diagnostics:
@@ -125,6 +125,6 @@ final:
     geometry: *geom
 
 test:
-  reference filename: testref/3dvar_diffusion.test
-  test output filename: testoutput/3dvar_diffusion.test
+  reference filename: testref/3dvar_diffmlb.test
+  test output filename: testoutput/3dvar_diffmlb.test
   float relative tolerance: 1e-5

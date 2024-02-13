@@ -14,7 +14,6 @@
 #include "soca/Geometry/Geometry.h"
 #include "soca/Increment/Increment.h"
 #include "soca/MLBalance/MLBalance.h"
-#include "soca/MLBalance/MLBalance.h"
 #include "soca/MLBalance/MLJac.h"
 
 namespace soca {
@@ -68,7 +67,7 @@ MLBalance::MLBalance(
 MLBalance::~MLBalance() {}
 
 // --------------------------------------------------------------------------------------
-//void MLBalance::setupJac( const oops::FieldSet3D & xb, atlas::FieldSet & jac) {
+
 void MLBalance::setupJac(const oops::FieldSet3D & xb,
                          const eckit::mpi::Comm & comm,
                          const eckit::Configuration & config) {

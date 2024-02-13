@@ -25,22 +25,26 @@ background error:
           inputSize: 7
           outputSize: 1
           hiddenSize: 2
-          load model: "arctic.pt"
+          load model: data_static/mlbalance/arctic.pt
       antarctic:
         ffnn:
           inputSize: 7
           outputSize: 1
           hiddenSize: 2
-          load model: "antarctic.pt"
+          load model: data_static/mlbalance/antarctic.pt
 
 dirac:
-  ixdir: [1, 17, 51, 31, 51, 10, 22, 62, 52, 44]
-  iydir: [8,  5,  6,  9,  7, 33, 30, 32, 31, 28]
-  izdir: [1,  1,  1,  1,  1,  1,  1,  1,  1,  1]
-  ifdir: [4,  4,  4,  4,  4,  4,  4,  4,  4,  4]
+  ixdir: [70, 22, 62, 52, 44, 23, 17, 31, 70]
+  iydir: [33, 30, 32, 31, 28, 11,  5,  2,  4]
+  izdir: [ 1,  1,  1,  1,  1,  1,  1,  1,  1]
+  ifdir: [ 4,  4,  4,  4,  4,  4,  4,  4,  4]
 
 output dirac:
   datadir: data_generated/dirac_mlbalance
   date: *date
   exp: dirac_mlbalance_%id%
   type: an
+
+test:
+  reference filename: testref/dirac_mlbalance.test
+  test output filename: testoutput/dirac_mlbalance.test

@@ -96,7 +96,7 @@ set( soca_test_ref
   testref/3dhyb_diffusion.test
   testref/3dhybfgat.test
   testref/3dvar_diffusion.test
-  testinput/3dvar_diffmlb.test
+  testref/3dvar_diffmlb.test
   testref/3dvar_godas.test
   testref/3dvar_single_ob.test
   testref/3dvar_soca.test
@@ -194,6 +194,15 @@ set( soca_install_data
   Data/godas_sst_bgerr.nc )
 install(FILES ${soca_install_data}
         DESTINATION ${INSTALL_DATA_DIR}/testdata/ )
+
+set( soca_install_mlbalance
+  Data/mlbalance/antarctic.pt
+  Data/mlbalance/normalization.antarctic.pt
+  Data/mlbalance/arctic.pt
+  Data/mlbalance/normalization.arctic.pt
+)
+install(FILES ${soca_install_mlbalance}
+        DESTINATION ${INSTALL_DATA_DIR}/testdata/mlbalance/ )
 
 #####################################################################
 
@@ -631,8 +640,10 @@ soca_add_test( NAME dirac_diffusion
                TEST_DEPENDS test_soca_parameters_diffusion_hz
                test_soca_parameters_diffusion_vt)
 
-soca_add_test( NAME dirac_mlbalance
-               EXE soca_error_covariance_toolbox.x)
+if( ${daml_FOUND} )
+  soca_add_test( NAME dirac_mlbalance
+                 EXE soca_error_covariance_toolbox.x)
+endif()
 
 # h(x) executables
 #---------------------------------------------------------------------------------------------------
@@ -710,11 +721,13 @@ soca_add_test( NAME 3dvar_diffusion
                             test_soca_parameters_diffusion_hz
                             test_soca_parameters_diffusion_vt)
 
-soca_add_test( NAME 3dvar_diffmlb
-               EXE  soca_var.x
-               TEST_DEPENDS test_soca_gridgen
-                            test_soca_parameters_diffusion_hz
-                            test_soca_parameters_diffusion_vt)
+if( ${daml_FOUND} )
+  soca_add_test( NAME 3dvar_diffmlb
+                 EXE  soca_var.x
+                 TEST_DEPENDS test_soca_gridgen
+                              test_soca_parameters_diffusion_hz
+                              test_soca_parameters_diffusion_vt)
+endif()
 
 soca_add_test( NAME 3dvar_godas
                EXE  soca_var.x
