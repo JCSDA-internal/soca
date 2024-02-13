@@ -10,7 +10,7 @@ cost function:
   time window:
     begin: 2018-04-14T00:00:00Z
     length: P2D
-  analysis variables: &soca_vars [cicen, hicen, hsnon, tsfc, tair, sice, socn, tocn, ssh, hocn, mld, layer_depth]
+  analysis variables: [cicen, hicen, hsnon, socn, tocn, ssh]
   geometry: &geom
     geom_grid_file: data_generated/gridgen/soca_gridspec.72x35x25.nc
     mom6_input_nml: data_static/72x35x25/input.nml
@@ -23,7 +23,7 @@ cost function:
     ice_filename: cice.res.nc
     sfc_filename: sfc.res.nc
     date: &bkg_date 2018-04-15T00:00:00Z
-    state variables: *soca_vars
+    state variables: [cicen, hicen, hsnon, tsfc, tair, sice, socn, tocn, ssh, hocn, mld, layer_depth]
 
   background error:
     covariance model: SABER
@@ -74,7 +74,7 @@ cost function:
         obsdataout:
           engine:
             type: H5File
-            obsfile: data_generated/3dvar_diffusion/icec.3dvar_diffusion.nc
+            obsfile: data_generated/3dvar_diffmlb/icec.3dvar_diffmlb.nc
         obsdatain:
           engine:
             type: H5File
@@ -102,7 +102,7 @@ variational:
       write increment: true
       increment:
         state component:
-          datadir: data_generated/3dvar_diffusion
+          datadir: data_generated/3dvar_diffmlb
           date: *bkg_date
           exp: 3dvar_diffmlb.iter1
           type: incr
