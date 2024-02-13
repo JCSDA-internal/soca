@@ -45,6 +45,9 @@ namespace soca {
       auto hs = atlas::array::make_view<double, 2>(xb["hsnon"]);
       auto sst = atlas::array::make_view<double, 2>(xb["tocn"]);
       auto sss = atlas::array::make_view<double, 2>(xb["socn"]);
+      auto sice = atlas::array::make_view<double, 2>(xb["sice"]);
+      auto tair = atlas::array::make_view<double, 2>(xb["tair"]);
+      auto tsfc = atlas::array::make_view<double, 2>(xb["tsfc"]);
 
       // Pointers to the Jacobian
       auto dcdsst = atlas::array::make_view<double, 2>(jacobian["dc/dsst"]);
@@ -56,13 +59,13 @@ namespace soca {
       torch::Tensor pattern = torch::zeros({iceEmulArctic_.inputSize_});
       for (atlas::idx_t jnode = 0; jnode < xb["tocn"].shape(0); ++jnode) {
         // TODO(G): add tair, tsfc & ice salinity to the soca background
-        pattern[0] = 1.0;           //  tair
-        pattern[1] = -2.0;          //  tsfc[i];
+        pattern[0] = tair(jnode, 0);
+        pattern[1] = tsfc(jnode, 0);
         pattern[2] = sst(jnode, 0);
         pattern[3] = sss(jnode, 0);
         pattern[4] = hs(jnode, 0);
         pattern[5] = hi(jnode, 0);
-        pattern[6] = 1.0;           //  ice salinity
+        pattern[6] = sice(jnode, 0);
         torch::Tensor dcdx = torch::zeros({iceEmulArctic_.inputSize_});
         if ( lats[jnode] > 40.0 ) {
           dcdx = iceEmulArctic_.model_->jac(pattern);

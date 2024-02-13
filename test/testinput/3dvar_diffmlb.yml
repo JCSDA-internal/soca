@@ -10,7 +10,7 @@ cost function:
   time window:
     begin: 2018-04-14T00:00:00Z
     length: P2D
-  analysis variables: &soca_vars [cicen, hicen, hsnon, socn, tocn, ssh, hocn, mld, layer_depth]
+  analysis variables: &soca_vars [cicen, hicen, hsnon, tsfc, tair, sice, socn, tocn, ssh, hocn, mld, layer_depth]
   geometry: &geom
     geom_grid_file: data_generated/gridgen/soca_gridspec.72x35x25.nc
     mom6_input_nml: data_static/72x35x25/input.nml
