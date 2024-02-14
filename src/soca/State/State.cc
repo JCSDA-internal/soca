@@ -12,6 +12,7 @@
 #include "soca/Increment/Increment.h"
 #include "soca/State/State.h"
 #include "soca/State/StateFortran.h"
+#include "soca/VariableChange/VariableChange.h"
 
 #include "atlas/field.h"
 
@@ -65,6 +66,20 @@ namespace soca {
     soca_state_create_f90(keyFlds_, geom_.toFortran(), vars_);
     soca_state_change_resol_f90(toFortran(), other.keyFlds_);
     Log::trace() << "State::State created by interpolation." << std::endl;
+  }
+  // -----------------------------------------------------------------------------
+  State::State(const oops::Variables & vars, const State & other) : State(other)
+  {
+    // TODO(Travis, maybe) The variable change needs to go here
+    //  (U/V rotate, etc), but since we don't really use it right now, this
+    //  can wait until after the variable changes get cleaned up, (and
+    //  after we finally implement the model naming convention??)
+
+    // eckit::LocalConfiguration varChangeConfig;
+    // varChangeConfig.set("variable change name", "Model2Ana");
+    // VariableChange model2ana(varChangeConfig, geom_);
+    // model2ana.changeVar(*this, vars);
+    Log::trace() << "State::State created with variable change." << std::endl;
   }
   // -----------------------------------------------------------------------------
   State::State(const State & other)
