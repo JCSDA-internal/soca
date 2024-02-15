@@ -11,22 +11,10 @@
 #include <string>
 
 #include "oops/interface/AnalyticInitBase.h"
-#include "oops/util/parameters/Parameters.h"
-#include "oops/util/parameters/RequiredParameter.h"
 
 #include "ufo/ObsTraits.h"
 
 namespace soca {
-
-  class AnalyticInitParameters : public oops::Parameters {
-    OOPS_CONCRETE_PARAMETERS(AnalyticInitParameters, Parameters)
-    oops::RequiredParameter<std::string> method{"method", this};
-   public:
-    // No parameters, for now
-  };
-
-// -----------------------------------------------------------------------------
-
 
   class AnalyticInit :
     public oops::interface::AnalyticInitBase<ufo::ObsTraits> {
