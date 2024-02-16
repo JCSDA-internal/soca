@@ -57,7 +57,6 @@ class MLBalance : public saber::SaberOuterBlockBase {
   oops::Variables activeVars_;
   oops::Variables innerVars_;
   const oops::GeometryData & innerGeometryData_;
-  std::shared_ptr<Geometry> geom_;
   Parameters_ params_;
   atlas::FieldSet jac_;
 };
