@@ -56,7 +56,7 @@ MLBalance::MLBalance(
   }
 
   // Initialize the Jacobian
-  jac_ = util::createFieldSet(xb["tocn"].functionspace(), jacVars, 0.0);
+  jac_ = util::createFieldSet(outerGeometryData.functionspace(), jacVars, 0.0);
 
   // Initialize Jacobian
   setupJac(xb, outerGeometryData.comm(), mlbConf);
