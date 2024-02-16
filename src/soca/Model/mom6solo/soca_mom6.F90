@@ -47,6 +47,8 @@ use MOM_variables,       only : surface
 use MOM_verticalGrid,    only : verticalGrid_type, &
                                 verticalGridInit, verticalGridEnd
 
+use signal_trap_mod, only: suspend_trap_sigfpe_f90, resume_trap_sigfpe_f90
+
 implicit none
 
 private
@@ -91,8 +93,10 @@ subroutine soca_geomdomain_init(Domain, nk, f_comm)
   ! Initialize fms
   call fms_init()
 
+  call suspend_trap_sigfpe_f90()
   ! Initialize fms io
   call fms_io_init()
+  call resume_trap_sigfpe_f90()
 
   ! Parse grid inputs
   call Get_MOM_Input(param_file, dirs)
