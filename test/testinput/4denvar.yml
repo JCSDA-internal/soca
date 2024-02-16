@@ -75,7 +75,7 @@ cost function:
 
 variational:
   minimizer:
-    algorithm: DRPCG
+    algorithm: RPCG
   iterations:
   - geometry: *geom
     ninner: 5
