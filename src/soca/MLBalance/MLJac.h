@@ -27,17 +27,15 @@ namespace soca {
     MLJac(const eckit::Configuration & config,
           const oops::FieldSet3D & xb,
           atlas::FieldSet jacobian,
-          std::shared_ptr<Geometry> geom,
+          const oops::GeometryData & GeometryData,
           const eckit::mpi::Comm & comm) :
       iceEmulArctic_(getConf(config, "arctic"), comm),
       iceEmulAntarctic_(getConf(config, "antarctic"), comm)
     {
       oops::Log::trace() << "In MLJack" << std::endl;
       // Geometry info
-      std::vector<double> lats;
-      std::vector<double> lons;
-      bool halo = true;
-      geom->latlon(lats, lons, halo);
+      const auto lonlat =
+        atlas::array::make_view<double, 2>(GeometryData.functionSpace().lonlat());
 
       // Pointers to the background
       auto cicen = atlas::array::make_view<double, 2>(xb["cicen"]);
@@ -67,10 +65,10 @@ namespace soca {
         pattern[5] = hi(jnode, 0);
         pattern[6] = sice(jnode, 0);
         torch::Tensor dcdx = torch::zeros({iceEmulArctic_.inputSize_});
-        if ( lats[jnode] > 40.0 ) {
+        if ( lonlat(jnode, 1) > 40.0 ) {
           dcdx = iceEmulArctic_.model_->jac(pattern);
         }
-        if ( lats[jnode] < -40.0 ) {
+        if ( lonlat(jnode, 1) < -40.0 ) {
           dcdx = iceEmulAntarctic_.model_->jac(pattern);
         }
         dcdsst(jnode, 0) = dcdx[2].item<float>();
@@ -81,6 +79,7 @@ namespace soca {
       oops::Log::trace() << "In MLJack" << std::endl;
     }
 
+    // Utility for initializer
     const eckit::LocalConfiguration getConf(const eckit::Configuration & conf,
                                             std::string str) {
       const eckit::LocalConfiguration localConf(conf, str);

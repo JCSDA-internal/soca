@@ -38,9 +38,6 @@ MLBalance::MLBalance(
     innerGeometryData_(outerGeometryData),
     jac_(nullptr)
 {
-  // setup geometry
-  geom_.reset(new Geometry(params_.geometry.value(), outerGeometryData.comm()));
-
   // Initialize the Jacobian variables
   std::vector<std::string>
     jacStr{"ds/dt",
@@ -56,7 +53,7 @@ MLBalance::MLBalance(
   }
 
   // Initialize the Jacobian
-  jac_ = util::createFieldSet(outerGeometryData.functionspace(), jacVars, 0.0);
+  jac_ = util::createFieldSet(outerGeometryData.functionSpace(), jacVars, 0.0);
 
   // Initialize Jacobian
   setupJac(xb, outerGeometryData.comm(), mlbConf);
@@ -73,7 +70,7 @@ void MLBalance::setupJac(const oops::FieldSet3D & xb,
                          const eckit::Configuration & config) {
   // Create a map of configurations
   eckit::LocalConfiguration mlConf = params_.mlbalances.value();
-  MLJac mlJac(mlConf, xb, jac_, geom_, comm);
+  MLJac mlJac(mlConf, xb, jac_, innerGeometryData_, comm);
 }
 
 // --------------------------------------------------------------------------------------
