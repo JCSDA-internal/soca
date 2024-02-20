@@ -23,6 +23,7 @@ set( soca_test_input
   testinput/diffstates.yml
   testinput/dirac_diffusion.yml
   testinput/dirac_horizfilt.yml
+  testinput/dirac_mlbalance.yml
   testinput/dirac_soca_cor_nicas_scales.yml
   testinput/dirac_soca_cov.yml
   testinput/dirac_soca_mask.yml
@@ -626,7 +627,10 @@ soca_add_test( NAME dirac_soca_nomask
 soca_add_test( NAME dirac_diffusion
                EXE soca_error_covariance_toolbox.x
                TEST_DEPENDS test_soca_parameters_diffusion_hz
-                            test_soca_parameters_diffusion_vt)
+               test_soca_parameters_diffusion_vt)
+
+soca_add_test( NAME dirac_mlbalance
+               EXE soca_error_covariance_toolbox.x)
 
 # h(x) executables
 #---------------------------------------------------------------------------------------------------
