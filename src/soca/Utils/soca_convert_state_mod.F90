@@ -25,6 +25,8 @@ use mpp_mod, only     : mpp_broadcast, mpp_sync, mpp_sync_self
 use soca_fields_mod, only: soca_field
 use soca_geom_mod, only: soca_geom
 
+use signal_trap_mod, only: suspend_trap_sigfpe_f90, resume_trap_sigfpe_f90
+
 implicit none
 private
 
@@ -67,7 +69,9 @@ subroutine soca_convertstate_setup(self, src, des, hocn, hocn2)
   !local
   integer :: tmp(1)
 
+  call suspend_trap_sigfpe_f90()
   call fms_io_init()
+  call resume_trap_sigfpe_f90()
 
   call read_data(trim(src%geom_grid_file), 'nzo_zstar', tmp(1), domain=src%Domain%mpp_domain)
   src%nzo_zstar = tmp(1)

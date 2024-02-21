@@ -17,6 +17,8 @@ use oops_variables_mod
 use soca_increment_mod
 use soca_geom_mod, only : soca_geom
 
+use signal_trap_mod, only: suspend_trap_sigfpe_f90, resume_trap_sigfpe_f90
+
 implicit none
 private
 
@@ -368,7 +370,9 @@ subroutine soca_diffusion_calibrate_vt(self, params, vt_conf)
     call oops_log%info("    Reading length scales from file")
     call vt_conf%get_or_die("from file.filename", str2)
     call vt_conf%get_or_die("from file.variable name", str3)
+    call suspend_trap_sigfpe_f90()
     call fms_io_init()
+    call resume_trap_sigfpe_f90()
     idr = register_restart_field(restart_file, str2, str3, &
       vt_scales, domain=self%geom%Domain%mpp_domain)
     call restore_state(restart_file, directory='')
@@ -463,7 +467,9 @@ subroutine soca_diffusion_calibrate_hz(self, params, hz_conf, norm_conf)
     call oops_log%info("    Reading length scales from file")
     call hz_conf%get_or_die("from file.filename", str2)
     call hz_conf%get_or_die("from file.variable name", str3)
+    call suspend_trap_sigfpe_f90()
     call fms_io_init()
+    call resume_trap_sigfpe_f90()
     idr = register_restart_field(restart_file, str2, str3, &
       hz_scales, domain=self%geom%Domain%mpp_domain)
     call restore_state(restart_file, directory='')
@@ -1092,7 +1098,9 @@ subroutine soca_diffusion_write_params(self, f_conf)
   call f_conf%get_or_die("groups", f_conf_list)
 
   ! write to file
+  call suspend_trap_sigfpe_f90()
   call fms_io_init()
+  call resume_trap_sigfpe_f90()
   do grp=1,size(f_conf_list)
     call f_conf_list(grp)%get_or_die('name', group_name)
     call f_conf_list(grp)%get_or_die('write.filename', filename)
@@ -1167,7 +1175,9 @@ subroutine soca_diffusion_read_params(self, f_conf)
   allocate(self%group(size(f_conf_list)))
   
   ! read from file
+  call suspend_trap_sigfpe_f90()
   call fms_io_init()
+  call resume_trap_sigfpe_f90()
   do grp=1,size(self%group)
     call f_conf_list(grp)%get_or_die('name', group_name)
     self%group(grp)%name = trim(group_name)    

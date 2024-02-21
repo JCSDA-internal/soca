@@ -27,6 +27,8 @@ use soca_mom6, only: soca_mom6_config, soca_mom6_init, soca_mom6_end
 use soca_state_mod, only: soca_state
 use soca_utils, only: soca_str2int
 
+use signal_trap_mod, only: suspend_trap_sigfpe_f90, resume_trap_sigfpe_f90
+
 implicit none
 private
 
@@ -169,7 +171,9 @@ subroutine soca_model_propagate(self, flds, fldsdate)
 
   if (self%advance_mom6==1) then
      ! Set the forcing for the next steps.
+     call suspend_trap_sigfpe_f90()
      call fms_io_init()
+     call resume_trap_sigfpe_f90()
      call set_forcing(self%mom6_config%sfc_state,&
                       self%mom6_config%forces,&
                       self%mom6_config%fluxes,&

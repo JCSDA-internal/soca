@@ -38,6 +38,8 @@ use soca_geom_mod, only : soca_geom
 use soca_utils, only: soca_mld
 use soca_utils, only: soca_stencil_interp, soca_stencil_neighbors
 
+use signal_trap_mod, only: suspend_trap_sigfpe_f90, resume_trap_sigfpe_f90
+
 implicit none
 private
 
@@ -864,7 +866,9 @@ subroutine soca_fields_read(self, f_conf, vdate)
      h_common = 0.0_kind_real
 
      ! Read common vertical coordinate from file
+     call suspend_trap_sigfpe_f90()
      call fms_io_init()
+     call resume_trap_sigfpe_f90()
      idr = register_restart_field(ocean_remap_restart, remap_filename, 'h', h_common, &
           domain=self%geom%Domain%mpp_domain)
      call restore_state(ocean_remap_restart, directory='')
@@ -921,7 +925,9 @@ subroutine soca_fields_read(self, f_conf, vdate)
       wav_filename = trim(basename)//trim(str)
     end if
 
+    call suspend_trap_sigfpe_f90()
     call fms_io_init()
+    call resume_trap_sigfpe_f90()
 
     ! built-in variables
     do i=1,size(self%fields)
@@ -1193,7 +1199,9 @@ subroutine soca_fields_write_file(self, filename)
 
   integer :: ii
 
+  call suspend_trap_sigfpe_f90()
   call fms_io_init()
+  call resume_trap_sigfpe_f90()
   call set_domain( self%geom%Domain%mpp_domain )
 
   ! write out all fields
@@ -1229,7 +1237,9 @@ subroutine soca_fields_write_rst(self, f_conf, vdate)
   write_ice = .false.
   write_sfc = .false.
   write_wav = .false.
+  call suspend_trap_sigfpe_f90()
   call fms_io_init()
+  call resume_trap_sigfpe_f90()
 
   ! Get date IO format (colons or not?)
   date_cols = .true.
