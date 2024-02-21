@@ -289,7 +289,7 @@ function(soca_add_test)
                       ARGS    ${CONFIG_FILE}
                       LIBS    soca
                       MPI     ${MPI}
-                      ENVIRONMENT ${TRAPFPE_ENV}
+                      #ENVIRONMENT ${TRAPFPE_ENV}
                       WORKING_DIRECTORY ${WORKDIR}
                       TEST_DEPENDS ${ARG_TEST_DEPENDS})
     set( EXE ./test_soca_${ARG_NAME})
@@ -302,8 +302,7 @@ function(soca_add_test)
                       COMMAND ${EXE}
                       WORKING_DIRECTORY ${WORKDIR}
                       ARGS ${CONFIG_FILE}
-                      ENVIRONMENT
-                              ${TRAPFPE_ENV}
+                      #ENVIRONMENT ${TRAPFPE_ENV}
                       DEPENDS ${ARG_EXE}
                       TEST_DEPENDS ${ARG_TEST_DEPENDS})
 
