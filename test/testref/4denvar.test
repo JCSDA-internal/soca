@@ -1,7 +1,7 @@
 CostJb   : Nonlinear Jb = 0.0000000000000000e+00
 CostJo   : Nonlinear Jo(SeaSufaceTemp) = 3.4432086113911851e+02, nobs = 47, Jo/n = 7.3259757689174148e+00, err = 3.8763169345842458e-01
 CostFunction: Nonlinear J = 3.4432086113911851e+02
-DRIPCGMinimizer: reduction in residual norm = 3.2400368980170978e-02
+RPCGMinimizer: reduction in residual norm = 1.5261181559532497e-02
 CostFunction::addIncrement: Analysis: 
   Valid time: 2018-04-15T00:00:00Z
    socn   min=10.7210460395083924   max=40.4416591897031168   mean=34.5443897261524953
@@ -30,6 +30,6 @@ layer_depth   min=2.2683307266867532   max=5658.3141547773811908   mean=1200.522
 
 
 
-CostJb   : Nonlinear Jb = 64.0479888481008572
-CostJo   : Nonlinear Jo(SeaSufaceTemp) = 77.9167739250520555, nobs = 47, Jo/n = 1.6578037005330224, err = 0.3876316934584246
+CostJb   : Nonlinear Jb = 64.0479888481008288
+CostJo   : Nonlinear Jo(SeaSufaceTemp) = 77.9167739250520839, nobs = 47, Jo/n = 1.6578037005330231, err = 0.3876316934584246
 CostFunction: Nonlinear J = 141.9647627731529269
