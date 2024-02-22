@@ -929,7 +929,7 @@ subroutine soca_fields_read(self, f_conf, vdate)
       call f_conf%get_or_die("basename", str)
       basename = str
       call f_conf%get_or_die("bio_filename", str)
-      ice_filename = trim(basename)//trim(str)
+      bio_filename = trim(basename)//trim(str)
     end if
 
     call fms_io_init()
