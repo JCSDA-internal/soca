@@ -4,7 +4,6 @@ set( soca_test_input
   testinput/3dhybfgat.yml
   testinput/3dvar_diffusion.yml
   testinput/3dvar_single_ob.yml
-  testinput/3dvar_soca.yml
   testinput/3dvar_zero_ob.yml
   testinput/3dvarbump.yml
   testinput/3dvarfgat_pseudo.yml

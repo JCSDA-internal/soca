@@ -34,18 +34,21 @@ cost function:
     - weight:
         value: 0.5
       covariance:
-        covariance model: SocaError
-        analysis variables: [socn, tocn, uocn, vocn, ssh]
-        date: 2018-04-15T00:00:00Z
-        bump:
-          io:
-            data directory: data_generated/static_socaerror_init
-          drivers:
-            multivariate strategy: univariate
-            read local nicas: true
-        correlation:
-        - name: ocn
-          variables: [socn, tocn, uocn, vocn, ssh]
+        covariance model: SABER
+        saber central block:
+          saber block name: EXPLICIT_DIFFUSION
+          active variables: [tocn, socn, ssh]
+          geometry: *geom
+          group mapping:
+          - name: group1
+            variables: [tocn, socn, ssh]
+          read:
+            groups:
+            - name: group1
+              horizontal:
+                filename: data_generated/parameters_diffusion_hz/hz_smaller.nc
+              vertical:
+                filename: data_generated/parameters_diffusion_vt/vt_5lvls.nc
 
     - weight:
         value: 0.5
