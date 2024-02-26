@@ -22,7 +22,6 @@ set( soca_test_input
   testinput/convertstate.yml
   testinput/diffstates.yml
   testinput/dirac_diffusion.yml
-  testinput/dirac_horizfilt.yml
   testinput/dirac_mlbalance.yml
   testinput/dirac_soca_cor_nicas_scales.yml
   testinput/dirac_soca_cov.yml
@@ -86,8 +85,6 @@ set( soca_test_input
   testinput/varchange_bkgerrgodas.yml
   testinput/varchange_bkgerrsoca.yml
   testinput/varchange_bkgerrsoca_stddev.yml
-  testinput/varchange_horizfilt.yml
-  testinput/varchange_vertconv.yml
 )
 
 set( soca_test_ref
@@ -114,7 +111,6 @@ set( soca_test_ref
   testref/convertstate.test
   testref/diffstates.test
   testref/dirac_diffusion.test
-  testref/dirac_horizfilt.test
   testref/dirac_soca_cor_nicas_scales.test
   testref/dirac_soca_cov.test
   testref/dirac_soca_mask.test
@@ -404,11 +400,6 @@ soca_add_test( NAME varchange_bkgerrfilt
                SRC TestVariableChange.cc
                TEST_DEPENDS test_soca_gridgen )
 
-soca_add_test( NAME varchange_horizfilt
-               SRC TestVariableChange.cc
-               NOTRAPFPE
-               TEST_DEPENDS test_soca_gridgen )
-
 soca_add_test( NAME varchange_bkgerrsoca
                SRC  TestVariableChange.cc
                TEST_DEPENDS test_soca_gridgen )
@@ -420,11 +411,6 @@ soca_add_test( NAME varchange_bkgerrsoca_stddev
 soca_add_test( NAME varchange_bkgerrgodas
                SRC  TestVariableChange.cc
                TEST_DEPENDS test_soca_gridgen )
-
-soca_add_test( NAME varchange_vertconv
-               SRC  TestVariableChange.cc
-               TEST_DEPENDS test_soca_gridgen )
-
 
 # Observation localization methods
 #---------------------------------------------------------------------------------------------------
@@ -605,11 +591,6 @@ soca_add_test( NAME dirac_socahyb_cov
                TEST_DEPENDS test_soca_gridgen
                             test_soca_static_socaerror_init
                             test_soca_parameters_bump_loc)
-
-soca_add_test( NAME dirac_horizfilt
-               EXE  soca_error_covariance_toolbox.x
-               TEST_DEPENDS test_soca_gridgen
-                            test_soca_static_socaerror_init)
 
 soca_add_test( NAME dirac_soca_mask
                EXE  soca_error_covariance_toolbox.x
