@@ -38,7 +38,7 @@ struct Traits {
   typedef soca::GeometryIterator     GeometryIterator;
   typedef soca::State                State;
   typedef soca::Increment            Increment;
-  typedef soca::ErrorCovariance      Covariance;
+  typedef soca::ErrorCovariance      Covariance;  // Not actually used, just empty stubs
 
   typedef soca::ModelBias            ModelAuxControl;
   typedef soca::ModelBiasIncrement   ModelAuxIncrement;
