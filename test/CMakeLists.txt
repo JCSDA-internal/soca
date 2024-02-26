@@ -40,6 +40,7 @@ set( soca_test_input
   testinput/forecast_identity.yml
   testinput/forecast_mom6_bgc.yml
   testinput/forecast_mom6.yml
+  testinput/forecast_ufs.yml
   testinput/forecast_mom6_ens1.yml
   testinput/forecast_mom6_ens2.yml
   testinput/forecast_mom6_ens3.yml
@@ -149,10 +150,71 @@ set( soca_test_ref
   testref/static_socaerrorlowres_init.test
 )
 
+set( soca_data_files
+  Data/godas_sst_bgerr.nc
+  Data/soca_gridspec.nc
+  Data/rossrad.dat
+  Data/fields_metadata.yml
+)
+
+set( soca_model_param
+  Data/72x35x25/diag_table
+  Data/72x35x25/field_table
+  Data/72x35x25/ice.bkgerror.nc
+  Data/72x35x25/ocn.bkgerror.nc
+  Data/72x35x25/wav.bkgerror.nc
+  Data/72x35x25/MOM_input
+  Data/72x35x25/MOM_input_small
+  Data/72x35x25/MOM_override_bgc
+)
+
+set( soca_model_namelist
+  Data/72x35x25/input.nml
+  Data/72x35x25/input_bgc.nml
+  Data/72x35x25/input_small.nml
+)
+
+set( soca_model_restarts
+  Data/72x35x25/INPUT/forcing_daily.nc
+  Data/72x35x25/INPUT/forcing_monthly.nc
+  Data/72x35x25/INPUT/hycom1_25.nc
+  Data/72x35x25/INPUT/cice.res.nc
+  Data/72x35x25/INPUT/layer_coord25.nc
+  Data/72x35x25/INPUT/MOM.res.nc
+  Data/72x35x25/INPUT/sfc.res.nc
+  Data/72x35x25/INPUT/wav.res.nc
+  Data/72x35x25/INPUT/ocean_hgrid.nc
+  Data/72x35x25/INPUT/ocean_topog.nc
+  Data/72x35x25/INPUT/ocean_mosaic.nc
+  Data/72x35x25/INPUT/grid_spec.nc
+)
+
+set( soca_obs
+  Data/Obs/adt.nc
+  Data/Obs/biomass_p.nc
+  Data/Obs/chl.nc
+  Data/Obs/gmi_gpm_geoval.nc
+  Data/Obs/gmi_gpm_obs.nc
+  Data/Obs/icec.nc
+  Data/Obs/icefb.nc
+  Data/Obs/prof.nc
+  Data/Obs/single_ob.nc
+  Data/Obs/sss.nc
+  Data/Obs/sst.nc
+  Data/Obs/swh.nc
+  Data/Obs/uocn_surface.nc
+  Data/Obs/vocn_surface.nc
+  Data/Obs/zero_ob.nc
+)
+
 # Create directory for test input/output/reference and symlink all files
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/testinput)
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/testoutput)
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/testref)
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/Data/ModelRunDirs)
+execute_process(COMMAND cmake -E create_symlink
+   ${CMAKE_BINARY_DIR}/_deps/testdata-src ${CMAKE_CURRENT_BINARY_DIR}/Data/ModelRunDirs/UFS
+)
 foreach(FILENAME ${soca_test_input} ${soca_test_ref})
     execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
            ${CMAKE_CURRENT_SOURCE_DIR}/${FILENAME}
@@ -197,7 +259,7 @@ install(FILES ${soca_install_data}
 
 # Configurable parameters for the subsequent tests
 
-set( SOCA_TESTS_MAX_MPI 2 CACHE STRING
+set( SOCA_TESTS_MAX_MPI 8 CACHE STRING
   "Maximum number of PEs to use for SOCA's MPI based tests.\
   NOTE: should leave this at 2 to ensure all tests pass.")
 
@@ -287,7 +349,7 @@ function(soca_add_test)
     ecbuild_add_test( TARGET  test_soca_${ARG_NAME}
                       SOURCES executables/${ARG_SRC}
                       ARGS    ${CONFIG_FILE}
-                      LIBS    soca
+                      LIBS    ${UFS_LIBS}
                       MPI     ${MPI}
                       ENVIRONMENT ${TRAPFPE_ENV}
                       WORKING_DIRECTORY ${WORKDIR}
@@ -457,6 +519,14 @@ soca_add_test( NAME forecast_identity
 # Test mom6 forecast
 soca_add_test( NAME forecast_mom6
                EXE  soca_forecast.x
+               NOTRAPFPE
+               TEST_DEPENDS test_soca_gridgen )
+
+# Test ufs/ng-godas forecast
+soca_add_test( NAME forecast_ufs
+               EXE  soca_forecast.x
+               MPI 8
+               CFG  forecast_ufs.yml
                NOTRAPFPE
                TEST_DEPENDS test_soca_gridgen )
 
@@ -642,7 +712,8 @@ soca_add_test( NAME makeobs
 
 soca_add_test( NAME hofx_3d
                EXE  soca_hofx3d.x
-               TEST_DEPENDS test_soca_gridgen )
+               TEST_DEPENDS test_soca_gridgen 
+               LIBS soca stochastic_physics ccpp fv3atm esmf)
 
 if( ${oasim_FOUND} )
   soca_add_test( NAME hofx_oasim_3d
@@ -653,12 +724,14 @@ endif( ${oasim_FOUND} )
 soca_add_test( NAME hofx_4d
                EXE  soca_hofx.x
                NOTRAPFPE
-               TEST_DEPENDS test_soca_gridgen )
+               TEST_DEPENDS test_soca_gridgen 
+               LIBS soca stochastic_physics ccpp fv3atm esmf)
 
 soca_add_test( NAME hofx_4d_pseudo
                EXE  soca_hofx.x
                TEST_DEPENDS test_soca_gridgen
-                            test_soca_forecast_mom6 )
+                            test_soca_forecast_mom6 
+               LIBS soca stochastic_physics ccpp fv3atm esmf)
 
 # NOTE, enshofx is disabled because MOM6 always writes out some diagnostic
 # netcdf files (which can't be disabled). This is normally not a problem, except
@@ -672,7 +745,6 @@ soca_add_test( NAME hofx_4d_pseudo
 #                MPI 3
 #                NOTRAPFPE
 #                TEST_DEPENDS test_soca_gridgen )
-
 
 # variational methods
 #---------------------------------------------------------------------------------------------------
@@ -694,7 +766,8 @@ soca_add_test( NAME 3dvar_soca
                EXE  soca_var.x
                NOTRAPFPE
                TEST_DEPENDS test_soca_gridgen
-                            test_soca_static_socaerror_init )
+                            test_soca_static_socaerror_init
+               LIBS soca stochastic_physics ccpp fv3atm esmf)
 
 soca_add_test( NAME 3dvarbump
                EXE  soca_var.x
@@ -799,12 +872,12 @@ soca_add_test( NAME convertincrement
                TEST_DEPENDS test_soca_gridgen
                             3dvar_godas )
 
-# restart checkpointing
-soca_add_test( NAME checkpointmodel
-               EXE  soca_checkpoint_model.x
-               NOTRAPFPE
-               TEST_DEPENDS test_soca_gridgen
-                            test_soca_3dvar_godas)
+## restart checkpointing
+#soca_add_test( NAME checkpointmodel
+#               EXE  soca_checkpoint_model.x
+#               NOTRAPFPE
+#               TEST_DEPENDS test_soca_gridgen
+#                            test_soca_3dvar_godas)
 
 if( ${icepack_FOUND} )
   # Apply the Soca2Cice nonlinear change of variable

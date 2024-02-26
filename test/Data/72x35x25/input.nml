@@ -24,5 +24,5 @@
 
  &fms_nml
        clock_grain='MODULE'
-       domains_stack_size = 2000000
+       domains_stack_size = 10000000
        clock_flags='SYNC' /

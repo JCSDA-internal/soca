@@ -25,7 +25,7 @@ use MOM_domains, only : MOM_domain_type
 use MOM_EOS,         only : EOS_type
 use mpp_domains_mod, only : mpp_get_compute_domain, mpp_get_data_domain, &
                             mpp_get_global_domain, mpp_update_domains, &
-                            CYCLIC_GLOBAL_DOMAIN, FOLD_NORTH_EDGE                            
+                            CYCLIC_GLOBAL_DOMAIN, FOLD_NORTH_EDGE
 ! soca modules
 use soca_fields_metadata_mod, only : soca_fields_metadata
 use soca_mom6, only: soca_mom6_config, soca_mom6_init, soca_geomdomain_init
@@ -117,6 +117,7 @@ type, public :: soca_geom
     real(kind=kind_real), allocatable, dimension(:,:) :: distance_from_coast !< distance to closest land grid point (m)
     real(kind=kind_real), allocatable, dimension(:,:,:) :: h !< layer thickness (m)
     real(kind=kind_real), allocatable, dimension(:,:,:) :: h_zstar
+    logical,              allocatable, dimension(:,:) :: valid_halo_mask !< true unless gridpoint is a duplicate or invalid halo
     !> \}
 
     !> instance of the metadata that is read in from a config file upon initialization
@@ -217,6 +218,9 @@ subroutine soca_geom_init(self, f_conf, f_comm)
   call mpp_update_domains(self%rossby_radius, self%Domain%mpp_domain)
   call mpp_update_domains(self%distance_from_coast, self%Domain%mpp_domain)
 
+  ! calculate which halo points are duplicates / invalid
+  call soca_geom_find_invalid_halo(self)
+
   ! Set output option for local geometry
   if ( .not. f_conf%get("save_local_domain", self%save_local_domain) ) &
      self%save_local_domain = .false.
@@ -260,6 +264,7 @@ subroutine soca_geom_end(self)
   if (allocated(self%distance_from_coast)) deallocate(self%distance_from_coast)
   if (allocated(self%h))             deallocate(self%h)
   if (allocated(self%h_zstar))       deallocate(self%h_zstar)
+  if (allocated(self%valid_halo_mask)) deallocate(self%valid_halo_mask)
   nullify(self%Domain)
   call self%functionspace%final()
 
@@ -399,7 +404,7 @@ subroutine soca_geom_gridgen(self)
   type(EOS_type), pointer :: eqn_of_state
   integer :: k
   real(kind=kind_real), allocatable :: tracer(:,:,:)
-  logical :: answers_2018 = .false.
+  integer :: answer_date = 20190101
 
   ! Generate grid
   call soca_mom6_init(mom6_config, partial_init=.true.)
@@ -428,7 +433,7 @@ subroutine soca_geom_gridgen(self)
   ! Setup intermediate zstar coordinate
   allocate(tracer(self%isd:self%ied, self%jsd:self%jed, self%nzo))
   tracer = 0.d0 ! dummy tracer
-  call diag_remap_init(remap_ctrl, coord_tuple='ZSTAR, ZSTAR, ZSTAR', answers_2018=answers_2018)
+  call diag_remap_init(remap_ctrl, coord_tuple='ZSTAR, ZSTAR, ZSTAR', answer_date=answer_date)
   call diag_remap_configure_axes(remap_ctrl, mom6_config%GV, mom6_config%scaling, mom6_config%param_file)
   self%nzo_zstar = remap_ctrl%nz
   if (allocated(self%h_zstar)) deallocate(self%h_zstar)
@@ -504,6 +509,8 @@ subroutine soca_geom_allocate(self)
   allocate(self%h(isd:ied,jsd:jed,1:nzo));       self%h = 0.0_kind_real
   
   allocate(self%atlas_ij2idx(isd:ied,jsd:jed));  self%atlas_ij2idx = -1
+
+  allocate(self%valid_halo_mask(isd:ied,jsd:jed));self%valid_halo_mask = .true.
 
 end subroutine soca_geom_allocate
 
@@ -1060,6 +1067,56 @@ subroutine soca_geom_mesh_valid_nodes_cells(self, nodes, cells)
   end if
 
 end subroutine
+
+! ------------------------------------------------------------------------------
+!> Examine the halo gridpoints to determine which ones are non-duplicate and valid
+!!
+!! The OOPS interpolation does not like duplicate points, but MOM6 does have duplicate
+!! and/or unused halo points. We create a mask (self%valid_halo_mask) that is true if 1) 
+!! not a halo point, or 2) a halo point that is not a duplicate lat/lon already present 
+!! in the PE's halo or non-halo regions. Invalid halo points are also masked out 
+!! (i.e. the lat/lon are not updated from the initialed INVALID_HALO value when a halo 
+!! exchanged is performed
+subroutine soca_geom_find_invalid_halo(self)
+  class(soca_geom), intent(inout) :: self
+
+  integer ::  i1, i2, j1, j2
+
+  ! iterate over all halo gridpoints
+  outer: do j1 = self%jsd, self%jed
+    do i1 = self%isd, self%ied
+
+      ! if not halo region, skip
+      if (j1 >= self%jsc .and. j1 <= self%jec .and. &
+          i1 >= self%isc .and. i1 <= self%iec)  cycle
+
+      ! if gridpoint is still set to -999 after a halo exchange, it is an invalid point
+          if (self%lat(i1,j1) == INVALID_HALO) then
+            self%valid_halo_mask(i1,j1) = .false.
+            cycle
+          end if    
+          
+      ! make sure this halo point doesn't exist anywhere else, if it does mask it out
+      inner: do j2 = self%jsd, self%jed
+        do i2 = self%isd, self%ied
+          ! skip if point 1 is same as point 2
+          if (j1 == j2 .and. i1 == i2) cycle
+          ! skip if point 2 has already been masked out
+          if (.not. self%valid_halo_mask(i2,j2)) cycle
+          
+          ! if lat/lon are the same, mark point 1 as a duplicate, mask out
+          if (self%lat(i1,j1) == self%lat(i2,j2) .and. &
+              self%lon(i1,j1) == self%lon(i2,j2)) then
+            self%valid_halo_mask(i1,j1) = .false.
+            exit inner
+          end if
+        end do
+      end do inner
+    
+    end do
+  end do outer
+
+end subroutine soca_geom_find_invalid_halo
 
 ! ------------------------------------------------------------------------------
 

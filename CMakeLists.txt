@@ -31,13 +31,33 @@ find_package( vader  1.6.0    REQUIRED)
 find_package( saber  1.9.0    REQUIRED)
 find_package( ioda   2.8.0    REQUIRED)
 find_package( ufo    1.9.0    REQUIRED)
-find_package( fms    2020.4.0 REQUIRED)
-find_package( mom6   2020.4.0 REQUIRED)
+# fms
+find_package(FMS 2022.04 REQUIRED COMPONENTS R4 R8)
+if (FV3_PRECISION MATCHES DOUBLE OR NOT FV3_PRECISION)
+  add_library(fms ALIAS FMS::fms_r8)
+else()
+  add_library(fms ALIAS FMS::fms_r4)
+endif()
+if(FV3_FORECAST_MODEL MATCHES UFS)
+  find_package( ESMF MODULE REQUIRED STATIC)
+  find_package( crtm   2.2.3)
+  find_package( bacio  REQUIRED)
+  find_package( sigio  REQUIRED)
+  find_package( sp     REQUIRED)
+  find_package( w3emc  REQUIRED)
+  find_package( w3nco  REQUIRED)
+  find_package( nemsio REQUIRED)
+  find_package( nemsio REQUIRED)
+  find_package( PIO 2.5.3 REQUIRED COMPONENTS C Fortran)
+else()
+  find_package( mom6   2020.4.0 REQUIRED)
+endif()
 
 # Optionally look for icepack
 find_package( icepack 1.2.0 QUIET)
 
-include_directories( ${NETCDF_INCLUDE_DIRS} )
+include_directories( ${NETCDF_INCLUDE_DIRS} ${DEPEND_LIB_ROOT}/include_r8 ${DEPEND_LIB_ROOT}/MOM6/mod  )
+include_directories( ${DEPEND_LIB_ROOT}/../ufs-weather-model/src/ufs-weather-model-build/MOM6-interface/mod_solo)
 
 
 ################################################################################
@@ -45,9 +65,48 @@ include_directories( ${NETCDF_INCLUDE_DIRS} )
 ################################################################################
 set( SOCA_LINKER_LANGUAGE CXX)
 
+if(FV3_FORECAST_MODEL MATCHES UFS)
+  if(${UFS_APP} MATCHES "NG-GODAS")
+    set( UFS_LIBS
+        soca
+        cdeps
+        cmeps
+        PIO::PIO_C PIO::PIO_Fortran
+        stochastic_physics
+        cice
+        esmf
+    )
+  elseif(${UFS_APP} MATCHES "S2S")
+    set( UFS_LIBS
+        soca
+        cmeps
+        PIO::PIO_C PIO::PIO_Fortran
+        fv3atm
+        fv3
+        fv3ccpp
+        ccpp_framework
+        ccpp_physics
+        stochastic_physics
+        FMS::fms_r8
+        cice
+        esmf
+    )
+  else()
+      message(FATAL_ERROR "soca UFS_LIBS not configured for UFS_APP ${UFS_APP}")
+  endif()
+endif()
+
 add_subdirectory( src )
 add_subdirectory( test )
 add_subdirectory( tutorial )
+
+include(FetchContent)
+FetchContent_Declare(
+  testdata
+  URL      https://ftp.emc.ncep.noaa.gov/jcsda/WDQMS/NCEP/UFS-JEDI-DATA/ufs.tar.gz
+  URL_HASH MD5=762e54986481c01e3a939edbe57b0ec4
+)
+FetchContent_MakeAvailable(testdata)
 
 # Build Doxygen documentation
 add_subdirectory( docs )
@@ -61,7 +120,7 @@ endif()
 ################################################################################
 
 # prepares a tar.gz of the sources and/or binaries
-ecbuild_install_project( NAME soca )
+# ecbuild_install_project( NAME soca )
 
 # print the summary of the configuration
 ecbuild_print_summary()
