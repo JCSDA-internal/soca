@@ -95,7 +95,7 @@ cost function:
         obsdataout:
           engine:
             type: H5File
-            obsfile: data_generated/3dvar_diffusion/sst_coolskin.3dvar_diffusion.nc
+            obsfile: data_generated/3dvar_diffusion/sst_coolskin.3dvar.nc
         obsdatain:
           engine:
             type: H5File
@@ -111,7 +111,7 @@ cost function:
         obsdataout:
           engine:
             type: H5File
-            obsfile: data_generated/3dvar_diffusion/sst.3dvar_diffusion.nc
+            obsfile: data_generated/3dvar_diffusion/sst.3dvar.nc
         obsdatain:
           engine:
             type: H5File
@@ -133,7 +133,7 @@ cost function:
         obsdataout:
           engine:
             type: H5File
-            obsfile: data_generated/3dvar_diffusion/sss.3dvar_diffusion.nc
+            obsfile: data_generated/3dvar_diffusion/sss.3dvar.nc
         obsdatain:
           engine:
             type: H5File
@@ -159,7 +159,7 @@ cost function:
         obsdataout:
           engine:
             type: H5File
-            obsfile: data_generated/3dvar_diffusion/adt.3dvar_diffusion.nc
+            obsfile: data_generated/3dvar_diffusion/adt.3dvar.nc
         obsdatain:
           engine:
             type: H5File
@@ -190,7 +190,7 @@ cost function:
         obsdataout:
           engine:
             type: H5File
-            obsfile: data_generated/3dvar_diffusion/prof_T.3dvar_diffusion.nc
+            obsfile: data_generated/3dvar_diffusion/prof_T.3dvar.nc
         obsdatain:
           engine:
             type: H5File
@@ -210,7 +210,7 @@ cost function:
         obsdataout:
           engine:
             type: H5File
-            obsfile: data_generated/3dvar_diffusion/prof_S.3dvar_diffusion.nc
+            obsfile: data_generated/3dvar_diffusion/prof_S.3dvar.nc
         obsdatain:
           engine:
             type: H5File
@@ -232,7 +232,7 @@ cost function:
         obsdataout:
           engine:
             type: H5File
-            obsfile: data_generated/3dvar_diffusion/icec.3dvar_diffusion.nc
+            obsfile: data_generated/3dvar_diffusion/icec.3dvar.nc
         obsdatain:
           engine:
             type: H5File
@@ -262,12 +262,12 @@ variational:
         state component:      
           datadir: data_generated/3dvar_diffusion
           date: *bkg_date
-          exp: 3dvar_diffusion.iter1
+          exp: 3dvar.iter1
           type: incr
 
 output:
   datadir: data_generated/3dvar_diffusion
-  exp: 3dvar_diffusion
+  exp: 3dvar
   type: an
 
 final:

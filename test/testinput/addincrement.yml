@@ -16,9 +16,9 @@ state:
 
 increment:
   read_from_file: 1
-  basename: data_generated/3dvar_godas/
-  ocn_filename: ocn.3dvar_godas.iter1.incr.2018-04-15T00:00:00Z.nc
-  ice_filename: ice.3dvar_godas.iter1.incr.2018-04-15T00:00:00Z.nc
+  basename: data_generated/3dvar_diffusion/
+  ocn_filename: ocn.3dvar.iter1.incr.2018-04-15T00:00:00Z.nc
+  ice_filename: ice.3dvar.iter1.incr.2018-04-15T00:00:00Z.nc
   date: *bkg_date
   added variables: [hsnon, socn, tocn]
 

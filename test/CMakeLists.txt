@@ -3,7 +3,6 @@ set( soca_test_input
   testinput/3dhyb_diffusion.yml
   testinput/3dhybfgat.yml
   testinput/3dvar_diffusion.yml
-  testinput/3dvar_godas.yml
   testinput/3dvar_single_ob.yml
   testinput/3dvar_soca.yml
   testinput/3dvar_zero_ob.yml
@@ -92,7 +91,6 @@ set( soca_test_ref
   testref/3dhyb_diffusion.test
   testref/3dhybfgat.test
   testref/3dvar_diffusion.test
-  testref/3dvar_godas.test
   testref/3dvar_single_ob.test
   testref/3dvar_soca.test
   testref/3dvar_zero_ob.test
@@ -765,27 +763,27 @@ soca_add_test( NAME letkf_split_solver
                             test_soca_letkf_split_observer )
 
 
-# other executables that depends on increments from 3dvar_godas run
+# other executables that depends on increments from 3dvar_diffusion run
 #---------------------------------------------------------------------------------------------------
 
 soca_add_test( NAME addincrement
                EXE  soca_addincrement.x
                TEST_DEPENDS test_soca_gridgen
-                            3dvar_godas )
+                            test_soca_3dvar_diffusion )
 
 # Remapping MOM6 (horiz+vertical interpolation)
 soca_add_test( NAME convertincrement
                EXE  soca_convertincrement.x
                NOTRAPFPE
                TEST_DEPENDS test_soca_gridgen
-                            3dvar_godas )
+                            test_soca_3dvar_diffusion )
 
 # restart checkpointing
 soca_add_test( NAME checkpointmodel
                EXE  soca_checkpoint_model.x
                NOTRAPFPE
                TEST_DEPENDS test_soca_gridgen
-                            test_soca_3dvar_godas)
+                            test_soca_3dvar_diffusion)
 
 if( ${icepack_FOUND} )
   # Apply the Soca2Cice nonlinear change of variable
@@ -797,5 +795,5 @@ if( ${icepack_FOUND} )
                     MPI 2
                     NOTRAPFPE
                     TEST_DEPENDS test_soca_gridgen
-                                 test_soca_3dvar_godas)
+                                test_soca_3dvar_diffusion)
 endif()
