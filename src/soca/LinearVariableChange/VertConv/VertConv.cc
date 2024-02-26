@@ -27,7 +27,7 @@ namespace soca {
   // ---------------------------------------------------------------------------
 
   static LinearVariableChangeMaker<VertConv>
-                             makerLinearVariableCHangeVertConv_("VertConvSOCA");
+                             makerLinearVariableCHangeVertConv_("DEPRECATED_VertConvSOCA");
 
   // ---------------------------------------------------------------------------
   VertConv::VertConv(const State & bkg,

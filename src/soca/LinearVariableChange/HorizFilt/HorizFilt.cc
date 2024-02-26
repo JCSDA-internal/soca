@@ -26,7 +26,7 @@ namespace soca {
   // -----------------------------------------------------------------------------
 
   static LinearVariableChangeMaker<HorizFilt>
-               makerLinearVariableChangeHorizFilt_("HorizFiltSOCA");
+               makerLinearVariableChangeHorizFilt_("DEPRECATED_HorizFiltSOCA");
 
   // -----------------------------------------------------------------------------
   HorizFilt::HorizFilt(const State & bkg,
