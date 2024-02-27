@@ -49,9 +49,9 @@ cost function:
             groups:
             - name: group1
               horizontal:
-                filename: data_generated/parameters_diffusion_hz/hz_smaller.nc
+                filename: data_generated/parameters_diffusion/hz_smaller.nc
               vertical:
-                filename: data_generated/parameters_diffusion_vt/vt_5lvls.nc      
+                filename: data_generated/parameters_diffusion/vt_5lvls.nc      
 
         linear variable change:
           input variables: *soca_vars
@@ -133,7 +133,7 @@ cost function:
         obsdataout:
           engine:
             type: H5File
-            obsfile: data_generated/3dhybfgat/adt.3dhybfgat.nc
+            obsfile: data_output/adt.nc
         obsdatain:
           engine:
             type: H5File
@@ -158,13 +158,13 @@ variational:
       write increment: true
       increment:
         state component:      
-          datadir: data_generated/3dhybfgat
+          datadir: data_output/
           date: *date_begin
           exp: 3dhybfgat.iter1
           type: incr
 
 output:
-  datadir: data_generated/3dhybfgat
+  datadir: data_output/
   exp: 3dhybfgat
   type: an
 

@@ -17,7 +17,7 @@ background error:
     saber block name: BUMP_NICAS
     calibration:
       io:
-        data directory: data_generated/parameters_bump_loc
+        data directory: data_output/
         files prefix: soca_bump_loc
       drivers:
         multivariate strategy: duplicated

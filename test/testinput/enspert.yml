@@ -30,9 +30,9 @@ background error:
       groups:
       - name: group1
         horizontal:
-          filename: data_generated/parameters_diffusion_hz/hz_smaller.nc
+          filename: data_generated/parameters_diffusion/hz_smaller.nc
         vertical:
-          filename: data_generated/parameters_diffusion_vt/vt_5lvls.nc
+          filename: data_generated/parameters_diffusion/vt_5lvls.nc
 
   linear variable change:
     linear variable changes:
@@ -86,7 +86,7 @@ forecast length: PT6H
 
 output:
  frequency: PT6H
- datadir: data_generated/enspert
+ datadir: data_output/
  exp: enspert
  type: ens
  date: *date

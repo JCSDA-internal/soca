@@ -70,9 +70,9 @@ cost function:
         groups:
         - name: group1
           horizontal:
-            filename: data_generated/parameters_diffusion_hz/hz_smaller.nc
+            filename: data_generated/parameters_diffusion/hz_smaller.nc
           vertical:
-            filename: data_generated/parameters_diffusion_vt/vt_5lvls.nc        
+            filename: data_generated/parameters_diffusion/vt_5lvls.nc        
 
     linear variable change:
       input variables: *soca_vars
@@ -103,7 +103,7 @@ cost function:
         obsdataout:
           engine:
             type: H5File
-            obsfile: data_generated/3dvarfgat_pseudo/sst.3dvarfgat_pseudo.nc
+            obsfile: data_output/sst.nc
         obsdatain:
           engine:
             type: H5File
@@ -125,7 +125,7 @@ cost function:
         obsdataout:
           engine:
             type: H5File
-            obsfile: data_generated/3dvarfgat_pseudo/sss.3dvarfgat_pseudo.nc
+            obsfile: data_output/sss.nc
         obsdatain:
           engine:
             type: H5File
@@ -148,7 +148,7 @@ cost function:
         obsdataout:
           engine:
             type: H5File
-            obsfile: data_generated/3dvarfgat_pseudo/adt.3dvarfgat_pseudo.nc
+            obsfile: data_output/adt.nc
         obsdatain:
           engine:
             type: H5File
@@ -166,7 +166,7 @@ cost function:
         obsdataout:
           engine:
             type: H5File
-            obsfile: data_generated/3dvarfgat_pseudo/prof_T.3dvarfgat_pseudo.nc
+            obsfile: data_output/prof_T.nc
         obsdatain:
           engine:
             type: H5File
@@ -186,7 +186,7 @@ cost function:
         obsdataout:
           engine:
             type: H5File
-            obsfile: data_generated/3dvarfgat_pseudo/prof_S.3dvarfgat_pseudo.nc
+            obsfile: data_output/prof_S.nc
         obsdatain:
           engine:
             type: H5File
@@ -219,7 +219,7 @@ minimizer:
   algorithm: RPCG
 
 output:
-  datadir: data_generated/3dvarfgat_pseudo
+  datadir: data_output/
   exp: 3dvarfgat_pseudo
   type: an
 

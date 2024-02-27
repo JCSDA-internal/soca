@@ -30,7 +30,7 @@ observations:
       obsdataout:
         engine:
           type: H5File
-          obsfile: data_generated/makeobs/prof.nc
+          obsfile: data_output/prof.nc
       obsdatain:
         engine:
           type: H5File

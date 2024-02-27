@@ -46,9 +46,9 @@ cost function:
             groups:
             - name: group1
               horizontal:
-                filename: data_generated/parameters_diffusion_hz/hz_smaller.nc
+                filename: data_generated/parameters_diffusion/hz_smaller.nc
               vertical:
-                filename: data_generated/parameters_diffusion_vt/vt_5lvls.nc
+                filename: data_generated/parameters_diffusion/vt_5lvls.nc
 
     - weight:
         value: 0.5
@@ -85,7 +85,7 @@ cost function:
         obsdataout:
           engine:
             type: H5File
-            obsfile: data_generated/4dhybenvar/sst.4dhybenvar.nc
+            obsfile: data_output/sst.nc
         obsdatain:
           engine:
             type: H5File
@@ -109,7 +109,7 @@ variational:
       departures: ombg
 
 output:
-  datadir: data_generated/4dhybenvar
+  datadir: data_output/
   exp: 4dhybenvar
   type: an
 

@@ -87,7 +87,7 @@ cost function:
         obsdataout:
           engine:
             type: H5File
-            obsfile: data_generated/3dvarbump/sst.3dvarbump.nc
+            obsfile: data_output/sst.nc
         obsdatain:
           engine:
             type: H5File
@@ -114,7 +114,7 @@ cost function:
         obsdataout:
           engine:
             type: H5File
-            obsfile: data_generated/3dvarbump/sss.3dvarbump.nc
+            obsfile: data_output/sss.nc
         obsdatain:
           engine:
             type: H5File
@@ -137,7 +137,7 @@ cost function:
         obsdataout:
           engine:
             type: H5File
-            obsfile: data_generated/3dvarbump/adt.3dvarbump.nc
+            obsfile: data_output/adt.nc
         obsdatain:
           engine:
             type: H5File
@@ -158,7 +158,7 @@ cost function:
         obsdataout:
           engine:
             type: H5File
-            obsfile: data_generated/3dvarbump/prof_T.3dvarbump.nc
+            obsfile: data_output/prof_T.nc
         obsdatain:
           engine:
             type: H5File
@@ -178,7 +178,7 @@ cost function:
         obsdataout:
           engine:
             type: H5File
-            obsfile: data_generated/3dvarbump/prof_S.3dvarbump.nc
+            obsfile: data_output/prof_S.nc
         obsdatain:
           engine:
             type: H5File
@@ -208,8 +208,8 @@ variational:
       departures: ombg
 
 output:
-  datadir: data_generated/3dvarbump
-  exp: 3dvarbump
+  datadir: data_output/
+  exp: 3dvar_nicas
   type: an
 
 final:
@@ -217,6 +217,6 @@ final:
     departures: oman
 
 test:
-  reference filename: testref/3dvarbump.test
-  test output filename: testoutput/3dvarbump.test
+  reference filename: testref/3dvar_nicas.test
+  test output filename: testoutput/3dvar_nicas.test
   float relative tolerance: 1e-4
