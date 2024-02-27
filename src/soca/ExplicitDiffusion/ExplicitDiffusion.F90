@@ -63,17 +63,20 @@ end subroutine
 
 ! ------------------------------------------------------------------------------
 
-subroutine soca_explicitdiffusion_multiply_c(c_key_self, c_key_dx) bind(c, name='soca_explicitdiffusion_multiply_f90')
+subroutine soca_explicitdiffusion_multiply_c(c_key_self, c_key_dx, c_sqrt) bind(c, name='soca_explicitdiffusion_multiply_f90')
   integer(c_int), intent(inout)  :: c_key_self
   integer(c_int),    intent(in)  :: c_key_dx
+  logical(c_bool),   intent(in)  :: c_sqrt
   
   type(soca_diffusion), pointer :: self
   type(soca_increment), pointer :: dx
+  logical :: sqrt
 
+  sqrt = c_sqrt
   call soca_diffusion_registry%get(c_key_self, self)
   call soca_increment_registry%get(c_key_dx, dx)
 
-  call self%multiply(dx)
+  call self%multiply(dx, sqrt)
 end subroutine
 
 ! ------------------------------------------------------------------------------

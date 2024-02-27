@@ -526,9 +526,10 @@ end subroutine
 
 ! ------------------------------------------------------------------------------
 ! Perform horizontal diffusion on each level
-subroutine soca_diffusion_multiply(self, dx)
+subroutine soca_diffusion_multiply(self, dx, sqrt)
   class(soca_diffusion), intent(inout) :: self
   type(soca_increment),  intent(inout) :: dx
+  logical,               intent(in)    :: sqrt
 
   real(kind=kind_real), allocatable :: tmp3d(:,:,:)
   character(len=1024) :: str
@@ -575,7 +576,7 @@ subroutine soca_diffusion_multiply(self, dx)
       end do
 
       ! multipy
-      call self%multiply_field(tmp3d, self%group(g))
+      call self%multiply_field(tmp3d, self%group(g), sqrt)
 
       ! copy back into source vars
       do f=1, size(dx%fields)
@@ -589,7 +590,7 @@ subroutine soca_diffusion_multiply(self, dx)
       ! apply multiply separately to each variable in the group
       do f=1, size(dx%fields)
         if ( self%get_group(dx%fields(f)%name) /= g) cycle
-        call self%multiply_field(dx%fields(f)%val, self%group(g))
+        call self%multiply_field(dx%fields(f)%val, self%group(g), sqrt)
       end do
     end if
   end do
@@ -598,10 +599,13 @@ subroutine soca_diffusion_multiply(self, dx)
 end subroutine
 
 ! ------------------------------------------------------------------------------
-subroutine soca_diffusion_multiply_field(self, field, params)
+! Performs a full multiplcation by diffusion if sqrt == .false.
+! Otherwise, the input is multiplied by the square root of the diffusion operator
+subroutine soca_diffusion_multiply_field(self, field, params, sqrt)
   class(soca_diffusion), intent(inout) :: self
   real(kind=kind_real), allocatable, intent(inout) :: field(:,:,:)
   type(soca_diffusion_group_params), intent(in) :: params
+  logical, intent(in) :: sqrt
   
   integer :: z
   real(kind=kind_real), allocatable :: tmp2d(:,:)
@@ -609,17 +613,19 @@ subroutine soca_diffusion_multiply_field(self, field, params)
   allocate(tmp2d(DOMAIN_WITH_HALO))
 
   ! normalization (horizontal + vertical)
-  if (params%niter_hz > 0) then
-    do z = 1, size(field, dim=3)
-      field(DOMAIN,z)  = field(DOMAIN,z) * params%normalization_hz(DOMAIN)
-    end do
+  if (.not. sqrt) then
+    if (params%niter_hz > 0) then
+      do z = 1, size(field, dim=3)
+        field(DOMAIN,z)  = field(DOMAIN,z) * params%normalization_hz(DOMAIN)
+      end do
+    end if
+    if (params%niter_vt > 0) then
+      field(DOMAIN,:)  = field(DOMAIN,:) * params%normalization_vt(DOMAIN,:)
+    end if
   end if
-  if (params%niter_vt > 0) then
-    field(DOMAIN,:)  = field(DOMAIN,:) * params%normalization_vt(DOMAIN,:)
-  end if  
      
   ! vertical diffusion AD
-  if (params%niter_vt > 0) then
+  if (.not. sqrt .and. params%niter_vt > 0) then
     call self%diffusion_vt_ad(field, params)
   end if   
 
@@ -630,7 +636,7 @@ subroutine soca_diffusion_multiply_field(self, field, params)
       tmp2d = field(:,:,z)
         
       ! horizontal diffusion AD
-      if (params%niter_hz > 0) then
+      if (.not. sqrt .and. params%niter_hz > 0) then
         call self%diffusion_hz_ad(tmp2d, params)
       end if
 
@@ -651,7 +657,10 @@ subroutine soca_diffusion_multiply_field(self, field, params)
     tmp2d = sum(field, dim=3)
 
     ! apply diffusion
-    call self%diffusion_hz_ad(tmp2d, params)
+    if (.not. sqrt ) then
+      call self%diffusion_hz_ad(tmp2d, params)
+    end if
+
     ! TODO grid metric
     ! tmp2d = tmp2d * self%inv_sqrt_area
     call self%diffusion_hz_tl(tmp2d, params)  
