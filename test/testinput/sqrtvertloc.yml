@@ -1,4 +1,4 @@
-geometry:
+geometry: &geom
   geom_grid_file: data_generated/gridgen/soca_gridspec.72x35x25.nc
   mom6_input_nml: data_static/72x35x25/input.nml
   fields metadata: data_static/fields_metadata.yml
@@ -14,29 +14,21 @@ background:
   state variables: *model_vars
 
 background error:
-  covariance model: SocaError
-  date: *date
-  analysis variables: &soca_vars [ssh, tocn, socn, uocn, vocn]
-  bump:
-    io:
-      data directory: data_generated/static_socaerror_init
-    drivers:
-      multivariate strategy: univariate
-      read local nicas: true
-  perturbation scales:
-    tocn:  1.0
-    socn:  1.0
-    ssh:   0.0
-    cicen: 0.1
-    hicen: 0.05
-    chl:   0.1
-    biop:  0.1
-    uocn:  0.1
-    vocn:  0.1
-  correlation:
-  - name: ocn
-    variables: [tocn, ssh, socn, uocn, vocn]
-
+  covariance model: SABER
+  saber central block:
+    saber block name: EXPLICIT_DIFFUSION
+    active variables: &soca_vars [ssh, tocn, socn, uocn, vocn]
+    geometry: *geom
+    group mapping:
+    - name: group1
+      variables: [ssh, tocn, socn, uocn, vocn]
+    read:
+      groups:
+      - name: group1
+        horizontal:
+          filename: data_generated/parameters_diffusion_hz/hz_smaller.nc
+        vertical:
+          filename: data_generated/parameters_diffusion_vt/vt_5lvls.nc
 
   linear variable change:
 
@@ -44,13 +36,6 @@ background error:
     output variables: *soca_vars
 
     linear variable changes:
-    - linear variable change name: VertConvSOCA
-      Lz_min: 2.0
-      Lz_mld: 1
-      Lz_mld_max: 500.0
-      scale_layer_thick: 1.5
-      input variables: *soca_vars
-      output variables: *soca_vars
 
     - linear variable change name: BkgErrFILT
       ocean_depth_min: 1000 # [m]
@@ -78,12 +63,6 @@ background error:
       chl_max: 30.0
       biop_min: 0.0
       biop_max: 1.0e-6
-      input variables: *soca_vars
-      output variables: *soca_vars
-
-    - linear variable change name: HorizFiltSOCA
-      niter: 1
-      filter variables: *soca_vars
       input variables: *soca_vars
       output variables: *soca_vars
 
