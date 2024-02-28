@@ -43,7 +43,7 @@ forecast length: PT6H
 
 output:
   frequency: PT6H
-  datadir: data_generated/forecast_pseudo
+  datadir: data_output/
   exp: forecast_pseudo
   date: *date
   type: fc

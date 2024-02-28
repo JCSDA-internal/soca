@@ -1,6 +1,6 @@
 _date_begin: &date_begin 2018-04-15T00:00:00Z
 cost function:
-  cost type: 4D-Var
+  cost type: 3D-FGAT
   time window:
     begin: *date_begin
     length: PT6H
@@ -15,7 +15,7 @@ cost function:
     name: MOM6solo
     tstep: PT1H
     advance_mom6: 1
-    model variables: &model_vars [cicen, hicen, socn, uocn, vocn, tocn, ssh, hocn, sw, lhf, shf, lw, us, mld, layer_depth]
+    model variables: &model_vars [cicen, hicen, socn, uocn, vocn, tocn, ssh, hocn, mld, layer_depth]
 
   variable change:
     variable change name: Model2Ana
@@ -37,20 +37,21 @@ cost function:
     covariance model: hybrid
     components:
     - covariance:
-        covariance model: SocaError
-        analysis variables: [cicen, hicen, socn, tocn, uocn, vocn, ssh, sw, lhf, shf, lw, us]
-        date: *date_begin
-        bump:
-          io:
-            data directory: data_generated/static_socaerror_init
-          drivers:
-            multivariate strategy: univariate
-            read local nicas: true
-        correlation:
-        - name: ocn
-          variables: [socn, tocn, uocn, vocn, ssh, sw, lhf, shf, lw, us]
-        - name: ice
-          variables: [cicen, hicen]
+        covariance model: SABER
+        saber central block:
+          saber block name: EXPLICIT_DIFFUSION
+          active variables: [tocn, socn, ssh, cicen, hicen]
+          geometry: *geom
+          group mapping:
+          - name: group1
+            variables: [tocn, socn, ssh, cicen, hicen]
+          read:
+            groups:
+            - name: group1
+              horizontal:
+                filename: data_generated/parameters_diffusion/hz_smaller.nc
+              vertical:
+                filename: data_generated/parameters_diffusion/vt_5lvls.nc      
 
         linear variable change:
           input variables: *soca_vars
@@ -77,12 +78,6 @@ cost function:
             cicen_max: 0.5
             hicen_min: 10.0
             hicen_max: 100.0
-
-          - linear variable change name: VertConvSOCA
-            Lz_min: 2.0
-            Lz_mld: 1
-            Lz_mld_max: 500.0
-            scale_layer_thick: 1.5
 
           - linear variable change name: BalanceSOCA
             dsdtmax: 0.1
@@ -138,7 +133,7 @@ cost function:
         obsdataout:
           engine:
             type: H5File
-            obsfile: data_generated/3dhybfgat/adt.3dhybfgat.nc
+            obsfile: data_output/adt.nc
         obsdatain:
           engine:
             type: H5File
@@ -154,11 +149,6 @@ variational:
     algorithm: RPCG
   iterations:
   - geometry: *geom
-    linear model:
-      name: Identity
-      increment variables: *soca_vars
-      variable change: Identity
-      tstep: PT1H
     ninner: 5
     gradient norm reduction: 1e-15
     test: on
@@ -168,13 +158,13 @@ variational:
       write increment: true
       increment:
         state component:      
-          datadir: data_generated/3dhybfgat
+          datadir: data_output/
           date: *date_begin
           exp: 3dhybfgat.iter1
           type: incr
 
 output:
-  datadir: data_generated/3dhybfgat
+  datadir: data_output/
   exp: 3dhybfgat
   type: an
 

@@ -37,12 +37,12 @@ cost function:
             groups:
             - name: group1
               horizontal:
-                filename: data_generated/parameters_diffusion_hz/hz_smaller.nc
+                filename: data_generated/parameters_diffusion/hz_smaller.nc
               vertical:
-                filename: data_generated/parameters_diffusion_vt/vt_5lvls.nc
+                filename: data_generated/parameters_diffusion/vt_5lvls.nc
             - name: group2          
               horizontal:
-                filename: data_generated/parameters_diffusion_hz/hz_smaller.nc  
+                filename: data_generated/parameters_diffusion/hz_smaller.nc  
         date: *bkg_date
         linear variable change:
           input variables: *soca_vars
@@ -120,7 +120,7 @@ cost function:
               - name: group1
                 multivariate strategy: duplicated
                 horizontal:
-                  filename: data_generated/parameters_diffusion_hz/hz_smaller.nc
+                  filename: data_generated/parameters_diffusion/hz_smaller.nc
                 vertical:
                   strategy: duplicated
 
@@ -134,7 +134,7 @@ cost function:
         obsdataout:
           engine:
             type: H5File
-            obsfile: data_generated/3dhyb_diffusion/adt.3dhyb_diffusion.nc
+            obsfile: data_output/adt.nc
         obsdatain:
           engine:
             type: H5File
@@ -159,13 +159,13 @@ variational:
       write increment: true
       increment:
         state component:      
-          datadir: data_generated/3dhyb_diffusion
+          datadir: data_output/
           date: *bkg_date
           exp: 3dhyb_diffusion.iter1
           type: incr
 
 output:
-  datadir: data_generated/3dhyb_diffusion
+  datadir: data_output/
   exp: 3dhyb_diffusion
   type: an
 

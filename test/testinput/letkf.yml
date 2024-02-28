@@ -28,7 +28,7 @@ observations:
       obsdataout:
         engine:
           type: H5File
-          obsfile: data_generated/letkf/sst.letkf.nc
+          obsfile: data_output/sst.nc
       obsdatain:
         engine:
           type: H5File
@@ -60,7 +60,7 @@ observations:
       obsdataout:
         engine:
           type: H5File
-          obsfile: data_generated/letkf/adt.letkf.nc
+          obsfile: data_output/adt.nc
       obsdatain:
         engine:
           type: H5File
@@ -99,31 +99,31 @@ local ensemble DA:
     mult: 1.1
 
 output:
-  datadir: data_generated/letkf
+  datadir: data_output/
   date: *date
   exp: letkf
   type: ens
 
 output mean prior:
-  datadir: data_generated/letkf
+  datadir: data_output/
   date: *date
   exp: letkf
   type: fc
 
 output variance prior:
-  datadir: data_generated/letkf
+  datadir: data_output/
   date: *date
   exp: letkf
   type: fc
 
 output variance posterior:
-  datadir: data_generated/letkf
+  datadir: data_output/
   date: *date
   exp: letkf
   type: an
 
 output increment:
-  datadir: data_generated/letkf
+  datadir: data_output/
   date: *date
   exp: letkf.inc
   type: an

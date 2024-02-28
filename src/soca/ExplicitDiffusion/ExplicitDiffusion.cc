@@ -5,6 +5,8 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
+#include "oops/util/FieldSetHelpers.h"
+
 #include "soca/ExplicitDiffusion/ExplicitDiffusion.h"
 #include "soca/ExplicitDiffusion/ExplicitDiffusionFortran.h"
 #include "soca/Geometry/Geometry.h"
@@ -40,8 +42,17 @@ ExplicitDiffusion::ExplicitDiffusion(
 
 // --------------------------------------------------------------------------------------
 
-void ExplicitDiffusion::randomize(oops::FieldSet3D &) const {
-  throw eckit::NotImplemented("read not implemented yet for ExplictDiffusion");
+void ExplicitDiffusion::randomize(oops::FieldSet3D & fset) const {
+  // Create random increments
+  fset.randomInit(geom_->functionSpace(), fset.variables());
+  Increment dx(*geom_, vars_, util::DateTime());
+  dx.fromFieldSet(fset.fieldSet());
+
+  // apply square root of diffusion
+  soca_explicitdiffusion_multiply_f90(keyFortran_, dx.toFortran(), true);
+
+  // copy back to fieldset
+  dx.toFieldSet(fset.fieldSet());
 }
 
 // --------------------------------------------------------------------------------------
