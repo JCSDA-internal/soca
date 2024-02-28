@@ -6,7 +6,7 @@ _: &land_mask
     minvalue: 0.5
 
 cost function:
-  cost type: 4D-Var
+  cost type: 3D-FGAT
   time window:
     begin: &date_begin 2018-04-15T00:00:00Z
     length: PT6H
@@ -39,20 +39,21 @@ cost function:
     state variables: *model_vars
 
   background error:
-    covariance model: SocaError
-    analysis variables: [cicen, hicen, socn, tocn, uocn, vocn, ssh, sw, lhf, shf, lw, us]
-    date: 2018-04-15T00:00:00Z
-    bump:
-      io:
-        data directory: data_generated/static_socaerror_init
-      drivers:
-        multivariate strategy: univariate
-        read local nicas: true
-    correlation:
-    - name: ocn
-      variables: [socn, tocn, uocn, vocn, ssh, sw, lhf, shf, lw, us]
-    - name: ice
-      variables: [cicen, hicen]
+    covariance model: SABER
+    saber central block:
+      saber block name: EXPLICIT_DIFFUSION
+      active variables: [tocn, socn, ssh, uocn, vocn, cicen, hicen, sw, lhf, shf, lw, us]
+      geometry: *geom
+      group mapping:
+      - name: group1
+        variables: [tocn, socn, ssh, uocn, vocn, cicen, hicen, sw, lhf, shf, lw, us]
+      read:
+        groups:
+        - name: group1
+          horizontal:
+            filename: data_generated/parameters_diffusion/hz_smaller.nc
+          vertical:
+            filename: data_generated/parameters_diffusion/vt_5lvls.nc
 
     linear variable change:
       input variables: *soca_vars
@@ -79,12 +80,6 @@ cost function:
         hicen_min: 10.0
         hicen_max: 100.0
 
-      - linear variable change name: VertConvSOCA
-        Lz_min: 10.0
-        Lz_mld: 1
-        Lz_mld_max: 500
-        scale_layer_thick: 1.5
-
       - linear variable change name: BalanceSOCA
         kst:
           dsdtmax: 0.1
@@ -104,7 +99,7 @@ cost function:
         obsdataout:
           engine:
             type: H5File
-            obsfile: data_generated/3dvarfgat/sst_coolskin.3dvarfgat.nc
+            obsfile: data_output/sst_coolskin.nc
         obsdatain:
           engine:
             type: H5File
@@ -120,7 +115,7 @@ cost function:
         obsdataout:
           engine:
             type: H5File
-            obsfile: data_generated/3dvarfgat/sst.3dvarfgat.nc
+            obsfile: data_output/sst.nc
         obsdatain:
           engine:
             type: H5File
@@ -142,7 +137,7 @@ cost function:
         obsdataout:
           engine:
             type: H5File
-            obsfile: data_generated/3dvarfgat/sss.3dvarfgat.nc
+            obsfile: data_output/sss.nc
         obsdatain:
           engine:
             type: H5File
@@ -165,7 +160,7 @@ cost function:
         obsdataout:
           engine:
             type: H5File
-            obsfile: data_generated/3dvarfgat/adt.3dvarfgat.nc
+            obsfile: data_output/adt.nc
         obsdatain:
           engine:
             type: H5File
@@ -183,7 +178,7 @@ cost function:
         obsdataout:
           engine:
             type: H5File
-            obsfile: data_generated/3dvarfgat/prof_T.3dvarfgat.nc
+            obsfile: data_output/prof_T.nc
         obsdatain:
           engine:
             type: H5File
@@ -203,7 +198,7 @@ cost function:
         obsdataout:
           engine:
             type: H5File
-            obsfile: data_generated/3dvarfgat/prof_S.3dvarfgat.nc
+            obsfile: data_output/prof_S.nc
         obsdatain:
           engine:
             type: H5File
@@ -225,7 +220,7 @@ cost function:
         obsdataout:
           engine:
             type: H5File
-            obsfile: data_generated/3dvarfgat/icec.3dvarfgat.nc
+            obsfile: data_output/icec.nc
         obsdatain:
           engine:
             type: H5File
@@ -244,7 +239,7 @@ cost function:
         obsdataout:
           engine:
             type: H5File
-            obsfile: data_generated/3dvarfgat/uocn_surface.3dvarfgat.nc
+            obsfile: data_output/uocn_surface.nc
         obsdatain:
           engine:
             type: H5File
@@ -259,11 +254,7 @@ variational:
     algorithm: RPCG
   iterations:
   - geometry: *geom
-    linear model:
-      name: Identity
-      increment variables: *soca_vars
-      tstep: PT1H
-    ninner: 1
+    ninner: 5
     gradient norm reduction: 1e-15
     test: on
     diagnostics:
@@ -272,13 +263,13 @@ variational:
       write increment: true
       increment:
         state component:      
-          datadir: data_generated/3dvarfgat
+          datadir: data_output/
           date: *bkg_date
           exp: 3dvarfgat.iter1
           type: incr
 
 output:
-  datadir: data_generated/3dvarfgat
+  datadir: data_output/
   exp: 3dvarfgat
   type: an
 

@@ -1,4 +1,4 @@
-geometry:
+geometry: &geom
   geom_grid_file: data_generated/gridgen/soca_gridspec.72x35x25.nc
   mom6_input_nml: data_static/72x35x25/input.nml
   fields metadata: data_static/fields_metadata.yml
@@ -18,43 +18,24 @@ initial condition:
   state variables: *model_vars
 
 background error:
-  covariance model: SocaError
-  date: *date
-  analysis variables: &soca_vars [ssh, cicen, hicen, tocn, socn, uocn, vocn, chl, biop]
-  bump:
-    io:
-      data directory: data_generated/static_socaerror_init
-    drivers:
-      multivariate strategy: univariate
-      read local nicas: true
-  perturbation scales:
-    tocn:  1.0
-    socn:  1.0
-    ssh:   0.0
-    cicen: 0.1
-    hicen: 0.05
-    chl:   0.1
-    biop:  0.1
-    uocn: 0.1
-    vocn: 0.1
-  correlation:
-  - name: ocn
-    variables: [tocn, ssh, socn, chl, biop, uocn, vocn]
-  - name: ice
-    variables: [cicen, hicen]
-
+  covariance model: SABER
+  saber central block:
+    saber block name: EXPLICIT_DIFFUSION
+    active variables: &soca_vars [tocn, socn, ssh, uocn, vocn, cicen, hicen, chl, biop]
+    geometry: *geom
+    group mapping:
+    - name: group1
+      variables: [tocn, socn, ssh, uocn, vocn, cicen, hicen,chl, biop]
+    read:
+      groups:
+      - name: group1
+        horizontal:
+          filename: data_generated/parameters_diffusion/hz_smaller.nc
+        vertical:
+          filename: data_generated/parameters_diffusion/vt_5lvls.nc
 
   linear variable change:
-
     linear variable changes:
-
-    - linear variable change name: VertConvSOCA
-      Lz_min: 2.0
-      Lz_mld: 1
-      Lz_mld_max: 500.0
-      scale_layer_thick: 1.5
-      input variables: *soca_vars
-      output variables: *soca_vars
 
     - linear variable change name: BkgErrFILT
       ocean_depth_min: 1000 # [m]
@@ -72,22 +53,16 @@ background error:
       s_min: 0.0
       s_max: 0.25
       ssh_min: 0.0   # value at EQ
-      ssh_max: 0.1   # value in Extratropics
+      ssh_max: 0.0   # value in Extratropics
       ssh_phi_ex: 20 # lat of transition from extratropics
-      cicen_min: 0.1
-      cicen_max: 0.5
-      hicen_min: 10.0
-      hicen_max: 100.0
-      chl_min: 0.001
-      chl_max: 30.0
+      cicen_min: 0.01
+      cicen_max: 0.05
+      hicen_min: 0.5
+      hicen_max: 5.0
+      chl_min: 0.0001
+      chl_max: 3.0
       biop_min: 0.0
-      biop_max: 1.0e-6
-      input variables: *soca_vars
-      output variables: *soca_vars
-
-    - linear variable change name: HorizFiltSOCA
-      niter: 1
-      filter variables: *soca_vars
+      biop_max: 1.0e-7
       input variables: *soca_vars
       output variables: *soca_vars
 
@@ -111,7 +86,7 @@ forecast length: PT6H
 
 output:
  frequency: PT6H
- datadir: data_generated/enspert
+ datadir: data_output/
  exp: enspert
  type: ens
  date: *date

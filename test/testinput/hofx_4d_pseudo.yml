@@ -39,7 +39,7 @@ observations:
       obsdataout:
         engine:
           type: H5File
-          obsfile: data_generated/hofx_4d_pseudo/sst.hofx_4d_pseudo.nc
+          obsfile: data_output/sst.nc
       obsdatain:
         engine:
           type: H5File
@@ -54,7 +54,7 @@ observations:
       obsdataout:
         engine:
           type: H5File
-          obsfile: data_generated/hofx_4d_pseudo/sss.hofx_4d_pseudo.nc
+          obsfile: data_output/sss.nc
       obsdatain:
         engine:
           type: H5File
@@ -69,7 +69,7 @@ observations:
       obsdataout:
         engine:
           type: H5File
-          obsfile: data_generated/hofx_4d_pseudo/adt.hofx_4d_pseudo.nc
+          obsfile: data_output/adt.nc
       obsdatain:
         engine:
           type: H5File
@@ -83,7 +83,7 @@ observations:
       obsdataout:
         engine:
           type: H5File
-          obsfile: data_generated/hofx_4d_pseudo/prof_T.hofx_4d_pseudo.nc
+          obsfile: data_output/prof_T.nc
       obsdatain:
         engine:
           type: H5File
@@ -97,7 +97,7 @@ observations:
       obsdataout:
         engine:
           type: H5File
-          obsfile: data_generated/hofx_4d_pseudo/prof_S.hofx_4d_pseudo.nc
+          obsfile: data_output/prof_S.nc
       obsdatain:
         engine:
           type: H5File

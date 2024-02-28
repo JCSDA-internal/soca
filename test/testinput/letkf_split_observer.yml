@@ -35,7 +35,7 @@ observations:
       obsdataout:
         engine:
           type: H5File
-          obsfile: data_generated/letkf_split_observer/sst.letkf_split_observer.nc
+          obsfile: data_output/sst.nc
       obsdatain:
         engine:
           type: H5File
@@ -64,7 +64,7 @@ observations:
       obsdataout:
         engine:
           type: H5File
-          obsfile: data_generated/letkf_split_observer/adt.letkf_split_observer.nc
+          obsfile: data_output/adt.nc
       obsdatain:
         engine:
           type: H5File
@@ -89,7 +89,7 @@ local ensemble DA:
   solver: LETKF
 
 output:
-  datadir: data_generated/letkf_split_observer
+  datadir: data_output/
   date: *date
   exp: letkf_split_observer
   type: ens

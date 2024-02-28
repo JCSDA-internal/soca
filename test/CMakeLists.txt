@@ -1,20 +1,32 @@
+# This file sets up the ctests for SOCA
+#
+# Each ctest will be run in its own working directory (to keep tests from
+# breaking when run in parallel), this working directory is available at
+# "./soca/test/test_workdir/<test_name>". Each test working directy has a link
+# to the following directories:
+#
+# - data_static - input data that does NOT come from any other ctest
+# - data_generated - contains the output from each ctest, and can be used as
+#                    input for another ctest
+# - data_output - a convenience link to "./data_generated/<test_name>", this is
+#                 created to easily differentiate between input and output data
+#                 for a given ctest yaml
+
+
 set( soca_test_input
-  testinput/3dhyb_nicas.yml
   testinput/3dhyb_diffusion.yml
+  testinput/3dhyb.yml
   testinput/3dhybfgat.yml
-  testinput/3dvar_diffusion.yml
-  testinput/3dvar_godas.yml
+  testinput/3dvar_nicas.yml
   testinput/3dvar_single_ob.yml
-  testinput/3dvar_soca.yml
   testinput/3dvar_zero_ob.yml
-  testinput/3dvarbump.yml
+  testinput/3dvar.yml
   testinput/3dvarfgat_pseudo.yml
   testinput/3dvarfgat.yml
   testinput/3dvarlowres_soca.yml
   testinput/4denvar.yml
   testinput/4dhybenvar.yml
   testinput/addincrement.yml
-  testinput/balance_mask.yml
   testinput/checkpointmodel.yml
   testinput/convertincrement.yml
   testinput/convertstate_changevar.yml
@@ -22,27 +34,23 @@ set( soca_test_input
   testinput/convertstate.yml
   testinput/diffstates.yml
   testinput/dirac_diffusion.yml
-  testinput/dirac_horizfilt.yml
   testinput/dirac_mlbalance.yml
   testinput/dirac_soca_cor_nicas_scales.yml
   testinput/dirac_soca_cov.yml
-  testinput/dirac_soca_mask.yml
-  testinput/dirac_soca_nomask.yml
   testinput/dirac_socahyb_cov.yml
   testinput/enshofx_1.yml
   testinput/enshofx_2.yml
   testinput/enshofx_3.yml
   testinput/enshofx.yml
-  testinput/enspert.yml
   testinput/ensmeanandvariance.yml
+  testinput/enspert.yml
   testinput/ensrecenter.yml
-  testinput/errorcovariance.yml
   testinput/forecast_identity.yml
   testinput/forecast_mom6_bgc.yml
-  testinput/forecast_mom6.yml
   testinput/forecast_mom6_ens1.yml
   testinput/forecast_mom6_ens2.yml
   testinput/forecast_mom6_ens3.yml
+  testinput/forecast_mom6.yml
   testinput/forecast_pseudo.yml
   testinput/geometry_iterator_2d.yml
   testinput/geometry_iterator_3d.yml
@@ -50,15 +58,14 @@ set( soca_test_input
   testinput/getvalues.yml
   testinput/gridgen.yml
   testinput/hofx_3d.yml
-  testinput/hofx_oasim_3d.yml
   testinput/hofx_4d_pseudo.yml
   testinput/hofx_4d.yml
+  testinput/hofx_oasim_3d.yml
   testinput/hybridgain.yml
   testinput/increment.yml
   testinput/letkf_split_observer.yml
   testinput/letkf_split_solver.yml
   testinput/letkf.yml
-  testinput/linearmodel.yml
   testinput/makeobs.yml
   testinput/model_ufsm6c6.yml
   testinput/model.yml
@@ -70,43 +77,34 @@ set( soca_test_input
   testinput/parameters_bump_cor_nicas.yml
   testinput/parameters_bump_cov.yml
   testinput/parameters_bump_loc.yml
-  testinput/parameters_diffusion_hz.yml
-  testinput/parameters_diffusion_vt.yml
+  testinput/parameters_diffusion.yml
   testinput/parametric_stddev.yml
   testinput/setcorscales.yml
   testinput/sqrtvertloc.yml
   testinput/state.yml
-  testinput/static_socaerror_init.yml
-  testinput/static_socaerror_test.yml
-  testinput/static_socaerrorlowres_init.yml
   testinput/varchange_ana2model.yml
   testinput/varchange_balance_TSSSH.yml
   testinput/varchange_balance.yml
   testinput/varchange_bkgerrfilt.yml
   testinput/varchange_bkgerrgodas.yml
-  testinput/varchange_bkgerrsoca.yml
   testinput/varchange_bkgerrsoca_stddev.yml
-  testinput/varchange_horizfilt.yml
-  testinput/varchange_vertconv.yml
+  testinput/varchange_bkgerrsoca.yml
 )
 
 set( soca_test_ref
-  testref/3dhyb_nicas.test
   testref/3dhyb_diffusion.test
+  testref/3dhyb.test
   testref/3dhybfgat.test
-  testref/3dvar_diffusion.test
-  testref/3dvar_godas.test
+  testref/3dvar_nicas.test
   testref/3dvar_single_ob.test
-  testref/3dvar_soca.test
   testref/3dvar_zero_ob.test
-  testref/3dvarbump.test
+  testref/3dvar.test
   testref/3dvarfgat_pseudo.test
   testref/3dvarfgat.test
   testref/3dvarlowres_soca.test
   testref/4denvar.test
   testref/4dhybenvar.test
   testref/addincrement.test
-  testref/balance_mask.test
   testref/checkpointmodel.test
   testref/convertincrement.test
   testref/convertstate_changevar.test
@@ -114,15 +112,12 @@ set( soca_test_ref
   testref/convertstate.test
   testref/diffstates.test
   testref/dirac_diffusion.test
-  testref/dirac_horizfilt.test
   testref/dirac_soca_cor_nicas_scales.test
   testref/dirac_soca_cov.test
-  testref/dirac_soca_mask.test
-  testref/dirac_soca_nomask.test
   testref/dirac_socahyb_cov.test
   testref/enshofx.test
-  testref/enspert.test
   testref/ensmeanandvariance.test
+  testref/enspert.test
   testref/ensrecenter.test
   testref/forecast_identity.test
   testref/forecast_mom6_bgc.test
@@ -130,23 +125,21 @@ set( soca_test_ref
   testref/forecast_pseudo.test
   testref/gridgen.test
   testref/hofx_3d.test
-  testref/hofx_oasim_3d.test
   testref/hofx_4d_pseudo.test
   testref/hofx_4d.test
+  testref/hofx_oasim_3d.test
   testref/hybridgain.test
   testref/letkf_split_observer.test
   testref/letkf_split_solver.test
   testref/letkf.test
   testref/makeobs.test
-  testref/parameters_bump_loc.test
   testref/parameters_bump_cor_nicas_scales.test
   testref/parameters_bump_cor_nicas.test
   testref/parameters_bump_cov.test
+  testref/parameters_bump_loc.test
   testref/parametric_stddev.test
   testref/setcorscales.test
   testref/sqrtvertloc.test
-  testref/static_socaerror_init.test
-  testref/static_socaerrorlowres_init.test
 )
 
 # Create directory for test input/output/reference and symlink all files
@@ -277,9 +270,13 @@ function(soca_add_test)
       ${WORKDIR}/data_static/workdir/${FILENAME}
       ${WORKDIR}/${FILENAME} )
   endforeach()
+  
   # setup output directory
   file( MAKE_DIRECTORY ${WORKDIR}/data_generated/${ARG_NAME})
-
+  execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
+    ${WORKDIR}/data_generated/${ARG_NAME}
+    ${WORKDIR}/data_output
+  )
 
   # Are we building a unit test / or running a soca executable?
   if ( ARG_SRC )
@@ -373,17 +370,6 @@ soca_add_test( NAME getvalues
                SRC  TestGetValues.cc
                TEST_DEPENDS test_soca_gridgen )
 
-soca_add_test( NAME errorcovariance
-               SRC  TestErrorCovariance.cc
-               TEST_DEPENDS test_soca_gridgen
-                            test_soca_static_socaerror_init )
-
-soca_add_test( NAME linearmodel
-               SRC  TestLinearModel.cc
-              #  NOTRAPFPE
-               TEST_DEPENDS test_soca_gridgen
-                            test_soca_static_socaerror_init )
-
 
 # Variable changes
 #---------------------------------------------------------------------------------------------------
@@ -404,11 +390,6 @@ soca_add_test( NAME varchange_bkgerrfilt
                SRC TestVariableChange.cc
                TEST_DEPENDS test_soca_gridgen )
 
-soca_add_test( NAME varchange_horizfilt
-               SRC TestVariableChange.cc
-               NOTRAPFPE
-               TEST_DEPENDS test_soca_gridgen )
-
 soca_add_test( NAME varchange_bkgerrsoca
                SRC  TestVariableChange.cc
                TEST_DEPENDS test_soca_gridgen )
@@ -420,11 +401,6 @@ soca_add_test( NAME varchange_bkgerrsoca_stddev
 soca_add_test( NAME varchange_bkgerrgodas
                SRC  TestVariableChange.cc
                TEST_DEPENDS test_soca_gridgen )
-
-soca_add_test( NAME varchange_vertconv
-               SRC  TestVariableChange.cc
-               TEST_DEPENDS test_soca_gridgen )
-
 
 # Observation localization methods
 #---------------------------------------------------------------------------------------------------
@@ -492,16 +468,6 @@ soca_add_test( NAME forecast_mom6_ens3
 # background error
 #---------------------------------------------------------------------------------------------------
 
-soca_add_test( NAME static_socaerror_init
-               EXE  soca_error_covariance_toolbox.x
-               #  NOTRAPFPE
-               TEST_DEPENDS test_soca_gridgen )
-
-soca_add_test( NAME static_socaerrorlowres_init
-               EXE  soca_error_covariance_toolbox.x
-               #  NOTRAPFPE
-               TEST_DEPENDS test_soca_gridgen )
-
 soca_add_test( NAME setcorscales
                EXE  soca_setcorscales.x
               #  NOTRAPFPE
@@ -526,15 +492,13 @@ soca_add_test( NAME parameters_bump_cov
                EXE  soca_error_covariance_toolbox.x
                NOTRAPFPE )
 
-soca_add_test( NAME parameters_diffusion_hz
+soca_add_test( NAME parameters_diffusion
                EXE  soca_error_covariance_toolbox.x
                TEST_DEPENDS test_soca_gridgen
                             test_soca_setcorscales)
 
-soca_add_test( NAME parameters_diffusion_vt
-               EXE  soca_error_covariance_toolbox.x
-               TEST_DEPENDS test_soca_gridgen
-                            test_soca_setcorscales)
+# TODO(travis) low res diffusion init
+
 
 # Misc applications
 #---------------------------------------------------------------------------------------------------
@@ -544,7 +508,7 @@ soca_add_test( NAME enspert
                EXE  soca_enspert.x
                NOTRAPFPE
                TEST_DEPENDS test_soca_gridgen
-                            test_soca_static_socaerror_init )
+                            test_soca_parameters_diffusion )
 
 # Remapping MOM6 (horiz+vertical intterpolation)
 soca_add_test( NAME convertstate
@@ -580,7 +544,7 @@ soca_add_test( NAME sqrtvertloc
                EXE  soca_sqrtvertloc.x
                NOTRAPFPE
                TEST_DEPENDS test_soca_gridgen
-                           test_soca_static_socaerror_init )
+                            test_soca_parameters_diffusion )
 
 soca_add_test( NAME diffstates
                EXE  soca_diffstates.x
@@ -593,44 +557,28 @@ soca_add_test( NAME diffstates
 soca_add_test( NAME dirac_soca_cor_nicas_scales
                EXE  soca_error_covariance_toolbox.x
                TEST_DEPENDS test_soca_gridgen
-                            parameters_bump_cor_nicas_scales)
+                            test_soca_parameters_bump_cor_nicas_scales)
 
 soca_add_test( NAME dirac_soca_cov
                EXE  soca_error_covariance_toolbox.x
                TEST_DEPENDS test_soca_gridgen
-                            test_soca_static_socaerror_init)
+                            test_soca_parameters_diffusion  )
 
 soca_add_test( NAME dirac_socahyb_cov
                EXE  soca_error_covariance_toolbox.x
                TEST_DEPENDS test_soca_gridgen
-                            test_soca_static_socaerror_init
-                            test_soca_parameters_bump_loc)
-
-soca_add_test( NAME dirac_horizfilt
-               EXE  soca_error_covariance_toolbox.x
-               TEST_DEPENDS test_soca_gridgen
-                            test_soca_static_socaerror_init)
-
-soca_add_test( NAME dirac_soca_mask
-               EXE  soca_error_covariance_toolbox.x
-               NOTRAPFPE
-               TEST_DEPENDS test_soca_gridgen
-                            test_soca_static_socaerror_init)
-
-soca_add_test( NAME dirac_soca_nomask
-               EXE  soca_error_covariance_toolbox.x
-               NOTRAPFPE
-               TEST_DEPENDS test_soca_gridgen
-                            test_soca_static_socaerror_init)
+                            test_soca_parameters_bump_loc
+                            test_soca_parameters_diffusion )
 
 # NOTE the following tests throws a FPE only on clang
 soca_add_test( NAME dirac_diffusion
                EXE soca_error_covariance_toolbox.x
-               TEST_DEPENDS test_soca_parameters_diffusion_hz
-               test_soca_parameters_diffusion_vt)
+               TEST_DEPENDS test_soca_gridgen
+                            test_soca_parameters_diffusion )
 
 soca_add_test( NAME dirac_mlbalance
-               EXE soca_error_covariance_toolbox.x)
+               EXE soca_error_covariance_toolbox.x
+               TEST_DEPENDS test_soca_gridgen )
 
 # h(x) executables
 #---------------------------------------------------------------------------------------------------
@@ -675,6 +623,8 @@ soca_add_test( NAME hofx_4d_pseudo
 
 
 # variational methods
+# (unless specifically specified, it is assumed that correlation uses
+#  EXPLICIT_DIFFUSION, and localization uses BUMP_NICAS )
 #---------------------------------------------------------------------------------------------------
 
 # # Following test does not work yet. IODA crashes
@@ -687,67 +637,55 @@ soca_add_test( NAME hofx_4d_pseudo
 # soca_add_test( NAME 3dvar_single_ob
 #                EXE  soca_var.x
 #                NOTRAPFPE
-#                TEST_DEPENDS test_soca_gridgen
-#                             test_soca_static_socaerror_init )
+#                TEST_DEPENDS test_soca_gridgen )
 
-soca_add_test( NAME 3dvar_soca
+soca_add_test( NAME 3dvar
                EXE  soca_var.x
-               NOTRAPFPE
                TEST_DEPENDS test_soca_gridgen
-                            test_soca_static_socaerror_init )
+                            test_soca_parameters_diffusion )
 
-soca_add_test( NAME 3dvarbump
+soca_add_test( NAME 3dvar_nicas
                EXE  soca_var.x
               #  NOTRAPFPE
-               TEST_DEPENDS test_soca_gridgen
-                            test_soca_parameters_bump_cor_nicas )
+               TEST_DEPENDS test_soca_parameters_bump_cor_nicas )
 
-soca_add_test( NAME 3dvar_diffusion
-               EXE  soca_var.x
-               TEST_DEPENDS test_soca_gridgen
-                            test_soca_parameters_diffusion_hz
-                            test_soca_parameters_diffusion_vt)
 
-soca_add_test( NAME 3dvar_godas
-               EXE  soca_var.x
-               TEST_DEPENDS test_soca_gridgen
-                            test_soca_static_socaerror_init )
-
-soca_add_test( NAME 3dvarlowres_soca
-               EXE  soca_var.x
-               NOTRAPFPE
-               TEST_DEPENDS test_soca_gridgen
-                            test_soca_static_socaerrorlowres_init )
+## TODO(travis) fix the lowres grid dx,dy so that I can init the 
+## low res diffusion, and then run this test
+# soca_add_test( NAME 3dvarlowres_soca
+#                EXE  soca_var.x
+#                NOTRAPFPE
+#                TEST_DEPENDS test_soca_gridgen )
 
 soca_add_test( NAME 3dvarfgat
                EXE  soca_var.x
                NOTRAPFPE
                TEST_DEPENDS test_soca_gridgen
-                            test_soca_static_socaerror_init )
+                            test_socs_parameters_diffusion )
 
 soca_add_test( NAME 3dvarfgat_pseudo
                EXE  soca_var.x
                TEST_DEPENDS test_soca_gridgen
                             test_soca_forecast_mom6
-                            test_soca_static_socaerror_init )
+                            test_socs_parameters_diffusion )
 
-soca_add_test( NAME 3dhyb_nicas
+soca_add_test( NAME 3dhyb
                EXE  soca_var.x
                TEST_DEPENDS test_soca_gridgen
-                            test_soca_static_socaerror_init
-                            test_soca_parameters_bump_loc )
+                            test_soca_parameters_bump_loc
+                            test_socs_parameters_diffusion )
 
 soca_add_test( NAME 3dhyb_diffusion
                EXE  soca_var.x
                TEST_DEPENDS test_soca_gridgen
-                            test_soca_parameters_diffusion_hz)
+                            test_soca_parameters_diffusion)
 
 soca_add_test( NAME 3dhybfgat
                EXE  soca_var.x
                NOTRAPFPE
                TEST_DEPENDS test_soca_gridgen
-                            test_soca_static_socaerror_init
-                            test_soca_parameters_bump_loc )
+                            test_soca_parameters_bump_loc
+                            test_socs_parameters_diffusion )
 
 soca_add_test( NAME 4denvar
                EXE soca_var.x
@@ -759,7 +697,8 @@ soca_add_test( NAME 4denvar
 soca_add_test( NAME 4dhybenvar
                EXE soca_var.x
                TEST_DEPENDS test_soca_gridgen
-                            test_soca_static_socaerror_init
+                            test_socs_parameters_diffusion
+                            test_soca_forecast_mom6
                             test_soca_forecast_mom6_ens1
                             test_soca_forecast_mom6_ens2
                             test_soca_forecast_mom6_ens3 )
@@ -784,27 +723,27 @@ soca_add_test( NAME letkf_split_solver
                             test_soca_letkf_split_observer )
 
 
-# other executables that depends on increments from 3dvar_godas run
+# other executables that depends on increments from 3dvar_diffusion run
 #---------------------------------------------------------------------------------------------------
 
 soca_add_test( NAME addincrement
                EXE  soca_addincrement.x
                TEST_DEPENDS test_soca_gridgen
-                            3dvar_godas )
+                            test_soca_3dvar )
 
 # Remapping MOM6 (horiz+vertical interpolation)
 soca_add_test( NAME convertincrement
                EXE  soca_convertincrement.x
                NOTRAPFPE
                TEST_DEPENDS test_soca_gridgen
-                            3dvar_godas )
+                            test_soca_3dvar)
 
 # restart checkpointing
 soca_add_test( NAME checkpointmodel
                EXE  soca_checkpoint_model.x
                NOTRAPFPE
                TEST_DEPENDS test_soca_gridgen
-                            test_soca_3dvar_godas)
+                            test_soca_3dvar )
 
 if( ${icepack_FOUND} )
   # Apply the Soca2Cice nonlinear change of variable
@@ -816,5 +755,5 @@ if( ${icepack_FOUND} )
                     MPI 2
                     NOTRAPFPE
                     TEST_DEPENDS test_soca_gridgen
-                                 test_soca_3dvar_godas)
+                                 test_soca_3dvar )
 endif()

@@ -23,20 +23,24 @@ cost function:
     covariance model: hybrid
     components:
     - covariance:
-        covariance model: SocaError
-        analysis variables: [cicen, hicen, hsnon, socn, tocn, uocn, vocn, ssh]
-        date: *bkg_date
-        bump:
-          io:
-            data directory: data_generated/static_socaerror_init
-          drivers:
-            multivariate strategy: univariate
-            read local nicas: true
-        correlation:
-        - name: ocn
-          variables: [hsnon, socn, tocn, uocn, vocn, ssh]
-        - name: ice
-          variables: [cicen, hicen]
+        covariance model: SABER
+        saber central block:
+          saber block name: EXPLICIT_DIFFUSION
+          active variables: [cicen, hicen, hsnon, tocn, socn, ssh, uocn, vocn]
+          geometry: *geom
+          group mapping:
+          - name: group1
+            variables: [tocn, socn, cicen, hicen, hsnon, uocn, vocn, ssh]
+          read:
+            groups:
+            - name: group1
+              horizontal:
+                filename: data_generated/parameters_diffusion/hz_smaller.nc
+              vertical:
+                filename: data_generated/parameters_diffusion/vt_5lvls.nc
+            - name: group2          
+              horizontal:
+                filename: data_generated/parameters_diffusion/hz_smaller.nc      
 
         linear variable change:
           input variables: *soca_vars
@@ -63,12 +67,6 @@ cost function:
             cicen_max: 0.5
             hicen_min: 10.0
             hicen_max: 100.0
-
-          - linear variable change name: VertConvSOCA
-            Lz_min: 2.0
-            Lz_mld: 1
-            Lz_mld_max: 500.0
-            scale_layer_thick: 1.5
 
           - linear variable change name: BalanceSOCA
             kst:
@@ -127,7 +125,7 @@ cost function:
         obsdataout:
           engine:
             type: H5File
-            obsfile: data_generated/3dhyb_nicas/adt.3dhyb_nicas.nc
+            obsfile: data_output/adt.nc
         obsdatain:
           engine:
             type: H5File
@@ -152,14 +150,14 @@ variational:
       write increment: true
       increment:
         state component:      
-          datadir: data_generated/3dhyb_nicas
+          datadir: data_output/
           date: *bkg_date
-          exp: 3dhyb_nicas.iter1
+          exp: 3dhyb.iter1
           type: incr
 
 output:
-  datadir: data_generated/3dhyb_nicas
-  exp: 3dhyb_nicas
+  datadir: data_output/
+  exp: 3dhyb
   type: an
 
 final:
@@ -167,6 +165,6 @@ final:
     departures: oman
 
 test:
-  reference filename: testref/3dhyb_nicas.test
-  test output filename: testoutput/3dhyb_nicas.test
+  reference filename: testref/3dhyb.test
+  test output filename: testoutput/3dhyb.test
   float relative tolerance: 1e-5

@@ -18,7 +18,7 @@ states:
      date: &bkg_date 2018-04-15T00:00:00Z
      state variables: [ssh, tocn, socn, uocn, vocn, hocn, cicen, layer_depth]
   output:
-     datadir: data_generated/convertstate
+     datadir: data_output/
      exp: convertstate
      type: fc
      date: *bkg_date

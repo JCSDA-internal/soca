@@ -21,7 +21,7 @@ forecast length: PT6H
 
 output:
   frequency: PT1H
-  datadir: data_generated/forecast_mom6_ens2
+  datadir: data_output/
   exp: fcst_ens2
   date: *date
   type: fc

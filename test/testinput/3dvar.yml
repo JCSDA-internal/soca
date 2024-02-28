@@ -26,20 +26,29 @@ cost function:
     state variables: *soca_vars
 
   background error:
-    covariance model: SocaError
-    analysis variables: [cicen, hicen, hsnon, socn, tocn, ssh, sw, lhf, shf, lw, us]
+    covariance model: SABER
+    saber central block:
+      saber block name: EXPLICIT_DIFFUSION
+      active variables: [tocn, socn, ssh]
+      geometry: *geom
+      group mapping:
+      - name: group1
+        variables: [tocn, socn]
+      - name: group2
+        variables: [ssh]
+      read:
+        groups:
+        - name: group1
+          horizontal:
+            filename: data_generated/parameters_diffusion/hz_smaller.nc
+          vertical:
+            filename: data_generated/parameters_diffusion/vt_5lvls.nc
+        - name: group2          
+          horizontal:
+            filename: data_generated/parameters_diffusion/hz_smaller.nc
+
     date: *bkg_date
-    bump:
-      io:
-        data directory: data_generated/static_socaerror_init
-      drivers:
-        multivariate strategy: univariate
-        read local nicas: true
-    correlation:
-    - name: ocn
-      variables: [hsnon, socn, tocn, ssh, sw, lhf, shf, lw, us]
-    - name: ice
-      variables: [cicen, hicen]
+    
 
     linear variable change:
       input variables: *soca_vars
@@ -51,9 +60,6 @@ cost function:
         efold_z: 2500.0       # [m]
 
       - linear variable change name: BkgErrGODAS
-        # optionally save the calculated parameters to a file
-        output:
-          filename: data_generated/3dvar_godas/bkgerrgodas.nc
         sst_bgerr_file: data_static/godas_sst_bgerr.nc
         t_min: 0.1
         t_max: 2.0
@@ -69,11 +75,6 @@ cost function:
         hicen_min: 10.0
         hicen_max: 100.0
 
-      - linear variable change name: VertConvSOCA
-        Lz_min: 2.0
-        Lz_mld: 1
-        Lz_mld_max: 500.0
-        scale_layer_thick: 1.5
 
       - linear variable change name: BalanceSOCA
         kst:
@@ -94,7 +95,7 @@ cost function:
         obsdataout:
           engine:
             type: H5File
-            obsfile: data_generated/3dvar_godas/sst_coolskin.3dvar_godas.nc
+            obsfile: data_output/sst_coolskin.nc
         obsdatain:
           engine:
             type: H5File
@@ -110,7 +111,7 @@ cost function:
         obsdataout:
           engine:
             type: H5File
-            obsfile: data_generated/3dvar_godas/sst.3dvar_godas.nc
+            obsfile: data_output/sst.nc
         obsdatain:
           engine:
             type: H5File
@@ -132,7 +133,7 @@ cost function:
         obsdataout:
           engine:
             type: H5File
-            obsfile: data_generated/3dvar_godas/sss.3dvar_godas.nc
+            obsfile: data_output/sss.nc
         obsdatain:
           engine:
             type: H5File
@@ -158,7 +159,7 @@ cost function:
         obsdataout:
           engine:
             type: H5File
-            obsfile: data_generated/3dvar_godas/adt.3dvar_godas.nc
+            obsfile: data_output/adt.nc
         obsdatain:
           engine:
             type: H5File
@@ -189,7 +190,7 @@ cost function:
         obsdataout:
           engine:
             type: H5File
-            obsfile: data_generated/3dvar_godas/prof_T.3dvar_godas.nc
+            obsfile: data_output/prof_T.nc
         obsdatain:
           engine:
             type: H5File
@@ -209,7 +210,7 @@ cost function:
         obsdataout:
           engine:
             type: H5File
-            obsfile: data_generated/3dvar_godas/prof_S.3dvar_godas.nc
+            obsfile: data_output/prof_S.nc
         obsdatain:
           engine:
             type: H5File
@@ -231,7 +232,7 @@ cost function:
         obsdataout:
           engine:
             type: H5File
-            obsfile: data_generated/3dvar_godas/icec.3dvar_godas.nc
+            obsfile: data_output/icec.nc
         obsdatain:
           engine:
             type: H5File
@@ -259,14 +260,14 @@ variational:
       write increment: true
       increment:
         state component:      
-          datadir: data_generated/3dvar_godas
+          datadir: data_output
           date: *bkg_date
-          exp: 3dvar_godas.iter1
+          exp: 3dvar.iter1
           type: incr
 
 output:
-  datadir: data_generated/3dvar_godas
-  exp: 3dvar_godas
+  datadir: data_output
+  exp: 3dvar
   type: an
 
 final:
@@ -274,6 +275,6 @@ final:
     departures: oman
 
 test:
-  reference filename: testref/3dvar_godas.test
-  test output filename: testoutput/3dvar_godas.test
+  reference filename: testref/3dvar.test
+  test output filename: testoutput/3dvar.test
   float relative tolerance: 1e-5

@@ -18,14 +18,29 @@ background error:
     geometry: *geom
     calibration:
       normalization:
-        # NOTE, not actually used here, since the normalization spec is only used for hz
         method: randomization  #< other option is "brute force"
         iterations: 1000       #< in the real world you'll want to use 1e4 or so
-      
+
       groups:
+      - name: hz_large
+        horizontal:
+          from file:
+            filename: data_generated/setcorscales/ocn.cor_rh.incr.2018-04-15T00:00:00Z.nc
+            variable name: ave_ssh        
+        write:
+          filename: data_output/hz_large.nc
+
+      - name: hz_smaller
+        horizontal:
+          # make this similar to what is used with BUMP in other tests, for now
+          as gaussian: true
+          fixed value: 840336.134453782
+        write:
+          filename: data_output/hz_smaller.nc
+
       - name: vt_5lvls
         vertical:
           as gaussian: true
           fixed value: 5.0
         write:
-          filename: data_generated/parameters_diffusion_vt/vt_5lvls.nc
+          filename: data_output/vt_5lvls.nc
