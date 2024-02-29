@@ -15,8 +15,12 @@ find_package(ecbuild 3.3.2 REQUIRED)
 include( ecbuild_system NO_POLICY_SCOPE )
 ecbuild_declare_project()
 
-list( APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
-include( soca_compiler_flags )
+## Compiler flags and other cmake settings
+find_package( jedicmake REQUIRED )  # Prefer find modules from jedi-cmake
+list( APPEND CMAKE_MODULE_PATH $ENV{jedi_cmake_ROOT}/share/jedicmake/Flags )
+include( jedi_compiler_flags )
+# This used to be in soca_compiler_flags, is not in jedi_compiler_flags
+add_definitions ( -Duse_libMPI -Duse_netCDF -DSPMD )
 
 ################################################################################
 # Dependencies
