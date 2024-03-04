@@ -26,19 +26,19 @@ ensemble:
     ice_filename: restarts_ens/ice.enspert.ens.4.2018-04-15T00:00:00Z.PT0S.nc
 
 variance output:
-  datadir: data_generated/ensmeanandvariance
+  datadir: data_output/
   exp: variance
   type: fc
   date: *date_bkg
 
 standard deviation output:
-  datadir: data_generated/ensmeanandvariance
+  datadir: data_output/
   exp: stddev
   type: fc
   date: *date_bkg
 
 mean output:
-  datadir: data_generated/ensmeanandvariance
+  datadir: data_output/
   exp: mean
   type: fc
   date: *date_bkg

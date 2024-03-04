@@ -42,20 +42,17 @@ namespace soca {
 
       ErrorCovariance(const Geometry &, const oops::Variables &,
                       const eckit::Configuration &,
-                      const State &, const State &);
-      ~ErrorCovariance();
+                      const State &, const State &) {
+        throw eckit::NotImplemented("You should not be using SocaError, use SABER!");}
+      ~ErrorCovariance() {}
 
-      void linearize(const State &, const Geometry &);
-      void multiply(const Increment &, Increment &) const;
-      void inverseMultiply(const Increment &, Increment &) const;
-      void randomize(Increment &) const;
+      void linearize(const State &, const Geometry &) {}
+      void multiply(const Increment &, Increment &) const {}
+      void inverseMultiply(const Increment &, Increment &) const {}
+      void randomize(Increment &) const {}
 
    private:
-      void print(std::ostream &) const;
-      int keyFtnConfig_;
-      boost::scoped_ptr<const Geometry> geom_;
-      boost::scoped_ptr<const State> traj_;
-      oops::Variables vars_;
+      void print(std::ostream &) const {}
   };
   // -----------------------------------------------------------------------------
 

@@ -23,7 +23,8 @@ extern "C" {
   void soca_explicitdiffusion_calibrate_f90(const F90explicitdiffusion &,
                                             const eckit::Configuration * const &);
   void soca_explicitdiffusion_multiply_f90(const F90explicitdiffusion &,
-                                           const F90flds &);
+                                           const F90flds &,
+                                           const bool & sqrt = false);
   void soca_explicitdiffusion_writeparams_f90(const F90explicitdiffusion &,
                                               const eckit::Configuration * const &);
   void soca_explicitdiffusion_readparams_f90(const F90explicitdiffusion &,

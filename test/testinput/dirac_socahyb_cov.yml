@@ -1,4 +1,4 @@
-geometry:
+geometry: &geom
   geom_grid_file: data_generated/gridgen/soca_gridspec.72x35x25.nc
   mom6_input_nml: data_static/72x35x25/input.nml
   fields metadata: data_static/fields_metadata.yml
@@ -22,20 +22,21 @@ background error:
   covariance model: hybrid
   components:
   - covariance:
-      covariance model: SocaError
-      analysis variables: [cicen, hicen, socn, tocn, uocn, vocn, ssh]
-      date: *date
-      bump:
-        io:
-          data directory: data_generated/static_socaerror_init
-        drivers:
-          multivariate strategy: univariate
-          read local nicas: true
-      correlation:
-      - name: ocn
-        variables: [socn, tocn, uocn, vocn, ssh]
-      - name: ice
-        variables: [cicen, hicen]
+      covariance model: SABER
+      saber central block:
+        saber block name: EXPLICIT_DIFFUSION
+        active variables: [cicen, hicen, uocn, vocn, tocn, socn, ssh]
+        geometry: *geom
+        group mapping:
+        - name: group1
+          variables: [cicen, hicen, uocn, vocn, tocn, socn, ssh]
+        read:
+          groups:
+          - name: group1
+            horizontal:
+              filename: data_generated/parameters_diffusion/hz_smaller.nc
+            vertical:
+              filename: data_generated/parameters_diffusion/vt_5lvls.nc
 
       linear variable change:
         input variables: *soca_vars
@@ -47,6 +48,7 @@ background error:
           efold_z: 2500.0       # [m]
           input variables: *soca_vars
           output variables: *soca_vars
+
         - linear variable change name: BkgErrGODAS
           sst_bgerr_file: data_static/godas_sst_bgerr.nc
           t_min: 0.1
@@ -64,13 +66,7 @@ background error:
           hicen_max: 100.0
           input variables: *soca_vars
           output variables: *soca_vars
-        - linear variable change name: VertConvSOCA
-          Lz_min: 2.0
-          Lz_mld: 1
-          Lz_mld_max: 500.0
-          scale_layer_thick: 1.5
-          input variables: *soca_vars
-          output variables: *soca_vars
+
         - linear variable change name: BalanceSOCA
           kst:
             dsdtmax: 0.1
@@ -86,6 +82,7 @@ background error:
           output variables: *soca_vars
     weight:
       value: 0.5
+ 
   - covariance:
       covariance model: ensemble
       members:
@@ -122,7 +119,7 @@ dirac:
   ifdir: [1,  1,  3,  2,  1,  1,  1,  5,  5, 8]
 
 output dirac:
-  datadir: data_generated/dirac_socahyb_cov
+  datadir: data_output/
   date: *date
   exp: dirac_socahyb_cov_%id%
   type: an

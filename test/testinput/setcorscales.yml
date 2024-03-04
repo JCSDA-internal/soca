@@ -34,12 +34,12 @@ scales:
     min value: 5000000
 
 rh output:
-  datadir: data_generated/setcorscales
+  datadir: data_output/
   exp: cor_rh
   type: incr
 
 rv output:
-  datadir: data_generated/setcorscales
+  datadir: data_output/
   exp: cor_rv
   type: incr
 

@@ -26,7 +26,7 @@ background error:
     saber block name: BUMP_NICAS
     calibration:
       io:
-        data directory: data_generated/parameters_bump_cov
+        data directory: data_output/
       drivers:
         compute covariance: true
         compute correlation: true
@@ -55,19 +55,19 @@ background error:
       output model files:
       - parameter: cor_rh
         file:
-          datadir: data_generated/parameters_bump_cov
+          datadir: data_output/
           date: *date
           exp: parameters_bump_cov.cor_rh
           type: an
       - parameter: cor_rv
         file:
-          datadir: data_generated/parameters_bump_cov
+          datadir: data_output/
           date: *date
           exp: parameters_bump_cov.cor_rv
           type: an
       - parameter: stddev
         file:
-          datadir: data_generated/parameters_bump_cov
+          datadir: data_output/
           date: *date
           exp: parameters_bump_cov.stddev
           type: an

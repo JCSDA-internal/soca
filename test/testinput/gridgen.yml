@@ -1,5 +1,5 @@
 geometry:
-  geom_grid_file: data_generated/gridgen/soca_gridspec.72x35x25.nc
+  geom_grid_file: data_output/soca_gridspec.72x35x25.nc
   save_local_domain: true
   full_init: true
   mom6_input_nml: data_static/72x35x25/input.nml
@@ -8,7 +8,7 @@ geometry:
 
   # save the atlas mesh for viewing in gmsh
   gmsh save: true
-  gmsh filename: data_generated/gridgen/gmsh.msh
+  gmsh filename: data_output/gmsh.msh
 
 test:
   reference filename: testref/gridgen.test
