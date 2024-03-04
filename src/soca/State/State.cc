@@ -53,6 +53,7 @@ namespace soca {
       std::string dt;
       conf.get("date", dt);
       time_ = util::DateTime(dt);
+      std::cout << "The value of number is time: " << &time_ << std::endl;
       soca_state_analytic_f90(toFortran(), &conf, &dtp);
     } else {
       soca_state_read_file_f90(toFortran(), &conf, &dtp);
