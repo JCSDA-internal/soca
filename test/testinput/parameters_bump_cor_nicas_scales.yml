@@ -17,7 +17,7 @@ background error:
     saber block name: BUMP_NICAS
     calibration:
       io:
-        data directory: data_generated/parameters_bump_cor_nicas_scales
+        data directory: data_output/
         files prefix: bump
       drivers:
         multivariate strategy: univariate

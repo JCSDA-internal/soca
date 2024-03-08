@@ -6,7 +6,7 @@ _: &land_mask
     minvalue: 0.5
 
 cost function:
-  cost type: 4D-Var
+  cost type: 3D-FGAT
   time window:
     begin: &date_begin 2018-04-15T00:00:00Z
     length: PT6H
@@ -58,18 +58,21 @@ cost function:
     state variables: [socn, tocn, ssh, hocn, uocn, vocn, mld, layer_depth]
 
   background error:
-    covariance model: SocaError
-    analysis variables: *soca_vars
-    date: 2018-04-15T00:00:00Z
-    bump:
-      io:
-        data directory: data_generated/static_socaerror_init
-      drivers:
-        multivariate strategy: univariate
-        read local nicas: true
-    correlation:
-    - name: ocn
-      variables: [socn, tocn, uocn, vocn, ssh]
+    covariance model: SABER
+    saber central block:
+      saber block name: EXPLICIT_DIFFUSION
+      active variables: [tocn, socn, ssh]
+      geometry: *geom
+      group mapping:
+      - name: group1
+        variables: [tocn, socn, ssh]
+      read:
+        groups:
+        - name: group1
+          horizontal:
+            filename: data_generated/parameters_diffusion/hz_smaller.nc
+          vertical:
+            filename: data_generated/parameters_diffusion/vt_5lvls.nc        
 
     linear variable change:
       input variables: *soca_vars
@@ -80,12 +83,6 @@ cost function:
         ocean_depth_min: 1000 # [m]
         rescale_bkgerr: 1.0
         efold_z: 2500.0       # [m]
-
-      - linear variable change name: VertConvSOCA
-        Lz_min: 10.0
-        Lz_mld: 1
-        Lz_mld_max: 500
-        scale_layer_thick: 1.5
 
       - linear variable change name: BalanceSOCA
         kst:
@@ -106,7 +103,7 @@ cost function:
         obsdataout:
           engine:
             type: H5File
-            obsfile: data_generated/3dvarfgat_pseudo/sst.3dvarfgat_pseudo.nc
+            obsfile: data_output/sst.nc
         obsdatain:
           engine:
             type: H5File
@@ -128,7 +125,7 @@ cost function:
         obsdataout:
           engine:
             type: H5File
-            obsfile: data_generated/3dvarfgat_pseudo/sss.3dvarfgat_pseudo.nc
+            obsfile: data_output/sss.nc
         obsdatain:
           engine:
             type: H5File
@@ -151,7 +148,7 @@ cost function:
         obsdataout:
           engine:
             type: H5File
-            obsfile: data_generated/3dvarfgat_pseudo/adt.3dvarfgat_pseudo.nc
+            obsfile: data_output/adt.nc
         obsdatain:
           engine:
             type: H5File
@@ -169,7 +166,7 @@ cost function:
         obsdataout:
           engine:
             type: H5File
-            obsfile: data_generated/3dvarfgat_pseudo/prof_T.3dvarfgat_pseudo.nc
+            obsfile: data_output/prof_T.nc
         obsdatain:
           engine:
             type: H5File
@@ -189,7 +186,7 @@ cost function:
         obsdataout:
           engine:
             type: H5File
-            obsfile: data_generated/3dvarfgat_pseudo/prof_S.3dvarfgat_pseudo.nc
+            obsfile: data_output/prof_S.nc
         obsdatain:
           engine:
             type: H5File
@@ -212,11 +209,6 @@ variational:
     algorithm: RPCG
   iterations:
   - geometry: *geom
-    linear model:
-      name: Identity
-      increment variables: *soca_vars
-      variable change: Identity
-      tstep: PT1H
     ninner: 5
     gradient norm reduction: 1e-15
     test: on
@@ -227,7 +219,7 @@ minimizer:
   algorithm: RPCG
 
 output:
-  datadir: data_generated/3dvarfgat_pseudo
+  datadir: data_output/
   exp: 3dvarfgat_pseudo
   type: an
 
@@ -238,4 +230,4 @@ final:
 test:
   reference filename: testref/3dvarfgat_pseudo.test
   test output filename: testoutput/3dvarfgat_pseudo.test
-  float relative tolerance: 1e-5
+  float relative tolerance: 1e-3

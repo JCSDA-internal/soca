@@ -25,7 +25,7 @@ observations:
       obsdataout:
         engine:
           type: H5File
-          obsfile: data_generated/hofx_oasim_3d/pace_oasim.hofx_oasim_3d.nc
+          obsfile: data_output/pace_oasim.nc
       obsdatain:
         engine:
           type: H5File

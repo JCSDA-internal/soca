@@ -27,7 +27,7 @@ ensemble:
     nmembers: 4
 
 recentered output:
-  datadir: data_generated/ensrecenter
+  datadir: data_output/
   exp: ensrecenter
   type: ens
   date: *date_bkg
