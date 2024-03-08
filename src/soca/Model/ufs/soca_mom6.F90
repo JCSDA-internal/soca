@@ -30,7 +30,6 @@ use MOM_grid,            only : ocean_grid_type, MOM_grid_init
 use MOM_io,              only : open_file, close_file, &
                                 check_nml_error, io_infra_init, io_infra_end, &
                                 ASCII_FILE, READONLY_FILE, open_ASCII_file
-use MOM_restart,         only : MOM_restart_CS
 use MOM_string_functions,only : uppercase
 !use MOM_surface_forcing, only : set_forcing, forcing_save_restart, &
 !                                surface_forcing_init, surface_forcing_CS
@@ -71,7 +70,6 @@ type soca_mom6_config
   type(ocean_grid_type),    pointer :: grid !< Grid metrics
   type(verticalGrid_type),  pointer :: GV   !< Vertical grid
   type(MOM_control_struct), pointer :: MOM_CSp  !< Tracer flow control structure.
-  type(MOM_restart_CS),     pointer :: restart_CSp !< A pointer to the restart control structure
   type(surface_forcing_CS), pointer :: surface_forcing_CSp => NULL()
   type(fckit_mpi_comm) :: f_comm
   type(param_file_type) :: param_file
@@ -180,7 +178,6 @@ subroutine soca_mom6_init(mom6_config, partial_init)
 
   ! Nullify mom6_config pointers
   mom6_config%MOM_CSp => NULL()
-  mom6_config%restart_CSp => NULL()
   mom6_config%grid => NULL()
   mom6_config%GV => NULL()
 
@@ -197,7 +194,6 @@ subroutine soca_mom6_init(mom6_config, partial_init)
       param_file, &
       mom6_config%dirs, &
       mom6_config%MOM_CSp, &
-      mom6_config%restart_CSp, &
       offline_tracer_mode=offline_tracer_mode, &
       diag_ptr=diag, &
       tracer_flow_CSp=tracer_flow_CSp, &
@@ -250,8 +246,7 @@ subroutine soca_mom6_init(mom6_config, partial_init)
   ! Do more stuff for mom init ...
   call finish_MOM_initialization(mom6_config%Time,&
                                  mom6_config%dirs,&
-                                 mom6_config%MOM_CSp,&
-                                 mom6_config%restart_CSp)
+                                 mom6_config%MOM_CSp)
 
 end subroutine soca_mom6_init
 
