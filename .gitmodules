@@ -1,0 +1,3 @@
+[submodule "mom6/MOM6"]
+	path = mom6/MOM6
+	url = https://github.com/NOAA-EMC/MOM6
