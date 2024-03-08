@@ -61,7 +61,7 @@ cost function:
         obsdataout:
           engine:
             type: H5File
-            obsfile: data_generated/4denvar/sst.4denvar.nc
+            obsfile: data_output/sst.nc
         obsdatain:
           engine:
             type: H5File
@@ -85,7 +85,7 @@ variational:
       departures: ombg
 
 output:
-  datadir: data_generated/4denvar
+  datadir: data_output/
   exp: 4denvar
   type: an
 

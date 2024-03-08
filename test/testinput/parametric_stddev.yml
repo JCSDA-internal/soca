@@ -44,7 +44,7 @@ increments:
      date: 2018-04-15T00:00:00Z
      state variables: [ssh, tocn, socn, hocn, layer_depth, mld]
   output:
-     datadir: data_generated/parametric_stddev
+     datadir: data_output/
      exp: parametric_stddev
      type: incr
      date: 2018-04-15T00:00:00Z
