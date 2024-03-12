@@ -30,7 +30,7 @@ states:
      date: &bkg_date 2018-04-15T00:00:00Z
      state variables: *soca_vars
   output:
-     datadir: data_generated/convertstate_changevar
+     datadir: data_output/
      exp: convertstate_changevar
      type: fc
      date: *bkg_date
@@ -43,7 +43,7 @@ states:
      date: *bkg_date
      state variables: *soca_vars
   output:
-     datadir: data_generated/convertstate_changevar
+     datadir: data_output/
      exp: convertstate_changevar.dummy_member
      type: fc
      date: *bkg_date

@@ -23,7 +23,7 @@ observations:
       obsdataout:
         engine:
           type: H5File
-          obsfile: data_generated/hofx_3d/sst_coolskin.hofx_3d.nc
+          obsfile: data_output/sst_coolskin.nc
       obsdatain:
         engine:
           type: H5File
@@ -37,7 +37,7 @@ observations:
       obsdataout:
         engine:
           type: H5File
-          obsfile: data_generated/hofx_3d/sst.hofx_3d.nc
+          obsfile: data_output/sst.nc
       obsdatain:
         engine:
           type: H5File
@@ -52,7 +52,7 @@ observations:
       obsdataout:
         engine:
           type: H5File
-          obsfile: data_generated/hofx_3d/sss.hofx_3d.nc
+          obsfile: data_output/sss.nc
       obsdatain:
         engine:
           type: H5File
@@ -67,7 +67,7 @@ observations:
       obsdataout:
         engine:
           type: H5File
-          obsfile: data_generated/hofx_3d/adt.hofx_3d.nc
+          obsfile: data_output/adt.nc
       obsdatain:
         engine:
           type: H5File
@@ -82,7 +82,7 @@ observations:
       obsdataout:
         engine:
           type: H5File
-          obsfile: data_generated/hofx_3d/prof.hofx_3d.nc
+          obsfile: data_output/prof.nc
       obsdatain:
         engine:
           type: H5File
@@ -104,7 +104,7 @@ observations:
       obsdataout:
         engine:
           type: H5File
-          obsfile: data_generated/hofx_3d/prof_T.hofx_3d.nc
+          obsfile: data_output/prof_T.nc
       obsdatain:
         engine:
           type: H5File
@@ -120,7 +120,7 @@ observations:
       obsdataout:
         engine:
           type: H5File
-          obsfile: data_generated/hofx_3d/prof_S.hofx_3d.nc
+          obsfile: data_output/prof_S.nc
       obsdatain:
         engine:
           type: H5File
@@ -137,7 +137,7 @@ observations:
       obsdataout:
         engine:
           type: H5File
-          obsfile: data_generated/hofx_3d/icec.hofx_3d.nc
+          obsfile: data_output/icec.nc
       obsdatain:
         engine:
           type: H5File
@@ -151,7 +151,7 @@ observations:
       obsdataout:
         engine:
           type: H5File
-          obsfile: data_generated/hofx_3d/icefb.hofx_3d.nc
+          obsfile: data_output/icefb.nc
       obsdatain:
         engine:
           type: H5File
@@ -165,7 +165,7 @@ observations:
       obsdataout:
         engine:
           type: H5File
-          obsfile: data_generated/hofx_3d/chl.hofx_3d.nc
+          obsfile: data_output/chl.nc
       obsdatain:
         engine:
           type: H5File
@@ -204,7 +204,7 @@ observations:
       obsdataout:
         engine:
           type: H5File
-          obsfile: data_generated/hofx_3d/uocn_surface.hofx_3d.nc
+          obsfile: data_output/uocn_surface.nc
       obsdatain:
         engine:
           type: H5File
@@ -219,7 +219,7 @@ observations:
       obsdataout:
         engine:
           type: H5File
-          obsfile: data_generated/hofx_3d/vocn_surface.hofx_3d.nc
+          obsfile: data_output/vocn_surface.nc
       obsdatain:
         engine:
           type: H5File

@@ -8,26 +8,18 @@
 #ifndef SOCA_ANALYTICINIT_ANALYTICINIT_H_
 #define SOCA_ANALYTICINIT_ANALYTICINIT_H_
 
+#include <string>
+
 #include "oops/interface/AnalyticInitBase.h"
+
 #include "ufo/ObsTraits.h"
 
 namespace soca {
 
-  class AnalyticInitParameters : public oops::AnalyticInitParametersBase {
-    OOPS_CONCRETE_PARAMETERS(AnalyticInitParameters, AnalyticInitParametersBase)
-   public:
-    // No parameters, for now
-  };
-
-// -----------------------------------------------------------------------------
-
-
   class AnalyticInit :
     public oops::interface::AnalyticInitBase<ufo::ObsTraits> {
    public:
-    typedef AnalyticInitParameters Parameters_;
-
-    explicit AnalyticInit(const Parameters_ &) {}
+    explicit AnalyticInit(const eckit::Configuration &) {}
     void fillGeoVaLs(const ufo::SampledLocations &, ufo::GeoVaLs &) const override;
   };
 

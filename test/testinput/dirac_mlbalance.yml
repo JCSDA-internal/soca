@@ -40,7 +40,7 @@ dirac:
   ifdir: [ 4,  4,  4,  4,  4,  4,  4,  4,  4]
 
 output dirac:
-  datadir: data_generated/dirac_mlbalance
+  datadir: data_output/
   date: *date
   exp: dirac_mlbalance_%id%
   type: an

@@ -34,18 +34,21 @@ cost function:
     - weight:
         value: 0.5
       covariance:
-        covariance model: SocaError
-        analysis variables: [socn, tocn, uocn, vocn, ssh]
-        date: 2018-04-15T00:00:00Z
-        bump:
-          io:
-            data directory: data_generated/static_socaerror_init
-          drivers:
-            multivariate strategy: univariate
-            read local nicas: true
-        correlation:
-        - name: ocn
-          variables: [socn, tocn, uocn, vocn, ssh]
+        covariance model: SABER
+        saber central block:
+          saber block name: EXPLICIT_DIFFUSION
+          active variables: [tocn, socn, ssh]
+          geometry: *geom
+          group mapping:
+          - name: group1
+            variables: [tocn, socn, ssh]
+          read:
+            groups:
+            - name: group1
+              horizontal:
+                filename: data_generated/parameters_diffusion/hz_smaller.nc
+              vertical:
+                filename: data_generated/parameters_diffusion/vt_5lvls.nc
 
     - weight:
         value: 0.5
@@ -82,7 +85,7 @@ cost function:
         obsdataout:
           engine:
             type: H5File
-            obsfile: data_generated/4dhybenvar/sst.4dhybenvar.nc
+            obsfile: data_output/sst.nc
         obsdatain:
           engine:
             type: H5File
@@ -96,7 +99,7 @@ cost function:
 
 variational:
   minimizer:
-    algorithm: DRIPCG
+    algorithm: RPCG
   iterations:
   - geometry: *geom
     ninner: 5
@@ -106,7 +109,7 @@ variational:
       departures: ombg
 
 output:
-  datadir: data_generated/4dhybenvar
+  datadir: data_output/
   exp: 4dhybenvar
   type: an
 
