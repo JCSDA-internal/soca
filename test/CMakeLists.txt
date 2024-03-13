@@ -66,8 +66,6 @@ set( soca_test_input
   testinput/letkf_split_solver.yml
   testinput/letkf.yml
   testinput/makeobs.yml
-  testinput/model_ufsm6c6.yml
-  testinput/model.yml
   testinput/obslocalization_vertical.yml
   testinput/obslocalization.yml
   testinput/obslocalizations.yml
@@ -353,11 +351,6 @@ soca_add_test( NAME state
 
 soca_add_test( NAME increment
                SRC  TestIncrement.cc
-               TEST_DEPENDS test_soca_gridgen )
-
-soca_add_test( NAME model
-               SRC  TestModel.cc
-               NOTRAPFPE
                TEST_DEPENDS test_soca_gridgen )
 
 soca_add_test( NAME modelaux

@@ -16,21 +16,28 @@ use kinds, only: kind_real
 use type_fieldset, only: fieldset_type
 
 ! mom6 / fms modules
+use fms_mod, only : fms_init, fms_end
 use fms_io_mod, only : fms_io_init, fms_io_exit, &
                        register_restart_field, restart_file_type, &
                        restore_state, free_restart_type, save_restart
-use MOM_diag_remap,  only : diag_remap_ctrl, diag_remap_init, diag_remap_configure_axes, &
-                            diag_remap_end, diag_remap_update
-use MOM_domains, only : MOM_domain_type
-use MOM_EOS,         only : EOS_type
+use MOM, only : MOM_control_struct, initialize_MOM, MOM_end, get_MOM_state_elements
+use MOM_domains, only : MOM_domain_type, MOM_domains_init, MOM_infra_init, MOM_infra_end
+use MOM_error_handler, only : MOM_error, MOM_mesg, WARNING, FATAL, is_root_pe
+use MOM_file_parser, only : get_param, param_file_type, close_param_file
+use MOM_get_input, only : directories, Get_MOM_Input
+use MOM_grid, only : ocean_grid_type
+use MOM_io, only : io_infra_init, io_infra_end
+use MOM_time_manager, only : real_to_time, JULIAN, set_calendar_type
 use mpp_domains_mod, only : mpp_get_compute_domain, mpp_get_data_domain, &
                             mpp_get_global_domain, mpp_update_domains, &
-                            CYCLIC_GLOBAL_DOMAIN, FOLD_NORTH_EDGE                            
+                            CYCLIC_GLOBAL_DOMAIN, FOLD_NORTH_EDGE
+use mpp_mod,only : mpp_init
+use time_interp_external_mod, only : time_interp_external_init
+use time_manager_mod, only: time_type
+
 ! soca modules
 use soca_fields_metadata_mod, only : soca_fields_metadata
-use soca_mom6, only: soca_mom6_config, soca_mom6_init, soca_geomdomain_init
 use soca_utils, only: write2pe, soca_remap_idw
-
 
 implicit none
 private
@@ -115,8 +122,6 @@ type, public :: soca_geom
     real(kind=kind_real), allocatable, dimension(:,:) :: cell_area !< cell area (m^2)
     real(kind=kind_real), allocatable, dimension(:,:) :: rossby_radius !< rossby radius (m) at the gridpoint
     real(kind=kind_real), allocatable, dimension(:,:) :: distance_from_coast !< distance to closest land grid point (m)
-    real(kind=kind_real), allocatable, dimension(:,:,:) :: h !< layer thickness (m)
-    real(kind=kind_real), allocatable, dimension(:,:,:) :: h_zstar
     !> \}
 
     !> instance of the metadata that is read in from a config file upon initialization
@@ -177,11 +182,23 @@ subroutine soca_geom_init(self, f_conf, f_comm)
   character(len=:), allocatable :: str
   logical :: full_init = .false.
 
+  ! variables needed to initialize the mom6 domain decomposition
+  type(param_file_type) :: param_file                !< Structure to parse for run-time parameters
+  type(directories)     :: dirs                      !< Structure containing several relevant directory paths
+
+
   ! MPI communicator
   self%f_comm = f_comm
 
-  ! Domain decomposition
-  call soca_geomdomain_init(self%Domain, self%nzo, f_comm)
+  ! use MOM6 to setup domain decomposition
+  call mpp_init(localcomm=f_comm%communicator())
+  call fms_init()
+  call fms_io_init()
+  call Get_MOM_Input(param_file, dirs)
+  call MOM_domains_init(self%Domain, param_file)
+  call get_param(param_file, "soca_mom6", "NK", self%nzo, fail_if_missing=.true.)
+  call close_param_file(param_file)
+  call fms_io_exit()
 
   ! User-defined grid filename
   if ( .not. f_conf%get("geom_grid_file", self%geom_grid_file) ) &
@@ -258,8 +275,6 @@ subroutine soca_geom_end(self)
   if (allocated(self%cell_area))     deallocate(self%cell_area)
   if (allocated(self%rossby_radius)) deallocate(self%rossby_radius)
   if (allocated(self%distance_from_coast)) deallocate(self%distance_from_coast)
-  if (allocated(self%h))             deallocate(self%h)
-  if (allocated(self%h_zstar))       deallocate(self%h_zstar)
   nullify(self%Domain)
   call self%functionspace%final()
 
@@ -380,7 +395,6 @@ subroutine soca_geom_clone(self, other)
   self%cell_area = other%cell_area
   self%rossby_radius = other%rossby_radius
   self%distance_from_coast = other%distance_from_coast
-  self%h = other%h
   self%atlas_ij2idx = other%atlas_ij2idx
   call self%fields_metadata%clone(other%fields_metadata)
 end subroutine soca_geom_clone
@@ -393,63 +407,51 @@ end subroutine soca_geom_clone
 subroutine soca_geom_gridgen(self)
   class(soca_geom), intent(inout) :: self
 
-  ! allocate variables for regridding to zstar coord
-  type(soca_mom6_config) :: mom6_config
-  type(diag_remap_ctrl) :: remap_ctrl
-  type(EOS_type), pointer :: eqn_of_state
-  integer :: k
-  real(kind=kind_real), allocatable :: tracer(:,:,:)
-  logical :: answers_2018 = .false.
-
+  ! variables needed to get grid info from MOM6
+  type(time_type) :: Start_time
+  type(param_file_type) :: param_file      ! The structure indicating the file(s)  
+  type(directories)  :: dirs       !< Relevant dirs/path
+  type(ocean_grid_type),    pointer :: grid !< Grid metrics
+  type(MOM_control_struct)  :: CSp
+  
   ! Generate grid
-  call soca_mom6_init(mom6_config, partial_init=.true.)
-  self%lonh = mom6_config%grid%gridlont
-  self%lath = mom6_config%grid%gridlatt
-  self%lonq = mom6_config%grid%gridlonb
-  self%latq = mom6_config%grid%gridlatb
-  self%lon = mom6_config%grid%GeoLonT
-  self%lat = mom6_config%grid%GeoLatT
-  self%lonu = mom6_config%grid%geoLonCu
-  self%latu = mom6_config%grid%geoLatCu
-  self%lonv = mom6_config%grid%geoLonCv
-  self%latv = mom6_config%grid%geoLatCv
+  Start_time = real_to_time(0.0d0)
+  call MOM_infra_init(localcomm=self%f_comm%communicator())
+  call io_infra_init()
+  call set_calendar_type(JULIAN)
+  call time_interp_external_init  
+  call initialize_MOM( Start_time, Start_time, param_file, dirs, CSp )
+  call get_MOM_state_elements(CSp, G=grid)
 
-  self%sin_rot = mom6_config%grid%sin_rot
-  self%cos_rot = mom6_config%grid%cos_rot
+  self%lonh = grid%gridlont
+  self%lath = grid%gridlatt
+  self%lonq = grid%gridlonb
+  self%latq = grid%gridlatb
+  self%lon =  grid%GeoLonT
+  self%lat =  grid%GeoLatT
+  self%lonu = grid%geoLonCu
+  self%latu = grid%geoLatCu
+  self%lonv = grid%geoLonCv
+  self%latv = grid%geoLatCv
+  self%sin_rot = grid%sin_rot
+  self%cos_rot = grid%cos_rot
+  self%mask2d = grid%mask2dT
+  self%mask2du = grid%mask2dCu
+  self%mask2dv = grid%mask2dCv
+  self%dx = grid%dxT
+  self%dy = grid%dyT
+  self%cell_area = grid%areaT
 
-  self%mask2d = mom6_config%grid%mask2dT
-  self%mask2du = mom6_config%grid%mask2dCu
-  self%mask2dv = mom6_config%grid%mask2dCv
-  self%dx = mom6_config%grid%dxT
-  self%dy = mom6_config%grid%dyT
-  self%cell_area  = mom6_config%grid%areaT
-  self%h = mom6_config%MOM_CSp%h
+  call MOM_end(CSp)
+  call io_infra_end()
+  !call MOM_infra_end()
 
-  ! Setup intermediate zstar coordinate
-  allocate(tracer(self%isd:self%ied, self%jsd:self%jed, self%nzo))
-  tracer = 0.d0 ! dummy tracer
-  call diag_remap_init(remap_ctrl, coord_tuple='ZSTAR, ZSTAR, ZSTAR', answers_2018=answers_2018)
-  call diag_remap_configure_axes(remap_ctrl, mom6_config%GV, mom6_config%scaling, mom6_config%param_file)
-  self%nzo_zstar = remap_ctrl%nz
-  if (allocated(self%h_zstar)) deallocate(self%h_zstar)
-  allocate(self%h_zstar(self%isd:self%ied, self%jsd:self%jed, 1:remap_ctrl%nz))
-
-  ! Compute intermediate vertical coordinate self%h_zstar
-  call diag_remap_update(remap_ctrl, &
-                         mom6_config%grid, &
-                         mom6_config%GV, &
-                         mom6_config%scaling, &
-                         self%h, tracer, tracer, eqn_of_state, self%h_zstar)
-  call diag_remap_end(remap_ctrl)
-
-  ! Get Rossby Radius
+  ! Calculate other static grid-based fields
   call soca_geom_rossby_radius(self, self%rossby_file)
-
   call soca_geom_distance_from_coast(self)
 
   ! Output to file
   call soca_geom_write(self)
-
 end subroutine soca_geom_gridgen
 
 
@@ -501,7 +503,6 @@ subroutine soca_geom_allocate(self)
   allocate(self%cell_area(isd:ied,jsd:jed));     self%cell_area = 0.0_kind_real
   allocate(self%rossby_radius(isd:ied,jsd:jed)); self%rossby_radius = 0.0_kind_real
   allocate(self%distance_from_coast(isd:ied,jsd:jed)); self%distance_from_coast = 0.0_kind_real
-  allocate(self%h(isd:ied,jsd:jed,1:nzo));       self%h = 0.0_kind_real
   
   allocate(self%atlas_ij2idx(isd:ied,jsd:jed));  self%atlas_ij2idx = -1
 
@@ -735,18 +736,8 @@ subroutine soca_geom_write(self)
                                    domain=self%Domain%mpp_domain)
   idr_geom = register_restart_field(geom_restart, &
                                    &self%geom_grid_file, &
-                                   &'h', &
-                                   &self%h(:,:,:), &
-                                   domain=self%Domain%mpp_domain)
-  idr_geom = register_restart_field(geom_restart, &
-                                   &self%geom_grid_file, &
                                    &'nzo_zstar', &
                                    &self%nzo_zstar, &
-                                   domain=self%Domain%mpp_domain)
-  idr_geom = register_restart_field(geom_restart, &
-                                   &self%geom_grid_file, &
-                                   &'h_zstar', &
-                                   &self%h_zstar(:,:,:), &
                                    domain=self%Domain%mpp_domain)
   idr_geom = register_restart_field(geom_restart, &
                                    &self%geom_grid_file, &
@@ -879,11 +870,6 @@ subroutine soca_geom_read(self)
                                    &self%geom_grid_file, &
                                    &'mask2dv', &
                                    &self%mask2dv(:,:), &
-                                   domain=self%Domain%mpp_domain)
-  idr_geom = register_restart_field(geom_restart, &
-                                   &self%geom_grid_file, &
-                                   &'h', &
-                                   &self%h(:,:,:), &
                                    domain=self%Domain%mpp_domain)
   idr_geom = register_restart_field(geom_restart, &
                                    &self%geom_grid_file, &
