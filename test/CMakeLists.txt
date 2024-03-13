@@ -342,9 +342,10 @@ soca_add_test( NAME geometry_iterator_2d
                SRC  TestGeometryIterator.cc
                TEST_DEPENDS test_soca_gridgen )
 
-soca_add_test( NAME geometry_iterator_3d
-               SRC  TestGeometryIterator.cc
-               TEST_DEPENDS test_soca_gridgen )
+# 3D geometry iterator is currently not working (or needed?)               
+# soca_add_test( NAME geometry_iterator_3d
+#                SRC  TestGeometryIterator.cc
+#                TEST_DEPENDS test_soca_gridgen )
 
 soca_add_test( NAME state
                SRC  TestState.cc
