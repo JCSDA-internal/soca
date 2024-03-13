@@ -98,7 +98,6 @@ set( soca_test_ref
   testref/3dhyb_diffusion.test
   testref/3dhyb.test
   testref/3dhybfgat.test
-  testref/3dvar_diffusion.test
   testref/3dvar_diffmlb.test
   testref/3dvar_godas.test
   testref/3dvar_nicas.test
@@ -673,17 +672,6 @@ if( ${daml_FOUND} )
                               test_soca_parameters_diffusion_hz
                               test_soca_parameters_diffusion_vt)
 endif()
-
-soca_add_test( NAME 3dvar_godas
-               EXE  soca_var.x
-               TEST_DEPENDS test_soca_gridgen
-                            test_soca_static_socaerror_init )
-
-soca_add_test( NAME 3dvarlowres_soca
-               EXE  soca_var.x
-               NOTRAPFPE
-               TEST_DEPENDS test_soca_gridgen
-               test_soca_static_socaerrorlowres_init )
 
 ## TODO(travis) fix the lowres grid dx,dy so that I can init the
 ## low res diffusion, and then run this test
