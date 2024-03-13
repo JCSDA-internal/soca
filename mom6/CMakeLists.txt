@@ -19,48 +19,45 @@ endif()
 set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} ${MOM6_Extra_FORTRAN_FLAGS}")
 
 # User option to build MOM6 solo executable
-set(MOM6SOLO OFF CACHE BOOL "Build MOM6 solo")
+set(MOM6SOLO ON CACHE BOOL "Build MOM6 solo")
 
 # include the rats nest of mom6 files
 include("mom6_files.cmake")
 
 ### Use common object library for building target library
-add_library(mom6_obj OBJECT 
+add_library(mom6 STATIC 
     ${mom6_src_files}
     ${mom6_stochastic_stub_files} ) ## TODO include stochastic package at some point?
-set_target_properties(mom6_obj PROPERTIES Fortran_MODULE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/mod)
-target_include_directories(mom6_obj PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/mod>)
-    
-target_include_directories(mom6_obj PRIVATE 
+set_target_properties(mom6 PROPERTIES Fortran_MODULE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/mod)
+target_include_directories(mom6 PUBLIC 
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/mod>
+    $<INSTALL_INTERFACE:mod>) 
+target_include_directories(mom6 PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/MOM6/config_src/memory/dynamic_nonsymmetric>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/MOM6/src/framework>)
 # TODO use symmetric memory above if doing regional MOM6
-target_link_libraries(mom6_obj PRIVATE fms NetCDF::NetCDF_Fortran)
-
-### Create target library and set PUBLIC interfaces on the library
-add_library(mom6 STATIC $<TARGET_OBJECTS:mom6_obj> )
-target_include_directories(mom6 PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/mod>
-                                       $<INSTALL_INTERFACE:mod>)
-target_include_directories(mom6 PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/MOM6/config_src/memory/dynamic_nonsymmetric>
-                                       $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/MOM6/src/framework>)
-target_link_libraries(mom6 PUBLIC fms NetCDF::NetCDF_Fortran)
+target_link_libraries(mom6 PUBLIC NetCDF::NetCDF_C NetCDF::NetCDF_Fortran fms )
 
 ####################################################
 ### Create standalone MOM6 executable
 ####################################################
-# if(MOM6SOLO)
-#   message("Building MOM6 standalone executable")
-#   add_executable(mom6solo ${mom6_solo_src_files})
-#   add_dependencies(mom6solo mom6_obj)
-#   set_target_properties(mom6solo PROPERTIES Fortran_MODULE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/mod_solo)
-#   target_include_directories(mom6solo PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/mod>)
-#   target_include_directories(mom6solo PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/mod_solo>)
-#   target_include_directories(mom6solo PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/MOM6/config_src/memory/dynamic_nonsymmetric>
-#                                               $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/MOM6/src/framework>)
-#   target_link_libraries(mom6solo PRIVATE mom6_obj
-#                                          fms
-#                                          NetCDF::NetCDF_Fortran)
-# endif()
+if(MOM6SOLO)
+  message("Building MOM6 standalone executable")
+  add_executable(mom6solo ${mom6_solo_src_files})
+  add_dependencies(mom6solo mom6)
+  set_target_properties(mom6solo PROPERTIES Fortran_MODULE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/mod_solo)
+  set_target_properties(mom6solo PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+  target_include_directories(mom6solo PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/mod>)
+  target_include_directories(mom6solo PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/mod_solo>)
+  target_include_directories(mom6solo PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/MOM6/config_src/memory/dynamic_nonsymmetric>
+                                              $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/MOM6/src/framework>)
+  target_link_libraries(mom6solo PUBLIC 
+    NetCDF::NetCDF_C
+    NetCDF::NetCDF_Fortran
+    fms
+    mom6 )
+
+endif()
 
 ####################################################
 ### Install

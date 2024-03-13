@@ -21,7 +21,7 @@ include( soca_compiler_flags )
 ################################################################################
 # Dependencies
 ################################################################################
-find_package( NetCDF REQUIRED COMPONENTS Fortran)
+find_package( NetCDF REQUIRED COMPONENTS Fortran C)
 find_package( gsl-lite REQUIRED HINTS $ENV{gsl_list_DIR})
 find_package( eckit  1.23.0   REQUIRED)
 find_package( fckit  0.10.1   REQUIRED)
@@ -32,14 +32,13 @@ find_package( saber  1.9.0    REQUIRED)
 find_package( ioda   2.8.0    REQUIRED)
 find_package( ufo    1.9.0    REQUIRED)
 
-find_package( fms    2022.4.0 REQUIRED COMPONENTS R4 R8)
+find_package( fms    2023.3.0 REQUIRED COMPONENTS R4 R8)
 add_library(  fms ALIAS FMS::fms_r8)
 
 # Optionally look for icepack
 find_package( icepack 1.2.0 QUIET)
 
 include_directories( ${NETCDF_INCLUDE_DIRS} )
-
 
 ################################################################################
 # Model
