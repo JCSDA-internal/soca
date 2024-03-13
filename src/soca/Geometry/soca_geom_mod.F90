@@ -156,9 +156,6 @@ type, public :: soca_geom
     !> \copybrief soca_geom_gridgen \see soca_geom_gridgen
     procedure :: gridgen => soca_geom_gridgen
 
-    !> \copybrief soca_geom_thickness2depth \see soca_geom_thickness2depth
-    procedure :: thickness2depth => soca_geom_thickness2depth
-
     !> \copybrief soca_geom_write \see soca_geom_write
     procedure :: write => soca_geom_write
 
@@ -916,36 +913,6 @@ subroutine soca_geom_get_domain_indices(self, domain_type, is, ie, js, je, local
 
 end subroutine soca_geom_get_domain_indices
 
-
-! ------------------------------------------------------------------------------
-!> Get layer depth from layer thicknesses
-!!
-!! \related soca_geom_mod::soca_geom
-subroutine soca_geom_thickness2depth(self, h, z)
-  class(soca_geom),     intent(in   ) :: self
-  real(kind=kind_real), intent(in   ) :: h(:,:,:) !< Layer thickness
-  real(kind=kind_real), intent(inout) :: z(:,:,:) !< Mid-layer depth
-
-  integer :: is, ie, js, je, i, j, k
-
-  ! Should check shape of z
-  is = lbound(h,dim=1)
-  ie = ubound(h,dim=1)
-  js = lbound(h,dim=2)
-  je = ubound(h,dim=2)
-
-  ! top layer
-  z(:,:,1) = 0.5_kind_real*h(:,:,1)
-
-  ! the rest of the layers
-  do i = is, ie
-     do j = js, je
-        do k = 2, self%nzo
-          z(i,j,k) = sum(h(i,j,1:k-1))+0.5_kind_real*h(i,j,k)
-        end do
-     end do
-  end do
-end subroutine soca_geom_thickness2depth
 
 ! ------------------------------------------------------------------------------
 ! Get a 2d array of the valid nodes / cells that are to be used on this PE
