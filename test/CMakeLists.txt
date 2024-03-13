@@ -27,7 +27,6 @@ set( soca_test_input
   testinput/4denvar.yml
   testinput/4dhybenvar.yml
   testinput/addincrement.yml
-  testinput/checkpointmodel.yml
   testinput/convertincrement.yml
   testinput/convertstate_changevar.yml
   testinput/convertstate_soca2cice.yml
@@ -105,7 +104,6 @@ set( soca_test_ref
   testref/4denvar.test
   testref/4dhybenvar.test
   testref/addincrement.test
-  testref/checkpointmodel.test
   testref/convertincrement.test
   testref/convertstate_changevar.test
   testref/convertstate_soca2cice.test
@@ -451,15 +449,15 @@ soca_add_test( NAME forecast_pseudo
                             test_soca_forecast_mom6 )
 
 soca_add_test( NAME forecast_mom6_ens1
-               EXE  soca_forecast.x
+               EXE  mom6solo
                NOTRAPFPE
                TEST_DEPENDS test_soca_gridgen )
 soca_add_test( NAME forecast_mom6_ens2
-               EXE  soca_forecast.x
+               EXE  mom6solo
                NOTRAPFPE
                TEST_DEPENDS test_soca_gridgen )
 soca_add_test( NAME forecast_mom6_ens3
-               EXE  soca_forecast.x
+               EXE  mom6solo
                NOTRAPFPE
                TEST_DEPENDS test_soca_gridgen )
 
@@ -738,12 +736,6 @@ soca_add_test( NAME convertincrement
                TEST_DEPENDS test_soca_gridgen
                             test_soca_3dvar)
 
-# restart checkpointing
-soca_add_test( NAME checkpointmodel
-               EXE  soca_checkpoint_model.x
-               NOTRAPFPE
-               TEST_DEPENDS test_soca_gridgen
-                            test_soca_3dvar )
 
 if( ${icepack_FOUND} )
   # Apply the Soca2Cice nonlinear change of variable
