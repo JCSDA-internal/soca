@@ -503,10 +503,11 @@ soca_add_test( NAME enspert
                             test_soca_parameters_diffusion )
 
 # Remapping MOM6 (horiz+vertical intterpolation)
-soca_add_test( NAME convertstate
-               EXE  soca_convertstate.x
-              #  NOTRAPFPE
-               TEST_DEPENDS test_soca_gridgen )
+# TODO this needs to be re-implemented
+# soca_add_test( NAME convertstate
+#                EXE  soca_convertstate.x
+#               #  NOTRAPFPE
+#                TEST_DEPENDS test_soca_gridgen )
 
 # Apply a nonlinear change of variable to an ensemble of states
 soca_add_test( NAME convertstate_changevar

@@ -325,18 +325,9 @@ subroutine soca_increment_change_resol(self, rhs)
   class(soca_increment),         intent(inout) :: self  ! target
   class(soca_increment), target, intent(in)    :: rhs   ! source
 
-  integer :: n
-  type(soca_convertstate_type) :: convert_state
-  type(soca_field), pointer :: field1, field2, hocn1, hocn2
+  call abor1_ftn("increment: change_resol not implemented")
+  ! TODO re-implement this using whatever generic stuff Francois is putting together
 
-  call convert_state%setup(rhs%geom, self%geom)
-  do n = 1, size(rhs%fields)
-    if (trim(rhs%fields(n)%name)=="hocn") cycle ! skip layer thickness
-    field1 => rhs%fields(n)
-    call self%get(trim(field1%name),field2)
-    call convert_state%change_resol2d(field1, field2, rhs%geom, self%geom)
-  end do !n
-  call convert_state%clean()
 end subroutine soca_increment_change_resol
 
 
