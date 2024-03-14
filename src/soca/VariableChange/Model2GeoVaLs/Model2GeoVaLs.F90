@@ -57,7 +57,8 @@ subroutine soca_model2geovals_changevar_f90(c_key_geom, c_key_xin, c_key_xout) &
       xout%fields(i)%val(:,:,1) = real(geom%lon, kind=kind_real)
 
     case ('sea_water_depth')
-      call geom%thickness2depth(geom%h, xout%fields(i)%val)
+      call xin%get('hocn', field)
+      call geom%thickness2depth(field%val, xout%fields(i)%val)
 
     case ('distance_from_coast')
       xout%fields(i)%val(:,:,1) = real(geom%distance_from_coast, kind=kind_real)
