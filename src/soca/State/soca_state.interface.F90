@@ -153,7 +153,6 @@ subroutine soca_state_read_file_c(c_key_fld, c_conf, c_dt) bind(c,name='soca_sta
 
     call soca_state_registry%get(c_key_fld,fld)
     call c_f_datetime(c_dt, fdate)
-
     call fld%read(fckit_configuration(c_conf), fdate)
 
 end subroutine soca_state_read_file_c
