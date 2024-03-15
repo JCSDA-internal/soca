@@ -108,7 +108,7 @@ variational:
           type: incr
 
 output:
-  datadir: data_generated/3dvar_diffmlb
+  datadir: data_output/
   exp: 3dvar_diffmlb
   type: an
 
