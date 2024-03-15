@@ -669,8 +669,7 @@ if( ${daml_FOUND} )
   soca_add_test( NAME 3dvar_diffmlb
                  EXE  soca_var.x
                  TEST_DEPENDS test_soca_gridgen
-                              test_soca_parameters_diffusion_hz
-                              test_soca_parameters_diffusion_vt)
+                              test_soca_parameters_diffusion )
 endif()
 
 ## TODO(travis) fix the lowres grid dx,dy so that I can init the
