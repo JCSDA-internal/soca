@@ -17,9 +17,6 @@ set( soca_test_input
   testinput/3dhyb_diffusion.yml
   testinput/3dhyb.yml
   testinput/3dhybfgat.yml
-  testinput/3dvar_diffusion.yml
-  testinput/3dvar_diffmlb.yml
-  testinput/3dvar_godas.yml
   testinput/3dvar_nicas.yml
   testinput/3dvar_single_ob.yml
   testinput/3dvar_zero_ob.yml
