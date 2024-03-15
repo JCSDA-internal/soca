@@ -74,7 +74,7 @@ cost function:
         obsdataout:
           engine:
             type: H5File
-            obsfile: data_generated/3dvar_diffmlb/icec.3dvar_diffmlb.nc
+            obsfile: data_output/icec.3dvar_diffmlb.nc
         obsdatain:
           engine:
             type: H5File
