@@ -118,7 +118,7 @@ final:
   increment:
     output:
       state component:
-        datadir: data_generated/3dvar_diffmlb
+        datadir: data_output/
         date: *bkg_date
         exp: 3dvar_diffmlb
         type: incr
