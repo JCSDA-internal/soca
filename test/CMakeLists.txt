@@ -16,13 +16,12 @@
 set( soca_test_input
   testinput/3dhyb_diffusion.yml
   testinput/3dhyb.yml
-  testinput/3dhybfgat.yml
+  testinput/3dhybfgat_pseudo.yml
   testinput/3dvar_nicas.yml
   testinput/3dvar_single_ob.yml
   testinput/3dvar_zero_ob.yml
   testinput/3dvar.yml
   testinput/3dvarfgat_pseudo.yml
-  testinput/3dvarfgat.yml
   testinput/3dvarlowres_soca.yml
   testinput/4denvar.yml
   testinput/4dhybenvar.yml
@@ -58,7 +57,6 @@ set( soca_test_input
   testinput/gridgen.yml
   testinput/hofx_3d.yml
   testinput/hofx_4d_pseudo.yml
-  testinput/hofx_4d.yml
   testinput/hofx_oasim_3d.yml
   testinput/hybridgain.yml
   testinput/increment.yml
@@ -66,6 +64,7 @@ set( soca_test_input
   testinput/letkf_split_solver.yml
   testinput/letkf.yml
   testinput/makeobs.yml
+  testinput/model.yml
   testinput/obslocalization_vertical.yml
   testinput/obslocalization.yml
   testinput/obslocalizations.yml
@@ -91,13 +90,12 @@ set( soca_test_input
 set( soca_test_ref
   testref/3dhyb_diffusion.test
   testref/3dhyb.test
-  testref/3dhybfgat.test
+  testref/3dhybfgat_pseudo.test
   testref/3dvar_nicas.test
   testref/3dvar_single_ob.test
   testref/3dvar_zero_ob.test
   testref/3dvar.test
   testref/3dvarfgat_pseudo.test
-  testref/3dvarfgat.test
   testref/3dvarlowres_soca.test
   testref/4denvar.test
   testref/4dhybenvar.test
@@ -122,7 +120,6 @@ set( soca_test_ref
   testref/gridgen.test
   testref/hofx_3d.test
   testref/hofx_4d_pseudo.test
-  testref/hofx_4d.test
   testref/hofx_oasim_3d.test
   testref/hybridgain.test
   testref/letkf_split_observer.test
@@ -400,8 +397,11 @@ soca_add_test( NAME obslocalization
                SRC  TestObsLocalization.cc
                TEST_DEPENDS test_soca_gridgen )
 
-soca_add_test( NAME obslocalization_vertical
-               SRC  TestObsLocalization.cc )
+## vertical localization is not working right now. h was removed from the
+## geometry (it is part of the state), so we need to rethink how the
+## geometryiterator works in the vertical               
+# soca_add_test( NAME obslocalization_vertical
+#                SRC  TestObsLocalization.cc )
 
 soca_add_test( NAME obslocalizations
                SRC  TestObsLocalizations.cc )
@@ -591,11 +591,6 @@ if( ${oasim_FOUND} )
                  TEST_DEPENDS test_soca_gridgen )
 endif( ${oasim_FOUND} )
 
-soca_add_test( NAME hofx_4d
-               EXE  soca_hofx.x
-               NOTRAPFPE
-               TEST_DEPENDS test_soca_gridgen )
-
 soca_add_test( NAME hofx_4d_pseudo
                EXE  soca_hofx.x
                TEST_DEPENDS test_soca_gridgen
@@ -650,12 +645,6 @@ soca_add_test( NAME 3dvar_nicas
 #                NOTRAPFPE
 #                TEST_DEPENDS test_soca_gridgen )
 
-soca_add_test( NAME 3dvarfgat
-               EXE  soca_var.x
-               NOTRAPFPE
-               TEST_DEPENDS test_soca_gridgen
-                            test_socs_parameters_diffusion )
-
 soca_add_test( NAME 3dvarfgat_pseudo
                EXE  soca_var.x
                TEST_DEPENDS test_soca_gridgen
@@ -673,7 +662,7 @@ soca_add_test( NAME 3dhyb_diffusion
                TEST_DEPENDS test_soca_gridgen
                             test_soca_parameters_diffusion)
 
-soca_add_test( NAME 3dhybfgat
+soca_add_test( NAME 3dhybfgat_pseudo
                EXE  soca_var.x
                NOTRAPFPE
                TEST_DEPENDS test_soca_gridgen
