@@ -300,7 +300,6 @@ function(soca_add_test)
                       TEST_DEPENDS ${ARG_TEST_DEPENDS})
   elseif ( ARG_SCRIPT )
     # running a test specific script
-    message(${CMAKE_CURRENT_SOURCE_DIR}/${ARG_SCRIPT})
     ecbuild_add_test( TARGET  test_soca_${ARG_NAME}
                       COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/${ARG_SCRIPT}
                       WORKING_DIRECTORY ${WORKDIR}
