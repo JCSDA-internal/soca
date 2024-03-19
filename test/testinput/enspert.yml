@@ -82,7 +82,7 @@ background error:
 
 members: 5
 perturbed variables: *soca_vars
-forecast length: PT6H
+forecast length: PT0H
 
 output:
  frequency: PT6H

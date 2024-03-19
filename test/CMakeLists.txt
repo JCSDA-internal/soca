@@ -114,8 +114,6 @@ set( soca_test_ref
   testref/enspert.test
   testref/ensrecenter.test
   testref/forecast_identity.test
-  testref/forecast_mom6_bgc.test
-  testref/forecast_mom6.test
   testref/forecast_pseudo.test
   testref/gridgen.test
   testref/hofx_3d.test
@@ -197,9 +195,10 @@ set( SOCA_TESTS_VALGRIND OFF CACHE BOOL
 
 #-------------------------------------------------------------------------------
 # The following is a wrapper to simplify the generation of tests.
-# There are two types of tests:
+# There are three types of tests:
 #  1) soca executables (EXE must be given)
 #  2) interface tests  (SRC must be given)
+#  3) a test script    (SCRIPT must be given)
 # Soca executables by default will also run a second step where the output test
 # log stream results are compared with reference values. The interface tests
 # do not do this.
@@ -219,7 +218,7 @@ function(soca_add_test)
   # parse the passed arguments
   set(prefix     ARG)
   set(novals     NOTRAPFPE NOVALGRIND)
-  set(singlevals NAME EXE SRC CFG MPI)
+  set(singlevals NAME EXE SRC SCRIPT CFG MPI)
   set(multivals  TEST_DEPENDS)
   cmake_parse_arguments(${prefix}
                         "${novals}" "${singlevals}" "${multivals}"
@@ -250,6 +249,8 @@ function(soca_add_test)
   endif()
 
   # setup working directory
+  # TODO, most of these are not needed for most tests, now that the MOM6
+  # model has been mostly removed
   set( WORKDIR ${CMAKE_CURRENT_BINARY_DIR}/test_workdir/${ARG_NAME})
   file( MAKE_DIRECTORY ${WORKDIR} )
   foreach(DIRNAME data_generated data_static testinput testoutput testref)
@@ -263,6 +264,7 @@ function(soca_add_test)
       ${WORKDIR}/data_static/workdir/${FILENAME}
       ${WORKDIR}/${FILENAME} )
   endforeach()
+  file(WRITE ${WORKDIR}/MOM_override "")
   
   # setup output directory
   file( MAKE_DIRECTORY ${WORKDIR}/data_generated/${ARG_NAME})
@@ -284,7 +286,7 @@ function(soca_add_test)
                       TEST_DEPENDS ${ARG_TEST_DEPENDS})
     set( EXE ./test_soca_${ARG_NAME})
 
-  else()
+  elseif ( ARG_EXE)
     # running a soca executable.
     set( EXE ${CMAKE_BINARY_DIR}/bin/${ARG_EXE})
     ecbuild_add_test( TARGET  test_soca_${ARG_NAME}
@@ -296,8 +298,16 @@ function(soca_add_test)
                               ${TRAPFPE_ENV}
                       DEPENDS ${ARG_EXE}
                       TEST_DEPENDS ${ARG_TEST_DEPENDS})
-
-
+  elseif ( ARG_SCRIPT )
+    # running a test specific script
+    message(${CMAKE_CURRENT_SOURCE_DIR}/${ARG_SCRIPT})
+    ecbuild_add_test( TARGET  test_soca_${ARG_NAME}
+                      COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/${ARG_SCRIPT}
+                      WORKING_DIRECTORY ${WORKDIR}
+                      ARGS ${CONFIG_FILE}
+                      ENVIRONMENT "BIN_DIR=${CMAKE_BINARY_DIR}/bin"         
+                      TEST_DEPENDS ${ARG_TEST_DEPENDS}                      
+                      )
   endif()
 
   # optional valgrind tests
@@ -416,25 +426,21 @@ soca_add_test( NAME obslocalizations
 # model forecasts
 #---------------------------------------------------------------------------------------------------
 
-# Test of read/write restart for MOM6&ICE, model advance = Id
 soca_add_test( NAME forecast_identity
                EXE  soca_forecast.x
-              #  NOTRAPFPE
                TEST_DEPENDS test_soca_gridgen)
 
-# Test mom6 forecast
+# Test mom6solo forecast
 soca_add_test( NAME forecast_mom6
-               EXE  soca_forecast.x
-               NOTRAPFPE
-               TEST_DEPENDS test_soca_gridgen )
+               SCRIPT mom6solo.py )        
 
-# Test mom6_bgc forecast (optional)
-if ( ENABLE_OCEAN_BGC )
-soca_add_test( NAME forecast_mom6_bgc
-               EXE  soca_forecast.x
-               NOTRAPFPE
-               TEST_DEPENDS test_soca_gridgen )
-endif()
+# # Test mom6_bgc forecast (optional)
+# if ( ENABLE_OCEAN_BGC )
+# soca_add_test( NAME forecast_mom6_bgc
+#                EXE  soca_forecast.x
+#                NOTRAPFPE
+#                TEST_DEPENDS test_soca_gridgen )
+# endif()
 
 # Test PseudoModel forecast
 soca_add_test( NAME forecast_pseudo
@@ -442,19 +448,15 @@ soca_add_test( NAME forecast_pseudo
                TEST_DEPENDS test_soca_gridgen
                             test_soca_forecast_mom6 )
 
+# create ensemble forecast from mom6solo
 soca_add_test( NAME forecast_mom6_ens1
-               EXE  mom6solo
-               NOTRAPFPE
-               TEST_DEPENDS test_soca_gridgen )
-soca_add_test( NAME forecast_mom6_ens2
-               EXE  mom6solo
-               NOTRAPFPE
-               TEST_DEPENDS test_soca_gridgen )
-soca_add_test( NAME forecast_mom6_ens3
-               EXE  mom6solo
-               NOTRAPFPE
-               TEST_DEPENDS test_soca_gridgen )
+               SCRIPT mom6solo.py )
 
+soca_add_test( NAME forecast_mom6_ens2
+               SCRIPT mom6solo.py )
+
+soca_add_test( NAME forecast_mom6_ens3
+               SCRIPT mom6solo.py )     
 
 
 # background error
