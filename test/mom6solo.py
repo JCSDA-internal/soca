@@ -8,6 +8,10 @@ import re
 import pandas as pd
 from datetime import datetime, timedelta
 
+# TODO put this back when updating MOM6
+MOM6EXE = 'mom6.x'
+#MOM6EXE = 'mom6solo'
+
 # get input parameters
 binDir = os.environ['BIN_DIR']
 with open(sys.argv[1], 'r') as config_file:
@@ -92,7 +96,7 @@ with open('RESTART_IN/ocean_solo.res', 'w') as file:
 #----------------------------------------------------------------------------------------
 # run executable
 #----------------------------------------------------------------------------------------
-exePath = binDir + '/mom6solo'
+exePath = binDir + '/' + MOM6EXE
 try:
   # Capture standard output and error
   result = subprocess.run(exePath, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)

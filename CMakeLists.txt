@@ -31,10 +31,8 @@ find_package( vader  1.6.0    REQUIRED)
 find_package( saber  1.9.0    REQUIRED)
 find_package( ioda   2.8.0    REQUIRED)
 find_package( ufo    1.9.0    REQUIRED)
-
-find_package( fms    2020.4.0 REQUIRED)
-#find_package( fms    2023.3.0 REQUIRED COMPONENTS R4 R8)
-#add_library(  fms ALIAS FMS::fms_r8)
+find_package( fms    2020.4.0 REQUIRED) # NOTE: remove this when we update to latest MOM6
+find_package( mom6   2020.4.0 REQUIRED) # NOTE: remove this when we update to latest MOM6
 
 # Optionally look for icepack
 find_package( icepack 1.2.0 QUIET)
@@ -45,7 +43,10 @@ include_directories( ${NETCDF_INCLUDE_DIRS} )
 # Model
 # TODO update to allow switching between mom6solo (here) and UFS (external)
 ################################################################################
-add_subdirectory(mom6)
+# # NOTE enable these when we're ready to update to latest MOM6
+# find_package( fms    2023.3.0 REQUIRED COMPONENTS R4 R8)
+# add_library(  fms ALIAS FMS::fms_r8)
+# add_subdirectory(mom6)
 
 ################################################################################
 # Sources

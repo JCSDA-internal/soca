@@ -12,7 +12,6 @@ use oops_variables_mod, only: oops_variables
 use random_mod, only: normal_distribution
 
 ! soca modules
-use soca_convert_state_mod, only : soca_convertstate_type
 use soca_fields_mod, only : soca_field, soca_fields
 use soca_geom_iter_mod, only : soca_geom_iter
 use soca_geom_mod, only : soca_geom
