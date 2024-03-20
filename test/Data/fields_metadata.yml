@@ -236,7 +236,7 @@
   getval name: Particulate_inorganic_carbon
   #constant value: 2.1
   io file: bio
-  io name: DIC
+  io name: PIC
 
 - name: dis_c
   levels: full_ocn
