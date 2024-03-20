@@ -243,7 +243,7 @@
   getval name: colored_dissolved_organic_carbon
   #constant value: 3.1
   io file: bio
-  io name: DOC
+  io name: CDC
 
 - name: diatom
   levels: full_ocn
