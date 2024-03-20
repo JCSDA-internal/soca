@@ -34,13 +34,12 @@ with nc.Dataset(inputFileName, 'r') as ncdIn, nc.Dataset(outputFileName, 'w', fo
   longitudes.units = 'degrees_east'
   longitudes.standard_name = 'longitude'
 
-  # use KD tree to find mapping between src and dst points
-  srcLon = ncdIn.variables['lon'][:]
-  srcLat = ncdIn.variables['lat'][:]
-  srcPoints = np.column_stack((srcLat.flatten(), srcLon.flatten()))
-  kdTree = KDTree(srcPoints)
-
-  _, mapping = kdTree.query(dstPoints)
+  # # use KD tree to find mapping between src and dst points
+  # srcLon = ncdIn.variables['lon'][:]
+  # srcLat = ncdIn.variables['lat'][:]
+  # srcPoints = np.column_stack((srcLat.flatten(), srcLon.flatten()))
+  # kdTree = KDTree(srcPoints)
+  # _, mapping = kdTree.query(dstPoints)
 
   # find variables to process
   allVars = [name for name, var in ncdIn.variables.items() if len(var.dimensions) == 2]
@@ -50,4 +49,5 @@ with nc.Dataset(inputFileName, 'r') as ncdIn, nc.Dataset(outputFileName, 'w', fo
     zName = f'nz_{v}'
     ncdOut.createDimension(zName, nz)
     valDst = ncdOut.createVariable(v, valSrc.datatype, [zName,'latitude','longitude'])
-    valDst[:] = valSrc[mapping, :].reshape((ny,nx,nz)).transpose(2,0,1)
+    #valDst[:] = valSrc[mapping, :].reshape((ny,nx,nz)).transpose(2,0,1)
+    valDst[:] = valSrc[:].reshape((ny,nx,nz)).transpose(2,0,1)

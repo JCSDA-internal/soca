@@ -9,8 +9,7 @@
 
 #include <string>
 
-#include "atlas/field.h"
-
+#include "oops/base/FieldSets.h"
 #include "oops/base/GeometryData.h"
 #include "oops/base/Variables.h"
 #include "oops/util/parameters/NumericConstraints.h"
@@ -102,8 +101,7 @@ class ParametricOceanStdDev : public saber::SaberOuterBlockBase {
 
   const oops::GeometryData & innerGeometryData_;
   oops::Variables innerVars_;
-
-  atlas::FieldSet bkgErr_;
+  oops::FieldSet3D bkgErr_;
 };
 
 }  // namespace soca
