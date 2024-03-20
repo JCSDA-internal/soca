@@ -20,7 +20,7 @@ background error:
   saber outer blocks:
   - saber block name: ParametricOceanStdDev
     output:
-     filepath: data_output/parametricStdDev.nc
+     filepath: data_output/parametricStdDev
     temperature:
       sst file: data_static/godas_sst_bgerr.nc
       dz: 20.0
