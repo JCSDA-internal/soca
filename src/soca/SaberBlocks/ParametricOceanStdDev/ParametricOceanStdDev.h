@@ -66,9 +66,9 @@ class ParametricOceanStdDevParameters : public saber::SaberBlockParametersBase {
   OOPS_CONCRETE_PARAMETERS(ParametricOceanStdDevParameters, saber::SaberBlockParametersBase)
  public:
   oops::Variables mandatoryActiveVars() const override {return oops::Variables();}
-  oops::RequiredParameter<ParametricOceanStdDevTocn> tocn{"tocn", this};
-  oops::RequiredParameter<ParametricOceanStdDevBound> socn{"socn", this};
-  oops::RequiredParameter<ParametricOceanStdDevSsh> ssh{"ssh", this};
+  oops::RequiredParameter<ParametricOceanStdDevTocn> tocn{"temperature", this};
+  oops::RequiredParameter<ParametricOceanStdDevBound> socn{"unbalanced salinity", this};
+  oops::RequiredParameter<ParametricOceanStdDevSsh> ssh{"unbalanced ssh", this};
   oops::OptionalParameter<std::map<std::string, ParametricOceanStdDevOther> > others{"others", this};
   oops::OptionalParameter<eckit::LocalConfiguration> output{"output", this};
 };

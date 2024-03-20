@@ -35,6 +35,7 @@ set( soca_test_input
   testinput/diffstates.yml
   testinput/dirac_diffusion.yml
   testinput/dirac_mlbalance.yml
+  testinput/dirac_parametric_ocean_stddev.yml
   testinput/dirac_soca_cor_nicas_scales.yml
   testinput/dirac_soca_cov.yml
   testinput/dirac_socahyb_cov.yml
@@ -577,6 +578,10 @@ soca_add_test( NAME dirac_diffusion
                             test_soca_parameters_diffusion )
 
 soca_add_test( NAME dirac_mlbalance
+               EXE soca_error_covariance_toolbox.x
+               TEST_DEPENDS test_soca_gridgen )
+
+soca_add_test( NAME dirac_parametric_ocean_stddev
                EXE soca_error_covariance_toolbox.x
                TEST_DEPENDS test_soca_gridgen )
 
