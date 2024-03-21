@@ -1547,7 +1547,8 @@ end function soca_genfilename
 ! ------------------------------------------------------------------------------
 !> Get the fields listed in vars, used by the interpolation.
 !!
-!! The fields that are returned have halos (minus the invalid and duplicate halo points)
+!! The fields that are returned have halos (minus the invalid and duplicate halo points),
+!! and field values at these halo points are set to 0.
 subroutine soca_fields_to_fieldset(self, vars, afieldset)
   class(soca_fields),   intent(in)    :: self
   type(oops_variables), intent(in)    :: vars
@@ -1578,11 +1579,13 @@ subroutine soca_fields_to_fieldset(self, vars, afieldset)
 
     ! create and fill field
     call afield%data(real_ptr)
+    real_ptr = 0.0_kind_real  ! set all points to zero, overwrite owned values below
     do j=self%geom%jsc,self%geom%jec
       do i=self%geom%isc,self%geom%iec
         real_ptr(:, self%geom%atlas_ij2idx(i,j)) = field%val(i,j,:)
       end do
     end do
+    call afield%set_dirty(.true.)  ! indicate halo values are out-of-date
 
     call afield%final()
   end do
@@ -1620,7 +1623,7 @@ subroutine soca_fields_from_fieldset(self, vars, afieldset)
             field%val(i,j,:) = real_ptr(:, self%geom%atlas_ij2idx(i,j))
           end do
         end do
-        
+
         call afield%final()
 
         ! Set flag

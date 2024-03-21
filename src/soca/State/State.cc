@@ -270,7 +270,6 @@ namespace soca {
 
   void State::toFieldSet(atlas::FieldSet &fset) const {
     soca_state_to_fieldset_f90(toFortran(), vars_, fset.get());
-    fset.haloExchange();
   }
 
   // -----------------------------------------------------------------------------
