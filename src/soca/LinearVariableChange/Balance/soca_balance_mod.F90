@@ -18,6 +18,8 @@ use soca_ksshts_mod, only: soca_ksshts, soca_steric_jacobian
 use soca_kst_mod, only: soca_kst, soca_soft_jacobian
 use soca_state_mod, only: soca_state
 
+use signal_trap_mod, only: suspend_trap_sigfpe_f90, resume_trap_sigfpe_f90
+
 implicit none
 private
 
@@ -186,7 +188,9 @@ subroutine soca_balance_setup(self, f_conf, traj, geom)
     if ( f_conf%has("dcdt") ) then
       call f_conf%get_or_die("dcdt.filename", filename)
       call f_conf%get_or_die("dcdt.name", kct_name)
+      call suspend_trap_sigfpe_f90()
       call fms_io_init()
+      call resume_trap_sigfpe_f90()
       call read_data(filename, kct_name, kct, domain=geom%Domain%mpp_domain)
       call fms_io_exit()
     end if

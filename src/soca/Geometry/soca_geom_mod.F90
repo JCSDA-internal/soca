@@ -31,6 +31,7 @@ use soca_fields_metadata_mod, only : soca_fields_metadata
 use soca_mom6, only: soca_mom6_config, soca_mom6_init, soca_geomdomain_init
 use soca_utils, only: write2pe, soca_remap_idw
 
+use signal_trap_mod, only: suspend_trap_sigfpe_f90, resume_trap_sigfpe_f90
 
 implicit none
 private
@@ -637,7 +638,10 @@ subroutine soca_geom_write(self)
   type(restart_file_type) :: geom_restart
 
   ! Save global domain
+  call suspend_trap_sigfpe_f90()
   call fms_io_init()
+  call resume_trap_sigfpe_f90()
+
   idr_geom = register_restart_field(geom_restart, &
                                    &self%geom_grid_file, &
                                    &'lonh', &
@@ -784,7 +788,10 @@ subroutine soca_geom_read(self)
   integer :: idr_geom
   type(restart_file_type) :: geom_restart
 
+  call suspend_trap_sigfpe_f90()
   call fms_io_init()
+  call resume_trap_sigfpe_f90()
+
   idr_geom = register_restart_field(geom_restart, &
                                    &self%geom_grid_file, &
                                    &'lonh', &

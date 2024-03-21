@@ -238,6 +238,10 @@ function(soca_add_test)
   else()
     set ( TRAPFPE_ENV "OOPS_TRAPFPE=1")
   endif()
+  if (HDF5_VERSION VERSION_GREATER_EQUAL 1.14.3)
+    message(WARN " Turning off FPE trapping in soca for hdf5-${HDF5_VERSION}")
+    set ( TRAPFPE_ENV "OOPS_TRAPFPE=0")
+  endif()
 
   if ( NOT SOCA_TESTS_VALGRIND )
     set ( ARG_NOVALGRIND TRUE)
@@ -299,8 +303,7 @@ function(soca_add_test)
                       COMMAND ${EXE}
                       WORKING_DIRECTORY ${WORKDIR}
                       ARGS ${CONFIG_FILE}
-                      ENVIRONMENT
-                              ${TRAPFPE_ENV}
+                      ENVIRONMENT ${TRAPFPE_ENV}
                       DEPENDS ${ARG_EXE}
                       TEST_DEPENDS ${ARG_TEST_DEPENDS})
 
