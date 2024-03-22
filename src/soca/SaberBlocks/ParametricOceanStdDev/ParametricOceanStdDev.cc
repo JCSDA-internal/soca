@@ -8,6 +8,7 @@
 #include <algorithm>
 
 #include "soca/SaberBlocks/ParametricOceanStdDev/ParametricOceanStdDev.h"
+#include "soca/SaberBlocks/ExplicitDiffusion/ExplicitDiffusion.h"
 
 #include "saber/blocks/SaberOuterBlockBase.h"
 
@@ -31,6 +32,7 @@ ParametricOceanStdDev::ParametricOceanStdDev(
     bkgErr_(xb.validTime(),xb.commGeom())
 {
   const int levels = xb["hocn"].levels();
+  const double MIN_LAYER_THICKNESS = 0.1;
 
   auto v_lonlat = atlas::array::make_view<double, 2>(innerGeometryData_.functionSpace().lonlat());
   auto v_mask = atlas::array::make_view<double, 2>(innerGeometryData_.getField("interp_mask"));
@@ -39,6 +41,19 @@ ParametricOceanStdDev::ParametricOceanStdDev(
   auto v_depth = atlas::array::make_view<double, 2>(xb["layer_depth"]);
 
 
+  //*************************************************************************************
+  // initialize the diffusion operator to use as a smoother
+  // NOTE: this is really abusive programming... using a saber central block INSIDE
+  // a saber outer block?!?! This will be cleaned up when diffusion is generalized
+  //*************************************************************************************
+  std::unique_ptr<ExplicitDiffusion> smoother;
+  if (params.smoother.value() != boost::none) {
+    ExplicitDiffusion::Parameters_ smootherConfig;
+    smootherConfig.validateAndDeserialize(*params.smoother.value());
+    smoother.reset(new ExplicitDiffusion(innerGeometryData_, innerVars_, eckit::LocalConfiguration(), smootherConfig, xb, fg ));
+    smoother->read();
+  }
+  
   //*************************************************************************************
   // calculate T background error
   //*************************************************************************************
@@ -57,23 +72,26 @@ ParametricOceanStdDev::ParametricOceanStdDev(
     v_tocn_err.assign(0.0);
     
     // loop over all points
-    std::vector<double> dtdz(levels);
+    std::vector<double> dtdz(levels, 0.0);
     for (size_t i = 0; i < tocn_err.shape(0); i++) {
       // skip land
       if (v_mask(i, 0) == 0.0) continue;
       
       // calculate dt/dz
-      // TODO this breaks with the thin layers, need to impose a min thickness
+      dtdz[0] = 2.0 * (v_tocn(i,1) - v_tocn(i,0)) / (v_hocn(i,0) + v_hocn(i,1));
       for (size_t z = 1; z < levels-1; z++) {
-        dtdz[z] = (v_tocn(i, z+1) - v_tocn(i, z-1)) / 
-                  (v_hocn(i,z) + 0.5 * (v_hocn(i, z+1) + v_hocn(i, z-1)));
+        dtdz[z] = (v_tocn(i, z+1) - v_tocn(i, z-1)) /
+                  (v_hocn(i,z) + 0.5*(v_hocn(i, z+1) + v_hocn(i, z-1)));
+        
+        // ignore dt/dz where layers are too thin
+        if(v_hocn(i,z) <= MIN_LAYER_THICKNESS) dtdz[z] = 0.0;
       }
-      dtdz[0] = dtdz[1];
-      dtdz[levels-1] = dtdz[levels-2];
+      dtdz[levels-1] = 0;
 
       // calculate value as function of dt/dz, efolding scale, and min/max
       for (size_t z = 0; z < levels; z++) {
-        // step 2: calc value from dT/dz
+        
+        // step 1: calc value from dT/dz        
         auto val = abs(params.tocn.value().dz * dtdz[z]);
 
         // step 2: calc a minimum from the efolding scale, and min SST value
@@ -83,14 +101,13 @@ ParametricOceanStdDev::ParametricOceanStdDev(
         // step 3: min/max
         val = std::clamp(val, localMin,  maxVal);
 
-        // step 4: smoothing
-        // TODO
-
         // done
         v_tocn_err(i, z) = val;
       }
     }
   }
+  if (smoother)
+    smoother->multiply(bkgErr_);
 
   //*************************************************************************************
   // calculate unbalanced S background error

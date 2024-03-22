@@ -34,6 +34,21 @@ background error:
       phi_ex: 20.0
       min: 0.0
       max: 0.1
+    smoother:
+      saber block name: EXPLICIT_DIFFUSION
+      active variables: [tocn]
+      geometry: *geom
+      group mapping:
+      - name: group1
+        variables: [tocn]
+      read:
+        groups:
+        - name: group1
+          normalize: false
+          horizontal:
+            filename: data_generated/parameters_diffusion/hz_smaller.nc
+          vertical:
+            filename: data_generated/parameters_diffusion/vt_5lvls.nc
 
 dirac:
   ixdir: [1, 17, 51, 31, 51, 63, 81, 14, 16, 43]
