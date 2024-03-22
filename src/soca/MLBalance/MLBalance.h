@@ -48,6 +48,10 @@ class MLBalance : public saber::SaberOuterBlockBase {
   void multiply(oops::FieldSet3D &) const override;
   void multiplyAD(oops::FieldSet3D &) const override;
 
+  void setupJac(const oops::FieldSet3D &,
+                const eckit::mpi::Comm &,
+                const eckit::Configuration &);
+
  private:
   void print(std::ostream &) const override;
   oops::Variables activeVars_;
