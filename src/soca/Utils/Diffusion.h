@@ -42,10 +42,9 @@ class Diffusion {
 
   // Stuff for storing the calculated edge geometry
   struct EdgeGeom {
-    bool valid=false;
     size_t nodeA, nodeB;
-    double edgeLength, sideLength;
-    double dsde; // length of grid side / length of mesh edge
+    double edgeLength;
+    double lengthRatio; // length of grid side / length of mesh edge
   }; 
   const std::vector<EdgeGeom> createEdgeGeom(const oops::GeometryData &) const;
   const std::vector<EdgeGeom> edgeGeom_;
