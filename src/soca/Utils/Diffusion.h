@@ -8,6 +8,7 @@
 #pragma once
 
 #include <memory>
+#include <vector>
 
 #include "oops/base/GeometryData.h"
 
@@ -27,9 +28,9 @@ namespace soca {
 
 class Diffusion {
  public:
-    Diffusion( const oops::GeometryData &, 
-               const atlas::Field & hzScales,
-               const atlas::Field & vtScales);
+    Diffusion(const oops::GeometryData &,
+              const atlas::Field & hzScales,
+              const atlas::Field & vtScales);
 
     void multiply(oops::FieldSet3D &) const;
     // void multiplyTL(oops::FieldSet3D &) const {}
@@ -38,18 +39,18 @@ class Diffusion {
  private:
   // stuff for preparing and storing the mesh
   const std::unique_ptr<const atlas::Mesh> mesh_;
-  const std::unique_ptr<const atlas::Mesh> createMesh(const oops::GeometryData &) const;  
+  const std::unique_ptr<const atlas::Mesh> createMesh(const oops::GeometryData &) const;
 
   // derived grid geometry
   atlas::Field inv_area_;
   struct EdgeGeom {
     size_t nodeA, nodeB;
     double edgeLength;
-    double lengthRatio; // length of grid side / length of mesh edge
-  }; 
+    double lengthRatio;  // length of grid side / length of mesh edge
+  };
   const std::vector<EdgeGeom> edgeGeom_;
-  const std::vector<EdgeGeom> createEdgeGeom(const oops::GeometryData &) const;  
-  
+  const std::vector<EdgeGeom> createEdgeGeom(const oops::GeometryData &) const;
+
   // horizontal diffusion parameters
   int niterHz_;
   std::vector<std::vector<double> > khdt_;
@@ -63,9 +64,8 @@ class Diffusion {
   void multiplyHzAD(atlas::Field &) const;
   void multiplyVtTL(atlas::Field &) const;
   // void multiplyVtAD(oops::FieldSet3D &) const;
-  
 };
 
 // --------------------------------------------------------------------------------------
 
-}
+}  // namespace soca
