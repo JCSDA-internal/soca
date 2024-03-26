@@ -1,4 +1,4 @@
-mom6_input_nml: data_static/72x35x25/input.nml
+mom6_input_nml: data_static/72x35x25/input_mom6solo.nml
 forecast length: PT24H
 initial condition:
   date: 2018-04-15T00:00:00Z
