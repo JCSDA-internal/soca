@@ -1,3 +1,10 @@
+/*
+ * (C) Copyright 2024-2024 UCAR
+ *
+ * This software is licensed under the terms of the Apache Licence Version 2.0
+ * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+ */
+
 #include "atlas/mesh/actions/BuildEdges.h"
 #include "atlas/mesh/actions/BuildCellCentres.h"
 #include "atlas/mesh/actions/BuildXYZField.h"
@@ -15,45 +22,57 @@ Diffusion::Diffusion(const oops::GeometryData & geometryData, const atlas::Field
   edgeGeom_(createEdgeGeom(geometryData)),
   edgeParam_(edgeGeom_.size())
 {
-  
-  // calc hfac (1/area)
+  // calculate some other grid based constants
+  //  inv_area (1/area)
   const atlas::FunctionSpace & fs = geometryData.functionSpace();
-  hfac_ = fs.createField<double>();
-  auto v_hfac = atlas::array::make_view<double, 1>(hfac_);
+  inv_area_ = fs.createField<double>();
+  auto v_inv_area = atlas::array::make_view<double, 1>(inv_area_);
   auto area = geometryData.fieldSet().field("area");  
   auto v_area = atlas::array::make_view<double, 2>(area);
   for(size_t i = 0; i < fs.size(); i++){
-    v_hfac(i) = v_area(i,0) < 1e-6 ? 0.0 : 1.0 / v_area(i,0);
+    v_inv_area(i) = v_area(i,0) < 1e-6 ? 0.0 : 1.0 / v_area(i,0);
   }
 
-  // TODO clean this up
-  // calculate the actual min number of iterations
-  auto v_scales = atlas::array::make_view<double, 1>(scales);
+  // calculate the actual min number of iterations, and the diffusion coefficient
+  auto v_scales = atlas::array::make_view<double, 2>(scales);
   double minItr = 0;
   for(size_t e = 0; e < edgeGeom_.size(); e++){
-    if (v_scales(edgeGeom_[e].nodeA) != 0.0 && v_scales(edgeGeom_[e].nodeB) != 0.0) {
-      double s = (v_scales(edgeGeom_[e].nodeA) + v_scales(edgeGeom_[e].nodeB)) / 2.0;
-      double el = edgeGeom_[e].edgeLength;
-      // TODO check my math on this, original had a 2.0 * ... but I think this is right
-      minItr = std::max(1.0 * s*s * (1.0 / (el*el)), minItr);
+    edgeParam_[e].KhDt.reserve(scales.shape(1));
+
+    for (size_t level = 0; level < scales.shape(1); level++) {
+      if (v_scales(edgeGeom_[e].nodeA, level) == 0.0 ||
+          v_scales(edgeGeom_[e].nodeB, level) == 0.0) {
+        // one of the nodes must be masked out, dont diffuse with it
+        edgeParam_[e].KhDt.push_back(0.0);
+      } else {
+        // calculate diffusion coefficient (not taking into account the number of
+        // iterations.. yet)
+        double s = (v_scales(edgeGeom_[e].nodeA, level) + 
+                    v_scales(edgeGeom_[e].nodeB, level)) / 2.0;
+        edgeParam_[e].KhDt.push_back(s * s);
+
+        // calculate the minimum number of iterations needed to be computationally stable
+        // on this PE
+        double el = edgeGeom_[e].edgeLength;
+        // TODO check my math on this, original had a 2.0 * ... but I think this is right
+        minItr = std::max(1.0 * s*s * (1.0 / (el*el)), minItr);
+      }
     }
   }
-  niter_ = round(minItr/2) * 2;  // make sure number of iterations is even
-  geometryData.comm().allReduceInPlace(niter_, eckit::mpi::Operation::MAX);
+  niterHz_ = round(minItr/2) * 2;  // make sure number of iterations is even
+  // get the global max number of iterations
+  geometryData.comm().allReduceInPlace(niterHz_, eckit::mpi::Operation::MAX);
     
-  // TODO do some error checking to make sure niter_ is not too big
-  std::cout << "DBG niter: "<<niter_<<std::endl;
+  // TODO do some error checking to make sure niterHz_ is not too big
+  std::cout << "DBG niter: "<<niterHz_<<std::endl;
 
-  // use scales to calculate KhDt
+  // adjust the above calculated diffusion coefficients by the final number of
+  // iterations
   for(size_t e = 0; e < edgeGeom_.size(); e++){
-    if (v_scales(edgeGeom_[e].nodeA) != 0.0 && v_scales(edgeGeom_[e].nodeB) != 0.0) {
-      double s = (v_scales(edgeGeom_[e].nodeA) + v_scales(edgeGeom_[e].nodeB)) / 2.0;
-      edgeParam_[e].KhDt = s * s / (2.0 * niter_);
-    } else {
-      edgeParam_[e].KhDt = 0.0;
+    for(size_t level=0; level < scales.shape(1); level++) {
+      edgeParam_[e].KhDt[level] *= 1.0 / (2.0 * niterHz_);
     }
   }
-
 }
 
 // --------------------------------------------------------------------------------------
@@ -130,7 +149,7 @@ const std::vector<Diffusion::EdgeGeom> Diffusion::createEdgeGeom(const oops::Geo
     //ASSERT(cellB >= 0); ASSERT(cellB < mesh_->cells().size());
     // NOTE there is something wrong with atlas returning a bad cell index if there should only be 1 cell    
     if(cellA >= mesh_->cells().size() || cellB >= mesh_->cells().size()) {
-      // TODO do thi correctly
+      // TODO do this correctly
       edgeGeom.lengthRatio = 1.0;
     } else {      
       const auto & centerA = atlas::Point3(centersView(cellA, 0),centersView(cellA, 1),centersView(cellA,2 ));
@@ -145,32 +164,48 @@ const std::vector<Diffusion::EdgeGeom> Diffusion::createEdgeGeom(const oops::Geo
 // --------------------------------------------------------------------------------------
 
 void Diffusion::multiply(oops::FieldSet3D &fset) const {  
-  const auto & node2edge = mesh_->nodes().edge_connectivity();
-  auto hfac = atlas::array::make_view<double, 1>(hfac_);
-
   for (atlas::Field field : fset) {
-    auto fieldVal = atlas::array::make_view<double, 2>(field);    
-    std::vector<double> flux(edgeGeom_.size(), 0.0);
+    multiplyHzAD(field);
+    multiplyHzTL(field);
+  }
+}
 
-    // TODO remove this
-    field.set_dirty(true);
+// --------------------------------------------------------------------------------------
+
+void Diffusion::multiplyHzTL(atlas::Field & field) const {
+  auto inv_area = atlas::array::make_view<double, 1>(inv_area_);
+  auto fieldVal = atlas::array::make_view<double, 2>(field);    
+  std::vector<double> flux(edgeGeom_.size(), 0.0);
+
+  // TODO remove this
+  field.set_dirty(true);
     
-    for(size_t itr=0; itr<niter_; itr++) {
-      field.haloExchange();
+  for(size_t itr = 0; itr < niterHz_/2; itr++) {
+    field.haloExchange();
 
+    for (size_t level = 0; level < field.shape(1); level++){
+      // TODO, also handle case where 2D scales are applied to 3D field??
+      // TODO, invert the order of loops? go over each edge first, then the 
+      // level within each edge?
+    
       // calculate diffusive flux at each edge
       for(size_t e = 0; e < edgeGeom_.size(); e++){
-        double dv = fieldVal(edgeGeom_[e].nodeA, 0) - fieldVal(edgeGeom_[e].nodeB, 0);
-        flux[e] = (edgeGeom_[e].lengthRatio * dv) * edgeParam_[e].KhDt;
+        double dv = fieldVal(edgeGeom_[e].nodeA, level) - fieldVal(edgeGeom_[e].nodeB, level);
+        flux[e] = (edgeGeom_[e].lengthRatio * dv) * edgeParam_[e].KhDt[level];
       }
 
       // time-step the diffusion terms
       for(size_t e = 0; e < edgeGeom_.size(); e++){
-        fieldVal(edgeGeom_[e].nodeA, 0) -= hfac(edgeGeom_[e].nodeA) * flux[e];
-        fieldVal(edgeGeom_[e].nodeB, 0) += hfac(edgeGeom_[e].nodeB) * flux[e];
+        fieldVal(edgeGeom_[e].nodeA, level) -= inv_area(edgeGeom_[e].nodeA) * flux[e];
+        fieldVal(edgeGeom_[e].nodeB, level) += inv_area(edgeGeom_[e].nodeB) * flux[e];
       }
-      field.set_dirty(true);
     }
-  } 
+    field.set_dirty(true);
+  }
+}
+
+// --------------------------------------------------------------------------------------
+void Diffusion::multiplyHzAD(atlas::Field & field) const {
+  ASSERT(1==2);
 }
 }

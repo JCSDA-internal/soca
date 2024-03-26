@@ -14,6 +14,7 @@
 // --------------------------------------------------------------------------------------
 // forward declarations
 namespace atlas {
+  class Field;
   class Mesh;
 }
 namespace oops {
@@ -33,8 +34,8 @@ class Diffusion {
     void multiplyAD(oops::FieldSet3D &) const {}
 
  private:
-  atlas::Field hfac_;
-  int niter_;
+  atlas::Field inv_area_;
+  int niterHz_;
 
   // stuff for preparing and storing the mesh
   const std::unique_ptr<const atlas::Mesh> createMesh(const oops::GeometryData &) const;
@@ -50,9 +51,14 @@ class Diffusion {
   const std::vector<EdgeGeom> edgeGeom_;
 
   struct EdgeParam {
-    double KhDt = 0.0; 
+    std::vector<double> KhDt; 
   };
   std::vector<EdgeParam> edgeParam_;
+
+  void multiplyHzTL(atlas::Field &) const;
+  void multiplyHzAD(atlas::Field &) const;
+  // void multiplyVtTL(oops::FieldSet3D &) const;
+  // void multiplyVtAD(oops::FieldSet3D &) const;
   
 };
 
