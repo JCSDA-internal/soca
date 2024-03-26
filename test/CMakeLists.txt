@@ -91,6 +91,7 @@ set( soca_test_ref
   testref/3dhyb_diffusion.test
   testref/3dhyb.test
   testref/3dhybfgat_pseudo.test
+  testref/3dvar_diffmlb.test
   testref/3dvar_nicas.test
   testref/3dvar_single_ob.test
   testref/3dvar_zero_ob.test
@@ -176,6 +177,15 @@ set( soca_install_data
   Data/godas_sst_bgerr.nc )
 install(FILES ${soca_install_data}
         DESTINATION ${INSTALL_DATA_DIR}/testdata/ )
+
+set( soca_install_mlbalance
+  Data/mlbalance/antarctic.pt
+  Data/mlbalance/normalization.antarctic.pt
+  Data/mlbalance/arctic.pt
+  Data/mlbalance/normalization.arctic.pt
+)
+install(FILES ${soca_install_mlbalance}
+        DESTINATION ${INSTALL_DATA_DIR}/testdata/mlbalance/ )
 
 #####################################################################
 
@@ -265,7 +275,7 @@ function(soca_add_test)
       ${WORKDIR}/${FILENAME} )
   endforeach()
   file(WRITE ${WORKDIR}/MOM_override "")
-  
+
   # setup output directory
   file( MAKE_DIRECTORY ${WORKDIR}/data_generated/${ARG_NAME})
   execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
@@ -570,9 +580,10 @@ soca_add_test( NAME dirac_diffusion
                TEST_DEPENDS test_soca_gridgen
                             test_soca_parameters_diffusion )
 
-soca_add_test( NAME dirac_mlbalance
-               EXE soca_error_covariance_toolbox.x
-               TEST_DEPENDS test_soca_gridgen )
+if( ${daml_FOUND} )
+  soca_add_test( NAME dirac_mlbalance
+                 EXE soca_error_covariance_toolbox.x)
+endif()
 
 # h(x) executables
 #---------------------------------------------------------------------------------------------------
@@ -639,7 +650,14 @@ soca_add_test( NAME 3dvar_nicas
                TEST_DEPENDS test_soca_parameters_bump_cor_nicas )
 
 
-## TODO(travis) fix the lowres grid dx,dy so that I can init the 
+if( ${daml_FOUND} )
+  soca_add_test( NAME 3dvar_diffmlb
+                 EXE  soca_var.x
+                 TEST_DEPENDS test_soca_gridgen
+                              test_soca_parameters_diffusion )
+endif()
+
+## TODO(travis) fix the lowres grid dx,dy so that I can init the
 ## low res diffusion, and then run this test
 # soca_add_test( NAME 3dvarlowres_soca
 #                EXE  soca_var.x
