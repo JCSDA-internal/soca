@@ -26,11 +26,6 @@ endif()
 #===================================================================================================
 # other optional repositories
 #===================================================================================================
-option(BUILD_FMS "download and build fms" OFF) # NOTE, changed to default=OFF, but this will be removed in the future
-if ( BUILD_FMS )
-  ecbuild_bundle( PROJECT fms           GIT "https://github.com/jcsda/FMS.git"                     UPDATE BRANCH release-stable )
-endif ()
-
 option(BUILD_ICEPACK "download and build icepack" OFF)
 if ( BUILD_ICEPACK )
   ecbuild_bundle( PROJECT icepack         GIT "https://github.com/JCSDA-internal/Icepack.git"         UPDATE BRANCH feature/ecbuild-new )

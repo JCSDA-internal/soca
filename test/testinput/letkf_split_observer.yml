@@ -14,7 +14,7 @@ background:
       read_from_file: 1
       state variables: [socn, tocn, ssh, uocn, vocn, hocn, chl, biop]
       basename: data_static/72x35x25/restarts_ens/
-      ocn_filename: ocn.enspert.ens.%mem%.2018-04-15T00:00:00Z.PT0S.nc
+      ocn_filename: MOM.res.ens.%mem%.nc
     pattern: '%mem%'
     nmembers: 4
 

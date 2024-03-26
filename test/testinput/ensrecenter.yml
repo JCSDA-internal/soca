@@ -20,8 +20,8 @@ ensemble:
       date: 2018-04-15T00:00:00Z
       basename: data_static/72x35x25/
       remap_filename: data_static/72x35x25/restarts/MOM.res.nc
-      ocn_filename: restarts_ens/ocn.enspert.ens.%mem%.2018-04-15T00:00:00Z.PT0S.nc
-      ice_filename: restarts_ens/ice.enspert.ens.%mem%.2018-04-15T00:00:00Z.PT0S.nc
+      ocn_filename: restarts_ens/MOM.res.ens.%mem%.nc
+      ice_filename: restarts_ens/cice.res.ens.%mem%.nc
       state variables: [cicen, hicen, socn, tocn, uocn, vocn, ssh, hocn]
     pattern: %mem%
     nmembers: 4
