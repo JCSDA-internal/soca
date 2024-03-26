@@ -205,9 +205,8 @@ const std::vector<Diffusion::EdgeGeom> Diffusion::createEdgeGeom(
 
 void Diffusion::multiply(oops::FieldSet3D &fset) const {
   for (atlas::Field field : fset) {
-    // multiplyHzAD(field);
-    multiplyVtTL(field);
-    multiplyHzTL(field);
+    multiplyVtAD(field);
+    multiplyHzAD(field);
     multiplyHzTL(field);
     multiplyVtTL(field);
   }
@@ -262,14 +261,11 @@ void Diffusion::multiplyVtTL(atlas::Field & field) const {
   const int nz = field.shape(1);
   std::vector<double> flux(nz-1, 0.0);  // 1 less level than field, since this is flux between levels
 
-  field.set_dirty(true);
   for (size_t itr = 0; itr < niterVt_ / 2; itr++) {
-    field.haloExchange();
-
     for (size_t i = 0; i < field.shape(0); i++) {
       // calculate diffusive flux
       for (size_t level = 0; level < flux.size(); level++) {
-        flux[level] = v_kvdt(i, level) * (v_field(i, level) - v_field(i, level+1)) / 2;
+        flux[level] = v_kvdt(i, level) * (v_field(i, level) - v_field(i, level+1)) / 2.0;
       }
 
       // time-step diffusion terms
@@ -278,8 +274,38 @@ void Diffusion::multiplyVtTL(atlas::Field & field) const {
         v_field(i, level+1) += flux[level];
       }
     }
-    field.set_dirty(true);
   }
+  
+  field.set_dirty(true);
+}
+
+// --------------------------------------------------------------------------------------
+// NOTE: the vertical adjoint code should produce identical answers compared
+// with the TL code above. It's explicitly coded anyway just to be safe
+void Diffusion::multiplyVtAD(atlas::Field & field) const {
+  auto v_field = atlas::array::make_view<double, 2>(field);
+  auto v_kvdt = atlas::array::make_view<double, 2>(kvdt_);
+
+  const int nz = field.shape(1);
+  std::vector<double> flux(nz-1, 0.0);  // 1 less level than field, since this is flux between levels
+
+  for (size_t itr = 0; itr < niterVt_ / 2; itr++) {
+    for (size_t i = 0; i < field.shape(0); i++) {
+      // adjoint time-step diffusion terms
+      for (size_t level = 0; level < nz-1; level++) {
+        flux[level] += v_field(i, level+1) - v_field(i, level);
+      }
+
+      // adjoint diffusive flux
+      for (size_t level = 0; level < flux.size(); level++) {
+        v_field(i, level) += v_kvdt(i, level)/2.0 * flux[level];
+        v_field(i, level+1) -= v_kvdt(i, level)/2.0 * flux[level];
+        flux[level] = 0.0;
+      }
+    }
+  }
+
+  field.set_dirty(true);
 }
 
 // --------------------------------------------------------------------------------------

@@ -63,7 +63,7 @@ class Diffusion {
   void multiplyHzTL(atlas::Field &) const;
   void multiplyHzAD(atlas::Field &) const;
   void multiplyVtTL(atlas::Field &) const;
-  // void multiplyVtAD(oops::FieldSet3D &) const;
+  void multiplyVtAD(atlas::Field &) const;
 };
 
 // --------------------------------------------------------------------------------------
