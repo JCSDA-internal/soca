@@ -27,37 +27,41 @@ namespace soca {
 
 class Diffusion {
  public:
-    Diffusion( const oops::GeometryData &, const atlas::Field & scales);
+    Diffusion( const oops::GeometryData &, 
+               const atlas::Field & hzScales,
+               const atlas::Field & vtScales);
 
     void multiply(oops::FieldSet3D &) const;
-    void multiplyTL(oops::FieldSet3D &) const {}
-    void multiplyAD(oops::FieldSet3D &) const {}
+    // void multiplyTL(oops::FieldSet3D &) const {}
+    // void multiplyAD(oops::FieldSet3D &) const {}
 
  private:
-  atlas::Field inv_area_;
-  int niterHz_;
-
   // stuff for preparing and storing the mesh
-  const std::unique_ptr<const atlas::Mesh> createMesh(const oops::GeometryData &) const;
   const std::unique_ptr<const atlas::Mesh> mesh_;
+  const std::unique_ptr<const atlas::Mesh> createMesh(const oops::GeometryData &) const;  
 
-  // Stuff for storing the calculated edge geometry
+  // derived grid geometry
+  atlas::Field inv_area_;
   struct EdgeGeom {
     size_t nodeA, nodeB;
     double edgeLength;
     double lengthRatio; // length of grid side / length of mesh edge
   }; 
-  const std::vector<EdgeGeom> createEdgeGeom(const oops::GeometryData &) const;
   const std::vector<EdgeGeom> edgeGeom_;
+  const std::vector<EdgeGeom> createEdgeGeom(const oops::GeometryData &) const;  
+  
+  // horizontal diffusion parameters
+  int niterHz_;
+  std::vector<std::vector<double> > khdt_;
 
-  struct EdgeParam {
-    std::vector<double> KhDt; 
-  };
-  std::vector<EdgeParam> edgeParam_;
+  // vertical diffusion parameters
+  int niterVt_;
+  atlas::Field kvdt_;
 
+  // private methods where the magic happens!
   void multiplyHzTL(atlas::Field &) const;
   void multiplyHzAD(atlas::Field &) const;
-  // void multiplyVtTL(oops::FieldSet3D &) const;
+  void multiplyVtTL(atlas::Field &) const;
   // void multiplyVtAD(oops::FieldSet3D &) const;
   
 };
