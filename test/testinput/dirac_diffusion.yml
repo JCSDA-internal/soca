@@ -13,9 +13,7 @@ background:
 
 background error:
   covariance model: SABER
-  # adjoint test: true
-  #  NOTE: to run the self adjoint test, you have to first comment out the 
-  #  indicated halo exchange in Increment::toFieldSet()
+  adjoint test: true
   saber central block:
     saber block name: EXPLICIT_DIFFUSION
     active variables: [tocn, socn, ssh]
