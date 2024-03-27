@@ -42,6 +42,8 @@ class SaberDiffusion : public saber::SaberCentralBlockBase {
   const oops::GeometryData & geom_;
   std::unique_ptr<Diffusion> diffusion_;
 
+  atlas::Field normHz_;
+
 };
 
 }
