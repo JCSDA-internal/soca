@@ -10,6 +10,9 @@
 #include "soca/SaberBlocks/ParametricOceanStdDev/ParametricOceanStdDev.h"
 #include "soca/SaberBlocks/ExplicitDiffusion/ExplicitDiffusion.h"
 
+#include "eckit/exception/Exceptions.h"
+#include "soca/Utils/Diffusion.h"
+
 #include "saber/blocks/SaberOuterBlockBase.h"
 
 namespace soca {
@@ -30,7 +33,7 @@ ParametricOceanStdDev::ParametricOceanStdDev(
     innerGeometryData_(outerGeometryData),
     innerVars_(outerVars),
     bkgErr_(xb.validTime(),xb.commGeom())
-{
+{ 
   const int levels = xb["hocn"].levels();
   const double MIN_LAYER_THICKNESS = 0.1;
 
@@ -40,19 +43,42 @@ ParametricOceanStdDev::ParametricOceanStdDev(
   auto v_tocn = atlas::array::make_view<double, 2>(xb["tocn"]);
   auto v_depth = atlas::array::make_view<double, 2>(xb["layer_depth"]);
 
+  // create hz scales
+  atlas::Field hzScales = innerGeometryData_.functionSpace().createField<double>(
+    atlas::option::levels(xb["tocn"].shape(1)));
+  auto v_hzScales = atlas::array::make_view<double, 2>(hzScales);
+  v_hzScales.assign(500e3);
+  
+  // create vt scales
+  atlas::Field vtScales = innerGeometryData_.functionSpace().createField<double>(
+    atlas::option::levels(xb["tocn"].shape(1)));
+  auto v_vtScales = atlas::array::make_view<double, 2>(vtScales);
+  v_vtScales.assign(5.0);
+
+  for (size_t i = 0; i < hzScales.shape(0); i++) {
+    if (!v_mask(i,0)) {
+      for(size_t level = 0; level < hzScales.shape(1); level++) {
+        v_hzScales(i, level) = 0.0;
+        v_vtScales(i, level) = 0.0;
+      }
+    }
+  }
+
+  Diffusion smoother(innerGeometryData_, hzScales, vtScales);  
+
 
   //*************************************************************************************
   // initialize the diffusion operator to use as a smoother
   // NOTE: this is really abusive programming... using a saber central block INSIDE
   // a saber outer block?!?! This will be cleaned up when diffusion is generalized
   //*************************************************************************************
-  std::unique_ptr<ExplicitDiffusion> smoother;
-  if (params.smoother.value() != boost::none) {
-    ExplicitDiffusion::Parameters_ smootherConfig;
-    smootherConfig.validateAndDeserialize(*params.smoother.value());
-    smoother.reset(new ExplicitDiffusion(innerGeometryData_, innerVars_, eckit::LocalConfiguration(), smootherConfig, xb, fg ));
-    smoother->read();
-  }
+  // std::unique_ptr<ExplicitDiffusion> smoother;
+  // if (params.smoother.value() != boost::none) {
+  //   ExplicitDiffusion::Parameters_ smootherConfig;
+  //   smootherConfig.validateAndDeserialize(*params.smoother.value());
+  //   smoother.reset(new ExplicitDiffusion(innerGeometryData_, innerVars_, eckit::LocalConfiguration(), smootherConfig, xb, fg ));
+  //   smoother->read();
+  // }
   
   //*************************************************************************************
   // calculate T background error
@@ -106,8 +132,10 @@ ParametricOceanStdDev::ParametricOceanStdDev(
       }
     }
   }
-  if (smoother)
-    smoother->multiply(bkgErr_);
+  
+  smoother.multiply(bkgErr_);
+  // if (smoother)
+  //   smoother->multiply(bkgErr_);
 
   //*************************************************************************************
   // calculate unbalanced S background error
