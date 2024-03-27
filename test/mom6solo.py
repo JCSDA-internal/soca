@@ -27,9 +27,6 @@ replacements = {
     'days' : '0',
     'hours': fcst_len
   },
-  'MOM_input_nml' : {
-    'restart_input_dir' : "'RESTART_IN/'",
-  }
 }
 
 # read input file
