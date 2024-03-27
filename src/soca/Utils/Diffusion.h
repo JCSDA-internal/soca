@@ -28,15 +28,17 @@ namespace soca {
 
 class Diffusion {
  public:
-    Diffusion(const oops::GeometryData &,
-              const atlas::Field & hzScales,
-              const atlas::Field & vtScales);
+  Diffusion(const oops::GeometryData &);    
+  void setScales(const atlas::Field & hzScales,
+                 const atlas::Field & vtScales);
 
-    void multiply(oops::FieldSet3D &) const;
-    // void multiplyTL(oops::FieldSet3D &) const {}
-    // void multiplyAD(oops::FieldSet3D &) const {}
+  void multiply(oops::FieldSet3D &) const;
+  // void multiplyTL(oops::FieldSet3D &) const {}
+  // void multiplyAD(oops::FieldSet3D &) const {}
 
  private:
+  const oops::GeometryData & geom_;
+  
   // stuff for preparing and storing the mesh
   const std::unique_ptr<const atlas::Mesh> mesh_;
   const std::unique_ptr<const atlas::Mesh> createMesh(const oops::GeometryData &) const;

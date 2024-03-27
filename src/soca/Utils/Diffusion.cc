@@ -19,23 +19,28 @@ namespace soca {
 
 // --------------------------------------------------------------------------------------
 
-Diffusion::Diffusion(const oops::GeometryData & geometryData,
-                     const atlas::Field & hzScales,
-                     const atlas::Field & vtScales)
-: mesh_(createMesh(geometryData)),
+Diffusion::Diffusion(const oops::GeometryData & geometryData)
+: geom_(geometryData),
+  mesh_(createMesh(geometryData)),
   edgeGeom_(createEdgeGeom(geometryData))
 {
   // calculate some other grid based constants
   //  inv_area (1/area)
-  const atlas::FunctionSpace & fs = geometryData.functionSpace();
+  const atlas::FunctionSpace & fs = geom_.functionSpace();
   inv_area_ = fs.createField<double>();
   auto v_inv_area = atlas::array::make_view<double, 1>(inv_area_);
-  auto area = geometryData.fieldSet().field("area");
+  auto area = geom_.fieldSet().field("area");
   auto v_area = atlas::array::make_view<double, 2>(area);
   for (size_t i = 0; i < fs.size(); i++) {
     v_inv_area(i) = v_area(i, 0) < 1e-6 ? 0.0 : 1.0 / v_area(i, 0);
   }
+}
 
+// --------------------------------------------------------------------------------------
+
+void Diffusion::setScales(const atlas::Field & hzScales, const atlas::Field & vtScales) {
+  const atlas::FunctionSpace & fs = geom_.functionSpace();
+  
   //-------------------------------------------------------------------------------------
   // Horizontal diffusion parameters (in units of m)
   //-------------------------------------------------------------------------------------
@@ -69,7 +74,7 @@ Diffusion::Diffusion(const oops::GeometryData & geometryData,
   }
   niterHz_ = round(minItr/2) * 2;  // make sure number of iterations is even
   // get the global max number of iterations
-  geometryData.comm().allReduceInPlace(niterHz_, eckit::mpi::Operation::MAX);
+  geom_.comm().allReduceInPlace(niterHz_, eckit::mpi::Operation::MAX);
 
   // TODO do some error checking to make sure niterHz_ is not too big
   std::cout << "DBG niterHz: " << niterHz_ << std::endl;
@@ -81,6 +86,7 @@ Diffusion::Diffusion(const oops::GeometryData & geometryData,
       khdt_[e][level] *= 1.0 / (2.0 * niterHz_);
     }
   }
+
 
   //-------------------------------------------------------------------------------------
   // Vertical diffusion parameters (in units of # of levels)
@@ -102,7 +108,7 @@ Diffusion::Diffusion(const oops::GeometryData & geometryData,
     }
   }
   niterVt_ = round(minItr/2) * 2;
-  geometryData.comm().allReduceInPlace(niterVt_, eckit::mpi::Operation::MAX);
+  geom_.comm().allReduceInPlace(niterVt_, eckit::mpi::Operation::MAX);
 
   std::cout << "DBG niterVt: " << niterVt_ << std::endl;
 
@@ -205,7 +211,7 @@ const std::vector<Diffusion::EdgeGeom> Diffusion::createEdgeGeom(
 
 void Diffusion::multiply(oops::FieldSet3D &fset) const {
   for (atlas::Field field : fset) {
-    multiplyVtAD(field);
+    multiplyVtAD(field);    
     multiplyHzAD(field);
     multiplyHzTL(field);
     multiplyVtTL(field);
@@ -218,9 +224,6 @@ void Diffusion::multiplyHzTL(atlas::Field & field) const {
   auto inv_area = atlas::array::make_view<double, 1>(inv_area_);
   auto fieldVal = atlas::array::make_view<double, 2>(field);
   std::vector<double> flux(edgeGeom_.size(), 0.0);
-
-  // TODO remove this
-  field.set_dirty(true);
 
   for (size_t itr = 0; itr < niterHz_/2; itr++) {
     field.haloExchange();
@@ -249,7 +252,42 @@ void Diffusion::multiplyHzTL(atlas::Field & field) const {
 // --------------------------------------------------------------------------------------
 
 void Diffusion::multiplyHzAD(atlas::Field & field) const {
-  ASSERT(1 == 2);
+  const atlas::FunctionSpace & fs = geom_.functionSpace();
+
+  auto inv_area = atlas::array::make_view<double, 1>(inv_area_);
+  auto fieldVal = atlas::array::make_view<double, 2>(field);
+  auto ghost = atlas::array::make_view<int, 1>(fs.ghost());
+  std::vector<double> flux(edgeGeom_.size(), 0.0);
+
+  // init halo to zero    
+  for (size_t i = 0; i < fs.size(); i++) {
+    if (ghost(i)) {
+      for (size_t level = 0; level < field.shape(1); level++) {
+        fieldVal(i, level) = 0;
+      }
+    }
+  }
+
+  for (size_t itr = 0; itr < niterHz_/2; itr++) {
+    for (size_t level = 0; level < field.shape(1); level++) {
+      // adjoint time-step the diffusion terms
+      for (size_t e = 0; e < edgeGeom_.size(); e++) {
+        flux[e] += inv_area(edgeGeom_[e].nodeB) * fieldVal(edgeGeom_[e].nodeB, level)
+                  -inv_area(edgeGeom_[e].nodeA) * fieldVal(edgeGeom_[e].nodeA, level);
+      }
+      
+      // adjoint calculate diffusive flux at each edge
+      for (size_t e = 0; e < edgeGeom_.size(); e++) {
+        fieldVal(edgeGeom_[e].nodeA, level) += edgeGeom_[e].lengthRatio * khdt_[e][level] * flux[e];
+        fieldVal(edgeGeom_[e].nodeB, level) -= edgeGeom_[e].lengthRatio * khdt_[e][level] * flux[e];
+        flux[e] = 0.0;
+      }
+    }    
+
+    field.adjointHaloExchange();
+  }
+
+  field.set_dirty(true);
 }
 
 // --------------------------------------------------------------------------------------
