@@ -220,6 +220,15 @@ void Diffusion::multiply(oops::FieldSet3D &fset) const {
 
 // --------------------------------------------------------------------------------------
 
+void Diffusion::multiplySqrt(oops::FieldSet3D &fset) const {
+  for (atlas::Field field : fset) {
+    multiplyHzTL(field);
+    multiplyVtTL(field);
+  }
+}
+
+// --------------------------------------------------------------------------------------
+
 void Diffusion::multiplyHzTL(atlas::Field & field) const {
   auto inv_area = atlas::array::make_view<double, 1>(inv_area_);
   auto fieldVal = atlas::array::make_view<double, 2>(field);

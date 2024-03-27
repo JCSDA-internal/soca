@@ -33,9 +33,8 @@ class Diffusion {
                  const atlas::Field & vtScales);
 
   void multiply(oops::FieldSet3D &) const;
-  // void multiplyTL(oops::FieldSet3D &) const {}
-  // void multiplyAD(oops::FieldSet3D &) const {}
-
+  void multiplySqrt(oops::FieldSet3D &) const;
+  
  private:
   const oops::GeometryData & geom_;
   
