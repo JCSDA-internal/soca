@@ -274,7 +274,6 @@ function(soca_add_test)
       ${WORKDIR}/data_static/workdir/${FILENAME}
       ${WORKDIR}/${FILENAME} )
   endforeach()
-  file(WRITE ${WORKDIR}/MOM_override "")
 
   # setup output directory
   file( MAKE_DIRECTORY ${WORKDIR}/data_generated/${ARG_NAME})
