@@ -30,7 +30,7 @@ find_package( oops   1.10.0   REQUIRED)
 find_package( vader  1.7.0    REQUIRED)
 find_package( saber  1.10.0   REQUIRED)
 find_package( ioda   2.9.0    REQUIRED)
-find_package( ufo    1.9.0    REQUIRED)
+find_package( ufo    1.10.0   REQUIRED)
 find_package( fms    2020.4.0 REQUIRED) # NOTE: remove this when we update to latest MOM6
 find_package( mom6   2020.4.0 REQUIRED) # NOTE: remove this when we update to latest MOM6
 
