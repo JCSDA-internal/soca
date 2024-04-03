@@ -841,7 +841,7 @@ subroutine soca_fields_read(self, f_conf, vdate)
   integer :: idr
   integer :: isd, ied, jsd, jed
   integer :: isc, iec, jsc, jec
-  integer :: i, j, nz, n
+  integer :: i, j, k, nz, n
   type(remapping_CS)  :: remapCS
   character(len=:), allocatable :: str
   real(kind=kind_real), allocatable :: h_common_ij(:), hocn_ij(:), varocn_ij(:), varocn2_ij(:)
@@ -1057,9 +1057,13 @@ subroutine soca_fields_read(self, f_conf, vdate)
     end if
 
     ! Initialize mid-layer depth from layer thickness
+    ! TODO, this shouldn't live here, it should be part of the variable change class only
     if (self%has("layer_depth")) then
       call self%get("layer_depth", layer_depth)
-      call self%geom%thickness2depth(hocn%val, layer_depth%val)
+        layer_depth%val = 0.5 * hocn%val
+        do k = 2, hocn%nz
+          layer_depth%val(:,:,k) = layer_depth%val(:,:,k) + sum(hocn%val(:,:,1:k-1), dim=3)
+        end do        
     end if
 
     ! Compute mixed layer depth TODO: Move somewhere else ...

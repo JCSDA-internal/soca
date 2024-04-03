@@ -83,6 +83,21 @@
   io name: hsnon
   property: positive_definite
 
+- name: tsfc
+  getval name: snow_ice_surface_temperature
+  io file: ice
+  io name: Tsfc_h
+
+- name: tair
+  getval name: air_temperature
+  io file: ice
+  io name: Tair_h
+
+- name: sice
+  getval name: bulk_ice_salinity
+  io file: ice
+  io name: sice_h
+
 # --------------------------------------------------------------------------------------------------
 # wave state variables
 # --------------------------------------------------------------------------------------------------
@@ -177,7 +192,7 @@
 # --------------------------------------------------------------------------------------------------
 - name: sea_water_temperature
   levels: full_ocn
-  
+
 # --------------------------------------------------------------------------------------------------
 - name: dummy_atm1
   constant value: 5.0
@@ -187,7 +202,7 @@
   constant value: 275  #The average amount of ozone in the atm. is 300 Dobson Units
 
 - name: wvapor
-  getval name: water_vapor   #g/cm^2  
+  getval name: water_vapor   #g/cm^2
   constant value: 1.2
 
 - name: ws

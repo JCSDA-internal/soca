@@ -158,21 +158,11 @@ subroutine soca_geom_iter_current(self, lon, lat, depth)
   case (2) ! 2-d iterator
     depth = -99999
   case (3) ! 3-d iterator
-    h1d(1,1,:) = self%geom%h(self%iindex,self%jindex,:)
-    call self%geom%thickness2depth(h1d, depth1d)
-    if (self%kindex == -1) then
-      ! special case of {-1} means end of the grid
-      depth = depth1d(1,1,self%geom%nzo)
-    elseif (self%kindex == 0) then
-      ! special case of the surface fields
-      depth = 0;
-    elseif (self%kindex < 0 .OR. self%kindex > self%geom%nzo) then
-      ! out of range
-      call abor1_ftn('soca_geom_iter_current: depth iterator out of bounds')
-    else
-      ! inside of the 3D grid
-      depth = depth1d(1,1,self%kindex)
-    endif
+    ! TODO: re-implement the 3D iterator if it is ever needed.
+    ! This was removed because "h" was removed from geometry. "depth" 
+    ! should probably be changed to "model level", since depth is now 
+    ! a state variable only.
+    call abor1_ftn('soca_geom_iter_current: 3D iterator not implemented')
   case default
     call abor1_ftn('soca_geom_iter_current: unknown geom%iterator_dimension')
   end select
