@@ -8,7 +8,7 @@
 #include <algorithm>
 
 #include "soca/SaberBlocks/ParametricOceanStdDev/ParametricOceanStdDev.h"
-#include "soca/SaberBlocks/ExplicitDiffusion/ExplicitDiffusion.h"
+// #include "soca/SaberBlocks/ExplicitDiffusion/ExplicitDiffusion.h"
 
 #include "eckit/exception/Exceptions.h"
 #include "soca/Utils/Diffusion.h"
@@ -33,7 +33,7 @@ ParametricOceanStdDev::ParametricOceanStdDev(
     innerGeometryData_(outerGeometryData),
     innerVars_(outerVars),
     bkgErr_(xb.validTime(),xb.commGeom())
-{ 
+{
   const int levels = xb["hocn"].levels();
   const double MIN_LAYER_THICKNESS = 0.1;
 
@@ -48,7 +48,7 @@ ParametricOceanStdDev::ParametricOceanStdDev(
     atlas::option::levels(xb["tocn"].shape(1)));
   auto v_hzScales = atlas::array::make_view<double, 2>(hzScales);
   v_hzScales.assign(500e3);
-  
+
   // create vt scales
   atlas::Field vtScales = innerGeometryData_.functionSpace().createField<double>(
     atlas::option::levels(xb["tocn"].shape(1)));
@@ -64,7 +64,7 @@ ParametricOceanStdDev::ParametricOceanStdDev(
     }
   }
 
-  Diffusion smoother(innerGeometryData_, hzScales, vtScales);  
+  // Diffusion smoother(innerGeometryData_, hzScales, vtScales);
 
 
   //*************************************************************************************
@@ -79,7 +79,7 @@ ParametricOceanStdDev::ParametricOceanStdDev(
   //   smoother.reset(new ExplicitDiffusion(innerGeometryData_, innerVars_, eckit::LocalConfiguration(), smootherConfig, xb, fg ));
   //   smoother->read();
   // }
-  
+
   //*************************************************************************************
   // calculate T background error
   //*************************************************************************************
@@ -94,21 +94,21 @@ ParametricOceanStdDev::ParametricOceanStdDev(
     auto efold = params.tocn.value().efold.value();
 
     // output field
-    auto v_tocn_err = atlas::array::make_view<double, 2>(tocn_err);  
+    auto v_tocn_err = atlas::array::make_view<double, 2>(tocn_err);
     v_tocn_err.assign(0.0);
-    
+
     // loop over all points
     std::vector<double> dtdz(levels, 0.0);
     for (size_t i = 0; i < tocn_err.shape(0); i++) {
       // skip land
       if (v_mask(i, 0) == 0.0) continue;
-      
+
       // calculate dt/dz
       dtdz[0] = 2.0 * (v_tocn(i,1) - v_tocn(i,0)) / (v_hocn(i,0) + v_hocn(i,1));
       for (size_t z = 1; z < levels-1; z++) {
         dtdz[z] = (v_tocn(i, z+1) - v_tocn(i, z-1)) /
                   (v_hocn(i,z) + 0.5*(v_hocn(i, z+1) + v_hocn(i, z-1)));
-        
+
         // ignore dt/dz where layers are too thin
         if(v_hocn(i,z) <= MIN_LAYER_THICKNESS) dtdz[z] = 0.0;
       }
@@ -116,14 +116,14 @@ ParametricOceanStdDev::ParametricOceanStdDev(
 
       // calculate value as function of dt/dz, efolding scale, and min/max
       for (size_t z = 0; z < levels; z++) {
-        
-        // step 1: calc value from dT/dz        
+
+        // step 1: calc value from dT/dz
         auto val = abs(params.tocn.value().dz * dtdz[z]);
 
         // step 2: calc a minimum from the efolding scale, and min SST value
         double sstVal = 0.1; //TODO read this in
-        auto localMin = minVal + (sstVal - minVal) * exp(-v_depth(i,z) / efold );        
-       
+        auto localMin = minVal + (sstVal - minVal) * exp(-v_depth(i,z) / efold );
+
         // step 3: min/max
         val = std::clamp(val, localMin,  maxVal);
 
@@ -132,8 +132,8 @@ ParametricOceanStdDev::ParametricOceanStdDev(
       }
     }
   }
-  
-  smoother.multiply(bkgErr_);
+
+  // smoother.multiply(bkgErr_);
   // if (smoother)
   //   smoother->multiply(bkgErr_);
 
@@ -156,7 +156,7 @@ ParametricOceanStdDev::ParametricOceanStdDev(
     // parameter from input config
     auto minVal = params.ssh.value().min.value();
     auto maxVal = params.ssh.value().max.value();
-  
+
     // output field
     auto v_ssh_err = atlas::array::make_view<double, 2>(ssh_err);
     v_ssh_err.assign(0.0);
@@ -171,10 +171,10 @@ ParametricOceanStdDev::ParametricOceanStdDev(
         // In the extratropics, set to max value
         v_ssh_err(i, 0) = maxVal;
       } else {
-        // otherwise, taper to min value towards the equator        
+        // otherwise, taper to min value towards the equator
         constexpr double pi = 3.14159265358979323846;
         v_ssh_err(i, 0) = minVal + 0.5 * (maxVal - minVal)*(1 - std::cos(pi * absLat / params.ssh.value().phi_ex.value()));
-      }     
+      }
     }
   }
 
@@ -188,7 +188,7 @@ ParametricOceanStdDev::ParametricOceanStdDev(
 // ------------------------------------------------------------------------------------------------
 
 void ParametricOceanStdDev::multiply(oops::FieldSet3D & fset) const {
-  
+
   for (atlas::Field field : fset) {
     if (! bkgErr_.has(field.name())) continue;
 

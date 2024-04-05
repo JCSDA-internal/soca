@@ -1162,7 +1162,6 @@ subroutine soca_diffusion_read_params(self, f_conf)
   type(restart_file_type) :: restart_file
   integer :: idr, grp
   character(len=1024) :: str
-  logical :: normalize
 
   call oops_log%info("")
   call oops_log%info("===================================================================================================")
@@ -1185,11 +1184,6 @@ subroutine soca_diffusion_read_params(self, f_conf)
     call oops_log%info("---------------------------------------------------------------------------------------------------")
     call oops_log%info(str)
 
-    normalize = .true.
-    if (f_conf_list(grp)%get("normalize", normalize)) then
-      call oops_log%info(" SKIPPING NORMALIZATION (are you sure??)")
-    end if
-
     ! read horizontal
     if (f_conf_list(grp)%get('horizontal', params_conf)) then
       call params_conf%get_or_die('filename', filename)
@@ -1209,11 +1203,9 @@ subroutine soca_diffusion_read_params(self, f_conf)
       idr = register_restart_field(restart_file, filename, str, &
         self%group(grp)%KhDt, domain=self%geom%Domain%mpp_domain)
 
-      if (normalize) then
-        str = "normalization_hz"
-        idr = register_restart_field(restart_file, filename, str, &
-          self%group(grp)%normalization_hz, domain=self%geom%Domain%mpp_domain)
-      end if
+      str = "normalization_hz"
+      idr = register_restart_field(restart_file, filename, str, &
+        self%group(grp)%normalization_hz, domain=self%geom%Domain%mpp_domain)
     
       call restore_state(restart_file, directory='')
       call free_restart_type(restart_file)
@@ -1249,11 +1241,9 @@ subroutine soca_diffusion_read_params(self, f_conf)
         idr = register_restart_field(restart_file, filename, str, &
           self%group(grp)%KvDt, domain=self%geom%Domain%mpp_domain)    
 
-        if (normalize) then
-          str = "normalization_vt"
-          idr = register_restart_field(restart_file, filename, str, &
-            self%group(grp)%normalization_vt, domain=self%geom%Domain%mpp_domain)          
-        end if
+        str = "normalization_vt"
+        idr = register_restart_field(restart_file, filename, str, &
+          self%group(grp)%normalization_vt, domain=self%geom%Domain%mpp_domain)          
 
         call restore_state(restart_file, directory='')
         call free_restart_type(restart_file)  

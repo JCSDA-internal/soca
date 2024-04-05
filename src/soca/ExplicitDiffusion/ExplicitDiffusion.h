@@ -11,7 +11,7 @@
 #include <string>
 #include <vector>
 
-#include "soca/SaberBlocks/ExplicitDiffusion/ExplicitDiffusionParameters.h"
+#include "soca/ExplicitDiffusion/ExplicitDiffusionParameters.h"
 #include "saber/blocks/SaberCentralBlockBase.h"
 
 

@@ -1,3 +1,2 @@
-add_subdirectory(ExplicitDiffusion)
 add_subdirectory(ParametricOceanStdDev)
 add_subdirectory(SOCABkgErrFilt)
