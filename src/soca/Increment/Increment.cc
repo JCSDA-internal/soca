@@ -358,11 +358,6 @@ namespace soca {
 
   void Increment::toFieldSet(atlas::FieldSet &fs) const {
     soca_increment_to_fieldset_f90(toFortran(), vars_, fs.get());
-
-    // NOTE: this breaks the saber adjoint test for the diffusion operator.
-    //  Fixing it is more work than I want to do right now. So if you want to run the
-    //  adjoint test, comment out this line first!
-    geom_.functionSpace().haloExchange(fs);
   }
 
 // -----------------------------------------------------------------------------

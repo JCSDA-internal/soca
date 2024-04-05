@@ -92,21 +92,21 @@ cost function:
           read_from_file: 1
           date: *bkg_date
           basename: data_static/72x35x25/restarts_ens/
-          remap_filename: data_static/72x35x25/restarts/MOM.res.nc
+#          remap_filename: data_static/72x35x25/restarts/MOM.res.nc
           state variables: *soca_vars
         members:
         - <<: *_file
-          ocn_filename: ocn.enspert.ens.1.2018-04-15T00:00:00Z.PT0S.nc
-          ice_filename: ice.enspert.ens.1.2018-04-15T00:00:00Z.PT0S.nc
+          ocn_filename: MOM.res.ens.1.nc
+          ice_filename: cice.res.ens.1.nc
         - <<: *_file
-          ocn_filename: ocn.enspert.ens.2.2018-04-15T00:00:00Z.PT0S.nc
-          ice_filename: ice.enspert.ens.2.2018-04-15T00:00:00Z.PT0S.nc
+          ocn_filename: MOM.res.ens.2.nc
+          ice_filename: cice.res.ens.2.nc
         - <<: *_file
-          ocn_filename: ocn.enspert.ens.3.2018-04-15T00:00:00Z.PT0S.nc
-          ice_filename: ice.enspert.ens.3.2018-04-15T00:00:00Z.PT0S.nc
+          ocn_filename: MOM.res.ens.3.nc
+          ice_filename: cice.res.ens.3.nc
         - <<: *_file
-          ocn_filename: ocn.enspert.ens.4.2018-04-15T00:00:00Z.PT0S.nc
-          ice_filename: ice.enspert.ens.4.2018-04-15T00:00:00Z.PT0S.nc
+          ocn_filename: MOM.res.ens.4.nc
+          ice_filename: cice.res.ens.4.nc
         localization:
           localization method: SABER
           saber central block:

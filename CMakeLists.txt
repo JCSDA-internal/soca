@@ -9,7 +9,7 @@
 ################################################################################
 
 cmake_minimum_required( VERSION 3.12 )
-project( soca VERSION 1.7.0 LANGUAGES C CXX Fortran)
+project( soca VERSION 1.8.0 LANGUAGES C CXX Fortran)
 
 find_package(ecbuild 3.3.2 REQUIRED)
 include( ecbuild_system NO_POLICY_SCOPE )
@@ -21,24 +21,36 @@ include( soca_compiler_flags )
 ################################################################################
 # Dependencies
 ################################################################################
-find_package( NetCDF REQUIRED COMPONENTS Fortran)
+find_package( NetCDF REQUIRED COMPONENTS Fortran C)
 find_package( gsl-lite REQUIRED HINTS $ENV{gsl_list_DIR})
-find_package( eckit  1.23.0   REQUIRED)
-find_package( fckit  0.10.1   REQUIRED)
+find_package( eckit  1.24.4   REQUIRED)
+find_package( fckit  0.11.0   REQUIRED)
 find_package( atlas  0.35.0   REQUIRED)
-find_package( oops   1.9.0    REQUIRED)
-find_package( vader  1.6.0    REQUIRED)
-find_package( saber  1.9.0    REQUIRED)
-find_package( ioda   2.8.0    REQUIRED)
-find_package( ufo    1.9.0    REQUIRED)
-find_package( fms    2020.4.0 REQUIRED)
-find_package( mom6   2020.4.0 REQUIRED)
+find_package( oops   1.10.0   REQUIRED)
+find_package( vader  1.7.0    REQUIRED)
+find_package( saber  1.10.0   REQUIRED)
+find_package( ioda   2.9.0    REQUIRED)
+find_package( ufo    1.10.0   REQUIRED)
+find_package( fms    2020.4.0 REQUIRED) # NOTE: remove this when we update to latest MOM6
+find_package( mom6   2020.4.0 REQUIRED) # NOTE: remove this when we update to latest MOM6
+
+# Optionally look for Torch and daml
+find_package(Torch QUIET)
+find_package(daml QUIET)
 
 # Optionally look for icepack
 find_package( icepack 1.2.0 QUIET)
 
 include_directories( ${NETCDF_INCLUDE_DIRS} )
 
+################################################################################
+# Model
+# TODO update to allow switching between mom6solo (here) and UFS (external)
+################################################################################
+# # NOTE enable these when we're ready to update to latest MOM6
+# find_package( fms    2023.3.0 REQUIRED COMPONENTS R4 R8)
+# add_library(  fms ALIAS FMS::fms_r8)
+# add_subdirectory(mom6)
 
 ################################################################################
 # Sources

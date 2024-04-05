@@ -4,9 +4,8 @@ geometry:
   fields metadata: data_static/fields_metadata.yml
 
 model:
-  name: MOM6solo # TODO create a persistence model factory
+  name: Identity
   tstep: PT1H
-  advance_mom6: 0
   model variables: &soca_vars [cicen, hicen, socn, tocn, ssh, hocn, sw, lhf, shf, lw, us, chl]
 
 initial condition:
