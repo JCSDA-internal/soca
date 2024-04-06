@@ -9,6 +9,8 @@
 
 #include <string>
 
+#include "soca/SaberBlocks/Util/OceanSmootherParameters.h"
+
 #include "oops/base/FieldSets.h"
 #include "oops/base/GeometryData.h"
 #include "oops/base/Variables.h"
@@ -50,14 +52,14 @@ class ParametricOceanStdDevTocn : public ParametricOceanStdDevBound {
 class ParametricOceanStdDevSsh : public ParametricOceanStdDevBound {
   OOPS_CONCRETE_PARAMETERS(ParametricOceanStdDevSsh, ParametricOceanStdDevBound)
  public:
-  oops::RequiredParameter<double> phi_ex{"phi_ex", this, 
+  oops::RequiredParameter<double> phi_ex{"phi_ex", this,
     {oops::minConstraint(0.0), oops::maxConstraint(90.0)}};
 };
 
 class ParametricOceanStdDevOther : public ParametricOceanStdDevBound {
   OOPS_CONCRETE_PARAMETERS(ParametricOceanStdDevOther, ParametricOceanStdDevBound)
  public:
-  oops::RequiredParameter<double> fractionOfBkg{"fraction of bkg", this, 
+  oops::RequiredParameter<double> fractionOfBkg{"fraction of bkg", this,
     {oops::minConstraint(0.0)}};
 };
 
@@ -70,7 +72,7 @@ class ParametricOceanStdDevParameters : public saber::SaberBlockParametersBase {
   oops::RequiredParameter<ParametricOceanStdDevSsh> ssh{"unbalanced ssh", this};
   oops::OptionalParameter<std::map<std::string, ParametricOceanStdDevOther> > others{"others", this};
   oops::OptionalParameter<eckit::LocalConfiguration> output{"output", this};
-  oops::OptionalParameter<eckit::LocalConfiguration> smoother{"smoother", this};
+  oops::OptionalParameter<OceanSmootherParameters> smoother{"smoother", this};
 };
 
 // -----------------------------------------------------------------------------------------

@@ -8,10 +8,10 @@
 #include <algorithm>
 
 #include "soca/SaberBlocks/ParametricOceanStdDev/ParametricOceanStdDev.h"
-// #include "soca/SaberBlocks/ExplicitDiffusion/ExplicitDiffusion.h"
+#include "soca/SaberBlocks/Util/OceanSmoother.h"
 
 #include "eckit/exception/Exceptions.h"
-#include "soca/Utils/Diffusion.h"
+
 
 #include "saber/blocks/SaberOuterBlockBase.h"
 
@@ -37,34 +37,20 @@ ParametricOceanStdDev::ParametricOceanStdDev(
   const int levels = xb["hocn"].levels();
   const double MIN_LAYER_THICKNESS = 0.1;
 
+  xb.fieldSet().haloExchange();
   auto v_lonlat = atlas::array::make_view<double, 2>(innerGeometryData_.functionSpace().lonlat());
   auto v_mask = atlas::array::make_view<double, 2>(innerGeometryData_.getField("interp_mask"));
   auto v_hocn = atlas::array::make_view<double, 2>(xb["hocn"]);
   auto v_tocn = atlas::array::make_view<double, 2>(xb["tocn"]);
   auto v_depth = atlas::array::make_view<double, 2>(xb["layer_depth"]);
 
-  // create hz scales
-  atlas::Field hzScales = innerGeometryData_.functionSpace().createField<double>(
-    atlas::option::levels(xb["tocn"].shape(1)));
-  auto v_hzScales = atlas::array::make_view<double, 2>(hzScales);
-  v_hzScales.assign(500e3);
 
-  // create vt scales
-  atlas::Field vtScales = innerGeometryData_.functionSpace().createField<double>(
-    atlas::option::levels(xb["tocn"].shape(1)));
-  auto v_vtScales = atlas::array::make_view<double, 2>(vtScales);
-  v_vtScales.assign(5.0);
-
-  for (size_t i = 0; i < hzScales.shape(0); i++) {
-    if (!v_mask(i,0)) {
-      for(size_t level = 0; level < hzScales.shape(1); level++) {
-        v_hzScales(i, level) = 0.0;
-        v_vtScales(i, level) = 0.0;
-      }
-    }
+  // initialize the smoother
+  std::unique_ptr<OceanSmoother> smoother;
+  if (params.smoother.value() != boost::none) {
+    smoother.reset(new OceanSmoother(innerGeometryData_,*params.smoother.value()));
   }
 
-  // Diffusion smoother(innerGeometryData_, hzScales, vtScales);
 
 
   //*************************************************************************************
@@ -83,6 +69,7 @@ ParametricOceanStdDev::ParametricOceanStdDev(
   //*************************************************************************************
   // calculate T background error
   //*************************************************************************************
+  std::cout << "DBG " << "creating T error"<<std::endl;
   atlas::Field tocn_err = innerGeometryData_.functionSpace().createField<double>(
     atlas::option::levels(levels) |
     atlas::option::name("tocn"));
@@ -133,13 +120,13 @@ ParametricOceanStdDev::ParametricOceanStdDev(
     }
   }
 
-  // smoother.multiply(bkgErr_);
-  // if (smoother)
-  //   smoother->multiply(bkgErr_);
+  // smooth the resulting field
+  if(smoother) smoother->multiply(tocn_err);
 
   //*************************************************************************************
   // calculate unbalanced S background error
   //*************************************************************************************
+  std::cout << "DBG " << "creating S error"<<std::endl;
   bkgErr_.add(
     innerGeometryData_.functionSpace().createField<double>(
     atlas::option::levels(levels) |
@@ -148,6 +135,7 @@ ParametricOceanStdDev::ParametricOceanStdDev(
   //*************************************************************************************
   // calculate unbalanced SSH background error
   //*************************************************************************************
+  std::cout << "DBG " << "creating SSH error"<<std::endl;
   atlas::Field ssh_err = innerGeometryData_.functionSpace().createField<double>(
     atlas::option::levels(1) |
     atlas::option::name("ssh"));
@@ -179,6 +167,7 @@ ParametricOceanStdDev::ParametricOceanStdDev(
   }
 
   // optionally write the output
+  std::cout << "DBG " << "writing output"<<std::endl;
   if (params.output.value() != boost::none) {
     bkgErr_.write(*params.output.value());
   }

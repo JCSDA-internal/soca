@@ -1,2 +1,3 @@
 add_subdirectory(ParametricOceanStdDev)
 add_subdirectory(SOCABkgErrFilt)
+add_subdirectory(Util)

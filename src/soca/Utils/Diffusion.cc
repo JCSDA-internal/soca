@@ -75,7 +75,7 @@ void Diffusion::setScales(const atlas::FieldSet & scales) {
           // on this PE
           const double el = edgeGeom_[e].edgeLength;
           // TODO(Travis) check my math on this, original had a 2.0 * ... but I think 1.5 is stable
-          minItr = std::max(1.5 * (s*s) / (el*el), minItr);
+          minItr = std::max(2.0 * (s*s) / (el*el) + 2, minItr);
         }
       }
     }
@@ -114,7 +114,7 @@ void Diffusion::setScales(const atlas::FieldSet & scales) {
           v_kvdt(i, level) = s * s;
 
           // TODO(Travis) check my math on this, original had a 2.0 * ... but I think 1.5 is stable
-          minItr = std::max(1.5 * s * s, minItr);
+          minItr = std::max(2.0 * s * s + 2, minItr);
         }
       }
     }
