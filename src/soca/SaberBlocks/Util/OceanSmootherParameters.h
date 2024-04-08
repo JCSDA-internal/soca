@@ -25,12 +25,14 @@ class OceanSmootherParameters : public oops::Parameters {
   class Horizontal : public oops::Parameters {
     OOPS_CONCRETE_PARAMETERS(Horizontal, oops::Parameters)
    public:
+    oops::Parameter<std::string> rossbyVariable{"rossby radius variable", "rossby_radius", this};
+
     oops::Parameter<double> base{"base value", 0.0, this, {oops::minConstraint(0.0)}};
     oops::Parameter<double> rossbyMult{"rossby mult", 1.0, this, {oops::minConstraint(0.0)}};
     oops::Parameter<double> minGridMult{"min grid mult", 1.0, this, {oops::minConstraint(0.0)}};
     oops::Parameter<double> min{"min", 0.0, this, {oops::minConstraint(0.0)}};
     oops::Parameter<double> max{"max", std::numeric_limits<double>::max(), this,
-                              {oops::minConstraint(0.0)}};
+                                {oops::minConstraint(0.0)}};
   };
 
   // ----------------------------------------------------------------------------------------------
@@ -44,7 +46,7 @@ class OceanSmootherParameters : public oops::Parameters {
 
   // ----------------------------------------------------------------------------------------------
 
-  oops::Parameter<std::string> mask{"mask", "", this};
+  oops::Parameter<std::string> mask{"mask variable", "", this};
   oops::OptionalParameter<Horizontal> horizontal{"horizontal", this};
   oops::OptionalParameter<Vertical> vertical{"vertical", this};
 };

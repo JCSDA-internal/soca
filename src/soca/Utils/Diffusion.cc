@@ -88,10 +88,16 @@ void Diffusion::setScales(const atlas::FieldSet & scales) {
 
     // adjust the above calculated diffusion coefficients by the final number of
     // iterations
-    for (size_t e = 0; e < khdt_.size(); e++) {
-      for (size_t level = 0; level < khdtLevels_; level++) {
-        khdt_[e][level] *= 1.0 / (2.0 * niterHz_);
+    if (niterHz_ > 0) {
+      for (size_t e = 0; e < khdt_.size(); e++) {
+        for (size_t level = 0; level < khdtLevels_; level++) {
+          khdt_[e][level] *= 1.0 / (2.0 * niterHz_);
+        }
       }
+    } else {
+      // if after all that, we have 0  iterations (probably because the length
+      // scales were miniscule), abandon doing horizontal diffusion
+      niterHz_ = -1;
     }
   }
 

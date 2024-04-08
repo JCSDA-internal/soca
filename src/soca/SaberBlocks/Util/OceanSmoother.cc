@@ -48,7 +48,8 @@ OceanSmoother::OceanSmoother(const oops::GeometryData & geom, const Parameters_ 
 
     // + rossby radius based value
     if (hzParam.rossbyMult.value() > 0.0) {
-      const auto &v_rossby = atlas::array::make_view<double, 2>(geom_.getField("rossby_radius"));
+      const std::string & rossbyVariable = hzParam.rossbyVariable.value();
+      const auto &v_rossby = atlas::array::make_view<double, 2>(geom_.getField(rossbyVariable));
       for (size_t i = 0; i < hzScales.shape(0); i++) {
           v_hzScales(i, 0) += v_rossby(i,0) * hzParam.rossbyMult.value();
       }
@@ -62,7 +63,12 @@ OceanSmoother::OceanSmoother(const oops::GeometryData & geom, const Parameters_ 
       }
     }
 
-    // TODO impose global min/max
+    // impose global min/max
+    const double minVal = hzParam.min.value();
+    const double maxVal = hzParam.max.value();
+    for (size_t i = 0; i < hzScales.shape(0); i++) {
+        v_hzScales(i, 0) = std::clamp(v_hzScales(i, 0), minVal, maxVal);
+    }
 
     // optional mask
     maskField(hzScales);
