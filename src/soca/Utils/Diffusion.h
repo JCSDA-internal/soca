@@ -49,8 +49,8 @@ class Diffusion {
   /// Perform diffusion smoothing of the input fields.
   /// The operation is guaranteed to be self-adjoint. `setScales()` must be set before
   /// this method can be called.
-  void multiply(atlas::FieldSet &, Mode mode = HZVT_2D_1D) const;
-  void multiply(atlas::Field &, Mode mode = HZVT_2D_1D) const;
+  void multiply(atlas::FieldSet &, Mode mode = HZVT_2D_1D, bool nonlinear = false) const;
+  void multiply(atlas::Field &, Mode mode = HZVT_2D_1D, bool nonlinear = false) const;
 
   /// Perform the square root of the diffusion operator (e.g. the
   /// tangent-linear, with 1/2 the number of iterations compared with multiply).

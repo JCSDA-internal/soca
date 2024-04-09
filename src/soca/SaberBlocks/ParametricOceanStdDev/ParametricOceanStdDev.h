@@ -59,7 +59,7 @@ class ParametricOceanStdDevSsh : public ParametricOceanStdDevBound {
 class ParametricOceanStdDevOther : public ParametricOceanStdDevBound {
   OOPS_CONCRETE_PARAMETERS(ParametricOceanStdDevOther, ParametricOceanStdDevBound)
  public:
-  oops::RequiredParameter<double> fractionOfBkg{"fraction of bkg", this,
+  oops::Parameter<double> fractionOfBkg{"fraction of background", 0.0, this,
     {oops::minConstraint(0.0)}};
 };
 
@@ -70,8 +70,8 @@ class ParametricOceanStdDevParameters : public saber::SaberBlockParametersBase {
   oops::RequiredParameter<ParametricOceanStdDevTocn> tocn{"temperature", this};
   oops::RequiredParameter<ParametricOceanStdDevBound> socn{"unbalanced salinity", this};
   oops::RequiredParameter<ParametricOceanStdDevSsh> ssh{"unbalanced ssh", this};
-  oops::OptionalParameter<std::map<std::string, ParametricOceanStdDevOther> > others{"others", this};
-  oops::OptionalParameter<eckit::LocalConfiguration> output{"output", this};
+  oops::OptionalParameter<std::map<std::string, ParametricOceanStdDevOther> > others{"other variables", this};
+  oops::OptionalParameter<eckit::LocalConfiguration> diagnostics{"diagnostics", this};
   oops::OptionalParameter<OceanSmootherParameters> smoother{"smoother", this};
 };
 

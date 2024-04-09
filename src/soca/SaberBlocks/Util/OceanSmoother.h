@@ -33,7 +33,10 @@ class OceanSmoother {
  public:
   typedef OceanSmootherParameters Parameters_;
 
-  explicit OceanSmoother(const oops::GeometryData &, const Parameters_ &);
+  explicit OceanSmoother(
+    const oops::GeometryData & geom,
+    const Parameters_ & params,
+    const int levels);
   void multiply(atlas::FieldSet &) const;
   void multiply(atlas::Field &) const;
 

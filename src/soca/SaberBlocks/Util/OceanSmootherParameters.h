@@ -40,8 +40,11 @@ class OceanSmootherParameters : public oops::Parameters {
   class Vertical : public oops::Parameters {
     OOPS_CONCRETE_PARAMETERS(Vertical, oops::Parameters)
    public:
-    oops::RequiredParameter<size_t> levels{"levels", this};
-    oops::Parameter<double> base{"base value", 1.0, this, {oops::minConstraint(0.0)}};
+    // oops::RequiredParameter<size_t> levels{"levels", this};
+    oops::Parameter<double> base{"base value", 0.0, this, {oops::minConstraint(0.0)}};
+    // oops::Parameter<double> min{"min", 0.0, this, {oops::minConstraint(0.0)}};
+    // oops::Parameter<double> max{"max", std::numeric_limits<double>::max(), this,
+    //                             {oops::minConstraint(0.0)}};
   };
 
   // ----------------------------------------------------------------------------------------------

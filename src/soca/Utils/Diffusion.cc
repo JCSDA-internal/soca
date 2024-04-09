@@ -80,6 +80,7 @@ void Diffusion::setScales(const atlas::FieldSet & scales) {
       }
     }
     niterHz_ = round(minItr/2) * 2;  // make sure number of iterations is even
+
     // get the global max number of iterations
     geom_.comm().allReduceInPlace(niterHz_, eckit::mpi::Operation::MAX);
 
@@ -95,7 +96,7 @@ void Diffusion::setScales(const atlas::FieldSet & scales) {
         }
       }
     } else {
-      // if after all that, we have 0  iterations (probably because the length
+      // if after all that, we have 0 iterations (probably because the length
       // scales were miniscule), abandon doing horizontal diffusion
       niterHz_ = -1;
     }
@@ -132,10 +133,16 @@ void Diffusion::setScales(const atlas::FieldSet & scales) {
 
     // adjust the above calculated diffusion coefficients by the final number of
     // iterations
-    for (size_t i = 0; i < kvdt_.shape(0); i++) {
-      for (size_t lvl = 0; lvl < kvdt_.shape(1); lvl++) {
-        v_kvdt(i, lvl) *= 1.0 / (2.0 * niterVt_);
+    if (niterVt_ > 0) {
+      for (size_t i = 0; i < kvdt_.shape(0); i++) {
+        for (size_t lvl = 0; lvl < kvdt_.shape(1); lvl++) {
+          v_kvdt(i, lvl) *= 1.0 / (2.0 * niterVt_);
+        }
       }
+    } else {
+      // if after all that, we have 0 iterations (probably because the length
+      // scales were miniscule), abandon doing vertical diffusion
+      niterVt_ = -1;
     }
   }
 }
@@ -235,15 +242,15 @@ const std::vector<Diffusion::EdgeGeom> Diffusion::createEdgeGeom(
 
 // --------------------------------------------------------------------------------------
 
-void Diffusion::multiply(atlas::FieldSet &fset, Mode mode) const {
+void Diffusion::multiply(atlas::FieldSet &fset, Mode mode, bool nonLinear) const {
   for (atlas::Field & field : fset) {
-    multiply(field);
+    multiply(field, mode, nonLinear);
   }
 }
 
 // --------------------------------------------------------------------------------------
 
-void Diffusion::multiply(atlas::Field &field, Mode mode) const {
+void Diffusion::multiply(atlas::Field &field, Mode mode, bool nonLinear) const {
   // We do not have the true 3D diffusion operator implemented (yet?)
   // force user to use the split Hz/vt instead
   if (mode == Mode::HZVT_3D) {
@@ -257,9 +264,9 @@ void Diffusion::multiply(atlas::Field &field, Mode mode) const {
                && field.shape(1) > 1 && niterVt_ > 0;
   bool doHz = (mode == Mode::HZ_ONLY || mode == Mode::HZVT_2D_1D) && niterHz_ > 0;
 
-  if (doVt) multiplyVtAD(field);
+  if (doVt) nonLinear ? multiplyVtTL(field) : multiplyVtAD(field);
   if (doHz) {
-    multiplyHzAD(field);
+    nonLinear ? multiplyHzTL(field) : multiplyHzAD(field);
     multiplyHzTL(field);
   }
   if (doVt) multiplyVtTL(field);
@@ -292,6 +299,8 @@ void Diffusion::multiplySqrt(atlas::FieldSet &fset, Mode mode) const {
 void Diffusion::multiplyHzTL(atlas::Field & field) const {
   const atlas::FunctionSpace & fs = geom_.functionSpace();
 
+  // sanity checks
+  ASSERT(niterHz_ > 0);
   ASSERT(field.shape(0) == fs.size());
   ASSERT(khdtLevels_ == 1 || field.shape(1) <= khdtLevels_);
 
@@ -327,6 +336,8 @@ void Diffusion::multiplyHzTL(atlas::Field & field) const {
 void Diffusion::multiplyHzAD(atlas::Field & field) const {
   const atlas::FunctionSpace & fs = geom_.functionSpace();
 
+  // sanity checks
+  ASSERT(niterHz_ > 0);
   ASSERT(field.shape(0) == fs.size());
   ASSERT(khdtLevels_ == 1 || field.shape(1) <= khdtLevels_);
 
@@ -375,7 +386,8 @@ void Diffusion::multiplyHzAD(atlas::Field & field) const {
 // --------------------------------------------------------------------------------------
 
 void Diffusion::multiplyVtTL(atlas::Field & field) const {
-  // make sure input field is correct shape
+  // sanity checks
+  ASSERT(niterVt_ > 0);
   ASSERT(field.shape(0) == kvdt_.shape(0));
   ASSERT(field.shape(1) == kvdt_.shape(1)+1 || field.shape(1) == 1);
 
@@ -407,7 +419,8 @@ void Diffusion::multiplyVtTL(atlas::Field & field) const {
 // NOTE: the vertical adjoint code should produce identical answers compared
 // with the TL code above. It's explicitly coded anyway just to be safe
 void Diffusion::multiplyVtAD(atlas::Field & field) const {
-  // make sure input field is correct shape
+  // sanity checks
+  ASSERT(niterVt_ > 0);
   ASSERT(field.shape(0) == kvdt_.shape(0));
   ASSERT(field.shape(1) == kvdt_.shape(1)+1 || field.shape(1) == 1);
 

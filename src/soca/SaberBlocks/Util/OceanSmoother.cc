@@ -10,17 +10,20 @@
 
 #include "atlas/field.h"
 
+#include "oops/util/Logger.h"
+
 namespace soca
 {
 
 // --------------------------------------------------------------------------------------
 
-OceanSmoother::OceanSmoother(const oops::GeometryData & geom, const Parameters_ & params)
+OceanSmoother::OceanSmoother(const oops::GeometryData & geom, const Parameters_ & params, const int levels)
  :  geom_(geom), diffusion_(geom)
 {
   atlas::FieldSet scales;
 
   // helper function to mask the scales
+  // TODO include a minimum layer thickness so that bottom layers are ignored
   auto maskField=[this, &params](atlas::Field &field) {
     if (params.mask.value() == "") return;
 
@@ -43,34 +46,46 @@ OceanSmoother::OceanSmoother(const oops::GeometryData & geom, const Parameters_ 
     scales.add(hzScales);
     auto v_hzScales = atlas::array::make_view<double, 2>(hzScales);
 
+    oops::Log::info() << "Ocean Smoother : calculating horizontal scales: " << std::endl;
+
     // base value
-    v_hzScales.assign(hzParam.base.value());
+    const double base = hzParam.base.value();
+    oops::Log::info() << "  base value: " << base << std::endl;
+    v_hzScales.assign(base);
 
     // + rossby radius based value
-    if (hzParam.rossbyMult.value() > 0.0) {
+    const double rossbyMult = hzParam.rossbyMult.value();
+    oops::Log::info() << "  rossby radius multiplier: " << rossbyMult << std::endl;
+    if (rossbyMult > 0.0) {
       const std::string & rossbyVariable = hzParam.rossbyVariable.value();
       const auto &v_rossby = atlas::array::make_view<double, 2>(geom_.getField(rossbyVariable));
       for (size_t i = 0; i < hzScales.shape(0); i++) {
-          v_hzScales(i, 0) += v_rossby(i,0) * hzParam.rossbyMult.value();
+          v_hzScales(i, 0) += v_rossby(i,0) * rossbyMult;
       }
     }
 
     // impose min based on grid size
-    if (hzParam.minGridMult.value() > 0.0) {
+    const double minGridMult = hzParam.minGridMult.value();
+    oops::Log::info() << "  minimum grid-based multiplier: " << minGridMult << std::endl;
+    if (minGridMult > 0.0) {
       const auto &v_area = atlas::array::make_view<double, 2>(geom_.getField("area"));
       for (size_t i = 0; i < hzScales.shape(0); i++) {
-          v_hzScales(i, 0) = std::max(v_hzScales(i, 0), std::sqrt(v_area(i,0))*hzParam.minGridMult.value());
+          v_hzScales(i, 0) = std::max(v_hzScales(i, 0), std::sqrt(v_area(i,0))*minGridMult);
       }
     }
 
     // impose global min/max
     const double minVal = hzParam.min.value();
     const double maxVal = hzParam.max.value();
+    oops::Log::info() << "  global minimum: " << minVal << std::endl;
+    oops::Log::info() << "  global maximum: " << maxVal << std::endl;
     for (size_t i = 0; i < hzScales.shape(0); i++) {
         v_hzScales(i, 0) = std::clamp(v_hzScales(i, 0), minVal, maxVal);
     }
 
     // optional mask
+    oops::Log::info() << "  using mask: "
+                      << (params.mask.value() == "" ? "NONE" : params.mask.value() ) << std::endl;
     maskField(hzScales);
   }
 
@@ -78,16 +93,39 @@ OceanSmoother::OceanSmoother(const oops::GeometryData & geom, const Parameters_ 
   if (params.vertical.value() != boost::none) {
     const OceanSmootherParameters::Vertical & vtParam = *params.vertical.value();
     atlas::Field vtScales = geom.functionSpace().createField<double>(
-      atlas::option::name("vtScales") | atlas::option::levels(vtParam.levels.value()));
+      atlas::option::name("vtScales") | atlas::option::levels(levels));
     scales.add(vtScales);
     auto v_vtScales = atlas::array::make_view<double, 2>(vtScales);
 
-    v_vtScales.assign(vtParam.base.value());
+    oops::Log::info() << "Ocean Smoother : calculating horizontal scales: " << std::endl;
 
+    // base value
+    const double base = vtParam.base.value();
+    oops::Log::info() << "  base value: " << base << std::endl;
+    v_vtScales.assign(base);
 
-    // TODO set the rest
+    // TODO, do an optional MLD based smoothing
 
+    // // impose global min/max
+    // // impose global min/max
+    // const double minVal = vtParam.min.value();
+    // const double maxVal = vtParam.max.value();
+    // oops::Log::info() << "  global minimum: " << minVal << std::endl;
+    // oops::Log::info() << "  global maximum: " << maxVal << std::endl;
+    // for (size_t i = 0; i < vtScales.shape(0); i++) {
+    //   for (size_t lvl = 0; lvl < vtScales.shape(1); lvl++) {
+    //     v_vtScales(i, lvl) = std::clamp(v_vtScales(i, lvl), minVal, maxVal);
+    //   }
+    // }
+
+    // optional mask
+    oops::Log::info() << "  using mask: "
+                      << (params.mask.value() == "" ? "NONE" : params.mask.value() ) << std::endl;
     maskField(vtScales);
+
+    // TODO zero out thin layers at the bottom
+
+    // TODO smooth by the horizontal scales
   }
 
   // all done, set the scales of the diffusion smoother
@@ -97,13 +135,13 @@ OceanSmoother::OceanSmoother(const oops::GeometryData & geom, const Parameters_ 
 // --------------------------------------------------------------------------------------
 
 void OceanSmoother::multiply(atlas::FieldSet & fset) const {
-  diffusion_.multiply(fset);
+  diffusion_.multiply(fset, Diffusion::HZVT_2D_1D, true);
 }
 
 // --------------------------------------------------------------------------------------
 
 void OceanSmoother::multiply(atlas::Field & field) const {
-  diffusion_.multiply(field);
+  diffusion_.multiply(field, Diffusion::HZVT_2D_1D, true);
 }
 
 }
