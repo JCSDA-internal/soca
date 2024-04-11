@@ -1,9 +1,9 @@
 mom6_input_nml: data_static/72x35x25/input_mom6solo.nml
 forecast length: PT24H
-initial condition:
+initial condition: 
   date: 2018-04-15T00:00:00Z
   ocn_filename: data_static/72x35x25/restarts/MOM.res.nc
 output:
   frequency: PT6H
-  exp: forecast_mom6
+  exp: forecast_mom6  
   datadir: data_output/

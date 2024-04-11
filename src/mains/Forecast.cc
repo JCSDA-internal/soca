@@ -6,11 +6,11 @@
  */
 
 
-#include "soca/Traits.h"
 #include "oops/generic/instantiateModelFactory.h"
-#include "oops/runs/Run.h"
 #include "oops/runs/Forecast.h"
+#include "oops/runs/Run.h"
 
+#include "soca/Traits.h"
 
 int main(int argc,  char ** argv) {
   oops::Run run(argc, argv);

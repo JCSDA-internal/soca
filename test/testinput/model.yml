@@ -12,7 +12,7 @@ model test:
   test reforecast: false
 
 model:
-  name: UFS
+  name: MOM6solo
   tstep: PT1H
   advance_mom6: 1
   # TODO issues with ustar/us changing after a forecast of len=0

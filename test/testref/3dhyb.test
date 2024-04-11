@@ -2,7 +2,7 @@ CostJb   : Nonlinear Jb = 0.0000000000000000e+00
 CostJo   : Nonlinear Jo(ADT) = 2.1585990691658122e+02, nobs = 99, Jo/n = 2.1804031001674873e+00, err = 1.0000000149011613e-01
 CostFunction: Nonlinear J = 2.1585990691658122e+02
 RPCGMinimizer: reduction in residual norm = 3.9870354978736110e-02
-CostFunction::addIncrement: Analysis:
+CostFunction::addIncrement: Analysis: 
   Valid time: 2018-04-15T00:00:00Z
   cicen   min=-0.0034668556769321   max=1.0000172065042263   mean=0.1175139005298868
   hicen   min=-0.1005327245329497   max=4.0326699282661229   mean=0.4688863516710726

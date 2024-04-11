@@ -2,7 +2,7 @@ CostJb   : Nonlinear Jb = 0.0000000000000000e+00
 CostJo   : Nonlinear Jo(SeaSufaceTemp) = 1.8768221098253971e+03, nobs = 199, Jo/n = 9.4312668835447084e+00, err = 3.6419991997020579e-01
 CostFunction: Nonlinear J = 1.8768221098253971e+03
 RPCGMinimizer: reduction in residual norm = 5.8539154032471272e-02
-CostFunction::addIncrement: Analysis:
+CostFunction::addIncrement: Analysis: 
   Valid time: 2018-04-15T00:00:00Z
    socn   min=10.7210460395083924   max=40.4416591897031168   mean=34.5443897261524953
    tocn   min=-2.6688485991157753   max=31.8204876336280975   mean=6.0278988757742109

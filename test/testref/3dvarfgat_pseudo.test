@@ -6,7 +6,7 @@ CostJo   : Nonlinear Jo(InsituTemperature) = 3.5389376539453463e+02, nobs = 206,
 CostJo   : Nonlinear Jo(InsituSalinity) = 3.4906662729111383e+02, nobs = 218, Jo/n = 1.6012230609684122e+00, err = 6.0819699545777528e-01
 CostFunction: Nonlinear J = 2.5341903281108353e+03
 RPCGMinimizer: reduction in residual norm = 4.1754487384122752e-01
-CostFunction::addIncrement: Analysis:
+CostFunction::addIncrement: Analysis: 
   Valid time: 2018-04-15T12:00:00Z
    socn   min=10.7132817362146326   max=40.4416122444350350   mean=34.5474174470745012
    tocn   min=-1.8879046811325451   max=31.8538873210726194   mean=6.0061939721872486
