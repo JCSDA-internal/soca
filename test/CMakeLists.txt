@@ -191,8 +191,6 @@ set( soca_install_mlbalance
 install(FILES ${soca_install_mlbalance}
         DESTINATION ${INSTALL_DATA_DIR}/testdata/mlbalance/ )
 
-set( SOCA_TESTS_MAX_MPI 8 CACHE STRING
-
 # Configurable parameters for the subsequent tests
 
 set( SOCA_TESTS_MAX_MPI 8 CACHE STRING
@@ -274,6 +272,7 @@ function(soca_add_test)
   endforeach()
   file(MAKE_DIRECTORY ${WORKDIR}/RESTART)
   foreach(FILENAME diag_table field_table INPUT)
+    execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
       ${WORKDIR}/data_static/workdir/${FILENAME}
       ${WORKDIR}/${FILENAME} )
   endforeach()
@@ -287,14 +286,15 @@ function(soca_add_test)
   # Are we building a unit test / or running a soca executable?
   if ( ARG_SRC )
     # building a unit test
-                      LIBS    ${UFS_LIBS}
-                      SOURCES executables/${ARG_SRC}
-                      ARGS    ${CONFIG_FILE}
-                      LIBS    ${UFS_LIBS}
-                      MPI     ${MPI}
-                      ENVIRONMENT ${TRAPFPE_ENV}
-                      WORKING_DIRECTORY ${WORKDIR}
-                      TEST_DEPENDS ${ARG_TEST_DEPENDS})
+     ecbuild_add_test( TARGET  test_soca_${ARG_NAME}
+                       LIBS    ${UFS_LIBS}
+                       SOURCES executables/${ARG_SRC}
+                       ARGS    ${CONFIG_FILE}
+                       LIBS    ${UFS_LIBS}
+                       MPI     ${MPI}
+                       ENVIRONMENT ${TRAPFPE_ENV}
+                       WORKING_DIRECTORY ${WORKDIR}
+                       TEST_DEPENDS ${ARG_TEST_DEPENDS})
     set( EXE ./test_soca_${ARG_NAME})
 
   elseif ( ARG_EXE)
@@ -593,8 +593,6 @@ soca_add_test( NAME makeobs
                EXE  soca_hofx.x
                NOTRAPFPE
                TEST_DEPENDS test_soca_gridgen )
-               TEST_DEPENDS test_soca_gridgen
-               LIBS soca stochastic_physics ccpp fv3atm esmf)
 soca_add_test( NAME hofx_3d
                EXE  soca_hofx3d.x
                TEST_DEPENDS test_soca_gridgen
@@ -605,8 +603,6 @@ if( ${oasim_FOUND} )
                  EXE  soca_hofx3d.x
                  TEST_DEPENDS test_soca_gridgen )
 endif( ${oasim_FOUND} )
-                            test_soca_forecast_mom6
-               LIBS soca stochastic_physics ccpp fv3atm esmf)
 soca_add_test( NAME hofx_4d_pseudo
                EXE  soca_hofx.x
                TEST_DEPENDS test_soca_gridgen
@@ -641,8 +637,6 @@ soca_add_test( NAME hofx_4d_pseudo
 #                EXE  soca_var.x
 #                NOTRAPFPE
 #                TEST_DEPENDS test_soca_gridgen )
-                            test_soca_parameters_diffusion
-               LIBS soca stochastic_physics ccpp fv3atm esmf )
 soca_add_test( NAME 3dvar
                EXE  soca_var.x
                TEST_DEPENDS test_soca_gridgen
