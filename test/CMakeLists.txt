@@ -274,6 +274,7 @@ function(soca_add_test)
   endforeach()
   file(MAKE_DIRECTORY ${WORKDIR}/RESTART)
   foreach(FILENAME diag_table field_table INPUT)
+    execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
       ${WORKDIR}/data_static/workdir/${FILENAME}
       ${WORKDIR}/${FILENAME} )
   endforeach()
@@ -287,7 +288,7 @@ function(soca_add_test)
   # Are we building a unit test / or running a soca executable?
   if ( ARG_SRC )
     # building a unit test
-                      LIBS    ${UFS_LIBS}
+    ecbuild_add_test( TARGET  test_soca_${ARG_NAME}
                       SOURCES executables/${ARG_SRC}
                       ARGS    ${CONFIG_FILE}
                       LIBS    ${UFS_LIBS}
