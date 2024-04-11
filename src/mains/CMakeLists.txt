@@ -55,11 +55,6 @@ ecbuild_add_executable( TARGET  soca_hybridgain.x
                         LIBS   ${UFS_LIBS}
                       )
 
-#ecbuild_add_executable( TARGET  soca_checkpoint_model.x
-#                        SOURCES CheckpointModel.cc
-#                        LIBS   ${UFS_LIBS}
-#                      )
-
 ecbuild_add_executable( TARGET  soca_gridgen.x
                         SOURCES GridGen.cc
                         LIBS   ${UFS_LIBS}

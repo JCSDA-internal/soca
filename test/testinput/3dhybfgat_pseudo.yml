@@ -3,7 +3,7 @@ cost function:
   cost type: 3D-FGAT
   time window:
     begin: *date_begin
-    length: PT6H
+    length: PT24H
   analysis variables: &soca_vars [cicen, hicen, socn, tocn, uocn, vocn, ssh, hocn]
 
   geometry: &geom
@@ -12,10 +12,25 @@ cost function:
     fields metadata: data_static/fields_metadata.yml
 
   model:
-    name: MOM6solo
-    tstep: PT1H
-    advance_mom6: 1
-    model variables: &model_vars [cicen, hicen, socn, uocn, vocn, tocn, ssh, hocn, mld, layer_depth]
+    name: PseudoModel
+    tstep: PT6H
+    _state : &state
+      basename: "./"
+      read_from_file: 1
+      ice_filename: data_static/72x35x25/restarts/cice.res.nc
+    states:
+    - date: 2018-04-15T06:00:00Z
+      ocn_filename: data_generated/forecast_mom6/ocn.forecast_mom6.fc.2018-04-15T00:00:00Z.PT6H.nc
+      << : *state
+    - date: 2018-04-15T12:00:00Z
+      ocn_filename: data_generated/forecast_mom6/ocn.forecast_mom6.fc.2018-04-15T00:00:00Z.PT12H.nc
+      << : *state
+    - date: 2018-04-15T18:00:00Z
+      ocn_filename: data_generated/forecast_mom6/ocn.forecast_mom6.fc.2018-04-15T00:00:00Z.PT18H.nc
+      << : *state
+    - date: 2018-04-16T00:00:00Z
+      ocn_filename: data_generated/forecast_mom6/ocn.forecast_mom6.fc.2018-04-15T00:00:00Z.PT24H.nc
+      << : *state
 
   variable change:
     variable change name: Model2Ana
@@ -31,7 +46,7 @@ cost function:
     ocn_filename: MOM.res.nc
     ice_filename: cice.res.nc
     date: *date_begin
-    state variables: *model_vars
+    state variables:  &model_vars [cicen, hicen, socn, uocn, vocn, tocn, ssh, hocn, mld, layer_depth]
 
   background error:
     covariance model: hybrid
@@ -51,7 +66,7 @@ cost function:
               horizontal:
                 filename: data_generated/parameters_diffusion/hz_smaller.nc
               vertical:
-                filename: data_generated/parameters_diffusion/vt_5lvls.nc      
+                filename: data_generated/parameters_diffusion/vt_5lvls.nc
 
         linear variable change:
           input variables: *soca_vars
@@ -96,21 +111,21 @@ cost function:
           read_from_file: 1
           date: *date_begin
           basename: data_static/72x35x25/restarts_ens/
-          remap_filename: data_static/72x35x25/restarts/MOM.res.nc
+          # remap_filename: data_static/72x35x25/restarts/MOM.res.nc
           state variables: *soca_vars
         members:
         - <<: *_file
-          ocn_filename: ocn.enspert.ens.1.2018-04-15T00:00:00Z.PT0S.nc
-          ice_filename: ice.enspert.ens.1.2018-04-15T00:00:00Z.PT0S.nc
+          ocn_filename: MOM.res.ens.1.nc
+          ice_filename: cice.res.ens.1.nc
         - <<: *_file
-          ocn_filename: ocn.enspert.ens.2.2018-04-15T00:00:00Z.PT0S.nc
-          ice_filename: ice.enspert.ens.2.2018-04-15T00:00:00Z.PT0S.nc
+          ocn_filename: MOM.res.ens.2.nc
+          ice_filename: cice.res.ens.2.nc
         - <<: *_file
-          ocn_filename: ocn.enspert.ens.3.2018-04-15T00:00:00Z.PT0S.nc
-          ice_filename: ice.enspert.ens.3.2018-04-15T00:00:00Z.PT0S.nc
+          ocn_filename: MOM.res.ens.3.nc
+          ice_filename: cice.res.ens.3.nc
         - <<: *_file
-          ocn_filename: ocn.enspert.ens.4.2018-04-15T00:00:00Z.PT0S.nc
-          ice_filename: ice.enspert.ens.4.2018-04-15T00:00:00Z.PT0S.nc
+          ocn_filename: MOM.res.ens.4.nc
+          ice_filename: cice.res.ens.4.nc
         localization:
           localization method: SABER
           saber central block:
@@ -157,7 +172,7 @@ variational:
     online diagnostics:
       write increment: true
       increment:
-        state component:      
+        state component:
           datadir: data_output/
           date: *date_begin
           exp: 3dhybfgat.iter1
@@ -173,6 +188,6 @@ final:
     departures: oman
 
 test:
-  reference filename: testref/3dhybfgat.test
-  test output filename: testoutput/3dhybfgat.test
+  reference filename: testref/3dhybfgat_pseudo.test
+  test output filename: testoutput/3dhybfgat_pseudo.test
   float relative tolerance: 1e-4

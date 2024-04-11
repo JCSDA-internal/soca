@@ -1,31 +1,9 @@
-geometry:
-  geom_grid_file: data_generated/gridgen/soca_gridspec.72x35x25.nc
-  mom6_input_nml: data_static/72x35x25/input.nml
-  fields metadata: data_static/fields_metadata.yml
-
-model:
-  name: UFS
-  tstep: PT1H
-  advance_mom6: 1
-  model variables: [cicen, hicen, socn, tocn, ssh, hocn, uocn, vocn, sw, lhf, shf, lw, us]
-
+mom6_input_nml: data_static/72x35x25/input_mom6solo.nml
+forecast length: PT24H
 initial condition:
-  read_from_file: 1
-  date: &date 2018-04-15T00:00:00Z
-  basename: data_static/72x35x25/restarts/
-  ocn_filename: MOM.res.nc
-  ice_filename: cice.res.nc
-  state variables: [cicen, hicen, socn, tocn, ssh, hocn, uocn, vocn, sw, lhf, shf, lw, us]
-
-forecast length: PT6H
-
+  date: 2018-04-15T00:00:00Z
+  ocn_filename: data_static/72x35x25/restarts/MOM.res.nc
 output:
-  frequency: PT1H
-  datadir: data_output/
+  frequency: PT6H
   exp: forecast_mom6
-  date: *date
-  type: fc
-
-test:
-  reference filename: testref/forecast_mom6.test
-  test output filename: testoutput/forecast_mom6.test
+  datadir: data_output/

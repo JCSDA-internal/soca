@@ -1,27 +1,9 @@
-geometry:
-  geom_grid_file: data_generated/gridgen/soca_gridspec.72x35x25.nc
-  mom6_input_nml: data_static/72x35x25/input.nml
-  fields metadata: data_static/fields_metadata.yml
-
-model:
-  name: MOM6solo
-  tstep: PT1H
-  advance_mom6: 1
-  model variables: [cicen, hicen, socn, tocn, ssh, hocn, uocn, vocn, sw, lhf, shf, lw, us]
-
+mom6_input_nml: data_static/72x35x25/input_mom6solo.nml
+forecast length: PT24H
 initial condition:
-  read_from_file: 1
-  date: &date 2018-04-15T00:00:00Z
-  basename: data_static/72x35x25/restarts_ens/
-  ocn_filename: ocn.enspert.ens.3.2018-04-15T00:00:00Z.PT0S.nc
-  ice_filename: ice.enspert.ens.3.2018-04-15T00:00:00Z.PT0S.nc
-  state variables: [cicen, hicen, socn, tocn, ssh, hocn, uocn, vocn, sw, lhf, shf, lw, us]
-
-forecast length: PT6H
-
+  date: 2018-04-15T00:00:00Z
+  ocn_filename: data_static/72x35x25/restarts_ens/MOM.res.ens.3.nc
 output:
-  frequency: PT1H
+  frequency: PT6H
   datadir: data_output/
   exp: fcst_ens3
-  date: *date
-  type: fc

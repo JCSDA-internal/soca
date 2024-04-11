@@ -16,21 +16,29 @@ use kinds, only: kind_real
 use type_fieldset, only: fieldset_type
 
 ! mom6 / fms modules
+use fms_mod, only : fms_init, fms_end
 use fms_io_mod, only : fms_io_init, fms_io_exit, &
                        register_restart_field, restart_file_type, &
                        restore_state, free_restart_type, save_restart
-use MOM_diag_remap,  only : diag_remap_ctrl, diag_remap_init, diag_remap_configure_axes, &
-                            diag_remap_end, diag_remap_update
-use MOM_domains, only : MOM_domain_type
-use MOM_EOS,         only : EOS_type
+use MOM, only : MOM_control_struct, initialize_MOM, MOM_end, get_MOM_state_elements
+use MOM_restart, only :MOM_restart_CS ! NOTE remove this when updating MOM6
+use MOM_domains, only : MOM_domain_type, MOM_domains_init, MOM_infra_init, MOM_infra_end
+use MOM_error_handler, only : MOM_error, MOM_mesg, WARNING, FATAL, is_root_pe
+use MOM_file_parser, only : get_param, param_file_type, close_param_file
+use MOM_get_input, only : directories, Get_MOM_Input
+use MOM_grid, only : ocean_grid_type
+use MOM_io, only : io_infra_init, io_infra_end
+use MOM_time_manager, only : real_to_time, JULIAN, set_calendar_type
 use mpp_domains_mod, only : mpp_get_compute_domain, mpp_get_data_domain, &
                             mpp_get_global_domain, mpp_update_domains, &
                             CYCLIC_GLOBAL_DOMAIN, FOLD_NORTH_EDGE
+use mpp_mod,only : mpp_init
+use time_interp_external_mod, only : time_interp_external_init
+use time_manager_mod, only: time_type
+
 ! soca modules
 use soca_fields_metadata_mod, only : soca_fields_metadata
-use soca_mom6, only: soca_mom6_config, soca_mom6_init, soca_geomdomain_init
 use soca_utils, only: write2pe, soca_remap_idw
-
 
 implicit none
 private
@@ -115,9 +123,6 @@ type, public :: soca_geom
     real(kind=kind_real), allocatable, dimension(:,:) :: cell_area !< cell area (m^2)
     real(kind=kind_real), allocatable, dimension(:,:) :: rossby_radius !< rossby radius (m) at the gridpoint
     real(kind=kind_real), allocatable, dimension(:,:) :: distance_from_coast !< distance to closest land grid point (m)
-    real(kind=kind_real), allocatable, dimension(:,:,:) :: h !< layer thickness (m)
-    real(kind=kind_real), allocatable, dimension(:,:,:) :: h_zstar
-    logical,              allocatable, dimension(:,:) :: valid_halo_mask !< true unless gridpoint is a duplicate or invalid halo
     !> \}
 
     !> instance of the metadata that is read in from a config file upon initialization
@@ -152,9 +157,6 @@ type, public :: soca_geom
     !> \copybrief soca_geom_gridgen \see soca_geom_gridgen
     procedure :: gridgen => soca_geom_gridgen
 
-    !> \copybrief soca_geom_thickness2depth \see soca_geom_thickness2depth
-    procedure :: thickness2depth => soca_geom_thickness2depth
-
     !> \copybrief soca_geom_write \see soca_geom_write
     procedure :: write => soca_geom_write
 
@@ -178,11 +180,23 @@ subroutine soca_geom_init(self, f_conf, f_comm)
   character(len=:), allocatable :: str
   logical :: full_init = .false.
 
+  ! variables needed to initialize the mom6 domain decomposition
+  type(param_file_type) :: param_file                !< Structure to parse for run-time parameters
+  type(directories)     :: dirs                      !< Structure containing several relevant directory paths
+
+
   ! MPI communicator
   self%f_comm = f_comm
 
-  ! Domain decomposition
-  call soca_geomdomain_init(self%Domain, self%nzo, f_comm)
+  ! use MOM6 to setup domain decomposition
+  call mpp_init(localcomm=f_comm%communicator())
+  call fms_init()
+  call fms_io_init()
+  call Get_MOM_Input(param_file, dirs)
+  call MOM_domains_init(self%Domain, param_file)
+  call get_param(param_file, "soca_mom6", "NK", self%nzo, fail_if_missing=.true.)
+  call close_param_file(param_file)
+  call fms_io_exit()
 
   ! User-defined grid filename
   if ( .not. f_conf%get("geom_grid_file", self%geom_grid_file) ) &
@@ -198,7 +212,7 @@ subroutine soca_geom_init(self, f_conf, f_comm)
 
   ! Read the geometry from file by default,
   ! skip this step if a full init is required
-  if ( .not. full_init) call soca_geom_read(self) 
+  if ( .not. full_init) call soca_geom_read(self)
 
   ! Fill halo
   call mpp_update_domains(self%lon, self%Domain%mpp_domain)
@@ -262,9 +276,6 @@ subroutine soca_geom_end(self)
   if (allocated(self%cell_area))     deallocate(self%cell_area)
   if (allocated(self%rossby_radius)) deallocate(self%rossby_radius)
   if (allocated(self%distance_from_coast)) deallocate(self%distance_from_coast)
-  if (allocated(self%h))             deallocate(self%h)
-  if (allocated(self%h_zstar))       deallocate(self%h_zstar)
-  if (allocated(self%valid_halo_mask)) deallocate(self%valid_halo_mask)
   nullify(self%Domain)
   call self%functionspace%final()
 
@@ -287,18 +298,18 @@ subroutine soca_geom_init_fieldset(self)
   fArea = self%functionspace%create_field(name='area', kind=atlas_real(kind_real), levels=1)
   call self%fieldset%add(fArea)
   call fArea%data(vArea)
-  
+
   fInterpMask = self%functionspace%create_field(name='interp_mask', kind=atlas_real(kind_real), levels=1)
-  call self%fieldset%add(fInterpMask)    
+  call self%fieldset%add(fInterpMask)
   call fInterpMask%data(vInterpMask)
 
   fVertCoord = self%functionspace%create_field(name='vert_coord', kind=atlas_real(kind_real), levels=self%nzo)
   call self%fieldset%add(fVertCoord)
-  call fVertCoord%data(vVertCoord) 
+  call fVertCoord%data(vVertCoord)
 
   fGmask = self%functionspace%create_field(name='gmask', kind=atlas_integer(kind(0)), levels=self%nzo)
   call self%fieldset%add(fGmask)
-  call fGmask%data(vGmask) 
+  call fGmask%data(vGmask)
 
   fOwned = self%functionspace%create_field(name='owned', kind=atlas_integer(kind(0)), levels=1)
   call self%fieldset%add(fOwned)
@@ -324,7 +335,7 @@ subroutine soca_geom_init_fieldset(self)
     vVertCoord(jz,:) = real(jz, kind_real)
   end do
 
-  ! halo exchanges for some of the fields 
+  ! halo exchanges for some of the fields
   call fGmask%halo_exchange()
   call fInterpMask%halo_exchange()
   call fArea%halo_exchange()
@@ -385,7 +396,6 @@ subroutine soca_geom_clone(self, other)
   self%cell_area = other%cell_area
   self%rossby_radius = other%rossby_radius
   self%distance_from_coast = other%distance_from_coast
-  self%h = other%h
   self%atlas_ij2idx = other%atlas_ij2idx
   call self%fields_metadata%clone(other%fields_metadata)
 end subroutine soca_geom_clone
@@ -398,63 +408,54 @@ end subroutine soca_geom_clone
 subroutine soca_geom_gridgen(self)
   class(soca_geom), intent(inout) :: self
 
-  ! allocate variables for regridding to zstar coord
-  type(soca_mom6_config) :: mom6_config
-  type(diag_remap_ctrl) :: remap_ctrl
-  type(EOS_type), pointer :: eqn_of_state
-  integer :: k
-  real(kind=kind_real), allocatable :: tracer(:,:,:)
-  integer :: answer_date = 20190101
+  ! variables needed to get grid info from MOM6
+  type(time_type) :: Start_time
+  type(param_file_type) :: param_file      ! The structure indicating the file(s)
+  type(directories)  :: dirs       !< Relevant dirs/path
+  type(ocean_grid_type),    pointer :: grid !< Grid metrics
+  type(MOM_control_struct)  :: CSp
+
+  type(MOM_restart_CS),     pointer :: restart_CSp !< NOTE remove this when updating MOM6
 
   ! Generate grid
-  call soca_mom6_init(mom6_config, partial_init=.true.)
-  self%lonh = mom6_config%grid%gridlont
-  self%lath = mom6_config%grid%gridlatt
-  self%lonq = mom6_config%grid%gridlonb
-  self%latq = mom6_config%grid%gridlatb
-  self%lon = mom6_config%grid%GeoLonT
-  self%lat = mom6_config%grid%GeoLatT
-  self%lonu = mom6_config%grid%geoLonCu
-  self%latu = mom6_config%grid%geoLatCu
-  self%lonv = mom6_config%grid%geoLonCv
-  self%latv = mom6_config%grid%geoLatCv
+  Start_time = real_to_time(0.0d0)
+  call MOM_infra_init(localcomm=self%f_comm%communicator())
+  call io_infra_init()
+  call set_calendar_type(JULIAN)
+  call time_interp_external_init
+  restart_CSp => NULL()
+  call initialize_MOM( Start_time, Start_time, param_file, dirs, CSp, restart_CSp )
+  call get_MOM_state_elements(CSp, G=grid)
 
-  self%sin_rot = mom6_config%grid%sin_rot
-  self%cos_rot = mom6_config%grid%cos_rot
+  self%lonh = grid%gridlont
+  self%lath = grid%gridlatt
+  self%lonq = grid%gridlonb
+  self%latq = grid%gridlatb
+  self%lon =  grid%GeoLonT
+  self%lat =  grid%GeoLatT
+  self%lonu = grid%geoLonCu
+  self%latu = grid%geoLatCu
+  self%lonv = grid%geoLonCv
+  self%latv = grid%geoLatCv
+  self%sin_rot = grid%sin_rot
+  self%cos_rot = grid%cos_rot
+  self%mask2d = grid%mask2dT
+  self%mask2du = grid%mask2dCu
+  self%mask2dv = grid%mask2dCv
+  self%dx = grid%dxT
+  self%dy = grid%dyT
+  self%cell_area = grid%areaT
 
-  self%mask2d = mom6_config%grid%mask2dT
-  self%mask2du = mom6_config%grid%mask2dCu
-  self%mask2dv = mom6_config%grid%mask2dCv
-  self%dx = mom6_config%grid%dxT
-  self%dy = mom6_config%grid%dyT
-  self%cell_area  = mom6_config%grid%areaT
-  self%h = mom6_config%MOM_CSp%h
+  call MOM_end(CSp)
+  call io_infra_end()
+  !call MOM_infra_end()
 
-  ! Setup intermediate zstar coordinate
-  allocate(tracer(self%isd:self%ied, self%jsd:self%jed, self%nzo))
-  tracer = 0.d0 ! dummy tracer
-  call diag_remap_init(remap_ctrl, coord_tuple='ZSTAR, ZSTAR, ZSTAR', answer_date=answer_date)
-  call diag_remap_configure_axes(remap_ctrl, mom6_config%GV, mom6_config%scaling, mom6_config%param_file)
-  self%nzo_zstar = remap_ctrl%nz
-  if (allocated(self%h_zstar)) deallocate(self%h_zstar)
-  allocate(self%h_zstar(self%isd:self%ied, self%jsd:self%jed, 1:remap_ctrl%nz))
-
-  ! Compute intermediate vertical coordinate self%h_zstar
-  call diag_remap_update(remap_ctrl, &
-                         mom6_config%grid, &
-                         mom6_config%GV, &
-                         mom6_config%scaling, &
-                         self%h, tracer, tracer, eqn_of_state, self%h_zstar)
-  call diag_remap_end(remap_ctrl)
-
-  ! Get Rossby Radius
+  ! Calculate other static grid-based fields
   call soca_geom_rossby_radius(self, self%rossby_file)
-
   call soca_geom_distance_from_coast(self)
 
   ! Output to file
   call soca_geom_write(self)
-
 end subroutine soca_geom_gridgen
 
 
@@ -480,7 +481,7 @@ subroutine soca_geom_allocate(self)
   call soca_geom_get_domain_indices(self, "data", self%isdl, self%iedl, self%jsdl, self%jedl, local=.true.)
 
   ! Allocate arrays on compute domain
-  ! NOTE, sometimes MOM6 doesn't use all the halo points, we set 
+  ! NOTE, sometimes MOM6 doesn't use all the halo points, we set
   !  lat/lon to INVALID_HALO so that we can detect this later when deciding
   !  which halo points are invalid/duplicates
   allocate(self%lonh(self%isg:self%ieg));        self%lonh = 0.0_kind_real
@@ -501,13 +502,12 @@ subroutine soca_geom_allocate(self)
   allocate(self%mask2du(isd:ied,jsd:jed));       self%mask2du = 0.0_kind_real
   allocate(self%mask2dv(isd:ied,jsd:jed));       self%mask2dv = 0.0_kind_real
 
-  allocate(self%dx(isd:ied,jsd:jed));            self%dx = 0.0_kind_real  
-  allocate(self%dy(isd:ied,jsd:jed));            self%dy = 0.0_kind_real  
+  allocate(self%dx(isd:ied,jsd:jed));            self%dx = 0.0_kind_real
+  allocate(self%dy(isd:ied,jsd:jed));            self%dy = 0.0_kind_real
   allocate(self%cell_area(isd:ied,jsd:jed));     self%cell_area = 0.0_kind_real
   allocate(self%rossby_radius(isd:ied,jsd:jed)); self%rossby_radius = 0.0_kind_real
   allocate(self%distance_from_coast(isd:ied,jsd:jed)); self%distance_from_coast = 0.0_kind_real
-  allocate(self%h(isd:ied,jsd:jed,1:nzo));       self%h = 0.0_kind_real
-  
+
   allocate(self%atlas_ij2idx(isd:ied,jsd:jed));  self%atlas_ij2idx = -1
 
   allocate(self%valid_halo_mask(isd:ied,jsd:jed));self%valid_halo_mask = .true.
@@ -742,18 +742,8 @@ subroutine soca_geom_write(self)
                                    domain=self%Domain%mpp_domain)
   idr_geom = register_restart_field(geom_restart, &
                                    &self%geom_grid_file, &
-                                   &'h', &
-                                   &self%h(:,:,:), &
-                                   domain=self%Domain%mpp_domain)
-  idr_geom = register_restart_field(geom_restart, &
-                                   &self%geom_grid_file, &
                                    &'nzo_zstar', &
                                    &self%nzo_zstar, &
-                                   domain=self%Domain%mpp_domain)
-  idr_geom = register_restart_field(geom_restart, &
-                                   &self%geom_grid_file, &
-                                   &'h_zstar', &
-                                   &self%h_zstar(:,:,:), &
                                    domain=self%Domain%mpp_domain)
   idr_geom = register_restart_field(geom_restart, &
                                    &self%geom_grid_file, &
@@ -861,7 +851,7 @@ subroutine soca_geom_read(self)
                                    &self%geom_grid_file, &
                                    &'dy', &
                                    &self%dy(:,:), &
-                                   domain=self%Domain%mpp_domain)                                   
+                                   domain=self%Domain%mpp_domain)
   idr_geom = register_restart_field(geom_restart, &
                                    &self%geom_grid_file, &
                                    &'area', &
@@ -886,11 +876,6 @@ subroutine soca_geom_read(self)
                                    &self%geom_grid_file, &
                                    &'mask2dv', &
                                    &self%mask2dv(:,:), &
-                                   domain=self%Domain%mpp_domain)
-  idr_geom = register_restart_field(geom_restart, &
-                                   &self%geom_grid_file, &
-                                   &'h', &
-                                   &self%h(:,:,:), &
                                    domain=self%Domain%mpp_domain)
   idr_geom = register_restart_field(geom_restart, &
                                    &self%geom_grid_file, &
@@ -939,36 +924,6 @@ end subroutine soca_geom_get_domain_indices
 
 
 ! ------------------------------------------------------------------------------
-!> Get layer depth from layer thicknesses
-!!
-!! \related soca_geom_mod::soca_geom
-subroutine soca_geom_thickness2depth(self, h, z)
-  class(soca_geom),     intent(in   ) :: self
-  real(kind=kind_real), intent(in   ) :: h(:,:,:) !< Layer thickness
-  real(kind=kind_real), intent(inout) :: z(:,:,:) !< Mid-layer depth
-
-  integer :: is, ie, js, je, i, j, k
-
-  ! Should check shape of z
-  is = lbound(h,dim=1)
-  ie = ubound(h,dim=1)
-  js = lbound(h,dim=2)
-  je = ubound(h,dim=2)
-
-  ! top layer
-  z(:,:,1) = 0.5_kind_real*h(:,:,1)
-
-  ! the rest of the layers
-  do i = is, ie
-     do j = js, je
-        do k = 2, self%nzo
-          z(i,j,k) = sum(h(i,j,1:k-1))+0.5_kind_real*h(i,j,k)
-        end do
-     end do
-  end do
-end subroutine soca_geom_thickness2depth
-
-! ------------------------------------------------------------------------------
 ! Get a 2d array of the valid nodes / cells that are to be used on this PE
 ! for ATLAS mesh generation.
 ! We assume that owned cells (quads) are generated north and east of the PE's owned nodes (vertices)
@@ -1008,10 +963,10 @@ subroutine soca_geom_mesh_valid_nodes_cells(self, nodes, cells)
     start_i = max(self%domain%NIGLOBAL/2, self%isc)
 
     ! additionally, this PE crosses the E/W midpoint, remove all extra nodes at the north for this PE
-    if (self%isc <= self%domain%NIGLOBAL/2 .and. self%iec > self%domain%NIGLOBAL/2) then      
+    if (self%isc <= self%domain%NIGLOBAL/2 .and. self%iec > self%domain%NIGLOBAL/2) then
       start_i = self%isc
     end if
-    
+
     ! remove some nodes
     do i=start_i, self%iec+1
         nodes(i, self%jec+1) = .false.
@@ -1023,11 +978,11 @@ subroutine soca_geom_mesh_valid_nodes_cells(self, nodes, cells)
         cells(i, self%jec) = .false.
       end if
     end do
-  end if     
-  
+  end if
+
   ! the grid is cyclic in the E/W direction and we are a PE at the eastern edge
-  ! -------------------------------------------------------------------------------------  
-  if (cyclic .and. self%isc == 1 .and. self%iec == self%domain%NIGLOBAL) then  
+  ! -------------------------------------------------------------------------------------
+  if (cyclic .and. self%isc == 1 .and. self%iec == self%domain%NIGLOBAL) then
     ! cyclic boundaries, and this PE spans entire width.
     ! Remove all nodes on the easternmost column.
     do j=self%jsc, self%jec+1
@@ -1036,7 +991,7 @@ subroutine soca_geom_mesh_valid_nodes_cells(self, nodes, cells)
   end if
 
   ! We are a regional grid
-  ! NOTE: this logic should change at some point so that there ARE halos around the 
+  ! NOTE: this logic should change at some point so that there ARE halos around the
   ! outer boundary
   ! -------------------------------------------------------------------------------------
   if (regional) then
@@ -1049,7 +1004,7 @@ subroutine soca_geom_mesh_valid_nodes_cells(self, nodes, cells)
       ! remove cells on top
       do i=self%isc, self%iec
         cells(i, self%jec) = .false.
-      end do      
+      end do
     end if
 
     ! are we a PE at the right edge?
@@ -1061,7 +1016,7 @@ subroutine soca_geom_mesh_valid_nodes_cells(self, nodes, cells)
       ! remove cells on right
       do j=self%jsc, self%jec
         cells(self%iec, j) = .false.
-      end do          
+      end do
     end if
 
   end if
@@ -1072,10 +1027,10 @@ end subroutine
 !> Examine the halo gridpoints to determine which ones are non-duplicate and valid
 !!
 !! The OOPS interpolation does not like duplicate points, but MOM6 does have duplicate
-!! and/or unused halo points. We create a mask (self%valid_halo_mask) that is true if 1) 
-!! not a halo point, or 2) a halo point that is not a duplicate lat/lon already present 
-!! in the PE's halo or non-halo regions. Invalid halo points are also masked out 
-!! (i.e. the lat/lon are not updated from the initialed INVALID_HALO value when a halo 
+!! and/or unused halo points. We create a mask (self%valid_halo_mask) that is true if 1)
+!! not a halo point, or 2) a halo point that is not a duplicate lat/lon already present
+!! in the PE's halo or non-halo regions. Invalid halo points are also masked out
+!! (i.e. the lat/lon are not updated from the initialed INVALID_HALO value when a halo
 !! exchanged is performed
 subroutine soca_geom_find_invalid_halo(self)
   class(soca_geom), intent(inout) :: self
@@ -1094,8 +1049,8 @@ subroutine soca_geom_find_invalid_halo(self)
           if (self%lat(i1,j1) == INVALID_HALO) then
             self%valid_halo_mask(i1,j1) = .false.
             cycle
-          end if    
-          
+          end if
+
       ! make sure this halo point doesn't exist anywhere else, if it does mask it out
       inner: do j2 = self%jsd, self%jed
         do i2 = self%isd, self%ied
@@ -1103,7 +1058,7 @@ subroutine soca_geom_find_invalid_halo(self)
           if (j1 == j2 .and. i1 == i2) cycle
           ! skip if point 2 has already been masked out
           if (.not. self%valid_halo_mask(i2,j2)) cycle
-          
+
           ! if lat/lon are the same, mark point 1 as a duplicate, mask out
           if (self%lat(i1,j1) == self%lat(i2,j2) .and. &
               self%lon(i1,j1) == self%lon(i2,j2)) then
@@ -1112,7 +1067,7 @@ subroutine soca_geom_find_invalid_halo(self)
           end if
         end do
       end do inner
-    
+
     end do
   end do outer
 

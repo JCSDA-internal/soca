@@ -11,9 +11,10 @@
 
 #include "oops/util/FieldSetHelpers.h"
 
-#include "soca/MLBalance/MLBalance.h"
 #include "soca/Geometry/Geometry.h"
 #include "soca/Increment/Increment.h"
+#include "soca/MLBalance/MLBalance.h"
+#include "soca/MLBalance/MLJac.h"
 
 namespace soca {
 
@@ -52,17 +53,25 @@ MLBalance::MLBalance(
   }
 
   // Initialize the Jacobian
-  // TODO(G): Currently set to 1.0 for testing, reset to 0 before implementing a
-  //           realistic jacobian
-  jac_ = util::createFieldSet(xb["tocn"].functionspace(), jacVars, 1.0);
+  jac_ = util::createFieldSet(outerGeometryData.functionSpace(), jacVars, 0.0);
 
-  // Do something with the ML Balances
-  oops::Log::info() << "Jacobian not implemented yet" << std::endl;
+  // Initialize Jacobian
+  setupJac(xb, outerGeometryData.comm(), mlbConf);
 }
 
 // --------------------------------------------------------------------------------------
 
 MLBalance::~MLBalance() {}
+
+// --------------------------------------------------------------------------------------
+
+void MLBalance::setupJac(const oops::FieldSet3D & xb,
+                         const eckit::mpi::Comm & comm,
+                         const eckit::Configuration & config) {
+  // Create a map of configurations
+  eckit::LocalConfiguration mlConf = params_.mlbalances.value();
+  MLJac mlJac(mlConf, xb, jac_, innerGeometryData_, comm);
+}
 
 // --------------------------------------------------------------------------------------
 

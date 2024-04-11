@@ -83,6 +83,21 @@
   io name: hsnon
   property: positive_definite
 
+- name: tsfc
+  getval name: snow_ice_surface_temperature
+  io file: ice
+  io name: Tsfc_h
+
+- name: tair
+  getval name: air_temperature
+  io file: ice
+  io name: Tair_h
+
+- name: sice
+  getval name: bulk_ice_salinity
+  io file: ice
+  io name: sice_h
+
 # --------------------------------------------------------------------------------------------------
 # wave state variables
 # --------------------------------------------------------------------------------------------------
@@ -177,7 +192,7 @@
 # --------------------------------------------------------------------------------------------------
 - name: sea_water_temperature
   levels: full_ocn
-  
+
 # --------------------------------------------------------------------------------------------------
 - name: dummy_atm1
   constant value: 5.0
@@ -187,7 +202,7 @@
   constant value: 275  #The average amount of ozone in the atm. is 300 Dobson Units
 
 - name: wvapor
-  getval name: water_vapor   #g/cm^2  
+  getval name: water_vapor   #g/cm^2
   constant value: 1.2
 
 - name: ws
@@ -224,37 +239,56 @@
 
 #---------------------ocean bio
 - name: c_det
+  levels: full_ocn
   getval name: Carbon_nitrogen_detritus_concentration
-  constant value: 4.7
+  io file: bio
+  io name: CDET
+  property: positive_definite
 
 - name: inorg_c
+  levels: full_ocn
   getval name: Particulate_inorganic_carbon
-  constant value: 2.1
+  io file: bio
+  io name: PIC
 
 - name: dis_c
+  levels: full_ocn
   getval name: colored_dissolved_organic_carbon
-  constant value: 3.1
+  io file: bio
+  io name: CDC
 
 - name: diatom
+  levels: full_ocn
   getval name: diatom_concentration
-  constant value: 0.01
+  io file: bio
+  io name: DIATOM
 
 - name: chloro
+  levels: full_ocn
   getval name: chlorophyte_concentration
-  constant value: 0.14
+  io file: bio
+  io name: CHLORO
 
 - name: cyano
+  levels: full_ocn
   getval name: cyano-bacteria_concentration
-  constant value: 0.003
+  io file: bio
+  io name: CYANO
 
 - name: cocco
+  levels: full_ocn
   getval name: coccolithophore_concentration
-  constant value: 0.092
+  io file: bio
+  io name: COCCO
 
 - name: dino
+  levels: full_ocn
   getval name: dinoflagellate_concentration
-  constant value: 0 #1.54e-17
+  io file: bio
+  io name: DINO
 
 - name: phaeo
+  levels: full_ocn
   getval name: phaeocystis_concentration
-  constant value: 0 #5.3e-24
+  io file: bio
+  io name: PHAEO

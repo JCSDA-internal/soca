@@ -4,9 +4,9 @@ geometry: &geom
   fields metadata: data_static/fields_metadata.yml
 
 model:
-  name: MOM6solo
+  # obviously not ideal, in the real world you'd want to run a forecast with MOM6 after running enspert
+  name: Identity
   tstep: PT6H
-  advance_mom6: 1
   model variables: &model_vars [cicen, hicen, hsnon, socn, tocn, uocn, vocn, ssh, hocn, chl, biop, sw, lhf, shf, lw, us, mld, layer_depth]
 
 initial condition:
@@ -82,7 +82,7 @@ background error:
 
 members: 5
 perturbed variables: *soca_vars
-forecast length: PT6H
+forecast length: PT0H
 
 output:
  frequency: PT6H
