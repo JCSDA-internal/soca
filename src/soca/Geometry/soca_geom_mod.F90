@@ -412,16 +412,13 @@ subroutine soca_geom_gridgen(self)
   type(ocean_grid_type),    pointer :: grid !< Grid metrics
   type(MOM_control_struct)  :: CSp
 
-  type(MOM_restart_CS),     pointer :: restart_CSp !< NOTE remove this when updating MOM6
-  
   ! Generate grid
   Start_time = real_to_time(0.0d0)
   call MOM_infra_init(localcomm=self%f_comm%communicator())
   call io_infra_init()
   call set_calendar_type(JULIAN)
   call time_interp_external_init  
-  restart_CSp => NULL()
-  call initialize_MOM( Start_time, Start_time, param_file, dirs, CSp, restart_CSp )
+  call initialize_MOM( Start_time, Start_time, param_file, dirs, CSp )
   call get_MOM_state_elements(CSp, G=grid)
 
   self%lonh = grid%gridlont
