@@ -138,10 +138,6 @@ set( soca_test_ref
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/testinput)
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/testoutput)
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/testref)
-file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/Data/ModelRunDirs)
-execute_process(COMMAND cmake -E create_symlink
-   ${CMAKE_BINARY_DIR}/_deps/testdata-src ${CMAKE_CURRENT_BINARY_DIR}/Data/ModelRunDirs/UFS
-)
 foreach(FILENAME ${soca_test_input} ${soca_test_ref})
     execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
            ${CMAKE_CURRENT_SOURCE_DIR}/${FILENAME}
@@ -191,11 +187,11 @@ set( soca_install_mlbalance
 install(FILES ${soca_install_mlbalance}
         DESTINATION ${INSTALL_DATA_DIR}/testdata/mlbalance/ )
 
-set( SOCA_TESTS_MAX_MPI 8 CACHE STRING
+#####################################################################
 
 # Configurable parameters for the subsequent tests
 
-set( SOCA_TESTS_MAX_MPI 8 CACHE STRING
+set( SOCA_TESTS_MAX_MPI 2 CACHE STRING
   "Maximum number of PEs to use for SOCA's MPI based tests.\
   NOTE: should leave this at 2 to ensure all tests pass.")
 
@@ -278,6 +274,7 @@ function(soca_add_test)
       ${WORKDIR}/data_static/workdir/${FILENAME}
       ${WORKDIR}/${FILENAME} )
   endforeach()
+
   # setup output directory
   file( MAKE_DIRECTORY ${WORKDIR}/data_generated/${ARG_NAME})
   execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
@@ -594,25 +591,21 @@ soca_add_test( NAME makeobs
                EXE  soca_hofx.x
                NOTRAPFPE
                TEST_DEPENDS test_soca_gridgen )
-               TEST_DEPENDS test_soca_gridgen
-               LIBS soca stochastic_physics ccpp fv3atm esmf)
+
 soca_add_test( NAME hofx_3d
                EXE  soca_hofx3d.x
-               TEST_DEPENDS test_soca_gridgen
-               LIBS soca stochastic_physics ccpp fv3atm esmf)
+               TEST_DEPENDS test_soca_gridgen )
 
 if( ${oasim_FOUND} )
   soca_add_test( NAME hofx_oasim_3d
                  EXE  soca_hofx3d.x
                  TEST_DEPENDS test_soca_gridgen )
 endif( ${oasim_FOUND} )
-                            test_soca_forecast_mom6
-               LIBS soca stochastic_physics ccpp fv3atm esmf)
+
 soca_add_test( NAME hofx_4d_pseudo
                EXE  soca_hofx.x
                TEST_DEPENDS test_soca_gridgen
-                            test_soca_forecast_mom6
-               LIBS soca stochastic_physics ccpp fv3atm esmf)
+                            test_soca_forecast_mom6 )
 
 # NOTE, enshofx is disabled because MOM6 always writes out some diagnostic
 # netcdf files (which can't be disabled). This is normally not a problem, except
@@ -621,10 +614,12 @@ soca_add_test( NAME hofx_4d_pseudo
 # same time. We'll need to take a closer look at MOM6 output when we start
 # dealing with in-core MOM6
 
+# soca_add_test( NAME enshofx
 #                EXE  soca_enshofx.x
 #                MPI 3
 #                NOTRAPFPE
 #                TEST_DEPENDS test_soca_gridgen )
+
 
 # variational methods
 # (unless specifically specified, it is assumed that correlation uses
@@ -642,13 +637,11 @@ soca_add_test( NAME hofx_4d_pseudo
 #                EXE  soca_var.x
 #                NOTRAPFPE
 #                TEST_DEPENDS test_soca_gridgen )
-                            test_soca_parameters_diffusion
-               LIBS soca stochastic_physics ccpp fv3atm esmf )
+
 soca_add_test( NAME 3dvar
                EXE  soca_var.x
                TEST_DEPENDS test_soca_gridgen
-                            test_soca_parameters_diffusion
-               LIBS soca stochastic_physics ccpp fv3atm esmf )
+                            test_soca_parameters_diffusion )
 
 soca_add_test( NAME 3dvar_nicas
                EXE  soca_var.x
