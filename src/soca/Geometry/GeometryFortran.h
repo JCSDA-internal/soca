@@ -49,6 +49,7 @@ namespace soca {
     void soca_geo_get_num_levels_f90(const F90geom &, const oops::Variables &,
                                     const size_t &, size_t[]);
     void soca_geo_iterator_dimension_f90(const F90geom &, int &);
+    void soca_geo_write_f90(const F90geom &);
   }
 }  // namespace soca
 #endif  // SOCA_GEOMETRY_GEOMETRYFORTRAN_H_

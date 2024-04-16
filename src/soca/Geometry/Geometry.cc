@@ -16,7 +16,7 @@
 #include "eckit/config/Configuration.h"
 
 #include "soca/Geometry/Geometry.h"
-
+#include "soca/Utils/readAndInterp.h"
 
 // -----------------------------------------------------------------------------
 namespace soca {
@@ -31,6 +31,7 @@ namespace soca {
 
     fmsinput_.updateNameList();
 
+    // Setup the Fortran side of Geometry, use MOM6 to calculate grid decomposition
     soca_geo_setup_f90(keyGeom_, &conf, &comm);
 
     // generate the grid ONLY if being run under the gridgen application.
@@ -112,9 +113,21 @@ namespace soca {
       }
     }
 
-    // Set ATLAS function space in Fortran, and fill in the
-    // geometry fieldset from the fortran side.
+    // Set ATLAS function space in Fortran, and fill in some of the the geometry
+    // fieldset from the fortran side.
     soca_geo_init_atlas_f90(keyGeom_, functionSpace_.get(), fields_.get());
+
+    // fill in the rest of the fieldset from the C++ side here
+    {
+      // TODO(Travis) only do this if gen == True, otherwise read in from file.
+      auto results = readNcAndInterp("data_static/rossrad.nc", {"rossby_radius"}, functionSpace_);
+      fields_.add(results.field(0));
+    }
+
+    // write output
+    if (gen) {
+      soca_geo_write_f90(keyGeom_);
+    }
   }
 
   // -----------------------------------------------------------------------------
@@ -198,5 +211,7 @@ namespace soca {
     }
     ASSERT(idx == gridSize);
   }
+
+  // -----------------------------------------------------------------------------
 
 }  // namespace soca

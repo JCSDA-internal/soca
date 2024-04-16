@@ -121,8 +121,6 @@ type, public :: soca_geom
     real(kind=kind_real), allocatable, dimension(:,:) :: dx !< cell x width (m)
     real(kind=kind_real), allocatable, dimension(:,:) :: dy !< cell y width (m)
     real(kind=kind_real), allocatable, dimension(:,:) :: cell_area !< cell area (m^2)
-    real(kind=kind_real), allocatable, dimension(:,:) :: rossby_radius !< rossby radius (m) at the gridpoint
-    real(kind=kind_real), allocatable, dimension(:,:) :: distance_from_coast !< distance to closest land grid point (m)
     !> \}
 
     !> instance of the metadata that is read in from a config file upon initialization
@@ -130,7 +128,6 @@ type, public :: soca_geom
 
     logical, private :: save_local_domain = .false. !< If true, save the local geometry for each pe.
     character(len=:), allocatable :: geom_grid_file !< filename of geometry
-    character(len=:), allocatable :: rossby_file !< filename of rossby radius input file (if used)
 
     type(fckit_mpi_comm) :: f_comm !< MPI communicator
 
@@ -201,8 +198,6 @@ subroutine soca_geom_init(self, f_conf, f_comm)
   ! User-defined grid filename
   if ( .not. f_conf%get("geom_grid_file", self%geom_grid_file) ) &
      self%geom_grid_file = "soca_gridspec.nc" ! default if not found
-  if ( .not. f_conf%get("rossby file", self%rossby_file)) &
-    self%rossby_file = "rossrad.dat" ! default if not found
 
   ! Allocate geometry arrays
   call soca_geom_allocate(self)
@@ -212,7 +207,7 @@ subroutine soca_geom_init(self, f_conf, f_comm)
 
   ! Read the geometry from file by default,
   ! skip this step if a full init is required
-  if ( .not. full_init) call soca_geom_read(self) 
+  if ( .not. full_init) call soca_geom_read(self)
 
   ! Fill halo
   call mpp_update_domains(self%lon, self%Domain%mpp_domain)
@@ -229,8 +224,6 @@ subroutine soca_geom_init(self, f_conf, f_comm)
   call mpp_update_domains(self%dx, self%Domain%mpp_domain)
   call mpp_update_domains(self%dy, self%Domain%mpp_domain)
   call mpp_update_domains(self%cell_area, self%Domain%mpp_domain)
-  call mpp_update_domains(self%rossby_radius, self%Domain%mpp_domain)
-  call mpp_update_domains(self%distance_from_coast, self%Domain%mpp_domain)
 
   ! Set output option for local geometry
   if ( .not. f_conf%get("save_local_domain", self%save_local_domain) ) &
@@ -271,8 +264,6 @@ subroutine soca_geom_end(self)
   if (allocated(self%dx))            deallocate(self%dx)
   if (allocated(self%dy))            deallocate(self%dy)
   if (allocated(self%cell_area))     deallocate(self%cell_area)
-  if (allocated(self%rossby_radius)) deallocate(self%rossby_radius)
-  if (allocated(self%distance_from_coast)) deallocate(self%distance_from_coast)
   nullify(self%Domain)
   call self%functionspace%final()
 
@@ -281,42 +272,45 @@ end subroutine soca_geom_end
 
 ! --------------------------------------------------------------------------------------------------
 !> Fill ATLAS fieldset
-!!
+!! NOTE, this is only the set of variables being filled in from the Fortran side,
+!! some variables are being set from the C++ side as well.
 !! \related soca_geom_mod::soca_geom
 subroutine soca_geom_init_fieldset(self)
   class(soca_geom),  intent(inout) :: self
 
   integer :: i, j, n, jz
-  type(atlas_field) :: fArea, fInterpMask, fVertCoord, fGmask, fOwned, fRossby
-  real(kind=kind_real), pointer :: vArea(:,:), vInterpMask(:,:), vVertCoord(:,:), vRossby(:,:)
+  type(atlas_field) :: fArea, fInterpMask, fVertCoord, fGmask, fOwned, fDist
+  real(kind=kind_real), pointer :: vArea(:,:), vInterpMask(:,:), vVertCoord(:,:), vDist(:,:)
   integer, pointer :: vGmask(:,:), vOwned(:,:)
+  real(kind=kind_real), allocatable :: dist(:,:)
 
   ! create fields, get pointers to their data
   fArea = self%functionspace%create_field(name='area', kind=atlas_real(kind_real), levels=1)
   call self%fieldset%add(fArea)
   call fArea%data(vArea)
-  
+
   fInterpMask = self%functionspace%create_field(name='interp_mask', kind=atlas_real(kind_real), levels=1)
-  call self%fieldset%add(fInterpMask)    
+  call self%fieldset%add(fInterpMask)
   call fInterpMask%data(vInterpMask)
 
   fVertCoord = self%functionspace%create_field(name='vert_coord', kind=atlas_real(kind_real), levels=self%nzo)
   call self%fieldset%add(fVertCoord)
-  call fVertCoord%data(vVertCoord) 
+  call fVertCoord%data(vVertCoord)
 
   fGmask = self%functionspace%create_field(name='gmask', kind=atlas_integer(kind(0)), levels=self%nzo)
   call self%fieldset%add(fGmask)
-  call fGmask%data(vGmask) 
+  call fGmask%data(vGmask)
 
   fOwned = self%functionspace%create_field(name='owned', kind=atlas_integer(kind(0)), levels=1)
   call self%fieldset%add(fOwned)
   call fOwned%data(vOwned)
 
-  fRossby = self%functionspace%create_field(name='rossby_radius', kind=atlas_real(kind_real), levels=1)
-  call self%fieldset%add(fRossby)
-  call fRossby%data(vRossby)
+  fDist = self%functionspace%create_field(name='distance_from_coast', kind=atlas_real(kind_real), levels=1)
+  call self%fieldset%add(fDist)
+  call fDist%data(vDist)
 
   ! set the data
+  call soca_geom_distance_from_coast(self, dist)
   vOwned = 0 ! need to set to 0, it's the only one that doesn't get halo update
   do j=self%jsc,self%jec
     do i=self%isc,self%iec
@@ -325,19 +319,18 @@ subroutine soca_geom_init_fieldset(self)
       vInterpMask(1,n) = self%mask2d(i,j)
       vGmask(:, n) = int(self%mask2d(i,j))
       vOwned(1, n) = 1
-      vRossby(1, n) = self%rossby_radius(i,j)
+      vDist(1, n) = dist(i,j)
     end do
   end do
   do jz=1,self%nzo
     vVertCoord(jz,:) = real(jz, kind_real)
   end do
 
-  ! halo exchanges for some of the fields 
+  ! halo exchanges for some of the fields
   call fGmask%halo_exchange()
   call fInterpMask%halo_exchange()
   call fArea%halo_exchange()
   call fVertCoord%halo_exchange()
-  call fRossby%halo_exchange()
 
   ! done, cleanup
   call fArea%final()
@@ -345,7 +338,7 @@ subroutine soca_geom_init_fieldset(self)
   call fVertCoord%final()
   call fGmask%final()
   call fOwned%final()
-  call fRossby%final()
+  call fDist%final()
 
 end subroutine soca_geom_init_fieldset
 
@@ -367,7 +360,6 @@ subroutine soca_geom_clone(self, other)
 
   !
   self%geom_grid_file = other%geom_grid_file
-  self%rossby_file = other%rossby_file
 
   self%iterator_dimension = other%iterator_dimension
 
@@ -391,15 +383,14 @@ subroutine soca_geom_clone(self, other)
   self%dx = other%dx
   self%dy = other%dy
   self%cell_area = other%cell_area
-  self%rossby_radius = other%rossby_radius
-  self%distance_from_coast = other%distance_from_coast
   self%atlas_ij2idx = other%atlas_ij2idx
   call self%fields_metadata%clone(other%fields_metadata)
 end subroutine soca_geom_clone
 
 
 ! ------------------------------------------------------------------------------
-!> Generate the grid with the help of mom6, and save it to a file for use later.
+!> Generate the grid with the help of mom6, and save it to for use later.
+!! Note that the atlas functionspace has NOT been generated yet so it can't be used.
 !!
 !! \related soca_geom_mod::soca_geom
 subroutine soca_geom_gridgen(self)
@@ -407,19 +398,19 @@ subroutine soca_geom_gridgen(self)
 
   ! variables needed to get grid info from MOM6
   type(time_type) :: Start_time
-  type(param_file_type) :: param_file      ! The structure indicating the file(s)  
+  type(param_file_type) :: param_file      ! The structure indicating the file(s)
   type(directories)  :: dirs       !< Relevant dirs/path
   type(ocean_grid_type),    pointer :: grid !< Grid metrics
   type(MOM_control_struct)  :: CSp
 
   type(MOM_restart_CS),     pointer :: restart_CSp !< NOTE remove this when updating MOM6
-  
+
   ! Generate grid
   Start_time = real_to_time(0.0d0)
   call MOM_infra_init(localcomm=self%f_comm%communicator())
   call io_infra_init()
   call set_calendar_type(JULIAN)
-  call time_interp_external_init  
+  call time_interp_external_init
   restart_CSp => NULL()
   call initialize_MOM( Start_time, Start_time, param_file, dirs, CSp, restart_CSp )
   call get_MOM_state_elements(CSp, G=grid)
@@ -447,12 +438,6 @@ subroutine soca_geom_gridgen(self)
   call io_infra_end()
   !call MOM_infra_end()
 
-  ! Calculate other static grid-based fields
-  call soca_geom_rossby_radius(self, self%rossby_file)
-  call soca_geom_distance_from_coast(self)
-
-  ! Output to file
-  call soca_geom_write(self)
 end subroutine soca_geom_gridgen
 
 
@@ -478,7 +463,7 @@ subroutine soca_geom_allocate(self)
   call soca_geom_get_domain_indices(self, "data", self%isdl, self%iedl, self%jsdl, self%jedl, local=.true.)
 
   ! Allocate arrays on compute domain
-  ! NOTE, sometimes MOM6 doesn't use all the halo points, we set 
+  ! NOTE, sometimes MOM6 doesn't use all the halo points, we set
   !  lat/lon to INVALID_HALO so that we can detect this later when deciding
   !  which halo points are invalid/duplicates
   allocate(self%lonh(self%isg:self%ieg));        self%lonh = 0.0_kind_real
@@ -499,12 +484,10 @@ subroutine soca_geom_allocate(self)
   allocate(self%mask2du(isd:ied,jsd:jed));       self%mask2du = 0.0_kind_real
   allocate(self%mask2dv(isd:ied,jsd:jed));       self%mask2dv = 0.0_kind_real
 
-  allocate(self%dx(isd:ied,jsd:jed));            self%dx = 0.0_kind_real  
-  allocate(self%dy(isd:ied,jsd:jed));            self%dy = 0.0_kind_real  
+  allocate(self%dx(isd:ied,jsd:jed));            self%dx = 0.0_kind_real
+  allocate(self%dy(isd:ied,jsd:jed));            self%dy = 0.0_kind_real
   allocate(self%cell_area(isd:ied,jsd:jed));     self%cell_area = 0.0_kind_real
-  allocate(self%rossby_radius(isd:ied,jsd:jed)); self%rossby_radius = 0.0_kind_real
-  allocate(self%distance_from_coast(isd:ied,jsd:jed)); self%distance_from_coast = 0.0_kind_real
-  
+
   allocate(self%atlas_ij2idx(isd:ied,jsd:jed));  self%atlas_ij2idx = -1
 
 end subroutine soca_geom_allocate
@@ -514,8 +497,9 @@ end subroutine soca_geom_allocate
 !> Calcuate distance from coast for the ocean points
 !!
 !! \related soca_geom_mod::soca_geom
-subroutine soca_geom_distance_from_coast(self)
+subroutine soca_geom_distance_from_coast(self, dist)
   class(soca_geom), intent(inout) :: self
+  real(kind=kind_real), allocatable :: dist(:,:)
 
   type(atlas_indexkdtree) :: kd
   type(atlas_geometry) :: ageometry
@@ -525,6 +509,9 @@ subroutine soca_geom_distance_from_coast(self)
   real(kind=kind_real), allocatable :: land_lon(:), land_lat(:)
   real(kind=kind_real), allocatable :: land_lon_l(:), land_lat_l(:)
   real(kind=kind_real) :: closest_lon, closest_lat
+
+  allocate(dist(self%isd:self%ied, self%jsd:self%jed))
+  dist = 0.0
 
   ! collect lat/lon of all land points on all procs
   ! (use the tracer grid and mask for this)
@@ -569,7 +556,7 @@ subroutine soca_geom_distance_from_coast(self)
   do i = self%isc, self%iec
     do j = self%jsc, self%jec
       call kd%closestPoints( self%lon(i,j), self%lat(i,j), 1, idx )
-      self%distance_from_coast(i,j) = ageometry%distance( &
+      dist(i,j) = ageometry%distance( &
             self%lon(i,j), self%lat(i,j), land_lon(idx(1)), land_lat(idx(1)))
     enddo
   enddo
@@ -578,50 +565,6 @@ subroutine soca_geom_distance_from_coast(self)
   call kd%final()
 
 end subroutine
-
-
-! ------------------------------------------------------------------------------
-!> Read and store Rossby Radius of deformation
-!!
-!! Input data is interpolated to the current grid.
-!!
-!! \related soca_geom_mod::soca_geom
-subroutine soca_geom_rossby_radius(self, filename)
-  class(soca_geom),           intent(inout) :: self
-  character(len=:), allocatable, intent(in) :: filename
-
-  integer :: unit, i, n
-  real(kind=kind_real) :: dum
-  real(kind=kind_real), allocatable :: lon(:),lat(:),rr(:)
-  integer :: isc, iec, jsc, jec
-  integer :: io
-
-  ! read in the file
-  unit = 20
-  open(unit=unit,file=filename,status="old",action="read")
-  n = 0
-  do
-     read(unit,*,iostat=io)
-     if (io/=0) exit
-     n = n+1
-  end do
-  rewind(unit)
-  allocate(lon(n),lat(n),rr(n))
-  do i = 1, n
-     read(unit,*) lat(i),lon(i),dum,rr(i)
-  end do
-  close(unit)
-
-  ! convert to meters
-  rr = rr * 1e3
-
-  ! remap
-  isc = self%isc ;  iec = self%iec ; jsc = self%jsc ; jec = self%jec
-  call soca_remap_idw(lon, lat, rr, self%lon(isc:iec,jsc:jec), &
-                      self%lat(isc:iec,jsc:jec), self%rossby_radius(isc:iec,jsc:jec) )
-
-end subroutine soca_geom_rossby_radius
-
 
 ! ------------------------------------------------------------------------------
 !> Write geometry to file
@@ -634,9 +577,14 @@ subroutine soca_geom_write(self)
   integer :: pe
   character(len=8) :: fmt = '(I5.5)'
   character(len=1024) :: strpe
-  integer :: ns
+  integer :: ns, i, j, n, v
   integer :: idr_geom
   type(restart_file_type) :: geom_restart
+
+  character(len=20), dimension(2) :: atlasVars
+  type(atlas_field) :: aField
+  real(kind=kind_real), pointer :: aFieldData(:,:)
+  real(kind=kind_real), allocatable, dimension(:,:,:) :: fieldData
 
   ! Save global domain
   call fms_io_init()
@@ -717,11 +665,6 @@ subroutine soca_geom_write(self)
                                    domain=self%Domain%mpp_domain)
   idr_geom = register_restart_field(geom_restart, &
                                    &self%geom_grid_file, &
-                                   &'rossby_radius', &
-                                   &self%rossby_radius(:,:), &
-                                   domain=self%Domain%mpp_domain)
-  idr_geom = register_restart_field(geom_restart, &
-                                   &self%geom_grid_file, &
                                    &'mask2d', &
                                    &self%mask2d(:,:), &
                                    domain=self%Domain%mpp_domain)
@@ -740,11 +683,30 @@ subroutine soca_geom_write(self)
                                    &'nzo_zstar', &
                                    &self%nzo_zstar, &
                                    domain=self%Domain%mpp_domain)
-  idr_geom = register_restart_field(geom_restart, &
-                                   &self%geom_grid_file, &
-                                   &'distance_from_coast', &
-                                   &self%distance_from_coast(:,:), &
-                                   domain=self%Domain%mpp_domain)
+
+  ! write out a subset of the fields in the atlas fieldset
+  atlasVars = [character(len=20) :: "rossby_radius", "distance_from_coast"]
+  allocate(fieldData(self%isd:self%ied, self%jsd:self%jed, size(atlasVars)))
+  do v = 1, size(atlasVars)
+    ! copy from atlas, to our fortran array
+    aField = self%fieldset%field(trim(atlasVars(v)))
+    call aField%data(aFieldData)
+    do j=self%jsc,self%jec
+      do i=self%isc,self%iec
+        n = self%atlas_ij2idx(i,j)
+        fieldData(i,j,v ) = aFieldData(1, n)
+      end do
+    end do
+    call aField%final()
+
+    ! register with FMS
+    idr_geom = register_restart_field(geom_restart, &
+                                  &self%geom_grid_file, &
+                                  &trim(atlasVars(v)), &
+                                  &fieldData(:,:, v), &
+                                  domain=self%Domain%mpp_domain)
+
+  end do
 
   call save_restart(geom_restart, directory='')
   call free_restart_type(geom_restart)
@@ -846,16 +808,11 @@ subroutine soca_geom_read(self)
                                    &self%geom_grid_file, &
                                    &'dy', &
                                    &self%dy(:,:), &
-                                   domain=self%Domain%mpp_domain)                                   
+                                   domain=self%Domain%mpp_domain)
   idr_geom = register_restart_field(geom_restart, &
                                    &self%geom_grid_file, &
                                    &'area', &
                                    &self%cell_area(:,:), &
-                                   domain=self%Domain%mpp_domain)
-  idr_geom = register_restart_field(geom_restart, &
-                                   &self%geom_grid_file, &
-                                   &'rossby_radius', &
-                                   &self%rossby_radius(:,:), &
                                    domain=self%Domain%mpp_domain)
   idr_geom = register_restart_field(geom_restart, &
                                    &self%geom_grid_file, &
@@ -871,11 +828,6 @@ subroutine soca_geom_read(self)
                                    &self%geom_grid_file, &
                                    &'mask2dv', &
                                    &self%mask2dv(:,:), &
-                                   domain=self%Domain%mpp_domain)
-  idr_geom = register_restart_field(geom_restart, &
-                                   &self%geom_grid_file, &
-                                   &'distance_from_coast', &
-                                   &self%distance_from_coast(:,:), &
                                    domain=self%Domain%mpp_domain)
   call restore_state(geom_restart, directory='')
   call free_restart_type(geom_restart)
@@ -958,10 +910,10 @@ subroutine soca_geom_mesh_valid_nodes_cells(self, nodes, cells)
     start_i = max(self%domain%NIGLOBAL/2, self%isc)
 
     ! additionally, this PE crosses the E/W midpoint, remove all extra nodes at the north for this PE
-    if (self%isc <= self%domain%NIGLOBAL/2 .and. self%iec > self%domain%NIGLOBAL/2) then      
+    if (self%isc <= self%domain%NIGLOBAL/2 .and. self%iec > self%domain%NIGLOBAL/2) then
       start_i = self%isc
     end if
-    
+
     ! remove some nodes
     do i=start_i, self%iec+1
         nodes(i, self%jec+1) = .false.
@@ -973,11 +925,11 @@ subroutine soca_geom_mesh_valid_nodes_cells(self, nodes, cells)
         cells(i, self%jec) = .false.
       end if
     end do
-  end if     
-  
+  end if
+
   ! the grid is cyclic in the E/W direction and we are a PE at the eastern edge
-  ! -------------------------------------------------------------------------------------  
-  if (cyclic .and. self%isc == 1 .and. self%iec == self%domain%NIGLOBAL) then  
+  ! -------------------------------------------------------------------------------------
+  if (cyclic .and. self%isc == 1 .and. self%iec == self%domain%NIGLOBAL) then
     ! cyclic boundaries, and this PE spans entire width.
     ! Remove all nodes on the easternmost column.
     do j=self%jsc, self%jec+1
@@ -986,7 +938,7 @@ subroutine soca_geom_mesh_valid_nodes_cells(self, nodes, cells)
   end if
 
   ! We are a regional grid
-  ! NOTE: this logic should change at some point so that there ARE halos around the 
+  ! NOTE: this logic should change at some point so that there ARE halos around the
   ! outer boundary
   ! -------------------------------------------------------------------------------------
   if (regional) then
@@ -999,7 +951,7 @@ subroutine soca_geom_mesh_valid_nodes_cells(self, nodes, cells)
       ! remove cells on top
       do i=self%isc, self%iec
         cells(i, self%jec) = .false.
-      end do      
+      end do
     end if
 
     ! are we a PE at the right edge?
@@ -1011,7 +963,7 @@ subroutine soca_geom_mesh_valid_nodes_cells(self, nodes, cells)
       ! remove cells on right
       do j=self%jsc, self%jec
         cells(self%iec, j) = .false.
-      end do          
+      end do
     end if
 
   end if

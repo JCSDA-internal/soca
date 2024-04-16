@@ -8,6 +8,7 @@ module soca_model2geovals_mod_c
 
 use iso_c_binding
 use kinds, only: kind_real
+use atlas_module, only: atlas_field
 
 ! soca modules
 use soca_fields_mod, only: soca_field
@@ -40,6 +41,10 @@ subroutine soca_model2geovals_changevar_f90(c_key_geom, c_key_xin, c_key_xout) &
   type(soca_field), pointer :: field
   integer :: i, ii, jj, kk
 
+  type(atlas_field) :: aField
+  real(kind=kind_real), pointer :: aFieldPtr(:,:)
+
+
   call soca_geom_registry%get(c_key_geom, geom)
   call soca_state_registry%get(c_key_xin, xin)
   call soca_state_registry%get(c_key_xout, xout)
@@ -52,7 +57,7 @@ subroutine soca_model2geovals_changevar_f90(c_key_geom, c_key_xin, c_key_xout) &
     ! fields that are obtained from geometry
     case ('latitude')
       xout%fields(i)%val(:,:,1) = real(geom%lat, kind=kind_real)
-    
+
     case ('longitude')
       xout%fields(i)%val(:,:,1) = real(geom%lon, kind=kind_real)
 
@@ -65,7 +70,14 @@ subroutine soca_model2geovals_changevar_f90(c_key_geom, c_key_xin, c_key_xout) &
         end do
 
     case ('distance_from_coast')
-      xout%fields(i)%val(:,:,1) = real(geom%distance_from_coast, kind=kind_real)
+      aField = geom%fieldset%field("distance_from_coast")
+      call aField%data(aFieldPtr)
+      do jj=geom%jsc,geom%jec
+        do ii=geom%isc,geom%iec
+          xout%fields(i)%val(ii,jj,1) = aFieldPtr(1, geom%atlas_ij2idx(ii,jj))
+        end do
+      end do
+      call aField%final()
 
     case ('sea_area_fraction')
       xout%fields(i)%val(:,:,1) = real(geom%mask2d, kind=kind_real)
@@ -73,10 +85,17 @@ subroutine soca_model2geovals_changevar_f90(c_key_geom, c_key_xin, c_key_xout) &
     case ('mesoscale_representation_error')
       ! Representation errors: dx/R
       ! TODO, why is the halo left to 0 for RR ??
-      xout%fields(i)%val(geom%isc:geom%iec, geom%jsc:geom%jec, 1) = &
-          geom%mask2d(geom%isc:geom%iec, geom%jsc:geom%jec) * &
-          sqrt(geom%cell_area(geom%isc:geom%iec, geom%jsc:geom%jec)) / &
-          geom%rossby_radius(geom%isc:geom%iec, geom%jsc:geom%jec)
+      aField = geom%fieldset%field("rossby_radius")
+      call aField%data(aFieldPtr)
+      do jj=geom%jsc,geom%jec
+        do ii=geom%isc,geom%iec
+          xout%fields(i)%val(ii,jj,1) = &
+            geom%mask2d(ii, jj) * &
+            sqrt(geom%cell_area(ii, jj)) / &
+            aFieldPtr(1, geom%atlas_ij2idx(ii,jj))
+        end do
+      end do
+      call aField%final()
 
     ! special derived state variables
     case ('surface_temperature_where_sea')
