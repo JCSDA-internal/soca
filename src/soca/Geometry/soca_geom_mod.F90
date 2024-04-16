@@ -212,7 +212,7 @@ subroutine soca_geom_init(self, f_conf, f_comm)
 
   ! Read the geometry from file by default,
   ! skip this step if a full init is required
-  if ( .not. full_init) call soca_geom_read(self) 
+  if ( .not. full_init) call soca_geom_read(self)
 
   ! Fill halo
   call mpp_update_domains(self%lon, self%Domain%mpp_domain)
@@ -295,18 +295,18 @@ subroutine soca_geom_init_fieldset(self)
   fArea = self%functionspace%create_field(name='area', kind=atlas_real(kind_real), levels=1)
   call self%fieldset%add(fArea)
   call fArea%data(vArea)
-  
+
   fInterpMask = self%functionspace%create_field(name='interp_mask', kind=atlas_real(kind_real), levels=1)
-  call self%fieldset%add(fInterpMask)    
+  call self%fieldset%add(fInterpMask)
   call fInterpMask%data(vInterpMask)
 
   fVertCoord = self%functionspace%create_field(name='vert_coord', kind=atlas_real(kind_real), levels=self%nzo)
   call self%fieldset%add(fVertCoord)
-  call fVertCoord%data(vVertCoord) 
+  call fVertCoord%data(vVertCoord)
 
   fGmask = self%functionspace%create_field(name='gmask', kind=atlas_integer(kind(0)), levels=self%nzo)
   call self%fieldset%add(fGmask)
-  call fGmask%data(vGmask) 
+  call fGmask%data(vGmask)
 
   fOwned = self%functionspace%create_field(name='owned', kind=atlas_integer(kind(0)), levels=1)
   call self%fieldset%add(fOwned)
@@ -332,7 +332,7 @@ subroutine soca_geom_init_fieldset(self)
     vVertCoord(jz,:) = real(jz, kind_real)
   end do
 
-  ! halo exchanges for some of the fields 
+  ! halo exchanges for some of the fields
   call fGmask%halo_exchange()
   call fInterpMask%halo_exchange()
   call fArea%halo_exchange()
@@ -407,21 +407,18 @@ subroutine soca_geom_gridgen(self)
 
   ! variables needed to get grid info from MOM6
   type(time_type) :: Start_time
-  type(param_file_type) :: param_file      ! The structure indicating the file(s)  
+  type(param_file_type) :: param_file      ! The structure indicating the file(s)
   type(directories)  :: dirs       !< Relevant dirs/path
   type(ocean_grid_type),    pointer :: grid !< Grid metrics
   type(MOM_control_struct)  :: CSp
 
-  type(MOM_restart_CS),     pointer :: restart_CSp !< NOTE remove this when updating MOM6
-  
   ! Generate grid
   Start_time = real_to_time(0.0d0)
   call MOM_infra_init(localcomm=self%f_comm%communicator())
   call io_infra_init()
   call set_calendar_type(JULIAN)
-  call time_interp_external_init  
-  restart_CSp => NULL()
-  call initialize_MOM( Start_time, Start_time, param_file, dirs, CSp, restart_CSp )
+  call time_interp_external_init
+  call initialize_MOM( Start_time, Start_time, param_file, dirs, CSp)
   call get_MOM_state_elements(CSp, G=grid)
 
   self%lonh = grid%gridlont
@@ -478,7 +475,7 @@ subroutine soca_geom_allocate(self)
   call soca_geom_get_domain_indices(self, "data", self%isdl, self%iedl, self%jsdl, self%jedl, local=.true.)
 
   ! Allocate arrays on compute domain
-  ! NOTE, sometimes MOM6 doesn't use all the halo points, we set 
+  ! NOTE, sometimes MOM6 doesn't use all the halo points, we set
   !  lat/lon to INVALID_HALO so that we can detect this later when deciding
   !  which halo points are invalid/duplicates
   allocate(self%lonh(self%isg:self%ieg));        self%lonh = 0.0_kind_real
@@ -499,12 +496,12 @@ subroutine soca_geom_allocate(self)
   allocate(self%mask2du(isd:ied,jsd:jed));       self%mask2du = 0.0_kind_real
   allocate(self%mask2dv(isd:ied,jsd:jed));       self%mask2dv = 0.0_kind_real
 
-  allocate(self%dx(isd:ied,jsd:jed));            self%dx = 0.0_kind_real  
-  allocate(self%dy(isd:ied,jsd:jed));            self%dy = 0.0_kind_real  
+  allocate(self%dx(isd:ied,jsd:jed));            self%dx = 0.0_kind_real
+  allocate(self%dy(isd:ied,jsd:jed));            self%dy = 0.0_kind_real
   allocate(self%cell_area(isd:ied,jsd:jed));     self%cell_area = 0.0_kind_real
   allocate(self%rossby_radius(isd:ied,jsd:jed)); self%rossby_radius = 0.0_kind_real
   allocate(self%distance_from_coast(isd:ied,jsd:jed)); self%distance_from_coast = 0.0_kind_real
-  
+
   allocate(self%atlas_ij2idx(isd:ied,jsd:jed));  self%atlas_ij2idx = -1
 
 end subroutine soca_geom_allocate
@@ -846,7 +843,7 @@ subroutine soca_geom_read(self)
                                    &self%geom_grid_file, &
                                    &'dy', &
                                    &self%dy(:,:), &
-                                   domain=self%Domain%mpp_domain)                                   
+                                   domain=self%Domain%mpp_domain)
   idr_geom = register_restart_field(geom_restart, &
                                    &self%geom_grid_file, &
                                    &'area', &
@@ -958,10 +955,10 @@ subroutine soca_geom_mesh_valid_nodes_cells(self, nodes, cells)
     start_i = max(self%domain%NIGLOBAL/2, self%isc)
 
     ! additionally, this PE crosses the E/W midpoint, remove all extra nodes at the north for this PE
-    if (self%isc <= self%domain%NIGLOBAL/2 .and. self%iec > self%domain%NIGLOBAL/2) then      
+    if (self%isc <= self%domain%NIGLOBAL/2 .and. self%iec > self%domain%NIGLOBAL/2) then
       start_i = self%isc
     end if
-    
+
     ! remove some nodes
     do i=start_i, self%iec+1
         nodes(i, self%jec+1) = .false.
@@ -973,11 +970,11 @@ subroutine soca_geom_mesh_valid_nodes_cells(self, nodes, cells)
         cells(i, self%jec) = .false.
       end if
     end do
-  end if     
-  
+  end if
+
   ! the grid is cyclic in the E/W direction and we are a PE at the eastern edge
-  ! -------------------------------------------------------------------------------------  
-  if (cyclic .and. self%isc == 1 .and. self%iec == self%domain%NIGLOBAL) then  
+  ! -------------------------------------------------------------------------------------
+  if (cyclic .and. self%isc == 1 .and. self%iec == self%domain%NIGLOBAL) then
     ! cyclic boundaries, and this PE spans entire width.
     ! Remove all nodes on the easternmost column.
     do j=self%jsc, self%jec+1
@@ -986,7 +983,7 @@ subroutine soca_geom_mesh_valid_nodes_cells(self, nodes, cells)
   end if
 
   ! We are a regional grid
-  ! NOTE: this logic should change at some point so that there ARE halos around the 
+  ! NOTE: this logic should change at some point so that there ARE halos around the
   ! outer boundary
   ! -------------------------------------------------------------------------------------
   if (regional) then
@@ -999,7 +996,7 @@ subroutine soca_geom_mesh_valid_nodes_cells(self, nodes, cells)
       ! remove cells on top
       do i=self%isc, self%iec
         cells(i, self%jec) = .false.
-      end do      
+      end do
     end if
 
     ! are we a PE at the right edge?
@@ -1011,7 +1008,7 @@ subroutine soca_geom_mesh_valid_nodes_cells(self, nodes, cells)
       ! remove cells on right
       do j=self%jsc, self%jec
         cells(self%iec, j) = .false.
-      end do          
+      end do
     end if
 
   end if
