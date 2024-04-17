@@ -395,7 +395,7 @@ subroutine soca_field_fill_masked(self, geom)
 
   integer :: i, j
 
-  if (.not. associated(self%mask)) return  
+  if (.not. associated(self%mask)) return
   do j = geom%jsc, geom%jec
     do i = geom%isc, geom%iec
       if (self%mask(i,j)==0) self%val(i,j,:) = self%metadata%fillvalue
@@ -1063,7 +1063,7 @@ subroutine soca_fields_read(self, f_conf, vdate)
         layer_depth%val = 0.5 * hocn%val
         do k = 2, hocn%nz
           layer_depth%val(:,:,k) = layer_depth%val(:,:,k) + sum(hocn%val(:,:,1:k-1), dim=3)
-        end do        
+        end do
     end if
 
     ! Compute mixed layer depth TODO: Move somewhere else ...
@@ -1081,7 +1081,7 @@ subroutine soca_fields_read(self, f_conf, vdate)
                 &field%val(i,j,:),&
                 &layer_depth%val(i,j,:),&
                 &self%geom%lon(i,j),&
-                &self%geom%lat(i,j))      
+                &self%geom%lat(i,j))
         end do
       end do
     end if
@@ -1224,8 +1224,6 @@ subroutine soca_fields_write_file(self, filename)
     call write_data( filename, self%fields(ii)%name, self%fields(ii)%val(:,:,:), self%geom%Domain%mpp_domain)
   end do
 
-  ! some other derived fields that should be written out
-  call write_data( filename, "rossby_radius", self%geom%rossby_radius, self%geom%Domain%mpp_domain)
 
   call fms_io_exit()
 end subroutine soca_fields_write_file
