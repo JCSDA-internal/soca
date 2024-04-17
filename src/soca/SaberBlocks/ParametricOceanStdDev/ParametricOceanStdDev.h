@@ -44,7 +44,7 @@ class ParametricOceanStdDevBound : public oops::Parameters {
 class ParametricOceanStdDevTocn : public ParametricOceanStdDevBound {
   OOPS_CONCRETE_PARAMETERS(ParametricOceanStdDevTocn, ParametricOceanStdDevBound)
  public:
-  oops::RequiredParameter<std::string> sstFile{"sst file", this};
+  oops::RequiredParameter<eckit::LocalConfiguration> sst{"sst", this};
   oops::RequiredParameter<double> dz{"dz", this, {oops::minConstraint(0.0)}};
   oops::RequiredParameter<double> efold{"efold", this, {oops::minConstraint(0.0)}};
 };

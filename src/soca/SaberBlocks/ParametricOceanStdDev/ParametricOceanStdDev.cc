@@ -9,9 +9,11 @@
 
 #include "soca/SaberBlocks/ParametricOceanStdDev/ParametricOceanStdDev.h"
 #include "soca/SaberBlocks/Util/OceanSmoother.h"
+#include "soca/Utils/readAndInterp.h"
 
 #include "eckit/exception/Exceptions.h"
 
+#include "oops/generic/AtlasInterpolator.h"
 
 #include "saber/blocks/SaberOuterBlockBase.h"
 
@@ -50,16 +52,15 @@ ParametricOceanStdDev::ParametricOceanStdDev(
     smoother.reset(new OceanSmoother(innerGeometryData_, *params.smoother.value(), levels));
   }
 
-
-
   //*************************************************************************************
   // calculate T background error
   //*************************************************************************************
-  std::cout << "DBG " << "creating T error"<<std::endl;
   atlas::Field tocn_err = geom.functionSpace().createField<double>(
     atlas::option::levels(levels) | atlas::option::name("tocn"));
   bkgErr_.add(tocn_err);
   {
+    oops::Log::info() << "ParametricOceanStdDev: Creating temperature background error:" << std::endl;
+
     // parameters from config
     auto minVal = params.tocn.value().min.value();
     auto maxVal = params.tocn.value().max.value();
@@ -68,6 +69,15 @@ ParametricOceanStdDev::ParametricOceanStdDev(
     // output field
     auto v_tocn_err = atlas::array::make_view<double, 2>(tocn_err);
     v_tocn_err.assign(0.0);
+
+    // Get SST values interpolated
+    const std::string & sstFilepath = params.tocn.value().sst.value().getString("filepath") ;
+    const std::string & sstVar = params.tocn.value().sst.value().getString("variable") ;
+    auto sstFields = readNcAndInterp(sstFilepath, {sstVar}, geom.functionSpace());
+    auto & sstErr = sstFields[sstVar];
+    sstErr.rename("sst_surf");
+    bkgErr_.add(sstErr);
+    const auto & v_sstErr = atlas::array::make_view<double, 2>(sstErr);
 
     // loop over all points
     std::vector<double> dtdz(levels, 0.0);
@@ -87,13 +97,13 @@ ParametricOceanStdDev::ParametricOceanStdDev(
       dtdz[levels-1] = 0;
 
       // calculate value as function of dt/dz, efolding scale, and min/max
+      double sstVal = v_sstErr(i, 0);
       for (size_t z = 0; z < levels; z++) {
 
         // step 1: calc value from dT/dz
         auto val = abs(params.tocn.value().dz * dtdz[z]);
 
         // step 2: calc a minimum from the efolding scale, and min SST value
-        double sstVal = 0.1; //TODO read this in
         auto localMin = minVal + (sstVal - minVal) * exp(-v_depth(i,z) / efold );
 
         // step 3: min/max
