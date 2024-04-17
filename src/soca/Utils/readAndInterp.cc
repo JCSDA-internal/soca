@@ -23,7 +23,7 @@ atlas::FieldSet readNcAndInterp(
 
   int ncid;
   if (nc_open(filename.c_str(), NC_NOWRITE, &ncid)) {
-      throw std::runtime_error("Failed to open NetCDF file.");
+    throw std::runtime_error("Failed to open NetCDF file.");
   }
 
   // Read latitude and longitude
@@ -43,43 +43,43 @@ atlas::FieldSet readNcAndInterp(
 
   // create src functionspace
   auto srcLonLatField = atlas::Field("lonlat",
-      atlas::array::make_datatype<double>(), atlas::array::make_shape(srcSize, 2));
+    atlas::array::make_datatype<double>(), atlas::array::make_shape(srcSize, 2));
   auto srcLonLatView = atlas::array::make_view<double, 2>(srcLonLatField);
   for (size_t i = 0; i < srcSize; i++) {
-      auto point = atlas::PointLonLat(longitudes[i], latitudes[i]);
-      point.normalise();
-      srcLonLatView(i, 0) = point.lon();
-      srcLonLatView(i, 1) = point.lat();
+    auto point = atlas::PointLonLat(longitudes[i], latitudes[i]);
+    point.normalise();
+    srcLonLatView(i, 0) = point.lon();
+    srcLonLatView(i, 1) = point.lat();
   }
   const auto srcFunctionSpace = atlas::functionspace::PointCloud(srcLonLatField);
 
   // create interpolation
   eckit::LocalConfiguration interpConfig;
   interpConfig.set("type", "k-nearest-neighbours");
-  interpConfig.set("k-nearest-neighbours", 5);
+  interpConfig.set("k-nearest-neighbours", 10); // do we really need this many?
   atlas::Interpolation interp(interpConfig, srcFunctionSpace, dstFunctionSpace);
 
   // read and interpolate fields
   for (const std::string & varName : vars) {
-      // Read variable data
-      int varId;
-      nc_inq_varid(ncid, varName.c_str(), &varId);
-      std::vector<double> varData(srcSize);
-      nc_get_var_double(ncid, varId, varData.data());
+    // Read variable data
+    int varId;
+    nc_inq_varid(ncid, varName.c_str(), &varId);
+    std::vector<double> varData(srcSize);
+    nc_get_var_double(ncid, varId, varData.data());
 
-      // Create a field for the variable
-      atlas::Field sourceField = srcFunctionSpace.createField<double>(
-      atlas::option::name(varName) | atlas::option::levels(1));
-      auto view = atlas::array::make_view<double, 2>(sourceField);
-      for (size_t i = 0; i < varData.size(); ++i) {
-          view(i, 0) = varData[i];
-      }
+    // Create a field for the variable
+    atlas::Field sourceField = srcFunctionSpace.createField<double>(
+    atlas::option::name(varName) | atlas::option::levels(1));
+    auto view = atlas::array::make_view<double, 2>(sourceField);
+    for (size_t i = 0; i < varData.size(); ++i) {
+      view(i, 0) = varData[i];
+    }
 
-      // interpolate
-      atlas::Field dstField = dstFunctionSpace.createField<double>(
+    // interpolate
+    atlas::Field dstField = dstFunctionSpace.createField<double>(
       atlas::option::name(varName) | atlas::option::levels(1));
-      interp.execute(sourceField, dstField);
-      fieldSet.add(dstField);
+    interp.execute(sourceField, dstField);
+    fieldSet.add(dstField);
   }
   return fieldSet;
 }

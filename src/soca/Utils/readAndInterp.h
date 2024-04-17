@@ -25,9 +25,9 @@ namespace soca
 ///        interpolated to.
 /// @return An atlas FieldSet with the interpolated fields.
 atlas::FieldSet readNcAndInterp(
-    const std::string & filename,
-    const std::vector<std::string> & vars,
-    const atlas::FunctionSpace & dstFunctionSpace);
+  const std::string & filename,
+  const std::vector<std::string> & vars,
+  const atlas::FunctionSpace & dstFunctionSpace);
 
 }  // namespace soca
 
