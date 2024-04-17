@@ -21,8 +21,6 @@
 // -----------------------------------------------------------------------------
 namespace soca {
 
-  const std::vector<char> grids{ 'h', 'u', 'v'};
-
   // -----------------------------------------------------------------------------
   Geometry::Geometry(const eckit::Configuration & conf,
                      const eckit::mpi::Comm & comm, const bool gen)
@@ -31,15 +29,11 @@ namespace soca {
 
     fmsinput_.updateNameList();
 
-    // Setup the Fortran side of Geometry, use MOM6 to calculate grid decomposition
-    soca_geo_setup_f90(keyGeom_, &conf, &comm);
+    // Create the grid decomposition from MOM6.
+    // Also either use MOM6 to generate the grid fields, or read precomputed values in.
+    soca_geo_setup_f90(keyGeom_, &conf, &comm, gen);
 
-    // generate the grid ONLY if being run under the gridgen application.
-    if (gen) {
-      soca_geo_gridgen_f90(keyGeom_);
-    }
-
-    // setup the atlas functionspace
+    // setup the atlas functionSpace
     {
       using atlas::gidx_t;
       using atlas::idx_t;
@@ -113,34 +107,30 @@ namespace soca {
       }
     }
 
-    // Set ATLAS function space in Fortran, and fill in some of the the geometry
-    // fieldset from the fortran side.
-    soca_geo_init_atlas_f90(keyGeom_, functionSpace_.get(), fields_.get());
+    // Set ATLAS function space in Fortran, and either generate some of the atlas fields
+    // if "gen" is set, otherwise those fields will be read in from the gridspec file
+    soca_geo_init_atlas_f90(keyGeom_, functionSpace_.get(), fields_.get(), &conf, gen);
 
-    // fill in the rest of the fieldset from the C++ side here
-    {
-      // TODO(Travis) only do this if gen == True, otherwise read in from file.
-      auto results = readNcAndInterp("data_static/rossrad.nc", {"rossby_radius"}, functionSpace_);
+    // fill in parts of the fieldset from the C++ side here
+    if (gen) {
+      // calculate rossby radius
+      std::string rossbyFile = conf.getString("rossby file");
+      auto results = readNcAndInterp(rossbyFile, {"rossby_radius"}, functionSpace_);
       fields_.add(results.field(0));
     }
 
     // write output
     if (gen) {
-      soca_geo_write_f90(keyGeom_);
+      soca_geo_write_f90(keyGeom_, &conf);
     }
   }
 
   // -----------------------------------------------------------------------------
   Geometry::Geometry(const Geometry & other)
-    : comm_(other.comm_),
-      fmsinput_(other.fmsinput_)
-       {
-    const int key_geo = other.keyGeom_;
-    soca_geo_clone_f90(keyGeom_, key_geo);
-
-    functionSpace_ = atlas::functionspace::NodeColumns(other.functionSpace_);
-    soca_geo_init_atlas_f90(keyGeom_, functionSpace_.get(), fields_.get());
+    : comm_(other.comm_), fmsinput_(other.fmsinput_) {
+    throw eckit::Exception("Geometry copy constructor is not implemented");
   }
+
   // -----------------------------------------------------------------------------
   Geometry::~Geometry() {
     soca_geo_delete_f90(keyGeom_);
