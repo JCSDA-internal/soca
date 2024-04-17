@@ -49,9 +49,6 @@ contains
   !> \copybrief soca_increment_random \see soca_increment_random
   procedure :: random      => soca_increment_random
 
-  !> \copybrief soca_increment_schur \see soca_increment_schur
-  procedure :: schur       => soca_increment_schur
-
   !> \}
 
   !> \name background error decorrelation length scales
@@ -113,25 +110,6 @@ subroutine soca_increment_random(self)
   ! update domains
   call self%update_halos()
 end subroutine soca_increment_random
-
-
-! ------------------------------------------------------------------------------
-!> perform a shur product between two sets of fields
-!!
-!! \relates soca_increment_mod::soca_increment
-subroutine soca_increment_schur(self,rhs)
-  class(soca_increment), intent(inout) :: self
-  class(soca_increment),    intent(in) :: rhs  !< other incrment in schur product
-  integer :: i
-
-  ! make sure fields are same shape
-  call self%check_congruent(rhs)
-
-  ! schur product
-  do i=1,size(self%fields)
-    self%fields(i)%val = self%fields(i)%val * rhs%fields(i)%val
-  end do
-end subroutine soca_increment_schur
 
 
 ! ------------------------------------------------------------------------------

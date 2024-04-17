@@ -26,6 +26,7 @@
 #include "oops/util/DateTime.h"
 #include "oops/util/Duration.h"
 #include "oops/util/Logger.h"
+#include "oops/util/FieldSetOperations.h"
 
 #include "ufo/GeoVaLs.h"
 
@@ -41,7 +42,7 @@ namespace soca {
     : time_(vt), vars_(vars), geom_(geom)
   {
     soca_increment_create_f90(keyFlds_, geom_.toFortran(), vars_);
-    soca_increment_zero_f90(toFortran());
+    zero();
     Log::trace() << "Increment constructed." << std::endl;
   }
   // -----------------------------------------------------------------------------
@@ -60,7 +61,7 @@ namespace soca {
     if (copy) {
       soca_increment_copy_f90(toFortran(), other.toFortran());
     } else {
-      soca_increment_zero_f90(toFortran());
+      zero();
     }
     Log::trace() << "Increment copy-created." << std::endl;
   }
@@ -97,18 +98,24 @@ namespace soca {
   // -----------------------------------------------------------------------------
   Increment & Increment::operator+=(const Increment & dx) {
     ASSERT(this->validTime() == dx.validTime());
-    soca_increment_self_add_f90(toFortran(), dx.toFortran());
+    atlas::FieldSet fs1, fs2; toFieldSet(fs1); dx.toFieldSet(fs2); // TODO temp
+    util::addFieldSets(fs1, fs2);
+    fromFieldSet(fs1);
     return *this;
   }
   // -----------------------------------------------------------------------------
   Increment & Increment::operator-=(const Increment & dx) {
     ASSERT(this->validTime() == dx.validTime());
-    soca_increment_self_sub_f90(toFortran(), dx.toFortran());
+    atlas::FieldSet fs1, fs2; toFieldSet(fs1); dx.toFieldSet(fs2); // TODO temp
+    util::subtractFieldSets(fs1, fs2);
+    fromFieldSet(fs1);
     return *this;
   }
   // -----------------------------------------------------------------------------
   Increment & Increment::operator*=(const double & zz) {
-    soca_increment_self_mul_f90(toFortran(), zz);
+    atlas::FieldSet fs1; toFieldSet(fs1); // TODO temp
+    util::multiplyFieldSet(fs1, zz);
+    fromFieldSet(fs1);
     return *this;
   }
   // -----------------------------------------------------------------------------
@@ -117,7 +124,9 @@ namespace soca {
   }
   // -----------------------------------------------------------------------------
   void Increment::zero() {
-    soca_increment_zero_f90(toFortran());
+    atlas::FieldSet fs1; toFieldSet(fs1); // TODO temp
+    util::zeroFieldSet(fs1);
+    fromFieldSet(fs1);
   }
   // -----------------------------------------------------------------------------
   void Increment::dirac(const eckit::Configuration & config) {
@@ -141,7 +150,9 @@ namespace soca {
   }
   // -----------------------------------------------------------------------------
   void Increment::schur_product_with(const Increment & dx) {
-    soca_increment_self_schur_f90(toFortran(), dx.toFortran());
+    atlas::FieldSet fs1, fs2; toFieldSet(fs1); dx.toFieldSet(fs2); // TODO temp
+    util::multiplyFieldSets(fs1, fs2);
+    fromFieldSet(fs1);
   }
   // -----------------------------------------------------------------------------
   double Increment::dot_product_with(const Increment & other) const {

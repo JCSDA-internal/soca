@@ -167,12 +167,6 @@ contains
   !> \copybrief soca_fields_gpnorm \see soca_fields_gpnorm
   procedure :: gpnorm   => soca_fields_gpnorm
 
-  !> \copybrief soca_fields_mul \see soca_fields_mul
-  procedure :: mul      => soca_fields_mul
-
-  !> \copybrief soca_fields_sub \see soca_fields_sub
-  procedure :: sub      => soca_fields_sub
-
   !> \copybrief soca_fields_ones \see soca_fields_ones
   procedure :: ones     => soca_fields_ones
 
@@ -687,44 +681,6 @@ subroutine soca_fields_add(self, rhs)
     self%fields(i)%val = self%fields(i)%val + rhs%fields(i)%val
   end do
 end subroutine soca_fields_add
-
-
-! ------------------------------------------------------------------------------
-!> subtract two sets of fields
-!!
-!! \f$ self = self - rhs \f$
-!!
-!! \throws abor1_ftn aborts if two fields are not congruent
-!! \relates soca_fields_mod::soca_fields
-subroutine soca_fields_sub(self, rhs)
-  class(soca_fields), intent(inout) :: self
-  class(soca_fields),     intent(in) :: rhs !< other field to subtract
-  integer :: i
-
-  ! make sure fields are same shape
-  call self%check_congruent(rhs)
-
-  ! subtract
-  do i=1,size(self%fields)
-    self%fields(i)%val = self%fields(i)%val - rhs%fields(i)%val
-  end do
-end subroutine soca_fields_sub
-
-
-! ------------------------------------------------------------------------------
-!> Multiply a set of fields by a constant.
-!!
-!! \f$ self = zz * self \f$
-!! \relates soca_fields_mod::soca_fields
-subroutine soca_fields_mul(self, zz)
-  class(soca_fields), intent(inout) :: self
-  real(kind=kind_real),  intent(in) :: zz !< the constant by which to multipy the field
-  integer :: i
-
-  do i=1,size(self%fields)
-    self%fields(i)%val = zz * self%fields(i)%val
-  end do
-end subroutine soca_fields_mul
 
 
 ! ------------------------------------------------------------------------------

@@ -82,20 +82,6 @@ end subroutine soca_increment_ones_c
 
 
 ! ------------------------------------------------------------------------------
-!> C++ interface for soca_increment_mod::soca_increment version of
-!! soca_fields_mod::soca_fields::zeros()
-subroutine soca_increment_zero_c(c_key_self) bind(c,name='soca_increment_zero_f90')
-  integer(c_int), intent(in) :: c_key_self
-
-  type(soca_increment), pointer :: self
-
-  call soca_increment_registry%get(c_key_self,self)
-  call self%zeros()
-
-end subroutine soca_increment_zero_c
-
-
-! ------------------------------------------------------------------------------
 !> C++ interface for soca_increment_mod::soca_increment::dirac()
 subroutine soca_increment_dirac_c(c_key_self,c_conf) bind(c,name='soca_increment_dirac_f90')
   integer(c_int), intent(in) :: c_key_self
@@ -138,77 +124,6 @@ subroutine soca_increment_copy_c(c_key_self,c_key_rhs) bind(c,name='soca_increme
   call self%copy(rhs)
 
 end subroutine soca_increment_copy_c
-
-
-! ------------------------------------------------------------------------------
-!> C++ interface for soca_increment_mod::soca_increment version of
-!! soca_fields_mod::soca_fields::add()
-subroutine soca_increment_self_add_c(c_key_self,c_key_rhs) bind(c,name='soca_increment_self_add_f90')
-  integer(c_int), intent(in) :: c_key_self
-  integer(c_int), intent(in) :: c_key_rhs
-
-  type(soca_increment), pointer :: self
-  type(soca_increment), pointer :: rhs
-
-  call soca_increment_registry%get(c_key_self,self)
-  call soca_increment_registry%get(c_key_rhs,rhs)
-
-  call self%add(rhs)
-
-end subroutine soca_increment_self_add_c
-
-
-! ------------------------------------------------------------------------------
-!> C++ interface for soca_increment_mod::soca_increment::schur()
-subroutine soca_increment_self_schur_c(c_key_self,c_key_rhs) bind(c,name='soca_increment_self_schur_f90')
-  integer(c_int), intent(in) :: c_key_self
-  integer(c_int), intent(in) :: c_key_rhs
-
-  type(soca_increment), pointer :: self
-  type(soca_increment), pointer :: rhs
-
-  call soca_increment_registry%get(c_key_self,self)
-  call soca_increment_registry%get(c_key_rhs,rhs)
-
-  call self%schur(rhs)
-
-end subroutine soca_increment_self_schur_c
-
-
-! ------------------------------------------------------------------------------
-!> C++ interface for soca_increment_mod::soca_increment version of
-!! soca_fields_mod::soca_fields::sub()
-subroutine soca_increment_self_sub_c(c_key_self,c_key_rhs) bind(c,name='soca_increment_self_sub_f90')
-  integer(c_int), intent(in) :: c_key_self
-  integer(c_int), intent(in) :: c_key_rhs
-
-  type(soca_increment), pointer :: self
-  type(soca_increment), pointer :: rhs
-
-  call soca_increment_registry%get(c_key_self,self)
-  call soca_increment_registry%get(c_key_rhs,rhs)
-
-  call self%sub(rhs)
-
-end subroutine soca_increment_self_sub_c
-
-
-! ------------------------------------------------------------------------------
-!> C++ interface for soca_increment_mod::soca_increment version of
-!! soca_fields_mod::soca_fields::mul()
-subroutine soca_increment_self_mul_c(c_key_self,c_zz) bind(c,name='soca_increment_self_mul_f90')
-  integer(c_int), intent(in) :: c_key_self
-  real(c_double), intent(in) :: c_zz
-
-  type(soca_increment), pointer :: self
-  real(kind=kind_real) :: zz
-
-  call soca_increment_registry%get(c_key_self,self)
-  zz = c_zz
-
-  call self%mul(zz)
-
-end subroutine soca_increment_self_mul_c
 
 
 ! ------------------------------------------------------------------------------
