@@ -10,7 +10,7 @@
 #include "atlas/interpolation/Interpolation.h"
 #include "atlas/util/Point.h"
 
-#include "soca/Utils/readAndInterp.h"
+#include "soca/Utils/readNcAndInterp.h"
 
 
 namespace soca {

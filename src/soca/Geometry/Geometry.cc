@@ -16,7 +16,7 @@
 #include "eckit/config/Configuration.h"
 
 #include "soca/Geometry/Geometry.h"
-#include "soca/Utils/readAndInterp.h"
+#include "soca/Utils/readNcAndInterp.h"
 
 // -----------------------------------------------------------------------------
 namespace soca {
