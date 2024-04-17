@@ -38,7 +38,7 @@ use time_manager_mod, only: time_type
 
 ! soca modules
 use soca_fields_metadata_mod, only : soca_fields_metadata
-use soca_utils, only: write2pe, soca_remap_idw
+use soca_utils, only: write2pe
 
 implicit none
 private
