@@ -56,7 +56,7 @@ atlas::FieldSet readNcAndInterp(
   // create interpolation
   eckit::LocalConfiguration interpConfig;
   interpConfig.set("type", "k-nearest-neighbours");
-  interpConfig.set("k-nearest-neighbours", 10); // do we really need this many?
+  interpConfig.set("k-nearest-neighbours", 10);  // do we really need this many points?
   atlas::Interpolation interp(interpConfig, srcFunctionSpace, dstFunctionSpace);
 
   // read and interpolate fields
