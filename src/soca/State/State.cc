@@ -161,23 +161,6 @@ namespace soca {
     const util::DateTime * dtp = &time_;
     soca_state_write_file_f90(toFortran(), &files, &dtp);
   }
-  // -----------------------------------------------------------------------------
-  void State::print(std::ostream & os) const {
-    os << std::endl << "  Valid time: " << validTime();
-    int n0, nf;
-    soca_state_sizes_f90(toFortran(), n0, n0, n0, nf);
-    std::vector<double> zstat(3*nf);
-    soca_state_gpnorm_f90(toFortran(), nf, zstat[0]);
-    for (int jj = 0; jj < nf; ++jj) {
-      os << std::endl << std::right << std::setw(7) << vars_[jj]
-         << "   min="  <<  std::fixed << std::setw(12) <<
-                           std::right << zstat[3*jj]
-         << "   max="  <<  std::fixed << std::setw(12) <<
-                           std::right << zstat[3*jj+1]
-         << "   mean=" <<  std::fixed << std::setw(12) <<
-                           std::right << zstat[3*jj+2];
-    }
-  }
 
   // -----------------------------------------------------------------------------
   /// For accumulator

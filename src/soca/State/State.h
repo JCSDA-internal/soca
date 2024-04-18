@@ -43,9 +43,8 @@ namespace soca {
    * A State contains everything that is needed to propagate the state
    * forward in time.
    */
-  class State : public util::Printable,
-                public Fields,
-    private util::ObjectCounter<State> {
+  class State : public Fields,
+                private util::ObjectCounter<State> {
    public:
       static const std::string classname() {return "soca::State";}
 
@@ -94,7 +93,6 @@ namespace soca {
       void fromFieldSet(const atlas::FieldSet &);
 
    private:
-      void print(std::ostream &) const override;
       F90flds keyFlds_;
   };
 // -----------------------------------------------------------------------------

@@ -26,8 +26,8 @@ class Geometry;
 
 // --------------------------------------------------------------------------------------
 
-class Fields : public util::Serializable {
-
+class Fields : public util::Serializable,
+               public util::Printable {
  public:
   explicit Fields(const Geometry &, const oops::Variables &,
                   const util::DateTime &);
@@ -49,6 +49,7 @@ class Fields : public util::Serializable {
   const oops::Variables & variables() const {return vars_;}
 
  protected:
+  void print(std::ostream &) const override;
 
   util::DateTime time_;
   oops::Variables vars_;

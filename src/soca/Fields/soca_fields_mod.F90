@@ -161,9 +161,6 @@ contains
   !> \copybrief soca_fields_dotprod \see soca_fields_dotprod
   procedure :: dot_prod => soca_fields_dotprod
 
-  !> \copybrief soca_fields_gpnorm \see soca_fields_gpnorm
-  procedure :: gpnorm   => soca_fields_gpnorm
-
   !> \copybrief soca_fields_ones \see soca_fields_ones
   procedure :: ones     => soca_fields_ones
 
@@ -1018,51 +1015,6 @@ end subroutine soca_fields_read
 
 
 ! ------------------------------------------------------------------------------
-!> calculate global statistics for each field (min, max, average)
-!!
-!! \param[in] nf: The number of fields, should be equal to the size of
-!!     soca_fields::fields
-!! \param[out] pstat: a 2D array with shape (i,j). For each field index
-!!     i is set as 0 = min, 1 = max, 2 = average, for j number of fields.
-!! \relates soca_fields_mod::soca_fields
-subroutine soca_fields_gpnorm(self, nf, pstat)
-  class(soca_fields),      intent(in) :: self
-  integer,                 intent(in) :: nf
-  real(kind=kind_real),   intent(out) :: pstat(3, nf)
-
-  logical :: mask(self%geom%isc:self%geom%iec, self%geom%jsc:self%geom%jec)
-  real(kind=kind_real) :: ocn_count, local_ocn_count, tmp(3)
-  integer :: jj, isc, iec, jsc, jec
-  type(soca_field), pointer :: field
-
-  ! Indices for compute domain
-  isc = self%geom%isc ; iec = self%geom%iec
-  jsc = self%geom%jsc ; jec = self%geom%jec
-
-  ! calculate global min, max, mean for each field
-  do jj=1, size(self%fields)
-    call self%get(self%fields(jj)%name, field)
-
-    ! get the mask and the total number of grid cells
-    if (.not. associated(field%mask)) then
-       mask = .true.
-     else
-       mask = field%mask(isc:iec, jsc:jec) > 0.0
-     end if
-    local_ocn_count = count(mask)
-    call self%geom%f_comm%allreduce(local_ocn_count, ocn_count, fckit_mpi_sum())
-
-    ! calculate global min/max/mean
-    call fldinfo(field%val(isc:iec,jsc:jec,:), mask, tmp)
-    call self%geom%f_comm%allreduce(tmp(1), pstat(1,jj), fckit_mpi_min())
-    call self%geom%f_comm%allreduce(tmp(2), pstat(2,jj), fckit_mpi_max())
-    call self%geom%f_comm%allreduce(tmp(3), pstat(3,jj), fckit_mpi_sum())
-    pstat(3,jj) = pstat(3,jj)/ocn_count
-  end do
-end subroutine soca_fields_gpnorm
-
-
-! ------------------------------------------------------------------------------
 !> Make sure two sets of fields are the same shape (same variables, same resolution)
 !!
 !! \throws abor1_ftn aborts if two fields are not congruent.
@@ -1449,9 +1401,11 @@ subroutine soca_fields_to_fieldset(self, vars, afieldset)
       afield = self%geom%functionspace%create_field( &
         name=vars%variable(v), kind=atlas_real(kind_real), levels=field%nz)
       meta = afield%metadata()
+      call meta%set('masked', field%metadata%masked)
       call meta%set('interp_type', 'default')
       if (field%metadata%masked) then
         call meta%set('interp_source_point_mask', 'interp_mask')
+        call meta%set('mask', "mask_"//field%metadata%grid)
       end if
       call afieldset%add(afield)
     end if

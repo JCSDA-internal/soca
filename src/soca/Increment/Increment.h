@@ -55,10 +55,8 @@ namespace soca {
    *  the tangent-linear and adjoint models.
    */
 
-  class Increment :
-    public util::Printable,
-    public Fields,
-    private util::ObjectCounter<Increment> {
+  class Increment : public Fields,
+                    private util::ObjectCounter<Increment> {
    public:
       static const std::string classname() {return "soca::Increment";}
 
@@ -111,8 +109,6 @@ namespace soca {
 
       /// Data
    private:
-      void print(std::ostream &) const override;
-
       F90flds keyFlds_;
 
   };

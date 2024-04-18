@@ -7,9 +7,11 @@
  * granted to it by virtue of its status as an intergovernmental organisation nor
  * does it submit to any jurisdiction.
  */
+#include <iomanip>
 
 #include "atlas/field.h"
 
+#include "soca/Geometry/Geometry.h"
 #include "soca/Fields/Fields.h"
 
 namespace soca
@@ -77,13 +79,69 @@ void Fields::deserialize(const std::vector<double> & vect, size_t & index) {
     }
   }
   // Use magic value to validate deserialization
-  ASSERT(vect.at(index) == SerializeCheckValue);
-  ++index;
+  ASSERT(vect.at(index++) == SerializeCheckValue);
 
   // Deserialize the date and time
   time_.deserialize(vect, index);
 
   fromFieldSet(fs);  // TODO temp
 }
+
+// -----------------------------------------------------------------------------
+
+void Fields::print(std::ostream & os) const {
+  atlas::FieldSet fs; toFieldSet(fs); //TODO temp
+
+  os << std::endl << "  Valid time: " << validTime();
+
+  // for each field
+  for (const auto & field : fs) {
+    size_t count = 0;
+    double min = std::numeric_limits<double>::max();
+    double max = std::numeric_limits<double>::min();
+    double sum = 0.0;
+
+    auto vGhost = atlas::array::make_view<int,1>(field.functionspace().ghost());
+    auto view = atlas::array::make_view<double,2>(field);
+    std::unique_ptr<atlas::array::ArrayView<double,2> > mask;
+    if (field.metadata().getBool("masked")) {
+      // optionally get the mask field, if one is given
+      std::string maskName = field.metadata().getString("mask");
+      mask.reset(new atlas::array::ArrayView<double,2>(
+        atlas::array::make_view<double, 2>(geom_.fields().field(maskName))));
+    }
+
+    // traverse all points to calculate stats
+    for (size_t i = 0; i < field.shape(0); i++) {
+      if (vGhost(i)) continue;
+      if (mask && (*mask)(i,0) == 0.0) continue;
+
+      count++;
+      for (size_t lvl = 0; lvl < field.shape(1); lvl++) {
+        min = std::min(min, view(i,lvl));
+        max = std::max(max, view(i,lvl));
+        sum += view(i,lvl) / field.shape(1);
+      }
+    }
+
+    // combine stats across PEs
+    geom_.getComm().allReduceInPlace(count, eckit::mpi::sum());
+    geom_.getComm().allReduceInPlace(min, eckit::mpi::min());
+    geom_.getComm().allReduceInPlace(max, eckit::mpi::max());
+    geom_.getComm().allReduceInPlace(sum, eckit::mpi::sum());
+    if (count > 0) sum /= count;
+
+    // done with this field, print information
+    os << std::endl << std::right << std::setw(7) << field.name()
+        << "   min="  <<  std::fixed << std::setw(12) <<
+                          std::right << min
+        << "   max="  <<  std::fixed << std::setw(12) <<
+                          std::right << max
+        << "   mean=" <<  std::fixed << std::setw(12) <<
+                          std::right << sum;
+  }
+}
+
+// -----------------------------------------------------------------------------
 
 }

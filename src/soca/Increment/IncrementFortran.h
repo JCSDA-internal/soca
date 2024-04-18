@@ -49,7 +49,6 @@ namespace soca {
     void soca_increment_from_fieldset_f90(const F90flds &,
                                    const oops::Variables &,
                                    const atlas::field::FieldSetImpl *);
-    void soca_increment_gpnorm_f90(const F90flds &, const int &, double &);
     void soca_increment_getpoint_f90(const F90flds &, const F90iter &, double &,
                            const int &);
     void soca_increment_setpoint_f90(F90flds &, const F90iter &, const double &,

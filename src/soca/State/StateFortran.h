@@ -43,7 +43,6 @@ namespace soca {
     void soca_state_tohgrid_f90(const F90flds &);
     void soca_state_logtrans_f90(const F90flds &, const oops::Variables &);
     void soca_state_expontrans_f90(const F90flds &, const oops::Variables &);
-    void soca_state_gpnorm_f90(const F90flds &, const int &, double &);
     void soca_state_sizes_f90(const F90flds &, int &,
                               int &, int &, int &);
     void soca_state_rms_f90(const F90flds &, double &);

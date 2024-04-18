@@ -214,32 +214,6 @@ end subroutine soca_increment_write_file_c
 
 
 ! ------------------------------------------------------------------------------
-!> C++ interface for soca_increment_mod::soca_increment version of
-!! soca_fields_mod::soca_fields::gpnorm()
-subroutine soca_increment_gpnorm_c(c_key_fld, kf, pstat) bind(c,name='soca_increment_gpnorm_f90')
-  integer(c_int),    intent(in) :: c_key_fld
-  integer(c_int),    intent(in) :: kf
-  real(c_double), intent(inout) :: pstat(3*kf)
-
-  type(soca_increment), pointer :: fld
-  real(kind=kind_real)      :: zstat(3, kf)
-  integer :: jj, js, jf
-
-  call soca_increment_registry%get(c_key_fld,fld)
-
-  call fld%gpnorm(kf, zstat)
-  jj=0
-  do jf = 1, kf
-      do js = 1, 3
-        jj=jj+1
-        pstat(jj) = zstat(js,jf)
-      enddo
-  enddo
-
-end subroutine soca_increment_gpnorm_c
-
-
-! ------------------------------------------------------------------------------
 !> C++ interface for soca_increment_mod::soca_increment RMS
 subroutine soca_increment_rms_c(c_key_fld, prms) bind(c,name='soca_increment_rms_f90')
   integer(c_int),    intent(in) :: c_key_fld
