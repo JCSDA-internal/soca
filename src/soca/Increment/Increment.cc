@@ -336,12 +336,11 @@ namespace soca {
   /// Serialization
   // -----------------------------------------------------------------------------
   size_t Increment::serialSize() const {
-    // Field
-    size_t nn;
-    soca_increment_serial_size_f90(toFortran(), geom_.toFortran(), nn);
-
-    // Magic factor
-    nn += 1;
+    size_t nn = 1;  // plus magic factor
+    atlas::FieldSet fs; toFieldSet(fs);
+    for(const auto & field : fs) {
+      nn += field.size();
+    }
 
     // Date and time
     nn += time_.serialSize();
@@ -350,14 +349,20 @@ namespace soca {
   // -----------------------------------------------------------------------------
   constexpr double SerializeCheckValue = -54321.98765;
   void Increment::serialize(std::vector<double> & vect) const {
+    atlas::FieldSet fs; toFieldSet(fs);
+
     // Serialize the field
-    size_t nn;
-    soca_increment_serial_size_f90(toFortran(), geom_.toFortran(), nn);
-    std::vector<double> vect_field(nn, 0);
-    vect.reserve(vect.size() + nn + 1 + time_.serialSize());
-    soca_increment_serialize_f90(toFortran(), geom_.toFortran(), nn,
-                                 vect_field.data());
-    vect.insert(vect.end(), vect_field.begin(), vect_field.end());
+    size_t n = 0;
+    vect.reserve(serialSize());
+    for(const auto & field : fs) {
+      auto view = atlas::array::make_view<double, 2>(field);
+      for (size_t i=0; i < field.shape(0); i++) {
+        for (size_t j = 0; j < field.shape(1); j++) {
+          vect.push_back(view(i,j));
+          n++;
+        }
+      }
+    }
 
     // Magic value placed in serialization; used to validate deserialization
     vect.push_back(SerializeCheckValue);
@@ -369,16 +374,23 @@ namespace soca {
   void Increment::deserialize(const std::vector<double> & vect,
                               size_t & index) {
     // Deserialize the field
-
-    soca_increment_deserialize_f90(toFortran(), geom_.toFortran(), vect.size(),
-                                   vect.data(), index);
-
-    // Use magic value to validate deserialization
+    atlas::FieldSet fs; toFieldSet(fs);
+    for (auto & field : fs) {
+      auto view = atlas::array::make_view<double, 2>(field);
+      for (size_t i=0; i < view.shape(0); i++) {
+        for (size_t j = 0; j < view.shape(1); j++) {
+          view(i,j) = vect[index++];
+        }
+      }
+    }
+    // // Use magic value to validate deserialization
     ASSERT(vect.at(index) == SerializeCheckValue);
     ++index;
 
     // Deserialize the date and time
     time_.deserialize(vect, index);
+
+    fromFieldSet(fs);  // TODO temp
   }
 
 // -----------------------------------------------------------------------------

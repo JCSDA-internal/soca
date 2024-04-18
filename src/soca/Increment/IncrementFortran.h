@@ -57,18 +57,6 @@ namespace soca {
     void soca_increment_sizes_f90(const F90flds &, int &,
                               int &, int &, int &);
     void soca_increment_rms_f90(const F90flds &, double &);
-    void soca_increment_serial_size_f90(const F90flds &,
-                                        const F90geom &,
-                                        size_t &);
-    void soca_increment_serialize_f90(const F90flds &,
-                                      const F90geom &,
-                                      const size_t &,
-                                      double[]);
-    void soca_increment_deserialize_f90(const F90flds &,
-                                        const F90geom &,
-                                        const size_t &,
-                                        const double[],
-                                        size_t &);
     void soca_increment_update_fields_f90(F90flds &, const oops::Variables &);
     void soca_increment_horiz_scales_f90(F90flds &,
                                          const eckit::Configuration * const &);
