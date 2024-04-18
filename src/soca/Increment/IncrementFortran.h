@@ -33,18 +33,9 @@ namespace soca {
                                const oops::Variables &);
     void soca_increment_delete_f90(F90flds &);
     void soca_increment_copy_f90(const F90flds &, const F90flds &);
-    void soca_increment_ones_f90(const F90flds &);
-    void soca_increment_accumul_f90(const F90flds &, const double &,
-                                    const F90flds &);
-    void soca_increment_axpy_f90(const F90flds &, const double &,
-                                 const F90flds &);
-    void soca_increment_dot_prod_f90(const F90flds &, const F90flds &,
-                                     double &);
     void soca_increment_random_f90(const F90flds &);
     void soca_increment_dirac_f90(const F90flds &,
                               const eckit::Configuration * const &);
-    void soca_increment_diff_incr_f90(const F90flds &, const F90flds &,
-                                  const F90flds &);
     void soca_increment_change_resol_f90(const F90flds &, const F90flds &);
     void soca_increment_read_file_f90(const F90flds &,
                                   const eckit::Configuration * const &,

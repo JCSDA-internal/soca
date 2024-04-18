@@ -68,20 +68,6 @@ end subroutine soca_increment_delete_c
 
 
 ! ------------------------------------------------------------------------------
-!> C++ interface for soca_increment_mod::soca_increment version of
-!! soca_fields_mod::soca_fields::ones()
-subroutine soca_increment_ones_c(c_key_self) bind(c,name='soca_increment_ones_f90')
-  integer(c_int), intent(in) :: c_key_self
-
-  type(soca_increment), pointer :: self
-
-  call soca_increment_registry%get(c_key_self,self)
-  call self%ones()
-
-end subroutine soca_increment_ones_c
-
-
-! ------------------------------------------------------------------------------
 !> C++ interface for soca_increment_mod::soca_increment::dirac()
 subroutine soca_increment_dirac_c(c_key_self,c_conf) bind(c,name='soca_increment_dirac_f90')
   integer(c_int), intent(in) :: c_key_self
@@ -124,88 +110,6 @@ subroutine soca_increment_copy_c(c_key_self,c_key_rhs) bind(c,name='soca_increme
   call self%copy(rhs)
 
 end subroutine soca_increment_copy_c
-
-
-! ------------------------------------------------------------------------------
-!> C++ interface for soca_increment_mod::soca_increment version of
-!! soca_fields_mod::soca_fields::axpy()
-subroutine soca_increment_accumul_c(c_key_self,c_zz,c_key_rhs) bind(c,name='soca_increment_accumul_f90')
-  integer(c_int), intent(in) :: c_key_self
-  real(c_double), intent(in) :: c_zz
-  integer(c_int), intent(in) :: c_key_rhs
-
-  type(soca_increment), pointer :: self
-  real(kind=kind_real)          :: zz
-  type(soca_state),     pointer :: rhs
-
-  call soca_increment_registry%get(c_key_self,self)
-  call soca_state_registry%get(c_key_rhs,rhs)
-  zz = c_zz
-
-  call self%axpy(zz,rhs)
-
-end subroutine soca_increment_accumul_c
-
-
-! ------------------------------------------------------------------------------
-!> C++ interface for soca_increment_mod::soca_increment version of
-!! soca_fields_mod::soca_fields::axpy()
-subroutine soca_increment_axpy_c(c_key_self,c_zz,c_key_rhs) bind(c,name='soca_increment_axpy_f90')
-  integer(c_int), intent(in) :: c_key_self
-  real(c_double), intent(in) :: c_zz
-  integer(c_int), intent(in) :: c_key_rhs
-
-  type(soca_increment), pointer :: self
-  real(kind=kind_real)      :: zz
-  type(soca_increment), pointer :: rhs
-
-  call soca_increment_registry%get(c_key_self,self)
-  call soca_increment_registry%get(c_key_rhs,rhs)
-  zz = c_zz
-
-  call self%axpy(zz,rhs)
-
-end subroutine soca_increment_axpy_c
-
-
-! ------------------------------------------------------------------------------
-!> C++ interface for soca_increment_mod::soca_increment version of
-!! soca_fields_mod::soca_fields::dot_prod()
-subroutine soca_increment_dot_prod_c(c_key_fld1,c_key_fld2,c_prod) bind(c,name='soca_increment_dot_prod_f90')
-  integer(c_int),    intent(in) :: c_key_fld1, c_key_fld2
-  real(c_double), intent(inout) :: c_prod
-
-  type(soca_increment), pointer :: fld1, fld2
-  real(kind=kind_real) :: zz
-
-  call soca_increment_registry%get(c_key_fld1,fld1)
-  call soca_increment_registry%get(c_key_fld2,fld2)
-
-  call fld1%dot_prod(fld2,zz)
-
-  c_prod = zz
-
-end subroutine soca_increment_dot_prod_c
-
-
-! ------------------------------------------------------------------------------
-!> C++ interface for subtracting two soca_increment_mod::soca_increment
-!! using  soca_state_mod::soca_state::diff_incr()
-subroutine soca_increment_diff_incr_c(c_key_lhs,c_key_x1,c_key_x2) bind(c,name='soca_increment_diff_incr_f90')
-  integer(c_int), intent(in) :: c_key_lhs
-  integer(c_int), intent(in) :: c_key_x1
-  integer(c_int), intent(in) :: c_key_x2
-
-  type(soca_increment), pointer :: lhs
-  type(soca_state),     pointer :: x1
-  type(soca_state),     pointer :: x2
-
-  call soca_increment_registry%get(c_key_lhs,lhs)
-  call soca_state_registry%get(c_key_x1,x1)
-  call soca_state_registry%get(c_key_x2,x2)
-  call x1%diff_incr(x2, lhs)
-
-end subroutine soca_increment_diff_incr_c
 
 
 ! ------------------------------------------------------------------------------

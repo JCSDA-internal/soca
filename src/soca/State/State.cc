@@ -22,6 +22,8 @@
 #include "oops/base/Variables.h"
 #include "oops/util/DateTime.h"
 #include "oops/util/Logger.h"
+#include "oops/util/FieldSetHelpers.h"
+#include "oops/util/FieldSetOperations.h"
 
 #include "ufo/GeoVaLs.h"
 
@@ -230,7 +232,11 @@ namespace soca {
   }
   // -----------------------------------------------------------------------------
   void State::accumul(const double & zz, const State & xx) {
-    soca_state_axpy_f90(toFortran(), zz, xx.toFortran());
+    atlas::FieldSet fs1, fs2, fs3; toFieldSet(fs1); xx.toFieldSet(fs2);
+    fs3 = util::copyFieldSet(fs2);
+    util::multiplyFieldSet(fs3, zz);
+    util::addFieldSets(fs1, fs3);
+    fromFieldSet(fs1);
   }
   // -----------------------------------------------------------------------------
   double State::norm() const {

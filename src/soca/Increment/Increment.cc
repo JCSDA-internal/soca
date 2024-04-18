@@ -27,6 +27,7 @@
 #include "oops/util/Duration.h"
 #include "oops/util/Logger.h"
 #include "oops/util/FieldSetOperations.h"
+#include "oops/util/FieldSetHelpers.h"
 
 #include "ufo/GeoVaLs.h"
 
@@ -86,8 +87,11 @@ namespace soca {
     ASSERT(this->validTime() == x2.validTime());
     State x1_at_geomres(geom_, x1);
     State x2_at_geomres(geom_, x2);
-    soca_increment_diff_incr_f90(toFortran(), x1_at_geomres.toFortran(),
-                                              x2_at_geomres.toFortran());
+    atlas::FieldSet fs1, fs2, fs3;
+    x1_at_geomres.toFieldSet(fs2); x2_at_geomres.toFieldSet(fs3); // TODO temp
+    fs1 = util::copyFieldSet(fs2);
+    util::subtractFieldSets(fs1, fs3);
+    fromFieldSet(fs1);
   }
   // -----------------------------------------------------------------------------
   Increment & Increment::operator=(const Increment & rhs) {
@@ -120,7 +124,12 @@ namespace soca {
   }
   // -----------------------------------------------------------------------------
   void Increment::ones() {
-    soca_increment_ones_f90(toFortran());
+    atlas::FieldSet fs; toFieldSet(fs);
+    for (auto & field : fs) {
+      auto view = atlas::array::make_view<double, 2>(field);
+      view.assign(1.0);
+    }
+    fromFieldSet(fs);
   }
   // -----------------------------------------------------------------------------
   void Increment::zero() {
@@ -142,11 +151,19 @@ namespace soca {
   void Increment::axpy(const double & zz, const Increment & dx,
                        const bool check) {
     ASSERT(!check || validTime() == dx.validTime());
-    soca_increment_axpy_f90(toFortran(), zz, dx.toFortran());
+    atlas::FieldSet fs1, fs2, fs3; toFieldSet(fs1); dx.toFieldSet(fs2);
+    fs3 = util::copyFieldSet(fs2);
+    util::multiplyFieldSet(fs3, zz);
+    util::addFieldSets(fs1, fs3);
+    fromFieldSet(fs1);
   }
   // -----------------------------------------------------------------------------
   void Increment::accumul(const double & zz, const State & xx) {
-    soca_increment_accumul_f90(toFortran(), zz, xx.toFortran());
+    atlas::FieldSet fs1, fs2, fs3; toFieldSet(fs1); xx.toFieldSet(fs2);
+    fs3 = util::copyFieldSet(fs2);
+    util::multiplyFieldSet(fs3, zz);
+    util::addFieldSets(fs1, fs3);
+    fromFieldSet(fs1);
   }
   // -----------------------------------------------------------------------------
   void Increment::schur_product_with(const Increment & dx) {
@@ -156,9 +173,8 @@ namespace soca {
   }
   // -----------------------------------------------------------------------------
   double Increment::dot_product_with(const Increment & other) const {
-    double zz;
-    soca_increment_dot_prod_f90(toFortran(), other.toFortran(), zz);
-    return zz;
+    atlas::FieldSet fs1, fs2; toFieldSet(fs1); other.toFieldSet(fs2); // TODO temp
+    return util::dotProductFieldSets(fs1, fs2, fs1.field_names(), geom_.getComm());
   }
   // -----------------------------------------------------------------------------
   void Increment::random() {

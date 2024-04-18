@@ -158,9 +158,6 @@ contains
   !> \copybrief soca_fields_add \see soca_fields_add
   procedure :: add      => soca_fields_add
 
-  !> \copybrief soca_fields_axpy \see soca_fields_axpy
-  procedure :: axpy     => soca_fields_axpy
-
   !> \copybrief soca_fields_dotprod \see soca_fields_dotprod
   procedure :: dot_prod => soca_fields_dotprod
 
@@ -681,33 +678,6 @@ subroutine soca_fields_add(self, rhs)
     self%fields(i)%val = self%fields(i)%val + rhs%fields(i)%val
   end do
 end subroutine soca_fields_add
-
-
-! ------------------------------------------------------------------------------
-!> Add two fields (multiplying the rhs first)
-!!
-!! \f$self = self + zz * rhs\f$
-!!
-!! \throws abor1_ftn aborts if \p is not a subset of \rhs
-!! \relates soca_fields_mod::soca_fields
-subroutine soca_fields_axpy(self, zz, rhs)
-  class(soca_fields), target, intent(inout) :: self
-  real(kind=kind_real),       intent(in)    :: zz !< constant by which to multiply other rhs
-  class(soca_fields),         intent(in)    :: rhs !< other field to add
-
-  type(soca_field), pointer :: f_rhs, f_lhs
-  integer :: i
-
-  ! make sure fields are correct shape
-  call self%check_subset(rhs)
-
-  do i=1,size(self%fields)
-    f_lhs => self%fields(i)
-    if (.not. rhs%has(f_lhs%name)) cycle
-    call rhs%get(f_lhs%name, f_rhs)
-    f_lhs%val = f_lhs%val + zz *f_rhs%val
-  end do
-end subroutine soca_fields_axpy
 
 
 ! ------------------------------------------------------------------------------

@@ -103,27 +103,6 @@ end subroutine soca_state_copy_c
 
 
 ! ------------------------------------------------------------------------------
-!> C++ interface for soca_state_mod::soca_state version of
-!! soca_fields_mod::soca_fields::axpy()
-subroutine soca_state_axpy_c(c_key_self,c_zz,c_key_rhs) bind(c,name='soca_state_axpy_f90')
-    integer(c_int), intent(in) :: c_key_self
-    real(c_double), intent(in) :: c_zz
-    integer(c_int), intent(in) :: c_key_rhs
-
-    type(soca_state), pointer :: self
-    real(kind=kind_real)      :: zz
-    type(soca_state), pointer :: rhs
-
-    call soca_state_registry%get(c_key_self,self)
-    call soca_state_registry%get(c_key_rhs,rhs)
-    zz = c_zz
-
-    call self%axpy(zz,rhs)
-
-end subroutine soca_state_axpy_c
-
-
-! ------------------------------------------------------------------------------
 !> C++ interface for soca_state_mod::soca_state::add_incr()
 subroutine soca_state_add_incr_c(c_key_self,c_key_rhs) bind(c,name='soca_state_add_incr_f90')
     integer(c_int), intent(in) :: c_key_self
