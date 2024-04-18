@@ -214,23 +214,6 @@ end subroutine soca_increment_write_file_c
 
 
 ! ------------------------------------------------------------------------------
-!> C++ interface for soca_increment_mod::soca_increment RMS
-subroutine soca_increment_rms_c(c_key_fld, prms) bind(c,name='soca_increment_rms_f90')
-  integer(c_int),    intent(in) :: c_key_fld
-  real(c_double), intent(inout) :: prms
-
-  type(soca_increment), pointer :: fld
-  real(kind=kind_real)      :: zz
-
-  call soca_increment_registry%get(c_key_fld,fld)
-
-  call fld%dot_prod(fld, zz)
-  prms = sqrt(zz)
-
-end subroutine soca_increment_rms_c
-
-
-! ------------------------------------------------------------------------------
 !> C++ interface for soca_increment_mod::soca_increment::getpoint()
 subroutine soca_increment_getpoint_c(c_key_fld,c_key_iter,values, values_len) bind(c,name='soca_increment_getpoint_f90')
   integer(c_int), intent(in) :: c_key_fld

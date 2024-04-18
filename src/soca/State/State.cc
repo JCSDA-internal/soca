@@ -179,12 +179,6 @@ namespace soca {
     fromFieldSet(fs1);
   }
   // -----------------------------------------------------------------------------
-  double State::norm() const {
-    double zz = 0.0;
-    soca_state_rms_f90(toFortran(), zz);
-    return zz;
-  }
-  // -----------------------------------------------------------------------------
   void State::updateFields(const oops::Variables & vars) {
     // Update local variables
     vars_ = vars;

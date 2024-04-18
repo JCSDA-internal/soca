@@ -35,12 +35,15 @@ class Fields : public util::Serializable,
   virtual void toFieldSet(atlas::FieldSet &) const = 0;
   virtual void fromFieldSet(const atlas::FieldSet &) = 0;
 
+  // math operators
+  double norm() const;
+
+  void updateTime(const util::Duration & dt) {time_ += dt;}
+
   // serialization
   size_t serialSize() const override;
   void serialize(std::vector<double> &) const override;
   void deserialize(const std::vector<double> &, size_t &) override;
-
-  void updateTime(const util::Duration & dt) {time_ += dt;}
 
   // accessors
   const Geometry & geometry() const {return geom_;}

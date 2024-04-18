@@ -158,9 +158,6 @@ contains
   !> \copybrief soca_fields_add \see soca_fields_add
   procedure :: add      => soca_fields_add
 
-  !> \copybrief soca_fields_dotprod \see soca_fields_dotprod
-  procedure :: dot_prod => soca_fields_dotprod
-
   !> \copybrief soca_fields_ones \see soca_fields_ones
   procedure :: ones     => soca_fields_ones
 
@@ -662,50 +659,6 @@ subroutine soca_fields_add(self, rhs)
     self%fields(i)%val = self%fields(i)%val + rhs%fields(i)%val
   end do
 end subroutine soca_fields_add
-
-
-! ------------------------------------------------------------------------------
-!> Calculate the global dot product of two sets of fields.
-!!
-!! \throws abor1_ftn aborts if two fields are not congruent
-!! \relates soca_fields_mod::soca_fields
-subroutine soca_fields_dotprod(self, rhs, zprod)
-  class(soca_fields), target, intent(in)  :: self
-  class(soca_fields), target, intent(in)  :: rhs !< field 2 of dot product
-  real(kind=kind_real),       intent(out) :: zprod !< The resulting dot product
-
-  real(kind=kind_real) :: local_zprod
-  integer :: ii, jj, kk, n
-  type(soca_field), pointer :: field1, field2
-
-  ! make sure fields are same shape
-  call self%check_congruent(rhs)
-
-  ! loop over (almost) all fields
-  local_zprod = 0.0_kind_real
-  do n=1,size(self%fields)
-    field1 => self%fields(n)
-    field2 => rhs%fields(n)
-
-    ! add the given field to the dot product (only using the compute domain)
-    do ii = self%geom%isc, self%geom%iec
-      do jj = self%geom%jsc, self%geom%jec
-        ! masking
-        if (associated(field1%mask)) then
-          if (field1%mask(ii,jj) < 1) cycle
-        endif
-
-        ! add to dot product
-        do kk=1,field1%nz
-          local_zprod = local_zprod + field1%val(ii,jj,kk) * field2%val(ii,jj,kk)
-        end do
-      end do
-    end do
-  end do
-
-  ! Get global dot product
-  call self%geom%f_comm%allreduce(local_zprod, zprod, fckit_mpi_sum())
-end subroutine soca_fields_dotprod
 
 
 ! ------------------------------------------------------------------------------

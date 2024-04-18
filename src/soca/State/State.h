@@ -76,7 +76,6 @@ namespace soca {
       /// I/O and diagnostics
       void read(const eckit::Configuration &);
       void write(const eckit::Configuration &) const;
-      double norm() const;
 
       int & toFortran() {return keyFlds_;}
       const int & toFortran() const {return keyFlds_;}

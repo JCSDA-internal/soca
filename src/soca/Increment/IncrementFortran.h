@@ -55,7 +55,6 @@ namespace soca {
                            const int &);
     void soca_increment_sizes_f90(const F90flds &, int &,
                               int &, int &, int &);
-    void soca_increment_rms_f90(const F90flds &, double &);
     void soca_increment_update_fields_f90(F90flds &, const oops::Variables &);
     void soca_increment_horiz_scales_f90(F90flds &,
                                          const eckit::Configuration * const &);

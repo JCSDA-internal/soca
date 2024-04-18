@@ -89,6 +89,37 @@ void Fields::deserialize(const std::vector<double> & vect, size_t & index) {
 
 // -----------------------------------------------------------------------------
 
+double Fields::norm() const {
+  atlas::FieldSet fs; toFieldSet(fs);
+  double zz = 0.0;
+  for (const auto & field : fs) {
+    auto vGhost = atlas::array::make_view<int,1>(field.functionspace().ghost());
+    auto view = atlas::array::make_view<double,2>(field);
+    std::unique_ptr<atlas::array::ArrayView<double,2> > mask;
+    if (field.metadata().getBool("masked")) {
+      // optionally get the mask field, if one is given
+      std::string maskName = field.metadata().getString("mask");
+      mask.reset(new atlas::array::ArrayView<double,2>(
+        atlas::array::make_view<double, 2>(geom_.fields().field(maskName))));
+    }
+
+    // traverse all points to calculate stats
+    for (size_t i = 0; i < field.shape(0); i++) {
+      if (vGhost(i)) continue;
+      if (mask && (*mask)(i,0) == 0.0) continue;
+      for (size_t lvl = 0; lvl < field.shape(1); lvl++) {
+        zz += view(i,lvl) * view(i,lvl);
+      }
+    }
+  }
+
+  geom_.getComm().allReduceInPlace(zz, eckit::mpi::sum());
+  zz = sqrt(zz);
+  return zz;
+}
+
+// -----------------------------------------------------------------------------
+
 void Fields::print(std::ostream & os) const {
   atlas::FieldSet fs; toFieldSet(fs); //TODO temp
 

@@ -125,23 +125,6 @@ end subroutine soca_state_write_file_c
 
 
 ! ------------------------------------------------------------------------------
-!> C++ interface for soca_state_mod::soca_state RMS
-subroutine soca_state_rms_c(c_key_fld, prms) bind(c,name='soca_state_rms_f90')
-    integer(c_int),    intent(in) :: c_key_fld
-    real(c_double), intent(inout) :: prms
-
-    type(soca_state), pointer :: fld
-    real(kind=kind_real)      :: zz
-
-    call soca_state_registry%get(c_key_fld,fld)
-
-    call fld%dot_prod(fld, zz)
-    prms = sqrt(zz)
-
-end subroutine soca_state_rms_c
-
-
-! ------------------------------------------------------------------------------
 !> C++ interface for soca_state_mod::soca_state::rotate()
 subroutine soca_state_rotate2grid_c(c_key_self, c_uvars, c_vvars) bind(c,name='soca_state_rotate2grid_f90')
   integer(c_int), intent(in)     :: c_key_self

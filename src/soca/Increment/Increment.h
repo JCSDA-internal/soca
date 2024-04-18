@@ -94,7 +94,6 @@ namespace soca {
       /// I/O and diagnostics
       void read(const eckit::Configuration &);
       void write(const eckit::Configuration &) const;
-      double norm() const;
       void horiz_scales(const eckit::Configuration &);
       void vert_scales(const double &);
       std::vector<double> rmsByLevel(const std::string &) const;
