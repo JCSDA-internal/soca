@@ -78,7 +78,7 @@ void VariableChange::changeVar(State & x, const oops::Variables & vars) const {
       "sea_water_salinity",
       "sea_water_depth"});
     preVaderVars += x.variables();
-    State preVader(x.geometry(), preVaderVars, x.time());
+    State preVader(x.geometry(), preVaderVars, x.validTime());
     variableChange_->changeVar(x, preVader);
     x.updateFields(preVaderVars);
     x = preVader;
@@ -110,7 +110,7 @@ void VariableChange::changeVar(State & x, const oops::Variables & vars) const {
   // ----------------------------------------------------------------------------
   Log::debug() << "VariableChange::changeVar SOCA specific post-VADER variable changes. "
                << std::endl;
-  State xout(x.geometry(), vars, x.time());
+  State xout(x.geometry(), vars, x.validTime());
   variableChange_->changeVar(x, xout);
   x.updateFields(vars);
   x = xout;

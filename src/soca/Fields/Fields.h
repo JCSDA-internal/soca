@@ -40,11 +40,16 @@ class Fields : public util::Serializable {
   void serialize(std::vector<double> &) const override;
   void deserialize(const std::vector<double> &, size_t &) override;
 
+  void updateTime(const util::Duration & dt) {time_ += dt;}
+
   // accessors
   const Geometry & geometry() const {return geom_;}
-  const util::DateTime & time() const {return time_;}
+  const util::DateTime & validTime() const {return time_;}
+  util::DateTime & validTime() {return time_;}
+  const oops::Variables & variables() const {return vars_;}
 
  protected:
+
   util::DateTime time_;
   oops::Variables vars_;
   const Geometry & geom_;

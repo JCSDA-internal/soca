@@ -292,18 +292,6 @@ namespace soca {
 
   // -----------------------------------------------------------------------------
 
-  const util::DateTime & Increment::validTime() const {return time_;}
-
-  // -----------------------------------------------------------------------------
-
-  util::DateTime & Increment::validTime() {return time_;}
-
-  // -----------------------------------------------------------------------------
-
-  void Increment::updateTime(const util::Duration & dt) {time_ += dt;}
-
-  // -----------------------------------------------------------------------------
-
   void Increment::horiz_scales(const eckit::Configuration & config) {
     soca_increment_horiz_scales_f90(toFortran(), &config);
     Log::trace() << "Horiz decorrelation length scales computed." << std::endl;

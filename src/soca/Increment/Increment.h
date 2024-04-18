@@ -97,9 +97,6 @@ namespace soca {
       void read(const eckit::Configuration &);
       void write(const eckit::Configuration &) const;
       double norm() const;
-      const util::DateTime & validTime() const;
-      util::DateTime & validTime();
-      void updateTime(const util::Duration & dt);
       void horiz_scales(const eckit::Configuration &);
       void vert_scales(const double &);
       std::vector<double> rmsByLevel(const std::string &) const;
@@ -111,10 +108,6 @@ namespace soca {
       void accumul(const double &, const State &);
       int & toFortran() {return keyFlds_;}
       const int & toFortran() const {return keyFlds_;}
-
-      /// Private variable accessor functions
-      const oops::Variables & variables() const {return vars_;}
-
 
       /// Data
    private:

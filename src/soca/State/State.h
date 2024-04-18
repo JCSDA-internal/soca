@@ -59,9 +59,6 @@ namespace soca {
       virtual ~State();
       State & operator=(const State &);
 
-      /// Needed by PseudoModel
-      void updateTime(const util::Duration & dt) {time_ += dt;}
-
       /// Rotations
       void rotate2north(const oops::Variables &, const oops::Variables &) const;
       void rotate2grid(const oops::Variables &, const oops::Variables &) const;
@@ -81,13 +78,9 @@ namespace soca {
       void read(const eckit::Configuration &);
       void write(const eckit::Configuration &) const;
       double norm() const;
-      const util::DateTime & validTime() const;
-      util::DateTime & validTime();
 
       int & toFortran() {return keyFlds_;}
       const int & toFortran() const {return keyFlds_;}
-      const oops::Variables & variables() const {return vars_;}
-      const util::DateTime & time() const {return time_;}
 
       /// Update the fields in variable changes
       void updateFields(const oops::Variables &);

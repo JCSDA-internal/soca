@@ -224,10 +224,6 @@ namespace soca {
   }
 
   // -----------------------------------------------------------------------------
-  const util::DateTime & State::validTime() const {return time_;}
-  // -----------------------------------------------------------------------------
-  util::DateTime & State::validTime() {return time_;}
-  // -----------------------------------------------------------------------------
 
   void State::toFieldSet(atlas::FieldSet &fset) const {
     soca_state_to_fieldset_f90(toFortran(), vars_, fset.get());
