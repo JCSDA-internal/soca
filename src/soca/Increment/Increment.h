@@ -18,10 +18,11 @@
 #include <vector>
 
 #include "soca/Fortran.h"
+#include "soca/Fields/Fields.h"
 
 #include "oops/base/LocalIncrement.h"
 #include "oops/base/Variables.h"
-#include "oops/util/DateTime.h"
+
 #include "oops/util/Duration.h"
 #include "oops/util/ObjectCounter.h"
 #include "oops/util/Printable.h"
@@ -56,7 +57,7 @@ namespace soca {
 
   class Increment :
     public util::Printable,
-    public util::Serializable,
+    public Fields,
     private util::ObjectCounter<Increment> {
    public:
       static const std::string classname() {return "soca::Increment";}
@@ -103,11 +104,6 @@ namespace soca {
       void vert_scales(const double &);
       std::vector<double> rmsByLevel(const std::string &) const;
 
-      /// Serialize and deserialize
-      size_t serialSize() const override;
-      void serialize(std::vector<double> &) const override;
-      void deserialize(const std::vector<double> &, size_t &) override;
-
       /// Update the fields in variable changes
       void updateFields(const oops::Variables &);
 
@@ -115,20 +111,17 @@ namespace soca {
       void accumul(const double &, const State &);
       int & toFortran() {return keyFlds_;}
       const int & toFortran() const {return keyFlds_;}
-      const Geometry & geometry() const {return geom_;}
 
       /// Private variable accessor functions
       const oops::Variables & variables() const {return vars_;}
-      const util::DateTime & time() const {return time_;}
+
 
       /// Data
    private:
       void print(std::ostream &) const override;
 
       F90flds keyFlds_;
-      oops::Variables vars_;
-      util::DateTime time_;
-      const Geometry & geom_;
+
   };
   // -----------------------------------------------------------------------------
 

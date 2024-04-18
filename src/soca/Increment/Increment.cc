@@ -40,7 +40,7 @@ namespace soca {
   // -----------------------------------------------------------------------------
   Increment::Increment(const Geometry & geom, const oops::Variables & vars,
                        const util::DateTime & vt)
-    : time_(vt), vars_(vars), geom_(geom)
+    : Fields(geom, vars, vt)
   {
     soca_increment_create_f90(keyFlds_, geom_.toFortran(), vars_);
     zero();
@@ -48,7 +48,7 @@ namespace soca {
   }
   // -----------------------------------------------------------------------------
   Increment::Increment(const Geometry & geom, const Increment & other)
-    : time_(other.time_), vars_(other.vars_), geom_(geom)
+    : Fields(geom, other.vars_, other.time_)
   {
     soca_increment_create_f90(keyFlds_, geom_.toFortran(), vars_);
     soca_increment_change_resol_f90(toFortran(), other.keyFlds_);
@@ -56,7 +56,7 @@ namespace soca {
   }
   // -----------------------------------------------------------------------------
   Increment::Increment(const Increment & other, const bool copy)
-    : time_(other.time_), vars_(other.vars_), geom_(other.geom_)
+    : Fields(other.geom_, other.vars_, other.time_)
   {
     soca_increment_create_f90(keyFlds_, geom_.toFortran(), vars_);
     if (copy) {
@@ -68,7 +68,7 @@ namespace soca {
   }
   // -----------------------------------------------------------------------------
   Increment::Increment(const Increment & other)
-    : time_(other.time_), vars_(other.vars_), geom_(other.geom_)
+    : Fields(other.geom_, other.vars_, other.time_)
   {
     soca_increment_create_f90(keyFlds_, geom_.toFortran(), vars_);
     soca_increment_copy_f90(toFortran(), other.toFortran());
@@ -330,67 +330,6 @@ namespace soca {
     vars_ = vars;
     // Update field data
     soca_increment_update_fields_f90(toFortran(), vars_);
-  }
-
-  // -----------------------------------------------------------------------------
-  /// Serialization
-  // -----------------------------------------------------------------------------
-  size_t Increment::serialSize() const {
-    size_t nn = 1;  // plus magic factor
-    atlas::FieldSet fs; toFieldSet(fs);
-    for(const auto & field : fs) {
-      nn += field.size();
-    }
-
-    // Date and time
-    nn += time_.serialSize();
-    return nn;
-  }
-  // -----------------------------------------------------------------------------
-  constexpr double SerializeCheckValue = -54321.98765;
-  void Increment::serialize(std::vector<double> & vect) const {
-    atlas::FieldSet fs; toFieldSet(fs);
-
-    // Serialize the field
-    size_t n = 0;
-    vect.reserve(serialSize());
-    for(const auto & field : fs) {
-      auto view = atlas::array::make_view<double, 2>(field);
-      for (size_t i=0; i < field.shape(0); i++) {
-        for (size_t j = 0; j < field.shape(1); j++) {
-          vect.push_back(view(i,j));
-          n++;
-        }
-      }
-    }
-
-    // Magic value placed in serialization; used to validate deserialization
-    vect.push_back(SerializeCheckValue);
-
-    // Serialize the date and time
-    time_.serialize(vect);
-  }
-  // -----------------------------------------------------------------------------
-  void Increment::deserialize(const std::vector<double> & vect,
-                              size_t & index) {
-    // Deserialize the field
-    atlas::FieldSet fs; toFieldSet(fs);
-    for (auto & field : fs) {
-      auto view = atlas::array::make_view<double, 2>(field);
-      for (size_t i=0; i < view.shape(0); i++) {
-        for (size_t j = 0; j < view.shape(1); j++) {
-          view(i,j) = vect[index++];
-        }
-      }
-    }
-    // // Use magic value to validate deserialization
-    ASSERT(vect.at(index) == SerializeCheckValue);
-    ++index;
-
-    // Deserialize the date and time
-    time_.deserialize(vect, index);
-
-    fromFieldSet(fs);  // TODO temp
   }
 
 // -----------------------------------------------------------------------------

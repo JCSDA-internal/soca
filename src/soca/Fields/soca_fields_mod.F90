@@ -196,19 +196,6 @@ contains
   procedure :: tohpoints  => soca_fields_tohpoints
   !> \}
 
-  !> \name serialization
-  !! \{
-
-  !> \copybrief soca_fields_serial_size \see soca_fields_serial_size
-  procedure :: serial_size => soca_fields_serial_size
-
-  !> \copybrief soca_fields_serialize \see soca_fields_serialize
-  procedure :: serialize   => soca_fields_serialize
-
-  !> \copybrief soca_fields_deserialize \see soca_fields_deserialize
-  procedure :: deserialize => soca_fields_deserialize
-
-  !> \}
 
   !> \copybrief soca_fields_update_fields \see soca_fields_update_fields
   procedure :: update_fields => soca_fields_update_fields
@@ -386,7 +373,7 @@ subroutine soca_field_fill_masked(self, geom)
 
   integer :: i, j
 
-  if (.not. associated(self%mask)) return  
+  if (.not. associated(self%mask)) return
   do j = geom%jsc, geom%jec
     do i = geom%isc, geom%iec
       if (self%mask(i,j)==0) self%val(i,j,:) = self%metadata%fillvalue
@@ -989,7 +976,7 @@ subroutine soca_fields_read(self, f_conf, vdate)
         layer_depth%val = 0.5 * hocn%val
         do k = 2, hocn%nz
           layer_depth%val(:,:,k) = layer_depth%val(:,:,k) + sum(hocn%val(:,:,1:k-1), dim=3)
-        end do        
+        end do
     end if
 
     ! Compute mixed layer depth TODO: Move somewhere else ...
@@ -1007,7 +994,7 @@ subroutine soca_fields_read(self, f_conf, vdate)
                 &field%val(i,j,:),&
                 &layer_depth%val(i,j,:),&
                 &self%geom%lon(i,j),&
-                &self%geom%lat(i,j))      
+                &self%geom%lat(i,j))
         end do
       end do
     end if
@@ -1292,73 +1279,6 @@ subroutine soca_fields_tohpoints(self)
  end do
 
 end subroutine soca_fields_tohpoints
-
-! ------------------------------------------------------------------------------
-!> Number of elements to return in the serialized array
-!!
-!! \see soca_fields_serialize
-!! \relates soca_fields_mod::soca_fields
-subroutine soca_fields_serial_size(self, geom, vec_size)
-  class(soca_fields),    intent(in)  :: self
-  type(soca_geom),       intent(in)  :: geom !< todo remove, not needed?
-  integer,               intent(out) :: vec_size !< resulting size of vector
-
-  integer :: i
-
-  ! Loop over fields
-  vec_size = 0
-  do i=1,size(self%fields)
-    vec_size = vec_size + size(self%fields(i)%val)
-  end do
-
-end subroutine soca_fields_serial_size
-
-
-! ------------------------------------------------------------------------------
-!> Return the fields as a serialized array
-!!
-!! \see soca_fields_serial_size
-!! \relates soca_fields_mod::soca_fields
-subroutine soca_fields_serialize(self, geom, vec_size, vec)
-  class(soca_fields),    intent(in)  :: self
-  type(soca_geom),       intent(in)  :: geom  !< todo remove this, not needed?
-  integer,               intent(in)  :: vec_size !< size of vector to return
-  real(kind=kind_real),  intent(out) :: vec(vec_size) !< fields as a serialized vector
-
-  integer :: index, i, nn
-
-  ! Loop over fields, levels and horizontal points
-  index = 1
-  do i=1,size(self%fields)
-    nn = size(self%fields(i)%val)
-    vec(index:index+nn-1) = reshape(self%fields(i)%val, (/ nn /) )
-    index = index + nn
-  end do
-
-end subroutine soca_fields_serialize
-
-! ------------------------------------------------------------------------------
-!> Deserialize, creating fields from a single serialized array
-!!
-!! \see soca_fields_serialize
-!! \relates soca_fields_mod::soca_fields
-subroutine soca_fields_deserialize(self, geom, vec_size, vec, index)
-  class(soca_fields), intent(inout) :: self
-  type(soca_geom),       intent(in)    :: geom !< todo remove this, not needed?
-  integer,               intent(in)    :: vec_size !< size of \p vec
-  real(kind=kind_real),  intent(in)    :: vec(vec_size) !< vector to deserialize
-  integer,               intent(inout) :: index !< index in \p vec at which to start deserializing
-
-  integer :: i, nn
-
-  ! Loop over fields, levels and horizontal points
-  do i=1,size(self%fields)
-    nn = size(self%fields(i)%val)
-    self%fields(i)%val = reshape(vec(index+1:index+1+nn), shape(self%fields(i)%val))
-    index = index + nn
-  end do
-
-end subroutine soca_fields_deserialize
 
 ! ------------------------------------------------------------------------------
 !> update fields, using list of variables the method removes fields not in the

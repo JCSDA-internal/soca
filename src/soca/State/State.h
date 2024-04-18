@@ -14,6 +14,7 @@
 #include <vector>
 
 #include "soca/Fortran.h"
+#include "soca/Fields/Fields.h"
 
 #include "oops/base/Variables.h"
 #include "oops/util/DateTime.h"
@@ -43,7 +44,7 @@ namespace soca {
    * forward in time.
    */
   class State : public util::Printable,
-                public util::Serializable,
+                public Fields,
     private util::ObjectCounter<State> {
    public:
       static const std::string classname() {return "soca::State";}
@@ -83,15 +84,8 @@ namespace soca {
       const util::DateTime & validTime() const;
       util::DateTime & validTime();
 
-      /// Serialize and deserialize
-      size_t serialSize() const override;
-      void serialize(std::vector<double> &) const override;
-      void deserialize(const std::vector<double> &, size_t &) override;
-
-
       int & toFortran() {return keyFlds_;}
       const int & toFortran() const {return keyFlds_;}
-      const Geometry & geometry() const;
       const oops::Variables & variables() const {return vars_;}
       const util::DateTime & time() const {return time_;}
 
@@ -108,12 +102,7 @@ namespace soca {
 
    private:
       void print(std::ostream &) const override;
-
       F90flds keyFlds_;
-
-      const Geometry & geom_;
-      oops::Variables vars_;
-      util::DateTime time_;
   };
 // -----------------------------------------------------------------------------
 

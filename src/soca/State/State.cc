@@ -36,16 +36,14 @@ namespace soca {
   // -----------------------------------------------------------------------------
   State::State(const Geometry & geom, const oops::Variables & vars,
                const util::DateTime & vt)
-    : time_(vt), vars_(vars), geom_(geom)
+    : Fields(geom, vars, vt)
   {
     soca_state_create_f90(keyFlds_, geom_.toFortran(), vars_);
     Log::trace() << "State::State created." << std::endl;
   }
   // -----------------------------------------------------------------------------
   State::State(const Geometry & geom, const eckit::Configuration & conf)
-    : time_(),
-      vars_(conf, "state variables"),
-      geom_(geom)
+    : Fields(geom, oops::Variables(conf, "state variables"), util::DateTime())
   {
     util::DateTime * dtp = &time_;
     oops::Variables vars(vars_);
@@ -63,7 +61,7 @@ namespace soca {
   }
   // -----------------------------------------------------------------------------
   State::State(const Geometry & geom, const State & other)
-    : vars_(other.vars_), time_(other.time_), geom_(geom)
+    : Fields(geom, other.vars_, other.time_)
   {
     soca_state_create_f90(keyFlds_, geom_.toFortran(), vars_);
     soca_state_change_resol_f90(toFortran(), other.keyFlds_);
@@ -85,7 +83,7 @@ namespace soca {
   }
   // -----------------------------------------------------------------------------
   State::State(const State & other)
-    : vars_(other.vars_), time_(other.time_), geom_(other.geom_)
+    : Fields(other.geom_, other.vars_, other.time_)
   {
     soca_state_create_f90(keyFlds_, geom_.toFortran(), vars_);
     soca_state_copy_f90(toFortran(), other.toFortran());
@@ -180,52 +178,7 @@ namespace soca {
                            std::right << zstat[3*jj+2];
     }
   }
-  // -----------------------------------------------------------------------------
-  /// Serialization
-  // -----------------------------------------------------------------------------
-  size_t State::serialSize() const {
-    // Field
-    size_t nn;
-    soca_state_serial_size_f90(toFortran(), geom_.toFortran(), nn);
 
-    // Magic factor
-    nn += 1;
-
-    // Date and time
-    nn += time_.serialSize();
-    return nn;
-  }
-  // -----------------------------------------------------------------------------
-  constexpr double SerializeCheckValue = -54321.98765;
-  void State::serialize(std::vector<double> & vect) const {
-    // Serialize the field
-    size_t nn;
-    soca_state_serial_size_f90(toFortran(), geom_.toFortran(), nn);
-    std::vector<double> vect_field(nn, 0);
-    vect.reserve(vect.size() + nn + 1 + time_.serialSize());
-    soca_state_serialize_f90(toFortran(), geom_.toFortran(), nn,
-                             vect_field.data());
-    vect.insert(vect.end(), vect_field.begin(), vect_field.end());
-
-    // Magic value placed in serialization; used to validate deserialization
-    vect.push_back(SerializeCheckValue);
-
-    // Serialize the date and time
-    time_.serialize(vect);
-  }
-  // -----------------------------------------------------------------------------
-  void State::deserialize(const std::vector<double> & vect, size_t & index) {
-    // Deserialize the field
-    soca_state_deserialize_f90(toFortran(), geom_.toFortran(), vect.size(),
-                               vect.data(), index);
-
-    // Use magic value to validate deserialization
-    ASSERT(vect.at(index) == SerializeCheckValue);
-    ++index;
-
-    // Deserialize the date and time
-    time_.deserialize(vect, index);
-  }
   // -----------------------------------------------------------------------------
   /// For accumulator
   // -----------------------------------------------------------------------------
@@ -274,8 +227,6 @@ namespace soca {
   const util::DateTime & State::validTime() const {return time_;}
   // -----------------------------------------------------------------------------
   util::DateTime & State::validTime() {return time_;}
-  // -----------------------------------------------------------------------------
-  const Geometry & State::geometry() const {return geom_;}
   // -----------------------------------------------------------------------------
 
   void State::toFieldSet(atlas::FieldSet &fset) const {
