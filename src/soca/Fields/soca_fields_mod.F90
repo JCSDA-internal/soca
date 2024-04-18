@@ -155,9 +155,6 @@ contains
   !> \name math operators
   !! \{
 
-  !> \copybrief soca_fields_add \see soca_fields_add
-  procedure :: add      => soca_fields_add
-
   !> \copybrief soca_fields_ones \see soca_fields_ones
   procedure :: ones     => soca_fields_ones
 
@@ -637,28 +634,6 @@ subroutine soca_fields_zeros(self)
   end do
 
 end subroutine soca_fields_zeros
-
-
-! ------------------------------------------------------------------------------
-!> Add two sets of fields together
-!!
-!! \f$ self = self + rhs \f$
-!!
-!! \throws abor1_ftn aborts if two fields are not congruent
-!! \relates soca_fields_mod::soca_fields
-subroutine soca_fields_add(self, rhs)
-  class(soca_fields), intent(inout) :: self
-  class(soca_fields),     intent(in) :: rhs !< other field to add
-  integer :: i
-
-  ! make sure fields are same shape
-  call self%check_congruent(rhs)
-
-  ! add
-  do i=1,size(self%fields)
-    self%fields(i)%val = self%fields(i)%val + rhs%fields(i)%val
-  end do
-end subroutine soca_fields_add
 
 
 ! ------------------------------------------------------------------------------
@@ -1220,34 +1195,6 @@ end subroutine soca_fields_update_fields
 ! ------------------------------------------------------------------------------
 ! Internal module functions/subroutines
 ! ------------------------------------------------------------------------------
-
-! ------------------------------------------------------------------------------
-!> Calculate min/max/mean statistics for a given field, using a mask.
-!!
-!! \param[in] fld : the field to calculate the statistics on
-!! \param[in] mask : statistics are only calculated where \p mask is \c .true.
-!! \param[out] info : [0] = min, [1] = max, [2] = average
-subroutine fldinfo(fld, mask, info)
-  real(kind=kind_real),  intent(in) :: fld(:,:,:)
-  logical,               intent(in) :: mask(:,:)
-  real(kind=kind_real), intent(out) :: info(3)
-
-  integer :: z
-  real(kind=kind_real) :: tmp(3,size(fld, dim=3))
-
-  ! calculate the min/max/sum separately for each masked level
-  do z = 1, size(tmp, dim=2)
-     tmp(1,z) = minval(fld(:,:,z), mask=mask)
-     tmp(2,z) = maxval(fld(:,:,z), mask=mask)
-     tmp(3,z) = sum(   fld(:,:,z), mask=mask) / size(fld, dim=3)
-  end do
-
-  ! then combine the min/max/sum over all levels
-  info(1) = minval(tmp(1,:))
-  info(2) = maxval(tmp(2,:))
-  info(3) = sum(   tmp(3,:))
-end subroutine fldinfo
-
 
 ! ------------------------------------------------------------------------------
 !> Generate filename (based on oops/qg)

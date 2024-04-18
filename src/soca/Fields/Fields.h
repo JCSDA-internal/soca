@@ -54,6 +54,8 @@ class Fields : public util::Serializable,
  protected:
   void print(std::ostream &) const override;
 
+  atlas::FieldSet fieldSet_;
+
   util::DateTime time_;
   oops::Variables vars_;
   const Geometry & geom_;
