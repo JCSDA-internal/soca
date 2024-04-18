@@ -28,14 +28,6 @@ type, public, extends(soca_fields) :: soca_state
 
 contains
 
-  !> \name interactions with increment
-  !! \{
-
-  !> \copybrief soca_state_add_incr \see soca_state_add_incr
-  procedure :: add_incr => soca_state_add_incr
-
-  !> \}
-
 
   !> \name misc
   !! \{
@@ -118,37 +110,6 @@ subroutine soca_state_rotate(self, coordinate, uvars, vvars)
     call vocn%update_halo(self%geom)
   end do
 end subroutine soca_state_rotate
-
-
-! ------------------------------------------------------------------------------
-!> add a set of increments to the set of fields
-!!
-!! \throws abor1_ftn aborts if \p rhs is not a subset of \p self
-!! \relates soca_state_mod::soca_state
-subroutine soca_state_add_incr(self, rhs)
-  class(soca_state),  intent(inout) :: self
-  class(soca_increment), intent(in) :: rhs !< increment to add to \p self
-
-  type(soca_field), pointer :: fld, fld_r
-  integer :: i, k
-
-  type(soca_fields), target :: incr
-
-  ! make sure rhs is a subset of self
-  call rhs%check_subset(self)
-
-  ! Make a copy of the increment
-  call incr%copy(rhs)
-
-
-  ! for each field that exists in incr, add to self
-  do i=1,size(incr%fields)
-    fld_r => incr%fields(i)
-    call self%get(fld_r%name, fld)
-    fld%val = fld%val + fld_r%val
-  end do
-
-end subroutine soca_state_add_incr
 
 
 ! ------------------------------------------------------------------------------

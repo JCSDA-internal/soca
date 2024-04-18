@@ -144,7 +144,9 @@ namespace soca {
     Increment dx_hr(geom_, dx);
 
     // Add increment to background state
-    soca_state_add_incr_f90(toFortran(), dx_hr.toFortran());
+    atlas::FieldSet fs1, fs2; toFieldSet(fs1); dx.toFieldSet(fs2);
+    util::addFieldSets(fs1, fs2);
+    fromFieldSet(fs1);
     return *this;
   }
   // -----------------------------------------------------------------------------
@@ -228,7 +230,9 @@ namespace soca {
   /// For accumulator
   // -----------------------------------------------------------------------------
   void State::zero() {
-    soca_state_zero_f90(toFortran());
+    atlas::FieldSet fs1; toFieldSet(fs1);
+    util::zeroFieldSet(fs1);
+    fromFieldSet(fs1);
   }
   // -----------------------------------------------------------------------------
   void State::accumul(const double & zz, const State & xx) {

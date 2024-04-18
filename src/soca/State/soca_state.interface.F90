@@ -72,20 +72,6 @@ end subroutine soca_state_delete_c
 
 ! ------------------------------------------------------------------------------
 !> C++ interface for soca_state_mod::soca_state version of
-!! soca_fields_mod::soca_fields::zeros()
-subroutine soca_state_zero_c(c_key_self) bind(c,name='soca_state_zero_f90')
-    integer(c_int), intent(in) :: c_key_self
-
-    type(soca_state), pointer :: self
-
-    call soca_state_registry%get(c_key_self,self)
-    call self%zeros()
-
-end subroutine soca_state_zero_c
-
-
-! ------------------------------------------------------------------------------
-!> C++ interface for soca_state_mod::soca_state version of
 !! soca_fields_mod::soca_fields::copy()
 subroutine soca_state_copy_c(c_key_self,c_key_rhs) bind(c,name='soca_state_copy_f90')
     integer(c_int), intent(in) :: c_key_self
@@ -100,23 +86,6 @@ subroutine soca_state_copy_c(c_key_self,c_key_rhs) bind(c,name='soca_state_copy_
     call self%copy(rhs)
 
 end subroutine soca_state_copy_c
-
-
-! ------------------------------------------------------------------------------
-!> C++ interface for soca_state_mod::soca_state::add_incr()
-subroutine soca_state_add_incr_c(c_key_self,c_key_rhs) bind(c,name='soca_state_add_incr_f90')
-    integer(c_int), intent(in) :: c_key_self
-    integer(c_int), intent(in) :: c_key_rhs
-
-    type(soca_state),     pointer :: self
-    type(soca_increment), pointer :: rhs
-
-    call soca_state_registry%get(c_key_self,self)
-    call soca_increment_registry%get(c_key_rhs,rhs)
-
-    call self%add_incr(rhs)
-
-end subroutine soca_state_add_incr_c
 
 
 ! ------------------------------------------------------------------------------
