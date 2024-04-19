@@ -223,22 +223,22 @@ namespace soca {
 
   void State::toFieldSet(atlas::FieldSet &fset) const {
     util::copyFieldSet(fieldSet_, fset);
-    oops::Log::info() << "DBG toFieldSet "<<std::endl;
     for (const auto & field : fset) {
       auto md = field.metadata();
-      oops::Log::info() << "  " << md <<std::endl;
     }
   }
 
   // -----------------------------------------------------------------------------
 
   void State::fromFieldSet(const atlas::FieldSet &fs) {
-    util::copyFieldSet(fs, fieldSet_);
+    //util::copyFieldSet(fs, fieldSet_);
     soca_state_from_fieldset_f90(toFortran(), vars_, fs.get());
+    soca_state_to_fieldset_f90(toFortran(), vars_, fieldSet_.get());
   }
 
   void State::syncFromFieldset() const{
     soca_state_from_fieldset_f90(toFortran(), vars_, fieldSet_.get());
+    soca_state_to_fieldset_f90(toFortran(), vars_, fieldSet_.get());
   }
   void State::syncToFieldset() const{
     soca_state_to_fieldset_f90(toFortran(), vars_, fieldSet_.get());
