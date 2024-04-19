@@ -322,13 +322,13 @@ subroutine soca_horiz_scales(self, f_conf)
 
   ! NOTE, this is duplicated code also present in soca_covariance_mod and possibly elsewhere.
   ! This does not belong in soca_increment_mod and should be moved out
-  
+
   ! rh is calculated as follows :
   ! 1) rh = "base value" + rossby_radius * "rossby mult"
   ! 2) minimum value of "min grid mult" * grid_size is imposed
   ! 3) min/max are imposed based on "min value" and "max value"
   ! 4) converted from a gaussian sigma to Gaspari-Cohn cutoff distance
-  do i=1,size(self%fields)    
+  do i=1,size(self%fields)
     ! get parameters for correlation lengths
     call f_conf%get_or_die(trim(self%fields(i)%name), subconf)
     if (.not. subconf%get("base value", r_base)) r_base = 0.0
@@ -336,7 +336,7 @@ subroutine soca_horiz_scales(self, f_conf)
     if (.not. subconf%get("min grid mult", r_min_grid)) r_min_grid = 1.0
     if (.not. subconf%get("min value", r_min)) r_min = 0.0
     if (.not. subconf%get("max value", r_max)) r_max = huge(r_max)
-    
+
     self%fields(i)%val(:,:,1) = r_base + r_mult*self%geom%rossby_radius(:,:)
     if (r_min_grid .gt. 0.0) then
       self%fields(i)%val(:,:,1) = max(self%fields(i)%val(:,:,1), sqrt(self%geom%cell_area)*r_min_grid)
@@ -349,7 +349,7 @@ subroutine soca_horiz_scales(self, f_conf)
     do jz=2,self%fields(i)%nz
       self%fields(i)%val(:,:,jz) = self%fields(i)%val(:,:,1)
     end do
-    
+
   end do
 end subroutine soca_horiz_scales
 
@@ -365,7 +365,9 @@ subroutine soca_vert_scales(self, vert)
   integer :: i, jz
 
   ! compute scales
+  print *, "DBG V"
   do i=1,size(self%fields)
+    print *, "DBG V ",self%fields(i)%name,vert
     do jz=1,self%fields(i)%nz
       self%fields(i)%val(:,:,jz) = 3.57_kind_real*self%geom%mask2d(:,:)*vert
     end do

@@ -35,6 +35,9 @@ class Fields : public util::Serializable,
   virtual void toFieldSet(atlas::FieldSet &) const = 0;
   virtual void fromFieldSet(const atlas::FieldSet &) = 0;
 
+  virtual void syncFromFieldset() const = 0;
+  virtual void syncToFieldset() const = 0;
+
   // math operators
   double norm() const;
 
@@ -54,7 +57,7 @@ class Fields : public util::Serializable,
  protected:
   void print(std::ostream &) const override;
 
-  atlas::FieldSet fieldSet_;
+  mutable atlas::FieldSet fieldSet_; //TODO remove mutable
 
   util::DateTime time_;
   oops::Variables vars_;

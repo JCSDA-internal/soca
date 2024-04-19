@@ -29,8 +29,7 @@ Fields::Fields(const Geometry & geom, const oops::Variables & vars, const util::
 // -----------------------------------------------------------------------------
 size_t Fields::serialSize() const {
   size_t nn = 1;  // plus magic factor
-  atlas::FieldSet fs; toFieldSet(fs);
-  for (const auto & field : fs) {
+  for (const auto & field : fieldSet_) {
     nn += field.size();
   }
 
@@ -43,12 +42,11 @@ size_t Fields::serialSize() const {
 
 constexpr double SerializeCheckValue = -54321.98765;
 void Fields::serialize(std::vector<double> & vect) const {
-  atlas::FieldSet fs; toFieldSet(fs);
 
   // Serialize the field
   size_t n = 0;
   vect.reserve(serialSize());
-  for (const auto & field : fs) {
+  for (const auto & field : fieldSet_) {
     const auto & view = atlas::array::make_view<double, 2>(field);
     for (size_t i=0; i < field.shape(0); i++) {
       for (size_t j = 0; j < field.shape(1); j++) {
@@ -68,8 +66,7 @@ void Fields::serialize(std::vector<double> & vect) const {
 // -----------------------------------------------------------------------------
 
 void Fields::deserialize(const std::vector<double> & vect, size_t & index) {
-  atlas::FieldSet fs; toFieldSet(fs);
-  for (auto & field : fs) {
+  for (auto & field : fieldSet_) {
     auto view = atlas::array::make_view<double, 2>(field);
     for (size_t i=0; i < view.shape(0); i++) {
       for (size_t j = 0; j < view.shape(1); j++) {
@@ -83,19 +80,18 @@ void Fields::deserialize(const std::vector<double> & vect, size_t & index) {
   // Deserialize the date and time
   time_.deserialize(vect, index);
 
-  fromFieldSet(fs);
+  syncFromFieldset();
 }
 
 // -----------------------------------------------------------------------------
 
 double Fields::norm() const {
-  atlas::FieldSet fs; toFieldSet(fs);
   double zz = 0.0;
-  for (const auto & field : fs) {
+  for (const auto & field : fieldSet_) {
     const auto & vGhost = atlas::array::make_view<int, 1>(field.functionspace().ghost());
     const auto & view = atlas::array::make_view<double, 2>(field);
     std::unique_ptr<atlas::array::ArrayView<double, 2> > mask;
-    if (field.metadata().getBool("masked")) {
+    if (field.metadata().getBool("masked", false)) {
       // optionally get the mask field, if one is given
       const std::string & maskName = field.metadata().getString("mask");
       mask.reset(new atlas::array::ArrayView<double, 2>(
@@ -120,12 +116,10 @@ double Fields::norm() const {
 // -----------------------------------------------------------------------------
 
 void Fields::print(std::ostream & os) const {
-  atlas::FieldSet fs; toFieldSet(fs);
-
   os << std::endl << "  Valid time: " << validTime();
 
   // for each field
-  for (const auto & field : fs) {
+  for (const auto & field : fieldSet_) {
     size_t count = 0;
     double min = std::numeric_limits<double>::max();
     double max = std::numeric_limits<double>::min();

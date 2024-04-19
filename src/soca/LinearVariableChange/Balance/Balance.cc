@@ -40,6 +40,7 @@ namespace soca {
     State traj_at_geomres(geom, traj);
 
     // Compute Jacobians of the balance wrt traj
+    traj_at_geomres.syncFromFieldset();
     soca_balance_setup_f90(keyFtnConfig_,
                            &configc,
                            traj_at_geomres.toFortran(),
@@ -54,26 +55,40 @@ namespace soca {
   void Balance::multiply(const Increment & dxa, Increment & dxm) const {
     // dxm = K dxa
     oops::Log::trace() << "soca::Balance::multiply " << std::endl;
+    // oops::Log::info()  <<"DBG BEFORE "<<dxa <<std::endl;
+    dxa.syncFromFieldset();
+    // oops::Log::info()  <<"DBG AFTER "<<dxa << std::endl;
+    // dxm.syncFromFieldset();
     soca_balance_mult_f90(keyFtnConfig_, dxa.toFortran(), dxm.toFortran());
+    dxm.syncToFieldset();
   }
   // -----------------------------------------------------------------------------
   void Balance::multiplyInverse(const Increment & dxm, Increment & dxa) const {
     // dxa = K^-1 dxm
     oops::Log::trace() << "soca::Balance::multiplyInverse " << std::endl;
+    dxm.syncFromFieldset();
+    // dxa.syncFromFieldset();
     soca_balance_multinv_f90(keyFtnConfig_, dxm.toFortran(), dxa.toFortran());
+    dxa.syncToFieldset();
   }
   // -----------------------------------------------------------------------------
   void Balance::multiplyAD(const Increment & dxm, Increment & dxa) const {
     // dxa = K^T dxm
     oops::Log::trace() << "soca::Balance::multiplyAD " << std::endl;
+    dxm.syncFromFieldset();
+    // dxa.syncFromFieldset();
     soca_balance_multad_f90(keyFtnConfig_, dxm.toFortran(), dxa.toFortran());
+    dxa.syncToFieldset();
   }
   // -----------------------------------------------------------------------------
   void Balance::multiplyInverseAD(const Increment & dxa,
                                   Increment & dxm) const {
     // dxm = (K^-1)^T dxa
     oops::Log::trace() << "soca::Balance::multiplyInverseAD " << std::endl;
+    // dxm.syncFromFieldset();
+    dxa.syncFromFieldset();
     soca_balance_multinvad_f90(keyFtnConfig_, dxa.toFortran(), dxm.toFortran());
+    dxm.syncToFieldset();
   }
   // -----------------------------------------------------------------------------
   void Balance::print(std::ostream & os) const {

@@ -59,16 +59,16 @@ namespace soca {
       State & operator=(const State &);
 
       /// Rotations
-      void rotate2north(const oops::Variables &, const oops::Variables &) const;
-      void rotate2grid(const oops::Variables &, const oops::Variables &) const;
+      void rotate2north(const oops::Variables &, const oops::Variables &);
+      void rotate2grid(const oops::Variables &, const oops::Variables &);
 
       /// Staggered grid interpolation
-      void tohgrid(const oops::Variables &, const oops::Variables &) const;
-      void tocgrid(const oops::Variables &, const oops::Variables &) const;
+      void tohgrid(const oops::Variables &, const oops::Variables &);
+      void tocgrid(const oops::Variables &, const oops::Variables &);
 
       /// Logarithmic and exponential transformations
-      void logtrans(const oops::Variables &) const;
-      void expontrans(const oops::Variables &) const;
+      void logtrans(const oops::Variables &);
+      void expontrans(const oops::Variables &);
 
       /// Interactions with Increment
       State & operator+=(const Increment &);
@@ -90,6 +90,9 @@ namespace soca {
       /// ATLAS Interfaces
       void toFieldSet(atlas::FieldSet &) const;
       void fromFieldSet(const atlas::FieldSet &);
+      void syncFromFieldset() const;
+      void syncToFieldset() const;
+
 
    private:
       F90flds keyFlds_;

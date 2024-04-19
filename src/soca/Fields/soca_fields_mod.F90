@@ -119,6 +119,7 @@ type, public :: soca_fields
 
   !> The soca_field instances that make up the fields
   type(soca_field), allocatable :: fields(:)
+  type(atlas_fieldset) :: aFieldset
 
 contains
   !> \name constructors / destructors
@@ -464,13 +465,16 @@ end subroutine
 !!
 !! \see soca_fields_init_vars
 !! \relates soca_fields_mod::soca_fields
-subroutine soca_fields_create(self, geom, vars)
+subroutine soca_fields_create(self, geom, vars, aFieldset)
   class(soca_fields),        intent(inout) :: self
   type(soca_geom),  pointer, intent(inout) :: geom !< geometry to associate with the fields
   type(oops_variables),      intent(in) :: vars !< list of field names to create
+  type(atlas_fieldset),      intent(in) :: aFieldset
 
   character(len=:), allocatable :: vars_str(:)
   integer :: i
+
+  self%afieldset = aFieldset
 
   ! make sure current object has not already been allocated
   if (allocated(self%fields)) &
@@ -1177,7 +1181,7 @@ subroutine soca_fields_update_fields(self, vars)
   integer :: f
 
   ! create new fields
-  call tmp_fields%create(self%geom, vars)
+  call tmp_fields%create(self%geom, vars, self%aFieldset)
 
   ! copy over where already existing
   do f = 1, size(tmp_fields%fields)
@@ -1356,6 +1360,8 @@ subroutine soca_fields_from_fieldset(self, vars, afieldset)
             field%val(i,j,:) = real_ptr(:, self%geom%atlas_ij2idx(i,j))
           end do
         end do
+
+        call field%update_halo(self%geom)
 
         call afield%final()
 

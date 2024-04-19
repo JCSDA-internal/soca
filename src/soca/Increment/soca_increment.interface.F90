@@ -30,14 +30,17 @@ contains
 ! ------------------------------------------------------------------------------
 !> C++ interface for soca_increment_mod::soca_increment version of
 !! soca_fields_mod::soca_fields::create()
-subroutine soca_increment_create_c(c_key_self, c_key_geom, c_vars) bind(c,name='soca_increment_create_f90')
+subroutine soca_increment_create_c(c_key_self, c_key_geom, c_vars, c_afieldsest) &
+    bind(c,name='soca_increment_create_f90')
   integer(c_int), intent(inout) :: c_key_self !< Handle to field
   integer(c_int),    intent(in) :: c_key_geom !< Geometry
   type(c_ptr),value, intent(in) :: c_vars     !< List of variables
+  type(c_ptr),value, intent(in) :: c_afieldsest
 
   type(soca_increment),pointer :: self
   type(soca_geom),  pointer :: geom
   type(oops_variables)      :: vars
+  type(atlas_fieldset)      :: afieldset
 
   call soca_geom_registry%get(c_key_geom, geom)
   call soca_increment_registry%init()
@@ -45,7 +48,8 @@ subroutine soca_increment_create_c(c_key_self, c_key_geom, c_vars) bind(c,name='
   call soca_increment_registry%get(c_key_self,self)
 
   vars = oops_variables(c_vars)
-  call self%create(geom, vars)
+  afieldset = atlas_fieldset(c_afieldsest)
+  call self%create(geom, vars, afieldset)
 
 end subroutine soca_increment_create_c
 

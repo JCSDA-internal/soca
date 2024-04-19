@@ -50,6 +50,7 @@ void ExplicitDiffusion::randomize(oops::FieldSet3D & fset) const {
 
   // apply square root of diffusion
   soca_explicitdiffusion_multiply_f90(keyFortran_, dx.toFortran(), true);
+  dx.syncToFieldset();
 
   // copy back to fieldset
   dx.toFieldSet(fset.fieldSet());
@@ -62,6 +63,7 @@ void ExplicitDiffusion::multiply(oops::FieldSet3D & fset) const {
   dx.fromFieldSet(fset.fieldSet());
 
   soca_explicitdiffusion_multiply_f90(keyFortran_, dx.toFortran());
+  dx.syncToFieldset();
 
   dx.toFieldSet(fset.fieldSet());
 }

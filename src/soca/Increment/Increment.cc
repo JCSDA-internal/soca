@@ -42,36 +42,48 @@ namespace soca {
                        const util::DateTime & vt)
     : Fields(geom, vars, vt)
   {
-    soca_increment_create_f90(keyFlds_, geom_.toFortran(), vars_);
+    soca_increment_create_f90(keyFlds_, geom_.toFortran(), vars_, fieldSet_.get());
+    syncToFieldset();
     zero();
+    syncFromFieldset();
+
     Log::trace() << "Increment constructed." << std::endl;
   }
   // -----------------------------------------------------------------------------
   Increment::Increment(const Geometry & geom, const Increment & other)
     : Fields(geom, other.vars_, other.time_)
   {
-    soca_increment_create_f90(keyFlds_, geom_.toFortran(), vars_);
+    other.syncFromFieldset();
+    soca_increment_create_f90(keyFlds_, geom_.toFortran(), vars_, fieldSet_.get());
     soca_increment_change_resol_f90(toFortran(), other.keyFlds_);
+    syncToFieldset();
     Log::trace() << "Increment constructed from other." << std::endl;
   }
   // -----------------------------------------------------------------------------
   Increment::Increment(const Increment & other, const bool copy)
     : Fields(other.geom_, other.vars_, other.time_)
   {
-    soca_increment_create_f90(keyFlds_, geom_.toFortran(), vars_);
+    other.syncFromFieldset();
+    soca_increment_create_f90(keyFlds_, geom_.toFortran(), vars_, fieldSet_.get());
+    syncToFieldset();
     if (copy) {
       soca_increment_copy_f90(toFortran(), other.toFortran());
+      syncToFieldset();
     } else {
       zero();
     }
+    syncFromFieldset();
     Log::trace() << "Increment copy-created." << std::endl;
   }
   // -----------------------------------------------------------------------------
   Increment::Increment(const Increment & other)
     : Fields(other.geom_, other.vars_, other.time_)
   {
-    soca_increment_create_f90(keyFlds_, geom_.toFortran(), vars_);
+    other.syncFromFieldset();
+    soca_increment_create_f90(keyFlds_, geom_.toFortran(), vars_, fieldSet_.get());
     soca_increment_copy_f90(toFortran(), other.toFortran());
+    syncToFieldset();
+
     Log::trace() << "Increment copy-created." << std::endl;
   }
   // -----------------------------------------------------------------------------
@@ -85,113 +97,117 @@ namespace soca {
   void Increment::diff(const State & x1, const State & x2) {
     ASSERT(this->validTime() == x1.validTime());
     ASSERT(this->validTime() == x2.validTime());
+
     State x1_at_geomres(geom_, x1);
     State x2_at_geomres(geom_, x2);
-    atlas::FieldSet fs1, fs2, fs3;
-    x1_at_geomres.toFieldSet(fs2); x2_at_geomres.toFieldSet(fs3);
-    fs1 = util::copyFieldSet(fs2);
-    util::subtractFieldSets(fs1, fs3);
-    fromFieldSet(fs1);
+    atlas::FieldSet fs1, fs2;
+    x1_at_geomres.toFieldSet(fs1); x2_at_geomres.toFieldSet(fs2);
+    fieldSet_ = util::copyFieldSet(fs1);
+    util::subtractFieldSets(fieldSet_, fs2);
+    syncFromFieldset();
   }
   // -----------------------------------------------------------------------------
   Increment & Increment::operator=(const Increment & rhs) {
     time_ = rhs.time_;
+    vars_ = rhs.vars_;
+    rhs.syncFromFieldset();
+    syncFromFieldset();
     soca_increment_copy_f90(toFortran(), rhs.toFortran());
+    syncToFieldset();
     return *this;
   }
   // -----------------------------------------------------------------------------
   Increment & Increment::operator+=(const Increment & dx) {
     ASSERT(this->validTime() == dx.validTime());
-    atlas::FieldSet fs1, fs2; toFieldSet(fs1); dx.toFieldSet(fs2);
-    util::addFieldSets(fs1, fs2);
-    fromFieldSet(fs1);
+
+    util::addFieldSets(fieldSet_, dx.fieldSet_);
+    syncFromFieldset();
     return *this;
   }
   // -----------------------------------------------------------------------------
   Increment & Increment::operator-=(const Increment & dx) {
     ASSERT(this->validTime() == dx.validTime());
-    atlas::FieldSet fs1, fs2; toFieldSet(fs1); dx.toFieldSet(fs2);
-    util::subtractFieldSets(fs1, fs2);
-    fromFieldSet(fs1);
+
+    util::subtractFieldSets(fieldSet_, dx.fieldSet_);
+    syncFromFieldset();
     return *this;
   }
   // -----------------------------------------------------------------------------
   Increment & Increment::operator*=(const double & zz) {
-    atlas::FieldSet fs1; toFieldSet(fs1);
-    util::multiplyFieldSet(fs1, zz);
-    fromFieldSet(fs1);
+    util::multiplyFieldSet(fieldSet_, zz);
+    syncFromFieldset();
     return *this;
   }
   // -----------------------------------------------------------------------------
   void Increment::ones() {
-    atlas::FieldSet fs; toFieldSet(fs);
-    for (auto & field : fs) {
+    for (auto & field : fieldSet_) {
       auto view = atlas::array::make_view<double, 2>(field);
       view.assign(1.0);
     }
-    fromFieldSet(fs);
+    syncFromFieldset();
   }
   // -----------------------------------------------------------------------------
   void Increment::zero() {
-    atlas::FieldSet fs1; toFieldSet(fs1);
-    util::zeroFieldSet(fs1);
-    fromFieldSet(fs1);
+    util::zeroFieldSet(fieldSet_);
+    syncFromFieldset();
   }
   // -----------------------------------------------------------------------------
   void Increment::dirac(const eckit::Configuration & config) {
+    syncFromFieldset();
     soca_increment_dirac_f90(toFortran(), &config);
+    syncToFieldset();
     Log::trace() << "Increment dirac initialized" << std::endl;
   }
   // -----------------------------------------------------------------------------
   void Increment::zero(const util::DateTime & vt) {
     zero();
     time_ = vt;
+    syncToFieldset();
   }
   // -----------------------------------------------------------------------------
   void Increment::axpy(const double & zz, const Increment & dx,
                        const bool check) {
     ASSERT(!check || validTime() == dx.validTime());
-    atlas::FieldSet fs1, fs2, fs3; toFieldSet(fs1); dx.toFieldSet(fs2);
-    fs3 = util::copyFieldSet(fs2);
-    util::multiplyFieldSet(fs3, zz);
-    util::addFieldSets(fs1, fs3);
-    fromFieldSet(fs1);
+    atlas::FieldSet fs1;
+    fs1 = util::copyFieldSet(dx.fieldSet_);
+    util::multiplyFieldSet(fs1, zz);
+    util::addFieldSets(fieldSet_, fs1);
+    syncFromFieldset();
   }
   // -----------------------------------------------------------------------------
   void Increment::accumul(const double & zz, const State & xx) {
-    atlas::FieldSet fs1, fs2, fs3; toFieldSet(fs1); xx.toFieldSet(fs2);
-    fs3 = util::copyFieldSet(fs2);
-    util::multiplyFieldSet(fs3, zz);
-    util::addFieldSets(fs1, fs3);
-    fromFieldSet(fs1);
+    atlas::FieldSet fs1, fs2; xx.toFieldSet(fs2);
+    fs1 = util::copyFieldSet(fs2);
+    util::multiplyFieldSet(fs1, zz);
+    util::addFieldSets(fieldSet_, fs1);
+    syncFromFieldset();
   }
   // -----------------------------------------------------------------------------
   void Increment::schur_product_with(const Increment & dx) {
-    atlas::FieldSet fs1, fs2; toFieldSet(fs1); dx.toFieldSet(fs2);
-    util::multiplyFieldSets(fs1, fs2);
-    fromFieldSet(fs1);
+    util::multiplyFieldSets(fieldSet_, dx.fieldSet_);
+    syncFromFieldset();
   }
   // -----------------------------------------------------------------------------
   double Increment::dot_product_with(const Increment & other) const {
-    atlas::FieldSet fs1, fs2; toFieldSet(fs1); other.toFieldSet(fs2);
-    return util::dotProductFieldSets(fs1, fs2, fs1.field_names(), geom_.getComm());
+    return util::dotProductFieldSets(fieldSet_, other.fieldSet_,
+      fieldSet_.field_names(), geom_.getComm());
   }
   // -----------------------------------------------------------------------------
   void Increment::random() {
+    syncFromFieldset();
     soca_increment_random_f90(toFortran());
+    syncToFieldset();
   }
 
   // -----------------------------------------------------------------------------
   oops::LocalIncrement Increment::getLocal(const GeometryIterator & iter) const {
-    atlas::FieldSet fs; toFieldSet(fs);
-
     ASSERT(geom_.IteratorDimension() == 2);  // changed need to be made here for 3D
     std::vector<int> varlens(vars_.size());
 
     // count space needed
     size_t idx = 0;
     for (const auto & var : vars_.variables()) {
-      varlens[idx++] = fs.field(var).shape(1);
+      varlens[idx++] = fieldSet_.field(var).shape(1);
     }
     size_t totalLen = std::accumulate(varlens.begin(), varlens.end(), 0);
 
@@ -199,7 +215,7 @@ namespace soca {
     std::vector<double> values;
     values.reserve(totalLen);
     for (const auto & var : vars_.variables()) {
-      const auto & view = atlas::array::make_view<double, 2>(fs.field(var));
+      const auto & view = atlas::array::make_view<double, 2>(fieldSet_.field(var));
       for (size_t lvl = 0; lvl < view.shape(1); lvl++) {
         values.push_back(view(iter.i(), lvl));
       }
@@ -211,42 +227,49 @@ namespace soca {
 
   // -----------------------------------------------------------------------------
   void Increment::setLocal(const oops::LocalIncrement & values, const GeometryIterator & iter) {
-    atlas::FieldSet fs; toFieldSet(fs);
     ASSERT(geom_.IteratorDimension() == 2);  // changes need to be made here for 3D
     const std::vector<double> & vals = values.getVals();
     size_t idx = 0;
     for (const auto & var : vars_.variables()) {
-      auto view = atlas::array::make_view<double, 2>(fs.field(var));
+      auto view = atlas::array::make_view<double, 2>(fieldSet_.field(var));
       for (size_t lvl = 0; lvl < view.shape(1); lvl++) {
         view(iter.i(), lvl) = vals[idx++];
       }
     }
     ASSERT(idx == vals.size());
-    fromFieldSet(fs);
+    syncFromFieldset();
   }
   // -----------------------------------------------------------------------------
   /// I/O and diagnostics
   // -----------------------------------------------------------------------------
   void Increment::read(const eckit::Configuration & files) {
     util::DateTime * dtp = &time_;
+    syncFromFieldset();
     soca_increment_read_file_f90(toFortran(), &files, &dtp);
+    syncToFieldset();
   }
   // -----------------------------------------------------------------------------
   void Increment::write(const eckit::Configuration & files) const {
     const util::DateTime * dtp = &time_;
+    syncFromFieldset();
     soca_increment_write_file_f90(toFortran(), &files, &dtp);
   }
   // -----------------------------------------------------------------------------
 
   void Increment::horiz_scales(const eckit::Configuration & config) {
+    syncFromFieldset();
     soca_increment_horiz_scales_f90(toFortran(), &config);
+    syncToFieldset();
     Log::trace() << "Horiz decorrelation length scales computed." << std::endl;
   }
 
   // -----------------------------------------------------------------------------
 
   void Increment::vert_scales(const double & vert) {
+    std::cout << "DBG CV "<< vert << std::endl;
+    syncFromFieldset();
     soca_increment_vert_scales_f90(toFortran(), vert);
+    syncToFieldset();
     Log::trace() << "Vert decorrelation length scales computed." << std::endl;
   }
 
@@ -263,21 +286,33 @@ namespace soca {
     // Update local variables
     vars_ = vars;
     // Update field data
+    syncFromFieldset();
     soca_increment_update_fields_f90(toFortran(), vars_);
+    syncToFieldset();
   }
 
 // -----------------------------------------------------------------------------
 
-  void Increment::toFieldSet(atlas::FieldSet &fs) const {
-    soca_increment_to_fieldset_f90(toFortran(), vars_, fs.get());
+  void Increment::toFieldSet(atlas::FieldSet &fset) const {
+    util::copyFieldSet(fieldSet_, fset);
+    //soca_increment_to_fieldset_f90(toFortran(), vars_, fs.get());
+    //fs.haloExchange(); // TODO remove this
   }
 
 // -----------------------------------------------------------------------------
 
   void Increment::fromFieldSet(const atlas::FieldSet &fs) {
+    util::copyFieldSet(fs, fieldSet_);
     soca_increment_from_fieldset_f90(toFortran(), vars_, fs.get());
   }
 
 // -----------------------------------------------------------------------------
+  void Increment::syncFromFieldset() const{
+    soca_increment_from_fieldset_f90(toFortran(), vars_, fieldSet_.get());
+  }
+  void Increment::syncToFieldset() const{
+    soca_increment_to_fieldset_f90(toFortran(), vars_, fieldSet_.get());
+  }
+
 
 }  // namespace soca

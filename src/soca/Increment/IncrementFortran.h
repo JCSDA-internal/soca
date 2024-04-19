@@ -30,7 +30,8 @@ namespace soca {
 
   extern "C" {
     void soca_increment_create_f90(F90flds &, const F90geom &,
-                               const oops::Variables &);
+                               const oops::Variables &,
+                               const atlas::field::FieldSetImpl *);
     void soca_increment_delete_f90(F90flds &);
     void soca_increment_copy_f90(const F90flds &, const F90flds &);
     void soca_increment_random_f90(const F90flds &);
@@ -52,7 +53,7 @@ namespace soca {
     void soca_increment_update_fields_f90(F90flds &, const oops::Variables &);
     void soca_increment_horiz_scales_f90(F90flds &,
                                          const eckit::Configuration * const &);
-    void soca_increment_vert_scales_f90(F90flds &, const double);
+    void soca_increment_vert_scales_f90(F90flds &, const double &);
   }
 }  // namespace soca
 #endif  // SOCA_INCREMENT_INCREMENTFORTRAN_H_
