@@ -202,7 +202,25 @@ namespace soca {
   }
   // -----------------------------------------------------------------------------
   void Increment::schur_product_with(const Increment & dx) {
-    util::multiplyFieldSets(fieldSet_, dx.fieldSet_);
+    //util::multiplyFieldSets(fieldSet_, dx.fieldSet_);
+
+    // note, can't use util::multiplyFieldSets because it doesn't handle a variable
+    // being in dx but not being in this (not sure why that is happening. is
+    // this a bug in soca?)
+    for (const auto & mulField : dx.fieldSet_) {
+      if (!fieldSet_.has(mulField.name())) continue;
+      // Get field with the same name
+      atlas::Field field = fieldSet_.field(mulField.name());
+      auto view = atlas::array::make_view<double, 2>(field);
+      const auto mulView = atlas::array::make_view<double, 2>(mulField);
+      for (int jnode = 0; jnode < field.shape(0); ++jnode) {
+        for (int jlevel = 0; jlevel < field.shape(1); ++jlevel) {
+          view(jnode, jlevel) *= mulView(jnode, jlevel);
+        }
+      }
+      // If either term in the product is out-of-date, then the result will be out-of-date
+      field.set_dirty(field.dirty() || mulField.dirty());
+    }
     syncFromFieldset();
   }
   // -----------------------------------------------------------------------------
