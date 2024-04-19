@@ -1304,14 +1304,16 @@ subroutine soca_fields_to_fieldset(self, vars, afieldset)
     else
       afield = self%geom%functionspace%create_field( &
         name=vars%variable(v), kind=atlas_real(kind_real), levels=field%nz)
-      meta = afield%metadata()
-      call meta%set('masked', field%metadata%masked)
-      call meta%set('interp_type', 'default')
-      if (field%metadata%masked) then
-        call meta%set('interp_source_point_mask', 'interp_mask')
-        call meta%set('mask', "mask_"//field%metadata%grid)
-      end if
       call afieldset%add(afield)
+    end if
+
+    ! NOTE, there is a bug somewhere, maybe, I shouldn't have to set the metadata on existing fields
+    meta = afield%metadata()
+    call meta%set('masked', field%metadata%masked)
+    call meta%set('interp_type', 'default')
+    if (field%metadata%masked) then
+      call meta%set('interp_source_point_mask', 'interp_mask')
+      call meta%set('mask', "mask_"//field%metadata%grid)
     end if
 
     ! create and fill field

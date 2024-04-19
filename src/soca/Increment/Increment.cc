@@ -108,10 +108,10 @@ namespace soca {
   }
   // -----------------------------------------------------------------------------
   Increment & Increment::operator=(const Increment & rhs) {
+    syncFromFieldset();
     time_ = rhs.time_;
     vars_ = rhs.vars_;
     rhs.syncFromFieldset();
-    syncFromFieldset();
     soca_increment_copy_f90(toFortran(), rhs.toFortran());
     syncToFieldset();
     return *this;
@@ -120,7 +120,25 @@ namespace soca {
   Increment & Increment::operator+=(const Increment & dx) {
     ASSERT(this->validTime() == dx.validTime());
 
-    util::addFieldSets(fieldSet_, dx.fieldSet_);
+    // note, can't use util::addFieldSets because it doesn't handle a variable
+    // being in dx but not being in this (not sure why that is happening. is
+    // this a bug in soca?)
+    for (const auto & addField : dx.fieldSet_) {
+      if (!fieldSet_.has(addField.name())) continue;
+
+      atlas::Field field = fieldSet_.field(addField.name());
+
+      auto view = atlas::array::make_view<double, 2>(field);
+      const auto addView = atlas::array::make_view<double, 2>(addField);
+      for (int jnode = 0; jnode < field.shape(0); ++jnode) {
+        for (int jlevel = 0; jlevel < field.shape(1); ++jlevel) {
+        view(jnode, jlevel) += addView(jnode, jlevel);
+        }
+      }
+
+      // If either term in the sum is out-of-date, then the result will be out-of-date
+      field.set_dirty(field.dirty() || addField.dirty());
+    }
     syncFromFieldset();
     return *this;
   }
@@ -283,10 +301,8 @@ namespace soca {
   // -----------------------------------------------------------------------------
 
   void Increment::updateFields(const oops::Variables & vars) {
-    // Update local variables
-    vars_ = vars;
-    // Update field data
     syncFromFieldset();
+    vars_ = vars;
     soca_increment_update_fields_f90(toFortran(), vars_);
     syncToFieldset();
   }
@@ -295,20 +311,20 @@ namespace soca {
 
   void Increment::toFieldSet(atlas::FieldSet &fset) const {
     util::copyFieldSet(fieldSet_, fset);
-    //soca_increment_to_fieldset_f90(toFortran(), vars_, fs.get());
-    //fs.haloExchange(); // TODO remove this
   }
 
 // -----------------------------------------------------------------------------
 
   void Increment::fromFieldSet(const atlas::FieldSet &fs) {
-    util::copyFieldSet(fs, fieldSet_);
+    // util::copyFieldSet(fs, fieldSet_);
     soca_increment_from_fieldset_f90(toFortran(), vars_, fs.get());
+    soca_increment_to_fieldset_f90(toFortran(), vars_, fieldSet_.get());  // due to a bug in the metadata being set, i think
   }
 
 // -----------------------------------------------------------------------------
   void Increment::syncFromFieldset() const{
     soca_increment_from_fieldset_f90(toFortran(), vars_, fieldSet_.get());
+    soca_increment_to_fieldset_f90(toFortran(), vars_, fieldSet_.get());  // due to a bug in the metadata being set, i think
   }
   void Increment::syncToFieldset() const{
     soca_increment_to_fieldset_f90(toFortran(), vars_, fieldSet_.get());

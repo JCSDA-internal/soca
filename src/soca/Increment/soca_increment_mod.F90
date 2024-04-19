@@ -365,9 +365,7 @@ subroutine soca_vert_scales(self, vert)
   integer :: i, jz
 
   ! compute scales
-  print *, "DBG V"
   do i=1,size(self%fields)
-    print *, "DBG V ",self%fields(i)%name,vert
     do jz=1,self%fields(i)%nz
       self%fields(i)%val(:,:,jz) = 3.57_kind_real*self%geom%mask2d(:,:)*vert
     end do

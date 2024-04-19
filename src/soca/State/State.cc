@@ -195,10 +195,8 @@ namespace soca {
   }
   // -----------------------------------------------------------------------------
   void State::updateFields(const oops::Variables & vars) {
-    // Update local variables
-    vars_ = vars;
-    // Update field data
     syncFromFieldset();
+    vars_ = vars;
     soca_state_update_fields_f90(toFortran(), vars_);
     syncToFieldset();
   }
@@ -225,6 +223,11 @@ namespace soca {
 
   void State::toFieldSet(atlas::FieldSet &fset) const {
     util::copyFieldSet(fieldSet_, fset);
+    oops::Log::info() << "DBG toFieldSet "<<std::endl;
+    for (const auto & field : fset) {
+      auto md = field.metadata();
+      oops::Log::info() << "  " << md <<std::endl;
+    }
   }
 
   // -----------------------------------------------------------------------------

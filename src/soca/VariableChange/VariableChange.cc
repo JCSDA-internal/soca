@@ -103,6 +103,7 @@ void VariableChange::changeVar(State & x, const oops::Variables & vars) const {
   varsFilled += vader_->changeVar(xfs, varsVader);
   x.updateFields(varsFilled);
   x.fromFieldSet(xfs);
+  x.toFieldSet(xfs);  // NOTE, there is a bug with the metadata being set, somewhere
   Log::debug() << "VariableChange::changeVar variables after var change: "
                << x.variables() << std::endl;
 
