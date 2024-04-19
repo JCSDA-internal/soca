@@ -182,76 +182,47 @@ namespace soca {
   }
 
   // -----------------------------------------------------------------------------
-  oops::LocalIncrement Increment::getLocal(
-                        const GeometryIterator & iter) const {
-    // TODO(Travis) remove the hardcoded variable names
+  oops::LocalIncrement Increment::getLocal(const GeometryIterator & iter) const {
+    atlas::FieldSet fs; toFieldSet(fs); //TODO temp
 
-    int nx, ny, nzo, nf;
-    soca_increment_sizes_f90(toFortran(), nx, ny, nzo, nf);
-    eckit::geometry::Point3 p3 = *iter;
+    // doesn't work with 3d iterator, for now
+    ASSERT(geom_.IteratorDimension() == 2);
     std::vector<int> varlens(vars_.size());
 
-    int iteratorDimension = geom_.IteratorDimension();
-    switch (iteratorDimension) {
-    case (3) :
-      if (p3[2] == 0.0) {
-      // should probably check if kindex == 0 (bit this requires more code)
-      // surface variables
-        for (int ii = 0; ii < vars_.size(); ii++) {
-          if (vars_[ii] == "ssh")  varlens[ii]=1;
-          else if (vars_[ii] == "cicen") varlens[ii]=1;
-          else if (vars_[ii] == "hicen") varlens[ii]=1;
-          else if (vars_[ii] == "hsnon") varlens[ii]=1;
-          else
-              varlens[ii] = 0;
-        }
-      } else {
-      // 3d variables
-        for (int ii = 0; ii < vars_.size(); ii++) {
-          if (vars_[ii] == "tocn") varlens[ii]=nzo;
-          else if (vars_[ii] == "socn") varlens[ii]=nzo;
-          else if (vars_[ii] == "hocn") varlens[ii]=nzo;
-          else if (vars_[ii] == "uocn") varlens[ii]=nzo;
-          else if (vars_[ii] == "vocn") varlens[ii]=nzo;
-          else if (vars_[ii] == "chl") varlens[ii]=nzo;
-          else if (vars_[ii] == "biop") varlens[ii]=nzo;
-          else
-              varlens[ii] = 0;
-        }
-      }
-    default :
-      for (int ii = 0; ii < vars_.size(); ii++) {
-        if (vars_[ii] == "tocn") varlens[ii]=nzo;
-        else if (vars_[ii] == "socn") varlens[ii]=nzo;
-        else if (vars_[ii] == "hocn") varlens[ii]=nzo;
-        else if (vars_[ii] == "uocn") varlens[ii]=nzo;
-        else if (vars_[ii] == "vocn") varlens[ii]=nzo;
-        else if (vars_[ii] == "ssh")  varlens[ii]=1;
-        else if (vars_[ii] == "cicen") varlens[ii]=1;
-        else if (vars_[ii] == "hicen") varlens[ii]=1;
-        else if (vars_[ii] == "hsnon") varlens[ii]=1;
-        else if (vars_[ii] == "chl") varlens[ii]=nzo;
-        else if (vars_[ii] == "biop") varlens[ii]=nzo;
-        else
-            varlens[ii] = 0;
+    // count space needed
+    size_t idx = 0;
+    for (const auto & var : vars_.variables()) {
+      varlens[idx++] = fs.field(var).shape(1);
+    }
+    size_t totalLen = std::accumulate(varlens.begin(), varlens.end(), 0);
+
+    // fill in vector
+    std::vector<double> values;
+    values.reserve(totalLen);
+    for (const auto & var : vars_.variables()) {
+      const auto & view = atlas::array::make_view<double, 2>(fs.field(var));
+      for (size_t lvl = 0; lvl < view.shape(1); lvl++) {
+        values.push_back(view(iter.i(), lvl));
       }
     }
-
-    int lenvalues = std::accumulate(varlens.begin(), varlens.end(), 0);
-    std::vector<double> values(lenvalues);
-
-    soca_increment_getpoint_f90(keyFlds_, iter.toFortran(), values[0],
-                            values.size());
+    ASSERT(values.size() == totalLen);
 
     return oops::LocalIncrement(vars_, values, varlens);
   }
 
   // -----------------------------------------------------------------------------
-  void Increment::setLocal(const oops::LocalIncrement & values,
-                             const GeometryIterator & iter) {
-    const std::vector<double> vals = values.getVals();
-    soca_increment_setpoint_f90(toFortran(), iter.toFortran(), vals[0],
-                            vals.size());
+  void Increment::setLocal(const oops::LocalIncrement & values, const GeometryIterator & iter) {
+    atlas::FieldSet fs; toFieldSet(fs);  //TODO temp
+    const std::vector<double> & vals = values.getVals();
+    size_t idx = 0;
+    for (const auto & var : vars_.variables()) {
+      auto view = atlas::array::make_view<double, 2>(fs.field(var));
+      for (size_t lvl = 0; lvl < view.shape(1); lvl++) {
+        view(iter.i(), lvl) = vals[idx++];
+      }
+    }
+    ASSERT(idx == vals.size());
+    fromFieldSet(fs);
   }
   // -----------------------------------------------------------------------------
   /// I/O and diagnostics

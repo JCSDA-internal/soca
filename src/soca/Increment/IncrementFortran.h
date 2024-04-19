@@ -49,12 +49,6 @@ namespace soca {
     void soca_increment_from_fieldset_f90(const F90flds &,
                                    const oops::Variables &,
                                    const atlas::field::FieldSetImpl *);
-    void soca_increment_getpoint_f90(const F90flds &, const F90iter &, double &,
-                           const int &);
-    void soca_increment_setpoint_f90(F90flds &, const F90iter &, const double &,
-                           const int &);
-    void soca_increment_sizes_f90(const F90flds &, int &,
-                              int &, int &, int &);
     void soca_increment_update_fields_f90(F90flds &, const oops::Variables &);
     void soca_increment_horiz_scales_f90(F90flds &,
                                          const eckit::Configuration * const &);

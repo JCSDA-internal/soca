@@ -14,8 +14,6 @@ use kinds, only: kind_real
 use oops_variables_mod, only : oops_variables
 
 ! soca modules
-use soca_geom_iter_mod_c, only: soca_geom_iter_registry
-use soca_geom_iter_mod, only : soca_geom_iter
 use soca_geom_mod_c, only: soca_geom_registry
 use soca_geom_mod, only: soca_geom
 use soca_increment_mod, only : soca_increment
@@ -211,62 +209,6 @@ subroutine soca_increment_write_file_c(c_key_fld, c_conf, c_dt) bind(c,name='soc
   call fld%write_rst(fckit_configuration(c_conf), fdate)
 
 end subroutine soca_increment_write_file_c
-
-
-! ------------------------------------------------------------------------------
-!> C++ interface for soca_increment_mod::soca_increment::getpoint()
-subroutine soca_increment_getpoint_c(c_key_fld,c_key_iter,values, values_len) bind(c,name='soca_increment_getpoint_f90')
-  integer(c_int), intent(in) :: c_key_fld
-  integer(c_int), intent(in) :: c_key_iter
-  integer(c_int), intent(in) :: values_len
-  real(c_double), intent(inout) :: values(values_len)
-
-  type(soca_increment),      pointer :: fld
-  type(soca_geom_iter), pointer :: iter
-
-  call soca_increment_registry%get(c_key_fld,fld)
-  call soca_geom_iter_registry%get(c_key_iter,iter)
-
-  call fld%getpoint(iter, values)
-
-end subroutine soca_increment_getpoint_c
-
-
-! ------------------------------------------------------------------------------
-!> C++ interface for soca_increment_mod::soca_increment::setpoint()
-subroutine soca_increment_setpoint_c(c_key_fld,c_key_iter,values, values_len) bind(c,name='soca_increment_setpoint_f90')
-  integer(c_int), intent(inout) :: c_key_fld
-  integer(c_int), intent(in) :: c_key_iter
-  integer(c_int), intent(in) :: values_len
-  real(c_double), intent(in) :: values(values_len)
-
-  type(soca_increment),      pointer :: fld
-  type(soca_geom_iter), pointer :: iter
-
-  call soca_increment_registry%get(c_key_fld,fld)
-  call soca_geom_iter_registry%get(c_key_iter,iter)
-
-  call fld%setpoint(iter, values)
-
-end subroutine soca_increment_setpoint_c
-
-
-! ------------------------------------------------------------------------------
-!> C++ interface to get soca_increment_mod::soca_increment dimension sizes
-subroutine soca_incrementnum_c(c_key_fld, nx, ny, nzo, nf) bind(c,name='soca_increment_sizes_f90')
-  integer(c_int),         intent(in) :: c_key_fld
-  integer(kind=c_int), intent(inout) :: nx, ny, nzo, nf
-
-  type(soca_increment), pointer :: fld
-
-  call soca_increment_registry%get(c_key_fld,fld)
-
-  nx = size(fld%geom%lon,1)
-  ny = size(fld%geom%lon,2)
-  nzo = fld%geom%nzo
-  nf = size(fld%fields)
-
-end subroutine soca_incrementnum_c
 
 
 ! ------------------------------------------------------------------------------

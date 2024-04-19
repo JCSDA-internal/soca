@@ -26,7 +26,6 @@
 #include "soca/Geometry/FmsInput.h"
 #include "soca/Geometry/GeometryFortran.h"
 #include "soca/GeometryIterator/GeometryIterator.h"
-#include "soca/GeometryIterator/GeometryIteratorFortran.h"
 
 #include "oops/util/ObjectCounter.h"
 #include "oops/util/Printable.h"

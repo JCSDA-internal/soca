@@ -135,18 +135,18 @@ namespace soca {
 
   // -----------------------------------------------------------------------------
   GeometryIterator Geometry::begin() const {
-    // return start of the geometry on this mpi tile
-    int ist, iend, jst, jend, kst, kend, itd;
-    soca_geo_start_end_f90(keyGeom_, ist, iend, jst, jend, kst, kend);
-    // 3D iterator starts from 0 for surface variables
-    if (IteratorDimension() == 3) kst = 0;
-    return GeometryIterator(*this, ist, jst, kst);
+    ASSERT(IteratorDimension() == 2);
+
+    // find the first non ghost point
+    const auto & ghost = atlas::array::make_view<int,1>(functionSpace_.ghost());
+    size_t idx = 0;
+    while (idx < ghost.size() && ghost(idx)) idx++;
+    return GeometryIterator(*this, idx, -1 );
   }
   // -----------------------------------------------------------------------------
   GeometryIterator Geometry::end() const {
-    // return end of the geometry on this mpi tile
-    // decided to return index out of bounds for the iterator loops to work
-    return GeometryIterator(*this, -1, -1, -1);
+    ASSERT(IteratorDimension() == 2);
+    return GeometryIterator(*this, functionSpace_.size(), -1);
   }
   // -----------------------------------------------------------------------------
   int Geometry::IteratorDimension() const {
