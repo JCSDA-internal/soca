@@ -25,8 +25,8 @@ GeometryIterator::GeometryIterator(const GeometryIterator& iter)
 
 GeometryIterator::GeometryIterator(const Geometry& geom,
                                    const size_t & iindex, const size_t & kindex)
- : geom_(geom), iIndex_(iindex), kIndex_(kindex) {
- }
+  : geom_(geom), iIndex_(iindex), kIndex_(kindex) {
+}
 
 // -----------------------------------------------------------------------------
 
@@ -50,21 +50,21 @@ eckit::geometry::Point3 GeometryIterator::operator*() const {
   ASSERT(geom_.IteratorDimension() == 2);  // modification needed for 3D
   ASSERT(iIndex_ < geom_.functionSpace().size());
   const auto & lonlat = geom_.functionSpace().lonlat();
-  const auto & vLonLat = atlas::array::make_view<double,2>(lonlat);
-  return eckit::geometry::Point3(vLonLat(iIndex_, 0), vLonLat(iIndex_,1), -99999);
+  const auto & vLonLat = atlas::array::make_view<double, 2>(lonlat);
+  return eckit::geometry::Point3(vLonLat(iIndex_, 0), vLonLat(iIndex_, 1), -99999);
 }
 
 // -----------------------------------------------------------------------------
 
 double GeometryIterator::getArea() const {
-  const auto & view = atlas::array::make_view<double,2>(geom_.fields().field("area"));
+  const auto & view = atlas::array::make_view<double, 2>(geom_.fields().field("area"));
   return view(iIndex_, 0);
 }
 
 // -----------------------------------------------------------------------------
 
 double GeometryIterator::getRossbyRadius() const {
-  const auto & view = atlas::array::make_view<double,2>(geom_.fields().field("rossby_radius"));
+  const auto & view = atlas::array::make_view<double, 2>(geom_.fields().field("rossby_radius"));
   return view(iIndex_, 0);
 }
 
@@ -77,10 +77,10 @@ GeometryIterator& GeometryIterator::operator++() {
     throw eckit::Exception("Can't go past end on geometry iterator");
   }
 
-  const auto & ghost = atlas::array::make_view<int,1>(fs.ghost());
+  const auto & ghost = atlas::array::make_view<int, 1>(fs.ghost());
   do { iIndex_++; } while (iIndex_ < fs.size() && ghost(iIndex_));
 
-  ASSERT( iIndex_ <= fs.size());
+  ASSERT(iIndex_ <= fs.size());
   return *this;
 }
 

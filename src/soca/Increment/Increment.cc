@@ -88,7 +88,7 @@ namespace soca {
     State x1_at_geomres(geom_, x1);
     State x2_at_geomres(geom_, x2);
     atlas::FieldSet fs1, fs2, fs3;
-    x1_at_geomres.toFieldSet(fs2); x2_at_geomres.toFieldSet(fs3); // TODO temp
+    x1_at_geomres.toFieldSet(fs2); x2_at_geomres.toFieldSet(fs3);
     fs1 = util::copyFieldSet(fs2);
     util::subtractFieldSets(fs1, fs3);
     fromFieldSet(fs1);
@@ -102,7 +102,7 @@ namespace soca {
   // -----------------------------------------------------------------------------
   Increment & Increment::operator+=(const Increment & dx) {
     ASSERT(this->validTime() == dx.validTime());
-    atlas::FieldSet fs1, fs2; toFieldSet(fs1); dx.toFieldSet(fs2); // TODO temp
+    atlas::FieldSet fs1, fs2; toFieldSet(fs1); dx.toFieldSet(fs2);
     util::addFieldSets(fs1, fs2);
     fromFieldSet(fs1);
     return *this;
@@ -110,14 +110,14 @@ namespace soca {
   // -----------------------------------------------------------------------------
   Increment & Increment::operator-=(const Increment & dx) {
     ASSERT(this->validTime() == dx.validTime());
-    atlas::FieldSet fs1, fs2; toFieldSet(fs1); dx.toFieldSet(fs2); // TODO temp
+    atlas::FieldSet fs1, fs2; toFieldSet(fs1); dx.toFieldSet(fs2);
     util::subtractFieldSets(fs1, fs2);
     fromFieldSet(fs1);
     return *this;
   }
   // -----------------------------------------------------------------------------
   Increment & Increment::operator*=(const double & zz) {
-    atlas::FieldSet fs1; toFieldSet(fs1); // TODO temp
+    atlas::FieldSet fs1; toFieldSet(fs1);
     util::multiplyFieldSet(fs1, zz);
     fromFieldSet(fs1);
     return *this;
@@ -133,7 +133,7 @@ namespace soca {
   }
   // -----------------------------------------------------------------------------
   void Increment::zero() {
-    atlas::FieldSet fs1; toFieldSet(fs1); // TODO temp
+    atlas::FieldSet fs1; toFieldSet(fs1);
     util::zeroFieldSet(fs1);
     fromFieldSet(fs1);
   }
@@ -167,13 +167,13 @@ namespace soca {
   }
   // -----------------------------------------------------------------------------
   void Increment::schur_product_with(const Increment & dx) {
-    atlas::FieldSet fs1, fs2; toFieldSet(fs1); dx.toFieldSet(fs2); // TODO temp
+    atlas::FieldSet fs1, fs2; toFieldSet(fs1); dx.toFieldSet(fs2);
     util::multiplyFieldSets(fs1, fs2);
     fromFieldSet(fs1);
   }
   // -----------------------------------------------------------------------------
   double Increment::dot_product_with(const Increment & other) const {
-    atlas::FieldSet fs1, fs2; toFieldSet(fs1); other.toFieldSet(fs2); // TODO temp
+    atlas::FieldSet fs1, fs2; toFieldSet(fs1); other.toFieldSet(fs2);
     return util::dotProductFieldSets(fs1, fs2, fs1.field_names(), geom_.getComm());
   }
   // -----------------------------------------------------------------------------
@@ -183,10 +183,9 @@ namespace soca {
 
   // -----------------------------------------------------------------------------
   oops::LocalIncrement Increment::getLocal(const GeometryIterator & iter) const {
-    atlas::FieldSet fs; toFieldSet(fs); //TODO temp
+    atlas::FieldSet fs; toFieldSet(fs);
 
-    // doesn't work with 3d iterator, for now
-    ASSERT(geom_.IteratorDimension() == 2);
+    ASSERT(geom_.IteratorDimension() == 2);  // changed need to be made here for 3D
     std::vector<int> varlens(vars_.size());
 
     // count space needed
@@ -212,7 +211,8 @@ namespace soca {
 
   // -----------------------------------------------------------------------------
   void Increment::setLocal(const oops::LocalIncrement & values, const GeometryIterator & iter) {
-    atlas::FieldSet fs; toFieldSet(fs);  //TODO temp
+    atlas::FieldSet fs; toFieldSet(fs);
+    ASSERT(geom_.IteratorDimension() == 2);  // changes need to be made here for 3D
     const std::vector<double> & vals = values.getVals();
     size_t idx = 0;
     for (const auto & var : vars_.variables()) {

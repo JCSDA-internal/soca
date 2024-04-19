@@ -3,11 +3,12 @@
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
- * In applying this licence, ECMWF does not waive the privileges and immunities
- * granted to it by virtue of its status as an intergovernmental organisation nor
- * does it submit to any jurisdiction.
  */
+#include <algorithm>
 #include <iomanip>
+#include <limits>
+#include <memory>
+#include <string>
 
 #include "atlas/field.h"
 
@@ -19,9 +20,8 @@ namespace soca
 
 // -----------------------------------------------------------------------------
 
-Fields::Fields(const Geometry & geom, const oops::Variables & vars,
-               const util::DateTime & vt)
- : geom_(geom), vars_(vars), time_(vt)  {
+Fields::Fields(const Geometry & geom, const oops::Variables & vars, const util::DateTime & vt)
+  : geom_(geom), vars_(vars), time_(vt)  {
 }
 
 // -----------------------------------------------------------------------------
@@ -30,8 +30,8 @@ Fields::Fields(const Geometry & geom, const oops::Variables & vars,
 size_t Fields::serialSize() const {
   size_t nn = 1;  // plus magic factor
   atlas::FieldSet fs; toFieldSet(fs);
-  for(const auto & field : fs) {
-      nn += field.size();
+  for (const auto & field : fs) {
+    nn += field.size();
   }
 
   // Date and time
@@ -48,11 +48,11 @@ void Fields::serialize(std::vector<double> & vect) const {
   // Serialize the field
   size_t n = 0;
   vect.reserve(serialSize());
-  for(const auto & field : fs) {
-    auto view = atlas::array::make_view<double, 2>(field);
+  for (const auto & field : fs) {
+    const auto & view = atlas::array::make_view<double, 2>(field);
     for (size_t i=0; i < field.shape(0); i++) {
       for (size_t j = 0; j < field.shape(1); j++) {
-        vect.push_back(view(i,j));
+        vect.push_back(view(i, j));
         n++;
       }
     }
@@ -68,13 +68,12 @@ void Fields::serialize(std::vector<double> & vect) const {
 // -----------------------------------------------------------------------------
 
 void Fields::deserialize(const std::vector<double> & vect, size_t & index) {
-  // Deserialize the field
   atlas::FieldSet fs; toFieldSet(fs);
   for (auto & field : fs) {
     auto view = atlas::array::make_view<double, 2>(field);
     for (size_t i=0; i < view.shape(0); i++) {
       for (size_t j = 0; j < view.shape(1); j++) {
-        view(i,j) = vect[index++];
+        view(i, j) = vect[index++];
       }
     }
   }
@@ -84,7 +83,7 @@ void Fields::deserialize(const std::vector<double> & vect, size_t & index) {
   // Deserialize the date and time
   time_.deserialize(vect, index);
 
-  fromFieldSet(fs);  // TODO temp
+  fromFieldSet(fs);
 }
 
 // -----------------------------------------------------------------------------
@@ -93,22 +92,22 @@ double Fields::norm() const {
   atlas::FieldSet fs; toFieldSet(fs);
   double zz = 0.0;
   for (const auto & field : fs) {
-    auto vGhost = atlas::array::make_view<int,1>(field.functionspace().ghost());
-    auto view = atlas::array::make_view<double,2>(field);
-    std::unique_ptr<atlas::array::ArrayView<double,2> > mask;
+    const auto & vGhost = atlas::array::make_view<int, 1>(field.functionspace().ghost());
+    const auto & view = atlas::array::make_view<double, 2>(field);
+    std::unique_ptr<atlas::array::ArrayView<double, 2> > mask;
     if (field.metadata().getBool("masked")) {
       // optionally get the mask field, if one is given
-      std::string maskName = field.metadata().getString("mask");
-      mask.reset(new atlas::array::ArrayView<double,2>(
+      const std::string & maskName = field.metadata().getString("mask");
+      mask.reset(new atlas::array::ArrayView<double, 2>(
         atlas::array::make_view<double, 2>(geom_.fields().field(maskName))));
     }
 
     // traverse all points to calculate stats
     for (size_t i = 0; i < field.shape(0); i++) {
       if (vGhost(i)) continue;
-      if (mask && (*mask)(i,0) == 0.0) continue;
+      if (mask && (*mask)(i, 0) == 0.0) continue;
       for (size_t lvl = 0; lvl < field.shape(1); lvl++) {
-        zz += view(i,lvl) * view(i,lvl);
+        zz += view(i, lvl) * view(i, lvl);
       }
     }
   }
@@ -121,7 +120,7 @@ double Fields::norm() const {
 // -----------------------------------------------------------------------------
 
 void Fields::print(std::ostream & os) const {
-  atlas::FieldSet fs; toFieldSet(fs); //TODO temp
+  atlas::FieldSet fs; toFieldSet(fs);
 
   os << std::endl << "  Valid time: " << validTime();
 
@@ -132,26 +131,26 @@ void Fields::print(std::ostream & os) const {
     double max = std::numeric_limits<double>::min();
     double sum = 0.0;
 
-    auto vGhost = atlas::array::make_view<int,1>(field.functionspace().ghost());
-    auto view = atlas::array::make_view<double,2>(field);
-    std::unique_ptr<atlas::array::ArrayView<double,2> > mask;
+    const auto & vGhost = atlas::array::make_view<int, 1>(field.functionspace().ghost());
+    const auto & view = atlas::array::make_view<double, 2>(field);
+    std::unique_ptr<atlas::array::ArrayView<double, 2> > mask;
     if (field.metadata().getBool("masked")) {
       // optionally get the mask field, if one is given
-      std::string maskName = field.metadata().getString("mask");
-      mask.reset(new atlas::array::ArrayView<double,2>(
+      const std::string & maskName = field.metadata().getString("mask");
+      mask.reset(new atlas::array::ArrayView<double, 2>(
         atlas::array::make_view<double, 2>(geom_.fields().field(maskName))));
     }
 
     // traverse all points to calculate stats
     for (size_t i = 0; i < field.shape(0); i++) {
       if (vGhost(i)) continue;
-      if (mask && (*mask)(i,0) == 0.0) continue;
+      if (mask && (*mask)(i, 0) == 0.0) continue;
 
       count++;
       for (size_t lvl = 0; lvl < field.shape(1); lvl++) {
-        min = std::min(min, view(i,lvl));
-        max = std::max(max, view(i,lvl));
-        sum += view(i,lvl) / field.shape(1);
+        min = std::min(min, view(i, lvl));
+        max = std::max(max, view(i, lvl));
+        sum += view(i, lvl) / field.shape(1);
       }
     }
 
@@ -175,4 +174,4 @@ void Fields::print(std::ostream & os) const {
 
 // -----------------------------------------------------------------------------
 
-}
+}  // namespace soca

@@ -134,20 +134,24 @@ namespace soca {
   }
 
   // -----------------------------------------------------------------------------
+
   GeometryIterator Geometry::begin() const {
-    ASSERT(IteratorDimension() == 2);
+    ASSERT(IteratorDimension() == 2);  // modification needed for 3D
 
     // find the first non ghost point
-    const auto & ghost = atlas::array::make_view<int,1>(functionSpace_.ghost());
+    const auto & ghost = atlas::array::make_view<int, 1>(functionSpace_.ghost());
     size_t idx = 0;
     while (idx < ghost.size() && ghost(idx)) idx++;
     return GeometryIterator(*this, idx, -1 );
   }
+
   // -----------------------------------------------------------------------------
+
   GeometryIterator Geometry::end() const {
-    ASSERT(IteratorDimension() == 2);
+    ASSERT(IteratorDimension() == 2);  // modification needed for 3D
     return GeometryIterator(*this, functionSpace_.size(), -1);
   }
+
   // -----------------------------------------------------------------------------
   int Geometry::IteratorDimension() const {
     // return dimesnion of the iterator
