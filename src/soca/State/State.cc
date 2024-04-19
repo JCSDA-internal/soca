@@ -158,7 +158,6 @@ namespace soca {
     // Add increment to background state
     atlas::FieldSet fs2; dx.toFieldSet(fs2);
     util::addFieldSets(fieldSet_, fs2);
-    syncFromFieldset();
     return *this;
   }
   // -----------------------------------------------------------------------------
@@ -183,7 +182,6 @@ namespace soca {
   // -----------------------------------------------------------------------------
   void State::zero() {
     util::zeroFieldSet(fieldSet_);
-    syncFromFieldset();
   }
   // -----------------------------------------------------------------------------
   void State::accumul(const double & zz, const State & xx) {
@@ -191,7 +189,6 @@ namespace soca {
     fs2 = util::copyFieldSet(fs1);
     util::multiplyFieldSet(fs2, zz);
     util::addFieldSets(fieldSet_, fs2);
-    syncFromFieldset();
   }
   // -----------------------------------------------------------------------------
   void State::updateFields(const oops::Variables & vars) {

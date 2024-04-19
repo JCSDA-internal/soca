@@ -45,7 +45,6 @@ namespace soca {
     soca_increment_create_f90(keyFlds_, geom_.toFortran(), vars_, fieldSet_.get());
     syncToFieldset();
     zero();
-    syncFromFieldset();
 
     Log::trace() << "Increment constructed." << std::endl;
   }
@@ -72,7 +71,6 @@ namespace soca {
     } else {
       zero();
     }
-    syncFromFieldset();
     Log::trace() << "Increment copy-created." << std::endl;
   }
   // -----------------------------------------------------------------------------
@@ -104,7 +102,6 @@ namespace soca {
     x1_at_geomres.toFieldSet(fs1); x2_at_geomres.toFieldSet(fs2);
     fieldSet_ = util::copyFieldSet(fs1);
     util::subtractFieldSets(fieldSet_, fs2);
-    syncFromFieldset();
   }
   // -----------------------------------------------------------------------------
   Increment & Increment::operator=(const Increment & rhs) {
@@ -139,21 +136,17 @@ namespace soca {
       // If either term in the sum is out-of-date, then the result will be out-of-date
       field.set_dirty(field.dirty() || addField.dirty());
     }
-    syncFromFieldset();
     return *this;
   }
   // -----------------------------------------------------------------------------
   Increment & Increment::operator-=(const Increment & dx) {
     ASSERT(this->validTime() == dx.validTime());
-
     util::subtractFieldSets(fieldSet_, dx.fieldSet_);
-    syncFromFieldset();
     return *this;
   }
   // -----------------------------------------------------------------------------
   Increment & Increment::operator*=(const double & zz) {
     util::multiplyFieldSet(fieldSet_, zz);
-    syncFromFieldset();
     return *this;
   }
   // -----------------------------------------------------------------------------
@@ -162,12 +155,10 @@ namespace soca {
       auto view = atlas::array::make_view<double, 2>(field);
       view.assign(1.0);
     }
-    syncFromFieldset();
   }
   // -----------------------------------------------------------------------------
   void Increment::zero() {
     util::zeroFieldSet(fieldSet_);
-    syncFromFieldset();
   }
   // -----------------------------------------------------------------------------
   void Increment::dirac(const eckit::Configuration & config) {
@@ -180,7 +171,6 @@ namespace soca {
   void Increment::zero(const util::DateTime & vt) {
     zero();
     time_ = vt;
-    syncToFieldset();
   }
   // -----------------------------------------------------------------------------
   void Increment::axpy(const double & zz, const Increment & dx,
@@ -190,7 +180,6 @@ namespace soca {
     fs1 = util::copyFieldSet(dx.fieldSet_);
     util::multiplyFieldSet(fs1, zz);
     util::addFieldSets(fieldSet_, fs1);
-    syncFromFieldset();
   }
   // -----------------------------------------------------------------------------
   void Increment::accumul(const double & zz, const State & xx) {
@@ -198,7 +187,6 @@ namespace soca {
     fs1 = util::copyFieldSet(fs2);
     util::multiplyFieldSet(fs1, zz);
     util::addFieldSets(fieldSet_, fs1);
-    syncFromFieldset();
   }
   // -----------------------------------------------------------------------------
   void Increment::schur_product_with(const Increment & dx) {
@@ -221,7 +209,6 @@ namespace soca {
       // If either term in the product is out-of-date, then the result will be out-of-date
       field.set_dirty(field.dirty() || mulField.dirty());
     }
-    syncFromFieldset();
   }
   // -----------------------------------------------------------------------------
   double Increment::dot_product_with(const Increment & other) const {
@@ -273,7 +260,6 @@ namespace soca {
       }
     }
     ASSERT(idx == vals.size());
-    syncFromFieldset();
   }
   // -----------------------------------------------------------------------------
   /// I/O and diagnostics

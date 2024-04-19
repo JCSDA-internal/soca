@@ -79,8 +79,6 @@ void Fields::deserialize(const std::vector<double> & vect, size_t & index) {
 
   // Deserialize the date and time
   time_.deserialize(vect, index);
-
-  syncFromFieldset();
 }
 
 // -----------------------------------------------------------------------------
