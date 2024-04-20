@@ -42,8 +42,6 @@ size_t Fields::serialSize() const {
 
 constexpr double SerializeCheckValue = -54321.98765;
 void Fields::serialize(std::vector<double> & vect) const {
-
-  // Serialize the field
   size_t n = 0;
   vect.reserve(serialSize());
   for (const auto & field : fieldSet_) {

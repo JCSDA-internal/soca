@@ -57,7 +57,7 @@ class Fields : public util::Serializable,
  protected:
   void print(std::ostream &) const override;
 
-  mutable atlas::FieldSet fieldSet_; //TODO remove mutable
+  mutable atlas::FieldSet fieldSet_;  // TODO(travis) remove mutable
 
   util::DateTime time_;
   oops::Variables vars_;
