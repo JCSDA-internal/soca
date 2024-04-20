@@ -348,23 +348,14 @@ namespace soca {
 
   // -----------------------------------------------------------------------------
 
-  void Increment::toFieldSet(atlas::FieldSet &fset) const {
-    util::copyFieldSet(fieldSet_, fset);
-  }
-
-  // -----------------------------------------------------------------------------
-
-  void Increment::fromFieldSet(const atlas::FieldSet &fs) {
-    soca_increment_from_fieldset_f90(toFortran(), vars_, fs.get());
-    // due to a bug in the metadata being set, i think
-    soca_increment_to_fieldset_f90(toFortran(), vars_, fieldSet_.get());
+  void Increment::fromFieldSet(const atlas::FieldSet &fset) {
+    util::copyFieldSet(fset, fieldSet_);
+    soca_increment_from_fieldset_f90(toFortran(), vars_, fieldSet_.get());
   }
 
   // -----------------------------------------------------------------------------
   void Increment::syncFromFieldset() const {
     soca_increment_from_fieldset_f90(toFortran(), vars_, fieldSet_.get());
-    // due to a bug in the metadata being set, i think
-    soca_increment_to_fieldset_f90(toFortran(), vars_, fieldSet_.get());
   }
 
   // -----------------------------------------------------------------------------

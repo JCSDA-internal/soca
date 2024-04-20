@@ -32,7 +32,7 @@ class Fields : public util::Serializable,
   explicit Fields(const Geometry &, const oops::Variables &,
                   const util::DateTime &);
 
-  virtual void toFieldSet(atlas::FieldSet &) const = 0;
+  void toFieldSet(atlas::FieldSet &) const;
   virtual void fromFieldSet(const atlas::FieldSet &) = 0;
 
   virtual void syncFromFieldset() const = 0;

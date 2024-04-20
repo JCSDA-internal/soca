@@ -88,7 +88,6 @@ namespace soca {
       void accumul(const double &, const State &);
 
       /// ATLAS Interfaces
-      void toFieldSet(atlas::FieldSet &) const;
       void fromFieldSet(const atlas::FieldSet &);
       void syncFromFieldset() const;
       void syncToFieldset() const;

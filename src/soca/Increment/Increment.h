@@ -88,7 +88,6 @@ namespace soca {
       void setLocal(const oops::LocalIncrement &, const GeometryIterator &);
 
       /// ATLAS
-      void toFieldSet(atlas::FieldSet &) const;
       void fromFieldSet(const atlas::FieldSet &);
       void syncFromFieldset() const;
       void syncToFieldset() const;

@@ -191,6 +191,7 @@ contains
 
   !> \copybrief soca_fields_update_fields \see soca_fields_update_fields
   procedure :: update_fields => soca_fields_update_fields
+  procedure :: update_metadata => soca_fields_update_metadata
 
   !> \name getter/setter needed for interpolation
   !! \{
@@ -492,6 +493,8 @@ subroutine soca_fields_create(self, geom, vars, aFieldset)
 
   ! set everything to zero
   call self%zeros()
+
+  call self%to_fieldset(vars, self%afieldset)
 end subroutine soca_fields_create
 
 
@@ -1373,6 +1376,34 @@ subroutine soca_fields_from_fieldset(self, vars, afieldset)
       end if
     end do
     if (.not.var_found) call abor1_ftn('variable '//trim(vars%variable(jvar))//' not found in increment')
+  end do
+
+  call self%update_metadata()
+
+end subroutine
+
+! ------------------------------------------------------------------------------
+! update the metadata in the atlas fieldset based on fields metadata
+! TODO this should probably just be combined with the update fields method
+subroutine soca_fields_update_metadata(self)
+  class(soca_fields), intent(inout) :: self
+  integer :: n
+  ! type(soca_field), pointer :: field
+  type(atlas_field) :: afield
+  type(atlas_metadata) :: ameta
+  type(soca_field_metadata) :: metadata
+
+  do n =1, self%afieldset%size()
+    afield = self%afieldset%field(n)
+    ameta = afield%metadata()
+    metadata = self%geom%fields_metadata%get(afield%name())
+
+    call ameta%set('masked', metadata%masked)
+    call ameta%set('interp_type', 'default')
+    if (metadata%masked) then
+      call ameta%set('interp_source_point_mask', 'interp_mask')
+      call ameta%set('mask', "mask_"//metadata%grid)
+    end if
   end do
 end subroutine
 

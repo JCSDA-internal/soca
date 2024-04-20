@@ -11,6 +11,7 @@
 #include <string>
 
 #include "atlas/field.h"
+#include "oops/util/FieldSetHelpers.h"
 
 #include "soca/Geometry/Geometry.h"
 #include "soca/Fields/Fields.h"
@@ -160,6 +161,13 @@ void Fields::print(std::ostream & os) const {
         << "   mean=" <<  std::fixed << std::setw(12) <<
                           std::right << sum;
   }
+}
+
+// -----------------------------------------------------------------------------
+
+void Fields::toFieldSet(atlas::FieldSet & fset) const {
+  // copy seems like a waste, it would be nice if we could get away with "share"
+  util::copyFieldSet(fieldSet_, fset);
 }
 
 // -----------------------------------------------------------------------------
