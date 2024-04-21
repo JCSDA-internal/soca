@@ -38,7 +38,6 @@ namespace soca {
     : Fields(geom, vars, vt)
   {
     soca_state_create_f90(keyFlds_, geom_.toFortran(), vars_, fieldSet_.get());
-    syncToFieldset();
     Log::trace() << "State::State created." << std::endl;
   }
 
@@ -50,7 +49,6 @@ namespace soca {
     util::DateTime * dtp = &time_;
     oops::Variables vars(vars_);
     soca_state_create_f90(keyFlds_, geom_.toFortran(), vars, fieldSet_.get());
-    syncToFieldset();
 
     if (conf.has("analytic init")) {
       std::string dt;
@@ -60,7 +58,6 @@ namespace soca {
     } else {
       soca_state_read_file_f90(toFortran(), &conf, &dtp);
     }
-    syncToFieldset();
     Log::trace() << "State::State created and read in." << std::endl;
   }
 
@@ -72,7 +69,6 @@ namespace soca {
     other.syncFromFieldset();
     soca_state_create_f90(keyFlds_, geom_.toFortran(), vars_, fieldSet_.get());
     soca_state_change_resol_f90(toFortran(), other.keyFlds_);
-    syncToFieldset();
     Log::trace() << "State::State created by interpolation." << std::endl;
   }
 
@@ -100,7 +96,6 @@ namespace soca {
     other.syncFromFieldset();
     soca_state_create_f90(keyFlds_, geom_.toFortran(), vars_, fieldSet_.get());
     soca_state_copy_f90(toFortran(), other.toFortran());
-    syncToFieldset();
     Log::trace() << "State::State copied." << std::endl;
   }
 
@@ -118,7 +113,6 @@ namespace soca {
     rhs.syncFromFieldset();
     syncFromFieldset();
     soca_state_copy_f90(toFortran(), rhs.toFortran());
-    syncToFieldset();
     return *this;
   }
 
@@ -128,7 +122,6 @@ namespace soca {
   void State::rotate2north(const oops::Variables & u, const oops::Variables & v) {
     Log::trace() << "State::State rotate from logical to geographical North." << std::endl;
     soca_state_rotate2north_f90(toFortran(), u, v);
-    syncToFieldset();
   }
 
   // -----------------------------------------------------------------------------
@@ -136,7 +129,6 @@ namespace soca {
   void State::rotate2grid(const oops::Variables & u, const oops::Variables & v) {
     Log::trace() << "State::State rotate from geographical to logical North." << std::endl;
     soca_state_rotate2grid_f90(toFortran(), u, v);
-    syncToFieldset();
   }
 
   // -----------------------------------------------------------------------------
@@ -145,14 +137,12 @@ namespace soca {
   void State::tohgrid(const oops::Variables & u, const oops::Variables & v) {
     Log::trace() << "State::State interpolate vector to h-grid." << std::endl;
     soca_state_tohgrid_f90(toFortran());
-    syncToFieldset();
   }
 
   // -----------------------------------------------------------------------------
 
   void State::tocgrid(const oops::Variables & u, const oops::Variables & v) {
     Log::trace() << "State::State interpolate vector to c-grid. NOT IMPLEMENTED" << std::endl;
-    syncToFieldset();
   }
 
   // -----------------------------------------------------------------------------
@@ -176,7 +166,6 @@ namespace soca {
     Log::trace() << "State::State read started." << std::endl;
     util::DateTime * dtp = &time_;
     soca_state_read_file_f90(toFortran(), &files, &dtp);
-    syncToFieldset();
     Log::trace() << "State::State read done." << std::endl;
   }
 
@@ -208,7 +197,6 @@ namespace soca {
     syncFromFieldset();
     vars_ = vars;
     soca_state_update_fields_f90(toFortran(), vars_);
-    syncToFieldset();
   }
 
   // -----------------------------------------------------------------------------
@@ -219,7 +207,6 @@ namespace soca {
     Log::trace() << "State::State apply logarithmic transformation." << std::endl;
     syncFromFieldset();
     soca_state_logtrans_f90(toFortran(), trvar);
-    syncToFieldset();
   }
 
   // -----------------------------------------------------------------------------
@@ -228,7 +215,6 @@ namespace soca {
     Log::trace() << "State::State apply exponential transformation." << std::endl;
     syncFromFieldset();
     soca_state_expontrans_f90(toFortran(), trvar);
-    syncToFieldset();
   }
 
   // -----------------------------------------------------------------------------
@@ -243,9 +229,5 @@ namespace soca {
   }
 
   // -----------------------------------------------------------------------------
-
-  void State::syncToFieldset() const {
-    soca_state_to_fieldset_f90(toFortran(), vars_, fieldSet_.get());
-  }
 
 }  // namespace soca

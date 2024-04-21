@@ -55,6 +55,7 @@ subroutine soca_state_create_c(c_key_self, c_key_geom, c_vars, c_afieldsest) &
     vars = oops_variables(c_vars)
     afieldset = atlas_fieldset(c_afieldsest)
     call self%create(geom, vars, afieldset)
+    call self%sync_to_atlas()
 
 end subroutine soca_state_create_c
 
@@ -88,6 +89,7 @@ subroutine soca_state_copy_c(c_key_self,c_key_rhs) bind(c,name='soca_state_copy_
     call soca_state_registry%get(c_key_rhs,rhs)
 
     call self%copy(rhs)
+    call self%sync_to_atlas()
 
 end subroutine soca_state_copy_c
 
@@ -106,6 +108,7 @@ subroutine soca_state_read_file_c(c_key_fld, c_conf, c_dt) bind(c,name='soca_sta
     call soca_state_registry%get(c_key_fld,fld)
     call c_f_datetime(c_dt, fdate)
     call fld%read(fckit_configuration(c_conf), fdate)
+    call fld%sync_to_atlas()
 
 end subroutine soca_state_read_file_c
 
@@ -143,6 +146,7 @@ subroutine soca_state_rotate2grid_c(c_key_self, c_uvars, c_vvars) bind(c,name='s
 
   call soca_state_registry%get(c_key_self,self)
   call self%rotate(coordinate="grid", uvars=uvars, vvars=vvars)
+  call self%sync_to_atlas()
 
 end subroutine soca_state_rotate2grid_c
 
@@ -162,6 +166,7 @@ subroutine soca_state_rotate2north_c(c_key_self, c_uvars, c_vvars) bind(c,name='
 
   call soca_state_registry%get(c_key_self,self)
   call self%rotate(coordinate="north", uvars=uvars, vvars=vvars)
+  call self%sync_to_atlas()
 
 end subroutine soca_state_rotate2north_c
 
@@ -174,6 +179,7 @@ subroutine soca_state_tohgrid_c(c_key_self) bind(c,name='soca_state_tohgrid_f90'
 
   call soca_state_registry%get(c_key_self,self)
   call self%tohpoints()
+  call self%sync_to_atlas()
 
 end subroutine soca_state_tohgrid_c
 
@@ -213,6 +219,7 @@ subroutine soca_state_change_resol_c(c_key_fld,c_key_rhs) bind(c,name='soca_stat
     else
       call fld%convert(rhs)
     endif
+    call fld%sync_to_atlas()
 
 end subroutine soca_state_change_resol_c
 
@@ -230,6 +237,7 @@ subroutine soca_state_logtrans_c(c_key_self, c_trvars) bind(c,name='soca_state_l
 
   call soca_state_registry%get(c_key_self,self)
   call self%logexpon(transfunc="log", trvars=trvars)
+  call self%sync_to_atlas()
 
 end subroutine soca_state_logtrans_c
 
@@ -247,6 +255,7 @@ subroutine soca_state_expontrans_c(c_key_self, c_trvars) bind(c,name='soca_state
 
   call soca_state_registry%get(c_key_self,self)
   call self%logexpon(transfunc="expon", trvars=trvars)
+  call self%sync_to_atlas()
 
 end subroutine soca_state_expontrans_c
 
@@ -264,6 +273,7 @@ subroutine scoa_state_analytic_c(c_key_self, c_conf, c_dt) &
   call soca_state_registry%get(c_key_self,self)
   call c_f_datetime (c_dt, fdate)
   call soca_analytic_state(self)
+  call self%sync_to_atlas()
 
 end subroutine scoa_state_analytic_c
 
@@ -291,28 +301,10 @@ f_vars = oops_variables(c_vars)
 ! Call implementation
 ! -------------------
 call f_self%update_fields(f_vars)
+call f_self%sync_to_atlas()
 
 end subroutine soca_state_update_fields_c
 
-
-! ------------------------------------------------------------------------------
-!> C++ interface for State version of soca_field_mod::soca_field::to_fieldset()
-subroutine soca_state_to_fieldset_c(c_key_self, c_vars, c_fieldset) &
-    bind (c, name='soca_state_to_fieldset_f90')
-  integer(c_int),       intent(in) :: c_key_self
-  type(c_ptr), value,   intent(in) :: c_vars
-  type(c_ptr), value,   intent(in) :: c_fieldset
-
-  type(soca_state), pointer :: self
-  type(oops_variables)      :: vars
-  type(atlas_fieldset)      :: afieldset
-
-  call soca_state_registry%get(c_key_self, self)
-  vars = oops_variables(c_vars)
-  afieldset = atlas_fieldset(c_fieldset)
-
-  call self%to_fieldset(vars, afieldset)
-end subroutine
 
 ! ------------------------------------------------------------------------------
 !> C++ interface for soca_increment_mod::soca_increment::from_fieldset()

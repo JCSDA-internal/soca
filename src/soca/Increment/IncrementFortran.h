@@ -44,9 +44,6 @@ namespace soca {
     void soca_increment_write_file_f90(const F90flds &,
                                    const eckit::Configuration * const &,
                                    const util::DateTime * const *);
-    void soca_increment_to_fieldset_f90(const F90flds &,
-                                        const oops::Variables &,
-                                        atlas::field::FieldSetImpl *);
     void soca_increment_from_fieldset_f90(const F90flds &,
                                    const oops::Variables &,
                                    const atlas::field::FieldSetImpl *);

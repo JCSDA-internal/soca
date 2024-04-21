@@ -52,7 +52,7 @@ subroutine soca_model2geovals_changevar_f90(c_key_geom, c_key_xin, c_key_xout) &
     ! fields that are obtained from geometry
     case ('latitude')
       xout%fields(i)%val(:,:,1) = real(geom%lat, kind=kind_real)
-    
+
     case ('longitude')
       xout%fields(i)%val(:,:,1) = real(geom%lon, kind=kind_real)
 
@@ -103,6 +103,8 @@ subroutine soca_model2geovals_changevar_f90(c_key_geom, c_key_xin, c_key_xout) &
     end select
 
   end do
+
+  call xout%sync_to_atlas()
 end subroutine
 
 !-------------------------------------------------------------------------------

@@ -103,6 +103,7 @@ subroutine soca_bkgerrfilt_mult_c(c_key_self, c_key_a, c_key_m)&
   !< Computes dxm = D dxa
   call dxm%copy(dxa)
   call self%mult(dxa, dxm)
+  call dxm%sync_to_atlas()
 end subroutine soca_bkgerrfilt_mult_c
 
 

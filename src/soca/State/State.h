@@ -90,7 +90,6 @@ namespace soca {
       /// ATLAS Interfaces
       void fromFieldSet(const atlas::FieldSet &);
       void syncFromFieldset() const;
-      void syncToFieldset() const;
 
 
    private:

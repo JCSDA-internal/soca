@@ -59,6 +59,8 @@ subroutine soca_model2geovals_linear_changevar_f90(c_key_geom, c_key_dxin, c_key
     endif
 
   end do
+
+  call dxout%sync_to_atlas()
 end subroutine
 
 
@@ -96,6 +98,8 @@ subroutine soca_model2geovals_linear_changevarAD_f90(c_key_geom, c_key_dxin, c_k
     end if
 
   end do
+
+  call dxout%sync_to_atlas()
 end subroutine
 
 !-------------------------------------------------------------------------------

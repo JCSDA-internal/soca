@@ -90,7 +90,6 @@ namespace soca {
       /// ATLAS
       void fromFieldSet(const atlas::FieldSet &);
       void syncFromFieldset() const;
-      void syncToFieldset() const;
 
 
       /// I/O and diagnostics

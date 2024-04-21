@@ -197,10 +197,12 @@ contains
   !! \{
 
   !> copybrief soca_fields_to_fieldset \see soca_fields_to_fieldset
-  procedure :: to_fieldset  => soca_fields_to_fieldset
 
   procedure :: from_fieldset => soca_fields_from_fieldset
 
+  procedure :: sync_to_atlas => soca_fields_sync_to_atlas
+
+  procedure :: sync_from_atlas => soca_fields_sync_from_atlas
   !> \}
 
 end type soca_fields
@@ -494,7 +496,6 @@ subroutine soca_fields_create(self, geom, vars, aFieldset)
   ! set everything to zero
   call self%zeros()
 
-  call self%to_fieldset(vars, self%afieldset)
 end subroutine soca_fields_create
 
 
@@ -1282,41 +1283,31 @@ function soca_genfilename(f_conf,length,vdate,date_cols,domain_type)
 
 end function soca_genfilename
 
-! ------------------------------------------------------------------------------
-!> Get the fields listed in vars, used by the interpolation.
-!!
-!! The fields that are returned have halos (minus the invalid and duplicate halo points),
-!! and field values at these halo points are set to 0.
-subroutine soca_fields_to_fieldset(self, vars, afieldset)
+subroutine soca_fields_sync_to_atlas(self)
   class(soca_fields),   intent(in)    :: self
-  type(oops_variables), intent(in)    :: vars
-  type(atlas_fieldset), intent(inout) :: afieldset
 
   type(atlas_field) :: afield
   integer :: v, n, i, j
-  type(soca_field), pointer :: field
   type(atlas_metadata) :: meta
   real(kind=kind_real), pointer :: real_ptr(:,:)
 
-  do v=1,vars%nvars()
-    call self%get(vars%variable(v), field)
-
+  do v=1,size(self%fields)
     ! get/create field
-    if (afieldset%has_field(vars%variable(v))) then
-      afield = afieldset%field(vars%variable(v))
+    if (self%afieldset%has_field( self%fields(v)%name)) then
+      afield = self%afieldset%field( self%fields(v)%name)
     else
       afield = self%geom%functionspace%create_field( &
-        name=vars%variable(v), kind=atlas_real(kind_real), levels=field%nz)
-      call afieldset%add(afield)
+        name= self%fields(v)%name, kind=atlas_real(kind_real), levels= self%fields(v)%nz)
+      call self%afieldset%add(afield)
     end if
 
-    ! NOTE, there is a bug somewhere, maybe, I shouldn't have to set the metadata on existing fields
+    ! set the metadata
     meta = afield%metadata()
-    call meta%set('masked', field%metadata%masked)
+    call meta%set('masked',  self%fields(v)%metadata%masked)
     call meta%set('interp_type', 'default')
-    if (field%metadata%masked) then
+    if ( self%fields(v)%metadata%masked) then
       call meta%set('interp_source_point_mask', 'interp_mask')
-      call meta%set('mask', "mask_"//field%metadata%grid)
+      call meta%set('mask', "mask_"// self%fields(v)%metadata%grid)
     end if
 
     ! create and fill field
@@ -1324,13 +1315,19 @@ subroutine soca_fields_to_fieldset(self, vars, afieldset)
     real_ptr = 0.0_kind_real  ! set all points to zero, overwrite owned values below
     do j=self%geom%jsc,self%geom%jec
       do i=self%geom%isc,self%geom%iec
-        real_ptr(:, self%geom%atlas_ij2idx(i,j)) = field%val(i,j,:)
+        real_ptr(:, self%geom%atlas_ij2idx(i,j)) =  self%fields(v)%val(i,j,:)
       end do
     end do
     call afield%set_dirty(.true.)  ! indicate halo values are out-of-date
 
     call afield%final()
   end do
+end subroutine
+
+subroutine soca_fields_sync_from_atlas(self, vars, afieldset)
+  class(soca_fields),   intent(in)    :: self
+  type(oops_variables), intent(in)    :: vars
+  type(atlas_fieldset), intent(inout) :: afieldset
 end subroutine
 
 ! ------------------------------------------------------------------------------

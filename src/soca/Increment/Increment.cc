@@ -43,7 +43,6 @@ namespace soca {
     : Fields(geom, vars, vt)
   {
     soca_increment_create_f90(keyFlds_, geom_.toFortran(), vars_, fieldSet_.get());
-    syncToFieldset();
     zero();
 
     Log::trace() << "Increment constructed." << std::endl;
@@ -57,7 +56,6 @@ namespace soca {
     other.syncFromFieldset();
     soca_increment_create_f90(keyFlds_, geom_.toFortran(), vars_, fieldSet_.get());
     soca_increment_change_resol_f90(toFortran(), other.keyFlds_);
-    syncToFieldset();
     Log::trace() << "Increment constructed from other." << std::endl;
   }
 
@@ -68,10 +66,8 @@ namespace soca {
   {
     other.syncFromFieldset();
     soca_increment_create_f90(keyFlds_, geom_.toFortran(), vars_, fieldSet_.get());
-    syncToFieldset();
     if (copy) {
       soca_increment_copy_f90(toFortran(), other.toFortran());
-      syncToFieldset();
     } else {
       zero();
     }
@@ -86,8 +82,6 @@ namespace soca {
     other.syncFromFieldset();
     soca_increment_create_f90(keyFlds_, geom_.toFortran(), vars_, fieldSet_.get());
     soca_increment_copy_f90(toFortran(), other.toFortran());
-    syncToFieldset();
-
     Log::trace() << "Increment copy-created." << std::endl;
   }
 
@@ -121,7 +115,6 @@ namespace soca {
     vars_ = rhs.vars_;
     rhs.syncFromFieldset();
     soca_increment_copy_f90(toFortran(), rhs.toFortran());
-    syncToFieldset();
     return *this;
   }
 
@@ -185,9 +178,7 @@ namespace soca {
   // -----------------------------------------------------------------------------
 
   void Increment::dirac(const eckit::Configuration & config) {
-    syncFromFieldset();
     soca_increment_dirac_f90(toFortran(), &config);
-    syncToFieldset();
     Log::trace() << "Increment dirac initialized" << std::endl;
   }
 
@@ -248,9 +239,7 @@ namespace soca {
   // -----------------------------------------------------------------------------
 
   void Increment::random() {
-    syncFromFieldset();
     soca_increment_random_f90(toFortran());
-    syncToFieldset();
   }
 
   // -----------------------------------------------------------------------------
@@ -300,9 +289,7 @@ namespace soca {
 
   void Increment::read(const eckit::Configuration & files) {
     util::DateTime * dtp = &time_;
-    syncFromFieldset();
     soca_increment_read_file_f90(toFortran(), &files, &dtp);
-    syncToFieldset();
   }
 
   // -----------------------------------------------------------------------------
@@ -316,18 +303,14 @@ namespace soca {
   // -----------------------------------------------------------------------------
 
   void Increment::horiz_scales(const eckit::Configuration & config) {
-    syncFromFieldset();
     soca_increment_horiz_scales_f90(toFortran(), &config);
-    syncToFieldset();
     Log::trace() << "Horiz decorrelation length scales computed." << std::endl;
   }
 
   // -----------------------------------------------------------------------------
 
   void Increment::vert_scales(const double & vert) {
-    syncFromFieldset();
     soca_increment_vert_scales_f90(toFortran(), vert);
-    syncToFieldset();
     Log::trace() << "Vert decorrelation length scales computed." << std::endl;
   }
 
@@ -340,10 +323,8 @@ namespace soca {
   // -----------------------------------------------------------------------------
 
   void Increment::updateFields(const oops::Variables & vars) {
-    syncFromFieldset();
     vars_ = vars;
     soca_increment_update_fields_f90(toFortran(), vars_);
-    syncToFieldset();
   }
 
   // -----------------------------------------------------------------------------
@@ -359,9 +340,5 @@ namespace soca {
   }
 
   // -----------------------------------------------------------------------------
-
-  void Increment::syncToFieldset() const {
-    soca_increment_to_fieldset_f90(toFortran(), vars_, fieldSet_.get());
-  }
 
 }  // namespace soca

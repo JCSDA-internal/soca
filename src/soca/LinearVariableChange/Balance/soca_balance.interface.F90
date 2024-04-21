@@ -97,6 +97,7 @@ subroutine soca_balance_mult_c(c_key_self, c_key_a, c_key_m)&
 
   !< Computes dxm = K dxa
   call self%mult(dxa, dxm)
+  call dxm%sync_to_atlas()
 end subroutine soca_balance_mult_c
 
 
@@ -121,6 +122,7 @@ subroutine soca_balance_multinv_c(c_key_self, c_key_m, c_key_a)&
 
   !< Computes dxa = K^-1 dxm
   call self%multinv(dxa, dxm)
+  call dxa%sync_to_atlas()
 end subroutine soca_balance_multinv_c
 
 
@@ -145,6 +147,7 @@ subroutine soca_balance_multad_c(c_key_self, c_key_m, c_key_a)&
 
   !< Computes dxa = K^T dxm
   call self%multad(dxa, dxm)
+  call dxa%sync_to_atlas()
 end subroutine soca_balance_multad_c
 
 
@@ -169,6 +172,7 @@ subroutine soca_balance_multinvad_c(c_key_self, c_key_a, c_key_m)&
 
   !< Computes dxm = (K^-1)^T dxa
   call self%multinvad(dxa, dxm)
+  call dxm%sync_to_atlas()
 end subroutine soca_balance_multinvad_c
 
 end module soca_balance_mod_c

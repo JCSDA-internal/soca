@@ -56,7 +56,6 @@ namespace soca {
     dxm.syncFromFieldset();
     dxa.syncFromFieldset();
     soca_bkgerr_mult_f90(keyFtnConfig_, dxa.toFortran(), dxm.toFortran());
-    dxm.syncToFieldset();
   }
   // -----------------------------------------------------------------------------
   void BkgErr::multiplyInverse(const Increment & dxm, Increment & dxa) const {
@@ -68,7 +67,6 @@ namespace soca {
     dxm.syncFromFieldset();
     dxa.syncFromFieldset();
     soca_bkgerr_mult_f90(keyFtnConfig_, dxm.toFortran(), dxa.toFortran());
-    dxa.syncToFieldset();
   }
   // -----------------------------------------------------------------------------
   void BkgErr::multiplyInverseAD(const Increment & dxa, Increment & dxm) const {

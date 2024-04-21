@@ -35,8 +35,7 @@ class Fields : public util::Serializable,
   void toFieldSet(atlas::FieldSet &) const;
   virtual void fromFieldSet(const atlas::FieldSet &) = 0;
 
-  virtual void syncFromFieldset() const = 0;
-  virtual void syncToFieldset() const = 0;
+  virtual void syncFromFieldset() const = 0;   // TODO(Travis) remove this
 
   // math operators
   double norm() const;

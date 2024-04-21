@@ -60,7 +60,6 @@ namespace soca {
     // oops::Log::info()  <<"DBG AFTER "<<dxa << std::endl;
     // dxm.syncFromFieldset();
     soca_balance_mult_f90(keyFtnConfig_, dxa.toFortran(), dxm.toFortran());
-    dxm.syncToFieldset();
   }
   // -----------------------------------------------------------------------------
   void Balance::multiplyInverse(const Increment & dxm, Increment & dxa) const {
@@ -69,7 +68,6 @@ namespace soca {
     dxm.syncFromFieldset();
     // dxa.syncFromFieldset();
     soca_balance_multinv_f90(keyFtnConfig_, dxm.toFortran(), dxa.toFortran());
-    dxa.syncToFieldset();
   }
   // -----------------------------------------------------------------------------
   void Balance::multiplyAD(const Increment & dxm, Increment & dxa) const {
@@ -78,7 +76,6 @@ namespace soca {
     dxm.syncFromFieldset();
     // dxa.syncFromFieldset();
     soca_balance_multad_f90(keyFtnConfig_, dxm.toFortran(), dxa.toFortran());
-    dxa.syncToFieldset();
   }
   // -----------------------------------------------------------------------------
   void Balance::multiplyInverseAD(const Increment & dxa,
@@ -88,7 +85,6 @@ namespace soca {
     // dxm.syncFromFieldset();
     dxa.syncFromFieldset();
     soca_balance_multinvad_f90(keyFtnConfig_, dxa.toFortran(), dxm.toFortran());
-    dxm.syncToFieldset();
   }
   // -----------------------------------------------------------------------------
   void Balance::print(std::ostream & os) const {
