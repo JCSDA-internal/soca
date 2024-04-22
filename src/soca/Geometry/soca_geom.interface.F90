@@ -43,10 +43,11 @@ contains
 
 ! ------------------------------------------------------------------------------
 !> C++ interface for soca_geom_mod::soca_geom::init()
-subroutine soca_geo_setup_c(c_key_self, c_conf, c_comm) bind(c,name='soca_geo_setup_f90')
+subroutine soca_geo_setup_c(c_key_self, c_conf, c_comm, c_gen) bind(c,name='soca_geo_setup_f90')
   integer(c_int),  intent(inout) :: c_key_self
   type(c_ptr),        intent(in) :: c_conf
   type(c_ptr), value, intent(in) :: c_comm
+  logical(c_bool),    intent(in) :: c_gen
 
   type(soca_geom), pointer :: self
 
@@ -54,18 +55,21 @@ subroutine soca_geo_setup_c(c_key_self, c_conf, c_comm) bind(c,name='soca_geo_se
   call soca_geom_registry%add(c_key_self)
   call soca_geom_registry%get(c_key_self,self)
 
-  call self%init(fckit_configuration(c_conf), fckit_mpi_comm(c_comm) )
+  call self%init(fckit_configuration(c_conf), fckit_mpi_comm(c_comm), logical(c_gen) )
 end subroutine soca_geo_setup_c
 
 
 ! --------------------------------------------------------------------------------------------------
 !> C++ interface to get atlas functionspace pointr from  soca_geom_mod::soca_geom,
 ! and then fill in the atlas fieldset with the required geometry fields
-subroutine soca_geo_init_atlas_c(c_key_self, c_functionspace, c_fieldset) &
+subroutine soca_geo_init_atlas_c(c_key_self, c_functionspace, c_fieldset, c_conf, c_gen) &
     bind(c,name='soca_geo_init_atlas_f90')
   integer(c_int), intent(in)     :: c_key_self
   type(c_ptr), intent(in), value :: c_functionspace, c_fieldset
+  type(c_ptr),        intent(in) :: c_conf
+  logical(c_bool),    intent(in) :: c_gen
 
+  logical :: gen
   type(soca_geom),pointer :: self
 
   call soca_geom_registry%get(c_key_self,self)
@@ -73,38 +77,9 @@ subroutine soca_geo_init_atlas_c(c_key_self, c_functionspace, c_fieldset) &
 
   ! fill in the geometry fieldset
   self%fieldset = atlas_fieldset(c_fieldset)
-  call self%init_fieldset()
+  call self%init_fieldset(fckit_configuration(c_conf), logical(c_gen))
 
 end subroutine soca_geo_init_atlas_c
-
-
-! ------------------------------------------------------------------------------
-!> C++ interface for soca_geom_mod::soca_geom::clone()
-subroutine soca_geo_clone_c(c_key_self, c_key_other) bind(c,name='soca_geo_clone_f90')
-  integer(c_int), intent(inout) :: c_key_self
-  integer(c_int), intent(in)    :: c_key_other
-
-  type(soca_geom), pointer :: self, other
-
-  call soca_geom_registry%add(c_key_self)
-  call soca_geom_registry%get(c_key_self, self)
-  call soca_geom_registry%get(c_key_other, other )
-
-  call self%clone(other)
-end subroutine soca_geo_clone_c
-
-
-! ------------------------------------------------------------------------------
-!> C++ interface for soca_geom_mod::soca_geom::gridgen()
-subroutine soca_geo_gridgen_c(c_key_self) bind(c,name='soca_geo_gridgen_f90')
-  integer(c_int), intent(inout) :: c_key_self
-
-  type(soca_geom), pointer :: self
-
-  call soca_geom_registry%get(c_key_self, self)
-
-  call self%gridgen()
-end subroutine soca_geo_gridgen_c
 
 
 ! ------------------------------------------------------------------------------
@@ -278,6 +253,20 @@ subroutine soca_geo_gen_mesh_c(c_key_self, c_nodes, c_lon, c_lat, c_ghosts, c_gl
   if (c_quad_nodes /= idx-1) then
     call abor1_ftn("ERROR: c_quad_nodes != idx-1")
   end if
+end subroutine
+
+! ------------------------------------------------------------------------------
+
+subroutine soca_geo_write_c(c_key_self, c_conf) bind(c, name='soca_geo_write_f90')
+  integer(c_int), intent(in)    :: c_key_self
+  type(c_ptr),    intent(in)    :: c_conf
+
+  type(soca_geom), pointer :: self
+
+  call soca_geom_registry%get(c_key_self, self)
+
+  call self%write(fckit_configuration(c_conf))
+
 end subroutine
 ! ------------------------------------------------------------------------------
 end module soca_geom_mod_c

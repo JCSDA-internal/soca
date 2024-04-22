@@ -6,6 +6,7 @@
 !> Increment fields
 module soca_increment_mod
 
+use atlas_module, only: atlas_field
 use fckit_configuration_module, only: fckit_configuration
 use kinds, only: kind_real
 use oops_variables_mod, only: oops_variables
@@ -310,15 +311,32 @@ end subroutine soca_increment_change_resol
 
 ! ------------------------------------------------------------------------------
 !> compute the horizontal decorelation length scales
-!!
+!! NOTE: this function should be moved somehwere else, it does not belong in Increment!
 !! \relates soca_increment_mod::soca_increment
 subroutine soca_horiz_scales(self, f_conf)
   class(soca_increment),        intent(inout) :: self
   type(fckit_configuration), value, intent(in):: f_conf   !< Configuration
 
-  integer :: i, jz
+  integer :: i, j, jz
   type(fckit_configuration) :: subconf
   real(kind=kind_real) :: r_base, r_mult, r_min_grid, r_min, r_max
+
+  type(atlas_field) :: aField
+  real(kind=kind_real), pointer :: aFieldPtr(:,:)
+  real(kind=kind_real), allocatable :: rossby(:,:)
+
+  ! get a copy of the rossby radius from atlas
+  allocate(rossby(self%geom%isd:self%geom%ied,self%geom%jsd:self%geom%jed))
+  rossby = 0.0
+  aField = self%geom%fieldset%field("rossby_radius")
+  call aField%data(aFieldPtr)
+  do j=self%geom%jsc,self%geom%jec
+    do i=self%geom%isc,self%geom%iec
+      rossby(i,j) = aFieldPtr(1, self%geom%atlas_ij2idx(i,j))
+    end do
+  end do
+  call aField%final()
+
 
   ! NOTE, this is duplicated code also present in soca_covariance_mod and possibly elsewhere.
   ! This does not belong in soca_increment_mod and should be moved out
@@ -337,7 +355,7 @@ subroutine soca_horiz_scales(self, f_conf)
     if (.not. subconf%get("min value", r_min)) r_min = 0.0
     if (.not. subconf%get("max value", r_max)) r_max = huge(r_max)
 
-    self%fields(i)%val(:,:,1) = r_base + r_mult*self%geom%rossby_radius(:,:)
+    self%fields(i)%val(:,:,1) = r_base + r_mult*rossby(:,:)
     if (r_min_grid .gt. 0.0) then
       self%fields(i)%val(:,:,1) = max(self%fields(i)%val(:,:,1), sqrt(self%geom%cell_area)*r_min_grid)
     end if

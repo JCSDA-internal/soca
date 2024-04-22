@@ -1,10 +1,9 @@
 geometry:
   geom_grid_file: data_output/soca_gridspec.72x35x25.nc
   save_local_domain: true
-  full_init: true
   mom6_input_nml: data_static/72x35x25/input.nml
   fields metadata: data_static/fields_metadata.yml
-  rossby file: data_static/rossrad.dat
+  rossby file: data_static/rossrad.nc
 
   # save the atlas mesh for viewing in gmsh
   gmsh save: true

@@ -31,22 +31,24 @@ namespace soca {
   extern "C" {
     void soca_geo_setup_f90(F90geom &,
                             const eckit::Configuration * const &,
-                            const eckit::mpi::Comm *);
+                            const eckit::mpi::Comm *,
+                            const bool & gen);
 
     void soca_geo_init_atlas_f90(const F90geom &,
                       atlas::functionspace::FunctionSpaceImpl *,
-                      atlas::field::FieldSetImpl *);
+                      atlas::field::FieldSetImpl *,
+                      const eckit::Configuration * const &,
+                      const bool & gen);
     void soca_geo_get_mesh_size_f90(const F90geom &, int &, int&);
     void soca_geo_gen_mesh_f90(
       const F90geom &,
       const int &, double[], double[], int[], int[], int[], int[],
       const int &, int[]);
-    void soca_geo_clone_f90(F90geom &, const F90geom &);
-    void soca_geo_gridgen_f90(const F90geom &);
     void soca_geo_delete_f90(F90geom &);
     void soca_geo_get_num_levels_f90(const F90geom &, const oops::Variables &,
                                     const size_t &, size_t[]);
     void soca_geo_iterator_dimension_f90(const F90geom &, int &);
+    void soca_geo_write_f90(const F90geom &, const eckit::Configuration * const &);
   }
 }  // namespace soca
 #endif  // SOCA_GEOMETRY_GEOMETRYFORTRAN_H_

@@ -1025,8 +1025,6 @@ subroutine soca_fields_write_file(self, filename)
     call write_data( filename, self%fields(ii)%name, self%fields(ii)%val(:,:,:), self%geom%Domain%mpp_domain)
   end do
 
-  ! some other derived fields that should be written out
-  call write_data( filename, "rossby_radius", self%geom%rossby_radius, self%geom%Domain%mpp_domain)
 
   call fms_io_exit()
 end subroutine soca_fields_write_file

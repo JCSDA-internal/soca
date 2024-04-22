@@ -53,7 +53,6 @@ namespace soca {
       static const std::string classname() {return "soca::Geometry";}
 
       explicit Geometry(const eckit::Configuration &, const eckit::mpi::Comm &, const bool = false);
-      Geometry(const Geometry &);
       ~Geometry();
 
       bool levelsAreTopDown() const {return true;}
@@ -76,6 +75,7 @@ namespace soca {
       void latlon(std::vector<double> &, std::vector<double> &, const bool) const;
 
    private:
+      Geometry(const Geometry &);
       void mask(std::vector<double> &, const bool, const char) const;
       Geometry & operator=(const Geometry &);
       void print(std::ostream &) const;
