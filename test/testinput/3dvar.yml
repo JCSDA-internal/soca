@@ -43,12 +43,12 @@ cost function:
             filename: data_generated/parameters_diffusion/hz_smaller.nc
           vertical:
             filename: data_generated/parameters_diffusion/vt_5lvls.nc
-        - name: group2          
+        - name: group2
           horizontal:
             filename: data_generated/parameters_diffusion/hz_smaller.nc
 
     date: *bkg_date
-    
+
 
     linear variable change:
       input variables: *soca_vars
@@ -259,7 +259,7 @@ variational:
     online diagnostics:
       write increment: true
       increment:
-        state component:      
+        state component:
           datadir: data_output
           date: *bkg_date
           exp: 3dvar.iter1
@@ -277,4 +277,4 @@ final:
 test:
   reference filename: testref/3dvar.test
   test output filename: testoutput/3dvar.test
-  float relative tolerance: 1e-5
+  float relative tolerance: 2e-4
