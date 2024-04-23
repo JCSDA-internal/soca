@@ -186,7 +186,7 @@ namespace soca {
 
   void State::accumul(const double & zz, const State & xx) {
     atlas::FieldSet fs1, fs2; xx.toFieldSet(fs1);
-    fs2 = util::copyFieldSet(fs1);
+    util::copyFieldSet(fs1, fs2);
     util::multiplyFieldSet(fs2, zz);
     util::addFieldSets(fieldSet_, fs2);
   }

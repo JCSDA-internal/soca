@@ -103,7 +103,7 @@ namespace soca {
     State x2_at_geomres(geom_, x2);
     atlas::FieldSet fs1, fs2;
     x1_at_geomres.toFieldSet(fs1); x2_at_geomres.toFieldSet(fs2);
-    fieldSet_ = util::copyFieldSet(fs1);
+    util::copyFieldSet(fs1, fieldSet_);
     util::subtractFieldSets(fieldSet_, fs2);
   }
 
@@ -135,7 +135,7 @@ namespace soca {
       const auto addView = atlas::array::make_view<double, 2>(addField);
       for (int jnode = 0; jnode < field.shape(0); ++jnode) {
         for (int jlevel = 0; jlevel < field.shape(1); ++jlevel) {
-        view(jnode, jlevel) += addView(jnode, jlevel);
+          view(jnode, jlevel) += addView(jnode, jlevel);
         }
       }
 
@@ -193,7 +193,7 @@ namespace soca {
   void Increment::axpy(const double & zz, const Increment & dx, const bool check) {
     ASSERT(!check || validTime() == dx.validTime());
     atlas::FieldSet fs1;
-    fs1 = util::copyFieldSet(dx.fieldSet_);
+    util::copyFieldSet(dx.fieldSet_, fs1);
     util::multiplyFieldSet(fs1, zz);
     util::addFieldSets(fieldSet_, fs1);
   }
@@ -202,7 +202,7 @@ namespace soca {
 
   void Increment::accumul(const double & zz, const State & xx) {
     atlas::FieldSet fs1, fs2; xx.toFieldSet(fs2);
-    fs1 = util::copyFieldSet(fs2);
+    util::copyFieldSet(fs2, fs1);
     util::multiplyFieldSet(fs1, zz);
     util::addFieldSets(fieldSet_, fs1);
   }
