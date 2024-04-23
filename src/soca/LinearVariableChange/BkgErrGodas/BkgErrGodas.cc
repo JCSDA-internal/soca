@@ -40,7 +40,6 @@ namespace soca {
     State bkg_at_geomres(geom, bkg);
 
     // Initialize the parametric background error variance
-    bkg_at_geomres.syncFromFieldset();
     soca_bkgerrgodas_setup_f90(keyFtnConfig_,
                                &configc,
                                bkg_at_geomres.toFortran(),
@@ -55,8 +54,6 @@ namespace soca {
   void BkgErrGodas::multiply(const Increment & dxa, Increment & dxm) const {
     // dxm = K dxa
     oops::Log::trace() << "soca::BkgErrGodas::multiply " << std::endl;
-    dxa.syncFromFieldset();
-    dxm.syncFromFieldset();
     soca_bkgerrgodas_mult_f90(keyFtnConfig_, dxa.toFortran(), dxm.toFortran());
   }
   // -----------------------------------------------------------------------------
@@ -68,8 +65,6 @@ namespace soca {
   void BkgErrGodas::multiplyAD(const Increment & dxm, Increment & dxa) const {
     // dxa = K^T dxm
     oops::Log::trace() << "soca::BkgErrGodas::multiplyAD " << std::endl;
-    dxm.syncFromFieldset();
-    dxa.syncFromFieldset();
     soca_bkgerrgodas_mult_f90(keyFtnConfig_, dxm.toFortran(), dxa.toFortran());
   }
   // -----------------------------------------------------------------------------

@@ -193,15 +193,9 @@ contains
   procedure :: update_fields => soca_fields_update_fields
   procedure :: update_metadata => soca_fields_update_metadata
 
-  !> \name getter/setter needed for interpolation
+  !> \name Temporary sync between C++ atlas and our fortran array
   !! \{
-
-  !> copybrief soca_fields_to_fieldset \see soca_fields_to_fieldset
-
-  procedure :: from_fieldset => soca_fields_from_fieldset
-
   procedure :: sync_to_atlas => soca_fields_sync_to_atlas
-
   procedure :: sync_from_atlas => soca_fields_sync_from_atlas
   !> \}
 
@@ -1196,6 +1190,8 @@ subroutine soca_fields_update_fields(self, vars)
   ! move ownership of fields from tmp to self
   call move_alloc(tmp_fields%fields, self%fields)
 
+  call self%update_metadata()
+
 end subroutine soca_fields_update_fields
 
 ! ------------------------------------------------------------------------------
@@ -1281,14 +1277,18 @@ function soca_genfilename(f_conf,length,vdate,date_cols,domain_type)
 
 end function soca_genfilename
 
+! ------------------------------------------------------------------------------
+! Copy the data from the internal "fields" to the atlas fieldset.
+! We also need to make sure the metadata on the fieldset is set correctly
 subroutine soca_fields_sync_to_atlas(self)
-  class(soca_fields),   intent(in)    :: self
+  class(soca_fields),   intent(inout)    :: self
 
   type(atlas_field) :: afield
   integer :: v, n, i, j
   type(atlas_metadata) :: meta
   real(kind=kind_real), pointer :: real_ptr(:,:)
 
+  ! copy from internal fortran fields to atlas fieldset
   do v=1,size(self%fields)
     ! get/create field
     if (self%afieldset%has_field( self%fields(v)%name)) then
@@ -1297,15 +1297,6 @@ subroutine soca_fields_sync_to_atlas(self)
       afield = self%geom%functionspace%create_field( &
         name= self%fields(v)%name, kind=atlas_real(kind_real), levels= self%fields(v)%nz)
       call self%afieldset%add(afield)
-    end if
-
-    ! set the metadata
-    meta = afield%metadata()
-    call meta%set('masked',  self%fields(v)%metadata%masked)
-    call meta%set('interp_type', 'default')
-    if ( self%fields(v)%metadata%masked) then
-      call meta%set('interp_source_point_mask', 'interp_mask')
-      call meta%set('mask', "mask_"// self%fields(v)%metadata%grid)
     end if
 
     ! create and fill field
@@ -1320,62 +1311,48 @@ subroutine soca_fields_sync_to_atlas(self)
 
     call afield%final()
   end do
-end subroutine
 
-subroutine soca_fields_sync_from_atlas(self, vars, afieldset)
-  class(soca_fields),   intent(in)    :: self
-  type(oops_variables), intent(in)    :: vars
-  type(atlas_fieldset), intent(inout) :: afieldset
+  ! update that atlas fieldset metadata, if needed
+  call self%update_metadata()
 end subroutine
 
 ! ------------------------------------------------------------------------------
-!> Set the our values from an atlas fieldset
-subroutine soca_fields_from_fieldset(self, vars, afieldset)
-  class(soca_fields), target, intent(inout) :: self
-  type(oops_variables),       intent(in)    :: vars
-  type(atlas_fieldset),       intent(in)    :: afieldset
 
-  integer :: jvar, i, j, n, f
-  real(kind=kind_real), pointer :: real_ptr(:,:)
-  logical :: var_found
-  character(len=1024) :: fieldname
-  type(soca_field), pointer :: field
+subroutine soca_fields_sync_from_atlas(self)
+  class(soca_fields),   intent(inout)    :: self
+
+  integer :: v, i, j
   type(atlas_field) :: afield
+  real(kind=kind_real), pointer :: real_ptr(:,:)
+  type(soca_field), pointer :: field
 
-  ! Initialization
-  call self%zeros()
+  ! TODO, remove fields that no longer exist?
 
-  do jvar = 1,vars%nvars()
-    var_found = .false.
-    do f=1,size(self%fields)
-      field => self%fields(f)
-      if (trim(vars%variable(jvar))==trim(field%name)) then
-        ! Get field
-        afield = afieldset%field(vars%variable(jvar))
 
-        ! Copy data
-        call afield%data(real_ptr)
-        do j=self%geom%jsc,self%geom%jec
-          do i=self%geom%isc,self%geom%iec
-            field%val(i,j,:) = real_ptr(:, self%geom%atlas_ij2idx(i,j))
-          end do
-        end do
+  do v = 1, self%afieldset%size()
+    afield = self%afieldset%field(v)
 
-        call field%update_halo(self%geom)
+    if (.not. self%has(afield%name())) then
+      cycle
+      ! THIS IS A BUG, why are there fields in the internal field that are not part of the atlas fieldset????
+      ! call abor1_ftn('fields_sync_from_atlas: variable '//trim(afield%name())//' not found in fields')
+    endif
 
-        call afield%final()
-
-        ! Set flag
-        var_found = .true.
-        exit
-      end if
+    call self%get(afield%name(), field)
+    call afield%data(real_ptr)
+    do j = self%geom%jsc, self%geom%jec
+      do i = self%geom%isc, self%geom%iec
+        field%val(i,j,:) = real_ptr(:, self%geom%atlas_ij2idx(i,j))
+      end do
     end do
-    if (.not.var_found) call abor1_ftn('variable '//trim(vars%variable(jvar))//' not found in increment')
+    call field%update_halo(self%geom)
+  call afield%final()
   end do
 
-  call self%update_metadata()
 
+  call self%update_metadata()
 end subroutine
+
 
 ! ------------------------------------------------------------------------------
 ! update the metadata in the atlas fieldset based on fields metadata

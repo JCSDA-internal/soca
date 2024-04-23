@@ -43,6 +43,7 @@ subroutine soca_model2geovals_linear_changevar_f90(c_key_geom, c_key_dxin, c_key
   call soca_geom_registry%get(c_key_geom, geom)
   call soca_increment_registry%get(c_key_dxin, dxin)
   call soca_increment_registry%get(c_key_dxout, dxout)
+  call dxin%sync_from_atlas()
 
   ! identity operators
   do i=1, size(dxout%fields)
@@ -82,6 +83,7 @@ subroutine soca_model2geovals_linear_changevarAD_f90(c_key_geom, c_key_dxin, c_k
   call soca_geom_registry%get(c_key_geom, geom)
   call soca_increment_registry%get(c_key_dxin, dxin)
   call soca_increment_registry%get(c_key_dxout, dxout)
+  call dxin%sync_from_atlas()
 
   ! identity operators
   do i=1, size(dxin%fields)

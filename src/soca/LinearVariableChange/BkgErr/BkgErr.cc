@@ -40,7 +40,6 @@ namespace soca {
     State bkg_at_geomres(geom, bkg);
 
     // Read/setup the diagonal of B
-    bkg_at_geomres.syncFromFieldset();
     soca_bkgerr_setup_f90(keyFtnConfig_,
                           &configc,
                           bkg_at_geomres.toFortran(),
@@ -53,8 +52,6 @@ namespace soca {
   // -----------------------------------------------------------------------------
   void BkgErr::multiply(const Increment & dxa, Increment & dxm) const {
     // dxm = K dxa
-    dxm.syncFromFieldset();
-    dxa.syncFromFieldset();
     soca_bkgerr_mult_f90(keyFtnConfig_, dxa.toFortran(), dxm.toFortran());
   }
   // -----------------------------------------------------------------------------
@@ -64,8 +61,6 @@ namespace soca {
   // -----------------------------------------------------------------------------
   void BkgErr::multiplyAD(const Increment & dxm, Increment & dxa) const {
     // dxa = K^T dxm
-    dxm.syncFromFieldset();
-    dxa.syncFromFieldset();
     soca_bkgerr_mult_f90(keyFtnConfig_, dxm.toFortran(), dxa.toFortran());
   }
   // -----------------------------------------------------------------------------

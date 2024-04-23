@@ -48,6 +48,7 @@ subroutine soca_model2geovals_changevar_f90(c_key_geom, c_key_xin, c_key_xout) &
   call soca_geom_registry%get(c_key_geom, geom)
   call soca_state_registry%get(c_key_xin, xin)
   call soca_state_registry%get(c_key_xout, xout)
+  call xin%sync_from_atlas()
 !
   do i=1, size(xout%fields)
 

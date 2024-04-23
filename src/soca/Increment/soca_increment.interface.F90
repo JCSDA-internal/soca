@@ -111,6 +111,7 @@ subroutine soca_increment_copy_c(c_key_self,c_key_rhs) bind(c,name='soca_increme
 
   call soca_increment_registry%get(c_key_self,self)
   call soca_increment_registry%get(c_key_rhs,rhs)
+  call rhs%sync_from_atlas()
 
   call self%copy(rhs)
   call self%sync_to_atlas()
@@ -128,6 +129,7 @@ subroutine soca_increment_change_resol_c(c_key_fld,c_key_rhs) bind(c,name='soca_
 
   call soca_increment_registry%get(c_key_fld,fld)
   call soca_increment_registry%get(c_key_rhs,rhs)
+  call rhs%sync_from_atlas()
 
   ! TODO (Guillaume or Travis) implement == in geometry or something to that effect.
   if ( size(fld%geom%lon,1)==size(rhs%geom%lon,1) .and. &
@@ -140,27 +142,6 @@ subroutine soca_increment_change_resol_c(c_key_fld,c_key_rhs) bind(c,name='soca_
   call fld%sync_to_atlas()
 
 end subroutine soca_increment_change_resol_c
-
-
-! ------------------------------------------------------------------------------
-!> C++ interface for soca_increment_mod::soca_increment::from_fieldset()
-subroutine soca_increment_from_fieldset_c(c_key_self, c_vars, c_afieldset) &
-    bind (c,name='soca_increment_from_fieldset_f90')
-  integer(c_int),         intent(in) :: c_key_self
-  type(c_ptr),     value, intent(in) :: c_vars
-  type(c_ptr),     value, intent(in) :: c_afieldset
-
-  type(soca_increment), pointer :: self
-  type(oops_variables)          :: vars
-  type(atlas_fieldset)          :: afieldset
-
-  call soca_increment_registry%get(c_key_self, self)
-  vars = oops_variables(c_vars)
-  afieldset = atlas_fieldset(c_afieldset)
-
-  call self%from_fieldset(vars, afieldset)
-
-end subroutine
 
 
 ! ------------------------------------------------------------------------------
@@ -195,6 +176,7 @@ subroutine soca_increment_write_file_c(c_key_fld, c_conf, c_dt) bind(c,name='soc
 
   call soca_increment_registry%get(c_key_fld,fld)
   call c_f_datetime(c_dt, fdate)
+  call fld%sync_from_atlas()
   call fld%write_rst(fckit_configuration(c_conf), fdate)
 
 end subroutine soca_increment_write_file_c

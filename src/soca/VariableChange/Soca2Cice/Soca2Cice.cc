@@ -36,11 +36,8 @@ Soca2Cice::~Soca2Cice() {}
 void Soca2Cice::changeVar(const State & xin, State & xout) const
 {
   xout = xin;
-  xin.syncFromFieldset();
-  xout.syncFromFieldset();
   soca_soca2cice_changevar_f90(keySoca2Cice_, geom_.toFortran(),
                                xin.toFortran(), xout.toFortran());
-  xout.syncToFieldset();
 }
 
 // -----------------------------------------------------------------------------

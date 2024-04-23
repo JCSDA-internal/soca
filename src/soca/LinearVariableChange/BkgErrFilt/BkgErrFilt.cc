@@ -39,7 +39,6 @@ namespace soca {
     State bkg_at_geomres(geom, bkg);
 
     // Setup background error filter
-    bkg_at_geomres.syncFromFieldset();
     soca_bkgerrfilt_setup_f90(keyFtnConfig_,
                               &configc,
                               bkg_at_geomres.toFortran(),
@@ -52,8 +51,6 @@ namespace soca {
   // -----------------------------------------------------------------------------
   void BkgErrFilt::multiply(const Increment & dxa, Increment & dxm) const {
     // dxm = K dxa
-    dxa.syncFromFieldset();
-    dxm.syncFromFieldset();
     soca_bkgerrfilt_mult_f90(keyFtnConfig_, dxa.toFortran(), dxm.toFortran());
   }
   // -----------------------------------------------------------------------------
@@ -64,8 +61,6 @@ namespace soca {
   // -----------------------------------------------------------------------------
   void BkgErrFilt::multiplyAD(const Increment & dxm, Increment & dxa) const {
     // dxa = K^T dxm
-    dxm.syncFromFieldset();
-    dxa.syncFromFieldset();
     soca_bkgerrfilt_mult_f90(keyFtnConfig_, dxm.toFortran(), dxa.toFortran());
   }
   // -----------------------------------------------------------------------------

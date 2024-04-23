@@ -34,10 +34,6 @@ Model2GeoVaLs::~Model2GeoVaLs() {}
 // -----------------------------------------------------------------------------
 
 void Model2GeoVaLs::changeVar(const State & xin, State & xout) const {
-  // xin.syncFromFieldset();
-  // xout.syncFromFieldset();
-  xin.syncFromFieldset();
-  xout.syncFromFieldset();
   soca_model2geovals_changevar_f90(geom_.toFortran(),
                                    xin.toFortran(), xout.toFortran());
 }

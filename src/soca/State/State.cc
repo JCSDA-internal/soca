@@ -66,7 +66,6 @@ namespace soca {
   State::State(const Geometry & geom, const State & other)
     : Fields(geom, other.vars_, other.time_)
   {
-    other.syncFromFieldset();
     soca_state_create_f90(keyFlds_, geom_.toFortran(), vars_, fieldSet_.get());
     soca_state_change_resol_f90(toFortran(), other.keyFlds_);
     Log::trace() << "State::State created by interpolation." << std::endl;
@@ -93,7 +92,6 @@ namespace soca {
   State::State(const State & other)
     : Fields(other.geom_, other.vars_, other.time_)
   {
-    other.syncFromFieldset();
     soca_state_create_f90(keyFlds_, geom_.toFortran(), vars_, fieldSet_.get());
     soca_state_copy_f90(toFortran(), other.toFortran());
     Log::trace() << "State::State copied." << std::endl;
@@ -110,8 +108,6 @@ namespace soca {
   // -----------------------------------------------------------------------------
   State & State::operator=(const State & rhs) {
     time_ = rhs.time_;
-    rhs.syncFromFieldset();
-    syncFromFieldset();
     soca_state_copy_f90(toFortran(), rhs.toFortran());
     return *this;
   }
@@ -173,7 +169,6 @@ namespace soca {
 
   void State::write(const eckit::Configuration & files) const {
     const util::DateTime * dtp = &time_;
-    syncFromFieldset();
     soca_state_write_file_f90(toFortran(), &files, &dtp);
   }
 
@@ -194,7 +189,6 @@ namespace soca {
   // -----------------------------------------------------------------------------
 
   void State::updateFields(const oops::Variables & vars) {
-    syncFromFieldset();
     vars_ = vars;
     soca_state_update_fields_f90(toFortran(), vars_);
   }
@@ -205,7 +199,6 @@ namespace soca {
 
   void State::logtrans(const oops::Variables & trvar) {
     Log::trace() << "State::State apply logarithmic transformation." << std::endl;
-    syncFromFieldset();
     soca_state_logtrans_f90(toFortran(), trvar);
   }
 
@@ -213,19 +206,7 @@ namespace soca {
 
   void State::expontrans(const oops::Variables & trvar) {
     Log::trace() << "State::State apply exponential transformation." << std::endl;
-    syncFromFieldset();
     soca_state_expontrans_f90(toFortran(), trvar);
-  }
-
-  // -----------------------------------------------------------------------------
-
-  void State::fromFieldSet(const atlas::FieldSet &fset) {
-    util::copyFieldSet(fset, fieldSet_);
-    soca_state_from_fieldset_f90(toFortran(), vars_, fieldSet_.get());
-  }
-
-  void State::syncFromFieldset() const {
-    soca_state_from_fieldset_f90(toFortran(), vars_, fieldSet_.get());
   }
 
   // -----------------------------------------------------------------------------

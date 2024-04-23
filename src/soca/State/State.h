@@ -87,11 +87,6 @@ namespace soca {
       void zero();
       void accumul(const double &, const State &);
 
-      /// ATLAS Interfaces
-      void fromFieldSet(const atlas::FieldSet &);
-      void syncFromFieldset() const;
-
-
    private:
       F90flds keyFlds_;
   };

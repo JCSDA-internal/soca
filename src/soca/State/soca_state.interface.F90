@@ -87,6 +87,7 @@ subroutine soca_state_copy_c(c_key_self,c_key_rhs) bind(c,name='soca_state_copy_
 
     call soca_state_registry%get(c_key_self,self)
     call soca_state_registry%get(c_key_rhs,rhs)
+    call rhs%sync_from_atlas()
 
     call self%copy(rhs)
     call self%sync_to_atlas()
@@ -125,6 +126,7 @@ subroutine soca_state_write_file_c(c_key_fld, c_conf, c_dt) bind(c,name='soca_st
     type(datetime)            :: fdate
 
     call soca_state_registry%get(c_key_fld,fld)
+    call fld%sync_from_atlas()
     call c_f_datetime(c_dt, fdate)
     call fld%write_rst(fckit_configuration(c_conf), fdate)
 
@@ -211,6 +213,7 @@ subroutine soca_state_change_resol_c(c_key_fld,c_key_rhs) bind(c,name='soca_stat
 
     call soca_state_registry%get(c_key_fld,fld)
     call soca_state_registry%get(c_key_rhs,rhs)
+    call rhs%sync_from_atlas()
 
     ! TODO (Guillaume or Travis) implement == in geometry or something to that effect.
     if (size(fld%geom%lon,1)==size(rhs%geom%lon,1) .and. size(fld%geom%lat,2)==size(rhs%geom%lat,2) .and. &
@@ -236,6 +239,7 @@ subroutine soca_state_logtrans_c(c_key_self, c_trvars) bind(c,name='soca_state_l
   trvars = oops_variables(c_trvars)
 
   call soca_state_registry%get(c_key_self,self)
+  call self%sync_from_atlas()
   call self%logexpon(transfunc="log", trvars=trvars)
   call self%sync_to_atlas()
 
@@ -293,6 +297,7 @@ type(oops_variables)      :: f_vars
 ! LinkedList
 ! ----------
 call soca_state_registry%get(c_key_self, f_self)
+call f_self%sync_from_atlas()
 
 ! Fortrain APIs
 ! -------------
@@ -304,26 +309,5 @@ call f_self%update_fields(f_vars)
 call f_self%sync_to_atlas()
 
 end subroutine soca_state_update_fields_c
-
-
-! ------------------------------------------------------------------------------
-!> C++ interface for soca_increment_mod::soca_increment::from_fieldset()
-subroutine soca_state_from_fieldset_c(c_key_self, c_vars, c_afieldset) &
-  bind (c,name='soca_state_from_fieldset_f90')
-integer(c_int),         intent(in) :: c_key_self
-type(c_ptr),     value, intent(in) :: c_vars
-type(c_ptr),     value, intent(in) :: c_afieldset
-
-type(soca_state), pointer :: self
-type(oops_variables)          :: vars
-type(atlas_fieldset)          :: afieldset
-
-call soca_state_registry%get(c_key_self, self)
-vars = oops_variables(c_vars)
-afieldset = atlas_fieldset(c_afieldset)
-
-call self%from_fieldset(vars, afieldset)
-
-end subroutine
 
 end module soca_state_mod_c

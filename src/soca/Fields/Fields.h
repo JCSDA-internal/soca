@@ -33,9 +33,7 @@ class Fields : public util::Serializable,
                   const util::DateTime &);
 
   void toFieldSet(atlas::FieldSet &) const;
-  virtual void fromFieldSet(const atlas::FieldSet &) = 0;
-
-  virtual void syncFromFieldset() const = 0;   // TODO(Travis) remove this
+  void fromFieldSet(const atlas::FieldSet &);
 
   // math operators
   double norm() const;

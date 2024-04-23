@@ -116,8 +116,11 @@ subroutine soca_soca2cice_changevar_f90(c_key_self, c_key_geom, c_key_xin, c_key
   call soca_geom_registry%get(c_key_geom, geom)
   call soca_state_registry%get(c_key_xin, xin)
   call soca_state_registry%get(c_key_xout, xout)
+  call xin%sync_from_atlas()
 
   call self%changevar(geom, xin, xout)
+
+  call xout%sync_to_atlas()
 
 end subroutine
 

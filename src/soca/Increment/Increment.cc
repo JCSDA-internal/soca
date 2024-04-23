@@ -53,7 +53,6 @@ namespace soca {
   Increment::Increment(const Geometry & geom, const Increment & other)
     : Fields(geom, other.vars_, other.time_)
   {
-    other.syncFromFieldset();
     soca_increment_create_f90(keyFlds_, geom_.toFortran(), vars_, fieldSet_.get());
     soca_increment_change_resol_f90(toFortran(), other.keyFlds_);
     Log::trace() << "Increment constructed from other." << std::endl;
@@ -64,7 +63,6 @@ namespace soca {
   Increment::Increment(const Increment & other, const bool copy)
     : Fields(other.geom_, other.vars_, other.time_)
   {
-    other.syncFromFieldset();
     soca_increment_create_f90(keyFlds_, geom_.toFortran(), vars_, fieldSet_.get());
     if (copy) {
       soca_increment_copy_f90(toFortran(), other.toFortran());
@@ -79,7 +77,6 @@ namespace soca {
   Increment::Increment(const Increment & other)
     : Fields(other.geom_, other.vars_, other.time_)
   {
-    other.syncFromFieldset();
     soca_increment_create_f90(keyFlds_, geom_.toFortran(), vars_, fieldSet_.get());
     soca_increment_copy_f90(toFortran(), other.toFortran());
     Log::trace() << "Increment copy-created." << std::endl;
@@ -110,10 +107,8 @@ namespace soca {
   // -----------------------------------------------------------------------------
 
   Increment & Increment::operator=(const Increment & rhs) {
-    syncFromFieldset();
     time_ = rhs.time_;
     vars_ = rhs.vars_;
-    rhs.syncFromFieldset();
     soca_increment_copy_f90(toFortran(), rhs.toFortran());
     return *this;
   }
@@ -296,7 +291,6 @@ namespace soca {
 
   void Increment::write(const eckit::Configuration & files) const {
     const util::DateTime * dtp = &time_;
-    syncFromFieldset();
     soca_increment_write_file_f90(toFortran(), &files, &dtp);
   }
 
@@ -325,18 +319,6 @@ namespace soca {
   void Increment::updateFields(const oops::Variables & vars) {
     vars_ = vars;
     soca_increment_update_fields_f90(toFortran(), vars_);
-  }
-
-  // -----------------------------------------------------------------------------
-
-  void Increment::fromFieldSet(const atlas::FieldSet &fset) {
-    util::copyFieldSet(fset, fieldSet_);
-    soca_increment_from_fieldset_f90(toFortran(), vars_, fieldSet_.get());
-  }
-
-  // -----------------------------------------------------------------------------
-  void Increment::syncFromFieldset() const {
-    soca_increment_from_fieldset_f90(toFortran(), vars_, fieldSet_.get());
   }
 
   // -----------------------------------------------------------------------------

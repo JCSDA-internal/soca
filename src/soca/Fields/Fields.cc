@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <iomanip>
 #include <limits>
+#include <map>
 #include <memory>
 #include <string>
 
@@ -168,6 +169,25 @@ void Fields::print(std::ostream & os) const {
 void Fields::toFieldSet(atlas::FieldSet & fset) const {
   // copy seems like a waste, it would be nice if we could get away with "share"
   util::copyFieldSet(fieldSet_, fset);
+}
+
+// -----------------------------------------------------------------------------
+
+void Fields::fromFieldSet(const atlas::FieldSet &fset) {
+  // keep a copy of the metadata to copy back
+  std::map<std::string, atlas::util::Metadata> metadata;
+  for (const auto & f : fieldSet_) metadata[f.name()] = f.metadata();
+
+  util::copyFieldSet(fset, fieldSet_);
+
+  for (auto & f : fieldSet_) {
+    if (metadata[f.name()].has("name")) {  // that's weird
+      // THERE IS A BUG IN SOCA, i'm getting fieldsets with one or two fields
+      // (hocn) that have have no metadata even though the rest of the field
+      // do
+      f.metadata() = metadata[f.name()];
+    }
+  }
 }
 
 // -----------------------------------------------------------------------------
