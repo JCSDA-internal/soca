@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2019-2021 UCAR
+ * (C) Copyright 2019-2024 UCAR
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -56,15 +56,8 @@ eckit::geometry::Point3 GeometryIterator::operator*() const {
 
 // -----------------------------------------------------------------------------
 
-double GeometryIterator::getArea() const {
-  const auto & view = atlas::array::make_view<double, 2>(geom_.fields().field("area"));
-  return view(iIndex_, 0);
-}
-
-// -----------------------------------------------------------------------------
-
-double GeometryIterator::getRossbyRadius() const {
-  const auto & view = atlas::array::make_view<double, 2>(geom_.fields().field("rossby_radius"));
+double GeometryIterator::getFieldValue(const std::string &fieldName) const {
+  const auto & view = atlas::array::make_view<double, 2>(geom_.fields().field(fieldName));
   return view(iIndex_, 0);
 }
 

@@ -47,9 +47,7 @@ class GeometryIterator:   public util::Printable,
   eckit::geometry::Point3 operator*() const;
   GeometryIterator& operator++();
 
-  // TODO(Travis) generalize this to get any geom field
-  double getArea() const;
-  double getRossbyRadius() const;
+  double getFieldValue(const std::string &) const;
 
   const size_t i() const {return iIndex_;}
   const size_t k() const {return kIndex_;}
