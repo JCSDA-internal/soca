@@ -185,23 +185,6 @@ subroutine soca_state_tohgrid_c(c_key_self) bind(c,name='soca_state_tohgrid_f90'
 
 end subroutine soca_state_tohgrid_c
 
-! ------------------------------------------------------------------------------
-!> C++ interface to get soca_state_mod::soca_state dimensions sizes
-subroutine soca_state_sizes_c(c_key_fld, nx, ny, nzo, nf) bind(c,name='soca_state_sizes_f90')
-    integer(c_int),         intent(in) :: c_key_fld
-    integer(kind=c_int), intent(inout) :: nx, ny, nzo, nf
-
-    type(soca_state), pointer :: fld
-
-    call soca_state_registry%get(c_key_fld,fld)
-
-    nx = size(fld%geom%lon,1)
-    ny = size(fld%geom%lon,2)
-    nzo = fld%geom%nzo
-    nf = size(fld%fields)
-
-end subroutine soca_state_sizes_c
-
 
 ! ------------------------------------------------------------------------------
 !> C++ interface for soca_state_mod::soca_state::convert()

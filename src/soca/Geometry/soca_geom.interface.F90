@@ -96,18 +96,6 @@ end subroutine soca_geo_delete_c
 
 
 ! ------------------------------------------------------------------------------
-!> C++ interface to get dimension of the GeometryIterator
-subroutine soca_geo_iterator_dimension(c_key_self, itd) bind(c, name='soca_geo_iterator_dimension_f90')
-  integer(c_int), intent( in) :: c_key_self
-  integer(c_int), intent(out) :: itd ! iterator dimension
-
-  type(soca_geom), pointer :: self
-  call soca_geom_registry%get(c_key_self, self)
-
-  itd = self%iterator_dimension
-end subroutine soca_geo_iterator_dimension
-
-! ------------------------------------------------------------------------------
 !> C++ interface to get number of levels for soca_geom
 subroutine soca_geo_get_num_levels_c(c_key_self, c_vars, c_levels_size, c_levels) &
            bind(c, name='soca_geo_get_num_levels_f90')

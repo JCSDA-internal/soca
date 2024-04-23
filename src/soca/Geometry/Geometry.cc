@@ -24,7 +24,7 @@ namespace soca {
   // -----------------------------------------------------------------------------
   Geometry::Geometry(const eckit::Configuration & conf,
                      const eckit::mpi::Comm & comm, const bool gen)
-    : comm_(comm),
+    : comm_(comm), iteratorDimensions_(conf.getInt("iterator dimension", 2)),
       fmsinput_(comm, conf) {
 
     fmsinput_.updateNameList();
@@ -127,7 +127,8 @@ namespace soca {
 
   // -----------------------------------------------------------------------------
   Geometry::Geometry(const Geometry & other)
-    : comm_(other.comm_), fmsinput_(other.fmsinput_) {
+    : comm_(other.comm_), fmsinput_(other.fmsinput_),
+      iteratorDimensions_(other.iteratorDimensions_) {
     throw eckit::Exception("Geometry copy constructor is not implemented");
   }
 
@@ -155,15 +156,6 @@ namespace soca {
     return GeometryIterator(*this, functionSpace_.size(), -1);
   }
 
-  // -----------------------------------------------------------------------------
-  int Geometry::IteratorDimension() const {
-    // return dimesnion of the iterator
-    // if 2, iterator is over vertical columns
-    // if 3, iterator is over 3D points
-    int rv;
-    soca_geo_iterator_dimension_f90(keyGeom_, rv);
-    return rv;
-  }
   // -----------------------------------------------------------------------------
   std::vector<size_t> Geometry::variableSizes(
       const oops::Variables & vars) const {

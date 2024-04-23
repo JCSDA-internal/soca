@@ -281,10 +281,6 @@ subroutine soca_geom_init(self, f_conf, f_comm, gen)
   call f_conf%get_or_die("fields metadata", str)
   call self%fields_metadata%create(str)
 
-  ! retrieve iterator dimension from config
-  if ( .not. f_conf%get("iterator dimension", self%iterator_dimension) ) &
-      self%iterator_dimension = 2
-
 end subroutine soca_geom_init
 
 ! ------------------------------------------------------------------------------

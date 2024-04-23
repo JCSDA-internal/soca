@@ -59,7 +59,7 @@ namespace soca {
 
       GeometryIterator begin() const;
       GeometryIterator end() const;
-      int IteratorDimension() const;
+      int IteratorDimension() const {return iteratorDimensions_;}
       std::vector<size_t> variableSizes(const oops::Variables & vars) const;
       std::vector<double> verticalCoord(std::string &) const {return {};}
 
@@ -85,6 +85,7 @@ namespace soca {
       FmsInput fmsinput_;
       atlas::functionspace::NodeColumns functionSpace_;
       atlas::FieldSet fields_;
+      int iteratorDimensions_;
   };
   // -----------------------------------------------------------------------------
 
