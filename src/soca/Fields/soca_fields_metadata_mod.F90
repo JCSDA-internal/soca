@@ -178,7 +178,7 @@ end subroutine
 !! The \p name can match any of \c name, \c getval_name, or \c getval_name_surface
 function soca_fields_metadata_get(self, name) result(field)
   class(soca_fields_metadata), intent(in) :: self
-  character(len=:), allocatable, intent(in) :: name !< the name to search for
+  character(len=*),            intent(in) :: name !< name of field to find
   type(soca_field_metadata) :: field
 
   integer :: i

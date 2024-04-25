@@ -1361,7 +1361,6 @@ end subroutine
 subroutine soca_fields_update_metadata(self)
   class(soca_fields), intent(inout) :: self
   integer :: n
-  ! type(soca_field), pointer :: field
   type(atlas_field) :: afield
   type(atlas_metadata) :: ameta
   type(soca_field_metadata) :: metadata

@@ -49,8 +49,8 @@ class GeometryIterator:   public util::Printable,
 
   double getFieldValue(const std::string &) const;
 
-  const size_t i() const {return iIndex_;}
-  const size_t k() const {return kIndex_;}
+  size_t i() const {return iIndex_;}
+  size_t k() const {return kIndex_;}
 
  private:
   void print(std::ostream &) const;
