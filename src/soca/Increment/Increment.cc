@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2017-2023 UCAR
+ * (C) Copyright 2017-2024 UCAR
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -42,6 +42,8 @@ namespace soca {
                        const util::DateTime & vt)
     : Fields(geom, vars, vt)
   {
+    // For now, creation of the fields and their accompanying metadata is done on
+    // the Fortran side. This will be moved to the C++ side at a later date.
     soca_increment_create_f90(keyFlds_, geom_.toFortran(), vars_, fieldSet_.get());
     zero();
 
@@ -51,9 +53,8 @@ namespace soca {
   // -----------------------------------------------------------------------------
 
   Increment::Increment(const Geometry & geom, const Increment & other)
-    : Fields(geom, other.vars_, other.time_)
+    : Increment(geom, other.vars_, other.time_)
   {
-    soca_increment_create_f90(keyFlds_, geom_.toFortran(), vars_, fieldSet_.get());
     soca_increment_change_resol_f90(toFortran(), other.keyFlds_);
     Log::trace() << "Increment constructed from other." << std::endl;
   }
@@ -61,13 +62,10 @@ namespace soca {
   // -----------------------------------------------------------------------------
 
   Increment::Increment(const Increment & other, const bool copy)
-    : Fields(other.geom_, other.vars_, other.time_)
+    : Increment(other.geom_, other.vars_, other.time_)
   {
-    soca_increment_create_f90(keyFlds_, geom_.toFortran(), vars_, fieldSet_.get());
     if (copy) {
       soca_increment_copy_f90(toFortran(), other.toFortran());
-    } else {
-      zero();
     }
     Log::trace() << "Increment copy-created." << std::endl;
   }
@@ -75,9 +73,8 @@ namespace soca {
   // -----------------------------------------------------------------------------
 
   Increment::Increment(const Increment & other)
-    : Fields(other.geom_, other.vars_, other.time_)
+    : Increment(other.geom_, other.vars_, other.time_)
   {
-    soca_increment_create_f90(keyFlds_, geom_.toFortran(), vars_, fieldSet_.get());
     soca_increment_copy_f90(toFortran(), other.toFortran());
     Log::trace() << "Increment copy-created." << std::endl;
   }
@@ -166,12 +163,6 @@ namespace soca {
 
   // -----------------------------------------------------------------------------
 
-  void Increment::zero() {
-    util::zeroFieldSet(fieldSet_);
-  }
-
-  // -----------------------------------------------------------------------------
-
   void Increment::dirac(const eckit::Configuration & config) {
     soca_increment_dirac_f90(toFortran(), &config);
     Log::trace() << "Increment dirac initialized" << std::endl;
@@ -187,19 +178,7 @@ namespace soca {
 
   void Increment::axpy(const double & zz, const Increment & dx, const bool check) {
     ASSERT(!check || validTime() == dx.validTime());
-    atlas::FieldSet fs1;
-    util::copyFieldSet(dx.fieldSet_, fs1);
-    util::multiplyFieldSet(fs1, zz);
-    util::addFieldSets(fieldSet_, fs1);
-  }
-
-  // -----------------------------------------------------------------------------
-
-  void Increment::accumul(const double & zz, const State & xx) {
-    atlas::FieldSet fs1, fs2; xx.toFieldSet(fs2);
-    util::copyFieldSet(fs2, fs1);
-    util::multiplyFieldSet(fs1, zz);
-    util::addFieldSets(fieldSet_, fs1);
+    accumul(zz, dx);
   }
 
   // -----------------------------------------------------------------------------
@@ -234,13 +213,16 @@ namespace soca {
   // -----------------------------------------------------------------------------
 
   void Increment::random() {
+    // TODO(travis) use the built-in random. I didn't want to do it with
+    // this PR because it would have changed answers.
     soca_increment_random_f90(toFortran());
   }
 
   // -----------------------------------------------------------------------------
 
   oops::LocalIncrement Increment::getLocal(const GeometryIterator & iter) const {
-    ASSERT(geom_.IteratorDimension() == 2);  // changed need to be made here for 3D
+    ASSERT(geom_.IteratorDimension() == 2);  // Change will be needed for 3D.
+                                             // We don't use 3D right now.
     std::vector<int> varlens(vars_.size());
 
     // count space needed

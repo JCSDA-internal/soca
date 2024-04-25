@@ -47,7 +47,8 @@ bool GeometryIterator::operator!=(const GeometryIterator & other) const {
 // -----------------------------------------------------------------------------
 
 eckit::geometry::Point3 GeometryIterator::operator*() const {
-  ASSERT(geom_.IteratorDimension() == 2);  // modification needed for 3D
+  ASSERT(geom_.IteratorDimension() == 2);  // Modification will be needed for 3D.
+                                           // We don't use 3D right now.
   ASSERT(iIndex_ < geom_.functionSpace().size());
   const auto & lonlat = geom_.functionSpace().lonlat();
   const auto & vLonLat = atlas::array::make_view<double, 2>(lonlat);
@@ -56,6 +57,7 @@ eckit::geometry::Point3 GeometryIterator::operator*() const {
 
 // -----------------------------------------------------------------------------
 
+/// Get any of the atlas fields, at the current point, stored in the geom FieldSet
 double GeometryIterator::getFieldValue(const std::string &fieldName) const {
   const auto & view = atlas::array::make_view<double, 2>(geom_.fields().field(fieldName));
   return view(iIndex_, 0);
@@ -64,7 +66,8 @@ double GeometryIterator::getFieldValue(const std::string &fieldName) const {
 // -----------------------------------------------------------------------------
 
 GeometryIterator& GeometryIterator::operator++() {
-  ASSERT(geom_.IteratorDimension() == 2);  // modification needed for 3D
+  ASSERT(geom_.IteratorDimension() == 2);  // Modification will be needed for 3D.
+                                           // We don't use 3D right now.
   const auto & fs = geom_.functionSpace();
   if (iIndex_ >= fs.size()) {
     throw eckit::Exception("Can't go past end on geometry iterator");

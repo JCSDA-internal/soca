@@ -1,4 +1,4 @@
-! (C) Copyright 2017-2021 UCAR
+! (C) Copyright 2017-2024 UCAR
 !
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -60,8 +60,8 @@ subroutine soca_bkgerrfilt_setup_c(c_key_self, c_conf, c_key_bkg, c_key_geom) &
   call soca_bkgerrfilt_registry%get(c_key_self, self)
   call soca_state_registry%get(c_key_bkg, bkg)
   call soca_geom_registry%get(c_key_geom, geom)
-  call bkg%sync_from_atlas()
 
+  call bkg%sync_from_atlas()
   call self%setup(fckit_configuration(c_conf), bkg, geom)
 end subroutine soca_bkgerrfilt_setup_c
 
@@ -100,9 +100,9 @@ subroutine soca_bkgerrfilt_mult_c(c_key_self, c_key_a, c_key_m)&
   call soca_increment_registry%get(c_key_a,dxa)
   call soca_increment_registry%get(c_key_m,dxm)
   call soca_bkgerrfilt_registry%get(c_key_self,self)
-  call dxa%sync_from_atlas()
 
   !< Computes dxm = D dxa
+  call dxa%sync_from_atlas()
   call dxm%copy(dxa)
   call self%mult(dxa, dxm)
   call dxm%sync_to_atlas()

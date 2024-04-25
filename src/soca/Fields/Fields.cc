@@ -13,6 +13,7 @@
 
 #include "atlas/field.h"
 #include "oops/util/FieldSetHelpers.h"
+#include "oops/util/FieldSetOperations.h"
 
 #include "soca/Geometry/Geometry.h"
 #include "soca/Fields/Fields.h"
@@ -26,9 +27,24 @@ Fields::Fields(const Geometry & geom, const oops::Variables & vars, const util::
   : geom_(geom), vars_(vars), time_(vt)  {
 }
 
+
 // -----------------------------------------------------------------------------
-/// Serialization
+
+void Fields::zero() {
+  util::zeroFieldSet(fieldSet_);
+}
+
 // -----------------------------------------------------------------------------
+
+void Fields::accumul(const double & zz, const Fields & xx) {
+  atlas::FieldSet fs1, fs2; xx.toFieldSet(fs1);
+  util::copyFieldSet(fs1, fs2);
+  util::multiplyFieldSet(fs2, zz);
+  util::addFieldSets(fieldSet_, fs2);
+}
+
+// -----------------------------------------------------------------------------
+
 size_t Fields::serialSize() const {
   size_t nn = 1;  // plus magic factor
   for (const auto & field : fieldSet_) {
@@ -184,7 +200,7 @@ void Fields::fromFieldSet(const atlas::FieldSet &fset) {
     if (metadata[f.name()].has("name")) {  // that's weird
       // THERE IS A BUG IN SOCA, i'm getting fieldsets with one or two fields
       // (hocn) that have have no metadata even though the rest of the field
-      // do
+      // do. Eh, i'll figure it out at a later date.
       f.metadata() = metadata[f.name()];
     }
   }

@@ -1,6 +1,6 @@
 /*
  * (C) Copyright 2009-2016 ECMWF.
- * (C) Copyright 2017-2023 UCAR.
+ * (C) Copyright 2017-2024 UCAR.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -22,7 +22,6 @@
 
 #include "oops/base/LocalIncrement.h"
 #include "oops/base/Variables.h"
-
 #include "oops/util/Duration.h"
 #include "oops/util/ObjectCounter.h"
 #include "oops/util/Printable.h"
@@ -71,7 +70,7 @@ namespace soca {
       /// Basic operators
       void diff(const State &, const State &);
       void ones();
-      void zero();
+      using Fields::zero;
       void zero(const util::DateTime &);
       Increment & operator =(const Increment &);
       Increment & operator+=(const Increment &);
@@ -98,7 +97,6 @@ namespace soca {
       void updateFields(const oops::Variables &);
 
       /// Other
-      void accumul(const double &, const State &);
       int & toFortran() {return keyFlds_;}
       const int & toFortran() const {return keyFlds_;}
 

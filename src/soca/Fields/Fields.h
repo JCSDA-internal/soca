@@ -26,19 +26,22 @@ class Geometry;
 
 // --------------------------------------------------------------------------------------
 
+/// @brief The `Fields` class contains the components that are common to both
+/// the `State` and `Increment` classes.
 class Fields : public util::Serializable,
                public util::Printable {
  public:
-  explicit Fields(const Geometry &, const oops::Variables &,
-                  const util::DateTime &);
+  explicit Fields(const Geometry &, const oops::Variables &, const util::DateTime &);
 
+  // These create copies of FieldSets
   void toFieldSet(atlas::FieldSet &) const;
   void fromFieldSet(const atlas::FieldSet &);
 
   // math operators
+  void zero();
   double norm() const;
-
   void updateTime(const util::Duration & dt) {time_ += dt;}
+  void accumul(const double &, const Fields &);
 
   // serialization
   size_t serialSize() const override;
@@ -54,8 +57,7 @@ class Fields : public util::Serializable,
  protected:
   void print(std::ostream &) const override;
 
-  mutable atlas::FieldSet fieldSet_;  // TODO(travis) remove mutable
-
+  atlas::FieldSet fieldSet_;
   util::DateTime time_;
   oops::Variables vars_;
   const Geometry & geom_;

@@ -1,4 +1,4 @@
-! (C) Copyright 2017-2023 UCAR
+! (C) Copyright 2017-2024 UCAR
 !
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -119,6 +119,7 @@ type, public :: soca_fields
 
   !> The soca_field instances that make up the fields
   type(soca_field), allocatable :: fields(:)
+
   type(atlas_fieldset) :: aFieldset
 
 contains
@@ -193,7 +194,8 @@ contains
   procedure :: update_fields => soca_fields_update_fields
   procedure :: update_metadata => soca_fields_update_metadata
 
-  !> \name Temporary sync between C++ atlas and our fortran array
+  !> \name Temporary sync between C++ atlas and our fortran array.
+  !> This will go away once the transition to atlas is complete
   !! \{
   procedure :: sync_to_atlas => soca_fields_sync_to_atlas
   procedure :: sync_from_atlas => soca_fields_sync_from_atlas
@@ -1328,13 +1330,12 @@ subroutine soca_fields_sync_from_atlas(self)
 
   ! TODO, remove fields that no longer exist?
 
-
   do v = 1, self%afieldset%size()
     afield = self%afieldset%field(v)
 
     if (.not. self%has(afield%name())) then
       cycle
-      ! THIS IS A BUG, why are there fields in the internal field that are not part of the atlas fieldset????
+      ! IS THIS A BUG, why are there fields in the internal field that are not part of the atlas fieldset????
       ! call abor1_ftn('fields_sync_from_atlas: variable '//trim(afield%name())//' not found in fields')
     endif
 

@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2017-2023 UCAR
+ * (C) Copyright 2017-2024 UCAR
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -140,7 +140,8 @@ namespace soca {
   // -----------------------------------------------------------------------------
 
   GeometryIterator Geometry::begin() const {
-    ASSERT(IteratorDimension() == 2);  // modification needed for 3D
+    ASSERT(IteratorDimension() == 2);  // Modification will be needed for 3D.
+                                       // We don't use 3D right now
 
     // find the first non ghost point
     const auto & ghost = atlas::array::make_view<int, 1>(functionSpace_.ghost());
@@ -152,7 +153,9 @@ namespace soca {
   // -----------------------------------------------------------------------------
 
   GeometryIterator Geometry::end() const {
-    ASSERT(IteratorDimension() == 2);  // modification needed for 3D
+    ASSERT(IteratorDimension() == 2);  // Modification will be needed for 3D.
+                                       // We don't use 3D right now
+
     return GeometryIterator(*this, functionSpace_.size(), -1);
   }
 

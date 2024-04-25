@@ -75,8 +75,8 @@ subroutine soca_explicitdiffusion_multiply_c(c_key_self, c_key_dx, c_sqrt) bind(
   sqrt = c_sqrt
   call soca_diffusion_registry%get(c_key_self, self)
   call soca_increment_registry%get(c_key_dx, dx)
-  call dx%sync_from_atlas()
 
+  call dx%sync_from_atlas()
   call self%multiply(dx, sqrt)
   call dx%sync_to_atlas()
 end subroutine

@@ -1,4 +1,4 @@
-! (C) Copyright 2017-2021 UCAR
+! (C) Copyright 2017-2024 UCAR
 !
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -58,8 +58,8 @@ subroutine soca_balance_setup_c(c_key_self, c_conf, c_key_traj, c_key_geom) &
   call soca_balance_registry%get(c_key_self, self)
   call soca_state_registry%get(c_key_traj, traj)
   call soca_geom_registry%get(c_key_geom, geom)
-  call traj%sync_from_atlas()
 
+  call traj%sync_from_atlas()
   call self%setup(fckit_configuration(c_conf), traj, geom)
 end subroutine soca_balance_setup_c
 
@@ -95,9 +95,9 @@ subroutine soca_balance_mult_c(c_key_self, c_key_a, c_key_m)&
   call soca_increment_registry%get(c_key_a,dxa)
   call soca_increment_registry%get(c_key_m,dxm)
   call soca_balance_registry%get(c_key_self,self)
-  call dxa%sync_from_atlas()
 
   !< Computes dxm = K dxa
+  call dxa%sync_from_atlas()
   call self%mult(dxa, dxm)
   call dxm%sync_to_atlas()
 end subroutine soca_balance_mult_c
@@ -121,9 +121,9 @@ subroutine soca_balance_multinv_c(c_key_self, c_key_m, c_key_a)&
   call soca_increment_registry%get(c_key_a,dxa)
   call soca_increment_registry%get(c_key_m,dxm)
   call soca_balance_registry%get(c_key_self,self)
-  call dxm%sync_from_atlas()
 
   !< Computes dxa = K^-1 dxm
+  call dxm%sync_from_atlas()
   call self%multinv(dxa, dxm)
   call dxa%sync_to_atlas()
 end subroutine soca_balance_multinv_c
@@ -147,9 +147,9 @@ subroutine soca_balance_multad_c(c_key_self, c_key_m, c_key_a)&
   call soca_increment_registry%get(c_key_a,dxa)
   call soca_increment_registry%get(c_key_m,dxm)
   call soca_balance_registry%get(c_key_self,self)
-  call dxm%sync_from_atlas()
 
   !< Computes dxa = K^T dxm
+  call dxm%sync_from_atlas()
   call self%multad(dxa, dxm)
   call dxa%sync_to_atlas()
 end subroutine soca_balance_multad_c
@@ -173,9 +173,9 @@ subroutine soca_balance_multinvad_c(c_key_self, c_key_a, c_key_m)&
   call soca_increment_registry%get(c_key_a,dxa)
   call soca_increment_registry%get(c_key_m,dxm)
   call soca_balance_registry%get(c_key_self,self)
-  call dxa%sync_from_atlas()
 
   !< Computes dxm = (K^-1)^T dxa
+  call dxa%sync_from_atlas()
   call self%multinvad(dxa, dxm)
   call dxm%sync_to_atlas()
 end subroutine soca_balance_multinvad_c

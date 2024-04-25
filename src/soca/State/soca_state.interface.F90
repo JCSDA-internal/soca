@@ -1,4 +1,4 @@
-! (C) Copyright 2020-2021 UCAR
+! (C) Copyright 2020-2024 UCAR
 !
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -87,8 +87,8 @@ subroutine soca_state_copy_c(c_key_self,c_key_rhs) bind(c,name='soca_state_copy_
 
     call soca_state_registry%get(c_key_self,self)
     call soca_state_registry%get(c_key_rhs,rhs)
-    call rhs%sync_from_atlas()
 
+    call rhs%sync_from_atlas()
     call self%copy(rhs)
     call self%sync_to_atlas()
 
@@ -196,6 +196,7 @@ subroutine soca_state_change_resol_c(c_key_fld,c_key_rhs) bind(c,name='soca_stat
 
     call soca_state_registry%get(c_key_fld,fld)
     call soca_state_registry%get(c_key_rhs,rhs)
+
     call rhs%sync_from_atlas()
 
     ! TODO (Guillaume or Travis) implement == in geometry or something to that effect.

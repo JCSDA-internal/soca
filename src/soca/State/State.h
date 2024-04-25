@@ -83,10 +83,6 @@ namespace soca {
       /// Update the fields in variable changes
       void updateFields(const oops::Variables &);
 
-      /// Other
-      void zero();
-      void accumul(const double &, const State &);
-
    private:
       F90flds keyFlds_;
   };

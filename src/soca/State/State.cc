@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2017-2023 UCAR
+ * (C) Copyright 2017-2024 UCAR
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -44,11 +44,9 @@ namespace soca {
   // -----------------------------------------------------------------------------
 
   State::State(const Geometry & geom, const eckit::Configuration & conf)
-    : Fields(geom, oops::Variables(conf, "state variables"), util::DateTime())
+    : State(geom, oops::Variables(conf, "state variables"), util::DateTime())
   {
     util::DateTime * dtp = &time_;
-    oops::Variables vars(vars_);
-    soca_state_create_f90(keyFlds_, geom_.toFortran(), vars, fieldSet_.get());
 
     if (conf.has("analytic init")) {
       std::string dt;
@@ -170,20 +168,6 @@ namespace soca {
   void State::write(const eckit::Configuration & files) const {
     const util::DateTime * dtp = &time_;
     soca_state_write_file_f90(toFortran(), &files, &dtp);
-  }
-
-  // -----------------------------------------------------------------------------
-  void State::zero() {
-    util::zeroFieldSet(fieldSet_);
-  }
-
-  // -----------------------------------------------------------------------------
-
-  void State::accumul(const double & zz, const State & xx) {
-    atlas::FieldSet fs1, fs2; xx.toFieldSet(fs1);
-    util::copyFieldSet(fs1, fs2);
-    util::multiplyFieldSet(fs2, zz);
-    util::addFieldSets(fieldSet_, fs2);
   }
 
   // -----------------------------------------------------------------------------

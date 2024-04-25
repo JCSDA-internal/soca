@@ -1,4 +1,4 @@
-! (C) Copyright 2020-2021 UCAR
+! (C) Copyright 2020-2024 UCAR
 !
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -31,6 +31,9 @@ contains
 
   !> \name misc
   !! \{
+
+  !! TODO(travis) These remaning subroutines should probably be removed, and instead
+  !! live on as a non-linear variable change or saber outer block.... someday
 
   !> \copybrief soca_state_rotate \see soca_state_rotate
   procedure :: rotate => soca_state_rotate
