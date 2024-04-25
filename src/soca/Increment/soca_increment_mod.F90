@@ -14,7 +14,6 @@ use random_mod, only: normal_distribution
 
 ! soca modules
 use soca_fields_mod, only : soca_field, soca_fields
-use soca_geom_iter_mod, only : soca_geom_iter
 use soca_geom_mod, only : soca_geom
 
 
