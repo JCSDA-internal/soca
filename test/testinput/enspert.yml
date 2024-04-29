@@ -20,19 +20,16 @@ initial condition:
 background error:
   covariance model: SABER
   saber central block:
-    saber block name: EXPLICIT_DIFFUSION
+    saber block name: DIFFUSION
     active variables: &soca_vars [tocn, socn, ssh, uocn, vocn, cicen, hicen, chl, biop]
-    geometry: *geom
-    group mapping:
-    - name: group1
-      variables: [tocn, socn, ssh, uocn, vocn, cicen, hicen,chl, biop]
     read:
       groups:
-      - name: group1
+      - variables: [tocn, socn, ssh, uocn, vocn, cicen, hicen, chl, biop]
         horizontal:
-          filename: data_generated/parameters_diffusion/hz_smaller.nc
+          filepath: data_generated/parameters_diffusion/hz_smaller
         vertical:
-          filename: data_generated/parameters_diffusion/vt_5lvls.nc
+          levels: 25
+          filepath: data_generated/parameters_diffusion/vt_5lvls
 
   linear variable change:
     linear variable changes:

@@ -54,19 +54,15 @@ cost function:
     - covariance:
         covariance model: SABER
         saber central block:
-          saber block name: EXPLICIT_DIFFUSION
-          active variables: [tocn, socn, ssh, cicen, hicen]
-          geometry: *geom
-          group mapping:
-          - name: group1
-            variables: [tocn, socn, ssh, cicen, hicen]
+          saber block name: DIFFUSION
           read:
             groups:
-            - name: group1
+            - variables: [tocn, socn, ssh, cicen, hicen]
               horizontal:
-                filename: data_generated/parameters_diffusion/hz_smaller.nc
+                filepath: data_generated/parameters_diffusion/hz_smaller
               vertical:
-                filename: data_generated/parameters_diffusion/vt_5lvls.nc      
+                levels: 25
+                filepath: data_generated/parameters_diffusion/vt_5lvls
 
         linear variable change:
           input variables: *soca_vars
@@ -172,7 +168,7 @@ variational:
     online diagnostics:
       write increment: true
       increment:
-        state component:      
+        state component:
           datadir: data_output/
           date: *date_begin
           exp: 3dhybfgat.iter1

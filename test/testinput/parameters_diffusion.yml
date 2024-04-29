@@ -9,38 +9,31 @@ background:
   date: &date 2018-04-15T06:00:00Z
   ocn_filename: MOM.res.nc
   ice_filename: cice.res.nc
-  state variables: &stateVariables [cicen, hicen, hsnon, socn, tocn, uocn, vocn, ssh]
+  state variables: &stateVariables [cicen, hicen, socn, tocn, uocn, vocn, ssh]
 
 background error:
   covariance model: SABER
   saber central block:
-    saber block name: EXPLICIT_DIFFUSION
-    geometry: *geom
+    saber block name: DIFFUSION
     calibration:
       normalization:
-        method: randomization  #< other option is "brute force"
         iterations: 1000       #< in the real world you'll want to use 1e4 or so
-
       groups:
-      - name: hz_large
-        horizontal:
-          from file:
-            filename: data_generated/setcorscales/ocn.cor_rh.incr.2018-04-15T00:00:00Z.nc
-            variable name: ave_ssh        
+      - horizontal:
+          filepath: data_generated/setcorscales/ocn.cor_rh.incr.2018-04-15T00:00:00Z
+          variable: ave_ssh
         write:
-          filename: data_output/hz_large.nc
-
-      - name: hz_smaller
-        horizontal:
-          # make this similar to what is used with BUMP in other tests, for now
-          as gaussian: true
+          filepath: data_output/hz_large
+      - horizontal:
           fixed value: 840336.134453782
-        write:
-          filename: data_output/hz_smaller.nc
-
-      - name: vt_5lvls
-        vertical:
+          mask: "interp_mask"
           as gaussian: true
-          fixed value: 5.0
         write:
-          filename: data_output/vt_5lvls.nc
+          filepath: data_output/hz_smaller
+      - vertical:
+          fixed value: 5.0
+          levels: 25
+          mask: "interp_mask"
+          as gaussian: true
+        write:
+          filepath: data_output/vt_5lvls

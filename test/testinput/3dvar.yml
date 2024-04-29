@@ -28,24 +28,18 @@ cost function:
   background error:
     covariance model: SABER
     saber central block:
-      saber block name: EXPLICIT_DIFFUSION
-      active variables: [tocn, socn, ssh]
-      geometry: *geom
-      group mapping:
-      - name: group1
-        variables: [tocn, socn]
-      - name: group2
-        variables: [ssh]
+      saber block name: DIFFUSION
       read:
         groups:
-        - name: group1
+        - variables: [tocn, socn]
           horizontal:
-            filename: data_generated/parameters_diffusion/hz_smaller.nc
+            filepath: data_generated/parameters_diffusion/hz_smaller
           vertical:
-            filename: data_generated/parameters_diffusion/vt_5lvls.nc
-        - name: group2
+            levels: 25
+            filepath: data_generated/parameters_diffusion/vt_5lvls
+        - variables: [ssh]
           horizontal:
-            filename: data_generated/parameters_diffusion/hz_smaller.nc
+            filepath: data_generated/parameters_diffusion/hz_smaller
 
     date: *bkg_date
 
