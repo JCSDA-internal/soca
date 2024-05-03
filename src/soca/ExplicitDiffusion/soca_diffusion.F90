@@ -496,6 +496,13 @@ subroutine soca_diffusion_calibrate_hz(self, params, hz_conf, norm_conf)
   do j = LOOP_DOMAIN_J
     do i = LOOP_DOMAIN_I
       if (self%mask(i,j) == 0.0 ) cycle
+
+      ! The following should never be triggered, but for some reason that is driving me crazy
+      ! it get divide by 0 on orion/intel unless these "unused" print statements are added.
+      ! Oh well, hopefully this code will be replaced with the generic diffusion soon.
+      if(self%dx(i,j) <= 0.0) call abor1_ftn("ERROR, dx too small")
+      if(self%dy(i,j) <= 0.0) call abor1_ftn("ERROR: dy too small")
+
       r_tmp(i,j) = 2.0 * hz_scales(i,j)**2 * (1.0/(self%dx(i,j)**2) + 1.0/(self%dy(i,j)**2))
     end do
   end do
