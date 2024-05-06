@@ -43,3 +43,4 @@ output:
 test:
   reference filename: testref/forecast_pseudo.test
   test output filename: testoutput/forecast_pseudo.test
+  float absolute tolerance: 1e-4

@@ -313,7 +313,8 @@ function(soca_add_test)
                       COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/${ARG_SCRIPT}
                       WORKING_DIRECTORY ${WORKDIR}
                       ARGS ${CONFIG_FILE}
-                      ENVIRONMENT "BIN_DIR=${CMAKE_BINARY_DIR}/bin"         
+                      ENVIRONMENT "BIN_DIR=${CMAKE_BINARY_DIR}/bin"
+		                  "MPIEXE=${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} ${MPI}"
                       TEST_DEPENDS ${ARG_TEST_DEPENDS}                      
                       )
   endif()

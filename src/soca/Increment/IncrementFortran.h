@@ -86,7 +86,7 @@ namespace soca {
     void soca_increment_update_fields_f90(F90flds &, const oops::Variables &);
     void soca_increment_horiz_scales_f90(F90flds &,
                                          const eckit::Configuration * const &);
-    void soca_increment_vert_scales_f90(F90flds &, const double);
+    void soca_increment_vert_scales_f90(F90flds &, const double &);
   }
 }  // namespace soca
 #endif  // SOCA_INCREMENT_INCREMENTFORTRAN_H_
