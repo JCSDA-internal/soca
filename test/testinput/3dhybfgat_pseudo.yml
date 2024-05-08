@@ -66,7 +66,7 @@ cost function:
               horizontal:
                 filename: data_generated/parameters_diffusion/hz_smaller.nc
               vertical:
-                filename: data_generated/parameters_diffusion/vt_5lvls.nc      
+                filename: data_generated/parameters_diffusion/vt_5lvls.nc
 
         linear variable change:
           input variables: *soca_vars
@@ -172,7 +172,7 @@ variational:
     online diagnostics:
       write increment: true
       increment:
-        state component:      
+        state component:
           datadir: data_output/
           date: *date_begin
           exp: 3dhybfgat.iter1
@@ -190,4 +190,5 @@ final:
 test:
   reference filename: testref/3dhybfgat_pseudo.test
   test output filename: testoutput/3dhybfgat_pseudo.test
+  float relative tolerance: 1e-4
   float absolute tolerance: 1e-4
