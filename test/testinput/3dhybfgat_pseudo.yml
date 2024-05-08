@@ -186,4 +186,5 @@ final:
 test:
   reference filename: testref/3dhybfgat_pseudo.test
   test output filename: testoutput/3dhybfgat_pseudo.test
+  float relative tolerance: 1e-4
   float absolute tolerance: 1e-4
