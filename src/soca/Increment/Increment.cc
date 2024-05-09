@@ -105,7 +105,6 @@ namespace soca {
 
   Increment & Increment::operator=(const Increment & rhs) {
     time_ = rhs.time_;
-    vars_ += rhs.vars_;  // assume that new variables might be added to self
     soca_increment_copy_f90(toFortran(), rhs.toFortran());
     return *this;
   }
