@@ -175,7 +175,6 @@ subroutine soca_geom_init(self, f_conf, f_comm, gen)
   type(time_type) :: Start_time
   type(ocean_grid_type),    pointer :: grid !< Grid metrics
   type(MOM_control_struct)  :: CSp
-  type(MOM_restart_CS),     pointer :: restart_CSp !< NOTE remove this when updating MOM6
 
   ! variables needed for reading gridspec file
   integer :: r
@@ -205,8 +204,7 @@ subroutine soca_geom_init(self, f_conf, f_comm, gen)
     call io_infra_init()
     call set_calendar_type(JULIAN)
     call time_interp_external_init
-    restart_CSp => NULL()
-    call initialize_MOM( Start_time, Start_time, param_file, dirs, CSp, restart_CSp )
+    call initialize_MOM( Start_time, Start_time, param_file, dirs, CSp )
     call get_MOM_state_elements(CSp, G=grid)
 
     ! grab the grid properties that we need
