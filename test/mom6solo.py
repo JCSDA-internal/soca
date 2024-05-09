@@ -12,6 +12,7 @@ MOM6EXE = 'mom6solo'
 
 # get input parameters
 binDir = os.environ['BIN_DIR']
+mpiExe = os.environ['MPIEXE']
 with open(sys.argv[1], 'r') as config_file:
   config = yaml.safe_load(config_file)
 
@@ -94,7 +95,7 @@ with open('RESTART_IN/ocean_solo.res', 'w') as file:
 exePath = binDir + '/' + MOM6EXE
 try:
   # Capture standard output and error
-  result = subprocess.run(exePath, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+  result = subprocess.run(mpiExe+" "+exePath, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, shell=True)
   # If the command was successful, print the output
   print(f"Executable ran successfully: {result.stdout}")
 except subprocess.CalledProcessError as e:

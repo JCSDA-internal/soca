@@ -6,6 +6,7 @@
 !> C++ interfaces for soca_geom_iter_mod::soca_geom_iter
 module soca_geom_iter_mod_c
 
+use atlas_module, only: atlas_field
 use iso_c_binding
 use kinds
 use soca_geom_iter_mod
@@ -149,10 +150,16 @@ subroutine soca_geom_iter_get_area_c(c_key_self, c_val) bind(c, name='soca_geom_
   integer(c_int), intent(   in) :: c_key_self !< Geometry iterator
   real(c_double), intent(inout) :: c_val
 
+  type(atlas_field) :: field
+  real(kind=kind_real), pointer :: fieldPtr(:,:)
+
   type(soca_geom_iter), pointer :: self
   call soca_geom_iter_registry%get(c_key_self, self)
 
-  c_val = self%geom%cell_area(self%iindex,self%jindex)
+  field = self%geom%fieldset%field("area")
+  call field%data(fieldPtr)
+  c_val = fieldPtr(1, self%geom%atlas_ij2idx(self%iindex, self%jindex))
+  call field%final()
 end subroutine
 
 
@@ -162,10 +169,17 @@ subroutine soca_geom_iter_get_rossby_c(c_key_self, c_val) bind(c, name='soca_geo
   integer(c_int), intent(   in) :: c_key_self !< Geometry iterator
   real(c_double), intent(inout) :: c_val
 
+  type(atlas_field) :: field
+  real(kind=kind_real), pointer :: fieldPtr(:,:)
+
   type(soca_geom_iter), pointer :: self
   call soca_geom_iter_registry%get(c_key_self, self)
 
-  c_val = self%geom%rossby_radius(self%iindex,self%jindex)
+  field = self%geom%fieldset%field("rossby_radius")
+  call field%data(fieldPtr)
+  c_val = fieldPtr(1, self%geom%atlas_ij2idx(self%iindex, self%jindex))
+  call field%final()
+
 end subroutine
 
 ! ------------------------------------------------------------------------------

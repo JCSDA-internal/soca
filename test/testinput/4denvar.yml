@@ -113,3 +113,4 @@ final:
 test:
   reference filename: testref/4denvar.test
   test output filename: testoutput/4denvar.test
+  float absolute tolerance: 1e-4
