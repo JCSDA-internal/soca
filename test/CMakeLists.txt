@@ -308,14 +308,15 @@ function(soca_add_test)
                       DEPENDS ${ARG_EXE}
                       TEST_DEPENDS ${ARG_TEST_DEPENDS})
   elseif ( ARG_SCRIPT )
-    # running a test specific script
+    # running a test specific script, right now this is only for the mom6.x forecast
     ecbuild_add_test( TARGET  test_soca_${ARG_NAME}
                       COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/${ARG_SCRIPT}
                       WORKING_DIRECTORY ${WORKDIR}
                       ARGS ${CONFIG_FILE}
+                      DEPENDS mom6.x
                       ENVIRONMENT "BIN_DIR=${CMAKE_BINARY_DIR}/bin"
 		                  "MPIEXE=${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} ${MPI}"
-                      TEST_DEPENDS ${ARG_TEST_DEPENDS}                      
+                      TEST_DEPENDS ${ARG_TEST_DEPENDS}
                       )
   endif()
 
@@ -356,7 +357,7 @@ soca_add_test( NAME geometry_iterator_2d
                SRC  TestGeometryIterator.cc
                TEST_DEPENDS test_soca_gridgen )
 
-# 3D geometry iterator is currently not working (or needed?)               
+# 3D geometry iterator is currently not working (or needed?)
 # soca_add_test( NAME geometry_iterator_3d
 #                SRC  TestGeometryIterator.cc
 #                TEST_DEPENDS test_soca_gridgen )
@@ -418,7 +419,7 @@ soca_add_test( NAME obslocalization
 
 ## vertical localization is not working right now. h was removed from the
 ## geometry (it is part of the state), so we need to rethink how the
-## geometryiterator works in the vertical               
+## geometryiterator works in the vertical
 # soca_add_test( NAME obslocalization_vertical
 #                SRC  TestObsLocalization.cc )
 
@@ -441,7 +442,7 @@ soca_add_test( NAME forecast_identity
 
 # Test mom6solo forecast
 soca_add_test( NAME forecast_mom6
-               SCRIPT mom6solo.py )        
+               SCRIPT mom6solo.py )
 
 # # Test mom6_bgc forecast (optional)
 # if ( ENABLE_OCEAN_BGC )
@@ -465,7 +466,7 @@ soca_add_test( NAME forecast_mom6_ens2
                SCRIPT mom6solo.py )
 
 soca_add_test( NAME forecast_mom6_ens3
-               SCRIPT mom6solo.py )     
+               SCRIPT mom6solo.py )
 
 
 # background error

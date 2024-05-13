@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2017-2021 UCAR
+ * (C) Copyright 2017-2024 UCAR
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -45,11 +45,8 @@ namespace soca {
       const int &, double[], double[], int[], int[], int[], int[],
       const int &, int[]);
     void soca_geo_delete_f90(F90geom &);
-    void soca_geo_start_end_f90(const F90geom &, int &, int &, int &, int &,
-                                int &, int &);
     void soca_geo_get_num_levels_f90(const F90geom &, const oops::Variables &,
                                     const size_t &, size_t[]);
-    void soca_geo_iterator_dimension_f90(const F90geom &, int &);
     void soca_geo_write_f90(const F90geom &, const eckit::Configuration * const &);
   }
 }  // namespace soca

@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2017-2023 UCAR
+ * (C) Copyright 2017-2024 UCAR
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -24,7 +24,7 @@ namespace soca {
   // -----------------------------------------------------------------------------
   Geometry::Geometry(const eckit::Configuration & conf,
                      const eckit::mpi::Comm & comm, const bool gen)
-    : comm_(comm),
+    : comm_(comm), iteratorDimensions_(conf.getInt("iterator dimension", 2)),
       fmsinput_(comm, conf) {
 
     fmsinput_.updateNameList();
@@ -127,7 +127,8 @@ namespace soca {
 
   // -----------------------------------------------------------------------------
   Geometry::Geometry(const Geometry & other)
-    : comm_(other.comm_), fmsinput_(other.fmsinput_) {
+    : comm_(other.comm_), fmsinput_(other.fmsinput_),
+      iteratorDimensions_(other.iteratorDimensions_) {
     throw eckit::Exception("Geometry copy constructor is not implemented");
   }
 
@@ -137,29 +138,27 @@ namespace soca {
   }
 
   // -----------------------------------------------------------------------------
+
   GeometryIterator Geometry::begin() const {
-    // return start of the geometry on this mpi tile
-    int ist, iend, jst, jend, kst, kend, itd;
-    soca_geo_start_end_f90(keyGeom_, ist, iend, jst, jend, kst, kend);
-    // 3D iterator starts from 0 for surface variables
-    if (IteratorDimension() == 3) kst = 0;
-    return GeometryIterator(*this, ist, jst, kst);
+    ASSERT(IteratorDimension() == 2);  // Modification will be needed for 3D.
+                                       // We don't use 3D right now
+
+    // find the first non ghost point
+    const auto & ghost = atlas::array::make_view<int, 1>(functionSpace_.ghost());
+    size_t idx = 0;
+    while (idx < ghost.size() && ghost(idx)) idx++;
+    return GeometryIterator(*this, idx, -1 );
   }
+
   // -----------------------------------------------------------------------------
+
   GeometryIterator Geometry::end() const {
-    // return end of the geometry on this mpi tile
-    // decided to return index out of bounds for the iterator loops to work
-    return GeometryIterator(*this, -1, -1, -1);
+    ASSERT(IteratorDimension() == 2);  // Modification will be needed for 3D.
+                                       // We don't use 3D right now
+
+    return GeometryIterator(*this, functionSpace_.size(), -1);
   }
-  // -----------------------------------------------------------------------------
-  int Geometry::IteratorDimension() const {
-    // return dimesnion of the iterator
-    // if 2, iterator is over vertical columns
-    // if 3, iterator is over 3D points
-    int rv;
-    soca_geo_iterator_dimension_f90(keyGeom_, rv);
-    return rv;
-  }
+
   // -----------------------------------------------------------------------------
   std::vector<size_t> Geometry::variableSizes(
       const oops::Variables & vars) const {
@@ -171,37 +170,6 @@ namespace soca {
   void Geometry::print(std::ostream & os) const {
     // TODO(Travis): Implement this correctly.
   }
-  // -----------------------------------------------------------------------------
-  void Geometry::latlon(std::vector<double> & lats, std::vector<double> & lons,
-      const bool halo) const {
-    // get the number of total grid points (including halo)
-    int gridSizeWithHalo = functionSpace_.size();
-    auto vLonlat = atlas::array::make_view<double, 2>(functionSpace_.lonlat());
-
-    // count the number of owned non-ghost points (isn't there an atlas function for this??)
-    auto vGhost = atlas::array::make_view<int, 1>(functionSpace_.ghost());
-    int gridSizeNoHalo = 0;
-    for (size_t i = 0; i < gridSizeWithHalo; i++) {
-      if (vGhost(i) == 0) gridSizeNoHalo++;
-    }
-
-    // allocate arrays
-    int gridSize = (halo) ? gridSizeWithHalo : gridSizeNoHalo;
-    lons.resize(gridSize);
-    lats.resize(gridSize);
-
-    // fill
-    int idx = 0;
-    for (size_t i=0; i < gridSizeWithHalo; i++) {
-      if (!halo && vGhost(i)) continue;
-      double lon = vLonlat(i, 0);
-      double lat = vLonlat(i, 1);
-      lats[idx] = lat;
-      lons[idx++] = lon;
-    }
-    ASSERT(idx == gridSize);
-  }
-
   // -----------------------------------------------------------------------------
 
 }  // namespace soca
