@@ -1,4 +1,4 @@
-! (C) Copyright 2017-2023UCAR
+! (C) Copyright 2017-2024 UCAR
 !
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -94,36 +94,6 @@ subroutine soca_geo_delete_c(c_key_self) bind(c,name='soca_geo_delete_f90')
   call soca_geom_registry%remove(c_key_self)
 end subroutine soca_geo_delete_c
 
-
-! ------------------------------------------------------------------------------
-!> C++ interface to return begin and end of local geometry in soca_geom
-subroutine soca_geo_start_end(c_key_self, ist, iend, jst, jend, kst, kend) bind(c, name='soca_geo_start_end_f90')
-  integer(c_int), intent( in) :: c_key_self
-  integer(c_int), intent(out) :: ist, iend, jst, jend, kst, kend
-
-  type(soca_geom), pointer :: self
-  call soca_geom_registry%get(c_key_self, self)
-
-  ist  = self%isc
-  iend = self%iec
-  jst  = self%jsc
-  jend = self%jec
-  kst  = 1
-  kend = self%nzo
-end subroutine soca_geo_start_end
-
-
-! ------------------------------------------------------------------------------
-!> C++ interface to get dimension of the GeometryIterator
-subroutine soca_geo_iterator_dimension(c_key_self, itd) bind(c, name='soca_geo_iterator_dimension_f90')
-  integer(c_int), intent( in) :: c_key_self
-  integer(c_int), intent(out) :: itd ! iterator dimension
-
-  type(soca_geom), pointer :: self
-  call soca_geom_registry%get(c_key_self, self)
-
-  itd = self%iterator_dimension
-end subroutine soca_geo_iterator_dimension
 
 ! ------------------------------------------------------------------------------
 !> C++ interface to get number of levels for soca_geom

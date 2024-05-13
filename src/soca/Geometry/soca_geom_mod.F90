@@ -1,4 +1,4 @@
-! (C) Copyright 2017-2023 UCAR
+! (C) Copyright 2017-2024 UCAR
 !
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -281,10 +281,6 @@ subroutine soca_geom_init(self, f_conf, f_comm, gen)
   call f_conf%get_or_die("fields metadata", str)
   call self%fields_metadata%create(str)
 
-  ! retrieve iterator dimension from config
-  if ( .not. f_conf%get("iterator dimension", self%iterator_dimension) ) &
-      self%iterator_dimension = 2
-
 end subroutine soca_geom_init
 
 ! ------------------------------------------------------------------------------
@@ -329,8 +325,9 @@ subroutine soca_geom_init_fieldset(self, f_conf, gen)
   logical,                  intent(in)  :: gen !< if true, we are doing a full init
 
   integer :: i, j, n, jz
-  real(kind=kind_real), pointer :: vArea(:,:), vInterpMask(:,:), vVertCoord(:,:)
-  type(atlas_field) :: fArea, fInterpMask, fVertCoord, fGmask, fOwned
+  type(atlas_field) :: fArea, fInterpMask, fVertCoord, fGmask, fOwned, fMaskH, fMaskU, fMaskV
+  real(kind=kind_real), pointer :: vArea(:,:), vInterpMask(:,:), vVertCoord(:,:), &
+                                   vMaskH(:,:), vMaskU(:,:), vMaskV(:,:)
   integer, pointer :: vGmask(:,:), vOwned(:,:)
 
   ! variables needed for reading in atlas fields from gridspec file
@@ -369,6 +366,21 @@ subroutine soca_geom_init_fieldset(self, f_conf, gen)
   call self%fieldset%add(fGmask)
   call fGmask%data(vGmask)
 
+  ! TODO temporary, this needs to be cleaned up
+  ! It's here so that answers don't change when moving the gpnorm calculations from fortran
+  ! to c++
+  fMaskH = self%functionspace%create_field(name='mask_h', kind=atlas_real(kind_real), levels=1)
+  call self%fieldset%add(fMaskH)
+  call fMaskH%data(vMaskH)
+
+  fMaskU = self%functionspace%create_field(name='mask_u', kind=atlas_real(kind_real), levels=1)
+  call self%fieldset%add(fMaskU)
+  call fMaskU%data(vMaskU)
+
+  fMaskV = self%functionspace%create_field(name='mask_v', kind=atlas_real(kind_real), levels=1)
+  call self%fieldset%add(fMaskV)
+  call fMaskV%data(vMaskV)
+
   ! set the data
   do j=self%jsc,self%jec
     do i=self%isc,self%iec
@@ -377,13 +389,16 @@ subroutine soca_geom_init_fieldset(self, f_conf, gen)
       vInterpMask(1,n) = self%mask2d(i,j)
       vGmask(:, n) = int(self%mask2d(i,j))
       vOwned(1, n) = 1
+      vMaskH(1, n) = self%mask2d(i,j)
+      vMaskU(1, n) = self%mask2du(i,j)
+      vMaskV(1, n) = self%mask2dv(i,j)
     end do
   end do
   do jz=1,self%nzo
     vVertCoord(jz,:) = real(jz, kind_real)
   end do
 
-  ! halo exchange
+  ! halo exchanges for some of the fields
   call fGmask%halo_exchange()
   call fInterpMask%halo_exchange()
   call fArea%halo_exchange()
@@ -395,6 +410,9 @@ subroutine soca_geom_init_fieldset(self, f_conf, gen)
   call fVertCoord%final()
   call fGmask%final()
   call fOwned%final()
+  call fMaskH%final()
+  call fMaskU%final()
+  call fMaskV%final()
 
   ! -----------------------------------------------------------------------------------------------
   if (gen) then

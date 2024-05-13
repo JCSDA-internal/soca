@@ -63,7 +63,21 @@ void ExplicitDiffusion::multiply(oops::FieldSet3D & fset) const {
 
   soca_explicitdiffusion_multiply_f90(keyFortran_, dx.toFortran());
 
-  dx.toFieldSet(fset.fieldSet());
+  // TODO(Travis) not the cleanest, but I don't care since ExplicitDiffusion is
+  // being rewritten soon anyway. The fortran code of ExplicitDiffusion is not
+  // leaving alone variables it should leave alone, so we have to copy fields
+  // back
+  atlas::FieldSet fs2;
+  dx.toFieldSet(fs2);
+  for (auto & f : fs2) {
+    auto view = atlas::array::make_view<double, 2>(f);
+    auto otherView = atlas::array::make_view<double, 2>(fset.fieldSet().field(f.name()));
+    for (atlas::idx_t jnode = 0; jnode < f.shape(0); ++jnode) {
+      for (atlas::idx_t jlevel = 0; jlevel < f.shape(1); ++jlevel) {
+          otherView(jnode, jlevel) = view(jnode, jlevel);
+      }
+    }
+  }
 }
 
 // --------------------------------------------------------------------------------------

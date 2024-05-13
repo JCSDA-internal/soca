@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2017-2021 UCAR
+ * (C) Copyright 2017-2024 UCAR
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -26,7 +26,6 @@
 #include "soca/Geometry/FmsInput.h"
 #include "soca/Geometry/GeometryFortran.h"
 #include "soca/GeometryIterator/GeometryIterator.h"
-#include "soca/GeometryIterator/GeometryIteratorFortran.h"
 
 #include "oops/util/ObjectCounter.h"
 #include "oops/util/Printable.h"
@@ -60,7 +59,7 @@ namespace soca {
 
       GeometryIterator begin() const;
       GeometryIterator end() const;
-      int IteratorDimension() const;
+      int IteratorDimension() const {return iteratorDimensions_;}
       std::vector<size_t> variableSizes(const oops::Variables & vars) const;
       std::vector<double> verticalCoord(std::string &) const {return {};}
 
@@ -84,6 +83,7 @@ namespace soca {
       FmsInput fmsinput_;
       atlas::functionspace::NodeColumns functionSpace_;
       atlas::FieldSet fields_;
+      int iteratorDimensions_;
   };
   // -----------------------------------------------------------------------------
 
