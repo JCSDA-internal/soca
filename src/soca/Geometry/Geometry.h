@@ -73,8 +73,6 @@ namespace soca {
       const atlas::FieldSet & fields() const {return fields_;}
       atlas::FieldSet & fields() {return fields_;}
 
-      void latlon(std::vector<double> &, std::vector<double> &, const bool) const;
-
    private:
       Geometry(const Geometry &);
       void mask(std::vector<double> &, const bool, const char) const;
