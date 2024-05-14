@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2021-2021 UCAR
+ * (C) Copyright 2021-2024 UCAR
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -60,8 +60,8 @@ void ObsLocRossby<MODEL>::computeLocalization(
 
   // calculate the length scale at this location
   double lengthscale = options_.base;
-  lengthscale += options_.mult * i.getRossbyRadius();
-  lengthscale = std::max(lengthscale, options_.min_grid * sqrt(i.getArea()));
+  lengthscale += options_.mult * i.getFieldValue("rossby_radius");
+  lengthscale = std::max(lengthscale, options_.min_grid * sqrt(i.getFieldValue("area")));
   const boost::optional<double> & minval = options_.min;
   const boost::optional<double> & maxval = options_.max;
   if (minval != boost::none) lengthscale = std::max(lengthscale, *minval);
