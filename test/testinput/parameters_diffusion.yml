@@ -8,8 +8,7 @@ background:
   basename: data_static/72x35x25/restarts/
   date: &date 2018-04-15T06:00:00Z
   ocn_filename: MOM.res.nc
-  ice_filename: cice.res.nc
-  state variables: &stateVariables [cicen, hicen, socn, tocn, uocn, vocn, ssh]
+  state variables: &stateVariables [socn, tocn, uocn, vocn, ssh]
 
 background error:
   covariance model: SABER
@@ -20,8 +19,11 @@ background error:
         iterations: 1000       #< in the real world you'll want to use 1e4 or so
       groups:
       - horizontal:
-          filepath: data_generated/setcorscales/ocn.cor_rh.incr.2018-04-15T00:00:00Z
-          variable: ave_ssh
+          model file:
+            date: *date
+            basename: data_generated/setcorscales/
+            ocn_filename: ocn.cor_rh.incr.2018-04-15T00:00:00Z.nc
+          model variable: ssh
         write:
           filepath: data_output/hz_large
       - horizontal:
