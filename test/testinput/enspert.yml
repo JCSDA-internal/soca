@@ -20,7 +20,7 @@ initial condition:
 background error:
   covariance model: SABER
   saber central block:
-    saber block name: DIFFUSION
+    saber block name: diffusion
     active variables: &soca_vars [tocn, socn, ssh, uocn, vocn, cicen, hicen, chl, biop]
     read:
       groups:

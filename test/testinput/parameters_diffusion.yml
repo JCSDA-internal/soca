@@ -13,7 +13,7 @@ background:
 background error:
   covariance model: SABER
   saber central block:
-    saber block name: DIFFUSION
+    saber block name: diffusion
     calibration:
       normalization:
         iterations: 1000       #< in the real world you'll want to use 1e4 or so

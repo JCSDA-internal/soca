@@ -44,7 +44,7 @@ cost function:
       covariance:
         covariance model: SABER
         saber central block:
-          saber block name: DIFFUSION
+          saber block name: diffusion
           read:
             groups:
             - variables: [tocn, socn, ssh]

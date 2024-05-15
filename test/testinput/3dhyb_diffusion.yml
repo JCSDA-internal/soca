@@ -25,7 +25,7 @@ cost function:
     - covariance:
         covariance model: SABER
         saber central block:
-          saber block name: DIFFUSION
+          saber block name: diffusion
           read:
             groups:
             - variables: [tocn, socn, cicen, hicen, hsnon]
@@ -103,7 +103,7 @@ cost function:
         localization:
           localization method: SABER
           saber central block:
-            saber block name: DIFFUSION
+            saber block name: diffusion
             read:
               groups:
               - variables: [tocn, socn, ssh, cicen, hicen, hsnon, uocn, vocn]

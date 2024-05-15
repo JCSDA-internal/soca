@@ -15,7 +15,7 @@ background error:
   covariance model: SABER
   adjoint test: true
   saber central block:
-    saber block name: DIFFUSION
+    saber block name: diffusion
     read:
       groups:
       - variables: [tocn, socn]

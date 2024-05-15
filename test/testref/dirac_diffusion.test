@@ -8,7 +8,7 @@ Input Dirac increment:
    hocn   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
     mld   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
 layer_depth   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
-Adjoint test for block DIFFUSION passed
+Adjoint test for block diffusion passed
 Covariance(SABER) * Increment:
   Valid time: 2018-04-15T00:00:00Z
   cicen   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
