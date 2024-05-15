@@ -33,6 +33,7 @@ find_package( ioda   2.9.0    REQUIRED)
 find_package( ufo    1.10.0   REQUIRED)
 find_package( fms    2023.3.0 REQUIRED COMPONENTS R4 R8)
 add_library(  fms ALIAS FMS::fms_r8)
+find_package( OpenMP COMPONENTS C Fortran REQUIRED)
 
 # Optionally look for Torch and daml
 find_package(Torch QUIET)
