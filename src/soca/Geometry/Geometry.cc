@@ -24,9 +24,11 @@ namespace soca {
   // -----------------------------------------------------------------------------
   Geometry::Geometry(const eckit::Configuration & conf,
                      const eckit::mpi::Comm & comm, const bool gen)
-    : comm_(comm), iteratorDimensions_(conf.getInt("iterator dimension", 2)),
-      fmsinput_(comm, conf) {
-
+    : comm_(comm),
+      fieldsMetadata_(std::make_shared<FieldsMetadata>(conf.getString("fields metadata"))),
+      fmsinput_(comm, conf),
+      iteratorDimensions_(conf.getInt("iterator dimension", 2))
+  {
     fmsinput_.updateNameList();
 
     // Create the grid decomposition from MOM6.
@@ -127,7 +129,9 @@ namespace soca {
 
   // -----------------------------------------------------------------------------
   Geometry::Geometry(const Geometry & other)
-    : comm_(other.comm_), fmsinput_(other.fmsinput_),
+    : comm_(other.comm_),
+      fieldsMetadata_(other.fieldsMetadata_),
+      fmsinput_(other.fmsinput_),
       iteratorDimensions_(other.iteratorDimensions_) {
     throw eckit::Exception("Geometry copy constructor is not implemented");
   }
