@@ -13,12 +13,14 @@
 #include "eckit/filesystem/PathName.h"
 
 #include "oops/util/abor1_cpp.h"
+#include "oops/util/Timer.h"
 
 #include "soca/Fields/FieldsMetadata.h"
 
 namespace soca {
 
 FieldsMetadata::FieldsMetadata(const std::string & filename) {
+  util::Timer timer("soca::FieldsMetadata", "FieldsMetadata");
   eckit::PathName filepathname = filename;
   eckit::YAMLConfiguration fullConfig(filepathname);
 
