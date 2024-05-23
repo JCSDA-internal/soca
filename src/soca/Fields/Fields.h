@@ -36,6 +36,10 @@ class Fields : public util::Serializable,
   // These create copies of FieldSets
   void toFieldSet(atlas::FieldSet &) const;
   void fromFieldSet(const atlas::FieldSet &);
+  // TODO(travis) remove this direct accessor when I figure out why sharing in
+  // toFieldSet causes a change of answers.
+  const atlas::FieldSet & fieldSet() const {return fieldSet_;}
+  atlas::FieldSet & fieldSet() {return fieldSet_;}
 
   // math operators
   void zero();

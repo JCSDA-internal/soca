@@ -16,7 +16,6 @@
 #include "soca/State/State.h"
 #include "soca/Traits.h"
 #include "soca/LinearVariableChange/LinearModel2GeoVaLs/LinearModel2GeoVaLs.h"
-#include "soca/LinearVariableChange/LinearModel2GeoVaLs/LinearModel2GeoVaLsFortran.h"
 
 namespace soca {
 
@@ -31,7 +30,6 @@ LinearModel2GeoVaLs::LinearModel2GeoVaLs(const State & bg, const State &fg,
                                         const Geometry &geom,
                                         const eckit::Configuration &conf)
   : geom_(geom) {
-  util::Timer timer("soca::LinearModel2GeoVaLs", "LinearModel2GeoVaLs");
 }
 
 // -----------------------------------------------------------------------------
@@ -44,8 +42,27 @@ LinearModel2GeoVaLs::~LinearModel2GeoVaLs() {
 void LinearModel2GeoVaLs::multiply(const Increment &dxin,
                                          Increment &dxout) const {
   util::Timer timer("soca::LinearModel2GeoVaLs", "multiply");
-  soca_model2geovals_linear_changevar_f90(geom_.toFortran(),
-                                          dxin.toFortran(), dxout.toFortran());
+
+  const auto & fsetIn = dxin.fieldSet();
+  auto & fsetOut = dxout.fieldSet();
+
+  // Identity operator. The only thing this does is check for names being
+  // different, and if a 2D field is requested from a 3D field then only the
+  // surface is retrieved
+  for (auto & fOut : fsetOut) {
+    const auto & fOutMeta = geom_.fieldMetadata(fOut.name());
+    const auto & fIn = fsetIn[fOutMeta.name];
+
+    const auto & v_fIn = atlas::array::make_view<double, 2>(fIn);
+    auto v_fOut = atlas::array::make_view<double, 2>(fOut);
+
+    for (atlas::idx_t i = 0; i < fOut.shape(0); i++) {
+      ASSERT(fOut.shape(1) <= fIn.shape(1));
+      for (atlas::idx_t lvl = 0; lvl < fOut.shape(1); lvl++) {
+        v_fOut(i, lvl) = v_fIn(i, lvl);
+      }
+    }
+  }
 }
 
 // -----------------------------------------------------------------------------
@@ -61,9 +78,25 @@ void LinearModel2GeoVaLs::multiplyInverse(const Increment &dxin,
 void LinearModel2GeoVaLs::multiplyAD(const Increment &dxin,
                                            Increment &dxout) const {
   util::Timer timer("soca::LinearModel2GeoVaLs", "multiplyAD");
-  soca_model2geovals_linear_changevarAD_f90(geom_.toFortran(),
-                                            dxin.toFortran(),
-                                            dxout.toFortran());
+
+  const auto & fsetIn = dxin.fieldSet();
+  auto & fsetOut = dxout.fieldSet();
+
+  // adjoint. Add fields, with identity transformation, to the output
+  for (auto & fIn : fsetIn) {
+    const auto & fInMeta = geom_.fieldMetadata(fIn.name());
+    auto & fOut = fsetOut[fInMeta.name];
+
+    const auto & v_fIn = atlas::array::make_view<double, 2>(fIn);
+    auto v_fOut = atlas::array::make_view<double, 2>(fOut);
+
+    for (atlas::idx_t i = 0; i < fOut.shape(0); i++) {
+      ASSERT(fOut.shape(1) >= fIn.shape(1));
+      for (atlas::idx_t lvl = 0; lvl < fIn.shape(1); lvl++) {
+        v_fOut(i, lvl) += v_fIn(i, lvl);
+      }
+    }
+  }
 }
 
 // -----------------------------------------------------------------------------
