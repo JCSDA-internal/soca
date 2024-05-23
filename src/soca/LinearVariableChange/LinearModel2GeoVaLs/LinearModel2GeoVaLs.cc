@@ -9,6 +9,7 @@
 #include "eckit/config/Configuration.h"
 
 #include "oops/util/abor1_cpp.h"
+#include "oops/util/Timer.h"
 
 #include "soca/Geometry/Geometry.h"
 #include "soca/Increment/Increment.h"
@@ -30,6 +31,7 @@ LinearModel2GeoVaLs::LinearModel2GeoVaLs(const State & bg, const State &fg,
                                         const Geometry &geom,
                                         const eckit::Configuration &conf)
   : geom_(geom) {
+  util::Timer timer("soca::LinearModel2GeoVaLs", "LinearModel2GeoVaLs");
 }
 
 // -----------------------------------------------------------------------------
@@ -41,6 +43,7 @@ LinearModel2GeoVaLs::~LinearModel2GeoVaLs() {
 
 void LinearModel2GeoVaLs::multiply(const Increment &dxin,
                                          Increment &dxout) const {
+  util::Timer timer("soca::LinearModel2GeoVaLs", "multiply");
   soca_model2geovals_linear_changevar_f90(geom_.toFortran(),
                                           dxin.toFortran(), dxout.toFortran());
 }
@@ -49,6 +52,7 @@ void LinearModel2GeoVaLs::multiply(const Increment &dxin,
 
 void LinearModel2GeoVaLs::multiplyInverse(const Increment &dxin,
                                                 Increment &dxout) const {
+  util::Timer timer("soca::LinearModel2GeoVaLs", "multiplyInverse");
   multiply(dxin, dxout);
 }
 
@@ -56,6 +60,7 @@ void LinearModel2GeoVaLs::multiplyInverse(const Increment &dxin,
 
 void LinearModel2GeoVaLs::multiplyAD(const Increment &dxin,
                                            Increment &dxout) const {
+  util::Timer timer("soca::LinearModel2GeoVaLs", "multiplyAD");
   soca_model2geovals_linear_changevarAD_f90(geom_.toFortran(),
                                             dxin.toFortran(),
                                             dxout.toFortran());
@@ -65,6 +70,7 @@ void LinearModel2GeoVaLs::multiplyAD(const Increment &dxin,
 
 void LinearModel2GeoVaLs::multiplyInverseAD(const Increment &dxin,
                                                   Increment &dxout) const {
+  util::Timer timer("soca::LinearModel2GeoVaLs", "multiplyInverseAD");
   multiplyAD(dxin, dxout);
 }
 

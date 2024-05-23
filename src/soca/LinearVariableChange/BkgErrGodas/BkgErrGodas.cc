@@ -11,6 +11,7 @@
 #include "eckit/config/Configuration.h"
 
 #include "oops/util/Logger.h"
+#include "oops/util/Timer.h"
 
 #include "soca/Geometry/Geometry.h"
 #include "soca/Increment/Increment.h"
@@ -34,6 +35,7 @@ namespace soca {
                  const Geometry & geom,
                  const eckit::Configuration & conf) {
     oops::Log::trace() << "soca::BkgErrGodas::setup " << std::endl;
+    util::Timer timer("soca::BkgErrGodas", "BkgErrGodas");
     const eckit::Configuration * configc = &conf;
 
     // Interpolate background to the geom resolution
@@ -48,28 +50,33 @@ namespace soca {
   // -----------------------------------------------------------------------------
   BkgErrGodas::~BkgErrGodas() {
     oops::Log::trace() << "soca::BkgErrGodas::delete " << std::endl;
+    util::Timer timer("soca::BkgErrGodas", "~BkgErrGodas");
     soca_bkgerrgodas_delete_f90(keyFtnConfig_);
   }
   // -----------------------------------------------------------------------------
   void BkgErrGodas::multiply(const Increment & dxa, Increment & dxm) const {
     // dxm = K dxa
     oops::Log::trace() << "soca::BkgErrGodas::multiply " << std::endl;
+    util::Timer timer("soca::BkgErrGodas", "multiply");
     soca_bkgerrgodas_mult_f90(keyFtnConfig_, dxa.toFortran(), dxm.toFortran());
   }
   // -----------------------------------------------------------------------------
   void BkgErrGodas::multiplyInverse(const Increment & dxm,
                                     Increment & dxa) const {
+    util::Timer timer("soca::BkgErrGodas", "multiplyInverse");
     dxa = dxm;
   }
   // -----------------------------------------------------------------------------
   void BkgErrGodas::multiplyAD(const Increment & dxm, Increment & dxa) const {
     // dxa = K^T dxm
     oops::Log::trace() << "soca::BkgErrGodas::multiplyAD " << std::endl;
+    util::Timer timer("soca::BkgErrGodas", "multiplyAD");
     soca_bkgerrgodas_mult_f90(keyFtnConfig_, dxm.toFortran(), dxa.toFortran());
   }
   // -----------------------------------------------------------------------------
   void BkgErrGodas::multiplyInverseAD(const Increment & dxa,
                                       Increment & dxm) const {
+    util::Timer timer("soca::BkgErrGodas", "multiplyInverseAD");
     dxm = dxa;
   }
   // -----------------------------------------------------------------------------

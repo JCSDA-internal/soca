@@ -11,6 +11,7 @@
 #include "eckit/config/Configuration.h"
 
 #include "oops/util/Logger.h"
+#include "oops/util/Timer.h"
 
 #include "soca/Geometry/Geometry.h"
 #include "soca/Increment/Increment.h"
@@ -33,6 +34,7 @@ namespace soca {
                  const State & traj,
                  const Geometry & geom,
                  const eckit::Configuration & conf) {
+    util::Timer timer("soca::BkgErrFilt", "BkgErrFilt");
     const eckit::Configuration * configc = &conf;
 
     // Interpolate background to the geom resolution
@@ -46,26 +48,31 @@ namespace soca {
   }
   // -----------------------------------------------------------------------------
   BkgErrFilt::~BkgErrFilt() {
+    util::Timer timer("soca::BkgErrFilt", "~BkgErrFilt");
     soca_bkgerrfilt_delete_f90(keyFtnConfig_);
   }
   // -----------------------------------------------------------------------------
   void BkgErrFilt::multiply(const Increment & dxa, Increment & dxm) const {
+    util::Timer timer("soca::BkgErrFilt", "multiply");
     // dxm = K dxa
     soca_bkgerrfilt_mult_f90(keyFtnConfig_, dxa.toFortran(), dxm.toFortran());
   }
   // -----------------------------------------------------------------------------
   void BkgErrFilt::multiplyInverse(const Increment & dxm,
                                    Increment & dxa) const {
+    util::Timer timer("soca::BkgErrFilt", "multiplyInverse");
     dxa = dxm;
   }
   // -----------------------------------------------------------------------------
   void BkgErrFilt::multiplyAD(const Increment & dxm, Increment & dxa) const {
+    util::Timer timer("soca::BkgErrFilt", "multiplyAD");
     // dxa = K^T dxm
     soca_bkgerrfilt_mult_f90(keyFtnConfig_, dxm.toFortran(), dxa.toFortran());
   }
   // -----------------------------------------------------------------------------
   void BkgErrFilt::multiplyInverseAD(const Increment & dxa,
                                      Increment & dxm) const {
+    util::Timer timer("soca::BkgErrFilt", "multiplyInverseAD");
     dxm = dxa;
   }
   // -----------------------------------------------------------------------------
