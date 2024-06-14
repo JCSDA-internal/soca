@@ -1,4 +1,4 @@
-! (C) Copyright 2017-2023 UCAR
+! (C) Copyright 2017-2024 UCAR
 !
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -120,6 +120,8 @@ type, public :: soca_fields
   !> The soca_field instances that make up the fields
   type(soca_field), allocatable :: fields(:)
 
+  type(atlas_fieldset) :: aFieldset
+
 contains
   !> \name constructors / destructors
   !! \{
@@ -155,24 +157,6 @@ contains
   !> \name math operators
   !! \{
 
-  !> \copybrief soca_fields_add \see soca_fields_add
-  procedure :: add      => soca_fields_add
-
-  !> \copybrief soca_fields_axpy \see soca_fields_axpy
-  procedure :: axpy     => soca_fields_axpy
-
-  !> \copybrief soca_fields_dotprod \see soca_fields_dotprod
-  procedure :: dot_prod => soca_fields_dotprod
-
-  !> \copybrief soca_fields_gpnorm \see soca_fields_gpnorm
-  procedure :: gpnorm   => soca_fields_gpnorm
-
-  !> \copybrief soca_fields_mul \see soca_fields_mul
-  procedure :: mul      => soca_fields_mul
-
-  !> \copybrief soca_fields_sub \see soca_fields_sub
-  procedure :: sub      => soca_fields_sub
-
   !> \copybrief soca_fields_ones \see soca_fields_ones
   procedure :: ones     => soca_fields_ones
 
@@ -205,31 +189,16 @@ contains
   procedure :: tohpoints  => soca_fields_tohpoints
   !> \}
 
-  !> \name serialization
-  !! \{
-
-  !> \copybrief soca_fields_serial_size \see soca_fields_serial_size
-  procedure :: serial_size => soca_fields_serial_size
-
-  !> \copybrief soca_fields_serialize \see soca_fields_serialize
-  procedure :: serialize   => soca_fields_serialize
-
-  !> \copybrief soca_fields_deserialize \see soca_fields_deserialize
-  procedure :: deserialize => soca_fields_deserialize
-
-  !> \}
 
   !> \copybrief soca_fields_update_fields \see soca_fields_update_fields
   procedure :: update_fields => soca_fields_update_fields
+  procedure :: update_metadata => soca_fields_update_metadata
 
-  !> \name getter/setter needed for interpolation
+  !> \name Temporary sync between C++ atlas and our fortran array.
+  !> This will go away once the transition to atlas is complete
   !! \{
-
-  !> copybrief soca_fields_to_fieldset \see soca_fields_to_fieldset
-  procedure :: to_fieldset  => soca_fields_to_fieldset
-
-  procedure :: from_fieldset => soca_fields_from_fieldset
-
+  procedure :: sync_to_atlas => soca_fields_sync_to_atlas
+  procedure :: sync_from_atlas => soca_fields_sync_from_atlas
   !> \}
 
 end type soca_fields
@@ -395,7 +364,7 @@ subroutine soca_field_fill_masked(self, geom)
 
   integer :: i, j
 
-  if (.not. associated(self%mask)) return  
+  if (.not. associated(self%mask)) return
   do j = geom%jsc, geom%jec
     do i = geom%isc, geom%iec
       if (self%mask(i,j)==0) self%val(i,j,:) = self%metadata%fillvalue
@@ -495,13 +464,16 @@ end subroutine
 !!
 !! \see soca_fields_init_vars
 !! \relates soca_fields_mod::soca_fields
-subroutine soca_fields_create(self, geom, vars)
+subroutine soca_fields_create(self, geom, vars, aFieldset)
   class(soca_fields),        intent(inout) :: self
   type(soca_geom),  pointer, intent(inout) :: geom !< geometry to associate with the fields
   type(oops_variables),      intent(in) :: vars !< list of field names to create
+  type(atlas_fieldset),      intent(in) :: aFieldset
 
   character(len=:), allocatable :: vars_str(:)
   integer :: i
+
+  self%afieldset = aFieldset
 
   ! make sure current object has not already been allocated
   if (allocated(self%fields)) &
@@ -519,6 +491,7 @@ subroutine soca_fields_create(self, geom, vars)
 
   ! set everything to zero
   call self%zeros()
+
 end subroutine soca_fields_create
 
 
@@ -665,137 +638,6 @@ subroutine soca_fields_zeros(self)
   end do
 
 end subroutine soca_fields_zeros
-
-
-! ------------------------------------------------------------------------------
-!> Add two sets of fields together
-!!
-!! \f$ self = self + rhs \f$
-!!
-!! \throws abor1_ftn aborts if two fields are not congruent
-!! \relates soca_fields_mod::soca_fields
-subroutine soca_fields_add(self, rhs)
-  class(soca_fields), intent(inout) :: self
-  class(soca_fields),     intent(in) :: rhs !< other field to add
-  integer :: i
-
-  ! make sure fields are same shape
-  call self%check_congruent(rhs)
-
-  ! add
-  do i=1,size(self%fields)
-    self%fields(i)%val = self%fields(i)%val + rhs%fields(i)%val
-  end do
-end subroutine soca_fields_add
-
-
-! ------------------------------------------------------------------------------
-!> subtract two sets of fields
-!!
-!! \f$ self = self - rhs \f$
-!!
-!! \throws abor1_ftn aborts if two fields are not congruent
-!! \relates soca_fields_mod::soca_fields
-subroutine soca_fields_sub(self, rhs)
-  class(soca_fields), intent(inout) :: self
-  class(soca_fields),     intent(in) :: rhs !< other field to subtract
-  integer :: i
-
-  ! make sure fields are same shape
-  call self%check_congruent(rhs)
-
-  ! subtract
-  do i=1,size(self%fields)
-    self%fields(i)%val = self%fields(i)%val - rhs%fields(i)%val
-  end do
-end subroutine soca_fields_sub
-
-
-! ------------------------------------------------------------------------------
-!> Multiply a set of fields by a constant.
-!!
-!! \f$ self = zz * self \f$
-!! \relates soca_fields_mod::soca_fields
-subroutine soca_fields_mul(self, zz)
-  class(soca_fields), intent(inout) :: self
-  real(kind=kind_real),  intent(in) :: zz !< the constant by which to multipy the field
-  integer :: i
-
-  do i=1,size(self%fields)
-    self%fields(i)%val = zz * self%fields(i)%val
-  end do
-end subroutine soca_fields_mul
-
-
-! ------------------------------------------------------------------------------
-!> Add two fields (multiplying the rhs first)
-!!
-!! \f$self = self + zz * rhs\f$
-!!
-!! \throws abor1_ftn aborts if \p is not a subset of \rhs
-!! \relates soca_fields_mod::soca_fields
-subroutine soca_fields_axpy(self, zz, rhs)
-  class(soca_fields), target, intent(inout) :: self
-  real(kind=kind_real),       intent(in)    :: zz !< constant by which to multiply other rhs
-  class(soca_fields),         intent(in)    :: rhs !< other field to add
-
-  type(soca_field), pointer :: f_rhs, f_lhs
-  integer :: i
-
-  ! make sure fields are correct shape
-  call self%check_subset(rhs)
-
-  do i=1,size(self%fields)
-    f_lhs => self%fields(i)
-    if (.not. rhs%has(f_lhs%name)) cycle
-    call rhs%get(f_lhs%name, f_rhs)
-    f_lhs%val = f_lhs%val + zz *f_rhs%val
-  end do
-end subroutine soca_fields_axpy
-
-
-! ------------------------------------------------------------------------------
-!> Calculate the global dot product of two sets of fields.
-!!
-!! \throws abor1_ftn aborts if two fields are not congruent
-!! \relates soca_fields_mod::soca_fields
-subroutine soca_fields_dotprod(self, rhs, zprod)
-  class(soca_fields), target, intent(in)  :: self
-  class(soca_fields), target, intent(in)  :: rhs !< field 2 of dot product
-  real(kind=kind_real),       intent(out) :: zprod !< The resulting dot product
-
-  real(kind=kind_real) :: local_zprod
-  integer :: ii, jj, kk, n
-  type(soca_field), pointer :: field1, field2
-
-  ! make sure fields are same shape
-  call self%check_congruent(rhs)
-
-  ! loop over (almost) all fields
-  local_zprod = 0.0_kind_real
-  do n=1,size(self%fields)
-    field1 => self%fields(n)
-    field2 => rhs%fields(n)
-
-    ! add the given field to the dot product (only using the compute domain)
-    do ii = self%geom%isc, self%geom%iec
-      do jj = self%geom%jsc, self%geom%jec
-        ! masking
-        if (associated(field1%mask)) then
-          if (field1%mask(ii,jj) < 1) cycle
-        endif
-
-        ! add to dot product
-        do kk=1,field1%nz
-          local_zprod = local_zprod + field1%val(ii,jj,kk) * field2%val(ii,jj,kk)
-        end do
-      end do
-    end do
-  end do
-
-  ! Get global dot product
-  call self%geom%f_comm%allreduce(local_zprod, zprod, fckit_mpi_sum())
-end subroutine soca_fields_dotprod
 
 
 ! ------------------------------------------------------------------------------
@@ -1063,7 +905,7 @@ subroutine soca_fields_read(self, f_conf, vdate)
         layer_depth%val = 0.5 * hocn%val
         do k = 2, hocn%nz
           layer_depth%val(:,:,k) = layer_depth%val(:,:,k) + sum(hocn%val(:,:,1:k-1), dim=3)
-        end do        
+        end do
     end if
 
     ! Compute mixed layer depth TODO: Move somewhere else ...
@@ -1081,7 +923,7 @@ subroutine soca_fields_read(self, f_conf, vdate)
                 &field%val(i,j,:),&
                 &layer_depth%val(i,j,:),&
                 &self%geom%lon(i,j),&
-                &self%geom%lat(i,j))      
+                &self%geom%lat(i,j))
         end do
       end do
     end if
@@ -1102,51 +944,6 @@ subroutine soca_fields_read(self, f_conf, vdate)
   end if
 
 end subroutine soca_fields_read
-
-
-! ------------------------------------------------------------------------------
-!> calculate global statistics for each field (min, max, average)
-!!
-!! \param[in] nf: The number of fields, should be equal to the size of
-!!     soca_fields::fields
-!! \param[out] pstat: a 2D array with shape (i,j). For each field index
-!!     i is set as 0 = min, 1 = max, 2 = average, for j number of fields.
-!! \relates soca_fields_mod::soca_fields
-subroutine soca_fields_gpnorm(self, nf, pstat)
-  class(soca_fields),      intent(in) :: self
-  integer,                 intent(in) :: nf
-  real(kind=kind_real),   intent(out) :: pstat(3, nf)
-
-  logical :: mask(self%geom%isc:self%geom%iec, self%geom%jsc:self%geom%jec)
-  real(kind=kind_real) :: ocn_count, local_ocn_count, tmp(3)
-  integer :: jj, isc, iec, jsc, jec
-  type(soca_field), pointer :: field
-
-  ! Indices for compute domain
-  isc = self%geom%isc ; iec = self%geom%iec
-  jsc = self%geom%jsc ; jec = self%geom%jec
-
-  ! calculate global min, max, mean for each field
-  do jj=1, size(self%fields)
-    call self%get(self%fields(jj)%name, field)
-
-    ! get the mask and the total number of grid cells
-    if (.not. associated(field%mask)) then
-       mask = .true.
-     else
-       mask = field%mask(isc:iec, jsc:jec) > 0.0
-     end if
-    local_ocn_count = count(mask)
-    call self%geom%f_comm%allreduce(local_ocn_count, ocn_count, fckit_mpi_sum())
-
-    ! calculate global min/max/mean
-    call fldinfo(field%val(isc:iec,jsc:jec,:), mask, tmp)
-    call self%geom%f_comm%allreduce(tmp(1), pstat(1,jj), fckit_mpi_min())
-    call self%geom%f_comm%allreduce(tmp(2), pstat(2,jj), fckit_mpi_max())
-    call self%geom%f_comm%allreduce(tmp(3), pstat(3,jj), fckit_mpi_sum())
-    pstat(3,jj) = pstat(3,jj)/ocn_count
-  end do
-end subroutine soca_fields_gpnorm
 
 
 ! ------------------------------------------------------------------------------
@@ -1224,8 +1021,6 @@ subroutine soca_fields_write_file(self, filename)
     call write_data( filename, self%fields(ii)%name, self%fields(ii)%val(:,:,:), self%geom%Domain%mpp_domain)
   end do
 
-  ! some other derived fields that should be written out
-  call write_data( filename, "rossby_radius", self%geom%rossby_radius, self%geom%Domain%mpp_domain)
 
   call fms_io_exit()
 end subroutine soca_fields_write_file
@@ -1368,73 +1163,6 @@ subroutine soca_fields_tohpoints(self)
 end subroutine soca_fields_tohpoints
 
 ! ------------------------------------------------------------------------------
-!> Number of elements to return in the serialized array
-!!
-!! \see soca_fields_serialize
-!! \relates soca_fields_mod::soca_fields
-subroutine soca_fields_serial_size(self, geom, vec_size)
-  class(soca_fields),    intent(in)  :: self
-  type(soca_geom),       intent(in)  :: geom !< todo remove, not needed?
-  integer,               intent(out) :: vec_size !< resulting size of vector
-
-  integer :: i
-
-  ! Loop over fields
-  vec_size = 0
-  do i=1,size(self%fields)
-    vec_size = vec_size + size(self%fields(i)%val)
-  end do
-
-end subroutine soca_fields_serial_size
-
-
-! ------------------------------------------------------------------------------
-!> Return the fields as a serialized array
-!!
-!! \see soca_fields_serial_size
-!! \relates soca_fields_mod::soca_fields
-subroutine soca_fields_serialize(self, geom, vec_size, vec)
-  class(soca_fields),    intent(in)  :: self
-  type(soca_geom),       intent(in)  :: geom  !< todo remove this, not needed?
-  integer,               intent(in)  :: vec_size !< size of vector to return
-  real(kind=kind_real),  intent(out) :: vec(vec_size) !< fields as a serialized vector
-
-  integer :: index, i, nn
-
-  ! Loop over fields, levels and horizontal points
-  index = 1
-  do i=1,size(self%fields)
-    nn = size(self%fields(i)%val)
-    vec(index:index+nn-1) = reshape(self%fields(i)%val, (/ nn /) )
-    index = index + nn
-  end do
-
-end subroutine soca_fields_serialize
-
-! ------------------------------------------------------------------------------
-!> Deserialize, creating fields from a single serialized array
-!!
-!! \see soca_fields_serialize
-!! \relates soca_fields_mod::soca_fields
-subroutine soca_fields_deserialize(self, geom, vec_size, vec, index)
-  class(soca_fields), intent(inout) :: self
-  type(soca_geom),       intent(in)    :: geom !< todo remove this, not needed?
-  integer,               intent(in)    :: vec_size !< size of \p vec
-  real(kind=kind_real),  intent(in)    :: vec(vec_size) !< vector to deserialize
-  integer,               intent(inout) :: index !< index in \p vec at which to start deserializing
-
-  integer :: i, nn
-
-  ! Loop over fields, levels and horizontal points
-  do i=1,size(self%fields)
-    nn = size(self%fields(i)%val)
-    self%fields(i)%val = reshape(vec(index+1:index+1+nn), shape(self%fields(i)%val))
-    index = index + nn
-  end do
-
-end subroutine soca_fields_deserialize
-
-! ------------------------------------------------------------------------------
 !> update fields, using list of variables the method removes fields not in the
 !! list and allocates fields in the list but not allocated
 !!
@@ -1451,7 +1179,7 @@ subroutine soca_fields_update_fields(self, vars)
   integer :: f
 
   ! create new fields
-  call tmp_fields%create(self%geom, vars)
+  call tmp_fields%create(self%geom, vars, self%aFieldset)
 
   ! copy over where already existing
   do f = 1, size(tmp_fields%fields)
@@ -1464,39 +1192,13 @@ subroutine soca_fields_update_fields(self, vars)
   ! move ownership of fields from tmp to self
   call move_alloc(tmp_fields%fields, self%fields)
 
+  call self%update_metadata()
+
 end subroutine soca_fields_update_fields
 
 ! ------------------------------------------------------------------------------
 ! Internal module functions/subroutines
 ! ------------------------------------------------------------------------------
-
-! ------------------------------------------------------------------------------
-!> Calculate min/max/mean statistics for a given field, using a mask.
-!!
-!! \param[in] fld : the field to calculate the statistics on
-!! \param[in] mask : statistics are only calculated where \p mask is \c .true.
-!! \param[out] info : [0] = min, [1] = max, [2] = average
-subroutine fldinfo(fld, mask, info)
-  real(kind=kind_real),  intent(in) :: fld(:,:,:)
-  logical,               intent(in) :: mask(:,:)
-  real(kind=kind_real), intent(out) :: info(3)
-
-  integer :: z
-  real(kind=kind_real) :: tmp(3,size(fld, dim=3))
-
-  ! calculate the min/max/sum separately for each masked level
-  do z = 1, size(tmp, dim=2)
-     tmp(1,z) = minval(fld(:,:,z), mask=mask)
-     tmp(2,z) = maxval(fld(:,:,z), mask=mask)
-     tmp(3,z) = sum(   fld(:,:,z), mask=mask) / size(fld, dim=3)
-  end do
-
-  ! then combine the min/max/sum over all levels
-  info(1) = minval(tmp(1,:))
-  info(2) = maxval(tmp(2,:))
-  info(3) = sum(   tmp(3,:))
-end subroutine fldinfo
-
 
 ! ------------------------------------------------------------------------------
 !> Generate filename (based on oops/qg)
@@ -1578,36 +1280,25 @@ function soca_genfilename(f_conf,length,vdate,date_cols,domain_type)
 end function soca_genfilename
 
 ! ------------------------------------------------------------------------------
-!> Get the fields listed in vars, used by the interpolation.
-!!
-!! The fields that are returned have halos (minus the invalid and duplicate halo points),
-!! and field values at these halo points are set to 0.
-subroutine soca_fields_to_fieldset(self, vars, afieldset)
-  class(soca_fields),   intent(in)    :: self
-  type(oops_variables), intent(in)    :: vars
-  type(atlas_fieldset), intent(inout) :: afieldset
+! Copy the data from the internal "fields" to the atlas fieldset.
+! We also need to make sure the metadata on the fieldset is set correctly
+subroutine soca_fields_sync_to_atlas(self)
+  class(soca_fields),   intent(inout)    :: self
 
   type(atlas_field) :: afield
   integer :: v, n, i, j
-  type(soca_field), pointer :: field
   type(atlas_metadata) :: meta
   real(kind=kind_real), pointer :: real_ptr(:,:)
 
-  do v=1,vars%nvars()
-    call self%get(vars%variable(v), field)
-
+  ! copy from internal fortran fields to atlas fieldset
+  do v=1,size(self%fields)
     ! get/create field
-    if (afieldset%has_field(vars%variable(v))) then
-      afield = afieldset%field(vars%variable(v))
+    if (self%afieldset%has_field( self%fields(v)%name)) then
+      afield = self%afieldset%field( self%fields(v)%name)
     else
       afield = self%geom%functionspace%create_field( &
-        name=vars%variable(v), kind=atlas_real(kind_real), levels=field%nz)
-      meta = afield%metadata()
-      call meta%set('interp_type', 'default')
-      if (field%metadata%masked) then
-        call meta%set('interp_source_point_mask', 'interp_mask')
-      end if
-      call afieldset%add(afield)
+        name= self%fields(v)%name, kind=atlas_real(kind_real), levels= self%fields(v)%nz)
+      call self%afieldset%add(afield)
     end if
 
     ! create and fill field
@@ -1615,56 +1306,76 @@ subroutine soca_fields_to_fieldset(self, vars, afieldset)
     real_ptr = 0.0_kind_real  ! set all points to zero, overwrite owned values below
     do j=self%geom%jsc,self%geom%jec
       do i=self%geom%isc,self%geom%iec
-        real_ptr(:, self%geom%atlas_ij2idx(i,j)) = field%val(i,j,:)
+        real_ptr(:, self%geom%atlas_ij2idx(i,j)) =  self%fields(v)%val(i,j,:)
       end do
     end do
     call afield%set_dirty(.true.)  ! indicate halo values are out-of-date
 
     call afield%final()
   end do
+
+  ! update that atlas fieldset metadata, if needed
+  call self%update_metadata()
 end subroutine
 
 ! ------------------------------------------------------------------------------
-!> Set the our values from an atlas fieldset
-subroutine soca_fields_from_fieldset(self, vars, afieldset)
-  class(soca_fields), target, intent(inout) :: self
-  type(oops_variables),       intent(in)    :: vars
-  type(atlas_fieldset),       intent(in)    :: afieldset
 
-  integer :: jvar, i, j, n, f
-  real(kind=kind_real), pointer :: real_ptr(:,:)
-  logical :: var_found
-  character(len=1024) :: fieldname
-  type(soca_field), pointer :: field
+subroutine soca_fields_sync_from_atlas(self)
+  class(soca_fields),   intent(inout)    :: self
+
+  integer :: v, i, j
   type(atlas_field) :: afield
+  real(kind=kind_real), pointer :: real_ptr(:,:)
+  type(soca_field), pointer :: field
 
-  ! Initialization
-  call self%zeros()
+  ! TODO, remove fields that no longer exist?
 
-  do jvar = 1,vars%nvars()
-    var_found = .false.
-    do f=1,size(self%fields)
-      field => self%fields(f)
-      if (trim(vars%variable(jvar))==trim(field%name)) then
-        ! Get field
-        afield = afieldset%field(vars%variable(jvar))
+  do v = 1, self%afieldset%size()
+    afield = self%afieldset%field(v)
 
-        ! Copy data
-        call afield%data(real_ptr)
-        do j=self%geom%jsc,self%geom%jec
-          do i=self%geom%isc,self%geom%iec
-            field%val(i,j,:) = real_ptr(:, self%geom%atlas_ij2idx(i,j))
-          end do
-        end do
+    if (.not. self%has(afield%name())) then
+      cycle
+      ! IS THIS A BUG, why are there fields in the internal field that are not part of the atlas fieldset????
+      ! call abor1_ftn('fields_sync_from_atlas: variable '//trim(afield%name())//' not found in fields')
+    endif
 
-        call afield%final()
-
-        ! Set flag
-        var_found = .true.
-        exit
-      end if
+    call self%get(afield%name(), field)
+    call afield%data(real_ptr)
+    do j = self%geom%jsc, self%geom%jec
+      do i = self%geom%isc, self%geom%iec
+        field%val(i,j,:) = real_ptr(:, self%geom%atlas_ij2idx(i,j))
+      end do
     end do
-    if (.not.var_found) call abor1_ftn('variable '//trim(vars%variable(jvar))//' not found in increment')
+    call field%update_halo(self%geom)
+  call afield%final()
+  end do
+
+
+  call self%update_metadata()
+end subroutine
+
+
+! ------------------------------------------------------------------------------
+! update the metadata in the atlas fieldset based on fields metadata
+! TODO this should probably just be combined with the update fields method
+subroutine soca_fields_update_metadata(self)
+  class(soca_fields), intent(inout) :: self
+  integer :: n
+  type(atlas_field) :: afield
+  type(atlas_metadata) :: ameta
+  type(soca_field_metadata) :: metadata
+
+  do n =1, self%afieldset%size()
+    afield = self%afieldset%field(n)
+    ameta = afield%metadata()
+    metadata = self%geom%fields_metadata%get(afield%name())
+
+    call ameta%set('masked', metadata%masked)
+    call ameta%set('interp_type', 'default')
+    if (metadata%masked) then
+      call ameta%set('interp_source_point_mask', 'interp_mask')
+      call ameta%set('mask', "mask_"//metadata%grid)
+    end if
   end do
 end subroutine
 

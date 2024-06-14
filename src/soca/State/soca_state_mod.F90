@@ -1,4 +1,4 @@
-! (C) Copyright 2020-2021 UCAR
+! (C) Copyright 2020-2024 UCAR
 !
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -28,20 +28,12 @@ type, public, extends(soca_fields) :: soca_state
 
 contains
 
-  !> \name interactions with increment
-  !! \{
-
-  !> \copybrief soca_state_diff_incr \see soca_state_diff_incr
-  procedure :: diff_incr=> soca_state_diff_incr
-
-  !> \copybrief soca_state_add_incr \see soca_state_add_incr
-  procedure :: add_incr => soca_state_add_incr
-
-  !> \}
-
 
   !> \name misc
   !! \{
+
+  !! TODO(travis) These remaning subroutines should probably be removed, and instead
+  !! live on as a non-linear variable change or saber outer block.... someday
 
   !> \copybrief soca_state_rotate \see soca_state_rotate
   procedure :: rotate => soca_state_rotate
@@ -124,64 +116,6 @@ end subroutine soca_state_rotate
 
 
 ! ------------------------------------------------------------------------------
-!> add a set of increments to the set of fields
-!!
-!! \throws abor1_ftn aborts if \p rhs is not a subset of \p self
-!! \relates soca_state_mod::soca_state
-subroutine soca_state_add_incr(self, rhs)
-  class(soca_state),  intent(inout) :: self
-  class(soca_increment), intent(in) :: rhs !< increment to add to \p self
-
-  type(soca_field), pointer :: fld, fld_r
-  integer :: i, k
-
-  type(soca_fields), target :: incr
-
-  ! make sure rhs is a subset of self
-  call rhs%check_subset(self)
-
-  ! Make a copy of the increment
-  call incr%copy(rhs)
-
-
-  ! for each field that exists in incr, add to self
-  do i=1,size(incr%fields)
-    fld_r => incr%fields(i)
-    call self%get(fld_r%name, fld)
-    fld%val = fld%val + fld_r%val
-  end do
-
-end subroutine soca_state_add_incr
-
-
-! ------------------------------------------------------------------------------
-!> subtract two sets of fields, saving the results in \p inc
-!!
-!! \f$ inc = x1 - x2 \f$
-!! \throws abor1_ftn aborts if \p inc and \p x2 are not subsets of \p x1
-!! \relates soca_state_mod::soca_state
-subroutine soca_state_diff_incr(x1, x2, inc)
-  class(soca_state),      intent(in)    :: x1
-  class(soca_state),      intent(in)    :: x2
-  class(soca_increment), intent(inout)  :: inc
-
-  integer :: i
-  type(soca_field), pointer :: f1, f2
-
-  ! make sure fields correct shapes
-  call inc%check_subset(x2)
-  call x2%check_subset(x1)
-
-  ! subtract
-  do i=1,size(inc%fields)
-    call x1%get(inc%fields(i)%name, f1)
-    call x2%get(inc%fields(i)%name, f2)
-    inc%fields(i)%val = f1%val - f2%val
-  end do
-end subroutine soca_state_diff_incr
-
-
-! ------------------------------------------------------------------------------
 !> Change resolution of \p rhs to \p self
 !!
 !! \p self must have valid "layer_depth" and "hocn" fields. The other fields
@@ -193,7 +127,7 @@ end subroutine soca_state_diff_incr
 subroutine soca_state_convert(self, rhs)
   class(soca_state),         intent(inout) :: self
   class(soca_state), target, intent(in)    :: rhs   !< source
-  
+
   call abor1_ftn("soca_state_convert is not implemented.")
   ! integer :: n
   ! type(soca_convertstate_type) :: convert_state

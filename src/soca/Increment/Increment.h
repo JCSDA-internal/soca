@@ -1,6 +1,6 @@
 /*
  * (C) Copyright 2009-2016 ECMWF.
- * (C) Copyright 2017-2023 UCAR.
+ * (C) Copyright 2017-2024 UCAR.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -18,10 +18,10 @@
 #include <vector>
 
 #include "soca/Fortran.h"
+#include "soca/Fields/Fields.h"
 
 #include "oops/base/LocalIncrement.h"
 #include "oops/base/Variables.h"
-#include "oops/util/DateTime.h"
 #include "oops/util/Duration.h"
 #include "oops/util/ObjectCounter.h"
 #include "oops/util/Printable.h"
@@ -54,10 +54,8 @@ namespace soca {
    *  the tangent-linear and adjoint models.
    */
 
-  class Increment :
-    public util::Printable,
-    public util::Serializable,
-    private util::ObjectCounter<Increment> {
+  class Increment : public Fields,
+                    private util::ObjectCounter<Increment> {
    public:
       static const std::string classname() {return "soca::Increment";}
 
@@ -72,7 +70,7 @@ namespace soca {
       /// Basic operators
       void diff(const State &, const State &);
       void ones();
-      void zero();
+      using Fields::zero;
       void zero(const util::DateTime &);
       Increment & operator =(const Increment &);
       Increment & operator+=(const Increment &);
@@ -88,47 +86,23 @@ namespace soca {
       oops::LocalIncrement getLocal(const GeometryIterator &) const;
       void setLocal(const oops::LocalIncrement &, const GeometryIterator &);
 
-      /// ATLAS
-      void toFieldSet(atlas::FieldSet &) const;
-      void fromFieldSet(const atlas::FieldSet &);
-
       /// I/O and diagnostics
       void read(const eckit::Configuration &);
       void write(const eckit::Configuration &) const;
-      double norm() const;
-      const util::DateTime & validTime() const;
-      util::DateTime & validTime();
-      void updateTime(const util::Duration & dt);
       void horiz_scales(const eckit::Configuration &);
       void vert_scales(const double &);
       std::vector<double> rmsByLevel(const std::string &) const;
-
-      /// Serialize and deserialize
-      size_t serialSize() const override;
-      void serialize(std::vector<double> &) const override;
-      void deserialize(const std::vector<double> &, size_t &) override;
 
       /// Update the fields in variable changes
       void updateFields(const oops::Variables &);
 
       /// Other
-      void accumul(const double &, const State &);
       int & toFortran() {return keyFlds_;}
       const int & toFortran() const {return keyFlds_;}
-      const Geometry & geometry() const {return geom_;}
-
-      /// Private variable accessor functions
-      const oops::Variables & variables() const {return vars_;}
-      const util::DateTime & time() const {return time_;}
 
       /// Data
    private:
-      void print(std::ostream &) const override;
-
       F90flds keyFlds_;
-      oops::Variables vars_;
-      util::DateTime time_;
-      const Geometry & geom_;
   };
   // -----------------------------------------------------------------------------
 
