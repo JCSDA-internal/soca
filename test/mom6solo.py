@@ -8,9 +8,7 @@ import re
 import pandas as pd
 from datetime import datetime, timedelta
 
-# TODO put this back when updating MOM6
-MOM6EXE = 'mom6.x'
-#MOM6EXE = 'mom6solo'
+MOM6EXE = 'mom6solo'
 
 # get input parameters
 binDir = os.environ['BIN_DIR']
