@@ -21,7 +21,6 @@ use fms_io_mod, only : fms_io_init, fms_io_exit, &
                        register_restart_field, restart_file_type, &
                        restore_state, free_restart_type, save_restart
 use MOM, only : MOM_control_struct, initialize_MOM, MOM_end, get_MOM_state_elements
-use MOM_restart, only :MOM_restart_CS ! NOTE remove this when updating MOM6
 use MOM_domains, only : MOM_domain_type, MOM_domains_init, MOM_infra_init, MOM_infra_end
 use MOM_error_handler, only : MOM_error, MOM_mesg, WARNING, FATAL, is_root_pe
 use MOM_file_parser, only : get_param, param_file_type, close_param_file
@@ -175,7 +174,6 @@ subroutine soca_geom_init(self, f_conf, f_comm, gen)
   type(time_type) :: Start_time
   type(ocean_grid_type),    pointer :: grid !< Grid metrics
   type(MOM_control_struct)  :: CSp
-  type(MOM_restart_CS),     pointer :: restart_CSp !< NOTE remove this when updating MOM6
 
   ! variables needed for reading gridspec file
   integer :: r
@@ -205,8 +203,7 @@ subroutine soca_geom_init(self, f_conf, f_comm, gen)
     call io_infra_init()
     call set_calendar_type(JULIAN)
     call time_interp_external_init
-    restart_CSp => NULL()
-    call initialize_MOM( Start_time, Start_time, param_file, dirs, CSp, restart_CSp )
+    call initialize_MOM( Start_time, Start_time, param_file, dirs, CSp)
     call get_MOM_state_elements(CSp, G=grid)
 
     ! grab the grid properties that we need
