@@ -1,17 +1,14 @@
 /*
- * (C) Copyright 2019-2021 UCAR
+ * (C) Copyright 2019-2024 UCAR
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#ifndef SOCA_GEOMETRYITERATOR_GEOMETRYITERATOR_H_
-#define SOCA_GEOMETRYITERATOR_GEOMETRYITERATOR_H_
+#pragma once
 
 #include <iterator>
 #include <string>
-
-#include "soca/Fortran.h"
 
 #include "oops/util/ObjectCounter.h"
 #include "oops/util/Printable.h"
@@ -26,20 +23,23 @@ namespace soca {
   class Geometry;
 }
 
-
 namespace soca {
 // -----------------------------------------------------------------------------
-class GeometryIterator: public std::iterator<std::forward_iterator_tag,
-                                               eckit::geometry::Point3>,
-                          public util::Printable,
+class GeometryIterator:   public util::Printable,
                           private util::ObjectCounter<GeometryIterator> {
  public:
+  typedef std::forward_iterator_tag iterator_category;
+  typedef eckit::geometry::Point3 value_type;
+  typedef ptrdiff_t difference_type;
+  typedef eckit::geometry::Point3 & reference;
+  typedef eckit::geometry::Point3 * pointer;
+
   static const std::string classname() {return "soca::GeometryIterator";}
 
   GeometryIterator(const GeometryIterator &);
   explicit GeometryIterator(const Geometry & geom,
-                            const int & iindex = 1, const int & jindex = 1,
-                            const int & kindex = 1);
+                            const size_t & iindex,
+                            const size_t & kindex = -1);
   ~GeometryIterator();
 
   bool operator==(const GeometryIterator &) const;
@@ -47,19 +47,17 @@ class GeometryIterator: public std::iterator<std::forward_iterator_tag,
   eckit::geometry::Point3 operator*() const;
   GeometryIterator& operator++();
 
-  double getArea() const;
-  double getRossbyRadius() const;
+  double getFieldValue(const std::string &) const;
 
-  int iteratorDimension() const;
-
-  F90iter & toFortran() {return keyIter_;}
-  const F90iter & toFortran() const {return keyIter_;}
+  size_t i() const {return iIndex_;}
+  size_t k() const {return kIndex_;}
 
  private:
   void print(std::ostream &) const;
-  F90iter keyIter_;
+  const Geometry & geom_;
+  size_t iIndex_;
+  size_t kIndex_;
 };
 
 }  // namespace soca
 
-#endif  // SOCA_GEOMETRYITERATOR_GEOMETRYITERATOR_H_

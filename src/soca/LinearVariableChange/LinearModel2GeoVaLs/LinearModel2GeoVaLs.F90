@@ -1,4 +1,4 @@
-! (C) Copyright 2020-2021 UCAR
+! (C) Copyright 2020-2024 UCAR
 !
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -44,6 +44,8 @@ subroutine soca_model2geovals_linear_changevar_f90(c_key_geom, c_key_dxin, c_key
   call soca_increment_registry%get(c_key_dxin, dxin)
   call soca_increment_registry%get(c_key_dxout, dxout)
 
+  call dxin%sync_from_atlas()
+
   ! identity operators
   do i=1, size(dxout%fields)
     call dxin%get(dxout%fields(i)%metadata%name, field)
@@ -59,6 +61,8 @@ subroutine soca_model2geovals_linear_changevar_f90(c_key_geom, c_key_dxin, c_key
     endif
 
   end do
+
+  call dxout%sync_to_atlas()
 end subroutine
 
 
@@ -81,6 +85,8 @@ subroutine soca_model2geovals_linear_changevarAD_f90(c_key_geom, c_key_dxin, c_k
   call soca_increment_registry%get(c_key_dxin, dxin)
   call soca_increment_registry%get(c_key_dxout, dxout)
 
+  call dxin%sync_from_atlas()
+
   ! identity operators
   do i=1, size(dxin%fields)
     call dxout%get(dxin%fields(i)%metadata%name, field)
@@ -96,6 +102,8 @@ subroutine soca_model2geovals_linear_changevarAD_f90(c_key_geom, c_key_dxin, c_k
     end if
 
   end do
+
+  call dxout%sync_to_atlas()
 end subroutine
 
 !-------------------------------------------------------------------------------
