@@ -222,14 +222,14 @@ variational:
           exp: 3dvarlowres_soca.iter1
           type: incr
 
-output:
-  datadir: data_generated/3dvarlowres_soca
-  exp: 3dvarlowres_soca
-  type: an
-
 final:
-  diagnostics:
-    departures: oman
+  analysis cost function evaluation:
+    diagnostics:
+      departures: oman
+    output:
+      datadir: data_generated/3dvarlowres_soca
+      exp: 3dvarlowres_soca
+      type: an
 
 test:
   reference filename: testref/3dvarlowres_soca.test

@@ -82,14 +82,14 @@ variational:
           exp: 3dvar_single_ob.iter1
           type: incr
 
-output:
-  datadir: data_generated/3dvar_single_ob
-  exp: 3dvar_single_ob
-  type: an
-
 final:
-  diagnostics:
-    departures: oman
+  analysis cost function evaluation:
+    diagnostics:
+      departures: oman
+    output:
+      datadir: data_generated/3dvar_single_ob
+      exp: 3dvar_single_ob
+      type: an
 
 test:
   reference filename: testref/3dvar_single_ob.test

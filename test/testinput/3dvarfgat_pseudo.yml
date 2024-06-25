@@ -212,14 +212,14 @@ variational:
 minimizer:
   algorithm: RPCG
 
-output:
-  datadir: data_output/
-  exp: 3dvarfgat_pseudo
-  type: an
-
 final:
-  diagnostics:
-    departures: oman
+  analysis cost function evaluation:
+    diagnostics:
+      departures: oman
+    output:
+      datadir: data_output/
+      exp: 3dvarfgat_pseudo
+      type: an
 
 test:
   reference filename: testref/3dvarfgat_pseudo.test

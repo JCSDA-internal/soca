@@ -101,14 +101,14 @@ variational:
     diagnostics:
       departures: ombg
 
-output:
-  datadir: data_output/
-  exp: 4denvar
-  type: an
-
 final:
-  diagnostics:
-    departures: oman
+  analysis cost function evaluation:
+    diagnostics:
+      departures: oman
+    output:
+      datadir: data_output/
+      exp: 4denvar
+      type: an
 
 test:
   reference filename: testref/4denvar.test

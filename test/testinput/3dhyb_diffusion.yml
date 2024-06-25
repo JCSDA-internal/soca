@@ -164,14 +164,14 @@ variational:
           exp: 3dhyb_diffusion.iter1
           type: incr
 
-output:
-  datadir: data_output/
-  exp: 3dhyb_diffusion
-  type: an
-
 final:
-  diagnostics:
-    departures: oman
+  analysis cost function evaluation:
+    diagnostics:
+      departures: oman
+    output:
+      datadir: data_output/
+      exp: 3dhyb_diffusion
+      type: an
 
 test:
   reference filename: testref/3dhyb_diffusion.test

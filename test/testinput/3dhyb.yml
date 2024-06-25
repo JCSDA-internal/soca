@@ -155,14 +155,14 @@ variational:
           exp: 3dhyb.iter1
           type: incr
 
-output:
-  datadir: data_output/
-  exp: 3dhyb
-  type: an
-
 final:
-  diagnostics:
-    departures: oman
+  analyis cost function evaluation:
+    diagnostics:
+      departures: oman
+    output:
+      datadir: data_output/
+      exp: 3dhyb
+      type: an
 
 test:
   reference filename: testref/3dhyb.test

@@ -265,14 +265,14 @@ variational:
           exp: 3dvar.iter1
           type: incr
 
-output:
-  datadir: data_output
-  exp: 3dvar
-  type: an
-
 final:
-  diagnostics:
-    departures: oman
+  analysis cost function evaluation:
+    diagnostics:
+      departures: oman
+    output:
+      datadir: data_output
+      exp: 3dvar
+      type: an
 
 test:
   reference filename: testref/3dvar.test

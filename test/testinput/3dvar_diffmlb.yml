@@ -107,14 +107,7 @@ variational:
           exp: 3dvar_diffmlb.iter1
           type: incr
 
-output:
-  datadir: data_output/
-  exp: 3dvar_diffmlb
-  type: an
-
 final:
-  diagnostics:
-    departures: oman
   increment:
     output:
       state component:
@@ -123,6 +116,13 @@ final:
         exp: 3dvar_diffmlb
         type: incr
     geometry: *geom
+  analysis cost function evaluation:
+    diagnostics:
+      departures: oman
+    output:
+      datadir: data_output/
+      exp: 3dvar_diffmlb
+      type: an
 
 test:
   reference filename: testref/3dvar_diffmlb.test
