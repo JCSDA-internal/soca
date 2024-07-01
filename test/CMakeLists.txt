@@ -308,12 +308,12 @@ function(soca_add_test)
                       DEPENDS ${ARG_EXE}
                       TEST_DEPENDS ${ARG_TEST_DEPENDS})
   elseif ( ARG_SCRIPT )
-    # running a test specific script, right now this is only for the mom6.x forecast
+    # running a test specific script, right now this is only for the mom6solo forecast
     ecbuild_add_test( TARGET  test_soca_${ARG_NAME}
                       COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/${ARG_SCRIPT}
                       WORKING_DIRECTORY ${WORKDIR}
                       ARGS ${CONFIG_FILE}
-                      DEPENDS mom6.x
+                      DEPENDS mom6solo
                       ENVIRONMENT "BIN_DIR=${CMAKE_BINARY_DIR}/bin"
 		                  "MPIEXE=${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} ${MPI}"
                       TEST_DEPENDS ${ARG_TEST_DEPENDS}
