@@ -101,7 +101,7 @@ set( soca_test_ref
   testref/3dvarlowres_soca.test
   testref/4denvar.test
   testref/4dhybenvar.test
-  #testref/4dvar_identity.test
+  testref/4dvar_identity.test
   testref/addincrement.test
   testref/convertincrement.test
   testref/convertstate_changevar.test

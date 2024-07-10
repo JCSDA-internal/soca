@@ -100,44 +100,6 @@ cost function:
           filename: data_static/72x35x25/dcdt.nc
           name: dcdt
 
-#      weight:
-#        value: 0.5
-#    - covariance:
-#        covariance model: ensemble
-#        _file: &_file
-#          read_from_file: 1
-#          date: *date_begin
-#          basename: data_static/72x35x25/restarts_ens/
-#          # remap_filename: data_static/72x35x25/restarts/MOM.res.nc
-#          state variables: *soca_vars
-#        members:
-#        - <<: *_file
-#          ocn_filename: MOM.res.ens.1.nc
-#          ice_filename: cice.res.ens.1.nc
-#        - <<: *_file
-#          ocn_filename: MOM.res.ens.2.nc
-#          ice_filename: cice.res.ens.2.nc
-#        - <<: *_file
-#          ocn_filename: MOM.res.ens.3.nc
-#          ice_filename: cice.res.ens.3.nc
-#        - <<: *_file
-#          ocn_filename: MOM.res.ens.4.nc
-#          ice_filename: cice.res.ens.4.nc
-#        localization:
-#          localization method: SABER
-#          saber central block:
-#            saber block name: BUMP_NICAS
-#            active variables: *soca_vars
-#            read:
-#              io:
-#                data directory: data_generated/parameters_bump_loc
-#                files prefix: soca_bump_loc
-#              drivers:
-#                multivariate strategy: duplicated
-#                read local nicas: true
-#      weight:
-#        value: 0.5
-
   observations:
     observers:
     - obs space:
@@ -168,12 +130,18 @@ variational:
       departures: ombg
     linear model:
       name: Identity
-      tstep: PT3H
-      variable change: Identity
+      tstep: PT6H
+      variable change:
+        variable change name: Model2Ana
+        rotate:
+          u: [uocn]
+          v: [vocn]
+        log:
+          var: []
 
 output:
   datadir: data_output/
-  exp: 4dvaridentity
+  exp: 4dvar_identity
   type: an
 
 final:
@@ -181,7 +149,7 @@ final:
     departures: oman
 
 test:
-  reference filename: testref/3dhybfgat_pseudo.test
-  test output filename: testoutput/3dhybfgat_pseudo.test
+  reference filename: testref/4dvar_identity.test
+  test output filename: testoutput/4dvar_identity.test
   float relative tolerance: 1e-4
   float absolute tolerance: 1e-4
