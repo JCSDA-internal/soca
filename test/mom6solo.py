@@ -8,9 +8,7 @@ import re
 import pandas as pd
 from datetime import datetime, timedelta
 
-# TODO put this back when updating MOM6
-MOM6EXE = 'mom6.x'
-#MOM6EXE = 'mom6solo'
+MOM6EXE = 'mom6solo'
 
 # get input parameters
 binDir = os.environ['BIN_DIR']
@@ -44,7 +42,7 @@ def replace_config_content(content, replacements):
       for key, value in changes.items():
         def replacement_function(match):
           start, end = match.group(1), match.group(3)
-          return f"{start}{value}{end}"                
+          return f"{start}{value}{end}"
         key_pattern = rf"(\b{key}\s*=\s*)([^,\n]*)(,|/|\n)"
         section_content = re.sub(key_pattern, replacement_function, section_content, flags=re.MULTILINE)
       # Replace the old section content with the new one
@@ -73,10 +71,10 @@ with open('MOM_override', 'w') as file:
 # link input restart files
 #----------------------------------------------------------------------------------------
 if os.path.exists ('RESTART'):
-  shutil.rmtree('RESTART')  
+  shutil.rmtree('RESTART')
 os.makedirs('RESTART')
 if os.path.exists ('RESTART_IN'):
-  shutil.rmtree('RESTART_IN')  
+  shutil.rmtree('RESTART_IN')
 os.makedirs('RESTART_IN')
 os.symlink("../"+config['initial condition']['ocn_filename'], 'RESTART_IN/MOM.res.nc')
 
@@ -89,7 +87,7 @@ with open('RESTART_IN/ocean_solo.res', 'w') as file:
   file.write("     4        (Calendar: no_calendar=0, thirty_day_months=1, julian=2, gregorian=3, noleap=4)\n")
   file.write(f"  {init_date.year:4d}     {init_date.month:2d}    {init_date.day:2d}     {init_date.hour:2d}     {init_date.minute:2d}     {init_date.second:2d}        Model start time:   year, month, day, hour, minute, second\n")
   file.write(f"  {init_date.year:4d}     {init_date.month:2d}    {init_date.day:2d}     {init_date.hour:2d}     {init_date.minute:2d}     {init_date.second:2d}        Current model time: year, month, day, hour, minute, second\n")
- 
+
 
 #----------------------------------------------------------------------------------------
 # run executable
@@ -111,15 +109,15 @@ except subprocess.CalledProcessError as e:
 #----------------------------------------------------------------------------------------
 for fcstHr in range(restartFrequency, fcst_len+1, restartFrequency):
   rstDate = init_date + timedelta(hours=fcstHr)
-  
+
   # get rstDate in format such as MOM.res_Y2018_D105_S03600.nc
-  rst_day = rstDate.timetuple().tm_yday  
+  rst_day = rstDate.timetuple().tm_yday
   rst_seconds = rstDate.hour * 3600
   rst_src = f"MOM.res_Y{rstDate.year}_D{rst_day:03}_S{rst_seconds:05}.nc"
- 
+
   # get init_date / fcstHr in a format such as ocn.forecast_mom6.fc.2018-04-15T00:00:00Z.PT1H.nc
   forecast_date = init_date + timedelta(hours=fcstHr)
   forecast_date_str = init_date.strftime("%Y-%m-%dT%H:%M:%SZ")
   rst_dst = f"ocn.{config['output']['exp']}.fc.{forecast_date_str}.PT{fcstHr}H.nc"
-    
+
   shutil.move('RESTART/'+rst_src, config['output']['datadir']+'/'+rst_dst)

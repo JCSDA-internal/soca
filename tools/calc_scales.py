@@ -12,13 +12,8 @@ def load_config(config_file):
         config = yaml.safe_load(stream)
     return config
 
-def main():
-  parser = argparse.ArgumentParser(description='Process some netCDF files.')
-  parser.add_argument('config_file', help='Path to the YAML configuration file')
-  args = parser.parse_args()
-
-  config = load_config(args.config_file)
-
+def run(yaml_file):
+  config = load_config(yaml_file)
   gridspec_filename = config.get('gridspec_filename', "./soca_gridspec.nc")
   restart_filename = config.get('restart_filename', "./MOM.res.nc")
   mld_filename = config.get('mld_filename', "./average_MLD.nc")
@@ -124,6 +119,14 @@ def main():
 
     var_vt[:] = vtScales
     var_hz[:] = hz_scales
+
+
+def main():
+  parser = argparse.ArgumentParser(description='Process some netCDF files.')
+  parser.add_argument('config_file', help='Path to the YAML configuration file')
+  args = parser.parse_args()
+
+  run(args.config_file)
 
 if __name__ == "__main__":
     main()
