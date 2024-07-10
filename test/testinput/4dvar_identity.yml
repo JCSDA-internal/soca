@@ -25,12 +25,6 @@ cost function:
     - date: 2018-04-15T12:00:00Z
       ocn_filename: data_generated/forecast_mom6/ocn.forecast_mom6.fc.2018-04-15T00:00:00Z.PT12H.nc
       << : *state
-    - date: 2018-04-15T18:00:00Z
-      ocn_filename: data_generated/forecast_mom6/ocn.forecast_mom6.fc.2018-04-15T00:00:00Z.PT18H.nc
-      << : *state
-    - date: 2018-04-16T00:00:00Z
-      ocn_filename: data_generated/forecast_mom6/ocn.forecast_mom6.fc.2018-04-15T00:00:00Z.PT24H.nc
-      << : *state
 
   variable change:
     variable change name: Model2Ana
@@ -131,13 +125,7 @@ variational:
     linear model:
       name: Identity
       tstep: PT6H
-      variable change:
-        variable change name: Model2Ana
-        rotate:
-          u: [uocn]
-          v: [vocn]
-        log:
-          var: []
+      variable change: Identity
 
 output:
   datadir: data_output/
