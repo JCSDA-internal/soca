@@ -75,7 +75,6 @@ ecbuild_add_executable( TARGET  soca_convertstate.x
                         LIBS    soca
                       )
 
-
 ecbuild_add_executable( TARGET  soca_converttostructuredgrid.x
 			SOURCES ConvertToStructuredGrid.cc
                         LIBS    soca
