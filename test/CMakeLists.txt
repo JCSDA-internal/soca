@@ -51,6 +51,7 @@ set( soca_test_input
   testinput/forecast_mom6_ens3.yml
   testinput/forecast_mom6.yml
   testinput/forecast_pseudo.yml
+  testinput/gen_hybrid_linear_model_coeffs.yml
   testinput/geometry_iterator_2d.yml
   testinput/geometry_iterator_3d.yml
   testinput/geometry.yml
@@ -557,6 +558,13 @@ soca_add_test( NAME diffstates
                EXE  soca_diffstates.x
                TEST_DEPENDS test_soca_gridgen )
 
+soca_add_test( NAME gen_hybrid_linear_model_coeffs
+               EXE  soca_gen_hybrid_linear_model_coeffs.x
+               TEST_DEPENDS test_soca_gridgen
+                            test_soca_forecast_mom6
+                            test_soca_forecast_mom6_ens1
+                            test_soca_forecast_mom6_ens2
+                            test_soca_forecast_mom6_ens3 )
 
 # Dirac tests
 #---------------------------------------------------------------------------------------------------
