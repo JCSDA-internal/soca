@@ -11,17 +11,20 @@ hybrid linear model:
       variable change: Identity
       name: Identity
   update tstep: PT6H
-  variables: [socn, tocn, uocn, vocn, ssh]
+  variables: [socn, tocn]
   coefficients:
     output:
-      base filepath: data_ouput/gybrid_linear_model_coedds
+      base filepath: data_output/hybrid_linear_model_coeffs
       one file per task: true
-    influence region size: 5
-    update variables: [socn, tocn, uocn, vocn, ssh]
+    influence region size: 3
+    update variables: [socn, tocn]
     time window:
       begin: 2018-04-15T00:00:00Z
       length: PT12H
     calculator:
+      #rms scaling: true
+      #regularization:
+      #  value: 10
     ensemble:
       model:
         name: PseudoModel
@@ -31,59 +34,58 @@ hybrid linear model:
           states:
           - date: 2018-04-15T06:00:00Z
             read_from_file: 1
-            basename: data_generated/forecast_mom6
+            basename: data_generated/forecast_mom6/
             state variables: [socn, tocn, uocn, vocn, ssh, hocn, layer_depth]
             ocn_filename: ocn.forecast_mom6.fc.2018-04-15T00:00:00Z.PT6H.nc
-          - date: 2010-04-15T12:00:00Z
+          - date: 2018-04-15T12:00:00Z
             read_from_file: 1
-            basename: data_generated/forecast_mom6
+            basename: data_generated/forecast_mom6/
             state variables: [socn, tocn, uocn, vocn, ssh, hocn, layer_depth]
             ocn_filename: ocn.forecast_mom6.fc.2018-04-15T00:00:00Z.PT12H.nc
         - ID: 1
           states:
           - date: 2018-04-15T06:00:00Z
             read_from_file: 1
-            basename: data_generated/forecast_mom6_ens1
+            basename: data_generated/forecast_mom6_ens1/
             state variables: [socn, tocn, uocn, vocn, ssh, hocn, layer_depth]
-            ocn_filename: ocn.forecast_mom6.fc.2018-04-15T00:00:00Z.PT6H.nc
-          - date: 2010-04-15T12:00:00Z
+            ocn_filename: ocn.fcst_ens1.fc.2018-04-15T00:00:00Z.PT6H.nc
+          - date: 2018-04-15T12:00:00Z
             read_from_file: 1
-            basename: data_generated/forecast_mom6_ens1
+            basename: data_generated/forecast_mom6_ens1/
             state variables: [socn, tocn, uocn, vocn, ssh, hocn, layer_depth]
-            ocn_filename: ocn.forecast_mom6.fc.2018-04-15T00:00:00Z.PT12H.nc
+            ocn_filename: ocn.fcst_ens1.fc.2018-04-15T00:00:00Z.PT12H.nc
         - ID: 2
           states:
           - date: 2018-04-15T06:00:00Z
             read_from_file: 1
-            basename: data_generated/forecast_mom6_ens2
+            basename: data_generated/forecast_mom6_ens2/
             state variables: [socn, tocn, uocn, vocn, ssh, hocn, layer_depth]
-            ocn_filename: ocn.forecast_mom6.fc.2018-04-15T00:00:00Z.PT6H.nc
-          - date: 2010-04-15T12:00:00Z
+            ocn_filename: ocn.fcst_ens2.fc.2018-04-15T00:00:00Z.PT6H.nc
+          - date: 2018-04-15T12:00:00Z
             read_from_file: 1
-            basename: data_generated/forecast_mom6_ens2
+            basename: data_generated/forecast_mom6_ens2/
             state variables: [socn, tocn, uocn, vocn, ssh, hocn, layer_depth]
-            ocn_filename: ocn.forecast_mom6.fc.2018-04-15T00:00:00Z.PT12H.nc
+            ocn_filename: ocn.fcst_ens2.fc.2018-04-15T00:00:00Z.PT12H.nc
         - ID: 3
           states:
           - date: 2018-04-15T06:00:00Z
             read_from_file: 1
-            basename: data_generated/forecast_mom6_ens3
+            basename: data_generated/forecast_mom6_ens3/
             state variables: [socn, tocn, uocn, vocn, ssh, hocn, layer_depth]
-            ocn_filename: ocn.forecast_mom6.fc.2018-04-15T00:00:00Z.PT6H.nc
-          - date: 2010-04-15T12:00:00Z
+            ocn_filename: ocn.fcst_ens3.fc.2018-04-15T00:00:00Z.PT6H.nc
+          - date: 2018-04-15T12:00:00Z
             read_from_file: 1
-            basename: data_generated/forecast_mom6_ens3
+            basename: data_generated/forecast_mom6_ens3/
             state variables: [socn, tocn, uocn, vocn, ssh, hocn, layer_depth]
-            ocn_filename: ocn.forecast_mom6.fc.2018-04-15T00:00:00Z.PT12H.nc
+            ocn_filename: ocn.fcst_ens3.fc.2018-04-15T00:00:00Z.PT12H.nc
       model geometry: *geom
       nonlinear control:
         ID: 0
-        states:
-          read_from_file: 1
-          basename: data_static/72x35x25/restarts/
-          state variables: [socn, tocn, uocn, vocn, ssh, hocn, layer_depth]
-          ocn_filename: MOM.res.nc
-          date: 2018-04-15T00:00:00Z
+        read_from_file: 1
+        basename: data_static/72x35x25/restarts/
+        state variables: [socn, tocn, uocn, vocn, ssh, hocn, layer_depth]
+        ocn_filename: MOM.res.nc
+        date: 2018-04-15T00:00:00Z
       nonlinear ensemble:
         read:
           members from template:
@@ -91,14 +93,14 @@ hybrid linear model:
             nmembers: 3
             template:
               ID: %mem%
-              states:
-                read_from_file: 1
-                state variables: [socn, tocn, uocn, vocn, ssh, hocn, layer_depth]
-                basename: data_static/72x35x25/restarts_ens/
-                ocn_filename: MOM.res.ens.%mem%.nc
-                date: 2018-04-15T00:00:00Z
+              read_from_file: 1
+              state variables: [socn, tocn, uocn, vocn, ssh, hocn, layer_depth]
+              basename: data_static/72x35x25/restarts_ens/
+              ocn_filename: MOM.res.ens.%mem%.nc
+              date: 2018-04-15T00:00:00Z
 
 test:
-  reference filename: testref/4dhybenvar.test
+  variables: [socn, tocn]
+  reference filename: testref/gen_hybrid_linear_model_coeffs_pseudo.test
   test output filename: testoutput/gen_hybrid_linear_model_coeffs_pseudo.test
   float absolute tolerance: 1e-4
