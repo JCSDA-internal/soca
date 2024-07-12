@@ -26,6 +26,7 @@ set( soca_test_input
   testinput/4denvar.yml
   testinput/4dhybenvar.yml
   testinput/4dvar_identity.yml
+  testinput/4dvar_htlm.yml
   testinput/addincrement.yml
   testinput/convertincrement.yml
   testinput/convertstate_changevar.yml
@@ -103,6 +104,7 @@ set( soca_test_ref
   testref/4denvar.test
   testref/4dhybenvar.test
   testref/4dvar_identity.test
+  testref/4dvar_htlm.test
   testref/addincrement.test
   testref/convertincrement.test
   testref/convertstate_changevar.test
@@ -722,6 +724,16 @@ soca_add_test( NAME 4dvar_identity
                             test_socs_parameters_diffusion
                             test_soca_forecast_mom6 )
 
+soca_add_test( NAME 4dvar_htlm
+               EXE soca_var.x
+               TEST_DEPENDS test_soca_gridgen
+                            test_soca_parameters_bump_loc
+                            test_socs_parameters_diffusion
+                            test_soca_forecast_mom6
+                            test_soca_forecast_mom6_ens1
+                            test_soca_forecast_mom6_ens2
+                            test_soca_forecast_mom6_ens3
+                            test_soca_gen_hybrid_linear_model_coeffs )
 # LETKF
 #---------------------------------------------------------------------------------------------------
 

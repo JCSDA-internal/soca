@@ -121,13 +121,26 @@ variational:
     diagnostics:
       departures: ombg
     linear model:
-      name: Identity
-      tstep: PT6H
-      variable change: Identity
+      simple linear model:
+        linear model:
+          name: Identity
+          tstep: PT6H
+          variable change: Identity
+      update tstep: PT6H
+      variables: [socn, tocn]
+      coefficients:
+        update variables: [socn, tocn]
+        influence region size: 3
+        time window:
+          begin: 2018-04-15T00:00:00Z
+          length: PT12H
+        input:
+          base filepath: data_output/hybrid_linear_model_coeffs
+          one file per task: true
 
 output:
   datadir: data_output/
-  exp: 4dvar_identity
+  exp: 4dvar_htlm
   type: an
 
 final:
@@ -135,7 +148,7 @@ final:
     departures: oman
 
 test:
-  reference filename: testref/4dvar_identity.test
-  test output filename: testoutput/4dvar_identity.test
+  reference filename: testref/4dvar_htlm.test
+  test output filename: testoutput/4dvar_htlm.test
   float relative tolerance: 1e-4
   float absolute tolerance: 1e-4
