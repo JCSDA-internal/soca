@@ -14,7 +14,7 @@ hybrid linear model:
   variables: [socn, tocn]
   coefficients:
     output:
-      base filepath: data_output/hybrid_linear_model_coeffs
+      base filepath: data_generated/hybrid_linear_model_coeffs
       one file per task: true
     influence region size: 3
     update variables: [socn, tocn]

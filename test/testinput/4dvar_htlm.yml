@@ -121,6 +121,7 @@ variational:
     diagnostics:
       departures: ombg
     linear model:
+      name: HTLM
       simple linear model:
         linear model:
           name: Identity
@@ -135,7 +136,7 @@ variational:
           begin: 2018-04-15T00:00:00Z
           length: PT12H
         input:
-          base filepath: data_output/hybrid_linear_model_coeffs
+          base filepath: data_generated/hybrid_linear_model_coeffs
           one file per task: true
 
 output:
