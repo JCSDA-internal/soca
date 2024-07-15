@@ -66,6 +66,7 @@ set( soca_test_input
   testinput/letkf_split_observer.yml
   testinput/letkf_split_solver.yml
   testinput/letkf.yml
+  testinput/linearization_error.yaml
   testinput/makeobs.yml
   testinput/model.yml
   testinput/obslocalization_vertical.yml
@@ -129,6 +130,7 @@ set( soca_test_ref
   testref/letkf_split_observer.test
   testref/letkf_split_solver.test
   testref/letkf.test
+  testiref/linearization_error.ref
   testref/makeobs.test
   testref/parameters_bump_cor_nicas_scales.test
   testref/parameters_bump_cor_nicas.test
@@ -560,6 +562,7 @@ soca_add_test( NAME diffstates
                EXE  soca_diffstates.x
                TEST_DEPENDS test_soca_gridgen )
 
+# Compute HTLM coefficients
 soca_add_test( NAME gen_hybrid_linear_model_coeffs
                EXE  soca_gen_hybrid_linear_model_coeffs.x
                TEST_DEPENDS test_soca_gridgen
@@ -567,6 +570,15 @@ soca_add_test( NAME gen_hybrid_linear_model_coeffs
                             test_soca_forecast_mom6_ens1
                             test_soca_forecast_mom6_ens2
                             test_soca_forecast_mom6_ens3 )
+
+soca_add_test( NAME linearization_error
+               EXE  soca_linearization_error.x
+               TEST_DEPENDS test_soca_gridgen
+                            test_soca_forecast_mom6
+                            test_soca_forecast_mom6_ens1
+                            test_soca_forecast_mom6_ens2
+                            test_soca_forecast_mom6_ens3 )
+
 
 # Dirac tests
 #---------------------------------------------------------------------------------------------------
