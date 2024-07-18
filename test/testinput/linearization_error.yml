@@ -23,9 +23,8 @@ linear model:
       begin: 2018-04-15T00:00:00Z
       length: PT12H
     calculator:
-      #rms scaling: true
       regularization:
-        value: 1000
+        base value: 1
     ensemble:
       model:
         name: PseudoModel
@@ -157,7 +156,15 @@ model aux control: {}
 output:
   datadir: data_output/
   exp: linearization_error
-  type: inc
+  type: an
+
+#output on latlon grid:
+#  local interpolator type: oops unstructured grid interpolator
+#  resolution in degrees: 5.0
+#  variables to output: [tocn,socn]
+#  model levels: [1]
+#  datapath: data_output
+#  filename prefix: linearization-error
 
 test:
   reference filename: testref/linearization_error.test
