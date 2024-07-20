@@ -36,7 +36,9 @@ target_include_directories(mom6 PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/MOM6/config_src/memory/dynamic_nonsymmetric>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/MOM6/src/framework>)
 # TODO use symmetric memory above if doing regional MOM6
-target_link_libraries(mom6 PUBLIC NetCDF::NetCDF_C NetCDF::NetCDF_Fortran fms )
+# Note that the explicit dependency on OpenMP is only because FMS is not declaring its OpenMP dependency correctly
+# This will be fixed with fms version 2024.01
+target_link_libraries(mom6 PUBLIC NetCDF::NetCDF_C NetCDF::NetCDF_Fortran fms OpenMP::OpenMP_Fortran OpenMP::OpenMP_C)
 
 ####################################################
 ### Create standalone MOM6 executable
@@ -72,3 +74,4 @@ install (
 install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/mod DESTINATION ${CMAKE_INSTALL_PREFIX}/MOM6)
 install(EXPORT      mom6-config
         DESTINATION lib/cmake)
+
