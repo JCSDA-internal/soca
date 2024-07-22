@@ -66,7 +66,7 @@ set( soca_test_input
   testinput/letkf_split_observer.yml
   testinput/letkf_split_solver.yml
   testinput/letkf.yml
-  testinput/linearization_error.yaml
+  testinput/linearization_error.yml
   testinput/makeobs.yml
   testinput/model.yml
   testinput/obslocalization_vertical.yml
@@ -122,6 +122,7 @@ set( soca_test_ref
   testref/ensrecenter.test
   testref/forecast_identity.test
   testref/forecast_pseudo.test
+  testref/gen_hybrid_linear_model_coeffs.test
   testref/gridgen.test
   testref/hofx_3d.test
   testref/hofx_4d_pseudo.test
@@ -130,7 +131,7 @@ set( soca_test_ref
   testref/letkf_split_observer.test
   testref/letkf_split_solver.test
   testref/letkf.test
-  testiref/linearization_error.ref
+  testref/linearization_error.test
   testref/makeobs.test
   testref/parameters_bump_cor_nicas_scales.test
   testref/parameters_bump_cor_nicas.test
@@ -578,7 +579,6 @@ soca_add_test( NAME linearization_error
                             test_soca_forecast_mom6_ens1
                             test_soca_forecast_mom6_ens2
                             test_soca_forecast_mom6_ens3 )
-
 
 # Dirac tests
 #---------------------------------------------------------------------------------------------------
