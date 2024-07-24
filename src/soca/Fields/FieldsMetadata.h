@@ -16,30 +16,34 @@ namespace soca {
 
 // --------------------------------------------------------------------------------------
 
-/// Holds all the user configurable meta data associated with a single field
-/// NOTE: this is a subset of what exists on the Fortran side, and is being
-/// expanded as it is needed during the Fortran -> C++ porting
+/// Holds all the user configurable meta data associated with a single field.
+/// This struct contains information about the internal variable name, the
+/// variable name used by UFO, and the variable name used by UFO for the surface
+/// (if this is a 3D field).
 struct FieldMetadata {
-  std::string name;  // The internal (within soca) variable name
-  std::string getvalName;  // The variable name used by UFO
-  std::string getvalNameSurface;  // the variable name used by UFO for the surface
-                                  // (if this is a 3D field)
+  std::string name;  ///< The internal (within soca) variable name.
+  std::string getvalName;  ///< The variable name used by UFO.
+  std::string getvalNameSurface;  ///< The variable name used by UFO for the surface
+                                  ///  (if this is a 3D field).
 };
 
 // --------------------------------------------------------------------------------------
 
 /// Metadata for the soca fields.
-/// A yaml file is read in containing information about the various fields
+/// A yaml file is read in containing information about the various fields.
 class FieldsMetadata {
  public:
-  /// Read metadata from a yaml file
-  explicit FieldsMetadata(const std::string &);
+  /// Constructs a FieldsMetadata object and reads metadata from a yaml file.
+  /// @param filepath The path to the yaml file.
+  explicit FieldsMetadata(const std::string & filepath);
 
-  /// Get the metadata for a field
-  /// @param name can either be the field's "name", "getvalName", or "getvalNameSurface"
+  /// Get the metadata for a field.
+  /// @param name The field's "name", "getvalName", or "getvalNameSurface".
+  /// @return A reference to the FieldMetadata object.
   const FieldMetadata & operator[](const std::string & name) const;
 
  private:
+  /// Map of field name(s) to FieldMetadata objects.
   std::map<std::string, std::shared_ptr<FieldMetadata>> fieldMetadata_;
 };
 

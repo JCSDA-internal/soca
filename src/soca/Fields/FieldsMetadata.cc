@@ -27,20 +27,23 @@ FieldsMetadata::FieldsMetadata(const std::string & filename) {
   // read in all the field metadata sections
   auto configs = fullConfig.getSubConfigurations("");
   for (auto config : configs) {
+    // create a shared object that can be passed around
     auto f = std::make_shared<FieldMetadata>();
 
+    // read in portion of the values (not all are read in on the C++ side, until
+    // needed)
     f->name = config.getString("name");
     f->getvalName = config.getString("getval name", f->name);
     f->getvalNameSurface = config.getString("getval name surface", "");
 
     // check for duplicates
-    if (fieldMetadata_.find(f->name) != fieldMetadata_.end() ||
-        fieldMetadata_.find(f->getvalName) != fieldMetadata_.end() ||
-        fieldMetadata_.find(f->getvalNameSurface) != fieldMetadata_.end() ) {
-      util::abor1_cpp("Duplicate field metadata: "+f->name);
+    if (fieldMetadata_.count(f->name) > 0 ||
+        fieldMetadata_.count(f->getvalName) > 0 ||
+        fieldMetadata_.count(f->getvalNameSurface) > 0) {
+      util::abor1_cpp("Duplicate field metadata: " + f->name);
     }
 
-    // insert
+    // insert into the maps, multiple copies are inserted for valid name
     fieldMetadata_[f->name] = f;
     fieldMetadata_[f->getvalName] = f;
     if (f->getvalNameSurface != "") {

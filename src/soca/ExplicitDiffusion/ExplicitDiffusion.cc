@@ -6,7 +6,6 @@
  */
 
 #include "oops/util/FieldSetHelpers.h"
-#include "oops/util/Timer.h"
 
 #include "soca/ExplicitDiffusion/ExplicitDiffusion.h"
 #include "soca/ExplicitDiffusion/ExplicitDiffusionFortran.h"
@@ -31,8 +30,6 @@ ExplicitDiffusion::ExplicitDiffusion(
     const oops::FieldSet3D & fg)
   : saber::SaberCentralBlockBase(params, xb.validTime()), params_(params)
 {
-  util::Timer timer("soca::ExplicitDiffusion", "ExplicitDiffusion");
-
   // setup geometry
   geom_.reset(new Geometry(params_.geometry.value(), geometryData.comm()));
 
@@ -46,8 +43,6 @@ ExplicitDiffusion::ExplicitDiffusion(
 // --------------------------------------------------------------------------------------
 
 void ExplicitDiffusion::randomize(oops::FieldSet3D & fset) const {
-  util::Timer timer("soca::ExplicitDiffusion", "randomize");
-
   // Create random increments
   fset.randomInit(geom_->functionSpace(), fset.variables());
   Increment dx(*geom_, vars_, util::DateTime());
@@ -63,8 +58,6 @@ void ExplicitDiffusion::randomize(oops::FieldSet3D & fset) const {
 // --------------------------------------------------------------------------------------
 
 void ExplicitDiffusion::multiply(oops::FieldSet3D & fset) const {
-  util::Timer timer("soca::ExplicitDiffusion", "multiply");
-
   Increment dx(*geom_, vars_, util::DateTime());
   dx.fromFieldSet(fset.fieldSet());
 
@@ -90,8 +83,6 @@ void ExplicitDiffusion::multiply(oops::FieldSet3D & fset) const {
 // --------------------------------------------------------------------------------------
 
 void ExplicitDiffusion::directCalibration(const oops::FieldSets &) {
-  util::Timer timer("soca::ExplicitDiffusion", "directCalibration");
-
   eckit::LocalConfiguration conf = *params_.calibration.value();
   soca_explicitdiffusion_calibrate_f90(keyFortran_, &conf);
 }
@@ -99,8 +90,6 @@ void ExplicitDiffusion::directCalibration(const oops::FieldSets &) {
 // --------------------------------------------------------------------------------------
 
 void ExplicitDiffusion::read() {
-  util::Timer timer("soca::ExplicitDiffusion", "read");
-
   eckit::LocalConfiguration conf = *params_.read.value();
   soca_explicitdiffusion_readparams_f90(keyFortran_, &conf);
 }
@@ -108,8 +97,6 @@ void ExplicitDiffusion::read() {
 // --------------------------------------------------------------------------------------
 
 void ExplicitDiffusion::write() const {
-  util::Timer timer("soca::ExplicitDiffusion", "write");
-
   eckit::LocalConfiguration conf = *params_.calibration.value();
   soca_explicitdiffusion_writeparams_f90(keyFortran_, &conf);
 }
