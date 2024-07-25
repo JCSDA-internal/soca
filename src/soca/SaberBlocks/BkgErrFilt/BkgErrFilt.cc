@@ -43,16 +43,23 @@ BkgErrFilt::BkgErrFilt(
     atlas::option::levels(1) );
   auto v_mult3D = atlas::array::make_view<double, 2>(mult3D_);
   auto v_mult2D = atlas::array::make_view<double, 2>(mult2D_);
-  auto v_hocn = atlas::array::make_view<double, 2>(xb["hocn"]);
+  const auto v_hocn = atlas::array::make_view<double, 2>(xb["hocn"]);
+  const auto v_mask = atlas::array::make_view<double, 2>(mask_);
 
   v_mult3D.assign(0.0);
   v_mult2D.assign(0.0);
   for (size_t i = 0; i < innerGeometryData_.functionSpace().size(); i++) {
+    if (v_mask(i, 0) == 0.0) continue;
+
+    // mask out if total depth is less than oceanDepthMin
     double depth = 0.0;
     for (size_t z = 0; z < levels; z++) depth += v_hocn(i, z);
     if (depth <= params.oceanDepthMin) continue;
 
+    // 2D vars (i.e. ssh) get masked and rescaled by a constant
     v_mult2D(i, 0) = params.rescaleBkgerr;
+
+    // 3D vars (i.e. socn, tocn) get masked and rescaled by an exponential decay with depth
     depth = 0.0;
     for (size_t z = 0; z < levels; z++) {
       depth += v_hocn(i, z) / 2.0;  // keep track of layer depth as we go
@@ -72,19 +79,31 @@ void BkgErrFilt::multiply(oops::FieldSet3D & fset) const {
   const std::set<std::string> FIELDS3D{"tocn", "socn"};
   const std::set<std::string> FIELDS2D{"ssh"};
 
-  auto v_mult3D = atlas::array::make_view<double, 2>(mult3D_);
-  auto v_mult2D = atlas::array::make_view<double, 2>(mult2D_);
-  auto v_mask   = atlas::array::make_view<double, 2>(mask_);
+  const auto v_mult3D = atlas::array::make_view<double, 2>(mult3D_);
+  const auto v_mult2D = atlas::array::make_view<double, 2>(mult2D_);
+  const auto v_mask   = atlas::array::make_view<double, 2>(mask_);
 
   for (atlas::Field field : fset) {
+    const auto levels = field.shape(1);
     auto v_field = atlas::array::make_view<double, 2>(field);
+    const bool inFields3D = FIELDS3D.find(field.name()) != FIELDS3D.end();
+    const bool inFields2D = FIELDS2D.find(field.name()) != FIELDS2D.end();
+
     for (size_t i = 0; i < field.shape(0); i++) {
-      for (size_t z = 0; z < field.levels(); z++) {
-        v_field(i, z) *= v_mask(i, 0);
-        if ( FIELDS3D.find(field.name()) != FIELDS3D.end() ) {
+      // Note, the IF statements are outside the loop over z to avoid the
+      // overhead of checking the same condition for every z level.
+      if (inFields2D) {
+        // 2D vars (i.e. ssh) get masked and rescaled by a constant
+        v_field(i, 0) *= v_mult2D(i, 0);
+      } else if (inFields3D) {
+        // 3D vars (i.e. socn, tocn) get masked and rescaled by an exponential decay with depth
+        for (size_t z = 0; z < levels; z++) {
           v_field(i, z) *= v_mult3D(i, z);
-        } else if ( FIELDS2D.find(field.name()) != FIELDS2D.end() ) {
-          v_field(i, z) *= v_mult2D(i, 0);
+        }
+      } else {
+        // all other vars get masked
+        for (size_t z = 0; z < levels; z++) {
+          v_field(i, z) *= v_mask(i, 0);
         }
       }
     }
