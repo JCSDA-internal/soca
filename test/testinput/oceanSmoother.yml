@@ -1,0 +1,31 @@
+geometry:
+  geom_grid_file: data_generated/gridgen/soca_gridspec.72x35x25.nc
+  mom6_input_nml: data_static/72x35x25/input.nml
+  fields metadata: data_static/fields_metadata.yml
+
+state:
+  date: 2018-04-15T00:00:00Z
+  read_from_file: 1
+  basename: data_static/72x35x25/restarts/
+  ocn_filename: MOM.res.nc
+  state variables: [tocn, socn, ssh, hocn]
+
+
+oceanSmoother:
+  # note that all scales here are Gaussian sigmas
+  horizontal:
+    rossby mult: 10
+    min grid mult: 1
+    max: 1000e3
+  vertical:
+    base value: 4
+
+
+output:
+  datadir: data_output
+  exp: oceanSmoother
+  type: incr
+
+test:
+  reference filename: testref/oceanSmoother.test
+  test output filename: testoutput/oceanSmoother.test
