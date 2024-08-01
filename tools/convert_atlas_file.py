@@ -5,7 +5,6 @@ Useful for visualizing output from ATLAS
 """
 import netCDF4 as nc
 import numpy as np
-from scipy.spatial import KDTree
 import argparse
 
 parser = argparse.ArgumentParser()
@@ -30,22 +29,15 @@ with nc.Dataset(inputFileName, 'r') as ncdIn, nc.Dataset(outputFileName, 'w', fo
   ncdOut.createDimension('latitude', ny)
   ncdOut.createDimension('longitude', nx)
   latitudes = ncdOut.createVariable('latitude', 'f4', ('latitude',))
-  longitudes = ncdOut.createVariable('longitude', 'f4', ('longitude',))  
+  longitudes = ncdOut.createVariable('longitude', 'f4', ('longitude',))
   latitudes[:] = np.mean(dstLat, axis=1)  # Assuming dstLat is 2D
-  longitudes[:] = np.mean(dstLon, axis=0)  # Assuming dstLon is 2D  
+  longitudes[:] = np.mean(dstLon, axis=0)  # Assuming dstLon is 2D
 
   # Assign attributes to latitude and longitude variables
   latitudes.units = 'degrees_north'
   latitudes.standard_name = 'latitude'
   longitudes.units = 'degrees_east'
   longitudes.standard_name = 'longitude'
-
-  # # use KD tree to find mapping between src and dst points
-  # srcLon = ncdIn.variables['lon'][:]
-  # srcLat = ncdIn.variables['lat'][:]
-  # srcPoints = np.column_stack((srcLat.flatten(), srcLon.flatten()))
-  # kdTree = KDTree(srcPoints)
-  # _, mapping = kdTree.query(dstPoints)
 
   # find variables to process
   allVars = [name for name, var in ncdIn.variables.items() if len(var.dimensions) == 2]
@@ -55,5 +47,4 @@ with nc.Dataset(inputFileName, 'r') as ncdIn, nc.Dataset(outputFileName, 'w', fo
     zName = f'nz_{v}'
     ncdOut.createDimension(zName, nz)
     valDst = ncdOut.createVariable(v, valSrc.datatype, [zName,'latitude','longitude'])
-    #valDst[:] = valSrc[mapping, :].reshape((ny,nx,nz)).transpose(2,0,1)
     valDst[:] = valSrc[:].reshape((ny,nx,nz)).transpose(2,0,1)
