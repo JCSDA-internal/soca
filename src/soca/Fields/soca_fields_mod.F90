@@ -696,6 +696,10 @@ subroutine soca_fields_read(self, f_conf, vdate)
   integer :: cnt_tmp4d  !< counter for the number of fields in tmp4d
   logical, allocatable :: is_cat_lev(:)  !< indices of fields with the category and level dimensions
   integer :: ncat, ice_levels
+  type(oops_variables) :: ice_cat_vars
+  type(oops_variables) :: unique_ice_cat_vars
+  type(oops_variables) :: seaice_categories_vars
+  type(oops_variables) :: seaice_categories_levels_vars
 
   if ( f_conf%has("read_from_file") ) &
       call f_conf%get_or_die("read_from_file", iread)
@@ -790,16 +794,23 @@ subroutine soca_fields_read(self, f_conf, vdate)
     allocate(is_cat_lev(size(self%fields)))
     is_cat_lev = .false.
     cnt_tmp3d = 0
+    ice_cat_vars = oops_variables()
+    unique_ice_cat_vars = oops_variables()
     do i=1,size(self%fields)
       if (self%fields(i)%metadata%categories > 0 .and. self%fields(i)%metadata%seaice_levels < 0) then
         cnt_tmp3d = cnt_tmp3d + 1
         ncat = self%fields(i)%metadata%categories
         is_cat(i) = .true.
+        if ( ice_cat_vars%has(self%fields(i)%metadata%io_sup_name) ) then
+          continue
+        else
+          call ice_cat_vars%push_back(self%fields(i)%metadata%io_sup_name)
+        end if
+        print *,"io sup name ", ice_cat_vars%varlist()
       end if
     end do
     print *,"cnt_tmp3d ", cnt_tmp3d
     if (cnt_tmp3d > 0) then
-      print *, isd, ied, jsd, jed, ncat, cnt_tmp3d
       allocate(tmp3d(isd:ied,jsd:jed,ncat,cnt_tmp3d))
       tmp3d = 0.0_kind_real
     end if
@@ -869,18 +880,23 @@ subroutine soca_fields_read(self, f_conf, vdate)
         end if
         if (is_cat(i)) then
           ! handle fields with category dimension
-          cnt_tmp3d = cnt_tmp3d + 1
-          print *, "shape of tmp3d ", shape(tmp3d)
-          print*, " cnt_tmp3d ", cnt_tmp3d
-          idr = register_restart_field(restart, filename, self%fields(i)%metadata%io_name, &
-               tmp3d(:,:,:,cnt_tmp3d), domain=self%geom%Domain%mpp_domain)
+          if ( unique_ice_cat_vars%has(self%fields(i)%metadata%io_sup_name) ) then
+            continue
+          else
+            call unique_ice_cat_vars%push_back(self%fields(i)%metadata%io_sup_name)
+            cnt_tmp3d = cnt_tmp3d + 1
+            print *, "shape of tmp3d ", shape(tmp3d)
+            print*, " cnt_tmp3d ", cnt_tmp3d
+            idr = register_restart_field(restart, filename, self%fields(i)%metadata%io_sup_name, &
+                 tmp3d(:,:,:,cnt_tmp3d), domain=self%geom%Domain%mpp_domain)
+          end if
         end if
         if (is_cat_lev(i)) then
           ! handle fields with category and level dimensions
           ! TODO: add your code here
         end if
       end if  ! end of if(self%fields(i)%metadata%io_file /= "")
-    end do
+    end do  ! end of do i=1,size(self%fields)
 
     call restore_state(ocean_restart, directory='')
     call free_restart_type(ocean_restart)
@@ -892,15 +908,10 @@ subroutine soca_fields_read(self, f_conf, vdate)
       call restore_state(ice_restart, directory='')
       call free_restart_type(ice_restart)
       ! restore the categories
-      cnt_tmp3d = 0
+      cnt_tmp3d = 1
       do i = 1, size(self%fields)
         if ( is_cat(i) ) then
-          cnt_tmp3d = cnt_tmp3d + 1
-          print *, "field name ", self%fields(i)%name
-          print *," is category ", is_cat(i)
-          print *," shape of tmp3d ", shape(tmp3d)
-          print *," shape of self%fields(i)%val ", shape(self%fields(i)%val)
-          !self%fields(i)%val(:,:,1) = tmp3d(:,:,self%fields(i)%metadata%category,cnt_tmp3d)
+          self%fields(i)%val(:,:,1) = tmp3d(:,:,self%fields(i)%metadata%category,cnt_tmp3d)
         end if
       end do
     end if
@@ -1018,7 +1029,6 @@ subroutine soca_fields_read(self, f_conf, vdate)
   end if
 
 end subroutine soca_fields_read
-
 
 ! ------------------------------------------------------------------------------
 !> Make sure two sets of fields are the same shape (same variables, same resolution)

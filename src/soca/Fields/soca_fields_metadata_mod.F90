@@ -27,6 +27,7 @@ type, public :: soca_field_metadata
   character(len=:),  allocatable :: getval_name_surface  ! name used by UFO for the surface (if this is a 3D field)
   character(len=:),  allocatable :: io_file  !< the restart file domain (ocn, sfc, ice). Or if "CONSTANT" use the value in "constant_value"
   character(len=:),  allocatable :: io_name  !< the name use in the restart IO
+  character(len=:),  allocatable :: io_sup_name  !< the IO name of the super set variable
   character(len=:),  allocatable :: property  !< physical property of the field, "none" or "positive_definite"
   integer                        :: categories  !< number of seaice categories
   integer                        :: category    !< category index of the seaice field
@@ -108,6 +109,9 @@ subroutine soca_fields_metadata_create(self, filename)
 
     if(.not. conf_list(i)%get("io name", str)) str = ""
     self%metadata(i)%io_name = str
+
+    if(.not. conf_list(i)%get("io sup name", str)) str = ""
+    self%metadata(i)%io_sup_name = str
 
     if(.not. conf_list(i)%get("io file", str)) str = ""
     self%metadata(i)%io_file = str

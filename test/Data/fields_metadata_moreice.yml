@@ -105,7 +105,8 @@
   category: 1
   categories: 5
   io file: ice
-  io name: aicen_h
+  io sup name: aicen_h
+  io name: aice1_h
   property: positive_definite
 
 - name: aice2_h
@@ -113,9 +114,36 @@
   category: 2
   categories: 5
   io file: ice
-  io name: aicen_h
+  io sup name: aicen_h
+  io name: aice2_h
   property: positive_definite
 
+- name: aice3_h
+  getval name: sea_ice_category_3_area_fraction
+  category: 3
+  categories: 5
+  io file: ice
+  io sup name: aicen_h
+  io name: aice3_h
+  property: positive_definite
+
+- name: aice4_h
+  getval name: sea_ice_category_4_area_fraction
+  category: 4
+  categories: 5
+  io file: ice
+  io sup name: aicen_h
+  io name: aice4_h
+  property: positive_definite
+
+- name: aice5_h
+  getval name: sea_ice_category_5_area_fraction
+  category: 5
+  categories: 5
+  io file: ice
+  io sup name: aicen_h
+  io name: aice5_h
+  property: positive_definite
 
 # --------------------------------------------------------------------------------------------------
 # wave state variables
