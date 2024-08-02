@@ -7,7 +7,6 @@
 
 #pragma once
 
-#include <limits>
 #include <memory>
 #include <string>
 
@@ -88,8 +87,7 @@ class OceanSmoother {
       oops::Parameter<double> rossbyMult{"rossby mult", 1.0, this, {oops::minConstraint(0.0)}};
       oops::Parameter<double> minGridMult{"min grid mult", 1.0, this, {oops::minConstraint(0.0)}};
       oops::Parameter<double> min{"min", 0.0, this, {oops::minConstraint(0.0)}};
-      oops::Parameter<double> max{"max", std::numeric_limits<double>::max(), this,
-                                  {oops::minConstraint(0.0)}};
+      oops::Parameter<double> max{"max", 150e3, this, {oops::minConstraint(0.0)}};
     };
 
     // ---------------------------------------------------------------------------
@@ -112,6 +110,9 @@ class OceanSmoother {
       oops::Parameter<bool> mldSmooth{"mld smooth",
         "If true, smooth the MLD by the horizontal scales before using it for the vertical scales",
         true, this};
+      oops::Parameter<double> mldMax{"mld max",
+        "The maximum MLD value to use for the vertical scales",
+        250.0, this, {oops::minConstraint(0.0)}};
     };
 
     // ---------------------------------------------------------------------------

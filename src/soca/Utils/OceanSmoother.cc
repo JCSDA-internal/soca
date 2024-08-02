@@ -155,7 +155,7 @@ OceanSmoother::OceanSmoother(
       const std::string & mldVariable = vtParam.mldVariable.value();
       auto mld = bkg.field(mldVariable).clone();  // make a copy, because we'll modify it
       diags.add(mld);
-      const auto &v_mld = atlas::array::make_view<double, 2>(mld);
+      auto v_mld = atlas::array::make_view<double, 2>(mld);
 
       // smooth the MLD field by the horizontal scales, if requested
       if (vtParam.mldSmooth.value()) {
@@ -165,6 +165,13 @@ OceanSmoother::OceanSmoother(
         oops::Diffusion hzSmoother(*diffusion_);
         hzSmoother.setParameters(scales);
         hzSmoother.multiply(fset, oops::Diffusion::Mode::HorizontalOnly);
+      }
+
+      // cap max MLD
+      const double mldMax = vtParam.mldMax.value();
+      oops::Log::info() << "  maximum MLD value: " << mldMax << std::endl;
+      for (size_t i = 0; i < mld.shape(0); i++) {
+        v_mld(i, 0) = std::min(v_mld(i, 0), mldMax);
       }
 
       // calculate the fractional number of levels in the MLD

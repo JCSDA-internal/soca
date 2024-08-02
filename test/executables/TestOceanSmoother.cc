@@ -25,9 +25,6 @@ typedef oops::Geometry<soca::Traits> Geometry_;
 typedef oops::Increment<soca::Traits> Increment_;
 typedef oops::State<soca::Traits> State_;
 
-std::shared_ptr<Geometry_> geom;
-std::shared_ptr<soca::OceanSmoother> smoother;
-
 // -----------------------------------------------------------------------------
 
 class OceanSmootherTestParameters : public oops::Parameters {
@@ -42,7 +39,6 @@ class OceanSmootherTestParameters : public oops::Parameters {
   oops::IgnoreOtherParameters ignoreOthers{this};
 };
 
-
 // -----------------------------------------------------------------------------
 
 void testMultiply() {
@@ -50,43 +46,43 @@ void testMultiply() {
   parameters.validateAndDeserialize(TestEnvironment::config());
 
   // read in geometry
-  geom.reset(new Geometry_(parameters.geometry, oops::mpi::world(), oops::mpi::myself()));
+  Geometry_ geom (parameters.geometry, oops::mpi::world(), oops::mpi::myself());
 
   // read in state
-  State_ state(*geom, parameters.state);
-
-  // create smoother
-  EXPECT(geom.get() != nullptr);
-  smoother.reset(new soca::OceanSmoother(geom->generic(), parameters.smoother, 25, state.fieldSet().fieldSet()));
+  State_ state(geom, parameters.state);
 
   // create a random increment
-  oops::Variables vars({oops::Variable("tocn")});
+  const std::string varname = "tocn";
+  oops::Variables vars({oops::Variable(varname)});
   util::DateTime time(20240101,0);
-  Increment_ dx(*geom, vars, time);
+  Increment_ dx(geom, vars, time);
   dx.random();
   oops::Log::test() << "random: " << dx << std::endl;
+  atlas::FieldSet fset = dx.fieldSet().fieldSet();
+
+  // initialize the smoother
+  const int levels = fset.field(varname).shape(1);
+  soca::OceanSmoother smoother(geom.generic(), parameters.smoother, levels, state.fieldSet().fieldSet());
 
   // smooth it and write it out
-  atlas::FieldSet fset = dx.fieldSet().fieldSet();
-  smoother->multiply(fset);
+  smoother.multiply(fset);
   dx.fromFieldSet(fset);
   oops::Log::test() << "smoothed random: " << dx << std::endl;
   dx.write(parameters.output);
 
-  // smoothing a field of ones should result in ones
+  // test that smoothing a field of ones results in ones
   dx.ones();
   fset = dx.fieldSet().fieldSet();
-  smoother->multiply(fset);
+  smoother.multiply(fset);
   dx.fromFieldSet(fset);
   oops::Log::test() << "smoothed ones: " << dx << std::endl;
 
-  // smoothing a field of zeros should result in zeros
+  // test that smoothing a field of zeros results in zeros
   dx.zero();
   fset = dx.fieldSet().fieldSet();
-  smoother->multiply(fset);
+  smoother.multiply(fset);
   dx.fromFieldSet(fset);
   oops::Log::test() << "smoothed zeros: " << dx << std::endl;
-
 }
 
 // -----------------------------------------------------------------------------
@@ -103,6 +99,9 @@ class OceanSmootherTest : public oops::Test {
 
   void clear() const override {}
 };
+
+// -----------------------------------------------------------------------------
+
 }  // namespace test
 
 // -----------------------------------------------------------------------------

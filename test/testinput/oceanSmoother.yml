@@ -15,7 +15,9 @@ oceanSmoother:
   # note that all scales here are Gaussian sigmas
   horizontal:
     rossby mult: 3
-    min grid mult: 1.0
+    min grid mult: 2.0
+    max: 300e3
+
   vertical:
     use mld: true
     mld smooth: true
