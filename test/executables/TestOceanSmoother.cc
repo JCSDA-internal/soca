@@ -42,13 +42,6 @@ class OceanSmootherTestParameters : public oops::Parameters {
   oops::IgnoreOtherParameters ignoreOthers{this};
 };
 
-// -----------------------------------------------------------------------------
-
-// void testConstructor() {
-//   OceanSmootherTestParameters parameters;
-//   parameters.validateAndDeserialize(TestEnvironment::config());
-
-// }
 
 // -----------------------------------------------------------------------------
 
@@ -73,7 +66,7 @@ void testMultiply() {
   dx.random();
   oops::Log::test() << "random: " << dx << std::endl;
 
-  // smooth it
+  // smooth it and write it out
   atlas::FieldSet fset = dx.fieldSet().fieldSet();
   smoother->multiply(fset);
   dx.fromFieldSet(fset);
@@ -104,8 +97,6 @@ class OceanSmootherTest : public oops::Test {
 
   void register_tests() const override {
     std::vector<eckit::testing::Test>& ts = eckit::testing::specification();
-    // ts.emplace_back(CASE("soca/OceanSmoother/testConstructor")
-    //                 {testConstructor(); });
     ts.emplace_back(CASE("soca/OceanSmoother/testMultiply")
                     {testMultiply(); });
   }
