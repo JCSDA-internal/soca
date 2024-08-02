@@ -145,6 +145,96 @@
   io name: aice5_h
   property: positive_definite
 
+- name: vice1_h
+  getval name: sea_ice_category_1_volume
+  category: 1
+  categories: 5
+  io file: ice
+  io sup name: vicen_h
+  io name: vice1_h
+  property: positive_definite
+
+- name: vice2_h
+  getval name: sea_ice_category_2_volume
+  category: 2
+  categories: 5
+  io file: ice
+  io sup name: vicen_h
+  io name: vice2_h
+  property: positive_definite
+
+- name: vice3_h
+  getval name: sea_ice_category_3_volume
+  category: 3
+  categories: 5
+  io file: ice
+  io sup name: vicen_h
+  io name: vice3_h
+  property: positive_definite
+
+- name: vice4_h
+  getval name: sea_ice_category_4_volume
+  category: 4
+  categories: 5
+  io file: ice
+  io sup name: vicen_h
+  io name: vice4_h
+  property: positive_definite
+
+- name: vice5_h
+  getval name: sea_ice_category_5_volume
+  category: 5
+  categories: 5
+  io file: ice
+  io sup name: vicen_h
+  io name: vice5_h
+  property: positive_definite
+
+- name: vsno1_h
+  getval name: snow_category_1_volume
+  category: 1
+  categories: 5
+  io file: ice
+  io sup name: vsnon_h
+  io name: vsno1_h
+  property: positive_definite
+
+- name: vsno2_h
+  getval name: snow_category_2_volume
+  category: 2
+  categories: 5
+  io file: ice
+  io sup name: vsnon_h
+  io name: vsno2_h
+  property: positive_definite
+
+- name: vsno3_h
+  getval name: snow_category_3_volume
+  category: 3
+  categories: 5
+  io file: ice
+  io sup name: vsnon_h
+  io name: vsno3_h
+  property: positive_definite
+
+- name: vsno4_h
+  getval name: snow_category_4_volume
+  category: 4
+  categories: 5
+  io file: ice
+  io sup name: vsnon_h
+  io name: vsno4_h
+  property: positive_definite
+
+- name: vsno5_h
+  getval name: snow_category_5_volume
+  category: 5
+  categories: 5
+  io file: ice
+  io sup name: vsnon_h
+  io name: vsno5_h
+  property: positive_definite
+
 # --------------------------------------------------------------------------------------------------
 # wave state variables
 # --------------------------------------------------------------------------------------------------

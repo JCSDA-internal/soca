@@ -170,6 +170,7 @@ contains
 
   !> \copybrief soca_fields_read \see soca_fields_read
   procedure :: read      => soca_fields_read
+  procedure, private :: read_seaice => soca_fields_read_seaice
 
   !> \copybrief soca_fields_write_file \see soca_fields_write_file
   procedure :: write_file=> soca_fields_write_file
@@ -689,17 +690,7 @@ subroutine soca_fields_read(self, f_conf, vdate)
   real(kind=kind_real), allocatable :: h_common_ij(:), hocn_ij(:), varocn_ij(:), varocn2_ij(:)
   logical :: read_sfc, read_ice, read_wav, read_bio
   type(soca_field), pointer :: field, field2, hocn, mld, layer_depth
-  real(kind=kind_real), allocatable :: tmp3d(:,:,:,:)     !< temporary array for fieds with category dimension
-  real(kind=kind_real), allocatable :: tmp4d(:,:,:,:,:)   !< temporary array for fields with category and layer dimensions
-  integer :: cnt_tmp3d  !< counter for the number of fields in tmp3d
-  logical, allocatable :: is_cat(:)  !< indices of fields with the category dimension only
-  integer :: cnt_tmp4d  !< counter for the number of fields in tmp4d
-  logical, allocatable :: is_cat_lev(:)  !< indices of fields with the category and level dimensions
-  integer :: ncat, ice_levels
-  type(oops_variables) :: ice_cat_vars
-  type(oops_variables) :: unique_ice_cat_vars
   type(oops_variables) :: seaice_categories_vars
-  type(oops_variables) :: seaice_categories_levels_vars
 
   if ( f_conf%has("read_from_file") ) &
       call f_conf%get_or_die("read_from_file", iread)
@@ -787,57 +778,10 @@ subroutine soca_fields_read(self, f_conf, vdate)
 
     call fms_io_init()
 
-    ! handle special case of multiple fields with category and layer dimensions
-    ! count the number of fields with category dimension
-    allocate(is_cat(size(self%fields)))
-    is_cat = .false.
-    allocate(is_cat_lev(size(self%fields)))
-    is_cat_lev = .false.
-    cnt_tmp3d = 0
-    ice_cat_vars = oops_variables()
-    unique_ice_cat_vars = oops_variables()
-    do i=1,size(self%fields)
-      if (self%fields(i)%metadata%categories > 0 .and. self%fields(i)%metadata%seaice_levels < 0) then
-        cnt_tmp3d = cnt_tmp3d + 1
-        ncat = self%fields(i)%metadata%categories
-        is_cat(i) = .true.
-        if ( ice_cat_vars%has(self%fields(i)%metadata%io_sup_name) ) then
-          continue
-        else
-          call ice_cat_vars%push_back(self%fields(i)%metadata%io_sup_name)
-        end if
-        print *,"io sup name ", ice_cat_vars%varlist()
-      end if
-    end do
-    print *,"cnt_tmp3d ", cnt_tmp3d
-    if (cnt_tmp3d > 0) then
-      allocate(tmp3d(isd:ied,jsd:jed,ncat,cnt_tmp3d))
-      tmp3d = 0.0_kind_real
-    end if
-
-    ! count the number of fields with category and layer dimensions
-    cnt_tmp4d = 0
-    do i=1,size(self%fields)
-      if (self%fields(i)%metadata%categories > 0 .and. self%fields(i)%metadata%seaice_levels > 1) then
-        cnt_tmp4d = cnt_tmp4d + 1
-        ice_levels = self%fields(i)%metadata%seaice_levels
-      end if
-    end do
-    print *,"cnt_tmp4d ", cnt_tmp4d
-    if (cnt_tmp4d > 0) then
-      allocate(tmp4d(isd:ied,jsd:jed,self%fields(i)%metadata%categories,self%fields(i)%metadata%seaice_levels,cnt_tmp4d))
-      tmp4d = 0.0_kind_real
-    end if
-
-    ! reset counters
-    cnt_tmp3d = 0
-    cnt_tmp4d = 0
-
+    seaice_categories_vars = oops_variables()
     ! built-in variables
     do i=1,size(self%fields)
-      print *,"=========================================== var name", self%fields(i)%name
-      print *,"-------- reading ", self%fields(i)%metadata%io_name
-      print *,"---------shape ", shape(self%fields(i)%val(:,:,:))
+
       if(self%fields(i)%metadata%io_file == "CONSTANT") then
         self%fields(i)%val(:,:,:) = self%fields(i)%metadata%constant_value
 
@@ -868,35 +812,22 @@ subroutine soca_fields_read(self, f_conf, vdate)
           call abor1_ftn('read_file(): illegal io_file: '//self%fields(i)%metadata%io_file)
         end select
 
+        ! check if the field has a category dimension and skip if it does
+        if (self%fields(i)%metadata%categories > 0 ) then
+          call seaice_categories_vars%push_back(self%fields(i)%name)
+          cycle
+        end if
+
         ! setup to read
-        if (.not. is_cat(i) .and. .not. is_cat_lev(i)) then
-          if (self%fields(i)%nz == 1) then
-            idr = register_restart_field(restart, filename, self%fields(i)%metadata%io_name, &
-                self%fields(i)%val(:,:,1), domain=self%geom%Domain%mpp_domain)
-          else
-            idr = register_restart_field(restart, filename, self%fields(i)%metadata%io_name, &
-                self%fields(i)%val(:,:,:), domain=self%geom%Domain%mpp_domain)
-          end if
+        if (self%fields(i)%nz == 1) then
+          idr = register_restart_field(restart, filename, self%fields(i)%metadata%io_name, &
+              self%fields(i)%val(:,:,1), domain=self%geom%Domain%mpp_domain)
+        else
+          idr = register_restart_field(restart, filename, self%fields(i)%metadata%io_name, &
+              self%fields(i)%val(:,:,:), domain=self%geom%Domain%mpp_domain)
         end if
-        if (is_cat(i)) then
-          ! handle fields with category dimension
-          if ( unique_ice_cat_vars%has(self%fields(i)%metadata%io_sup_name) ) then
-            continue
-          else
-            call unique_ice_cat_vars%push_back(self%fields(i)%metadata%io_sup_name)
-            cnt_tmp3d = cnt_tmp3d + 1
-            print *, "shape of tmp3d ", shape(tmp3d)
-            print*, " cnt_tmp3d ", cnt_tmp3d
-            idr = register_restart_field(restart, filename, self%fields(i)%metadata%io_sup_name, &
-                 tmp3d(:,:,:,cnt_tmp3d), domain=self%geom%Domain%mpp_domain)
-          end if
-        end if
-        if (is_cat_lev(i)) then
-          ! handle fields with category and level dimensions
-          ! TODO: add your code here
-        end if
-      end if  ! end of if(self%fields(i)%metadata%io_file /= "")
-    end do  ! end of do i=1,size(self%fields)
+      end if
+    end do
 
     call restore_state(ocean_restart, directory='')
     call free_restart_type(ocean_restart)
@@ -907,13 +838,6 @@ subroutine soca_fields_read(self, f_conf, vdate)
     if (read_ice) then
       call restore_state(ice_restart, directory='')
       call free_restart_type(ice_restart)
-      ! restore the categories
-      cnt_tmp3d = 1
-      do i = 1, size(self%fields)
-        if ( is_cat(i) ) then
-          self%fields(i)%val(:,:,1) = tmp3d(:,:,self%fields(i)%metadata%category,cnt_tmp3d)
-        end if
-      end do
     end if
     if (read_wav) then
       call restore_state(wav_restart, directory='')
@@ -925,6 +849,11 @@ subroutine soca_fields_read(self, f_conf, vdate)
     end if
 
     call fms_io_exit()
+
+    ! read sea ice variables with categoriy and/or levels dimensions
+    if (seaice_categories_vars%nvars() > 0) then
+      call self%read_seaice(ice_filename, seaice_categories_vars)
+    end if
 
     ! Change masked values
     do n=1,size(self%fields)
@@ -1029,6 +958,59 @@ subroutine soca_fields_read(self, f_conf, vdate)
   end if
 
 end subroutine soca_fields_read
+
+subroutine soca_fields_read_seaice(self, filename, seaice_categories_vars)
+  class(soca_fields), intent(inout) :: self
+  character(800), intent(in) :: filename  !TODO: there's probably a better way to do this
+  type(oops_variables), intent(in) :: seaice_categories_vars
+
+  type(oops_variables) :: cice_vars, tmp_vars
+  type(restart_file_type) :: restart
+
+  integer :: i, ncat, idr, cnt, io_index
+  real(kind=kind_real), allocatable :: tmp3d(:,:,:,:)
+
+  ! check what cice variables with category dimesnion need to be read
+  cice_vars = oops_variables()  ! used to store the unique cice io variables
+  do i=1,size(self%fields)
+    if (self%fields(i)%metadata%io_file == "ice") then
+      if ( cice_vars%has(self%fields(i)%metadata%io_sup_name) ) then
+        continue
+      else
+        if (self%fields(i)%metadata%seaice_levels < 0 .and. self%fields(i)%metadata%categories > 0) then
+          call cice_vars%push_back(self%fields(i)%metadata%io_sup_name)
+        end if
+        ncat = self%fields(i)%metadata%categories
+      end if
+    end if
+  end do
+
+  ! read the cice variables
+  allocate(tmp3d(self%geom%isd:self%geom%ied,self%geom%jsd:self%geom%jed,ncat,cice_vars%nvars()))
+  tmp3d = 0.0_kind_real
+  call fms_io_init()
+  do i=1,cice_vars%nvars()
+    idr = register_restart_field(restart, filename, cice_vars%variable(i), &
+                       tmp3d(:,:,:,i), domain=self%geom%Domain%mpp_domain)
+  end do
+  call restore_state(restart, directory='')
+  call free_restart_type(restart)
+  call fms_io_exit()
+
+  ! copy the variable into the corresponding field
+  cnt = 1
+  do i = 1, size(self%fields)
+    if (self%fields(i)%metadata%io_file == "ice" .and.&
+       &self%fields(i)%metadata%seaice_levels < 0 .and.&
+       &self%fields(i)%metadata%categories > 0) then
+
+      ! get the index of cice_vars that correspond to the io_sup_name
+      io_index = cice_vars%find(self%fields(i)%metadata%io_sup_name)
+      self%fields(i)%val(:,:,1) = tmp3d(:,:,self%fields(i)%metadata%category,io_index)
+    end if
+  end do
+
+end subroutine soca_fields_read_seaice
 
 ! ------------------------------------------------------------------------------
 !> Make sure two sets of fields are the same shape (same variables, same resolution)
