@@ -7,14 +7,16 @@ import netCDF4 as nc
 import numpy as np
 import argparse
 
-parser = argparse.ArgumentParser()
-parser.add_argument('inputFilename', type=str, help='The input file name')
-parser.add_argument('outputFilename', type=str, help='The output file name')
-args = parser.parse_args()
+# get command line arguments
+parser = argparse.ArgumentParser(description='Tool to convert from the ATLAS unstructured output to the same grid used by SOCA/MOM6.')
+parser.add_argument('input_file', help='Input file name')
+parser.add_argument('output_file', help='Output file name')
+parser.add_argument('-g', '--output_grid', default='soca_gridspec.nc', help='Output grid file name')
 
-outputGrid = "../gridgen/soca_gridspec.72x35x25.nc"
-inputFileName = args.inputFilename
-outputFileName = args.outputFilename
+args = parser.parse_args()
+outputGrid = args.output_grid
+inputFileName = args.input_file
+outputFileName = args.output_file
 
 # get destination grid coordinates
 with nc.Dataset(outputGrid, 'r') as ncd:
