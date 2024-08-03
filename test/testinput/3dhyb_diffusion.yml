@@ -25,24 +25,18 @@ cost function:
     - covariance:
         covariance model: SABER
         saber central block:
-          saber block name: EXPLICIT_DIFFUSION
-          active variables: [cicen, hicen, hsnon, tocn, socn, ssh]
-          geometry: *geom
-          group mapping:
-          - name: group1
-            variables: [tocn, socn, cicen, hicen, hsnon]
-          - name: group2
-            variables: [ssh]
+          saber block name: diffusion
           read:
             groups:
-            - name: group1
+            - variables: [tocn, socn, cicen, hicen, hsnon]
               horizontal:
-                filename: data_generated/parameters_diffusion/hz_smaller.nc
+                filepath: data_generated/parameters_diffusion/hz_smaller
               vertical:
-                filename: data_generated/parameters_diffusion/vt_5lvls.nc
-            - name: group2
+                levels: 25
+                filepath: data_generated/parameters_diffusion/vt_5lvls
+            - variables: [ssh]
               horizontal:
-                filename: data_generated/parameters_diffusion/hz_smaller.nc
+                filepath: data_generated/parameters_diffusion/hz_smaller
 
         saber outer blocks:
         - saber block name: SOCABkgErrFilt
@@ -110,18 +104,13 @@ cost function:
         localization:
           localization method: SABER
           saber central block:
-            saber block name: EXPLICIT_DIFFUSION
-            active variables: [tocn, socn, ssh, cicen, hicen, hsnon, uocn, vocn]
-            geometry: *geom
-            group mapping:
-            - name: group1
-              variables: [tocn, socn, ssh, cicen, hicen, hsnon, uocn, vocn]
+            saber block name: diffusion
             read:
               groups:
-              - name: group1
+              - variables: [tocn, socn, ssh, cicen, hicen, hsnon, uocn, vocn]
                 multivariate strategy: duplicated
                 horizontal:
-                  filename: data_generated/parameters_diffusion/hz_smaller.nc
+                  filepath: data_generated/parameters_diffusion/hz_smaller
                 vertical:
                   strategy: duplicated
 

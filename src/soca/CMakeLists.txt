@@ -54,7 +54,6 @@ endif()
 # Add source code in the subdirectories
 add_subdirectory(AnalyticInit)
 add_subdirectory(Covariance)
-add_subdirectory(ExplicitDiffusion)
 add_subdirectory(Fields)
 add_subdirectory(Geometry)
 add_subdirectory(GeometryIterator)

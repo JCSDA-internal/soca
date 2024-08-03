@@ -25,22 +25,15 @@ cost function:
     - covariance:
         covariance model: SABER
         saber central block:
-          saber block name: EXPLICIT_DIFFUSION
-          active variables: [cicen, hicen, hsnon, tocn, socn, ssh, uocn, vocn]
-          geometry: *geom
-          group mapping:
-          - name: group1
-            variables: [tocn, socn, cicen, hicen, hsnon, uocn, vocn, ssh]
+          saber block name: diffusion
           read:
             groups:
-            - name: group1
+            - variables: [tocn, socn, cicen, hicen, hsnon, uocn, vocn, ssh]
               horizontal:
-                filename: data_generated/parameters_diffusion/hz_smaller.nc
+                filepath: data_generated/parameters_diffusion/hz_smaller
               vertical:
-                filename: data_generated/parameters_diffusion/vt_5lvls.nc
-            - name: group2
-              horizontal:
-                filename: data_generated/parameters_diffusion/hz_smaller.nc
+                levels: 25
+                filepath: data_generated/parameters_diffusion/vt_5lvls
 
         saber outer blocks:
         - saber block name: SOCABkgErrFilt
