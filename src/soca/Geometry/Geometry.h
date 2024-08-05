@@ -22,6 +22,7 @@
 #include "eckit/config/LocalConfiguration.h"
 #include "eckit/mpi/Comm.h"
 
+#include "soca/Fields/FieldsMetadata.h"
 #include "soca/Fortran.h"
 #include "soca/Geometry/FmsInput.h"
 #include "soca/Geometry/GeometryFortran.h"
@@ -72,6 +73,9 @@ namespace soca {
       const atlas::FieldSet & fields() const {return fields_;}
       atlas::FieldSet & fields() {return fields_;}
 
+      const FieldMetadata & fieldMetadata(const std::string & name) const {
+        return (*fieldsMetadata_)[name];}
+
    private:
       Geometry(const Geometry &);
       void mask(std::vector<double> &, const bool, const char) const;
@@ -82,6 +86,7 @@ namespace soca {
       const eckit::mpi::Comm & comm_;
       FmsInput fmsinput_;
       atlas::functionspace::NodeColumns functionSpace_;
+      std::shared_ptr<FieldsMetadata> fieldsMetadata_;
       atlas::FieldSet fields_;
       int iteratorDimensions_;
   };

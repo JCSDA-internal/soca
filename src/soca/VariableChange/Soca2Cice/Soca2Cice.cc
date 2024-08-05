@@ -5,6 +5,8 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
+#include "oops/util/Timer.h"
+
 #include "soca/VariableChange/Soca2Cice/Soca2Cice.h"
 #include "soca/VariableChange/Soca2Cice/Soca2CiceFortran.h"
 
@@ -21,6 +23,8 @@ Soca2Cice::Soca2Cice(const Geometry & geom,
                              const eckit::Configuration & conf)
   : geom_(geom)
 {
+  util::Timer timer("soca::Soca2Cice", "Soca2Cice");
+
   const eckit::Configuration * soca2ciceconfig = &conf;
   soca_soca2cice_setup_f90(keySoca2Cice_,
                            &soca2ciceconfig,
@@ -35,6 +39,8 @@ Soca2Cice::~Soca2Cice() {}
 
 void Soca2Cice::changeVar(const State & xin, State & xout) const
 {
+  util::Timer timer("soca::Soca2Cice", "changeVar");
+
   xout = xin;
   soca_soca2cice_changevar_f90(keySoca2Cice_, geom_.toFortran(),
                                xin.toFortran(), xout.toFortran());
@@ -43,6 +49,7 @@ void Soca2Cice::changeVar(const State & xin, State & xout) const
 // -----------------------------------------------------------------------------
 
 void Soca2Cice::changeVarInverse(const State &, State &) const {
+  util::Timer timer("soca::Soca2Cice", "changeVarInverse");
 }
 
 // -----------------------------------------------------------------------------
