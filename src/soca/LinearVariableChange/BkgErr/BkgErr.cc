@@ -12,6 +12,7 @@
 
 #include "oops/base/Variables.h"
 #include "oops/util/Logger.h"
+#include "oops/util/Timer.h"
 
 #include "soca/Geometry/Geometry.h"
 #include "soca/Increment/Increment.h"
@@ -34,6 +35,7 @@ namespace soca {
                  const State & traj,
                  const Geometry & geom,
                  const eckit::Configuration & conf) {
+    util::Timer timer("soca::BkgErr", "BkgErr");
     const eckit::Configuration * configc = &conf;
 
     // Interpolate background to the geom resolution
@@ -47,24 +49,29 @@ namespace soca {
   }
   // -----------------------------------------------------------------------------
   BkgErr::~BkgErr() {
+    util::Timer timer("soca::BkgErr", "~BkgErr");
     soca_bkgerr_delete_f90(keyFtnConfig_);
   }
   // -----------------------------------------------------------------------------
   void BkgErr::multiply(const Increment & dxa, Increment & dxm) const {
+    util::Timer timer("soca::BkgErr", "multiply");
     // dxm = K dxa
     soca_bkgerr_mult_f90(keyFtnConfig_, dxa.toFortran(), dxm.toFortran());
   }
   // -----------------------------------------------------------------------------
   void BkgErr::multiplyInverse(const Increment & dxm, Increment & dxa) const {
+    util::Timer timer("soca::BkgErr", "multiply");
     dxa = dxm;
   }
   // -----------------------------------------------------------------------------
   void BkgErr::multiplyAD(const Increment & dxm, Increment & dxa) const {
+    util::Timer timer("soca::BkgErr", "multiplyAD");
     // dxa = K^T dxm
     soca_bkgerr_mult_f90(keyFtnConfig_, dxm.toFortran(), dxa.toFortran());
   }
   // -----------------------------------------------------------------------------
   void BkgErr::multiplyInverseAD(const Increment & dxa, Increment & dxm) const {
+    util::Timer timer("soca::BkgErr", "multiplyInverseAD");
     dxm = dxa;
   }
   // -----------------------------------------------------------------------------

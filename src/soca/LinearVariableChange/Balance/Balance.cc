@@ -11,6 +11,7 @@
 #include "eckit/config/Configuration.h"
 
 #include "oops/util/Logger.h"
+#include "oops/util/Timer.h"
 
 #include "soca/Geometry/Geometry.h"
 #include "soca/Increment/Increment.h"
@@ -34,6 +35,8 @@ namespace soca {
                    const Geometry & geom,
                    const eckit::Configuration & conf) {
     oops::Log::trace() << "soca::Balance::setup " << std::endl;
+    util::Timer timer("soca::Balance", "Balance");
+
     const eckit::Configuration * configc = &conf;
 
     // Interpolate trajectory to the geom resolution
@@ -54,18 +57,21 @@ namespace soca {
   void Balance::multiply(const Increment & dxa, Increment & dxm) const {
     // dxm = K dxa
     oops::Log::trace() << "soca::Balance::multiply " << std::endl;
+    util::Timer timer("soca::Balance", "multiply");
     soca_balance_mult_f90(keyFtnConfig_, dxa.toFortran(), dxm.toFortran());
   }
   // -----------------------------------------------------------------------------
   void Balance::multiplyInverse(const Increment & dxm, Increment & dxa) const {
     // dxa = K^-1 dxm
     oops::Log::trace() << "soca::Balance::multiplyInverse " << std::endl;
+    util::Timer timer("soca::Balance", "multiplyInverse");
     soca_balance_multinv_f90(keyFtnConfig_, dxm.toFortran(), dxa.toFortran());
   }
   // -----------------------------------------------------------------------------
   void Balance::multiplyAD(const Increment & dxm, Increment & dxa) const {
     // dxa = K^T dxm
     oops::Log::trace() << "soca::Balance::multiplyAD " << std::endl;
+    util::Timer timer("soca::Balance", "multiplyAD");
     soca_balance_multad_f90(keyFtnConfig_, dxm.toFortran(), dxa.toFortran());
   }
   // -----------------------------------------------------------------------------
@@ -73,6 +79,7 @@ namespace soca {
                                   Increment & dxm) const {
     // dxm = (K^-1)^T dxa
     oops::Log::trace() << "soca::Balance::multiplyInverseAD " << std::endl;
+    util::Timer timer("soca::Balance", "multiplyInverseAD");
     soca_balance_multinvad_f90(keyFtnConfig_, dxa.toFortran(), dxm.toFortran());
   }
   // -----------------------------------------------------------------------------
