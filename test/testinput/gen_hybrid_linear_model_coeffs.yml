@@ -14,7 +14,7 @@ hybrid linear model:
   variables: [socn, tocn]
   coefficients:
     output:
-      base filepath: data_generated/hybrid_linear_model_coeffs
+      base filepath: data_output/hybrid_linear_model_coeffs
       one file per task: true
     influence region size: 3
     update variables: [socn, tocn]
@@ -22,8 +22,8 @@ hybrid linear model:
       begin: 2018-04-15T00:00:00Z
       length: PT12H
     calculator:
-      regularization:
-        base value: 1
+      #regularization:
+      #  base value: 0.01
     ensemble:
       model:
         name: PseudoModel
@@ -100,6 +100,6 @@ hybrid linear model:
 
 test:
   variables: [socn, tocn]
-  reference filename: testref/gen_hybrid_linear_model_coeffs_pseudo.test
-  test output filename: testoutput/gen_hybrid_linear_model_coeffs_pseudo.test
+  reference filename: testref/gen_hybrid_linear_model_coeffs.test
+  test output filename: testoutput/gen_hybrid_linear_model_coeffs.test
   float absolute tolerance: 1e-4

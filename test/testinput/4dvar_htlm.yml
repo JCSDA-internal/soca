@@ -95,18 +95,19 @@ cost function:
   observations:
     observers:
     - obs space:
-        name: ADT
+        name: SeaSufaceTemp
         obsdataout:
           engine:
             type: H5File
-            obsfile: data_output/adt.nc
+            obsfile: data_output/sst.nc
         obsdatain:
           engine:
             type: H5File
-            obsfile: data_static/obs/adt.nc
-        simulated variables: [absoluteDynamicTopography]
+            obsfile: data_static/obs/sst.nc
+        simulated variables: [seaSurfaceTemperature]
       obs operator:
-        name: ADT
+        name: Identity
+        observation alias file: testinput/obsop_name_map.yml
       obs error:
         covariance model: diagonal
 
@@ -136,7 +137,7 @@ variational:
           begin: 2018-04-15T00:00:00Z
           length: PT12H
         input:
-          base filepath: data_generated/hybrid_linear_model_coeffs
+          base filepath: data_generated/gen_hybrid_linear_model_coeffs/hybrid_linear_model_coeffs
           one file per task: true
 
 output:
