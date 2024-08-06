@@ -29,6 +29,7 @@ OceanSmoother::OceanSmoother(
 {
   atlas::FieldSet scales;  // The final fields sent to the diffusion operator
   atlas::FieldSet diags;  // Diagnostic fields that are optionally output
+  const auto & v_ghost = atlas::array::make_view<int, 1>(geom_.functionSpace().ghost());
 
   // Create the 3D mask field
   {
@@ -44,10 +45,12 @@ OceanSmoother::OceanSmoother(
       const auto & v_hzMask = atlas::array::make_view<double, 2>(
         geom_.getField(maskParams.maskVariable.value()));
       for (size_t i = 0; i < mask_->shape(0); i++) {
+        if (v_ghost(i)) continue;
         for (size_t level = 0; level < mask_->shape(1); level++) {
           v_mask(i, level) = v_hzMask(i, 0) ? 1.0 : 0.0;
         }
       }
+      mask_->set_dirty();
     }
 
     // mask out vertical layers that are too thin
@@ -56,25 +59,29 @@ OceanSmoother::OceanSmoother(
       const auto & v_thickness = atlas::array::make_view<double, 2>(
         bkg.field(params.thicknessVariable.value()));
       for (size_t i = 0; i < mask_->shape(0); i++) {
+        if (v_ghost(i)) continue;
         for (size_t level = 0; level < mask_->shape(1); level++) {
           if (v_thickness(i, level) < minThickness) {
             v_mask(i, level) = 0.0;
           }
         }
       }
+      mask_->set_dirty();
     }
   }
 
   // helper function to mask the scales later
-  auto maskField = [this, &bkg, &params](atlas::Field &field) {
+  auto maskField = [this, &bkg, &params, &v_ghost](atlas::Field &field) {
     if (mask_) {
       const auto & v_mask = atlas::array::make_view<double, 2>(*mask_);
       auto v_field = atlas::array::make_view<double, 2>(field);
       for (size_t i = 0; i < field.shape(0); i++) {
+        if (v_ghost(i)) continue;
         for (size_t level = 0; level < field.shape(1); level++) {
           v_field(i, level) *= v_mask(i, level);
         }
       }
+      field.set_dirty();
     }
   };
 
@@ -83,6 +90,7 @@ OceanSmoother::OceanSmoother(
     const OceanSmoother::Parameters::Horizontal & hzParam = *params.horizontal.value();
     atlas::Field hzScales = geom.functionSpace().createField<double>(
       atlas::option::name("hzScales") | atlas::option::levels(levels));
+    hzScales->set_dirty();
     auto v_hzScales = atlas::array::make_view<double, 2>(hzScales);
 
     oops::Log::info() << "Ocean Smoother : calculating horizontal scales: " << std::endl;
@@ -99,6 +107,7 @@ OceanSmoother::OceanSmoother(
       const std::string & rossbyVariable = hzParam.rossbyVariable.value();
       const auto &v_rossby = atlas::array::make_view<double, 2>(geom_.getField(rossbyVariable));
       for (size_t i = 0; i < hzScales.shape(0); i++) {
+        if (v_ghost(i)) continue;
         for (size_t level = 0; level < levels; level++) {
           v_hzScales(i, level) += v_rossby(i, level) * rossbyMult;
         }
@@ -111,6 +120,7 @@ OceanSmoother::OceanSmoother(
     if (minGridMult > 0.0) {
       const auto &v_area = atlas::array::make_view<double, 2>(geom_.getField("area"));
       for (size_t i = 0; i < hzScales.shape(0); i++) {
+        if (v_ghost(i)) continue;
         for (size_t level = 0; level < levels; level++) {
           v_hzScales(i, level) = std::max(
             v_hzScales(i, level),
@@ -125,6 +135,7 @@ OceanSmoother::OceanSmoother(
     oops::Log::info() << "  global minimum: " << minVal << std::endl;
     oops::Log::info() << "  global maximum: " << maxVal << std::endl;
     for (size_t i = 0; i < hzScales.shape(0); i++) {
+      if (v_ghost(i)) continue;
       for (size_t level = 0; level < levels; level++) {
         v_hzScales(i, level) = std::clamp(v_hzScales(i, level), minVal, maxVal);
       }
@@ -144,6 +155,7 @@ OceanSmoother::OceanSmoother(
     atlas::Field vtScales = geom.functionSpace().createField<double>(
       atlas::option::name("vtScales") | atlas::option::levels(levels));
     auto v_vtScales = atlas::array::make_view<double, 2>(vtScales);
+    vtScales.set_dirty();
     v_vtScales.assign(0.0);
 
     oops::Log::info() << "Ocean Smoother : calculating vertical scales: " << std::endl;
@@ -171,6 +183,7 @@ OceanSmoother::OceanSmoother(
       const double mldMax = vtParam.mldMax.value();
       oops::Log::info() << "  maximum MLD value: " << mldMax << std::endl;
       for (size_t i = 0; i < mld.shape(0); i++) {
+        if (v_ghost(i)) continue;
         v_mld(i, 0) = std::min(v_mld(i, 0), mldMax);
       }
 
@@ -184,10 +197,8 @@ OceanSmoother::OceanSmoother(
       auto v_mldLevels = atlas::array::make_view<double, 2>(mldLevels);
       v_mldLevels.assign(0.0);
       for (size_t i = 0; i < mldLevels.shape(0); i++) {
-        // skip land points
-        if (v_mask(i, 0) == 0.0) {
-          continue;
-        }
+        if (v_ghost(i)) continue;
+        if (v_mask(i, 0) == 0.0) continue;  // skip land points
 
         // find the last level in the MLD, the depth at that level, and the depth of the next level
         double depth = 0.0;
@@ -206,8 +217,10 @@ OceanSmoother::OceanSmoother(
         // what percentage of next level to add. Note, we clamp to [0,1] because
         // the MLD could be deeper than the last level due to the earlier
         // smoothing of MLD
-        double frac = (v_mld(i, 0) - depth) /(depth_p1 - depth);
-        frac = std::clamp(frac, 0.0, 1.0);
+        double frac = 1.0;
+        if (depth_p1 > depth) {
+          frac = std::clamp((v_mld(i, 0) - depth) /(depth_p1 - depth), 0.0, 1.0);
+        }
 
         // final
         v_mldLevels(i, 0) = mldLevel + frac;
@@ -215,6 +228,7 @@ OceanSmoother::OceanSmoother(
 
       // calculate the vertical scales based on the MLD
       for (size_t i = 0; i < vtScales.shape(0); i++) {
+        if (v_ghost(i)) continue;
         for (size_t level = 0; level < levels; level++) {
           v_vtScales(i, level) = v_mldLevels(i, 0)-level;
         }
@@ -228,6 +242,7 @@ OceanSmoother::OceanSmoother(
     oops::Log::info() << "  global maximum: " << maxVal << std::endl;
     ASSERT(minVal <= maxVal);
     for (size_t i = 0; i < vtScales.shape(0); i++) {
+      if (v_ghost(i)) continue;
       for (size_t level = 0; level < levels; level++) {
         v_vtScales(i, level) = std::clamp(v_vtScales(i, level), minVal, maxVal);
       }
@@ -265,15 +280,18 @@ void OceanSmoother::multiply(atlas::FieldSet & fields) {
 
   // mask out the fields if requested
   if (mask_) {
+    const auto & v_ghost = atlas::array::make_view<int, 1>(geom_.functionSpace().ghost());
     for (size_t f = 0; f < fields.size(); f++) {
       auto & field = fields[f];
       auto v_field = atlas::array::make_view<double, 2>(field);
       auto v_mask = atlas::array::make_view<double, 2>(*mask_);
       for (size_t i = 0; i < field.shape(0); i++) {
+        if (v_ghost(i)) continue;
         for (size_t level = 0; level < field.shape(1); level++) {
           v_field(i, level) *= v_mask(i, level);
         }
       }
+      field.set_dirty();
     }
   }
 }
