@@ -441,11 +441,8 @@ subroutine soca_fields_init_vars(self, vars)
       select case(self%fields(i)%metadata%levels)
       case ('full_ocn')
         nz = self%geom%nzo
-      case ('1') ! TODO, generalize to work with any number?
-        nz = 1
       case default
-        call abor1_ftn('soca_fields::create(): Illegal levels '//self%fields(i)%metadata%levels// &
-                       ' given for ' // self%fields(i)%name)
+        read(self%fields(i)%metadata%levels, *) nz
       end select
     endif
 
@@ -959,57 +956,133 @@ subroutine soca_fields_read(self, f_conf, vdate)
 
 end subroutine soca_fields_read
 
+! function that populates an empty oop_variable instance with the unige CICE variables
+subroutine get_cice_vars(self, cice_vars, ncat, nlev, cice_vars_type)
+  type(soca_fields), intent(inout) :: self
+  type(oops_variables), intent(in) :: cice_vars
+  integer, intent(out) :: ncat, nlev
+  character(len=5), intent(in) :: cice_vars_type
+
+  integer :: i, levels
+
+  select case (trim(cice_vars_type))
+    case ("dynam")
+      ! get the variables with a category dimension only (dynamic variables)
+      nlev = 1
+      do i=1,size(self%fields)
+        if (self%fields(i)%metadata%io_file == "ice") then
+          if ( cice_vars%has(self%fields(i)%metadata%io_sup_name) ) then
+            continue
+          else
+            if (self%fields(i)%metadata%levels == '1' .and. self%fields(i)%metadata%categories > 0) then
+              call cice_vars%push_back(self%fields(i)%metadata%io_sup_name)
+            end if
+            ncat = self%fields(i)%metadata%categories
+          end if
+        end if
+      end do
+    case ("therm")
+      ! get the variables with category and level dimensions (thermodynamic variables)
+      !read(self%fields(i)%metadata%levels, *) levels
+      !print *, "-------------- levels ", levels
+      do i=1,size(self%fields)
+        if (self%fields(i)%metadata%io_file == "ice") then
+          if ( cice_vars%has(self%fields(i)%metadata%io_sup_name) ) then
+            continue
+          else
+            if (self%fields(i)%nz > 1 .and. self%fields(i)%metadata%categories > 0) then
+              call cice_vars%push_back(self%fields(i)%metadata%io_sup_name)
+            end if
+            ncat = self%fields(i)%metadata%categories
+            nlev = self%fields(i)%nz
+          end if
+        end if
+      end do
+
+    case default
+      ! abort here
+  end select
+
+end subroutine get_cice_vars
+
 subroutine soca_fields_read_seaice(self, filename, seaice_categories_vars)
   class(soca_fields), intent(inout) :: self
   character(800), intent(in) :: filename  !TODO: there's probably a better way to do this
   type(oops_variables), intent(in) :: seaice_categories_vars
 
-  type(oops_variables) :: cice_vars, tmp_vars
+  type(oops_variables) :: cice_vars_cats, cice_vars_cats_levs
   type(restart_file_type) :: restart
 
-  integer :: i, ncat, idr, cnt, io_index
-  real(kind=kind_real), allocatable :: tmp3d(:,:,:,:)
+  integer :: i, ncat, icelevs, idr, cnt, io_index
+  real(kind=kind_real), allocatable :: tmp3d(:,:,:,:), tmp4d(:,:,:,:,:)
 
-  ! check what cice variables with category dimesnion need to be read
-  cice_vars = oops_variables()  ! used to store the unique cice io variables
-  do i=1,size(self%fields)
-    if (self%fields(i)%metadata%io_file == "ice") then
-      if ( cice_vars%has(self%fields(i)%metadata%io_sup_name) ) then
-        continue
-      else
-        if (self%fields(i)%metadata%seaice_levels < 0 .and. self%fields(i)%metadata%categories > 0) then
-          call cice_vars%push_back(self%fields(i)%metadata%io_sup_name)
-        end if
-        ncat = self%fields(i)%metadata%categories
+  ! check what cice variables with category dimension need to be read
+  cice_vars_cats = oops_variables()  ! used to store the unique cice io variables with a category dimension
+  call get_cice_vars(self, cice_vars_cats, ncat, icelevs, "dynam")
+
+  ! read the cice variables with category dimension only
+  if (cice_vars_cats%nvars() > 0) then
+    allocate(tmp3d(self%geom%isd:self%geom%ied,self%geom%jsd:self%geom%jed,ncat,cice_vars_cats%nvars()))
+    tmp3d = 0.0_kind_real
+    call fms_io_init()
+    do i=1,cice_vars_cats%nvars()
+      idr = register_restart_field(restart, filename, cice_vars_cats%variable(i), &
+                         tmp3d(:,:,:,i), domain=self%geom%Domain%mpp_domain)
+    end do
+    call restore_state(restart, directory='')
+    call free_restart_type(restart)
+    call fms_io_exit()
+
+    ! copy the variable into the corresponding field
+    cnt = 1
+    do i = 1, size(self%fields)
+      if (self%fields(i)%metadata%io_file == "ice" .and.&
+         &self%fields(i)%metadata%levels == '1' .and.&
+         &self%fields(i)%metadata%categories > 0) then
+
+        ! get the index of cice_vars that correspond to the io_sup_name
+        io_index = cice_vars_cats%find(self%fields(i)%metadata%io_sup_name)
+        self%fields(i)%val(:,:,1) = tmp3d(:,:,self%fields(i)%metadata%category,io_index)
       end if
-    end if
-  end do
+    end do
+  end if
 
-  ! read the cice variables
-  allocate(tmp3d(self%geom%isd:self%geom%ied,self%geom%jsd:self%geom%jed,ncat,cice_vars%nvars()))
-  tmp3d = 0.0_kind_real
-  call fms_io_init()
-  do i=1,cice_vars%nvars()
-    idr = register_restart_field(restart, filename, cice_vars%variable(i), &
-                       tmp3d(:,:,:,i), domain=self%geom%Domain%mpp_domain)
-  end do
-  call restore_state(restart, directory='')
-  call free_restart_type(restart)
-  call fms_io_exit()
+  ! check what cice variables with category and level dimension need to be read
+  cice_vars_cats_levs = oops_variables()  ! used to store the unique cice io variables with a category dimension
+  call get_cice_vars(self, cice_vars_cats_levs, ncat, icelevs, "therm")
 
-  ! copy the variable into the corresponding field
-  cnt = 1
-  do i = 1, size(self%fields)
-    if (self%fields(i)%metadata%io_file == "ice" .and.&
-       &self%fields(i)%metadata%seaice_levels < 0 .and.&
-       &self%fields(i)%metadata%categories > 0) then
+  print *, "=============================================== "
+  ! read the cice variables with category and level dimensions
+  if (cice_vars_cats_levs%nvars() > 0) then
+    print *, "icelevs ", icelevs
+    print *, "ncat ", ncat
 
-      ! get the index of cice_vars that correspond to the io_sup_name
-      io_index = cice_vars%find(self%fields(i)%metadata%io_sup_name)
-      self%fields(i)%val(:,:,1) = tmp3d(:,:,self%fields(i)%metadata%category,io_index)
-    end if
-  end do
+    allocate(tmp4d(self%geom%isd:self%geom%ied,self%geom%jsd:self%geom%jed,icelevs,&
+    &ncat,cice_vars_cats_levs%nvars()))
+    tmp4d = 0.0_kind_real
+    print *, "shape of tmp4d", shape(tmp4d)
+    call fms_io_init()
+    do i=1,cice_vars_cats_levs%nvars()
+      idr = register_restart_field(restart, filename, cice_vars_cats_levs%variable(i), &
+                         tmp4d(:,:,:,:,i), domain=self%geom%Domain%mpp_domain)
+    end do
+    call restore_state(restart, directory='')
+    call free_restart_type(restart)
+    call fms_io_exit()
 
+    ! copy the variable into the corresponding field
+    cnt = 1
+    do i = 1, size(self%fields)
+      if (self%fields(i)%metadata%io_file == "ice" .and.&
+         &self%fields(i)%nz > 1 .and.&
+         &self%fields(i)%metadata%categories > 0) then
+
+        ! get the index of cice_vars that correspond to the io_sup_name
+        io_index = cice_vars_cats_levs%find(self%fields(i)%metadata%io_sup_name)
+        self%fields(i)%val(:,:,:) = tmp4d(:,:,:,self%fields(i)%metadata%category,io_index)
+      end if
+    end do
+  end if
 end subroutine soca_fields_read_seaice
 
 ! ------------------------------------------------------------------------------

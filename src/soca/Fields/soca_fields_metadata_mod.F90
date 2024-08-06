@@ -31,7 +31,6 @@ type, public :: soca_field_metadata
   character(len=:),  allocatable :: property  !< physical property of the field, "none" or "positive_definite"
   integer                        :: categories  !< number of seaice categories
   integer                        :: category    !< category index of the seaice field
-  integer                        :: seaice_levels  !< number of seaice levels
   real(kind=kind_real)           :: fillvalue
   logical                        :: vert_interp   !< true if the field can be vertically interpolated
   real(kind=kind_real)           :: constant_value !< An optional value to use globally for the field
@@ -124,9 +123,6 @@ subroutine soca_fields_metadata_create(self, filename)
 
     if(.not. conf_list(i)%get("categories", val)) val = -1
     self%metadata(i)%categories = val
-
-    if(.not. conf_list(i)%get("seaice levels", val)) val = -1
-    self%metadata(i)%seaice_levels = val
 
     if(.not. conf_list(i)%get("fill value", val)) val = 0.0
     self%metadata(i)%fillvalue = val

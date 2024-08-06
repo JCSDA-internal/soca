@@ -32,6 +32,22 @@ soca_vars: &soca_vars
   - vsno3_h
   - vsno4_h
   - vsno5_h
+  - ti1z_h
+  - ti2z_h
+  - ti3z_h
+  - ti4z_h
+  - ti5z_h
+  - si1z_h
+  - si2z_h
+  - si3z_h
+  - si4z_h
+  - si5z_h
+  - ts1z_h
+  - ts2z_h
+  - ts3z_h
+  - ts4z_h
+  - ts5z_h
+
 
 cost function:
   cost type: 3D-Var
