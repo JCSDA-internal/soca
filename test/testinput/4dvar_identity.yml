@@ -58,7 +58,7 @@ cost function:
             filename: data_generated/parameters_diffusion/vt_5lvls.nc
 
     saber outer blocks:
-    - saber block name: SOCABkgErrFILT
+    - saber block name: SOCABkgErrFilt
       ocean_depth_min: 1000 # [m]
       rescale_bkgerr: 1.0
       efold_z: 2500.0       # [m]
@@ -131,6 +131,8 @@ output:
   datadir: data_output/
   exp: 4dvar_identity
   type: an
+  first: PT0H
+  frequency: PT6H
 
 final:
   diagnostics:
