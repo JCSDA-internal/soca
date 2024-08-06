@@ -28,24 +28,24 @@ cost function:
   background error:
     covariance model: SABER
     saber central block:
-      saber block name: EXPLICIT_DIFFUSION
-      active variables: [tocn, socn, ssh]
-      geometry: *geom
-      group mapping:
-      - name: group1
-        variables: [tocn, socn]
-      - name: group2
-        variables: [ssh]
+      saber block name: diffusion
       read:
         groups:
-        - name: group1
+        - variables: [tocn, socn]
           horizontal:
-            filename: data_generated/parameters_diffusion/hz_smaller.nc
+            filepath: data_generated/parameters_diffusion/hz_smaller
           vertical:
-            filename: data_generated/parameters_diffusion/vt_5lvls.nc
-        - name: group2
+            levels: 25
+            filepath: data_generated/parameters_diffusion/vt_5lvls
+        - variables: [ssh]
           horizontal:
-            filename: data_generated/parameters_diffusion/hz_smaller.nc
+            filepath: data_generated/parameters_diffusion/hz_smaller
+
+    saber outer blocks:
+    - saber block name: SOCABkgErrFilt
+      ocean_depth_min: 1000 # [m]
+      rescale_bkgerr: 1.0
+      efold_z: 2500.0       # [m]
 
     date: *bkg_date
 
@@ -54,10 +54,6 @@ cost function:
       input variables: *soca_vars
       output variables: *soca_vars
       linear variable changes:
-      - linear variable change name: BkgErrFILT
-        ocean_depth_min: 1000 # [m]
-        rescale_bkgerr: 1.0
-        efold_z: 2500.0       # [m]
 
       - linear variable change name: BkgErrGODAS
         sst_bgerr_file: data_static/godas_sst_bgerr.nc
