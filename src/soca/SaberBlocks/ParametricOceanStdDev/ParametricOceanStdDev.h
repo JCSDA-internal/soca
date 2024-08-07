@@ -14,6 +14,8 @@
 #include "saber/blocks/SaberBlockParametersBase.h"
 #include "saber/blocks/SaberOuterBlockBase.h"
 
+#include "soca/Utils/OceanSmoother.h"
+
 namespace soca
 {
 
@@ -36,6 +38,10 @@ class ParametricOceanStdDev : public saber::SaberOuterBlockBase {
     class Tocn : public Bounds {
       OOPS_CONCRETE_PARAMETERS(Tocn, Bounds)
      public:
+      oops::Parameter<eckit::LocalConfiguration> sst{"sst",
+        eckit::LocalConfiguration().set("fixed value", 1.0), this};
+      oops::Parameter<double> dz{"dz", 20.0, this, {oops::minConstraint(0.0)}};
+      oops::Parameter<double> efold{"efold", 500, this, {oops::minConstraint(0.0)}};
     };
 
     // --------------------------------------------------------------------------------------
@@ -53,10 +59,16 @@ class ParametricOceanStdDev : public saber::SaberOuterBlockBase {
     // --------------------------------------------------------------------------------------
 
     oops::Variables mandatoryActiveVars() const override { return oops::Variables(); }
+    oops::Parameter<std::string> maskVariable{"mask variable",
+      "The name of the geometry variable to use as a 2D horizontal mask",
+      "interp_mask", this};
+    oops::OptionalParameter<OceanSmoother::Parameters> smoother{"smoother", this};
     oops::Parameter<Tocn> tocn{"temperature", Tocn(), this};
     oops::Parameter<Socn> socn{"unbalanced salinity", Socn(), this};
     oops::Parameter<Ssh> ssh{"unbalanced ssh", Ssh(), this};
-
+    oops::OptionalParameter<eckit::LocalConfiguration> saveDiags{"save diagnostics",
+      "If present, save the calculated stddev to the given file",
+      this};
   };
   // ----------------------------------------------------------------------------------------
 
@@ -71,7 +83,7 @@ class ParametricOceanStdDev : public saber::SaberOuterBlockBase {
 
   virtual ~ParametricOceanStdDev() = default;
 
-  const oops::GeometryData & innerGeometryData() const override { return innerGeometryData_; }
+  const oops::GeometryData & innerGeometryData() const override { return geom_; }
   const oops::Variables & innerVars() const override { return innerVars_; }
 
   void multiply(oops::FieldSet3D &) const override;
@@ -81,8 +93,9 @@ class ParametricOceanStdDev : public saber::SaberOuterBlockBase {
  private:
   void print(std::ostream &) const override;
 
-  const oops::GeometryData & innerGeometryData_;
+  const oops::GeometryData & geom_;
   oops::Variables innerVars_;
+  atlas::FieldSet bkgErr_;
 };
 
 } // namespace soca
