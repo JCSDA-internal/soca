@@ -98,6 +98,7 @@ set( soca_test_ref
   testref/3dvar_single_ob.test
   testref/3dvar_zero_ob.test
   testref/3dvar.test
+  testref/3dvar_moreice.test
   testref/3dvarfgat_pseudo.test
   testref/3dvarlowres_soca.test
   testref/4denvar.test

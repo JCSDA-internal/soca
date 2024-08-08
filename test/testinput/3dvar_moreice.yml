@@ -5,7 +5,7 @@ _: &land_mask
   - variable: {name: GeoVaLs/sea_area_fraction}
     minvalue: 0.5
 
-soca_vars: &soca_vars
+soca_vars_state: &soca_vars_state
   - socn
   - tocn
   - uocn
@@ -48,13 +48,20 @@ soca_vars: &soca_vars
   - ts4z_h
   - ts5z_h
 
+soca_vars_control: &soca_vars_control
+  - socn
+  - tocn
+  - uocn
+  - vocn
+  - ssh
+  - cicen
 
 cost function:
   cost type: 3D-Var
   time window:
     begin: 2018-04-14T00:00:00Z
     length: P2D
-  analysis variables: *soca_vars
+  analysis variables: *soca_vars_control
   geometry: &geom
     geom_grid_file: data_generated/gridgen/soca_gridspec.72x35x25.nc
     mom6_input_nml: data_static/72x35x25/input.nml
@@ -62,12 +69,12 @@ cost function:
 
   background:
     read_from_file: 1
-    basename: /home/gvernier/data/bkg/
-    ocn_filename: gdas.ocean.t12z.inst.f006.nc
+    basename: data_static/72x35x25/restarts/
+    ocn_filename: MOM.res.nc
     ice_filename: gdas.ice.t12z.inst.f006.nc
     state variables:
     date: &bkg_date 2018-04-15T00:00:00Z
-    state variables: *soca_vars
+    state variables: *soca_vars_state
 
   background error:
     covariance model: SABER
@@ -95,8 +102,8 @@ cost function:
 
 
     linear variable change:
-      input variables: *soca_vars
-      output variables: *soca_vars
+      input variables: *soca_vars_control
+      output variables: *soca_vars_control
       linear variable changes:
       - linear variable change name: BkgErrFILT
         ocean_depth_min: 1000 # [m]
@@ -157,12 +164,12 @@ variational:
         state component:
           datadir: data_output
           date: *bkg_date
-          exp: 3dvar.iter1
+          exp: 3dvar_moreice.iter1
           type: incr
 
 output:
   datadir: data_output
-  exp: 3dvar
+  exp: 3dvar_moreice
   type: an
 
 final:
@@ -170,6 +177,6 @@ final:
     departures: oman
 
 test:
-  reference filename: testref/3dvar.test
-  test output filename: testoutput/3dvar.test
+  reference filename: testref/3dvar_moreice.test
+  test output filename: testoutput/3dvar_moreice.test
   float relative tolerance: 2e-4

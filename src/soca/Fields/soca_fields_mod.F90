@@ -19,6 +19,7 @@ use datetime_mod, only: datetime, datetime_set, datetime_to_string, datetime_to_
 use duration_mod, only: duration, duration_to_string
 use fckit_configuration_module, only: fckit_configuration
 use logger_mod
+use netcdf
 use fckit_mpi_module, only: fckit_mpi_min, fckit_mpi_max, fckit_mpi_sum
 use kinds, only: kind_real
 use oops_variables_mod, only: oops_variables
@@ -685,7 +686,7 @@ subroutine soca_fields_read(self, f_conf, vdate)
   type(remapping_CS)  :: remapCS
   character(len=:), allocatable :: str
   real(kind=kind_real), allocatable :: h_common_ij(:), hocn_ij(:), varocn_ij(:), varocn2_ij(:)
-  logical :: read_sfc, read_ice, read_wav, read_bio
+  logical :: read_sfc, read_ice, read_wav, read_bio, soca_io
   type(soca_field), pointer :: field, field2, hocn, mld, layer_depth
   type(oops_variables) :: seaice_categories_vars
 
@@ -811,6 +812,14 @@ subroutine soca_fields_read(self, f_conf, vdate)
 
         ! check if the field has a category dimension and skip if it does
         if (self%fields(i)%metadata%categories > 0 ) then
+          ! check if the file was constructed by soca or comes from the CICE history
+          ! The CICE history aggregates the category and level in 1 array
+          ! The SOCA io considers categories to be separate variables and will index the naming
+          soca_io = does_variable_exist(self, filename, self%fields(i)%metadata%io_name)
+          if (.not. soca_io) continue
+
+          ! if we're here, the file is coming from the CICE history IO and needs to be
+          ! read differently
           call seaice_categories_vars%push_back(self%fields(i)%name)
           cycle
         end if
@@ -956,7 +965,7 @@ subroutine soca_fields_read(self, f_conf, vdate)
 
 end subroutine soca_fields_read
 
-! function that populates an empty oop_variable instance with the unige CICE variables
+! Populate an empty oop_variable instance with the unique CICE variables
 subroutine get_cice_vars(self, cice_vars, ncat, nlev, cice_vars_type)
   type(soca_fields), intent(inout) :: self
   type(oops_variables), intent(in) :: cice_vars
@@ -983,8 +992,6 @@ subroutine get_cice_vars(self, cice_vars, ncat, nlev, cice_vars_type)
       end do
     case ("therm")
       ! get the variables with category and level dimensions (thermodynamic variables)
-      !read(self%fields(i)%metadata%levels, *) levels
-      !print *, "-------------- levels ", levels
       do i=1,size(self%fields)
         if (self%fields(i)%metadata%io_file == "ice") then
           if ( cice_vars%has(self%fields(i)%metadata%io_sup_name) ) then
@@ -1005,6 +1012,41 @@ subroutine get_cice_vars(self, cice_vars, ncat, nlev, cice_vars_type)
 
 end subroutine get_cice_vars
 
+! Function to check if a NetCDF variable exists
+logical function does_variable_exist(self, filename, varname)
+type(soca_fields), intent(in) :: self
+character(len=*), intent(in) :: filename, varname
+integer :: ncid, varid, retval
+
+! Open the NetCDF file
+if ( self%geom%f_comm%rank() == 0 ) then
+  retval = nf90_open(filename, nf90_nowrite, ncid)
+  if (retval /= nf90_noerr) then
+     print *, "Error opening file: ", trim(nf90_strerror(retval))
+     does_variable_exist = .false.
+     return
+  end if
+
+  ! Inquire if the variable exists
+  retval = nf90_inq_varid(ncid, trim(varname), varid)
+  if (retval == nf90_noerr) then
+     does_variable_exist = .true.
+  else
+     does_variable_exist = .false.
+  end if
+
+  ! Close the NetCDF file
+  retval = nf90_close(ncid)
+  if (retval /= nf90_noerr) then
+     print *, "Error closing file: ", trim(nf90_strerror(retval))
+  end if
+end if
+
+! Broadcast to all PE's
+call self%geom%f_comm%broadcast(retval, 0)
+
+end function does_variable_exist
+
 subroutine soca_fields_read_seaice(self, filename, seaice_categories_vars)
   class(soca_fields), intent(inout) :: self
   character(800), intent(in) :: filename  !TODO: there's probably a better way to do this
@@ -1013,7 +1055,7 @@ subroutine soca_fields_read_seaice(self, filename, seaice_categories_vars)
   type(oops_variables) :: cice_vars_cats, cice_vars_cats_levs
   type(restart_file_type) :: restart
 
-  integer :: i, ncat, icelevs, idr, cnt, io_index
+  integer :: i, ncat, icelevs, snowlevs, idr, cnt, io_index
   real(kind=kind_real), allocatable :: tmp3d(:,:,:,:), tmp4d(:,:,:,:,:)
 
   ! check what cice variables with category dimension need to be read
@@ -1048,10 +1090,9 @@ subroutine soca_fields_read_seaice(self, filename, seaice_categories_vars)
   end if
 
   ! check what cice variables with category and level dimension need to be read
-  cice_vars_cats_levs = oops_variables()  ! used to store the unique cice io variables with a category dimension
+  cice_vars_cats_levs = oops_variables()  ! used to store the unique cice io variables with category and level dimensions
   call get_cice_vars(self, cice_vars_cats_levs, ncat, icelevs, "therm")
 
-  print *, "=============================================== "
   ! read the cice variables with category and level dimensions
   if (cice_vars_cats_levs%nvars() > 0) then
     print *, "icelevs ", icelevs
