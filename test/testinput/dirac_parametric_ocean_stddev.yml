@@ -18,18 +18,17 @@ background error:
   saber outer blocks:
   - saber block name: SOCAParametricOceanStdDev
     temperature:
-      min: 0.1
-      max: 2.0
-      dz: 20.0
       sst:
-        # fixed value: 4.0
         filepath: data_static/godas_sst_bgerr.nc
         variable: sst_bgerr
+    unbalanced salinity: {}
+    unbalanced ssh: {}
     smoother:
       horizontal:
         min grid mult: 10
         max: 500e3
-      vertical: {}
+      vertical:
+        use mld: true
       save diagnostics:
         filepath: data_output/smoother_diags
     save diagnostics:

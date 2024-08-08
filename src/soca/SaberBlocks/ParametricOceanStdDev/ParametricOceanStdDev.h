@@ -29,6 +29,10 @@ class ParametricOceanStdDev : public saber::SaberOuterBlockBase {
     class Bounds : public oops::Parameters {
       OOPS_CONCRETE_PARAMETERS(Bounds, oops::Parameters)
      public:
+      // a special constructor to set the default min and max
+      Bounds(double defaultMin, double defaultMax) : oops::Parameters(),
+        min("min", defaultMin, this, {oops::minConstraint(0.0)}),
+        max("max", defaultMax, this, {oops::minConstraint(0.0)}) {}
       oops::Parameter<double> min{"min", 0.0, this, {oops::minConstraint(0.0)}};
       oops::Parameter<double> max{"max", std::numeric_limits<double>::max(),
         this, {oops::minConstraint(0.0)}};
@@ -36,8 +40,9 @@ class ParametricOceanStdDev : public saber::SaberOuterBlockBase {
 
     // --------------------------------------------------------------------------------------
     class Tocn : public Bounds {
-      OOPS_CONCRETE_PARAMETERS(Tocn, Bounds)
+      OOPS_CONCRETE_PARAMETERS_ENABLE_COPY_AND_MOVE(Tocn, Bounds)
      public:
+      Tocn() : Bounds(0.1, 2.0) {}  // set default min and max
       oops::Parameter<eckit::LocalConfiguration> sst{"sst",
         eckit::LocalConfiguration().set("fixed value", 1.0), this};
       oops::Parameter<double> dz{"dz", 20.0, this, {oops::minConstraint(0.0)}};
@@ -45,15 +50,18 @@ class ParametricOceanStdDev : public saber::SaberOuterBlockBase {
     };
 
     // --------------------------------------------------------------------------------------
-    class Socn : public Bounds {
-      OOPS_CONCRETE_PARAMETERS(Socn, Bounds)
+    class Ssh : public Bounds {
+      OOPS_CONCRETE_PARAMETERS_ENABLE_COPY_AND_MOVE(Ssh, Bounds)
      public:
+      Ssh() : Bounds(0.0, 0.1) {}  // set default min and max
+      oops::Parameter<double> phiEx{"phi ex", 20.0, this, {oops::minConstraint(0.0)}};
     };
 
     // --------------------------------------------------------------------------------------
-    class Ssh : public Bounds {
-      OOPS_CONCRETE_PARAMETERS(Ssh, Bounds)
+    class Socn : public Bounds {
+      OOPS_CONCRETE_PARAMETERS_ENABLE_COPY_AND_MOVE(Socn, Bounds)
      public:
+      Socn() : Bounds(0.0, 0.25) {}  // set default min and max
     };
 
     // --------------------------------------------------------------------------------------
