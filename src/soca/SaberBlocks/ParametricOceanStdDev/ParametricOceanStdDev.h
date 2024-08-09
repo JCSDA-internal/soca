@@ -22,6 +22,7 @@ namespace soca
 class ParametricOceanStdDev : public saber::SaberOuterBlockBase {
  public:
   // ----------------------------------------------------------------------------------------
+  // Yaml parameters for ParametricOceanStdDev
   class Parameters : public saber::SaberBlockParametersBase {
     OOPS_CONCRETE_PARAMETERS(Parameters, saber::SaberBlockParametersBase)
    public:
@@ -129,6 +130,7 @@ class ParametricOceanStdDev : public saber::SaberOuterBlockBase {
 
  private:
   void print(std::ostream &) const override;
+  void commonMultiply(oops::FieldSet3D &) const;
 
   const oops::GeometryData & geom_;
   oops::Variables innerVars_;

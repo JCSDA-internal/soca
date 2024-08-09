@@ -297,12 +297,35 @@ ParametricOceanStdDev::ParametricOceanStdDev(
 }
 
 // ----------------------------------------------------------------------------------------
+// The TL and AD multiply are the same, so we can use a common function for
+// both. We could just have multiplyAD() call multiply(), but we want to keep
+// the timings separate.
+void ParametricOceanStdDev::commonMultiply(oops::FieldSet3D &fset) const {
+  const auto & v_ghost = atlas::array::make_view<int, 1>(geom_.functionSpace().ghost());
+
+  for (auto & field : fset) {
+    if (!bkgErr_.has(field.name())) continue;
+
+    auto v_field = atlas::array::make_view<double, 2>(field);
+    const auto & v_err  = atlas::array::make_view<double, 2>(bkgErr_[field.name()]);
+    for (size_t i = 0; i < field.shape(0); i++) {
+      if (v_ghost(i)) continue;  // skip ghost points
+
+      for (size_t z = 0; z < field.shape(1); z++) {
+        v_field(i, z) *= v_err(i, z);
+      }
+    }
+    field.set_dirty();
+  }
+}
+
+// ----------------------------------------------------------------------------------------
 
 void ParametricOceanStdDev::multiply(oops::FieldSet3D &fset) const {
   oops::Log::trace() << "ParametricOceanStdDev::multiply starting" << std::endl;
   util::Timer timer("soca::ParametricOceanStdDev", "multiply");
 
-  // TODO implement this
+  commonMultiply(fset);
 
   oops::Log::trace() << "ParametricOceanStdDev::multiply done" << std::endl;
 }
@@ -313,7 +336,7 @@ void ParametricOceanStdDev::multiplyAD(oops::FieldSet3D & fset) const {
   oops::Log::trace() << "ParametricOceanStdDev::multiplyAD starting" << std::endl;
   util::Timer timer("soca::ParametricOceanStdDev", "multiplyAD");
 
-  // TODO implement this
+  commonMultiply(fset);
 
   oops::Log::trace() << "ParametricOceanStdDev::multiplyAD done" << std::endl;
 }
@@ -324,7 +347,22 @@ void ParametricOceanStdDev::leftInverseMultiply(oops::FieldSet3D &fset) const {
   oops::Log::trace() << "ParametricOceanStdDev::leftInverseMultiply starting" << std::endl;
   util::Timer timer("soca::ParametricOceanStdDev", "leftInverseMultiply");
 
-  // TODO implement this
+  const auto & v_ghost = atlas::array::make_view<int, 1>(geom_.functionSpace().ghost());
+
+  for (auto & field : fset) {
+    if (!bkgErr_.has(field.name())) continue;
+
+    auto v_field = atlas::array::make_view<double, 2>(field);
+    const auto & v_err  = atlas::array::make_view<double, 2>(bkgErr_[field.name()]);
+    for (size_t i = 0; i < field.shape(0); i++) {
+      if (v_ghost(i)) continue;  // skip ghost points
+
+      for (size_t z = 0; z < field.shape(1); z++) {
+        v_field(i, z) /= v_err(i, z);
+      }
+    }
+    field.set_dirty();
+  }
 
   oops::Log::trace() << "ParametricOceanStdDev::leftInverseMultiply done" << std::endl;
 }
