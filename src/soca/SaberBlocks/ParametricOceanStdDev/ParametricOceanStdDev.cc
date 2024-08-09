@@ -32,48 +32,65 @@ ParametricOceanStdDev::ParametricOceanStdDev(
 {
   util::Timer timer("soca::ParametricOceanStdDev", "ParametricOceanStdDev");
 
-  // TODO get rid of hardcoded variable names
-
   // things we'll need for later
   const auto & fs = geom_.functionSpace();
+  const auto & hocn = xb[params.thicknessVariable.value()];
+  const auto & v_hocn = atlas::array::make_view<double, 2>(hocn);
   const auto & v_ghost = atlas::array::make_view<int, 1>(fs.ghost());
   const auto & v_mask = atlas::array::make_view<double, 2>(
     geom_.getField(params.maskVariable.value()));
-  const auto & v_hocn = atlas::array::make_view<double, 2>(xb["hocn"]);
-  const auto & v_depth = atlas::array::make_view<double, 2>(xb["layer_depth"]);
-  const int levels = xb["hocn"].shape(1);
-  const double minLayerThickness = 0.01;
+  const int levels = hocn.shape(1);
   atlas::FieldSet diags;
 
-  // setup the smoother
-  std::unique_ptr<OceanSmoother> smoother3D;
-  if (params.smoother.value()) {
-    oops::Log::info() << "ParametricOceanStdDev: using user-provided smoother" << std::endl;
-    smoother3D = std::make_unique<OceanSmoother>(geom_, *params.smoother.value(), levels, xb.fieldSet());
+  // calc layer depths
+  auto depth = hocn.clone(); depth.rename("layer_depth");
+  auto v_depth = atlas::array::make_view<double, 2>(depth);
+  for (size_t i = 0; i < depth.shape(0); i++) {
+    v_depth(i, 0) = v_hocn(i, 0) / 2.0;
+    for (size_t z = 1; z < levels; z++) {
+      v_depth(i, z) = v_depth(i, z-1) + v_hocn(i, z-1)/2.0 + v_hocn(i, z)/2.0;
+    }
   }
+  diags.add(depth);
+
+  // setup the smoother. If the user provides a smoother, use that, otherwise
+  // create a smoother based on the default parameters for hz and vt smoothing.
+  oops::Log::info() << "ParametricOceanStdDev: using user-provided smoother" << std::endl;
+  eckit::LocalConfiguration smootherConfig;
+  if (params.smoother.value()) {
+    smootherConfig = params.smoother.value()->toConfiguration();
+  } else {
+    smootherConfig.set("horizontal", eckit::LocalConfiguration());
+    smootherConfig.set("vertical", eckit::LocalConfiguration());
+  }
+  OceanSmoother::Parameters smootherParams;
+  smootherParams.deserialize(smootherConfig);
+  OceanSmoother smoother3D(geom_, smootherParams, levels, xb.fieldSet());
+
 
   // --------------------------------------------------------------------------------------------
-  // create temperature error (TODO only if temperature is active)
+  // create temperature error.
   // This is done by calculating the temperature gradient, and then using that
   // to calculate the temperature error as a function of the e-folding scale,
   // and min/max values. The min value at the surface is read in from a file
   // The temperature error is then smoothed.
-  {
+  const auto & tocnParams = params.tocn.value();
+  if (xb.has(tocnParams.varName.value())) {
     oops::Log::info() << "ParametricOceanStdDev: creating temperature error" << std::endl;
-    const auto & tocnParams = params.tocn.value();
-    const auto & tocn = xb["tocn"];
+
+    const auto & tocn = xb[params.tocn.value().varName.value()];
     const auto & v_tocn = atlas::array::make_view<double, 2>(tocn);
     const double minVal = tocnParams.min.value();
     const double maxVal = tocnParams.max.value();
     const double efold = tocnParams.efold.value();
+    const double minLayerThickness = tocnParams.minLayerThickness.value();
 
     // create empty error field
-    atlas::Field tocn_err = tocn.clone();
-    tocn_err.rename("temperature");
-    auto v_tocn_err = atlas::array::make_view<double, 2>(tocn_err);
-    v_tocn_err.assign(0.0);
-    bkgErr_.add(tocn_err);
-    diags.add(tocn_err);
+    atlas::Field tocnErr = tocn.clone();
+    auto v_tocnErr = atlas::array::make_view<double, 2>(tocnErr);
+    v_tocnErr.assign(0.0);
+    bkgErr_.add(tocnErr);
+    diags.add(tocnErr);
 
     // get the sst values
     atlas::Field sstErr;
@@ -106,7 +123,7 @@ ParametricOceanStdDev::ParametricOceanStdDev(
     diags.add(dtdz);
 
     // iterate over all points
-    for (size_t i = 0; i < tocn_err.shape(0); i++) {
+    for (size_t i = 0; i < tocnErr.shape(0); i++) {
       if (v_ghost(i)) continue;  // skip ghost points
       if (v_mask(i, 0) == 0) continue;  // skip land points
 
@@ -133,42 +150,42 @@ ParametricOceanStdDev::ParametricOceanStdDev(
         auto localMin = minVal + (sstVal - minVal) * exp(-v_depth(i,z) / efold );
 
         // step 3: min/max
-        v_tocn_err(i, z) = std::clamp(val, localMin, maxVal);;
+        v_tocnErr(i, z) = std::clamp(val, localMin, maxVal);;
       }
     }
     sstErr.set_dirty();
 
     // smooth the temperature error
-    if (smoother3D) {
-      smoother3D->multiply(tocn_err);
+    if (tocnParams.smooth.value()) {
+      smoother3D.multiply(tocnErr);
     }
   }
 
   // --------------------------------------------------------------------------------------------
-  // create unbalanced salinity error (TODO only if salinity is active)
-  {
+  // create unbalanced salinity error
+  const auto & socnParams = params.socn.value();
+  if (xb.has(socnParams.varName.value())) {
     oops::Log::info() << "ParametricOceanStdDev: creating salinity error" << std::endl;
-    const auto & socnParams = params.socn.value();
+
     const double min = socnParams.min.value();
     const double max = socnParams.max.value();
-    const double maxMld = 400;
+    const double maxMld = socnParams.mldMax.value();
 
     // create empty error field
-    atlas::Field socn_err = fs.createField<double>(atlas::option::levels(levels) |
-                                                   atlas::option::name("unbalanced salinity"));
-    auto v_socn_err = atlas::array::make_view<double, 2>(socn_err);
-    v_socn_err.assign(0.0);
-    bkgErr_.add(socn_err);
-    diags.add(socn_err);
+    atlas::Field socnErr = fs.createField<double>(atlas::option::levels(levels) |
+                                                   atlas::option::name(socnParams.varName.value()));
+    auto v_socnErr = atlas::array::make_view<double, 2>(socnErr);
+    v_socnErr.assign(0.0);
+    bkgErr_.add(socnErr);
+    diags.add(socnErr);
 
     // find the MLD, and smooth it if requested
-    atlas::Field mld = xb["mld"].clone();
-    mld.rename("mld");
+    atlas::Field mld = xb[socnParams.mldVariableName.value()].clone(); mld.rename("mld");
     const auto & v_mld = atlas::array::make_view<double, 2>(mld);
     diags.add(mld);
 
     // iterate over each grid point
-    for (size_t i = 0; i < socn_err.shape(0); i++) {
+    for (size_t i = 0; i < socnErr.shape(0); i++) {
       if (v_ghost(i)) continue;  // skip ghost points
       if (v_mask(i, 0) == 0) continue;  // skip land points
 
@@ -177,18 +194,18 @@ ParametricOceanStdDev::ParametricOceanStdDev(
       auto mld = std::min(v_mld(i, 0), maxMld);
       for (size_t z = 0; z < levels; z++) {
         if (v_depth(i, z) <= mld) {
-          v_socn_err(i, z) = max;
+          v_socnErr(i, z) = max;
         } else {
           const double r = 0.1 + 0.45 * (1.0-tanh(2.0 * log(v_depth(i, z) / mld)));
-          v_socn_err(i, z) = r * max;
+          v_socnErr(i, z) = r * max;
         }
       }
     }
-    socn_err.set_dirty();
+    socnErr.set_dirty();
 
     // smooth the unbalanced salinity error
-    if (smoother3D) {
-      smoother3D->multiply(socn_err);
+    if (socnParams.smooth.value()) {
+      smoother3D.multiply(socnErr);
     }
   }
 
@@ -196,9 +213,10 @@ ParametricOceanStdDev::ParametricOceanStdDev(
   // create unbalanced SSH error
   // This is done by setting the SSH error to a maximum value in the
   // extra-tropics poles, and decreasing exponentially toward 0.0 the equator
-  {
+  const auto & sshParams = params.ssh.value();
+  if (xb.has(sshParams.varName.value())) {
     oops::Log::info() << "ParametricOceanStdDev: creating SSH error" << std::endl;
-    const auto & sshParams = params.ssh.value();
+
     const double min = sshParams.min.value();
     const double max = sshParams.max.value();
     const double phiEx = sshParams.phiEx.value();
@@ -206,15 +224,15 @@ ParametricOceanStdDev::ParametricOceanStdDev(
     constexpr double pi = 2.0 * acos(0.0);
 
     // create empty error field
-    atlas::Field ssh_err = fs.createField<double>(atlas::option::levels(1) |
-                                                  atlas::option::name("unbalanced ssh"));
-    auto v_ssh_err = atlas::array::make_view<double, 2>(ssh_err);
-    v_ssh_err.assign(0.0);
-    bkgErr_.add(ssh_err);
-    diags.add(ssh_err);
+    atlas::Field sshErr = fs.createField<double>(atlas::option::levels(1) |
+                                                  atlas::option::name(sshParams.varName.value()));
+    auto v_sshErr = atlas::array::make_view<double, 2>(sshErr);
+    v_sshErr.assign(0.0);
+    bkgErr_.add(sshErr);
+    diags.add(sshErr);
 
     // find the SSH error
-    for (size_t i = 0 ; i < ssh_err.shape(0); i++) {
+    for (size_t i = 0 ; i < sshErr.shape(0); i++) {
       if (v_ghost(i)) continue;  // skip ghost points
       if (v_mask(i, 0) == 0) continue;  // skip land points
 
@@ -222,14 +240,54 @@ ParametricOceanStdDev::ParametricOceanStdDev(
       auto absLat = std::abs(v_lonlat(i, 1));
       if(absLat >= phiEx) {
         // in the extra-tropics, set to max value
-        v_ssh_err(i, 0) = max;
+        v_sshErr(i, 0) = max;
       } else {
         // otherwise, set to a value that increases exponentially toward equator
-        v_ssh_err(i, 0) = min + 0.5 * (max - min) * (1.0 - cos(pi * absLat / phiEx));
+        v_sshErr(i, 0) = min + 0.5 * (max - min) * (1.0 - cos(pi * absLat / phiEx));
+      }
+    }
+    sshErr.set_dirty();
+  }
+
+  // --------------------------------------------------------------------------------------------
+  // deal with other generic variables
+  // Which only have a min/max, and a fraction of the background
+  if (params.otherVars.value()) {
+    for (const auto & [varName, varParams] : *params.otherVars.value()) {
+      if (!xb.has(varName)) continue; // skip if the variable isn't in the background (give warning?)
+
+      oops::Log::info() << "ParametricOceanStdDev: creating "+varName+" error" << std::endl;
+      const double min = varParams.min.value();
+      const double max = varParams.max.value();
+      const double fraction = varParams.fractionOfBkg.value();
+
+      const auto & varBg = xb[varName];
+      const auto & v_varBg = atlas::array::make_view<double, 2>(varBg);
+
+      auto varErr = varBg.clone();
+      auto v_varErr = atlas::array::make_view<double, 2>(varErr);
+
+      bkgErr_.add(varErr);
+      diags.add(varErr);
+
+      // iterate over each grid point
+      for (size_t i = 0; i < varErr.shape(0); i++) {
+        if (v_ghost(i)) continue;  // skip ghost points
+        if (v_mask(i, 0) == 0) continue;  // skip land points
+
+        // calculate the error as a fraction of the background
+        for (size_t z = 0; z < varBg.shape(1); z++) {
+          v_varErr(i, z) = std::clamp( std::abs(fraction * v_varBg(i, z)), min, max);
+        }
+      }
+      varErr.set_dirty();
+
+      // smooth the error
+      if (varParams.smooth.value()) {
+        smoother3D.multiply(varErr);
       }
     }
   }
-
 
   // save the diagnostics if requested
   if (params.saveDiags.value()) {
