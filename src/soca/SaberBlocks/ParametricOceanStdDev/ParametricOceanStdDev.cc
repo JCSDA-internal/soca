@@ -15,7 +15,8 @@ namespace soca {
 
 // ----------------------------------------------------------------------------------------
 
-static saber::SaberOuterBlockMaker<ParametricOceanStdDev> makerParametricOceanStdDev_("SOCAParametricOceanStdDev");
+static saber::SaberOuterBlockMaker<ParametricOceanStdDev>
+  makerParametricOceanStdDev_("SOCAParametricOceanStdDev");
 
 // ----------------------------------------------------------------------------------------
 
@@ -95,8 +96,8 @@ ParametricOceanStdDev::ParametricOceanStdDev(
     // get the sst values
     atlas::Field sstErr;
     const auto & sstParams = tocnParams.sst.value();
-    if(sstParams.has("fixed value") == sstParams.has("filepath")) {
-      //sanity check to make sure only one option is specified
+    if (sstParams.has("fixed value") == sstParams.has("filepath")) {
+      // sanity check to make sure only one option is specified
       throw eckit::BadParameter("ParametricOceanStdDev: tocn parameter must have either"
                                 " 'fixed value' or 'filepath'", Here());
     } else if (sstParams.has("fixed value")) {
@@ -128,26 +129,27 @@ ParametricOceanStdDev::ParametricOceanStdDev(
       if (v_mask(i, 0) == 0) continue;  // skip land points
 
       // calculate dt/dz
-      v_dtdz(i, 0) = 2.0 * (v_tocn(i,1) - v_tocn(i,0)) / (v_hocn(i,0) + v_hocn(i,1));
       for (size_t z = 1; z < levels-1; z++) {
         v_dtdz(i, z) = (v_tocn(i, z+1) - v_tocn(i, z-1)) /
-                       (v_hocn(i,z) + 0.5*(v_hocn(i, z+1) + v_hocn(i, z-1)));
+                       (v_hocn(i, z) + 0.5*(v_hocn(i, z+1) + v_hocn(i, z-1)));
 
         // ignore dt/dz where layers are too thin
-        if(v_hocn(i,z) <= minLayerThickness) v_dtdz(1, z) = 0.0;
+        if (v_hocn(i, z) <= minLayerThickness || v_hocn(i, z+1) <= minLayerThickness) {
+          v_dtdz(i, z) = 0.0;
+        }
       }
-      v_dtdz(1, levels-1) = 0;
+      v_dtdz(i, 0) = v_dtdz(i, 1);
+      v_dtdz(i, levels-1) = 0;
 
       // calculate the temperature error as a function of dt/dz, e-folding scale,
       // and min/max values
       double sstVal = v_sstErr(i, 0);
       for (size_t z = 0; z < levels; z++) {
-
         // step 1: calc value from dT/dz
         auto val = abs(tocnParams.dz.value() * v_dtdz(i, z));
 
         // step 2: calc a min from the e-folding scale, and min SST value
-        auto localMin = minVal + (sstVal - minVal) * exp(-v_depth(i,z) / efold );
+        auto localMin = minVal + (sstVal - minVal) * exp(-v_depth(i, z) / efold);
 
         // step 3: min/max
         v_tocnErr(i, z) = std::clamp(val, localMin, maxVal);;
@@ -196,6 +198,7 @@ ParametricOceanStdDev::ParametricOceanStdDev(
         if (v_depth(i, z) <= mld) {
           v_socnErr(i, z) = max;
         } else {
+          // NOTE, this isn't quite right, it's not taking into account the min val
           const double r = 0.1 + 0.45 * (1.0-tanh(2.0 * log(v_depth(i, z) / mld)));
           v_socnErr(i, z) = r * max;
         }
@@ -238,7 +241,7 @@ ParametricOceanStdDev::ParametricOceanStdDev(
 
       // calculate the SSH error as a function of the exponential scale
       auto absLat = std::abs(v_lonlat(i, 1));
-      if(absLat >= phiEx) {
+      if (absLat >= phiEx) {
         // in the extra-tropics, set to max value
         v_sshErr(i, 0) = max;
       } else {
@@ -254,7 +257,8 @@ ParametricOceanStdDev::ParametricOceanStdDev(
   // Which only have a min/max, and a fraction of the background
   if (params.otherVars.value()) {
     for (const auto & [varName, varParams] : *params.otherVars.value()) {
-      if (!xb.has(varName)) continue; // skip if the variable isn't in the background (give warning?)
+      if (!xb.has(varName)) continue;  // skip if the variable isn't
+                                       // in the background (give warning?)
 
       oops::Log::info() << "ParametricOceanStdDev: creating "+varName+" error" << std::endl;
       const double min = varParams.min.value();
@@ -277,7 +281,7 @@ ParametricOceanStdDev::ParametricOceanStdDev(
 
         // calculate the error as a fraction of the background
         for (size_t z = 0; z < varBg.shape(1); z++) {
-          v_varErr(i, z) = std::clamp( std::abs(fraction * v_varBg(i, z)), min, max);
+          v_varErr(i, z) = std::clamp(std::abs(fraction * v_varBg(i, z)), min, max);
         }
       }
       varErr.set_dirty();

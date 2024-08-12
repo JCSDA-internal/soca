@@ -7,7 +7,10 @@
 
 #pragma once
 
+#include <algorithm>
 #include <limits>
+#include <map>
+#include <string>
 
 #include "oops/util/parameters/NumericConstraints.h"
 
@@ -25,6 +28,7 @@ class ParametricOceanStdDev : public saber::SaberOuterBlockBase {
   // Yaml parameters for ParametricOceanStdDev
   class Parameters : public saber::SaberBlockParametersBase {
     OOPS_CONCRETE_PARAMETERS(Parameters, saber::SaberBlockParametersBase)
+
    public:
     // --------------------------------------------------------------------------------------
     class BkgErrVariable : public oops::Parameters {
@@ -70,7 +74,7 @@ class ParametricOceanStdDev : public saber::SaberOuterBlockBase {
     class Socn : public BkgErrVariable {
       OOPS_CONCRETE_PARAMETERS_ENABLE_COPY_AND_MOVE(Socn, BkgErrVariable)
      public:
-      Socn() : BkgErrVariable("socn", 0.0, 0.25) {}  // set default min and max
+      Socn() : BkgErrVariable("socn", 0.01, 0.25) {}  // set default min and max
       oops::Parameter<std::string> mldVariableName{"mld variable",
         "The name of the mixed layer depth variable in the background passed to the constructor",
         "mld", this};
@@ -106,7 +110,6 @@ class ParametricOceanStdDev : public saber::SaberOuterBlockBase {
     oops::Parameter<std::string> thicknessVariable{"thickness variable",
       "The name of the layer thickness state variable in the background passed to the constructor",
       "hocn", this};
-
   };
   // ----------------------------------------------------------------------------------------
 
@@ -137,4 +140,4 @@ class ParametricOceanStdDev : public saber::SaberOuterBlockBase {
   atlas::FieldSet bkgErr_;
 };
 
-} // namespace soca
+}  // namespace soca
