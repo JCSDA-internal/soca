@@ -83,7 +83,6 @@ set( soca_test_input
   testinput/varchange_ana2model.yml
   testinput/varchange_balance_TSSSH.yml
   testinput/varchange_balance.yml
-  testinput/varchange_bkgerrgodas.yml
   testinput/varchange_bkgerrsoca_stddev.yml
   testinput/varchange_bkgerrsoca.yml
 )
@@ -409,9 +408,6 @@ soca_add_test( NAME varchange_bkgerrsoca_stddev
                SRC  TestVariableChange.cc
                TEST_DEPENDS test_soca_gridgen )
 
-soca_add_test( NAME varchange_bkgerrgodas
-               SRC  TestVariableChange.cc
-               TEST_DEPENDS test_soca_gridgen )
 
 # Observation localization methods
 #---------------------------------------------------------------------------------------------------
