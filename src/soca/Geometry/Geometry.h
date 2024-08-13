@@ -92,6 +92,8 @@ namespace soca {
   };
   // -----------------------------------------------------------------------------
 
+  bool operator==(const Geometry& lhs, const Geometry& rhs);
+  bool operator!=(const Geometry& lhs, const Geometry& rhs);
 }  // namespace soca
 
 #endif  // SOCA_GEOMETRY_GEOMETRY_H_

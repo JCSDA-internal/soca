@@ -62,7 +62,7 @@ namespace soca {
       /// Constructor, destructor
       Increment(const Geometry &, const oops::Variables &,
                 const util::DateTime &);
-      Increment(const Geometry &, const Increment &);
+      Increment(const Geometry &, const Increment &, const bool = false);
       Increment(const Increment &, const bool);
       Increment(const Increment &);
       virtual ~Increment();

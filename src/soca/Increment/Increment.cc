@@ -21,8 +21,10 @@
 
 #include "eckit/exception/Exceptions.h"
 
+#include "oops/base/GeometryData.h"
 #include "oops/base/LocalIncrement.h"
 #include "oops/base/Variables.h"
+#include "oops/generic/GlobalInterpolator.h"
 #include "oops/util/DateTime.h"
 #include "oops/util/Duration.h"
 #include "oops/util/Logger.h"
@@ -51,12 +53,39 @@ namespace soca {
   }
 
   // -----------------------------------------------------------------------------
-
-  Increment::Increment(const Geometry & geom, const Increment & other)
+  // Resolution change
+  Increment::Increment(const Geometry & geom, const Increment & other, const bool ad)
     : Increment(geom, other.vars_, other.time_)
   {
-    soca_increment_change_resol_f90(toFortran(), other.keyFlds_);
-    Log::trace() << "Increment constructed from other." << std::endl;
+    Log::trace() << "Increment resolution change." << std::endl;
+    if (geom == other.geom_) {
+      // same geometry, just copy
+      soca_increment_copy_f90(toFortran(), other.toFortran());
+      return;
+    }
+    // otherwise, different geometry, do resolution change
+    // TODO, this doesn't do anything in the vertical, should I check for that?
+
+    // initialize interpolator
+    eckit::LocalConfiguration conf;
+    conf.set("local interpolator type", "oops unstructured grid interpolator");
+
+    atlas::FieldSet otherFset, selfFset;
+    other.toFieldSet(otherFset);
+    if (ad) {
+      // adjoint interpolation
+      const oops::GeometryData sourceGeom(geom_.functionSpace(), geom_.fields(),
+                                          geom_.levelsAreTopDown(), geom_.getComm());
+      oops::GlobalInterpolator interp(conf, sourceGeom, other.geom_.functionSpace(), geom.getComm());
+      interp.applyAD(selfFset, otherFset);
+    } else {
+      // interpolation
+      const oops::GeometryData sourceGeom(other.geom_.functionSpace(), other.geom_.fields(),
+                                          other.geom_.levelsAreTopDown(), other.geom_.getComm());
+      oops::GlobalInterpolator interp(conf, sourceGeom, geom_.functionSpace(), geom.getComm());
+      interp.apply(otherFset, selfFset);
+    }
+    fromFieldSet(selfFset);
   }
 
   // -----------------------------------------------------------------------------

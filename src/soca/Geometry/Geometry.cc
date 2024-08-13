@@ -14,6 +14,7 @@
 #include "atlas/output/Gmsh.h"
 
 #include "eckit/config/Configuration.h"
+#include "oops/util/Timer.h"
 
 #include "soca/Geometry/Geometry.h"
 #include "soca/Utils/readNcAndInterp.h"
@@ -174,8 +175,31 @@ namespace soca {
   void Geometry::print(std::ostream & os) const {
     // TODO(Travis): Implement this correctly.
   }
-  // -----------------------------------------------------------------------------
 
   // -----------------------------------------------------------------------------
+  bool operator==(const Geometry& lhs, const Geometry& rhs) {
+    util::Timer timer(Geometry::classname(), "operator==");
+
+    // check that lat/lons are the same shape
+    const auto ll1 = lhs.functionSpace().lonlat();
+    const auto ll2 = rhs.functionSpace().lonlat();
+    if (ll1.shape(0) != ll2.shape(0)) return false;
+
+    // check that all lat/lons are the same value
+    const auto & v_ll1 = atlas::array::make_view<double, 2>(ll1);
+    const auto & v_ll2 = atlas::array::make_view<double, 2>(ll2);
+    for (size_t i = 0; i < ll1.shape(0); ++i) {
+      if (v_ll1(i, 0) != v_ll2(i, 0) || v_ll1(i, 1) != v_ll2(i, 1)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  // -----------------------------------------------------------------------------
+  bool operator!=(const Geometry& lhs, const Geometry& rhs) {
+    return !(lhs == rhs);
+  }
+
 
 }  // namespace soca

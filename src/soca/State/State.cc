@@ -19,7 +19,9 @@
 #include "eckit/config/LocalConfiguration.h"
 #include "eckit/exception/Exceptions.h"
 
+#include "oops/base/GeometryData.h"
 #include "oops/base/Variables.h"
+#include "oops/generic/GlobalInterpolator.h"
 #include "oops/util/DateTime.h"
 #include "oops/util/Logger.h"
 #include "oops/util/FieldSetHelpers.h"
@@ -60,12 +62,34 @@ namespace soca {
   }
 
   // -----------------------------------------------------------------------------
-
+  // Resolution change
   State::State(const Geometry & geom, const State & other)
     : Fields(geom, other.vars_, other.time_)
   {
     soca_state_create_f90(keyFlds_, geom_.toFortran(), vars_, fieldSet_.get());
-    soca_state_change_resol_f90(toFortran(), other.keyFlds_);
+
+    // if geometry is the same, just copy
+    if (geom == other.geom_) {
+      soca_state_copy_f90(toFortran(), other.toFortran());
+      return;
+    }
+
+    // otherwise, different geometry, do resolution change
+    // TODO, this doesn't do anything in the vertical, should I check for that?
+
+    // initialize interpolator
+    eckit::LocalConfiguration conf;
+    conf.set("local interpolator type", "oops unstructured grid interpolator");
+    const oops::GeometryData sourceGeom(other.geom_.functionSpace(), other.geom_.fields(),
+                                        other.geom_.levelsAreTopDown(), other.geom_.getComm());
+    oops::GlobalInterpolator interp(conf, sourceGeom, geom_.functionSpace(), geom.getComm());
+
+    // interpolate
+    atlas::FieldSet otherFset, selfFset;
+    other.toFieldSet(otherFset);
+    interp.apply(otherFset, selfFset);
+    fromFieldSet(selfFset);
+
     Log::trace() << "State::State created by interpolation." << std::endl;
   }
 
