@@ -23,7 +23,7 @@ hybrid linear model:
       length: PT12H
     calculator:
       #regularization:
-      #  base value: 0.01
+      #  base value: 10
     ensemble:
       model:
         name: PseudoModel
@@ -102,4 +102,4 @@ test:
   variables: [socn, tocn]
   reference filename: testref/gen_hybrid_linear_model_coeffs.test
   test output filename: testoutput/gen_hybrid_linear_model_coeffs.test
-  float absolute tolerance: 1e-4
+  #float absolute tolerance: 1e-4

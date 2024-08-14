@@ -140,7 +140,9 @@ variational:
 output:
   datadir: data_output/
   exp: 4dvar_htlm
-  type: an
+  type: incr
+  first: PT0H
+  frequency: PT6H
 
 final:
   diagnostics:

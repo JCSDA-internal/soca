@@ -126,9 +126,9 @@ variational:
 output:
   datadir: data_output/
   exp: 4dvar_identity
-  type: an
-  #first: PT0H
-  #frequency: PT6H
+  type: incr
+  first: PT0H
+  frequency: PT6H
 
 final:
   diagnostics:

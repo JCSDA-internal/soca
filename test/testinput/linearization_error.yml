@@ -23,8 +23,8 @@ linear model:
       begin: 2018-04-15T00:00:00Z
       length: PT12H
     calculator:
-      regularization:
-        base value: 1
+      #regularization:
+      # base value: 0.01 #1000
     ensemble:
       model:
         name: PseudoModel
