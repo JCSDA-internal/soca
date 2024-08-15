@@ -73,6 +73,7 @@ set( soca_test_input
   testinput/obslocalization.yml
   testinput/obslocalizations.yml
   testinput/obsop_name_map.yml
+  testinput/oceanSmoother.yml
   testinput/parameters_bump_cor_nicas_scales.yml
   testinput/parameters_bump_cor_nicas.yml
   testinput/parameters_bump_cov.yml
@@ -132,6 +133,7 @@ set( soca_test_ref
   testref/letkf.test
   testref/linearization_error.test
   testref/makeobs.test
+  testref/oceanSmoother.test
   testref/parameters_bump_cor_nicas_scales.test
   testref/parameters_bump_cor_nicas.test
   testref/parameters_bump_cov.test
@@ -386,6 +388,9 @@ soca_add_test( NAME getvalues
                SRC  TestGetValues.cc
                TEST_DEPENDS test_soca_gridgen )
 
+soca_add_test( NAME oceanSmoother
+               SRC  TestOceanSmoother.cc
+               TEST_DEPENDS test_soca_gridgen )
 
 # Variable changes
 #---------------------------------------------------------------------------------------------------
