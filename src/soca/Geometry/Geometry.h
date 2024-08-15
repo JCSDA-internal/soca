@@ -96,7 +96,6 @@ namespace soca {
   };
   // -----------------------------------------------------------------------------
 
-
 }  // namespace soca
 
 #endif  // SOCA_GEOMETRY_GEOMETRY_H_

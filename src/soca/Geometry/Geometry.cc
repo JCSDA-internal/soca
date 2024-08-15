@@ -131,7 +131,6 @@ namespace soca {
 
     // create a hash for the geometry for later comparison
     hash_ = util::getGridUid(functionSpace_);
-
   }
 
   // -----------------------------------------------------------------------------
@@ -191,6 +190,5 @@ namespace soca {
   bool operator!=(const Geometry& lhs, const Geometry& rhs) {
     return !(lhs == rhs);
   }
-
 
 }  // namespace soca

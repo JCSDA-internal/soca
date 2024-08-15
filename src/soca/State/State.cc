@@ -23,9 +23,9 @@
 #include "oops/base/Variables.h"
 #include "oops/generic/GlobalInterpolator.h"
 #include "oops/util/DateTime.h"
-#include "oops/util/Logger.h"
 #include "oops/util/FieldSetHelpers.h"
 #include "oops/util/FieldSetOperations.h"
+#include "oops/util/Logger.h"
 #include "oops/util/missingValues.h"
 
 #include "ufo/GeoVaLs.h"
@@ -170,12 +170,12 @@ namespace soca {
   State & State::operator+=(const Increment & dx) {
     ASSERT(validTime() == dx.validTime());
 
-    // Interpolate increment to analysis grid if needed
-    std::unique_ptr<Increment> dx_hr;
+    // Interpolate increment to analysis grid only if needed
+    std::shared_ptr<const Increment> dx_hr;
     if (geom_ != dx.geometry()) {
-      dx_hr = std::make_unique<Increment>(geom_, dx);
+      dx_hr = std::make_shared<Increment>(geom_, dx);
     } else {
-      dx_hr.reset(new Increment(dx));
+      dx_hr.reset(&dx, [](const Increment*) {});  // don't delete original dx!
     }
 
     // Add increment to background state
