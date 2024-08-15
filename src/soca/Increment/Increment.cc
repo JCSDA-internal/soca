@@ -135,7 +135,7 @@ namespace soca {
       x1_interp = std::make_shared<const State>(geom_, x1);
       x2_interp = std::make_shared<const State>(geom_, x2);
     } else {
-      x1_interp.reset(&x1, [](const State *) {}); // don't delete the originals!
+      x1_interp.reset(&x1, [](const State *) {});  // don't delete the originals!
       x2_interp.reset(&x2, [](const State *) {});
     }
 
