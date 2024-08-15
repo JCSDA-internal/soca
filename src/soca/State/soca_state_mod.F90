@@ -38,9 +38,6 @@ contains
   !> \copybrief soca_state_rotate \see soca_state_rotate
   procedure :: rotate => soca_state_rotate
 
-  !> \copybrief soca_state_convert \see soca_state_convert
-  procedure :: convert => soca_state_convert
-
   !> \copybrief soca_state_logexpon \see soca_state_logexpon
   procedure :: logexpon => soca_state_logexpon
 

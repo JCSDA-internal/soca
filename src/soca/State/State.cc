@@ -26,6 +26,7 @@
 #include "oops/util/Logger.h"
 #include "oops/util/FieldSetHelpers.h"
 #include "oops/util/FieldSetOperations.h"
+#include "oops/util/missingValues.h"
 
 #include "ufo/GeoVaLs.h"
 
@@ -68,27 +69,27 @@ namespace soca {
   {
     soca_state_create_f90(keyFlds_, geom_.toFortran(), vars_, fieldSet_.get());
 
-    // if geometry is the same, just copy
+    // if geometry is the same, just copy and quit
     if (geom == other.geom_) {
       soca_state_copy_f90(toFortran(), other.toFortran());
       return;
     }
 
     // otherwise, different geometry, do resolution change
-    // TODO, this doesn't do anything in the vertical, should I check for that?
-
-    // initialize interpolator
     eckit::LocalConfiguration conf;
     conf.set("local interpolator type", "oops unstructured grid interpolator");
     const oops::GeometryData sourceGeom(other.geom_.functionSpace(), other.geom_.fields(),
                                         other.geom_.levelsAreTopDown(), other.geom_.getComm());
     oops::GlobalInterpolator interp(conf, sourceGeom, geom_.functionSpace(), geom.getComm());
-
-    // interpolate
     atlas::FieldSet otherFset, selfFset;
     other.toFieldSet(otherFset);
     interp.apply(otherFset, selfFset);
     fromFieldSet(selfFset);
+
+    // TODO(Travis) There is a possibility of missing values if the land masks
+    // do not match, handle this somehow?
+
+    // TODO(travis) handle a change of resolution in the vertical, someday
 
     Log::trace() << "State::State created by interpolation." << std::endl;
   }
@@ -168,12 +169,35 @@ namespace soca {
   // -----------------------------------------------------------------------------
   State & State::operator+=(const Increment & dx) {
     ASSERT(validTime() == dx.validTime());
-    // Interpolate increment to analysis grid
-    Increment dx_hr(geom_, dx);
+
+    // Interpolate increment to analysis grid if needed
+    std::unique_ptr<Increment> dx_hr;
+    if (geom_ != dx.geometry()) {
+      dx_hr = std::make_unique<Increment>(geom_, dx);
+    } else {
+      dx_hr.reset(new Increment(dx));
+    }
 
     // Add increment to background state
-    atlas::FieldSet fs2; dx.toFieldSet(fs2);
-    util::addFieldSets(fieldSet_, fs2);
+    // NOTE: if the land masks are not carefully constructed, this can
+    // result in MISSING_VALUEs in the increment trying to be added to the state.
+    // TODO(travis) issue a warning if this happens? Fix this deeper down in the
+    // increment side? In the meantime we can just ignore the missing values
+    atlas::FieldSet fs2; dx_hr->toFieldSet(fs2);
+    const auto missing = util::missingValue<double>();
+    for (const auto & src : fs2) {
+      const auto v_src = atlas::array::make_view<double, 2>(src);
+      auto & dst = fieldSet_.field(src.name());
+      auto v_dst = atlas::array::make_view<double, 2>(dst);
+      for (size_t i = 0; i < src.shape(0); ++i) {
+        for (size_t j = 0; j < src.shape(1); ++j) {
+          if (v_src(i, j) == missing) continue;
+          v_dst(i, j) += v_src(i, j);
+        }
+      }
+      dst.set_dirty(src.dirty() || dst.dirty());
+    }
+
     return *this;
   }
 

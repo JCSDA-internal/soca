@@ -58,25 +58,24 @@ namespace soca {
     : Increment(geom, other.vars_, other.time_)
   {
     Log::trace() << "Increment resolution change." << std::endl;
+
+    // same geometry, just copy and quit
     if (geom == other.geom_) {
-      // same geometry, just copy
       soca_increment_copy_f90(toFortran(), other.toFortran());
       return;
     }
-    // otherwise, different geometry, do resolution change
-    // TODO, this doesn't do anything in the vertical, should I check for that?
 
-    // initialize interpolator
+    // otherwise, different geometry, do resolution change
     eckit::LocalConfiguration conf;
     conf.set("local interpolator type", "oops unstructured grid interpolator");
-
     atlas::FieldSet otherFset, selfFset;
     other.toFieldSet(otherFset);
     if (ad) {
       // adjoint interpolation
       const oops::GeometryData sourceGeom(geom_.functionSpace(), geom_.fields(),
                                           geom_.levelsAreTopDown(), geom_.getComm());
-      oops::GlobalInterpolator interp(conf, sourceGeom, other.geom_.functionSpace(), geom.getComm());
+      oops::GlobalInterpolator interp(conf, sourceGeom,
+                                      other.geom_.functionSpace(), geom.getComm());
       interp.applyAD(selfFset, otherFset);
     } else {
       // interpolation
@@ -86,6 +85,13 @@ namespace soca {
       interp.apply(otherFset, selfFset);
     }
     fromFieldSet(selfFset);
+
+    // TODO(Travis) There is a possibility of missing values if the land masks
+    // do not match, handle this somehow?
+
+    // TODO(travis) handle a change of resolution in the vertical, someday
+
+    Log::trace() << "soca::Increment resolution change DONE." << std::endl;
   }
 
   // -----------------------------------------------------------------------------

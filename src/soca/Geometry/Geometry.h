@@ -76,6 +76,9 @@ namespace soca {
       const FieldMetadata & fieldMetadata(const std::string & name) const {
         return (*fieldsMetadata_)[name];}
 
+      friend bool operator==(const Geometry& lhs, const Geometry& rhs);
+      friend bool operator!=(const Geometry& lhs, const Geometry& rhs);
+
    private:
       Geometry(const Geometry &);
       void mask(std::vector<double> &, const bool, const char) const;
@@ -89,11 +92,11 @@ namespace soca {
       std::shared_ptr<FieldsMetadata> fieldsMetadata_;
       atlas::FieldSet fields_;
       int iteratorDimensions_;
+      std::string hash_;
   };
   // -----------------------------------------------------------------------------
 
-  bool operator==(const Geometry& lhs, const Geometry& rhs);
-  bool operator!=(const Geometry& lhs, const Geometry& rhs);
+
 }  // namespace soca
 
 #endif  // SOCA_GEOMETRY_GEOMETRY_H_
