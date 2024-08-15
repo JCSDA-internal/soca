@@ -127,11 +127,22 @@ namespace soca {
   void Increment::diff(const State & x1, const State & x2) {
     ASSERT(this->validTime() == x1.validTime());
     ASSERT(this->validTime() == x2.validTime());
+    ASSERT(x1.geometry() == x2.geometry());
 
-    State x1_at_geomres(geom_, x1);
-    State x2_at_geomres(geom_, x2);
+    // interpolate state to increment resolution, only if needed
+    std::shared_ptr<const State> x1_interp, x2_interp;
+    if (geom_ != x1.geometry()) {
+      x1_interp = std::make_shared<const State>(geom_, x1);
+      x2_interp = std::make_shared<const State>(geom_, x2);
+    } else {
+      x1_interp.reset(&x1, [](const State *) {}); // don't delete the originals!
+      x2_interp.reset(&x2, [](const State *) {});
+    }
+
+    // subtract fields
     atlas::FieldSet fs1, fs2;
-    x1_at_geomres.toFieldSet(fs1); x2_at_geomres.toFieldSet(fs2);
+    x1_interp->toFieldSet(fs1);
+    x2_interp->toFieldSet(fs2);
     util::copyFieldSet(fs1, fieldSet_);
     util::subtractFieldSets(fieldSet_, fs2);
   }
@@ -139,6 +150,8 @@ namespace soca {
   // -----------------------------------------------------------------------------
 
   Increment & Increment::operator=(const Increment & rhs) {
+    ASSERT(geom_ == rhs.geom_);
+
     time_ = rhs.time_;
     soca_increment_copy_f90(toFortran(), rhs.toFortran());
     return *this;
@@ -148,6 +161,7 @@ namespace soca {
 
   Increment & Increment::operator+=(const Increment & dx) {
     ASSERT(this->validTime() == dx.validTime());
+    ASSERT(geom_ == dx.geom_);
 
     // note, can't use util::addFieldSets because it doesn't handle a variable
     // being in dx but not being in this (not sure why that is happening. is
@@ -175,6 +189,8 @@ namespace soca {
 
   Increment & Increment::operator-=(const Increment & dx) {
     ASSERT(this->validTime() == dx.validTime());
+    ASSERT(geom_ == dx.geom_);
+
     util::subtractFieldSets(fieldSet_, dx.fieldSet_);
     return *this;
   }
@@ -240,6 +256,8 @@ namespace soca {
   // -----------------------------------------------------------------------------
 
   double Increment::dot_product_with(const Increment & other) const {
+    ASSERT(geom_ == other.geom_);
+
     return util::dotProductFieldSets(fieldSet_, other.fieldSet_,
       fieldSet_.field_names(), geom_.getComm());
   }

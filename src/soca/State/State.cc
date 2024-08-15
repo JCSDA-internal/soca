@@ -130,6 +130,8 @@ namespace soca {
   /// Basic operators
   // -----------------------------------------------------------------------------
   State & State::operator=(const State & rhs) {
+    ASSERT(geom_ == rhs.geom_);
+
     time_ = rhs.time_;
     soca_state_copy_f90(toFortran(), rhs.toFortran());
     return *this;
@@ -171,11 +173,11 @@ namespace soca {
     ASSERT(validTime() == dx.validTime());
 
     // Interpolate increment to analysis grid only if needed
-    std::shared_ptr<const Increment> dx_hr;
+    std::shared_ptr<const Increment> dx_interp;
     if (geom_ != dx.geometry()) {
-      dx_hr = std::make_shared<Increment>(geom_, dx);
+      dx_interp = std::make_shared<Increment>(geom_, dx);
     } else {
-      dx_hr.reset(&dx, [](const Increment*) {});  // don't delete original dx!
+      dx_interp.reset(&dx, [](const Increment*) {});  // don't delete original dx!
     }
 
     // Add increment to background state
@@ -183,7 +185,8 @@ namespace soca {
     // result in MISSING_VALUEs in the increment trying to be added to the state.
     // TODO(travis) issue a warning if this happens? Fix this deeper down in the
     // increment side? In the meantime we can just ignore the missing values
-    atlas::FieldSet fs2; dx_hr->toFieldSet(fs2);
+    atlas::FieldSet fs2;
+    dx_interp->toFieldSet(fs2);
     const auto missing = util::missingValue<double>();
     for (const auto & src : fs2) {
       const auto v_src = atlas::array::make_view<double, 2>(src);
