@@ -129,8 +129,8 @@ namespace soca {
       soca_geo_write_f90(keyGeom_, &conf);
     }
 
-    // create a hash for the geometry for later comparison
-    hash_ = util::getGridUid(functionSpace_);
+    // create a uid for the geometry for later comparison
+    uid_ = util::getGridUid(functionSpace_);
   }
 
   // -----------------------------------------------------------------------------
@@ -183,7 +183,7 @@ namespace soca {
 
   // -----------------------------------------------------------------------------
   bool operator==(const Geometry& lhs, const Geometry& rhs) {
-    return lhs.hash_ == rhs.hash_;
+    return lhs.uid_ == rhs.uid_;
   }
 
   // -----------------------------------------------------------------------------

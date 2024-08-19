@@ -92,7 +92,7 @@ namespace soca {
       std::shared_ptr<FieldsMetadata> fieldsMetadata_;
       atlas::FieldSet fields_;
       int iteratorDimensions_;
-      std::string hash_;
+      std::string uid_;
   };
   // -----------------------------------------------------------------------------
 
