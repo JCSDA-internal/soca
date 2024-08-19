@@ -11,7 +11,7 @@ cost function:
     begin: 2018-04-14T00:00:00Z
     length: P2D
   analysis variables: &soca_vars [cicen, hicen, hsnon, socn, tocn, ssh, hocn, sw, lhf, shf, lw, us, mld, layer_depth]
-  geometry: &geom
+  geometry:
     geom_grid_file: data_generated/gridgen/soca_gridspec.72x35x25.nc
     mom6_input_nml: data_static/72x35x25/input.nml
     fields metadata: data_static/fields_metadata.yml
@@ -42,11 +42,11 @@ cost function:
           horizontal:
             filepath: data_generated/parameters_diffusion_lowres/hz_smaller
 
-    saber outer blocks:
-    - saber block name: SOCABkgErrFilt
-      ocean_depth_min: 1000 # [m]
-      rescale_bkgerr: 1.0
-      efold_z: 2500.0       # [m]
+    # saber outer blocks:
+    # - saber block name: SOCABkgErrFilt
+    #   ocean_depth_min: 1000 # [m]
+    #   rescale_bkgerr: 1.0
+    #   efold_z: 2500.0       # [m]
 
     linear variable change:
       input variables: *soca_vars
