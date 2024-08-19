@@ -100,11 +100,11 @@ hybrid linear model:
 
 test:
   variables: [socn, tocn]
-  # NOTE: Not using the file in testref because the test is
+  # NOTE: iUsing large tolerances
   # here just to test the plumbing the testoutput is not 
   # realistic as initital perturbation is a matrix of ones
   # OR accurate as the RMSbyLevel doesnt take 
   # landmask into account
-  reference filename: testoutput/gen_hybrid_linear_model_coeffs.test
+  reference filename: testref/gen_hybrid_linear_model_coeffs.test
   test output filename: testoutput/gen_hybrid_linear_model_coeffs.test
-  float absolute tolerance: 1e-4
+  float absolute tolerance: 1e4
