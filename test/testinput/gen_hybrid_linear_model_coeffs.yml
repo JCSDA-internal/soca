@@ -105,6 +105,6 @@ test:
   # realistic as initital perturbation is a matrix of ones
   # OR accurate as the RMSbyLevel doesnt take 
   # landmask into account
-  reference filename: testputput/gen_hybrid_linear_model_coeffs.test
+  reference filename: testoutput/gen_hybrid_linear_model_coeffs.test
   test output filename: testoutput/gen_hybrid_linear_model_coeffs.test
   float absolute tolerance: 1e-4
