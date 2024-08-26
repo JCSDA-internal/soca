@@ -8,7 +8,7 @@ CostJo   : Nonlinear Jo(InsituSalinity) = 3.4706220681200762e+02, nobs = 218, Jo
 CostJo   : Nonlinear Jo(SeaIceFraction) = 5.9780675099388782e+02, nobs = 89, Jo/n = 6.7169297864481781e+00, err = 1.0000000149011612e-01
 CostFunction: Nonlinear J = 1.9578730601063908e+04
 RPCGMinimizer: reduction in residual norm = 1.6845782920068089e-01
-CostFunction::addIncrement: Analysis: 
+CostFunction::addIncrement: Analysis:
   Valid time: 2018-04-15T00:00:00Z
   cicen   min=0.0000000000000000   max=1.0001762112605992   mean=0.1175454838337257
   hicen   min=0.0000000000000000   max=4.0326673084246947   mean=0.4712515705773916
