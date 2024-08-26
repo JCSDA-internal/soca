@@ -22,7 +22,7 @@ linear model:
     time window:
       begin: 2018-04-15T00:00:00Z
       length: PT12H
-    calculator:
+    calculator: {}
       #regularization:
       # base value: 0.01 #1000
     ensemble:

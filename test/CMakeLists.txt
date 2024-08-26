@@ -746,7 +746,6 @@ soca_add_test( NAME 4dvar_identity
 soca_add_test( NAME 4dvar_htlm
                EXE soca_var.x
                TEST_DEPENDS test_soca_gridgen
-                            test_soca_parameters_bump_loc
                             test_socs_parameters_diffusion
                             test_soca_forecast_mom6
                             test_soca_forecast_mom6_ens1
