@@ -33,6 +33,11 @@ BkgErrFilt::BkgErrFilt(
 {
   util::Timer timer("soca::BkgErrFilt", "BkgErrFilt");
 
+  // TODO(travis) this block is not working with dual resolution.
+  // outerGeometryData is the low resolution grid, but xb and fg are on the
+  // high resolution grid. I don't think I have what I need to to interpolate.
+  ASSERT(outerGeometryData.fieldSet()[0].shape(0) == xb.fieldSet()[0].shape(0));
+
   const double MIN_THICKNESS = 1.0e-3;
   const int levels = xb["hocn"].levels();
 

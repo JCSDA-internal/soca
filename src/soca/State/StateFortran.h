@@ -44,7 +44,6 @@ namespace soca {
     void soca_state_tohgrid_f90(const F90flds &);
     void soca_state_logtrans_f90(const F90flds &, const oops::Variables &);
     void soca_state_expontrans_f90(const F90flds &, const oops::Variables &);
-    void soca_state_change_resol_f90(const F90flds &, const F90flds &);
     void soca_state_analytic_f90(const F90flds &,
                                  const eckit::Configuration * const &,
                                  util::DateTime * const *);

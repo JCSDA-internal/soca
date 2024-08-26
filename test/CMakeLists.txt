@@ -17,12 +17,12 @@ set( soca_test_input
   testinput/3dhyb_diffusion.yml
   testinput/3dhyb.yml
   testinput/3dhybfgat_pseudo.yml
+  testinput/3dvar_lowres.yml
   testinput/3dvar_nicas.yml
   testinput/3dvar_single_ob.yml
   testinput/3dvar_zero_ob.yml
   testinput/3dvar.yml
   testinput/3dvarfgat_pseudo.yml
-  testinput/3dvarlowres_soca.yml
   testinput/4denvar.yml
   testinput/4dhybenvar.yml
   testinput/4dvar_identity.yml
@@ -34,6 +34,7 @@ set( soca_test_input
   testinput/convertstate.yml
   testinput/diffstates.yml
   testinput/dirac_diffusion.yml
+  testinput/dirac_diffusion_lowres.yml
   testinput/dirac_mlbalance.yml
   testinput/dirac_soca_cor_nicas_scales.yml
   testinput/dirac_soca_cov.yml
@@ -79,6 +80,7 @@ set( soca_test_input
   testinput/parameters_bump_cov.yml
   testinput/parameters_bump_loc.yml
   testinput/parameters_diffusion.yml
+  testinput/parameters_diffusion_lowres.yml
   testinput/parametric_stddev.yml
   testinput/setcorscales.yml
   testinput/sqrtvertloc.yml
@@ -96,12 +98,12 @@ set( soca_test_ref
   testref/3dhyb.test
   testref/3dhybfgat_pseudo.test
   testref/3dvar_diffmlb.test
+  testref/3dvar_lowres.test
   testref/3dvar_nicas.test
   testref/3dvar_single_ob.test
   testref/3dvar_zero_ob.test
   testref/3dvar.test
   testref/3dvarfgat_pseudo.test
-  testref/3dvarlowres_soca.test
   testref/4denvar.test
   testref/4dhybenvar.test
   testref/4dvar_identity.test
@@ -113,6 +115,7 @@ set( soca_test_ref
   testref/convertstate.test
   testref/diffstates.test
   testref/dirac_diffusion.test
+  testref/dirac_diffusion_lowres.test
   testref/dirac_soca_cor_nicas_scales.test
   testref/dirac_soca_cov.test
   testref/dirac_socahyb_cov.test
@@ -509,7 +512,8 @@ soca_add_test( NAME parameters_diffusion
                TEST_DEPENDS test_soca_gridgen
                             test_soca_setcorscales)
 
-# TODO(travis) low res diffusion init
+soca_add_test( NAME parameters_diffusion_lowres
+               EXE  soca_error_covariance_toolbox.x)
 
 
 # Misc applications
@@ -523,11 +527,10 @@ soca_add_test( NAME enspert
                             test_soca_parameters_diffusion )
 
 # Remapping MOM6 (horiz+vertical intterpolation)
-# TODO this needs to be re-implemented
-# soca_add_test( NAME convertstate
-#                EXE  soca_convertstate.x
-#               #  NOTRAPFPE
-#                TEST_DEPENDS test_soca_gridgen )
+soca_add_test( NAME convertstate
+               EXE  soca_convertstate.x
+              #  NOTRAPFPE
+               TEST_DEPENDS test_soca_gridgen )
 
 # Apply a nonlinear change of variable to an ensemble of states
 soca_add_test( NAME convertstate_changevar
@@ -604,6 +607,11 @@ soca_add_test( NAME dirac_diffusion
                EXE soca_error_covariance_toolbox.x
                TEST_DEPENDS test_soca_gridgen
                             test_soca_parameters_diffusion )
+
+soca_add_test( NAME dirac_diffusion_lowres
+               EXE soca_error_covariance_toolbox.x
+               TEST_DEPENDS test_soca_parameters_diffusion_lowres )
+
 
 if( ${daml_FOUND} )
   soca_add_test( NAME dirac_mlbalance
@@ -682,12 +690,11 @@ if( ${daml_FOUND} )
                               test_soca_parameters_diffusion )
 endif()
 
-## TODO(travis) fix the lowres grid dx,dy so that I can init the
-## low res diffusion, and then run this test
-# soca_add_test( NAME 3dvarlowres_soca
-#                EXE  soca_var.x
-#                NOTRAPFPE
-#                TEST_DEPENDS test_soca_gridgen )
+soca_add_test( NAME 3dvar_lowres
+               EXE  soca_var.x
+               NOTRAPFPE
+               TEST_DEPENDS test_soca_gridgen
+                            test_soca_parameters_diffusion_lowres )
 
 soca_add_test( NAME 3dvarfgat_pseudo
                EXE  soca_var.x
