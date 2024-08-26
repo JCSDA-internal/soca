@@ -15,6 +15,7 @@
 #include "soca/VariableChange/VariableChange.h"
 
 #include "oops/util/Logger.h"
+#include "oops/util/Timer.h"
 
 using oops::Log;
 
@@ -31,6 +32,7 @@ std::map<std::string, std::vector<std::string>> SocaVaderCookbook {
 
 VariableChange::VariableChange(const eckit::Configuration & config,
                                const Geometry & geometry) {
+  util::Timer timer("soca::VariableChange", "VariableChange");
   VariableChangeParameters params;
   params.deserialize(config);
 
@@ -58,6 +60,7 @@ void VariableChange::changeVar(State & x, const oops::Variables & vars) const {
                << x.variables() << std::endl;
   Log::debug() << "VariableChange::changeVar vars out: "
                << vars << std::endl;
+  util::Timer timer("soca::VariableChange", "changeVar");
 
   // TODO(travis) rename in/out variables so that skipping this
   // works for Model2Ana (i.e. we need rotated/unrotate u/v renamed different)
@@ -125,6 +128,7 @@ void VariableChange::changeVar(State & x, const oops::Variables & vars) const {
 
 void VariableChange::changeVarInverse(State & x,
                                       const oops::Variables & vars) const {
+  util::Timer timer("soca::VariableChange", "changeVarInverse");
   changeVar(x, vars);
 }
 
