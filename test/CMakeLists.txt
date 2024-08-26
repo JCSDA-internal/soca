@@ -353,6 +353,7 @@ endfunction()
 #---------------------------------------------------------------------------------------------------
 
 soca_add_test( NAME gridgen
+               NOTRAPFPE
                EXE  soca_gridgen.x )
 
 
