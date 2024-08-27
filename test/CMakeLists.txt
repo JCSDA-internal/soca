@@ -25,6 +25,8 @@ set( soca_test_input
   testinput/3dvarfgat_pseudo.yml
   testinput/4denvar.yml
   testinput/4dhybenvar.yml
+  testinput/4dvar_identity.yml
+  testinput/4dvar_htlm.yml
   testinput/addincrement.yml
   testinput/convertincrement.yml
   testinput/convertstate_changevar.yml
@@ -51,6 +53,7 @@ set( soca_test_input
   testinput/forecast_mom6_ens3.yml
   testinput/forecast_mom6.yml
   testinput/forecast_pseudo.yml
+  testinput/gen_hybrid_linear_model_coeffs.yml
   testinput/geometry_iterator_2d.yml
   testinput/geometry_iterator_3d.yml
   testinput/geometry.yml
@@ -64,6 +67,7 @@ set( soca_test_input
   testinput/letkf_split_observer.yml
   testinput/letkf_split_solver.yml
   testinput/letkf.yml
+  testinput/linearization_error.yml
   testinput/makeobs.yml
   testinput/model.yml
   testinput/obslocalization_vertical.yml
@@ -102,6 +106,8 @@ set( soca_test_ref
   testref/3dvarfgat_pseudo.test
   testref/4denvar.test
   testref/4dhybenvar.test
+  testref/4dvar_identity.test
+  testref/4dvar_htlm.test
   testref/addincrement.test
   testref/convertincrement.test
   testref/convertstate_changevar.test
@@ -119,6 +125,7 @@ set( soca_test_ref
   testref/ensrecenter.test
   testref/forecast_identity.test
   testref/forecast_pseudo.test
+  testref/gen_hybrid_linear_model_coeffs.test
   testref/gridgen.test
   testref/hofx_3d.test
   testref/hofx_4d_pseudo.test
@@ -127,6 +134,7 @@ set( soca_test_ref
   testref/letkf_split_observer.test
   testref/letkf_split_solver.test
   testref/letkf.test
+  testref/linearization_error.test
   testref/makeobs.test
   testref/oceanSmoother.test
   testref/parameters_bump_cor_nicas_scales.test
@@ -559,6 +567,22 @@ soca_add_test( NAME diffstates
                EXE  soca_diffstates.x
                TEST_DEPENDS test_soca_gridgen )
 
+# Compute HTLM coefficients
+soca_add_test( NAME gen_hybrid_linear_model_coeffs
+               EXE  soca_gen_hybrid_linear_model_coeffs.x
+               TEST_DEPENDS test_soca_gridgen
+                            test_soca_forecast_mom6
+                            test_soca_forecast_mom6_ens1
+                            test_soca_forecast_mom6_ens2
+                            test_soca_forecast_mom6_ens3 )
+
+soca_add_test( NAME linearization_error
+               EXE  soca_linearization_error.x
+               TEST_DEPENDS test_soca_gridgen
+                            test_soca_forecast_mom6
+                            test_soca_forecast_mom6_ens1
+                            test_soca_forecast_mom6_ens2
+                            test_soca_forecast_mom6_ens3 )
 
 # Dirac tests
 #---------------------------------------------------------------------------------------------------
@@ -713,6 +737,22 @@ soca_add_test( NAME 4dhybenvar
                             test_soca_forecast_mom6_ens2
                             test_soca_forecast_mom6_ens3 )
 
+soca_add_test( NAME 4dvar_identity
+               EXE soca_var.x
+               TEST_DEPENDS test_soca_gridgen
+                            test_soca_parameters_bump_loc
+                            test_socs_parameters_diffusion
+                            test_soca_forecast_mom6 )
+
+soca_add_test( NAME 4dvar_htlm
+               EXE soca_var.x
+               TEST_DEPENDS test_soca_gridgen
+                            test_socs_parameters_diffusion
+                            test_soca_forecast_mom6
+                            test_soca_forecast_mom6_ens1
+                            test_soca_forecast_mom6_ens2
+                            test_soca_forecast_mom6_ens3
+                            test_soca_gen_hybrid_linear_model_coeffs )
 # LETKF
 #---------------------------------------------------------------------------------------------------
 

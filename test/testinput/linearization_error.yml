@@ -1,0 +1,172 @@
+forecast length: PT12H
+time resolution: PT6H
+
+# Linear model (HTLM or TLM)
+linear model geometry: &geom
+  geom_grid_file: data_generated/gridgen/soca_gridspec.72x35x25.nc
+  mom6_input_nml: data_static/72x35x25/input.nml
+  fields metadata: data_static/fields_metadata.yml
+
+linear model:
+  name: HTLM
+  simple linear model:
+    linear model:
+      tstep: PT6H
+      variable change: Identity
+      name: Identity
+  update tstep: PT6H
+  variables: [socn, tocn]
+  coefficients:
+    influence region size: 3
+    update variables: [socn, tocn]
+    time window:
+      begin: 2018-04-15T00:00:00Z
+      length: PT12H
+    calculator: {}
+      #regularization:
+      # base value: 0.01 #1000
+    ensemble:
+      model:
+        name: PseudoModel
+        tstep: PT6H
+        multiple runs:
+        - ID: 0
+          states:
+          - date: 2018-04-15T06:00:00Z
+            read_from_file: 1
+            basename: data_generated/forecast_mom6/
+            state variables: [socn, tocn, uocn, vocn, ssh, hocn, layer_depth]
+            ocn_filename: ocn.forecast_mom6.fc.2018-04-15T00:00:00Z.PT6H.nc
+          - date: 2018-04-15T12:00:00Z
+            read_from_file: 1
+            basename: data_generated/forecast_mom6/
+            state variables: [socn, tocn, uocn, vocn, ssh, hocn, layer_depth]
+            ocn_filename: ocn.forecast_mom6.fc.2018-04-15T00:00:00Z.PT12H.nc
+        - ID: 1
+          states:
+          - date: 2018-04-15T06:00:00Z
+            read_from_file: 1
+            basename: data_generated/forecast_mom6_ens1/
+            state variables: [socn, tocn, uocn, vocn, ssh, hocn, layer_depth]
+            ocn_filename: ocn.fcst_ens1.fc.2018-04-15T00:00:00Z.PT6H.nc
+          - date: 2018-04-15T12:00:00Z
+            read_from_file: 1
+            basename: data_generated/forecast_mom6_ens1/
+            state variables: [socn, tocn, uocn, vocn, ssh, hocn, layer_depth]
+            ocn_filename: ocn.fcst_ens1.fc.2018-04-15T00:00:00Z.PT12H.nc
+        - ID: 2
+          states:
+          - date: 2018-04-15T06:00:00Z
+            read_from_file: 1
+            basename: data_generated/forecast_mom6_ens2/
+            state variables: [socn, tocn, uocn, vocn, ssh, hocn, layer_depth]
+            ocn_filename: ocn.fcst_ens2.fc.2018-04-15T00:00:00Z.PT6H.nc
+          - date: 2018-04-15T12:00:00Z
+            read_from_file: 1
+            basename: data_generated/forecast_mom6_ens2/
+            state variables: [socn, tocn, uocn, vocn, ssh, hocn, layer_depth]
+            ocn_filename: ocn.fcst_ens2.fc.2018-04-15T00:00:00Z.PT12H.nc
+        - ID: 3
+          states:
+          - date: 2018-04-15T06:00:00Z
+            read_from_file: 1
+            basename: data_generated/forecast_mom6_ens3/
+            state variables: [socn, tocn, uocn, vocn, ssh, hocn, layer_depth]
+            ocn_filename: ocn.fcst_ens3.fc.2018-04-15T00:00:00Z.PT6H.nc
+          - date: 2018-04-15T12:00:00Z
+            read_from_file: 1
+            basename: data_generated/forecast_mom6_ens3/
+            state variables: [socn, tocn, uocn, vocn, ssh, hocn, layer_depth]
+            ocn_filename: ocn.fcst_ens3.fc.2018-04-15T00:00:00Z.PT12H.nc
+      model geometry: *geom
+      nonlinear control:
+        ID: 0
+        read_from_file: 1
+        basename: data_static/72x35x25/restarts/
+        state variables: [socn, tocn, uocn, vocn, ssh, hocn, layer_depth]
+        ocn_filename: MOM.res.nc
+        date: 2018-04-15T00:00:00Z
+      nonlinear ensemble:
+        read:
+          members from template:
+            pattern: '%mem%'
+            nmembers: 3
+            template:
+              ID: %mem%
+              read_from_file: 1
+              state variables: [socn, tocn, uocn, vocn, ssh, hocn, layer_depth]
+              basename: data_static/72x35x25/restarts_ens/
+              ocn_filename: MOM.res.ens.%mem%.nc
+              date: 2018-04-15T00:00:00Z
+
+# Provide the 2 states to calulate initial perturbation and run the non-linear model for 2 trajectories
+x1:
+  ID: 0
+  read_from_file: 1
+  basename: data_static/72x35x25/restarts/
+  state variables: [socn, tocn, uocn, vocn, ssh, hocn, layer_depth]
+  ocn_filename: MOM.res.nc
+  state variables: [socn, tocn, uocn, vocn, ssh, hocn, layer_depth]
+  date: 2018-04-15T00:00:00Z
+
+x2:
+  ID: 1
+  read_from_file: 1
+  state variables: [socn, tocn, uocn, vocn, ssh, hocn, layer_depth]
+  basename: data_static/72x35x25/restarts_ens/
+  ocn_filename: MOM.res.ens.1.nc
+  state variables: [socn, tocn, uocn, vocn, ssh, hocn, layer_depth]
+  date: 2018-04-15T00:00:00Z
+
+# Provide the non-linear model here
+model:
+  name: PseudoModel
+  tstep: PT6H
+  multiple runs:
+  - ID: 0
+    states:
+    - date: 2018-04-15T06:00:00Z
+      basename: data_generated/forecast_mom6/
+      ocn_filename: ocn.forecast_mom6.fc.2018-04-15T00:00:00Z.PT6H.nc
+      state variables: [socn, tocn, uocn, vocn, ssh, hocn, layer_depth]
+      read_from_file: 1
+    - date: 2018-04-15T12:00:00Z
+      basename: data_generated/forecast_mom6/
+      ocn_filename: ocn.forecast_mom6.fc.2018-04-15T00:00:00Z.PT12H.nc
+      state variables: [socn, tocn, uocn, vocn, ssh, hocn, layer_depth]
+      read_from_file: 1
+  - ID: 1
+    states:
+    - date: 2018-04-15T06:00:00Z
+      read_from_file: 1
+      basename: data_generated/forecast_mom6_ens1/
+      state variables: [socn, tocn, uocn, vocn, ssh, hocn, layer_depth]
+      ocn_filename: ocn.fcst_ens1.fc.2018-04-15T00:00:00Z.PT6H.nc
+    - date: 2018-04-15T12:00:00Z
+      read_from_file: 1
+      basename: data_generated/forecast_mom6_ens1/
+      state variables: [socn, tocn, uocn, vocn, ssh, hocn, layer_depth]
+      ocn_filename: ocn.fcst_ens1.fc.2018-04-15T00:00:00Z.PT12H.nc
+
+model geometry: *geom
+
+model aux increment: {}
+model aux control: {}
+
+output:
+  datadir: data_output/
+  exp: linearization_error
+  type: an
+
+#output on latlon grid:
+#  local interpolator type: oops unstructured grid interpolator
+#  resolution in degrees: 5.0
+#  variables to output: [tocn,socn]
+#  model levels: [1]
+#  datapath: data_output
+#  filename prefix: linearization-error
+
+test:
+  reference filename: testref/linearization_error.test
+  test output filename: testoutput/linearization_error.test
+  float absolute tolerance: 1e-4
