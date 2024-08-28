@@ -1,0 +1,44 @@
+geometry: &geom
+  geom_grid_file: data_static/36x17x25/soca_gridspec.nc
+  mom6_input_nml: data_static/36x17x25/input.nml
+  fields metadata: data_static/fields_metadata.yml
+
+background:
+  read_from_file: 1
+  basename: data_static/36x17x25/restarts/
+  date: &date 2018-04-15T06:00:00Z
+  ocn_filename: MOM.res.nc
+  state variables: &stateVariables [socn, tocn, uocn, vocn, ssh]
+
+background error:
+  covariance model: SABER
+  saber central block:
+    saber block name: diffusion
+    calibration:
+      normalization:
+        iterations: 1000       #< in the real world you'll want to use 1e4 or so
+      groups:
+      # NOTE this is different from the high resolution case because I don't
+      # want to bother generating a new scale file for low res
+      # - horizontal:
+      #     model file:
+      #       date: *date
+      #       basename: data_generated/setcorscales/
+      #       ocn_filename: ocn.cor_rh.incr.2018-04-15T00:00:00Z.nc
+      #     model variable: ssh
+      #   write:
+      #     filepath: data_output/hz_large
+      - horizontal:
+          fixed value: 840336.134453782
+          mask: "interp_mask"
+          as gaussian: true
+        write:
+          filepath: data_output/hz_smaller
+      - vertical:
+          fixed value: 5.0
+          levels: 25
+          mask: "interp_mask"
+          as gaussian: true
+        write:
+          filepath: data_output/vt_5lvls
+

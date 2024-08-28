@@ -37,7 +37,6 @@ namespace soca {
     void soca_increment_random_f90(const F90flds &);
     void soca_increment_dirac_f90(const F90flds &,
                               const eckit::Configuration * const &);
-    void soca_increment_change_resol_f90(const F90flds &, const F90flds &);
     void soca_increment_read_file_f90(const F90flds &,
                                   const eckit::Configuration * const &,
                                   util::DateTime * const *);

@@ -15,6 +15,9 @@
 
 #include "eckit/config/Configuration.h"
 
+#include "oops/util/Timer.h"
+#include "oops/util/FieldSetHelpers.h"
+
 #include "soca/Geometry/Geometry.h"
 #include "soca/Utils/readNcAndInterp.h"
 
@@ -125,6 +128,9 @@ namespace soca {
     if (gen) {
       soca_geo_write_f90(keyGeom_, &conf);
     }
+
+    // create a uid for the geometry for later comparison
+    uid_ = util::getGridUid(functionSpace_);
   }
 
   // -----------------------------------------------------------------------------
@@ -174,8 +180,15 @@ namespace soca {
   void Geometry::print(std::ostream & os) const {
     // TODO(Travis): Implement this correctly.
   }
-  // -----------------------------------------------------------------------------
 
   // -----------------------------------------------------------------------------
+  bool operator==(const Geometry& lhs, const Geometry& rhs) {
+    return lhs.uid_ == rhs.uid_;
+  }
+
+  // -----------------------------------------------------------------------------
+  bool operator!=(const Geometry& lhs, const Geometry& rhs) {
+    return !(lhs == rhs);
+  }
 
 }  // namespace soca

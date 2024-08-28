@@ -51,9 +51,6 @@ contains
 
   !> \}
 
-  !> \copybrief soca_increment_change_resol \see soca_increment_change_resol
-  procedure :: convert     => soca_increment_change_resol
-
 end type
 
 
@@ -179,20 +176,6 @@ subroutine soca_increment_dirac(self, f_conf)
     end if
   end do
 end subroutine soca_increment_dirac
-
-
-! ------------------------------------------------------------------------------
-!> Change resolution
-!!
-!! \relates soca_increment_mod::soca_increment
-subroutine soca_increment_change_resol(self, rhs)
-  class(soca_increment),         intent(inout) :: self  ! target
-  class(soca_increment), target, intent(in)    :: rhs   ! source
-
-  call abor1_ftn("increment: change_resol not implemented")
-  ! TODO re-implement this using whatever generic stuff Francois is putting together
-
-end subroutine soca_increment_change_resol
 
 
 ! ------------------------------------------------------------------------------

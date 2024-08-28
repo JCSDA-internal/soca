@@ -19,11 +19,14 @@
 #include "eckit/config/LocalConfiguration.h"
 #include "eckit/exception/Exceptions.h"
 
+#include "oops/base/GeometryData.h"
 #include "oops/base/Variables.h"
+#include "oops/generic/GlobalInterpolator.h"
 #include "oops/util/DateTime.h"
-#include "oops/util/Logger.h"
 #include "oops/util/FieldSetHelpers.h"
 #include "oops/util/FieldSetOperations.h"
+#include "oops/util/Logger.h"
+#include "oops/util/missingValues.h"
 
 #include "ufo/GeoVaLs.h"
 
@@ -60,12 +63,34 @@ namespace soca {
   }
 
   // -----------------------------------------------------------------------------
-
+  // Resolution change
   State::State(const Geometry & geom, const State & other)
     : Fields(geom, other.vars_, other.time_)
   {
     soca_state_create_f90(keyFlds_, geom_.toFortran(), vars_, fieldSet_.get());
-    soca_state_change_resol_f90(toFortran(), other.keyFlds_);
+
+    // if geometry is the same, just copy and quit
+    if (geom == other.geom_) {
+      soca_state_copy_f90(toFortran(), other.toFortran());
+      return;
+    }
+
+    // otherwise, different geometry, do resolution change
+    eckit::LocalConfiguration conf;
+    conf.set("local interpolator type", "oops unstructured grid interpolator");
+    const oops::GeometryData sourceGeom(other.geom_.functionSpace(), other.geom_.fields(),
+                                        other.geom_.levelsAreTopDown(), other.geom_.getComm());
+    oops::GlobalInterpolator interp(conf, sourceGeom, geom_.functionSpace(), geom.getComm());
+    atlas::FieldSet otherFset, selfFset;
+    other.toFieldSet(otherFset);
+    interp.apply(otherFset, selfFset);
+    fromFieldSet(selfFset);
+
+    // TODO(Travis) There is a possibility of missing values if the land masks
+    // do not match, handle this somehow?
+
+    // TODO(travis) handle a change of resolution in the vertical, someday
+
     Log::trace() << "State::State created by interpolation." << std::endl;
   }
 
@@ -105,6 +130,8 @@ namespace soca {
   /// Basic operators
   // -----------------------------------------------------------------------------
   State & State::operator=(const State & rhs) {
+    ASSERT(geom_ == rhs.geom_);
+
     time_ = rhs.time_;
     soca_state_copy_f90(toFortran(), rhs.toFortran());
     return *this;
@@ -144,12 +171,36 @@ namespace soca {
   // -----------------------------------------------------------------------------
   State & State::operator+=(const Increment & dx) {
     ASSERT(validTime() == dx.validTime());
-    // Interpolate increment to analysis grid
-    Increment dx_hr(geom_, dx);
+
+    // Interpolate increment to analysis grid only if needed
+    std::shared_ptr<const Increment> dx_interp;
+    if (geom_ != dx.geometry()) {
+      dx_interp = std::make_shared<Increment>(geom_, dx);
+    } else {
+      dx_interp.reset(&dx, [](const Increment*) {});  // don't delete original dx!
+    }
 
     // Add increment to background state
-    atlas::FieldSet fs2; dx.toFieldSet(fs2);
-    util::addFieldSets(fieldSet_, fs2);
+    // NOTE: if the land masks are not carefully constructed, this can
+    // result in MISSING_VALUEs in the increment trying to be added to the state.
+    // TODO(travis) issue a warning if this happens? Fix this deeper down in the
+    // increment side? In the meantime we can just ignore the missing values
+    atlas::FieldSet fs2;
+    dx_interp->toFieldSet(fs2);
+    const auto missing = util::missingValue<double>();
+    for (const auto & src : fs2) {
+      const auto v_src = atlas::array::make_view<double, 2>(src);
+      auto & dst = fieldSet_.field(src.name());
+      auto v_dst = atlas::array::make_view<double, 2>(dst);
+      for (size_t i = 0; i < src.shape(0); ++i) {
+        for (size_t j = 0; j < src.shape(1); ++j) {
+          if (v_src(i, j) == missing) continue;
+          v_dst(i, j) += v_src(i, j);
+        }
+      }
+      dst.set_dirty(src.dirty() || dst.dirty());
+    }
+
     return *this;
   }
 
