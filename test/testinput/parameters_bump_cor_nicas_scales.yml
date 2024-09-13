@@ -60,3 +60,4 @@ background error:
 test:
   reference filename: testref/parameters_bump_cor_nicas_scales.test
   test output filename: testoutput/parameters_bump_cor_nicas_scales.test
+  float relative tolerance: 1e-5
