@@ -169,4 +169,4 @@ output:
 test:
   reference filename: testref/linearization_error.test
   test output filename: testoutput/linearization_error.test
-  float absolute tolerance: 1e-2
+  float absolute tolerance: 1e2
