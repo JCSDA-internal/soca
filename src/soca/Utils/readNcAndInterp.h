@@ -17,7 +17,7 @@ namespace soca
 /// @brief Read a netCDF file and interpolate the values to the destination atlas FunctionSpace.
 ///
 /// It is assumed that variables in the input file are all 1D, and that "latitude" and "longitude"
-/// variables are present in addition to the variables listed in `vars`
+/// variables are present in addition to the variables listed in `vars`. All  resulting fields are 2D
 ///
 /// @param filename The name of the netCDF file to read.
 /// @param vars A list of variable names to read in and process
