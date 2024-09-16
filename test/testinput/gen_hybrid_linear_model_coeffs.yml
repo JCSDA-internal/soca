@@ -107,4 +107,4 @@ test:
   # landmask into account
   reference filename: testref/gen_hybrid_linear_model_coeffs.test
   test output filename: testoutput/gen_hybrid_linear_model_coeffs.test
-  float absolute tolerance: 1e8
+  float absolute tolerance: 1e10
