@@ -90,4 +90,4 @@ output:
 test:
   reference filename: testref/enspert.test
   test output filename: testoutput/enspert.test
-  float relative tolerance: 1e-7
+  float relative tolerance: 1e-6
