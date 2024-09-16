@@ -10,6 +10,8 @@
 #include "atlas/interpolation/Interpolation.h"
 #include "atlas/util/Point.h"
 
+#include "oops/util/Timer.h"
+
 #include "soca/Utils/readNcAndInterp.h"
 
 
@@ -19,6 +21,8 @@ atlas::FieldSet readNcAndInterp(
     const std::string & filename,
     const std::vector<std::string> & vars,
     const atlas::FunctionSpace & dstFunctionSpace ) {
+  util::Timer timer("soca::readNcAndInterp", "readNcAndInterp");
+
   atlas::FieldSet fieldSet;
 
   int ncid;
