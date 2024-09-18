@@ -84,27 +84,13 @@ namespace soca {
     atlas::FieldSet otherFset, selfFset;
     other.toFieldSet(otherFset);
     interp.apply(otherFset, selfFset);
+    fromFieldSet(selfFset);
 
-    // There is a possibility of missing values if the land masks do not match.
-    // Handle this by setting missing values to zero.
-    // NOTE: This is a temporary fix, this happens primarily due to the u/v mask
-    // issues, and should go away when we do proper U/V de-staggering
-    double missingVal = util::missingValue<double>();
-    for (auto & field : selfFset) {
-      auto v = atlas::array::make_view<double, 2>(field);
-      for (size_t i = 0; i < field.shape(0); ++i) {
-        for (size_t j = 0; j < field.shape(1); ++j) {
-          if (v(i, j) == missingVal) {
-            v(i, j) = 0.0;
-          }
-        }
-      }
-    }
+    // TODO(Travis) There is a possibility of missing values if the land masks
+    // do not match, handle this somehow?
 
     // TODO(travis) handle a change of resolution in the vertical, someday
 
-
-    fromFieldSet(selfFset);
     Log::trace() << "State::State created by interpolation." << std::endl;
   }
 
