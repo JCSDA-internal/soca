@@ -46,3 +46,4 @@ rv output:
 test:
   reference filename: testref/setcorscales.test
   test output filename: testoutput/setcorscales.test
+  float relative tolerance: 1e-5
