@@ -13,6 +13,9 @@
 #                       This parameter cannot be used with io_file/io_name
 # fill value:           If the field is masked, this value will be used for the masked areas.
 #                       (Default: 0.0)
+# categories:           Number of categories for a field with a category dimension (Default: -1)
+#                       If > 0, then the fields "name", "getval name *" and "io name" can use the
+#                       placeholder "<CATEGORY>" which will be replaced with the category number
 # --------------------------------------------------------------------------------------------------
 
 
@@ -103,278 +106,56 @@
 # --------------------------------------------------------------------------------------------------
 # ice state variables with category dimension
 # --------------------------------------------------------------------------------------------------
-- name: aice1_h
-  getval name: sea_ice_category_1_area_fraction
-  category: 1
+- name: aice<CATEGORY>_h
+  getval name: sea_ice_category_<CATEGORY>_area_fraction
   categories: 5
   io file: ice
   io sup name: aicen_h
-  io name: aice1_h
+  io name: aice<CATEGORY>_h
   property: positive_definite
 
-- name: aice2_h
-  getval name: sea_ice_category_2_area_fraction
-  category: 2
-  categories: 5
-  io file: ice
-  io sup name: aicen_h
-  io name: aice2_h
-  property: positive_definite
-
-- name: aice3_h
-  getval name: sea_ice_category_3_area_fraction
-  category: 3
-  categories: 5
-  io file: ice
-  io sup name: aicen_h
-  io name: aice3_h
-  property: positive_definite
-
-- name: aice4_h
-  getval name: sea_ice_category_4_area_fraction
-  category: 4
-  categories: 5
-  io file: ice
-  io sup name: aicen_h
-  io name: aice4_h
-  property: positive_definite
-
-- name: aice5_h
-  getval name: sea_ice_category_5_area_fraction
-  category: 5
-  categories: 5
-  io file: ice
-  io sup name: aicen_h
-  io name: aice5_h
-  property: positive_definite
-
-- name: vice1_h
-  getval name: sea_ice_category_1_volume
-  category: 1
+- name: vice<CATEGORY>_h
+  getval name: sea_ice_category_<CATEGORY>_volume
   categories: 5
   io file: ice
   io sup name: vicen_h
-  io name: vice1_h
+  io name: vice<CATEGORY>_h
   property: positive_definite
 
-- name: vice2_h
-  getval name: sea_ice_category_2_volume
-  category: 2
-  categories: 5
-  io file: ice
-  io sup name: vicen_h
-  io name: vice2_h
-  property: positive_definite
-
-- name: vice3_h
-  getval name: sea_ice_category_3_volume
-  category: 3
-  categories: 5
-  io file: ice
-  io sup name: vicen_h
-  io name: vice3_h
-  property: positive_definite
-
-- name: vice4_h
-  getval name: sea_ice_category_4_volume
-  category: 4
-  categories: 5
-  io file: ice
-  io sup name: vicen_h
-  io name: vice4_h
-  property: positive_definite
-
-- name: vice5_h
-  getval name: sea_ice_category_5_volume
-  category: 5
-  categories: 5
-  io file: ice
-  io sup name: vicen_h
-  io name: vice5_h
-  property: positive_definite
-
-- name: vsno1_h
-  getval name: snow_category_1_volume
-  category: 1
+- name: vsno<CATEGORY>_h
+  getval name: snow_category_<CATEGORY>_volume
   categories: 5
   io file: ice
   io sup name: vsnon_h
-  io name: vsno1_h
-  property: positive_definite
-
-- name: vsno2_h
-  getval name: snow_category_2_volume
-  category: 2
-  categories: 5
-  io file: ice
-  io sup name: vsnon_h
-  io name: vsno2_h
-  property: positive_definite
-
-- name: vsno3_h
-  getval name: snow_category_3_volume
-  category: 3
-  categories: 5
-  io file: ice
-  io sup name: vsnon_h
-  io name: vsno3_h
-  property: positive_definite
-
-- name: vsno4_h
-  getval name: snow_category_4_volume
-  category: 4
-  categories: 5
-  io file: ice
-  io sup name: vsnon_h
-  io name: vsno4_h
-  property: positive_definite
-
-- name: vsno5_h
-  getval name: snow_category_5_volume
-  category: 5
-  categories: 5
-  io file: ice
-  io sup name: vsnon_h
-  io name: vsno5_h
+  io name: vsno<CATEGORY>_h
   property: positive_definite
 
 # --------------------------------------------------------------------------------------------------
 # Thermodynamic ice state variables with category and level dimension
 # --------------------------------------------------------------------------------------------------
-- name: ti1z_h
-  getval name: ice_internal_temperatures_catergory_1
-  category: 1
+- name: ti<CATEGORY>z_h
+  getval name: ice_internal_temperatures_catergory_<CATEGORY>
   categories: 5
   levels: 7
   io file: ice
   io sup name: Tinz_h
-  io name: ti1z_h
+  io name: ti<CATEGORY>z_h
 
-- name: ti2z_h
-  getval name: ice_internal_temperatures_catergory_2
-  category: 2
-  categories: 5
-  levels: 7
-  io file: ice
-  io sup name: Tinz_h
-  io name: ti2z_h
-
-- name: ti3z_h
-  getval name: ice_internal_temperatures_catergory_3
-  category: 3
-  categories: 5
-  levels: 7
-  io file: ice
-  io sup name: Tinz_h
-  io name: ti3z_h
-
-- name: ti4z_h
-  getval name: ice_internal_temperatures_catergory_4
-  category: 4
-  categories: 5
-  levels: 7
-  io file: ice
-  io sup name: Tinz_h
-  io name: ti4z_h
-
-- name: ti5z_h
-  getval name: ice_internal_temperatures_catergory_5
-  category: 5
-  categories: 5
-  levels: 7
-  io file: ice
-  io sup name: Tinz_h
-  io name: ti5z_h
-
-- name: si1z_h
-  getval name: ice_internal_bulk_salinity_catergory_1
-  category: 1
+- name: si<CATEGORY>z_h
+  getval name: ice_internal_bulk_salinity_catergory_<CATEGORY>
   categories: 5
   levels: 7
   io file: ice
   io sup name: Sinz_h
-  io name: si1z_h
+  io name: si<CATEGORY>z_h
 
-- name: si2z_h
-  getval name: ice_internal_bulk_salinity_catergory_2
-  category: 2
-  categories: 5
-  levels: 7
-  io file: ice
-  io sup name: Sinz_h
-  io name: si2z_h
-
-- name: si3z_h
-  getval name: ice_internal_bulk_salinity_catergory_3
-  category: 3
-  categories: 5
-  levels: 7
-  io file: ice
-  io sup name: Sinz_h
-  io name: si3z_h
-
-- name: si4z_h
-  getval name: ice_internal_bulk_salinity_catergory_4
-  category: 4
-  categories: 5
-  levels: 7
-  io file: ice
-  io sup name: Sinz_h
-  io name: si4z_h
-
-- name: si5z_h
-  getval name: ice_internal_bulk_salinity_catergory_5
-  category: 5
-  categories: 5
-  levels: 7
-  io file: ice
-  io sup name: Sinz_h
-  io name: si5z_h
-
-- name: ts1z_h
-  getval name: snow internal temperatures_catergory_1
-  category: 1
+- name: ts<CATEGORY>z_h
+  getval name: snow internal temperatures_catergory_<CATEGORY>
   categories: 5
   levels: 1
   io file: ice
   io sup name: Tsnz_h
-  io name: ts1z_h
-
-- name: ts2z_h
-  getval name: snow internal temperatures_catergory_2
-  category: 2
-  categories: 5
-  levels: 1
-  io file: ice
-  io sup name: Tsnz_h
-  io name: ts2z_h
-
-- name: ts3z_h
-  getval name: snow internal temperatures_catergory_3
-  category: 3
-  categories: 5
-  levels: 1
-  io file: ice
-  io sup name: Tsnz_h
-  io name: ts3z_h
-
-- name: ts4z_h
-  getval name: snow internal temperatures_catergory_4
-  category: 4
-  categories: 5
-  levels: 1
-  io file: ice
-  io sup name: Tsnz_h
-  io name: ts4z_h
-
-- name: ts5z_h
-  getval name: snow internal temperatures_catergory_5
-  category: 5
-  categories: 5
-  levels: 1
-  io file: ice
-  io sup name: Tsnz_h
-  io name: ts5z_h
+  io name: ts<CATEGORY>z_h
 
 # --------------------------------------------------------------------------------------------------
 # wave state variables
