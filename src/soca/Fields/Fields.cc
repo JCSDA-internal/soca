@@ -21,6 +21,11 @@
 namespace soca
 {
 
+// NOTE, this should change when mask stuff is generalized in oops.
+// Also note, until we deal with U/V de-staggering, the print value is kinda
+// slightly wrong. Oh well.
+const char MASK_METADATA[] = "interp_source_point_mask";
+
 // -----------------------------------------------------------------------------
 
 Fields::Fields(const Geometry & geom, const oops::Variables & vars, const util::DateTime & vt)
@@ -105,9 +110,9 @@ double Fields::norm() const {
     const auto & vGhost = atlas::array::make_view<int, 1>(field.functionspace().ghost());
     const auto & view = atlas::array::make_view<double, 2>(field);
     std::unique_ptr<atlas::array::ArrayView<double, 2> > mask;
-    if (field.metadata().getBool("masked", false)) {
+    if (field.metadata().has(MASK_METADATA)) {
       // optionally get the mask field, if one is given
-      const std::string & maskName = field.metadata().getString("mask");
+      const std::string & maskName = field.metadata().getString(MASK_METADATA);
       mask.reset(new atlas::array::ArrayView<double, 2>(
         atlas::array::make_view<double, 2>(geom_.fields().field(maskName))));
     }
@@ -130,11 +135,6 @@ double Fields::norm() const {
 // -----------------------------------------------------------------------------
 
 void Fields::print(std::ostream & os) const {
-  // NOTE, this should change when mask stuff is generalized in oops.
-  // Also note, until we deal with U/V de-staggering, the print value is kinda
-  // slightly wrong. Oh well.
-  const std::string MASK_METADATA = "interp_source_point_mask";
-
   os << std::endl << "  Valid time: " << validTime();
 
   // for each field
