@@ -1370,11 +1370,9 @@ subroutine soca_fields_update_metadata(self)
     ameta = afield%metadata()
     metadata = self%geom%fields_metadata%get(afield%name())
 
-    call ameta%set('masked', metadata%masked)
     call ameta%set('interp_type', 'default')
     if (metadata%masked) then
       call ameta%set('interp_source_point_mask', 'interp_mask')
-      call ameta%set('mask', "mask_"//metadata%grid)
     end if
   end do
 end subroutine
