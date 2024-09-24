@@ -116,8 +116,6 @@ variational:
     ninner: 5
     gradient norm reduction: 1e-15
     test: on
-    diagnostics:
-      departures: ombg
     linear model:
       name: HTLM
       simple linear model:
@@ -143,10 +141,6 @@ output:
   type: incr
   first: PT0H
   frequency: PT6H
-
-final:
-  diagnostics:
-    departures: oman
 
 test:
   reference filename: testref/4dvar_htlm.test
