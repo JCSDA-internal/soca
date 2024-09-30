@@ -117,17 +117,10 @@ variational:
     ninner: 5
     gradient norm reduction: 1e-10
     test: on
-    diagnostics:
-      departures: ombg
-
 output:
   datadir: data_output/
   exp: 4dhybenvar
   type: an
-
-final:
-  diagnostics:
-    departures: oman
 
 test:
   reference filename: testref/4dhybenvar.test

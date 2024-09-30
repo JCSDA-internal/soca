@@ -255,8 +255,6 @@ variational:
     ninner: 5
     gradient norm reduction: 1e-15
     test: on
-    diagnostics:
-      departures: ombg
     online diagnostics:
       write increment: true
       increment:
@@ -270,10 +268,6 @@ output:
   datadir: data_output
   exp: 3dvar_lowres
   type: an
-
-final:
-  diagnostics:
-    departures: oman
 
 test:
   reference filename: testref/3dvar_lowres.test
