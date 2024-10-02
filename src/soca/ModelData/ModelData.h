@@ -32,7 +32,9 @@ class ModelData : public util::Printable {
             "Particulate_inorganic_carbon", "colored_dissolved_organic_carbon",
             "diatom_concentration", "chlorophyte_concentration", "cyano-bacteria_concentration",
             "coccolithophore_concentration", "dinoflagellate_concentration",
-            "phaeocystis_concentration", "ozone_thickness", "water_vapor", "relative_humidity",
+            "phaeocystis_concentration",
+            // atmospheric variables that will be removed later
+            "ozone_thickness", "water_vapor", "relative_humidity",
             "cloud_area_fraction_in_atmosphere_layer", "cloud_liquid_water_path",
             "aerosol_optical_thickness", "single_scattering_albedo", "asymmetry_parameter"}));
   }
