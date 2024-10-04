@@ -243,7 +243,7 @@ subroutine soca_bkgerrgodas_ssh(self)
   domain%is = self%geom%isc ; domain%ie = self%geom%iec
   domain%js = self%geom%jsc ; domain%je = self%geom%jec
 
-  call self%std_bkgerr%get("ssh", ssh)
+  call self%std_bkgerr%get("sea_surface_height_above_geoid", ssh)
 
   ! Loop over compute domain
   do i = domain%is, domain%ie

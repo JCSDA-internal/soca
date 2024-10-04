@@ -57,8 +57,7 @@
   io name: h
   vert interp: false
 
-- name: ssh
-  getval name: sea_surface_height_above_geoid
+- name: sea_surface_height_above_geoid
   io file: ocn
   io name: ave_ssh
 

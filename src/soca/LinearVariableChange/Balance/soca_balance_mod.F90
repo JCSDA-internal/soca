@@ -257,7 +257,7 @@ subroutine soca_balance_mult(self, dxa, dxm)
           fld_m%val(i,j,:) = fld_a%val(i,j,:) + &
             & self%kst%jacobian(i,j,:) * tocn_a%val(i,j,:)
 
-        case ("ssh") ! SSH
+        case ("sea_surface_height_above_geoid") ! SSH
           fld_m%val(i,j,:) = fld_a%val(i,j,:)
           do k = 1, tocn_a%nz
             fld_m%val(i,j,:) = fld_m%val(i,j,:) + &
@@ -294,7 +294,7 @@ subroutine soca_balance_multad(self, dxa, dxm)
   cicen_m => null()
 
   call dxm%get("socn", socn_m)
-  call dxm%get("ssh",  ssh_m)
+  call dxm%get("sea_surface_height_above_geoid",  ssh_m)
   if (dxm%has("cicen")) call dxm%get("cicen",cicen_m)
 
   do n = 1, size(dxa%fields)
@@ -397,7 +397,7 @@ subroutine soca_balance_multinvad(self, dxa, dxm)
   cicen_a => null()
 
   call dxa%get("socn", socn_a)
-  call dxa%get("ssh",  ssh_a)
+  call dxa%get("sea_surface_height_above_geoid",  ssh_a)
   if (dxa%has("cicen")) call dxa%get("cicen",cicen_a)
 
   do n = 1, size(dxm%fields)

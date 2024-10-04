@@ -82,7 +82,7 @@ void BkgErrFilt::multiply(oops::FieldSet3D & fset) const {
   util::Timer timer("soca::BkgErrFilt", "multiply");
 
   const std::set<std::string> FIELDS3D{"tocn", "socn"};
-  const std::set<std::string> FIELDS2D{"ssh"};
+  const std::set<std::string> FIELDS2D{"sea_surface_height_above_geoid"};
 
   const auto v_mult3D = atlas::array::make_view<double, 2>(mult3D_);
   const auto v_mult2D = atlas::array::make_view<double, 2>(mult2D_);
