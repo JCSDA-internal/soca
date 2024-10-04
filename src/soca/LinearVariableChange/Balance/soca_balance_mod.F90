@@ -108,7 +108,7 @@ subroutine soca_balance_setup(self, f_conf, traj, geom)
   call traj%get("sea_water_potential_temperature", tocn)
   call traj%get("socn", socn)
   call traj%get("hocn", hocn)
-  call traj%get("mld", mld)
+  call traj%get("ocean_mixed_layer_thickness", mld)
   call traj%get("layer_depth", layer_depth)
   if (traj%has("cicen"))  call traj%get("cicen", cicen)
 

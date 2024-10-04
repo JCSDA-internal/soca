@@ -289,7 +289,7 @@ subroutine soca_bkgerrgodas_socn(self)
 
   ! Loop over compute domain
   call self%std_bkgerr%get("socn", field)
-  call self%bkg%get("mld", mld)
+  call self%bkg%get("ocean_mixed_layer_thickness", mld)
   call self%bkg%get("layer_depth", layer_depth)
 
   do i = domain%is, domain%ie

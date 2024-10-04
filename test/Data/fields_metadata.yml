@@ -170,7 +170,7 @@
 
 - name: mesoscale_representation_error
 
-- name: mld
+- name: ocean_mixed_layer_thickness
 
 - name: sea_floor_depth_below_sea_surface
 
