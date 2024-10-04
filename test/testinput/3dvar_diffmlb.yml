@@ -96,8 +96,6 @@ variational:
     ninner: 5
     gradient norm reduction: 1e-15
     test: on
-    diagnostics:
-      departures: ombg
     online diagnostics:
       write increment: true
       increment:
@@ -113,8 +111,6 @@ output:
   type: an
 
 final:
-  diagnostics:
-    departures: oman
   increment:
     output:
       state component:

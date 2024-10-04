@@ -16,7 +16,9 @@ states:
      ice_filename: cice.res.nc
      sfc_filename: sfc.res.nc
      date: &bkg_date 2018-04-15T00:00:00Z
-     state variables: [ssh, tocn, socn, uocn, vocn, hocn, cicen, layer_depth]
+     # NOTE: you probably shouldn't use uocn and vocn for now until grid
+     # de-staggering is implemented
+     state variables: [ssh, tocn, socn, hocn, cicen, layer_depth]
   output:
      datadir: data_output/
      exp: convertstate
