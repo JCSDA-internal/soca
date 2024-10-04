@@ -910,7 +910,7 @@ subroutine soca_fields_read(self, f_conf, vdate)
 
     ! Compute mixed layer depth TODO: Move somewhere else ...
     if (self%has("mld") .and. self%has("layer_depth")) then
-      call self%get("tocn", field)
+      call self%get("sea_water_potential_temperature", field)
       call self%get("socn", field2)
       call self%get("mld", mld)
       mld%val = 0.0

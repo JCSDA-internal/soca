@@ -182,8 +182,8 @@ subroutine soca_bkgerrgodas_tocn(self)
   call sst%init(domain, self%sst_bgerr_file)
   call sst%bin(self%geom%lon, self%geom%lat)
 
-  call self%bkg%get("tocn", tocn_b)
-  call self%std_bkgerr%get("tocn", tocn_e)
+  call self%bkg%get("sea_water_potential_temperature", tocn_b)
+  call self%std_bkgerr%get("sea_water_potential_temperature", tocn_e)
   call self%bkg%get("hocn", hocn)
   call self%bkg%get("layer_depth",layer_depth)
 

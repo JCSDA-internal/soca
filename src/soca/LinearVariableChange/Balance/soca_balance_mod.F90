@@ -105,7 +105,7 @@ subroutine soca_balance_setup(self, f_conf, traj, geom)
   jsd=geom%jsd; jed=geom%jed
 
   ! Get required fields
-  call traj%get("tocn", tocn)
+  call traj%get("sea_water_potential_temperature", tocn)
   call traj%get("socn", socn)
   call traj%get("hocn", hocn)
   call traj%get("mld", mld)
@@ -240,7 +240,7 @@ subroutine soca_balance_mult(self, dxa, dxm)
   !> K= [ Ketat Ketas I  0 ]
   !>    [ Kct     0   0  I ]
 
-  call dxa%get("tocn",tocn_a)
+  call dxa%get("sea_water_potential_temperature",tocn_a)
   call dxa%get("socn",socn_a)
 
   do n=1, size(dxm%fields)
@@ -307,7 +307,7 @@ subroutine soca_balance_multad(self, dxa, dxm)
         case default
           fld_a%val(i,j,:) = fld_m%val(i,j,:)
 
-        case ("tocn") ! Temperature
+        case ("sea_water_potential_temperature") ! Temperature
           fld_a%val(i,j,:) = fld_m%val(i,j,:) + &
             & self%kst%jacobian(i,j,:) * socn_m%val(i,j,:) + &
             & self%ksshts%kssht(i,j,:) * ssh_m%val(i,j,1)
@@ -341,7 +341,7 @@ subroutine soca_balance_multinv(self, dxa, dxm)
   type(soca_field), pointer :: fld_m, fld_a
   type(soca_field), pointer :: tocn_m, socn_m
 
-  call dxm%get("tocn", tocn_m)
+  call dxm%get("sea_water_potential_temperature", tocn_m)
   call dxm%get("socn", socn_m)
 
   do n = 1, size(dxa%fields)
@@ -410,7 +410,7 @@ subroutine soca_balance_multinvad(self, dxa, dxm)
         case default
           fld_m%val(i,j,:) = fld_a%val(i,j,:)
 
-        case ('tocn') ! Temperature
+        case ('sea_water_potential_temperature') ! Temperature
           fld_m%val(i,j,:) = fld_a%val(i,j,:) &
             & - self%kst%jacobian(i,j,:) * socn_a%val(i,j,:) &
             & + ( self%ksshts%ksshs(i,j,:) * self%kst%jacobian(i,j,:) &

@@ -15,7 +15,7 @@ cost function:
   - hicen
   - hsnon
   - socn
-  - tocn
+  - sea_water_potential_temperature
   - sea_surface_height_above_geoid
   - hocn
   - sw
@@ -45,7 +45,7 @@ cost function:
       saber block name: diffusion
       read:
         groups:
-        - variables: [tocn, socn]
+        - variables: [sea_water_potential_temperature, socn]
           horizontal:
             filepath: data_generated/parameters_diffusion/hz_smaller
           vertical:

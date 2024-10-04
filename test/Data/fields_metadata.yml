@@ -19,9 +19,8 @@
 # --------------------------------------------------------------------------------------------------
 # Ocean state variables
 # --------------------------------------------------------------------------------------------------
-- name: tocn
+- name: sea_water_potential_temperature
   levels: full_ocn
-  getval name: sea_water_potential_temperature
   getval name surface: sea_surface_temperature
   io file: ocn
   io name: Temp
