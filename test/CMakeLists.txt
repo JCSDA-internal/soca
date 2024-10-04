@@ -607,16 +607,14 @@ soca_add_test( NAME dirac_diffusion
                TEST_DEPENDS test_soca_gridgen
                             test_soca_parameters_diffusion )
 
-<<<<<<< HEAD
 soca_add_test( NAME dirac_parametric_ocean_stddev
                 EXE soca_error_covariance_toolbox.x
                 TEST_DEPENDS test_soca_gridgen )
-=======
+
 soca_add_test( NAME dirac_diffusion_lowres
                EXE soca_error_covariance_toolbox.x
                TEST_DEPENDS test_soca_parameters_diffusion_lowres )
 
->>>>>>> origin/develop
 
 if( ${daml_FOUND} )
   soca_add_test( NAME dirac_mlbalance
