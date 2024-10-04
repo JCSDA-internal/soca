@@ -210,7 +210,7 @@
   constant value: 6
 
 - name: pres
-  getval name: surface_pressure_at_mean_sea_level
+  getval name: surface_pressure
   constant value: 999
 
 - name: rh
