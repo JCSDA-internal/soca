@@ -64,7 +64,7 @@ subroutine soca_model2geovals_changevar_f90(c_key_geom, c_key_xin, c_key_xout) &
       xout%fields(i)%val(:,:,1) = real(geom%lon, kind=kind_real)
 
     case ('sea_water_depth')
-      call xin%get('hocn', field)
+      call xin%get('sea_water_cell_thickness', field)
         xout%fields(i)%val = 0.5 * field%val
         do kk = 2, field%nz
           xout%fields(i)%val(:,:,kk) = xout%fields(i)%val(:,:,kk) + &
@@ -105,7 +105,7 @@ subroutine soca_model2geovals_changevar_f90(c_key_geom, c_key_xin, c_key_xout) &
       xout%fields(i)%val(:,:,1) = field%val(:,:,1) + 273.15_kind_real
 
     case ('sea_floor_depth_below_sea_surface')
-      call xin%get('hocn', field)
+      call xin%get('sea_water_cell_thickness', field)
       xout%fields(i)%val(:,:,1) = sum(field%val, dim=3)
 
     ! identity operators

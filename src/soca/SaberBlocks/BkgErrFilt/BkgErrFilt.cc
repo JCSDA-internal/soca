@@ -39,7 +39,7 @@ BkgErrFilt::BkgErrFilt(
   ASSERT(outerGeometryData.fieldSet()[0].shape(0) == xb.fieldSet()[0].shape(0));
 
   const double MIN_THICKNESS = 1.0e-3;
-  const int levels = xb["hocn"].levels();
+  const int levels = xb["sea_water_cell_thickness"].levels();
 
   mask_ = innerGeometryData_.getField("interp_mask");
   mult3D_ = innerGeometryData_.functionSpace().createField<double>(
@@ -48,7 +48,7 @@ BkgErrFilt::BkgErrFilt(
     atlas::option::levels(1) );
   auto v_mult3D = atlas::array::make_view<double, 2>(mult3D_);
   auto v_mult2D = atlas::array::make_view<double, 2>(mult2D_);
-  const auto v_hocn = atlas::array::make_view<double, 2>(xb["hocn"]);
+  const auto v_hocn = atlas::array::make_view<double, 2>(xb["sea_water_cell_thickness"]);
   const auto v_mask = atlas::array::make_view<double, 2>(mask_);
 
   v_mult3D.assign(0.0);

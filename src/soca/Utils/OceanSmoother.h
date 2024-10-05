@@ -125,7 +125,7 @@ class OceanSmoother {
       this};
     oops::Parameter<std::string> thicknessVariable{"thickness variable",
       "The name of the layer thickness state variable in the fieldset passed to the constructor",
-      "hocn", this};
+      "sea_water_cell_thickness", this};
   };
 
   // -----------------------------------------------------------------------------

@@ -80,7 +80,7 @@ subroutine soca_increment_random(self)
     field => self%fields(i)
     ! TODO remove this once increment / state are fully separated
     ! NOTE: can't randomize "hocn", testIncrementInterpAD fails
-    if (field%name == 'hocn') cycle
+    if (field%name == "sea_water_cell_thickness") cycle
     call normal_distribution(field%val,  0.0_kind_real, 1.0_kind_real, rseed)
   end do
 

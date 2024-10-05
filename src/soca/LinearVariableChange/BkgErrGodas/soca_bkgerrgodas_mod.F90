@@ -96,7 +96,12 @@ subroutine soca_bkgerrgodas_setup(self, f_conf, bkg, geom)
   do i=1,size(self%std_bkgerr%fields)
     field => self%std_bkgerr%fields(i)
     select case(field%name)
-    case ('sw','lw','lhf','shf','us','swh')
+    case ('net_downwelling_shortwave_radiation',&
+          'net_downwelling_longwave_radiation',&
+          'upward_latent_heat_flux_in_air',&
+          'upward_sensible_heat_flux_in_air',&
+          'friction_velocity_over_water',&
+          'sea_surface_wave_significant_height')
       call bkg%get(field%name, field_bkg)
       field%val = abs(field_bkg%val)
       field%val = 0.1_kind_real * field%val
@@ -184,8 +189,8 @@ subroutine soca_bkgerrgodas_tocn(self)
 
   call self%bkg%get("sea_water_potential_temperature", tocn_b)
   call self%std_bkgerr%get("sea_water_potential_temperature", tocn_e)
-  call self%bkg%get("hocn", hocn)
-  call self%bkg%get("layer_depth",layer_depth)
+  call self%bkg%get("sea_water_cell_thickness", hocn)
+  call self%bkg%get("depth_below_sea_surface",layer_depth)
 
   ! Loop over compute domain
   do i = domain%is, domain%ie
@@ -290,7 +295,7 @@ subroutine soca_bkgerrgodas_socn(self)
   ! Loop over compute domain
   call self%std_bkgerr%get("sea_water_salinity", field)
   call self%bkg%get("ocean_mixed_layer_thickness", mld)
-  call self%bkg%get("layer_depth", layer_depth)
+  call self%bkg%get("depth_below_sea_surface", layer_depth)
 
   do i = domain%is, domain%ie
     do j = domain%js, domain%je

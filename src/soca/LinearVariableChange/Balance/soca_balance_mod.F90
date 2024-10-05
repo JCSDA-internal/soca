@@ -107,9 +107,9 @@ subroutine soca_balance_setup(self, f_conf, traj, geom)
   ! Get required fields
   call traj%get("sea_water_potential_temperature", tocn)
   call traj%get("sea_water_salinity", socn)
-  call traj%get("hocn", hocn)
+  call traj%get("sea_water_cell_thickness", hocn)
   call traj%get("ocean_mixed_layer_thickness", mld)
-  call traj%get("layer_depth", layer_depth)
+  call traj%get("depth_below_sea_surface", layer_depth)
   if (traj%has("cicen"))  call traj%get("cicen", cicen)
 
   ! allocate space
