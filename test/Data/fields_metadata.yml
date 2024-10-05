@@ -25,9 +25,8 @@
   io file: ocn
   io name: Temp
 
-- name: socn
+- name: sea_water_salinity
   levels: full_ocn
-  getval name: sea_water_salinity
   getval name surface: sea_surface_salinity
   io file: ocn
   io name: Salt

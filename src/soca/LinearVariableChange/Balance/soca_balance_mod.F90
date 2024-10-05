@@ -106,7 +106,7 @@ subroutine soca_balance_setup(self, f_conf, traj, geom)
 
   ! Get required fields
   call traj%get("sea_water_potential_temperature", tocn)
-  call traj%get("socn", socn)
+  call traj%get("sea_water_salinity", socn)
   call traj%get("hocn", hocn)
   call traj%get("ocean_mixed_layer_thickness", mld)
   call traj%get("layer_depth", layer_depth)
@@ -241,7 +241,7 @@ subroutine soca_balance_mult(self, dxa, dxm)
   !>    [ Kct     0   0  I ]
 
   call dxa%get("sea_water_potential_temperature",tocn_a)
-  call dxa%get("socn",socn_a)
+  call dxa%get("sea_water_salinity",socn_a)
 
   do n=1, size(dxm%fields)
     fld_m => dxm%fields(n)
@@ -253,7 +253,7 @@ subroutine soca_balance_mult(self, dxa, dxm)
         case default
           fld_m%val(i,j,:) = fld_a%val(i,j,:)
 
-        case("socn") ! Salinity
+        case("sea_water_salinity") ! Salinity
           fld_m%val(i,j,:) = fld_a%val(i,j,:) + &
             & self%kst%jacobian(i,j,:) * tocn_a%val(i,j,:)
 
@@ -293,7 +293,7 @@ subroutine soca_balance_multad(self, dxa, dxm)
 
   cicen_m => null()
 
-  call dxm%get("socn", socn_m)
+  call dxm%get("sea_water_salinity", socn_m)
   call dxm%get("sea_surface_height_above_geoid",  ssh_m)
   if (dxm%has("cicen")) call dxm%get("cicen",cicen_m)
 
@@ -317,7 +317,7 @@ subroutine soca_balance_multad(self, dxa, dxm)
               & self%kct(i,j) * sum(cicen_m%val(i,j,:))
           end if
 
-        case ("socn") ! Salinity
+        case ("sea_water_salinity") ! Salinity
           fld_a%val(i,j,:) = fld_m%val(i,j,:) + &
             & self%ksshts%ksshs(i,j,:) * ssh_m%val(i,j, 1)
 
@@ -342,7 +342,7 @@ subroutine soca_balance_multinv(self, dxa, dxm)
   type(soca_field), pointer :: tocn_m, socn_m
 
   call dxm%get("sea_water_potential_temperature", tocn_m)
-  call dxm%get("socn", socn_m)
+  call dxm%get("sea_water_salinity", socn_m)
 
   do n = 1, size(dxa%fields)
     fld_a => dxa%fields(n)
@@ -396,7 +396,7 @@ subroutine soca_balance_multinvad(self, dxa, dxm)
 
   cicen_a => null()
 
-  call dxa%get("socn", socn_a)
+  call dxa%get("sea_water_salinity", socn_a)
   call dxa%get("sea_surface_height_above_geoid",  ssh_a)
   if (dxa%has("cicen")) call dxa%get("cicen",cicen_a)
 
