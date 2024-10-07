@@ -6,7 +6,19 @@ geometry:
 model:
   name: Identity
   tstep: PT1H
-  model variables: &soca_vars [cicen, hicen, socn, tocn, ssh, hocn, sw, lhf, shf, lw, us, chl]
+  model variables: &soca_vars
+  - sea_ice_category_area_fraction
+  - sea_ice_category_thickness
+  - sea_water_salinity
+  - sea_water_potential_temperature
+  - sea_surface_height_above_geoid
+  - sea_water_cell_thickness
+  - net_downwelling_shortwave_radiation
+  - upward_latent_heat_flux_in_air
+  - upward_sensible_heat_flux_in_air
+  - net_downwelling_longwave_radiation
+  - friction_velocity_over_water
+  - mass_concentration_of_chlorophyll_in_sea_water
 
 initial condition:
   read_from_file: 1

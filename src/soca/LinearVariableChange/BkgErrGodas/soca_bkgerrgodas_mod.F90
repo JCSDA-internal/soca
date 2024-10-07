@@ -105,7 +105,10 @@ subroutine soca_bkgerrgodas_setup(self, f_conf, bkg, geom)
       call bkg%get(field%name, field_bkg)
       field%val = abs(field_bkg%val)
       field%val = 0.1_kind_real * field%val
-    case ('chl','biop','uocn','vocn')
+    case ('mass_concentration_of_chlorophyll_in_sea_water',&
+          'molar_concentration_of_biomass_in_sea_water_in_p_units',&
+          'eastward_sea_water_velocity',&
+          'northward_sea_water_velocity')
       call bkg%get(field%name, field_bkg)
       field%val = abs(field_bkg%val) * 0.2_kind_real
     end select

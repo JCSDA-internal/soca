@@ -110,7 +110,7 @@ subroutine soca_balance_setup(self, f_conf, traj, geom)
   call traj%get("sea_water_cell_thickness", hocn)
   call traj%get("ocean_mixed_layer_thickness", mld)
   call traj%get("depth_below_sea_surface", layer_depth)
-  if (traj%has("cicen"))  call traj%get("cicen", cicen)
+  if (traj%has("sea_ice_category_area_fraction"))  call traj%get("sea_ice_category_area_fraction", cicen)
 
   ! allocate space
   nl = hocn%nz
@@ -179,7 +179,7 @@ subroutine soca_balance_setup(self, f_conf, traj, geom)
   deallocate(jac)
 
   ! Compute Kct
-  if (traj%has("cicen")) then
+  if (traj%has("sea_ice_category_area_fraction")) then
     ! Setup dc/dT
     allocate(kct(isd:ied,jsd:jed))
     kct = 0.0_kind_real
@@ -265,7 +265,7 @@ subroutine soca_balance_mult(self, dxa, dxm)
               & self%ksshts%ksshs(i,j,k) * socn_a%val(i,j,k)
           end do
 
-        case ("cicen") ! Ice fraction
+        case ("sea_ice_category_area_fraction") ! Ice fraction
           do k = 1, fld_m%nz
             fld_m%val(i,j,k) = fld_a%val(i,j,k) + &
               & self%kct(i,j) * tocn_a%val(i,j,1)
@@ -295,7 +295,7 @@ subroutine soca_balance_multad(self, dxa, dxm)
 
   call dxm%get("sea_water_salinity", socn_m)
   call dxm%get("sea_surface_height_above_geoid",  ssh_m)
-  if (dxm%has("cicen")) call dxm%get("cicen",cicen_m)
+  if (dxm%has("sea_ice_category_area_fraction")) call dxm%get("sea_ice_category_area_fraction",cicen_m)
 
   do n = 1, size(dxa%fields)
     fld_a => dxa%fields(n)
@@ -354,11 +354,11 @@ subroutine soca_balance_multinv(self, dxa, dxm)
         case default
           fld_a%val(i,j,:) = fld_m%val(i,j,:)
 
-        case ('socn') ! Salinity
+        case ('sea_water_salinity') ! Salinity
           fld_a%val(i,j,:) = fld_m%val(i,j,:) - &
             & self%kst%jacobian(i,j,:) * tocn_m%val(i,j,:)
 
-        case ('ssh') ! SSH
+        case ('sea_surface_height_above_geoid') ! SSH
           fld_a%val(i,j, :) = fld_m%val(i,j, :)
           do k = 1, tocn_m%nz
             fld_a%val(i,j,:) = fld_a%val(i,j,:) + &
@@ -367,7 +367,7 @@ subroutine soca_balance_multinv(self, dxa, dxm)
               & self%ksshts%ksshs(i,j,k) * socn_m%val(i,j,k)
           end do
 
-        case ('cicen') ! Ice fraction
+        case ('sea_ice_category_area_fraction') ! Ice fraction
           fld_a%val(i,j,:) =  fld_m%val(i,j,:)
           do k = 1, fld_m%nz
             fld_a%val(i,j,k) = fld_a%val(i,j,k) - &
@@ -398,7 +398,7 @@ subroutine soca_balance_multinvad(self, dxa, dxm)
 
   call dxa%get("sea_water_salinity", socn_a)
   call dxa%get("sea_surface_height_above_geoid",  ssh_a)
-  if (dxa%has("cicen")) call dxa%get("cicen",cicen_a)
+  if (dxa%has("sea_ice_category_area_fraction")) call dxa%get("sea_ice_category_area_fraction",cicen_a)
 
   do n = 1, size(dxm%fields)
     fld_m => dxm%fields(n)
@@ -421,7 +421,7 @@ subroutine soca_balance_multinvad(self, dxa, dxm)
               & - self%kct(i,j) * sum(cicen_a%val(i,j,:))
           end if
 
-        case ('socn') ! Salinity
+        case ('sea_water_salinity') ! Salinity
           fld_m%val(i,j,:) = fld_a%val(i,j,:) - &
             & self%ksshts%ksshs(i,j,:) * ssh_a%val(i,j,1)
 

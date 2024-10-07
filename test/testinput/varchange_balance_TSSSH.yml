@@ -8,14 +8,23 @@ background:
   date: 2018-04-15T00:00:00Z
   basename: data_static/72x35x25/restarts/
   ocn_filename: MOM.res.nc
-  state variables: &soca_vars [socn, tocn, ssh, hocn, mld, layer_depth]
+  state variables:
+  - sea_water_salinity
+  - sea_water_potential_temperature
+  - sea_surface_height_above_geoid
+  - sea_water_cell_thickness
+  - ocean_mixed_layer_thickness
+  - depth_below_sea_surface
 
 linear variable change tests:
 - tolerance inverse: 1e-12
   test inverse: 1
   linear variable change:
-    input variables: *soca_vars
-    output variables: *soca_vars
+    input variables: &soca_an_vars
+    - sea_water_salinity
+    - sea_water_potential_temperature
+    - sea_surface_height_above_geoid
+    output variables: *soca_an_vars
     linear variable changes:
     - linear variable change name: BalanceSOCA
       dsdtmax: 1.0

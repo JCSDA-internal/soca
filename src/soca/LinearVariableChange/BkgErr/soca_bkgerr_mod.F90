@@ -82,7 +82,7 @@ subroutine soca_bkgerr_setup(self, f_conf, bkg, geom)
     do i=1,size(self%std_bkgerr%fields)
       field => self%std_bkgerr%fields(i)
       select case(field%name)
-      case ("tocn", "socn", "ssh")
+      case ("sea_water_potential_temperature", "sea_water_salinity", "sea_surface_height_above_geoid")
         field%val = sqrt(field%val)
       end select
     end do
@@ -94,12 +94,12 @@ subroutine soca_bkgerr_setup(self, f_conf, bkg, geom)
   ! Get constand background error for sst and sss
   if ( f_conf%has("fixed_std_sst") ) then
     call f_conf%get_or_die("fixed_std_sst", std)
-    call self%std_bkgerr%get("tocn", field)
+    call self%std_bkgerr%get("sea_water_potential_temperature", field)
     field%val(:,:,1) = std
   end if
   if ( f_conf%has("fixed_std_sss") ) then
       call f_conf%get_or_die("fixed_std_sss", std)
-      call self%std_bkgerr%get("socn", field)
+      call self%std_bkgerr%get("sea_water_salinity", field)
       field%val(:,:,1) = std
   end if
 
@@ -110,10 +110,15 @@ subroutine soca_bkgerr_setup(self, f_conf, bkg, geom)
   do i=1,size(self%std_bkgerr%fields)
     field => self%std_bkgerr%fields(i)
     select case(field%name)
-    case ('sw','lw','lhf','shf','us')
+    case ('net_downwelling_shortwave_radiation',&
+          'net_downwelling_longwave_radiation',&
+          'upward_latent_heat_flux_in_air',&
+          'upward_sensible_heat_flux_in_air',&
+          'friction_velocity_over_water')
       call bkg%get(field%name, field_bkg)
       field%val = abs(field_bkg%val) * 0.1_kind_real
-    case ('chl','biop')
+    case ('mass_concentration_of_chlorophyll_in_sea_water',&
+          'molar_concentration_of_biomass_in_sea_water_in_p_units')
       call bkg%get(field%name, field_bkg)
       field%val = abs(field_bkg%val) * 0.2_kind_real
     end select

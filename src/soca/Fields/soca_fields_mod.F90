@@ -727,7 +727,7 @@ subroutine soca_fields_read(self, f_conf, vdate)
 
   ! iread = 1 (state) or 3 (increment): Read restart file
   if ((iread==1).or.(iread==3)) then
-    call self%get("sea_water_cell_thickness", hocn)
+    if (self%has("sea_water_cell_thickness")) call self%get("sea_water_cell_thickness", hocn)
     ! filename for ocean
     call f_conf%get_or_die("basename", str)
     basename = str

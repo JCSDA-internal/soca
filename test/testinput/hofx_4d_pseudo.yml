@@ -29,7 +29,13 @@ initial condition:
   date: 2018-04-15T00:00:00Z
   basename: data_static/72x35x25/restarts/
   ocn_filename: MOM.res.nc
-  state variables: [socn, tocn, ssh, hocn, uocn, vocn]
+  state variables:
+  - sea_water_salinity
+  - sea_water_potential_temperature
+  - sea_surface_height_above_geoid
+  - sea_water_cell_thickness
+  - eastward_sea_water_velocity
+  - northward_sea_water_velocity
 
 time window:
   begin: 2018-04-15T00:00:00Z

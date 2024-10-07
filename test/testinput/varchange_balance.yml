@@ -10,14 +10,31 @@ background:
   basename: data_static/72x35x25/restarts/
   ocn_filename: MOM.res.nc
   ice_filename: cice.res.nc
-  state variables: &soca_vars [cicen, hicen, socn, tocn, uocn, vocn, ssh, hocn, mld, layer_depth]
+  state variables: &soca_vars
+  - sea_ice_category_area_fraction
+  - sea_ice_category_thickness
+  - sea_water_salinity
+  - sea_water_potential_temperature
+  - eastward_sea_water_velocity
+  - northward_sea_water_velocity
+  - sea_surface_height_above_geoid
+  - sea_water_cell_thickness
+  - ocean_mixed_layer_thickness
+  - depth_below_sea_surface
 
 linear variable change tests:
 - tolerance inverse: 1e-12
   test inverse: 1
   linear variable change:
-    input variables: *soca_vars
-    output variables: *soca_vars
+    input variables: &soca_an_vars
+    # - sea_ice_category_area_fraction
+    # - sea_ice_category_thickness
+    - sea_water_salinity
+    - sea_water_potential_temperature
+    # - eastward_sea_water_velocity
+    # - northward_sea_water_velocity
+    - sea_surface_height_above_geoid
+    output variables: *soca_an_vars
     linear variable changes:
     - linear variable change name: BalanceSOCA
       dsdtmax: 1.0

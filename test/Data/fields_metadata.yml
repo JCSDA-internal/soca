@@ -59,36 +59,30 @@
 # --------------------------------------------------------------------------------------------------
 # ice state variables
 # --------------------------------------------------------------------------------------------------
-- name: hicen
-  getval name: sea_ice_category_thickness
+- name: sea_ice_category_thickness
   io file: ice
   io name: hicen
   property: positive_definite
 
-- name: cicen
-  getval name: sea_ice_category_area_fraction
+- name: sea_ice_category_area_fraction
   getval name surface: sea_ice_area_fraction     # note: not accurate, should be "sum" not "surface"
   io file: ice
   io name: aicen
 
-- name: hsnon
-  getval name: sea_ice_category_snow_thickness
+- name: sea_ice_category_snow_thickness
   io file: ice
   io name: hsnon
   property: positive_definite
 
-- name: tsfc
-  getval name: snow_ice_surface_temperature
+- name: snow_ice_surface_temperature
   io file: ice
   io name: Tsfc_h
 
-- name: tair
-  getval name: air_temperature
+- name: air_temperature
   io file: ice
   io name: Tair_h
 
-- name: sice
-  getval name: bulk_ice_salinity
+- name: bulk_ice_salinity
   io file: ice
   io name: sice_h
 
@@ -132,17 +126,15 @@
 # --------------------------------------------------------------------------------------------------
 # BGC
 # --------------------------------------------------------------------------------------------------
-- name: chl
+- name: mass_concentration_of_chlorophyll_in_sea_water
   levels: full_ocn
-  getval name: mass_concentration_of_chlorophyll_in_sea_water
   getval name surface: sea_surface_chlorophyll
   io file: ocn
   io name: chl
   property: positive_definite
 
-- name: biop
+- name: molar_concentration_of_biomass_in_sea_water_in_p_units
   levels: full_ocn
-  getval name: molar_concentration_of_biomass_in_sea_water_in_p_units
   getval name surface: sea_surface_biomass_in_p_units
   io file: ocn
   io name: biomass_p
@@ -185,98 +177,79 @@
 - name: dummy_atm1
   constant value: 5.0
 
-- name: oz_th
-  getval name: ozone_thickness
+- name: ozone_thickness
   constant value: 275  #The average amount of ozone in the atm. is 300 Dobson Units
 
-- name: wvapor
-  getval name: water_vapor   #g/cm^2
+- name: water_vapor   #g/cm^2
   constant value: 1.2
 
-- name: ws
-  getval name: surface_wind_speed
+- name: surface_wind_speed
   constant value: 6
 
-- name: pres
-  getval name: surface_pressure
+- name: surface_pressure
   constant value: 999
 
-- name: rh
-  getval name: relative_humidity
+- name: relative_humidity
   constant value: 89
 
-- name: cld_lwp
-  getval name: cloud_liquid_water_path
+- name: cloud_liquid_water_path
   constant value: 163
 
-- name: cov
-  getval name: cloud_area_fraction_in_atmosphere_layer
+- name: cloud_area_fraction_in_atmosphere_layer
   constant value: 80
 
-- name: aer_tau
-  getval name: aerosol_optical_thickness
+- name: aerosol_optical_thickness
   constant value: 0.16
 
-- name: scat_alb
-  getval name: single_scattering_albedo
+- name: single_scattering_albedo
   constant value: 0.71
 
-- name: asym_par
-  getval name: asymmetry_parameter
+- name: asymmetry_parameter
   constant value: 0.97
 
 #---------------------ocean bio
-- name: c_det
+- name: Carbon_nitrogen_detritus_concentration
   levels: full_ocn
-  getval name: Carbon_nitrogen_detritus_concentration
   io file: bio
   io name: CDET
   property: positive_definite
 
-- name: inorg_c
+- name: Particulate_inorganic_carbon
   levels: full_ocn
-  getval name: Particulate_inorganic_carbon
   io file: bio
   io name: PIC
 
-- name: dis_c
+- name: colored_dissolved_organic_carbon
   levels: full_ocn
-  getval name: colored_dissolved_organic_carbon
   io file: bio
   io name: CDC
 
-- name: diatom
+- name: diatom_concentration
   levels: full_ocn
-  getval name: diatom_concentration
   io file: bio
   io name: DIATOM
 
-- name: chloro
+- name: chlorophyte_concentration
   levels: full_ocn
-  getval name: chlorophyte_concentration
   io file: bio
   io name: CHLORO
 
-- name: cyano
+- name: cyano-bacteria_concentration
   levels: full_ocn
-  getval name: cyano-bacteria_concentration
   io file: bio
   io name: CYANO
 
-- name: cocco
+- name: coccolithophore_concentration
   levels: full_ocn
-  getval name: coccolithophore_concentration
   io file: bio
   io name: COCCO
 
-- name: dino
+- name: dinoflagellate_concentration
   levels: full_ocn
-  getval name: dinoflagellate_concentration
   io file: bio
   io name: DINO
 
-- name: phaeo
+- name: phaeocystis_concentration
   levels: full_ocn
-  getval name: phaeocystis_concentration
   io file: bio
   io name: PHAEO
