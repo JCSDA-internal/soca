@@ -181,7 +181,7 @@
 - name: surface_wind_speed
   constant value: 6
 
-- name: surface_pressure
+- name: air_pressure_at_surface
   constant value: 999
 
 - name: relative_humidity
