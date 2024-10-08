@@ -25,7 +25,7 @@ model:
   - net_downwelling_longwave_radiation
   - friction_velocity_over_water
   - ocean_mixed_layer_thickness
-  - depth_below_sea_surface
+  - sea_water_depth
 
 initial condition:
   read_from_file: 1

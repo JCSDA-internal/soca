@@ -193,7 +193,7 @@ subroutine soca_bkgerrgodas_tocn(self)
   call self%bkg%get("sea_water_potential_temperature", tocn_b)
   call self%std_bkgerr%get("sea_water_potential_temperature", tocn_e)
   call self%bkg%get("sea_water_cell_thickness", hocn)
-  call self%bkg%get("depth_below_sea_surface",layer_depth)
+  call self%bkg%get("sea_water_depth",layer_depth)
 
   ! Loop over compute domain
   do i = domain%is, domain%ie
@@ -298,7 +298,7 @@ subroutine soca_bkgerrgodas_socn(self)
   ! Loop over compute domain
   call self%std_bkgerr%get("sea_water_salinity", field)
   call self%bkg%get("ocean_mixed_layer_thickness", mld)
-  call self%bkg%get("depth_below_sea_surface", layer_depth)
+  call self%bkg%get("sea_water_depth", layer_depth)
 
   do i = domain%is, domain%ie
     do j = domain%js, domain%je

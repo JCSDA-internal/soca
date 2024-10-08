@@ -51,7 +51,7 @@ cost function:
     - sea_surface_height_above_geoid
     - sea_water_cell_thickness
     - ocean_mixed_layer_thickness
-    - depth_below_sea_surface
+    - sea_water_depth
 
   background error:
     covariance model: SABER

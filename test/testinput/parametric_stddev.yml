@@ -47,7 +47,7 @@ increments:
       - sea_water_potential_temperature
       - sea_water_salinity
       - sea_water_cell_thickness
-      - depth_below_sea_surface
+      - sea_water_depth
       - ocean_mixed_layer_thickness
 
   output:

@@ -109,7 +109,7 @@ subroutine soca_balance_setup(self, f_conf, traj, geom)
   call traj%get("sea_water_salinity", socn)
   call traj%get("sea_water_cell_thickness", hocn)
   call traj%get("ocean_mixed_layer_thickness", mld)
-  call traj%get("depth_below_sea_surface", layer_depth)
+  call traj%get("sea_water_depth", layer_depth)
   if (traj%has("sea_ice_category_area_fraction"))  call traj%get("sea_ice_category_area_fraction", cicen)
 
   ! allocate space

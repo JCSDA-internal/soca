@@ -26,7 +26,7 @@ state test:
     - net_downwelling_longwave_radiation
     - friction_velocity_over_water
     - ocean_mixed_layer_thickness
-    - depth_below_sea_surface
+    - sea_water_depth
     remap_filename: data_static/72x35x25/restarts/MOM.res.nc
 
   state generate:
@@ -37,7 +37,7 @@ state test:
     state variables: *soca_vars
 
   norm file: 387790.8913881866
-  norm generated state:  371.70278401427595
+  norm generated state:  358.48861601992229
 
   date: *date
   tolerance: 1.0e-08

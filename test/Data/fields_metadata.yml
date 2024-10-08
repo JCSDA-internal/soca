@@ -146,10 +146,6 @@
 - name: distance_from_coast
   masked: false
 
-- name: depth_below_sea_surface
-  levels: full_ocn
-  vert interp: false
-
 - name: mesoscale_representation_error
 
 - name: ocean_mixed_layer_thickness
@@ -161,7 +157,7 @@
 
 - name: surface_temperature_where_sea # TODO delete this
 
-- name: sea_water_depth # TODO delete this
+- name: sea_water_depth
   levels: full_ocn
 
 - name: latitude

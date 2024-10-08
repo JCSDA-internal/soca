@@ -30,7 +30,7 @@ cost function:
         - northward_sea_water_velocity
         - sea_surface_height_above_geoid
         - sea_water_cell_thickness
-        - depth_below_sea_surface
+        - sea_water_depth
       read_from_file: 1
       basename: data_static/72x35x25/restarts/
       state variables: *soca_bg_vars

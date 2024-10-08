@@ -19,7 +19,7 @@ background:
   - northward_sea_water_velocity
   - sea_water_cell_thickness
   - ocean_mixed_layer_thickness
-  - depth_below_sea_surface
+  - sea_water_depth
 
 linear variable change tests:
 - tolerance inverse: 1e-12
