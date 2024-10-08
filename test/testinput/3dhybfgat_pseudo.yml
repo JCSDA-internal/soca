@@ -4,7 +4,14 @@ cost function:
   time window:
     begin: *date_begin
     length: PT24H
-  analysis variables: &soca_vars [cicen, hicen, socn, tocn, uocn, vocn, ssh, hocn]
+  analysis variables: &soca_an_vars
+  - sea_ice_category_area_fraction
+  - sea_ice_category_thickness
+  - sea_water_salinity
+  - sea_water_potential_temperature
+  - eastward_sea_water_velocity
+  - northward_sea_water_velocity
+  - sea_surface_height_above_geoid
 
   geometry: &geom
     geom_grid_file: data_generated/gridgen/soca_gridspec.72x35x25.nc
@@ -35,8 +42,8 @@ cost function:
   variable change:
     variable change name: Model2Ana
     rotate:
-      u: [uocn]
-      v: [vocn]
+      u: [eastward_sea_water_velocity]
+      v: [northward_sea_water_velocity]
     log:
       var: []
 
@@ -46,7 +53,17 @@ cost function:
     ocn_filename: MOM.res.nc
     ice_filename: cice.res.nc
     date: *date_begin
-    state variables:  &model_vars [cicen, hicen, socn, uocn, vocn, tocn, ssh, hocn, mld, layer_depth]
+    state variables:  &soca_bg_vars
+    - sea_ice_category_area_fraction
+    - sea_ice_category_thickness
+    - sea_water_salinity
+    - eastward_sea_water_velocity
+    - northward_sea_water_velocity
+    - sea_water_potential_temperature
+    - sea_surface_height_above_geoid
+    - sea_water_cell_thickness
+    - ocean_mixed_layer_thickness
+    - depth_below_sea_surface
 
   background error:
     covariance model: hybrid
@@ -57,7 +74,12 @@ cost function:
           saber block name: diffusion
           read:
             groups:
-            - variables: [tocn, socn, ssh, cicen, hicen]
+            - variables:
+              - sea_water_potential_temperature
+              - sea_water_salinity
+              - sea_surface_height_above_geoid
+              - sea_ice_category_area_fraction
+              - sea_ice_category_thickness
               horizontal:
                 filepath: data_generated/parameters_diffusion/hz_smaller
               vertical:
@@ -71,8 +93,8 @@ cost function:
           efold_z: 2500.0       # [m]
 
         linear variable change:
-          input variables: *soca_vars
-          output variables: *soca_vars
+          input variables: *soca_an_vars
+          output variables: *soca_an_vars
           linear variable changes:
 
           - linear variable change name: BkgErrGODAS
@@ -109,7 +131,7 @@ cost function:
           date: *date_begin
           basename: data_static/72x35x25/restarts_ens/
           # remap_filename: data_static/72x35x25/restarts/MOM.res.nc
-          state variables: *soca_vars
+          state variables: *soca_bg_vars
         members:
         - <<: *_file
           ocn_filename: MOM.res.ens.1.nc
@@ -127,7 +149,7 @@ cost function:
           localization method: SABER
           saber central block:
             saber block name: BUMP_NICAS
-            active variables: *soca_vars
+            active variables: *soca_an_vars
             read:
               io:
                 data directory: data_generated/parameters_bump_loc

@@ -82,7 +82,9 @@ subroutine soca_bkgerr_setup(self, f_conf, bkg, geom)
     do i=1,size(self%std_bkgerr%fields)
       field => self%std_bkgerr%fields(i)
       select case(field%name)
-      case ("sea_water_potential_temperature", "sea_water_salinity", "sea_surface_height_above_geoid")
+      case ("sea_water_potential_temperature",&
+            "sea_water_salinity",&
+            "sea_surface_height_above_geoid")
         field%val = sqrt(field%val)
       end select
     end do

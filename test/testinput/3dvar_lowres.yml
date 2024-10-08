@@ -10,7 +10,19 @@ cost function:
   time window:
     begin: 2018-04-14T00:00:00Z
     length: P2D
-  analysis variables: &soca_vars [cicen, hicen, hsnon, socn, tocn, ssh, hocn, sw, lhf, shf, lw, us, mld, layer_depth]
+  analysis variables: &soca_an_vars
+  - sea_ice_category_area_fraction
+  - sea_ice_category_thickness
+  - sea_ice_category_snow_thickness
+  - sea_water_salinity
+  - sea_water_potential_temperature
+  - sea_surface_height_above_geoid
+  - net_downwelling_shortwave_radiation
+  - upward_latent_heat_flux_in_air
+  - upward_sensible_heat_flux_in_air
+  - net_downwelling_longwave_radiation
+  - friction_velocity_over_water
+
   geometry:
     geom_grid_file: data_generated/gridgen/soca_gridspec.72x35x25.nc
     mom6_input_nml: data_static/72x35x25/input.nml
@@ -23,7 +35,21 @@ cost function:
     ice_filename: cice.res.nc
     sfc_filename: sfc.res.nc
     date: &bkg_date 2018-04-15T00:00:00Z
-    state variables: *soca_vars
+    state variables:
+    - sea_ice_category_area_fraction
+    - sea_ice_category_thickness
+    - sea_ice_category_snow_thickness
+    - sea_water_salinity
+    - sea_water_potential_temperature
+    - sea_surface_height_above_geoid
+    - sea_water_cell_thickness
+    - net_downwelling_shortwave_radiation
+    - upward_latent_heat_flux_in_air
+    - upward_sensible_heat_flux_in_air
+    - net_downwelling_longwave_radiation
+    - friction_velocity_over_water
+    - ocean_mixed_layer_thickness
+    - depth_below_sea_surface
 
   background error:
     covariance model: SABER
@@ -34,13 +60,15 @@ cost function:
       read:
         groups:
         # NOTE, the lower resolution files are used here
-        - variables: [tocn, socn]
+        - variables:
+          - sea_water_potential_temperature
+          - sea_water_salinity
           horizontal:
             filepath: data_generated/parameters_diffusion_lowres/hz_smaller
           vertical:
             levels: 25
             filepath: data_generated/parameters_diffusion_lowres/vt_5lvls
-        - variables: [ssh]
+        - variables: [sea_surface_height_above_geoid]
           horizontal:
             filepath: data_generated/parameters_diffusion_lowres/hz_smaller
 
@@ -51,8 +79,8 @@ cost function:
       efold_z: 2500.0       # [m]
 
     linear variable change:
-      input variables: *soca_vars
-      output variables: *soca_vars
+      input variables: *soca_an_vars
+      output variables: *soca_an_vars
       linear variable changes:
 
       - linear variable change name: BkgErrGODAS
