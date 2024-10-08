@@ -162,9 +162,9 @@ subroutine check_ice_bounds(self, geom, xm)
   real(kind=kind_real) :: hice_max = 8.0
 
   ! pointers to soca fields (most likely an analysis)
-  call xm%get("cicen",aice_ana)
-  call xm%get("hicen",hice_ana)
-  call xm%get("hsnon",hsno_ana)
+  call xm%get("sea_ice_category_area_fraction",aice_ana)
+  call xm%get("sea_ice_category_thickness",hice_ana)
+  call xm%get("sea_ice_category_snow_thickness",hsno_ana)
 
   ! check seaice fraction bounds
   where (aice_ana%val<0_kind_real)
