@@ -433,7 +433,7 @@ subroutine soca_fields_init_vars(self, vars)
     end select
 
     ! determine number of levels
-    if (self%fields(i)%name == self%fields(i)%metadata%getval_name_surface) then
+    if (self%fields(i)%name == self%fields(i)%metadata%name_surface) then
       ! if this field is a surface getval, override the number of levels with 1
       nz = 1
     else

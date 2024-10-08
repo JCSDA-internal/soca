@@ -19,12 +19,11 @@ private
 !!
 !! Instances of these types are to be held by soca_fields_metadata
 type, public :: soca_field_metadata
-  character(len=:),  allocatable :: name     !< internal name used only by soca code
+  character(len=:),  allocatable :: name     !< name used by soca and JEDI
+  character(len=:),  allocatable :: name_surface  ! name used by UFO for the surface (if this is a 3D field)
   character(len=1)               :: grid     !< "h", "u" or "v"
   logical                        :: masked   !< should use land mask when interpolating
   character(len=:),  allocatable :: levels   !< "1", or "full_ocn"
-  character(len=:),  allocatable :: getval_name !< variable name used by UFO
-  character(len=:),  allocatable :: getval_name_surface  ! name used by UFO for the surface (if this is a 3D field)
   character(len=:),  allocatable :: io_file  !< the restart file domain (ocn, sfc, ice). Or if "CONSTANT" use the value in "constant_value"
   character(len=:),  allocatable :: io_name  !< the name use in the restart IO
   character(len=:),  allocatable :: property  !< physical property of the field, "none" or "positive_definite"
@@ -88,6 +87,9 @@ subroutine soca_fields_metadata_create(self, filename)
 
     call conf_list(i)%get_or_die("name", self%metadata(i)%name)
 
+    if(.not. conf_list(i)%get("name surface", str)) str=""
+    self%metadata(i)%name_surface = str
+
     if(.not. conf_list(i)%get("grid", str)) str = 'h'
     self%metadata(i)%grid = str
 
@@ -96,12 +98,6 @@ subroutine soca_fields_metadata_create(self, filename)
 
     if(.not. conf_list(i)%get("levels", str)) str = "1"
     self%metadata(i)%levels = str
-
-    if(.not. conf_list(i)%get("getval name", str)) str=self%metadata(i)%name
-    self%metadata(i)%getval_name = str
-
-    if(.not. conf_list(i)%get("getval name surface", str)) str=""
-    self%metadata(i)%getval_name_surface = str
 
     if(.not. conf_list(i)%get("io name", str)) str = ""
     self%metadata(i)%io_name = str
@@ -140,14 +136,9 @@ subroutine soca_fields_metadata_create(self, filename)
   do i=1,size(self%metadata)
     do j=i+1,size(self%metadata)
       if ( self%metadata(i)%name == self%metadata(j)%name .or. &
-           self%metadata(i)%name == self%metadata(j)%getval_name .or. &
-           self%metadata(i)%name == self%metadata(j)%getval_name_surface .or. &
-           self%metadata(i)%getval_name == self%metadata(j)%name .or. &
-           self%metadata(i)%getval_name == self%metadata(j)%getval_name .or. &
-           self%metadata(i)%getval_name == self%metadata(j)%getval_name_surface .or. &
-           ( self%metadata(i)%getval_name_surface /=  "" .and. ( &
-             self%metadata(i)%getval_name_surface == self%metadata(j)%name .or. &
-             self%metadata(i)%getval_name_surface == self%metadata(j)%getval_name ))) then
+           self%metadata(i)%name == self%metadata(j)%name_surface .or. &
+           ( self%metadata(i)%name_surface /=  "" .and. &
+             self%metadata(i)%name_surface == self%metadata(j)%name)) then
         str=repeat(" ",1024)
         write(str, *) "Duplicate field metadata: ", i, self%metadata(i)%name, &
                                                     j, self%metadata(j)%name
@@ -186,8 +177,7 @@ function soca_fields_metadata_get(self, name) result(field)
   ! find the field by any of its internal or getval names
   do i=1,size(self%metadata)
     if( trim(self%metadata(i)%name) == trim(name) .or. &
-        trim(self%metadata(i)%getval_name) == trim(name) .or. &
-        trim(self%metadata(i)%getval_name_surface) == trim(name) ) then
+        trim(self%metadata(i)%name_surface) == trim(name) ) then
       field = self%metadata(i)
       return
     endif
