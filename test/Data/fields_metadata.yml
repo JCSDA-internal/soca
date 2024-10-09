@@ -206,7 +206,7 @@
   constant value: 1.2
 
 - name: ws
-  getval name: surface_wind_speed
+  getval name: wind_speed_at_surface
   constant value: 6
 
 - name: pres
