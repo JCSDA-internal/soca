@@ -179,7 +179,7 @@
 - name: sea_area_fraction
   masked: false
 
-- name: surface_temperature_where_sea
+- name: skin_temperature_at_surface_where_sea
 
 - name: sea_water_depth
   levels: full_ocn
