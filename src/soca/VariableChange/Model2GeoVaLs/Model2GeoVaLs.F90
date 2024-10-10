@@ -100,7 +100,7 @@ subroutine soca_model2geovals_changevar_f90(c_key_geom, c_key_xin, c_key_xout) &
       call aField%final()
 
     ! special derived state variables
-    case ('surface_temperature_where_sea')
+    case ('skin_temperature_at_surface_where_sea')
       call xin%get('tocn', field)
       xout%fields(i)%val(:,:,1) = field%val(:,:,1) + 273.15_kind_real
 
