@@ -15,7 +15,7 @@ state:
     - sea_water_cell_thickness
     - ozone_thickness
     - water_vapor
-    - surface_wind_speed
+    - wind_speed_at_surface
     - air_pressure_at_surface
     - relative_humidity
     - cloud_liquid_water_path

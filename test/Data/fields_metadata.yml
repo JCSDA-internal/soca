@@ -154,7 +154,7 @@
 - name: sea_area_fraction
   masked: false
 
-- name: surface_temperature_where_sea # TODO delete this
+- name: skin_temperature_at_surface_where_sea
 
 - name: sea_water_depth
   levels: full_ocn
@@ -178,7 +178,7 @@
 - name: water_vapor   #g/cm^2
   constant value: 1.2
 
-- name: surface_wind_speed
+- name: wind_speed_at_surface
   constant value: 6
 
 - name: air_pressure_at_surface
