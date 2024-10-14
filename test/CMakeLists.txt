@@ -17,6 +17,7 @@ set( soca_test_input
   testinput/3dhyb_diffusion.yml
   testinput/3dhyb.yml
   testinput/3dhybfgat_pseudo.yml
+  testinput/3dvar_moreice.yml
   testinput/3dvar_lowres.yml
   testinput/3dvar_nicas.yml
   testinput/3dvar_single_ob.yml
@@ -103,6 +104,7 @@ set( soca_test_ref
   testref/3dvar_single_ob.test
   testref/3dvar_zero_ob.test
   testref/3dvar.test
+  testref/3dvar_moreice.test
   testref/3dvarfgat_pseudo.test
   testref/4denvar.test
   testref/4dhybenvar.test
@@ -674,6 +676,11 @@ soca_add_test( NAME hofx_4d_pseudo
 #                TEST_DEPENDS test_soca_gridgen )
 
 soca_add_test( NAME 3dvar
+               EXE  soca_var.x
+               TEST_DEPENDS test_soca_gridgen
+                            test_soca_parameters_diffusion )
+
+soca_add_test( NAME 3dvar_moreice
                EXE  soca_var.x
                TEST_DEPENDS test_soca_gridgen
                             test_soca_parameters_diffusion )
