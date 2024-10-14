@@ -107,9 +107,9 @@ class ParametricOceanStdDev : public saber::SaberOuterBlockBase {
     oops::Parameter<std::string> maskVariable{"mask variable",
       "The name of the geometry variable to use as a 2D horizontal land mask",
       "interp_mask", this};
-    oops::Parameter<std::string> thicknessVariable{"thickness variable",
-      "The name of the layer thickness state variable in the background passed to the constructor",
-      "hocn", this};
+    oops::Parameter<std::string> depthVariable{"depth variable",
+      "The name of the depth state variable in the background passed to the constructor",
+      "layer_depth", this};
   };
   // ----------------------------------------------------------------------------------------
 

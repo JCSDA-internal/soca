@@ -35,23 +35,14 @@ ParametricOceanStdDev::ParametricOceanStdDev(
 
   // things we'll need for later
   const auto & fs = geom_.functionSpace();
-  const auto & hocn = xb[params.thicknessVariable.value()];
-  const auto & v_hocn = atlas::array::make_view<double, 2>(hocn);
+  const auto & depth = xb[params.depthVariable.value()];
+  const auto & v_depth = atlas::array::make_view<double, 2>(depth);
   const auto & v_ghost = atlas::array::make_view<int, 1>(fs.ghost());
   const auto & v_mask = atlas::array::make_view<double, 2>(
     geom_.getField(params.maskVariable.value()));
-  const int levels = hocn.shape(1);
-  atlas::FieldSet diags;
+  const int levels = depth.shape(1);
 
-  // calc layer depths
-  auto depth = hocn.clone(); depth.rename("layer_depth");
-  auto v_depth = atlas::array::make_view<double, 2>(depth);
-  for (size_t i = 0; i < depth.shape(0); i++) {
-    v_depth(i, 0) = v_hocn(i, 0) / 2.0;
-    for (size_t z = 1; z < levels; z++) {
-      v_depth(i, z) = v_depth(i, z-1) + v_hocn(i, z-1)/2.0 + v_hocn(i, z)/2.0;
-    }
-  }
+  atlas::FieldSet diags;
   diags.add(depth);
 
   // setup the smoother. If the user provides a smoother, use that, otherwise
@@ -131,10 +122,10 @@ ParametricOceanStdDev::ParametricOceanStdDev(
       // calculate dt/dz
       for (size_t z = 1; z < levels-1; z++) {
         v_dtdz(i, z) = (v_tocn(i, z+1) - v_tocn(i, z-1)) /
-                       (v_hocn(i, z) + 0.5*(v_hocn(i, z+1) + v_hocn(i, z-1)));
+                       (v_depth(i, z+1) - v_depth(i, z-1));
 
         // ignore dt/dz where layers are too thin
-        if (v_hocn(i, z) <= minLayerThickness || v_hocn(i, z+1) <= minLayerThickness) {
+        if(v_depth(i, z+1)-v_depth(i,z) <= minLayerThickness) {
           v_dtdz(i, z) = 0.0;
         }
       }
