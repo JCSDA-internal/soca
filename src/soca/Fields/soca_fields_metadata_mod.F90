@@ -20,7 +20,7 @@ private
 !! Instances of these types are to be held by soca_fields_metadata
 type, public :: soca_field_metadata
   character(len=:),  allocatable :: name     !< name used by soca and JEDI
-  character(len=:),  allocatable :: name_surface  ! name used by UFO for the surface (if this is a 3D field)
+  character(len=:),  allocatable :: name_surface  !< name used by UFO for the surface (if this is a 3D field)
   character(len=1)               :: grid     !< "h", "u" or "v"
   logical                        :: masked   !< should use land mask when interpolating
   character(len=:),  allocatable :: levels   !< "1", or "full_ocn"
