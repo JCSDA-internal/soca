@@ -21,10 +21,9 @@
 namespace soca
 {
 
-// NOTE, this should change when mask stuff is generalized in oops.
-// Also note, until we deal with U/V de-staggering, the print value is kinda
+// Note, until we deal with U/V de-staggering, the print value is kinda
 // slightly wrong. Oh well.
-const char MASK_METADATA[] = "interp_source_point_mask";
+const char MASK_METADATA[] = "mask";
 
 // -----------------------------------------------------------------------------
 
