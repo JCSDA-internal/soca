@@ -184,7 +184,7 @@ install(FILES ${soca_install_model_input}
         DESTINATION ${INSTALL_DATA_DIR}/testdata/72x35x25/INPUT/ )
 
 set( soca_install_data
-  Data/rossrad.dat
+  Data/rossrad.nc
   Data/godas_sst_bgerr.nc )
 install(FILES ${soca_install_data}
         DESTINATION ${INSTALL_DATA_DIR}/testdata/ )

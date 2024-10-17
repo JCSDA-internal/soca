@@ -6,8 +6,12 @@ input geometry: &geom
 output geometry: *geom
 
 linear variable change:
-  input variables: [tocn, socn, ssh, hocn]
-  output variables: [tocn, socn, ssh, hocn]
+  input variables: &soca_inc_vars
+  - sea_water_potential_temperature
+  - sea_water_salinity
+  - sea_surface_height_above_geoid
+#  - sea_water_cell_thickness
+  output variables: *soca_inc_vars
   linear variable changes:
   - linear variable change name: BalanceSOCA
     kst:
@@ -20,19 +24,29 @@ linear variable change:
 
 increments:
 - date: 2018-04-15T00:00:00Z
-  input variables: [tocn, socn, ssh, hocn]
+  input variables: *soca_inc_vars
   input:
      read_from_file: 1
      basename: data_generated/3dvar/
      ocn_filename: ocn.3dvar.iter1.incr.2018-04-15T00:00:00Z.nc
      date: 2018-04-15T00:00:00Z
-     state variables: [ssh, tocn, socn, hocn]
+     state variables:
+     - sea_surface_height_above_geoid
+     - sea_water_potential_temperature
+     - sea_water_salinity
+     - sea_water_cell_thickness
   trajectory:
      read_from_file: 1
      basename: data_static/72x35x25/restarts/
      ocn_filename: MOM.res.nc
      date: 2018-04-15T00:00:00Z
-     state variables: [ssh, tocn, socn, hocn, layer_depth, mld]
+     state variables: &soca_bg_vars
+      - sea_surface_height_above_geoid
+      - sea_water_potential_temperature
+      - sea_water_salinity
+      - sea_water_cell_thickness
+      - sea_water_depth
+      - ocean_mixed_layer_thickness
   output:
      datadir: data_output/
      exp: convertincrement

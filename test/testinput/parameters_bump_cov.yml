@@ -8,7 +8,7 @@ background:
   date: &date 2018-04-15T00:00:00Z
   basename: data_static/36x17x25/restarts/
   ocn_filename: MOM.res.nc
-  state variables:  [tocn]
+  state variables:  [sea_water_potential_temperature]
 
 background error:
   covariance model: SABER
@@ -19,7 +19,7 @@ background error:
         date: *date
         basename: data_static/36x17x25/restarts_ens/
         ocn_filename: ocn.enspert.lowres.ens.%mem%.2018-04-15T00:00:00Z.PT6H.nc
-        state variables:  [tocn]
+        state variables:  [sea_water_potential_temperature]
       pattern: '%mem%'
       nmembers: 4
   saber central block:

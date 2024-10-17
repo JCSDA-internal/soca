@@ -10,7 +10,13 @@ background:
   ocn_filename: MOM.res.nc
   # basename: data_generated/convertstate/
   # ocn_filename: ocn.convertstate.fc.2018-04-15T00:00:00Z.PT0S.nc
-  state variables: [socn, tocn, uocn, vocn, ssh]
+  state variables: &soca_vars
+  - sea_water_salinity
+  - sea_water_potential_temperature
+  - eastward_sea_water_velocity
+  - northward_sea_water_velocity
+  - sea_surface_height_above_geoid
+  - sea_water_cell_thickness
 
 background error:
   covariance model: SABER
@@ -30,31 +36,21 @@ background error:
         resolution: 6.0
         explicit length-scales: true
         horizontal length-scale:
-        - groups:
-          - socn
-          - tocn
-          - uocn
-          - vocn
-          - ssh
+        - groups: *soca_vars
           value: 6000.0e3
         vertical length-scale:
-        - groups:
-          - socn
-          - tocn
-          - uocn
-          - vocn
-          - ssh
+        - groups: *soca_vars
           value: 100
       grids:
       - model:
           variables:
-          - socn
-          - tocn
-          - uocn
-          - vocn
+          - sea_water_salinity
+          - sea_water_potential_temperature
+          - eastward_sea_water_velocity
+          - northward_sea_water_velocity
       - model:
           variables:
-          - ssh
+          - sea_surface_height_above_geoid
       output model files:
       - parameter: cor_rh
         file:

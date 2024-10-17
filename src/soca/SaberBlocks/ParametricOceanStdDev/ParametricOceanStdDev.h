@@ -64,7 +64,8 @@ class ParametricOceanStdDev : public saber::SaberOuterBlockBase {
     class Tocn : public BkgErrVariable {
       OOPS_CONCRETE_PARAMETERS_ENABLE_COPY_AND_MOVE(Tocn, BkgErrVariable)
      public:
-      Tocn() : BkgErrVariable("tocn", 0.1, 2.0) {}  // set default min and max
+      // special constructor to set default min and max
+      Tocn() : BkgErrVariable("sea_water_potential_temperature", 0.1, 2.0) {}
       oops::Parameter<eckit::LocalConfiguration> sst{"sst",
         eckit::LocalConfiguration().set("fixed value", 1.0), this};
       oops::Parameter<double> dz{"dz", 20.0, this, {oops::minConstraint(0.0)}};
@@ -79,7 +80,8 @@ class ParametricOceanStdDev : public saber::SaberOuterBlockBase {
     class Ssh : public BkgErrVariable {
       OOPS_CONCRETE_PARAMETERS_ENABLE_COPY_AND_MOVE(Ssh, BkgErrVariable)
      public:
-      Ssh() : BkgErrVariable("ssh", 0.0, 0.1) {}  // set default min and max
+      // special constructor to set default min and max
+      Ssh() : BkgErrVariable("sea_surface_height_above_geoid", 0.0, 0.1) {}
       oops::Parameter<double> phiEx{"phi ex", 20.0, this,
         {oops::minConstraint(0.0), oops::maxConstraint(90.0)}};
     };
@@ -89,10 +91,10 @@ class ParametricOceanStdDev : public saber::SaberOuterBlockBase {
     class Socn : public BkgErrVariable {
       OOPS_CONCRETE_PARAMETERS_ENABLE_COPY_AND_MOVE(Socn, BkgErrVariable)
      public:
-      Socn() : BkgErrVariable("socn", 0.01, 0.25) {}  // set default min and max
+      Socn() : BkgErrVariable("sea_water_salinity", 0.01, 0.25) {}  // set default min and max
       oops::Parameter<std::string> mldVariableName{"mld variable",
         "The name of the mixed layer depth variable in the background passed to the constructor",
-        "mld", this};
+        "ocean_mixed_layer_thickness", this};
       oops::Parameter<double> mldMax{"mld max", 400.0, this, {oops::minConstraint(0.0)}};
     };
 
@@ -125,7 +127,7 @@ class ParametricOceanStdDev : public saber::SaberOuterBlockBase {
       "interp_mask", this};
     oops::Parameter<std::string> depthVariable{"depth variable",
       "The name of the depth state variable in the background passed to the constructor",
-      "layer_depth", this};
+      "sea_water_depth", this};
   };
   // ----------------------------------------------------------------------------------------
 
