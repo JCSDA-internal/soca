@@ -9,8 +9,8 @@
 
 #include <algorithm>
 #include <limits>
-#include <map>
 #include <string>
+#include <vector>
 
 #include "oops/util/parameters/NumericConstraints.h"
 
@@ -23,7 +23,7 @@ namespace soca
 {
 
 /*
- * @brief A Saber Block to calculate the standard deviation of ocean fields
+ * @brief A Saber Block to calculate the background error standard deviation of ocean fields
  * (temperature, unbalanced salinity, and unbalanced ssh) using a parametric
  * model based on the background vertical temperature gradient and mixed layer depth.
  *
@@ -103,6 +103,7 @@ class ParametricOceanStdDev : public saber::SaberOuterBlockBase {
     class OtherVar : public BkgErrVariable {
       OOPS_CONCRETE_PARAMETERS(OtherVar, BkgErrVariable)
      public:
+      oops::RequiredParameter<std::string> varName{"variable", this};
       oops::Parameter<double> fractionOfBkg{"fraction of background", 0.0, this,
         {oops::minConstraint(0.0)}};
     };
@@ -113,7 +114,7 @@ class ParametricOceanStdDev : public saber::SaberOuterBlockBase {
     oops::Parameter<Tocn> tocn{"temperature", Tocn(), this};
     oops::Parameter<Socn> socn{"unbalanced salinity", Socn(), this};
     oops::Parameter<Ssh> ssh{"unbalanced ssh", Ssh(), this};
-    oops::OptionalParameter<std::map<std::string, OtherVar>> otherVars{"other variables", this};
+    oops::OptionalParameter<std::vector<OtherVar>> otherVars{"other variables", this};
 
     oops::OptionalParameter<OceanSmoother::Parameters> smoother{"smoother", this};
     oops::OptionalParameter<eckit::LocalConfiguration> saveDiags{"save diagnostics",
@@ -129,9 +130,20 @@ class ParametricOceanStdDev : public saber::SaberOuterBlockBase {
       "The name of the depth state variable in the background passed to the constructor",
       "sea_water_depth", this};
   };
+
   // ----------------------------------------------------------------------------------------
 
-  typedef Parameters Parameters_;
+  /// @brief This wrapper class is a bit of a hack. It allows us to do the yaml
+  /// validation localy which otherwise is not catching extra erroneous parameters.
+  class ParametersWrapper : public Parameters {
+    OOPS_CONCRETE_PARAMETERS(ParametersWrapper, Parameters)
+   public:
+    oops::ConfigurationParameter fullConfig{this};
+  };
+
+  // ----------------------------------------------------------------------------------------
+
+  typedef ParametersWrapper Parameters_;
 
   explicit ParametricOceanStdDev(const oops::GeometryData &,
                                   const oops::Variables &,

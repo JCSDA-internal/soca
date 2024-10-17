@@ -33,6 +33,13 @@ ParametricOceanStdDev::ParametricOceanStdDev(
 {
   util::Timer timer("soca::ParametricOceanStdDev", "ParametricOceanStdDev");
 
+  // validate the configuration, using a hacky way
+  {
+    auto fullConfig = params.fullConfig.value();
+    Parameters params2;
+    params2.validate(fullConfig);
+  }
+
   // things we'll need for later
   const auto & fs = geom_.functionSpace();
   const auto & depth = xb[params.depthVariable.value()];
@@ -167,7 +174,7 @@ ParametricOceanStdDev::ParametricOceanStdDev(
 
     // create empty error field
     atlas::Field socnErr = fs.createField<double>(atlas::option::levels(levels) |
-                                                   atlas::option::name(socnParams.varName.value()));
+                                                  atlas::option::name(socnParams.varName.value()));
     auto v_socnErr = atlas::array::make_view<double, 2>(socnErr);
     v_socnErr.assign(0.0);
     bkgErr_.add(socnErr);
@@ -220,7 +227,7 @@ ParametricOceanStdDev::ParametricOceanStdDev(
 
     // create empty error field
     atlas::Field sshErr = fs.createField<double>(atlas::option::levels(1) |
-                                                  atlas::option::name(sshParams.varName.value()));
+                                                 atlas::option::name(sshParams.varName.value()));
     auto v_sshErr = atlas::array::make_view<double, 2>(sshErr);
     v_sshErr.assign(0.0);
     bkgErr_.add(sshErr);
@@ -248,7 +255,8 @@ ParametricOceanStdDev::ParametricOceanStdDev(
   // deal with other generic variables
   // Which only have a min/max, and a fraction of the background
   if (params.otherVars.value()) {
-    for (const auto & [varName, varParams] : *params.otherVars.value()) {
+    for (const auto & varParams : *params.otherVars.value()) {
+      std::string varName = varParams.varName.value();
       if (!xb.has(varName)) continue;  // skip if the variable isn't
                                        // in the background (give warning?)
 
