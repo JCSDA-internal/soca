@@ -42,6 +42,7 @@ ParametricOceanStdDev::ParametricOceanStdDev(
     geom_.getField(params.maskVariable.value()));
   const int levels = depth.shape(1);
 
+  // diagnostic fields that will be optionally saved to a file at the end
   atlas::FieldSet diags;
   diags.add(depth);
 
@@ -125,7 +126,7 @@ ParametricOceanStdDev::ParametricOceanStdDev(
                        (v_depth(i, z+1) - v_depth(i, z-1));
 
         // ignore dt/dz where layers are too thin
-        if(v_depth(i, z+1)-v_depth(i,z) <= minLayerThickness) {
+        if (v_depth(i, z+1) - v_depth(i, z) <= minLayerThickness) {
           v_dtdz(i, z) = 0.0;
         }
       }

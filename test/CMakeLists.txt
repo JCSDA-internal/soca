@@ -82,7 +82,6 @@ set( soca_test_input
   testinput/parameters_bump_loc.yml
   testinput/parameters_diffusion.yml
   testinput/parameters_diffusion_lowres.yml
-  testinput/parametric_stddev.yml
   testinput/setcorscales.yml
   testinput/sqrtvertloc.yml
   testinput/state.yml
@@ -142,7 +141,6 @@ set( soca_test_ref
   testref/parameters_bump_cor_nicas.test
   testref/parameters_bump_cov.test
   testref/parameters_bump_loc.test
-  testref/parametric_stddev.test
   testref/setcorscales.test
   testref/sqrtvertloc.test
 )
@@ -539,11 +537,6 @@ soca_add_test( NAME convertstate_changevar
 
 soca_add_test( NAME ensmeanandvariance
                EXE  soca_ensmeanandvariance.x
-               TEST_DEPENDS test_soca_gridgen )
-
-soca_add_test( NAME parametric_stddev
-               EXE  soca_convertincrement.x
-              #  NOTRAPFPE
                TEST_DEPENDS test_soca_gridgen )
 
 soca_add_test( NAME ensrecenter

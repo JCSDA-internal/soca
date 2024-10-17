@@ -13,38 +13,19 @@ background:
 
 background error:
   adjoint test: true
+  #inverse test: true
   covariance model: SABER
   saber central block:
     saber block name: ID
   saber outer blocks:
-  # - saber block name: SOCAParametricOceanStdDev
-  #   temperature:
-  #     sst:
-  #       filepath: data_static/godas_sst_bgerr.nc
-  #       variable: sst_bgerr
-  #   unbalanced salinity: {} # use default values
-  #   unbalanced ssh: {} # use default values
-  #   other variables:
-  #     sw:
-  #       min: 10.0
-  #       fraction of background: 0.2
-  #     lhf:
-  #       fraction of background: 0.2
-  #       min: 5.0
-  #       smooth: false
-  #   smoother:
-  #     horizontal:
-  #       min grid mult: 10
-  #       max: 500e3
-  #     vertical: {} # use default values
-  #     save diagnostics:
-  #       filepath: data_output/smoother_diags
-  #   save diagnostics:
-  #     filepath: data_output/parametric_ocean_stddev_diags
+
 
   - saber block name: SOCAParametricOceanStdDev
+    # NOTE, this explicity sets all the parameters (to the same as their default
+    # values), but in practice you can leave them out and the default values
+    # will be used.
     temperature:
-      varaible: tocn
+      variable: tocn
       min: 0.1
       max: 2.0
       dz: 20.0
@@ -65,21 +46,24 @@ background error:
       min: 0.0
       max: 0.1
       smooth: true
-    other variables:
-      sw:
-        min: 10.0
-        fraction of background: 0.2
-      lhf:
-        fraction of background: 0.2
-        min: 5.0
-        smooth: false
-    smoother:
+    # other variables:
+    #   sw:
+    #     min: 10.0
+    #     fraction of background: 0.2
+    #   lhf:
+    #     fraction of background: 0.2
+    #     min: 5.0
+    #     smooth: false
+    smoother:  # see oceanSmoother.yaml for more details on the defaults for the smoother
       horizontal:
         min grid mult: 10
         max: 500e3
-      vertical: {}
+      vertical:
+        use mld: true
+      foo: bar
     save diagnostics:
       filepath: data_output/parametric_ocean_stddev_diags
+
 
 dirac: &dirac
   ixdir: [1, 17, 51, 31, 51, 63, 81, 14]
@@ -94,6 +78,6 @@ output dirac:
   exp: dirac_parametric_ocean_stddev_%id%
   type: an
 
-# test:
-#   reference filename: testref/dirac_parametric_ocean_stddev.test
-#   test output filename: testoutput/dirac_parametric_ocean_stddev.test
+test:
+  reference filename: testref/dirac_parametric_ocean_stddev.test
+  test output filename: testoutput/dirac_parametric_ocean_stddev.test

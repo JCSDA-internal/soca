@@ -22,15 +22,27 @@
 namespace soca
 {
 
+/*
+ * @brief A Saber Block to calculate the standard deviation of ocean fields
+ * (temperature, unbalanced salinity, and unbalanced ssh) using a parametric
+ * model based on the background vertical temperature gradient and mixed layer depth.
+ *
+ * @details For details see Weaver, A. T., Deltel, C., Machu, É., Ricci, S., & Daget, N.
+ * (2005). A multivariate balance operator for variational ocean data
+ * assimilation. Quarterly Journal of the Royal Meteorological Society: A journal
+ * of the atmospheric sciences, applied meteorology and physical oceanography,
+ * 131(613), 3605-3625.
+ */
 class ParametricOceanStdDev : public saber::SaberOuterBlockBase {
  public:
   // ----------------------------------------------------------------------------------------
-  // Yaml parameters for ParametricOceanStdDev
+  /// @brief Yaml parameters for ParametricOceanStdDev
   class Parameters : public saber::SaberBlockParametersBase {
     OOPS_CONCRETE_PARAMETERS(Parameters, saber::SaberBlockParametersBase)
 
    public:
     // --------------------------------------------------------------------------------------
+    /// @brief yaml parameters that apply to all variables
     class BkgErrVariable : public oops::Parameters {
       OOPS_ABSTRACT_PARAMETERS(BkgErrVariable, oops::Parameters)
      public:
@@ -48,6 +60,7 @@ class ParametricOceanStdDev : public saber::SaberOuterBlockBase {
     };
 
     // --------------------------------------------------------------------------------------
+    /// @brief yaml parameters for the temperature variable
     class Tocn : public BkgErrVariable {
       OOPS_CONCRETE_PARAMETERS_ENABLE_COPY_AND_MOVE(Tocn, BkgErrVariable)
      public:
@@ -62,6 +75,7 @@ class ParametricOceanStdDev : public saber::SaberOuterBlockBase {
     };
 
     // --------------------------------------------------------------------------------------
+    /// @brief yaml parameters for the unbalanced ssh variable
     class Ssh : public BkgErrVariable {
       OOPS_CONCRETE_PARAMETERS_ENABLE_COPY_AND_MOVE(Ssh, BkgErrVariable)
      public:
@@ -71,6 +85,7 @@ class ParametricOceanStdDev : public saber::SaberOuterBlockBase {
     };
 
     // --------------------------------------------------------------------------------------
+    /// @brief yaml parameters for the unbalanced salinity variable
     class Socn : public BkgErrVariable {
       OOPS_CONCRETE_PARAMETERS_ENABLE_COPY_AND_MOVE(Socn, BkgErrVariable)
      public:
@@ -82,6 +97,7 @@ class ParametricOceanStdDev : public saber::SaberOuterBlockBase {
     };
 
     // --------------------------------------------------------------------------------------
+    /// @brief yaml parameters for other variables that are not temperature, ssh, or salinity
     class OtherVar : public BkgErrVariable {
       OOPS_CONCRETE_PARAMETERS(OtherVar, BkgErrVariable)
      public:
