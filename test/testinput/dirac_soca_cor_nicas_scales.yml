@@ -9,7 +9,13 @@ background:
   date: &date 2018-04-15T00:00:00Z
   ocn_filename: MOM.res.nc
   ice_filename: cice.res.nc
-  state variables: &soca_vars [socn, tocn, ssh, hocn, cicen, hicen]
+  state variables:
+  - sea_water_salinity
+  - sea_water_potential_temperature
+  - sea_surface_height_above_geoid
+  - sea_water_cell_thickness
+  - sea_ice_category_area_fraction
+  - sea_ice_category_thickness
 
 background error:
   covariance model: SABER
@@ -25,13 +31,13 @@ background error:
       grids:
       - model:
           variables:
-          - socn
-          - tocn
+          - sea_water_salinity
+          - sea_water_potential_temperature
       - model:
           variables:
-          - ssh
-          - cicen
-          - hicen
+          - sea_surface_height_above_geoid
+          - sea_ice_category_area_fraction
+          - sea_ice_category_thickness
 
 dirac:
   ixdir: [1, 17, 41, 31, 51, 63, 81, 14, 16, 43]

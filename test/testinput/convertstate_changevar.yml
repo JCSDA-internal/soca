@@ -1,7 +1,3 @@
-_: #YAML anchors to be used throughout
-  - &soca_vars [ssh, tocn, socn, uocn, vocn, hocn, cicen, chl, layer_depth]
-
-
 input geometry: &geom
   geom_grid_file: data_generated/gridgen/soca_gridspec.72x35x25.nc
   mom6_input_nml: data_static/72x35x25/input.nml
@@ -13,12 +9,23 @@ variable change:
   variable change name: Model2Ana
   do inverse: false
   rotate:
-    u: [uocn]
-    v: [vocn]
+    u: [eastward_sea_water_velocity]
+    v: [northward_sea_water_velocity]
   interp: true
   log:
-    var: [socn, chl]
-  output variables: *soca_vars
+    var:
+    - sea_water_salinity
+    - mass_concentration_of_chlorophyll_in_sea_water
+  output variables: &soca_vars
+  - sea_surface_height_above_geoid
+  - sea_water_potential_temperature
+  - sea_water_salinity
+  - eastward_sea_water_velocity
+  - northward_sea_water_velocity
+  - sea_water_cell_thickness
+  - sea_ice_category_area_fraction
+  - mass_concentration_of_chlorophyll_in_sea_water
+  - sea_water_depth
 
 states:
 - input:

@@ -64,7 +64,7 @@ subroutine soca_model2geovals_changevar_f90(c_key_geom, c_key_xin, c_key_xout) &
       xout%fields(i)%val(:,:,1) = real(geom%lon, kind=kind_real)
 
     case ('sea_water_depth')
-      call xin%get('hocn', field)
+      call xin%get('sea_water_cell_thickness', field)
         xout%fields(i)%val = 0.5 * field%val
         do kk = 2, field%nz
           xout%fields(i)%val(:,:,kk) = xout%fields(i)%val(:,:,kk) + &
@@ -101,20 +101,19 @@ subroutine soca_model2geovals_changevar_f90(c_key_geom, c_key_xin, c_key_xout) &
 
     ! special derived state variables
     case ('skin_temperature_at_surface_where_sea')
-      call xin%get('tocn', field)
+      call xin%get('sea_water_potential_temperature', field)
       xout%fields(i)%val(:,:,1) = field%val(:,:,1) + 273.15_kind_real
 
     case ('sea_floor_depth_below_sea_surface')
-      call xin%get('hocn', field)
+      call xin%get('sea_water_cell_thickness', field)
       xout%fields(i)%val(:,:,1) = sum(field%val, dim=3)
 
     ! identity operators
     case default
       call xin%get(xout%fields(i)%metadata%name, field)
-      if (xout%fields(i)%name == field%metadata%name .or. &
-          xout%fields(i)%name == field%metadata%getval_name ) then
+      if (xout%fields(i)%name == field%metadata%name ) then
         xout%fields(i)%val(:,:,:) =  field%val(:,:,:) !< full field
-      elseif (field%metadata%getval_name_surface == xout%fields(i)%name) then
+      elseif (field%metadata%name_surface == xout%fields(i)%name) then
         xout%fields(i)%val(:,:,1) = field%val(:,:,1) !< surface only of a 3D field
       else
         call abor1_ftn( 'error in soca_model2geovals_changevar_f90 processing ' &

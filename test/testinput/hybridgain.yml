@@ -8,7 +8,15 @@ _file: &_file
   date: &date_bkg 2018-04-15T00:00:00Z
   basename: data_static/72x35x25/
   remap_filename: data_static/72x35x25/restarts/MOM.res.nc
-  state variables:  &soca_vars [cicen, hicen, socn, tocn, uocn, vocn, ssh, hocn]
+  state variables:
+  - sea_ice_category_area_fraction
+  - sea_ice_category_thickness
+  - sea_water_salinity
+  - sea_water_potential_temperature
+  - eastward_sea_water_velocity
+  - northward_sea_water_velocity
+  - sea_surface_height_above_geoid
+  - sea_water_cell_thickness
 
 hybrid weights:
   control: 0.2

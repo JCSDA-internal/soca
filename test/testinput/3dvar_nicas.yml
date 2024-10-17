@@ -10,7 +10,12 @@ cost function:
   time window:
     begin: 2018-04-14T00:00:00Z
     length: P2D
-  analysis variables: &soca_vars [socn, tocn, uocn, vocn, ssh]
+  analysis variables: &soca_an_vars
+  - sea_water_salinity
+  - sea_water_potential_temperature
+  - eastward_sea_water_velocity
+  - northward_sea_water_velocity
+  - sea_surface_height_above_geoid
   geometry: &geom_small
     geom_grid_file: data_static/36x17x25/soca_gridspec.nc
     mom6_input_nml: data_static/36x17x25/input.nml
@@ -22,7 +27,15 @@ cost function:
     basename: data_static/36x17x25/restarts/
     ocn_filename: MOM.res.nc
     date: 2018-04-15T00:00:00Z
-    state variables: [hocn, socn, tocn, uocn, vocn, ssh, mld, layer_depth]
+    state variables:
+    - sea_water_cell_thickness
+    - sea_water_salinity
+    - sea_water_potential_temperature
+    - eastward_sea_water_velocity
+    - northward_sea_water_velocity
+    - sea_surface_height_above_geoid
+    - ocean_mixed_layer_thickness
+    - sea_water_depth
 
   background error:
     covariance model: SABER
@@ -38,13 +51,13 @@ cost function:
         grids:
         - model:
             variables:
-            - socn
-            - tocn
-            - uocn
-            - vocn
+            - sea_water_salinity
+            - sea_water_potential_temperature
+            - eastward_sea_water_velocity
+            - northward_sea_water_velocity
         - model:
             variables:
-            - ssh
+            - sea_surface_height_above_geoid
     saber outer blocks:
     - saber block name: SOCABkgErrFilt
       ocean_depth_min: 1000 # [m]
@@ -52,8 +65,8 @@ cost function:
       efold_z: 2500.0       # [m]
 
     linear variable change:
-      input variables: *soca_vars
-      output variables: *soca_vars
+      input variables: *soca_an_vars
+      output variables: *soca_an_vars
       linear variable changes:
 
       - linear variable change name: BkgErrGODAS

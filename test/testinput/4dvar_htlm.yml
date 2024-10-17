@@ -4,7 +4,12 @@ cost function:
   time window:
     begin: *date_begin
     length: PT12H
-  analysis variables: &soca_vars [socn, tocn, uocn, vocn, ssh, hocn]
+  analysis variables: &soca_an_vars
+  - sea_water_salinity
+  - sea_water_potential_temperature
+  - eastward_sea_water_velocity
+  - northward_sea_water_velocity
+  - sea_surface_height_above_geoid
 
   geometry: &geom
     geom_grid_file: data_generated/gridgen/soca_gridspec.72x35x25.nc
@@ -38,7 +43,15 @@ cost function:
     basename: data_static/72x35x25/restarts/
     ocn_filename: MOM.res.nc
     date: *date_begin
-    state variables:  &model_vars [socn, uocn, vocn, tocn, ssh, hocn, mld, layer_depth]
+    state variables:  &soca_bg_vars
+    - sea_water_salinity
+    - eastward_sea_water_velocity
+    - northward_sea_water_velocity
+    - sea_water_potential_temperature
+    - sea_surface_height_above_geoid
+    - sea_water_cell_thickness
+    - ocean_mixed_layer_thickness
+    - sea_water_depth
 
   background error:
     covariance model: SABER
@@ -46,7 +59,10 @@ cost function:
       saber block name: diffusion
       read:
         groups:
-        - variables: [tocn, socn, ssh]
+        - variables:
+          - sea_water_potential_temperature
+          - sea_water_salinity
+          - sea_surface_height_above_geoid
           horizontal:
             filepath: data_generated/parameters_diffusion/hz_smaller
           vertical:
@@ -60,8 +76,8 @@ cost function:
       efold_z: 2500.0       # [m]
 
     linear variable change:
-      input variables: *soca_vars
-      output variables: *soca_vars
+      input variables: *soca_an_vars
+      output variables: *soca_an_vars
       linear variable changes:
 
       - linear variable change name: BkgErrGODAS
@@ -124,9 +140,11 @@ variational:
           tstep: PT6H
           variable change: Identity
       update tstep: PT6H
-      variables: [socn, tocn]
+      variables: &tlm_vars
+      - sea_water_salinity
+      - sea_water_potential_temperature
       coefficients:
-        update variables: [socn, tocn]
+        update variables: *tlm_vars
         influence region size: 3
         time window:
           begin: 2018-04-15T00:00:00Z

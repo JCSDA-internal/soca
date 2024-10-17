@@ -9,14 +9,31 @@ background:
   basename: data_static/72x35x25/restarts/
   ocn_filename: MOM.res.nc
   ice_filename: cice.res.nc
-  state variables: &soca_vars [cicen, hicen, socn, tocn, ssh, uocn, vocn, hocn, mld, layer_depth]
+  state variables:
+  - sea_ice_category_area_fraction
+  - sea_ice_category_thickness
+  - sea_water_salinity
+  - sea_water_potential_temperature
+  - sea_surface_height_above_geoid
+  - eastward_sea_water_velocity
+  - northward_sea_water_velocity
+  - sea_water_cell_thickness
+  - ocean_mixed_layer_thickness
+  - sea_water_depth
 
 linear variable change tests:
 - tolerance inverse: 1e-12
   test inverse: 0
   linear variable change:
-    input variables: *soca_vars
-    output variables: *soca_vars
+    input variables: &soca_an_vars
+    - sea_ice_category_area_fraction
+    - sea_ice_category_thickness
+    - sea_water_salinity
+    - sea_water_potential_temperature
+    - sea_surface_height_above_geoid
+    - eastward_sea_water_velocity
+    - northward_sea_water_velocity
+    output variables: *soca_an_vars
     linear variable changes:
     - linear variable change name: BkgErrGODAS
       sst_bgerr_file: data_static/godas_sst_bgerr.nc

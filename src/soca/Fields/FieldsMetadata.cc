@@ -33,21 +33,18 @@ FieldsMetadata::FieldsMetadata(const std::string & filename) {
     // read in portion of the values (not all are read in on the C++ side, until
     // needed)
     f->name = config.getString("name");
-    f->getvalName = config.getString("getval name", f->name);
-    f->getvalNameSurface = config.getString("getval name surface", "");
+    f->nameSurface = config.getString("name surface", "");
 
     // check for duplicates
     if (fieldMetadata_.count(f->name) > 0 ||
-        fieldMetadata_.count(f->getvalName) > 0 ||
-        fieldMetadata_.count(f->getvalNameSurface) > 0) {
+        fieldMetadata_.count(f->nameSurface) > 0) {
       util::abor1_cpp("Duplicate field metadata: " + f->name);
     }
 
     // insert into the maps, multiple copies are inserted for valid name
     fieldMetadata_[f->name] = f;
-    fieldMetadata_[f->getvalName] = f;
-    if (f->getvalNameSurface != "") {
-      fieldMetadata_[f->getvalNameSurface] = f;
+    if (f->nameSurface != "") {
+      fieldMetadata_[f->nameSurface] = f;
     }
   }
 }

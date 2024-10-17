@@ -4,7 +4,14 @@ geometry:
   fields metadata: data_static/fields_metadata.yml
   iterator dimension: 2
 
-inc variables: [cicen, hicen, socn, tocn, uocn, vocn, ssh, hocn]
+inc variables:
+  - sea_ice_category_area_fraction
+  - sea_ice_category_thickness
+  - sea_water_salinity
+  - sea_water_potential_temperature
+  - eastward_sea_water_velocity
+  - northward_sea_water_velocity
+  - sea_surface_height_above_geoid
 
 increment test:
   date: &date 2018-04-15T00:00:00Z

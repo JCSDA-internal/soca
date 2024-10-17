@@ -106,7 +106,7 @@ class OceanSmoother {
        false, this};
       oops::Parameter<std::string> mldVariable{"mld variable",
         "The name of the MLD variable in the fieldset passed to the constructor",
-        "mld", this};
+        "ocean_mixed_layer_thickness", this};
       oops::Parameter<bool> mldSmooth{"mld smooth",
         "If true, smooth the MLD by the horizontal scales before using it for the vertical scales",
         true, this};
@@ -125,7 +125,7 @@ class OceanSmoother {
       this};
     oops::Parameter<std::string> thicknessVariable{"thickness variable",
       "The name of the layer thickness state variable in the fieldset passed to the constructor",
-      "hocn", this};
+      "sea_water_cell_thickness", this};
   };
 
   // -----------------------------------------------------------------------------
