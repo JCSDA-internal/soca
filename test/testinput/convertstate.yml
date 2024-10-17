@@ -18,7 +18,14 @@ states:
      date: &bkg_date 2018-04-15T00:00:00Z
      # NOTE: you probably shouldn't use uocn and vocn for now until grid
      # de-staggering is implemented
-     state variables: [ssh, tocn, socn, hocn, cicen, layer_depth]
+     state variables:
+     - sea_surface_height_above_geoid
+     - sea_water_potential_temperature
+     - sea_water_salinity
+     - sea_water_cell_thickness
+     - sea_ice_category_area_fraction
+     - sea_water_depth
+
   output:
      datadir: data_output/
      exp: convertstate

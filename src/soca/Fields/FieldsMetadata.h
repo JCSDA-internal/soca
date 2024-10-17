@@ -21,10 +21,9 @@ namespace soca {
 /// variable name used by UFO, and the variable name used by UFO for the surface
 /// (if this is a 3D field).
 struct FieldMetadata {
-  std::string name;  ///< The internal (within soca) variable name.
-  std::string getvalName;  ///< The variable name used by UFO.
-  std::string getvalNameSurface;  ///< The variable name used by UFO for the surface
-                                  ///  (if this is a 3D field).
+  std::string name;  ///< The soca and JEDI name.
+  std::string nameSurface;  ///< The variable name used by UFO for the surface
+                            ///  (if this is a 3D field).
 };
 
 // --------------------------------------------------------------------------------------

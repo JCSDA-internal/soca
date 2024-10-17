@@ -96,11 +96,19 @@ subroutine soca_bkgerrgodas_setup(self, f_conf, bkg, geom)
   do i=1,size(self%std_bkgerr%fields)
     field => self%std_bkgerr%fields(i)
     select case(field%name)
-    case ('sw','lw','lhf','shf','us','swh')
+    case ('net_downwelling_shortwave_radiation',&
+          'net_downwelling_longwave_radiation',&
+          'upward_latent_heat_flux_in_air',&
+          'upward_sensible_heat_flux_in_air',&
+          'friction_velocity_over_water',&
+          'sea_surface_wave_significant_height')
       call bkg%get(field%name, field_bkg)
       field%val = abs(field_bkg%val)
       field%val = 0.1_kind_real * field%val
-    case ('chl','biop','uocn','vocn')
+    case ('mass_concentration_of_chlorophyll_in_sea_water',&
+          'molar_concentration_of_biomass_in_sea_water_in_p_units',&
+          'eastward_sea_water_velocity',&
+          'northward_sea_water_velocity')
       call bkg%get(field%name, field_bkg)
       field%val = abs(field_bkg%val) * 0.2_kind_real
     end select
@@ -182,10 +190,10 @@ subroutine soca_bkgerrgodas_tocn(self)
   call sst%init(domain, self%sst_bgerr_file)
   call sst%bin(self%geom%lon, self%geom%lat)
 
-  call self%bkg%get("tocn", tocn_b)
-  call self%std_bkgerr%get("tocn", tocn_e)
-  call self%bkg%get("hocn", hocn)
-  call self%bkg%get("layer_depth",layer_depth)
+  call self%bkg%get("sea_water_potential_temperature", tocn_b)
+  call self%std_bkgerr%get("sea_water_potential_temperature", tocn_e)
+  call self%bkg%get("sea_water_cell_thickness", hocn)
+  call self%bkg%get("sea_water_depth",layer_depth)
 
   ! Loop over compute domain
   do i = domain%is, domain%ie
@@ -243,7 +251,7 @@ subroutine soca_bkgerrgodas_ssh(self)
   domain%is = self%geom%isc ; domain%ie = self%geom%iec
   domain%js = self%geom%jsc ; domain%je = self%geom%jec
 
-  call self%std_bkgerr%get("ssh", ssh)
+  call self%std_bkgerr%get("sea_surface_height_above_geoid", ssh)
 
   ! Loop over compute domain
   do i = domain%is, domain%ie
@@ -288,9 +296,9 @@ subroutine soca_bkgerrgodas_socn(self)
   ! TODO read in a precomputed surface S background error
 
   ! Loop over compute domain
-  call self%std_bkgerr%get("socn", field)
-  call self%bkg%get("mld", mld)
-  call self%bkg%get("layer_depth", layer_depth)
+  call self%std_bkgerr%get("sea_water_salinity", field)
+  call self%bkg%get("ocean_mixed_layer_thickness", mld)
+  call self%bkg%get("sea_water_depth", layer_depth)
 
   do i = domain%is, domain%ie
     do j = domain%js, domain%je

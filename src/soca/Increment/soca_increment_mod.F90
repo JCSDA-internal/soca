@@ -80,7 +80,7 @@ subroutine soca_increment_random(self)
     field => self%fields(i)
     ! TODO remove this once increment / state are fully separated
     ! NOTE: can't randomize "hocn", testIncrementInterpAD fails
-    if (field%name == 'hocn') cycle
+    if (field%name == "sea_water_cell_thickness") cycle
     call normal_distribution(field%val,  0.0_kind_real, 1.0_kind_real, rseed)
   end do
 
@@ -149,23 +149,23 @@ subroutine soca_increment_dirac(self, f_conf)
     field => null()
     select case(ifdir(n))
     case (1)
-      call self%get("tocn", field)
+      call self%get("sea_water_potential_temperature", field)
     case (2)
-      call self%get("socn", field)
+      call self%get("sea_water_salinity", field)
     case (3)
-      call self%get("ssh", field)
+      call self%get("sea_surface_height_above_geoid", field)
     case (4)
-      call self%get("cicen", field)
+      call self%get("sea_ice_category_area_fraction", field)
     case (5)
-      call self%get("hicen", field)
+      call self%get("sea_ice_category_thickness", field)
     case (6)
-      call self%get("chl", field)
+      call self%get("mass_concentration_of_chlorophyll_in_sea_water", field)
     case (7)
-      call self%get("biop", field)
+      call self%get("molar_concentration_of_biomass_in_sea_water_in_p_units", field)
     case (8)
-      call self%get("uocn", field)
+      call self%get("eastward_sea_water_velocity", field)
     case (9)
-      call self%get("vocn", field)
+      call self%get("northward_sea_water_velocity", field)
     case default
       ! TODO print error that out of range
     end select

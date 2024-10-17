@@ -69,16 +69,14 @@ void VariableChange::changeVar(State & x, const oops::Variables & vars) const {
 
   // The following is TEMPORARY.
   // ----------------------------------------------------------------------------
-  // We need to do some variable renaming BEFORE we run VADER.
-  // Eventually, we will internally rename these variables when they are
-  // first loaded in so that we won't have to worry about it here.
+  // We need to create some variables that VADER will need to run.
+  // TODO(Travis): This is a bit of a hack, create lat/lon directly here
+  // or as a vader recipe.
   if (vars.has("sea_water_temperature")) {
     Log::debug() << "VariableChange::changeVar Pre-VADER variable changes. " << std::endl;
     oops::Variables preVaderVars(std::vector<std::string>{
       "latitude",
       "longitude",
-      "sea_water_potential_temperature",
-      "sea_water_salinity",
       "sea_water_depth"});
     preVaderVars += x.variables();
     State preVader(x.geometry(), preVaderVars, x.validTime());

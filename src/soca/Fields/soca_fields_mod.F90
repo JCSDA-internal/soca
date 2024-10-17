@@ -433,7 +433,7 @@ subroutine soca_fields_init_vars(self, vars)
     end select
 
     ! determine number of levels
-    if (self%fields(i)%name == self%fields(i)%metadata%getval_name_surface) then
+    if (self%fields(i)%name == self%fields(i)%metadata%name_surface) then
       ! if this field is a surface getval, override the number of levels with 1
       nz = 1
     else
@@ -727,7 +727,7 @@ subroutine soca_fields_read(self, f_conf, vdate)
 
   ! iread = 1 (state) or 3 (increment): Read restart file
   if ((iread==1).or.(iread==3)) then
-    if (self%has("hocn")) call self%get("hocn", hocn)
+    if (self%has("sea_water_cell_thickness")) call self%get("sea_water_cell_thickness", hocn)
     ! filename for ocean
     call f_conf%get_or_die("basename", str)
     basename = str
@@ -900,8 +900,8 @@ subroutine soca_fields_read(self, f_conf, vdate)
 
     ! Initialize mid-layer depth from layer thickness
     ! TODO, this shouldn't live here, it should be part of the variable change class only
-    if (self%has("layer_depth")) then
-      call self%get("layer_depth", layer_depth)
+    if (self%has("sea_water_depth")) then
+      call self%get("sea_water_depth", layer_depth)
         layer_depth%val = 0.5 * hocn%val
         do k = 2, hocn%nz
           layer_depth%val(:,:,k) = layer_depth%val(:,:,k) + sum(hocn%val(:,:,1:k-1), dim=3)
@@ -909,10 +909,10 @@ subroutine soca_fields_read(self, f_conf, vdate)
     end if
 
     ! Compute mixed layer depth TODO: Move somewhere else ...
-    if (self%has("mld") .and. self%has("layer_depth")) then
-      call self%get("tocn", field)
-      call self%get("socn", field2)
-      call self%get("mld", mld)
+    if (self%has("ocean_mixed_layer_thickness") .and. self%has("sea_water_depth")) then
+      call self%get("sea_water_potential_temperature", field)
+      call self%get("sea_water_salinity", field2)
+      call self%get("ocean_mixed_layer_thickness", mld)
       mld%val = 0.0
       do i = isc, iec
         do j = jsc, jec

@@ -136,6 +136,12 @@ double Fields::norm() const {
 void Fields::print(std::ostream & os) const {
   os << std::endl << "  Valid time: " << validTime();
 
+  // find the longest field name, for use in formatting of the print
+  size_t maxNameLen = 0;
+  for (const auto & field : fieldSet_) {
+    maxNameLen = std::max(maxNameLen, field.name().size());
+  }
+
   // for each field
   for (const auto & field : fieldSet_) {
     size_t count = 0;
@@ -174,7 +180,7 @@ void Fields::print(std::ostream & os) const {
     if (count > 0) sum /= count;
 
     // done with this field, print information
-    os << std::endl << std::right << std::setw(7) << field.name()
+    os << std::endl << std::right << std::setw(maxNameLen) << field.name()
         << "   min="  <<  std::fixed << std::setw(12) <<
                           std::right << min
         << "   max="  <<  std::fixed << std::setw(12) <<

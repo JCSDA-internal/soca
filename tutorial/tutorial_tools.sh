@@ -26,7 +26,7 @@ function mom6_soca_static() {
     cp $datadir/Data/72x35x25/MOM_input .
     ln -sf $datadir/Data/fields_metadata.yml .
     ln -sf $datadir/Data/72x35x25/*_table .
-    ln -sf $datadir/Data/rossrad.dat .
+    ln -sf $datadir/Data/rossrad.nc .
     ln -sf $datadir/Data/godas_sst_bgerr.nc .
 }
 

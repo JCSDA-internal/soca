@@ -10,7 +10,23 @@ state:
     ocn_filename: MOM.res.nc
     ice_filename: cice.res.nc
     sfc_filename: sfc.res.nc
-    state variables: [cicen, hicen, hsnon, socn, tocn, ssh, hocn, uocn, vocn, sw, lhf, shf, lw, us, chl, dummy_atm1]
+    state variables:
+    - sea_ice_category_area_fraction
+    - sea_ice_category_thickness
+    - sea_ice_category_snow_thickness
+    - sea_water_salinity
+    - sea_water_potential_temperature
+    - sea_surface_height_above_geoid
+    - sea_water_cell_thickness
+    - eastward_sea_water_velocity
+    - northward_sea_water_velocity
+    - net_downwelling_shortwave_radiation
+    - upward_latent_heat_flux_in_air
+    - upward_sensible_heat_flux_in_air
+    - net_downwelling_longwave_radiation
+    - friction_velocity_over_water
+    - mass_concentration_of_chlorophyll_in_sea_water
+    - dummy_atm1
 
 time window:
   begin: 2018-04-14T00:00:00Z
@@ -114,7 +130,7 @@ observations:
       name: VertInterp
       observation alias file: testinput/obsop_name_map.yml
       vertical coordinate: sea_water_depth
-      observation vertical coordinate: depth      
+      observation vertical coordinate: depth
   - obs space:
       name: InsituSalinity
       obsdataout:
