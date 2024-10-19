@@ -48,39 +48,31 @@ background error:
           filepath: data_generated/parameters_diffusion/vt_5lvls
 
   saber outer blocks:
+
   - saber block name: SOCABkgErrFilt
     ocean_depth_min: 1000 # [m]
     rescale_bkgerr: 1.0
     efold_z: 2500.0       # [m]
 
-  linear variable change:
+  - saber block name: SOCAParametricOceanStdDev
+    temperature:
+      sst:
+        filepath: data_static/godas_sst_bgerr.nc
+        variable: sst_bgerr
+    unbalanced salinity: {} # use defaults
+    unbalanced ssh: {} # use defaults
+    other variables:
+    - variable: eastward_sea_water_velocity
+      fraction of background: 0.2
+    - variable: northward_sea_water_velocity
+      fraction of background: 0.2
+    save diagnostics:
+      filepath: data_output/parametric_ocean_stddev_diags
 
+  linear variable change:
     input variables: *soca_vars
     output variables: *soca_vars
-
     linear variable changes:
-
-    - linear variable change name: BkgErrGODAS
-      sst_bgerr_file: data_static/godas_sst_bgerr.nc
-      t_min: 0.25
-      t_max: 1.0
-      t_dz:  20.0
-      t_efold: 500.0
-      s_min: 0.0
-      s_max: 0.25
-      ssh_min: 0.0   # value at EQ
-      ssh_max: 0.1   # value in Extratropics
-      ssh_phi_ex: 20 # lat of transition from extratropics
-      cicen_min: 0.1
-      cicen_max: 0.5
-      hicen_min: 10.0
-      hicen_max: 100.0
-      chl_min: 0.001
-      chl_max: 30.0
-      biop_min: 0.0
-      biop_max: 1.0e-6
-      input variables: *soca_vars
-      output variables: *soca_vars
 
     - linear variable change name: BalanceSOCA
       kst:

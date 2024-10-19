@@ -8,8 +8,15 @@ background:
   basename: data_static/72x35x25/restarts/
   date: 2018-04-15T00:00:00Z
   ocn_filename: MOM.res.nc
-  sfc_filename: sfc.res.nc
-  state variables: [socn, tocn, ssh, hocn, mld, layer_depth, sw, lhf, shf, lw, us]
+  state variables:
+  - sea_water_salinity
+  - sea_water_potential_temperature
+  - sea_surface_height_above_geoid
+  - sea_water_cell_thickness
+  - ocean_mixed_layer_thickness
+  - sea_water_depth
+  - eastward_sea_water_velocity
+  - northward_sea_water_velocity
 
 background error:
   adjoint test: true
@@ -19,9 +26,8 @@ background error:
     saber block name: ID
   saber outer blocks:
 
-
   - saber block name: SOCAParametricOceanStdDev
-    # NOTE, this explicity sets all the parameters (to the same as their default
+    # NOTE, this explicitly sets all the parameters (to the same as their default
     # values), but in practice you can leave them out and the default values
     # will be used.
     temperature:
@@ -46,21 +52,21 @@ background error:
       min: 0.0
       max: 0.1
       smooth: true
-    # other variables:
-    #   sw:
-    #     min: 10.0
-    #     fraction of background: 0.2
-    #   lhf:
-    #     fraction of background: 0.2
-    #     min: 5.0
-    #     smooth: false
+    other variables:
+    - variable: eastward_sea_water_velocity
+      min: 0.1
+      max: 0.5
+      fraction of background: 0.2
+    - variable: northward_sea_water_velocity
+      min: 0.1
+      max: 0.5
+      fraction of background: 0.2
     smoother:  # see oceanSmoother.yaml for more details on the defaults for the smoother
       horizontal:
         min grid mult: 10
         max: 500e3
       vertical:
         use mld: true
-      foo: bar
     save diagnostics:
       filepath: data_output/parametric_ocean_stddev_diags
 
