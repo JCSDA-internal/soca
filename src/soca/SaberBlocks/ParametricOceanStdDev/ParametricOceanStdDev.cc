@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2017-2024 UCAR
+ * (C) Copyright 2024-2024 UCAR
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -67,7 +67,6 @@ ParametricOceanStdDev::ParametricOceanStdDev(
   smootherParams.deserialize(smootherConfig);
   OceanSmoother smoother3D(geom_, smootherParams, levels, xb.fieldSet());
 
-
   // --------------------------------------------------------------------------------------------
   // create temperature error.
   // This is done by calculating the temperature gradient, and then using that
@@ -116,7 +115,7 @@ ParametricOceanStdDev::ParametricOceanStdDev(
     const auto & v_sstErr = atlas::array::make_view<double, 2>(sstErr);
 
     // initialize empty dtdz and efold fields
-    atlas::Field dtdz = fs.createField<double>(atlas::option::levels(tocn.shape(1)) |
+    atlas::Field dtdz = fs.createField<double>(atlas::option::levels(levels) |
                                                atlas::option::name("dtdz"));
     auto v_dtdz = atlas::array::make_view<double, 2>(dtdz);
     v_dtdz.assign(0.0);
@@ -267,6 +266,7 @@ ParametricOceanStdDev::ParametricOceanStdDev(
 
       const auto & varBg = xb[varName];
       const auto & v_varBg = atlas::array::make_view<double, 2>(varBg);
+      const auto levels = varBg.shape(1);
 
       auto varErr = varBg.clone();
       auto v_varErr = atlas::array::make_view<double, 2>(varErr);
@@ -280,7 +280,7 @@ ParametricOceanStdDev::ParametricOceanStdDev(
         if (v_mask(i, 0) == 0) continue;  // skip land points
 
         // calculate the error as a fraction of the background
-        for (size_t z = 0; z < varBg.shape(1); z++) {
+        for (size_t z = 0; z < levels; z++) {
           v_varErr(i, z) = std::clamp(std::abs(fraction * v_varBg(i, z)), min, max);
         }
       }
@@ -310,12 +310,13 @@ void ParametricOceanStdDev::commonMultiply(oops::FieldSet3D &fset) const {
   for (auto & field : fset) {
     if (!bkgErr_.has(field.name())) continue;
 
+    const auto levels = field.shape(1);
     auto v_field = atlas::array::make_view<double, 2>(field);
     const auto & v_err  = atlas::array::make_view<double, 2>(bkgErr_[field.name()]);
     for (size_t i = 0; i < field.shape(0); i++) {
       if (v_ghost(i)) continue;  // skip ghost points
 
-      for (size_t z = 0; z < field.shape(1); z++) {
+      for (size_t z = 0; z < levels; z++) {
         v_field(i, z) *= v_err(i, z);
       }
     }
@@ -356,13 +357,18 @@ void ParametricOceanStdDev::leftInverseMultiply(oops::FieldSet3D &fset) const {
   for (auto & field : fset) {
     if (!bkgErr_.has(field.name())) continue;
 
+    const auto levels = field.shape(1);
     auto v_field = atlas::array::make_view<double, 2>(field);
     const auto & v_err  = atlas::array::make_view<double, 2>(bkgErr_[field.name()]);
     for (size_t i = 0; i < field.shape(0); i++) {
       if (v_ghost(i)) continue;  // skip ghost points
 
-      for (size_t z = 0; z < field.shape(1); z++) {
-        v_field(i, z) /= v_err(i, z);
+      for (size_t z = 0; z < levels; z++) {
+        if (v_err(i, z) == 0.0) {
+          v_field(i, z) = 0.0;
+        } else {
+          v_field(i, z) /= v_err(i, z);
+        }
       }
     }
     field.set_dirty();

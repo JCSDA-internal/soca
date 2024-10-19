@@ -19,13 +19,14 @@ background:
   - northward_sea_water_velocity
 
 background error:
-  adjoint test: true
-  #inverse test: true
   covariance model: SABER
   saber central block:
     saber block name: ID
-  saber outer blocks:
 
+  adjoint test: true
+  inverse test: true
+
+  saber outer blocks:
   - saber block name: SOCAParametricOceanStdDev
     # NOTE, this explicitly sets all the parameters (to the same as their default
     # values), but in practice you can leave them out and the default values

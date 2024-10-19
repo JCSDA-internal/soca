@@ -9,6 +9,8 @@ sea_water_potential_temperature   min=0.0000000000000000   max=1.000000000000000
     eastward_sea_water_velocity   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
    northward_sea_water_velocity   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
 Adjoint test for block SOCAParametricOceanStdDev passed
+Inner inverse test for block SOCAParametricOceanStdDev passed: U Uinv (U x) == (U x)
+Outer inverse test for block SOCAParametricOceanStdDev passed: Uinv U (Uinv x) == (Uinv x)
 Adjoint test for block ID passed
 Covariance(SABER) diagnostics:
 - Variances at Dirac points:
