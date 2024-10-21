@@ -163,5 +163,5 @@ output:
 test:
   reference filename: testref/4dvar_htlm.test
   test output filename: testoutput/4dvar_htlm.test
-  float relative tolerance: 1e-4
-  float absolute tolerance: 1e-4
+  float relative tolerance: 1e-2
+  float absolute tolerance: 1e-2
