@@ -21,7 +21,7 @@ include( soca_compiler_flags )
 ################################################################################
 # Dependencies
 ################################################################################
-find_package( NetCDF REQUIRED COMPONENTS Fortran C)
+find_package( NetCDF REQUIRED COMPONENTS Fortran C CXX)
 find_package( gsl-lite REQUIRED HINTS $ENV{gsl_list_DIR})
 find_package( eckit  1.24.4   REQUIRED)
 find_package( fckit  0.11.0   REQUIRED)
@@ -37,7 +37,12 @@ find_package( OpenMP COMPONENTS C Fortran REQUIRED)
 
 # Optionally look for Torch and daml
 find_package(Torch QUIET)
-find_package(daml QUIET)
+
+if(DEFINED Torch_ROOT)
+  # Temporary fix until Torch is properly installed as a cmake package
+  include_directories("${Torch_ROOT}/include")
+  include_directories("${Torch_ROOT}/include/torch/csrc/api/include")
+endif()
 
 # Optionally look for icepack
 find_package( icepack 1.2.0 QUIET)

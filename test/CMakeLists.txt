@@ -614,7 +614,7 @@ soca_add_test( NAME dirac_diffusion_lowres
                TEST_DEPENDS test_soca_parameters_diffusion_lowres )
 
 
-if( ${daml_FOUND} )
+if( DEFINED Torch_ROOT )
   soca_add_test( NAME dirac_mlbalance
                  EXE soca_error_covariance_toolbox.x)
 endif()
@@ -684,7 +684,7 @@ soca_add_test( NAME 3dvar_nicas
                TEST_DEPENDS test_soca_parameters_bump_cor_nicas )
 
 
-if( ${daml_FOUND} )
+if( DEFINED Torch_ROOT )
   soca_add_test( NAME 3dvar_diffmlb
                  EXE  soca_var.x
                  TEST_DEPENDS test_soca_gridgen

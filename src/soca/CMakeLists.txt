@@ -30,6 +30,7 @@ target_include_directories(soca PUBLIC
   $<INSTALL_INTERFACE:include/soca>)
 
 target_link_libraries( soca PUBLIC NetCDF::NetCDF_Fortran )
+target_link_libraries( soca PUBLIC NetCDF::NetCDF_CXX )
 target_link_libraries( soca PUBLIC fckit )
 target_link_libraries( soca PUBLIC atlas )
 target_link_libraries( soca PUBLIC atlas_f )
@@ -42,10 +43,15 @@ target_link_libraries( soca PUBLIC ioda )
 target_link_libraries( soca PUBLIC ufo )
 target_link_libraries( soca PUBLIC vader )
 
-if( ${daml_FOUND} )
-  target_link_libraries( soca PUBLIC "${TORCH_LIBRARIES}" )
+#if( ${daml_FOUND} )
+  #target_link_libraries( soca PUBLIC "${TORCH_LIBRARIES}" )
+  target_link_libraries( soca PUBLIC
+    "${Torch_ROOT}/lib/libtorch.so"          # For the Torch core library
+    "${Torch_ROOT}/lib/libtorch_cpu.so"      # For the CPU backend
+    "${Torch_ROOT}/lib/libc10.so"            # Core library
+    )
   target_link_libraries( soca PUBLIC daml )
-endif()
+#endif()
 
 if( ${icepack_FOUND} )
   target_link_libraries( soca PUBLIC icepack )
@@ -59,9 +65,9 @@ add_subdirectory(Geometry)
 add_subdirectory(GeometryIterator)
 add_subdirectory(Increment)
 add_subdirectory(LinearVariableChange)
-if( ${daml_FOUND} )
+#if( ${daml_FOUND} )
   add_subdirectory(MLBalance)
-endif()
+#endif()
 add_subdirectory(ModelBias)
 add_subdirectory(ModelData)
 add_subdirectory(ObsLocalization)
