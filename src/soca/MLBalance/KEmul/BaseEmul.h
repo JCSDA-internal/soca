@@ -57,10 +57,10 @@ namespace soca {
       outputSize_(getSize(config, "ffnn.outputSize")),
       hiddenSize_(getSize(config, "ffnn.hiddenSize")) {
       // Check pyTorch version
-      std::cout << "PyTorch Version: "
-              << TORCH_VERSION_MAJOR << "."
-              << TORCH_VERSION_MINOR << "."
-              << TORCH_VERSION_PATCH << std::endl;
+      oops::Log::info() << "PyTorch Version: "
+                        << TORCH_VERSION_MAJOR << "."
+                        << TORCH_VERSION_MINOR << "."
+                        << TORCH_VERSION_PATCH << std::endl;
 
       // Check thread info
       unsigned int maxThreads = std::thread::hardware_concurrency();
@@ -287,7 +287,7 @@ namespace soca {
         numParams += parameter.numel();
       }
 
-      std::cout << "Number of parameters: " << numParams << std::endl;
+      oops::Log::info() << "Number of parameters: " << numParams << std::endl;
     }
   };
 }  // namespace soca

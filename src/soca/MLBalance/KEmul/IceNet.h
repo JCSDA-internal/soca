@@ -50,7 +50,6 @@ struct IceNet : torch::nn::Module {
 
     // Save 1st and 2nd moments
     std::vector<torch::Tensor> moments = {this->inputMean, this->inputStd};
-    std::cout << moments[0] << std::endl;
     torch::save(moments, path.string() + "/normalization." + fileName.string());
   }
 

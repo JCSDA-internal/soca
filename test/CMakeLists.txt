@@ -22,6 +22,7 @@ set( soca_test_input
   testinput/3dvar_single_ob.yml
   testinput/3dvar_zero_ob.yml
   testinput/3dvar.yml
+  testinput/3dvar_diffmlb.yml
   testinput/3dvarfgat_pseudo.yml
   testinput/4denvar.yml
   testinput/4dhybenvar.yml
@@ -35,6 +36,7 @@ set( soca_test_input
   testinput/diffstates.yml
   testinput/dirac_diffusion.yml
   testinput/dirac_diffusion_lowres.yml
+  testinput/train_mlbalance.yml
   testinput/dirac_mlbalance.yml
   testinput/dirac_soca_cor_nicas_scales.yml
   testinput/dirac_soca_cov.yml
@@ -116,6 +118,7 @@ set( soca_test_ref
   testref/diffstates.test
   testref/dirac_diffusion.test
   testref/dirac_diffusion_lowres.test
+  testref/dirac_mlbalance.test
   testref/dirac_soca_cor_nicas_scales.test
   testref/dirac_soca_cov.test
   testref/dirac_socahyb_cov.test
@@ -615,8 +618,12 @@ soca_add_test( NAME dirac_diffusion_lowres
 
 
 if( DEFINED Torch_ROOT )
+  soca_add_test( NAME train_mlbalance
+                 EXE soca_ice_emulator.x)
+
   soca_add_test( NAME dirac_mlbalance
-                 EXE soca_error_covariance_toolbox.x)
+                 EXE soca_error_covariance_toolbox.x
+                 TEST_DEPENDS test_soca_train_mlbalance )
 endif()
 
 # h(x) executables
@@ -688,7 +695,8 @@ if( DEFINED Torch_ROOT )
   soca_add_test( NAME 3dvar_diffmlb
                  EXE  soca_var.x
                  TEST_DEPENDS test_soca_gridgen
-                              test_soca_parameters_diffusion )
+                              test_soca_parameters_diffusion
+                              test_soca_train_mlbalance)
 endif()
 
 soca_add_test( NAME 3dvar_lowres

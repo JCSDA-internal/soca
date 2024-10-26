@@ -83,6 +83,7 @@ namespace soca {
                torch::Tensor,
                torch::Tensor>
     prepData(const std::string& fileName, bool geoloc = false, int n = 400000) override {
+      // TODO(G): Move this elsewhere and leverage soca and/or atlas io
       // Read additional config
       std::string pole;
       config_.get("domain.pole", pole);
@@ -114,7 +115,7 @@ namespace soca {
       MPI_Allreduce(&localBatchSize, &numPatterns,
                     1, MPI_INT, MPI_MIN, MPI_COMM_WORLD);
 
-      std::cout << "Number of patterns: " << numPatterns << std::endl;
+      oops::Log::info() << "Number of patterns: " << numPatterns << std::endl;
 
       torch::Tensor patterns = torch::empty({numPatterns, inputSize_}, torch::kFloat32);
       torch::Tensor targets = torch::empty({numPatterns}, torch::kFloat32);
