@@ -43,15 +43,15 @@ target_link_libraries( soca PUBLIC ioda )
 target_link_libraries( soca PUBLIC ufo )
 target_link_libraries( soca PUBLIC vader )
 
-#if( ${daml_FOUND} )
-  #target_link_libraries( soca PUBLIC "${TORCH_LIBRARIES}" )
+
+if(DEFINED Torch_ROOT)
   target_link_libraries( soca PUBLIC
     "${Torch_ROOT}/lib/libtorch.so"          # For the Torch core library
     "${Torch_ROOT}/lib/libtorch_cpu.so"      # For the CPU backend
     "${Torch_ROOT}/lib/libc10.so"            # Core library
     )
   target_link_libraries( soca PUBLIC daml )
-#endif()
+endif()
 
 if( ${icepack_FOUND} )
   target_link_libraries( soca PUBLIC icepack )
@@ -65,9 +65,9 @@ add_subdirectory(Geometry)
 add_subdirectory(GeometryIterator)
 add_subdirectory(Increment)
 add_subdirectory(LinearVariableChange)
-#if( ${daml_FOUND} )
+if(DEFINED Torch_ROOT)
   add_subdirectory(MLBalance)
-#endif()
+endif()
 add_subdirectory(ModelBias)
 add_subdirectory(ModelData)
 add_subdirectory(ObsLocalization)

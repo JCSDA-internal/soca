@@ -35,7 +35,7 @@ find_package( fms    2023.3.0 REQUIRED COMPONENTS R4 R8)
 add_library(  fms ALIAS FMS::fms_r8)
 find_package( OpenMP COMPONENTS C Fortran REQUIRED)
 
-# Optionally look for Torch and daml
+# Optionally look for Torch
 find_package(Torch QUIET)
 
 if(DEFINED Torch_ROOT)
