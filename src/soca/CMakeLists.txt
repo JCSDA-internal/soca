@@ -44,7 +44,7 @@ target_link_libraries( soca PUBLIC ufo )
 target_link_libraries( soca PUBLIC vader )
 
 
-if(DEFINED Torch_ROOT)
+if(Torch_FOUND)
   target_link_libraries( soca PUBLIC
     "${Torch_ROOT}/lib/libtorch.so"          # For the Torch core library
     "${Torch_ROOT}/lib/libtorch_cpu.so"      # For the CPU backend
@@ -65,7 +65,7 @@ add_subdirectory(Geometry)
 add_subdirectory(GeometryIterator)
 add_subdirectory(Increment)
 add_subdirectory(LinearVariableChange)
-if(DEFINED Torch_ROOT)
+if(Torch_FOUND)
   add_subdirectory(MLBalance)
 endif()
 add_subdirectory(ModelBias)

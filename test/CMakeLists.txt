@@ -617,7 +617,7 @@ soca_add_test( NAME dirac_diffusion_lowres
                TEST_DEPENDS test_soca_parameters_diffusion_lowres )
 
 
-if( DEFINED Torch_ROOT )
+if( Torch_FOUND )
   soca_add_test( NAME train_mlbalance
                  EXE soca_ice_emulator.x)
 
@@ -691,7 +691,7 @@ soca_add_test( NAME 3dvar_nicas
                TEST_DEPENDS test_soca_parameters_bump_cor_nicas )
 
 
-if( DEFINED Torch_ROOT )
+if( Torch_FOUND )
   soca_add_test( NAME 3dvar_diffmlb
                  EXE  soca_var.x
                  TEST_DEPENDS test_soca_gridgen
