@@ -109,7 +109,7 @@ subroutine soca_fields_metadata_create(self, filename)
     call conf_list(i)%get_or_die("name", metadata_tmp(i)%name)
 
     if(.not. conf_list(i)%get("name surface", str)) str=""
-    self%metadata(i)%name_surface = str
+    metadata_tmp(i)%name_surface = str
 
     if(.not. conf_list(i)%get("grid", str)) str = 'h'
     metadata_tmp(i)%grid = str
