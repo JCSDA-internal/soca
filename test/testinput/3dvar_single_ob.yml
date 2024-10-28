@@ -71,12 +71,10 @@ variational:
     ninner: 5
     gradient norm reduction: 1e-3
     test: on
-    diagnostics:
-      departures: ombg
     online diagnostics:
       write increment: true
       increment:
-        state component:      
+        state component:
           datadir: data_generated/3dvar_single_ob
           date: *bkg_date
           exp: 3dvar_single_ob.iter1
@@ -86,10 +84,6 @@ output:
   datadir: data_generated/3dvar_single_ob
   exp: 3dvar_single_ob
   type: an
-
-final:
-  diagnostics:
-    departures: oman
 
 test:
   reference filename: testref/3dvar_single_ob.test

@@ -21,6 +21,10 @@
 namespace soca
 {
 
+// Note, until we deal with U/V de-staggering, the print value is kinda
+// slightly wrong. Oh well.
+const char MASK_METADATA[] = "mask";
+
 // -----------------------------------------------------------------------------
 
 Fields::Fields(const Geometry & geom, const oops::Variables & vars, const util::DateTime & vt)
@@ -105,9 +109,9 @@ double Fields::norm() const {
     const auto & vGhost = atlas::array::make_view<int, 1>(field.functionspace().ghost());
     const auto & view = atlas::array::make_view<double, 2>(field);
     std::unique_ptr<atlas::array::ArrayView<double, 2> > mask;
-    if (field.metadata().getBool("masked", false)) {
+    if (field.metadata().has(MASK_METADATA)) {
       // optionally get the mask field, if one is given
-      const std::string & maskName = field.metadata().getString("mask");
+      const std::string & maskName = field.metadata().getString(MASK_METADATA);
       mask.reset(new atlas::array::ArrayView<double, 2>(
         atlas::array::make_view<double, 2>(geom_.fields().field(maskName))));
     }
@@ -132,6 +136,12 @@ double Fields::norm() const {
 void Fields::print(std::ostream & os) const {
   os << std::endl << "  Valid time: " << validTime();
 
+  // find the longest field name, for use in formatting of the print
+  size_t maxNameLen = 0;
+  for (const auto & field : fieldSet_) {
+    maxNameLen = std::max(maxNameLen, field.name().size());
+  }
+
   // for each field
   for (const auto & field : fieldSet_) {
     size_t count = 0;
@@ -142,9 +152,9 @@ void Fields::print(std::ostream & os) const {
     const auto & vGhost = atlas::array::make_view<int, 1>(field.functionspace().ghost());
     const auto & view = atlas::array::make_view<double, 2>(field);
     std::unique_ptr<atlas::array::ArrayView<double, 2> > mask;
-    if (field.metadata().getBool("masked")) {
+    if (field.metadata().has(MASK_METADATA)) {
       // optionally get the mask field, if one is given
-      const std::string & maskName = field.metadata().getString("mask");
+      const std::string & maskName = field.metadata().getString(MASK_METADATA);
       mask.reset(new atlas::array::ArrayView<double, 2>(
         atlas::array::make_view<double, 2>(geom_.fields().field(maskName))));
     }
@@ -170,7 +180,7 @@ void Fields::print(std::ostream & os) const {
     if (count > 0) sum /= count;
 
     // done with this field, print information
-    os << std::endl << std::right << std::setw(7) << field.name()
+    os << std::endl << std::right << std::setw(maxNameLen) << field.name()
         << "   min="  <<  std::fixed << std::setw(12) <<
                           std::right << min
         << "   max="  <<  std::fixed << std::setw(12) <<

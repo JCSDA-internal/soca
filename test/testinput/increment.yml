@@ -8,8 +8,20 @@ other geometry:
   mom6_input_nml: data_static/36x17x25/input.nml
   fields metadata: data_static/fields_metadata.yml
 
-# TODO should add cicen/uocn/vocn, but this makes the tests fail
-inc variables: [hicen, socn, tocn, uocn, vocn, ssh, chl, biop, sw, lw, lhf, shf, us]
+inc variables:
+- sea_ice_category_thickness
+- sea_water_salinity
+- sea_water_potential_temperature
+- eastward_sea_water_velocity
+- northward_sea_water_velocity
+- sea_surface_height_above_geoid
+- mass_concentration_of_chlorophyll_in_sea_water
+- molar_concentration_of_biomass_in_sea_water_in_p_units
+- net_downwelling_shortwave_radiation
+- net_downwelling_longwave_radiation
+- upward_latent_heat_flux_in_air
+- upward_sensible_heat_flux_in_air
+- friction_velocity_over_water
 
 increment test:
   tolerance AD resolution change: 1.0e-12

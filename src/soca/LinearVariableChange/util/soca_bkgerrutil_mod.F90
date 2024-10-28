@@ -88,28 +88,28 @@ subroutine soca_bkgerr_applybounds(self, fld)
   do n=1,size(fld%fields)
     field => fld%fields(n)
     select case(field%name)
-    case ("tocn")
+    case ("sea_water_potential_temperature")
       vmin = self%t_min!! \relates soca_bkgerrutil_mod::soca_bkgerr_bounds_type
       vmax = self%t_max
-    case ("socn")
+    case ("sea_water_salinity")
       vmin = self%s_min
       vmax = self%s_max
-    case ("ssh")
+    case ("sea_surface_height_above_geoid")
       vmin = self%ssh_min
       vmax = self%ssh_max
-    case ("cicen")
+    case ("sea_ice_category_area_fraction")
       vmin = self%cicen_min
       vmax = self%cicen_max
-    case ("hicen")
+    case ("sea_ice_category_thickness")
       vmin = self%hicen_min
       vmax = self%hicen_max
-    case ("chl")
+    case ("mass_concentration_of_chlorophyll_in_sea_water")
       vmin = self%chl_min
       vmax = self%chl_max
-    case ("biop")
+    case ("molar_concentration_of_biomass_in_sea_water_in_p_units")
       vmin = self%biop_min
       vmax = self%biop_max
-    case ("swh")
+    case ("sea_surface_wave_significant_height")
       vmin = self%swh_min
       vmax = self%swh_max
     case default

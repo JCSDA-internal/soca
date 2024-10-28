@@ -118,7 +118,7 @@ subroutine soca_geo_get_num_levels_c(c_key_self, c_vars, c_levels_size, c_levels
     field = self%fields_metadata%get(field_name)
     select case(field%levels)
     case ("full_ocn")
-      if (field_name == field%getval_name_surface) then
+      if (field_name == field%name_surface) then
         c_levels(i) = 1
       else
         c_levels(i) = self%nzo

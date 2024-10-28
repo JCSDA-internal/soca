@@ -9,7 +9,17 @@ background:
   date: &date 2018-04-15T00:00:00Z
   ocn_filename: MOM.res.nc
   ice_filename: cice.res.nc
-  state variables: &soca_vars [cicen, hicen, socn, tocn, uocn, vocn, ssh, hocn, mld, layer_depth]
+  state variables: &soca_vars
+  - sea_ice_category_area_fraction
+  - sea_ice_category_thickness
+  - sea_water_salinity
+  - sea_water_potential_temperature
+  - eastward_sea_water_velocity
+  - northward_sea_water_velocity
+  - sea_surface_height_above_geoid
+  - sea_water_cell_thickness
+  - ocean_mixed_layer_thickness
+  - sea_water_depth
 
 background error:
   covariance model: SABER
@@ -17,7 +27,14 @@ background error:
     saber block name: diffusion
     read:
       groups:
-      - variables: [cicen, hicen, uocn, vocn, tocn, socn, ssh]
+      - variables:
+        - sea_ice_category_area_fraction
+        - sea_ice_category_thickness
+        - eastward_sea_water_velocity
+        - northward_sea_water_velocity
+        - sea_water_potential_temperature
+        - sea_water_salinity
+        - sea_surface_height_above_geoid
         horizontal:
           filepath: data_generated/parameters_diffusion/hz_smaller
         vertical:
@@ -33,7 +50,6 @@ background error:
   linear variable change:
     input variables: *soca_vars
     output variables: *soca_vars
-
     linear variable changes:
 
     - linear variable change name: BkgErrGODAS
@@ -51,8 +67,6 @@ background error:
       cicen_max: 0.5
       hicen_min: 10.0
       hicen_max: 100.0
-      input variables: *soca_vars
-      output variables: *soca_vars
 
     - linear variable change name: BalanceSOCA
       kst:
@@ -65,8 +79,6 @@ background error:
       dcdt:
         filename: data_static/72x35x25/dcdt.nc
         name: dcdt
-      input variables: *soca_vars
-      output variables: *soca_vars
 
 dirac:
   ixdir: [1, 17, 41, 31, 51, 63, 81, 14, 16, 43, 55]

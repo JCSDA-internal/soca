@@ -76,8 +76,6 @@ variational:
     ninner: 5
     gradient norm reduction: 1e-15
     test: on
-    diagnostics:
-      departures: ombg
     online diagnostics:
       write increment: true
       increment:
@@ -90,10 +88,6 @@ output:
   datadir: Data
   exp: 3dvargodas
   type: an
-
-final:
-  diagnostics:
-    departures: oman
 
 test:
   reference filename: testref/3dvar_zero_ob.test

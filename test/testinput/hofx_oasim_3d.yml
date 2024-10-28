@@ -11,9 +11,27 @@ state:
     ice_filename: cice.res.nc
     sfc_filename: sfc.res.nc
     bio_filename: NOBM.res.nc
-    state variables: [hocn, oz_th, wvapor, ws, pres, rh, cld_lwp,
-    cov, aer_tau, scat_alb, asym_par,  c_det, inorg_c, dis_c,
-    diatom, chloro, cyano, cocco, dino, phaeo]
+    state variables:
+    - sea_water_cell_thickness
+    - ozone_thickness
+    - water_vapor
+    - wind_speed_at_surface
+    - air_pressure_at_surface
+    - relative_humidity
+    - cloud_liquid_water_path
+    - cloud_area_fraction_in_atmosphere_layer
+    - aerosol_optical_thickness
+    - single_scattering_albedo
+    - asymmetry_parameter
+    - Carbon_nitrogen_detritus_concentration
+    - Particulate_inorganic_carbon
+    - colored_dissolved_organic_carbon
+    - diatom_concentration
+    - chlorophyte_concentration
+    - cyano-bacteria_concentration
+    - coccolithophore_concentration
+    - dinoflagellate_concentration
+    - phaeocystis_concentration
 
 time window:
   begin: 2018-04-14T00:00:00Z

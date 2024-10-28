@@ -52,7 +52,7 @@ void testMultiply() {
   State_ state(geom, parameters.state);
 
   // create a random increment
-  const std::string varname = "tocn";
+  const std::string varname = "sea_water_potential_temperature";
   oops::Variables vars({oops::Variable(varname)});
   util::DateTime time(20240101,0);
   Increment_ dx(geom, vars, time);

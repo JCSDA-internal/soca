@@ -7,7 +7,21 @@ state:
   analytic init:
     method: soca_ana_init
   date: &date 2018-04-15T03:00:00Z
-  state variables: [tocn, socn, hocn, ssh, cicen, hicen, swh, sw, lw, lhf, shf, us, uocn, vocn ]
+  state variables:
+  - sea_water_potential_temperature
+  - sea_water_salinity
+  - sea_water_cell_thickness
+  - sea_surface_height_above_geoid
+  - sea_ice_category_area_fraction
+  - sea_ice_category_thickness
+  - sea_surface_wave_significant_height
+  - net_downwelling_shortwave_radiation
+  - net_downwelling_longwave_radiation
+  - upward_latent_heat_flux_in_air
+  - upward_sensible_heat_flux_in_air
+  - friction_velocity_over_water
+  - eastward_sea_water_velocity
+  - northward_sea_water_velocity
 
 variables: &vars [
 # sea_water_potential_temperature,
@@ -45,7 +59,7 @@ locations:
         lat2: 37.5
         lon1: -192.5
         lon2: -57
-        obs errors: [1.0, 1.0, 1.0, 1.0] 
+        obs errors: [1.0, 1.0, 1.0, 1.0]
         # , 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
 
 tolerance interpolation: 10.5  # still really huge... should probably figure out why sometime.

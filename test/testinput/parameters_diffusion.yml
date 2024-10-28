@@ -8,7 +8,12 @@ background:
   basename: data_static/72x35x25/restarts/
   date: &date 2018-04-15T06:00:00Z
   ocn_filename: MOM.res.nc
-  state variables: &stateVariables [socn, tocn, uocn, vocn, ssh]
+  state variables:
+  - sea_water_salinity
+  - sea_water_potential_temperature
+  - eastward_sea_water_velocity
+  - northward_sea_water_velocity
+  - sea_surface_height_above_geoid
 
 background error:
   covariance model: SABER
@@ -23,7 +28,7 @@ background error:
             date: *date
             basename: data_generated/setcorscales/
             ocn_filename: ocn.cor_rh.incr.2018-04-15T00:00:00Z.nc
-          model variable: ssh
+          model variable: sea_surface_height_above_geoid
         write:
           filepath: data_output/hz_large
       - horizontal:

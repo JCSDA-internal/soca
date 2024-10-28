@@ -22,7 +22,13 @@ variable change:
     tstep: PT1H
   cice output:
     restart: data_output/iced.2018-04-15-00000.nc
-  output variables: [tocn, socn, hocn, cicen, hicen, hsnon]
+  output variables: &soca_vars
+  - sea_water_potential_temperature
+  - sea_water_salinity
+  - sea_water_cell_thickness
+  - sea_ice_category_area_fraction
+  - sea_ice_category_thickness
+  - sea_ice_category_snow_thickness
 
 states:
 - input:
@@ -31,7 +37,7 @@ states:
      ocn_filename: ocn.3dvar.an.2018-04-15T00:00:00Z.nc
      ice_filename: ice.3dvar.an.2018-04-15T00:00:00Z.nc
      date: &bkg_date 2018-04-15T00:00:00Z
-     state variables: [tocn, socn, hocn, cicen, hicen, hsnon]
+     state variables: *soca_vars
   output:
      datadir: data_output/
      exp: soca2cice
