@@ -9,7 +9,7 @@ _file: &_file
   basename: data_static/72x35x25/
   remap_filename: data_static/72x35x25/restarts/MOM.res.nc
   state variables:  &soca_vars
-  - sea_ice_category_area_fraction
+  - sea_ice_area_fraction
   - sea_ice_category_thickness
   - sea_water_salinity
   - sea_water_potential_temperature

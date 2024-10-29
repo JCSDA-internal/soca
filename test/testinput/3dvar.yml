@@ -11,7 +11,7 @@ cost function:
     begin: 2018-04-14T00:00:00Z
     length: P2D
   analysis variables: &soca_an_vars
-  - sea_ice_category_area_fraction
+  - sea_ice_area_fraction
   - sea_ice_category_thickness
   - sea_ice_category_snow_thickness
   - sea_water_salinity
@@ -36,7 +36,7 @@ cost function:
     sfc_filename: sfc.res.nc
     date: &bkg_date 2018-04-15T00:00:00Z
     state variables: &soca_bg_vars
-    - sea_ice_category_area_fraction
+    - sea_ice_area_fraction
     - sea_ice_category_thickness
     - sea_ice_category_snow_thickness
     - sea_water_salinity

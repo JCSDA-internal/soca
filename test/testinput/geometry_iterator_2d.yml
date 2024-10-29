@@ -5,7 +5,7 @@ geometry:
   iterator dimension: 2
 
 inc variables:
-  - sea_ice_category_area_fraction
+  - sea_ice_area_fraction
   - sea_ice_category_thickness
   - sea_water_salinity
   - sea_water_potential_temperature

@@ -23,7 +23,7 @@ variable change:
   - eastward_sea_water_velocity
   - northward_sea_water_velocity
   - sea_water_cell_thickness
-  - sea_ice_category_area_fraction
+  - sea_ice_area_fraction
   - mass_concentration_of_chlorophyll_in_sea_water
   - sea_water_depth
 

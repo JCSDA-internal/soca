@@ -12,7 +12,7 @@ state:
   - sea_water_salinity
   - sea_water_cell_thickness
   - sea_surface_height_above_geoid
-  - sea_ice_category_area_fraction
+  - sea_ice_area_fraction
   - sea_ice_category_thickness
   - sea_surface_wave_significant_height
   - net_downwelling_shortwave_radiation
@@ -29,7 +29,7 @@ variables: &vars [
 #                   sea_water_cell_thickness,
 #                   sea_surface_height_above_geoid,
 #                   sea_surface_temperature,
-#                   sea_ice_category_area_fraction,
+#                   sea_ice_area_fraction,
 #                   sea_ice_category_thickness,
 #                   sea_surface_wave_significant_height,
                   net_downwelling_shortwave_radiation,

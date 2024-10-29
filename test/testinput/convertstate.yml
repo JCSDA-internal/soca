@@ -23,7 +23,7 @@ states:
      - sea_water_potential_temperature
      - sea_water_salinity
      - sea_water_cell_thickness
-     - sea_ice_category_area_fraction
+     - sea_ice_area_fraction
      - sea_water_depth
 
   output:

@@ -97,7 +97,7 @@ subroutine soca_bkgerr_applybounds(self, fld)
     case ("sea_surface_height_above_geoid")
       vmin = self%ssh_min
       vmax = self%ssh_max
-    case ("sea_ice_category_area_fraction")
+    case ("sea_ice_area_fraction")
       vmin = self%cicen_min
       vmax = self%cicen_max
     case ("sea_ice_category_thickness")
