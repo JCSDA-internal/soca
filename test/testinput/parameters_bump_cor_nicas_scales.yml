@@ -15,8 +15,8 @@ background:
   - eastward_sea_water_velocity
   - northward_sea_water_velocity
   - sea_surface_height_above_geoid
-  - sea_ice_category_area_fraction
-  - sea_ice_category_thickness
+  - sea_ice_area_fraction
+  - sea_ice_thickness
 
 background error:
   covariance model: SABER
@@ -44,8 +44,8 @@ background error:
       - model:
           variables:
           - sea_surface_height_above_geoid
-          - sea_ice_category_area_fraction
-          - sea_ice_category_thickness
+          - sea_ice_area_fraction
+          - sea_ice_thickness
       input model files:
       - parameter: rh
         file:

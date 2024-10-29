@@ -19,7 +19,6 @@ use datetime_mod, only: datetime, datetime_set, datetime_to_string, datetime_to_
 use duration_mod, only: duration, duration_to_string
 use fckit_configuration_module, only: fckit_configuration
 use logger_mod
-use netcdf
 use fckit_mpi_module, only: fckit_mpi_min, fckit_mpi_max, fckit_mpi_sum
 use kinds, only: kind_real
 use oops_variables_mod, only: oops_variables
@@ -27,7 +26,8 @@ use tools_const, only: deg2rad
 
 ! MOM6 / FMS modules
 use fms_io_mod, only: fms_io_init, fms_io_exit, register_restart_field, &
-                      restart_file_type, restore_state, free_restart_type, save_restart
+                      restart_file_type, restore_state, free_restart_type, save_restart, &
+                      file_exist, field_exist
 use fms_mod,    only: write_data, set_domain
 use MOM_remapping, only : remapping_CS, initialize_remapping, remapping_core_h, &
                           end_remapping
@@ -797,7 +797,7 @@ subroutine soca_fields_read(self, f_conf, vdate)
         case ('ice')
           filename = ice_filename
           restart => ice_restart
-          read_ice = .true.
+          ! note, read_ice is set below
         case ('wav')
           filename = wav_filename
           restart => wav_restart
@@ -811,17 +811,21 @@ subroutine soca_fields_read(self, f_conf, vdate)
         end select
 
         ! check if the field has a category dimension and skip if it does
-        if (self%fields(i)%metadata%categories > 0 ) then
-          ! check if the file was constructed by soca or comes from the CICE history
-          ! The CICE history aggregates the category and level in 1 array
-          ! The SOCA io considers categories to be separate variables and will index the naming
-          soca_io = does_variable_exist(self, filename, self%fields(i)%metadata%io_name)
-          if (.not. soca_io) continue
-
-          ! if we're here, the file is coming from the CICE history IO and needs to be
-          ! read differently
-          call seaice_categories_vars%push_back(self%fields(i)%name)
-          cycle
+        if (self%fields(i)%metadata%io_file == "ice") then
+          if (self%fields(i)%metadata%categories > 0 ) then
+            ! check if the file was constructed by soca or comes from the CICE history
+            ! The CICE history aggregates the category and level in 1 array
+            ! The SOCA io considers categories to be separate variables and will index the naming
+            if(file_exist(filename) .and. field_exist(filename, self%fields(i)%metadata%io_name)) then
+              read_ice = .true.
+            else
+              call seaice_categories_vars%push_back(self%fields(i)%name)
+              cycle
+            end if
+          else
+            ! not a category field, treat normally
+            read_ice = .true.
+          end if
         end if
 
         ! setup to read
@@ -1012,40 +1016,6 @@ subroutine get_cice_vars(self, cice_vars, ncat, nlev, cice_vars_type)
 
 end subroutine get_cice_vars
 
-! Function to check if a NetCDF variable exists
-logical function does_variable_exist(self, filename, varname)
-type(soca_fields), intent(in) :: self
-character(len=*), intent(in) :: filename, varname
-integer :: ncid, varid, retval
-
-! Open the NetCDF file
-if ( self%geom%f_comm%rank() == 0 ) then
-  retval = nf90_open(filename, nf90_nowrite, ncid)
-  if (retval /= nf90_noerr) then
-     print *, "Error opening file: ", trim(nf90_strerror(retval))
-     does_variable_exist = .false.
-     return
-  end if
-
-  ! Inquire if the variable exists
-  retval = nf90_inq_varid(ncid, trim(varname), varid)
-  if (retval == nf90_noerr) then
-     does_variable_exist = .true.
-  else
-     does_variable_exist = .false.
-  end if
-
-  ! Close the NetCDF file
-  retval = nf90_close(ncid)
-  if (retval /= nf90_noerr) then
-     print *, "Error closing file: ", trim(nf90_strerror(retval))
-  end if
-end if
-
-! Broadcast to all PE's
-call self%geom%f_comm%broadcast(retval, 0)
-
-end function does_variable_exist
 
 subroutine soca_fields_read_seaice(self, filename, seaice_categories_vars)
   class(soca_fields), intent(inout) :: self

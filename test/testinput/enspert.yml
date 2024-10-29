@@ -8,9 +8,9 @@ model:
   name: Identity
   tstep: PT6H
   model variables: &model_vars
-  - sea_ice_category_area_fraction
-  - sea_ice_category_thickness
-  - sea_ice_category_snow_thickness
+  - sea_ice_area_fraction
+  - sea_ice_thickness
+  - sea_ice_snow_thickness
   - sea_water_salinity
   - sea_water_potential_temperature
   - eastward_sea_water_velocity
@@ -45,8 +45,8 @@ background error:
     - sea_surface_height_above_geoid
     - eastward_sea_water_velocity
     - northward_sea_water_velocity
-    - sea_ice_category_area_fraction
-    - sea_ice_category_thickness
+    - sea_ice_area_fraction
+    - sea_ice_thickness
     - mass_concentration_of_chlorophyll_in_sea_water
     - molar_concentration_of_biomass_in_sea_water_in_p_units
 
