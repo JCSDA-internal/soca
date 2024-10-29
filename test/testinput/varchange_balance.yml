@@ -11,8 +11,8 @@ background:
   ocn_filename: MOM.res.nc
   ice_filename: cice.res.nc
   state variables: &soca_vars
-  - sea_ice_category_area_fraction
-  - sea_ice_category_thickness
+  - sea_ice_area_fraction
+  - sea_ice_thickness
   - sea_water_salinity
   - sea_water_potential_temperature
   - eastward_sea_water_velocity
@@ -27,8 +27,8 @@ linear variable change tests:
   test inverse: 1
   linear variable change:
     input variables: &soca_an_vars
-    # - sea_ice_category_area_fraction
-    # - sea_ice_category_thickness
+    # - sea_ice_area_fraction
+    # - sea_ice_thickness
     - sea_water_salinity
     - sea_water_potential_temperature
     # - eastward_sea_water_velocity

@@ -58,17 +58,16 @@
 # --------------------------------------------------------------------------------------------------
 # ice state variables
 # --------------------------------------------------------------------------------------------------
-- name: sea_ice_category_thickness
+- name: sea_ice_thickness
   io file: ice
   io name: hicen
   property: positive_definite
 
-- name: sea_ice_category_area_fraction
-  name surface: sea_ice_area_fraction     # note: not accurate, should be "sum" not "surface"
+- name: sea_ice_area_fraction
   io file: ice
   io name: aicen
 
-- name: sea_ice_category_snow_thickness
+- name: sea_ice_snow_thickness
   io file: ice
   io name: hsnon
   property: positive_definite
