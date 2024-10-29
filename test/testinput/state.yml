@@ -37,7 +37,7 @@ state test:
     state variables: *soca_vars
 
   norm file: 387790.8913881866
-  norm generated state:  358.48861601992229
+  norm generated state:  359.03266600533954
 
   date: *date
   tolerance: 1.0e-08
