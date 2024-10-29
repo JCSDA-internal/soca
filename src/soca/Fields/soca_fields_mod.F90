@@ -797,7 +797,7 @@ subroutine soca_fields_read(self, f_conf, vdate)
         case ('ice')
           filename = ice_filename
           restart => ice_restart
-          read_ice = .true.
+          ! note, read_ice is set below
         case ('wav')
           filename = wav_filename
           restart => wav_restart
@@ -811,17 +811,21 @@ subroutine soca_fields_read(self, f_conf, vdate)
         end select
 
         ! check if the field has a category dimension and skip if it does
-        if (self%fields(i)%metadata%categories > 0 ) then
-          ! check if the file was constructed by soca or comes from the CICE history
-          ! The CICE history aggregates the category and level in 1 array
-          ! The SOCA io considers categories to be separate variables and will index the naming
-          soca_io = does_variable_exist(self, filename, self%fields(i)%metadata%io_name)
-          if (.not. soca_io) continue
+        if (self%fields(i)%metadata%io_file == "ice") then
+          if (self%fields(i)%metadata%categories > 0 ) then
+            ! check if the file was constructed by soca or comes from the CICE history
+            ! The CICE history aggregates the category and level in 1 array
+            ! The SOCA io considers categories to be separate variables and will index the naming
+            soca_io = does_variable_exist(self, filename, self%fields(i)%metadata%io_name)
+            if (.not. soca_io) cycle
 
-          ! if we're here, the file is coming from the CICE history IO and needs to be
-          ! read differently
-          call seaice_categories_vars%push_back(self%fields(i)%name)
-          cycle
+            ! if we're here, the file is coming from the CICE history IO and needs to be
+            ! read differently
+            call seaice_categories_vars%push_back(self%fields(i)%name)
+            cycle
+          else
+            read_ice = .true.
+          end if
         end if
 
         ! setup to read
