@@ -100,7 +100,7 @@ subroutine soca_bkgerr_applybounds(self, fld)
     case ("sea_ice_area_fraction")
       vmin = self%cicen_min
       vmax = self%cicen_max
-    case ("sea_ice_category_thickness")
+    case ("sea_ice_thickness")
       vmin = self%hicen_min
       vmax = self%hicen_max
     case ("mass_concentration_of_chlorophyll_in_sea_water")
