@@ -164,7 +164,7 @@ subroutine check_ice_bounds(self, geom, xm)
   ! pointers to soca fields (most likely an analysis)
   call xm%get("sea_ice_area_fraction",aice_ana)
   call xm%get("sea_ice_category_thickness",hice_ana)
-  call xm%get("sea_ice_category_snow_thickness",hsno_ana)
+  call xm%get("sea_ice_snow_thickness",hsno_ana)
 
   ! check seaice fraction bounds
   where (aice_ana%val<0_kind_real)
@@ -270,7 +270,7 @@ subroutine cleanup_ice(self, geom, xm)
   call xm%get("sea_water_salinity",s_ana)
   call xm%get("sea_ice_area_fraction",aice_ana)
   call xm%get("sea_ice_category_thickness", hice_ana)
-  call xm%get("sea_ice_category_snow_thickness", hsno_ana)
+  call xm%get("sea_ice_snow_thickness", hsno_ana)
 
   ! get thickness category bounds
   allocate(h_bounds(0:self%ncat))
@@ -356,7 +356,7 @@ subroutine prior_dist_rescale(self, geom, xm)
 
   call xm%get("sea_ice_area_fraction", aice_ana)
   call xm%get("sea_ice_category_thickness", hice_ana)
-  call xm%get("sea_ice_category_snow_thickness", hsno_ana)
+  call xm%get("sea_ice_snow_thickness", hsno_ana)
   call xm%get("sea_water_salinity", s_ana)
 
   do i = geom%isc, geom%iec

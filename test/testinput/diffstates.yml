@@ -15,7 +15,7 @@ state1:
   state variables: &state_vars
   - sea_ice_area_fraction
   - sea_ice_category_thickness
-  - sea_ice_category_snow_thickness
+  - sea_ice_snow_thickness
   - sea_water_salinity
   - sea_water_potential_temperature
   - sea_surface_height_above_geoid
