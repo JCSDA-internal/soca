@@ -8,11 +8,11 @@ CostJo   : Nonlinear Jo(InsituSalinity) = 3.4706220681200762e+02, nobs = 218, Jo
 CostJo   : Nonlinear Jo(SeaIceFraction) = 5.9780675099388782e+02, nobs = 89, Jo/n = 6.7169297864481781e+00, err = 1.0000000149011612e-01
 CostFunction: Nonlinear J = 1.9578730601063908e+04
 RPCGMinimizer: reduction in residual norm = 2.6377141612353683e-01
-CostFunction::addIncrement: Analysis: 
+CostFunction::addIncrement: Analysis:
   Valid time: 2018-04-15T00:00:00Z
-     sea_ice_category_area_fraction   min=-0.0001291896179326   max=1.0000039848914242   mean=0.1175172743974210
-         sea_ice_category_thickness   min=0.0000000000000000   max=4.0326673084246947   mean=0.4712515705773916
-    sea_ice_category_snow_thickness   min=0.0000000000000000   max=1.2712833951042413   mean=0.0886865877527975
+     sea_ice_area_fraction   min=-0.0001291896179326   max=1.0000039848914242   mean=0.1175172743974210
+         sea_ice_thickness   min=0.0000000000000000   max=4.0326673084246947   mean=0.4712515705773916
+    sea_ice_snow_thickness   min=0.0000000000000000   max=1.2712833951042413   mean=0.0886865877527975
                  sea_water_salinity   min=10.7210460395083924   max=40.4416591897031168   mean=34.5443997897729602
     sea_water_potential_temperature   min=-1.8883899372702533   max=31.7004645720658580   mean=6.0192772900527789
      sea_surface_height_above_geoid   min=-1.9244819906376407   max=0.9273682458190659   mean=-0.2767604030363437

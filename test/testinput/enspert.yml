@@ -78,9 +78,9 @@ background error:
       min: 0.0
       max: 0.0
     other variables:
-    - variable: sea_ice_category_area_fraction
+    - variable: sea_ice_area_fraction
       min: 0.01
-    - variable: sea_ice_category_thickness
+    - variable: sea_ice_thickness
       min: 0.5
     - variable: mass_concentration_of_chlorophyll_in_sea_water
       min: 0.0001
