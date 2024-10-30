@@ -222,7 +222,7 @@ ParametricOceanStdDev::ParametricOceanStdDev(
     const double max = sshParams.max.value();
     const double phiEx = sshParams.phiEx.value();
     const auto & v_lonlat = atlas::array::make_view<double, 2>(fs.lonlat());
-    constexpr double pi = 2.0 * acos(0.0);
+    const double pi = 2.0 * acos(0.0);
 
     // create empty error field
     atlas::Field sshErr = fs.createField<double>(atlas::option::levels(1) |
