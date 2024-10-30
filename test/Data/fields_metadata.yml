@@ -12,6 +12,9 @@
 #                       This parameter cannot be used with io_file/io_name
 # fill value:           If the field is masked, this value will be used for the masked areas.
 #                       (Default: 0.0)
+# categories:           Number of categories for a field with a category dimension (Default: -1)
+#                       If > 0, then the fields "name", and "io name" can use the
+#                       placeholder "<CATEGORY>" which will be replaced with the category number
 # --------------------------------------------------------------------------------------------------
 
 
@@ -56,21 +59,20 @@
   io name: ave_ssh
 
 # --------------------------------------------------------------------------------------------------
-# ice state variables
+# ice state variables with no categories
 # --------------------------------------------------------------------------------------------------
-- name: sea_ice_category_thickness
+- name: sea_ice_thickness
   io file: ice
-  io name: hicen
+  io name: hi_h #note, was hicen
   property: positive_definite
 
-- name: sea_ice_category_area_fraction
-  name surface: sea_ice_area_fraction     # note: not accurate, should be "sum" not "surface"
+- name: sea_ice_area_fraction
   io file: ice
-  io name: aicen
+  io name: aice_h #note, was aicen
 
-- name: sea_ice_category_snow_thickness
+- name: sea_ice_snow_thickness
   io file: ice
-  io name: hsnon
+  io name: hs_h #note, was hsnon
   property: positive_definite
 
 - name: snow_ice_surface_temperature
@@ -84,6 +86,55 @@
 - name: bulk_ice_salinity
   io file: ice
   io name: sice_h
+
+# --------------------------------------------------------------------------------------------------
+# ice state variables with category dimension
+# --------------------------------------------------------------------------------------------------
+- name: sea_ice_category<CATEGORY>_area_fraction
+  categories: 5
+  io file: ice
+  io sup name: aicen_h
+  io name: aice<CATEGORY>_h
+  property: positive_definite
+
+- name: sea_ice_category<CATEGORY>_volume
+  categories: 5
+  io file: ice
+  io sup name: vicen_h
+  io name: vice<CATEGORY>_h
+  property: positive_definite
+
+- name: sea_ice_snow_category<CATEGORY>_volume
+  categories: 5
+  io file: ice
+  io sup name: vsnon_h
+  io name: vsno<CATEGORY>_h
+  property: positive_definite
+
+# --------------------------------------------------------------------------------------------------
+# Thermodynamic ice state variables with category and level dimension
+# --------------------------------------------------------------------------------------------------
+- name: sea_ice_category<CATEGORY>_temperature
+  categories: 5
+  levels: 7
+  io file: ice
+  io sup name: Tinz_h
+  io name: ti<CATEGORY>z_h
+
+- name: sea_ice_category<CATEGORY>_salinity
+  categories: 5
+  levels: 7
+  io file: ice
+  io sup name: Sinz_h
+  io name: si<CATEGORY>z_h
+
+- name: sea_ice_snow_category<CATEGORY>_temperature
+  categories: 5
+  levels: 1
+  io file: ice
+  io sup name: Tsnz_h
+  io name: ts<CATEGORY>z_h
+
 
 # --------------------------------------------------------------------------------------------------
 # wave state variables

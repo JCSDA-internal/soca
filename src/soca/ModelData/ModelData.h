@@ -27,8 +27,8 @@ class ModelData : public util::Printable {
   static const oops::Variables defaultVariables() {
     return oops::Variables(std::vector<std::string>({"skin_temperature_at_surface_where_sea",
             "sea_water_potential_temperature", "sea_water_salinity", "sea_water_cell_thickness",
-            "sea_surface_height_above_geoid", "sea_ice_category_area_fraction",
-            "sea_ice_category_thickness", "Carbon_nitrogen_detritus_concentration",
+            "sea_surface_height_above_geoid", "sea_ice_area_fraction",
+            "sea_ice_thickness", "Carbon_nitrogen_detritus_concentration",
             "Particulate_inorganic_carbon", "colored_dissolved_organic_carbon",
             "diatom_concentration", "chlorophyte_concentration", "cyano-bacteria_concentration",
             "coccolithophore_concentration", "dinoflagellate_concentration",

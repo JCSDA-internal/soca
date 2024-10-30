@@ -13,8 +13,8 @@ model:
   name: Identity # could also do PseudoModel, if you wanted
   tstep: PT1H
   model variables: &soca_vars
-  - sea_ice_category_area_fraction
-  - sea_ice_category_thickness
+  - sea_ice_area_fraction
+  - sea_ice_thickness
   - sea_water_salinity
   - sea_water_potential_temperature
   - sea_surface_height_above_geoid

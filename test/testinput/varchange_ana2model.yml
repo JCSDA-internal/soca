@@ -14,7 +14,7 @@ variable change tests:
       - sea_water_salinity
       - mass_concentration_of_chlorophyll_in_sea_water
     output variables: &soca_vars
-    - sea_ice_category_area_fraction
+    - sea_ice_area_fraction
     - sea_water_potential_temperature
     - sea_water_salinity
     - sea_water_cell_thickness

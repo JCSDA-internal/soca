@@ -11,9 +11,9 @@ state:
     ice_filename: cice.res.nc
     sfc_filename: sfc.res.nc
     state variables:
-    - sea_ice_category_area_fraction
-    - sea_ice_category_thickness
-    - sea_ice_category_snow_thickness
+    - sea_ice_area_fraction
+    - sea_ice_thickness
+    - sea_ice_snow_thickness
     - sea_water_salinity
     - sea_water_potential_temperature
     - sea_surface_height_above_geoid
@@ -160,21 +160,24 @@ observations:
           obsfile: data_static/obs/icec.nc
       simulated variables: [seaIceFraction]
     obs operator:
-      name: SeaIceFraction
+      name: Identity
+      observation alias file: testinput/obsop_name_map.yml
 
-  - obs space:
-      name: SeaIceFreeboard
-      obsdataout:
-        engine:
-          type: H5File
-          obsfile: data_output/icefb.nc
-      obsdatain:
-        engine:
-          type: H5File
-          obsfile: data_static/obs/icefb.nc
-      simulated variables: [seaIceFreeboard]
-    obs operator:
-      name: SeaIceThickness
+  # don't need freeboard for now. delete this someday
+  # or update UFO to get it working again.
+  # - obs space:
+  #     name: SeaIceFreeboard
+  #     obsdataout:
+  #       engine:
+  #         type: H5File
+  #         obsfile: data_output/icefb.nc
+  #     obsdatain:
+  #       engine:
+  #         type: H5File
+  #         obsfile: data_static/obs/icefb.nc
+  #     simulated variables: [seaIceFreeboard]
+  #   obs operator:
+  #     name: SeaIceThickness
 
   - obs space:
       name: Chlorophyll
