@@ -680,11 +680,10 @@ soca_add_test( NAME 3dvar
                TEST_DEPENDS test_soca_gridgen
                             test_soca_parameters_diffusion )
 
-# TODO fix this test
-# soca_add_test( NAME 3dvar_moreice
-#                EXE  soca_var.x
-#                TEST_DEPENDS test_soca_gridgen
-#                             test_soca_parameters_diffusion )
+ soca_add_test( NAME 3dvar_moreice
+                EXE  soca_var.x
+                TEST_DEPENDS test_soca_gridgen
+                             test_soca_parameters_diffusion )
 
 soca_add_test( NAME 3dvar_nicas
                EXE  soca_var.x

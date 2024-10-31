@@ -1005,7 +1005,7 @@ subroutine get_cice_vars(self, cice_vars, ncat, nlev, cice_vars_type)
               call cice_vars%push_back(self%fields(i)%metadata%io_sup_name)
             end if
             ncat = self%fields(i)%metadata%categories
-            nlev = self%fields(i)%nz
+            read(self%fields(i)%metadata%levels, *) nlev
           end if
         end if
       end do
@@ -1065,13 +1065,9 @@ subroutine soca_fields_read_seaice(self, filename, seaice_categories_vars)
 
   ! read the cice variables with category and level dimensions
   if (cice_vars_cats_levs%nvars() > 0) then
-    print *, "icelevs ", icelevs
-    print *, "ncat ", ncat
-
     allocate(tmp4d(self%geom%isd:self%geom%ied,self%geom%jsd:self%geom%jed,icelevs,&
     &ncat,cice_vars_cats_levs%nvars()))
     tmp4d = 0.0_kind_real
-    print *, "shape of tmp4d", shape(tmp4d)
     call fms_io_init()
     do i=1,cice_vars_cats_levs%nvars()
       idr = register_restart_field(restart, filename, cice_vars_cats_levs%variable(i), &
