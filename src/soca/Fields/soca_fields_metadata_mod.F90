@@ -72,6 +72,8 @@ function templateStr(str_in, find, replace) result(str_out)
   pos = index(str_in, find)
   if (pos > 0) then
     str_out = str_in(:pos-1) // trim(adjustl(replace)) // str_in(pos+len(find):)
+  else
+    str_out = str_in
   end if
 end function
 
