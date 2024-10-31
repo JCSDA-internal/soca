@@ -985,7 +985,7 @@ subroutine get_cice_vars(self, cice_vars, ncat, nlev, cice_vars_type)
       do i=1,size(self%fields)
         if (self%fields(i)%metadata%io_file == "ice") then
           if ( cice_vars%has(self%fields(i)%metadata%io_sup_name) ) then
-            continue
+            cycle
           else
             if (self%fields(i)%metadata%levels == '1' .and. self%fields(i)%metadata%categories > 0) then
               call cice_vars%push_back(self%fields(i)%metadata%io_sup_name)
@@ -999,7 +999,7 @@ subroutine get_cice_vars(self, cice_vars, ncat, nlev, cice_vars_type)
       do i=1,size(self%fields)
         if (self%fields(i)%metadata%io_file == "ice") then
           if ( cice_vars%has(self%fields(i)%metadata%io_sup_name) ) then
-            continue
+            cycle
           else
             if (self%fields(i)%nz > 1 .and. self%fields(i)%metadata%categories > 0) then
               call cice_vars%push_back(self%fields(i)%metadata%io_sup_name)
