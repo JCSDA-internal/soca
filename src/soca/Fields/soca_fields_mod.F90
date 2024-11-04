@@ -983,29 +983,25 @@ subroutine get_cice_vars(self, cice_vars, ncat, nlev, cice_vars_type)
       ! get the variables with a category dimension only (dynamic variables)
       nlev = 1
       do i=1,size(self%fields)
-        if (self%fields(i)%metadata%io_file == "ice") then
-          if ( cice_vars%has(self%fields(i)%metadata%io_sup_name) ) then
-            cycle
-          else
-            if (self%fields(i)%metadata%levels == '1' .and. self%fields(i)%metadata%categories > 0) then
-              call cice_vars%push_back(self%fields(i)%metadata%io_sup_name)
-            end if
-            ncat = self%fields(i)%metadata%categories
+        if (self%fields(i)%metadata%io_file == "ice" .and.&
+            & .not. cice_vars%has(self%fields(i)%metadata%io_sup_name)) then
+          if (self%fields(i)%metadata%levels == '1' .and. self%fields(i)%metadata%categories > 0) then
+            call cice_vars%push_back(self%fields(i)%metadata%io_sup_name)
           end if
+          ncat = self%fields(i)%metadata%categories
         end if
       end do
     case ("therm")
       ! get the variables with category and level dimensions (thermodynamic variables)
+      nlev = -1
       do i=1,size(self%fields)
-        if (self%fields(i)%metadata%io_file == "ice") then
-          if ( cice_vars%has(self%fields(i)%metadata%io_sup_name) ) then
-            cycle
-          else
-            if (self%fields(i)%nz > 1 .and. self%fields(i)%metadata%categories > 0) then
-              call cice_vars%push_back(self%fields(i)%metadata%io_sup_name)
-            end if
+        if (self%fields(i)%metadata%io_file == "ice" .and.&
+            & .not. cice_vars%has(self%fields(i)%metadata%io_sup_name)) then
+          read(self%fields(i)%metadata%levels, *) levels
+          if (levels > 1 .and. self%fields(i)%metadata%categories > 0) then
+            call cice_vars%push_back(self%fields(i)%metadata%io_sup_name)
             ncat = self%fields(i)%metadata%categories
-            read(self%fields(i)%metadata%levels, *) nlev
+            nlev = levels
           end if
         end if
       end do
@@ -1063,7 +1059,7 @@ subroutine soca_fields_read_seaice(self, filename, seaice_categories_vars)
   cice_vars_cats_levs = oops_variables()  ! used to store the unique cice io variables with category and level dimensions
   call get_cice_vars(self, cice_vars_cats_levs, ncat, icelevs, "therm")
 
-  ! read the cice variables with category and level dimensions
+  ! read the seaice (not snow) cice variables with category and level dimensions
   if (cice_vars_cats_levs%nvars() > 0) then
     allocate(tmp4d(self%geom%isd:self%geom%ied,self%geom%jsd:self%geom%jed,icelevs,&
     &ncat,cice_vars_cats_levs%nvars()))
