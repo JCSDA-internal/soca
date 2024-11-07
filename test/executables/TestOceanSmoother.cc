@@ -31,7 +31,7 @@ class OceanSmootherTestParameters : public oops::Parameters {
   OOPS_CONCRETE_PARAMETERS(OceanSmootherTestParameters, Parameters)
 
  public :
-  oops::RequiredParameter<Geometry_::Parameters_> geometry{"geometry", this};
+  oops::RequiredParameter<eckit::LocalConfiguration> geometry{"geometry", this};
   oops::RequiredParameter<soca::OceanSmoother::Parameters> smoother{"oceanSmoother", this};
   oops::RequiredParameter<eckit::LocalConfiguration> output{"output", this};
   oops::RequiredParameter<eckit::LocalConfiguration> state{"state", this};
