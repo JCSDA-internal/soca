@@ -13,9 +13,9 @@ state1:
   sfc_filename: sfc.res.nc
   date: &bkg_date 2018-04-15T00:00:00Z
   state variables: &state_vars
-  - sea_ice_category_area_fraction
-  - sea_ice_category_thickness
-  - sea_ice_category_snow_thickness
+  - sea_ice_area_fraction
+  - sea_ice_thickness
+  - sea_ice_snow_thickness
   - sea_water_salinity
   - sea_water_potential_temperature
   - sea_surface_height_above_geoid

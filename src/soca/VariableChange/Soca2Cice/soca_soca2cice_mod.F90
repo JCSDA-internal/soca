@@ -162,9 +162,9 @@ subroutine check_ice_bounds(self, geom, xm)
   real(kind=kind_real) :: hice_max = 8.0
 
   ! pointers to soca fields (most likely an analysis)
-  call xm%get("sea_ice_category_area_fraction",aice_ana)
-  call xm%get("sea_ice_category_thickness",hice_ana)
-  call xm%get("sea_ice_category_snow_thickness",hsno_ana)
+  call xm%get("sea_ice_area_fraction",aice_ana)
+  call xm%get("sea_ice_thickness",hice_ana)
+  call xm%get("sea_ice_snow_thickness",hsno_ana)
 
   ! check seaice fraction bounds
   where (aice_ana%val<0_kind_real)
@@ -208,7 +208,7 @@ subroutine shuffle_ice(self, geom, xm)
   ! pointers to soca fields (most likely an analysis)
   call xm%get("sea_water_potential_temperature",t_ana)
   call xm%get("sea_water_salinity",s_ana)
-  call xm%get("sea_ice_category_area_fraction",aice_ana)
+  call xm%get("sea_ice_area_fraction",aice_ana)
 
   do i = geom%isc, geom%iec
      do j = geom%jsc, geom%jec
@@ -268,9 +268,9 @@ subroutine cleanup_ice(self, geom, xm)
   ! pointers to soca fields (most likely an analysis)
   call xm%get("sea_water_potential_temperature",t_ana)
   call xm%get("sea_water_salinity",s_ana)
-  call xm%get("sea_ice_category_area_fraction",aice_ana)
-  call xm%get("sea_ice_category_thickness", hice_ana)
-  call xm%get("sea_ice_category_snow_thickness", hsno_ana)
+  call xm%get("sea_ice_area_fraction",aice_ana)
+  call xm%get("sea_ice_thickness", hice_ana)
+  call xm%get("sea_ice_snow_thickness", hsno_ana)
 
   ! get thickness category bounds
   allocate(h_bounds(0:self%ncat))
@@ -354,9 +354,9 @@ subroutine prior_dist_rescale(self, geom, xm)
   type(soca_field), pointer :: s_ana, aice_ana, hice_ana, hsno_ana
   integer :: c, i, j
 
-  call xm%get("sea_ice_category_area_fraction", aice_ana)
-  call xm%get("sea_ice_category_thickness", hice_ana)
-  call xm%get("sea_ice_category_snow_thickness", hsno_ana)
+  call xm%get("sea_ice_area_fraction", aice_ana)
+  call xm%get("sea_ice_thickness", hice_ana)
+  call xm%get("sea_ice_snow_thickness", hsno_ana)
   call xm%get("sea_water_salinity", s_ana)
 
   do i = geom%isc, geom%iec

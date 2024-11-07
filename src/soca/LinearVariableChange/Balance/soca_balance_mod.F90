@@ -74,7 +74,7 @@ end function soca_tanh_filt
 !> Initialization of the balance operator and its trajectory.
 !!
 !! - balances always used: T,S,SSH
-!! - optional balances depending on input fields: cicen
+!! - optional balances depending on input fields: cice
 !! \relates soca_balance_mod::soca_balance
 subroutine soca_balance_setup(self, f_conf, traj, geom)
   class(soca_balance),       intent(inout) :: self
@@ -86,7 +86,7 @@ subroutine soca_balance_setup(self, f_conf, traj, geom)
   integer :: isd, ied, jsd, jed
   integer :: i, j, k, nl
   real(kind=kind_real), allocatable :: jac(:), coef_mld, coef_layers
-  type(soca_field), pointer :: tocn, socn, hocn, cicen, mld, layer_depth
+  type(soca_field), pointer :: tocn, socn, hocn, cice, mld, layer_depth
 
   ! declarations related to the dynamic height Jacobians
   character(len=:), allocatable :: filename
@@ -110,7 +110,7 @@ subroutine soca_balance_setup(self, f_conf, traj, geom)
   call traj%get("sea_water_cell_thickness", hocn)
   call traj%get("ocean_mixed_layer_thickness", mld)
   call traj%get("sea_water_depth", layer_depth)
-  if (traj%has("sea_ice_category_area_fraction"))  call traj%get("sea_ice_category_area_fraction", cicen)
+  if (traj%has("sea_ice_area_fraction"))  call traj%get("sea_ice_area_fraction", cice)
 
   ! allocate space
   nl = hocn%nz
@@ -179,7 +179,7 @@ subroutine soca_balance_setup(self, f_conf, traj, geom)
   deallocate(jac)
 
   ! Compute Kct
-  if (traj%has("sea_ice_category_area_fraction")) then
+  if (traj%has("sea_ice_area_fraction")) then
     ! Setup dc/dT
     allocate(kct(isd:ied,jsd:jed))
     kct = 0.0_kind_real
@@ -194,7 +194,7 @@ subroutine soca_balance_setup(self, f_conf, traj, geom)
     self%kct = 0.0_kind_real
     do i = isc, iec
       do j = jsc, jec
-          if (sum(cicen%val(i,j,:)) > 1.0e-3_kind_real) then
+          if (cice%val(i,j,1) > 1.0e-3_kind_real) then
             self%kct = kct(i,j)
           end if
       end do
@@ -216,7 +216,7 @@ subroutine soca_balance_delete(self)
   deallocate(self%ksshts%kssht)
   deallocate(self%ksshts%ksshs)
 
-  ! only exists if cicen was given
+  ! only exists if cice was given
   if (allocated(self%kct)) deallocate(self%kct)
 end subroutine soca_balance_delete
 
@@ -265,11 +265,9 @@ subroutine soca_balance_mult(self, dxa, dxm)
               & self%ksshts%ksshs(i,j,k) * socn_a%val(i,j,k)
           end do
 
-        case ("sea_ice_category_area_fraction") ! Ice fraction
-          do k = 1, fld_m%nz
-            fld_m%val(i,j,k) = fld_a%val(i,j,k) + &
+        case ("sea_ice_area_fraction") ! Ice fraction
+            fld_m%val(i,j,1) = fld_a%val(i,j,1) + &
               & self%kct(i,j) * tocn_a%val(i,j,1)
-          end do
 
         end select
       end do
@@ -288,14 +286,14 @@ subroutine soca_balance_multad(self, dxa, dxm)
   type(soca_increment), target, intent(inout) :: dxa !< output increment
 
   type(soca_field), pointer :: fld_a, fld_m
-  type(soca_field), pointer :: socn_m, ssh_m, cicen_m
+  type(soca_field), pointer :: socn_m, ssh_m, cice_m
   integer :: i, j, n
 
-  cicen_m => null()
+  cice_m => null()
 
   call dxm%get("sea_water_salinity", socn_m)
   call dxm%get("sea_surface_height_above_geoid",  ssh_m)
-  if (dxm%has("sea_ice_category_area_fraction")) call dxm%get("sea_ice_category_area_fraction",cicen_m)
+  if (dxm%has("sea_ice_area_fraction")) call dxm%get("sea_ice_area_fraction",cice_m)
 
   do n = 1, size(dxa%fields)
     fld_a => dxa%fields(n)
@@ -312,9 +310,9 @@ subroutine soca_balance_multad(self, dxa, dxm)
             & self%kst%jacobian(i,j,:) * socn_m%val(i,j,:) + &
             & self%ksshts%kssht(i,j,:) * ssh_m%val(i,j,1)
 
-          if (associated(cicen_m)) then ! use cicen only if present
+          if (associated(cice_m)) then ! use cice only if present
             fld_a%val(i,j,1) = fld_a%val(i,j,1) + &
-              & self%kct(i,j) * sum(cicen_m%val(i,j,:))
+              & self%kct(i,j) * cice_m%val(i,j,1)
           end if
 
         case ("sea_water_salinity") ! Salinity
@@ -367,12 +365,10 @@ subroutine soca_balance_multinv(self, dxa, dxm)
               & self%ksshts%ksshs(i,j,k) * socn_m%val(i,j,k)
           end do
 
-        case ('sea_ice_category_area_fraction') ! Ice fraction
+        case ('sea_ice_area_fraction') ! Ice fraction
           fld_a%val(i,j,:) =  fld_m%val(i,j,:)
-          do k = 1, fld_m%nz
-            fld_a%val(i,j,k) = fld_a%val(i,j,k) - &
+            fld_a%val(i,j,1) = fld_a%val(i,j,1) - &
               & self%kct(i,j) * tocn_m%val(i,j,1)
-          end do
 
         end select
       end do
@@ -392,13 +388,13 @@ subroutine soca_balance_multinvad(self, dxa, dxm)
 
   integer :: i, j, n
   type(soca_field), pointer :: fld_a, fld_m
-  type(soca_field), pointer :: socn_a, ssh_a, cicen_a
+  type(soca_field), pointer :: socn_a, ssh_a, cice_a
 
-  cicen_a => null()
+  cice_a => null()
 
   call dxa%get("sea_water_salinity", socn_a)
   call dxa%get("sea_surface_height_above_geoid",  ssh_a)
-  if (dxa%has("sea_ice_category_area_fraction")) call dxa%get("sea_ice_category_area_fraction",cicen_a)
+  if (dxa%has("sea_ice_area_fraction")) call dxa%get("sea_ice_area_fraction",cice_a)
 
   do n = 1, size(dxm%fields)
     fld_m => dxm%fields(n)
@@ -416,9 +412,9 @@ subroutine soca_balance_multinvad(self, dxa, dxm)
             & + ( self%ksshts%ksshs(i,j,:) * self%kst%jacobian(i,j,:) &
             &     - self%ksshts%kssht(i,j,:) ) * ssh_a%val(i,j,1)
 
-          if (associated(cicen_a)) then ! use cicen only if present
+          if (associated(cice_a)) then ! use cice only if present
             fld_m%val(i,j,1) = fld_m%val(i,j,1) &
-              & - self%kct(i,j) * sum(cicen_a%val(i,j,:))
+              & - self%kct(i,j) * cice_a%val(i,j,1)
           end if
 
         case ('sea_water_salinity') ! Salinity
