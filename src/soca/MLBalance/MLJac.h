@@ -38,9 +38,9 @@ namespace soca {
         atlas::array::make_view<double, 2>(GeometryData.functionSpace().lonlat());
 
       // Pointers to the background
-      auto cicen = atlas::array::make_view<double, 2>(xb["sea_ice_category_area_fraction"]);
-      auto hi = atlas::array::make_view<double, 2>(xb["sea_ice_category_thickness"]);
-      auto hs = atlas::array::make_view<double, 2>(xb["sea_ice_category_snow_thickness"]);
+      auto cicen = atlas::array::make_view<double, 2>(xb["sea_ice_area_fraction"]);
+      auto hi = atlas::array::make_view<double, 2>(xb["sea_ice_thickness"]);
+      auto hs = atlas::array::make_view<double, 2>(xb["sea_ice_snow_thickness"]);
       auto sst = atlas::array::make_view<double, 2>(xb["sea_water_potential_temperature"]);
       auto sss = atlas::array::make_view<double, 2>(xb["sea_water_salinity"]);
       auto sice = atlas::array::make_view<double, 2>(xb["bulk_ice_salinity"]);

@@ -4,9 +4,9 @@ CostFunction: Nonlinear J = 5.9780675099388782e+02
 RPCGMinimizer: reduction in residual norm = 6.9578333084327329e-02
 CostFunction::addIncrement: Analysis: 
   Valid time: 2018-04-15T00:00:00Z
- sea_ice_category_area_fraction   min=-0.1036522281921659   max=1.5890707917345379   mean=0.1770510723993644
-     sea_ice_category_thickness   min=-0.0001516309943195   max=4.0319498634926729   mean=0.4765411500997312
-sea_ice_category_snow_thickness   min=-0.2868864405725090   max=1.2926802129154602   mean=0.0725973325096385
+          sea_ice_area_fraction   min=-0.1036522281921659   max=1.5890707917345379   mean=0.1770510723993644
+              sea_ice_thickness   min=-0.0001516309943195   max=4.0319498634926729   mean=0.4765411500997312
+         sea_ice_snow_thickness   min=-0.2868864405725090   max=1.2926802129154602   mean=0.0725973325096385
    snow_ice_surface_temperature   min=-11.8000000000000007   max=0.0000000000000000   mean=-2.9751257610129023
                 air_temperature   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
               bulk_ice_salinity   min=0.0000000000000000   max=5.0000000000000000   mean=4.4124371194935357

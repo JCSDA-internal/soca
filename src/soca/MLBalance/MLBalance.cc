@@ -87,9 +87,9 @@ void MLBalance::multiply(oops::FieldSet3D & fset) const {
   //    [ dc/dsst       dc/dsss   0      dc/dhi dc/dhs   I ]   ice concentration
 
   // Increment fields
-  auto dc = atlas::array::make_view<double, 2>(fset["sea_ice_category_area_fraction"]);
-  auto dhi = atlas::array::make_view<double, 2>(fset["sea_ice_category_thickness"]);
-  auto dhs = atlas::array::make_view<double, 2>(fset["sea_ice_category_snow_thickness"]);
+  auto dc = atlas::array::make_view<double, 2>(fset["sea_ice_area_fraction"]);
+  auto dhi = atlas::array::make_view<double, 2>(fset["sea_ice_thickness"]);
+  auto dhs = atlas::array::make_view<double, 2>(fset["sea_ice_snow_thickness"]);
   auto dt = atlas::array::make_view<double, 2>(fset["sea_water_potential_temperature"]);
   auto ds = atlas::array::make_view<double, 2>(fset["sea_water_salinity"]);
   auto dssh = atlas::array::make_view<double, 2>(fset["sea_surface_height_above_geoid"]);
@@ -136,9 +136,9 @@ void MLBalance::multiplyAD(oops::FieldSet3D & fset) const {
   //        [ 0         0      0        0      0      I       ]   ice concentration
 
   // Increment fields
-  auto dc = atlas::array::make_view<double, 2>(fset["sea_ice_category_area_fraction"]);
-  auto dhi = atlas::array::make_view<double, 2>(fset["sea_ice_category_thickness"]);
-  auto dhs = atlas::array::make_view<double, 2>(fset["sea_ice_category_snow_thickness"]);
+  auto dc = atlas::array::make_view<double, 2>(fset["sea_ice_area_fraction"]);
+  auto dhi = atlas::array::make_view<double, 2>(fset["sea_ice_thickness"]);
+  auto dhs = atlas::array::make_view<double, 2>(fset["sea_ice_snow_thickness"]);
   auto dt = atlas::array::make_view<double, 2>(fset["sea_water_potential_temperature"]);
   auto ds = atlas::array::make_view<double, 2>(fset["sea_water_salinity"]);
   auto dssh = atlas::array::make_view<double, 2>(fset["sea_surface_height_above_geoid"]);

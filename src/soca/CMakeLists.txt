@@ -50,7 +50,6 @@ if(Torch_FOUND)
     "${Torch_ROOT}/lib/libtorch_cpu.so"      # For the CPU backend
     "${Torch_ROOT}/lib/libc10.so"            # Core library
     )
-  target_link_libraries( soca PUBLIC daml )
 endif()
 
 if( ${icepack_FOUND} )

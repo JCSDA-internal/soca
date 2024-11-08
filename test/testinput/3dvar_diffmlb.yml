@@ -11,9 +11,9 @@ cost function:
     begin: 2018-04-14T00:00:00Z
     length: P2D
   analysis variables:
-    - sea_ice_category_area_fraction
-    - sea_ice_category_thickness
-    - sea_ice_category_snow_thickness
+    - sea_ice_area_fraction
+    - sea_ice_thickness
+    - sea_ice_snow_thickness
     - sea_water_salinity
     - sea_water_potential_temperature
     - sea_surface_height_above_geoid
@@ -31,9 +31,9 @@ cost function:
     sfc_filename: sfc.res.nc
     date: &bkg_date 2018-04-15T00:00:00Z
     state variables:
-    - sea_ice_category_area_fraction
-    - sea_ice_category_thickness
-    - sea_ice_category_snow_thickness
+    - sea_ice_area_fraction
+    - sea_ice_thickness
+    - sea_ice_snow_thickness
     - snow_ice_surface_temperature
     - air_temperature
     - bulk_ice_salinity
@@ -59,9 +59,9 @@ cost function:
             levels: 25
             filepath: data_generated/parameters_diffusion/vt_5lvls
         - variables:
-          - sea_ice_category_area_fraction
-          - sea_ice_category_thickness
-          - sea_ice_category_snow_thickness
+          - sea_ice_area_fraction
+          - sea_ice_thickness
+          - sea_ice_snow_thickness
           - sea_surface_height_above_geoid
           horizontal:
             filepath: data_generated/parameters_diffusion/hz_smaller

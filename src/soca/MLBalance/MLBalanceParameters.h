@@ -24,9 +24,9 @@ class MLBalanceParameters : public saber::SaberBlockParametersBase {
     return oops::Variables({"sea_water_potential_temperature",
                              "sea_water_salinity",
                              "sea_surface_height_above_geoid",
-                             "sea_ice_category_area_fraction",
-                             "sea_ice_category_thickness",
-                             "sea_ice_category_snow_thickness"});}
+                             "sea_ice_area_fraction",
+                             "sea_ice_thickness",
+                             "sea_ice_snow_thickness"});}
 };
 
 // --------------------------------------------------------------------------------------

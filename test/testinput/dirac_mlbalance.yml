@@ -10,9 +10,9 @@ background:
   ocn_filename: MOM.res.nc
   ice_filename: cice.res.nc
   state variables:
-  - sea_ice_category_area_fraction
-  - sea_ice_category_thickness
-  - sea_ice_category_snow_thickness
+  - sea_ice_area_fraction
+  - sea_ice_thickness
+  - sea_ice_snow_thickness
   - snow_ice_surface_temperature
   - air_temperature
   - bulk_ice_salinity
