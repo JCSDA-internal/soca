@@ -36,20 +36,23 @@ integer :: root=0
 !!            categories, save the aggregated variables in a file
 !!            readable by soca
 
+type, public :: soca_soca2cice_params
+   real(kind=kind_real) :: seaice_edge
+   logical :: shuffle
+   logical :: rescale_prior
+   real(kind=kind_real) :: rescale_min_hice
+   real(kind=kind_real) :: rescale_min_hsno
+end type soca_soca2cice_params
+
 type, public :: soca_soca2cice
    type(fckit_mpi_comm) :: f_comm
    integer :: myrank
    integer :: ncat, ni, nj, ice_lev=7, sno_lev=1
    character(len=:), allocatable :: rst_filename
    character(len=:), allocatable :: rst_out_filename
-   character(len=:), allocatable :: domain
    type(cice_state) :: cice
    type(atlas_indexkdtree) :: kdtree
-   real(kind=kind_real) :: seaice_edge
-   logical :: shuffle
-   logical :: rescale_prior
-   real(kind=kind_real) :: rescale_min_hice
-   real(kind=kind_real) :: rescale_min_hsno
+   type(soca_soca2cice_params) :: arctic, antarctic
 contains
   procedure :: setup => soca_soca2cice_setup
   procedure :: changevar => soca_soca2cice_changevar
@@ -57,7 +60,6 @@ contains
   procedure, private :: check_ice_bounds
   procedure, private :: prior_dist_rescale
   procedure, private :: cleanup_ice
-  procedure, private :: in_domain
 end type soca_soca2cice
 
 
@@ -123,10 +125,10 @@ subroutine soca_soca2cice_changevar(self, geom, xa, xm)
   call self%check_ice_bounds(geom, xm)
 
   ! add ice in the background where needed
-  if (self%shuffle) call self%shuffle_ice(geom, xm)
+  if (self%arctic%shuffle .or. self%antarctic%shuffle) call self%shuffle_ice(geom, xm)
 
   ! de-aggregate using the prior distribution
-  if (self%rescale_prior) call self%prior_dist_rescale(geom, xm)
+  if (self%arctic%rescale_prior .or. self%antarctic%rescale_prior) call self%prior_dist_rescale(geom, xm)
 
   ! cleanup seaice state
   call self%cleanup_ice(geom, xm)
@@ -194,7 +196,7 @@ subroutine shuffle_ice(self, geom, xm)
   type(soca_geom), target, intent(in)  :: geom
   type(soca_state),      intent(inout) :: xm
 
-  real(kind=kind_real) :: aice
+  real(kind=kind_real) :: aice, seaice_edge
   integer :: i, j, k, n, ii, jj
   type(soca_field), pointer :: t_ana, s_ana, aice_ana
   integer :: minidx(1), nn_max
@@ -216,8 +218,14 @@ subroutine shuffle_ice(self, geom, xm)
         aice = aice_ana%val(i,j,1)    ! ice fraction analysis
 
         ! Skip if outside of domain
-        if (.not.(self%in_domain(geom, i, j))) cycle           ! skip if out of domain
-        if (self%cice%aice(i,j).gt.self%seaice_edge) cycle     ! skip if the background has more ice than the threshold
+        if (geom%lat(i,j)>0.0_kind_real) then
+          if (.not. self%arctic%shuffle) cycle
+          seaice_edge = self%arctic%seaice_edge
+        else
+          if (.not. self%antarctic%shuffle) cycle
+          seaice_edge = self%antarctic%seaice_edge
+        endif
+        if (self%cice%aice(i,j).gt.seaice_edge) cycle     ! skip if the background has more ice than the threshold
         if (aice.le.0.0_kind_real) cycle                       ! 0 ice analysis is treated elsewhere
 
         ! find neighbors. TODO (G): add constraint for thickness and snow depth as well
@@ -283,7 +291,6 @@ subroutine cleanup_ice(self, geom, xm)
   allocate(zTin(self%ice_lev), zTsn(self%sno_lev))
   do i = geom%isc, geom%iec
      do j = geom%jsc, geom%jec
-        if (.not.(self%in_domain(geom, i, j))) cycle    ! skip if out of domain
         if (aice_ana%val(i,j,1).eq.0.0_kind_real) cycle
 
         do k = 1, self%ncat
@@ -333,8 +340,6 @@ subroutine cleanup_ice(self, geom, xm)
   ! re-compute aggregates = analysis that is effectively inserted in the restart
   do i = geom%isc, geom%iec
      do j = geom%jsc, geom%jec
-        if (.not.(self%in_domain(geom, i, j))) cycle    ! skip if out of domain
-
         aice_ana%val(i,j,1) = sum(self%cice%aicen(i,j,:))
         hice_ana%val(i,j,1) = sum(self%cice%vicen(i,j,:))
         hsno_ana%val(i,j,1) = sum(self%cice%vsnon(i,j,:))
@@ -350,7 +355,7 @@ subroutine prior_dist_rescale(self, geom, xm)
   type(soca_geom), target, intent(in)  :: geom
   type(soca_state),      intent(inout) :: xm
 
-  real(kind=kind_real) :: alpha, hice, hsno
+  real(kind=kind_real) :: alpha, hice, hsno, seaice_edge, rescale_min_hice, rescale_min_hsno
   type(soca_field), pointer :: s_ana, aice_ana, hice_ana, hsno_ana
   integer :: c, i, j
 
@@ -362,8 +367,18 @@ subroutine prior_dist_rescale(self, geom, xm)
   do i = geom%isc, geom%iec
      do j = geom%jsc, geom%jec
 
-        if (.not.(self%in_domain(geom, i, j))) cycle       ! skip if out of domain
-        if (self%cice%aice(i,j).lt.self%seaice_edge) cycle ! Only rescale within the icepack
+        if (geom%lat(i,j)>0.0_kind_real) then
+          if (.not. self%arctic%rescale_prior) cycle
+          seaice_edge = self%arctic%seaice_edge
+          rescale_min_hice = self%arctic%rescale_min_hice
+          rescale_min_hsno = self%arctic%rescale_min_hsno
+        else
+          if (.not. self%antarctic%rescale_prior) cycle
+          seaice_edge = self%antarctic%seaice_edge
+          rescale_min_hice = self%antarctic%rescale_min_hice
+          rescale_min_hsno = self%antarctic%rescale_min_hsno
+        endif
+        if (self%cice%aice(i,j).lt.seaice_edge) cycle ! Only rescale within the icepack
 
         ! rescale background to match aggregate ice concentration analysis
         alpha = aice_ana%val(i,j,1)/self%cice%aice(i,j)
@@ -376,14 +391,14 @@ subroutine prior_dist_rescale(self, geom, xm)
 
         ! adjust ice volume to match mean cell thickness
         hice = sum(self%cice%vicen(i,j,:))
-        if (hice.gt.self%rescale_min_hice) then
+        if (hice.gt.rescale_min_hice) then
            alpha = hice_ana%val(i,j,1)/hice
            self%cice%vicen(i,j,:) = alpha*self%cice%vicen(i,j,:)
         end if
 
         ! adjust snow volume to match mean cell thickness
         hsno = sum(self%cice%vsnon(i,j,:))
-        if (hsno.gt.self%rescale_min_hsno) then
+        if (hsno.gt.rescale_min_hsno) then
            alpha = hsno_ana%val(i,j,1)/hsno
            self%cice%vsnon(i,j,:) = alpha*self%cice%vsnon(i,j,:)
         end if
@@ -393,24 +408,6 @@ subroutine prior_dist_rescale(self, geom, xm)
 
 end subroutine prior_dist_rescale
 
-! ------------------------------------------------------------------------------
-function in_domain(self, geom, i, j) result(testin)
-  class(soca_soca2cice), intent(in) :: self
-  type(soca_geom), target, intent(in)  :: geom
-  integer, intent(in) :: i, j
-  logical :: testin
-
-  testin = .false.
-  select case(self%domain)
-  case ('global')
-     testin = .true.
-  case ('arctic')
-     if (geom%lat(i,j)>30.0_kind_real) testin = .true.
-  case ('antarctic')
-     if (geom%lat(i,j)<-30.0_kind_real) testin = .true.
-  end select
-
-end function in_domain
 ! ------------------------------------------------------------------------------
 
 end module soca_soca2cice_mod
