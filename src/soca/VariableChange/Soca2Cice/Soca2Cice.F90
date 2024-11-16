@@ -42,9 +42,9 @@ contains
 subroutine soca_soca2cice_setup_f90(c_key_self, c_conf, c_key_geom) &
   bind(c,name='soca_soca2cice_setup_f90')
 
-  integer(c_int), intent(inout) :: c_key_self   !<
-  type(c_ptr),       intent(in) :: c_conf       !< The configuration
-  integer(c_int),    intent(in) :: c_key_geom   !< Geometry
+  integer(c_int), intent(inout)  :: c_key_self   !<
+  type(c_ptr), value, intent(in) :: c_conf       !< The configuration
+  integer(c_int),    intent(in)  :: c_key_geom   !< Geometry
 
   type(soca_soca2cice), pointer :: self
   type(soca_geom), pointer :: geom
@@ -65,44 +65,23 @@ subroutine soca_soca2cice_setup_f90(c_key_self, c_conf, c_key_geom) &
   call f_conf%get_or_die("cice background state.sno_lev", self%sno_lev)
 
   ! seaice edge
-  self%arctic%seaice_edge = 0.15_kind_real
-  if (f_conf%has("arctic.seaice edge")) &
-    call f_conf%get_or_die("arctic.seaice edge", self%arctic%seaice_edge)
-  self%antarctic%seaice_edge = 0.15_kind_real
-  if (f_conf%has("antarctic.seaice edge")) &
-    call f_conf%get_or_die("antarctic.seaice edge", self%arctic%seaice_edge)
+  call f_conf%get_or_die("arctic.seaice edge", self%arctic%seaice_edge)
+  call f_conf%get_or_die("antarctic.seaice edge", self%arctic%seaice_edge)
   ! shuffle switch
-  self%arctic%shuffle = .true.
-  if (f_conf%has("arctic.shuffle")) &
-    call f_conf%get_or_die("arctic.shuffle", self%arctic%shuffle)
-  self%antarctic%shuffle = .true.
-  if (f_conf%has("antarctic.shuffle")) &
-    call f_conf%get_or_die("antarctic.shuffle", self%antarctic%shuffle)
+  call f_conf%get_or_die("arctic.shuffle", self%arctic%shuffle)
+  call f_conf%get_or_die("antarctic.shuffle", self%antarctic%shuffle)
 
   ! rescale to prior switch
   self%arctic%rescale_prior = .false.
   if (f_conf%has("arctic.rescale prior")) then
      self%arctic%rescale_prior = .true.
-     self%arctic%rescale_min_hice = 0.5_kind_real   ! set default min ice thickness above which to rescale
-     if (f_conf%has("arctic.rescale prior.min hice")) then
-        call f_conf%get_or_die("arctic.rescale prior.min hice", self%arctic%rescale_min_hice)
-     end if
-     self%arctic%rescale_min_hsno = 0.1_kind_real   ! set default min snow thickness above which to rescale
-     if (f_conf%has("arctic.rescale prior.min hsno")) then
-        call f_conf%get_or_die("arctic.rescale prior.min hsno", self%arctic%rescale_min_hsno)
-     end if
+     call f_conf%get_or_die("arctic.rescale prior.min hice", self%arctic%rescale_min_hice)
+     call f_conf%get_or_die("arctic.rescale prior.min hsno", self%arctic%rescale_min_hsno)
   end if
   self%antarctic%rescale_prior = .false.
   if (f_conf%has("antarctic.rescale prior")) then
-     self%antarctic%rescale_prior = .true.
-     self%antarctic%rescale_min_hice = 0.5_kind_real   ! set default min ice thickness above which to rescale
-     if (f_conf%has("antarctic.rescale prior.min hice")) then
-        call f_conf%get_or_die("antarctic.rescale prior.min hice", self%antarctic%rescale_min_hice)
-     end if
-     self%antarctic%rescale_min_hsno = 0.1_kind_real   ! set default min snow thickness above which to rescale
-     if (f_conf%has("antarctic.rescale prior.min hsno")) then
-        call f_conf%get_or_die("antarctic.rescale prior.min hsno", self%antarctic%rescale_min_hsno)
-     end if
+     call f_conf%get_or_die("antarctic.rescale prior.min hice", self%antarctic%rescale_min_hice)
+     call f_conf%get_or_die("antarctic.rescale prior.min hsno", self%antarctic%rescale_min_hsno)
   end if
 
   ! cice input restart
