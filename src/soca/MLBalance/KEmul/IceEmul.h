@@ -31,10 +31,7 @@
 namespace soca {
 
   /// Utilities:
-  std::vector<float> readCice(const std::string fileName, const std::string varName) {
-    // Open CICE restart file for reading
-    netCDF::NcFile ncFile(fileName, netCDF::NcFile::read);
-
+  std::vector<float> readCice(const netCDF::NcFile & ncFile, const std::string varName) {
     // Get dimensions
     int dimLon = ncFile.getDim("ni").getSize();
     int dimLat = ncFile.getDim("nj").getSize();
@@ -71,8 +68,8 @@ namespace soca {
   class IceEmul : public BaseEmul<IceNet> {
    public:
     // Constructor
-    explicit IceEmul(const eckit::Configuration & config,
-                     const eckit::mpi::Comm & comm) : BaseEmul<IceNet>(config, comm) {}
+    IceEmul(const eckit::Configuration & config,
+            const eckit::mpi::Comm & comm) : BaseEmul<IceNet>(config, comm) {}
 
     // -----------------------------------------------------------------------------
     // Override prepData in IceEmul
@@ -86,27 +83,29 @@ namespace soca {
       // TODO(G): Move this elsewhere and leverage soca and/or atlas io
       // Read additional config
       std::string pole;
-      config_.get("domain.pole", pole);
+      getConfig().get("domain.pole", pole);
       bool cleanData;
-      config_.get("domain.clean data", cleanData);
+      getConfig().get("domain.clean data", cleanData);
 
       // Read the patterns/targets
-      std::vector<float> lat = readCice(fileName, "ULAT");
-      std::vector<float> lon = readCice(fileName, "ULON");
-      std::vector<float> aice = readCice(fileName, "aice_h");
-      std::vector<float> tsfc = readCice(fileName, "Tsfc_h");
-      std::vector<float> sst = readCice(fileName, "sst_h");
-      std::vector<float> sss = readCice(fileName, "sss_h");
-      std::vector<float> sice = readCice(fileName, "sice_h");
-      std::vector<float> hi = readCice(fileName, "hi_h");
-      std::vector<float> hs = readCice(fileName, "hs_h");
-      std::vector<float> mask = readCice(fileName, "umask");
-      std::vector<float> tair = readCice(fileName, "Tair_h");
+      netCDF::NcFile ncFile(fileName, netCDF::NcFile::read);
+      std::vector<float> lat = readCice(ncFile, "ULAT");
+      std::vector<float> lon = readCice(ncFile, "ULON");
+      std::vector<float> aice = readCice(ncFile, "aice_h");
+      std::vector<float> tsfc = readCice(ncFile, "Tsfc_h");
+      std::vector<float> sst = readCice(ncFile, "sst_h");
+      std::vector<float> sss = readCice(ncFile, "sss_h");
+      std::vector<float> sice = readCice(ncFile, "sice_h");
+      std::vector<float> hi = readCice(ncFile, "hi_h");
+      std::vector<float> hs = readCice(ncFile, "hs_h");
+      std::vector<float> mask = readCice(ncFile, "umask");
+      std::vector<float> tair = readCice(ncFile, "Tair_h");
+      ncFile.close();
 
       // Calculate the number of patterns per pe
       int localBatchSize(0);
       int numPatterns(0);
-      for (size_t i = comm_.rank(); i < lat.size(); i += comm_.size()) {
+      for (size_t i = getComm().rank(); i < lat.size(); i += getComm().size()) {
         if (selectData(mask[i], lat[i], aice[i], cleanData, pole)) {
           localBatchSize+=1;
         }
@@ -117,12 +116,12 @@ namespace soca {
 
       oops::Log::info() << "Number of patterns: " << numPatterns << std::endl;
 
-      torch::Tensor patterns = torch::empty({numPatterns, inputSize_}, torch::kFloat32);
+      torch::Tensor patterns = torch::empty({numPatterns, getInputSize()}, torch::kFloat32);
       torch::Tensor targets = torch::empty({numPatterns}, torch::kFloat32);
       std::vector<float> lat_out;
       std::vector<float> lon_out;
       int cnt(0);
-      for (size_t i = comm_.rank(); i < lat.size(); i += comm_.size()) {
+      for (size_t i = getComm().rank(); i < lat.size(); i += getComm().size()) {
         if (selectData(mask[i], lat[i], aice[i], cleanData, pole)) {
           patterns[cnt][0] = tair[i];
           patterns[cnt][1] = tsfc[i];
@@ -155,9 +154,9 @@ namespace soca {
                     global_sq_sum.numel(), MPI_FLOAT, MPI_SUM, MPI_COMM_WORLD);
 
       // Calculate the global mean and std deviation
-      torch::Tensor mean = global_sum / (numPatterns * static_cast<float>(comm_.size()));
+      torch::Tensor mean = global_sum / (numPatterns * static_cast<float>(getComm().size()));
       torch::Tensor std = torch::sqrt(global_sq_sum /
-                 (numPatterns * static_cast<float>(comm_.size())) - torch::pow(mean, 2));
+                 (numPatterns * static_cast<float>(getComm().size())) - torch::pow(mean, 2));
 
       return std::make_tuple(patterns, targets, lon_out, lat_out, mean, std);
     }
@@ -174,7 +173,7 @@ namespace soca {
       std::vector lat = std::get<3>(result);
 
       // Loop through the patterns and predict
-      torch::Tensor input = torch::ones({inputSize_});
+      torch::Tensor input = torch::ones({getInputSize()});
       std::vector<float> ice_original;
       std::vector<float> ice_ffnn;
       // TODO(G): Store the jacobian in a 2D array
@@ -186,19 +185,19 @@ namespace soca {
       std::vector<float> dcdhs;
       std::vector<float> dcdsi;
       for (size_t j = 0; j < targets.size(0); ++j) {
-        for (size_t i = 0; i < inputSize_; ++i) {
+        for (size_t i = 0; i < getInputSize(); ++i) {
           input[i] = inputs[j][i];
         }
 
         // Run the input through the FFNN
-        torch::Tensor prediction = model_->forward(input);
+        torch::Tensor prediction = getModel()->forward(input);
 
         // Store results
         ice_original.push_back(targets[j].item<float>());
         ice_ffnn.push_back(prediction.item<float>());
 
         // Compute the Jacobian
-        torch::Tensor doutdx = model_->jac(input);
+        torch::Tensor doutdx = getModel()->jac(input);
         // Save the Jacobian elements into individual arrays
         // TODO(G): Store the jacobian in a 2D array
         dcdtair.push_back(doutdx[0].item<float>());
@@ -214,7 +213,7 @@ namespace soca {
       // TODO(G): Move into a separate function
       netCDF::NcFile ncFile(fileNameResults, netCDF::NcFile::replace);
       netCDF::NcDim dim = ncFile.addDim("n", ice_original.size());
-      netCDF::NcDim dim2 = ncFile.addDim("n_inputs", inputSize_);
+      netCDF::NcDim dim2 = ncFile.addDim("n_inputs", getInputSize());
 
       ncFile.addVar("lon", netCDF::ncFloat, dim).putVar(lon.data());
       ncFile.addVar("lat", netCDF::ncFloat, dim).putVar(lat.data());

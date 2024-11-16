@@ -54,7 +54,7 @@ namespace soca {
       auto dcdhs = atlas::array::make_view<double, 2>(jacobian["dc/dhs"]);
 
       // Containerize the model's bkg in a torch tensor and compute Jacobian
-      torch::Tensor pattern = torch::zeros({iceEmulArctic_.inputSize_});
+      torch::Tensor pattern = torch::zeros({iceEmulArctic_.getInputSize()});
       const int nnodes = xb["sea_water_potential_temperature"].shape(0);
       for (atlas::idx_t jnode = 0; jnode < nnodes; ++jnode) {
         pattern[0] = tair(jnode, 0);
@@ -64,12 +64,12 @@ namespace soca {
         pattern[4] = hs(jnode, 0);
         pattern[5] = hi(jnode, 0);
         pattern[6] = sice(jnode, 0);
-        torch::Tensor dcdx = torch::zeros({iceEmulArctic_.inputSize_});
+        torch::Tensor dcdx = torch::zeros({iceEmulArctic_.getInputSize()});
         if ( lonlat(jnode, 1) > 40.0 ) {
-          dcdx = iceEmulArctic_.model_->jac(pattern);
+          dcdx = iceEmulArctic_.getModel()->jac(pattern);
         }
         if ( lonlat(jnode, 1) < -40.0 ) {
-          dcdx = iceEmulAntarctic_.model_->jac(pattern);
+          dcdx = iceEmulAntarctic_.getModel()->jac(pattern);
         }
         dcdsst(jnode, 0) = dcdx[2].item<float>();
         dcdsss(jnode, 0) = dcdx[3].item<float>();

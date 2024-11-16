@@ -36,7 +36,7 @@ namespace soca {
   // -----------------------------------------------------------------------------
   template <typename Net>
   class BaseEmul {
-   public:
+   private:
     int inputSize_;
     int outputSize_;
     int hiddenSize_;
@@ -51,11 +51,38 @@ namespace soca {
 
    public:
     // Constructor
-    explicit BaseEmul(const eckit::Configuration & config, const eckit::mpi::Comm & comm):
+    BaseEmul(const eckit::Configuration, const eckit::mpi::Comm);
+
+    // Getters
+    int getInputSize() const { return inputSize_; }
+    int getOutputSize() const { return outputSize_; }
+    int getHiddenSize() const { return hiddenSize_; }
+    int getKernelSize() const { return kernelSize_; }
+    int getStride() const { return stride_; }
+    int getBatchSize() const { return batchSize_; }
+    size_t getEpochs() const { return epochs_; }
+    std::string getModelOutputFileName() const { return modelOutputFileName_; }
+    std::shared_ptr<Net> getModel() const { return model_; }
+    const eckit::mpi::Comm & getComm() const { return comm_; }
+    const eckit::Configuration & getConfig() const { return config_; }
+
+    // Setters
+    void setInputSize(int inputSize) { inputSize_ = inputSize; }
+    void setOutputSize(int outputSize) { outputSize_ = outputSize; }
+    void setHiddenSize(int hiddenSize) { hiddenSize_ = hiddenSize; }
+    void setKernelSize(int kernelSize) { kernelSize_ = kernelSize; }
+    void setStride(int stride) { stride_ = stride; }
+    void setBatchSize(int batchSize) { batchSize_ = batchSize; }
+    void setEpochs(size_t epochs) { epochs_ = epochs; }
+    void setModelOutputFileName(const std::string & modelOutputFileName) { modelOutputFileName_ = modelOutputFileName; }
+    void setModel(const std::shared_ptr<Net> & model) { model_ = model; }
+
+    // Constructor
+    BaseEmul(const eckit::Configuration & config, const eckit::mpi::Comm & comm):
       comm_(comm), config_(config),
-      inputSize_(getSize(config, "ffnn.inputSize")),
-      outputSize_(getSize(config, "ffnn.outputSize")),
-      hiddenSize_(getSize(config, "ffnn.hiddenSize")) {
+      inputSize_(getNNSize(config, "ffnn.inputSize")),
+      outputSize_(getNNSize(config, "ffnn.outputSize")),
+      hiddenSize_(getNNSize(config, "ffnn.hiddenSize")) {
       // Check pyTorch version
       oops::Log::info() << "PyTorch Version: "
                         << TORCH_VERSION_MAJOR << "."
@@ -93,20 +120,19 @@ namespace soca {
         config_.get("ffnn.load model", modelFileName);
         torch::load(model_, modelFileName);
         model_->loadNorm(modelFileName);
-        /*
-        TODO(G): Move that to oops log debug?
-        std::cout << "----- mean: " << model_->inputMean << std::endl;
-        std::cout << "----- std dev: " << model_->inputStd << std::endl;
+
+        // Print model info
+        oops::Log::info() << "----- mean: " << model_->inputMean << std::endl;
+        oops::Log::info() << "----- std dev: " << model_->inputStd << std::endl;
         for (const auto& pair : model_->named_parameters()) {
-          std::cout << "Parameter name: " << pair.key()
+          oops::Log::info() << "Parameter name: " << pair.key()
                     << ", Size: " << pair.value().sizes() << std::endl;
         }
         for (const auto& pair : model_->named_buffers()) {
-          std::cout << "Buffer name: " << pair.key()
+          oops::Log::info() << "Buffer name: " << pair.key()
                     << ", Size: " << pair.value().sizes() << std::endl;
-          std::cout << "       values: " << pair.value() << std::endl;
+          oops::Log::info() << "       values: " << pair.value() << std::endl;
         }
-        */
       }
 
       // Number of degrees of freedom in the FFNN
@@ -148,10 +174,6 @@ namespace soca {
       float finalLoss(0.0);
       oops::Log::trace() << "Train ..." << std::endl;
       for (size_t epoch = 0; epoch < epochs_; ++epoch) {
-        // Setup the model for training
-        // TODO(G): figure out why I commented the following line
-        // model_->train();
-
         // Forward pass.
         auto output = model_->forward(input);
 
@@ -256,7 +278,7 @@ namespace soca {
                          const int n) = 0;
 
     // Initializers
-    int getSize(const eckit::Configuration & config, const std::string& paramName) {
+    int getNNSize(const eckit::Configuration & config, const std::string& paramName) {
       int param;
       config.get(paramName, param);
       return param;
@@ -267,15 +289,15 @@ namespace soca {
         const int barWidth = 50;
         float percentage = static_cast<float>(progress) / total;
         int barLength = static_cast<int>(percentage * barWidth);
-        std::cout << "[";
+        oops::Log::info() << "[";
         for (int i = 0; i < barWidth; ++i) {
           if (i < barLength) {
-            std::cout << "=";
+            oops::Log::info() << "=";
           } else {
-            std::cout << " ";
+            oops::Log::info() << " ";
           }
         }
-        std::cout << "] " << std::setw(3) << static_cast<int>(percentage * 100)
+        oops::Log::info() << "] " << std::setw(3) << static_cast<int>(percentage * 100)
                   << "% "<< "Loss: " << loss << "\r";
         std::cout.flush();
       }
