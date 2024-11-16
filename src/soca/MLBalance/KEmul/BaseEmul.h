@@ -74,7 +74,8 @@ namespace soca {
     void setStride(int stride) { stride_ = stride; }
     void setBatchSize(int batchSize) { batchSize_ = batchSize; }
     void setEpochs(size_t epochs) { epochs_ = epochs; }
-    void setModelOutputFileName(const std::string & modelOutputFileName) { modelOutputFileName_ = modelOutputFileName; }
+    void setModelOutputFileName(const std::string & modelOutputFileName)
+                               { modelOutputFileName_ = modelOutputFileName; }
     void setModel(const std::shared_ptr<Net> & model) { model_ = model; }
 
     // Constructor
