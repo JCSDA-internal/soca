@@ -89,8 +89,6 @@ set( soca_test_input
   testinput/varchange_ana2model.yml
   testinput/varchange_balance_TSSSH.yml
   testinput/varchange_balance.yml
-  testinput/varchange_bkgerrsoca_stddev.yml
-  testinput/varchange_bkgerrsoca.yml
 )
 
 set( soca_test_ref
@@ -409,14 +407,6 @@ soca_add_test( NAME varchange_balance
                TEST_DEPENDS test_soca_gridgen )
 
 soca_add_test( NAME varchange_balance_TSSSH
-               SRC  TestVariableChange.cc
-               TEST_DEPENDS test_soca_gridgen )
-
-soca_add_test( NAME varchange_bkgerrsoca
-               SRC  TestVariableChange.cc
-               TEST_DEPENDS test_soca_gridgen )
-
-soca_add_test( NAME varchange_bkgerrsoca_stddev
                SRC  TestVariableChange.cc
                TEST_DEPENDS test_soca_gridgen )
 
