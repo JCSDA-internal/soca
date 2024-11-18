@@ -75,29 +75,39 @@ cost function:
       rescale_bkgerr: 1.0
       efold_z: 2500.0       # [m]
 
+    - saber block name: SOCAParametricOceanStdDev
+      temperature:
+        sst:
+          filepath: data_static/godas_sst_bgerr.nc
+          variable: sst_bgerr
+      unbalanced salinity: {} # use default values
+      unbalanced ssh: {} # use default values
+      other variables:
+      - variable: sea_ice_area_fraction
+        min: 0.1
+      - variable: sea_ice_thickness
+        min: 10.0
+      - variable: eastward_sea_water_velocity
+        fraction of background: 0.2
+      - variable: northward_sea_water_velocity
+        fraction of background: 0.2
+      - variable: net_downwelling_shortwave_radiation
+        fraction of background: 0.1
+      - variable: upward_latent_heat_flux_in_air
+        fraction of background: 0.1
+      - variable: upward_sensible_heat_flux_in_air
+        fraction of background: 0.1
+      - variable: net_downwelling_longwave_radiation
+        fraction of background: 0.1
+      - variable: friction_velocity_over_water
+        fraction of background: 0.1
+
     date: *bkg_date
 
     linear variable change:
       input variables: *soca_an_vars
       output variables: *soca_an_vars
       linear variable changes:
-
-      - linear variable change name: BkgErrGODAS
-        sst_bgerr_file: data_static/godas_sst_bgerr.nc
-        t_min: 0.1
-        t_max: 2.0
-        t_dz:  20.0
-        t_efold: 500.0
-        s_min: 0.0
-        s_max: 0.25
-        ssh_min: 0.0   # value at EQ
-        ssh_max: 0.1   # value in Extratropics
-        ssh_phi_ex: 20 # lat of transition from extratropics
-        cicen_min: 0.1
-        cicen_max: 0.5
-        hicen_min: 10.0
-        hicen_max: 100.0
-
 
       - linear variable change name: BalanceSOCA
         kst:

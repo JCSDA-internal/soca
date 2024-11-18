@@ -1,1 +1,2 @@
 add_subdirectory(BkgErrFilt)
+add_subdirectory(ParametricOceanStdDev)
