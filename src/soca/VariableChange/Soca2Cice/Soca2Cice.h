@@ -29,6 +29,8 @@ class Soca2Cice: public VariableChangeBase {
   class RescaleParameters : public oops::Parameters {
     OOPS_CONCRETE_PARAMETERS(RescaleParameters, oops::Parameters)
    public:
+    oops::Parameter<bool> rescale{"rescale",
+      "rescale analysis in the ice pack", false, this};
     oops::Parameter<float> min_hice{"min hice",
       "min ice thickness to trigger adjusting ice volume", 0.5, this};
     oops::Parameter<float> min_hsno{"min hsno",
@@ -43,12 +45,12 @@ class Soca2Cice: public VariableChangeBase {
       "Threshold for sea ice edge, used in shuffle and rescale prior options",
       0.15, this, {oops::minConstraint(0.0), oops::maxConstraint(1.0)}};
     oops::Parameter<bool> shuffle{"shuffle",
-      "Option to shuffle sea ice in the marginal ice zone (where ice concentration",
+      "Option to shuffle sea ice in the marginal ice zone (where ice concentration"
       " < seaice edge)",
       true, this};
-    oops::OptionalParameter<RescaleParameters> rescale{"rescale prior",
-      "Option to rescale sea ice in the ice pack zone (where ice concentration",
-      " > seaice edge)", this};
+    oops::Parameter<RescaleParameters> rescale{"rescale prior",
+      "Option to rescale sea ice in the ice pack zone (where ice concentration"
+      " > seaice edge)", {}, this};
   };
 
   // ---------------------------------------------------------------------------

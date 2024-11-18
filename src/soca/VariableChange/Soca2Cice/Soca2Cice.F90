@@ -66,23 +66,17 @@ subroutine soca_soca2cice_setup_f90(c_key_self, c_conf, c_key_geom) &
 
   ! seaice edge
   call f_conf%get_or_die("arctic.seaice edge", self%arctic%seaice_edge)
-  call f_conf%get_or_die("antarctic.seaice edge", self%arctic%seaice_edge)
+  call f_conf%get_or_die("antarctic.seaice edge", self%antarctic%seaice_edge)
   ! shuffle switch
   call f_conf%get_or_die("arctic.shuffle", self%arctic%shuffle)
   call f_conf%get_or_die("antarctic.shuffle", self%antarctic%shuffle)
-
   ! rescale to prior switch
-  self%arctic%rescale_prior = .false.
-  if (f_conf%has("arctic.rescale prior")) then
-     self%arctic%rescale_prior = .true.
-     call f_conf%get_or_die("arctic.rescale prior.min hice", self%arctic%rescale_min_hice)
-     call f_conf%get_or_die("arctic.rescale prior.min hsno", self%arctic%rescale_min_hsno)
-  end if
-  self%antarctic%rescale_prior = .false.
-  if (f_conf%has("antarctic.rescale prior")) then
-     call f_conf%get_or_die("antarctic.rescale prior.min hice", self%antarctic%rescale_min_hice)
-     call f_conf%get_or_die("antarctic.rescale prior.min hsno", self%antarctic%rescale_min_hsno)
-  end if
+  call f_conf%get_or_die("arctic.rescale prior.rescale", self%arctic%rescale_prior)
+  call f_conf%get_or_die("arctic.rescale prior.min hice", self%arctic%rescale_min_hice)
+  call f_conf%get_or_die("arctic.rescale prior.min hsno", self%arctic%rescale_min_hsno)
+  call f_conf%get_or_die("antarctic.rescale prior.rescale", self%antarctic%rescale_prior)
+  call f_conf%get_or_die("antarctic.rescale prior.min hice", self%antarctic%rescale_min_hice)
+  call f_conf%get_or_die("antarctic.rescale prior.min hsno", self%antarctic%rescale_min_hsno)
 
   ! cice input restart
   call f_conf%get_or_die("cice background state.restart", self%rst_filename)

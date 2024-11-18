@@ -7,17 +7,14 @@ output geometry: *geom
 
 variable change:
   variable change name: Soca2Cice
-  do inverse: false
   arctic:
-    seaice edge: 0.15
-    shuffle: true
     rescale prior:
-      min hice: 0.5
-      min hsno: 0.1
+      rescale: true
   antarctic:
     seaice edge: 0.15
     shuffle: true
     rescale prior:
+      rescale: true
       min hice: 0.5
       min hsno: 0.1
   cice background state:
@@ -25,7 +22,6 @@ variable change:
     ncat: 5
     ice_lev: 7
     sno_lev: 1
-    tstep: PT1H
   cice output:
     restart: data_output/iced.2018-04-15-00000.nc
   output variables: &soca_vars

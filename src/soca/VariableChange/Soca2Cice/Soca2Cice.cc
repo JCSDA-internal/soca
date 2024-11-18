@@ -24,6 +24,7 @@ Soca2Cice::Soca2Cice(const Geometry & geom,
   : geom_(geom)
 {
   util::Timer timer("soca::Soca2Cice", "Soca2Cice");
+
   Parameters params;
   params.deserialize(conf);
 
