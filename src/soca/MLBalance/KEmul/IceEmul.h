@@ -17,7 +17,7 @@
 #include "eckit/config/YAMLConfiguration.h"
 #include "eckit/filesystem/PathName.h"
 
-#include "netcdf"
+#include "netcdf.h"  // NOLINT
 #include "oops/util/Logger.h"
 #include "torch/torch.h"
 #include "torch/csrc/distributed/c10d/ProcessGroup.hpp"
@@ -29,19 +29,6 @@
 // -----------------------------------------------------------------------------
 
 namespace soca {
-
-  /// Utilities:
-  std::vector<float> readCice(const netCDF::NcFile & ncFile, const std::string varName) {
-    // Get dimensions
-    int dimLon = ncFile.getDim("ni").getSize();
-    int dimLat = ncFile.getDim("nj").getSize();
-
-    // Read the CICE variable
-    std::vector<float> iceField(dimLat * dimLon);
-    ncFile.getVar(varName).getVar(iceField.data());
-
-    return iceField;
-  }
 
   // Check if data is in the domain
   bool selectData(const float mask, const float lat, const float aice,
@@ -80,7 +67,7 @@ namespace soca {
                torch::Tensor,
                torch::Tensor>
     prepData(const std::string& fileName, bool geoloc = false, int n = 400000) override {
-      // TODO(G): Move this elsewhere and leverage soca and/or atlas io
+      // TODO(G): Definitely move this elsewhere and leverage soca and/or atlas io
       // Read additional config
       std::string pole;
       getConfig().get("domain.pole", pole);
@@ -88,19 +75,60 @@ namespace soca {
       getConfig().get("domain.clean data", cleanData);
 
       // Read the patterns/targets
-      netCDF::NcFile ncFile(fileName, netCDF::NcFile::read);
-      std::vector<float> lat = readCice(ncFile, "ULAT");
-      std::vector<float> lon = readCice(ncFile, "ULON");
-      std::vector<float> aice = readCice(ncFile, "aice_h");
-      std::vector<float> tsfc = readCice(ncFile, "Tsfc_h");
-      std::vector<float> sst = readCice(ncFile, "sst_h");
-      std::vector<float> sss = readCice(ncFile, "sss_h");
-      std::vector<float> sice = readCice(ncFile, "sice_h");
-      std::vector<float> hi = readCice(ncFile, "hi_h");
-      std::vector<float> hs = readCice(ncFile, "hs_h");
-      std::vector<float> mask = readCice(ncFile, "umask");
-      std::vector<float> tair = readCice(ncFile, "Tair_h");
-      ncFile.close();
+      // Open the file
+      int ncid;
+      nc_open(fileName.c_str(), NC_NOWRITE, &ncid);
+
+      // Get dimensions
+      int varid;
+      std::string varName = "sst_h";
+      nc_inq_varid(ncid, varName.c_str(), &varid);
+      int ndims;
+      nc_inq_varndims(ncid, varid, &ndims);
+      int dimids[3];
+      size_t dimLen[3];
+      size_t nj, ni;
+      nc_inq_vardimid(ncid, varid, dimids);
+      nc_inq_dimlen(ncid, dimids[1], &nj);
+      nc_inq_dimlen(ncid, dimids[2], &ni);
+
+      // Allocate the CICE variable
+      std::vector<float> lat(nj * ni);
+      std::vector<float> lon(nj * ni);
+      std::vector<float> aice(nj * ni);
+      std::vector<float> tsfc(nj * ni);
+      std::vector<float> sst(nj * ni);
+      std::vector<float> sss(nj * ni);
+      std::vector<float> sice(nj * ni);
+      std::vector<float> hi(nj * ni);
+      std::vector<float> hs(nj * ni);
+      std::vector<float> mask(nj * ni);
+      std::vector<float> tair(nj * ni);
+
+      // Read the CICE variables
+      varName = "ULAT"; nc_inq_varid(ncid, varName.c_str(), &varid);
+      nc_get_var_float(ncid, varid, lat.data());
+      varName = "ULON"; nc_inq_varid(ncid, varName.c_str(), &varid);
+      nc_get_var_float(ncid, varid, lon.data());
+      varName = "aice_h"; nc_inq_varid(ncid, varName.c_str(), &varid);
+      nc_get_var_float(ncid, varid, aice.data());
+      varName = "Tsfc_h"; nc_inq_varid(ncid, varName.c_str(), &varid);
+      nc_get_var_float(ncid, varid, tsfc.data());
+      varName = "sst_h"; nc_inq_varid(ncid, varName.c_str(), &varid);
+      nc_get_var_float(ncid, varid, sst.data());
+      varName = "sss_h"; nc_inq_varid(ncid, varName.c_str(), &varid);
+      nc_get_var_float(ncid, varid, sss.data());
+      varName = "sice_h"; nc_inq_varid(ncid, varName.c_str(), &varid);
+      nc_get_var_float(ncid, varid, sice.data());
+      varName = "hi_h"; nc_inq_varid(ncid, varName.c_str(), &varid);
+      nc_get_var_float(ncid, varid, hi.data());
+      varName = "hs_h"; nc_inq_varid(ncid, varName.c_str(), &varid);
+      nc_get_var_float(ncid, varid, hs.data());
+      varName = "umask"; nc_inq_varid(ncid, varName.c_str(), &varid);
+      nc_get_var_float(ncid, varid, mask.data());
+      varName = "Tair_h"; nc_inq_varid(ncid, varName.c_str(), &varid);
+      nc_get_var_float(ncid, varid, tair.data());
+      nc_close(ncid);
 
       // Calculate the number of patterns per pe
       int localBatchSize(0);
@@ -211,21 +239,42 @@ namespace soca {
 
       // Save the prediction and Jacobian
       // TODO(G): Move into a separate function
-      netCDF::NcFile ncFile(fileNameResults, netCDF::NcFile::replace);
-      netCDF::NcDim dim = ncFile.addDim("n", ice_original.size());
-      netCDF::NcDim dim2 = ncFile.addDim("n_inputs", getInputSize());
+      int ncid;
+      nc_create(fileNameResults.c_str(), NC_CLOBBER, &ncid);
+      int dimid, dimid2;
+      nc_def_dim(ncid, "n", ice_original.size(), &dimid);
+      nc_def_dim(ncid, "n_inputs", getInputSize(), &dimid2);
 
-      ncFile.addVar("lon", netCDF::ncFloat, dim).putVar(lon.data());
-      ncFile.addVar("lat", netCDF::ncFloat, dim).putVar(lat.data());
-      ncFile.addVar("aice", netCDF::ncFloat, dim).putVar(ice_original.data());
-      ncFile.addVar("aice_ffnn", netCDF::ncFloat, dim).putVar(ice_ffnn.data());
-      ncFile.addVar("dcdt", netCDF::ncFloat, {dim}).putVar(dcdt.data());
-      ncFile.addVar("dcds", netCDF::ncFloat, {dim}).putVar(dcds.data());
-      ncFile.addVar("dcdhs", netCDF::ncFloat, {dim}).putVar(dcdhs.data());
-      ncFile.addVar("dcdhi", netCDF::ncFloat, {dim}).putVar(dcdhi.data());
-      ncFile.addVar("dcdsi", netCDF::ncFloat, {dim}).putVar(dcdsi.data());
-      ncFile.addVar("dcdtsfc", netCDF::ncFloat, {dim}).putVar(dcdtsfc.data());
-      ncFile.addVar("dcdtair", netCDF::ncFloat, {dim}).putVar(dcdtair.data());
+      int lon_varid, lat_varid, aice_varid, aice_ffnn_varid;
+      int dcdt_varid, dcds_varid, dcdhs_varid, dcdhi_varid;
+      int dcdsi_varid, dcdtsfc_varid, dcdtair_varid;
+      nc_def_var(ncid, "lon", NC_FLOAT, 1, &dimid, &lon_varid);
+      nc_def_var(ncid, "lat", NC_FLOAT, 1, &dimid, &lat_varid);
+      nc_def_var(ncid, "aice", NC_FLOAT, 1, &dimid, &aice_varid);
+      nc_def_var(ncid, "aice_ffnn", NC_FLOAT, 1, &dimid, &aice_ffnn_varid);
+      nc_def_var(ncid, "dcdt", NC_FLOAT, 1, &dimid, &dcdt_varid);
+      nc_def_var(ncid, "dcds", NC_FLOAT, 1, &dimid, &dcds_varid);
+      nc_def_var(ncid, "dcdhs", NC_FLOAT, 1, &dimid, &dcdhs_varid);
+      nc_def_var(ncid, "dcdhi", NC_FLOAT, 1, &dimid, &dcdhi_varid);
+      nc_def_var(ncid, "dcdsi", NC_FLOAT, 1, &dimid, &dcdsi_varid);
+      nc_def_var(ncid, "dcdtsfc", NC_FLOAT, 1, &dimid, &dcdtsfc_varid);
+      nc_def_var(ncid, "dcdtair", NC_FLOAT, 1, &dimid, &dcdtair_varid);
+
+      nc_enddef(ncid);
+
+      nc_put_var_float(ncid, lon_varid, lon.data());
+      nc_put_var_float(ncid, lat_varid, lat.data());
+      nc_put_var_float(ncid, aice_varid, ice_original.data());
+      nc_put_var_float(ncid, aice_ffnn_varid, ice_ffnn.data());
+      nc_put_var_float(ncid, dcdt_varid, dcdt.data());
+      nc_put_var_float(ncid, dcds_varid, dcds.data());
+      nc_put_var_float(ncid, dcdhs_varid, dcdhs.data());
+      nc_put_var_float(ncid, dcdhi_varid, dcdhi.data());
+      nc_put_var_float(ncid, dcdsi_varid, dcdsi.data());
+      nc_put_var_float(ncid, dcdtsfc_varid, dcdtsfc.data());
+      nc_put_var_float(ncid, dcdtair_varid, dcdtair.data());
+
+      nc_close(ncid);
     }
   };
 }  // namespace soca

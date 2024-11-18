@@ -21,7 +21,7 @@ include( soca_compiler_flags )
 ################################################################################
 # Dependencies
 ################################################################################
-find_package( NetCDF REQUIRED COMPONENTS Fortran C CXX)
+find_package( NetCDF REQUIRED COMPONENTS Fortran C)
 find_package( gsl-lite REQUIRED HINTS $ENV{gsl_list_DIR})
 find_package( eckit  1.24.4   REQUIRED)
 find_package( fckit  0.11.0   REQUIRED)

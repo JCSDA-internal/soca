@@ -30,7 +30,7 @@ target_include_directories(soca PUBLIC
   $<INSTALL_INTERFACE:include/soca>)
 
 target_link_libraries( soca PUBLIC NetCDF::NetCDF_Fortran )
-target_link_libraries( soca PUBLIC NetCDF::NetCDF_CXX )
+target_link_libraries( soca PUBLIC NetCDF::NetCDF_C )
 target_link_libraries( soca PUBLIC fckit )
 target_link_libraries( soca PUBLIC atlas )
 target_link_libraries( soca PUBLIC atlas_f )

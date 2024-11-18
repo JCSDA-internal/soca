@@ -101,6 +101,6 @@ ecbuild_add_executable( TARGET  soca_linearization_error.x
 if(Torch_FOUND)
   ecbuild_add_executable( TARGET  soca_ice_emulator.x
                         SOURCES IceEmul.cc
-                        LIBS    soca NetCDF::NetCDF_CXX
+                        LIBS    soca NetCDF::NetCDF_C
                       )
 endif()
