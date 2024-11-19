@@ -37,6 +37,7 @@ set( soca_test_input
   testinput/dirac_diffusion.yml
   testinput/dirac_diffusion_lowres.yml
   testinput/dirac_mlbalance.yml
+  testinput/dirac_parametric_ocean_stddev.yml
   testinput/dirac_soca_cor_nicas_scales.yml
   testinput/dirac_soca_cov.yml
   testinput/dirac_socahyb_cov.yml
@@ -82,14 +83,12 @@ set( soca_test_input
   testinput/parameters_bump_loc.yml
   testinput/parameters_diffusion.yml
   testinput/parameters_diffusion_lowres.yml
-  testinput/parametric_stddev.yml
   testinput/setcorscales.yml
   testinput/sqrtvertloc.yml
   testinput/state.yml
   testinput/varchange_ana2model.yml
   testinput/varchange_balance_TSSSH.yml
   testinput/varchange_balance.yml
-  testinput/varchange_bkgerrgodas.yml
   testinput/varchange_bkgerrsoca_stddev.yml
   testinput/varchange_bkgerrsoca.yml
 )
@@ -117,6 +116,7 @@ set( soca_test_ref
   testref/convertstate.test
   testref/diffstates.test
   testref/dirac_diffusion.test
+  testref/dirac_parametric_ocean_stddev.test
   testref/dirac_diffusion_lowres.test
   testref/dirac_soca_cor_nicas_scales.test
   testref/dirac_soca_cov.test
@@ -143,7 +143,6 @@ set( soca_test_ref
   testref/parameters_bump_cor_nicas.test
   testref/parameters_bump_cov.test
   testref/parameters_bump_loc.test
-  testref/parametric_stddev.test
   testref/setcorscales.test
   testref/sqrtvertloc.test
 )
@@ -421,9 +420,6 @@ soca_add_test( NAME varchange_bkgerrsoca_stddev
                SRC  TestVariableChange.cc
                TEST_DEPENDS test_soca_gridgen )
 
-soca_add_test( NAME varchange_bkgerrgodas
-               SRC  TestVariableChange.cc
-               TEST_DEPENDS test_soca_gridgen )
 
 # Observation localization methods
 #---------------------------------------------------------------------------------------------------
@@ -545,11 +541,6 @@ soca_add_test( NAME ensmeanandvariance
                EXE  soca_ensmeanandvariance.x
                TEST_DEPENDS test_soca_gridgen )
 
-soca_add_test( NAME parametric_stddev
-               EXE  soca_convertincrement.x
-              #  NOTRAPFPE
-               TEST_DEPENDS test_soca_gridgen )
-
 soca_add_test( NAME ensrecenter
                EXE  soca_ensrecenter.x
                TEST_DEPENDS test_soca_gridgen )
@@ -610,6 +601,10 @@ soca_add_test( NAME dirac_diffusion
                EXE soca_error_covariance_toolbox.x
                TEST_DEPENDS test_soca_gridgen
                             test_soca_parameters_diffusion )
+
+soca_add_test( NAME dirac_parametric_ocean_stddev
+                EXE soca_error_covariance_toolbox.x
+                TEST_DEPENDS test_soca_gridgen )
 
 soca_add_test( NAME dirac_diffusion_lowres
                EXE soca_error_covariance_toolbox.x

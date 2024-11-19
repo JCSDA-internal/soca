@@ -16,7 +16,7 @@ implicit none
 
 private
 public :: write2pe, soca_str2int, soca_adjust, &
-          soca_rho, soca_diff, soca_mld, nc_check, soca_remap_idw, &
+          soca_rho, soca_diff, soca_mld, nc_check, &
           soca_stencil_interp, soca_stencil_neighbors
 
 ! ------------------------------------------------------------------------------
@@ -183,81 +183,6 @@ subroutine soca_str2int(str, int)
   read(str,*)  int
 end subroutine soca_str2int
 
-
-! ------------------------------------------------------------------------------
-!> inverse distance weighted remaping (modified Shepard's method)
-subroutine soca_remap_idw(lon_src, lat_src, data_src, lon_dst, lat_dst, data_dst)
-  real(kind_real), intent(in) :: lon_src(:)
-  real(kind_real), intent(in) :: lat_src(:)
-  real(kind_real), intent(in) :: data_src(:)
-  real(kind_real), intent(in) :: lon_dst(:,:)
-  real(kind_real), intent(in) :: lat_dst(:,:)
-  real(kind_real), intent(inout) :: data_dst(:,:)
-
-  integer, parameter :: nn_max = 10
-  real(kind_real), parameter :: idw_pow = 2.0
-
-  integer :: idx(nn_max)
-  integer :: n_src, i, j, n, nn
-  real(kind_real) :: dmax, r, w(nn_max),  dist(nn_max)
-  type(atlas_geometry) :: ageometry
-  type(atlas_indexkdtree) :: kd
-
-  ! create kd tree
-  n_src = size(lon_src)
-  ageometry = atlas_geometry("UnitSphere")
-  kd = atlas_indexkdtree(ageometry)
-  call kd%reserve(n_src)
-  call kd%build(n_src, lon_src, lat_src)
-
-  ! remap
-  do i = 1, size(data_dst, dim=1)
-    do j = 1, size(data_dst, dim=2)
-
-      ! get nn_max nearest neighbors
-      call kd%closestPoints(lon_dst(i,j), lat_dst(i,j), nn_max, idx)
-
-      ! get distances. Add a small offset so there is never any 0 values
-      do n=1,nn_max
-        dist(n) = ageometry%distance(lon_dst(i,j), lat_dst(i,j), &
-                                     lon_src(idx(n)), lat_src(idx(n)))
-      end do
-      dist = dist + 1e-6
-
-      ! truncate the list if the last points are the same distance.
-      ! This is needed to ensure reproducibility across machines.
-      ! The last point is always removed (becuase we don't know if it would
-      ! have been identical to the one after it)
-      nn=nn_max-1
-      do n=nn_max-1, 1, -1
-        if (dist(n) /= dist(nn_max)) exit
-        nn = n-1
-      end do
-
-      if (nn <= 0 ) call fckit_exception%abort( &
-        "No valid points found in IDW remapping, uh oh.")
-
-      ! calculate weights based on inverse distance
-      dmax = maxval(dist(1:nn))
-      w = 0.0
-      do n=1,nn
-        w(n) = ((dmax-dist(n)) / (dmax*dist(n))) ** idw_pow
-      end do
-      w = w / sum(w)
-
-      ! calculate final value
-      r = 0.0
-      do n=1,nn
-        r = r + data_src(idx(n))*w(n)
-      end do
-      data_dst(i,j) = r
-
-    end do
-  end do
-
-  ! done, cleanup
-  call kd%final()
-end subroutine soca_remap_idw
 
 ! ------------------------------------------------------------------------------
 !> find the 6 stencil neighbors

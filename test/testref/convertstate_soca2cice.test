@@ -1,27 +1,27 @@
-Input state:
+Input state: 
   Valid time: 2018-04-15T00:00:00Z
-sea_water_potential_temperature   min=-1.8883899372702533   max=31.7004645720658580   mean=6.0192761834558457
-             sea_water_salinity   min=10.7210460395083924   max=40.4416591897031168   mean=34.5444024551186359
+sea_water_potential_temperature   min=-1.8883899372702533   max=31.7004645720658580   mean=6.0192772900527789
+             sea_water_salinity   min=10.7210460395083924   max=40.4416591897031168   mean=34.5443997897729602
        sea_water_cell_thickness   min=0.0009999999999977   max=1345.6400000000003274   mean=128.6280642064969300
- sea_ice_area_fraction   min=-0.0001426936911699   max=1.0000042197240977   mean=0.1175175651714392
-     sea_ice_thickness   min=0.0000000000000000   max=4.0326673084246947   mean=0.4712515705773916
-sea_ice_snow_thickness   min=0.0000000000000000   max=1.2712833951042413   mean=0.0886865877527975
-Variable transform:
+          sea_ice_area_fraction   min=-0.0001291896179326   max=1.0000039848914242   mean=0.1175172743974210
+              sea_ice_thickness   min=0.0000000000000000   max=4.0326673084246947   mean=0.4712515705773916
+         sea_ice_snow_thickness   min=0.0000000000000000   max=1.2712833951042413   mean=0.0886865877527975
+Variable transform: 
 Variable change from: 6 variables: sea_water_potential_temperature, sea_water_salinity, sea_water_cell_thickness, sea_ice_area_fraction, sea_ice_thickness, sea_ice_snow_thickness
 Variable change to: 6 variables: sea_water_potential_temperature, sea_water_salinity, sea_water_cell_thickness, sea_ice_area_fraction, sea_ice_thickness, sea_ice_snow_thickness
-State after variable transform:
+State after variable transform: 
   Valid time: 2018-04-15T00:00:00Z
-sea_water_potential_temperature   min=-1.8883899372702533   max=31.7004645720658580   mean=6.0192761834558457
-             sea_water_salinity   min=10.7210460395083924   max=40.4416591897031168   mean=34.5444024551186359
+sea_water_potential_temperature   min=-1.8883899372702533   max=31.7004645720658580   mean=6.0192772900527789
+             sea_water_salinity   min=10.7210460395083924   max=40.4416591897031168   mean=34.5443997897729602
        sea_water_cell_thickness   min=0.0009999999999977   max=1345.6400000000003274   mean=128.6280642064969300
- sea_ice_area_fraction   min=0.0000000000000000   max=1.0000000000000002   mean=0.1167739648983999
-     sea_ice_thickness   min=0.0000000000000000   max=4.0326673084246947   mean=0.2834618983600976
-sea_ice_snow_thickness   min=0.0000000000000000   max=1.2712833951042413   mean=0.0433671009341639
-Output state:
+          sea_ice_area_fraction   min=0.0000000000000000   max=1.0000000000000002   mean=0.1167681693497665
+              sea_ice_thickness   min=0.0000000000000000   max=4.0326673084246938   mean=0.2834602842476014
+         sea_ice_snow_thickness   min=0.0000000000000000   max=1.2712833951042413   mean=0.0433667680229471
+Output state: 
   Valid time: 2018-04-15T00:00:00Z
-sea_water_potential_temperature   min=-1.8883899372702533   max=31.7004645720658580   mean=6.0192761834558457
-             sea_water_salinity   min=10.7210460395083924   max=40.4416591897031168   mean=34.5444024551186359
+sea_water_potential_temperature   min=-1.8883899372702533   max=31.7004645720658580   mean=6.0192772900527789
+             sea_water_salinity   min=10.7210460395083924   max=40.4416591897031168   mean=34.5443997897729602
        sea_water_cell_thickness   min=0.0009999999999977   max=1345.6400000000003274   mean=128.6280642064969300
- sea_ice_area_fraction   min=0.0000000000000000   max=1.0000000000000002   mean=0.1167739648983999
-     sea_ice_thickness   min=0.0000000000000000   max=4.0326673084246947   mean=0.2834618983600976
-sea_ice_snow_thickness   min=0.0000000000000000   max=1.2712833951042413   mean=0.0433671009341639
+          sea_ice_area_fraction   min=0.0000000000000000   max=1.0000000000000002   mean=0.1167681693497665
+              sea_ice_thickness   min=0.0000000000000000   max=4.0326673084246938   mean=0.2834602842476014
+         sea_ice_snow_thickness   min=0.0000000000000000   max=1.2712833951042413   mean=0.0433667680229471
