@@ -66,18 +66,6 @@ namespace soca {
     const eckit::mpi::Comm & getComm() const { return comm_; }
     const eckit::Configuration & getConfig() const { return config_; }
 
-    // Setters
-    void setInputSize(int inputSize) { inputSize_ = inputSize; }
-    void setOutputSize(int outputSize) { outputSize_ = outputSize; }
-    void setHiddenSize(int hiddenSize) { hiddenSize_ = hiddenSize; }
-    void setKernelSize(int kernelSize) { kernelSize_ = kernelSize; }
-    void setStride(int stride) { stride_ = stride; }
-    void setBatchSize(int batchSize) { batchSize_ = batchSize; }
-    void setEpochs(size_t epochs) { epochs_ = epochs; }
-    void setModelOutputFileName(const std::string & modelOutputFileName)
-                               { modelOutputFileName_ = modelOutputFileName; }
-    void setModel(const std::shared_ptr<Net> & model) { model_ = model; }
-
     // Constructor
     BaseEmul(const eckit::Configuration & config, const eckit::mpi::Comm & comm):
       comm_(comm), config_(config),
