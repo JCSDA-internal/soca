@@ -47,7 +47,7 @@ end type soca_soca2cice_params
 type, public :: soca_soca2cice
    type(fckit_mpi_comm) :: f_comm
    integer :: myrank
-   integer :: ncat, ni, nj, ice_lev=7, sno_lev=1
+   integer :: ncat, ni, nj, ice_lev, sno_lev
    character(len=:), allocatable :: rst_filename
    character(len=:), allocatable :: rst_out_filename
    type(cice_state) :: cice
@@ -99,7 +99,7 @@ subroutine soca_soca2cice_setup(self, geom)
   heat_capacity = .true.
 
   ! initialize cice
-  call self%cice%init(geom, self%rst_filename, self%rst_out_filename)
+  call self%cice%init(geom, self%rst_filename, self%rst_out_filename, self%ice_lev, self%sno_lev)
 
   ! read cice fields from restart
   call self%cice%read(geom)
