@@ -33,7 +33,7 @@ namespace soca {
       : Application(comm) {}
     static const std::string classname() {return "soca::SetCorScales";}
 
-    int execute(const eckit::Configuration & fullConfig, bool /*validate*/) const {
+    int execute(const eckit::Configuration & fullConfig) const {
       //  setup geometry
       const eckit::LocalConfiguration resolConfig(fullConfig, "resolution");
       const Geometry resol(resolConfig, this->getComm());
