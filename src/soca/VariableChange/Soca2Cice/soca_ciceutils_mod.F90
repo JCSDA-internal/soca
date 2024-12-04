@@ -26,7 +26,7 @@ type, public :: agg_cice_state
 end type agg_cice_state
 
 type, public :: cice_state
-   integer :: ncat, ni, nj, ice_lev=7, sno_lev=1
+   integer :: ncat, ni, nj, ice_lev, sno_lev
    integer :: isc, iec, jsc, jec   ! compute domain
    integer :: isd, ied, jsd, jed   ! data domain
    logical :: initialized = .false.
@@ -60,11 +60,12 @@ contains
 
 
 ! ------------------------------------------------------------------------------
-subroutine soca_ciceutils_init(self, geom, rst_filename, rst_out_filename, global)
+subroutine soca_ciceutils_init(self, geom, rst_filename, rst_out_filename, ice_lev, sno_lev, global)
   class(cice_state),    intent(inout) :: self
   type(soca_geom), target, intent(in) :: geom
   character(len=*),        intent(in) :: rst_filename
   character(len=*),        intent(in) :: rst_out_filename
+  integer,                 intent(in) :: ice_lev, sno_lev
   logical,    optional, intent(inout) :: global
   integer(kind=4) :: ncid, dimid, varid
   logical :: isglobal
@@ -99,6 +100,9 @@ subroutine soca_ciceutils_init(self, geom, rst_filename, rst_out_filename, globa
   call nc_check(nf90_inquire_dimension(ncid, dimid, len = self%nj))
   call nc_check(nf90_close(ncid))
 
+  self%ice_lev = ice_lev
+  self%sno_lev = sno_lev
+
   ! Allocate seaice fields
   if (isglobal) then
      call self%alloc(1, self%ni, 1, self%nj)
@@ -130,7 +134,7 @@ subroutine soca_ciceutils_gather(self, glb, geom)
 
   ! allocate the global cice_state data structure
   if (geom%f_comm%rank() == mpp_root_pe()) then
-     call glb%init(geom, self%rst_filename, self%rst_out_filename, global=isglobal)
+     call glb%init(geom, self%rst_filename, self%rst_out_filename, self%ice_lev, self%sno_lev, global=isglobal)
      allocate(var2d(self%ni, self%nj))
   end if
 
