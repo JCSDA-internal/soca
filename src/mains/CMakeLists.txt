@@ -103,4 +103,8 @@ if(Torch_FOUND)
                         SOURCES IceEmul.cc
                         LIBS    soca NetCDF::NetCDF_C
                       )
+  ecbuild_add_executable( TARGET  soca_ice_emul_data_prep.x
+                        SOURCES IceEmulDataPrep.cc
+                        LIBS    soca
+                      )
 endif()

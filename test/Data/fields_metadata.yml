@@ -87,6 +87,14 @@
   io file: ice
   io name: sice_h
 
+- name: sea_water_temperature_under_ice
+  io file: ice
+  io name: sst_h
+
+- name: sea_water_salinity_under_ice
+  io file: ice
+  io name: sss_h
+
 # --------------------------------------------------------------------------------------------------
 # ice state variables with category dimension
 # --------------------------------------------------------------------------------------------------

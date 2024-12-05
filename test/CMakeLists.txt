@@ -37,6 +37,7 @@ set( soca_test_input
   testinput/diffstates.yml
   testinput/dirac_diffusion.yml
   testinput/dirac_diffusion_lowres.yml
+  testinput/prepdata_mlbalance.yml
   testinput/train_mlbalance.yml
   testinput/dirac_mlbalance.yml
   testinput/dirac_parametric_ocean_stddev.yml
@@ -605,6 +606,9 @@ soca_add_test( NAME dirac_diffusion_lowres
 
 
 if( Torch_FOUND )
+  soca_add_test( NAME prepdata_mlbalance
+                 EXE soca_ice_emul_data_prep.x)
+
   soca_add_test( NAME train_mlbalance
                  EXE soca_ice_emulator.x)
 
