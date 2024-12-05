@@ -169,7 +169,7 @@ subroutine check_ice_bounds(self, geom, xm)
   call xm%get("sea_ice_snow_thickness",hsno_ana)
 
   ! check seaice fraction bounds
-  where (aice_ana%val<0_kind_real)
+  where (aice_ana%val<1e-4_kind_real)
      aice_ana%val = 0_kind_real
   end where
   where (aice_ana%val>1_kind_real)
@@ -226,8 +226,8 @@ subroutine shuffle_ice(self, geom, xm)
           seaice_edge = self%antarctic%seaice_edge
         endif
         if (self%cice%aice(i,j).gt.seaice_edge) cycle     ! skip if the background has more ice than the threshold
-        if (aice.le.0.0_kind_real) cycle                       ! 0 ice analysis is treated elsewhere
-
+        if (aice.le.0.0_kind_real) cycle                  ! 0 ice analysis is treated elsewhere
+        if (self%cice%agg%n_src == 0) cycle               ! skip if there are no points on this task with ice in the background
         ! find neighbors. TODO (G): add constraint for thickness and snow depth as well
         call self%kdtree%closestPoints(geom%lon(i,j), geom%lat(i,j), nn_max, idx)
         do k = 1, nn_max
