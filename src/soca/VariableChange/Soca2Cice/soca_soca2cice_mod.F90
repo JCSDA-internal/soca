@@ -169,7 +169,7 @@ subroutine check_ice_bounds(self, geom, xm)
   call xm%get("sea_ice_snow_thickness",hsno_ana)
 
   ! check seaice fraction bounds
-  where (aice_ana%val<1e-4_kind_real)
+  where (aice_ana%val<0_kind_real)
      aice_ana%val = 0_kind_real
   end where
   where (aice_ana%val>1_kind_real)
