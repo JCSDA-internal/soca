@@ -110,8 +110,9 @@ background error:
       dcdt:
         filename: data_static/72x35x25/dcdt.nc
         name: dcdt
-      input variables: *soca_vars
+    input variables: *soca_vars
     output variables: *soca_vars
+    add vars and return: True
 
 members: 5
 perturbed variables: *soca_vars

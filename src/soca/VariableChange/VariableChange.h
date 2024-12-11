@@ -56,6 +56,7 @@ class VariableChange : public util::Printable {
   void print(std::ostream &) const override;
   std::unique_ptr<VariableChangeBase> variableChange_;
   std::unique_ptr<vader::Vader> vader_;
+  bool add_vars_and_return_;
 };
 
 // -----------------------------------------------------------------------------

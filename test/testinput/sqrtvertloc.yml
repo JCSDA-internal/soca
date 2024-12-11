@@ -72,6 +72,7 @@ background error:
   linear variable change:
     input variables: *soca_vars
     output variables: *soca_vars
+    add vars and return: True
     linear variable changes:
 
     - linear variable change name: BalanceSOCA

@@ -31,10 +31,20 @@ std::map<std::string, std::vector<std::string>> SocaVaderCookbook {
 // -----------------------------------------------------------------------------
 
 VariableChange::VariableChange(const eckit::Configuration & config,
-                               const Geometry & geometry) {
+                               const Geometry & geometry)
+: add_vars_and_return_() {
   util::Timer timer("soca::VariableChange", "VariableChange");
   VariableChangeParameters params;
   params.deserialize(config);
+
+  // Optionally the code will not perform any variable change. It will simply
+  // add the new variables that are in the var list (setting them to zero in
+  // the process) and returning.
+  add_vars_and_return_ =
+              params.variableChangeParametersWrapper.add_vars_and_return.value();
+  if (add_vars_and_return_) {
+    return;
+  }
 
   // setup vader
   eckit::LocalConfiguration vaderConfig, vaderCookbookConfig;
@@ -61,6 +71,20 @@ void VariableChange::changeVar(State & x, const oops::Variables & vars) const {
   Log::debug() << "VariableChange::changeVar vars out: "
                << vars << std::endl;
   util::Timer timer("soca::VariableChange", "changeVar");
+
+  // If user does not want to perform any variable changes, return
+  // -------------------------------------------------------------
+  if (add_vars_and_return_) {
+    // This option is to create a state that contains all the fields that are
+    // both input and output fields. This can be required for calling the B
+    // matrix when there is a linear variable change.
+    oops::Variables allVars = x.variables();
+    allVars += vars;
+    x.updateFields(allVars);
+    oops::Log::info() << "VariableChange::changeVar done (add and return)"
+                      << std::endl;
+    return;
+  }
 
   // TODO(travis) rename in/out variables so that skipping this
   // works for Model2Ana (i.e. we need rotated/unrotate u/v renamed different)
@@ -127,6 +151,21 @@ void VariableChange::changeVar(State & x, const oops::Variables & vars) const {
 void VariableChange::changeVarInverse(State & x,
                                       const oops::Variables & vars) const {
   util::Timer timer("soca::VariableChange", "changeVarInverse");
+
+  // If user does not want to perform any variable changes, return
+  // -------------------------------------------------------------
+  if (add_vars_and_return_) {
+    // This option is to create a state that contains all the fields that are
+    // both input and output fields. This can be required for calling the B
+    // matrix when there is a linear variable change.
+    oops::Variables allVars = x.variables();
+    allVars += vars;
+    x.updateFields(allVars);
+    oops::Log::info() << "VariableChange::changeVarInv done (add and return)"
+                      << std::endl;
+    return;
+  }
+
   changeVar(x, vars);
 }
 

@@ -108,6 +108,7 @@ cost function:
         linear variable change:
           input variables: *soca_an_vars
           output variables: *soca_an_vars
+          add vars and return: True
           linear variable changes:
 
           - linear variable change name: BalanceSOCA

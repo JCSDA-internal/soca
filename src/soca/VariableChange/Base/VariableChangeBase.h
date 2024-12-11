@@ -20,6 +20,7 @@
 #include "oops/util/parameters/ConfigurationParameter.h"
 #include "oops/util/parameters/HasParameters_.h"
 #include "oops/util/parameters/OptionalParameter.h"
+#include "oops/util/parameters/Parameter.h"
 #include "oops/util/parameters/Parameters.h"
 #include "oops/util/parameters/ParametersOrConfiguration.h"
 #include "oops/util/parameters/PolymorphicParameter.h"
@@ -75,6 +76,7 @@ class VariableChangeParametersWrapper : public oops::Parameters {
   oops::PolymorphicParameter<VariableChangeParametersBase,
                              VariableChangeFactory>
     variableChangeParameters{"variable change name", "default", this};
+  oops::Parameter<bool> add_vars_and_return{"add vars and return", false, this};
 };
 
 // -----------------------------------------------------------------------------
