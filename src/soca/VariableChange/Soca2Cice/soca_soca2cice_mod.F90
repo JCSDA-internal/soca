@@ -226,8 +226,8 @@ subroutine shuffle_ice(self, geom, xm)
           seaice_edge = self%antarctic%seaice_edge
         endif
         if (self%cice%aice(i,j).gt.seaice_edge) cycle     ! skip if the background has more ice than the threshold
-        if (aice.le.0.0_kind_real) cycle                       ! 0 ice analysis is treated elsewhere
-
+        if (aice.le.0.0_kind_real) cycle                  ! 0 ice analysis is treated elsewhere
+        if (self%cice%agg%n_src == 0) cycle               ! skip if there are no points on this task with ice in the background
         ! find neighbors. TODO (G): add constraint for thickness and snow depth as well
         call self%kdtree%closestPoints(geom%lon(i,j), geom%lat(i,j), nn_max, idx)
         do k = 1, nn_max
