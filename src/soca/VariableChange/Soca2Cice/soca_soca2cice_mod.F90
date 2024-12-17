@@ -202,6 +202,7 @@ subroutine shuffle_ice(self, geom, xm)
   integer :: minidx(1), nn_max
   integer, allocatable :: idx(:)
   real(kind=kind_real), allocatable :: testmin(:)
+  type(cice_state) :: cice_in
 
   ! Make sure the search tree is smaller than the data size
   nn_max = min(self%cice%agg%n_src, 9)
@@ -212,6 +213,7 @@ subroutine shuffle_ice(self, geom, xm)
   call xm%get("sea_water_salinity",s_ana)
   call xm%get("sea_ice_area_fraction",aice_ana)
 
+  call cice_in%copydata(self%cice)
   do i = geom%isc, geom%iec
      do j = geom%jsc, geom%jec
 
@@ -231,28 +233,28 @@ subroutine shuffle_ice(self, geom, xm)
         ! find neighbors. TODO (G): add constraint for thickness and snow depth as well
         call self%kdtree%closestPoints(geom%lon(i,j), geom%lat(i,j), nn_max, idx)
         do k = 1, nn_max
-           testmin(k) = abs(self%cice%aice(self%cice%agg%ij(1, idx(k)), self%cice%agg%ij(2, idx(k))) - aice)
+           testmin(k) = abs(cice_in%aice(self%cice%agg%ij(1, idx(k)), self%cice%agg%ij(2, idx(k))) - aice)
         end do
         minidx = minloc(testmin) ! I know, I rock.
         ii = self%cice%agg%ij(1, idx(minidx(1)))
         jj = self%cice%agg%ij(2, idx(minidx(1)))
 
         ! update local no ice state with closest non-0 ice state
-        self%cice%aice(i, j) = self%cice%aice(ii, jj)
-        self%cice%aicen(i, j,:) = self%cice%aicen(ii, jj, :)
-        self%cice%vicen(i, j,:) = self%cice%vicen(ii, jj, :)
-        self%cice%vsnon(i, j,:) = self%cice%vsnon(ii, jj, :)
-        self%cice%apnd(i, j,:) = self%cice%apnd(ii, jj, :)
-        self%cice%hpnd(i, j,:) = self%cice%hpnd(ii, jj, :)
-        self%cice%ipnd(i, j,:) = self%cice%ipnd(ii, jj, :)
-        self%cice%tsfcn(i, j,:) = self%cice%tsfcn(ii, jj, :)
+        self%cice%aice(i, j) = cice_in%aice(ii, jj)
+        self%cice%aicen(i, j,:) = cice_in%aicen(ii, jj, :)
+        self%cice%vicen(i, j,:) = cice_in%vicen(ii, jj, :)
+        self%cice%vsnon(i, j,:) = cice_in%vsnon(ii, jj, :)
+        self%cice%apnd(i, j,:) = cice_in%apnd(ii, jj, :)
+        self%cice%hpnd(i, j,:) = cice_in%hpnd(ii, jj, :)
+        self%cice%ipnd(i, j,:) = cice_in%ipnd(ii, jj, :)
+        self%cice%tsfcn(i, j,:) = cice_in%tsfcn(ii, jj, :)
 
         do k = 1, self%ice_lev
-           self%cice%qice(i, j,: , k) = self%cice%qice(ii, jj, :, k)
-           self%cice%sice(i, j,: , k) = self%cice%sice(ii, jj, :, k)
+           self%cice%qice(i, j,: , k) = cice_in%qice(ii, jj, :, k)
+           self%cice%sice(i, j,: , k) = cice_in%sice(ii, jj, :, k)
         end do
         do k = 1, self%sno_lev
-           self%cice%qsno(i, j,: , k) = self%cice%qsno(ii, jj, :, k)
+           self%cice%qsno(i, j,: , k) = cice_in%qsno(ii, jj, :, k)
         end do
      end do
   end do

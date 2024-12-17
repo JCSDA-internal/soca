@@ -48,6 +48,7 @@ type, public :: cice_state
 contains
   procedure :: init => soca_ciceutils_init
   procedure :: alloc => soca_ciceutils_alloc
+  procedure :: copydata => soca_ciceutils_copydata
   procedure :: read => soca_ciceutils_read
   procedure :: write => soca_ciceutils_write
   procedure :: gather => soca_ciceutils_gather
@@ -224,6 +225,46 @@ subroutine soca_ciceutils_alloc(self, isd, ied, jsd, jed)
   allocate(self%sice(isd:ied, jsd:jed, ncat, ice_lev));   self%sice = 0.0_kind_real
 
 end subroutine soca_ciceutils_alloc
+
+! ------------------------------------------------------------------------------
+subroutine soca_ciceutils_copydata(self, other)
+  class(cice_state), intent(inout) :: self
+  class(cice_state),    intent(in) :: other
+  integer :: isd, ied, jsd, jed
+  integer :: ncat, ice_lev, sno_lev
+
+  self%ncat = other%ncat; ncat = other%ncat
+  self%ice_lev = other%ice_lev; ice_lev = other%ice_lev
+  self%sno_lev = other%sno_lev; sno_lev = other%sno_lev
+  self%ni = other%ni
+  self%nj = other%nj
+  self%isc = other%isc
+  self%iec = other%iec
+  self%jsc = other%jsc
+  self%jec = other%jec
+  self%isd = other%isd; isd = other%isd
+  self%ied = other%ied; ied = other%ied
+  self%jsd = other%jsd; jsd = other%jsd
+  self%jed = other%jed; jed = other%jed
+
+  allocate(self%iceumask(isd:ied, jsd:jed));      self%iceumask = other%iceumask
+
+  allocate(self%aice(isd:ied, jsd:jed));          self%aice = other%aice
+
+  allocate(self%aicen(isd:ied, jsd:jed, ncat));   self%aicen = other%aicen
+  allocate(self%vicen(isd:ied, jsd:jed, ncat));   self%vicen = other%vicen
+  allocate(self%vsnon(isd:ied, jsd:jed, ncat));   self%vsnon = other%vsnon
+
+  allocate(self%apnd(isd:ied, jsd:jed, ncat));    self%apnd = other%apnd
+  allocate(self%hpnd(isd:ied, jsd:jed, ncat));    self%hpnd = other%hpnd
+  allocate(self%ipnd(isd:ied, jsd:jed, ncat));    self%ipnd = other%ipnd
+
+  allocate(self%tsfcn(isd:ied, jsd:jed, ncat));           self%tsfcn = other%tsfcn
+  allocate(self%qsno(isd:ied, jsd:jed, ncat, sno_lev));   self%qsno = other%qsno
+  allocate(self%qice(isd:ied, jsd:jed, ncat, ice_lev));   self%qice = other%qice
+  allocate(self%sice(isd:ied, jsd:jed, ncat, ice_lev));   self%sice = other%sice
+
+end subroutine soca_ciceutils_copydata
 
 ! ------------------------------------------------------------------------------
 subroutine soca_ciceutils_read(self, geom)

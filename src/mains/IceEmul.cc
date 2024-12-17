@@ -22,7 +22,7 @@ namespace soca {
     static const std::string classname() {return "soca::IceEmulApp";}
 
     // -----------------------------------------------------------------------------
-    int execute(const eckit::Configuration & config, bool /*validate*/) const {
+    int execute(const eckit::Configuration & config) const {
       oops::Log::info() << "Initialize the FFNN" << std::endl;
       soca::IceEmul iceEmul(config, getComm());
 
