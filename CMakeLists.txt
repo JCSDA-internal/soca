@@ -43,6 +43,7 @@ if(DEFINED Torch_ROOT AND NOT Torch_ROOT STREQUAL "")
   # Temporary fix until Torch is properly installed as a cmake package
   include_directories("${Torch_ROOT}/include")
   include_directories("${Torch_ROOT}/include/torch/csrc/api/include")
+  include_directories("${Torch_ROOT}/include/torch/csrc/distributed/c10d")
 endif()
 
 # Optionally look for icepack

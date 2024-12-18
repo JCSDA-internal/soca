@@ -105,6 +105,6 @@ if(Torch_FOUND)
                       )
   ecbuild_add_executable( TARGET  soca_ice_emul_data_prep.x
                         SOURCES IceEmulDataPrep.cc
-                        LIBS    soca
+                        LIBS    soca torch_cpu
                       )
 endif()

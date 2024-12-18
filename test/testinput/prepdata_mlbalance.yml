@@ -1,0 +1,115 @@
+geometry:
+  geom_grid_file: data_generated/gridgen/soca_gridspec.72x35x25.nc
+  mom6_input_nml: data_static/72x35x25/input.nml
+  fields metadata: data_static/fields_metadata.yml
+
+backgrounds:
+  - date: 2018-04-15T00:00:00Z
+    read_from_file: 1
+    basename: data_static/72x35x25/
+    ocn_filename: restarts/MOM.res.nc
+    ice_filename: history/cice_history.nc
+    state variables:
+    - sea_ice_area_fraction              # aice
+    - snow_ice_surface_temperature       # tsfc
+    - sea_water_temperature_under_ice    # sst
+    - sea_water_salinity_under_ice       # sss
+    - bulk_ice_salinity                  # sice
+    - sea_ice_thickness                  # hi
+    - sea_ice_snow_thickness             # hs
+    - air_temperature                    # tair
+    - sea_water_potential_temperature
+    - sea_water_salinity
+  - date: 2018-04-15T00:00:00Z
+    read_from_file: 1
+    basename: data_static/72x35x25/
+    ocn_filename: restarts/MOM.res.nc
+    ice_filename: history/cice_history.nc
+    state variables:
+    - sea_ice_area_fraction              # aice
+    - snow_ice_surface_temperature       # tsfc
+    - sea_water_temperature_under_ice    # sst
+    - sea_water_salinity_under_ice       # sss
+    - bulk_ice_salinity                  # sice
+    - sea_ice_thickness                  # hi
+    - sea_ice_snow_thickness             # hs
+    - air_temperature                    # tair
+    - sea_water_potential_temperature
+    - sea_water_salinity
+  - date: 2018-04-15T00:00:00Z
+    read_from_file: 1
+    basename: data_static/72x35x25/
+    ocn_filename: restarts/MOM.res.nc
+    ice_filename: history/cice_history.nc
+    state variables:
+    - sea_ice_area_fraction              # aice
+    - snow_ice_surface_temperature       # tsfc
+    - sea_water_temperature_under_ice    # sst
+    - sea_water_salinity_under_ice       # sss
+    - bulk_ice_salinity                  # sice
+    - sea_ice_thickness                  # hi
+    - sea_ice_snow_thickness             # hs
+    - air_temperature                    # tair
+    - sea_water_potential_temperature
+    - sea_water_salinity
+  - date: 2018-04-15T00:00:00Z
+    read_from_file: 1
+    basename: data_static/72x35x25/
+    ocn_filename: restarts/MOM.res.nc
+    ice_filename: history/cice_history.nc
+    state variables:
+    - sea_ice_area_fraction              # aice
+    - snow_ice_surface_temperature       # tsfc
+    - sea_water_temperature_under_ice    # sst
+    - sea_water_salinity_under_ice       # sss
+    - bulk_ice_salinity                  # sice
+    - sea_ice_thickness                  # hi
+    - sea_ice_snow_thickness             # hs
+    - air_temperature                    # tair
+    - sea_water_potential_temperature
+    - sea_water_salinity
+  - date: 2018-04-15T00:00:00Z
+    read_from_file: 1
+    basename: data_static/72x35x25/
+    ocn_filename: restarts/MOM.res.nc
+    ice_filename: history/cice_history.nc
+    state variables:
+    - sea_ice_area_fraction              # aice
+    - snow_ice_surface_temperature       # tsfc
+    - sea_water_temperature_under_ice    # sst
+    - sea_water_salinity_under_ice       # sss
+    - bulk_ice_salinity                  # sice
+    - sea_ice_thickness                  # hi
+    - sea_ice_snow_thickness             # hs
+    - air_temperature                    # tair
+    - sea_water_potential_temperature
+    - sea_water_salinity
+  - date: 2018-04-15T00:00:00Z
+    read_from_file: 1
+    basename: data_static/72x35x25/
+    ocn_filename: restarts/MOM.res.nc
+    ice_filename: history/cice_history.nc
+    state variables:
+    - sea_ice_area_fraction              # aice
+    - snow_ice_surface_temperature       # tsfc
+    - sea_water_temperature_under_ice    # sst
+    - sea_water_salinity_under_ice       # sss
+    - bulk_ice_salinity                  # sice
+    - sea_ice_thickness                  # hi
+    - sea_ice_snow_thickness             # hs
+    - air_temperature                    # tair
+    - sea_water_potential_temperature
+    - sea_water_salinity
+
+output file: prepdata_mlbalance.pt   # torch tensor native file format
+input variables:
+  - air_temperature
+  - snow_ice_surface_temperature
+  - sea_water_temperature_under_ice
+  - sea_water_salinity_under_ice
+  - sea_ice_snow_thickness
+  - sea_ice_thickness
+  - bulk_ice_salinity
+
+output variables:
+  - sea_ice_area_fraction
