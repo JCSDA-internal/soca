@@ -28,7 +28,7 @@ namespace soca {
       : Application(comm) {}
     static const std::string classname() {return "soca::GridGen";}
 
-    int execute(const eckit::Configuration & fullConfig, bool /*validate*/) const {
+    int execute(const eckit::Configuration & fullConfig) const {
       //  Setup resolution
       const eckit::LocalConfiguration geomconfig(fullConfig, "geometry");
       const Geometry geom(geomconfig, this->getComm(), true);
