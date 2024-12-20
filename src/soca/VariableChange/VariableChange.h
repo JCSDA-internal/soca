@@ -13,7 +13,6 @@
 
 #include <boost/ptr_container/ptr_vector.hpp>
 
-#include "oops/base/VariableChangeParametersBase.h"
 #include "oops/util/parameters/Parameter.h"
 #include "oops/util/parameters/Parameters.h"
 #include "oops/util/Printable.h"
@@ -29,9 +28,8 @@ namespace soca {
 
 // -----------------------------------------------------------------------------
 
-class VariableChangeParameters : public oops::VariableChangeParametersBase {
-  OOPS_CONCRETE_PARAMETERS(VariableChangeParameters,
-                           oops::VariableChangeParametersBase)
+class VariableChangeParameters : public oops::Parameters {
+  OOPS_CONCRETE_PARAMETERS(VariableChangeParameters, oops::Parameters)
  public:
   // Wrapper to VariableChange parameters
   VariableChangeParametersWrapper variableChangeParametersWrapper{this};
