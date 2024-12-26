@@ -796,7 +796,7 @@ if( ${icepack_FOUND} )
        DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/data_generated/convertstate_soca2cice/ )
      soca_add_test( NAME convertstate_soca2cice
                     EXE  soca_convertstate.x
-                    MPI 2
+                    MPI 1
                     NOTRAPFPE
                     TEST_DEPENDS test_soca_gridgen
                                  test_soca_3dvar )

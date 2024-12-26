@@ -11,12 +11,12 @@ use fckit_exception_module, only: fckit_exception
 use fckit_mpi_module, only: fckit_mpi_comm
 use kinds, only: kind_real
 
-use icepack_itd
-use icepack_mushy_physics, only: liquidus_temperature_mush
-use icepack_therm_shared, only: l_brine, icepack_ice_temperature
+use icepack_itd, only: icepack_init_itd, cleanup_itd
+use icepack_warnings, only: icepack_warnings_flush
+use icepack_tracers, only: icepack_init_tracer_indices, nt_tsfc, nt_qice, nt_qsno, nt_sice
 use icepack_parameters, only: icepack_init_parameters, icepack_recompute_constants
 use icepack_parameters, only: ktherm, heat_capacity
-use icepack_parameters, only: rhos, Lfresh, cp_ice
+use icepack_therm_shared, only: l_brine
 
 use soca_geom_mod, only: soca_geom
 use soca_state_mod, only: soca_state
@@ -269,12 +269,22 @@ subroutine cleanup_ice(self, geom, xm)
   type(soca_geom), target, intent(in)  :: geom
   type(soca_state),      intent(inout) :: xm
 
-  integer :: i, j, k, n, n_src
+  integer :: i, j, k, n, n_src, ntracers
+  integer :: nt_tsfc_in, nt_qice_in, nt_qsno_in, nt_sice_in
+  real(kind=kind_real) :: aice, aice0
   type(soca_field), pointer :: t_ana, s_ana, aice_ana, hice_ana, hsno_ana
-
+  real(kind=kind_real) :: dt
   real(kind=kind_real), allocatable :: h_bounds(:)
-  real(kind=kind_real), allocatable :: zTin(:), zTsn(:), temp_sno_test
+  real(kind=kind_real), allocatable :: tracers(:,:)   ! (ntracers, ncat)
+  logical, allocatable :: first_ice(:)                ! (ncat) ! For bgc and S tracers. set to true if zapping ice.
+  integer, allocatable :: trcr_depend(:)              ! (ntracers), = 0 for aicen tracers, 1 for vicen, 2 for vsnon
+  real(kind=kind_real), allocatable :: trcr_base(:,:) ! (ntracers, 3);  = 0 or 1 depending on tracer dependency
+                                                      ! argument 2:  (1) aice, (2) vice, (3) vsno
+  integer, allocatable :: n_trcr_strata(:)            ! number of underlying tracer layers
+  integer, allocatable :: nt_strata(:,:)              ! indices of underlying tracer layers
+  real(kind=kind_real), allocatable :: fiso_ocn(:)    ! isotope flux to ocean     (kg/m^2/s)
 
+  dt = 900.0 ! randomly chosen
   ! pointers to soca fields (most likely an analysis)
   call xm%get("sea_water_potential_temperature",t_ana)
   call xm%get("sea_water_salinity",s_ana)
@@ -285,57 +295,63 @@ subroutine cleanup_ice(self, geom, xm)
   ! get thickness category bounds
   allocate(h_bounds(0:self%ncat))
   call icepack_init_itd(self%ncat, h_bounds) ! TODO (G): move that in setup
+  ! initialize tracers (ice/snow temperature, ice and snow enthalpies, ice salinity)
+  ntracers = 4
+  allocate(tracers(1+2*self%ice_lev+self%sno_lev, self%ncat))
+  allocate(trcr_depend(ntracers), trcr_base(ntracers, 3))
+  allocate(n_trcr_strata(ntracers), nt_strata(ntracers, max(self%ice_lev, self%sno_lev)))
+  trcr_base(:, :) = 0.0
+  trcr_depend(1) = 0; trcr_base(1, 1) = 1.0 ! Tsfcn is ice area tracer
+  trcr_depend(2) = 1; trcr_base(2, 2) = 1.0 ! qice is ice volume tracer
+  trcr_depend(3) = 2; trcr_base(3, 3) = 1.0 ! qsno is snow volume tracer
+  trcr_depend(4) = 1; trcr_base(4, 2) = 1.0 ! sice is ice volume tracer
 
-  ! TODO (G): re-bin sea-ice that is out of the thickness category
+  nt_tsfc_in = 1
+  n_trcr_strata(1) = 1                      ! Tsfcn is 1 level
+  nt_strata(1, 1) = nt_tsfc_in
 
-  ! reset sea-ice where ice fraction of the category is 0
-  ! and check/fix snow temperature
-  allocate(zTin(self%ice_lev), zTsn(self%sno_lev))
+  nt_qice_in = nt_tsfc_in + 1
+  n_trcr_strata(2) = self%ice_lev           ! qice is ice_lev levels
+  nt_strata(2, 1:self%ice_lev) = [(nt_qice_in + i - 1, i = 1, self%ice_lev)]
+
+  nt_qsno_in = nt_qice_in + self%ice_lev
+  n_trcr_strata(3) = self%sno_lev           ! qsno is sno_lev levels
+  nt_strata(3, 1:self%sno_lev) = [(nt_qsno_in + i - 1, i = 1, self%sno_lev)]
+
+  nt_sice_in = nt_qsno_in + self%sno_lev
+  n_trcr_strata(4) = self%ice_lev           ! sice is ice_lev levels
+  nt_strata(4, 1:self%ice_lev) = [(nt_sice_in + i - 1, i = 1, self%ice_lev)]
+  call icepack_init_tracer_indices(nt_tsfc_in=nt_tsfc_in, nt_qice_in=nt_qice_in, &
+                                   nt_qsno_in=nt_qsno_in, nt_sice_in=nt_sice_in)
+  allocate(first_ice(self%ncat))
+  first_ice(:) = .true.
+
   do i = geom%isc, geom%iec
      do j = geom%jsc, geom%jec
-        if (aice_ana%val(i,j,1).eq.0.0_kind_real) cycle
-
-        do k = 1, self%ncat
-           ! zero out enthalpy if no ice
-           if (self%cice%aicen(i,j,k).eq.0.0_kind_real) then
-              self%cice%vicen(i,j,k) = 0_kind_real
-              self%cice%vsnon(i,j,k) = 0_kind_real
-
-              self%cice%apnd(i,j,k) = 0_kind_real
-              self%cice%hpnd(i,j,k) = 0_kind_real
-              self%cice%ipnd(i,j,k) = 0_kind_real
-
-              self%cice%qice(i,j,k,:) = 0_kind_real
-              self%cice%sice(i,j,k,:) = 0_kind_real
-              self%cice%qsno(i,j,k,:) = 0_kind_real
-
-              self%cice%tsfcn(i,j,k) = liquidus_temperature_mush(s_ana%val(i,j,1))
-           else
-              ! Check snow temperature and adjust if out of wack
-              ! for future ref, vertical geometry from top to bottom:
-              ! T surface                (tsfcn)
-              ! T snow level 1           (from qsno)
-              ! ...
-              ! T snow level sno_lev
-              ! T ice level 1            (from qice)
-              ! ...
-              ! T ice level ice_lev
-              ! Ocean T level 1          (from MOM)
-              do n = 1, self%ice_lev
-                 zTin(n) = icepack_ice_temperature(self%cice%qice(i,j,k,n), self%cice%sice(i,j,k,n))
-              end do
-              zTsn(1) = (Lfresh + self%cice%qsno(i,j,k,1)/rhos)/cp_ice
-              temp_sno_test = 0.5_kind_real*(self%cice%tsfcn(i,j,k) + zTin(1))
-
-              ! TODO (G): the 2 deg departure check is pulled out of thin ice ... or somethin' move
-              !           to config?
-              if (abs(zTsn(1)-temp_sno_test).lt.2.0_kind_real) cycle
-
-              ! if we're here, there's a problem with snow, "fix" it!
-              self%cice%qsno(i,j,k,1) = rhos*(temp_sno_test*cp_ice - Lfresh)
-
-           end if
-        end do
+        ! setup tracers at this gridpoint
+        tracers(nt_tsfc,:) = self%cice%tsfcn(i,j,:)
+        do k = 1, self%ice_lev
+          tracers(nt_qice+k-1, :) = self%cice%qice(i,j,:,k)
+          tracers(nt_sice+k-1, :) = self%cice%sice(i,j,:,k)
+        enddo
+        do k = 1, self%sno_lev
+          tracers(nt_qsno+k-1, :) = self%cice%qsno(i,j,:,k)
+        enddo
+        ! call icepack_cleanup_itd: rebins thickness categories if necessary,
+        ! eliminates very small ice areas while conserving mass and energy
+        call cleanup_itd(dt, ntracers, self%ice_lev, self%sno_lev, self%ncat, &
+                         h_bounds, self%cice%aicen(i,j,:), tracers, &
+                         self%cice%vicen(i,j,:), self%cice%vsnon(i,j,:), &
+                         ! ice and total water concentration are computed in the call using aicen
+                         aice, aice0, &
+                         ! number of aerosol tracers, bio tracers, bio layers
+                         0, 0, 0, &
+                         ! aerosol flag, topo pond flag, heat capacity flag, flag for zapping ice for bgc and s tracers
+                         .false., .false., .true., first_ice, &
+                         ! tracer indices and sizes used in rebinning
+                         trcr_depend, trcr_base, n_trcr_strata, nt_strata, &
+                         fiso_ocn=fiso_ocn)
+        call icepack_warnings_flush(6)
      end do
   end do
 
@@ -347,6 +363,8 @@ subroutine cleanup_ice(self, geom, xm)
         hsno_ana%val(i,j,1) = sum(self%cice%vsnon(i,j,:))
      end do
   end do
+
+  deallocate(h_bounds, tracers, trcr_depend, trcr_base, n_trcr_strata, nt_strata, first_ice)
 
 end subroutine cleanup_ice
 
@@ -380,7 +398,7 @@ subroutine prior_dist_rescale(self, geom, xm)
           rescale_min_hice = self%antarctic%rescale_min_hice
           rescale_min_hsno = self%antarctic%rescale_min_hsno
         endif
-        if (self%cice%aice(i,j).lt.seaice_edge) cycle ! Only rescale within the icepack
+        if (self%cice%aice(i,j).le.seaice_edge) cycle ! Only rescale within the icepack
 
         ! rescale background to match aggregate ice concentration analysis
         alpha = aice_ana%val(i,j,1)/self%cice%aice(i,j)
