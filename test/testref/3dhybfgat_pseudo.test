@@ -1,22 +1,22 @@
 CostJb   : Nonlinear Jb = 0.0000000000000000e+00
 CostJo   : Nonlinear Jo(ADT) = 2.2476814235841482e+02, nobs = 99, Jo/n = 2.2703852763476244e+00, err = 1.0000000149011613e-01
 CostFunction: Nonlinear J = 2.2476814235841482e+02
-RPCGMinimizer: reduction in residual norm = 1.3320731298083168e-02
-CostFunction::addIncrement: Analysis:
+RPCGMinimizer: reduction in residual norm = 1.3279821542958451e-02
+CostFunction::addIncrement: Analysis: 
   Valid time: 2018-04-15T12:00:00Z
- sea_ice_area_fraction   min=-0.0055418849744159   max=1.0000886961479574   mean=0.1175402571169394
-     sea_ice_thickness   min=-0.2230316173203144   max=4.0326713715018041   mean=0.4658882274471515
-             sea_water_salinity   min=10.7132817362146326   max=40.4416122444350350   mean=34.5582955552305791
-    eastward_sea_water_velocity   min=-0.8226354655295237   max=0.6737204173717148   mean=-0.0001433805834471
-   northward_sea_water_velocity   min=-0.9645810399665027   max=0.9240991277707887   mean=0.0002003548627873
-sea_water_potential_temperature   min=-1.8651223187175390   max=31.8538874651658581   mean=6.0227097013390098
- sea_surface_height_above_geoid   min=-2.1134175476076029   max=0.8955198009313518   mean=-0.2984377780518056
+          sea_ice_area_fraction   min=-0.0055436533627182   max=1.0000887718458058   mean=0.1175402973460810
+              sea_ice_thickness   min=-0.2231845811459730   max=4.0326713728872239   mean=0.4658857474068551
+             sea_water_salinity   min=10.7132817362146326   max=40.4416122444350350   mean=34.5582482935720563
+    eastward_sea_water_velocity   min=-0.8226354883602678   max=0.6737206737669789   mean=-0.0001433749781897
+   northward_sea_water_velocity   min=-0.9645802473946695   max=0.9240992002698506   mean=0.0002003563361414
+sea_water_potential_temperature   min=-1.8651223187175390   max=31.8538874655882509   mean=6.0227102746676389
+ sea_surface_height_above_geoid   min=-2.1133324246109306   max=0.8957710504752534   mean=-0.2984314032216557
        sea_water_cell_thickness   min=0.0009999999999977   max=1345.6400000000007822   mean=128.6278147393432505
     ocean_mixed_layer_thickness   min=2.2805545996611403   max=4593.1693891607183104   mean=191.0555656854947131
                 sea_water_depth   min=2.2805545996611403   max=5658.3062783710120129   mean=1200.5220907214948056
 
 
 
-CostJb   : Nonlinear Jb = 6.4862665205739649
-CostJo   : Nonlinear Jo(ADT) = 113.1627081523070899, nobs = 99, Jo/n = 1.1430576581041121, err = 0.1000000014901161
-CostFunction: Nonlinear J = 119.6489746728810530
+CostJb   : Nonlinear Jb = 6.4429683342020123
+CostJo   : Nonlinear Jo(ADT) = 113.2961818352593468, nobs = 99, Jo/n = 1.1444058771238317, err = 0.1000000014901161
+CostFunction: Nonlinear J = 119.7391501694613538
