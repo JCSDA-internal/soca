@@ -81,6 +81,10 @@ class Soca2Cice: public VariableChangeBase {
     oops::RequiredParameter<OutputParameters> output{"cice output", this};
     oops::RequiredParameter<RedistributionParameters> arctic{"arctic", this};
     oops::RequiredParameter<RedistributionParameters> antarctic{"antarctic", this};
+    oops::Parameter<float> icepackTstep{"icepack time step",
+            "icepack time step used for thickness categories rebinning", 300, this};
+    oops::Parameter<int> shuffleStencilSize{"shuffle stencil size",
+            "stencil size used in the shuffle search", 9, this, {oops::minConstraint(9)}};
   };
 
   const std::string classname() {return "soca::Soca2Cice";}

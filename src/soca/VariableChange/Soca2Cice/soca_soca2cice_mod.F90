@@ -12,10 +12,11 @@ use fckit_mpi_module, only: fckit_mpi_comm
 use kinds, only: kind_real
 
 use icepack_itd, only: icepack_init_itd, cleanup_itd
-use icepack_warnings, only: icepack_warnings_flush
+use icepack_warnings, only: icepack_warnings_flush, icepack_warnings_aborted
 use icepack_tracers, only: icepack_init_tracer_indices, nt_tsfc, nt_qice, nt_qsno, nt_sice
 use icepack_parameters, only: icepack_init_parameters, icepack_recompute_constants
 use icepack_parameters, only: ktherm, heat_capacity
+use icepack_mushy_physics, only: liquidus_temperature_mush
 use icepack_therm_shared, only: l_brine
 
 use soca_geom_mod, only: soca_geom
@@ -47,7 +48,8 @@ end type soca_soca2cice_params
 type, public :: soca_soca2cice
    type(fckit_mpi_comm) :: f_comm
    integer :: myrank
-   integer :: ncat, ni, nj, ice_lev, sno_lev
+   integer :: ncat, ni, nj, ice_lev, sno_lev, shuffle_n
+   real(kind=kind_real) :: dt
    character(len=:), allocatable :: rst_filename
    character(len=:), allocatable :: rst_out_filename
    type(cice_state) :: cice
@@ -75,16 +77,6 @@ subroutine soca_soca2cice_setup(self, geom)
   class(soca_soca2cice), intent(inout) :: self
   type(soca_geom), target, intent(in)  :: geom !< geometry
 
-  integer(kind=4) :: ncid
-  integer(kind=4) :: dimid
-  integer(kind=4) :: varid
-
-  integer :: myrank, root=0, count
-  real(kind=kind_real), allocatable :: buffer(:)
-
-  real(kind=kind_real) :: aice, aice0
-  integer, allocatable :: ij(:,:)
-  integer :: l, n_src, i, j, n
   type(atlas_geometry) :: ageometry
 
   ! Communicator
@@ -159,9 +151,6 @@ subroutine check_ice_bounds(self, geom, xm)
   type(soca_state),      intent(inout) :: xm
 
   type(soca_field), pointer :: aice_ana, hice_ana, hsno_ana
-  integer :: i, j
-  real(kind=kind_real) :: hice
-  real(kind=kind_real) :: hice_max = 8.0
 
   ! pointers to soca fields (most likely an analysis)
   call xm%get("sea_ice_area_fraction",aice_ana)
@@ -198,18 +187,17 @@ subroutine shuffle_ice(self, geom, xm)
 
   real(kind=kind_real) :: aice, seaice_edge
   integer :: i, j, k, n, ii, jj
-  type(soca_field), pointer :: t_ana, s_ana, aice_ana
+  type(soca_field), pointer :: s_ana, aice_ana
   integer :: minidx(1), nn_max
   integer, allocatable :: idx(:)
   real(kind=kind_real), allocatable :: testmin(:)
   type(cice_state) :: cice_in
 
   ! Make sure the search tree is smaller than the data size
-  nn_max = min(self%cice%agg%n_src, 9)
+  nn_max = min(self%cice%agg%n_src, self%shuffle_n)
   allocate(idx(nn_max), testmin(nn_max))
 
   ! pointers to soca fields (most likely an analysis)
-  call xm%get("sea_water_potential_temperature",t_ana)
   call xm%get("sea_water_salinity",s_ana)
   call xm%get("sea_ice_area_fraction",aice_ana)
 
@@ -228,7 +216,18 @@ subroutine shuffle_ice(self, geom, xm)
           seaice_edge = self%antarctic%seaice_edge
         endif
         if (self%cice%aice(i,j).gt.seaice_edge) cycle     ! skip if the background has more ice than the threshold
-        if (aice.le.0.0_kind_real) cycle                  ! 0 ice analysis is treated elsewhere
+        if (aice.le.0.0_kind_real) then
+           self%cice%aicen(i,j,:) = 0_kind_real
+           self%cice%vicen(i,j,:) = 0_kind_real
+           self%cice%vsnon(i,j,:) = 0_kind_real
+           self%cice%apnd(i,j,:) = 0_kind_real
+           self%cice%hpnd(i,j,:) = 0_kind_real
+           self%cice%ipnd(i,j,:) = 0_kind_real
+           self%cice%qice(i,j,:,:) = 0_kind_real
+           self%cice%sice(i,j,:,:) = 0_kind_real
+           self%cice%qsno(i,j,:,:) = 0_kind_real
+           self%cice%tsfcn(i,j,:) = liquidus_temperature_mush(s_ana%val(i,j,1))
+        endif
         if (self%cice%agg%n_src == 0) cycle               ! skip if there are no points on this task with ice in the background
         ! find neighbors. TODO (G): add constraint for thickness and snow depth as well
         call self%kdtree%closestPoints(geom%lon(i,j), geom%lat(i,j), nn_max, idx)
@@ -269,11 +268,10 @@ subroutine cleanup_ice(self, geom, xm)
   type(soca_geom), target, intent(in)  :: geom
   type(soca_state),      intent(inout) :: xm
 
-  integer :: i, j, k, n, n_src, ntracers
+  integer :: i, j, k, ntracers
   integer :: nt_tsfc_in, nt_qice_in, nt_qsno_in, nt_sice_in
   real(kind=kind_real) :: aice, aice0
   type(soca_field), pointer :: t_ana, s_ana, aice_ana, hice_ana, hsno_ana
-  real(kind=kind_real) :: dt
   real(kind=kind_real), allocatable :: h_bounds(:)
   real(kind=kind_real), allocatable :: tracers(:,:)   ! (ntracers, ncat)
   logical, allocatable :: first_ice(:)                ! (ncat) ! For bgc and S tracers. set to true if zapping ice.
@@ -282,9 +280,9 @@ subroutine cleanup_ice(self, geom, xm)
                                                       ! argument 2:  (1) aice, (2) vice, (3) vsno
   integer, allocatable :: n_trcr_strata(:)            ! number of underlying tracer layers
   integer, allocatable :: nt_strata(:,:)              ! indices of underlying tracer layers
-  real(kind=kind_real), allocatable :: fiso_ocn(:)    ! isotope flux to ocean     (kg/m^2/s)
+  real(kind=kind_real), allocatable :: fiso_ocn(:)    ! isotope flux to ocean, not used as long as icepack's
+                                                      ! tr_iso is false (default), so not initialized here.
 
-  dt = 900.0 ! randomly chosen
   ! pointers to soca fields (most likely an analysis)
   call xm%get("sea_water_potential_temperature",t_ana)
   call xm%get("sea_water_salinity",s_ana)
@@ -339,7 +337,7 @@ subroutine cleanup_ice(self, geom, xm)
         enddo
         ! call icepack_cleanup_itd: rebins thickness categories if necessary,
         ! eliminates very small ice areas while conserving mass and energy
-        call cleanup_itd(dt, ntracers, self%ice_lev, self%sno_lev, self%ncat, &
+        call cleanup_itd(self%dt, ntracers, self%ice_lev, self%sno_lev, self%ncat, &
                          h_bounds, self%cice%aicen(i,j,:), tracers, &
                          self%cice%vicen(i,j,:), self%cice%vsnon(i,j,:), &
                          ! ice and total water concentration are computed in the call using aicen
@@ -352,12 +350,10 @@ subroutine cleanup_ice(self, geom, xm)
                          trcr_depend, trcr_base, n_trcr_strata, nt_strata, &
                          fiso_ocn=fiso_ocn)
         call icepack_warnings_flush(6)
-     end do
-  end do
-
-  ! re-compute aggregates = analysis that is effectively inserted in the restart
-  do i = geom%isc, geom%iec
-     do j = geom%jsc, geom%jec
+        if (icepack_warnings_aborted()) then
+           call abor1_ftn("Soca2Cice: icepack aborted during cleanup_itd")
+        endif
+        ! re-compute aggregates = analysis that is effectively inserted in the restart
         aice_ana%val(i,j,1) = sum(self%cice%aicen(i,j,:))
         hice_ana%val(i,j,1) = sum(self%cice%vicen(i,j,:))
         hsno_ana%val(i,j,1) = sum(self%cice%vsnon(i,j,:))
