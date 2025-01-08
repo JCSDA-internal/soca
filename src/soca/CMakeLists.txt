@@ -37,7 +37,7 @@ target_link_libraries( soca PUBLIC atlas_f )
 target_link_libraries( soca PUBLIC fms )
 target_link_libraries( soca PUBLIC gsw )
 target_link_libraries( soca PUBLIC mom6 )
-target_link_libraries( soca PUBLIC icepack )
+target_link_libraries( soca PUBLIC icepack_limited ) # custom soca build with only some functions built
 target_link_libraries( soca PUBLIC oops )
 target_link_libraries( soca PUBLIC saber )
 target_link_libraries( soca PUBLIC ioda )
