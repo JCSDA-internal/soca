@@ -3,4 +3,4 @@
 	url = https://github.com/NOAA-EMC/MOM6
 [submodule "external/icepack/Icepack"]
 	path = external/icepack/Icepack
-	url = git@github.com:CICE-Consortium/Icepack.git
+	url = https://github.com/CICE-Consortium/Icepack.git
