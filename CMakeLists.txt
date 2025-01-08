@@ -45,9 +45,6 @@ if(DEFINED Torch_ROOT AND NOT Torch_ROOT STREQUAL "")
   include_directories("${Torch_ROOT}/include/torch/csrc/api/include")
 endif()
 
-# Optionally look for icepack
-find_package( icepack 1.2.0 QUIET)
-
 include_directories( ${NETCDF_INCLUDE_DIRS} )
 
 ################################################################################
@@ -55,6 +52,7 @@ include_directories( ${NETCDF_INCLUDE_DIRS} )
 # TODO update to allow switching between mom6solo (here) and UFS (external)
 ################################################################################
 add_subdirectory(external/mom6)
+add_subdirectory(external/icepack)
 
 ################################################################################
 # Sources
