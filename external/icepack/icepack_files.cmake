@@ -13,7 +13,7 @@ list(APPEND icepack_files
 #   Icepack/columnphysics/icepack_intfc.F90
 #   Icepack/columnphysics/icepack_isotope.F90
   Icepack/columnphysics/icepack_itd.F90
-#   Icepack/columnphysics/icepack_kinds.F90
+  Icepack/columnphysics/icepack_kinds.F90
 #   Icepack/columnphysics/icepack_mechred.F90
 #   Icepack/columnphysics/icepack_meltpond_cesm.F90
 #   Icepack/columnphysics/icepack_meltpond_lvl.F90
