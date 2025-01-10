@@ -58,7 +58,7 @@ namespace soca {
       virtual ~State();
       State & operator=(const State &);
       void transpose(const State & DistState, const eckit::mpi::Comm & global,
-         const int & ensNum, const int & transNum) {
+         const int ensNum, const int transNum) {
          throw eckit::NotImplemented("Soca State::transpose not implemented", Here());
       }
 
