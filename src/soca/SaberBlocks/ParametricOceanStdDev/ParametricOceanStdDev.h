@@ -12,6 +12,7 @@
 #include <string>
 #include <vector>
 
+#include "oops/util/parameters/ConfigurationParameter.h"
 #include "oops/util/parameters/NumericConstraints.h"
 
 #include "saber/blocks/SaberBlockParametersBase.h"

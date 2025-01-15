@@ -77,7 +77,10 @@ subroutine soca_soca2cice_setup_f90(c_key_self, c_conf, c_key_geom) &
   call f_conf%get_or_die("antarctic.rescale prior.rescale", self%antarctic%rescale_prior)
   call f_conf%get_or_die("antarctic.rescale prior.min hice", self%antarctic%rescale_min_hice)
   call f_conf%get_or_die("antarctic.rescale prior.min hsno", self%antarctic%rescale_min_hsno)
-
+  ! icepack time step for rebinning
+  call f_conf%get_or_die("icepack time step", self%dt)
+  ! shuffle stencil size
+  call f_conf%get_or_die("shuffle stencil size", self%shuffle_n)
   ! cice input restart
   call f_conf%get_or_die("cice background state.restart", self%rst_filename)
 
