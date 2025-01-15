@@ -97,22 +97,24 @@ background error:
     save diagnostics:
       filepath: data_output/parametric_ocean_stddev_diags
 
-  linear variable change:
-    linear variable changes:
-    - linear variable change name: BalanceSOCA
-      kst:
-        dsdtmax: 0.1
-        dsdzmin: 3.0e-6
-        dtdzmin: 1.0e-6
-        nlayers: 10
-      ksshts:
-        nlayers: 2
-      dcdt:
-        filename: data_static/72x35x25/dcdt.nc
-        name: dcdt
-    input variables: *soca_vars
-    output variables: *soca_vars
-    add vars and return: True
+  model specific variable change:
+    inner variables: *soca_vars
+    outer variables: *soca_vars
+    variable change:
+      add vars and return: True
+    linear variable change:
+      linear variable changes:
+      - linear variable change name: BalanceSOCA
+        kst:
+          dsdtmax: 0.1
+          dsdzmin: 3.0e-6
+          dtdzmin: 1.0e-6
+          nlayers: 10
+        ksshts:
+          nlayers: 2
+        dcdt:
+          filename: data_static/72x35x25/dcdt.nc
+          name: dcdt
 
 members: 5
 perturbed variables: *soca_vars

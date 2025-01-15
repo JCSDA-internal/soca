@@ -64,22 +64,22 @@ background error:
     - variable: northward_sea_water_velocity
       fraction of background: 0.2
 
-  linear variable change:
-    input variables: *soca_vars
-    output variables: *soca_vars
-    linear variable changes:
-
-    - linear variable change name: BalanceSOCA
-      kst:
-        dsdtmax: 0.1
-        dsdzmin: 3.0e-6
-        dtdzmin: 1.0e-6
-        nlayers: 2
-      ksshts:
-        nlayers: 2
-      dcdt:
-        filename: data_static/72x35x25/dcdt.nc
-        name: dcdt
+  model specific variable change:
+    inner variables: *soca_vars
+    outer variables: *soca_vars
+    linear variable change:
+      linear variable changes:
+      - linear variable change name: BalanceSOCA
+        kst:
+          dsdtmax: 0.1
+          dsdzmin: 3.0e-6
+          dtdzmin: 1.0e-6
+          nlayers: 2
+        ksshts:
+          nlayers: 2
+        dcdt:
+          filename: data_static/72x35x25/dcdt.nc
+          name: dcdt
 
 dirac:
   ixdir: [1, 17, 41, 31, 51, 63, 81, 14, 16, 43, 55]
