@@ -8,6 +8,7 @@ module soca_balance_mod
 use fckit_configuration_module, only: fckit_configuration
 use fms_mod, only: read_data
 use kinds, only: kind_real
+use atlas_module, only: atlas_field
 
 ! soca modules
 use soca_fields_mod, only: soca_field
@@ -227,49 +228,76 @@ subroutine soca_balance_mult(self, dxa, dxm)
   type(soca_increment), target, intent(in)    :: dxa !< input increment
   type(soca_increment), target, intent(inout) :: dxm !< output increment
 
-  type(soca_field), pointer :: fld_m, fld_a
-  type(soca_field), pointer :: tocn_a, socn_a
-
-  integer :: i, j, k, n
+  type(atlas_field) :: fld_m, fld_a, tocn_a, socn_a
+  real(kind=kind_real), pointer :: data_m(:,:), data_a(:,:), data_tocn(:,:), data_socn(:,:)
+  integer :: i, j, k, n, idx
 
   !>    [ I       0   0  0 ]
   !>    [ Kst     I   0  0 ]
   !> K= [ Ketat Ketas I  0 ]
   !>    [ Kct     0   0  I ]
 
-  call dxa%get("sea_water_potential_temperature",tocn_a)
-  call dxa%get("sea_water_salinity",socn_a)
+  tocn_a = dxa%afieldset%field("sea_water_potential_temperature")
+  socn_a = dxa%afieldset%field("sea_water_salinity")
+  call tocn_a%data(data_tocn)
+  call socn_a%data(data_socn)
 
-  do n=1, size(dxm%fields)
-    fld_m => dxm%fields(n)
-    fld_a => dxa%fields(n)
+  do n=1, dxm%afieldset%size()
+    fld_m = dxm%afieldset%field(n)
+    fld_a = dxa%afieldset%field(n)
+    call fld_m%data(data_m)
+    call fld_a%data(data_a)
 
-    do i = self%geom%isc, self%geom%iec
-      do j = self%geom%jsc, self%geom%jec
-        select case(fld_m%name)
-        case default
-          fld_m%val(i,j,:) = fld_a%val(i,j,:)
-
-        case("sea_water_salinity") ! Salinity
-          fld_m%val(i,j,:) = fld_a%val(i,j,:) + &
-            & self%kst%jacobian(i,j,:) * tocn_a%val(i,j,:)
-
-        case ("sea_surface_height_above_geoid") ! SSH
-          fld_m%val(i,j,:) = fld_a%val(i,j,:)
-          do k = 1, tocn_a%nz
-            fld_m%val(i,j,:) = fld_m%val(i,j,:) + &
-              & self%ksshts%kssht(i,j,k) * tocn_a%val(i,j,k) + &
-              & self%ksshts%ksshs(i,j,k) * socn_a%val(i,j,k)
-          end do
-
-        case ("sea_ice_area_fraction") ! Ice fraction
-            fld_m%val(i,j,1) = fld_a%val(i,j,1) + &
-              & self%kct(i,j) * tocn_a%val(i,j,1)
-
-        end select
+    select case(fld_m%name())
+    case default
+      do i = 1, fld_m%shape(2)
+        do k = 1, fld_m%shape(1)
+          data_m(k, i) = data_a(k, i)
+        end do
       end do
-    end do
+
+    case ("sea_water_salinity")
+      do j = self%geom%jsc, self%geom%jec
+        do i = self%geom%isc, self%geom%iec
+          idx = self%geom%atlas_ij2idx(i,j)
+          do k = 1, fld_m%shape(1)
+            data_m(k, idx) = data_a(k, idx) + &
+              & self%kst%jacobian(i,j,k) * data_tocn(k, idx)
+          end do
+        end do
+      end do
+
+    case ("sea_surface_height_above_geoid")
+      do j = self%geom%jsc, self%geom%jec
+        do i = self%geom%isc, self%geom%iec
+          idx = self%geom%atlas_ij2idx(i,j)
+          data_m(1, idx) = data_a(1, idx)
+          do k = 1, tocn_a%shape(1)
+            data_m(1, idx) = data_m(1, idx) + &
+              self%ksshts%kssht(i,j,k) * data_tocn(k, idx) +&
+              self%ksshts%ksshs(i,j,k) * data_socn(k, idx)
+          end do
+        end do
+      end do
+
+    case ("sea_ice_area_fraction")
+      do j = self%geom%jsc, self%geom%jec
+        do i = self%geom%isc, self%geom%iec
+          idx = self%geom%atlas_ij2idx(i,j)
+          data_m(1, idx) = data_a(1, idx) + &
+            self%kct(i,j) * data_tocn(1, idx)
+        end do
+      end do
+
+    end select
+
+    call fld_m%final()
+    call fld_a%final()
   end do
+
+  call tocn_a%final()
+  call socn_a%final()
+
 end subroutine soca_balance_mult
 
 

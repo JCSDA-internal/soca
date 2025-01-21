@@ -97,9 +97,7 @@ subroutine soca_balance_mult_c(c_key_self, c_key_a, c_key_m)&
   call soca_balance_registry%get(c_key_self,self)
 
   !< Computes dxm = K dxa
-  call dxa%sync_from_atlas()
   call self%mult(dxa, dxm)
-  call dxm%sync_to_atlas()
 end subroutine soca_balance_mult_c
 
 
