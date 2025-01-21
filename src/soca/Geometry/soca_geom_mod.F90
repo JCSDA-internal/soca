@@ -192,7 +192,6 @@ subroutine soca_geom_init(self, f_conf, f_comm, gen)
   call MOM_domains_init(self%Domain, param_file)
   call get_param(param_file, "soca_mom6", "NK", self%nzo, fail_if_missing=.true.)
   call close_param_file(param_file)
-  call fms_io_exit()
 
   ! Allocate geometry arrays
   call soca_geom_allocate(self)
@@ -234,7 +233,6 @@ subroutine soca_geom_init(self, f_conf, f_comm, gen)
     ! Read in the precomputed grid from the soca gridspec file instead
     ! NOTE that we will rerad the gridspec file later for some of the variables
     ! once the altas FunctionSpace has been created.
-    call fms_io_init()
     if (.not. f_conf%get("geom_grid_file", str)) str = "soca_gridspec.nc"
     r = register_restart_field(geom_restart, str, "lonh",    self%lonh,      self%Domain%mpp_domain)
     r = register_restart_field(geom_restart, str, "lath",    self%lath,      self%Domain%mpp_domain)
@@ -256,7 +254,6 @@ subroutine soca_geom_init(self, f_conf, f_comm, gen)
     r = register_restart_field(geom_restart, str, "mask2dv", self%mask2dv,   self%Domain%mpp_domain)
     call restore_state(geom_restart, directory='')
     call free_restart_type(geom_restart)
-    call fms_io_exit()
   endif
 
   ! Fill halos
@@ -288,6 +285,7 @@ end subroutine soca_geom_init
 subroutine soca_geom_end(self)
   class(soca_geom), intent(out)  :: self
 
+  call fms_io_exit()
   if (allocated(self%lonh))          deallocate(self%lonh)
   if (allocated(self%lath))          deallocate(self%lath)
   if (allocated(self%lonq))          deallocate(self%lonq)
@@ -432,13 +430,11 @@ subroutine soca_geom_init_fieldset(self, f_conf, gen)
     allocate(fieldDataVars(self%isd:self%ied, self%jsd:self%jed, size(atlasVars)))
 
     ! read in from gridspec file
-    call fms_io_init()
     do v = 1, size(atlasVars)
       r = register_restart_field(geom_restart, str, atlasVars(v), fieldDataVars(:,:,v), self%Domain%mpp_domain)
     end do
     call restore_state(geom_restart, directory='')
     call free_restart_type(geom_restart)
-    call fms_io_exit()
 
     ! copy from fortran array to atlas field
     do v = 1, size(atlasVars)
@@ -608,7 +604,6 @@ subroutine soca_geom_write(self, f_conf)
   character(len=256) :: geom_output_pe
 
   ! Save global domain
-  call fms_io_init()
   if (.not. f_conf%get("geom_grid_file", str)) str = "soca_gridspec.nc"
   r = register_restart_field(geom_restart, str, "lonh",    self%lonh,      self%Domain%mpp_domain)
   r = register_restart_field(geom_restart, str, "lath",    self%lath,      self%Domain%mpp_domain)
@@ -650,7 +645,6 @@ subroutine soca_geom_write(self, f_conf)
 
   call save_restart(geom_restart, directory='')
   call free_restart_type(geom_restart)
-  call fms_io_exit()
 
   ! Set output option for local geometry
   if ( .not. f_conf%get("save_local_domain", save_local) ) save_local = .false.

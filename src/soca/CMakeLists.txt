@@ -37,6 +37,7 @@ target_link_libraries( soca PUBLIC atlas_f )
 target_link_libraries( soca PUBLIC fms )
 target_link_libraries( soca PUBLIC gsw )
 target_link_libraries( soca PUBLIC mom6 )
+target_link_libraries( soca PUBLIC icepack_limited ) # custom soca build with only some functions built
 target_link_libraries( soca PUBLIC oops )
 target_link_libraries( soca PUBLIC saber )
 target_link_libraries( soca PUBLIC ioda )
@@ -50,10 +51,6 @@ if(Torch_FOUND)
     "${Torch_ROOT}/lib/libtorch_cpu.so"      # For the CPU backend
     "${Torch_ROOT}/lib/libc10.so"            # Core library
     )
-endif()
-
-if( ${icepack_FOUND} )
-  target_link_libraries( soca PUBLIC icepack )
 endif()
 
 # Add source code in the subdirectories

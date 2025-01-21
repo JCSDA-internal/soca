@@ -32,18 +32,18 @@ type, public :: cice_state
    logical :: initialized = .false.
    character(len=:), allocatable :: rst_filename
    character(len=:), allocatable :: rst_out_filename
-   real(kind=kind_real),  allocatable :: aicen(:,:,:)
-   real(kind=kind_real),  allocatable :: vicen(:,:,:)
-   real(kind=kind_real),  allocatable :: vsnon(:,:,:)
-   real(kind=kind_real),  allocatable :: apnd(:,:,:)
-   real(kind=kind_real),  allocatable :: hpnd(:,:,:)
-   real(kind=kind_real),  allocatable :: ipnd(:,:,:)
-   real(kind=kind_real),  allocatable :: tsfcn(:,:,:)
-   real(kind=kind_real),  allocatable :: qice(:,:,:,:)
-   real(kind=kind_real),  allocatable :: qsno(:,:,:,:)
-   real(kind=kind_real),  allocatable :: sice(:,:,:,:)
+   real(kind=kind_real),  allocatable :: aicen(:,:,:)    ! ice concentration
+   real(kind=kind_real),  allocatable :: vicen(:,:,:)    ! ice volume
+   real(kind=kind_real),  allocatable :: vsnon(:,:,:)    ! snow volume
+   real(kind=kind_real),  allocatable :: apnd(:,:,:)     ! melt pond area fraction
+   real(kind=kind_real),  allocatable :: hpnd(:,:,:)     ! melt pond depth
+   real(kind=kind_real),  allocatable :: ipnd(:,:,:)     ! melt pond refrozen lid thickness
+   real(kind=kind_real),  allocatable :: tsfcn(:,:,:)    ! ice/snow temperature
+   real(kind=kind_real),  allocatable :: qice(:,:,:,:)   ! volume-weighted ice enthalpy
+   real(kind=kind_real),  allocatable :: qsno(:,:,:,:)   ! volume-weighted snow enthalpy
+   real(kind=kind_real),  allocatable :: sice(:,:,:,:)   ! volume-weighted ice bulk salinity
    real(kind=kind_real),  allocatable :: iceumask(:,:)
-   real(kind=kind_real),  allocatable :: aice(:,:)
+   real(kind=kind_real),  allocatable :: aice(:,:)       ! total ice concentration
    type(agg_cice_state):: agg
 contains
   procedure :: init => soca_ciceutils_init

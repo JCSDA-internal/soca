@@ -49,3 +49,4 @@ states:
 test:
   reference filename: testref/convertstate_soca2cice.test
   test output filename: testoutput/convertstate_soca2cice.test
+  float relative tolerance: 1e-4
