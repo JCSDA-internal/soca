@@ -53,6 +53,9 @@ private
 ! oops!
 real(kind=kind_real), parameter :: INVALID_HALO = -999_kind_real
 
+!> counter for geometries, used to call fms_io
+integer, save, private :: global_soca_geom_counter = 0
+
 ! ------------------------------------------------------------------------------
 !> Geometry data structure
 type, public :: soca_geom
@@ -187,7 +190,10 @@ subroutine soca_geom_init(self, f_conf, f_comm, gen)
   ! use MOM6 to setup domain decomposition
   call mpp_init(localcomm=f_comm%communicator())
   call fms_init()
-  call fms_io_init()
+  if (global_soca_geom_counter .eq. 0) then
+    call fms_io_init()
+  endif
+  global_soca_geom_counter = global_soca_geom_counter + 1
   call Get_MOM_Input(param_file, dirs)
   call MOM_domains_init(self%Domain, param_file)
   call get_param(param_file, "soca_mom6", "NK", self%nzo, fail_if_missing=.true.)
@@ -284,8 +290,10 @@ end subroutine soca_geom_init
 !! \related soca_geom_mod::soca_geom
 subroutine soca_geom_end(self)
   class(soca_geom), intent(out)  :: self
-
-  call fms_io_exit()
+  global_soca_geom_counter = global_soca_geom_counter - 1
+  if (global_soca_geom_counter .eq. 0) then
+    call fms_io_exit()
+  endif
   if (allocated(self%lonh))          deallocate(self%lonh)
   if (allocated(self%lath))          deallocate(self%lath)
   if (allocated(self%lonq))          deallocate(self%lonq)
