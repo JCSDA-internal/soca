@@ -789,15 +789,13 @@ soca_add_test( NAME convertincrement
                             test_soca_3dvar)
 
 
-if( ${icepack_FOUND} )
-  # Apply the Soca2Cice nonlinear change of variable
-  # TODO (G): check test dependency
-  file(COPY ${CMAKE_CURRENT_BINARY_DIR}/data_static/72x35x25/restarts/iced.2018-04-15-00000.nc
-       DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/data_generated/convertstate_soca2cice/ )
-     soca_add_test( NAME convertstate_soca2cice
-                    EXE  soca_convertstate.x
-                    MPI 2
-                    NOTRAPFPE
-                    TEST_DEPENDS test_soca_gridgen
-                                 test_soca_3dvar )
-endif()
+# Apply the Soca2Cice nonlinear change of variable
+# TODO (G): check test dependency
+file(COPY ${CMAKE_CURRENT_BINARY_DIR}/data_static/72x35x25/restarts/iced.2018-04-15-00000.nc
+     DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/data_generated/convertstate_soca2cice/ )
+soca_add_test( NAME convertstate_soca2cice
+              EXE  soca_convertstate.x
+              MPI 2
+              NOTRAPFPE
+              TEST_DEPENDS test_soca_gridgen
+                           test_soca_3dvar )

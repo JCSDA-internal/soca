@@ -6,7 +6,6 @@
 module soca_balance_mod
 
 use fckit_configuration_module, only: fckit_configuration
-use fms_io_mod, only: fms_io_init, fms_io_exit
 use fms_mod, only: read_data
 use kinds, only: kind_real
 
@@ -186,9 +185,7 @@ subroutine soca_balance_setup(self, f_conf, traj, geom)
     if ( f_conf%has("dcdt") ) then
       call f_conf%get_or_die("dcdt.filename", filename)
       call f_conf%get_or_die("dcdt.name", kct_name)
-      call fms_io_init()
       call read_data(filename, kct_name, kct, domain=geom%Domain%mpp_domain)
-      call fms_io_exit()
     end if
     allocate(self%kct(isc:iec,jsc:jec))
     self%kct = 0.0_kind_real
