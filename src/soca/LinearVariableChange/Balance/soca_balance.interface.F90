@@ -169,9 +169,7 @@ subroutine soca_balance_multinvad_c(c_key_self, c_key_a, c_key_m)&
   call soca_balance_registry%get(c_key_self,self)
 
   !< Computes dxm = (K^-1)^T dxa
-  call dxa%sync_from_atlas()
   call self%multinvad(dxa, dxm)
-  call dxm%sync_to_atlas()
 end subroutine soca_balance_multinvad_c
 
 end module soca_balance_mod_c
