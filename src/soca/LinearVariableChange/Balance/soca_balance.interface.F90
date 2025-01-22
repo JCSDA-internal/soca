@@ -59,7 +59,6 @@ subroutine soca_balance_setup_c(c_key_self, c_conf, c_key_traj, c_key_geom) &
   call soca_state_registry%get(c_key_traj, traj)
   call soca_geom_registry%get(c_key_geom, geom)
 
-  call traj%sync_from_atlas()
   call self%setup(fckit_configuration(c_conf), traj, geom)
 end subroutine soca_balance_setup_c
 

@@ -28,6 +28,8 @@ private
 !! soca_ksshts_mod::soca_ksshts and soca_kst_mod::soca_kst
 type, public :: soca_balance
   ! private members
+  ! TODO the jacobians should really be stored in atlas fields, but
+  !  I didn't feel like dealing with all that refactoring
   type(soca_kst), private             :: kst                 !< T/S balance
   type(soca_ksshts), private          :: ksshts              !< SSH/T/S balance
   real(kind=kind_real), private, allocatable :: kct(:,:)     !< C/T Jacobian
@@ -84,13 +86,16 @@ subroutine soca_balance_setup(self, f_conf, traj, geom)
 
   integer :: isc, iec, jsc, jec
   integer :: isd, ied, jsd, jed
-  integer :: i, j, k, nl
+  integer :: i, j, k, nl, idx
   real(kind=kind_real), allocatable :: jac(:), coef_mld, coef_layers
-  type(soca_field), pointer :: tocn, socn, hocn, cice, mld, layer_depth
+
+  type(atlas_field) :: tocn, socn, hocn, cice, mld, layer_depth
+  real(kind=kind_real), pointer :: data_tocn(:,:), data_socn(:,:), data_hocn(:,:)
+  real(kind=kind_real), pointer :: data_cice(:,:) => null(), data_mld(:,:), data_layer_depth(:,:)
+  real(kind=kind_real), allocatable :: col_tocn(:), col_socn(:), col_hocn(:)
 
   ! declarations related to the dynamic height Jacobians
   character(len=:), allocatable :: filename
-  real(kind=kind_real) :: threshold
 
   ! declarations related to the sea-ice Jacobian
   character(len=:), allocatable :: kct_name
@@ -105,17 +110,26 @@ subroutine soca_balance_setup(self, f_conf, traj, geom)
   jsd=geom%jsd; jed=geom%jed
 
   ! Get required fields
-  call traj%get("sea_water_potential_temperature", tocn)
-  call traj%get("sea_water_salinity", socn)
-  call traj%get("sea_water_cell_thickness", hocn)
-  call traj%get("ocean_mixed_layer_thickness", mld)
-  call traj%get("sea_water_depth", layer_depth)
-  if (traj%has("sea_ice_area_fraction"))  call traj%get("sea_ice_area_fraction", cice)
+  tocn = traj%afieldset%field("sea_water_potential_temperature")
+  socn = traj%afieldset%field("sea_water_salinity")
+  hocn = traj%afieldset%field("sea_water_cell_thickness")
+  mld = traj%afieldset%field("ocean_mixed_layer_thickness")
+  layer_depth = traj%afieldset%field("sea_water_depth")
+  call tocn%data(data_tocn)
+  call socn%data(data_socn)
+  call hocn%data(data_hocn)
+  call mld%data(data_mld)
+  call layer_depth%data(data_layer_depth)
+  if (traj%has("sea_ice_area_fraction")) then
+    cice = traj%afieldset%field("sea_ice_area_fraction")
+    call cice%data(data_cice)
+  end if
 
   ! allocate space
-  nl = hocn%nz
-  allocate(self%kst%jacobian(isc:iec,jsc:jec,geom%nzo))
+  nl = hocn%shape(1)
+  allocate(self%kst%jacobian(isc:iec,jsc:jec,nl))
   self%kst%jacobian=0.0
+  allocate(col_tocn(nl), col_socn(nl), col_hocn(nl))
 
   ! Setup Kst if in the configuration
   if ( f_conf%has("kst") ) then
@@ -128,22 +142,26 @@ subroutine soca_balance_setup(self, f_conf, traj, geom)
      ! Compute and store Jacobian of Kst
      do i = isc, iec
         do j = jsc, jec
-           ! do nothing if on land
-           if ( geom%mask2d(i, j) == 0 ) cycle
+          idx = geom%atlas_ij2idx(i,j)
 
-           ! compute dS(T)/dT
-           call soca_soft_jacobian(jac,&
-                &tocn%val(i,j,:),&
-                &socn%val(i,j,:),&
-                &hocn%val(i,j,:),&
-                &self%kst%dsdtmax, self%kst%dsdzmin, self%kst%dtdzmin)
+          ! do nothing if on land
+          if ( geom%mask2d(i, j) == 0 ) cycle
 
-           ! filter out the Jacobian as specified in the configuration
-           do k=1,nl
-              coef_mld = soca_tanh_filt(layer_depth%val(i,j,k),mld%val(i,j,1))
-              coef_layers = soca_tanh_filt(real(k, kind=kind_real), real(self%kst%nlayers, kind=kind_real))
-              self%kst%jacobian(i,j,k) = jac(k)*coef_mld*coef_layers
-           end do
+          ! compute dS(T)/dT
+          do k=1,nl
+             col_tocn(k) = data_tocn(k, idx)
+             col_socn(k) = data_socn(k, idx)
+             col_hocn(k) = data_hocn(k, idx)
+          end do
+          call soca_soft_jacobian(jac, col_tocn, col_socn, col_hocn, &
+            self%kst%dsdtmax, self%kst%dsdzmin, self%kst%dtdzmin)
+
+          ! filter out the Jacobian as specified in the configuration
+          do k=1,nl
+            coef_mld = soca_tanh_filt(data_layer_depth(k, idx), data_mld(1, idx))
+            coef_layers = soca_tanh_filt(real(k, kind=kind_real), real(self%kst%nlayers, kind=kind_real))
+            self%kst%jacobian(i,j,k) = jac(k)*coef_mld*coef_layers
+          end do
         end do
      end do
      deallocate(jac)
@@ -162,14 +180,11 @@ subroutine soca_balance_setup(self, f_conf, traj, geom)
   do i = isc, iec
     do j = jsc, jec
       if (geom%mask2d(i,j) == 0.0) cycle
+      idx = geom%atlas_ij2idx(i,j)
       do k = 1, nl
         call soca_steric_jacobian (jac, &
-        tocn%val(i,j,k), &
-        socn%val(i,j,k), &
-        &layer_depth%val(i,j,k),&
-        &hocn%val(i,j,k),&
-        &geom%lon(i,j),&
-        &geom%lat(i,j))
+          data_tocn(k, idx), data_socn(k, idx), data_layer_depth(k, idx), &
+          data_hocn(k,idx), geom%lon(i,j), geom%lat(i,j))
         coef_layers = soca_tanh_filt(real(k, kind=kind_real), real(self%ksshts%nlayers, kind=kind_real))
         self%ksshts%kssht(i,j,k) = jac(1)*coef_layers
         self%ksshts%ksshs(i,j,k) = jac(2)*coef_layers
@@ -192,12 +207,21 @@ subroutine soca_balance_setup(self, f_conf, traj, geom)
     self%kct = 0.0_kind_real
     do i = isc, iec
       do j = jsc, jec
-          if (cice%val(i,j,1) > 1.0e-3_kind_real) then
-            self%kct = kct(i,j)
-          end if
+        idx = geom%atlas_ij2idx(i,j)
+        if (data_cice(1, idx) > 1.0e-3_kind_real) then
+          self%kct = kct(i,j)
+        end if
       end do
     end do
   end if
+
+  ! Finalize fields
+  call tocn%final()
+  call socn%final()
+  call hocn%final()
+  call mld%final()
+  call layer_depth%final()
+  if (associated(data_cice)) call cice%final()
 
 end subroutine soca_balance_setup
 
