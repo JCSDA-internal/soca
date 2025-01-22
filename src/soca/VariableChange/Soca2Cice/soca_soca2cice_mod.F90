@@ -294,31 +294,44 @@ subroutine cleanup_ice(self, geom, xm)
   allocate(h_bounds(0:self%ncat))
   call icepack_init_itd(self%ncat, h_bounds) ! TODO (G): move that in setup
   ! initialize tracers (ice/snow temperature, ice and snow enthalpies, ice salinity)
-  ntracers = 4
-  allocate(tracers(1+2*self%ice_lev+self%sno_lev, self%ncat))
+  ntracers = 1+2*self%ice_lev+self%sno_lev
+  allocate(tracers(ntracers, self%ncat))
   allocate(trcr_depend(ntracers), trcr_base(ntracers, 3))
-  allocate(n_trcr_strata(ntracers), nt_strata(ntracers, max(self%ice_lev, self%sno_lev)))
+  allocate(n_trcr_strata(ntracers), nt_strata(ntracers, 2))
+  n_trcr_strata(:) = 0
+  nt_strata(:,:) = 0
   trcr_base(:, :) = 0.0
-  trcr_depend(1) = 0; trcr_base(1, 1) = 1.0 ! Tsfcn is ice area tracer
-  trcr_depend(2) = 1; trcr_base(2, 2) = 1.0 ! qice is ice volume tracer
-  trcr_depend(3) = 2; trcr_base(3, 3) = 1.0 ! qsno is snow volume tracer
-  trcr_depend(4) = 1; trcr_base(4, 2) = 1.0 ! sice is ice volume tracer
 
+  ! ice/snow surface temperature: ice area tracer
   nt_tsfc_in = 1
-  n_trcr_strata(1) = 1                      ! Tsfcn is 1 level
-  nt_strata(1, 1) = nt_tsfc_in
+  ntracers = 1
+  trcr_depend(nt_tsfc_in) = 0
+  trcr_base(nt_tsfc_in, 1) = 1.0
 
-  nt_qice_in = nt_tsfc_in + 1
-  n_trcr_strata(2) = self%ice_lev           ! qice is ice_lev levels
-  nt_strata(2, 1:self%ice_lev) = [(nt_qice_in + i - 1, i = 1, self%ice_lev)]
+  ! ice enthalpy: ice volume tracer
+  nt_qice_in = ntracers + 1
+  ntracers = ntracers + self%ice_lev
+  do k = 1, self%ice_lev
+   trcr_depend(nt_qice_in + k - 1) = 1
+   trcr_base(nt_qice_in + k - 1, 2) = 1.0
+  enddo
 
-  nt_qsno_in = nt_qice_in + self%ice_lev
-  n_trcr_strata(3) = self%sno_lev           ! qsno is sno_lev levels
-  nt_strata(3, 1:self%sno_lev) = [(nt_qsno_in + i - 1, i = 1, self%sno_lev)]
+  ! snow enthalpy: snow volume tracer
+  nt_qsno_in = ntracers + 1
+  ntracers = ntracers + self%sno_lev
+  do k = 1, self%sno_lev
+    trcr_depend(nt_qsno_in + k - 1) = 2
+    trcr_base(nt_qsno_in + k - 1, 3) = 1.0
+  enddo
 
-  nt_sice_in = nt_qsno_in + self%sno_lev
-  n_trcr_strata(4) = self%ice_lev           ! sice is ice_lev levels
-  nt_strata(4, 1:self%ice_lev) = [(nt_sice_in + i - 1, i = 1, self%ice_lev)]
+  ! ice salinity: ice volume tracer
+  nt_sice_in = ntracers + 1
+  ntracers = ntracers + self%ice_lev
+  do k = 1, self%ice_lev
+   trcr_depend(nt_sice_in + k - 1) = 1
+   trcr_base(nt_sice_in + k - 1, 2) = 1.0
+  enddo
+
   call icepack_init_tracer_indices(nt_tsfc_in=nt_tsfc_in, nt_qice_in=nt_qice_in, &
                                    nt_qsno_in=nt_qsno_in, nt_sice_in=nt_sice_in)
   allocate(first_ice(self%ncat))
@@ -349,6 +362,15 @@ subroutine cleanup_ice(self, geom, xm)
                          ! tracer indices and sizes used in rebinning
                          trcr_depend, trcr_base, n_trcr_strata, nt_strata, &
                          fiso_ocn=fiso_ocn)
+        ! put tracers back
+        self%cice%tsfcn(i,j,:) = tracers(nt_tsfc,:)
+        do k = 1, self%ice_lev
+          self%cice%qice(i,j,:,k) = tracers(nt_qice+k-1, :)
+          self%cice%sice(i,j,:,k) = tracers(nt_sice+k-1, :)
+        enddo
+        do k = 1, self%sno_lev
+          self%cice%qsno(i,j,:,k) = tracers(nt_qsno+k-1, :)
+        enddo
         call icepack_warnings_flush(6)
         if (icepack_warnings_aborted()) then
            call abor1_ftn("Soca2Cice: icepack aborted during cleanup_itd")
