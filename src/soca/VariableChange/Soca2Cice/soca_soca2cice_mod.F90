@@ -216,8 +216,8 @@ subroutine shuffle_ice(self, geom, xm)
   allocate(idx(nn_max), testmin(nn_max))
 
   call cice_in%copydata(self%cice)
-  do i = geom%isc, geom%iec
-     do j = geom%jsc, geom%jec
+  do j = geom%jsc, geom%jec
+     do i = geom%isc, geom%iec
         atlas_idx = geom%atlas_ij2idx(i,j)
         local_aice = data_aice(1, atlas_idx)    ! ice fraction analysis
 
