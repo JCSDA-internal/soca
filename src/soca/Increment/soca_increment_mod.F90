@@ -73,6 +73,7 @@ subroutine soca_increment_random(self)
     !  it is only set the first time normal_distribution() is called with a seed
   integer :: i, j, k, n, idx
 
+  type(soca_field), pointer :: field
   type(atlas_field) :: afield
   real(kind=kind_real), pointer :: fdata(:,:)
   real(kind=kind_real), allocatable :: tmp3d(:,:,:)
@@ -80,6 +81,7 @@ subroutine soca_increment_random(self)
 
   do n = 1, self%afieldset%size()
     afield = self%afieldset%field(n)
+    field => self%fields(n) ! TODO remove this dependency
     call afield%data(fdata)
 
     ! NOTE: can't randomize "hocn", testIncrementInterpAD fails
@@ -102,10 +104,21 @@ subroutine soca_increment_random(self)
     end do
     deallocate(tmp3d)
 
+    ! mask land
+    if (associated(field%mask)) then
+      do j=self%geom%jsc,self%geom%jec
+        do i=self%geom%isc,self%geom%iec
+          idx = self%geom%atlas_ij2idx(i,j)
+          do k=1,afield%shape(1)
+            fdata(k,idx) = fdata(k,idx) * field%mask(i,j)
+          end do
+        end do
+      end do
+    end if
+
+    call afield%set_dirty()
     call afield%final()
   end do
-
-  ! TODO previously the random values were masked out, is this needed?
 
 end subroutine soca_increment_random
 
