@@ -112,7 +112,21 @@ subroutine soca_increment_dirac(self, f_conf)
   integer :: ndir,n, jz
   integer,allocatable :: ixdir(:),iydir(:),izdir(:),ifdir(:)
 
-  type(soca_field), pointer :: field
+  type(atlas_field) :: field
+  real(kind=kind_real), pointer :: fdata(:,:)
+
+  ! Define field name mapping
+  character(len=:), allocatable :: field_names(:)
+  allocate(character(len=50)::field_names(9))
+  field_names(1) = "sea_water_potential_temperature"
+  field_names(2) = "sea_water_salinity"
+  field_names(3) = "sea_surface_height_above_geoid"
+  field_names(4) = "sea_ice_area_fraction"
+  field_names(5) = "sea_ice_thickness"
+  field_names(6) = "mass_concentration_of_chlorophyll_in_sea_water"
+  field_names(7) = "molar_concentration_of_biomass_in_sea_water_in_p_units"
+  field_names(8) = "eastward_sea_water_velocity"
+  field_names(9) = "northward_sea_water_velocity"
 
   ! Get Diracs size
   ndir = f_conf%get_size("ixdir")
@@ -140,40 +154,19 @@ subroutine soca_increment_dirac(self, f_conf)
   ! Setup Diracs
   call self%zeros()
   do n=1,ndir
-      ! skip this index if not in the bounds of this PE
-      if (ixdir(n) > iec .or. ixdir(n) < isc) cycle
-      if (iydir(n) > jec .or. iydir(n) < jsc) cycle
+    ! skip this index if not in the bounds of this PE
+     if (ixdir(n) > iec .or. ixdir(n) < isc) cycle
+     if (iydir(n) > jec .or. iydir(n) < jsc) cycle
 
-    ! TODO this list is getting long, change it so that the field name
-    ! is directly used in the yaml?
-    field => null()
-    select case(ifdir(n))
-    case (1)
-      call self%get("sea_water_potential_temperature", field)
-    case (2)
-      call self%get("sea_water_salinity", field)
-    case (3)
-      call self%get("sea_surface_height_above_geoid", field)
-    case (4)
-      call self%get("sea_ice_area_fraction", field)
-    case (5)
-      call self%get("sea_ice_thickness", field)
-    case (6)
-      call self%get("mass_concentration_of_chlorophyll_in_sea_water", field)
-    case (7)
-      call self%get("molar_concentration_of_biomass_in_sea_water_in_p_units", field)
-    case (8)
-      call self%get("eastward_sea_water_velocity", field)
-    case (9)
-      call self%get("northward_sea_water_velocity", field)
-    case default
-      ! TODO print error that out of range
-    end select
-    if (associated(field)) then
-      jz = 1
-      if (field%nz > 1) jz = izdir(n)
-      field%val(ixdir(n),iydir(n),izdir(n)) = 1.0
-    end if
+    ! get field
+    if (ifdir(n) <= 0 .or. ifdir(n) > 9) cycle
+    field = self%afieldset%field(field_names(ifdir(n)))
+    call field%data(fdata)
+
+    ! set dirac
+    fdata(izdir(n), self%geom%atlas_ij2idx(ixdir(n),iydir(n))) = 1.0
+
+    call field%final()
   end do
 end subroutine soca_increment_dirac
 

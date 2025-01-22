@@ -615,10 +615,20 @@ end subroutine soca_fields_update_halos
 !! \relates soca_fields_mod::soca_fields
 subroutine soca_fields_ones(self)
   class(soca_fields), intent(inout) :: self
+  type(atlas_field) :: field
+  real(kind=kind_real), pointer :: fdata(:,:)
   integer :: i
 
+  ! TODO delete
   do i = 1, size(self%fields)
     self%fields(i)%val = 1.0_kind_real
+  end do
+
+  do i = 1, self%afieldset%size()
+    field = self%afieldset%field(i)
+    call field%data(fdata)
+    fdata(:,:) = 1.0_kind_real
+    call field%final()
   end do
 
 end subroutine soca_fields_ones
@@ -630,10 +640,20 @@ end subroutine soca_fields_ones
 !! \relates soca_fields_mod::soca_fields
 subroutine soca_fields_zeros(self)
   class(soca_fields), intent(inout) :: self
+  type(atlas_field) :: field
+  real(kind=kind_real), pointer :: fdata(:,:)
   integer :: i
 
+  ! TODO delete
   do i = 1, size(self%fields)
     self%fields(i)%val = 0.0_kind_real
+  end do
+
+  do i = 1, self%afieldset%size()
+    field = self%afieldset%field(i)
+    call field%data(fdata)
+    fdata(:,:) = 0.0_kind_real
+    call field%final()
   end do
 
 end subroutine soca_fields_zeros

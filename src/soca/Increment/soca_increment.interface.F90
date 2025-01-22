@@ -80,7 +80,6 @@ subroutine soca_increment_dirac_c(c_key_self,c_conf) bind(c,name='soca_increment
 
   call soca_increment_registry%get(c_key_self,self)
   call self%dirac(fckit_configuration(c_conf))
-  call self%sync_to_atlas()
 
 end subroutine soca_increment_dirac_c
 
