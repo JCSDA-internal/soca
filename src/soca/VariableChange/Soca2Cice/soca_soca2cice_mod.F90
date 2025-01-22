@@ -5,7 +5,7 @@
 
 module soca_soca2cice_mod
 
-use atlas_module, only: atlas_geometry, atlas_indexkdtree
+use atlas_module, only: atlas_geometry, atlas_indexkdtree, atlas_field
 use fckit_configuration_module, only: fckit_configuration
 use fckit_exception_module, only: fckit_exception
 use fckit_mpi_module, only: fckit_mpi_comm
@@ -116,6 +116,9 @@ subroutine soca_soca2cice_changevar(self, geom, xa, xm)
   ! fix bounds
   call self%check_ice_bounds(geom, xm)
 
+   ! TODO delete
+  call xm%sync_from_atlas()
+
   ! add ice in the background where needed
   if (self%arctic%shuffle .or. self%antarctic%shuffle) call self%shuffle_ice(geom, xm)
 
@@ -128,6 +131,8 @@ subroutine soca_soca2cice_changevar(self, geom, xa, xm)
   ! write cice restart
   call self%cice%write(geom)
 
+  ! TODO delete
+  call xm%sync_to_atlas()
 end subroutine soca_soca2cice_changevar
 
 ! ------------------------------------------------------------------------------
@@ -150,31 +155,37 @@ subroutine check_ice_bounds(self, geom, xm)
   type(soca_geom), target, intent(in)  :: geom
   type(soca_state),      intent(inout) :: xm
 
-  type(soca_field), pointer :: aice_ana, hice_ana, hsno_ana
+  type(atlas_field) :: aice, hice, hsno
+  real(kind=kind_real), pointer :: data_aice(:,:), data_hice(:,:), data_hsno(:,:)
 
-  ! pointers to soca fields (most likely an analysis)
-  call xm%get("sea_ice_area_fraction",aice_ana)
-  call xm%get("sea_ice_thickness",hice_ana)
-  call xm%get("sea_ice_snow_thickness",hsno_ana)
+  aice = xm%afieldset%field("sea_ice_area_fraction")
+  hice = xm%afieldset%field("sea_ice_thickness")
+  hsno = xm%afieldset%field("sea_ice_snow_thickness")
+  call aice%data(data_aice)
+  call hice%data(data_hice)
+  call hsno%data(data_hsno)
 
   ! check seaice fraction bounds
-  where (aice_ana%val<0_kind_real)
-     aice_ana%val = 0_kind_real
+  where (data_aice<0_kind_real)
+     data_aice = 0_kind_real
   end where
-  where (aice_ana%val>1_kind_real)
-     aice_ana%val = 1_kind_real
+  where (data_aice>1_kind_real)
+     data_aice = 1_kind_real
   end where
 
   ! check seaice thickness bounds
-  where (hice_ana%val<0_kind_real)
-     hice_ana%val = 0_kind_real
+  where (data_hice<0_kind_real)
+     data_hice = 0_kind_real
   end where
 
   ! check snow thickness bounds
-  where (hsno_ana%val<0_kind_real)
-     hsno_ana%val = 0_kind_real
+  where (data_hsno<0_kind_real)
+     data_hsno = 0_kind_real
   end where
 
+  call aice%final()
+  call hice%final()
+  call hsno%final()
 end subroutine check_ice_bounds
 
 ! ------------------------------------------------------------------------------
