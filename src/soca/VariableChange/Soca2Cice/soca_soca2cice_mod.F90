@@ -116,11 +116,11 @@ subroutine soca_soca2cice_changevar(self, geom, xa, xm)
   ! fix bounds
   call self%check_ice_bounds(geom, xm)
 
-   ! TODO delete
-  call xm%sync_from_atlas()
-
   ! add ice in the background where needed
   if (self%arctic%shuffle .or. self%antarctic%shuffle) call self%shuffle_ice(geom, xm)
+
+     ! TODO delete
+  call xm%sync_from_atlas()
 
   ! de-aggregate using the prior distribution
   if (self%arctic%rescale_prior .or. self%antarctic%rescale_prior) call self%prior_dist_rescale(geom, xm)
@@ -196,27 +196,30 @@ subroutine shuffle_ice(self, geom, xm)
   type(soca_geom), target, intent(in)  :: geom
   type(soca_state),      intent(inout) :: xm
 
-  real(kind=kind_real) :: aice, seaice_edge
-  integer :: i, j, k, n, ii, jj
-  type(soca_field), pointer :: s_ana, aice_ana
+  real(kind=kind_real) :: local_aice, seaice_edge
+  integer :: i, j, k, n, ii, jj, atlas_idx
   integer :: minidx(1), nn_max
   integer, allocatable :: idx(:)
   real(kind=kind_real), allocatable :: testmin(:)
   type(cice_state) :: cice_in
 
+  type(atlas_field) :: socn, aice
+  real(kind=kind_real), pointer :: data_socn(:,:), data_aice(:,:)
+
+  socn = xm%afieldset%field("sea_water_salinity")
+  aice = xm%afieldset%field("sea_ice_area_fraction")
+  call socn%data(data_socn)
+  call aice%data(data_aice)
+
   ! Make sure the search tree is smaller than the data size
   nn_max = min(self%cice%agg%n_src, self%shuffle_n)
   allocate(idx(nn_max), testmin(nn_max))
 
-  ! pointers to soca fields (most likely an analysis)
-  call xm%get("sea_water_salinity",s_ana)
-  call xm%get("sea_ice_area_fraction",aice_ana)
-
   call cice_in%copydata(self%cice)
   do i = geom%isc, geom%iec
      do j = geom%jsc, geom%jec
-
-        aice = aice_ana%val(i,j,1)    ! ice fraction analysis
+        atlas_idx = geom%atlas_ij2idx(i,j)
+        local_aice = data_aice(1, atlas_idx)    ! ice fraction analysis
 
         ! Skip if outside of domain
         if (geom%lat(i,j)>0.0_kind_real) then
@@ -227,7 +230,7 @@ subroutine shuffle_ice(self, geom, xm)
           seaice_edge = self%antarctic%seaice_edge
         endif
         if (self%cice%aice(i,j).gt.seaice_edge) cycle     ! skip if the background has more ice than the threshold
-        if (aice.le.0.0_kind_real) then
+        if (local_aice.le.0.0_kind_real) then
            self%cice%aicen(i,j,:) = 0_kind_real
            self%cice%vicen(i,j,:) = 0_kind_real
            self%cice%vsnon(i,j,:) = 0_kind_real
@@ -237,13 +240,13 @@ subroutine shuffle_ice(self, geom, xm)
            self%cice%qice(i,j,:,:) = 0_kind_real
            self%cice%sice(i,j,:,:) = 0_kind_real
            self%cice%qsno(i,j,:,:) = 0_kind_real
-           self%cice%tsfcn(i,j,:) = liquidus_temperature_mush(s_ana%val(i,j,1))
+           self%cice%tsfcn(i,j,:) = liquidus_temperature_mush(data_socn(1, atlas_idx))
         endif
         if (self%cice%agg%n_src == 0) cycle               ! skip if there are no points on this task with ice in the background
         ! find neighbors. TODO (G): add constraint for thickness and snow depth as well
         call self%kdtree%closestPoints(geom%lon(i,j), geom%lat(i,j), nn_max, idx)
         do k = 1, nn_max
-           testmin(k) = abs(cice_in%aice(self%cice%agg%ij(1, idx(k)), self%cice%agg%ij(2, idx(k))) - aice)
+           testmin(k) = abs(cice_in%aice(self%cice%agg%ij(1, idx(k)), self%cice%agg%ij(2, idx(k))) - local_aice)
         end do
         minidx = minloc(testmin) ! I know, I rock.
         ii = self%cice%agg%ij(1, idx(minidx(1)))
@@ -269,6 +272,8 @@ subroutine shuffle_ice(self, geom, xm)
      end do
   end do
 
+  call socn%final()
+  call aice%final()
 end subroutine shuffle_ice
 
 ! ------------------------------------------------------------------------------
