@@ -119,11 +119,11 @@ subroutine soca_soca2cice_changevar(self, geom, xa, xm)
   ! add ice in the background where needed
   if (self%arctic%shuffle .or. self%antarctic%shuffle) call self%shuffle_ice(geom, xm)
 
-     ! TODO delete
-  call xm%sync_from_atlas()
-
   ! de-aggregate using the prior distribution
   if (self%arctic%rescale_prior .or. self%antarctic%rescale_prior) call self%prior_dist_rescale(geom, xm)
+
+    ! TODO delete
+  call xm%sync_from_atlas()
 
   ! cleanup seaice state
   call self%cleanup_ice(geom, xm)
@@ -387,17 +387,25 @@ subroutine prior_dist_rescale(self, geom, xm)
   type(soca_geom), target, intent(in)  :: geom
   type(soca_state),      intent(inout) :: xm
 
-  real(kind=kind_real) :: alpha, hice, hsno, seaice_edge, rescale_min_hice, rescale_min_hsno
-  type(soca_field), pointer :: s_ana, aice_ana, hice_ana, hsno_ana
-  integer :: c, i, j
+  real(kind=kind_real) :: alpha, local_hice, local_hsno, seaice_edge, rescale_min_hice, rescale_min_hsno
+  integer :: c, i, j, idx
 
-  call xm%get("sea_ice_area_fraction", aice_ana)
-  call xm%get("sea_ice_thickness", hice_ana)
-  call xm%get("sea_ice_snow_thickness", hsno_ana)
-  call xm%get("sea_water_salinity", s_ana)
+  type(atlas_field) :: aice, hice, hsno, socn
+  real(kind=kind_real), pointer :: data_aice(:,:), data_hice(:,:), data_hsno(:,:), data_socn(:,:)
 
-  do i = geom%isc, geom%iec
-     do j = geom%jsc, geom%jec
+  ! get fields from atlas
+  aice = xm%afieldset%field("sea_ice_area_fraction")
+  hice = xm%afieldset%field("sea_ice_thickness")
+  hsno = xm%afieldset%field("sea_ice_snow_thickness")
+  socn = xm%afieldset%field("sea_water_salinity")
+  call aice%data(data_aice)
+  call hice%data(data_hice)
+  call hsno%data(data_hsno)
+  call socn%data(data_socn)
+
+  do j = geom%jsc, geom%jec
+    do i = geom%isc, geom%iec
+      idx = geom%atlas_ij2idx(i,j)
 
         if (geom%lat(i,j)>0.0_kind_real) then
           if (.not. self%arctic%rescale_prior) cycle
@@ -413,7 +421,7 @@ subroutine prior_dist_rescale(self, geom, xm)
         if (self%cice%aice(i,j).le.seaice_edge) cycle ! Only rescale within the icepack
 
         ! rescale background to match aggregate ice concentration analysis
-        alpha = aice_ana%val(i,j,1)/self%cice%aice(i,j)
+        alpha = data_aice(1, idx)/self%cice%aice(i,j)
         self%cice%aice(i,j) = alpha * self%cice%aice(i,j)
         do c = 1, self%ncat
            self%cice%aicen(i,j,c) = alpha*self%cice%aicen(i,j,c)
@@ -422,22 +430,25 @@ subroutine prior_dist_rescale(self, geom, xm)
         end do
 
         ! adjust ice volume to match mean cell thickness
-        hice = sum(self%cice%vicen(i,j,:))
-        if (hice.gt.rescale_min_hice) then
-           alpha = hice_ana%val(i,j,1)/hice
+        local_hice = sum(self%cice%vicen(i,j,:))
+        if (local_hice.gt.rescale_min_hice) then
+           alpha = data_hice(1, idx)/local_hice
            self%cice%vicen(i,j,:) = alpha*self%cice%vicen(i,j,:)
         end if
 
         ! adjust snow volume to match mean cell thickness
-        hsno = sum(self%cice%vsnon(i,j,:))
-        if (hsno.gt.rescale_min_hsno) then
-           alpha = hsno_ana%val(i,j,1)/hsno
+        local_hsno = sum(self%cice%vsnon(i,j,:))
+        if (local_hsno.gt.rescale_min_hsno) then
+           alpha = data_hsno(1, idx)/local_hsno
            self%cice%vsnon(i,j,:) = alpha*self%cice%vsnon(i,j,:)
         end if
-
-     end do
+    end do
   end do
 
+  call aice%final()
+  call hice%final()
+  call hsno%final()
+  call socn%final()
 end subroutine prior_dist_rescale
 
 ! ------------------------------------------------------------------------------
