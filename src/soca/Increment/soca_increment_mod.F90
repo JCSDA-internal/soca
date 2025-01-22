@@ -71,30 +71,42 @@ subroutine soca_increment_random(self)
   integer, parameter :: rseed = 1 ! constant for reproducability of tests
     ! NOTE: random seeds are not quite working the way expected,
     !  it is only set the first time normal_distribution() is called with a seed
-  integer :: jz, i
+  integer :: i, j, k, n, idx
 
-  type(soca_field), pointer :: field
+  type(atlas_field) :: afield
+  real(kind=kind_real), pointer :: fdata(:,:)
+  real(kind=kind_real), allocatable :: tmp3d(:,:,:)
 
-  ! set random values
-  do i = 1, size(self%fields)
-    field => self%fields(i)
-    ! TODO remove this once increment / state are fully separated
+
+  do n = 1, self%afieldset%size()
+    afield = self%afieldset%field(n)
+    call afield%data(fdata)
+
     ! NOTE: can't randomize "hocn", testIncrementInterpAD fails
-    if (field%name == "sea_water_cell_thickness") cycle
-    call normal_distribution(field%val,  0.0_kind_real, 1.0_kind_real, rseed)
-  end do
+    if (afield%name() == "sea_water_cell_thickness") then
+      call afield%final()
+      cycle
+    end if
 
-  ! mask out land, set to zero
-  do i=1,size(self%fields)
-    field => self%fields(i)
-    if (.not. associated(field%mask) ) cycle
-    do jz=1,field%nz
-      field%val(:,:,jz) = field%val(:,:,jz) * field%mask(:,:)
+    ! allocate and fill with random values
+    ! NOTE this is done in a weird way to keep answers from changing when it was refactored
+    allocate(tmp3d(self%geom%isd:self%geom%ied, self%geom%jsd:self%geom%jed, afield%shape(1)))
+    call normal_distribution(tmp3d,  0.0_kind_real, 1.0_kind_real, rseed)
+    do j=self%geom%jsc,self%geom%jec
+      do i=self%geom%isc,self%geom%iec
+        idx = self%geom%atlas_ij2idx(i,j)
+        do k=1,afield%shape(1)
+          fdata(k,idx) = tmp3d(i,j,k)
+        end do
+      end do
     end do
+    deallocate(tmp3d)
+
+    call afield%final()
   end do
 
-  ! update domains
-  call self%update_halos()
+  ! TODO previously the random values were masked out, is this needed?
+
 end subroutine soca_increment_random
 
 

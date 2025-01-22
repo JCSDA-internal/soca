@@ -93,7 +93,6 @@ subroutine soca_increment_random_c(c_key_self) bind(c,name='soca_increment_rando
 
   call soca_increment_registry%get(c_key_self,self)
   call self%random()
-  call self%sync_to_atlas()
 
 end subroutine soca_increment_random_c
 
