@@ -122,12 +122,11 @@ subroutine soca_soca2cice_changevar(self, geom, xa, xm)
   ! de-aggregate using the prior distribution
   if (self%arctic%rescale_prior .or. self%antarctic%rescale_prior) call self%prior_dist_rescale(geom, xm)
 
-    ! TODO delete
-  call xm%sync_from_atlas()
-
   ! cleanup seaice state
   call self%cleanup_ice(geom, xm)
 
+      ! TODO delete
+  call xm%sync_from_atlas()
   ! write cice restart
   call self%cice%write(geom)
 
@@ -284,10 +283,9 @@ subroutine cleanup_ice(self, geom, xm)
   type(soca_geom), target, intent(in)  :: geom
   type(soca_state),      intent(inout) :: xm
 
-  integer :: i, j, k, ntracers
+  integer :: i, j, k, ntracers, idx
   integer :: nt_tsfc_in, nt_qice_in, nt_qsno_in, nt_sice_in
-  real(kind=kind_real) :: aice, aice0
-  type(soca_field), pointer :: t_ana, s_ana, aice_ana, hice_ana, hsno_ana
+  real(kind=kind_real) :: local_aice, aice0
   real(kind=kind_real), allocatable :: h_bounds(:)
   real(kind=kind_real), allocatable :: tracers(:,:)   ! (ntracers, ncat)
   logical, allocatable :: first_ice(:)                ! (ncat) ! For bgc and S tracers. set to true if zapping ice.
@@ -299,12 +297,20 @@ subroutine cleanup_ice(self, geom, xm)
   real(kind=kind_real), allocatable :: fiso_ocn(:)    ! isotope flux to ocean, not used as long as icepack's
                                                       ! tr_iso is false (default), so not initialized here.
 
-  ! pointers to soca fields (most likely an analysis)
-  call xm%get("sea_water_potential_temperature",t_ana)
-  call xm%get("sea_water_salinity",s_ana)
-  call xm%get("sea_ice_area_fraction",aice_ana)
-  call xm%get("sea_ice_thickness", hice_ana)
-  call xm%get("sea_ice_snow_thickness", hsno_ana)
+  type(atlas_field) :: tocn, socn, aice, hice, hsno
+  real(kind=kind_real), pointer :: data_tocn(:,:), data_socn(:,:), data_aice(:,:), data_hice(:,:), data_hsno(:,:)
+
+  ! get fields from atlas
+  tocn = xm%afieldset%field("sea_water_potential_temperature")
+  socn = xm%afieldset%field("sea_water_salinity")
+  aice = xm%afieldset%field("sea_ice_area_fraction")
+  hice = xm%afieldset%field("sea_ice_thickness")
+  hsno = xm%afieldset%field("sea_ice_snow_thickness")
+  call tocn%data(data_tocn)
+  call socn%data(data_socn)
+  call aice%data(data_aice)
+  call hice%data(data_hice)
+  call hsno%data(data_hsno)
 
   ! get thickness category bounds
   allocate(h_bounds(0:self%ncat))
@@ -340,8 +346,10 @@ subroutine cleanup_ice(self, geom, xm)
   allocate(first_ice(self%ncat))
   first_ice(:) = .true.
 
-  do i = geom%isc, geom%iec
-     do j = geom%jsc, geom%jec
+  do j = geom%jsc, geom%jec
+     do i = geom%isc, geom%iec
+        idx = geom%atlas_ij2idx(i,j)
+
         ! setup tracers at this gridpoint
         tracers(nt_tsfc,:) = self%cice%tsfcn(i,j,:)
         do k = 1, self%ice_lev
@@ -357,7 +365,7 @@ subroutine cleanup_ice(self, geom, xm)
                          h_bounds, self%cice%aicen(i,j,:), tracers, &
                          self%cice%vicen(i,j,:), self%cice%vsnon(i,j,:), &
                          ! ice and total water concentration are computed in the call using aicen
-                         aice, aice0, &
+                         local_aice, aice0, &
                          ! number of aerosol tracers, bio tracers, bio layers
                          0, 0, 0, &
                          ! aerosol flag, topo pond flag, heat capacity flag, flag for zapping ice for bgc and s tracers
@@ -370,14 +378,19 @@ subroutine cleanup_ice(self, geom, xm)
            call abor1_ftn("Soca2Cice: icepack aborted during cleanup_itd")
         endif
         ! re-compute aggregates = analysis that is effectively inserted in the restart
-        aice_ana%val(i,j,1) = sum(self%cice%aicen(i,j,:))
-        hice_ana%val(i,j,1) = sum(self%cice%vicen(i,j,:))
-        hsno_ana%val(i,j,1) = sum(self%cice%vsnon(i,j,:))
+        data_aice(1, idx) = sum(self%cice%aicen(i,j,:))
+        data_hice(1, idx) = sum(self%cice%vicen(i,j,:))
+        data_hsno(1, idx) = sum(self%cice%vsnon(i,j,:))
      end do
   end do
 
   deallocate(h_bounds, tracers, trcr_depend, trcr_base, n_trcr_strata, nt_strata, first_ice)
 
+  call tocn%final()
+  call socn%final()
+  call aice%final()
+  call hice%final()
+  call hsno%final()
 end subroutine cleanup_ice
 
 ! ------------------------------------------------------------------------------
