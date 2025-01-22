@@ -28,7 +28,6 @@ namespace soca {
                                const oops::Variables &,
                                const atlas::field::FieldSetImpl *);
     void soca_state_delete_f90(F90flds &);
-    void soca_state_copy_f90(const F90flds &, const F90flds &);
     void soca_state_read_file_f90(const F90flds &,
                                   const eckit::Configuration * const &,
                                   util::DateTime * const *);

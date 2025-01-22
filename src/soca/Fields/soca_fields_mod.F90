@@ -130,9 +130,6 @@ contains
   !> \copybrief soca_fields_create \see soca_fields_create
   procedure :: create => soca_fields_create
 
-  !> \copybrief soca_fields_copy \see soca_fields_copy
-  procedure :: copy   => soca_fields_copy
-
   !> \copybrief soca_fields_delete \see soca_fields_delete
   procedure :: delete => soca_fields_delete
 
@@ -508,42 +505,6 @@ subroutine soca_fields_delete(self)
     call self%fields(i)%delete()
   end do
   deallocate(self%fields)
-
-end subroutine
-
-
-! ------------------------------------------------------------------------------
-!> Copy the contents of \p rhs to \p self.
-!!
-!! \p self will be initialized with the variable names in \p rhs if
-!! not already initialized.
-!!
-!! \see soca_fields_init_vars
-!! \relates soca_fields_mod::soca_fields
-subroutine soca_fields_copy(self, rhs)
-  class(soca_fields), intent(inout) :: self
-  class(soca_fields),  intent(in)    :: rhs !< fields to copy from
-
-  character(len=:), allocatable :: vars_str(:)
-  integer :: i
-  type(soca_field), pointer :: rhs_fld
-
-  ! initialize the variables based on the names in rhs
-  if (.not. allocated(self%fields)) then
-    self%geom => rhs%geom
-    allocate(character(len=1024) :: vars_str(size(rhs%fields)))
-    do i=1, size(vars_str)
-      vars_str(i) = rhs%fields(i)%name
-    end do
-    call soca_fields_init_vars(self, vars_str)
-  end if
-
-  ! copy values from rhs to self, only if the variable exists
-  !  in self
-  do i=1,size(self%fields)
-    call rhs%get(self%fields(i)%name, rhs_fld)
-    call self%fields(i)%copy(rhs_fld)
-  end do
 
 end subroutine
 

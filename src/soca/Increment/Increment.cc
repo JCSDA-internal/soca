@@ -61,7 +61,7 @@ namespace soca {
 
     // same geometry, just copy and quit
     if (geom == other.geom_) {
-      soca_increment_copy_f90(toFortran(), other.toFortran());
+      util::copyFieldSet(other.fieldSet_, fieldSet_);
       return;
     }
 
@@ -100,7 +100,7 @@ namespace soca {
     : Increment(other.geom_, other.vars_, other.time_)
   {
     if (copy) {
-      soca_increment_copy_f90(toFortran(), other.toFortran());
+      util::copyFieldSet(other.fieldSet_, fieldSet_);
     }
     Log::trace() << "Increment copy-created." << std::endl;
   }
@@ -110,7 +110,7 @@ namespace soca {
   Increment::Increment(const Increment & other)
     : Increment(other.geom_, other.vars_, other.time_)
   {
-    soca_increment_copy_f90(toFortran(), other.toFortran());
+    util::copyFieldSet(other.fieldSet_, fieldSet_);
     Log::trace() << "Increment copy-created." << std::endl;
   }
 
@@ -153,7 +153,24 @@ namespace soca {
     ASSERT(geom_ == rhs.geom_);
 
     time_ = rhs.time_;
-    soca_increment_copy_f90(toFortran(), rhs.toFortran());
+
+    // copy from rhs to self, only if field exists in self
+    for (const auto & otherField : rhs.fieldSet_) {
+      if (!fieldSet_.has(otherField.name())) continue;
+
+      atlas::Field field = fieldSet_.field(otherField.name());
+      auto view = atlas::array::make_view<double, 2>(field);
+      const auto otherView = atlas::array::make_view<double, 2>(otherField);
+      for (int jnode = 0; jnode < field.shape(0); ++jnode) {
+        for (int jlevel = 0; jlevel < field.shape(1); ++jlevel) {
+          view(jnode, jlevel) = otherView(jnode, jlevel);
+        }
+      }
+
+      // If either term in the sum is out-of-date, then the result will be out-of-date
+      field.set_dirty(field.dirty() || otherField.dirty());
+    }
+
     return *this;
   }
 

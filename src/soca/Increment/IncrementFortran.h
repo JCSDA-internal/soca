@@ -33,7 +33,6 @@ namespace soca {
                                const oops::Variables &,
                                const atlas::field::FieldSetImpl *);
     void soca_increment_delete_f90(F90flds &);
-    void soca_increment_copy_f90(const F90flds &, const F90flds &);
     void soca_increment_random_f90(const F90flds &);
     void soca_increment_dirac_f90(const F90flds &,
                               const eckit::Configuration * const &);

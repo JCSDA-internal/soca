@@ -71,7 +71,7 @@ namespace soca {
 
     // if geometry is the same, just copy and quit
     if (geom == other.geom_) {
-      soca_state_copy_f90(toFortran(), other.toFortran());
+      util::copyFieldSet(other.fieldSet_, fieldSet_);
       return;
     }
 
@@ -116,7 +116,7 @@ namespace soca {
     : Fields(other.geom_, other.vars_, other.time_)
   {
     soca_state_create_f90(keyFlds_, geom_.toFortran(), vars_, fieldSet_.get());
-    soca_state_copy_f90(toFortran(), other.toFortran());
+    util::copyFieldSet(other.fieldSet_, fieldSet_);
     Log::trace() << "State::State copied." << std::endl;
   }
 
@@ -133,7 +133,7 @@ namespace soca {
     ASSERT(geom_ == rhs.geom_);
 
     time_ = rhs.time_;
-    soca_state_copy_f90(toFortran(), rhs.toFortran());
+    util::copyFieldSet(rhs.fieldSet_, fieldSet_);
     return *this;
   }
 
