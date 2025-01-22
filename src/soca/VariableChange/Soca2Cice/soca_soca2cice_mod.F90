@@ -125,13 +125,9 @@ subroutine soca_soca2cice_changevar(self, geom, xa, xm)
   ! cleanup seaice state
   call self%cleanup_ice(geom, xm)
 
-      ! TODO delete
-  call xm%sync_from_atlas()
   ! write cice restart
   call self%cice%write(geom)
-
-  ! TODO delete
-  call xm%sync_to_atlas()
+  call xm%sync_from_atlas() ! TODO why is this needed?? Remove when fixed
 end subroutine soca_soca2cice_changevar
 
 ! ------------------------------------------------------------------------------
@@ -383,6 +379,11 @@ subroutine cleanup_ice(self, geom, xm)
         data_hsno(1, idx) = sum(self%cice%vsnon(i,j,:))
      end do
   end do
+
+  ! indicate dirty halos for updated fields
+  call aice%set_dirty()
+  call hice%set_dirty()
+  call hsno%set_dirty()
 
   deallocate(h_bounds, tracers, trcr_depend, trcr_base, n_trcr_strata, nt_strata, first_ice)
 
