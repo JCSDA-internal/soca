@@ -238,14 +238,29 @@ subroutine soca_vert_scales(self, vert)
   class(soca_increment), intent(inout) :: self
   real(kind=kind_real),  intent(in)    :: vert
 
-  integer :: i, jz
+  type(atlas_field) :: field, mask
+  real(kind=kind_real), pointer :: data_field(:,:), data_mask(:,:)
+
+  integer :: n, i, k
+
+  ! get a copy of the input atlas fields needed
+  mask = self%geom%fieldset%field("mask_h")
+  call mask%data(data_mask)
 
   ! compute scales
-  do i=1,size(self%fields)
-    do jz=1,self%fields(i)%nz
-      self%fields(i)%val(:,:,jz) = 3.57_kind_real*self%geom%mask2d(:,:)*vert
+  do n=1,self%afieldset%size()
+    field=self%afieldset%field(n)
+    call field%data(data_field)
+    do i=1,field%shape(2)
+      do k=1,field%shape(1)
+        data_field(k,i) = 3.57_kind_real * data_mask(1,i) * vert
+      end do
     end do
+
+    call field%final()
   end do
+
+  call mask%final()
 end subroutine soca_vert_scales
 ! ------------------------------------------------------------------------------
 

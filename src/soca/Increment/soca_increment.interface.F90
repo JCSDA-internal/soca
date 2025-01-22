@@ -198,7 +198,6 @@ subroutine soca_increment_vert_scales_c(c_key_self, c_vert) bind(c,name='soca_in
   call soca_increment_registry%get(c_key_self, f_self)
   vert = c_vert
   call f_self%vert_scales(c_vert)
-  call f_self%sync_to_atlas()
 
 end subroutine soca_increment_vert_scales_c
 
