@@ -179,7 +179,6 @@ subroutine soca_increment_horiz_scales_c(c_key_self, c_conf) &
 
   call soca_increment_registry%get(c_key_self, f_self)
   call f_self%horiz_scales(fckit_configuration(c_conf))
-  call f_self%sync_to_atlas()
 
 end subroutine soca_increment_horiz_scales_c
 

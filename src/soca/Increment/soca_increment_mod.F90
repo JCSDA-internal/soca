@@ -179,26 +179,18 @@ subroutine soca_horiz_scales(self, f_conf)
   class(soca_increment),        intent(inout) :: self
   type(fckit_configuration), value, intent(in):: f_conf   !< Configuration
 
-  integer :: i, j, jz
+  integer :: n, i, j
   type(fckit_configuration) :: subconf
-  real(kind=kind_real) :: r_base, r_mult, r_min_grid, r_min, r_max
+  real(kind=kind_real) :: r_base, r_mult, r_min_grid, r_min, r_max, val
 
-  type(atlas_field) :: aField
-  real(kind=kind_real), pointer :: aFieldPtr(:,:)
-  real(kind=kind_real), allocatable :: rossby(:,:)
+  type(atlas_field) :: afield, area, rossby
+  real(kind=kind_real), pointer :: data_field(:,:), data_area(:,:), data_rossby(:,:)
 
-  ! get a copy of the rossby radius from atlas
-  allocate(rossby(self%geom%isd:self%geom%ied,self%geom%jsd:self%geom%jed))
-  rossby = 0.0
-  aField = self%geom%fieldset%field("rossby_radius")
-  call aField%data(aFieldPtr)
-  do j=self%geom%jsc,self%geom%jec
-    do i=self%geom%isc,self%geom%iec
-      rossby(i,j) = aFieldPtr(1, self%geom%atlas_ij2idx(i,j))
-    end do
-  end do
-  call aField%final()
-
+  ! get a copy of the input atlas fields needed
+  rossby = self%geom%fieldset%field("rossby_radius")
+  area = self%geom%fieldset%field("area")
+  call rossby%data(data_rossby)
+  call area%data(data_area)
 
   ! NOTE, this is duplicated code also present in soca_covariance_mod and possibly elsewhere.
   ! This does not belong in soca_increment_mod and should be moved out
@@ -208,29 +200,33 @@ subroutine soca_horiz_scales(self, f_conf)
   ! 2) minimum value of "min grid mult" * grid_size is imposed
   ! 3) min/max are imposed based on "min value" and "max value"
   ! 4) converted from a gaussian sigma to Gaspari-Cohn cutoff distance
-  do i=1,size(self%fields)
+  do n=1, self%afieldset%size()
+    afield = self%afieldset%field(n)
+    call afield%data(data_field)
+
     ! get parameters for correlation lengths
-    call f_conf%get_or_die(trim(self%fields(i)%name), subconf)
+    call f_conf%get_or_die(trim(afield%name()), subconf)
     if (.not. subconf%get("base value", r_base)) r_base = 0.0
     if (.not. subconf%get("rossby mult", r_mult)) r_mult = 0.0
     if (.not. subconf%get("min grid mult", r_min_grid)) r_min_grid = 1.0
     if (.not. subconf%get("min value", r_min)) r_min = 0.0
     if (.not. subconf%get("max value", r_max)) r_max = huge(r_max)
 
-    self%fields(i)%val(:,:,1) = r_base + r_mult*rossby(:,:)
-    if (r_min_grid .gt. 0.0) then
-      self%fields(i)%val(:,:,1) = max(self%fields(i)%val(:,:,1), sqrt(self%geom%cell_area)*r_min_grid)
-    end if
-    self%fields(i)%val(:,:,1) = min(r_max, self%fields(i)%val(:,:,1))
-    self%fields(i)%val(:,:,1) = max(r_min, self%fields(i)%val(:,:,1))
-    self%fields(i)%val(:,:,1) = 3.57_kind_real * self%fields(i)%val(:,:,1) ! convert from gaussian sigma to
-                                                                           ! Gaspari-Cohn half width
-
-    do jz=2,self%fields(i)%nz
-      self%fields(i)%val(:,:,jz) = self%fields(i)%val(:,:,1)
+    do i=1, afield%shape(2)
+      val = r_base + r_mult*data_rossby(1, i)
+      if (r_min_grid > 0.0) val = max(val, sqrt(data_area(1, i))*r_min_grid)
+      val = min(r_max, val)
+      val = max(r_min, val)
+      val = 3.57_kind_real * val ! convert from gaussian sigma to Gaspari-Cohn half width
+      do j=1, afield%shape(1)
+        data_field(j, i) = val
+      end do
     end do
 
+    call afield%final()
   end do
+  call rossby%final()
+  call area%final()
 end subroutine soca_horiz_scales
 
 
