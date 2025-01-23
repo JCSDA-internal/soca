@@ -127,9 +127,7 @@ subroutine soca_state_rotate2grid_c(c_key_self, c_uvars, c_vvars) bind(c,name='s
   vvars = oops_variables(c_vvars)
 
   call soca_state_registry%get(c_key_self,self)
-  call self%sync_from_atlas()
   call self%rotate(coordinate="grid", uvars=uvars, vvars=vvars)
-  call self%sync_to_atlas()
 
 end subroutine soca_state_rotate2grid_c
 
@@ -148,9 +146,7 @@ subroutine soca_state_rotate2north_c(c_key_self, c_uvars, c_vvars) bind(c,name='
   vvars = oops_variables(c_vvars)
 
   call soca_state_registry%get(c_key_self,self)
-  call self%sync_from_atlas()
   call self%rotate(coordinate="north", uvars=uvars, vvars=vvars)
-  call self%sync_to_atlas()
 
 end subroutine soca_state_rotate2north_c
 

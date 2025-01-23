@@ -9,6 +9,7 @@ module soca_state_mod
 use logger_mod
 use kinds, only: kind_real
 use oops_variables_mod
+use atlas_module, only: atlas_field
 
 ! soca modules
 use soca_geom_mod
@@ -64,50 +65,65 @@ subroutine soca_state_rotate(self, coordinate, uvars, vvars)
   type(oops_variables),  intent(in) :: uvars !< list of one or more U variables
   type(oops_variables),  intent(in) :: vvars !< list of one or more V variables
 
-  integer :: z, i
-  type(soca_field), pointer :: uocn, vocn
-  real(kind=kind_real), allocatable :: un(:,:,:), vn(:,:,:)
+  integer :: i, j, k, n, idx
+
+  type(atlas_field) :: ufield, vfield
+  real(kind=kind_real), pointer :: udata(:,:), vdata(:,:)
+  real(kind=kind_real) :: u, v
+
   character(len=64) :: u_names, v_names
 
-  do i=1, uvars%nvars()
-    ! get (u, v) pair and make a copy
-    u_names = trim(uvars%variable(i))
-    v_names = trim(vvars%variable(i))
-    if (self%has(u_names).and.self%has(v_names)) then
-      call oops_log%info("rotating "//trim(u_names)//" "//trim(v_names))
-      call self%get(u_names, uocn)
-      call self%get(v_names, vocn)
-    else
+  do n=1, uvars%nvars()
+    ! get (u, v) pair
+    u_names = trim(uvars%variable(n))
+    v_names = trim(vvars%variable(n))
+
+    if (.not. (self%has(u_names).and.self%has(v_names))) then
       ! Skip if no pair found.
       call oops_log%info("not rotating "//trim(u_names)//" "//trim(v_names))
       cycle
     end if
-    allocate(un(size(uocn%val,1),size(uocn%val,2),size(uocn%val,3)))
-    allocate(vn(size(uocn%val,1),size(uocn%val,2),size(uocn%val,3)))
-    un = uocn%val
-    vn = vocn%val
+
+    call oops_log%info("rotating "//trim(u_names)//" "//trim(v_names))
+    ufield = self%afieldset%field(u_names)
+    vfield = self%afieldset%field(v_names)
+    call ufield%data(udata)
+    call vfield%data(vdata)
 
     select case(trim(coordinate))
-    case("north")   ! rotate (uocn, vocn) to geo north
-      do z=1,uocn%nz
-        uocn%val(:,:,z) = &
-        (self%geom%cos_rot(:,:)*un(:,:,z) + self%geom%sin_rot(:,:)*vn(:,:,z)) * uocn%mask(:,:)
-        vocn%val(:,:,z) = &
-        (- self%geom%sin_rot(:,:)*un(:,:,z) + self%geom%cos_rot(:,:)*vn(:,:,z)) * vocn%mask(:,:)
+    case("north")
+      do j=self%geom%jsc,self%geom%jec
+        do i=self%geom%isc,self%geom%iec
+          idx = self%geom%atlas_ij2idx(i,j)
+          do k=1,ufield%shape(1)
+            u = udata(k, idx)
+            v = vdata(k, idx)
+            udata(k, idx) = self%geom%cos_rot(i,j)*u + self%geom%sin_rot(i,j) * v
+            vdata(k, idx) = -self%geom%sin_rot(i,j)*u + self%geom%cos_rot(i,j) * v
+            ! TODO should apply mask, not sure if I care enough to do it
+          end do
+        end do
       end do
     case("grid")
-      do z=1,uocn%nz
-        uocn%val(:,:,z) = &
-        (self%geom%cos_rot(:,:)*un(:,:,z) - self%geom%sin_rot(:,:)*vn(:,:,z)) * uocn%mask(:,:)
-        vocn%val(:,:,z) = &
-        (self%geom%sin_rot(:,:)*un(:,:,z) + self%geom%cos_rot(:,:)*vn(:,:,z)) * vocn%mask(:,:)
+      do j=self%geom%jsc,self%geom%jec
+        do i=self%geom%isc,self%geom%iec
+          idx = self%geom%atlas_ij2idx(i,j)
+          do k=1,ufield%shape(1)
+            print *, "DBG grid "
+            u = udata(k, idx)
+            v = vdata(k, idx)
+            udata(k, idx) = self%geom%cos_rot(i,j)*u - self%geom%sin_rot(i,j) * v
+            vdata(k, idx) = self%geom%sin_rot(i,j)*u + self%geom%cos_rot(i,j) * v
+            ! TODO should apply mask, not sure if I care enough to do it
+          end do
+        end do
       end do
     end select
-    deallocate(un, vn)
 
-    ! update halos
-    call uocn%update_halo(self%geom)
-    call vocn%update_halo(self%geom)
+    call ufield%set_dirty()
+    call vfield%set_dirty()
+    call ufield%final()
+    call vfield%final()
   end do
 end subroutine soca_state_rotate
 
