@@ -137,39 +137,45 @@ subroutine soca_state_logexpon(self, transfunc, trvars)
   character(len=*),      intent(in) :: transfunc !< "log" or "expon"
   type(oops_variables),  intent(in) :: trvars !< list of variables to transform
 
-  integer :: z, i
-  type(soca_field), pointer :: trocn
-  real(kind=kind_real), allocatable :: trn(:,:,:)
+  integer :: i, k, n
   real(kind=kind_real) :: min_val = 1e-6_kind_real
   character(len=64) :: tr_names
 
-  do i=1, trvars%nvars()
+  type(atlas_field) :: field
+  real(kind=kind_real), pointer :: fdata(:,:)
+
+  do n=1, trvars%nvars()
     ! get a list variables to be transformed and make a copy
-    tr_names = trim(trvars%variable(i))
-    if (self%has(tr_names)) then
-      call oops_log%info("transforming "//trim(tr_names))
-      call self%get(tr_names, trocn)
-    else
+    tr_names = trim(trvars%variable(n))
+    if (.not. self%has(tr_names)) then
       ! Skip if no variable found.
       call oops_log%info("not transforming "//trim(tr_names))
       cycle
     end if
-    allocate(trn(size(trocn%val,1),size(trocn%val,2),size(trocn%val,3)))
-    trn = trocn%val
+    call oops_log%info("transforming "//trim(tr_names))
+
+    field = self%afieldset%field(tr_names)
+    call field%data(fdata)
 
     select case(trim(transfunc))
     case("log")   ! apply logarithmic transformation
-      trocn%val = log(trn + min_val)
+      do i=1, field%shape(2)
+        do k=1, field%shape(1)
+          fdata(k,i) = log(fdata(k,i) + min_val)
+        end do
+      end do
     case("expon") ! Apply exponential transformation
-      trocn%val = exp(trn) - min_val
+      do i=1, field%shape(2)
+        do k=1, field%shape(1)
+          fdata(k,i) = exp(fdata(k,i)) - min_val
+        end do
+      end do
     end select
 
-    ! update halos
-    call trocn%update_halo(self%geom)
-
-    ! deallocate trn for next variable
-    deallocate(trn)
+    !call field%set_dirty()
+    call field%final()
   end do
+
 end subroutine soca_state_logexpon
 ! ------------------------------------------------------------------------------
 

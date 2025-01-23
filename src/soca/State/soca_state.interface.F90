@@ -177,9 +177,7 @@ subroutine soca_state_logtrans_c(c_key_self, c_trvars) bind(c,name='soca_state_l
   trvars = oops_variables(c_trvars)
 
   call soca_state_registry%get(c_key_self,self)
-  call self%sync_from_atlas()
   call self%logexpon(transfunc="log", trvars=trvars)
-  call self%sync_to_atlas()
 
 end subroutine soca_state_logtrans_c
 
@@ -196,9 +194,7 @@ subroutine soca_state_expontrans_c(c_key_self, c_trvars) bind(c,name='soca_state
   trvars = oops_variables(c_trvars)
 
   call soca_state_registry%get(c_key_self,self)
-  call self%sync_from_atlas()
   call self%logexpon(transfunc="expon", trvars=trvars)
-  call self%sync_to_atlas()
 
 end subroutine soca_state_expontrans_c
 
