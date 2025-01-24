@@ -234,14 +234,48 @@ namespace soca {
 
   void State::logtrans(const oops::Variables & trvar) {
     Log::trace() << "State::State apply logarithmic transformation." << std::endl;
-    soca_state_logtrans_f90(toFortran(), trvar);
+
+    double minVal = 1.0e-6;
+    for (const auto & var : trvar) {
+      const std::string & varName = var.name();
+      if (!vars_.has(varName)) {
+        throw eckit::UserError("State variable " + varName + " not found in State.");
+      } else {
+        Log::info() << "transforming variable "  << varName << std::endl;
+      }
+
+      auto & field = fieldSet_.field(varName);
+      auto view = atlas::array::make_view<double, 2>(field);
+      for (size_t i = 0; i < field.shape(0); ++i) {
+        for (size_t j = 0; j < field.shape(1); ++j) {
+          view(i, j) = std::log(view(i, j)+minVal);
+        }
+      }
+    }
   }
 
   // -----------------------------------------------------------------------------
 
   void State::expontrans(const oops::Variables & trvar) {
     Log::trace() << "State::State apply exponential transformation." << std::endl;
-    soca_state_expontrans_f90(toFortran(), trvar);
+
+    double minVal = 1.0e-6;
+    for (const auto & var : trvar) {
+      const std::string & varName = var.name();
+      if (!vars_.has(varName)) {
+        throw eckit::UserError("State variable " + varName + " not found in State.");
+      } else {
+        Log::info() << "transforming variable "  << varName << std::endl;
+      }
+
+      auto & field = fieldSet_.field(varName);
+      auto view = atlas::array::make_view<double, 2>(field);
+      for (size_t i = 0; i < field.shape(0); ++i) {
+        for (size_t j = 0; j < field.shape(1); ++j) {
+          view(i, j) = std::exp(view(i, j))-minVal;
+        }
+      }
+    }
   }
 
   // -----------------------------------------------------------------------------

@@ -39,9 +39,6 @@ contains
   !> \copybrief soca_state_rotate \see soca_state_rotate
   procedure :: rotate => soca_state_rotate
 
-  !> \copybrief soca_state_logexpon \see soca_state_logexpon
-  procedure :: logexpon => soca_state_logexpon
-
   !> \}
 
 end type
@@ -127,57 +124,6 @@ subroutine soca_state_rotate(self, coordinate, uvars, vvars)
   end do
 end subroutine soca_state_rotate
 
-
 ! ------------------------------------------------------------------------------
-!> Apply logarithmic and exponential transformations
-!!
-!! \relates soca_state_mod::soca_state
-subroutine soca_state_logexpon(self, transfunc, trvars)
-  class(soca_state),  intent(inout) :: self
-  character(len=*),      intent(in) :: transfunc !< "log" or "expon"
-  type(oops_variables),  intent(in) :: trvars !< list of variables to transform
-
-  integer :: i, k, n
-  real(kind=kind_real) :: min_val = 1e-6_kind_real
-  character(len=64) :: tr_names
-
-  type(atlas_field) :: field
-  real(kind=kind_real), pointer :: fdata(:,:)
-
-  do n=1, trvars%nvars()
-    ! get a list variables to be transformed and make a copy
-    tr_names = trim(trvars%variable(n))
-    if (.not. self%has(tr_names)) then
-      ! Skip if no variable found.
-      call oops_log%info("not transforming "//trim(tr_names))
-      cycle
-    end if
-    call oops_log%info("transforming "//trim(tr_names))
-
-    field = self%afieldset%field(tr_names)
-    call field%data(fdata)
-
-    select case(trim(transfunc))
-    case("log")   ! apply logarithmic transformation
-      do i=1, field%shape(2)
-        do k=1, field%shape(1)
-          fdata(k,i) = log(fdata(k,i) + min_val)
-        end do
-      end do
-    case("expon") ! Apply exponential transformation
-      do i=1, field%shape(2)
-        do k=1, field%shape(1)
-          fdata(k,i) = exp(fdata(k,i)) - min_val
-        end do
-      end do
-    end select
-
-    !call field%set_dirty()
-    call field%final()
-  end do
-
-end subroutine soca_state_logexpon
-! ------------------------------------------------------------------------------
-
 
 end module

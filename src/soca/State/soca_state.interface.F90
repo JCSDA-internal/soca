@@ -164,40 +164,6 @@ end subroutine soca_state_tohgrid_c
 
 
 ! ------------------------------------------------------------------------------
-!> C++ interface for soca_state_mod::soca_state::logexpon()
-subroutine soca_state_logtrans_c(c_key_self, c_trvars) bind(c,name='soca_state_logtrans_f90')
-  integer(c_int), intent(in)     :: c_key_self
-  type(c_ptr), value, intent(in) :: c_trvars
-
-  type(soca_state), pointer :: self
-  type(oops_variables) :: trvars
-
-  trvars = oops_variables(c_trvars)
-
-  call soca_state_registry%get(c_key_self,self)
-  call self%logexpon(transfunc="log", trvars=trvars)
-
-end subroutine soca_state_logtrans_c
-
-
-! ------------------------------------------------------------------------------
-!> C++ interface for soca_state_mod::soca_state::logexpon()
-subroutine soca_state_expontrans_c(c_key_self, c_trvars) bind(c,name='soca_state_expontrans_f90')
-  integer(c_int), intent(in)     :: c_key_self
-  type(c_ptr), value, intent(in) :: c_trvars
-
-  type(soca_state), pointer :: self
-  type(oops_variables) :: trvars
-
-  trvars = oops_variables(c_trvars)
-
-  call soca_state_registry%get(c_key_self,self)
-  call self%logexpon(transfunc="expon", trvars=trvars)
-
-end subroutine soca_state_expontrans_c
-
-
-! ------------------------------------------------------------------------------
 subroutine scoa_state_analytic_c(c_key_self, c_conf, c_dt) &
     bind(c,name='soca_state_analytic_f90')
   integer (c_int),     intent(in   ) :: c_key_self
