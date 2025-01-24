@@ -144,7 +144,7 @@ namespace soca {
     Log::trace() << "State::State rotate from logical to geographical North." << std::endl;
 
     ASSERT(u.size() == v.size());
-    for (size_t n = 0; n < u.size(); n++){
+    for (size_t n = 0; n < u.size(); n++) {
       const std::string & uName = u[n].name();
       const std::string & vName = v[n].name();
       if (!vars_.has(uName) || !vars_.has(vName)) {
@@ -181,7 +181,7 @@ namespace soca {
   void State::rotate2grid(const oops::Variables & u, const oops::Variables & v) {
     Log::trace() << "State::State rotate from geographical to logical North." << std::endl;
     ASSERT(u.size() == v.size());
-    for (size_t n = 0; n < u.size(); n++){
+    for (size_t n = 0; n < u.size(); n++) {
       const std::string & uName = u[n].name();
       const std::string & vName = v[n].name();
       if (!vars_.has(uName) || !vars_.has(vName)) {
