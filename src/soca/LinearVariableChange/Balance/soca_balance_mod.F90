@@ -17,6 +17,7 @@ use soca_increment_mod, only: soca_increment
 use soca_ksshts_mod, only: soca_ksshts, soca_steric_jacobian
 use soca_kst_mod, only: soca_kst, soca_soft_jacobian
 use soca_state_mod, only: soca_state
+use soca_write_jacobian_mod, only: write_jacobian_to_netcdf
 
 implicit none
 private
@@ -91,6 +92,7 @@ subroutine soca_balance_setup(self, f_conf, traj, geom)
   ! declarations related to the dynamic height Jacobians
   character(len=:), allocatable :: filename
   real(kind=kind_real) :: threshold
+  character(len=:), allocatable :: str
 
   ! declarations related to the sea-ice Jacobian
   character(len=:), allocatable :: kct_name
@@ -147,6 +149,12 @@ subroutine soca_balance_setup(self, f_conf, traj, geom)
         end do
      end do
      deallocate(jac)
+
+    ! optionally write out Kst Jacobian
+    if ( f_conf%has("kst.jacobian_output")) then
+      call f_conf%get_or_die("kst.jacobian_output.filename", str)
+      call write_jacobian_to_netcdf(self%kst%jacobian, geom, str, "kst_jacobian")
+    end if
   end if
 
   ! Get configuration for Ksshts
@@ -177,6 +185,13 @@ subroutine soca_balance_setup(self, f_conf, traj, geom)
     end do
   end do
   deallocate(jac)
+
+  ! optionally write out Ksshts Jacobian
+  if ( f_conf%has("ksshts.jacobian_output")) then
+    call f_conf%get_or_die("ksshts.jacobian_output.filename", str)
+    call write_jacobian_to_netcdf(self%ksshts%kssht, geom, str, "kssht_jacobian")
+    call write_jacobian_to_netcdf(self%ksshts%ksshs, geom, str, "ksshs_jacobian")
+  end if
 
   ! Compute Kct
   if (traj%has("sea_ice_area_fraction")) then
