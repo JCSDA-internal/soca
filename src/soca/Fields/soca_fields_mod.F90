@@ -98,9 +98,6 @@ contains
   !>\copybrief soca_field_update_halo \see soca_field_update_halo
   procedure :: update_halo     => soca_field_update_halo
 
-  !>\copybrief soca_field_stencil_interp \see soca_field_stencil_interp
-  procedure :: stencil_interp  => soca_field_stencil_interp
-
   !>\copybrief soca_field_fill_masked \see soca_field_fill_masked
   procedure :: fill_masked     => soca_field_fill_masked
 
@@ -270,8 +267,8 @@ end subroutine soca_field_check_congruent
 !!
 !! Interpolation used is inverse distance weidghted, taking into
 !! consideration the mask and using at most 6 neighbors.
-subroutine soca_field_stencil_interp(self, geom, fromto)
-  class(soca_field), intent(inout) :: self
+subroutine soca_field_stencil_interp(field, geom, fromto)
+  real(kind=kind_real), allocatable, intent(inout) :: field(:,:,:)
   class(soca_geom),    intent(in) :: geom   !< geometry
   character(len=4),     intent(in) :: fromto !< "u2h", "v2h"
 
@@ -286,7 +283,7 @@ subroutine soca_field_stencil_interp(self, geom, fromto)
   real(kind=kind_real), allocatable :: masksrc_local(:,:), maskdst_local(:,:)
 
   ! Initialize temporary arrays
-  allocate(val_tmp, mold=self%val)
+  allocate(val_tmp, mold=field)
   val_tmp = 0_kind_real
 
   ! Identify source and destination grids
@@ -316,7 +313,7 @@ subroutine soca_field_stencil_interp(self, geom, fromto)
   end select
 
   ! Interpolate
-  allocate(val(6,self%nz))
+  allocate(val(6,size(field, 3)))
   do j = geom%jsc, geom%jec
      do i = geom%isc, geom%iec
         ! destination on land, skip
@@ -331,12 +328,12 @@ subroutine soca_field_stencil_interp(self, geom, fromto)
            if (masksrc_local(ij(1,sti), ij(2,sti)) == 0_kind_real) cycle
 
            ! outcroping of layers, skip
-           if (abs(self%val(ij(1,sti), ij(2,sti),1)) > val_max) cycle
+           if (abs(field(ij(1,sti), ij(2,sti),1)) > val_max) cycle
 
            ! store the valid neighbors
            lon_src(nn) = lonsrc_local(ij(1,sti), ij(2,sti))
            lat_src(nn) = latsrc_local(ij(1,sti), ij(2,sti))
-           val(nn,:) = self%val(ij(1,sti), ij(2,sti),:)
+           val(nn,:) = field(ij(1,sti), ij(2,sti),:)
            nn = nn + 1
         end do
         nn = nn - 1
@@ -349,7 +346,7 @@ subroutine soca_field_stencil_interp(self, geom, fromto)
         end if
      end do
   end do
-  self%val = val_tmp
+  field = val_tmp
 
 end subroutine soca_field_stencil_interp
 
@@ -1240,30 +1237,57 @@ end subroutine soca_fields_write_rst
 subroutine soca_fields_tohpoints(self)
   class(soca_fields), intent(inout) :: self !< self
 
-  integer :: i
-  real(kind=kind_real), allocatable :: val(:,:,:)
-  real(kind=kind_real), pointer :: lon_out(:,:) => null()
-  real(kind=kind_real), pointer :: lat_out(:,:) => null()
+  integer :: i,j,k,n,idx
   character(len=4) :: fromto
 
-  ! Associate lon_out and lat_out with the h-grid
-  lon_out => self%geom%lon
-  lat_out => self%geom%lat
+  type(atlas_field) :: afield
+  real(kind=kind_real), pointer :: adata(:,:)
+  real(kind=kind_real), allocatable :: fdata(:,:,:)
 
   ! Apply interpolation to all fields, when necessary
-  do i=1,size(self%fields)
+  do n=1,size(self%fields)
     ! Check if already on h-points
-    if (self%fields(i)%metadata%grid == 'h') cycle
+    if (self%fields(n)%metadata%grid == 'h') cycle
 
     ! Interpolate to different location of the stencil
-    fromto = self%fields(i)%metadata%grid//'toh'
-    call self%fields(i)%stencil_interp(self%geom, fromto)
-    call self%fields(i)%update_halo(self%geom)
+    fromto = self%fields(n)%metadata%grid//'toh'
+
+    ! convert from atlas to 3d fortran field...
+    ! because I don't want to fully refactor stencil interpolation
+    allocate(fdata(self%geom%isd:self%geom%ied, self%geom%jsd:self%geom%jed, self%fields(n)%nz))
+    afield = self%aFieldset%field(self%fields(n)%name)
+    call afield%data(adata)
+    do j=self%geom%jsc, self%geom%jec
+      do i=self%geom%isc, self%geom%iec
+        idx = self%geom%atlas_ij2idx(i,j)
+        do k=1,afield%shape(1)
+          fdata(i,j,k) = adata(k, idx)
+        end do
+      end do
+    end do
+    call mpp_update_domains(fdata, self%geom%Domain%mpp_domain)
+
+    ! interp
+    call soca_field_stencil_interp(fdata, self%geom, fromto)
+
+    !copy back to atlas
+    do j=self%geom%jsc, self%geom%jec
+      do i=self%geom%isc, self%geom%iec
+        idx = self%geom%atlas_ij2idx(i,j)
+        do k=1,afield%shape(1)
+          adata(k, idx) = fdata(i,j,k)
+        end do
+      end do
+    end do
+    deallocate(fdata)
+
+    call afield%set_dirty()
+    call afield%final()
 
     ! Update grid location to h-points
-    self%fields(i)%metadata%grid = 'h'
-    self%fields(i)%lon => self%geom%lon
-    self%fields(i)%lat => self%geom%lat
+    self%fields(n)%metadata%grid = 'h'
+    self%fields(n)%lon => self%geom%lon
+    self%fields(n)%lat => self%geom%lat
  end do
 
 end subroutine soca_fields_tohpoints
