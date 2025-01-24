@@ -127,7 +127,6 @@ subroutine soca_soca2cice_changevar(self, geom, xa, xm)
 
   ! write cice restart
   call self%cice%write(geom)
-  call xm%sync_from_atlas() ! TODO why is this needed?? Remove when fixed
 end subroutine soca_soca2cice_changevar
 
 ! ------------------------------------------------------------------------------
