@@ -95,9 +95,6 @@ contains
   !>\copybrief soca_field_check_congruent \see soca_field_check_congruent
   procedure :: check_congruent => soca_field_check_congruent
 
-  !>\copybrief soca_field_update_halo \see soca_field_update_halo
-  procedure :: update_halo     => soca_field_update_halo
-
   !>\copybrief soca_field_fill_masked \see soca_field_fill_masked
   procedure :: fill_masked     => soca_field_fill_masked
 
@@ -178,9 +175,6 @@ contains
   !> \name misc
   !! \{
 
-  !> \copybrief soca_fields_update_halos \see soca_fields_update_halos
-  procedure :: update_halos => soca_fields_update_halos
-
   !> \copybrief soca_fields_tohpoints \see soca_fields_tohpoints
   procedure :: tohpoints  => soca_fields_tohpoints
   !> \}
@@ -229,18 +223,6 @@ subroutine soca_field_copy(self, rhs)
   ! be changed to point to rhs pointers. Bad things happen
 end subroutine soca_field_copy
 
-
-! ------------------------------------------------------------------------------
-!> Update the data in the halo region of the field.
-!!
-!! \relates soca_fields_mod::soca_field
-!! \todo have field keep a pointer to its relevant sections of soca_geom?
-subroutine soca_field_update_halo(self, geom)
-  class(soca_field),     intent(inout) :: self
-  type(soca_geom), pointer, intent(in) :: geom !< soca_geom from soca_fields
-
-  call mpp_update_domains(self%val, geom%Domain%mpp_domain)
-end subroutine soca_field_update_halo
 
 ! ------------------------------------------------------------------------------
 !> Make sure the two fields are the same in terms of name, size, shape.
@@ -551,20 +533,6 @@ function soca_fields_has(self, name) result(res)
     end if
   end do
 end function
-
-
-! ------------------------------------------------------------------------------
-!> Update the halo region of all fields.
-!!
-!! \relates soca_fields_mod::soca_fields
-subroutine soca_fields_update_halos(self)
-  class(soca_fields), intent(inout) :: self
-  integer :: i
-
-  do i=1,size(self%fields)
-    call self%fields(i)%update_halo(self%geom)
-  end do
-end subroutine soca_fields_update_halos
 
 
 ! ------------------------------------------------------------------------------
@@ -1476,10 +1444,10 @@ subroutine soca_fields_sync_from_atlas(self)
         field%val(i,j,:) = real_ptr(:, self%geom%atlas_ij2idx(i,j))
       end do
     end do
-    call field%update_halo(self%geom)
+    call mpp_update_domains(field%val, self%geom%Domain%mpp_domain)
+
   call afield%final()
   end do
-
 
   call self%update_metadata()
 end subroutine
