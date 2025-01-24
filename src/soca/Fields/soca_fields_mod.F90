@@ -141,9 +141,6 @@ contains
   !> \copybrief soca_fields_check_congruent \see soca_fields_check_congruent
   procedure :: check_congruent => soca_fields_check_congruent
 
-  !> \copybrief soca_fields_check_subset \see soca_fields_check_subset
-  procedure :: check_subset    => soca_fields_check_subset
-
   !> \}
 
   !> \name math operators
@@ -1048,32 +1045,6 @@ subroutine soca_fields_check_congruent(self, rhs)
     end do
   end do
 end subroutine soca_fields_check_congruent
-
-
-! ------------------------------------------------------------------------------
-!> make sure two sets of fields are the same shape for fields they have in common
-!!
-!! \throws abor1_ftn aborts if \p self is not a subset of \p rhs
-!! \relates soca_fields_mod::soca_fields
-subroutine soca_fields_check_subset(self, rhs)
-  class(soca_fields), intent(in) :: self
-  class(soca_fields), intent(in) :: rhs !< other field that \p self should be subset of
-
-  type(soca_field), pointer :: fld
-  integer :: i, j
-
-  ! each field should match (name, size, shape)
-  do i=1,size(self%fields)
-    if (.not. rhs%has(self%fields(i)%name)) &
-      call abor1_ftn("soca_fields: self is not a subset of rhs")
-    call rhs%get(self%fields(i)%name, fld)
-    do j = 1, size(shape(fld%val))
-      if (size(self%fields(i)%val, dim=j) /= size(fld%val, dim=j) ) then
-        call abor1_ftn("soca_fields: field '"//self%fields(i)%name//"' has different dimensions")
-      end if
-    end do
-  end do
-end subroutine soca_fields_check_subset
 
 
 ! ------------------------------------------------------------------------------
