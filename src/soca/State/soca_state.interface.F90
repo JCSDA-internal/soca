@@ -106,7 +106,6 @@ subroutine soca_state_write_file_c(c_key_fld, c_conf, c_dt) bind(c,name='soca_st
     type(datetime)            :: fdate
 
     call soca_state_registry%get(c_key_fld,fld)
-    call fld%sync_from_atlas()
     call c_f_datetime(c_dt, fdate)
     call fld%write_rst(fckit_configuration(c_conf), fdate)
 

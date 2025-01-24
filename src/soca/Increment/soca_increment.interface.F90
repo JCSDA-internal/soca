@@ -129,7 +129,6 @@ subroutine soca_increment_write_file_c(c_key_fld, c_conf, c_dt) bind(c,name='soc
 
   call soca_increment_registry%get(c_key_fld,fld)
   call c_f_datetime(c_dt, fdate)
-  call fld%sync_from_atlas()
   call fld%write_rst(fckit_configuration(c_conf), fdate)
 
 end subroutine soca_increment_write_file_c

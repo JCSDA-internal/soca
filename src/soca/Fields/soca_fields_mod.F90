@@ -1058,17 +1058,21 @@ subroutine soca_fields_write_rst(self, f_conf, vdate)
   type(datetime),             intent(inout) :: vdate    !< DateTime
 
   integer, parameter :: max_string_length=800
-  character(len=max_string_length) :: ocn_filename, sfc_filename, ice_filename, wav_filename, bio_filename, filename
-  type(restart_file_type), target :: ocean_restart, sfc_restart, ice_restart, wav_restart, bio_restart
-  type(restart_file_type), pointer :: restart
-  integer :: idr, i
+    type(restart_file_type) :: restart
+  integer :: idr, i, j, k, idx, d, f, n
   type(soca_field), pointer :: field
-  logical :: write_sfc, write_ice, write_wav, write_bio, date_cols
+  logical :: date_cols
 
-  write_ice = .false.
-  write_sfc = .false.
-  write_wav = .false.
-  write_bio = .false.
+  character(len=3), allocatable :: domains(:)
+  character(len=:), allocatable :: domain_filename
+  type(atlas_field) :: afield
+
+  type varwrapper
+    type(atlas_field) :: afield
+    real(kind=kind_real), pointer :: adata(:,:)
+    real(kind=kind_real), allocatable :: data(:,:,:)
+  end type varwrapper
+  type(varwrapper), allocatable :: vars(:)
 
   ! Get date IO format (colons or not?)
   date_cols = .true.
@@ -1076,74 +1080,69 @@ subroutine soca_fields_write_rst(self, f_conf, vdate)
     call f_conf%get_or_die("date colons", date_cols)
   end if
 
-  ! filenames
-  ocn_filename = soca_genfilename(f_conf,max_string_length,vdate,date_cols,"ocn")
-  sfc_filename = soca_genfilename(f_conf,max_string_length,vdate,date_cols,"sfc")
-  ice_filename = soca_genfilename(f_conf, max_string_length,vdate,date_cols,"ice")
-  wav_filename = soca_genfilename(f_conf, max_string_length,vdate,date_cols,"wav")
-  bio_filename = soca_genfilename(f_conf, max_string_length,vdate,date_cols,"bio")
+  ! Set up domain info
+  domains = [character(len=3) :: "ocn", "sfc", "ice", "wav", "bio"]
 
-  ! built in variables
-  do i=1,size(self%fields)
-    field => self%fields(i)
-    call field%fill_masked(self%geom)
-    if (len_trim(field%metadata%io_file) /= 0) then
-      ! which file are we writing to
-      select case(field%metadata%io_file)
-      case ('ocn')
-        filename = ocn_filename
-        restart => ocean_restart
-      case ('sfc')
-        filename = sfc_filename
-        restart => sfc_restart
-        write_sfc = .true.
-      case ('ice')
-        filename = ice_filename
-        restart => ice_restart
-        write_ice = .true.
-      case ('wav')
-        filename = wav_filename
-        restart => wav_restart
-        write_wav = .true.
-      case ('bio')
-        filename = bio_filename
-        restart => bio_restart
-        write_bio = .true.
-      case default
-        call abor1_ftn('soca_write_restart(): illegal io_file: '//field%metadata%io_file)
-      end select
+  ! for each domain, get the fields to be written out and write them
+  do d=1,size(domains)
+    domain_filename = soca_genfilename(f_conf,max_string_length,vdate,date_cols,domains(d))
 
-      ! write
-      if (field%nz == 1) then
-        idr = register_restart_field( restart, filename, field%metadata%io_name, &
-          field%val(:,:,1), domain=self%geom%Domain%mpp_domain)
+    ! count the number of vars that we will write in this file
+    n = 0
+    do f=1,size(self%fields)
+      if (self%fields(f)%metadata%io_file == domains(d)) n = n +1
+    end do
+    if (n == 0) cycle
+    print *, "Writing ", n, " fields to ", domain_filename
+    allocate(vars(n))
+
+    ! create temporary fortran copies of the atlas fields so that the fms writer
+    ! can handle them.
+    n=0
+    do f=1,size(self%fields)
+      if (self%fields(f)%metadata%io_file /= domains(d)) cycle
+      n = n + 1
+
+      ! create memory
+      vars(n)%afield = self%aFieldset%field(self%fields(f)%name)
+      call vars(n)%afield%data(vars(n)%adata)
+      allocate(vars(n)%data(self%geom%isd:self%geom%ied, &
+                            self%geom%jsd:self%geom%jed, vars(n)%afield%shape(1)))
+
+      ! copy, setting masked values to fillvalue
+      if (associated(self%fields(f)%mask)) vars(n)%data = self%fields(f)%metadata%fillvalue
+      do j=self%geom%jsc, self%geom%jec
+        do i=self%geom%isc, self%geom%iec
+          idx = self%geom%atlas_ij2idx(i,j)
+          if (associated(self%fields(f)%mask) .and. self%fields(f)%mask(i,j) == 0) cycle
+
+          do k=1,vars(n)%afield%shape(1)
+            vars(n)%data(i,j,k) = vars(n)%adata(k, idx)
+          end do
+        end do
+      end do
+
+      ! register with restart write
+      if (vars(n)%afield%shape(1) == 1) then
+        idr = register_restart_field(restart, domain_filename, self%fields(f)%metadata%io_name, &
+            vars(n)%data(:,:,1), domain=self%geom%Domain%mpp_domain)
       else
-        idr = register_restart_field( restart, filename, field%metadata%io_name, &
-        field%val(:,:,:), domain=self%geom%Domain%mpp_domain)
+        idr = register_restart_field(restart, domain_filename, self%fields(f)%metadata%io_name, &
+            vars(n)%data(:,:,:), domain=self%geom%Domain%mpp_domain)
       end if
-    end if
+    end do
+
+    ! write the file
+    call save_restart(restart, directory='')
+
+    ! cleanup
+    call free_restart_type(restart)
+    do n=1,size(vars)
+      deallocate(vars(n)%data)
+      call vars(n)%afield%final()
+    end do
+    deallocate(vars)
   end do
-
-  ! write out and cleanup
-  call save_restart(ocean_restart, directory='')
-  call free_restart_type(ocean_restart)
-  if (write_sfc) then
-    call save_restart(sfc_restart, directory='')
-    call free_restart_type(sfc_restart)
-  end if
-  if (write_ice) then
-    call save_restart(ice_restart, directory='')
-    call free_restart_type(ice_restart)
-  end if
-  if (write_wav) then
-    call save_restart(wav_restart, directory='')
-    call free_restart_type(wav_restart)
-  end if
-  if (write_bio) then
-    call save_restart(bio_restart, directory='')
-    call free_restart_type(bio_restart)
- endif
-
 end subroutine soca_fields_write_rst
 
 ! ------------------------------------------------------------------------------
