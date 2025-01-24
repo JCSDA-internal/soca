@@ -164,9 +164,6 @@ contains
   procedure :: read      => soca_fields_read
   procedure, private :: read_seaice => soca_fields_read_seaice
 
-  !> \copybrief soca_fields_write_file \see soca_fields_write_file
-  procedure :: write_file=> soca_fields_write_file
-
   !> \copybrief soca_fields_write_rst \see soca_fields_write_rst
   procedure :: write_rst => soca_fields_write_rst
 
@@ -1077,26 +1074,6 @@ subroutine soca_fields_check_subset(self, rhs)
     end do
   end do
 end subroutine soca_fields_check_subset
-
-
-! ------------------------------------------------------------------------------
-!> Save soca fields to file using fms write_data
-!!
-!! \param[in] filename : The name of the file to save to
-!!
-!! \relates soca_fields_mod::soca_fields
-subroutine soca_fields_write_file(self, filename)
-  class(soca_fields),  intent(in) :: self
-  character(len=*),   intent(in) :: filename
-
-  integer :: ii
-
-  ! write out all fields
-  do ii = 1, size(self%fields)
-    call write_data( filename, self%fields(ii)%name, self%fields(ii)%val(:,:,:), self%geom%Domain%mpp_domain)
-  end do
-
-end subroutine soca_fields_write_file
 
 
 ! ------------------------------------------------------------------------------
