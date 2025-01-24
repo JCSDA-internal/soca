@@ -142,14 +142,75 @@ namespace soca {
   // -----------------------------------------------------------------------------
   void State::rotate2north(const oops::Variables & u, const oops::Variables & v) {
     Log::trace() << "State::State rotate from logical to geographical North." << std::endl;
-    soca_state_rotate2north_f90(toFortran(), u, v);
+
+    ASSERT(u.size() == v.size());
+    for (size_t n = 0; n < u.size(); n++){
+      const std::string & uName = u[n].name();
+      const std::string & vName = v[n].name();
+      if (!vars_.has(uName) || !vars_.has(vName)) {
+        throw eckit::UserError("State variables " + uName + " or " + vName + " not found.");
+      } else {
+        Log::info() << "rotating variables " << uName << " and " << vName << std::endl;
+      }
+
+      atlas::Field & uField = fieldSet_.field(uName);
+      atlas::Field & vField = fieldSet_.field(vName);
+      auto uView = atlas::array::make_view<double, 2>(uField);
+      auto vView = atlas::array::make_view<double, 2>(vField);
+      const auto & ghostView = atlas::array::make_view<int, 1>(uField.functionspace().ghost());
+      const auto & cosView = atlas::array::make_view<double, 2>(geom_.fields().field("cos_rot"));
+      const auto & sinView = atlas::array::make_view<double, 2>(geom_.fields().field("sin_rot"));
+
+      for (size_t i = 0; i < uField.shape(0); ++i) {
+        if (ghostView(i)) continue;
+
+        for (size_t j = 0; j < uField.shape(1); ++j) {
+          double uOrig = uView(i, j);
+          double vOrig = vView(i, j);
+          uView(i, j) = uOrig * cosView(i, 0) + vOrig * sinView(i, 0);
+          vView(i, j) = -uOrig * sinView(i, 0) + vOrig * cosView(i, 0);
+        }
+      }
+      uField.set_dirty();
+      vField.set_dirty();
+    }
   }
 
   // -----------------------------------------------------------------------------
 
   void State::rotate2grid(const oops::Variables & u, const oops::Variables & v) {
     Log::trace() << "State::State rotate from geographical to logical North." << std::endl;
-    soca_state_rotate2grid_f90(toFortran(), u, v);
+    ASSERT(u.size() == v.size());
+    for (size_t n = 0; n < u.size(); n++){
+      const std::string & uName = u[n].name();
+      const std::string & vName = v[n].name();
+      if (!vars_.has(uName) || !vars_.has(vName)) {
+        throw eckit::UserError("State variables " + uName + " or " + vName + " not found.");
+      } else {
+        Log::info() << "rotating variables " << uName << " and " << vName << std::endl;
+      }
+
+      atlas::Field & uField = fieldSet_.field(uName);
+      atlas::Field & vField = fieldSet_.field(vName);
+      auto uView = atlas::array::make_view<double, 2>(uField);
+      auto vView = atlas::array::make_view<double, 2>(vField);
+      const auto & ghostView = atlas::array::make_view<int, 1>(uField.functionspace().ghost());
+      const auto & cosView = atlas::array::make_view<double, 2>(geom_.fields().field("cos_rot"));
+      const auto & sinView = atlas::array::make_view<double, 2>(geom_.fields().field("sin_rot"));
+
+      for (size_t i = 0; i < uField.shape(0); ++i) {
+        if (ghostView(i)) continue;
+
+        for (size_t j = 0; j < uField.shape(1); ++j) {
+          double uOrig = uView(i, j);
+          double vOrig = vView(i, j);
+          uView(i, j) = uOrig * cosView(i, 0) - vOrig * sinView(i, 0);
+          vView(i, j) = uOrig * sinView(i, 0) + vOrig * cosView(i, 0);
+        }
+      }
+      uField.set_dirty();
+      vField.set_dirty();
+    }
   }
 
   // -----------------------------------------------------------------------------

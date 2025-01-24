@@ -114,43 +114,6 @@ end subroutine soca_state_write_file_c
 
 
 ! ------------------------------------------------------------------------------
-!> C++ interface for soca_state_mod::soca_state::rotate()
-subroutine soca_state_rotate2grid_c(c_key_self, c_uvars, c_vvars) bind(c,name='soca_state_rotate2grid_f90')
-  integer(c_int), intent(in)     :: c_key_self
-  type(c_ptr), value, intent(in) :: c_uvars
-  type(c_ptr), value, intent(in) :: c_vvars
-
-  type(soca_state), pointer :: self
-  type(oops_variables) :: uvars, vvars
-
-  uvars = oops_variables(c_uvars)
-  vvars = oops_variables(c_vvars)
-
-  call soca_state_registry%get(c_key_self,self)
-  call self%rotate(coordinate="grid", uvars=uvars, vvars=vvars)
-
-end subroutine soca_state_rotate2grid_c
-
-
-! ------------------------------------------------------------------------------
-!> C++ interface for soca_state_mod::soca_state::rotate()
-subroutine soca_state_rotate2north_c(c_key_self, c_uvars, c_vvars) bind(c,name='soca_state_rotate2north_f90')
-  integer(c_int),     intent(in) :: c_key_self
-  type(c_ptr), value, intent(in) :: c_uvars
-  type(c_ptr), value, intent(in) :: c_vvars
-
-  type(soca_state), pointer :: self
-  type(oops_variables) :: uvars, vvars
-
-  uvars = oops_variables(c_uvars)
-  vvars = oops_variables(c_vvars)
-
-  call soca_state_registry%get(c_key_self,self)
-  call self%rotate(coordinate="north", uvars=uvars, vvars=vvars)
-
-end subroutine soca_state_rotate2north_c
-
-! ------------------------------------------------------------------------------
 !> C++ interface for soca_state_mod::soca_state::tohgrid()
 subroutine soca_state_tohgrid_c(c_key_self) bind(c,name='soca_state_tohgrid_f90')
   integer(c_int),     intent(in) :: c_key_self

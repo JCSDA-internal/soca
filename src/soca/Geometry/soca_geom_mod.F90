@@ -329,9 +329,9 @@ subroutine soca_geom_init_fieldset(self, f_conf, gen)
   logical,                  intent(in)  :: gen !< if true, we are doing a full init
 
   integer :: i, j, n, jz
-  type(atlas_field) :: fArea, fInterpMask, fVertCoord, fGmask, fOwned, fMaskH, fMaskU, fMaskV
+  type(atlas_field) :: fArea, fInterpMask, fVertCoord, fGmask, fOwned, fMaskH, fMaskU, fMaskV, fCos, fSin
   real(kind=kind_real), pointer :: vArea(:,:), vInterpMask(:,:), vVertCoord(:,:), &
-                                   vMaskH(:,:), vMaskU(:,:), vMaskV(:,:)
+                                   vMaskH(:,:), vMaskU(:,:), vMaskV(:,:), vCos(:,:), vSin(:,:)
   integer, pointer :: vGmask(:,:), vOwned(:,:)
 
   ! variables needed for reading in atlas fields from gridspec file
@@ -370,6 +370,14 @@ subroutine soca_geom_init_fieldset(self, f_conf, gen)
   call self%fieldset%add(fGmask)
   call fGmask%data(vGmask)
 
+  fCos = self%functionspace%create_field(name='cos_rot', kind=atlas_real(kind_real), levels=1)
+  call self%fieldset%add(fCos)
+  call fCos%data(vCos)
+
+  fSin = self%functionspace%create_field(name='sin_rot', kind=atlas_real(kind_real), levels=1)
+  call self%fieldset%add(fSin)
+  call fSin%data(vSin)
+
   ! TODO temporary, this needs to be cleaned up
   ! It's here so that answers don't change when moving the gpnorm calculations from fortran
   ! to c++
@@ -396,6 +404,8 @@ subroutine soca_geom_init_fieldset(self, f_conf, gen)
       vMaskH(1, n) = self%mask2d(i,j)
       vMaskU(1, n) = self%mask2du(i,j)
       vMaskV(1, n) = self%mask2dv(i,j)
+      vCos(1, n) = self%cos_rot(i,j)
+      vSin(1, n) = self%sin_rot(i,j)
     end do
   end do
   do jz=1,self%nzo
@@ -407,6 +417,8 @@ subroutine soca_geom_init_fieldset(self, f_conf, gen)
   call fInterpMask%halo_exchange()
   call fArea%halo_exchange()
   call fVertCoord%halo_exchange()
+  call fCos%halo_exchange()
+  call fSin%halo_exchange()
 
   ! done, cleanup
   call fArea%final()
@@ -417,6 +429,8 @@ subroutine soca_geom_init_fieldset(self, f_conf, gen)
   call fMaskH%final()
   call fMaskU%final()
   call fMaskV%final()
+  call fCos%final()
+  call fSin%final()
 
   ! -----------------------------------------------------------------------------------------------
   if (gen) then
