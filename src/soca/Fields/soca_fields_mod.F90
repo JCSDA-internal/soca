@@ -187,6 +187,15 @@ contains
 
 end type soca_fields
 
+! ------------------------------------------------------------------------------
+! Used to hold info when processing an atlas field
+type varwrapper
+  type(atlas_field) :: afield
+  real(kind=kind_real), pointer :: adata(:,:)
+  type(soca_field), pointer :: field
+  real(kind=kind_real), allocatable :: data(:,:,:)
+end type varwrapper
+
 
 ! ------------------------------------------------------------------------------
 ! ------------------------------------------------------------------------------
@@ -608,300 +617,236 @@ subroutine soca_fields_read(self, f_conf, vdate)
   type(fckit_configuration),  intent(in)    :: f_conf
   type(datetime),             intent(inout) :: vdate
 
-  integer, parameter :: max_string_length=800
-  character(len=max_string_length) :: ocn_filename, sfc_filename, ice_filename, wav_filename, bio_filename, filename
-  character(len=:), allocatable :: basename, incr_filename
-  integer :: iread = 0, id
-  integer :: ii
-  logical :: vert_remap=.false.
-  character(len=max_string_length) :: remap_filename
+  ! integer, parameter :: max_string_length=800
+  character(len=:), allocatable :: str, basename, filename
+  integer :: iread = 0
+  ! integer :: ii
   real(kind=kind_real), allocatable :: h_common(:,:,:)    !< layer thickness to remap to
-  type(restart_file_type), target :: ocean_restart, sfc_restart, ice_restart, wav_restart, bio_restart
-  type(restart_file_type) :: ocean_remap_restart
-  type(restart_file_type), pointer :: restart
-  integer :: idr
-  integer :: isd, ied, jsd, jed
-  integer :: isc, iec, jsc, jec
-  integer :: i, j, k, nz, n
-  type(remapping_CS)  :: remapCS
-  character(len=:), allocatable :: str
-  real(kind=kind_real), allocatable :: h_common_ij(:), hocn_ij(:), varocn_ij(:), varocn2_ij(:)
-  logical :: read_sfc, read_ice, read_wav, read_bio, soca_io
-  type(soca_field), pointer :: field, field2, hocn, mld, layer_depth
+  type(restart_file_type) :: restart
+  integer :: d, f, i, j, k, n, idx, idr
+  ! integer :: nz, n, d, idx
+  ! type(remapping_CS)  :: remapCS
   type(oops_variables) :: seaice_categories_vars
+  type(varwrapper), allocatable :: vars(:)
+  type(atlas_field) :: afield1, afield2, afield3, afield4
+  real(kind=kind_real), pointer :: adata1(:,:), adata2(:,:), adata3(:,:), adata4(:,:)
 
-  if ( f_conf%has("read_from_file") ) &
-      call f_conf%get_or_die("read_from_file", iread)
+  character(len=3), dimension(5) :: domains
+  domains = [character(len=3) :: "ocn", "sfc", "ice", "wav", "bio"]
 
-  ! Get Indices for data domain and allocate common layer depth array
-  isd = self%geom%isd ; ied = self%geom%ied
-  jsd = self%geom%jsd ; jed = self%geom%jed
+  if ( f_conf%has("read_from_file") ) call f_conf%get_or_die("read_from_file", iread)
 
   ! Check if vertical remapping needs to be applied
-  nz = self%geom%nzo
   if ( f_conf%has("remap_filename") ) then
-     vert_remap = .true.
      call f_conf%get_or_die("remap_filename", str)
-     remap_filename = str
-     allocate(h_common(isd:ied,jsd:jed,nz))
+     allocate(h_common(self%geom%isd:self%geom%ied, self%geom%jsd:self%geom%jed, self%geom%nzo))
      h_common = 0.0_kind_real
 
      ! Read common vertical coordinate from file
-     idr = register_restart_field(ocean_remap_restart, remap_filename, 'h', h_common, &
+     idr = register_restart_field(restart, str, 'h', h_common, &
           domain=self%geom%Domain%mpp_domain)
-     call restore_state(ocean_remap_restart, directory='')
-     call free_restart_type(ocean_remap_restart)
+     call restore_state(restart, directory='')
+     call free_restart_type(restart)
   end if
 
   ! Create unit increment
   if ( f_conf%has("Identity") ) then
-     call f_conf%get_or_die("Identity", id)
-     if ( id==1 ) call self%ones()
+     call f_conf%get_or_die("Identity", i)
+     if ( i==1 ) call self%ones()
      call f_conf%get_or_die("date", str)
      call datetime_set(str, vdate)
   end if
 
-  ! TODO redo this to be generic
-
   ! iread = 1 (state) or 3 (increment): Read restart file
-  if ((iread==1).or.(iread==3)) then
-    if (self%has("sea_water_cell_thickness")) call self%get("sea_water_cell_thickness", hocn)
-    ! filename for ocean
-    call f_conf%get_or_die("basename", str)
-    basename = str
-    call f_conf%get_or_die("ocn_filename", str)
-    ocn_filename = trim(basename) // trim(str)
-
-    ! filename for ocn sfc
-    read_sfc = .false.
-    sfc_filename=""
-    if ( f_conf%has("sfc_filename") ) then
-      call f_conf%get_or_die("basename", str)
-      basename = str
-      call f_conf%get_or_die("sfc_filename", str)
-      sfc_filename = trim(basename)//trim(str)
-    end if
-
-    ! filename for ice
-    read_ice = .false.
-    ice_filename=""
-    if ( f_conf%has("ice_filename") ) then
-      call f_conf%get_or_die("basename", str)
-      basename = str
-      call f_conf%get_or_die("ice_filename", str)
-      ice_filename = trim(basename)//trim(str)
-    end if
-
-    ! filename for wav
-    read_wav = .false.
-    wav_filename=""
-    if ( f_conf%has("wav_filename") ) then
-      call f_conf%get_or_die("basename", str)
-      basename = str
-      call f_conf%get_or_die("wav_filename", str)
-      wav_filename = trim(basename)//trim(str)
-    end if
-
-    ! filename for bio
-    read_bio = .false.
-    bio_filename=""
-    if ( f_conf%has("bio_filename") ) then
-      call f_conf%get_or_die("basename", str)
-      basename = str
-      call f_conf%get_or_die("bio_filename", str)
-      bio_filename = trim(basename)//trim(str)
-    end if
-
+  if (iread==1 .or. iread==3) then
     seaice_categories_vars = oops_variables()
-    ! built-in variables
-    do i=1,size(self%fields)
-
-      if(self%fields(i)%metadata%io_file == "CONSTANT") then
-        self%fields(i)%val(:,:,:) = self%fields(i)%metadata%constant_value
-
-      else if(self%fields(i)%metadata%io_file /= "") then
-        ! which file are we reading from?
-        select case(self%fields(i)%metadata%io_file)
-        case ('ocn')
-          filename = ocn_filename
-          restart => ocean_restart
-        case ('sfc')
-          if (sfc_filename == "") cycle ! we have sfc fields, but no file to read from
-          filename = sfc_filename
-          restart => sfc_restart
-          read_sfc = .true.
-        case ('ice')
-          filename = ice_filename
-          restart => ice_restart
-          ! note, read_ice is set below
-        case ('wav')
-          filename = wav_filename
-          restart => wav_restart
-          read_wav = .true.
-        case ('bio')
-          filename = bio_filename
-          restart => bio_restart
-          read_bio = .true.
-        case default
-          call abor1_ftn('read_file(): illegal io_file: '//self%fields(i)%metadata%io_file)
-        end select
-
-        ! check if the field has a category dimension and skip if it does
-        if (self%fields(i)%metadata%io_file == "ice") then
-          if (self%fields(i)%metadata%categories > 0 ) then
-            ! check if the file was constructed by soca or comes from the CICE history
-            ! The CICE history aggregates the category and level in 1 array
-            ! The SOCA io considers categories to be separate variables and will index the naming
-            if(file_exist(filename) .and. field_exist(filename, self%fields(i)%metadata%io_name)) then
-              read_ice = .true.
-            else
-              call seaice_categories_vars%push_back(self%fields(i)%name)
-              cycle
-            end if
-          else
-            ! not a category field, treat normally
-            read_ice = .true.
-          end if
-        end if
-
-        ! setup to read
-        if (self%fields(i)%nz == 1) then
-          idr = register_restart_field(restart, filename, self%fields(i)%metadata%io_name, &
-              self%fields(i)%val(:,:,1), domain=self%geom%Domain%mpp_domain)
-        else
-          idr = register_restart_field(restart, filename, self%fields(i)%metadata%io_name, &
-              self%fields(i)%val(:,:,:), domain=self%geom%Domain%mpp_domain)
-        end if
-      end if
-    end do
-
-    call restore_state(ocean_restart, directory='')
-    call free_restart_type(ocean_restart)
-    if (read_sfc) then
-      call restore_state(sfc_restart, directory='')
-      call free_restart_type(sfc_restart)
-    end if
-    if (read_ice) then
-      call restore_state(ice_restart, directory='')
-      call free_restart_type(ice_restart)
-    end if
-    if (read_wav) then
-      call restore_state(wav_restart, directory='')
-      call free_restart_type(wav_restart)
-    end if
-    if (read_bio) then
-      call restore_state(bio_restart, directory='')
-      call free_restart_type(bio_restart)
-    end if
-
-    ! read sea ice variables with categoriy and/or levels dimensions
-    if (seaice_categories_vars%nvars() > 0) then
-      call self%read_seaice(ice_filename, seaice_categories_vars)
-    end if
-
-    ! Change masked values
-    do n=1,size(self%fields)
-       field => self%fields(n)
-       call field%fill_masked(self%geom)
-    end do
-
-    ! Update halo and return if reading increment
-    if (iread==3) then !
-       do n=1,size(self%fields)
-         field => self%fields(n)
-         call mpp_update_domains(field%val, self%geom%Domain%mpp_domain)
-      end do
-      return
-   end if
-
-    ! Indices for compute domain
-    isc = self%geom%isc ; iec = self%geom%iec
-    jsc = self%geom%jsc ; jec = self%geom%jec
-
-    ! Remap layers if needed
-    if (vert_remap) then
-
-      ! output log of  what fields are going to be interpolated vertically
-      if ( self%geom%f_comm%rank() == 0 ) then
-        do n=1,size(self%fields)
-          if (.not. self%fields(n)%metadata%vert_interp) cycle
-          call oops_log%info("vertically remapping "//trim(self%fields(n)%name))
-        end do
-      end if
-
-      allocate(h_common_ij(nz), hocn_ij(nz), varocn_ij(nz), varocn2_ij(nz))
-      call initialize_remapping(remapCS,'PCM')
-      do i = isc, iec
-        do j = jsc, jec
-          h_common_ij = h_common(i,j,:)
-          hocn_ij = hocn%val(i,j,:)
-
-          do n=1,size(self%fields)
-            field => self%fields(n)
-            ! TODO Vertical remapping is only valid if the field is on the tracer grid point.
-            if (.not. field%metadata%vert_interp) cycle
-            if (associated(field%mask) .and. field%mask(i,j).eq.1) then
-               varocn_ij = field%val(i,j,:)
-               call remapping_core_h(remapCS, nz, h_common_ij, varocn_ij,&
-                      &nz, hocn_ij, varocn2_ij)
-               field%val(i,j,:) = varocn2_ij
-            else
-               field%val(i,j,:) = 0.0_kind_real
-            end if
-          end do
-        end do
-      end do
-      hocn%val = h_common
-      deallocate(h_common_ij, hocn_ij, varocn_ij, varocn2_ij)
-      call end_remapping(remapCS)
-    end if
-
-    ! Initialize mid-layer depth from layer thickness
-    ! TODO, this shouldn't live here, it should be part of the variable change class only
-    if (self%has("sea_water_depth")) then
-      call self%get("sea_water_depth", layer_depth)
-        layer_depth%val = 0.5 * hocn%val
-        do k = 2, hocn%nz
-          layer_depth%val(:,:,k) = layer_depth%val(:,:,k) + sum(hocn%val(:,:,1:k-1), dim=3)
-        end do
-    end if
-
-    ! Compute mixed layer depth TODO: Move somewhere else ...
-    if (self%has("ocean_mixed_layer_thickness") .and. self%has("sea_water_depth")) then
-      call self%get("sea_water_potential_temperature", field)
-      call self%get("sea_water_salinity", field2)
-      call self%get("ocean_mixed_layer_thickness", mld)
-      mld%val = 0.0
-      do i = isc, iec
-        do j = jsc, jec
-            if (self%geom%mask2d(i,j)==0) cycle
-
-            mld%val(i,j,1) = soca_mld(&
-                &field2%val(i,j,:),&
-                &field%val(i,j,:),&
-                &layer_depth%val(i,j,:),&
-                &self%geom%lon(i,j),&
-                &self%geom%lat(i,j))
-        end do
-      end do
-    end if
-
-    ! Update halo
-    do n=1,size(self%fields)
-      field => self%fields(n)
-      call mpp_update_domains(field%val, self%geom%Domain%mpp_domain)
-    end do
 
     ! Set vdate if reading state
     if (iread==1) then
       call f_conf%get_or_die("date", str)
       call datetime_set(str, vdate)
     end if
+    call f_conf%get_or_die("basename", basename)
 
-    return
+    ! handle constant fields first
+    do f=1,size(self%fields)
+      if (self%fields(f)%metadata%io_file == "CONSTANT") then
+        afield1  = self%afieldset%field(self%fields(f)%name)
+        call afield1%data(adata1)
+        adata1(:,:) = self%fields(f)%metadata%constant_value
+        call afield1%final()
+      end if
+    end do
+
+    ! for each separate domain, check if a filename is provided
+    do d=1, size(domains)
+      if(f_conf%get(domains(d)//"_filename", str)) then
+        filename = trim(basename) // trim(str)
+
+        ! determine how many variables will be read in with this file
+        n = 0
+        do i=1,size(self%fields)
+          if (self%fields(i)%metadata%io_file == domains(d)) n = n + 1
+        end do
+        if (n == 0) cycle
+        allocate(vars(n))
+
+        ! for each variable, setup to read
+        n = 0
+        do f=1,size(self%fields)
+          if (self%fields(f)%metadata%io_file == domains(d)) then
+            if (domains(d) == "ice" .and. self%fields(f)%metadata%categories > 0) then
+              ! check if the file was constructed by soca or comes from the CICE history
+              ! The CICE history aggregates the category and level in 1 array
+              ! The SOCA io considers categories to be separate variables and will index the naming
+              if(file_exist(filename) .and. field_exist(filename, self%fields(f)%metadata%io_name)) then
+              else
+                call seaice_categories_vars%push_back(self%fields(f)%name)
+                cycle
+              end if
+            end if
+            n = n + 1
+
+            vars(n)%field => self%fields(f)
+            vars(n)%afield = self%afieldset%field(vars(n)%field%name)
+            call vars(n)%afield%data(vars(n)%adata)
+            allocate(vars(n)%data(&
+              self%geom%isd:self%geom%ied, self%geom%jsd:self%geom%jed, vars(n)%field%nz))
+            if (vars(n)%field%nz == 1) then
+              idr = register_restart_field(restart, filename, &
+                vars(n)%field%metadata%io_name, vars(n)%data(:,:,1), &
+                domain=self%geom%Domain%mpp_domain)
+            else
+              idr = register_restart_field(restart, filename, &
+                vars(n)%field%metadata%io_name, vars(n)%data(:,:,:), &
+                domain=self%geom%Domain%mpp_domain)
+            end if
+          end if
+        end do
+
+        ! read
+        call restore_state(restart, directory='')
+        call free_restart_type(restart)
+
+        ! copy back into atlas fields, filling land with fillvalue
+        do n=1,size(vars)
+          if (.not. allocated(vars(n)%data)) cycle ! skip special ice fields
+          do j=self%geom%jsc, self%geom%jec
+            do i=self%geom%isc, self%geom%iec
+              idx = self%geom%atlas_ij2idx(i,j)
+              if( associated(vars(n)%field%mask) .and. vars(n)%field%mask(i,j) == 0 ) then
+                vars(n)%adata(:, idx) = vars(n)%field%metadata%fillvalue
+              else
+                do k=1,vars(n)%afield%shape(1)
+                  vars(n)%adata(k, idx) = vars(n)%data(i,j,k)
+                end do
+              end if
+            end do
+          end do
+          call vars(n)%afield%set_dirty()
+        end do
+
+        ! done, cleanup
+        do i=1,size(vars)
+          if (.not. allocated(vars(i)%data)) cycle
+          deallocate(vars(i)%data)
+          call vars(i)%afield%final()
+        end do
+        deallocate(vars)
+      end if
+    end do
+
+    ! read sea ice variables with category and/or levels dimensions
+    if (seaice_categories_vars%nvars() > 0) then
+      call f_conf%get_or_die("ice_filename", str)
+      filename = trim(basename) // trim(str)
+      call self%read_seaice(filename, seaice_categories_vars)
+    end if
+
+    ! initialize mid-layer depth from layer thickness
+    ! TODO, this shouldn't live here, it should be part of the variable change class only
+    if (self%afieldset%has("sea_water_depth")) then
+      afield1 = self%afieldset%field("sea_water_depth")
+      afield2 = self%afieldset%field("sea_water_cell_thickness")
+      call afield1%data(adata1)
+      call afield2%data(adata2)
+      adata1(:,:) = 0.5 * adata2(:,:)
+      do i=1,afield1%shape(2)
+        do k=2,afield1%shape(1)
+          adata1(k,i) = adata1(k,i) + sum(adata2(1:k-1,i))
+        end do
+      end do
+      call afield1%set_dirty()
+      call afield1%final()
+      call afield2%final()
+    end if
+
+    ! Compute mixed layer depth TODO: Move somewhere else ...
+    if (self%afieldset%has("ocean_mixed_layer_thickness")) then
+      afield1 = self%afieldset%field("ocean_mixed_layer_thickness")
+      afield2 = self%afieldset%field("sea_water_salinity")
+      afield3 = self%afieldset%field("sea_water_potential_temperature")
+      afield4 = self%afieldset%field("sea_water_depth")
+      call afield1%data(adata1)
+      call afield2%data(adata2)
+      call afield3%data(adata3)
+      call afield4%data(adata4)
+      adata1(:,:) = 0.0_kind_real
+      do j=self%geom%jsc, self%geom%jec
+        do i=self%geom%isc, self%geom%iec
+          if (self%geom%mask2d(i,j)==0) cycle
+          idx = self%geom%atlas_ij2idx(i,j)
+          adata1(1,idx) = soca_mld(adata2(:,idx), adata3(:,idx), adata4(:,idx), &
+            self%geom%lon(i,j), self%geom%lat(i,j))
+        end do
+      end do
+      call afield1%set_dirty()
+      call afield1%final()
+      call afield2%final()
+      call afield3%final()
+      call afield4%final()
+    end if
+
+ ! ! Remap layers if needed
+    ! if (vert_remap) then
+
+    !   ! output log of  what fields are going to be interpolated vertically
+    !   if ( self%geom%f_comm%rank() == 0 ) then
+    !     do n=1,size(self%fields)
+    !       if (.not. self%fields(n)%metadata%vert_interp) cycle
+    !       call oops_log%info("vertically remapping "//trim(self%fields(n)%name))
+    !     end do
+    !   end if
+
+    !   allocate(h_common_ij(nz), hocn_ij(nz), varocn_ij(nz), varocn2_ij(nz))
+    !   call initialize_remapping(remapCS,'PCM')
+    !   do i = isc, iec
+    !     do j = jsc, jec
+    !       h_common_ij = h_common(i,j,:)
+    !       hocn_ij = hocn%val(i,j,:)
+
+    !       do n=1,size(self%fields)
+    !         field => self%fields(n)
+    !         ! TODO Vertical remapping is only valid if the field is on the tracer grid point.
+    !         if (.not. field%metadata%vert_interp) cycle
+    !         if (associated(field%mask) .and. field%mask(i,j).eq.1) then
+    !            varocn_ij = field%val(i,j,:)
+    !            call remapping_core_h(remapCS, nz, h_common_ij, varocn_ij,&
+    !                   &nz, hocn_ij, varocn2_ij)
+    !            field%val(i,j,:) = varocn2_ij
+    !         else
+    !            field%val(i,j,:) = 0.0_kind_real
+    !         end if
+    !       end do
+    !     end do
+    !   end do
+    !   hocn%val = h_common
+    !   deallocate(h_common_ij, hocn_ij, varocn_ij, varocn2_ij)
+    !   call end_remapping(remapCS)
+    ! end if
   end if
-
 end subroutine soca_fields_read
+
 
 ! Populate an empty oop_variable instance with the unique CICE variables
 subroutine get_cice_vars(self, cice_vars, ncat, nlev, cice_vars_type)
@@ -949,13 +894,15 @@ end subroutine get_cice_vars
 
 subroutine soca_fields_read_seaice(self, filename, seaice_categories_vars)
   class(soca_fields), intent(inout) :: self
-  character(800), intent(in) :: filename  !TODO: there's probably a better way to do this
+  character(len=*), intent(in) :: filename
   type(oops_variables), intent(in) :: seaice_categories_vars
 
   type(oops_variables) :: cice_vars_cats, cice_vars_cats_levs
   type(restart_file_type) :: restart
+  type(atlas_field) :: afield
+  real(kind=kind_real), pointer :: adata(:,:)
 
-  integer :: i, ncat, icelevs, snowlevs, idr, cnt, io_index
+  integer :: i, j, k, f, ncat, icelevs, snowlevs, idr, cnt, io_index, idx
   real(kind=kind_real), allocatable :: tmp3d(:,:,:,:), tmp4d(:,:,:,:,:)
 
   ! check what cice variables with category dimension need to be read
@@ -975,14 +922,24 @@ subroutine soca_fields_read_seaice(self, filename, seaice_categories_vars)
 
     ! copy the variable into the corresponding field
     cnt = 1
-    do i = 1, size(self%fields)
-      if (self%fields(i)%metadata%io_file == "ice" .and.&
-         &self%fields(i)%metadata%levels == '1' .and.&
-         &self%fields(i)%metadata%categories > 0) then
+    do f = 1, size(self%fields)
+      if (self%fields(f)%metadata%io_file == "ice" .and.&
+         &self%fields(f)%metadata%levels == '1' .and.&
+         &self%fields(f)%metadata%categories > 0) then
 
         ! get the index of cice_vars that correspond to the io_sup_name
-        io_index = cice_vars_cats%find(self%fields(i)%metadata%io_sup_name)
-        self%fields(i)%val(:,:,1) = tmp3d(:,:,self%fields(i)%metadata%category,io_index)
+        io_index = cice_vars_cats%find(self%fields(f)%metadata%io_sup_name)
+
+        afield = self%afieldset%field(self%fields(f)%name)
+        call afield%data(adata)
+        do j=self%geom%jsc, self%geom%jec
+          do i=self%geom%isc, self%geom%iec
+            idx = self%geom%atlas_ij2idx(i,j)
+            adata(1,idx) = tmp3d(i,j,self%fields(f)%metadata%category,io_index)
+          end do
+        end do
+        call afield%set_dirty()
+        call afield%final()
       end if
     end do
   end if
@@ -1005,14 +962,24 @@ subroutine soca_fields_read_seaice(self, filename, seaice_categories_vars)
 
     ! copy the variable into the corresponding field
     cnt = 1
-    do i = 1, size(self%fields)
-      if (self%fields(i)%metadata%io_file == "ice" .and.&
-         &self%fields(i)%nz > 1 .and.&
-         &self%fields(i)%metadata%categories > 0) then
+    do f = 1, size(self%fields)
+      if (self%fields(f)%metadata%io_file == "ice" .and.&
+         &self%fields(f)%nz > 1 .and.&
+         &self%fields(f)%metadata%categories > 0) then
 
         ! get the index of cice_vars that correspond to the io_sup_name
-        io_index = cice_vars_cats_levs%find(self%fields(i)%metadata%io_sup_name)
-        self%fields(i)%val(:,:,:) = tmp4d(:,:,:,self%fields(i)%metadata%category,io_index)
+        io_index = cice_vars_cats_levs%find(self%fields(f)%metadata%io_sup_name)
+
+        afield = self%afieldset%field(self%fields(f)%name)
+        call afield%data(adata)
+        do j=self%geom%jsc, self%geom%jec
+          do i=self%geom%isc, self%geom%iec
+            idx = self%geom%atlas_ij2idx(i,j)
+            adata(:,idx) = tmp4d(i,j,:,self%fields(f)%metadata%category,io_index)
+          end do
+        end do
+        call afield%set_dirty()
+        call afield%final()
       end if
     end do
   end if
@@ -1067,11 +1034,6 @@ subroutine soca_fields_write_rst(self, f_conf, vdate)
   character(len=:), allocatable :: domain_filename
   type(atlas_field) :: afield
 
-  type varwrapper
-    type(atlas_field) :: afield
-    real(kind=kind_real), pointer :: adata(:,:)
-    real(kind=kind_real), allocatable :: data(:,:,:)
-  end type varwrapper
   type(varwrapper), allocatable :: vars(:)
 
   ! Get date IO format (colons or not?)
@@ -1093,7 +1055,6 @@ subroutine soca_fields_write_rst(self, f_conf, vdate)
       if (self%fields(f)%metadata%io_file == domains(d)) n = n +1
     end do
     if (n == 0) cycle
-    print *, "Writing ", n, " fields to ", domain_filename
     allocate(vars(n))
 
     ! create temporary fortran copies of the atlas fields so that the fms writer

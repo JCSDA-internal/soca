@@ -111,7 +111,6 @@ subroutine soca_increment_read_file_c(c_key_fld, c_conf, c_dt) bind(c,name='soca
   call soca_increment_registry%get(c_key_fld,fld)
   call c_f_datetime(c_dt, fdate)
   call fld%read(fckit_configuration(c_conf), fdate)
-  call fld%sync_to_atlas()
 
 end subroutine soca_increment_read_file_c
 
