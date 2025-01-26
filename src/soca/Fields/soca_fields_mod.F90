@@ -137,9 +137,6 @@ contains
   !> \copybrief soca_fields_ones \see soca_fields_ones
   procedure :: ones     => soca_fields_ones
 
-  !> \copybrief soca_fields_zeros \see soca_fields_zeros
-  procedure :: zeros    => soca_fields_zeros
-
   !> \}
 
   !> \name I/O
@@ -361,6 +358,7 @@ subroutine soca_fields_init_vars(self, vars)
       self%geom%isd:self%geom%ied, &
       self%geom%jsd:self%geom%jed, &
       nz ))
+    self%fields(i)%val = 0.0_kind_real
 
   end do
 end subroutine
@@ -395,9 +393,6 @@ subroutine soca_fields_create(self, geom, vars, aFieldset)
     vars_str(i) = trim(vars%variable(i))
   end do
   call soca_fields_init_vars(self, vars_str)
-
-  ! set everything to zero
-  call self%zeros()
 
 end subroutine soca_fields_create
 
@@ -485,31 +480,6 @@ subroutine soca_fields_ones(self)
   end do
 
 end subroutine soca_fields_ones
-
-
-! ------------------------------------------------------------------------------
-!> Reset the value of all fields to zero.
-!!
-!! \relates soca_fields_mod::soca_fields
-subroutine soca_fields_zeros(self)
-  class(soca_fields), intent(inout) :: self
-  type(atlas_field) :: field
-  real(kind=kind_real), pointer :: fdata(:,:)
-  integer :: i
-
-  ! TODO delete
-  do i = 1, size(self%fields)
-    self%fields(i)%val = 0.0_kind_real
-  end do
-
-  do i = 1, self%afieldset%size()
-    field = self%afieldset%field(i)
-    call field%data(fdata)
-    fdata(:,:) = 0.0_kind_real
-    call field%final()
-  end do
-
-end subroutine soca_fields_zeros
 
 
 ! ------------------------------------------------------------------------------

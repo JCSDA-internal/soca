@@ -176,8 +176,15 @@ subroutine soca_increment_dirac(self, f_conf)
   isc = self%geom%isc ; iec = self%geom%iec
   jsc = self%geom%jsc ; jec = self%geom%jec
 
+  ! set all fields to zero
+  do n=1,self%afieldset%size()
+    field = self%afieldset%field(n)
+    call field%data(fdata)
+    fdata = 0.0
+    call field%final()
+  end do
+
   ! Setup Diracs
-  call self%zeros()
   do n=1,ndir
     ! skip this index if not in the bounds of this PE
      if (ixdir(n) > iec .or. ixdir(n) < isc) cycle
