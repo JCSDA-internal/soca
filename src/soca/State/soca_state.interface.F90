@@ -156,7 +156,6 @@ type(oops_variables)      :: f_vars
 ! LinkedList
 ! ----------
 call soca_state_registry%get(c_key_self, f_self)
-call f_self%sync_from_atlas()
 
 ! Fortrain APIs
 ! -------------

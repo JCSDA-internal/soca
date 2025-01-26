@@ -95,9 +95,6 @@ contains
   !>\copybrief soca_field_check_congruent \see soca_field_check_congruent
   procedure :: check_congruent => soca_field_check_congruent
 
-  !>\copybrief soca_field_fill_masked \see soca_field_fill_masked
-  procedure :: fill_masked     => soca_field_fill_masked
-
 end type soca_field
 
 
@@ -182,7 +179,6 @@ contains
   !> This will go away once the transition to atlas is complete
   !! \{
   procedure :: sync_to_atlas => soca_fields_sync_to_atlas
-  procedure :: sync_from_atlas => soca_fields_sync_from_atlas
   !> \}
 
 end type soca_fields
@@ -335,24 +331,6 @@ subroutine soca_field_stencil_interp(field, geom, fromto)
 
 end subroutine soca_field_stencil_interp
 
-! ------------------------------------------------------------------------------
-!> Fill masked values
-!!
-!! Needed when reading fms history which can contain NaN's over land
-subroutine soca_field_fill_masked(self, geom)
-  class(soca_field), intent(inout) :: self
-  type(soca_geom),      intent(in) :: geom
-
-  integer :: i, j
-
-  if (.not. associated(self%mask)) return
-  do j = geom%jsc, geom%jec
-    do i = geom%isc, geom%iec
-      if (self%mask(i,j)==0) self%val(i,j,:) = self%metadata%fillvalue
-    end do
-  end do
-
-end subroutine soca_field_fill_masked
 
 ! ------------------------------------------------------------------------------
 !> Delete the soca_field object.
@@ -1321,42 +1299,6 @@ subroutine soca_fields_sync_to_atlas(self)
   end do
 
   ! update that atlas fieldset metadata, if needed
-  call self%update_metadata()
-end subroutine
-
-! ------------------------------------------------------------------------------
-
-subroutine soca_fields_sync_from_atlas(self)
-  class(soca_fields),   intent(inout)    :: self
-
-  integer :: v, i, j
-  type(atlas_field) :: afield
-  real(kind=kind_real), pointer :: real_ptr(:,:)
-  type(soca_field), pointer :: field
-
-  ! TODO, remove fields that no longer exist?
-
-  do v = 1, self%afieldset%size()
-    afield = self%afieldset%field(v)
-
-    if (.not. self%has(afield%name())) then
-      cycle
-      ! IS THIS A BUG, why are there fields in the internal field that are not part of the atlas fieldset????
-      ! call abor1_ftn('fields_sync_from_atlas: variable '//trim(afield%name())//' not found in fields')
-    endif
-
-    call self%get(afield%name(), field)
-    call afield%data(real_ptr)
-    do j = self%geom%jsc, self%geom%jec
-      do i = self%geom%isc, self%geom%iec
-        field%val(i,j,:) = real_ptr(:, self%geom%atlas_ij2idx(i,j))
-      end do
-    end do
-    call mpp_update_domains(field%val, self%geom%Domain%mpp_domain)
-
-  call afield%final()
-  end do
-
   call self%update_metadata()
 end subroutine
 
