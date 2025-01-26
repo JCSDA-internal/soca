@@ -86,14 +86,8 @@ type, public :: soca_field
 
 contains
 
-  !>\copybrief soca_field_copy \see soca_field_copy
-  procedure :: copy            => soca_field_copy
-
   !>\copybrief soca_field_delete \see soca_field_delete
   procedure :: delete          => soca_field_delete
-
-  !>\copybrief soca_field_check_congruent \see soca_field_check_congruent
-  procedure :: check_congruent => soca_field_check_congruent
 
 end type soca_field
 
@@ -134,9 +128,6 @@ contains
 
   !> \copybrief soca_fields_has \see soca_fields_has
   procedure :: has    => soca_fields_has
-
-  !> \copybrief soca_fields_check_congruent \see soca_fields_check_congruent
-  procedure :: check_congruent => soca_fields_check_congruent
 
   !> \}
 
@@ -202,46 +193,6 @@ contains
 ! soca_field subroutines
 ! ------------------------------------------------------------------------------
 
-
-! ------------------------------------------------------------------------------
-!> Copy a field from \p rhs to \p self.
-!!
-!! If the fields are not congruent, this subroutine will throw an error.
-!! \p self must be allocated first.
-!! \relates soca_fields_mod::soca_field
-subroutine soca_field_copy(self, rhs)
-  class(soca_field), intent(inout) :: self !< The field to copy \b to
-  type(soca_field),  intent(in)    :: rhs !< The field to copy \b from
-
-  call self%check_congruent(rhs)
-
-  ! the only variable that should be different is %val
-  self%val = rhs%val
-
-  ! NOTE: the pointers (mask, lat, lon) will be different, but should NOT
-  ! be changed to point to rhs pointers. Bad things happen
-end subroutine soca_field_copy
-
-
-! ------------------------------------------------------------------------------
-!> Make sure the two fields are the same in terms of name, size, shape.
-!!
-!! \throws abor1_ftn Halts program if fields are not congruent
-!! \relates soca_fields_mod::soca_field
-subroutine soca_field_check_congruent(self, rhs)
-  class(soca_field), intent(in) :: self
-  type(soca_field),  intent(in) :: rhs !< other field to check for congruency
-  integer :: i
-
-  if ( self%nz /= rhs%nz ) call abor1_ftn("soca_field:  self%nz /= rhs%nz")
-  if ( self%name /= rhs%name ) call abor1_ftn("soca_field:  self%name /= rhs%name")
-  if ( size(shape(self%val)) /= size(shape(rhs%val)) ) &
-    call abor1_ftn("soca_field: shape of self%val /= rhs%val")
-  do i =1, size(shape(self%val))
-    if (size(self%val, dim=i) /= size(rhs%val, dim=i)) &
-      call abor1_ftn("soca_field: shape of self%val /= rhs%val")
-  end do
-end subroutine soca_field_check_congruent
 
 ! ------------------------------------------------------------------------------
 !> Perform spatial interpolation between adjacent grid point in the same stencil
@@ -525,11 +476,6 @@ subroutine soca_fields_ones(self)
   type(atlas_field) :: field
   real(kind=kind_real), pointer :: fdata(:,:)
   integer :: i
-
-  ! TODO delete
-  do i = 1, size(self%fields)
-    self%fields(i)%val = 1.0_kind_real
-  end do
 
   do i = 1, self%afieldset%size()
     field = self%afieldset%field(i)
@@ -963,34 +909,6 @@ subroutine soca_fields_read_seaice(self, filename, seaice_categories_vars)
   end if
 end subroutine soca_fields_read_seaice
 
-! ------------------------------------------------------------------------------
-!> Make sure two sets of fields are the same shape (same variables, same resolution)
-!!
-!! \throws abor1_ftn aborts if two fields are not congruent.
-!!
-!! \relates soca_fields_mod::soca_fields
-subroutine soca_fields_check_congruent(self, rhs)
-  class(soca_fields), intent(in) :: self
-  class(soca_fields), intent(in) :: rhs !< other fields to check for congruency
-
-  integer :: i, j
-
-  ! number of fields should be the same
-  if (size(self%fields) /= size(rhs%fields)) &
-    call abor1_ftn("soca_fields: contains different number of fields")
-
-  ! each field should match (name, size, shape)
-  do i=1,size(self%fields)
-    if (self%fields(i)%name /= rhs%fields(i)%name) &
-      call abor1_ftn("soca_fields: field have different names")
-    do j = 1, size(shape(self%fields(i)%val))
-      if (size(self%fields(i)%val, dim=j) /= size(rhs%fields(i)%val, dim=j) ) then
-        call abor1_ftn("soca_fields: field '"//self%fields(i)%name//"' has different dimensions")
-      end if
-    end do
-  end do
-end subroutine soca_fields_check_congruent
-
 
 ! ------------------------------------------------------------------------------
 !> Save soca fields in a restart format
@@ -1169,7 +1087,7 @@ subroutine soca_fields_update_fields(self, vars)
   do f = 1, size(tmp_fields%fields)
     if (self%has(tmp_fields%fields(f)%name)) then
       call self%get(tmp_fields%fields(f)%name, field)
-      call tmp_fields%fields(f)%copy(field)
+      tmp_fields%fields(f)%val = field%val
     end if
   end do
 
