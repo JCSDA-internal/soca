@@ -19,10 +19,8 @@ use datetime_mod, only: datetime, datetime_set, datetime_to_string, datetime_to_
 use duration_mod, only: duration, duration_to_string
 use fckit_configuration_module, only: fckit_configuration
 use logger_mod
-use fckit_mpi_module, only: fckit_mpi_min, fckit_mpi_max, fckit_mpi_sum
 use kinds, only: kind_real
 use oops_variables_mod, only: oops_variables
-use tools_const, only: deg2rad
 
 ! MOM6 / FMS modules
 use fms_io_mod, only: register_restart_field, &
@@ -61,8 +59,6 @@ type, public :: soca_field
   !> The number of vertical levels.
   integer                           :: nz
 
-  !> The actual field data.
-  real(kind=kind_real), allocatable :: val(:,:,:)
 
   !> Pointer to the relevant mask in soca_geom_mod::soca_geom
   !!
@@ -162,12 +158,6 @@ contains
   !> \copybrief soca_fields_update_fields \see soca_fields_update_fields
   procedure :: update_fields => soca_fields_update_fields
   procedure :: update_metadata => soca_fields_update_metadata
-
-  !> \name Temporary sync between C++ atlas and our fortran array.
-  !> This will go away once the transition to atlas is complete
-  !! \{
-  procedure :: sync_to_atlas => soca_fields_sync_to_atlas
-  !> \}
 
 end type soca_fields
 
@@ -286,8 +276,6 @@ end subroutine soca_field_stencil_interp
 !! \relates soca_fields_mod::soca_field
 subroutine soca_field_delete(self)
   class(soca_field), intent(inout) :: self
-
-  if (allocated(self%val)) deallocate(self%val)
 end subroutine
 
 
@@ -354,12 +342,6 @@ subroutine soca_fields_init_vars(self, vars)
 
     ! allocate space
     self%fields(i)%nz = nz
-    allocate(self%fields(i)%val(&
-      self%geom%isd:self%geom%ied, &
-      self%geom%jsd:self%geom%jed, &
-      nz ))
-    self%fields(i)%val = 0.0_kind_real
-
   end do
 end subroutine
 
@@ -377,6 +359,8 @@ subroutine soca_fields_create(self, geom, vars, aFieldset)
 
   character(len=:), allocatable :: vars_str(:)
   integer :: i
+  type(atlas_field) :: afield
+  real(kind=kind_real), pointer :: adata(:,:)
 
   self%afieldset = aFieldset
 
@@ -393,6 +377,18 @@ subroutine soca_fields_create(self, geom, vars, aFieldset)
     vars_str(i) = trim(vars%variable(i))
   end do
   call soca_fields_init_vars(self, vars_str)
+
+  ! create atlas fieldset
+  do i=1,size(self%fields)
+    afield = self%geom%functionspace%create_field(&
+      name=self%fields(i)%name, kind=atlas_real(kind_real), &
+      levels=self%fields(i)%nz)
+    call self%afieldset%add(afield)
+    call afield%data(adata)
+    adata(:,:) = 0.0_kind_real
+    call afield%final()
+  end do
+  call self%update_metadata()
 
 end subroutine soca_fields_create
 
@@ -1048,21 +1044,31 @@ subroutine soca_fields_update_fields(self, vars)
 
   type(soca_fields) :: tmp_fields
   type(soca_field), pointer :: field
-  integer :: f
+  type(atlas_field) :: afield
+  real(kind=kind_real), pointer :: adata(:,:)
+  integer :: f, i, j, idx
+  character(len=:), allocatable :: vars_str(:)
 
-  ! create new fields
-  call tmp_fields%create(self%geom, vars, self%aFieldset)
+  ! reinitialize variable parameters
+  deallocate(self%fields)
+  allocate(character(len=100) :: vars_str(vars%nvars()))
+  do i=1,vars%nvars()
+    vars_str(i) = vars%variable(i)
+  end do
+  call soca_fields_init_vars(self, vars_str)
 
-  ! copy over where already existing
-  do f = 1, size(tmp_fields%fields)
-    if (self%has(tmp_fields%fields(f)%name)) then
-      call self%get(tmp_fields%fields(f)%name, field)
-      tmp_fields%fields(f)%val = field%val
+  ! create new atlas fields
+  do f=1,size(self%fields)
+    if (.not. self%aFieldset%has(self%fields(f)%name)) then
+      afield = self%geom%functionspace%create_field( &
+        name=self%fields(f)%name, kind=atlas_real(kind_real), &
+        levels=self%fields(f)%nz)
+      call afield%data(adata)
+      call self%afieldset%add(afield)
+      adata(:,:) = 0.0_kind_real
+      call afield%final()
     end if
   end do
-
-  ! move ownership of fields from tmp to self
-  call move_alloc(tmp_fields%fields, self%fields)
 
   call self%update_metadata()
 
@@ -1150,46 +1156,6 @@ function soca_genfilename(f_conf,length,vdate,date_cols,domain_type)
    if ( allocated(str) ) deallocate(str)
 
 end function soca_genfilename
-
-! ------------------------------------------------------------------------------
-! Copy the data from the internal "fields" to the atlas fieldset.
-! We also need to make sure the metadata on the fieldset is set correctly
-subroutine soca_fields_sync_to_atlas(self)
-  class(soca_fields),   intent(inout)    :: self
-
-  type(atlas_field) :: afield
-  integer :: v, n, i, j
-  type(atlas_metadata) :: meta
-  real(kind=kind_real), pointer :: real_ptr(:,:)
-
-  ! copy from internal fortran fields to atlas fieldset
-  do v=1,size(self%fields)
-    ! get/create field
-    if (self%afieldset%has_field( self%fields(v)%name)) then
-      afield = self%afieldset%field( self%fields(v)%name)
-    else
-      afield = self%geom%functionspace%create_field( &
-        name= self%fields(v)%name, kind=atlas_real(kind_real), levels= self%fields(v)%nz)
-      call self%afieldset%add(afield)
-    end if
-
-    ! create and fill field
-    call afield%data(real_ptr)
-    real_ptr = 0.0_kind_real  ! set all points to zero, overwrite owned values below
-    do j=self%geom%jsc,self%geom%jec
-      do i=self%geom%isc,self%geom%iec
-        real_ptr(:, self%geom%atlas_ij2idx(i,j)) =  self%fields(v)%val(i,j,:)
-      end do
-    end do
-    call afield%set_dirty(.true.)  ! indicate halo values are out-of-date
-
-    call afield%final()
-  end do
-
-  ! update that atlas fieldset metadata, if needed
-  call self%update_metadata()
-end subroutine
-
 
 ! ------------------------------------------------------------------------------
 ! update the metadata in the atlas fieldset based on fields metadata

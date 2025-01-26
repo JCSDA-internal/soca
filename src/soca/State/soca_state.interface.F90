@@ -55,7 +55,6 @@ subroutine soca_state_create_c(c_key_self, c_key_geom, c_vars, c_afieldsest) &
     vars = oops_variables(c_vars)
     afieldset = atlas_fieldset(c_afieldsest)
     call self%create(geom, vars, afieldset)
-    call self%sync_to_atlas()
 
 end subroutine soca_state_create_c
 
@@ -164,7 +163,6 @@ f_vars = oops_variables(c_vars)
 ! Call implementation
 ! -------------------
 call f_self%update_fields(f_vars)
-call f_self%sync_to_atlas()
 
 end subroutine soca_state_update_fields_c
 
