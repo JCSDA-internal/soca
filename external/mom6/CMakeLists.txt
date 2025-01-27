@@ -1,3 +1,6 @@
+# This file was modified from the original wrapper in ufs-weather-model
+# https://github.com/ufs-community/ufs-weather-model/tree/develop/MOM6-interface
+
 ### MOM6 Fortran compiler flags
 if(CMAKE_Fortran_COMPILER_ID MATCHES "GNU")
   set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -g -fbacktrace")
@@ -25,13 +28,13 @@ set(MOM6SOLO ON CACHE BOOL "Build MOM6 solo")
 include("mom6_files.cmake")
 
 ### Use common object library for building target library
-add_library(mom6 STATIC 
+add_library(mom6 STATIC
     ${mom6_src_files}
     ${mom6_stochastic_stub_files} ) ## TODO include stochastic package at some point?
 set_target_properties(mom6 PROPERTIES Fortran_MODULE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/mod)
-target_include_directories(mom6 PUBLIC 
+target_include_directories(mom6 PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/mod>
-    $<INSTALL_INTERFACE:mod>) 
+    $<INSTALL_INTERFACE:mod>)
 target_include_directories(mom6 PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/MOM6/config_src/memory/dynamic_nonsymmetric>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/MOM6/src/framework>)
@@ -53,7 +56,7 @@ if(MOM6SOLO)
   target_include_directories(mom6solo PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/mod_solo>)
   target_include_directories(mom6solo PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/MOM6/config_src/memory/dynamic_nonsymmetric>
                                               $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/MOM6/src/framework>)
-  target_link_libraries(mom6solo PUBLIC 
+  target_link_libraries(mom6solo PUBLIC
     NetCDF::NetCDF_C
     NetCDF::NetCDF_Fortran
     fms
@@ -65,7 +68,7 @@ endif()
 ### Install
 ####################################################
 install (
-    TARGETS mom6 
+    TARGETS mom6
     EXPORT mom6-config
     RUNTIME DESTINATION bin
     LIBRARY DESTINATION lib
