@@ -368,6 +368,16 @@ namespace soca {
   // -----------------------------------------------------------------------------
 
   void Increment::updateFields(const oops::Variables & vars) {
+    // remove fields from the fieldset that are no longer in vars
+    atlas::FieldSet orig = util::shareFields(fieldSet_);
+    fieldSet_.clear();
+    for (const auto & v : vars) {
+      if (orig.has(v.name())) {
+        fieldSet_.add(orig.field(v.name()));
+      }
+    }
+
+    // update new vars
     vars_ = vars;
     soca_increment_update_fields_f90(toFortran(), vars_);
   }
