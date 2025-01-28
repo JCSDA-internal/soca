@@ -363,33 +363,14 @@ subroutine soca_fields_create(self, geom, vars, aFieldset)
   real(kind=kind_real), pointer :: adata(:,:)
 
   self%afieldset = aFieldset
+  self%geom => geom
 
   ! make sure current object has not already been allocated
   if (allocated(self%fields)) &
     call abor1_ftn("soca_fields::create(): object already allocated")
 
-  ! associate geometry
-  self%geom => geom
-
-  ! initialize the variable parameters
-  allocate(character(len=1024) :: vars_str(vars%nvars()))
-  do i=1,vars%nvars()
-    vars_str(i) = trim(vars%variable(i))
-  end do
-  call soca_fields_init_vars(self, vars_str)
-
-  ! create atlas fieldset
-  do i=1,size(self%fields)
-    afield = self%geom%functionspace%create_field(&
-      name=self%fields(i)%name, kind=atlas_real(kind_real), &
-      levels=self%fields(i)%nz)
-    call self%afieldset%add(afield)
-    call afield%data(adata)
-    adata(:,:) = 0.0_kind_real
-    call afield%final()
-  end do
-  call self%update_metadata()
-
+  ! initialize the variables
+  call self%update_fields(vars)
 end subroutine soca_fields_create
 
 
@@ -1050,7 +1031,7 @@ subroutine soca_fields_update_fields(self, vars)
   character(len=:), allocatable :: vars_str(:)
 
   ! reinitialize variable parameters
-  deallocate(self%fields)
+  if (allocated(self%fields)) deallocate(self%fields)
   allocate(character(len=100) :: vars_str(vars%nvars()))
   do i=1,vars%nvars()
     vars_str(i) = vars%variable(i)
