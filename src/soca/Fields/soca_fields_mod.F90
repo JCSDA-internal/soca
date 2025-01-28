@@ -80,11 +80,6 @@ type, public :: soca_field
   !! see soca_fields_metadata_mod::soca_field_metadata
   type(soca_field_metadata)         :: metadata
 
-contains
-
-  !>\copybrief soca_field_delete \see soca_field_delete
-  procedure :: delete          => soca_field_delete
-
 end type soca_field
 
 
@@ -271,15 +266,6 @@ end subroutine soca_field_stencil_interp
 
 
 ! ------------------------------------------------------------------------------
-!> Delete the soca_field object.
-!!
-!! \relates soca_fields_mod::soca_field
-subroutine soca_field_delete(self)
-  class(soca_field), intent(inout) :: self
-end subroutine
-
-
-! ------------------------------------------------------------------------------
 ! soca_fields subroutines
 ! ------------------------------------------------------------------------------
 
@@ -384,9 +370,6 @@ subroutine soca_fields_delete(self)
 
   ! clear the fields and nullify pointers
   nullify(self%geom)
-  do i = 1, size(self%fields)
-    call self%fields(i)%delete()
-  end do
   deallocate(self%fields)
 
 end subroutine
@@ -602,15 +585,14 @@ subroutine soca_fields_read(self, f_conf, vdate)
         ! copy back into atlas fields, filling land with fillvalue
         do n=1,size(vars)
           if (.not. allocated(vars(n)%data)) cycle ! skip special ice fields
+          vars(n)%adata(:,:) = 0.0
           do j=self%geom%jsc, self%geom%jec
             do i=self%geom%isc, self%geom%iec
               idx = self%geom%atlas_ij2idx(i,j)
               if( associated(vars(n)%field%mask) .and. vars(n)%field%mask(i,j) == 0 ) then
                 vars(n)%adata(:, idx) = vars(n)%field%metadata%fillvalue
               else
-                do k=1,vars(n)%afield%shape(1)
-                  vars(n)%adata(k, idx) = vars(n)%data(i,j,k)
-                end do
+                vars(n)%adata(:, idx) = vars(n)%data(i,j,:)
               end if
             end do
           end do
@@ -641,10 +623,13 @@ subroutine soca_fields_read(self, f_conf, vdate)
       afield2 = self%afieldset%field("sea_water_cell_thickness")
       call afield1%data(adata1)
       call afield2%data(adata2)
-      adata1(:,:) = 0.5 * adata2(:,:)
-      do i=1,afield1%shape(2)
-        do k=2,afield1%shape(1)
-          adata1(k,i) = adata1(k,i) + sum(adata2(1:k-1,i))
+      do j=self%geom%jsc, self%geom%jec
+        do i=self%geom%isc, self%geom%iec
+          idx = self%geom%atlas_ij2idx(i,j)
+          adata1(:,idx) = 0.5 * adata2(:,idx)
+          do k=2,afield1%shape(1)
+            adata1(k,idx) = adata1(k,idx) + sum(adata2(1:k-1,idx))
+          end do
         end do
       end do
       call afield1%set_dirty()
@@ -919,10 +904,7 @@ subroutine soca_fields_write_rst(self, f_conf, vdate)
         do i=self%geom%isc, self%geom%iec
           idx = self%geom%atlas_ij2idx(i,j)
           if (associated(self%fields(f)%mask) .and. self%fields(f)%mask(i,j) == 0) cycle
-
-          do k=1,vars(n)%afield%shape(1)
-            vars(n)%data(i,j,k) = vars(n)%adata(k, idx)
-          end do
+            vars(n)%data(i,j,:) = vars(n)%adata(:, idx)
         end do
       end do
 
