@@ -26,7 +26,6 @@ use oops_variables_mod, only: oops_variables
 use fms_io_mod, only: register_restart_field, &
                       restart_file_type, restore_state, free_restart_type, save_restart, &
                       file_exist, field_exist
-use fms_mod,    only: write_data, set_domain
 use MOM_remapping, only : remapping_CS, initialize_remapping, remapping_core_h, &
                           end_remapping
 use mpp_domains_mod, only : mpp_update_domains
@@ -471,19 +470,17 @@ subroutine soca_fields_read(self, f_conf, vdate)
   type(fckit_configuration),  intent(in)    :: f_conf
   type(datetime),             intent(inout) :: vdate
 
-  ! integer, parameter :: max_string_length=800
   character(len=:), allocatable :: str, basename, filename
   integer :: iread = 0
-  ! integer :: ii
   real(kind=kind_real), allocatable :: h_common(:,:,:)    !< layer thickness to remap to
   type(restart_file_type) :: restart
   integer :: d, f, i, j, k, n, idx, idr
-  ! integer :: nz, n, d, idx
-  ! type(remapping_CS)  :: remapCS
+  type(remapping_CS)  :: remapCS
   type(oops_variables) :: seaice_categories_vars
   type(varwrapper), allocatable :: vars(:)
   type(atlas_field) :: afield1, afield2, afield3, afield4
   real(kind=kind_real), pointer :: adata1(:,:), adata2(:,:), adata3(:,:), adata4(:,:)
+  real(kind=kind_real), allocatable :: h_common_ij(:), hocn_ij(:), varocn_ij(:), varocn2_ij(:)
 
   character(len=3), dimension(5) :: domains
   domains = [character(len=3) :: "ocn", "sfc", "ice", "wav", "bio"]
@@ -663,44 +660,56 @@ subroutine soca_fields_read(self, f_conf, vdate)
       call afield4%final()
     end if
 
- ! ! Remap layers if needed
-    ! if (vert_remap) then
+    ! Remap layers if needed
+    if (allocated(h_common)) then
+      call initialize_remapping(remapCS,'PCM')
 
-    !   ! output log of  what fields are going to be interpolated vertically
-    !   if ( self%geom%f_comm%rank() == 0 ) then
-    !     do n=1,size(self%fields)
-    !       if (.not. self%fields(n)%metadata%vert_interp) cycle
-    !       call oops_log%info("vertically remapping "//trim(self%fields(n)%name))
-    !     end do
-    !   end if
+      ! allocate things
+      allocate(h_common_ij(self%geom%nzo), hocn_ij(self%geom%nzo), &
+               varocn_ij(self%geom%nzo), varocn2_ij(self%geom%nzo))
+      afield1 = self%afieldset%field("sea_water_cell_thickness")
+      call afield1%data(adata1)
 
-    !   allocate(h_common_ij(nz), hocn_ij(nz), varocn_ij(nz), varocn2_ij(nz))
-    !   call initialize_remapping(remapCS,'PCM')
-    !   do i = isc, iec
-    !     do j = jsc, jec
-    !       h_common_ij = h_common(i,j,:)
-    !       hocn_ij = hocn%val(i,j,:)
+      ! for each field that should be remapped
+      do n=1,size(self%fields)
+        if (.not. self%fields(n)%metadata%vert_interp) cycle
+        if ( self%geom%f_comm%rank() == 0 ) then
+          call oops_log%info("vertically remapping "//trim(self%fields(n)%name))
+        end if
+        afield2 = self%afieldset%field(self%fields(n)%name)
+        call afield2%data(adata2)
 
-    !       do n=1,size(self%fields)
-    !         field => self%fields(n)
-    !         ! TODO Vertical remapping is only valid if the field is on the tracer grid point.
-    !         if (.not. field%metadata%vert_interp) cycle
-    !         if (associated(field%mask) .and. field%mask(i,j).eq.1) then
-    !            varocn_ij = field%val(i,j,:)
-    !            call remapping_core_h(remapCS, nz, h_common_ij, varocn_ij,&
-    !                   &nz, hocn_ij, varocn2_ij)
-    !            field%val(i,j,:) = varocn2_ij
-    !         else
-    !            field%val(i,j,:) = 0.0_kind_real
-    !         end if
-    !       end do
-    !     end do
-    !   end do
-    !   hocn%val = h_common
-    !   deallocate(h_common_ij, hocn_ij, varocn_ij, varocn2_ij)
-    !   call end_remapping(remapCS)
-    ! end if
+        ! for each grid point
+        do j=self%geom%jsc, self%geom%jec
+          do i=self%geom%isc, self%geom%iec
+            idx = self%geom%atlas_ij2idx(i,j)
+            if (.not. associated(self%fields(n)%mask) .or. self%fields(n)%mask(i,j) .gt. 0.0) then
+              h_common_ij(:) = h_common(i,j,:)
+              hocn_ij(:) = adata1(:, idx)
+              varocn_ij(:) = adata2(:, idx)
+              call remapping_core_h(remapCS, self%geom%nzo, h_common_ij, varocn_ij, &
+                                    self%geom%nzo, hocn_ij, varocn2_ij)
+              adata2(:, idx) = varocn2_ij
+            else
+              adata2(:, idx) = 0.0_kind_real
+            end if
+          end do
+        end do
+        call afield2%set_dirty()
+
+        ! cleanup
+        call afield2%final()
+      end do
+
+      ! cleanup
+      call end_remapping(remapCS)
+      deallocate(h_common_ij, hocn_ij, varocn_ij, varocn2_ij)
+      call afield1%final()
+    end if
   end if
+
+  ! cleanup
+  if (allocated(h_common)) deallocate(h_common)
 end subroutine soca_fields_read
 
 
