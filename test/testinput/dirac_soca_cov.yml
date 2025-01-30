@@ -67,6 +67,8 @@ background error:
   variable change:
     inner variables: *soca_vars
     outer variables: *soca_vars
+    nonlinear variable change:
+      add vars and return: True
     linear variable change:
       linear variable changes:
       - linear variable change name: BalanceSOCA
