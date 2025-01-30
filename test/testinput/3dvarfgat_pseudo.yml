@@ -87,10 +87,10 @@ cost function:
       efold_z: 2500.0       # [m]
 
 
-    model specific variable change:
+    variable change:
       inner variables: *soca_an_vars
       outer variables: *soca_an_vars
-      variable change:
+      nonlinear variable change:
         add vars and return: True
       linear variable change:
         linear variable changes:

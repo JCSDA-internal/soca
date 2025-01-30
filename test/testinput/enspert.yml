@@ -97,10 +97,10 @@ background error:
     save diagnostics:
       filepath: data_output/parametric_ocean_stddev_diags
 
-  model specific variable change:
+  variable change:
     inner variables: *soca_vars
     outer variables: *soca_vars
-    variable change:
+    nonlinear variable change:
       add vars and return: True
     linear variable change:
       linear variable changes:

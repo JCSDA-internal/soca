@@ -74,7 +74,7 @@ background error:
         - variable: northward_sea_water_velocity
           fraction of background: 0.2
 
-      model specific variable change:
+      variable change:
         inner variables: *soca_vars
         outer variables: *soca_vars
         linear variable change:
