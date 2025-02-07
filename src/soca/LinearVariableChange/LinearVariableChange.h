@@ -14,7 +14,8 @@
 
 #include <boost/ptr_container/ptr_vector.hpp>
 
-#include "oops/base/LinearVariableChangeParametersBase.h"
+#include "oops/base/ParameterTraitsVariables.h"
+#include "oops/base/Variables.h"
 #include "oops/util/parameters/OptionalParameter.h"
 #include "oops/util/parameters/Parameter.h"
 #include "oops/util/parameters/Parameters.h"
@@ -30,11 +31,11 @@ class State;
 
 // -----------------------------------------------------------------------------
 
-class LinearVariableChangeParameters :
-  public oops::LinearVariableChangeParametersBase {
-  OOPS_CONCRETE_PARAMETERS(LinearVariableChangeParameters,
-                           oops::LinearVariableChangeParametersBase)
+class LinearVariableChangeParameters : public oops::Parameters {
+  OOPS_CONCRETE_PARAMETERS(LinearVariableChangeParameters, oops::Parameters)
  public:
+  oops::OptionalParameter<oops::Variables> inputVariables{"input variables", this};
+  oops::OptionalParameter<oops::Variables> outputVariables{"output variables", this};
   oops::OptionalParameter<std::vector<LinearVariableChangeParametersWrapper>>
          linearVariableChangesWrapper{"linear variable changes", this};
 };

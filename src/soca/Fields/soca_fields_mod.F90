@@ -25,7 +25,7 @@ use oops_variables_mod, only: oops_variables
 use tools_const, only: deg2rad
 
 ! MOM6 / FMS modules
-use fms_io_mod, only: fms_io_init, fms_io_exit, register_restart_field, &
+use fms_io_mod, only: register_restart_field, &
                       restart_file_type, restore_state, free_restart_type, save_restart, &
                       file_exist, field_exist
 use fms_mod,    only: write_data, set_domain
@@ -707,12 +707,10 @@ subroutine soca_fields_read(self, f_conf, vdate)
      h_common = 0.0_kind_real
 
      ! Read common vertical coordinate from file
-     call fms_io_init()
      idr = register_restart_field(ocean_remap_restart, remap_filename, 'h', h_common, &
           domain=self%geom%Domain%mpp_domain)
      call restore_state(ocean_remap_restart, directory='')
      call free_restart_type(ocean_remap_restart)
-     call fms_io_exit()
   end if
 
   ! Create unit increment
@@ -773,8 +771,6 @@ subroutine soca_fields_read(self, f_conf, vdate)
       call f_conf%get_or_die("bio_filename", str)
       bio_filename = trim(basename)//trim(str)
     end if
-
-    call fms_io_init()
 
     seaice_categories_vars = oops_variables()
     ! built-in variables
@@ -857,8 +853,6 @@ subroutine soca_fields_read(self, f_conf, vdate)
       call restore_state(bio_restart, directory='')
       call free_restart_type(bio_restart)
     end if
-
-    call fms_io_exit()
 
     ! read sea ice variables with categoriy and/or levels dimensions
     if (seaice_categories_vars%nvars() > 0) then
@@ -1032,14 +1026,12 @@ subroutine soca_fields_read_seaice(self, filename, seaice_categories_vars)
   if (cice_vars_cats%nvars() > 0) then
     allocate(tmp3d(self%geom%isd:self%geom%ied,self%geom%jsd:self%geom%jed,ncat,cice_vars_cats%nvars()))
     tmp3d = 0.0_kind_real
-    call fms_io_init()
     do i=1,cice_vars_cats%nvars()
       idr = register_restart_field(restart, filename, cice_vars_cats%variable(i), &
                          tmp3d(:,:,:,i), domain=self%geom%Domain%mpp_domain)
     end do
     call restore_state(restart, directory='')
     call free_restart_type(restart)
-    call fms_io_exit()
 
     ! copy the variable into the corresponding field
     cnt = 1
@@ -1064,14 +1056,12 @@ subroutine soca_fields_read_seaice(self, filename, seaice_categories_vars)
     allocate(tmp4d(self%geom%isd:self%geom%ied,self%geom%jsd:self%geom%jed,icelevs,&
     &ncat,cice_vars_cats_levs%nvars()))
     tmp4d = 0.0_kind_real
-    call fms_io_init()
     do i=1,cice_vars_cats_levs%nvars()
       idr = register_restart_field(restart, filename, cice_vars_cats_levs%variable(i), &
                          tmp4d(:,:,:,:,i), domain=self%geom%Domain%mpp_domain)
     end do
     call restore_state(restart, directory='')
     call free_restart_type(restart)
-    call fms_io_exit()
 
     ! copy the variable into the corresponding field
     cnt = 1
@@ -1155,16 +1145,11 @@ subroutine soca_fields_write_file(self, filename)
 
   integer :: ii
 
-  call fms_io_init()
-  call set_domain( self%geom%Domain%mpp_domain )
-
   ! write out all fields
   do ii = 1, size(self%fields)
     call write_data( filename, self%fields(ii)%name, self%fields(ii)%val(:,:,:), self%geom%Domain%mpp_domain)
   end do
 
-
-  call fms_io_exit()
 end subroutine soca_fields_write_file
 
 
@@ -1190,7 +1175,6 @@ subroutine soca_fields_write_rst(self, f_conf, vdate)
   write_sfc = .false.
   write_wav = .false.
   write_bio = .false.
-  call fms_io_init()
 
   ! Get date IO format (colons or not?)
   date_cols = .true.
@@ -1265,7 +1249,6 @@ subroutine soca_fields_write_rst(self, f_conf, vdate)
     call save_restart(bio_restart, directory='')
     call free_restart_type(bio_restart)
  endif
-  call fms_io_exit()
 
 end subroutine soca_fields_write_rst
 
