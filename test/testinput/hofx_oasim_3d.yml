@@ -53,8 +53,12 @@ observations:
       channels: 50-70
     obs operator:
       name: OASIM
-      CoefficientPath: data_static/oasim
-
+      OASIM_Coefficient: data_static/oasim
+      Absorbers: [H2O,O3]
+      obs options:
+        Sensor_ID: v.modis_aqua
+        EndianType: little_endian
+        CoefficientPath: Data/
 test:
   reference filename: testref/hofx_oasim_3d.test
   test output filename: testoutput/hofx_oasim_3d.test
