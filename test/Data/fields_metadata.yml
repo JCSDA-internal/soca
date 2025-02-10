@@ -219,7 +219,6 @@
 - name: sea_water_temperature
   levels: full_ocn
 
-#Atmospheric variables for oasim 
 #--------------------------------------------------------------------------------------------------
 - name: dummy_atm1
   constant value: 5.0
