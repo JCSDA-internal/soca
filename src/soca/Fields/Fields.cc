@@ -209,14 +209,19 @@ void Fields::toFieldSet(atlas::FieldSet & fset) const {
 // -----------------------------------------------------------------------------
 
 void Fields::fromFieldSet(const atlas::FieldSet &fset) {
-  // keep a copy of the metadata to copy back
-  std::map<std::string, atlas::util::Metadata> metadata;
-  for (const auto & f : fieldSet_) metadata[f.name()] = f.metadata();
-
-  util::copyFieldSet(fset, fieldSet_);
-
-  for (auto & f : fieldSet_) {
-    f.metadata() = metadata[f.name()];
+  // copy fields (note that I don't use util::copyFieldSet because I want to
+  // keep the metadata untouched)
+  for (const auto & field : fset) {
+    ASSERT(fieldSet_.has(field.name()));
+    const auto & view = atlas::array::make_view<double, 2>(field);
+    auto myField = fieldSet_.field(field.name());
+    auto myView = atlas::array::make_view<double, 2>(myField);
+    for (size_t i = 0; i < field.shape(0); i++) {
+      for (size_t lvl = 0; lvl < field.shape(1); lvl++) {
+        myView(i, lvl) = view(i, lvl);
+      }
+    }
+    myField.set_dirty(field.dirty());
   }
 }
 
