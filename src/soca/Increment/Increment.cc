@@ -68,21 +68,20 @@ namespace soca {
     // otherwise, different geometry, do resolution change
     eckit::LocalConfiguration conf;
     conf.set("local interpolator type", "oops unstructured grid interpolator");
-    atlas::FieldSet otherFset, selfFset;
-    other.toFieldSet(otherFset);
+    atlas::FieldSet selfFset;
     if (ad) {
       // adjoint interpolation
       const oops::GeometryData sourceGeom(geom_.functionSpace(), geom_.fields(),
                                           geom_.levelsAreTopDown(), geom_.getComm());
       oops::GlobalInterpolator interp(conf, sourceGeom,
                                       other.geom_.functionSpace(), geom.getComm());
-      interp.applyAD(selfFset, otherFset);
+      interp.applyAD(selfFset, other.fieldSet_);
     } else {
       // interpolation
       const oops::GeometryData sourceGeom(other.geom_.functionSpace(), other.geom_.fields(),
                                           other.geom_.levelsAreTopDown(), other.geom_.getComm());
       oops::GlobalInterpolator interp(conf, sourceGeom, geom_.functionSpace(), geom.getComm());
-      interp.apply(otherFset, selfFset);
+      interp.apply(other.fieldSet_, selfFset);
     }
     fromFieldSet(selfFset);
 
@@ -140,11 +139,19 @@ namespace soca {
     }
 
     // subtract fields
-    atlas::FieldSet fs1, fs2;
-    x1_interp->toFieldSet(fs1);
-    x2_interp->toFieldSet(fs2);
-    util::copyFieldSet(fs1, fieldSet_);
-    util::subtractFieldSets(fieldSet_, fs2);
+    for (auto & field : fieldSet_) {
+      const auto & vGhost = atlas::array::make_view<int, 1>(field.functionspace().ghost());
+      const auto & vx1 = atlas::array::make_view<double, 2>(x1_interp->fieldSet().field(field.name()));
+      const auto & vx2 = atlas::array::make_view<double, 2>(x2_interp->fieldSet().field(field.name()));
+      auto view = atlas::array::make_view<double, 2>(field);
+      for (int jnode = 0; jnode < field.shape(0); ++jnode) {
+        if (vGhost(jnode)) continue;
+        for (int jlevel = 0; jlevel < field.shape(1); ++jlevel) {
+          view(jnode, jlevel) = vx1(jnode, jlevel) - vx2(jnode, jlevel);
+        }
+      }
+      field.set_dirty();
+    }
   }
 
   // -----------------------------------------------------------------------------

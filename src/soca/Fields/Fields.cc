@@ -41,10 +41,19 @@ void Fields::zero() {
 // -----------------------------------------------------------------------------
 
 void Fields::accumul(const double & zz, const Fields & xx) {
-  atlas::FieldSet fs1, fs2; xx.toFieldSet(fs1);
-  util::copyFieldSet(fs1, fs2);
-  util::multiplyFieldSet(fs2, zz);
-  util::addFieldSets(fieldSet_, fs2);
+  for (auto & field : fieldSet_) {
+    const auto & otherField = xx.fieldSet().field(field.name());
+    const auto &  vGhost = atlas::array::make_view<int, 1>(otherField.functionspace().ghost());
+    const auto & otherView = atlas::array::make_view<double, 2>(otherField);
+    auto view = atlas::array::make_view<double, 2>(fieldSet_.field(otherField.name()));
+    for (size_t i = 0; i < otherField.shape(0); i++) {
+      if (vGhost(i)) continue;
+      for (size_t lvl = 0; lvl < otherField.shape(1); lvl++) {
+        view(i, lvl) += zz * otherView(i, lvl);
+      }
+    }
+    field.set_dirty();
+  }
 }
 
 // -----------------------------------------------------------------------------

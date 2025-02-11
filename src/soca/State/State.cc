@@ -81,10 +81,7 @@ namespace soca {
     const oops::GeometryData sourceGeom(other.geom_.functionSpace(), other.geom_.fields(),
                                         other.geom_.levelsAreTopDown(), other.geom_.getComm());
     oops::GlobalInterpolator interp(conf, sourceGeom, geom_.functionSpace(), geom.getComm());
-    atlas::FieldSet otherFset, selfFset;
-    other.toFieldSet(otherFset);
-    interp.apply(otherFset, selfFset);
-    fromFieldSet(selfFset);
+    interp.apply(other.fieldSet_, fieldSet_);
 
     // TODO(Travis) There is a possibility of missing values if the land masks
     // do not match, handle this somehow?
@@ -246,20 +243,21 @@ namespace soca {
     // result in MISSING_VALUEs in the increment trying to be added to the state.
     // TODO(travis) issue a warning if this happens? Fix this deeper down in the
     // increment side? In the meantime we can just ignore the missing values
-    atlas::FieldSet fs2;
-    dx_interp->toFieldSet(fs2);
+
     const auto missing = util::missingValue<double>();
-    for (const auto & src : fs2) {
+    for (const auto & src : dx_interp->fieldSet()) {
+      const auto & vGhost = atlas::array::make_view<int, 1>(src.functionspace().ghost());
       const auto v_src = atlas::array::make_view<double, 2>(src);
       auto & dst = fieldSet_.field(src.name());
       auto v_dst = atlas::array::make_view<double, 2>(dst);
       for (size_t i = 0; i < src.shape(0); ++i) {
+        if (vGhost(i)) continue;
         for (size_t j = 0; j < src.shape(1); ++j) {
           if (v_src(i, j) == missing) continue;
           v_dst(i, j) += v_src(i, j);
         }
       }
-      dst.set_dirty(src.dirty() || dst.dirty());
+      dst.set_dirty();
     }
 
     return *this;
