@@ -444,6 +444,7 @@ subroutine soca_geom_init_fieldset(self, f_conf, gen)
         aFieldData(1, self%atlas_ij2idx(i,j)) = fieldData(i, j)
       end do
     end do
+    call aField%halo_exchange()
     call aField%final()
   else
     ! otherwise, read in files from the gridspec file and place directly into atlas fieldset

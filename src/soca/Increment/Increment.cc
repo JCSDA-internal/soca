@@ -61,29 +61,27 @@ namespace soca {
 
     // same geometry, just copy and quit
     if (geom == other.geom_) {
-      util::copyFieldSet(other.fieldSet_, fieldSet_);
+      *this = other;
       return;
     }
 
     // otherwise, different geometry, do resolution change
     eckit::LocalConfiguration conf;
     conf.set("local interpolator type", "oops unstructured grid interpolator");
-    atlas::FieldSet selfFset;
     if (ad) {
       // adjoint interpolation
       const oops::GeometryData sourceGeom(geom_.functionSpace(), geom_.fields(),
                                           geom_.levelsAreTopDown(), geom_.getComm());
       oops::GlobalInterpolator interp(conf, sourceGeom,
                                       other.geom_.functionSpace(), geom.getComm());
-      interp.applyAD(selfFset, other.fieldSet_);
+      interp.applyAD(fieldSet_, other.fieldSet_);
     } else {
       // interpolation
       const oops::GeometryData sourceGeom(other.geom_.functionSpace(), other.geom_.fields(),
                                           other.geom_.levelsAreTopDown(), other.geom_.getComm());
       oops::GlobalInterpolator interp(conf, sourceGeom, geom_.functionSpace(), geom.getComm());
-      interp.apply(other.fieldSet_, selfFset);
+      interp.apply(other.fieldSet_, fieldSet_);
     }
-    fromFieldSet(selfFset);
 
     // TODO(Travis) There is a possibility of missing values if the land masks
     // do not match, handle this somehow?
@@ -99,7 +97,7 @@ namespace soca {
     : Increment(other.geom_, other.vars_, other.time_)
   {
     if (copy) {
-      util::copyFieldSet(other.fieldSet_, fieldSet_);
+      *this = other;
     }
     Log::trace() << "Increment copy-created." << std::endl;
   }
@@ -109,7 +107,7 @@ namespace soca {
   Increment::Increment(const Increment & other)
     : Increment(other.geom_, other.vars_, other.time_)
   {
-    util::copyFieldSet(other.fieldSet_, fieldSet_);
+    *this = other;
     Log::trace() << "Increment copy-created." << std::endl;
   }
 
@@ -140,17 +138,17 @@ namespace soca {
 
     // subtract fields
     for (auto & field : fieldSet_) {
-      const auto & vGhost = atlas::array::make_view<int, 1>(field.functionspace().ghost());
-      const auto & vx1 = atlas::array::make_view<double, 2>(x1_interp->fieldSet().field(field.name()));
-      const auto & vx2 = atlas::array::make_view<double, 2>(x2_interp->fieldSet().field(field.name()));
+      const auto & f1 = x1_interp->fieldSet().field(field.name());
+      const auto & f2 = x2_interp->fieldSet().field(field.name());
+      const auto & vx1 = atlas::array::make_view<double, 2>(f1);
+      const auto & vx2 = atlas::array::make_view<double, 2>(f2);
       auto view = atlas::array::make_view<double, 2>(field);
       for (int jnode = 0; jnode < field.shape(0); ++jnode) {
-        if (vGhost(jnode)) continue;
         for (int jlevel = 0; jlevel < field.shape(1); ++jlevel) {
           view(jnode, jlevel) = vx1(jnode, jlevel) - vx2(jnode, jlevel);
         }
       }
-      field.set_dirty();
+      field.set_dirty(f1.dirty() || f2.dirty());
     }
   }
 
@@ -158,25 +156,10 @@ namespace soca {
 
   Increment & Increment::operator=(const Increment & rhs) {
     ASSERT(geom_ == rhs.geom_);
+    ASSERT(vars_ == rhs.vars_);
 
     time_ = rhs.time_;
-
-    // copy from rhs to self, only if field exists in self
-    for (const auto & otherField : rhs.fieldSet_) {
-      if (!fieldSet_.has(otherField.name())) continue;
-
-      atlas::Field field = fieldSet_.field(otherField.name());
-      auto view = atlas::array::make_view<double, 2>(field);
-      const auto otherView = atlas::array::make_view<double, 2>(otherField);
-      for (int jnode = 0; jnode < field.shape(0); ++jnode) {
-        for (int jlevel = 0; jlevel < field.shape(1); ++jlevel) {
-          view(jnode, jlevel) = otherView(jnode, jlevel);
-        }
-      }
-
-      // If either term in the sum is out-of-date, then the result will be out-of-date
-      field.set_dirty(field.dirty() || otherField.dirty());
-    }
+    util::copyFieldSet(rhs.fieldSet_, fieldSet_);
 
     return *this;
   }
@@ -187,25 +170,7 @@ namespace soca {
     ASSERT(this->validTime() == dx.validTime());
     ASSERT(geom_ == dx.geom_);
 
-    // note, can't use util::addFieldSets because it doesn't handle a variable
-    // being in dx but not being in this (not sure why that is happening. is
-    // this a bug in soca?)
-    for (const auto & addField : dx.fieldSet_) {
-      if (!fieldSet_.has(addField.name())) continue;
-
-      atlas::Field field = fieldSet_.field(addField.name());
-
-      auto view = atlas::array::make_view<double, 2>(field);
-      const auto addView = atlas::array::make_view<double, 2>(addField);
-      for (int jnode = 0; jnode < field.shape(0); ++jnode) {
-        for (int jlevel = 0; jlevel < field.shape(1); ++jlevel) {
-          view(jnode, jlevel) += addView(jnode, jlevel);
-        }
-      }
-
-      // If either term in the sum is out-of-date, then the result will be out-of-date
-      field.set_dirty(field.dirty() || addField.dirty());
-    }
+    util::addFieldSets(fieldSet_, dx.fieldSet_);
     return *this;
   }
 
@@ -232,6 +197,7 @@ namespace soca {
     for (auto & field : fieldSet_) {
       auto view = atlas::array::make_view<double, 2>(field);
       view.assign(1.0);
+      fieldSet_.set_dirty(false);
     }
   }
 
@@ -258,23 +224,7 @@ namespace soca {
   // -----------------------------------------------------------------------------
 
   void Increment::schur_product_with(const Increment & dx) {
-    // note, can't use util::multiplyFieldSets because it doesn't handle a variable
-    // being in dx but not being in this (not sure why that is happening. is
-    // this a bug in soca?)
-    for (const auto & mulField : dx.fieldSet_) {
-      if (!fieldSet_.has(mulField.name())) continue;
-      // Get field with the same name
-      atlas::Field field = fieldSet_.field(mulField.name());
-      auto view = atlas::array::make_view<double, 2>(field);
-      const auto mulView = atlas::array::make_view<double, 2>(mulField);
-      for (int jnode = 0; jnode < field.shape(0); ++jnode) {
-        for (int jlevel = 0; jlevel < field.shape(1); ++jlevel) {
-          view(jnode, jlevel) *= mulView(jnode, jlevel);
-        }
-      }
-      // If either term in the product is out-of-date, then the result will be out-of-date
-      field.set_dirty(field.dirty() || mulField.dirty());
-    }
+    util::multiplyFieldSets(fieldSet_, dx.fieldSet_);
   }
 
   // -----------------------------------------------------------------------------
@@ -328,10 +278,12 @@ namespace soca {
     const std::vector<double> & vals = values.getVals();
     size_t idx = 0;
     for (const auto & var : vars_.variables()) {
-      auto view = atlas::array::make_view<double, 2>(fieldSet_.field(var));
+      auto field = fieldSet_.field(var);
+      auto view = atlas::array::make_view<double, 2>(field);
       for (size_t lvl = 0; lvl < view.shape(1); lvl++) {
         view(iter.i(), lvl) = vals[idx++];
       }
+      field.set_dirty();
     }
     ASSERT(idx == vals.size());
   }
@@ -343,6 +295,7 @@ namespace soca {
   void Increment::read(const eckit::Configuration & files) {
     util::DateTime * dtp = &time_;
     soca_increment_read_file_f90(toFortran(), &files, &dtp);
+    fieldSet_.set_dirty();  // just in case, i don't trust the fortan code
   }
 
   // -----------------------------------------------------------------------------

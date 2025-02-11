@@ -71,7 +71,7 @@ namespace soca {
 
     // if geometry is the same, just copy and quit
     if (geom == other.geom_) {
-      util::copyFieldSet(other.fieldSet_, fieldSet_);
+      *this = other;
       return;
     }
 
@@ -113,7 +113,7 @@ namespace soca {
     : Fields(other.geom_, other.vars_, other.time_)
   {
     soca_state_create_f90(keyFlds_, geom_.toFortran(), vars_, fieldSet_.get());
-    util::copyFieldSet(other.fieldSet_, fieldSet_);
+    *this = other;
     Log::trace() << "State::State copied." << std::endl;
   }
 
@@ -128,7 +128,7 @@ namespace soca {
   // -----------------------------------------------------------------------------
   State & State::operator=(const State & rhs) {
     ASSERT(geom_ == rhs.geom_);
-
+    ASSERT(vars_ == rhs.vars_);
     time_ = rhs.time_;
     util::copyFieldSet(rhs.fieldSet_, fieldSet_);
     return *this;
@@ -246,18 +246,16 @@ namespace soca {
 
     const auto missing = util::missingValue<double>();
     for (const auto & src : dx_interp->fieldSet()) {
-      const auto & vGhost = atlas::array::make_view<int, 1>(src.functionspace().ghost());
       const auto v_src = atlas::array::make_view<double, 2>(src);
       auto & dst = fieldSet_.field(src.name());
       auto v_dst = atlas::array::make_view<double, 2>(dst);
       for (size_t i = 0; i < src.shape(0); ++i) {
-        if (vGhost(i)) continue;
         for (size_t j = 0; j < src.shape(1); ++j) {
           if (v_src(i, j) == missing) continue;
           v_dst(i, j) += v_src(i, j);
         }
       }
-      dst.set_dirty();
+      dst.set_dirty(dst.dirty() || src.dirty());
     }
 
     return *this;
@@ -270,6 +268,9 @@ namespace soca {
     Log::trace() << "State::State read started." << std::endl;
     util::DateTime * dtp = &time_;
     soca_state_read_file_f90(toFortran(), &files, &dtp);
+
+    fieldSet_.set_dirty();  // just in case, i don't trust the fortran code
+
     Log::trace() << "State::State read done." << std::endl;
   }
 

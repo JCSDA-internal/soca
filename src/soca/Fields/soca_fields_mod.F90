@@ -151,7 +151,6 @@ contains
 
   !> \copybrief soca_fields_update_fields \see soca_fields_update_fields
   procedure :: update_fields => soca_fields_update_fields
-  procedure :: update_metadata => soca_fields_update_metadata
 
 end type soca_fields
 
@@ -435,6 +434,7 @@ subroutine soca_fields_ones(self)
     field = self%afieldset%field(i)
     call field%data(fdata)
     fdata(:,:) = 1.0_kind_real
+    call field%set_dirty(.false.)
     call field%final()
   end do
 
@@ -1021,6 +1021,9 @@ subroutine soca_fields_update_fields(self, vars)
   integer :: f, i, j, idx
   character(len=:), allocatable :: vars_str(:)
 
+  type(atlas_metadata) :: ameta
+  type(soca_field_metadata) :: metadata
+
   ! reinitialize variable parameters
   if (allocated(self%fields)) deallocate(self%fields)
   allocate(character(len=100) :: vars_str(vars%nvars()))
@@ -1038,12 +1041,20 @@ subroutine soca_fields_update_fields(self, vars)
       call afield%data(adata)
       call self%afieldset%add(afield)
       adata(:,:) = 0.0_kind_real
+
+      ! set metadata
+      ameta = afield%metadata()
+      metadata = self%geom%fields_metadata%get(afield%name())
+      call ameta%set('interp_type', 'default')
+      if (metadata%masked) then
+        call ameta%set('mask', 'interp_mask')
+      end if
+      call ameta%final()
+
+
       call afield%final()
     end if
   end do
-
-  call self%update_metadata()
-
 end subroutine soca_fields_update_fields
 
 ! ------------------------------------------------------------------------------
@@ -1128,27 +1139,5 @@ function soca_genfilename(f_conf,length,vdate,date_cols,domain_type)
    if ( allocated(str) ) deallocate(str)
 
 end function soca_genfilename
-
-! ------------------------------------------------------------------------------
-! update the metadata in the atlas fieldset based on fields metadata
-! TODO this should probably just be combined with the update fields method
-subroutine soca_fields_update_metadata(self)
-  class(soca_fields), intent(inout) :: self
-  integer :: n
-  type(atlas_field) :: afield
-  type(atlas_metadata) :: ameta
-  type(soca_field_metadata) :: metadata
-
-  do n =1, self%afieldset%size()
-    afield = self%afieldset%field(n)
-    ameta = afield%metadata()
-    metadata = self%geom%fields_metadata%get(afield%name())
-
-    call ameta%set('interp_type', 'default')
-    if (metadata%masked) then
-      call ameta%set('mask', 'interp_mask')
-    end if
-  end do
-end subroutine
 
 end module soca_fields_mod

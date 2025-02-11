@@ -255,6 +255,7 @@ subroutine soca_horiz_scales(self, f_conf)
       end do
     end do
 
+    call afield%set_dirty(rossby%dirty() .or. area%dirty())
     call afield%final()
   end do
   call rossby%final()

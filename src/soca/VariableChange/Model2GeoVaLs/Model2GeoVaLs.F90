@@ -83,6 +83,7 @@ subroutine soca_model2geovals_changevar_f90(c_key_geom, c_key_xin, c_key_xout) &
           data_out(kk, ii) = data_out(kk-1,ii) +  0.5 * (data2(kk, ii) + data2(kk-1, ii))
         end do
       end do
+      call field_out%set_dirty(field2%dirty());
       call field2%final()
 
     case ('distance_from_coast')
@@ -91,6 +92,7 @@ subroutine soca_model2geovals_changevar_f90(c_key_geom, c_key_xin, c_key_xout) &
       do ii = 1, field2%shape(2)
         data_out(1, ii) = data2(1, ii)
       end do
+      call field_out%set_dirty(field2%dirty())
       call field2%final()
 
     case ('sea_area_fraction')
@@ -138,6 +140,7 @@ subroutine soca_model2geovals_changevar_f90(c_key_geom, c_key_xin, c_key_xout) &
           data_out(1, ii) = data_out(1, ii) + data2(kk, ii)
         end do
       end do
+      call field_out%set_dirty(field2%dirty())
       call field2%final()
 
     ! identity operators
@@ -164,6 +167,7 @@ subroutine soca_model2geovals_changevar_f90(c_key_geom, c_key_xin, c_key_xout) &
         call abor1_ftn( 'error in soca_model2geovals_changevar_f90 processing ' &
                         // field_out%name() )
       end if
+      call field_out%set_dirty(field2%dirty())
       call field2%final()
     end select
 

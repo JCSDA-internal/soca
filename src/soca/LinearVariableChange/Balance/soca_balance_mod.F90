@@ -274,11 +274,8 @@ subroutine soca_balance_mult(self, dxa, dxm)
 
     select case(fld_m%name())
     case default
-      do i = 1, fld_m%shape(2)
-        do k = 1, fld_m%shape(1)
-          data_m(k, i) = data_a(k, i)
-        end do
-      end do
+      data_m(:, :) = data_a(:, :)
+      call fld_m%set_dirty(fld_a%dirty())
 
     case ("sea_water_salinity")
       do j = self%geom%jsc, self%geom%jec
@@ -360,11 +357,8 @@ subroutine soca_balance_multad(self, dxa, dxm)
 
     select case(fld_a%name())
     case default
-      do i = 1, fld_a%shape(2)
-        do k = 1, fld_a%shape(1)
-          data_a(k, i) = data_m(k, i)
-        end do
-      end do
+      data_a(:, :) = data_m(:, :)
+      call fld_a%set_dirty(fld_m%dirty())
 
     case ("sea_water_salinity")
       do j = self%geom%jsc, self%geom%jec
@@ -434,11 +428,8 @@ subroutine soca_balance_multinv(self, dxa, dxm)
 
     select case(fld_a%name())
     case default
-      do i = 1, fld_a%shape(2)
-        do k = 1, fld_a%shape(1)
-          data_a(k, i) = data_m(k, i)
-        end do
-      end do
+      data_a(:, :) = data_m(:, :)
+      call fld_a%set_dirty(fld_m%dirty())
 
     case ("sea_water_salinity")
       do j = self%geom%jsc, self%geom%jec
@@ -519,11 +510,8 @@ subroutine soca_balance_multinvad(self, dxa, dxm)
 
     select case(fld_m%name())
     case default
-      do i = 1, fld_m%shape(2)
-        do k = 1, fld_m%shape(1)
-          data_m(k, i) = data_a(k, i)
-        end do
-      end do
+      data_m(:, :) = data_a(:, :)
+      call fld_m%set_dirty(fld_a%dirty())
 
     case ("sea_water_potential_temperature")
       do j = self%geom%jsc, self%geom%jec
