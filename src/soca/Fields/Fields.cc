@@ -146,7 +146,7 @@ void Fields::print(std::ostream & os) const {
   for (const auto & field : fieldSet_) {
     size_t count = 0;
     double min = std::numeric_limits<double>::max();
-    double max = std::numeric_limits<double>::min();
+    double max = std::numeric_limits<double>::lowest();
     double sum = 0.0;
 
     const auto & vGhost = atlas::array::make_view<int, 1>(field.functionspace().ghost());
