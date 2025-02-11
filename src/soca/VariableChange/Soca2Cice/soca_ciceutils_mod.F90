@@ -8,7 +8,7 @@ module soca_ciceutils_mod
 use kinds, only: kind_real
 use netcdf
 use fckit_mpi_module, only: fckit_mpi_comm
-use icepack_itd
+use icepack_itd, only: aggregate_area
 use soca_utils, only: nc_check
 use soca_geom_mod, only: soca_geom
 use mpp_domains_mod, only : mpp_update_domains
@@ -307,8 +307,7 @@ subroutine soca_ciceutils_read(self, geom)
   do j = geom%jsd, geom%jed
      do i = geom%isd, geom%ied
         if (self%iceumask(i,j).eq.1) then
-           call aggregate_area (self%ncat, &
-                                self%aicen(i,j,:), &
+           call aggregate_area (self%aicen(i,j,:), &
                                 self%aice(i,j), aice0)
            self%agg%lon(cnt) = geom%lon(i,j)
            self%agg%lat(cnt) = geom%lat(i,j)
