@@ -65,7 +65,6 @@ set( soca_test_input
   testinput/gridgen.yml
   testinput/hofx_3d.yml
   testinput/hofx_4d_pseudo.yml
-  testinput/hofx_oasim_3d.yml
   testinput/hybridgain.yml
   testinput/increment.yml
   testinput/letkf_split_observer.yml
@@ -132,7 +131,6 @@ set( soca_test_ref
   testref/gridgen.test
   testref/hofx_3d.test
   testref/hofx_4d_pseudo.test
-  testref/hofx_oasim_3d.test
   testref/hybridgain.test
   testref/letkf_split_observer.test
   testref/letkf_split_solver.test
@@ -624,12 +622,6 @@ soca_add_test( NAME makeobs
 soca_add_test( NAME hofx_3d
                EXE  soca_hofx3d.x
                TEST_DEPENDS test_soca_gridgen )
-
-if( ${oasim_FOUND} )
-  soca_add_test( NAME hofx_oasim_3d
-                 EXE  soca_hofx3d.x
-                 TEST_DEPENDS test_soca_gridgen )
-endif( ${oasim_FOUND} )
 
 soca_add_test( NAME hofx_4d_pseudo
                EXE  soca_hofx.x
