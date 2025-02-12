@@ -13,11 +13,10 @@ use kinds, only: kind_real
 
 use icepack_itd, only: icepack_init_itd, cleanup_itd
 use icepack_warnings, only: icepack_warnings_flush, icepack_warnings_aborted
-use icepack_tracers, only: icepack_init_tracer_indices, nt_tsfc, nt_qice, nt_qsno, nt_sice
+use icepack_tracers, only: icepack_init_tracer_sizes, icepack_init_tracer_indices
 use icepack_parameters, only: icepack_init_parameters, icepack_recompute_constants
-use icepack_parameters, only: ktherm, heat_capacity
-use icepack_mushy_physics, only: liquidus_temperature_mush
-use icepack_therm_shared, only: l_brine
+use icepack_parameters, only: ktherm
+use icepack_therm_shared, only: icepack_liquidus_temperature, l_brine
 
 use soca_geom_mod, only: soca_geom
 use soca_state_mod, only: soca_state
@@ -88,8 +87,7 @@ subroutine soca_soca2cice_setup(self, geom)
   call icepack_recompute_constants()
   l_brine = .true.
   ktherm = 2
-  heat_capacity = .true.
-
+  call icepack_init_tracer_sizes(ncat_in=self%ncat, nilyr_in=self%ice_lev, nslyr_in=self%sno_lev)
   ! initialize cice
   call self%cice%init(geom, self%rst_filename, self%rst_out_filename, self%ice_lev, self%sno_lev)
 
@@ -234,7 +232,7 @@ subroutine shuffle_ice(self, geom, xm)
            self%cice%qice(i,j,:,:) = 0_kind_real
            self%cice%sice(i,j,:,:) = 0_kind_real
            self%cice%qsno(i,j,:,:) = 0_kind_real
-           self%cice%tsfcn(i,j,:) = liquidus_temperature_mush(data_socn(1, atlas_idx))
+           self%cice%tsfcn(i,j,:) = icepack_liquidus_temperature(data_socn(1, atlas_idx))
         endif
         if (self%cice%agg%n_src == 0) cycle               ! skip if there are no points on this task with ice in the background
         ! find neighbors. TODO (G): add constraint for thickness and snow depth as well
@@ -280,7 +278,7 @@ subroutine cleanup_ice(self, geom, xm)
 
   integer :: i, j, k, ntracers, idx
   integer :: nt_tsfc_in, nt_qice_in, nt_qsno_in, nt_sice_in
-  real(kind=kind_real) :: local_aice, aice0
+  real(kind=kind_real) :: local_aice, aice0, Tf
   real(kind=kind_real), allocatable :: h_bounds(:)
   real(kind=kind_real), allocatable :: tracers(:,:)   ! (ntracers, ncat)
   logical, allocatable :: first_ice(:)                ! (ncat) ! For bgc and S tracers. set to true if zapping ice.
@@ -289,8 +287,6 @@ subroutine cleanup_ice(self, geom, xm)
                                                       ! argument 2:  (1) aice, (2) vice, (3) vsno
   integer, allocatable :: n_trcr_strata(:)            ! number of underlying tracer layers
   integer, allocatable :: nt_strata(:,:)              ! indices of underlying tracer layers
-  real(kind=kind_real), allocatable :: fiso_ocn(:)    ! isotope flux to ocean, not used as long as icepack's
-                                                      ! tr_iso is false (default), so not initialized here.
 
   type(atlas_field) :: tocn, socn, aice, hice, hsno
   real(kind=kind_real), pointer :: data_tocn(:,:), data_socn(:,:), data_aice(:,:), data_hice(:,:), data_hsno(:,:)
@@ -309,7 +305,7 @@ subroutine cleanup_ice(self, geom, xm)
 
   ! get thickness category bounds
   allocate(h_bounds(0:self%ncat))
-  call icepack_init_itd(self%ncat, h_bounds) ! TODO (G): move that in setup
+  call icepack_init_itd(h_bounds) ! TODO (G): move that in setup
   ! initialize tracers (ice/snow temperature, ice and snow enthalpies, ice salinity)
   ntracers = 1+2*self%ice_lev+self%sno_lev
   allocate(tracers(ntracers, self%ncat))
@@ -349,6 +345,7 @@ subroutine cleanup_ice(self, geom, xm)
    trcr_base(nt_sice_in + k - 1, 2) = 1.0
   enddo
 
+  call icepack_init_tracer_sizes(ntrcr_in=ntracers)
   call icepack_init_tracer_indices(nt_tsfc_in=nt_tsfc_in, nt_qice_in=nt_qice_in, &
                                    nt_qsno_in=nt_qsno_in, nt_sice_in=nt_sice_in)
   allocate(first_ice(self%ncat))
@@ -359,36 +356,36 @@ subroutine cleanup_ice(self, geom, xm)
         idx = geom%atlas_ij2idx(i,j)
 
         ! setup tracers at this gridpoint
-        tracers(nt_tsfc,:) = self%cice%tsfcn(i,j,:)
+        tracers(nt_tsfc_in,:) = self%cice%tsfcn(i,j,:)
         do k = 1, self%ice_lev
-          tracers(nt_qice+k-1, :) = self%cice%qice(i,j,:,k)
-          tracers(nt_sice+k-1, :) = self%cice%sice(i,j,:,k)
+          tracers(nt_qice_in+k-1, :) = self%cice%qice(i,j,:,k)
+          tracers(nt_sice_in+k-1, :) = self%cice%sice(i,j,:,k)
         enddo
         do k = 1, self%sno_lev
-          tracers(nt_qsno+k-1, :) = self%cice%qsno(i,j,:,k)
+          tracers(nt_qsno_in+k-1, :) = self%cice%qsno(i,j,:,k)
         enddo
+
         ! call icepack_cleanup_itd: rebins thickness categories if necessary,
         ! eliminates very small ice areas while conserving mass and energy
-        call cleanup_itd(self%dt, ntracers, self%ice_lev, self%sno_lev, self%ncat, &
-                         h_bounds, self%cice%aicen(i,j,:), tracers, &
+        Tf = icepack_liquidus_temperature(data_socn(1, idx))
+        call cleanup_itd(self%dt, h_bounds, self%cice%aicen(i,j,:), tracers, &
                          self%cice%vicen(i,j,:), self%cice%vsnon(i,j,:), &
                          ! ice and total water concentration are computed in the call using aicen
                          local_aice, aice0, &
-                         ! number of aerosol tracers, bio tracers, bio layers
-                         0, 0, 0, &
-                         ! aerosol flag, topo pond flag, heat capacity flag, flag for zapping ice for bgc and s tracers
-                         .false., .false., .true., first_ice, &
+                         ! aerosol flag, topo pond flag, flag for zapping ice for bgc and s tracers
+                         .false., .false., first_ice, &
                          ! tracer indices and sizes used in rebinning
                          trcr_depend, trcr_base, n_trcr_strata, nt_strata, &
-                         fiso_ocn=fiso_ocn)
+                         ! freezing temperature
+                         Tf = Tf)
         ! put tracers back
-        self%cice%tsfcn(i,j,:) = tracers(nt_tsfc,:)
+        self%cice%tsfcn(i,j,:) = tracers(nt_tsfc_in,:)
         do k = 1, self%ice_lev
-          self%cice%qice(i,j,:,k) = tracers(nt_qice+k-1, :)
-          self%cice%sice(i,j,:,k) = tracers(nt_sice+k-1, :)
+          self%cice%qice(i,j,:,k) = tracers(nt_qice_in+k-1, :)
+          self%cice%sice(i,j,:,k) = tracers(nt_sice_in+k-1, :)
         enddo
         do k = 1, self%sno_lev
-          self%cice%qsno(i,j,:,k) = tracers(nt_qsno+k-1, :)
+          self%cice%qsno(i,j,:,k) = tracers(nt_qsno_in+k-1, :)
         enddo
         call icepack_warnings_flush(6)
         if (icepack_warnings_aborted()) then
@@ -426,17 +423,15 @@ subroutine prior_dist_rescale(self, geom, xm)
   integer :: c, i, j, idx
 
   type(atlas_field) :: aice, hice, hsno, socn
-  real(kind=kind_real), pointer :: data_aice(:,:), data_hice(:,:), data_hsno(:,:), data_socn(:,:)
+  real(kind=kind_real), pointer :: data_aice(:,:), data_hice(:,:), data_hsno(:,:)
 
   ! get fields from atlas
   aice = xm%afieldset%field("sea_ice_area_fraction")
   hice = xm%afieldset%field("sea_ice_thickness")
   hsno = xm%afieldset%field("sea_ice_snow_thickness")
-  socn = xm%afieldset%field("sea_water_salinity")
   call aice%data(data_aice)
   call hice%data(data_hice)
   call hsno%data(data_hsno)
-  call socn%data(data_socn)
 
   do j = geom%jsc, geom%jec
     do i = geom%isc, geom%iec
@@ -483,7 +478,6 @@ subroutine prior_dist_rescale(self, geom, xm)
   call aice%final()
   call hice%final()
   call hsno%final()
-  call socn%final()
 end subroutine prior_dist_rescale
 
 ! ------------------------------------------------------------------------------
