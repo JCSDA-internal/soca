@@ -4,11 +4,11 @@ CostFunction: Nonlinear J = 7.5731660125378380e+02
 RPCGMinimizer: reduction in residual norm = 7.6550575118280284e-02
 CostFunction::addIncrement: Analysis: 
   Valid time: 2018-04-15T00:00:00Z
-             sea_water_salinity   min=10.7210460395083924   max=40.4416591897031168   mean=34.5443897261525663
+             sea_water_salinity   min=10.7210460395083924   max=40.4416591897031168   mean=34.5441632355969261
     eastward_sea_water_velocity   min=-0.8581693992488438   max=0.7000954286848975   mean=-0.0002411941155065
    northward_sea_water_velocity   min=-0.7661101215480253   max=1.4377766409421606   mean=0.0020193957336148
 sea_water_potential_temperature   min=-1.8883899372702533   max=31.7004645720658580   mean=6.0157314614329183
- sea_surface_height_above_geoid   min=-1.9242749070275156   max=0.9526876430383274   mean=-0.2789223007557387
+ sea_surface_height_above_geoid   min=-1.9243038762262521   max=0.9520733875505107   mean=-0.2788664096789653
        sea_water_cell_thickness   min=0.0009999999999977   max=1345.6400000000003274   mean=128.6280642064969300
     ocean_mixed_layer_thickness   min=2.2854716757984130   max=4593.1533423819937525   mean=192.4109073940401515
                 sea_water_depth   min=2.2854716757984130   max=5658.3057467114012979   mean=1200.5229536158342398
