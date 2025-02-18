@@ -93,6 +93,27 @@ namespace soca {
 
   // -----------------------------------------------------------------------------
 
+  Increment::Increment(const oops::Variables & vars, const Increment & other)
+    : Increment(other.geom_, vars, other.time_)
+  {
+    // assume that the new variables are a subset of the old variables
+    for (auto field : fieldSet_) {
+      const auto & oth = other.fieldSet().field(field.name());
+      const auto & othView = atlas::array::make_view<double, 2>(oth);
+      auto view = atlas::array::make_view<double, 2>(field);
+      for (int jnode = 0; jnode < field.shape(0); ++jnode) {
+        for (int jlevel = 0; jlevel < field.shape(1); ++jlevel) {
+          view(jnode, jlevel) = othView(jnode, jlevel);
+        }
+      }
+
+      field.set_dirty(oth.dirty());
+    }
+    Log::trace() << "Increment subset copy-created." << std::endl;
+  }
+
+  // -----------------------------------------------------------------------------
+
   Increment::Increment(const Increment & other, const bool copy)
     : Increment(other.geom_, other.vars_, other.time_)
   {
