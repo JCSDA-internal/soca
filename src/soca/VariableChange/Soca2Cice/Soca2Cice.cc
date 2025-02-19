@@ -41,7 +41,8 @@ Soca2Cice::~Soca2Cice() {}
 void Soca2Cice::changeVar(const State & xin, State & xout) const
 {
   util::Timer timer("soca::Soca2Cice", "changeVar");
-
+  oops::Variables varsout = xout.variables();
+  xout.updateFields(xin.variables());
   xout = xin;
   soca_soca2cice_changevar_f90(keySoca2Cice_, geom_.toFortran(),
                                xin.toFortran(), xout.toFortran());
@@ -61,6 +62,7 @@ void Soca2Cice::changeVar(const State & xin, State & xout) const
     inc += socainc;
     inc.write(*params_.incOutput.value());
   }
+  xout.updateFields(varsout);
 }
 
 // -----------------------------------------------------------------------------
