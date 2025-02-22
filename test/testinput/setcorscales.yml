@@ -14,6 +14,10 @@ corr variables:
 - sea_ice_area_fraction
 - sea_ice_thickness
 
+islands:
+  lon: [10.0, 10.0]
+  lat: [10.0, 10.0]
+
 scales:
   vert layers: 100 # in units of layer
   sea_water_salinity:

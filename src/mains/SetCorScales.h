@@ -10,6 +10,11 @@
 
 #include <string>
 
+#include "atlas/field.h"
+#include "atlas/util/Earth.h"
+#include "atlas/util/Geometry.h"
+#include "atlas/util/Point.h"
+
 #include "soca/Traits.h"
 
 #include "soca/Geometry/Geometry.h"
@@ -46,6 +51,19 @@ namespace soca {
       //  compute horizontal decorrelation length scales
       const eckit::LocalConfiguration scalesConfig(fullConfig, "scales");
       rh.horiz_scales(scalesConfig);
+
+      // locate islands
+      if (scalesConfig.has("islands")) {
+        // Get the field set from rh
+        atlas::FieldSet rhFs;
+        rh.toFieldSet(rhFs);
+        // Get the 2D grid
+        auto lonlat = atlas::array::make_view<double, 2>(resol.functionSpace().lonlat());
+        const eckit::LocalConfiguration islandsConfig(scalesConfig, "islands");
+        // Get the location of Islands from the config
+        const atlas::PointLonLat p0(islandsConfig.getDouble("lon"), islandsConfig.getDouble("lat"));
+      }
+
       const eckit::LocalConfiguration rhoutputConfig(fullConfig, "rh output");
       rh.write(rhoutputConfig);
       oops::Log::test() << "Output horizontal scales: " << rh << std::endl;
