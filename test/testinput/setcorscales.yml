@@ -15,8 +15,9 @@ corr variables:
 - sea_ice_thickness
 
 islands:
-  lon: [10.0, 10.0]
-  lat: [10.0, 10.0]
+  scale: 1000.0  # in kilometers
+  lat: [35.24, 35.639, 32.288]
+  lon: [-75.55, -75.477, -64.74]
 
 scales:
   vert layers: 100 # in units of layer
