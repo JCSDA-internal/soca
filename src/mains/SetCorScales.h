@@ -9,6 +9,7 @@
 #define MAINS_SETCORSCALES_H_
 
 #include <string>
+#include <vector>
 
 #include "atlas/field.h"
 #include "atlas/util/Earth.h"
