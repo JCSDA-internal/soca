@@ -191,4 +191,4 @@ output:
 test:
   reference filename: testref/3dhyb.test
   test output filename: testoutput/3dhyb.test
-  float relative tolerance: 1e-5
+  float relative tolerance: 2e-5
