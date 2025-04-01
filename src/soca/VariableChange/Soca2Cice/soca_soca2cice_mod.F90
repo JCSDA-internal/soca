@@ -272,6 +272,7 @@ end subroutine shuffle_ice
 !> clean-up the CICE state
 !!
 subroutine cleanup_ice(self, geom, xm)
+  use fckit_log_module,   only: fckit_log
   class(soca_soca2cice), intent(inout) :: self
   type(soca_geom), target, intent(in)  :: geom
   type(soca_state),      intent(inout) :: xm
@@ -290,6 +291,8 @@ subroutine cleanup_ice(self, geom, xm)
 
   type(atlas_field) :: tocn, socn, aice, hice, hsno
   real(kind=kind_real), pointer :: data_tocn(:,:), data_socn(:,:), data_aice(:,:), data_hice(:,:), data_hsno(:,:)
+  character(255) :: msg
+  integer :: count_thinice
 
   ! get fields from atlas
   tocn = xm%afieldset%field("sea_water_potential_temperature")
@@ -351,6 +354,7 @@ subroutine cleanup_ice(self, geom, xm)
   allocate(first_ice(self%ncat))
   first_ice(:) = .true.
 
+  count_thinice = 0
   do j = geom%jsc, geom%jec
      do i = geom%isc, geom%iec
         idx = geom%atlas_ij2idx(i,j)
@@ -391,12 +395,34 @@ subroutine cleanup_ice(self, geom, xm)
         if (icepack_warnings_aborted()) then
            call abor1_ftn("Soca2Cice: icepack aborted during cleanup_itd")
         endif
+        ! remove ice if ice volume is less than 0.00001: empirical hack
+        ! https://github.com/NOAA-EMC/GDASApp/issues/1575
+        do k = 1, self%ncat
+          if ((self%cice%aicen(i,j,k) > 0.0) .and. (self%cice%vicen(i,j,k) < 0.00001)) then
+            count_thinice = count_thinice + 1
+            self%cice%aicen(i,j,k) = 0_kind_real
+            self%cice%vicen(i,j,k) = 0_kind_real
+            self%cice%vsnon(i,j,k) = 0_kind_real
+            self%cice%apnd(i,j,k) = 0_kind_real
+            self%cice%hpnd(i,j,k) = 0_kind_real
+            self%cice%ipnd(i,j,k) = 0_kind_real
+            self%cice%qice(i,j,k,:) = 0_kind_real
+            self%cice%sice(i,j,k,:) = 0_kind_real
+            self%cice%qsno(i,j,k,:) = 0_kind_real
+            self%cice%tsfcn(i,j,k) = Tf
+          endif
+        enddo
         ! re-compute aggregates = analysis that is effectively inserted in the restart
         data_aice(1, idx) = sum(self%cice%aicen(i,j,:))
         data_hice(1, idx) = sum(self%cice%vicen(i,j,:))
         data_hsno(1, idx) = sum(self%cice%vsnon(i,j,:))
      end do
   end do
+  if (count_thinice > 0) then
+    write(msg,*) 'soca2cice: ice volume is lower than 0.00001 at ', count_thinice, &
+                 ' locations*cats, removed ice'
+    call fckit_log%warning(msg)
+  endif
 
   ! indicate dirty halos for updated fields
   call aice%set_dirty()
