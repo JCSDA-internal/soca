@@ -1,0 +1,53 @@
+analysis variables:
+- sea_ice_area_fraction
+- sea_surface_height_above_geoid
+
+background error:
+  covariance model: SABER
+  saber central block:
+    saber block name: ID
+
+geometry:
+  geom_grid_file: data_generated/gridgen/soca_gridspec.72x35x25.nc
+  mom6_input_nml: data_static/72x35x25/input.nml
+  fields metadata: data_static/fields_metadata.yml
+
+linear model:
+  name: LinearModelOceanIceEmulator
+  tstep: PT1H
+  model variables:
+  - sea_ice_area_fraction
+  - sea_surface_height_above_geoid
+  trajectory:
+    model variables:
+    - sea_ice_area_fraction
+    - sea_surface_height_above_geoid
+
+linear model test:
+  forecast length: PT3H
+  tstep: PT1H
+  first multiplier TL: 1.e-11
+  iterations TL: 1
+  tolerance AD: 2.0e-11
+  tolerance TL: 1.0
+  tolerance zero length forecast: 0.08
+
+model:
+  name: ModelOceanIceEmulator
+  tstep: PT1H
+  model variables:
+  - sea_ice_area_fraction
+  - sea_surface_height_above_geoid
+
+model aux control: null
+
+initial condition:
+  read_from_file: 1
+  date: 2018-04-15T00:00:00Z
+  basename: data_static/72x35x25/restarts/
+  ocn_filename: MOM.res.nc
+  ice_filename: cice.res.nc
+  sfc_filename: sfc.res.nc
+  state variables:
+  - sea_ice_area_fraction
+  - sea_surface_height_above_geoid

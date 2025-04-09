@@ -13,6 +13,8 @@
 #include <string>
 #include <vector>
 
+#include "eckit/mpi/Comm.h"
+
 #include "soca/Fortran.h"
 #include "soca/Fields/Fields.h"
 

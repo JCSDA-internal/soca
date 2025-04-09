@@ -53,7 +53,6 @@ void LinearModel2GeoVaLs::multiply(const Increment &dxin,
     // get the correct input field (mapping variable names where necessary)
     const auto & fOutMeta = geom_.fieldMetadata(fOut.name());
     const auto & fIn = fsetIn[fOutMeta.name];
-
     // copy the data (turning 3D to 2D if necessary)
     const auto & v_fIn = atlas::array::make_view<double, 2>(fIn);
     auto v_fOut = atlas::array::make_view<double, 2>(fOut);
