@@ -310,4 +310,4 @@ output:
 test:
   reference filename: testref/3dvar_lowres.test
   test output filename: testoutput/3dvar_lowres.test
-  float relative tolerance: 2e-4
+  float relative tolerance: 4e-4

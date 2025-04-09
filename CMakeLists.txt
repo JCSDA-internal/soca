@@ -61,7 +61,6 @@ set( SOCA_LINKER_LANGUAGE CXX)
 
 add_subdirectory( src )
 add_subdirectory( test )
-add_subdirectory( tutorial )
 
 # Build Doxygen documentation
 add_subdirectory( docs )

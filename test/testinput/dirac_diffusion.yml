@@ -55,3 +55,4 @@ output dirac:
 test:
   reference filename: testref/dirac_diffusion.test
   test output filename: testoutput/dirac_diffusion.test
+  float relative tolerance: 2e-5

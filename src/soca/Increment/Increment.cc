@@ -253,6 +253,11 @@ namespace soca {
   }
 
   // -----------------------------------------------------------------------------
+  void Increment::sqrt() {
+    util::sqrtFieldSet(fieldSet_);
+  }
+
+  // -----------------------------------------------------------------------------
 
   void Increment::axpy(const double & zz, const Increment & dx, const bool check) {
     ASSERT(!check || validTime() == dx.validTime());
