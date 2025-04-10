@@ -24,7 +24,8 @@ using oops::Log;
 
 namespace soca {
   // -----------------------------------------------------------------------------
-  static oops::interface::ModelMaker<soca::Traits, soca::ModelOceanIceEmulator> makermodel_("ModelOceanIceEmulator");
+  static oops::interface::ModelMaker<soca::Traits, soca::ModelOceanIceEmulator>
+      makermodel_("ModelOceanIceEmulator");
 
   // -----------------------------------------------------------------------------
   ModelOceanIceEmulator::ModelOceanIceEmulator(const Geometry & resol,
@@ -55,12 +56,6 @@ namespace soca {
   void ModelOceanIceEmulator::finalize(State & xx) const {
     Log::debug() << "------------ ModelOceanIceEmulator::finalize" << std::endl;
   }
-  // -----------------------------------------------------------------------------
-  //int ModelOceanIceEmulator::saveTrajectory(State & xx, const ModelBias &) const {
-  //  int ftraj = 0;
-  //  xx.validTime() += tstep_;
-  //  return ftraj;
-  //}
   // -----------------------------------------------------------------------------
   void ModelOceanIceEmulator::print(std::ostream & os) const {
     os << "ModelOceanIceEmulator::print not implemented";

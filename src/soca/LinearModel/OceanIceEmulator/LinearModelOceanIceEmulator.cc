@@ -26,7 +26,8 @@ using oops::Log;
 
 namespace soca {
   // -----------------------------------------------------------------------------
-  static oops::interface::LinearModelMaker<Traits, LinearModelOceanIceEmulator> makermodel_("LinearModelOceanIceEmulator");
+static oops::interface::LinearModelMaker<Traits, LinearModelOceanIceEmulator>
+        makermodel_("LinearModelOceanIceEmulator");
 
   // -----------------------------------------------------------------------------
     LinearModelOceanIceEmulator::LinearModelOceanIceEmulator(const Geometry & resol,
@@ -55,7 +56,8 @@ namespace soca {
         Log::debug() << "------------ dx:" << dx << std::endl;
     }
     // -----------------------------------------------------------------------------
-    void LinearModelOceanIceEmulator::stepTL(Increment & dx, const ModelBiasIncrement & bias) const {
+    void LinearModelOceanIceEmulator::stepTL(Increment & dx,
+                                             const ModelBiasIncrement & bias) const {
         const ModelTrajectory * traj = this->getTrajectory(dx.validTime());
         dx.validTime() += tstep_;
     }
@@ -65,14 +67,16 @@ namespace soca {
         const ModelTrajectory * traj = this->getTrajectory(dx.validTime());
     }
     // -----------------------------------------------------------------------------
-    void LinearModelOceanIceEmulator::setTrajectory(const State & xx, State & xlr, const ModelBias & bias) {
+    void LinearModelOceanIceEmulator::setTrajectory(const State & xx,
+                                                    State & xlr, const ModelBias & bias) {
         ASSERT(traj_.find(xx.validTime()) == traj_.end());
         ModelTrajectory * traj = new ModelTrajectory();
         traj->set(xlr);
         traj_[xx.validTime()] = traj;
     }
     // -----------------------------------------------------------------------------
-    const ModelTrajectory * LinearModelOceanIceEmulator::getTrajectory(const util::DateTime & tt) const {
+    const ModelTrajectory * LinearModelOceanIceEmulator::getTrajectory(
+                                                            const util::DateTime & tt) const {
       ASSERT(traj_.begin()->first <= tt);
       ASSERT(traj_.rbegin()->first >= tt);
       trajICst itra = traj_.lower_bound(tt);

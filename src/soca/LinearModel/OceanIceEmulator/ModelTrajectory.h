@@ -5,8 +5,8 @@
 * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
 */
 
-#ifndef SOCA_LINEARMODEL_OCEANICEEMULATOR_MODETRAJECTORY_H_
-#define SOCA_LINEARMODEL_OCEANICEEMULATOR_MODETRAJECTORY_H_
+#pragma once
+
 
 #include <string>
 
@@ -42,4 +42,3 @@ class ModelTrajectory: private util::ObjectCounter<ModelTrajectory> {
 
 }  // namespace soca
 
-#endif  // SOCA_LINEARMODEL_OCEANICEEMULATOR_MODETRAJECTORY_H_
