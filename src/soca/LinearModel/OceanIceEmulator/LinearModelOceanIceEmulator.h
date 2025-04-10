@@ -81,7 +81,6 @@ class LinearModelOceanIceEmulator: public oops::interface::LinearModelBase<Trait
  private:
   const ModelTrajectory * getTrajectory(const util::DateTime &) const;
   void print(std::ostream &) const override;
-  //typedef std::map< util::DateTime, int >::iterator trajIter;
   typedef std::map< util::DateTime, ModelTrajectory * >::const_iterator trajICst;
 
   // Data

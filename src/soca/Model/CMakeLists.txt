@@ -1,3 +1,1 @@
-#if(Torch_FOUND)
-  add_subdirectory(OceanIceEmulator)
-#endif()
+add_subdirectory(OceanIceEmulator)

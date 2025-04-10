@@ -33,13 +33,16 @@ namespace soca {
                                         const eckit::Configuration & model)
         : tstep_(0), geom_(resol), traj_(), lrmodel_(geom_, model), vars_(model, "model variables")
     {
-        Log::trace() << "------------ LinearModelOceanIceEmulator::LinearModelOceanIceEmulator" << std::endl;
-        Log::trace() << "------------ LinearModelOceanIceEmulator config: " << model << std::endl;
+        Log::debug() << "------------ LinearModelOceanIceEmulator config: " << model << std::endl;
         tstep_ = util::Duration(model.getString("tstep"));
     }
     // -----------------------------------------------------------------------------
     LinearModelOceanIceEmulator::~LinearModelOceanIceEmulator() {
-        Log::trace() << "------------ LinearModelOceanIceEmulator destructed" << std::endl;
+        Log::debug() << "------------ LinearModelOceanIceEmulator destructor" << std::endl;
+        for (trajICst jtra = traj_.begin(); jtra != traj_.end(); ++jtra) {
+            delete jtra->second;
+        }
+        Log::debug() << "------------ LinearModelOceanIceEmulator destructor done" << std::endl;
     }
     // -----------------------------------------------------------------------------
     void LinearModelOceanIceEmulator::initializeTL(Increment & dx) const {
@@ -49,31 +52,23 @@ namespace soca {
     // -----------------------------------------------------------------------------
     void LinearModelOceanIceEmulator::initializeAD(Increment & dx) const {
         Log::debug() << "------------ LinearModelOceanIceEmulator::initializeAD" << std::endl;
+        Log::debug() << "------------ dx:" << dx << std::endl;
     }
     // -----------------------------------------------------------------------------
     void LinearModelOceanIceEmulator::stepTL(Increment & dx, const ModelBiasIncrement & bias) const {
-        Log::trace() << "------------ LinearModelOceanIceEmulator::Time: " << dx.validTime() << std::endl;
-        //util::DateTime * modeldate = &dx.validTime();
         const ModelTrajectory * traj = this->getTrajectory(dx.validTime());
         dx.validTime() += tstep_;
     }
     // -----------------------------------------------------------------------------
     void LinearModelOceanIceEmulator::stepAD(Increment & dx, ModelBiasIncrement & bias) const {
-        Log::trace() << "------------ LinearModelOceanIceEmulator::Time: " << dx.validTime() << std::endl;
-        //util::DateTime * modeldate = &dx.validTime();
         dx.validTime() -= tstep_;
         const ModelTrajectory * traj = this->getTrajectory(dx.validTime());
     }
     // -----------------------------------------------------------------------------
     void LinearModelOceanIceEmulator::setTrajectory(const State & xx, State & xlr, const ModelBias & bias) {
-        Log::trace() << "------------ LinearModelOceanIceEmulator::setTrajectory" << std::endl;
-        Log::trace() << "xlr: " << xlr << std::endl;
         ASSERT(traj_.find(xx.validTime()) == traj_.end());
         ModelTrajectory * traj = new ModelTrajectory();
-        Log::info() << "$$$$$$$$$$$$$$$$$$$$$$$$$ set traj time: " << xx.validTime() << std::endl;
-        //lrmodel_.step(xlr, bias);
         traj->set(xlr);
-        Log::info() << "------------ LinearModelOceanIceEmulator::setTrajectory " << xx << std::endl;
         traj_[xx.validTime()] = traj;
     }
     // -----------------------------------------------------------------------------

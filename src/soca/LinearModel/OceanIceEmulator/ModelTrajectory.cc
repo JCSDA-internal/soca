@@ -22,13 +22,6 @@ void ModelTrajectory::set(const State & xx) {
 }
 // -----------------------------------------------------------------------------
 const State & ModelTrajectory::get(const int ii) const {
-  // TODO(G): Pass the max number of elements in the trajectory as a parameter
-  //if (ii < 1 || ii > 2) {
-  //    throw eckit::BadValue("ModelTrajectory::get index out of range", Here());
-  //}
-  //ASSERT(ltraj_);
-  //ASSERT(traj_.size() == 2);
-  //ASSERT(1 <= ii && ii <= 2);
   return traj_[ii-1];
 }
 // -----------------------------------------------------------------------------

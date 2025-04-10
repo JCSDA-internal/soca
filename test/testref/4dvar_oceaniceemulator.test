@@ -1,0 +1,16 @@
+CostJo   : Nonlinear Jo(ADT) = 8.9597419583419821e+01, nobs = 31, Jo/n = 2.8902393414006395e+00, err = 1.0000000149011612e-01
+CostJo   : Nonlinear Jo(SeaIceFraction) = 2.1864952874790742e+02, nobs = 27, Jo/n = 8.0981306943669420e+00, err = 1.0000000149011612e-01
+CostFunction: Nonlinear J = 3.0824694833132725e+02
+RPCGMinimizer: reduction in residual norm = 1.7502645806354089e-01
+CostFunction::addIncrement: Analysis: 
+  Valid time: 2018-04-15T00:00:00Z
+         sea_ice_area_fraction   min=-0.0492577015407390   max=1.5885816312703911   mean=0.1663368961674055
+sea_surface_height_above_geoid   min=-1.9223840270044554   max=0.8794616240501941   mean=-0.2888265818133443
+CostJo   : Nonlinear Jo(ADT) = 9.7026166930794986, nobs = 31, Jo/n = 0.3129876352606290, err = 0.1000000014901161
+CostJo   : Nonlinear Jo(SeaIceFraction) = 29.7284104264182076, nobs = 27, Jo/n = 1.1010522380154892, err = 0.1000000014901161
+CostFunction: Nonlinear J = 39.4310271194977062
+RPCGMinimizer: reduction in residual norm = 0.6251357497997215
+CostFunction::addIncrement: Analysis: 
+  Valid time: 2018-04-15T00:00:00Z
+         sea_ice_area_fraction   min=-0.1863903172961555   max=1.4479863227833776   mean=0.1586391947574739
+sea_surface_height_above_geoid   min=-1.9240761838395299   max=0.8723414907497136   mean=-0.2898862656894614

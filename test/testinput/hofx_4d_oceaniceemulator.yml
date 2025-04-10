@@ -39,3 +39,9 @@ observations:
       simulated variables: [absoluteDynamicTopography]
     obs operator:
       name: ADT
+
+test:
+  reference filename: testref/hofx_4d_oceaniceemulator.test
+  test output filename: testoutput/hofx_4d_oceaniceemulator.out
+  float relative tolerance: 1e-4
+  float absolute tolerance: 1e-4

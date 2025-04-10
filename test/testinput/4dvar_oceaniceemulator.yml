@@ -1,6 +1,7 @@
 _date_begin: &date_begin 2018-04-15T00:00:00Z
 cost function:
   cost type: 4D-Var
+  jb evaluation: false
   time window:
     begin: *date_begin
     length: PT6H
@@ -40,12 +41,6 @@ cost function:
           horizontal:
             filepath: data_generated/parameters_diffusion/hz_smaller
 
-
-#  background error:
-#    covariance model: SABER
-#    saber central block:
-#      saber block name: ID
-
   observations:
     observers:
     - obs space:
@@ -64,54 +59,49 @@ cost function:
       obs error:
         covariance model: diagonal
 
-#    - obs space:
-#        name: SeaIceFraction
-#        obsdataout:
-#          engine:
-#            type: H5File
-#            obsfile: data_output/icec.4dvar_oceaniceemulator.nc
-#        obsdatain:
-#          engine:
-#            type: H5File
-#            obsfile: data_static/obs/icec.nc
-#        simulated variables: [seaIceFraction]
-#      obs operator:
-#        name: Identity
-#        observation alias file: testinput/obsop_name_map.yml
-#      obs error:
-#        covariance model: diagonal
-#      obs filters:
-#      - *land_mask
+    - obs space:
+        name: SeaIceFraction
+        obsdataout:
+          engine:
+            type: H5File
+            obsfile: data_output/icec.4dvar_oceaniceemulator.nc
+        obsdatain:
+          engine:
+            type: H5File
+            obsfile: data_static/obs/icec.nc
+        simulated variables: [seaIceFraction]
+      obs operator:
+        name: Identity
+        observation alias file: testinput/obsop_name_map.yml
+      obs error:
+        covariance model: diagonal
 
 variational:
   minimizer:
     algorithm: RPCG
   iterations:
   - geometry: *geom
-    ninner: 5
+    ninner: 2
     gradient norm reduction: 1e-15
     linear model:
-
-      #name: Identity
-      #tstep: PT1H
-      #variable change: Identity
-
       name: LinearModelOceanIceEmulator
       tstep: PT1H
       model variables:
       - sea_ice_area_fraction
       - sea_surface_height_above_geoid
+  - geometry: *geom
+    ninner: 2
+    gradient norm reduction: 1e-15
+    linear model:
+      name: LinearModelOceanIceEmulator
+      tstep: PT1H
+      model variables:
+      - sea_ice_area_fraction
+      - sea_surface_height_above_geoid
+final j evaluation: false
 
-output:
-  datadir: data_output/
-  exp: 4dvar_identity
-  type: incr
-  first: PT0H
-  frequency: PT1H
-
-#test:
-#  reference filename: testref/4dvar_identity.test
-#  test output filename: testoutput/4dvar_identity.test
-#  float relative tolerance: 1e-4
-#  float absolute tolerance: 1e-4
-#
+test:
+  reference filename: testref/4dvar_oceaniceemulator.test
+  test output filename: testoutput/4dvar_oceaniceemulator.out
+  float relative tolerance: 1e-4
+  float absolute tolerance: 1e-4

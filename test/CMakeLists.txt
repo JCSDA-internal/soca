@@ -111,6 +111,7 @@ set( soca_test_ref
   testref/4dhybenvar.test
   testref/4dvar_identity.test
   testref/4dvar_htlm.test
+  testref/4dvar_oceaniceemulator.test
   testref/addincrement.test
   testref/convertincrement.test
   testref/convertstate_changevar.test
@@ -134,6 +135,7 @@ set( soca_test_ref
   testref/gridgen.test
   testref/hofx_3d.test
   testref/hofx_4d_pseudo.test
+  testref/hofx_4d_oceaniceemulator.test
   testref/hybridgain.test
   testref/letkf_split_observer.test
   testref/letkf_split_solver.test

@@ -104,8 +104,3 @@ if(Torch_FOUND)
                         LIBS    soca NetCDF::NetCDF_C
                       )
 endif()
-
-#ecbuild_add_executable( TARGET  soca_adjoint_forecast.x
-#                        SOURCES AdjointForecast.cc
-#                        LIBS    soca
-#)
