@@ -59,12 +59,14 @@ static oops::interface::LinearModelMaker<Traits, LinearModelOceanIceEmulator>
     void LinearModelOceanIceEmulator::stepTL(Increment & dx,
                                              const ModelBiasIncrement & bias) const {
         const ModelTrajectory * traj = this->getTrajectory(dx.validTime());
+        oops::Log::debug() << "------------ Traj in TL" <<  traj << std::endl;
         dx.validTime() += tstep_;
     }
     // -----------------------------------------------------------------------------
     void LinearModelOceanIceEmulator::stepAD(Increment & dx, ModelBiasIncrement & bias) const {
         dx.validTime() -= tstep_;
         const ModelTrajectory * traj = this->getTrajectory(dx.validTime());
+        oops::Log::debug() << "------------ Traj in AD" <<  traj << std::endl;
     }
     // -----------------------------------------------------------------------------
     void LinearModelOceanIceEmulator::setTrajectory(const State & xx,
@@ -77,6 +79,7 @@ static oops::interface::LinearModelMaker<Traits, LinearModelOceanIceEmulator>
     // -----------------------------------------------------------------------------
     const ModelTrajectory * LinearModelOceanIceEmulator::getTrajectory(
                                                             const util::DateTime & tt) const {
+      ASSERT(traj_.size() > 0);
       ASSERT(traj_.begin()->first <= tt);
       ASSERT(traj_.rbegin()->first >= tt);
       trajICst itra = traj_.lower_bound(tt);
