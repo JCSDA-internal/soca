@@ -49,7 +49,6 @@ namespace soca {
   // -----------------------------------------------------------------------------
   void ModelOceanIceEmulator::step(State & xx, const ModelBias &) const {
     Log::trace() << "------------ ModelOceanIceEmulator::Time: " << xx.validTime() << std::endl;
-    util::DateTime * modeldate = &xx.validTime();
     xx.validTime() += tstep_;
   }
   // -----------------------------------------------------------------------------
