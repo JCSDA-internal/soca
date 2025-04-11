@@ -22,6 +22,9 @@ void ModelTrajectory::set(const State & xx) {
 }
 // -----------------------------------------------------------------------------
 const State & ModelTrajectory::get(const int ii) const {
+  if (ii <= 0 || ii > static_cast<int>(traj_.size())) {
+    throw eckit::OutOfRange("Index out of bounds in ModelTrajectory::get", Here());
+  }
   return traj_[ii-1];
 }
 // -----------------------------------------------------------------------------
