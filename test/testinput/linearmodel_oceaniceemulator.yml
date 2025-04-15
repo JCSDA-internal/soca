@@ -15,6 +15,12 @@ geometry:
 linear model:
   name: LinearModelOceanIceEmulator
   tstep: PT1H
+  aimodel:
+    inputSize: 2
+    outputSize: 2
+    hiddenSize: 10
+    load model: ai_ocnice.pt
+
   model variables:
   - sea_ice_area_fraction
   - sea_surface_height_above_geoid
@@ -26,6 +32,12 @@ linear model:
 linear model test:
   forecast length: PT3H
   tstep: PT1H
+  aimodel:
+    inputSize: 2
+    outputSize: 2
+    hiddenSize: 10
+    load model: ai_ocnice.pt
+
   first multiplier TL: 1.e-11
   iterations TL: 1
   tolerance AD: 2.0e-11
@@ -35,6 +47,11 @@ linear model test:
 model:
   name: ModelOceanIceEmulator
   tstep: PT1H
+  aimodel:
+    inputSize: 2
+    outputSize: 2
+    hiddenSize: 10
+    load model: ai_ocnice.pt
   model variables:
   - sea_ice_area_fraction
   - sea_surface_height_above_geoid

@@ -29,10 +29,19 @@ namespace soca {
 static oops::interface::LinearModelMaker<Traits, LinearModelOceanIceEmulator>
         makermodel_("LinearModelOceanIceEmulator");
 
+
   // -----------------------------------------------------------------------------
     LinearModelOceanIceEmulator::LinearModelOceanIceEmulator(const Geometry & resol,
                                         const eckit::Configuration & model)
-        : tstep_(0), geom_(resol), traj_(), lrmodel_(geom_, model), vars_(model, "model variables")
+        : tstep_(0),
+          geom_(resol),
+          geomData_(resol.functionSpace(), resol.fields(),
+                    resol.levelsAreTopDown(), resol.getComm()),
+          ghostView_(atlas::array::make_view<int, 1>(geomData_.functionSpace().ghost())),
+          maskView_(atlas::array::make_view<double, 2>(geomData_.getField("mask_h"))),
+          traj_(),
+          aimodel_(model),
+          vars_(model, "model variables")
     {
         Log::debug() << "------------ LinearModelOceanIceEmulator config: " << model << std::endl;
         tstep_ = util::Duration(model.getString("tstep"));
@@ -58,15 +67,96 @@ static oops::interface::LinearModelMaker<Traits, LinearModelOceanIceEmulator>
     // -----------------------------------------------------------------------------
     void LinearModelOceanIceEmulator::stepTL(Increment & dx,
                                              const ModelBiasIncrement & bias) const {
-        const ModelTrajectory * traj = this->getTrajectory(dx.validTime());
-        oops::Log::debug() << "------------ Traj in TL" <<  traj << std::endl;
+        // Get the trajectory
+        auto [traj_v, traj_names] = this->getTrajectory(dx.validTime());
+
+        // Create vectors of increment field views and names
+        std::vector<atlas::array::ArrayView<double, 2>> dx_v;
+        std::vector<std::string> dx_names;
+        for (auto & field : dx.fieldSet()) {
+          dx_v.push_back(atlas::array::make_view<double, 2>(field));
+          dx_names.push_back(field.name());
+        }
+
+        // Loop through nodes and apply the linearized aimodel
+        torch::Tensor torch_dx_out;
+        auto nodes = dx_v[0].shape(0);
+        for (size_t jnode = 0; jnode < nodes; ++jnode) {
+          if (maskView_(jnode, 0) == 0) continue;  // skip land points
+          if (ghostView_(jnode)) continue;         // skip ghost points
+
+          // Prepare the incrememnt input
+          std::vector<double> inputData;
+          for (size_t j = 0; j < dx_v.size(); ++j) {
+            inputData.push_back(dx_v[j](jnode, 0));
+          }
+
+          // Prepare the trajectory input
+          std::vector<double> inputDataTraj;
+          for (size_t j = 0; j < traj_v.size(); ++j) {
+            inputDataTraj.push_back(traj_v[j](jnode, 0));
+          }
+
+          // Convert inputData to a tensor
+          torch::Tensor torch_dx = torch::tensor(inputData).reshape({1, static_cast<int64_t>(inputData.size())});
+          torch::Tensor torch_traj = torch::tensor(inputDataTraj).reshape({1, static_cast<int64_t>(inputDataTraj.size())});
+          torch_dx_out = aimodel_.forward_tlm(torch_traj, torch_dx);
+          Log::debug() << "------------ dx out: " << torch_dx_out << std::endl;
+        }
+
+        // Update the increment
+        for (size_t j = 0; j < dx_v.size(); ++j) {
+          for (size_t jnode = 0; jnode < nodes; ++jnode) {
+            dx_v[j](jnode, 0) = torch_dx_out[0][j].item<double>();
+          }
+        }
         dx.validTime() += tstep_;
     }
     // -----------------------------------------------------------------------------
     void LinearModelOceanIceEmulator::stepAD(Increment & dx, ModelBiasIncrement & bias) const {
         dx.validTime() -= tstep_;
-        const ModelTrajectory * traj = this->getTrajectory(dx.validTime());
-        oops::Log::debug() << "------------ Traj in AD" <<  traj << std::endl;
+        // Get the trajectory
+        auto [traj_v, traj_names] = this->getTrajectory(dx.validTime());
+
+        // Create vectors of increment field views and names
+        std::vector<atlas::array::ArrayView<double, 2>> dx_v;
+        std::vector<std::string> dx_names;
+        for (auto & field : dx.fieldSet()) {
+          dx_v.push_back(atlas::array::make_view<double, 2>(field));
+          dx_names.push_back(field.name());
+        }
+        // Loop through nodes and apply the linearized aimodel
+        torch::Tensor torch_dx_out;
+        auto nodes = dx_v[0].shape(0);
+        for (size_t jnode = 0; jnode < nodes; ++jnode) {
+          if (maskView_(jnode, 0) == 0) continue;  // skip land points
+          if (ghostView_(jnode)) continue;         // skip ghost points
+
+          // Prepare the incrememnt input
+          std::vector<double> inputData;
+          for (size_t j = 0; j < dx_v.size(); ++j) {
+            inputData.push_back(dx_v[j](jnode, 0));
+          }
+
+          // Prepare the trajectory input
+          std::vector<double> inputDataTraj;
+          for (size_t j = 0; j < traj_v.size(); ++j) {
+            inputDataTraj.push_back(traj_v[j](jnode, 0));
+          }
+
+          // Convert inputData to a tensor
+          torch::Tensor torch_dx = torch::tensor(inputData).reshape({1, static_cast<int64_t>(inputData.size())});
+          torch::Tensor torch_traj = torch::tensor(inputDataTraj).reshape({1, static_cast<int64_t>(inputDataTraj.size())});
+          torch_dx_out = aimodel_.forward_ad(torch_traj, torch_dx);
+          Log::debug() << "------------ dx out: " << torch_dx_out << std::endl;
+        }
+
+        // Update the increment
+        for (size_t j = 0; j < dx_v.size(); ++j) {
+          for (size_t jnode = 0; jnode < nodes; ++jnode) {
+            dx_v[j](jnode, 0) = torch_dx_out[0][j].item<double>();
+          }
+        }
     }
     // -----------------------------------------------------------------------------
     void LinearModelOceanIceEmulator::setTrajectory(const State & xx,
@@ -77,13 +167,40 @@ static oops::interface::LinearModelMaker<Traits, LinearModelOceanIceEmulator>
         traj_[xx.validTime()] = traj;
     }
     // -----------------------------------------------------------------------------
-    const ModelTrajectory * LinearModelOceanIceEmulator::getTrajectory(
-                                                            const util::DateTime & tt) const {
-      ASSERT(traj_.size() > 0);
-      ASSERT(traj_.begin()->first <= tt);
-      ASSERT(traj_.rbegin()->first >= tt);
-      trajICst itra = traj_.lower_bound(tt);
-      return itra->second;
+
+    std::pair<std::vector<atlas::array::ArrayView<double, 2>>,
+              std::vector<std::string>>
+    LinearModelOceanIceEmulator::getTrajectory(const util::DateTime & tt) const {
+        ASSERT(traj_.size() > 0);  // Ensure the map is not empty
+
+        // Find the first key greater than tt
+        auto itra = traj_.upper_bound(tt);
+
+        // If tt is earlier than the first key, throw an error
+        ASSERT(itra != traj_.begin());
+
+        // Move back to the trajectory valid for tt
+        --itra;
+
+        // Ensure that the trajectory is valid for tt
+        ASSERT(itra->first <= tt);
+
+        // Retrieve the ModelTrajectory
+        const ModelTrajectory * traj = itra->second;
+
+        // Retrieve the State valid for tt
+        soca::State trajState = traj->getStateByDateTime(tt);
+        //return traj->getStateByDateTime(tt);
+
+        // Create trajectory views
+        std::vector<atlas::array::ArrayView<double, 2>> traj_v;
+        std::vector<std::string> traj_names;
+        for (auto & field : trajState.fieldSet()) {
+          oops::Log::debug() << "------------ traj field: " << field.name() << std::endl;
+          traj_v.push_back(atlas::array::make_view<double, 2>(field));
+          traj_names.push_back(field.name());
+        }
+        return std::make_pair(traj_v, traj_names);
     }
     // -----------------------------------------------------------------------------
     void LinearModelOceanIceEmulator::finalizeTL(Increment & dx) const {

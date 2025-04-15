@@ -11,7 +11,7 @@
 #include <string>
 
 #include <boost/ptr_container/ptr_vector.hpp>
-
+#include "oops/util/DateTime.h"
 #include "oops/util/ObjectCounter.h"
 
 namespace soca {
@@ -33,6 +33,7 @@ class ModelTrajectory: private util::ObjectCounter<ModelTrajectory> {
 
 /// Get trajectory
   const State & get(const int) const;
+  const State & getStateByDateTime(const util::DateTime & tt) const;
 
  private:
   const bool ltraj_;

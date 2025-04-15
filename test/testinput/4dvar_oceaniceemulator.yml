@@ -17,6 +17,11 @@ cost function:
   model:
     name: ModelOceanIceEmulator
     tstep: PT1H
+    aimodel:
+      inputSize: 2
+      outputSize: 2
+      hiddenSize: 10
+      load model: ai_ocnice.pt
     model variables: &soca_vars
     - sea_ice_area_fraction
     - sea_surface_height_above_geoid
@@ -86,15 +91,11 @@ variational:
     linear model:
       name: LinearModelOceanIceEmulator
       tstep: PT1H
-      model variables:
-      - sea_ice_area_fraction
-      - sea_surface_height_above_geoid
-  - geometry: *geom
-    ninner: 2
-    gradient norm reduction: 1e-15
-    linear model:
-      name: LinearModelOceanIceEmulator
-      tstep: PT1H
+      aimodel:
+        inputSize: 2
+        outputSize: 2
+        hiddenSize: 10
+        load model: ai_ocnice.pt
       model variables:
       - sea_ice_area_fraction
       - sea_surface_height_above_geoid

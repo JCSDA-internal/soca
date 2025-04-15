@@ -11,6 +11,7 @@
 
 #include "soca/Geometry/Geometry.h"
 #include "soca/Model/OceanIceEmulator/ModelOceanIceEmulator.h"
+#include "soca/Model/OceanIceEmulator/OceanIceFFNN.h"
 #include "soca/ModelBias/ModelBias.h"
 #include "soca/State/State.h"
 
@@ -19,6 +20,7 @@
 
 #include "oops/util/DateTime.h"
 #include "oops/util/Logger.h"
+#include "oops/base/GeometryData.h"
 
 using oops::Log;
 
@@ -32,11 +34,17 @@ namespace soca {
                              const eckit::Configuration & model)
     : tstep_(0),
       geom_(resol),
-      vars_(model, "model variables")
+      geomData_(resol.functionSpace(), resol.fields(),
+                resol.levelsAreTopDown(), resol.getComm()),
+      vars_(model, "model variables"),
+      aimodel_(model)
   {
     Log::trace() << "------------ ModelOceanIceEmulator::ModelOceanIceEmulator" << std::endl;
     Log::trace() << "------------ ModelOceanIceEmulator vars: " << vars_ << std::endl;
     tstep_ = util::Duration(model.getString("tstep"));
+    //  geomData_(oops::GeometryData(resol.functionSpace(), resol.fields(),
+    //                               resol.levelsAreTopDown(), resol.getComm())),
+    aimodel_.initWeights();
   }
   // -----------------------------------------------------------------------------
   ModelOceanIceEmulator::~ModelOceanIceEmulator() {
@@ -49,6 +57,45 @@ namespace soca {
   // -----------------------------------------------------------------------------
   void ModelOceanIceEmulator::step(State & xx, const ModelBias &) const {
     Log::trace() << "------------ ModelOceanIceEmulator::Time: " << xx.validTime() << std::endl;
+
+    // Create a vector of field views
+    std::vector<atlas::array::ArrayView<double, 2>> fieldViews;
+    std::vector<std::string> fieldNames;
+
+    // Populate the vector with views to each field
+    for (auto & field : xx.fieldSet()) {
+      oops::Log::debug() << "------------ field: " << field.name() << std::endl;
+      fieldViews.push_back(atlas::array::make_view<double, 2>(field));
+      fieldNames.push_back(field.name());
+    }
+
+    // mask and ghost cells
+    auto fs = geomData_.functionSpace();
+    const auto & ghostView = atlas::array::make_view<int, 1>(fs.ghost());
+    const auto & maskView = atlas::array::make_view<double, 2>(geomData_.getField("mask_h"));
+
+    // Print the weights of the aimodel
+    for (const auto& tensor : aimodel_.parameters()) {
+        Log::debug() << tensor << " ";
+    }
+    Log::debug() << std::endl;
+
+    // Loop through nodes and apply the aimodel
+    auto nodes = fieldViews[0].shape(0);
+    for (size_t jnode = 0; jnode < nodes; ++jnode) {
+      if (maskView(jnode, 0) == 0) continue;  // skip land points
+      if (ghostView(jnode)) continue;         // skip ghost points
+
+      std::vector<double> inputData;
+      for (size_t j = 0; j < fieldViews.size(); ++j) {
+        Log::debug() << "------------ field: " << fieldNames[j] << " value: " << fieldViews[j](jnode, 0) << std::endl;
+        inputData.push_back(fieldViews[j](jnode, 0));
+      }
+
+      // Convert inputData to a tensor
+      torch::Tensor inputTensor = torch::tensor(inputData).reshape({1, static_cast<int64_t>(inputData.size())});
+      auto x = aimodel_.forward(inputTensor);
+    }
     xx.validTime() += tstep_;
   }
   // -----------------------------------------------------------------------------

@@ -21,6 +21,7 @@
 #include "oops/util/ObjectCounter.h"
 #include "oops/util/Printable.h"
 
+#include "soca/Model/OceanIceEmulator/OceanIceFFNN.h"
 
 // Forward declarations
 namespace eckit {
@@ -69,7 +70,9 @@ namespace soca {
     int keyConfig_;
     util::Duration tstep_;
     const Geometry & geom_;
+    const oops::GeometryData geomData_;
     const oops::Variables vars_;
+    mutable soca::OceanIceFFNN aimodel_;
   };
   // -----------------------------------------------------------------------------
 

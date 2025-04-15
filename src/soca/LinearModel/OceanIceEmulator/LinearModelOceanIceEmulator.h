@@ -80,17 +80,22 @@ class LinearModelOceanIceEmulator: public oops::interface::LinearModelBase<Trait
   const Geometry & resolution() const {return geom_;}
 
  private:
-  const ModelTrajectory * getTrajectory(const util::DateTime &) const;
+  //const ModelTrajectory * getTrajectory(const util::DateTime &) const;
+  std::pair<std::vector<atlas::array::ArrayView<double, 2>>, std::vector<std::string>>
+       getTrajectory(const util::DateTime & tt) const;
   void print(std::ostream &) const override;
   typedef std::map< util::DateTime, ModelTrajectory * >::const_iterator trajICst;
 
   // Data
   util::Duration tstep_;
   const Geometry & geom_;
+  const oops::GeometryData geomData_;
   const util::Duration steptraj_;
   std::map< util::DateTime, ModelTrajectory * > traj_;
-  const soca::ModelOceanIceEmulator lrmodel_;
+  mutable soca::OceanIceFFNN aimodel_;
   const oops::Variables vars_;
+  const atlas::array::ArrayView<int, 1> ghostView_;
+  const atlas::array::ArrayView<double, 2> maskView_;
 };
 // -----------------------------------------------------------------------------
 

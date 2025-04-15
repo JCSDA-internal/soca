@@ -8,6 +8,7 @@
 #include "soca/LinearModel/OceanIceEmulator/ModelTrajectory.h"
 
 #include "eckit/exception/Exceptions.h"
+#include "oops/util/DateTime.h"
 #include "soca/State/State.h"
 
 // -----------------------------------------------------------------------------
@@ -26,6 +27,16 @@ const State & ModelTrajectory::get(const int ii) const {
     throw eckit::OutOfRange("Index out of bounds in ModelTrajectory::get", Here());
   }
   return traj_[ii-1];
+}
+// -----------------------------------------------------------------------------
+const State & ModelTrajectory::getStateByDateTime(const util::DateTime & tt) const {
+    // Iterate through the stored States to find the one valid for tt
+    for (const auto &state : traj_) {  // Assuming traj_ is a container of State objects
+        if (state.validTime() == tt) {
+            return state;
+        }
+    }
+    throw std::runtime_error("No State found for the given DateTime: " + tt.toString());
 }
 // -----------------------------------------------------------------------------
 

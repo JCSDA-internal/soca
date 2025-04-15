@@ -7,6 +7,12 @@ geometry:
 model:
   name: ModelOceanIceEmulator
   tstep: PT1H
+  aimodel:
+    inputSize: 2
+    outputSize: 2
+    hiddenSize: 10
+    load model: ai_ocnice.pt
+
   model variables: &soca_vars
   - sea_ice_area_fraction
   - sea_surface_height_above_geoid
