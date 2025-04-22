@@ -3,3 +3,5 @@ soca_target_sources(
   ModelOceanIceEmulator.h
   OceanIceFFNN.h
 )
+
+add_subdirectory(test)

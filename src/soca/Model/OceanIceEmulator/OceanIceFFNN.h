@@ -15,6 +15,7 @@
 
 #include "torch/serialize.h"
 #include "torch/torch.h"
+#include "eckit/config/Configuration.h"
 #include "oops/util/Logger.h"
 
 namespace soca {
@@ -25,6 +26,8 @@ class OceanIceFFNN : public torch::nn::Module {
     int inputSize = config.getInt("aimodel.inputSize");
     int hiddenSize = config.getInt("aimodel.hiddenSize");
     int outputSize = config.getInt("aimodel.outputSize");
+    weightsFileName = config.getString("aimodel.load model");
+
     oops::Log::info() << "Starting OceanIceFFNN constructor: "
                        << inputSize << outputSize << hiddenSize << std::endl;
 
@@ -65,8 +68,28 @@ class OceanIceFFNN : public torch::nn::Module {
   }
 
   void initWeights() {
-    torch::nn::init::xavier_normal_(fc1->weight);
-    torch::nn::init::xavier_normal_(fc2->weight);
+    // Initialize weights of the linear layers
+    torch::nn::init::normal_(fc1->weight, 0.0, 0.5);  // Mean 0, StdDev 0.5
+    torch::nn::init::normal_(fc2->weight, 0.0, 0.5);  // Mean 0, StdDev 0.5
+
+    // Save the weights
+//    std::filesystem::path filePath("weights");
+//    auto path = filePath.parent_path();
+//    auto fileName = filePath.filename();
+//    std::vector<torch::Tensor> weights = {fc1->weight, fc2->weight};
+//    torch::save(weights, path.string() + "/weights." + fileName.string());
+//    oops::Log::info() << "Weights saved to: " << path.string() + "/weights." + fileName.string() << std::endl;
+  }
+
+  void loadWeights() {
+    // Load weights from file
+    std::vector<torch::Tensor> weights;
+    torch::load(weights, weightsFileName);
+
+    // Assign loaded weights to the layers
+    fc1->weight = weights[0];
+    fc2->weight = weights[1];
+    oops::Log::info() << "Weights loaded from: " << weightsFileName << std::endl;
   }
 
   // Implement the forward pass
@@ -78,23 +101,13 @@ class OceanIceFFNN : public torch::nn::Module {
   }
 
 torch::Tensor forward_tlm(torch::Tensor x, torch::Tensor dx) {
-    // Ensure x requires gradients
-    x = x.clone().detach().requires_grad_(true);
+    // Normalize the perturbation
+    auto dx_norm = dx / inputStd.detach();
 
-    // Compute the forward pass
-    auto y = this->forward(x);
-
-    // Compute the Jacobian-vector product (JVP)
-    auto jvp = torch::autograd::grad(
-        /* outputs */ torch::autograd::variable_list{y},  // Wrap y in a variable_list
-        /* inputs */ torch::autograd::variable_list{x},  // Wrap x in a variable_list
-        /* grad_outputs */ torch::autograd::variable_list{dx},  // Wrap dx in a variable_list
-        /* retain_graph */ true,
-        /* create_graph */ true
-    );
-
-    // Return the JVP
-    return jvp[0];
+    // TLM of the linear layers (no activation functions in your model)
+    auto dx1 = fc1->weight.matmul(dx_norm.transpose(0, 1)).transpose(0, 1);  // Input → Hidden
+    auto dx2 = fc2->weight.matmul(dx1.transpose(0, 1)).transpose(0, 1); // Hidden → Output
+    return dx2;
 }
 
 torch::Tensor forward_ad(torch::Tensor x, torch::Tensor dy) {
@@ -115,6 +128,7 @@ torch::Tensor forward_ad(torch::Tensor x, torch::Tensor dy) {
 
     // Return the VJP (i.e., gradient wrt input)
     return vjp[0];
+
 }
 
  private:
@@ -123,5 +137,8 @@ torch::Tensor forward_ad(torch::Tensor x, torch::Tensor dy) {
   torch::nn::Linear fc2{nullptr};
   torch::Tensor inputMean;
   torch::Tensor inputStd;
-};
+
+  // File name for weights
+  std::string weightsFileName;
+};;
 }  // namespace soca

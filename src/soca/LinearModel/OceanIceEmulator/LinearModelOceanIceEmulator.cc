@@ -45,6 +45,12 @@ static oops::interface::LinearModelMaker<Traits, LinearModelOceanIceEmulator>
     {
         Log::debug() << "------------ LinearModelOceanIceEmulator config: " << model << std::endl;
         tstep_ = util::Duration(model.getString("tstep"));
+        aimodel_.loadWeights();
+        Log::debug() << "------------ Loaded AI model weights in TLM model: " << std::endl;
+        for (const auto& tensor : aimodel_.parameters()) {
+          Log::debug() << tensor << std::endl;
+        }
+
     }
     // -----------------------------------------------------------------------------
     LinearModelOceanIceEmulator::~LinearModelOceanIceEmulator() {
@@ -79,11 +85,9 @@ static oops::interface::LinearModelMaker<Traits, LinearModelOceanIceEmulator>
         }
 
         // Loop through nodes and apply the linearized aimodel
-        torch::Tensor torch_dx_out;
         auto nodes = dx_v[0].shape(0);
         for (size_t jnode = 0; jnode < nodes; ++jnode) {
-          if (maskView_(jnode, 0) == 0) continue;  // skip land points
-          if (ghostView_(jnode)) continue;         // skip ghost points
+          if (maskView_(jnode, 0) == 0 || ghostView_(jnode)) continue;  // skip land/ghost points
 
           // Prepare the incrememnt input
           std::vector<double> inputData;
@@ -100,14 +104,11 @@ static oops::interface::LinearModelMaker<Traits, LinearModelOceanIceEmulator>
           // Convert inputData to a tensor
           torch::Tensor torch_dx = torch::tensor(inputData).reshape({1, static_cast<int64_t>(inputData.size())});
           torch::Tensor torch_traj = torch::tensor(inputDataTraj).reshape({1, static_cast<int64_t>(inputDataTraj.size())});
-          torch_dx_out = aimodel_.forward_tlm(torch_traj, torch_dx);
-          Log::debug() << "------------ dx out: " << torch_dx_out << std::endl;
-        }
+          auto torch_dx_out = aimodel_.forward_tlm(torch_traj, torch_dx);
 
-        // Update the increment
-        for (size_t j = 0; j < dx_v.size(); ++j) {
-          for (size_t jnode = 0; jnode < nodes; ++jnode) {
-            dx_v[j](jnode, 0) = torch_dx_out[0][j].item<double>();
+          // Update the increment
+          for (size_t j = 0; j < dx_v.size(); ++j) {
+              dx_v[j](jnode, 0) = torch_dx_out[0][j].item<double>();
           }
         }
         dx.validTime() += tstep_;
@@ -126,11 +127,9 @@ static oops::interface::LinearModelMaker<Traits, LinearModelOceanIceEmulator>
           dx_names.push_back(field.name());
         }
         // Loop through nodes and apply the linearized aimodel
-        torch::Tensor torch_dx_out;
         auto nodes = dx_v[0].shape(0);
         for (size_t jnode = 0; jnode < nodes; ++jnode) {
-          if (maskView_(jnode, 0) == 0) continue;  // skip land points
-          if (ghostView_(jnode)) continue;         // skip ghost points
+          if (maskView_(jnode, 0) == 0 || ghostView_(jnode)) continue;  // skip land/ghost points
 
           // Prepare the incrememnt input
           std::vector<double> inputData;
@@ -147,14 +146,11 @@ static oops::interface::LinearModelMaker<Traits, LinearModelOceanIceEmulator>
           // Convert inputData to a tensor
           torch::Tensor torch_dx = torch::tensor(inputData).reshape({1, static_cast<int64_t>(inputData.size())});
           torch::Tensor torch_traj = torch::tensor(inputDataTraj).reshape({1, static_cast<int64_t>(inputDataTraj.size())});
-          torch_dx_out = aimodel_.forward_ad(torch_traj, torch_dx);
-          Log::debug() << "------------ dx out: " << torch_dx_out << std::endl;
-        }
+          auto torch_dx_out = aimodel_.forward_ad(torch_traj, torch_dx);
 
-        // Update the increment
-        for (size_t j = 0; j < dx_v.size(); ++j) {
-          for (size_t jnode = 0; jnode < nodes; ++jnode) {
-            dx_v[j](jnode, 0) = torch_dx_out[0][j].item<double>();
+          // Update the increment
+          for (size_t j = 0; j < dx_v.size(); ++j) {
+              dx_v[j](jnode, 0) = torch_dx_out[0][j].item<double>();
           }
         }
     }

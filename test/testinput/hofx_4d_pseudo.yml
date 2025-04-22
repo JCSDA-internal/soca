@@ -46,6 +46,8 @@ observations:
   observers:
   - obs space:
       name: SeaSurfaceTemp
+    get values:
+      time interpolation: linear
       obsdataout:
         engine:
           type: H5File
@@ -61,6 +63,8 @@ observations:
 
   - obs space:
       name: SeaSurfaceSalinity
+    get values:
+      time interpolation: linear
       obsdataout:
         engine:
           type: H5File
@@ -76,6 +80,8 @@ observations:
 
   - obs space:
       name: ADT
+    get values:
+      time interpolation: linear
       obsdataout:
         engine:
           type: H5File
@@ -90,6 +96,8 @@ observations:
 
   - obs space:
       name: InsituTemperature
+    get values:
+      time interpolation: linear
       obsdataout:
         engine:
           type: H5File
@@ -103,6 +111,8 @@ observations:
       name: InsituTemperature
 
   - obs space:
+    get values:
+      time interpolation: linear
       name: InsituSalinity
       obsdataout:
         engine:

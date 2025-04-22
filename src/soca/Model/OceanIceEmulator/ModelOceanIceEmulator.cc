@@ -40,11 +40,16 @@ namespace soca {
       aimodel_(model)
   {
     Log::trace() << "------------ ModelOceanIceEmulator::ModelOceanIceEmulator" << std::endl;
-    Log::trace() << "------------ ModelOceanIceEmulator vars: " << vars_ << std::endl;
+    Log::debug() << "------------ ModelOceanIceEmulator vars: " << vars_ << std::endl;
     tstep_ = util::Duration(model.getString("tstep"));
     //  geomData_(oops::GeometryData(resol.functionSpace(), resol.fields(),
     //                               resol.levelsAreTopDown(), resol.getComm())),
-    aimodel_.initWeights();
+    aimodel_.loadWeights();
+    Log::debug() << "------------ Loaded AI model weights in NL model: " << std::endl;
+    for (const auto& tensor : aimodel_.parameters()) {
+      Log::debug() << tensor << std::endl;
+    }
+
   }
   // -----------------------------------------------------------------------------
   ModelOceanIceEmulator::~ModelOceanIceEmulator() {
@@ -56,17 +61,17 @@ namespace soca {
   }
   // -----------------------------------------------------------------------------
   void ModelOceanIceEmulator::step(State & xx, const ModelBias &) const {
-    Log::trace() << "------------ ModelOceanIceEmulator::Time: " << xx.validTime() << std::endl;
+    Log::debug() << "------------ ModelOceanIceEmulator::Time: " << xx.validTime() << std::endl;
 
     // Create a vector of field views
-    std::vector<atlas::array::ArrayView<double, 2>> fieldViews;
-    std::vector<std::string> fieldNames;
+    std::vector<atlas::array::ArrayView<double, 2>> x_v;
+    std::vector<std::string> x_names;
 
     // Populate the vector with views to each field
     for (auto & field : xx.fieldSet()) {
       oops::Log::debug() << "------------ field: " << field.name() << std::endl;
-      fieldViews.push_back(atlas::array::make_view<double, 2>(field));
-      fieldNames.push_back(field.name());
+      x_v.push_back(atlas::array::make_view<double, 2>(field));
+      x_names.push_back(field.name());
     }
 
     // mask and ghost cells
@@ -81,20 +86,27 @@ namespace soca {
     Log::debug() << std::endl;
 
     // Loop through nodes and apply the aimodel
-    auto nodes = fieldViews[0].shape(0);
+    auto nodes = x_v[0].shape(0);
     for (size_t jnode = 0; jnode < nodes; ++jnode) {
-      if (maskView(jnode, 0) == 0) continue;  // skip land points
-      if (ghostView(jnode)) continue;         // skip ghost points
+      // Skip land points and ghost points
+      if (maskView(jnode, 0) == 0 || ghostView(jnode)) continue;  // skip land/ghost points
 
+      // Prepare the input data
       std::vector<double> inputData;
-      for (size_t j = 0; j < fieldViews.size(); ++j) {
-        Log::debug() << "------------ field: " << fieldNames[j] << " value: " << fieldViews[j](jnode, 0) << std::endl;
-        inputData.push_back(fieldViews[j](jnode, 0));
+      for (size_t j = 0; j < x_v.size(); ++j) {
+        inputData.push_back(x_v[j](jnode, 0));
       }
 
       // Convert inputData to a tensor
       torch::Tensor inputTensor = torch::tensor(inputData).reshape({1, static_cast<int64_t>(inputData.size())});
-      auto x = aimodel_.forward(inputTensor);
+      auto torch_x_out = aimodel_.forward(inputTensor);
+
+      // Update the state
+      for (size_t j = 0; j < x_v.size(); ++j) {
+        x_v[j](jnode, 0) = torch_x_out[0][j].item<double>();
+        Log::debug() << "------------ field: " << x_names[j] << " value: " << x_v[j](jnode, 0) << std::endl;
+      }
+      Log::debug() << "------------ x out: " << torch_x_out << std::endl;
     }
     xx.validTime() += tstep_;
   }

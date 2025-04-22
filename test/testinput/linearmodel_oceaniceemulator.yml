@@ -19,7 +19,7 @@ linear model:
     inputSize: 2
     outputSize: 2
     hiddenSize: 10
-    load model: ai_ocnice.pt
+    load model: /home/gvernier/sandboxes/jedi-bundle-new/soca/test/Data/oceanice_emul/ai_ocnice.pt
 
   model variables:
   - sea_ice_area_fraction
@@ -30,19 +30,19 @@ linear model:
     - sea_surface_height_above_geoid
 
 linear model test:
-  forecast length: PT3H
+  forecast length: PT1H
   tstep: PT1H
   aimodel:
     inputSize: 2
     outputSize: 2
     hiddenSize: 10
-    load model: ai_ocnice.pt
+    load model: /home/gvernier/sandboxes/jedi-bundle-new/soca/test/Data/oceanice_emul/ai_ocnice.pt
 
-  first multiplier TL: 1.e-11
-  iterations TL: 1
-  tolerance AD: 2.0e-11
-  tolerance TL: 1.0
-  tolerance zero length forecast: 0.08
+  first multiplier TL: 1.0e2
+  iterations TL: 10
+  tolerance AD: 1.0e-7
+  tolerance TL: 1.0e-7
+  tolerance zero length forecast: 1.0e-6
 
 model:
   name: ModelOceanIceEmulator
@@ -51,7 +51,7 @@ model:
     inputSize: 2
     outputSize: 2
     hiddenSize: 10
-    load model: ai_ocnice.pt
+    load model: /home/gvernier/sandboxes/jedi-bundle-new/soca/test/Data/oceanice_emul/ai_ocnice.pt
   model variables:
   - sea_ice_area_fraction
   - sea_surface_height_above_geoid

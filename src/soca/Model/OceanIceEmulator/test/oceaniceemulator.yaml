@@ -1,0 +1,5 @@
+  aimodel:
+    inputSize: 2
+    outputSize: 2
+    hiddenSize: 10
+    load model: ai_ocnice.pt

@@ -97,10 +97,36 @@ struct IceNet : torch::nn::Module {
 
   // Compute the Jacobian (dout/dx)
   torch::Tensor jac(torch::Tensor x) {
-    auto xp = torch::from_blob(x.data_ptr(), {x.size(0)}, torch::requires_grad());
+    // Clone and require gradients for input
+    auto xp = x.clone().detach().requires_grad_(true);
+
+    // Forward pass
     auto y = this->forward(xp);
-    y.backward();
-    return xp.grad();
+
+    // Get dimensions
+    int output_dim = y.size(0);
+    int input_dim = x.size(0);
+
+    // Create jacobian tensor
+    auto jacobian = torch::zeros({output_dim, input_dim});
+
+    // For each output dimension
+    for (int i = 0; i < output_dim; i++) {
+      // Clear previous gradients
+      if (xp.grad().defined()) xp.grad().zero_();
+
+      // Create a one-hot vector for this output dimension
+      auto v = torch::zeros_like(y);
+      v[i] = 1.0;
+
+      // Backpropagate
+      y.backward(v, /*retain_graph=*/true);
+
+      // Store gradients in the jacobian
+      jacobian[i] = xp.grad();
+    }
+
+    return jacobian;
   }
 
   torch::Tensor jacNorm(torch::Tensor input) {
