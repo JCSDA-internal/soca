@@ -43,14 +43,15 @@ static oops::interface::LinearModelMaker<Traits, LinearModelOceanIceEmulator>
           aimodel_(model),
           vars_(model, "model variables")
     {
-        Log::debug() << "------------ LinearModelOceanIceEmulator config: " << model << std::endl;
+        // Get the time step from the model configuration
         tstep_ = util::Duration(model.getString("tstep"));
+
+        // Load the AI model weights
         aimodel_.loadWeights();
         Log::debug() << "------------ Loaded AI model weights in TLM model: " << std::endl;
         for (const auto& tensor : aimodel_.parameters()) {
           Log::debug() << tensor << std::endl;
         }
-
     }
     // -----------------------------------------------------------------------------
     LinearModelOceanIceEmulator::~LinearModelOceanIceEmulator() {
@@ -111,6 +112,8 @@ static oops::interface::LinearModelMaker<Traits, LinearModelOceanIceEmulator>
               dx_v[j](jnode, 0) = torch_dx_out[0][j].item<double>();
           }
         }
+        // Update halo points
+        
         dx.validTime() += tstep_;
     }
     // -----------------------------------------------------------------------------

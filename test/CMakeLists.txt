@@ -80,6 +80,7 @@ set( soca_test_input
   testinput/obslocalization.yml
   testinput/obslocalizations.yml
   testinput/obsop_name_map.yml
+  testinput/oceaniceffnn.yml
   testinput/oceanSmoother.yml
   testinput/parameters_bump_cor_nicas_scales.yml
   testinput/parameters_bump_cor_nicas.yml
@@ -474,11 +475,6 @@ soca_add_test( NAME forecast_mom6_ens2
 soca_add_test( NAME forecast_mom6_ens3
                SCRIPT mom6solo.py )
 
-soca_add_test( NAME linear_oceaniceemulator
-               SRC  TestLinearModel.cc
-               CFG  linearmodel_oceaniceemulator.yml
-               TEST_DEPENDS test_soca_gridgen )
-
 # background error
 #---------------------------------------------------------------------------------------------------
 
@@ -610,16 +606,6 @@ soca_add_test( NAME dirac_diffusion_lowres
                EXE soca_error_covariance_toolbox.x
                TEST_DEPENDS test_soca_parameters_diffusion_lowres )
 
-
-if( Torch_FOUND )
-  soca_add_test( NAME train_mlbalance
-                 EXE soca_ice_emulator.x)
-
-  soca_add_test( NAME dirac_mlbalance
-                 EXE soca_error_covariance_toolbox.x
-                 TEST_DEPENDS test_soca_train_mlbalance )
-endif()
-
 # h(x) executables
 #---------------------------------------------------------------------------------------------------
 
@@ -630,10 +616,6 @@ soca_add_test( NAME makeobs
 
 soca_add_test( NAME hofx_3d
                EXE  soca_hofx3d.x
-               TEST_DEPENDS test_soca_gridgen )
-
-soca_add_test( NAME hofx_4d_oceaniceemulator
-               EXE  soca_hofx.x
                TEST_DEPENDS test_soca_gridgen )
 
 soca_add_test( NAME hofx_4d_pseudo
@@ -686,15 +668,6 @@ soca_add_test( NAME 3dvar_nicas
                EXE  soca_var.x
               #  NOTRAPFPE
                TEST_DEPENDS test_soca_parameters_bump_cor_nicas )
-
-
-if( Torch_FOUND )
-  soca_add_test( NAME 3dvar_diffmlb
-                 EXE  soca_var.x
-                 TEST_DEPENDS test_soca_gridgen
-                              test_soca_parameters_diffusion
-                              test_soca_train_mlbalance)
-endif()
 
 soca_add_test( NAME 3dvar_lowres
                EXE  soca_var.x
@@ -759,9 +732,6 @@ soca_add_test( NAME 4dvar_htlm
                             test_soca_forecast_mom6_ens3
                             test_soca_gen_hybrid_linear_model_coeffs )
 
-soca_add_test( NAME 4dvar_oceaniceemulator
-               EXE soca_var.x
-               TEST_DEPENDS test_soca_gridgen )
 # LETKF
 #---------------------------------------------------------------------------------------------------
 
@@ -808,3 +778,40 @@ soca_add_test( NAME convertstate_soca2cice
               NOTRAPFPE
               TEST_DEPENDS test_soca_gridgen
                            test_soca_3dvar )
+
+if( Torch_FOUND )
+  # ML Balance
+  #---------------------------------------------------------------------------------------------------
+  soca_add_test( NAME train_mlbalance
+                 EXE  soca_ice_emulator.x )
+
+  soca_add_test( NAME dirac_mlbalance
+                 EXE  soca_error_covariance_toolbox.x
+                 TEST_DEPENDS test_soca_train_mlbalance )
+
+  soca_add_test( NAME 3dvar_diffmlb
+                 EXE  soca_var.x
+                 TEST_DEPENDS test_soca_gridgen
+                              test_soca_parameters_diffusion
+                              test_soca_train_mlbalance )
+
+  # Ocean Ice Emulator
+  #---------------------------------------------------------------------------------------------------
+  soca_add_test( NAME oceaniceffnn
+                 NOTRAPFPE
+                 EXE  soca_test_oceaniceffnn.x )
+
+  soca_add_test( NAME linear_oceaniceemulator
+                 SRC  TestLinearModel.cc
+                 CFG  linearmodel_oceaniceemulator.yml
+                 TEST_DEPENDS test_soca_gridgen )
+
+  soca_add_test( NAME hofx_4d_oceaniceemulator
+                 EXE  soca_hofx.x
+                 TEST_DEPENDS test_soca_gridgen )
+
+  soca_add_test( NAME 4dvar_oceaniceemulator
+                 EXE soca_var.x
+                 TEST_DEPENDS test_soca_gridgen )
+endif()
+

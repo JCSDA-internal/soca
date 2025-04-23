@@ -26,7 +26,8 @@ class OceanIceFFNN : public torch::nn::Module {
     int inputSize = config.getInt("aimodel.inputSize");
     int hiddenSize = config.getInt("aimodel.hiddenSize");
     int outputSize = config.getInt("aimodel.outputSize");
-    weightsFileName = config.getString("aimodel.load model");
+    weightsFileName_ = config.getString("aimodel.load weights");
+    normFileName_ = config.getString("aimodel.load normalization", "");
 
     oops::Log::info() << "Starting OceanIceFFNN constructor: "
                        << inputSize << outputSize << hiddenSize << std::endl;
@@ -36,73 +37,61 @@ class OceanIceFFNN : public torch::nn::Module {
     fc2 = register_module("fc2", torch::nn::Linear(hiddenSize, outputSize));
 
     // Register mean and std as buffers
-    inputMean = register_buffer("input_mean", torch::full({inputSize}, 0.0));
-    inputStd = register_buffer("input_std", torch::full({inputSize}, 1.0));
+    inputMean_ = register_buffer("input_mean", torch::full({inputSize}, 0.0));
+    inputStd_ = register_buffer("input_std", torch::full({inputSize}, 1.0));
     oops::Log::trace() << "End OceanIceFFNN constructor" << std::endl;
   }
 
   // Initialize normalization
   void initNorm(torch::Tensor mean, torch::Tensor stdDev) {
-    inputMean = mean;
-    inputStd = stdDev;
+    inputMean_ = mean;
+    inputStd_ = stdDev;
   }
 
   void saveNorm(const std::string modelFileName) {
-    std::filesystem::path filePath(modelFileName);
-    auto path = filePath.parent_path();
-    auto fileName = filePath.filename();
-
-    std::vector<torch::Tensor> moments = {this->inputMean, this->inputStd};
-    torch::save(moments, path.string() + "/normalization." + fileName.string());
+    std::vector<torch::Tensor> moments = {this->inputMean_, this->inputStd_};
+    torch::save(moments, normFileName_);
   }
 
-  void loadNorm(const std::string modelFileName) {
-    std::filesystem::path filePath(modelFileName);
-    auto path = filePath.parent_path();
-    auto fileName = filePath.filename();
-
+  void loadNorm() {
     std::vector<torch::Tensor> moments;
-    torch::load(moments, path.string() + "/normalization." + fileName.string());
-    this->inputMean = moments[0];
-    this->inputStd = moments[1];
+    torch::load(moments, normFileName_);
+    this->inputMean_ = moments[0];
+    this->inputStd_ = moments[1];
   }
 
   void initWeights() {
     // Initialize weights of the linear layers
     torch::nn::init::normal_(fc1->weight, 0.0, 0.5);  // Mean 0, StdDev 0.5
     torch::nn::init::normal_(fc2->weight, 0.0, 0.5);  // Mean 0, StdDev 0.5
+  }
 
-    // Save the weights
-//    std::filesystem::path filePath("weights");
-//    auto path = filePath.parent_path();
-//    auto fileName = filePath.filename();
-//    std::vector<torch::Tensor> weights = {fc1->weight, fc2->weight};
-//    torch::save(weights, path.string() + "/weights." + fileName.string());
-//    oops::Log::info() << "Weights saved to: " << path.string() + "/weights." + fileName.string() << std::endl;
+  void saveWeights() {
+    std::vector<torch::Tensor> weights = {fc1->weight, fc2->weight};
+    torch::save(weights, weightsFileName_);
   }
 
   void loadWeights() {
     // Load weights from file
     std::vector<torch::Tensor> weights;
-    torch::load(weights, weightsFileName);
+    torch::load(weights, weightsFileName_);
 
     // Assign loaded weights to the layers
     fc1->weight = weights[0];
     fc2->weight = weights[1];
-    oops::Log::info() << "Weights loaded from: " << weightsFileName << std::endl;
   }
 
-  // Implement the forward pass
+  // Implement the forward pass with ReLU activation
   torch::Tensor forward(torch::Tensor x) {
-    x = (x - inputMean) / inputStd;
+    x = (x - inputMean_) / inputStd_;
     x = fc1(x);
     x = fc2(x);
     return x;
   }
 
-torch::Tensor forward_tlm(torch::Tensor x, torch::Tensor dx) {
+  torch::Tensor forward_tlm(torch::Tensor x, torch::Tensor dx) {
     // Normalize the perturbation
-    auto dx_norm = dx / inputStd.detach();
+    auto dx_norm = dx / inputStd_.detach();
 
     // TLM of the linear layers (no activation functions in your model)
     auto dx1 = fc1->weight.matmul(dx_norm.transpose(0, 1)).transpose(0, 1);  // Input → Hidden
@@ -135,10 +124,11 @@ torch::Tensor forward_ad(torch::Tensor x, torch::Tensor dy) {
   // Define the layers.
   torch::nn::Linear fc1{nullptr};
   torch::nn::Linear fc2{nullptr};
-  torch::Tensor inputMean;
-  torch::Tensor inputStd;
+  torch::Tensor inputMean_;
+  torch::Tensor inputStd_;
 
-  // File name for weights
-  std::string weightsFileName;
+  // Define the model name
+  std::string weightsFileName_;
+  std::string normFileName_;
 };;
 }  // namespace soca

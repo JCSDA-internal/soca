@@ -39,17 +39,15 @@ namespace soca {
       vars_(model, "model variables"),
       aimodel_(model)
   {
-    Log::trace() << "------------ ModelOceanIceEmulator::ModelOceanIceEmulator" << std::endl;
-    Log::debug() << "------------ ModelOceanIceEmulator vars: " << vars_ << std::endl;
+    // Get the time step from the model configuration
     tstep_ = util::Duration(model.getString("tstep"));
-    //  geomData_(oops::GeometryData(resol.functionSpace(), resol.fields(),
-    //                               resol.levelsAreTopDown(), resol.getComm())),
+
+    // Load the AI model weights
     aimodel_.loadWeights();
     Log::debug() << "------------ Loaded AI model weights in NL model: " << std::endl;
     for (const auto& tensor : aimodel_.parameters()) {
       Log::debug() << tensor << std::endl;
     }
-
   }
   // -----------------------------------------------------------------------------
   ModelOceanIceEmulator::~ModelOceanIceEmulator() {
