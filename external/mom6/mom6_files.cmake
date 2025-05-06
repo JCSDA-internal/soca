@@ -35,6 +35,7 @@ list(APPEND mom6_src_files
   MOM6/src/core/MOM_continuity.F90
   MOM6/src/core/MOM_continuity_PPM.F90
   MOM6/src/core/MOM_density_integrals.F90
+  MOM6/src/core/MOM_dynamics_split_RK2b.F90
   MOM6/src/core/MOM_dynamics_split_RK2.F90
   MOM6/src/core/MOM_dynamics_unsplit.F90
   MOM6/src/core/MOM_dynamics_unsplit_RK2.F90
@@ -51,7 +52,9 @@ list(APPEND mom6_src_files
   MOM6/src/core/MOM_verticalGrid.F90
 
   MOM6/src/diagnostics/MOM_PointAccel.F90
+  MOM6/src/diagnostics/MOM_diagnose_MLD.F90
   MOM6/src/diagnostics/MOM_debugging.F90
+  MOM6/src/diagnostics/MOM_harmonic_analysis.F90
   MOM6/src/diagnostics/MOM_spatial_means.F90
   MOM6/src/diagnostics/MOM_diagnostics.F90
   MOM6/src/diagnostics/MOM_obsolete_diagnostics.F90
@@ -59,6 +62,7 @@ list(APPEND mom6_src_files
   MOM6/src/diagnostics/MOM_sum_output.F90
   MOM6/src/diagnostics/MOM_wave_speed.F90
 
+  MOM6/src/equation_of_state/MOM_EOS_base_type.F90
   MOM6/src/equation_of_state/MOM_EOS.F90
   MOM6/src/equation_of_state/MOM_EOS_Jackett06.F90
   MOM6/src/equation_of_state/MOM_EOS_Roquet_SpV.F90
@@ -162,6 +166,7 @@ list(APPEND mom6_src_files
   MOM6/src/parameterizations/lateral/MOM_lateral_mixing_coeffs.F90
   MOM6/src/parameterizations/lateral/MOM_mixed_layer_restrat.F90
   MOM6/src/parameterizations/lateral/MOM_spherical_harmonics.F90
+  MOM6/src/parameterizations/lateral/MOM_streaming_filter.F90
   MOM6/src/parameterizations/lateral/MOM_thickness_diffuse.F90
   MOM6/src/parameterizations/lateral/MOM_tidal_forcing.F90
   MOM6/src/parameterizations/lateral/MOM_Zanna_Bolton.F90

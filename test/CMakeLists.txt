@@ -29,6 +29,7 @@ set( soca_test_input
   testinput/4dhybenvar.yml
   testinput/4dvar_identity.yml
   testinput/4dvar_htlm.yml
+  testinput/4dvar_oceaniceemulator.yml
   testinput/addincrement.yml
   testinput/convertincrement.yml
   testinput/convertstate_changevar.yml
@@ -64,6 +65,7 @@ set( soca_test_input
   testinput/getvalues.yml
   testinput/gridgen.yml
   testinput/hofx_3d.yml
+  testinput/hofx_4d_oceaniceemulator.yml
   testinput/hofx_4d_pseudo.yml
   testinput/hybridgain.yml
   testinput/increment.yml
@@ -71,6 +73,7 @@ set( soca_test_input
   testinput/letkf_split_solver.yml
   testinput/letkf.yml
   testinput/linearization_error.yml
+  testinput/linearmodel_oceaniceemulator.yml
   testinput/makeobs.yml
   testinput/model.yml
   testinput/obslocalization_vertical.yml
@@ -108,6 +111,7 @@ set( soca_test_ref
   testref/4dhybenvar.test
   testref/4dvar_identity.test
   testref/4dvar_htlm.test
+  testref/4dvar_oceaniceemulator.test
   testref/addincrement.test
   testref/convertincrement.test
   testref/convertstate_changevar.test
@@ -131,6 +135,7 @@ set( soca_test_ref
   testref/gridgen.test
   testref/hofx_3d.test
   testref/hofx_4d_pseudo.test
+  testref/hofx_4d_oceaniceemulator.test
   testref/hybridgain.test
   testref/letkf_split_observer.test
   testref/letkf_split_solver.test
@@ -469,6 +474,10 @@ soca_add_test( NAME forecast_mom6_ens2
 soca_add_test( NAME forecast_mom6_ens3
                SCRIPT mom6solo.py )
 
+soca_add_test( NAME linear_oceaniceemulator
+               SRC  TestLinearModel.cc
+               CFG  linearmodel_oceaniceemulator.yml
+               TEST_DEPENDS test_soca_gridgen )
 
 # background error
 #---------------------------------------------------------------------------------------------------
@@ -623,6 +632,10 @@ soca_add_test( NAME hofx_3d
                EXE  soca_hofx3d.x
                TEST_DEPENDS test_soca_gridgen )
 
+soca_add_test( NAME hofx_4d_oceaniceemulator
+               EXE  soca_hofx.x
+               TEST_DEPENDS test_soca_gridgen )
+
 soca_add_test( NAME hofx_4d_pseudo
                EXE  soca_hofx.x
                TEST_DEPENDS test_soca_gridgen
@@ -745,6 +758,10 @@ soca_add_test( NAME 4dvar_htlm
                             test_soca_forecast_mom6_ens2
                             test_soca_forecast_mom6_ens3
                             test_soca_gen_hybrid_linear_model_coeffs )
+
+soca_add_test( NAME 4dvar_oceaniceemulator
+               EXE soca_var.x
+               TEST_DEPENDS test_soca_gridgen )
 # LETKF
 #---------------------------------------------------------------------------------------------------
 
