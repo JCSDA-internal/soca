@@ -136,8 +136,8 @@ subroutine soca_ciceutils_gather(self, glb, geom)
   ! allocate the global cice_state data structure
   if (geom%f_comm%rank() == mpp_root_pe()) then
      call glb%init(geom, self%rst_filename, self%rst_out_filename, self%ice_lev, self%sno_lev, global=isglobal)
-     allocate(var2d(self%ni, self%nj))
   end if
+  allocate(var2d(self%ni, self%nj))
 
   ! gather 2D arrays
   call mpp_gather(self%isc, self%iec, self%jsc, self%jec, pelist, &
@@ -194,6 +194,7 @@ subroutine soca_ciceutils_gather(self, glb, geom)
         if ( pe == mpp_root_pe()) glb%qsno(1:self%ni,1:self%nj,n,l) = var2d*glb%iceumask
      end do
   end do
+  deallocate(var2d)
 
 end subroutine soca_ciceutils_gather
 
