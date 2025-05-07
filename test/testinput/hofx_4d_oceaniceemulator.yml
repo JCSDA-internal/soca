@@ -1,0 +1,47 @@
+_date_begin: &date_begin 2018-04-15T00:00:00Z
+geometry:
+  geom_grid_file: data_generated/gridgen/soca_gridspec.72x35x25.nc
+  mom6_input_nml: data_static/72x35x25/input.nml
+  fields metadata: data_static/fields_metadata.yml
+
+model:
+  name: ModelOceanIceEmulator
+  tstep: PT1H
+  model variables: &soca_vars
+  - sea_ice_area_fraction
+  - sea_surface_height_above_geoid
+
+initial condition:
+  read_from_file: 1
+  date: *date_begin
+  basename: data_static/72x35x25/restarts/
+  ocn_filename: MOM.res.nc
+  ice_filename: cice.res.nc
+  state variables: *soca_vars
+
+time window:
+  begin: *date_begin
+  length: PT24H
+forecast length: PT24H
+
+observations:
+  observers:
+  - obs space:
+      name: ADT
+      obsdataout:
+        engine:
+          type: H5File
+          obsfile: data_output/adt.nc
+      obsdatain:
+        engine:
+          type: H5File
+          obsfile: data_static/obs/adt.nc
+      simulated variables: [absoluteDynamicTopography]
+    obs operator:
+      name: ADT
+
+test:
+  reference filename: testref/hofx_4d_oceaniceemulator.test
+  test output filename: testoutput/hofx_4d_oceaniceemulator.out
+  float relative tolerance: 1e-4
+  float absolute tolerance: 1e-4
