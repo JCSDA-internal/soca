@@ -40,22 +40,29 @@ namespace soca {
 
     int execute(const eckit::Configuration & fullConfig) const {
       // Setup OceanIceEmulator
+      oops::Log::debug() << "--- OceanIceEmulator ctor" << std::endl;
       OceanIceFFNN model(fullConfig);
 
       // Create model
+      oops::Log::debug() << "--- OceanIceEmulator initWeights" << std::endl;
       model.initWeights();
+      oops::Log::debug() << "--- OceanIceEmulator saveWeights" << std::endl;
       model.saveWeights();
+      oops::Log::debug() << "--- OceanIceEmulator initNorm" << std::endl;
       model.initNorm(torch::zeros({2}), torch::ones({2}));
 
       // Generate random inputs
-      auto x = torch::randn({1, 2});
-      auto dx = torch::randn_like(x);
-      auto dy = torch::randn({1, 2});
+      oops::Log::debug() << "--- OceanIceEmulator gen random input" << std::endl;
+      auto x = torch::randn({1, 2}, torch::dtype(torch::kDouble));
+      auto dx = torch::randn_like(x, torch::dtype(torch::kDouble));
+      auto dy = torch::randn({1, 2}, torch::dtype(torch::kDouble));
 
       // Forward base output
+      oops::Log::debug() << "--- OceanIceEmulator forward" << std::endl;
       auto y = model.forward(x);
 
       // ---------- TLM Check: finite difference ----------
+      oops::Log::debug() << "--- OceanIceEmulator TLM check: finite diff" << std::endl;
       double eps = 1e-5;
       auto y_fd = model.forward(x + eps*dx);
       auto dy_fd = (y_fd - y);
@@ -64,6 +71,7 @@ namespace soca {
       printTestResult("TLM finite difference test", diff_tlm, 1e-6);
 
       // Check linearity of TLM
+      oops::Log::debug() << "--- OceanIceEmulator TLM check: linearity" << std::endl;
       double scale = 2.0;
       auto y_tlm1 = model.forward_tlm(x, scale*dx);
       auto y_tlm2 = scale * model.forward_tlm(x, dx);

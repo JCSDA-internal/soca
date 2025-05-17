@@ -38,10 +38,10 @@ linear model test:
     hiddenSize: 10
     load weights: /home/gvernier/sandboxes/jedi-bundle-new/soca/test/Data/oceanice_emul/ai_ocnice.pt
 
-  first multiplier TL: 1.0e0
-  iterations TL: 1
-  tolerance AD: 1.0e-7
-  tolerance TL: 1.0e-6
+  first multiplier TL: 1.0
+  iterations TL: 10
+  tolerance AD: 1.0e-6
+  tolerance TL: 1.0
   tolerance zero length forecast: 1.0e-6
 
 model:

@@ -88,6 +88,12 @@ namespace soca {
     for (size_t jnode = 0; jnode < nodes; ++jnode) {
       // Skip land points and ghost points
       if (maskView(jnode, 0) == 0 || ghostView(jnode)) continue;  // skip land/ghost points
+      //if (maskView(jnode, 0) == 0 || ghostView(jnode)) {
+      //    for (size_t j = 0; j < x_v.size(); ++j) {
+      //      x_v[j](jnode, 0) = 0.0;
+      //  }
+      //  continue;  // skip land/ghost points
+      //}
 
       // Prepare the input data
       std::vector<double> inputData;
@@ -102,10 +108,13 @@ namespace soca {
       // Update the state
       for (size_t j = 0; j < x_v.size(); ++j) {
         x_v[j](jnode, 0) = torch_x_out[0][j].item<double>();
-        Log::debug() << "------------ field: " << x_names[j] << " value: " << x_v[j](jnode, 0) << std::endl;
       }
-      Log::debug() << "------------ x out: " << torch_x_out << std::endl;
     }
+    // Update halo points
+    //for (auto & field : xx.fieldSet()) {
+    //  field.haloExchange();
+    //}
+    // Update the valid time
     xx.validTime() += tstep_;
   }
   // -----------------------------------------------------------------------------
