@@ -50,7 +50,6 @@ subroutine soca_soca2cice_setup_f90(c_key_self, c_conf, c_key_geom) &
   type(soca_geom), pointer :: geom
 
   type(fckit_configuration) :: f_conf
-  character(len=:), allocatable :: str
 
   f_conf = fckit_configuration(c_conf)
 
@@ -80,7 +79,11 @@ subroutine soca_soca2cice_setup_f90(c_key_self, c_conf, c_key_geom) &
   ! icepack time step for rebinning
   call f_conf%get_or_die("icepack time step", self%dt)
   ! shuffle stencil size
-  call f_conf%get_or_die("shuffle stencil size", self%shuffle_n)
+  if (f_conf%has("shuffle stencil depth")) then
+    call f_conf%get_or_die("shuffle stencil depth", self%shuffle_n)
+  else
+    self%shuffle_n = 0
+  end if
   ! cice input restart
   call f_conf%get_or_die("cice background state.restart", self%rst_filename)
 
@@ -101,7 +104,6 @@ subroutine soca_soca2cice_changevar_f90(c_key_self, c_key_geom, c_key_xin, c_key
   type(soca_soca2cice), pointer :: self
   type(soca_geom),      pointer :: geom
   type(soca_state),     pointer :: xin, xout
-  type(soca_field),     pointer :: field
 
   call soca_soca2cice_registry%get(c_key_self, self)
   call soca_geom_registry%get(c_key_geom, geom)

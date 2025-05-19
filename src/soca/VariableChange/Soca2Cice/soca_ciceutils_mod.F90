@@ -29,6 +29,7 @@ type, public :: cice_state
    integer :: ncat, ni, nj, ice_lev, sno_lev
    integer :: isc, iec, jsc, jec   ! compute domain
    integer :: isd, ied, jsd, jed   ! data domain
+   integer :: halo ! halo size
    logical :: initialized = .false.
    character(len=:), allocatable :: rst_filename
    character(len=:), allocatable :: rst_out_filename
@@ -90,6 +91,8 @@ subroutine soca_ciceutils_init(self, geom, rst_filename, rst_out_filename, ice_l
   self%ied = geom%ied
   self%jsd = geom%jsd
   self%jed = geom%jed
+  self%halo = min(abs(self%isd-self%isc), abs(self%ied-self%iec), &
+                  abs(self%jsd-self%jsc), abs(self%jed-self%jec))
 
   ! Get global seaice grid info
   call nc_check(nf90_open(self%rst_filename, nf90_nowrite, ncid))
