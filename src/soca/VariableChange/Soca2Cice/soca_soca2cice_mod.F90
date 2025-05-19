@@ -205,7 +205,6 @@ subroutine shuffle_ice(self, geom, xm)
       halo = self%shuffle_n
     end if
   end if
-  print *, "halo: ", halo
 
   allocate(testmin(2*halo + 1, 2*halo + 1))
 
