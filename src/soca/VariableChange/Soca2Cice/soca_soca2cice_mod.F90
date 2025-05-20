@@ -211,6 +211,8 @@ subroutine shuffle_ice(self, geom, xm)
   call cice_in%copydata(self%cice)
   do j = geom%jsc, geom%jec
      do i = geom%isc, geom%iec
+        if (geom%mask2d(i,j) == 0) cycle        ! skip land points
+
         atlas_idx = geom%atlas_ij2idx(i,j)
         local_aice = data_aice(1, atlas_idx)    ! ice fraction analysis
 
@@ -223,7 +225,7 @@ subroutine shuffle_ice(self, geom, xm)
           seaice_edge = self%antarctic%seaice_edge
         endif
         if (self%cice%aice(i,j).gt.seaice_edge) cycle     ! skip if the background has more ice than the threshold
-        if (local_aice.le.0.0_kind_real) then
+        if (local_aice.le.0.0_kind_real) then             ! set state to zero if the analysis is zero
            self%cice%aicen(i,j,:) = 0_kind_real
            self%cice%vicen(i,j,:) = 0_kind_real
            self%cice%vsnon(i,j,:) = 0_kind_real
@@ -234,8 +236,8 @@ subroutine shuffle_ice(self, geom, xm)
            self%cice%sice(i,j,:,:) = 0_kind_real
            self%cice%qsno(i,j,:,:) = 0_kind_real
            self%cice%tsfcn(i,j,:) = icepack_liquidus_temperature(data_socn(1, atlas_idx))
+           cycle
         endif
-        if (self%cice%agg%n_src == 0) cycle               ! skip if there are no points on this task with ice in the background
         do ii = i - halo, i + halo
           do jj = j - halo, j + halo
             testmin(ii-i+halo+1, jj-j+halo+1) = abs(cice_in%aice(ii,jj) - local_aice)
@@ -412,6 +414,19 @@ subroutine cleanup_ice(self, geom, xm)
             self%cice%tsfcn(i,j,k) = Tf
           endif
         enddo
+        ! remove ice over land
+        ! if (geom%mask2d(i,j) == 0) then
+        !   self%cice%aicen(i,j,:) = 0_kind_real
+        !   self%cice%vicen(i,j,:) = 0_kind_real
+        !   self%cice%vsnon(i,j,:) = 0_kind_real
+        !   self%cice%apnd(i,j,:) = 0_kind_real
+        !   self%cice%hpnd(i,j,:) = 0_kind_real
+        !   self%cice%ipnd(i,j,:) = 0_kind_real
+        !   self%cice%qice(i,j,:,:) = 0_kind_real
+        !   self%cice%sice(i,j,:,:) = 0_kind_real
+        !   self%cice%qsno(i,j,:,:) = 0_kind_real
+        !   self%cice%tsfcn(i,j,:) = 0_kind_real
+        ! endif
         ! re-compute aggregates = analysis that is effectively inserted in the restart
         data_aice(1, idx) = sum(self%cice%aicen(i,j,:))
         data_hice(1, idx) = sum(self%cice%vicen(i,j,:))
@@ -461,6 +476,8 @@ subroutine prior_dist_rescale(self, geom, xm)
 
   do j = geom%jsc, geom%jec
     do i = geom%isc, geom%iec
+      if (geom%mask2d(i,j) == 0) cycle   ! skip land points
+
       idx = geom%atlas_ij2idx(i,j)
 
         if (geom%lat(i,j)>0.0_kind_real) then

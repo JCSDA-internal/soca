@@ -17,14 +17,6 @@ use mpp_mod, only : mpp_gather, mpp_root_pe, mpp_pe
 implicit none
 private
 
-type, public :: agg_cice_state
-   real(kind=kind_real),  allocatable :: aice(:)
-   real(kind=kind_real),  allocatable :: lon(:)
-   real(kind=kind_real),  allocatable :: lat(:)
-   integer,  allocatable :: ij(:,:)
-   integer :: n_src
-end type agg_cice_state
-
 type, public :: cice_state
    integer :: ncat, ni, nj, ice_lev, sno_lev
    integer :: isc, iec, jsc, jec   ! compute domain
@@ -43,9 +35,7 @@ type, public :: cice_state
    real(kind=kind_real),  allocatable :: qice(:,:,:,:)   ! volume-weighted ice enthalpy
    real(kind=kind_real),  allocatable :: qsno(:,:,:,:)   ! volume-weighted snow enthalpy
    real(kind=kind_real),  allocatable :: sice(:,:,:,:)   ! volume-weighted ice bulk salinity
-   real(kind=kind_real),  allocatable :: iceumask(:,:)
    real(kind=kind_real),  allocatable :: aice(:,:)       ! total ice concentration
-   type(agg_cice_state):: agg
 contains
   procedure :: init => soca_ciceutils_init
   procedure :: alloc => soca_ciceutils_alloc
@@ -142,51 +132,44 @@ subroutine soca_ciceutils_gather(self, glb, geom)
   end if
   allocate(var2d(self%ni, self%nj))
 
-  ! gather 2D arrays
-  call mpp_gather(self%isc, self%iec, self%jsc, self%jec, pelist, &
-       self%iceumask(self%isc:self%iec,self%jsc:self%jec), &
-       var2d, is_root_pe)
-  if ( pe == mpp_root_pe()) glb%iceumask(1:self%ni,1:self%nj) = var2d
-  call geom%f_comm%barrier()
-
   ! gather 2D arrays along categories, snow and ice levels
   do n = 1, self%ncat
      ! aicen
      call mpp_gather(self%isc, self%iec, self%jsc, self%jec, pelist, &
           self%aicen(self%isc:self%iec,self%jsc:self%jec,n), &
           var2d, is_root_pe)
-     if ( pe == mpp_root_pe()) glb%aicen(1:self%ni,1:self%nj,n) = var2d*glb%iceumask
+     if ( pe == mpp_root_pe()) glb%aicen(1:self%ni,1:self%nj,n) = var2d
 
      ! vicen
      call mpp_gather(self%isc, self%iec, self%jsc, self%jec, pelist, &
           self%vicen(self%isc:self%iec,self%jsc:self%jec,n), &
           var2d, is_root_pe)
-     if ( pe == mpp_root_pe()) glb%vicen(1:self%ni,1:self%nj,n) = var2d*glb%iceumask
+     if ( pe == mpp_root_pe()) glb%vicen(1:self%ni,1:self%nj,n) = var2d
 
      ! vsnon
      call mpp_gather(self%isc, self%iec, self%jsc, self%jec, pelist, &
           self%vsnon(self%isc:self%iec,self%jsc:self%jec,n), &
           var2d, is_root_pe)
-     if ( pe == mpp_root_pe()) glb%vsnon(1:self%ni,1:self%nj,n) = var2d*glb%iceumask
+     if ( pe == mpp_root_pe()) glb%vsnon(1:self%ni,1:self%nj,n) = var2d
 
      ! Tsfcn
      call mpp_gather(self%isc, self%iec, self%jsc, self%jec, pelist, &
           self%tsfcn(self%isc:self%iec,self%jsc:self%jec,n), &
           var2d, is_root_pe)
-     if ( pe == mpp_root_pe()) glb%tsfcn(1:self%ni,1:self%nj,n) = var2d*glb%iceumask
+     if ( pe == mpp_root_pe()) glb%tsfcn(1:self%ni,1:self%nj,n) = var2d
 
      do l = 1, self%ice_lev
         ! Qice
         call mpp_gather(self%isc, self%iec, self%jsc, self%jec, pelist, &
              self%qice(self%isc:self%iec,self%jsc:self%jec,n,l), &
              var2d, is_root_pe)
-        if ( pe == mpp_root_pe()) glb%qice(1:self%ni,1:self%nj,n,l) = var2d*glb%iceumask
+        if ( pe == mpp_root_pe()) glb%qice(1:self%ni,1:self%nj,n,l) = var2d
 
         ! Sice
         call mpp_gather(self%isc, self%iec, self%jsc, self%jec, pelist, &
              self%sice(self%isc:self%iec,self%jsc:self%jec,n,l), &
              var2d, is_root_pe)
-        if ( pe == mpp_root_pe()) glb%sice(1:self%ni,1:self%nj,n,l) = var2d*glb%iceumask
+        if ( pe == mpp_root_pe()) glb%sice(1:self%ni,1:self%nj,n,l) = var2d
      end do
 
      do l = 1, self%sno_lev
@@ -194,7 +177,7 @@ subroutine soca_ciceutils_gather(self, glb, geom)
         call mpp_gather(self%isc, self%iec, self%jsc, self%jec, pelist, &
              self%qsno(self%isc:self%iec,self%jsc:self%jec,n,l), &
              var2d, is_root_pe)
-        if ( pe == mpp_root_pe()) glb%qsno(1:self%ni,1:self%nj,n,l) = var2d*glb%iceumask
+        if ( pe == mpp_root_pe()) glb%qsno(1:self%ni,1:self%nj,n,l) = var2d
      end do
   end do
   deallocate(var2d)
@@ -210,8 +193,6 @@ subroutine soca_ciceutils_alloc(self, isd, ied, jsd, jed)
   ncat = self%ncat
   ice_lev = self%ice_lev
   sno_lev = self%sno_lev
-
-  allocate(self%iceumask(isd:ied, jsd:jed));      self%iceumask = 0.0_kind_real
 
   allocate(self%aice(isd:ied, jsd:jed));          self%aice = 0.0_kind_real
 
@@ -251,8 +232,6 @@ subroutine soca_ciceutils_copydata(self, other)
   self%jsd = other%jsd; jsd = other%jsd
   self%jed = other%jed; jed = other%jed
 
-  allocate(self%iceumask(isd:ied, jsd:jed));      self%iceumask = other%iceumask
-
   allocate(self%aice(isd:ied, jsd:jed));          self%aice = other%aice
 
   allocate(self%aicen(isd:ied, jsd:jed, ncat));   self%aicen = other%aicen
@@ -275,13 +254,10 @@ subroutine soca_ciceutils_read(self, geom)
   class(cice_state), intent(inout) :: self
   type(soca_geom), target, intent(in)  :: geom
 
-  integer(kind=4) :: ncid, dimid, varid, i, j, cnt, n_src
+  integer(kind=4) :: ncid, dimid, varid, i, j
   real(kind=kind_real) :: aice0
 
   call nc_check(nf90_open(self%rst_filename, nf90_nowrite, ncid))
-
-  ! ice mask
-  call getvar2d('iceumask', self%iceumask, self%ni, self%nj, geom, ncid)
 
   ! dynamic variables
   call getvar3d('aicen', self%aicen, self%ni, self%nj, self%ncat, geom, ncid)
@@ -301,25 +277,9 @@ subroutine soca_ciceutils_read(self, geom)
 
   call nc_check(nf90_close(ncid))
 
-  ! aggregate categories
-  cnt = 1
-  n_src = sum(self%iceumask)
-  self%agg%n_src = n_src
-  allocate(self%agg%lon(n_src), self%agg%lat(n_src), self%agg%aice(n_src))
-  allocate(self%agg%ij(2,n_src))
-
   do j = geom%jsd, geom%jed
      do i = geom%isd, geom%ied
-        if (self%iceumask(i,j).eq.1) then
-           call aggregate_area (self%aicen(i,j,:), &
-                                self%aice(i,j), aice0)
-           self%agg%lon(cnt) = geom%lon(i,j)
-           self%agg%lat(cnt) = geom%lat(i,j)
-           self%agg%aice(cnt) = self%aice(i,j)
-           self%agg%ij(1,cnt) = i
-           self%agg%ij(2,cnt) = j
-           cnt = cnt + 1
-        end if
+       call aggregate_area(self%aicen(i,j,:), self%aice(i,j), aice0)
      end do
   end do
 
@@ -361,9 +321,6 @@ subroutine soca_ciceutils_write(self, geom)
      call nc_check(nf90_inq_varid(ncid,"Tsfcn",varid))
      call nc_check(nf90_put_var(ncid,varid,glb%tsfcn))
 
-     call nc_check(nf90_inq_varid(ncid,"iceumask",varid))
-     call nc_check(nf90_put_var(ncid,varid,glb%iceumask))
-
      do l = 1, self%ice_lev
         write(strnum,'(i1)') l
         cicevarname = "qice00"//strnum
@@ -397,8 +354,6 @@ subroutine soca_ciceutils_finalize(self)
   ncat = 0
   ice_lev = 0
   sno_lev = 0
-
-  deallocate(self%iceumask)
 
   deallocate(self%aicen)
   deallocate(self%vicen)
