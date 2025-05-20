@@ -415,18 +415,18 @@ subroutine cleanup_ice(self, geom, xm)
           endif
         enddo
         ! remove ice over land
-        ! if (geom%mask2d(i,j) == 0) then
-        !   self%cice%aicen(i,j,:) = 0_kind_real
-        !   self%cice%vicen(i,j,:) = 0_kind_real
-        !   self%cice%vsnon(i,j,:) = 0_kind_real
-        !   self%cice%apnd(i,j,:) = 0_kind_real
-        !   self%cice%hpnd(i,j,:) = 0_kind_real
-        !   self%cice%ipnd(i,j,:) = 0_kind_real
-        !   self%cice%qice(i,j,:,:) = 0_kind_real
-        !   self%cice%sice(i,j,:,:) = 0_kind_real
-        !   self%cice%qsno(i,j,:,:) = 0_kind_real
-        !   self%cice%tsfcn(i,j,:) = 0_kind_real
-        ! endif
+        if (geom%mask2d(i,j) == 0) then
+          self%cice%aicen(i,j,:) = 0_kind_real
+          self%cice%vicen(i,j,:) = 0_kind_real
+          self%cice%vsnon(i,j,:) = 0_kind_real
+          self%cice%apnd(i,j,:) = 0_kind_real
+          self%cice%hpnd(i,j,:) = 0_kind_real
+          self%cice%ipnd(i,j,:) = 0_kind_real
+          self%cice%qice(i,j,:,:) = 0_kind_real
+          self%cice%sice(i,j,:,:) = 0_kind_real
+          self%cice%qsno(i,j,:,:) = 0_kind_real
+          self%cice%tsfcn(i,j,:) = 0_kind_real
+        endif
         ! re-compute aggregates = analysis that is effectively inserted in the restart
         data_aice(1, idx) = sum(self%cice%aicen(i,j,:))
         data_hice(1, idx) = sum(self%cice%vicen(i,j,:))
