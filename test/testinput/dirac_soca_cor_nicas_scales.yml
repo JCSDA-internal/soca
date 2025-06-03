@@ -22,8 +22,6 @@ background error:
   saber central block:
     saber block name: BUMP_NICAS
     read:
-      model: 
-        level for 2d variables: top
       io:
         data directory: data_generated/parameters_bump_cor_nicas_scales
         files prefix: bump

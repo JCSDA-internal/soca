@@ -30,8 +30,6 @@ cost function:
     analysis variables: *a_vars
     date: *bkg_date
     bump:
-      model: 
-        level for 2d variables: top
       io:
         data directory: data_generated/static_socaerror_init
       drivers:

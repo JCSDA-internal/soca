@@ -24,8 +24,6 @@ background error:
   saber central block:
     saber block name: BUMP_NICAS
     calibration:
-      model: 
-        level for 2d variables: top
       io:
         data directory: data_output/
         files prefix: soca_bump_loc
