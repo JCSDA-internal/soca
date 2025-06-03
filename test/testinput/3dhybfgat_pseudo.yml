@@ -151,6 +151,8 @@ cost function:
             saber block name: BUMP_NICAS
             active variables: *soca_an_vars
             read:
+              model: 
+                level for 2d variables: top
               io:
                 data directory: data_generated/parameters_bump_loc
                 files prefix: soca_bump_loc
