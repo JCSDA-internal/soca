@@ -180,17 +180,19 @@ subroutine shuffle_ice(self, geom, xm)
   type(soca_geom), target, intent(in)  :: geom
   type(soca_state),      intent(inout) :: xm
 
-  real(kind=kind_real) :: local_aice, seaice_edge
-  integer :: i, j, k, ii, jj, atlas_idx, halo
+  real(kind=kind_real) :: local_aice, seaice_edge, sst, Tf
+  integer :: i, j, k, ii, jj, atlas_idx, halo, npos
   integer :: minidx(2)
   real(kind=kind_real), allocatable :: testmin(:,:)
 
   type(cice_state) :: cice_in
-  type(atlas_field) :: socn, aice
-  real(kind=kind_real), pointer :: data_socn(:,:), data_aice(:,:)
+  type(atlas_field) :: tocn, socn, aice
+  real(kind=kind_real), pointer :: data_tocn(:,:), data_socn(:,:), data_aice(:,:)
 
+  tocn = xm%afieldset%field("sea_water_potential_temperature")
   socn = xm%afieldset%field("sea_water_salinity")
   aice = xm%afieldset%field("sea_ice_area_fraction")
+  call tocn%data(data_tocn)
   call socn%data(data_socn)
   call aice%data(data_aice)
 
@@ -226,17 +228,37 @@ subroutine shuffle_ice(self, geom, xm)
         endif
         if (self%cice%aice(i,j).gt.seaice_edge) cycle     ! skip if the background has more ice than the threshold
         if (local_aice.le.0.0_kind_real) then             ! set state to zero if the analysis is zero
-           self%cice%aicen(i,j,:) = 0_kind_real
-           self%cice%vicen(i,j,:) = 0_kind_real
-           self%cice%vsnon(i,j,:) = 0_kind_real
-           self%cice%apnd(i,j,:) = 0_kind_real
-           self%cice%hpnd(i,j,:) = 0_kind_real
-           self%cice%ipnd(i,j,:) = 0_kind_real
-           self%cice%qice(i,j,:,:) = 0_kind_real
-           self%cice%sice(i,j,:,:) = 0_kind_real
-           self%cice%qsno(i,j,:,:) = 0_kind_real
-           self%cice%tsfcn(i,j,:) = icepack_liquidus_temperature(data_socn(1, atlas_idx))
-           cycle
+          self%cice%aicen(i,j,:) = 0_kind_real
+          self%cice%vicen(i,j,:) = 0_kind_real
+          self%cice%vsnon(i,j,:) = 0_kind_real
+          self%cice%apnd(i,j,:) = 0_kind_real
+          self%cice%hpnd(i,j,:) = 0_kind_real
+          self%cice%ipnd(i,j,:) = 0_kind_real
+          self%cice%qice(i,j,:,:) = 0_kind_real
+          self%cice%sice(i,j,:,:) = 0_kind_real
+          self%cice%qsno(i,j,:,:) = 0_kind_real
+          Tf = icepack_liquidus_temperature(data_socn(1, atlas_idx))
+          self%cice%tsfcn(i,j,:) = Tf
+          ! adjust SST (when we have some data) if ice is removed and SST is freezing
+          if ((cice_in%aice(i,j) > 0.0) .and. (data_tocn(1,atlas_idx)<Tf+0.1)) then
+            npos = 1
+            sst = data_tocn(1, atlas_idx)
+            do ii = i - 1, i + 1
+              do jj = j - 1, j + 1
+                if (cice_in%aice(ii,jj) == 0.0) then
+                  sst = sst + data_tocn(1, geom%atlas_ij2idx(ii,jj))
+                  npos = npos + 1
+                endif
+              enddo
+            enddo
+            sst = sst / npos
+            if (sst > data_tocn(1,atlas_idx) + 1.0) then
+              sst = data_tocn(1, atlas_idx) + 1.0
+            endif
+            print *, "soca2cice: setting SST from ", data_tocn(1, atlas_idx), "to ", sst, &
+                     " at (", i, ",", j, ") with no ice"
+          endif
+          cycle
         endif
         do ii = i - halo, i + halo
           do jj = j - halo, j + halo
@@ -263,9 +285,18 @@ subroutine shuffle_ice(self, geom, xm)
         do k = 1, self%sno_lev
            self%cice%qsno(i, j,: , k) = cice_in%qsno(ii, jj, :, k)
         end do
+        ! adjust SST when ice is added
+        if ((self%cice%aice(i, j) > 0.0) .and. (cice_in%aice(i,j) == 0.0)) then
+           local_aice = self%cice%aice(i, j)
+           sst = local_aice * icepack_liquidus_temperature(data_socn(1, atlas_idx)) + &
+                 (1.0_kind_real - local_aice) * data_tocn(1, atlas_idx)
+           print *, "soca2cice: setting SST from ", data_tocn(1, atlas_idx), "to ", &
+                 sst, " at (", i, ",", j, ") with ice"
+           data_tocn(1, atlas_idx) = sst
+        endif
      end do
   end do
-
+  call tocn%final()
   call socn%final()
   call aice%final()
 end subroutine shuffle_ice
