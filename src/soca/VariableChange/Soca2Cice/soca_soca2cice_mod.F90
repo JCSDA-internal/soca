@@ -10,6 +10,7 @@ use fckit_configuration_module, only: fckit_configuration
 use fckit_exception_module, only: fckit_exception
 use fckit_mpi_module, only: fckit_mpi_comm
 use kinds, only: kind_real
+use mpp_domains_mod, only : mpp_update_domains
 
 use icepack_itd, only: icepack_init_itd, cleanup_itd
 use icepack_warnings, only: icepack_warnings_flush, icepack_warnings_aborted
@@ -42,6 +43,8 @@ type, public :: soca_soca2cice_params
    logical :: rescale_prior
    real(kind=kind_real) :: rescale_min_hice
    real(kind=kind_real) :: rescale_min_hsno
+   logical :: update_sst
+   real(kind=kind_real) :: max_update_sst
 end type soca_soca2cice_params
 
 type, public :: soca_soca2cice
@@ -180,12 +183,14 @@ subroutine shuffle_ice(self, geom, xm)
   type(soca_geom), target, intent(in)  :: geom
   type(soca_state),      intent(inout) :: xm
 
-  real(kind=kind_real) :: local_aice, seaice_edge, sst, Tf
+  real(kind=kind_real) :: local_aice, seaice_edge, sst, Tf, max_update_sst
+  logical :: update_sst
   integer :: i, j, k, ii, jj, atlas_idx, halo, npos
   integer :: minidx(2)
   real(kind=kind_real), allocatable :: testmin(:,:)
 
   type(cice_state) :: cice_in
+  real(kind=kind_real), allocatable :: tocn_in(:,:)
   type(atlas_field) :: tocn, socn, aice
   real(kind=kind_real), pointer :: data_tocn(:,:), data_socn(:,:), data_aice(:,:)
 
@@ -210,7 +215,18 @@ subroutine shuffle_ice(self, geom, xm)
 
   allocate(testmin(2*halo + 1, 2*halo + 1))
 
+  ! make copies of the cice state and sst since the original state
+  ! needs to be used for the shuffle
   call cice_in%copydata(self%cice)
+  allocate(tocn_in(geom%isd:geom%ied, geom%jsd:geom%jed))
+  do j = geom%jsc, geom%jec
+    do i = geom%isc, geom%iec
+      atlas_idx = geom%atlas_ij2idx(i,j)
+      tocn_in(i,j) = data_tocn(1, atlas_idx)
+    end do
+  end do
+  call mpp_update_domains(tocn_in, geom%Domain%mpp_domain)
+
   do j = geom%jsc, geom%jec
      do i = geom%isc, geom%iec
         if (geom%mask2d(i,j) == 0) cycle        ! skip land points
@@ -222,43 +238,46 @@ subroutine shuffle_ice(self, geom, xm)
         if (geom%lat(i,j)>0.0_kind_real) then
           if (.not. self%arctic%shuffle) cycle
           seaice_edge = self%arctic%seaice_edge
+          update_sst = self%arctic%update_sst
+          max_update_sst = self%arctic%max_update_sst
         else
           if (.not. self%antarctic%shuffle) cycle
           seaice_edge = self%antarctic%seaice_edge
+          update_sst = self%antarctic%update_sst
+          max_update_sst = self%antarctic%max_update_sst
         endif
         if (self%cice%aice(i,j).gt.seaice_edge) cycle     ! skip if the background has more ice than the threshold
         if (local_aice.le.0.0_kind_real) then             ! set state to zero if the analysis is zero
-          self%cice%aicen(i,j,:) = 0_kind_real
-          self%cice%vicen(i,j,:) = 0_kind_real
-          self%cice%vsnon(i,j,:) = 0_kind_real
-          self%cice%apnd(i,j,:) = 0_kind_real
-          self%cice%hpnd(i,j,:) = 0_kind_real
-          self%cice%ipnd(i,j,:) = 0_kind_real
-          self%cice%qice(i,j,:,:) = 0_kind_real
-          self%cice%sice(i,j,:,:) = 0_kind_real
-          self%cice%qsno(i,j,:,:) = 0_kind_real
-          Tf = icepack_liquidus_temperature(data_socn(1, atlas_idx))
-          self%cice%tsfcn(i,j,:) = Tf
-          ! adjust SST (when we have some data) if ice is removed and SST is freezing
-          if ((cice_in%aice(i,j) > 0.0) .and. (data_tocn(1,atlas_idx)<Tf+0.1)) then
-            npos = 1
-            sst = data_tocn(1, atlas_idx)
-            do ii = i - 1, i + 1
-              do jj = j - 1, j + 1
-                if (cice_in%aice(ii,jj) == 0.0) then
-                  sst = sst + data_tocn(1, geom%atlas_ij2idx(ii,jj))
-                  npos = npos + 1
-                endif
-              enddo
-            enddo
-            sst = sst / npos
-            if (sst > data_tocn(1,atlas_idx) + 1.0) then
-              sst = data_tocn(1, atlas_idx) + 1.0
-            endif
-            print *, "soca2cice: setting SST from ", data_tocn(1, atlas_idx), "to ", sst, &
-                     " at (", i, ",", j, ") with no ice"
-          endif
-          cycle
+           self%cice%aicen(i,j,:) = 0_kind_real
+           self%cice%vicen(i,j,:) = 0_kind_real
+           self%cice%vsnon(i,j,:) = 0_kind_real
+           self%cice%apnd(i,j,:) = 0_kind_real
+           self%cice%hpnd(i,j,:) = 0_kind_real
+           self%cice%ipnd(i,j,:) = 0_kind_real
+           self%cice%qice(i,j,:,:) = 0_kind_real
+           self%cice%sice(i,j,:,:) = 0_kind_real
+           self%cice%qsno(i,j,:,:) = 0_kind_real
+           Tf = icepack_liquidus_temperature(data_socn(1, atlas_idx))
+           self%cice%tsfcn(i,j,:) = Tf
+           ! adjust SST (when we have some data) if ice is removed and SST is freezing
+           if (update_sst .and. (cice_in%aice(i,j) > 0.0) .and. (data_tocn(1,atlas_idx)<=Tf)) then
+             npos = 1
+             sst = data_tocn(1,atlas_idx)
+             do ii = i - 1, i + 1
+               do jj = j - 1, j + 1
+                 if (cice_in%aice(ii,jj) == 0.0) then
+                   sst = sst + tocn_in(ii,jj)
+                   npos = npos + 1
+                 endif
+               enddo
+             enddo
+             sst = sst / npos
+             if (sst > data_tocn(1,atlas_idx) + max_update_sst) then
+               sst = data_tocn(1, atlas_idx) + max_update_sst
+             endif
+             data_tocn(1, atlas_idx) = sst
+           endif
+           cycle
         endif
         do ii = i - halo, i + halo
           do jj = j - halo, j + halo
@@ -286,16 +305,15 @@ subroutine shuffle_ice(self, geom, xm)
            self%cice%qsno(i, j,: , k) = cice_in%qsno(ii, jj, :, k)
         end do
         ! adjust SST when ice is added
-        if ((self%cice%aice(i, j) > 0.0) .and. (cice_in%aice(i,j) == 0.0)) then
+        if (update_sst .and. (self%cice%aice(i, j) > 0.0) .and. (cice_in%aice(i,j) == 0.0)) then
            local_aice = self%cice%aice(i, j)
            sst = local_aice * icepack_liquidus_temperature(data_socn(1, atlas_idx)) + &
                  (1.0_kind_real - local_aice) * data_tocn(1, atlas_idx)
-           print *, "soca2cice: setting SST from ", data_tocn(1, atlas_idx), "to ", &
-                 sst, " at (", i, ",", j, ") with ice"
            data_tocn(1, atlas_idx) = sst
         endif
      end do
   end do
+  deallocate(tocn_in)
   call tocn%final()
   call socn%final()
   call aice%final()

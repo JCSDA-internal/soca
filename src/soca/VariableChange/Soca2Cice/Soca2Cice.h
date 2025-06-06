@@ -51,6 +51,11 @@ class Soca2Cice: public VariableChangeBase {
     oops::Parameter<RescaleParameters> rescale{"rescale prior",
       "Option to rescale sea ice in the ice pack zone (where ice concentration"
       " > seaice edge)", {}, this};
+    oops::Parameter<bool> adjustSST{"update SST",
+      "Option to update sea surface temperature", true, this};
+    oops::Parameter<double> sstDiffMax{"max positive SST update",
+      "Maximum update to sea surface temperature (K)", 1.0, this,
+      {oops::minConstraint(0.0)}};
   };
 
   // ---------------------------------------------------------------------------
