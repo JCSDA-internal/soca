@@ -73,9 +73,13 @@ subroutine soca_soca2cice_setup_f90(c_key_self, c_conf, c_key_geom) &
   call f_conf%get_or_die("arctic.rescale prior.rescale", self%arctic%rescale_prior)
   call f_conf%get_or_die("arctic.rescale prior.min hice", self%arctic%rescale_min_hice)
   call f_conf%get_or_die("arctic.rescale prior.min hsno", self%arctic%rescale_min_hsno)
+  call f_conf%get_or_die("arctic.update SST", self%arctic%update_sst)
+  call f_conf%get_or_die("arctic.max positive SST update", self%arctic%max_update_sst)
   call f_conf%get_or_die("antarctic.rescale prior.rescale", self%antarctic%rescale_prior)
   call f_conf%get_or_die("antarctic.rescale prior.min hice", self%antarctic%rescale_min_hice)
   call f_conf%get_or_die("antarctic.rescale prior.min hsno", self%antarctic%rescale_min_hsno)
+  call f_conf%get_or_die("antarctic.update SST", self%antarctic%update_sst)
+  call f_conf%get_or_die("antarctic.max positive SST update", self%antarctic%max_update_sst)
   ! icepack time step for rebinning
   call f_conf%get_or_die("icepack time step", self%dt)
   ! shuffle stencil size
